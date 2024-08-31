@@ -2,5 +2,4 @@
 
 #pragma once
 
-#include "Build/Build.h"
-#include "HAL/Platform.h"
+#include "Build/AutomaticBuild.h"

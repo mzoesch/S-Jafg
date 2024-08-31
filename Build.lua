@@ -17,6 +17,8 @@ workspace ( "Jafg" )
 filter ( "system:windows" )
     systemversion ( "latest" )
     defines ( { "PLATFORM_WINDOWS" } )
+    entrypoint "WinMainCRTStartup"
+    linkoptions ( { "/SUBSYSTEM:WINDOWS" } )
 
 filter ( )
 
