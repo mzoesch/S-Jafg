@@ -47,7 +47,7 @@ group ( "App" )
 
         includedirs ( { 
             "App/Source",
-            "Core/Source",
+            "Core/Source/Public",
         } )
 
         files ( { 
@@ -64,6 +64,7 @@ group ( "Core" )
 
         includedirs ( { 
             "Core/Source",
+            "Core/Source/Public",
         } )
 
         files ( { 
