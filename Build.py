@@ -63,8 +63,8 @@ def generate_solution_files_with_premake() -> None:
     return None
 
 def main(*args, **kwargs) -> int:
-    # print('Updating submodules ...')
-    # run_subprocess('git', 'submodule', 'update', '--init', '--recursive')
+    print('Updating submodules ...')
+    run_subprocess('git', 'submodule', 'update', '--init', '--recursive')
 
     generate_solution_files_with_premake()
 
