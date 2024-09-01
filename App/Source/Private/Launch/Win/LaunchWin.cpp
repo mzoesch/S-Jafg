@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreMinimal.h"
+#include "CoreAFX.h"
 
 #if !PLATFORM_WINDOWS
     #error "Is not PLATFORM_WINDOWS but platform specific code is being compiled."
@@ -9,7 +9,7 @@
 #include <iostream>
 #include <Windows.h>
 
-extern int32 GuardedMain(const TChar* CmdLine);
+extern EPlatformExit::Type GuardedMain(const TChar* CmdLine);
 
 bool GPauseBeforeExit = false;
 

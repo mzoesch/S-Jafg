@@ -28,3 +28,5 @@ typedef PlatformTypes::int64    int64;
 // ReSharper restore CppInconsistentNaming
 
 typedef PlatformTypes::TChar    TChar;
+
+typedef PlatformTypes::String   String;

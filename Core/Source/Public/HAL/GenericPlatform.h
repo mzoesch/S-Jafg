@@ -2,6 +2,19 @@
 
 #pragma once
 
+#include <string>
+
+///////////////////////////////////////////////////////////////////////////////
+// Maybe undefined features
+#ifndef NODISCARD
+    #define NODISCARD [[nodiscard]]
+#endif /* !NODISCARD */
+#ifndef FORCEINLINE
+    #define FORCEINLINE _forceinline
+#endif /* !FORCEINLINE */
+// ~Maybe undefined features
+///////////////////////////////////////////////////////////////////////////////
+
 /** Generic types for almost all compilers and platforms. */
 struct GenericPlatformTypes
 {
@@ -17,7 +30,7 @@ struct GenericPlatformTypes
     typedef unsigned long long  uint64;
 
     /** 8-bit signed integer */
-    typedef	signed char         int8;
+    typedef signed char         int8;
     /** 16-bit signed integer  */
     typedef signed short int    int16;
     /** 32-bit signed integer */
@@ -37,4 +50,6 @@ struct GenericPlatformTypes
 
     /** A switchable character - either AnsiChar or WideChar. */
     typedef TWideChar           TChar;
+
+    typedef std::string         String;
 };
