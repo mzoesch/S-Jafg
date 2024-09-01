@@ -9,16 +9,24 @@ objdir ( IntermediateDir .. OutputDir )
 language ( "C++" )
 cppdialect ( "C++20" )
 
+-- Important Vendor libraries
+includeDir = { }
+includeDir["GLFW"] = "App/Vendor/GLFW/include"
+includeDir["Glad"] = "App/Vendor/Glad/include"
+
 workspace ( "Jafg" )
     architecture ( "x64" )
     startproject ( "App" )
-    configurations ( { "Debug", "Development", "Shipping" } )
+    configurations ( { "Debug", "Development", "Shipping", } )
+
+    -- Incompatiple with /Yc - How do we fix this?
+    -- flags ( { "MultiProcessorCompile" } )
 
 filter ( "system:windows" )
     systemversion ( "latest" )
-    defines ( { "PLATFORM_WINDOWS" } )
+    defines ( { "PLATFORM_WINDOWS", } ) -- /* "GLFW_INCLUDE_NONE", */
     entrypoint "WinMainCRTStartup"
-    linkoptions ( { "/SUBSYSTEM:WINDOWS" } )
+    linkoptions ( { "/SUBSYSTEM:WINDOWS", } )
 
 filter ( )
 
@@ -49,7 +57,10 @@ group ( "App" )
 
         includedirs ( { 
             "App/Source",
+            "App/Source/Public",
             "Core/Source/Public",
+            "%{includeDir.GLFW}",
+            "%{includeDir.Glad}",
         } )
 
         files ( { 
@@ -57,7 +68,18 @@ group ( "App" )
             "App/Source/**.cpp",
         } )
 
-        links ( { "Core" } )
+        links ( {
+            "Core",
+            "GLFW",
+            "Glad",
+            "opengl32.lib",
+        } )
+
+        -- Somehow this does not work??
+        -- The IDEA will just set the pch to /Yu but we, of course, need /Yc...
+        pchheader ( "CoreAFX.h" )
+        pchsource ( "Core/Source/Private/CoreAFX.cpp" )
+group ( "" )
 
 group ( "Core" )
     project ( "Core" )
@@ -73,3 +95,14 @@ group ( "Core" )
             "Core/Source/**.h",
             "Core/Source/**.cpp",
         } )
+
+        -- Somehow this does not work??
+        -- The IDEA will just set the pch to /Yu but we, of course, need /Yc...
+        pchheader ( "CoreAFX.h" )
+        pchsource ( "Core/Source/Private/CoreAFX.cpp" )
+group ( "" )
+
+group ( "Vendor" )
+    include ( "App/Vendor/GLFW/Build.lua" )
+    include ( "App/Vendor/Glad/Build.lua" )
+group ( "" )

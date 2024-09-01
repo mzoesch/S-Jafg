@@ -1,6 +1,8 @@
 @echo off
 
 pushd ..
-Vendor\Premake\Win\premake5.exe --file=Build.lua vs2022
+echo Calling Python to generate solution files.
+python Build.py
 popd
+
 pause
