@@ -1,0 +1,3 @@
+[submodule "App/Vendor/GLFW"]
+	path = App/Vendor/GLFW
+	url = https://github.com/mzoesch/glfw
