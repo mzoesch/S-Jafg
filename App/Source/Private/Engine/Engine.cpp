@@ -2,7 +2,7 @@
 
 #include "CoreAFX.h"
 #include "Engine/Engine.h"
-#include "IO/DesktopPlatform.h"
+#include "Runtime/Platform/DesktopPlatform.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals

@@ -30,7 +30,7 @@ protected:
 };
 
 #if PLATFORM_WINDOWS
-    #include "DesktopPlatformWin.h"
+    #include "Runtime/Platform/DesktopPlatformWin.h"
 #else /* PLATFORM_WINDOWS */
     #error "Could not resolve PLATFORM."
 #endif /* !PLATFORM_WINDOWS */

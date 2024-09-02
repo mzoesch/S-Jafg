@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreAFX.h"
-#include "IO/Surface.h"
+#include "Runtime/Platform/Surface.h"
 
 class Engine;
 

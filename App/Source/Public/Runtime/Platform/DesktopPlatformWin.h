@@ -3,11 +3,10 @@
 #pragma once
 
 #include "CoreAFX.h"
-#include "DesktopPlatform.h"
 
 struct GLFWwindow;
 
-class DesktopPlatformWin : public DesktopPlatformBase
+class DesktopPlatformWin final : public DesktopPlatformBase
 {
 public:
 
@@ -35,6 +34,7 @@ private:
     GLFWwindow* MasterWindow = nullptr;
 
     int32 WindowCount = 0;
+    std::vector<uint32> CompiledShaders;
 };
 
 typedef DesktopPlatformWin DesktopPlatform;
