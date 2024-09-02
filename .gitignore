@@ -55,5 +55,8 @@ Intermediate/*
 # Configuration files
 Saved/*
 
+# Logs
+*.log
+
 # Sln
 JAFG.sln.DotSettings.user

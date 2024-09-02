@@ -2,6 +2,7 @@
 
 #pragma once
 
+
 /*-----------------------------------------------------------------------------
     Predefined macros.
 -----------------------------------------------------------------------------*/
@@ -32,9 +33,9 @@
 -----------------------------------------------------------------------------*/
 
 #if PLATFORM_WINDOWS
-    #define PLATFORM_DESKTOP       1                                        // NOLINT(modernize-macro-to-enum)
+    #define PLATFORM_DESKTOP        1
 #else /* !PLATFORM_WINDOWS */
-    #define PLATFORM_DESKTOP       0
+    #define PLATFORM_DESKTOP        0
 #endif /* PLATFORM_WINDOWS */
 
 
@@ -45,6 +46,7 @@
 #define INCLUDED_AUTOMATIC_BUILD_PRIVATE
 
 #ifndef REFLECT_MANUAL_BUILD
+    /** Always (EVEN IN SHIPPING) reflect manual build if not specified otherwise. */
     #define REFLECT_MANUAL_BUILD_OVERRIDES 1
 #endif /* !REFLECT_MANUAL_BUILD */
 

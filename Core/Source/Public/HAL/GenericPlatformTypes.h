@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <codecvt>
 #include <string>
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -12,6 +13,7 @@
 #ifndef FORCEINLINE
     #define FORCEINLINE _forceinline
 #endif /* !FORCEINLINE */
+#define LITERAL_WIDE(x) L##x
 // ~Maybe undefined features
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -49,7 +51,22 @@ struct GenericPlatformTypes
     typedef wchar_t             TWideChar;
 
     /** A switchable character - either AnsiChar or WideChar. */
-    typedef TWideChar           TChar;
+    typedef TAnsiChar           TChar;
 
     typedef std::string         String;
+    typedef std::wstring        WideString;
+
+    static String Ws2S(const WideString& Ws)
+    {
+        __pragma( warning(push) )
+        __pragma( warning(disable: 4996) )
+
+        typedef std::codecvt_utf8<wchar_t> TypeX;
+        std::wstring_convert<TypeX, wchar_t> Converter;
+        return Converter.to_bytes(Ws);
+
+        __pragma( warning(pop) )
+    }
+
+    static const TChar* Ws2CStr(const WideString& Ws) { return Ws2S(Ws).c_str(); }
 };

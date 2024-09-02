@@ -22,7 +22,7 @@ int32 LaunchWin(HINSTANCE hInInstance, HINSTANCE hPrevInstance, char*, int32 nCm
         CmdLine = ::GetCommandLineW();
     }
 
-    ErrorLevel = GuardedMain(CmdLine);
+    ErrorLevel = GuardedMain(PlatformTypes::Ws2CStr(CmdLine));
 
     return ErrorLevel;
 }

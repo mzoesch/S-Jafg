@@ -11,8 +11,9 @@ cppdialect ( "C++20" )
 
 -- Important Vendor libraries
 includeDir = { }
-includeDir["GLFW"] = "App/Vendor/GLFW/include"
-includeDir["Glad"] = "App/Vendor/Glad/include"
+includeDir["GLFW"]   = "App/Vendor/GLFW/include"
+includeDir["Glad"]   = "App/Vendor/Glad/include"
+includeDir["spdlog"] = "Core/Vendor/spdlog/include"
 
 workspace ( "Jafg" )
     architecture ( "x64" )
@@ -61,6 +62,7 @@ group ( "App" )
             "Core/Source/Public",
             "%{includeDir.GLFW}",
             "%{includeDir.Glad}",
+            "%{includeDir.spdlog}",
         } )
 
         files ( { 
@@ -89,6 +91,7 @@ group ( "Core" )
         includedirs ( { 
             "Core/Source",
             "Core/Source/Public",
+            "%{includeDir.spdlog}",
         } )
 
         files ( { 
@@ -102,7 +105,11 @@ group ( "Core" )
         pchsource ( "Core/Source/Private/CoreAFX.cpp" )
 group ( "" )
 
-group ( "Vendor" )
+group ( "Vendor/App" )
     include ( "App/Vendor/GLFW/Build.lua" )
     include ( "App/Vendor/Glad/Build.lua" )
+group ( "" )
+
+group ( "Vendor/Core" )
+    include ( "Core/Vendor/Build.lua" )
 group ( "" )
