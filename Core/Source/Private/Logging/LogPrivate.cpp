@@ -89,6 +89,16 @@ bool JafgLog::Private::JafgLogInstance::UnregisterLogger(const String& Category)
     return true;
 }
 
+void JafgLog::Private::JafgLogInstance::UnsafeFlushEverythingFast()
+{
+    spdlog::apply_all( [] (const std::shared_ptr<TLogger>& Logger)
+    {
+        Logger->flush();
+    });
+
+    return;
+}
+
 EPlatformExit::Type JafgLog::Private::Init()
 {
     if (bInitialized)

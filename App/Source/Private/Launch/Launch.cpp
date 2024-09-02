@@ -12,8 +12,8 @@
 
 void RegisterCoreLogCategories()
 {
-    REGISTER_LOG_CATEGORY(LogCore)
-    REGISTER_LOG_CATEGORY(LogGuardedMain)
+    ensure( REGISTER_LOG_CATEGORY(LogCore)        )
+    ensure( REGISTER_LOG_CATEGORY(LogGuardedMain) )
 
     return;
 }
@@ -73,6 +73,7 @@ EPlatformExit::Type GuardedMain(const TChar* CmdLine)
     EPlatformExit::Type ErrorLevel = JafgLog::Private::Init();
     if (ErrorLevel != EPlatformExit::Success)
     {
+        checkNoEntry()
         return ErrorLevel;
     }
     RegisterCoreLogCategories();
@@ -82,6 +83,7 @@ EPlatformExit::Type GuardedMain(const TChar* CmdLine)
     ErrorLevel = Application::Create();
     if (ErrorLevel != EPlatformExit::Success)
     {
+        checkNoEntry()
         return ErrorLevel;
     }
 
@@ -89,6 +91,7 @@ EPlatformExit::Type GuardedMain(const TChar* CmdLine)
 
     if (ErrorLevel != EPlatformExit::Success)
     {
+        checkNoEntry()
         return ErrorLevel;
     }
 

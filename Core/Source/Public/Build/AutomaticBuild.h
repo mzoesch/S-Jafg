@@ -22,10 +22,9 @@
     #define AS_DEDICATED_SERVER     0
 #endif /* !AS_DEDICATED_SERVER */
 
-
-/*-----------------------------------------------------------------------------
-    Development macros.
------------------------------------------------------------------------------*/
+#if !(IN_DEBUG || IN_DEVELOPMENT || IN_SHIPPING)
+    #error "No build configuration specified."
+#endif /* !(IN_DEBUG || IN_DEVELOPMENT || IN_SHIPPING) */
 
 
 /*-----------------------------------------------------------------------------
@@ -54,3 +53,39 @@
     /* Override with manual build settings. */
     #include "Build/ManualBuildOverride.h"
 #endif /* REFLECT_MANUAL_BUILD */
+
+
+/*-----------------------------------------------------------------------------
+    Development macros.
+-----------------------------------------------------------------------------*/
+
+/**
+ * Checks are only executed in development configurations unless overridden in manual build.
+ */
+#if DO_EVER_CHECKS
+    #if IN_SHIPPING
+        #define DO_CHECKS               DO_CHECKS_IN_SHIPPING
+    #else /* !IN_SHIPPING */
+        #define DO_CHECKS               1
+    #endif /* !IN_SHIPPING */
+#else /* DO_EVER_CHECKS */
+    #define DO_CHECKS                   0
+#endif /* !DO_EVER_CHECKS */
+
+/**
+ * Always do assertions (even in SHIPPING) if not overridden in manual build.
+ */
+#if DO_EVER_ASSERTS
+    #if IN_SHIPPING
+        #define DO_ASSERTS              !DO_STRIP_ASSERTS_IN_SHIPPING
+    #else /* !IN_SHIPPING */
+        #define DO_ASSERTS              1
+    #endif /* !IN_SHIPPING */
+#else /* DO_EVER_ASSERTS */
+    #define DO_ASSERTS                  0
+#endif /* !DO_EVER_ASSERTS */
+
+/**
+ * Only do ensure if checks are enabled.
+ */
+#define DO_ENSURES                      DO_CHECKS

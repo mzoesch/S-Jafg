@@ -44,6 +44,8 @@ public:
     template <typename... T>
     FORCEINLINE static void TryLogMessage(const String& Category, const TLogLevel Level, TStringFormat<T...> Format, T&&... Args);
 
+    static void UnsafeFlushEverythingFast();
+
 private:
 
     std::shared_ptr<TConsoleSink> ConsoleSink = nullptr;

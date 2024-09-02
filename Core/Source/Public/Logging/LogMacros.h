@@ -20,6 +20,9 @@
 #define LOG_PRIVATE(Category, Verbosity, Format, ...) \
     JafgLog::Private::JafgLogInstance::TryLogMessage(Category::GetCategoryName(), Verbosity, Format, ##__VA_ARGS__);
 
+#define LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST() \
+    JafgLog::Private::JafgLogInstance::UnsafeFlushEverythingFast();
+
 
 /*----------------------------------------------------------------------------
     External logging macros.
@@ -44,4 +47,4 @@
     LOG_PRIVATE(Category, J_FATAL, "\033[;31m{}: " Format "\033[0m", LOG_PRIVATE_TRACE_STR_CUR_CLASS_FUNC, ##__VA_ARGS__)
 
 #define REGISTER_LOG_CATEGORY(Category) \
-    JafgLog::Private::JafgLogInstance::TryRegisterLogCategory<Category>();
+    JafgLog::Private::JafgLogInstance::TryRegisterLogCategory<Category>()

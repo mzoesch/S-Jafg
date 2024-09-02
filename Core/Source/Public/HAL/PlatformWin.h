@@ -22,3 +22,8 @@ struct WinPlatformTypes final : public GenericPlatformTypes
 #endif /* PLATFORM_MAX_PATH */
 #define PLATFORM_MAX_PATH \
     MAX_PATH
+
+#ifdef PLATFORM_BREAK
+    #error "PLATFORM_BREAK is already defined."
+#endif /* PLATFORM_BREAK */
+#define PLATFORM_BREAK() (__nop(), __debugbreak())
