@@ -14,6 +14,7 @@ includeDir = { }
 includeDir["GLFW"]   = "App/Vendor/GLFW/include"
 includeDir["Glad"]   = "App/Vendor/Glad/include"
 includeDir["spdlog"] = "Core/Vendor/spdlog/include"
+includeDir["glm"]    = "Core/Vendor/glm/glm"
 
 workspace ( "Jafg" )
     architecture ( "x64" )
@@ -63,6 +64,7 @@ group ( "App" )
             "%{includeDir.GLFW}",
             "%{includeDir.Glad}",
             "%{includeDir.spdlog}",
+            "%{includeDir.glm}",
         } )
 
         files ( { 

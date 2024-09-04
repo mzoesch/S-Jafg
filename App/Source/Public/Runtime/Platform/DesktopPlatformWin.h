@@ -34,7 +34,16 @@ private:
     GLFWwindow* MasterWindow = nullptr;
 
     int32 WindowCount = 0;
-    std::vector<uint32> CompiledShaders;
+
+    class VertexArray* Va = nullptr;
+    class IndexBuffer* Ib = nullptr;
+    class VertexBuffer* Vb = nullptr;
+    class Shader* Sh = nullptr;
+    class Texture* Tx = nullptr;
+    class Renderer* MyRenderer = nullptr;
+
+    float r = 0.0f;
+    float increment = 0.005f;
 };
 
 typedef DesktopPlatformWin DesktopPlatform;

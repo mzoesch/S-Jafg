@@ -4,63 +4,20 @@
 #include "Runtime/Platform/DesktopPlatform.h"
 #include "Runtime/Platform/DesktopPlatformWin.h"
 #include "Private/Engine/CoreGlobals.h"
-#include "glad/glad.h"
-#include "GLFW/glfw3.h"
+#include "Glfw/Renderer.h"
+#include <fstream>
+#include "glm.hpp"
+#include "gtc/matrix_transform.hpp"
 
 namespace
 {
 
 void GlfwErrorCallback(int32 Error, const char* Description)
 {
-}
+    LOG_WARNING(LogCore, "GLFW Error: {} - {}", Error, Description)
+    checkNoEntry()
 
-uint32 CompileShader(const uint32 Type, const String& Source)
-{
-    const uint32 Id  = glCreateShader(Type);
-    const char*  Src = Source.c_str();
-
-    glShaderSource(Id, 1, &Src, nullptr);
-    glCompileShader(Id);
-
-    int32 Result;
-    glGetShaderiv(Id, GL_COMPILE_STATUS, &Result);
-
-    if (Result == GL_FALSE)
-    {
-        int32 Length;
-        glGetShaderiv(Id, GL_INFO_LOG_LENGTH, &Length);
-
-        char* Message = static_cast<char*>(alloca(Length * sizeof(char)));
-        glGetShaderInfoLog(Id, Length, &Length, Message);
-
-        jassert( false )
-
-        /*
-         * Do not remove this return for now as else we would let go of the char* Message (out of scope)
-         * and therefore would not be able to see the error message in the debugger.
-         */
-        return Id;
-    }
-
-    return Id;
-}
-
-uint32 CreateShader(const String& InVertexShader, const String& InFragmentShader)
-{
-    const uint32 Program = glCreateProgram();
-
-    const uint32 VertexShader   = CompileShader(GL_VERTEX_SHADER, InVertexShader);
-    const uint32 FragmentShader = CompileShader(GL_FRAGMENT_SHADER, InFragmentShader);
-
-    glAttachShader(Program, VertexShader);
-    glAttachShader(Program, FragmentShader);
-    glLinkProgram(Program);
-    glValidateProgram(Program);
-
-    glDeleteShader(VertexShader);
-    glDeleteShader(FragmentShader);
-
-    return Program;
+    return;
 }
 
 }
@@ -73,6 +30,10 @@ void DesktopPlatformWin::Init()
         glfwSetErrorCallback(GlfwErrorCallback);
     }
 
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     this->MasterWindow = this->CreateNativeWindow(DesktopSurfaceProps());
 
     {
@@ -80,47 +41,51 @@ void DesktopPlatformWin::Init()
     }
 
     // BEGIN Just Temp
-    constexpr float Locations[6] =
+    glfwSwapInterval(1);
+
+    constexpr float Locations[] =
     {
-        -0.5f, -0.5f,
-         0.0f,  0.5f,
-         0.5f, -0.5f
+        -0.5f, -0.5f, 0.0f, 0.0f, // 0: Bottom Left
+         0.5f, -0.5f, 1.0f, 0.0f, // 1: Bottom Right
+         0.5f,  0.5f, 1.0f, 1.0f, // 2: Top Right
+        -0.5f,  0.5f, 0.0f, 1.0f, // 3: Top Left
     };
 
-    uint32 Buffer;
-    glGenBuffers(1, &Buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, Buffer);
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), Locations, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
+    constexpr uint32 Indices[] =
+    {
+        0, 1, 2,
+        2, 3, 0,
+    };
 
-    const std::string VertexShader = R"(
-        #version 330 core
+    GL_CALL( glEnable(GL_BLEND) )
+    GL_CALL( glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ) )
 
-        layout(location = 0) in vec4 position;
+    Va = new VertexArray();
+    Vb = new VertexBuffer(Locations, 4ull * 4ull * sizeof(float));
 
-        void main()
-        {
-            gl_Position = position;
-        }
-    )";
+    VertexBufferLayout Layout;
+    Layout.Push<float>(2);
+    Layout.Push<float>(2);
+    Va->AddBuffer(*Vb, Layout);
 
-    const std::string FragmentShader = R"(
-        #version 330 core
+    Ib = new IndexBuffer(Indices, 6ull);
 
-        layout(location = 0) out vec4 color;
+    const glm::mat4 Proj = glm::ortho(-2.0f, 2.0f, -1.5f, 1.5f, -1.0f, 1.0f);
 
-        void main()
-        {
-            color = vec4(1.0, 0.0, 0.0, 1.0);
-        }
-    )";
+    Sh = new Shader(R"(E:\dev\c\Jafg\Content\Shaders\Basic.shader)");
+    Sh->Bind();
+    Sh->SetUniformMat4F("u_ModelViewProjection", Proj);
 
-    const uint32 Shader = CreateShader(VertexShader, FragmentShader);
+    Tx = new Texture(R"(E:\dev\c\Jafg\Content\Textures\pp.png)");
+    Tx->Bind(0);
+    Sh->SetUniform1I("u_Texture", 0);
 
-    glUseProgram(Shader);
+    Va->Unbind();
+    Vb->Unbind();
+    Ib->Unbind();
+    Sh->Unbind();
 
-    this->CompiledShaders.emplace_back(Shader);
+    MyRenderer = new Renderer();
 
     return;
 }
@@ -132,12 +97,6 @@ void DesktopPlatformWin::TearDown()
         glfwDestroyWindow(this->MasterWindow);
         --this->WindowCount;
         this->MasterWindow = nullptr;
-    }
-
-    LOG_DEBUG(LogCore, "Deleting {} shaders.", this->CompiledShaders.size())
-    for (const uint32 Shader : this->CompiledShaders)
-    {
-        glDeleteProgram(Shader);
     }
 
     glfwTerminate();
@@ -158,9 +117,18 @@ void DesktopPlatformWin::OnUpdate()
         return;
     }
 
-    glClear(GL_COLOR_BUFFER_BIT);
+    MyRenderer->Clear();
+    MyRenderer->Draw(*Va, *Ib, *Sh);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    if (this->r > 1.0f)
+    {
+        this->increment = -0.005f;
+    }
+    else if (this->r < 0.0f)
+    {
+        this->increment = 0.005f;
+    }
+    this->r += this->increment;
 
     glfwSwapBuffers(this->MasterWindow);
 

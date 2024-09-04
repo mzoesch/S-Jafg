@@ -16,12 +16,14 @@
     #define checkNoEntry()                  CHECK_IMPL_PRIVATE(false && NO_ENTRY_ASSERT_TEXT)
     #define unimplemented()                 CHECK_IMPL_PRIVATE(false && "Unimplemented code path.")
 
+    // PLATFORM_BREAK() - Currently not using platform break. We of course should be using it.
+    // But it is to buggy right now.
     #define CHECK_IMPL_PRIVATE(expr)                       \
         {                                                  \
             if (UNLIKELY(!(expr)))                         \
             {                                              \
                 LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST() \
-                PLATFORM_BREAK();                          \
+                assert(false && #expr);                    \
             }                                              \
         }
 

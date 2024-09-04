@@ -18,7 +18,7 @@ protected:
 
     struct DesktopSurfaceProps
     {
-        explicit DesktopSurfaceProps(String Title = "Desktop Platform", const int32 Width = 1280, const int32 Height = 720)
+        explicit DesktopSurfaceProps(String Title = "Desktop Platform", const int32 Width = 960 /* 1280 */, const int32 Height = 720)
             : Title(std::move(Title)), Width(Width), Height(Height)
         {
         }
