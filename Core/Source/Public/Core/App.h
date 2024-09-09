@@ -11,5 +11,9 @@ namespace Application
 {
     EPlatformExit::Type Create();
 
-    float GetDeltaTime();
+    void  SetDeltaTime(const double DeltaTime);
+    double GetDeltaTime();
+    float GetDeltaTimeAsFloat();
+    void UpdateFrameCount();
+    uint64 GetFrameCount();
 }

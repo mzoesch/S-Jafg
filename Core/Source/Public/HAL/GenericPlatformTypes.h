@@ -40,6 +40,9 @@ struct GenericPlatformTypes
     /** 64-bit signed integer */
     typedef signed long long    int64;
 
+    /** Platform dependent iterator type. */
+    typedef size_t              sizetype;
+
     // ReSharper restore CppInconsistentNaming
 
     /** An ANSI character. 8-bit fixed-width representation of 7-bit characters. */

@@ -4,11 +4,12 @@
 #include "Core/App.h"
 #include "Engine/Engine.h"
 #include "Logging/LogPrivate.h"
-#include "Private/Engine/CoreGlobals.h"
+#include "Runtime/Platform/DesktopPlatform.h"
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/msvc_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/dist_sink.h>
+#include "GLFW/glfw3.h"
 
 void RegisterCoreLogCategories()
 {
@@ -18,6 +19,42 @@ void RegisterCoreLogCategories()
     return;
 }
 
+std::unique_ptr<LPlatformSpecificCallbacks> CreatePlatformSpecificCallbacks()
+{
+    std::unique_ptr<LPlatformSpecificCallbacks> PlatformSpecificCallbacks = std::make_unique<LPlatformSpecificCallbacks>();
+
+    PlatformSpecificCallbacks->CreateSurface = [] () -> std::unique_ptr<Surface>
+    {
+#if PLATFORM_DESKTOP
+        std::unique_ptr<Surface> DesktopSurface = std::make_unique<DesktopPlatform>();
+        DesktopSurface->As<DesktopPlatform>()->Init();
+        return DesktopSurface;
+#else /* PLATFORM_DESKTOP */
+        #error "Could not resolve PLATFORM."
+#endif /* !PLATFORM_DESKTOP */
+    };
+
+    PlatformSpecificCallbacks->OnTearDown = [] (std::unique_ptr<Surface>* ActiveSurface)
+    {
+#if PLATFORM_DESKTOP
+        ActiveSurface->get()->As<DesktopPlatform>()->TearDown();
+#else /* PLATFORM_DESKTOP */
+    #error "Could not resolve PLATFORM."
+#endif /* !PLATFORM_DESKTOP */
+
+        ActiveSurface->reset();
+
+        return;
+    };
+
+    PlatformSpecificCallbacks->GetHighestResolutionMonotonicTime = [] () -> double
+    {
+        return glfwGetTime();
+    };
+
+    return PlatformSpecificCallbacks;
+}
+
 FORCEINLINE EPlatformExit::Type EngineInit()
 {
     if (GEngine)
@@ -25,23 +62,23 @@ FORCEINLINE EPlatformExit::Type EngineInit()
         return EPlatformExit::Fatal;
     }
 
-    GEngine = new Engine();
+    GEngine = new JEngine();
 
-    GEngine->Init();
+    GEngine->Init(CreatePlatformSpecificCallbacks());
 
     return EPlatformExit::Success;
 }
 
 FORCEINLINE void EngineTick()
 {
-    BeginExitIfRequested();
+    GEngine->BeginExitIfRequested();
 
     {
         GEngine->UpdateTime();
         GEngine->EnforceTickRate();
     }
 
-    GEngine->Tick(Application::GetDeltaTime());
+    GEngine->Tick(Application::GetDeltaTimeAsFloat());
 
     return;
 }

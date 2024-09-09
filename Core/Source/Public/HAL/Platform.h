@@ -47,6 +47,8 @@ typedef PlatformTypes::int8         int8;
 typedef PlatformTypes::int16        int16;
 typedef PlatformTypes::int32        int32;
 typedef PlatformTypes::int64        int64;
+
+typedef PlatformTypes::sizetype     sizetype;
 // ReSharper restore CppInconsistentNaming
 
 typedef PlatformTypes::TChar        TChar;

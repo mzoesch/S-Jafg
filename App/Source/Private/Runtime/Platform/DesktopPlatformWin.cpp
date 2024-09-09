@@ -3,11 +3,11 @@
 #include "CoreAFX.h"
 #include "Runtime/Platform/DesktopPlatform.h"
 #include "Runtime/Platform/DesktopPlatformWin.h"
-#include "Private/Engine/CoreGlobals.h"
 #include "Glfw/Renderer.h"
 #include <fstream>
 #include "glm.hpp"
 #include "gtc/matrix_transform.hpp"
+#include "Engine/Engine.h"
 
 namespace
 {
@@ -113,7 +113,9 @@ void DesktopPlatformWin::OnUpdate()
 
     if (glfwWindowShouldClose(this->MasterWindow))
     {
-        RequestEngineExit("Window closed.");
+        check( GEngine )
+
+        GEngine->RequestEngineExit("Window closed.");
         return;
     }
 

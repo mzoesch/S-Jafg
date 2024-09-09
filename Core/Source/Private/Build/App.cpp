@@ -3,12 +3,14 @@
 #include "CoreAFX.h"
 #include "Core/App.h"
 
-class App;
+struct App;
 
 App* GApp = nullptr;
 
-class App
+struct App
 {
+    double DeltaTime  = 0.0f;
+    uint64 FrameCount = 0;
 };
 
 EPlatformExit::Type Application::Create()
@@ -23,7 +25,27 @@ EPlatformExit::Type Application::Create()
     return EPlatformExit::Success;
 }
 
-float Application::GetDeltaTime()
+void Application::SetDeltaTime(const double DeltaTime)
 {
-    return 0.1f;
+    GApp->DeltaTime = DeltaTime;
+}
+
+double Application::GetDeltaTime()
+{
+    return GApp->DeltaTime;
+}
+
+float Application::GetDeltaTimeAsFloat()
+{
+    return static_cast<float>(GApp->DeltaTime);
+}
+
+void Application::UpdateFrameCount()
+{
+    GApp->FrameCount++;
+}
+
+uint64 Application::GetFrameCount()
+{
+    return GApp->FrameCount;
 }
