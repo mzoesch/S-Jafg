@@ -8,6 +8,5 @@
 #if PLATFORM_WINDOWS
     #include "HAL/PlatformMiscWin.h"
 #else /* PLATFORM_WINDOWS */
-    /* Add more platform types here in the future... */
     #error "Could not resolve PLATFORM."
 #endif /* !PLATFORM_WINDOWS */

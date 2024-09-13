@@ -1,3 +1,5 @@
+-- Copyright mzoesch. All rights reserved.
+
 BinariesDir     = "Binaries/"
 IntermediateDir = "Intermediate/"
 
@@ -6,31 +8,51 @@ OutputDir       = "%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}/%{prj.name}
 targetdir ( BinariesDir .. OutputDir )
 objdir ( IntermediateDir .. OutputDir )
 
-language ( "C++" )
-cppdialect ( "C++20" )
+language "C++"
+cppdialect "C++20"
 
--- Important Vendor libraries
-includeDir = { }
-includeDir["GLFW"]   = "App/Vendor/GLFW/include"
-includeDir["Glad"]   = "App/Vendor/Glad/include"
-includeDir["spdlog"] = "Core/Vendor/spdlog/include"
+-- Important Vendor Header-onyl includes
+includes = { }
+-- Import Vendor includes
+linkedIncludes = { }
 
 workspace ( "Jafg" )
     architecture ( "x64" )
-    startproject ( "App" )
+    startproject ( "Runtime" )
     configurations ( { "Debug", "Development", "Shipping", } )
+    platforms ( { "Client", "Server" } )
+
+    -- See https://premake.github.io/docs/Tokens/ for documentation
+    -- prebuildcommands ( {
+        --     "python ../Program.py run=BuildTask --prebuild \
+        --         --%{wks.name} --%{wks.location} \
+        --         --%{prj.name} --%{prj.location} --%{prj.language} --%{prj.group} \
+        --         --%{cfg.longname} --%{cfg.shortname} --%{cfg.kind} --%{cfg.architecture} --%{cfg.platform} \
+        --         --%{cfg.system} --%{cfg.buildcfg} --%{cfg.buildtarget} --%{cfg.linktarrget} --{cfg.objdir} \
+        --         --%{file.path} --%{file.abspath} --%{file.relpath} --%{file.directory} --%{file.reldirectory} \
+        --         --%{file.name} --%{file.basename} --%{file.extension} \
+        --     "
+    -- } )
+    prebuildcommands ( { "python ../Program.py run=BuildTask --prebuild --%{cfg.buildcfg} --%{cfg.platform} --%{prj.name} --%{cfg.kind}", } )
+    postbuildcommands ( { "python ../Program.py run=BuildTask --postbuild --%{cfg.buildcfg} --%{cfg.platform} --%{prj.name} --%{cfg.kind}", } )
 
     -- Incompatiple with /Yc - How do we fix this?
     -- flags ( { "MultiProcessorCompile" } )
 
+-- -///////////////////////////////////////////////////////////////////////////
+-- -// Hardware Platform filters
 filter ( "system:windows" )
     systemversion ( "latest" )
-    defines ( { "PLATFORM_WINDOWS", } ) -- /* "GLFW_INCLUDE_NONE", */
+    defines ( { "PLATFORM_WINDOWS", } )
     entrypoint "WinMainCRTStartup"
     linkoptions ( { "/SUBSYSTEM:WINDOWS", } )
 
-filter ( )
+    filter ( )
+-- -// ~Hardware Platform filters
+-- -///////////////////////////////////////////////////////////////////////////
 
+-- -///////////////////////////////////////////////////////////////////////////
+-- -// Config filters
 filter ( "configurations:Debug" )
     defines ( "IN_DEBUG" )
     runtime ( "Debug" )
@@ -50,66 +72,106 @@ filter ( "configurations:Shipping" )
     optimize ( "On" )
 
 filter ( )
+-- -// ~Config filters
+-- -///////////////////////////////////////////////////////////////////////////
 
-group ( "App" )
-    project ( "App" )
-        location ( "App" )
+-- -///////////////////////////////////////////////////////////////////////////
+-- -// Platform filters
+filter ( "platforms:Client" )
+    defines ( "AS_CLIENT" )
+
+filter ( "platforms:Server" )
+    defines ( "AS_SERVER" )
+filter ( )
+-- -// ~Platform filters
+-- -///////////////////////////////////////////////////////////////////////////
+
+group ( "Runtime")
+    project ( "Runtime" )
+        location ( "Runtime" )
         kind ( "ConsoleApp" )
 
         includedirs ( { 
-            "App/Source",
-            "App/Source/Public",
+            "Runtime/Source/Public",
             "Core/Source/Public",
-            "%{includeDir.GLFW}",
-            "%{includeDir.Glad}",
-            "%{includeDir.spdlog}",
+            "Core/Vendor/Deps/include",
         } )
 
         files ( { 
-            "App/Source/**.h",
-            "App/Source/**.cpp",
+            "Runtime/Source/**.h",
+            "Runtime/Source/**.hpp",
+            "Runtime/Source/**.c",
+            "Runtime/Source/**.cpp",
         } )
 
         links ( {
-            "Core",
-            "GLFW",
-            "Glad",
-            "opengl32.lib",
+            "Static-Core",
+            "Core/Vendor/Deps/lib/glfw3.lib",
         } )
 
         -- Somehow this does not work??
         -- The IDEA will just set the pch to /Yu but we, of course, need /Yc...
-        pchheader ( "CoreAFX.h" )
-        pchsource ( "Core/Source/Private/CoreAFX.cpp" )
+        -- pchheader ( "CoreAFX.h" )
+        -- pchsource ( "Core/Source/Private/CoreAFX.cpp" )
 group ( "" )
 
-group ( "Core" )
-    project ( "Core" )
+group ( "Static-Core")
+    project ( "Static-Core" )
         location ( "Core" )
         kind ( "StaticLib" )
 
         includedirs ( { 
-            "Core/Source",
             "Core/Source/Public",
-            "%{includeDir.spdlog}",
+            "Core/Vendor/Deps/include",
         } )
 
         files ( { 
             "Core/Source/**.h",
+            "Core/Source/**.hpp",
+            "Core/Source/**.c",
             "Core/Source/**.cpp",
+        } )
+
+        links ( {
+            "Core/Vendor/Deps/lib/glfw3.lib",
         } )
 
         -- Somehow this does not work??
         -- The IDEA will just set the pch to /Yu but we, of course, need /Yc...
-        pchheader ( "CoreAFX.h" )
-        pchsource ( "Core/Source/Private/CoreAFX.cpp" )
+        -- pchheader ( "CoreAFX.h" )
+        -- pchsource ( "Core/Source/Private/CoreAFX.cpp" )
 group ( "" )
 
-group ( "Vendor/App" )
-    include ( "App/Vendor/GLFW/Build.lua" )
-    include ( "App/Vendor/Glad/Build.lua" )
-group ( "" )
+group ("Programs")
+    project ( "Router" )
+        kind ( "None" )
+        files ( { 
+            "Program.py",
+            "GenerateSolutionFiles.bat",
+            "Setup.bat",
+            "Programs/Router.py",
+        } )
 
-group ( "Vendor/Core" )
-    include ( "Core/Vendor/Build.lua" )
+    group ( "Programs/Tools")
+        project ( "Shared" )
+            location ( "Programs/Shared" )
+            kind ( "None" )
+            files ( { 
+                "Programs/Shared/*.py",
+            } )
+
+        project ( "BuildTasks" )
+            location ( "Programs/BuildTasks" )
+            kind ( "None" )
+            files ( { 
+                "Programs/BuildTasks/*.py",
+            } )
+
+        project ( "BuildTool" )
+            location ( "Programs/BuildTool" )
+            kind ( "None" )
+            files ( {
+                "Programs/BuildTool/*.py", 
+            } )
+    group ( "Programs" )
 group ( "" )

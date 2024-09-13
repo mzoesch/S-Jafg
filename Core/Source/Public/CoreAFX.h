@@ -15,17 +15,22 @@
     Commonly used headers.
 ----------------------------------------------------------------------------*/
 
+///////////////////////////////////////////////////////////////////////////////
+// Generic
 #include "Runtime/AssertionMacros.h"
 
-#include "Logging/LogPrivate.h"
-#include "Logging/LogVerbosity.h"
-#include "Logging/LogCategory.h"
+///////////////////////////////////////////////////////////////////////////////
+// Logging
 #include "Logging/LogMacros.h"
-#include "Logging/CoreLogCategories.h"
 
+///////////////////////////////////////////////////////////////////////////////
+// Maths
+#include "Math/Vector.h"
+#include "Math/Vector2.h"
+#include "Math/IntVector2.h"
 
 /*----------------------------------------------------------------------------
     Standard, Platform-APIs and Third-Party.
 ----------------------------------------------------------------------------*/
 
-#include "JafgPCH.h"
+#include "PartyPCH.h"

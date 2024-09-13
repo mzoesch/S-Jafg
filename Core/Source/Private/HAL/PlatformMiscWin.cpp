@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
 #include "HAL/PlatformMisc.h"
 
 String WinPlatformMisc::GetEngineRootDir()
