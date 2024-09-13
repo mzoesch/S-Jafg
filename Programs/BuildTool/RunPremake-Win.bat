@@ -9,16 +9,21 @@ echo Found called Bat Script in path: %CurrentPath%. Resolving Jafg root directo
 set PushdCount=0
 
 @REM Loop until the current directory is "Jafg". This is kinda stupid as we cannot rename the root dir of the project. 
-:loop
-if "%CurrentPath%" == "%cd:Jafg=%" goto found
-pushd ..
-set CurrentPath=%cd%
-set /a PushdCount+=1
-goto loop
+@REM :loop
+@REM if "%CurrentPath%" == "%cd:Jafg=%" goto found
+@REM pushd ..
+@REM set CurrentPath=%cd%
+@REM set /a PushdCount+=1
+@REM goto loop
 
-:found
-popd
-set /a PushdCount-=1
+@REM :found
+@REM popd
+@REM set /a PushdCount-=1
+@REM set CurrentPath=%cd%
+
+pushd .. 
+pushd ..
+
 set CurrentPath=%cd%
 echo Found Jafg root directory at: %CurrentPath%. Calling Premake5.
 
@@ -26,8 +31,11 @@ echo Found Jafg root directory at: %CurrentPath%. Calling Premake5.
 Programs\Vendor\Premake\Bin\premake5.exe --file=Build.lua vs2022
 
 @REM Pop the directories as many times as PushdCount
-for /l %%i in (1,1,%PushdCount%) do (
-    popd
-)
+@REM for /l %%i in (1,1,%PushdCount%) do (
+@REM     popd
+@REM )
+
+popd
+popd
 
 endlocal
