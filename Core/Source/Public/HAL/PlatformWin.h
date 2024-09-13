@@ -8,7 +8,11 @@
 
 #include <Windows.h>
 
+/*
+ * We forward declare this shit, as this file should only be included implicitly by including Platform.h
+ */
 struct GenericPlatformTypes;
+
 struct WinPlatformTypes;
 
 typedef WinPlatformTypes PlatformTypes;

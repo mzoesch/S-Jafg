@@ -3,10 +3,14 @@
 #pragma once
 
 #include "CoreAFX.h"
-#include "Runtime/Platform/Surface.h"
+#include "glad/glad.h" /* Include glad to get all the required OpenGL headers. */
+#include <GLFW/glfw3.h>
+#include "Level.h"
 
+class JLocalPlayer;
+class JWorld;
 class JEngine;
-struct LWorldContext;
+class Surface;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
@@ -34,17 +38,22 @@ FORCEINLINE auto WillShortlyTerminate() -> bool { return bGShouldRequestExit || 
 
 FORCEINLINE auto HasCustomExitStatus() -> bool { return GCustomExitStatusOverride != INDEX_NONE; }
 FORCEINLINE auto GetCustomExitStatus() -> int32 { return GCustomExitStatusOverride; }
-FORCEINLINE auto HasCustomExitReason() -> bool { return !GCustomExitReason.empty(); }
+FORCEINLINE auto HasCustomExitReason() -> bool { return GCustomExitReason.empty() == false; }
 FORCEINLINE auto GetCustomExitReason() -> String { return GCustomExitReason; }
 
-// ~Engine Globals
+// Engine Globals
 ///////////////////////////////////////////////////////////////////////////////
 
-struct LPlatformSpecificCallbacks
+/**
+ * Private engine context wrapper around a world.
+ * This struct is internal to the engine and should not be used outside it.
+ */
+struct LWorldContext
 {
-    std::unique_ptr<Surface> (*CreateSurface)();
-    void (*OnTearDown)(std::unique_ptr<Surface>* ActiveSurface);
-    double (*GetHighestResolutionMonotonicTime)();
+    String  TravelUrl;
+    JWorld* ChildWorld;
+
+    FORCEINLINE bool IsWaitingForTravel() const { return this->TravelUrl.empty() == false; }
 };
 
 class JEngine
@@ -53,18 +62,12 @@ class JEngine
 
 public:
 
-    void Init(std::unique_ptr<LPlatformSpecificCallbacks>&& InPlatformSpecificCallbacks);
-    void Tick(const float DeltaSeconds);
+    void Init();
+    void Tick(const float DeltaTime);
     void TearDown();
 
     void UpdateTime();
     void EnforceTickRate();
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // Context Related
-    ///////////////////////////////////////////////////////////////////////////////
-
-    void Browse(LWorldContext& Context, const String& Url);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Private function redirects
@@ -76,35 +79,62 @@ public:
     void RequestEngineExit(const int32 CustomExitStatus);
     void RequestEngineExit(const int32 CustomExitStatus, const String& Reason);
 
+    ///////////////////////////////////////////////////////////////////////////////
+    // Local Stuff
+    ///////////////////////////////////////////////////////////////////////////////
+
+    FORCEINLINE auto HasSurface() const -> bool { return this->SurfaceToDrawOn != nullptr; }
+    FORCEINLINE auto GetSurface() const -> Surface* { return this->SurfaceToDrawOn; }
+
+    FORCEINLINE auto HasLocalPlayer() const -> bool { return this->LocalPlayer != nullptr; }
+    FORCEINLINE auto GetLocalPlayer() const -> JLocalPlayer* { return this->LocalPlayer; }
+
 private:
 
-    void TickForWorldTravel(LWorldContext& Context);
-    void InitializeContext(LWorldContext& Context);
+    Surface*      SurfaceToDrawOn = nullptr;
+    JLocalPlayer* LocalPlayer     = nullptr;
 
-    LWorldContext& CreateNewWorldContext();
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // Time
-    ///////////////////////////////////////////////////////////////////////////////
-
-    double                    CurrentFrameTime          = 0.0;
-    double                    LastFrameTime             = 0.0;
-    float                     CurrentFps                = 0.0f;
-    SteadyStatisticsTimePoint StatisticsSteadyTimeStart = std::chrono::steady_clock::now();
-    uint64                    StatisticsFrameCount      = 0;
-    float                     LowestFps                 = -1.0f;
-    float                     HighestFps                = -1.0f;
+public:
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Platform Specific
+    // Context Related
     ///////////////////////////////////////////////////////////////////////////////
 
-    std::unique_ptr<LPlatformSpecificCallbacks> PlatformSpecificCallbacks = nullptr;
-    std::unique_ptr<Surface> ActiveSurface = nullptr;
+    FORCEINLINE static auto GetMaxContexts() -> uint8 { return JEngine::MaxContexts; }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // Worlds
-    ///////////////////////////////////////////////////////////////////////////////
+    auto GetCurrentFreeContexts() const -> uint8;
+    auto GetCurrentOccupiedContexts() const -> uint8;
 
-    std::vector<LWorldContext*> Contexts;
+    auto GetFirstRunningWorld() -> JWorld*;
+    auto GetContextFromWorld(const JWorld& World) -> LWorldContext&;
+
+    /** Browse to a new Url at the next opportunity. */
+    auto Browse(const JWorld& Context, const String& Url) -> void;
+    /** @return True if registered successfully.*/
+    auto RegisterLevel(LLevel InLevel) -> bool;
+    auto IsLevelRegistered(const String& Identifier) const -> bool;
+
+private:
+
+    auto GetFirstAvailableContextIndex() const -> uint8;
+    auto CreateNewWorldContext() -> LWorldContext&;
+    auto InitializeContext(LWorldContext& Context) -> void;
+
+    /** Browse to a new Url at the next opportunity. */
+    auto Browse(LWorldContext& Context, const String& Url) const -> void;
+    auto IsContextUrlInternal(const String& Url) const -> bool;
+    void TravelContext(LWorldContext& Context);
+    auto GetLevelByInternalUrl(const String& Url) -> LLevel*;
+
+    /** The maximum amount of context this engine can handle. */
+    static constexpr uint8 MaxContexts { 3 };
+
+    /**
+     * All current engine contexts.
+     * An index of a specific context is not guaranteed to stay the same. Always expect a short
+     * lifetime of the index.
+     */
+    LWorldContext* Contexts[JEngine::MaxContexts] = { nullptr, nullptr, nullptr, };
+    /** The registered levels that this engine can load. */
+    std::vector<LLevel> RegisteredLevels = { };
 };

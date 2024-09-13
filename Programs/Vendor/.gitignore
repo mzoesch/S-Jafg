@@ -1,0 +1,10 @@
+# Ignore everything. Vendors will be installed via the BuildTool.
+
+LICENSE
+*
+*.*
+./*
+/*
+
+!.gitignore
+!README.md

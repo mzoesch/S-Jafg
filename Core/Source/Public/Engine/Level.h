@@ -2,10 +2,14 @@
 
 #pragma once
 
-#include "Engine/Object.h"
+#include "CoreAFX.h"
 
-class JLevel : public JObject
+struct LLevel
 {
-    /** Called when this level is loaded */
-    virtual void OnLoad() { }
+    LLevel() = default;
+    explicit LLevel(String InIdentifier) : Identifier(std::move(InIdentifier))
+    {
+    }
+
+    String Identifier;
 };

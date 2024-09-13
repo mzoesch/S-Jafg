@@ -2,16 +2,15 @@
 
 #pragma once
 
-#ifndef INCLUDED_AUTOMATIC_BUILD_PRIVATE
+#ifndef PRIVATE_INCLUDED_AUTOMATIC_BUILD
     #error "This file must not be included directly. Include Build/Build.h instead."
-#endif /* !INCLUDED_AUTOMATIC_BUILD_PRIVATE */
+#endif /* !PRIVATE_INCLUDED_AUTOMATIC_BUILD_PRIVATE */
 
 #define NO_ENTRY_ASSERT_TEXT "Enclosing block should never be entered."
 
 #if DO_CHECKS
-// ReSharper disable CppInconsistentNaming
 
-    #define checkCode(Code)                 do { Code; } while ( false )
+    #define checkCode(code)                 do { code; } while ( false )
     #define check(expr)                     CHECK_IMPL_PRIVATE(expr)
     #define checkNoEntry()                  CHECK_IMPL_PRIVATE(false && NO_ENTRY_ASSERT_TEXT)
     #define unimplemented()                 CHECK_IMPL_PRIVATE(false && "Unimplemented code path.")
@@ -34,23 +33,19 @@
     #define checkNoEntry()
     #define unimplemented()
 
-// ReSharper restore CppInconsistentNaming
 #endif /* !DO_CHECKS */
 
 #if DO_ENSURES
-// ReSharper disable CppInconsistentNaming
 
     #define ensure(expr)                    check(expr)
 
 #else /* !DO_ENSURES */
 
-    #define ensure(expr)                    {expr;}
+    #define ensure(expr)                    expr;
 
-// ReSharper restore CppInconsistentNaming
 #endif /* !DO_ENSURES */
 
 #if DO_ASSERTS
-// ReSharper disable CppInconsistentNaming
 
     #if DO_CHECKS
 
@@ -77,5 +72,4 @@
     #define jassert(expr)
     #define jassertNoEntry()
 
-// ReSharper restore CppInconsistentNaming
 #endif /* !DO_ASSERTS */

@@ -11,7 +11,7 @@
 
 #ifndef PLATFORM_WINDOWS
     #define PLATFORM_WINDOWS        0
-#endif /* !PLATFORM_WINDOWS */
+#endif
 
 
 /*-----------------------------------------------------------------------------
@@ -34,10 +34,20 @@
 
 
 /*-----------------------------------------------------------------------------
+    Implicitly generated macros.
+-----------------------------------------------------------------------------*/
+
+#if PLATFORM_WINDOWS
+    #define PLATFORM_DESKTOP        1
+#else /* !PLATFORM_WINDOWS */
+    #define PLATFORM_DESKTOP        0
+#endif /* PLATFORM_WINDOWS */
+
+
+/*-----------------------------------------------------------------------------
     Generalized types based on a specific platform.
 -----------------------------------------------------------------------------*/
 
-// ReSharper disable CppInconsistentNaming
 typedef PlatformTypes::uint8        uint8;
 typedef PlatformTypes::uint16       uint16;
 typedef PlatformTypes::uint32       uint32;
@@ -48,9 +58,6 @@ typedef PlatformTypes::int16        int16;
 typedef PlatformTypes::int32        int32;
 typedef PlatformTypes::int64        int64;
 
-typedef PlatformTypes::sizetype     sizetype;
-// ReSharper restore CppInconsistentNaming
-
 typedef PlatformTypes::TChar        TChar;
 
 typedef PlatformTypes::String       String;
@@ -58,7 +65,7 @@ typedef PlatformTypes::WideString   WideString;
 
 
 /*-----------------------------------------------------------------------------
-    Statically assert that the necessary platform-specific macros are defined.
+    Statically assert that necessary platform-specific macros are defined.
 -----------------------------------------------------------------------------*/
 
 #ifndef PLATFORM_MAX_PATH

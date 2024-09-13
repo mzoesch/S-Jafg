@@ -3,48 +3,82 @@
 #pragma once
 
 #include "CoreAFX.h"
-#include "Engine/Object.h"
+#include "RHI/Shader.h"
 
-class AActor;
+class JWorldSubsystem;
+class Camera;
+class Planet;
+struct LLevel;
+struct GLFWwindow;
 
-class JWorld final : public JObject
+namespace EWorldState
+{
+
+enum Type : uint8
+{
+    None,
+    Uninitialized,
+    Initializing,
+    Running,
+    TearingDown,
+    WaitingForKill,
+};
+
+}
+
+/**
+ * Represents a world at its core.
+ * Once every frame a world will be ticked. It may register itself to the RHI to be used when
+ * rendering on any kind of surface. Multiple worlds may draw to the same surface.
+ */
+class JWorld
 {
 public:
 
-    void Init();
-    void TearDown();
+    JWorld()                                        = delete;
+    JWorld(JWorld&)                                 = delete;
+    JWorld(const JWorld&)                           = delete;
+    JWorld(JWorld&&)                                = delete;
+    FORCEINLINE JWorld& operator=(JWorld&)          = delete;
+    FORCEINLINE JWorld& operator=(const JWorld&)    = delete;
+    FORCEINLINE JWorld& operator=(JWorld&&)         = delete;
 
-    FORCEINLINE auto GetActorCount() const -> sizetype { return this->Actors.size(); }
-    FORCEINLINE auto GetActors() const -> const std::vector<AActor*>& { return this->Actors; }
-
-    template <class T = AActor>
-    FORCEINLINE auto GetFirstActor() const -> T*
+    explicit JWorld(const EWorldState::Type InWorldType)
+        : WorldState(InWorldType)
     {
-        for (auto Actor : this->Actors)
-        {
-            if (auto CastedActor = dynamic_cast<T*>(Actor))
-            {
-                return CastedActor;
-            }
-        }
-
-        return nullptr;
+        check( this->WorldState != EWorldState::None )
     }
 
-    template <class T = AActor>
-    FORCEINLINE auto GetFirstActorChecked() const -> AActor*
-    {
-        if (T* Actor = this->GetFirstActor<T>())
-        {
-            return Actor;
-        }
+    FORCEINLINE EWorldState::Type GetWorldState() const { return this->WorldState; }
 
-        check( false && "Failed to find actor of specified type" )
+    void InitializeWorld(const LLevel& Level);
 
-        return nullptr;
-    }
+    FORCEINLINE bool CanTick() const { return this->GetWorldState() == EWorldState::Running; }
+    void Tick(const float DeltaTime);
+
+    void TearDownWorld();
+
+    bool FirstTimeMouseScroll = true;
+    bool Key_EscapeDown = false;
+    bool bShowMouse = false;
+    double LastMouseX = 0.0f;
+    double LastMouseY = 0.0f;
+
+    Camera* MainCamera = nullptr;
+    Planet* MainPlanet = nullptr;
+
+    Shader ShaderProgram = Shader();
+    uint32 Texture       = 0;
+
+    void MouseCallback(const double XPos, const double YPos);
+    void ScrollCallback(const double YOffset);
 
 private:
 
-    std::vector<AActor*> Actors;
+    void InitializeSubsystems();
+    void TearDownSubsystems();
+
+    std::vector<JWorldSubsystem*> Subsystems;
+
+    EWorldState::Type WorldState;
 };

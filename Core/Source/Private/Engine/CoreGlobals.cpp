@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
-#include "CoreGlobals.h"
+#include "Engine/CoreGlobals.h"
 #include "Engine/Engine.h"
 
 void BeginExitIfRequested()

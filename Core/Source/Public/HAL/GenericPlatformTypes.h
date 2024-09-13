@@ -20,8 +20,6 @@
 /** Generic types for almost all compilers and platforms. */
 struct GenericPlatformTypes
 {
-    // ReSharper disable CppInconsistentNaming
-
     /** 8-bit unsigned integer */
     typedef unsigned char       uint8;
     /** 16-bit unsigned integer */
@@ -39,11 +37,6 @@ struct GenericPlatformTypes
     typedef signed int          int32;
     /** 64-bit signed integer */
     typedef signed long long    int64;
-
-    /** Platform dependent iterator type. */
-    typedef size_t              sizetype;
-
-    // ReSharper restore CppInconsistentNaming
 
     /** An ANSI character. 8-bit fixed-width representation of 7-bit characters. */
     typedef char                TAnsiChar;
@@ -71,5 +64,10 @@ struct GenericPlatformTypes
         __pragma( warning(pop) )
     }
 
-    static const TChar* Ws2CStr(const WideString& Ws) { return Ws2S(Ws).c_str(); }
+    /** @return You are the owner. Plz delete! */
+    static const TChar* Ws2CStr(const WideString& Ws)
+    {
+        const String* StrPtr = new String(Ws2S(Ws));
+        return StrPtr->c_str();
+    }
 };

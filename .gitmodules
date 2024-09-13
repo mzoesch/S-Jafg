@@ -1,9 +1,0 @@
-[submodule "App/Vendor/GLFW"]
-	path = App/Vendor/GLFW
-	url = https://github.com/mzoesch/glfw
-[submodule "Core/Vendor/spdlog"]
-	path = Core/Vendor/spdlog
-	url = https://github.com/gabime/spdlog.git
-[submodule "Core/Vendor/glm"]
-	path = Core/Vendor/glm
-	url = https://github.com/g-truc/glm.git
