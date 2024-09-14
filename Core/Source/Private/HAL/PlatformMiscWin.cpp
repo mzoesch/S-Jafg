@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "HAL/PlatformMisc.h"
+#include <Windows.h>
 
 String WinPlatformMisc::GetEngineRootDir()
 {

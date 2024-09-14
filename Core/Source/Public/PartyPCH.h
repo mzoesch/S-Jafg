@@ -7,7 +7,7 @@
 ----------------------------------------------------------------------------*/
 
 #if PLATFORM_WINDOWS
-    #include <Windows.h>
+    // #include <Windows.h>
 #endif /* PLATFORM_WINDOWS */
 
 

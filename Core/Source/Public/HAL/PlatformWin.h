@@ -6,7 +6,7 @@
     #error "Wanted to override generic platform types with windows specific types, but platform is not windows."
 #endif /* !PLATFORM_WINDOWS */
 
-#include <Windows.h>
+// #include <Windows.h>
 
 /*
  * We forward declare this shit, as this file should only be included implicitly by including Platform.h
@@ -25,7 +25,7 @@ struct WinPlatformTypes final : public GenericPlatformTypes
     #error "PLATFORM_MAX_PATH is already defined."
 #endif /* PLATFORM_MAX_PATH */
 #define PLATFORM_MAX_PATH \
-    MAX_PATH
+    260// MAX_PATH // 260
 
 #ifdef PLATFORM_BREAK
     #error "PLATFORM_BREAK is already defined."

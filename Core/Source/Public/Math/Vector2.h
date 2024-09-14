@@ -2,7 +2,7 @@
 
 #pragma once
 
-/** Jafg implementation of a Vector2. */
+/** Jafg implementation of a vector2. */
 template<typename T>
 struct TVector2 final
 {

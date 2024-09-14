@@ -91,7 +91,7 @@ void JChunkGenerationSubsystem::TearDown()
 void JChunkGenerationSubsystem::UpdateChunkQueue()
 {
     const float CamX = this->GetWorld()->MainCamera->Position.x;
-    const float CamY = this->GetWorld()->MainCamera->Position.z;
+    const float CamY = this->GetWorld()->MainCamera->Position.y;
 
     const int32 CurrentCamX = static_cast<int32>(CamX < 0 ? floor(CamX / static_cast<float>(ChunkSize)) : CamX / static_cast<float>(ChunkSize));
     const int32 CurrentCamY = static_cast<int32>(CamY < 0 ? floor(CamY / static_cast<float>(ChunkSize)) : CamY / static_cast<float>(ChunkSize));
@@ -101,8 +101,8 @@ void JChunkGenerationSubsystem::UpdateChunkQueue()
         return;
     }
 
-    std::cout << "Camera moved to new chunk (" << CurrentCamX << ", " << CurrentCamY << ")" << '\n';
-    std::cout << "Precious loc (" << this->GetWorld()->MainCamera->Position.x << ", " << this->GetWorld()->MainCamera->Position.z << ")" << '\n';
+    // std::cout << "Camera moved to new chunk (" << CurrentCamX << ", " << CurrentCamY << ")" << '\n';
+    // std::cout << "Precious loc (" << this->GetWorld()->MainCamera->Position.x << ", " << this->GetWorld()->MainCamera->Position.y << ")" << '\n';
 
     std::cout.flush();
 
@@ -116,9 +116,9 @@ void JChunkGenerationSubsystem::UpdateChunkQueue()
 
     for (const auto& Chunk : VerticalChunks)
     {
-        for (int32 y = 0; y <= RenderHeight; y++)
+        for (int32 z = 0; z <= RenderHeight; z++)
         {
-            ChunkQueue.emplace(Chunk.X, y, Chunk.Y);
+            ChunkQueue.emplace(Chunk.X, Chunk.Y, z);
         }
     }
 
@@ -131,10 +131,10 @@ void JChunkGenerationSubsystem::KillChunks()
     {
         if (It->second->ready && (
                abs(It->second->chunkPos.x - static_cast<float>(LastCamX)) > static_cast<float>(RenderDistance)
-            || abs(It->second->chunkPos.z - static_cast<float>(LastCamY)) > static_cast<float>(RenderDistance)
+            || abs(It->second->chunkPos.y - static_cast<float>(LastCamY)) > static_cast<float>(RenderDistance)
         ))
         {
-            It->second->~Chunk();
+            It->second->~AChunk();
             It = Chunks.erase(It);
         }
         else
@@ -156,7 +156,7 @@ void JChunkGenerationSubsystem::GenerateChunks()
 
         if (!Chunks.contains(TupleToKey({Next.x, Next.y, Next.z})))
         {
-            Chunks.try_emplace(TupleToKey({Next.x, Next.y, Next.z}), new Chunk(ChunkSize, Next));
+            Chunks.try_emplace(TupleToKey({Next.x, Next.y, Next.z}), new AChunk(Next));
             ++GeneratedChunks;
         }
     }

@@ -7,6 +7,9 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#if PLATFORM_WINDOWS
+	#include <Windows.h>
+#endif /* PLATFORM_WINDOWS */
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath)
 {
@@ -20,7 +23,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 	fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 	try
 	{
-		std::string ExecPath(MAX_PATH, '\0');
+		std::string ExecPath(PLATFORM_MAX_PATH, '\0');
 		GetModuleFileNameA(NULL, &ExecPath[0], ExecPath.size());
 		ExecPath = ExecPath.substr(0, ExecPath.find_last_of('\\'));
 

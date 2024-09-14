@@ -7,6 +7,7 @@
 #include <vector>
 #include <thread>
 #include <glm/glm.hpp>
+#include "MyWorld/WorldStatics.h"
 
 struct Vertex
 {
@@ -24,25 +25,31 @@ struct Vertex
     }
 };
 
-class Chunk
+class AChunk
 {
+
 public:
-    Chunk(unsigned int chunkSize, glm::vec3 chunkPos);
-    ~Chunk();
+
+    AChunk(glm::vec3 chunkPos);
+    ~AChunk();
 
     void GenerateChunk();
     void Render(unsigned int modelLoc);
 
-public:
-    std::vector<unsigned int> chunkData;
+    uint32* RawVoxelData;
+    // std::vector<unsigned int> RawVoxelData;
     glm::vec3 chunkPos;
     bool ready;
     bool generated;
 
+    FORCEINLINE static int32 GetIndex(const int32 X, const int32 Y, const int32 Z)
+    {
+        return X + Y * WorldStatics::ChunkSize + Z * WorldStatics::ChunkSize * WorldStatics::ChunkSize;
+    }
+
 private:
     unsigned int vertexArrayObject;
     unsigned int vbo, ebo;
-    unsigned int chunkSize;
     unsigned int numTriangles;
     glm::vec3 worldPos;
     std::thread chunkThread;

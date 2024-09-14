@@ -64,9 +64,9 @@ void DesktopPlatformWin::Initialize()
     glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CW);
+    // glEnable(GL_CULL_FACE);
+    // glCullFace(GL_BACK);
+    // glFrontFace(GL_CW);
 
     glEnable(GL_DEPTH_TEST);
 

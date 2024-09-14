@@ -13,6 +13,9 @@
 
 #include "MyWorld/Chunk/ChunkGenerationSubsystem.h"
 #include "Subsystems/WorldSubsystem.h"
+#if PLATFORM_WINDOWS
+    #include <Windows.h>
+#endif /* PLATFORM_WINDOWS */
 
 void JWorld::InitializeWorld(const LLevel& Level)
 {
@@ -46,7 +49,7 @@ void JWorld::InitializeWorld(const LLevel& Level)
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(Data);
 
-    MainCamera = new Camera(glm::vec3(0.0f, 25.0f, 0.0f));
+    MainCamera = new Camera(glm::vec3(0.0f, 0.0f, 25.0f));
 
     this->InitializeSubsystems();
 
@@ -73,6 +76,10 @@ void JWorld::Tick(const float DeltaTime)
             Tickable->Tick(DeltaTime);
         }
     }
+
+    std::cout << "Cam: " << MainCamera->Position.x << ", " << MainCamera->Position.y << ", " << MainCamera->Position.z <<
+        '\n';
+    std::cout.flush();
 
     return;
 }

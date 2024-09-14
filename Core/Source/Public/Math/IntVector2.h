@@ -3,7 +3,7 @@
 #pragma once
 
 /** Jafg implementation of an integral Vector2. */
-template<typename T>
+template <typename T>
 struct TIntVector2 final
 {
     static_assert(std::is_integral_v<T>, "Generic type T of TIntVector2 must be an integral type.");
