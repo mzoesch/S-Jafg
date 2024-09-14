@@ -6,7 +6,7 @@ setlocal enabledelayedexpansion
 set CurrentPath=%cd%
 echo Found called Bat Script in path: %CurrentPath%. Resolving Jafg root directory.
 
-set PushdCount=0
+@REM set PushdCount=0
 
 @REM Loop until the current directory is "Jafg". This is kinda stupid as we cannot rename the root dir of the project. 
 @REM :loop
@@ -21,8 +21,8 @@ set PushdCount=0
 @REM set /a PushdCount-=1
 @REM set CurrentPath=%cd%
 
-pushd .. 
-pushd ..
+@REM pushd ..
+@REM pushd ..
 
 set CurrentPath=%cd%
 echo Found Jafg root directory at: %CurrentPath%. Calling Premake5.
@@ -35,7 +35,7 @@ Programs\Vendor\Premake\Bin\premake5.exe --file=Build.lua vs2022
 @REM     popd
 @REM )
 
-popd
-popd
+@REM popd
+@REM popd
 
 endlocal
