@@ -1,5 +1,7 @@
 @REM Copyright mzoesch. All rights reserved.
 
+@REM Always call this script from the root directory of the project.
+
 @echo off
 setlocal enabledelayedexpansion
 

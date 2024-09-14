@@ -144,6 +144,7 @@ group ( "" )
 
 group ("Programs")
     project ( "Router" )
+        location ( "Programs" )
         kind ( "None" )
         files ( { 
             "Program.py",
