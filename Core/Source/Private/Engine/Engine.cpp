@@ -149,10 +149,10 @@ void JEngine::UpdateTime()
         StatsTimeDelta > 10'000
     )
     {
-        std::cout << "Time Stats: Avg: " << static_cast<float>(Application::GetStatisticsFrameCount()) /
-            10'000.0f * 1'000.0f << ", Low: " << Application::GetLowestFps() << ", High: " << Application::GetHighestFps() <<
-            '\n';
-        std::cout.flush();
+        // std::cout << "Time Stats: Avg: " << static_cast<float>(Application::GetStatisticsFrameCount()) /
+        //     10'000.0f * 1'000.0f << ", Low: " << Application::GetLowestFps() << ", High: " << Application::GetHighestFps() <<
+        //     '\n';
+        // std::cout.flush();
 
         Application::ResetStatistics();
     }

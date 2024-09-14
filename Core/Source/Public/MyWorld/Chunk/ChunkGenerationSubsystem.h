@@ -26,12 +26,15 @@ public:
 
 private:
 
-    uint32 NumChunks = 0, NumChunksRendered = 0;
+    void UpdateChunkQueue();
+    void KillChunks();
+    void GenerateChunks();
+    void RenderChunks();
+
     std::unordered_map<int32, Chunk*> Chunks;
     std::queue<glm::vec3> ChunkQueue;
-    int RenderDistance = 10;
-    int RenderHeight = 1;
+    int RenderDistance = 20;
+    int RenderHeight = 3;
     unsigned int ChunkSize = 32;
-    unsigned int ChunksLoading = 0;
-    int LastCamX = -100, LastCamY = -100, LastCamZ = -100;
+    int LastCamX = -100, LastCamY = -100;
 };

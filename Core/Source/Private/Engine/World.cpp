@@ -60,7 +60,7 @@ void JWorld::Tick(const float DeltaTime)
     TIntVector2 WindowDimensions = GEngine->GetSurface()->GetDimensions();
 
     glm::mat4 Projection = glm::perspective(glm::radians(MainCamera->Zoom),
-        static_cast<float>(WindowDimensions.X) / static_cast<float>(WindowDimensions.Y), 0.1f, 200.0f); // change clipping here
+        static_cast<float>(WindowDimensions.X) / static_cast<float>(WindowDimensions.Y), 0.1f, 2000.0f); // change clipping here
     const int32 ViewLoc = glGetUniformLocation(ShaderProgram.ID, "view");
     glUniformMatrix4fv(ViewLoc, 1, GL_FALSE, glm::value_ptr(View));
     const int32 ProjectionLoc = glGetUniformLocation(ShaderProgram.ID, "projection");

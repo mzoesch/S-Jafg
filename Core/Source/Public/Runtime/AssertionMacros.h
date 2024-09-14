@@ -10,7 +10,7 @@
 
 #if DO_CHECKS
 
-    #define checkCode(code)                 do { code; } while ( false )
+    #define checkCode(code)                 do { code; } while ( false );
     #define check(expr)                     CHECK_IMPL_PRIVATE(expr)
     #define checkNoEntry()                  CHECK_IMPL_PRIVATE(false && NO_ENTRY_ASSERT_TEXT)
     #define unimplemented()                 CHECK_IMPL_PRIVATE(false && "Unimplemented code path.")
