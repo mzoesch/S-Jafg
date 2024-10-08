@@ -105,21 +105,26 @@ void AChunk::GenerateChunk()
                     //     northBlock = northData[northIndex];
                     // }
 
-                    // if (northBlock == 0)
-                    // {
-                    //     vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->sideMinX, block->sideMinY));
-                    //     vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->sideMaxX, block->sideMinY));
-                    //     vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->sideMinX, block->sideMaxY));
-                    //     vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->sideMaxX, block->sideMaxY));
-                    //
-                    //     indices.push_back(currentVertex + 0);
-                    //     indices.push_back(currentVertex + 3);
-                    //     indices.push_back(currentVertex + 1);
-                    //     indices.push_back(currentVertex + 0);
-                    //     indices.push_back(currentVertex + 2);
-                    //     indices.push_back(currentVertex + 3);
-                    //     currentVertex += 4;
-                    // }
+                    if (northBlock == 0)
+                    {
+                        // vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->sideMinX, block->sideMinY));
+                        // vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->sideMaxX, block->sideMinY));
+                        // vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->sideMinX, block->sideMaxY));
+                        // vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->sideMaxX, block->sideMaxY));
+
+                        vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->sideMinX, block->sideMinY));
+                        vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->sideMaxX, block->sideMinY));
+                        vertices.push_back(Vertex(x + 1, y + 0, z + 1, block->sideMinX, block->sideMaxY));
+                        vertices.push_back(Vertex(x + 0, y + 0, z + 1, block->sideMaxX, block->sideMaxY));
+
+                        indices.push_back(currentVertex + 0);
+                        indices.push_back(currentVertex + 3);
+                        indices.push_back(currentVertex + 1);
+                        indices.push_back(currentVertex + 0);
+                        indices.push_back(currentVertex + 2);
+                        indices.push_back(currentVertex + 3);
+                        currentVertex += 4;
+                    }
                 }
 
                 // South
@@ -137,21 +142,26 @@ void AChunk::GenerateChunk()
                     //         WorldStatics::ChunkSize + z;
                     //     southBlock = southData[southIndex];
                     // }
-                    // if (southBlock == 0)
-                    // {
-                    //     vertices.push_back(Vertex(x + 0, y + 0, z + 1, block->sideMinX, block->sideMinY));
-                    //     vertices.push_back(Vertex(x + 1, y + 0, z + 1, block->sideMaxX, block->sideMinY));
-                    //     vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->sideMinX, block->sideMaxY));
-                    //     vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->sideMaxX, block->sideMaxY));
-                    //
-                    //     indices.push_back(currentVertex + 0);
-                    //     indices.push_back(currentVertex + 3);
-                    //     indices.push_back(currentVertex + 1);
-                    //     indices.push_back(currentVertex + 0);
-                    //     indices.push_back(currentVertex + 2);
-                    //     indices.push_back(currentVertex + 3);
-                    //     currentVertex += 4;
-                    // }
+                    if (southBlock == 0)
+                    {
+                        // vertices.push_back(Vertex(x + 0, y + 0, z + 1, block->sideMinX, block->sideMinY));
+                        // vertices.push_back(Vertex(x + 1, y + 0, z + 1, block->sideMaxX, block->sideMinY));
+                        // vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->sideMinX, block->sideMaxY));
+                        // vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->sideMaxX, block->sideMaxY));
+
+                        vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->sideMinX, block->sideMinY));
+                        vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->sideMaxX, block->sideMinY));
+                        vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->sideMinX, block->sideMaxY));
+                        vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->sideMaxX, block->sideMaxY));
+
+                        indices.push_back(currentVertex + 0);
+                        indices.push_back(currentVertex + 3);
+                        indices.push_back(currentVertex + 1);
+                        indices.push_back(currentVertex + 0);
+                        indices.push_back(currentVertex + 2);
+                        indices.push_back(currentVertex + 3);
+                        currentVertex += 4;
+                    }
                 }
 
                 // West
@@ -169,21 +179,26 @@ void AChunk::GenerateChunk()
                     //         WorldStatics::ChunkSize + y * WorldStatics::ChunkSize + z;
                     //     westBlock = westData[blockIndex];
                     // }
-                    // if (westBlock == 0)
-                    // {
-                    //     vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->sideMinX, block->sideMinY));
-                    //     vertices.push_back(Vertex(x + 0, y + 0, z + 1, block->sideMaxX, block->sideMinY));
-                    //     vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->sideMinX, block->sideMaxY));
-                    //     vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->sideMaxX, block->sideMaxY));
-                    //
-                    //     indices.push_back(currentVertex + 0);
-                    //     indices.push_back(currentVertex + 3);
-                    //     indices.push_back(currentVertex + 1);
-                    //     indices.push_back(currentVertex + 0);
-                    //     indices.push_back(currentVertex + 2);
-                    //     indices.push_back(currentVertex + 3);
-                    //     currentVertex += 4;
-                    // }
+                    if (westBlock == 0)
+                    {
+                        // vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->sideMinX, block->sideMinY));
+                        // vertices.push_back(Vertex(x + 0, y + 0, z + 1, block->sideMaxX, block->sideMinY));
+                        // vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->sideMinX, block->sideMaxY));
+                        // vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->sideMaxX, block->sideMaxY));
+
+                        vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->sideMinX, block->sideMinY));
+                        vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->sideMaxX, block->sideMinY));
+                        vertices.push_back(Vertex(x + 0, y + 0, z + 1, block->sideMinX, block->sideMaxY));
+                        vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->sideMaxX, block->sideMaxY));
+
+                        indices.push_back(currentVertex + 0);
+                        indices.push_back(currentVertex + 3);
+                        indices.push_back(currentVertex + 1);
+                        indices.push_back(currentVertex + 0);
+                        indices.push_back(currentVertex + 2);
+                        indices.push_back(currentVertex + 3);
+                        currentVertex += 4;
+                    }
                 }
 
                 // East
@@ -201,21 +216,26 @@ void AChunk::GenerateChunk()
                     //         WorldStatics::ChunkSize + z;
                     //     eastBlock = eastData[blockIndex];
                     // }
-                    // if (eastBlock == 0)
-                    // {
-                    //     vertices.push_back(Vertex(x + 1, y + 0, z + 1, block->sideMinX, block->sideMinY));
-                    //     vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->sideMaxX, block->sideMinY));
-                    //     vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->sideMinX, block->sideMaxY));
-                    //     vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->sideMaxX, block->sideMaxY));
-                    //
-                    //     indices.push_back(currentVertex + 0);
-                    //     indices.push_back(currentVertex + 3);
-                    //     indices.push_back(currentVertex + 1);
-                    //     indices.push_back(currentVertex + 0);
-                    //     indices.push_back(currentVertex + 2);
-                    //     indices.push_back(currentVertex + 3);
-                    //     currentVertex += 4;
-                    // }
+                    if (eastBlock == 0)
+                    {
+                        // vertices.push_back(Vertex(x + 1, y + 0, z + 1, block->sideMinX, block->sideMinY));
+                        // vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->sideMaxX, block->sideMinY));
+                        // vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->sideMinX, block->sideMaxY));
+                        // vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->sideMaxX, block->sideMaxY));
+
+                        vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->sideMinX, block->sideMinY));
+                        vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->sideMaxX, block->sideMinY));
+                        vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->sideMinX, block->sideMaxY));
+                        vertices.push_back(Vertex(x + 1, y + 0, z + 1, block->sideMaxX, block->sideMaxY));
+
+                        indices.push_back(currentVertex + 0);
+                        indices.push_back(currentVertex + 3);
+                        indices.push_back(currentVertex + 1);
+                        indices.push_back(currentVertex + 0);
+                        indices.push_back(currentVertex + 2);
+                        indices.push_back(currentVertex + 3);
+                        currentVertex += 4;
+                    }
                 }
 
                 // Bottom
@@ -233,21 +253,26 @@ void AChunk::GenerateChunk()
                     //         WorldStatics::ChunkSize + (WorldStatics::ChunkSize - 1);
                     //     bottomBlock = downData[blockIndex];
                     // }
-                    // if (bottomBlock == 0)
-                    // {
-                    //     vertices.push_back(Vertex(x + 1, y + 0, z + 1, block->bottomMinX, block->bottomMinY));
-                    //     vertices.push_back(Vertex(x + 0, y + 0, z + 1, block->bottomMaxX, block->bottomMinY));
-                    //     vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->bottomMinX, block->bottomMaxY));
-                    //     vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->bottomMaxX, block->bottomMaxY));
-                    //
-                    //     indices.push_back(currentVertex + 0);
-                    //     indices.push_back(currentVertex + 3);
-                    //     indices.push_back(currentVertex + 1);
-                    //     indices.push_back(currentVertex + 0);
-                    //     indices.push_back(currentVertex + 2);
-                    //     indices.push_back(currentVertex + 3);
-                    //     currentVertex += 4;
-                    // }
+                    if (bottomBlock == 0)
+                    {
+                        // vertices.push_back(Vertex(x + 1, y + 0, z + 1, block->bottomMinX, block->bottomMinY));
+                        // vertices.push_back(Vertex(x + 0, y + 0, z + 1, block->bottomMaxX, block->bottomMinY));
+                        // vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->bottomMinX, block->bottomMaxY));
+                        // vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->bottomMaxX, block->bottomMaxY));
+
+                        vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->bottomMinX, block->bottomMinY));
+                        vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->bottomMaxX, block->bottomMinY));
+                        vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->bottomMinX, block->bottomMaxY));
+                        vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->bottomMaxX, block->bottomMaxY));
+
+                        indices.push_back(currentVertex + 0);
+                        indices.push_back(currentVertex + 3);
+                        indices.push_back(currentVertex + 1);
+                        indices.push_back(currentVertex + 0);
+                        indices.push_back(currentVertex + 2);
+                        indices.push_back(currentVertex + 3);
+                        currentVertex += 4;
+                    }
                 }
 
                 // Top
@@ -304,7 +329,7 @@ void AChunk::GenerateChunk()
     //std::cout << "Generated: " << generated << '\n';
 }
 
-    void AChunk::Render(unsigned int modelLoc)
+void AChunk::Render(unsigned int modelLoc)
 {
     if (!ready)
     {
