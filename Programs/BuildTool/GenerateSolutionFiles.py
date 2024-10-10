@@ -30,7 +30,8 @@ def fix_cpp_pch_subsystem() -> None:
     print('Fixing precompiled header subsystem (from /Yu to /Yc) ...')
 
     fix_cpp_pch_subsystem_for_project(os.path.abspath('./Runtime/Runtime.vcxproj'))
-    fix_cpp_pch_subsystem_for_project(os.path.abspath('./Core/Static-Core.vcxproj'))
+    fix_cpp_pch_subsystem_for_project(os.path.abspath('./Core/Core.vcxproj'))
+    fix_cpp_pch_subsystem_for_project(os.path.abspath('./Lal/Lal.vcxproj'))
 
     return None
 

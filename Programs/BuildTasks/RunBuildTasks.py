@@ -40,12 +40,16 @@ def parse_args(*args: str) -> tuple[bool, bool, BuildPlatform, BuildConfiguratio
             configuration = BuildConfiguration.SHIPPING
             continue
 
-        if 'Static-Core' in arg:
-            project_type = ProjectType.STATIC_CORE
+        if 'Core' in arg:
+            project_type = ProjectType.CORE
             continue
 
         if 'Runtime' in arg:
             project_type = ProjectType.RUNTIME
+            continue
+
+        if 'Lal' in arg:
+            project_type = ProjectType.LAL
             continue
 
         # Currently we do not have plugins but in the future we will.
@@ -76,7 +80,7 @@ def main(*args, **kwargs) -> None:
         return None
 
     if project_type == ProjectType.UNKNOWN:
-        raise ValueError('No project type specified. Please specify either static-core or runtime.')
+        raise ValueError('No project type specified.')
         return None
 
     if is_prebuild:

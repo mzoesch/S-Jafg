@@ -86,6 +86,24 @@ filter ( )
 -- -// ~Platform filters
 -- -///////////////////////////////////////////////////////////////////////////
 
+group ("Lal")
+    project ( "Lal" )
+        location ( "Lal" )
+        kind ( "StaticLib" )
+
+        includedirs ( {
+            "Lal/Source/Public",
+        } )
+
+        files ( {
+            "Lal/**.md",
+            "Lal/Source/**.h",
+            "Lal/Source/**.hpp",
+            "Lal/Source/**.c",
+            "Lal/Source/**.cpp",
+        } )
+group ( "" )
+
 group ( "Runtime")
     project ( "Runtime" )
         location ( "Runtime" )
@@ -99,6 +117,7 @@ group ( "Runtime")
         } )
 
         files ( { 
+            "Runtime/**.md",
             "Runtime/Source/**.h",
             "Runtime/Source/**.hpp",
             "Runtime/Source/**.c",
@@ -106,7 +125,7 @@ group ( "Runtime")
         } )
 
         links ( {
-            "Static-Core",
+            "Core",
             "Core/Vendor/Deps/lib/glfw3.lib",
             "Core/Vendor/Deps/lib/freetype.lib",
         } )
@@ -117,10 +136,10 @@ group ( "Runtime")
         -- pchsource ( "Core/Source/Private/CoreAFX.cpp" )
 group ( "" )
 
-group ( "Static-Core")
-    project ( "Static-Core" )
+group ( "Core")
+    project ( "Core" )
         location ( "Core" )
-        kind ( "StaticLib" )
+        kind ( "SharedLib" )
 
         includedirs ( { 
             "Core/Source/Public",
@@ -128,7 +147,8 @@ group ( "Static-Core")
             "Core/Vendor/Deps/include/Freetype",
         } )
 
-        files ( { 
+        files ( {
+            "Core/**.md",
             "Core/Source/**.h",
             "Core/Source/**.hpp",
             "Core/Source/**.c",

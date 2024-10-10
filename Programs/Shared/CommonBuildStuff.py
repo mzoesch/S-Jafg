@@ -15,10 +15,11 @@ class BuildConfiguration(Enum):
 
 class ProjectType(Enum):
     UNKNOWN     = 0
-    STATIC_CORE = 1
-    RUNTIME     = 2
-    PLUGIN      = 3
-    OTHER       = 4 # Currently ignored by this build system.
+    LAL         = 1
+    CORE        = 2
+    RUNTIME     = 3
+    PLUGIN      = 4
+    OTHER       = 5 # Currently ignored by this build system.
 
 def build_platform_to_string(platform: BuildPlatform) -> str:
     if platform == BuildPlatform.CLIENT:
