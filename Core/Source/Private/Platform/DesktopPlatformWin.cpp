@@ -8,6 +8,23 @@
 #include "Engine/Framework/Camera.h"
 #include "Player/LocalPlayer.h"
 #include "Player/PlayerInput.h"
+#include <Freetype/ft2build.h>
+#include <glm/gtc/type_ptr.inl>
+
+#include FT_FREETYPE_H
+#include "RHI/Shader.h"
+
+struct Character
+{
+    unsigned int TextureID;  // ID handle of the glyph texture
+    glm::ivec2   Size;       // Size of glyph
+    glm::ivec2   Bearing;    // Offset from baseline to left/top of glyph
+    unsigned int Advance;    // Offset to advance to next glyph
+};
+
+std::map<char, Character> Characters;
+unsigned int VAO, VBO;
+Shader FontShaderProgram;
 
 void DesktopPlatformWin::Initialize()
 {
@@ -70,6 +87,83 @@ void DesktopPlatformWin::Initialize()
 
     glEnable(GL_DEPTH_TEST);
 
+    FontShaderProgram = Shader("Content/Shaders/vs_font.shader", "Content/Shaders/fs_font.shader");
+    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
+    FontShaderProgram.Use();
+    glUniformMatrix4fv(glGetUniformLocation(FontShaderProgram.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+    FT_Library Ft;
+    if (FT_Init_FreeType(&Ft))
+    {
+        RequestEngineExit(EPlatformExit::Fatal, "Failed to initialize Freetype library.");
+        return;
+    }
+
+    FT_Face Face;
+    if (FT_New_Face(Ft, "E:/dev/c/Jafg/Content/Fonts/Core.otf", 0, &Face))
+    {
+        RequestEngineExit(EPlatformExit::Fatal, "Failed to load font face.");
+        return;
+    }
+
+    FT_Set_Pixel_Sizes(Face, 0, 48); // set size to load glyphs as
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
+    // load first 128 characters of ASCII set
+    for (unsigned char c = 0; c < 128; c++)
+    {
+        // load character glyph
+        if (FT_Load_Char(Face, c, FT_LOAD_RENDER))
+        {
+            std::cout << "Failed to load Glyph" << '\n';
+            std::cout.flush();
+            continue;
+        }
+        // generate texture
+        unsigned int texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RED,
+            Face->glyph->bitmap.width,
+            Face->glyph->bitmap.rows,
+            0,
+            GL_RED,
+            GL_UNSIGNED_BYTE,
+            Face->glyph->bitmap.buffer
+        );
+        // set texture options
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // now store character for later use
+        Character character = {
+            texture,
+            glm::ivec2(Face->glyph->bitmap.width, Face->glyph->bitmap.rows),
+            glm::ivec2(Face->glyph->bitmap_left, Face->glyph->bitmap_top),
+            Face->glyph->advance.x
+        };
+        Characters.insert(std::pair<char, Character>(c, character));
+    }
+    glBindTexture(GL_TEXTURE_2D, 1);
+    FT_Done_Face(Face);
+    FT_Done_FreeType(Ft);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
     return;
 }
 
@@ -82,13 +176,61 @@ void DesktopPlatformWin::OnClear()
     return;
 }
 
+void RenderText(Shader &shader, std::string text, float x, float y, float scale, glm::vec3 color);
 void DesktopPlatformWin::OnUpdate()
 {
     DesktopPlatformBase::OnUpdate();
 
+    RenderText(FontShaderProgram, "Hello, World!", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+
     glfwSwapBuffers(this->MasterWindow);
 
     return;
+}
+
+void RenderText(Shader &shader, std::string text, float x, float y, float scale, glm::vec3 color)
+{
+    // activate corresponding render state
+    shader.Use();
+    glUniform3f(glGetUniformLocation(shader.ID, "textColor"), color.x, color.y, color.z);
+    glActiveTexture(GL_TEXTURE0);
+    glBindVertexArray(VAO);
+
+    // iterate through all characters
+    std::string::const_iterator c;
+    for (c = text.begin(); c != text.end(); c++)
+    {
+        Character ch = Characters[*c];
+
+        float xpos = x + ch.Bearing.x * scale;
+        float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
+
+        float w = ch.Size.x * scale;
+        float h = ch.Size.y * scale;
+        // update VBO for each character
+        float vertices[6][4] = {
+            { xpos,     ypos + h,   0.0f, 0.0f },
+            { xpos,     ypos,       0.0f, 1.0f },
+            { xpos + w, ypos,       1.0f, 1.0f },
+
+            { xpos,     ypos + h,   0.0f, 0.0f },
+            { xpos + w, ypos,       1.0f, 1.0f },
+            { xpos + w, ypos + h,   1.0f, 0.0f }
+        };
+        // render glyph texture over quad
+        glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+        // update content of VBO memory
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); // be sure to use glBufferSubData and not glBufferData
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        // render quad
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
+        x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+    }
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void DesktopPlatformWin::TearDown()

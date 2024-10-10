@@ -60,6 +60,10 @@ void JWorld::Tick(const float DeltaTime)
 {
     glm::mat4 View = MainCamera->GetViewMatrix();
 
+    ShaderProgram.Use();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, Texture);
+
     TIntVector2 WindowDimensions = GEngine->GetSurface()->GetDimensions();
 
     glm::mat4 Projection = glm::perspective(glm::radians(MainCamera->Zoom),
@@ -77,9 +81,9 @@ void JWorld::Tick(const float DeltaTime)
         }
     }
 
-    std::cout << "Cam: " << MainCamera->Position.x << ", " << MainCamera->Position.y << ", " << MainCamera->Position.z <<
-        '\n';
-    std::cout.flush();
+    // std::cout << "Cam: " << MainCamera->Position.x << ", " << MainCamera->Position.y << ", " << MainCamera->Position.z <<
+    //     '\n';
+    // std::cout.flush();
 
     return;
 }

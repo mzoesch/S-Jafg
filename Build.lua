@@ -95,6 +95,7 @@ group ( "Runtime")
             "Runtime/Source/Public",
             "Core/Source/Public",
             "Core/Vendor/Deps/include",
+            "Core/Vendor/Deps/include/Freetype",
         } )
 
         files ( { 
@@ -107,6 +108,7 @@ group ( "Runtime")
         links ( {
             "Static-Core",
             "Core/Vendor/Deps/lib/glfw3.lib",
+            "Core/Vendor/Deps/lib/freetype.lib",
         } )
 
         -- Somehow this does not work??
@@ -123,6 +125,7 @@ group ( "Static-Core")
         includedirs ( { 
             "Core/Source/Public",
             "Core/Vendor/Deps/include",
+            "Core/Vendor/Deps/include/Freetype",
         } )
 
         files ( { 
@@ -134,6 +137,7 @@ group ( "Static-Core")
 
         links ( {
             "Core/Vendor/Deps/lib/glfw3.lib",
+            "Core/Vendor/Deps/lib/freetype.lib",
         } )
 
         -- Somehow this does not work??
