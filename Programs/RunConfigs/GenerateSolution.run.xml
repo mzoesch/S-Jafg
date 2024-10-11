@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="GenerateSolution" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="Programs" />
+    <working_directory value="$PROJECT_DIR$" />
+    <parameters value="--SolutionGenerator" />
+    <kind value="PACKAGE" />
+    <package value="Jafg" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/Main.go" />
+    <method v="2" />
+  </configuration>
+</component>

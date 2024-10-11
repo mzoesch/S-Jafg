@@ -1,1 +1,1 @@
-# Contains Vendor files and programs. Automatically installed by the BuildTool.
+# Contains vendor files and programs. Automatically installed by the solution generators.

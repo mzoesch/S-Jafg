@@ -3,10 +3,14 @@
 @echo off
 
 @REM Will install all the necessary dependencies for this project
-@REM and generate the necessary platfrom dependent solution files.
+@REM and generate the necessary platform dependent solution files.
+
+pushd ..
 
 echo Calling Python to generate solution files ...
 
-python Program.py --install-deps --compile-scripts --generate-solution
+python Program.py --compile-scripts --generate-solution
+
+popd
 
 pause

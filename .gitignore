@@ -60,3 +60,10 @@ Saved/*
 
 # Sln
 JAFG.sln.DotSettings.user
+
+# Python
+.venv
+venv
+
+# Generated build files
+__buildSolution.lua

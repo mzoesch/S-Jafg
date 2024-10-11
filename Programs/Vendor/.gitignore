@@ -1,4 +1,4 @@
-# Ignore everything. Vendors will be installed via the BuildTool.
+# Ignore everything. Vendors will be installed via the solution generators.
 
 LICENSE
 *

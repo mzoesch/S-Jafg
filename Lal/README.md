@@ -1,1 +1,0 @@
-# Language Abstraction Layer (Lal)
