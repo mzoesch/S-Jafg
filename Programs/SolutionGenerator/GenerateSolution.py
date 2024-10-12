@@ -11,7 +11,7 @@ def generate_solution() -> None:
 
     compiled_working_dir: str = get_engine_root_dir() + '/Programs/'
     target_binary: str = get_engine_root_dir() + '/Programs/Jafg.exe'
-    subprocess.check_call(f'{target_binary} --SolutionGenerator', shell=True, cwd=compiled_working_dir)
+    subprocess.check_call(f'{target_binary} --SolutionGenerator --Generate', shell=True, cwd=compiled_working_dir)
 
     if Platform.is_windows():
         premake_process: str = os.path.abspath(get_engine_root_dir() + '/Programs/Shell/RunPremake-Win.bat')
@@ -19,6 +19,8 @@ def generate_solution() -> None:
         run_subprocess(premake_process)
     else:
         raise ValueError('Platform not supported.')
+
+    subprocess.check_call(f'{target_binary} --SolutionGenerator --PostLuaRun', shell=True, cwd=compiled_working_dir)
 
     print('Solution generated successfully.')
 

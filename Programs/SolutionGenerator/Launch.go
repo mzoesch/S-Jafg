@@ -10,7 +10,15 @@ func Launch(args []string) {
         return
     }
 
-    GenerateSolution()
+    if slices.Contains(args, "--Generate") {
+        GenerateSolution()
+        return
+    }
+
+    if slices.Contains(args, "--PostLuaRun") {
+        PostLuaRun()
+        return
+    }
 
     return
 }

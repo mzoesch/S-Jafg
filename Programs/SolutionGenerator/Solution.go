@@ -4,6 +4,7 @@ package SolutionGenerator
 
 import (
     "Jafg/Shared"
+    "bufio"
     "fmt"
     "os"
     "strings"
@@ -34,12 +35,24 @@ func CleanSolution() {
         }
     }
 
+    fmt.Println("Finished cleaning the solution.")
+
     return
 }
 
 func GenerateSolution() {
     PrepareBuildLua()
     WriteWorkspace()
+
+    fmt.Println("Finished generating the solution.")
+
+    return
+}
+
+func PostLuaRun() {
+    FixAfx()
+
+    fmt.Println("Finished post lua run.")
 
     return
 }
@@ -78,7 +91,7 @@ func PrepareBuildLua() {
     return
 }
 func WriteWorkspace() {
-    fmt.Println("Writing workspace")
+    fmt.Println("Writing workspace ...")
 
     file, err := os.OpenFile(Shared.FullSolutionLuaPath(), os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
     if err != nil {
@@ -110,14 +123,174 @@ func MakeBuildLuaContent() string {
     builder.WriteString("    configurations { 'Debug', 'Development', 'Shipping' }\n")
     builder.WriteString("    platforms { 'Client', 'Server' }\n")
 
+    builder.WriteString("    prebuildcommands {\n")
+    builder.WriteString("        'echo Launching pre build programs ...',\n")
+    builder.WriteString("        'python ../Program.py --fwd --BuildTool --pre-build --BUILD_CONFIG=%{cfg.buildcfg} --PLATFORM=%{cfg.platform} --PROJ_NAME=%{prj.name} --CFG_KIND=%{cfg.kind}',\n")
+    builder.WriteString("        'echo Finished all pre build programs.',\n")
+    builder.WriteString("    }\n")
+
+    builder.WriteString("filter 'system:windows'\n")
+    builder.WriteString("    systemversion 'latest'\n")
+    builder.WriteString("    defines { 'PLATFORM_WINDOWS' }\n")
+    builder.WriteString("    linkoptions { '/SUBSYSTEM:WINDOWS' }\n")
+    builder.WriteString("filter {}\n")
+
+    builder.WriteString("filter 'configurations:Debug'\n")
+    builder.WriteString("    defines { 'IN_DEBUG' }\n")
+    builder.WriteString("    runtime 'Debug'\n")
+    builder.WriteString("    symbols 'On'\n")
+    builder.WriteString("    optimize 'Off'\n")
+    builder.WriteString("filter {}\n")
+
+    builder.WriteString("filter 'configurations:Development'\n")
+    builder.WriteString("    defines { 'IN_DEVELOPMENT' }\n")
+    builder.WriteString("    runtime 'Release'\n")
+    builder.WriteString("    symbols 'On'\n")
+    builder.WriteString("    optimize 'On'\n")
+    builder.WriteString("filter {}\n")
+
+    builder.WriteString("filter 'configurations:Shipping'\n")
+    builder.WriteString("    defines { 'IN_SHIPPING' }\n")
+    builder.WriteString("    runtime 'Release'\n")
+    builder.WriteString("    symbols 'Off'\n")
+    builder.WriteString("    optimize 'On'\n")
+    builder.WriteString("filter {}\n")
+
+    builder.WriteString("filter 'platforms:Client'\n")
+    builder.WriteString("    defines { 'AS_CLIENT' }\n")
+    builder.WriteString("filter {}\n")
+
+    builder.WriteString("filter 'platforms:Server'\n")
+    builder.WriteString("    defines { 'AS_SERVER' }\n")
+    builder.WriteString("filter {}\n")
+
     for _, proj := range Shared.GApp.Projects {
+        var defines []string = []string{}
+        defines = append(defines, "CURRENT_PROJECT_NAME="+strings.ToUpper(proj.Name))
+        defines = append(defines, fmt.Sprintf("PRIVATE_JAFG_CURRENT_PROJECT_PREPROC_IDENT=%s", proj.GetPreProcIntAsString()))
+
+        var includeDirs []string = []string{}
+        includeDirs = append(includeDirs, proj.GetRelativeDirPath()+"/Source/Public")
+        includeDirs = append(includeDirs, Shared.GeneratedHeadersDir)
+        if proj.Name != "Lal" {
+            includeDirs = append(includeDirs, Shared.GApp.GetCheckedProjectByName("Lal").GetRelativeDirPath()+"/Source/Public")
+        }
+        if proj.Name != "Lal" && proj.Name != "Engine" {
+            includeDirs = append(includeDirs, Shared.GApp.GetCheckedProjectByName("Engine").GetRelativeDirPath()+"/Source/Public")
+        }
+
+        var linkedLibs []string = []string{}
+        if proj.Name != "Lal" && proj.Name != "Engine" {
+            linkedLibs = append(linkedLibs, "Engine")
+        }
+
         builder.WriteString(fmt.Sprintf("group '%s'\n", proj.Name))
         builder.WriteString(fmt.Sprintf("project '%s'\n", proj.Name))
         builder.WriteString(fmt.Sprintf("    location '%s'\n", proj.Name))
         builder.WriteString(fmt.Sprintf("    kind '%s'\n", proj.Kind.ToLuaString()))
 
+        if proj.Kind == Shared.LAUNCH {
+            builder.WriteString("    filter 'system:windows'\n")
+            builder.WriteString("        entrypoint 'WinMainCRTStartup'\n")
+            builder.WriteString("    filter {}\n")
+        }
+
+        builder.WriteString("    targetdir ('Binaries/%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}/" + proj.GetRelativeDirPath() + "/')\n")
+        builder.WriteString("    objdir ('Intermediate/%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}/" + proj.GetRelativeDirPath() + "/')\n")
+
+        builder.WriteString("    files {\n" +
+            "        '" + proj.GetRelativeDirPath() + "/**.md',\n" +
+            "        '" + proj.GetRelativeDirPath() + "/**.jafgproj',\n" +
+            "        '" + proj.GetRelativeDirPath() + "/Source/**.h',\n" +
+            "        '" + proj.GetRelativeDirPath() + "/Source/**.hpp',\n" +
+            "        '" + proj.GetRelativeDirPath() + "/Source/**.c',\n" +
+            "        '" + proj.GetRelativeDirPath() + "/Source/**.cpp',\n" +
+            "    }\n",
+        )
+
+        builder.WriteString("    defines {\n")
+        for _, define := range defines {
+            builder.WriteString("        '" + define + "',\n")
+        }
+        builder.WriteString("    }\n")
+
+        builder.WriteString("    includedirs {\n")
+        for _, includeDir := range includeDirs {
+            builder.WriteString("        '" + includeDir + "',\n")
+        }
+        builder.WriteString("    }\n")
+
+        builder.WriteString("    links {\n")
+        for _, linkedLib := range linkedLibs {
+            builder.WriteString("        '" + linkedLib + "',\n")
+        }
+        builder.WriteString("    }\n")
+
+        builder.WriteString("    -- Somehow this does not work??\n")
+        builder.WriteString("    -- The IDEA will just set the pch to /Yu but we, of course, nett /Yc\n")
+        builder.WriteString("    pchheader 'CoreAFX.h'\n")
+        builder.WriteString("    pchsource '" + Shared.GApp.GetProjectByName("Lal").GetRelativeDirPath() + "/Source/Private/CoreAFX.cpp'\n")
+
         builder.WriteString("group ''\n")
     }
 
     return builder.String()
+}
+
+func FixAfx() {
+    fmt.Println("Fixing AFX from /Yu to /Yc")
+    for _, proj := range Shared.GApp.Projects {
+        FixAfxForProject(proj)
+    }
+
+    return
+}
+
+// FixAfxForProject Fixes the wrongly generated precompiled header subsystem in the solution from /Yu to /Yc.
+func FixAfxForProject(proj Shared.Project) {
+    var targetedProjFile string = proj.GetAbsoluteDirPath() + "/" + proj.Name + ".vcxproj"
+    fmt.Println("Fixing AFX in file: " + targetedProjFile)
+
+    if _, err := os.Stat(targetedProjFile); os.IsNotExist(err) {
+        panic("Could not find the project file: " + targetedProjFile)
+    }
+
+    file, err := os.OpenFile(targetedProjFile, os.O_RDWR, 0666)
+    if err != nil {
+        panic(err)
+    }
+
+    var lines []string = []string{}
+    var scanner *bufio.Scanner = bufio.NewScanner(file)
+    for scanner.Scan() {
+        var line string = scanner.Text()
+        if strings.Contains(line, "<PrecompiledHeader>Use</PrecompiledHeader>") {
+            line = strings.ReplaceAll(line, "<PrecompiledHeader>Use</PrecompiledHeader>", "<PrecompiledHeader>Create</PrecompiledHeader>")
+        }
+
+        lines = append(lines, line)
+    }
+
+    err = file.Truncate(0)
+    if err != nil {
+        panic(err)
+    }
+    _, err = file.Seek(0, 0)
+    if err != nil {
+        panic(err)
+    }
+
+    for _, line := range lines {
+        _, err = file.WriteString(line + "\n")
+        if err != nil {
+            panic(err)
+        }
+    }
+
+    err = file.Close()
+    if err != nil {
+        panic(err)
+    }
+
+    return
 }

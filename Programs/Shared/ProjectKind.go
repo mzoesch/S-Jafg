@@ -35,6 +35,18 @@ func (kind ProjectKind) ToLuaString() string {
     }
 }
 
+func (kind ProjectKind) IsShared() bool {
+    return kind == SHARED
+}
+
+func (kind ProjectKind) IsStatic() bool {
+    return kind == STATIC
+}
+
+func (kind ProjectKind) IsLaunch() bool {
+    return kind == LAUNCH
+}
+
 func IsValid(kind string) bool {
     switch kind {
     case "Shared":
@@ -50,11 +62,11 @@ func IsValid(kind string) bool {
 
 func ProjectKindFromString(kind string) ProjectKind {
     switch kind {
-    case "Shared":
+    case "Shared", "SharedLib":
         return SHARED
-    case "Static":
+    case "Static", "StaticLib":
         return STATIC
-    case "Launch":
+    case "Launch", "ConsoleApp":
         return LAUNCH
     default:
         panic("Unknown project kind: " + kind)

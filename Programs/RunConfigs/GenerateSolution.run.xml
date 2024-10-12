@@ -2,7 +2,7 @@
   <configuration default="false" name="GenerateSolution" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="Programs" />
     <working_directory value="$PROJECT_DIR$" />
-    <parameters value="--SolutionGenerator" />
+    <parameters value="--SolutionGenerator --Generate" />
     <kind value="PACKAGE" />
     <package value="Jafg" />
     <directory value="$PROJECT_DIR$" />

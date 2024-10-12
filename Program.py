@@ -13,6 +13,7 @@ Valid arguments:
     --install-deps      : Will install the dependencies for the program.
     --compile-scripts   : Will compile the scripts for the program.
     --generate-solution : Will generate the solution for the program.
+    --fwd               : Will just forward args to go.
 
 For more arguments used by other scripts, see Programs/Main.go.
 """

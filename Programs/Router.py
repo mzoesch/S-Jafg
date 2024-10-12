@@ -1,5 +1,8 @@
 # Copyright mzoesch. All rights reserved.
 
+import subprocess
+from .Shared.SharedDefinitions import *
+
 def parse_args_to_kwargs(*args: list[str]) -> dict[str, str]: 
     """Will convert a list of arguments to a dictionary of keyword arguments."""
 
@@ -16,6 +19,13 @@ def route_to_program(*args, **kwargs) -> None:
     """Will call the main function of the program to run in this library."""
 
     print(f'Try running program with: {args=}.')
+
+    if '--fwd' in args:
+        compiled_working_dir: str = get_engine_root_dir() + '/Programs/'
+        target_binary: str = get_engine_root_dir() + '/Programs/Jafg.exe'
+        cat_args: str = ' '.join(args)
+        subprocess.check_call(f'{target_binary} {cat_args}', shell=True, cwd=compiled_working_dir)
+        return None
 
     if '--install-deps' in args:
         from Programs.SolutionGenerator import InstallDeps as install_deps

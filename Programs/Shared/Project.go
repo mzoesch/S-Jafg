@@ -5,6 +5,7 @@ package Shared
 import (
     "encoding/json"
     "fmt"
+    "strconv"
     "strings"
 )
 
@@ -16,6 +17,16 @@ type Project struct {
     Path string
 
     Kind ProjectKind
+
+    PreProcInteger int64
+}
+
+func (proj *Project) GetPreProcIntAsString() string {
+    return strconv.FormatInt(proj.PreProcInteger, 10)
+}
+
+func (proj *Project) GetPreProcIntAsStringBase2() string {
+    return strconv.FormatInt(proj.PreProcInteger, 2)
 }
 
 func (proj *Project) ToString() string {
@@ -31,7 +42,20 @@ func (proj *Project) GetAbsoluteDirPath() string {
     return proj.Path[:strings.LastIndex(proj.Path, "/")]
 }
 
-func (proj *Project) Initialize(name string, pathToProjFile string, content string) {
+func (proj *Project) GetRelativeDirPath() string {
+    var absPath string = proj.GetAbsoluteDirPath()
+    var engineRootDir string = GApp.GetEngineRootDir()
+    var relPath string = absPath[len(engineRootDir):]
+    if strings.HasPrefix(relPath, "/") {
+        relPath = relPath[1:]
+    }
+
+    return relPath
+}
+
+func (proj *Project) Initialize(preProcInteger int64, name string, pathToProjFile string, content string) {
+    proj.PreProcInteger = preProcInteger
+
     proj.Name = name
     proj.Path = pathToProjFile
 

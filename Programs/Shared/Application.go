@@ -15,11 +15,19 @@ func FullSolutionLuaPath() string {
     return GApp.GetEngineRootDir() + "/" + SolutionLuaFile
 }
 
+var GeneratedHeaderExtension string = ".generated.h"
+
+var GeneratedHeadersDir string = "Vslf/gh"
+
+func FullGeneratedHeadersDir() string {
+    return GApp.GetEngineRootDir() + "/" + GeneratedHeadersDir
+}
+
 type Application struct {
     Projects []Project
 }
 
-var GApp *Application
+var GApp *Application = nil
 
 func (app *Application) Initialize() {
     GApp = app
@@ -56,6 +64,29 @@ func (app *Application) GetEngineRootDir() string {
     return wd
 }
 
+func (app *Application) GetSolutionName() string {
+    return "Jafg"
+}
+
+func (app *Application) GetProjectByName(name string) *Project {
+    for _, proj := range app.Projects {
+        if proj.Name == name {
+            return &proj
+        }
+    }
+
+    return nil
+}
+
+func (app *Application) GetCheckedProjectByName(name string) *Project {
+    var proj *Project = app.GetProjectByName(name)
+    if proj == nil {
+        panic("Project not found: " + name)
+    }
+
+    return proj
+}
+
 func DetectAllProjects() {
     var rootDir string = GApp.GetEngineRootDir()
 
@@ -64,6 +95,7 @@ func DetectAllProjects() {
         panic(err)
     }
 
+    var curProjPreProcInteger int64 = 1
     for _, entry := range entries {
         if !entry.IsDir() {
             continue
@@ -116,7 +148,8 @@ func DetectAllProjects() {
             panic(err)
         }
 
-        proj.Initialize(entry.Name(), resolvedProjFile, string(file[:]))
+        proj.Initialize(curProjPreProcInteger, entry.Name(), resolvedProjFile, string(file[:]))
+        curProjPreProcInteger *= 2
 
         GApp.Projects = append(GApp.Projects, proj)
 

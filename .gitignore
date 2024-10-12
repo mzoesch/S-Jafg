@@ -3,6 +3,9 @@
 # Using both Visual Studio and JetBrains Raider IDE
 .idea/
 
+# Scripting idea
+.vscode/
+
 # Compiled Object files
 *.slo
 *.lo
@@ -45,6 +48,9 @@
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
+
+# Vslf files
+Vslf/*
 
 # Binary Files
 Binaries/*
