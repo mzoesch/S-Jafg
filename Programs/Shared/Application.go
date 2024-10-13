@@ -9,27 +9,9 @@ import (
     "strings"
 )
 
-var SolutionLuaFile string = "__buildSolution.lua"
-
-func FullSolutionLuaPath() string {
-    return GApp.GetEngineRootDir() + "/" + SolutionLuaFile
-}
-
-var GeneratedHeaderExtension string = ".generated.h"
-
-var GeneratedHeadersDir string = "Vslf/gh"
-var VendorIncludeDir string = "Engine/Vendor/Include"
-var VendorLibDir string = "Engine/Vendor/Lib"
-var ContentDir string = "Content"
-var BinariesDir string = "Binaries"
-var IntermediateDir string = "Intermediate"
-
-func FullGeneratedHeadersDir() string {
-    return GApp.GetEngineRootDir() + "/" + GeneratedHeadersDir
-}
-
 type Application struct {
     Projects []Project
+    Config AppConfiguration
 }
 
 var GApp *Application = nil
@@ -42,6 +24,12 @@ func (app *Application) Initialize() {
     for _, proj := range app.Projects {
         fmt.Println("  - " + proj.ToString())
     }
+
+    app.Config = AppConfiguration{}
+    app.Config.Initialize()
+
+    fmt.Println(app.Config.ToString())
+
 
     return
 }

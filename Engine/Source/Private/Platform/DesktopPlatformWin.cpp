@@ -257,9 +257,6 @@ void Jafg::DesktopPlatformWin::PollInputs()
 
     check( GEngine->HasLocalPlayer() )
 
-    std::cout << "Polling inputs..." << '\n';
-    std::cout.flush();
-
     if (glfwGetKey(this->MasterWindow, GLFW_KEY_W) == GLFW_PRESS)
     {
         GEngine->GetLocalPlayer()->GetPlayerInput()->AddKeyDown(EKeys::W);

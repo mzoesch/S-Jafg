@@ -34,8 +34,14 @@ func LaunchPreBuildTasks(args []string) {
 }
 
 func LaunchPostBuildTasks(args []string) {
+    fmt.Println("A")
     if Info.GProjectBuildInfo.Kind.IsLaunch() {
+        fmt.Println("B")
         CopyContentFolder()
+    }
+    fmt.Println("C")
+    if Info.GProjectBuildInfo.Kind.IsShared() {
+        fmt.Println("D")
         CopySharedProjectBinaries()
     }
 

@@ -131,7 +131,7 @@ void Jafg::LEngine::UpdateTime()
     using namespace Jafg;
 
     Application::SetPreviousFrameTime(Application::GetCurrentFrameTime());
-    // Application::SetCurrentFrameTime(glfwGetTime());
+    Application::SetCurrentFrameTime(glfwGetTime());
 
     Application::SetDeltaTime(Application::GetCurrentFrameTime() - Application::GetPreviousFrameTime());
 

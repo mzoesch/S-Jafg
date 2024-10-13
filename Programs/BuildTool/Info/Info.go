@@ -22,7 +22,7 @@ var GProjectBuildInfo *ProjectBuildInfo = nil
 func (info *ProjectBuildInfo) ToString() string {
     return fmt.Sprintf("{%s, %s, %s, %s, %s, %s}",
         info.ProjectName, info.Kind.ToString(),
-        info.BuildConfig, info.Platform,
+        info.BuildConfig.ToString(), info.Platform,
         info.System,      info.Architecture,
     )
 }
