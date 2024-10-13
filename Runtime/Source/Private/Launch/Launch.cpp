@@ -27,20 +27,39 @@ FORCEINLINE EPlatformExit::Type EngineInit()
 
 FORCEINLINE void EngineTick()
 {
-    // GEngine->BeginExitIfRequested();
-    //
-    // {
-    //     GEngine->UpdateTime();
-    //     GEngine->EnforceTickRate();
-    // }
-    //
-    // GEngine->Tick(Application::GetDeltaTimeAsFloat());
+    GEngine->BeginExitIfRequested();
+
+    {
+        GEngine->UpdateTime();
+        GEngine->EnforceTickRate();
+    }
+
+    GEngine->Tick(Application::GetDeltaTimeAsFloat());
 
     return;
 }
 
 FORCEINLINE void EngineExit()
 {
+    std::cout << "Engine exit." << '\n';
+
+    if (GEngine)
+    {
+        GEngine->TearDown();
+        delete GEngine;
+        GEngine = nullptr;
+    }
+
+    if (::HasCustomExitReason())
+    {
+        std::cout << "Engine exit requested: " << ::GetCustomExitReason() << '\n';
+    }
+
+    if (::HasCustomExitStatus())
+    {
+        std::cout << "Engine exit status: " << ::GetCustomExitStatus() << '\n';
+    }
+
     return;
 }
 
@@ -61,10 +80,10 @@ EPlatformExit::Type GuardedMain(const LChar* CmdLine)
         return ErrorLevel;
     }
 
-    // while (::IsTearingDown() == false)
-    // {
-    //     EngineTick();
-    // }
+    while (::IsTearingDown() == false)
+    {
+        EngineTick();
+    }
 
     return ErrorLevel;
 }

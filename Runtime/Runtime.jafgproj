@@ -1,4 +1,5 @@
 {
     "FriendlyName": "Runtime",
-    "Kind": "Launch"
+    "Kind": "Launch",
+    "Pch": "No"
 }

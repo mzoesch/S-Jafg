@@ -14,42 +14,42 @@ typedef std::chrono::steady_clock::time_point SteadyStatisticsTimePoint;
 
 }
 
-FORCEINLINE auto SetDeltaTime(const double DeltaTime) -> void;
-FORCEINLINE auto GetDeltaTime() -> double;
-FORCEINLINE auto GetDeltaTimeAsFloat() -> float;
-FORCEINLINE auto UpdateFrameCount() -> void;
-FORCEINLINE auto GetFrameCount() -> uint64;
+FORCEINLINE ENGINE_API auto SetDeltaTime(const double DeltaTime) -> void;
+FORCEINLINE ENGINE_API auto GetDeltaTime() -> double;
+FORCEINLINE ENGINE_API auto GetDeltaTimeAsFloat() -> float;
+FORCEINLINE ENGINE_API auto UpdateFrameCount() -> void;
+FORCEINLINE ENGINE_API auto GetFrameCount() -> uint64;
 
-FORCEINLINE auto GetCurrentFrameTime() -> double;
-FORCEINLINE auto SetCurrentFrameTime(const double CurrentFrameTime) -> void;
-FORCEINLINE auto GetPreviousFrameTime() -> double;
-FORCEINLINE auto SetPreviousFrameTime(const double PreviousFrameTime) -> void;
+FORCEINLINE ENGINE_API auto GetCurrentFrameTime() -> double;
+FORCEINLINE ENGINE_API auto SetCurrentFrameTime(const double CurrentFrameTime) -> void;
+FORCEINLINE ENGINE_API auto GetPreviousFrameTime() -> double;
+FORCEINLINE ENGINE_API auto SetPreviousFrameTime(const double PreviousFrameTime) -> void;
 
-FORCEINLINE auto GetCurrentFps() -> float;
-FORCEINLINE auto SetCurrentFps(const float CurrentFps) -> void;
-FORCEINLINE auto GetLowestFps() -> float;
-FORCEINLINE auto SetLowestFps(const float LowestFps) -> void;
-FORCEINLINE auto GetHighestFps() -> float;
-FORCEINLINE auto SetHighestFps(const float HighestFps) -> void;
-FORCEINLINE auto GetLastStatisticsTime() -> Private::SteadyStatisticsTimePoint;
-FORCEINLINE auto SetLastStatisticsTime(const Private::SteadyStatisticsTimePoint LastStatisticsTime) -> void;
-FORCEINLINE auto GetStatisticsFrameCount() -> uint64;
-FORCEINLINE auto ResetStatistics() -> void;
+FORCEINLINE ENGINE_API auto GetCurrentFps() -> float;
+FORCEINLINE ENGINE_API auto SetCurrentFps(const float CurrentFps) -> void;
+FORCEINLINE ENGINE_API auto GetLowestFps() -> float;
+FORCEINLINE ENGINE_API auto SetLowestFps(const float LowestFps) -> void;
+FORCEINLINE ENGINE_API auto GetHighestFps() -> float;
+FORCEINLINE ENGINE_API auto SetHighestFps(const float HighestFps) -> void;
+FORCEINLINE ENGINE_API auto GetLastStatisticsTime() -> Private::SteadyStatisticsTimePoint;
+FORCEINLINE ENGINE_API auto SetLastStatisticsTime(const Private::SteadyStatisticsTimePoint LastStatisticsTime) -> void;
+FORCEINLINE ENGINE_API auto GetStatisticsFrameCount() -> uint64;
+FORCEINLINE ENGINE_API auto ResetStatistics() -> void;
 
 namespace Private
 {
 
-extern double DeltaTime;
-extern uint64 FrameCount;
+ENGINE_API extern double DeltaTime;
+ENGINE_API extern uint64 FrameCount;
 
-extern double CurrentFrameTime;
-extern double PreviousFrameTime;
+ENGINE_API extern double CurrentFrameTime;
+ENGINE_API extern double PreviousFrameTime;
 
-extern float                     CurrentFps;
-extern float                     LowestFps;
-extern float                     HighestFps;
-extern SteadyStatisticsTimePoint LastStatisticsTime;
-extern uint64                    StatisticsFrameCount;
+ENGINE_API extern float                     CurrentFps;
+ENGINE_API extern float                     LowestFps;
+ENGINE_API extern float                     HighestFps;
+ENGINE_API extern SteadyStatisticsTimePoint LastStatisticsTime;
+ENGINE_API extern uint64                    StatisticsFrameCount;
 
 }
 

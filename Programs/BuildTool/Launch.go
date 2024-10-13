@@ -5,12 +5,16 @@ package BuildTool
 import (
     "Jafg/BuildTool/Info"
     "Jafg/Shared"
+    "fmt"
     "slices"
 )
 
 func Launch(args []string) {
     Info.GProjectBuildInfo = new (Info.ProjectBuildInfo)
     Info.GProjectBuildInfo.Initialize(args)
+
+    fmt.Println(fmt.Sprintf("Launching build tool for project %s ...", Info.GProjectBuildInfo.ProjectName))
+    fmt.Println(fmt.Sprintf("Build Info: %s.", Info.GProjectBuildInfo.ToString()))
 
     if slices.Contains(args, "--pre-build") {
         LaunchPreBuildTasks(args)
@@ -30,5 +34,10 @@ func LaunchPreBuildTasks(args []string) {
 }
 
 func LaunchPostBuildTasks(args []string) {
+    if Info.GProjectBuildInfo.Kind.IsLaunch() {
+        CopyContentFolder()
+        CopySharedProjectBinaries()
+    }
+
     return
 }

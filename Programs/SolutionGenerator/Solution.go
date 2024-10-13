@@ -125,8 +125,20 @@ func MakeBuildLuaContent() string {
 
     builder.WriteString("    prebuildcommands {\n")
     builder.WriteString("        'echo Launching pre build programs ...',\n")
-    builder.WriteString("        'python ../Program.py --fwd --BuildTool --pre-build --BUILD_CONFIG=%{cfg.buildcfg} --PLATFORM=%{cfg.platform} --PROJ_NAME=%{prj.name} --CFG_KIND=%{cfg.kind}',\n")
+    builder.WriteString("        'python ../Program.py --fwd --BuildTool --pre-build --BUILD_CONFIG=%{cfg.buildcfg} " +
+        "--PLATFORM=%{cfg.platform} --PROJ_NAME=%{prj.name} --CFG_KIND=%{cfg.kind} " +
+        "--CFG_SYSTEM=%{cfg.system} --CFG_ARCHITECTURE=%{cfg.architecture}',\n",
+    )
     builder.WriteString("        'echo Finished all pre build programs.',\n")
+    builder.WriteString("    }\n")
+
+    builder.WriteString("    postbuildcommands {\n")
+    builder.WriteString("        'echo Launching post build programs ...',\n")
+    builder.WriteString("        'python ../Program.py --fwd --BuildTool --post-build --BUILD_CONFIG=%{cfg.buildcfg} " +
+        "--PLATFORM=%{cfg.platform} --PROJ_NAME=%{prj.name} --CFG_KIND=%{cfg.kind} " +
+        "--CFG_SYSTEM=%{cfg.system} --CFG_ARCHITECTURE=%{cfg.architecture}',\n",
+    )
+    builder.WriteString("        'echo Finished all post build programs.',\n")
     builder.WriteString("    }\n")
 
     builder.WriteString("filter 'system:windows'\n")
@@ -174,12 +186,20 @@ func MakeBuildLuaContent() string {
         includeDirs = append(includeDirs, Shared.GeneratedHeadersDir)
         if proj.Name != "Lal" {
             includeDirs = append(includeDirs, Shared.GApp.GetCheckedProjectByName("Lal").GetRelativeDirPath()+"/Source/Public")
+            includeDirs = append(includeDirs, Shared.VendorIncludeDir)
+            /* Has to be included directly and not insides the namespace. */
+            includeDirs = append(includeDirs, Shared.VendorIncludeDir+"/Freetype")
         }
         if proj.Name != "Lal" && proj.Name != "Engine" {
             includeDirs = append(includeDirs, Shared.GApp.GetCheckedProjectByName("Engine").GetRelativeDirPath()+"/Source/Public")
         }
 
         var linkedLibs []string = []string{}
+        if proj.Name != "Lal" {
+            linkedLibs = append(linkedLibs, "Lal")
+            linkedLibs = append(linkedLibs, Shared.VendorLibDir+"/glfw3.lib")
+            linkedLibs = append(linkedLibs, Shared.VendorLibDir+"/freetype.lib")
+        }
         if proj.Name != "Lal" && proj.Name != "Engine" {
             linkedLibs = append(linkedLibs, "Engine")
         }
@@ -195,8 +215,12 @@ func MakeBuildLuaContent() string {
             builder.WriteString("    filter {}\n")
         }
 
-        builder.WriteString("    targetdir ('Binaries/%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}/" + proj.GetRelativeDirPath() + "/')\n")
-        builder.WriteString("    objdir ('Intermediate/%{cfg.system}-%{cfg.architecture}/%{cfg.buildcfg}/" + proj.GetRelativeDirPath() + "/')\n")
+        builder.WriteString(fmt.Sprintf("    targetdir ('%s/%%{cfg.system}-%%{cfg.architecture}/%%{cfg.buildcfg}/%s/')\n",
+            Shared.BinariesDir, proj.GetRelativeDirPath(),
+        ))
+        builder.WriteString(fmt.Sprintf("    objdir ('%s/%%{cfg.system}-%%{cfg.architecture}/%%{cfg.buildcfg}/%s/')\n",
+            Shared.IntermediateDir,  proj.GetRelativeDirPath(),
+        ))
 
         builder.WriteString("    files {\n" +
             "        '" + proj.GetRelativeDirPath() + "/**.md',\n" +
@@ -226,10 +250,19 @@ func MakeBuildLuaContent() string {
         }
         builder.WriteString("    }\n")
 
-        builder.WriteString("    -- Somehow this does not work??\n")
-        builder.WriteString("    -- The IDEA will just set the pch to /Yu but we, of course, nett /Yc\n")
-        builder.WriteString("    pchheader 'CoreAFX.h'\n")
-        builder.WriteString("    pchsource '" + Shared.GApp.GetProjectByName("Lal").GetRelativeDirPath() + "/Source/Private/CoreAFX.cpp'\n")
+        if proj.Pch.IsUse() || proj.Pch.IsGenerate() {
+            if proj.Pch.IsGenerate() {
+                /*
+                 * To fix the below problem, we rerun this program after the lua script has been executed.
+                 * Fixing this manually by editing the .vcxproj files.
+                 * @see Arg: --PostLuaRun
+                 */
+                builder.WriteString("    -- Somehow this does not work??\n")
+                builder.WriteString("    -- The IDEA will just set the pch to /Yu but we, of course, need /Yc\n")
+            }
+            builder.WriteString("    pchheader 'CoreAFX.h'\n")
+            builder.WriteString("    pchsource '" + Shared.GApp.GetProjectByName("Lal").GetRelativeDirPath() + "/Source/Private/CoreAFX.cpp'\n")
+        }
 
         builder.WriteString("group ''\n")
     }
@@ -240,7 +273,11 @@ func MakeBuildLuaContent() string {
 func FixAfx() {
     fmt.Println("Fixing AFX from /Yu to /Yc")
     for _, proj := range Shared.GApp.Projects {
-        FixAfxForProject(proj)
+        if proj.Pch.IsGenerate() {
+            FixAfxForProject(proj)
+        }
+
+        continue
     }
 
     return
@@ -265,7 +302,8 @@ func FixAfxForProject(proj Shared.Project) {
     for scanner.Scan() {
         var line string = scanner.Text()
         if strings.Contains(line, "<PrecompiledHeader>Use</PrecompiledHeader>") {
-            line = strings.ReplaceAll(line, "<PrecompiledHeader>Use</PrecompiledHeader>", "<PrecompiledHeader>Create</PrecompiledHeader>")
+            line = strings.ReplaceAll(line, "<PrecompiledHeader>Use</PrecompiledHeader>",
+                "<PrecompiledHeader>Create</PrecompiledHeader>")
         }
 
         lines = append(lines, line)

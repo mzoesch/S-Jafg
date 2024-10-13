@@ -1,4 +1,5 @@
 {
     "FriendlyName": "Lal",
-    "Kind": "Static"
+    "Kind": "Static",
+    "Pch": "Generate"
 }

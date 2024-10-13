@@ -10,14 +10,24 @@ import (
 )
 
 type Project struct {
+    /** Internal name / identifier. */
     Name         string
+
+    /** What a user might see. */
     FriendlyName string
 
     /** The path to the .jafgproj file. */
     Path string
 
+    /** Kind of project. */
     Kind ProjectKind
+    /** How to respond to Pch usage. */
+    Pch  Pch
 
+    /**
+     * Automatically generated. For preproc only.
+     * @see Build.h and Build.generated.h
+     */
     PreProcInteger int64
 }
 
@@ -79,7 +89,7 @@ func (proj *Project) Initialize(preProcInteger int64, name string, pathToProjFil
                 fmt.Println(i, u)
             }
         default:
-            fmt.Println(k, "is of a type I don't know how to handle")
+            fmt.Println(k, "is of a type I don't know how to handle.")
         }
     }
 
@@ -92,6 +102,8 @@ func (proj *Project) InitializeWithSingleJsonField(key string, value string) {
         proj.FriendlyName = value
     case "Kind":
         proj.Kind = ProjectKindFromString(value)
+    case "Pch":
+        proj.Pch = PchFromString(value)
     default:
         panic("Unknown key in project JSON: " + key)
     }

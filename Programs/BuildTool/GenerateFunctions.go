@@ -20,8 +20,8 @@ func GenerateBuildHeaderFile() {
     var file *os.File = Shared.OpenFile(TargetFile, true, os.O_WRONLY)
 
     var content string = fmt.Sprintf(`
-#define PRIVATE_JAFG_BUILD_GENERATED_STR_HELPER(msg) #msg
-#define PRIVATE_JAFG_BUILD_GENERATED_STR(x) PRIVATE_JAFG_BUILD_GENERATED_STR_HELPER(x)
+#define PRIVATE_JAFG_BUILD_GENERATED_STR_HELPER(msg)        #msg
+#define PRIVATE_JAFG_BUILD_GENERATED_STR(x)                 PRIVATE_JAFG_BUILD_GENERATED_STR_HELPER( x )
 
 /*-----------------------------------------------------------------------------
     Call specs for all projects.

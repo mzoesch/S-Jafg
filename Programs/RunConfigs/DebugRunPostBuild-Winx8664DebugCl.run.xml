@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="DebugRunPostBuild-Winx8664DebugCl" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="Programs" />
+    <working_directory value="$PROJECT_DIR$" />
+    <parameters value="--fwd --BuildTool --post-build --BUILD_CONFIG=Debug --PLATFORM=Client --PROJ_NAME=Runtime --CFG_KIND=ConsoleApp --CFG_SYSTEM=windows --CFG_ARCHITECTURE=x86_64" />
+    <kind value="PACKAGE" />
+    <package value="Jafg" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/Main.go" />
+    <method v="2" />
+  </configuration>
+</component>

@@ -47,7 +47,7 @@ func (kind ProjectKind) IsLaunch() bool {
     return kind == LAUNCH
 }
 
-func IsValid(kind string) bool {
+func IsValidProjectKind(kind string) bool {
     switch kind {
     case "Shared":
         return true

@@ -1,6 +1,4 @@
-/*
- * Copyright 2024 mzoesch. All rights reserved.
- */
+// Copyright 2024 mzoesch. All rights reserved.
 
 package Shared
 
@@ -24,6 +22,17 @@ func GetRuneCountInString(s string, r rune) int {
 func CheckForDir(subDir string) {
     if _, err := os.Stat(fmt.Sprintf("%s/%s", GApp.GetEngineRootDir(), subDir)); os.IsNotExist(err) {
         err := os.MkdirAll(fmt.Sprintf("%s/%s", GApp.GetEngineRootDir(), subDir), os.ModePerm)
+        if err != nil {
+            panic(err)
+        }
+    }
+
+    return
+}
+
+func CheckForDirAbsolute(absPath string) {
+    if _, err := os.Stat(absPath); os.IsNotExist(err) {
+        err := os.MkdirAll(absPath, os.ModePerm)
         if err != nil {
             panic(err)
         }

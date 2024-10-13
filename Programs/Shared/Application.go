@@ -18,6 +18,11 @@ func FullSolutionLuaPath() string {
 var GeneratedHeaderExtension string = ".generated.h"
 
 var GeneratedHeadersDir string = "Vslf/gh"
+var VendorIncludeDir string = "Engine/Vendor/Include"
+var VendorLibDir string = "Engine/Vendor/Lib"
+var ContentDir string = "Content"
+var BinariesDir string = "Binaries"
+var IntermediateDir string = "Intermediate"
 
 func FullGeneratedHeadersDir() string {
     return GApp.GetEngineRootDir() + "/" + GeneratedHeadersDir
@@ -133,6 +138,8 @@ func DetectAllProjects() {
 
                 bValid = true
             }
+
+            continue
         }
 
         if !bValid {
