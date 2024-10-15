@@ -15,6 +15,8 @@ class JLocalPlayer;
 class JWorld;
 class Surface;
 
+ENGINE_EXTERN template class ENGINE_API TArray<::Jafg::LLevel, ::Jafg::ResizePolicy::Dynamic, ::Jafg::AllocationPolicy::Heap>;
+
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
 
@@ -116,7 +118,8 @@ public:
     /** Browse to a new Url at the next opportunity. */
     auto Browse(const JWorld& Context, const LString& Url) -> void;
     /** @return True if registered successfully.*/
-    auto RegisterLevel(LLevel InLevel) -> bool;
+    auto RegisterLevel(const LLevel& InLevel) -> bool;
+    auto RegisterLevel(const LLevel&& InLevel) -> bool;
     auto IsLevelRegistered(const LString& Identifier) const -> bool;
 
 private:
@@ -141,7 +144,7 @@ private:
      */
     LWorldContext* Contexts[LEngine::MaxContexts] = { nullptr, nullptr, nullptr, };
     /** The registered levels that this engine can load. */
-    std::vector<LLevel> RegisteredLevels = { };
+    TdhArray<LLevel> RegisteredLevels = { };
 };
 
-} /* ~Namespace Jafg */
+} /* Namespace Jafg */

@@ -1,5 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
+#include "CoreAFX.h"
 #include "MyWorld/Chunk/ChunkGenerationSubsystem.h"
 #include "Engine/World.h"
 #include "Engine/Framework/Camera.h"

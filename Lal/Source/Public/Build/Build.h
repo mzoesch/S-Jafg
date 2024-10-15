@@ -97,11 +97,22 @@
 #if DO_EVER_CHECKS
     #if IN_SHIPPING
         #define DO_CHECKS               DO_CHECKS_IN_SHIPPING
+        #if LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME
+            #define DO_SLOW_CHECKS      DO_CHECKS_IN_SHIPPING
+        #else /* LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME */
+            #define DO_SLOW_CHECKS      0
+        #endif /* !LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME */
     #else /* IN_SHIPPING */
         #define DO_CHECKS               1
+        #if IN_DEVELOPMENT
+            #define DO_SLOW_CHECKS      LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME
+        #else /* IN_DEVELOPMENT */
+            #define DO_SLOW_CHECKS      ALLOW_SLOW_CHECKS
+        #endif /* !IN_DEVELOPMENT */
     #endif /* !IN_SHIPPING */
 #else /* DO_EVER_CHECKS */
     #define DO_CHECKS                   0
+    #define DO_SLOW_CHECKS              0
 #endif /* !DO_EVER_CHECKS */
 
 /**

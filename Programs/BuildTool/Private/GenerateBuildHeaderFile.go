@@ -22,9 +22,13 @@ func GetProjectCallSpecs() string {
             if proj.Name == projApi.Name {
                 builder.WriteString("    ")
                 builder.WriteString(GetCallSpecForProject(&projApi, projApi.Kind.IsShared()))
+                builder.WriteString("    ")
+                builder.WriteString(GetExternSpecForProject(&projApi, projApi.Kind.IsShared()))
             } else {
                 builder.WriteString("    ")
                 builder.WriteString(GetCallSpecForProject(&projApi, false))
+                builder.WriteString("    ")
+                builder.WriteString(GetExternSpecForProject(&projApi, false))
             }
         }
 
@@ -66,6 +70,20 @@ func GetCallSpecForProject(proj *Shared.Project, bDoExport bool) string {
     }
 
     return fmt.Sprintf("#define %s_API                  %s\n",
+        strings.ToUpper(proj.Name),
+        spec,
+    )
+}
+
+func GetExternSpecForProject(proj *Shared.Project, bDoExport bool) string {
+    var spec string = ""
+    if bDoExport {
+        spec = "PLATFORM_EXTERNSPEC_OUT"
+    } else {
+        spec = "PLATFORM_EXTERNSPEC_IN"
+    }
+
+    return fmt.Sprintf("#define %s_EXTERN              %s\n",
         strings.ToUpper(proj.Name),
         spec,
     )

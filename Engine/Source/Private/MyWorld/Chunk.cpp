@@ -1,5 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
+#include "CoreAFX.h"
 #include "MyWorld/Chunk.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

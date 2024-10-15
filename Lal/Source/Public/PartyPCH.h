@@ -29,4 +29,3 @@
 #include <functional>
 #include <memory>
 #include <chrono>
-#include <cassert>

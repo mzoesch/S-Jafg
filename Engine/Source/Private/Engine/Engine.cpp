@@ -310,15 +310,7 @@ void Jafg::LEngine::TravelContext(LWorldContext& Context)
 
 Jafg::LLevel* Jafg::LEngine::GetLevelByInternalUrl(const LString& Url)
 {
-    for (LLevel& i : this->RegisteredLevels)
-    {
-        if (i.Identifier == Url)
-        {
-            return &i;
-        }
-    }
-
-    return nullptr;
+    return this->RegisteredLevels.FindRef(Url);
 }
 
 void Jafg::LEngine::Browse(const JWorld& Context, const LString& Url)
@@ -326,24 +318,43 @@ void Jafg::LEngine::Browse(const JWorld& Context, const LString& Url)
     this->Browse(this->GetContextFromWorld(Context), Url);
 }
 
-bool Jafg::LEngine::RegisterLevel(LLevel InLevel)
+bool Jafg::LEngine::RegisterLevel(const LLevel& InLevel)
 {
     if (this->IsLevelRegistered(InLevel.Identifier))
     {
         return false;
     }
 
-    this->RegisteredLevels.emplace_back(std::move(InLevel));
+    this->RegisteredLevels.Add(InLevel);
+
+    return true;
+}
+
+bool Jafg::LEngine::RegisterLevel(const LLevel&& InLevel)
+{
+    if (this->IsLevelRegistered(InLevel.Identifier))
+    {
+        return false;
+    }
+
+    this->RegisteredLevels.Add(InLevel);
 
     return true;
 }
 
 bool Jafg::LEngine::IsLevelRegistered(const LString& Identifier) const
 {
-    return std::ranges::any_of(
-        this->RegisteredLevels,
-        [&Identifier] (const LLevel& i) { return i.Identifier == Identifier; }
+    return this->RegisteredLevels.ContainsByPredicate(
+        [&Identifier] (const LLevel& i)
+        {
+            return i.Identifier == Identifier;
+        }
     );
+    //
+    // return std::ranges::any_of(
+    //     this->RegisteredLevels,
+    //     [&Identifier] (const LLevel& i) { return i.Identifier == Identifier; }
+    // );
 }
 
 uint8 Jafg::LEngine::GetFirstAvailableContextIndex() const

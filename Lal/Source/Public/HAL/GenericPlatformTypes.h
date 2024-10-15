@@ -3,20 +3,25 @@
 #pragma once
 
 #include <codecvt>
-#include <string>
 
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler dependent features
 
 #ifndef NODISCARD
-    #define NODISCARD [[nodiscard]]
+    #define NODISCARD           [[nodiscard]]
 #endif /* !NODISCARD */
 
 #ifndef FORCEINLINE
-    #define FORCEINLINE _forceinline
+    #define FORCEINLINE         _forceinline
 #endif /* !FORCEINLINE */
 
-#define LITERAL_WIDE(x) L##x
+#ifndef RESTRICT
+    #define RESTRICT            __restrict
+#endif /* !RESTRICT */
+
+#ifndef LITERAL_WIDE
+    #define LITERAL_WIDE(x)     L##x
+#endif /* !LITERAL_WIDE */
 
 // ~Compiler dependent features
 ///////////////////////////////////////////////////////////////////////////////
@@ -53,8 +58,8 @@ struct LGenericPlatformTypes
     /** A switchable character - either AnsiChar or WideChar. */
     typedef LAnsiChar           LChar;
 
-    typedef std::string         LString;
     typedef std::wstring        LWideString;
+    typedef std::string         LString;
 
     static LString Ws2S(const LWideString& Ws)
     {

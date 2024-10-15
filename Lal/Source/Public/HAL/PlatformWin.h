@@ -33,3 +33,5 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
 
 #define PLATFORM_CALLSPEC_OUT       __declspec ( dllexport )
 #define PLATFORM_CALLSPEC_IN        __declspec ( dllimport )
+#define PLATFORM_EXTERNSPEC_OUT
+#define PLATFORM_EXTERNSPEC_IN      extern

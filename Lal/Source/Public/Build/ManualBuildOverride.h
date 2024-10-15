@@ -15,13 +15,25 @@
 -----------------------------------------------------------------------------*/
 
 /** Whether to ever do checks. This affects all build configurations. */
-#define DO_EVER_CHECKS                  1
+#define DO_EVER_CHECKS                              1
+
 /** Whether to override the default behavior to strip checks in shipping builds. */
-#define DO_CHECKS_IN_SHIPPING           0
+#define DO_CHECKS_IN_SHIPPING                       0
+
+/** Whether to override the default behavior to strip checks in debug builds. */
+#define ALLOW_SLOW_CHECKS                           1
+
+/**
+ * Whether slow checks should share the same lifetime as normal checks among build configurations.
+ * Default is zero, so slow checks only get evaluated in debug builds.
+ */
+#define LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME        0
+
 /** Whether to ever do assertions. This affects all build configurations. */
-#define DO_EVER_ASSERTS                 1
+#define DO_EVER_ASSERTS                             1
+
 /**
  * Whether to evaporate assertions in shipping builds. Turing this on may cause undefined behavior
  * when encountering an assertion in shipping builds.
  */
-#define DO_STRIP_ASSERTS_IN_SHIPPING    0
+#define DO_STRIP_ASSERTS_IN_SHIPPING                0

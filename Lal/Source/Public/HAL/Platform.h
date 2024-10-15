@@ -82,3 +82,10 @@ typedef LPlatformTypes::LWideString  LWideString;
 #ifndef PLATFORM_CALLSPEC_OUT
     #error "PLATFORM_CALLSPEC_OUT is not defined."
 #endif /* !PLATFORM_CALLSPEC_OUT */
+
+#ifndef PLATFORM_EXTERNSPEC_IN
+    #error "PLATFORM_EXTERNSPEC_IN is not defined."
+#endif /* !PLATFORM_EXTERNSPEC_IN */
+#ifndef PLATFORM_EXTERNSPEC_OUT
+    #error "PLATFORM_EXTERNSPEC_OUT is not defined."
+#endif /* !PLATFORM_EXTERNSPEC_OUT */
