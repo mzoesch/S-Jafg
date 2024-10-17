@@ -12,6 +12,7 @@ import (
 type Application struct {
     Projects []Project
     Config AppConfiguration
+    CurPreProcCursor int64
 }
 
 var GApp *Application = nil
@@ -20,9 +21,9 @@ func (app *Application) Initialize() {
     GApp = app
     DetectAllProjects()
 
-    fmt.Println("Projects detected:")
+    fmt.Println("| Projects:")
     for _, proj := range app.Projects {
-        fmt.Println("  - " + proj.ToString())
+        fmt.Print(proj.ToFancyString(2, true))
     }
 
     app.Config = AppConfiguration{}
@@ -30,6 +31,20 @@ func (app *Application) Initialize() {
 
     fmt.Println(app.Config.ToString())
 
+    var preProcInts map[int64]bool = make(map[int64]bool)
+    for _, proj := range app.Projects {
+        procs := proj.GetAllPreProcIntegers()
+
+        for _, proc := range procs {
+            if preProcInts[proc] {
+                panic(fmt.Sprintf("PreProcInt collision: %d. Faulty project: %s", proc, proj.Name))
+            }
+
+            preProcInts[proc] = true
+        }
+
+        continue
+    }
 
     return
 }
@@ -88,7 +103,7 @@ func DetectAllProjects() {
         panic(err)
     }
 
-    var curProjPreProcInteger int64 = 1
+    GApp.CurPreProcCursor = 1
     for _, entry := range entries {
         if !entry.IsDir() {
             continue
@@ -143,12 +158,37 @@ func DetectAllProjects() {
             panic(err)
         }
 
-        proj.Initialize(curProjPreProcInteger, entry.Name(), resolvedProjFile, string(file[:]))
-        curProjPreProcInteger *= 2
+        var thisProjPreProcCursor int64 = GApp.CurPreProcCursor
+        GApp.CurPreProcCursor *= 2
+        proj.Initialize(thisProjPreProcCursor, entry.Name(), resolvedProjFile, string(file[:]))
 
         GApp.Projects = append(GApp.Projects, proj)
 
         continue
+    }
+
+    CheckForCircularDependencies()
+
+    return
+}
+
+func CheckForCircularDependencies() {
+    for _, proj := range GApp.Projects {
+        CheckForCircularDependenciesImpl(&proj, make(map[string]bool))
+    }
+
+    return
+}
+
+func CheckForCircularDependenciesImpl(proj *Project, visited map[string]bool) {
+    if visited[proj.Name] {
+        panic("Circular dependency detected: " + proj.Name)
+    }
+
+    visited[proj.Name] = true
+
+    for _, subProj := range proj.Projects {
+        CheckForCircularDependenciesImpl(&subProj, visited)
     }
 
     return

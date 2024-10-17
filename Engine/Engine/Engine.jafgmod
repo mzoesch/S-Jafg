@@ -1,0 +1,6 @@
+{
+    "FriendlyName": "Engine",
+    "PublicDependencies": [
+        "CORE_DEPENDENCIES", "Lal"
+    ]
+}

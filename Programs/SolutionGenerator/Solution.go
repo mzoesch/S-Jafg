@@ -7,6 +7,7 @@ import (
     "bufio"
     "fmt"
     "os"
+    "slices"
     "strings"
 )
 
@@ -177,105 +178,172 @@ func MakeBuildLuaContent() string {
     builder.WriteString("filter {}\n")
 
     for _, proj := range Shared.GApp.Projects {
-        var defines []string = []string{}
-        defines = append(defines, "CURRENT_PROJECT_NAME="+strings.ToUpper(proj.Name))
-        defines = append(defines, fmt.Sprintf("PRIVATE_JAFG_CURRENT_PROJECT_PREPROC_IDENT=%s", proj.GetPreProcIntAsString()))
-
-        var includeDirs []string = []string{}
-        includeDirs = append(includeDirs, proj.GetRelativeDirPath()+"/Source/Public")
-        includeDirs = append(includeDirs, Shared.GeneratedHeadersDir)
-        if proj.Name != "Lal" {
-            includeDirs = append(includeDirs, Shared.GApp.GetCheckedProjectByName("Lal").GetRelativeDirPath()+"/Source/Public")
-            includeDirs = append(includeDirs, Shared.VendorIncludeDir)
-            /* Has to be included directly and not insides the namespace. */
-            includeDirs = append(includeDirs, Shared.VendorIncludeDir+"/Freetype")
-        }
-        if proj.Name != "Lal" && proj.Name != "Engine" {
-            includeDirs = append(includeDirs, Shared.GApp.GetCheckedProjectByName("Engine").GetRelativeDirPath()+"/Source/Public")
-        }
-
-        var linkedLibs []string = []string{}
-        if proj.Name != "Lal" {
-            linkedLibs = append(linkedLibs, "Lal")
-            linkedLibs = append(linkedLibs, Shared.VendorLibDir+"/glfw3.lib")
-            linkedLibs = append(linkedLibs, Shared.VendorLibDir+"/freetype.lib")
-        }
-        if proj.Name != "Lal" && proj.Name != "Engine" {
-            linkedLibs = append(linkedLibs, "Engine")
-        }
-
-        builder.WriteString(fmt.Sprintf("group '%s'\n", proj.Name))
-        builder.WriteString(fmt.Sprintf("project '%s'\n", proj.Name))
-        builder.WriteString(fmt.Sprintf("    location '%s'\n", proj.Name))
-        builder.WriteString(fmt.Sprintf("    kind '%s'\n", proj.Kind.ToLuaString()))
-
-        if proj.Kind == Shared.LAUNCH {
-            builder.WriteString("    filter 'system:windows'\n")
-            builder.WriteString("        entrypoint 'WinMainCRTStartup'\n")
-            builder.WriteString("    filter {}\n")
-        }
-
-        builder.WriteString(fmt.Sprintf("    targetdir ('%s/%%{cfg.system}-%%{cfg.architecture}/%%{cfg.buildcfg}/%s/')\n",
-            Shared.BinariesDir, proj.GetRelativeDirPath(),
-        ))
-        builder.WriteString(fmt.Sprintf("    objdir ('%s/%%{cfg.system}-%%{cfg.architecture}/%%{cfg.buildcfg}/%s/')\n",
-            Shared.IntermediateDir,  proj.GetRelativeDirPath(),
-        ))
-
-        builder.WriteString("    files {\n" +
-            "        '" + proj.GetRelativeDirPath() + "/**.md',\n" +
-            "        '" + proj.GetRelativeDirPath() + "/**.jafgproj',\n" +
-            "        '" + proj.GetRelativeDirPath() + "/Source/**.h',\n" +
-            "        '" + proj.GetRelativeDirPath() + "/Source/**.hpp',\n" +
-            "        '" + proj.GetRelativeDirPath() + "/Source/**.c',\n" +
-            "        '" + proj.GetRelativeDirPath() + "/Source/**.cpp',\n" +
-            "    }\n",
-        )
-
-        builder.WriteString("    defines {\n")
-        for _, define := range defines {
-            builder.WriteString("        '" + define + "',\n")
-        }
-        builder.WriteString("    }\n")
-
-        builder.WriteString("    includedirs {\n")
-        for _, includeDir := range includeDirs {
-            builder.WriteString("        '" + includeDir + "',\n")
-        }
-        builder.WriteString("    }\n")
-
-        builder.WriteString("    links {\n")
-        for _, linkedLib := range linkedLibs {
-            builder.WriteString("        '" + linkedLib + "',\n")
-        }
-        builder.WriteString("    }\n")
-
-        if proj.Pch.IsUse() || proj.Pch.IsGenerate() {
-            if proj.Pch.IsGenerate() {
-                /*
-                 * To fix the below problem, we rerun this program after the lua script has been executed.
-                 * Fixing this manually by editing the .vcxproj files.
-                 * @see Arg: --PostLuaRun
-                 */
-                builder.WriteString("    -- Somehow this does not work??\n")
-                builder.WriteString("    -- The IDEA will just set the pch to /Yu but we, of course, need /Yc\n")
-            }
-            builder.WriteString("    pchheader 'CoreAFX.h'\n")
-            builder.WriteString("    pchsource '" + Shared.GApp.GetProjectByName("Lal").GetRelativeDirPath() + "/Source/Private/CoreAFX.cpp'\n")
-        }
-
-        builder.WriteString("group ''\n")
+        MakeProjectSpecificLuaContent(&builder, &proj, 0)
     }
 
     return builder.String()
 }
 
-func FixAfx() {
-    fmt.Println("Fixing AFX from /Yu to /Yc")
-    for _, proj := range Shared.GApp.Projects {
-        if proj.Pch.IsGenerate() {
-            FixAfxForProject(proj)
+func MakeProjectSpecificLuaContent(builder *strings.Builder, proj *Shared.Project, indent int) {
+    /* Defines for every module of a project. */
+    var projDefines []string
+    projDefines = append(projDefines, "CURRENT_PROJECT_NAME="+strings.ToUpper(proj.Name))
+    projDefines = append(projDefines, fmt.Sprintf("PRIVATE_JAFG_CURRENT_PROJECT_PREPROC_IDENT=%s", proj.GetPreProcIntAsString()))
+
+    for _, m := range proj.Modules {
+        var modDefines []string
+        modDefines = append(modDefines, "CURRENT_MODULE_NAME="+strings.ToUpper(m.GetName()))
+        modDefines = append(modDefines, fmt.Sprintf("PRIVATE_JAFG_CURRENT_MODULE_PREPROC_IDENT=%s", m.GetPreProcInt()))
+
+        var includeDirs []string
+        var linkedLibs []string
+        includeDirs = append(includeDirs, proj.GetRelativeDirPath()+"/Source/Public")
+        includeDirs = append(includeDirs, Shared.GeneratedHeadersDir)
+
+        var dependencies []string
+        GetAllDependenciesRecursiveForModule(m, &dependencies)
+
+        for _, publicDep := range dependencies {
+            if publicDep == "CORE_DEPENDENCIES" {
+                includeDirs = append(includeDirs, Shared.VendorIncludeDir)
+                /* Has to be included directly and not insides the namespace. */
+                includeDirs = append(includeDirs, Shared.VendorIncludeDir+"/Freetype")
+
+                linkedLibs = append(linkedLibs, Shared.VendorLibDir+"/glfw3.lib")
+                linkedLibs = append(linkedLibs, Shared.VendorLibDir+"/freetype.lib")
+
+                continue
+            }
+
+            continue
         }
+
+        continue
+    }
+
+    var dependencies []string
+    GetAllDependenciesRecursiveForProject(proj, &dependencies)
+    for _, publicDep := range dependencies {
+        if publicDep == "CORE_DEPENDENCIES" {
+            includeDirs = append(includeDirs, Shared.VendorIncludeDir)
+            /* Has to be included directly and not insides the namespace. */
+            includeDirs = append(includeDirs, Shared.VendorIncludeDir+"/Freetype")
+
+            linkedLibs = append(linkedLibs, Shared.VendorLibDir+"/glfw3.lib")
+            linkedLibs = append(linkedLibs, Shared.VendorLibDir+"/freetype.lib")
+
+            continue
+        }
+
+        var depProj *Shared.Project = Shared.GApp.GetCheckedProjectByName(publicDep)
+
+        includeDirs = append(includeDirs, depProj.GetRelativeDirPath()+"/Source/Public")
+
+        if depProj.Kind.IsLaunch() {
+            panic("Launch projects cannot be public dependencies. Faulty dependency: " +
+                depProj.Name + " in project: " + proj.Name)
+        }
+
+        if depProj.Kind.IsShared() {
+            linkedLibs = append(linkedLibs, depProj.Name)
+        }
+
+        if depProj.Kind.IsStatic() {
+            linkedLibs = append(linkedLibs, depProj.Name)
+        }
+
+        continue
+    }
+
+    builder.WriteString(fmt.Sprintf("%sgroup '%s'\n", Shared.Indent(indent), strings.Join(proj.GetInclusiveParentProjectChain(), "/")))
+    builder.WriteString(fmt.Sprintf("%sproject '%s'\n", Shared.Indent(indent), proj.Name))
+    builder.WriteString(fmt.Sprintf("%s    location '%s'\n", Shared.Indent(indent), proj.GetRelativeDirPath()))
+    builder.WriteString(fmt.Sprintf("%s    kind '%s'\n", Shared.Indent(indent), proj.Kind.ToLuaString()))
+
+    if proj.Kind == Shared.LAUNCH {
+        Shared.WriteWithIndent(builder, indent, "    filter 'system:windows'\n")
+        Shared.WriteWithIndent(builder, indent, "        entrypoint 'WinMainCRTStartup'\n")
+        Shared.WriteWithIndent(builder, indent, "    filter {}\n")
+    }
+
+    Shared.WriteWithIndent(builder, indent,
+        fmt.Sprintf("    targetdir ('%s/%%{cfg.system}-%%{cfg.architecture}/%%{cfg.buildcfg}/%s/')\n",
+        Shared.BinariesDir, proj.GetRelativeDirPath(),
+    ))
+    Shared.WriteWithIndent(builder, indent,
+        fmt.Sprintf("    objdir ('%s/%%{cfg.system}-%%{cfg.architecture}/%%{cfg.buildcfg}/%s/')\n",
+        Shared.IntermediateDir,  proj.GetRelativeDirPath(),
+    ))
+
+
+
+    Shared.WriteWithIndent(builder, indent, "    files {\n" +
+        Shared.Indent(indent) + "        '" + proj.GetRelativeDirPath() + "/**.md',\n" +
+        Shared.Indent(indent) + "        '" + proj.GetRelativeDirPath() + "/**.jafgproj',\n" +
+        Shared.Indent(indent) + "        '" + proj.GetRelativeDirPath() + "/Source/**.h',\n" +
+        Shared.Indent(indent) + "        '" + proj.GetRelativeDirPath() + "/Source/**.hpp',\n" +
+        Shared.Indent(indent) + "        '" + proj.GetRelativeDirPath() + "/Source/**.c',\n" +
+        Shared.Indent(indent) + "        '" + proj.GetRelativeDirPath() + "/Source/**.cpp',\n" +
+        Shared.Indent(indent) + "    }\n",
+    )
+
+    Shared.WriteWithIndent(builder, indent, "    defines {\n")
+    for _, define := range defines {
+        builder.WriteString(Shared.Indent(indent) + "        '" + define + "',\n")
+    }
+    Shared.WriteWithIndent(builder, indent, "    }\n")
+
+    Shared.WriteWithIndent(builder, indent, "    includedirs {\n")
+    for _, includeDir := range includeDirs {
+        builder.WriteString(Shared.Indent(indent) + "        '" + includeDir + "',\n")
+    }
+    Shared.WriteWithIndent(builder, indent, "    }\n")
+
+    Shared.WriteWithIndent(builder, indent, "    links {\n")
+    for _, linkedLib := range linkedLibs {
+        builder.WriteString(Shared.Indent(indent) + "        '" + linkedLib + "',\n")
+    }
+    Shared.WriteWithIndent(builder, indent, "    }\n")
+
+    if proj.Pch.IsUse() || proj.Pch.IsGenerate() {
+        if proj.Pch.IsGenerate() {
+            /*
+             * To fix the below problem, we rerun this program after the lua script has been executed.
+             * Fixing this manually by editing the .vcxproj files.
+             * @see Arg: --PostLuaRun
+             */
+            Shared.WriteWithIndent(builder, indent, "    -- Somehow this does not work??\n")
+            Shared.WriteWithIndent(builder, indent, "    -- The IDEA will just set the pch to /Yu but we, of course, need /Yc\n")
+        }
+        Shared.WriteWithIndent(builder, indent,
+            "    pchheader 'CoreAFX.h'\n")
+        Shared.WriteWithIndent(builder, indent,
+            "    pchsource '" + Shared.GApp.GetProjectByName("Lal").GetRelativeDirPath() + "/Source/Private/CoreAFX.cpp'\n")
+    }
+
+    for _, subProj := range proj.Projects {
+        MakeProjectSpecificLuaContent(builder, &subProj, indent + 4)
+    }
+
+    Shared.WriteWithIndent(builder, indent, "group ''\n")
+
+    return
+}
+
+func GetAllDependenciesRecursiveForProject(proj *Shared.Project, dependencies *[]string) {
+    if proj.Modules[0].IsPoly() {
+        panic("Only non poly projects can have dependencies. Did you mean to include the dependencies in the modules config file?")
+    }
+
+    for _, publicDep := range proj.PublicDependencies {
+        if slices.Contains(*dependencies, publicDep) {
+            continue
+        }
+
+        *dependencies = append(*dependencies, publicDep)
+
+        var depProj *Shared.Project = Shared.GApp.GetCheckedProjectByName(publicDep)
+        GetAllDependenciesRecursiveForProject(depProj, dependencies)
 
         continue
     }
@@ -283,16 +351,62 @@ func FixAfx() {
     return
 }
 
-// FixAfxForProject Fixes the wrongly generated precompiled header subsystem in the solution from /Yu to /Yc.
-func FixAfxForProject(proj Shared.Project) {
-    var targetedProjFile string = proj.GetAbsoluteDirPath() + "/" + proj.Name + ".vcxproj"
-    fmt.Println("Fixing AFX in file: " + targetedProjFile)
+func GetAllDependenciesRecursiveForModule(m Shared.Module, dependencies *[]string) {
+    if m.IsPoly() {
+        for _, publicDep := range m.GetPublicDependencies() {
+            if slices.Contains(*dependencies, publicDep) {
+                continue
+            }
 
-    if _, err := os.Stat(targetedProjFile); os.IsNotExist(err) {
-        panic("Could not find the project file: " + targetedProjFile)
+            *dependencies = append(*dependencies, publicDep)
+
+            var depProj *Shared.Project = Shared.GApp.GetCheckedProjectByName(publicDep)
+            GetAllDependenciesRecursiveForProject(depProj, dependencies)
+
+            continue
+        }
+    } else {
+        GetAllDependenciesRecursiveForProject(m.GetParent(), dependencies)
     }
 
-    file, err := os.OpenFile(targetedProjFile, os.O_RDWR, 0666)
+    return
+}
+
+func FixAfx() {
+    fmt.Println("Fixing AFX from /Yu to /Yc")
+
+    for _, proj := range Shared.GApp.Projects {
+        FixAfxForProjectRecursive(proj)
+    }
+
+    return
+}
+
+func FixAfxForProjectRecursive(proj Shared.Project) {
+    for _, mod := range proj.Modules {
+        var absPath string = Shared.RelPathToAbsPath(mod.GetRelDirPath())
+
+        FixAfxForFile(absPath + "/" + mod.GetName() + ".vcxproj")
+
+        continue
+    }
+
+    for _, subProj := range proj.Projects {
+        FixAfxForProjectRecursive(subProj)
+    }
+
+    return
+}
+
+// FixAfxForFile Fixes the wrongly generated precompiled header subsystem in the solution from /Yu to /Yc.
+func FixAfxForFile(absFile string) {
+    fmt.Println("Fixing AFX in file: " + absFile)
+
+    if _, err := os.Stat(absFile); os.IsNotExist(err) {
+        panic("Could not find the project file: " + absFile)
+    }
+
+    file, err := os.OpenFile(absFile, os.O_RDWR, 0666)
     if err != nil {
         panic(err)
     }

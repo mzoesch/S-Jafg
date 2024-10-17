@@ -3,8 +3,11 @@
 package Shared
 
 import (
+    "encoding/json"
     "fmt"
+    "io"
     "os"
+    "strings"
 )
 
 func GetRuneCountInString(s string, r rune) int {
@@ -69,6 +72,27 @@ func OpenFile(subDir string, bTruncate bool, flag int) *os.File {
     return file
 }
 
+func GetFileContents(file *os.File) string {
+    if file == nil {
+        panic("GetFileContents called with nil file")
+    }
+
+    data, err := io.ReadAll(file)
+    if err != nil {
+        panic(err)
+    }
+    return string(data)
+}
+
+func ReadFileContents(absFilePath string) string {
+    file, err := os.ReadFile(absFilePath)
+    if err != nil {
+        panic(err)
+    }
+
+    return string(file)
+}
+
 func WriteToFile(file *os.File, data string) {
     _, err := file.WriteString(data)
     if err != nil {
@@ -85,4 +109,27 @@ func CloseFile(file *os.File) {
     }
 
     return
+}
+
+func GetJsonMap(content string) map[string]interface{} {
+    var jsonInterface interface{}
+    var err error = json.Unmarshal([]byte(content), &jsonInterface)
+    if err != nil {
+        panic(err)
+    }
+
+    return jsonInterface.(map[string]interface{})
+}
+
+func RelPathToAbsPath(relPath string) string {
+    return fmt.Sprintf("%s/%s", GApp.GetEngineRootDir(), relPath)
+}
+
+func Indent(indent int) string {
+    return strings.Repeat(" ", indent)
+}
+
+func WriteWithIndent(builder *strings.Builder, indent int, content string) {
+    builder.WriteString(Indent(indent))
+    builder.WriteString(content)
 }

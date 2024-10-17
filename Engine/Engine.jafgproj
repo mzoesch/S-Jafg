@@ -1,5 +1,12 @@
 {
     "FriendlyName": "Engine",
     "Kind": "Shared",
-    "Pch": "No"
+    "Pch": "No",
+    "PrimaryModule": "Engine",
+    "Modules": [
+        "Engine", "Tester"
+    ],
+    "Projects": [
+        "RHI"
+    ]
 }

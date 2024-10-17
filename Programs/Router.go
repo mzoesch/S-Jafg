@@ -10,7 +10,9 @@ import (
 )
 
 func RouteToSubProgram(args []string) error {
-    if slices.Contains(args, "--SolutionGenerator") {
+    if slices.Contains(args, "--DoNothingTestingOnly") {
+        return nil
+    } else if slices.Contains(args, "--SolutionGenerator") {
         SolutionGenerator.Launch(args)
     } else if slices.Contains(args, "--BuildTool") {
         BuildTool.Launch(args)
