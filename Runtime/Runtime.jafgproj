@@ -1,5 +1,7 @@
 {
     "FriendlyName": "Runtime",
     "Kind": "Launch",
-    "Pch": "No"
+    "Modules": [
+        "SOLO"
+    ]
 }

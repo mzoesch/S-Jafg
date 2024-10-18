@@ -1,6 +1,6 @@
 {
-    "FriendlyName": "Tester",
-    "Pch": "No",
+    "FriendlyName": "Runtime",
+    "Pch": "Generate",
     "PublicDependencies": [
         "Engine"
     ]

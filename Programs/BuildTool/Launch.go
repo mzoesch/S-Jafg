@@ -3,46 +3,44 @@
 package BuildTool
 
 import (
-    "Jafg/BuildTool/Info"
     "Jafg/Shared"
     "fmt"
     "slices"
 )
 
 func Launch(args []string) {
-    Info.GProjectBuildInfo = new (Info.ProjectBuildInfo)
-    Info.GProjectBuildInfo.Initialize(args)
+    var myInfo *BuildInfo = new(BuildInfo)
+    myInfo.Initialize(args)
 
-    fmt.Println(fmt.Sprintf("Launching build tool for project %s ...", Info.GProjectBuildInfo.ProjectName))
-    fmt.Println(fmt.Sprintf("Build Info: %s.", Info.GProjectBuildInfo.ToString()))
+    fmt.Println(fmt.Sprintf("Launching build tool for module [%s] ...", GBuildInfo.ModuleName))
+    fmt.Println(fmt.Sprintf("Build configuration: [%s].", GBuildInfo.ToString()))
 
     if slices.Contains(args, "--pre-build") {
         LaunchPreBuildTasks(args)
-    }
-    if slices.Contains(args, "--post-build") {
+    } else if slices.Contains(args, "--post-build") {
         LaunchPostBuildTasks(args)
+    } else {
+        panic("No build task specified.")
     }
 
     return
 }
 
 func LaunchPreBuildTasks(args []string) {
-    Shared.CheckForDir(Shared.GeneratedHeadersDir)
-    GenerateBuildHeaderFile()
+    Shared.CheckRelativeDir(Shared.GeneratedHeadersDir)
+
+    GenerateWorkspaceWideBuildHeaderFile()
 
     return
 }
 
 func LaunchPostBuildTasks(args []string) {
-    fmt.Println("A")
-    if Info.GProjectBuildInfo.Kind.IsLaunch() {
-        fmt.Println("B")
-        CopyContentFolder()
+    if GBuildInfo.Kind.IsLaunch() {
+        GBuildInfo.CopyWorkspaceContentToLaunch()
     }
-    fmt.Println("C")
-    if Info.GProjectBuildInfo.Kind.IsShared() {
-        fmt.Println("D")
-        CopySharedProjectBinaries()
+
+    if GBuildInfo.Kind.IsShared() {
+        GBuildInfo.CopyModuleBinariesToLaunch()
     }
 
     return

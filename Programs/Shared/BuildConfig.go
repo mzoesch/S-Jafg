@@ -3,10 +3,11 @@
 package Shared
 
 type BuildConfig int
+
 const (
-    BCFG_SHIPPING BuildConfig = iota
+    BCFG_SHIPPING    BuildConfig = iota
     BCFG_DEVELOPMENT BuildConfig = iota
-    BCFG_DEBUG BuildConfig = iota
+    BCFG_DEBUG       BuildConfig = iota
 )
 
 func (config BuildConfig) ToString() string {

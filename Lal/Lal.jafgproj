@@ -1,5 +1,7 @@
 {
     "FriendlyName": "Lal",
     "Kind": "Static",
-    "Pch": "Generate"
+    "Modules": [
+        "SOLO"
+    ]
 }

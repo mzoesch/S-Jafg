@@ -3,19 +3,20 @@
 package Shared
 
 type ProjectKind int
+
 const (
-    SHARED ProjectKind = iota
-    STATIC ProjectKind = iota
-    LAUNCH ProjectKind = iota
+    PKIND_SHARED ProjectKind = iota
+    PKIND_STATIC ProjectKind = iota
+    PKIND_LAUNCH ProjectKind = iota
 )
 
 func (kind ProjectKind) ToString() string {
     switch kind {
-    case SHARED:
+    case PKIND_SHARED:
         return "Shared"
-    case STATIC:
+    case PKIND_STATIC:
         return "Static"
-    case LAUNCH:
+    case PKIND_LAUNCH:
         return "Launch"
     default:
         panic("Unknown project kind")
@@ -24,11 +25,11 @@ func (kind ProjectKind) ToString() string {
 
 func (kind ProjectKind) ToLuaString() string {
     switch kind {
-    case SHARED:
+    case PKIND_SHARED:
         return "SharedLib"
-    case STATIC:
+    case PKIND_STATIC:
         return "StaticLib"
-    case LAUNCH:
+    case PKIND_LAUNCH:
         return "ConsoleApp"
     default:
         panic("Unknown project kind")
@@ -36,15 +37,15 @@ func (kind ProjectKind) ToLuaString() string {
 }
 
 func (kind ProjectKind) IsShared() bool {
-    return kind == SHARED
+    return kind == PKIND_SHARED
 }
 
 func (kind ProjectKind) IsStatic() bool {
-    return kind == STATIC
+    return kind == PKIND_STATIC
 }
 
 func (kind ProjectKind) IsLaunch() bool {
-    return kind == LAUNCH
+    return kind == PKIND_LAUNCH
 }
 
 func IsValidProjectKind(kind string) bool {
@@ -63,11 +64,11 @@ func IsValidProjectKind(kind string) bool {
 func ProjectKindFromString(kind string) ProjectKind {
     switch kind {
     case "Shared", "SharedLib":
-        return SHARED
+        return PKIND_SHARED
     case "Static", "StaticLib":
-        return STATIC
+        return PKIND_STATIC
     case "Launch", "ConsoleApp":
-        return LAUNCH
+        return PKIND_LAUNCH
     default:
         panic("Unknown project kind: " + kind)
     }

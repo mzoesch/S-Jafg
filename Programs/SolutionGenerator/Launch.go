@@ -19,6 +19,4 @@ func Launch(args []string) {
         PostLuaRun()
         return
     }
-
-    return
 }

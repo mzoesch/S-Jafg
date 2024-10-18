@@ -5,9 +5,10 @@ package Shared
 import "fmt"
 
 type Pch int
+
 const (
-    PCH_NO Pch = iota
-    PCH_USE Pch = iota
+    PCH_NO       Pch = iota
+    PCH_USE      Pch = iota
     PCH_GENERATE Pch = iota
 )
 

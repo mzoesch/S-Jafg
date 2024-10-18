@@ -305,7 +305,7 @@ T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& InEleme
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& InElement, SizeType& OutIndex) const noexcept
 {
-    return this->FindRef(InElement, OutIndex);
+    return (const_cast<TArray*>(this))->FindRef(InElement, OutIndex);
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
@@ -322,7 +322,7 @@ T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& InEleme
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& InElement) const noexcept
 {
-    return this->FindRef(InElement);
+    return (const_cast<TArray*>(this))->FindRef(InElement);
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>

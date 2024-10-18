@@ -1,7 +1,6 @@
 {
     "FriendlyName": "Engine",
     "Kind": "Shared",
-    "Pch": "No",
     "PrimaryModule": "Engine",
     "Modules": [
         "Engine", "Tester"
