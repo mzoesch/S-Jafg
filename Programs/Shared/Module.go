@@ -4,6 +4,7 @@ package Shared
 
 import (
     "fmt"
+    "slices"
     "strconv"
 )
 
@@ -22,7 +23,8 @@ type Module struct {
     Pch Pch
     Kind ProjectKind
 
-    PublicDependencies []string
+    PublicDependencies            []string
+    ConditionalPublicDependencies []ConditionalInclude
 
     TargetNames []string
     Targets     []Target
@@ -44,6 +46,8 @@ func (mod *Module) LoadModule() {
             mod.DeserializeStringField(k, vv)
         case []interface{}:
             mod.DeserializeArrayField(k, vv)
+        case map[string]interface{}:
+            mod.DeserializeObjectField(k, vv)
         default:
             panic(fmt.Sprintf("Could not resolve type: %T.", vv))
         }
@@ -115,6 +119,27 @@ func (mod *Module) DeserializeArrayField(key string, value []interface{}) {
     return
 }
 
+func (mod *Module) DeserializeObjectField(key string, value map[string]interface{}) {
+    switch key {
+    case "ConditionalPublicDependencies":
+        for k, v := range value {
+            mod.ConditionalPublicDependencies = append(mod.ConditionalPublicDependencies, ConditionalInclude{})
+            var condInc *ConditionalInclude = &mod.ConditionalPublicDependencies[len(mod.ConditionalPublicDependencies)-1]
+
+            condInc.Condition = k
+            for _, vv := range v.([]interface{}) {
+                condInc.Include = vv.(string)
+            }
+
+            continue
+        }
+    default:
+        panic(fmt.Sprintf("Unknown module field: %s.", key))
+    }
+
+    return
+}
+
 func (mod *Module) ValidateJsonLoading() {
     if len(mod.Name) == 0 {
         panic("Module name is empty.")
@@ -160,21 +185,48 @@ func (mod *Module) LoadTargets() {
     return
 }
 
-func (mod *Module) GetAllDependenciesTransitive() []string {
+func (mod *Module) GetAllDependenciesTransitive(targ *Target) []string {
     var out []string
+    mod.GetAllDependenciesTransitiveImpl(targ, &out)
+    return out
+}
 
+func (mod *Module) GetAllDependenciesTransitiveImpl(targ *Target, inOutSlice *[]string) {
     for _, dep := range mod.PublicDependencies {
-        out = append(out, dep)
+        if slices.Contains(*inOutSlice, dep) {
+            continue
+        }
+
+        *inOutSlice = append(*inOutSlice, dep)
 
         // Special dependencies that are not modules and are hardcoded into the lua generation.
         if dep == "CORE_DEPENDENCIES" {
             continue
         }
 
-        out = append(out, GApp.GetCheckedModuleByName(dep).GetAllDependenciesTransitive()...)
+        GApp.GetCheckedModuleByName(dep).GetAllDependenciesTransitiveImpl(targ, inOutSlice)
     }
 
-    return RemoveDuplicatesFromStringSlice(out)
+    for _, condInc := range mod.ConditionalPublicDependencies {
+        if condInc.IsConditionTrue(targ) {
+            if slices.Contains(*inOutSlice, condInc.Include) {
+                continue
+            }
+
+            *inOutSlice = append(*inOutSlice, condInc.Include)
+
+            // Special dependencies that are not modules and are hardcoded into the lua generation.
+            if condInc.Include == "CORE_DEPENDENCIES" {
+                continue
+            }
+
+            GApp.GetCheckedModuleByName(condInc.Include).GetAllDependenciesTransitiveImpl(targ, inOutSlice)
+        }
+
+        continue
+    }
+
+    return
 }
 
 func (mod *Module) IsSoloModuleArchitecture() bool {

@@ -2,7 +2,12 @@
 
 #include "CoreAFX.h"
 
+#include "TestCore/RunTests.h"
+
 #if WITH_TESTS
+
+#include "TestInclude.h"
+#include "TesterInclude.h"
 
 EPlatformExit::Type LaunchTestMain(void);
 
@@ -18,9 +23,10 @@ EPlatformExit::Type TestWideMain(wchar_t* CmdLine)
 
 EPlatformExit::Type LaunchTestMain(void)
 {
-    std::cout << "Test main." << '\n';
+    EPlatformExit::Type ExitCode = EPlatformExit::Success;
+    ::Jafg::Tester::RunTests(&ExitCode);
 
-    return EPlatformExit::Success;
+    return ExitCode;
 }
 
 #endif /* WITH_TESTS */

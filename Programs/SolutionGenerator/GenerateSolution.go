@@ -231,33 +231,6 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
         panic("WriteLuaBuildFileForSpecificModule called with nil module.")
     }
 
-    var includeDirs []string
-    var linkedLibs []string
-    includeDirs = append(includeDirs, Shared.GeneratedHeadersDir)
-    includeDirs = append(includeDirs, fmt.Sprintf("%s/Source/Public", mod.GetRelativeModuleDir()))
-    for _, dep := range mod.GetAllDependenciesTransitive() {
-        if dep == "CORE_DEPENDENCIES" {
-            includeDirs = append(includeDirs, Shared.VendorIncludeDir)
-            /* Has to be included directly and not inside the namespace. */
-            includeDirs = append(includeDirs, fmt.Sprintf("%s/Freetype", Shared.VendorIncludeDir))
-
-            linkedLibs = append(linkedLibs, fmt.Sprintf("%s/glfw3.lib", Shared.VendorLibDir))
-            linkedLibs = append(linkedLibs, fmt.Sprintf("%s/freetype.lib", Shared.VendorLibDir))
-
-            continue
-        }
-
-        var mod *Shared.Module = Shared.GApp.GetCheckedModuleByName(dep)
-
-        includeDirs = append(includeDirs, fmt.Sprintf(
-            "%s/Source/Public",
-            mod.GetRelativeModuleDir(),
-        ))
-        linkedLibs = append(linkedLibs, mod.GetUsableName())
-
-        continue
-    }
-
     var defines []string
     defines = append(defines, fmt.Sprintf("CURRENT_PROJECT_NAME=%s", mod.Parent.Name))
     defines = append(defines, fmt.Sprintf("CURRENT_MODULE_NAME=%s", mod.GetUsableName()))
@@ -333,17 +306,71 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
     WriteWithIndent(builder, indent+8, fmt.Sprintf("'%s/Source/**.cpp',\n", mod.GetRelativeModuleDir()))
     WriteWithIndent(builder, indent+4, "}\n")
 
-    WriteWithIndent(builder, indent+4, "includedirs {\n")
-    for _, dir := range includeDirs {
-        WriteWithIndent(builder, indent+8, fmt.Sprintf("'%s',\n", dir))
-    }
-    WriteWithIndent(builder, indent+4, "}\n")
+    for _, targ := range Shared.GApp.GetAllTargets() {
+        var includeDirs []string
+        var linkedLibs []string
+        includeDirs = append(includeDirs, Shared.GeneratedHeadersDir)
+        includeDirs = append(includeDirs, fmt.Sprintf("%s/Source/Public", mod.GetRelativeModuleDir()))
+        for _, dep := range mod.GetAllDependenciesTransitive(targ) {
+            if dep == "CORE_DEPENDENCIES" {
+                includeDirs = append(includeDirs, Shared.VendorIncludeDir)
+                /* Has to be included directly and not inside the namespace. */
+                includeDirs = append(includeDirs, fmt.Sprintf("%s/Freetype", Shared.VendorIncludeDir))
 
-    WriteWithIndent(builder, indent+4, "links {\n")
-    for _, lib := range linkedLibs {
-        WriteWithIndent(builder, indent+8, fmt.Sprintf("'%s',\n", lib))
+                linkedLibs = append(linkedLibs, fmt.Sprintf("%s/glfw3.lib", Shared.VendorLibDir))
+                linkedLibs = append(linkedLibs, fmt.Sprintf("%s/freetype.lib", Shared.VendorLibDir))
+
+                continue
+            }
+
+            var modDep *Shared.Module = Shared.GApp.GetCheckedModuleByName(dep)
+
+            includeDirs = append(includeDirs, fmt.Sprintf(
+                "%s/Source/Public",
+                modDep.GetRelativeModuleDir(),
+            ))
+            linkedLibs = append(linkedLibs, modDep.GetUsableName())
+
+            /*
+             * Special case for the tester module. We should not hard code this but use the mod config file.
+             * But this works for now. Just a short-term solution.
+             */
+            if mod.GetUsableName() == "Tester" {
+                includeDirs = append(includeDirs, fmt.Sprintf(
+                    "%s/Source/Test",
+                    modDep.GetRelativeModuleDir(),
+                ))
+            }
+
+            continue
+        }
+
+        for _, buildConfiguration := range GetAllBuildTargetConfigurations(targ) {
+            if len(includeDirs) == 0 {
+                continue
+            }
+
+            WriteWithIndent(builder, indent+4, fmt.Sprintf("filter { 'configurations:%s' }\n", buildConfiguration))
+
+            WriteWithIndent(builder, indent+8, "includedirs {\n")
+            for _, dir := range includeDirs {
+                WriteWithIndent(builder, indent+12, fmt.Sprintf("'%s',\n", dir))
+            }
+            WriteWithIndent(builder, indent+8, "}\n")
+
+            WriteWithIndent(builder, indent+8, "links {\n")
+            for _, lib := range linkedLibs {
+                WriteWithIndent(builder, indent+12, fmt.Sprintf("'%s',\n", lib))
+            }
+            WriteWithIndent(builder, indent+8, "}\n")
+
+            WriteWithIndent(builder, indent+4, "filter { }\n")
+
+            continue
+        }
+
+        continue
     }
-    WriteWithIndent(builder, indent+4, "}\n")
 
     WriteWithIndent(builder, indent+4, "defines {\n")
     for _, def := range defines {

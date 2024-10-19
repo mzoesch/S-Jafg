@@ -2,6 +2,6 @@
     "FriendlyName": "Engine",
     "DefaultKind": "Shared",
     "Modules": [
-        "Engine", "Rhi", "Tester"
+        "Engine", "Rhi", "Tester", "TesterForward"
     ]
 }

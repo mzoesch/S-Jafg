@@ -4,6 +4,11 @@
     "PublicDependencies": [
         "Engine"
     ],
+    "ConditionalPublicDependencies": {
+        "WITH_TESTS": [
+            "Tester"
+        ]
+    },
     "Targets": [
         {
             "Suffix": "Client",
@@ -19,7 +24,6 @@
         },
         {
             "Suffix": "TestUnit",
-            "CustomEntryPoint": "LaunchTest",
             "AdditionalDefines": [
                 "AS_CLIENT", "WITH_TESTS"
             ]

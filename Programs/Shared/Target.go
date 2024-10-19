@@ -26,8 +26,13 @@ func (targ *Target) LoadTarget() {
             targ.DeserializeStringField(k, vv)
         case []interface{}:
             targ.DeserializeArrayField(k, vv)
-        default:
+        case map[string]interface{}:
+            if k == "ConditionalPublicDependencies" {
+                continue
+            }
             panic(fmt.Sprintf("Could not resolve type: %T.", vv))
+        default:
+            panic(fmt.Sprintf("Could not resolve type: %T. Inside target: %s.", vv, targ.Parent.GetUsableName()))
         }
     }
 

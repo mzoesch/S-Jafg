@@ -3,5 +3,10 @@
     "Pch": "No",
     "PublicDependencies": [
         "CORE_DEPENDENCIES", "Lal"
-    ]
+    ],
+    "ConditionalPublicDependencies": {
+        "WITH_TESTS": [
+            "TesterForward"
+        ]
+    }
 }
