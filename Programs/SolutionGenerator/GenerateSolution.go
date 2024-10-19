@@ -40,6 +40,72 @@ func WriteWithIndent(builder *strings.Builder, indent int, content string) {
     builder.WriteString(fmt.Sprintf("%s%s", Shared.Indent(indent), content))
 }
 
+func GetAllBuildConfigurations() []string {
+    var out []string
+    for _, targ := range Shared.GApp.GetAllTargets() {
+        out = append(out, fmt.Sprintf("Debug-%s", targ.GetSuffix()))
+        out = append(out, fmt.Sprintf("Development-%s", targ.GetSuffix()))
+        out = append(out, fmt.Sprintf("Shipping-%s", targ.GetSuffix()))
+
+        continue
+    }
+
+
+    return out
+}
+
+func GetAllDebugBuildConfigurations() []string {
+    var out []string
+    for _, targ := range GetAllBuildConfigurations() {
+        if strings.Contains(targ, "Debug") {
+            out = append(out, targ)
+        }
+
+        continue
+    }
+
+    return out
+}
+
+func GetAllDevelopmentBuildConfigurations() []string {
+    var out []string
+    for _, targ := range GetAllBuildConfigurations() {
+        if strings.Contains(targ, "Development") {
+            out = append(out, targ)
+        }
+
+        continue
+    }
+
+    return out
+}
+
+func GetAllShippingBuildConfigurations() []string {
+    var out []string
+    for _, targ := range GetAllBuildConfigurations() {
+        if strings.Contains(targ, "Shipping") {
+            out = append(out, targ)
+        }
+
+        continue
+    }
+
+    return out
+}
+
+func GetAllBuildTargetConfigurations(target *Shared.Target) []string {
+    var out []string
+    for _, buildConfiguration := range GetAllBuildConfigurations() {
+        if strings.Contains(buildConfiguration, target.GetSuffix()) {
+            out = append(out, buildConfiguration)
+        }
+
+        continue
+    }
+
+    return out
+}
+
 func WriteLuaBuildFileBody(handle *os.File) {
     if handle == nil {
         panic("WriteLuaBuildFileBody called with nil handle.")
@@ -53,43 +119,57 @@ func WriteLuaBuildFileBody(handle *os.File) {
     WriteWithIndent(&builder, 0, "workspace 'Jafg'\n")
     WriteWithIndent(&builder, 4, "architecture 'x64'\n")
     WriteWithIndent(&builder, 4, "startproject 'Runtime'\n")
-    WriteWithIndent(&builder, 4, "configurations { 'Debug', 'Development', 'Shipping' }\n")
-    WriteWithIndent(&builder, 4, "platforms { 'Client', 'Server' }\n")
+    for _, targ := range GetAllBuildConfigurations() {
+        WriteWithIndent(&builder, 4, fmt.Sprintf("configurations { '%s' }\n", targ))
+    }
+    WriteWithIndent(&builder, 4, "platforms { 'Windows64'}\n")
 
-    WriteWithIndent(&builder, 4, "filter 'system:windows'\n")
-    WriteWithIndent(&builder, 4, "systemversion 'latest'\n")
-    WriteWithIndent(&builder, 4, "defines { 'PLATFORM_WINDOWS' }\n")
-    WriteWithIndent(&builder, 4, "linkoptions { '/SUBSYSTEM:WINDOWS' }\n")
+    WriteWithIndent(&builder, 4, "filter 'platforms:Windows64'\n")
+    WriteWithIndent(&builder, 8, "systemversion 'latest'\n")
+    WriteWithIndent(&builder, 8, "defines { 'PLATFORM_WINDOWS' }\n")
+    WriteWithIndent(&builder, 8, "linkoptions { '/SUBSYSTEM:WINDOWS' }\n")
     WriteWithIndent(&builder, 4, "filter {}\n")
 
-    WriteWithIndent(&builder, 4, "filter 'configurations:Debug'\n")
-    WriteWithIndent(&builder, 8, "defines { 'IN_DEBUG' }\n")
-    WriteWithIndent(&builder, 8, "runtime 'Debug'\n")
-    WriteWithIndent(&builder, 8, "symbols 'On'\n")
-    WriteWithIndent(&builder, 8, "optimize 'Off'\n")
-    WriteWithIndent(&builder, 4, "filter {}\n")
+    for _, buildConfiguration := range GetAllDebugBuildConfigurations() {
+        WriteWithIndent(&builder, 4, fmt.Sprintf("filter 'configurations:%s'\n", buildConfiguration))
+        WriteWithIndent(&builder, 8, "defines { 'IN_DEBUG' }\n")
+        WriteWithIndent(&builder, 8, "runtime 'Debug'\n")
+        WriteWithIndent(&builder, 8, "symbols 'On'\n")
+        WriteWithIndent(&builder, 8, "optimize 'Off'\n")
+        WriteWithIndent(&builder, 4, "filter {}\n")
+    }
 
-    WriteWithIndent(&builder, 4, "filter 'configurations:Development'\n")
-    WriteWithIndent(&builder, 8, "defines { 'IN_DEVELOPMENT' }\n")
-    WriteWithIndent(&builder, 8, "runtime 'Release'\n")
-    WriteWithIndent(&builder, 8, "symbols 'On'\n")
-    WriteWithIndent(&builder, 8, "optimize 'On'\n")
-    WriteWithIndent(&builder, 4, "filter {}\n")
+    for _, buildConfiguration := range GetAllDevelopmentBuildConfigurations() {
+        WriteWithIndent(&builder, 4, fmt.Sprintf("filter 'configurations:%s'\n", buildConfiguration))
+        WriteWithIndent(&builder, 8, "defines { 'IN_DEVELOPMENT' }\n")
+        WriteWithIndent(&builder, 8, "runtime 'Release'\n")
+        WriteWithIndent(&builder, 8, "symbols 'On'\n")
+        WriteWithIndent(&builder, 8, "optimize 'On'\n")
+        WriteWithIndent(&builder, 4, "filter {}\n")
+    }
 
-    WriteWithIndent(&builder, 4, "filter 'configurations:Shipping'\n")
-    WriteWithIndent(&builder, 8, "defines { 'IN_SHIPPING' }\n")
-    WriteWithIndent(&builder, 8, "runtime 'Release'\n")
-    WriteWithIndent(&builder, 8, "symbols 'Off'\n")
-    WriteWithIndent(&builder, 8, "optimize 'On'\n")
-    WriteWithIndent(&builder, 4, "filter {}\n")
+    for _, buildConfiguration := range GetAllShippingBuildConfigurations() {
+        WriteWithIndent(&builder, 4, fmt.Sprintf("filter 'configurations:%s'\n", buildConfiguration))
+        WriteWithIndent(&builder, 8, "defines { 'IN_SHIPPING' }\n")
+        WriteWithIndent(&builder, 8, "runtime 'Release'\n")
+        WriteWithIndent(&builder, 8, "symbols 'Off'\n")
+        WriteWithIndent(&builder, 8, "optimize 'On'\n")
+        WriteWithIndent(&builder, 4, "filter {}\n")
+    }
 
-    WriteWithIndent(&builder, 4, "filter 'platforms:Client'\n")
-    WriteWithIndent(&builder, 8, "defines { 'AS_CLIENT' }\n")
-    WriteWithIndent(&builder, 4, "filter {}\n")
+    for _, targ := range Shared.GApp.GetAllTargets() {
+        for _, buildConfiguration := range GetAllBuildTargetConfigurations(targ) {
+            WriteWithIndent(&builder, 4, fmt.Sprintf("filter 'configurations:%s'\n", buildConfiguration))
+            for _, def := range targ.AdditionalDefines {
+                WriteWithIndent(&builder, 8, fmt.Sprintf("defines { '%s' }\n", def))
+            }
+            WriteWithIndent(&builder, 4, "filter {}\n")
 
-    WriteWithIndent(&builder, 4, "filter 'platforms:Server'\n")
-    WriteWithIndent(&builder, 8, "defines { 'AS_SERVER' }\n")
-    WriteWithIndent(&builder, 4, "filter {}\n")
+            continue
+        }
+
+        continue
+    }
 
     WriteLuaBuildFileProjectSpecificSection(&builder)
     WriteLuaBuildFileGeneratedSection(&builder)
@@ -186,7 +266,7 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
     WriteWithIndent(builder, indent, fmt.Sprintf("project '%s'\n", mod.GetUsableName()))
 
     WriteWithIndent(builder, indent+4, fmt.Sprintf("location '%s'\n", mod.GetRelativeModuleDir()))
-    WriteWithIndent(builder, indent+4, fmt.Sprintf("kind '%s'\n", mod.GetKind().ToLuaString()))
+    WriteWithIndent(builder, indent+4, fmt.Sprintf("kind '%s'\n", mod.GetKind().ToLuaString(&mod.Parent.DefaultKind)))
 
     WriteWithIndent(builder, indent+4, "prebuildcommands {\n")
     WriteWithIndent(builder, indent+8, "'echo Launching pre build programs ...',\n")
@@ -216,6 +296,32 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
         "objdir ('%s/%%{cfg.system}-%%{cfg.architecture}/%%{cfg.buildcfg}/%s/')\n",
         Shared.IntermediateDir, mod.GetRelativeModuleDir(),
     ))
+
+    if mod.GetKind().IsLaunch() {
+        for _, targ := range Shared.GApp.GetAllTargets() {
+            if targ.HasCustomEntryPoint() {
+                for _, buildConfiguration := range GetAllBuildTargetConfigurations(targ) {
+                    WriteWithIndent(builder, indent+4, fmt.Sprintf(
+                        "filter { 'platforms:Windows64', 'configurations:%s' }\n",
+                        buildConfiguration,
+                    ))
+                    WriteWithIndent(builder, indent+8, fmt.Sprintf("entrypoint '%s'\n", targ.CustomEntryPoint))
+                    WriteWithIndent(builder, indent+4, "filter {}\n")
+                }
+            } else {
+                for _, buildConfiguration := range GetAllBuildTargetConfigurations(targ) {
+                    WriteWithIndent(builder, indent+4, fmt.Sprintf(
+                        "filter { 'platforms:Windows64', 'configurations:%s' }\n",
+                        buildConfiguration,
+                    ))
+                    WriteWithIndent(builder, indent+8, fmt.Sprintf("entrypoint 'WinMainCRTStartup'\n"))
+                    WriteWithIndent(builder, indent+4, "filter {}\n")
+                }
+            }
+
+            continue
+        }
+    }
 
     WriteWithIndent(builder, indent+4, "files {\n")
     WriteWithIndent(builder, indent+8, fmt.Sprintf("'%s/**.md',\n", mod.GetRelativeModuleDir()))

@@ -18,10 +18,9 @@ type Project struct {
     FriendlyName    string
     AbsProjFilePath string
 
-    Kind ProjectKind
+    DefaultKind ProjectKind
 
     IsSoloModuleArchitecture bool
-    PrimaryModule            string
     ModuleNames              []string
     Modules                  []Module
 
@@ -74,12 +73,10 @@ func (proj *Project) DeserializeStringField(key string, value string) {
     switch key {
     case "FriendlyName":
         proj.FriendlyName = value
-    case "Kind":
-        proj.Kind = ProjectKindFromString(value)
-    case "PrimaryModule":
-        proj.PrimaryModule = value
+    case "DefaultKind":
+        proj.DefaultKind = ProjectKindFromString(value)
     default:
-        panic(fmt.Sprintf("Could not resolve key: %s.", key))
+        panic(fmt.Sprintf("Could not resolve key [%s] inside project [%s].", key, proj.Name))
     }
 
     return
@@ -92,9 +89,17 @@ func (proj *Project) DeserializeArrayField(key string, value []interface{}) {
             proj.ModuleNames = append(proj.ModuleNames, v.(string))
 
             if v.(string) == "SOLO" {
-                proj.PrimaryModule = "SOLO"
                 proj.IsSoloModuleArchitecture = true
+
+                if len(value) > 1 {
+                    panic(fmt.Sprintf(
+                        "SOLO module architectures cannot have more than one module. Faulty project: %s.",
+                        proj.Name,
+                    ))
+                }
             }
+
+            continue
         }
     case "Projects":
         for _, v := range value {
@@ -118,10 +123,6 @@ func (proj *Project) ValidateJsonLoading() {
 
     if len(proj.ModuleNames) == 0 {
         panic(fmt.Sprintf("Project [%s] has no modules. At least one module is required.", proj.Name))
-    }
-
-    if len(proj.PrimaryModule) == 0 {
-        panic(fmt.Sprintf("Project [%s] has no primary module. A primary module is required.", proj.Name))
     }
 
     return
@@ -149,7 +150,7 @@ func (proj *Project) GetRelativeProjectDir() string {
 }
 
 func (proj *Project) PrettyPrint(indent int) {
-    fmt.Println(fmt.Sprintf("%s| Project [%s] [%s]:", Indent(indent), proj.Name, proj.Kind.ToString()))
+    fmt.Println(fmt.Sprintf("%s| Project [%s] [%s]:", Indent(indent), proj.Name, proj.DefaultKind.ToString()))
     for _, mod := range proj.Modules {
         mod.PrettyPrint(indent + 2)
     }

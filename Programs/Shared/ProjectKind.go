@@ -5,6 +5,7 @@ package Shared
 type ProjectKind int
 
 const (
+    PKIND_INHERIT ProjectKind = iota
     PKIND_SHARED ProjectKind = iota
     PKIND_STATIC ProjectKind = iota
     PKIND_LAUNCH ProjectKind = iota
@@ -12,6 +13,8 @@ const (
 
 func (kind ProjectKind) ToString() string {
     switch kind {
+    case PKIND_INHERIT:
+        return "Inherit"
     case PKIND_SHARED:
         return "Shared"
     case PKIND_STATIC:
@@ -23,7 +26,15 @@ func (kind ProjectKind) ToString() string {
     }
 }
 
-func (kind ProjectKind) ToLuaString() string {
+func (kind ProjectKind) ToLuaString(parentKind *ProjectKind) string {
+    if kind == PKIND_INHERIT {
+        if parentKind == nil {
+            panic("Parent kind is nil. But kind should be inherited.")
+        }
+
+        return parentKind.ToLuaString(nil)
+    }
+
     switch kind {
     case PKIND_SHARED:
         return "SharedLib"
@@ -34,6 +45,10 @@ func (kind ProjectKind) ToLuaString() string {
     default:
         panic("Unknown project kind")
     }
+}
+
+func (kind ProjectKind) IsInherit() bool {
+    return kind == PKIND_INHERIT
 }
 
 func (kind ProjectKind) IsShared() bool {
@@ -50,6 +65,8 @@ func (kind ProjectKind) IsLaunch() bool {
 
 func IsValidProjectKind(kind string) bool {
     switch kind {
+    case "Inherit":
+        return true
     case "Shared":
         return true
     case "Static":
@@ -63,6 +80,8 @@ func IsValidProjectKind(kind string) bool {
 
 func ProjectKindFromString(kind string) ProjectKind {
     switch kind {
+    case "Inherit":
+        return PKIND_INHERIT
     case "Shared", "SharedLib":
         return PKIND_SHARED
     case "Static", "StaticLib":

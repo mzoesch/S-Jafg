@@ -5,6 +5,7 @@ package BuildTool
 import (
     "Jafg/Shared"
     "fmt"
+    "strings"
 )
 
 // BuildInfo is a struct that holds information about the current build for a specific module.
@@ -13,6 +14,9 @@ type BuildInfo struct {
 
     Kind        Shared.ProjectKind
     BuildConfig Shared.BuildConfig
+    buildTarget string
+
+    FullBuildConfig string
 
     Platform     string
     System       string
@@ -50,6 +54,12 @@ func (bi *BuildInfo) Initialize(args []string) {
             panic("Could not find the build configuration")
         }
         bi.BuildConfig = Shared.GetBuildConfigFromString(Value)
+        bi.FullBuildConfig = Value
+        // Split value by "-" to get the target name.
+        if !strings.Contains(Value, "-") {
+            panic(fmt.Sprintf("Could not find the build target inside the build configuration %s.", Value))
+        }
+        bi.buildTarget = strings.Split(Value, "-")[1]
     }
 
     {
@@ -104,11 +114,11 @@ func (bi *BuildInfo) CopyModuleBinariesToLaunch() {
         }
 
         var relativeSource string = Shared.GetBinTargetRelativePath(
-            bi.System, bi.Architecture, bi.BuildConfig.ToString(),
+            bi.System, bi.Architecture, bi.BuildConfig.ToString(), bi.buildTarget,
             Shared.GApp.GetCheckedModuleByName(bi.ModuleName).GetRelativeModuleDir(),
         )
         var relativeTarget string = Shared.GetBinTargetRelativePath(
-            bi.System, bi.Architecture, bi.BuildConfig.ToString(),
+            bi.System, bi.Architecture, bi.BuildConfig.ToString(), bi.buildTarget,
             mod.GetRelativeModuleDir(),
         )
 
@@ -135,7 +145,7 @@ func (bi *BuildInfo) CopyWorkspaceContentToLaunch() {
 
     Shared.CopyRelativeDirectory(
         Shared.ContentDir,
-        Shared.GetBinTargetRelativePath(bi.System, bi.Architecture, bi.BuildConfig.ToString(), bi.ModuleName),
+        Shared.GetBinTargetRelativePath(bi.System, bi.Architecture, bi.BuildConfig.ToString(), bi.buildTarget, bi.ModuleName),
         true,
         true,
     )

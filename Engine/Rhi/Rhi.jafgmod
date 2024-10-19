@@ -1,0 +1,6 @@
+{
+    "Pch": "Generate",
+    "PublicDependencies": [
+        "Lal"
+    ]
+}

@@ -3,5 +3,26 @@
     "Pch": "Generate",
     "PublicDependencies": [
         "Engine"
+    ],
+    "Targets": [
+        {
+            "Suffix": "Client",
+            "AdditionalDefines": [
+                "AS_CLIENT"
+            ]
+        },
+        {
+            "Suffix": "Server",
+            "AdditionalDefines": [
+                "AS_SERVER"
+            ]
+        },
+        {
+            "Suffix": "TestUnit",
+            "CustomEntryPoint": "LaunchTest",
+            "AdditionalDefines": [
+                "AS_CLIENT", "WITH_TESTS"
+            ]
+        }
     ]
 }

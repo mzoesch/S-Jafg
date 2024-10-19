@@ -1,5 +1,5 @@
 {
-    "Kind": "Shared",
+    "DefaultKind": "Shared",
     "Modules": [
         "SOLO"
     ]

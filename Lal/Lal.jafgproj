@@ -1,6 +1,6 @@
 {
     "FriendlyName": "Lal",
-    "Kind": "Static",
+    "DefaultKind": "Static",
     "Modules": [
         "SOLO"
     ]

@@ -24,7 +24,6 @@ func GenerateWorkspaceWideBuildHeaderFile() {
     )
 
     var content string = fmt.Sprintf(`
-%s
 #define PRIVATE_JAFG_BUILD_GENERATED_STR_HELPER(msg)        #msg
 #define PRIVATE_JAFG_BUILD_GENERATED_STR(x)                 PRIVATE_JAFG_BUILD_GENERATED_STR_HELPER( x )
 
@@ -41,14 +40,13 @@ func GenerateWorkspaceWideBuildHeaderFile() {
 #undef PRIVATE_JAFG_BUILD_GENERATED_STR_HELPER
 #undef PRIVATE_JAFG_BUILD_GENERATED_STR
 `,
-        GeneratedHeaderFileStub,
         MakeModuleCallSpecs(),
         MakeModuleAssertCallSpecs(),
     )
 
     var file *os.File = Shared.OpenRelativeFile(relativeTargetFile, false, os.O_RDWR|os.O_CREATE)
 
-    MakeHeaderContentFinal(file, true, false, content)
+   content = MakeHeaderContentFinal(file, true, false, content)
 
     if Shared.IsFileAndStringEqual(file, content, true) {
         fmt.Printf("Workspace-wide build header file [%s] is up-to-date. Skipping re-write.\n", relativeTargetFile)

@@ -38,7 +38,7 @@
 #endif /* IN_SHIPPING */
 
 ///////////////////////////////////////////////////////////////////////////////
-// Build "platforms".
+// Build targets.
 #ifndef AS_CLIENT
     #define AS_CLIENT               0
 #endif /* !AS_CLIENT */
@@ -60,15 +60,39 @@
     #endif /* AS_CLIENT */
 #endif /* AS_SERVER */
 
+#ifndef WITH_TESTS
+    #define WITH_TESTS              0
+#endif /* !WITH_TESTS */
+
+/*
+ * This is of course just hardcoded here for now.
+ * Later when we build an actual testing framework or use one, we would use
+ * the IDEA to determine what test should run.
+ */
+#ifndef DO_TEST_UNITS
+    #if WITH_TESTS
+        #define DO_TEST_UNITS           1
+    #else /* WITH_TESTS */
+        #define DO_TEST_UNITS           0
+    #endif /* !WITH_TESTS */
+#endif /* !DO_TEST_UNITS */
+
 ///////////////////////////////////////////////////////////////////////////////
 // Project specific.
 #ifndef CURRENT_PROJECT_NAME
     #error "No project name specified."
 #endif /* !CURRENT_PROJECT_NAME */
+#ifndef CURRENT_MODULE_NAME
+    #error "No module name specified."
+#endif /* !CURRENT_MODULE_NAME */
+#ifndef PRIVATE_JAFG_CURRENT_MODULE_PREPROC_IDENT
+    #error "No module preprocessor identifier specified."
+#endif /* !PRIVATE_JAFG_CURRENT_MODULE_PREPROC_IDENT */
 
 ///////////////////////////////////////////////////////////////////////////////
 // Include the generated build file
 #include "Build.generated.h"
+
 
 /*-----------------------------------------------------------------------------
     Manual build override settings.

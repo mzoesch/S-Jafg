@@ -206,3 +206,15 @@ func (app *Application) GetAllModules() []*Module {
 
     return Out
 }
+
+func (app *Application) GetAllTargets() []*Target {
+    var Out []*Target
+
+    for _, mod := range app.GetAllModules() {
+        for _, targ := range mod.Targets {
+            Out = append(Out, &targ)
+        }
+    }
+
+    return Out
+}

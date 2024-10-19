@@ -2,6 +2,11 @@
 
 package Shared
 
+import (
+    "fmt"
+    "strings"
+)
+
 type BuildConfig int
 
 const (
@@ -49,14 +54,19 @@ func IsValidBuildConfig(config string) bool {
 }
 
 func GetBuildConfigFromString(config string) BuildConfig {
-    switch config {
-    case "Shipping":
-        return BCFG_SHIPPING
-    case "Development":
-        return BCFG_DEVELOPMENT
-    case "Debug":
+    if strings.Contains(config, BCFG_DEBUG.ToString()) {
         return BCFG_DEBUG
-    default:
-        panic("Unknown build configuration")
     }
+
+    if strings.Contains(config, BCFG_DEVELOPMENT.ToString()) {
+        return BCFG_DEVELOPMENT
+    }
+
+    if strings.Contains(config, BCFG_SHIPPING.ToString()) {
+        return BCFG_SHIPPING
+    }
+
+    panic(fmt.Sprintf("Unknown build configuration [%s].", config))
+
+    return BCFG_DEBUG
 }

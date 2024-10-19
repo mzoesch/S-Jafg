@@ -39,8 +39,18 @@ void LaunchWinShutdown()
     return;
 }
 
+#if WITH_TESTS
+
+    extern EPlatformExit::Type TestAnsiMain(char* CmdLine);
+    extern EPlatformExit::Type TestWideMain(wchar_t* CmdLine);
+
+#endif /* WITH_TESTS */
+
 int32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ char* pCmdLine, _In_ int32 nCmdShow)
 {
+#if WITH_TESTS
+    return TestWideMain(::GetCommandLineW());
+#else /* WITH_TESTS */
     /*
      * If LNK2019 [int __cdecl __scrt_common_main_seh(void)] make sure to set the System-Linker of the Runtime
      * Project to use the subsystem "Not Set" (for automatic platform detection) or "Windows".
@@ -48,4 +58,5 @@ int32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstanc
     const int32 Result = LaunchWin(hInInstance, hPrevInstance, pCmdLine, nCmdShow, nullptr);
     LaunchWinShutdown();
     return Result;
+#endif /* !WITH_TESTS */
 }

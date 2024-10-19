@@ -1,6 +1,6 @@
 {
     "FriendlyName": "Runtime",
-    "Kind": "Launch",
+    "DefaultKind": "Launch",
     "Modules": [
         "SOLO"
     ]

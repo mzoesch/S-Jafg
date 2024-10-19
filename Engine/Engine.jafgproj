@@ -1,11 +1,7 @@
 {
     "FriendlyName": "Engine",
-    "Kind": "Shared",
-    "PrimaryModule": "Engine",
+    "DefaultKind": "Shared",
     "Modules": [
-        "Engine", "Tester"
-    ],
-    "Projects": [
-        "RHI"
+        "Engine", "Rhi", "Tester"
     ]
 }

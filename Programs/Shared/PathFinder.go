@@ -81,8 +81,8 @@ func ReadAllEntriesFromAbsolutePath(absPath string) []fs.DirEntry {
     return entries
 }
 
-func GetBinTargetRelativePath(system string, architecture string, buildConfig string, subPath string) string {
-    return fmt.Sprintf("%s/%s-%s/%s/%s", BinariesDir, system, architecture, buildConfig, subPath)
+func GetBinTargetRelativePath(system string, architecture string, buildConfig string, buildTarget string, subPath string) string {
+    return fmt.Sprintf("%s/%s-%s/%s-%s/%s", BinariesDir, system, architecture, buildConfig, buildTarget, subPath)
 }
 
 func CopyRelativeDirectory(relativeSource string, relativeTarget string, bOverwrite bool, bRecursively bool) {
