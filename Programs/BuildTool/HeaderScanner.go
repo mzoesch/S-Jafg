@@ -54,6 +54,7 @@ func OperateOnHeaderFile(fileName string, content *string) {
     var tokens []Token = TokenizeContent(content)
 
     if len(tokens) == 0 {
+        ConditionallyWriteGeneratedHeaderFile()
         return
     }
 
