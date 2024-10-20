@@ -3,7 +3,9 @@
 #pragma once
 
 #ifndef PRIVATE_JAFG_TEST_INCLUDED_TEST_FORWARD
-    #include "TestInclude.h"
+    #if WITH_TESTS
+        #include "TestInclude.h"
+    #endif /* WITH_TESTS */
 #endif /* !PRIVATE_JAFG_TEST_INCLUDED_TEST_FORWARD */
 
 #define PRIVATE_JAFG_TEST_INCLUDED_TESTER

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Math/Vector2.h"
+#include "Maths/Vector2.h"
 
 /** Jafg implementation of a vector. */
 template <typename T>

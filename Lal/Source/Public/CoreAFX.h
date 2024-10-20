@@ -30,7 +30,8 @@
     Core Forwards.
 ----------------------------------------------------------------------------*/
 
-#include "Math/MathForward.h"
+#include "Maths/MathDefines.h"
+#include "Maths/MathForward.h"
 
 
 /*----------------------------------------------------------------------------
@@ -52,10 +53,11 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Maths
-#include "Math/Vector2.h"
-#include "Math/Vector.h"
-#include "Math/IntVector2.h"
-#include "Math/IntVector.h"
+#include "Maths/MathUtility.h"
+#include "Maths/Vector2.h"
+#include "Maths/Vector.h"
+#include "Maths/IntVector2.h"
+#include "Maths/IntVector.h"
 
 
 /*----------------------------------------------------------------------------

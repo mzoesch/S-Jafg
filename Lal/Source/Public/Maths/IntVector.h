@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Math/IntVector2.h"
+#include "Maths/IntVector2.h"
 
 /** Jafg implementation of an integral Vector. */
 template <typename T>

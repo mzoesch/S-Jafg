@@ -1,14 +1,20 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "TestCore/RunTests.h"
+#if WITH_TESTS
+    /* Order *must* be preserved. */
+    #include "TestInclude.h"
+#endif /* WITH_TESTS */
 #include "TesterInclude.h"
 
-/*-----------------------------------------------------------------------------
-    Do not remove this seemingly useless include.
-    When we include this file, all the test cases will be statically
-    initialized and transitively added to the list of test cases.
------------------------------------------------------------------------------*/
-#include "RunTests.generated.h"
+#if WITH_TESTS
+    /*-----------------------------------------------------------------------------
+        Do not remove this seemingly useless include.
+        When we include this file, all the test cases will be statically
+        initialized and transitively added to the list of test cases.
+    -----------------------------------------------------------------------------*/
+    #include "RunTests.generated.h"
+#endif /* WITH_TESTS */
 
 namespace Jafg::Tester
 {
@@ -27,7 +33,6 @@ void Jafg::Tester::RunTests(EPlatformExit::Type* ExitCode)
 
     GTestFramework = new LTestFramework();
 
-    std::cout << "Starting simple tests ..." << '\n';
     std::cout << "Waiting for "
               << ::Jafg::Tester::GetAllSimpleTestCasesDuringStaticInitialization().size()
               << " simple tests to finish ..." << '\n';
@@ -48,7 +53,9 @@ void Jafg::Tester::RunTests(EPlatformExit::Type* ExitCode)
 
         if (SimpleTestCase->HasErrors())
         {
-            std::cout << " FAILED" << '\n';
+            std::cout << " FAILED. Run "
+                      << SimpleTestCase->GetNumberOfRunTests()
+                      << " tests." << '\n';
 
             for (const std::string& Error : SimpleTestCase->GetErrors())
             {
@@ -59,7 +66,9 @@ void Jafg::Tester::RunTests(EPlatformExit::Type* ExitCode)
         }
         else
         {
-            std::cout << " OK" << '\n';
+            std::cout << " OK. Run "
+                      << SimpleTestCase->GetNumberOfRunTests()
+                      << " tests." << '\n';
         }
 
         std::cout.flush();
@@ -82,7 +91,7 @@ Jafg::Tester::LTestFramework::LTestFramework()
 
 Jafg::Tester::LTestFramework::~LTestFramework()
 {
-    std::cout << "Finished running tests. Tearing down framework." << '\n';
+    std::cout << "Finished running all tests. Tearing down framework ..." << '\n';
     std::cout << "Test framework encountered "
               << this->OccuriedErrors
               << " errors." << '\n';
@@ -92,9 +101,14 @@ Jafg::Tester::LTestFramework::~LTestFramework()
     return;
 }
 
-TEST_CASE(TestTheTestframework, "Jafg.TestFramework")
+#if WITH_TESTS
+TEST_CASE(Types, "Jafg.TestFramework")
 {
-    CHECK_EQUALS("Test the TestFramework", 1, 0)
+    CHECK_EQUALS("Test the TestFramework",    0,    0)
+    CHECK_EQUALS("Test the TestFramework", 0.0f, 0.0f)
+    CHECK_EQUALS("Test the TestFramework", 0.0 , 0.0 )
+    CHECK_EQUALS("Test the TestFramework", 0.0L, 0.0L)
 
     return;
 }
+#endif /* WITH_TESTS */

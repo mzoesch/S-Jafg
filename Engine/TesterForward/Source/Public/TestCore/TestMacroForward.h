@@ -27,20 +27,20 @@
     )
 
 /**
- * Checks if X and Y are equal.
+ * Checks if A and B are equal.
  *
  * @param What Short description of the check.
- * @param X    Left-hand side of the comparison.
- * @param Y    Right-hand side of the comparison.
+ * @param A    Left-hand side of the comparison.
+ * @param B    Right-hand side of the comparison.
  */
-#define CHECK_EQUALS(What, X, Y)                                          \
+#define CHECK_EQUALS(What, A, B)                                          \
     /* Just doing some simple local variable initialization to get the */ \
     /* syntax highlighting and intellisense working inside an IDEA.    */ \
     {                                                                     \
         auto What_ = ( What );                                            \
-        auto X_ = ( X );                                                  \
-        auto Y_ = ( Y );                                                  \
-    }                                                                     \
+        auto A_ = ( B );                                                  \
+        auto A_ = ( B );                                                  \
+    }
 
 #define PRIVATE_JAFG_TEST_JOIN_INNER_TWO(   A, B                        ) A##B
 #define PRIVATE_JAFG_TEST_JOIN_INNER_THREE( A, B, C                     ) A##B##C
