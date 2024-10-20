@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "TestInclude.h"
+
 TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
 {
     using namespace Jafg;

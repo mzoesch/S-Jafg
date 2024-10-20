@@ -386,7 +386,7 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
              * @see Arg: --PostLuaRun
              */
             WriteWithIndent(builder, indent+4, "-- Somehow this does not work??\n")
-            WriteWithIndent(builder, indent+4, "-- The IDEA will just set the pch to /Yu but we, of course, need /Yc\n")
+            WriteWithIndent(builder, indent+4, "-- The IDEA will just set the pch to /Yu but we, of course, need /Yc.\n")
         }
         WriteWithIndent(builder, indent+4, "pchheader 'CoreAfx.h'\n")
         WriteWithIndent(builder, indent+4, fmt.Sprintf(

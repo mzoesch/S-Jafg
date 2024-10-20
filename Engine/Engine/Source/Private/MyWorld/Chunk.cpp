@@ -45,7 +45,7 @@ void AChunk::GenerateChunk()
 {
     //std::cout << "Started thread: " << std::this_thread::get_id() << '\n';
 
-    WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y, chunkPos.z, WorldStatics::ChunkSize, RawVoxelData);
+    WorldGen::GenerateChunkData(static_cast<int>(chunkPos.x), static_cast<int>(chunkPos.y), static_cast<int>(chunkPos.z), WorldStatics::ChunkSize, RawVoxelData);
 
     // std::vector<unsigned int> northData, southData, eastData, westData, upData, downData;
     uint32* northData = new uint32[WorldStatics::VoxelCount];
@@ -67,12 +67,12 @@ void AChunk::GenerateChunk()
     // WorldGen::GenerateChunkData(chunkPos.x - 1, chunkPos.y, chunkPos.z, WorldStatics::ChunkSize, westData);
     // WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y + 1, chunkPos.z, WorldStatics::ChunkSize, upData);
     // WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y - 1, chunkPos.z, WorldStatics::ChunkSize, downData);
-    WorldGen::GenerateChunkData(chunkPos.x + 1, chunkPos.y, chunkPos.z, WorldStatics::ChunkSize, northData);
-    WorldGen::GenerateChunkData(chunkPos.x - 1, chunkPos.y, chunkPos.z, WorldStatics::ChunkSize, southData);
-    WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y + 1, chunkPos.z, WorldStatics::ChunkSize, eastData);
-    WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y - 1, chunkPos.z, WorldStatics::ChunkSize, westData);
-    WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y, chunkPos.z + 1, WorldStatics::ChunkSize, upData);
-    WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y, chunkPos.z - 1, WorldStatics::ChunkSize, downData);
+    WorldGen::GenerateChunkData(static_cast<int>(chunkPos.x + 1), static_cast<int>(chunkPos.y), static_cast<int>(chunkPos.z), WorldStatics::ChunkSize, northData);
+    WorldGen::GenerateChunkData(static_cast<int>(chunkPos.x - 1), static_cast<int>(chunkPos.y), static_cast<int>(chunkPos.z), WorldStatics::ChunkSize, southData);
+    WorldGen::GenerateChunkData(static_cast<int>(chunkPos.x), static_cast<int>(chunkPos.y + 1), static_cast<int>(chunkPos.z), WorldStatics::ChunkSize, eastData);
+    WorldGen::GenerateChunkData(static_cast<int>(chunkPos.x), static_cast<int>(chunkPos.y - 1), static_cast<int>(chunkPos.z), WorldStatics::ChunkSize, westData);
+    WorldGen::GenerateChunkData(static_cast<int>(chunkPos.x), static_cast<int>(chunkPos.y), static_cast<int>(chunkPos.z + 1), WorldStatics::ChunkSize, upData);
+    WorldGen::GenerateChunkData(static_cast<int>(chunkPos.x), static_cast<int>(chunkPos.y), static_cast<int>(chunkPos.z - 1), WorldStatics::ChunkSize, downData);
 
     //std::cout << "Got chunk data in thread: " << std::this_thread::get_id() << '\n';
 
@@ -113,10 +113,10 @@ void AChunk::GenerateChunk()
                         // vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->sideMinX, block->sideMaxY));
                         // vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->sideMaxX, block->sideMaxY));
 
-                        vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->sideMinX, block->sideMinY));
-                        vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->sideMaxX, block->sideMinY));
-                        vertices.push_back(Vertex(x + 1, y + 0, z + 1, block->sideMinX, block->sideMaxY));
-                        vertices.push_back(Vertex(x + 0, y + 0, z + 1, block->sideMaxX, block->sideMaxY));
+                        vertices.emplace_back(x + 1, y + 0, z + 0, block->sideMinX, block->sideMinY);
+                        vertices.emplace_back(x + 0, y + 0, z + 0, block->sideMaxX, block->sideMinY);
+                        vertices.emplace_back(x + 1, y + 0, z + 1, block->sideMinX, block->sideMaxY);
+                        vertices.emplace_back(x + 0, y + 0, z + 1, block->sideMaxX, block->sideMaxY);
 
                         indices.push_back(currentVertex + 0);
                         indices.push_back(currentVertex + 3);
@@ -150,10 +150,10 @@ void AChunk::GenerateChunk()
                         // vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->sideMinX, block->sideMaxY));
                         // vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->sideMaxX, block->sideMaxY));
 
-                        vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->sideMinX, block->sideMinY));
-                        vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->sideMaxX, block->sideMinY));
-                        vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->sideMinX, block->sideMaxY));
-                        vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->sideMaxX, block->sideMaxY));
+                        vertices.emplace_back(x + 0, y + 1, z + 0, block->sideMinX, block->sideMinY);
+                        vertices.emplace_back(x + 1, y + 1, z + 0, block->sideMaxX, block->sideMinY);
+                        vertices.emplace_back(x + 0, y + 1, z + 1, block->sideMinX, block->sideMaxY);
+                        vertices.emplace_back(x + 1, y + 1, z + 1, block->sideMaxX, block->sideMaxY);
 
                         indices.push_back(currentVertex + 0);
                         indices.push_back(currentVertex + 3);
@@ -187,10 +187,10 @@ void AChunk::GenerateChunk()
                         // vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->sideMinX, block->sideMaxY));
                         // vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->sideMaxX, block->sideMaxY));
 
-                        vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->sideMinX, block->sideMinY));
-                        vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->sideMaxX, block->sideMinY));
-                        vertices.push_back(Vertex(x + 0, y + 0, z + 1, block->sideMinX, block->sideMaxY));
-                        vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->sideMaxX, block->sideMaxY));
+                        vertices.emplace_back(x + 0, y + 0, z + 0, block->sideMinX, block->sideMinY);
+                        vertices.emplace_back(x + 0, y + 1, z + 0, block->sideMaxX, block->sideMinY);
+                        vertices.emplace_back(x + 0, y + 0, z + 1, block->sideMinX, block->sideMaxY);
+                        vertices.emplace_back(x + 0, y + 1, z + 1, block->sideMaxX, block->sideMaxY);
 
                         indices.push_back(currentVertex + 0);
                         indices.push_back(currentVertex + 3);
@@ -224,10 +224,10 @@ void AChunk::GenerateChunk()
                         // vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->sideMinX, block->sideMaxY));
                         // vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->sideMaxX, block->sideMaxY));
 
-                        vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->sideMinX, block->sideMinY));
-                        vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->sideMaxX, block->sideMinY));
-                        vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->sideMinX, block->sideMaxY));
-                        vertices.push_back(Vertex(x + 1, y + 0, z + 1, block->sideMaxX, block->sideMaxY));
+                        vertices.emplace_back(x + 1, y + 1, z + 0, block->sideMinX, block->sideMinY);
+                        vertices.emplace_back(x + 1, y + 0, z + 0, block->sideMaxX, block->sideMinY);
+                        vertices.emplace_back(x + 1, y + 1, z + 1, block->sideMinX, block->sideMaxY);
+                        vertices.emplace_back(x + 1, y + 0, z + 1, block->sideMaxX, block->sideMaxY);
 
                         indices.push_back(currentVertex + 0);
                         indices.push_back(currentVertex + 3);
@@ -261,10 +261,10 @@ void AChunk::GenerateChunk()
                         // vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->bottomMinX, block->bottomMaxY));
                         // vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->bottomMaxX, block->bottomMaxY));
 
-                        vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->bottomMinX, block->bottomMinY));
-                        vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->bottomMaxX, block->bottomMinY));
-                        vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->bottomMinX, block->bottomMaxY));
-                        vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->bottomMaxX, block->bottomMaxY));
+                        vertices.emplace_back(x + 1, y + 1, z + 0, block->bottomMinX, block->bottomMinY);
+                        vertices.emplace_back(x + 0, y + 1, z + 0, block->bottomMaxX, block->bottomMinY);
+                        vertices.emplace_back(x + 1, y + 0, z + 0, block->bottomMinX, block->bottomMaxY);
+                        vertices.emplace_back(x + 0, y + 0, z + 0, block->bottomMaxX, block->bottomMaxY);
 
                         indices.push_back(currentVertex + 0);
                         indices.push_back(currentVertex + 3);
@@ -298,10 +298,10 @@ void AChunk::GenerateChunk()
                         // vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->topMinX, block->topMaxY));
                         // vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->topMaxX, block->topMaxY));
 
-                        vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->topMinX, block->topMinY));
-                        vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->topMaxX, block->topMinY));
-                        vertices.push_back(Vertex(x + 0, y + 0, z + 1, block->topMinX, block->topMaxY));
-                        vertices.push_back(Vertex(x + 1, y + 0, z + 1, block->topMaxX, block->topMaxY));
+                        vertices.emplace_back(x + 0, y + 1, z + 1, block->topMinX, block->topMinY);
+                        vertices.emplace_back(x + 1, y + 1, z + 1, block->topMaxX, block->topMinY);
+                        vertices.emplace_back(x + 0, y + 0, z + 1, block->topMinX, block->topMaxY);
+                        vertices.emplace_back(x + 1, y + 0, z + 1, block->topMaxX, block->topMaxY);
 
                         indices.push_back(currentVertex + 0);
                         indices.push_back(currentVertex + 3);
@@ -336,23 +336,23 @@ void AChunk::Render(unsigned int modelLoc)
     {
         if (generated)
         {
-            numTriangles = indices.size();
+            numTriangles = static_cast<unsigned int>( indices.size() );
 
             glGenVertexArrays(1, &vertexArrayObject);
             glBindVertexArray(vertexArrayObject);
 
             glGenBuffers(1, &vbo);
             glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices.size() * sizeof(Vertex)), vertices.data(), GL_STATIC_DRAW);
 
-            glVertexAttribPointer(0, 3, GL_BYTE, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, posX));
+            glVertexAttribPointer(0, 3, GL_BYTE, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, posX)));
             glEnableVertexAttribArray(0);
-            glVertexAttribPointer(1, 2, GL_BYTE, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texGridX));
+            glVertexAttribPointer(1, 2, GL_BYTE, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, texGridX)));
             glEnableVertexAttribArray(1);
 
             glGenBuffers(1, &ebo);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(),
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(indices.size() * sizeof(unsigned int)), indices.data(),
                          GL_STATIC_DRAW);
             ready = true;
         }
@@ -367,7 +367,7 @@ void AChunk::Render(unsigned int modelLoc)
 
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, worldPos);
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(static_cast<GLint>(modelLoc), 1, GL_FALSE, glm::value_ptr(model));
 
-    glDrawElements(GL_TRIANGLES, numTriangles, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(numTriangles), GL_UNSIGNED_INT, 0);
 }

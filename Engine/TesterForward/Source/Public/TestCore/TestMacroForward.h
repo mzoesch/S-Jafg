@@ -38,8 +38,8 @@
     /* syntax highlighting and intellisense working inside an IDEA.    */ \
     {                                                                     \
         auto What_ = ( What );                                            \
-        auto A_ = ( B );                                                  \
-        auto A_ = ( B );                                                  \
+        auto A_ = ( A );                                                  \
+        auto B_ = ( B );                                                  \
     }
 
 #define PRIVATE_JAFG_TEST_JOIN_INNER_TWO(   A, B                        ) A##B
@@ -55,5 +55,5 @@
     PRIVATE_JAFG_TEST_JOIN_INNER_FIVE(Prefix, _, Line, _, Counter)
 
 /** Forward simple test macro to expand to an unused static (in translation private scope) function. */
-#define PRIVATE_JAFG_TEST_MAKE_SIMPLE_TEST(ClassName, PrettyName, Category, FileName, LineNumber )\
+#define PRIVATE_JAFG_TEST_MAKE_SIMPLE_TEST(ClassName, PrettyName, Category, FileName, LineNumber ) \
     static void PRIVATE_JAFG_TEST_JOIN_INNER_TWO(DiscardMe, ClassName)( void )
