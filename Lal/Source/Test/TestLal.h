@@ -2,8 +2,4 @@
 
 #pragma once
 
-#include "TestInclude.h"
-
-
-
-inline int Hello = 0;
+#include "TestContainers.h"

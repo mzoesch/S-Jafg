@@ -156,3 +156,11 @@
  * Only do ensure if checks are enabled.
  */
 #define DO_ENSURES                      DO_CHECKS
+
+
+/*-----------------------------------------------------------------------------
+    Jafg build tool.
+-----------------------------------------------------------------------------*/
+
+/** Pragmas for the Jafg Build Tool. */
+#define PRAGMA_FOR_JAFG_BUILD_TOOL(Pragma)

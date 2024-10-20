@@ -4,13 +4,12 @@ package Shared
 
 import "fmt"
 
-// Project is a struct that holds the structure for a project in the application
+// Project is a struct that holds the structure for a project in the application.
 //
 // The following fields are required:
-//   "PrimaryModule"    - The name of the primary module
 //   "Modules"          - A list of module names that this project consists of (SOLO if only
 //                        one annotated with just a ~Source/)
-//   "Kind"             - The kind of project ("Static", "Shared", "Launch")
+//   "DefaultKind"      - The kind of project ("Static", "Shared", "Launch")
 // The following fields are optional:
 //   "FriendlyName"     - A human-readable name for the project
 type Project struct {

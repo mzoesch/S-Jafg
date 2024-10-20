@@ -337,7 +337,7 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
              */
             if mod.GetUsableName() == "Tester" {
                 includeDirs = append(includeDirs, fmt.Sprintf(
-                    "%s/Source/Test",
+                    "%s/Source",
                     modDep.GetRelativeModuleDir(),
                 ))
             }

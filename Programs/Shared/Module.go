@@ -8,19 +8,19 @@ import (
     "strconv"
 )
 
-// Module is a struct that holds the structure for a module in the application
-// A module is always statically compiled and linked into the application.
+// Module is a struct that holds the structure for a module in the application.
 //
 // The following fields are optional:
-//   "FriendlyName"         - A human-readable name for the module
-//   "PublicDependencies"   - A list of module names that this module depends on
-//   "Pch"                  - The precompiled header strategy for the module ("No", "Use", "Generate")
+//   "FriendlyName"                  - A human-readable name for the module
+//   "PublicDependencies"            - A list of module names that this module depends on
+//   "Pch"                           - The precompiled header strategy for the module ("No", "Use", "Generate")
+//   "ConditionalPublicDependencies" - A list of conditional dependencies (condition based of target defines).
 type Module struct {
     Name         string
     FriendlyName string
     Parent       *Project
 
-    Pch Pch
+    Pch  Pch
     Kind ProjectKind
 
     PublicDependencies            []string
@@ -289,4 +289,17 @@ func (mod *Module) GetPreProcIntAsString() string {
 
 func (mod *Module) GetPreProcIntAsStringBase2() string {
     return strconv.FormatInt(mod.PreProcInt, 2)
+}
+
+func (mod *Module) GetPredictedTestIncludeFileName() string {
+    return fmt.Sprintf("Test%s.h", mod.GetUsableName())
+}
+
+func (mod *Module) GetPredictedRelativeTestIncludeFilePath() string {
+    return fmt.Sprintf("%s/Source/Test/%s", mod.GetRelativeModuleDir(), mod.GetPredictedTestIncludeFileName())
+}
+
+func (mod *Module) HasValidTestIncludeFile() bool {
+    var relativeFileInQuestion string = mod.GetPredictedRelativeTestIncludeFilePath()
+    return DoesRelativeFileExist(relativeFileInQuestion)
 }

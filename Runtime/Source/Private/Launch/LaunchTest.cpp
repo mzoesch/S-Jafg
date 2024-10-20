@@ -2,11 +2,8 @@
 
 #include "CoreAFX.h"
 
-#include "TestCore/RunTests.h"
-
 #if WITH_TESTS
 
-#include "TestInclude.h"
 #include "TesterInclude.h"
 
 EPlatformExit::Type LaunchTestMain(void);

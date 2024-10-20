@@ -6,6 +6,7 @@ import (
     "fmt"
     "io"
     "os"
+    "path/filepath"
 )
 
 // CheckRelativeDir checks if a directory exists and if not tries to create it.
@@ -32,11 +33,13 @@ func CheckAbsoluteDir(absDir string) {
     return
 }
 
+// CheckRelativeFile checks if a file exists and if not tries to create it.
 func CheckRelativeFile(relFilePath string) {
     CheckAbsoluteFile(fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), relFilePath))
     return
 }
 
+// CheckAbsoluteFile checks if a file exists and if not tries to create it.
 func CheckAbsoluteFile(absFilePath string) {
     if _, err := os.Stat(absFilePath); os.IsNotExist(err) {
         file, err := os.Create(absFilePath)
@@ -53,6 +56,7 @@ func CheckAbsoluteFile(absFilePath string) {
     return
 }
 
+// VerifyAbsoluteFileExistence verifies that a file exists, panicking if it doesn't
 func VerifyAbsoluteFileExistence(absFile string) {
     if _, err := os.Stat(absFile); os.IsNotExist(err) {
         if err != nil {
@@ -61,6 +65,22 @@ func VerifyAbsoluteFileExistence(absFile string) {
     }
 
     return
+}
+
+func DoesRelativeFileExist(relFile string) bool {
+    return DoesAbsoluteFileExist(GetAbsolutePathNoCheck(relFile))
+}
+
+func DoesAbsoluteFileExist(absoluteFile string) bool {
+    _, err := os.Stat(absoluteFile);
+    if os.IsNotExist(err) {
+        return false
+    }
+    if err != nil {
+        panic(err)
+    }
+
+    return true
 }
 
 // TruncateRelativeFile truncates a file, or creates it if it doesn't exist
@@ -101,8 +121,8 @@ func SeekFileBeginning(file *os.File) {
     return
 }
 
-func OpenRelativeFile(relDir string, bTruncate bool, flag int) *os.File {
-    return OpenAbsoluteFile(fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), relDir), bTruncate, flag)
+func OpenRelativeFile(relFile string, bTruncate bool, flag int) *os.File {
+    return OpenAbsoluteFile(fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), relFile), bTruncate, flag)
 }
 
 func OpenAbsoluteFile(absDir string, bTruncate bool, flag int) *os.File {
@@ -159,6 +179,11 @@ func ReadFileContentsFromAbsolutePath(absPath string) string {
     return GetContentsFromOpenFile(file)
 }
 
+func DeleteRelativeFileIfExists(relPath string) {
+    DeleteAbsoluteFileIfExists(GetAbsolutePathNoCheck(relPath))
+    return
+}
+
 func DeleteAbsoluteFileIfExists(absPath string) {
     if _, err := os.Stat(absPath); !os.IsNotExist(err) {
         err := os.Remove(absPath)
@@ -175,12 +200,22 @@ func IsFileAndStringEqual(file *os.File, other string, bPrintReasonToStdOut bool
     if err != nil {
        panic(err)
     }
+
     var content string = string(byteContent)
+
+    if len(content) != len(other) {
+        if bPrintReasonToStdOut {
+            fmt.Printf("Provided file and string are not equal [%s]. Lengths differ.\n", file.Name())
+        }
+
+        return false
+    }
 
     var otherRunes []rune = []rune(other)
 
-    var lineCount int = 0
     var bEqual bool = true
+    var lineCount int = 0
+
     for i, c := range content {
         if c == '\n' {
             lineCount++
@@ -208,4 +243,58 @@ func IsFileAndStringEqual(file *os.File, other string, bPrintReasonToStdOut bool
     }
 
     return false
+}
+
+func RecursivelyGetAllFilesInRelativeDir(relativeDir string) []string {
+    return RecursivelyGetAllFilesInAbsoluteDir(fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), relativeDir))
+}
+
+func RecursivelyGetAllFilesInAbsoluteDir(absDir string) []string {
+    var files []string
+    err := filepath.Walk(absDir, func(path string, info os.FileInfo, err error) error {
+        if err != nil {
+            panic(err)
+        }
+
+        if !info.IsDir() {
+            files = append(files, path)
+        }
+
+        return nil
+    })
+    if err != nil {
+        return nil
+    }
+
+    return files
+}
+
+func IsHeaderFile(file string) bool {
+    return filepath.Ext(file) == ".h" || filepath.Ext(file) == ".hpp"
+}
+
+func GetFileNameFromHeaderPath(headerPath string) string {
+    var base string = filepath.Base(headerPath)
+
+    var dotIndex int = -1
+    for i := len(base) - 1; i >= 0; i-- {
+        if base[i] == '.' {
+            dotIndex = i
+            break
+        }
+
+        continue
+    }
+
+    if dotIndex == -1 {
+        panic(fmt.Sprintf("Could not find dot in header path [%s].", headerPath))
+    }
+
+    return base[:dotIndex]
+}
+
+// GetRelativeGeneratedHeaderPath returns the relative path to the generated header file.
+// Do not an extension to the filename.
+func GetRelativeGeneratedHeaderPath(filename string) string {
+    return fmt.Sprintf("%s/%s%s", GeneratedHeadersDir, filename, GeneratedHeadersExtension)
 }

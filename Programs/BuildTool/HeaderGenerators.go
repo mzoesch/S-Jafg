@@ -47,10 +47,17 @@ func MakeHeaderContentFinal(file *os.File, bDoHeaderGuard bool, bIsHeaderGuardMo
     )
 }
 
+// GetHeaderGuardForModule2 exists because:
+//     GetHeaderGuardForModule for whatever reason is not visible outside this file scope????
+//     So we just create this exact function but with a 2 as a suffix, and then it works?? Wtf??? Huh.
+func GetHeaderGuardForModule2(moduleName string, justFilename string) string {
+    return GetHeaderGuardForModule(moduleName, justFilename)
+}
+
 func GetHeaderGuardForModule(moduleName string, justFilename string) string {
     return fmt.Sprintf(`
 #ifdef PRIVATE_JAFG_%s_%s_GENERATED_HEADER
-#error "Generated header from %s-file inside project %s already exists. Missing #ifndef or #pragma once directive?"
+    #error "Generated header from %s-file inside project %s already exists. Missing #ifndef or #pragma once directive?"
 #endif /* PRIVATE_JAFG_%s_%s_GENERATED_HEADER */
 #define PRIVATE_JAFG_%s_%s_GENERATED_HEADER
 `,
@@ -64,7 +71,7 @@ func GetHeaderGuardForModule(moduleName string, justFilename string) string {
 func GetHeaderGuardGeneric(justFilename string) string {
     return fmt.Sprintf(`
 #ifdef PRIVATE_JAFG_%s_GENERATED_HEADER
-#error "Generated header from %s-file already exists. Missing #ifndef or #pragma once directive?"
+    #error "Generated header from %s-file already exists. Missing #ifndef or #pragma once directive?"
 #endif /* PRIVATE_JAFG_%s_GENERATED_HEADER */
 #define PRIVATE_JAFG_%s_GENERATED_HEADER
 `,

@@ -154,3 +154,17 @@ func (bi *BuildInfo) CopyWorkspaceContentToLaunch() {
 
     return
 }
+
+func (bi *BuildInfo) GetRelativeModuleDir() string {
+    for _, mod := range Shared.GApp.GetAllModules() {
+        if mod.GetUsableName() == bi.ModuleName {
+            return mod.GetRelativeModuleDir()
+        }
+
+        continue
+    }
+
+    panic(fmt.Sprintf("Could not find module [%s].", bi.ModuleName))
+
+    return ""
+}

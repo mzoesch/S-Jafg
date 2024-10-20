@@ -49,6 +49,11 @@ func GetCheckedAbsolutePath(relPath string) string {
     return absPath
 }
 
+func GetAbsolutePathNoCheck(relPath string) string {
+    absPath, _ := GetAbsolutePath(relPath)
+    return absPath
+}
+
 func GetAbsolutePathToEngineRootDir() string {
     wd, err := os.Getwd()
     if err != nil {
