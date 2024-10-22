@@ -3,57 +3,35 @@
 #pragma once
 
 #include "CoreAFX.h"
-#include "Engine/Object.h"
-#include "InputTypes.h"
+#include "Player/InputTypes.h"
 
 namespace Jafg
 {
 
-struct LRawInput
-{
-    explicit LRawInput() = default;
-    explicit LRawInput(const LKey Key) : Key(Key), Value(1.0f) { }
-    explicit LRawInput(const LKey Key, const float Value) : Key(Key), Value(Value)
-    {
-    }
+class LSurface;
+class LLocalPlayer;
 
-    LKey  Key;
-    float Value;
-
-    FORCEINLINE bool operator <(const LRawInput& Other) const   { return this->Key < Other.Key;  }
-    FORCEINLINE bool operator <(const LKey& Other) const        { return this->Key < Other;      }
-    FORCEINLINE bool operator >(const LRawInput& Other) const   { return this->Key > Other.Key;  }
-    FORCEINLINE bool operator >(const LKey& Other) const        { return this->Key > Other;      }
-    FORCEINLINE bool operator==(const LRawInput& Other) const   { return this->Key == Other.Key; }
-    FORCEINLINE bool operator==(const LKey& Other) const        { return this->Key == Other;     }
-    FORCEINLINE bool operator!=(const LRawInput& Other) const   { return this->Key != Other.Key; }
-    FORCEINLINE bool operator!=(const LKey& Other) const        { return this->Key != Other;     }
-};
-
-class JPlayerInput final : public JObject
+class LPlayerInput final
 {
 public:
 
-    JPlayerInput() = default;
+    LPlayerInput() = default;
 
     /** Called when a new frame is started. */
-    void BeginNewFrame(void);
+    void BeginNewFrame();
 
-    /** Key frame, add all the keys that are down. */
-    FORCEINLINE auto AddKeyDown(const LKey Key) -> void { this->DownKeys.emplace(LRawInput(Key)); }
-    FORCEINLINE auto AddKeyDown(const LKey Key, const float Value) -> void { this->DownKeys.emplace(LRawInput(Key, Value)); }
-    FORCEINLINE auto GetCurrentlyPressedKeys(void) const -> const std::set<LRawInput>& { return this->DownKeys; }
     /** Whether this key was just downed this frame. */
-    bool IsNewDown(const LKey& Key) const;
+    bool IsNewDown(const LKey Key) const;
 
-    void ProcessInput(void);
+    void DispatchInputDelegates();
 
-private:
+    auto GetLocalPlayer() const -> LLocalPlayer*;
+    auto GetCheckedLocalPlayer() const -> LLocalPlayer*;
+    auto GetPanickedLocalPlayer() const -> LLocalPlayer*;
 
-    /** The keys that are currently down. */
-    std::set<LRawInput> DownKeys;
-    /** The keys that were down last frame. */
-    std::set<LRawInput> LastFrameDownKeys;
+    auto GetPrimaryContext() const -> LSurface*;
+    auto GetCheckedPrimaryContext() const -> LSurface*;
+    auto GetPanickedPrimaryContext() const -> LSurface*;
 };
 
-} /* Namespace Jafg. */
+} /* ~Namespace Jafg. */

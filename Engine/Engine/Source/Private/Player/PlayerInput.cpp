@@ -1,107 +1,160 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAFX.h"
-#include "Player/PlayerInput.h"
 #include <intrin.h>
-#include "Platform/DesktopPlatform.h"
+#include "Player/PlayerInput.h"
 #include "Core/Application.h"
+#include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Engine/Framework/Camera.h"
+#include "Engine/Framework/PlayerController.h"
 #include "Platform/Surface.h"
+#include "Player/LocalPlayer.h"
 
-void Jafg::JPlayerInput::BeginNewFrame()
+void Jafg::LPlayerInput::BeginNewFrame()
 {
-    this->LastFrameDownKeys = this->DownKeys;
-    this->DownKeys.clear();
+    LSurface* Context = this->GetCheckedPrimaryContext();
+
+    Context->DownKeys.SwapBuffers(Context->LastFrameDownKeys);
+    Context->DownKeys.Reset(Context->DownKeys.GetSize());
 
     return;
 }
 
-bool Jafg::JPlayerInput::IsNewDown(const LKey& Key) const
+bool Jafg::LPlayerInput::IsNewDown(const LKey Key) const
 {
-    return this->DownKeys.contains(LRawInput(Key)) && (this->LastFrameDownKeys.contains(LRawInput(Key)) == false);
+    const LSurface* Context = this->GetCheckedPrimaryContext();
+    return Context->DownKeys.Contains(Key) && (Context->LastFrameDownKeys.Contains(Key) == false);
 }
 
-void Jafg::JPlayerInput::ProcessInput()
+void Jafg::LPlayerInput::DispatchInputDelegates()
 {
-    /* Player in transit or not yet initialized in a world. */
-    if (this->GetWorld() == nullptr)
+    LLocalPlayer* LocalPlayer = this->GetCheckedLocalPlayer();
+    if (!LocalPlayer->DoesPossess() || !LocalPlayer->HasPrimarySurface())
     {
         return;
     }
+    check( LocalPlayer->GetPossessed()->GetWorld() )
+    LWorld* TargetWorld = LocalPlayer->GetPossessed()->GetWorld();
+    LSurface* PrimarySurface = LocalPlayer->GetPrimarySurface();
 
-    if (this->GetCurrentlyPressedKeys().contains(LRawInput(EKeys::W)))
+    if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::W))
     {
-        this->GetWorld()->MainCamera->ProcessKeyboard(FORWARD, Application::GetDeltaTimeAsFloat());
+        TargetWorld->MainCamera->ProcessKeyboard(FORWARD, Application::GetDeltaTimeAsFloat());
     }
 
-    if (this->GetCurrentlyPressedKeys().contains(LRawInput(EKeys::S)))
+    if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::S))
     {
-        this->GetWorld()->MainCamera->ProcessKeyboard(BACKWARD, Application::GetDeltaTimeAsFloat());
+        TargetWorld->MainCamera->ProcessKeyboard(BACKWARD, Application::GetDeltaTimeAsFloat());
     }
 
-    if (this->GetCurrentlyPressedKeys().contains(LRawInput(EKeys::A)))
+    if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::A))
     {
-        this->GetWorld()->MainCamera->ProcessKeyboard(LEFT, Application::GetDeltaTimeAsFloat());
+        TargetWorld->MainCamera->ProcessKeyboard(LEFT, Application::GetDeltaTimeAsFloat());
     }
 
-    if (this->GetCurrentlyPressedKeys().contains(LRawInput(EKeys::D)))
+    if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::D))
     {
-        this->GetWorld()->MainCamera->ProcessKeyboard(RIGHT, Application::GetDeltaTimeAsFloat());
+        TargetWorld->MainCamera->ProcessKeyboard(RIGHT, Application::GetDeltaTimeAsFloat());
     }
 
-    if (this->GetCurrentlyPressedKeys().contains(LRawInput(EKeys::Q)))
+    if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::Q))
     {
-        this->GetWorld()->MainCamera->ProcessKeyboard(DOWN, Application::GetDeltaTimeAsFloat());
+        TargetWorld->MainCamera->ProcessKeyboard(DOWN, Application::GetDeltaTimeAsFloat());
     }
 
-    if (this->GetCurrentlyPressedKeys().contains(LRawInput(EKeys::E)))
+    if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::E))
     {
-        this->GetWorld()->MainCamera->ProcessKeyboard(UP, Application::GetDeltaTimeAsFloat());
+        TargetWorld->MainCamera->ProcessKeyboard(UP, Application::GetDeltaTimeAsFloat());
     }
 
-    if (this->GetCurrentlyPressedKeys().contains(LRawInput(EKeys::Escape)))
+    if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::Escape))
     {
         if (this->IsNewDown(EKeys::Escape))
         {
-            this->GetWorld()->bShowMouse = !this->GetWorld()->bShowMouse;
-            this->GetWorld()->FirstTimeMouseScroll = true;
-            ::GLFWwindow* MyWindow = this->GetEngine()->GetSurface()->As<Jafg::DesktopPlatform>()->GetMasterWindow();
-            glfwSetInputMode(MyWindow, GLFW_CURSOR,
-                this->GetWorld()->bShowMouse ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+            TargetWorld->bShowMouse = !TargetWorld->bShowMouse;
+            TargetWorld->FirstTimeMouseScroll = true;
+            LocalPlayer->GetPrimarySurface()->SetInputMode(TargetWorld->bShowMouse);
         }
     }
 
     {
-        const std::set<LRawInput>::const_iterator MouseX = this->GetCurrentlyPressedKeys().find(LRawInput(EKeys::MouseX));
-        const std::set<LRawInput>::const_iterator MouseY = this->GetCurrentlyPressedKeys().find(LRawInput(EKeys::MouseY));
+        const LRawInput* const MouseX = PrimarySurface->GetCurrentlyPressedKeys().FindRef(EKeys::MouseX);
+        const LRawInput* const MouseY = PrimarySurface->GetCurrentlyPressedKeys().FindRef(EKeys::MouseY);
 
-        if (this->DownKeys.empty() == false)
+        if (PrimarySurface->GetCurrentlyPressedKeys().IsEmpty() == false)
         {
             __nop();
         }
 
-        if (MouseX != this->GetCurrentlyPressedKeys().end() && MouseY != this->GetCurrentlyPressedKeys().end())
+        if (MouseX != nullptr && MouseY != nullptr)
         {
-            this->GetWorld()->MouseCallback(MouseX->Value, MouseY->Value);
+            TargetWorld->MouseCallback(MouseX->Value, MouseY->Value);
         }
-        else if (MouseX != this->GetCurrentlyPressedKeys().end())
+        else if (MouseX != nullptr)
         {
-            this->GetWorld()->MouseCallback(MouseX->Value, 0.0f);
+            TargetWorld->MouseCallback(MouseX->Value, 0.0f);
         }
-        else if (MouseY != this->GetCurrentlyPressedKeys().end())
+        else if (MouseY != nullptr)
         {
-            this->GetWorld()->MouseCallback(0.0f, MouseY->Value);
+            TargetWorld->MouseCallback(0.0f, MouseY->Value);
         }
     }
 
     {
-        const std::set<LRawInput>::const_iterator MouseWheelAxis = this->GetCurrentlyPressedKeys().find(LRawInput(EKeys::MouseWheelAxis));
-        if (MouseWheelAxis != this->GetCurrentlyPressedKeys().end())
+        const LRawInput* const MouseWheelAxis = PrimarySurface->GetCurrentlyPressedKeys().FindRef(EKeys::MouseWheelAxis);
+        if (MouseWheelAxis != nullptr)
         {
-            this->GetWorld()->ScrollCallback(MouseWheelAxis->Value);
+            TargetWorld->ScrollCallback(MouseWheelAxis->Value);
         }
     }
 
     return;
+}
+
+Jafg::LLocalPlayer* Jafg::LPlayerInput::GetLocalPlayer() const
+{
+    checkSlow( GEngine )
+    return GEngine->GetLocalPlayer();
+}
+
+Jafg::LLocalPlayer* Jafg::LPlayerInput::GetCheckedLocalPlayer() const
+{
+    checkSlow( GEngine )
+    return GEngine->GetCheckedLocalPlayer();
+}
+
+Jafg::LLocalPlayer* Jafg::LPlayerInput::GetPanickedLocalPlayer() const
+{
+    checkSlow( GEngine )
+    return GEngine->GetPanickedLocalPlayer();
+}
+
+Jafg::LSurface* Jafg::LPlayerInput::GetPrimaryContext() const
+{
+    return this->GetCheckedLocalPlayer()->GetPrimarySurface();
+}
+
+Jafg::LSurface* Jafg::LPlayerInput::GetCheckedPrimaryContext() const
+{
+    if (LSurface* Surface = this->GetCheckedLocalPlayer()->GetPrimarySurface(); Surface)
+    {
+        return Surface;
+    }
+
+    check( false && "Could not find primary context." )
+
+    return nullptr;
+}
+
+Jafg::LSurface* Jafg::LPlayerInput::GetPanickedPrimaryContext() const
+{
+    if (LSurface* Surface = this->GetPanickedLocalPlayer()->GetPrimarySurface(); Surface)
+    {
+        return Surface;
+    }
+
+    panic( "Could not find primary context." )
+
+    return nullptr;
 }

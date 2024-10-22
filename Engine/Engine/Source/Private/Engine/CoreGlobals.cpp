@@ -3,15 +3,31 @@
 #include "CoreAFX.h"
 #include "CoreGlobals.h"
 #include "Engine/Engine.h"
+#include "Forward/EngineForward.h"
 
 void Jafg::Private::BeginExitIfRequested()
 {
-    if (IsEngineExitRequested())
+    if (IsEngineExitRequested() || ReflectForwardEngineExitRequest())
     {
         bGEngineRequestingExit = true;
     }
 
     return;
+}
+
+bool Jafg::Private::ReflectForwardEngineExitRequest()
+{
+    if (::Jafg::EngineForward::bForwardExitRequest)
+    {
+        ::Jafg::RequestEngineExit(
+            ::Jafg::EngineForward::ForwardCustomExitStatus,
+            ::Jafg::EngineForward::ForwardCustomExitReason
+        );
+
+        return true;
+    }
+
+    return false;
 }
 
 void Jafg::RequestEngineExit()

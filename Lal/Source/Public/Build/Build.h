@@ -41,7 +41,12 @@
 // Build targets.
 #ifndef AS_CLIENT
     #define AS_CLIENT               0
-#endif /* !AS_CLIENT */
+    #define WITH_FRONTEND           0
+    #define WITH_LOCAL_LAYER        0
+#else /* !AS_CLIENT */
+    #define WITH_FRONTEND           1
+    #define WITH_LOCAL_LAYER        1
+#endif /* AS_CLIENT */
 #ifndef AS_SERVER
     #define AS_SERVER               0
 #endif /* !AS_SERVER */
@@ -59,6 +64,9 @@
         #error "Multiple build platforms specified."
     #endif /* AS_CLIENT */
 #endif /* AS_SERVER */
+#ifndef WITH_FRONTEND
+    #error "WITH_FRONTEND not defined."
+#endif /* !WITH_FRONTEND */
 
 #ifndef WITH_TESTS
     #define WITH_TESTS              0
@@ -90,7 +98,7 @@
 #endif /* !PRIVATE_JAFG_CURRENT_MODULE_PREPROC_IDENT */
 
 ///////////////////////////////////////////////////////////////////////////////
-// Include the generated build file
+// Include the generated build file.
 #include "Build.generated.h"
 
 
@@ -164,3 +172,6 @@
 
 /** Pragmas for the Jafg Build Tool. */
 #define PRAGMA_FOR_JAFG_BUILD_TOOL(Pragma)
+
+/** Advice the build tool to make the global workspace wide build file for this file. */
+PRAGMA_FOR_JAFG_BUILD_TOOL("MakeBuildFile")

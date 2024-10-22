@@ -1,0 +1,7 @@
+{
+    "FriendlyName": "Input",
+    "Pch": "Generate",
+    "PublicDependencies": [
+        "Lal"
+    ]
+}

@@ -10,9 +10,13 @@ namespace Jafg::Application
 namespace Private
 {
 
-typedef std::chrono::steady_clock::time_point SteadyStatisticsTimePoint;
+typedef std::chrono::high_resolution_clock             Hrc;
+typedef std::chrono::high_resolution_clock::time_point HrcTimePoint;
 
 }
+
+FORCEINLINE ENGINE_API auto GetHighestNow() -> Private::HrcTimePoint;
+FORCEINLINE ENGINE_API auto GetTimeDifferenceFromStaticContainerInitialization(const Private::HrcTimePoint& Point) -> double;
 
 FORCEINLINE ENGINE_API auto SetDeltaTime(const double DeltaTime) -> void;
 FORCEINLINE ENGINE_API auto GetDeltaTime() -> double;
@@ -31,8 +35,8 @@ FORCEINLINE ENGINE_API auto GetLowestFps() -> float;
 FORCEINLINE ENGINE_API auto SetLowestFps(const float LowestFps) -> void;
 FORCEINLINE ENGINE_API auto GetHighestFps() -> float;
 FORCEINLINE ENGINE_API auto SetHighestFps(const float HighestFps) -> void;
-FORCEINLINE ENGINE_API auto GetLastStatisticsTime() -> Private::SteadyStatisticsTimePoint;
-FORCEINLINE ENGINE_API auto SetLastStatisticsTime(const Private::SteadyStatisticsTimePoint LastStatisticsTime) -> void;
+FORCEINLINE ENGINE_API auto GetLastStatisticsTime() -> Private::HrcTimePoint;
+FORCEINLINE ENGINE_API auto SetLastStatisticsTime(const Private::HrcTimePoint LastStatisticsTime) -> void;
 FORCEINLINE ENGINE_API auto GetStatisticsFrameCount() -> uint64;
 FORCEINLINE ENGINE_API auto ResetStatistics() -> void;
 
@@ -45,14 +49,25 @@ ENGINE_API extern uint64 FrameCount;
 ENGINE_API extern double CurrentFrameTime;
 ENGINE_API extern double PreviousFrameTime;
 
-ENGINE_API extern float                     CurrentFps;
-ENGINE_API extern float                     LowestFps;
-ENGINE_API extern float                     HighestFps;
-ENGINE_API extern SteadyStatisticsTimePoint LastStatisticsTime;
-ENGINE_API extern uint64                    StatisticsFrameCount;
+ENGINE_API extern float        CurrentFps;
+ENGINE_API extern float        LowestFps;
+ENGINE_API extern float        HighestFps;
+ENGINE_API extern HrcTimePoint StaticContainerInitializationTime;
+ENGINE_API extern HrcTimePoint LastStatisticsTime;
+ENGINE_API extern uint64       StatisticsFrameCount;
 
+} /* ~Namespace Private */
+
+} /* ~Namespace Jafg::Application */
+
+FORCEINLINE Jafg::Application::Private::HrcTimePoint Jafg::Application::GetHighestNow()
+{
+    return Private::Hrc::now();
 }
 
+FORCEINLINE double Jafg::Application::GetTimeDifferenceFromStaticContainerInitialization(const Private::HrcTimePoint& Point)
+{
+    return std::chrono::duration<double>(Point - Private::StaticContainerInitializationTime).count();
 }
 
 FORCEINLINE void Jafg::Application::SetDeltaTime(const double DeltaTime)
@@ -74,6 +89,8 @@ FORCEINLINE void Jafg::Application::UpdateFrameCount()
 {
     ++Private::FrameCount;
     ++Private::StatisticsFrameCount;
+
+    return;
 }
 
 FORCEINLINE uint64 Jafg::Application::GetFrameCount()
@@ -131,12 +148,12 @@ FORCEINLINE void Jafg::Application::SetHighestFps(const float HighestFps)
     Private::HighestFps = HighestFps;
 }
 
-FORCEINLINE Jafg::Application::Private::SteadyStatisticsTimePoint Jafg::Application::GetLastStatisticsTime()
+FORCEINLINE Jafg::Application::Private::HrcTimePoint Jafg::Application::GetLastStatisticsTime()
 {
     return Private::LastStatisticsTime;
 }
 
-FORCEINLINE void Jafg::Application::SetLastStatisticsTime(const Private::SteadyStatisticsTimePoint LastStatisticsTime)
+FORCEINLINE void Jafg::Application::SetLastStatisticsTime(const Private::HrcTimePoint LastStatisticsTime)
 {
     Private::LastStatisticsTime = LastStatisticsTime;
 }

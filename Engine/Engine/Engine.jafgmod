@@ -1,12 +1,18 @@
 {
     "FriendlyName": "Engine",
-    "Pch": "No",
+    "Pch": "Generate",
     "PublicDependencies": [
-        "CORE_DEPENDENCIES", "Lal"
+        "CORE_DEPENDENCIES", "Lal", "Input"
+    ],
+    "PrivateDependencies": [
+        "EngineForward"
     ],
     "ConditionalPublicDependencies": {
         "WITH_TESTS": [
             "TesterForward"
+        ],
+        "AS_CLIENT": [
+            "Rhi"
         ]
     }
 }

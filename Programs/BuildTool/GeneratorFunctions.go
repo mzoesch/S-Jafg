@@ -9,10 +9,8 @@ import (
 )
 
 // GenerateWorkspaceWideBuildHeaderFile generates a header file that contains build information for the
-// entire workspace. *But* only modifies the existing file if the generated build information is different
-// from the existing build information. This is to avoid lengthy rebuilds as gcc, msvc or clang will use
-// timestamps to determine if a file needs to be rebuilt. This sucks for us :(.
-func GenerateWorkspaceWideBuildHeaderFile() {
+// entire workspace.
+func GenerateWorkspaceWideBuildHeaderFile() string {
     if GBuildInfo == nil {
         panic("BuildInfo not initialized.")
     }
@@ -45,19 +43,7 @@ func GenerateWorkspaceWideBuildHeaderFile() {
     )
 
     var file *os.File = Shared.OpenRelativeFile(relativeTargetFile, false, os.O_RDWR|os.O_CREATE)
-
-   content = MakeHeaderContentFinal(file, true, false, content)
-
-    if Shared.IsFileAndStringEqual(file, content, true) {
-        fmt.Printf("Workspace-wide build header file [%s] is up-to-date. Skipping re-write.\n", relativeTargetFile)
-    } else {
-        fmt.Printf("Workspace-wide build header file [%s] is outdated. Writing new content.\n", relativeTargetFile)
-        Shared.TruncateFile(file)
-        Shared.SeekFileBeginning(file)
-        Shared.WriteToFile(file, content)
-    }
-
+    var finalContent string = MakeHeaderContentFinal(file, true, false, content)
     Shared.CloseFile(file)
-
-    return
+    return finalContent
 }

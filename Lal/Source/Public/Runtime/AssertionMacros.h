@@ -66,13 +66,13 @@
 
         #define jassert(expr)               check(expr)
         #define jassertNoEntry()            checkNoEntry()
-        #define panic(expr)                 jassert(expr)
+        #define panic(expr)                 jassert( false && ( expr ) )
 
     #else /* DO_CHECKS */
 
         #define jassert(expr)               ASSERT_IMPL_PRIVATE(expr)
         #define jassertNoEntry()            ASSERT_IMPL_PRIVATE(false && NO_ENTRY_ASSERT_TEXT)
-        #define panic(expr)                 jassert(expr)
+        #define panic(expr)                 jassert( false && ( expr ) )
 
         #define ASSERT_IMPL_PRIVATE(expr)                                 \
             {                                                             \

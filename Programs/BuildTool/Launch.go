@@ -29,7 +29,6 @@ func Launch(args []string) {
 func LaunchPreBuildTasks(args []string) {
     Shared.CheckRelativeDir(Shared.GeneratedHeadersDir)
 
-    GenerateWorkspaceWideBuildHeaderFile()
     SystematicallyScanHeadersThatAreDue()
 
     return

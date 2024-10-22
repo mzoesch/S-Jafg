@@ -3,7 +3,7 @@
 #pragma once
 
 #if !PLATFORM_WINDOWS
-    #error "Tried to include Windoews specific platform code on a non-Windows platform."
+    #error "Tried to include Windows specific platform code on a non-Windows platform."
 #endif /* !PLATFORM_WINDOWS */
 
 #include "CoreAFX.h"
@@ -14,11 +14,11 @@ struct GLFWwindow;
 namespace Jafg
 {
 
-class ENGINE_API DesktopPlatformWin final : public DesktopPlatformBase
+class RHI_API LDesktopPlatformWin final : public LDesktopPlatformBase
 {
 public:
 
-    ~DesktopPlatformWin() override = default;
+    ~LDesktopPlatformWin() override = default;
 
     // DesktopPlatformBase implementation
     virtual void Initialize() override;
@@ -42,7 +42,7 @@ public:
 
 private:
 
-    ::GLFWwindow* CreateNativeWindow(const DesktopSurfaceProps& Props) const;
+    ::GLFWwindow* CreateNativeWindow(const LDesktopSurfaceProps& Props) const;
 
     void FramebufferSizeCallback(::GLFWwindow* Window, const int32 Width, const int32 Height);
     void MouseCallback(::GLFWwindow* Window, const double XPos, const double YPos);
@@ -54,6 +54,6 @@ private:
 };
 
 /** The currently active desktop platform. */
-typedef DesktopPlatformWin DesktopPlatform;
+typedef LDesktopPlatformWin LDesktopPlatform;
 
-}
+} /* ~Namespace Jafg */

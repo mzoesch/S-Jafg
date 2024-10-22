@@ -23,6 +23,7 @@
 
 #include "HAL/GenericPlatformTypes.h"
 #include "HAL/Platform.h"
+#include "Core/CoreMacros.h"
 #include "Core/CoreDefines.h"
 
 
@@ -48,8 +49,10 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Containers
-#include "Containers/JafgArray.h"
-#include "Containers/JafgString.h"
+#include "Containers/ContainerMacros.h"
+#include "Containers/Iterator.h"
+#include "Containers/Array.h"
+#include "Containers/String.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Maths

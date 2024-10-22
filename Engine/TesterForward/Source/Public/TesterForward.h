@@ -1,6 +1,5 @@
-#pragma once
-#include "Build.generated.h"
-#define PLATFORM_CALLSPEC_IN __declspec( dllimport )
-#define PLATFORM_CALLSPEC_OUT __declspec( dllexport )
+// Copyright mzoesch. All rights reserved.
 
-TESTERFORWARD_API int DontDiscardMe();
+#pragma once
+
+__declspec( dllexport ) int DontDiscardMe();

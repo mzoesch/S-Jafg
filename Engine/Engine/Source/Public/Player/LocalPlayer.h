@@ -2,29 +2,52 @@
 
 #pragma once
 
-#include "Engine/Object.h"
+#include "CoreAFX.h"
 
 namespace Jafg
 {
 
-class JPlayerInput;
+class LSurface;
+class LPlayerInput;
+class APlayerController;
 
-class JLocalPlayer : public JObject
+/**
+ * Represents a player that is considered local (physically present) on the
+ * current machine where this application instance is running.
+ * It is responsible for handling input / output for the human player.
+ * This includes inputs from physical devices and output to some kind
+ * of display device.
+ * This class is therefore never created on a dedicated server.
+ */
+class LLocalPlayer final
 {
 public:
 
-    JLocalPlayer() = default;
+    LLocalPlayer() = default;
+
+    PROHIBIT_REALLOC_OF_ANY_FROM(LLocalPlayer)
 
     void Initialize();
     void Tick(const float DeltaTime);
+    void OnLateTick(const float DeltaTime);
     void TearDown();
 
-    JPlayerInput* GetPlayerInput(void) const { return this->PlayerInput; }
+    FORCEINLINE auto IsPlayerInputValid() const -> bool { return this->PlayerInput != nullptr; }
+    FORCEINLINE auto GetPlayerInput() const -> LPlayerInput* { return this->PlayerInput; }
+
+    FORCEINLINE auto HasPrimarySurface() const -> bool { return this->SurfaceToDrawOn != nullptr; }
+    FORCEINLINE auto GetPrimarySurface() const -> LSurface* { return this->SurfaceToDrawOn; }
+
+    FORCEINLINE auto DoesPossess() const -> bool { return this->PlayerController != nullptr; }
+    FORCEINLINE auto GetPossessed() const -> APlayerController* { return this->PlayerController; }
+                auto Possess(APlayerController* InNewController) -> void;
 
 private:
 
-    /** Only exists if locally controlled. */
-    JPlayerInput* PlayerInput;
+    LPlayerInput* PlayerInput     = nullptr;
+    LSurface*     SurfaceToDrawOn = nullptr;
+
+    APlayerController* PlayerController = nullptr;
 };
 
-} /* Namespace Jafg. */
+} /* ~Namespace Jafg. */

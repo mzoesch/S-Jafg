@@ -25,6 +25,7 @@ type Module struct {
 
     PublicDependencies            []string
     ConditionalPublicDependencies []ConditionalInclude
+    PrivateDependencies           []string
 
     TargetNames []string
     Targets     []Target
@@ -88,6 +89,10 @@ func (mod *Module) DeserializeArrayField(key string, value []interface{}) {
     case "PublicDependencies":
         for _, v := range value {
             mod.PublicDependencies = append(mod.PublicDependencies, v.(string))
+        }
+    case "PrivateDependencies":
+        for _, v := range value {
+            mod.PrivateDependencies = append(mod.PrivateDependencies, v.(string))
         }
     case "Targets":
         for _, v := range value {
@@ -158,6 +163,33 @@ func (mod *Module) ValidateAllDependencies() {
         if dep == "CORE_DEPENDENCIES" {
             continue
         }
+        if dep == "RHI_DEPENDENCIES" {
+            continue
+        }
+
+        GApp.RequireModuleExists(dep)
+    }
+
+    for _, condInc := range mod.ConditionalPublicDependencies {
+        // Special dependencies that are not modules and are hardcoded into the lua generation.
+        if condInc.Include == "CORE_DEPENDENCIES" {
+            continue
+        }
+        if condInc.Include == "RHI_DEPENDENCIES" {
+            continue
+        }
+
+        GApp.RequireModuleExists(condInc.Include)
+    }
+
+    for _, dep := range mod.PrivateDependencies {
+        // Special dependencies that are not modules and are hardcoded into the lua generation.
+        if dep == "CORE_DEPENDENCIES" {
+            continue
+        }
+        if dep == "RHI_DEPENDENCIES" {
+            continue
+        }
 
         GApp.RequireModuleExists(dep)
     }
@@ -203,6 +235,9 @@ func (mod *Module) GetAllDependenciesTransitiveImpl(targ *Target, inOutSlice *[]
         if dep == "CORE_DEPENDENCIES" {
             continue
         }
+        if dep == "RHI_DEPENDENCIES" {
+            continue
+        }
 
         GApp.GetCheckedModuleByName(dep).GetAllDependenciesTransitiveImpl(targ, inOutSlice)
     }
@@ -219,11 +254,22 @@ func (mod *Module) GetAllDependenciesTransitiveImpl(targ *Target, inOutSlice *[]
             if condInc.Include == "CORE_DEPENDENCIES" {
                 continue
             }
+            if condInc.Include == "RHI_DEPENDENCIES" {
+                continue
+            }
 
             GApp.GetCheckedModuleByName(condInc.Include).GetAllDependenciesTransitiveImpl(targ, inOutSlice)
         }
 
         continue
+    }
+
+    for _, dep := range mod.PrivateDependencies {
+        if slices.Contains(*inOutSlice, dep) {
+            continue
+        }
+
+        *inOutSlice = append(*inOutSlice, dep)
     }
 
     return

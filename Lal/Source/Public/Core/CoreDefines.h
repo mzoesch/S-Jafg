@@ -15,4 +15,4 @@ enum Type : int32
     Restart     = 0b0000'1000,
 };
 
-}
+} /* ~Namespace EPlatformExit. */

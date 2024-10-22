@@ -13,6 +13,8 @@ class JChunkGenerationSubsystem final : public Jafg::JTickableWorldSubsystem
 {
 public:
 
+    explicit JChunkGenerationSubsystem(Jafg::LWorld* InOuter) : Jafg::JTickableWorldSubsystem(InOuter) { }
+
     // WorldSubsystem implementation
     virtual void Initialize(Jafg::LSubsystemCollection& Collection) override;
     virtual void Tick(const float DeltaTime) override;

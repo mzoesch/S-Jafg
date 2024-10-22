@@ -3,17 +3,15 @@
 #pragma once
 
 #include "CoreAFX.h"
-#include "glad/glad.h" /* Include glad to get all the required OpenGL headers. */
-#include <GLFW/glfw3.h>
 #include "Level.h"
 
 namespace Jafg
 {
 
 class LEngine;
-class JLocalPlayer;
-class JWorld;
-class Surface;
+class LLocalPlayer;
+class LWorld;
+class LSurface;
 
 ENGINE_EXTERN template class ENGINE_API TArray<::Jafg::LLevel, ::Jafg::ResizePolicy::Dynamic, ::Jafg::AllocationPolicy::Heap>;
 
@@ -46,7 +44,7 @@ FORCEINLINE ENGINE_API auto GetCustomExitStatus() -> int32 { return GCustomExitS
 FORCEINLINE ENGINE_API auto HasCustomExitReason() -> bool { return GCustomExitReason.empty() == false; }
 FORCEINLINE ENGINE_API auto GetCustomExitReason() -> LString { return GCustomExitReason; }
 
-// Engine Globals
+// ~Engine Globals
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
@@ -56,7 +54,7 @@ FORCEINLINE ENGINE_API auto GetCustomExitReason() -> LString { return GCustomExi
 struct LWorldContext
 {
     LString TravelUrl;
-    JWorld* ChildWorld;
+    LWorld* ChildWorld;
 
     FORCEINLINE bool IsWaitingForTravel() const { return this->TravelUrl.empty() == false; }
 };
@@ -90,16 +88,26 @@ public:
     // Client Local Stuff
     ///////////////////////////////////////////////////////////////////////////////
 
-    FORCEINLINE auto HasSurface() const -> bool { return this->SurfaceToDrawOn != nullptr; }
-    FORCEINLINE auto GetSurface() const -> Surface* { return this->SurfaceToDrawOn; }
+    auto CanEverRender() const -> bool;
+
+    auto HasPrimarySurface() const -> bool;
+    auto GetPrimarySurface() const -> LSurface*;
+    auto GetCheckedPrimarySurface() const -> LSurface*;
+    auto GetPanickedPrimarySurface() const -> LSurface*;
 
     FORCEINLINE auto HasLocalPlayer() const -> bool { return this->LocalPlayer != nullptr; }
-    FORCEINLINE auto GetLocalPlayer() const -> JLocalPlayer* { return this->LocalPlayer; }
+    FORCEINLINE auto GetLocalPlayer() const -> LLocalPlayer* { return this->LocalPlayer; }
+    FORCEINLINE auto GetCheckedLocalPlayer() const -> LLocalPlayer* { check( this->LocalPlayer ) return this->LocalPlayer; }
+    FORCEINLINE auto GetPanickedLocalPlayer() const -> LLocalPlayer*
+    {
+        if (this->HasLocalPlayer()) { return this->GetLocalPlayer(); }
+        panic( "Could not find local player instance." )
+        return nullptr;
+    }
 
 private:
 
-    Surface*      SurfaceToDrawOn = nullptr;
-    JLocalPlayer* LocalPlayer     = nullptr;
+    LLocalPlayer* LocalPlayer     = nullptr;
 
 public:
 
@@ -112,11 +120,11 @@ public:
     auto GetCurrentFreeContexts() const -> uint8;
     auto GetCurrentOccupiedContexts() const -> uint8;
 
-    auto GetFirstRunningWorld() -> JWorld*;
-    auto GetContextFromWorld(const JWorld& World) -> LWorldContext&;
+    auto GetFirstRunningWorld() -> LWorld*;
+    auto GetContextFromWorld(const LWorld& World) -> LWorldContext&;
 
     /** Browse to a new Url at the next opportunity. */
-    auto Browse(const JWorld& Context, const LString& Url) -> void;
+    auto Browse(const LWorld& Context, const LString& Url) -> void;
     /** @return True if registered successfully.*/
     auto RegisterLevel(const LLevel& InLevel) -> bool;
     auto RegisterLevel(const LLevel&& InLevel) -> bool;
@@ -147,4 +155,4 @@ private:
     TdhArray<LLevel> RegisteredLevels = { };
 };
 
-} /* Namespace Jafg */
+} /* ~Namespace Jafg */

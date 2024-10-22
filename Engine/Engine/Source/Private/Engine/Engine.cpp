@@ -7,10 +7,10 @@
 #if PLATFORM_DESKTOP
     #include "Platform/DesktopPlatform.h"
 #endif /* PLATFORM_DESKTOP */
-#include <glad/glad.h>
 #include <glm/gtc/type_ptr.inl>
 #include "Core/Application.h"
 #include "Engine/World.h"
+#include "Module/ModuleSupervisor.h"
 #include "Player/LocalPlayer.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -29,37 +29,41 @@ ENGINE_API LString          GCustomExitReason           = "";
 
 }
 
+namespace Jafg::EngineForward
+{
+
+ENGINE_API extern bool         bForwardExitRequest;
+ENGINE_API extern int32        ForwardCustomExitStatus;
+ENGINE_API extern LString      ForwardCustomExitReason;
+
+}
+
 // ~Engine Globals
 ///////////////////////////////////////////////////////////////////////////////
 
 void Jafg::LEngine::Init()
 {
-#if PLATFORM_DESKTOP
-    this->SurfaceToDrawOn = new Jafg::DesktopPlatform();
-#else /* PLATFORM_DESKTOP */
-    #error "Cannot resolve surface.
-#endif /* !PLATFORM_DESKTOP */
+    new LModuleSupervisor(); check( GModuleSupervisor )
 
-    this->SurfaceToDrawOn->Initialize();
-    this->SurfaceToDrawOn->SetVSync(true);
-    this->SurfaceToDrawOn->SetInputMode(false);
+#if WITH_LOCAL_LAYER
+    check( this->LocalPlayer == nullptr )
+    this->LocalPlayer = new LLocalPlayer();
+    this->LocalPlayer->Initialize();
+#endif /* WITH_LOCAL_LAYER */
 
     LWorldContext& Context = this->CreateNewWorldContext();
     this->InitializeContext(Context);
     this->RegisterLevel(LLevel("LWorld"));
     this->Browse(Context, "LWorld");
 
-    check( this->LocalPlayer == nullptr )
-    this->LocalPlayer = new JLocalPlayer();
-    this->LocalPlayer->Initialize();
-
     return;
 }
 
 void Jafg::LEngine::Tick(const float DeltaTime)
 {
-    this->SurfaceToDrawOn->OnClear();
+#if WITH_LOCAL_LAYER
     this->LocalPlayer->Tick(DeltaTime);
+#endif /* WITH_LOCAL_LAYER */
 
     for (LWorldContext* i : this->Contexts)
     {
@@ -86,7 +90,9 @@ void Jafg::LEngine::Tick(const float DeltaTime)
         continue;
     }
 
-    this->SurfaceToDrawOn->OnUpdate();
+#if WITH_LOCAL_LAYER
+    this->LocalPlayer->OnLateTick(DeltaTime);
+#endif /* WITH_LOCAL_LAYER */
 
     return;
 }
@@ -114,13 +120,6 @@ void Jafg::LEngine::TearDown()
         continue;
     }
 
-    if (this->SurfaceToDrawOn)
-    {
-        this->SurfaceToDrawOn->TearDown();
-        delete this->SurfaceToDrawOn;
-        this->SurfaceToDrawOn = nullptr;
-    }
-
     return;
 }
 
@@ -131,8 +130,11 @@ void Jafg::LEngine::UpdateTime()
     using namespace Jafg;
 
     Application::SetPreviousFrameTime(Application::GetCurrentFrameTime());
-    Application::SetCurrentFrameTime(glfwGetTime());
-
+    Application::SetCurrentFrameTime(
+        Application::GetTimeDifferenceFromStaticContainerInitialization(
+            Application::GetHighestNow()
+        )
+    );
     Application::SetDeltaTime(Application::GetCurrentFrameTime() - Application::GetPreviousFrameTime());
 
     Application::SetCurrentFps(1.0f / Application::GetDeltaTimeAsFloat());
@@ -203,6 +205,56 @@ void Jafg::LEngine::RequestEngineExit(const int32 CustomExitStatus, const LStrin
     ::Jafg::RequestEngineExit(CustomExitStatus, Reason);
 }
 
+/* It does not really make sense to make this static, as if there is no global engine object we cannot check for rendering state. */
+// ReSharper disable once CppMemberFunctionMayBeStatic
+bool Jafg::LEngine::CanEverRender() const
+{
+#if WITH_FRONTEND
+    return true;
+#else /* WITH_FRONTEND */
+    return false;
+#endif /* !WITH_FRONTEND */
+}
+
+bool Jafg::LEngine::HasPrimarySurface() const
+{
+    return this->HasLocalPlayer() && this->GetLocalPlayer()->HasPrimarySurface();
+}
+
+Jafg::LSurface* Jafg::LEngine::GetPrimarySurface() const
+{
+    if (this->HasLocalPlayer())
+    {
+        return this->GetLocalPlayer()->GetPrimarySurface();
+    }
+
+    return nullptr;
+}
+
+Jafg::LSurface* Jafg::LEngine::GetCheckedPrimarySurface() const
+{
+    if (LSurface* Surface = this->GetPrimarySurface(); Surface)
+    {
+        return Surface;
+    }
+
+    check( false && "Failed to get primary surface." )
+
+    return nullptr;
+}
+
+Jafg::LSurface* Jafg::LEngine::GetPanickedPrimarySurface() const
+{
+    if (LSurface* Surface = this->GetPrimarySurface(); Surface)
+    {
+        return Surface;
+    }
+
+    panic( "Failed to get primary surface." )
+
+    return nullptr;
+}
+
 uint8 Jafg::LEngine::GetCurrentFreeContexts() const
 {
     return LEngine::GetMaxContexts() - this->GetCurrentOccupiedContexts();
@@ -222,7 +274,7 @@ uint8 Jafg::LEngine::GetCurrentOccupiedContexts() const
     return OccupiedContexts;
 }
 
-Jafg::JWorld* Jafg::LEngine::GetFirstRunningWorld()
+Jafg::LWorld* Jafg::LEngine::GetFirstRunningWorld()
 {
     for (const LWorldContext* i : this->Contexts)
     {
@@ -237,7 +289,7 @@ Jafg::JWorld* Jafg::LEngine::GetFirstRunningWorld()
     return nullptr;
 }
 
-Jafg::LWorldContext& Jafg::LEngine::GetContextFromWorld(const JWorld& World)
+Jafg::LWorldContext& Jafg::LEngine::GetContextFromWorld(const LWorld& World)
 {
     for (LWorldContext* i : this->Contexts)
     {
@@ -313,7 +365,7 @@ Jafg::LLevel* Jafg::LEngine::GetLevelByInternalUrl(const LString& Url)
     return this->RegisteredLevels.FindRef(Url);
 }
 
-void Jafg::LEngine::Browse(const JWorld& Context, const LString& Url)
+void Jafg::LEngine::Browse(const LWorld& Context, const LString& Url)
 {
     this->Browse(this->GetContextFromWorld(Context), Url);
 }
@@ -391,7 +443,7 @@ void Jafg::LEngine::InitializeContext(LWorldContext& Context)
 {
     jassert( Context.ChildWorld == nullptr )
 
-    Context.ChildWorld = new JWorld(EWorldState::Uninitialized);
+    Context.ChildWorld = new LWorld(EWorldState::Uninitialized);
 
     return;
 }

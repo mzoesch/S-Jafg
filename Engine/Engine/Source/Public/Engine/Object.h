@@ -12,13 +12,22 @@ class ENGINE_API JObject
 {
 protected:
 
+    JObject() = default;
+    JObject(LWorld* Outer) : Outer(Outer) { }
+    PROHIBIT_REALLOC_OF_ANY_FROM(JObject)
     virtual ~JObject() = default;
 
 public:
 
-    // ReSharper disable once CppMemberFunctionMayBeStatic
-    FORCEINLINE         auto GetEngine(void) const -> LEngine* { return GEngine; }
-    FORCEINLINE virtual auto GetWorld(void) const -> JWorld* { return this->GetEngine()->GetFirstRunningWorld(); }
+    FORCEINLINE virtual auto HasContext() const -> bool { return this->Outer != nullptr; }
+    FORCEINLINE virtual auto GetWorld() const -> LWorld* { return this->Outer; }
+
+protected:
+
+    LWorld* Outer = nullptr;
 };
 
-} /* Namespace Jafg */
+JObject& NewJObject();
+JObject& NewJObject(LWorld* Outer);
+
+} /* ~Namespace Jafg */

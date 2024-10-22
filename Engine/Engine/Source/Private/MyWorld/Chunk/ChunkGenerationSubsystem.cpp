@@ -2,6 +2,7 @@
 
 #include "CoreAFX.h"
 #include "MyWorld/Chunk/ChunkGenerationSubsystem.h"
+#include "Shader.h"
 #include "Engine/World.h"
 #include "Engine/Framework/Camera.h"
 
@@ -167,7 +168,7 @@ void JChunkGenerationSubsystem::GenerateChunks()
 
 void JChunkGenerationSubsystem::RenderChunks()
 {
-    const uint32 ModelLoc = glGetUniformLocation(this->GetWorld()->ShaderProgram.ID, "model");
+    const uint32 ModelLoc = JustTemporary::G(this->GetWorld()->ShaderProgram);
 
     for (const auto& Chunk : Chunks | std::views::values)
     {

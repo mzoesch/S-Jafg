@@ -3,16 +3,17 @@
 #pragma once
 
 #include "CoreAFX.h"
-#include "RHI/Shader.h"
 
 struct GLFWwindow;
 
 namespace Jafg
 {
 
+class LEngine;
+class Shader;
+class AActor;
 class JWorldSubsystem;
 class Camera;
-class Planet;
 struct LLevel;
 
 namespace EWorldState
@@ -28,30 +29,37 @@ enum Type : uint8
     WaitingForKill,
 };
 
-}
+} /* ~Namespace EWorldState */
+
+MAKE_EXTERNAL_TEMPLATE_DHARRAY(ENGINE, ::Jafg::AActor*)
 
 /**
  * Represents a world at its core.
  * Once every frame a world will be ticked. It may register itself to the RHI to be used when
  * rendering on any kind of surface. Multiple worlds may draw to the same surface.
  */
-class JWorld
+class ENGINE_API LWorld
 {
 public:
 
-    JWorld()                                        = delete;
-    JWorld(JWorld&)                                 = delete;
-    JWorld(const JWorld&)                           = delete;
-    JWorld(JWorld&&)                                = delete;
-    FORCEINLINE JWorld& operator=(JWorld&)          = delete;
-    FORCEINLINE JWorld& operator=(const JWorld&)    = delete;
-    FORCEINLINE JWorld& operator=(JWorld&&)         = delete;
+    LWorld()                                        = delete;
 
-    explicit JWorld(const EWorldState::Type InWorldType)
+    PROHIBIT_REALLOC_OF_ANY_FROM(LWorld)
+
+    // LWorld(LWorld&)                                 = delete;
+    // LWorld(const LWorld&)                           = delete;
+    // LWorld(LWorld&&)                                = delete;
+    // FORCEINLINE LWorld& operator=(LWorld&)          = delete;
+    // FORCEINLINE LWorld& operator=(const LWorld&)    = delete;
+    // FORCEINLINE LWorld& operator=(LWorld&&)         = delete;
+
+    explicit LWorld(const EWorldState::Type InWorldType)
         : WorldState(InWorldType)
     {
         check( this->WorldState != EWorldState::None )
     }
+
+    LEngine* GetEngine() const;
 
     FORCEINLINE EWorldState::Type GetWorldState() const { return this->WorldState; }
 
@@ -69,15 +77,16 @@ public:
     double LastMouseY = 0.0f;
 
     Camera* MainCamera = nullptr;
-    Planet* MainPlanet = nullptr;
 
-    Shader ShaderProgram = Shader();
+    Shader* ShaderProgram = nullptr;
     uint32 Texture       = 0;
 
     void MouseCallback(const double XPos, const double YPos);
     void ScrollCallback(const double YOffset);
 
 private:
+
+    TdhArray<AActor*> Actors;
 
     void InitializeSubsystems();
     void TearDownSubsystems();
@@ -87,4 +96,4 @@ private:
     EWorldState::Type WorldState;
 };
 
-} /* Namespace Jafg */
+} /* ~Namespace Jafg */

@@ -12,10 +12,11 @@ ENGINE_API uint64 FrameCount    { 0    };
 ENGINE_API double CurrentFrameTime  { 0.0f };
 ENGINE_API double PreviousFrameTime { 0.0f };
 
-ENGINE_API float                     CurrentFps         { 0.0f };
-ENGINE_API float                     LowestFps          { -1.0f };
-ENGINE_API float                     HighestFps         { -1.0f };
-ENGINE_API SteadyStatisticsTimePoint LastStatisticsTime { std::chrono::steady_clock::now() };
-ENGINE_API uint64                    StatisticsFrameCount { 0 };
+ENGINE_API float        CurrentFps                        { 0.0f };
+ENGINE_API float        LowestFps                         { -1.0f };
+ENGINE_API float        HighestFps                        { -1.0f };
+ENGINE_API HrcTimePoint StaticContainerInitializationTime { Hrc::now() };
+ENGINE_API HrcTimePoint LastStatisticsTime                { StaticContainerInitializationTime };
+ENGINE_API uint64       StatisticsFrameCount              { 0 };
 
 }

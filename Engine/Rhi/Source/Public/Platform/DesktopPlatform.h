@@ -9,15 +9,15 @@ namespace Jafg
 {
 
 /** Generic interface for a desktop platform. */
-class ENGINE_API DesktopPlatformBase : public Surface
+class RHI_API LDesktopPlatformBase : public LSurface
 /*
- * We do not use the name DesktopPlatform as it is reserved for the actual platform implementation class
- * by typedef'ing itself to DesktopPlatform.
+ * We do not use the name LDesktopPlatform as it is reserved for the actual platform implementation class
+ * by typedef'ing itself to LDesktopPlatform.
  */
 {
 public:
 
-    ~DesktopPlatformBase() override = default;
+    ~LDesktopPlatformBase() override = default;
 
     // Surface implementation
     virtual void Initialize() override { }
@@ -31,11 +31,16 @@ public:
 
 protected:
 
-    struct DesktopSurfaceProps
+    struct LDesktopSurfaceProps final
     {
-        explicit DesktopSurfaceProps(LString Title = "Desktop Platform", const int32 Width = 1280, const int32 Height = 720)
+        FORCEINLINE explicit LDesktopSurfaceProps(
+            LString Title = "Desktop Platform",
+            const int32 Width = 1280,
+            const int32 Height = 720
+        )
             : Title(std::move(Title)), Width(Width), Height(Height)
         {
+            return;
         }
 
         LString Title;
@@ -44,10 +49,10 @@ protected:
     };
 };
 
-} /* Namespace Jafg */
+} /* ~Namespace Jafg */
 
 #if PLATFORM_WINDOWS
     #include "Platform/DesktopPlatformWin.h"
-#else
+#else /* PLATFORM_WINDOWS */
     #error "Could not resolve PLATFORM."
 #endif /* !PLATFORM_WINDOWS */

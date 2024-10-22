@@ -2,10 +2,10 @@
 
 #include "CoreAFX.h"
 #include "MyWorld/Chunk.h"
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include "DoSomething.h"
 #include "MyWorld/Blocks.h"
 #include "MyWorld/WorldGen.h"
 #include "MyWorld/WorldStatics.h"
@@ -36,9 +36,7 @@ AChunk::~AChunk()
 
     delete[] RawVoxelData;
 
-    glDeleteBuffers(1, &vbo);
-    glDeleteBuffers(1, &ebo);
-    glDeleteVertexArrays(1, &vertexArrayObject);
+    JustTemporary::D(vbo, ebo, vertexArrayObject);
 }
 
 void AChunk::GenerateChunk()
@@ -337,23 +335,7 @@ void AChunk::Render(unsigned int modelLoc)
         if (generated)
         {
             numTriangles = static_cast<unsigned int>( indices.size() );
-
-            glGenVertexArrays(1, &vertexArrayObject);
-            glBindVertexArray(vertexArrayObject);
-
-            glGenBuffers(1, &vbo);
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices.size() * sizeof(Vertex)), vertices.data(), GL_STATIC_DRAW);
-
-            glVertexAttribPointer(0, 3, GL_BYTE, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, posX)));
-            glEnableVertexAttribArray(0);
-            glVertexAttribPointer(1, 2, GL_BYTE, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, texGridX)));
-            glEnableVertexAttribArray(1);
-
-            glGenBuffers(1, &ebo);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(indices.size() * sizeof(unsigned int)), indices.data(),
-                         GL_STATIC_DRAW);
+            JustTemporary::E(vertexArrayObject, vbo, ebo, indices, vertices);
             ready = true;
         }
 
@@ -363,11 +345,5 @@ void AChunk::Render(unsigned int modelLoc)
     //std::cout << "Rendering chunk " << chunkPos.x << ", " << chunkPos.y << ", " << chunkPos.z << '\n'
     //	<< "Chunk VAO: " << vertexArrayObject << '\n' << "Triangles: " << numTriangles << '\n';
 
-    glBindVertexArray(vertexArrayObject);
-
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, worldPos);
-    glUniformMatrix4fv(static_cast<GLint>(modelLoc), 1, GL_FALSE, glm::value_ptr(model));
-
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(numTriangles), GL_UNSIGNED_INT, 0);
+    JustTemporary::F(vertexArrayObject, worldPos, numTriangles, modelLoc);
 }

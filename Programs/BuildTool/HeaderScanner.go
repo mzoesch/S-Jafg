@@ -27,6 +27,15 @@ func (chs *CurrentHeaderState) AppendString(str string) {
     return
 }
 
+func (chs *CurrentHeaderState) AppendStringNoSideEffects(str string) {
+    if chs.builder.Len() == 0 {
+        chs.builder = new(strings.Builder)
+    }
+
+    chs.builder.WriteString(str)
+    return
+}
+
 var GCurrentHeaderState *CurrentHeaderState = nil
 
 func RecursivelyScanAndOperateOnHeaders(absolutePaths []string) {
@@ -105,6 +114,8 @@ func ExecutePragmaStatement(pragmaStatement string) {
     switch pragmaStatement {
     case "IncludeAllModuleTests":
         IncludeAllModuleTests()
+    case "MakeBuildFile":
+        MakeBuildFile()
     default:
         panic(fmt.Sprintf("Unknown pragma statement [%s].", pragmaStatement))
     }
@@ -122,6 +133,15 @@ func IncludeAllModuleTests() {
 
         continue
     }
+
+    return
+}
+
+func MakeBuildFile() {
+    fmt.Println("Making build file ...")
+
+    var content string = GenerateWorkspaceWideBuildHeaderFile()
+    GCurrentHeaderState.AppendStringNoSideEffects(content)
 
     return
 }

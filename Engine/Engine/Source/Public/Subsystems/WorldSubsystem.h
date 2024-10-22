@@ -14,6 +14,7 @@ class JWorldSubsystem : public JSubsystem
 public:
 
     JWorldSubsystem() = default;
+    JWorldSubsystem(Jafg::LWorld* InOuter) : JSubsystem(InOuter) { }
 
     // Subsystem implementation
     virtual void Initialize(LSubsystemCollection& Collection) override;
@@ -23,6 +24,12 @@ public:
 
 class JTickableWorldSubsystem : public JWorldSubsystem, public LTickableObject
 {
+public:
+
+    JTickableWorldSubsystem(Jafg::LWorld* InOuter) : JWorldSubsystem(InOuter) { }
+
+protected:
+
     virtual void Tick(const float DeltaTime) override { }
 };
 

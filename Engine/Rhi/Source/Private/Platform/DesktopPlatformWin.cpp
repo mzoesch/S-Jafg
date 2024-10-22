@@ -4,14 +4,15 @@
 #include "Platform/DesktopPlatformWin.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "Engine/Engine.h"
-#include "Engine/Framework/Camera.h"
-#include "Player/LocalPlayer.h"
-#include "Player/PlayerInput.h"
 #include <Freetype/ft2build.h>
+#include <glm/fwd.hpp>
+#include <glm/vec2.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
 #include <glm/gtc/type_ptr.inl>
 #include FT_FREETYPE_H
-#include "RHI/Shader.h"
+#include "Shader.h"
+#include "Forward/EngineForward.h"
+#include <glm/glm.hpp>
 
 struct Character
 {
@@ -25,22 +26,22 @@ std::map<char, Character> Characters;
 unsigned int VAO, VBO;
 Jafg::Shader FontShaderProgram;
 
-void Jafg::DesktopPlatformWin::Initialize()
+void Jafg::LDesktopPlatformWin::Initialize()
 {
-    DesktopPlatformBase::Initialize();
+    LDesktopPlatformBase::Initialize();
 
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    this->MasterWindow = this->CreateNativeWindow(DesktopSurfaceProps());
+    this->MasterWindow = this->CreateNativeWindow(LDesktopSurfaceProps());
     if (this->MasterWindow == nullptr)
     {
-        check( GEngine )
-        GEngine->RequestEngineExit(EPlatformExit::Fatal, "Failed to initialize glfw window.");
+        JAFG_ENGINE_FORWARD_REQUEST_EXIT(EPlatformExit::Fatal, "Failed to initialize glfw window.")
         return;
     }
+    glfwSetWindowUserPointer(this->MasterWindow, reinterpret_cast<void*>(this));
 
     /*
      * We have to call this, as there is no default set by glfw. The default is open for the
@@ -59,24 +60,28 @@ void Jafg::DesktopPlatformWin::Initialize()
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        check( GEngine )
-        GEngine->RequestEngineExit(EPlatformExit::Fatal, "Failed to initialize glad.");
+        JAFG_ENGINE_FORWARD_REQUEST_EXIT(EPlatformExit::Fatal, "Failed to initialize glad.")
         return;
     }
 
     const TIntVector2 WindowDimensions = this->GetDimensions();
     glViewport(0, 0, WindowDimensions.X, WindowDimensions.Y);
+
     glfwSetFramebufferSizeCallback(this->MasterWindow, [] (::GLFWwindow* Window, const int32 Width, const int32 Height)
     {
-        static_cast<DesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->FramebufferSizeCallback(Window, Width, Height);
+        void* A = glfwGetWindowUserPointer(Window);
+        LDesktopPlatformWin* B = static_cast<LDesktopPlatformWin*>(A);
+        B->FramebufferSizeCallback(Window, Width, Height);
+
+        // static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->FramebufferSizeCallback(Window, Width, Height);
     });
     glfwSetCursorPosCallback(this->MasterWindow, [] (::GLFWwindow* Window, const double XPos, const double YPos)
     {
-        static_cast<DesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->MouseCallback(Window, XPos, YPos);
+        static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->MouseCallback(Window, XPos, YPos);
     });
     glfwSetScrollCallback(this->MasterWindow, [] (::GLFWwindow* Window, const double XOffset, const double YOffset)
     {
-        static_cast<DesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->ScrollCallback(Window, XOffset, YOffset);
+        static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->ScrollCallback(Window, XOffset, YOffset);
     });
 
     glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
@@ -96,16 +101,14 @@ void Jafg::DesktopPlatformWin::Initialize()
     FT_Library Ft;
     if (FT_Init_FreeType(&Ft))
     {
-        check( GEngine )
-        GEngine->RequestEngineExit(EPlatformExit::Fatal, "Failed to initialize Freetype library.");
+        JAFG_ENGINE_FORWARD_REQUEST_EXIT(EPlatformExit::Fatal, "Failed to initialize Freetype library.")
         return;
     }
 
     FT_Face Face;
     if (FT_New_Face(Ft, "E:/dev/c/Jafg/Content/Fonts/Core.otf", 0, &Face))
     {
-        check( GEngine )
-        GEngine->RequestEngineExit(EPlatformExit::Fatal, "Failed to load font face.");
+        JAFG_ENGINE_FORWARD_REQUEST_EXIT(EPlatformExit::Fatal, "Failed to load font face.")
         return;
     }
 
@@ -170,9 +173,9 @@ void Jafg::DesktopPlatformWin::Initialize()
     return;
 }
 
-void Jafg::DesktopPlatformWin::OnClear()
+void Jafg::LDesktopPlatformWin::OnClear()
 {
-    DesktopPlatformBase::OnClear();
+    LDesktopPlatformBase::OnClear();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -180,9 +183,9 @@ void Jafg::DesktopPlatformWin::OnClear()
 }
 
 void RenderText(Jafg::Shader &shader, std::string text, float x, float y, float scale, glm::vec3 color);
-void Jafg::DesktopPlatformWin::OnUpdate()
+void Jafg::LDesktopPlatformWin::OnUpdate()
 {
-    DesktopPlatformBase::OnUpdate();
+    LDesktopPlatformBase::OnUpdate();
 
     RenderText(FontShaderProgram, "Hello, World!", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 
@@ -236,9 +239,9 @@ void RenderText(Jafg::Shader &shader, std::string text, float x, float y, float 
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Jafg::DesktopPlatformWin::TearDown()
+void Jafg::LDesktopPlatformWin::TearDown()
 {
-    DesktopPlatformBase::TearDown();
+    LDesktopPlatformBase::TearDown();
 
     if (this->MasterWindow)
     {
@@ -251,54 +254,51 @@ void Jafg::DesktopPlatformWin::TearDown()
     return;
 }
 
-void Jafg::DesktopPlatformWin::PollInputs()
+void Jafg::LDesktopPlatformWin::PollInputs()
 {
-    DesktopPlatformBase::PollInputs();
-
-    check( GEngine->HasLocalPlayer() )
+    LDesktopPlatformBase::PollInputs();
 
     if (glfwGetKey(this->MasterWindow, GLFW_KEY_W) == GLFW_PRESS)
     {
-        GEngine->GetLocalPlayer()->GetPlayerInput()->AddKeyDown(EKeys::W);
+        this->AddKeyDown(EKeys::W);
     }
     if (glfwGetKey(this->MasterWindow, GLFW_KEY_S) == GLFW_PRESS)
     {
-        GEngine->GetLocalPlayer()->GetPlayerInput()->AddKeyDown(EKeys::S);
+        this->AddKeyDown(EKeys::S);
     }
     if (glfwGetKey(this->MasterWindow, GLFW_KEY_A) == GLFW_PRESS)
     {
-        GEngine->GetLocalPlayer()->GetPlayerInput()->AddKeyDown(EKeys::A);
+        this->AddKeyDown(EKeys::A);
     }
     if (glfwGetKey(this->MasterWindow, GLFW_KEY_D) == GLFW_PRESS)
     {
-        GEngine->GetLocalPlayer()->GetPlayerInput()->AddKeyDown(EKeys::D);
+        this->AddKeyDown(EKeys::D);
     }
     if (glfwGetKey(this->MasterWindow, GLFW_KEY_Q) == GLFW_PRESS)
     {
-        GEngine->GetLocalPlayer()->GetPlayerInput()->AddKeyDown(EKeys::Q);
+        this->AddKeyDown(EKeys::Q);
     }
     if (glfwGetKey(this->MasterWindow, GLFW_KEY_E) == GLFW_PRESS)
     {
-        GEngine->GetLocalPlayer()->GetPlayerInput()->AddKeyDown(EKeys::E);
+        this->AddKeyDown(EKeys::E);
     }
     if (glfwGetKey(this->MasterWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
-        GEngine->GetLocalPlayer()->GetPlayerInput()->AddKeyDown(EKeys::Escape);
+        this->AddKeyDown(EKeys::Escape);
     }
 
     return;
 }
 
-void Jafg::DesktopPlatformWin::PollEvents()
+void Jafg::LDesktopPlatformWin::PollEvents()
 {
-    DesktopPlatformBase::PollEvents();
+    LDesktopPlatformBase::PollEvents();
 
     if (this->MasterWindow)
     {
         if (glfwWindowShouldClose(this->MasterWindow))
         {
-            check( GEngine)
-            GEngine->RequestEngineExit("Window closed by user.");
+            JAFG_ENGINE_FORWARD_REQUEST_EXIT(INDEX_NONE, "Window closed by user.")
         }
     }
 
@@ -307,9 +307,9 @@ void Jafg::DesktopPlatformWin::PollEvents()
     return;
 }
 
-void Jafg::DesktopPlatformWin::SetInputMode(const bool bShowCursor)
+void Jafg::LDesktopPlatformWin::SetInputMode(const bool bShowCursor)
 {
-    DesktopPlatformBase::SetInputMode(bShowCursor);
+    LDesktopPlatformBase::SetInputMode(bShowCursor);
 
     if (this->MasterWindow)
     {
@@ -319,17 +319,17 @@ void Jafg::DesktopPlatformWin::SetInputMode(const bool bShowCursor)
     return;
 }
 
-int32 Jafg::DesktopPlatformWin::GetWidth() const
+int32 Jafg::LDesktopPlatformWin::GetWidth() const
 {
     return this->GetDimensions().X;
 }
 
-int32 Jafg::DesktopPlatformWin::GetHeight() const
+int32 Jafg::LDesktopPlatformWin::GetHeight() const
 {
     return this->GetDimensions().Y;
 }
 
-TIntVector2<int32> Jafg::DesktopPlatformWin::GetDimensions() const
+TIntVector2<int32> Jafg::LDesktopPlatformWin::GetDimensions() const
 {
     /*
      * Do we want to cache this value?
@@ -342,7 +342,7 @@ TIntVector2<int32> Jafg::DesktopPlatformWin::GetDimensions() const
     return TIntVector2<int32>(Width, Height);
 }
 
-void Jafg::DesktopPlatformWin::SetVSync(const bool bEnabled)
+void Jafg::LDesktopPlatformWin::SetVSync(const bool bEnabled)
 {
     this->bVSync = bEnabled;
     glfwSwapInterval(bEnabled ? 1 : 0);
@@ -350,12 +350,12 @@ void Jafg::DesktopPlatformWin::SetVSync(const bool bEnabled)
     return;
 }
 
-bool Jafg::DesktopPlatformWin::IsVSync() const
+bool Jafg::LDesktopPlatformWin::IsVSync() const
 {
     return this->bVSync;
 }
 
-GLFWwindow* Jafg::DesktopPlatformWin::CreateNativeWindow(const DesktopSurfaceProps& Props) const
+GLFWwindow* Jafg::LDesktopPlatformWin::CreateNativeWindow(const LDesktopSurfaceProps& Props) const
 {
     jassert( this->MasterWindow == nullptr && "Currently only supporting one window." )
 
@@ -370,28 +370,20 @@ GLFWwindow* Jafg::DesktopPlatformWin::CreateNativeWindow(const DesktopSurfacePro
     return Window;
 }
 
-void Jafg::DesktopPlatformWin::FramebufferSizeCallback(::GLFWwindow* Window, const int32 Width, const int32 Height)
+void Jafg::LDesktopPlatformWin::FramebufferSizeCallback(::GLFWwindow* Window, const int32 Width, const int32 Height)
 {
     glViewport(0, 0, Width, Height);
 }
 
-void Jafg::DesktopPlatformWin::MouseCallback(::GLFWwindow* Window, const double XPos, const double YPos)
+void Jafg::LDesktopPlatformWin::MouseCallback(::GLFWwindow* Window, const double XPos, const double YPos)
 {
-    if (GEngine)
-    {
-        GEngine->GetLocalPlayer()->GetPlayerInput()->AddKeyDown(EKeys::MouseX, static_cast<float>(XPos));
-        GEngine->GetLocalPlayer()->GetPlayerInput()->AddKeyDown(EKeys::MouseY, static_cast<float>(YPos));
-    }
+    this->AddKeyDown(EKeys::MouseX, static_cast<float>(XPos));
+    this->AddKeyDown(EKeys::MouseY, static_cast<float>(YPos));
 
     return;
 }
 
-void Jafg::DesktopPlatformWin::ScrollCallback(::GLFWwindow* Window, const double XOffset, const double YOffset)
+void Jafg::LDesktopPlatformWin::ScrollCallback(::GLFWwindow* Window, const double XOffset, const double YOffset)
 {
-    if (GEngine)
-    {
-        GEngine->GetLocalPlayer()->GetPlayerInput()->AddKeyDown(EKeys::MouseWheelAxis, static_cast<float>(YOffset));
-    }
-
-    return;
+    this->AddKeyDown(EKeys::MouseWheelAxis, static_cast<float>(XOffset));
 }

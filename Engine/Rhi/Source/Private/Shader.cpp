@@ -1,9 +1,13 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAFX.h"
-#include "RHI/Shader.h"
+#include "BuildRhi.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
+#include "Shader.h"
 #include <filesystem>
-#include <glad/glad.h>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -24,7 +28,7 @@ Jafg::Shader::Shader(const char* vertexPath, const char* fragmentPath)
 	try
 	{
 		std::string ExecPath(PLATFORM_MAX_PATH, '\0');
-		GetModuleFileNameA(NULL, &ExecPath[0], ExecPath.size());
+		GetModuleFileNameA(NULL, &ExecPath[0], static_cast<DWORD>( ExecPath.size() ));
 		ExecPath = ExecPath.substr(0, ExecPath.find_last_of('\\'));
 
 		std::cout << "Opening vertex shader file: " << ExecPath + '/' + vertexPath << '\n';

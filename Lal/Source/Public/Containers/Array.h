@@ -9,6 +9,8 @@ namespace Jafg
  * An array container with a fixed or dynamic size policy allocated on the stack or heap.
  * Fixed size arrays have zero runtime overhead and are equivalent to c arrays.
  *
+ * !!!This array implementation currently will not be able to handle complex types that require move semantics!!!
+ *
  * @tparam T                Element type.
  * @tparam ResizePolicy     Policy for resizing the array.
  * @tparam AllocationPolicy Policy for allocating the array.
@@ -40,19 +42,47 @@ public:
     FORCEINLINE TArray() noexcept;
     FORCEINLINE ~TArray() noexcept;
 
-    FORCEINLINE auto GetSize()     const noexcept -> SizeType { return this->Size;                   }
-    FORCEINLINE auto GetCapacity() const noexcept -> SizeType { return this->Capacity;               }
-    FORCEINLINE auto IsData()      const noexcept -> bool     { return this->GetData() != nullptr;   }
-    FORCEINLINE auto IsSlack()     const noexcept -> bool     { return this->GetData() != nullptr;   }
-    FORCEINLINE auto GetData()           noexcept -> T*       { return this->Data;                   }
-    FORCEINLINE auto GetData()     const noexcept -> const T* { return this->Data;                   }
-    FORCEINLINE auto GetSlack()          noexcept -> T*       { return this->GetData() + this->Size; }
-    FORCEINLINE auto GetSlack()    const noexcept -> const T* { return this->GetData() + this->Size; }
+    FORCEINLINE auto GetSize()     const noexcept -> SizeType { return this->Size;                       }
+    FORCEINLINE auto IsEmpty()    const noexcept -> bool      { return this->GetSize() == 0;             }
+    FORCEINLINE auto GetCapacity() const noexcept -> SizeType { return this->Capacity;                   }
+    FORCEINLINE auto IsData()      const noexcept -> bool     { return this->GetData() != nullptr;       }
+    FORCEINLINE auto IsSlack()     const noexcept -> bool     { return this->GetData() != nullptr;       }
+    FORCEINLINE auto GetData()           noexcept -> T*       { return this->Data;                       }
+    FORCEINLINE auto GetData()     const noexcept -> const T* { return this->Data;                       }
+    FORCEINLINE auto GetSlack()          noexcept -> T*       { return this->GetData() + this->Size;     }
+    FORCEINLINE auto GetSlack()    const noexcept -> const T* { return this->GetData() + this->Size;     }
+    FORCEINLINE auto GetFirst()          noexcept -> T*       { return this->GetData();                  }
+    FORCEINLINE auto GetLast()           noexcept -> T*       { return this->GetData() + this->Size - 1; }
 
+    /**
+     * Add a new element to the array while potentially reallocating the whole array to fit.
+     */
     template <bool Condition = IsDynamic()>
     FORCEINLINE auto Add(const T& InElement)  noexcept -> TEnableIf<Condition, Self&>;
     template <bool Condition = IsDynamic()>
     FORCEINLINE auto Add(const T&& InElement) noexcept -> TEnableIf<Condition, Self&>;
+
+    /**
+     * Adds a new element to the array and zeroes the target memory while potentially
+     * reallocating the whole array to fit. No constructor of T will be called.
+     */
+    FORCEINLINE auto AddZeroed() noexcept -> SizeType;
+    FORCEINLINE auto AddZeroed(const SizeType InCount) noexcept -> SizeType;
+
+    /**
+     * Adds a new element to the array without touching the new target memory while potentially reallocating the whole
+     * array to fit. No constructor of T will be called. It is undefined behavior of what the memory contains after
+     * calling this function.
+     */
+    FORCEINLINE auto AddUninitialized() noexcept -> SizeType;
+    FORCEINLINE auto AddUninitialized(const SizeType InCount) noexcept -> SizeType;
+
+    /**
+     * Adds a new element to the array and constructs it in place while potentially
+     * reallocating the whole array to fit.
+     */
+    template <typename ... Args>
+    FORCEINLINE auto Emplace(Args&&... InArgs) noexcept -> Self&;
 
     template <typename Predicate>
     FORCEINLINE auto FindByPredicate(const Predicate& InPredicate)       noexcept -> T*;
@@ -79,21 +109,61 @@ public:
     FORCEINLINE auto FindRef(const T& InElement)                                        noexcept ->       T*;
     FORCEINLINE auto FindRef(const T& InElement)                                  const noexcept -> const T*;
 
+    template <typename InOtherElement>
+    FORCEINLINE auto Contains(const InOtherElement& InElement)         const noexcept -> bool;
     template <typename Predicate>
     FORCEINLINE auto ContainsByPredicate(const Predicate& InPredicate) const noexcept -> bool;
     FORCEINLINE auto Contains(const T& InElement)                      const noexcept -> bool;
 
-    /** @return True, if the array has to be reallocated to append / emplace a new element. */
+    /**
+     * Will reserve memory for the array such that the buffer can hold at least InReserve elements.
+     * Bits will be zeroed out. This action cannot perform a shrink under the hood.
+     */
+    FORCEINLINE auto Reserve(const SizeType InReserve) noexcept -> void;
+
+    /**
+     * Will clear out all elements in the array and set the size to zero. It will not deallocate or reallocate
+     * the current memory buffer unless the InReserve parameter is greater than the current capacity and growing
+     * the current memory buffer is not possible.
+     */
+    FORCEINLINE auto Reset(const SizeType InReserve) noexcept -> void;
+
+    /** @return True, if the array has to be reallocated to push / emplace a new element. */
     FORCEINLINE auto IsCapped()                           const noexcept -> bool;
     FORCEINLINE auto IsValidIndex(const SizeType InIndex) const noexcept -> bool;
 
+    /**
+     * Get an element reference for T by index. Panics if CHECK_CONTAINER_BOUNDS is true (usually only true in
+     * development build configurations), and the inbound index is invalid. Otherwise, the behavior is undefined.
+     */
     FORCEINLINE auto operator[](const SizeType InIndex)       noexcept ->       T&;
     FORCEINLINE auto operator[](const SizeType InIndex) const noexcept -> const T&;
 
+    /** Makes a copy of the other array. No constructors will be called. */
+    FORCEINLINE auto operator =(const Self& InOther) noexcept -> Self&;
+    /** Moves the other array. No move semantics will be called. */
+    FORCEINLINE auto operator =(      Self&& InOther) noexcept -> Self&;
+
+    /** Swaps the contents of this array with the other array. */
+    FORCEINLINE auto SwapBuffers(Self& InOther) noexcept -> void;
+
+    /** Private iterator functions for range-based loops. Do not use these directly. */
+    FORCEINLINE auto begin()       noexcept -> Iterator<T>       { return Iterator<T>      (this->GetData());  }
+    FORCEINLINE auto begin() const noexcept -> Iterator<const T> { return Iterator<const T>(this->GetData());  }
+    FORCEINLINE auto end()         noexcept -> Iterator<T>       { return Iterator<T>      (this->GetSlack()); }
+    FORCEINLINE auto end()   const noexcept -> Iterator<const T> { return Iterator<const T>(this->GetSlack()); }
+
 private:
 
+    /**
+     * Grows the array by **reallocating** the whole array to fit, forwarding elements and zeroing the new memory.
+     * A std::realloc whill never call copy or move constructors.
+     */
     template <bool Condition = IsDynamic()>
-    FORCEINLINE auto Grow() noexcept -> TEnableIf<Condition, void>;
+    FORCEINLINE auto ZeroedGrow() noexcept -> TEnableIf<Condition, void>;
+    /** Same as ZeroedGrow(void) but with a specific capacity. */
+    template <bool Condition = IsDynamic()>
+    FORCEINLINE auto ZeroedGrow(const SizeType InTotalCapacity) noexcept -> TEnableIf<Condition, void>;
     template <bool Condition = IsDynamic()>
     FORCEINLINE auto Shrink() noexcept -> TEnableIf<Condition, void>;
 
@@ -139,7 +209,7 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Add(const T& InElement) noe
 {
     if (this->IsCapped())
     {
-        this->Grow();
+        this->ZeroedGrow();
     }
 
     *(this->Data + this->Size++) = InElement;
@@ -158,11 +228,54 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Add(const T&& InElement) no
 {
     if (this->IsCapped())
     {
-        this->Grow();
+        this->ZeroedGrow();
     }
 
     *(this->Data + this->Size++) = std::move(InElement);
 
+    return *this;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddZeroed() noexcept
+{
+    if (this->IsCapped())
+    {
+        this->ZeroedGrow();
+    }
+
+    return ++this->Size - 1;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddZeroed(const SizeType InCount) noexcept
+{
+    unimplemented()
+    return 0;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddUninitialized() noexcept
+{
+    unimplemented()
+    return 0;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddUninitialized(const SizeType InCount) noexcept
+{
+    unimplemented()
+    return 0;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+template <typename ... Args>
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Emplace(Args&&... InArgs) noexcept
+{
+    // !!! We want to use AddUninitialized() to safe some runtime overhead. But we need to implement it first. Lol. !!!
+    SizeType Index = this->AddZeroed();
+    new( this->GetData() + Index ) T(std::forward<Args>(InArgs)...);
     return *this;
 }
 
@@ -175,7 +288,7 @@ T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindByPredicate(const Pr
         return nullptr;
     }
 
-    for (T* RESTRICT Bulk = this->GetData(), *RESTRICT End = Bulk + this->GetSize(); Bulk != End; ++Bulk)
+    for (T* RESTRICT Bulk = this->GetData(), *RESTRICT End = Bulk + this->Size; Bulk != End; ++Bulk)
     {
         if (InPredicate(*Bulk))
         {
@@ -212,7 +325,7 @@ SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Find(const InOther
         return INDEX_NONE;
     }
 
-    for (const T* RESTRICT Bulk = this->GetData(), *RESTRICT End = Bulk + this->GetSize(); Bulk != End; ++Bulk)
+    for (const T* RESTRICT Bulk = this->GetData(), *RESTRICT End = Bulk + this->Size; Bulk != End; ++Bulk)
     {
         if (*Bulk == InElement)
         {
@@ -240,7 +353,7 @@ SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Find(const T& InEl
         return INDEX_NONE;
     }
 
-    for (const T* RESTRICT Bulk = this->GetData(), *RESTRICT End = Bulk + this->GetSize(); Bulk != End; ++Bulk)
+    for (const T* RESTRICT Bulk = this->GetData(), *RESTRICT End = Bulk + this->Size; Bulk != End; ++Bulk)
     {
         if (*Bulk == InElement)
         {
@@ -288,7 +401,7 @@ template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type Al
 template <typename InOtherElement>
 const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const InOtherElement& InElement) const noexcept
 {
-    return this->FindRef(InElement);
+    return (const_cast<TArray*>(this))->FindRef(InElement);
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
@@ -326,6 +439,13 @@ const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& I
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+template <typename InOtherElement>
+bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Contains(const InOtherElement& InElement) const noexcept
+{
+    return this->Find(InElement) != INDEX_NONE;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename Predicate>
 bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ContainsByPredicate(const Predicate& InPredicate) const noexcept
 {
@@ -336,6 +456,38 @@ template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type Al
 bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Contains(const T& InElement) const noexcept
 {
     return this->Find(InElement) != INDEX_NONE;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Reserve(const SizeType InReserve) noexcept
+{
+    if (InReserve > this->Capacity)
+    {
+        this->ZeroedGrow(InReserve);
+    }
+
+    return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Reset(const SizeType InReserve) noexcept
+{
+    if (this->IsData() == false)
+    {
+        this->Reserve(InReserve);
+        return;
+    }
+
+    for (T* RESTRICT Bulk = this->Data, *RESTRICT End = Bulk + this->Size; Bulk != End; ++Bulk)
+    {
+        Bulk->~T();
+    }
+
+    this->Size = 0;
+
+    this->Reserve(InReserve);
+
+    return;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
@@ -385,9 +537,96 @@ const T& TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator[](const S
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator=(const Self& InOther) noexcept
+{
+    if (this == &InOther)
+    {
+        checkNoEntry() // We probably want to do some logging here. But we don't have a logger yet.
+        return *this;
+    }
+
+    if (this->Data)
+    {
+        if constexpr (AllocationPolicy == AllocationPolicy::Heap)
+        {
+            ::free(this->Data);
+        }
+    }
+
+    this->Size      = InOther.Size;
+    this->Capacity  = InOther.Capacity;
+    this->Data      = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
+    ::memset(this->Data, 0, this->Capacity * sizeof(T));
+    ::memcpy(this->Data, InOther.Data, this->Size * sizeof(T));
+
+    return *this;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator=(Self&& InOther) noexcept
+{
+    if (this == &InOther)
+    {
+        checkNoEntry() // We probably want to do some logging here. But we don't have a logger yet.
+        return *this;
+    }
+
+    if (this->Data)
+    {
+        if constexpr (AllocationPolicy == AllocationPolicy::Heap)
+        {
+            ::free(this->Data);
+        }
+    }
+
+    this->Size      = InOther.Size;
+    this->Capacity  = InOther.Capacity;
+    this->Data      = InOther.Data;
+
+    InOther.Size     = 0;
+    InOther.Capacity = 0;
+    InOther.Data     = nullptr;
+
+    return *this;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::SwapBuffers(Self& InOther) noexcept
+{
+    if (this == &InOther)
+    {
+        check(false && "Cannot switch contents with itself.")
+        /* It's okay. When encountering this in production, we'll just ignore it. */
+        return;
+    }
+
+    /*
+     * We could use std::swap here?
+     * But this will do move semantics, and currently this array implementation does
+     * not support any move semantics anyway.
+     */
+
+    SizeType TempSize     = this->Size;
+    SizeType TempCapacity = this->Capacity;
+    T* TempData           = this->Data;
+
+    this->Size      = InOther.Size;
+    this->Capacity  = InOther.Capacity;
+    this->Data      = InOther.Data;
+
+    InOther.Size     = TempSize;
+    InOther.Capacity = TempCapacity;
+    InOther.Data     = TempData;
+
+    return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <bool Condition>
 typename TArray<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf<Condition, void>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Grow() noexcept
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow() noexcept
 {
     static_assert(ResizePolicy == ResizePolicy::Dynamic, "Only dynamic arrays may grow.");
 
@@ -417,7 +656,7 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Grow() noexcept
         checkSlow( this->Size == 0 )
 
         this->Capacity = FIRST_GROWTH;
-        this->Data = reinterpret_cast<T*>(::malloc(this->Capacity * sizeof(T)));
+        this->Data = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
         checkSlow( sizeof(*this->Data) == sizeof(T) )
 
         ::memset(this->Data, 0, this->Capacity * sizeof(*this->Data));
@@ -427,12 +666,14 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Grow() noexcept
 
     SizeType NewCapacity = this->Capacity < SECOND_GROWTH ? SECOND_GROWTH : this->Capacity * 2;
 
-    T* NewData = reinterpret_cast<T*>(::realloc(this->Data, NewCapacity * sizeof(T)));
+    T* NewData = static_cast<T*>(::realloc(this->Data, NewCapacity * sizeof(T)));
+#if !IN_SHIPPING /* This will anyway never happen. Trust me, bro. */
     if (NewData == nullptr)
     {
-        panic(false && "Failed to reallocate memory for TArray.")
+        panic( false && "Failed to reallocate memory for TArray." )
         return;
     }
+#endif /* !IN_SHIPPING */
 
     ::memset(NewData + this->Capacity, 0, (NewCapacity - this->Capacity) * sizeof(T));
 
@@ -441,6 +682,62 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Grow() noexcept
 
 #undef FIRST_GROWTH
 #undef SECOND_GROWTH
+
+    return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+template <bool Condition>
+typename TArray<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf<Condition, void>
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow(const SizeType InTotalCapacity) noexcept
+{
+    static_assert(ResizePolicy == ResizePolicy::Dynamic, "Only dynamic arrays may grow.");
+
+    if constexpr (AllocationPolicy == AllocationPolicy::Stack)
+    {
+        /*
+         * Not yet :). But there is a way to do this. Currently not used by Jafg but maybe in the future we'll
+         * need this.
+         */
+        static_assert(AllocationPolicy != AllocationPolicy::Heap, "Cannot grow a stack allocated array.");
+        return;
+    }
+
+#if IN_DEBUG
+    check( InTotalCapacity > this->Capacity && InTotalCapacity > 0 )
+    if (InTotalCapacity > std::numeric_limits<SizeType>::max())
+    {
+        jassertNoEntry()
+        return;
+    }
+#endif /* IN_DEBUG */
+
+    if (this->Data == nullptr)
+    {
+        checkSlow( this->Size == 0 )
+
+        this->Capacity = InTotalCapacity;
+        this->Data = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
+        checkSlow( sizeof(*this->Data) == sizeof(T) )
+
+        ::memset(this->Data, 0, this->Capacity * sizeof(*this->Data));
+
+        return;
+    }
+
+    T* NewData = static_cast<T*>(::realloc(this->Data, InTotalCapacity * sizeof(T)));
+#if !IN_SHIPPING /* This will anyway never happen. Trust me, bro. */
+    if (NewData == nullptr)
+    {
+        panic( false && "Failed to reallocate memory for TArray." )
+        return;
+    }
+#endif /* !IN_SHIPPING */
+
+    ::memset(NewData + this->Capacity, 0, (InTotalCapacity - this->Capacity) * sizeof(T));
+
+    this->Data      = NewData;
+    this->Capacity  = InTotalCapacity;
 
     return;
 }

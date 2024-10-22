@@ -1,6 +1,14 @@
 {
-    "Pch": "Generate",
+    "Pch": "No",
     "PublicDependencies": [
-        "Lal"
-    ]
+        "Lal", "RHI_DEPENDENCIES", "Input"
+    ],
+    "PrivateDependencies": [
+        "EngineForward"
+    ],
+    "ConditionalPublicDependencies": {
+        "WITH_TESTS": [
+            "TesterForward"
+        ]
+    }
 }

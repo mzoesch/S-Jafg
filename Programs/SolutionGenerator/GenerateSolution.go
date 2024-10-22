@@ -313,6 +313,11 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
         includeDirs = append(includeDirs, fmt.Sprintf("%s/Source/Public", mod.GetRelativeModuleDir()))
         for _, dep := range mod.GetAllDependenciesTransitive(targ) {
             if dep == "CORE_DEPENDENCIES" {
+                /* Currently no core dependencies in use. */
+                continue
+            }
+
+            if dep == "RHI_DEPENDENCIES" {
                 includeDirs = append(includeDirs, Shared.VendorIncludeDir)
                 /* Has to be included directly and not inside the namespace. */
                 includeDirs = append(includeDirs, fmt.Sprintf("%s/Freetype", Shared.VendorIncludeDir))
