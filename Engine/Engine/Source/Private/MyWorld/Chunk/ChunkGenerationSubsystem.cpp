@@ -2,9 +2,11 @@
 
 #include "CoreAFX.h"
 #include "MyWorld/Chunk/ChunkGenerationSubsystem.h"
-#include "Shader.h"
+
+#include "JustTemp.h"
 #include "Engine/World.h"
 #include "Engine/Framework/Camera.h"
+#include "RhiFramework/Shader.h"
 
 void GetAllChunksInDistance(const TIntVector2<int32>& Center, const int32 Distance, std::vector<TIntVector2<int32>>& OutChunks)
 {
@@ -168,7 +170,8 @@ void JChunkGenerationSubsystem::GenerateChunks()
 
 void JChunkGenerationSubsystem::RenderChunks()
 {
-    const uint32 ModelLoc = JustTemporary::G(this->GetWorld()->ShaderProgram);
+    // const uint32 ModelLoc = glGetUniformLocation(this->GetWorld()->ShaderProgram->ID, "model");
+    const uint32 ModelLoc = JustTemp::D(this->GetWorld()->ShaderProgram);
 
     for (const auto& Chunk : Chunks | std::views::values)
     {

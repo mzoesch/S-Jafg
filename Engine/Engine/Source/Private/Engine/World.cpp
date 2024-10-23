@@ -7,11 +7,11 @@
 #include "Platform/Surface.h"
 #include <glm/vec3.hpp>
 #include <glm/gtc/type_ptr.inl>
-#include "DoSomething.h"
-#include "Shader.h"
+#include "JustTemp.h"
 #include "Engine/Framework/PlayerController.h"
 #include "MyWorld/Chunk/ChunkGenerationSubsystem.h"
 #include "Player/LocalPlayer.h"
+#include "RhiFramework/Shader.h"
 #include "Subsystems/WorldSubsystem.h"
 #if PLATFORM_WINDOWS
     #include <Windows.h>
@@ -30,7 +30,7 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
     ShaderProgram->Use();
     ShaderProgram->SetFloat("texMultiplier", 0.5f);
 
-    JustTemporary::A(Texture);
+    JustTemp::A(&Texture);
 
     MainCamera = new Camera(glm::vec3(0.0f, 0.0f, 25.0f));
 
@@ -53,10 +53,19 @@ void Jafg::LWorld::Tick(const float DeltaTime)
     glm::mat4 View = MainCamera->GetViewMatrix();
 
     ShaderProgram->Use();
-    JustTemporary::B(Texture);
+
+    JustTemp::B(Texture);
 
     TIntVector2 WindowDimensions = GEngine->GetCheckedLocalPlayer()->GetPrimarySurface()->GetDimensions();
-    JustTemporary::C(WindowDimensions, View, MainCamera->Zoom, ShaderProgram);
+
+    JustTemp::C(MainCamera->Zoom, ShaderProgram, WindowDimensions, View);
+
+    // glm::mat4 Projection = glm::perspective(glm::radians(MainCamera->Zoom),
+    //     static_cast<float>(WindowDimensions.X) / static_cast<float>(WindowDimensions.Y), 0.1f, 2000.0f); // change clipping here
+    // const int32 ViewLoc = glGetUniformLocation(ShaderProgram->ID, "view");
+    // glUniformMatrix4fv(ViewLoc, 1, GL_FALSE, glm::value_ptr(View));
+    // const int32 ProjectionLoc = glGetUniformLocation(ShaderProgram->ID, "projection");
+    // glUniformMatrix4fv(ProjectionLoc, 1, GL_FALSE, glm::value_ptr(Projection));
 
     for (AActor* Actor : this->Actors)
     {

@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAFX.h"
+#include "Forward/EngineForward.h"
 #include "Platform/DesktopPlatformWin.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -10,8 +11,7 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/gtc/type_ptr.inl>
 #include FT_FREETYPE_H
-#include "Shader.h"
-#include "Forward/EngineForward.h"
+#include "RhiFramework/Shader.h"
 #include <glm/glm.hpp>
 
 struct Character
@@ -69,11 +69,7 @@ void Jafg::LDesktopPlatformWin::Initialize()
 
     glfwSetFramebufferSizeCallback(this->MasterWindow, [] (::GLFWwindow* Window, const int32 Width, const int32 Height)
     {
-        void* A = glfwGetWindowUserPointer(Window);
-        LDesktopPlatformWin* B = static_cast<LDesktopPlatformWin*>(A);
-        B->FramebufferSizeCallback(Window, Width, Height);
-
-        // static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->FramebufferSizeCallback(Window, Width, Height);
+        static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->FramebufferSizeCallback(Window, Width, Height);
     });
     glfwSetCursorPosCallback(this->MasterWindow, [] (::GLFWwindow* Window, const double XPos, const double YPos)
     {
@@ -385,5 +381,5 @@ void Jafg::LDesktopPlatformWin::MouseCallback(::GLFWwindow* Window, const double
 
 void Jafg::LDesktopPlatformWin::ScrollCallback(::GLFWwindow* Window, const double XOffset, const double YOffset)
 {
-    this->AddKeyDown(EKeys::MouseWheelAxis, static_cast<float>(XOffset));
+    this->AddKeyDown(EKeys::MouseWheelAxis, static_cast<float>(YOffset));
 }

@@ -8,7 +8,7 @@
 #include <thread>
 #include <glm/glm.hpp>
 #include "MyWorld/WorldStatics.h"
-#include "DoSomething.h"
+#include "RhiFramework/Shader.h"
 
 class AChunk
 {
@@ -39,6 +39,6 @@ private:
     glm::vec3 worldPos;
     std::thread chunkThread;
 
-    std::vector<Vertex> vertices;
+    std::vector<Jafg::Vertex> vertices;
     std::vector<unsigned int> indices;
 };

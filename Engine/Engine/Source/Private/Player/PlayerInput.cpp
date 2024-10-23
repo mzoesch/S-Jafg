@@ -15,8 +15,8 @@ void Jafg::LPlayerInput::BeginNewFrame()
 {
     LSurface* Context = this->GetCheckedPrimaryContext();
 
-    Context->DownKeys.SwapBuffers(Context->LastFrameDownKeys);
-    Context->DownKeys.Reset(Context->DownKeys.GetSize());
+    Context->GetCurrentlyPressedKeys().SwapBuffers(Context->GetLastFramePressedKeys());
+    Context->GetCurrentlyPressedKeys().Reset(Context->GetCurrentlyPressedKeys().GetSize());
 
     return;
 }
@@ -24,7 +24,7 @@ void Jafg::LPlayerInput::BeginNewFrame()
 bool Jafg::LPlayerInput::IsNewDown(const LKey Key) const
 {
     const LSurface* Context = this->GetCheckedPrimaryContext();
-    return Context->DownKeys.Contains(Key) && (Context->LastFrameDownKeys.Contains(Key) == false);
+    return Context->GetCurrentlyPressedKeys().Contains(Key) && (Context->GetLastFramePressedKeys().Contains(Key) == false);
 }
 
 void Jafg::LPlayerInput::DispatchInputDelegates()

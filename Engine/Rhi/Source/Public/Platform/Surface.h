@@ -8,19 +8,11 @@
 namespace Jafg
 {
 
-class LPlayerInput;
-
-MAKE_EXTERNAL_TEMPLATE_DHARRAY(RHI, LRawInput)
-
 /** Interface for a generic surface that the RHI may use to draw on. */
 class RHI_API LSurface
 {
-    friend LPlayerInput;
-
 public:
 
-    LSurface() = default;
-    PROHIBIT_REALLOC_OF_ANY_FROM(LSurface)
     virtual ~LSurface() = default;
 
     virtual void Initialize()       = 0;
@@ -31,7 +23,7 @@ public:
     virtual void PollInputs()       = 0;
     virtual void PollEvents()       = 0;
 
-    virtual void SetInputMode(const bool bShowCursor) = 0;
+    virtual void SetInputMode(bool bShowCursor) = 0;
 
     NODISCARD virtual auto GetWidth() const -> int32                    = 0;
     NODISCARD virtual auto GetHeight() const -> int32                   = 0;
@@ -45,9 +37,13 @@ public:
 
     FORCEINLINE auto AddKeyDown(const LKey InKey) -> void { this->DownKeys.Emplace(InKey); }
     FORCEINLINE auto AddKeyDown(const LKey InKey, const float InValue) -> void { this->DownKeys.Emplace(InKey, InValue); }
-    FORCEINLINE auto GetCurrentlyPressedKeys() const -> const TdhArray<LRawInput>& { return this->DownKeys; }
+    FORCEINLINE auto GetCurrentlyPressedKeys()       ->       TdhArray<LRawInput>& { return this->DownKeys;          }
+    FORCEINLINE auto GetCurrentlyPressedKeys() const -> const TdhArray<LRawInput>& { return this->DownKeys;          }
+    FORCEINLINE auto GetLastFramePressedKeys()       ->       TdhArray<LRawInput>& { return this->LastFrameDownKeys; }
+    FORCEINLINE auto GetLastFramePressedKeys() const -> const TdhArray<LRawInput>& { return this->LastFrameDownKeys; }
 
 private:
+
 
     /** The keys that are currently down for this surface this frame. */
     TdhArray<LRawInput> DownKeys;

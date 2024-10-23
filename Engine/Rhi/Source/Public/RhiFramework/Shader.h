@@ -2,11 +2,26 @@
 
 #pragma once
 
-class std::string;
+#include "CoreAFX.h"
 
 namespace Jafg
 {
 
+struct Vertex
+{
+    char posX, posY, posZ;
+    char texGridX, texGridY;
+
+    Vertex(char _posX, char _posY, char _posZ, char _texGridX, char _texGridY)
+    {
+        posX = _posX;
+        posY = _posY;
+        posZ = _posZ;
+
+        texGridX = _texGridX;
+        texGridY = _texGridY;
+    }
+};
 class RHI_API Shader
 {
 public:
@@ -23,5 +38,4 @@ public:
     void setInt(const std::string& name, int value) const;
     void SetFloat(const std::string& name, float value) const;
 };
-
-} /* ~Namespace Jafg */
+}

@@ -7,6 +7,7 @@
 #if PLATFORM_DESKTOP
     #include "Platform/DesktopPlatform.h"
 #endif /* PLATFORM_DESKTOP */
+#include <glad/glad.h>
 #include <glm/gtc/type_ptr.inl>
 #include "Core/Application.h"
 #include "Engine/World.h"
@@ -26,15 +27,6 @@ ENGINE_API bool             bGEngineRequestingExit      = false;
 
 ENGINE_API int32            GCustomExitStatusOverride   = INDEX_NONE;
 ENGINE_API LString          GCustomExitReason           = "";
-
-}
-
-namespace Jafg::EngineForward
-{
-
-ENGINE_API extern bool         bForwardExitRequest;
-ENGINE_API extern int32        ForwardCustomExitStatus;
-ENGINE_API extern LString      ForwardCustomExitReason;
 
 }
 
@@ -119,6 +111,15 @@ void Jafg::LEngine::TearDown()
 
         continue;
     }
+
+#if WITH_LOCAL_LAYER
+    if (this->LocalPlayer)
+    {
+        this->LocalPlayer->TearDown();
+        delete this->LocalPlayer;
+        this->LocalPlayer = nullptr;
+    }
+#endif /* WITH_LOCAL_LAYER */
 
     return;
 }
