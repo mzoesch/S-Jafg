@@ -10,6 +10,9 @@
 #include <unordered_map>
 #include "Engine/World.h"
 
+namespace Jafg
+{
+
 DECLARE_JAFG_CLASS()
 class JChunkGenerationSubsystem final : public Jafg::JTickableWorldSubsystem
 {
@@ -44,3 +47,5 @@ private:
     unsigned int ChunkSize = 32;
     int LastCamX = -100, LastCamY = -100;
 };
+
+} /* ~Namespace Jafg */

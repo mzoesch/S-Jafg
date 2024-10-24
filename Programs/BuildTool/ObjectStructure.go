@@ -23,13 +23,35 @@ var ObjectStructureCacheFileStub string = `
 
 // ObjectNode represents a node in the object structure hierarchy.
 type ObjectNode struct {
-    Name     string
-    Children []ObjectNode
+    Name       string
+    Children   []ObjectNode
+    Namespaces []string
+}
+
+func (on *ObjectNode) GetComparableName() string {
+    var out string = "::"
+    for idx, _ := range on.Namespaces {
+        out += on.Namespaces[idx] + "::"
+    }
+    out += on.Name
+
+    return out
 }
 
 type PrivateDeferredObjectNode struct {
-    Name  string
-    Super string
+    Name       string
+    Super      string
+    Namespaces []string
+}
+
+func (pdon *PrivateDeferredObjectNode) GetComparableName() string {
+    var out string = "::"
+    for idx, _ := range pdon.Namespaces {
+        out += pdon.Namespaces[idx] + "::"
+    }
+    out += pdon.Name
+
+    return out
 }
 
 // ObjectHierarchy represents the hierarchy of objects in the project.
@@ -76,8 +98,8 @@ func (s *ObjectHierarchyStack) Peek() (string, bool /* bWasEmpty */) {
     return s.s[l-1], false
 }
 
-func (os *ObjectNode) FindCheckedObjectNodeByString(name string) *ObjectNode {
-    var node *ObjectNode = os.FindObjectNodeByString(name)
+func (on *ObjectNode) FindCheckedObjectNodeByString(name string, namespaces []string) *ObjectNode {
+    var node *ObjectNode = on.FindObjectNodeByString(name, namespaces)
     if node == nil {
         panic(fmt.Sprintf("Object node [%s] not found.", name))
     }
@@ -85,19 +107,50 @@ func (os *ObjectNode) FindCheckedObjectNodeByString(name string) *ObjectNode {
     return node
 }
 
-func (os *ObjectNode) FindObjectNodeByString(name string) *ObjectNode {
-    if os.Name == name {
-        return os
+func ConcatNameWithNamespace(name string, namespaces []string) string {
+    var out string = "::"
+    for idx, _ := range namespaces {
+        out += namespaces[idx] + "::"
+    }
+    out += name
+
+    return out
+}
+
+// FindObjectNodeByString will search from inside namespace to outside.
+func (on *ObjectNode) FindObjectNodeByString(name string, namespaces []string) *ObjectNode {
+    var node *ObjectNode = on.FindObjectNodeByStringImpl(name, namespaces)
+    if node != nil {
+        return node
     }
 
-    for idx, _ := range os.Children {
-        if os.Children[idx].Name == name {
-            return &os.Children[idx]
+    for i := len(namespaces) - 1; i >= 0; i-- {
+        var newNamespaces []string = namespaces[:i]
+        node = on.FindObjectNodeByStringImpl(name, newNamespaces)
+        if node != nil {
+            return node
+        }
+
+        continue
+    }
+
+    node = on.FindObjectNodeByNameNoNamespace(name)
+    return node
+}
+
+func (on *ObjectNode) FindObjectNodeByStringImpl(name string, namespaces []string) *ObjectNode {
+    if on.GetComparableName() == ConcatNameWithNamespace(name, namespaces) {
+        return on
+    }
+
+    for idx, _ := range on.Children {
+        if on.Children[idx].GetComparableName() == ConcatNameWithNamespace(name, namespaces) {
+            return &on.Children[idx]
         }
     }
 
-    for idx, _ := range os.Children {
-        var node *ObjectNode = os.Children[idx].FindObjectNodeByString(name)
+    for idx, _ := range on.Children {
+        var node *ObjectNode = on.Children[idx].FindObjectNodeByString(name, namespaces)
         if node != nil {
             return node
         }
@@ -106,15 +159,36 @@ func (os *ObjectNode) FindObjectNodeByString(name string) *ObjectNode {
     return nil
 }
 
-func (os *ObjectNode) MakeCoolStringRepresentation(indent int) string {
+func (on *ObjectNode) FindObjectNodeByNameNoNamespace(name string) *ObjectNode {
+    if on.Name == name {
+        return on
+    }
+
+    for idx, _ := range on.Children {
+        if on.Children[idx].Name == name {
+            return &on.Children[idx]
+        }
+    }
+
+    for idx, _ := range on.Children {
+        var node *ObjectNode = on.Children[idx].FindObjectNodeByNameNoNamespace(name)
+        if node != nil {
+            return node
+        }
+    }
+
+    return nil
+}
+
+func (on *ObjectNode) MakeCoolStringRepresentation(indent int) string {
     var out string = ""
     for i := 0; i < indent; i++ {
         out += ObjectStructureIndent
     }
 
-    out += os.Name + "\n"
+    out += on.GetComparableName() + "\n"
 
-    for _, child := range os.Children {
+    for _, child := range on.Children {
         out += child.MakeCoolStringRepresentation(indent + 1)
     }
 
@@ -137,16 +211,16 @@ func SortObjectNodesByName(nodes []ObjectNode) {
     return
 }
 
-func (os *ObjectNode) RecursivelySortByName() {
-    if len(os.Children) == 0 {
+func (on *ObjectNode) RecursivelySortByName() {
+    if len(on.Children) == 0 {
         return
     }
 
-    for i := 0; i < len(os.Children); i++ {
-        os.Children[i].RecursivelySortByName()
+    for i := 0; i < len(on.Children); i++ {
+        on.Children[i].RecursivelySortByName()
     }
 
-    SortObjectNodesByName(os.Children)
+    SortObjectNodesByName(on.Children)
 
     return
 }
@@ -199,10 +273,31 @@ func (oh *ObjectHierarchy) LoadCache() {
             continue
         }
 
-        var className string = words[i][wordCursor:]
+        var classNameUnSplit string = words[i][wordCursor:]
+        var classNameSplit []string = strings.Split(classNameUnSplit, "::")
+        var idx int = 0
+        for idx < len(classNameSplit) {
+            if classNameSplit[idx] == "" {
+                classNameSplit = append(classNameSplit[:idx], classNameSplit[idx+1:]...)
+            } else {
+                idx++
+            }
+
+            continue
+        }
+
+        if len(classNameSplit) == 0 {
+            panic("Object structure cache file is illformed. Could not split class name.")
+        }
+        if len(classNameSplit) == 1 {
+            panic("Object structure cache file is illformed. Could not find namespace.")
+        }
+
+        var className string = classNameSplit[len(classNameSplit)-1]
+        var namespaces []string = classNameSplit[:len(classNameSplit)-1]
 
         if currentIndentationCount == 0 {
-            if !oh.AddNewObjectNode(className, "") {
+            if !oh.AddNewObjectNode(className, "", namespaces) {
                 panic("Object structure cache file is illformed. Could not add root object node.")
             }
         } else {
@@ -218,7 +313,7 @@ func (oh *ObjectHierarchy) LoadCache() {
             if bWasEmpty {
                 panic("Object structure cache file is illformed. Stack is empty.")
             }
-            if !oh.AddNewObjectNode(className, super) {
+            if !oh.AddNewObjectNode(className, super, namespaces) {
                 panic("Object structure cache file is illformed. Could not add object node. Missing super class.")
             }
         }
@@ -264,8 +359,8 @@ func (oh *ObjectHierarchy) MakeCoolStringRepresentation() string {
     return out
 }
 
-func (oh *ObjectHierarchy) AddDeferredObjectNode(name string, superName string) {
-    oh.DeferredNodes = append(oh.DeferredNodes, PrivateDeferredObjectNode{name, superName})
+func (oh *ObjectHierarchy) AddDeferredObjectNode(name string, superName string, namespaces []string) {
+    oh.DeferredNodes = append(oh.DeferredNodes, PrivateDeferredObjectNode{name, superName, namespaces})
     return
 }
 
@@ -283,7 +378,7 @@ func (oh *ObjectHierarchy) ResolveDeferredNodes() {
         }
 
         var cursorNode PrivateDeferredObjectNode = oh.DeferredNodes[cursor]
-        if !oh.AddNewObjectNode(cursorNode.Name, cursorNode.Super) {
+        if !oh.AddNewObjectNode(cursorNode.Name, cursorNode.Super, cursorNode.Namespaces) {
             cursor++
             continue
         }
@@ -297,15 +392,15 @@ func (oh *ObjectHierarchy) ResolveDeferredNodes() {
     return
 }
 
-func (oh *ObjectHierarchy) AddNewObjectNode(name string, superName string) bool /* bCouldAdd */ {
+func (oh *ObjectHierarchy) AddNewObjectNode(name string, superName string, namespaces []string) bool /* bCouldAdd */ {
     if oh.Root != nil {
-        var maybeNode *ObjectNode = oh.Root.FindObjectNodeByString(name)
+        var maybeNode *ObjectNode = oh.Root.FindObjectNodeByString(name, namespaces)
         if maybeNode != nil {
             if superName == "" {
                 return true
             }
 
-            superNode := oh.Root.FindCheckedObjectNodeByString(superName)
+            superNode := oh.Root.FindCheckedObjectNodeByString(superName, namespaces)
 
             for idx, _ := range superNode.Children {
                 if superNode.Children[idx].Name == name {
@@ -325,21 +420,26 @@ func (oh *ObjectHierarchy) AddNewObjectNode(name string, superName string) bool 
     }
 
     if superName != "" {
-        var superNode *ObjectNode = oh.Root.FindObjectNodeByString(superName)
+        var superNode *ObjectNode = oh.Root.FindObjectNodeByString(superName, namespaces)
         if superNode == nil {
             return false
         }
 
         var newNode *ObjectNode = new(ObjectNode)
         newNode.Name = name
+        newNode.Namespaces = namespaces
         superNode.Children = append(superNode.Children, *newNode)
     } else {
         if oh.Root == nil {
             var newNode *ObjectNode = new(ObjectNode)
             newNode.Name = name
+            newNode.Namespaces = namespaces
             oh.Root = newNode
         } else {
             oh.Root.Name = name
+            if oh.Root.GetComparableName() != "::"+strings.Join(namespaces, "::")+"::"+name {
+                panic("Root object node has different namespaces.")
+            }
         }
     }
 

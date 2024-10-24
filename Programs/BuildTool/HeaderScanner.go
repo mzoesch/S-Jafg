@@ -91,7 +91,15 @@ func ScanForObjectStructureOnFile(fileName string, content *string) {
         }
 
         if token.Kind.IsJafgClass() {
-            ExecuteJafgClassStatement(token.JafgClassName, token.JafgClassSuperName)
+            ExecuteJafgClassStatement(
+                token.JafgClassName,
+                token.JafgClassSuperName,
+                CalculateCurrentNamespaces(&tokens, idx),
+            )
+            continue
+        }
+
+        if token.Kind.IsPushNamespace() || token.Kind.IsPopNamespace() {
             continue
         }
 
@@ -132,6 +140,10 @@ func OperateOnHeaderFileForGeneratedHeaders(fileName string, content *string) {
         }
 
         if token.Kind.IsJafgClass() {
+            continue
+        }
+
+        if token.Kind.IsPushNamespace() || token.Kind.IsPopNamespace() {
             continue
         }
 
@@ -202,12 +214,15 @@ func ExecutePragmaStatementForGeneratedHeaders(pragmaStatement string, tokenInde
     return out
 }
 
-func ExecuteJafgClassStatement(jafgClassName string, jafgClassSuperName string) {
+func ExecuteJafgClassStatement(jafgClassName string, jafgClassSuperName string, namespaces []string) {
     fmt.Printf("Found Jafg class [%s] with super class [%s].\n", jafgClassName, jafgClassSuperName)
-    if GObjectStructure.AddNewObjectNode(jafgClassName, jafgClassSuperName) {
+
+    if GObjectStructure.AddNewObjectNode(jafgClassName, jafgClassSuperName, namespaces) {
         return
     }
-    GObjectStructure.AddDeferredObjectNode(jafgClassName, jafgClassSuperName)
+
+    GObjectStructure.AddDeferredObjectNode(jafgClassName, jafgClassSuperName, namespaces)
+
     return
 }
 
@@ -236,6 +251,27 @@ func MakeBuildFile() {
     return
 }
 
+func CalculateCurrentNamespaces(tokens *[]Token, index int) []string {
+    var out []string
+
+    for idx := 0; idx < index; idx++ {
+        var token Token = (*tokens)[idx]
+
+        if token.Kind.IsPushNamespace() {
+            out = append(out, token.NamespaceName)
+            continue
+        }
+
+        if token.Kind.IsPopNamespace() {
+            out = out[:len(out)-1]
+        }
+
+        break
+    }
+
+    return out
+}
+
 func RegisterObjectBaseClass(index int, tokens *[]Token) int /* How many tokens to skip. */ {
     if len(*tokens) <= index+1 {
         panic("Object base class is illformed.")
@@ -250,7 +286,11 @@ func RegisterObjectBaseClass(index int, tokens *[]Token) int /* How many tokens 
             objBaseClass.JafgClassName, objBaseClass.JafgClassSuperName))
     }
 
-    GObjectStructure.AddNewObjectNode(objBaseClass.JafgClassName, objBaseClass.JafgClassSuperName)
+    GObjectStructure.AddNewObjectNode(
+        objBaseClass.JafgClassName,
+        objBaseClass.JafgClassSuperName,
+        CalculateCurrentNamespaces(tokens, index),
+    )
 
     return 1
 }

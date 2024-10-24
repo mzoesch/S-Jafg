@@ -11,9 +11,11 @@ import (
 type TokenKind int
 
 const (
-    TOKEN_INVALID    TokenKind = iota
-    TOKEN_PRAGMA     TokenKind = iota
-    TOKEN_JAFG_CLASS TokenKind = iota
+    TOKEN_INVALID        TokenKind = iota
+    TOKEN_PRAGMA         TokenKind = iota
+    TOKEN_JAFG_CLASS     TokenKind = iota
+    TOKEN_PUSH_NAMESPACE TokenKind = iota
+    TOKEN_POP_NAMESPACE  TokenKind = iota
 )
 
 func (tk TokenKind) IsInvalid() bool {
@@ -28,12 +30,26 @@ func (tk TokenKind) IsJafgClass() bool {
     return tk == TOKEN_JAFG_CLASS
 }
 
+func (tk TokenKind) IsPushNamespace() bool {
+    return tk == TOKEN_PUSH_NAMESPACE
+}
+
+func (tk TokenKind) IsPopNamespace() bool {
+    return tk == TOKEN_POP_NAMESPACE
+}
+
 func (tk TokenKind) ToString() string {
     switch tk {
     case TOKEN_INVALID:
         return "INVALID"
     case TOKEN_PRAGMA:
         return "PRAGMA"
+    case TOKEN_JAFG_CLASS:
+        return "JAFG_CLASS"
+    case TOKEN_PUSH_NAMESPACE:
+        return "PUSH_NAMESPACE"
+    case TOKEN_POP_NAMESPACE:
+        return "POP_NAMESPACE"
     default:
         panic("Unknown token kind")
     }
@@ -46,6 +62,9 @@ type Token struct {
 
     JafgClassName      string
     JafgClassSuperName string
+
+    NamespaceName     string
+    CurlyBracketDepth int
 }
 
 func (t *Token) ToString() string {
@@ -53,9 +72,18 @@ func (t *Token) ToString() string {
 }
 
 func TokenizeContent(content *string) []Token {
+
+    /*
+     * I know that this code is a total mess and has many bugs in it.
+     * But if you write your C/C++ the way I do (format with enough spaces, newlines, and no tabs),
+     * this should maybe in most cases theoretically work, probably - when giving it enough love.
+     *         - mzoesch    \_(-_-)_/
+     */
+
     var out []Token
 
     var words []string = SplitValidCppFile(content, []string{" ", ",", "\n", "\t", "\r"})
+    var currentCurlyBracketDepth int = 0
 
     /* Whether to skip the next word because of forward declarations. */
     var bSkipNextWord bool = false
@@ -71,6 +99,21 @@ func TokenizeContent(content *string) []Token {
             continue
         }
 
+        for _, character := range word {
+            if character == '{' {
+                currentCurlyBracketDepth++
+            } else if character == '}' {
+                currentCurlyBracketDepth--
+                for _, token := range out {
+                    if token.Kind.IsPushNamespace() && token.CurlyBracketDepth == currentCurlyBracketDepth {
+                        var popToken Token
+                        popToken.Kind = TOKEN_POP_NAMESPACE
+                        out = append(out, popToken)
+                    }
+                }
+            }
+        }
+
         if strings.HasPrefix(word, "PRAGMA_FOR_JAFG_BUILD_TOOL") {
             MakeTokenForPragma(&out, GetCheckedNextValidString(&words, &index))
             continue
@@ -78,6 +121,10 @@ func TokenizeContent(content *string) []Token {
 
         if strings.HasPrefix(word, "DECLARE_JAFG_CLASS") {
             MakeTokenForJafgClass(&out, index, &words)
+        }
+
+        if strings.HasPrefix(word, "namespace") {
+            MakeTokenForPushNamespace(&out, index, &words, currentCurlyBracketDepth)
         }
 
         continue
@@ -332,6 +379,27 @@ func MakeTokenForJafgClass(tokens *[]Token, index int, words *[]string) {
     }
 
     *tokens = append(*tokens, token)
+
+    return
+}
+
+func MakeTokenForPushNamespace(tokens *[]Token, index int, words *[]string, curlyBracketDepth int) {
+    var predictedNamespaceNameLocation int = index + 1
+
+    if predictedNamespaceNameLocation >= len(*words) {
+        panic("Unexpected end of file. While searching for namespace name.")
+    }
+
+    var fullNamespaceName string = (*words)[predictedNamespaceNameLocation]
+    var splitNamespaceName []string = strings.Split(fullNamespaceName, "::")
+
+    for _, split := range splitNamespaceName {
+        var token Token
+        token.Kind = TOKEN_PUSH_NAMESPACE
+        token.NamespaceName = split
+        token.CurlyBracketDepth = curlyBracketDepth
+        *tokens = append(*tokens, token)
+    }
 
     return
 }

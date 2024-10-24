@@ -69,12 +69,12 @@ FunctionEnd:
     return;
 }
 
-void JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
+void Jafg::JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
 {
     JWorldSubsystem::Initialize(Collection);
 }
 
-void JChunkGenerationSubsystem::Tick(const float DeltaTime)
+void Jafg::JChunkGenerationSubsystem::Tick(const float DeltaTime)
 {
     this->UpdateChunkQueue();
     this->KillChunks();
@@ -84,12 +84,12 @@ void JChunkGenerationSubsystem::Tick(const float DeltaTime)
     return;
 }
 
-void JChunkGenerationSubsystem::TearDown()
+void Jafg::JChunkGenerationSubsystem::TearDown()
 {
     JWorldSubsystem::TearDown();
 }
 
-void JChunkGenerationSubsystem::UpdateChunkQueue()
+void Jafg::JChunkGenerationSubsystem::UpdateChunkQueue()
 {
     const float CamX = this->GetWorld()->MainCamera->Position.x;
     const float CamY = this->GetWorld()->MainCamera->Position.y;
@@ -121,7 +121,7 @@ void JChunkGenerationSubsystem::UpdateChunkQueue()
     return;
 }
 
-void JChunkGenerationSubsystem::KillChunks()
+void Jafg::JChunkGenerationSubsystem::KillChunks()
 {
     for (auto It = Chunks.begin(); It != Chunks.end();)
     {
@@ -142,7 +142,7 @@ void JChunkGenerationSubsystem::KillChunks()
     return;
 }
 
-void JChunkGenerationSubsystem::GenerateChunks()
+void Jafg::JChunkGenerationSubsystem::GenerateChunks()
 {
     int32 GeneratedChunks = 0;
     while (!ChunkQueue.empty() && GeneratedChunks < 2)
@@ -160,7 +160,7 @@ void JChunkGenerationSubsystem::GenerateChunks()
     return;
 }
 
-void JChunkGenerationSubsystem::RenderChunks()
+void Jafg::JChunkGenerationSubsystem::RenderChunks()
 {
     // const uint32 ModelLoc = glGetUniformLocation(this->GetWorld()->ShaderProgram->ID, "model");
     const uint32 ModelLoc = JustTemp::D(this->GetWorld()->ShaderProgram);
