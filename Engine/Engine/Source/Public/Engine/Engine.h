@@ -3,8 +3,6 @@
 #pragma once
 
 #include "CoreAFX.h"
-#include "glad/glad.h" /* Include glad to get all the required OpenGL headers. */
-#include <GLFW/glfw3.h>
 #include "Level.h"
 
 namespace Jafg

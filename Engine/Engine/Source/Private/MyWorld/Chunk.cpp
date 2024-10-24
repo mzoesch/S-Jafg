@@ -25,8 +25,8 @@ AChunk::AChunk(glm::vec3 GlobalChunkLocation)
 
     chunkThread = std::thread(&AChunk::GenerateChunk, this);
 
-    std::cout << "Created chunk at: " << chunkPos.x << ", " << chunkPos.y << ", " << chunkPos.z << '\n';
-    std::cout.flush();
+    // std::cout << "Created chunk at: " << chunkPos.x << ", " << chunkPos.y << ", " << chunkPos.z << '\n';
+    // std::cout.flush();
 }
 
 AChunk::~AChunk()

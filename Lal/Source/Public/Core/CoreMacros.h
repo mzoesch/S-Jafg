@@ -13,7 +13,7 @@
 #define PRIVATE_JAFG_CORE_JOIN_INNER_NINE(  A, B, C, D, E, F, G, H, I   ) A##B##C##D##E##F##G##H##I
 
 /**
- * Advice the preprocessor to exclude the following code without the interactive intellisense mocking at as
+ * Advice the preprocessor to exclude the following code without the interactive intellisense mocking at us
  * that we excluded content of a condition that is always false.
  */
 #define PREPROCESSOR_EXCLUDE_FF     0

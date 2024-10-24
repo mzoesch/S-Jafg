@@ -73,6 +73,8 @@ EPlatformExit::Type GuardedMain(const LChar* CmdLine)
         }
     } GuardedMainScope;
 
+    LOG_INFO(LogGuardedMain, "Hello, world.")
+
     EPlatformExit::Type ErrorLevel = EngineInit();
 
     if (ErrorLevel != EPlatformExit::Success)
