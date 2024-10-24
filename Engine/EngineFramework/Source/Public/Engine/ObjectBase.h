@@ -11,8 +11,12 @@ namespace Jafg
 namespace Private
 {
 
+PRAGMA_FOR_JAFG_BUILD_TOOL("NextIsObjectBaseClass")
+DECLARE_JAFG_CLASS()
 class ENGINEFRAMEWORK_API JObjectBase
 {
+    GENERATED_CLASS_BODY()
+
 protected:
 
     JObjectBase() = default;

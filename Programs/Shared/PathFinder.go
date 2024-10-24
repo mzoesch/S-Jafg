@@ -25,6 +25,7 @@ var VslfDir string = "Vslf"
 var ProgramsDir string = "Programs"
 var GeneratedHeadersDir string = fmt.Sprintf("%s/gh", VslfDir)
 var GeneratedHeadersExtension string = ".generated.h"
+var ObjectStructureCacheFile string = fmt.Sprintf("%s/jobj.jobj", VslfDir)
 var VendorIncludeDir string = "Engine/Vendor/Include"
 var VendorLibDir string = "Engine/Vendor/Lib"
 
@@ -136,7 +137,7 @@ func CopyAbsoluteDirectory(absoluteSource string, absoluteTarget string, bOverwr
             continue
         }
 
-        if _, err := os.Stat(targetFile, ); os.IsExist(err) {
+        if _, err := os.Stat(targetFile); os.IsExist(err) {
             if bOverwrite {
                 err := os.Remove(targetFile)
                 if err != nil {
@@ -223,7 +224,7 @@ func CopyAbsoluteDirectoryByExtension(absoluteSource string, absoluteTarget stri
             continue
         }
 
-        if _, err := os.Stat(targetFile, ); os.IsExist(err) {
+        if _, err := os.Stat(targetFile); os.IsExist(err) {
             if bOverwrite {
                 err := os.Remove(targetFile)
                 if err != nil {

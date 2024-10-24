@@ -173,5 +173,10 @@
 /** Pragmas for the Jafg Build Tool. */
 #define PRAGMA_FOR_JAFG_BUILD_TOOL(Pragma)
 
+/** Allows one to declare a class that derives from JObjectBase in some form. */
+#define DECLARE_JAFG_CLASS()
+/** Has to be declared inside the body of a class that was marked with DECLARE_JAFG_CLASS. */
+#define GENERATED_CLASS_BODY()
+
 /** Advice the build tool to make the global workspace wide build file for this file. */
 PRAGMA_FOR_JAFG_BUILD_TOOL("MakeBuildFile")

@@ -1,6 +1,6 @@
 {
     "FriendlyName": "EngineFramework",
-    "Pch": "No",
+    "Pch": "Generate",
     "PublicDependencies": [
         "CORE_DEPENDENCIES", "Lal"
     ],

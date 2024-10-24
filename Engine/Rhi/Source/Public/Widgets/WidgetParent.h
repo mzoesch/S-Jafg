@@ -7,8 +7,11 @@
 namespace Jafg
 {
 
+DECLARE_JAFG_CLASS()
 class RHI_API WWidgetParent : public WWidgetNode
 {
+    GENERATED_CLASS_BODY()
+
 public:
     WWidgetParent() = default;
 };

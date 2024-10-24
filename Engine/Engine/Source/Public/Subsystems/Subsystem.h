@@ -9,8 +9,11 @@
 namespace Jafg
 {
 
+DECLARE_JAFG_CLASS()
 class JSubsystem : public JObject
 {
+    GENERATED_CLASS_BODY()
+
 public:
 
     JSubsystem(Jafg::LWorld* InOuter) : JObject(InOuter) { }

@@ -10,8 +10,11 @@
 #include <unordered_map>
 #include "Engine/World.h"
 
+DECLARE_JAFG_CLASS()
 class JChunkGenerationSubsystem final : public Jafg::JTickableWorldSubsystem
 {
+    GENERATED_CLASS_BODY()
+
 public:
 
     explicit JChunkGenerationSubsystem(Jafg::LWorld* InOuter) : Jafg::JTickableWorldSubsystem(InOuter) { }

@@ -12,6 +12,10 @@ func ContainsByPredicate[T any](ts []T, pred func(T) bool) bool {
     return false
 }
 
+func CountRunesInString(str string) int {
+    return len([]rune(str))
+}
+
 func RemoveDuplicatesFromStringSlice(strSlice []string) []string {
     allKeys := make(map[string]bool)
     var list []string

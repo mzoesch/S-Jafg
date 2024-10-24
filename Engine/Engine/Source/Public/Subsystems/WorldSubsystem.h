@@ -10,8 +10,11 @@
 namespace Jafg
 {
 
+DECLARE_JAFG_CLASS()
 class JWorldSubsystem : public JSubsystem
 {
+    GENERATED_CLASS_BODY()
+
 public:
 
     JWorldSubsystem(Jafg::LWorld* InOuter) : JSubsystem(InOuter) { }
@@ -22,8 +25,11 @@ public:
     // ~Subsystem implementation
 };
 
+DECLARE_JAFG_CLASS()
 class JTickableWorldSubsystem : public JWorldSubsystem, public LTickableObject
 {
+    GENERATED_CLASS_BODY()
+
 public:
 
     JTickableWorldSubsystem(Jafg::LWorld* InOuter) : JWorldSubsystem(InOuter) { }

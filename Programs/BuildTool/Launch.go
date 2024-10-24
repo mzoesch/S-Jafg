@@ -29,7 +29,25 @@ func Launch(args []string) {
 func LaunchPreBuildTasks(args []string) {
     Shared.CheckRelativeDir(Shared.GeneratedHeadersDir)
 
-    SystematicallyScanHeadersThatAreDue()
+    var relativeTargetDir string = GBuildInfo.GetRelativeModuleDir()
+    var allFiles []string = Shared.RecursivelyGetAllFilesInRelativeDir(relativeTargetDir)
+    var allHeaders []string
+    for _, file := range allFiles {
+        if Shared.IsHeaderFile(file) {
+            allHeaders = append(allHeaders, file)
+        }
+
+        continue
+    }
+
+    GObjectStructure = new(ObjectHierarchy)
+    GObjectStructure.LoadCache()
+    ScanAllHeadersForObjectStructure(allHeaders)
+    GObjectStructure.ResolveDeferredNodes()
+    GObjectStructure.RecursivelySortByName()
+    GObjectStructure.SaveToCache()
+
+    RecursivelyScanAndOperateOnHeaders(allHeaders)
 
     return
 }
@@ -42,25 +60,6 @@ func LaunchPostBuildTasks(args []string) {
     if GBuildInfo.Kind.IsShared() {
         GBuildInfo.CopyModuleBinariesToLaunch()
     }
-
-    return
-}
-
-// SystematicallyScanHeadersThatAreDue scans all headers that are due for regeneration.
-// Will regenerate generated headers if they are out of date.
-func SystematicallyScanHeadersThatAreDue() {
-    var relativeTargetDir string = GBuildInfo.GetRelativeModuleDir()
-    var allFiles []string = Shared.RecursivelyGetAllFilesInRelativeDir(relativeTargetDir)
-    var allHeaders []string
-    for _, file := range allFiles {
-        if Shared.IsHeaderFile(file) {
-            allHeaders = append(allHeaders, file)
-        }
-
-        continue
-    }
-
-    RecursivelyScanAndOperateOnHeaders(allHeaders)
 
     return
 }

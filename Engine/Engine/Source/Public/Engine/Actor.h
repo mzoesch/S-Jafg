@@ -10,8 +10,11 @@ namespace Jafg
 
 class LWorld;
 
+DECLARE_JAFG_CLASS()
 class ENGINE_API AActor : public JObject
 {
+    GENERATED_CLASS_BODY()
+
     friend LWorld;
 
 public:

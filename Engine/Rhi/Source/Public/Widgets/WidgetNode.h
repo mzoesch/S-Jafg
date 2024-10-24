@@ -34,8 +34,11 @@ enum Type : uint8
 
 } /* ~Namespace EWidgetVisibility */
 
+DECLARE_JAFG_CLASS()
 class RHI_API WWidgetNode : public ::Jafg::Private::JObjectBase
 {
+    GENERATED_CLASS_BODY()
+
     friend LWidgetConstructor;
 
 public:

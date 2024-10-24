@@ -14,6 +14,8 @@ type CurrentHeaderState struct {
     builder  *strings.Builder
 }
 
+var GCurrentHeaderState *CurrentHeaderState = nil
+
 func (chs *CurrentHeaderState) AppendString(str string) {
     if chs.builder.Len() == 0 {
         chs.builder = new(strings.Builder)
@@ -36,16 +38,14 @@ func (chs *CurrentHeaderState) AppendStringNoSideEffects(str string) {
     return
 }
 
-var GCurrentHeaderState *CurrentHeaderState = nil
-
-func RecursivelyScanAndOperateOnHeaders(absolutePaths []string) {
+func ScanAllHeadersForObjectStructure(absolutePaths []string) {
     for _, path := range absolutePaths {
         if !Shared.IsHeaderFile(path) {
             panic(fmt.Sprintf("File [%s] is not a header file.", path))
         }
 
         var content string = Shared.ReadFileContentsFromAbsolutePath(path)
-        OperateOnHeaderFile(Shared.GetFileNameFromHeaderPath(path), &content)
+        ScanForObjectStructureOnFile(Shared.GetFileNameFromHeaderPath(path), &content)
 
         continue
     }
@@ -53,9 +53,57 @@ func RecursivelyScanAndOperateOnHeaders(absolutePaths []string) {
     return
 }
 
-// OperateOnHeaderFile tokenizes the content of a header file and generates the .generated.h file if necessary.
-// Will delete the old .generated.h file if it exists and no new one is needed.
-func OperateOnHeaderFile(fileName string, content *string) {
+// RecursivelyScanAndOperateOnHeaders scans all headers that are due for regeneration.
+// Will regenerate generated headers if they are out of date.
+func RecursivelyScanAndOperateOnHeaders(absolutePaths []string) {
+    for _, path := range absolutePaths {
+        if !Shared.IsHeaderFile(path) {
+            panic(fmt.Sprintf("File [%s] is not a header file.", path))
+        }
+
+        var content string = Shared.ReadFileContentsFromAbsolutePath(path)
+        OperateOnHeaderFileForGeneratedHeaders(Shared.GetFileNameFromHeaderPath(path), &content)
+
+        continue
+    }
+
+    return
+}
+
+// ScanForObjectStructureOnFile scans a header file for object structure information and caches it.
+func ScanForObjectStructureOnFile(fileName string, content *string) {
+    var tokens []Token = TokenizeContent(content)
+
+    var tokensToSkip int = 0
+    for idx, token := range tokens {
+        if token.Kind.IsInvalid() {
+            panic("Invalid token kind.")
+        }
+
+        if tokensToSkip > 0 {
+            tokensToSkip--
+            continue
+        }
+
+        if token.Kind.IsPragma() {
+            tokensToSkip = ExecutePragmaStatementForObjectStructure(token.PragmaStatement, idx, &tokens)
+            continue
+        }
+
+        if token.Kind.IsJafgClass() {
+            ExecuteJafgClassStatement(token.JafgClassName, token.JafgClassSuperName)
+            continue
+        }
+
+        panic("Unknown token kind.")
+    }
+
+    return
+}
+
+// OperateOnHeaderFileForGeneratedHeaders tokenizes the content of a header file and generates the .generated.h
+//file if necessary. Will delete the old .generated.h file if it exists and no new one is needed.
+func OperateOnHeaderFileForGeneratedHeaders(fileName string, content *string) {
     GCurrentHeaderState = new(CurrentHeaderState)
     GCurrentHeaderState.filename = fileName
     GCurrentHeaderState.builder = new(strings.Builder)
@@ -67,13 +115,23 @@ func OperateOnHeaderFile(fileName string, content *string) {
         return
     }
 
-    for _, token := range tokens {
+    var tokensToSkip int = 0
+    for idx, token := range tokens {
         if token.Kind.IsInvalid() {
             panic("Invalid token kind.")
         }
 
+        if tokensToSkip > 0 {
+            tokensToSkip--
+            continue
+        }
+
         if token.Kind.IsPragma() {
-            ExecutePragmaStatement(token.Description)
+            tokensToSkip = ExecutePragmaStatementForGeneratedHeaders(token.PragmaStatement, idx, &tokens)
+            continue
+        }
+
+        if token.Kind.IsJafgClass() {
             continue
         }
 
@@ -110,15 +168,47 @@ func ConditionallyWriteGeneratedHeaderFile() {
     return
 }
 
-func ExecutePragmaStatement(pragmaStatement string) {
+func ExecutePragmaStatementForObjectStructure(pragmaStatement string, tokenIndex int, tokens *[]Token) int /* How many tokens to skip. */ {
+    var out int = 0
+
+    switch pragmaStatement {
+    case "IncludeAllModuleTests":
+        break
+    case "MakeBuildFile":
+        break
+    case "NextIsObjectBaseClass":
+        out = RegisterObjectBaseClass(tokenIndex, tokens)
+    default:
+        panic(fmt.Sprintf("Unknown pragma statement [%s].", pragmaStatement))
+    }
+
+    return out
+}
+
+func ExecutePragmaStatementForGeneratedHeaders(pragmaStatement string, tokenIndex int, tokens *[]Token) int /* How many tokens to skip. */ {
+    var out int = 0
+
     switch pragmaStatement {
     case "IncludeAllModuleTests":
         IncludeAllModuleTests()
     case "MakeBuildFile":
         MakeBuildFile()
+    case "NextIsObjectBaseClass":
+        break
     default:
         panic(fmt.Sprintf("Unknown pragma statement [%s].", pragmaStatement))
     }
+
+    return out
+}
+
+func ExecuteJafgClassStatement(jafgClassName string, jafgClassSuperName string) {
+    fmt.Printf("Found Jafg class [%s] with super class [%s].\n", jafgClassName, jafgClassSuperName)
+    if GObjectStructure.AddNewObjectNode(jafgClassName, jafgClassSuperName) {
+        return
+    }
+    GObjectStructure.AddDeferredObjectNode(jafgClassName, jafgClassSuperName)
+    return
 }
 
 func IncludeAllModuleTests() {
@@ -144,4 +234,23 @@ func MakeBuildFile() {
     GCurrentHeaderState.AppendStringNoSideEffects(content)
 
     return
+}
+
+func RegisterObjectBaseClass(index int, tokens *[]Token) int /* How many tokens to skip. */ {
+    if len(*tokens) <= index+1 {
+        panic("Object base class is illformed.")
+    }
+
+    var objBaseClass Token = (*tokens)[index+1]
+
+    fmt.Printf("Registering object base class with name %s ...\n", objBaseClass.JafgClassName)
+
+    if objBaseClass.JafgClassSuperName != "" {
+        panic(fmt.Sprintf("Object base class [%s] has a super class [%s]. This is not allowed.",
+            objBaseClass.JafgClassName, objBaseClass.JafgClassSuperName))
+    }
+
+    GObjectStructure.AddNewObjectNode(objBaseClass.JafgClassName, objBaseClass.JafgClassSuperName)
+
+    return 1
 }
