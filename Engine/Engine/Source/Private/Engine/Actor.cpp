@@ -3,7 +3,7 @@
 #include "CoreAFX.h"
 #include "Engine/Actor.h"
 
-Jafg::AActor::AActor(LWorld* InOuter) : JObject()
+Jafg::AActor::AActor(LWorld* InOuter) : JObject(InOuter)
 {
-    this->Outer = InOuter;
+    return;
 }

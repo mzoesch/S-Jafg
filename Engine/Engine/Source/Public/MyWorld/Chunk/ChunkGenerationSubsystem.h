@@ -8,6 +8,7 @@
 #include <queue>
 #include "glm/glm.hpp"
 #include <unordered_map>
+#include "Engine/World.h"
 
 class JChunkGenerationSubsystem final : public Jafg::JTickableWorldSubsystem
 {

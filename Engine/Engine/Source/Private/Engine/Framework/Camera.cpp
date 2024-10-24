@@ -102,8 +102,8 @@ void Jafg::Camera::ProcessMouseScroll(const float YOffset)
     if (MovementSpeed > 50)
         MovementSpeed = 50;
 
-    std::cout << "Camera speed: " << MovementSpeed << '\n';
-    std::cout.flush();
+    // std::cout << "Camera speed: " << MovementSpeed << '\n';
+    // std::cout.flush();
 }
 
 // calculates the front vector from the Camera's (updated) Euler Angles

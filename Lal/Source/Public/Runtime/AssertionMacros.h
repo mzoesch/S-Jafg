@@ -112,8 +112,8 @@
 
 #if DO_ENSURES
 
-    /** !!!Currently, secretly a check lol. We have to implement the logic for that.!!! */
-    #define ensure(Expr)                    check( Expr )
+    /** !!!Implement this asap. Currently just forwarded.!!! */
+    #define ensure(Expr)                    Expr
 
 #else /* !DO_ENSURES */
 

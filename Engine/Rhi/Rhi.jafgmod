@@ -1,7 +1,7 @@
 {
     "Pch": "No",
     "PublicDependencies": [
-        "Lal", "RHI_DEPENDENCIES", "Input"
+        "EngineFramework", "RHI_DEPENDENCIES", "Input"
     ],
     "PrivateDependencies": [
         "EngineForward"

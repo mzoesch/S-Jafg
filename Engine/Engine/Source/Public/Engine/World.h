@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreAFX.h"
+#include "Engine/ObjectContext.h"
 
 struct GLFWwindow;
 
@@ -38,7 +39,7 @@ MAKE_EXTERNAL_TEMPLATE_DHARRAY(ENGINE, ::Jafg::AActor*)
  * Once every frame a world will be ticked. It may register itself to the RHI to be used when
  * rendering on any kind of surface. Multiple worlds may draw to the same surface.
  */
-class ENGINE_API LWorld
+class ENGINE_API LWorld final : public ::Jafg::Private::LObjectContext
 {
 public:
 

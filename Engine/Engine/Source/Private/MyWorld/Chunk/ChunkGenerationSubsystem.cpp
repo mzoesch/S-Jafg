@@ -2,11 +2,8 @@
 
 #include "CoreAFX.h"
 #include "MyWorld/Chunk/ChunkGenerationSubsystem.h"
-
 #include "JustTemp.h"
-#include "Engine/World.h"
 #include "Engine/Framework/Camera.h"
-#include "RhiFramework/Shader.h"
 
 void GetAllChunksInDistance(const TIntVector2<int32>& Center, const int32 Distance, std::vector<TIntVector2<int32>>& OutChunks)
 {
@@ -104,11 +101,6 @@ void JChunkGenerationSubsystem::UpdateChunkQueue()
     {
         return;
     }
-
-    // std::cout << "Camera moved to new chunk (" << CurrentCamX << ", " << CurrentCamY << ")" << '\n';
-    // std::cout << "Precious loc (" << this->GetWorld()->MainCamera->Position.x << ", " << this->GetWorld()->MainCamera->Position.y << ")" << '\n';
-
-    std::cout.flush();
 
     LastCamX = CurrentCamX;
     LastCamY = CurrentCamY;

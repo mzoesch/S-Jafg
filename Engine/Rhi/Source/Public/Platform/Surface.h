@@ -7,18 +7,25 @@
 
 namespace Jafg
 {
+class LViewport;
+}
+
+namespace Jafg
+{
 
 /** Interface for a generic surface that the RHI may use to draw on. */
 class RHI_API LSurface
 {
 public:
 
+    LSurface() = default;
+    PROHIBIT_REALLOC_OF_ANY_FROM(LSurface)
     virtual ~LSurface() = default;
 
-    virtual void Initialize()       = 0;
-    virtual void OnClear()          = 0;
-    virtual void OnUpdate()         = 0;
-    virtual void TearDown()         = 0;
+    virtual void Initialize();
+    virtual void OnClear();
+    virtual void OnUpdate();
+    virtual void TearDown();
 
     virtual void PollInputs()       = 0;
     virtual void PollEvents()       = 0;
@@ -44,6 +51,8 @@ public:
 
 private:
 
+    /** The viewport that is used to draw on this surface. */
+    LViewport* Viewport = nullptr;
 
     /** The keys that are currently down for this surface this frame. */
     TdhArray<LRawInput> DownKeys;

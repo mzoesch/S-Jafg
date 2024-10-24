@@ -20,10 +20,10 @@ public:
     ~LDesktopPlatformBase() override = default;
 
     // Surface implementation
-    virtual void Initialize() override { }
-    virtual void OnClear() override    { }
-    virtual void OnUpdate() override   { }
-    virtual void TearDown() override   { }
+    virtual void Initialize() override { LSurface::Initialize(); }
+    virtual void OnClear() override    { LSurface::OnClear();    }
+    virtual void OnUpdate() override   { LSurface::OnUpdate();   }
+    virtual void TearDown() override   { LSurface::TearDown();   }
     virtual void PollInputs() override { }
     virtual void PollEvents() override { }
     virtual void SetInputMode(bool bShowCursor) override { }

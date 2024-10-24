@@ -13,7 +13,6 @@ class JSubsystem : public JObject
 {
 public:
 
-    JSubsystem() = default;
     JSubsystem(Jafg::LWorld* InOuter) : JObject(InOuter) { }
 
     virtual void Initialize(LSubsystemCollection& Collection) { }

@@ -5,6 +5,7 @@
 #include "CoreAFX.h"
 #include "Subsystems/Subsystem.h"
 #include "Tickable/TickableObject.h"
+#include "Engine/World.h"
 
 namespace Jafg
 {
@@ -13,7 +14,6 @@ class JWorldSubsystem : public JSubsystem
 {
 public:
 
-    JWorldSubsystem() = default;
     JWorldSubsystem(Jafg::LWorld* InOuter) : JSubsystem(InOuter) { }
 
     // Subsystem implementation

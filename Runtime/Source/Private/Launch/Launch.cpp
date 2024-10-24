@@ -27,6 +27,8 @@ FORCEINLINE EPlatformExit::Type EngineInit()
 
 FORCEINLINE void EngineTick()
 {
+    LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST() /* Just temporary. */
+
     GEngine->BeginExitIfRequested();
 
     {

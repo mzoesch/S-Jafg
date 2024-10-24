@@ -9,7 +9,11 @@ namespace Jafg
  * An array container with a fixed or dynamic size policy allocated on the stack or heap.
  * Fixed size arrays have zero runtime overhead and are equivalent to c arrays.
  *
- * !!!This array implementation currently will not be able to handle complex types that require move semantics!!!
+ * This array may not handle complex types that require move semantics as it was designed to be a fast and simple
+ * container for extreme fast-paced memory read and write operations.
+ *
+ * Allows for OOB checks if CHECK_CONTAINER_BOUNDS is defined. If checks are enabled, the array will panic if
+ * something fishy is going on.
  *
  * @tparam T                Element type.
  * @tparam ResizePolicy     Policy for resizing the array.
@@ -43,7 +47,7 @@ public:
     FORCEINLINE ~TArray() noexcept;
 
     FORCEINLINE auto GetSize()     const noexcept -> SizeType { return this->Size;                       }
-    FORCEINLINE auto IsEmpty()    const noexcept -> bool      { return this->GetSize() == 0;             }
+    FORCEINLINE auto IsEmpty()     const noexcept -> bool     { return this->GetSize() == 0;             }
     FORCEINLINE auto GetCapacity() const noexcept -> SizeType { return this->Capacity;                   }
     FORCEINLINE auto IsData()      const noexcept -> bool     { return this->GetData() != nullptr;       }
     FORCEINLINE auto IsSlack()     const noexcept -> bool     { return this->GetData() != nullptr;       }
@@ -52,7 +56,9 @@ public:
     FORCEINLINE auto GetSlack()          noexcept -> T*       { return this->GetData() + this->Size;     }
     FORCEINLINE auto GetSlack()    const noexcept -> const T* { return this->GetData() + this->Size;     }
     FORCEINLINE auto GetFirst()          noexcept -> T*       { return this->GetData();                  }
+    FORCEINLINE auto GetFirst()    const noexcept -> const T* { return this->GetData();                  }
     FORCEINLINE auto GetLast()           noexcept -> T*       { return this->GetData() + this->Size - 1; }
+    FORCEINLINE auto GetLast()     const noexcept -> const T* { return this->GetData() + this->Size - 1; }
 
     /**
      * Add a new element to the array while potentially reallocating the whole array to fit.
@@ -128,6 +134,12 @@ public:
      */
     FORCEINLINE auto Reset(const SizeType InReserve) noexcept -> void;
 
+    /**
+     * Completely empties the array and sets the size to zero. The memory buffer will be deallocated if it was
+     * allocated on the heap.
+     */
+    FORCEINLINE auto Empty() noexcept -> void;
+
     /** @return True, if the array has to be reallocated to push / emplace a new element. */
     FORCEINLINE auto IsCapped()                           const noexcept -> bool;
     FORCEINLINE auto IsValidIndex(const SizeType InIndex) const noexcept -> bool;
@@ -157,7 +169,7 @@ private:
 
     /**
      * Grows the array by **reallocating** the whole array to fit, forwarding elements and zeroing the new memory.
-     * A std::realloc whill never call copy or move constructors.
+     * A std::realloc will never call copy or move constructors.
      */
     template <bool Condition = IsDynamic()>
     FORCEINLINE auto ZeroedGrow() noexcept -> TEnableIf<Condition, void>;
@@ -166,6 +178,8 @@ private:
     FORCEINLINE auto ZeroedGrow(const SizeType InTotalCapacity) noexcept -> TEnableIf<Condition, void>;
     template <bool Condition = IsDynamic()>
     FORCEINLINE auto Shrink() noexcept -> TEnableIf<Condition, void>;
+    template <bool Condition = IsDynamic()>
+    FORCEINLINE auto Shrink(const SizeType InTotalCapacity) noexcept -> TEnableIf<Condition, void>;
 
     SizeType    Size;
     SizeType    Capacity;
@@ -491,6 +505,26 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Reset(const SizeType I
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Empty() noexcept
+{
+    if (this->IsData() == false)
+    {
+        return;
+    }
+
+    for (T* RESTRICT Bulk = this->Data, *RESTRICT End = Bulk + this->Size; Bulk != End; ++Bulk)
+    {
+        Bulk->~T();
+    }
+
+    this->Size = 0;
+
+    this->Shrink(0);
+
+    return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::IsCapped() const noexcept
 {
     if constexpr (std::is_unsigned_v<SizeType>)
@@ -597,8 +631,12 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::SwapBuffers(Self& InOt
 {
     if (this == &InOther)
     {
-        check(false && "Cannot switch contents with itself.")
-        /* It's okay. When encountering this in production, we'll just ignore it. */
+        check( false && "Cannot switch contents with itself." )
+        /*
+         * It's okay. When encountering this in production, we'll just ignore it.
+         * I mean, the program will crash anyway soon if that happens, probably.
+         * But this array should not be the reason for the end of life.
+         */
         return;
     }
 
@@ -610,7 +648,7 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::SwapBuffers(Self& InOt
 
     SizeType TempSize     = this->Size;
     SizeType TempCapacity = this->Capacity;
-    T* TempData           = this->Data;
+    T*       TempData     = this->Data;
 
     this->Size      = InOther.Size;
     this->Capacity  = InOther.Capacity;
@@ -750,4 +788,53 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Shrink() noexcept
     unimplemented()
 }
 
-} /* Namespace Jafg */
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+template <bool Condition>
+typename TArray<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf<Condition, void>
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Shrink(const SizeType InTotalCapacity) noexcept
+{
+    static_assert(ResizePolicy == ResizePolicy::Dynamic, "Only dynamic arrays may grow.");
+
+    if constexpr (AllocationPolicy == AllocationPolicy::Stack)
+    {
+        /*
+         * Not yet :). But there is a way to do this. Currently not used by Jafg but maybe in the future we'll
+         * need this.
+         */
+        static_assert(AllocationPolicy != AllocationPolicy::Heap, "Cannot grow a stack allocated array.");
+        return;
+    }
+
+    check( this->IsData()                                           )
+    check( InTotalCapacity < this->Capacity && InTotalCapacity >= 0 )
+    check( InTotalCapacity <= this->Size                            )
+
+#if !IN_SHIPPING
+
+    T* NewData = static_cast<T*>(::realloc(this->Data, InTotalCapacity * sizeof(T)));
+    if (NewData == nullptr)
+    {
+        panic( "Failed to reallocate memory for TArray." )
+        return;
+    }
+
+    check( NewData == this->Data && "Failed to shrink memory for TArray. Got a new malloc instead." )
+
+    this->Data      = NewData;
+
+#else /* !IN_SHIPPING */
+
+    /**
+     * In SHIPPING just shrink it and hope for the best.
+     * A memory failure will not happen. Trust me, bro.
+     */
+    this->Data = static_cast<T*>(::realloc(this->Data, InTotalCapacity * sizeof(T)));
+
+#endif /* IN_SHIPPING */
+
+    this->Capacity = InTotalCapacity;
+
+    return;
+}
+
+} /* ~Namespace Jafg */

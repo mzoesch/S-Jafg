@@ -19,9 +19,7 @@ public:
     // Temporary constructor until jafg build system is implemented.
     explicit AActor(LWorld* InOuter);
 
-protected:
-
-    virtual void BeginLife()                 { }
+    virtual void BeginLife() override        { JObject::BeginLife(); }
     virtual void Tick(const float DeltaTime) { }
     virtual void EndLife()                   { }
 };

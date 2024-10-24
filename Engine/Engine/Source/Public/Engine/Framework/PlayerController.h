@@ -15,8 +15,6 @@ public:
     APlayerController() = delete;
     explicit APlayerController(LWorld* World) : AActor(World) { }
 
-protected:
-
     virtual void BeginLife() override;
     virtual void Tick(const float DeltaTime) override;
     virtual void EndLife() override;

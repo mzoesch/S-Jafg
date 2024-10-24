@@ -2,6 +2,7 @@
 
 #include "CoreAFX.h"
 #include "Player/LocalPlayer.h"
+#include "Engine/Framework/Hud.h"
 #include "Player/PlayerInput.h"
 #include "Platform/Surface.h"
 
@@ -21,6 +22,9 @@ void Jafg::LLocalPlayer::Initialize()
     this->GetPrimarySurface()->SetVSync(true);
     this->GetPrimarySurface()->SetInputMode(false);
 
+    this->Hud = new ::Jafg::LHud();
+    this->Hud->BeginLife();
+
     return;
 }
 
@@ -31,6 +35,7 @@ void Jafg::LLocalPlayer::Tick(const float DeltaTime)
     this->PlayerInput->BeginNewFrame();
     this->GetPrimarySurface()->PollInputs();
     this->GetPrimarySurface()->PollEvents();
+    this->Hud->Tick();
     this->PlayerInput->DispatchInputDelegates();
 
     return;
@@ -39,17 +44,27 @@ void Jafg::LLocalPlayer::Tick(const float DeltaTime)
 void Jafg::LLocalPlayer::OnLateTick(const float DeltaTime)
 {
     this->GetPrimarySurface()->OnUpdate();
+    this->Hud->Draw();
+
+    return;
 }
 
 void Jafg::LLocalPlayer::TearDown()
 {
-    if (this->PlayerInput)
+    if (ensure(this->Hud))
+    {
+        this->Hud->EndLife();
+        delete this->Hud;
+        this->Hud = nullptr;
+    }
+
+    if (ensure(this->PlayerInput))
     {
         delete this->PlayerInput;
         this->PlayerInput = nullptr;
     }
 
-    if (this->SurfaceToDrawOn)
+    if (ensure(this->SurfaceToDrawOn))
     {
         this->SurfaceToDrawOn->TearDown();
         delete this->SurfaceToDrawOn;

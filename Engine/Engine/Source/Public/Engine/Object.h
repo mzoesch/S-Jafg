@@ -3,31 +3,29 @@
 #pragma once
 
 #include "CoreAFX.h"
+#include "Engine/ObjectBase.h"
 #include "Engine.h"
 
 namespace Jafg
 {
 
-class ENGINE_API JObject
+class LWorld;
+
+class ENGINE_API JObject : public ::Jafg::Private::JObjectBase
 {
 protected:
 
-    JObject() = default;
-    JObject(LWorld* Outer) : Outer(Outer) { }
-    PROHIBIT_REALLOC_OF_ANY_FROM(JObject)
-    virtual ~JObject() = default;
+    explicit JObject(LWorld* InOuter);
 
 public:
 
-    FORCEINLINE virtual auto HasContext() const -> bool { return this->Outer != nullptr; }
-    FORCEINLINE virtual auto GetWorld() const -> LWorld* { return this->Outer; }
+    FORCEINLINE virtual auto GetWorld() const -> LWorld* { return this->CastedOuter; }
 
-protected:
+    virtual void BeginLife() override;
 
-    LWorld* Outer = nullptr;
+private:
+
+    LWorld* CastedOuter = nullptr;
 };
-
-JObject& NewJObject();
-JObject& NewJObject(LWorld* Outer);
 
 } /* ~Namespace Jafg */

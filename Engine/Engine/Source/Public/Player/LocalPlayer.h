@@ -7,6 +7,7 @@
 namespace Jafg
 {
 
+class LHud;
 class LSurface;
 class LPlayerInput;
 class APlayerController;
@@ -45,6 +46,8 @@ public:
 private:
 
     LPlayerInput* PlayerInput     = nullptr;
+
+    LHud*         Hud             = nullptr;
     LSurface*     SurfaceToDrawOn = nullptr;
 
     APlayerController* PlayerController = nullptr;
