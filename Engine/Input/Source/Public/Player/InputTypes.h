@@ -12,7 +12,7 @@ typedef uint8 LKey;
 namespace EKeys
 {
 
-LString ToString(const LKey& Key);
+LStringLegacy ToString(const LKey& Key);
 
 inline constexpr LKey KeyBegin                  {   0 };
 inline constexpr LKey KeyEnd                    { 255 };

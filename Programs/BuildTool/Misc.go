@@ -11,7 +11,7 @@ var GeneratedHeaderFileStub string = `
 -----------------------------------------------------------------------------*/
 `
 
-var GeneratedSourceFileStub string = `
+var GeneratedTranslationFileStub string = `
 // Copyright mzoesch. All rights reserved.
 
 /*-----------------------------------------------------------------------------
@@ -23,6 +23,13 @@ var GeneratedSourceFileStub string = `
 var HeaderGuardPostfixStub string = `
 /*-----------------------------------------------------------------------------
     BEGIN Generated header content.
+-----------------------------------------------------------------------------*/
+
+`
+
+var TranslationStubPostFixStub string = `
+/*-----------------------------------------------------------------------------
+    BEGIN Generated translation content.
 -----------------------------------------------------------------------------*/
 
 `

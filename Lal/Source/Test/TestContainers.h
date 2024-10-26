@@ -45,7 +45,7 @@ TEST_CASE(SimpleStringArrayOperations, "Lal.Containers")
 {
     using namespace Jafg;
 
-    TdhArray<LString> Arr;
+    TdhArray<LStringLegacy> Arr;
     CHECK_EQUALS( "Array with zero size.", Arr.GetSize(),                0 )
     CHECK_EQUALS( "Array with zero size.", Arr.GetCapacity(),            0 )
     CHECK_EQUALS( "Array with zero size.", Arr.GetData(),          nullptr )
@@ -74,14 +74,13 @@ TEST_CASE(SimpleStringArrayOperations, "Lal.Containers")
     CHECK_EQUALS( "Array with eight elements.", Arr.GetSize(),                8 )
     CHECK_EQUALS( "Array with eight elements.", Arr.GetCapacity(),            20 )
 
-    std::string* ZeroPtr = &Arr[0];
-    std::string* OnePtr = &Arr[1];
-    std::string* TwoPtr = &Arr[2];
-    std::string* ThreePtr = &Arr[3];
-    std::string* FourPtr = &Arr[4];
-    std::string* FivePtr = &Arr[5];
-    std::string* SixPtr = &Arr[6];
-    std::string* SevenPtr = &Arr[7];
+    Arr.Add("My Ninth Literal String."); Arr.Add("My Tenth Literal String."); Arr.Add("My Eleventh Literal String.");
+    Arr.Add("My Twelfth Literal String."); Arr.Add("My Thirteenth Literal String."); Arr.Add("My Fourteenth Literal String.");
+    CHECK_EQUALS( "Array with fourteen elements.", Arr.GetSize(),                14 )
+    CHECK_EQUALS( "Array with fourteen elements.", Arr.GetCapacity(),            20 )
+    CHECK_EQUALS( "Array with fourteen elements.", Arr.IsCapped(),             false )
+    CHECK_EQUALS( "Array with fourteen elements.", Arr[8],   "My Ninth Literal String." )
+    CHECK_EQUALS( "Array with fourteen elements.", Arr[13], "My Fourteenth Literal String." )
 
     return;
 }

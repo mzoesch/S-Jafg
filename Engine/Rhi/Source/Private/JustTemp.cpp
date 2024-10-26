@@ -21,11 +21,11 @@ void JustTemp::A(uint32* Texture)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     stbi_set_flip_vertically_on_load(true);
 
-    LString ExecPath(PLATFORM_MAX_PATH, '\0');
+    LStringLegacy ExecPath(PLATFORM_MAX_PATH, '\0');
     GetModuleFileNameA(nullptr, ExecPath.data(), static_cast<uint32>(ExecPath.size()));
     ExecPath = ExecPath.substr(0, ExecPath.find_last_of('\\'));
 
-    LString TexPath = ExecPath + '/' + "Content/Textures/Map.png";
+    LStringLegacy TexPath = ExecPath + '/' + "Content/Textures/Map.png";
 
     int32 Width, Height, NrChannels;
     uint8* Data = stbi_load(&TexPath[0], &Width, &Height, &NrChannels, 0);

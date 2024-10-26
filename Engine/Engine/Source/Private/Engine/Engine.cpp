@@ -2,16 +2,12 @@
 
 #include "CoreAFX.h"
 #include "Engine/Engine.h"
-#include "Engine/Framework/Camera.h"
 #include "CoreGlobals.h"
 #if PLATFORM_DESKTOP
     #include "Platform/DesktopPlatform.h"
 #endif /* PLATFORM_DESKTOP */
-#include <glad/glad.h>
-#include <glm/gtc/type_ptr.inl>
 #include "Core/Application.h"
 #include "Engine/World.h"
-#include "Module/ModuleSupervisor.h"
 #include "Player/LocalPlayer.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -26,17 +22,15 @@ ENGINE_API bool             bGShouldRequestExit         = false;
 ENGINE_API bool             bGEngineRequestingExit      = false;
 
 ENGINE_API int32            GCustomExitStatusOverride   = INDEX_NONE;
-ENGINE_API LString          GCustomExitReason           = "";
+ENGINE_API LStringLegacy          GCustomExitReason           = "";
 
-}
+} /* ~Namespace Jafg. */
 
 // ~Engine Globals
 ///////////////////////////////////////////////////////////////////////////////
 
 void Jafg::LEngine::Init()
 {
-    new LModuleSupervisor(); check( GModuleSupervisor )
-
 #if WITH_LOCAL_LAYER
     check( this->LocalPlayer == nullptr )
     this->LocalPlayer = new LLocalPlayer();
@@ -132,7 +126,7 @@ void Jafg::LEngine::UpdateTime()
 
     Application::SetPreviousFrameTime(Application::GetCurrentFrameTime());
     Application::SetCurrentFrameTime(
-        Application::GetTimeDifferenceFromStaticContainerInitialization(
+        Application::GetTimeDifferenceFromStaticStorageInitialization(
             Application::GetHighestNow()
         )
     );
@@ -180,6 +174,13 @@ void Jafg::LEngine::BeginExitIfRequested()
 
 /* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
 // ReSharper disable once CppMemberFunctionMayBeStatic
+void Jafg::LEngine::ReflectForwardedExitRequest()
+{
+    ::Jafg::Private::ReflectForwardEngineExitRequest();
+}
+
+/* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
+// ReSharper disable once CppMemberFunctionMayBeStatic
 void Jafg::LEngine::RequestEngineExit()
 {
     ::Jafg::RequestEngineExit();
@@ -187,7 +188,7 @@ void Jafg::LEngine::RequestEngineExit()
 
 /* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
 // ReSharper disable once CppMemberFunctionMayBeStatic
-void Jafg::LEngine::RequestEngineExit(const LString& Reason)
+void Jafg::LEngine::RequestEngineExit(const LStringLegacy& Reason)
 {
     ::Jafg::RequestEngineExit(Reason);
 }
@@ -201,7 +202,7 @@ void Jafg::LEngine::RequestEngineExit(const int32 CustomExitStatus)
 
 /* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
 // ReSharper disable once CppMemberFunctionMayBeStatic
-void Jafg::LEngine::RequestEngineExit(const int32 CustomExitStatus, const LString& Reason)
+void Jafg::LEngine::RequestEngineExit(const int32 CustomExitStatus, const LStringLegacy& Reason)
 {
     ::Jafg::RequestEngineExit(CustomExitStatus, Reason);
 }
@@ -305,7 +306,7 @@ Jafg::LWorldContext& Jafg::LEngine::GetContextFromWorld(const LWorld& World)
     return CreateNewWorldContext();
 }
 
-void Jafg::LEngine::Browse(LWorldContext& Context, const LString& Url) const
+void Jafg::LEngine::Browse(LWorldContext& Context, const LStringLegacy& Url) const
 {
     if (this->IsContextUrlInternal(Url) == false)
     {
@@ -324,7 +325,7 @@ void Jafg::LEngine::Browse(LWorldContext& Context, const LString& Url) const
     return;
 }
 
-bool Jafg::LEngine::IsContextUrlInternal(const LString& Url) const
+bool Jafg::LEngine::IsContextUrlInternal(const LStringLegacy& Url) const
 {
     if (Url.empty())
     {
@@ -361,12 +362,12 @@ void Jafg::LEngine::TravelContext(LWorldContext& Context)
     return;
 }
 
-Jafg::LLevel* Jafg::LEngine::GetLevelByInternalUrl(const LString& Url)
+Jafg::LLevel* Jafg::LEngine::GetLevelByInternalUrl(const LStringLegacy& Url)
 {
     return this->RegisteredLevels.FindRef(Url);
 }
 
-void Jafg::LEngine::Browse(const LWorld& Context, const LString& Url)
+void Jafg::LEngine::Browse(const LWorld& Context, const LStringLegacy& Url)
 {
     this->Browse(this->GetContextFromWorld(Context), Url);
 }
@@ -395,7 +396,7 @@ bool Jafg::LEngine::RegisterLevel(const LLevel&& InLevel)
     return true;
 }
 
-bool Jafg::LEngine::IsLevelRegistered(const LString& Identifier) const
+bool Jafg::LEngine::IsLevelRegistered(const LStringLegacy& Identifier) const
 {
     return this->RegisteredLevels.ContainsByPredicate(
         [&Identifier] (const LLevel& i)

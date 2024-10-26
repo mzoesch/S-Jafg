@@ -308,6 +308,10 @@ func (mod *Module) GetRelativeModuleDir() string {
     return relModFile[:len(relModFile)-len(mod.GetModuleFileName())-1]
 }
 
+func (mod *Module) GetRelativePublicSourceDir() string {
+    return fmt.Sprintf("%s/Source/Public", mod.GetRelativeModuleDir())
+}
+
 func (mod *Module) PrettyPrint(indent int) {
     fmt.Println(fmt.Sprintf(
         "%s| Module [%s] [%s] [%s] [%d] ",

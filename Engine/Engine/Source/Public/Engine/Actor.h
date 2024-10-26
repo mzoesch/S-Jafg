@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "CoreAFX.h"
 #include "Engine/Object.h"
+#include "Actor.generated.h"
 
 namespace Jafg
 {
@@ -17,10 +17,11 @@ class ENGINE_API AActor : public JObject
 
     friend LWorld;
 
-public:
+protected:
 
-    // Temporary constructor until jafg build system is implemented.
-    explicit AActor(LWorld* InOuter);
+    DEFAULT_OBJECT_CONSTRUCTOR(AActor)
+
+public:
 
     virtual void BeginLife() override        { JObject::BeginLife(); }
     virtual void Tick(const float DeltaTime) { }

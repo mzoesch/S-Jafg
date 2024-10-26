@@ -222,7 +222,6 @@ func GetRelativePythonProgramLaunchPath(mod *Shared.Module) string {
     return fmt.Sprintf("%sProgram.py", prefix)
 }
 
-
 func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mod *Shared.Module) {
     if builder == nil {
         panic("WriteLuaBuildFileForSpecificModule called with nil builder.")
@@ -304,6 +303,10 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
     WriteWithIndent(builder, indent+8, fmt.Sprintf("'%s/Source/**.hpp',\n", mod.GetRelativeModuleDir()))
     WriteWithIndent(builder, indent+8, fmt.Sprintf("'%s/Source/**.c',\n", mod.GetRelativeModuleDir()))
     WriteWithIndent(builder, indent+8, fmt.Sprintf("'%s/Source/**.cpp',\n", mod.GetRelativeModuleDir()))
+    WriteWithIndent(builder, indent+8, fmt.Sprintf("'%s/**.h',\n", Shared.GetRelativeGeneratedTranslationDirForModule(mod)))
+    WriteWithIndent(builder, indent+8, fmt.Sprintf("'%s/**.hpp',\n", Shared.GetRelativeGeneratedTranslationDirForModule(mod)))
+    WriteWithIndent(builder, indent+8, fmt.Sprintf("'%s/**.c',\n", Shared.GetRelativeGeneratedTranslationDirForModule(mod)))
+    WriteWithIndent(builder, indent+8, fmt.Sprintf("'%s/**.cpp',\n", Shared.GetRelativeGeneratedTranslationDirForModule(mod)))
     WriteWithIndent(builder, indent+4, "}\n")
 
     for _, targ := range Shared.GApp.GetAllTargets() {
@@ -409,17 +412,17 @@ func WriteLuaBuildFileGeneratedSection(builder *strings.Builder) {
     WriteWithIndent(builder, 0, "group 'Engine'\n")
 
     WriteWithIndent(builder, 4, fmt.Sprintf("project '%s'\n", Shared.VslfDir))
-    WriteWithIndent(builder, 8, fmt.Sprintf("location '%s'\n", Shared.GeneratedHeadersDir))
+    WriteWithIndent(builder, 8, fmt.Sprintf("location '%s'\n", Shared.VslfDir))
     WriteWithIndent(builder, 8, fmt.Sprintf("kind '%s'\n", "None"))
 
     WriteWithIndent(builder, 8, "files {\n")
-    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.md',\n", Shared.GeneratedHeadersDir))
-    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.jafgmod',\n", Shared.GeneratedHeadersDir))
-    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.jafgproj',\n", Shared.GeneratedHeadersDir))
-    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.h',\n", Shared.GeneratedHeadersDir))
-    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.hpp',\n", Shared.GeneratedHeadersDir))
-    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.c',\n", Shared.GeneratedHeadersDir))
-    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.cpp',\n", Shared.GeneratedHeadersDir))
+    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.md',\n", Shared.VslfDir))
+    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.jafgmod',\n", Shared.VslfDir))
+    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.jafgproj',\n", Shared.VslfDir))
+    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.h',\n", Shared.VslfDir))
+    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.hpp',\n", Shared.VslfDir))
+    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.c',\n", Shared.VslfDir))
+    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.cpp',\n", Shared.VslfDir))
     WriteWithIndent(builder, 8, "}\n")
 
     WriteWithIndent(builder, 0, "group ''\n")

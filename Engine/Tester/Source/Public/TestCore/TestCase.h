@@ -63,4 +63,4 @@ private:
     std::vector<std::string> Errors           = { };
 };
 
-} /* Namespace Jafg::Tester */
+} /* ~Namespace Jafg::Tester */

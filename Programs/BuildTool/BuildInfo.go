@@ -168,3 +168,10 @@ func (bi *BuildInfo) GetRelativeModuleDir() string {
 
     return ""
 }
+
+func (bi *BuildInfo) GetRelativeGeneratedTranslationDir() string {
+    return fmt.Sprintf("%s/%s",
+        Shared.GeneratedTranslationsDir,
+        bi.GetRelativeModuleDir(),
+    )
+}

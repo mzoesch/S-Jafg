@@ -812,13 +812,13 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Shrink(const SizeType InTot
 #if !IN_SHIPPING
 
     T* NewData = static_cast<T*>(::realloc(this->Data, InTotalCapacity * sizeof(T)));
-    if (NewData == nullptr)
+    if (NewData == nullptr && InTotalCapacity > 0)
     {
         panic( "Failed to reallocate memory for TArray." )
         return;
     }
 
-    check( NewData == this->Data && "Failed to shrink memory for TArray. Got a new malloc instead." )
+    check( NewData != this->Data && "Failed to shrink memory for TArray. Got a new malloc instead." )
 
     this->Data      = NewData;
 

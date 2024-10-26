@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Widgets/WidgetNode.h"
+#include "WidgetParent.generated.h"
 
 namespace Jafg
 {
@@ -12,8 +13,9 @@ class RHI_API WWidgetParent : public WWidgetNode
 {
     GENERATED_CLASS_BODY()
 
-public:
-    WWidgetParent() = default;
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTOR(WWidgetParent)
 };
 
 } /* ~Namespace Jafg. */

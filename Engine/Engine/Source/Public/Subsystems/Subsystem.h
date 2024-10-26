@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "CoreAFX.h"
 #include "Engine/Object.h"
 #include "Subsystems/SubsystemCollection.h"
+#include "Subsystem.generated.h"
 
 namespace Jafg
 {
@@ -14,9 +14,12 @@ class JSubsystem : public JObject
 {
     GENERATED_CLASS_BODY()
 
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTOR(JSubsystem)
+
 public:
 
-    JSubsystem(Jafg::LWorld* InOuter) : JObject(InOuter) { }
 
     virtual void Initialize(LSubsystemCollection& Collection) { }
     virtual void TearDown() { }

@@ -25,6 +25,8 @@ var VslfDir string = "Vslf"
 var ProgramsDir string = "Programs"
 var GeneratedHeadersDir string = fmt.Sprintf("%s/gh", VslfDir)
 var GeneratedHeadersExtension string = ".generated.h"
+var GeneratedTranslationsDir string = fmt.Sprintf("%s/gt", VslfDir)
+var GeneratedTranslationsExtension string = ".generated.cpp"
 var ObjectStructureCacheFile string = fmt.Sprintf("%s/jobj.jobj", VslfDir)
 var VendorIncludeDir string = "Engine/Vendor/Include"
 var VendorLibDir string = "Engine/Vendor/Lib"
@@ -53,6 +55,18 @@ func GetCheckedAbsolutePath(relPath string) string {
 func GetAbsolutePathNoCheck(relPath string) string {
     absPath, _ := GetAbsolutePath(relPath)
     return absPath
+}
+
+func GetRelativePathFromAbsolutePath(absPath string) string {
+    if !strings.Contains(absPath, GetAbsolutePathToEngineRootDir()) {
+        panic(fmt.Sprintf("Path %s is not a subpath of %s.", absPath, GetAbsolutePathToEngineRootDir()))
+    }
+
+    return absPath[len(GetAbsolutePathToEngineRootDir())+1:]
+}
+
+func NormalizePath(path string) string {
+    return strings.ReplaceAll(path, "\\", "/")
 }
 
 func GetAbsolutePathToEngineRootDir() string {

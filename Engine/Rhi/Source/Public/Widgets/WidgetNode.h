@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "CoreAFX.h"
 #include "Engine/ObjectBase.h"
+#include "WidgetNode.generated.h"
 
 namespace Jafg
 {
@@ -41,11 +41,11 @@ class RHI_API WWidgetNode : public ::Jafg::Private::JObjectBase
 
     friend LWidgetConstructor;
 
-public:
+protected:
 
-    WWidgetNode() = default;
-    PROHIBIT_REALLOC_OF_ANY_FROM(WWidgetNode)
-    virtual ~WWidgetNode() override = default;
+    DEFAULT_OBJECT_CONSTRUCTOR(WWidgetNode)
+
+public:
 
     virtual void Construct();
     virtual void Tick();

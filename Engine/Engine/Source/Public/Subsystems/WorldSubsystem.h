@@ -4,8 +4,8 @@
 
 #include "CoreAFX.h"
 #include "Subsystems/Subsystem.h"
-#include "Tickable/TickableObject.h"
-#include "Engine/World.h"
+
+#include "WorldSubsystem.generated.h"
 
 namespace Jafg
 {
@@ -15,9 +15,11 @@ class JWorldSubsystem : public JSubsystem
 {
     GENERATED_CLASS_BODY()
 
-public:
+protected:
 
-    JWorldSubsystem(Jafg::LWorld* InOuter) : JSubsystem(InOuter) { }
+    DEFAULT_OBJECT_CONSTRUCTOR(JWorldSubsystem)
+
+public:
 
     // Subsystem implementation
     virtual void Initialize(LSubsystemCollection& Collection) override;
@@ -25,18 +27,4 @@ public:
     // ~Subsystem implementation
 };
 
-DECLARE_JAFG_CLASS()
-class JTickableWorldSubsystem : public JWorldSubsystem, public LTickableObject
-{
-    GENERATED_CLASS_BODY()
-
-public:
-
-    JTickableWorldSubsystem(Jafg::LWorld* InOuter) : JWorldSubsystem(InOuter) { }
-
-protected:
-
-    virtual void Tick(const float DeltaTime) override { }
-};
-
-} /* Namespace Jafg */
+} /* ~Namespace Jafg */

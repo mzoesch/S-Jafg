@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Widgets/WidgetParent.h"
+#include "WidgetRegion.generated.h"
 
 namespace Jafg
 {
@@ -12,8 +13,9 @@ class RHI_API WWidgetRegion : public WWidgetParent
 {
     GENERATED_CLASS_BODY()
 
-public:
-    WWidgetRegion() = default;
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTOR(WWidgetRegion)
 };
 
 } /* ~Namespace Jafg. */

@@ -23,12 +23,26 @@
     PROHIBIT_COPY(Ty)                    \
     PROHIBIT_MOVE(Ty)
 
+#define PROHIBIT_REALLOC_OF_ANY_FROM_NAMESPACED(TSpacedTy, Ty) \
+    PROHIBIT_COPY_NAMESPACED(TSpacedTy, Ty)                    \
+    PROHIBIT_MOVE_NAMESPACED(TSpacedTy, Ty)
+
 /** Prohibits copying of a specific type T. */
 #define PROHIBIT_COPY(Type)                                                          \
     Type(const Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
     Type& operator=(const Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = delete;
 
+/** Prohibits copying of a specific type T. */
+#define PROHIBIT_COPY_NAMESPACED(TSpacedType, Type) \
+    TSpacedType(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
+    TSpacedType& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = delete;
+
 /** Prohibits moving of a specific type T. */
 #define PROHIBIT_MOVE(Type)                                                     \
     Type(Type&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
     Type& operator=(Type&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = delete;
+
+/** Prohibits moving of a specific type T. */
+#define PROHIBIT_MOVE_NAMESPACED(TSpacedType, Type) \
+    TSpacedType(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
+    TSpacedType& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = delete;

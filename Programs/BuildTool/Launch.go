@@ -27,7 +27,14 @@ func Launch(args []string) {
 }
 
 func LaunchPreBuildTasks(args []string) {
+    /*
+     * Absolute necessary directories.
+     * The standard api for the platform filesystem does not allow, for whatever reason, to create a file
+     * inside a directory that currently does not exist. So we just recursively create all potential points
+     * of interest directories.
+     */
     Shared.CheckRelativeDir(Shared.GeneratedHeadersDir)
+    Shared.CheckRelativeDir(Shared.GeneratedTranslationsDir)
 
     var relativeTargetDir string = GBuildInfo.GetRelativeModuleDir()
     var allFiles []string = Shared.RecursivelyGetAllFilesInRelativeDir(relativeTargetDir)

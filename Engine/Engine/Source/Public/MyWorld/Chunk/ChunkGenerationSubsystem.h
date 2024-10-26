@@ -3,12 +3,13 @@
 #pragma once
 
 #include "CoreAFX.h"
-#include "Subsystems/WorldSubsystem.h"
+#include "Subsystems/TickableWorldSubsystem.h"
 #include "MyWorld/Chunk.h"
 #include <queue>
 #include "glm/glm.hpp"
 #include <unordered_map>
-#include "Engine/World.h"
+
+#include "ChunkGenerationSubsystem.generated.h"
 
 namespace Jafg
 {
@@ -18,9 +19,11 @@ class JChunkGenerationSubsystem final : public Jafg::JTickableWorldSubsystem
 {
     GENERATED_CLASS_BODY()
 
-public:
+protected:
 
-    explicit JChunkGenerationSubsystem(Jafg::LWorld* InOuter) : Jafg::JTickableWorldSubsystem(InOuter) { }
+    DEFAULT_OBJECT_CONSTRUCTOR(JChunkGenerationSubsystem)
+
+public:
 
     // WorldSubsystem implementation
     virtual void Initialize(Jafg::LSubsystemCollection& Collection) override;

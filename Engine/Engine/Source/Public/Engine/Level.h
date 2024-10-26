@@ -10,7 +10,7 @@ namespace Jafg
 struct ENGINE_API LLevel
 {
     LLevel() = default;
-    explicit LLevel(LString InIdentifier) : Identifier(std::move(InIdentifier))
+    explicit LLevel(LStringLegacy InIdentifier) : Identifier(std::move(InIdentifier))
     {
     }
 
@@ -37,12 +37,12 @@ struct ENGINE_API LLevel
         return *this;
     }
 
-    LString Identifier;
+    LStringLegacy Identifier;
 
     FORCEINLINE auto operator==(const LLevel& Other) const -> bool  { return Identifier == Other.Identifier; }
     FORCEINLINE auto operator!=(const LLevel& Other) const -> bool  { return !(*this == Other);              }
-    FORCEINLINE auto operator==(const LString& Other) const -> bool { return Identifier == Other;            }
-    FORCEINLINE auto operator!=(const LString& Other) const -> bool { return !(*this == Other);              }
+    FORCEINLINE auto operator==(const LStringLegacy& Other) const -> bool { return Identifier == Other;            }
+    FORCEINLINE auto operator!=(const LStringLegacy& Other) const -> bool { return !(*this == Other);              }
 };
 
 } /* Namespace Jafg */

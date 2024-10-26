@@ -116,19 +116,19 @@
  * Current class name.
  */
 #define PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS \
-    (LString(__FUNCTION__)
+    (LStringLegacy(__FUNCTION__)
 
 /**
  * Current function name.
  */
 #define PRIVATE_JAFG_LOG_TRACE_STR_CUR_FUNC \
-    (LString(__FUNCDNAME__))
+    (LStringLegacy(__FUNCDNAME__))
 
 /**
  * Current function signature.
  */
 #define PRIVATE_JAFG_LOG_TRACE_STR_CUR_FUNC_SIG \
-    (LString(__FUNCSIG__))
+    (LStringLegacy(__FUNCSIG__))
 
 /**
  * Current line number.
@@ -140,7 +140,7 @@
  * Current class and function name.
  */
 #define PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC \
-    (LString(__FUNCTION__))
+    (LStringLegacy(__FUNCTION__))
 
 /**
  * Current class name, function name and line number.

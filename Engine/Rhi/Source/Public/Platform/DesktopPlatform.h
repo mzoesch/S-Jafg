@@ -34,7 +34,7 @@ protected:
     struct LDesktopSurfaceProps final
     {
         FORCEINLINE explicit LDesktopSurfaceProps(
-            LString Title = "Desktop Platform",
+            LStringLegacy Title = "Desktop Platform",
             const int32 Width = 1280,
             const int32 Height = 720
         )
@@ -43,7 +43,7 @@ protected:
             return;
         }
 
-        LString Title;
+        LStringLegacy Title;
         int32   Width;
         int32   Height;
     };

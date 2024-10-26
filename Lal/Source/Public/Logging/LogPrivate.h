@@ -22,7 +22,7 @@ struct LLogCategory
     LLogCategory() = delete;
     PROHIBIT_REALLOC_OF_ANY_FROM(LLogCategory)
 
-    FORCEINLINE explicit LLogCategory(LString Category) : Category(std::move(Category))
+    FORCEINLINE explicit LLogCategory(LStringLegacy Category) : Category(std::move(Category))
     {
         return;
     }
@@ -31,17 +31,17 @@ struct LLogCategory
 
     FORCEINLINE static auto GetVerbosity() -> ELogVerbosityType { return Verbosity; }
 
-    FORCEINLINE auto GetCategory() const -> const LString& { return this->Category; }
+    FORCEINLINE auto GetCategory() const -> const LStringLegacy& { return this->Category; }
 
 private:
 
-    LString           Category;
+    LStringLegacy           Category;
 };
 
 /**
  * Log a message to the stdout that may be used with Ansi strings.
  */
-FORCEINLINE void LogMessage(const LString&& InAnsiMessage)
+FORCEINLINE void LogMessage(const LStringLegacy&& InAnsiMessage)
 {
     std::cout << InAnsiMessage << '\n';
 }
@@ -55,7 +55,7 @@ FORCEINLINE void LogMessage(const LString&& InAnsiMessage)
  * @param InFile        The file where the panic occurred.
  * @param InLine        The line where the panic occurred.
  */
-FORCEINLINE void LogPanicMessage(const LString&& InMessage, const LString&& InAnsiMessage, const LString&& InFile, const uint32 InLine)
+FORCEINLINE void LogPanicMessage(const LStringLegacy&& InMessage, const LStringLegacy&& InAnsiMessage, const LStringLegacy&& InFile, const uint32 InLine)
 {
     std::cout << InAnsiMessage << '\n';
     /*

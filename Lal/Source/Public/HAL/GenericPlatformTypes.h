@@ -59,9 +59,9 @@ struct LGenericPlatformTypes
     typedef LAnsiChar           LChar;
 
     typedef std::wstring        LWideString;
-    typedef std::string         LString;
+    typedef std::string         LStringLegacy;
 
-    static LString Ws2S(const LWideString& Ws)
+    static LStringLegacy Ws2S(const LWideString& Ws)
     {
         __pragma( warning(push) )
         __pragma( warning(disable: 4996) )
@@ -76,7 +76,7 @@ struct LGenericPlatformTypes
     /** @return You are the owner. Plz delete! */
     static const LChar* Ws2CStr(const LWideString& Ws)
     {
-        const LString* StrPtr = new LString(Ws2S(Ws));
+        const LStringLegacy* StrPtr = new LStringLegacy(Ws2S(Ws));
         return StrPtr->c_str();
     }
 };

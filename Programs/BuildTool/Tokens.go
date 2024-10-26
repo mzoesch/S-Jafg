@@ -60,8 +60,10 @@ type Token struct {
 
     PragmaStatement string
 
-    JafgClassName      string
-    JafgClassSuperName string
+    JafgClassName            string
+    JafgClassNamespaces      []string
+    JafgClassSuperName       string
+    JafgClassSuperNamespaces []string
 
     NamespaceName     string
     CurlyBracketDepth int
@@ -356,6 +358,7 @@ func MakeTokenForJafgClass(tokens *[]Token, index int, words *[]string) {
         predictedClassNameLocation++
     }
     token.JafgClassName = (*words)[predictedClassNameLocation]
+    token.JafgClassNamespaces = CalculateCurrentNamespaces(tokens, len(*tokens))
 
     predictedSuperClassNameLocation, bFound := FindNextCheckedIndex(words, &index, "public")
     if !bFound {
@@ -376,6 +379,10 @@ func MakeTokenForJafgClass(tokens *[]Token, index int, words *[]string) {
         var superClassName string = (*words)[predictedSuperClassNameLocation]
         var superClassNameParts []string = strings.Split(superClassName, "::")
         token.JafgClassSuperName = superClassNameParts[len(superClassNameParts)-1]
+
+        /* Bugprone - ambiguous. But who cares right now? We will have to rewrite this whole program anyway. */
+        var node *ObjectNode = GObjectStructure.Root.FindCheckedObjectNodeByString(token.JafgClassSuperName, []string{})
+        token.JafgClassSuperNamespaces = node.Namespaces;
     }
 
     *tokens = append(*tokens, token)

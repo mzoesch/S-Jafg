@@ -3,11 +3,28 @@
 #include "CoreAFX.h"
 #include "Engine/Engine.h"
 #include "Core/Application.h"
+#include "Engine/ObjectBaseUtility.h"
 
 using namespace Jafg;
 
+FORCEINLINE EPlatformExit::Type GetMostSignificantExitReason()
+{
+    /*
+     * Even if the engine is null, this will not cause a crash as this member method must always behave in a static
+     * way if itself is not defined.
+     */
+    GEngine->ReflectForwardedExitRequest();
+
+    return ::HasCustomExitStatus()
+        ? static_cast<EPlatformExit::Type>(::GetCustomExitStatus())
+        : EPlatformExit::Fatal;
+}
+
 FORCEINLINE EPlatformExit::Type EngineInit()
 {
+    Private::CreateSingletonObjectRegistry();
+    Private::GObjectRegistry->LoadPendingPackages();
+
     if (GEngine)
     {
         return EPlatformExit::Fatal;
@@ -19,7 +36,7 @@ FORCEINLINE EPlatformExit::Type EngineInit()
 
     if (::IsEngineExitRequested())
     {
-        return EPlatformExit::Fatal;
+        ::GetMostSignificantExitReason();
     }
 
     return EPlatformExit::Success;
@@ -43,7 +60,7 @@ FORCEINLINE void EngineTick()
 
 FORCEINLINE void EngineExit()
 {
-    std::cout << "Engine exit." << '\n';
+    LOG_INFO(LogGuardedMain, "Engine is exiting ...")
 
     if (GEngine)
     {
@@ -51,16 +68,30 @@ FORCEINLINE void EngineExit()
         delete GEngine;
         GEngine = nullptr;
     }
+    /*
+     * Something very eccentric has happened or the pre-life-engine tasks failed to initialize before
+     * the engine was even created.
+     */
+    else
+    {
+        /*
+         * Even if the engine is null, this will not cause a crash as this member method must always behave in a static
+         * way if itself is not defined.
+         */
+        GEngine->ReflectForwardedExitRequest();
+    }
 
     if (::HasCustomExitReason())
     {
-        std::cout << "Engine exit requested: " << ::GetCustomExitReason() << '\n';
+        LOG_INFO(LogGuardedMain, "Engine exit with custom exit reason: {}", ::GetCustomExitReason())
     }
 
     if (::HasCustomExitStatus())
     {
-        std::cout << "Engine exit status: " << ::GetCustomExitStatus() << '\n';
+        LOG_INFO(LogGuardedMain, "Engine exit with custom exit status: {}", ::GetCustomExitStatus())
     }
+
+    Private::KillSingletonObjectRegistry();
 
     return;
 }
@@ -75,10 +106,10 @@ EPlatformExit::Type GuardedMain(const LChar* CmdLine)
         }
     } GuardedMainScope;
 
-    LOG_INFO(LogGuardedMain, "Hello, world.")
+    LOG_INFO(LogGuardedMain, "Finished static storage initialization after {} seconds.",
+        Application::GetDeltaSinceStaticStorageInitialization())
 
-    EPlatformExit::Type ErrorLevel = EngineInit();
-
+    const EPlatformExit::Type ErrorLevel = EngineInit();
     if (ErrorLevel != EPlatformExit::Success)
     {
         return ErrorLevel;
@@ -89,5 +120,5 @@ EPlatformExit::Type GuardedMain(const LChar* CmdLine)
         EngineTick();
     }
 
-    return ErrorLevel;
+    return GetMostSignificantExitReason();
 }

@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "CoreAFX.h"
 #include "Engine/ObjectBase.h"
 #include "Engine.h"
+#include "Object.generated.h"
 
 namespace Jafg
 {
@@ -18,7 +18,7 @@ class ENGINE_API JObject : public ::Jafg::Private::JObjectBase
 
 protected:
 
-    explicit JObject(LWorld* InOuter);
+    DEFAULT_OBJECT_CONSTRUCTOR(JObject)
 
 public:
 

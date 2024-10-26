@@ -30,7 +30,7 @@ ENGINE_API extern bool          bGShouldRequestExit;
 ENGINE_API extern bool          bGEngineRequestingExit;
 
 ENGINE_API extern int32         GCustomExitStatusOverride;
-ENGINE_API extern LString       GCustomExitReason;
+ENGINE_API extern LStringLegacy       GCustomExitReason;
 
 FORCEINLINE ENGINE_API auto IsEngine() -> bool { return GEngine; }
 FORCEINLINE ENGINE_API auto GetEngine() -> LEngine* { return GEngine; }
@@ -42,7 +42,7 @@ FORCEINLINE ENGINE_API auto WillShortlyTerminate() -> bool { return bGShouldRequ
 FORCEINLINE ENGINE_API auto HasCustomExitStatus() -> bool { return GCustomExitStatusOverride != INDEX_NONE; }
 FORCEINLINE ENGINE_API auto GetCustomExitStatus() -> int32 { return GCustomExitStatusOverride; }
 FORCEINLINE ENGINE_API auto HasCustomExitReason() -> bool { return GCustomExitReason.empty() == false; }
-FORCEINLINE ENGINE_API auto GetCustomExitReason() -> LString { return GCustomExitReason; }
+FORCEINLINE ENGINE_API auto GetCustomExitReason() -> LStringLegacy { return GCustomExitReason; }
 
 // ~Engine Globals
 ///////////////////////////////////////////////////////////////////////////////
@@ -53,7 +53,7 @@ FORCEINLINE ENGINE_API auto GetCustomExitReason() -> LString { return GCustomExi
  */
 struct LWorldContext
 {
-    LString TravelUrl;
+    LStringLegacy TravelUrl;
     LWorld* ChildWorld;
 
     FORCEINLINE bool IsWaitingForTravel() const { return this->TravelUrl.empty() == false; }
@@ -78,11 +78,13 @@ public:
 
     /** Internal public method. Do not use. */
     void BeginExitIfRequested();
+    /** Internal public method. Do not use. */
+    void ReflectForwardedExitRequest();
 
     void RequestEngineExit();
-    void RequestEngineExit(const LString& Reason);
+    void RequestEngineExit(const LStringLegacy& Reason);
     void RequestEngineExit(const int32 CustomExitStatus);
-    void RequestEngineExit(const int32 CustomExitStatus, const LString& Reason);
+    void RequestEngineExit(const int32 CustomExitStatus, const LStringLegacy& Reason);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Client Local Stuff
@@ -124,11 +126,11 @@ public:
     auto GetContextFromWorld(const LWorld& World) -> LWorldContext&;
 
     /** Browse to a new Url at the next opportunity. */
-    auto Browse(const LWorld& Context, const LString& Url) -> void;
+    auto Browse(const LWorld& Context, const LStringLegacy& Url) -> void;
     /** @return True if registered successfully.*/
     auto RegisterLevel(const LLevel& InLevel) -> bool;
     auto RegisterLevel(const LLevel&& InLevel) -> bool;
-    auto IsLevelRegistered(const LString& Identifier) const -> bool;
+    auto IsLevelRegistered(const LStringLegacy& Identifier) const -> bool;
 
 private:
 
@@ -137,10 +139,10 @@ private:
     auto InitializeContext(LWorldContext& Context) -> void;
 
     /** Browse to a new Url at the next opportunity. */
-    auto Browse(LWorldContext& Context, const LString& Url) const -> void;
-    auto IsContextUrlInternal(const LString& Url) const -> bool;
+    auto Browse(LWorldContext& Context, const LStringLegacy& Url) const -> void;
+    auto IsContextUrlInternal(const LStringLegacy& Url) const -> bool;
     void TravelContext(LWorldContext& Context);
-    auto GetLevelByInternalUrl(const LString& Url) -> LLevel*;
+    auto GetLevelByInternalUrl(const LStringLegacy& Url) -> LLevel*;
 
     /** The maximum amount of context this engine can handle. */
     static constexpr uint8 MaxContexts { 3 };

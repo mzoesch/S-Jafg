@@ -42,7 +42,7 @@ void Jafg::RequestEngineExit()
     return;
 }
 
-void Jafg::RequestEngineExit(const LString& Reason)
+void Jafg::RequestEngineExit(const LStringLegacy& Reason)
 {
     if (WillShortlyTerminate())
     {
@@ -68,7 +68,7 @@ void Jafg::RequestEngineExit(const int32 CustomExitStatus)
     return;
 }
 
-void Jafg::RequestEngineExit(const int32 CustomExitStatus, const LString& Reason)
+void Jafg::RequestEngineExit(const int32 CustomExitStatus, const LStringLegacy& Reason)
 {
     if (WillShortlyTerminate())
     {

@@ -15,8 +15,16 @@ typedef std::chrono::high_resolution_clock::time_point HrcTimePoint;
 
 }
 
+/**
+ * Global application functions.
+ * All time related functions are measured in seconds except stated otherwise.
+ */
+#if PREPROCESSOR_EXCLUDE_FF
+#endif /* ~PREPROCESSOR_EXCLUDE_FF */
+
 FORCEINLINE ENGINE_API auto GetHighestNow() -> Private::HrcTimePoint;
-FORCEINLINE ENGINE_API auto GetTimeDifferenceFromStaticContainerInitialization(const Private::HrcTimePoint& Point) -> double;
+FORCEINLINE ENGINE_API auto GetTimeDifferenceFromStaticStorageInitialization(const Private::HrcTimePoint& Point) -> double;
+FORCEINLINE ENGINE_API auto GetDeltaSinceStaticStorageInitialization() -> double;
 
 FORCEINLINE ENGINE_API auto SetDeltaTime(const double DeltaTime) -> void;
 FORCEINLINE ENGINE_API auto GetDeltaTime() -> double;
@@ -65,9 +73,14 @@ FORCEINLINE Jafg::Application::Private::HrcTimePoint Jafg::Application::GetHighe
     return Private::Hrc::now();
 }
 
-FORCEINLINE double Jafg::Application::GetTimeDifferenceFromStaticContainerInitialization(const Private::HrcTimePoint& Point)
+FORCEINLINE double Jafg::Application::GetTimeDifferenceFromStaticStorageInitialization(const Private::HrcTimePoint& Point)
 {
     return std::chrono::duration<double>(Point - Private::StaticContainerInitializationTime).count();
+}
+
+FORCEINLINE double Jafg::Application::GetDeltaSinceStaticStorageInitialization()
+{
+    return GetTimeDifferenceFromStaticStorageInitialization(GetHighestNow());
 }
 
 FORCEINLINE void Jafg::Application::SetDeltaTime(const double DeltaTime)

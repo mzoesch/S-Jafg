@@ -6,20 +6,21 @@ import (
     "Jafg/Shared"
     "fmt"
     "os"
+    "path/filepath"
     "strings"
 )
 
 type CurrentHeaderState struct {
-    filename string
-    builder  *strings.Builder
+    filename           string
+    absoluteFilePath   string
+    builder            *strings.Builder
+    translationBuilder *strings.Builder
 }
 
 var GCurrentHeaderState *CurrentHeaderState = nil
 
 func (chs *CurrentHeaderState) AppendString(str string) {
     if chs.builder.Len() == 0 {
-        chs.builder = new(strings.Builder)
-
         chs.builder.WriteString(GeneratedHeaderFileStub)
         chs.builder.WriteString(GetHeaderGuardForModule2(GBuildInfo.ModuleName, GCurrentHeaderState.filename))
         chs.builder.WriteString(HeaderGuardPostfixStub)
@@ -30,11 +31,18 @@ func (chs *CurrentHeaderState) AppendString(str string) {
 }
 
 func (chs *CurrentHeaderState) AppendStringNoSideEffects(str string) {
-    if chs.builder.Len() == 0 {
-        chs.builder = new(strings.Builder)
+    chs.builder.WriteString(str)
+    return
+}
+
+func (chs *CurrentHeaderState) AppendTranslationString(str string) {
+    if chs.translationBuilder.Len() == 0 {
+        chs.translationBuilder.WriteString(GeneratedTranslationFileStub)
+        chs.translationBuilder.WriteString(GetTranslationImportStub(GCurrentHeaderState.filename, true))
+        chs.translationBuilder.WriteString(TranslationStubPostFixStub)
     }
 
-    chs.builder.WriteString(str)
+    chs.translationBuilder.WriteString(str)
     return
 }
 
@@ -62,7 +70,7 @@ func RecursivelyScanAndOperateOnHeaders(absolutePaths []string) {
         }
 
         var content string = Shared.ReadFileContentsFromAbsolutePath(path)
-        OperateOnHeaderFileForGeneratedHeaders(Shared.GetFileNameFromHeaderPath(path), &content)
+        OperateOnHeaderFileForGeneratedHeaders(path, Shared.GetFileNameFromHeaderPath(path), &content)
 
         continue
     }
@@ -110,16 +118,18 @@ func ScanForObjectStructureOnFile(fileName string, content *string) {
 }
 
 // OperateOnHeaderFileForGeneratedHeaders tokenizes the content of a header file and generates the .generated.h
-//file if necessary. Will delete the old .generated.h file if it exists and no new one is needed.
-func OperateOnHeaderFileForGeneratedHeaders(fileName string, content *string) {
+// file if necessary. Will delete the old .generated.h file if it exists and no new one is needed.
+func OperateOnHeaderFileForGeneratedHeaders(absoluteFilePath string, fileName string, content *string) {
     GCurrentHeaderState = new(CurrentHeaderState)
     GCurrentHeaderState.filename = fileName
+    GCurrentHeaderState.absoluteFilePath = Shared.NormalizePath(absoluteFilePath)
     GCurrentHeaderState.builder = new(strings.Builder)
+    GCurrentHeaderState.translationBuilder = new(strings.Builder)
 
     var tokens []Token = TokenizeContent(content)
 
     if len(tokens) == 0 {
-        ConditionallyWriteGeneratedHeaderFile()
+        ConditionallyWriteGeneratedFiles()
         return
     }
 
@@ -140,6 +150,7 @@ func OperateOnHeaderFileForGeneratedHeaders(fileName string, content *string) {
         }
 
         if token.Kind.IsJafgClass() {
+            GenerateObjectBodyForClass(token)
             continue
         }
 
@@ -150,8 +161,14 @@ func OperateOnHeaderFileForGeneratedHeaders(fileName string, content *string) {
         panic("Unknown token kind.")
     }
 
-    ConditionallyWriteGeneratedHeaderFile()
+    ConditionallyWriteGeneratedFiles()
 
+    return
+}
+
+func ConditionallyWriteGeneratedFiles() {
+    ConditionallyWriteGeneratedHeaderFile()
+    ConditionallyWriteGeneratedTranslationFile()
     return
 }
 
@@ -163,6 +180,8 @@ func ConditionallyWriteGeneratedHeaderFile() {
         return
     }
 
+    Shared.CheckRelativeFile(targetFile)
+
     var contentToWrite string = GCurrentHeaderState.builder.String()
 
     var file *os.File = Shared.OpenRelativeFile(targetFile, false, os.O_RDWR|os.O_CREATE)
@@ -170,6 +189,36 @@ func ConditionallyWriteGeneratedHeaderFile() {
         fmt.Printf("Generated header file [%s] is up-to-date. Skipping re-write.\n", targetFile)
     } else {
         fmt.Printf("Generated header file [%s] is outdated. Writing new content.\n", targetFile)
+        Shared.TruncateFile(file)
+        Shared.SeekFileBeginning(file)
+        Shared.WriteToFile(file, contentToWrite)
+    }
+
+    Shared.CloseFile(file)
+
+    return
+}
+
+func ConditionallyWriteGeneratedTranslationFile() {
+    var targetFile string = Shared.GetRelativeGeneratedTranslationPath(
+        GBuildInfo.GetRelativeModuleDir() + "/" + GCurrentHeaderState.filename,
+    )
+
+    if GCurrentHeaderState.translationBuilder.Len() == 0 {
+        Shared.DeleteRelativeFileIfExists(targetFile)
+        return
+    }
+
+    Shared.CheckRelativeDir(filepath.Dir(targetFile))
+    Shared.CheckRelativeFile(targetFile)
+
+    var contentToWrite string = GCurrentHeaderState.translationBuilder.String()
+
+    var file *os.File = Shared.OpenRelativeFile(targetFile, false, os.O_RDWR|os.O_CREATE)
+    if Shared.IsFileAndStringEqual(file, contentToWrite, true) {
+        fmt.Printf("Generated translation file [%s] is up-to-date. Skipping re-write.\n", targetFile)
+    } else {
+        fmt.Printf("Generated translation file [%s] is outdated. Writing new content.\n", targetFile)
         Shared.TruncateFile(file)
         Shared.SeekFileBeginning(file)
         Shared.WriteToFile(file, contentToWrite)
@@ -293,4 +342,86 @@ func RegisterObjectBaseClass(index int, tokens *[]Token) int /* How many tokens 
     )
 
     return 1
+}
+
+func GenerateObjectBodyForClass(token Token) {
+    if token.JafgClassSuperName == "" {
+        if GObjectStructure.Root == nil {
+            panic(fmt.Sprintf("Object [%s] is the root object. But super was not found.", token.JafgClassName))
+        }
+        if GObjectStructure.Root.Name != token.JafgClassName {
+            panic(fmt.Sprintf("Object [%s] is not the root object. But super was not found.", token.JafgClassName))
+        }
+
+        token.JafgClassSuperName = token.JafgClassName
+        token.JafgClassSuperNamespaces = token.JafgClassNamespaces
+    }
+
+    var fullSpacedName string = ConcatNameWithNamespace(token.JafgClassName, token.JafgClassNamespaces)
+    var concatedNamespaces string = ConcatNamespaces(token.JafgClassNamespaces)
+    var fullSuperSpacedName string = ConcatNameWithNamespace(token.JafgClassSuperName, token.JafgClassSuperNamespaces)
+
+    GCurrentHeaderState.AppendString(fmt.Sprintf(`
+#ifdef GENERATED_CLASS_BODY
+    #undef GENERATED_CLASS_BODY
+#endif /* GENERATED_CLASS_BODY */
+
+#define GENERATED_CLASS_BODY()                         \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_BODY_IMPL( \
+        %s, /* MyClassName          */                 \
+        %s, /* MyClassSpacedName    */                 \
+        %s, /* SuperClassName       */                 \
+        %s  /* SuperClassSpacedName */                 \
+    )
+
+#ifdef DECLARE_JAFG_CLASS
+    #undef DECLARE_JAFG_CLASS
+#endif /* DECLARE_JAFG_CLASS */
+
+#define DECLARE_JAFG_CLASS() \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION( \
+        %s, /* MyClassName          */                                                 \
+        %s, /* MyClassSpacedName    */                                                 \
+        %s, /* SuperClassName       */                                                 \
+        %s  /* SuperClassSpacedName */                                                 \
+    )
+
+`,
+        token.JafgClassName,
+        fullSpacedName,
+        token.JafgClassSuperName,
+        fullSuperSpacedName,
+
+        token.JafgClassName,
+        fullSpacedName,
+        token.JafgClassSuperName,
+        fullSuperSpacedName,
+    ))
+
+    GCurrentHeaderState.AppendTranslationString(fmt.Sprintf(`
+#ifndef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION not defined."
+    #error "Missing #include \"Engine/ObjectBase.h\". This should be transitively included by the derived class [%s] inside"
+    #error "project [%s]. Is super class [%s] not deriving from any subclass of ObjectBase? It must."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION */
+
+PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION(
+    %s, /* MyClassName          */
+    %s, /* MyClassSpacedName    */
+    %s, /* MyClassNamespaces    */
+    %s, /* SuperClassName       */
+    %s  /* SuperClassSpacedName */
+)
+
+`,
+        fullSpacedName, GBuildInfo.ModuleName, fullSuperSpacedName,
+
+        token.JafgClassName,
+        fullSpacedName,
+        concatedNamespaces,
+        token.JafgClassSuperName,
+        fullSuperSpacedName,
+    ))
+
+    return
 }

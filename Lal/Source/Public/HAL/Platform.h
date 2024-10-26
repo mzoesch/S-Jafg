@@ -60,8 +60,8 @@ typedef LPlatformTypes::int64        int64;
 
 typedef LPlatformTypes::LChar        LChar;
 
-typedef LPlatformTypes::LString      LString;
-typedef LPlatformTypes::LWideString  LWideString;
+typedef LPlatformTypes::LStringLegacy LStringLegacy;
+typedef LPlatformTypes::LWideString   LWideString;
 
 
 /*-----------------------------------------------------------------------------

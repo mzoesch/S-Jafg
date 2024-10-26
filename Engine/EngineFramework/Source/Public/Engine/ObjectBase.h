@@ -4,9 +4,24 @@
 
 #include "CoreAFX.h"
 #include "Engine/ObjectContext.h"
+#include "Engine/ObjectBaseUtility.h"
+#include "Engine/ObjectMacros.h"
+#include "ObjectBase.generated.h"
 
 namespace Jafg
 {
+
+struct LTemporalStructForCreatingObjects;
+
+struct LObjectInitializer final
+{
+    LObjectInitializer()  = default;
+    ~LObjectInitializer() = default;
+
+    Private::LObjectContext* Outer = nullptr;
+};
+
+FORCEINLINE ENGINEFRAMEWORK_API auto GetDefaultObjectInitializer() -> LObjectInitializer { return LObjectInitializer(); }
 
 namespace Private
 {
@@ -19,9 +34,7 @@ class ENGINEFRAMEWORK_API JObjectBase
 
 protected:
 
-    JObjectBase() = default;
-    explicit JObjectBase(::Jafg::Private::LObjectContext* Outer) : Outer(Outer) { }
-    PROHIBIT_REALLOC_OF_ANY_FROM(JObjectBase)
+    explicit JObjectBase(const LObjectInitializer& ObjectInitializer);
     virtual ~JObjectBase() = default;
 
 public:
@@ -39,12 +52,28 @@ private:
 
 } /* ~Namespace Private */
 
+struct LTemporalStructForCreatingObjects final
+{
+    LTemporalStructForCreatingObjects() = delete;
+    PROHIBIT_REALLOC_OF_ANY_FROM(LTemporalStructForCreatingObjects)
+    ~LTemporalStructForCreatingObjects() = delete;
+
+    template <typename T = ::Jafg::Private::JObjectBase, typename U = ::Jafg::Private::LObjectContext>
+    static T* TempHelperJObjectCreation(U* Outer)
+    {
+        LObjectInitializer ObjectInitializer = GetDefaultObjectInitializer();
+        ObjectInitializer.Outer = Outer;
+        T* Out = new T(ObjectInitializer);
+        Out->BeginLife();
+        return Out;
+    }
+
+};
+
 template <typename T = ::Jafg::Private::JObjectBase, typename U = ::Jafg::Private::LObjectContext>
 T* TempHelperJObjectCreation(U* Outer)
 {
-    T* Out = new T(Outer);
-    Out->BeginLife();
-    return Out;
+    return LTemporalStructForCreatingObjects::TempHelperJObjectCreation<T, U>(Outer);
 }
 
 ::Jafg::Private::JObjectBase* NewJObject();

@@ -4,6 +4,7 @@
 #include "MyWorld/Chunk/ChunkGenerationSubsystem.h"
 #include "JustTemp.h"
 #include "Engine/Framework/Camera.h"
+#include "Engine/World.h"
 
 void GetAllChunksInDistance(const TIntVector2<int32>& Center, const int32 Distance, std::vector<TIntVector2<int32>>& OutChunks)
 {

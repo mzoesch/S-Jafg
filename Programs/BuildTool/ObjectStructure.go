@@ -117,6 +117,15 @@ func ConcatNameWithNamespace(name string, namespaces []string) string {
     return out
 }
 
+func ConcatNamespaces(namespaces []string) string {
+    var out string = "::"
+    for idx, _ := range namespaces {
+        out += namespaces[idx] + "::" /* It is important to have the double colons at the end. */
+    }
+
+    return out
+}
+
 // FindObjectNodeByString will search from inside namespace to outside.
 func (on *ObjectNode) FindObjectNodeByString(name string, namespaces []string) *ObjectNode {
     var node *ObjectNode = on.FindObjectNodeByStringImpl(name, namespaces)
@@ -277,6 +286,11 @@ func (oh *ObjectHierarchy) LoadCache() {
         var classNameSplit []string = strings.Split(classNameUnSplit, "::")
         var idx int = 0
         for idx < len(classNameSplit) {
+            /*
+             * Removes empty string duplicates.
+             * Why is the standard implementation even with empty strings???
+             * Is this not stupid??
+             */
             if classNameSplit[idx] == "" {
                 classNameSplit = append(classNameSplit[:idx], classNameSplit[idx+1:]...)
             } else {

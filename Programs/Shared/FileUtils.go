@@ -294,7 +294,17 @@ func GetFileNameFromHeaderPath(headerPath string) string {
 }
 
 // GetRelativeGeneratedHeaderPath returns the relative path to the generated header file.
-// Do not an extension to the filename.
+// Do not add an extension to the filename.
 func GetRelativeGeneratedHeaderPath(filename string) string {
     return fmt.Sprintf("%s/%s%s", GeneratedHeadersDir, filename, GeneratedHeadersExtension)
+}
+
+// GetRelativeGeneratedTranslationPath returns the relative path to the generated translation file.
+// Do not add an extension to the filename.
+func GetRelativeGeneratedTranslationPath(filename string) string {
+    return fmt.Sprintf("%s/%s%s", GeneratedTranslationsDir, filename, GeneratedTranslationsExtension)
+}
+
+func GetRelativeGeneratedTranslationDirForModule(mod *Module) string {
+    return fmt.Sprintf("%s/%s", GeneratedTranslationsDir, mod.GetRelativeModuleDir())
 }

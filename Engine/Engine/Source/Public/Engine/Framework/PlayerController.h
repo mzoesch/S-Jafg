@@ -2,18 +2,22 @@
 
 #pragma once
 
-#include "CoreAFX.h"
 #include "Engine/Actor.h"
+#include "PlayerController.generated.h"
 
 namespace Jafg
 {
 
+DECLARE_JAFG_CLASS()
 class ENGINE_API APlayerController final : public AActor
 {
-public:
+    GENERATED_CLASS_BODY()
 
-    APlayerController() = delete;
-    explicit APlayerController(LWorld* World) : AActor(World) { }
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTOR(APlayerController)
+
+public:
 
     virtual void BeginLife() override;
     virtual void Tick(const float DeltaTime) override;
