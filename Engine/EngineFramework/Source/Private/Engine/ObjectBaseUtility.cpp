@@ -3,6 +3,9 @@
 #include "CoreAFX.h"
 #include "Engine/ObjectBaseUtility.h"
 
+#include "Engine/ObjectBase.h"
+#include "Engine/ObjectClass.h"
+
 namespace Jafg::Private
 {
 
@@ -35,40 +38,109 @@ Jafg::TdhArray<Jafg::Private::LRegistrationQueuePackage>& Jafg::Private::GetRegi
     return RegistrationQueue;
 }
 
+Jafg::Private::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context, const LObjectClass* StaticClass)
+{
+    check( StaticClass )
+
+    void* Out = ::malloc(StaticClass->GetTotalByteSize());
+    check( Out )
+    ::memcpy(Out, StaticClass->GetDefaultPackageReferrer(), StaticClass->GetTotalByteSize());  // NOLINT(bugprone-undefined-memory-manipulation)
+
+    // ReSharper disable once CppReinterpretCastFromVoidPtr
+    reinterpret_cast<JObjectBase*>(Out)->Outer = Context ? Context : nullptr;
+    // ReSharper disable once CppReinterpretCastFromVoidPtr
+    reinterpret_cast<JObjectBase*>(Out)->BeginLife();
+
+    // ReSharper disable once CppReinterpretCastFromVoidPtr
+    return reinterpret_cast<JObjectBase*>(Out);
+}
+
 void Jafg::Private::LObjectRegistry::LoadPendingPackages()
 {
     for (LRegistrationQueuePackage& Package : Private::GetRegisterObjectQueue())
     {
         if (this->DoesPackageWithNameExist(Package.SpacedClassName))
         {
-            panic( "Package already exists." )
+            panicMsgf( "Package [{}] already exists.", Package.SpacedClassName )
             continue;
         }
 
         LRegistryPackage NewPackage;
-        NewPackage.SpacedClassName        = Package.SpacedClassName;
-        NewPackage.DefaultPackageReferrer = Package.GetContentDefault();
+        NewPackage.SpacedClassName                     = Package.SpacedClassName;
+        NewPackage.StaticClass                         = new LObjectClass();
+        NewPackage.StaticClass->DefaultPackageReferrer = Package.GetContentDefault();
+        check( NewPackage.StaticClass->DefaultPackageReferrer != nullptr )
 
-        this->RegisteredObjects.Add(NewPackage);
+        this->RegisteredObjects.Add(std::forward<LRegistryPackage>(NewPackage));
 
-        LRegistryPackage* NewPackageRef = this->RegisteredObjects.GetLast();
-
-        Package.Callback(NewPackage.DefaultPackageReferrer);
+        Package.Callback(NewPackage.StaticClass);
 
         continue;
     }
 
     Private::GetRegisterObjectQueue().Empty();
 
+    this->ValidateLoadedPackages();
+
+    return;
+}
+
+void Jafg::Private::LObjectRegistry::ValidateLoadedPackages()
+{
+    for (const LRegistryPackage& Package : this->RegisteredObjects)
+    {
+        if (Package.SpacedClassName.IsEmpty())
+        {
+            panic( "Found loaded package with empty name." )
+            continue;
+        }
+
+        if (Package.StaticClass == nullptr)
+        {
+            panicMsgf( "Found loaded package [{}] with no static class.", Package.SpacedClassName )
+            continue;
+        }
+
+        if (Package.StaticClass->DefaultPackageReferrer == nullptr)
+        {
+            panicMsgf( "Found loaded package [{}] with no default referrer.", Package.SpacedClassName )
+            continue;
+        }
+
+        if (Package.StaticClass->TotalByteSize == INDEX_NONE)
+        {
+            panicMsgf( "Found loaded package [{}] with no byte size.", Package.SpacedClassName )
+            continue;
+        }
+
+        for (const LRegistryPackage& OtherPackage : this->RegisteredObjects)
+        {
+            if (&Package == &OtherPackage)
+            {
+                continue;
+            }
+
+            if (Package.SpacedClassName == OtherPackage.SpacedClassName)
+            {
+                panicMsgf( "Found duplicate package names [%s].", Package.SpacedClassName )
+                continue;
+            }
+
+            continue;
+        }
+
+        continue;
+    }
+
     return;
 }
 
 bool Jafg::Private::LObjectRegistry::DoesPackageWithNameExist(const LSimpleString& SpacedClassName) const
 {
-    return this->GetPackageWithName(SpacedClassName) != nullptr;
+    return this->GetPackageByName(SpacedClassName) != nullptr;
 }
 
-Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageWithName(const LSimpleString& SpacedClassName)
+Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByName(const LSimpleString& SpacedClassName)
 {
     for (LRegistryPackage& Package : this->RegisteredObjects)
     {
@@ -83,7 +155,7 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageWithN
     return nullptr;
 }
 
-const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageWithName(const LSimpleString& SpacedClassName) const
+const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByName(const LSimpleString& SpacedClassName) const
 {
     for (const LRegistryPackage& Package : this->RegisteredObjects)
     {
@@ -98,9 +170,9 @@ const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackag
     return nullptr;
 }
 
-Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageWithName(const LSimpleString& SpacedClassName)
+Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByName(const LSimpleString& SpacedClassName)
 {
-    if (LRegistryPackage* Package = this->GetPackageWithName(SpacedClassName))
+    if (LRegistryPackage* Package = this->GetPackageByName(SpacedClassName))
     {
         return Package;
     }
@@ -110,9 +182,9 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPack
     return nullptr;
 }
 
-const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageWithName(const LSimpleString& SpacedClassName) const
+const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByName(const LSimpleString& SpacedClassName) const
 {
-    if (const LRegistryPackage* Package = this->GetPackageWithName(SpacedClassName))
+    if (const LRegistryPackage* Package = this->GetPackageByName(SpacedClassName))
     {
         return Package;
     }
@@ -122,11 +194,11 @@ const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanick
     return nullptr;
 }
 
-Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByPointer(const void* ContentDefaultReferrer)
+Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByStaticClass(const void* StaticClass)
 {
     for (LRegistryPackage& Package : this->RegisteredObjects)
     {
-        if (Package.DefaultPackageReferrer == ContentDefaultReferrer)
+        if (Package.StaticClass == StaticClass)
         {
             return &Package;
         }
@@ -137,9 +209,73 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByPoi
     return nullptr;
 }
 
-Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByPointer(const void* ContentDefaultReferrer)
+Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByStaticClass(const void* StaticClass)
 {
-    if (LRegistryPackage* Package = this->GetPackageByPointer(ContentDefaultReferrer); Package)
+    for (LRegistryPackage& Package : this->RegisteredObjects)
+    {
+        if (Package.StaticClass == StaticClass)
+        {
+            return &Package;
+        }
+
+        continue;
+    }
+
+    panic( "Failed to find package by static class." )
+
+    return nullptr;
+}
+
+const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByStaticClass(const void* StaticClass) const
+{
+    for (const LRegistryPackage& Package : this->RegisteredObjects)
+    {
+        if (Package.StaticClass == StaticClass)
+        {
+            return &Package;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByStaticClass(const void* StaticClass) const
+{
+    for (const LRegistryPackage& Package : this->RegisteredObjects)
+    {
+        if (Package.StaticClass == StaticClass)
+        {
+            return &Package;
+        }
+
+        continue;
+    }
+
+    panic( "Failed to find package by static class." )
+
+    return nullptr;
+}
+
+Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByContentDefault(const void* ContentDefaultReferrer)
+{
+    for (LRegistryPackage& Package : this->RegisteredObjects)
+    {
+        if (Package.StaticClass->GetDefaultPackageReferrer() == ContentDefaultReferrer)
+        {
+            return &Package;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByContentDefault(const void* ContentDefaultReferrer)
+{
+    if (LRegistryPackage* Package = this->GetPackageByContentDefault(ContentDefaultReferrer); Package)
     {
         return Package;
     }

@@ -3,17 +3,40 @@
 #pragma once
 
 #include "CoreAFX.h"
+#include "ObjectClass.h"
+#include "Engine/ObjectContext.h"
 
-namespace Jafg::Private
+namespace Jafg
 {
 
+namespace Private
+{
+
+class JObjectBase;
 class JObjectBase;
 class LObjectRegistry;
 struct TRegistryPackageBase;
 struct LRegistrationQueuePackage;
+struct LObjectMiscellaneousAccessor;
 
 typedef JObjectBase* (*GetContentDefaultFunctor)(void);
-typedef void (*OnRegistrationDelegate)(JObjectBase* DefaultPackageReferrer);
+typedef void (*OnRegistrationDelegate)(LObjectClass* StaticClass);
+
+} /* ~Namespace Private */
+
+/** Allocate a new object of type TObj. */
+template <typename TObj>
+FORCEINLINE auto NewObject() -> TObj*;
+/** Allocate a new object of type TObj within a given context. */
+template <typename TObj>
+FORCEINLINE auto NewObject(Private::LObjectContext* Context) -> TObj*;
+/** Allocate a new object with its given class name. */
+FORCEINLINE auto NewObject(const LSimpleString& ClassName) -> Private::JObjectBase*;
+/** Allocate a new object with its given class name within a given context. */
+FORCEINLINE auto NewObject(Private::LObjectContext* Context, const LSimpleString& ClassName) -> Private::JObjectBase*;
+
+namespace Private
+{
 
 /**
  * Global application wide singleton object registry.
@@ -48,6 +71,23 @@ struct LRegistrationQueuePackage final
 };
 
 /**
+ * Global accessor struct that is permitted to access private member attributes from all derived classes
+ * of JObjectBase.
+ */
+struct LObjectMiscellaneousAccessor final
+{
+    LObjectMiscellaneousAccessor()  = delete;
+    PROHIBIT_REALLOC_OF_ANY_FROM(LObjectMiscellaneousAccessor)
+    ~LObjectMiscellaneousAccessor() = delete;
+
+    template <typename TObj>
+    FORCEINLINE static auto NewObject(Private::LObjectContext* Context) -> TObj*;
+    FORCEINLINE static auto NewObject(Private::LObjectContext* Context, const LSimpleString& ClassName) -> JObjectBase*;
+
+    ENGINEFRAMEWORK_API static auto NewObject(LObjectContext* Context, const LObjectClass* StaticClass) -> JObjectBase*;
+};
+
+/**
  * A package that holds a generic derived JObjectBase object.
  * This object is known to the engine as it has been registered and initialized.
  */
@@ -55,8 +95,8 @@ struct LRegistryPackage final
 {
     /** Full namespaced name of the target class. */
     LSimpleString SpacedClassName;
-    /** Pointer to the default content object of the target class. */
-    JObjectBase*  DefaultPackageReferrer;
+    /** Pointer to the static class object of the target class. */
+    LObjectClass* StaticClass;
 };
 
 /** Singleton registry that holds all content, that is considered default, to an object. */
@@ -73,15 +113,25 @@ public:
      * Loads them into memory and initializes the default package referrer for them.
      */
     ENGINEFRAMEWORK_API void LoadPendingPackages(void);
+    /**
+     * Validates all loaded packages by checking for name conflicts and for the existence
+     * of a content default referrer.
+     */
+    ENGINEFRAMEWORK_API void ValidateLoadedPackages(void);
 
     ENGINEFRAMEWORK_API auto DoesPackageWithNameExist(const LSimpleString& SpacedClassName) const -> bool;
-    ENGINEFRAMEWORK_API auto GetPackageWithName(const LSimpleString& SpacedClassName) -> LRegistryPackage*;
-    ENGINEFRAMEWORK_API auto GetPackageWithName(const LSimpleString& SpacedClassName) const -> const LRegistryPackage*;
-    ENGINEFRAMEWORK_API auto GetPanickedPackageWithName(const LSimpleString& SpacedClassName) -> LRegistryPackage*;
-    ENGINEFRAMEWORK_API auto GetPanickedPackageWithName(const LSimpleString& SpacedClassName) const -> const LRegistryPackage*;
+    ENGINEFRAMEWORK_API auto GetPackageByName(const LSimpleString& SpacedClassName) -> LRegistryPackage*;
+    ENGINEFRAMEWORK_API auto GetPackageByName(const LSimpleString& SpacedClassName) const -> const LRegistryPackage*;
+    ENGINEFRAMEWORK_API auto GetPanickedPackageByName(const LSimpleString& SpacedClassName) -> LRegistryPackage*;
+    ENGINEFRAMEWORK_API auto GetPanickedPackageByName(const LSimpleString& SpacedClassName) const -> const LRegistryPackage*;
 
-    ENGINEFRAMEWORK_API auto GetPackageByPointer(const void* ContentDefaultReferrer) -> LRegistryPackage*;
-    ENGINEFRAMEWORK_API auto GetPanickedPackageByPointer(const void* ContentDefaultReferrer) -> LRegistryPackage*;
+    ENGINEFRAMEWORK_API auto GetPackageByStaticClass(const void* StaticClass) -> LRegistryPackage*;
+    ENGINEFRAMEWORK_API auto GetPanickedPackageByStaticClass(const void* StaticClass) -> LRegistryPackage*;
+    ENGINEFRAMEWORK_API auto GetPackageByStaticClass(const void* StaticClass) const -> const LRegistryPackage*;
+    ENGINEFRAMEWORK_API auto GetPanickedPackageByStaticClass(const void* StaticClass) const -> const LRegistryPackage*;
+
+    ENGINEFRAMEWORK_API auto GetPackageByContentDefault(const void* ContentDefaultReferrer) -> LRegistryPackage*;
+    ENGINEFRAMEWORK_API auto GetPanickedPackageByContentDefault(const void* ContentDefaultReferrer) -> LRegistryPackage*;
 
     FORCEINLINE auto GetRegisteredObjects() -> TdhArray<LRegistryPackage>& { return this->RegisteredObjects; }
 
@@ -112,25 +162,67 @@ void RegisterNewObjectType(
 /** Global static helper struct to allow for private member access through derived classes of JObjectBase. */
 struct LRegistrationCallbackHelper final
 {
-    LRegistrationCallbackHelper() = delete;
+    LRegistrationCallbackHelper()  = delete;
     PROHIBIT_REALLOC_OF_ANY_FROM(LRegistrationCallbackHelper)
     ~LRegistrationCallbackHelper() = delete;
 
     template <typename TObj = JObjectBase>
-    static void DoRegisterContentsForClass(TObj* DefaultPackageReferrer)
+    static void DoRegisterContentsForClass(LObjectClass* StaticClass)
     {
-        jassert( DefaultPackageReferrer != nullptr )
         static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
 
-        TObj::ClassName           = GObjectRegistry->GetPanickedPackageByPointer(DefaultPackageReferrer)->SpacedClassName;
-        TObj::StaticClassReferrer = DefaultPackageReferrer;
+        jassert( StaticClass )
+        jassert( StaticClass->DefaultPackageReferrer )
 
-        check( TObj::StaticClassReferrer )
+        TObj::StaticClassReferrer  = StaticClass;
+        StaticClass->TotalByteSize = sizeof(TObj);
 
-        LOG_DEBUG(LogTemporal, "Finished registering class [{}].", TObj::StaticClassName())
+        check( TObj::StaticClass() )
+
+        LOG_VERBOSE(
+            LogObjectPackager,
+            "Finished registering package for [{} ({}b)].",
+            TObj::StaticClass()->GetSpacedClassName(),
+            TObj::StaticClass()->GetTotalByteSize()
+        )
 
         return;
     }
 };
 
-} /* ~Namespace Jafg::Private */
+} /* ~Namespace Private */
+
+template <typename TObj>
+TObj* NewObject()
+{
+    return NewObject<TObj>(nullptr);
+}
+
+template <typename TObj>
+TObj* NewObject(Private::LObjectContext* Context)
+{
+    return Private::LObjectMiscellaneousAccessor::NewObject<TObj>(Context);
+}
+
+Private::JObjectBase* NewObject(const LSimpleString& ClassName)
+{
+    return NewObject(nullptr, ClassName);
+}
+
+Private::JObjectBase* NewObject(Private::LObjectContext* Context, const LSimpleString& ClassName)
+{
+    return Private::LObjectMiscellaneousAccessor::NewObject(Context, ClassName);
+}
+
+template <typename TObj>
+TObj* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context)
+{
+    return reinterpret_cast<TObj*>(LObjectMiscellaneousAccessor::NewObject(Context, TObj::StaticClass()));
+}
+
+Private::JObjectBase* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context, const LSimpleString& ClassName)
+{
+    return LObjectMiscellaneousAccessor::NewObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass);
+}
+
+} /* ~Namespace Jafg */

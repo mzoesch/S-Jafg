@@ -23,6 +23,11 @@
  *   - DO_SLOW_CHECKS: Usually only enabled in debug configurations unless overriden in ManualBuildOverride.h.
  *   - DO_ENSURES:     Enabled in every configuration where DO_CHECKS is enabled. The same lifetime is always shared.
  *   - DO_ASSERTS:     Usually enabled in any configuration unless overriden in ManualBuildOverride.h.
+ *
+ * Assertion variants:
+ *    - Msg-Suffix:  Allows adding a message that cannot be evaluated as a parameter type boolean of the
+ *                   binary operator&&.
+ *    - Msgf-Suffix: Allows adding a formatted message in the style of std::format.
  */
 #if PREPROCESSOR_EXCLUDE_FF
 #endif /* PREPROCESSOR_EXCLUDE_FF */
@@ -33,24 +38,16 @@
 
 #define NO_ENTRY_ASSERT_TEXT        "Enclosing block should never be entered."
 #define UNIMPLEMENTED_ASSERT_TEXT   "Unimplemented code path."
+#define FORCED_CODE_PATH_IMPL_TEXT  "Unimplemented code path that was deffered for development "                      \
+    "purposes is missing his implementation. Either implement the control path or change serverity of the enclosing " \
+    "block by adding a panic or normal check statement."
 
 #if DO_CHECKS
 
     /**
-     * Allows concatenating multiple statements that are evaporated
-     * and therefore not compiled if DO_CHECKS is false.
+     * Normal check implementation.
      */
-    #define checkCode(Code)                 do { Code; } while ( false );
-
     #define check(Expr)                     PRIVATE_JAFG_CHECK_IMPL( Expr )
-
-    #define checkNoEntry()                  PRIVATE_JAFG_CHECK_IMPL( false && NO_ENTRY_ASSERT_TEXT )
-
-    /**
-     * Will throw static asserts when compiled IN_SHIPPING. Useful for control paths that are not essential
-     * for a quick prototype but should be implemented when encountering them in the wild.
-     */
-    #define unimplemented()                 PRIVATE_JAFG_CHECK_IMPL( false && UNIMPLEMENTED_ASSERT_TEXT )
 
     /**
      * Same as check but allows adding a message that cannot be evaluated as a parameter type boolean of the
@@ -61,7 +58,25 @@
     /**
      * Same as checkMsg but with a formatted message one in the style of std::format.
      */
-    #define checkMsgf(Expr, Format, ...)    PRIVATE_JAFG_CHECK_IMPL_MSGF(Expr, Format, ##__VA_ARGS__)
+    #define checkMsgf(Expr, Format, ...)    PRIVATE_JAFG_CHECK_IMPL_MSGF( Expr, Format, ##__VA_ARGS__ )
+
+    /**
+     * Will evaluate to a check that will always fail except at runtime.
+     */
+    #define checkNoEntry()                  PRIVATE_JAFG_CHECK_IMPL( false && NO_ENTRY_ASSERT_TEXT )
+
+    /**
+     * Allows concatenating multiple statements that are evaporated
+     * and therefore not compiled if DO_CHECKS is false.
+     */
+    #define checkCode(Code)                 do { Code; } while ( false );
+
+    /**
+     * Behaves like a checkNoEntry except when DO_CHECKS is false (usually only IN_SHIPPING), it will
+     * evaluate to a static-assert instead of being compiled out like check-like macros. Useful for control paths
+     * that are not essential for a quick prototype but should be implemented when encountering them in the wild.
+     */
+    #define unimplemented()                 PRIVATE_JAFG_CHECK_IMPL( false && UNIMPLEMENTED_ASSERT_TEXT )
 
     // PLATFORM_BREAK() - Currently not using platform break. We of course should be using it.
     // But it is to buggy right now.
@@ -91,22 +106,26 @@
 
 #else /* DO_CHECKS */
 
-    #define checkCode(Expr)
     #define check(Expr)
-    #define checkNoEntry()
-    #define unimplemented()
-
     #define checkMsg(Expr, Msg)
+    #define checkMsgf(Expr, Format, ...)
+    #define checkNoEntry()
+    #define checkCode(Expr)
+    #define unimplemented()                     static_assert( false, FORCED_CODE_PATH_IMPL_TEXT );
 
 #endif /* !DO_CHECKS */
 
 #if DO_SLOW_CHECKS
 
-    #define checkSlow(Expr)                 check( Expr )
+    #define checkSlow(Expr)                     check( Expr )
+    #define checkSlowMsg(Expr, Msg)             checkMsg( Expr, Msg )
+    #define checkSlowMsgf(Expr, Format, ...)    checkMsgf( Expr, Format, ##__VA_ARGS__ )
 
 #else /* DO_SLOW_CHECKS */
 
     #define checkSlow(expr)
+    #define checkSlowMsg(Expr, Msg)
+    #define checkSlowMsgf(Expr, Format, ...)
 
 #endif /* !DO_SLOW_CHECKS */
 
@@ -125,15 +144,25 @@
 
     #if DO_CHECKS
 
-        #define jassert(Expr)               check( Expr )
-        #define jassertNoEntry()            checkNoEntry()
-        #define panic(Expr)                 jassert( false && ( Expr ) )
+        #define jassert(Expr)                       check( Expr )
+        #define jassertMsg(Expr, Msg)               checkMsg( Expr, Msg )
+        #define jassertMsgf(Expr, Format, ...)      checkMsgf( Expr, Format, ##__VA_ARGS__ )
+
+        #define jassertNoEntry()                    checkNoEntry()
+
+        #define panic(Msg)                          jassert( false && ( Msg ) )
+        #define panicMsgf(Format, ...)              jassertMsgf( false, Format, ##__VA_ARGS__ )
 
     #else /* DO_CHECKS */
 
-        #define jassert(Expr)               PRIVATE_JAFG_ASSERT_IMPL( Expr )
-        #define jassertNoEntry()            PRIVATE_JAFG_ASSERT_IMPL( false && NO_ENTRY_ASSERT_TEXT )
-        #define panic(Expr)                 jassert( false && ( Expr ) )
+        #define jassert(Expr)                       PRIVATE_JAFG_ASSERT_IMPL( Expr )
+        #define jassertMsg(Expr, Msg)               PRIVATE_JAFG_ASSERT_IMPL_MSG( Expr, Msg )
+        #define jassertMsgf(Expr, Format, ...)      PRIVATE_JAFG_ASSERT_IMPL_MSGF( Expr, Format, ##__VA_ARGS__ )
+
+        #define jassertNoEntry()                    PRIVATE_JAFG_ASSERT_IMPL( false && NO_ENTRY_ASSERT_TEXT )
+
+        #define panic(Msg)                          jassert( false && ( Msg ) )
+        #define panicMsgf(Format, ...)              jassertMsgf( false, Format, ##__VA_ARGS__ )
 
         #define PRIVATE_JAFG_ASSERT_IMPL(Expr)                                   \
             {                                                                    \
@@ -143,21 +172,39 @@
                 }                                                                \
             }
 
+        #define PRIVATE_JAFG_ASSERT_IMPL_MSG(Expr, Msg)                                       \
+            {                                                                                 \
+                if (UNLIKELY(!(Expr)))                                                        \
+                {                                                                             \
+                    LOG_FATAL(LogJafgInternal, "Program panicked: [{}] with {}", #Expr, Msg); \
+                }                                                                             \
+            }
+
+        #define PRIVATE_JAFG_ASSERT_IMPL_MSGF(Expr, Format, ...)                                                      \
+            {                                                                                                         \
+                if (UNLIKELY(!(Expr)))                                                                                \
+                {                                                                                                     \
+                    LOG_FATAL(LogJafgInternal, "Program panicked because of [{}]: " Format "", #Expr, ##__VA_ARGS__); \
+                }                                                                                                     \
+            }
+
     #endif /* !DO_CHECKS */
 
 #else /* DO_ASSERTS */
 
     #define jassert(Expr)
+    #define jassertMsg(Expr, Msg)
+    #define jassertMsgf(Expr, Format, ...)
+
     #define jassertNoEntry()
 
-    // Panics should allow letting the engine quit immediately.
-    // Not even finishing the current tick.
-    // But allow for db handlers to be called.
-    // It should never corrupt a save file or anything like that.
-    // Maybe we want to do a copy of the save file before quitting.
-    // Impl tbd.
-    #define panic(expr) /* Something here ... */
-    #error "Missing panic implementation."
+    #define panic(Msg)                    PRIVATE_JAFG_PANIC_IMPL( Msg )
+    #define panicMsgf(Format, ...)        PRIVATE_JAFG_PANIC_IMPL_MSGF( Format, ##__VA_ARGS__ )
+
+#define PRIVATE_JAFG_PANIC_IMPL_MSGF(Format, ...)                                                                     \
+    {                                                                                                                 \
+        LOG_FATAL(LogJafgInternal, "Program panicked encountering unlikely control path: " Format "", ##__VA_ARGS__); \
+    }
 
 #endif /* !DO_ASSERTS */
 

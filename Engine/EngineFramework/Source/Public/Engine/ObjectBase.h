@@ -3,15 +3,15 @@
 #pragma once
 
 #include "CoreAFX.h"
+#include "Engine/ObjectBaseTypes.h"
 #include "Engine/ObjectContext.h"
+#include "Engine/ObjectClass.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Engine/ObjectMacros.h"
 #include "ObjectBase.generated.h"
 
 namespace Jafg
 {
-
-struct LTemporalStructForCreatingObjects;
 
 struct LObjectInitializer final
 {
@@ -50,32 +50,5 @@ private:
 };
 
 } /* ~Namespace Private */
-
-struct LTemporalStructForCreatingObjects final
-{
-    LTemporalStructForCreatingObjects() = delete;
-    PROHIBIT_REALLOC_OF_ANY_FROM(LTemporalStructForCreatingObjects)
-    ~LTemporalStructForCreatingObjects() = delete;
-
-    template <typename T = ::Jafg::Private::JObjectBase, typename U = ::Jafg::Private::LObjectContext>
-    static T* TempHelperJObjectCreation(U* Outer)
-    {
-        LObjectInitializer ObjectInitializer = GetDefaultObjectInitializer();
-        ObjectInitializer.Outer = Outer;
-        T* Out = new T(ObjectInitializer);
-        Out->BeginLife();
-        return Out;
-    }
-
-};
-
-template <typename T = ::Jafg::Private::JObjectBase, typename U = ::Jafg::Private::LObjectContext>
-T* TempHelperJObjectCreation(U* Outer)
-{
-    return LTemporalStructForCreatingObjects::TempHelperJObjectCreation<T, U>(Outer);
-}
-
-::Jafg::Private::JObjectBase* NewJObject();
-::Jafg::Private::JObjectBase* NewJObject(::Jafg::Private::LObjectContext* Outer);
 
 } /* ~Namespace Jafg */

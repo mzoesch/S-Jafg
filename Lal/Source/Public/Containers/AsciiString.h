@@ -57,6 +57,7 @@ public:
     FORCEINLINE auto Reserve(const SizeType Size)     -> void { this->Data.Reserve(Size);           return; }
     FORCEINLINE auto Reset  (const SizeType Size)     -> void ;
     FORCEINLINE auto Empty  (void)                    -> void ;
+    FORCEINLINE auto IsEmpty(void) const              -> bool { return this->GetRuneCount() == 0;           }
     FORCEINLINE auto SwapStrings(LAsciiString& Other) -> void { this->Data.SwapBuffers(Other.Data); return; }
 
     /** Copy the string into another string. */

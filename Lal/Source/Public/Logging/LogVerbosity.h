@@ -11,7 +11,7 @@ namespace ELogVerbosity
 enum Type : uint8
 {
     Trace       = 1,
-    Debug       = 2,
+    Verbose     = 2,
     Info        = 3,
     Warning     = 4,
     Error       = 5,

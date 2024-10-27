@@ -34,7 +34,7 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 
     MainCamera = new Camera(glm::vec3(0.0f, 0.0f, 25.0f));
 
-    APlayerController* Pc = TempHelperJObjectCreation<APlayerController>(this);
+    APlayerController* Pc = NewObject<APlayerController>(this);
     this->Actors.Add(Pc);
     GEngine->GetCheckedLocalPlayer()->Possess(Pc);
 
@@ -136,7 +136,7 @@ void Jafg::LWorld::ScrollCallback(const double YOffset)
 
 void Jafg::LWorld::InitializeSubsystems()
 {
-    JChunkGenerationSubsystem* ChunkGenerationSubsystem = TempHelperJObjectCreation<JChunkGenerationSubsystem, LWorld>(this);
+    JChunkGenerationSubsystem* ChunkGenerationSubsystem = NewObject<JChunkGenerationSubsystem>(this);
     this->Subsystems.emplace_back(ChunkGenerationSubsystem);
     LSubsystemCollection Collection;
     ChunkGenerationSubsystem->Initialize(Collection);

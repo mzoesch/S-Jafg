@@ -13,17 +13,17 @@ private:\
     typedef SuperClassSpacedName Super; \
     typedef MyClassSpacedName Derived; \
     friend struct ::Jafg::Private::LRegistrationCallbackHelper; \
-    friend struct ::Jafg::LTemporalStructForCreatingObjects; \
+    friend struct ::Jafg::Private::LObjectMiscellaneousAccessor; \
     friend PRIVATE_JAFG_CORE_JOIN_INNER_THREE(L_, MyClassName, _ConstructionHelper); \
     friend class ::Jafg::Private::LObjectRegistry; \
-    inline static LSimpleString ClassName = ""; \
-    inline static MyClassSpacedName * StaticClassReferrer = nullptr; \
-    static auto GetImmutableClassReferrer() -> const MyClassSpacedName * { return StaticClassReferrer; } \
-    static auto GetMutableClassReferrer() -> MyClassSpacedName * { return StaticClassReferrer; } \
+    inline static ::Jafg::LObjectClass * StaticClassReferrer = nullptr; \
+    static auto GetImmutableClassReferrer() -> const MyClassSpacedName * { return StaticClassReferrer->GetDefaultPackageReferrer<MyClassSpacedName>(); } \
+    static auto GetMutableClassReferrer() -> MyClassSpacedName * { return StaticClassReferrer->GetMutableDefaultPackageReferrer<MyClassSpacedName>(); } \
 public:\
-    static LSimpleString& StaticClassName() { return PRIVATE_JAFG_CORE_JOIN_INNER_TWO(MyClassSpacedName, ::ClassName); } \
-    static const MyClassSpacedName * StaticClass() { return GetImmutableClassReferrer(); } \
+    static const MyClassSpacedName * ContentDefault() { return GetImmutableClassReferrer(); } \
+    static const ::Jafg::LObjectClass * StaticClass() { return StaticClassReferrer; } \
     MyClassSpacedName() = delete; \
+    /* void operator delete(void* Ptr) = delete; */ \
     PROHIBIT_REALLOC_OF_ANY_FROM_NAMESPACED( MyClassSpacedName, MyClassName ) \
 private: /* Restore default visibility. */
 
@@ -51,9 +51,9 @@ private: /* Restore default visibility. */
         ::Jafg::Private::RegisterNewObjectType< MyClassSpacedName >(\
             #MyClassSpacedName, \
             [](void) -> ::Jafg::Private::JObjectBase* { return new MyClassSpacedName(::Jafg::GetDefaultObjectInitializer()); }, \
-            [] (::Jafg::Private::JObjectBase * DefaultPackageReferrer) -> void {\
+            [] (::Jafg::LObjectClass * StaticClass) -> void {\
             ::Jafg::Private::LRegistrationCallbackHelper::DoRegisterContentsForClass< MyClassSpacedName >( \
-                dynamic_cast< MyClassSpacedName *>(DefaultPackageReferrer));\
+                StaticClass);\
         return; });\
         return;\
     } \

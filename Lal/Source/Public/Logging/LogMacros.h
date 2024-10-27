@@ -29,7 +29,7 @@
 ----------------------------------------------------------------------------*/
 
 #define LOG_COLOR_TRACE            "\033[;90m"      /* Dark gray   */
-#define LOG_COLOR_DEBUG            "\033[;37m"      /* Light gray  */
+#define LOG_COLOR_VERBOSE          "\033[;37m"      /* Light gray  */
 #define LOG_COLOR_INFO             "\033[;97m"      /* White       */
 #define LOG_COLOR_WARNING          "\033[;93m"      /* Yellow      */
 #define LOG_COLOR_ERROR            "\033[;91m"      /* Red         */
@@ -63,13 +63,13 @@
     PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Trace, LOG_COLOR_TRACE, Format, ##__VA_ARGS__)
 
 /**
- * A macro that logs a formatted message if the log category is active at DEBUG verbosity level.
+ * A macro that logs a formatted message if the log category is active at VERBOSE verbosity level.
  *
  * @param CategoryName Name of the log category as provided to DECLARE_INLINE_LOG_CATEGORY.
  * @param Format       Format string literal in the style of std::format.
  */
-#define LOG_DEBUG(Category, Format, ...)                                                  \
-    PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Debug, LOG_COLOR_DEBUG, Format, ##__VA_ARGS__)
+#define LOG_VERBOSE(Category, Format, ...)                                                    \
+    PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Verbose, LOG_COLOR_VERBOSE, Format, ##__VA_ARGS__)
 
 /**
  * A macro that logs a formatted message if the log category is active at INFO verbosity level.
