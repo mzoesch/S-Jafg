@@ -80,7 +80,7 @@ void Jafg::Tester::LSimpleTestCase::TestEqual(
     const float A,
     const float B,
     const int32 LineNumber,
-    const float Tolerance /*= JAFG_FLOAT_NOT_SO_SMALL_NUMBER */
+    const float Tolerance /* = JAFG_FLOAT_NOT_SO_SMALL_NUMBER */
 )
 {
     this->IncreaseTestCount();
@@ -101,7 +101,7 @@ void Jafg::Tester::LSimpleTestCase::TestEqual(
     const double A,
     const double B,
     const int32 LineNumber,
-    const double Tolerance /*= JAFG_DOUBLE_NOT_SO_SMALL_NUMBER */
+    const double Tolerance /* = JAFG_DOUBLE_NOT_SO_SMALL_NUMBER */
 )
 {
     this->IncreaseTestCount();
@@ -117,13 +117,385 @@ void Jafg::Tester::LSimpleTestCase::TestEqual(
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::AddError(const LChar* What, const int32 LineNumber /*= -1*/)
+void Jafg::Tester::LSimpleTestCase::TestNotEqual(const LChar* What, const int32 A, const int32 B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A != B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestNotEqual(const LChar* What, const int64 A, const int64 B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A != B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestNotEqual(
+    const LChar* What,
+    const float A,
+    const float B,
+    const int32 LineNumber,
+    const float Tolerance /* = JAFG_DOUBLE_NOT_SO_SMALL_NUMBER */
+)
+{
+    this->IncreaseTestCount();
+
+    if (Maths::IsNearlyEqual(A, B, Tolerance) == false)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestNotEqual(
+    const LChar* What,
+    const double A,
+    const double B,
+    const int32 LineNumber,
+    const double Tolerance /* = JAFG_DOUBLE_NOT_SO_SMALL_NUMBER */
+)
+{
+    this->IncreaseTestCount();
+
+    if (Maths::IsNearlyEqual(A, B, Tolerance) == false)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestLess(const LChar* What, const int32 A, const int32 B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A < B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestLess(const LChar* What, const int64 A, const int64 B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A < B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestLess(const LChar* What, const float A, const float B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A < B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestLess(const LChar* What, const double A, const double B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A < B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestGreater(const LChar* What, const int32 A, const int32 B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A > B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestGreater(const LChar* What, const int64 A, const int64 B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A > B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestGreater(const LChar* What, const float A, const float B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A > B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestGreater(const LChar* What, const double A, const double B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A > B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const LChar* What, const int32 A, const int32 B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A <= B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const LChar* What, const int64 A, const int64 B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A <= B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const LChar* What, const float A, const float B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A <= B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const LChar* What, const double A, const double B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A <= B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const LChar* What, const int32 A, const int32 B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A >= B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const LChar* What, const int64 A, const int64 B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A >= B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const LChar* What, const float A, const float B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A >= B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const LChar* What, const double A, const double B, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A >= B)
+    {
+        return;
+    }
+
+    const std::string EVal = std::format("{}", A);
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestNull(const LChar* What, const void* A, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A == nullptr)
+    {
+        return;
+    }
+
+    const std::string EVal = "nullptr";
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestNotNull(const LChar* What, const void* A, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A != nullptr)
+    {
+        return;
+    }
+
+    const std::string EVal = "not nullptr";
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestTrue(const LChar* What, const bool A, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A)
+    {
+        return;
+    }
+
+    const std::string EVal = "true";
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::TestFalse(const LChar* What, const bool A, const int32 LineNumber)
+{
+    this->IncreaseTestCount();
+
+    if (A == false)
+    {
+        return;
+    }
+
+    const std::string EVal = "false";
+    this->AddError(What, EVal.c_str(), LineNumber);
+
+    return;
+}
+
+void Jafg::Tester::LSimpleTestCase::AddError(const LChar* What, const int32 LineNumber /* = -1 */)
 {
     this->Errors.emplace_back(std::format("FAULT {}. [Inside file {} at line {}.]", What, this->GetFilename(), LineNumber).c_str());
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::AddError(const LChar* What, const LChar* ExpectedValue, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::AddError(const LChar* What, const LChar* ExpectedValue, const int32 LineNumber /* = -1 */)
 {
     this->Errors.emplace_back(std::format("FAULT {}. Expected: {{ {} }}. [Inside file {} at line {}.]", What, ExpectedValue, this->GetFilename(), LineNumber).c_str());
     return;

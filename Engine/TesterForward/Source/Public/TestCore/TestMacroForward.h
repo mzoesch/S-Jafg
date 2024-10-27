@@ -42,6 +42,124 @@
         auto B_ = ( B );                                                  \
     }
 
+/**
+ * Checks if A and B are not equal.
+ *
+ * @param What Short description of the check.
+ * @param A    Left-hand side of the comparison.
+ * @param B    Right-hand side of the comparison.
+ */
+#define CHECK_NOT_EQUALS(What, A, B)                                      \
+    {                                                                     \
+        auto What_ = ( What );                                            \
+        auto A_ = ( A );                                                  \
+        auto B_ = ( B );                                                  \
+    }
+
+/**
+ * Checks if A is less than B.
+ *
+ * @param What Short description of the check.
+ * @param A    Left-hand side of the comparison.
+ * @param B    Right-hand side of the comparison.
+ */
+#define CHECK_LESS(What, A, B)                                            \
+    {                                                                     \
+        auto What_ = ( What );                                            \
+        auto A_ = ( A );                                                  \
+        auto B_ = ( B );                                                  \
+    }
+
+/**
+ * Checks if A is greater than B.
+ *
+ * @param What Short description of the check.
+ * @param A    Left-hand side of the comparison.
+ * @param B    Right-hand side of the comparison.
+ */
+#define CHECK_GREATER(What, A, B)                                         \
+    {                                                                     \
+        auto What_ = ( What );                                            \
+        auto A_ = ( A );                                                  \
+        auto B_ = ( B );                                                  \
+    }
+
+/**
+ * Checks if A is less than or equal to B.
+ *
+ * @param What Short description of the check.
+ * @param A    Left-hand side of the comparison.
+ * @param B    Right-hand side of the comparison.
+ */
+#define CHECK_LESS_OR_EQUAL(What, A, B)                                   \
+    {                                                                     \
+        auto What_ = ( What );                                            \
+        auto A_ = ( A );                                                  \
+        auto B_ = ( B );                                                  \
+    }
+
+/**
+ * Checks if A is greater than or equal to B.
+ *
+ * @param What Short description of the check.
+ * @param A    Left-hand side of the comparison.
+ * @param B    Right-hand side of the comparison.
+ */
+#define CHECK_GREATER_OR_EQUAL(What, A, B)                                \
+    {                                                                     \
+        auto What_ = ( What );                                            \
+        auto A_ = ( A );                                                  \
+        auto B_ = ( B );                                                  \
+    }
+
+/**
+ * Checks if A is null.
+ *
+ * @param What Short description of the check.
+ * @param A    The pointer to check.
+ */
+#define CHECK_NULL(What, A)                                               \
+    {                                                                     \
+        auto What_ = ( What );                                            \
+        auto A_ = ( A );                                                  \
+    }
+
+/**
+ * Checks if A is not null.
+ *
+ * @param What Short description of the check.
+ * @param A    The pointer to check.
+ */
+#define CHECK_NOT_NULL(What, A)                                           \
+    {                                                                     \
+        auto What_ = ( What );                                            \
+        auto A_ = ( A );                                                  \
+    }
+
+/**
+ * Checks if A is true.
+ *
+ * @param What Short description of the check.
+ * @param A    The condition to check.
+ */
+#define CHECK_TRUE(What, A)                                               \
+    {                                                                     \
+        auto What_ = ( What );                                            \
+        auto A_ = ( A );                                                  \
+    }
+
+/**
+ * Checks if A is false.
+ *
+ * @param What Short description of the check.
+ * @param A    The condition to check.
+ */
+#define CHECK_FALSE(What, A)                                              \
+    {                                                                     \
+        auto What_ = ( What );                                            \
+        auto A_ = ( A );                                                  \
+    }
+
 #define PRIVATE_JAFG_TEST_JOIN_INNER_TWO(   A, B                        ) A##B
 #define PRIVATE_JAFG_TEST_JOIN_INNER_THREE( A, B, C                     ) A##B##C
 #define PRIVATE_JAFG_TEST_JOIN_INNER_FOUR(  A, B, C, D                  ) A##B##C##D

@@ -4,6 +4,7 @@
 
 #include "CoreAFX.h"
 #include "Engine/ObjectContext.h"
+#include "Engine/Actor.h"
 
 struct GLFWwindow;
 
@@ -12,7 +13,6 @@ namespace Jafg
 
 class LEngine;
 class Shader;
-class AActor;
 class JWorldSubsystem;
 class Camera;
 struct LLevel;

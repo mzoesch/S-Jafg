@@ -8,8 +8,10 @@
 
 #define PRIVATE_JAFG_TEST_INCLUDED_TEST_FORWARD
 
+
 /*----------------------------------------------------------------------------
     Commonly used headers.
 ----------------------------------------------------------------------------*/
 
+#include "CoreAFX.h"
 #include "TestCore/TestMacroForward.h"

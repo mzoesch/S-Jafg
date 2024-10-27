@@ -84,19 +84,24 @@ void Jafg::Tester::RunTests(EPlatformExit::Type* ExitCode)
 
 Jafg::Tester::LTestFramework::LTestFramework()
 {
-    std::cout << "Started test framework." << '\n';
-
+    LOG_INFO(LogTestingFramework, "Started test framework.")
     return;
 }
 
 Jafg::Tester::LTestFramework::~LTestFramework()
 {
-    std::cout << "Finished running all tests. Tearing down framework ..." << '\n';
-    std::cout << "Test framework encountered "
-              << this->OccuriedErrors
-              << " errors." << '\n';
+    LOG_INFO(LogTestingFramework, "Finished test framework. Tearing down framework ...")
 
     *::Jafg::Tester::TestExitCode = this->HasErrors() ? EPlatformExit::Error : EPlatformExit::Success;
+
+    if (this->HasErrors())
+    {
+        LOG_ERROR(LogTestingFramework, "Test framework encountered {} errors.", this->OccuriedErrors)
+    }
+    else
+    {
+        LOG_INFO(LogTestingFramework, "Test framework encountered no errors.")
+    }
 
     return;
 }

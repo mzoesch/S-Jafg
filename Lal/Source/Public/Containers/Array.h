@@ -43,7 +43,7 @@ class TArray
 
 public:
 
-    FORCEINLINE TArray() noexcept;
+    FORCEINLINE  TArray() noexcept;
     FORCEINLINE ~TArray() noexcept;
 
     FORCEINLINE auto GetSize()     const noexcept -> SizeType { return this->Size;                       }
@@ -53,12 +53,12 @@ public:
     FORCEINLINE auto IsSlack()     const noexcept -> bool     { return this->GetData() != nullptr;       }
     FORCEINLINE auto GetData()           noexcept -> T*       { return this->Data;                       }
     FORCEINLINE auto GetData()     const noexcept -> const T* { return this->Data;                       }
-    FORCEINLINE auto GetSlack()          noexcept -> T*       { return this->GetData() + this->Size;     }
-    FORCEINLINE auto GetSlack()    const noexcept -> const T* { return this->GetData() + this->Size;     }
-    FORCEINLINE auto GetFirst()          noexcept -> T*       { return this->GetData();                  }
-    FORCEINLINE auto GetFirst()    const noexcept -> const T* { return this->GetData();                  }
-    FORCEINLINE auto GetLast()           noexcept -> T*       { return this->GetData() + this->Size - 1; }
-    FORCEINLINE auto GetLast()     const noexcept -> const T* { return this->GetData() + this->Size - 1; }
+    FORCEINLINE auto GetSlack()          noexcept -> T*       ;
+    FORCEINLINE auto GetSlack()    const noexcept -> const T* ;
+    FORCEINLINE auto GetFirst()          noexcept -> T*       ;
+    FORCEINLINE auto GetFirst()    const noexcept -> const T* ;
+    FORCEINLINE auto GetLast()           noexcept -> T*       ;
+    FORCEINLINE auto GetLast()     const noexcept -> const T* ;
 
     /**
      * Add a new element to the array while potentially reallocating the whole array to fit.
@@ -67,6 +67,22 @@ public:
     FORCEINLINE auto Add(const T& InElement)  noexcept -> TEnableIf<Condition, Self&>;
     template <bool Condition = IsDynamic()>
     FORCEINLINE auto Add(const T&& InElement) noexcept -> TEnableIf<Condition, Self&>;
+
+    /**
+     * Peeks at the last element in the array.
+     *
+     * @return The element or nullptr if the array is empty.
+     */
+    FORCEINLINE auto Peek()                      noexcept ->       T*;
+    FORCEINLINE auto Peek()                const noexcept -> const T*;
+    FORCEINLINE auto Pop()                       noexcept -> void    ;
+    FORCEINLINE auto Pop(const SizeType InCount) noexcept -> void    ;
+
+    /**
+     * Appends new elements to the array while potentially reallocating the whole array to fit.
+     */
+    template <bool Condition = IsDynamic()>
+    FORCEINLINE auto Append(const Self& InOther) noexcept -> TEnableIf<Condition, Self&>;
 
     /**
      * Adds a new element to the array and zeroes the target memory while potentially
@@ -153,10 +169,42 @@ public:
 
     /** Makes a copy of the other array. No constructors will be called. */
     FORCEINLINE auto operator =(const Self& InOther) noexcept -> Self&;
+    FORCEINLINE auto CopyFrom  (const Self& InOther) noexcept -> Self& { return this->operator=(InOther); }
     /** Moves the other array. No move semantics will be called. */
     FORCEINLINE auto operator =(      Self&& InOther) noexcept -> Self&;
+    FORCEINLINE auto operator =(const Self&& InOther) noexcept -> Self& = delete;
+    FORCEINLINE auto MoveFrom  (      Self&& InOther) noexcept -> Self& { return this->operator=(std::move(InOther)); }
 
-    /** Swaps the contents of this array with the other array. */
+    /**
+     * Do not use std operators as ...
+     *    - they are ambiguous in terms of meaning (compare by size, value or reference?).
+     *    - we might accidentally do comparisons inside templated paths of arrays that are very expensive in terms of
+     *      runtime performance.
+     * Better be explicit about it with the named functions #EqualSize, #IsSameArray and #IsDataEqual.
+     */
+    FORCEINLINE auto operator==(      Self& InOther)       noexcept -> bool = delete;
+    FORCEINLINE auto operator==(const Self& InOther) const noexcept -> bool = delete;
+    FORCEINLINE auto operator!=(      Self& InOther)       noexcept -> bool = delete;
+    FORCEINLINE auto operator!=(const Self& InOther) const noexcept -> bool = delete;
+
+    FORCEINLINE auto operator <(      Self& InOther)       noexcept -> bool { return this->Size  < InOther.Size; }
+    FORCEINLINE auto operator <(const Self& InOther) const noexcept -> bool { return this->Size  < InOther.Size; }
+    FORCEINLINE auto operator >(      Self& InOther)       noexcept -> bool { return this->Size  > InOther.Size; }
+    FORCEINLINE auto operator >(const Self& InOther) const noexcept -> bool { return this->Size  > InOther.Size; }
+    FORCEINLINE auto operator<=(      Self& InOther)       noexcept -> bool { return this->Size <= InOther.Size; }
+    FORCEINLINE auto operator<=(const Self& InOther) const noexcept -> bool { return this->Size <= InOther.Size; }
+    FORCEINLINE auto operator>=(      Self& InOther)       noexcept -> bool { return this->Size >= InOther.Size; }
+    FORCEINLINE auto operator>=(const Self& InOther) const noexcept -> bool { return this->Size >= InOther.Size; }
+    FORCEINLINE auto EqualSize (      Self& InOther)       noexcept -> bool { return this->Size == InOther.Size; }
+    FORCEINLINE auto EqualSize (const Self& InOther) const noexcept -> bool { return this->Size == InOther.Size; }
+
+    /** Checks if both instances point to the same memory location. */
+    FORCEINLINE auto IsSameArray(const Self& InOther) const noexcept -> bool;
+    /** Checks if both instances have the same meaningful data. The capacity is not checked. */
+    FORCEINLINE auto IsDataEqual(const Self& InOther) const noexcept -> bool;
+    FORCEINLINE auto IsDataUnequal(const Self& InOther) const noexcept -> bool { return !this->IsDataEqual(InOther); }
+
+    /** Swaps the content buffers of this array with the other array. */
     FORCEINLINE auto SwapBuffers(Self& InOther) noexcept -> void;
 
     /** Private iterator functions for range-based loops. Do not use these directly. */
@@ -181,6 +229,8 @@ private:
     template <bool Condition = IsDynamic()>
     FORCEINLINE auto Shrink(const SizeType InTotalCapacity) noexcept -> TEnableIf<Condition, void>;
 
+    FORCEINLINE auto DestroyAt(const SizeType InIndex) noexcept -> void;
+
     SizeType    Size;
     SizeType    Capacity;
     T*          Data;
@@ -201,6 +251,8 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::~TArray() noexcept
 {
     if (this->Data)
     {
+        this->Reset(0);
+
         if constexpr (AllocationPolicy == AllocationPolicy::Heap)
         {
             ::free(this->Data);
@@ -210,6 +262,66 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::~TArray() noexcept
     }
 
     return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetSlack() noexcept
+{
+#if CHECK_CONTAINER_BOUNDS
+    check( this->IsData() )
+#endif /* CHECK_CONTAINER_BOUNDS */
+
+    return this->GetData() + this->Size;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetSlack() const noexcept
+{
+#if CHECK_CONTAINER_BOUNDS
+    check( this->IsData() )
+#endif /* CHECK_CONTAINER_BOUNDS */
+
+    return this->GetData() + this->Size;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetFirst() noexcept
+{
+#if CHECK_CONTAINER_BOUNDS
+    check( this->IsData() )
+#endif /* CHECK_CONTAINER_BOUNDS */
+
+    return this->GetData();
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetFirst() const noexcept
+{
+#if CHECK_CONTAINER_BOUNDS
+    check( this->IsData() )
+#endif /* CHECK_CONTAINER_BOUNDS */
+
+    return this->GetData();
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetLast() noexcept
+{
+#if CHECK_CONTAINER_BOUNDS
+    check( this->IsData() )
+#endif /* CHECK_CONTAINER_BOUNDS */
+
+    return this->GetData() + this->Size - 1;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetLast() const noexcept
+{
+#if CHECK_CONTAINER_BOUNDS
+    check( this->IsData() )
+#endif /* CHECK_CONTAINER_BOUNDS */
+
+    return this->GetData() + this->Size - 1;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
@@ -246,6 +358,70 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Add(const T&& InElement) no
     }
 
     *(this->Data + this->Size++) = std::move(InElement);
+
+    return *this;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Peek() noexcept
+{
+    if (this->IsData())
+    {
+        return this->GetLast();
+    }
+
+    return nullptr;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Peek() const noexcept
+{
+    if (this->IsData())
+    {
+        return this->GetLast();
+    }
+
+    return nullptr;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Pop() noexcept
+{
+    if (this->Size > 0)
+    {
+        this->DestroyAt(--this->Size);
+    }
+
+    return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Pop(SizeType InCount) noexcept
+{
+    while (this->Size > 0 && InCount > 0)
+    {
+        this->DestroyAt(--this->Size);
+        --InCount;
+
+        continue;
+    }
+
+    return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+template <bool Condition>
+typename TArray<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf
+<
+    Condition,
+    TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
+>
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Append(const Self& InOther) noexcept
+{
+    this->Reserve(InOther.Size);
+
+    ::memcpy(this->Data + this->Size, InOther.Data, InOther.Size * sizeof(T));
+    this->Size += InOther.Size;
 
     return *this;
 }
@@ -494,7 +670,14 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Reset(const SizeType I
 
     for (T* RESTRICT Bulk = this->Data, *RESTRICT End = Bulk + this->Size; Bulk != End; ++Bulk)
     {
-        Bulk->~T();
+        if constexpr (std::is_pointer_v<T>)
+        {
+            (*Bulk).~T();
+        }
+        else
+        {
+            Bulk->~T();
+        }
     }
 
     this->Size = 0;
@@ -514,7 +697,14 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Empty() noexcept
 
     for (T* RESTRICT Bulk = this->Data, *RESTRICT End = Bulk + this->Size; Bulk != End; ++Bulk)
     {
-        Bulk->~T();
+        if constexpr (std::is_pointer_v<T>)
+        {
+            (*Bulk).~T();
+        }
+        else
+        {
+            Bulk->~T();
+        }
     }
 
     this->Size = 0;
@@ -624,6 +814,36 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator=(Self&& InOther) n
     InOther.Data     = nullptr;
 
     return *this;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::IsSameArray(const Self& InOther) const noexcept
+{
+    return this->Data == InOther.Data;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::IsDataEqual(const Self& InOther) const noexcept
+{
+    if (this->Size != InOther.Size)
+    {
+        return false;
+    }
+
+    /* Does this work and is if faster? */
+    /* return ::memcmp(this->Data, InOther.Data, this->Size * sizeof(T)) == 0; */
+
+    for (SizeType Index = 0; Index < this->Size; ++Index)
+    {
+        if (this->Data[Index] != InOther.Data[Index])
+        {
+            return false;
+        }
+
+        continue;
+    }
+
+    return true;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
@@ -835,6 +1055,12 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Shrink(const SizeType InTot
     this->Capacity = InTotalCapacity;
 
     return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::DestroyAt(const SizeType InIndex) noexcept
+{
+    this->Data[InIndex].~T();
 }
 
 } /* ~Namespace Jafg */

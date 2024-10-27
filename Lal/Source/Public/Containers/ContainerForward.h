@@ -44,7 +44,9 @@ template
     typename                SizeType            = DefaultContainerSizeType
 >
 class TArray;
-// class LString;
+
+class   LAsciiString;
+typedef LAsciiString LString;
 
 
 /*----------------------------------------------------------------------------

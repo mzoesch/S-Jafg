@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreAFX.h"
+#include "Widgets/WidgetNode.h"
 
 namespace Jafg
 {

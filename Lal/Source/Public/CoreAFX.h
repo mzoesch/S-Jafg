@@ -55,7 +55,6 @@
 #include "Containers/ContainerMacros.h"
 #include "Containers/Iterator.h"
 #include "Containers/Array.h"
-#include "Containers/String.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Maths
