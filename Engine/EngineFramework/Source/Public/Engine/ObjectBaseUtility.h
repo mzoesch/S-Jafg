@@ -30,7 +30,7 @@ ENGINEFRAMEWORK_API auto GetRegisterObjectQueue() -> TdhArray<LRegistrationQueue
 template <typename TObj>
 FORCEINLINE auto RegisterNewObjectType(
     /** Full namespaced name of the target class. */
-    LStringLegacy                  SpacedClassName,
+    LSimpleString            SpacedClassName,
     /** Delegate that returns a clean default object of the target class. */
     GetContentDefaultFunctor GetContentDefaultDelegate,
     /** Delegate that is called when the object has been registered. */
@@ -40,7 +40,7 @@ FORCEINLINE auto RegisterNewObjectType(
 struct LRegistrationQueuePackage final
 {
     /** Full namespaced name of the target class. */
-    LStringLegacy                  SpacedClassName;
+    LSimpleString            SpacedClassName;
     /** Delegate that returns a clean default object of the target class. */
     GetContentDefaultFunctor GetContentDefault;
     /** Delegate that is called when the object has been registered. */
@@ -54,9 +54,9 @@ struct LRegistrationQueuePackage final
 struct LRegistryPackage final
 {
     /** Full namespaced name of the target class. */
-    LStringLegacy      SpacedClassName;
+    LSimpleString SpacedClassName;
     /** Pointer to the default content object of the target class. */
-    JObjectBase* DefaultPackageReferrer;
+    JObjectBase*  DefaultPackageReferrer;
 };
 
 /** Singleton registry that holds all content, that is considered default, to an object. */
@@ -74,11 +74,11 @@ public:
      */
     ENGINEFRAMEWORK_API void LoadPendingPackages(void);
 
-    ENGINEFRAMEWORK_API auto DoesPackageWithNameExist(const LStringLegacy& SpacedClassName) const -> bool;
-    ENGINEFRAMEWORK_API auto GetPackageWithName(const LStringLegacy& SpacedClassName) -> LRegistryPackage*;
-    ENGINEFRAMEWORK_API auto GetPackageWithName(const LStringLegacy& SpacedClassName) const -> const LRegistryPackage*;
-    ENGINEFRAMEWORK_API auto GetPanickedPackageWithName(const LStringLegacy& SpacedClassName) -> LRegistryPackage*;
-    ENGINEFRAMEWORK_API auto GetPanickedPackageWithName(const LStringLegacy& SpacedClassName) const -> const LRegistryPackage*;
+    ENGINEFRAMEWORK_API auto DoesPackageWithNameExist(const LSimpleString& SpacedClassName) const -> bool;
+    ENGINEFRAMEWORK_API auto GetPackageWithName(const LSimpleString& SpacedClassName) -> LRegistryPackage*;
+    ENGINEFRAMEWORK_API auto GetPackageWithName(const LSimpleString& SpacedClassName) const -> const LRegistryPackage*;
+    ENGINEFRAMEWORK_API auto GetPanickedPackageWithName(const LSimpleString& SpacedClassName) -> LRegistryPackage*;
+    ENGINEFRAMEWORK_API auto GetPanickedPackageWithName(const LSimpleString& SpacedClassName) const -> const LRegistryPackage*;
 
     ENGINEFRAMEWORK_API auto GetPackageByPointer(const void* ContentDefaultReferrer) -> LRegistryPackage*;
     ENGINEFRAMEWORK_API auto GetPanickedPackageByPointer(const void* ContentDefaultReferrer) -> LRegistryPackage*;
@@ -92,7 +92,7 @@ private:
 
 template <typename TObj>
 void RegisterNewObjectType(
-    LStringLegacy                  SpacedClassName,
+    LSimpleString            SpacedClassName,
     GetContentDefaultFunctor GetContentDefaultDelegate,
     OnRegistrationDelegate   Callback
 )
@@ -100,7 +100,7 @@ void RegisterNewObjectType(
     static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
 
     Private::GetRegisterObjectQueue().Emplace(
-        std::forward<LStringLegacy>(SpacedClassName),
+        std::forward<LSimpleString>(SpacedClassName),
         GetContentDefaultDelegate,
         Callback
     );

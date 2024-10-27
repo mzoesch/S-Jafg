@@ -16,12 +16,12 @@ private:\
     friend struct ::Jafg::LTemporalStructForCreatingObjects; \
     friend PRIVATE_JAFG_CORE_JOIN_INNER_THREE(L_, MyClassName, _ConstructionHelper); \
     friend class ::Jafg::Private::LObjectRegistry; \
-    inline static LStringLegacy ClassName = ""; \
+    inline static LSimpleString ClassName = ""; \
     inline static MyClassSpacedName * StaticClassReferrer = nullptr; \
     static auto GetImmutableClassReferrer() -> const MyClassSpacedName * { return StaticClassReferrer; } \
     static auto GetMutableClassReferrer() -> MyClassSpacedName * { return StaticClassReferrer; } \
 public:\
-    static LStringLegacy& StaticClassName() { return PRIVATE_JAFG_CORE_JOIN_INNER_TWO(MyClassSpacedName, ::ClassName); } \
+    static LSimpleString& StaticClassName() { return PRIVATE_JAFG_CORE_JOIN_INNER_TWO(MyClassSpacedName, ::ClassName); } \
     static const MyClassSpacedName * StaticClass() { return GetImmutableClassReferrer(); } \
     MyClassSpacedName() = delete; \
     PROHIBIT_REALLOC_OF_ANY_FROM_NAMESPACED( MyClassSpacedName, MyClassName ) \

@@ -63,12 +63,12 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
     return;
 }
 
-bool Jafg::Private::LObjectRegistry::DoesPackageWithNameExist(const LStringLegacy& SpacedClassName) const
+bool Jafg::Private::LObjectRegistry::DoesPackageWithNameExist(const LSimpleString& SpacedClassName) const
 {
     return this->GetPackageWithName(SpacedClassName) != nullptr;
 }
 
-Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageWithName(const LStringLegacy& SpacedClassName)
+Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageWithName(const LSimpleString& SpacedClassName)
 {
     for (LRegistryPackage& Package : this->RegisteredObjects)
     {
@@ -83,7 +83,7 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageWithN
     return nullptr;
 }
 
-const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageWithName(const LStringLegacy& SpacedClassName) const
+const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageWithName(const LSimpleString& SpacedClassName) const
 {
     for (const LRegistryPackage& Package : this->RegisteredObjects)
     {
@@ -98,7 +98,7 @@ const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackag
     return nullptr;
 }
 
-Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageWithName(const LStringLegacy& SpacedClassName)
+Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageWithName(const LSimpleString& SpacedClassName)
 {
     if (LRegistryPackage* Package = this->GetPackageWithName(SpacedClassName))
     {
@@ -110,7 +110,7 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPack
     return nullptr;
 }
 
-const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageWithName(const LStringLegacy& SpacedClassName) const
+const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageWithName(const LSimpleString& SpacedClassName) const
 {
     if (const LRegistryPackage* Package = this->GetPackageWithName(SpacedClassName))
     {

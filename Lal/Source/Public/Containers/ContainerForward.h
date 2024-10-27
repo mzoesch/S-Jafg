@@ -38,15 +38,15 @@ enum Type : uint8
 
 template
 <
-    typename                T,
-    ResizePolicy::Type      ResizePolicy        = ResizePolicy::Static,
-    AllocationPolicy::Type  AllocationPolicy    = AllocationPolicy::Heap,
+    typename                T                   ,
+    ResizePolicy::Type      ResizePolicy        ,
+    AllocationPolicy::Type  AllocationPolicy    ,
     typename                SizeType            = DefaultContainerSizeType
 >
 class TArray;
 
-class   LAsciiString;
-typedef LAsciiString LString;
+class LAsciiString;
+class LUniEightString;
 
 
 /*----------------------------------------------------------------------------
@@ -62,5 +62,8 @@ template <typename T> using TshArray                = TStaticHeapArray<T>;
 template <typename T> using TdhArray                = TDynamicHeapArray<T>;
 template <typename T> using TssArray                = TStaticStackArray<T>;
 template <typename T> using TdsArray                = TDynamicStackArray<T>;
+
+typedef LAsciiString        LSimpleString;
+typedef LUniEightString     LString;
 
 } /* ~Namespace Jafg */

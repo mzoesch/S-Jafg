@@ -47,7 +47,6 @@ public:
 private:
 
     ::Jafg::Private::LObjectContext* Outer = nullptr;
-
 };
 
 } /* ~Namespace Private */
