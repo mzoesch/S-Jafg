@@ -46,19 +46,21 @@ public:
     FORCEINLINE  TArray() noexcept;
     FORCEINLINE ~TArray() noexcept;
 
-    FORCEINLINE auto GetSize()     const noexcept -> SizeType { return this->Size;                       }
-    FORCEINLINE auto IsEmpty()     const noexcept -> bool     { return this->GetSize() == 0;             }
-    FORCEINLINE auto GetCapacity() const noexcept -> SizeType { return this->Capacity;                   }
-    FORCEINLINE auto IsData()      const noexcept -> bool     { return this->GetData() != nullptr;       }
-    FORCEINLINE auto IsSlack()     const noexcept -> bool     { return this->GetData() != nullptr;       }
-    FORCEINLINE auto GetData()           noexcept -> T*       { return this->Data;                       }
-    FORCEINLINE auto GetData()     const noexcept -> const T* { return this->Data;                       }
-    FORCEINLINE auto GetSlack()          noexcept -> T*       ;
-    FORCEINLINE auto GetSlack()    const noexcept -> const T* ;
-    FORCEINLINE auto GetFirst()          noexcept -> T*       ;
-    FORCEINLINE auto GetFirst()    const noexcept -> const T* ;
-    FORCEINLINE auto GetLast()           noexcept -> T*       ;
-    FORCEINLINE auto GetLast()     const noexcept -> const T* ;
+    FORCEINLINE auto GetSize()        const noexcept -> SizeType { return this->Size;                       }
+    FORCEINLINE auto IsEmpty()        const noexcept -> bool     { return this->GetSize() == 0;             }
+    FORCEINLINE auto GetCapacity()    const noexcept -> SizeType { return this->Capacity;                   }
+    FORCEINLINE auto IsData()         const noexcept -> bool     { return this->GetData() != nullptr;       }
+    FORCEINLINE auto IsSlack()        const noexcept -> bool     { return this->GetData() != nullptr;       }
+    FORCEINLINE auto GetData()              noexcept -> T*       { return this->Data;                       }
+    FORCEINLINE auto GetData()        const noexcept -> const T* { return this->Data;                       }
+    FORCEINLINE auto GetSlack()             noexcept -> T*       ;
+    FORCEINLINE auto GetSlack()       const noexcept -> const T* ;
+    FORCEINLINE auto GetUnsafeSlack()       noexcept -> T*       ;
+    FORCEINLINE auto GetUnsafeSlack() const noexcept -> const T* ;
+    FORCEINLINE auto GetFirst()             noexcept -> T*       ;
+    FORCEINLINE auto GetFirst()       const noexcept -> const T* ;
+    FORCEINLINE auto GetLast()              noexcept -> T*       ;
+    FORCEINLINE auto GetLast()        const noexcept -> const T* ;
 
     /**
      * Add a new element to the array while potentially reallocating the whole array to fit.
@@ -208,10 +210,10 @@ public:
     FORCEINLINE auto SwapBuffers(Self& InOther) noexcept -> void;
 
     /** Private iterator functions for range-based loops. Do not use these directly. */
-    FORCEINLINE auto begin()       noexcept -> Iterator<T>       { return Iterator<T>      (this->GetData());  }
-    FORCEINLINE auto begin() const noexcept -> Iterator<const T> { return Iterator<const T>(this->GetData());  }
-    FORCEINLINE auto end()         noexcept -> Iterator<T>       { return Iterator<T>      (this->GetSlack()); }
-    FORCEINLINE auto end()   const noexcept -> Iterator<const T> { return Iterator<const T>(this->GetSlack()); }
+    FORCEINLINE auto begin()       noexcept -> Iterator<T>       { return Iterator<T>      (this->GetData());        }
+    FORCEINLINE auto begin() const noexcept -> Iterator<const T> { return Iterator<const T>(this->GetData());        }
+    FORCEINLINE auto end()         noexcept -> Iterator<T>       { return Iterator<T>      (this->GetUnsafeSlack()); }
+    FORCEINLINE auto end()   const noexcept -> Iterator<const T> { return Iterator<const T>(this->GetUnsafeSlack()); }
 
 private:
 
@@ -281,6 +283,18 @@ const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetSlack() const n
     check( this->IsData() )
 #endif /* CHECK_CONTAINER_BOUNDS */
 
+    return this->GetData() + this->Size;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetUnsafeSlack() noexcept
+{
+    return this->GetData() + this->Size;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetUnsafeSlack() const noexcept
+{
     return this->GetData() + this->Size;
 }
 
