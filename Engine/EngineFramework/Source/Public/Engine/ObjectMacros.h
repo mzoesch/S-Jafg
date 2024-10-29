@@ -31,11 +31,13 @@ private: /* Restore default visibility. */
         MyClassName, \
         MyClassSpacedName, \
         SuperClassName, \
-        SuperClassSpacedName \
+        SuperClassSpacedName, \
+        ... \
     )               \
                     \
     struct PRIVATE_JAFG_CORE_JOIN_INNER_THREE(L_, MyClassName, _ConstructionHelper) final {\
         PRIVATE_JAFG_CORE_JOIN_INNER_THREE(L_, MyClassName, _ConstructionHelper)();\
+        inline static ::EClassFlags::Type ClassFlags = EClassFlags::CombineFlags(EClassFlags::None, ##__VA_ARGS__);\
     }; \
 
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION( \
@@ -53,7 +55,9 @@ private: /* Restore default visibility. */
             [](void) -> ::Jafg::Private::JObjectBase* { return new MyClassSpacedName(::Jafg::GetDefaultObjectInitializer()); }, \
             [] (::Jafg::LObjectClass * StaticClass) -> void {\
             ::Jafg::Private::LRegistrationCallbackHelper::DoRegisterContentsForClass< MyClassSpacedName >( \
-                StaticClass);\
+                StaticClass,\
+                PRIVATE_JAFG_CORE_JOIN_INNER_THREE(L_, MyClassName, _ConstructionHelper)::ClassFlags,\
+                #SuperClassSpacedName); \
         return; });\
         return;\
     } \

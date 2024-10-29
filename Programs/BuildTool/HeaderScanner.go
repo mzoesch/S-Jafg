@@ -378,12 +378,13 @@ func GenerateObjectBodyForClass(token Token) {
     #undef DECLARE_JAFG_CLASS
 #endif /* DECLARE_JAFG_CLASS */
 
-#define DECLARE_JAFG_CLASS() \
+#define DECLARE_JAFG_CLASS(...) \
     PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION( \
         %s, /* MyClassName          */                                                 \
         %s, /* MyClassSpacedName    */                                                 \
         %s, /* SuperClassName       */                                                 \
-        %s  /* SuperClassSpacedName */                                                 \
+        %s, /* SuperClassSpacedName */                                                 \
+        ##__VA_ARGS__ /* ClassFlags */                                                 \
     )
 
 `,

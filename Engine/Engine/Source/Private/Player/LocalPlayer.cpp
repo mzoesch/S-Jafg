@@ -10,6 +10,8 @@ void Jafg::LLocalPlayer::Initialize()
 {
     checkSlow( this->PlayerInput == nullptr )
 
+    this->Context = new ::Jafg::Private::LObjectContext();
+
     this->PlayerInput = new LPlayerInput();
 
 #if PLATFORM_DESKTOP
@@ -23,7 +25,7 @@ void Jafg::LLocalPlayer::Initialize()
     this->GetPrimarySurface()->SetInputMode(false);
 
     this->Hud = new ::Jafg::LHud();
-    this->Hud->BeginLife();
+    this->Hud->Initialize(this->GetContext());
 
     return;
 }
@@ -53,7 +55,7 @@ void Jafg::LLocalPlayer::TearDown()
 {
     if (ensure(this->Hud))
     {
-        this->Hud->EndLife();
+        this->Hud->TearDown();
         delete this->Hud;
         this->Hud = nullptr;
     }
@@ -70,6 +72,11 @@ void Jafg::LLocalPlayer::TearDown()
         delete this->SurfaceToDrawOn;
         this->SurfaceToDrawOn = nullptr;
     }
+
+    check( this->Context )
+    this->Context->TearDownContext();
+    delete this->Context;
+    this->Context = nullptr;
 
     return;
 }

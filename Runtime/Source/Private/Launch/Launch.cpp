@@ -4,8 +4,14 @@
 #include "Engine/Engine.h"
 #include "Core/Application.h"
 #include "Engine/ObjectBaseUtility.h"
+#include "Engine/Carnifex.h"
 
 using namespace Jafg;
+
+namespace
+{
+    LCarnifex* PrivateCarnifex = nullptr;
+}
 
 FORCEINLINE EPlatformExit::Type GetMostSignificantExitReason()
 {
@@ -22,6 +28,9 @@ FORCEINLINE EPlatformExit::Type GetMostSignificantExitReason()
 
 FORCEINLINE EPlatformExit::Type EngineInit()
 {
+    PrivateCarnifex = new LCarnifex();
+    ::Jafg::Private::GCarnifexReferrer = &PrivateCarnifex;
+
     Private::CreateSingletonObjectRegistry();
     Private::GObjectRegistry->LoadPendingPackages();
 
@@ -55,6 +64,8 @@ FORCEINLINE void EngineTick()
 
     GEngine->Tick(Application::GetDeltaTimeAsFloat());
 
+    PrivateCarnifex->KillAllGarbageChildren();
+
     return;
 }
 
@@ -80,6 +91,11 @@ FORCEINLINE void EngineExit()
          */
         GEngine->ReflectForwardedExitRequest();
     }
+
+    PrivateCarnifex->KillAllGarbageChildren();
+    delete PrivateCarnifex;
+    ::Jafg::Private::GCarnifexReferrer = nullptr;
+    PrivateCarnifex = nullptr;
 
     if (::HasCustomExitReason())
     {

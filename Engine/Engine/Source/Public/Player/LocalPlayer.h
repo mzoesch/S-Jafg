@@ -7,6 +7,13 @@
 namespace Jafg
 {
 
+namespace Private
+{
+
+class LObjectContext;
+
+}
+
 class LHud;
 class LSurface;
 class LPlayerInput;
@@ -43,6 +50,8 @@ public:
     FORCEINLINE auto GetPossessed() const -> APlayerController* { return this->PlayerController; }
                 auto Possess(APlayerController* InNewController) -> void;
 
+    FORCEINLINE auto GetContext() const -> Private::LObjectContext* { return this->Context; }
+
 private:
 
     LPlayerInput* PlayerInput     = nullptr;
@@ -51,6 +60,12 @@ private:
     LSurface*     SurfaceToDrawOn = nullptr;
 
     APlayerController* PlayerController = nullptr;
+
+    /**
+     * The context of the local player. It is created when the local player is instantiated
+     * and not destroyed until the local player is killed.
+     */
+    Private::LObjectContext* Context = nullptr;
 };
 
 } /* ~Namespace Jafg. */

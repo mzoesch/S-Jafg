@@ -17,6 +17,7 @@ class JObjectBase;
 class LObjectRegistry;
 struct TRegistryPackageBase;
 struct LRegistrationQueuePackage;
+struct LRegistrationCallbackHelper;
 struct LObjectMiscellaneousAccessor;
 
 typedef JObjectBase* (*GetContentDefaultFunctor)(void);
@@ -24,16 +25,37 @@ typedef void (*OnRegistrationDelegate)(LObjectClass* StaticClass);
 
 } /* ~Namespace Private */
 
+/** A global context that shares the lifetime of the program (not engine!). */
+ENGINEFRAMEWORK_API extern Private::LObjectContext* GOmniVitaContext;
+
 /** Allocate a new object of type TObj. */
 template <typename TObj>
 FORCEINLINE auto NewObject() -> TObj*;
 /** Allocate a new object of type TObj within a given context. */
 template <typename TObj>
-FORCEINLINE auto NewObject(Private::LObjectContext* Context) -> TObj*;
+FORCEINLINE auto NewObject(Private::LObjectContext* InContext) -> TObj*;
+/** Allocate a new object of type TObj within a given context and with a given static class that might be more specialist. */
+template <typename TObj>
+FORCEINLINE auto NewObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> TObj*;
 /** Allocate a new object with its given class name. */
-FORCEINLINE auto NewObject(const LSimpleString& ClassName) -> Private::JObjectBase*;
+FORCEINLINE auto NewObject(const LSimpleString& InClassName) -> Private::JObjectBase*;
 /** Allocate a new object with its given class name within a given context. */
-FORCEINLINE auto NewObject(Private::LObjectContext* Context, const LSimpleString& ClassName) -> Private::JObjectBase*;
+FORCEINLINE auto NewObject(Private::LObjectContext* InContext, const LSimpleString& InClassName) -> Private::JObjectBase*;
+/** Allocate a new object with its given static class and a given context. */
+FORCEINLINE auto NewObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> Private::JObjectBase*;
+
+/** Allocate a new object of type TObj. The begin-life method will not be called. */
+template <typename TObj>
+FORCEINLINE auto NewDeferredObject() -> TObj*;
+/** Allocate a new object of type TObj within a given context. The begin-life method will not be called. */
+template <typename TObj>
+FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext) -> TObj*;
+/** Allocate a new object with its given class name. The begin-life method will not be called. */
+FORCEINLINE auto NewDeferredObject(const LSimpleString& InClassName) -> Private::JObjectBase*;
+/** Allocate a new object with its given class name within a given context. The begin-life method will not be called. */
+FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LSimpleString& InClassName) -> Private::JObjectBase*;
+/** Allocate a new object with its given static class and a given context. The begin-life method will not be called. */
+FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> Private::JObjectBase*;
 
 namespace Private
 {
@@ -42,6 +64,8 @@ namespace Private
  * Global application wide singleton object registry.
  */
 ENGINEFRAMEWORK_API extern LObjectRegistry* GObjectRegistry;
+/** Referrs to a program global carnifex. This variable is not the owner. */
+ENGINEFRAMEWORK_API extern LCarnifex**      GCarnifexReferrer;
 
 ENGINEFRAMEWORK_API void CreateSingletonObjectRegistry(void);
 ENGINEFRAMEWORK_API void KillSingletonObjectRegistry(void);
@@ -84,7 +108,24 @@ struct LObjectMiscellaneousAccessor final
     FORCEINLINE static auto NewObject(Private::LObjectContext* Context) -> TObj*;
     FORCEINLINE static auto NewObject(Private::LObjectContext* Context, const LSimpleString& ClassName) -> JObjectBase*;
 
-    ENGINEFRAMEWORK_API static auto NewObject(LObjectContext* Context, const LObjectClass* StaticClass) -> JObjectBase*;
+    template <typename TObj>
+    FORCEINLINE static auto NewDeferredObject(Private::LObjectContext* Context) -> TObj*;
+    FORCEINLINE static auto NewDeferredObject(Private::LObjectContext* Context, const LSimpleString& ClassName) -> JObjectBase*;
+
+    ENGINEFRAMEWORK_API static auto NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
+    ENGINEFRAMEWORK_API static auto NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
+};
+
+/**
+ * Temporal private object that holds an already registered package that requires additional tasks to be done after
+ * all packages have been registered.
+ */
+struct LDeferredRegistryPackage final
+{
+    /** Full namespaced name of the target superclass that has to be resolved at a later time. */
+    LSimpleString   SuperName;
+    /** The target child that is missing its parent. */
+    LObjectClass*   StaticClass;
 };
 
 /**
@@ -102,6 +143,8 @@ struct LRegistryPackage final
 /** Singleton registry that holds all content, that is considered default, to an object. */
 class LObjectRegistry final
 {
+    friend LRegistrationCallbackHelper;
+
 public:
 
     LObjectRegistry()  = default;
@@ -133,11 +176,14 @@ public:
     ENGINEFRAMEWORK_API auto GetPackageByContentDefault(const void* ContentDefaultReferrer) -> LRegistryPackage*;
     ENGINEFRAMEWORK_API auto GetPanickedPackageByContentDefault(const void* ContentDefaultReferrer) -> LRegistryPackage*;
 
-    FORCEINLINE auto GetRegisteredObjects() -> TdhArray<LRegistryPackage>& { return this->RegisteredObjects; }
+    FORCEINLINE         auto GetRegisteredObjects() -> TdhArray<LRegistryPackage>& { return this->RegisteredObjects; }
+    /** Gets all registered static class that inherit in any way from InStaticClass. */
+    ENGINEFRAMEWORK_API auto GetRegisteredObjectsOfClass(const LObjectClass* InStaticClass, TdhArray<const LObjectClass*>& OutArray) const -> void;
 
 private:
 
-    TdhArray<LRegistryPackage> RegisteredObjects;
+    TdhArray<LDeferredRegistryPackage> DeferredPackages;
+    TdhArray<LRegistryPackage>         RegisteredObjects;
 };
 
 template <typename TObj>
@@ -166,8 +212,20 @@ struct LRegistrationCallbackHelper final
     PROHIBIT_REALLOC_OF_ANY_FROM(LRegistrationCallbackHelper)
     ~LRegistrationCallbackHelper() = delete;
 
+    /**
+     * Registers static class information that is required for the object to be registered.
+     *
+     * @tparam TObj       The object type that is being registered.
+     * @param StaticClass The static class that was assigned to TObj.
+     * @param Flags       The flags that describe class-specific behavior.
+     * @param Parent      The namespaced name of the parent class.
+     */
     template <typename TObj = JObjectBase>
-    static void DoRegisterContentsForClass(LObjectClass* StaticClass)
+    static void DoRegisterContentsForClass(
+        LObjectClass*           StaticClass,
+        const EClassFlags::Type Flags,
+        LSimpleString&&         Parent
+    )
     {
         static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
 
@@ -176,15 +234,14 @@ struct LRegistrationCallbackHelper final
 
         TObj::StaticClassReferrer  = StaticClass;
         StaticClass->TotalByteSize = sizeof(TObj);
+        StaticClass->Flags         = Flags;
 
         check( TObj::StaticClass() )
 
-        LOG_VERBOSE(
-            LogObjectPackager,
-            "Finished registering package for [{} ({}b)].",
-            TObj::StaticClass()->GetSpacedClassName(),
-            TObj::StaticClass()->GetTotalByteSize()
-        )
+        GObjectRegistry->DeferredPackages.Emplace(
+            std::move(Parent),
+            const_cast<LObjectClass*>(TObj::StaticClass())
+        );
 
         return;
     }
@@ -195,23 +252,61 @@ struct LRegistrationCallbackHelper final
 template <typename TObj>
 TObj* NewObject()
 {
-    return NewObject<TObj>(nullptr);
+    return NewObject<TObj>(GOmniVitaContext);
 }
 
 template <typename TObj>
-TObj* NewObject(Private::LObjectContext* Context)
+TObj* NewObject(Private::LObjectContext* InContext)
 {
-    return Private::LObjectMiscellaneousAccessor::NewObject<TObj>(Context);
+    return Private::LObjectMiscellaneousAccessor::NewObject<TObj>(InContext);
 }
 
-Private::JObjectBase* NewObject(const LSimpleString& ClassName)
+template <typename TObj>
+TObj* NewObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
-    return NewObject(nullptr, ClassName);
+    return reinterpret_cast<TObj*>(Private::LObjectMiscellaneousAccessor::NewObject(InContext, InStaticClass));
 }
 
-Private::JObjectBase* NewObject(Private::LObjectContext* Context, const LSimpleString& ClassName)
+Private::JObjectBase* NewObject(const LSimpleString& InClassName)
 {
-    return Private::LObjectMiscellaneousAccessor::NewObject(Context, ClassName);
+    return NewObject(GOmniVitaContext, InClassName);
+}
+
+Private::JObjectBase* NewObject(Private::LObjectContext* InContext, const LSimpleString& InClassName)
+{
+    return Private::LObjectMiscellaneousAccessor::NewObject(InContext, InClassName);
+}
+
+Private::JObjectBase* NewObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass)
+{
+    return Private::LObjectMiscellaneousAccessor::NewObject(InContext, InStaticClass);
+}
+
+template <typename TObj>
+TObj* NewDeferredObject()
+{
+    return NewDeferredObject<TObj>(GOmniVitaContext);
+}
+
+template <typename TObj>
+TObj* NewDeferredObject(Private::LObjectContext* InContext)
+{
+    return Private::LObjectMiscellaneousAccessor::NewDeferredObject<TObj>(InContext);
+}
+
+Private::JObjectBase* NewDeferredObject(const LSimpleString& InClassName)
+{
+    return NewDeferredObject(GOmniVitaContext, InClassName);
+}
+
+Private::JObjectBase* NewDeferredObject(Private::LObjectContext* InContext, const LSimpleString& InClassName)
+{
+    return Private::LObjectMiscellaneousAccessor::NewDeferredObject(InContext, InClassName);
+}
+
+Private::JObjectBase* NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass)
+{
+    return Private::LObjectMiscellaneousAccessor::NewDeferredObject(InContext, InStaticClass);
 }
 
 template <typename TObj>
@@ -223,6 +318,17 @@ TObj* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context)
 Private::JObjectBase* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context, const LSimpleString& ClassName)
 {
     return LObjectMiscellaneousAccessor::NewObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass);
+}
+
+template <typename TObj>
+TObj* Private::LObjectMiscellaneousAccessor::NewDeferredObject(Private::LObjectContext* Context)
+{
+    return reinterpret_cast<TObj*>(LObjectMiscellaneousAccessor::NewDeferredObject(Context, TObj::StaticClass()));
+}
+
+Private::JObjectBase* Private::LObjectMiscellaneousAccessor::NewDeferredObject(Private::LObjectContext* Context, const LSimpleString& ClassName)
+{
+    return LObjectMiscellaneousAccessor::NewDeferredObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass);
 }
 
 } /* ~Namespace Jafg */

@@ -91,7 +91,7 @@ void Jafg::LEngine::TearDown()
         {
             if (i->ChildWorld != nullptr)
             {
-                i->ChildWorld->TearDownWorld();
+                i->ChildWorld->TearDownContext();
 
                 check( i->ChildWorld->GetWorldState() == EWorldState::WaitingForKill )
 
@@ -354,7 +354,7 @@ void Jafg::LEngine::TravelContext(LWorldContext& Context)
 
     if (Context.ChildWorld->GetWorldState() == EWorldState::Running)
     {
-        Context.ChildWorld->TearDownWorld();
+        Context.ChildWorld->TearDownContext();
     }
 
     Context.ChildWorld->InitializeWorld(*Level);

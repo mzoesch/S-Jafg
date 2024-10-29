@@ -47,6 +47,10 @@ protected:
 
 public:
 
+    // JObjectBase implementation
+    virtual void MarkAsGarbage() override;
+    // ~JObjectBase implementation
+
     virtual void Construct();
     virtual void Tick();
     virtual void Destruct();

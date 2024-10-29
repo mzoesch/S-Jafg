@@ -20,7 +20,14 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JTickableWorldSubsystem)
 
+    // JWorldSubsystem implementation
+    virtual void Initialize(LSubsystemCollection& Collection) override;
+    virtual void TearDown() override;
+    // ~JWorldSubsystem implementation
+
+    // LTickableObject implementation
     virtual void Tick(const float DeltaTime) override { }
+    // ~LTickableObject implementation
 };
 
 } /* ~Namespace Jafg */

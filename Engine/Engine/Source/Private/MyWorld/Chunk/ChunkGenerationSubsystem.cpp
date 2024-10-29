@@ -72,11 +72,13 @@ FunctionEnd:
 
 void Jafg::JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
 {
-    JWorldSubsystem::Initialize(Collection);
+    Super::Initialize(Collection);
 }
 
 void Jafg::JChunkGenerationSubsystem::Tick(const float DeltaTime)
 {
+    Super::Tick(DeltaTime);
+
     this->UpdateChunkQueue();
     this->KillChunks();
     this->GenerateChunks();
@@ -87,7 +89,7 @@ void Jafg::JChunkGenerationSubsystem::Tick(const float DeltaTime)
 
 void Jafg::JChunkGenerationSubsystem::TearDown()
 {
-    JWorldSubsystem::TearDown();
+    Super::TearDown();
 }
 
 void Jafg::JChunkGenerationSubsystem::UpdateChunkQueue()

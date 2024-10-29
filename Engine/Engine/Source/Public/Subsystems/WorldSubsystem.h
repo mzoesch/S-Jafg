@@ -18,13 +18,6 @@ class JWorldSubsystem : public JSubsystem
 protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JWorldSubsystem)
-
-public:
-
-    // Subsystem implementation
-    virtual void Initialize(LSubsystemCollection& Collection) override;
-    virtual void TearDown() override;
-    // ~Subsystem implementation
 };
 
 } /* ~Namespace Jafg */

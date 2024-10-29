@@ -15,7 +15,7 @@ namespace Jafg
 {
 
 DECLARE_JAFG_CLASS()
-class JChunkGenerationSubsystem final : public Jafg::JTickableWorldSubsystem
+class JChunkGenerationSubsystem final : public JTickableWorldSubsystem
 {
     GENERATED_CLASS_BODY()
 
@@ -23,13 +23,11 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JChunkGenerationSubsystem)
 
-public:
-
-    // WorldSubsystem implementation
+    // JTickableWorldSubsystem implementation
     virtual void Initialize(Jafg::LSubsystemCollection& Collection) override;
     virtual void Tick(const float DeltaTime) override;
     virtual void TearDown() override;
-    // ~WorldSubsystem implementation
+    // ~JTickableWorldSubsystem implementation
 
     FORCEINLINE int32 TupleToKey(const std::tuple<int32, int32, int32>& Tuple) const
     {

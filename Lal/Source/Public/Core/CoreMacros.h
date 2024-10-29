@@ -29,11 +29,13 @@
 
 /** Prohibits copying of a specific type T. */
 #define PROHIBIT_COPY(Type)                                                          \
+    Type(      Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
     Type(const Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
     Type& operator=(const Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = delete;
 
 /** Prohibits copying of a specific type T. */
 #define PROHIBIT_COPY_NAMESPACED(TSpacedType, Type) \
+    TSpacedType(      TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
     TSpacedType(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
     TSpacedType& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = delete;
 

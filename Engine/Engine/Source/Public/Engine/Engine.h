@@ -8,6 +8,7 @@
 namespace Jafg
 {
 
+class JObject;
 class LEngine;
 class LLocalPlayer;
 class LWorld;
@@ -62,6 +63,8 @@ struct LWorldContext
 class ENGINE_API LEngine
 {
     typedef std::chrono::steady_clock::time_point SteadyStatisticsTimePoint;
+
+    friend JObject;
 
 public:
 

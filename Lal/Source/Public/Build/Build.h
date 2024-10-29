@@ -174,9 +174,27 @@
 #define PRAGMA_FOR_JAFG_BUILD_TOOL(Pragma)
 
 /** Allows one to declare a class that derives from JObjectBase in some form. */
-#define DECLARE_JAFG_CLASS()
+#define DECLARE_JAFG_CLASS(... /* ClassFlags */ )
 /** Has to be declared inside the body of a class that was marked with DECLARE_JAFG_CLASS. */
 #define GENERATED_CLASS_BODY()
 
 /** Advice the build tool to make the global workspace wide build file for this file. */
 PRAGMA_FOR_JAFG_BUILD_TOOL("MakeBuildFile")
+
+
+/*-----------------------------------------------------------------------------
+    Static errors not caught by the compiler.
+-----------------------------------------------------------------------------*/
+
+//
+// Error C1189 : #error:  The C++ Standard Library forbids macroizing the keyword "dynamic_cast".
+//
+// Shit. We cannot define dynamic_cast?
+// But how can we check this mistake at runtime?
+//
+// /**
+//  * Do not use dynamic_cast in Jafg.
+//  * Rtti is disabled, and using dynamic_cast will always return nullptr or cause an abnormal program termination.
+//  */
+// #define dynamic_cast UNAVAILABLE_DYNAMIC_CAST
+//

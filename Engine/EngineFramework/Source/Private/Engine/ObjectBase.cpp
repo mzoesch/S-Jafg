@@ -2,6 +2,7 @@
 
 #include "CoreAFX.h"
 #include "Engine/ObjectBase.h"
+#include "Engine/Carnifex.h"
 
 Jafg::Private::JObjectBase::JObjectBase(const LObjectInitializer& ObjectInitializer)
 {
@@ -15,7 +16,68 @@ Jafg::Private::JObjectBase::JObjectBase(const LObjectInitializer& ObjectInitiali
     return;
 }
 
-void Jafg::Private::JObjectBase::BeginLife()
+Jafg::Private::JObjectBase::~JObjectBase()
 {
+    /*
+     * If this check triggers, you might have done one of the following things that are forbidden:
+     *   - Manually deleted an object via ~delete or ~delete[].
+     *   - Used a smart pointer not from the jafg library, for example, a std::shared_ptr (Which are not
+     *     compatible).
+     *
+     * Create a new object with NewObject. Delete them by either calling #MarkAsGarbage to get them distracted
+     * at the next engine butcher cycle or by calling #KillYourSelfNow to get them distracted immediately (comparable
+     * with a call to the delete operator).
+     */
+    check( this->bGarbage )
+}
+
+void Jafg::Private::JObjectBase::MarkAsGarbage()
+{
+    /*
+     * Might be called multiple times when tearing down complex subsystems.
+     * Therefore, we just guard this method.
+     */
+    if (this->bGarbage)
+    {
+        return;
+    }
+
+    this->MarkAsGarbage(true);
+
+    return;
+}
+
+void Jafg::Private::JObjectBase::KillYourSelfNow()
+{
+    check( this->bGarbage == false )
+
+    this->MarkAsGarbage(false);
+
+    check( this->Outer )
+    check( this->Outer->Carnifex )
+    check( this->Outer->GetCarnifex() )
+    this->Outer->GetCarnifex()->DevourGarbageChildNow(this);
+
+    return;
+}
+
+void Jafg::Private::JObjectBase::MarkAsGarbage(const bool bAddToCarnifex)
+{
+    check( this->bGarbage == false )
+
+    this->bGarbage = true;
+
+    check( this->Outer )
+
+    const bool bWasRemoved = this->Outer->Employees.RemoveOnce(this);
+    check( bWasRemoved )
+
+    if (bAddToCarnifex)
+    {
+        check( this->Outer->Carnifex )
+        check( this->Outer->GetCarnifex() )
+        this->Outer->GetCarnifex()->AddGarbageChild(this);
+    }
+
     return;
 }

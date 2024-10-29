@@ -9,6 +9,7 @@ namespace Jafg
 {
 
 class WWidgetNode;
+struct LSubsystemCollection;
 
 MAKE_EXTERNAL_TEMPLATE_DHARRAY(ENGINE, WWidgetNode*)
 
@@ -20,14 +21,16 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FROM(LHud)
     ~LHud() = default;
 
-    void BeginLife();
+    void Initialize(Private::LObjectContext* InOuter);
     void Tick();
     void Draw();
-    void EndLife();
+    void TearDown();
 
 private:
 
-    TdhArray<WWidgetNode*> TopLevelWidgets;
+    Private::LObjectContext* Outer;
+    LSubsystemCollection*    Collection;
+    TdhArray<WWidgetNode*>   TopLevelWidgets;
 };
 
 } /* ~Namespace Jafg. */

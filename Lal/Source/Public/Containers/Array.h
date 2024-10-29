@@ -44,6 +44,9 @@ class TArray
 public:
 
     FORCEINLINE  TArray() noexcept;
+    FORCEINLINE  TArray(const Self&  InOther) noexcept;
+    FORCEINLINE  TArray(      Self&& InOther) noexcept;
+    FORCEINLINE  TArray(std::initializer_list<T> InList) noexcept;
     FORCEINLINE ~TArray() noexcept;
 
     FORCEINLINE auto GetSize()        const noexcept -> SizeType { return this->Size;                       }
@@ -70,13 +73,10 @@ public:
     template <bool Condition = IsDynamic()>
     FORCEINLINE auto Add(const T&& InElement) noexcept -> TEnableIf<Condition, Self&>;
 
-    /**
-     * Peeks at the last element in the array.
-     *
-     * @return The element or nullptr if the array is empty.
-     */
+    /** Peeks at the last element in the array. Returns nullptr if the array is empty. */
     FORCEINLINE auto Peek()                      noexcept ->       T*;
     FORCEINLINE auto Peek()                const noexcept -> const T*;
+    /** Removes the last element in the array. */
     FORCEINLINE auto Pop()                       noexcept -> void    ;
     FORCEINLINE auto Pop(const SizeType InCount) noexcept -> void    ;
 
@@ -84,7 +84,8 @@ public:
      * Appends new elements to the array while potentially reallocating the whole array to fit.
      */
     template <bool Condition = IsDynamic()>
-    FORCEINLINE auto Append(const Self& InOther) noexcept -> TEnableIf<Condition, Self&>;
+    FORCEINLINE auto Append(const Self&  InOther) noexcept -> TEnableIf<Condition, Self&>;
+    FORCEINLINE auto Append(      Self&& InOther) noexcept -> Self&;
 
     /**
      * Adds a new element to the array and zeroes the target memory while potentially
@@ -100,6 +101,14 @@ public:
      */
     FORCEINLINE auto AddUninitialized() noexcept -> SizeType;
     FORCEINLINE auto AddUninitialized(const SizeType InCount) noexcept -> SizeType;
+
+    FORCEINLINE auto RemoveAt(const SizeType InIndex) noexcept -> void;
+
+    /**
+     * Tries to remove the first occurrence of the provided element from the array.
+     * @return True, if an element was found and successfully removed.
+     */
+    FORCEINLINE auto RemoveOnce(const T& InElement) noexcept -> bool;
 
     /**
      * Adds a new element to the array and constructs it in place while potentially
@@ -244,6 +253,33 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray() noexcept
     this->Size        = 0;
     this->Capacity    = 0;
     this->Data        = nullptr;
+
+    return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(const Self& InOther) noexcept
+{
+    this->Append(InOther);
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(Self&& InOther) noexcept
+{
+    this->Append(std::move(InOther));
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(std::initializer_list<T> InList) noexcept
+{
+    this->Size        = 0;
+    this->Capacity    = 0;
+    this->Data        = nullptr;
+
+    this->Reserve(static_cast<SizeType>(InList.size()));
+    this->Size        = static_cast<SizeType>(InList.size());
+
+    ::memcpy(this->Data, InList.begin(), this->Size * sizeof(T));
 
     return;
 }
@@ -432,10 +468,44 @@ typename TArray<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf
 >
 TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Append(const Self& InOther) noexcept
 {
-    this->Reserve(InOther.Size);
+    this->Reserve(this->GetSize() + InOther.Size);
 
     ::memcpy(this->Data + this->Size, InOther.Data, InOther.Size * sizeof(T));
     this->Size += InOther.Size;
+
+    return *this;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Append(Self&& InOther) noexcept
+{
+    if (this->IsData())
+    {
+        /*
+         * Treat the r value as an l and take ownership of it. We have to copy the r buffer to this buffer,
+         * therefore, we call the #Append l value overload of this method.
+         */
+        this->Append(InOther);
+
+        /*
+         * We of course now free the passed r buffer as it is not in need anymore. We have copied the data.
+         */
+        InOther.Size     = 0;
+        InOther.Capacity = 0;
+        ::free(InOther.Data);
+        InOther.Data     = nullptr;
+
+        return *this;
+    }
+
+    this->Size     = InOther.Size;
+    this->Capacity = InOther.Capacity;
+    this->Data     = InOther.Data;
+
+    InOther.Size     = 0;
+    InOther.Capacity = 0;
+    InOther.Data     = nullptr;
 
     return *this;
 }
@@ -470,6 +540,38 @@ SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddUninitialized(c
 {
     unimplemented()
     return 0;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAt(const SizeType InIndex) noexcept
+{
+#if CHECK_CONTAINER_BOUNDS
+    check( this->IsValidIndex(InIndex) )
+#endif /* CHECK_CONTAINER_BOUNDS */
+
+    this->DestroyAt(InIndex);
+
+    if (InIndex < this->Size - 1)
+    {
+        ::memmove(this->Data + InIndex, this->Data + InIndex + 1, (this->Size - InIndex - 1) * sizeof(T));
+    }
+
+    --this->Size;
+
+    return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnce(const T& InElement) noexcept
+{
+    SizeType Index = this->Find(InElement);
+    if (Index != INDEX_NONE)
+    {
+        this->RemoveAt(Index);
+        return true;
+    }
+
+    return false;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>

@@ -8,9 +8,21 @@ void Jafg::JObject::BeginLife()
 {
     JObjectBase::BeginLife();
 
-    if (LWorld* InnerCastedOuter = dynamic_cast<LWorld*>(this->GetContext()); InnerCastedOuter)
+    for (uint8 i = 0; i < LEngine::GetMaxContexts(); ++i)
     {
-        this->CastedOuter = InnerCastedOuter;
+        if (const LWorldContext* Context = GEngine->Contexts[i]; Context)
+        {
+            if (Context->ChildWorld)
+            {
+                if (static_cast<void*>(Context->ChildWorld) == static_cast<void*>(this->GetContext()))
+                {
+                    this->CastedOuter = Context->ChildWorld;
+                    return;
+                }
+            }
+        }
+
+        continue;
     }
 
     return;

@@ -15,7 +15,9 @@ class LEngine;
 class Shader;
 class JWorldSubsystem;
 class Camera;
+class LTickableObject;
 struct LLevel;
+struct LSubsystemCollection;
 
 namespace EWorldState
 {
@@ -43,17 +45,8 @@ class ENGINE_API LWorld final : public ::Jafg::Private::LObjectContext
 {
 public:
 
-    LWorld()                                        = delete;
-
+    LWorld() = delete;
     PROHIBIT_REALLOC_OF_ANY_FROM(LWorld)
-
-    // LWorld(LWorld&)                                 = delete;
-    // LWorld(const LWorld&)                           = delete;
-    // LWorld(LWorld&&)                                = delete;
-    // FORCEINLINE LWorld& operator=(LWorld&)          = delete;
-    // FORCEINLINE LWorld& operator=(const LWorld&)    = delete;
-    // FORCEINLINE LWorld& operator=(LWorld&&)         = delete;
-
     explicit LWorld(const EWorldState::Type InWorldType)
         : WorldState(InWorldType)
     {
@@ -69,7 +62,7 @@ public:
     FORCEINLINE bool CanTick() const { return this->GetWorldState() == EWorldState::Running; }
     void Tick(const float DeltaTime);
 
-    void TearDownWorld();
+    virtual void TearDownContext() override;
 
     bool FirstTimeMouseScroll = true;
     bool Key_EscapeDown = false;
@@ -85,16 +78,20 @@ public:
     void MouseCallback(const double XPos, const double YPos);
     void ScrollCallback(const double YOffset);
 
+    void RegisterTickableObject(LTickableObject* Tickable);
+    void UnregisterTickableObject(LTickableObject* Tickable);
+
 private:
 
+    TdhArray<LTickableObject*> TickableObjects;
+
     TdhArray<AActor*> Actors;
+    EWorldState::Type WorldState;
 
     void InitializeSubsystems();
     void TearDownSubsystems();
 
-    std::vector<JWorldSubsystem*> Subsystems;
-
-    EWorldState::Type WorldState;
+    LSubsystemCollection* Collection = nullptr;
 };
 
 } /* ~Namespace Jafg */

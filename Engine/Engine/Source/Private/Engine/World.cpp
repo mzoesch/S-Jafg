@@ -12,6 +12,7 @@
 #include "MyWorld/Chunk/ChunkGenerationSubsystem.h"
 #include "Player/LocalPlayer.h"
 #include "RhiFramework/Shader.h"
+#include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/WorldSubsystem.h"
 #if PLATFORM_WINDOWS
     #include <Windows.h>
@@ -34,7 +35,7 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 
     MainCamera = new Camera(glm::vec3(0.0f, 0.0f, 25.0f));
 
-    APlayerController* Pc = NewObject<APlayerController>(this);
+    APlayerController* Pc = NewDeferredObject<APlayerController>(this);
     this->Actors.Add(Pc);
     GEngine->GetCheckedLocalPlayer()->Possess(Pc);
 
@@ -51,55 +52,38 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 void Jafg::LWorld::Tick(const float DeltaTime)
 {
     glm::mat4 View = MainCamera->GetViewMatrix();
-
     ShaderProgram->Use();
-
     JustTemp::B(Texture);
-
     TIntVector2 WindowDimensions = GEngine->GetCheckedLocalPlayer()->GetPrimarySurface()->GetDimensions();
-
     JustTemp::C(MainCamera->Zoom, ShaderProgram, WindowDimensions, View);
-
-    // glm::mat4 Projection = glm::perspective(glm::radians(MainCamera->Zoom),
-    //     static_cast<float>(WindowDimensions.X) / static_cast<float>(WindowDimensions.Y), 0.1f, 2000.0f); // change clipping here
-    // const int32 ViewLoc = glGetUniformLocation(ShaderProgram->ID, "view");
-    // glUniformMatrix4fv(ViewLoc, 1, GL_FALSE, glm::value_ptr(View));
-    // const int32 ProjectionLoc = glGetUniformLocation(ShaderProgram->ID, "projection");
-    // glUniformMatrix4fv(ProjectionLoc, 1, GL_FALSE, glm::value_ptr(Projection));
 
     for (AActor* Actor : this->Actors)
     {
         Actor->Tick(DeltaTime);
     }
 
-    for (JWorldSubsystem* const& Subsystem : this->Subsystems)
+    for (LTickableObject* Tickable : this->TickableObjects)
     {
-        if (LTickableObject* Tickable = dynamic_cast<LTickableObject*>(Subsystem); Tickable)
-        {
-            Tickable->Tick(DeltaTime);
-        }
+        Tickable->Tick(DeltaTime);
     }
 
     return;
 }
 
-void Jafg::LWorld::TearDownWorld()
+void Jafg::LWorld::TearDownContext()
 {
     check( this->GetWorldState() == EWorldState::Running )
-
     this->WorldState = EWorldState::TearingDown;
 
     for (AActor* Actor : this->Actors)
     {
-        Actor->EndLife();
+        Actor->KillYourSelfNow();
     }
-    for (const AActor* Actor : this->Actors)
-    {
-        delete Actor;
-    }
-    this->Actors.Reset(0);
+    this->Actors.Empty();
 
     this->TearDownSubsystems();
+
+    LObjectContext::TearDownContext();
 
     this->WorldState = EWorldState::WaitingForKill;
 
@@ -134,29 +118,46 @@ void Jafg::LWorld::ScrollCallback(const double YOffset)
     MainCamera->ProcessMouseScroll(static_cast<float>(YOffset));
 }
 
+void Jafg::LWorld::RegisterTickableObject(LTickableObject* Tickable)
+{
+    if (this->TickableObjects.Contains(Tickable))
+    {
+        panic( "Found duplicate tickable object" )
+        return;
+    }
+
+    this->TickableObjects.Add(Tickable);
+
+    return;
+}
+
+void Jafg::LWorld::UnregisterTickableObject(LTickableObject* Tickable)
+{
+    if (this->TickableObjects.RemoveOnce(Tickable))
+    {
+        return;
+    }
+
+    panic( "Failed to find tickable object" )
+
+    return;
+}
+
 void Jafg::LWorld::InitializeSubsystems()
 {
-    JChunkGenerationSubsystem* ChunkGenerationSubsystem = NewObject<JChunkGenerationSubsystem>(this);
-    this->Subsystems.emplace_back(ChunkGenerationSubsystem);
-    LSubsystemCollection Collection;
-    ChunkGenerationSubsystem->Initialize(Collection);
+    check( this->Collection == nullptr )
+    this->Collection = new LSubsystemCollection(this);
+    this->Collection->LocateAllSubsystemsOfClass(JWorldSubsystem::StaticClass());
+    this->Collection->InitializeSubsystems();
 
     return;
 }
 
 void Jafg::LWorld::TearDownSubsystems()
 {
-    for (JWorldSubsystem* const& Subsystem : this->Subsystems)
-    {
-        Subsystem->TearDown();
-    }
-
-    for (const JWorldSubsystem* const& Subsystem : this->Subsystems)
-    {
-        delete Subsystem;
-    }
-
-    this->Subsystems.clear();
+    this->Collection->TearDownSubsystems();
+    delete this->Collection;
+    this->Collection = nullptr;
 
     return;
 }

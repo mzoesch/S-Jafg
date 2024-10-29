@@ -3,7 +3,6 @@
 #pragma once
 
 #include "TestInclude.h"
-#include "Containers/String.h"
 
 TEST_CASE(SimpleAsciiStringOperations, "Lal.Strings")
 {

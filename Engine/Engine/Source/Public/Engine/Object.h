@@ -11,6 +11,9 @@ namespace Jafg
 
 class LWorld;
 
+/**
+ * An object that usually uses a world as its outer.
+ */
 DECLARE_JAFG_CLASS()
 class ENGINE_API JObject : public ::Jafg::Private::JObjectBase
 {

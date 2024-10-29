@@ -4,13 +4,48 @@
 
 #include "CoreAFX.h"
 
-namespace Jafg::Private
+namespace Jafg
 {
 
+class LCarnifex;
+
+namespace Private
+{
+
+class JObjectBase;
+struct LObjectMiscellaneousAccessor;
+
+/**
+ * Object context that is used to determine the context and lifetimes of jafg objects.
+ */
 class ENGINEFRAMEWORK_API LObjectContext
 {
+    friend JObjectBase;
+    friend LCarnifex;
+    friend LObjectMiscellaneousAccessor;
+
 public:
+
+    LObjectContext();
+    PROHIBIT_REALLOC_OF_ANY_FROM(LObjectContext)
     virtual ~LObjectContext() = default;
+
+    virtual void TearDownContext();
+
+    FORCEINLINE auto GetCarnifex() const -> LCarnifex* { return *this->Carnifex; }
+
+private:
+
+    /** The carnifex that is used to mascara all children within this context. */
+    LCarnifex** Carnifex = nullptr;
+
+    /**
+     * The employees that are working within this context.
+     * If this context dies, the employees will kill themselves.
+     */
+    TdhArray<JObjectBase*> Employees;
 };
+
+} /* ~Namespace Private */
 
 } /* ~Namespace Jafg */

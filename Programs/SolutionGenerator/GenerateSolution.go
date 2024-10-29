@@ -269,6 +269,17 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
         Shared.IntermediateDir, mod.GetRelativeModuleDir(),
     ))
 
+    WriteWithIndent(builder, indent+4, fmt.Sprintf(
+        "rtti '%s'\n",
+        /*
+         * Currently off for everything. Maybe some modules will want to have this enabled?
+         * But how does this work? If one has this on and one off, can we then just use the classes
+         * interchangeably between modules?
+         * Before that is resolved, just make it off for everything and do not give an option for the user.
+         */
+        "Off",
+    ))
+
     if mod.GetKind().IsLaunch() {
         for _, targ := range Shared.GApp.GetAllTargets() {
             if targ.HasCustomEntryPoint() {

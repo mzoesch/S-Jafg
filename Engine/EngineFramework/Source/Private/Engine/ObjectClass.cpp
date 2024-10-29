@@ -8,3 +8,21 @@ const Jafg::LSimpleString& Jafg::LObjectClass::GetSpacedClassName() const
 {
     return Private::GObjectRegistry->GetPanickedPackageByStaticClass(this)->SpacedClassName;
 }
+
+bool Jafg::LObjectClass::DerivesFrom(const LObjectClass* InParent) const
+{
+    const LObjectClass* Current = this;
+    while (Current != nullptr)
+    {
+        if (Current == InParent)
+        {
+            return true;
+        }
+
+        Current = Current->Parent;
+
+        continue;
+    }
+
+    return false;
+}

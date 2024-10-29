@@ -2,16 +2,24 @@
 
 #include "CoreAFX.h"
 #include "Engine/ObjectBaseUtility.h"
-
+#include "Memory/MemoryMisc.h"
 #include "Engine/ObjectBase.h"
 #include "Engine/ObjectClass.h"
 
-namespace Jafg::Private
+namespace Jafg
 {
 
-ENGINEFRAMEWORK_API LObjectRegistry* GObjectRegistry = nullptr;
+ENGINEFRAMEWORK_API Private::LObjectContext* GOmniVitaContext = nullptr;
 
-} /* ~Namespace Jafg::Private */
+namespace Private
+{
+
+ENGINEFRAMEWORK_API LObjectRegistry* GObjectRegistry   = nullptr;
+ENGINEFRAMEWORK_API LCarnifex**      GCarnifexReferrer = nullptr;
+
+} /* ~Namespace Private */
+
+} /* ~Namespace Jafg */
 
 void Jafg::Private::CreateSingletonObjectRegistry()
 {
@@ -38,25 +46,71 @@ Jafg::TdhArray<Jafg::Private::LRegistrationQueuePackage>& Jafg::Private::GetRegi
     return RegistrationQueue;
 }
 
-Jafg::Private::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context, const LObjectClass* StaticClass)
+Jafg::Private::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewObject(
+    LObjectContext*     InContext,
+    const LObjectClass* InStaticClass
+)
 {
-    check( StaticClass )
+    JObjectBase* Out = LObjectMiscellaneousAccessor::NewDeferredObject(InContext, InStaticClass);
+    Out->BeginLife();
+    return Out;
+}
 
-    void* Out = ::malloc(StaticClass->GetTotalByteSize());
+Jafg::Private::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObject(
+    LObjectContext*     InContext,
+    const LObjectClass* InStaticClass
+)
+{
+    check( InContext     )
+    check( InStaticClass )
+
+    if (InStaticClass->IsAbstract())
+    {
+        panicMsgf( "Tried to instantiate abstract class [{}].", InStaticClass->GetSpacedClassName() )
+        return nullptr;
+    }
+
+    void* Out = ::malloc(InStaticClass->GetTotalByteSize());
     check( Out )
-    ::memcpy(Out, StaticClass->GetDefaultPackageReferrer(), StaticClass->GetTotalByteSize());  // NOLINT(bugprone-undefined-memory-manipulation)
 
     // ReSharper disable once CppReinterpretCastFromVoidPtr
-    reinterpret_cast<JObjectBase*>(Out)->Outer = Context ? Context : nullptr;
-    // ReSharper disable once CppReinterpretCastFromVoidPtr
-    reinterpret_cast<JObjectBase*>(Out)->BeginLife();
+    JObjectBase* Reinterpreted = reinterpret_cast<JObjectBase*>(Out);
+    check( Reinterpreted == Out )
 
-    // ReSharper disable once CppReinterpretCastFromVoidPtr
-    return reinterpret_cast<JObjectBase*>(Out);
+    ::memcpy(Out, InStaticClass->GetDefaultPackageReferrer(), InStaticClass->GetTotalByteSize());  // NOLINT(bugprone-undefined-memory-manipulation)
+
+    checkCode(
+        checkMsgf(
+            /* Offset of VTable ptr is 8 bytes (at least on x64) - that is currently the only platform we support. */
+            ::Jafg::OffsetOf(&JObjectBase::VClass) == 8 ,
+            "Offset is [{}].", ::Jafg::OffsetOf(&JObjectBase::VClass)
+        )
+
+        void** ActualJafgVTableLocation    = reinterpret_cast<void**>(&Reinterpreted->VClass);
+        /* 8 Bytes offset because of compiler generated v table pointer. */
+        void** PredictedJafgVTableLocation = reinterpret_cast<void**>(reinterpret_cast<::size_t>(Out) + 8);
+        check( ActualJafgVTableLocation == PredictedJafgVTableLocation )
+    )
+
+    Reinterpreted->VClass = const_cast<LObjectClass*>(InStaticClass);
+    Reinterpreted->Outer  = InContext;
+
+    InContext->Employees.Emplace(Reinterpreted);
+
+    return Reinterpreted;
 }
 
 void Jafg::Private::LObjectRegistry::LoadPendingPackages()
 {
+    if (Private::GetRegisterObjectQueue().IsEmpty())
+    {
+        return;
+    }
+
+    const int32 CurrentPackages = this->RegisteredObjects.GetSize();
+
+    LOG_VERBOSE(LogObjectPackager, "Loading [{}] pending packages.", Private::GetRegisterObjectQueue().GetSize())
+
     for (LRegistrationQueuePackage& Package : Private::GetRegisterObjectQueue())
     {
         if (this->DoesPackageWithNameExist(Package.SpacedClassName))
@@ -80,6 +134,48 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
 
     Private::GetRegisterObjectQueue().Empty();
 
+    for (auto& [SuperName, StaticClass] : this->DeferredPackages)
+    {
+        if (SuperName == StaticClass->GetSpacedClassName())
+        {
+            /*
+             * The root package.
+             */
+            continue;
+        }
+
+        const LRegistryPackage* ParentPackage = GetPanickedPackageByName(SuperName);
+        if (ParentPackage->StaticClass->GetChildren().Contains(StaticClass))
+        {
+            panicMsgf(
+                "Tried resolving deferred package [{}] that already has registered its child.",
+                StaticClass->GetSpacedClassName()
+            )
+            continue;
+        }
+
+        ParentPackage->StaticClass->GetChildren().Add(StaticClass);
+        StaticClass->Parent = ParentPackage->StaticClass;
+
+        continue;
+    }
+
+    this->DeferredPackages.Empty();
+
+    for (int32 i = CurrentPackages; i < this->RegisteredObjects.GetSize(); ++i)
+    {
+        auto& [SpacedClassName, StaticClass] = this->RegisteredObjects[i];
+
+        LOG_TRACE(
+            LogObjectPackager,
+            "Finished loading package for [{} ({}b)].",
+            StaticClass->GetSpacedClassName(),
+            StaticClass->GetTotalByteSize()
+        )
+
+        continue;
+    }
+
     this->ValidateLoadedPackages();
 
     return;
@@ -87,6 +183,7 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
 
 void Jafg::Private::LObjectRegistry::ValidateLoadedPackages()
 {
+    bool bRootFound = false;
     for (const LRegistryPackage& Package : this->RegisteredObjects)
     {
         if (Package.SpacedClassName.IsEmpty())
@@ -104,6 +201,18 @@ void Jafg::Private::LObjectRegistry::ValidateLoadedPackages()
         if (Package.StaticClass->DefaultPackageReferrer == nullptr)
         {
             panicMsgf( "Found loaded package [{}] with no default referrer.", Package.SpacedClassName )
+            continue;
+        }
+
+        if (Package.StaticClass->GetParent() == nullptr)
+        {
+            if (bRootFound)
+            {
+                panicMsgf( "Found loaded package [{}] with no parent or found multiple root objects.", Package.SpacedClassName )
+                continue;
+            }
+
+            bRootFound = true;
             continue;
         }
 
@@ -283,4 +392,22 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPack
     panic( "Failed to find package." )
 
     return nullptr;
+}
+
+void Jafg::Private::LObjectRegistry::GetRegisteredObjectsOfClass(
+    const LObjectClass*            InStaticClass,
+    TdhArray<const LObjectClass*>& OutArray
+) const
+{
+    for (const auto& [_, StaticClass] : this->RegisteredObjects)
+    {
+        if (StaticClass->DerivesFrom(InStaticClass))
+        {
+            OutArray.Add(StaticClass);
+        }
+
+        continue;
+    }
+
+    return;
 }
