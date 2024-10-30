@@ -83,7 +83,7 @@ public:
      * them to kill themselves now. This might have minimal runtime performance issues when called in large quantities
      * as we cannot use the spare time between ticks, if enforcing it was enabled by the user, for this task.
      */
-    virtual void KillYourSelfNow();
+    virtual void KillYourSelfNow(const bool bMayBeGarbage = false);
 
     /**
      * Called transitively either by the butcher or #KillYourSelfNow at the last moment of this object lifetime.

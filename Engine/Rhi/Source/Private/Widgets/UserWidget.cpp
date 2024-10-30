@@ -1,26 +1,42 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/UserWidget.h"
+#include "Widgets/Viewport.h"
+#include "Widgets/WidgetParent.h"
 
-void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy)
+void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy /* = true */)
 {
-    if (this->GetParent())
+    Super::RemoveFromParent();
+
+    if (this->AttachedViewport)
     {
-        this->GetParent()->RemoveChild(this);
-    }
-    else
-    {
-        // Todo remove from local player.
+        this->AttachedViewport->RemoveWidget(this);
     }
 
     if (bDestroy)
     {
-        this->KillYourSelfNow();
+        this->KillYourSelfNow(true);
     }
 
     return;
 }
 
-void Jafg::WUserWidget::AddToMainViewport()
+void Jafg::WUserWidget::AddToViewport(LViewport* InViewport)
 {
+    this->AttachedViewport = InViewport;
+    this->AttachedViewport->AddWidget(this);
+
+    return;
+}
+
+void Jafg::WUserWidget::ReplaceRoot(WWidgetParent* InRoot)
+{
+    if (this->HasRoot())
+    {
+        this->Root->RemoveFromParent();
+    }
+
+    this->Root = InRoot;
+
+    return;
 }

@@ -20,6 +20,7 @@ protected:
 public:
 
     // WUserWidget implementation
+    virtual void Construct() override;
     virtual void Tick() override;
     // ~WUserWidget implementation
 };

@@ -7,6 +7,11 @@
 
 namespace Jafg
 {
+class LViewport;
+}
+
+namespace Jafg
+{
 
 class WUserWidget;
 struct LSubsystemCollection;
@@ -31,14 +36,15 @@ public:
     void Draw();
     void TearDown();
 
-    void AddWidget(WUserWidget* Widget);
-    void RemoveWidget(WUserWidget* Widget);
+    FORCEINLINE auto GetMainViewport() const -> LViewport* { return this->MainViewport; }
+    void AddWidget(WUserWidget* Widget) const;
+    void RemoveWidget(WUserWidget* Widget) const;
 
 private:
 
     Private::LObjectContext* Outer;
     LSubsystemCollection*    Collection;
-    TdhArray<WUserWidget*>   TopLevelWidgets;
+    LViewport*               MainViewport;
 };
 
 } /* ~Namespace Jafg. */

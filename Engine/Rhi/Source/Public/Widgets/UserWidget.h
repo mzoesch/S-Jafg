@@ -8,6 +8,9 @@
 namespace Jafg
 {
 
+class LViewport;
+class WWidgetParent;
+
 /**
  * A user widget is a widget node that can be added to the local player widget viewport.
  * A user widget can consist of multiple widget nodes and can be used to create complex
@@ -24,20 +27,25 @@ protected:
 
 public:
 
-    /**
-     * Removes this widget from its parent widget.
-     * @param bDestroy If true, the widget will be destroyed automatically.
-     */
-    void RemoveFromParent(const bool bDestroy = true);
+    virtual void RemoveFromParent(const bool bDestroy = true) override;
 
-    /**
-     * Add this widget to the main viewport of the current active local player.
-     */
-    void AddToMainViewport();
+    /** Add this widget to the main viewport of the current active local player. */
+    void AddToViewport(LViewport* InViewport);
+
+    void ReplaceRoot(WWidgetParent* InRoot);
+    FORCEINLINE auto HasRoot() const -> bool { return this->Root != nullptr; }
+    FORCEINLINE auto GetRoot() const -> WWidgetParent* { return this->Root;  }
+
+private:
+
+    /** The absolute root of this widget. Attach everything to this widget. */
+    WWidgetParent* Root             = nullptr;
+    /** Where this widget resides in. */
+    LViewport*     AttachedViewport = nullptr;
 };
 
 template <typename TWidget>
-TWidget* ConstructUserWidget(Private::LObjectContext* InContext)
+FORCEINLINE auto ConstructUserWidget(Private::LObjectContext* InContext) -> TWidget*
 {
     return NewObject<TWidget>(InContext);
 }

@@ -47,11 +47,17 @@ void Jafg::Private::JObjectBase::MarkAsGarbage()
     return;
 }
 
-void Jafg::Private::JObjectBase::KillYourSelfNow()
+void Jafg::Private::JObjectBase::KillYourSelfNow(const bool bMayBeGarbage /* = false */)
 {
-    check( this->bGarbage == false )
+    if (bMayBeGarbage == false)
+    {
+        check( this->bGarbage == false )
+    }
 
-    this->MarkAsGarbage(false);
+    if (this->bGarbage == false)
+    {
+        this->MarkAsGarbage(false);
+    }
 
     check( this->Outer )
     check( this->Outer->Carnifex )
@@ -63,8 +69,6 @@ void Jafg::Private::JObjectBase::KillYourSelfNow()
 
 void Jafg::Private::JObjectBase::MarkAsGarbage(const bool bAddToCarnifex)
 {
-    check( this->bGarbage == false )
-
     this->bGarbage = true;
 
     check( this->Outer )

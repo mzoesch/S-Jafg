@@ -35,6 +35,11 @@ void Jafg::LCarnifex::KillAllGarbageChildren()
 
 void Jafg::LCarnifex::DevourGarbageChildNow(Private::JObjectBase* Child)
 {
+    if (Private::JObjectBase** GarbageChild = this->GarbageChildren.FindRef(Child); GarbageChild)
+    {
+        this->GarbageChildren.RemoveOnceChecked(*GarbageChild);
+    }
+
     checkSlow( Child )
     check( Child->IsGarbage() )
 

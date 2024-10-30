@@ -37,9 +37,12 @@ protected:
     FORCEINLINE auto ShouldTick() const -> bool { return this->bShouldTick; }
     FORCEINLINE void SetShouldTick(const bool bShouldTick) { this->bShouldTick = bShouldTick; }
 
+    FORCEINLINE auto GetHud() const -> LHud* { return this->OwningHud; }
+
 private:
 
-    bool bShouldTick = false;
+    bool  bShouldTick = false;
+    LHud* OwningHud   = nullptr;
 };
 
 } /* ~Namespace Jafg. */

@@ -5,16 +5,20 @@
 #include "Core/Application.h"
 #include "Subsystems/HudSubsystem.h"
 #include "Subsystems/SubsystemCollection.h"
-#include "Widgets/UserWidget.h"
 #include "Widgets/WidgetNode.h"
+#include "Widgets/Viewport.h"
+
 #include "Widgets/WidgetRegion.h"
 
 void Jafg::LHud::Initialize(Private::LObjectContext* InOuter)
 {
-    this->Outer = InOuter;
+    this->Outer                = InOuter;
+    GCurrentWidgetContextState = this->Outer;
+
+    this->MainViewport = new LViewport();
+    this->MainViewport->Initialize();
 
     checkSlow( this->Collection == nullptr )
-
     this->Collection = new LSubsystemCollection(this->Outer);
     this->Collection->LocateAllSubsystemsOfClass(JHudSubsystem::StaticClass());
     this->Collection->InitializeSubsystems();
@@ -41,15 +45,7 @@ void Jafg::LHud::Tick()
         return;
     });
 
-    for (WUserWidget* Widget : this->TopLevelWidgets)
-    {
-        if (Widget->ShouldNowTick())
-        {
-            Widget->Tick();
-        }
-
-        continue;
-    }
+    this->MainViewport->Tick();
 
     return;
 }
@@ -61,26 +57,22 @@ void Jafg::LHud::Draw()
 void Jafg::LHud::TearDown()
 {
     this->Collection->TearDownSubsystems();
+    delete this->Collection;
+    this->Collection = nullptr;
 
-    for (WWidgetNode* Widget : this->TopLevelWidgets)
-    {
-        Widget->MarkAsGarbage();
-    }
-
-    this->TopLevelWidgets.Empty();
-
-    return;
-}
-
-void Jafg::LHud::AddWidget(WUserWidget* Widget)
-{
-    check( Widget )
-    this->TopLevelWidgets.Add(Widget);
+    this->MainViewport->TearDown();
+    delete this->MainViewport;
+    this->MainViewport = nullptr;
 
     return;
 }
 
-void Jafg::LHud::RemoveWidget(WUserWidget* Widget)
+void Jafg::LHud::AddWidget(WUserWidget* Widget) const
 {
-    this->TopLevelWidgets.RemoveOnceChecked(Widget);
+    this->MainViewport->AddWidget(Widget);
+}
+
+void Jafg::LHud::RemoveWidget(WUserWidget* Widget) const
+{
+    this->MainViewport->RemoveWidget(Widget);
 }

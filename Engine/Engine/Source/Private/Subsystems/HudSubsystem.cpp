@@ -2,10 +2,16 @@
 
 #include "CoreAFX.h"
 #include "Subsystems/HudSubsystem.h"
+#include "Player/LocalPlayer.h"
 
 void Jafg::JHudSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     JSubsystem::Initialize(Collection);
+
+    this->OwningHud = GEngine->GetPanickedLocalPlayer()->GetHud();
+    checkSlow( this->OwningHud )
+
+    return;
 }
 
 void Jafg::JHudSubsystem::TearDown()

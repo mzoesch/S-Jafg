@@ -7,6 +7,8 @@
 namespace Jafg
 {
 
+class WUserWidget;
+
 class RHI_API LViewport final
 {
 public:
@@ -16,7 +18,16 @@ public:
     ~LViewport() = default;
 
     void Initialize();
+    void Tick();
+    void Draw();
     void TearDown();
+
+    void AddWidget(WUserWidget* Widget);
+    void RemoveWidget(WUserWidget* Widget);
+
+private:
+
+    TdhArray<WUserWidget*> TopLevelWidgets;
 };
 
 } /* ~Namespace Jafg. */

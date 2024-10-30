@@ -9,6 +9,7 @@ namespace Jafg
 {
 
 class LSurface;
+class WWidgetParent;
 struct LWidgetConstructor;
 
 namespace EWidgetVisibility
@@ -34,22 +35,26 @@ enum Type : uint8
 
 } /* ~Namespace EWidgetVisibility */
 
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class RHI_API WWidgetNode : public ::Jafg::Private::JObjectBase
 {
     GENERATED_CLASS_BODY()
 
     friend LWidgetConstructor;
+    friend WWidgetParent;
 
 protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(WWidgetNode)
 
-public:
+private:
 
     // JObjectBase implementation
-    virtual void MarkAsGarbage() override;
+    virtual void BeginLife() override final { Super::BeginLife(); this->Construct(); return; }
+    virtual void EndLife() override final   { this->Destruct();   Super::EndLife();  return; }
     // ~JObjectBase implementation
+
+public:
 
     virtual void Construct();
     virtual void Tick();
@@ -72,17 +77,35 @@ public:
     FORCEINLINE auto GetVisibility() const -> EWidgetVisibility::Type { return this->Visibility; }
     FORCEINLINE auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> void { this->Visibility = InVisibility; }
 
-    FORCEINLINE auto GetParent()   const -> WWidgetNode* { return this->Parent; }
-    FORCEINLINE auto GetChildren() const -> const TdhArray<WWidgetNode*>& { return this->Children; }
-    FORCEINLINE auto RemoveChild(WWidgetNode* Child) -> void { this->Children.RemoveOnceChecked(Child); }
+    /**
+     * Removes this widget from its parent widget.
+     * @param bDestroy If true, the widget will be destroyed automatically.
+     */
+    virtual void RemoveFromParent(const bool bDestroy = true);
+    FORCEINLINE auto GetParent()   const -> WWidgetParent* { return this->Parent; }
 
 private:
 
     bool                    bDisableTick = false;
     EWidgetVisibility::Type Visibility   = EWidgetVisibility::Visible;
 
-    WWidgetNode*            Parent       = nullptr;
-    TdhArray<WWidgetNode*>  Children;
+    WWidgetParent*          Parent       = nullptr;
 };
+
+template <typename TNode>
+FORCEINLINE auto ConstructWidgetNode(Private::LObjectContext* InContext) -> TNode*
+{
+    return NewObject<TNode>(InContext);
+}
+
+/** Before constructing empty context widget, update the global specific widget context. */
+RHI_API extern Private::LObjectContext* GCurrentWidgetContextState;
+/** Constructs a new widget node in the current context of the current program widget state context. */
+template <typename TNode>
+FORCEINLINE auto ConstructWidgetNode() -> TNode*
+{
+    checkSlow( GCurrentWidgetContextState != nullptr )
+    return ConstructWidgetNode<TNode>(GCurrentWidgetContextState);
+}
 
 } /* ~Namespace Jafg */
