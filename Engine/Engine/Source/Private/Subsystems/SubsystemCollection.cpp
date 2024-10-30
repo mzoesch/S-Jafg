@@ -7,6 +7,8 @@
 
 void Jafg::LSubsystemCollection::LocateAllSubsystemsOfClass(const LObjectClass* InClass)
 {
+    LOG_VERBOSE(LogSubsystemCollection, "Locating all subsystems of class {}.", InClass->GetSpacedClassName())
+
     Private::GObjectRegistry->GetRegisteredObjectsOfClass(InClass, this->Subsystems);
 
     for (const LObjectClass* SubsystemClass : this->Subsystems)
@@ -34,6 +36,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystems()
 
         if (Subsystem->ShouldCreateSubsystem(this->Outer))
         {
+            LOG_TRACE(LogSubsystemCollection, "Initializing subsystem {}.", Subsystem->GetFullName())
             Subsystem->Initialize(*this);
             ++i;
             continue;

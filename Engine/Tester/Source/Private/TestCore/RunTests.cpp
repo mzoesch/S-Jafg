@@ -71,6 +71,8 @@ void Jafg::Tester::RunTests(EPlatformExit::Type* ExitCode)
                       << " tests." << '\n';
         }
 
+        GTestFramework->IncreaseRunChecks(SimpleTestCase->GetNumberOfRunTests());
+
         std::cout.flush();
 
         continue;
@@ -90,6 +92,10 @@ Jafg::Tester::LTestFramework::LTestFramework()
 
 Jafg::Tester::LTestFramework::~LTestFramework()
 {
+    LOG_INFO(LogTestingFramework, "Run {} simple tests with a total of {} checks." ,
+        ::Jafg::Tester::GetAllSimpleTestCasesDuringStaticInitialization().size(),
+        this->RunChecks
+    )
     LOG_INFO(LogTestingFramework, "Finished test framework. Tearing down framework ...")
 
     *::Jafg::Tester::TestExitCode = this->HasErrors() ? EPlatformExit::Error : EPlatformExit::Success;

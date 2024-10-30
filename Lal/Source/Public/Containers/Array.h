@@ -109,6 +109,7 @@ public:
      * @return True, if an element was found and successfully removed.
      */
     FORCEINLINE auto RemoveOnce(const T& InElement) noexcept -> bool;
+    FORCEINLINE auto RemoveOnceChecked(const T& InElement) noexcept -> bool;
 
     /**
      * Adds a new element to the array and constructs it in place while potentially
@@ -572,6 +573,17 @@ bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnce(const T& In
     }
 
     return false;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceChecked(const T& InElement) noexcept
+{
+#if IN_SHIPPING
+    const bool bRemoved = this->RemoveOnce(InElement);
+    check( bRemoved )
+#else /* IN_SHIPPING */
+    return this->RemoveOnce(InElement);
+#endif /* IN_SHIPPING */
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>

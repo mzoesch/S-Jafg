@@ -25,8 +25,11 @@ struct TESTER_API LTestFramework
     FORCEINLINE auto HasErrors() const -> bool { return this->OccuriedErrors > 0; }
     FORCEINLINE auto OnError() const -> void { ++this->OccuriedErrors; }
 
+    FORCEINLINE auto IncreaseRunChecks(const int32 Value) const -> void { this->RunChecks += Value; }
+
 private:
 
+    mutable int32 RunChecks      = 0;
     mutable int32 OccuriedErrors = 0;
 };
 

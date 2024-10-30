@@ -8,11 +8,16 @@
 namespace Jafg
 {
 
-class WWidgetNode;
+class WUserWidget;
 struct LSubsystemCollection;
 
-MAKE_EXTERNAL_TEMPLATE_DHARRAY(ENGINE, WWidgetNode*)
+MAKE_EXTERNAL_TEMPLATE_DHARRAY(ENGINE, WUserWidget*)
 
+/**
+ * The hud is owned by the local player and shares its lifetime.
+ * The hud is the main hub for all user interface elements. Create hud subsystems to automatically
+ * add multiple widgets of a type to the viewport.
+ */
 class ENGINE_API LHud final
 {
 public:
@@ -26,11 +31,14 @@ public:
     void Draw();
     void TearDown();
 
+    void AddWidget(WUserWidget* Widget);
+    void RemoveWidget(WUserWidget* Widget);
+
 private:
 
     Private::LObjectContext* Outer;
     LSubsystemCollection*    Collection;
-    TdhArray<WWidgetNode*>   TopLevelWidgets;
+    TdhArray<WUserWidget*>   TopLevelWidgets;
 };
 
 } /* ~Namespace Jafg. */

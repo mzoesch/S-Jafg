@@ -25,7 +25,7 @@ struct LObjectInitializer final
     Private::LObjectContext* Outer = nullptr;
 };
 
-FORCEINLINE ENGINEFRAMEWORK_API auto GetDefaultObjectInitializer() -> LObjectInitializer&& { return LObjectInitializer(); }
+FORCEINLINE ENGINEFRAMEWORK_API auto GetDefaultObjectInitializer() -> LObjectInitializer { return LObjectInitializer(); }
 
 namespace Private
 {
@@ -52,8 +52,9 @@ protected:
 
 public:
 
-    FORCEINLINE auto GetVTable()        const -> const LObjectClass* { return this->VClass; }
-    FORCEINLINE auto GetMutableVTable() const ->       LObjectClass* { return this->VClass; }
+    FORCEINLINE auto GetVTable()        const -> const LObjectClass*  { return this->VClass; }
+    FORCEINLINE auto GetMutableVTable() const ->       LObjectClass*  { return this->VClass; }
+    FORCEINLINE auto GetFullName()      const -> const LSimpleString& { return this->VClass->GetSpacedClassName(); }
 
     /**
      * Gets the context that this object lives in and shares its lifetime with it.

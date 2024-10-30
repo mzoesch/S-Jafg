@@ -5,4 +5,6 @@
 #include "TestInclude.h"
 
 #include "TestContainers.h"
+#include "TestDelegates.h"
+#include "TestFunctors.h"
 #include "TestStrings.h"

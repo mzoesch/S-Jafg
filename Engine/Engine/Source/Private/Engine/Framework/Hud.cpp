@@ -2,8 +2,10 @@
 
 #include "CoreAFX.h"
 #include "Engine/Framework/Hud.h"
+#include "Core/Application.h"
 #include "Subsystems/HudSubsystem.h"
 #include "Subsystems/SubsystemCollection.h"
+#include "Widgets/UserWidget.h"
 #include "Widgets/WidgetNode.h"
 #include "Widgets/WidgetRegion.h"
 
@@ -24,10 +26,22 @@ void Jafg::LHud::Tick()
 {
     this->Collection->ForEachSubsystem( [] (JSubsystem* Subsystem)
     {
+        if (JHudSubsystem* HudSubsystem = DynamicCast<JHudSubsystem>(Subsystem); HudSubsystem)
+        {
+            if (HudSubsystem->ShouldTick())
+            {
+                HudSubsystem->Tick(Application::GetDeltaTimeAsFloat());
+            }
+
+            return;
+        }
+
+        panicMsgf( "Could not cast predicated hud subsystem [{}] to JHudSubsystem.", Subsystem->GetFullName() )
+
         return;
     });
 
-    for (WWidgetNode* Widget : this->TopLevelWidgets)
+    for (WUserWidget* Widget : this->TopLevelWidgets)
     {
         if (Widget->ShouldNowTick())
         {
@@ -56,4 +70,17 @@ void Jafg::LHud::TearDown()
     this->TopLevelWidgets.Empty();
 
     return;
+}
+
+void Jafg::LHud::AddWidget(WUserWidget* Widget)
+{
+    check( Widget )
+    this->TopLevelWidgets.Add(Widget);
+
+    return;
+}
+
+void Jafg::LHud::RemoveWidget(WUserWidget* Widget)
+{
+    this->TopLevelWidgets.RemoveOnceChecked(Widget);
 }

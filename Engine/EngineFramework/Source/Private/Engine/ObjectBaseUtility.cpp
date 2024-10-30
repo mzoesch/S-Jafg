@@ -100,6 +100,11 @@ Jafg::Private::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDefe
     return Reinterpreted;
 }
 
+bool Jafg::Private::LObjectMiscellaneousAccessor::DynamicCast(const JObjectBase* InObject, const LObjectClass* InTargetClass)
+{
+    return InObject->GetVTable()->DerivesFrom(InTargetClass);
+}
+
 void Jafg::Private::LObjectRegistry::LoadPendingPackages()
 {
     if (Private::GetRegisterObjectQueue().IsEmpty())
@@ -122,7 +127,9 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
         LRegistryPackage NewPackage;
         NewPackage.SpacedClassName                     = Package.SpacedClassName;
         NewPackage.StaticClass                         = new LObjectClass();
+        NewPackage.StaticClass->SpacedClassName        = Package.SpacedClassName;
         NewPackage.StaticClass->DefaultPackageReferrer = Package.GetContentDefault();
+        check( NewPackage.StaticClass->SpacedClassName.IsEmpty() == false )
         check( NewPackage.StaticClass->DefaultPackageReferrer != nullptr )
 
         this->RegisteredObjects.Add(std::forward<LRegistryPackage>(NewPackage));

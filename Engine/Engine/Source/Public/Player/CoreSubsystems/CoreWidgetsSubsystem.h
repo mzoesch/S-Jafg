@@ -8,8 +8,10 @@
 namespace Jafg
 {
 
+class WDebugScreen;
+
 DECLARE_JAFG_CLASS()
-class ENGINE_API JCoreWidgetsSubsystem : public JHudSubsystem
+class ENGINE_API JCoreWidgetsSubsystem final : public JHudSubsystem
 {
     GENERATED_CLASS_BODY()
 
@@ -17,8 +19,12 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JCoreWidgetsSubsystem)
 
-public:
+    virtual void Initialize(LSubsystemCollection& Collection) override;
+    virtual void TearDown() override;
 
+private:
+
+    WDebugScreen* DebugScreen = nullptr;
 };
 
 } /* ~Namespace Jafg */

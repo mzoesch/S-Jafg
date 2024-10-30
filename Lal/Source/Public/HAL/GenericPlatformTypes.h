@@ -61,6 +61,8 @@ struct LGenericPlatformTypes
     typedef std::wstring        LWideString;
     typedef std::string         LStringLegacy;
 
+    typedef decltype(nullptr)   LNullptrTy;
+
     static LStringLegacy Ws2S(const LWideString& Ws)
     {
         __pragma( warning(push) )

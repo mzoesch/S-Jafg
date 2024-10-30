@@ -51,6 +51,12 @@
 #include "Logging/CoreCategories.h"
 
 ///////////////////////////////////////////////////////////////////////////////
+// Functors
+#include "Core/Function.h"
+#include "Delegates/DelegatePrivate.h"
+#include "Delegates/DelegateMacros.h"
+
+///////////////////////////////////////////////////////////////////////////////
 // Containers
 #include "Containers/ContainerMacros.h"
 #include "Containers/Iterator.h"

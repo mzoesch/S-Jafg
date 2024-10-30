@@ -63,6 +63,7 @@ typedef LPlatformTypes::LChar        LChar;
 typedef LPlatformTypes::LStringLegacy LStringLegacy;
 typedef LPlatformTypes::LWideString   LWideString;
 
+typedef LPlatformTypes::LNullptrTy    LNullptrTy;
 
 /*-----------------------------------------------------------------------------
     Statically assert that the necessary platform-specific macros are defined.

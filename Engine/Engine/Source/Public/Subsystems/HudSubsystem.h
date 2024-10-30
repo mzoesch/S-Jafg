@@ -9,6 +9,8 @@
 namespace Jafg
 {
 
+class LHud;
+
 /**
  * A subsystem that shares its lifetime with the local player hud.
  * Important delegates will be broadcasted to all children of this subsystem.
@@ -19,20 +21,25 @@ class JHudSubsystem : public JSubsystem
 {
     GENERATED_CLASS_BODY()
 
+    friend LHud;
+
 protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JHudSubsystem)
 
-public:
-
-    virtual bool ShouldCreateSubsystem(const Private::LObjectContext* InOuter) const override
-    {
-        return false;
-    }
-
+    // JSubsystem implementation
     virtual void Initialize(LSubsystemCollection& Collection) override;
-    virtual void Tick(const float DeltaTime);
     virtual void TearDown() override;
+    // ~JSubsystem implementation
+
+    virtual void Tick(const float DeltaTime);
+
+    FORCEINLINE auto ShouldTick() const -> bool { return this->bShouldTick; }
+    FORCEINLINE void SetShouldTick(const bool bShouldTick) { this->bShouldTick = bShouldTick; }
+
+private:
+
+    bool bShouldTick = false;
 };
 
 } /* ~Namespace Jafg. */

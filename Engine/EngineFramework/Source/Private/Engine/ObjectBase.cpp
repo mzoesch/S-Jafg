@@ -69,8 +69,12 @@ void Jafg::Private::JObjectBase::MarkAsGarbage(const bool bAddToCarnifex)
 
     check( this->Outer )
 
+#if IN_SHIPPING
+    this->Outer->Employees.RemoveOnce(this);
+#else /* IN_SHIPPING */
     const bool bWasRemoved = this->Outer->Employees.RemoveOnce(this);
     check( bWasRemoved )
+#endif /* !IN_SHIPPING */
 
     if (bAddToCarnifex)
     {

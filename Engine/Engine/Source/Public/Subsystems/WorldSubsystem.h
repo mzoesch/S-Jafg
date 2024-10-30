@@ -10,7 +10,7 @@
 namespace Jafg
 {
 
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class JWorldSubsystem : public JSubsystem
 {
     GENERATED_CLASS_BODY()

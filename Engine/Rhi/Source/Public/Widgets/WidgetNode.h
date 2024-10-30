@@ -72,10 +72,17 @@ public:
     FORCEINLINE auto GetVisibility() const -> EWidgetVisibility::Type { return this->Visibility; }
     FORCEINLINE auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> void { this->Visibility = InVisibility; }
 
+    FORCEINLINE auto GetParent()   const -> WWidgetNode* { return this->Parent; }
+    FORCEINLINE auto GetChildren() const -> const TdhArray<WWidgetNode*>& { return this->Children; }
+    FORCEINLINE auto RemoveChild(WWidgetNode* Child) -> void { this->Children.RemoveOnceChecked(Child); }
+
 private:
 
     bool                    bDisableTick = false;
     EWidgetVisibility::Type Visibility   = EWidgetVisibility::Visible;
+
+    WWidgetNode*            Parent       = nullptr;
+    TdhArray<WWidgetNode*>  Children;
 };
 
 } /* ~Namespace Jafg */

@@ -42,7 +42,8 @@ public:
 
     FORCEINLINE auto IsPlayerInputValid() const -> bool { return this->PlayerInput != nullptr; }
     FORCEINLINE auto GetPlayerInput() const -> LPlayerInput* { return this->PlayerInput; }
-
+    FORCEINLINE auto IsHud() const -> bool { return this->Hud != nullptr; }
+    FORCEINLINE auto GetHud() const -> LHud* { return this->Hud; }
     FORCEINLINE auto HasPrimarySurface() const -> bool { return this->SurfaceToDrawOn != nullptr; }
     FORCEINLINE auto GetPrimarySurface() const -> LSurface* { return this->SurfaceToDrawOn; }
 

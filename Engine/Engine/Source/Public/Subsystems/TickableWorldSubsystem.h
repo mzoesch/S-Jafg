@@ -11,7 +11,7 @@
 namespace Jafg
 {
 
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class JTickableWorldSubsystem : public JWorldSubsystem, public LTickableObject
 {
     GENERATED_CLASS_BODY()

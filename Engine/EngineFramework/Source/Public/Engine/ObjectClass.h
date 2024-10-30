@@ -33,7 +33,7 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FROM(LObjectClass)
     ~LObjectClass() = default;
 
-    ENGINEFRAMEWORK_API auto GetSpacedClassName() const -> const LSimpleString&;
+    FORCEINLINE auto GetSpacedClassName() const -> const LSimpleString& { return this->SpacedClassName; }
 
     template <typename TObj>
     FORCEINLINE auto GetDefaultPackageReferrer() const -> const TObj*
@@ -67,6 +67,8 @@ public:
     FORCEINLINE auto IsNotAbstract() const -> bool        { return (this->Flags  & EClassFlags::Abstract) == EClassFlags::None; }
 
 private:
+
+    LSimpleString           SpacedClassName        = { };
 
     /** The single parent of this object. */
     LObjectClass*           Parent                 = nullptr;

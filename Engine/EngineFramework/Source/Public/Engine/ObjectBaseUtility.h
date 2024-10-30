@@ -57,6 +57,9 @@ FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LSi
 /** Allocate a new object with its given static class and a given context. The begin-life method will not be called. */
 FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> Private::JObjectBase*;
 
+template <typename TObj>
+FORCEINLINE TObj* DynamicCast(Private::JObjectBase* InObject);
+
 namespace Private
 {
 
@@ -114,6 +117,8 @@ struct LObjectMiscellaneousAccessor final
 
     ENGINEFRAMEWORK_API static auto NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
     ENGINEFRAMEWORK_API static auto NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
+
+    ENGINEFRAMEWORK_API static auto DynamicCast(const JObjectBase* InObject, const LObjectClass* InTargetClass) -> bool;
 };
 
 /**
@@ -318,6 +323,17 @@ TObj* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context)
 Private::JObjectBase* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context, const LSimpleString& ClassName)
 {
     return LObjectMiscellaneousAccessor::NewObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass);
+}
+
+template <typename TObj>
+TObj* DynamicCast(Private::JObjectBase* InObject)
+{
+    if (Private::LObjectMiscellaneousAccessor::DynamicCast(InObject, TObj::StaticClass()))
+    {
+        return reinterpret_cast<TObj*>(InObject);
+    }
+
+    return nullptr;
 }
 
 template <typename TObj>

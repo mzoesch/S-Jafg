@@ -8,11 +8,11 @@ void Jafg::JHudSubsystem::Initialize(LSubsystemCollection& Collection)
     JSubsystem::Initialize(Collection);
 }
 
-void Jafg::JHudSubsystem::Tick(const float DeltaTime)
-{
-}
-
 void Jafg::JHudSubsystem::TearDown()
 {
     JSubsystem::TearDown();
+}
+
+void Jafg::JHudSubsystem::Tick(const float DeltaTime)
+{
 }
