@@ -5,7 +5,8 @@
 
 void Jafg::LSurface::Initialize()
 {
-    this->Viewport = new LViewport();
+    this->SurfaceViewport = new LViewport();
+    this->SurfaceViewport->Initialize();
 }
 
 void Jafg::LSurface::OnClear()
@@ -14,15 +15,16 @@ void Jafg::LSurface::OnClear()
 
 void Jafg::LSurface::OnUpdate()
 {
+    this->SurfaceViewport->Draw();
 }
 
 void Jafg::LSurface::TearDown()
 {
-    if (ensure(this->Viewport))
+    if (ensure(this->SurfaceViewport))
     {
-        this->Viewport->TearDown();
-        delete this->Viewport;
-        this->Viewport = nullptr;
+        this->SurfaceViewport->TearDown();
+        delete this->SurfaceViewport;
+        this->SurfaceViewport = nullptr;
     }
 
     return;

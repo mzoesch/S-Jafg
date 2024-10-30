@@ -7,6 +7,7 @@
 namespace Jafg
 {
 
+class LEngine;
 class LCarnifex;
 
 namespace Private

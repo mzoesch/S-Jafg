@@ -14,6 +14,8 @@
 #include "RhiFramework/Shader.h"
 #include <glm/glm.hpp>
 
+#include "Widgets/Viewport.h"
+
 struct Character
 {
     unsigned int TextureID;  // ID handle of the glyph texture
@@ -66,6 +68,11 @@ void Jafg::LDesktopPlatformWin::Initialize()
 
     const TIntVector2 WindowDimensions = this->GetDimensions();
     glViewport(0, 0, WindowDimensions.X, WindowDimensions.Y);
+
+    if (this->GetViewport())
+    {
+        this->GetViewport()->ChangeDimensions(WindowDimensions);
+    }
 
     glfwSetFramebufferSizeCallback(this->MasterWindow, [] (::GLFWwindow* Window, const int32 Width, const int32 Height)
     {

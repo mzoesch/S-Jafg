@@ -55,11 +55,11 @@ struct TVector final
     /** Global unit vector constant along the z-axis (0, 0, 1). */
     static const TVector<T> UnitVectorZ;
 
-    static inline TVector<T> Zero()  { return TVector<T>::ZeroVector;  }
-    static inline TVector<T> One()   { return TVector<T>::OneVector;   }
-    static inline TVector<T> UnitX() { return TVector<T>::UnitVectorX; }
-    static inline TVector<T> UnitY() { return TVector<T>::UnitVectorY; }
-    static inline TVector<T> UnitZ() { return TVector<T>::UnitVectorZ; }
+    static FORCEINLINE TVector<T> Zero()  { return TVector<T>::ZeroVector;  }
+    static FORCEINLINE TVector<T> One()   { return TVector<T>::OneVector;   }
+    static FORCEINLINE TVector<T> UnitX() { return TVector<T>::UnitVectorX; }
+    static FORCEINLINE TVector<T> UnitY() { return TVector<T>::UnitVectorY; }
+    static FORCEINLINE TVector<T> UnitZ() { return TVector<T>::UnitVectorZ; }
 
     FORCEINLINE          TVector<T>()                                       = default;
     FORCEINLINE explicit TVector<T>(const T InFloatingPoint)                : X(InFloatingPoint), Y(InFloatingPoint), Z(InFloatingPoint) { }

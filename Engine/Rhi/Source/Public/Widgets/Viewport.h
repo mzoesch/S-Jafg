@@ -25,8 +25,12 @@ public:
     void AddWidget(WUserWidget* Widget);
     void RemoveWidget(WUserWidget* Widget);
 
+    auto ChangeDimensions(const LIntVector2& InDimensions) -> void;
+    FORCEINLINE auto GetDimensions() const -> LIntVector2 { return this->Dimensions; }
+
 private:
 
+    LIntVector2            Dimensions;
     TdhArray<WUserWidget*> TopLevelWidgets;
 };
 

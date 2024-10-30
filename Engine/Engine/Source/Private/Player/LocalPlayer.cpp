@@ -46,7 +46,6 @@ void Jafg::LLocalPlayer::Tick(const float DeltaTime)
 void Jafg::LLocalPlayer::OnLateTick(const float DeltaTime)
 {
     this->GetPrimarySurface()->OnUpdate();
-    this->Hud->Draw();
 
     return;
 }

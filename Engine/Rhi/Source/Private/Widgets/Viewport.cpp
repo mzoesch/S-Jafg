@@ -24,11 +24,18 @@ void Jafg::LViewport::Tick()
 
 void Jafg::LViewport::Draw()
 {
+    for (const WUserWidget* Widget : this->TopLevelWidgets)
+    {
+        Widget->ViewportDrawEntry(this);
+        // Widget->Draw(this);
+    }
+
+    return;
 }
 
 void Jafg::LViewport::TearDown()
 {
-    for (WWidgetNode* Widget : this->TopLevelWidgets)
+    for (WUserWidget* Widget : this->TopLevelWidgets)
     {
         Widget->MarkAsGarbage();
     }
@@ -47,4 +54,13 @@ void Jafg::LViewport::AddWidget(WUserWidget* Widget)
 void Jafg::LViewport::RemoveWidget(WUserWidget* Widget)
 {
     this->TopLevelWidgets.RemoveOnceChecked(Widget);
+}
+
+void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
+{
+    check( InDimensions.X > 0 && InDimensions.Y > 0 )
+
+    this->Dimensions = InDimensions;
+
+    return;
 }

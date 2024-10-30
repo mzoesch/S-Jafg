@@ -3,25 +3,25 @@
 #include "CoreAFX.h"
 #include "Engine/Framework/Hud.h"
 #include "Core/Application.h"
+#include "Platform/Surface.h"
+#include "Player/LocalPlayer.h"
 #include "Subsystems/HudSubsystem.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Widgets/WidgetNode.h"
 #include "Widgets/Viewport.h"
-
-#include "Widgets/WidgetRegion.h"
+#include "Engine/Engine.h"
 
 void Jafg::LHud::Initialize(Private::LObjectContext* InOuter)
 {
     this->Outer                = InOuter;
     GCurrentWidgetContextState = this->Outer;
 
-    this->MainViewport = new LViewport();
-    this->MainViewport->Initialize();
-
     checkSlow( this->Collection == nullptr )
     this->Collection = new LSubsystemCollection(this->Outer);
     this->Collection->LocateAllSubsystemsOfClass(JHudSubsystem::StaticClass());
     this->Collection->InitializeSubsystems();
+
+    check( this->GetMainViewport() )
 
     return;
 }
@@ -45,13 +45,9 @@ void Jafg::LHud::Tick()
         return;
     });
 
-    this->MainViewport->Tick();
+    this->GetMainViewport()->Tick();
 
     return;
-}
-
-void Jafg::LHud::Draw()
-{
 }
 
 void Jafg::LHud::TearDown()
@@ -60,19 +56,20 @@ void Jafg::LHud::TearDown()
     delete this->Collection;
     this->Collection = nullptr;
 
-    this->MainViewport->TearDown();
-    delete this->MainViewport;
-    this->MainViewport = nullptr;
-
     return;
+}
+
+Jafg::LViewport* Jafg::LHud::GetMainViewport() const
+{
+    return GEngine->GetPanickedLocalPlayer()->GetPrimarySurface()->GetViewport();
 }
 
 void Jafg::LHud::AddWidget(WUserWidget* Widget) const
 {
-    this->MainViewport->AddWidget(Widget);
+    this->GetMainViewport()->AddWidget(Widget);
 }
 
 void Jafg::LHud::RemoveWidget(WUserWidget* Widget) const
 {
-    this->MainViewport->RemoveWidget(Widget);
+    this->GetMainViewport()->RemoveWidget(Widget);
 }

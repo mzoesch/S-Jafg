@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "WidgetNode.h"
+#include "Widgets/WidgetParentBase.h"
 #include "UserWidget.generated.h"
 
 namespace Jafg
@@ -17,7 +17,7 @@ class WWidgetParent;
  * user interfaces.
  */
 DECLARE_JAFG_CLASS()
-class RHI_API WUserWidget : public WWidgetNode
+class RHI_API WUserWidget : public WWidgetParentBase
 {
     GENERATED_CLASS_BODY()
 
@@ -27,7 +27,16 @@ protected:
 
 public:
 
-    virtual void RemoveFromParent(const bool bDestroy = true) override;
+    void ViewportDrawEntry(LViewport* Context) const;
+
+    // WWidgetNode implementation
+    virtual void Draw(LViewport* Context) const override;
+    virtual auto GetViewportSize() const -> LIntVector2 override;
+    // ~WWidgetNode implementation
+
+    // WWidgetParentBase implementation
+    virtual auto RemoveFromParent(const bool bDestroy = true) -> void override;
+    // ~WWidgetParentBase implementation
 
     /** Add this widget to the main viewport of the current active local player. */
     void AddToViewport(LViewport* InViewport);
@@ -40,7 +49,7 @@ private:
 
     /** The absolute root of this widget. Attach everything to this widget. */
     WWidgetParent* Root             = nullptr;
-    /** Where this widget resides in. */
+    /** Where this widget resides in. Can be null if attached to another widget. So do not use without checking. */
     LViewport*     AttachedViewport = nullptr;
 };
 

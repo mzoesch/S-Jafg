@@ -293,7 +293,7 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPack
         return Package;
     }
 
-    panic( "Failed to find package." )
+    panicMsgf( "Failed to find package [{}].", SpacedClassName )
 
     return nullptr;
 }

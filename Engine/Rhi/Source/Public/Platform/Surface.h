@@ -32,6 +32,7 @@ public:
 
     virtual void SetInputMode(bool bShowCursor) = 0;
 
+    FORCEINLINE       auto GetViewport() const -> LViewport* { return this->SurfaceViewport; }
     NODISCARD virtual auto GetWidth() const -> int32                    = 0;
     NODISCARD virtual auto GetHeight() const -> int32                   = 0;
     NODISCARD virtual auto GetDimensions() const -> TIntVector2<int32>  = 0;
@@ -51,8 +52,10 @@ public:
 
 private:
 
-    /** The viewport that is used to draw on this surface. */
-    LViewport* Viewport = nullptr;
+    /**
+     * The viewport that is used to draw on this surface meaning the viewport that includes the whole surface screen.
+     */
+    LViewport* SurfaceViewport = nullptr;
 
     /** The keys that are currently down for this surface this frame. */
     TdhArray<LRawInput> DownKeys;

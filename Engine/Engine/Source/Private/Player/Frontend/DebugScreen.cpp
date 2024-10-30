@@ -9,9 +9,11 @@ void Jafg::WDebugScreen::Construct()
 {
     Super::Construct();
 
-    this->ReplaceRoot(ConstructWidgetNode<WWidgetRegion>());
+    this->ReplaceRoot(ConstructDeferredWidgetNode<WWidgetRegion>());
 
-    this->GetRoot()->AddChild(ConstructWidgetNode<WTextBlock>());
+    this->GetRoot()->AddChild(ConstructDeferredWidgetNode<WTextBlock>());
+
+    ConstructDeferredWidgetNode(this->GetRoot());
 
     return;
 }

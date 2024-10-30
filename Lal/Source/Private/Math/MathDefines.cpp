@@ -33,3 +33,15 @@ template<> const LVectorD LVectorD::LeftVector { LVectorD(0.0, -1.0, 0.0) };
 template<> const LVectorD LVectorD::UnitVectorX { LVectorD(1.0, 0.0, 0.0) };
 template<> const LVectorD LVectorD::UnitVectorY { LVectorD(0.0, 1.0, 0.0) };
 template<> const LVectorD LVectorD::UnitVectorZ { LVectorD(0.0, 0.0, 1.0) };
+
+template<> const LInt8Vector2 LInt8Vector2::ZeroVector { LInt8Vector2(0, 0) };
+template<> const LInt8Vector2 LInt8Vector2::OneVector { LInt8Vector2(1, 1) };
+
+template<> const LInt16Vector2 LInt16Vector2::ZeroVector { LInt16Vector2(0, 0) };
+template<> const LInt16Vector2 LInt16Vector2::OneVector { LInt16Vector2(1, 1) };
+
+template<> const LInt32Vector2 LInt32Vector2::ZeroVector { LInt32Vector2(0, 0) };
+template<> const LInt32Vector2 LInt32Vector2::OneVector { LInt32Vector2(1, 1) };
+
+template<> const LInt64Vector2 LInt64Vector2::ZeroVector { LInt64Vector2(0, 0) };
+template<> const LInt64Vector2 LInt64Vector2::OneVector { LInt64Vector2(1, 1) };

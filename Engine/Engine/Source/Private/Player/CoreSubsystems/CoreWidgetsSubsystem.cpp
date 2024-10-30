@@ -10,8 +10,9 @@ void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
 
-    this->DebugScreen = ConstructUserWidget<WDebugScreen>(this->GetContext());
+    this->DebugScreen = ConstructDeferredWidgetNode<WDebugScreen>(this->GetContext());
     this->DebugScreen->AddToViewport(this->GetHud()->GetMainViewport());
+    ConstructDeferredWidgetNode(this->DebugScreen);
 
     return;
 }

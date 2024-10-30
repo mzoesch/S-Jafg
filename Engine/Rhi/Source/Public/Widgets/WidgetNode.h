@@ -8,8 +8,11 @@
 namespace Jafg
 {
 
-class LSurface;
 class WWidgetParent;
+class WUserWidget;
+class LViewport;
+class LSurface;
+class WWidgetParentBase;
 struct LWidgetConstructor;
 
 namespace EWidgetVisibility
@@ -42,25 +45,26 @@ class RHI_API WWidgetNode : public ::Jafg::Private::JObjectBase
 
     friend LWidgetConstructor;
     friend WWidgetParent;
+    friend WWidgetParentBase;
+    friend WUserWidget;
 
 protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(WWidgetNode)
 
-private:
+public:
 
     // JObjectBase implementation
     virtual void BeginLife() override final { Super::BeginLife(); this->Construct(); return; }
     virtual void EndLife() override final   { this->Destruct();   Super::EndLife();  return; }
+    virtual void MarkAsGarbage() override;
     // ~JObjectBase implementation
-
-public:
 
     virtual void Construct();
     virtual void Tick();
     virtual void Destruct();
 
-    virtual void Draw(LSurface* Context) const;
+    virtual void Draw(LViewport* Context) const { }
 
     /** Weather this widget is allowed to tick this frame. */
     FORCEINLINE auto ShouldNowTick() const -> bool
@@ -82,20 +86,29 @@ public:
      * @param bDestroy If true, the widget will be destroyed automatically.
      */
     virtual void RemoveFromParent(const bool bDestroy = true);
-    FORCEINLINE auto GetParent()   const -> WWidgetParent* { return this->Parent; }
+    FORCEINLINE auto GetParent()   const -> WWidgetParentBase* { return this->Parent; }
+
+    /** @return The size of the current viewport in pixels. */
+    virtual auto GetViewportSize() const -> LIntVector2;
 
 private:
 
     bool                    bDisableTick = false;
     EWidgetVisibility::Type Visibility   = EWidgetVisibility::Visible;
 
-    WWidgetParent*          Parent       = nullptr;
+    WWidgetParentBase*       Parent       = nullptr;
 };
 
 template <typename TNode>
 FORCEINLINE auto ConstructWidgetNode(Private::LObjectContext* InContext) -> TNode*
 {
     return NewObject<TNode>(InContext);
+}
+
+template <typename TNode>
+FORCEINLINE auto ConstructDeferredWidgetNode(Private::LObjectContext* InContext) -> TNode*
+{
+    return NewDeferredObject<TNode>(InContext);
 }
 
 /** Before constructing empty context widget, update the global specific widget context. */
@@ -106,6 +119,20 @@ FORCEINLINE auto ConstructWidgetNode() -> TNode*
 {
     checkSlow( GCurrentWidgetContextState != nullptr )
     return ConstructWidgetNode<TNode>(GCurrentWidgetContextState);
+}
+
+template <typename TNode>
+FORCEINLINE auto ConstructDeferredWidgetNode() -> TNode*
+{
+    checkSlow( GCurrentWidgetContextState != nullptr )
+    return ConstructDeferredWidgetNode<TNode>(GCurrentWidgetContextState);
+}
+
+FORCEINLINE void ConstructDeferredWidgetNode(WWidgetNode* InNode)
+{
+    checkSlow( InNode != nullptr )
+    InNode->BeginLife();
+    return;
 }
 
 } /* ~Namespace Jafg */

@@ -19,6 +19,15 @@ struct TIntVector2 final
         T XY[2];
     };
 
+    /** Global zero vector constant (0, 0). */
+    static const TIntVector2<T> ZeroVector;
+
+    /** Global one vector constant (1, 1). */
+    static const TIntVector2<T> OneVector;
+
+    static FORCEINLINE TIntVector2<T> Zero() { return TIntVector2<T>::ZeroVector; }
+    static FORCEINLINE TIntVector2<T> One()  { return TIntVector2<T>::OneVector;  }
+
     FORCEINLINE          TIntVector2<T>()                                       = default;
     FORCEINLINE explicit TIntVector2<T>(const T InIntegral) noexcept            : X(InIntegral), Y(InIntegral)  { }
     FORCEINLINE explicit TIntVector2<T>(const T InX, const T InY) noexcept      : X(InX), Y(InY)                { }

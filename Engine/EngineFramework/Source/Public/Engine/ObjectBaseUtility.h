@@ -6,6 +6,31 @@
 #include "ObjectClass.h"
 #include "Engine/ObjectContext.h"
 
+
+///////////////////////////////////////////////////////////////////////////////
+// Compiler options
+
+/**
+ * Whether the c++ compiler should check for pure virtual functions, and if
+ * they have been overriden by any derived class. Usually disabled as the
+ * program may not run with this option enabled.
+ * Usually, this program crashes if it encounters a non-implemented pure
+ * virtual method.
+ */
+#define DO_PURE_VIRTUAL_COMPILER_CHECKS                 0
+
+// ~Compiler options
+///////////////////////////////////////////////////////////////////////////////
+
+#if DO_PURE_VIRTUAL_COMPILER_CHECKS
+    #define PURE_VIRTUAL(...) = 0
+#else /* DO_PURE_VIRTUAL_COMPILER_CHECKS */
+    /** Define a RetTy for non-void members if needed. */
+    #define PURE_VIRTUAL(RetTy, ...) { panic( "Pure virtual function was encountered." ) RetTy; ##__VA_ARGS__; }
+#endif /* !DO_PURE_VIRTUAL_COMPILER_CHECKS */
+
+#define NON_CALLABLE_MEMBER(RetTy, ...) { panic( "Non-callable member function was encountered." ) RetTy; ##__VA_ARGS__; }
+
 namespace Jafg
 {
 

@@ -8,6 +8,9 @@
 namespace Jafg
 {
 
+class Shader;
+class LViewport;
+
 DECLARE_JAFG_CLASS()
 class RHI_API WTextBlock final : public WWidgetNode
 {
@@ -16,6 +19,21 @@ class RHI_API WTextBlock final : public WWidgetNode
 protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(WTextBlock)
+
+public:
+
+    // WWidgetNode implementation
+    virtual void Construct() override;
+    virtual void Tick() override;
+    virtual void Destruct() override;
+    virtual void Draw(LViewport* Context) const override;
+    // ~WWidgetNode implementation
+
+private:
+
+    void DrawTextImpl() const;
+
+    Shader* FontShaderProgram = nullptr;
 };
 
 } /* ~Namespace Jafg */

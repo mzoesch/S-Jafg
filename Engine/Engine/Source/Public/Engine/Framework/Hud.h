@@ -33,10 +33,10 @@ public:
 
     void Initialize(Private::LObjectContext* InOuter);
     void Tick();
-    void Draw();
     void TearDown();
 
-    FORCEINLINE auto GetMainViewport() const -> LViewport* { return this->MainViewport; }
+    auto GetMainViewport() const -> LViewport* ;
+
     void AddWidget(WUserWidget* Widget) const;
     void RemoveWidget(WUserWidget* Widget) const;
 
@@ -44,7 +44,6 @@ private:
 
     Private::LObjectContext* Outer;
     LSubsystemCollection*    Collection;
-    LViewport*               MainViewport;
 };
 
 } /* ~Namespace Jafg. */
