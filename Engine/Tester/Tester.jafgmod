@@ -2,6 +2,6 @@
     "FriendlyName": "Tester",
     "Pch": "No",
     "PublicDependencies": [
-        "Engine"
+        "TesterForward", "Lal"
     ]
 }

@@ -20,6 +20,17 @@ func GenerateSolution() {
     return
 }
 
+func GenerateLalUnitTestsSolution() {
+    var handle *os.File = PrepareLuaBuildFile()
+    WriteLuaBuildFileBodyForLalUnitTests(handle)
+
+    Shared.CloseFile(handle)
+
+    fmt.Println("Finished generating Lal unit tests solution.")
+
+    return
+}
+
 func PrepareLuaBuildFile() *os.File {
     fmt.Println("Preparing Lua build file...")
 
@@ -106,64 +117,58 @@ func GetAllBuildTargetConfigurations(target *Shared.Target) []string {
     return out
 }
 
-func WriteLuaBuildFileBody(handle *os.File) {
-    if handle == nil {
-        panic("WriteLuaBuildFileBody called with nil handle.")
-    }
+func WriteAllLuaBuildFileSharedLogic(builder *strings.Builder) {
+    WriteWithIndent(builder, 0, "language 'C++'\n")
+    WriteWithIndent(builder, 0, "cppdialect 'C++20'\n")
 
-    var builder strings.Builder = strings.Builder{}
-
-    WriteWithIndent(&builder, 0, "language 'C++'\n")
-    WriteWithIndent(&builder, 0, "cppdialect 'C++20'\n")
-
-    WriteWithIndent(&builder, 0, "workspace 'Jafg'\n")
-    WriteWithIndent(&builder, 4, "architecture 'x64'\n")
-    WriteWithIndent(&builder, 4, "startproject 'Runtime'\n")
+    WriteWithIndent(builder, 0, "workspace 'Jafg'\n")
+    WriteWithIndent(builder, 4, "architecture 'x64'\n")
+    WriteWithIndent(builder, 4, "startproject 'Runtime'\n")
     for _, targ := range GetAllBuildConfigurations() {
-        WriteWithIndent(&builder, 4, fmt.Sprintf("configurations { '%s' }\n", targ))
+        WriteWithIndent(builder, 4, fmt.Sprintf("configurations { '%s' }\n", targ))
     }
-    WriteWithIndent(&builder, 4, "platforms { 'Windows64'}\n")
+    WriteWithIndent(builder, 4, "platforms { 'Windows64'}\n")
 
-    WriteWithIndent(&builder, 4, "filter 'platforms:Windows64'\n")
-    WriteWithIndent(&builder, 8, "systemversion 'latest'\n")
-    WriteWithIndent(&builder, 8, "defines { 'PLATFORM_WINDOWS' }\n")
-    WriteWithIndent(&builder, 8, "linkoptions { '/SUBSYSTEM:WINDOWS' }\n")
-    WriteWithIndent(&builder, 4, "filter {}\n")
+    WriteWithIndent(builder, 4, "filter 'platforms:Windows64'\n")
+    WriteWithIndent(builder, 8, "systemversion 'latest'\n")
+    WriteWithIndent(builder, 8, "defines { 'PLATFORM_WINDOWS' }\n")
+    WriteWithIndent(builder, 8, "linkoptions { '/SUBSYSTEM:WINDOWS' }\n")
+    WriteWithIndent(builder, 4, "filter {}\n")
 
     for _, buildConfiguration := range GetAllDebugBuildConfigurations() {
-        WriteWithIndent(&builder, 4, fmt.Sprintf("filter 'configurations:%s'\n", buildConfiguration))
-        WriteWithIndent(&builder, 8, "defines { 'IN_DEBUG' }\n")
-        WriteWithIndent(&builder, 8, "runtime 'Debug'\n")
-        WriteWithIndent(&builder, 8, "symbols 'On'\n")
-        WriteWithIndent(&builder, 8, "optimize 'Off'\n")
-        WriteWithIndent(&builder, 4, "filter {}\n")
+        WriteWithIndent(builder, 4, fmt.Sprintf("filter 'configurations:%s'\n", buildConfiguration))
+        WriteWithIndent(builder, 8, "defines { 'IN_DEBUG' }\n")
+        WriteWithIndent(builder, 8, "runtime 'Debug'\n")
+        WriteWithIndent(builder, 8, "symbols 'On'\n")
+        WriteWithIndent(builder, 8, "optimize 'Off'\n")
+        WriteWithIndent(builder, 4, "filter {}\n")
     }
 
     for _, buildConfiguration := range GetAllDevelopmentBuildConfigurations() {
-        WriteWithIndent(&builder, 4, fmt.Sprintf("filter 'configurations:%s'\n", buildConfiguration))
-        WriteWithIndent(&builder, 8, "defines { 'IN_DEVELOPMENT' }\n")
-        WriteWithIndent(&builder, 8, "runtime 'Release'\n")
-        WriteWithIndent(&builder, 8, "symbols 'On'\n")
-        WriteWithIndent(&builder, 8, "optimize 'On'\n")
-        WriteWithIndent(&builder, 4, "filter {}\n")
+        WriteWithIndent(builder, 4, fmt.Sprintf("filter 'configurations:%s'\n", buildConfiguration))
+        WriteWithIndent(builder, 8, "defines { 'IN_DEVELOPMENT' }\n")
+        WriteWithIndent(builder, 8, "runtime 'Release'\n")
+        WriteWithIndent(builder, 8, "symbols 'On'\n")
+        WriteWithIndent(builder, 8, "optimize 'On'\n")
+        WriteWithIndent(builder, 4, "filter {}\n")
     }
 
     for _, buildConfiguration := range GetAllShippingBuildConfigurations() {
-        WriteWithIndent(&builder, 4, fmt.Sprintf("filter 'configurations:%s'\n", buildConfiguration))
-        WriteWithIndent(&builder, 8, "defines { 'IN_SHIPPING' }\n")
-        WriteWithIndent(&builder, 8, "runtime 'Release'\n")
-        WriteWithIndent(&builder, 8, "symbols 'Off'\n")
-        WriteWithIndent(&builder, 8, "optimize 'On'\n")
-        WriteWithIndent(&builder, 4, "filter {}\n")
+        WriteWithIndent(builder, 4, fmt.Sprintf("filter 'configurations:%s'\n", buildConfiguration))
+        WriteWithIndent(builder, 8, "defines { 'IN_SHIPPING' }\n")
+        WriteWithIndent(builder, 8, "runtime 'Release'\n")
+        WriteWithIndent(builder, 8, "symbols 'Off'\n")
+        WriteWithIndent(builder, 8, "optimize 'On'\n")
+        WriteWithIndent(builder, 4, "filter {}\n")
     }
 
     for _, targ := range Shared.GApp.GetAllTargets() {
         for _, buildConfiguration := range GetAllBuildTargetConfigurations(targ) {
-            WriteWithIndent(&builder, 4, fmt.Sprintf("filter 'configurations:%s'\n", buildConfiguration))
+            WriteWithIndent(builder, 4, fmt.Sprintf("filter 'configurations:%s'\n", buildConfiguration))
             for _, def := range targ.AdditionalDefines {
-                WriteWithIndent(&builder, 8, fmt.Sprintf("defines { '%s' }\n", def))
+                WriteWithIndent(builder, 8, fmt.Sprintf("defines { '%s' }\n", def))
             }
-            WriteWithIndent(&builder, 4, "filter {}\n")
+            WriteWithIndent(builder, 4, "filter {}\n")
 
             continue
         }
@@ -171,8 +176,36 @@ func WriteLuaBuildFileBody(handle *os.File) {
         continue
     }
 
+    return
+}
+
+func WriteLuaBuildFileBody(handle *os.File) {
+    if handle == nil {
+        panic("WriteLuaBuildFileBody called with nil handle.")
+    }
+
+    var builder strings.Builder = strings.Builder{}
+
+    WriteAllLuaBuildFileSharedLogic(&builder)
+
     WriteLuaBuildFileProjectSpecificSection(&builder)
     WriteLuaBuildFileGeneratedSection(&builder)
+
+    Shared.WriteToFile(handle, builder.String())
+
+    return
+}
+
+func WriteLuaBuildFileBodyForLalUnitTests(handle *os.File) {
+    if handle == nil {
+        panic("WriteLuaBuildFileBody called with nil handle.")
+    }
+
+    var builder strings.Builder = strings.Builder{}
+
+    WriteAllLuaBuildFileSharedLogic(&builder)
+
+    WriteLuaBuildFileProjectSpecificSectionLalUnitTests(&builder)
 
     Shared.WriteToFile(handle, builder.String())
 
@@ -191,6 +224,24 @@ func WriteLuaBuildFileProjectSpecificSection(builder *strings.Builder) {
     return
 }
 
+func WriteLuaBuildFileProjectSpecificSectionLalUnitTests(builder *strings.Builder) {
+    if builder == nil {
+        panic("WriteLuaBuildFileProjectSpecificSection called with nil builder.")
+    }
+
+    for _, proj := range Shared.GApp.Projects {
+        if proj.Name == "Lal" {
+            WriteLuaBuildFileForSpecificProject(builder, 0, &proj)
+        } else if proj.Name == "Engine" {
+            WriteLuaBuildFileForSpecificProjectOnlyLalUnitTests(builder, 0, &proj)
+        }
+
+        continue
+    }
+
+    return
+}
+
 func WriteLuaBuildFileForSpecificProject(builder *strings.Builder, indent int, proj *Shared.Project) {
     if builder == nil {
         panic("WriteLuaBuildFileForSpecificProject called with nil builder.")
@@ -203,6 +254,31 @@ func WriteLuaBuildFileForSpecificProject(builder *strings.Builder, indent int, p
 
     for _, mod := range proj.Modules {
         WriteLuaBuildFileForSpecificModule(builder, indent+4, &mod)
+    }
+
+    WriteWithIndent(builder, indent, "group ''\n")
+
+    return
+}
+
+func WriteLuaBuildFileForSpecificProjectOnlyLalUnitTests(builder *strings.Builder, indent int, proj *Shared.Project) {
+    if builder == nil {
+        panic("WriteLuaBuildFileForSpecificProject called with nil builder.")
+    }
+    if proj == nil {
+        panic("WriteLuaBuildFileForSpecificProject called with nil project.")
+    }
+
+    WriteWithIndent(builder, indent, fmt.Sprintf("group '%s'\n", proj.GetRelativeProjectDir()))
+
+    for _, mod := range proj.Modules {
+        if mod.GetUsableName() == "TesterForward" {
+            WriteLuaBuildFileForSpecificModule(builder, indent+4, &mod)
+        } else if mod.GetUsableName() == "Tester" {
+            WriteLuaBuildFileForSpecificModule(builder, indent+4, &mod)
+        }
+
+        continue
     }
 
     WriteWithIndent(builder, indent, "group ''\n")

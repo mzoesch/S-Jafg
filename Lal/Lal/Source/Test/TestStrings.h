@@ -13,7 +13,7 @@ TEST_CASE(SimpleAsciiStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr,                      "" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr,                    "\0" )
     CHECK_LESS(     "Implicitly constructed string.", MyStr,                     "A" )
-    CHECK_EQUALS(   "Implicitly constructed string.", MyStr.GetSize(),             1 )
+    CHECK_EQUALS(   "Implicitly constructed string.", MyStr.GetSize(),             0 )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr.GetRuneCount(),        0 )
 
     MyStr = "Abc";
@@ -95,7 +95,7 @@ TEST_CASE(SimpleAsciiStringManipulations, "Lal.Strings")
     LAsciiString MyStr;
     CHECK_EQUALS( "Simple Manipulations.", MyStr,               "" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,            "\0" )
-    CHECK_EQUALS( "Simple Manipulations.", MyStr.GetSize(),      1 )
+    CHECK_EQUALS( "Simple Manipulations.", MyStr.GetSize(),      0 )
     CHECK_EQUALS( "Simple Manipulations.", MyStr.GetRuneCount(), 0 )
 
     MyStr.Append("");
@@ -180,13 +180,13 @@ TEST_CASE(SimpleAsciiStringManipulations, "Lal.Strings")
     MyStr.Pop();
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr,                    "" )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr,                  "\0" )
-    CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetSize()  ,         1 )
+    CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetSize()  ,         0 )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetRuneCount(),      0 )
     CHECK_EQUALS(  "Not so simple manipulations.", *MyStr.Peek(),          '\0' )
     MyStr.Pop();
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr,                    "" )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr,                  "\0" )
-    CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetSize()  ,         1 )
+    CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetSize()  ,         0 )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetRuneCount(),      0 )
     CHECK_EQUALS(  "Not so simple manipulations.", *MyStr.Peek(),          '\0' )
 
@@ -207,13 +207,13 @@ TEST_CASE(SimpleAsciiStringManipulations, "Lal.Strings")
     MyStr.Empty();
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,               "" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,             "\0" )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),      1 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),      0 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(), 0 )
 
     MyStr.Reserve(5);
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,               "" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,             "\0" )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),      1 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),      0 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(), 0 )
 
     return;
@@ -226,8 +226,8 @@ TEST_CASE(AsciiArrayCopyingAndMoving, "Lal.Strings")
     LAsciiString MyStr1;
     LAsciiString MyStr2 = MyStr1;
 
-    CHECK_EQUALS(       "Copy constructed string.", MyStr1,                 MyStr2 )
-    CHECK_NOT_EQUALS(   "Copy constructed string.", MyStr1.ToC(),     MyStr2.ToC() )
+    CHECK_EQUALS(   "Copy constructed string.", MyStr1,                 MyStr2 )
+    CHECK_EQUALS(   "Copy constructed string.", MyStr1.ToC(),     MyStr2.ToC() )
 
     MyStr2.Append("Abcdefgh");
     CHECK_EQUALS(       "Copy constructed string.", MyStr1,                   "" )

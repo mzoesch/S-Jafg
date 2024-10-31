@@ -39,4 +39,8 @@ def route_to_program(*args, **kwargs) -> None:
         from Programs.SolutionGenerator import GenerateSolution as generate_solution
         generate_solution.generate_solution()
 
+    if '--generate-solution-for-lal-unit-tests' in args:
+        from Programs.SolutionGenerator import GenerateSolution as generate_solution
+        generate_solution.generate_solution_for_lal_unit_tests()
+
     return None

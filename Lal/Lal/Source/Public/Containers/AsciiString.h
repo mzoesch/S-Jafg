@@ -19,12 +19,13 @@ class LAsciiString
      */
     using LRune = uint8;
 
-    inline static uint8 StringTerminator     = '\0';
+    inline static LRune StringTerminatorRune = '\0';
     inline static char  StringTerminatorChar = '\0';
 
 public:
 
     FORCEINLINE LAsciiString()                           noexcept;
+    FORCEINLINE LAsciiString(LNullptrTy)                 noexcept;
 
     FORCEINLINE LAsciiString(      LAsciiString&  Other) noexcept;
     FORCEINLINE LAsciiString(const LAsciiString&  Other) noexcept;
@@ -32,10 +33,10 @@ public:
     FORCEINLINE LAsciiString(const LAsciiString&& Other) noexcept = delete;
     FORCEINLINE LAsciiString(const LRune* Other)         noexcept;
     FORCEINLINE LAsciiString(const char* Other)          noexcept;
-    FORCEINLINE LAsciiString(const int32  Number)        noexcept;
-    FORCEINLINE LAsciiString(const int64  Number)        noexcept;
-    FORCEINLINE LAsciiString(const uint32 Number)        noexcept;
-    FORCEINLINE LAsciiString(const uint64 Number)        noexcept;
+    FORCEINLINE explicit LAsciiString(const int32  Number)    noexcept;
+    FORCEINLINE explicit LAsciiString(const int64  Number)    noexcept;
+    FORCEINLINE explicit LAsciiString(const uint32 Number)    noexcept;
+    FORCEINLINE explicit LAsciiString(const uint64 Number)    noexcept;
 
     FORCEINLINE auto operator=(const char*  Other)         noexcept -> LAsciiString&;
     FORCEINLINE auto operator=(const uint8* Other)         noexcept -> LAsciiString&;
@@ -59,28 +60,34 @@ public:
     FORCEINLINE auto Peek(void) const -> const LRune*;
 
     FORCEINLINE auto Reserve(const SizeType Size)     -> void { this->Data.Reserve(Size);           return; }
+    /**
+     * Empties the string and sets its size to zero. The memory buffer will not be deallocated or reallocated unless
+     * the Size parameter is greater than the current capacity and growing the current memory buffer is not possible.
+     * A null-terminator will be written to the first byte of the buffer.
+     */
     FORCEINLINE auto Reset  (const SizeType Size)     -> void ;
+    /**
+     * Empties the string and sets its size to zero. The memory buffer will be deallocated.
+     */
     FORCEINLINE auto Empty  (void)                    -> void ;
     FORCEINLINE auto IsEmpty(void) const              -> bool { return this->GetRuneCount() == 0;           }
     FORCEINLINE auto SwapStrings(LAsciiString& Other) -> void { this->Data.SwapBuffers(Other.Data); return; }
 
-    /** Copy the string into another string. */
+    /** Copy a string into another string. */
     FORCEINLINE auto CopyInto(LAsciiString& Other) const -> void { Other = *this;            return; }
     FORCEINLINE auto CopyFrom(const LAsciiString& Other) -> void { *this = Other;            return; }
-    /** Move the string into another string. */
+    /** Move a string into another string. */
     FORCEINLINE auto MoveInto(LAsciiString& Other)       -> void { Other = std::move(*this); return; }
     FORCEINLINE auto MoveFrom(LAsciiString& Other)       -> void { *this = std::move(Other); return; }
 
     /** Get the size of the string in bytes. */
     FORCEINLINE auto GetSize(void) const -> SizeType { return this->Data.GetSize(); }
     /** Get the number of runes in the string (that excludes the null-terminator). */
-    FORCEINLINE auto GetRuneCount(void) const -> SizeType { return this->Data.GetSize() - 1; }
+    FORCEINLINE auto GetRuneCount(void) const -> SizeType { return Maths::Max(this->Data.GetSize() - 0x01, 0x00); }
 
     /** Interpret the string as a C-style string. */
-    FORCEINLINE auto ToC()         ->       char * { return reinterpret_cast<      char*>(this->Data.GetData()); }
-    FORCEINLINE auto ToC()   const -> const char * { return reinterpret_cast<const char*>(this->Data.GetData()); }
-    FORCEINLINE auto ToPtr()       ->       LRune* { return this->Data.GetData(); }
-    FORCEINLINE auto ToPtr() const -> const LRune* { return this->Data.GetData(); }
+    FORCEINLINE auto ToC()   const -> const char * ;
+    FORCEINLINE auto ToPtr() const -> const LRune* ;
 
     FORCEINLINE auto operator[](const SizeType Index)       ->       LRune& { return this->Data[Index]; }
     FORCEINLINE auto operator[](const SizeType Index) const -> const LRune& { return this->Data[Index]; }
@@ -94,6 +101,7 @@ public:
     FORCEINLINE auto operator+=(const LAsciiString& Other)       -> LAsciiString&;
     FORCEINLINE auto operator-=(const LAsciiString& Other)       -> LAsciiString& = delete;
 
+    FORCEINLINE auto operator==(LNullptrTy)         const -> bool;
     FORCEINLINE auto operator==(const char * Other) const -> bool;
     FORCEINLINE auto operator==(const LRune* Other) const -> bool;
     FORCEINLINE auto operator!=(const char * Other) const -> bool { return !(*this == Other); }
@@ -110,14 +118,14 @@ public:
     FORCEINLINE auto operator+=(const LRune* Other)       -> LAsciiString& { this->Append(Other); return *this; }
 
     FORCEINLINE auto Equals(const LAsciiString& Other) const -> bool { return *this == Other; }
-    FORCEINLINE auto Equals(const char* Other) const -> bool { return *this == Other; }
-    FORCEINLINE auto Equals(const LRune* Other) const -> bool { return *this == Other; }
+    FORCEINLINE auto Equals(const char* Other)         const -> bool { return *this == Other; }
+    FORCEINLINE auto Equals(const LRune* Other)        const -> bool { return *this == Other; }
 
     /** Private iterator functions for range-based loops. Do not use these directly. */
-    FORCEINLINE auto begin()       noexcept -> Iterator<LRune>       { return Iterator<LRune>      (this->Data.GetData());      }
-    FORCEINLINE auto begin() const noexcept -> Iterator<const LRune> { return Iterator<const LRune>(this->Data.GetData());      }
-    FORCEINLINE auto end()         noexcept -> Iterator<LRune>       { return Iterator<LRune>      (this->Data.GetSlack() - 1); }
-    FORCEINLINE auto end()   const noexcept -> Iterator<const LRune> { return Iterator<const LRune>(this->Data.GetSlack() - 1); }
+    FORCEINLINE auto begin()       noexcept -> Iterator<LRune>       ;
+    FORCEINLINE auto begin() const noexcept -> Iterator<const LRune> ;
+    FORCEINLINE auto end()         noexcept -> Iterator<LRune>       ;
+    FORCEINLINE auto end()   const noexcept -> Iterator<const LRune> ;
 
 private:
 
@@ -146,20 +154,13 @@ struct std::formatter<Jafg::LAsciiString> : std::formatter<const char*>
 
 FORCEINLINE Jafg::LAsciiString::LAsciiString() noexcept
 {
-    /*
-     * We reserve one here. As if we only have empty strings, we still need to have the default null-terminator
-     * allocated to ensure backwards compatibility with C-style strings.
-     * If we just added the terminator, the default-dynamic-array allocator would instantly allocate not one
-     * but five new elements. This would cost us a lot of memory.
-     *
-     * For later: Maybe we can just have a global string terminator pointer and use that instead? We currently do not
-     * randomly reorganize runes inside a string inside c-style functions.
-     * Maybe we add an explicit way of doing that when the time comes, as: #GetGrowableMemoryPointer.
-     */
-    this->Data.Reserve(1);
+    check( this->Data.GetData() == nullptr )
+}
 
-    this->Data.Add(LAsciiString::StringTerminator);
-
+FORCEINLINE Jafg::LAsciiString::LAsciiString(LNullptrTy) noexcept
+{
+    this->Data.Empty();
+    check( this->Data.GetData() == nullptr )
     return;
 }
 
@@ -167,12 +168,9 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(LAsciiString& Other) noexcept
 {
     this->Data = Other.Data;
 
-#if !IN_SHIPPING
-    if (*this->Data.Peek() != LAsciiString::StringTerminator)
-    {
-        panic( "Got copy of illformed string (not null-terminated)." )
-    }
-#endif /* !IN_SHIPPING */
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -181,12 +179,9 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const LAsciiString& Other) noexcept
 {
     this->Data = Other.Data;
 
-#if !IN_SHIPPING
-    if (*this->Data.Peek() != LAsciiString::StringTerminator)
-    {
-        panic( "Got copy of illformed string (not null-terminated)." )
-    }
-#endif /* !IN_SHIPPING */
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -195,18 +190,33 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(LAsciiString&& Other) noexcept
 {
     this->Data = std::forward<TdhArray<LRune>>(Other.Data);
 
-#if !IN_SHIPPING
-    if (*this->Data.Peek() != LAsciiString::StringTerminator)
-    {
-        panic( "Got forwarded memory of illformed string (not null-terminated)." )
-    }
-#endif /* !IN_SHIPPING */
-
-    /*
-     * The other one is a string we have to reset to ensure that it is in a valid state.
-     * As a valid forwarded state of a TArray is not valid for a LAsciiString.
-     */
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
     Other.EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+
+    return;
+}
+
+FORCEINLINE Jafg::LAsciiString::LAsciiString(const LRune* Other) noexcept
+{
+    this->Data.Reset(1);
+
+    while (true)
+    {
+        this->Data.Add(*Other);
+
+        if (*Other++ == LAsciiString::StringTerminatorRune)
+        {
+            break;
+        }
+
+        continue;
+    }
+
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -227,6 +237,10 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const char* Other) noexcept
         continue;
     }
 
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+
     return;
 }
 
@@ -236,6 +250,7 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const int32 Number) noexcept
     const std::string NumberString = std::to_string(Number);
 
     this->Data.Reset(static_cast<SizeType>(NumberString.size()) + 1);
+    this->Data.Add(LAsciiString::StringTerminatorRune);
     this->Append(NumberString.c_str());
 
     return;
@@ -246,6 +261,7 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const int64 Number) noexcept
     const std::string NumberString = std::to_string(Number);
 
     this->Data.Reset(static_cast<SizeType>(NumberString.size()) + 1);
+    this->Data.Add(LAsciiString::StringTerminatorRune);
     this->Append(NumberString.c_str());
 
     return;
@@ -256,6 +272,7 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const uint32 Number) noexcept
     const std::string NumberString = std::to_string(Number);
 
     this->Data.Reset(static_cast<SizeType>(NumberString.size()) + 1);
+    this->Data.Add(LAsciiString::StringTerminatorRune);
     this->Append(NumberString.c_str());
 
     return;
@@ -266,6 +283,7 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const uint64 Number) noexcept
     const std::string NumberString = std::to_string(Number);
 
     this->Data.Reset(static_cast<SizeType>(NumberString.size()) + 1);
+    this->Data.Add(LAsciiString::StringTerminatorRune);
     this->Append(NumberString.c_str());
 
     return;
@@ -298,7 +316,7 @@ FORCEINLINE Jafg::LAsciiString& Jafg::LAsciiString::operator=(const uint8* Other
     {
         this->Data.Add(*Other);
 
-        if (*Other++ == LAsciiString::StringTerminator)
+        if (*Other++ == LAsciiString::StringTerminatorRune)
         {
             break;
         }
@@ -313,12 +331,9 @@ FORCEINLINE Jafg::LAsciiString& Jafg::LAsciiString::operator=(const LAsciiString
 {
     this->Data = Other.Data;
 
-#if !IN_SHIPPING
-    if (*this->Data.Peek() != LAsciiString::StringTerminator)
-    {
-        panic( "Got copy of illformed string (not null-terminated)." )
-    }
-#endif /* !IN_SHIPPING */
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
 
     return *this;
 }
@@ -327,25 +342,25 @@ FORCEINLINE Jafg::LAsciiString& Jafg::LAsciiString::operator=(LAsciiString&& Oth
 {
     this->Data = std::forward<TdhArray<LRune>>(Other.Data);
 
-#if !IN_SHIPPING
-    if (*this->Data.Peek() != LAsciiString::StringTerminator)
-    {
-        panic( "Got forwarded memory of illformed string (not null-terminated)." )
-    }
-#endif /* !IN_SHIPPING */
-
-    /*
-     * The other one is a string we have to reset to ensure that it is in a valid state.
-     * As a valid forwarded state of a TArray is not valid for a LAsciiString.
-     */
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
     Other.EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
 
     return *this;
 }
 
 FORCEINLINE void Jafg::LAsciiString::Append(const char* Other)
 {
-    this->Data.Pop();
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+
+    if (this->Data.IsData())
+    {
+        /* Null-terminator. */
+        this->Data.Pop();
+    }
 
     while (true)
     {
@@ -359,20 +374,30 @@ FORCEINLINE void Jafg::LAsciiString::Append(const char* Other)
         continue;
     }
 
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+
     return;
 }
 
 FORCEINLINE void Jafg::LAsciiString::Append(const LAsciiString& Other)
 {
-    this->Data.Pop();
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+
+    if (this->Data.IsData())
+    {
+        /* Null-terminator. */
+        this->Data.Pop();
+    }
+
     this->Data.Append(Other.Data);
 
-#if !IN_SHIPPING
-    if (*this->Data.Peek() != LAsciiString::StringTerminator)
-    {
-        panic( "Got copy of illformed string (not null-terminated)." )
-    }
-#endif /* !IN_SHIPPING */
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -383,8 +408,21 @@ FORCEINLINE void Jafg::LAsciiString::Pop()
     {
         this->Data.Pop();
         this->Data.Pop();
-        this->Data.Add(LAsciiString::StringTerminator);
+
+        if (this->Data.IsEmpty())
+        {
+            /* Orphan memory. */
+            this->Empty();
+        }
+        else
+        {
+            this->Data.Add(LAsciiString::StringTerminatorRune);
+        }
     }
+
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -393,7 +431,7 @@ FORCEINLINE const Jafg::LAsciiString::LRune* Jafg::LAsciiString::Peek() const
 {
     if (this->GetRuneCount() == 0)
     {
-        return this->Data.Peek();
+        return &LAsciiString::StringTerminatorRune;
     }
 
     return &this->Data[this->GetSize() - 2];
@@ -401,8 +439,10 @@ FORCEINLINE const Jafg::LAsciiString::LRune* Jafg::LAsciiString::Peek() const
 
 FORCEINLINE void Jafg::LAsciiString::Reset(const SizeType Size)
 {
-    this->Data.Reset(Size < 1 ? 1 : Size);
-    this->Data.Add(LAsciiString::StringTerminator);
+    check( Size >= 0 )
+
+    this->Data.Reset(Size);
+    this->Data.Add(LAsciiString::StringTerminatorRune);
 
     return;
 }
@@ -410,78 +450,108 @@ FORCEINLINE void Jafg::LAsciiString::Reset(const SizeType Size)
 FORCEINLINE void Jafg::LAsciiString::Empty()
 {
     this->Data.Empty();
-    this->Data.Add(LAsciiString::StringTerminator);
+
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+
     return;
 }
 
-FORCEINLINE Jafg::LAsciiString::LAsciiString(const LRune* Other) noexcept
+FORCEINLINE const char* Jafg::LAsciiString::ToC() const
 {
-    while (true)
+    if (this->Data.IsData())
     {
-        this->Data.Add(*Other);
-
-        if (*Other == LAsciiString::StringTerminator)
-        {
-            break;
-        }
-
-        continue;
+        return reinterpret_cast<const char*>(this->Data.GetData());
     }
 
-    return;
+    return &LAsciiString::StringTerminatorChar;
+}
+
+FORCEINLINE const Jafg::LAsciiString::LRune* Jafg::LAsciiString::ToPtr() const
+{
+    if (this->Data.IsData())
+    {
+        return this->Data.GetData();
+    }
+
+    return &LAsciiString::StringTerminatorRune;
 }
 
 FORCEINLINE Jafg::LAsciiString& Jafg::LAsciiString::operator+=(const LAsciiString& Other)
 {
-    this->Data.Pop();
+    if (this->Data.IsData())
+    {
+        this->Data.Pop();
+    }
+
     this->Data.Append(Other.Data);
 
-#if !IN_SHIPPING
-    if (*this->Data.Peek() != LAsciiString::StringTerminator)
-    {
-        panic( "Got copy of illformed string (not null-terminated)." )
-    }
-#endif /* !IN_SHIPPING */
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
 
     return *this;
 }
 
+FORCEINLINE bool Jafg::LAsciiString::operator==(LNullptrTy) const
+{
+    return this->Data.IsData();
+}
+
 FORCEINLINE bool Jafg::LAsciiString::operator==(const char* Other) const
 {
-    check( Other != nullptr )
+    checkSlow( Other != nullptr )
 
-    for (const LRune Rune : this->Data)
+    if (this->Data.IsData())
     {
-        if (Rune != *Other++)
+        for (const LRune Rune : this->Data)
         {
-            return false;
+            if (Rune != *Other++)
+            {
+                return false;
+            }
+
+            continue;
         }
 
-        continue;
+        return true;
     }
 
-    return true;
+    return *Other == LAsciiString::StringTerminatorChar;
 }
 
 FORCEINLINE bool Jafg::LAsciiString::operator==(const LRune* Other) const
 {
-    check( Other != nullptr )
+    checkSlow( Other != nullptr )
 
-    for (const LRune Rune : this->Data)
+    if (this->Data.IsData())
     {
-        if (Rune != *Other++)
+        for (const LRune Rune : this->Data)
         {
-            return false;
+            if (Rune != *Other++)
+            {
+                return false;
+            }
+
+            continue;
         }
 
-        continue;
+        return true;
     }
 
-    return true;
+    return *Other == LAsciiString::StringTerminatorRune;
 }
 
 FORCEINLINE bool Jafg::LAsciiString::operator<(const char* Other) const
 {
+    checkSlow( Other != nullptr )
+
+    if (this->Data.IsData() == false)
+    {
+        return *Other != LAsciiString::StringTerminatorChar;
+    }
+
     for (const LRune Rune : this->Data)
     {
         if (*Other == LAsciiString::StringTerminatorChar)
@@ -509,9 +579,16 @@ FORCEINLINE bool Jafg::LAsciiString::operator<(const char* Other) const
 
 FORCEINLINE bool Jafg::LAsciiString::operator<(const LRune* Other) const
 {
+    checkSlow( Other != nullptr )
+
+    if (this->Data.IsData() == false)
+    {
+        return *Other != LAsciiString::StringTerminatorRune;
+    }
+
     for (const LRune Rune : this->Data)
     {
-        if (*Other == LAsciiString::StringTerminator)
+        if (*Other == LAsciiString::StringTerminatorRune)
         {
             return false;
         }
@@ -536,11 +613,16 @@ FORCEINLINE bool Jafg::LAsciiString::operator<(const LRune* Other) const
 
 FORCEINLINE bool Jafg::LAsciiString::operator>(const char* Other) const
 {
+    if (this->Data.IsData() == false)
+    {
+        return false;
+    }
+
     for (const LRune Rune : this->Data)
     {
         if (*Other == LAsciiString::StringTerminatorChar)
         {
-            return Rune != LAsciiString::StringTerminator;
+            return Rune != LAsciiString::StringTerminatorRune;
         }
 
         if (Rune > *Other)
@@ -563,11 +645,16 @@ FORCEINLINE bool Jafg::LAsciiString::operator>(const char* Other) const
 
 FORCEINLINE bool Jafg::LAsciiString::operator>(const LRune* Other) const
 {
+    if (this->Data.IsData() == false)
+    {
+        return false;
+    }
+
     for (const LRune Rune : this->Data)
     {
-        if (*Other == LAsciiString::StringTerminator)
+        if (*Other == LAsciiString::StringTerminatorRune)
         {
-            return Rune != LAsciiString::StringTerminator;
+            return Rune != LAsciiString::StringTerminatorRune;
         }
 
         if (Rune > *Other)
@@ -588,18 +675,66 @@ FORCEINLINE bool Jafg::LAsciiString::operator>(const LRune* Other) const
     return false;
 }
 
+FORCEINLINE auto Jafg::LAsciiString::begin() noexcept -> Iterator<LRune>
+{
+    if (this->Data.IsData() == false)
+    {
+        return { nullptr };
+    }
+
+    return { this->Data.GetData() };
+}
+
+FORCEINLINE auto Jafg::LAsciiString::begin() const noexcept -> Iterator<const LRune>
+{
+    if (this->Data.IsData() == false)
+    {
+        return { nullptr };
+    }
+
+    return { this->Data.GetData() };
+}
+
+FORCEINLINE auto Jafg::LAsciiString::end() noexcept -> Iterator<LRune>
+{
+    if (this->Data.IsData() == false)
+    {
+        return { nullptr };
+    }
+
+    return { this->Data.GetSlack() - 1 };
+}
+
+FORCEINLINE auto Jafg::LAsciiString::end() const noexcept -> Iterator<const LRune>
+{
+    if (this->Data.IsData() == false)
+    {
+        return { nullptr };
+    }
+
+    return { this->Data.GetSlack() - 1 };
+}
+
 FORCEINLINE void Jafg::LAsciiString::EnsureValidState()
 {
-    if (this->GetSize() == 0)
+    if (this->Data.IsData())
     {
-        this->Data.Add(LAsciiString::StringTerminator);
+        if (*this->Data.Peek() != LAsciiString::StringTerminatorRune)
+        {
+            this->Data.Add(LAsciiString::StringTerminatorRune);
+            LOG_ERROR(
+                LogJafgInternal,
+                "Ensured that string is null-terminated. This may not happen in shipping configurations."
+            )
+        }
+
         return;
     }
 
-    if (*this->Data.Peek() != LAsciiString::StringTerminator)
-    {
-        this->Data.Add(LAsciiString::StringTerminator);
-    }
+    check( this->GetSize()          == 0       )
+    check( this->GetRuneCount()     == 0       )
+    check( this->Data.GetCapacity() == 0       )
+    check( this->Data.GetData()     == nullptr )
 
     return;
 }

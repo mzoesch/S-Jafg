@@ -33,6 +33,7 @@
 
 #include "Maths/MathDefines.h"
 #include "Maths/MathForward.h"
+#include "Maths/MathUtility.h"
 
 
 /*----------------------------------------------------------------------------
@@ -65,7 +66,6 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Maths
-#include "Maths/MathUtility.h"
 #include "Maths/Vector2.h"
 #include "Maths/Vector.h"
 #include "Maths/IntVector2.h"

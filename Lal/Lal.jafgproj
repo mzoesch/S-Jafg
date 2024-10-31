@@ -2,6 +2,7 @@
     "FriendlyName": "Lal",
     "DefaultKind": "Static",
     "Modules": [
-        "SOLO"
+        "Lal",
+        "LalTestRuntime"
     ]
 }

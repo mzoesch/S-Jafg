@@ -15,6 +15,11 @@ func Launch(args []string) {
         return
     }
 
+    if slices.Contains(args, "--Generate-Lal-Unit-Tests") {
+        GenerateLalUnitTestsSolution()
+        return
+    }
+
     if slices.Contains(args, "--PostLuaRun") {
         PostLuaRun()
         return

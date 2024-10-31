@@ -13,8 +13,15 @@ void Jafg::WDebugScreen::Construct()
     MakeRootNode(WWidgetRegion)
     [
         NewNode(WTextBlock) >> this->TestTextBlock
-        & LColor::Black
         & "Hello from Wsdsml."
+        & LTextBlockBrush { .X = 10.0f, .Y = 10.0f }
+        & LColor::Black
+    ]
+    [
+        NewNode(WTextBlock)
+        & "Hello from Wsdsml2."
+        & LTextBlockBrush { .X = 10.0f, .Y = 30.0f }
+        & LColor::Black
     ]
     FinishWidgetStyling()
 

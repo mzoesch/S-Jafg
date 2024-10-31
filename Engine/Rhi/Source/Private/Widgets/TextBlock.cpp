@@ -87,22 +87,20 @@ void Jafg::WTextBlock::Draw(LViewport* Context) const
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(this->Vao);
 
-    std::string text = this->Content.ToC();
-    float x  = 10;
-    float y  = 10;
-    float scale = 0.2f;
+    float X = this->Brush.X;
 
+    std::string text = this->Content.ToC();
     // iterate through all characters
     std::string::const_iterator c;
     for (c = text.begin(); c != text.end(); c++)
     {
         Character ch = Characters[*c];
 
-        float xpos = x + ch.Bearing.x * scale;
-        float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
+        float xpos = X + ch.Bearing.x * this->Brush.Scale;
+        float ypos = this->Brush.Y - (ch.Size.y - ch.Bearing.y) * this->Brush.Scale;
 
-        float w = ch.Size.x * scale;
-        float h = ch.Size.y * scale;
+        float w = ch.Size.x * this->Brush.Scale;
+        float h = ch.Size.y * this->Brush.Scale;
         // update VBO for each character
         float vertices[6][4] = {
             { xpos,     ypos + h,   0.0f, 0.0f },
@@ -123,7 +121,7 @@ void Jafg::WTextBlock::Draw(LViewport* Context) const
         // render quad
         glDrawArrays(GL_TRIANGLES, 0, 6);
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-        x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+        X += (ch.Advance >> 6) * this->Brush.Scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
     }
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);

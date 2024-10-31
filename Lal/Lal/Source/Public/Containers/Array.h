@@ -49,13 +49,13 @@ public:
     FORCEINLINE  TArray(std::initializer_list<T> InList) noexcept;
     FORCEINLINE ~TArray() noexcept;
 
-    FORCEINLINE auto GetSize()        const noexcept -> SizeType { return this->Size;                       }
-    FORCEINLINE auto IsEmpty()        const noexcept -> bool     { return this->GetSize() == 0;             }
-    FORCEINLINE auto GetCapacity()    const noexcept -> SizeType { return this->Capacity;                   }
-    FORCEINLINE auto IsData()         const noexcept -> bool     { return this->GetData() != nullptr;       }
-    FORCEINLINE auto IsSlack()        const noexcept -> bool     { return this->GetData() != nullptr;       }
-    FORCEINLINE auto GetData()              noexcept -> T*       { return this->Data;                       }
-    FORCEINLINE auto GetData()        const noexcept -> const T* { return this->Data;                       }
+    FORCEINLINE auto GetSize()        const noexcept -> SizeType { return this->Size;            }
+    FORCEINLINE auto IsEmpty()        const noexcept -> bool     { return this->GetSize() == 0;  }
+    FORCEINLINE auto GetCapacity()    const noexcept -> SizeType { return this->Capacity;        }
+    FORCEINLINE auto IsData()         const noexcept -> bool     { return this->Data != nullptr; }
+    FORCEINLINE auto IsSlack()        const noexcept -> bool     { return this->Data != nullptr; }
+    FORCEINLINE auto GetData()              noexcept -> T*       { return this->Data;            }
+    FORCEINLINE auto GetData()        const noexcept -> const T* { return this->Data;            }
     FORCEINLINE auto GetSlack()             noexcept -> T*       ;
     FORCEINLINE auto GetSlack()       const noexcept -> const T* ;
     FORCEINLINE auto GetUnsafeSlack()       noexcept -> T*       ;
@@ -908,9 +908,22 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator=(const Self& InOth
 
     this->Size      = InOther.Size;
     this->Capacity  = InOther.Capacity;
-    this->Data      = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
-    ::memset(this->Data, 0, this->Capacity * sizeof(T));
-    ::memcpy(this->Data, InOther.Data, this->Size * sizeof(T));
+
+    if (InOther.Data != nullptr)
+    {
+        check(
+               this->Capacity > 0
+            && "Other data is not null but capacity is greater than zero. You just encountered a memory leak."
+        )
+
+        this->Data      = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
+        ::memset(this->Data, 0, this->Capacity * sizeof(T));
+        ::memcpy(this->Data, InOther.Data, this->Size * sizeof(T));
+    }
+    else
+    {
+        this->Data = nullptr;
+    }
 
     return *this;
 }

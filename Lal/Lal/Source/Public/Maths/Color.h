@@ -55,7 +55,7 @@ struct LColor final
 #endif /* !PLATFORM_USES_LITTLE_ENDIAN */
     { }
 
-    FORCEINLINE constexpr explicit LColor(const LColor& InColor) : Bits(InColor.Bits) { }
+    FORCEINLINE constexpr          LColor(const LColor& InColor) : Bits(InColor.Bits) { }
     FORCEINLINE constexpr explicit LColor(const uint32 InColor)  : Bits(InColor)      { }
     FORCEINLINE constexpr explicit LColor(uint8 InChannels[4])
         : Channels{ InChannels[0], InChannels[1], InChannels[2], InChannels[3] }      { }

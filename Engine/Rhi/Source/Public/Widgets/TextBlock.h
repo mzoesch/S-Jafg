@@ -13,7 +13,10 @@ class LViewport;
 
 struct LTextBlockBrush
 {
-    LColor Color;
+    LColor Color = LColor::Black;
+    float  Scale = 1.0f;
+    float X = 0.0f;
+    float Y = 0.0f;
 };
 
 DECLARE_JAFG_CLASS()
@@ -35,11 +38,12 @@ public:
     // ~WWidgetNode implementation
 
     FORCEINLINE void SetContent(const LSimpleString& InContent) { this->Content = InContent; }
+    FORCEINLINE void SetContent(LSimpleString&& InContent) { this->Content = std::move(InContent); }
     FORCEINLINE auto GetContent() const -> const LSimpleString& { return this->Content;      }
 
-    FORCEINLINE void SetColor(const LColor& InColor) { this->Brush.Color = InColor; }
+    FORCEINLINE auto SetColor(const LColor& InColor) -> WTextBlock& { this->Brush.Color = InColor; return *this; }
 
-    FORCEINLINE void SetBrush(const LTextBlockBrush& InBrush)   { this->Brush = InBrush; }
+    FORCEINLINE auto SetBrush(const LTextBlockBrush& InBrush) -> WTextBlock& { this->Brush = InBrush; return *this; }
     FORCEINLINE auto GetBrush() const -> const LTextBlockBrush& { return this->Brush;    }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -48,8 +52,13 @@ public:
 
     FORCEINLINE auto operator&(const LColor&     InColor) -> WTextBlock& { this->SetColor(InColor);     return *this; }
     FORCEINLINE auto operator&(const LColor&&    InColor) -> WTextBlock& { this->SetColor(InColor);     return *this; }
-    FORCEINLINE auto operator&(const char*     InContent) -> WTextBlock& { this->SetContent(InContent); return *this; }
+    FORCEINLINE auto operator&(LSimpleString&& InContent) -> WTextBlock& { this->SetContent(std::forward<LSimpleString>(InContent)); return *this; }
     FORCEINLINE auto operator&(LTextBlockBrush&& InBrush) -> WTextBlock& { this->SetBrush(InBrush);     return *this; }
+
+    FORCEINLINE auto operator>(LNullptrTy) -> WTextBlock&
+    {
+        return *this;
+    }
 
     template <typename TNode>
     FORCEINLINE auto operator>>(TNode*& OutNode) -> WTextBlock&
@@ -71,7 +80,7 @@ private:
      */
     void FirstTimeLoadCharacters();
 
-    LSimpleString   Content = "";
+    LSimpleString   Content = nullptr;
     LTextBlockBrush Brush   = { };
 
     uint32  Vao               = 0x0u;
