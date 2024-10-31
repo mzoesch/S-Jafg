@@ -32,6 +32,10 @@ public:
     FORCEINLINE LAsciiString(const LAsciiString&& Other) noexcept = delete;
     FORCEINLINE LAsciiString(const LRune* Other)         noexcept;
     FORCEINLINE LAsciiString(const char* Other)          noexcept;
+    FORCEINLINE LAsciiString(const int32  Number)        noexcept;
+    FORCEINLINE LAsciiString(const int64  Number)        noexcept;
+    FORCEINLINE LAsciiString(const uint32 Number)        noexcept;
+    FORCEINLINE LAsciiString(const uint64 Number)        noexcept;
 
     FORCEINLINE auto operator=(const char*  Other)         noexcept -> LAsciiString&;
     FORCEINLINE auto operator=(const uint8* Other)         noexcept -> LAsciiString&;
@@ -222,6 +226,47 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const char* Other) noexcept
 
         continue;
     }
+
+    return;
+}
+
+FORCEINLINE Jafg::LAsciiString::LAsciiString(const int32 Number) noexcept
+{
+    /* Super sketchy, we will have to implement this somehow on our own. */
+    const std::string NumberString = std::to_string(Number);
+
+    this->Data.Reset(static_cast<SizeType>(NumberString.size()) + 1);
+    this->Append(NumberString.c_str());
+
+    return;
+}
+
+FORCEINLINE Jafg::LAsciiString::LAsciiString(const int64 Number) noexcept
+{
+    const std::string NumberString = std::to_string(Number);
+
+    this->Data.Reset(static_cast<SizeType>(NumberString.size()) + 1);
+    this->Append(NumberString.c_str());
+
+    return;
+}
+
+FORCEINLINE Jafg::LAsciiString::LAsciiString(const uint32 Number) noexcept
+{
+    const std::string NumberString = std::to_string(Number);
+
+    this->Data.Reset(static_cast<SizeType>(NumberString.size()) + 1);
+    this->Append(NumberString.c_str());
+
+    return;
+}
+
+FORCEINLINE Jafg::LAsciiString::LAsciiString(const uint64 Number) noexcept
+{
+    const std::string NumberString = std::to_string(Number);
+
+    this->Data.Reset(static_cast<SizeType>(NumberString.size()) + 1);
+    this->Append(NumberString.c_str());
 
     return;
 }

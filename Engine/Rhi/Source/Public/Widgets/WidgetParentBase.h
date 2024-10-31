@@ -26,7 +26,19 @@ public:
 
     virtual auto GetChildren()             const -> const TdhArray<WWidgetNode*>& PURE_VIRTUAL(return TdhArray<WWidgetNode*>())
     virtual auto RemoveChild(WWidgetNode* Child) -> void PURE_VIRTUAL()
+    /** @return The new widget's parent. */
     virtual auto AddChild(WWidgetNode* Child)    -> WWidgetParentBase* PURE_VIRTUAL(return nullptr)
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Wsdsml
+    ///////////////////////////////////////////////////////////////////////////////
+
+    FORCEINLINE auto operator[](WWidgetNode* Child) -> WWidgetParentBase& { this->AddChild( Child); return *this; }
+    FORCEINLINE auto operator[](WWidgetNode& Child) -> WWidgetParentBase& { this->AddChild(&Child); return *this; }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // ~Wsdsml
+    ///////////////////////////////////////////////////////////////////////////////
 };
 
 } /* ~Namespace Jafg. */

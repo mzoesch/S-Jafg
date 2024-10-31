@@ -64,7 +64,7 @@ void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy /* = true */)
 }
 
 
-void Jafg::WUserWidget::ReplaceRoot(WWidgetParent* InRoot)
+Jafg::WWidgetParent* Jafg::WUserWidget::ReplaceRoot(WWidgetParent* InRoot)
 {
     if (this->HasRoot())
     {
@@ -74,5 +74,10 @@ void Jafg::WUserWidget::ReplaceRoot(WWidgetParent* InRoot)
     this->Root = InRoot;
     InRoot->Parent = this;
 
-    return;
+    return this->Root;
+}
+
+Jafg::WWidgetParent* Jafg::WUserWidget::ReplaceRoot(WWidgetParent& InRoot)
+{
+    return this->ReplaceRoot(&InRoot);
 }

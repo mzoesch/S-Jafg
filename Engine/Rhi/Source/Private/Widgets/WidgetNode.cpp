@@ -37,7 +37,7 @@ void Jafg::WWidgetNode::Destruct()
 {
 }
 
-void Jafg::WWidgetNode::RemoveFromParent(const bool bDestroy)
+void Jafg::WWidgetNode::RemoveFromParent(const bool bDestroy /* = true */)
 {
     if (this->Parent)
     {

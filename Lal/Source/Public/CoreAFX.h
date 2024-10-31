@@ -70,6 +70,7 @@
 #include "Maths/Vector.h"
 #include "Maths/IntVector2.h"
 #include "Maths/IntVector.h"
+#include "Maths/Color.h"
 
 
 /*----------------------------------------------------------------------------

@@ -1,5 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
+#include "CoreAFX.h"
 #include "Widgets/TextBlock.h"
 #include "RhiFramework/Shader.h"
 #include <glad/glad.h>
@@ -15,23 +16,81 @@
 namespace
 {
 
-struct Character
+struct Character final
 {
-    unsigned int TextureID;  // ID handle of the glyph texture
-    glm::ivec2   Size;       // Size of glyph
-    glm::ivec2   Bearing;    // Offset from baseline to left/top of glyph
-    unsigned int Advance;    // Offset to advance to next glyph
+    uint32     TextureId; // ID handle of the glyph texture
+    glm::ivec2 Size;      // Size of glyph
+    glm::ivec2 Bearing;   // Offset from baseline to left/top of glyph
+    uint32     Advance;   // Offset to advance to next glyph
 };
 
+/**
+ * Loaded characters, private storage for this translation unit but usable for all WTextBlock instances.
+ */
 std::map<char, Character> Characters;
-unsigned int VAO2, VBO2;
-void RenderText(Jafg::Shader &shader, std::string text, float x, float y, float scale, glm::vec3 color)
+
+}
+
+void Jafg::WTextBlock::Construct()
 {
-    // activate corresponding render state
-    shader.Use();
-    glUniform3f(glGetUniformLocation(shader.ID, "textColor"), color.x, color.y, color.z);
+    Super::Construct();
+
+    LIntVector2 WindowDimensions = this->GetViewportSize();
+
+    this->FontShaderProgram = new Shader("Content/Shaders/vs_font.shader", "Content/Shaders/fs_font.shader");
+    checkSlow( this->FontShaderProgram )
+    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
+    this->FontShaderProgram->Use();
+    glUniformMatrix4fv(glGetUniformLocation(FontShaderProgram->ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+    if (Characters.empty())
+    {
+        LOG_VERBOSE(LogWidgets, "Loading standard font.")
+        this->FirstTimeLoadCharacters();
+    }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glGenVertexArrays(1, &this->Vao);
+    glGenBuffers(1, &this->Vbo);
+    glBindVertexArray(this->Vao);
+    glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    return;
+}
+
+void Jafg::WTextBlock::Tick()
+{
+    Super::Tick();
+}
+
+void Jafg::WTextBlock::Destruct()
+{
+    Super::Destruct();
+}
+
+void Jafg::WTextBlock::Draw(LViewport* Context) const
+{
+    Super::Draw(Context);
+
+    checkSlow( Characters.empty() == false )
+    check( this->FontShaderProgram )
+
+    this->FontShaderProgram->Use();
+    glUniform3f(glGetUniformLocation(this->FontShaderProgram->ID, "textColor"), this->Brush.Color.R, this->Brush.Color.G, this->Brush.Color.B);
     glActiveTexture(GL_TEXTURE0);
-    glBindVertexArray(VAO2);
+    glBindVertexArray(this->Vao);
+
+    std::string text = this->Content.ToC();
+    float x  = 10;
+    float y  = 10;
+    float scale = 0.2f;
 
     // iterate through all characters
     std::string::const_iterator c;
@@ -55,9 +114,9 @@ void RenderText(Jafg::Shader &shader, std::string text, float x, float y, float 
             { xpos + w, ypos + h,   1.0f, 0.0f }
         };
         // render glyph texture over quad
-        glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+        glBindTexture(GL_TEXTURE_2D, ch.TextureId);
         // update content of VBO memory
-        glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+        glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); // be sure to use glBufferSubData and not glBufferData
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -72,20 +131,8 @@ void RenderText(Jafg::Shader &shader, std::string text, float x, float y, float 
     return;
 }
 
-}
-
-void Jafg::WTextBlock::Construct()
+void Jafg::WTextBlock::FirstTimeLoadCharacters()
 {
-    Super::Construct();
-
-    LIntVector2 WindowDimensions = this->GetViewportSize();
-
-    this->FontShaderProgram = new Shader("Content/Shaders/vs_font.shader", "Content/Shaders/fs_font.shader");
-    checkSlow( this->FontShaderProgram )
-    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
-    this->FontShaderProgram->Use();
-    glUniformMatrix4fv(glGetUniformLocation(FontShaderProgram->ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
     FT_Library Ft;
     if (FT_Init_FreeType(&Ft))
     {
@@ -145,40 +192,5 @@ void Jafg::WTextBlock::Construct()
     FT_Done_Face(Face);
     FT_Done_FreeType(Ft);
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glGenVertexArrays(1, &VAO2);
-    glGenBuffers(1, &VBO2);
-    glBindVertexArray(VAO2);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
     return;
-}
-
-void Jafg::WTextBlock::Tick()
-{
-    Super::Tick();
-}
-
-void Jafg::WTextBlock::Destruct()
-{
-    Super::Destruct();
-}
-
-void Jafg::WTextBlock::Draw(LViewport* Context) const
-{
-    Super::Draw(Context);
-    this->DrawTextImpl();
-    return;
-}
-
-void Jafg::WTextBlock::DrawTextImpl() const
-{
-    RenderText(*FontShaderProgram, "....... text block!", 100.0f, 100.0f, 0.2f, glm::vec3(1.0, 0.0f, 0.0f));
 }

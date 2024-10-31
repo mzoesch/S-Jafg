@@ -41,7 +41,9 @@ public:
     /** Add this widget to the main viewport of the current active local player. */
     void AddToViewport(LViewport* InViewport);
 
-    void ReplaceRoot(WWidgetParent* InRoot);
+    /** @return The new root. */
+    auto ReplaceRoot(WWidgetParent* InRoot) -> WWidgetParent*;
+    auto ReplaceRoot(WWidgetParent& InRoot) -> WWidgetParent*;
     FORCEINLINE auto HasRoot() const -> bool { return this->Root != nullptr; }
     FORCEINLINE auto GetRoot() const -> WWidgetParent* { return this->Root;  }
 

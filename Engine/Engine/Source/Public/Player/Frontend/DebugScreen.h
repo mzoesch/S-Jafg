@@ -8,6 +8,8 @@
 namespace Jafg
 {
 
+class WTextBlock;
+
 DECLARE_JAFG_CLASS()
 class ENGINE_API WDebugScreen final : public WUserWidget
 {
@@ -23,6 +25,10 @@ public:
     virtual void Construct() override;
     virtual void Tick() override;
     // ~WUserWidget implementation
+
+private:
+
+    WTextBlock* TestTextBlock = nullptr;
 };
 
 } /* ~Namespace Jafg */

@@ -90,3 +90,9 @@ typedef LPlatformTypes::LNullptrTy    LNullptrTy;
 #ifndef PLATFORM_EXTERNSPEC_OUT
     #error "PLATFORM_EXTERNSPEC_OUT is not defined."
 #endif /* !PLATFORM_EXTERNSPEC_OUT */
+
+#ifndef PLATFORM_USES_LITTLE_ENDIAN
+    #error "PLATFORM_USES_LITTLE_ENDIAN is not defined."
+#endif /* !PLATFORM_USES_LITTLE_ENDIAN */
+/* Implicitly define opposite. */
+#define PLATFORM_USES_BIG_ENDIAN        (!PLATFORM_USES_LITTLE_ENDIAN)

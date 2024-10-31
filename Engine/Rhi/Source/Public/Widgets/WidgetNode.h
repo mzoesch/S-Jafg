@@ -135,4 +135,17 @@ FORCEINLINE void ConstructDeferredWidgetNode(WWidgetNode* InNode)
     return;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Widget style domain-specific-macro language (Wsdsml)
+//
+// Use these macros to create complex widget structures.
+// Example use cases can be found here:
+// @see Player/Frontend/DebugScreen.cpp
+///////////////////////////////////////////////////////////////////////////////
+
+#define MakeRootNode(TRoot)   (*this->ReplaceRoot(NewNode(TRoot)))
+#define FinishWidgetStyling() ;ConstructDeferredWidgetNode(this->GetRoot());
+
+#define NewNode(TNode) (*ConstructDeferredWidgetNode<TNode>())
+
 } /* ~Namespace Jafg */
