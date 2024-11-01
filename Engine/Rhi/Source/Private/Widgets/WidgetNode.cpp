@@ -39,12 +39,12 @@ void Jafg::WWidgetNode::Destruct()
 
 void Jafg::WWidgetNode::RemoveFromParent(const bool bDestroy /* = true */)
 {
-    if (this->Parent)
+    if (this->Slot)
     {
-        this->Parent->RemoveChild(this);
-        this->Parent = nullptr;
+        check( this->Slot->Parent )
+        this->Slot->Parent->RemoveChild(this);
+        this->Slot = nullptr;
     }
-
     if (bDestroy)
     {
         this->MarkAsGarbage();
@@ -53,14 +53,35 @@ void Jafg::WWidgetNode::RemoveFromParent(const bool bDestroy /* = true */)
     return;
 }
 
+auto Jafg::WWidgetNode::GetParent() const -> WWidgetParentBase*
+{
+    if (this->Slot)
+    {
+        return this->Slot->Parent;
+    }
+
+    return nullptr;
+}
+
 LIntVector2 Jafg::WWidgetNode::GetViewportSize() const
 {
-    if (this->Parent)
+    if (this->Slot)
     {
-        return this->Parent->GetViewportSize();
+        check( this->Slot->Parent )
+        return this->Slot->Parent->GetViewportSize();
     }
 
     panic( "Failed to find window dimensions." )
 
     return LIntVector2::ZeroVector;
+}
+
+LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromMostOuter() const
+{
+    if (this->Slot)
+    {
+        return this->Slot->Parent->GetRelativeTopLeftFromMostOuter() + this->GetRelativeTopLeft();
+    }
+
+    return this->GetRelativeTopLeft();
 }

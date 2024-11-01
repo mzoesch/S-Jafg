@@ -4,10 +4,14 @@
 
 void Jafg::WWidgetParent::MarkAsGarbage()
 {
-    for (WWidgetNode* Child : this->Children)
+    for (const LWidgetSlot* ChildSlot : this->Children)
     {
-        Child->MarkAsGarbage();
+        ChildSlot->Content->Slot = nullptr;
+        ChildSlot->Content->MarkAsGarbage();
+        delete ChildSlot;
     }
+
+    this->Children.Empty();
 
     Super::MarkAsGarbage();
 
@@ -18,9 +22,9 @@ void Jafg::WWidgetParent::Construct()
 {
     Super::Construct();
 
-    for (WWidgetNode* Child : this->Children)
+    for (const LWidgetSlot* ChildSlot : this->Children)
     {
-        Child->BeginLife();
+        ChildSlot->Content->BeginLife();
     }
 
     return;
@@ -30,9 +34,12 @@ void Jafg::WWidgetParent::Draw(LViewport* Context) const
 {
     Super::Draw(Context);
 
-    for (const WWidgetNode* Child : this->Children)
+    for (const LWidgetSlot* ChildSlot : this->Children)
     {
-        Child->Draw(Context);
+        checkSlow( ChildSlot->Content )
+        ChildSlot->Content->Draw(Context);
+
+        continue;
     }
 
     return;
@@ -42,18 +49,51 @@ void Jafg::WWidgetParent::Destruct()
 {
     Super::Destruct();
 
-    for (WWidgetNode* Child : this->Children)
+    for (const LWidgetSlot* ChildSlot : this->Children)
     {
-        Child->EndLife();
+        ChildSlot->Content->Slot = nullptr;
+        ChildSlot->Content->MarkAsGarbage();
+        delete ChildSlot;
+    }
+
+    this->Children.Empty();
+
+    return;
+}
+
+void Jafg::WWidgetParent::RemoveChild(WWidgetNode* Child)
+{
+    for (LWidgetSlot* ChildSlot : this->Children)
+    {
+        if (ChildSlot->Content == Child)
+        {
+            ChildSlot->Content->Slot = nullptr;
+            ChildSlot->Content->MarkAsGarbage();
+            this->Children.RemoveOnceChecked(ChildSlot);
+            delete ChildSlot;
+
+            break;
+        }
     }
 
     return;
 }
 
-Jafg::WWidgetParentBase* Jafg::WWidgetParent::AddChild(WWidgetNode* Child)
+void Jafg::WWidgetParent::RemoveChild(LWidgetSlot* Child)
 {
-    this->Children.Add(Child);
-    Child->Parent = this;
+    Child->Content->Slot = nullptr;
+    this->Children.RemoveOnceChecked(Child);
+    delete Child;
 
-    return this;
+    return;
+}
+
+Jafg::LWidgetSlot* Jafg::WWidgetParent::AddChild(WWidgetNode* Child)
+{
+    LWidgetSlot* NewChildSlot = new LWidgetSlot(this, Child);
+    this->Children.Add(NewChildSlot);
+    NewChildSlot->Content->Slot = NewChildSlot;
+    NewChildSlot->Margin = this->GetPaddingPtr();
+
+    return NewChildSlot;
 }

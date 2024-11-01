@@ -32,10 +32,17 @@ public:
     // WWidgetNode implementation
     virtual void Draw(LViewport* Context) const override;
     virtual auto GetViewportSize() const -> LIntVector2 override;
+    virtual auto RemoveFromParent(const bool bDestroy = true) -> void override;
     // ~WWidgetNode implementation
 
     // WWidgetParentBase implementation
-    virtual auto RemoveFromParent(const bool bDestroy = true) -> void override;
+    FORCEINLINE virtual auto GetChildren() const -> const TdhArray<LWidgetSlot*>& override { return { this->Root }; }
+    FORCEINLINE virtual auto RemoveChild(WWidgetNode* InChild) -> void override { panic( "Invalid call on member." ) }
+    FORCEINLINE virtual auto RemoveChild(LWidgetSlot* InSlot) -> void override { panic( "Invalid call on member." ) }
+    FORCEINLINE virtual auto AddChild(WWidgetNode* InChild) -> LWidgetSlot* override { panic( "Invalid call on member.") return nullptr; }
+    FORCEINLINE virtual auto GetPaddingPtr() const -> const LPadding* override { return &this->Padding; }
+    FORCEINLINE virtual auto GetPaddingPtr() -> LPadding* override { return &this->Padding; }
+    FORCEINLINE virtual auto SetPadding(const LPadding& InPadding) -> WWidgetParentBase& override { this->Padding = InPadding; return *this; }
     // ~WWidgetParentBase implementation
 
     /** Add this widget to the main viewport of the current active local player. */
@@ -45,14 +52,17 @@ public:
     auto ReplaceRoot(WWidgetParent* InRoot) -> WWidgetParent*;
     auto ReplaceRoot(WWidgetParent& InRoot) -> WWidgetParent*;
     FORCEINLINE auto HasRoot() const -> bool { return this->Root != nullptr; }
-    FORCEINLINE auto GetRoot() const -> WWidgetParent* { return this->Root;  }
+    FORCEINLINE auto GetRoot() const -> WWidgetNode* { return this->Root->Content;  }
 
 private:
 
     /** The absolute root of this widget. Attach everything to this widget. */
-    WWidgetParent* Root             = nullptr;
+    LWidgetSlot* Root             = nullptr;
     /** Where this widget resides in. Can be null if attached to another widget. So do not use without checking. */
-    LViewport*     AttachedViewport = nullptr;
+    LViewport*   AttachedViewport = nullptr;
+
+    /** The padding area between the slot and the content it contains. */
+    LPadding     Padding;
 };
 
 template <typename TWidget>

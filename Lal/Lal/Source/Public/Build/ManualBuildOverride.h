@@ -16,17 +16,17 @@
 
 /** Whether to ever do checks. This affects all build configurations. */
 #ifndef DO_EVER_CHECKS
-    #define DO_EVER_CHECKS                              1
+    #define DO_EVER_CHECKS                                                  1
 #endif /* !DO_EVER_CHECKS */
 
 /** Whether to override the default behavior to strip checks in shipping builds. */
 #ifndef DO_CHECKS_IN_SHIPPING
-    #define DO_CHECKS_IN_SHIPPING                       0
+    #define DO_CHECKS_IN_SHIPPING                                           0
 #endif /* !DO_CHECKS_IN_SHIPPING */
 
 /** Whether to override the default behavior to strip checks in debug builds. */
 #ifndef ALLOW_SLOW_CHECKS
-    #define ALLOW_SLOW_CHECKS                           1
+    #define ALLOW_SLOW_CHECKS                                               1
 #endif /* !ALLOW_SLOW_CHECKS */
 
 /**
@@ -34,12 +34,12 @@
  * Default is zero, so slow checks only get evaluated in debug builds.
  */
 #ifndef LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME
-    #define LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME        0
+    #define LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME                            0
 #endif /* !LET_SLOW_CHECKS_SHARE_CHECK_LIFETIME */
 
 /** Whether to ever do assertions. This affects all build configurations. */
 #ifndef DO_EVER_ASSERTS
-    #define DO_EVER_ASSERTS                             1
+    #define DO_EVER_ASSERTS                                                 1
 #endif /* !DO_EVER_ASSERTS */
 
 /**
@@ -48,5 +48,14 @@
  * Note that panics are not affected by this setting.
  */
 #ifndef DO_STRIP_ASSERTS_IN_SHIPPING
-    #define DO_STRIP_ASSERTS_IN_SHIPPING                0
+    #define DO_STRIP_ASSERTS_IN_SHIPPING                                    0
 #endif /* !DO_STRIP_ASSERTS_IN_SHIPPING */
+
+/**
+ * Whether to only do panics instead of static asserts when the compiler / runtime encounters
+ * an unimplemented code path in shipping. Useful when testing in shipping configuration.
+ * But it should always be turned off in production shipping.
+ */
+#ifndef DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING
+    #define DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING         1
+#endif /* !DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS */

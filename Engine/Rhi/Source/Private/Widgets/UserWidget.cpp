@@ -10,7 +10,7 @@ void Jafg::WUserWidget::ViewportDrawEntry(LViewport* Context) const
 
     if (this->Root)
     {
-        this->Root->Draw(Context);
+        this->Root->Content->Draw(Context);
     }
 
     return;
@@ -22,7 +22,8 @@ void Jafg::WUserWidget::Draw(LViewport* Context) const
 
     if (this->Root)
     {
-        this->Root->Draw(Context);
+        checkSlow( this->Root->Parent == this )
+        this->Root->Content->Draw(Context);
     }
 
     return;
@@ -66,15 +67,25 @@ void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy /* = true */)
 
 Jafg::WWidgetParent* Jafg::WUserWidget::ReplaceRoot(WWidgetParent* InRoot)
 {
+    check( this->Slot == nullptr )
+
     if (this->HasRoot())
     {
-        this->Root->RemoveFromParent();
+        check( this->Root )
+        check( this->Root->Parent == this )
+        check( this->Root->Content )
+        this->Root->Content->RemoveFromParent();
+        check( this->Root == nullptr )
     }
 
-    this->Root = InRoot;
-    InRoot->Parent = this;
+    check( InRoot->Slot == nullptr )
+    check( this->Root == nullptr )
 
-    return this->Root;
+    this->Root = new LWidgetSlot(this, InRoot);
+    this->Root->Content->Slot = this->Root;
+    this->Root->Margin = this->GetPaddingPtr();
+
+    return InRoot;
 }
 
 Jafg::WWidgetParent* Jafg::WUserWidget::ReplaceRoot(WWidgetParent& InRoot)

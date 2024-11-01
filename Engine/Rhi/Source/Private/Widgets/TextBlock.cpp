@@ -39,8 +39,8 @@ void Jafg::WTextBlock::Construct()
 
     this->FontShaderProgram = new Shader("Content/Shaders/vs_font.shader", "Content/Shaders/fs_font.shader");
     checkSlow( this->FontShaderProgram )
-    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
     this->FontShaderProgram->Use();
+    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
     glUniformMatrix4fv(glGetUniformLocation(FontShaderProgram->ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
     if (Characters.empty())
@@ -87,17 +87,25 @@ void Jafg::WTextBlock::Draw(LViewport* Context) const
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(this->Vao);
 
-    float X = this->Brush.X;
+    LIntVector2 WindowDimensions = this->GetViewportSize();
+    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
+    glUniformMatrix4fv(glGetUniformLocation(FontShaderProgram->ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+    const LVector2 Offset = this->GetRelativeTopLeftFromMostOuter();
+
+    const float YFromBottom = static_cast<float>(WindowDimensions.Y) - Offset.Y;
+
+    float X = Offset.X;
 
     std::string text = this->Content.ToC();
     // iterate through all characters
-    std::string::const_iterator c;
-    for (c = text.begin(); c != text.end(); c++)
+    for (std::string::const_iterator c = text.begin(); c != text.end(); ++c)
     {
         Character ch = Characters[*c];
 
         float xpos = X + ch.Bearing.x * this->Brush.Scale;
-        float ypos = this->Brush.Y - (ch.Size.y - ch.Bearing.y) * this->Brush.Scale;
+        // float ypos = YFromBottom - (ch.Size.y - ch.Bearing.y) * this->Brush.Scale;
+        float ypos = YFromBottom - ch.Size.y * this->Brush.Scale;
 
         float w = ch.Size.x * this->Brush.Scale;
         float h = ch.Size.y * this->Brush.Scale;

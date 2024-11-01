@@ -24,17 +24,24 @@ protected:
 
 public:
 
-    virtual auto GetChildren()             const -> const TdhArray<WWidgetNode*>& PURE_VIRTUAL(return TdhArray<WWidgetNode*>())
-    virtual auto RemoveChild(WWidgetNode* Child) -> void PURE_VIRTUAL()
-    /** @return The new widget's parent. */
-    virtual auto AddChild(WWidgetNode* Child)    -> WWidgetParentBase* PURE_VIRTUAL(return nullptr)
+    virtual auto GetChildren()             const   -> const TdhArray<LWidgetSlot*>& PURE_VIRTUAL(return TdhArray<LWidgetSlot*>())
+    virtual auto RemoveChild(WWidgetNode* InChild) -> void PURE_VIRTUAL()
+    virtual auto RemoveChild(LWidgetSlot* InSlot)  -> void PURE_VIRTUAL()
+    virtual auto AddChild(WWidgetNode* InChild)    -> LWidgetSlot* PURE_VIRTUAL(return nullptr)
+
+    virtual auto GetPaddingPtr() const -> const LPadding* PURE_VIRTUAL(return nullptr)
+    virtual auto GetPaddingPtr()       ->       LPadding* PURE_VIRTUAL(return nullptr)
+
+    virtual auto SetPadding(const LPadding& InPadding) -> WWidgetParentBase& PURE_VIRTUAL(return *this)
 
     ///////////////////////////////////////////////////////////////////////////////
     // Wsdsml
     ///////////////////////////////////////////////////////////////////////////////
 
-    FORCEINLINE auto operator[](WWidgetNode* Child) -> WWidgetParentBase& { this->AddChild( Child); return *this; }
-    FORCEINLINE auto operator[](WWidgetNode& Child) -> WWidgetParentBase& { this->AddChild(&Child); return *this; }
+    FORCEINLINE auto operator[](WWidgetNode* InChild) -> WWidgetParentBase& { this->AddChild( InChild); return *this; }
+    FORCEINLINE auto operator[](WWidgetNode& InChild) -> WWidgetParentBase& { this->AddChild(&InChild); return *this; }
+
+    FORCEINLINE auto operator&(const LPadding& InPadding) -> WWidgetParentBase& { this->SetPadding(InPadding); return *this; }
 
     ///////////////////////////////////////////////////////////////////////////////
     // ~Wsdsml

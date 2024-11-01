@@ -15,10 +15,11 @@
 
 
 /*-----------------------------------------------------------------------------
-    Generic platform macros.
+    Branch prediction hints.
 -----------------------------------------------------------------------------*/
 
-#define UNLIKELY(expr)              (!!(expr))
+#define UNLIKELY(Expr)              (!!(Expr))
+#define LIKELY(Expr)                (!!(Expr))
 
 
 /*-----------------------------------------------------------------------------
@@ -48,22 +49,23 @@
     Generalized types based on a specific platform.
 -----------------------------------------------------------------------------*/
 
-typedef LPlatformTypes::uint8        uint8;
-typedef LPlatformTypes::uint16       uint16;
-typedef LPlatformTypes::uint32       uint32;
-typedef LPlatformTypes::uint64       uint64;
+typedef LPlatformTypes::uint8         uint8;
+typedef LPlatformTypes::uint16        uint16;
+typedef LPlatformTypes::uint32        uint32;
+typedef LPlatformTypes::uint64        uint64;
 
-typedef LPlatformTypes::int8         int8;
-typedef LPlatformTypes::int16        int16;
-typedef LPlatformTypes::int32        int32;
-typedef LPlatformTypes::int64        int64;
+typedef LPlatformTypes::int8          int8;
+typedef LPlatformTypes::int16         int16;
+typedef LPlatformTypes::int32         int32;
+typedef LPlatformTypes::int64         int64;
 
-typedef LPlatformTypes::LChar        LChar;
+typedef LPlatformTypes::LChar         LChar;
 
 typedef LPlatformTypes::LStringLegacy LStringLegacy;
 typedef LPlatformTypes::LWideString   LWideString;
 
 typedef LPlatformTypes::LNullptrTy    LNullptrTy;
+
 
 /*-----------------------------------------------------------------------------
     Statically assert that the necessary platform-specific macros are defined.
@@ -73,9 +75,41 @@ typedef LPlatformTypes::LNullptrTy    LNullptrTy;
     #error "PLATFORM_MAX_PATH is not defined."
 #endif /* !PLATFORM_MAX_PATH */
 
+#ifndef PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH
+    #error "PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH is not defined."
+#endif /* !PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH */
+
+/**
+ * Platform break. Should just break the debugger if attached and pause the program. It must allow for continuing.
+ * If no debugger is attached, the behavior is undefined.
+ */
 #ifndef PLATFORM_BREAK
     #error "PLATFORM_BREAK is not defined."
 #endif /* !PLATFORM_BREAK */
+
+/**
+ * Platform error break. This signals the user via a platform-specific pop-up window that an error occurred and the
+ * program panicked. Resuming the program will not be possible except when an attached debugger is present.
+ */
+#ifndef PLATFORM_ERROR_BREAK
+    #error "PLATFORM_ERROR_BREAK is not defined."
+#endif /* !PLATFORM_ERROR_BREAK */
+#ifndef PLATFORM_ERROR_BREAK_WITH_BODY
+    #error "PLATFORM_ERROR_BREAK_WITH_BODY is not defined."
+#endif /* !PLATFORM_ERROR_BREAK_WITH_BODY */
+
+/**
+ * Platform panic break. This signals the user via a platform-specific pop-up window that a fatal error occurred
+ * and the program panicked. Resuming the program will not be possible.
+ * This will only be called in shipping builds. This macro will be replaced in development build with
+ * PLATFORM_ERROR_BREAK.
+ */
+#ifndef PLATFORM_PANIC_BREAK
+    #error "PLATFORM_PANIC_BREAK is not defined."
+#endif /* !PLATFORM_PANIC_BREAK */
+#ifndef PLATFORM_PANIC_BREAK_WITH_BODY
+    #error "PLATFORM_PANIC_BREAK_WITH_BODY is not defined."
+#endif /* !PLATFORM_PANIC_BREAK_WITH_BODY */
 
 #ifndef PLATFORM_CALLSPEC_IN
     #error "PLATFORM_CALLSPEC_IN is not defined."
@@ -91,8 +125,12 @@ typedef LPlatformTypes::LNullptrTy    LNullptrTy;
     #error "PLATFORM_EXTERNSPEC_OUT is not defined."
 #endif /* !PLATFORM_EXTERNSPEC_OUT */
 
+/*
+ * There is a way to confirm this at compile time. We should to
+ * a test for this.
+ */
 #ifndef PLATFORM_USES_LITTLE_ENDIAN
     #error "PLATFORM_USES_LITTLE_ENDIAN is not defined."
 #endif /* !PLATFORM_USES_LITTLE_ENDIAN */
 /* Implicitly define opposite. */
-#define PLATFORM_USES_BIG_ENDIAN        (!PLATFORM_USES_LITTLE_ENDIAN)
+#define PLATFORM_USES_BIG_ENDIAN        ( !PLATFORM_USES_LITTLE_ENDIAN )

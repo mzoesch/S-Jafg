@@ -29,13 +29,22 @@ public:
     virtual void Destruct() override;
     // ~WWidgetNode implementation
 
-    FORCEINLINE auto GetChildren() const -> const TdhArray<WWidgetNode*>& override { return this->Children; }
-    FORCEINLINE auto RemoveChild(WWidgetNode* Child) -> void override { this->Children.RemoveOnceChecked(Child); }
-    virtual auto AddChild(WWidgetNode* Child) -> WWidgetParentBase* override;
+    FORCEINLINE virtual auto GetChildren() const -> const TdhArray<LWidgetSlot*>& override { return this->Children; }
+    virtual auto RemoveChild(WWidgetNode* Child) -> void override;
+    virtual auto RemoveChild(LWidgetSlot* Child) -> void override;
+    virtual auto AddChild(WWidgetNode* Child) -> LWidgetSlot* override;
+
+    FORCEINLINE virtual auto GetPaddingPtr() const -> const LPadding* override { return &this->Padding; }
+    FORCEINLINE virtual auto GetPaddingPtr()       ->       LPadding* override { return &this->Padding; }
+
+    FORCEINLINE virtual auto SetPadding(const LPadding& InPadding) -> WWidgetParentBase& override { this->Padding = InPadding; return *this; }
 
 private:
 
-    TdhArray<WWidgetNode*> Children;
+    TdhArray<LWidgetSlot*> Children;
+
+    /** The padding area between the slot and the content it contains. */
+    LPadding               Padding;
 };
 
 } /* ~Namespace Jafg. */

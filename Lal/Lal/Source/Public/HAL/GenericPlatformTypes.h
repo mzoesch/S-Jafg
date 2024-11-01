@@ -15,6 +15,10 @@
     #define FORCEINLINE         _forceinline
 #endif /* !FORCEINLINE */
 
+#ifndef NOINLINE
+    #define NOINLINE            __declspec(noinline)
+#endif /* !NOINLINE */
+
 #ifndef RESTRICT
     #define RESTRICT            __restrict
 #endif /* !RESTRICT */

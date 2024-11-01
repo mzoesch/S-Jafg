@@ -148,6 +148,9 @@ void Jafg::LDesktopPlatformWin::PollInputs()
     {
         this->AddKeyDown(EKeys::Escape);
     }
+    if (glfwGetKey(this->MasterWindow, GLFW_KEY_P) == GLFW_PRESS)
+    {
+    }
 
     return;
 }
@@ -232,9 +235,16 @@ GLFWwindow* Jafg::LDesktopPlatformWin::CreateNativeWindow(const LDesktopSurfaceP
     return Window;
 }
 
-void Jafg::LDesktopPlatformWin::FramebufferSizeCallback(::GLFWwindow* Window, const int32 Width, const int32 Height)
+void Jafg::LDesktopPlatformWin::FramebufferSizeCallback(::GLFWwindow*, const int32 Width, const int32 Height)
 {
     glViewport(0, 0, Width, Height);
+
+    if (this->GetViewport())
+    {
+        this->GetViewport()->ChangeDimensions(LIntVector2(Width, Height));
+    }
+
+    return;
 }
 
 void Jafg::LDesktopPlatformWin::MouseCallback(::GLFWwindow* Window, const double XPos, const double YPos)

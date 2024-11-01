@@ -55,7 +55,12 @@ FORCEINLINE void LogMessage(const LStringLegacy&& InAnsiMessage)
  * @param InFile        The file where the panic occurred.
  * @param InLine        The line where the panic occurred.
  */
-FORCEINLINE void LogPanicMessage(const LStringLegacy&& InMessage, const LStringLegacy&& InAnsiMessage, const LStringLegacy&& InFile, const uint32 InLine)
+FORCEINLINE void LogPanicMessage(
+    const LStringLegacy&& InMessage,
+    const LStringLegacy&& InAnsiMessage,
+    const LStringLegacy&& InFile,
+    const uint32          InLine
+)
 {
     std::cout << InAnsiMessage << '\n';
     /*
@@ -65,24 +70,7 @@ FORCEINLINE void LogPanicMessage(const LStringLegacy&& InMessage, const LStringL
      */
     /* std::cerr << InMessage << '\n'; */
 
-    LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
-
-#if PLATFORM_WINDOWS
-
-    const std::wstring InMessageWide = std::wstring(InMessage.begin(), InMessage.end());
-    const std::wstring InFileWide    = std::wstring(InFile.begin(), InFile.end());
-
-    (void)
-    (
-        (
-            _wassert(InMessageWide.c_str(), InFileWide.c_str(), InLine), 0
-        )
-    )
-    ;
-
-#else /* PLATFORM_WINDOWS */
-    #error "Could not resolve PLATFORM."
-#endif /* !PLATFORM_WINDOWS */
+    PLATFORM_PANIC_BREAK_WITH_BODY(InMessage, InFile, InLine)
 
     return;
 }

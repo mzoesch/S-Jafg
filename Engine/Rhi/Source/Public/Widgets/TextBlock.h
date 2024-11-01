@@ -15,8 +15,6 @@ struct LTextBlockBrush
 {
     LColor Color = LColor::Black;
     float  Scale = 1.0f;
-    float X = 0.0f;
-    float Y = 0.0f;
 };
 
 DECLARE_JAFG_CLASS()
@@ -42,6 +40,7 @@ public:
     FORCEINLINE auto GetContent() const -> const LSimpleString& { return this->Content;      }
 
     FORCEINLINE auto SetColor(const LColor& InColor) -> WTextBlock& { this->Brush.Color = InColor; return *this; }
+    FORCEINLINE auto SetMargin(const LMargin& InMargin) -> WTextBlock& { *this->GetSlot()->Margin = InMargin; return *this; }
 
     FORCEINLINE auto SetBrush(const LTextBlockBrush& InBrush) -> WTextBlock& { this->Brush = InBrush; return *this; }
     FORCEINLINE auto GetBrush() const -> const LTextBlockBrush& { return this->Brush;    }

@@ -61,7 +61,7 @@
     #define checkMsgf(Expr, Format, ...)    PRIVATE_JAFG_CHECK_IMPL_MSGF( Expr, Format, ##__VA_ARGS__ )
 
     /**
-     * Will evaluate to a check that will always fail except at runtime.
+     * Will evaluate to a check that will always fail at runtime.
      */
     #define checkNoEntry()                  PRIVATE_JAFG_CHECK_IMPL( false && NO_ENTRY_ASSERT_TEXT )
 
@@ -78,8 +78,6 @@
      */
     #define unimplemented()                 PRIVATE_JAFG_CHECK_IMPL( false && UNIMPLEMENTED_ASSERT_TEXT )
 
-    // PLATFORM_BREAK() - Currently not using platform break. We of course should be using it.
-    // But it is to buggy right now.
     #define PRIVATE_JAFG_CHECK_IMPL(Expr)                                             \
         {                                                                             \
             if (UNLIKELY(!(Expr)))                                                    \
@@ -111,7 +109,12 @@
     #define checkMsgf(Expr, Format, ...)
     #define checkNoEntry()
     #define checkCode(Expr)
+
+#if DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING
+    #define unimplemented()                     panic( "Encounter unimplemented control path forced to be a runtime error." )
+#else /* DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING */
     #define unimplemented()                     static_assert( false, FORCED_CODE_PATH_IMPL_TEXT );
+#endif /* !DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING */
 
 #endif /* !DO_CHECKS */
 
@@ -210,6 +213,32 @@
 
 
 /*-----------------------------------------------------------------------------
+    Break macros.
+-----------------------------------------------------------------------------*/
+
+/***
+ * Will always break the program with a platform-specific error pop-up window.
+ * When developing, the program will be able to resume itself.
+ */
+#if IN_SHIPPING
+    #define ALWAYS_BREAK_PANIC(InMessage) \
+        PLATFORM_PANIC_BREAK(InMessage)
+#else /* IN_SHIPPING */
+    #define ALWAYS_BREAK_PANIC(InMessage) \
+        PLATFORM_ERROR_BREAK(InMessage)
+#endif /* IN_SHIPPING */
+
+/**
+ * When not in shipping breaks, the program if a debugger is present else the behavior is undefined.
+ */
+#if IN_SHIPPING
+    #define CONDITIONALLY_BREAK()
+#else /* IN_SHIPPING */
+    #define CONDITIONALLY_BREAK()       PLATFORM_BREAK()
+#endif /* !IN_SHIPPING */
+
+
+/*-----------------------------------------------------------------------------
     Statically assert defines here to check for illformed configurations.
 -----------------------------------------------------------------------------*/
 
@@ -234,9 +263,3 @@
         #error "Checks may not be enabled without asserts."
     #endif /* !DO_ASSERTS */
 #endif /* DO_CHECKS */
-
-#if DO_ASSERTS
-    #if !DO_CHECKS
-        #error "Asserts may not be enabled without checks."
-    #endif /* !DO_CHECKS */
-#endif /* DO_ASSERTS */
