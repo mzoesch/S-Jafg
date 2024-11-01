@@ -76,11 +76,21 @@ LIntVector2 Jafg::WWidgetNode::GetViewportSize() const
     return LIntVector2::ZeroVector;
 }
 
-LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromMostOuter() const
+LVector2 Jafg::WWidgetNode::GetRelativeTopLeft() const
 {
     if (this->Slot)
     {
-        return this->Slot->Parent->GetRelativeTopLeftFromMostOuter() + this->GetRelativeTopLeft();
+        return this->Slot->Margin->GetTopLeftOffset();
+    }
+
+    return LVector2::Zero();
+}
+
+LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const
+{
+    if (this->Slot)
+    {
+        return this->Slot->Parent->GetRelativeTopLeftFromMostOuter(this) + this->GetRelativeTopLeft();
     }
 
     return this->GetRelativeTopLeft();

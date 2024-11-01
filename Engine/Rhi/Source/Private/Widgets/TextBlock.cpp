@@ -18,10 +18,31 @@ namespace
 
 struct Character final
 {
-    uint32     TextureId; // ID handle of the glyph texture
-    glm::ivec2 Size;      // Size of glyph
-    glm::ivec2 Bearing;   // Offset from baseline to left/top of glyph
-    uint32     Advance;   // Offset to advance to next glyph
+    uint32     TextureId = 0;             // ID handle of the glyph texture
+    glm::ivec2 Size      = glm::ivec2();  // Size of glyph
+    glm::ivec2 Bearing   = glm::ivec2();  // Offset from baseline to left/top of glyph
+    LIntVector2 Advance  = LIntVector2(); // Offset to advance to next glyph
+
+    Character() = default;
+    Character(const Character& InOther)
+    {
+        this->TextureId = InOther.TextureId;
+        this->Size      = InOther.Size;
+        this->Bearing   = InOther.Bearing;
+        this->Advance   = InOther.Advance;
+
+        return;
+    }
+
+    Character(const uint32 InTextureId, const glm::ivec2& InSize, const glm::ivec2& InBearing, const LIntVector2& InAdvance)
+    {
+        this->TextureId = InTextureId;
+        this->Size      = InSize;
+        this->Bearing   = InBearing;
+        this->Advance   = InAdvance;
+
+        return;
+    }
 };
 
 /**
@@ -65,16 +86,6 @@ void Jafg::WTextBlock::Construct()
     return;
 }
 
-void Jafg::WTextBlock::Tick()
-{
-    Super::Tick();
-}
-
-void Jafg::WTextBlock::Destruct()
-{
-    Super::Destruct();
-}
-
 void Jafg::WTextBlock::Draw(LViewport* Context) const
 {
     Super::Draw(Context);
@@ -91,7 +102,7 @@ void Jafg::WTextBlock::Draw(LViewport* Context) const
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
     glUniformMatrix4fv(glGetUniformLocation(FontShaderProgram->ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-    const LVector2 Offset = this->GetRelativeTopLeftFromMostOuter();
+    const LVector2 Offset = this->GetRelativeTopLeftFromMostOuter(this);
 
     const float YFromBottom = static_cast<float>(WindowDimensions.Y) - Offset.Y;
 
@@ -129,10 +140,27 @@ void Jafg::WTextBlock::Draw(LViewport* Context) const
         // render quad
         glDrawArrays(GL_TRIANGLES, 0, 6);
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-        X += (ch.Advance >> 6) * this->Brush.Scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+        X += (ch.Advance.X >> 6) * this->Brush.Scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
     }
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    return;
+}
+
+void Jafg::WTextBlock::UpdateDesiredSize() const
+{
+    if (this->Content.IsEmpty())
+    {
+        this->SetDesiredSize(LVector2::Zero());
+        return;
+    }
+
+    const Character& Ch = Characters.at(this->Content.GetCharAt(0));
+
+    const float X = static_cast<float>(Ch.Advance.X) * this->Brush.Scale * static_cast<float>(this->Content.GetRuneCount()) / 64.0f;
+    const float Y = static_cast<float>(Ch.Size.y) * this->Brush.Scale;
+    this->SetDesiredSize(LVector2(X, Y));
 
     return;
 }
@@ -186,11 +214,12 @@ void Jafg::WTextBlock::FirstTimeLoadCharacters()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         // now store character for later use
-        Character character = {
+        Character character =
+        {
             texture,
             glm::ivec2(Face->glyph->bitmap.width, Face->glyph->bitmap.rows),
             glm::ivec2(Face->glyph->bitmap_left, Face->glyph->bitmap_top),
-            Face->glyph->advance.x
+            LIntVector2(Face->glyph->advance.x, Face->glyph->advance.y)
         };
         Characters.insert(std::pair<char, Character>(c, character));
     }

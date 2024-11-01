@@ -89,6 +89,8 @@ public:
     FORCEINLINE auto ToC()   const -> const char * ;
     FORCEINLINE auto ToPtr() const -> const LRune* ;
 
+    FORCEINLINE auto GetRuneAt(const SizeType Index) const -> LRune { return this->Data[Index];                    }
+    FORCEINLINE auto GetCharAt(const SizeType Index) const -> char  { return static_cast<char>(this->Data[Index]); }
     FORCEINLINE auto operator[](const SizeType Index)       ->       LRune& { return this->Data[Index]; }
     FORCEINLINE auto operator[](const SizeType Index) const -> const LRune& { return this->Data[Index]; }
 

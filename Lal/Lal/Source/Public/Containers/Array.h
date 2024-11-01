@@ -119,6 +119,8 @@ public:
     FORCEINLINE auto Emplace(Args&&... InArgs) noexcept -> Self&;
 
     template <typename Predicate>
+    FORCEINLINE auto FindIndexByPredicate(const Predicate& InPredicate) const noexcept -> SizeType;
+    template <typename Predicate>
     FORCEINLINE auto FindByPredicate(const Predicate& InPredicate)       noexcept -> T*;
     template <typename Predicate>
     FORCEINLINE auto FindByPredicate(const Predicate& InPredicate) const noexcept -> const T*;
@@ -595,6 +597,31 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Emplace(Args&&... InArgs) n
     SizeType Index = this->AddZeroed();
     new( this->GetData() + Index ) T(std::forward<Args>(InArgs)...);
     return *this;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+template <typename Predicate>
+SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindIndexByPredicate(const Predicate& InPredicate) const noexcept
+{
+    if (this->IsData() == false)
+    {
+        return INDEX_NONE;
+    }
+
+    SizeType Out = -1;
+    for (const T* RESTRICT Bulk = this->GetData(), *RESTRICT End = Bulk + this->Size; Bulk != End; ++Bulk)
+    {
+        ++Out;
+
+        if (InPredicate(*Bulk))
+        {
+            return Out;
+        }
+
+        continue;
+    }
+
+    return INDEX_NONE;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>

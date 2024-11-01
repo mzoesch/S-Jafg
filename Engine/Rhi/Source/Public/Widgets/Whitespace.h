@@ -38,7 +38,7 @@ struct LWhitespace
     {
     }
 
-    FORCEINLINE explicit LWhitespace(const int32 UniformWhitespace)
+    FORCEINLINE LWhitespace(const int32 UniformWhitespace)
         : West(static_cast<float>(UniformWhitespace))
         , North(static_cast<float>(UniformWhitespace))
         , East(static_cast<float>(UniformWhitespace))
@@ -46,7 +46,7 @@ struct LWhitespace
     {
     }
 
-    FORCEINLINE explicit LWhitespace(const float UniformWhitespace)
+    FORCEINLINE LWhitespace(const float UniformWhitespace)
         : West(UniformWhitespace)
         , North(UniformWhitespace)
         , East(UniformWhitespace)
@@ -54,7 +54,7 @@ struct LWhitespace
     {
     }
 
-    FORCEINLINE explicit LWhitespace(const double UniformWhitespace)
+    FORCEINLINE LWhitespace(const double UniformWhitespace)
         : West(static_cast<float>(UniformWhitespace))
         , North(static_cast<float>(UniformWhitespace))
         , East(static_cast<float>(UniformWhitespace))
@@ -63,10 +63,10 @@ struct LWhitespace
     }
 
     FORCEINLINE explicit LWhitespace(const int32 Horizontal, const int32 Vertical)
-        : West(Horizontal)
-        , North(Vertical)
-        , East(Horizontal)
-        , South(Vertical)
+        : West(static_cast<float>(Horizontal))
+        , North(static_cast<float>(Vertical))
+        , East(static_cast<float>(Horizontal))
+        , South(static_cast<float>(Vertical))
     {
     }
 

@@ -84,25 +84,15 @@ public:
     virtual void Tick();
     virtual void Destruct();
 
-    virtual void Draw(LViewport* Context) const { }
+    virtual void Draw(LViewport* Context) const { this->UpdateDesiredSize(); return; }
 
     /** Weather this widget is allowed to tick this frame. */
-    FORCEINLINE auto ShouldNowTick() const -> bool
-    {
-        return
-               ( this->bDisableTick == false )
-            && (
-                   this->Visibility == EWidgetVisibility::Visible
-                || this->Visibility == EWidgetVisibility::TransitiveHitTestInvisible
-                || this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible
-            );
-    }
-
+    FORCEINLINE auto ShouldNowTick() const -> bool;
     FORCEINLINE auto GetVisibility() const -> EWidgetVisibility::Type { return this->Visibility; }
     FORCEINLINE auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> void { this->Visibility = InVisibility; }
 
     /**
-     * Removes this widget from its parent widget.
+     * Orphans the widget from its parent widget.
      * @param bDestroy If true, the widget will be destroyed automatically.
      */
     virtual auto RemoveFromParent(const bool bDestroy = true) -> void;
@@ -112,36 +102,37 @@ public:
     virtual auto GetViewportSize() const -> LIntVector2;
 
     /** @return The top left corner of this widget relative to its parent. If no parent relative to the viewport. */
-    FORCEINLINE auto GetRelativeTopLeft() const -> LVector2
-    {
-        if (this->Slot)
-        {
-            return this->Slot->Margin->GetTopLeftOffset();
-        }
-
-        return LVector2::Zero();
-    }
+    auto GetRelativeTopLeft() const -> LVector2;
 
     /**
+     * @param  WhoAsked The widget that asked for the relative top left. Must be a direct child.
      * @return The top left corner relative to the most outer parent. In the best case, this should be the viewport,
      *         although this is not guaranteed.
      */
-    FORCEINLINE auto GetRelativeTopLeftFromMostOuter() const -> LVector2;
-
-protected:
+    virtual auto GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const -> LVector2;
 
     FORCEINLINE auto GetSlot() const -> LWidgetSlot* { return this->Slot; }
 
+    /** Virtual update method for desired size. */
+    virtual void UpdateDesiredSize() const { }
+    FORCEINLINE auto SetDesiredSize(const LVector2& InSize) const -> void { this->DesiredSize = InSize; }
+    FORCEINLINE auto GetDesiredSize() const -> const LVector2& { return this->DesiredSize; }
+
 private:
 
-    bool                    bDisableTick = false;
+    bool bDisableTick = false;
     EWidgetVisibility::Type Visibility   = EWidgetVisibility::Visible;
 
     /**
      * The slot that this widget is currently in. Might be null if the widget is a standalone.
      * This class is not the owner of this slot. But the parent holding the child is.
      */
-    LWidgetSlot*            Slot         = nullptr;
+    LWidgetSlot* Slot = nullptr;
+
+    /**
+     * The desired size of this widget.
+     */
+    mutable LVector2 DesiredSize = LVector2::Zero();
 };
 
 template <typename TNode>
@@ -194,3 +185,14 @@ FORCEINLINE void ConstructDeferredWidgetNode(WWidgetNode* InNode)
 #define NewNode(TNode) (*ConstructDeferredWidgetNode<TNode>())
 
 } /* ~Namespace Jafg */
+
+bool Jafg::WWidgetNode::ShouldNowTick() const
+{
+    return
+        ( this->bDisableTick == false )
+        && (
+            this->Visibility == EWidgetVisibility::Visible
+            || this->Visibility == EWidgetVisibility::TransitiveHitTestInvisible
+            || this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible
+        );
+}

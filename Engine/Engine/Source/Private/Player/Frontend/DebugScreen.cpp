@@ -4,14 +4,14 @@
 #include "Player/Frontend/DebugScreen.h"
 #include "Core/Application.h"
 #include "Widgets/TextBlock.h"
-#include "Widgets/WidgetRegion.h"
+#include "Widgets/VBox.h"
 
 void Jafg::WDebugScreen::Construct()
 {
     Super::Construct();
 
-    MakeRootNode(WWidgetRegion)
-    .SetPadding(LPadding(50))
+    MakeRootNode(WVBox)
+    .SetPadding(5.0f)
     [
         NewNode(WTextBlock) >> this->TestTextBlock
         & "Hello from Wsdsml."
@@ -19,7 +19,7 @@ void Jafg::WDebugScreen::Construct()
     ]
     [
         NewNode(WTextBlock)
-        & ""
+        & "AAAAAAAAAAAAAAAAAAAAAAAAAAA"
         & LColor::Black
     ]
     FinishWidgetStyling()

@@ -2,9 +2,24 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "Widgets/WidgetRegion.h"
+#include "VBox.generated.h"
 
 namespace Jafg
 {
+
+DECLARE_JAFG_CLASS()
+class RHI_API WVBox : public WWidgetRegion
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTOR(WVBox)
+
+public:
+
+    virtual auto GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const -> LVector2 override;
+};
 
 } /* ~Namespace Jafg. */

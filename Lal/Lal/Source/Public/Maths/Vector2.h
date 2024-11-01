@@ -51,125 +51,137 @@ struct TVector2 final
     FORCEINLINE explicit TVector2<T>(const TVector2<T>& InVec)      : X(InVec.X), Y(InVec.Y)                    { }
     FORCEINLINE          TVector2<T>(TVector2<T>&& InVec) noexcept  : X(InVec.X), Y(InVec.Y)                    { }
 
+    FORCEINLINE TVector2<T>& operator =(const TVector2<T>&  InVec) noexcept { this->X = InVec.X; this->Y = InVec.Y; return *this; }
+    FORCEINLINE TVector2<T>& operator =(      TVector2<T>&& InVec) noexcept { this->X = InVec.X; this->Y = InVec.Y; return *this; }
+    FORCEINLINE TVector2<T>& operator =(const TVector2<T>&& InVec) noexcept = delete;
+
     FORCEINLINE TVector2<T>  operator +(const T            InScalar) const;
     FORCEINLINE TVector2<T>  operator +(const TVector2<T>& InVec   ) const;
-    FORCEINLINE TVector2<T>& operator+=(const T            InScalar) const;
-    FORCEINLINE TVector2<T>& operator+=(const TVector2<T>& InVec   ) const;
+    FORCEINLINE TVector2<T>& operator+=(const T            InScalar);
+    FORCEINLINE TVector2<T>& operator+=(const TVector2<T>& InVec   );
     FORCEINLINE TVector2<T>  operator -(const T            InScalar) const;
     FORCEINLINE TVector2<T>  operator -(const TVector2<T>& InVec   ) const;
-    FORCEINLINE TVector2<T>& operator-=(const T            InScalar) const;
-    FORCEINLINE TVector2<T>& operator-=(const TVector2<T>& InVec   ) const;
+    FORCEINLINE TVector2<T>& operator-=(const T            InScalar);
+    FORCEINLINE TVector2<T>& operator-=(const TVector2<T>& InVec   );
     FORCEINLINE TVector2<T>  operator *(const T            InScalar) const;
     FORCEINLINE TVector2<T>  operator *(const TVector2<T>& InVec   ) const;
-    FORCEINLINE TVector2<T>& operator*=(const T            InScalar) const;
-    FORCEINLINE TVector2<T>& operator*=(const TVector2<T>& InVec   ) const;
+    FORCEINLINE TVector2<T>& operator*=(const T            InScalar);
+    FORCEINLINE TVector2<T>& operator*=(const TVector2<T>& InVec   );
     FORCEINLINE TVector2<T>  operator /(const T            InScalar) const;
     FORCEINLINE TVector2<T>  operator /(const TVector2<T>& InVec   ) const;
-    FORCEINLINE TVector2<T>& operator/=(const T            InScalar) const;
-    FORCEINLINE TVector2<T>& operator/=(const TVector2<T>& InVec   ) const;
-    FORCEINLINE TVector2<T>  operator -() const { return TVector2<T>(-X, -Y); }
+    FORCEINLINE TVector2<T>& operator/=(const T            InScalar);
+    FORCEINLINE TVector2<T>& operator/=(const TVector2<T>& InVec   );
+    FORCEINLINE TVector2<T>  operator -() const { return TVector2<T>(-this->X, -this->Y); }
 };
 
 template <typename T>
 TVector2<T> TVector2<T>::operator+(const T InScalar) const
 {
-    return TVector2<T>(X + InScalar, Y + InScalar);
+    return TVector2<T>(this->X + InScalar, this->Y + InScalar);
 }
 
 template <typename T>
 TVector2<T> TVector2<T>::operator+(const TVector2<T>& InVec) const
 {
-    return TVector2<T>(X + InVec.X, Y + InVec.Y);
+    return TVector2<T>(this->X + InVec.X, this->Y + InVec.Y);
 }
 
 template <typename T>
-TVector2<T>& TVector2<T>::operator+=(const T InScalar) const
+TVector2<T>& TVector2<T>::operator+=(const T InScalar)
 {
-    *this = *this + InScalar;
+    this->X += InScalar;
+    this->Y += InScalar;
     return *this;
 }
 
 template <typename T>
-TVector2<T>& TVector2<T>::operator+=(const TVector2<T>& InVec) const
+TVector2<T>& TVector2<T>::operator+=(const TVector2<T>& InVec)
 {
-    *this = *this + InVec;
+    this->X += InVec.X;
+    this->Y += InVec.Y;
     return *this;
 }
 
 template <typename T>
 TVector2<T> TVector2<T>::operator-(const T InScalar) const
 {
-    return TVector2<T>(X - InScalar, Y - InScalar);
+    return TVector2<T>(this->X - InScalar, this->Y - InScalar);
 }
 
 template <typename T>
 TVector2<T> TVector2<T>::operator-(const TVector2<T>& InVec) const
 {
-    return TVector2<T>(X - InVec.X, Y - InVec.Y);
+    return TVector2<T>(this->X - InVec.X, this->Y - InVec.Y);
 }
 
 template <typename T>
-TVector2<T>& TVector2<T>::operator-=(const T InScalar) const
+TVector2<T>& TVector2<T>::operator-=(const T InScalar)
 {
-    *this = *this - InScalar;
+    this->X -= InScalar;
+    this->Y -= InScalar;
     return *this;
 }
 
 template <typename T>
-TVector2<T>& TVector2<T>::operator-=(const TVector2<T>& InVec) const
+TVector2<T>& TVector2<T>::operator-=(const TVector2<T>& InVec)
 {
-    *this = *this - InVec;
+    this->X -= InVec.X;
+    this->Y -= InVec.Y;
     return *this;
 }
 
 template <typename T>
 TVector2<T> TVector2<T>::operator*(const T InScalar) const
 {
-    return TVector2<T>(X * InScalar, Y * InScalar);
+    return TVector2<T>(this->X * InScalar, this->Y * InScalar);
 }
 
 template <typename T>
 TVector2<T> TVector2<T>::operator*(const TVector2<T>& InVec) const
 {
-    return TVector2<T>(X * InVec.X, Y * InVec.Y);
+    return TVector2<T>(this->X * InVec.X, this->Y * InVec.Y);
 }
 
 template <typename T>
-TVector2<T>& TVector2<T>::operator*=(const T InScalar) const
+TVector2<T>& TVector2<T>::operator*=(const T InScalar)
 {
-    *this = *this * InScalar;
+    this->X *= InScalar;
+    this->Y *= InScalar;
     return *this;
 }
 
 template <typename T>
-TVector2<T>& TVector2<T>::operator*=(const TVector2<T>& InVec) const
+TVector2<T>& TVector2<T>::operator*=(const TVector2<T>& InVec)
 {
-    *this = *this * InVec;
+    this->X *= InVec.X;
+    this->Y *= InVec.Y;
     return *this;
 }
 
 template <typename T>
 TVector2<T> TVector2<T>::operator/(const T InScalar) const
 {
-    return TVector2<T>(X / InScalar, Y / InScalar);
+    return TVector2<T>(this->X / InScalar, this->Y / InScalar);
 }
 
 template <typename T>
 TVector2<T> TVector2<T>::operator/(const TVector2<T>& InVec) const
 {
-    return TVector2<T>(X / InVec.X, Y / InVec.Y);
+    return TVector2<T>(this->X / InVec.X, this->Y / InVec.Y);
 }
 
 template <typename T>
-TVector2<T>& TVector2<T>::operator/=(const T InScalar) const
+TVector2<T>& TVector2<T>::operator/=(const T InScalar)
 {
-    *this = *this / InScalar;
+    this->X /= InScalar;
+    this->Y /= InScalar;
     return *this;
 }
 
 template <typename T>
-TVector2<T>& TVector2<T>::operator/=(const TVector2<T>& InVec) const
+TVector2<T>& TVector2<T>::operator/=(const TVector2<T>& InVec)
 {
-    *this = *this / InVec;
+    this->X /= InVec.X;
+    this->Y /= InVec.Y;
     return *this;
 }

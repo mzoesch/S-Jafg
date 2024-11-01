@@ -150,6 +150,15 @@ void Jafg::LDesktopPlatformWin::PollInputs()
     }
     if (glfwGetKey(this->MasterWindow, GLFW_KEY_P) == GLFW_PRESS)
     {
+        PLATFORM_BREAK()
+    }
+    if (glfwGetKey(this->MasterWindow, GLFW_KEY_F1) == GLFW_PRESS)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    if (glfwGetKey(this->MasterWindow, GLFW_KEY_F2) == GLFW_PRESS)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     return;
