@@ -116,7 +116,7 @@ void Jafg::WTextBlock::Draw(LViewport* Context) const
 
         float xpos = X + ch.Bearing.x * this->Brush.Scale;
         // float ypos = YFromBottom - (ch.Size.y - ch.Bearing.y) * this->Brush.Scale;
-        float ypos = YFromBottom - ch.Size.y * this->Brush.Scale;
+        float ypos = YFromBottom - (ch.Size.y - ch.Bearing.y + 29.0f) * this->Brush.Scale;
 
         float w = ch.Size.x * this->Brush.Scale;
         float h = ch.Size.y * this->Brush.Scale;

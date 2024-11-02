@@ -37,9 +37,9 @@ public:
 
     // WWidgetParentBase implementation
     FORCEINLINE virtual auto GetChildren() const -> const TdhArray<LWidgetSlot*>& override { return { this->Root }; }
-    FORCEINLINE virtual auto RemoveChild(WWidgetNode* InChild) -> void override { panic( "Invalid call on member." ) }
-    FORCEINLINE virtual auto RemoveChild(LWidgetSlot* InSlot) -> void override { panic( "Invalid call on member." ) }
-    FORCEINLINE virtual auto AddChild(WWidgetNode* InChild) -> LWidgetSlot* override { panic( "Invalid call on member.") return nullptr; }
+    FORCEINLINE virtual auto RemoveChild(WWidgetNode* InChild) -> void override NON_CALLABLE_MEMBER(return)
+    FORCEINLINE virtual auto RemoveChild(LWidgetSlot* InSlot) -> void override NON_CALLABLE_MEMBER(return)
+    FORCEINLINE virtual auto AddChild(WWidgetNode* InChild) -> LWidgetSlot* override NON_CALLABLE_MEMBER(return nullptr)
     FORCEINLINE virtual auto GetPaddingPtr() const -> const LPadding* override { return &this->Padding; }
     FORCEINLINE virtual auto GetPaddingPtr() -> LPadding* override { return &this->Padding; }
     FORCEINLINE virtual auto SetPadding(const LPadding& InPadding) -> WWidgetParentBase& override { this->Padding = InPadding; return *this; }

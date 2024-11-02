@@ -23,12 +23,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #if DO_PURE_VIRTUAL_COMPILER_CHECKS
-    #define PURE_VIRTUAL(...) = 0
+    #define PURE_VIRTUAL(...) = 0;
 #else /* DO_PURE_VIRTUAL_COMPILER_CHECKS */
     /** Define a RetTy for non-void members if needed. */
     #define PURE_VIRTUAL(RetTy, ...) { panic( "Pure virtual function was encountered." ) RetTy; ##__VA_ARGS__; }
 #endif /* !DO_PURE_VIRTUAL_COMPILER_CHECKS */
 
+/** A member that was derived but is not callable. */
 #define NON_CALLABLE_MEMBER(RetTy, ...) { panic( "Non-callable member function was encountered." ) RetTy; ##__VA_ARGS__; }
 
 namespace Jafg
@@ -82,8 +83,13 @@ FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LSi
 /** Allocate a new object with its given static class and a given context. The begin-life method will not be called. */
 FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> Private::JObjectBase*;
 
+/** @return The dynamic-casted object if the object is or derives from TObj, else nullptr. */
 template <typename TObj>
-FORCEINLINE TObj* DynamicCast(Private::JObjectBase* InObject);
+FORCEINLINE auto DynamicCast(Private::JObjectBase* InObject) -> TObj*;
+
+/** @return The default package referrer. */
+template <typename TObj>
+FORCEINLINE auto GetDefault() -> const TObj*;
 
 namespace Private
 {
@@ -359,6 +365,12 @@ TObj* DynamicCast(Private::JObjectBase* InObject)
     }
 
     return nullptr;
+}
+
+template <typename TObj>
+const TObj* GetDefault()
+{
+    return reinterpret_cast<const TObj*>(TObj::StaticClass()->GetDefaultPackageReferrer());
 }
 
 template <typename TObj>

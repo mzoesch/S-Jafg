@@ -22,7 +22,7 @@ namespace EWidgetVisibility
 
 enum Type : uint8
 {
-    /** Visible, takes up space in the widget layout and hit-testable. */
+    /** Visible, takes up space in the widget layout and is hit-testable. */
     Visible,
 
     /** Not visible, takes up space in the widget layout and is not hit-testable. */
@@ -43,10 +43,14 @@ enum Type : uint8
 /** The base struct for every widget slot. */
 struct LWidgetSlot
 {
-    /** The parent of this slot and the owner of the memory. */
+    /**
+     * The parent of this slot and the owner of the memory.
+     */
     WWidgetParentBase* Parent;
 
-    /** The content of this slot. We interpret all names in this struct as of the view of the content. */
+    /**
+     * The content of this slot. We interpret all names in this and derived structs as of the view of the content.
+     */
     WWidgetNode*       Content;
 
     /**
@@ -80,9 +84,9 @@ public:
     virtual void MarkAsGarbage() override;
     // ~JObjectBase implementation
 
-    virtual void Construct();
-    virtual void Tick();
-    virtual void Destruct();
+    virtual void Construct() { }
+    virtual void Tick()      { }
+    virtual void Destruct()  { }
 
     virtual void Draw(LViewport* Context) const { this->UpdateDesiredSize(); return; }
 
@@ -101,7 +105,7 @@ public:
     /** @return The size of the current viewport in pixels. */
     virtual auto GetViewportSize() const -> LIntVector2;
 
-    /** @return The top left corner of this widget relative to its parent. If no parent relative to the viewport. */
+    /** @return The top left corner of this widget relative to its parent. If no parent, relative to the viewport. */
     auto GetRelativeTopLeft() const -> LVector2;
 
     /**
@@ -113,7 +117,7 @@ public:
 
     FORCEINLINE auto GetSlot() const -> LWidgetSlot* { return this->Slot; }
 
-    /** Virtual update method for desired size. */
+    /** Virtual update method for the desired size. Automatically called. */
     virtual void UpdateDesiredSize() const { }
     FORCEINLINE auto SetDesiredSize(const LVector2& InSize) const -> void { this->DesiredSize = InSize; }
     FORCEINLINE auto GetDesiredSize() const -> const LVector2& { return this->DesiredSize; }
@@ -121,7 +125,7 @@ public:
 private:
 
     bool bDisableTick = false;
-    EWidgetVisibility::Type Visibility   = EWidgetVisibility::Visible;
+    EWidgetVisibility::Type Visibility = EWidgetVisibility::Visible;
 
     /**
      * The slot that this widget is currently in. Might be null if the widget is a standalone.

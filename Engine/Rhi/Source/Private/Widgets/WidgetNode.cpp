@@ -24,19 +24,6 @@ void Jafg::WWidgetNode::MarkAsGarbage()
     return;
 }
 
-void Jafg::WWidgetNode::Construct()
-{
-}
-
-void Jafg::WWidgetNode::Tick()
-{
-
-}
-
-void Jafg::WWidgetNode::Destruct()
-{
-}
-
 void Jafg::WWidgetNode::RemoveFromParent(const bool bDestroy /* = true */)
 {
     if (this->Slot)
