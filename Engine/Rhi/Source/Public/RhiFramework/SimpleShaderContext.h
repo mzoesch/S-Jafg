@@ -13,6 +13,10 @@ public:
 
     LSimpleShaderContext() = default;
 
+    void Use();
+    void Draw();
+    void Unuse();
+
     FORCEINLINE auto GetShader() -> LShader& { return this->Shader; }
     FORCEINLINE auto GetShader() const -> const LShader& { return this->Shader; }
     FORCEINLINE auto GetVao() -> uint32& { return this->Vao; }
@@ -26,11 +30,14 @@ public:
     FORCEINLINE auto GetVboPtr() -> uint32* { return &this->Vbo; }
     FORCEINLINE auto GetVboPtr() const -> const uint32* { return &this->Vbo; }
 
+    void GenerateArrayBuffers();
+    void UpdateStaticArrayBuffers(const float Vertices[], const uint32 Size);
+
 private:
 
     LShader Shader;
-    uint32 Vao   = 0x0u;
-    uint32 Vbo   = 0x0u;
+    uint32  Vao   = 0x0u;
+    uint32  Vbo   = 0x0u;
 };
 
 } /* ~Namespace Jafg. */

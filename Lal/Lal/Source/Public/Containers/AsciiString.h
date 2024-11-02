@@ -129,6 +129,9 @@ public:
     FORCEINLINE auto end()         noexcept -> Iterator<LRune>       ;
     FORCEINLINE auto end()   const noexcept -> Iterator<const LRune> ;
 
+    template <typename ... ArgyTy>
+    static auto SprintF(const char* Format, const ArgyTy& ... Args) -> LAsciiString;
+
 private:
 
     /**
@@ -739,4 +742,18 @@ FORCEINLINE void Jafg::LAsciiString::EnsureValidState()
     check( this->Data.GetData()     == nullptr )
 
     return;
+}
+
+template <typename ... ArgyTy>
+Jafg::LAsciiString Jafg::LAsciiString::SprintF(const char* Format, const ArgyTy& ... Args)
+{
+    /**
+     * Super supid solution. But who cares right now.
+     * Later we write our own implementation with type safety etc.
+     *
+     * S will be stackallocated if in str is small enough. So its not that bad.
+     * But still one unnecessary heap allocation by this class...
+     */
+    const LStringLegacy S = std::vformat(Format, std::make_format_args(Args...));
+    return { S.c_str() };
 }

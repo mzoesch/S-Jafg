@@ -11,6 +11,10 @@
     #define NODISCARD           [[nodiscard]]
 #endif /* !NODISCARD */
 
+#ifndef UNUSED
+    #define UNUSED              [[maybe_unused]]
+#endif /* !UNUSED */
+
 #ifndef FORCEINLINE
     #define FORCEINLINE         _forceinline
 #endif /* !FORCEINLINE */

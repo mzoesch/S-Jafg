@@ -3,7 +3,8 @@
 #pragma once
 
 #include "Engine/ObjectBase.h"
-#include "Whitespace.h"
+#include "Widgets/Whitespace.h"
+#include "Widgets/InterfaceTypes.h"
 #include "WidgetNode.generated.h"
 
 namespace Jafg

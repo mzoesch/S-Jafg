@@ -21,27 +21,32 @@ void Jafg::WWidgetRegion::Draw(LViewport* Context) const
 
     if (this->ShaderContext == false)
     {
+        LOG_TRACE(LogTemporal, "Creating new shader context for WWidgetRegion.")
+        this->ShaderContext.MakeMeaningful();
         this->CreateNewShaderContext();
     }
 
-
+    this->ShaderContext->Use();
+    this->ShaderContext->Draw();
+    this->ShaderContext->Unuse();
 
     return;
 }
 
 void Jafg::WWidgetRegion::CreateNewShaderContext() const
 {
-    LIntVector2 WDim = this->GetViewportSize();
-
     LShader& Shader = this->ShaderContext->GetShader();
     Shader = LShader("Content/Shaders/visual.vert", "Content/Shaders/visual.frag");
     Shader.Use();
 
-    glm::mat4 projection =
-        glm::ortho(0.0f, static_cast<float>(WDim.X), static_cast<float>(WDim.Y), 0.0f, -1.0f, 1.0f);
+    float vertices[] = {
+        -0.5f, -0.5f, 0.0f, // left
+         0.5f, -0.5f, 0.0f, // right
+         0.0f,  0.5f, 0.0f  // top
+    };
 
+    this->ShaderContext->GenerateArrayBuffers();
+    this->ShaderContext->UpdateStaticArrayBuffers(vertices, sizeof(vertices));
 
     return;
 }
-
-
