@@ -14,7 +14,8 @@ void Jafg::WDebugScreen::Construct()
     const JUserPreferences* UserPreferences = GetDefault<JUserPreferences>();
 
     MakeRootNode(WVBox)
-    .SetPadding(5.0f)
+    .SetRegionPadding(5.0f)
+    .SetBrush(LRegionBrush({.Tint = LColor::Cyan}))
     [
         NewNode(WTextBlock) >> this->TestTextBlock
         & "Hello from Wsdsml."

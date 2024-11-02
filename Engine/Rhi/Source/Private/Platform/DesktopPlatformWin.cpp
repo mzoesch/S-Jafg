@@ -11,6 +11,11 @@
 #include <glm/glm.hpp>
 #include "Widgets/Viewport.h"
 
+void OpenGlErrorCallback(int error_code, const char* description)
+{
+    panic( "OpenGl encountered an error." )
+}
+
 void Jafg::LDesktopPlatformWin::Initialize()
 {
     LDesktopPlatformBase::Initialize();
@@ -19,6 +24,7 @@ void Jafg::LDesktopPlatformWin::Initialize()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
     this->MasterWindow = this->CreateNativeWindow(LDesktopSurfaceProps());
     if (this->MasterWindow == nullptr)
@@ -70,6 +76,8 @@ void Jafg::LDesktopPlatformWin::Initialize()
         static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->ScrollCallback(Window, XOffset, YOffset);
     });
 
+    glfwSetErrorCallback(OpenGlErrorCallback);
+
     glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -91,7 +99,7 @@ void Jafg::LDesktopPlatformWin::OnClear()
     return;
 }
 
-void RenderText(Jafg::Shader &shader, std::string text, float x, float y, float scale, glm::vec3 color);
+void RenderText(Jafg::LShader &shader, std::string text, float x, float y, float scale, glm::vec3 color);
 void Jafg::LDesktopPlatformWin::OnUpdate()
 {
     LDesktopPlatformBase::OnUpdate();

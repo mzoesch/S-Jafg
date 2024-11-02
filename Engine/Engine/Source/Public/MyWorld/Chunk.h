@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 #include "MyWorld/WorldStatics.h"
 #include "RhiFramework/Shader.h"
+#include "JustTemp.h"
 
 class AChunk
 {

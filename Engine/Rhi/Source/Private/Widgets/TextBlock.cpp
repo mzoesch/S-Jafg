@@ -58,11 +58,11 @@ void Jafg::WTextBlock::Construct()
 
     LIntVector2 WindowDimensions = this->GetViewportSize();
 
-    this->FontShaderProgram = new Shader("Content/Shaders/vs_font.shader", "Content/Shaders/fs_font.shader");
+    this->FontShaderProgram = new LShader("Content/Shaders/vs_font.shader", "Content/Shaders/fs_font.shader");
     checkSlow( this->FontShaderProgram )
     this->FontShaderProgram->Use();
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
-    glUniformMatrix4fv(glGetUniformLocation(FontShaderProgram->ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(glGetUniformLocation(FontShaderProgram->GetId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
     if (Characters.empty())
     {
@@ -94,13 +94,13 @@ void Jafg::WTextBlock::Draw(LViewport* Context) const
     check( this->FontShaderProgram )
 
     this->FontShaderProgram->Use();
-    glUniform3f(glGetUniformLocation(this->FontShaderProgram->ID, "textColor"), this->Brush.Color.R, this->Brush.Color.G, this->Brush.Color.B);
+    glUniform3f(glGetUniformLocation(this->FontShaderProgram->GetId(), "textColor"), this->Brush.Color.R, this->Brush.Color.G, this->Brush.Color.B);
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(this->Vao);
 
     LIntVector2 WindowDimensions = this->GetViewportSize();
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
-    glUniformMatrix4fv(glGetUniformLocation(FontShaderProgram->ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(glGetUniformLocation(FontShaderProgram->GetId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
     const LVector2 Offset = this->GetRelativeTopLeftFromMostOuter(this);
 

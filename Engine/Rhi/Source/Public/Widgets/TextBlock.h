@@ -8,7 +8,7 @@
 namespace Jafg
 {
 
-class Shader;
+class LShader;
 class LViewport;
 
 struct LTextBlockBrush
@@ -86,7 +86,7 @@ private:
 
     uint32  Vao               = 0x0u;
     uint32  Vbo               = 0x0u;
-    Shader* FontShaderProgram = nullptr;
+    LShader* FontShaderProgram = nullptr;
 };
 
 } /* ~Namespace Jafg */

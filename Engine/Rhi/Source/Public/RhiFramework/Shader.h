@@ -7,35 +7,25 @@
 namespace Jafg
 {
 
-struct Vertex
-{
-    char posX, posY, posZ;
-    char texGridX, texGridY;
-
-    Vertex(char _posX, char _posY, char _posZ, char _texGridX, char _texGridY)
-    {
-        posX = _posX;
-        posY = _posY;
-        posZ = _posZ;
-
-        texGridX = _texGridX;
-        texGridY = _texGridY;
-    }
-};
-class RHI_API Shader
+class RHI_API LShader
 {
 public:
-    // the program ID
-    unsigned int ID;
 
-    Shader() = default;
+    LShader() = default;
+
     // constructor reads and builds the shader
-    Shader(const char* vertexPath, const char* fragmentPath);
+    LShader(const char* vertexPath, const char* fragmentPath);
     // use/activate the shader
     void Use();
-    // utility uniform functions
-    void setBool(const std::string& name, bool value) const;
-    void setInt(const std::string& name, int value) const;
-    void SetFloat(const std::string& name, float value) const;
+    void SetBoolUniform(const LSimpleString& Name, const bool Value) const;
+    void SetIntUniform(const LSimpleString& Name, const int32 Value) const;
+    void SetFloatUniform(const LSimpleString& Name, const float Value) const;
+
+    FORCEINLINE auto GetId() const -> uint32 { return this->Id; }
+
+private:
+
+    uint32 Id;
 };
-}
+
+} /* ~Namespace Jafg. */

@@ -49,12 +49,16 @@ public:
     void AddToViewport(LViewport* InViewport);
 
     /** @return The new root. */
-    auto ReplaceRoot(WWidgetParent* InRoot) -> WWidgetParent*;
-    auto ReplaceRoot(WWidgetParent& InRoot) -> WWidgetParent*;
+    template <typename TParent>
+    auto ReplaceRoot(TParent& InRoot) -> TParent* { return static_cast<TParent*>(this->ReplaceRootImpl(InRoot)); }
     FORCEINLINE auto HasRoot() const -> bool { return this->Root != nullptr; }
     FORCEINLINE auto GetRoot() const -> WWidgetNode* { return this->Root->Content;  }
+    template <typename TRootTy>
+    FORCEINLINE auto GetRoot() const -> TRootTy* { return static_cast<TRootTy*>(this->Root->Content); }
 
 private:
+
+    WWidgetParent* ReplaceRootImpl(WWidgetParent& InRoot);
 
     /** The absolute root of this widget. Attach everything to this widget. */
     LWidgetSlot* Root             = nullptr;

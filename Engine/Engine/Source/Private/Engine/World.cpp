@@ -27,9 +27,9 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 {
     this->WorldState = EWorldState::Initializing;
 
-    ShaderProgram = new Shader("Content/Shaders/vertex_shader.shader", "Content/Shaders/fragment_shader.shader");
+    ShaderProgram = new LShader("Content/Shaders/vertex_shader.shader", "Content/Shaders/fragment_shader.shader");
     ShaderProgram->Use();
-    ShaderProgram->SetFloat("texMultiplier", 0.5f);
+    ShaderProgram->SetFloatUniform("texMultiplier", 0.5f);
 
     JustTemp::A(&Texture);
 

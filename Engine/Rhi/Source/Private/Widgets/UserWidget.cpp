@@ -64,8 +64,7 @@ void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy /* = true */)
     return;
 }
 
-
-Jafg::WWidgetParent* Jafg::WUserWidget::ReplaceRoot(WWidgetParent* InRoot)
+Jafg::WWidgetParent* Jafg::WUserWidget::ReplaceRootImpl(WWidgetParent& InRoot)
 {
     check( this->Slot == nullptr )
 
@@ -78,17 +77,12 @@ Jafg::WWidgetParent* Jafg::WUserWidget::ReplaceRoot(WWidgetParent* InRoot)
         check( this->Root == nullptr )
     }
 
-    check( InRoot->Slot == nullptr )
+    check( InRoot.Slot == nullptr )
     check( this->Root == nullptr )
 
-    this->Root = new LWidgetSlot(this, InRoot);
+    this->Root = new LWidgetSlot(this, &InRoot);
     this->Root->Content->Slot = this->Root;
     this->Root->Margin = this->GetPaddingPtr();
 
-    return InRoot;
-}
-
-Jafg::WWidgetParent* Jafg::WUserWidget::ReplaceRoot(WWidgetParent& InRoot)
-{
-    return this->ReplaceRoot(&InRoot);
+    return &InRoot;
 }

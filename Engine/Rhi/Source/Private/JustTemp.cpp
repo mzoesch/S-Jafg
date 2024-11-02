@@ -45,21 +45,21 @@ void JustTemp::B(uint32 Texture)
     glBindTexture(GL_TEXTURE_2D, Texture);
 }
 
-void JustTemp::C(float Zoom, Jafg::Shader* ShaderProgram, LIntVector2 WindowDimensions, glm::mat4 View)
+void JustTemp::C(float Zoom, Jafg::LShader* ShaderProgram, LIntVector2 WindowDimensions, glm::mat4 View)
 {
     glm::mat4 Projection = glm::perspective(glm::radians(Zoom),
         static_cast<float>(WindowDimensions.X) / static_cast<float>(WindowDimensions.Y), 0.1f, 2000.0f); // change clipping here
-    const int32 ViewLoc = glGetUniformLocation(ShaderProgram->ID, "view");
+    const int32 ViewLoc = glGetUniformLocation(ShaderProgram->GetId(), "view");
     glUniformMatrix4fv(ViewLoc, 1, GL_FALSE, glm::value_ptr(View));
-    const int32 ProjectionLoc = glGetUniformLocation(ShaderProgram->ID, "projection");
+    const int32 ProjectionLoc = glGetUniformLocation(ShaderProgram->GetId(), "projection");
     glUniformMatrix4fv(ProjectionLoc, 1, GL_FALSE, glm::value_ptr(Projection));
 
     return;
 }
 
-uint32 JustTemp::D(Jafg::Shader* ShaderProgram)
+uint32 JustTemp::D(Jafg::LShader* ShaderProgram)
 {
-    return glGetUniformLocation(ShaderProgram->ID, "model");
+    return glGetUniformLocation(ShaderProgram->GetId(), "model");
 }
 
 void JustTemp::E(uint32* vertexArrayObject, uint32* vbo, uint32* ebo)

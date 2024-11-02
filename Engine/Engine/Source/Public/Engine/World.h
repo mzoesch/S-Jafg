@@ -12,7 +12,7 @@ namespace Jafg
 {
 
 class LEngine;
-class Shader;
+class LShader;
 class JWorldSubsystem;
 class Camera;
 class LTickableObject;
@@ -72,7 +72,7 @@ public:
 
     Camera* MainCamera = nullptr;
 
-    Shader* ShaderProgram = nullptr;
+    LShader* ShaderProgram = nullptr;
     uint32 Texture       = 0;
 
     void MouseCallback(const double XPos, const double YPos);

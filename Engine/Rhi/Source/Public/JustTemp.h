@@ -6,14 +6,34 @@
 #include <glm/glm.hpp>
 #include "RhiFramework/Shader.h"
 
+namespace Jafg
+{
+
+struct Vertex
+{
+    char posX, posY, posZ;
+    char texGridX, texGridY;
+
+    Vertex(char _posX, char _posY, char _posZ, char _texGridX, char _texGridY)
+    {
+        posX = _posX;
+        posY = _posY;
+        posZ = _posZ;
+
+        texGridX = _texGridX;
+        texGridY = _texGridY;
+    }
+};
+
+}
 
 namespace JustTemp
 {
 
 void RHI_API A(uint32* Texture);
 void RHI_API B(uint32 Texture);
-void RHI_API C(float Zoom, Jafg::Shader* ShaderProgram, LIntVector2 WindowDimensions, glm::mat4 View);
-uint32 RHI_API D(Jafg::Shader* ShaderProgram);
+void RHI_API C(float Zoom, Jafg::LShader* ShaderProgram, LIntVector2 WindowDimensions, glm::mat4 View);
+uint32 RHI_API D(Jafg::LShader* ShaderProgram);
 
 
 void RHI_API E(uint32* vertexArrayObject, uint32* vbo, uint32* ebo);

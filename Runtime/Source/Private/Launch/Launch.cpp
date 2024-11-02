@@ -23,7 +23,7 @@ FORCEINLINE EPlatformExit::Type GetMostSignificantExitReason()
 
     return ::HasCustomExitStatus()
         ? static_cast<EPlatformExit::Type>(::GetCustomExitStatus())
-        : EPlatformExit::Fatal;
+        : EPlatformExit::Success;
 }
 
 FORCEINLINE EPlatformExit::Type EngineInit()

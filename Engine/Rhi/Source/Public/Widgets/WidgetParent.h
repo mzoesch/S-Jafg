@@ -37,7 +37,7 @@ public:
     FORCEINLINE virtual auto GetPaddingPtr() const -> const LPadding* override { return &this->Padding; }
     FORCEINLINE virtual auto GetPaddingPtr()       ->       LPadding* override { return &this->Padding; }
 
-    FORCEINLINE virtual auto SetPadding(const LPadding& InPadding) -> WWidgetParentBase& override { this->Padding = InPadding; return *this; }
+    FORCEINLINE auto SetPadding(const LPadding& InPadding) -> WWidgetParentBase& override { this->Padding = InPadding; return *this; }
 
 private:
 
