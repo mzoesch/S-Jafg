@@ -28,7 +28,7 @@ protected:
 public:
 
     // WWidgetNode implementation
-    virtual void Draw(LViewport* Context) const override;
+    virtual void Draw(LViewport& Context) const override;
     virtual auto GetViewportSize() const -> LIntVector2 override;
     virtual auto RemoveFromParent(const bool bDestroy = true) -> void override;
     // ~WWidgetNode implementation

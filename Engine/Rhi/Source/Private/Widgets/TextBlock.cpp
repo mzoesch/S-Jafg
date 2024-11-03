@@ -12,6 +12,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include "Forward/EngineForward.h"
+#include "User/UserPreferences.h"
 #include "Widgets/Viewport.h"
 
 namespace
@@ -49,15 +50,24 @@ struct Character final
 /**
  * Loaded characters, private storage for this translation unit but usable for all WTextBlock instances.
  */
-std::map<char, Character> Characters;
+std::map<uint8, Character> Characters;
 
+}
+
+Jafg::LTextBlockBrush Jafg::LTextBlockBrush::MakeDefaultSmall()
+{
+    return LTextBlockBrush
+    {
+        .Tint  = LColor(0, 0, 0, 128),
+        .Scale = GetDefault<JUserPreferences>()->GetDefaultSmallFontSize()
+    };
 }
 
 void Jafg::WTextBlock::Construct()
 {
     Super::Construct();
 
-    LIntVector2 WindowDimensions = this->GetViewportSize();
+    const LIntVector2 WindowDimensions = this->GetViewportSize();
 
     this->FontShaderProgram = new LShader("Content/Shaders/Font.vert", "Content/Shaders/Font.frag");
     checkSlow( this->FontShaderProgram )
@@ -87,9 +97,31 @@ void Jafg::WTextBlock::Construct()
     return;
 }
 
-void Jafg::WTextBlock::Draw(LViewport* Context) const
+void Jafg::WTextBlock::Draw(LViewport& Context) const
 {
     Super::Draw(Context);
+
+    if (this->Brush.Tint != LColor::Transparent)
+    {
+        if (this->TintShaderContext.IsMeaningful() == false)
+        {
+            this->TintShaderContext.Make();
+        }
+
+        this->TintShaderContext.Draw(
+            Context,
+            this->GetDesiredSize(),
+            this->GetRelativeTopLeftFromMostOuter(this),
+            this->Brush.Tint
+        );
+    }
+    else
+    {
+        if (this->TintShaderContext.IsMeaningful())
+        {
+            this->TintShaderContext.Free();
+        }
+    }
 
     checkSlow( Characters.empty() == false )
     check( this->FontShaderProgram )
@@ -104,46 +136,55 @@ void Jafg::WTextBlock::Draw(LViewport* Context) const
     glUniformMatrix4fv(glGetUniformLocation(FontShaderProgram->GetId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
     const LVector2 Offset = this->GetRelativeTopLeftFromMostOuter(this);
+    const float ScaleFactor = Context.GetScaleFactor();
 
-    const float YFromBottom = static_cast<float>(WindowDimensions.Y) - Offset.Y;
+    const float YFromBottom = static_cast<float>(WindowDimensions.Y);
 
-    float X = Offset.X;
+    float X = Offset.X + this->Padding.Left;
 
-    glUniform1f(glGetUniformLocation(this->FontShaderProgram->GetId(), "OrthoZDepth"), Context->GetFrameOrthoZLayerDepth());
+    glUniform1f(glGetUniformLocation(this->FontShaderProgram->GetId(), "OrthoZDepth"), Context.GetFrameOrthoZLayerDepth());
 
-    std::string text = this->Content.ToC();
-    // iterate through all characters
-    for (std::string::const_iterator c = text.begin(); c != text.end(); ++c)
+    for (const uint8 Rune : this->Content)
     {
-        Character ch = Characters[*c];
+        const Character& Ch = Characters[Rune];
 
-        float xpos = X + ch.Bearing.x * this->Brush.Scale;
-        // float ypos = YFromBottom - (ch.Size.y - ch.Bearing.y) * this->Brush.Scale;
-        float ypos = YFromBottom - (ch.Size.y - ch.Bearing.y + 29.0f) * this->Brush.Scale;
+        const int32 PosX = static_cast<int32>((X + Ch.Bearing.x * this->Brush.Scale) * ScaleFactor);
+        const int32 PosY =
+            static_cast<int32>
+            (
+                 YFromBottom-this->GetDesiredSize().Y -
+                 ((-this->Padding.Bottom + Offset.Y - ((Ch.Size.y - Ch.Bearing.y) * this->Brush.Scale)) * ScaleFactor)
+            );
 
-        float w = ch.Size.x * this->Brush.Scale;
-        float h = ch.Size.y * this->Brush.Scale;
+        const int32 CharW = static_cast<int32>(Ch.Size.x * this->Brush.Scale * ScaleFactor);
+        const int32 CharH = static_cast<int32>(Ch.Size.y * this->Brush.Scale * ScaleFactor);
+
+        const float PosXf = static_cast<float>(PosX);
+        const float PosYf = static_cast<float>(PosY);
+        const float CharWf = static_cast<float>(CharW);
+        const float CharHf = static_cast<float>(CharH);
+
         // update VBO for each character
-        float vertices[6][4] = {
-            { xpos,     ypos + h,   0.0f, 0.0f },
-            { xpos,     ypos,       0.0f, 1.0f },
-            { xpos + w, ypos,       1.0f, 1.0f },
+        const float Vertices[6][4] = {
+            { PosXf,     PosYf + CharHf,   0.0f, 0.0f },
+            { PosXf,     PosYf,       0.0f, 1.0f },
+            { PosXf + CharWf, PosYf,       1.0f, 1.0f },
 
-            { xpos,     ypos + h,   0.0f, 0.0f },
-            { xpos + w, ypos,       1.0f, 1.0f },
-            { xpos + w, ypos + h,   1.0f, 0.0f }
+            { PosXf,     PosYf + CharHf,   0.0f, 0.0f },
+            { PosXf + CharWf, PosYf,       1.0f, 1.0f },
+            { PosXf + CharWf, PosYf + CharHf,   1.0f, 0.0f }
         };
         // render glyph texture over quad
-        glBindTexture(GL_TEXTURE_2D, ch.TextureId);
+        glBindTexture(GL_TEXTURE_2D, Ch.TextureId);
         // update content of VBO memory
         glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); // be sure to use glBufferSubData and not glBufferData
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertices), Vertices); // be sure to use glBufferSubData and not glBufferData
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         // render quad
         glDrawArrays(GL_TRIANGLES, 0, 6);
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-        X += (ch.Advance.X >> 6) * this->Brush.Scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+        X += (Ch.Advance.X >> 6) * this->Brush.Scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
     }
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -174,13 +215,6 @@ void Jafg::WTextBlock::UpdateDesiredSize() const
     return;
 }
 
-LVector2 Jafg::WTextBlock::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const
-{
-    LVector2 Out = WWidgetNode::GetRelativeTopLeftFromMostOuter(WhoAsked);
-    Out += this->Padding.GetTopLeftOffset();
-    return Out;
-}
-
 void Jafg::WTextBlock::FirstTimeLoadCharacters()
 {
     FT_Library Ft;
@@ -200,10 +234,10 @@ void Jafg::WTextBlock::FirstTimeLoadCharacters()
     FT_Set_Pixel_Sizes(Face, 0, 48); // set size to load glyphs as
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
     // load first 128 characters of ASCII set
-    for (unsigned char c = 0; c < 128; c++)
+    for (uint8 C = 0; C < 128; C++)
     {
         // load character glyph
-        if (FT_Load_Char(Face, c, FT_LOAD_RENDER))
+        if (FT_Load_Char(Face, C, FT_LOAD_RENDER))
         {
             std::cout << "Failed to load Glyph" << '\n';
             std::cout.flush();
@@ -213,6 +247,17 @@ void Jafg::WTextBlock::FirstTimeLoadCharacters()
         unsigned int texture;
         glGenTextures(1, &texture);
         glBindTexture(GL_TEXTURE_2D, texture);
+
+        // int width = Face->glyph->bitmap.width;
+        // int rows = Face->glyph->bitmap.rows;
+        // uint8* flippedBuffer = new uint8[Face->glyph->bitmap.width * Face->glyph->bitmap.rows];
+        // for (int y = 0; y < rows; y++) {
+        //     // Copy each row from bottom to top
+        //     memcpy(flippedBuffer + y * width, Face->glyph->bitmap.buffer + (rows - 1 - y) * width, width);
+        // }
+
+        // FontHeight = Face->height;
+
         glTexImage2D(
             GL_TEXTURE_2D,
             0,
@@ -222,13 +267,16 @@ void Jafg::WTextBlock::FirstTimeLoadCharacters()
             0,
             GL_RED,
             GL_UNSIGNED_BYTE,
+            // flippedBuffer
             Face->glyph->bitmap.buffer
         );
+        // delete[] flippedBuffer;
         // set texture options
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
         // now store character for later use
         Character character =
         {
@@ -237,7 +285,7 @@ void Jafg::WTextBlock::FirstTimeLoadCharacters()
             glm::ivec2(Face->glyph->bitmap_left, Face->glyph->bitmap_top),
             LIntVector2(Face->glyph->advance.x, Face->glyph->advance.y)
         };
-        Characters.insert(std::pair<char, Character>(c, character));
+        Characters.insert(std::pair<uint8, Character>(C, character));
     }
     glBindTexture(GL_TEXTURE_2D, 1);
     FT_Done_Face(Face);

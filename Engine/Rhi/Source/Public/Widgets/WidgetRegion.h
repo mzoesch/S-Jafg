@@ -30,7 +30,7 @@ protected:
 
 public:
 
-    virtual void Draw(LViewport* Context) const override;
+    virtual void Draw(LViewport& Context) const override;
     virtual void UpdateDesiredSize() const override;
 
     FORCEINLINE auto SetBrush(const LRegionBrush& InBrush) -> WWidgetRegion& { this->Brush = InBrush; return *this; }

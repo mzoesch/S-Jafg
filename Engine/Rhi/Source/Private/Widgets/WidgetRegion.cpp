@@ -2,7 +2,7 @@
 
 #include "Widgets/WidgetRegion.h"
 
-void Jafg::WWidgetRegion::Draw(LViewport* Context) const
+void Jafg::WWidgetRegion::Draw(LViewport& Context) const
 {
     if (this->HasBrush() == false)
     {
@@ -24,7 +24,7 @@ void Jafg::WWidgetRegion::Draw(LViewport* Context) const
     }
 
     this->ShaderContext->Draw(
-        *Context,
+        Context,
         this->GetDesiredSize(),
         this->GetRelativeTopLeftFromMostOuter(this),
         this->GetBrush().Tint

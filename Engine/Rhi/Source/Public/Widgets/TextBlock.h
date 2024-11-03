@@ -3,6 +3,7 @@
 #pragma once
 
 #include "WidgetNode.h"
+#include "RhiFramework/SimpleShaderContext.h"
 #include "TextBlock.generated.h"
 
 namespace Jafg
@@ -11,11 +12,13 @@ namespace Jafg
 class LShader;
 class LViewport;
 
-struct LTextBlockBrush
+struct RHI_API LTextBlockBrush
 {
-    LColor Tint  = LColor::Black;
+    LColor Tint  = LColor::Transparent;
     LColor Color = LColor::White;
     float  Scale = 1.0f;
+
+    static LTextBlockBrush MakeDefaultSmall();
 };
 
 DECLARE_JAFG_CLASS()
@@ -30,10 +33,9 @@ protected:
 public:
 
     virtual void Construct() override;
-    virtual void Draw(LViewport* Context) const override;
+    virtual void Draw(LViewport& Context) const override;
 
     virtual auto UpdateDesiredSize() const -> void override;
-    virtual auto GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const -> LVector2 override;
 
     FORCEINLINE void SetContent(const LSimpleString& InContent) { this->Content = InContent; }
     FORCEINLINE void SetContent(LSimpleString&& InContent) { this->Content = std::move(InContent); }
@@ -83,7 +85,7 @@ private:
     void FirstTimeLoadCharacters();
 
     /** The padding area between the slot and the content it contains. */
-    LPadding Padding = { };
+    LPadding Padding = LPadding(4.5f);
 
     LSimpleString   Content = nullptr;
     LTextBlockBrush Brush   = { };
@@ -91,6 +93,7 @@ private:
     uint32  Vao               = 0x0u;
     uint32  Vbo               = 0x0u;
     LShader* FontShaderProgram = nullptr;
+    mutable LBoxShaderContext TintShaderContext = { };
 };
 
 } /* ~Namespace Jafg */

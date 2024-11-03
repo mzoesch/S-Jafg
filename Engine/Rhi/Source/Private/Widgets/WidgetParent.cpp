@@ -30,7 +30,7 @@ void Jafg::WWidgetParent::Construct()
     return;
 }
 
-void Jafg::WWidgetParent::Draw(LViewport* Context) const
+void Jafg::WWidgetParent::Draw(LViewport& Context) const
 {
     Super::Draw(Context);
 

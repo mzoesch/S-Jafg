@@ -4,7 +4,7 @@
 #include "Widgets/Viewport.h"
 #include "Widgets/WidgetParent.h"
 
-void Jafg::WUserWidget::Draw(LViewport* Context) const
+void Jafg::WUserWidget::Draw(LViewport& Context) const
 {
     Super::Draw(Context);
 

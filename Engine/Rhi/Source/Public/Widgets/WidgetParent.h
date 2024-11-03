@@ -24,7 +24,7 @@ public:
 
     virtual void MarkAsGarbage() override;
     virtual void Construct() override;
-    virtual void Draw(LViewport* Context) const override;
+    virtual void Draw(LViewport& Context) const override;
     virtual void Destruct() override;
 
     FORCEINLINE virtual auto GetChildren() const -> const TdhArray<LWidgetSlot*>& override { return this->Children; }

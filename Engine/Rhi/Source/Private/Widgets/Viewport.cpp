@@ -35,7 +35,7 @@ void Jafg::LViewport::Draw()
     for (const WUserWidget* Widget : this->TopLevelWidgets)
     {
         Widget->UpdateDesiredSize();
-        Widget->Draw(this);
+        Widget->Draw(*this);
     }
 
     return;

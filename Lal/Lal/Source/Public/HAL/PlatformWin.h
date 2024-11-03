@@ -56,8 +56,6 @@ struct LWinPlatformBreakDefines final
 #endif /* IN_SHIPPING */
 
         abort();
-
-        return;
     }
 };
 
