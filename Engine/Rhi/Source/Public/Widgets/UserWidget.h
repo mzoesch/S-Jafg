@@ -27,8 +27,6 @@ protected:
 
 public:
 
-    void ViewportDrawEntry(LViewport* Context) const;
-
     // WWidgetNode implementation
     virtual void Draw(LViewport* Context) const override;
     virtual auto GetViewportSize() const -> LIntVector2 override;
@@ -36,9 +34,9 @@ public:
     // ~WWidgetNode implementation
 
     // WWidgetParentBase implementation
-    FORCEINLINE virtual auto GetChildren() const -> const TdhArray<LWidgetSlot*>& override { return { this->Root }; }
-    FORCEINLINE virtual auto RemoveChild(WWidgetNode* InChild) -> void override NON_CALLABLE_MEMBER(return)
-    FORCEINLINE virtual auto RemoveChild(LWidgetSlot* InSlot) -> void override NON_CALLABLE_MEMBER(return)
+    FORCEINLINE virtual auto GetChildren() const -> const TdhArray<LWidgetSlot*>& override { return this->SingleRootChild; }
+    FORCEINLINE virtual auto RemoveChild(WWidgetNode* InChild) -> void override;
+    FORCEINLINE virtual auto RemoveChild(LWidgetSlot* InSlot) -> void override;
     FORCEINLINE virtual auto AddChild(WWidgetNode* InChild) -> LWidgetSlot* override NON_CALLABLE_MEMBER(return nullptr)
     FORCEINLINE virtual auto GetPaddingPtr() const -> const LPadding* override { return &this->Padding; }
     FORCEINLINE virtual auto GetPaddingPtr() -> LPadding* override { return &this->Padding; }
@@ -61,12 +59,13 @@ private:
     WWidgetParent* ReplaceRootImpl(WWidgetParent& InRoot);
 
     /** The absolute root of this widget. Attach everything to this widget. */
-    LWidgetSlot* Root             = nullptr;
+    LWidgetSlot* Root = nullptr;
+    TdhArray<LWidgetSlot*> SingleRootChild;
     /** Where this widget resides in. Can be null if attached to another widget. So do not use without checking. */
-    LViewport*   AttachedViewport = nullptr;
+    LViewport* AttachedViewport = nullptr;
 
     /** The padding area between the slot and the content it contains. */
-    LPadding     Padding;
+    LPadding Padding;
 };
 
 template <typename TWidget>

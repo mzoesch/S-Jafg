@@ -89,7 +89,7 @@ public:
     virtual void Tick()      { }
     virtual void Destruct()  { }
 
-    virtual void Draw(LViewport* Context) const { this->UpdateDesiredSize(); return; }
+    virtual void Draw(LViewport* Context) const { }
 
     /** Weather this widget is allowed to tick this frame. */
     FORCEINLINE auto ShouldNowTick() const -> bool;

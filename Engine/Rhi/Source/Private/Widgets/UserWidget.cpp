@@ -4,18 +4,6 @@
 #include "Widgets/Viewport.h"
 #include "Widgets/WidgetParent.h"
 
-void Jafg::WUserWidget::ViewportDrawEntry(LViewport* Context) const
-{
-    Super::Draw(Context);
-
-    if (this->Root)
-    {
-        this->Root->Content->Draw(Context);
-    }
-
-    return;
-}
-
 void Jafg::WUserWidget::Draw(LViewport* Context) const
 {
     Super::Draw(Context);
@@ -64,6 +52,39 @@ void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy /* = true */)
     return;
 }
 
+void Jafg::WUserWidget::RemoveChild(WWidgetNode* InChild)
+{
+    check( this->SingleRootChild.GetSize() == 1 )
+
+    if (this->SingleRootChild[0]->Content == InChild)
+    {
+        this->RemoveChild(this->SingleRootChild[0]);
+        return;
+    }
+
+    panic( "The in child is not the root of this widget." )
+
+    return;
+}
+
+void Jafg::WUserWidget::RemoveChild(LWidgetSlot* InSlot)
+{
+    check( this->SingleRootChild.GetSize() == 1 )
+
+    if (this->SingleRootChild[0] == InSlot)
+    {
+        this->SingleRootChild.Empty();
+        this->Root = nullptr;
+        delete InSlot;
+    }
+    else
+    {
+        panic( "The in slot is not the root of this widget." )
+    }
+
+    return;
+}
+
 Jafg::WWidgetParent* Jafg::WUserWidget::ReplaceRootImpl(WWidgetParent& InRoot)
 {
     check( this->Slot == nullptr )
@@ -71,18 +92,26 @@ Jafg::WWidgetParent* Jafg::WUserWidget::ReplaceRootImpl(WWidgetParent& InRoot)
     if (this->HasRoot())
     {
         check( this->Root )
+        check( this->Root == this->SingleRootChild[0] )
         check( this->Root->Parent == this )
         check( this->Root->Content )
         this->Root->Content->RemoveFromParent();
         check( this->Root == nullptr )
+        check( this->SingleRootChild.IsEmpty() )
     }
 
     check( InRoot.Slot == nullptr )
     check( this->Root == nullptr )
+    check( this->SingleRootChild.IsEmpty() )
 
-    this->Root = new LWidgetSlot(this, &InRoot);
+    this->SingleRootChild.Emplace(new LWidgetSlot(this, &InRoot));
+    // this->Root = new LWidgetSlot(this, &InRoot);
+    this->Root = this->SingleRootChild[0];
+
     this->Root->Content->Slot = this->Root;
     this->Root->Margin = this->GetPaddingPtr();
+
+    check( this->Root == this->SingleRootChild[0] )
 
     return &InRoot;
 }

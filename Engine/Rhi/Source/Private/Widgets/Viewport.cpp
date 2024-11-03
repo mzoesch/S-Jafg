@@ -24,10 +24,16 @@ void Jafg::LViewport::Tick()
 
 void Jafg::LViewport::Draw()
 {
+    /*
+     * Maybe we want to make a callback to this. So that we do not have to recalculate
+     * this every frame. But who cares? Its just one single floating point operation.
+     */
+    this->RecalculateScaleFactor();
+
     for (const WUserWidget* Widget : this->TopLevelWidgets)
     {
-        Widget->ViewportDrawEntry(this);
-        // Widget->Draw(this);
+        Widget->UpdateDesiredSize();
+        Widget->Draw(this);
     }
 
     return;
@@ -63,4 +69,9 @@ void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
     this->Dimensions = InDimensions;
 
     return;
+}
+
+void Jafg::LViewport::RecalculateScaleFactor()
+{
+    this->ScaleFactor = this->PlatformDpi / this->BaseDpi;
 }

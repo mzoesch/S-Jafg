@@ -9,6 +9,10 @@ namespace Jafg
 
 class WUserWidget;
 
+/**
+ * Represents a viewport that can contain widgets.
+ * A viewport has in most cases a handle to some sort of platform-specific window instance.
+ */
 class RHI_API LViewport final
 {
 public:
@@ -25,12 +29,33 @@ public:
     void AddWidget(WUserWidget* Widget);
     void RemoveWidget(WUserWidget* Widget);
 
+    /** The scale factor is based on the physical platform dpi in relation to the base dpi. */
+    FORCEINLINE auto GetScaleFactor() const -> float { return this->ScaleFactor; }
+    FORCEINLINE auto SetPlatformDpi(const float InDpi) -> void { this->PlatformDpi = InDpi; }
+    FORCEINLINE auto GetPlatformDpi() const -> float { return this->PlatformDpi; }
+    FORCEINLINE auto GetBaseDpi() const -> float { return this->BaseDpi; }
+
     auto ChangeDimensions(const LIntVector2& InDimensions) -> void;
     FORCEINLINE auto GetDimensions() const -> LIntVector2 { return this->Dimensions; }
 
 private:
 
+    void RecalculateScaleFactor();
+
+    /** The factor with which the entire orthographic projection is scaled. */
+    float ScaleFactor =  1.0f;
+    /** The dpi fetched from the physical platform. */
+    float PlatformDpi =  0.0f;
+    /**
+     * The base dpi that the application was designed for.
+     * All scales are based and calculated from this value, and only for the drawing
+     * we use the platform dpi.
+     */
+    float BaseDpi     = 96.0f;
+
+    /** The dimensions of the viewport in px. */
     LIntVector2            Dimensions;
+    /** Top level widgets that this viewport owns. */
     TdhArray<WUserWidget*> TopLevelWidgets;
 };
 

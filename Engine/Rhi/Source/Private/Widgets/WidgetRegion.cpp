@@ -7,8 +7,6 @@
 
 void Jafg::WWidgetRegion::Draw(LViewport* Context) const
 {
-    Super::Draw(Context);
-
     if (this->HasBrush() == false)
     {
         if (this->ShaderContext)
@@ -29,6 +27,8 @@ void Jafg::WWidgetRegion::Draw(LViewport* Context) const
     this->ShaderContext->Use();
     this->ShaderContext->Draw();
     this->ShaderContext->Unuse();
+
+    Super::Draw(Context);
 
     return;
 }

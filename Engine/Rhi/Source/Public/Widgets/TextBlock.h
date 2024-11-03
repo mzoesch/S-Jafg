@@ -31,11 +31,7 @@ public:
     virtual void Construct() override;
     virtual void Draw(LViewport* Context) const override;
 
-protected:
-
     virtual void UpdateDesiredSize() const override;
-
-public:
 
     FORCEINLINE void SetContent(const LSimpleString& InContent) { this->Content = InContent; }
     FORCEINLINE void SetContent(LSimpleString&& InContent) { this->Content = std::move(InContent); }

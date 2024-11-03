@@ -24,6 +24,8 @@ protected:
 
 public:
 
+    virtual void UpdateDesiredSize() const override;
+
     virtual auto GetChildren()             const   -> const TdhArray<LWidgetSlot*>& PURE_VIRTUAL(return WWidgetParentBase::NothingReference)
     virtual auto RemoveChild(WWidgetNode* InChild) -> void PURE_VIRTUAL()
     virtual auto RemoveChild(LWidgetSlot* InSlot)  -> void PURE_VIRTUAL()

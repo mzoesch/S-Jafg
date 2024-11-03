@@ -72,9 +72,18 @@ void Jafg::WWidgetParent::RemoveChild(WWidgetNode* Child)
             this->Children.RemoveOnceChecked(ChildSlot);
             delete ChildSlot;
 
-            break;
+            check( this->Children.FindByPredicate([Child] (const LWidgetSlot* Slot)
+            {
+                return Slot->Content == Child;
+            }) == nullptr )
+
+            return;
         }
+
+        continue;
     }
+
+    panic( "The in child is not a child of this widget." )
 
     return;
 }

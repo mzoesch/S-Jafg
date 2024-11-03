@@ -5,6 +5,8 @@
 #include "Platform/DesktopPlatformWin.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 #include <glm/fwd.hpp>
 #include <glm/gtc/type_ptr.inl>
 #include "RhiFramework/Shader.h"
@@ -33,6 +35,14 @@ void Jafg::LDesktopPlatformWin::Initialize()
         return;
     }
     glfwSetWindowUserPointer(this->MasterWindow, reinterpret_cast<void*>(this));
+
+    glfwGetWin32Window(this->MasterWindow);
+
+    check( this->GetViewport() )
+    const HWND NativeWindowHandle = glfwGetWin32Window(this->MasterWindow);
+    check( NativeWindowHandle )
+    const uint32 PlatformDpi = GetDpiForWindow(NativeWindowHandle);
+    this->GetViewport()->SetPlatformDpi(static_cast<float>(PlatformDpi));
 
     /*
      * We have to call this, as there is no default set by glfw. The default is open for the

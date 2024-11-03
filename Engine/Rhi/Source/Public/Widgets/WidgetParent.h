@@ -22,12 +22,10 @@ protected:
 
 public:
 
-    // WWidgetNode implementation
     virtual void MarkAsGarbage() override;
     virtual void Construct() override;
     virtual void Draw(LViewport* Context) const override;
     virtual void Destruct() override;
-    // ~WWidgetNode implementation
 
     FORCEINLINE virtual auto GetChildren() const -> const TdhArray<LWidgetSlot*>& override { return this->Children; }
     virtual auto RemoveChild(WWidgetNode* Child) -> void override;
