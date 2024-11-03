@@ -15,6 +15,11 @@
 #include <stb_image.h>
 #include <glm/gtc/type_ptr.hpp>
 
+void Jafg::LShader::Free()
+{
+    glDeleteProgram(Id);
+}
+
 Jafg::LShader::LShader(const char* vertexPath, const char* fragmentPath)
 {
     // 1. retrieve the vertex/fragment source code from filePath
@@ -121,6 +126,11 @@ void Jafg::LShader::SetIntUniform(const LSimpleString& Name, const int32 Value) 
     glUniform1i(glGetUniformLocation(this->Id, Name.ToC()), Value);
 }
 
+void Jafg::LShader::SetUIntUniform(const LSimpleString& Name, const uint32 Value) const
+{
+    glUniform1ui(glGetUniformLocation(this->Id, Name.ToC()), Value);
+}
+
 void Jafg::LShader::SetFloatUniform(const LSimpleString& Name, const float Value) const
 {
     glUniform1f(glGetUniformLocation(this->Id, Name.ToC()), Value);
@@ -129,6 +139,11 @@ void Jafg::LShader::SetFloatUniform(const LSimpleString& Name, const float Value
 void Jafg::LShader::SetVector2Uniform(const LSimpleString& Name, const glm::vec2& Value) const
 {
     glUniform2fv(glGetUniformLocation(this->Id, Name.ToC()), 1, glm::value_ptr(Value));
+}
+
+void Jafg::LShader::SetVector4Uniform(const LSimpleString& Name, const glm::vec4& Value) const
+{
+    glUniform4fv(glGetUniformLocation(this->Id, Name.ToC()), 1, glm::value_ptr(Value));
 }
 
 void Jafg::LShader::SetMatrix4Uniform(const LSimpleString& Name, const glm::mat4& Value) const

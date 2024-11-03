@@ -35,7 +35,7 @@ public:
     /**
      * Draws the box.
      */
-    void Draw(const LViewport& Context, const LVector2& Size, const LVector2& TopLeft) const;
+    void Draw(const LViewport& Context, const LVector2& Size, const LVector2& TopLeft, const LColor& Color) const;
 
     FORCEINLINE auto IsMeaningful() const -> bool { return this->bIsMeaningful; }
 

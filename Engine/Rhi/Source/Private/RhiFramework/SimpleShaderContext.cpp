@@ -39,9 +39,23 @@ void Jafg::LBoxShaderContext::Make()
 
 void Jafg::LBoxShaderContext::Free()
 {
+    if (this->bIsMeaningful == false)
+    {
+        return;
+    }
+
+    this->bIsMeaningful = false;
+
+    glDeleteVertexArrays(1, &this->Vao);
+    glDeleteBuffers(1, &this->Vbo);
+
+    this->Shader.Free();
+
+    return;
+
 }
 
-void Jafg::LBoxShaderContext::Draw(const LViewport& Context, const LVector2& Size, const LVector2& TopLeft) const
+void Jafg::LBoxShaderContext::Draw(const LViewport& Context, const LVector2& Size, const LVector2& TopLeft, const LColor& Color) const
 {
     this->Shader.Use();
     glBindVertexArray(this->Vao);
@@ -50,26 +64,26 @@ void Jafg::LBoxShaderContext::Draw(const LViewport& Context, const LVector2& Siz
 
     const float Vertices[] =
     {
-        TopLeft.X * Scale,                  TopLeft.Y * Scale, /* Top left */
-        (TopLeft.X + Size.X) * Scale, TopLeft.Y * Scale,      /* Top right */
-        TopLeft.X * Scale, (TopLeft.Y + Size.Y) * Scale,      /* Bottom left */
+        TopLeft.X * Scale,            TopLeft.Y * Scale,            /* Top    Left  */
+        (TopLeft.X + Size.X) * Scale, TopLeft.Y * Scale,            /* Top    Right */
+        TopLeft.X * Scale,            (TopLeft.Y + Size.Y) * Scale, /* Bottom Left  */
 
-        (TopLeft.X + Size.X) * Scale, TopLeft.Y * Scale,      /* Top right */
-        (TopLeft.X + Size.X) * Scale, (TopLeft.Y + Size.Y) * Scale, /* Bottom right */
-        TopLeft.X * Scale, (TopLeft.Y + Size.Y) * Scale       /* Bottom left */
+        (TopLeft.X + Size.X) * Scale, TopLeft.Y * Scale,            /* Top    Right */
+        (TopLeft.X + Size.X) * Scale, (TopLeft.Y + Size.Y) * Scale, /* Bottom Right */
+        TopLeft.X * Scale,            (TopLeft.Y + Size.Y) * Scale  /* Bottom Left  */
     };
 
     const LIntVector2 WindowDimensions = Context.GetDimensions();
     const glm::mat4 Projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
     this->Shader.SetMatrix4Uniform("Projection", Projection);
     this->Shader.SetFloatUniform("OrthoZDepth", Context.GetFrameOrthoZLayerDepth());
+    this->Shader.SetIntUniform("BoxColor", *reinterpret_cast<const int32*>(&Color.Bits));
 
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_DYNAMIC_DRAW);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    // Unbind
     glBindVertexArray(0);
 
     return;

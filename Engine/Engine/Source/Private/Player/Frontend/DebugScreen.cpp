@@ -2,6 +2,7 @@
 
 #include "CoreAFX.h"
 #include "Player/Frontend/DebugScreen.h"
+#include "Build/EngineBuildInfo.h"
 #include "Core/Application.h"
 #include "User/UserPreferences.h"
 #include "Widgets/TextBlock.h"
@@ -14,19 +15,24 @@ void Jafg::WDebugScreen::Construct()
     const JUserPreferences* UserPreferences = GetDefault<JUserPreferences>();
 
     MakeRootNode(WVBox)
-    .SetRegionPadding(5.0f)
-    .SetBrush(LRegionBrush({.Tint = LColor::Cyan}))
+    [
+        NewNode(WTextBlock)
+        .SetPadding(5.0f)
+        & LSimpleString::SprintF("JAFG {}", BuildInfo::GetEngineVersion().ToString())
+        & LTextBlockBrush({.Tint = LColor(0, 0, 0, 128), .Scale = UserPreferences->GetSmallFontSize()})
+        & LColor::White
+    ]
     [
         NewNode(WTextBlock) >> this->TestTextBlock
         & "Hello from Wsdsml."
-        & LColor::Black
         & LTextBlockBrush({.Scale = UserPreferences->GetSmallFontSize()})
+        & LColor::White
     ]
     [
         NewNode(WTextBlock)
         & "Hello World."
-        & LColor::Black
         & LTextBlockBrush({.Scale = UserPreferences->GetSmallFontSize()})
+        & LColor::White
     ]
     FinishWidgetStyling()
 

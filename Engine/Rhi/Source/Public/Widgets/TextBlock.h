@@ -13,7 +13,8 @@ class LViewport;
 
 struct LTextBlockBrush
 {
-    LColor Color = LColor::Black;
+    LColor Tint  = LColor::Black;
+    LColor Color = LColor::White;
     float  Scale = 1.0f;
 };
 
@@ -31,7 +32,8 @@ public:
     virtual void Construct() override;
     virtual void Draw(LViewport* Context) const override;
 
-    virtual void UpdateDesiredSize() const override;
+    virtual auto UpdateDesiredSize() const -> void override;
+    virtual auto GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const -> LVector2 override;
 
     FORCEINLINE void SetContent(const LSimpleString& InContent) { this->Content = InContent; }
     FORCEINLINE void SetContent(LSimpleString&& InContent) { this->Content = std::move(InContent); }
@@ -42,6 +44,9 @@ public:
 
     FORCEINLINE auto SetBrush(const LTextBlockBrush& InBrush) -> WTextBlock& { this->Brush = InBrush; return *this; }
     FORCEINLINE auto GetBrush() const -> const LTextBlockBrush& { return this->Brush;    }
+
+    FORCEINLINE auto SetPadding(const LPadding& InPadding) -> WTextBlock& { this->Padding = InPadding; return *this; }
+    FORCEINLINE auto GetPadding() const -> const LPadding& { return this->Padding; }
 
     ///////////////////////////////////////////////////////////////////////////////
     // Wsdsml
@@ -76,6 +81,9 @@ private:
      * all glyphs from the font file.
      */
     void FirstTimeLoadCharacters();
+
+    /** The padding area between the slot and the content it contains. */
+    LPadding Padding = { };
 
     LSimpleString   Content = nullptr;
     LTextBlockBrush Brush   = { };

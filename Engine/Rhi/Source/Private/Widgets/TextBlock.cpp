@@ -155,7 +155,7 @@ void Jafg::WTextBlock::UpdateDesiredSize() const
 {
     if (this->Content.IsEmpty())
     {
-        this->SetDesiredSize(LVector2::Zero());
+        this->SetDesiredSize(this->Padding.GetDesiredSize());
         return;
     }
 
@@ -167,9 +167,18 @@ void Jafg::WTextBlock::UpdateDesiredSize() const
         DesiredSize.Y = Maths::Max(DesiredSize.Y, static_cast<float>(Ch.Size.y) * this->Brush.Scale);
     }
 
+    DesiredSize += this->Padding.GetDesiredSize();
+
     this->SetDesiredSize(DesiredSize);
 
     return;
+}
+
+LVector2 Jafg::WTextBlock::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const
+{
+    LVector2 Out = WWidgetNode::GetRelativeTopLeftFromMostOuter(WhoAsked);
+    Out += this->Padding.GetTopLeftOffset();
+    return Out;
 }
 
 void Jafg::WTextBlock::FirstTimeLoadCharacters()

@@ -1,9 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/WidgetRegion.h"
-#include <glm/fwd.hpp>
-#include <glm/glm.hpp>
-#include <glm/ext/matrix_clip_space.hpp>
 
 void Jafg::WWidgetRegion::Draw(LViewport* Context) const
 {
@@ -26,7 +23,12 @@ void Jafg::WWidgetRegion::Draw(LViewport* Context) const
         this->CreateNewShaderContext();
     }
 
-    this->ShaderContext->Draw(*Context, this->GetDesiredSize(), this->GetRelativeTopLeftFromMostOuter(this));
+    this->ShaderContext->Draw(
+        *Context,
+        this->GetDesiredSize(),
+        this->GetRelativeTopLeftFromMostOuter(this),
+        this->GetBrush().Tint
+    );
 
     Super::Draw(Context);
 
