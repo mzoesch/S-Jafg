@@ -14,6 +14,8 @@ void Jafg::WWidgetRegion::Draw(LViewport* Context) const
             this->ShaderContext.Reset();
         }
 
+        Super::Draw(Context);
+
         return;
     }
 
@@ -24,29 +26,32 @@ void Jafg::WWidgetRegion::Draw(LViewport* Context) const
         this->CreateNewShaderContext();
     }
 
-    this->ShaderContext->Use();
-    this->ShaderContext->Draw();
-    this->ShaderContext->Unuse();
+    this->ShaderContext->Draw(*Context, this->GetDesiredSize(), this->GetRelativeTopLeftFromMostOuter(this));
 
     Super::Draw(Context);
 
     return;
 }
 
-void Jafg::WWidgetRegion::CreateNewShaderContext() const
+void Jafg::WWidgetRegion::UpdateDesiredSize() const
 {
-    LShader& Shader = this->ShaderContext->GetShader();
-    Shader = LShader("Content/Shaders/visual.vert", "Content/Shaders/visual.frag");
-    Shader.Use();
+    Super::UpdateDesiredSize();
 
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f, // left
-         0.5f, -0.5f, 0.0f, // right
-         0.0f,  0.5f, 0.0f  // top
-    };
+    LVector2 DesiredSize = LVector2::Zero();
+    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    {
+        DesiredSize.X = Maths::Max(DesiredSize.X, ChildSlot->Content->GetDesiredSize().X);
+        DesiredSize.Y = Maths::Max(DesiredSize.Y, ChildSlot->Content->GetDesiredSize().Y);
 
-    this->ShaderContext->GenerateArrayBuffers();
-    this->ShaderContext->UpdateStaticArrayBuffers(vertices, sizeof(vertices));
+        continue;
+    }
+
+    this->SetDesiredSize(DesiredSize);
 
     return;
+}
+
+void Jafg::WWidgetRegion::CreateNewShaderContext() const
+{
+    this->ShaderContext->Make();
 }

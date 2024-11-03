@@ -12,6 +12,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include "Forward/EngineForward.h"
+#include "Widgets/Viewport.h"
 
 namespace
 {
@@ -58,7 +59,7 @@ void Jafg::WTextBlock::Construct()
 
     LIntVector2 WindowDimensions = this->GetViewportSize();
 
-    this->FontShaderProgram = new LShader("Content/Shaders/vs_font.shader", "Content/Shaders/fs_font.shader");
+    this->FontShaderProgram = new LShader("Content/Shaders/Font.vert", "Content/Shaders/Font.frag");
     checkSlow( this->FontShaderProgram )
     this->FontShaderProgram->Use();
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
@@ -108,6 +109,8 @@ void Jafg::WTextBlock::Draw(LViewport* Context) const
 
     float X = Offset.X;
 
+    glUniform1f(glGetUniformLocation(this->FontShaderProgram->GetId(), "OrthoZDepth"), Context->GetFrameOrthoZLayerDepth());
+
     std::string text = this->Content.ToC();
     // iterate through all characters
     for (std::string::const_iterator c = text.begin(); c != text.end(); ++c)
@@ -156,11 +159,15 @@ void Jafg::WTextBlock::UpdateDesiredSize() const
         return;
     }
 
-    const Character& Ch = Characters.at(this->Content.GetCharAt(0));
+    LVector2 DesiredSize = LVector2::Zero();
+    for (const uint8 Rune : this->Content)
+    {
+        const Character& Ch = Characters.at(static_cast<int8>(Rune));
+        DesiredSize.X += static_cast<float>(Ch.Advance.X) * this->Brush.Scale / 64.0f;
+        DesiredSize.Y = Maths::Max(DesiredSize.Y, static_cast<float>(Ch.Size.y) * this->Brush.Scale);
+    }
 
-    const float X = static_cast<float>(Ch.Advance.X) * this->Brush.Scale * static_cast<float>(this->Content.GetRuneCount()) / 64.0f;
-    const float Y = static_cast<float>(Ch.Size.y) * this->Brush.Scale;
-    this->SetDesiredSize(LVector2(X, Y));
+    this->SetDesiredSize(DesiredSize);
 
     return;
 }

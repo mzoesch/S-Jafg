@@ -48,7 +48,7 @@ struct TVector2 final
     FORCEINLINE explicit TVector2<T>(const T InFloatingPoint)       : X(InFloatingPoint), Y(InFloatingPoint)    { }
     FORCEINLINE explicit TVector2<T>(const T InX, const T InY)      : X(InX), Y(InY)                            { }
     FORCEINLINE explicit TVector2<T>(const T InXY[2])               : X(InXY[0]), Y(InXY[1])                    { }
-    FORCEINLINE explicit TVector2<T>(const TVector2<T>& InVec)      : X(InVec.X), Y(InVec.Y)                    { }
+    FORCEINLINE          TVector2<T>(const TVector2<T>& InVec)      : X(InVec.X), Y(InVec.Y)                    { }
     FORCEINLINE          TVector2<T>(TVector2<T>&& InVec) noexcept  : X(InVec.X), Y(InVec.Y)                    { }
 
     FORCEINLINE TVector2<T>& operator =(const TVector2<T>&  InVec) noexcept { this->X = InVec.X; this->Y = InVec.Y; return *this; }

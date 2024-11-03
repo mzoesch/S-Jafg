@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreAFX.h"
+#include <glm/fwd.hpp>
 
 namespace Jafg
 {
@@ -16,10 +17,12 @@ public:
     // constructor reads and builds the shader
     LShader(const char* vertexPath, const char* fragmentPath);
     // use/activate the shader
-    void Use();
+    void Use() const;
     void SetBoolUniform(const LSimpleString& Name, const bool Value) const;
     void SetIntUniform(const LSimpleString& Name, const int32 Value) const;
     void SetFloatUniform(const LSimpleString& Name, const float Value) const;
+    void SetVector2Uniform(const LSimpleString& Name, const glm::vec2& Value) const;
+    void SetMatrix4Uniform(const LSimpleString& Name, const glm::mat4& Value) const;
 
     FORCEINLINE auto GetId() const -> uint32 { return this->Id; }
 

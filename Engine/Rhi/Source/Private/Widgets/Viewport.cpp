@@ -24,6 +24,8 @@ void Jafg::LViewport::Tick()
 
 void Jafg::LViewport::Draw()
 {
+    this->FrameZLayerDepth = 0.0f;
+
     /*
      * Maybe we want to make a callback to this. So that we do not have to recalculate
      * this every frame. But who cares? Its just one single floating point operation.

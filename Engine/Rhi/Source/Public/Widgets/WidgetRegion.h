@@ -31,6 +31,7 @@ protected:
 public:
 
     virtual void Draw(LViewport* Context) const override;
+    virtual void UpdateDesiredSize() const override;
 
     FORCEINLINE auto SetBrush(const LRegionBrush& InBrush) -> WWidgetRegion& { this->Brush = InBrush; return *this; }
     FORCEINLINE auto HasBrush() const -> bool { return this->Brush.IsSet(); }
@@ -45,7 +46,7 @@ private:
     void CreateNewShaderContext() const;
 
     TOptional<LRegionBrush> Brush;
-    mutable TOptional<LSimpleShaderContext> ShaderContext;
+    mutable TOptional<LBoxShaderContext> ShaderContext;
 };
 
 } /* ~Namespace Jafg. */

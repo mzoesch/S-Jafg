@@ -223,9 +223,13 @@
 #if IN_SHIPPING
     #define ALWAYS_BREAK_PANIC(InMessage) \
         PLATFORM_PANIC_BREAK(InMessage)
+    #define ALWAYS_BREAK_PANIC_WITH_BODY(InMessage, InFile, InLine) \
+        PLATFORM_PANIC_BREAK(InMessage)
 #else /* IN_SHIPPING */
     #define ALWAYS_BREAK_PANIC(InMessage) \
         PLATFORM_ERROR_BREAK(InMessage)
+    #define ALWAYS_BREAK_PANIC_WITH_BODY(InMessage, InFile, InLine) \
+        PLATFORM_ERROR_BREAK_WITH_BODY(InMessage, InFile, InLine)
 #endif /* IN_SHIPPING */
 
 /**

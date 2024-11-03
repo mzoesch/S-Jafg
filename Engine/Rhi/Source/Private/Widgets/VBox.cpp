@@ -4,13 +4,17 @@
 
 LVector2 Jafg::WVBox::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const
 {
-    LVector2 Offset = Super::GetRelativeTopLeftFromMostOuter(WhoAsked);
+    if (this == WhoAsked)
+    {
+        return Super::GetRelativeTopLeftFromMostOuter(WhoAsked);
+    }
 
+    LVector2 Offset = Super::GetRelativeTopLeftFromMostOuter(WhoAsked);
     int32 Idx = this->GetChildren().FindIndexByPredicate([WhoAsked] (const LWidgetSlot* const InSlot) -> bool
     {
         return InSlot->Content == WhoAsked;
     });
-    jassert( Idx != INDEX_NONE )
+    check( Idx != INDEX_NONE )
 
     while (--Idx > INDEX_NONE)
     {
@@ -18,4 +22,24 @@ LVector2 Jafg::WVBox::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAske
     }
 
     return Offset;
+}
+
+void Jafg::WVBox::UpdateDesiredSize() const
+{
+    Super::UpdateDesiredSize();
+
+    LVector2 DesiredSize = LVector2::Zero();
+    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    {
+        DesiredSize.X  = Maths::Max(DesiredSize.X, ChildSlot->Content->GetDesiredSize().X);
+        DesiredSize.Y += ChildSlot->Content->GetDesiredSize().Y;
+
+        continue;
+    }
+
+    DesiredSize += this->GetPadding().GetDesiredSize();
+
+    this->SetDesiredSize(DesiredSize);
+
+    return;
 }

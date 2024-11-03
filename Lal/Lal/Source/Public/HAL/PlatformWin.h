@@ -32,7 +32,7 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
 
 struct LWinPlatformBreakDefines final
 {
-    NOINLINE static void OnProgramPanic(const std::string& InMessage, const std::string& InFile, const int32_t Line)
+    NORETURN NOINLINE static void OnProgramPanic(const std::string& InMessage, const std::string& InFile, const int32_t InLine)
     {
         const std::string  InCaption     = "Jafg panicked";
         const std::wstring InCaptionWide = std::wstring(InCaption.begin(), InCaption.end());
@@ -42,13 +42,20 @@ struct LWinPlatformBreakDefines final
         InMessageWithAdditionalInfo += "File: ";
         InMessageWithAdditionalInfo += InFile;
         InMessageWithAdditionalInfo += "\nLine: ";
-        InMessageWithAdditionalInfo += std::to_string(Line);
+        InMessageWithAdditionalInfo += std::to_string(InLine);
         InMessageWithAdditionalInfo += "\n\nExpression: ";
         InMessageWithAdditionalInfo += InMessage;
 
         const std::wstring InMessageWide = std::wstring(InMessageWithAdditionalInfo.begin(), InMessageWithAdditionalInfo.end());
 
+#if IN_SHIPPING
+        /*
+         * We only need this in shipping because abort will ask the debugger, if attached, to load the memory dump.
+         */
         MessageBox(nullptr, InMessageWide.c_str(), InCaptionWide.c_str(), MB_ICONERROR | MB_OK);
+#endif /* IN_SHIPPING */
+
+        abort();
 
         return;
     }

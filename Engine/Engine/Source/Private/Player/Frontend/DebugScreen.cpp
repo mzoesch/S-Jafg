@@ -24,7 +24,7 @@ void Jafg::WDebugScreen::Construct()
     ]
     [
         NewNode(WTextBlock)
-        & "My text block."
+        & "Hello World."
         & LColor::Black
         & LTextBlockBrush({.Scale = UserPreferences->GetSmallFontSize()})
     ]

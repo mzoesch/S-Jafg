@@ -38,6 +38,12 @@ public:
     auto ChangeDimensions(const LIntVector2& InDimensions) -> void;
     FORCEINLINE auto GetDimensions() const -> LIntVector2 { return this->Dimensions; }
 
+    FORCEINLINE auto GetFrameOrthoZLayerDepth() const -> float
+    {
+        this->FrameZLayerDepth += 0.0001f;
+        return this->FrameZLayerDepth;
+    }
+
 private:
 
     void RecalculateScaleFactor();
@@ -57,6 +63,8 @@ private:
     LIntVector2            Dimensions;
     /** Top level widgets that this viewport owns. */
     TdhArray<WUserWidget*> TopLevelWidgets;
+
+    mutable float FrameZLayerDepth = 0.0f;
 };
 
 } /* ~Namespace Jafg. */

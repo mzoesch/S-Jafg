@@ -15,6 +15,10 @@
     #define UNUSED              [[maybe_unused]]
 #endif /* !UNUSED */
 
+#ifndef NORETURN
+    #define NORETURN            [[noreturn]]
+#endif /* !NORETURN */
+
 #ifndef FORCEINLINE
     #define FORCEINLINE         _forceinline
 #endif /* !FORCEINLINE */

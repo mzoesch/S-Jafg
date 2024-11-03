@@ -63,7 +63,7 @@ LIntVector2 Jafg::WWidgetNode::GetViewportSize() const
     return LIntVector2::ZeroVector;
 }
 
-LVector2 Jafg::WWidgetNode::GetRelativeTopLeft() const
+LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromOuter() const
 {
     if (this->Slot)
     {
@@ -77,8 +77,8 @@ LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromMostOuter(const WWidgetNode* W
 {
     if (this->Slot)
     {
-        return this->Slot->Parent->GetRelativeTopLeftFromMostOuter(this) + this->GetRelativeTopLeft();
+        return this->Slot->Parent->GetRelativeTopLeftFromMostOuter(this) + this->GetRelativeTopLeftFromOuter();
     }
 
-    return this->GetRelativeTopLeft();
+    return this->GetRelativeTopLeftFromOuter();
 }

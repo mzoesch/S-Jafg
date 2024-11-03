@@ -20,6 +20,7 @@ protected:
 public:
 
     virtual auto GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const -> LVector2 override;
+    virtual auto UpdateDesiredSize() const -> void override;
 };
 
 } /* ~Namespace Jafg. */

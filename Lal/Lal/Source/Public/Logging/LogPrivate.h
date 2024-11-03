@@ -70,7 +70,7 @@ FORCEINLINE void LogPanicMessage(
      */
     /* std::cerr << InMessage << '\n'; */
 
-    PLATFORM_PANIC_BREAK_WITH_BODY(InMessage, InFile, InLine)
+    ALWAYS_BREAK_PANIC_WITH_BODY(InMessage, InFile, InLine)
 
     return;
 }

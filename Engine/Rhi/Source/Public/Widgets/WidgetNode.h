@@ -107,7 +107,7 @@ public:
     virtual auto GetViewportSize() const -> LIntVector2;
 
     /** @return The top left corner of this widget relative to its parent. If no parent, relative to the viewport. */
-    auto GetRelativeTopLeft() const -> LVector2;
+    auto GetRelativeTopLeftFromOuter() const -> LVector2;
 
     /**
      * @param  WhoAsked The widget that asked for the relative top left. Must be a direct child.

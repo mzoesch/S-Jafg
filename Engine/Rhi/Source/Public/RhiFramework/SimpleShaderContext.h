@@ -7,34 +7,41 @@
 namespace Jafg
 {
 
-class RHI_API LSimpleShaderContext
+class LViewport;
+
+/**
+ * A simple shader helping class that renders a box on an orthographic projection.
+ */
+class RHI_API LBoxShaderContext
 {
 public:
 
-    LSimpleShaderContext() = default;
+    LBoxShaderContext() = default;
+    PROHIBIT_COPY(LBoxShaderContext)
+    DEFAULT_MOVE(LBoxShaderContext)
+    ~LBoxShaderContext() { this->Free(); }
 
-    void Use();
-    void Draw();
-    void Unuse();
+    /**
+     * Make the shader context meaningful.
+     */
+    void Make();
 
-    FORCEINLINE auto GetShader() -> LShader& { return this->Shader; }
-    FORCEINLINE auto GetShader() const -> const LShader& { return this->Shader; }
-    FORCEINLINE auto GetVao() -> uint32& { return this->Vao; }
-    FORCEINLINE auto GetVao() const -> const uint32& { return this->Vao; }
-    FORCEINLINE auto GetVbo() -> uint32& { return this->Vbo; }
-    FORCEINLINE auto GetVbo() const -> const uint32& { return this->Vbo; }
-    FORCEINLINE auto GetShaderPtr() -> LShader* { return &this->Shader; }
-    FORCEINLINE auto GetShaderPtr() const -> const LShader* { return &this->Shader; }
-    FORCEINLINE auto GetVaoPtr() -> uint32* { return &this->Vao; }
-    FORCEINLINE auto GetVaoPtr() const -> const uint32* { return &this->Vao; }
-    FORCEINLINE auto GetVboPtr() -> uint32* { return &this->Vbo; }
-    FORCEINLINE auto GetVboPtr() const -> const uint32* { return &this->Vbo; }
+    /**
+     * Free the shader context from the graphical device.
+     * No C++ memory will be freed through this method.
+     */
+    void Free();
 
-    void GenerateArrayBuffers();
-    void UpdateStaticArrayBuffers(const float Vertices[], const uint32 Size);
+    /**
+     * Draws the box.
+     */
+    void Draw(const LViewport& Context, const LVector2& Size, const LVector2& TopLeft) const;
+
+    FORCEINLINE auto IsMeaningful() const -> bool { return this->bIsMeaningful; }
 
 private:
 
+    bool    bIsMeaningful = false;
     LShader Shader;
     uint32  Vao   = 0x0u;
     uint32  Vbo   = 0x0u;

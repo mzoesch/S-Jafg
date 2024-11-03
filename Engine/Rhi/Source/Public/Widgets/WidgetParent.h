@@ -32,6 +32,7 @@ public:
     virtual auto RemoveChild(LWidgetSlot* Child) -> void override;
     virtual auto AddChild(WWidgetNode* Child) -> LWidgetSlot* override;
 
+    FORCEINLINE         auto GetPadding()    const -> const LPadding& { return this->Padding; }
     FORCEINLINE virtual auto GetPaddingPtr() const -> const LPadding* override { return &this->Padding; }
     FORCEINLINE virtual auto GetPaddingPtr()       ->       LPadding* override { return &this->Padding; }
 

@@ -48,3 +48,34 @@
 #define PROHIBIT_MOVE_NAMESPACED(TSpacedType, Type) \
     TSpacedType(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
     TSpacedType& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = delete;
+
+/** Defaults the copy and move operations of a specific type T. */
+#define DEFAULT_REALLOC_OF_ANY_FROM(Ty) \
+    DEFAULT_COPY(Ty)                    \
+    DEFAULT_MOVE(Ty)
+
+#define DEFAULT_REALLOC_OF_ANY_FROM_NAMESPACED(TSpacedTy, Ty) \
+    DEFAULT_COPY_NAMESPACED(TSpacedTy, Ty)                    \
+    DEFAULT_MOVE_NAMESPACED(TSpacedTy, Ty)
+
+/** Defaults the copy operations of a specific type T. */
+#define DEFAULT_COPY(Type) \
+    Type(      Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
+    Type(const Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
+    Type& operator=(const Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;
+
+/** Defaults the copy operations of a specific type T. */
+#define DEFAULT_COPY_NAMESPACED(TSpacedType, Type) \
+    TSpacedType(      TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
+    TSpacedType(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
+    TSpacedType& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;
+
+/** Defaults the move operations of a specific type T. */
+#define DEFAULT_MOVE(Type) \
+    Type(Type&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
+    Type& operator=(Type&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;
+
+/** Defaults the move operations of a specific type T. */
+#define DEFAULT_MOVE_NAMESPACED(TSpacedType, Type) \
+    TSpacedType(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
+    TSpacedType& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;

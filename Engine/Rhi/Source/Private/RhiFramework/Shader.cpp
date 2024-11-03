@@ -13,6 +13,7 @@
 #endif /* PLATFORM_WINDOWS */
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include <glm/gtc/type_ptr.hpp>
 
 Jafg::LShader::LShader(const char* vertexPath, const char* fragmentPath)
 {
@@ -105,7 +106,7 @@ Jafg::LShader::LShader(const char* vertexPath, const char* fragmentPath)
     glDeleteShader(fragment);
 }
 
-void Jafg::LShader::Use()
+void Jafg::LShader::Use() const
 {
     glUseProgram(Id);
 }
@@ -123,4 +124,14 @@ void Jafg::LShader::SetIntUniform(const LSimpleString& Name, const int32 Value) 
 void Jafg::LShader::SetFloatUniform(const LSimpleString& Name, const float Value) const
 {
     glUniform1f(glGetUniformLocation(this->Id, Name.ToC()), Value);
+}
+
+void Jafg::LShader::SetVector2Uniform(const LSimpleString& Name, const glm::vec2& Value) const
+{
+    glUniform2fv(glGetUniformLocation(this->Id, Name.ToC()), 1, glm::value_ptr(Value));
+}
+
+void Jafg::LShader::SetMatrix4Uniform(const LSimpleString& Name, const glm::mat4& Value) const
+{
+    glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.ToC()), 1, GL_FALSE, glm::value_ptr(Value));
 }
