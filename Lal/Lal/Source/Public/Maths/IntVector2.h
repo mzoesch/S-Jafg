@@ -2,6 +2,9 @@
 
 #pragma once
 
+namespace Jafg
+{
+
 /** Jafg implementation of an integral Vector2. */
 template <typename T>
 struct TIntVector2 final
@@ -45,3 +48,5 @@ struct TIntVector2 final
     FORCEINLINE bool     operator==(const TIntVector2<T>& Other) const { return X == Other.X && Y == Other.Y; }
     FORCEINLINE bool     operator!=(const TIntVector2<T>& Other) const { return X != Other.X || Y != Other.Y; }
 };
+
+} /* ~Namespace Jafg */

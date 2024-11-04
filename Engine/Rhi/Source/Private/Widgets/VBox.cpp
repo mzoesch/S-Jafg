@@ -2,7 +2,7 @@
 
 #include "Widgets/VBox.h"
 
-LVector2 Jafg::WVBox::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const
+Jafg::LVector2 Jafg::WVBox::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const
 {
     if (this == WhoAsked)
     {

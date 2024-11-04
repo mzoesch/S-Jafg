@@ -2,6 +2,10 @@
 
 #pragma once
 
+namespace Jafg
+{
+
+
 /*----------------------------------------------------------------------------
     Type Forwards.
 ----------------------------------------------------------------------------*/
@@ -10,6 +14,7 @@ template <typename T> struct TVector;
 template <typename T> struct TVector2;
 template <typename T> struct TIntVector;
 template <typename T> struct TIntVector2;
+template <typename T> struct TRotator;
 
 
 /*----------------------------------------------------------------------------
@@ -30,12 +35,23 @@ using LInt16Vector2     = TIntVector2<int16>;
 using LInt32Vector2     = TIntVector2<int32>;
 using LInt64Vector2     = TIntVector2<int64>;
 
+using LRotatorF         = TRotator<float>;
+using LRotatorD         = TRotator<double>;
+
 
 /*----------------------------------------------------------------------------
     Aliases.
 ----------------------------------------------------------------------------*/
 
+/*
+ * Uses floats by default.
+ * Uses integers with 32 bits of precision by default.
+ */
+
 typedef LVectorF         LVector;
 typedef LVector2F        LVector2;
 typedef LInt32Vector     LIntVector;
 typedef LInt32Vector2    LIntVector2;
+typedef LRotatorF        LRotator;
+
+} /* ~Namespace Jafg */

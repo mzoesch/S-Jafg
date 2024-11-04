@@ -17,7 +17,7 @@ void Jafg::WUserWidget::Draw(LViewport& Context) const
     return;
 }
 
-LIntVector2 Jafg::WUserWidget::GetViewportSize() const
+Jafg::LIntVector2 Jafg::WUserWidget::GetViewportSize() const
 {
     if (this->AttachedViewport)
     {

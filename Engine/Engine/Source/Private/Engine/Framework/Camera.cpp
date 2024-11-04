@@ -45,14 +45,6 @@ void Jafg::Camera::ProcessKeyboard(const Camera_Movement Dir, const float DeltaT
     const glm::vec3 Forward = LocalFront;
     const glm::vec3 Right   = LocalRight;
 
-    LOG_INFO(LogTemporal,
-    "Front {:.2f} {:.2f} {:.2f} Right {:.2f} {:.2f} {:.2f} Up {:.2f} {:.2f} {:.2f} Pos {:.2f} {:.2f} {:.2f}",
-        Forward.x, Forward.y, Forward.z,
-        Right.x, Right.y, Right.z,
-        UpLocal.x, UpLocal.y, UpLocal.z,
-        Position.x, Position.y, Position.z
-    );
-
     if (Dir == FORWARD)
     {
         Position += Forward * Vel;

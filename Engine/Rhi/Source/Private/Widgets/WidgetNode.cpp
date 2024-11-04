@@ -50,7 +50,7 @@ auto Jafg::WWidgetNode::GetParent() const -> WWidgetParentBase*
     return nullptr;
 }
 
-LIntVector2 Jafg::WWidgetNode::GetViewportSize() const
+Jafg::LIntVector2 Jafg::WWidgetNode::GetViewportSize() const
 {
     if (this->Slot)
     {
@@ -63,7 +63,7 @@ LIntVector2 Jafg::WWidgetNode::GetViewportSize() const
     return LIntVector2::ZeroVector;
 }
 
-LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromOuter() const
+Jafg::LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromOuter() const
 {
     if (this->Slot)
     {
@@ -73,7 +73,7 @@ LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromOuter() const
     return LVector2::Zero();
 }
 
-LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const
+Jafg::LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const
 {
     if (this->Slot)
     {

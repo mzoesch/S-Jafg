@@ -221,7 +221,7 @@ int32 Jafg::LDesktopPlatformWin::GetHeight() const
     return this->GetDimensions().Y;
 }
 
-TIntVector2<int32> Jafg::LDesktopPlatformWin::GetDimensions() const
+Jafg::TIntVector2<int32> Jafg::LDesktopPlatformWin::GetDimensions() const
 {
     /*
      * Do we want to cache this value?

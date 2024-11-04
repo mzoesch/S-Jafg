@@ -32,7 +32,7 @@ namespace JustTemp
 
 void RHI_API A(uint32* Texture);
 void RHI_API B(uint32 Texture);
-void RHI_API C(float Zoom, Jafg::LShader* ShaderProgram, LIntVector2 WindowDimensions, glm::mat4 View);
+void RHI_API C(float Zoom, Jafg::LShader* ShaderProgram, Jafg::LIntVector2 WindowDimensions, glm::mat4 View);
 uint32 RHI_API D(Jafg::LShader* ShaderProgram);
 
 

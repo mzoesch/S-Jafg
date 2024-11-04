@@ -2,7 +2,9 @@
 
 #pragma once
 
-#include "Maths/IntVector2.h"
+
+namespace Jafg
+{
 
 /** Jafg implementation of an integral Vector. */
 template <typename T>
@@ -30,3 +32,5 @@ struct TIntVector final
     FORCEINLINE          TIntVector<T>(TIntVector<T>& InVec) noexcept         : X(InVec.X), Y(InVec.Y), Z(InVec.Z)        { }
     FORCEINLINE          TIntVector<T>(TIntVector<T>&& InVec) noexcept   : X(InVec.X), Y(InVec.Y), Z(InVec.Z)        { }
 };
+
+} /* ~Namespace Jafg */

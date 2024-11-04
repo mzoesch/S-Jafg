@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include "Maths/Vector2.h"
+namespace Jafg
+{
 
 /** Jafg implementation of a vector. */
 template <typename T>
@@ -69,3 +70,5 @@ struct TVector final
     FORCEINLINE explicit TVector<T>(const TVector<T>& InVec)                : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
     FORCEINLINE          TVector<T>(TVector<T>&& InVec) noexcept            : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
 };
+
+} /* ~Namespace Jafg */

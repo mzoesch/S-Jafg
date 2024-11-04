@@ -11,7 +11,7 @@ void Jafg::APawn::DeclareNewPossessor(APlayerController* InNewController)
     this->OwningController = InNewController;
 }
 
-LVector Jafg::APawn::GetLocation() const
+Jafg::LVector Jafg::APawn::GetLocation() const
 {
     const glm::vec3 Loc = this->GetWorld()->MainCamera->Position;
     return LVector(Loc.x, Loc.y, Loc.z);

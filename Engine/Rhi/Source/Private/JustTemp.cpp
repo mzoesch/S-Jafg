@@ -45,7 +45,7 @@ void JustTemp::B(uint32 Texture)
     glBindTexture(GL_TEXTURE_2D, Texture);
 }
 
-void JustTemp::C(float Zoom, Jafg::LShader* ShaderProgram, LIntVector2 WindowDimensions, glm::mat4 View)
+void JustTemp::C(float Zoom, Jafg::LShader* ShaderProgram, Jafg::LIntVector2 WindowDimensions, glm::mat4 View)
 {
     glm::mat4 Projection = glm::perspective(glm::radians(Zoom),
         static_cast<float>(WindowDimensions.X) / static_cast<float>(WindowDimensions.Y), 0.1f, 2000.0f); // change clipping here

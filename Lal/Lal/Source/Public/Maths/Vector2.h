@@ -2,6 +2,9 @@
 
 #pragma once
 
+namespace Jafg
+{
+
 /** Jafg implementation of a vector2. */
 template<typename T>
 struct TVector2 final
@@ -185,3 +188,5 @@ TVector2<T>& TVector2<T>::operator/=(const TVector2<T>& InVec)
     this->Y /= InVec.Y;
     return *this;
 }
+
+} /* ~Namespace Jafg */

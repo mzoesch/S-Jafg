@@ -6,8 +6,10 @@
 #include "Engine/Framework/Camera.h"
 #include "Engine/World.h"
 
-void GetAllChunksInDistance(const TIntVector2<int32>& Center, const int32 Distance, std::vector<TIntVector2<int32>>& OutChunks)
+void GetAllChunksInDistance(const Jafg::TIntVector2<int32>& Center, const int32 Distance, std::vector<Jafg::TIntVector2<int32>>& OutChunks)
 {
+    using namespace Jafg;
+
     const int32 PredictedOutChunkCount = (Distance * 2 + 1) * (Distance * 2 + 1);
     OutChunks.reserve(PredictedOutChunkCount);
 

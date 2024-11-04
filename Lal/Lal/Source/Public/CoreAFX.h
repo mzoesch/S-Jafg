@@ -33,7 +33,6 @@
 
 #include "Maths/MathDefines.h"
 #include "Maths/MathForward.h"
-#include "Maths/MathUtility.h"
 
 
 /*----------------------------------------------------------------------------
@@ -50,6 +49,10 @@
 #include "Logging/LogMacros.h"
 #include "Logging/LogPrivate.h"
 #include "Logging/CoreCategories.h"
+
+///////////////////////////////////////////////////////////////////////////////
+// Maths Core
+#include "Maths/MathUtility.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Functors
@@ -75,6 +78,7 @@
 #include "Maths/IntVector2.h"
 #include "Maths/IntVector.h"
 #include "Maths/Color.h"
+#include "Maths/Rotator.h"
 
 
 /*----------------------------------------------------------------------------
