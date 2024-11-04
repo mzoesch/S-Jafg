@@ -14,6 +14,7 @@
 #include "RhiFramework/Shader.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/WorldSubsystem.h"
+#include "Engine/Framework/Pawn.h"
 #if PLATFORM_WINDOWS
     #include <Windows.h>
 #endif /* PLATFORM_WINDOWS */
@@ -27,7 +28,7 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 {
     this->WorldState = EWorldState::Initializing;
 
-    ShaderProgram = new LShader("Content/Shaders/vertex_shader.shader", "Content/Shaders/fragment_shader.shader");
+    ShaderProgram = new LShader("Content/Shaders/Chunk.vert", "Content/Shaders/Chunk.frag");
     ShaderProgram->Use();
     ShaderProgram->SetFloatUniform("texMultiplier", 0.5f);
 
@@ -38,6 +39,10 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
     APlayerController* Pc = NewDeferredObject<APlayerController>(this);
     this->Actors.Add(Pc);
     GEngine->GetCheckedLocalPlayer()->Possess(Pc);
+
+    APawn* Pawn = NewDeferredObject<APawn>(this);
+    this->Actors.Add(Pawn);
+    Pc->Possess(Pawn);
 
     for (AActor* Actor : this->Actors)
     {

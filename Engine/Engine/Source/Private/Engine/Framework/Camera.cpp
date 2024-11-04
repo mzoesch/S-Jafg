@@ -41,8 +41,17 @@ void Jafg::Camera::ProcessKeyboard(const Camera_Movement Dir, const float DeltaT
     // const glm::vec3 Right = glm::vec3(LVector::RightVector.X, LVector::RightVector.Y, LVector::RightVector.Z);
     const glm::vec3 Up = glm::vec3(TVector<float>::UpVector.X, LVector::UpVector.Y, LVector::UpVector.Z);
 
+    const glm::vec3 UpLocal = LocalUp;
     const glm::vec3 Forward = LocalFront;
     const glm::vec3 Right   = LocalRight;
+
+    LOG_INFO(LogTemporal,
+    "Front {:.2f} {:.2f} {:.2f} Right {:.2f} {:.2f} {:.2f} Up {:.2f} {:.2f} {:.2f} Pos {:.2f} {:.2f} {:.2f}",
+        Forward.x, Forward.y, Forward.z,
+        Right.x, Right.y, Right.z,
+        UpLocal.x, UpLocal.y, UpLocal.z,
+        Position.x, Position.y, Position.z
+    );
 
     if (Dir == FORWARD)
     {
@@ -75,7 +84,7 @@ void Jafg::Camera::ProcessKeyboard(const Camera_Movement Dir, const float DeltaT
 // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
 void Jafg::Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch)
 {
-    xoffset *= -MouseSensitivity;
+    xoffset *= MouseSensitivity;
     yoffset *= MouseSensitivity;
 
     Yaw += xoffset;
@@ -84,11 +93,23 @@ void Jafg::Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean 
     // make sure that when pitch is out of bounds, screen doesn't get flipped
     if (constrainPitch)
     {
-        if (Pitch > 89.0f)
-            Pitch = 89.0f;
-        if (Pitch < -89.0f)
-            Pitch = -89.0f;
+        if (Pitch > 89.9f)
+            Pitch = 89.9f;
+        if (Pitch < -89.9f)
+            Pitch = -89.9f;
     }
+
+    // Clamp Yaw to -180 to 180
+    while (Yaw > 180.0f)
+    {
+        Yaw -= 360.0f;
+    }
+    while (Yaw < -180.0f)
+    {
+        Yaw += 360.0f;
+    }
+    check( Yaw >= -180.0f && Yaw <= 180.0f )
+
 
     // update Front, Right and Up Vectors using the updated Euler angles
     updateCameraVectors();
@@ -112,18 +133,19 @@ void Jafg::Camera::updateCameraVectors()
     // calculate the new Front vector
     glm::vec3 front;
     front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-    front.y = sin(glm::radians(Pitch));
-    front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+    front.y = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+    front.z = sin(glm::radians(Pitch));
 
     LocalFront = glm::normalize(front);
 
-    LocalFront = glm::vec3(LocalFront.x, LocalFront.z, LocalFront.y);
-
     // also re-calculate the Right and Up vector
-
-    // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+    // normalize the vectors, because their length gets closer to 0 the more you look up
+    // or down which results in slower movement.
     glm::vec3 WorldUp = glm::vec3(LVector::UpVector.X, LVector::UpVector.Y, LVector::UpVector.Z);
+    // LocalRight = glm::normalize(glm::cross(LocalFront, WorldUp));
     LocalRight = glm::normalize(glm::cross(LocalFront, WorldUp));
+    LocalRight = -LocalRight;
 
     LocalUp = glm::normalize(glm::cross(LocalRight, LocalFront));
+    LocalUp = -LocalUp;
 }

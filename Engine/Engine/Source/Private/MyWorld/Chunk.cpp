@@ -370,7 +370,8 @@ void AChunk::Render(unsigned int modelLoc)
     // glBindVertexArray(vertexArrayObject);
     //
     // glm::mat4 model = glm::mat4(1.0f);
-    // model = glm::translate(model, worldPos);
+    // model = glm::
+    // translate(model, worldPos);
     // glUniformMatrix4fv(static_cast<GLint>(modelLoc), 1, GL_FALSE, glm::value_ptr(model));
     //
     // glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(numTriangles), GL_UNSIGNED_INT, 0);

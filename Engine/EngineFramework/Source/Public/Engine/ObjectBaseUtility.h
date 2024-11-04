@@ -90,6 +90,9 @@ FORCEINLINE auto DynamicCast(Private::JObjectBase* InObject) -> TObj*;
 /** @return The default package referrer. */
 template <typename TObj>
 FORCEINLINE auto GetDefault() -> const TObj*;
+/** @return The default package referrer. */
+template <typename TObj>
+FORCEINLINE auto GetMutableDefault() -> TObj*;
 
 namespace Private
 {
@@ -371,6 +374,12 @@ template <typename TObj>
 const TObj* GetDefault()
 {
     return reinterpret_cast<const TObj*>(TObj::StaticClass()->GetDefaultPackageReferrer());
+}
+
+template <typename TObj>
+TObj* GetMutableDefault()
+{
+    return reinterpret_cast<TObj*>(TObj::StaticClass()->GetMutableDefaultPackageReferrer());
 }
 
 template <typename TObj>

@@ -17,6 +17,25 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JUserPreferences)
 
+    ///////////////////////////////////////////////////////////////////////////////
+    // Rendering pipeline
+    ///////////////////////////////////////////////////////////////////////////////
+
+public:
+
+    FORCEINLINE constexpr bool GetDefaultVSyncEnabled() const { return JUserPreferences::bDefaultVSyncEnabled; }
+    FORCEINLINE bool GetVSyncEnabled() const { return this->bVSyncEnabled; }
+    FORCEINLINE void SetVSyncEnabled(const bool bEnabled) { this->bVSyncEnabled = bEnabled; }
+
+private:
+
+    inline static constexpr bool bDefaultVSyncEnabled { true };
+    bool bVSyncEnabled { JUserPreferences::bDefaultVSyncEnabled };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Interface
+    ///////////////////////////////////////////////////////////////////////////////
+
 public:
 
     FORCEINLINE constexpr float GetDefaultHeaderFontSize() const { return JUserPreferences::DefaultHeaderFontSize; }

@@ -8,6 +8,8 @@
 namespace Jafg
 {
 
+class APawn;
+
 DECLARE_JAFG_CLASS()
 class ENGINE_API APlayerController final : public AActor
 {
@@ -22,6 +24,14 @@ public:
     virtual void BeginLife() override;
     virtual void Tick(const float DeltaTime) override;
     virtual void EndLife() override;
+
+    FORCEINLINE auto DoesPossess() const -> bool { return this->PossessedPawn != nullptr; }
+    FORCEINLINE auto GetPossessed() const -> APawn* { return this->PossessedPawn; }
+                auto Possess(APawn* InNewPawn, const bool bKillOld = true) -> void;
+
+private:
+
+    APawn* PossessedPawn = nullptr;
 };
 
 } /* ~Namespace Jafg. */

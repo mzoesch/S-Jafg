@@ -5,6 +5,7 @@
 #include "Engine/Framework/Hud.h"
 #include "Player/PlayerInput.h"
 #include "Platform/Surface.h"
+#include "User/UserPreferences.h"
 
 void Jafg::LLocalPlayer::Initialize()
 {
@@ -20,8 +21,11 @@ void Jafg::LLocalPlayer::Initialize()
     #error "Cannot resolve surface.
 #endif /* !PLATFORM_DESKTOP */
 
+    JUserPreferences* UserPreferences = GetMutableDefault<JUserPreferences>();
+    UserPreferences->SetVSyncEnabled(true);
+
     this->GetPrimarySurface()->Initialize();
-    this->GetPrimarySurface()->SetVSync(true);
+    this->GetPrimarySurface()->SetVSync(UserPreferences->GetVSyncEnabled());
     this->GetPrimarySurface()->SetInputMode(false);
 
     this->Hud = new ::Jafg::LHud();
