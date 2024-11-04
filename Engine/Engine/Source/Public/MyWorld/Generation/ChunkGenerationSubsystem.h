@@ -2,20 +2,18 @@
 
 #pragma once
 
-#include "CoreAFX.h"
-#include "Subsystems/TickableWorldSubsystem.h"
-#include "MyWorld/Chunk.h"
+#include "Subsystems/CappedTickableWorldSubsystem.h"
+#include "MyWorld/Chunk/Chunk.h"
 #include <queue>
 #include "glm/glm.hpp"
 #include <unordered_map>
-
 #include "ChunkGenerationSubsystem.generated.h"
 
 namespace Jafg
 {
 
 DECLARE_JAFG_CLASS()
-class JChunkGenerationSubsystem final : public JTickableWorldSubsystem
+class JChunkGenerationSubsystem final : public JCappedTickableWorldSubsystem
 {
     GENERATED_CLASS_BODY()
 
@@ -25,7 +23,7 @@ protected:
 
     // JTickableWorldSubsystem implementation
     virtual void Initialize(Jafg::LSubsystemCollection& Collection) override;
-    virtual void Tick(const float DeltaTime) override;
+    virtual void CappedTick(const float EngineDeltaTime, const float SubsystemDeltaTime) override;
     virtual void TearDown() override;
     // ~JTickableWorldSubsystem implementation
 

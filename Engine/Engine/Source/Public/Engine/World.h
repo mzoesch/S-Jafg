@@ -2,15 +2,12 @@
 
 #pragma once
 
-#include "CoreAFX.h"
 #include "Engine/ObjectContext.h"
-#include "Engine/Actor.h"
-
-struct GLFWwindow;
 
 namespace Jafg
 {
 
+class AActor;
 class LEngine;
 class LShader;
 class JWorldSubsystem;

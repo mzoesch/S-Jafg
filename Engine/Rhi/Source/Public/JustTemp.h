@@ -37,7 +37,7 @@ uint32 RHI_API D(Jafg::LShader* ShaderProgram);
 
 
 void RHI_API E(uint32* vertexArrayObject, uint32* vbo, uint32* ebo);
-void RHI_API F(uint32* vertexArrayObject, uint32* vbo, uint32* ebo, std::vector<Jafg::Vertex>* vertices, std::vector<uint32>* indices
+void RHI_API F(uint32* vertexArrayObject, uint32* vbo, uint32* ebo, Jafg::TdhArray<Jafg::Vertex>* vertices, Jafg::TdhArray<uint32>* indices
     , uint32* numTriangles);
 void RHI_API G(uint32* vertexArrayObject, uint32* numTriangles, glm::vec3* worldPos, uint32* modelLoc);
 

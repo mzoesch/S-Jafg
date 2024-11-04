@@ -9,7 +9,7 @@
 #include <glm/gtc/type_ptr.inl>
 #include "JustTemp.h"
 #include "Engine/Framework/PlayerController.h"
-#include "MyWorld/Chunk/ChunkGenerationSubsystem.h"
+#include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "Player/LocalPlayer.h"
 #include "RhiFramework/Shader.h"
 #include "Subsystems/SubsystemCollection.h"

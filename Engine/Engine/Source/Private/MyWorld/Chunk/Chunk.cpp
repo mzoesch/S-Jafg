@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAFX.h"
-#include "MyWorld/Chunk.h"
+#include "MyWorld/Chunk/Chunk.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -10,43 +10,52 @@
 #include "MyWorld/WorldGen.h"
 #include "MyWorld/WorldStatics.h"
 
-AChunk::AChunk(glm::vec3 GlobalChunkLocation)
+void Jafg::AChunk::BeginLife()
 {
-    this->chunkPos = GlobalChunkLocation;
-    worldPos = glm::vec3(GlobalChunkLocation.x * WorldStatics::ChunkSize,
-                         GlobalChunkLocation.y * WorldStatics::ChunkSize,
-                         GlobalChunkLocation.z * WorldStatics::ChunkSize);
+    Super::BeginLife();
 
-    ready = false;
-    generated = false;
+    WorldPos = glm::vec3(ChunkPos.x * WorldStatics::ChunkSize,
+                         ChunkPos.y * WorldStatics::ChunkSize,
+                         ChunkPos.z * WorldStatics::ChunkSize);
+
+    bReady = false;
+    bGenerated = false;
 
     this->RawVoxelData = new uint32[WorldStatics::VoxelCount];
     memset(RawVoxelData, 0, WorldStatics::VoxelCount * sizeof(uint32));
-
-    chunkThread = std::thread(&AChunk::GenerateChunk, this);
+    this->GenerateChunk();
 
     // std::cout << "Created chunk at: " << chunkPos.x << ", " << chunkPos.y << ", " << chunkPos.z << '\n';
     // std::cout.flush();
+    return;
 }
 
-AChunk::~AChunk()
+void Jafg::AChunk::EndLife()
 {
-    if (chunkThread.joinable())
-        chunkThread.join();
+    Super::EndLife();
+
+    JustTemp::E(&VertexArrayObject, &Vbo, &Vbo);
 
     delete[] RawVoxelData;
+    RawVoxelData = nullptr;
 
-    JustTemp::E(&vertexArrayObject, &vbo, &vbo);
+    Vertices.Empty();
+    Indices.Empty();
+
+    // Vertices.clear();
+    // Indices.clear();
+
     // glDeleteBuffers(1, &vbo);
     // glDeleteBuffers(1, &ebo);
     // glDeleteVertexArrays(1, &vertexArrayObject);
+    return;
 }
 
-void AChunk::GenerateChunk()
+void Jafg::AChunk::GenerateChunk()
 {
     //std::cout << "Started thread: " << std::this_thread::get_id() << '\n';
 
-    WorldGen::GenerateChunkData(static_cast<int>(chunkPos.x), static_cast<int>(chunkPos.y), static_cast<int>(chunkPos.z), WorldStatics::ChunkSize, RawVoxelData);
+    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z), WorldStatics::ChunkSize, RawVoxelData);
 
     // std::vector<unsigned int> northData, southData, eastData, westData, upData, downData;
     uint32* northData = new uint32[WorldStatics::VoxelCount];
@@ -68,12 +77,12 @@ void AChunk::GenerateChunk()
     // WorldGen::GenerateChunkData(chunkPos.x - 1, chunkPos.y, chunkPos.z, WorldStatics::ChunkSize, westData);
     // WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y + 1, chunkPos.z, WorldStatics::ChunkSize, upData);
     // WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y - 1, chunkPos.z, WorldStatics::ChunkSize, downData);
-    WorldGen::GenerateChunkData(static_cast<int>(chunkPos.x + 1), static_cast<int>(chunkPos.y), static_cast<int>(chunkPos.z), WorldStatics::ChunkSize, northData);
-    WorldGen::GenerateChunkData(static_cast<int>(chunkPos.x - 1), static_cast<int>(chunkPos.y), static_cast<int>(chunkPos.z), WorldStatics::ChunkSize, southData);
-    WorldGen::GenerateChunkData(static_cast<int>(chunkPos.x), static_cast<int>(chunkPos.y + 1), static_cast<int>(chunkPos.z), WorldStatics::ChunkSize, eastData);
-    WorldGen::GenerateChunkData(static_cast<int>(chunkPos.x), static_cast<int>(chunkPos.y - 1), static_cast<int>(chunkPos.z), WorldStatics::ChunkSize, westData);
-    WorldGen::GenerateChunkData(static_cast<int>(chunkPos.x), static_cast<int>(chunkPos.y), static_cast<int>(chunkPos.z + 1), WorldStatics::ChunkSize, upData);
-    WorldGen::GenerateChunkData(static_cast<int>(chunkPos.x), static_cast<int>(chunkPos.y), static_cast<int>(chunkPos.z - 1), WorldStatics::ChunkSize, downData);
+    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x + 1), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z), WorldStatics::ChunkSize, northData);
+    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x - 1), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z), WorldStatics::ChunkSize, southData);
+    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y + 1), static_cast<int>(ChunkPos.z), WorldStatics::ChunkSize, eastData);
+    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y - 1), static_cast<int>(ChunkPos.z), WorldStatics::ChunkSize, westData);
+    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z + 1), WorldStatics::ChunkSize, upData);
+    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z - 1), WorldStatics::ChunkSize, downData);
 
     //std::cout << "Got chunk data in thread: " << std::this_thread::get_id() << '\n';
 
@@ -114,17 +123,17 @@ void AChunk::GenerateChunk()
                         // vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->sideMinX, block->sideMaxY));
                         // vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->sideMaxX, block->sideMaxY));
 
-                        vertices.emplace_back(x + 1, y + 0, z + 0, block->sideMinX, block->sideMinY);
-                        vertices.emplace_back(x + 0, y + 0, z + 0, block->sideMaxX, block->sideMinY);
-                        vertices.emplace_back(x + 1, y + 0, z + 1, block->sideMinX, block->sideMaxY);
-                        vertices.emplace_back(x + 0, y + 0, z + 1, block->sideMaxX, block->sideMaxY);
+                        Vertices.Emplace(x + 1, y + 0, z + 0, block->sideMinX, block->sideMinY);
+                        Vertices.Emplace(x + 0, y + 0, z + 0, block->sideMaxX, block->sideMinY);
+                        Vertices.Emplace(x + 1, y + 0, z + 1, block->sideMinX, block->sideMaxY);
+                        Vertices.Emplace(x + 0, y + 0, z + 1, block->sideMaxX, block->sideMaxY);
 
-                        indices.push_back(currentVertex + 0);
-                        indices.push_back(currentVertex + 3);
-                        indices.push_back(currentVertex + 1);
-                        indices.push_back(currentVertex + 0);
-                        indices.push_back(currentVertex + 2);
-                        indices.push_back(currentVertex + 3);
+                        Indices.Emplace(currentVertex + 0);
+                        Indices.Emplace(currentVertex + 3);
+                        Indices.Emplace(currentVertex + 1);
+                        Indices.Emplace(currentVertex + 0);
+                        Indices.Emplace(currentVertex + 2);
+                        Indices.Emplace(currentVertex + 3);
                         currentVertex += 4;
                     }
                 }
@@ -151,17 +160,17 @@ void AChunk::GenerateChunk()
                         // vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->sideMinX, block->sideMaxY));
                         // vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->sideMaxX, block->sideMaxY));
 
-                        vertices.emplace_back(x + 0, y + 1, z + 0, block->sideMinX, block->sideMinY);
-                        vertices.emplace_back(x + 1, y + 1, z + 0, block->sideMaxX, block->sideMinY);
-                        vertices.emplace_back(x + 0, y + 1, z + 1, block->sideMinX, block->sideMaxY);
-                        vertices.emplace_back(x + 1, y + 1, z + 1, block->sideMaxX, block->sideMaxY);
+                        Vertices.Emplace(x + 0, y + 1, z + 0, block->sideMinX, block->sideMinY);
+                        Vertices.Emplace(x + 1, y + 1, z + 0, block->sideMaxX, block->sideMinY);
+                        Vertices.Emplace(x + 0, y + 1, z + 1, block->sideMinX, block->sideMaxY);
+                        Vertices.Emplace(x + 1, y + 1, z + 1, block->sideMaxX, block->sideMaxY);
 
-                        indices.push_back(currentVertex + 0);
-                        indices.push_back(currentVertex + 3);
-                        indices.push_back(currentVertex + 1);
-                        indices.push_back(currentVertex + 0);
-                        indices.push_back(currentVertex + 2);
-                        indices.push_back(currentVertex + 3);
+                        Indices.Emplace(currentVertex + 0);
+                        Indices.Emplace(currentVertex + 3);
+                        Indices.Emplace(currentVertex + 1);
+                        Indices.Emplace(currentVertex + 0);
+                        Indices.Emplace(currentVertex + 2);
+                        Indices.Emplace(currentVertex + 3);
                         currentVertex += 4;
                     }
                 }
@@ -188,17 +197,17 @@ void AChunk::GenerateChunk()
                         // vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->sideMinX, block->sideMaxY));
                         // vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->sideMaxX, block->sideMaxY));
 
-                        vertices.emplace_back(x + 0, y + 0, z + 0, block->sideMinX, block->sideMinY);
-                        vertices.emplace_back(x + 0, y + 1, z + 0, block->sideMaxX, block->sideMinY);
-                        vertices.emplace_back(x + 0, y + 0, z + 1, block->sideMinX, block->sideMaxY);
-                        vertices.emplace_back(x + 0, y + 1, z + 1, block->sideMaxX, block->sideMaxY);
+                        Vertices.Emplace(x + 0, y + 0, z + 0, block->sideMinX, block->sideMinY);
+                        Vertices.Emplace(x + 0, y + 1, z + 0, block->sideMaxX, block->sideMinY);
+                        Vertices.Emplace(x + 0, y + 0, z + 1, block->sideMinX, block->sideMaxY);
+                        Vertices.Emplace(x + 0, y + 1, z + 1, block->sideMaxX, block->sideMaxY);
 
-                        indices.push_back(currentVertex + 0);
-                        indices.push_back(currentVertex + 3);
-                        indices.push_back(currentVertex + 1);
-                        indices.push_back(currentVertex + 0);
-                        indices.push_back(currentVertex + 2);
-                        indices.push_back(currentVertex + 3);
+                        Indices.Emplace(currentVertex + 0);
+                        Indices.Emplace(currentVertex + 3);
+                        Indices.Emplace(currentVertex + 1);
+                        Indices.Emplace(currentVertex + 0);
+                        Indices.Emplace(currentVertex + 2);
+                        Indices.Emplace(currentVertex + 3);
                         currentVertex += 4;
                     }
                 }
@@ -225,17 +234,17 @@ void AChunk::GenerateChunk()
                         // vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->sideMinX, block->sideMaxY));
                         // vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->sideMaxX, block->sideMaxY));
 
-                        vertices.emplace_back(x + 1, y + 1, z + 0, block->sideMinX, block->sideMinY);
-                        vertices.emplace_back(x + 1, y + 0, z + 0, block->sideMaxX, block->sideMinY);
-                        vertices.emplace_back(x + 1, y + 1, z + 1, block->sideMinX, block->sideMaxY);
-                        vertices.emplace_back(x + 1, y + 0, z + 1, block->sideMaxX, block->sideMaxY);
+                        Vertices.Emplace(x + 1, y + 1, z + 0, block->sideMinX, block->sideMinY);
+                        Vertices.Emplace(x + 1, y + 0, z + 0, block->sideMaxX, block->sideMinY);
+                        Vertices.Emplace(x + 1, y + 1, z + 1, block->sideMinX, block->sideMaxY);
+                        Vertices.Emplace(x + 1, y + 0, z + 1, block->sideMaxX, block->sideMaxY);
 
-                        indices.push_back(currentVertex + 0);
-                        indices.push_back(currentVertex + 3);
-                        indices.push_back(currentVertex + 1);
-                        indices.push_back(currentVertex + 0);
-                        indices.push_back(currentVertex + 2);
-                        indices.push_back(currentVertex + 3);
+                        Indices.Emplace(currentVertex + 0);
+                        Indices.Emplace(currentVertex + 3);
+                        Indices.Emplace(currentVertex + 1);
+                        Indices.Emplace(currentVertex + 0);
+                        Indices.Emplace(currentVertex + 2);
+                        Indices.Emplace(currentVertex + 3);
                         currentVertex += 4;
                     }
                 }
@@ -262,17 +271,17 @@ void AChunk::GenerateChunk()
                         // vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->bottomMinX, block->bottomMaxY));
                         // vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->bottomMaxX, block->bottomMaxY));
 
-                        vertices.emplace_back(x + 1, y + 1, z + 0, block->bottomMinX, block->bottomMinY);
-                        vertices.emplace_back(x + 0, y + 1, z + 0, block->bottomMaxX, block->bottomMinY);
-                        vertices.emplace_back(x + 1, y + 0, z + 0, block->bottomMinX, block->bottomMaxY);
-                        vertices.emplace_back(x + 0, y + 0, z + 0, block->bottomMaxX, block->bottomMaxY);
+                        Vertices.Emplace(x + 1, y + 1, z + 0, block->bottomMinX, block->bottomMinY);
+                        Vertices.Emplace(x + 0, y + 1, z + 0, block->bottomMaxX, block->bottomMinY);
+                        Vertices.Emplace(x + 1, y + 0, z + 0, block->bottomMinX, block->bottomMaxY);
+                        Vertices.Emplace(x + 0, y + 0, z + 0, block->bottomMaxX, block->bottomMaxY);
 
-                        indices.push_back(currentVertex + 0);
-                        indices.push_back(currentVertex + 3);
-                        indices.push_back(currentVertex + 1);
-                        indices.push_back(currentVertex + 0);
-                        indices.push_back(currentVertex + 2);
-                        indices.push_back(currentVertex + 3);
+                        Indices.Emplace(currentVertex + 0);
+                        Indices.Emplace(currentVertex + 3);
+                        Indices.Emplace(currentVertex + 1);
+                        Indices.Emplace(currentVertex + 0);
+                        Indices.Emplace(currentVertex + 2);
+                        Indices.Emplace(currentVertex + 3);
                         currentVertex += 4;
                     }
                 }
@@ -299,17 +308,17 @@ void AChunk::GenerateChunk()
                         // vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->topMinX, block->topMaxY));
                         // vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->topMaxX, block->topMaxY));
 
-                        vertices.emplace_back(x + 0, y + 1, z + 1, block->topMinX, block->topMinY);
-                        vertices.emplace_back(x + 1, y + 1, z + 1, block->topMaxX, block->topMinY);
-                        vertices.emplace_back(x + 0, y + 0, z + 1, block->topMinX, block->topMaxY);
-                        vertices.emplace_back(x + 1, y + 0, z + 1, block->topMaxX, block->topMaxY);
+                        Vertices.Emplace(x + 0, y + 1, z + 1, block->topMinX, block->topMinY);
+                        Vertices.Emplace(x + 1, y + 1, z + 1, block->topMaxX, block->topMinY);
+                        Vertices.Emplace(x + 0, y + 0, z + 1, block->topMinX, block->topMaxY);
+                        Vertices.Emplace(x + 1, y + 0, z + 1, block->topMaxX, block->topMaxY);
 
-                        indices.push_back(currentVertex + 0);
-                        indices.push_back(currentVertex + 3);
-                        indices.push_back(currentVertex + 1);
-                        indices.push_back(currentVertex + 0);
-                        indices.push_back(currentVertex + 2);
-                        indices.push_back(currentVertex + 3);
+                        Indices.Emplace(currentVertex + 0);
+                        Indices.Emplace(currentVertex + 3);
+                        Indices.Emplace(currentVertex + 1);
+                        Indices.Emplace(currentVertex + 0);
+                        Indices.Emplace(currentVertex + 2);
+                        Indices.Emplace(currentVertex + 3);
                         currentVertex += 4;
                     }
                 }
@@ -326,18 +335,18 @@ void AChunk::GenerateChunk()
     delete[] upData;
     delete[] downData;
 
-    generated = true;
+    bGenerated = true;
 
     //std::cout << "Generated: " << generated << '\n';
 }
 
-void AChunk::Render(unsigned int modelLoc)
+void Jafg::AChunk::Render(unsigned int ModelLoc)
 {
-    if (!ready)
+    if (!bReady)
     {
-        if (generated)
+        if (bGenerated)
         {
-            JustTemp::F(&vertexArrayObject, &vbo, &ebo, &vertices, &indices, &numTriangles);
+            JustTemp::F(&VertexArrayObject, &Vbo, &Ebo, &Vertices, &Indices, &NumTriangles);
             // numTriangles = static_cast<unsigned int>( indices.size() );
             //
             // glGenVertexArrays(1, &vertexArrayObject);
@@ -356,7 +365,7 @@ void AChunk::Render(unsigned int modelLoc)
             // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
             // glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(indices.size() * sizeof(unsigned int)), indices.data(),
             //              GL_STATIC_DRAW);
-            ready = true;
+            bReady = true;
         }
 
         return;
@@ -365,7 +374,7 @@ void AChunk::Render(unsigned int modelLoc)
     //std::cout << "Rendering chunk " << chunkPos.x << ", " << chunkPos.y << ", " << chunkPos.z << '\n'
     //	<< "Chunk VAO: " << vertexArrayObject << '\n' << "Triangles: " << numTriangles << '\n';
 
-    JustTemp::G(&vertexArrayObject, &numTriangles, &worldPos, &modelLoc);
+    JustTemp::G(&VertexArrayObject, &NumTriangles, &WorldPos, &ModelLoc);
 
     // glBindVertexArray(vertexArrayObject);
     //

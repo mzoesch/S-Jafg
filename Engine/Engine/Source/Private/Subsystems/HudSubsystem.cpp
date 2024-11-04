@@ -3,6 +3,7 @@
 #include "CoreAFX.h"
 #include "Subsystems/HudSubsystem.h"
 #include "Player/LocalPlayer.h"
+#include "Engine/Engine.h"
 
 void Jafg::JHudSubsystem::Initialize(LSubsystemCollection& Collection)
 {

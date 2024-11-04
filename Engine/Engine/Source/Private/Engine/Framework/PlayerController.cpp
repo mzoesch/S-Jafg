@@ -5,6 +5,7 @@
 #include "Engine/World.h"
 #include "Engine/Framework/Pawn.h"
 #include "Player/LocalPlayer.h"
+#include "Engine/Engine.h"
 
 void Jafg::APlayerController::BeginLife()
 {

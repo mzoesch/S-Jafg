@@ -19,6 +19,11 @@ ENGINEFRAMEWORK_API LCarnifex**      GCarnifexReferrer = nullptr;
 
 } /* ~Namespace Private */
 
+void MakeDeferredObjectFinal(Private::JObjectBase* InObject)
+{
+    InObject->BeginLife();
+}
+
 } /* ~Namespace Jafg */
 
 void Jafg::Private::CreateSingletonObjectRegistry()
@@ -82,7 +87,7 @@ Jafg::Private::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDefe
     checkCode(
         checkMsgf(
             /* Offset of VTable ptr is 8 bytes (at least on x64) - that is currently the only platform we support. */
-            ::Jafg::OffsetOf(&JObjectBase::VClass) == 8 ,
+            ::Jafg::OffsetOf(&JObjectBase::VClass) == 8,
             "Offset is [{}].", ::Jafg::OffsetOf(&JObjectBase::VClass)
         )
 

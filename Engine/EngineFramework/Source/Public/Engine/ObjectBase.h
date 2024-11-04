@@ -68,7 +68,13 @@ public:
      * Use it as a deferred constructor that needs runtime information not available at module static storage
      * initialization time.
      */
-    virtual void BeginLife() { }
+    virtual void BeginLife()
+    {
+#if DO_DOUBLE_CHECK_LIFETIMES
+        jassert( this->bHasBegunLife == false )
+        this->bHasBegunLife = true;
+#endif /* DO_DOUBLE_CHECK_LIFETIMES */
+    }
 
     /**
      * Marks this object instance as garbage, and it will be killed at the end of this or the next tick depending
@@ -97,6 +103,10 @@ private:
 
     bool                             bGarbage = false;
     ::Jafg::Private::LObjectContext* Outer    = nullptr;
+
+#if DO_DOUBLE_CHECK_LIFETIMES
+    bool bHasBegunLife = false;
+#endif /* DO_DOUBLE_CHECK_LIFETIMES */
 };
 
 } /* ~Namespace Private */

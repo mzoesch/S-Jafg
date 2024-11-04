@@ -8,8 +8,6 @@
 namespace Jafg
 {
 
-class LWorld;
-
 DECLARE_JAFG_CLASS()
 class ENGINE_API AActor : public JObject
 {
@@ -23,9 +21,14 @@ protected:
 
 public:
 
-    virtual void BeginLife() override        { JObject::BeginLife(); }
+    virtual void BeginLife() override        { Super::BeginLife(); }
     virtual void Tick(const float DeltaTime) { }
-    virtual void EndLife()                   { }
+    virtual void EndLife()                   { Super::EndLife(); }
 };
 
 } /* ~Namespace Jafg. */
+
+/*
+ * Keep this include as every action with any actor will need a ton of function from this include.
+ */
+#include "ActorUtility.h"

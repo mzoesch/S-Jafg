@@ -24,8 +24,8 @@ Jafg::Private::JObjectBase::~JObjectBase()
      *   - Used a smart pointer not from the jafg library, for example, a std::shared_ptr (Which are not
      *     compatible).
      *
-     * Create a new object with NewObject. Delete them by either calling #MarkAsGarbage to get them distracted
-     * at the next engine butcher cycle or by calling #KillYourSelfNow to get them distracted immediately (comparable
+     * Create a new object with NewObject<T>. Delete them by either calling #MarkAsGarbage to get them discarded
+     * at the next engine butcher cycle or by calling #KillYourSelfNow to get them discarded immediately (comparable
      * with a call to the delete operator).
      */
     check( this->bGarbage )

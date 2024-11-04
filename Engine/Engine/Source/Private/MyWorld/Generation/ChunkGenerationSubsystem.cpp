@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAFX.h"
-#include "MyWorld/Chunk/ChunkGenerationSubsystem.h"
+#include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "JustTemp.h"
 #include "Engine/Framework/Camera.h"
 #include "Engine/World.h"
@@ -75,11 +75,17 @@ FunctionEnd:
 void Jafg::JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
+    this->SetTickInterval(0.0f);
+    return;
 }
 
-void Jafg::JChunkGenerationSubsystem::Tick(const float DeltaTime)
+void Jafg::JChunkGenerationSubsystem::CappedTick(const float EngineDeltaTime, const float SubsystemDeltaTime)
 {
-    Super::Tick(DeltaTime);
+    Super::CappedTick(EngineDeltaTime, SubsystemDeltaTime);
+
+    LOG_INFO(
+        LogTemporal,
+        "Ticking with {:.4f} engine delta time and {:.4f} subsystem delta time", EngineDeltaTime, SubsystemDeltaTime)
 
     this->UpdateChunkQueue();
     this->KillChunks();
@@ -130,12 +136,13 @@ void Jafg::JChunkGenerationSubsystem::KillChunks()
 {
     for (auto It = Chunks.begin(); It != Chunks.end();)
     {
-        if (It->second->ready && (
-               abs(It->second->chunkPos.x - static_cast<float>(LastCamX)) > static_cast<float>(RenderDistance)
-            || abs(It->second->chunkPos.y - static_cast<float>(LastCamY)) > static_cast<float>(RenderDistance)
+        if (It->second->bReady && (
+               abs(It->second->ChunkPos.x - static_cast<float>(LastCamX)) > static_cast<float>(RenderDistance)
+            || abs(It->second->ChunkPos.y - static_cast<float>(LastCamY)) > static_cast<float>(RenderDistance)
         ))
         {
-            It->second->~AChunk();
+            It->second->KillYourSelfNow();
+            It->second = nullptr;
             It = Chunks.erase(It);
         }
         else
@@ -158,7 +165,10 @@ void Jafg::JChunkGenerationSubsystem::GenerateChunks()
         int32 Key = TupleToKey({static_cast<int32>(Next.x), static_cast<int32>(Next.y), static_cast<int32>(Next.z)});
         if (!Chunks.contains(Key))
         {
-            Chunks.try_emplace(Key, new AChunk(Next));
+            AChunk* Chunk = NewDeferredObject<AChunk>(this->GetWorld());
+            Chunk->ChunkPos = Next;
+            MakeDeferredObjectFinal(Chunk);
+            Chunks.try_emplace(Key, Chunk);
             ++GeneratedChunks;
         }
     }

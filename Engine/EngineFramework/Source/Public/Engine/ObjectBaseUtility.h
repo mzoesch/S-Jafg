@@ -6,7 +6,6 @@
 #include "ObjectClass.h"
 #include "Engine/ObjectContext.h"
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler options
 
@@ -18,6 +17,8 @@
  * virtual method.
  */
 #define DO_PURE_VIRTUAL_COMPILER_CHECKS                 0
+
+#define DO_DOUBLE_CHECK_LIFETIMES                       !IN_SHIPPING
 
 // ~Compiler options
 ///////////////////////////////////////////////////////////////////////////////
@@ -82,6 +83,11 @@ FORCEINLINE auto NewDeferredObject(const LSimpleString& InClassName) -> Private:
 FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LSimpleString& InClassName) -> Private::JObjectBase*;
 /** Allocate a new object with its given static class and a given context. The begin-life method will not be called. */
 FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> Private::JObjectBase*;
+
+/**
+ * Call this method to finalize an object that was deferred.
+ */
+ENGINEFRAMEWORK_API void MakeDeferredObjectFinal(Private::JObjectBase* InObject);
 
 /** @return The dynamic-casted object if the object is or derives from TObj, else nullptr. */
 template <typename TObj>
@@ -288,9 +294,12 @@ struct LRegistrationCallbackHelper final
 
 } /* ~Namespace Private */
 
+class AActor;
+
 template <typename TObj>
 TObj* NewObject()
 {
+    static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed");
     return NewObject<TObj>(GOmniVitaContext);
 }
 

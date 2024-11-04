@@ -69,18 +69,18 @@ void JustTemp::E(uint32* vertexArrayObject, uint32* vbo, uint32* ebo)
     glDeleteVertexArrays(1, vertexArrayObject);
 }
 
-void JustTemp::F(uint32* vertexArrayObject, uint32* vbo, uint32* ebo, std::vector<Jafg::Vertex>* vertices,
-    std::vector<uint32>* indices, uint32* numTriangles)
+void JustTemp::F(uint32* vertexArrayObject, uint32* vbo, uint32* ebo, Jafg::TdhArray<Jafg::Vertex>* vertices,
+    Jafg::TdhArray<uint32>* indices, uint32* numTriangles)
 {
     using namespace Jafg;
-    *numTriangles = static_cast<unsigned int>( indices->size() );
+    *numTriangles = static_cast<unsigned int>( indices->GetSize() );
 
     glGenVertexArrays(1, vertexArrayObject);
     glBindVertexArray(*vertexArrayObject);
 
     glGenBuffers(1, vbo);
     glBindBuffer(GL_ARRAY_BUFFER, *vbo);
-    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices->size() * sizeof(Jafg::Vertex)), vertices->data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices->GetSize() * sizeof(Jafg::Vertex)), vertices->GetData(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_BYTE, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, posX)));
     glEnableVertexAttribArray(0);
@@ -89,7 +89,7 @@ void JustTemp::F(uint32* vertexArrayObject, uint32* vbo, uint32* ebo, std::vecto
 
     glGenBuffers(1, ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(indices->size() * sizeof(unsigned int)), indices->data(),
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(indices->GetSize() * sizeof(unsigned int)), indices->GetData(),
                  GL_STATIC_DRAW);
 }
 

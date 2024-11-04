@@ -3,6 +3,7 @@
 #include "CoreAFX.h"
 #include "Engine/Object.h"
 #include "Engine/World.h"
+#include "Engine/Engine.h"
 
 void Jafg::JObject::BeginLife()
 {

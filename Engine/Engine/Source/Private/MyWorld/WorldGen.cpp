@@ -2,10 +2,12 @@
 #include "MyWorld/WorldGen.h"
 #include <OpenSimplexNoise.hh>
 #include "MyWorld/Blocks.h"
-#include "MyWorld/Chunk.h"
+#include "MyWorld/Chunk/Chunk.h"
 
 void WorldGen::GenerateChunkData(int chunkX, int chunkY, int chunkZ, int chunkSize, uint32*& chunkData)
 {
+    using namespace Jafg;
+
     const OSN::Noise<2> SurfaceNoise;
     const OSN::Noise<3> CaveNoise;
     const int ChunkLocX = chunkX * chunkSize;
