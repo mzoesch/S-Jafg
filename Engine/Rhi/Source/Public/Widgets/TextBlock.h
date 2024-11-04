@@ -12,13 +12,13 @@ namespace Jafg
 class LShader;
 class LViewport;
 
-struct RHI_API LTextBlockBrush
+struct LTextBlockBrush
 {
     LColor Tint  = LColor::Transparent;
     LColor Color = LColor::White;
     float  Scale = 1.0f;
 
-    static LTextBlockBrush MakeDefaultSmall();
+    RHI_API static LTextBlockBrush MakeDefaultSmall();
 };
 
 DECLARE_JAFG_CLASS()

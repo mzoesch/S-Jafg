@@ -33,7 +33,7 @@ Jafg::LShader::LShader(const char* vertexPath, const char* fragmentPath)
     try
     {
         std::string ExecPath(PLATFORM_MAX_PATH, '\0');
-        GetModuleFileNameA(NULL, &ExecPath[0], ExecPath.size());
+        GetModuleFileNameA(nullptr, ExecPath.data(), static_cast<DWORD>(ExecPath.size()));
         ExecPath = ExecPath.substr(0, ExecPath.find_last_of('\\'));
 
         std::cout << "Opening vertex shader file: " << ExecPath + '/' + vertexPath << '\n';

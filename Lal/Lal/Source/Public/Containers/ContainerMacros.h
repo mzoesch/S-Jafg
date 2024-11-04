@@ -8,11 +8,13 @@
  *
  * @param Api     The api where we should look for export / import symbols.
  * @param Element The element type T of the array.
+ *
+ * @remark
  */
 #define MAKE_EXTERNAL_TEMPLATE_DHARRAY(Api, Element)                    \
     PRIVATE_JAFG_MAKE_EXTERNAL_TEMPLATE(                                \
         Api,                                                            \
-        TArray<                                                         \
+        ::Jafg::TArray<                                                 \
             Element PRIVATE_JAFG_CONTAINER_COMMA                        \
             ::Jafg::ResizePolicy::Dynamic PRIVATE_JAFG_CONTAINER_COMMA  \
             ::Jafg::AllocationPolicy::Heap PRIVATE_JAFG_CONTAINER_COMMA \

@@ -6,17 +6,51 @@
     #error "Wanted to override generic platform types with windows specific types, but platform is not windows."
 #endif /* !PLATFORM_WINDOWS */
 
+#ifndef _MSC_VER
+    #error "Compiling windows platform specific code with non-msvc compiler."
+#else /* !_MSC_VER */
+    #if _MSC_VER < 1930
+        #error "Program requires at least verion \"Visual Studio 2022 RTW 17.0\" of the MSVC compiler."
+    #endif /* _MSC_VER < 1930 */
+#endif /* _MSC_VER */
+
+#ifndef __cplusplus
+    #error "No cpp standard specified."
+#else /* !__cplusplus */
+    #if __cplusplus == 199711L
+        #error "Mvsc command line build flag was not set. Missing \"/Zc:__cplusplus\" to handle cpp verion ctrl correctly."
+    #else /* __cplusplus == 199711L */
+        #if __cplusplus < 202002L
+            #error "Program requires at least C++20."
+        #endif /* __cplusplus < 202002L */
+    #endif /* __cplusplus != 199711L */
+#endif /* __cplusplus */
+
 /* Why the duck does this even exists. This destroys so many normal functions - wtf?? */
 #define NOMINMAX
 #include <Windows.h>
 
-#include <intrin.h>
+///////////////////////////////////////////////////////////////////////////////
+// Compiler config
 
 /*
- * TODO Hide this in a private translation file.
- *      We want to get rid of all these includes. Including the ones in PartyPCH.h.
+ * Warning C4172 (compiler warning level 1)   ===>   Raise to error:
+ * returning address of local variable or temporary: function.
+ *
+ * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4172?view=msvc-170
  */
-#include <string>
+#pragma warning(error : 4172)
+
+/*
+ * Warning C4251 (compiler warning level 2):
+ * 'type' : class 'type1' needs to have dll-interface to be used by clients of class 'type2'.
+ *
+ * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4251?view=msvc-170
+ */
+#pragma warning(disable : 4251)
+
+// ~Compiler config
+///////////////////////////////////////////////////////////////////////////////
 
 /*
  * We forward declare this shit, as this file should only be included implicitly by including Platform.h
@@ -24,39 +58,11 @@
 struct LGenericPlatformTypes;
 
 struct  LWinPlatformTypes;
+struct  LWinPlatformBreakDefines;
 typedef LWinPlatformTypes LPlatformTypes;
 
 struct LWinPlatformTypes final : public LGenericPlatformTypes
 {
-};
-
-struct LWinPlatformBreakDefines final
-{
-    NORETURN NOINLINE static void OnProgramPanic(const std::string& InMessage, const std::string& InFile, const int32_t InLine)
-    {
-        const std::string  InCaption     = "Jafg panicked";
-        const std::wstring InCaptionWide = std::wstring(InCaption.begin(), InCaption.end());
-
-        std::string InMessageWithAdditionalInfo;
-        InMessageWithAdditionalInfo += "Jafg entered an one-way enclosing block inside a critical control path and panicked.\n\n";
-        InMessageWithAdditionalInfo += "File: ";
-        InMessageWithAdditionalInfo += InFile;
-        InMessageWithAdditionalInfo += "\nLine: ";
-        InMessageWithAdditionalInfo += std::to_string(InLine);
-        InMessageWithAdditionalInfo += "\n\nExpression: ";
-        InMessageWithAdditionalInfo += InMessage;
-
-        const std::wstring InMessageWide = std::wstring(InMessageWithAdditionalInfo.begin(), InMessageWithAdditionalInfo.end());
-
-#if IN_SHIPPING
-        /*
-         * We only need this in shipping because abort will ask the debugger, if attached, to load the memory dump.
-         */
-        MessageBox(nullptr, InMessageWide.c_str(), InCaptionWide.c_str(), MB_ICONERROR | MB_OK);
-#endif /* IN_SHIPPING */
-
-        abort();
-    }
 };
 
 #ifdef PLATFORM_MAX_PATH
@@ -148,3 +154,9 @@ struct LWinPlatformBreakDefines final
  * https://learn.microsoft.com/en-us/cpp/mfc/windows-sockets-byte-ordering?view=msvc-170
  */
 #define PLATFORM_USES_LITTLE_ENDIAN     1
+
+struct LWinPlatformBreakDefines final
+{
+    NORETURN NOINLINE
+    static void OnProgramPanic(const std::string& InMessage, const std::string& InFile, const int32_t InLine);
+};

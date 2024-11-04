@@ -120,6 +120,7 @@ func GetAllBuildTargetConfigurations(target *Shared.Target) []string {
 func WriteAllLuaBuildFileSharedLogic(builder *strings.Builder) {
     WriteWithIndent(builder, 0, "language 'C++'\n")
     WriteWithIndent(builder, 0, "cppdialect 'C++20'\n")
+    WriteWithIndent(builder, 0, "buildoptions { '/Zc:__cplusplus' }\n")
 
     WriteWithIndent(builder, 0, "workspace 'Jafg'\n")
     WriteWithIndent(builder, 4, "architecture 'x64'\n")

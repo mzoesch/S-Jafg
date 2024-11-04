@@ -150,12 +150,13 @@ void Jafg::JChunkGenerationSubsystem::GenerateChunks()
     int32 GeneratedChunks = 0;
     while (!ChunkQueue.empty() && GeneratedChunks < 2)
     {
-        glm::vec3 Next = ChunkQueue.front();
+        const glm::vec3 Next = ChunkQueue.front();
         ChunkQueue.pop();
 
-        if (!Chunks.contains(TupleToKey({Next.x, Next.y, Next.z})))
+        int32 Key = TupleToKey({static_cast<int32>(Next.x), static_cast<int32>(Next.y), static_cast<int32>(Next.z)});
+        if (!Chunks.contains(Key))
         {
-            Chunks.try_emplace(TupleToKey({Next.x, Next.y, Next.z}), new AChunk(Next));
+            Chunks.try_emplace(Key, new AChunk(Next));
             ++GeneratedChunks;
         }
     }

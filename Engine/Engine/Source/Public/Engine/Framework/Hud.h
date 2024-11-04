@@ -16,8 +16,6 @@ namespace Jafg
 class WUserWidget;
 struct LSubsystemCollection;
 
-MAKE_EXTERNAL_TEMPLATE_DHARRAY(ENGINE, WUserWidget*)
-
 /**
  * The hud is owned by the local player and shares its lifetime.
  * The hud is the main hub for all user interface elements. Create hud subsystems to automatically

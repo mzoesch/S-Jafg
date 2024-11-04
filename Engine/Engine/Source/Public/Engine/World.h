@@ -34,8 +34,6 @@ enum Type : uint8
 
 } /* ~Namespace EWorldState */
 
-MAKE_EXTERNAL_TEMPLATE_DHARRAY(ENGINE, ::Jafg::AActor*)
-
 /**
  * Represents a world at its core.
  * Once every frame a world will be ticked. It may register itself to the RHI to be used when

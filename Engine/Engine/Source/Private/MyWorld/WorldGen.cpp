@@ -34,11 +34,11 @@ void WorldGen::GenerateChunkData(int chunkX, int chunkY, int chunkZ, int chunkSi
                     ? 1 : 0
                 );*/
 
-                const float NoiseCaves = CaveNoise.eval(
-                    static_cast<float>(X + ChunkLocX) * .1f,
-                    static_cast<float>(Y + ChunkLocY) * .1f,
-                    static_cast<float>(Z + ChunkLocZ) * .1f
-                );
+                // const float NoiseCaves = CaveNoise.eval(
+                //     static_cast<float>(X + ChunkLocX) * .1f,
+                //     static_cast<float>(Y + ChunkLocY) * .1f,
+                //     static_cast<float>(Z + ChunkLocZ) * .1f
+                // );
 
                 if (Z + ChunkLocZ < Noise2D)
                 {

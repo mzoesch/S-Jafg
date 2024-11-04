@@ -35,8 +35,8 @@ public:
 
     // WWidgetParentBase implementation
     FORCEINLINE virtual auto GetChildren() const -> const TdhArray<LWidgetSlot*>& override { return this->SingleRootChild; }
-    FORCEINLINE virtual auto RemoveChild(WWidgetNode* InChild) -> void override;
-    FORCEINLINE virtual auto RemoveChild(LWidgetSlot* InSlot) -> void override;
+                virtual auto RemoveChild(WWidgetNode* InChild) -> void override;
+                virtual auto RemoveChild(LWidgetSlot* InSlot) -> void override;
     FORCEINLINE virtual auto AddChild(WWidgetNode* InChild) -> LWidgetSlot* override NON_CALLABLE_MEMBER(return nullptr)
     FORCEINLINE virtual auto GetPaddingPtr() const -> const LPadding* override { return &this->Padding; }
     FORCEINLINE virtual auto GetPaddingPtr() -> LPadding* override { return &this->Padding; }

@@ -17,7 +17,7 @@ class LHud;
  * Widget construction and destruction should be done here.
  */
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
-class JHudSubsystem : public JSubsystem
+class ENGINE_API JHudSubsystem : public JSubsystem
 {
     GENERATED_CLASS_BODY()
 
