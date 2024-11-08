@@ -77,6 +77,8 @@ FORCEINLINE auto NewDeferredObject() -> TObj*;
 /** Allocate a new object of type TObj within a given context. The begin-life method will not be called. */
 template <typename TObj>
 FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext) -> TObj*;
+template <typename TObj>
+FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> TObj*;
 /** Allocate a new object with its given class name. The begin-life method will not be called. */
 FORCEINLINE auto NewDeferredObject(const LSimpleString& InClassName) -> Private::JObjectBase*;
 /** Allocate a new object with its given class name within a given context. The begin-life method will not be called. */
@@ -340,6 +342,12 @@ template <typename TObj>
 TObj* NewDeferredObject(Private::LObjectContext* InContext)
 {
     return Private::LObjectMiscellaneousAccessor::NewDeferredObject<TObj>(InContext);
+}
+
+template <typename TObj>
+TObj* NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass)
+{
+    return reinterpret_cast<TObj*>(NewDeferredObject(InContext, InStaticClass));
 }
 
 Private::JObjectBase* NewDeferredObject(const LSimpleString& InClassName)

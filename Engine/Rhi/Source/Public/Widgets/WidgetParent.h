@@ -22,7 +22,7 @@ protected:
 
 public:
 
-    virtual void MarkAsGarbage() override;
+    virtual void OnGarbage() override;
     virtual void Construct() override;
     virtual void Draw(LViewport& Context) const override;
     virtual void Destruct() override;

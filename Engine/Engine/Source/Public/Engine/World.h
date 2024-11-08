@@ -16,6 +16,13 @@ class LTickableObject;
 struct LLevel;
 struct LSubsystemCollection;
 
+namespace Private
+{
+
+struct LWorldMiscellaneousAccessor;
+
+} /* ~Namespace Private */
+
 namespace EWorldState
 {
 
@@ -38,6 +45,9 @@ enum Type : uint8
  */
 class ENGINE_API LWorld final : public ::Jafg::Private::LObjectContext
 {
+    friend AActor;
+    friend Private::LWorldMiscellaneousAccessor;
+
 public:
 
     LWorld() = delete;
@@ -76,9 +86,13 @@ public:
     void RegisterTickableObject(LTickableObject* Tickable);
     void UnregisterTickableObject(LTickableObject* Tickable);
 
+    FORCEINLINE auto GetTickableObjects() const -> const TdhArray<LTickableObject*>& { return this->TickableObjects; }
+    FORCEINLINE auto GetActors() const -> const TdhArray<AActor*>& { return this->Actors; }
+
 private:
 
     TdhArray<LTickableObject*> TickableObjects;
+    TdhArray<LTickableObject*> DeletedTickableObjects;
 
     TdhArray<AActor*> Actors;
     EWorldState::Type WorldState;
@@ -87,6 +101,12 @@ private:
     void TearDownSubsystems();
 
     LSubsystemCollection* Collection = nullptr;
+
+    /** Main thread only. */
+    bool TickableObjectsPutMutex : 1 = false;
+    bool IsTickableObjectsPutMutexLocked() const { return this->TickableObjectsPutMutex; }
+    void AcquireTickableObjectsLock() { this->TickableObjectsPutMutex = true; }
+    void ReleaseTickableObjectsLock() { this->TickableObjectsPutMutex = false; }
 };
 
 } /* ~Namespace Jafg */

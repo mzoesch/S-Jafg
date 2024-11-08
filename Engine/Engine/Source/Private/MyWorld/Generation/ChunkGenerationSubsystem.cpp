@@ -86,7 +86,7 @@ void Jafg::JChunkGenerationSubsystem::CappedTick(const float EngineDeltaTime, co
     this->UpdateChunkQueue();
     this->KillChunks();
     this->GenerateChunks();
-    this->RenderChunks();
+    // this->RenderChunks();
 
     return;
 }
@@ -164,11 +164,11 @@ void Jafg::JChunkGenerationSubsystem::GenerateChunks()
         int32 Key = TupleToKey({static_cast<int32>(Next.x), static_cast<int32>(Next.y), static_cast<int32>(Next.z)});
         if (!Chunks.contains(Key))
         {
-            AChunk* Chunk = NewDeferredObject<AChunk>(this->GetWorld());
+            AChunk* Chunk = SpawnDeferredActor<AChunk>(this->GetWorld());
             Chunk->ChunkPos = Next;
             Chunk->ChunkKey =
                 { static_cast<LChunkKeyDomainTy>(Next.x), static_cast<LChunkKeyDomainTy>(Next.y), static_cast<LChunkKeyDomainTy>(Next.z) };
-            MakeDeferredObjectFinal(Chunk);
+            MakeDeferredActorFinal(Chunk);
             Chunks.try_emplace(Key, Chunk);
             ++GeneratedChunks;
         }
@@ -177,15 +177,15 @@ void Jafg::JChunkGenerationSubsystem::GenerateChunks()
     return;
 }
 
-void Jafg::JChunkGenerationSubsystem::RenderChunks()
-{
-    // const uint32 ModelLoc = glGetUniformLocation(this->GetWorld()->ShaderProgram->ID, "model");
-    const uint32 ModelLoc = JustTemp::D(this->GetWorld()->ShaderProgram);
-
-    for (const auto& Chunk : Chunks | std::views::values)
-    {
-        Chunk->Render(ModelLoc);
-    }
-
-    return;
-}
+// void Jafg::JChunkGenerationSubsystem::RenderChunks()
+// {
+//     // const uint32 ModelLoc = glGetUniformLocation(this->GetWorld()->ShaderProgram->ID, "model");
+//     const uint32 ModelLoc = JustTemp::D(this->GetWorld()->ShaderProgram);
+//
+//     for (const auto& Chunk : Chunks | std::views::values)
+//     {
+//         Chunk->Render(ModelLoc);
+//     }
+//
+//     return;
+// }

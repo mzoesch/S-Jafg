@@ -5,8 +5,8 @@
 #include "Engine/Engine.h"
 #include "Engine/Framework/Camera.h"
 #include "Platform/Surface.h"
-#include <glm/vec3.hpp>
 #include <glm/gtc/type_ptr.inl>
+#include "Engine/ActorUtility.h"
 #include "JustTemp.h"
 #include "Engine/Framework/PlayerController.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
@@ -36,17 +36,14 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 
     MainCamera = new Camera(LVector(0.0f , 0.0f, 25.0f));
 
-    APlayerController* Pc = NewDeferredObject<APlayerController>(this);
-    this->Actors.Add(Pc);
+    APlayerController* Pc = SpawnDeferredActor<APlayerController>(this);
     GEngine->GetCheckedLocalPlayer()->Possess(Pc);
-
-    APawn* Pawn = NewDeferredObject<APawn>(this);
-    this->Actors.Add(Pawn);
+    APawn* Pawn = SpawnDeferredActor<APawn>(this);
     Pc->Possess(Pawn);
 
     for (AActor* Actor : this->Actors)
     {
-        Actor->BeginLife();
+        MakeDeferredActorFinal(Actor);
     }
 
     this->InitializeSubsystems();
@@ -65,14 +62,30 @@ void Jafg::LWorld::Tick(const float DeltaTime)
     TIntVector2 WindowDimensions = GEngine->GetCheckedLocalPlayer()->GetPrimarySurface()->GetDimensions();
     JustTemp::C(MainCamera->Zoom, ShaderProgram, WindowDimensions, View);
 
-    for (AActor* Actor : this->Actors)
-    {
-        Actor->Tick(DeltaTime);
-    }
-
+    this->AcquireTickableObjectsLock();
     for (LTickableObject* Tickable : this->TickableObjects)
     {
         Tickable->Tick(DeltaTime);
+    }
+    this->ReleaseTickableObjectsLock();
+    for (LTickableObject* Tickable : this->DeletedTickableObjects)
+    {
+        this->TickableObjects.RemoveOnceChecked(Tickable);
+    }
+    this->DeletedTickableObjects.Empty();
+
+    const LViewport* ViewportContext = this->GetEngine()->GetCheckedLocalPlayer()->GetPrimarySurface()->GetViewport();
+    check( ViewportContext )
+    for (const AActor* Actor : this->Actors)
+    {
+        check( Actor->IsGarbage() == false )
+
+        if (Actor->HasRendererComponent())
+        {
+            Actor->GetRendererComponent()->Draw(*ViewportContext);
+        }
+
+        continue;
     }
 
     return;
@@ -83,13 +96,16 @@ void Jafg::LWorld::TearDownContext()
     check( this->GetWorldState() == EWorldState::Running )
     this->WorldState = EWorldState::TearingDown;
 
+    this->TearDownSubsystems();
+
     for (AActor* Actor : this->Actors)
     {
         Actor->KillYourSelfNow();
     }
-    this->Actors.Empty();
 
-    this->TearDownSubsystems();
+    this->Actors.Empty();
+    this->TickableObjects.Empty();
+    this->DeletedTickableObjects.Empty();
 
     LObjectContext::TearDownContext();
 

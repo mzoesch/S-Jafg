@@ -15,9 +15,9 @@ struct LWidgetConstructor
 
 } /* ~Namespace Jafg */
 
-void Jafg::WWidgetNode::MarkAsGarbage()
+void Jafg::WWidgetNode::OnGarbage()
 {
-    Super::MarkAsGarbage();
+    Super::OnGarbage();
 
     this->Destruct();
 

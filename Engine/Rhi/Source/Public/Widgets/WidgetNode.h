@@ -82,7 +82,7 @@ public:
     // JObjectBase implementation
     virtual void BeginLife() override final { Super::BeginLife(); this->Construct(); return; }
     virtual void EndLife() override final   { this->Destruct();   Super::EndLife();  return; }
-    virtual void MarkAsGarbage() override;
+    virtual void OnGarbage() override;
     // ~JObjectBase implementation
 
     virtual void Construct() { }

@@ -12,11 +12,6 @@ void Jafg::APlayerController::BeginLife()
     AActor::BeginLife();
 }
 
-void Jafg::APlayerController::Tick(const float DeltaTime)
-{
-    AActor::Tick(DeltaTime);
-}
-
 void Jafg::APlayerController::EndLife()
 {
     AActor::EndLife();

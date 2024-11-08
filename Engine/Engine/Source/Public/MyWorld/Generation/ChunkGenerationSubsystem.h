@@ -37,7 +37,7 @@ private:
     void UpdateChunkQueue();
     void KillChunks();
     void GenerateChunks();
-    void RenderChunks();
+    // void RenderChunks();
 
     std::unordered_map<int32, AChunk*> Chunks;
     std::queue<glm::vec3> ChunkQueue;

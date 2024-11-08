@@ -22,7 +22,6 @@ protected:
 public:
 
     virtual void BeginLife() override;
-    virtual void Tick(const float DeltaTime) override;
     virtual void EndLife() override;
 
     FORCEINLINE auto DoesPossess() const -> bool { return this->PossessedPawn != nullptr; }

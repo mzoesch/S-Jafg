@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Engine/Actor.h"
+#include "Engine/Components/RenderComponent.h"
 #include "MyWorld/Chunk/ChunkKey.h"
 #include <glm/glm.hpp>
 #include "MyWorld/WorldStatics.h"
@@ -12,6 +13,23 @@
 
 namespace Jafg
 {
+
+class AChunk;
+
+class ENGINE_API LChunkRendererComponent final : public LRendererComponent
+{
+public:
+
+    LChunkRendererComponent() = delete;
+    explicit LChunkRendererComponent(AChunk& Owner);
+    virtual ~LChunkRendererComponent() override = default;
+
+    virtual void Draw(const LViewport& Context) override;
+
+private:
+
+    AChunk* Owner = nullptr;
+};
 
 DECLARE_JAFG_CLASS()
 class ENGINE_API AChunk final : public AActor

@@ -49,10 +49,12 @@ void Jafg::Private::JObjectBase::MarkAsGarbage()
 
 void Jafg::Private::JObjectBase::KillYourSelfNow(const bool bMayBeGarbage /* = false */)
 {
+#if DO_CHECKS
     if (bMayBeGarbage == false)
     {
         check( this->bGarbage == false )
     }
+#endif /* DO_CHECKS */
 
     if (this->bGarbage == false)
     {
@@ -69,6 +71,7 @@ void Jafg::Private::JObjectBase::KillYourSelfNow(const bool bMayBeGarbage /* = f
 
 void Jafg::Private::JObjectBase::MarkAsGarbage(const bool bAddToCarnifex)
 {
+    checkSlow( this->bGarbage == false )
     this->bGarbage = true;
 
     check( this->Outer )
@@ -86,6 +89,8 @@ void Jafg::Private::JObjectBase::MarkAsGarbage(const bool bAddToCarnifex)
         check( this->Outer->GetCarnifex() )
         this->Outer->GetCarnifex()->AddGarbageChild(this);
     }
+
+    this->OnGarbage();
 
     return;
 }

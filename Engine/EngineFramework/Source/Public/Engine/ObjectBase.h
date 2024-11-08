@@ -80,7 +80,7 @@ public:
      * Marks this object instance as garbage, and it will be killed at the end of this or the next tick depending
      * on call time inside said tick.
      */
-    virtual void MarkAsGarbage();
+    void MarkAsGarbage();
     /** Whether this object is marked as garbage and will be killed very soon. */
     FORCEINLINE bool IsGarbage() const { return this->bGarbage; }
 
@@ -89,13 +89,18 @@ public:
      * them to kill themselves now. This might have minimal runtime performance issues when called in large quantities
      * as we cannot use the spare time between ticks, if enforcing it was enabled by the user, for this task.
      */
-    virtual void KillYourSelfNow(const bool bMayBeGarbage = false);
+    void KillYourSelfNow(const bool bMayBeGarbage = false);
 
     /**
      * Called transitively either by the butcher or #KillYourSelfNow at the last moment of this object lifetime.
      * The destructor will still be called afterward, but this should be the destructor for the common people.
      */
     virtual void EndLife() { }
+
+protected:
+
+    /** Delegate called when this object was marked as garbage. */
+    virtual void OnGarbage() { }
 
 private:
 

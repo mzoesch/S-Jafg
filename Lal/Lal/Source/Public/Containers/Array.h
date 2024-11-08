@@ -580,12 +580,13 @@ bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnce(const T& In
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceChecked(const T& InElement) noexcept
 {
-#if IN_SHIPPING
+#if DO_CHECKS
     const bool bRemoved = this->RemoveOnce(InElement);
     check( bRemoved )
-#else /* IN_SHIPPING */
+    return bRemoved;
+#else /* DO_CHECKS */
     return this->RemoveOnce(InElement);
-#endif /* IN_SHIPPING */
+#endif /* !DO_CHECKS */
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>

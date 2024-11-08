@@ -4,15 +4,31 @@
 #include "MyWorld/Chunk/Chunk.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+#include "MyWorld/MyWorldStatics.h"
 #include "JustTemp.h"
 #include "MyWorld/Blocks.h"
 #include "MyWorld/WorldGen.h"
 #include "MyWorld/WorldStatics.h"
 
+Jafg::LChunkRendererComponent::LChunkRendererComponent(AChunk& Owner)
+{
+    this->Owner = &Owner;
+}
+
+void Jafg::LChunkRendererComponent::Draw(const LViewport& Context)
+{
+    const uint32 ModelLoc = JustTemp::D(this->Owner->GetWorld()->ShaderProgram);
+
+    this->Owner->Render(ModelLoc);
+
+    return;
+}
+
 void Jafg::AChunk::BeginLife()
 {
     Super::BeginLife();
+
+    this->SetRendererComponent(new LChunkRendererComponent(*this));
 
     this->WorldLocation = this->ChunkKey.ToWorldSpaceVector();
 

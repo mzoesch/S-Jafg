@@ -2,7 +2,7 @@
 
 #include "Widgets/WidgetParent.h"
 
-void Jafg::WWidgetParent::MarkAsGarbage()
+void Jafg::WWidgetParent::OnGarbage()
 {
     for (const LWidgetSlot* ChildSlot : this->Children)
     {
@@ -13,7 +13,7 @@ void Jafg::WWidgetParent::MarkAsGarbage()
 
     this->Children.Empty();
 
-    Super::MarkAsGarbage();
+    Super::OnGarbage();
 
     return;
 }
