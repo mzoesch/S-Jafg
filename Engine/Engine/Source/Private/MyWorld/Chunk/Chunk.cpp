@@ -14,19 +14,15 @@ void Jafg::AChunk::BeginLife()
 {
     Super::BeginLife();
 
-    WorldPos = glm::vec3(ChunkPos.x * WorldStatics::ChunkSize,
-                         ChunkPos.y * WorldStatics::ChunkSize,
-                         ChunkPos.z * WorldStatics::ChunkSize);
+    this->WorldLocation = this->ChunkKey.ToWorldSpaceVector();
 
     bReady = false;
     bGenerated = false;
 
-    this->RawVoxelData = new uint32[WorldStatics::VoxelCount];
-    memset(RawVoxelData, 0, WorldStatics::VoxelCount * sizeof(uint32));
+    this->RawVoxelData = new uint32[MwStatics::VoxelCount];
+    memset(this->RawVoxelData, 0, MwStatics::VoxelCount * sizeof(uint32));
     this->GenerateChunk();
 
-    // std::cout << "Created chunk at: " << chunkPos.x << ", " << chunkPos.y << ", " << chunkPos.z << '\n';
-    // std::cout.flush();
     return;
 }
 
@@ -368,7 +364,7 @@ void Jafg::AChunk::Render(unsigned int ModelLoc)
     //std::cout << "Rendering chunk " << chunkPos.x << ", " << chunkPos.y << ", " << chunkPos.z << '\n'
     //	<< "Chunk VAO: " << vertexArrayObject << '\n' << "Triangles: " << numTriangles << '\n';
 
-    JustTemp::G(&VertexArrayObject, &NumTriangles, &WorldPos, &ModelLoc);
+    JustTemp::G(&VertexArrayObject, &NumTriangles, &WorldLocation, &ModelLoc);
 
     // glBindVertexArray(vertexArrayObject);
     //
@@ -378,4 +374,6 @@ void Jafg::AChunk::Render(unsigned int ModelLoc)
     // glUniformMatrix4fv(static_cast<GLint>(modelLoc), 1, GL_FALSE, glm::value_ptr(model));
     //
     // glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(numTriangles), GL_UNSIGNED_INT, 0);
+
+    return;
 }

@@ -13,7 +13,7 @@ enum Type : uint8
     Identity, Zero
 };
 
-}
+} /* ~Namespace Matrix */
 
 /*----------------------------------------------------------------------------
     Type Forwards.

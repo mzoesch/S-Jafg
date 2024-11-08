@@ -98,12 +98,14 @@ void JustTemp::F(uint32* vertexArrayObject, uint32* vbo, uint32* ebo, Jafg::TdhA
                  GL_STATIC_DRAW);
 }
 
-void JustTemp::G(uint32* vertexArrayObject, uint32* numTriangles, glm::vec3* worldPos, uint32* modelLoc)
+void JustTemp::G(uint32* vertexArrayObject, uint32* numTriangles, Jafg::LVector* worldPos, uint32* modelLoc)
 {
     glBindVertexArray(*vertexArrayObject);
 
+    glm::vec3 worldPosVec = glm::vec3(worldPos->X, worldPos->Y, worldPos->Z);
+
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, *worldPos);
+    model = glm::translate(model, worldPosVec);
     glUniformMatrix4fv(static_cast<GLint>(*modelLoc), 1, GL_FALSE, glm::value_ptr(model));
 
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(*numTriangles), GL_UNSIGNED_INT, 0);

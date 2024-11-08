@@ -166,6 +166,8 @@ void Jafg::JChunkGenerationSubsystem::GenerateChunks()
         {
             AChunk* Chunk = NewDeferredObject<AChunk>(this->GetWorld());
             Chunk->ChunkPos = Next;
+            Chunk->ChunkKey =
+                { static_cast<LChunkKeyDomainTy>(Next.x), static_cast<LChunkKeyDomainTy>(Next.y), static_cast<LChunkKeyDomainTy>(Next.z) };
             MakeDeferredObjectFinal(Chunk);
             Chunks.try_emplace(Key, Chunk);
             ++GeneratedChunks;

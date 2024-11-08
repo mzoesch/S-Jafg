@@ -408,7 +408,7 @@ template <typename T>
 TMatrix<T> MakePerspectiveProjectionMatrix(const T RadYFov, const T Ratio, const T NearZPlane, const T FarZPlane)
 {
     check( NearZPlane > 0.0f && FarZPlane > NearZPlane )
-    check( Maths::Absolute(Ratio - std::numeric_limits<T>::epsilon() > static_cast<T>(0.0f)) )
+    check( Maths::Absolute(Ratio - std::numeric_limits<T>::epsilon()) > static_cast<T>(0.0f) )
 
     const T TanHalfYFov = Maths::Tan(RadYFov * static_cast<T>(0.5f));
 

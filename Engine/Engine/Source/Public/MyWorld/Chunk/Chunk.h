@@ -33,7 +33,8 @@ public:
     uint32* RawVoxelData = nullptr;
     glm::vec3 ChunkPos = glm::vec3(0.0f);
 
-    LChunkKey ChunkKey = { };
+    LChunkKey  ChunkKey      = { };
+    LVector    WorldLocation = { };
 
     bool bReady = false;
     bool bGenerated = false;
@@ -49,7 +50,6 @@ private:
     unsigned int Vbo = 0;
     unsigned int Ebo = 0;
     unsigned int NumTriangles= 0;
-    glm::vec3 WorldPos = glm::vec3(0.0f);
 
     TdhArray<Jafg::Vertex> Vertices = {};
     TdhArray<uint32> Indices = {};

@@ -56,28 +56,34 @@ struct TVector
     /** Global unit vector constant along the z-axis (0, 0, 1). */
     static const TVector<T> UnitVectorZ;
 
-    FORCEINLINE static TVector<T> Zero()  { return TVector<T>::ZeroVector;  }
-    FORCEINLINE static TVector<T> One()   { return TVector<T>::OneVector;   }
-    FORCEINLINE static TVector<T> UnitX() { return TVector<T>::UnitVectorX; }
-    FORCEINLINE static TVector<T> UnitY() { return TVector<T>::UnitVectorY; }
-    FORCEINLINE static TVector<T> UnitZ() { return TVector<T>::UnitVectorZ; }
+    FORCEINLINE static TVector<T> Zero()     { return TVector<T>::ZeroVector;     }
+    FORCEINLINE static TVector<T> One()      { return TVector<T>::OneVector;      }
+    FORCEINLINE static TVector<T> Up()       { return TVector<T>::UpVector;       }
+    FORCEINLINE static TVector<T> Down()     { return TVector<T>::DownVector;     }
+    FORCEINLINE static TVector<T> Forward()  { return TVector<T>::ForwardVector;  }
+    FORCEINLINE static TVector<T> Backward() { return TVector<T>::BackwardVector; }
+    FORCEINLINE static TVector<T> Right()    { return TVector<T>::RightVector;    }
+    FORCEINLINE static TVector<T> Left()     { return TVector<T>::LeftVector;     }
+    FORCEINLINE static TVector<T> UnitX()    { return TVector<T>::UnitVectorX;    }
+    FORCEINLINE static TVector<T> UnitY()    { return TVector<T>::UnitVectorY;    }
+    FORCEINLINE static TVector<T> UnitZ()    { return TVector<T>::UnitVectorZ;    }
 
-    FORCEINLINE          TVector<T>()                                       = default;
-    FORCEINLINE explicit TVector<T>(const T InFloatingPoint)                : X(InFloatingPoint), Y(InFloatingPoint), Z(InFloatingPoint) { }
-    FORCEINLINE explicit TVector<T>(const T InX, const T InY, const T InZ)  : X(InX), Y(InY), Z(InZ) { }
-    FORCEINLINE explicit TVector<T>(const TVector2<T> InVec, const T InZ)   : X(InVec.X), Y(InVec.Y), Z(InZ) { }
-    FORCEINLINE explicit TVector<T>(const T InXYZ[3])                       : X(InXYZ[0]), Y(InXYZ[1]), Z(InXYZ[2]) { }
-    FORCEINLINE          TVector<T>(const TVector<T>& InVec)                : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
-    FORCEINLINE          TVector<T>(TVector<T>&& InVec) noexcept            : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
+    FORCEINLINE          TVector<T>()                                      noexcept = default;
+    FORCEINLINE explicit TVector<T>(const T InFloatingPoint)               noexcept : X(InFloatingPoint), Y(InFloatingPoint), Z(InFloatingPoint) { }
+    FORCEINLINE explicit TVector<T>(const T InX, const T InY, const T InZ) noexcept : X(InX), Y(InY), Z(InZ) { }
+    FORCEINLINE explicit TVector<T>(const TVector2<T> InVec, const T InZ)  noexcept : X(InVec.X), Y(InVec.Y), Z(InZ) { }
+    FORCEINLINE explicit TVector<T>(const T InXYZ[3])                      noexcept : X(InXYZ[0]), Y(InXYZ[1]), Z(InXYZ[2]) { }
+    FORCEINLINE          TVector<T>(const TVector<T>& InVec)               noexcept : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
+    FORCEINLINE          TVector<T>(TVector<T>&& InVec)                    noexcept : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
 
-    FORCEINLINE auto GetData()       ->       T* { return &this->X; }
-    FORCEINLINE auto GetData() const -> const T* { return &this->X; }
+    FORCEINLINE auto GetData()       noexcept ->       T* { return &this->X; }
+    FORCEINLINE auto GetData() const noexcept -> const T* { return &this->X; }
 
     FORCEINLINE auto operator[](const int32 InIndex)       ->       T&;
     FORCEINLINE auto operator[](const int32 InIndex) const -> const T&;
 
-    FORCEINLINE TVector<T>& operator =(const TVector<T>& InVec)  noexcept { this->X = InVec.X; this->Y = InVec.Y; this->Z = InVec.Z; return *this; }
-    FORCEINLINE TVector<T>& operator =(      TVector<T>&& InVec) noexcept { this->X = InVec.X; this->Y = InVec.Y; this->Z = InVec.Z; return *this; }
+    FORCEINLINE TVector<T>& operator =(const TVector<T>&  InVec) noexcept;
+    FORCEINLINE TVector<T>& operator =(      TVector<T>&& InVec) noexcept;
     FORCEINLINE TVector<T>& operator =(const TVector<T>&& InVec) noexcept = delete;
 
     FORCEINLINE TVector<T>  operator +(const T           InScalar) const;
@@ -101,8 +107,8 @@ struct TVector
     FORCEINLINE T operator |(const TVector<T>& InVec) const { return this->Dot(InVec); }
 
     FORCEINLINE bool Equals(const TVector<T>& InVec, const T InTolerance = JAFG_SMALL_NUMBER) const;
-    FORCEINLINE bool operator ==(const TVector<T>& InVec) const;
-    FORCEINLINE bool operator !=(const TVector<T>& InVec) const;
+    FORCEINLINE bool operator==(const TVector<T>& InVec) const;
+    FORCEINLINE bool operator!=(const TVector<T>& InVec) const;
 
     FORCEINLINE bool IsZero() const;
     FORCEINLINE bool IsNearlyZero(const T InTolerance = JAFG_NOT_SO_SMALL_NUMBER) const;
@@ -137,6 +143,24 @@ const T& TVector<T>::operator[](const int32 InIndex) const
 {
     check( InIndex > INDEX_NONE && InIndex < 3 )
     return this->XYZ[InIndex];
+}
+
+template <typename T>
+TVector<T>& TVector<T>::operator=(const TVector<T>& InVec) noexcept
+{
+    this->X = InVec.X;
+    this->Y = InVec.Y;
+    this->Z = InVec.Z;
+    return *this;
+}
+
+template <typename T>
+TVector<T>& TVector<T>::operator=(TVector<T>&& InVec) noexcept
+{
+    this->X = InVec.X;
+    this->Y = InVec.Y;
+    this->Z = InVec.Z;
+    return *this;
 }
 
 template <typename T>
