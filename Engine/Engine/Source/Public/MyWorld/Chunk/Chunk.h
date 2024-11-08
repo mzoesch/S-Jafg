@@ -3,8 +3,7 @@
 #pragma once
 
 #include "Engine/Actor.h"
-#include <vector>
-#include <thread>
+#include "MyWorld/Chunk/ChunkKey.h"
 #include <glm/glm.hpp>
 #include "MyWorld/WorldStatics.h"
 #include "RhiFramework/Shader.h"
@@ -33,6 +32,9 @@ public:
 
     uint32* RawVoxelData = nullptr;
     glm::vec3 ChunkPos = glm::vec3(0.0f);
+
+    LChunkKey ChunkKey = { };
+
     bool bReady = false;
     bool bGenerated = false;
 

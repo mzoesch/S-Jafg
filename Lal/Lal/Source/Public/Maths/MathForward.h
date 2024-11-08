@@ -5,6 +5,15 @@
 namespace Jafg
 {
 
+namespace Matrix
+{
+
+enum Type : uint8
+{
+    Identity, Zero
+};
+
+}
 
 /*----------------------------------------------------------------------------
     Type Forwards.
@@ -12,9 +21,12 @@ namespace Jafg
 
 template <typename T> struct TVector;
 template <typename T> struct TVector2;
+template <typename T> struct TVector4;
 template <typename T> struct TIntVector;
 template <typename T> struct TIntVector2;
 template <typename T> struct TRotator;
+template <typename T> struct TPlane;
+template <typename T> struct TMatrix;
 
 
 /*----------------------------------------------------------------------------
@@ -25,6 +37,8 @@ using LVectorF          = TVector<float>;
 using LVectorD          = TVector<double>;
 using LVector2F         = TVector2<float>;
 using LVector2D         = TVector2<double>;
+using LVector4F         = TVector4<float>;
+using LVector4D         = TVector4<double>;
 
 using LInt8Vector       = TIntVector<int8>;
 using LInt16Vector      = TIntVector<int16>;
@@ -38,6 +52,12 @@ using LInt64Vector2     = TIntVector2<int64>;
 using LRotatorF         = TRotator<float>;
 using LRotatorD         = TRotator<double>;
 
+using LPlaneF           = TPlane<float>;
+using LPlaneD           = TPlane<double>;
+
+using LMatrixF          = TMatrix<float>;
+using LMatrixD          = TMatrix<double>;
+
 
 /*----------------------------------------------------------------------------
     Aliases.
@@ -50,8 +70,11 @@ using LRotatorD         = TRotator<double>;
 
 typedef LVectorF         LVector;
 typedef LVector2F        LVector2;
+typedef LVector4F        LVector4;
 typedef LInt32Vector     LIntVector;
 typedef LInt32Vector2    LIntVector2;
 typedef LRotatorF        LRotator;
+typedef LPlaneF          LPlane;
+typedef LMatrixF         LMatrix;
 
 } /* ~Namespace Jafg */

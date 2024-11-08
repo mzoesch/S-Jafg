@@ -7,7 +7,7 @@ namespace Jafg
 
 /** Jafg implementation of a vector. */
 template <typename T>
-struct TVector final
+struct TVector
 {
     static_assert(std::is_floating_point_v<T>, "Generic type T of TVector must be a floating point type.");
 
@@ -56,19 +56,358 @@ struct TVector final
     /** Global unit vector constant along the z-axis (0, 0, 1). */
     static const TVector<T> UnitVectorZ;
 
-    static FORCEINLINE TVector<T> Zero()  { return TVector<T>::ZeroVector;  }
-    static FORCEINLINE TVector<T> One()   { return TVector<T>::OneVector;   }
-    static FORCEINLINE TVector<T> UnitX() { return TVector<T>::UnitVectorX; }
-    static FORCEINLINE TVector<T> UnitY() { return TVector<T>::UnitVectorY; }
-    static FORCEINLINE TVector<T> UnitZ() { return TVector<T>::UnitVectorZ; }
+    FORCEINLINE static TVector<T> Zero()  { return TVector<T>::ZeroVector;  }
+    FORCEINLINE static TVector<T> One()   { return TVector<T>::OneVector;   }
+    FORCEINLINE static TVector<T> UnitX() { return TVector<T>::UnitVectorX; }
+    FORCEINLINE static TVector<T> UnitY() { return TVector<T>::UnitVectorY; }
+    FORCEINLINE static TVector<T> UnitZ() { return TVector<T>::UnitVectorZ; }
 
     FORCEINLINE          TVector<T>()                                       = default;
     FORCEINLINE explicit TVector<T>(const T InFloatingPoint)                : X(InFloatingPoint), Y(InFloatingPoint), Z(InFloatingPoint) { }
     FORCEINLINE explicit TVector<T>(const T InX, const T InY, const T InZ)  : X(InX), Y(InY), Z(InZ) { }
     FORCEINLINE explicit TVector<T>(const TVector2<T> InVec, const T InZ)   : X(InVec.X), Y(InVec.Y), Z(InZ) { }
     FORCEINLINE explicit TVector<T>(const T InXYZ[3])                       : X(InXYZ[0]), Y(InXYZ[1]), Z(InXYZ[2]) { }
-    FORCEINLINE explicit TVector<T>(const TVector<T>& InVec)                : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
+    FORCEINLINE          TVector<T>(const TVector<T>& InVec)                : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
     FORCEINLINE          TVector<T>(TVector<T>&& InVec) noexcept            : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
+
+    FORCEINLINE auto GetData()       ->       T* { return &this->X; }
+    FORCEINLINE auto GetData() const -> const T* { return &this->X; }
+
+    FORCEINLINE auto operator[](const int32 InIndex)       ->       T&;
+    FORCEINLINE auto operator[](const int32 InIndex) const -> const T&;
+
+    FORCEINLINE TVector<T>& operator =(const TVector<T>& InVec)  noexcept { this->X = InVec.X; this->Y = InVec.Y; this->Z = InVec.Z; return *this; }
+    FORCEINLINE TVector<T>& operator =(      TVector<T>&& InVec) noexcept { this->X = InVec.X; this->Y = InVec.Y; this->Z = InVec.Z; return *this; }
+    FORCEINLINE TVector<T>& operator =(const TVector<T>&& InVec) noexcept = delete;
+
+    FORCEINLINE TVector<T>  operator +(const T           InScalar) const;
+    FORCEINLINE TVector<T>  operator +(const TVector<T>& InVec   ) const;
+    FORCEINLINE TVector<T>& operator+=(const T           InScalar);
+    FORCEINLINE TVector<T>& operator+=(const TVector<T>& InVec   );
+    FORCEINLINE TVector<T>  operator -(const T           InScalar) const;
+    FORCEINLINE TVector<T>  operator -(const TVector<T>& InVec   ) const;
+    FORCEINLINE TVector<T>& operator-=(const T           InScalar);
+    FORCEINLINE TVector<T>& operator-=(const TVector<T>& InVec   );
+    FORCEINLINE TVector<T>  operator *(const T           InScalar) const;
+    FORCEINLINE TVector<T>  operator *(const TVector<T>& InVec   ) const;
+    FORCEINLINE TVector<T>& operator*=(const T           InScalar);
+    FORCEINLINE TVector<T>& operator*=(const TVector<T>& InVec   );
+    FORCEINLINE TVector<T>  operator /(const T           InScalar) const;
+    FORCEINLINE TVector<T>  operator /(const TVector<T>& InVec   ) const;
+    FORCEINLINE TVector<T>& operator/=(const T           InScalar);
+    FORCEINLINE TVector<T>& operator/=(const TVector<T>& InVec   );
+    FORCEINLINE TVector<T>  operator -() const { return TVector<T>(-this->X, -this->Y, -this->Z); }
+
+    FORCEINLINE T operator |(const TVector<T>& InVec) const { return this->Dot(InVec); }
+
+    FORCEINLINE bool Equals(const TVector<T>& InVec, const T InTolerance = JAFG_SMALL_NUMBER) const;
+    FORCEINLINE bool operator ==(const TVector<T>& InVec) const;
+    FORCEINLINE bool operator !=(const TVector<T>& InVec) const;
+
+    FORCEINLINE bool IsZero() const;
+    FORCEINLINE bool IsNearlyZero(const T InTolerance = JAFG_NOT_SO_SMALL_NUMBER) const;
+
+    FORCEINLINE auto Magnitude() const -> T;
+    FORCEINLINE auto SquaredMagnitude() const -> T;
+    FORCEINLINE auto Magnitude2D() const -> T;
+    FORCEINLINE auto SquaredMagnitude2D() const -> T;
+
+    FORCEINLINE auto IsNormalized() const -> bool;
+    FORCEINLINE auto Normalize(const T InTolerance = JAFG_SMALL_NUMBER) -> void;
+    FORCEINLINE auto NormalizeRet(const T InTolerance = JAFG_SMALL_NUMBER) -> TVector<T>&;
+    FORCEINLINE auto GetNormalized(const T InTolerance = JAFG_SMALL_NUMBER, const TVector<T>& ResultIfZero = Zero()) const -> TVector<T>;
+    FORCEINLINE auto GetUnsafeNormalized() const -> TVector<T>;
+
+    FORCEINLINE auto Invert() -> void;
+    FORCEINLINE auto InvertRet() -> TVector<T>&;
+    FORCEINLINE auto GetInvert() const -> TVector<T>;
+    FORCEINLINE auto Cross(const TVector<T>& InVec) const -> TVector<T>;
+    FORCEINLINE auto Dot(const TVector<T>& InVec) const -> T;
 };
+
+template <typename T>
+T& TVector<T>::operator[](const int32 InIndex)
+{
+    check( InIndex > INDEX_NONE && InIndex < 3 )
+    return this->XYZ[InIndex];
+}
+
+template <typename T>
+const T& TVector<T>::operator[](const int32 InIndex) const
+{
+    check( InIndex > INDEX_NONE && InIndex < 3 )
+    return this->XYZ[InIndex];
+}
+
+template <typename T>
+TVector<T> TVector<T>::operator+(const T InScalar) const
+{
+    return TVector<T>(this->X + InScalar, this->Y + InScalar, this->Z + InScalar);
+}
+
+template <typename T>
+TVector<T> TVector<T>::operator+(const TVector<T>& InVec) const
+{
+    return TVector<T>(this->X + InVec.X, this->Y + InVec.Y, this->Z + InVec.Z);
+}
+
+template <typename T>
+TVector<T>& TVector<T>::operator+=(const T InScalar)
+{
+    this->X += InScalar;
+    this->Y += InScalar;
+    this->Z += InScalar;
+    return *this;
+}
+
+template <typename T>
+TVector<T>& TVector<T>::operator+=(const TVector<T>& InVec)
+{
+    this->X += InVec.X;
+    this->Y += InVec.Y;
+    this->Z += InVec.Z;
+    return *this;
+}
+
+template <typename T>
+TVector<T> TVector<T>::operator-(const T InScalar) const
+{
+    return TVector<T>(this->X - InScalar, this->Y - InScalar, this->Z - InScalar);
+}
+
+template <typename T>
+TVector<T> TVector<T>::operator-(const TVector<T>& InVec) const
+{
+    return TVector<T>(this->X - InVec.X, this->Y - InVec.Y, this->Z - InVec.Z);
+}
+
+template <typename T>
+TVector<T>& TVector<T>::operator-=(const T InScalar)
+{
+    this->X -= InScalar;
+    this->Y -= InScalar;
+    this->Z -= InScalar;
+    return *this;
+}
+
+template <typename T>
+TVector<T>& TVector<T>::operator-=(const TVector<T>& InVec)
+{
+    this->X -= InVec.X;
+    this->Y -= InVec.Y;
+    this->Z -= InVec.Z;
+    return *this;
+}
+
+template <typename T>
+TVector<T> TVector<T>::operator*(const T InScalar) const
+{
+    return TVector<T>(this->X * InScalar, this->Y * InScalar, this->Z * InScalar);
+}
+
+template <typename T>
+TVector<T> TVector<T>::operator*(const TVector<T>& InVec) const
+{
+    return TVector<T>(this->X * InVec.X, this->Y * InVec.Y, this->Z * InVec.Z);
+}
+
+template <typename T>
+TVector<T>& TVector<T>::operator*=(const T InScalar)
+{
+    this->X *= InScalar;
+    this->Y *= InScalar;
+    this->Z *= InScalar;
+    return *this;
+}
+
+template <typename T>
+TVector<T>& TVector<T>::operator*=(const TVector<T>& InVec)
+{
+    this->X *= InVec.X;
+    this->Y *= InVec.Y;
+    this->Z *= InVec.Z;
+    return *this;
+}
+
+template <typename T>
+TVector<T> TVector<T>::operator/(const T InScalar) const
+{
+    return TVector<T>(this->X / InScalar, this->Y / InScalar, this->Z / InScalar);
+}
+
+template <typename T>
+TVector<T> TVector<T>::operator/(const TVector<T>& InVec) const
+{
+    return TVector<T>(this->X / InVec.X, this->Y / InVec.Y, this->Z / InVec.Z);
+}
+
+template <typename T>
+TVector<T>& TVector<T>::operator/=(const T InScalar)
+{
+    this->X /= InScalar;
+    this->Y /= InScalar;
+    this->Z /= InScalar;
+    return *this;
+}
+
+template <typename T>
+TVector<T>& TVector<T>::operator/=(const TVector<T>& InVec)
+{
+    this->X /= InVec.X;
+    this->Y /= InVec.Y;
+    this->Z /= InVec.Z;
+    return *this;
+}
+
+template <typename T>
+bool TVector<T>::Equals(const TVector<T>& InVec, const T InTolerance) const
+{
+    return Maths::Absolute(this->X - InVec.X) < InTolerance
+        && Maths::Absolute(this->Y - InVec.Y) < InTolerance
+        && Maths::Absolute(this->Z - InVec.Z) < InTolerance;
+}
+
+template <typename T>
+bool TVector<T>::operator==(const TVector<T>& InVec) const
+{
+    return this->X == InVec.X && this->Y == InVec.Y && this->Z == InVec.Z;
+}
+
+template <typename T>
+bool TVector<T>::operator!=(const TVector<T>& InVec) const
+{
+    return !(*this == InVec);
+}
+
+template <typename T>
+bool TVector<T>::IsZero() const
+{
+    return this->X == 0.0f && this->Y == 0.0f && this->Z == 0.0f;
+}
+
+template <typename T>
+bool TVector<T>::IsNearlyZero(const T InTolerance) const
+{
+    return Maths::Absolute(this->X) < InTolerance
+        && Maths::Absolute(this->Y) < InTolerance
+        && Maths::Absolute(this->Z) < InTolerance;
+}
+
+template <typename T>
+T TVector<T>::Magnitude() const
+{
+    return Maths::Sqrt(this->X * this->X + this->Y * this->Y + this->Z * this->Z);
+}
+
+template <typename T>
+T TVector<T>::SquaredMagnitude() const
+{
+    return this->X * this->X + this->Y * this->Y + this->Z * this->Z;
+}
+
+template <typename T>
+T TVector<T>::Magnitude2D() const
+{
+    return Maths::Sqrt(this->X * this->X + this->Y * this->Y);
+}
+
+template <typename T>
+T TVector<T>::SquaredMagnitude2D() const
+{
+    return this->X * this->X + this->Y * this->Y;
+}
+
+template <typename T>
+bool TVector<T>::IsNormalized() const
+{
+    return Maths::Absolute(1.0f - this->SquaredMagnitude()) < static_cast<T>(JAFG_THRESHOLD_NORM_VEC_D);
+}
+
+template <typename T>
+void TVector<T>::Normalize(const T InTolerance)
+{
+    const T SquareSum = this->X * this->X + this->Y * this->Y + this->Z * this->Z;
+    if (SquareSum > InTolerance)
+    {
+        const T Scale = Maths::InverseSqrt(SquareSum);
+        this->X *= Scale;
+        this->Y *= Scale;
+        this->Z *= Scale;
+    }
+
+    return;
+}
+
+template <typename T>
+TVector<T>& TVector<T>::NormalizeRet(const T InTolerance)
+{
+    this->Normalize(InTolerance);
+    return *this;
+}
+
+template <typename T>
+TVector<T> TVector<T>::GetNormalized(T InTolerance, const TVector<T>& ResultIfZero) const
+{
+    const T SquareSum = this->X * this->X + this->Y * this->Y + this->Z * this->Z;
+
+    if (SquareSum == 1.0f)
+    {
+        return *this;
+    }
+
+    if (SquareSum < InTolerance)
+    {
+        return ResultIfZero;
+    }
+
+    const T Scale = Maths::InverseSqrt(SquareSum);
+    return TVector<T>(this->X * Scale, this->Y * Scale, this->Z * Scale);
+}
+
+template <typename T>
+TVector<T> TVector<T>::GetUnsafeNormalized() const
+{
+    const T Scale = Maths::InverseSqrt(this->X * this->X + this->Y * this->Y + this->Z * this->Z);
+    return TVector<T>(this->X * Scale, this->Y * Scale, this->Z * Scale);
+}
+
+template <typename T>
+void TVector<T>::Invert()
+{
+    this->X = -this->X;
+    this->Y = -this->Y;
+    this->Z = -this->Z;
+
+    return;
+}
+
+template <typename T>
+TVector<T>& TVector<T>::InvertRet()
+{
+    this->Invert();
+    return *this;
+}
+
+template <typename T>
+TVector<T> TVector<T>::GetInvert() const
+{
+    return TVector<T>(-this->X, -this->Y, -this->Z);
+}
+
+template <typename T>
+TVector<T> TVector<T>::Cross(const TVector<T>& InVec) const
+{
+    return TVector<T>(
+        this->Y * InVec.Z - this->Z * InVec.Y,
+        this->Z * InVec.X - this->X * InVec.Z,
+        this->X * InVec.Y - this->Y * InVec.X
+    );
+}
+
+template <typename T>
+T TVector<T>::Dot(const TVector<T>& InVec) const
+{
+    return this->X * InVec.X + this->Y * InVec.Y + this->Z * InVec.Z;
+}
 
 } /* ~Namespace Jafg */

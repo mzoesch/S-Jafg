@@ -42,12 +42,6 @@ void Jafg::AChunk::EndLife()
     Vertices.Empty();
     Indices.Empty();
 
-    // Vertices.clear();
-    // Indices.clear();
-
-    // glDeleteBuffers(1, &vbo);
-    // glDeleteBuffers(1, &ebo);
-    // glDeleteVertexArrays(1, &vertexArrayObject);
     return;
 }
 

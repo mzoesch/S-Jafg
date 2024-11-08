@@ -5,7 +5,6 @@
 namespace Jafg::Maths
 {
 
-
 /*----------------------------------------------------------------------------
     Macros.
 ----------------------------------------------------------------------------*/
@@ -70,53 +69,205 @@ NODISCARD constexpr FORCEINLINE auto Min(const T A, const T B) -> T { return (B 
 template <typename T>
 NODISCARD constexpr FORCEINLINE auto Max(const T A, const T B) -> T { return (B < A) ? A : B; }
 
+/** Inclusively clamp the value of type T between its minimum and maximum values. */
+template <typename T>
+NODISCARD constexpr FORCEINLINE auto Clamp(const T Value, const T MinValue, const T MaxValue) -> T { return Maths::Max(Maths::Min(Value, MaxValue), MinValue); }
+MIX_FLOATING_POINT_ARGS_THREE_PARAMS(Clamp)
+NODISCARD constexpr FORCEINLINE auto Clamp(const float Value, const float MinValue, const float MaxValue) -> float { return Clamp<float>(Value, MinValue, MaxValue); }
+NODISCARD constexpr FORCEINLINE auto Clamp(const double Value, const double MinValue, const double MaxValue) -> double { return Clamp<double>(Value, MinValue, MaxValue); }
+
 NODISCARD FORCEINLINE bool IsNearlyEqual(const float A, const float B, const float Tolerance = JAFG_FLOAT_SMALL_NUMBER);
 NODISCARD FORCEINLINE bool IsNearlyEqual(const double A, const double B, const double Tolerance = JAFG_DOUBLE_SMALL_NUMBER);
 
 /** https://en.cppreference.com/w/c/numeric/math/fmod */
 NODISCARD FORCEINLINE float  Fmod(const float Numerator, const float Denominator);
 NODISCARD FORCEINLINE double Fmod(const double Numerator, const double Denominator);
-MIX_FLOATING_POINT_ARGS_TWO_PARAMS(Fmod);
+MIX_FLOATING_POINT_ARGS_TWO_PARAMS(Fmod)
 
+template <typename T> NODISCARD constexpr FORCEINLINE auto Sqrt(const T Value) -> T;
+template <typename T> NODISCARD constexpr FORCEINLINE auto InverseSqrt(const T Value) -> T;
+
+template <typename T> NODISCARD constexpr FORCEINLINE auto ToRadians(const T Degrees) -> T;
+template <typename T> NODISCARD constexpr FORCEINLINE auto ToDegrees(const T Radians) -> T;
+/** Normalize the radian value of type T to the range [0, 2*PI[. */
+template <typename T> NODISCARD constexpr FORCEINLINE auto ClampRadians(const T Radians) -> T;
+/** Normalize the radian value of type T to the range ]-PI, PI[. */
+template <typename T> NODISCARD constexpr FORCEINLINE auto NormalizeRadians(const T Radians) -> T;
+/** Normalize the degree  value of type T to the range [0, 360[. */
+template <typename T> NODISCARD constexpr FORCEINLINE auto ClampDegrees(const T Degrees) -> T;
+/** Normalize the degree value of type T to the range ]-180, 180]. */
+template <typename T> NODISCARD constexpr FORCEINLINE auto NormalizeDegrees(const T Degrees) -> T;
+template <typename T> NODISCARD FORCEINLINE auto Sin(const T Value) -> T;       // So this is all non constexpr, lol.
+template <typename T> NODISCARD FORCEINLINE auto Asin(const T Value) -> T;      // The std is not constexpr because of
+template <typename T> NODISCARD FORCEINLINE auto Sinh(const T Value) -> T;      // legacy code (at least until C++26).
+template <typename T> NODISCARD FORCEINLINE auto ASinh(const T Value) -> T;     // So we either shit on that, or
+template <typename T> NODISCARD FORCEINLINE auto Cos(const T Value) -> T;       // implement our own math - I prefer
+template <typename T> NODISCARD FORCEINLINE auto Acos(const T Value) -> T;      // the latter as currently this is just
+template <typename T> NODISCARD FORCEINLINE auto Cosh(const T Value) -> T;      // a wrapper around std - that will be
+template <typename T> NODISCARD FORCEINLINE auto ACosh(const T Value) -> T;     // fun :).
+template <typename T> NODISCARD FORCEINLINE auto Tan(const T Value) -> T;
+template <typename T> NODISCARD FORCEINLINE auto Atan(const T Value) -> T;
+template <typename T> NODISCARD FORCEINLINE auto Tanh(const T Value) -> T;
+template <typename T> NODISCARD FORCEINLINE auto ATanh(const T Value) -> T;
+
+/**
+ * An affine transformation to get the transformation for objects viewed as of Eye.
+ *
+ * @tparam T      The floating type.
+ * @param  Eye    The location to calculate when "viewed" form this location.
+ * @param  Center The forward center of the view.
+ * @param  Up     The up vector of the view.
+ * @return        The view matrix V:
+ *                      |  R.X      U'.X   -F.X    0 | Where R  is the normalized right vector by crossing F and Up.
+ *                  V = |  R.Y      U'.Y   -F.Y    0 |       U' is the normalized up vector by crossing R and F.
+ *                      |  R.Z      U'.Z   -F.Z    0 |       F  is the normalized forward vector by getting the delta
+ *                      | -R*Eye -U'*Eye  F*Eye    1 |       from Eye to Center.
+ */
+template <typename T>
+NODISCARD FORCEINLINE auto MakeViewMatrix(const TVector<T>& Eye, const TVector<T>& Center, const TVector<T>& Up) -> TMatrix<T>;
+
+/**
+ *
+ * @tparam T
+ * @param RadYFov
+ * @param Ratio
+ * @param NearZPlane
+ * @param FarZPlane
+ * @return
+ */
+template <typename T>
+NODISCARD FORCEINLINE auto MakePerspectiveProjectionMatrix(const T RadYFov, const T Ratio, const T NearZPlane, const T FarZPlane) -> TMatrix<T>;
 
 /*----------------------------------------------------------------------------
     Specializations.
 ----------------------------------------------------------------------------*/
 
-template <>
-FORCEINLINE float Absolute(const float A)
+template <> FORCEINLINE float  Absolute(const float A)  { return ::fabsf(A); }
+template <> FORCEINLINE double Absolute(const double A) { return ::fabs(A); }
+template <> FORCEINLINE float  Min(const float A,  const float B)  { return (B < A) ? B : A; }
+template <> FORCEINLINE double Min(const double A, const double B) { return (B < A) ? B : A; }
+template <> FORCEINLINE float  Max(const float A,  const float B)  { return (B < A) ? A : B; }
+template <> FORCEINLINE double Max(const double A, const double B) { return (B < A) ? A : B; }
+
+template <> FORCEINLINE float  Sin(const float Value)     { return ::sinf(Value);     }
+template <> FORCEINLINE double Sin(const double Value)    { return ::sin(Value);      }
+template <> FORCEINLINE float  Asin(const float Value)    { return ::asinf(Value);    }
+template <> FORCEINLINE double Asin(const double Value)   { return ::asin(Value);     }
+template <> FORCEINLINE float  Sinh(const float Value)    { return ::sinhf(Value);    }
+template <> FORCEINLINE double Sinh(const double Value)   { return ::sinh(Value);     }
+template <> FORCEINLINE float  ASinh(const float Value)   { return ::asinhf(Value);   }
+template <> FORCEINLINE double ASinh(const double Value)  { return ::asinh(Value);    }
+template <> FORCEINLINE float  Cos(const float Value)     { return ::cosf(Value);     }
+template <> FORCEINLINE double Cos(const double Value)    { return ::cos(Value);      }
+template <> FORCEINLINE float  Acos(const float Value)    { return ::acosf(Value);    }
+template <> FORCEINLINE double Acos(const double Value)   { return ::acos(Value);     }
+template <> FORCEINLINE float  Cosh(const float Value)    { return ::coshf(Value);    }
+template <> FORCEINLINE double Cosh(const double Value)   { return ::cosh(Value);     }
+template <> FORCEINLINE float  ACosh(const float Value)   { return ::acoshf(Value);   }
+template <> FORCEINLINE double ACosh(const double Value)  { return ::acosh(Value);    }
+template <> FORCEINLINE float  Tan(const float Value)     { return ::tanf(Value);     }
+template <> FORCEINLINE double Tan(const double Value)    { return ::tan(Value);      }
+template <> FORCEINLINE float  Atan(const float Value)    { return ::atanf(Value);    }
+template <> FORCEINLINE double Atan(const double Value)   { return ::atan(Value);     }
+template <> FORCEINLINE float  Tanh(const float Value)    { return ::tanhf(Value);    }
+template <> FORCEINLINE double Tanh(const double Value)   { return ::tanh(Value);     }
+template <> FORCEINLINE float  ATanh(const float Value)   { return ::atanhf(Value);   }
+template <> FORCEINLINE double ATanh(const double Value)  { return ::atanh(Value);    }
+
+template <typename T> T Sin(const T Value)
 {
-    return ::fabsf(A);
+    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    jassertNoEntry()
+    return T { };
 }
 
-template <>
-FORCEINLINE double Absolute(const double A)
+template <typename T> T Asin(const T Value)
 {
-    return ::fabs(A);
+    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    jassertNoEntry()
+    return T { };
 }
 
-template <>
-FORCEINLINE float Min(const float A, const float B)
+template <typename T> T Sinh(const T Value)
 {
-    return (B < A) ? B : A;
+    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    jassertNoEntry()
+    return T { };
 }
 
-template <>
-FORCEINLINE double Min(const double A, const double B)
+template <typename T> T ASinh(const T Value)
 {
-    return (B < A) ? B : A;
+    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    jassertNoEntry()
+    return T { };
 }
 
-template <>
-FORCEINLINE float Max(const float A, const float B)
+template <typename T> T Cos(const T Value)
 {
-    return (B < A) ? A : B;
+    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    jassertNoEntry()
+    return T { };
 }
 
-template <>
-FORCEINLINE double Max(const double A, const double B)
+template <typename T> T Acos(const T Value)
 {
-    return (B < A) ? A : B;
+    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    jassertNoEntry()
+    return T { };
+}
+
+template <typename T> T Cosh(const T Value)
+{
+    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    jassertNoEntry()
+    return T { };
+}
+
+template <typename T> T ACosh(const T Value)
+{
+    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    jassertNoEntry()
+    return T { };
+}
+
+template <typename T> T Tan(const T Value)
+{
+    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    jassertNoEntry()
+    return T { };
+}
+
+template <typename T> T Atan(const T Value)
+{
+    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    jassertNoEntry()
+    return T { };
+}
+
+template <typename T> T Tanh(const T Value)
+{
+    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    jassertNoEntry()
+    return T { };
+}
+
+template <typename T> T ATanh(const T Value)
+{
+    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
+    jassertNoEntry()
+    return T { };
 }
 
 
@@ -124,17 +275,17 @@ FORCEINLINE double Max(const double A, const double B)
     Definitions.
 ----------------------------------------------------------------------------*/
 
-FORCEINLINE bool IsNearlyEqual(const float A, const float B, const float Tolerance)
+bool IsNearlyEqual(const float A, const float B, const float Tolerance)
 {
     return Absolute(A - B) < Tolerance;
 }
 
-FORCEINLINE bool IsNearlyEqual(const double A, const double B, const double Tolerance)
+bool IsNearlyEqual(const double A, const double B, const double Tolerance)
 {
     return Absolute(A - B) < Tolerance;
 }
 
-FORCEINLINE float Fmod(const float Numerator, const float Denominator)
+float Fmod(const float Numerator, const float Denominator)
 {
 #if DO_CHECKS
     const float AbsDenominator = Maths::Absolute(Denominator);
@@ -148,7 +299,7 @@ FORCEINLINE float Fmod(const float Numerator, const float Denominator)
     return ::fmodf(Numerator, Denominator);
 }
 
-FORCEINLINE double Fmod(const double Numerator, const double Denominator)
+double Fmod(const double Numerator, const double Denominator)
 {
 #if DO_CHECKS
     const double AbsDenominator = Maths::Absolute(Denominator);
@@ -160,6 +311,114 @@ FORCEINLINE double Fmod(const double Numerator, const double Denominator)
 #endif /* DO_CHECKS */
 
     return ::fmod(Numerator, Denominator);
+}
+
+template <typename T>
+constexpr T Sqrt(const T Value)
+{
+    static_assert(std::is_floating_point_v<T>, "Value must be a floating point type.");
+    return static_cast<T>(::sqrt(Value));
+}
+
+template <typename T>
+constexpr T InverseSqrt(const T Value)
+{
+    static_assert(std::is_floating_point_v<T>, "Value must be a floating point type.");
+    return static_cast<T>(1) / Maths::Sqrt(Value);
+}
+
+template <typename T>
+constexpr T ToRadians(const T Degrees)
+{
+    static_assert(std::is_floating_point_v<T>, "Degrees must be a floating point type.");
+    return Degrees * static_cast<T>(0.01745329251994329576923690768489);
+}
+
+template <typename T>
+constexpr T ToDegrees(const T Radians)
+{
+    static_assert(std::is_floating_point_v<T>, "Radians must be a floating point type.");
+    return Radians * static_cast<T>(57.295779513082320876798154814105);
+}
+
+template <typename T>
+constexpr T ClampRadians(const T Radians)
+{
+    static_assert(std::is_floating_point_v<T>, "Radians must be a floating point type.");
+    return Radians - (static_cast<T>(JAFG_TWO_PI_D) * static_cast<T>(std::floor(Radians / JAFG_TWO_PI_D)));
+}
+
+template <typename T>
+constexpr T NormalizeRadians(T Radians)
+{
+    static_assert(std::is_floating_point_v<T>, "Radians must be a floating point type.");
+    Radians = ClampRadians(Radians);
+    if (Radians > static_cast<T>(JAFG_PI_D))
+    {
+        Radians -= static_cast<T>(JAFG_TWO_PI_D);
+    }
+    return Radians;
+}
+
+template <typename T>
+constexpr T ClampDegrees(const T Degrees)
+{
+    static_assert(std::is_floating_point_v<T>, "Degrees must be a floating point type.");
+    return Degrees - (static_cast<T>(JAFG_DEG_FULL_CIRCLE_D) * static_cast<T>(std::floor(Degrees / JAFG_DEG_FULL_CIRCLE_D)));
+}
+
+template <typename T>
+constexpr T NormalizeDegrees(T Degrees)
+{
+    static_assert(std::is_floating_point_v<T>, "Degrees must be a floating point type.");
+    Degrees = ClampDegrees(Degrees);
+    if (Degrees > static_cast<T>(JAFG_DEG_HALF_CIRCLE_D))
+    {
+        Degrees -= static_cast<T>(JAFG_DEG_FULL_CIRCLE_D);
+    }
+    return Degrees;
+}
+
+template <typename T>
+TMatrix<T> MakeViewMatrix(const TVector<T>& Eye, const TVector<T>& Center, const TVector<T>& Up)
+{
+    const TVector<T> F = (Center - Eye).NormalizeRet();
+    const TVector<T> R = F.Cross(Up).NormalizeRet();
+    const TVector<T> U = R.Cross(F);
+
+    TMatrix<T> Result;
+    Result.Matrix[0][0] =  R.X;
+    Result.Matrix[1][0] =  R.Y;
+    Result.Matrix[2][0] =  R.Z;
+    Result.Matrix[0][1] =  U.X;
+    Result.Matrix[1][1] =  U.Y;
+    Result.Matrix[2][1] =  U.Z;
+    Result.Matrix[0][2] = -F.X;
+    Result.Matrix[1][2] = -F.Y;
+    Result.Matrix[2][2] = -F.Z;
+    Result.Matrix[3][0] = -(R | Eye);
+    Result.Matrix[3][1] = -(U | Eye);
+    Result.Matrix[3][2] =  (F | Eye);
+    Result.Matrix[3][3] =  1.0f;
+
+    return Result;
+}
+
+template <typename T>
+TMatrix<T> MakePerspectiveProjectionMatrix(const T RadYFov, const T Ratio, const T NearZPlane, const T FarZPlane)
+{
+    check( NearZPlane > 0.0f && FarZPlane > NearZPlane )
+    check( Maths::Absolute(Ratio - std::numeric_limits<T>::epsilon() > static_cast<T>(0.0f)) )
+
+    const T TanHalfYFov = Maths::Tan(RadYFov * static_cast<T>(0.5f));
+
+    TMatrix<T> Result = Matrix::Zero;
+    Result.Matrix[0][0] = static_cast<T>(1.0f) / (Ratio * TanHalfYFov);
+    Result.Matrix[1][1] = static_cast<T>(1.0f) / TanHalfYFov;
+    Result.Matrix[2][2] = - (FarZPlane + NearZPlane) / (FarZPlane - NearZPlane);
+    Result.Matrix[2][3] = -  static_cast<T>(1.0f);
+    Result.Matrix[3][2] = - (static_cast<T>(2.0f) * FarZPlane * NearZPlane) / (FarZPlane - NearZPlane);
+    return Result;
 }
 
 } /* Namespace Jafg::Maths */

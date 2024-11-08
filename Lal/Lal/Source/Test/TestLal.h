@@ -7,4 +7,5 @@
 #include "TestContainers.h"
 #include "TestDelegates.h"
 #include "TestFunctors.h"
+#include "TestMaths.h"
 #include "TestStrings.h"

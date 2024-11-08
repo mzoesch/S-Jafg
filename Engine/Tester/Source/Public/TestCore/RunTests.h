@@ -17,6 +17,8 @@ void TESTER_API RunTests(EPlatformExit::Type* ExitCode);
 
 struct TESTER_API LTestFramework
 {
+    typedef std::chrono::time_point<std::chrono::steady_clock> TimePoint;
+
     LTestFramework();
     LTestFramework(const LTestFramework& _) = delete;
     LTestFramework(LTestFramework&& _)      = delete;
@@ -29,6 +31,7 @@ struct TESTER_API LTestFramework
 
 private:
 
+    TimePoint     StartTime;
     mutable int32 RunChecks      = 0;
     mutable int32 OccuriedErrors = 0;
 };

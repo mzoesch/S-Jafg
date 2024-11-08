@@ -13,13 +13,14 @@ void Jafg::APawn::DeclareNewPossessor(APlayerController* InNewController)
 
 Jafg::LVector Jafg::APawn::GetLocation() const
 {
-    const glm::vec3 Loc = this->GetWorld()->MainCamera->Position;
+    const LVector LocVec = this->GetWorld()->MainCamera->Location;
+    const glm::vec3 Loc = glm::vec3(LocVec.X, LocVec.Y, LocVec.Z);
     return LVector(Loc.x, Loc.y, Loc.z);
 }
 
 Jafg::LSimpleString Jafg::APawn::GetFacingStringDebug() const
 {
-    float Yaw = this->GetWorld()->MainCamera->Yaw;
+    const float Yaw = this->GetWorld()->MainCamera->Rotator.Yaw;
 
     LSimpleString YawAsText = "N/A";
     if (Yaw >= -45.f && Yaw <= 45.f)
@@ -42,7 +43,7 @@ Jafg::LSimpleString Jafg::APawn::GetFacingStringDebug() const
     return LSimpleString::SprintF(
         "Facing: {} ({:.2f}Y / {:.2f}P)",
         YawAsText,
-        this->GetWorld()->MainCamera->Yaw,
-        this->GetWorld()->MainCamera->Pitch
+        this->GetWorld()->MainCamera->Rotator.Yaw,
+        this->GetWorld()->MainCamera->Rotator.Pitch
     );
 }

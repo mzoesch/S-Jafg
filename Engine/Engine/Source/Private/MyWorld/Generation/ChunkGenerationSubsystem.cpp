@@ -83,10 +83,6 @@ void Jafg::JChunkGenerationSubsystem::CappedTick(const float EngineDeltaTime, co
 {
     Super::CappedTick(EngineDeltaTime, SubsystemDeltaTime);
 
-    LOG_INFO(
-        LogTemporal,
-        "Ticking with {:.4f} engine delta time and {:.4f} subsystem delta time", EngineDeltaTime, SubsystemDeltaTime)
-
     this->UpdateChunkQueue();
     this->KillChunks();
     this->GenerateChunks();
@@ -102,8 +98,8 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
 
 void Jafg::JChunkGenerationSubsystem::UpdateChunkQueue()
 {
-    const float CamX = this->GetWorld()->MainCamera->Position.x;
-    const float CamY = this->GetWorld()->MainCamera->Position.y;
+    const float CamX = this->GetWorld()->MainCamera->Location.X;
+    const float CamY = this->GetWorld()->MainCamera->Location.Y;
 
     const int32 CurrentCamX = static_cast<int32>(CamX < 0 ? floor(CamX / static_cast<float>(ChunkSize)) : CamX / static_cast<float>(ChunkSize));
     const int32 CurrentCamY = static_cast<int32>(CamY < 0 ? floor(CamY / static_cast<float>(ChunkSize)) : CamY / static_cast<float>(ChunkSize));
@@ -113,8 +109,12 @@ void Jafg::JChunkGenerationSubsystem::UpdateChunkQueue()
         return;
     }
 
+    LOG_TRACE(LogTemporal, "{:.2f} {:.2f} - {} {}",
+        CamX, CamY, CurrentCamX, CurrentCamY)
+
     LastCamX = CurrentCamX;
     LastCamY = CurrentCamY;
+
 
     ChunkQueue = { };
     const TIntVector2<int32> Center(CurrentCamX, CurrentCamY);
@@ -142,7 +142,6 @@ void Jafg::JChunkGenerationSubsystem::KillChunks()
         ))
         {
             It->second->KillYourSelfNow();
-            It->second = nullptr;
             It = Chunks.erase(It);
         }
         else

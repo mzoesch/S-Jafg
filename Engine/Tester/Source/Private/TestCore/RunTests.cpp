@@ -86,15 +86,20 @@ void Jafg::Tester::RunTests(EPlatformExit::Type* ExitCode)
 
 Jafg::Tester::LTestFramework::LTestFramework()
 {
+    this->StartTime = std::chrono::high_resolution_clock::now();
     LOG_INFO(LogTestingFramework, "Started test framework.")
     return;
 }
 
 Jafg::Tester::LTestFramework::~LTestFramework()
 {
-    LOG_INFO(LogTestingFramework, "Run {} simple tests with a total of {} checks." ,
+    const std::chrono::duration<long long, std::milli> Duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - this->StartTime);
+
+    LOG_INFO(LogTestingFramework, "Run {} simple tests with a total of {} checks in {}ms." ,
         ::Jafg::Tester::GetAllSimpleTestCasesDuringStaticInitialization().size(),
-        this->RunChecks
+        this->RunChecks,
+        Duration.count()
     )
     LOG_INFO(LogTestingFramework, "Finished test framework. Tearing down framework ...")
 

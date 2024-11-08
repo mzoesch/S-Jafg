@@ -3,141 +3,105 @@
 #include "CoreAFX.h"
 #include "Engine/Framework/Camera.h"
 
-Jafg::Camera::Camera(glm::vec3 position, float yaw, float pitch)
-: MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
+Jafg::Camera::Camera(const LVector& InStartLocation)
 {
-    Position = position;
-    Yaw      = yaw;
-    Pitch    = pitch;
-
-    updateCameraVectors();
+    this->Location = InStartLocation;
+    this->Rotator  = LRotator::ZeroRotator;
+    this->UpdateCameraTransform();
+    return;
 }
 
-Jafg::Camera::Camera(float posX, float posY, float posZ, float yaw, float pitch)
-: MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
+Jafg::LMatrix Jafg::Camera::GetViewMatrix() const
 {
-    Position = glm::vec3(posX, posY, posZ);
-    Yaw = yaw;
-    Pitch = pitch;
-    updateCameraVectors();
+    return Maths::MakeViewMatrix(this->Location, this->Location + this->Front, this->Up);
+
+    // glm::mat4 Result;
+    // for (int32 i = 0; i < 4; i++)
+    // {
+    //     for (int32 j = 0; j < 4; j++)
+    //     {
+    //         Result[i][j] = Mat.Matrix[i][j];
+    //     }
+    // }
+    //
+    // return Result;
 }
 
-// returns the view matrix calculated using Euler Angles and the LookAt Matrix
-glm::mat4 Jafg::Camera::GetViewMatrix()
-{
-    glm::vec3 LookAtLocation = Position;
-    // LookAtLocation *= glm::vec3(-1, -1, 1);
-    // LookAtLocation = glm::vec3(LookAtLocation.y, LookAtLocation.x, LookAtLocation.z);
-
-    return glm::lookAt(LookAtLocation, LookAtLocation + LocalFront, LocalUp);
-}
-
-// processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
 void Jafg::Camera::ProcessKeyboard(const Camera_Movement Dir, const float DeltaTime)
 {
-    const float Vel = MovementSpeed * DeltaTime;
-
-    // const glm::vec3 Forward = glm::vec3(LVector::ForwardVector.X, LVector::ForwardVector.Y, LVector::ForwardVector.Z);
-    // const glm::vec3 Right = glm::vec3(LVector::RightVector.X, LVector::RightVector.Y, LVector::RightVector.Z);
-    const glm::vec3 Up = glm::vec3(TVector<float>::UpVector.X, LVector::UpVector.Y, LVector::UpVector.Z);
-
-    const glm::vec3 UpLocal = LocalUp;
-    const glm::vec3 Forward = LocalFront;
-    const glm::vec3 Right   = LocalRight;
+    const float Vel = this->MovementSpeed * DeltaTime;
 
     if (Dir == FORWARD)
     {
-        Position += Forward * Vel;
+        this->Location += this->Front * Vel;
     }
     else if (Dir == BACKWARD)
     {
-        Position -= Forward * Vel;
+        this->Location -= this->Front * Vel;
     }
     else if (Dir == LEFT)
     {
-        Position -= Right * Vel;
+        this->Location -= this->Right * Vel;
     }
     else if (Dir == RIGHT)
     {
-        Position += Right * Vel;
+        this->Location += this->Right * Vel;
     }
     else if (Dir == UP)
     {
-        Position += Up * Vel;
+        this->Location += LVector::UpVector * Vel;
     }
     else if (Dir == DOWN)
     {
-        Position -= Up * Vel;
+        this->Location -= LVector::UpVector * Vel;
     }
 
     return;
 }
 
-// processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-void Jafg::Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch)
+void Jafg::Camera::ProcessMouseMovement(float XOffset, float YOffset)
 {
-    xoffset *= MouseSensitivity;
-    yoffset *= MouseSensitivity;
+    XOffset *= this->MouseSensitivity;
+    YOffset *= this->MouseSensitivity;
 
-    Yaw += xoffset;
-    Pitch += yoffset;
+    this->Rotator.Yaw   += XOffset;
+    this->Rotator.Pitch += YOffset;
 
-    // make sure that when pitch is out of bounds, screen doesn't get flipped
-    if (constrainPitch)
-    {
-        if (Pitch > 89.9f)
-            Pitch = 89.9f;
-        if (Pitch < -89.9f)
-            Pitch = -89.9f;
-    }
+    this->Rotator.ConstrainAxis(ERotatorAxis::Pitch, 89.9f);
+    this->Rotator.NormalizeRotation();
+    check( this->Rotator.Pitch >= -89.9f && this->Rotator.Pitch <= 89.9f )
+    check( this->Rotator.Yaw >= -180.0f && this->Rotator.Yaw <= 180.0f )
 
-    // Clamp Yaw to -180 to 180
-    while (Yaw > 180.0f)
-    {
-        Yaw -= 360.0f;
-    }
-    while (Yaw < -180.0f)
-    {
-        Yaw += 360.0f;
-    }
-    check( Yaw >= -180.0f && Yaw <= 180.0f )
+    this->UpdateCameraTransform();
 
-
-    // update Front, Right and Up Vectors using the updated Euler angles
-    updateCameraVectors();
+    return;
 }
 
 void Jafg::Camera::ProcessMouseScroll(const float YOffset)
 {
-    MovementSpeed += YOffset;
-    if (MovementSpeed < 0)
-        MovementSpeed = 0;
-    if (MovementSpeed > 50)
-        MovementSpeed = 50;
+    this->MovementSpeed += YOffset;
 
-    // std::cout << "Camera speed: " << MovementSpeed << '\n';
-    // std::cout.flush();
+    if (this->MovementSpeed < 0)
+    {
+        this->MovementSpeed = 0;
+    }
+    if (this->MovementSpeed > 50)
+    {
+        this->MovementSpeed = 50;
+    }
+
+    return;
 }
 
-// calculates the front vector from the Camera's (updated) Euler Angles
-void Jafg::Camera::updateCameraVectors()
+void Jafg::Camera::UpdateCameraTransform()
 {
-    // calculate the new Front vector
-    glm::vec3 front;
-    front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-    front.y = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-    front.z = sin(glm::radians(Pitch));
+    this->Front.X = Maths::Cos(Maths::ToRadians(this->Rotator.Yaw)) * Maths::Cos(Maths::ToRadians(this->Rotator.Pitch));
+    this->Front.Y = Maths::Sin(Maths::ToRadians(this->Rotator.Yaw)) * Maths::Cos(Maths::ToRadians(this->Rotator.Pitch));
+    this->Front.Z = Maths::Sin(Maths::ToRadians(this->Rotator.Pitch));
+    this->Front.Normalize();
 
-    LocalFront = glm::normalize(front);
+    this->Right = this->Front.Cross(LVector::UpVector).NormalizeRet().InvertRet();
+    this->Up    = this->Right.Cross(this->Front).NormalizeRet().InvertRet();
 
-    // also re-calculate the Right and Up vector
-    // normalize the vectors, because their length gets closer to 0 the more you look up
-    // or down which results in slower movement.
-    glm::vec3 WorldUp = glm::vec3(LVector::UpVector.X, LVector::UpVector.Y, LVector::UpVector.Z);
-    // LocalRight = glm::normalize(glm::cross(LocalFront, WorldUp));
-    LocalRight = glm::normalize(glm::cross(LocalFront, WorldUp));
-    LocalRight = -LocalRight;
-
-    LocalUp = glm::normalize(glm::cross(LocalRight, LocalFront));
-    LocalUp = -LocalUp;
+    return;
 }

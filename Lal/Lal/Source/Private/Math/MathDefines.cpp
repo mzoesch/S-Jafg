@@ -54,6 +54,22 @@ template<> const LVector2D LVector2D::UnitVector
 template<> const LVector2D LVector2D::UnitVectorX        { LVector2D( 1.0,  0.0) };
 template<> const LVector2D LVector2D::UnitVectorY        { LVector2D( 0.0,  1.0) };
 
+template<> const LVector4F LVector4F::ZeroVector         { LVector4F( 0.0f, 0.0f, 0.0f, 0.0f) };
+template<> const LVector4F LVector4F::IdentityVector     { LVector4F( 0.0f, 0.0f, 0.0f, 1.0f) };
+template<> const LVector4F LVector4F::OneVector          { LVector4F( 1.0f, 1.0f, 1.0f, 1.0f) };
+template<> const LVector4F LVector4F::UnitVectorX        { LVector4F( 1.0f, 0.0f, 0.0f, 0.0f) };
+template<> const LVector4F LVector4F::UnitVectorY        { LVector4F( 0.0f, 1.0f, 0.0f, 0.0f) };
+template<> const LVector4F LVector4F::UnitVectorZ        { LVector4F( 0.0f, 0.0f, 1.0f, 0.0f) };
+template<> const LVector4F LVector4F::UnitVectorW        { LVector4F( 0.0f, 0.0f, 0.0f, 1.0f) };
+
+template<> const LVector4D LVector4D::ZeroVector         { LVector4D( 0.0, 0.0, 0.0, 0.0) };
+template<> const LVector4D LVector4D::IdentityVector     { LVector4D( 0.0, 0.0, 0.0, 1.0) };
+template<> const LVector4D LVector4D::OneVector          { LVector4D( 1.0, 1.0, 1.0, 1.0) };
+template<> const LVector4D LVector4D::UnitVectorX        { LVector4D( 1.0, 0.0, 0.0, 0.0) };
+template<> const LVector4D LVector4D::UnitVectorY        { LVector4D( 0.0, 1.0, 0.0, 0.0) };
+template<> const LVector4D LVector4D::UnitVectorZ        { LVector4D( 0.0, 0.0, 1.0, 0.0) };
+template<> const LVector4D LVector4D::UnitVectorW        { LVector4D( 0.0, 0.0, 0.0, 1.0) };
+
 template<> const LInt8Vector2 LInt8Vector2::ZeroVector   { LInt8Vector2(0, 0) };
 template<> const LInt8Vector2 LInt8Vector2::OneVector    { LInt8Vector2(1, 1) };
 
@@ -66,10 +82,24 @@ template<> const LInt32Vector2 LInt32Vector2::OneVector  { LInt32Vector2(1, 1) }
 template<> const LInt64Vector2 LInt64Vector2::ZeroVector { LInt64Vector2(0, 0) };
 template<> const LInt64Vector2 LInt64Vector2::OneVector  { LInt64Vector2(1, 1) };
 
-template<> const LRotatorF LRotatorF::ZeroRotator         { LRotatorF( 0.0f,  0.0f,  0.0f) };
-template<> const LRotatorF LRotatorF::OneRotator          { LRotatorF( 1.0f,  1.0f,  1.0f) };
+template<> const LRotatorF LRotatorF::ZeroRotator         { LRotatorF( 0.0f, 0.0f, 0.0f) };
+template<> const LRotatorF LRotatorF::OneRotator          { LRotatorF( 1.0f, 1.0f, 1.0f) };
+template<> const LRotatorD LRotatorD::ZeroRotator         { LRotatorD( 0.0, 0.0, 0.0) };
+template<> const LRotatorD LRotatorD::OneRotator          { LRotatorD( 1.0, 1.0, 1.0) };
 
-template<> const LRotatorD LRotatorD::ZeroRotator         { LRotatorD( 0.0,  0.0,  0.0) };
-template<> const LRotatorD LRotatorD::OneRotator          { LRotatorD( 1.0,  1.0,  1.0) };
+template<> const LPlaneF LPlaneF::ZeroPlane               { LPlaneF( 0.0f, 0.0f, 0.0f, 0.0f) };
+template<> const LPlaneF LPlaneF::OnePlane                { LPlaneF( 1.0f, 1.0f, 1.0f, 1.0f) };
+template<> const LPlaneF LPlaneF::UnitPlaneX              { LPlaneF( 1.0f, 0.0f, 0.0f, 0.0f) };
+template<> const LPlaneF LPlaneF::UnitPlaneY              { LPlaneF( 0.0f, 1.0f, 0.0f, 0.0f) };
+template<> const LPlaneF LPlaneF::UnitPlaneZ              { LPlaneF( 0.0f, 0.0f, 1.0f, 0.0f) };
+template<> const LPlaneF LPlaneF::UnitPlaneW              { LPlaneF( 0.0f, 0.0f, 0.0f, 1.0f) };
+template<> const LPlaneD LPlaneD::ZeroPlane               { LPlaneD( 0.0, 0.0, 0.0, 0.0) };
+template<> const LPlaneD LPlaneD::OnePlane                { LPlaneD( 1.0, 1.0, 1.0, 1.0) };
+template<> const LPlaneD LPlaneD::UnitPlaneX              { LPlaneD( 1.0, 0.0, 0.0, 0.0) };
+template<> const LPlaneD LPlaneD::UnitPlaneY              { LPlaneD( 0.0, 1.0, 0.0, 0.0) };
+template<> const LPlaneD LPlaneD::UnitPlaneZ              { LPlaneD( 0.0, 0.0, 1.0, 0.0) };
+template<> const LPlaneD LPlaneD::UnitPlaneW              { LPlaneD( 0.0, 0.0, 0.0, 1.0) };
+
+template<> const LMatrixF LMatrixF::Identity { LPlaneF::UnitPlaneX, LPlaneF::UnitPlaneY, LPlaneF::UnitPlaneZ, LPlaneF::UnitPlaneW };
 
 } /* ~Namespace Jafg */

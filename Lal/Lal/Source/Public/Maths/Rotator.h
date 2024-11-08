@@ -5,6 +5,59 @@
 namespace Jafg
 {
 
+typedef uint8 LRotatorAxis;
+
+namespace ERotatorAxis
+{
+
+enum Type : LRotatorAxis
+{
+    None  = 0 << 0,
+    Pitch = 1 << 0,
+    Yaw   = 1 << 1,
+    Roll  = 1 << 2,
+};
+
+FORCEINLINE Type operator|(const Type& Lhs, const Type& Rhs)
+{
+    return static_cast<Type>(static_cast<LRotatorAxis>(Lhs) | static_cast<LRotatorAxis>(Rhs));
+}
+
+FORCEINLINE Type& operator|=(Type& Lhs, const Type& Rhs)
+{
+    Lhs = Lhs | Rhs;
+    return Lhs;
+}
+
+FORCEINLINE Type operator&(const Type& Lhs, const Type& Rhs)
+{
+    return static_cast<Type>(static_cast<LRotatorAxis>(Lhs) & static_cast<LRotatorAxis>(Rhs));
+}
+
+FORCEINLINE Type& operator&=(Type& Lhs, const Type& Rhs)
+{
+    Lhs = Lhs & Rhs;
+    return Lhs;
+}
+
+FORCEINLINE Type operator~(const Type& Lhs)
+{
+    return static_cast<Type>(~static_cast<LRotatorAxis>(Lhs));
+}
+
+template <typename  ... FlagsTy>
+constexpr ERotatorAxis::Type CombineFlags(FlagsTy ... Flags)
+{
+    static_assert(
+        (std::is_same_v<FlagsTy, ERotatorAxis::Type> && ...),
+        "All arguments must be of type EClassFlags::Type."
+    );
+
+    return (static_cast<ERotatorAxis::Type>(Flags) | ...);
+}
+
+} /* ~Namespace ERotatorAxis */
+
 /** Jafg implementation of a rotational vector. */
 template <typename T>
 struct TRotator final
@@ -29,6 +82,12 @@ struct TRotator final
     FORCEINLINE          TRotator<T>() = default;
     FORCEINLINE explicit TRotator<T>(const T InFloatingPoint);
     FORCEINLINE explicit TRotator<T>(const T InPitch, const T InYaw, const T InRoll);
+    FORCEINLINE          TRotator<T>(const TRotator<T>& InRotator) : Pitch(InRotator.Pitch), Yaw(InRotator.Yaw), Roll(InRotator.Roll) { }
+    FORCEINLINE          TRotator<T>(TRotator<T>&& InRotator) noexcept : Pitch(InRotator.Pitch), Yaw(InRotator.Yaw), Roll(InRotator.Roll) { }
+
+    FORCEINLINE TRotator<T>& operator =(const TRotator<T>& InRotator) noexcept;
+    FORCEINLINE TRotator<T>& operator =(TRotator<T>&& InRotator) noexcept;
+    FORCEINLINE TRotator<T>& operator =(const TRotator<T>&& InRotator) noexcept = delete;
 
     FORCEINLINE TRotator<T>& Add(const TRotator<T>& InRotator);
     FORCEINLINE TRotator<T>& Subtract(const TRotator<T>& InRotator);
@@ -57,6 +116,9 @@ struct TRotator final
     /** Normalizes an angle to the range of ]-180, 180] */
     FORCEINLINE static auto NormalizeAxis(T Angle) -> T;
     FORCEINLINE        auto NormalizeRotation() -> void;
+
+    /** Constrains one or multiple axes to a defined constraint in the range of ]0, 180]. */
+    FORCEINLINE auto ConstrainAxis(const LRotatorAxis AxisFlags, const T Constraint) -> void;
 };
 
 template <typename T>
@@ -67,6 +129,18 @@ TRotator<T>::TRotator(const T InFloatingPoint): Pitch(InFloatingPoint), Yaw(InFl
 template <typename T>
 TRotator<T>::TRotator(const T InPitch, const T InYaw, const T InRoll): Pitch(InPitch), Yaw(InYaw), Roll(InRoll)
 {
+}
+
+template <typename T>
+TRotator<T>& TRotator<T>::operator=(const TRotator<T>& InRotator) noexcept
+{
+    this->Pitch = InRotator.Pitch; this->Yaw = InRotator.Yaw; this->Roll = InRotator.Roll; return *this;
+}
+
+template <typename T>
+TRotator<T>& TRotator<T>::operator=(TRotator<T>&& InRotator) noexcept
+{
+    this->Pitch = InRotator.Pitch; this->Yaw = InRotator.Yaw; this->Roll = InRotator.Roll; return *this;
 }
 
 template <typename T>
@@ -174,7 +248,7 @@ bool TRotator<T>::operator==(const TRotator<T>& InRotator) const
 template <typename T>
 bool TRotator<T>::IsZero() const
 {
-    return TVector<T>::ClampAxis(Pitch) == 0 && TVector<T>::ClampAxis(Yaw) == 0 && TVector<T>::ClampAxis(Roll) == 0;
+    return ClampAxis(Pitch) == 0 && ClampAxis(Yaw) == 0 && ClampAxis(Roll) == 0;
 }
 
 template <typename T>
@@ -203,11 +277,11 @@ T TRotator<T>::ClampAxis(T Angle)
 template <typename T>
 T TRotator<T>::NormalizeAxis(T Angle)
 {
-    Angle = TVector<T>::ClampAxis(Angle);
-    if (Angle > static_cast<T>(180.0))
+    Angle = ClampAxis(Angle);
+    if (Angle > static_cast<T>(JAFG_DEG_HALF_CIRCLE_D))
     {
         /* Shift to ]-180, 180]. */
-        Angle -= static_cast<T>(360.0);
+        Angle -= static_cast<T>(JAFG_DEG_FULL_CIRCLE_D);
     }
     return Angle;
 }
@@ -218,6 +292,30 @@ void TRotator<T>::NormalizeRotation()
     this->Pitch = TRotator<T>::NormalizeAxis(this->Pitch);
     this->Yaw   = TRotator<T>::NormalizeAxis(this->Yaw);
     this->Roll  = TRotator<T>::NormalizeAxis(this->Roll);
+
+    return;
+}
+
+template <typename T>
+void TRotator<T>::ConstrainAxis(const LRotatorAxis AxisFlags, const T Constraint)
+{
+    check( AxisFlags != ERotatorAxis::None )
+    check( Constraint > 0.0f && Constraint <= 180.0f )
+
+    if (AxisFlags & ERotatorAxis::Pitch)
+    {
+        this->Pitch = Maths::Clamp(this->Pitch, -Constraint, Constraint);
+    }
+
+    if (AxisFlags & ERotatorAxis::Yaw)
+    {
+        this->Yaw = Maths::Clamp(this->Yaw, -Constraint, Constraint);
+    }
+
+    if (AxisFlags & ERotatorAxis::Roll)
+    {
+        this->Roll = Maths::Clamp(this->Roll, -Constraint, Constraint);
+    }
 
     return;
 }

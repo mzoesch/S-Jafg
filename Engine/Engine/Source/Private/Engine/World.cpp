@@ -34,7 +34,7 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 
     JustTemp::A(&Texture);
 
-    MainCamera = new Camera(glm::vec3(0.0f, 0.0f, 25.0f));
+    MainCamera = new Camera(LVector(0.0f , 0.0f, 25.0f));
 
     APlayerController* Pc = NewDeferredObject<APlayerController>(this);
     this->Actors.Add(Pc);
@@ -56,7 +56,10 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 
 void Jafg::LWorld::Tick(const float DeltaTime)
 {
-    glm::mat4 View = MainCamera->GetViewMatrix();
+    // glm::mat4 View = MainCamera->GetViewMatrix();
+
+    LMatrix View = MainCamera->GetViewMatrix();
+
     ShaderProgram->Use();
     JustTemp::B(Texture);
     TIntVector2 WindowDimensions = GEngine->GetCheckedLocalPlayer()->GetPrimarySurface()->GetDimensions();

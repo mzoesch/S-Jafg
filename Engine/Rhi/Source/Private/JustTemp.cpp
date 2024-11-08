@@ -45,14 +45,19 @@ void JustTemp::B(uint32 Texture)
     glBindTexture(GL_TEXTURE_2D, Texture);
 }
 
-void JustTemp::C(float Zoom, Jafg::LShader* ShaderProgram, Jafg::LIntVector2 WindowDimensions, glm::mat4 View)
+void JustTemp::C(float Zoom, Jafg::LShader* ShaderProgram, Jafg::LIntVector2 WindowDimensions, const Jafg::LMatrix& View)
 {
-    glm::mat4 Projection = glm::perspective(glm::radians(Zoom),
-        static_cast<float>(WindowDimensions.X) / static_cast<float>(WindowDimensions.Y), 0.1f, 2000.0f); // change clipping here
+    Jafg::TMatrix Proj = Jafg::Maths::MakePerspectiveProjectionMatrix(
+        Jafg::Maths::ToRadians(Zoom),
+        static_cast<float>(WindowDimensions.X) / static_cast<float>(WindowDimensions.Y),
+        0.1f, 2000.0f
+    );
+
     const int32 ViewLoc = glGetUniformLocation(ShaderProgram->GetId(), "view");
-    glUniformMatrix4fv(ViewLoc, 1, GL_FALSE, glm::value_ptr(View));
     const int32 ProjectionLoc = glGetUniformLocation(ShaderProgram->GetId(), "projection");
-    glUniformMatrix4fv(ProjectionLoc, 1, GL_FALSE, glm::value_ptr(Projection));
+
+    glUniformMatrix4fv(ViewLoc, 1, GL_FALSE, View.GetData());
+    glUniformMatrix4fv(ProjectionLoc, 1, GL_FALSE, Proj.GetData());
 
     return;
 }
