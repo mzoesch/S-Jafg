@@ -47,4 +47,4 @@ private:
     uint32  Vbo   = 0x0u;
 };
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */

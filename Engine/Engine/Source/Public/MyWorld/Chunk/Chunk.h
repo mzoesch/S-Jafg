@@ -15,6 +15,7 @@ namespace Jafg
 {
 
 class AChunk;
+class JChunkGenerationSubsystem;
 
 class ENGINE_API LChunkRendererComponent final : public LRendererComponent
 {
@@ -29,6 +30,11 @@ public:
 private:
 
     AChunk* Owner = nullptr;
+};
+
+struct LSharedChunkArgs final
+{
+    JChunkGenerationSubsystem* ChunkGenerationSubsystem;
 };
 
 DECLARE_JAFG_CLASS()
@@ -51,6 +57,7 @@ public:
     uint32* RawVoxelData = nullptr;
     glm::vec3 ChunkPos = glm::vec3(0.0f);
 
+    LSharedChunkArgs* SharedArgs;
     LChunkKey  ChunkKey      = { };
     LVector    WorldLocation = { };
 

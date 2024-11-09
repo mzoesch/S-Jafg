@@ -3,7 +3,7 @@
 #pragma once
 
 #include "WidgetNode.h"
-#include "RhiFramework/SimpleShaderContext.h"
+#include "RhiFramework/BoxShaderContext.h"
 #include "TextBlock.generated.h"
 
 namespace Jafg

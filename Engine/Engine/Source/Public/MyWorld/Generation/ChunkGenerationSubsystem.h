@@ -12,6 +12,8 @@
 namespace Jafg
 {
 
+class LChunkShaderContext;
+
 DECLARE_JAFG_CLASS()
 class JChunkGenerationSubsystem final : public JCappedTickableWorldSubsystem
 {
@@ -23,7 +25,7 @@ protected:
 
     // JTickableWorldSubsystem implementation
     virtual void Initialize(Jafg::LSubsystemCollection& Collection) override;
-    virtual void CappedTick(const float EngineDeltaTime, const float SubsystemDeltaTime) override;
+    virtual void FixedTick(const float EngineDeltaTime, const float SubsystemDeltaTime) override;
     virtual void TearDown() override;
     // ~JTickableWorldSubsystem implementation
 
@@ -32,12 +34,16 @@ protected:
         return std::get<0>(Tuple) + std::get<1>(Tuple) * ChunkSize + std::get<2>(Tuple) * ChunkSize * ChunkSize;
     }
 
+public:
+
+    FORCEINLINE auto HasChunkShaderContext() const -> bool { return this->ChunkShaderContext != nullptr; }
+    FORCEINLINE auto GetChunkShaderContext() const -> LChunkShaderContext* { return this->ChunkShaderContext; }
+
 private:
 
     void UpdateChunkQueue();
     void KillChunks();
     void GenerateChunks();
-    // void RenderChunks();
 
     std::unordered_map<int32, AChunk*> Chunks;
     std::queue<glm::vec3> ChunkQueue;
@@ -45,6 +51,9 @@ private:
     int RenderHeight = 0;
     unsigned int ChunkSize = 32;
     int LastCamX = -100, LastCamY = -100;
+
+    LChunkShaderContext* ChunkShaderContext = nullptr;
+    LSharedChunkArgs* SharedChunkArgs;
 };
 
 } /* ~Namespace Jafg */

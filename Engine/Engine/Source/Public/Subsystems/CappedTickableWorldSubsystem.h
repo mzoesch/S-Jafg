@@ -27,7 +27,7 @@ protected:
      * @param EngineDeltaTime    The delta time of the engine.
      * @param SubsystemDeltaTime The delta time since the lass call of #CappedTick.
      */
-    virtual void CappedTick(const float EngineDeltaTime, const float SubsystemDeltaTime) { }
+    virtual void FixedTick(const float EngineDeltaTime, const float SubsystemDeltaTime) { }
 
     FORCEINLINE auto GetTickInterval() const -> float { return this->TickInterval; }
     FORCEINLINE auto SetTickInterval(const float Interval) -> void { this->TickInterval = Interval; }

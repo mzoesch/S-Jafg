@@ -7,11 +7,9 @@
 #include "Platform/Surface.h"
 #include <glm/gtc/type_ptr.inl>
 #include "Engine/ActorUtility.h"
-#include "JustTemp.h"
 #include "Engine/Framework/PlayerController.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "Player/LocalPlayer.h"
-#include "RhiFramework/Shader.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Engine/Framework/Pawn.h"
@@ -27,12 +25,6 @@ Jafg::LEngine* Jafg::LWorld::GetEngine() const
 void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 {
     this->WorldState = EWorldState::Initializing;
-
-    ShaderProgram = new LShader("Content/Shaders/Chunk.vert", "Content/Shaders/Chunk.frag");
-    ShaderProgram->Use();
-    ShaderProgram->SetFloatUniform("texMultiplier", 0.5f);
-
-    JustTemp::A(&Texture);
 
     MainCamera = new Camera(LVector(0.0f , 0.0f, 25.0f));
 
@@ -53,15 +45,6 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 
 void Jafg::LWorld::Tick(const float DeltaTime)
 {
-    // glm::mat4 View = MainCamera->GetViewMatrix();
-
-    LMatrix View = MainCamera->GetViewMatrix();
-
-    ShaderProgram->Use();
-    JustTemp::B(Texture);
-    TIntVector2 WindowDimensions = GEngine->GetCheckedLocalPlayer()->GetPrimarySurface()->GetDimensions();
-    JustTemp::C(MainCamera->Zoom, ShaderProgram, WindowDimensions, View);
-
     this->AcquireTickableObjectsLock();
     for (LTickableObject* Tickable : this->TickableObjects)
     {

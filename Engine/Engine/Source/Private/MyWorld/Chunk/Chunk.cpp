@@ -6,9 +6,14 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "MyWorld/MyWorldStatics.h"
 #include "JustTemp.h"
+#include "Engine/Framework/Camera.h"
 #include "MyWorld/Blocks.h"
 #include "MyWorld/WorldGen.h"
 #include "MyWorld/WorldStatics.h"
+#include "MyWorld/Generation/ChunkGenerationSubsystem.h"
+#include "RhiFramework/ChunkShaderContext.h"
+
+// C4553
 
 Jafg::LChunkRendererComponent::LChunkRendererComponent(AChunk& Owner)
 {
@@ -17,7 +22,16 @@ Jafg::LChunkRendererComponent::LChunkRendererComponent(AChunk& Owner)
 
 void Jafg::LChunkRendererComponent::Draw(const LViewport& Context)
 {
-    const uint32 ModelLoc = JustTemp::D(this->Owner->GetWorld()->ShaderProgram);
+    checkSlow( this->Owner->SharedArgs )
+
+    LChunkShaderContext* ShaderContext = this->Owner->SharedArgs->ChunkGenerationSubsystem->GetChunkShaderContext();
+
+    LChunkShaderDrawArgs Args;
+    Args.DegYFov   = this->Owner->GetWorld()->MainCamera->Zoom;
+    Args.ViewMatrix.CopyFrom(this->Owner->GetWorld()->MainCamera->GetViewMatrix());
+    ShaderContext->Draw(Context, Args);
+
+    const uint32 ModelLoc = JustTemp::D(ShaderContext->GetProgram());
 
     this->Owner->Render(ModelLoc);
 
@@ -36,7 +50,7 @@ void Jafg::AChunk::BeginLife()
     bGenerated = false;
 
     this->RawVoxelData = new uint32[MwStatics::VoxelCount];
-    memset(this->RawVoxelData, 0, MwStatics::VoxelCount * sizeof(uint32));
+    ::memset(this->RawVoxelData, 0, MwStatics::VoxelCount * sizeof(uint32));
     this->GenerateChunk();
 
     return;

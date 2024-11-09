@@ -11,7 +11,7 @@ void Jafg::JCappedTickableWorldSubsystem::Tick(const float DeltaTime)
 
     if (this->LastTickTime > this->TickInterval)
     {
-        this->CappedTick(DeltaTime, this->LastTickTime);
+        this->FixedTick(DeltaTime, this->LastTickTime);
         this->LastTickTime = 0.0f;
     }
 

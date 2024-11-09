@@ -5,6 +5,7 @@
 #include "JustTemp.h"
 #include "Engine/Framework/Camera.h"
 #include "Engine/World.h"
+#include "RhiFramework/ChunkShaderContext.h"
 
 void GetAllChunksInDistance(const Jafg::TIntVector2<int32>& Center, const int32 Distance, std::vector<Jafg::TIntVector2<int32>>& OutChunks)
 {
@@ -76,17 +77,23 @@ void Jafg::JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Col
 {
     Super::Initialize(Collection);
     this->SetTickInterval(0.0f);
+
+    this->ChunkShaderContext = new LChunkShaderContext();
+    this->ChunkShaderContext->Make();
+
+    this->SharedChunkArgs = new LSharedChunkArgs();
+    this->SharedChunkArgs->ChunkGenerationSubsystem = this;
+
     return;
 }
 
-void Jafg::JChunkGenerationSubsystem::CappedTick(const float EngineDeltaTime, const float SubsystemDeltaTime)
+void Jafg::JChunkGenerationSubsystem::FixedTick(const float EngineDeltaTime, const float SubsystemDeltaTime)
 {
-    Super::CappedTick(EngineDeltaTime, SubsystemDeltaTime);
+    Super::FixedTick(EngineDeltaTime, SubsystemDeltaTime);
 
     this->UpdateChunkQueue();
     this->KillChunks();
     this->GenerateChunks();
-    // this->RenderChunks();
 
     return;
 }
@@ -94,6 +101,15 @@ void Jafg::JChunkGenerationSubsystem::CappedTick(const float EngineDeltaTime, co
 void Jafg::JChunkGenerationSubsystem::TearDown()
 {
     Super::TearDown();
+
+    this->ChunkShaderContext->Free();
+    delete this->ChunkShaderContext;
+    this->ChunkShaderContext = nullptr;
+
+    delete this->SharedChunkArgs;
+    this->SharedChunkArgs = nullptr;
+
+    return;
 }
 
 void Jafg::JChunkGenerationSubsystem::UpdateChunkQueue()
@@ -168,6 +184,7 @@ void Jafg::JChunkGenerationSubsystem::GenerateChunks()
             Chunk->ChunkPos = Next;
             Chunk->ChunkKey =
                 { static_cast<LChunkKeyDomainTy>(Next.x), static_cast<LChunkKeyDomainTy>(Next.y), static_cast<LChunkKeyDomainTy>(Next.z) };
+            Chunk->SharedArgs = this->SharedChunkArgs;
             MakeDeferredActorFinal(Chunk);
             Chunks.try_emplace(Key, Chunk);
             ++GeneratedChunks;
@@ -176,16 +193,3 @@ void Jafg::JChunkGenerationSubsystem::GenerateChunks()
 
     return;
 }
-
-// void Jafg::JChunkGenerationSubsystem::RenderChunks()
-// {
-//     // const uint32 ModelLoc = glGetUniformLocation(this->GetWorld()->ShaderProgram->ID, "model");
-//     const uint32 ModelLoc = JustTemp::D(this->GetWorld()->ShaderProgram);
-//
-//     for (const auto& Chunk : Chunks | std::views::values)
-//     {
-//         Chunk->Render(ModelLoc);
-//     }
-//
-//     return;
-// }

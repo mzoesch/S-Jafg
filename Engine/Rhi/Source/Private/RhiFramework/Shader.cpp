@@ -150,3 +150,8 @@ void Jafg::LShader::SetMatrix4Uniform(const LSimpleString& Name, const glm::mat4
 {
     glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.ToC()), 1, GL_FALSE, glm::value_ptr(Value));
 }
+
+void Jafg::LShader::SetMatrix4Uniform(const LSimpleString& Name, const LMatrixF& Value) const
+{
+    glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.ToC()), 1, GL_FALSE, Value.GetData());
+}

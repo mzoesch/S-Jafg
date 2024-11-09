@@ -27,6 +27,7 @@ public:
     void SetVector2Uniform(const LSimpleString& Name, const glm::vec2& Value) const;
     void SetVector4Uniform(const LSimpleString& Name, const glm::vec4& Value) const;
     void SetMatrix4Uniform(const LSimpleString& Name, const glm::mat4& Value) const;
+    void SetMatrix4Uniform(const LSimpleString& Name, const LMatrixF& Value) const;
 
 
     FORCEINLINE auto GetId() const -> uint32 { return this->Id; }

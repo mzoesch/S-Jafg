@@ -77,9 +77,6 @@ public:
 
     Camera* MainCamera = nullptr;
 
-    LShader* ShaderProgram = nullptr;
-    uint32 Texture       = 0;
-
     void MouseCallback(const double XPos, const double YPos);
     void ScrollCallback(const double YOffset);
 

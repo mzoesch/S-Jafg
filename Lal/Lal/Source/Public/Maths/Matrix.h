@@ -66,6 +66,8 @@ struct TMatrix final
     FORCEINLINE TMatrix<T>& operator =(      TMatrix<T>&& InMatrix) noexcept = delete;
     FORCEINLINE TMatrix<T>& operator =(const TMatrix<T>&& InMatrix) noexcept = delete;
 
+    FORCEINLINE void CopyFrom(const TMatrix<T>& InMatrix) { TMatrix::FastCopy(InMatrix, this); }
+
     FORCEINLINE void SetIdentity();
 
     FORCEINLINE TMatrix<T>  operator *(const TMatrix<T>& InMatrix) const;

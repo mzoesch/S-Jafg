@@ -1,12 +1,11 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "RhiFramework/SimpleShaderContext.h"
-#include <glad/glad.h> /* Include glad to get all the required OpenGL headers. */
+#include "RhiFramework/BoxShaderContext.h"
+#include <glad/glad.h>  /* Include glad to get all the required OpenGL headers. */
 #include <GLFW/glfw3.h> /* Include glfw3 after glad to avoid include order issues. */
 #include <glm/fwd.hpp>
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
-
 #include "Widgets/Viewport.h"
 
 void Jafg::LBoxShaderContext::Make()

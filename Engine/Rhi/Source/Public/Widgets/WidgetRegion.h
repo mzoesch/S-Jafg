@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Widgets/WidgetParent.h"
-#include "RhiFramework/SimpleShaderContext.h"
+#include "RhiFramework/BoxShaderContext.h"
 #include "Misc/Optional.h"
 #include "WidgetRegion.generated.h"
 
