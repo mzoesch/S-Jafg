@@ -42,7 +42,10 @@ void Jafg::AChunk::BeginLife()
 {
     Super::BeginLife();
 
-    this->SetRendererComponent(new LChunkRendererComponent(*this));
+    check( this->SharedArgs )
+
+    this->SetRendererComponent(new LChunkRendererComponent(*this)); checkSlow( this->HasRendererComponent() )
+    this->Mesher = this->SharedArgs->GetNewMesher(*this); checkSlow( this->Mesher )
 
     this->WorldLocation = this->ChunkKey.ToWorldSpaceVector();
 

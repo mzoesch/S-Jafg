@@ -6,6 +6,7 @@
 #include "Engine/Framework/Camera.h"
 #include "Engine/World.h"
 #include "RhiFramework/ChunkShaderContext.h"
+#include "MyWorld/Meshing/FastMesher.h"
 
 void GetAllChunksInDistance(const Jafg::TIntVector2<int32>& Center, const int32 Distance, std::vector<Jafg::TIntVector2<int32>>& OutChunks)
 {
@@ -83,6 +84,7 @@ void Jafg::JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Col
 
     this->SharedChunkArgs = new LSharedChunkArgs();
     this->SharedChunkArgs->ChunkGenerationSubsystem = this;
+    this->SharedChunkArgs->GetNewMesher = [] (AChunk& Owner) -> LChunkMesher* { return new LFastChunkMesher(Owner); };
 
     return;
 }

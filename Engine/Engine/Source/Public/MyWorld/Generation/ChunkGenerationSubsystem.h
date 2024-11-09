@@ -52,8 +52,8 @@ private:
     unsigned int ChunkSize = 32;
     int LastCamX = -100, LastCamY = -100;
 
+    LSharedChunkArgs*    SharedChunkArgs    = nullptr;
     LChunkShaderContext* ChunkShaderContext = nullptr;
-    LSharedChunkArgs* SharedChunkArgs;
 };
 
 } /* ~Namespace Jafg */
