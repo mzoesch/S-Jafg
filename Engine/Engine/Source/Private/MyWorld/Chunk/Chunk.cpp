@@ -11,6 +11,7 @@
 #include "MyWorld/WorldGen.h"
 #include "MyWorld/WorldStatics.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
+#include "MyWorld/Meshing/ChunkMesher.h"
 #include "RhiFramework/ChunkShaderContext.h"
 
 // C4553
@@ -44,17 +45,10 @@ void Jafg::AChunk::BeginLife()
 
     check( this->SharedArgs )
 
-    this->SetRendererComponent(new LChunkRendererComponent(*this)); checkSlow( this->HasRendererComponent() )
-    this->Mesher = this->SharedArgs->GetNewMesher(*this); checkSlow( this->Mesher )
+    this->ChunkState = EChunkState::Freed;
 
-    this->WorldLocation = this->ChunkKey.ToWorldSpaceVector();
-
-    bReady = false;
-    bGenerated = false;
-
-    this->RawVoxelData = new uint32[MwStatics::VoxelCount];
-    ::memset(this->RawVoxelData, 0, MwStatics::VoxelCount * sizeof(uint32));
-    this->GenerateChunk();
+    this->bReady        = false;
+    this->bGenerated    = false;
 
     return;
 }
@@ -65,302 +59,19 @@ void Jafg::AChunk::EndLife()
 
     JustTemp::E(&VertexArrayObject, &Vbo, &Vbo);
 
-    delete[] RawVoxelData;
-    RawVoxelData = nullptr;
-
-    Vertices.Empty();
-    Indices.Empty();
-
-    return;
-}
-
-void Jafg::AChunk::GenerateChunk()
-{
-    //std::cout << "Started thread: " << std::this_thread::get_id() << '\n';
-
-    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z), WorldStatics::ChunkSize, RawVoxelData);
-
-    // std::vector<unsigned int> northData, southData, eastData, westData, upData, downData;
-    uint32* northData = new uint32[WorldStatics::VoxelCount];
-    uint32* southData = new uint32[WorldStatics::VoxelCount];
-    uint32* eastData = new uint32[WorldStatics::VoxelCount];
-    uint32* westData = new uint32[WorldStatics::VoxelCount];
-    uint32* upData = new uint32[WorldStatics::VoxelCount];
-    uint32* downData = new uint32[WorldStatics::VoxelCount];
-    memset(northData, 0, WorldStatics::VoxelCount * sizeof(uint32));
-    memset(southData, 0, WorldStatics::VoxelCount * sizeof(uint32));
-    memset(eastData, 0, WorldStatics::VoxelCount * sizeof(uint32));
-    memset(westData, 0, WorldStatics::VoxelCount * sizeof(uint32));
-    memset(upData, 0, WorldStatics::VoxelCount * sizeof(uint32));
-    memset(downData, 0, WorldStatics::VoxelCount * sizeof(uint32));
-
-    // WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y, chunkPos.z - 1, WorldStatics::ChunkSize, northData);
-    // WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y, chunkPos.z + 1, WorldStatics::ChunkSize, southData);
-    // WorldGen::GenerateChunkData(chunkPos.x + 1, chunkPos.y, chunkPos.z, WorldStatics::ChunkSize, eastData);
-    // WorldGen::GenerateChunkData(chunkPos.x - 1, chunkPos.y, chunkPos.z, WorldStatics::ChunkSize, westData);
-    // WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y + 1, chunkPos.z, WorldStatics::ChunkSize, upData);
-    // WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y - 1, chunkPos.z, WorldStatics::ChunkSize, downData);
-    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x + 1), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z), WorldStatics::ChunkSize, northData);
-    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x - 1), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z), WorldStatics::ChunkSize, southData);
-    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y + 1), static_cast<int>(ChunkPos.z), WorldStatics::ChunkSize, eastData);
-    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y - 1), static_cast<int>(ChunkPos.z), WorldStatics::ChunkSize, westData);
-    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z + 1), WorldStatics::ChunkSize, upData);
-    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z - 1), WorldStatics::ChunkSize, downData);
-
-    //std::cout << "Got chunk data in thread: " << std::this_thread::get_id() << '\n';
-
-    unsigned int currentVertex = 0;
-    for (char x = 0; x < WorldStatics::ChunkSize; x++)
+    if (this->Mesher)
     {
-        for (char y = 0; y < WorldStatics::ChunkSize; y++)
-        {
-            for (char z = 0; z < WorldStatics::ChunkSize; z++)
-            {
-                int Index = GetIndex(x, y, z);
-                // int index = x * WorldStatics::ChunkSize * WorldStatics::ChunkSize + y * WorldStatics::ChunkSize + z;
-                if (RawVoxelData[Index] == 0)
-                    continue;
-
-                const Block* block = &Blocks::blocks[RawVoxelData[Index]];
-
-                // North
-                {
-                    int northBlock = 0;
-                    // if (y > 0)
-                    // {
-                    //     int northIndex = x * WorldStatics::ChunkSize * WorldStatics::ChunkSize + (y - 1) *
-                    //         WorldStatics::ChunkSize + z;
-                    //     northBlock = RawVoxelData[northIndex];
-                    // }
-                    // else
-                    // {
-                    //     int northIndex = x * WorldStatics::ChunkSize * WorldStatics::ChunkSize + (
-                    //         WorldStatics::ChunkSize - 1) * WorldStatics::ChunkSize + z;
-                    //     northBlock = northData[northIndex];
-                    // }
-
-                    if (northBlock == 0)
-                    {
-                        // vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->sideMinX, block->sideMinY));
-                        // vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->sideMaxX, block->sideMinY));
-                        // vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->sideMinX, block->sideMaxY));
-                        // vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->sideMaxX, block->sideMaxY));
-
-                        Vertices.Emplace(x + 1, y + 0, z + 0, block->sideMinX, block->sideMinY);
-                        Vertices.Emplace(x + 0, y + 0, z + 0, block->sideMaxX, block->sideMinY);
-                        Vertices.Emplace(x + 1, y + 0, z + 1, block->sideMinX, block->sideMaxY);
-                        Vertices.Emplace(x + 0, y + 0, z + 1, block->sideMaxX, block->sideMaxY);
-
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 3);
-                        Indices.Emplace(currentVertex + 1);
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 2);
-                        Indices.Emplace(currentVertex + 3);
-                        currentVertex += 4;
-                    }
-                }
-
-                // South
-                {
-                    int southBlock = 0;
-                    // if (y < WorldStatics::ChunkSize - 1)
-                    // {
-                    //     int southIndex = x * WorldStatics::ChunkSize * WorldStatics::ChunkSize + (y + 1) *
-                    //         WorldStatics::ChunkSize + z;
-                    //     southBlock = RawVoxelData[southIndex];
-                    // }
-                    // else
-                    // {
-                    //     int southIndex = x * WorldStatics::ChunkSize * WorldStatics::ChunkSize + 0 *
-                    //         WorldStatics::ChunkSize + z;
-                    //     southBlock = southData[southIndex];
-                    // }
-                    if (southBlock == 0)
-                    {
-                        // vertices.push_back(Vertex(x + 0, y + 0, z + 1, block->sideMinX, block->sideMinY));
-                        // vertices.push_back(Vertex(x + 1, y + 0, z + 1, block->sideMaxX, block->sideMinY));
-                        // vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->sideMinX, block->sideMaxY));
-                        // vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->sideMaxX, block->sideMaxY));
-
-                        Vertices.Emplace(x + 0, y + 1, z + 0, block->sideMinX, block->sideMinY);
-                        Vertices.Emplace(x + 1, y + 1, z + 0, block->sideMaxX, block->sideMinY);
-                        Vertices.Emplace(x + 0, y + 1, z + 1, block->sideMinX, block->sideMaxY);
-                        Vertices.Emplace(x + 1, y + 1, z + 1, block->sideMaxX, block->sideMaxY);
-
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 3);
-                        Indices.Emplace(currentVertex + 1);
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 2);
-                        Indices.Emplace(currentVertex + 3);
-                        currentVertex += 4;
-                    }
-                }
-
-                // West
-                {
-                    int westBlock = 0;
-                    // if (x > 0)
-                    // {
-                    //     int blockIndex = (x - 1) * WorldStatics::ChunkSize * WorldStatics::ChunkSize + y *
-                    //         WorldStatics::ChunkSize + z;
-                    //     westBlock = RawVoxelData[blockIndex];
-                    // }
-                    // else
-                    // {
-                    //     int blockIndex = (WorldStatics::ChunkSize - 1) * WorldStatics::ChunkSize *
-                    //         WorldStatics::ChunkSize + y * WorldStatics::ChunkSize + z;
-                    //     westBlock = westData[blockIndex];
-                    // }
-                    if (westBlock == 0)
-                    {
-                        // vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->sideMinX, block->sideMinY));
-                        // vertices.push_back(Vertex(x + 0, y + 0, z + 1, block->sideMaxX, block->sideMinY));
-                        // vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->sideMinX, block->sideMaxY));
-                        // vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->sideMaxX, block->sideMaxY));
-
-                        Vertices.Emplace(x + 0, y + 0, z + 0, block->sideMinX, block->sideMinY);
-                        Vertices.Emplace(x + 0, y + 1, z + 0, block->sideMaxX, block->sideMinY);
-                        Vertices.Emplace(x + 0, y + 0, z + 1, block->sideMinX, block->sideMaxY);
-                        Vertices.Emplace(x + 0, y + 1, z + 1, block->sideMaxX, block->sideMaxY);
-
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 3);
-                        Indices.Emplace(currentVertex + 1);
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 2);
-                        Indices.Emplace(currentVertex + 3);
-                        currentVertex += 4;
-                    }
-                }
-
-                // East
-                {
-                    int eastBlock = 0;
-                    // if (x < WorldStatics::ChunkSize - 1)
-                    // {
-                    //     int blockIndex = (x + 1) * WorldStatics::ChunkSize * WorldStatics::ChunkSize + y *
-                    //         WorldStatics::ChunkSize + z;
-                    //     eastBlock = RawVoxelData[blockIndex];
-                    // }
-                    // else
-                    // {
-                    //     int blockIndex = 0 * WorldStatics::ChunkSize * WorldStatics::ChunkSize + y *
-                    //         WorldStatics::ChunkSize + z;
-                    //     eastBlock = eastData[blockIndex];
-                    // }
-                    if (eastBlock == 0)
-                    {
-                        // vertices.push_back(Vertex(x + 1, y + 0, z + 1, block->sideMinX, block->sideMinY));
-                        // vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->sideMaxX, block->sideMinY));
-                        // vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->sideMinX, block->sideMaxY));
-                        // vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->sideMaxX, block->sideMaxY));
-
-                        Vertices.Emplace(x + 1, y + 1, z + 0, block->sideMinX, block->sideMinY);
-                        Vertices.Emplace(x + 1, y + 0, z + 0, block->sideMaxX, block->sideMinY);
-                        Vertices.Emplace(x + 1, y + 1, z + 1, block->sideMinX, block->sideMaxY);
-                        Vertices.Emplace(x + 1, y + 0, z + 1, block->sideMaxX, block->sideMaxY);
-
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 3);
-                        Indices.Emplace(currentVertex + 1);
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 2);
-                        Indices.Emplace(currentVertex + 3);
-                        currentVertex += 4;
-                    }
-                }
-
-                // Bottom
-                {
-                    int bottomBlock = 0;
-                    // if (z > 0)
-                    // {
-                    //     int blockIndex = x * WorldStatics::ChunkSize * WorldStatics::ChunkSize + y *
-                    //         WorldStatics::ChunkSize + (z - 1);
-                    //     bottomBlock = RawVoxelData[blockIndex];
-                    // }
-                    // else
-                    // {
-                    //     int blockIndex = x * WorldStatics::ChunkSize * WorldStatics::ChunkSize + y *
-                    //         WorldStatics::ChunkSize + (WorldStatics::ChunkSize - 1);
-                    //     bottomBlock = downData[blockIndex];
-                    // }
-                    if (bottomBlock == 0)
-                    {
-                        // vertices.push_back(Vertex(x + 1, y + 0, z + 1, block->bottomMinX, block->bottomMinY));
-                        // vertices.push_back(Vertex(x + 0, y + 0, z + 1, block->bottomMaxX, block->bottomMinY));
-                        // vertices.push_back(Vertex(x + 1, y + 0, z + 0, block->bottomMinX, block->bottomMaxY));
-                        // vertices.push_back(Vertex(x + 0, y + 0, z + 0, block->bottomMaxX, block->bottomMaxY));
-
-                        Vertices.Emplace(x + 1, y + 1, z + 0, block->bottomMinX, block->bottomMinY);
-                        Vertices.Emplace(x + 0, y + 1, z + 0, block->bottomMaxX, block->bottomMinY);
-                        Vertices.Emplace(x + 1, y + 0, z + 0, block->bottomMinX, block->bottomMaxY);
-                        Vertices.Emplace(x + 0, y + 0, z + 0, block->bottomMaxX, block->bottomMaxY);
-
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 3);
-                        Indices.Emplace(currentVertex + 1);
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 2);
-                        Indices.Emplace(currentVertex + 3);
-                        currentVertex += 4;
-                    }
-                }
-
-                // Top
-                {
-                    int topBlock = 0;
-                    // if (z < WorldStatics::ChunkSize - 1)
-                    // {
-                    //     int blockIndex = x * WorldStatics::ChunkSize * WorldStatics::ChunkSize + y *
-                    //         WorldStatics::ChunkSize + (z + 1);
-                    //     topBlock = RawVoxelData[blockIndex];
-                    // }
-                    // else
-                    // {
-                    //     int blockIndex = x * WorldStatics::ChunkSize * WorldStatics::ChunkSize + y *
-                    //         WorldStatics::ChunkSize + 0;
-                    //     topBlock = upData[blockIndex];
-                    // }
-                    if (topBlock == 0)
-                    {
-                        // vertices.push_back(Vertex(x + 0, y + 1, z + 1, block->topMinX, block->topMinY));
-                        // vertices.push_back(Vertex(x + 1, y + 1, z + 1, block->topMaxX, block->topMinY));
-                        // vertices.push_back(Vertex(x + 0, y + 1, z + 0, block->topMinX, block->topMaxY));
-                        // vertices.push_back(Vertex(x + 1, y + 1, z + 0, block->topMaxX, block->topMaxY));
-
-                        Vertices.Emplace(x + 0, y + 1, z + 1, block->topMinX, block->topMinY);
-                        Vertices.Emplace(x + 1, y + 1, z + 1, block->topMaxX, block->topMinY);
-                        Vertices.Emplace(x + 0, y + 0, z + 1, block->topMinX, block->topMaxY);
-                        Vertices.Emplace(x + 1, y + 0, z + 1, block->topMaxX, block->topMaxY);
-
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 3);
-                        Indices.Emplace(currentVertex + 1);
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 2);
-                        Indices.Emplace(currentVertex + 3);
-                        currentVertex += 4;
-                    }
-                }
-            }
-        }
+        delete this->Mesher;
+        this->Mesher = nullptr;
     }
 
-    //std::cout << "Finished generating in thread: " << std::this_thread::get_id() << '\n';
+    if (this->RawVoxelData)
+    {
+        delete[] RawVoxelData;
+        RawVoxelData = nullptr;
+    }
 
-    delete[] northData;
-    delete[] southData;
-    delete[] eastData;
-    delete[] westData;
-    delete[] upData;
-    delete[] downData;
-
-    bGenerated = true;
-
-    //std::cout << "Generated: " << generated << '\n';
+    return;
 }
 
 void Jafg::AChunk::Render(unsigned int ModelLoc)
@@ -369,7 +80,7 @@ void Jafg::AChunk::Render(unsigned int ModelLoc)
     {
         if (bGenerated)
         {
-            JustTemp::F(&VertexArrayObject, &Vbo, &Ebo, &Vertices, &Indices, &NumTriangles);
+            JustTemp::F(&VertexArrayObject, &Vbo, &Ebo, &this->Mesher->GetVertices(), &this->Mesher->GetIndices());
             // numTriangles = static_cast<unsigned int>( indices.size() );
             //
             // glGenVertexArrays(1, &vertexArrayObject);
@@ -397,7 +108,7 @@ void Jafg::AChunk::Render(unsigned int ModelLoc)
     //std::cout << "Rendering chunk " << chunkPos.x << ", " << chunkPos.y << ", " << chunkPos.z << '\n'
     //	<< "Chunk VAO: " << vertexArrayObject << '\n' << "Triangles: " << numTriangles << '\n';
 
-    JustTemp::G(&VertexArrayObject, &NumTriangles, &WorldLocation, &ModelLoc);
+    JustTemp::G(&VertexArrayObject, this->Mesher->GetNumTriangles(), &WorldLocation, &ModelLoc);
 
     // glBindVertexArray(vertexArrayObject);
     //
@@ -407,6 +118,167 @@ void Jafg::AChunk::Render(unsigned int ModelLoc)
     // glUniformMatrix4fv(static_cast<GLint>(modelLoc), 1, GL_FALSE, glm::value_ptr(model));
     //
     // glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(numTriangles), GL_UNSIGNED_INT, 0);
+
+    return;
+}
+
+void Jafg::AChunk::SetChunkState(const EChunkState::Type NewChunkState)
+{
+    if (this->IsStateChangeValid(NewChunkState) == false)
+    {
+        LOG_FATAL(
+            LogChunkValidation,
+            "Encountered invalid state change from {} to {}",
+            LexToString(this->ChunkState),
+            LexToString(NewChunkState)
+        )
+
+        return;
+    }
+
+    this->ChunkState = NewChunkState;
+
+    switch (this->ChunkState)
+    {
+    case EChunkState::Spawned: { this->OnSpawned(); break; }
+    case EChunkState::Shaped: { this->Shape(); break; }
+    case EChunkState::SurfaceReplaced: { this->ReplaceSurface(); break; }
+    case EChunkState::Active: { this->OnActive(); break; }
+    default: { break; }
+    }
+
+    return;
+}
+
+void Jafg::AChunk::OnAlloc(const LChunkKey& InChunkKey)
+{
+    check( this->GetChunkState() == EChunkState::Freed )
+
+    this->ChunkKey = InChunkKey;
+    this->ChunkPos = glm::vec3(this->ChunkKey.X, this->ChunkKey.Y, this->ChunkKey.Z);
+    this->WorldLocation = this->ChunkKey.ToWorldSpaceVector();
+
+    this->SetChunkState(EChunkState::PreSpawned);
+
+    return;
+}
+
+void Jafg::AChunk::SetChunkPersistency(const EChunkPersistency::Type NewPersistency, const float TimeToLive /* = 10.0f */)
+{
+    this->ChunkPersistency = NewPersistency;
+
+    if (this->ChunkPersistency == EChunkPersistency::Persistent)
+    {
+        return;
+    }
+
+    if (
+        const float EndOfLive = this->GetWorld()->GetRealTimeSecondsSinceWorldLaunch() + TimeToLive;
+        EndOfLive > this->RealTimeInSecondsWhenTransientChunkShouldBeKilled
+    )
+    {
+        this->RealTimeInSecondsWhenTransientChunkShouldBeKilled = EndOfLive;
+    }
+
+    return;
+}
+
+bool Jafg::AChunk::IsStateChangeValid(const EChunkState::Type NewChunkState) const
+{
+    switch (NewChunkState)
+    {
+    case EChunkState::Invalid:
+    {
+        return false;
+    }
+    case EChunkState::Freed:
+    {
+        return true;
+    }
+    case EChunkState::PreSpawned:
+    {
+        return this->ChunkState == EChunkState::Freed;
+    }
+    case EChunkState::Spawned:
+    {
+        return this->ChunkState == EChunkState::PreSpawned;
+    }
+    case EChunkState::Shaped:
+    {
+        return this->ChunkState == EChunkState::Spawned;
+    }
+    case EChunkState::SurfaceReplaced:
+    {
+        return this->ChunkState == EChunkState::Shaped;
+    }
+    case EChunkState::Active:
+    {
+        return this->ChunkState == EChunkState::SurfaceReplaced;
+    }
+    default:
+    {
+        checkNoEntry()
+        return false;
+    }
+    }
+}
+
+void Jafg::AChunk::OnSpawned()
+{
+    check( this->ChunkState == EChunkState::Spawned )
+
+    JChunkGenerationSubsystem* Subsystem = this->SharedArgs->ChunkGenerationSubsystem;
+
+    this->NNorth = Subsystem->GetPanickedChunk(this->ChunkKey.GetNorthKey());
+    this->NEast  = Subsystem->GetPanickedChunk(this->ChunkKey.GetEastKey());
+    this->NSouth = Subsystem->GetPanickedChunk(this->ChunkKey.GetSouthKey());
+    this->NWest  = Subsystem->GetPanickedChunk(this->ChunkKey.GetWestKey());
+    this->NUp    = Subsystem->GetPanickedChunk(this->ChunkKey.GetUpKey());
+    this->NDown  = Subsystem->GetPanickedChunk(this->ChunkKey.GetDownKey());
+
+    checkSlow( this->NNorth )
+    checkSlow( this->NEast  )
+    checkSlow( this->NSouth )
+    checkSlow( this->NWest  )
+    checkSlow( this->NUp    )
+    checkSlow( this->NDown  )
+
+    return;
+}
+
+void Jafg::AChunk::Shape()
+{
+    check( this->ChunkState == EChunkState::Shaped )
+
+    this->RawVoxelData = new uint32[MwStatics::VoxelCount];
+    ::memset(this->RawVoxelData, 0, MwStatics::VoxelCount * sizeof(uint32));
+
+    WorldGen::GenerateChunkData(
+        static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z),
+        WorldStatics::ChunkSize, RawVoxelData);
+
+    return;
+}
+
+void Jafg::AChunk::ReplaceSurface()
+{
+    check( this->ChunkState == EChunkState::SurfaceReplaced )
+}
+
+void Jafg::AChunk::OnActive()
+{
+    check( this->ChunkState == EChunkState::Active )
+
+    check( this->Mesher == nullptr )
+    check( this->HasRendererComponent() == false )
+
+    this->SetRendererComponent(new LChunkRendererComponent(*this));
+    checkSlow( this->HasRendererComponent() )
+
+    this->Mesher = this->SharedArgs->GetNewMesher(*this);
+    checkSlow( this->Mesher )
+
+    this->Mesher->RegenerateProceduralMesh();
 
     return;
 }

@@ -7,6 +7,8 @@
 #include "Engine/World.h"
 #include "RhiFramework/ChunkShaderContext.h"
 #include "MyWorld/Meshing/FastMesher.h"
+#include "MyWorld/Chunk/ChunkStates.h"
+#include "MyWorld/Chunk/ChunkPersistency.h"
 
 void GetAllChunksInDistance(const Jafg::TIntVector2<int32>& Center, const int32 Distance, std::vector<Jafg::TIntVector2<int32>>& OutChunks)
 {
@@ -133,7 +135,6 @@ void Jafg::JChunkGenerationSubsystem::UpdateChunkQueue()
     LastCamX = CurrentCamX;
     LastCamY = CurrentCamY;
 
-
     ChunkQueue = { };
     const TIntVector2<int32> Center(CurrentCamX, CurrentCamY);
     std::vector<TIntVector2<int32>> VerticalChunks;
@@ -173,24 +174,133 @@ void Jafg::JChunkGenerationSubsystem::KillChunks()
 
 void Jafg::JChunkGenerationSubsystem::GenerateChunks()
 {
+    const TdhArray<LChunkKey> ActiveChunks = this->GetCurrentActiveChunkSnapshot();
+
     int32 GeneratedChunks = 0;
     while (!ChunkQueue.empty() && GeneratedChunks < 2)
     {
         const glm::vec3 Next = ChunkQueue.front();
         ChunkQueue.pop();
+        LChunkKey NextKey = LChunkKey(static_cast<LChunkKeyDomainTy>(Next.x),
+            static_cast<LChunkKeyDomainTy>(Next.y), static_cast<LChunkKeyDomainTy>(Next.z));
 
-        int32 Key = TupleToKey({static_cast<int32>(Next.x), static_cast<int32>(Next.y), static_cast<int32>(Next.z)});
-        if (!Chunks.contains(Key))
+        if (ActiveChunks.Contains(NextKey) == false)
         {
-            AChunk* Chunk = SpawnDeferredActor<AChunk>(this->GetWorld());
-            Chunk->ChunkPos = Next;
-            Chunk->ChunkKey =
-                { static_cast<LChunkKeyDomainTy>(Next.x), static_cast<LChunkKeyDomainTy>(Next.y), static_cast<LChunkKeyDomainTy>(Next.z) };
-            Chunk->SharedArgs = this->SharedChunkArgs;
-            MakeDeferredActorFinal(Chunk);
-            Chunks.try_emplace(Key, Chunk);
+            this->SafeLoadChunk(NextKey);
             ++GeneratedChunks;
         }
+
+        continue;
+    }
+
+    return;
+}
+
+void Jafg::JChunkGenerationSubsystem::SafeLoadChunk(
+    const LChunkKey& ChunkKey,
+    const EChunkPersistency::Type Persistency /* = EChunkPersistency::Persistent */,
+    const float TimeToLive /* = 20.0f */,
+    const EChunkState::Type TargetState /* = EChunkState::Active */
+)
+{
+    /* We can only generate chunks between those states. The other are special. */
+    check( EChunkState::Freed < TargetState && TargetState < EChunkState::Special )
+
+    AChunk* Target;
+    if (AChunk** ChunkMapPtr = this->FindChunkOrNull(ChunkKey); ChunkMapPtr)
+    {
+        Target = *ChunkMapPtr;
+        /* If the chunk is in a persistent state. We may never set it back to a temporary state. */
+        if (Target->IsTransient())
+        {
+            Target->SetChunkPersistency(Persistency, TimeToLive);
+        }
+    }
+    else
+    {
+        Target = this->SpawnChunk(ChunkKey); checkSlow( Target )
+        this->Chunks.try_emplace(ChunkKey, Target);
+        Target->SetChunkPersistency(Persistency, TimeToLive);
+    }
+
+    if (TargetState < EChunkState::Spawned) { check( EChunkState::PreSpawned ) return; }
+    if (Target->GetChunkState() < EChunkState::Spawned)
+    {
+        this->PrepareWorldForChunkTransit_Spawned(ChunkKey);
+        Target->SetChunkState(EChunkState::Spawned);
+    }
+
+    if (TargetState < EChunkState::Shaped) { check( EChunkState::Spawned ) return; }
+    if (Target->GetChunkState() < EChunkState::Shaped)
+    {
+        this->PrepareWorldForChunkTransit_Shaped(ChunkKey);
+        Target->SetChunkState(EChunkState::Shaped);
+    }
+
+    if (TargetState < EChunkState::SurfaceReplaced) { check( EChunkState::Shaped ) return; }
+    if (Target->GetChunkState() < EChunkState::SurfaceReplaced)
+    {
+        this->PrepareWorldForChunkTransit_SurfaceReplaced(ChunkKey);
+        Target->SetChunkState(EChunkState::SurfaceReplaced);
+    }
+
+    if (TargetState == EChunkState::Active)
+    {
+        Target->SetChunkState(EChunkState::Active);
+    }
+
+    return;
+}
+
+Jafg::AChunk* Jafg::JChunkGenerationSubsystem::SpawnChunk(const LChunkKey& InChunkKey) const
+{
+    AChunk* Chunk = SpawnDeferredActor<AChunk>(this->GetWorld());
+    Chunk->SharedArgs = this->SharedChunkArgs;
+    MakeDeferredActorFinal(Chunk);
+    Chunk->OnAlloc(InChunkKey);
+    return Chunk;
+}
+
+Jafg::AChunk** Jafg::JChunkGenerationSubsystem::FindChunkOrNull(const LChunkKey& ChunkKey)
+{
+    const std::unordered_map<LChunkKey, AChunk*>::iterator It = this->Chunks.find(ChunkKey);
+    return It == this->Chunks.end() ? nullptr : &It->second;
+}
+
+void Jafg::JChunkGenerationSubsystem::PrepareWorldForChunkTransit_Spawned(const LChunkKey& InChunkKey)
+{
+    for (const LChunkKey& Neighbor : InChunkKey.GetNeighboringChunkKeys())
+    {
+        this->SafeLoadChunk(
+            Neighbor,
+            EChunkPersistency::Transient,
+            40.0f,
+            EChunkState::PreSpawned
+        );
+
+        continue;
+    }
+
+    return;
+}
+
+void Jafg::JChunkGenerationSubsystem::PrepareWorldForChunkTransit_Shaped(const LChunkKey& InChunkKey)
+{
+    /* Shaping currently does not require any additional states more than spawned. */
+}
+
+void Jafg::JChunkGenerationSubsystem::PrepareWorldForChunkTransit_SurfaceReplaced(const LChunkKey& InChunkKey)
+{
+    for (const LChunkKey& Neighbor : InChunkKey.GetNeighboringChunkKeys())
+    {
+        this->SafeLoadChunk(
+            Neighbor,
+            EChunkPersistency::Transient,
+            40.0f,
+            EChunkState::Shaped
+        );
+
+        continue;
     }
 
     return;

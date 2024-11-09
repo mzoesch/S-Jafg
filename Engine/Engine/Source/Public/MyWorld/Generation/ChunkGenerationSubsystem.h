@@ -8,6 +8,7 @@
 #include "glm/glm.hpp"
 #include <unordered_map>
 #include "ChunkGenerationSubsystem.generated.h"
+#include "MyWorld/Chunk/ChunkPersistency.h"
 
 namespace Jafg
 {
@@ -39,13 +40,45 @@ public:
     FORCEINLINE auto HasChunkShaderContext() const -> bool { return this->ChunkShaderContext != nullptr; }
     FORCEINLINE auto GetChunkShaderContext() const -> LChunkShaderContext* { return this->ChunkShaderContext; }
 
+    FORCEINLINE auto GetChunks() const -> const std::unordered_map<LChunkKey, AChunk*>& { return this->Chunks; }
+    FORCEINLINE auto GetCurrentActiveChunkSnapshot() const -> TdhArray<LChunkKey>
+    {
+        TdhArray<LChunkKey> Out;
+        for (const auto& [Fst, Snd] : this->Chunks)
+        {
+            if (Snd->GetChunkState() == EChunkState::Active)
+            {
+                Out.Add(Fst);
+            }
+        }
+        return Out;
+    }
+    FORCEINLINE auto GetPanickedChunk(const LChunkKey& InChunkKey) -> AChunk*
+    {
+        if (AChunk** Chunk = this->FindChunkOrNull(InChunkKey); Chunk != nullptr)
+        {
+            return *Chunk;
+        }
+        panicMsgf( "Chunk {} not found.", InChunkKey.ToString() )
+        return nullptr;
+    }
+
 private:
 
     void UpdateChunkQueue();
     void KillChunks();
     void GenerateChunks();
 
-    std::unordered_map<int32, AChunk*> Chunks;
+    void SafeLoadChunk(
+        const LChunkKey& ChunkKey,
+        const EChunkPersistency::Type Persistency = EChunkPersistency::Persistent,
+        const float TimeToLive = 20.0f,
+        const EChunkState::Type TargetState = EChunkState::Active
+    );
+
+    AChunk* SpawnChunk(const LChunkKey& InChunkKey) const;
+
+    std::unordered_map<LChunkKey, AChunk*> Chunks;
     std::queue<glm::vec3> ChunkQueue;
     int RenderDistance = 1;
     int RenderHeight = 0;
@@ -54,6 +87,12 @@ private:
 
     LSharedChunkArgs*    SharedChunkArgs    = nullptr;
     LChunkShaderContext* ChunkShaderContext = nullptr;
+
+    AChunk** FindChunkOrNull(const LChunkKey& ChunkKey);
+
+    void PrepareWorldForChunkTransit_Spawned(const LChunkKey& InChunkKey);
+    void PrepareWorldForChunkTransit_Shaped(const LChunkKey& InChunkKey);
+    void PrepareWorldForChunkTransit_SurfaceReplaced(const LChunkKey& InChunkKey);
 };
 
 } /* ~Namespace Jafg */

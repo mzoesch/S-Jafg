@@ -86,6 +86,8 @@ public:
     FORCEINLINE auto GetTickableObjects() const -> const TdhArray<LTickableObject*>& { return this->TickableObjects; }
     FORCEINLINE auto GetActors() const -> const TdhArray<AActor*>& { return this->Actors; }
 
+    float GetRealTimeSecondsSinceWorldLaunch() const;
+
 private:
 
     TdhArray<LTickableObject*> TickableObjects;
@@ -104,6 +106,12 @@ private:
     bool IsTickableObjectsPutMutexLocked() const { return this->TickableObjectsPutMutex; }
     void AcquireTickableObjectsLock() { this->TickableObjectsPutMutex = true; }
     void ReleaseTickableObjectsLock() { this->TickableObjectsPutMutex = false; }
+
+    /**
+     * The real time (not stopped or dilated / clamped) when this world was launched.
+     * Real time is relative to the static storage initialization of the engine shared library.
+     */
+    float RealTimeWhenWorldWasLaunched = 0.0f;
 };
 
 } /* ~Namespace Jafg */

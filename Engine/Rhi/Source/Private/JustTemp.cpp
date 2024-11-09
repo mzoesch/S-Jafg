@@ -22,11 +22,10 @@ void JustTemp::E(uint32* vertexArrayObject, uint32* vbo, uint32* ebo)
     glDeleteVertexArrays(1, vertexArrayObject);
 }
 
-void JustTemp::F(uint32* vertexArrayObject, uint32* vbo, uint32* ebo, Jafg::TdhArray<Jafg::Vertex>* vertices,
-    Jafg::TdhArray<uint32>* indices, uint32* numTriangles)
+void JustTemp::F(uint32* vertexArrayObject, uint32* vbo, uint32* ebo, const Jafg::TdhArray<Jafg::Vertex>* vertices,
+   const Jafg::TdhArray<uint32>* indices)
 {
     using namespace Jafg;
-    *numTriangles = static_cast<unsigned int>( indices->GetSize() );
 
     glGenVertexArrays(1, vertexArrayObject);
     glBindVertexArray(*vertexArrayObject);
@@ -46,7 +45,7 @@ void JustTemp::F(uint32* vertexArrayObject, uint32* vbo, uint32* ebo, Jafg::TdhA
                  GL_STATIC_DRAW);
 }
 
-void JustTemp::G(uint32* vertexArrayObject, uint32* numTriangles, Jafg::LVector* worldPos, uint32* modelLoc)
+void JustTemp::G(uint32* vertexArrayObject, uint32 numTriangles, Jafg::LVector* worldPos, uint32* modelLoc)
 {
     glBindVertexArray(*vertexArrayObject);
 
@@ -56,5 +55,5 @@ void JustTemp::G(uint32* vertexArrayObject, uint32* numTriangles, Jafg::LVector*
     model = glm::translate(model, worldPosVec);
     glUniformMatrix4fv(static_cast<GLint>(*modelLoc), 1, GL_FALSE, glm::value_ptr(model));
 
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(*numTriangles), GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(numTriangles), GL_UNSIGNED_INT, 0);
 }

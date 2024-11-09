@@ -125,7 +125,6 @@ public:
     auto GetCurrentFreeContexts() const -> uint8;
     auto GetCurrentOccupiedContexts() const -> uint8;
 
-    auto GetFirstRunningWorld() -> LWorld*;
     auto GetContextFromWorld(const LWorld& World) -> LWorldContext&;
 
     /** Browse to a new Url at the next opportunity. */

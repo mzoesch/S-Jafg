@@ -15,8 +15,8 @@ struct LChunkShaderDrawArgs : public LGenericShaderContextDrawArgs
 
 class RHI_API LChunkShaderContext final : public LGenericShaderContext
 {
-public:
 
+public:
     virtual void Make() override;
     virtual void OnFree() override;
     virtual void Draw(const LViewport& Context, LGenericShaderContextDrawArgs& InArgs) const override;

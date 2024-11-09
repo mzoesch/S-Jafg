@@ -6,6 +6,8 @@
 #include "Engine/Framework/Camera.h"
 #include "Platform/Surface.h"
 #include <glm/gtc/type_ptr.inl>
+
+#include "Core/Application.h"
 #include "Engine/ActorUtility.h"
 #include "Engine/Framework/PlayerController.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
@@ -24,6 +26,9 @@ Jafg::LEngine* Jafg::LWorld::GetEngine() const
 
 void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 {
+    this->RealTimeWhenWorldWasLaunched = static_cast<float>(Application::GetDeltaSinceStaticStorageInitialization());
+    check( this->RealTimeWhenWorldWasLaunched > 0.0f )
+
     this->WorldState = EWorldState::Initializing;
 
     MainCamera = new Camera(LVector(0.0f , 0.0f, 25.0f));
@@ -148,6 +153,12 @@ void Jafg::LWorld::UnregisterTickableObject(LTickableObject* Tickable)
     panic( "Failed to find tickable object" )
 
     return;
+}
+
+float Jafg::LWorld::GetRealTimeSecondsSinceWorldLaunch() const
+{
+    const float Now = static_cast<float>(Application::GetDeltaSinceStaticStorageInitialization());
+    return Now - this->RealTimeWhenWorldWasLaunched;
 }
 
 void Jafg::LWorld::InitializeSubsystems()

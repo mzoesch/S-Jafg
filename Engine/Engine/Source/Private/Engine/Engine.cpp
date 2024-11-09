@@ -276,21 +276,6 @@ uint8 Jafg::LEngine::GetCurrentOccupiedContexts() const
     return OccupiedContexts;
 }
 
-Jafg::LWorld* Jafg::LEngine::GetFirstRunningWorld()
-{
-    for (const LWorldContext* i : this->Contexts)
-    {
-        if (i != nullptr && i->ChildWorld != nullptr && i->ChildWorld->GetWorldState() == EWorldState::Running)
-        {
-            return i->ChildWorld;
-        }
-
-        continue;
-    }
-
-    return nullptr;
-}
-
 Jafg::LWorldContext& Jafg::LEngine::GetContextFromWorld(const LWorld& World)
 {
     for (LWorldContext* i : this->Contexts)
