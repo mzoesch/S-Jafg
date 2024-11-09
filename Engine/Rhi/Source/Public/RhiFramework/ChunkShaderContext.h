@@ -3,14 +3,20 @@
 #pragma once
 
 #include "GenericShaderContext.h"
+#include "JustTemp.h"
 
 namespace Jafg
 {
 
+class LChunkShaderInstance;
+
 struct LChunkShaderDrawArgs : public LGenericShaderContextDrawArgs
 {
-    float   DegYFov    = 0.0f;
-    LMatrix ViewMatrix = LMatrix(Matrix::Identity);
+    float                 DegYFov       = 0.0f;
+    LMatrix               ViewMatrix    = LMatrix(Matrix::Identity);
+    LVector               WorldLocation = { };
+    int32                 NumTriangles  = 0;
+    LChunkShaderInstance* Instance      = nullptr;
 };
 
 class RHI_API LChunkShaderContext final : public LGenericShaderContext
@@ -30,6 +36,20 @@ private:
 
     LShader* Program = nullptr;
     uint32   Texture = 0;
+};
+
+class RHI_API LChunkShaderInstance final
+{
+public:
+    LChunkShaderInstance() = default;
+    DEFAULT_REALLOC_OF_ANY_FROM(LChunkShaderInstance)
+    ~LChunkShaderInstance();
+
+    void LoadMeshToGraphicsMemory(const TdhArray<Vertex>& Vertices, const TdhArray<uint32>& Indices);
+
+    uint32 VertexArrayObject = 0;
+    uint32 Vbo               = 0;
+    uint32 Ebo               = 0;
 };
 
 } /* ~Namespace Jafg */

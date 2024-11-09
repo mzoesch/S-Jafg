@@ -68,7 +68,7 @@ void Jafg::LWorld::Tick(const float DeltaTime)
     {
         check( Actor->IsGarbage() == false )
 
-        if (Actor->HasRendererComponent())
+        if (Actor->IsRendererComponentValid())
         {
             Actor->GetRendererComponent()->Draw(*ViewportContext);
         }

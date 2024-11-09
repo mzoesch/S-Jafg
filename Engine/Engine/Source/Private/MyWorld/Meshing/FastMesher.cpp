@@ -2,9 +2,7 @@
 
 #include "CoreAFX.h"
 #include "MyWorld/Meshing/FastMesher.h"
-
 #include "MyWorld/Blocks.h"
-#include "MyWorld/WorldGen.h"
 #include "MyWorld/WorldStatics.h"
 #include "MyWorld/Chunk/Chunk.h"
 
@@ -27,36 +25,7 @@ void Jafg::LFastChunkMesher::GenerateProceduralMesh()
 {
     glm::vec3 ChunkPos = this->GetOwner().ChunkPos;
 
-    // std::vector<unsigned int> northData, southData, eastData, westData, upData, downData;
-    uint32* northData = new uint32[WorldStatics::VoxelCount];
-    uint32* southData = new uint32[WorldStatics::VoxelCount];
-    uint32* eastData = new uint32[WorldStatics::VoxelCount];
-    uint32* westData = new uint32[WorldStatics::VoxelCount];
-    uint32* upData = new uint32[WorldStatics::VoxelCount];
-    uint32* downData = new uint32[WorldStatics::VoxelCount];
-    memset(northData, 0, WorldStatics::VoxelCount * sizeof(uint32));
-    memset(southData, 0, WorldStatics::VoxelCount * sizeof(uint32));
-    memset(eastData, 0, WorldStatics::VoxelCount * sizeof(uint32));
-    memset(westData, 0, WorldStatics::VoxelCount * sizeof(uint32));
-    memset(upData, 0, WorldStatics::VoxelCount * sizeof(uint32));
-    memset(downData, 0, WorldStatics::VoxelCount * sizeof(uint32));
-
-    // WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y, chunkPos.z - 1, WorldStatics::ChunkSize, northData);
-    // WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y, chunkPos.z + 1, WorldStatics::ChunkSize, southData);
-    // WorldGen::GenerateChunkData(chunkPos.x + 1, chunkPos.y, chunkPos.z, WorldStatics::ChunkSize, eastData);
-    // WorldGen::GenerateChunkData(chunkPos.x - 1, chunkPos.y, chunkPos.z, WorldStatics::ChunkSize, westData);
-    // WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y + 1, chunkPos.z, WorldStatics::ChunkSize, upData);
-    // WorldGen::GenerateChunkData(chunkPos.x, chunkPos.y - 1, chunkPos.z, WorldStatics::ChunkSize, downData);
-    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x + 1), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z), WorldStatics::ChunkSize, northData);
-    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x - 1), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z), WorldStatics::ChunkSize, southData);
-    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y + 1), static_cast<int>(ChunkPos.z), WorldStatics::ChunkSize, eastData);
-    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y - 1), static_cast<int>(ChunkPos.z), WorldStatics::ChunkSize, westData);
-    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z + 1), WorldStatics::ChunkSize, upData);
-    WorldGen::GenerateChunkData(static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z - 1), WorldStatics::ChunkSize, downData);
-
-    //std::cout << "Got chunk data in thread: " << std::this_thread::get_id() << '\n';
-
-    unsigned int currentVertex = 0;
+    unsigned int CurrentVertex = 0;
     for (char x = 0; x < WorldStatics::ChunkSize; x++)
     {
         for (char y = 0; y < WorldStatics::ChunkSize; y++)
@@ -98,13 +67,13 @@ void Jafg::LFastChunkMesher::GenerateProceduralMesh()
                         Vertices.Emplace(x + 1, y + 0, z + 1, block->sideMinX, block->sideMaxY);
                         Vertices.Emplace(x + 0, y + 0, z + 1, block->sideMaxX, block->sideMaxY);
 
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 3);
-                        Indices.Emplace(currentVertex + 1);
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 2);
-                        Indices.Emplace(currentVertex + 3);
-                        currentVertex += 4;
+                        Indices.Emplace(CurrentVertex + 0);
+                        Indices.Emplace(CurrentVertex + 3);
+                        Indices.Emplace(CurrentVertex + 1);
+                        Indices.Emplace(CurrentVertex + 0);
+                        Indices.Emplace(CurrentVertex + 2);
+                        Indices.Emplace(CurrentVertex + 3);
+                        CurrentVertex += 4;
                     }
                 }
 
@@ -135,13 +104,13 @@ void Jafg::LFastChunkMesher::GenerateProceduralMesh()
                         Vertices.Emplace(x + 0, y + 1, z + 1, block->sideMinX, block->sideMaxY);
                         Vertices.Emplace(x + 1, y + 1, z + 1, block->sideMaxX, block->sideMaxY);
 
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 3);
-                        Indices.Emplace(currentVertex + 1);
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 2);
-                        Indices.Emplace(currentVertex + 3);
-                        currentVertex += 4;
+                        Indices.Emplace(CurrentVertex + 0);
+                        Indices.Emplace(CurrentVertex + 3);
+                        Indices.Emplace(CurrentVertex + 1);
+                        Indices.Emplace(CurrentVertex + 0);
+                        Indices.Emplace(CurrentVertex + 2);
+                        Indices.Emplace(CurrentVertex + 3);
+                        CurrentVertex += 4;
                     }
                 }
 
@@ -172,13 +141,13 @@ void Jafg::LFastChunkMesher::GenerateProceduralMesh()
                         Vertices.Emplace(x + 0, y + 0, z + 1, block->sideMinX, block->sideMaxY);
                         Vertices.Emplace(x + 0, y + 1, z + 1, block->sideMaxX, block->sideMaxY);
 
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 3);
-                        Indices.Emplace(currentVertex + 1);
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 2);
-                        Indices.Emplace(currentVertex + 3);
-                        currentVertex += 4;
+                        Indices.Emplace(CurrentVertex + 0);
+                        Indices.Emplace(CurrentVertex + 3);
+                        Indices.Emplace(CurrentVertex + 1);
+                        Indices.Emplace(CurrentVertex + 0);
+                        Indices.Emplace(CurrentVertex + 2);
+                        Indices.Emplace(CurrentVertex + 3);
+                        CurrentVertex += 4;
                     }
                 }
 
@@ -209,13 +178,13 @@ void Jafg::LFastChunkMesher::GenerateProceduralMesh()
                         Vertices.Emplace(x + 1, y + 1, z + 1, block->sideMinX, block->sideMaxY);
                         Vertices.Emplace(x + 1, y + 0, z + 1, block->sideMaxX, block->sideMaxY);
 
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 3);
-                        Indices.Emplace(currentVertex + 1);
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 2);
-                        Indices.Emplace(currentVertex + 3);
-                        currentVertex += 4;
+                        Indices.Emplace(CurrentVertex + 0);
+                        Indices.Emplace(CurrentVertex + 3);
+                        Indices.Emplace(CurrentVertex + 1);
+                        Indices.Emplace(CurrentVertex + 0);
+                        Indices.Emplace(CurrentVertex + 2);
+                        Indices.Emplace(CurrentVertex + 3);
+                        CurrentVertex += 4;
                     }
                 }
 
@@ -246,13 +215,13 @@ void Jafg::LFastChunkMesher::GenerateProceduralMesh()
                         Vertices.Emplace(x + 1, y + 0, z + 0, block->bottomMinX, block->bottomMaxY);
                         Vertices.Emplace(x + 0, y + 0, z + 0, block->bottomMaxX, block->bottomMaxY);
 
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 3);
-                        Indices.Emplace(currentVertex + 1);
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 2);
-                        Indices.Emplace(currentVertex + 3);
-                        currentVertex += 4;
+                        Indices.Emplace(CurrentVertex + 0);
+                        Indices.Emplace(CurrentVertex + 3);
+                        Indices.Emplace(CurrentVertex + 1);
+                        Indices.Emplace(CurrentVertex + 0);
+                        Indices.Emplace(CurrentVertex + 2);
+                        Indices.Emplace(CurrentVertex + 3);
+                        CurrentVertex += 4;
                     }
                 }
 
@@ -283,34 +252,28 @@ void Jafg::LFastChunkMesher::GenerateProceduralMesh()
                         Vertices.Emplace(x + 0, y + 0, z + 1, block->topMinX, block->topMaxY);
                         Vertices.Emplace(x + 1, y + 0, z + 1, block->topMaxX, block->topMaxY);
 
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 3);
-                        Indices.Emplace(currentVertex + 1);
-                        Indices.Emplace(currentVertex + 0);
-                        Indices.Emplace(currentVertex + 2);
-                        Indices.Emplace(currentVertex + 3);
-                        currentVertex += 4;
+                        Indices.Emplace(CurrentVertex + 0);
+                        Indices.Emplace(CurrentVertex + 3);
+                        Indices.Emplace(CurrentVertex + 1);
+                        Indices.Emplace(CurrentVertex + 0);
+                        Indices.Emplace(CurrentVertex + 2);
+                        Indices.Emplace(CurrentVertex + 3);
+                        CurrentVertex += 4;
                     }
                 }
             }
         }
     }
 
-    //std::cout << "Finished generating in thread: " << std::this_thread::get_id() << '\n';
-
-    delete[] northData;
-    delete[] southData;
-    delete[] eastData;
-    delete[] westData;
-    delete[] upData;
-    delete[] downData;
-
-    this->GetOwner().bGenerated = true;
-
-    //std::cout << "Generated: " << generated << '\n';
+    return;
 }
 
 void Jafg::LFastChunkMesher::ApplyProceduralMesh()
 {
+    checkSlow( this->GetOwner().IsRendererComponentValid() )
+    this->GetOwner().GetChunkRendererComponent()->GetShaderInstance()->LoadMeshToGraphicsMemory(
+        this->Vertices, this->Indices
+    );
+
     return;
 }

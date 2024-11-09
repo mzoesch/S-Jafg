@@ -155,10 +155,10 @@ void Jafg::JChunkGenerationSubsystem::KillChunks()
 {
     for (auto It = Chunks.begin(); It != Chunks.end();)
     {
-        if (It->second->bReady && (
+        if (
                abs(It->second->ChunkPos.x - static_cast<float>(LastCamX)) > static_cast<float>(RenderDistance)
             || abs(It->second->ChunkPos.y - static_cast<float>(LastCamY)) > static_cast<float>(RenderDistance)
-        ))
+        )
         {
             It->second->KillYourSelfNow();
             It = Chunks.erase(It);

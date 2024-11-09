@@ -30,7 +30,7 @@ public:
 
     virtual void OnGarbage() override;
 
-    FORCEINLINE auto HasRendererComponent() const -> bool { return this->RendererComponent != nullptr; }
+    FORCEINLINE auto IsRendererComponentValid() const -> bool { return this->RendererComponent != nullptr; }
     FORCEINLINE auto GetRendererComponent() const -> LRendererComponent* { return this->RendererComponent; }
 
     FORCEINLINE auto CanEverTick() const -> bool { return this->bCanEverTick; }
