@@ -8,6 +8,7 @@
 namespace Jafg
 {
 
+class LEye;
 class APawn;
 
 DECLARE_JAFG_CLASS()
@@ -30,7 +31,8 @@ public:
 
 private:
 
+    LEye*  EyeReference  = nullptr;
     APawn* PossessedPawn = nullptr;
 };
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */

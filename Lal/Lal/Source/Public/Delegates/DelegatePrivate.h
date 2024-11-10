@@ -72,13 +72,21 @@ struct LDelegateHandle final
     template <typename DelegateTy>
     friend struct TMulticastDelegate;
 
+    LDelegateHandle() = delete;
+    FORCEINLINE LDelegateHandle(LNullptrTy) : Handle(nullptr) { return; }
+    FORCEINLINE LDelegateHandle(const LDelegateHandle& InOther) = default;
+    FORCEINLINE LDelegateHandle(LDelegateHandle&& InOther) = default;
+    FORCEINLINE LDelegateHandle& operator=(LNullptrTy) { this->Handle = nullptr; return *this; }
+    FORCEINLINE LDelegateHandle& operator=(const LDelegateHandle& InOther) = default;
+    FORCEINLINE LDelegateHandle& operator=(LDelegateHandle&& InOther) = default;
+
     FORCEINLINE explicit LDelegateHandle(void* InHandle) : Handle(InHandle) { check( this->Handle != nullptr ) return; }
 
     FORCEINLINE auto Reset()         -> void { this->Handle = nullptr; return; }
     FORCEINLINE auto IsValid() const -> bool { return this->Handle != nullptr; }
 
 #if IN_DEBUG
-    /* For unit tests. */
+    /** For unit tests. */
     FORCEINLINE void* GetHandle() const { return this->Handle; }
 #endif /* IN_DEBUG */
 

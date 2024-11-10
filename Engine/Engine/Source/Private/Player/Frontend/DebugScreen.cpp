@@ -67,7 +67,7 @@ void Jafg::WDebugScreen::Tick()
             const APlayerController* Controller = LocalPlayer->GetPossessed();
             if (Controller->DoesPossess())
             {
-                const LVector Location = Controller->GetPossessed()->GetLocation();
+                const LVector Location = Controller->GetPossessed()->GetTranslation();
                 this->LocalPlayerLocationSection->SetContent(LSimpleString::SprintF(
                     "XYZ: {:.3f} / {:.3f} / {:.3f}",
                     Location.X,

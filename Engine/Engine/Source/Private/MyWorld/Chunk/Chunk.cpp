@@ -4,13 +4,16 @@
 #include "MyWorld/Chunk/Chunk.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "Engine/Engine.h"
 #include "MyWorld/MyWorldStatics.h"
-#include "Engine/Framework/Camera.h"
+#include "Engine/Framework/Pawn.h"
+#include "Engine/Framework/PlayerController.h"
 #include "MyWorld/Blocks.h"
 #include "MyWorld/WorldGen.h"
 #include "MyWorld/WorldStatics.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "MyWorld/Meshing/ChunkMesher.h"
+#include "Player/LocalPlayer.h"
 #include "RhiFramework/ChunkShaderContext.h"
 
 // C4553
@@ -27,9 +30,11 @@ void Jafg::LChunkRendererComponent::Draw(const LViewport& Context)
     const LChunkShaderContext* ShaderContext =
         this->Owner->SharedArgs->ChunkGenerationSubsystem->GetChunkShaderContext();
 
+    const LEye* Eye = GEngine->GetCheckedLocalPlayer()->GetPossessed()->GetPossessed()->GetEye();
+
     LChunkShaderDrawArgs Args;
-    Args.DegYFov   = this->Owner->GetWorld()->MainCamera->Zoom;
-    Args.ViewMatrix.CopyFrom(this->Owner->GetWorld()->MainCamera->GetViewMatrix());
+    Args.DegYFov   = Eye->GetDegYFov();
+    Args.ViewMatrix.CopyFrom(Eye->GetViewMatrix());
     Args.WorldLocation = this->Owner->WorldLocation;
     Args.NumTriangles = this->Owner->GetMesher()->GetNumTriangles();
     Args.Instance = &this->Instance;

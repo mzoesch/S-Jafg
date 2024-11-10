@@ -2,13 +2,15 @@
 
 #include "CoreAFX.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
-#include "Engine/Framework/Camera.h"
+#include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "Engine/Framework/Pawn.h"
+#include "Engine/Framework/PlayerController.h"
 #include "RhiFramework/ChunkShaderContext.h"
-#include "MyWorld/Meshing/FastMesher.h"
 #include "MyWorld/Chunk/ChunkStates.h"
 #include "MyWorld/Chunk/ChunkPersistency.h"
 #include "MyWorld/Meshing/NaiveMesher.h"
+#include "Player/LocalPlayer.h"
 
 void GetAllChunksInDistance(const Jafg::TIntVector2<int32>& Center, const int32 Distance, std::vector<Jafg::TIntVector2<int32>>& OutChunks)
 {
@@ -118,8 +120,10 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
 
 void Jafg::JChunkGenerationSubsystem::UpdateChunkQueue()
 {
-    const float CamX = this->GetWorld()->MainCamera->Location.X;
-    const float CamY = this->GetWorld()->MainCamera->Location.Y;
+    LVector Translation = this->GetWorld()->GetEngine()->GetCheckedLocalPlayer()->GetPossessed()->GetPossessed()->GetTranslation();
+
+    const float CamX = Translation.X;
+    const float CamY = Translation.Y;
 
     const int32 CurrentCamX = static_cast<int32>(CamX < 0 ? floor(CamX / static_cast<float>(ChunkSize)) : CamX / static_cast<float>(ChunkSize));
     const int32 CurrentCamY = static_cast<int32>(CamY < 0 ? floor(CamY / static_cast<float>(ChunkSize)) : CamY / static_cast<float>(ChunkSize));

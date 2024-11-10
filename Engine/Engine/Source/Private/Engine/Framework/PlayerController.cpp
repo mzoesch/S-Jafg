@@ -24,12 +24,20 @@ void Jafg::APlayerController::EndLife()
 
 void Jafg::APlayerController::Possess(APawn* InNewPawn, const bool bKillOld /* = true */)
 {
-    if (bKillOld && this->PossessedPawn)
+    if (this->PossessedPawn)
     {
-        this->PossessedPawn->EndLife();
+        this->PossessedPawn->DeclareNewPossessor(nullptr);
+        if (bKillOld)
+        {
+            this->PossessedPawn->EndLife();
+        }
     }
 
     this->PossessedPawn = InNewPawn;
+    if (this->PossessedPawn)
+    {
+        this->PossessedPawn->DeclareNewPossessor(this);
+    }
 
     return;
 }

@@ -11,7 +11,6 @@ class AActor;
 class LEngine;
 class LShader;
 class JWorldSubsystem;
-class Camera;
 class LTickableObject;
 struct LLevel;
 struct LSubsystemCollection;
@@ -37,6 +36,31 @@ enum Type : uint8
 };
 
 } /* ~Namespace EWorldState */
+
+namespace EWorldTimeBehavior
+{
+
+enum Type : uint8
+{
+    /**
+     * Time behaves linearly. This is the default behavior.
+     */
+    Linear,
+
+    /**
+     * Time is desisted for this world.
+     * Time will not be forwarded to employees of the world context.
+     */
+    Desist,
+
+    /**
+     * Time is simulated and private to world core subsystems.
+     * Time will not be forwarded to employees of the world context.
+     */
+    Simulate,
+};
+
+} /* ~Namespace EWorldTimeBehavior */
 
 /**
  * Represents a world at its core.
@@ -74,8 +98,6 @@ public:
     bool bShowMouse = false;
     double LastMouseX = 0.0f;
     double LastMouseY = 0.0f;
-
-    Camera* MainCamera = nullptr;
 
     void MouseCallback(const double XPos, const double YPos);
     void ScrollCallback(const double YOffset);

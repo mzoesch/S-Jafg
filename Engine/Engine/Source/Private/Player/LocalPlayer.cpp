@@ -2,10 +2,15 @@
 
 #include "CoreAFX.h"
 #include "Player/LocalPlayer.h"
+#include "Engine/Engine.h"
 #include "Engine/Framework/Hud.h"
 #include "Player/PlayerInput.h"
 #include "Platform/Surface.h"
 #include "User/UserPreferences.h"
+#include "Engine/ActorUtility.h"
+#include "Engine/Framework/Pawn.h"
+#include "Engine/Framework/PlayerController.h"
+#include "Engine/Framework/Lackey.h"
 
 void Jafg::LLocalPlayer::Initialize()
 {
@@ -30,6 +35,8 @@ void Jafg::LLocalPlayer::Initialize()
 
     this->Hud = new ::Jafg::LHud();
     this->Hud->Initialize(this->GetContext());
+
+    this->OnWorldBeginLifeHandle = GEngine->OnWorldBeginLife.AddMember(&LLocalPlayer::OnWorldBeginLife, this);
 
     return;
 }
@@ -56,6 +63,12 @@ void Jafg::LLocalPlayer::OnLateTick(const float DeltaTime)
 
 void Jafg::LLocalPlayer::TearDown()
 {
+    if (ensure(this->OnWorldBeginLifeHandle.IsValid()))
+    {
+        GEngine->OnWorldBeginLife.Remove(this->OnWorldBeginLifeHandle);
+        this->OnWorldBeginLifeHandle.Reset();
+    }
+
     if (ensure(this->Hud))
     {
         this->Hud->TearDown();
@@ -87,4 +100,24 @@ void Jafg::LLocalPlayer::TearDown()
 void Jafg::LLocalPlayer::Possess(APlayerController* InNewController)
 {
     this->PlayerController = InNewController;
+}
+
+void Jafg::LLocalPlayer::OnWorldBeginLife(LWorld* InNewWorld)
+{
+    checkSlow( InNewWorld )
+
+    if (this->PlayerController == nullptr)
+    {
+        APlayerController* Pc = SpawnDeferredActor<APlayerController>(InNewWorld);
+        this->Possess(Pc);
+    }
+
+    if (this->PlayerController->DoesPossess() == false)
+    {
+        APawn* Pawn = SpawnDeferredActor<APawn>(InNewWorld, ALackey::StaticClass());
+        this->PlayerController->Possess(Pawn);
+        Pawn->SetTranslation(LVector(0.0f, 0.0f, 50.0f));
+    }
+
+    return;
 }

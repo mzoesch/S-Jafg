@@ -3,21 +3,15 @@
 #include "CoreAFX.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
-#include "Engine/Framework/Camera.h"
 #include "Platform/Surface.h"
-#include <glm/gtc/type_ptr.inl>
-
 #include "Core/Application.h"
 #include "Engine/ActorUtility.h"
+#include "Engine/Framework/Pawn.h"
 #include "Engine/Framework/PlayerController.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "Player/LocalPlayer.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "Engine/Framework/Pawn.h"
-#if PLATFORM_WINDOWS
-    #include <Windows.h>
-#endif /* PLATFORM_WINDOWS */
 
 Jafg::LEngine* Jafg::LWorld::GetEngine() const
 {
@@ -31,12 +25,7 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 
     this->WorldState = EWorldState::Initializing;
 
-    MainCamera = new Camera(LVector(0.0f , 0.0f, 25.0f));
-
-    APlayerController* Pc = SpawnDeferredActor<APlayerController>(this);
-    GEngine->GetCheckedLocalPlayer()->Possess(Pc);
-    APawn* Pawn = SpawnDeferredActor<APawn>(this);
-    Pc->Possess(Pawn);
+    this->GetEngine()->OnWorldBeginLife.Broadcast(this);
 
     for (AActor* Actor : this->Actors)
     {
@@ -46,6 +35,8 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
     this->InitializeSubsystems();
 
     this->WorldState = EWorldState::Running;
+
+    return;
 }
 
 void Jafg::LWorld::Tick(const float DeltaTime)
@@ -70,6 +61,7 @@ void Jafg::LWorld::Tick(const float DeltaTime)
 
         if (Actor->IsRendererComponentValid())
         {
+            // And add eye here.
             Actor->GetRendererComponent()->Draw(*ViewportContext);
         }
 
@@ -122,12 +114,16 @@ void Jafg::LWorld::MouseCallback(double XPos, double YPos)
     LastMouseX = XPos;
     LastMouseY = YPos;
 
-    MainCamera->ProcessMouseMovement(static_cast<float>(XOffset), static_cast<float>(YOffset));
+    this->GetEngine()->GetCheckedLocalPlayer()->GetPossessed()->GetPossessed()->ProcessMouseMovement(
+        static_cast<float>(XOffset),
+        static_cast<float>(YOffset)
+    );
 }
 
 void Jafg::LWorld::ScrollCallback(const double YOffset)
 {
-    MainCamera->ProcessMouseScroll(static_cast<float>(YOffset));
+    this->GetEngine()->GetCheckedLocalPlayer()->GetPossessed()->GetPossessed()->ProcessMouseScroll(
+        static_cast<float>(YOffset));
 }
 
 void Jafg::LWorld::RegisterTickableObject(LTickableObject* Tickable)

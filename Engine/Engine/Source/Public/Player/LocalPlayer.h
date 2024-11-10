@@ -14,6 +14,7 @@ class LObjectContext;
 
 }
 
+class LWorld;
 class LHud;
 class LSurface;
 class LPlayerInput;
@@ -53,6 +54,10 @@ public:
 
     FORCEINLINE auto GetContext() const -> Private::LObjectContext* { return this->Context; }
 
+protected:
+
+    void OnWorldBeginLife(LWorld* InNewWorld);
+
 private:
 
     LPlayerInput* PlayerInput     = nullptr;
@@ -60,6 +65,7 @@ private:
     LHud*         Hud             = nullptr;
     LSurface*     SurfaceToDrawOn = nullptr;
 
+    LDelegateHandle OnWorldBeginLifeHandle = nullptr;
     APlayerController* PlayerController = nullptr;
 
     /**

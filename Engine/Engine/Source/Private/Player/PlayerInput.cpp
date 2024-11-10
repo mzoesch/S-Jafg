@@ -6,7 +6,7 @@
 #include "Core/Application.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
-#include "Engine/Framework/Camera.h"
+#include "Engine/Framework/Pawn.h"
 #include "Engine/Framework/PlayerController.h"
 #include "Platform/Surface.h"
 #include "Player/LocalPlayer.h"
@@ -40,32 +40,32 @@ void Jafg::LPlayerInput::DispatchInputDelegates()
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::W))
     {
-        TargetWorld->MainCamera->ProcessKeyboard(FORWARD, Application::GetDeltaTimeAsFloat());
+        LocalPlayer->GetPossessed()->GetPossessed()->ProcessKeyboard(FORWARD, Application::GetDeltaTimeAsFloat());
     }
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::S))
     {
-        TargetWorld->MainCamera->ProcessKeyboard(BACKWARD, Application::GetDeltaTimeAsFloat());
+        LocalPlayer->GetPossessed()->GetPossessed()->ProcessKeyboard(BACKWARD, Application::GetDeltaTimeAsFloat());
     }
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::A))
     {
-        TargetWorld->MainCamera->ProcessKeyboard(LEFT, Application::GetDeltaTimeAsFloat());
+        LocalPlayer->GetPossessed()->GetPossessed()->ProcessKeyboard(LEFT, Application::GetDeltaTimeAsFloat());
     }
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::D))
     {
-        TargetWorld->MainCamera->ProcessKeyboard(RIGHT, Application::GetDeltaTimeAsFloat());
+        LocalPlayer->GetPossessed()->GetPossessed()->ProcessKeyboard(RIGHT, Application::GetDeltaTimeAsFloat());
     }
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::Q))
     {
-        TargetWorld->MainCamera->ProcessKeyboard(DOWN, Application::GetDeltaTimeAsFloat());
+        LocalPlayer->GetPossessed()->GetPossessed()->ProcessKeyboard(DOWN, Application::GetDeltaTimeAsFloat());
     }
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::E))
     {
-        TargetWorld->MainCamera->ProcessKeyboard(UP, Application::GetDeltaTimeAsFloat());
+        LocalPlayer->GetPossessed()->GetPossessed()->ProcessKeyboard(UP, Application::GetDeltaTimeAsFloat());
     }
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::Escape))

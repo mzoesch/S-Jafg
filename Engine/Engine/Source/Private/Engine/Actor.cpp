@@ -43,6 +43,41 @@ void Jafg::AActor::OnGarbage()
     return;
 }
 
+void Jafg::AActor::ChangeTransform(const LTransform& InTransform, const EActorSweep::Type SweepType)
+{
+    this->Transform = InTransform;
+}
+
+void Jafg::AActor::AddTranslation(const LVector& InLocation, const EActorSweep::Type SweepType)
+{
+    this->Transform.Translation += InLocation;
+}
+
+void Jafg::AActor::AddRotator(const LRotator& InRotator, const EActorSweep::Type SweepType)
+{
+    this->Transform.Rotator += InRotator;
+}
+
+void Jafg::AActor::AddScale(const LVector& InScale, const EActorSweep::Type SweepType)
+{
+    this->Transform.Scale += InScale;
+}
+
+void Jafg::AActor::SetTranslation(const LVector& InLocation, const EActorSweep::Type SweepType)
+{
+    this->Transform.Translation = InLocation;
+}
+
+void Jafg::AActor::SetRotator(const LRotator& InRotator, const EActorSweep::Type SweepType)
+{
+    this->Transform.Rotator = InRotator;
+}
+
+void Jafg::AActor::SetScale(const LVector& InScale, const EActorSweep::Type SweepType)
+{
+    this->Transform.Scale = InScale;
+}
+
 void Jafg::AActor::SetRendererComponent(LRendererComponent* InRendererComponent, const bool bFreeOld /* = true */)
 {
     if (bFreeOld && this->RendererComponent != nullptr)

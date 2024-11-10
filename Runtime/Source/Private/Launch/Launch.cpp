@@ -41,7 +41,7 @@ FORCEINLINE EPlatformExit::Type EngineInit()
 
     GEngine = new LEngine();
 
-    GEngine->Init();
+    GEngine->Initialize();
 
     if (::IsEngineExitRequested())
     {

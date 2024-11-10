@@ -5,11 +5,24 @@
 #include "Engine/Object.h"
 #include "Tickable/TickableObject.h"
 #include "Actor.generated.h"
+#include "Maths/Transform.h"
 
 namespace Jafg
 {
 
 class LRendererComponent;
+
+namespace EActorSweep
+{
+
+enum Type : uint8
+{
+    Teleport,
+    Sweep,
+    SweepComplex,
+};
+
+} /* ~Namespace EActorSweep */
 
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API AActor : public JObject, public LTickableObject
@@ -33,6 +46,24 @@ public:
     FORCEINLINE auto IsRendererComponentValid() const -> bool { return this->RendererComponent != nullptr; }
     FORCEINLINE auto GetRendererComponent() const -> LRendererComponent* { return this->RendererComponent; }
 
+    void ChangeTransform(const LTransform& InTransform, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    void AddTranslation(const LVector& InLocation, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    void AddRotator(const LRotator& InRotator, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    void AddScale(const LVector& InScale, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    void SetTranslation(const LVector& InLocation, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    void SetRotator(const LRotator& InRotator, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    void SetScale(const LVector& InScale, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    FORCEINLINE auto GetTransform() const -> const LTransform& { return this->Transform; }
+    FORCEINLINE auto GetTranslation() const -> const LVector& { return this->Transform.Translation; }
+    FORCEINLINE auto GetRotator() const -> const LRotator& { return this->Transform.Rotator; }
+    FORCEINLINE auto GetScale() const -> const LVector& { return this->Transform.Scale; }
+    FORCEINLINE auto GetMutableTransform() -> LTransform& { return this->Transform; }
+    FORCEINLINE auto GetMutableTranslation() -> LVector& { return this->Transform.Translation; }
+    FORCEINLINE auto GetMutableRotator() -> LRotator& { return this->Transform.Rotator; }
+    FORCEINLINE auto GetMutableScale() -> LVector& { return this->Transform.Scale; }
+
+    FORCEINLINE auto GetTransformPtr() const -> const LTransform* { return &this->Transform; }
+
     FORCEINLINE auto CanEverTick() const -> bool { return this->bCanEverTick; }
     FORCEINLINE auto ShouldTick() const -> bool { return this->bShouldTick; }
     FORCEINLINE auto SetShouldTick(const bool bInShouldTick) -> void { this->bShouldTick = bInShouldTick; }
@@ -48,6 +79,8 @@ private:
     FORCEINLINE virtual bool ShouldTickableObjectTick() const override final { return this->ShouldTick(); }
 
     LRendererComponent* RendererComponent = nullptr;
+
+    LTransform Transform = { };
 
     /**
      * Whether this Actor should ever be able to tick or not.

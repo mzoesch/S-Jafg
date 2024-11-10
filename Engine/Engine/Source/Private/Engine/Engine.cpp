@@ -29,7 +29,7 @@ ENGINE_API LStringLegacy          GCustomExitReason           = "";
 // ~Engine Globals
 ///////////////////////////////////////////////////////////////////////////////
 
-void Jafg::LEngine::Init()
+void Jafg::LEngine::Initialize()
 {
 #if WITH_LOCAL_LAYER
     check( this->LocalPlayer == nullptr )

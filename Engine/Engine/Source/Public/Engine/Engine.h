@@ -14,8 +14,6 @@ class LLocalPlayer;
 class LWorld;
 class LSurface;
 
-ENGINE_EXTERN template class ENGINE_API TArray<::Jafg::LLevel, ::Jafg::ResizePolicy::Dynamic, ::Jafg::AllocationPolicy::Heap>;
-
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
 
@@ -60,6 +58,8 @@ struct LWorldContext
     FORCEINLINE bool IsWaitingForTravel() const { return this->TravelUrl.empty() == false; }
 };
 
+MAKE_MULTICAST_SIGNATURE(LOnWorldBeginLifeDelegateSignature, LWorld* /* InNewWorld */)
+
 class ENGINE_API LEngine
 {
     typedef std::chrono::steady_clock::time_point LSteadyStatisticsTimePoint;
@@ -68,7 +68,7 @@ class ENGINE_API LEngine
 
 public:
 
-    void Init();
+    void Initialize();
     void Tick(const float DeltaTime);
     void TearDown();
 
@@ -133,6 +133,12 @@ public:
     auto RegisterLevel(const LLevel& InLevel) -> bool;
     auto RegisterLevel(const LLevel&& InLevel) -> bool;
     auto IsLevelRegistered(const LStringLegacy& Identifier) const -> bool;
+
+    /**
+     * Delegate called when a new world is shortly about to be running inside its beginning life cycle.
+     * The world pointer is guaranteed to be valid.
+     */
+    LOnWorldBeginLifeDelegateSignature OnWorldBeginLife;
 
 private:
 
