@@ -8,7 +8,7 @@
 #endif /* PLATFORM_DESKTOP */
 #include "Core/Application.h"
 #include "Engine/World.h"
-#include "Player/LocalPlayer.h"
+#include "User/LocalEgo.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
@@ -32,13 +32,13 @@ ENGINE_API LStringLegacy          GCustomExitReason           = "";
 void Jafg::LEngine::Initialize()
 {
 #if WITH_LOCAL_LAYER
-    check( this->LocalPlayer == nullptr )
-    this->LocalPlayer = new LLocalPlayer();
-    this->LocalPlayer->Initialize();
+    check( this->LocalEgo == nullptr )
+    this->LocalEgo = new LLocalEgo();
+    this->LocalEgo->Initialize();
 #endif /* WITH_LOCAL_LAYER */
 
     LWorldContext& Context = this->CreateNewWorldContext();
-    this->InitializeContext(Context);
+    this->InitializeContext(Context, "StartUpWorld");
     this->RegisterLevel(LLevel("LWorld"));
     this->Browse(Context, "LWorld");
 
@@ -48,7 +48,7 @@ void Jafg::LEngine::Initialize()
 void Jafg::LEngine::Tick(const float DeltaTime)
 {
 #if WITH_LOCAL_LAYER
-    this->LocalPlayer->Tick(DeltaTime);
+    this->LocalEgo->Tick(DeltaTime);
 #endif /* WITH_LOCAL_LAYER */
 
     for (LWorldContext* i : this->Contexts)
@@ -77,7 +77,7 @@ void Jafg::LEngine::Tick(const float DeltaTime)
     }
 
 #if WITH_LOCAL_LAYER
-    this->LocalPlayer->OnLateTick(DeltaTime);
+    this->LocalEgo->OnLateTick(DeltaTime);
 #endif /* WITH_LOCAL_LAYER */
 
     return;
@@ -107,11 +107,11 @@ void Jafg::LEngine::TearDown()
     }
 
 #if WITH_LOCAL_LAYER
-    if (this->LocalPlayer)
+    if (this->LocalEgo)
     {
-        this->LocalPlayer->TearDown();
-        delete this->LocalPlayer;
-        this->LocalPlayer = nullptr;
+        this->LocalEgo->TearDown();
+        delete this->LocalEgo;
+        this->LocalEgo = nullptr;
     }
 #endif /* WITH_LOCAL_LAYER */
 
@@ -214,14 +214,14 @@ bool Jafg::LEngine::CanEverRender() const
 
 bool Jafg::LEngine::HasPrimarySurface() const
 {
-    return this->HasLocalPlayer() && this->GetLocalPlayer()->HasPrimarySurface();
+    return this->HasLocalEgo() && this->GetLocalEgo()->HasPrimarySurface();
 }
 
 Jafg::LSurface* Jafg::LEngine::GetPrimarySurface() const
 {
-    if (this->HasLocalPlayer())
+    if (this->HasLocalEgo())
     {
-        return this->GetLocalPlayer()->GetPrimarySurface();
+        return this->GetLocalEgo()->GetPrimarySurface();
     }
 
     return nullptr;
@@ -420,11 +420,12 @@ Jafg::LWorldContext& Jafg::LEngine::CreateNewWorldContext()
     return *this->Contexts[Index];
 }
 
-void Jafg::LEngine::InitializeContext(LWorldContext& Context)
+void Jafg::LEngine::InitializeContext(LWorldContext& InContext, const LSimpleString& InHumanReadableName)
 {
-    jassert( Context.ChildWorld == nullptr )
+    jassert( InContext.ChildWorld == nullptr )
 
-    Context.ChildWorld = new LWorld(EWorldState::Uninitialized);
+    InContext.ChildWorld = new LWorld(EWorldState::Uninitialized);
+    InContext.ChildWorld->SetHumanReadableName(InHumanReadableName);
 
     return;
 }

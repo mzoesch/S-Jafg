@@ -28,8 +28,11 @@ FORCEINLINE EPlatformExit::Type GetMostSignificantExitReason()
 
 FORCEINLINE EPlatformExit::Type EngineInit()
 {
-    PrivateCarnifex = new LCarnifex();
-    ::Jafg::Private::GCarnifexReferrer = &PrivateCarnifex;
+    PrivateCarnifex            = new LCarnifex();
+    Private::GCarnifexReferrer = &PrivateCarnifex;
+    GOmniVitaContext           = new Private::LObjectContext();
+    GOmniVitaContext->SetHumanReadableName("OmniVitaContext");
+    check( GOmniVitaContext->GetCarnifex() )
 
     Private::CreateSingletonObjectRegistry();
     Private::GObjectRegistry->LoadPendingPackages();
@@ -90,6 +93,13 @@ FORCEINLINE void EngineExit()
          * way if itself is not defined.
          */
         GEngine->ReflectForwardedExitRequest();
+    }
+
+    if (ensure(GOmniVitaContext))
+    {
+        GOmniVitaContext->TearDownContext();
+        delete GOmniVitaContext;
+        GOmniVitaContext = nullptr;
     }
 
     PrivateCarnifex->KillAllGarbageChildren();

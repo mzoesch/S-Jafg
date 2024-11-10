@@ -10,7 +10,7 @@ namespace Jafg
 
 class JObject;
 class LEngine;
-class LLocalPlayer;
+class LLocalEgo;
 class LWorld;
 class LSurface;
 
@@ -100,19 +100,19 @@ public:
     auto GetCheckedPrimarySurface() const -> LSurface*;
     auto GetPanickedPrimarySurface() const -> LSurface*;
 
-    FORCEINLINE auto HasLocalPlayer() const -> bool { return this->LocalPlayer != nullptr; }
-    FORCEINLINE auto GetLocalPlayer() const -> LLocalPlayer* { return this->LocalPlayer; }
-    FORCEINLINE auto GetCheckedLocalPlayer() const -> LLocalPlayer* { check( this->LocalPlayer ) return this->LocalPlayer; }
-    FORCEINLINE auto GetPanickedLocalPlayer() const -> LLocalPlayer*
+    FORCEINLINE auto HasLocalEgo() const -> bool { return this->LocalEgo != nullptr; }
+    FORCEINLINE auto GetLocalEgo() const -> LLocalEgo* { return this->LocalEgo; }
+    FORCEINLINE auto GetCheckedLocalEgo() const -> LLocalEgo* { check( this->LocalEgo ) return this->LocalEgo; }
+    FORCEINLINE auto GetPanickedLocalEgo() const -> LLocalEgo*
     {
-        if (this->HasLocalPlayer()) { return this->GetLocalPlayer(); }
-        panic( "Could not find local player instance." )
+        if (this->HasLocalEgo()) { return this->GetLocalEgo(); }
+        panic( "Could not find local ego instance." )
         return nullptr;
     }
 
 private:
 
-    LLocalPlayer* LocalPlayer     = nullptr;
+    LLocalEgo* LocalEgo     = nullptr;
 
 public:
 
@@ -144,7 +144,7 @@ private:
 
     auto GetFirstAvailableContextIndex() const -> uint8;
     auto CreateNewWorldContext() -> LWorldContext&;
-    auto InitializeContext(LWorldContext& Context) -> void;
+    auto InitializeContext(LWorldContext& InContext, const LSimpleString& InHumanReadableName) -> void;
 
     /** Browse to a new Url at the next opportunity. */
     auto Browse(LWorldContext& Context, const LStringLegacy& Url) const -> void;

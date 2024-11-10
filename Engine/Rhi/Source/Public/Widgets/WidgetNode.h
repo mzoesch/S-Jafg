@@ -181,7 +181,7 @@ FORCEINLINE void ConstructDeferredWidgetNode(WWidgetNode* InNode)
 //
 // Use these macros to create complex widget structures.
 // Example use cases can be found here:
-// @see Player/Frontend/DebugScreen.cpp
+// @see User/Frontend/DebugScreen.cpp
 ///////////////////////////////////////////////////////////////////////////////
 
 #define MakeRootNode(TRoot)   (*this->ReplaceRoot(NewNode(TRoot)))

@@ -3,19 +3,19 @@
 #pragma once
 
 #include "CoreAFX.h"
-#include "Player/InputTypes.h"
+#include "User/InputTypes.h"
 
 namespace Jafg
 {
 
 class LSurface;
-class LLocalPlayer;
+class LLocalEgo;
 
-class LPlayerInput final
+class LUserInput final
 {
 public:
 
-    LPlayerInput() = default;
+    LUserInput() = default;
 
     /** Called when a new frame is started. */
     void BeginNewFrame();
@@ -25,13 +25,13 @@ public:
 
     void DispatchInputDelegates();
 
-    auto GetLocalPlayer() const -> LLocalPlayer*;
-    auto GetCheckedLocalPlayer() const -> LLocalPlayer*;
-    auto GetPanickedLocalPlayer() const -> LLocalPlayer*;
+    auto GetLocalEgo() const -> LLocalEgo*;
+    auto GetCheckedLocalEgo() const -> LLocalEgo*;
+    auto GetPanickedLocalEgo() const -> LLocalEgo*;
 
     auto GetPrimaryContext() const -> LSurface*;
     auto GetCheckedPrimaryContext() const -> LSurface*;
     auto GetPanickedPrimaryContext() const -> LSurface*;
 };
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */

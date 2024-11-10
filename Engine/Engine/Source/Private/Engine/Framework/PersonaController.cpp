@@ -1,28 +1,28 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAFX.h"
-#include "Engine/Framework/PlayerController.h"
+#include "Engine/Framework/PersonaController.h"
 #include "Engine/World.h"
 #include "Engine/Framework/Pawn.h"
-#include "Player/LocalPlayer.h"
+#include "User/LocalEgo.h"
 #include "Engine/Engine.h"
 
-void Jafg::APlayerController::BeginLife()
+void Jafg::APersonaController::BeginLife()
 {
     AActor::BeginLife();
 }
 
-void Jafg::APlayerController::EndLife()
+void Jafg::APersonaController::EndLife()
 {
     AActor::EndLife();
 
     this->Possess(nullptr);
-    this->GetWorld()->GetEngine()->GetCheckedLocalPlayer()->Possess(nullptr);
+    this->GetWorld()->GetEngine()->GetCheckedLocalEgo()->Possess(nullptr);
 
     return;
 }
 
-void Jafg::APlayerController::Possess(APawn* InNewPawn, const bool bKillOld /* = true */)
+void Jafg::APersonaController::Possess(APawn* InNewPawn, const bool bKillOld /* = true */)
 {
     if (this->PossessedPawn)
     {

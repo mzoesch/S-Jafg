@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAFX.h"
-#include "Player/InputTypes.h"
+#include "User/InputTypes.h"
 
 LStringLegacy Jafg::EKeys::ToString(const LKey& Key)
 {

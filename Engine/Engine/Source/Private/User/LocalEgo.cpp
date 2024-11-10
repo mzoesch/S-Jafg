@@ -1,24 +1,28 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAFX.h"
-#include "Player/LocalPlayer.h"
+#include "User/LocalEgo.h"
 #include "Engine/Engine.h"
 #include "Engine/Framework/Hud.h"
-#include "Player/PlayerInput.h"
+#include "User/UserInput.h"
 #include "Platform/Surface.h"
 #include "User/UserPreferences.h"
 #include "Engine/ActorUtility.h"
 #include "Engine/Framework/Pawn.h"
-#include "Engine/Framework/PlayerController.h"
+#include "Engine/Framework/PersonaController.h"
 #include "Engine/Framework/Lackey.h"
+#include "MyWorld/MyWorldStatics.h"
+#include "Subsystems/LocalEgoSubsystem.h"
+#include "Subsystems/SubsystemCollection.h"
 
-void Jafg::LLocalPlayer::Initialize()
+void Jafg::LLocalEgo::Initialize()
 {
-    checkSlow( this->PlayerInput == nullptr )
+    checkSlow( this->UserInput == nullptr )
 
     this->Context = new ::Jafg::Private::LObjectContext();
+    this->Context->SetHumanReadableName("LocalEgo");
 
-    this->PlayerInput = new LPlayerInput();
+    this->UserInput = new LUserInput();
 
 #if PLATFORM_DESKTOP
     this->SurfaceToDrawOn = new ::Jafg::LDesktopPlatform();
@@ -36,33 +40,43 @@ void Jafg::LLocalPlayer::Initialize()
     this->Hud = new ::Jafg::LHud();
     this->Hud->Initialize(this->GetContext());
 
-    this->OnWorldBeginLifeHandle = GEngine->OnWorldBeginLife.AddMember(&LLocalPlayer::OnWorldBeginLife, this);
+    this->OnWorldBeginLifeHandle = GEngine->OnWorldBeginLife.AddMember(&LLocalEgo::OnWorldBeginLife, this);
+
+    checkSlow( this->Collection == nullptr )
+    this->Collection = new LSubsystemCollection(this->Context);
+    this->Collection->LocateAllSubsystemsOfClass(JLocalEgoSubsystem::StaticClass());
+    this->Collection->InitializeSubsystems();
 
     return;
 }
 
-void Jafg::LLocalPlayer::Tick(const float DeltaTime)
+void Jafg::LLocalEgo::Tick(const float DeltaTime)
 {
     this->SurfaceToDrawOn->OnClear();
 
-    this->PlayerInput->BeginNewFrame();
+    this->UserInput->BeginNewFrame();
     this->GetPrimarySurface()->PollInputs();
     this->GetPrimarySurface()->PollEvents();
     this->Hud->Tick();
-    this->PlayerInput->DispatchInputDelegates();
+    this->UserInput->DispatchInputDelegates();
 
     return;
 }
 
-void Jafg::LLocalPlayer::OnLateTick(const float DeltaTime)
+void Jafg::LLocalEgo::OnLateTick(const float DeltaTime)
 {
     this->GetPrimarySurface()->OnUpdate();
 
     return;
 }
 
-void Jafg::LLocalPlayer::TearDown()
+void Jafg::LLocalEgo::TearDown()
 {
+    checkSlow( this->Collection )
+    this->Collection->TearDownSubsystems();
+    delete this->Collection;
+    this->Collection = nullptr;
+
     if (ensure(this->OnWorldBeginLifeHandle.IsValid()))
     {
         GEngine->OnWorldBeginLife.Remove(this->OnWorldBeginLifeHandle);
@@ -76,10 +90,10 @@ void Jafg::LLocalPlayer::TearDown()
         this->Hud = nullptr;
     }
 
-    if (ensure(this->PlayerInput))
+    if (ensure(this->UserInput))
     {
-        delete this->PlayerInput;
-        this->PlayerInput = nullptr;
+        delete this->UserInput;
+        this->UserInput = nullptr;
     }
 
     if (ensure(this->SurfaceToDrawOn))
@@ -97,26 +111,26 @@ void Jafg::LLocalPlayer::TearDown()
     return;
 }
 
-void Jafg::LLocalPlayer::Possess(APlayerController* InNewController)
+void Jafg::LLocalEgo::Possess(APersonaController* InNewController)
 {
-    this->PlayerController = InNewController;
+    this->PersonaController = InNewController;
 }
 
-void Jafg::LLocalPlayer::OnWorldBeginLife(LWorld* InNewWorld)
+void Jafg::LLocalEgo::OnWorldBeginLife(LWorld* InNewWorld)
 {
     checkSlow( InNewWorld )
 
-    if (this->PlayerController == nullptr)
+    if (this->PersonaController == nullptr)
     {
-        APlayerController* Pc = SpawnDeferredActor<APlayerController>(InNewWorld);
+        APersonaController* Pc = SpawnDeferredActor<APersonaController>(InNewWorld);
         this->Possess(Pc);
     }
 
-    if (this->PlayerController->DoesPossess() == false)
+    if (this->PersonaController->DoesPossess() == false)
     {
         APawn* Pawn = SpawnDeferredActor<APawn>(InNewWorld, ALackey::StaticClass());
-        this->PlayerController->Possess(Pawn);
-        Pawn->SetTranslation(LVector(0.0f, 0.0f, 50.0f));
+        this->PersonaController->Possess(Pawn);
+        Pawn->SetTranslation(LVector(MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 0.5f, 25.0f));
     }
 
     return;

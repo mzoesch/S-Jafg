@@ -7,9 +7,9 @@
 #include "Core/Application.h"
 #include "Engine/ActorUtility.h"
 #include "Engine/Framework/Pawn.h"
-#include "Engine/Framework/PlayerController.h"
+#include "Engine/Framework/PersonaController.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
-#include "Player/LocalPlayer.h"
+#include "User/LocalEgo.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/WorldSubsystem.h"
 
@@ -53,7 +53,7 @@ void Jafg::LWorld::Tick(const float DeltaTime)
     }
     this->DeletedTickableObjects.Empty();
 
-    const LViewport* ViewportContext = this->GetEngine()->GetCheckedLocalPlayer()->GetPrimarySurface()->GetViewport();
+    const LViewport* ViewportContext = this->GetEngine()->GetCheckedLocalEgo()->GetPrimarySurface()->GetViewport();
     check( ViewportContext )
     for (const AActor* Actor : this->Actors)
     {
@@ -114,7 +114,7 @@ void Jafg::LWorld::MouseCallback(double XPos, double YPos)
     LastMouseX = XPos;
     LastMouseY = YPos;
 
-    this->GetEngine()->GetCheckedLocalPlayer()->GetPossessed()->GetPossessed()->ProcessMouseMovement(
+    this->GetEngine()->GetCheckedLocalEgo()->GetPossessed()->GetPossessed()->ProcessMouseMovement(
         static_cast<float>(XOffset),
         static_cast<float>(YOffset)
     );
@@ -122,7 +122,7 @@ void Jafg::LWorld::MouseCallback(double XPos, double YPos)
 
 void Jafg::LWorld::ScrollCallback(const double YOffset)
 {
-    this->GetEngine()->GetCheckedLocalPlayer()->GetPossessed()->GetPossessed()->ProcessMouseScroll(
+    this->GetEngine()->GetCheckedLocalEgo()->GetPossessed()->GetPossessed()->ProcessMouseScroll(
         static_cast<float>(YOffset));
 }
 

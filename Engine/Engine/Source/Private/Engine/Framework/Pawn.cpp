@@ -3,7 +3,7 @@
 #include "CoreAFX.h"
 #include "Engine/Framework/Pawn.h"
 
-void Jafg::APawn::DeclareNewPossessor(APlayerController* InNewController)
+void Jafg::APawn::DeclareNewPossessor(APersonaController* InNewController)
 {
     this->OwningController = InNewController;
 

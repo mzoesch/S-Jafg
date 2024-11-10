@@ -5,7 +5,6 @@
 #include "Engine/Object.h"
 #include "Tickable/TickableObject.h"
 #include "Actor.generated.h"
-#include "Maths/Transform.h"
 
 namespace Jafg
 {

@@ -11,9 +11,9 @@
 #include "RhiFramework/Shader.h"
 #include "ChunkPersistency.h"
 #include "RhiFramework/ChunkShaderContext.h"
-#include "Chunk.generated.h"
 #include "MyWorld/CommonTypes.h"
 #include "MyWorld/VoxelKey.h"
+#include "Chunk.generated.h"
 
 namespace Jafg
 {

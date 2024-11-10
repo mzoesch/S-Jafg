@@ -2,14 +2,14 @@
 
 #include "CoreAFX.h"
 #include "Subsystems/HudSubsystem.h"
-#include "Player/LocalPlayer.h"
+#include "User/LocalEgo.h"
 #include "Engine/Engine.h"
 
 void Jafg::JHudSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     JSubsystem::Initialize(Collection);
 
-    this->OwningHud = GEngine->GetPanickedLocalPlayer()->GetHud();
+    this->OwningHud = GEngine->GetPanickedLocalEgo()->GetHud();
     checkSlow( this->OwningHud )
 
     return;

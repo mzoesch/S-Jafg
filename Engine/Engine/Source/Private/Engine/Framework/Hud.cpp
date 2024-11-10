@@ -4,7 +4,7 @@
 #include "Engine/Framework/Hud.h"
 #include "Core/Application.h"
 #include "Platform/Surface.h"
-#include "Player/LocalPlayer.h"
+#include "User/LocalEgo.h"
 #include "Subsystems/HudSubsystem.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Widgets/WidgetNode.h"
@@ -13,7 +13,7 @@
 
 void Jafg::LHud::Initialize(Private::LObjectContext* InOuter)
 {
-    this->Outer                = InOuter;
+    this->Outer = InOuter;
     GCurrentWidgetContextState = this->Outer;
 
     checkSlow( this->Collection == nullptr )
@@ -52,6 +52,8 @@ void Jafg::LHud::Tick()
 
 void Jafg::LHud::TearDown()
 {
+    GCurrentWidgetContextState = nullptr;
+
     this->Collection->TearDownSubsystems();
     delete this->Collection;
     this->Collection = nullptr;
@@ -61,7 +63,7 @@ void Jafg::LHud::TearDown()
 
 Jafg::LViewport* Jafg::LHud::GetMainViewport() const
 {
-    return GEngine->GetPanickedLocalPlayer()->GetPrimarySurface()->GetViewport();
+    return GEngine->GetPanickedLocalEgo()->GetPrimarySurface()->GetViewport();
 }
 
 void Jafg::LHud::AddWidget(WUserWidget* Widget) const

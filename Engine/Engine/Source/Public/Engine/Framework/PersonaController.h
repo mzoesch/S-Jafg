@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "Engine/Actor.h"
-#include "PlayerController.generated.h"
+#include "Engine/Framework/Controller.h"
+#include "PersonaController.generated.h"
 
 namespace Jafg
 {
@@ -12,13 +12,13 @@ class LEye;
 class APawn;
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API APlayerController final : public AActor
+class ENGINE_API APersonaController final : public AController
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(APlayerController)
+    DEFAULT_OBJECT_CONSTRUCTOR(APersonaController)
 
 public:
 

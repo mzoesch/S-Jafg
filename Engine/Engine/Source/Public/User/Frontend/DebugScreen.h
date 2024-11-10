@@ -33,8 +33,8 @@ private:
     WTextBlock* FpsSection = nullptr;
     WTextBlock* TimeStatsSection = nullptr;
 
-    WTextBlock* LocalPlayerLocationSection = nullptr;
-    WTextBlock* LocalPlayerFacingSection = nullptr;
+    WTextBlock* LocalPawnLocationSection = nullptr;
+    WTextBlock* LocalPawnFacingSection = nullptr;
 
     /** The time when we should invalidate the cache in seconds. */
     double ResetTime = 0.1;

@@ -2,21 +2,20 @@
 
 #pragma once
 
-#include "CoreAFX.h"
 #include "Subsystems/Subsystem.h"
-#include "WorldSubsystem.generated.h"
+#include "LocalEgoSubsystem.generated.h"
 
 namespace Jafg
 {
 
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
-class ENGINE_API JWorldSubsystem : public JSubsystem
+class ENGINE_API JLocalEgoSubsystem : public JSubsystem
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JWorldSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTOR(JLocalEgoSubsystem)
 };
 
 } /* ~Namespace Jafg */

@@ -1,13 +1,13 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAFX.h"
-#include "Player/Frontend/DebugScreen.h"
+#include "User/Frontend/DebugScreen.h"
 #include "Build/EngineBuildInfo.h"
 #include "Core/Application.h"
 #include "Engine/Engine.h"
 #include "Engine/Framework/Pawn.h"
-#include "Engine/Framework/PlayerController.h"
-#include "Player/LocalPlayer.h"
+#include "Engine/Framework/PersonaController.h"
+#include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
 #include "Widgets/Spacer.h"
 #include "Widgets/TextBlock.h"
@@ -41,11 +41,11 @@ void Jafg::WDebugScreen::Construct()
     [
         NewNode(WVBox)
         [
-            NewNode(WTextBlock) >> this->LocalPlayerLocationSection
+            NewNode(WTextBlock) >> this->LocalPawnLocationSection
             & LTextBlockBrush::MakeDefaultSmall()
         ]
         [
-            NewNode(WTextBlock) >> this->LocalPlayerFacingSection
+            NewNode(WTextBlock) >> this->LocalPawnFacingSection
             & LTextBlockBrush::MakeDefaultSmall()
         ]
     ]
@@ -58,17 +58,17 @@ void Jafg::WDebugScreen::Tick()
 {
     Super::Tick();
 
-    const LLocalPlayer* LocalPlayer = GEngine->GetCheckedLocalPlayer();
+    const LLocalEgo* LocalEgo = GEngine->GetCheckedLocalEgo();
 
-    if (this->LocalPlayerLocationSection)
+    if (this->LocalPawnLocationSection)
     {
-        if (LocalPlayer->DoesPossess())
+        if (LocalEgo->DoesPossess())
         {
-            const APlayerController* Controller = LocalPlayer->GetPossessed();
+            const APersonaController* Controller = LocalEgo->GetPossessed();
             if (Controller->DoesPossess())
             {
                 const LVector Location = Controller->GetPossessed()->GetTranslation();
-                this->LocalPlayerLocationSection->SetContent(LSimpleString::SprintF(
+                this->LocalPawnLocationSection->SetContent(LSimpleString::SprintF(
                     "XYZ: {:.3f} / {:.3f} / {:.3f}",
                     Location.X,
                     Location.Y,
@@ -77,20 +77,20 @@ void Jafg::WDebugScreen::Tick()
             }
             else
             {
-                this->LocalPlayerLocationSection->SetContent("[ERR: No pawn]");
+                this->LocalPawnLocationSection->SetContent("[ERR: No pawn]");
             }
         }
         else
         {
-            this->LocalPlayerLocationSection->SetContent("[ERR: No possessor]");
+            this->LocalPawnLocationSection->SetContent("[ERR: No possessor]");
         }
     }
 
-    if (this->LocalPlayerFacingSection)
+    if (this->LocalPawnFacingSection)
     {
-        if (LocalPlayer->DoesPossess())
+        if (LocalEgo->DoesPossess())
         {
-            const APlayerController* Controller = LocalPlayer->GetPossessed();
+            const APersonaController* Controller = LocalEgo->GetPossessed();
             if (Controller->DoesPossess())
             {
                 const LRotator Rotator = Controller->GetPossessed()->GetRotator();
@@ -113,19 +113,19 @@ void Jafg::WDebugScreen::Tick()
                     YawAsText = "West (Towards negative Y)";
                 }
 
-                this->LocalPlayerFacingSection->SetContent(LSimpleString::SprintF(
+                this->LocalPawnFacingSection->SetContent(LSimpleString::SprintF(
                     "Facing: {} ({:.2f}Y / {:.2f}P)",
                     YawAsText, Rotator.Yaw, Rotator.Pitch
                 ));
             }
             else
             {
-                this->LocalPlayerFacingSection->SetContent("[ERR: No pawn]");
+                this->LocalPawnFacingSection->SetContent("[ERR: No pawn]");
             }
         }
         else
         {
-            this->LocalPlayerFacingSection->SetContent("[ERR: No possessor]");
+            this->LocalPawnFacingSection->SetContent("[ERR: No possessor]");
         }
     }
 

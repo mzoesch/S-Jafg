@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreAFX.h"
-#include "Player/RawInput.h"
+#include "User/RawInput.h"
 
 namespace Jafg
 {

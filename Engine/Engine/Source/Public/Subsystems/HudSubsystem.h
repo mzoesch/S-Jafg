@@ -12,7 +12,7 @@ namespace Jafg
 class LHud;
 
 /**
- * A subsystem that shares its lifetime with the local player hud.
+ * A subsystem that shares its lifetime with the local ego hud.
  * Important delegates will be broadcasted to all children of this subsystem.
  * Widget construction and destruction should be done here.
  */

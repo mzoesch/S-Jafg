@@ -7,16 +7,14 @@
 #include "Engine/Engine.h"
 #include "MyWorld/MyWorldStatics.h"
 #include "Engine/Framework/Pawn.h"
-#include "Engine/Framework/PlayerController.h"
+#include "Engine/Framework/PersonaController.h"
 #include "MyWorld/Blocks.h"
 #include "MyWorld/WorldGen.h"
 #include "MyWorld/WorldStatics.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "MyWorld/Meshing/ChunkMesher.h"
-#include "Player/LocalPlayer.h"
+#include "User/LocalEgo.h"
 #include "RhiFramework/ChunkShaderContext.h"
-
-// C4553
 
 Jafg::LChunkRendererComponent::LChunkRendererComponent(AChunk& Owner)
 {
@@ -30,10 +28,10 @@ void Jafg::LChunkRendererComponent::Draw(const LViewport& Context)
     const LChunkShaderContext* ShaderContext =
         this->Owner->SharedArgs->ChunkGenerationSubsystem->GetChunkShaderContext();
 
-    const LEye* Eye = GEngine->GetCheckedLocalPlayer()->GetPossessed()->GetPossessed()->GetEye();
+    const LEye* Eye = GEngine->GetCheckedLocalEgo()->GetPossessed()->GetPossessed()->GetEye();
 
     LChunkShaderDrawArgs Args;
-    Args.DegYFov   = Eye->GetDegYFov();
+    Args.DegYFov = Eye->GetDegYFov();
     Args.ViewMatrix.CopyFrom(Eye->GetViewMatrix());
     Args.WorldLocation = this->Owner->WorldLocation;
     Args.NumTriangles = this->Owner->GetMesher()->GetNumTriangles();
@@ -96,7 +94,6 @@ void Jafg::AChunk::SetChunkState(const EChunkState::Type NewChunkState)
         return;
     }
 
-    EChunkState::Type OldChunkState = this->ChunkState;
     this->ChunkState = NewChunkState;
 
     switch (this->ChunkState)

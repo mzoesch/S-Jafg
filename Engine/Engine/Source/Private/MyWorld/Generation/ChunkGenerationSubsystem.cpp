@@ -5,12 +5,12 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Engine/Framework/Pawn.h"
-#include "Engine/Framework/PlayerController.h"
+#include "Engine/Framework/PersonaController.h"
 #include "RhiFramework/ChunkShaderContext.h"
 #include "MyWorld/Chunk/ChunkStates.h"
 #include "MyWorld/Chunk/ChunkPersistency.h"
 #include "MyWorld/Meshing/NaiveMesher.h"
-#include "Player/LocalPlayer.h"
+#include "User/LocalEgo.h"
 
 void GetAllChunksInDistance(const Jafg::TIntVector2<int32>& Center, const int32 Distance, std::vector<Jafg::TIntVector2<int32>>& OutChunks)
 {
@@ -120,7 +120,7 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
 
 void Jafg::JChunkGenerationSubsystem::UpdateChunkQueue()
 {
-    LVector Translation = this->GetWorld()->GetEngine()->GetCheckedLocalPlayer()->GetPossessed()->GetPossessed()->GetTranslation();
+    LVector Translation = this->GetWorld()->GetEngine()->GetCheckedLocalEgo()->GetPossessed()->GetPossessed()->GetTranslation();
 
     const float CamX = Translation.X;
     const float CamY = Translation.Y;
@@ -223,7 +223,7 @@ void Jafg::JChunkGenerationSubsystem::SafeLoadChunk(
     else
     {
         Target = this->SpawnChunk(ChunkKey); checkSlow( Target )
-        this->Chunks.try_emplace(ChunkKey, Target);
+        CgsChunks.try_emplace(ChunkKey, Target);
         Target->SetChunkPersistency(Persistency, TimeToLive);
     }
 
@@ -267,8 +267,8 @@ Jafg::AChunk* Jafg::JChunkGenerationSubsystem::SpawnChunk(const LChunkKey& InChu
 
 Jafg::AChunk** Jafg::JChunkGenerationSubsystem::FindChunkOrNull(const LChunkKey& ChunkKey)
 {
-    const std::unordered_map<LChunkKey, AChunk*>::iterator It = this->Chunks.find(ChunkKey);
-    return It == this->Chunks.end() ? nullptr : &It->second;
+    const std::unordered_map<LChunkKey, AChunk*>::iterator It = CgsChunks.find(ChunkKey);
+    return It == CgsChunks.end() ? nullptr : &It->second;
 }
 
 void Jafg::JChunkGenerationSubsystem::PrepareWorldForChunkTransit_Spawned(const LChunkKey& InChunkKey)

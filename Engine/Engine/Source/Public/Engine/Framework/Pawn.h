@@ -18,7 +18,7 @@ enum Camera_Movement {
     DOWN
 };
 
-class APlayerController;
+class APersonaController;
 
 /**
  * A pawn is something that can be possessed by a controller.
@@ -35,8 +35,8 @@ protected:
 public:
 
     FORCEINLINE auto IsPossessed() const -> bool { return this->OwningController != nullptr; }
-    FORCEINLINE auto GetOwningController() const -> APlayerController* { return this->OwningController; }
-                auto DeclareNewPossessor(APlayerController* InNewController) -> void;
+    FORCEINLINE auto GetOwningController() const -> APersonaController* { return this->OwningController; }
+                auto DeclareNewPossessor(APersonaController* InNewController) -> void;
 
     FORCEINLINE auto HasEye() const -> bool { return this->Eye != nullptr; }
     FORCEINLINE auto GetEye() -> LEye* { return this->Eye; }
@@ -57,7 +57,7 @@ private:
     LVector RelativeRight = LVector::RightVector;
     LVector RelativeUp    = LVector::UpVector;
 
-    APlayerController* OwningController = nullptr;
+    APersonaController* OwningController = nullptr;
 
     float MovementSpeed    = 2.5f;
     float MouseSensitivity = 0.1f;

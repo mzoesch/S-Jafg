@@ -8,10 +8,11 @@ Jafg::Private::JObjectBase::JObjectBase(const LObjectInitializer& ObjectInitiali
 {
     // TODO Check if obj was already registered
 
-    if (ObjectInitializer.Outer)
-    {
-        this->Outer = ObjectInitializer.Outer;
-    }
+    check( ObjectInitializer.Outer )
+    this->Outer = ObjectInitializer.Outer;
+
+    check( this->Outer->Employees.Contains(this) == false )
+    this->Outer->Employees.Add(this);
 
     return;
 }

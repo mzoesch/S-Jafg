@@ -12,10 +12,29 @@ Jafg::Private::LObjectContext::LObjectContext()
 
 void Jafg::Private::LObjectContext::TearDownContext()
 {
+    LOG_TRACE(
+        LogCarnifex,
+        "Context [{}] found {} garbage employees. Begin to kill them.",
+        this->HumanReadableName, this->Employees.GetSize()
+    )
+
     for (JObjectBase* const& Employee : this->Employees)
     {
         checkSlow( Employee )
-        Employee->MarkAsGarbage();
+
+        if (Employee->GetVTable())
+        {
+            Employee->MarkAsGarbage();
+            continue;
+        }
+
+        /*
+         * The default content referrer.
+         */
+        check( Employee->bGarbage == false )
+        Employee->bGarbage = true;
+        delete Employee;
+
         continue;
     }
 

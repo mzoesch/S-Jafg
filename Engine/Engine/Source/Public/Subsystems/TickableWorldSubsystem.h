@@ -5,7 +5,6 @@
 #include "CoreAFX.h"
 #include "WorldSubsystem.h"
 #include "Tickable/TickableObject.h"
-
 #include "TickableWorldSubsystem.generated.h"
 
 namespace Jafg

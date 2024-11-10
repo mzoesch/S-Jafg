@@ -12,7 +12,7 @@ class LViewport;
 class WWidgetParent;
 
 /**
- * A user widget is a widget node that can be added to the local player widget viewport.
+ * A user widget is a widget node that can be added to the local ego widget viewport.
  * A user widget can consist of multiple widget nodes and can be used to create complex
  * user interfaces.
  */
@@ -43,7 +43,7 @@ public:
     FORCEINLINE virtual auto SetPadding(const LPadding& InPadding) -> WWidgetParentBase& override { this->Padding = InPadding; return *this; }
     // ~WWidgetParentBase implementation
 
-    /** Add this widget to the main viewport of the current active local player. */
+    /** Add this widget to the main viewport of the current active local ego. */
     void AddToViewport(LViewport* InViewport);
 
     /** @return The new root. */

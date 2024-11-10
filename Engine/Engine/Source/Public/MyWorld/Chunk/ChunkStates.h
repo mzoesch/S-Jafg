@@ -41,7 +41,7 @@ enum Type : uint8
     ----------------------------------------------------------------------------*/
 
     /**
-     * Chunk has been marked as a pending kill and is no longer visible to the player in the world (the mesh
+     * Chunk has been marked as a pending kill and is no longer visible to the LEye in the world (the mesh
      * has been cleared to save memory).
      * The validation system will remove this chunk from the world in the near future.
      */

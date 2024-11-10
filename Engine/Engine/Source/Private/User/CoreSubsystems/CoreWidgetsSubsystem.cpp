@@ -1,9 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAFX.h"
-#include "Player/CoreSubsystems/CoreWidgetsSubsystem.h"
+#include "User/CoreSubsystems/CoreWidgetsSubsystem.h"
 #include "Engine/Framework/Hud.h"
-#include "Player/Frontend/DebugScreen.h"
+#include "User/Frontend/DebugScreen.h"
 #include "Widgets/UserWidget.h"
 
 void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)

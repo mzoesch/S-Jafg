@@ -2,22 +2,17 @@
 
 #pragma once
 
-#include "CoreAFX.h"
 #include "Widgets/WidgetNode.h"
 
 namespace Jafg
 {
+
 class LViewport;
-}
-
-namespace Jafg
-{
-
 class WUserWidget;
 struct LSubsystemCollection;
 
 /**
- * The hud is owned by the local player and shares its lifetime.
+ * The hud is owned by the local ego and shares its lifetime.
  * The hud is the main hub for all user interface elements. Create hud subsystems to automatically
  * add multiple widgets of a type to the viewport.
  */

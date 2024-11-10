@@ -35,7 +35,12 @@ public:
 
     FORCEINLINE auto GetCarnifex() const -> LCarnifex* { return *this->Carnifex; }
 
+    FORCEINLINE auto SetHumanReadableName(const LSimpleString& InS) -> void { this->HumanReadableName = InS; }
+    FORCEINLINE auto GetHumanReadableName() const -> const LSimpleString& { return this->HumanReadableName; }
+
 private:
+
+    LSimpleString HumanReadableName;
 
     /** The carnifex that is used to mascara all children within this context. */
     LCarnifex** Carnifex = nullptr;

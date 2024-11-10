@@ -27,6 +27,7 @@ template <typename T> struct TIntVector2;
 template <typename T> struct TRotator;
 template <typename T> struct TPlane;
 template <typename T> struct TMatrix;
+template <typename T> struct TTransform;
 
 
 /*----------------------------------------------------------------------------
@@ -58,6 +59,9 @@ using LPlaneD           = TPlane<double>;
 using LMatrixF          = TMatrix<float>;
 using LMatrixD          = TMatrix<double>;
 
+using LTransformF       = TTransform<float>;
+using LTransformD       = TTransform<double>;
+
 
 /*----------------------------------------------------------------------------
     Aliases.
@@ -76,5 +80,6 @@ typedef LInt32Vector2    LIntVector2;
 typedef LRotatorF        LRotator;
 typedef LPlaneF          LPlane;
 typedef LMatrixF         LMatrix;
+typedef LTransformF      LTransform;
 
 } /* ~Namespace Jafg */

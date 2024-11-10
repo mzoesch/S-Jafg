@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreAFX.h"
-
 namespace Jafg
 {
 
@@ -17,11 +15,5 @@ struct TTransform final
     TRotator<T> Rotator;
     TVector<T>  Scale;
 };
-
-
-using LTransformF = TTransform<float>;
-using LTransformF = TTransform<float>;
-
-typedef LTransformF LTransform;
 
 } /* ~Namespace Jafg */

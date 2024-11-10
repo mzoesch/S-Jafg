@@ -18,14 +18,30 @@ class LCarnifex;
 /** Helper struct to initialize the default object referrers. */
 struct LObjectInitializer final
 {
-    LObjectInitializer()  = default;
+    LObjectInitializer() = delete;
+    FORCEINLINE explicit LObjectInitializer(::Jafg::Private::LObjectContext* InOuter) : Outer(InOuter)
+    {
+        checkSlow( this->Outer )
+        return;
+    }
+    FORCEINLINE LObjectInitializer(const LObjectInitializer&)            = default;
+    FORCEINLINE LObjectInitializer(LObjectInitializer&&)                 = default;
+    FORCEINLINE LObjectInitializer& operator=(const LObjectInitializer&) = default;
+    FORCEINLINE LObjectInitializer& operator=(LObjectInitializer&&)      = default;
     ~LObjectInitializer() = default;
 
-    /** If context is null, the GOmniVitaContext will be used. */
+    /**
+     * Outer for a j class inside a module - this outer represents the lifetime of the package referrer
+     * inside a module and is not used as a (default) outer for clients of this class.
+     * @remakrs Although a client should generally not life if its package referrer died.
+     */
     Private::LObjectContext* Outer = nullptr;
 };
 
-FORCEINLINE ENGINEFRAMEWORK_API auto GetDefaultObjectInitializer() -> LObjectInitializer { return LObjectInitializer(); }
+FORCEINLINE auto GetDefaultObjectInitializer() -> LObjectInitializer
+{
+    return LObjectInitializer(GOmniVitaContext);
+}
 
 namespace Private
 {
@@ -39,6 +55,7 @@ DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINEFRAMEWORK_API JObjectBase
 {
     friend LCarnifex;
+    friend LObjectContext;
 
     /** The jafg v table class of this object. */
     LObjectClass* VClass = nullptr;

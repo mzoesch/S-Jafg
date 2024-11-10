@@ -33,7 +33,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler config
 
-/*
+/**
  * Warning C4172 (compiler warning level 1)   ===>   Raise to error:
  * returning address of local variable or temporary: function.
  *
@@ -41,13 +41,21 @@
  */
 #pragma warning(error : 4172)
 
-/*
+/**
  * Warning C4251 (compiler warning level 2):
  * 'type' : class 'type1' needs to have dll-interface to be used by clients of class 'type2'.
  *
  * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4251?view=msvc-170
  */
 #pragma warning(disable : 4251)
+
+/**
+ * Warning C4553 (compiler warning level 1)   ===>   Raise to error:
+ * 'operator' : operator has no effect; did you intend 'operator'?
+ *
+ * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4553?view=msvc-170
+ */
+#pragma warning(error : 4553)
 
 // ~Compiler config
 ///////////////////////////////////////////////////////////////////////////////
@@ -118,7 +126,8 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
         const std::wstring ___InFileWide    = std::wstring(___InFile.begin(),    ___InFile.end()   ); \
         const int32        ___InLine        = InLine;                                                 \
         {                                                                                             \
-            (void)(                                                                                   \
+            (void)                                                                                    \
+            (                                                                                         \
             (                                                                                         \
                 _wassert(___InMessageWide.c_str(), ___InFileWide.c_str(), ___InLine), 0               \
             )                                                                                         \

@@ -82,6 +82,7 @@
 #include "Maths/Rotator.h"
 #include "Maths/Plane.h"
 #include "Maths/Matrix.h"
+#include "Maths/Transform.h"
 
 
 /*----------------------------------------------------------------------------

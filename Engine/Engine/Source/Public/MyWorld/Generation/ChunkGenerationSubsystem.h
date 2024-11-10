@@ -7,13 +7,18 @@
 #include <queue>
 #include "glm/glm.hpp"
 #include <unordered_map>
-#include "ChunkGenerationSubsystem.generated.h"
 #include "MyWorld/Chunk/ChunkPersistency.h"
+#include "ChunkGenerationSubsystem.generated.h"
 
 namespace Jafg
 {
 
 class LChunkShaderContext;
+
+/* Just temp. This is not a solution, but we first have to implement this on our own -
+ * just to satisfy the j-object requirements. */
+inline std::unordered_map<LChunkKey, AChunk*> CgsChunks = { };
+inline std::queue<glm::vec3> ChunkQueue = { };
 
 DECLARE_JAFG_CLASS()
 class JChunkGenerationSubsystem final : public JCappedTickableWorldSubsystem
@@ -40,11 +45,11 @@ public:
     FORCEINLINE auto HasChunkShaderContext() const -> bool { return this->ChunkShaderContext != nullptr; }
     FORCEINLINE auto GetChunkShaderContext() const -> LChunkShaderContext* { return this->ChunkShaderContext; }
 
-    FORCEINLINE auto GetChunks() const -> const std::unordered_map<LChunkKey, AChunk*>& { return this->Chunks; }
+    FORCEINLINE auto GetChunks() const -> const std::unordered_map<LChunkKey, AChunk*>& { return CgsChunks; }
     FORCEINLINE auto GetCurrentActiveChunkSnapshot() const -> TdhArray<LChunkKey>
     {
         TdhArray<LChunkKey> Out;
-        for (const auto& [Fst, Snd] : this->Chunks)
+        for (const auto& [Fst, Snd] : CgsChunks)
         {
             if (Snd->GetChunkState() == EChunkState::Active)
             {
@@ -78,8 +83,7 @@ private:
 
     AChunk* SpawnChunk(const LChunkKey& InChunkKey) const;
 
-    std::unordered_map<LChunkKey, AChunk*> Chunks;
-    std::queue<glm::vec3> ChunkQueue;
+
     int RenderDistance = 1;
     int RenderHeight = 0;
     unsigned int ChunkSize = 32;

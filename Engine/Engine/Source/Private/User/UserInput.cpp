@@ -1,17 +1,17 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAFX.h"
-#include <intrin.h>
-#include "Player/PlayerInput.h"
+#include "User/UserInput.h"
 #include "Core/Application.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Engine/Framework/Pawn.h"
-#include "Engine/Framework/PlayerController.h"
+#include "Engine/Framework/PersonaController.h"
 #include "Platform/Surface.h"
-#include "Player/LocalPlayer.h"
+#include "User/LocalEgo.h"
+#include <intrin.h>
 
-void Jafg::LPlayerInput::BeginNewFrame()
+void Jafg::LUserInput::BeginNewFrame()
 {
     LSurface* Context = this->GetCheckedPrimaryContext();
 
@@ -21,51 +21,51 @@ void Jafg::LPlayerInput::BeginNewFrame()
     return;
 }
 
-bool Jafg::LPlayerInput::IsNewDown(const LKey Key) const
+bool Jafg::LUserInput::IsNewDown(const LKey Key) const
 {
     const LSurface* Context = this->GetCheckedPrimaryContext();
     return Context->GetCurrentlyPressedKeys().Contains(Key) && (Context->GetLastFramePressedKeys().Contains(Key) == false);
 }
 
-void Jafg::LPlayerInput::DispatchInputDelegates()
+void Jafg::LUserInput::DispatchInputDelegates()
 {
-    LLocalPlayer* LocalPlayer = this->GetCheckedLocalPlayer();
-    if (!LocalPlayer->DoesPossess() || !LocalPlayer->HasPrimarySurface())
+    LLocalEgo* LocalEgo = this->GetCheckedLocalEgo();
+    if (!LocalEgo->DoesPossess() || !LocalEgo->HasPrimarySurface())
     {
         return;
     }
-    check( LocalPlayer->GetPossessed()->GetWorld() )
-    LWorld* TargetWorld = LocalPlayer->GetPossessed()->GetWorld();
-    LSurface* PrimarySurface = LocalPlayer->GetPrimarySurface();
+    check( LocalEgo->GetPossessed()->GetWorld() )
+    LWorld* TargetWorld = LocalEgo->GetPossessed()->GetWorld();
+    LSurface* PrimarySurface = LocalEgo->GetPrimarySurface();
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::W))
     {
-        LocalPlayer->GetPossessed()->GetPossessed()->ProcessKeyboard(FORWARD, Application::GetDeltaTimeAsFloat());
+        LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(FORWARD, Application::GetDeltaTimeAsFloat());
     }
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::S))
     {
-        LocalPlayer->GetPossessed()->GetPossessed()->ProcessKeyboard(BACKWARD, Application::GetDeltaTimeAsFloat());
+        LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(BACKWARD, Application::GetDeltaTimeAsFloat());
     }
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::A))
     {
-        LocalPlayer->GetPossessed()->GetPossessed()->ProcessKeyboard(LEFT, Application::GetDeltaTimeAsFloat());
+        LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(LEFT, Application::GetDeltaTimeAsFloat());
     }
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::D))
     {
-        LocalPlayer->GetPossessed()->GetPossessed()->ProcessKeyboard(RIGHT, Application::GetDeltaTimeAsFloat());
+        LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(RIGHT, Application::GetDeltaTimeAsFloat());
     }
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::Q))
     {
-        LocalPlayer->GetPossessed()->GetPossessed()->ProcessKeyboard(DOWN, Application::GetDeltaTimeAsFloat());
+        LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(DOWN, Application::GetDeltaTimeAsFloat());
     }
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::E))
     {
-        LocalPlayer->GetPossessed()->GetPossessed()->ProcessKeyboard(UP, Application::GetDeltaTimeAsFloat());
+        LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(UP, Application::GetDeltaTimeAsFloat());
     }
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::Escape))
@@ -74,7 +74,7 @@ void Jafg::LPlayerInput::DispatchInputDelegates()
         {
             TargetWorld->bShowMouse = !TargetWorld->bShowMouse;
             TargetWorld->FirstTimeMouseScroll = true;
-            LocalPlayer->GetPrimarySurface()->SetInputMode(TargetWorld->bShowMouse);
+            LocalEgo->GetPrimarySurface()->SetInputMode(TargetWorld->bShowMouse);
         }
     }
 
@@ -112,32 +112,32 @@ void Jafg::LPlayerInput::DispatchInputDelegates()
     return;
 }
 
-Jafg::LLocalPlayer* Jafg::LPlayerInput::GetLocalPlayer() const
+Jafg::LLocalEgo* Jafg::LUserInput::GetLocalEgo() const
 {
     checkSlow( GEngine )
-    return GEngine->GetLocalPlayer();
+    return GEngine->GetLocalEgo();
 }
 
-Jafg::LLocalPlayer* Jafg::LPlayerInput::GetCheckedLocalPlayer() const
+Jafg::LLocalEgo* Jafg::LUserInput::GetCheckedLocalEgo() const
 {
     checkSlow( GEngine )
-    return GEngine->GetCheckedLocalPlayer();
+    return GEngine->GetCheckedLocalEgo();
 }
 
-Jafg::LLocalPlayer* Jafg::LPlayerInput::GetPanickedLocalPlayer() const
+Jafg::LLocalEgo* Jafg::LUserInput::GetPanickedLocalEgo() const
 {
     checkSlow( GEngine )
-    return GEngine->GetPanickedLocalPlayer();
+    return GEngine->GetPanickedLocalEgo();
 }
 
-Jafg::LSurface* Jafg::LPlayerInput::GetPrimaryContext() const
+Jafg::LSurface* Jafg::LUserInput::GetPrimaryContext() const
 {
-    return this->GetCheckedLocalPlayer()->GetPrimarySurface();
+    return this->GetCheckedLocalEgo()->GetPrimarySurface();
 }
 
-Jafg::LSurface* Jafg::LPlayerInput::GetCheckedPrimaryContext() const
+Jafg::LSurface* Jafg::LUserInput::GetCheckedPrimaryContext() const
 {
-    if (LSurface* Surface = this->GetCheckedLocalPlayer()->GetPrimarySurface(); Surface)
+    if (LSurface* Surface = this->GetCheckedLocalEgo()->GetPrimarySurface(); Surface)
     {
         return Surface;
     }
@@ -147,9 +147,9 @@ Jafg::LSurface* Jafg::LPlayerInput::GetCheckedPrimaryContext() const
     return nullptr;
 }
 
-Jafg::LSurface* Jafg::LPlayerInput::GetPanickedPrimaryContext() const
+Jafg::LSurface* Jafg::LUserInput::GetPanickedPrimaryContext() const
 {
-    if (LSurface* Surface = this->GetPanickedLocalPlayer()->GetPrimarySurface(); Surface)
+    if (LSurface* Surface = this->GetPanickedLocalEgo()->GetPrimarySurface(); Surface)
     {
         return Surface;
     }
