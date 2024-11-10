@@ -25,9 +25,8 @@ public:
     FORCEINLINE auto GetOwningController() const -> APlayerController* { return this->OwningController; }
                 auto DeclareNewPossessor(APlayerController* InNewController) -> void;
 
-    LVector GetLocation() const;
-
-    LSimpleString GetFacingStringDebug() const;
+    LVector  GetLocation() const;
+    LRotator GetRotator() const;
 
 private:
 

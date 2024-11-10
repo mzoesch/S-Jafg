@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreAFX.h"
 #include "MyWorld/MyWorldStatics.h"
 
 namespace Jafg

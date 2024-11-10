@@ -131,30 +131,24 @@ void Jafg::LEngine::UpdateTime()
         )
     );
     Application::SetDeltaTime(Application::GetCurrentFrameTime() - Application::GetPreviousFrameTime());
-
-    Application::SetCurrentFps(1.0f / Application::GetDeltaTimeAsFloat());
-    if (Application::GetLowestFps() < 0.0f || Application::GetCurrentFps() < Application::GetLowestFps())
+    if (Application::GetDeltaTime() < Application::GetLowestDeltaTime())
     {
-        Application::SetLowestFps(Application::GetCurrentFps());
+        Application::SetLowestDeltaTime(Application::GetDeltaTime());
     }
-    if (Application::GetHighestFps() < 0.0f || Application::GetCurrentFps() > Application::GetHighestFps())
+    if (Application::GetDeltaTime() > Application::GetHighestDeltaTime())
     {
-        Application::SetHighestFps(Application::GetCurrentFps());
+        Application::SetHighestDeltaTime(Application::GetDeltaTime());
     }
 
     Application::UpdateFrameCount();
 
-    const SteadyStatisticsTimePoint CurrentSteadyTime = std::chrono::steady_clock::now();
+    const Application::Private::LHrcTimePoint CurrentSteadyTime = Application::GetHighestNow();
     if (
-        const int64 StatsTimeDelta = std::chrono::duration_cast<std::chrono::milliseconds>(CurrentSteadyTime - Application::GetLastStatisticsTime()).count();
-        StatsTimeDelta > 10'000
+            std::chrono::duration<double>(CurrentSteadyTime - Application::GetLastStatisticsTime()).count()
+        >
+            Application::GetStatisticsPeriod()
     )
     {
-        // std::cout << "Time Stats: Avg: " << static_cast<float>(Application::GetStatisticsFrameCount()) /
-        //     10'000.0f * 1'000.0f << ", Low: " << Application::GetLowestFps() << ", High: " << Application::GetHighestFps() <<
-        //     '\n';
-        // std::cout.flush();
-
         Application::ResetStatistics();
     }
 

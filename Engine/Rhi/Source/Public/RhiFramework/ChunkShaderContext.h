@@ -3,7 +3,7 @@
 #pragma once
 
 #include "GenericShaderContext.h"
-#include "JustTemp.h"
+#include "RhiFramework/ChunkBoxVertex.h"
 
 namespace Jafg
 {
@@ -21,16 +21,16 @@ struct LChunkShaderDrawArgs : public LGenericShaderContextDrawArgs
 
 class RHI_API LChunkShaderContext final : public LGenericShaderContext
 {
-
 public:
+
     virtual void Make() override;
     virtual void OnFree() override;
     virtual void Draw(const LViewport& Context, LGenericShaderContextDrawArgs& InArgs) const override;
 
-    FORCEINLINE LShader* GetProgram() { return this->Program; }
-    FORCEINLINE const LShader* GetProgram() const { return this->Program; }
+    FORCEINLINE auto GetProgram()       ->       LShader* { return this->Program; }
+    FORCEINLINE auto GetProgram() const -> const LShader* { return this->Program; }
 
-    FORCEINLINE uint32 GetTexture() const { return this->Texture; }
+    FORCEINLINE auto GetTextureLocation() const -> uint32 { return this->Texture; }
 
 private:
 
@@ -41,15 +41,22 @@ private:
 class RHI_API LChunkShaderInstance final
 {
 public:
+
     LChunkShaderInstance() = default;
     DEFAULT_REALLOC_OF_ANY_FROM(LChunkShaderInstance)
     ~LChunkShaderInstance();
 
-    void LoadMeshToGraphicsMemory(const TdhArray<Vertex>& Vertices, const TdhArray<uint32>& Indices);
+    void LoadMeshToGraphicsMemory(const TdhArray<ChunkBoxVertex>& Vertices, const TdhArray<uint32>& Indices);
 
-    uint32 VertexArrayObject = 0;
-    uint32 Vbo               = 0;
-    uint32 Ebo               = 0;
+    FORCEINLINE auto GetVertexArrayObject()   const -> uint32 { return this->Vao; }
+    FORCEINLINE auto GetVertexBufferObject()  const -> uint32 { return this->Vbo; }
+    FORCEINLINE auto GetElementBufferObject() const -> uint32 { return this->Ebo; }
+
+private:
+
+    uint32 Vao = 0;
+    uint32 Vbo = 0;
+    uint32 Ebo = 0;
 };
 
 } /* ~Namespace Jafg */

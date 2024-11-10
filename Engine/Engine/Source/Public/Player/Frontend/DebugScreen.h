@@ -31,6 +31,7 @@ public:
 private:
 
     WTextBlock* FpsSection = nullptr;
+    WTextBlock* TimeStatsSection = nullptr;
 
     WTextBlock* LocalPlayerLocationSection = nullptr;
     WTextBlock* LocalPlayerFacingSection = nullptr;

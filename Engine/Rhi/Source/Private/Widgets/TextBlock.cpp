@@ -131,6 +131,11 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(this->Vao);
 
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
     LIntVector2 WindowDimensions = this->GetViewportSize();
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
     glUniformMatrix4fv(glGetUniformLocation(FontShaderProgram->GetId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));

@@ -4,14 +4,16 @@
 
 #include "Engine/Actor.h"
 #include "MyWorld/Chunk/ChunkStates.h"
+#include "MyWorld/MyWorldStatics.h"
 #include "Engine/Components/RenderComponent.h"
-#include "MyWorld/Chunk/ChunkKey.h"
+#include "MyWorld/ChunkKey.h"
 #include <glm/glm.hpp>
-#include "MyWorld/WorldStatics.h"
 #include "RhiFramework/Shader.h"
 #include "ChunkPersistency.h"
 #include "RhiFramework/ChunkShaderContext.h"
 #include "Chunk.generated.h"
+#include "MyWorld/CommonTypes.h"
+#include "MyWorld/VoxelKey.h"
 
 namespace Jafg
 {
@@ -56,8 +58,16 @@ class ENGINE_API AChunk final : public AActor
 {
     GENERATED_CLASS_BODY()
 
-    friend LChunkMesher;
-    friend LFastChunkMesher;
+public:
+
+    /** The index in the raw voxel data array. */
+    typedef int32 LVoxelIndex;
+
+    static_assert(
+        MwStatics::ChunkSize < std::numeric_limits<LVoxelKeyDomainTy>::max() - 1,
+        "Encountered to large chunk size for indexing the raw voxels domains "
+        "- this will result in undefined overflow behavior."
+    );
 
 protected:
 
@@ -105,22 +115,100 @@ private:
 public:
 
     //////////////////////////////////////////////////////////////////////////
-    // Procedural Mesh
+    // Raw Data
     //////////////////////////////////////////////////////////////////////////
 
     FORCEINLINE bool HasRawVoxelData() const { return this->RawVoxelData; }
+    FORCEINLINE static LVoxelIndex GetRawVoxelIndex(const LVoxelKey InKey)
+    {
+        return InKey.X + InKey.Y * MwStatics::ChunkSize + InKey.Z * MwStatics::ChunkSizeSquared;
+    }
+    FORCEINLINE static LVoxelIndex GetRawVoxelIndex(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ)
+    {
+        return InX + InY * MwStatics::ChunkSize + InZ * MwStatics::ChunkSizeSquared;
+    }
+    FORCEINLINE static LVoxelIndex GetRawVoxelIndex(const int32 InX, const int32 InY, const int32 InZ)
+    {
+        return InX + InY * MwStatics::ChunkSize + InZ * MwStatics::ChunkSizeSquared;
+    }
 
-    uint32* RawVoxelData = nullptr;
+    FORCEINLINE voxel_t GetRawVoxelData(const LVoxelKey InKey) const
+    {
+        checkSlow( this->HasRawVoxelData() )
+        return this->RawVoxelData[AChunk::GetRawVoxelIndex(InKey)];
+    }
+    FORCEINLINE voxel_t GetRawVoxelData(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ) const
+    {
+        checkSlow( this->HasRawVoxelData() )
+        return this->RawVoxelData[AChunk::GetRawVoxelIndex(InX, InY, InZ)];
+    }
+    FORCEINLINE voxel_t GetRawVoxelData(const int32 InX, const int32 InY, const int32 InZ) const
+    {
+        checkSlow( this->HasRawVoxelData() )
+        return this->RawVoxelData[AChunk::GetRawVoxelIndex(InX, InY, InZ)];
+    }
+
+    FORCEINLINE voxel_t GetSafeRawVoxelData(
+        const LVoxelKey InKey, const voxel_t InFallback = ECompileTimeVoxels::Air
+    ) const
+    {
+        checkSlow( this->HasRawVoxelData() )
+        if (InKey.IsLocal())
+        {
+            return this->GetRawVoxelData(InKey);
+        }
+        return InFallback;
+    }
+    FORCEINLINE voxel_t GetSafeRawVoxelData(
+        const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ, const voxel_t InFallback = ECompileTimeVoxels::Air
+    ) const
+    {
+        checkSlow( this->HasRawVoxelData() )
+        if (LVoxelKey(InX, InY, InZ).IsLocal())
+        {
+            return this->GetRawVoxelData(InX, InY, InZ);
+        }
+        return InFallback;
+    }
+    FORCEINLINE voxel_t GetSafeRawVoxelData(
+        const int32 InX, const int32 InY, const int32 InZ, const voxel_t InFallback = ECompileTimeVoxels::Air
+    ) const
+    {
+        checkSlow( this->HasRawVoxelData() )
+        if (LVoxelKey(InX, InY, InZ).IsLocal())
+        {
+            return this->GetRawVoxelData(InX, InY, InZ);
+        }
+        return InFallback;
+    }
+
+    FORCEINLINE voxel_t GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey) const
+    {
+        return this->GetCheckedNeighboringChunk(&InKey)->GetRawVoxelData(InKey);
+    }
+    FORCEINLINE voxel_t GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey, const voxel_t Fallback) const
+    {
+#if DO_CHECKS
+        const LVoxelKey In = InKey;
+#endif /* DO_CHECKS */
+        if (const AChunk* Target = this->GetNeighboringChunk(&InKey); Target)
+        {
+#if DO_CHECKS
+            if (Target == this) { check( InKey == In ) }
+            else { check( InKey != In && InKey.IsLocal() ) }
+#endif /* DO_CHECKS */
+            return Target->GetRawVoxelData(InKey);
+        }
+
+        return Fallback;
+    }
+
+    voxel_t* RawVoxelData = nullptr;
     glm::vec3 ChunkPos = glm::vec3(0.0f);
 
     LSharedChunkArgs* SharedArgs = nullptr;
     LChunkKey  ChunkKey      = { };
     LVector    WorldLocation = { };
-
-    FORCEINLINE static int32 GetIndex(const int32 X, const int32 Y, const int32 Z)
-    {
-        return X + Y * WorldStatics::ChunkSize + Z * WorldStatics::ChunkSize * WorldStatics::ChunkSize;
-    }
 
     FORCEINLINE auto GetChunkRendererComponent() -> LChunkRendererComponent*
     {
@@ -159,6 +247,10 @@ public:
     FORCEINLINE auto HasNDown() const -> bool { return this->NDown != nullptr; }
     FORCEINLINE auto GetNDown() const -> AChunk* { return this->NDown; }
 
+    FORCEINLINE auto GetNeighboringChunk(LVoxelKey* InOutKey) const -> const AChunk*;
+    FORCEINLINE auto GetCheckedNeighboringChunk(LVoxelKey* InOutKey) const -> const AChunk*;
+    FORCEINLINE auto GetPanickedNeighboringChunk(LVoxelKey* InOutKey) const -> const AChunk*;
+
 private:
 
     AChunk* NNorth = nullptr;
@@ -170,5 +262,40 @@ private:
 
 #pragma endregion Neighbors
 };
+
+FORCEINLINE const AChunk* AChunk::GetNeighboringChunk(LVoxelKey* InOutKey) const
+{
+    switch (InOutKey->NormalizeKeyForNeighbor())
+    {
+    case EVoxelKeyLocation::Local: { return this; }
+    case EVoxelKeyLocation::North: { return this->NNorth; }
+    case EVoxelKeyLocation::East:  { return this->NEast;  }
+    case EVoxelKeyLocation::South: { return this->NSouth; }
+    case EVoxelKeyLocation::West:  { return this->NWest;  }
+    case EVoxelKeyLocation::Up:    { return this->NUp;    }
+    case EVoxelKeyLocation::Down:  { return this->NDown;  }
+    default: { checkNoEntry(); return nullptr; }
+    }
+}
+
+FORCEINLINE const AChunk* AChunk::GetCheckedNeighboringChunk(LVoxelKey* InOutKey) const
+{
+    if (const AChunk* Target = this->GetNeighboringChunk(InOutKey); Target)
+    {
+        return Target;
+    }
+    checkNoEntry()
+    return nullptr;
+}
+
+FORCEINLINE const AChunk* AChunk::GetPanickedNeighboringChunk(LVoxelKey* InOutKey) const
+{
+    if (const AChunk* Target = this->GetNeighboringChunk(InOutKey); Target)
+    {
+        return Target;
+    }
+    panic( "Failed to find target chunk by local voxel key." )
+    return nullptr;
+}
 
 } /* ~Namespace Jafg */

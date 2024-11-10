@@ -62,7 +62,7 @@ struct LWorldContext
 
 class ENGINE_API LEngine
 {
-    typedef std::chrono::steady_clock::time_point SteadyStatisticsTimePoint;
+    typedef std::chrono::steady_clock::time_point LSteadyStatisticsTimePoint;
 
     friend JObject;
 

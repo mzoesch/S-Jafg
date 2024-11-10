@@ -10,6 +10,8 @@
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "Engine/ObjectBaseUtility.h"
+#include "User/UserPreferences.h"
 
 void Jafg::LChunkShaderContext::Make()
 {
@@ -19,7 +21,6 @@ void Jafg::LChunkShaderContext::Make()
 
     this->Program = new LShader("Content/Shaders/Chunk.vert", "Content/Shaders/Chunk.frag");
     this->Program->Use();
-    this->Program->SetFloatUniform("texMultiplier", 0.5f);
 
     glGenTextures(1, &this->Texture);
     glActiveTexture(GL_TEXTURE0);
@@ -68,6 +69,26 @@ void Jafg::LChunkShaderContext::Draw(const LViewport& Context, LGenericShaderCon
 {
     GENERIC_SHADER_DRAW_BODY(LChunkShaderDrawArgs)
 
+    if (const JUserPreferences* Preferences = GetDefault<JUserPreferences>();
+        Preferences->GetPolygonMode() == EPolygonMode::Fill)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glFrontFace(GL_CW);
+    }
+    else if (Preferences->GetPolygonMode() == EPolygonMode::Wireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glFrontFace(GL_CW);
+    }
+    else
+    {
+        panic( "Encountered unknown polygon mode." )
+    }
+
     checkSlow( this->Program )
     this->Program->Use();
 
@@ -85,7 +106,7 @@ void Jafg::LChunkShaderContext::Draw(const LViewport& Context, LGenericShaderCon
 
     const int32 ModelLocation = glGetUniformLocation(this->Program->GetId(), "model");
 
-    glBindVertexArray(Args.Instance->VertexArrayObject);
+    glBindVertexArray(Args.Instance->GetVertexArrayObject());
 
     glm::vec3 worldPosVec = glm::vec3(Args.WorldLocation.X, Args.WorldLocation.Y, Args.WorldLocation.Z);
     glm::mat4 model = glm::mat4(1.0f);
@@ -101,26 +122,26 @@ Jafg::LChunkShaderInstance::~LChunkShaderInstance()
 {
     glDeleteBuffers(1, &this->Vbo);
     glDeleteBuffers(1, &this->Ebo);
-    glDeleteVertexArrays(1, &this->VertexArrayObject);
+    glDeleteVertexArrays(1, &this->Vao);
 
     return;
 }
 
-void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TdhArray<Vertex>& Vertices, const TdhArray<uint32>& Indices)
+void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TdhArray<ChunkBoxVertex>& Vertices, const TdhArray<uint32>& Indices)
 {
     static_assert(sizeof(GLsizeiptr) == sizeof(int64), "GLsizeiptr is not 64 bits");
 
-    glGenVertexArrays(1, &this->VertexArrayObject);
-    glBindVertexArray(this->VertexArrayObject);
+    glGenVertexArrays(1, &this->Vao);
+    glBindVertexArray(this->Vao);
 
     glGenBuffers(1, &this->Vbo);
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
     glBufferData(GL_ARRAY_BUFFER,
-        Vertices.GetSize() * static_cast<int64>(sizeof(::Jafg::Vertex)), Vertices.GetData(), GL_STATIC_DRAW);
+        Vertices.GetSize() * static_cast<int64>(sizeof(::Jafg::ChunkBoxVertex)), Vertices.GetData(), GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_BYTE, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, posX)));
+    glVertexAttribPointer(0, 3, GL_BYTE, GL_FALSE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(ChunkBoxVertex, LocationX)));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_BYTE, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, texGridX)));
+    glVertexAttribPointer(1, 2, GL_BYTE, GL_FALSE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(ChunkBoxVertex, TextureGridX)));
     glEnableVertexAttribArray(1);
 
     glGenBuffers(1, &this->Ebo);

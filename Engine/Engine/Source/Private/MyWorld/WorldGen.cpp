@@ -44,11 +44,11 @@ void WorldGen::GenerateChunkData(int chunkX, int chunkY, int chunkZ, int chunkSi
 
                 if (Z + ChunkLocZ < Noise2D)
                 {
-                    chunkData[AChunk::GetIndex(X, Y, Z)] = Blocks::GRASS_BLOCK;
+                    chunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = Blocks::GRASS_BLOCK;
                 }
                 else
                 {
-                    chunkData[AChunk::GetIndex(X, Y, Z)] = 0;
+                    chunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = 0;
                 }
                 //
                 // if (Z + ChunkLocZ > Noise2D || NoiseCaves > .5f)

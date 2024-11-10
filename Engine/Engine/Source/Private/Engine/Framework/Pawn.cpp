@@ -18,32 +18,7 @@ Jafg::LVector Jafg::APawn::GetLocation() const
     return LVector(Loc.x, Loc.y, Loc.z);
 }
 
-Jafg::LSimpleString Jafg::APawn::GetFacingStringDebug() const
+Jafg::LRotator Jafg::APawn::GetRotator() const
 {
-    const float Yaw = this->GetWorld()->MainCamera->Rotator.Yaw;
-
-    LSimpleString YawAsText = "N/A";
-    if (Yaw >= -45.f && Yaw <= 45.f)
-    {
-        YawAsText = "north (Towards positive X)";
-    }
-    else if (Yaw > 45.f && Yaw < 135.f)
-    {
-        YawAsText = "east (Towards positive Y)";
-    }
-    else if (Yaw >= 135.f || Yaw <= -135.f)
-    {
-        YawAsText = "south (Towards negative X)";
-    }
-    else if (Yaw > -135.f && Yaw < -45.f)
-    {
-        YawAsText = "west (Towards negative Y)";
-    }
-
-    return LSimpleString::SprintF(
-        "Facing: {} ({:.2f}Y / {:.2f}P)",
-        YawAsText,
-        this->GetWorld()->MainCamera->Rotator.Yaw,
-        this->GetWorld()->MainCamera->Rotator.Pitch
-    );
+    return this->GetWorld()->MainCamera->Rotator;
 }

@@ -5,7 +5,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "MyWorld/MyWorldStatics.h"
-#include "JustTemp.h"
 #include "Engine/Framework/Camera.h"
 #include "MyWorld/Blocks.h"
 #include "MyWorld/WorldGen.h"
@@ -47,6 +46,15 @@ void Jafg::AChunk::BeginLife()
 
     this->ChunkState = EChunkState::Freed;
 
+    checkSlow( this->RawVoxelData == nullptr )
+    checkSlow( this->Mesher == nullptr )
+    checkSlow( this->NNorth == nullptr )
+    checkSlow( this->NEast  == nullptr )
+    checkSlow( this->NSouth == nullptr )
+    checkSlow( this->NWest  == nullptr )
+    checkSlow( this->NUp    == nullptr )
+    checkSlow( this->NDown  == nullptr )
+
     return;
 }
 
@@ -83,6 +91,7 @@ void Jafg::AChunk::SetChunkState(const EChunkState::Type NewChunkState)
         return;
     }
 
+    EChunkState::Type OldChunkState = this->ChunkState;
     this->ChunkState = NewChunkState;
 
     switch (this->ChunkState)

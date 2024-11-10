@@ -6,33 +6,18 @@
 #include "MyWorld/WorldStatics.h"
 #include "MyWorld/Chunk/Chunk.h"
 
-Jafg::LFastChunkMesher::~LFastChunkMesher()
-{
-    this->ClearProceduralMesh();
-
-    Vertices.Empty();
-    Indices.Empty();
-
-    return;
-}
-
-void Jafg::LFastChunkMesher::ClearProceduralMesh()
-{
-    return;
-}
-
 void Jafg::LFastChunkMesher::GenerateProceduralMesh()
 {
     glm::vec3 ChunkPos = this->GetOwner().ChunkPos;
 
     unsigned int CurrentVertex = 0;
-    for (char x = 0; x < WorldStatics::ChunkSize; x++)
+    for (LVoxelKeyDomainTy x = 0; x < WorldStatics::ChunkSize; x++)
     {
-        for (char y = 0; y < WorldStatics::ChunkSize; y++)
+        for (LVoxelKeyDomainTy y = 0; y < WorldStatics::ChunkSize; y++)
         {
-            for (char z = 0; z < WorldStatics::ChunkSize; z++)
+            for (LVoxelKeyDomainTy z = 0; z < WorldStatics::ChunkSize; z++)
             {
-                int Index = this->GetOwner().GetIndex(x, y, z);
+                AChunk::LVoxelIndex Index = this->GetOwner().GetRawVoxelIndex(x, y, z);
                 // int index = x * WorldStatics::ChunkSize * WorldStatics::ChunkSize + y * WorldStatics::ChunkSize + z;
                 if (this->GetOwner().RawVoxelData[Index] == 0)
                     continue;
@@ -264,16 +249,6 @@ void Jafg::LFastChunkMesher::GenerateProceduralMesh()
             }
         }
     }
-
-    return;
-}
-
-void Jafg::LFastChunkMesher::ApplyProceduralMesh()
-{
-    checkSlow( this->GetOwner().IsRendererComponentValid() )
-    this->GetOwner().GetChunkRendererComponent()->GetShaderInstance()->LoadMeshToGraphicsMemory(
-        this->Vertices, this->Indices
-    );
 
     return;
 }

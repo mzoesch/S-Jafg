@@ -7,12 +7,12 @@
 namespace Jafg
 {
 
-class LFastChunkMesher final : public LChunkMesher
+class LNaiveMesher final : public LChunkMesher
 {
 public:
 
-    LFastChunkMesher() = delete;
-    explicit LFastChunkMesher(AChunk& Owner) : LChunkMesher(Owner) { }
+    LNaiveMesher() = delete;
+    explicit LNaiveMesher(AChunk& Owner) : LChunkMesher(Owner) { }
 
     virtual void GenerateProceduralMesh() override;
 };

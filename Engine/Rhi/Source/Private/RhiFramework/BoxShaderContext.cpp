@@ -59,6 +59,11 @@ void Jafg::LBoxShaderContext::Draw(const LViewport& Context, const LVector2& Siz
     this->Shader.Use();
     glBindVertexArray(this->Vao);
 
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CW);
+
     const float Scale = Context.GetScaleFactor();
 
     const float Vertices[] =

@@ -11,6 +11,9 @@
 #include <glm/gtc/type_ptr.inl>
 #include "RhiFramework/Shader.h"
 #include <glm/glm.hpp>
+
+#include "Engine/ObjectBaseUtility.h"
+#include "User/UserPreferences.h"
 #include "Widgets/Viewport.h"
 
 void OpenGlErrorCallback(int error_code, const char* description)
@@ -90,11 +93,6 @@ void Jafg::LDesktopPlatformWin::Initialize()
 
     glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    // glEnable(GL_CULL_FACE);
-    // glCullFace(GL_BACK);
-    // glFrontFace(GL_CW);
-
     glEnable(GL_DEPTH_TEST);
 
     return;
@@ -172,11 +170,13 @@ void Jafg::LDesktopPlatformWin::PollInputs()
     }
     if (glfwGetKey(this->MasterWindow, GLFW_KEY_F1) == GLFW_PRESS)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Wireframe);
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
     if (glfwGetKey(this->MasterWindow, GLFW_KEY_F2) == GLFW_PRESS)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Fill);
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     return;

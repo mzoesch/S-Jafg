@@ -2,13 +2,13 @@
 
 #include "CoreAFX.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
-#include "JustTemp.h"
 #include "Engine/Framework/Camera.h"
 #include "Engine/World.h"
 #include "RhiFramework/ChunkShaderContext.h"
 #include "MyWorld/Meshing/FastMesher.h"
 #include "MyWorld/Chunk/ChunkStates.h"
 #include "MyWorld/Chunk/ChunkPersistency.h"
+#include "MyWorld/Meshing/NaiveMesher.h"
 
 void GetAllChunksInDistance(const Jafg::TIntVector2<int32>& Center, const int32 Distance, std::vector<Jafg::TIntVector2<int32>>& OutChunks)
 {
@@ -86,7 +86,7 @@ void Jafg::JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Col
 
     this->SharedChunkArgs = new LSharedChunkArgs();
     this->SharedChunkArgs->ChunkGenerationSubsystem = this;
-    this->SharedChunkArgs->GetNewMesher = [] (AChunk& Owner) -> LChunkMesher* { return new LFastChunkMesher(Owner); };
+    this->SharedChunkArgs->GetNewMesher = [] (AChunk& Owner) -> LChunkMesher* { return new LNaiveMesher(Owner); };
 
     return;
 }
@@ -153,21 +153,21 @@ void Jafg::JChunkGenerationSubsystem::UpdateChunkQueue()
 
 void Jafg::JChunkGenerationSubsystem::KillChunks()
 {
-    for (auto It = Chunks.begin(); It != Chunks.end();)
-    {
-        if (
-               abs(It->second->ChunkPos.x - static_cast<float>(LastCamX)) > static_cast<float>(RenderDistance)
-            || abs(It->second->ChunkPos.y - static_cast<float>(LastCamY)) > static_cast<float>(RenderDistance)
-        )
-        {
-            It->second->KillYourSelfNow();
-            It = Chunks.erase(It);
-        }
-        else
-        {
-            ++It;
-        }
-    }
+    // for (auto It = Chunks.begin(); It != Chunks.end();)
+    // {
+    //     if (
+    //            abs(It->second->ChunkPos.x - static_cast<float>(LastCamX)) > static_cast<float>(RenderDistance)
+    //         || abs(It->second->ChunkPos.y - static_cast<float>(LastCamY)) > static_cast<float>(RenderDistance)
+    //     )
+    //     {
+    //         It->second->KillYourSelfNow();
+    //         It = Chunks.erase(It);
+    //     }
+    //     else
+    //     {
+    //         ++It;
+    //     }
+    // }
 
     return;
 }

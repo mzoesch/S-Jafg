@@ -8,6 +8,19 @@
 namespace Jafg
 {
 
+namespace EPolygonMode
+{
+
+enum Type : uint8
+{
+    Fill      = 0,
+    Wireframe = 1,
+    Max       = 1,
+    Num       = 2,
+};
+
+} /* ~Namespace EPolygonMode. */
+
 DECLARE_JAFG_CLASS()
 class ENGINEFRAMEWORK_API JUserPreferences final : public Private::JObjectBase
 {
@@ -24,13 +37,18 @@ protected:
 public:
 
     FORCEINLINE constexpr bool GetDefaultVSyncEnabled() const { return JUserPreferences::bDefaultVSyncEnabled; }
+    FORCEINLINE constexpr EPolygonMode::Type GetDefaultPolygonMode() const { return JUserPreferences::DefaultPolygonMode; }
     FORCEINLINE bool GetVSyncEnabled() const { return this->bVSyncEnabled; }
     FORCEINLINE void SetVSyncEnabled(const bool bEnabled) { this->bVSyncEnabled = bEnabled; }
+    FORCEINLINE EPolygonMode::Type GetPolygonMode() const { return this->PolygonMode; }
+    FORCEINLINE void SetPolygonMode(const EPolygonMode::Type NewPolygonMode) { this->PolygonMode = NewPolygonMode; }
 
 private:
 
     inline static constexpr bool bDefaultVSyncEnabled { true };
+    inline static constexpr EPolygonMode::Type DefaultPolygonMode { EPolygonMode::Fill };
     bool bVSyncEnabled { JUserPreferences::bDefaultVSyncEnabled };
+    EPolygonMode::Type PolygonMode { JUserPreferences::DefaultPolygonMode };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Interface

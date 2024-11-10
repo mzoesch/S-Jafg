@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreAFX.h"
-#include "JustTemp.h"
+#include "RhiFramework/ChunkBoxVertex.h"
 
 namespace Jafg
 {
@@ -16,11 +16,11 @@ public:
 
     LChunkMesher() = delete;
     FORCEINLINE explicit LChunkMesher(AChunk& Owner) : Owner(&Owner) { }
-    virtual ~LChunkMesher() = default;
+    virtual ~LChunkMesher();
 
-    virtual void ClearProceduralMesh()    = 0;
+            void ClearProceduralMesh();
     virtual void GenerateProceduralMesh() = 0;
-    virtual void ApplyProceduralMesh()    = 0;
+            void ApplyProceduralMesh() const;
 
     FORCEINLINE void RegenerateProceduralMesh()
     {
@@ -33,13 +33,13 @@ public:
 
     FORCEINLINE auto GetOwner() const -> AChunk& { return *this->Owner; }
     FORCEINLINE auto GetNumTriangles() const -> int32 { return this->Indices.GetSize(); }
-    FORCEINLINE auto GetVertices() const -> const TdhArray<Vertex>& { return this->Vertices; }
+    FORCEINLINE auto GetVertices() const -> const TdhArray<ChunkBoxVertex>& { return this->Vertices; }
     FORCEINLINE auto GetIndices() const -> const TdhArray<uint32>& { return this->Indices; }
 
 protected:
 
-    TdhArray<Vertex> Vertices = {};
-    TdhArray<uint32> Indices = {};
+    TdhArray<ChunkBoxVertex> Vertices = { };
+    TdhArray<uint32>         Indices  = { };
 
 private:
 
