@@ -273,6 +273,10 @@ func WriteLuaBuildFileBody(handle *os.File) {
     WriteLuaBuildFileProjectSpecificSection(&builder)
     WriteLuaBuildFileGeneratedSection(&builder)
 
+    WriteWithIndent(&builder, 0, "filter 'files:**.c'\n")
+    WriteWithIndent(&builder, 4, "flags {'NoPCH'}\n")
+    WriteWithIndent(&builder, 0, "filter {}\n")
+
     Shared.WriteToFile(handle, builder.String())
 
     return

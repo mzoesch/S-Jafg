@@ -1,5 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
+#include "CoreAfx.h"
 #include "Widgets/WidgetRegion.h"
 
 void Jafg::WWidgetRegion::Draw(LViewport& Context) const

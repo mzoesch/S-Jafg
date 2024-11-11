@@ -1,5 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
+#include "CoreAfx.h"
 #include "Platform/PlatformMisc.h"
 
 namespace Jafg

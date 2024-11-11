@@ -1,5 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
+#include "CoreAfx.h"
 #include "Widgets/VBox.h"
 
 Jafg::LVector2 Jafg::WVBox::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const

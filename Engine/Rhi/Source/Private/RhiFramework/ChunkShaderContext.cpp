@@ -1,5 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
+#include "CoreAfx.h"
 #include "RhiFramework/ChunkShaderContext.h"
 #include "RhiFramework/Shader.h"
 #include "Forward/EngineForward.h"

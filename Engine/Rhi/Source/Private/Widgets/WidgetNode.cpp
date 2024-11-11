@@ -1,5 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
+#include "CoreAfx.h"
 #include "Widgets/WidgetNode.h"
 #include "Widgets/WidgetParent.h"
 

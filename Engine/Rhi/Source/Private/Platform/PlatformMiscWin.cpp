@@ -1,5 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
+#include "CoreAfx.h"
 #include "Widgets/InterfaceTypes.h"
 #if PLATFORM_WINDOWS
 
