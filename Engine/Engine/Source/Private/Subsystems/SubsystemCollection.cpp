@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Subsystems/Subsystem.h"

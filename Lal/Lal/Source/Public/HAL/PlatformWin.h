@@ -79,6 +79,7 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
 #define PLATFORM_MAX_PATH \
     MAX_PATH
 
+#include <intrin.h>
 #define PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH() \
     __nop()
 

@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "User/CoreSubsystems/CoreWidgetsSubsystem.h"
 #include "Engine/Framework/Hud.h"
 #include "User/Frontend/DebugScreen.h"

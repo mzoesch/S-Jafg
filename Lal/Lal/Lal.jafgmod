@@ -1,5 +1,5 @@
 {
-    "Pch": "Generate",
+    "Pch": "Use",
     "ConditionalPublicDependencies": {
         "WITH_TESTS": [
             "TesterForward"

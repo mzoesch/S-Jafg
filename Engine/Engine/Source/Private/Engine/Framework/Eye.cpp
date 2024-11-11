@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Engine/Framework/Eye.h"
 #include "Engine/Framework/Pawn.h"
 

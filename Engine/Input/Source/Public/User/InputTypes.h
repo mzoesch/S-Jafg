@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 
 namespace Jafg
 {
@@ -12,7 +12,7 @@ typedef uint8 LKey;
 namespace EKeys
 {
 
-LStringLegacy ToString(const LKey& Key);
+INPUT_API LSimpleString ToString(const LKey& Key);
 
 inline constexpr LKey KeyBegin                  {   0 };
 inline constexpr LKey KeyEnd                    { 255 };

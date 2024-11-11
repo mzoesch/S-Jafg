@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
-#include "User/UserInput.h"
+#include "CoreAfx.h"
+#include "User/Input/UserInput.h"
 #include "Core/Application.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -9,11 +9,13 @@
 #include "Engine/Framework/PersonaController.h"
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
-#include <intrin.h>
+#include "User/Input/UserInputAction.h"
+#include "User/Input/UserInputActionValue.h"
 
 void Jafg::LUserInput::BeginNewFrame()
 {
-    LSurface* Context = this->GetCheckedPrimaryContext();
+    LSurface* Context = this->GetLocalEgo()->GetPrimarySurface();
+    check( Context )
 
     Context->GetCurrentlyPressedKeys().SwapBuffers(Context->GetLastFramePressedKeys());
     Context->GetCurrentlyPressedKeys().Reset(Context->GetCurrentlyPressedKeys().GetSize());
@@ -23,7 +25,8 @@ void Jafg::LUserInput::BeginNewFrame()
 
 bool Jafg::LUserInput::IsNewDown(const LKey Key) const
 {
-    const LSurface* Context = this->GetCheckedPrimaryContext();
+    const LSurface* Context = this->GetLocalEgo()->GetPrimarySurface();
+    check( Context )
     return Context->GetCurrentlyPressedKeys().Contains(Key) && (Context->GetLastFramePressedKeys().Contains(Key) == false);
 }
 
@@ -37,6 +40,10 @@ void Jafg::LUserInput::DispatchInputDelegates()
     check( LocalEgo->GetPossessed()->GetWorld() )
     LWorld* TargetWorld = LocalEgo->GetPossessed()->GetWorld();
     LSurface* PrimarySurface = LocalEgo->GetPrimarySurface();
+
+    TdhArray<LRawInput> TriggeredKeys = this->GetTriggeredKeys();
+    TdhArray<LRawInput> OngoingKeys   = this->GetOngoingKeys();
+    TdhArray<LRawInput> CompletedKeys = this->GetCompletedKeys();
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::W))
     {
@@ -84,7 +91,7 @@ void Jafg::LUserInput::DispatchInputDelegates()
 
         if (PrimarySurface->GetCurrentlyPressedKeys().IsEmpty() == false)
         {
-            __nop();
+            PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH();
         }
 
         if (MouseX != nullptr && MouseY != nullptr)
@@ -109,6 +116,58 @@ void Jafg::LUserInput::DispatchInputDelegates()
         }
     }
 
+    for (LUserInputContext* Context : this->ActiveContexts)
+    {
+        for (LUserInputMappedAction& Action : Context->GetMappedActions())
+        {
+            if (Action.Trigger == EUserInputActionTrigger::Triggered)
+            {
+                for (const LRawInput& TriggeredKey : TriggeredKeys)
+                {
+                    if (Action.Key == TriggeredKey.Key)
+                    {
+                        LUserInputActionValue V;
+                        Action.Callback(V);
+                    }
+
+                    continue;
+                }
+            }
+
+            else if (Action.Trigger == EUserInputActionTrigger::Ongoing)
+            {
+                for (const LRawInput& OngoingKey : OngoingKeys)
+                {
+                    if (Action.Key == OngoingKey.Key)
+                    {
+                        LUserInputActionValue V;
+                        Action.Callback(V);
+                    }
+
+                    continue;
+                }
+            }
+
+            else if (Action.Trigger == EUserInputActionTrigger::Completed)
+            {
+                for (const LRawInput& CompletedKey : CompletedKeys)
+                {
+                    if (Action.Key == CompletedKey.Key)
+                    {
+                        LUserInputActionValue V;
+                        Action.Callback(V);
+                    }
+
+                    continue;
+                }
+            }
+
+            continue;
+        }
+
+        continue;
+    }
+
     return;
 }
 
@@ -130,31 +189,54 @@ Jafg::LLocalEgo* Jafg::LUserInput::GetPanickedLocalEgo() const
     return GEngine->GetPanickedLocalEgo();
 }
 
-Jafg::LSurface* Jafg::LUserInput::GetPrimaryContext() const
+void Jafg::LUserInput::RegisterContext(LUserInputContext&& Context, const bool bMakeActive)
 {
-    return this->GetCheckedLocalEgo()->GetPrimarySurface();
-}
+    LUserInputContext* ContextPtr = new LUserInputContext(std::move(Context));
+    this->RegisteredContexts.Add(ContextPtr);
 
-Jafg::LSurface* Jafg::LUserInput::GetCheckedPrimaryContext() const
-{
-    if (LSurface* Surface = this->GetCheckedLocalEgo()->GetPrimarySurface(); Surface)
+    if (bMakeActive)
     {
-        return Surface;
+        this->ActiveContexts.Add(ContextPtr);
     }
 
-    check( false && "Could not find primary context." )
-
-    return nullptr;
+    return;
 }
 
-Jafg::LSurface* Jafg::LUserInput::GetPanickedPrimaryContext() const
+Jafg::TdhArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
 {
-    if (LSurface* Surface = this->GetPanickedLocalEgo()->GetPrimarySurface(); Surface)
+    TdhArray<LRawInput> TriggeredKeys;
+
+    for (const LRawInput& Key : this->GetLocalEgo()->GetPrimarySurface()->GetCurrentlyPressedKeys())
     {
-        return Surface;
+        if (this->GetLocalEgo()->GetPrimarySurface()->GetLastFramePressedKeys().Contains(Key) == false)
+        {
+            TriggeredKeys.Emplace(Key);
+        }
+
+        continue;
     }
 
-    panic( "Could not find primary context." )
+    return TriggeredKeys;
+}
 
-    return nullptr;
+Jafg::TdhArray<Jafg::LRawInput>& Jafg::LUserInput::GetOngoingKeys() const
+{
+    return this->GetLocalEgo()->GetPrimarySurface()->GetCurrentlyPressedKeys();
+}
+
+Jafg::TdhArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
+{
+    TdhArray<LRawInput> CompletedKeys;
+
+    for (const LRawInput& Key : this->GetLocalEgo()->GetPrimarySurface()->GetLastFramePressedKeys())
+    {
+        if (this->GetLocalEgo()->GetPrimarySurface()->GetCurrentlyPressedKeys().Contains(Key) == false)
+        {
+            CompletedKeys.Emplace(Key);
+        }
+
+        continue;
+    }
+
+    return CompletedKeys;
 }

@@ -2,7 +2,9 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
+#include "User/RawInput.h"
+#include "UserInputContext.h"
 #include "User/InputTypes.h"
 
 namespace Jafg
@@ -17,7 +19,6 @@ public:
 
     LUserInput() = default;
 
-    /** Called when a new frame is started. */
     void BeginNewFrame();
 
     /** Whether this key was just downed this frame. */
@@ -29,9 +30,19 @@ public:
     auto GetCheckedLocalEgo() const -> LLocalEgo*;
     auto GetPanickedLocalEgo() const -> LLocalEgo*;
 
-    auto GetPrimaryContext() const -> LSurface*;
-    auto GetCheckedPrimaryContext() const -> LSurface*;
-    auto GetPanickedPrimaryContext() const -> LSurface*;
+    void RegisterContext(LUserInputContext&& Context, const bool bMakeActive = false);
+
+    TdhArray<LRawInput>  GetTriggeredKeys() const;
+    TdhArray<LRawInput>& GetOngoingKeys() const;
+    TdhArray<LRawInput>  GetCompletedKeys() const;
+
+private:
+
+    /**
+     * The most important context is stored first.
+     */
+    TdhArray<LUserInputContext*> ActiveContexts;
+    TdhArray<LUserInputContext*> RegisteredContexts;
 };
 
 } /* ~Namespace Jafg */

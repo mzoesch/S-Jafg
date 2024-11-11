@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "User/Frontend/DebugScreen.h"
 #include "Build/EngineBuildInfo.h"
 #include "Core/Application.h"

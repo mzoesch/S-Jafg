@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Module/Module.h"
 
 namespace Jafg
@@ -18,4 +18,4 @@ protected:
     // ~LModuleBase implementation
 };
 
-}
+} /* ~Namespace Jafg */

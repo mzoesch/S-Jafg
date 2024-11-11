@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "MyWorld/Chunk/Chunk.h"
 #include "MyWorld/Meshing/ChunkMesher.h"
 

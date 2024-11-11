@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Subsystems/Subsystem.h"
 #include "WorldSubsystem.generated.h"
 

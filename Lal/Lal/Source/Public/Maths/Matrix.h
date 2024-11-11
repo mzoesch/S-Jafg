@@ -5,7 +5,7 @@
 namespace Jafg
 {
 
-/** Jafg implementation of a four dimensional matrix. */
+/** Jafg implementation of a four dimensional matrix with TMatrix[R][C] notation. */
 template <typename T>
 struct TMatrix final
 {

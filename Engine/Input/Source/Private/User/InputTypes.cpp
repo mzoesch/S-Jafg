@@ -1,9 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "User/InputTypes.h"
 
-LStringLegacy Jafg::EKeys::ToString(const LKey& Key)
+Jafg::LSimpleString Jafg::EKeys::ToString(const LKey& Key)
 {
     switch (Key)
     {

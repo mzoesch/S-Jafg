@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 
 namespace Jafg::Application
 {
@@ -20,7 +20,7 @@ typedef std::chrono::high_resolution_clock::time_point LHrcTimePoint;
  * All time related functions are measured in seconds except stated otherwise.
  */
 #if PREPROCESSOR_EXCLUDE_FF
-#endif /* ~PREPROCESSOR_EXCLUDE_FF */
+#endif /* PREPROCESSOR_EXCLUDE_FF */
 
 FORCEINLINE auto GetHighestNow() -> Private::LHrcTimePoint;
 FORCEINLINE auto GetTimeDifferenceFromStaticStorageInitialization(const Private::LHrcTimePoint& Point) -> double;

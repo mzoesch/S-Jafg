@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Build/EngineBuildInfo.h"
 
 const Jafg::LSimpleString& Jafg::BuildInfo::GetBuildTime()

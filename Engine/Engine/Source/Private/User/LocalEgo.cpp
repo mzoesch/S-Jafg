@@ -1,10 +1,10 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "User/LocalEgo.h"
 #include "Engine/Engine.h"
 #include "Engine/Framework/Hud.h"
-#include "User/UserInput.h"
+#include "User/Input/UserInput.h"
 #include "Platform/Surface.h"
 #include "User/UserPreferences.h"
 #include "Engine/ActorUtility.h"
@@ -113,7 +113,16 @@ void Jafg::LLocalEgo::TearDown()
 
 void Jafg::LLocalEgo::Possess(APersonaController* InNewController)
 {
+    APersonaController* Old = this->PersonaController;
     this->PersonaController = InNewController;
+
+    this->Collection->ForEachSubsystem<JLocalEgoSubsystem>(
+    [Old, InNewController] (JLocalEgoSubsystem* Subsystem)
+    {
+        Subsystem->OnNewPersonaControllerPossessed(Old, InNewController);
+    });
+
+    return;
 }
 
 void Jafg::LLocalEgo::OnWorldBeginLife(LWorld* InNewWorld)

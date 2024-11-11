@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "MyWorld/MyWorldStatics.h"
 #include "MyWorld/Meshing/NaiveMesher.h"
 #include "MyWorld/Block.h"

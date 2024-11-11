@@ -1,4 +1,4 @@
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "MyWorld/WorldGen.h"
 #include <OpenSimplexNoise.hh>
 #include "MyWorld/Blocks.h"

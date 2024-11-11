@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 
 namespace Jafg
 {
@@ -21,10 +21,10 @@ public:
 
 protected:
 
-    virtual void LoadModule() = 0;
+    virtual void LoadModule()     = 0;
     virtual void TearDownModule() = 0;
 };
 
 #define IMPLEMENT_MODULE(ModuleName) \
 
-}
+} /* ~Namespace Jafg */

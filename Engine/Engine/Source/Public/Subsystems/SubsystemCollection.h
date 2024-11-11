@@ -2,16 +2,20 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
+#include "Subsystems/Subsystem.h"
 #include "Engine/ObjectClass.h"
+#include "Engine/ObjectBaseUtility.h"
 
 namespace Jafg
 {
 
 namespace Private
 {
+
 class LObjectContext;
-}
+
+} /* ~Namespace Private */
 
 class LWorld;
 class JSubsystem;
@@ -39,6 +43,47 @@ struct LSubsystemCollection final
         {
             checkSlow( Subsystem )
             std::forward<Predicate>(InPredicate)(Subsystem);
+            continue;
+        }
+
+        return;
+    }
+
+    template <typename TSubsystem, typename Predicate, bool bAllowMissCast = false>
+    FORCEINLINE void ForEachSubsystem(Predicate&& InPredicate)
+    {
+        for (JSubsystem* Subsystem : this->SubsystemInstances)
+        {
+            checkSlow( Subsystem )
+            if (TSubsystem* SubsystemT = DynamicCast<TSubsystem>(Subsystem); SubsystemT)
+            {
+                std::forward<Predicate>(InPredicate)(SubsystemT);
+                continue;
+            }
+
+            if constexpr (bAllowMissCast)
+            {
+                continue;
+            }
+
+            panicMsgf(
+                "Failed to dynamically cast subsystem [{}] to [{}].",
+                Subsystem->GetFullName(),
+                TSubsystem::StaticClass()->GetSpacedClassName()
+            )
+            continue;
+        }
+
+        return;
+    }
+
+    template <typename TSubsystem, typename Predicate>
+    FORCEINLINE void ForEachSubsystemUnsafe(Predicate&& InPredicate)
+    {
+        for (JSubsystem* Subsystem : this->SubsystemInstances)
+        {
+            checkSlow( Subsystem )
+            std::forward<Predicate>(InPredicate)(reinterpret_cast<TSubsystem*>(Subsystem));
             continue;
         }
 

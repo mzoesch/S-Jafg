@@ -1,6 +1,6 @@
 {
     "FriendlyName": "LalTestRuntime",
-    "Pch": "Generate",
+    "Pch": "Use",
     "Kind": "Launch",
     "PublicDependencies": [
         "CORE_DEPENDENCIES", "Lal"

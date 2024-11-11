@@ -401,7 +401,6 @@ void TVector<T>::Invert()
     this->X = -this->X;
     this->Y = -this->Y;
     this->Z = -this->Z;
-
     return;
 }
 

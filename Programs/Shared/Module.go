@@ -13,7 +13,7 @@ import (
 // The following fields are optional:
 //   "FriendlyName"                  - A human-readable name for the module
 //   "PublicDependencies"            - A list of module names that this module depends on
-//   "Pch"                           - The precompiled header strategy for the module ("No", "Use", "Generate")
+//   "Pch"                           - The precompiled header strategy for the module ("No", "Use")
 //   "ConditionalPublicDependencies" - A list of conditional dependencies (condition based of target defines).
 type Module struct {
     Name         string

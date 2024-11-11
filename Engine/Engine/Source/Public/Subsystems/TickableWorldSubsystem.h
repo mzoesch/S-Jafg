@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "WorldSubsystem.h"
 #include "Tickable/TickableObject.h"
 #include "TickableWorldSubsystem.generated.h"

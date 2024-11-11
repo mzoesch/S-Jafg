@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"

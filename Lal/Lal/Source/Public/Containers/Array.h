@@ -263,13 +263,36 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray() noexcept
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(const Self& InOther) noexcept
 {
-    this->Append(InOther);
+    this->Size     = InOther.Size;
+    this->Capacity = InOther.Capacity;
+
+    if (InOther.Data)
+    {
+        this->Data = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
+        ::memset(this->Data, 0, this->Capacity * sizeof(T));
+        ::memcpy(this->Data, InOther.Data, this->Size * sizeof(T));
+    }
+    else
+    {
+        this->Data = nullptr;
+        check( this->Size == 0 && this->Capacity == 0 )
+    }
+
+    return;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(Self&& InOther) noexcept
 {
-    this->Append(std::move(InOther));
+    this->Size     = InOther.Size;
+    this->Capacity = InOther.Capacity;
+    this->Data     = InOther.Data;
+
+    InOther.Size     = 0;
+    InOther.Capacity = 0;
+    InOther.Data     = nullptr;
+
+    return;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
@@ -944,7 +967,7 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator=(const Self& InOth
             && "Other data is not null but capacity is greater than zero. You just encountered a memory leak."
         )
 
-        this->Data      = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
+        this->Data = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
         ::memset(this->Data, 0, this->Capacity * sizeof(T));
         ::memcpy(this->Data, InOther.Data, this->Size * sizeof(T));
     }

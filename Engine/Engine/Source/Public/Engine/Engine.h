@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Level.h"
 
 namespace Jafg
@@ -29,19 +29,19 @@ ENGINE_API extern bool          bGShouldRequestExit;
 ENGINE_API extern bool          bGEngineRequestingExit;
 
 ENGINE_API extern int32         GCustomExitStatusOverride;
-ENGINE_API extern LStringLegacy       GCustomExitReason;
+ENGINE_API extern LSimpleString GCustomExitReason;
 
-FORCEINLINE ENGINE_API auto IsEngine() -> bool { return GEngine; }
-FORCEINLINE ENGINE_API auto GetEngine() -> LEngine* { return GEngine; }
+FORCEINLINE auto IsEngine() -> bool { return GEngine; }
+FORCEINLINE auto GetEngine() -> LEngine* { return GEngine; }
 
-FORCEINLINE ENGINE_API auto IsEngineExitRequested() -> bool { return bGShouldRequestExit; }
-FORCEINLINE ENGINE_API auto IsTearingDown() -> bool { return bGEngineRequestingExit; }
-FORCEINLINE ENGINE_API auto WillShortlyTerminate() -> bool { return bGShouldRequestExit || bGEngineRequestingExit; }
+FORCEINLINE auto IsEngineExitRequested() -> bool { return bGShouldRequestExit; }
+FORCEINLINE auto IsTearingDown() -> bool { return bGEngineRequestingExit; }
+FORCEINLINE auto WillShortlyTerminate() -> bool { return bGShouldRequestExit || bGEngineRequestingExit; }
 
-FORCEINLINE ENGINE_API auto HasCustomExitStatus() -> bool { return GCustomExitStatusOverride != INDEX_NONE; }
-FORCEINLINE ENGINE_API auto GetCustomExitStatus() -> int32 { return GCustomExitStatusOverride; }
-FORCEINLINE ENGINE_API auto HasCustomExitReason() -> bool { return GCustomExitReason.empty() == false; }
-FORCEINLINE ENGINE_API auto GetCustomExitReason() -> LStringLegacy { return GCustomExitReason; }
+FORCEINLINE auto HasCustomExitStatus() -> bool { return GCustomExitStatusOverride != INDEX_NONE; }
+FORCEINLINE auto GetCustomExitStatus() -> int32 { return GCustomExitStatusOverride; }
+FORCEINLINE auto HasCustomExitReason() -> bool { return GCustomExitReason.IsEmpty() == false; }
+FORCEINLINE auto GetCustomExitReason() -> LSimpleString { return GCustomExitReason; }
 
 // ~Engine Globals
 ///////////////////////////////////////////////////////////////////////////////
@@ -85,9 +85,9 @@ public:
     void ReflectForwardedExitRequest();
 
     void RequestEngineExit();
-    void RequestEngineExit(const LStringLegacy& Reason);
+    void RequestEngineExit(const LSimpleString& Reason);
     void RequestEngineExit(const int32 CustomExitStatus);
-    void RequestEngineExit(const int32 CustomExitStatus, const LStringLegacy& Reason);
+    void RequestEngineExit(const int32 CustomExitStatus, const LSimpleString& Reason);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Client Local Stuff

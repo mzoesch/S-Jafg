@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Forward/EngineForward.h"
 #include "Platform/DesktopPlatformWin.h"
 #include <glad/glad.h>

@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 
 #if !PLATFORM_WINDOWS
     #error "Is not PLATFORM_WINDOWS but platform specific code is being compiled."

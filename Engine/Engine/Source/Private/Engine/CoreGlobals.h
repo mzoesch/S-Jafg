@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 
 namespace Jafg
 {
@@ -19,8 +19,8 @@ bool ReflectForwardEngineExitRequest();
 } /* ~Namespace Private */
 
 void RequestEngineExit();
-void RequestEngineExit(const LStringLegacy& Reason);
+void RequestEngineExit(const LSimpleString& Reason);
 void RequestEngineExit(const int32 CustomExitStatus);
-void RequestEngineExit(const int32 CustomExitStatus, const LStringLegacy& Reason);
+void RequestEngineExit(const int32 CustomExitStatus, const LSimpleString& Reason);
 
 } /* ~Namespace Jafg */

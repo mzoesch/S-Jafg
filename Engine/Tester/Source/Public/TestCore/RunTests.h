@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 
 PRAGMA_FOR_JAFG_BUILD_TOOL("IncludeAllModuleTests")
 

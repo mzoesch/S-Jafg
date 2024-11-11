@@ -1,6 +1,6 @@
 {
     "FriendlyName": "Input",
-    "Pch": "Generate",
+    "Pch": "Use",
     "PublicDependencies": [
         "Lal"
     ]

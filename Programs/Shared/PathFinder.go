@@ -27,6 +27,7 @@ var GeneratedHeadersDir string = fmt.Sprintf("%s/gh", VslfDir)
 var GeneratedHeadersExtension string = ".generated.h"
 var GeneratedTranslationsDir string = fmt.Sprintf("%s/gt", VslfDir)
 var GeneratedTranslationsExtension string = ".generated.cpp"
+var GeneratedProjectsDir string = fmt.Sprintf("%s/gp", VslfDir)
 var ObjectStructureCacheFile string = fmt.Sprintf("%s/jobj.jobj", VslfDir)
 var VendorIncludeDir string = "Engine/Vendor/Include"
 var VendorLibDir string = "Engine/Vendor/Lib"

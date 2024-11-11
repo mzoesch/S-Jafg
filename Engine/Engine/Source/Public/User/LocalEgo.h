@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 
 namespace Jafg
 {
@@ -14,8 +14,8 @@ class LObjectContext;
 
 } /* ~Namespace Private */
 
-class LWorld;
 class LHud;
+class LWorld;
 class LSurface;
 class LUserInput;
 class APersonaController;
@@ -42,7 +42,8 @@ public:
     void TearDown();
 
     FORCEINLINE auto IsUserInputValid() const -> bool { return this->UserInput != nullptr; }
-    FORCEINLINE auto GetUserInput() const -> LUserInput* { return this->UserInput; }
+    FORCEINLINE auto GetUserInput() -> LUserInput* { return this->UserInput; }
+    FORCEINLINE auto GetUserInput() const -> const LUserInput* { return this->UserInput; }
     FORCEINLINE auto IsHud() const -> bool { return this->Hud != nullptr; }
     FORCEINLINE auto GetHud() const -> LHud* { return this->Hud; }
     FORCEINLINE auto HasPrimarySurface() const -> bool { return this->SurfaceToDrawOn != nullptr; }

@@ -10,14 +10,14 @@
  * directly and **___DO NOT USE___** this header.
  */
 #if PREPROCESSOR_EXCLUDE_FF
-#endif /* 0 */
+#endif /* PREPROCESSOR_EXCLUDE_FF */
 
 namespace Jafg::EngineForward
 {
 
-ENGINEFORWARD_API extern bool         bForwardExitRequest;
-ENGINEFORWARD_API extern int32        ForwardCustomExitStatus;
-ENGINEFORWARD_API extern LStringLegacy      ForwardCustomExitReason;
+ENGINEFORWARD_API extern bool          bForwardExitRequest;
+ENGINEFORWARD_API extern int32         ForwardCustomExitStatus;
+ENGINEFORWARD_API extern LSimpleString ForwardCustomExitReason;
 
 } /* ~Namespace Jafg::EngineForward */
 

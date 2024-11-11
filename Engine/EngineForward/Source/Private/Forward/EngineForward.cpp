@@ -1,13 +1,13 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Forward/EngineForward.h"
 
 namespace Jafg::EngineForward
 {
 
-ENGINEFORWARD_API bool         bForwardExitRequest        = false;
-ENGINEFORWARD_API int32        ForwardCustomExitStatus    = INDEX_NONE;
-ENGINEFORWARD_API LStringLegacy      ForwardCustomExitReason    = "";
+ENGINEFORWARD_API bool          bForwardExitRequest     = false;
+ENGINEFORWARD_API int32         ForwardCustomExitStatus = INDEX_NONE;
+ENGINEFORWARD_API LSimpleString ForwardCustomExitReason = "";
 
 } /* ~Namespace Jafg::EngineForward */

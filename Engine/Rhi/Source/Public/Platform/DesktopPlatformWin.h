@@ -6,7 +6,7 @@
     #error "Tried to include Windows specific platform code on a non-Windows platform."
 #endif /* !PLATFORM_WINDOWS */
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Platform/DesktopPlatform.h"
 
 struct GLFWwindow;

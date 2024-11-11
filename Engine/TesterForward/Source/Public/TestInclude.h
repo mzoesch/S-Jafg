@@ -13,5 +13,5 @@
     Commonly used headers.
 ----------------------------------------------------------------------------*/
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "TestCore/TestMacroForward.h"

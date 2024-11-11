@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Maths/Color.h"
 
 const Jafg::LColor Jafg::LColor::Transparent    { 0x00u, 0x00u, 0x00u, 0x00u };

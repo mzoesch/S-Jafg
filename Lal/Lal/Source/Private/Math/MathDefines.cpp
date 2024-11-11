@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 
 /*----------------------------------------------------------------------------
     Globals.
@@ -148,5 +148,6 @@ template<> const LPlaneD LPlaneD::UnitPlaneZ                        { LPlaneD( 0
 template<> const LPlaneD LPlaneD::UnitPlaneW                        { LPlaneD( 0.0 , 0.0 , 0.0 , 1.0 ) };
 
 template<> const LMatrixF LMatrixF::Identity { LPlaneF::UnitPlaneX, LPlaneF::UnitPlaneY, LPlaneF::UnitPlaneZ, LPlaneF::UnitPlaneW };
+template<> const LMatrixD LMatrixD::Identity { LPlaneD::UnitPlaneX, LPlaneD::UnitPlaneY, LPlaneD::UnitPlaneZ, LPlaneD::UnitPlaneW };
 
 } /* ~Namespace Jafg */

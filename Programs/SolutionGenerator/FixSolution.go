@@ -34,13 +34,25 @@ func FixAfx() {
 }
 
 func FixAfxForModule(mod *Shared.Module) {
-    var afxFile string = Shared.GetCheckedAbsolutePath(fmt.Sprintf(
-        "%s/%s.vcxproj",
-        mod.GetRelativeModuleDir(),
-        mod.GetUsableName(),
-    ))
+    //if mod.Pch.IsUse() {
+    //    var afxFile string = Shared.GetCheckedAbsolutePath(fmt.Sprintf(
+    //        "%s/%s.vcxproj",
+    //        mod.GetRelativeModuleDir(),
+    //        mod.GetUsableName(),
+    //    ))
+    //
+    //    FixAfxForFile(afxFile)
+    //}
 
-    FixAfxForFile(afxFile)
+    //if mod.Pch.IsUse() {
+    //    var afxFile string = Shared.GetCheckedAbsolutePath(fmt.Sprintf(
+    //        "%s/Vslf-%s.vcxproj",
+    //        GetVslfModuleProjectRelativeDir(mod),
+    //        mod.GetUsableName(),
+    //    ))
+    //
+    //    FixAfxForFile(afxFile)
+    //}
 
     return
 }

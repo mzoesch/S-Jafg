@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Memory/MemoryMisc.h"
 #include "Engine/ObjectBase.h"

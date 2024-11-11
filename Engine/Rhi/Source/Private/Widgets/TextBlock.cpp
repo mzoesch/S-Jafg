@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Widgets/TextBlock.h"
 #include "RhiFramework/Shader.h"
 #include <glad/glad.h>

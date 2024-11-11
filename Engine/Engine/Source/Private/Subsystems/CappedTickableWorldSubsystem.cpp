@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Subsystems/CappedTickableWorldSubsystem.h"
 
 void Jafg::JCappedTickableWorldSubsystem::Tick(const float DeltaTime)

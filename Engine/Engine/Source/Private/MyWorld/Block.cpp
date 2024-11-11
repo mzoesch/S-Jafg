@@ -1,4 +1,4 @@
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "MyWorld/Block.h"
 
 Block::Block(char minX, char minY)

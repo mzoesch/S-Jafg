@@ -8,6 +8,8 @@ import (
 )
 
 func CleanSolution() {
+    fmt.Println("Cleaning solution...")
+
     Shared.DeleteAbsoluteFileIfExists(Shared.GetAbsolutePathToSolutionLuaFile())
     Shared.DeleteAbsoluteFileIfExists(Shared.GetAbsolutePathToEngineRootDir() + "/Jafg.sln")
 

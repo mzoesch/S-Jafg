@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Subsystems/HudSubsystem.h"
 #include "User/LocalEgo.h"
 #include "Engine/Engine.h"

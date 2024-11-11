@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 
 DECLARE_INLINE_LOG_CATEGORY(LogPlatformMisc, Trace)
 

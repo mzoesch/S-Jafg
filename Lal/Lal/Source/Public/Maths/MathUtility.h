@@ -62,19 +62,26 @@ namespace Jafg::Maths
     Declarations.
 ----------------------------------------------------------------------------*/
 
-template <typename T>
-NODISCARD constexpr FORCEINLINE auto Absolute(const T A) -> T { return ( A < static_cast<T>(0) ) ? -A : A; }
-template <typename T>
-NODISCARD constexpr FORCEINLINE auto Min(const T A, const T B) -> T { return (B < A) ? B : A; }
-template <typename T>
-NODISCARD constexpr FORCEINLINE auto Max(const T A, const T B) -> T { return (B < A) ? A : B; }
+template <typename T> NODISCARD constexpr FORCEINLINE auto Absolute(const T A) -> T { return ( A < static_cast<T>(0) ) ? -A : A; }
+template <typename T> NODISCARD constexpr FORCEINLINE auto Min(const T A, const T B) -> T { return (B < A) ? B : A; }
+template <typename T> NODISCARD constexpr FORCEINLINE auto Max(const T A, const T B) -> T { return (B < A) ? A : B; }
+
+template <typename T> NODISCARD constexpr FORCEINLINE auto Squared(const T Value) -> T { return Value * Value; }
+template <typename T> NODISCARD constexpr FORCEINLINE auto Cubed(const T Value) -> T { return Value * Value * Value; }
+template <typename T> NODISCARD constexpr FORCEINLINE auto Quartic(const T Value) -> T { return Value * Value * Value * Value; }
+template <typename T> NODISCARD constexpr FORCEINLINE auto Quintic(const T Value) -> T { return Value * Value * Value * Value * Value; }
+template <typename T> NODISCARD constexpr FORCEINLINE auto Sextic(const T Value) -> T { return Value * Value * Value * Value * Value * Value; }
+/** For generic pow. But should be avoided when dealing with exponents less than seven due to performance. */
+template <typename T> NODISCARD constexpr FORCEINLINE auto Pow(const T Base, const T Exponent) -> T;
+
+template <typename T> NODISCARD constexpr FORCEINLINE auto Factorial(const T Value) -> T;
 
 /** Inclusively clamp the value of type T between its minimum and maximum values. */
 template <typename T>
-NODISCARD constexpr FORCEINLINE auto Clamp(const T Value, const T MinValue, const T MaxValue) -> T { return Maths::Max(Maths::Min(Value, MaxValue), MinValue); }
+NODISCARD constexpr FORCEINLINE auto Clamp(const T Value, const T MinValue, const T MaxValue) -> T;
 MIX_FLOATING_POINT_ARGS_THREE_PARAMS(Clamp)
-NODISCARD constexpr FORCEINLINE auto Clamp(const float Value, const float MinValue, const float MaxValue) -> float { return Clamp<float>(Value, MinValue, MaxValue); }
-NODISCARD constexpr FORCEINLINE auto Clamp(const double Value, const double MinValue, const double MaxValue) -> double { return Clamp<double>(Value, MinValue, MaxValue); }
+NODISCARD constexpr FORCEINLINE auto Clamp(const float Value, const float MinValue, const float MaxValue) -> float;
+NODISCARD constexpr FORCEINLINE auto Clamp(const double Value, const double MinValue, const double MaxValue) -> double;
 
 NODISCARD FORCEINLINE bool IsNearlyEqual(const float A, const float B, const float Tolerance = JAFG_FLOAT_SMALL_NUMBER);
 NODISCARD FORCEINLINE bool IsNearlyEqual(const double A, const double B, const double Tolerance = JAFG_DOUBLE_SMALL_NUMBER);
@@ -118,25 +125,33 @@ template <typename T> NODISCARD FORCEINLINE auto ATanh(const T Value) -> T;
  * @param  Center The forward center of the view.
  * @param  Up     The up vector of the view.
  * @return        The view matrix V:
- *                      |  R.X      U'.X   -F.X    0 | Where R  is the normalized right vector by crossing F and Up.
- *                  V = |  R.Y      U'.Y   -F.Y    0 |       U' is the normalized up vector by crossing R and F.
- *                      |  R.Z      U'.Z   -F.Z    0 |       F  is the normalized forward vector by getting the delta
- *                      | -R*Eye -U'*Eye  F*Eye    1 |       from Eye to Center.
+ *         |    R.X    U'.X   -F.X    0 | Where R  is the normalized right vector by crossing F and Up.
+ *     V = |    R.Y    U'.Y   -F.Y    0 |       U' is the normalized up vector by crossing R and F.
+ *         |    R.Z    U'.Z   -F.Z    0 |       F  is the normalized forward vector by getting the delta
+ *         | -R*Eye -U'*Eye  F*Eye    1 |       from Eye to Center.
  */
 template <typename T>
 NODISCARD FORCEINLINE auto MakeViewMatrix(const TVector<T>& Eye, const TVector<T>& Center, const TVector<T>& Up) -> TMatrix<T>;
 
 /**
+ * An affine transformation to get the transformation for objects to be projected perspective while keeping the
+ * Z depth buffer information.
  *
- * @tparam T
- * @param RadYFov
- * @param Ratio
- * @param NearZPlane
- * @param FarZPlane
- * @return
+ * @tparam T          The floating type.
+ * @param  RadYFov    Vertical field of view in radians.
+ * @param  Ratio      Ratio of the perspective view for distortion correction.
+ * @param  NearZPlane Near clipped Z plane for the perspective frustum view.
+ * @param  FarZPlane  Far clipped Z plane for the perspective frustum view.
+ * @return            The perspective projection matrix P:
+ *         | (H*R)^-1    0                 0                   0 | Where H is the cotangent of the half of the vertical
+ *     P = |        0 H^-1                 0                   0 |       radiant field of view.
+ *         |        0    0 -(Fz-Nz)^-(Fz+Nz) -(Fz-Nz)^-(2*Fz*Nz) |       R is the ratio of the view.
+ *         |        0    0                -1                   0 |       Nz is the near Z plane.
+ *                                                                       Fz is the far Z plane.
  */
 template <typename T>
 NODISCARD FORCEINLINE auto MakePerspectiveProjectionMatrix(const T RadYFov, const T Ratio, const T NearZPlane, const T FarZPlane) -> TMatrix<T>;
+
 
 /*----------------------------------------------------------------------------
     Specializations.
@@ -311,6 +326,36 @@ double Fmod(const double Numerator, const double Denominator)
 #endif /* DO_CHECKS */
 
     return ::fmod(Numerator, Denominator);
+}
+
+template <typename T>
+constexpr T Pow(const T Base, const T Exponent)
+{
+    return std::pow(Base, Exponent);
+}
+
+template <typename T>
+constexpr T Factorial(const T Value)
+{
+    return (Value == static_cast<T>(0))
+        ? static_cast<T>(1) /* We have to make this more performant by using a loop. */
+        : Value * Factorial<T>(Value - static_cast<T>(1));
+}
+
+template <typename T>
+constexpr auto Clamp(const T Value, const T MinValue, const T MaxValue) -> T
+{
+    return Maths::Max(Maths::Min(Value, MaxValue), MinValue);
+}
+
+constexpr float Clamp(const float Value, const float MinValue, const float MaxValue)
+{
+    return Clamp<float>(Value, MinValue, MaxValue);
+}
+
+constexpr double Clamp(const double Value, const double MinValue, const double MaxValue)
+{
+    return Clamp<double>(Value, MinValue, MaxValue);
 }
 
 template <typename T>

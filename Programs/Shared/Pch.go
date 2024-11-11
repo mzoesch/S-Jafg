@@ -9,7 +9,7 @@ type Pch int
 const (
     PCH_NO       Pch = iota
     PCH_USE      Pch = iota
-    PCH_GENERATE Pch = iota
+    //PCH_GENERATE Pch = iota
 )
 
 func (pch Pch) ToString() string {
@@ -18,8 +18,8 @@ func (pch Pch) ToString() string {
         return "No"
     case PCH_USE:
         return "Use"
-    case PCH_GENERATE:
-        return "Generate"
+    //case PCH_GENERATE:
+    //    return "Generate"
     default:
         panic("Unknown Pch")
     }
@@ -33,9 +33,9 @@ func (pch Pch) IsUse() bool {
     return pch == PCH_USE
 }
 
-func (pch Pch) IsGenerate() bool {
-    return pch == PCH_GENERATE
-}
+//func (pch Pch) IsGenerate() bool {
+//    return pch == PCH_GENERATE
+//}
 
 func IsValidPch(kind string) bool {
     switch kind {
@@ -56,8 +56,8 @@ func PchFromString(kind string) Pch {
         return PCH_NO
     case "Use":
         return PCH_USE
-    case "Generate":
-        return PCH_GENERATE
+    //case "Generate":
+        //return PCH_GENERATE
     default:
         panic(fmt.Sprintf("Unknown Pch: Found %s.", kind))
     }

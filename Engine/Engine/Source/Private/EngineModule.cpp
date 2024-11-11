@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "EngineModule.h"
 
 void Jafg::LEngineModule::LoadModule()

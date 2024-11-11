@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "RhiFramework/Shader.h"
 #include <filesystem>
 #include <glad/glad.h> /* Include glad to get all the required OpenGL headers. */

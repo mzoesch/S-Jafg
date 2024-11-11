@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "CoreGlobals.h"
 #include "Engine/Engine.h"
 #include "Forward/EngineForward.h"
@@ -42,7 +42,7 @@ void Jafg::RequestEngineExit()
     return;
 }
 
-void Jafg::RequestEngineExit(const LStringLegacy& Reason)
+void Jafg::RequestEngineExit(const LSimpleString& Reason)
 {
     if (WillShortlyTerminate())
     {
@@ -68,7 +68,7 @@ void Jafg::RequestEngineExit(const int32 CustomExitStatus)
     return;
 }
 
-void Jafg::RequestEngineExit(const int32 CustomExitStatus, const LStringLegacy& Reason)
+void Jafg::RequestEngineExit(const int32 CustomExitStatus, const LSimpleString& Reason)
 {
     if (WillShortlyTerminate())
     {

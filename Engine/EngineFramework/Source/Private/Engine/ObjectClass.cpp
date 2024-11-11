@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Engine/ObjectClass.h"
 
 bool Jafg::LObjectClass::DerivesFrom(const LObjectClass* InParent) const
