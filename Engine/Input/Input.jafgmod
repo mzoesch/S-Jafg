@@ -1,7 +1,0 @@
-{
-    "FriendlyName": "Input",
-    "Pch": "Use",
-    "PublicDependencies": [
-        "Lal"
-    ]
-}

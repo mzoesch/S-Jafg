@@ -6,7 +6,7 @@
 #include "Engine/World.h"
 #include "Engine/Framework/Pawn.h"
 #include "Engine/Framework/PersonaController.h"
-#include "RhiFramework/ChunkShaderContext.h"
+#include "Rhi/ChunkShaderContext.h"
 #include "MyWorld/Chunk/ChunkStates.h"
 #include "MyWorld/Chunk/ChunkPersistency.h"
 #include "MyWorld/Meshing/NaiveMesher.h"

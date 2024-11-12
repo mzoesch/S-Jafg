@@ -4,9 +4,6 @@
     "Modules": [
         "Engine", 
         "EngineForward",
-        "EngineFramework",
-        "Input",
-        "Rhi",
         "Tester",
         "TesterForward"
     ]

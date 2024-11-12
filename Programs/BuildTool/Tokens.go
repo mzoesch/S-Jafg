@@ -380,18 +380,23 @@ func MakeTokenForJafgClass(tokens *[]Token, index int, words *[]string) {
         var superClassNameParts []string = strings.Split(superClassName, "::")
         token.JafgClassSuperName = superClassNameParts[len(superClassNameParts)-1]
 
-        /* Bugprone - ambiguous. But who cares right now? We will have to rewrite this whole program anyway. */
-        var node *ObjectNode = GObjectStructure.Root.FindObjectNodeByString(token.JafgClassSuperName, []string{})
-        if node == nil {
-            /*
-             * Ignore this error. This only happens if there is not .jobj file available from the last cache.
-             * We retokenize the whole current module anyway again in this program lifetime for other non-class
-             * structure related tasks where then we have all the cache information available (that we are here
-             * currently calculating).
-             */
+        /* Fresh installation of the program - no cache available. */
+        if GObjectStructure.Root == nil {
             token.JafgClassSuperNamespaces = []string{}
         } else {
-            token.JafgClassSuperNamespaces = node.Namespaces;
+            /* Bugprone - ambiguous. But who cares right now? We will have to rewrite this whole program anyway. */
+            var node *ObjectNode = GObjectStructure.Root.FindObjectNodeByString(token.JafgClassSuperName, []string{})
+            if node == nil {
+                /*
+                 * Ignore this error. This only happens if there is not .jobj file available from the last cache.
+                 * We retokenize the whole current module anyway again in this program lifetime for other non-class
+                 * structure related tasks where then we have all the cache information available (that we are here
+                 * currently calculating).
+                 */
+                token.JafgClassSuperNamespaces = []string{}
+            } else {
+                token.JafgClassSuperNamespaces = node.Namespaces;
+            }
         }
     }
 

@@ -4,7 +4,7 @@
 
 #include "CoreAfx.h"
 
-#include "User/InputTypes.h"
+#include "User/Input/InputTypes.h"
 #include "User/Input/UserInputActionTrigger.h"
 
 namespace Jafg

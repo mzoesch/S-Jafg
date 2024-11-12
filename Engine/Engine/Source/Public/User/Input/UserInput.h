@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreAfx.h"
-#include "User/RawInput.h"
+#include "User/Input/RawInput.h"
 #include "UserInputContext.h"
-#include "User/InputTypes.h"
+#include "User/Input/InputTypes.h"
 
 namespace Jafg
 {

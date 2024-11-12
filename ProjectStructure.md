@@ -9,7 +9,7 @@ A static library that abstracts C++ to a more suitable platform agnostic languag
 Defining platform specific abstractions and providing fundamental classes and data types
 such as arrays, strings, math-stuff etc. that are optimized for this application. 
 ### Engine
-A dynamic linked library that contains the core functionality of this application.
+A collection of dynamic linked libraries that contains the core functionality of this application.
 This library contains public interfaces, classes, etc. that are used by other plugins.
 ### Runtime
 Private entry point for this application containing runtime related code that is not meant to be shared.

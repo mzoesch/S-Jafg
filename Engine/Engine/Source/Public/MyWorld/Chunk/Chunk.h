@@ -8,9 +8,9 @@
 #include "Engine/Components/RenderComponent.h"
 #include "MyWorld/ChunkKey.h"
 #include <glm/glm.hpp>
-#include "RhiFramework/Shader.h"
+#include "Rhi/Shader.h"
 #include "ChunkPersistency.h"
-#include "RhiFramework/ChunkShaderContext.h"
+#include "Rhi/ChunkShaderContext.h"
 #include "MyWorld/CommonTypes.h"
 #include "MyWorld/VoxelKey.h"
 #include "Chunk.generated.h"

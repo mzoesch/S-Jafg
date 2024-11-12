@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreAfx.h"
-#include "RhiFramework/ChunkBoxVertex.h"
+#include "Rhi/ChunkBoxVertex.h"
 
 namespace Jafg
 {

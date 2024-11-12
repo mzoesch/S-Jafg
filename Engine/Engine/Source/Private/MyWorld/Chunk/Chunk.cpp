@@ -14,7 +14,7 @@
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "MyWorld/Meshing/ChunkMesher.h"
 #include "User/LocalEgo.h"
-#include "RhiFramework/ChunkShaderContext.h"
+#include "Rhi/ChunkShaderContext.h"
 
 Jafg::LChunkRendererComponent::LChunkRendererComponent(AChunk& Owner)
 {

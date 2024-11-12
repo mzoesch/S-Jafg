@@ -434,6 +434,10 @@ func (oh *ObjectHierarchy) AddNewObjectNode(name string, superName string, names
     }
 
     if superName != "" {
+        if oh.Root == nil {
+            return false
+        }
+
         var superNode *ObjectNode = oh.Root.FindObjectNodeByString(superName, namespaces)
         if superNode == nil {
             return false
