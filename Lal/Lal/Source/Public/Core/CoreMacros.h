@@ -18,6 +18,20 @@
  */
 #define PREPROCESSOR_EXCLUDE_FF     0
 
+/** A struct must always be at least one byte in size. */
+#define UNREACHABLE_BYTE_SIZE_FOR_STRUCT 0x00
+#define UNREACHABLE_BYTE_SIZE_FOR_CLASS  0x00
+#define UNREACHABLE_BYTE_SIZE_FOR_TYPE   0x00
+
+/**
+ * Causes a compile time error if this specialization of a templated function is used.
+ */
+#define UNSUPPORTED_TEMPLATED_SPECIALIZATION(Ty, ...)                                                           \
+    {                                                                                                           \
+        static_assert(sizeof(Ty) == UNREACHABLE_BYTE_SIZE_FOR_TYPE, "Templated specialization not supported."); \
+        ##__VA_ARGS__;                                                                                          \
+    }
+
 /** Prohibits copying and moving of a specific type T. */
 #define PROHIBIT_REALLOC_OF_ANY_FROM(Ty) \
     PROHIBIT_COPY(Ty)                    \

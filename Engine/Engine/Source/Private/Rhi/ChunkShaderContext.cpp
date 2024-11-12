@@ -5,14 +5,12 @@
 #include "Rhi/Shader.h"
 #include "Forward/EngineForward.h"
 #include "Widgets/Viewport.h"
-#include <glad/glad.h>  /* Include glad to get all the required OpenGL headers. */
-#include <GLFW/glfw3.h> /* Include glfw3 after glad to avoid include order issues. */
 #include <stb_image.h>
 #include <glm/glm.hpp>
-#include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "Engine/ObjectBaseUtility.h"
 #include "User/UserPreferences.h"
+#include "RhiVendorInclude.h"
 
 void Jafg::LChunkShaderContext::Make()
 {
@@ -95,24 +93,18 @@ void Jafg::LChunkShaderContext::Draw(const LViewport& Context, LGenericShaderCon
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, this->Texture);
+    glBindVertexArray(Args.Instance->GetVertexArrayObject());
 
     const TMatrix Projection = Maths::MakePerspectiveProjectionMatrix(
         Maths::ToRadians(Args.DegYFov),
         static_cast<float>(Context.GetDimensions().X) / static_cast<float>(Context.GetDimensions().Y),
         0.1f, 2000.0f
     );
+    LMatrix Model; Model.InlineTranslate(Args.WorldLocation);
 
-    this->Program->SetMatrix4Uniform("view", Args.ViewMatrix);
-    this->Program->SetMatrix4Uniform("projection", Projection);
-
-    const int32 ModelLocation = glGetUniformLocation(this->Program->GetId(), "model");
-
-    glBindVertexArray(Args.Instance->GetVertexArrayObject());
-
-    glm::vec3 worldPosVec = glm::vec3(Args.WorldLocation.X, Args.WorldLocation.Y, Args.WorldLocation.Z);
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, worldPosVec);
-    glUniformMatrix4fv(ModelLocation, 1, GL_FALSE, glm::value_ptr(model));
+    this->Program->SetMatrixUniform("view", Args.ViewMatrix);
+    this->Program->SetMatrixUniform("projection", Projection);
+    this->Program->SetMatrixUniform("model", Model);
 
     glDrawElements(GL_TRIANGLES, Args.NumTriangles, GL_UNSIGNED_INT, 0);
 

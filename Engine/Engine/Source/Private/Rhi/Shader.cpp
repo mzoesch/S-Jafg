@@ -136,22 +136,7 @@ void Jafg::LShader::SetFloatUniform(const LSimpleString& Name, const float Value
     glUniform1f(glGetUniformLocation(this->Id, Name.ToC()), Value);
 }
 
-void Jafg::LShader::SetVector2Uniform(const LSimpleString& Name, const glm::vec2& Value) const
-{
-    glUniform2fv(glGetUniformLocation(this->Id, Name.ToC()), 1, glm::value_ptr(Value));
-}
-
-void Jafg::LShader::SetVector4Uniform(const LSimpleString& Name, const glm::vec4& Value) const
-{
-    glUniform4fv(glGetUniformLocation(this->Id, Name.ToC()), 1, glm::value_ptr(Value));
-}
-
-void Jafg::LShader::SetMatrix4Uniform(const LSimpleString& Name, const glm::mat4& Value) const
-{
-    glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.ToC()), 1, GL_FALSE, glm::value_ptr(Value));
-}
-
-void Jafg::LShader::SetMatrix4Uniform(const LSimpleString& Name, const LMatrixF& Value) const
+void Jafg::LShader::SetMatrixUniform(const LSimpleString& Name, const LMatrixF& Value) const
 {
     glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.ToC()), 1, GL_FALSE, Value.GetData());
 }

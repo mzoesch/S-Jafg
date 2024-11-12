@@ -67,10 +67,10 @@ template <typename T> NODISCARD constexpr FORCEINLINE auto Min(const T A, const 
 template <typename T> NODISCARD constexpr FORCEINLINE auto Max(const T A, const T B) -> T { return (B < A) ? A : B; }
 
 template <typename T> NODISCARD constexpr FORCEINLINE auto Squared(const T Value) -> T { return Value * Value; }
-template <typename T> NODISCARD constexpr FORCEINLINE auto Cubed(const T Value) -> T { return Value * Value * Value; }
+template <typename T> NODISCARD constexpr FORCEINLINE auto Cubed(const T Value)   -> T { return Value * Value * Value; }
 template <typename T> NODISCARD constexpr FORCEINLINE auto Quartic(const T Value) -> T { return Value * Value * Value * Value; }
 template <typename T> NODISCARD constexpr FORCEINLINE auto Quintic(const T Value) -> T { return Value * Value * Value * Value * Value; }
-template <typename T> NODISCARD constexpr FORCEINLINE auto Sextic(const T Value) -> T { return Value * Value * Value * Value * Value * Value; }
+template <typename T> NODISCARD constexpr FORCEINLINE auto Sextic(const T Value)  -> T { return Value * Value * Value * Value * Value * Value; }
 /** For generic pow. But should be avoided when dealing with exponents less than seven due to performance. */
 template <typename T> NODISCARD constexpr FORCEINLINE auto Pow(const T Base, const T Exponent) -> T;
 
@@ -134,7 +134,7 @@ template <typename T>
 NODISCARD FORCEINLINE auto MakeViewMatrix(const TVector<T>& Eye, const TVector<T>& Center, const TVector<T>& Up) -> TMatrix<T>;
 
 /**
- * An affine transformation to get the transformation for objects to be projected perspective while keeping the
+ * An affine transformation to get the transformation for objects to be projected perspectively while keeping the
  * Z depth buffer information.
  *
  * @tparam T          The floating type.
@@ -143,14 +143,29 @@ NODISCARD FORCEINLINE auto MakeViewMatrix(const TVector<T>& Eye, const TVector<T
  * @param  NearZPlane Near clipped Z plane for the perspective frustum view.
  * @param  FarZPlane  Far clipped Z plane for the perspective frustum view.
  * @return            The perspective projection matrix P:
- *         | (H*R)^-1    0                 0                   0 | Where H is the cotangent of the half of the vertical
- *     P = |        0 H^-1                 0                   0 |       radiant field of view.
- *         |        0    0 -(Fz-Nz)^-(Fz+Nz) -(Fz-Nz)^-(2*Fz*Nz) |       R is the ratio of the view.
- *         |        0    0                -1                   0 |       Nz is the near Z plane.
- *                                                                       Fz is the far Z plane.
+ *         | (H*R)^-1    0                   0                     0 | Where H is the cotangent of the half of the
+ *     P = |        0 H^-1                   0                     0 |       vertical radiant field of view.
+ *         |        0    0 -(Fz+Nz)*(Fz-Nz)^-1 -(2*Fz*Nz)*(Fz-Nz)^-1 |       R is the ratio of the view.
+ *         |        0    0                  -1                     0 |       Nz is the near Z plane.
+ *                                                                           Fz is the far Z plane.
  */
 template <typename T>
 NODISCARD FORCEINLINE auto MakePerspectiveProjectionMatrix(const T RadYFov, const T Ratio, const T NearZPlane, const T FarZPlane) -> TMatrix<T>;
+
+/**
+ * An affine transformation to get the transformation for objects to be projected orthographically.
+ *
+ * @tparam T           The floating type.
+ * @param  RightBottom The two-dimensional coordinate of the right bottom corner.
+ * @param  LeftTop     The two-dimensional coordinate of the left top corner.
+ * @return             The orthographic projection matrix O:
+ *          | 2*(R-L)^-1         0   0 -(R+L)*(R-L)^-1 | Where R is the right coordinate.
+ *     O =  | 0          2*(B-T)^-1  0 -(B+T)*(B-T)^-1 |       L is the left coordinate.
+ *          | 0                  0  -1               0 |       T is the top coordinate.
+ *          | 0                  0   0               1 |       B is the bottom coordinate.
+ */
+template <typename T>
+NODISCARD FORCEINLINE auto MakeOrthographicProjectionMatrix(const TVector2<T>& RightBottom, const TVector2<T>& LeftTop = TVector2<T>::Zero()) -> TMatrix<T>;
 
 
 /*----------------------------------------------------------------------------
@@ -189,101 +204,18 @@ template <> FORCEINLINE double Tanh(const double Value)   { return ::tanh(Value)
 template <> FORCEINLINE float  ATanh(const float Value)   { return ::atanhf(Value);   }
 template <> FORCEINLINE double ATanh(const double Value)  { return ::atanh(Value);    }
 
-template <typename T> T Sin(const T Value)
-{
-    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    jassertNoEntry()
-    return T { };
-}
-
-template <typename T> T Asin(const T Value)
-{
-    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    jassertNoEntry()
-    return T { };
-}
-
-template <typename T> T Sinh(const T Value)
-{
-    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    jassertNoEntry()
-    return T { };
-}
-
-template <typename T> T ASinh(const T Value)
-{
-    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    jassertNoEntry()
-    return T { };
-}
-
-template <typename T> T Cos(const T Value)
-{
-    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    jassertNoEntry()
-    return T { };
-}
-
-template <typename T> T Acos(const T Value)
-{
-    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    jassertNoEntry()
-    return T { };
-}
-
-template <typename T> T Cosh(const T Value)
-{
-    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    jassertNoEntry()
-    return T { };
-}
-
-template <typename T> T ACosh(const T Value)
-{
-    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    jassertNoEntry()
-    return T { };
-}
-
-template <typename T> T Tan(const T Value)
-{
-    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    jassertNoEntry()
-    return T { };
-}
-
-template <typename T> T Atan(const T Value)
-{
-    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    jassertNoEntry()
-    return T { };
-}
-
-template <typename T> T Tanh(const T Value)
-{
-    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    jassertNoEntry()
-    return T { };
-}
-
-template <typename T> T ATanh(const T Value)
-{
-    static_assert( std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    static_assert(!std::is_floating_point_v<T>, "Could not resolve floating point type.");
-    jassertNoEntry()
-    return T { };
-}
+template <typename T> T Sin(const T Value)   UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T> T Asin(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T> T Sinh(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T> T ASinh(const T Value) UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T> T Cos(const T Value)   UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T> T Acos(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T> T Cosh(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T> T ACosh(const T Value) UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T> T Tan(const T Value)   UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T> T Atan(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T> T Tanh(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T> T ATanh(const T Value) UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
 
 
 /*----------------------------------------------------------------------------
@@ -463,6 +395,18 @@ TMatrix<T> MakePerspectiveProjectionMatrix(const T RadYFov, const T Ratio, const
     Result.Matrix[2][2] = - (FarZPlane + NearZPlane) / (FarZPlane - NearZPlane);
     Result.Matrix[2][3] = -  static_cast<T>(1.0f);
     Result.Matrix[3][2] = - (static_cast<T>(2.0f) * FarZPlane * NearZPlane) / (FarZPlane - NearZPlane);
+    return Result;
+}
+
+template <typename T>
+TMatrix<T> MakeOrthographicProjectionMatrix(const TVector2<T>& RightBottom, const TVector2<T>& LeftTop /* = TVector2<T>::Zero() */)
+{
+    TMatrix<T> Result = Matrix::Identity;
+    Result.Matrix[0][0] = static_cast<T>(2.0f) / (RightBottom.X - LeftTop.X);
+    Result.Matrix[1][1] = static_cast<T>(2.0f) / (RightBottom.Y - LeftTop.Y);
+    Result.Matrix[2][2] = - static_cast<T>(1.0f);
+    Result.Matrix[3][1] = - (RightBottom.X + LeftTop.X) / (RightBottom.X - LeftTop.X);
+    Result.Matrix[3][0] = - (RightBottom.Y + LeftTop.Y) / (RightBottom.Y - LeftTop.Y);
     return Result;
 }
 

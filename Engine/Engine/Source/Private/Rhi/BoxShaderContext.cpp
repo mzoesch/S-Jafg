@@ -2,12 +2,8 @@
 
 #include "CoreAfx.h"
 #include "Rhi/BoxShaderContext.h"
-#include <glad/glad.h>  /* Include glad to get all the required OpenGL headers. */
-#include <GLFW/glfw3.h> /* Include glfw3 after glad to avoid include order issues. */
-#include <glm/fwd.hpp>
-#include <glm/glm.hpp>
-#include <glm/ext/matrix_clip_space.hpp>
 #include "Widgets/Viewport.h"
+#include "RhiVendorInclude.h"
 
 void Jafg::LBoxShaderContext::Make()
 {
@@ -52,7 +48,6 @@ void Jafg::LBoxShaderContext::Free()
     this->Shader.Free();
 
     return;
-
 }
 
 void Jafg::LBoxShaderContext::Draw(const LViewport& Context, const LVector2& Size, const LVector2& TopLeft, const LColor& Color) const
@@ -79,8 +74,11 @@ void Jafg::LBoxShaderContext::Draw(const LViewport& Context, const LVector2& Siz
     };
 
     const LIntVector2 WindowDimensions = Context.GetDimensions();
-    const glm::mat4 Projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
-    this->Shader.SetMatrix4Uniform("Projection", Projection);
+    const LMatrix Projection = Maths::MakeOrthographicProjectionMatrix(
+        LVector2(static_cast<float>(WindowDimensions.X), static_cast<float>(WindowDimensions.Y))
+    );
+
+    this->Shader.SetMatrixUniform("Projection", Projection);
     this->Shader.SetFloatUniform("OrthoZDepth", Context.GetFrameOrthoZLayerDepth());
     this->Shader.SetIntUniform("BoxColor", *reinterpret_cast<const int32*>(&Color.Bits));
 

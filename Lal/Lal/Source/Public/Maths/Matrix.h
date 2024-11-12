@@ -79,6 +79,9 @@ struct TMatrix final
     FORCEINLINE bool operator==(const TMatrix<T>& InMatrix) const;
     FORCEINLINE bool operator!=(const TMatrix<T>& InMatrix) const;
 
+    /** Translate this matrix inline by the given translation vector. */
+    FORCEINLINE void InlineTranslate(const TVector<T>& InTranslation);
+
 private:
 
     /**
@@ -254,6 +257,15 @@ template <typename T>
 bool TMatrix<T>::operator!=(const TMatrix<T>& InMatrix) const
 {
     return !(*this == InMatrix);
+}
+
+template <typename T>
+void TMatrix<T>::InlineTranslate(const TVector<T>& InTranslation)
+{
+    this->Matrix[3][0] += InTranslation.X;
+    this->Matrix[3][1] += InTranslation.Y;
+    this->Matrix[3][2] += InTranslation.Z;
+    return;
 }
 
 template <typename T>
