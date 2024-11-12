@@ -297,8 +297,6 @@ void Jafg::LDesktopPlatformWin::ScrollCallback(::GLFWwindow* Window, const doubl
         return;
     }
 
-    LOG_WARNING(LogTemporal, "{}", YOffset)
-
     if (YOffset > 0.0f)
     {
         this->AddKeyDown(EKeys::MouseWheelUp, static_cast<float>(YOffset));
