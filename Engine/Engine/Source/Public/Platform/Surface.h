@@ -43,12 +43,29 @@ public:
     template<class T = LSurface>
     NODISCARD T* As() { return static_cast<T*>(this); }
 
-    FORCEINLINE auto AddKeyDown(const LKey InKey) -> void { this->DownKeys.Emplace(InKey); }
-    FORCEINLINE auto AddKeyDown(const LKey InKey, const float InValue) -> void { this->DownKeys.Emplace(InKey, InValue); }
+    FORCEINLINE auto AddKeyDown(const LKey InKey) -> void
+    {
+        check( this->DownKeys.FindRef(InKey) == nullptr )
+        this->DownKeys.Emplace(InKey);
+    }
+    FORCEINLINE auto AddKeyDown(const LKey InKey, const float InValue) -> void
+    {
+        check( this->DownKeys.FindRef(InKey) == nullptr )
+        this->DownKeys.Emplace(InKey, InValue);
+    }
     FORCEINLINE auto GetCurrentlyPressedKeys()       ->       TdhArray<LRawInput>& { return this->DownKeys;          }
     FORCEINLINE auto GetCurrentlyPressedKeys() const -> const TdhArray<LRawInput>& { return this->DownKeys;          }
     FORCEINLINE auto GetLastFramePressedKeys()       ->       TdhArray<LRawInput>& { return this->LastFrameDownKeys; }
     FORCEINLINE auto GetLastFramePressedKeys() const -> const TdhArray<LRawInput>& { return this->LastFrameDownKeys; }
+
+    FORCEINLINE bool IsShowMouseCursor() const { return this->bShowMouseCursor; }
+
+protected:
+
+    bool bShowMouseCursor    = false;
+    bool bFirstMouseCallback = true;
+    double LastMouseX = 0.0;
+    double LastMouseY = 0.0;
 
 private:
 

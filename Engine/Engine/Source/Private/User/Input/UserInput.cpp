@@ -2,14 +2,12 @@
 
 #include "CoreAfx.h"
 #include "User/Input/UserInput.h"
-#include "Core/Application.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
-#include "Engine/Framework/Pawn.h"
 #include "Engine/Framework/PersonaController.h"
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
-#include "User/Input/UserInputAction.h"
+#include "User/Input/InputAction.h"
 #include "User/Input/InputActionValue.h"
 
 void Jafg::LUserInput::BeginNewFrame()
@@ -32,85 +30,35 @@ bool Jafg::LUserInput::IsNewDown(const LKey Key) const
 
 void Jafg::LUserInput::DispatchInputDelegates()
 {
-    LLocalEgo* LocalEgo = this->GetCheckedLocalEgo();
+    const LLocalEgo* LocalEgo = this->GetCheckedLocalEgo();
     if (!LocalEgo->DoesPossess() || !LocalEgo->HasPrimarySurface())
     {
         return;
     }
     check( LocalEgo->GetPossessed()->GetWorld() )
-    LWorld* TargetWorld = LocalEgo->GetPossessed()->GetWorld();
-    LSurface* PrimarySurface = LocalEgo->GetPrimarySurface();
+
+    LWorld*   TargetWorld    = LocalEgo->GetPossessed()->GetWorld(); check( TargetWorld )
+    LSurface* PrimarySurface = LocalEgo->GetPrimarySurface(); check( PrimarySurface )
 
     const TdhArray<LRawInput> TriggeredKeys = this->GetTriggeredKeys();
     const TdhArray<LRawInput> OngoingKeys   = this->GetOngoingKeys();
     const TdhArray<LRawInput> CompletedKeys = this->GetCompletedKeys();
 
-    // if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::Q))
-    // {
-    //     LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(DOWN, Application::GetDeltaTimeAsFloat());
-    // }
-    //
-    // if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::E))
-    // {
-    //     LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(UP, Application::GetDeltaTimeAsFloat());
-    // }
-
-    if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::Escape))
-    {
-        if (this->IsNewDown(EKeys::Escape))
-        {
-            TargetWorld->bShowMouse = !TargetWorld->bShowMouse;
-            TargetWorld->FirstTimeMouseScroll = true;
-            LocalEgo->GetPrimarySurface()->SetInputMode(TargetWorld->bShowMouse);
-        }
-    }
-
-    {
-        const LRawInput* const MouseX = PrimarySurface->GetCurrentlyPressedKeys().FindRef(EKeys::MouseX);
-        const LRawInput* const MouseY = PrimarySurface->GetCurrentlyPressedKeys().FindRef(EKeys::MouseY);
-
-        if (PrimarySurface->GetCurrentlyPressedKeys().IsEmpty() == false)
-        {
-            PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH();
-        }
-
-        if (MouseX != nullptr && MouseY != nullptr)
-        {
-            TargetWorld->MouseCallback(MouseX->Value, MouseY->Value);
-        }
-        else if (MouseX != nullptr)
-        {
-            TargetWorld->MouseCallback(MouseX->Value, 0.0f);
-        }
-        else if (MouseY != nullptr)
-        {
-            TargetWorld->MouseCallback(0.0f, MouseY->Value);
-        }
-    }
-
-    {
-        const LRawInput* const MouseWheelAxis = PrimarySurface->GetCurrentlyPressedKeys().FindRef(EKeys::MouseWheelAxis);
-        if (MouseWheelAxis != nullptr)
-        {
-            TargetWorld->ScrollCallback(MouseWheelAxis->Value);
-        }
-    }
-
     for (LUserInputContext* Context : this->ActiveContexts)
     {
-        for (LUserInputMappedAction& MappedAction : Context->GetMappedActions())
+        for (LInputMappedAction& MappedAction : Context->GetMappedActions())
         {
-            if (MappedAction.Trigger == EUserInputActionTrigger::Triggered)
+            if (MappedAction.Trigger == EInputActionTrigger::Triggered)
             {
                 this->DispatchInputDelegatesForAction(TriggeredKeys, &MappedAction);
             }
 
-            else if (MappedAction.Trigger == EUserInputActionTrigger::Ongoing)
+            else if (MappedAction.Trigger == EInputActionTrigger::Ongoing)
             {
                 this->DispatchInputDelegatesForAction(OngoingKeys, &MappedAction);
             }
 
-            else if (MappedAction.Trigger == EUserInputActionTrigger::Completed)
+            else if (MappedAction.Trigger == EInputActionTrigger::Completed)
             {
                 this->DispatchInputDelegatesForAction(CompletedKeys, &MappedAction);
             }
@@ -194,6 +142,32 @@ Jafg::TdhArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
     return CompletedKeys;
 }
 
+Jafg::LUserInputContext* Jafg::LUserInput::GetContextByName(const LSimpleString& InName)
+{
+    for (LUserInputContext* Context : this->RegisteredContexts)
+    {
+        if (Context->GetUniqueIdentifier() == InName)
+        {
+            return Context;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+Jafg::LUserInputContext* Jafg::LUserInput::GetCheckedContextByName(const LSimpleString& InName)
+{
+#if DO_CHECKS
+    LUserInputContext* Context = this->GetContextByName(InName);
+    check( Context )
+    return Context;
+#else /* DO_CHECKS */
+    return this->GetContextByName(InName);
+#endif /* !DO_CHECKS */
+}
+
 void Jafg::LUserInput::GetContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const
 {
     for (LUserInputContext* Context : this->RegisteredContexts)
@@ -218,7 +192,7 @@ void Jafg::LUserInput::GetCheckedContextByName(const LSimpleString& InName, LUse
     return;
 }
 
-void Jafg::LUserInput::DispatchInputDelegatesForAction(const TdhArray<LRawInput>& InRawInputs, LUserInputMappedAction* InAction)
+void Jafg::LUserInput::DispatchInputDelegatesForAction(const TdhArray<LRawInput>& InRawInputs, const LInputMappedAction* InAction)
 {
     LInputActionValue Value = InAction->Action->Category;
 
@@ -228,7 +202,7 @@ void Jafg::LUserInput::DispatchInputDelegatesForAction(const TdhArray<LRawInput>
         {
             if (MappedKey.Key == RawInput.Key)
             {
-                LVector Magnitude = LVector::UnitX();
+                LVector Magnitude = LVector(RawInput.Value, 0.0f, 0.0f);
 
                 for (LInputActionMappedKeyModifier* Modifier : MappedKey.Modifiers)
                 {
@@ -240,6 +214,18 @@ void Jafg::LUserInput::DispatchInputDelegatesForAction(const TdhArray<LRawInput>
                 continue;
             }
 
+            if (MappedKey.Key == EKeys::MouseXY)
+            {
+                if (RawInput.Key == EKeys::MouseX)
+                {
+                    Value += LVector(RawInput.Value, 0.0f, 0.0f);
+                }
+                else if (RawInput.Key == EKeys::MouseY)
+                {
+                    Value += LVector(0.0f, RawInput.Value, 0.0f);
+                }
+            }
+
             continue;
         }
 
@@ -248,7 +234,8 @@ void Jafg::LUserInput::DispatchInputDelegatesForAction(const TdhArray<LRawInput>
 
     if (Value.IsNonZero())
     {
-        InAction->Callback(Value);
+        check( InAction->Callback )
+        (*InAction->Callback)(Value);
     }
 
     return;

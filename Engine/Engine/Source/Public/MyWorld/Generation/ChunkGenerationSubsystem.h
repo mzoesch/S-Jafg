@@ -35,11 +35,6 @@ protected:
     virtual void TearDown() override;
     // ~JTickableWorldSubsystem implementation
 
-    FORCEINLINE int32 TupleToKey(const std::tuple<int32, int32, int32>& Tuple) const
-    {
-        return std::get<0>(Tuple) + std::get<1>(Tuple) * ChunkSize + std::get<2>(Tuple) * ChunkSize * ChunkSize;
-    }
-
 public:
 
     FORCEINLINE auto HasChunkShaderContext() const -> bool { return this->ChunkShaderContext != nullptr; }
@@ -83,10 +78,8 @@ private:
 
     AChunk* SpawnChunk(const LChunkKey& InChunkKey) const;
 
-
-    int RenderDistance = 1;
+    int RenderDistance = 10;
     int RenderHeight = 0;
-    unsigned int ChunkSize = 32;
     int LastCamX = -100, LastCamY = -100;
 
     LSharedChunkArgs*    SharedChunkArgs    = nullptr;

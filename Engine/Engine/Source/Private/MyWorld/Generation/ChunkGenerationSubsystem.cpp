@@ -125,8 +125,8 @@ void Jafg::JChunkGenerationSubsystem::UpdateChunkQueue()
     const float CamX = Translation.X;
     const float CamY = Translation.Y;
 
-    const int32 CurrentCamX = static_cast<int32>(CamX < 0 ? floor(CamX / static_cast<float>(ChunkSize)) : CamX / static_cast<float>(ChunkSize));
-    const int32 CurrentCamY = static_cast<int32>(CamY < 0 ? floor(CamY / static_cast<float>(ChunkSize)) : CamY / static_cast<float>(ChunkSize));
+    const int32 CurrentCamX = static_cast<int32>(CamX < 0 ? floor(CamX / static_cast<float>(MwStatics::ChunkSize)) : CamX / static_cast<float>(MwStatics::ChunkSize));
+    const int32 CurrentCamY = static_cast<int32>(CamY < 0 ? floor(CamY / static_cast<float>(MwStatics::ChunkSize)) : CamY / static_cast<float>(MwStatics::ChunkSize));
 
     if (CurrentCamX == LastCamX && CurrentCamY == LastCamY)
     {

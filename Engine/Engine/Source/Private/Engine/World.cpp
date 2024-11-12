@@ -94,38 +94,6 @@ void Jafg::LWorld::TearDownContext()
     return;
 }
 
-void Jafg::LWorld::MouseCallback(double XPos, double YPos)
-{
-    if (bShowMouse)
-    {
-        return;
-    }
-
-    if (FirstTimeMouseScroll)
-    {
-        LastMouseX = XPos;
-        LastMouseY = YPos;
-        FirstTimeMouseScroll = false;
-    }
-
-    const double XOffset = XPos - LastMouseX;
-    const double YOffset = LastMouseY - YPos;
-
-    LastMouseX = XPos;
-    LastMouseY = YPos;
-
-    this->GetEngine()->GetCheckedLocalEgo()->GetPossessed()->GetPossessed()->ProcessMouseMovement(
-        static_cast<float>(XOffset),
-        static_cast<float>(YOffset)
-    );
-}
-
-void Jafg::LWorld::ScrollCallback(const double YOffset)
-{
-    this->GetEngine()->GetCheckedLocalEgo()->GetPossessed()->GetPossessed()->ProcessMouseScroll(
-        static_cast<float>(YOffset));
-}
-
 void Jafg::LWorld::RegisterTickableObject(LTickableObject* Tickable)
 {
     if (this->TickableObjects.Contains(Tickable))

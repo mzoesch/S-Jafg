@@ -36,14 +36,14 @@ Jafg::LShader::LShader(const char* vertexPath, const char* fragmentPath)
         GetModuleFileNameA(nullptr, ExecPath.data(), static_cast<DWORD>(ExecPath.size()));
         ExecPath = ExecPath.substr(0, ExecPath.find_last_of('\\'));
 
-        std::cout << "Opening vertex shader file: " << ExecPath + '/' + vertexPath << '\n';
-        std::cout << "Opening fragment shader file: " << ExecPath + '/' + fragmentPath << '\n';
+        LOG_TRACE(LogPlatform, "Opening vertex shader file: [{}].", ExecPath + '/' + vertexPath);
+        LOG_TRACE(LogPlatform, "Opening fragment shader file: [{}].", ExecPath + '/' + fragmentPath);
 
         // open files
         vShaderFile.open(ExecPath + '/' + vertexPath);
         fShaderFile.open(ExecPath + '/' + fragmentPath);
         std::stringstream vShaderStream, fShaderStream;
-        // read file's buffer contents into streams
+        // read file's buffer contents into streamss
         vShaderStream << vShaderFile.rdbuf();
         fShaderStream << fShaderFile.rdbuf();
         // close file handlers

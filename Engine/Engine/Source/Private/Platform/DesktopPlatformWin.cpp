@@ -11,8 +11,6 @@
 #include <glm/gtc/type_ptr.inl>
 #include "Rhi/Shader.h"
 #include <glm/glm.hpp>
-#include "Engine/ObjectBaseUtility.h"
-#include "User/UserPreferences.h"
 #include "Widgets/Viewport.h"
 #include "User/Input/GlfwInputTranslation.h"
 
@@ -156,49 +154,6 @@ void Jafg::LDesktopPlatformWin::PollInputs()
         continue;
     }
 
-    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_W) == GLFW_PRESS)
-    // {
-    //     this->AddKeyDown(EKeys::W);
-    // }
-    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_S) == GLFW_PRESS)
-    // {
-    //     this->AddKeyDown(EKeys::S);
-    // }
-    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_A) == GLFW_PRESS)
-    // {
-    //     this->AddKeyDown(EKeys::A);
-    // }
-    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_D) == GLFW_PRESS)
-    // {
-    //     this->AddKeyDown(EKeys::D);
-    // }
-    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_Q) == GLFW_PRESS)
-    // {
-    //     this->AddKeyDown(EKeys::Q);
-    // }
-    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_E) == GLFW_PRESS)
-    // {
-    //     this->AddKeyDown(EKeys::E);
-    // }
-    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    // {
-    //     this->AddKeyDown(EKeys::Escape);
-    // }
-    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_P) == GLFW_PRESS)
-    // {
-    //     PLATFORM_BREAK()
-    // }
-    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_F1) == GLFW_PRESS)
-    // {
-    //     GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Wireframe);
-    //     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    // }
-    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_F2) == GLFW_PRESS)
-    // {
-    //     GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Fill);
-    //     // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    // }
-
     return;
 }
 
@@ -223,10 +178,17 @@ void Jafg::LDesktopPlatformWin::SetInputMode(const bool bShowCursor)
 {
     LDesktopPlatformBase::SetInputMode(bShowCursor);
 
+    if (bShowCursor)
+    {
+        this->bFirstMouseCallback = true;
+    }
+
     if (this->MasterWindow)
     {
         glfwSetInputMode(this->MasterWindow, GLFW_CURSOR, bShowCursor ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
     }
+
+    this->bShowMouseCursor = bShowCursor;
 
     return;
 }
@@ -296,13 +258,57 @@ void Jafg::LDesktopPlatformWin::FramebufferSizeCallback(::GLFWwindow*, const int
 
 void Jafg::LDesktopPlatformWin::MouseCallback(::GLFWwindow* Window, const double XPos, const double YPos)
 {
-    this->AddKeyDown(EKeys::MouseX, static_cast<float>(XPos));
-    this->AddKeyDown(EKeys::MouseY, static_cast<float>(YPos));
+    if (this->IsShowMouseCursor())
+    {
+        return;
+    }
+
+    if (this->GetCurrentlyPressedKeys().Contains(EKeys::MouseX))
+    {
+        return;
+    }
+    if (this->GetCurrentlyPressedKeys().Contains(EKeys::MouseY))
+    {
+        return;
+    }
+
+    if (this->bFirstMouseCallback)
+    {
+        this->LastMouseX = XPos;
+        this->LastMouseY = YPos;
+        this->bFirstMouseCallback = false;
+    }
+
+    const double XOffset = static_cast<double>(XPos) - this->LastMouseX;
+    const double YOffset = this->LastMouseY - static_cast<double>(YPos);
+    this->LastMouseX = XPos;
+    this->LastMouseY = YPos;
+
+    this->AddKeyDown(EKeys::MouseX, static_cast<float>(YOffset));
+    this->AddKeyDown(EKeys::MouseY, static_cast<float>(XOffset));
 
     return;
 }
 
 void Jafg::LDesktopPlatformWin::ScrollCallback(::GLFWwindow* Window, const double XOffset, const double YOffset)
 {
+    if (this->GetCurrentlyPressedKeys().Contains(EKeys::MouseWheelAxis))
+    {
+        return;
+    }
+
+    LOG_WARNING(LogTemporal, "{}", YOffset)
+
+    if (YOffset > 0.0f)
+    {
+        this->AddKeyDown(EKeys::MouseWheelUp, static_cast<float>(YOffset));
+    }
+    else if (YOffset < 0.0f)
+    {
+        this->AddKeyDown(EKeys::MouseWheelDown, static_cast<float>(YOffset));
+    }
+
     this->AddKeyDown(EKeys::MouseWheelAxis, static_cast<float>(YOffset));
+
+    return;
 }

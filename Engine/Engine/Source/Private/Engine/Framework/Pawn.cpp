@@ -2,7 +2,6 @@
 
 #include "CoreAfx.h"
 #include "Engine/Framework/Pawn.h"
-
 #include "User/Input/InputActionValue.h"
 
 void Jafg::APawn::DeclareNewPossessor(APersonaController* InNewController)
@@ -22,9 +21,6 @@ void Jafg::APawn::DeclareNewPossessor(APersonaController* InNewController)
 
 void Jafg::APawn::AddMovementInput(LInputActionValue& InValue)
 {
-    LOG_WARNING(LogTemporal, "Moving: {:.2f} {:.2f} {:.2f}",
-        InValue.Get<LVector3>().X, InValue.Get<LVector3>().Y, InValue.Get<LVector3>().Z)
-
     LVector TranslationDelta = LVector::Zero();
     TranslationDelta += this->RelativeFront * (InValue.Get<LVector3>().X * this->MovementSpeed);
     TranslationDelta += this->RelativeRight * (InValue.Get<LVector3>().Y * this->MovementSpeed);
@@ -35,12 +31,26 @@ void Jafg::APawn::AddMovementInput(LInputActionValue& InValue)
     return;
 }
 
-void Jafg::APawn::ProcessMouseMovement(float XOffset, float YOffset)
+void Jafg::APawn::AddRotationInput(LInputActionValue& InValue)
 {
-    XOffset *= this->MouseSensitivity;
-    YOffset *= this->MouseSensitivity;
+    // if (this->bFirstMouseCallback)
+    // {
+    //     this->LastMouseX = InValue.Get<LVector2>().X;
+    //     this->LastMouseY = InValue.Get<LVector2>().Y;
+    //     this->bFirstMouseCallback = false;
+    // }
+    //
+    // const double XOffset = static_cast<double>(InValue.Get<LVector2>().X) - this->LastMouseX;
+    // const double YOffset = this->LastMouseY - static_cast<double>(InValue.Get<LVector2>().Y);
+    //
+    // this->LastMouseX = InValue.Get<LVector2>().X;
+    // this->LastMouseY = InValue.Get<LVector2>().Y;
 
-    this->AddRotator(LRotator(YOffset, XOffset, 0.0f));
+    this->AddRotator(LRotator(
+        InValue.Get<LVector2>().X * this->MouseSensitivity,
+        InValue.Get<LVector2>().Y * this->MouseSensitivity,
+        0.0f
+    ));
 
     this->GetMutableRotator().ConstrainAxis(ERotatorAxis::Pitch, 89.9f);
     this->GetMutableRotator().NormalizeRotation();
@@ -52,9 +62,9 @@ void Jafg::APawn::ProcessMouseMovement(float XOffset, float YOffset)
     return;
 }
 
-void Jafg::APawn::ProcessMouseScroll(const float YOffset)
+void Jafg::APawn::ChangeVelocity(LInputActionValue& InValue)
 {
-    this->MovementSpeed += YOffset;
+    this->MovementSpeed += InValue.Get<float>();
 
     if (this->MovementSpeed < 0)
     {

@@ -4,7 +4,7 @@
 
 #include "CoreAfx.h"
 #include "User/Input/RawInput.h"
-#include "UserInputContext.h"
+#include "InputContext.h"
 #include "User/Input/InputTypes.h"
 
 namespace Jafg
@@ -13,6 +13,9 @@ namespace Jafg
 class LSurface;
 class LLocalEgo;
 
+/**
+ * Proxy for the raw platform physical input data and the dispatching of input delegates.
+ */
 class LUserInput final
 {
 public:
@@ -22,28 +25,30 @@ public:
     void BeginNewFrame();
 
     /** Whether this key was just downed this frame. */
-    bool IsNewDown(const LKey Key) const;
+    ENGINE_API bool IsNewDown(const LKey Key) const;
 
     void DispatchInputDelegates();
 
-    auto GetLocalEgo() const -> LLocalEgo*;
-    auto GetCheckedLocalEgo() const -> LLocalEgo*;
-    auto GetPanickedLocalEgo() const -> LLocalEgo*;
+    ENGINE_API auto GetLocalEgo() const -> LLocalEgo*;
+    ENGINE_API auto GetCheckedLocalEgo() const -> LLocalEgo*;
+    ENGINE_API auto GetPanickedLocalEgo() const -> LLocalEgo*;
 
-    void RegisterContext(LUserInputContext&& Context, const bool bMakeActive = false);
+    ENGINE_API void RegisterContext(LUserInputContext&& Context, const bool bMakeActive = false);
 
-    TdhArray<LRawInput>  GetTriggeredKeys() const;
-    TdhArray<LRawInput>& GetOngoingKeys() const;
-    TdhArray<LRawInput>  GetCompletedKeys() const;
+    ENGINE_API TdhArray<LRawInput>  GetTriggeredKeys() const;
+    ENGINE_API TdhArray<LRawInput>& GetOngoingKeys() const;
+    ENGINE_API TdhArray<LRawInput>  GetCompletedKeys() const;
 
-    void GetContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
-    void GetCheckedContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
+    ENGINE_API  auto GetContextByName(const LSimpleString& InName) -> LUserInputContext*;
+    ENGINE_API  auto GetCheckedContextByName(const LSimpleString& InName) -> LUserInputContext*;
+    ENGINE_API  void GetContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
+    ENGINE_API  void GetCheckedContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
     FORCEINLINE auto GetActiveContexts() const -> const TdhArray<LUserInputContext*>& { return this->ActiveContexts; }
     FORCEINLINE auto GetRegisteredContexts() const -> const TdhArray<LUserInputContext*>& { return this->RegisteredContexts; }
 
 private:
 
-    void DispatchInputDelegatesForAction(const TdhArray<LRawInput>& InRawInputs, LUserInputMappedAction* InAction);
+    void DispatchInputDelegatesForAction(const TdhArray<LRawInput>& InRawInputs, const LInputMappedAction* InAction);
 
     /**
      * The most important context is stored first.

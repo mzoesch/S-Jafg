@@ -9,15 +9,6 @@
 namespace Jafg
 {
 
-enum Camera_Movement {
-    FORWARD,
-    BACKWARD,
-    LEFT,
-    RIGHT,
-    UP,
-    DOWN
-};
-
 class APersonaController;
 struct LInputActionValue;
 
@@ -44,9 +35,8 @@ public:
     FORCEINLINE auto GetEye() const -> const LEye* { return this->Eye; }
 
     void AddMovementInput(LInputActionValue& InValue);
-
-    void ProcessMouseMovement(const float XOffset, const float YOffset);
-    void ProcessMouseScroll(const float YOffset);
+    void AddRotationInput(LInputActionValue& InValue);
+    void ChangeVelocity(LInputActionValue& InValue);
 
 private:
 
@@ -63,6 +53,10 @@ private:
 
     float MovementSpeed    = 2.5f;
     float MouseSensitivity = 0.1f;
+
+    double LastMouseX = 0.0;
+    double LastMouseY = 0.0;
+    bool bFirstMouseCallback = true;
 };
 
 } /* ~Namespace Jafg */

@@ -50,7 +50,7 @@ struct LInputActionValue final
     FORCEINLINE auto GetRawValue() const -> Axis3D { return this->Value; }
     FORCEINLINE auto GetValueType() const -> EInputActionCategory::Type { return this->ValueType; }
 
-    template<typename T>
+    template <typename T>
     FORCEINLINE T Get() const { static_assert(sizeof(T) == 0, "Unsupported value type for input action value!"); return T(); }
 
     FORCEINLINE auto operator+=(const Axis0D  InValue) -> LInputActionValue& { this->Value.X += (InValue ? static_cast<LReal>(1.0) : static_cast<LReal>(0.0)); return *this; }
@@ -62,26 +62,7 @@ struct LInputActionValue final
     FORCEINLINE auto operator+=(const Axis3D& InValue) -> LInputActionValue& { this->Value   += InValue; return *this; }
     FORCEINLINE auto operator-=(const Axis3D& InValue) -> LInputActionValue& { this->Value   -= InValue; return *this; }
 
-    FORCEINLINE LSimpleString ToString() const
-    {
-        check( this->ValueType != EInputActionCategory::None )
-
-        if (this->ValueType == EInputActionCategory::Boolean)
-        {
-            return this->IsNonZero() ? "true" : "false";
-        }
-        if (this->ValueType == EInputActionCategory::Axis1D)
-        {
-            return LSimpleString::SprintF("{:.3f}", this->Value.X);
-        }
-        if (this->ValueType == EInputActionCategory::Axis2D)
-        {
-            return LSimpleString::SprintF("{:.3f},{:.3f}", this->Value.X, this->Value.Y);
-        }
-
-        checkNoEntry()
-        return { };
-    }
+    FORCEINLINE LSimpleString ToString() const;
 
 private:
 
@@ -132,6 +113,27 @@ inline LInputActionValue::Axis3D LInputActionValue::Get<LInputActionValue::Axis3
 {
     check( this->ValueType == EInputActionCategory::Axis3D )
     return this->Value;
+}
+
+LSimpleString LInputActionValue::ToString() const
+{
+    check( this->ValueType != EInputActionCategory::None )
+
+    if (this->ValueType == EInputActionCategory::Boolean)
+    {
+        return this->IsNonZero() ? "true" : "false";
+    }
+    if (this->ValueType == EInputActionCategory::Axis1D)
+    {
+        return LSimpleString::SprintF("{:.3f}", this->Value.X);
+    }
+    if (this->ValueType == EInputActionCategory::Axis2D)
+    {
+        return LSimpleString::SprintF("{:.3f},{:.3f}", this->Value.X, this->Value.Y);
+    }
+
+    checkNoEntry()
+    return { };
 }
 
 } /* ~Namespace Jafg */

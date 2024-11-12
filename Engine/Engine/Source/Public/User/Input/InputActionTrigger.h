@@ -7,17 +7,19 @@
 namespace Jafg
 {
 
-namespace EUserInputActionTrigger
+namespace EInputActionTrigger
 {
 
 enum Type : uint8
 {
-    None,
-    Triggered,
-    Ongoing,
-    Completed,
+    None      = 0x0 << 0,
+    Triggered = 0x1 << 0,
+    Ongoing   = 0x1 << 1,
+    Completed = 0x1 << 2,
 };
 
 } /* ~Namespace EUserInputActionTrigger */
+
+ENUM_CLASS_FLAGS(EInputActionTrigger::Type)
 
 } /* ~Namespace Jafg */

@@ -32,6 +32,7 @@ void Jafg::LLocalEgo::Initialize()
 
     JUserPreferences* UserPreferences = GetMutableDefault<JUserPreferences>();
     UserPreferences->SetVSyncEnabled(true);
+    UserPreferences->SetPolygonMode(EPolygonMode::Wireframe);
 
     this->GetPrimarySurface()->Initialize();
     this->GetPrimarySurface()->SetVSync(UserPreferences->GetVSyncEnabled());

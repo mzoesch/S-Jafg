@@ -93,15 +93,6 @@ public:
 
     virtual void TearDownContext() override;
 
-    bool FirstTimeMouseScroll = true;
-    bool Key_EscapeDown = false;
-    bool bShowMouse = false;
-    double LastMouseX = 0.0f;
-    double LastMouseY = 0.0f;
-
-    void MouseCallback(const double XPos, const double YPos);
-    void ScrollCallback(const double YOffset);
-
     void RegisterTickableObject(LTickableObject* Tickable);
     void UnregisterTickableObject(LTickableObject* Tickable);
 
