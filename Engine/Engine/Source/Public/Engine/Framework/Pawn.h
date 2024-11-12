@@ -19,6 +19,7 @@ enum Camera_Movement {
 };
 
 class APersonaController;
+struct LInputActionValue;
 
 /**
  * A pawn is something that can be possessed by a controller.
@@ -42,7 +43,8 @@ public:
     FORCEINLINE auto GetEye() -> LEye* { return this->Eye; }
     FORCEINLINE auto GetEye() const -> const LEye* { return this->Eye; }
 
-    void ProcessKeyboard(const Camera_Movement Dir, const float DeltaTime);
+    void AddMovementInput(LInputActionValue& InValue);
+
     void ProcessMouseMovement(const float XOffset, const float YOffset);
     void ProcessMouseScroll(const float YOffset);
 

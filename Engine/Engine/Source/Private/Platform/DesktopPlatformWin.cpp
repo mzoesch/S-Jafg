@@ -11,10 +11,10 @@
 #include <glm/gtc/type_ptr.inl>
 #include "Rhi/Shader.h"
 #include <glm/glm.hpp>
-
 #include "Engine/ObjectBaseUtility.h"
 #include "User/UserPreferences.h"
 #include "Widgets/Viewport.h"
+#include "User/Input/GlfwInputTranslation.h"
 
 void OpenGlErrorCallback(int error_code, const char* description)
 {
@@ -136,48 +136,68 @@ void Jafg::LDesktopPlatformWin::PollInputs()
 {
     LDesktopPlatformBase::PollInputs();
 
-    if (glfwGetKey(this->MasterWindow, GLFW_KEY_W) == GLFW_PRESS)
+    LKey KeyCursor = EKeys::A;
+    while (KeyCursor <= EKeys::LastKey)
     {
-        this->AddKeyDown(EKeys::W);
+        const int32 TranslatedKey = Glfw3::TranslateKeyToGlfw(KeyCursor);
+        if (TranslatedKey == INDEX_NONE)
+        {
+            ++KeyCursor;
+            continue;
+        }
+
+        if (glfwGetKey(this->MasterWindow, TranslatedKey) == GLFW_PRESS)
+        {
+            this->AddKeyDown(KeyCursor);
+        }
+
+        ++KeyCursor;
+
+        continue;
     }
-    if (glfwGetKey(this->MasterWindow, GLFW_KEY_S) == GLFW_PRESS)
-    {
-        this->AddKeyDown(EKeys::S);
-    }
-    if (glfwGetKey(this->MasterWindow, GLFW_KEY_A) == GLFW_PRESS)
-    {
-        this->AddKeyDown(EKeys::A);
-    }
-    if (glfwGetKey(this->MasterWindow, GLFW_KEY_D) == GLFW_PRESS)
-    {
-        this->AddKeyDown(EKeys::D);
-    }
-    if (glfwGetKey(this->MasterWindow, GLFW_KEY_Q) == GLFW_PRESS)
-    {
-        this->AddKeyDown(EKeys::Q);
-    }
-    if (glfwGetKey(this->MasterWindow, GLFW_KEY_E) == GLFW_PRESS)
-    {
-        this->AddKeyDown(EKeys::E);
-    }
-    if (glfwGetKey(this->MasterWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        this->AddKeyDown(EKeys::Escape);
-    }
-    if (glfwGetKey(this->MasterWindow, GLFW_KEY_P) == GLFW_PRESS)
-    {
-        PLATFORM_BREAK()
-    }
-    if (glfwGetKey(this->MasterWindow, GLFW_KEY_F1) == GLFW_PRESS)
-    {
-        GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Wireframe);
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    }
-    if (glfwGetKey(this->MasterWindow, GLFW_KEY_F2) == GLFW_PRESS)
-    {
-        GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Fill);
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
+
+    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_W) == GLFW_PRESS)
+    // {
+    //     this->AddKeyDown(EKeys::W);
+    // }
+    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_S) == GLFW_PRESS)
+    // {
+    //     this->AddKeyDown(EKeys::S);
+    // }
+    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_A) == GLFW_PRESS)
+    // {
+    //     this->AddKeyDown(EKeys::A);
+    // }
+    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_D) == GLFW_PRESS)
+    // {
+    //     this->AddKeyDown(EKeys::D);
+    // }
+    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_Q) == GLFW_PRESS)
+    // {
+    //     this->AddKeyDown(EKeys::Q);
+    // }
+    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_E) == GLFW_PRESS)
+    // {
+    //     this->AddKeyDown(EKeys::E);
+    // }
+    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    // {
+    //     this->AddKeyDown(EKeys::Escape);
+    // }
+    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_P) == GLFW_PRESS)
+    // {
+    //     PLATFORM_BREAK()
+    // }
+    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_F1) == GLFW_PRESS)
+    // {
+    //     GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Wireframe);
+    //     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // }
+    // if (glfwGetKey(this->MasterWindow, GLFW_KEY_F2) == GLFW_PRESS)
+    // {
+    //     GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Fill);
+    //     // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // }
 
     return;
 }

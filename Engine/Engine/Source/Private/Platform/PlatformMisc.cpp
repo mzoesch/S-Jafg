@@ -29,4 +29,4 @@ void LPlatformMisc::MakeCachedValuesValid()
     return;
 }
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */

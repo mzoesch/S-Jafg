@@ -10,6 +10,7 @@ namespace Jafg
 
 class LLocalEgo;
 class APersonaController;
+class APawn;
 
 /**
  * A subsystem that shares its lifetime with the local ego.
@@ -30,6 +31,11 @@ public:
      * Called when the local ego possesses a new controller. Both pointers may be null.
      */
     virtual void OnNewPersonaControllerPossessed(APersonaController* InOld, APersonaController* InNew) { }
+
+    /**
+     * Called when the current controller possesses a new pawn. Both pointers may be null.
+     */
+    virtual void OnNewPawnPossessed(APawn* InOld, APawn* InNew) { }
 
     LLocalEgo* GetLocalEgo() const;
 };

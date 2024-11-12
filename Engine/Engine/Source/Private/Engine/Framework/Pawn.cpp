@@ -3,6 +3,8 @@
 #include "CoreAfx.h"
 #include "Engine/Framework/Pawn.h"
 
+#include "User/Input/InputActionValue.h"
+
 void Jafg::APawn::DeclareNewPossessor(APersonaController* InNewController)
 {
     this->OwningController = InNewController;
@@ -18,35 +20,15 @@ void Jafg::APawn::DeclareNewPossessor(APersonaController* InNewController)
     return;
 }
 
-void Jafg::APawn::ProcessKeyboard(const Camera_Movement Dir, const float DeltaTime)
+void Jafg::APawn::AddMovementInput(LInputActionValue& InValue)
 {
-    const float Vel = this->MovementSpeed * DeltaTime;
+    LOG_WARNING(LogTemporal, "Moving: {:.2f} {:.2f} {:.2f}",
+        InValue.Get<LVector3>().X, InValue.Get<LVector3>().Y, InValue.Get<LVector3>().Z)
 
     LVector TranslationDelta = LVector::Zero();
-    if (Dir == FORWARD)
-    {
-        TranslationDelta += this->RelativeFront * Vel;
-    }
-    else if (Dir == BACKWARD)
-    {
-        TranslationDelta -= this->RelativeFront * Vel;
-    }
-    else if (Dir == LEFT)
-    {
-        TranslationDelta -= this->RelativeRight * Vel;
-    }
-    else if (Dir == RIGHT)
-    {
-        TranslationDelta += this->RelativeRight * Vel;
-    }
-    else if (Dir == UP)
-    {
-        TranslationDelta += LVector::UpVector * Vel;
-    }
-    else if (Dir == DOWN)
-    {
-        TranslationDelta -= LVector::UpVector * Vel;
-    }
+    TranslationDelta += this->RelativeFront * (InValue.Get<LVector3>().X * this->MovementSpeed);
+    TranslationDelta += this->RelativeRight * (InValue.Get<LVector3>().Y * this->MovementSpeed);
+    TranslationDelta += LVector::UpVector   * (InValue.Get<LVector3>().Z * this->MovementSpeed);
 
     this->AddTranslation(TranslationDelta);
 

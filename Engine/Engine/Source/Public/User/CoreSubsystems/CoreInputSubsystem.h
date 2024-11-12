@@ -8,7 +8,7 @@
 namespace Jafg
 {
 
-struct LUserInputActionValue;
+struct LInputActionValue;
 
 /**
  * Adds core input functionality such as debugging keys, return to home, and more.
@@ -25,11 +25,11 @@ protected:
 
     virtual void Initialize(LSubsystemCollection& Collection) override;
 
-    virtual void OnNewPersonaControllerPossessed(APersonaController* InOld, APersonaController* InNew) override;
+    virtual void OnNewPawnPossessed(APawn* InOld, APawn* InNew) override;
 
 private:
 
-    void OnDebugScreenToggle(LUserInputActionValue& InValue);
+    void OnDebugScreenToggle(LInputActionValue& InValue);
 };
 
 } /* ~Namespace Jafg */

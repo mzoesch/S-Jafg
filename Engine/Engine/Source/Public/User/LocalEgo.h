@@ -14,6 +14,7 @@ class LObjectContext;
 
 } /* ~Namespace Private */
 
+class APawn;
 class LHud;
 class LWorld;
 class LSurface;
@@ -54,6 +55,8 @@ public:
                 auto Possess(APersonaController* InNewController) -> void;
 
     FORCEINLINE auto GetContext() const -> Private::LObjectContext* { return this->Context; }
+
+    void OnNewPawnPossessed(APawn* InOld, APawn* InNew) const;
 
 protected:
 

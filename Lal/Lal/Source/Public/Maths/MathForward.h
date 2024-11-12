@@ -72,7 +72,10 @@ using LTransformD       = TTransform<double>;
  * Uses integers with 32 bits of precision by default.
  */
 
+typedef LVectorF         LVector3F;
+typedef LVectorD         LVector3D;
 typedef LVectorF         LVector;
+typedef LVector3F        LVector3;
 typedef LVector2F        LVector2;
 typedef LVector4F        LVector4;
 typedef LInt32Vector     LIntVector;

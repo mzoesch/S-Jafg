@@ -16,6 +16,7 @@ ENGINE_API LSimpleString ToString(const LKey& Key);
 
 inline constexpr LKey KeyBegin                  {   0 };
 inline constexpr LKey KeyEnd                    { 255 };
+inline constexpr LKey LastKey                   { 124 };
 /* Statically assert this so that in the future we do not forget to change begin and end - when changing the type. */
 static_assert(sizeof(LKey) == 1, "LKey must be 1 byte in size.");
 
@@ -157,6 +158,8 @@ inline constexpr LKey Exclamation               { 121 };
 inline constexpr LKey LeftParenthesis           { 122 };
 inline constexpr LKey RightParenthesis          { 123 };
 inline constexpr LKey Quote                     { 124 };
+/** Remember to change this here. */
+static_assert(EKeys::LastKey == EKeys::Quote, "Last key not valid.");
 
 /** Platform specific virtual delete key. */
 inline constexpr LKey PlatformDelete            { EKeys::KeyEnd };

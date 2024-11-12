@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreAfx.h"
-
 #include "User/Input/InputTypes.h"
 #include "User/Input/UserInputActionTrigger.h"
 
@@ -11,48 +10,30 @@ namespace Jafg
 {
 
 struct LUserInputAction;
-struct LUserInputActionValue;
+struct LInputActionValue;
+struct LInputActionMappedKey;
 
-typedef TFunction<void(LUserInputActionValue& InValue)> LUserInputActionCallback;
+typedef TFunction<void(LInputActionValue& InValue)> LUserInputActionCallback;
 
-MAKE_MULTICAST_SIGNATURE(OnActionTriggered, const LUserInputActionValue&)
+MAKE_MULTICAST_SIGNATURE(OnActionTriggered, const LInputActionValue&)
 
 struct LUserInputMappedAction
 {
     LUserInputMappedAction() = delete;
-    LUserInputMappedAction(
-        LUserInputAction*                   InAction,
-        const LKey                          InKey,
-        const EUserInputActionTrigger::Type InTrigger,
-        const LUserInputActionCallback&     InCallback
-    )
-        : Action(InAction), Key(InKey), Trigger(InTrigger)
-    {
-        this->Callback = InCallback;
-
-        if (this->Action == nullptr)
-        {
-            panic( "Action must not be null." )
-        }
-
-        if (this->Callback.IsSet() == false)
-        {
-            panic( "Callback must be set." )
-        }
-
-        return;
-    }
+    explicit LUserInputMappedAction(LUserInputAction* InAction) : Action(InAction) { check( InAction ) }
     DEFAULT_REALLOC_OF_ANY_FROM(LUserInputMappedAction)
     ~LUserInputMappedAction() = default;
 
+    void ResetCallback();
+    void SetCallback(const EUserInputActionTrigger::Type InTrigger, const LUserInputActionCallback& InCallback);
+
     LUserInputAction*             Action;
-    LKey                          Key;
-    EUserInputActionTrigger::Type Trigger;
-    LUserInputActionCallback      Callback;
+    EUserInputActionTrigger::Type Trigger  = EUserInputActionTrigger::None;
+    LUserInputActionCallback      Callback = nullptr;
 };
 
 /**
- * A context that can be used to map actions to keys.
+ * A context that can be used to have a set of actions that are mapped to keys and callbacks.
  */
 struct ENGINE_API LUserInputContext final
 {
@@ -61,21 +42,30 @@ struct ENGINE_API LUserInputContext final
     DEFAULT_REALLOC_OF_ANY_FROM(LUserInputContext)
     ~LUserInputContext() = default;
 
-    /** This class takes care of the ownership of InAction. */
-    void MapAction(
-        LUserInputAction& InAction,
+    /** @return The newly mapped action. This is not the same as the input argument. */
+    LUserInputAction* MapAction(const LUserInputAction& InAction);
+
+    auto MapKey(LUserInputAction* InAction, const LKey InKey) -> LInputActionMappedKey*;
+    auto MapCallback(
+        const LUserInputAction* InAction,
+        const EUserInputActionTrigger::Type InTrigger,
+        const LUserInputActionCallback& InCallback
+    ) -> void;
+    auto MapKey(
+        LUserInputAction* InAction,
         const LKey InKey,
         const EUserInputActionTrigger::Type InTrigger,
-        const LUserInputActionCallback&& InCallback
-    );
+        const LUserInputActionCallback& InCallback
+    ) -> LInputActionMappedKey*;
 
     FORCEINLINE auto GetUniqueIdentifier() const -> const LSimpleString& { return this->UniqueIdentifier; }
     FORCEINLINE auto GetMappedActions()       ->       TdhArray<LUserInputMappedAction>& { return this->MappedActions; }
     FORCEINLINE auto GetMappedActions() const -> const TdhArray<LUserInputMappedAction>& { return this->MappedActions; }
 
-private:
+    auto FindMappedAction(const LUserInputAction* InAction) -> LUserInputMappedAction*;
+    auto FindCheckedMappedAction(const LUserInputAction* InAction) -> LUserInputMappedAction*;
 
-    bool IsActionWithSameKeyAlreadyMapped(const LUserInputAction& Action, const LKey Key) const;
+private:
 
     LSimpleString UniqueIdentifier;
     TdhArray<LUserInputMappedAction> MappedActions;

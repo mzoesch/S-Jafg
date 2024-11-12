@@ -36,7 +36,14 @@ public:
     TdhArray<LRawInput>& GetOngoingKeys() const;
     TdhArray<LRawInput>  GetCompletedKeys() const;
 
+    void GetContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
+    void GetCheckedContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
+    FORCEINLINE auto GetActiveContexts() const -> const TdhArray<LUserInputContext*>& { return this->ActiveContexts; }
+    FORCEINLINE auto GetRegisteredContexts() const -> const TdhArray<LUserInputContext*>& { return this->RegisteredContexts; }
+
 private:
+
+    void DispatchInputDelegatesForAction(const TdhArray<LRawInput>& InRawInputs, LUserInputMappedAction* InAction);
 
     /**
      * The most important context is stored first.

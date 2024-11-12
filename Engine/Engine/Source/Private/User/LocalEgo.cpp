@@ -116,10 +116,30 @@ void Jafg::LLocalEgo::Possess(APersonaController* InNewController)
     APersonaController* Old = this->PersonaController;
     this->PersonaController = InNewController;
 
+    if (Old)
+    {
+        Old->SetLocalEgo(nullptr);
+    }
+    if (InNewController)
+    {
+        InNewController->SetLocalEgo(this);
+    }
+
     this->Collection->ForEachSubsystem<JLocalEgoSubsystem>(
     [Old, InNewController] (JLocalEgoSubsystem* Subsystem)
     {
         Subsystem->OnNewPersonaControllerPossessed(Old, InNewController);
+    });
+
+    return;
+}
+
+void Jafg::LLocalEgo::OnNewPawnPossessed(APawn* InOld, APawn* InNew) const
+{
+    this->Collection->ForEachSubsystem<JLocalEgoSubsystem>(
+    [InOld, InNew] (JLocalEgoSubsystem* Subsystem)
+    {
+        Subsystem->OnNewPawnPossessed(InOld, InNew);
     });
 
     return;

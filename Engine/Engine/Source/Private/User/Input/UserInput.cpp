@@ -10,7 +10,7 @@
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "User/Input/UserInputAction.h"
-#include "User/Input/UserInputActionValue.h"
+#include "User/Input/InputActionValue.h"
 
 void Jafg::LUserInput::BeginNewFrame()
 {
@@ -41,39 +41,19 @@ void Jafg::LUserInput::DispatchInputDelegates()
     LWorld* TargetWorld = LocalEgo->GetPossessed()->GetWorld();
     LSurface* PrimarySurface = LocalEgo->GetPrimarySurface();
 
-    TdhArray<LRawInput> TriggeredKeys = this->GetTriggeredKeys();
-    TdhArray<LRawInput> OngoingKeys   = this->GetOngoingKeys();
-    TdhArray<LRawInput> CompletedKeys = this->GetCompletedKeys();
+    const TdhArray<LRawInput> TriggeredKeys = this->GetTriggeredKeys();
+    const TdhArray<LRawInput> OngoingKeys   = this->GetOngoingKeys();
+    const TdhArray<LRawInput> CompletedKeys = this->GetCompletedKeys();
 
-    if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::W))
-    {
-        LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(FORWARD, Application::GetDeltaTimeAsFloat());
-    }
-
-    if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::S))
-    {
-        LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(BACKWARD, Application::GetDeltaTimeAsFloat());
-    }
-
-    if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::A))
-    {
-        LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(LEFT, Application::GetDeltaTimeAsFloat());
-    }
-
-    if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::D))
-    {
-        LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(RIGHT, Application::GetDeltaTimeAsFloat());
-    }
-
-    if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::Q))
-    {
-        LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(DOWN, Application::GetDeltaTimeAsFloat());
-    }
-
-    if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::E))
-    {
-        LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(UP, Application::GetDeltaTimeAsFloat());
-    }
+    // if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::Q))
+    // {
+    //     LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(DOWN, Application::GetDeltaTimeAsFloat());
+    // }
+    //
+    // if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::E))
+    // {
+    //     LocalEgo->GetPossessed()->GetPossessed()->ProcessKeyboard(UP, Application::GetDeltaTimeAsFloat());
+    // }
 
     if (PrimarySurface->GetCurrentlyPressedKeys().Contains(EKeys::Escape))
     {
@@ -118,48 +98,21 @@ void Jafg::LUserInput::DispatchInputDelegates()
 
     for (LUserInputContext* Context : this->ActiveContexts)
     {
-        for (LUserInputMappedAction& Action : Context->GetMappedActions())
+        for (LUserInputMappedAction& MappedAction : Context->GetMappedActions())
         {
-            if (Action.Trigger == EUserInputActionTrigger::Triggered)
+            if (MappedAction.Trigger == EUserInputActionTrigger::Triggered)
             {
-                for (const LRawInput& TriggeredKey : TriggeredKeys)
-                {
-                    if (Action.Key == TriggeredKey.Key)
-                    {
-                        LUserInputActionValue V;
-                        Action.Callback(V);
-                    }
-
-                    continue;
-                }
+                this->DispatchInputDelegatesForAction(TriggeredKeys, &MappedAction);
             }
 
-            else if (Action.Trigger == EUserInputActionTrigger::Ongoing)
+            else if (MappedAction.Trigger == EUserInputActionTrigger::Ongoing)
             {
-                for (const LRawInput& OngoingKey : OngoingKeys)
-                {
-                    if (Action.Key == OngoingKey.Key)
-                    {
-                        LUserInputActionValue V;
-                        Action.Callback(V);
-                    }
-
-                    continue;
-                }
+                this->DispatchInputDelegatesForAction(OngoingKeys, &MappedAction);
             }
 
-            else if (Action.Trigger == EUserInputActionTrigger::Completed)
+            else if (MappedAction.Trigger == EUserInputActionTrigger::Completed)
             {
-                for (const LRawInput& CompletedKey : CompletedKeys)
-                {
-                    if (Action.Key == CompletedKey.Key)
-                    {
-                        LUserInputActionValue V;
-                        Action.Callback(V);
-                    }
-
-                    continue;
-                }
+                this->DispatchInputDelegatesForAction(CompletedKeys, &MappedAction);
             }
 
             continue;
@@ -189,7 +142,7 @@ Jafg::LLocalEgo* Jafg::LUserInput::GetPanickedLocalEgo() const
     return GEngine->GetPanickedLocalEgo();
 }
 
-void Jafg::LUserInput::RegisterContext(LUserInputContext&& Context, const bool bMakeActive)
+void Jafg::LUserInput::RegisterContext(LUserInputContext&& Context, const bool bMakeActive /* = false */)
 {
     LUserInputContext* ContextPtr = new LUserInputContext(std::move(Context));
     this->RegisteredContexts.Add(ContextPtr);
@@ -239,4 +192,64 @@ Jafg::TdhArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
     }
 
     return CompletedKeys;
+}
+
+void Jafg::LUserInput::GetContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const
+{
+    for (LUserInputContext* Context : this->RegisteredContexts)
+    {
+        if (Context->GetUniqueIdentifier() == InName)
+        {
+            OutContext = Context;
+            return;
+        }
+
+        continue;
+    }
+
+    OutContext = nullptr;
+    return;
+}
+
+void Jafg::LUserInput::GetCheckedContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const
+{
+    this->GetContextByName(InName, OutContext);
+    check( OutContext )
+    return;
+}
+
+void Jafg::LUserInput::DispatchInputDelegatesForAction(const TdhArray<LRawInput>& InRawInputs, LUserInputMappedAction* InAction)
+{
+    LInputActionValue Value = InAction->Action->Category;
+
+    for (const LRawInput& RawInput : InRawInputs)
+    {
+        for (const LInputActionMappedKey& MappedKey : InAction->Action->MappedKeys)
+        {
+            if (MappedKey.Key == RawInput.Key)
+            {
+                LVector Magnitude = LVector::UnitX();
+
+                for (LInputActionMappedKeyModifier* Modifier : MappedKey.Modifiers)
+                {
+                    Magnitude = Modifier->ApplyModifier(Magnitude);
+                }
+
+                Value += Magnitude;
+
+                continue;
+            }
+
+            continue;
+        }
+
+        continue;
+    }
+
+    if (Value.IsNonZero())
+    {
+        InAction->Callback(Value);
+    }
+
+    return;
 }

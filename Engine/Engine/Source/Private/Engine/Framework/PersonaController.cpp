@@ -24,6 +24,9 @@ void Jafg::APersonaController::EndLife()
 
 void Jafg::APersonaController::Possess(APawn* InNewPawn, const bool bKillOld /* = true */)
 {
+    APawn* OldPawn = this->PossessedPawn;
+    if (bKillOld) { OldPawn = nullptr; } /* Otherwise, we will get access violations. */
+
     if (this->PossessedPawn)
     {
         this->PossessedPawn->DeclareNewPossessor(nullptr);
@@ -37,6 +40,11 @@ void Jafg::APersonaController::Possess(APawn* InNewPawn, const bool bKillOld /* 
     if (this->PossessedPawn)
     {
         this->PossessedPawn->DeclareNewPossessor(this);
+    }
+
+    if (this->HasLocalEgo())
+    {
+        this->LocalEgo->OnNewPawnPossessed(OldPawn, this->PossessedPawn);
     }
 
     return;
