@@ -64,3 +64,19 @@ void Jafg::LSubsystemCollection::TearDownSubsystems()
 
     return;
 }
+
+Jafg::JSubsystem* Jafg::LSubsystemCollection::GetSubsystem(const LObjectClass* InStaticClass)
+{
+    for (JSubsystem* Subsystem : this->SubsystemInstances)
+    {
+        checkSlow( Subsystem )
+        if (Subsystem->GetVTable() == InStaticClass)
+        {
+            return Subsystem;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}

@@ -3,12 +3,10 @@
 #include "CoreAfx.h"
 #include "Engine/Engine.h"
 #include "CoreGlobals.h"
-#if PLATFORM_DESKTOP
-    #include "Platform/DesktopPlatform.h"
-#endif /* PLATFORM_DESKTOP */
 #include "Core/Application.h"
 #include "Engine/World.h"
 #include "User/LocalEgo.h"
+#include "Engine/Framework/ApplicationInstance.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
@@ -41,6 +39,10 @@ void Jafg::LEngine::Initialize()
     this->InitializeContext(Context, "StartUpWorld");
     this->RegisterLevel(LLevel("LWorld"));
     this->Browse(Context, "LWorld");
+
+    check( this->IsApplicationInstanceValid() == false )
+    this->ApplicationInstance = new LApplicationInstance();
+    this->ApplicationInstance->Initialize();
 
     return;
 }
@@ -104,6 +106,13 @@ void Jafg::LEngine::TearDown()
         }
 
         continue;
+    }
+
+    if (ensure(this->ApplicationInstance))
+    {
+        this->ApplicationInstance->TearDown();
+        delete this->ApplicationInstance;
+        this->ApplicationInstance = nullptr;
     }
 
 #if WITH_LOCAL_LAYER
@@ -383,11 +392,6 @@ bool Jafg::LEngine::IsLevelRegistered(const LStringLegacy& Identifier) const
             return i.Identifier == Identifier;
         }
     );
-    //
-    // return std::ranges::any_of(
-    //     this->RegisteredLevels,
-    //     [&Identifier] (const LLevel& i) { return i.Identifier == Identifier; }
-    // );
 }
 
 uint8 Jafg::LEngine::GetFirstAvailableContextIndex() const

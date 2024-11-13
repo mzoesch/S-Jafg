@@ -21,7 +21,7 @@ enum Type : uint8
 
 } /* ~Namespace EPolygonMode. */
 
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_CLASS(EClassFlags::Singleton)
 class ENGINE_API JUserPreferences final : public Private::JObjectBase
 {
     GENERATED_CLASS_BODY()

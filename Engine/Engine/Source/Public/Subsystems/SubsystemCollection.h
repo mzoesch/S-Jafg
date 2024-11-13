@@ -90,6 +90,36 @@ struct LSubsystemCollection final
         return;
     }
 
+    ENGINE_API auto GetSubsystem(const LObjectClass* InStaticClass) -> JSubsystem*;
+    FORCEINLINE auto GetCheckedSubsystem(const LObjectClass* InStaticClass) -> JSubsystem*
+    {
+        JSubsystem* Out = this->GetSubsystem(InStaticClass);
+        check( Out )
+        return Out;
+    }
+
+    template <typename TSubsystem, bool bAllowForNullptr = true>
+    FORCEINLINE auto GetSubsystem() -> TSubsystem*
+    {
+        return CheckedStaticCast<TSubsystem, bAllowForNullptr>(this->GetSubsystem(TSubsystem::StaticClass()));
+    }
+    template <typename TSubsystem, bool bAllowForNullptr = true>
+    FORCEINLINE auto GetSubsystem(const LObjectClass* InStaticClass) -> TSubsystem*
+    {
+        return CheckedStaticCast<TSubsystem, bAllowForNullptr>(this->GetSubsystem(InStaticClass));
+    }
+
+    template <typename TSubsystem>
+    FORCEINLINE auto GetCheckedSubsystem() -> TSubsystem*
+    {
+        return CheckedStaticCast<TSubsystem>(this->GetCheckedSubsystem(TSubsystem::StaticClass()));
+    }
+    template <typename TSubsystem>
+    FORCEINLINE auto GetCheckedSubsystem(const LObjectClass* InStaticClass) -> TSubsystem*
+    {
+        return CheckedStaticCast<TSubsystem>(this->GetCheckedSubsystem(InStaticClass));
+    }
+
 private:
 
     Private::LObjectContext*      Outer;

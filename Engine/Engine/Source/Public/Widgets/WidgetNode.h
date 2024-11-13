@@ -52,13 +52,44 @@ struct LWidgetSlot
     /**
      * The content of this slot. We interpret all names in this and derived structs as of the view of the content.
      */
-    WWidgetNode*       Content;
+    WWidgetNode* Content;
 
     /**
      * The padding of the parent widget aka the margin of the child widget.
      */
     LMargin* Margin;
 };
+
+/**
+ * Constructs a new widget node in the given context
+ * @see NewNode(TNode) (Wsdsml)
+ * @see User/Frontend/DebugScreen.cpp
+ */
+template <typename TNode>
+FORCEINLINE auto ConstructWidgetNode(Private::LObjectContext* InContext) -> TNode*;
+/**
+ * Constructs a new deferred widget node in the given context.
+ * @see NewNode(TNode) (Wsdsml)
+ * @see User/Frontend/DebugScreen.cpp
+ */
+template <typename TNode>
+FORCEINLINE auto ConstructDeferredWidgetNode(Private::LObjectContext* InContext) -> TNode*;
+
+/**
+ * Before constructing empty context widget, update the global specific widget context.
+ * This behaves like a state machine.
+ */
+ENGINE_API extern Private::LObjectContext* GCurrentWidgetContextState;
+
+/** Constructs a new widget node in the current context of the current program widget state context. */
+template <typename TNode>
+FORCEINLINE auto ConstructWidgetNode() -> TNode*;
+/** Constructs a new deferred widget node in the current context of the current program widget state context. */
+template <typename TNode>
+FORCEINLINE auto ConstructDeferredWidgetNode() -> TNode*;
+
+/** Call this method to finalize a widget that was deferred. */
+FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode);
 
 /**
  * The base class for everything that can be interpreted as a visual element.
@@ -143,18 +174,18 @@ private:
 template <typename TNode>
 FORCEINLINE auto ConstructWidgetNode(Private::LObjectContext* InContext) -> TNode*
 {
-    return NewObject<TNode>(InContext);
+    TNode* Node = ConstructDeferredWidgetNode<TNode>(InContext);
+    ::Jafg::MakeDeferredWidgetNodeFinal(Node);
+    return Node;
 }
 
 template <typename TNode>
 FORCEINLINE auto ConstructDeferredWidgetNode(Private::LObjectContext* InContext) -> TNode*
 {
-    return NewDeferredObject<TNode>(InContext);
+    checkSlow( InContext )
+    return NewDeferredObject<TNode, false, true>(InContext, TNode::StaticClass());
 }
 
-/** Before constructing empty context widget, update the global specific widget context. */
-ENGINE_API extern Private::LObjectContext* GCurrentWidgetContextState;
-/** Constructs a new widget node in the current context of the current program widget state context. */
 template <typename TNode>
 FORCEINLINE auto ConstructWidgetNode() -> TNode*
 {
@@ -169,10 +200,10 @@ FORCEINLINE auto ConstructDeferredWidgetNode() -> TNode*
     return ConstructDeferredWidgetNode<TNode>(GCurrentWidgetContextState);
 }
 
-FORCEINLINE void ConstructDeferredWidgetNode(WWidgetNode* InNode)
+FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode)
 {
-    checkSlow( InNode != nullptr )
-    InNode->BeginLife();
+    checkSlow( InNode )
+    MakeDeferredObjectFinal(InNode);
     return;
 }
 
@@ -185,7 +216,7 @@ FORCEINLINE void ConstructDeferredWidgetNode(WWidgetNode* InNode)
 ///////////////////////////////////////////////////////////////////////////////
 
 #define MakeRootNode(TRoot)   (*this->ReplaceRoot(NewNode(TRoot)))
-#define FinishWidgetStyling() ;ConstructDeferredWidgetNode(this->GetRoot());
+#define FinishWidgetStyling() ;MakeDeferredWidgetNodeFinal(this->GetRoot());
 
 #define NewNode(TNode) (*ConstructDeferredWidgetNode<TNode>())
 

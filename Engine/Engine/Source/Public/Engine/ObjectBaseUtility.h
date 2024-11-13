@@ -10,15 +10,24 @@
 // Compiler options
 
 /**
- * Whether the c++ compiler should check for pure virtual functions, and if
- * they have been overriden by any derived class. Usually disabled as the
- * program may not run with this option enabled.
- * Usually, this program crashes if it encounters a non-implemented pure
- * virtual method.
+ * Whether the C++ compiler should check for pure virtual functions, and if they have been overriden by any derived
+ * class. Usually disabled as the program may not run with this option enabled.
+ * Abstract classes must still be instantiable to satisfy the object registry that runs at every module startup.
+ * Usually, this program crashes if it encounters a non-implemented pure virtual method.
  */
-#define DO_PURE_VIRTUAL_COMPILER_CHECKS                 0
+#ifndef DO_PURE_VIRTUAL_COMPILER_CHECKS
+    #define DO_PURE_VIRTUAL_COMPILER_CHECKS                 0
+#endif /* !DO_PURE_VIRTUAL_COMPILER_CHECKS */
 
-#define DO_DOUBLE_CHECK_LIFETIMES                       !IN_SHIPPING
+/**
+ * Whether to double-check lifetimes of JObjectBase objects. Meaning check if an object has rightfully begun its life,
+ * was marked as garbage, ended its life, then was destroyed and freed in the end.
+ * These checks add a meaningful non-neglectable overhead to object creation and destruction and should therefore
+ * be disabled in shipping builds.
+ */
+#ifndef DO_DOUBLE_CHECK_LIFETIMES
+    #define DO_DOUBLE_CHECK_LIFETIMES                       !IN_SHIPPING
+#endif /* !DO_DOUBLE_CHECK_LIFETIMES */
 
 // ~Compiler options
 ///////////////////////////////////////////////////////////////////////////////
@@ -36,10 +45,12 @@
 namespace Jafg
 {
 
+class AActor;
+class WWidgetNode;
+
 namespace Private
 {
 
-class JObjectBase;
 class JObjectBase;
 class LObjectRegistry;
 struct TRegistryPackageBase;
@@ -58,32 +69,24 @@ ENGINE_API extern Private::LObjectContext* GOmniVitaContext;
 /** Allocate a new object of type TObj. */
 template <typename TObj>
 FORCEINLINE auto NewObject() -> TObj*;
-/** Allocate a new object of type TObj within a given context. */
 template <typename TObj>
 FORCEINLINE auto NewObject(Private::LObjectContext* InContext) -> TObj*;
-/** Allocate a new object of type TObj within a given context and with a given static class that might be more specialist. */
 template <typename TObj>
 FORCEINLINE auto NewObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> TObj*;
-/** Allocate a new object with its given class name. */
 FORCEINLINE auto NewObject(const LSimpleString& InClassName) -> Private::JObjectBase*;
-/** Allocate a new object with its given class name within a given context. */
 FORCEINLINE auto NewObject(Private::LObjectContext* InContext, const LSimpleString& InClassName) -> Private::JObjectBase*;
-/** Allocate a new object with its given static class and a given context. */
 FORCEINLINE auto NewObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> Private::JObjectBase*;
 
 /** Allocate a new object of type TObj. The begin-life method will not be called. */
 template <typename TObj>
 FORCEINLINE auto NewDeferredObject() -> TObj*;
-/** Allocate a new object of type TObj within a given context. The begin-life method will not be called. */
 template <typename TObj>
 FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext) -> TObj*;
-template <typename TObj>
+/* Boolean parameters are for internal use only - __DO NOT__ change the default values. */
+template <typename TObj, bool bAllowActor = /*FALSE REQUIRED*/false, bool bAllowWidget = /*FALSE REQUIRED*/false>
 FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> TObj*;
-/** Allocate a new object with its given class name. The begin-life method will not be called. */
 FORCEINLINE auto NewDeferredObject(const LSimpleString& InClassName) -> Private::JObjectBase*;
-/** Allocate a new object with its given class name within a given context. The begin-life method will not be called. */
 FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LSimpleString& InClassName) -> Private::JObjectBase*;
-/** Allocate a new object with its given static class and a given context. The begin-life method will not be called. */
 FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> Private::JObjectBase*;
 
 /**
@@ -91,14 +94,38 @@ FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LOb
  */
 ENGINE_API void MakeDeferredObjectFinal(Private::JObjectBase* InObject);
 
-/** @return The dynamic-casted object if the object is or derives from TObj, else nullptr. */
+/**
+ * @return The dynamic-casted object if the object is or derives from TObj, else nullptr.
+ * @remark This method is fairly slow and should not be used in high proximity in performance-critical control paths.
+ *         If it is known at compile time with certainty that the object is of the target type, use CheckedStaticCast
+ *         as that function does not add any runtime overhead.
+ */
 template <typename TObj>
 FORCEINLINE auto DynamicCast(Private::JObjectBase* InObject) -> TObj*;
+
+/**
+ * Only checks if the object can be casted if DO_CHECKS is true. If the object fails to cast to the
+ * targeted type, the application will panic. If DO_CHECKS is false, it will assume that the object is
+ * of the target type and do an unsafe cast.
+ * Only use this method if you are sure that the object is of the targeted type.
+ *
+ * @tparam bAllowForNullptr Whether to allow for nullptr to be returned if the input object is nullptr.
+ * @return The casted object. Will never return nullptr (if bAllowForNullptr is false). But the return value might be
+ *         meaningless if DO_CHECKS is false. So you cannot check if this object is valid, e.g., if it is nullptr.
+ */
+template <typename TObj, bool bAllowForNullptr = false>
+FORCEINLINE auto CheckedStaticCast(Private::JObjectBase* InObject) -> TObj*;
 
 /** @return The default package referrer. */
 template <typename TObj>
 FORCEINLINE auto GetDefault() -> const TObj*;
-/** @return The default package referrer. */
+/**
+ * @return  The default package referrer that is mutable.
+ * @remarks Mutating any members of the referrer will not affect already instantiated objects but only objects that are
+ *          created after the referrer has been mutated.
+ *          Generally it is bad habit to mutate the default package referrer, and therefore this method should be used
+ *          sparingly - or for "singleton" objects.
+ */
 template <typename TObj>
 FORCEINLINE auto GetMutableDefault() -> TObj*;
 
@@ -262,10 +289,10 @@ struct LRegistrationCallbackHelper final
     /**
      * Registers static class information that is required for the object to be registered.
      *
-     * @tparam TObj       The object type that is being registered.
-     * @param StaticClass The static class that was assigned to TObj.
-     * @param Flags       The flags that describe class-specific behavior.
-     * @param Parent      The namespaced name of the parent class.
+     * @tparam TObj        The object type that is being registered.
+     * @param  StaticClass The static class that was assigned to TObj.
+     * @param  Flags       The flags that describe class-specific behavior.
+     * @param  Parent      The namespaced name of the parent class.
      */
     template <typename TObj = JObjectBase>
     static void DoRegisterContentsForClass(
@@ -296,24 +323,27 @@ struct LRegistrationCallbackHelper final
 
 } /* ~Namespace Private */
 
-class AActor;
-
 template <typename TObj>
 TObj* NewObject()
 {
-    static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed");
+    static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
+    static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return NewObject<TObj>(GOmniVitaContext);
 }
 
 template <typename TObj>
 TObj* NewObject(Private::LObjectContext* InContext)
 {
+    static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
+    static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return Private::LObjectMiscellaneousAccessor::NewObject<TObj>(InContext);
 }
 
 template <typename TObj>
 TObj* NewObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
+    static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
+    static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return reinterpret_cast<TObj*>(Private::LObjectMiscellaneousAccessor::NewObject(InContext, InStaticClass));
 }
 
@@ -335,18 +365,31 @@ Private::JObjectBase* NewObject(Private::LObjectContext* InContext, const LObjec
 template <typename TObj>
 TObj* NewDeferredObject()
 {
+    static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
+    static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return NewDeferredObject<TObj>(GOmniVitaContext);
 }
 
 template <typename TObj>
 TObj* NewDeferredObject(Private::LObjectContext* InContext)
 {
+    static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
+    static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return Private::LObjectMiscellaneousAccessor::NewDeferredObject<TObj>(InContext);
 }
 
-template <typename TObj>
+template <typename TObj, bool bAllowActor /* = false */, bool bAllowWidget /* = false */>
 TObj* NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
+    if constexpr (bAllowActor == false)
+    {
+        static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
+    }
+    if constexpr (bAllowWidget == false)
+    {
+        static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
+    }
+
     return reinterpret_cast<TObj*>(NewDeferredObject(InContext, InStaticClass));
 }
 
@@ -368,6 +411,8 @@ Private::JObjectBase* NewDeferredObject(Private::LObjectContext* InContext, cons
 template <typename TObj>
 TObj* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context)
 {
+    static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
+    static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return reinterpret_cast<TObj*>(LObjectMiscellaneousAccessor::NewObject(Context, TObj::StaticClass()));
 }
 
@@ -387,6 +432,35 @@ TObj* DynamicCast(Private::JObjectBase* InObject)
     return nullptr;
 }
 
+template <typename TObj, bool bAllowForNullptr /* = false */>
+TObj* CheckedStaticCast(Private::JObjectBase* InObject)
+{
+#if DO_CHECKS
+    if constexpr (bAllowForNullptr)
+    {
+        if (InObject == nullptr)
+        {
+            return nullptr;
+        }
+    }
+    else
+    {
+        jassert( InObject )
+    }
+
+    if (TObj* Out = DynamicCast<TObj>(InObject); Out)
+    {
+        return Out;
+    }
+
+    panicMsgf( "Failed to cast object to [{}].", TObj::StaticClass()->GetSpacedClassName() )
+
+    return nullptr;
+#else /* DO_CHECKS */
+    return reinterpret_cast<TObj*>(InObject);
+#endif /* !DO_CHECKS */
+}
+
 template <typename TObj>
 const TObj* GetDefault()
 {
@@ -402,6 +476,8 @@ TObj* GetMutableDefault()
 template <typename TObj>
 TObj* Private::LObjectMiscellaneousAccessor::NewDeferredObject(Private::LObjectContext* Context)
 {
+    static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
+    static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return reinterpret_cast<TObj*>(LObjectMiscellaneousAccessor::NewDeferredObject(Context, TObj::StaticClass()));
 }
 

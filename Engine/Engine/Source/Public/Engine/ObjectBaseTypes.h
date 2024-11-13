@@ -21,6 +21,9 @@ enum Type : LClassFlags
 
     /** The class is abstract and can therefore not be instantiated. */
     Abstract        = 1 << 0,
+
+    /** The class is a singleton and can only be accessed through the #DetDefault and #GetMutableDefault functions. */
+    Singleton       = Abstract,
 };
 
 FORCEINLINE Type operator|(const Type& Lhs, const Type& Rhs)

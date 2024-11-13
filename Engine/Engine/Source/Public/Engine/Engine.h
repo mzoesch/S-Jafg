@@ -13,6 +13,7 @@ class LEngine;
 class LLocalEgo;
 class LWorld;
 class LSurface;
+class LApplicationInstance;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
@@ -112,7 +113,7 @@ public:
 
 private:
 
-    LLocalEgo* LocalEgo     = nullptr;
+    LLocalEgo* LocalEgo = nullptr;
 
 public:
 
@@ -163,6 +164,19 @@ private:
     LWorldContext* Contexts[LEngine::MaxContexts] = { nullptr, nullptr, nullptr, };
     /** The registered levels that this engine can load. */
     TdhArray<LLevel> RegisteredLevels = { };
+
+public:
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Misc
+    ///////////////////////////////////////////////////////////////////////////////
+
+    FORCEINLINE auto IsApplicationInstanceValid() const -> bool { return this->ApplicationInstance; }
+    FORCEINLINE auto GetApplicationInstance() const -> LApplicationInstance* { return this->ApplicationInstance; }
+
+private:
+
+    LApplicationInstance* ApplicationInstance = nullptr;
 };
 
 } /* ~Namespace Jafg */

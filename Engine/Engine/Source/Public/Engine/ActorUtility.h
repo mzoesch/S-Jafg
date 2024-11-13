@@ -92,7 +92,7 @@ FORCEINLINE AActor* Private::LWorldMiscellaneousAccessor::SpawnDeferredActor(LWo
 {
     check( InContext )
 
-    AActor* Actor = NewDeferredObject<AActor>(InContext, InStaticClass);
+    AActor* Actor = NewDeferredObject<AActor, true, false>(InContext, InStaticClass);
     InContext->Actors.Add(Actor);
 
     if (Actor->CanEverTick())
