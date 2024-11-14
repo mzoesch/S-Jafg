@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/Object.h"
+#include "Engine/ObjectBase.h"
 #include "Subsystem.generated.h"
 
 namespace Jafg
@@ -16,7 +16,7 @@ struct LSubsystemCollection;
  * To create your own subsystem lifetime:
  */
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
-class ENGINE_API JSubsystem : public JObject
+class ENGINE_API JSubsystem : public Private::JObjectBase
 {
     friend LSubsystemCollection;
 
@@ -37,8 +37,14 @@ protected:
      *       soon after.
      */
     virtual bool ShouldCreateSubsystem(const Private::LObjectContext* InOuter) const { return true; }
-    virtual void Initialize(LSubsystemCollection& Collection)                        { }
-    virtual void TearDown()                                                          { }
+    virtual void Initialize(LSubsystemCollection& Collection);
+    virtual void TearDown() { }
+
+    FORCEINLINE bool IsInitialized() const { return this->bIsInitialized; }
+
+private:
+
+    bool bIsInitialized = false;
 };
 
 } /* Namespace Jafg */

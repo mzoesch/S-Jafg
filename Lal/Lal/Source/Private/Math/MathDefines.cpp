@@ -119,15 +119,23 @@ template<> const LInt64Vector LInt64Vector::UnitVectorZ             { LInt64Vect
 
 template<> const LInt8Vector2 LInt8Vector2::ZeroVector              { LInt8Vector2(0, 0) };
 template<> const LInt8Vector2 LInt8Vector2::OneVector               { LInt8Vector2(1, 1) };
+template<> const LuInt8Vector2 LuInt8Vector2::ZeroVector            { LuInt8Vector2(0u, 0u) };
+template<> const LuInt8Vector2 LuInt8Vector2::OneVector             { LuInt8Vector2(1u, 1u) };
 
 template<> const LInt16Vector2 LInt16Vector2::ZeroVector            { LInt16Vector2(0, 0) };
 template<> const LInt16Vector2 LInt16Vector2::OneVector             { LInt16Vector2(1, 1) };
+template<> const LuInt16Vector2 LuInt16Vector2::ZeroVector          { LuInt16Vector2(0u, 0u) };
+template<> const LuInt16Vector2 LuInt16Vector2::OneVector           { LuInt16Vector2(1u, 1u) };
 
 template<> const LInt32Vector2 LInt32Vector2::ZeroVector            { LInt32Vector2(0, 0) };
 template<> const LInt32Vector2 LInt32Vector2::OneVector             { LInt32Vector2(1, 1) };
+template<> const LuInt32Vector2 LuInt32Vector2::ZeroVector          { LuInt32Vector2(0u, 0u) };
+template<> const LuInt32Vector2 LuInt32Vector2::OneVector           { LuInt32Vector2(1u, 1u) };
 
 template<> const LInt64Vector2 LInt64Vector2::ZeroVector            { LInt64Vector2(0, 0) };
 template<> const LInt64Vector2 LInt64Vector2::OneVector             { LInt64Vector2(1, 1) };
+template<> const LuInt64Vector2 LuInt64Vector2::ZeroVector          { LuInt64Vector2(0u, 0u) };
+template<> const LuInt64Vector2 LuInt64Vector2::OneVector           { LuInt64Vector2(1u, 1u) };
 
 template<> const LRotatorF LRotatorF::ZeroRotator                   { LRotatorF( 0.0f, 0.0f, 0.0f) };
 template<> const LRotatorF LRotatorF::OneRotator                    { LRotatorF( 1.0f, 1.0f, 1.0f) };

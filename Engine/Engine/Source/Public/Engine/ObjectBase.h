@@ -77,8 +77,8 @@ public:
      * Gets the context that this object lives in and shares its lifetime with it.
      * Lifetimes can be abridged by calling either #MarkAsGarbage or #KillYourSelfNow.
      */
-    FORCEINLINE virtual auto GetContext() const -> ::Jafg::Private::LObjectContext* { return this->Outer; }
-    FORCEINLINE virtual auto HasContext() const -> bool { return this->Outer != nullptr; }
+    FORCEINLINE virtual auto GetOuter() const -> ::Jafg::Private::LObjectContext* { return this->Outer; }
+    FORCEINLINE virtual auto HasOuter() const -> bool { return this->Outer != nullptr; }
 
     /**
      * The first thing that is being called after this object is being created.

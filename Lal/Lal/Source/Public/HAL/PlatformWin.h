@@ -34,6 +34,22 @@
 // Compiler config
 
 /**
+ * Warning C4002 (compiler warning level 1)   ==>   Raise to error:
+ * too many arguments for function-like macro invocation 'identifier'
+ *
+ * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4002?view=msvc-170
+ */
+#pragma warning(error: 4002)
+
+/**
+ * Warning C4003 (compiler warning level 1)   ===>   Raise to error:
+ * not enough arguments for function-like macro invocation 'identifier'
+ *
+ * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4003?view=msvc-170
+ */
+#pragma warning(error: 4003)
+
+/**
  * Warning C4172 (compiler warning level 1)   ===>   Raise to error:
  * returning address of local variable or temporary: function.
  *

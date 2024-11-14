@@ -5,8 +5,6 @@
 #include "Platform/PlatformMisc.h"
 #include "Widgets/Viewport.h"
 
-DECLARE_INLINE_LOG_CATEGORY(LogSurface, Trace)
-
 void Jafg::LSurface::Initialize()
 {
     PlatformMisc::InvalidateCachedValues();

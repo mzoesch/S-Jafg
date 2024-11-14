@@ -9,3 +9,4 @@
 #include "TestFunctors.h"
 #include "TestMaths.h"
 #include "TestStrings.h"
+#include "TestPath.h"

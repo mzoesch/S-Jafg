@@ -15,7 +15,7 @@ void Jafg::JObject::BeginLife()
         {
             if (Context->ChildWorld)
             {
-                if (static_cast<void*>(Context->ChildWorld) == static_cast<void*>(this->GetContext()))
+                if (static_cast<void*>(Context->ChildWorld) == static_cast<void*>(this->GetOuter()))
                 {
                     this->CastedOuter = Context->ChildWorld;
                     return;

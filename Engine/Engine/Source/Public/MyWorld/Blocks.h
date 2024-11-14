@@ -8,6 +8,7 @@ namespace Blocks
 {
 
 const std::vector<Block> blocks{
+    Block(0, 0), // Null block
     Block(0, 0), // Air block
     Block(0, 0), // Dirt block
 
@@ -20,10 +21,11 @@ const std::vector<Block> blocks{
 
 enum BLOCKS
 {
-    AIR = 0,
-    DIRT_BLOCK = 1,
-    GRASS_BLOCK = 2,
-    STONE_BLOCK = 3
+    Null = 0,
+    AIR = 1,
+    DIRT_BLOCK = 2,
+    GRASS_BLOCK = 3,
+    STONE_BLOCK = 4
 };
 
 }

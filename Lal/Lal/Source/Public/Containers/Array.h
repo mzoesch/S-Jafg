@@ -71,7 +71,7 @@ public:
     template <bool Condition = IsDynamic()>
     FORCEINLINE auto Add(const T& InElement)  noexcept -> TEnableIf<Condition, Self&>;
     template <bool Condition = IsDynamic()>
-    FORCEINLINE auto Add(const T&& InElement) noexcept -> TEnableIf<Condition, Self&>;
+    FORCEINLINE auto Add(      T&& InElement) noexcept -> TEnableIf<Condition, Self&>;
 
     /** Peeks at the last element in the array. Returns nullptr if the array is empty. */
     FORCEINLINE auto Peek()                      noexcept ->       T*;
@@ -169,6 +169,12 @@ public:
      * allocated on the heap.
      */
     FORCEINLINE auto Empty() noexcept -> void;
+
+    /**
+     * Resizes the array to the new size. The new size has to be less or equal to the current size.
+     * Use reserve if you need to grow the array.
+     */
+    FORCEINLINE auto Resize(const int32 InSize, const bool bInAllowShrinking = true) noexcept -> void;
 
     /** @return True, if the array has to be reallocated to push / emplace a new element. */
     FORCEINLINE auto IsCapped()                           const noexcept -> bool;
@@ -426,7 +432,7 @@ typename TArray<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf
     Condition,
     TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
 >
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Add(const T&& InElement) noexcept
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Add(T&& InElement) noexcept
 {
     if (this->IsCapped())
     {
@@ -894,6 +900,18 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Empty() noexcept
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Resize(const int32 InSize, const bool bInAllowShrinking) noexcept
+{
+#if CHECK_CONTAINER_BOUNDS
+    check( InSize >= 0 && InSize <= this->Size )
+#endif /* CHECK_CONTAINER_BOUNDS */
+
+    this->Size = InSize;
+
+    return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::IsCapped() const noexcept
 {
     if constexpr (std::is_unsigned_v<SizeType>)
@@ -910,7 +928,7 @@ bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::IsCapped() const noexc
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::IsValidIndex(const SizeType InIndex) const noexcept
 {
-    return InIndex > -1 && InIndex < this->Size;
+    return InIndex > INDEX_NONE && InIndex < this->Size;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
@@ -948,6 +966,11 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator=(const Self& InOth
         checkNoEntry() // We probably want to do some logging here. But we don't have a logger yet.
         return *this;
     }
+
+    /*
+     * TODO We can reuse the memory maybe if the other is small enough?
+     *      Or try to grow the memory if the other is bigger?
+     */
 
     if (this->Data)
     {

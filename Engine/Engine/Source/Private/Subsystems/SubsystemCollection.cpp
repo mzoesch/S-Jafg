@@ -34,6 +34,12 @@ void Jafg::LSubsystemCollection::InitializeSubsystems()
 
         checkSlow( Subsystem )
 
+        if (Subsystem->IsInitialized())
+        {
+            ++i;
+            continue;
+        }
+
         if (Subsystem->ShouldCreateSubsystem(this->Outer))
         {
             LOG_TRACE(LogSubsystemCollection, "Initializing subsystem {}.", Subsystem->GetFullName())
@@ -61,6 +67,31 @@ void Jafg::LSubsystemCollection::TearDownSubsystems()
     }
 
     this->SubsystemInstances.Empty();
+
+    return;
+}
+
+void Jafg::LSubsystemCollection::InitializeDependency(const LObjectClass* InStaticClass)
+{
+    JSubsystem* Subsystem = this->GetCheckedSubsystem(InStaticClass);
+
+    if (Subsystem->IsInitialized())
+    {
+        return;
+    }
+
+    if (Subsystem->ShouldCreateSubsystem(this->Outer) == false)
+    {
+        LOG_WARNING(
+            LogJafgInternal,
+            "Wanted to initialize dependent subsystem {} but it does not want to be created.",
+            Subsystem->GetFullName()
+        )
+        return;
+    }
+
+    LOG_TRACE(LogSubsystemCollection, "Initializing subsystem {}.", Subsystem->GetFullName())
+    Subsystem->Initialize(*this);
 
     return;
 }

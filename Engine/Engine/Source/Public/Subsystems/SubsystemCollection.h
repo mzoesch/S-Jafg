@@ -36,6 +36,15 @@ struct LSubsystemCollection final
     ENGINE_API void InitializeSubsystems();
     ENGINE_API void TearDownSubsystems();
 
+    /**
+     * Try to initialize a subsystem of the given class. The target subsystem must be in this collection where this
+     * this method was called on.
+     * Use this method if you must preserve the order of initialization of subsystems in a given collection.
+     */
+    ENGINE_API void InitializeDependency(const LObjectClass* InStaticClass);
+    template <typename TSubsystem>
+    FORCEINLINE void InitializeDependency() { this->InitializeDependency(TSubsystem::StaticClass()); }
+
     template <typename Predicate>
     FORCEINLINE void ForEachSubsystem(Predicate&& InPredicate)
     {

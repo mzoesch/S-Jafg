@@ -36,12 +36,16 @@ public:
     ENGINE_API auto GetEngine() const -> const LEngine*;
 
     template <typename T>
-    FORCEINLINE auto GetSubsystem() const -> JApplicationInstanceSubsystem* { return CheckedStaticCast<T, true>(this->GetSubsystem(T::StaticClass())); }
+    FORCEINLINE auto GetSubsystem() -> T* { return CheckedStaticCast<T, true>(this->GetSubsystem(T::StaticClass())); }
     template <typename T>
-    FORCEINLINE auto GetCheckedSubsystem() const -> JApplicationInstanceSubsystem* { return CheckedStaticCast<T>(this->GetCheckedSubsystem(T::StaticClass())); }
-    ENGINE_API auto GetSubsystem(const LObjectClass* InStaticClass)       ->       JApplicationInstanceSubsystem*;
+    FORCEINLINE auto GetSubsystem() const -> const T* { return CheckedStaticCast<T, true>(this->GetSubsystem(T::StaticClass())); }
+    template <typename T>
+    FORCEINLINE auto GetCheckedSubsystem() -> T* { return CheckedStaticCast<T>(this->GetCheckedSubsystem(T::StaticClass())); }
+    template <typename T>
+    FORCEINLINE auto GetCheckedSubsystem() const -> const T* { return CheckedStaticCast<T>(this->GetCheckedSubsystem(T::StaticClass())); }
+    ENGINE_API auto GetSubsystem(const LObjectClass* InStaticClass) -> JApplicationInstanceSubsystem*;
     ENGINE_API auto GetSubsystem(const LObjectClass* InStaticClass) const -> const JApplicationInstanceSubsystem*;
-    ENGINE_API auto GetCheckedSubsystem(const LObjectClass* InStaticClass)       ->       JApplicationInstanceSubsystem*;
+    ENGINE_API auto GetCheckedSubsystem(const LObjectClass* InStaticClass) -> JApplicationInstanceSubsystem*;
     ENGINE_API auto GetCheckedSubsystem(const LObjectClass* InStaticClass) const -> const JApplicationInstanceSubsystem*;
 
 private:

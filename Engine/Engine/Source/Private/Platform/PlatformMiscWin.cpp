@@ -1,10 +1,11 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
-#include "Widgets/InterfaceTypes.h"
 #if PLATFORM_WINDOWS
 
+#include "Widgets/InterfaceTypes.h"
 #include "Platform/PlatformMisc.h"
+#include "System/Path.h"
 
 #include <cfgmgr32.h> /* MAX_DEVICE_ID_LEN */
 
@@ -47,7 +48,6 @@ NOINLINE PhyMonitorSizes FindMonitorSizesFromEdid()
     // was used instead of "offsetof(SP_DEVICE_INTERFACE_DETAIL_DATA, DevicePath)").
     wchar_t devPathBuffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + (128 * sizeof(wchar_t))];
 
-    // Loop over the device interfaces using the SetupAPI
     DWORD MonitorIndex = 0;
     SP_DEVICE_INTERFACE_DATA DevInfo;
     DevInfo.cbSize = sizeof(DevInfo);
@@ -239,6 +239,27 @@ BOOL CALLBACK MonitorEnumProc(const HMONITOR HMonitor, HDC HdcMonitor, LPRECT Lp
 }
 
 } /* ~Namespace <Anonymous> */
+
+Jafg::LSimpleString Jafg::PlatformMisc::GetEngineRootDirImpl()
+{
+    LPath RealRootDir = PlatformMisc::GetRealEngineRootDir();
+    RealRootDir.PopSubPaths(4);
+    return RealRootDir.MoveOut();
+}
+
+Jafg::LSimpleString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
+{
+    TCHAR Buffer[PLATFORM_MAX_PATH] = { 0 };
+    GetModuleFileName(nullptr, Buffer, PLATFORM_MAX_PATH);
+    std::wstring::size_type Position = std::wstring(Buffer).find_last_of(LITERAL_WIDE("\\/"));
+    std::wstring WideEngineRootDir = std::wstring(Buffer).substr(0, Position);
+    LStringLegacy EngineRootDir = LGenericPlatformTypes::Ws2S(WideEngineRootDir);
+
+    Jafg::LPath Path = Jafg::LPath(EngineRootDir.c_str());
+    Path.Normalize();
+
+    return { Path.MoveOut() };
+}
 
 int32 Jafg::PlatformMisc::GetNumberOfPhysicalViewports()
 {

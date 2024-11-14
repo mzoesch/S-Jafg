@@ -296,3 +296,59 @@ TEST_CASE(AsciiArrayCopyingAndMoving, "Lal.Strings")
 
     return;
 }
+
+TEST_CASE(AsciiStringStartsWith, "Lal.Strings")
+{
+    using namespace Jafg;
+
+    LAsciiString MyStr = "";
+    CHECK_TRUE(  "Empty string.", MyStr.StartsWith("")      )
+    CHECK_TRUE(  "Empty string.", MyStr.StartsWith("\0")    )
+    CHECK_FALSE( "Empty string.", MyStr.StartsWith("A")     )
+
+    MyStr += "";
+    CHECK_EQUALS( "Empty string.", MyStr, ""                 )
+    CHECK_TRUE(   "Empty string.", MyStr.StartsWith("")      )
+    CHECK_TRUE(   "Empty string.", MyStr.StartsWith("\0")    )
+    CHECK_FALSE(  "Empty string.", MyStr.StartsWith("A")     )
+
+    MyStr += "A";
+    CHECK_EQUALS( "A string.", MyStr, "A"                )
+    CHECK_FALSE(  "A string.", MyStr.StartsWith("")      )
+    CHECK_FALSE(  "A string.", MyStr.StartsWith("\0")    )
+    CHECK_TRUE(   "A string.", MyStr.StartsWith("A")     )
+    CHECK_FALSE(  "A string.", MyStr.StartsWith("AB")    )
+    CHECK_FALSE(  "A string.", MyStr.StartsWith("B")     )
+
+    MyStr += "B";
+    CHECK_EQUALS( "AB string.", MyStr, "AB"              )
+    CHECK_FALSE(  "AB string.", MyStr.StartsWith("")     )
+    CHECK_FALSE(  "AB string.", MyStr.StartsWith("\0")   )
+    CHECK_TRUE(   "AB string.", MyStr.StartsWith("A")    )
+    CHECK_TRUE(   "AB string.", MyStr.StartsWith("AB")   )
+    CHECK_FALSE(  "AB string.", MyStr.StartsWith("ABC")  )
+    CHECK_FALSE(  "AB string.", MyStr.StartsWith("B")    )
+
+    MyStr += "C";
+    CHECK_EQUALS( "ABC string.", MyStr, "ABC"            )
+    CHECK_FALSE(  "ABC string.", MyStr.StartsWith("")    )
+    CHECK_FALSE(  "ABC string.", MyStr.StartsWith("\0")  )
+    CHECK_TRUE(   "ABC string.", MyStr.StartsWith("A")   )
+    CHECK_TRUE(   "ABC string.", MyStr.StartsWith("AB")  )
+    CHECK_TRUE(   "ABC string.", MyStr.StartsWith("ABC") )
+    CHECK_FALSE(  "ABC string.", MyStr.StartsWith("ABCD"))
+    CHECK_FALSE(  "ABC string.", MyStr.StartsWith("B")   )
+
+    MyStr += "D";
+    CHECK_EQUALS( "ABCD string.", MyStr, "ABCD"             )
+    CHECK_FALSE(  "ABCD string.", MyStr.StartsWith("")      )
+    CHECK_FALSE(  "ABCD string.", MyStr.StartsWith("\0")    )
+    CHECK_TRUE(   "ABCD string.", MyStr.StartsWith("A")     )
+    CHECK_TRUE(   "ABCD string.", MyStr.StartsWith("AB")    )
+    CHECK_TRUE(   "ABCD string.", MyStr.StartsWith("ABC")   )
+    CHECK_TRUE(   "ABCD string.", MyStr.StartsWith("ABCD")  )
+    CHECK_FALSE(  "ABCD string.", MyStr.StartsWith("ABCDE") )
+    CHECK_FALSE(  "ABCD string.", MyStr.StartsWith("B")     )
+
+    return;
+}

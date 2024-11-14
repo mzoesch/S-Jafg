@@ -104,6 +104,11 @@ struct LColor final
     static const LColor Yellow;
     static const LColor Cyan;
     static const LColor Magenta;
+
+    FORCEINLINE LSimpleString ToString() const
+    {
+        return LSimpleString::SprintF("RGBA: {} {} {} {}", R, G, B, A);
+    }
 };
 
 } /* ~Namespace Jafg */

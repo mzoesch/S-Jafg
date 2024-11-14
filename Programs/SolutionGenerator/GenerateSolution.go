@@ -272,6 +272,7 @@ func WriteLuaBuildFileBody(handle *os.File) {
 
     WriteLuaBuildFileProjectSpecificSection(&builder)
     WriteLuaBuildFileGeneratedSection(&builder)
+    WriteLuaBuildFileVendorSection(&builder)
 
     WriteWithIndent(&builder, 0, "filter 'files:**.c'\n")
     WriteWithIndent(&builder, 4, "flags {'NoPCH'}\n")
@@ -689,6 +690,29 @@ func WriteLuaBuildFileGeneratedSection(builder *strings.Builder) {
     //WriteWithIndent(builder, 8, "}\n")
     //
     //WriteWithIndent(builder, 0, "group ''\n")
+
+    return
+}
+
+func WriteLuaBuildFileVendorSection(builder *strings.Builder) {
+
+    WriteWithIndent(builder, 0, "group 'Vendor'\n")
+
+    WriteWithIndent(builder, 4, fmt.Sprintf("project '%s'\n", "Vendor"))
+    WriteWithIndent(builder, 8, fmt.Sprintf("location '%s'\n", Shared.VendorIncludeDir))
+    WriteWithIndent(builder, 8, fmt.Sprintf("kind '%s'\n", "None"))
+
+    WriteWithIndent(builder, 8, "files {\n")
+    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.md',\n", Shared.VendorIncludeDir))
+    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.jafgmod',\n", Shared.VendorIncludeDir))
+    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.jafgproj',\n", Shared.VslfDir))
+    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.h',\n", Shared.VendorIncludeDir))
+    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.hpp',\n", Shared.VendorIncludeDir))
+    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.c',\n", Shared.VendorIncludeDir))
+    WriteWithIndent(builder, 12, fmt.Sprintf("'%s/**.cpp',\n", Shared.VendorIncludeDir))
+    WriteWithIndent(builder, 8, "}\n")
+
+    WriteWithIndent(builder, 0, "group ''\n")
 
     return
 }

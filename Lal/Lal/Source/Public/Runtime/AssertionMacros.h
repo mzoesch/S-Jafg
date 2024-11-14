@@ -233,7 +233,7 @@
 #endif /* IN_SHIPPING */
 
 /**
- * When not in shipping breaks, the program if a debugger is present else the behavior is undefined.
+ * When not in shipping, it breaks the program if a debugger is present else the behavior is undefined.
  */
 #if IN_SHIPPING
     #define CONDITIONALLY_BREAK()

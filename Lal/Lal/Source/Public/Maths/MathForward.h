@@ -45,10 +45,15 @@ using LInt8Vector       = TIntVector<int8>;
 using LInt16Vector      = TIntVector<int16>;
 using LInt32Vector      = TIntVector<int32>;
 using LInt64Vector      = TIntVector<int64>;
+
 using LInt8Vector2      = TIntVector2<int8>;
 using LInt16Vector2     = TIntVector2<int16>;
 using LInt32Vector2     = TIntVector2<int32>;
 using LInt64Vector2     = TIntVector2<int64>;
+using LuInt8Vector2     = TIntVector2<uint8>;
+using LuInt16Vector2    = TIntVector2<uint16>;
+using LuInt32Vector2    = TIntVector2<uint32>;
+using LuInt64Vector2    = TIntVector2<uint64>;
 
 using LRotatorF         = TRotator<float>;
 using LRotatorD         = TRotator<double>;
@@ -84,5 +89,11 @@ typedef LRotatorF        LRotator;
 typedef LPlaneF          LPlane;
 typedef LMatrixF         LMatrix;
 typedef LTransformF      LTransform;
+typedef LuInt8Vector2    LSize8;
+typedef LuInt16Vector2   LSize16;
+typedef LuInt32Vector2   LSize32;
+typedef LuInt64Vector2   LSize64;
+typedef LSize32          LSize;
+typedef LInt32Vector2    LPoint;
 
 } /* ~Namespace Jafg */

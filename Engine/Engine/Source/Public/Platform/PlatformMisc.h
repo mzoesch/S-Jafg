@@ -4,8 +4,6 @@
 
 #include "CoreAfx.h"
 
-DECLARE_INLINE_LOG_CATEGORY(LogPlatformMisc, Trace)
-
 namespace Jafg
 {
 
@@ -45,6 +43,21 @@ namespace PlatformMisc
 {
 
 /**
+ * The engine root dir that is currently being used. This might not be the real engine root dir as the runtime
+ * console application might not be inside this directory.
+ * In shipped builds, this is the same as GetRealEngineRootDir().
+ */
+ENGINE_API LSimpleString GetEngineRootDir();
+ENGINE_API LSimpleString GetEngineRootDirImpl();
+
+/**
+ * The real engine root dir where the runtime console application is located and running from.
+ * In shipped builds, this is the same as GetEngineRootDir().
+ */
+ENGINE_API LSimpleString GetRealEngineRootDir();
+ENGINE_API LSimpleString GetRealEngineRootDirImpl();
+
+/**
  * Invalidate all cached values and reinitialize them inside GPlatformMisc.
  */
 ENGINE_API void InvalidateCachedValues();
@@ -71,6 +84,8 @@ struct ENGINE_API LPlatformMisc
 
     int32 NumberOfPhysicalViewports = INDEX_NONE;
     TdhArray<LPhysicalViewport> PhysicalViewports;
+    LSimpleString EngineRootDir;
+    LSimpleString RealEngineRootDir;
 };
 
 } /* ~Namespace Jafg */

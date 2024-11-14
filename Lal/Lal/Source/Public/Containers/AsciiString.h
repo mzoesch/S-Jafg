@@ -12,17 +12,16 @@ namespace Jafg
  */
 class LAsciiString
 {
+public:
+
     using SizeType = int32;
     /**
      * A rune is a single grapheme represented by a single byte.
      * Said grapheme has to be a valid ascii character.
      */
-    using LRune = uint8;
+    using LRune = LChar;
 
     inline static LRune StringTerminatorRune = '\0';
-    inline static char  StringTerminatorChar = '\0';
-
-public:
 
     FORCEINLINE LAsciiString()                           noexcept;
     FORCEINLINE LAsciiString(LNullptrTy)                 noexcept;
@@ -32,27 +31,27 @@ public:
     FORCEINLINE LAsciiString(      LAsciiString&& Other) noexcept;
     FORCEINLINE LAsciiString(const LAsciiString&& Other) noexcept = delete;
     FORCEINLINE LAsciiString(const LRune* Other)         noexcept;
-    FORCEINLINE LAsciiString(const char* Other)          noexcept;
     FORCEINLINE explicit LAsciiString(const int32  Number)    noexcept;
     FORCEINLINE explicit LAsciiString(const int64  Number)    noexcept;
     FORCEINLINE explicit LAsciiString(const uint32 Number)    noexcept;
     FORCEINLINE explicit LAsciiString(const uint64 Number)    noexcept;
 
-    FORCEINLINE auto operator=(const char*  Other)         noexcept -> LAsciiString&;
-    FORCEINLINE auto operator=(const uint8* Other)         noexcept -> LAsciiString&;
+    FORCEINLINE auto operator=(const LRune* Other)         noexcept -> LAsciiString&;
     FORCEINLINE auto operator=(const LAsciiString&  Other) noexcept -> LAsciiString&;
     FORCEINLINE auto operator=(      LAsciiString&& Other) noexcept -> LAsciiString&;
     FORCEINLINE auto operator=(const LAsciiString&& Other) noexcept -> LAsciiString& = delete;
 
-    FORCEINLINE operator       char *()       noexcept = delete;
-    FORCEINLINE operator const char *() const noexcept = delete;
     FORCEINLINE operator       LRune*()       noexcept = delete;
     FORCEINLINE operator const LRune*() const noexcept = delete;
 
     FORCEINLINE ~LAsciiString()                          noexcept = default;
 
-    FORCEINLINE auto Append(const char* Other)         -> void ;
-    FORCEINLINE auto Append(const LAsciiString& Other) -> void ;
+    FORCEINLINE auto Append(const LRune* Other)        -> void;
+    FORCEINLINE auto Append(const LAsciiString& Other) -> void;
+
+    /** Adds a single rune to the string. */
+    FORCEINLINE auto Add(const LRune  Other) -> void;
+    FORCEINLINE auto Add(const LRune* Other) -> void;
 
     /** Pop the last rune. */
     FORCEINLINE auto Pop(void) -> void;
@@ -80,6 +79,8 @@ public:
     FORCEINLINE auto MoveInto(LAsciiString& Other)       -> void { Other = std::move(*this); return; }
     FORCEINLINE auto MoveFrom(LAsciiString& Other)       -> void { *this = std::move(Other); return; }
 
+    FORCEINLINE auto MoveOut() -> LAsciiString { return std::move(*this); }
+
     /** Get the size of the string in bytes. */
     FORCEINLINE auto GetSize(void) const -> SizeType { return this->Data.GetSize(); }
     /** Get the number of runes in the string (that excludes the null-terminator). */
@@ -89,39 +90,42 @@ public:
     FORCEINLINE auto ToC()   const -> const char * ;
     FORCEINLINE auto ToPtr() const -> const LRune* ;
 
-    FORCEINLINE auto GetRuneAt(const SizeType Index) const -> LRune { return this->Data[Index];                    }
-    FORCEINLINE auto GetCharAt(const SizeType Index) const -> char  { return static_cast<char>(this->Data[Index]); }
+    FORCEINLINE auto GetRuneAt(const SizeType Index)  const -> LRune { return this->Data[Index];                    }
+    FORCEINLINE auto GetCharAt(const SizeType Index)  const -> char  { return static_cast<char>(this->Data[Index]); }
     FORCEINLINE auto operator[](const SizeType Index)       ->       LRune& { return this->Data[Index]; }
     FORCEINLINE auto operator[](const SizeType Index) const -> const LRune& { return this->Data[Index]; }
 
     FORCEINLINE auto operator==(const LAsciiString& Other) const -> bool { return this->Data.IsDataEqual(Other.Data);   }
     FORCEINLINE auto operator!=(const LAsciiString& Other) const -> bool { return this->Data.IsDataUnequal(Other.Data); }
-    FORCEINLINE auto operator <(const LAsciiString& Other) const -> bool { return this->Data  < Other.Data;             }
-    FORCEINLINE auto operator >(const LAsciiString& Other) const -> bool { return this->Data  > Other.Data;             }
-    FORCEINLINE auto operator<=(const LAsciiString& Other) const -> bool { return this->Data <= Other.Data;             }
-    FORCEINLINE auto operator>=(const LAsciiString& Other) const -> bool { return this->Data >= Other.Data;             }
+    FORCEINLINE auto operator <(const LAsciiString& Other) const -> bool { return *this < Other.ToPtr();                }
+    FORCEINLINE auto operator >(const LAsciiString& Other) const -> bool { return *this > Other.ToPtr();                }
+    FORCEINLINE auto operator<=(const LAsciiString& Other) const -> bool { return *this <= Other.ToPtr();               }
+    FORCEINLINE auto operator>=(const LAsciiString& Other) const -> bool { return *this >= Other.ToPtr();               }
     FORCEINLINE auto operator+=(const LAsciiString& Other)       -> LAsciiString&;
     FORCEINLINE auto operator-=(const LAsciiString& Other)       -> LAsciiString& = delete;
 
     FORCEINLINE auto operator==(LNullptrTy)         const -> bool;
-    FORCEINLINE auto operator==(const char * Other) const -> bool;
     FORCEINLINE auto operator==(const LRune* Other) const -> bool;
-    FORCEINLINE auto operator!=(const char * Other) const -> bool { return !(*this == Other); }
     FORCEINLINE auto operator!=(const LRune* Other) const -> bool { return !(*this == Other); }
-    FORCEINLINE auto operator <(const char * Other) const -> bool;
     FORCEINLINE auto operator <(const LRune* Other) const -> bool;
-    FORCEINLINE auto operator >(const char * Other) const -> bool;
     FORCEINLINE auto operator >(const LRune* Other) const -> bool;
-    FORCEINLINE auto operator<=(const char * Other) const -> bool { return !(*this > Other); }
     FORCEINLINE auto operator<=(const LRune* Other) const -> bool { return !(*this > Other); }
-    FORCEINLINE auto operator>=(const char * Other) const -> bool { return !(*this < Other); }
     FORCEINLINE auto operator>=(const LRune* Other) const -> bool { return !(*this < Other); }
-    FORCEINLINE auto operator+=(const char * Other)       -> LAsciiString& { this->Append(Other); return *this; }
     FORCEINLINE auto operator+=(const LRune* Other)       -> LAsciiString& { this->Append(Other); return *this; }
 
     FORCEINLINE auto Equals(const LAsciiString& Other) const -> bool { return *this == Other; }
-    FORCEINLINE auto Equals(const char* Other)         const -> bool { return *this == Other; }
     FORCEINLINE auto Equals(const LRune* Other)        const -> bool { return *this == Other; }
+
+    FORCEINLINE bool StartsWith(const LRune* InOther) const;
+    FORCEINLINE bool StartsWith(const LAsciiString& InOther) const;
+
+    FORCEINLINE auto Replace(const LChar Old, const LChar New) -> void;
+    FORCEINLINE auto FindFirst(const LChar InChar) const -> int32;
+    FORCEINLINE auto FindSecond(const LChar InChar) const -> int32;
+    FORCEINLINE auto FindLast(const LChar InChar) const -> int32;
+    FORCEINLINE auto InlineCut(const int32 InIndex) -> void;
+    FORCEINLINE auto InlineSub(const int32 InIndex, const int32 InCount) -> void;
+    FORCEINLINE auto Count(const LChar InChar) const -> int32;
 
     /** Private iterator functions for range-based loops. Do not use these directly. */
     FORCEINLINE auto begin()       noexcept -> Iterator<LRune>       ;
@@ -205,6 +209,11 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(LAsciiString&& Other) noexcept
 
 FORCEINLINE Jafg::LAsciiString::LAsciiString(const LRune* Other) noexcept
 {
+    if (*Other == LAsciiString::StringTerminatorRune)
+    {
+        return;
+    }
+
     this->Data.Reset(1);
 
     while (true)
@@ -212,29 +221,6 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const LRune* Other) noexcept
         this->Data.Add(*Other);
 
         if (*Other++ == LAsciiString::StringTerminatorRune)
-        {
-            break;
-        }
-
-        continue;
-    }
-
-#if CHECK_STRING_VALIDITY
-    this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
-
-    return;
-}
-
-FORCEINLINE Jafg::LAsciiString::LAsciiString(const char* Other) noexcept
-{
-    this->Data.Reset(1);
-
-    while (true)
-    {
-        this->Data.Add(*Other);
-
-        if (*Other++ == LAsciiString::StringTerminatorChar)
         {
             break;
         }
@@ -294,27 +280,14 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const uint64 Number) noexcept
     return;
 }
 
-FORCEINLINE Jafg::LAsciiString& Jafg::LAsciiString::operator=(const char* Other) noexcept
+FORCEINLINE Jafg::LAsciiString& Jafg::LAsciiString::operator=(const LRune* Other) noexcept
 {
-    this->Data.Reset(1);
-
-    while (true)
+    if (*Other == LAsciiString::StringTerminatorRune)
     {
-        this->Data.Add(*Other);
-
-        if (*Other++ == LAsciiString::StringTerminatorChar)
-        {
-            break;
-        }
-
-        continue;
+        this->Data.Empty();
+        return *this;
     }
 
-    return *this;
-}
-
-FORCEINLINE Jafg::LAsciiString& Jafg::LAsciiString::operator=(const uint8* Other) noexcept
-{
     this->Data.Reset(1);
 
     while (true)
@@ -355,7 +328,7 @@ FORCEINLINE Jafg::LAsciiString& Jafg::LAsciiString::operator=(LAsciiString&& Oth
     return *this;
 }
 
-FORCEINLINE void Jafg::LAsciiString::Append(const char* Other)
+FORCEINLINE void Jafg::LAsciiString::Append(const LRune* Other)
 {
 #if CHECK_STRING_VALIDITY
     this->EnsureValidState();
@@ -371,7 +344,7 @@ FORCEINLINE void Jafg::LAsciiString::Append(const char* Other)
     {
         this->Data.Add(*Other);
 
-        if (*Other++ == LAsciiString::StringTerminatorChar)
+        if (*Other++ == LAsciiString::StringTerminatorRune)
         {
             break;
         }
@@ -399,6 +372,36 @@ FORCEINLINE void Jafg::LAsciiString::Append(const LAsciiString& Other)
     }
 
     this->Data.Append(Other.Data);
+
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+
+    return;
+}
+
+void Jafg::LAsciiString::Add(const LRune Other)
+{
+    this->Add(&Other);
+    return;
+}
+
+void Jafg::LAsciiString::Add(const LRune* Other)
+{
+    check( Other )
+    if (*Other == LAsciiString::StringTerminatorRune)
+    {
+        return;
+    }
+
+    if (this->Data.IsData())
+    {
+        /* Null-terminator. */
+        this->Data.Pop();
+    }
+
+    this->Data.Add(*Other);
+    this->Data.Add(LAsciiString::StringTerminatorRune);
 
 #if CHECK_STRING_VALIDITY
     this->EnsureValidState();
@@ -463,14 +466,18 @@ FORCEINLINE void Jafg::LAsciiString::Empty()
     return;
 }
 
-FORCEINLINE const char* Jafg::LAsciiString::ToC() const
+FORCEINLINE const Jafg::LAsciiString::LRune* Jafg::LAsciiString::ToC() const
 {
+    /*
+     * Platform specific conversion - currently not implemented.
+     */
+
     if (this->Data.IsData())
     {
         return reinterpret_cast<const char*>(this->Data.GetData());
     }
 
-    return &LAsciiString::StringTerminatorChar;
+    return &LAsciiString::StringTerminatorRune;
 }
 
 FORCEINLINE const Jafg::LAsciiString::LRune* Jafg::LAsciiString::ToPtr() const
@@ -504,28 +511,6 @@ FORCEINLINE bool Jafg::LAsciiString::operator==(LNullptrTy) const
     return this->Data.IsData();
 }
 
-FORCEINLINE bool Jafg::LAsciiString::operator==(const char* Other) const
-{
-    checkSlow( Other != nullptr )
-
-    if (this->Data.IsData())
-    {
-        for (const LRune Rune : this->Data)
-        {
-            if (Rune != *Other++)
-            {
-                return false;
-            }
-
-            continue;
-        }
-
-        return true;
-    }
-
-    return *Other == LAsciiString::StringTerminatorChar;
-}
-
 FORCEINLINE bool Jafg::LAsciiString::operator==(const LRune* Other) const
 {
     checkSlow( Other != nullptr )
@@ -546,40 +531,6 @@ FORCEINLINE bool Jafg::LAsciiString::operator==(const LRune* Other) const
     }
 
     return *Other == LAsciiString::StringTerminatorRune;
-}
-
-FORCEINLINE bool Jafg::LAsciiString::operator<(const char* Other) const
-{
-    checkSlow( Other != nullptr )
-
-    if (this->Data.IsData() == false)
-    {
-        return *Other != LAsciiString::StringTerminatorChar;
-    }
-
-    for (const LRune Rune : this->Data)
-    {
-        if (*Other == LAsciiString::StringTerminatorChar)
-        {
-            return false;
-        }
-
-        if (Rune < *Other)
-        {
-            return true;
-        }
-
-        if (Rune > *Other)
-        {
-            return false;
-        }
-
-        ++Other;
-
-        continue;
-    }
-
-    return true;
 }
 
 FORCEINLINE bool Jafg::LAsciiString::operator<(const LRune* Other) const
@@ -616,38 +567,6 @@ FORCEINLINE bool Jafg::LAsciiString::operator<(const LRune* Other) const
     return true;
 }
 
-FORCEINLINE bool Jafg::LAsciiString::operator>(const char* Other) const
-{
-    if (this->Data.IsData() == false)
-    {
-        return false;
-    }
-
-    for (const LRune Rune : this->Data)
-    {
-        if (*Other == LAsciiString::StringTerminatorChar)
-        {
-            return Rune != LAsciiString::StringTerminatorRune;
-        }
-
-        if (Rune > *Other)
-        {
-            return true;
-        }
-
-        if (Rune < *Other)
-        {
-            return false;
-        }
-
-        ++Other;
-
-        continue;
-    }
-
-    return false;
-}
-
 FORCEINLINE bool Jafg::LAsciiString::operator>(const LRune* Other) const
 {
     if (this->Data.IsData() == false)
@@ -678,6 +597,177 @@ FORCEINLINE bool Jafg::LAsciiString::operator>(const LRune* Other) const
     }
 
     return false;
+}
+
+inline bool Jafg::LAsciiString::StartsWith(const LRune* InOther) const
+{
+    if (*InOther == LAsciiString::StringTerminatorRune)
+    {
+        return *this->Peek() == *InOther;
+    }
+
+    int32 Cursor = 0;
+    while (*InOther != LAsciiString::StringTerminatorRune)
+    {
+        if (this->GetRuneCount() <= Cursor)
+        {
+            return false;
+        }
+
+        if (this->Data[Cursor++] != *InOther)
+        {
+            return false;
+        }
+
+        ++InOther;
+
+        continue;
+    }
+
+    return Cursor <= this->GetSize();
+}
+
+inline bool Jafg::LAsciiString::StartsWith(const LAsciiString& InOther) const
+{
+    return this->StartsWith(InOther.ToPtr());
+}
+
+inline void Jafg::LAsciiString::Replace(const LChar Old, const LChar New)
+{
+    for (LRune& Rune : this->Data)
+    {
+        if (Rune == Old)
+        {
+            Rune = New;
+        }
+
+        continue;
+    }
+
+    return;
+}
+
+FORCEINLINE auto Jafg::LAsciiString::FindFirst(const LChar InChar) const -> int32
+{
+    if (this->Data.IsData() == false)
+    {
+        return INDEX_NONE;
+    }
+
+    for (int32 Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Data[Index] == InChar)
+        {
+            return Index;
+        }
+
+        continue;
+    }
+
+    return INDEX_NONE;
+}
+
+FORCEINLINE int32 Jafg::LAsciiString::FindSecond(const LChar InChar) const
+{
+    if (this->Data.IsData() == false)
+    {
+        return INDEX_NONE;
+    }
+
+    bool Found = false;
+
+    for (int32 Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Data[Index] == InChar)
+        {
+            if (Found)
+            {
+                return Index;
+            }
+
+            Found = true;
+        }
+
+        continue;
+    }
+
+    return INDEX_NONE;
+}
+
+FORCEINLINE int32 Jafg::LAsciiString::FindLast(const LChar InChar) const
+{
+    if (this->Data.IsData() == false)
+    {
+        return INDEX_NONE;
+    }
+
+    for (int32 Index = this->GetSize() - 1; Index >= 0; --Index)
+    {
+        if (this->Data[Index] == InChar)
+        {
+            return Index;
+        }
+
+        continue;
+    }
+
+    return INDEX_NONE;
+}
+
+FORCEINLINE void Jafg::LAsciiString::InlineCut(const int32 InIndex)
+{
+    check( this->Data.IsValidIndex(InIndex) )
+
+    this->Data.Resize(InIndex + 1);
+    this->Data.Add(LAsciiString::StringTerminatorRune);
+
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+
+    return;
+}
+
+FORCEINLINE void Jafg::LAsciiString::InlineSub(const int32 InIndex, const int32 InCount)
+{
+    check( this->Data.IsValidIndex(InIndex - 1) )
+    check( this->Data.IsValidIndex(InIndex + InCount - 1) )
+    check( InCount >= 0 )
+
+    LAsciiString Sub;
+    Sub.Reserve(InCount + 1);
+    for (int32 i = InIndex; i < InIndex + InCount; ++i)
+    {
+        Sub.Data.Add(this->Data[i]);
+    }
+    check( *Sub.Data.Peek() != LAsciiString::StringTerminatorRune )
+    check( Sub.Data.GetSize() == InCount )
+    Sub.Data.Add(LAsciiString::StringTerminatorRune);
+
+    this->Empty();
+    *this = std::move(Sub);
+
+    check( Sub.GetSize() == 0 )
+    check( Sub.GetRuneCount() == 0 )
+    check( Sub.Data.GetCapacity() == 0 )
+
+    return;
+}
+
+FORCEINLINE int32 Jafg::LAsciiString::Count(const LChar InChar) const
+{
+    int32 Count = 0;
+    for (const LRune Rune : this->Data)
+    {
+        if (Rune == InChar)
+        {
+            ++Count;
+        }
+
+        continue;
+    }
+
+    return Count;
 }
 
 FORCEINLINE auto Jafg::LAsciiString::begin() noexcept -> Iterator<LRune>

@@ -102,6 +102,8 @@ ENGINE_API void MakeDeferredObjectFinal(Private::JObjectBase* InObject);
  */
 template <typename TObj>
 FORCEINLINE auto DynamicCast(Private::JObjectBase* InObject) -> TObj*;
+template <typename TObj>
+FORCEINLINE auto DynamicCast(const Private::JObjectBase* InObject) -> const TObj*;
 
 /**
  * Only checks if the object can be casted if DO_CHECKS is true. If the object fails to cast to the
@@ -115,6 +117,8 @@ FORCEINLINE auto DynamicCast(Private::JObjectBase* InObject) -> TObj*;
  */
 template <typename TObj, bool bAllowForNullptr = false>
 FORCEINLINE auto CheckedStaticCast(Private::JObjectBase* InObject) -> TObj*;
+template <typename TObj, bool bAllowForNullptr = false>
+FORCEINLINE auto CheckedStaticCast(const Private::JObjectBase* InObject) -> const TObj*;
 
 /** @return The default package referrer. */
 template <typename TObj>
@@ -124,7 +128,7 @@ FORCEINLINE auto GetDefault() -> const TObj*;
  * @remarks Mutating any members of the referrer will not affect already instantiated objects but only objects that are
  *          created after the referrer has been mutated.
  *          Generally it is bad habit to mutate the default package referrer, and therefore this method should be used
- *          sparingly - or for "singleton" objects.
+ *          sparingly - or for "singleton" like objects.
  */
 template <typename TObj>
 FORCEINLINE auto GetMutableDefault() -> TObj*;
@@ -432,6 +436,12 @@ TObj* DynamicCast(Private::JObjectBase* InObject)
     return nullptr;
 }
 
+template <typename TObj>
+const TObj* DynamicCast(const Private::JObjectBase* InObject)
+{
+    return DynamicCast<TObj>(const_cast<Private::JObjectBase*>(InObject));
+}
+
 template <typename TObj, bool bAllowForNullptr /* = false */>
 TObj* CheckedStaticCast(Private::JObjectBase* InObject)
 {
@@ -459,6 +469,12 @@ TObj* CheckedStaticCast(Private::JObjectBase* InObject)
 #else /* DO_CHECKS */
     return reinterpret_cast<TObj*>(InObject);
 #endif /* !DO_CHECKS */
+}
+
+template <typename TObj, bool bAllowForNullptr>
+const TObj* CheckedStaticCast(const Private::JObjectBase* InObject)
+{
+    return CheckedStaticCast<TObj, bAllowForNullptr>(const_cast<Private::JObjectBase*>(InObject));
 }
 
 template <typename TObj>

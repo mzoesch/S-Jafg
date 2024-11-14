@@ -239,10 +239,10 @@ TEST_CASE(MatrixOperations, "Lal.Maths")
     const LMatrix V = Maths::MakeViewMatrix(E, E + F, U);
     const LMatrix Expected =
         {
-            LPlaneF{  0.894427299f, -0.0f,       -0.44721359, 0.0f },
-            LPlaneF{ -0.44721365,    0.0f,       -0.89442718, 0.0f },
-            LPlaneF{  0.0f,          1.00000012, -0.0f,       0.0f },
-            LPlaneF{ -0.0f,         -5.00000048,  0.0f,       1.0f }
+            LPlaneF{  0.894427299f, -0.0f,        -0.44721359f, 0.0f },
+            LPlaneF{ -0.44721365f,   0.0f,        -0.89442718f, 0.0f },
+            LPlaneF{  0.0f,          1.00000012f, -0.0f,        0.0f },
+            LPlaneF{ -0.0f,         -5.00000048f,  0.0f,        1.0f }
         };
 
     CHECK_EQUALS( "MatrixOperations", V, Expected )

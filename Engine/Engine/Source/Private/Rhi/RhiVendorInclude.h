@@ -12,3 +12,5 @@
 #if JAFG_WITH_GLFW3
     #include <GLFW/glfw3.h> /* Include glfw3 after glad to avoid include order issues. */
 #endif /* JAFG_WITH_GLFW3 */
+
+#include <stb_image.h>

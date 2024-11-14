@@ -91,6 +91,6 @@ struct LGenericPlatformTypes
     static const LChar* Ws2CStr(const LWideString& Ws)
     {
         const LStringLegacy* StrPtr = new LStringLegacy(Ws2S(Ws));
-        return StrPtr->c_str();
+        return reinterpret_cast<const LChar*>(StrPtr->c_str());
     }
 };

@@ -17,6 +17,10 @@ class ENGINE_API JWorldSubsystem : public JSubsystem
 protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JWorldSubsystem)
+
+public:
+
+    FORCEINLINE auto GetWorld() const -> LWorld* { return reinterpret_cast<LWorld*>(this->GetOuter()); }
 };
 
 } /* ~Namespace Jafg */

@@ -48,7 +48,7 @@ void WorldGen::GenerateChunkData(int chunkX, int chunkY, int chunkZ, int chunkSi
                 }
                 else
                 {
-                    chunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = 0;
+                    chunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = Blocks::AIR;
                 }
                 //
                 // if (Z + ChunkLocZ > Noise2D || NoiseCaves > .5f)

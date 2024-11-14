@@ -7,7 +7,6 @@
 #include "Core/Application.h"
 #include "Engine/ActorUtility.h"
 #include "Engine/Framework/Pawn.h"
-#include "Engine/Framework/PersonaController.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "User/LocalEgo.h"
 #include "Subsystems/SubsystemCollection.h"

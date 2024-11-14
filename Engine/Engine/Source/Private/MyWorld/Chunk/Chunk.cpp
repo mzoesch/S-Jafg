@@ -10,7 +10,6 @@
 #include "Engine/Framework/PersonaController.h"
 #include "MyWorld/Blocks.h"
 #include "MyWorld/WorldGen.h"
-#include "MyWorld/WorldStatics.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "MyWorld/Meshing/ChunkMesher.h"
 #include "User/LocalEgo.h"
@@ -213,7 +212,7 @@ void Jafg::AChunk::Shape()
 
     WorldGen::GenerateChunkData(
         static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z),
-        WorldStatics::ChunkSize, RawVoxelData);
+        MwStatics::ChunkSize, RawVoxelData);
 
     return;
 }

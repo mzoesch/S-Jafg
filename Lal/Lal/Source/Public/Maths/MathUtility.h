@@ -83,6 +83,9 @@ MIX_FLOATING_POINT_ARGS_THREE_PARAMS(Clamp)
 NODISCARD constexpr FORCEINLINE auto Clamp(const float Value, const float MinValue, const float MaxValue) -> float;
 NODISCARD constexpr FORCEINLINE auto Clamp(const double Value, const double MinValue, const double MaxValue) -> double;
 
+template <typename T> NODISCARD constexpr FORCEINLINE auto Floor(const T Value) -> T;
+template <typename T> NODISCARD constexpr FORCEINLINE auto Ceil(const T Value) -> T;
+
 NODISCARD FORCEINLINE bool IsNearlyEqual(const float A, const float B, const float Tolerance = JAFG_FLOAT_SMALL_NUMBER);
 NODISCARD FORCEINLINE bool IsNearlyEqual(const double A, const double B, const double Tolerance = JAFG_DOUBLE_SMALL_NUMBER);
 
@@ -91,6 +94,7 @@ NODISCARD FORCEINLINE float  Fmod(const float Numerator, const float Denominator
 NODISCARD FORCEINLINE double Fmod(const double Numerator, const double Denominator);
 MIX_FLOATING_POINT_ARGS_TWO_PARAMS(Fmod)
 
+template <typename T> NODISCARD constexpr FORCEINLINE auto IsPowerOfTwo(const T Value) -> bool;
 template <typename T> NODISCARD constexpr FORCEINLINE auto Sqrt(const T Value) -> T;
 template <typename T> NODISCARD constexpr FORCEINLINE auto InverseSqrt(const T Value) -> T;
 
@@ -179,43 +183,50 @@ template <> FORCEINLINE double Min(const double A, const double B) { return (B <
 template <> FORCEINLINE float  Max(const float A,  const float B)  { return (B < A) ? A : B; }
 template <> FORCEINLINE double Max(const double A, const double B) { return (B < A) ? A : B; }
 
-template <> FORCEINLINE float  Sin(const float Value)     { return ::sinf(Value);     }
-template <> FORCEINLINE double Sin(const double Value)    { return ::sin(Value);      }
-template <> FORCEINLINE float  Asin(const float Value)    { return ::asinf(Value);    }
-template <> FORCEINLINE double Asin(const double Value)   { return ::asin(Value);     }
-template <> FORCEINLINE float  Sinh(const float Value)    { return ::sinhf(Value);    }
-template <> FORCEINLINE double Sinh(const double Value)   { return ::sinh(Value);     }
-template <> FORCEINLINE float  ASinh(const float Value)   { return ::asinhf(Value);   }
-template <> FORCEINLINE double ASinh(const double Value)  { return ::asinh(Value);    }
-template <> FORCEINLINE float  Cos(const float Value)     { return ::cosf(Value);     }
-template <> FORCEINLINE double Cos(const double Value)    { return ::cos(Value);      }
-template <> FORCEINLINE float  Acos(const float Value)    { return ::acosf(Value);    }
-template <> FORCEINLINE double Acos(const double Value)   { return ::acos(Value);     }
-template <> FORCEINLINE float  Cosh(const float Value)    { return ::coshf(Value);    }
-template <> FORCEINLINE double Cosh(const double Value)   { return ::cosh(Value);     }
-template <> FORCEINLINE float  ACosh(const float Value)   { return ::acoshf(Value);   }
-template <> FORCEINLINE double ACosh(const double Value)  { return ::acosh(Value);    }
-template <> FORCEINLINE float  Tan(const float Value)     { return ::tanf(Value);     }
-template <> FORCEINLINE double Tan(const double Value)    { return ::tan(Value);      }
-template <> FORCEINLINE float  Atan(const float Value)    { return ::atanf(Value);    }
-template <> FORCEINLINE double Atan(const double Value)   { return ::atan(Value);     }
-template <> FORCEINLINE float  Tanh(const float Value)    { return ::tanhf(Value);    }
-template <> FORCEINLINE double Tanh(const double Value)   { return ::tanh(Value);     }
-template <> FORCEINLINE float  ATanh(const float Value)   { return ::atanhf(Value);   }
-template <> FORCEINLINE double ATanh(const double Value)  { return ::atanh(Value);    }
+template <> FORCEINLINE float  Floor(const float Value)  { return ::floorf(Value); }
+template <> FORCEINLINE double Floor(const double Value) { return ::floor(Value);  }
+template <> FORCEINLINE float  Ceil(const float Value)   { return ::ceilf(Value);  }
+template <> FORCEINLINE double Ceil(const double Value)  { return ::ceil(Value);   }
 
-template <typename T> T Sin(const T Value)   UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
-template <typename T> T Asin(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
-template <typename T> T Sinh(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
-template <typename T> T ASinh(const T Value) UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
-template <typename T> T Cos(const T Value)   UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
-template <typename T> T Acos(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
-template <typename T> T Cosh(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
-template <typename T> T ACosh(const T Value) UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
-template <typename T> T Tan(const T Value)   UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
-template <typename T> T Atan(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
-template <typename T> T Tanh(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
-template <typename T> T ATanh(const T Value) UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <> FORCEINLINE float  Sin(const float Value)     { return ::sinf(Value);   }
+template <> FORCEINLINE double Sin(const double Value)    { return ::sin(Value);    }
+template <> FORCEINLINE float  Asin(const float Value)    { return ::asinf(Value);  }
+template <> FORCEINLINE double Asin(const double Value)   { return ::asin(Value);   }
+template <> FORCEINLINE float  Sinh(const float Value)    { return ::sinhf(Value);  }
+template <> FORCEINLINE double Sinh(const double Value)   { return ::sinh(Value);   }
+template <> FORCEINLINE float  ASinh(const float Value)   { return ::asinhf(Value); }
+template <> FORCEINLINE double ASinh(const double Value)  { return ::asinh(Value);  }
+template <> FORCEINLINE float  Cos(const float Value)     { return ::cosf(Value);   }
+template <> FORCEINLINE double Cos(const double Value)    { return ::cos(Value);    }
+template <> FORCEINLINE float  Acos(const float Value)    { return ::acosf(Value);  }
+template <> FORCEINLINE double Acos(const double Value)   { return ::acos(Value);   }
+template <> FORCEINLINE float  Cosh(const float Value)    { return ::coshf(Value);  }
+template <> FORCEINLINE double Cosh(const double Value)   { return ::cosh(Value);   }
+template <> FORCEINLINE float  ACosh(const float Value)   { return ::acoshf(Value); }
+template <> FORCEINLINE double ACosh(const double Value)  { return ::acosh(Value);  }
+template <> FORCEINLINE float  Tan(const float Value)     { return ::tanf(Value);   }
+template <> FORCEINLINE double Tan(const double Value)    { return ::tan(Value);    }
+template <> FORCEINLINE float  Atan(const float Value)    { return ::atanf(Value);  }
+template <> FORCEINLINE double Atan(const double Value)   { return ::atan(Value);   }
+template <> FORCEINLINE float  Tanh(const float Value)    { return ::tanhf(Value);  }
+template <> FORCEINLINE double Tanh(const double Value)   { return ::tanh(Value);   }
+template <> FORCEINLINE float  ATanh(const float Value)   { return ::atanhf(Value); }
+template <> FORCEINLINE double ATanh(const double Value)  { return ::atanh(Value);  }
+
+template <typename T> constexpr T Floor(const T Value) UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T> constexpr T Ceil(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T>           T Sin(const T Value)   UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T>           T Asin(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T>           T Sinh(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T>           T ASinh(const T Value) UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T>           T Cos(const T Value)   UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T>           T Acos(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T>           T Cosh(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T>           T ACosh(const T Value) UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T>           T Tan(const T Value)   UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T>           T Atan(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T>           T Tanh(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
+template <typename T>           T ATanh(const T Value) UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
 
 
 /*----------------------------------------------------------------------------
@@ -291,6 +302,19 @@ constexpr double Clamp(const double Value, const double MinValue, const double M
 }
 
 template <typename T>
+constexpr bool IsPowerOfTwo(const T Value)
+{
+    static_assert(std::is_integral_v<T>, "Value must be an integral type.");
+
+    if (Value <= static_cast<T>(0))
+    {
+        return false;
+    }
+
+    return (Value & (Value - static_cast<T>(1))) == static_cast<T>(0);
+}
+
+template <typename T>
 constexpr T Sqrt(const T Value)
 {
     static_assert(std::is_floating_point_v<T>, "Value must be a floating point type.");
@@ -341,7 +365,7 @@ template <typename T>
 constexpr T ClampDegrees(const T Degrees)
 {
     static_assert(std::is_floating_point_v<T>, "Degrees must be a floating point type.");
-    return Degrees - (static_cast<T>(JAFG_DEG_FULL_CIRCLE_D) * static_cast<T>(std::floor(Degrees / JAFG_DEG_FULL_CIRCLE_D)));
+    return Degrees - (static_cast<T>(JAFG_DEG_FULL_CIRCLE_D) * static_cast<T>(Maths::Floor(Degrees / JAFG_DEG_FULL_CIRCLE_D)));
 }
 
 template <typename T>

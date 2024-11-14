@@ -3,17 +3,10 @@
 #include "CoreAfx.h"
 #include "Rhi/Shader.h"
 #include <filesystem>
-#include <glad/glad.h> /* Include glad to get all the required OpenGL headers. */
-#include <GLFW/glfw3.h> /* Include glfw3 after glad to avoid include order issues. */
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#if PLATFORM_WINDOWS
-#include <Windows.h>
-#endif /* PLATFORM_WINDOWS */
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-#include <glm/gtc/type_ptr.hpp>
+#include "RhiVendorInclude.h"
 
 void Jafg::LShader::Free()
 {
