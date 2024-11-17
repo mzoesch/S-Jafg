@@ -24,8 +24,13 @@ protected:
     virtual void Initialize(LSubsystemCollection& Collection) override;
     virtual void TearDown() override;
 
+public:
+
     FORCEINLINE auto CalculateSpecificTexturePointOnAtlas(const LTextureIndex InTextureIndex) const -> LPoint;
     FORCEINLINE auto GetCurrentTextureWidth() const -> int32 { return this->CurrentTextureWidth; }
+
+    FORCEINLINE auto HasAtlas() const -> bool { return this->Atlas.GetFirstMipMap().Bulk.IsAllocated(); }
+    FORCEINLINE auto GetAtlas() const -> const LTexture2& { check( this->HasAtlas() ) return this->Atlas; }
 
 private:
 

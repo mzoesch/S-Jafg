@@ -11,8 +11,10 @@
 #include <glm/gtc/type_ptr.inl>
 #include "Rhi/Shader.h"
 #include <glm/glm.hpp>
+#include "Rhi/RendererApplier.h"
 #include "Widgets/Viewport.h"
 #include "User/Input/GlfwInputTranslation.h"
+#include "Core/LaunchProgress.h"
 
 void OpenGlErrorCallback(int error_code, const char* description)
 {
@@ -23,24 +25,41 @@ void Jafg::LDesktopPlatformWin::Initialize()
 {
     LDesktopPlatformBase::Initialize();
 
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+    if (LaunchProgress::Private::GProgressWindow)
+    {
+        LaunchProgress::Private::bOwnerShipToken = true;
+        this->MasterWindow = LaunchProgress::Private::GProgressWindow;
+    }
+    else
+    {
+        if (RendererApplier::IsGlfwInitialized() == false)
+        {
+            const bool bOk = RendererApplier::InitializeGlfw();
+            if (bOk == false)
+            {
+                JAFG_ENGINE_FORWARD_REQUEST_EXIT(EPlatformExit::Fatal, "Failed to initialize glfw window.")
+                return;
+            }
+        }
+        this->MasterWindow = LDesktopPlatformWin::CreateNativeWindow(LDesktopSurfaceProps());
+    }
 
-    this->MasterWindow = this->CreateNativeWindow(LDesktopSurfaceProps());
+    // glfwInit();
+    // glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    // glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    // glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+
+    // this->MasterWindow = LDesktopPlatformWin::CreateNativeWindow(LDesktopSurfaceProps());
     if (this->MasterWindow == nullptr)
     {
         JAFG_ENGINE_FORWARD_REQUEST_EXIT(EPlatformExit::Fatal, "Failed to initialize glfw window.")
         return;
     }
-    glfwSetWindowUserPointer(this->MasterWindow, reinterpret_cast<void*>(this));
-
-    glfwGetWin32Window(this->MasterWindow);
+    glfwSetWindowUserPointer(this->MasterWindow->GetNativeWindow(), reinterpret_cast<void*>(this));
 
     check( this->GetViewport() )
-    const HWND NativeWindowHandle = glfwGetWin32Window(this->MasterWindow);
+    const HWND NativeWindowHandle = glfwGetWin32Window(this->MasterWindow->GetNativeWindow());
     check( NativeWindowHandle )
     const uint32 PlatformDpi = GetDpiForWindow(NativeWindowHandle);
     this->GetViewport()->SetPlatformDpi(static_cast<float>(PlatformDpi));
@@ -60,11 +79,11 @@ void Jafg::LDesktopPlatformWin::Initialize()
      */
     this->SetVSync(false);
 
-    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))  // NOLINT(clang-diagnostic-cast-function-type-strict)
-    {
-        JAFG_ENGINE_FORWARD_REQUEST_EXIT(EPlatformExit::Fatal, "Failed to initialize glad.")
-        return;
-    }
+    // if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))  // NOLINT(clang-diagnostic-cast-function-type-strict)
+    // {
+    //     JAFG_ENGINE_FORWARD_REQUEST_EXIT(EPlatformExit::Fatal, "Failed to initialize glad.")
+    //     return;
+    // }
 
     const TIntVector2 WindowDimensions = this->GetDimensions();
     glViewport(0, 0, WindowDimensions.X, WindowDimensions.Y);
@@ -74,15 +93,15 @@ void Jafg::LDesktopPlatformWin::Initialize()
         this->GetViewport()->ChangeDimensions(WindowDimensions);
     }
 
-    glfwSetFramebufferSizeCallback(this->MasterWindow, [] (::GLFWwindow* Window, const int32 Width, const int32 Height)
+    glfwSetFramebufferSizeCallback(this->MasterWindow->GetNativeWindow(), [] (::GLFWwindow* Window, const int32 Width, const int32 Height)
     {
         static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->FramebufferSizeCallback(Window, Width, Height);
     });
-    glfwSetCursorPosCallback(this->MasterWindow, [] (::GLFWwindow* Window, const double XPos, const double YPos)
+    glfwSetCursorPosCallback(this->MasterWindow->GetNativeWindow(), [] (::GLFWwindow* Window, const double XPos, const double YPos)
     {
         static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->MouseCallback(Window, XPos, YPos);
     });
-    glfwSetScrollCallback(this->MasterWindow, [] (::GLFWwindow* Window, const double XOffset, const double YOffset)
+    glfwSetScrollCallback(this->MasterWindow->GetNativeWindow(), [] (::GLFWwindow* Window, const double XOffset, const double YOffset)
     {
         static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->ScrollCallback(Window, XOffset, YOffset);
     });
@@ -110,7 +129,7 @@ void Jafg::LDesktopPlatformWin::OnUpdate()
 {
     LDesktopPlatformBase::OnUpdate();
 
-    glfwSwapBuffers(this->MasterWindow);
+    glfwSwapBuffers(this->MasterWindow->GetNativeWindow());
 
     return;
 }
@@ -121,7 +140,8 @@ void Jafg::LDesktopPlatformWin::TearDown()
 
     if (this->MasterWindow)
     {
-        glfwDestroyWindow(this->MasterWindow);
+        glfwDestroyWindow(this->MasterWindow->GetNativeWindow());
+        delete this->MasterWindow;
         this->MasterWindow = nullptr;
     }
 
@@ -144,7 +164,7 @@ void Jafg::LDesktopPlatformWin::PollInputs()
             continue;
         }
 
-        if (glfwGetKey(this->MasterWindow, TranslatedKey) == GLFW_PRESS)
+        if (glfwGetKey(this->MasterWindow->GetNativeWindow(), TranslatedKey) == GLFW_PRESS)
         {
             this->AddKeyDown(KeyCursor);
         }
@@ -163,7 +183,7 @@ void Jafg::LDesktopPlatformWin::PollEvents()
 
     if (this->MasterWindow)
     {
-        if (glfwWindowShouldClose(this->MasterWindow))
+        if (glfwWindowShouldClose(this->MasterWindow->GetNativeWindow()))
         {
             JAFG_ENGINE_FORWARD_REQUEST_EXIT(INDEX_NONE, "Window closed by user.")
         }
@@ -185,7 +205,7 @@ void Jafg::LDesktopPlatformWin::SetInputMode(const bool bShowCursor)
 
     if (this->MasterWindow)
     {
-        glfwSetInputMode(this->MasterWindow, GLFW_CURSOR, bShowCursor ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+        glfwSetInputMode(this->MasterWindow->GetNativeWindow(), GLFW_CURSOR, bShowCursor ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
     }
 
     this->bShowMouseCursor = bShowCursor;
@@ -211,7 +231,7 @@ Jafg::TIntVector2<int32> Jafg::LDesktopPlatformWin::GetDimensions() const
      */
 
     int32 Width, Height;
-    glfwGetWindowSize(this->MasterWindow, &Width, &Height);
+    glfwGetWindowSize(this->MasterWindow->GetNativeWindow(), &Width, &Height);
 
     return TIntVector2<int32>(Width, Height);
 }
@@ -229,11 +249,9 @@ bool Jafg::LDesktopPlatformWin::IsVSync() const
     return this->bVSync;
 }
 
-GLFWwindow* Jafg::LDesktopPlatformWin::CreateNativeWindow(const LDesktopSurfaceProps& Props) const
+Jafg::LNativeWindowWin* Jafg::LDesktopPlatformWin::CreateNativeWindow(const LDesktopSurfaceProps& Props)
 {
-    jassert( this->MasterWindow == nullptr && "Currently only supporting one window." )
-
-    ::GLFWwindow* Window = glfwCreateWindow(Props.Width, Props.Height, Props.Title.c_str(), nullptr, nullptr);
+    ::GLFWwindow* Window = glfwCreateWindow(Props.Width, Props.Height, Props.Title.ToC(), nullptr, nullptr);
     if (Window == nullptr)
     {
         return nullptr;
@@ -241,7 +259,9 @@ GLFWwindow* Jafg::LDesktopPlatformWin::CreateNativeWindow(const LDesktopSurfaceP
 
     glfwMakeContextCurrent(Window);
 
-    return Window;
+    LNativeWindowWin* NativeWindow = new LNativeWindowWin();
+    NativeWindow->NativeWindow = Window;
+    return NativeWindow;
 }
 
 void Jafg::LDesktopPlatformWin::FramebufferSizeCallback(::GLFWwindow*, const int32 Width, const int32 Height)

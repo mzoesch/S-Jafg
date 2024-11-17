@@ -11,6 +11,7 @@
 #include "Engine/ObjectBaseUtility.h"
 #include "User/UserPreferences.h"
 #include "RhiVendorInclude.h"
+#include "System/EnginePath.h"
 
 void Jafg::LChunkShaderContext::Make()
 {
@@ -18,7 +19,7 @@ void Jafg::LChunkShaderContext::Make()
 
     check( this->Program == nullptr )
 
-    this->Program = new LShader("Content/Shaders/Chunk.vert", "Content/Shaders/Chunk.frag");
+    this->Program = new LShader(LEnginePath(EEnginePaths::Shaders, "Chunk"));
     this->Program->Use();
 
     glGenTextures(1, &this->Texture);

@@ -5,8 +5,34 @@
 #include "CoreAfx.h"
 #include "Platform/Surface.h"
 
+struct GLFWwindow;
+
 namespace Jafg
 {
+
+struct LDesktopSurfaceProps final
+{
+    FORCEINLINE explicit LDesktopSurfaceProps(
+        LSimpleString Title  = "Jafg Desktop Platform",
+        const int32   Width  = 1280,
+        const int32   Height = 720
+    )
+        : Title(std::move(Title)), Width(Width), Height(Height)
+    {
+        return;
+    }
+
+    LSimpleString Title;
+    int32         Width;
+    int32         Height;
+};
+
+struct LNativeDesktopWindowBase // <-- Do not use this struct directly but the platform-specific typedef'ed version
+                                //     instead to make code platform-agnostic.
+{
+    // This struct always defines the following member function:
+    //   - GetNativeWindow() const -> Ptr*
+};
 
 /** Generic interface for a desktop platform. */
 class ENGINE_API LDesktopPlatformBase : public LSurface
@@ -28,25 +54,6 @@ public:
     virtual void PollEvents() override { }
     virtual void SetInputMode(bool bShowCursor) override { }
     // ~Surface implementation
-
-protected:
-
-    struct LDesktopSurfaceProps final
-    {
-        FORCEINLINE explicit LDesktopSurfaceProps(
-            LStringLegacy Title = "Desktop Platform",
-            const int32 Width = 1280,
-            const int32 Height = 720
-        )
-            : Title(std::move(Title)), Width(Width), Height(Height)
-        {
-            return;
-        }
-
-        LStringLegacy Title;
-        int32   Width;
-        int32   Height;
-    };
 };
 
 } /* ~Namespace Jafg */

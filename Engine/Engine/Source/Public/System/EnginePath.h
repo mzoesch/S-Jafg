@@ -36,6 +36,8 @@ public:
     FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy, const LPathTy& Other) noexcept : PathTy(InPathTy), Data(Other) { }
     FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy, LPathTy&& Other) noexcept : PathTy(InPathTy), Data(std::move(Other)) { }
     FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy) noexcept : PathTy(InPathTy) { }
+    FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy, LNullptrTy) noexcept : PathTy(InPathTy) { }
+    FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy, const LRune* InPath) noexcept : PathTy(InPathTy), Data(InPath) { }
     FORCEINLINE ~LEnginePathBase() noexcept = default;
 
     FORCEINLINE auto SetPathTy(const EEnginePaths::Type InPathTy) noexcept -> void { this->PathTy = InPathTy; }

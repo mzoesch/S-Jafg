@@ -3,8 +3,10 @@
 #include "CoreAfx.h"
 #include "Engine/Engine.h"
 #include "Core/Application.h"
+#include "Core/LaunchProgress.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Engine/Carnifex.h"
+#include "Platform/PlatformMisc.h"
 
 using namespace Jafg;
 
@@ -28,6 +30,11 @@ FORCEINLINE EPlatformExit::Type GetMostSignificantExitReason()
 
 FORCEINLINE EPlatformExit::Type EngineInit()
 {
+    LaunchProgress::PrepareBeginProgress();
+    LaunchProgress::BeginProgress("Core Initialization", "Engine pre-life initialization", 0.0f);
+
+    PlatformMisc::InvalidateCachedValues();
+
     PrivateCarnifex            = new LCarnifex();
     Private::GCarnifexReferrer = &PrivateCarnifex;
     GOmniVitaContext           = new Private::LObjectContext();
@@ -43,15 +50,12 @@ FORCEINLINE EPlatformExit::Type EngineInit()
     }
 
     GEngine = new LEngine();
-
     GEngine->Initialize();
 
-    if (::IsEngineExitRequested())
-    {
-        ::GetMostSignificantExitReason();
-    }
+    LaunchProgress::BeginProgress("End of initialization", "Starting ticking ...", 1.0f);
+    LaunchProgress::FinishAndGiveUpMemory();
 
-    return EPlatformExit::Success;
+    return ::IsEngineExitRequested() ? ::GetMostSignificantExitReason() : EPlatformExit::Success;
 }
 
 FORCEINLINE void EngineTick()

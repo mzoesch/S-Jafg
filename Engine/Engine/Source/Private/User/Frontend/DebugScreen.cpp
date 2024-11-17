@@ -5,17 +5,25 @@
 #include "Build/EngineBuildInfo.h"
 #include "Core/Application.h"
 #include "Engine/Engine.h"
+#include "Engine/Framework/ApplicationInstance.h"
 #include "Engine/Framework/Pawn.h"
 #include "Engine/Framework/PersonaController.h"
+#include "System/MaterialSubsystem.h"
+#include "System/TextureSubsystem.h"
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
 #include "Widgets/Spacer.h"
 #include "Widgets/TextBlock.h"
 #include "Widgets/VBox.h"
+#include "System/EnginePath.h"
 
 void Jafg::WDebugScreen::Construct()
 {
     Super::Construct();
+
+    JMaterialSubsystem* MaterialSubsystem = this->GetApplicationInstance()->GetSubsystem<JMaterialSubsystem>();
+
+    // TestTexture.LoadFromDisk(LEnginePath(EEnginePaths::Voxels, "Grass_Flora.png"), *GetDefault<JUserPreferences>());
 
     MakeRootNode(WVBox)
     [
@@ -47,6 +55,18 @@ void Jafg::WDebugScreen::Construct()
         [
             NewNode(WTextBlock) >> this->LocalPawnFacingSection
             & LTextBlockBrush::MakeDefaultSmall()
+        ]
+    ]
+    [
+        NewNode(WSpacer)
+        .SetHeight(20.0f)
+    ]
+    [
+        NewNode(WVBox)
+        [
+            NewNode(WWidgetRegion)
+            .SetRegionPadding(LPadding(100.0f))
+            & &MaterialSubsystem->GetAtlas()
         ]
     ]
     FinishWidgetStyling()

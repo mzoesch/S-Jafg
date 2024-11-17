@@ -2,6 +2,8 @@
 
 #include "CoreAfx.h"
 #include "Widgets/WidgetNode.h"
+
+#include "Engine/Engine.h"
 #include "Widgets/WidgetParent.h"
 
 namespace Jafg
@@ -82,4 +84,10 @@ Jafg::LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromMostOuter(const WWidgetN
     }
 
     return this->GetRelativeTopLeftFromOuter();
+}
+
+Jafg::LApplicationInstance* Jafg::WWidgetNode::GetApplicationInstance() const
+{
+    checkSlow( GEngine )
+    return GEngine->GetApplicationInstance();
 }

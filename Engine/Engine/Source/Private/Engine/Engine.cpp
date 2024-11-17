@@ -29,6 +29,10 @@ ENGINE_API LSimpleString GCustomExitReason         = "";
 
 void Jafg::LEngine::Initialize()
 {
+    check( this->IsApplicationInstanceValid() == false )
+    this->ApplicationInstance = new LApplicationInstance();
+    this->ApplicationInstance->Initialize();
+
 #if WITH_LOCAL_LAYER
     check( this->LocalEgo == nullptr )
     this->LocalEgo = new LLocalEgo();
@@ -39,10 +43,6 @@ void Jafg::LEngine::Initialize()
     this->InitializeContext(Context, "StartUpWorld");
     this->RegisterLevel(LLevel("LWorld"));
     this->Browse(Context, "LWorld");
-
-    check( this->IsApplicationInstanceValid() == false )
-    this->ApplicationInstance = new LApplicationInstance();
-    this->ApplicationInstance->Initialize();
 
     return;
 }

@@ -4,6 +4,7 @@
 
 #include "Widgets/UserWidget.h"
 #include "DebugScreen.generated.h"
+#include "Rhi/Texture2.h"
 
 namespace Jafg
 {
@@ -40,6 +41,8 @@ private:
     double ResetTime = 0.1;
     /** The current time in seconds when the cache will be invalidated. */
     double InvalidateCacheTime = 0.0;
+
+    LTexture2 TestTexture;
 };
 
 } /* ~Namespace Jafg */

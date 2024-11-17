@@ -14,6 +14,7 @@
 #include "Forward/EngineForward.h"
 #include "User/UserPreferences.h"
 #include "Widgets/Viewport.h"
+#include "System/EnginePath.h"
 
 namespace
 {
@@ -69,7 +70,7 @@ void Jafg::WTextBlock::Construct()
 
     const LIntVector2 WindowDimensions = this->GetViewportSize();
 
-    this->FontShaderProgram = new LShader("Content/Shaders/Font.vert", "Content/Shaders/Font.frag");
+    this->FontShaderProgram = new LShader(LEnginePath(EEnginePaths::Shaders, "Font"));
     checkSlow( this->FontShaderProgram )
     this->FontShaderProgram->Use();
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));

@@ -65,7 +65,7 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
             static_cast<LTextureIndex>(LoadedTextures.GetSize())
         );
 
-        LEnginePath Path = LEnginePath(EEnginePaths::Voxels, DiskTexture.Name);
+        LEnginePath Path = LEnginePath(EEnginePaths::Voxels, DiskTexture.Name.ToPtr());
         Path.AddExtension(".png");
 
         LTexture2 Texture;
@@ -109,7 +109,6 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
 void Jafg::JMaterialSubsystem::CreateAtlas(const TdhArray<LTexture2>& Textures)
 {
     const int32 TextureSizeLimit = RendererInformation::GetLimitTextureDimension();
-    const LViewportSize ViewportSizeLimit = RendererInformation::GetLimitViewportDimensions();
 
     int32 MaxTextureSize = INDEX_NONE;
     for (const LTexture2& Texture : Textures)

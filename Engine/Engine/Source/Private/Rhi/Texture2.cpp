@@ -55,6 +55,7 @@ void Jafg::LTexture2::CopyTexture(const LTexture2& InTexture, const LPoint& InPo
         this->CreateEmpty(InTexture.MipMap.Size.X, InTexture.MipMap.Size.Y, InTexture.MipMap.Format);
     }
 
+    check( this->MipMap.Format == InTexture.MipMap.Format && this->MipMap.Format != ERawImageFormat::Unspecified )
     check( this->MipMap.Bulk.IsAllocated() )
     check( this->MipMap.Size.X >= InTexture.MipMap.Size.X )
     check( this->MipMap.Size.Y >= InTexture.MipMap.Size.Y )
@@ -62,15 +63,19 @@ void Jafg::LTexture2::CopyTexture(const LTexture2& InTexture, const LPoint& InPo
     check( InPoint.Y + InTexture.MipMap.Size.Y <= this->MipMap.Size.Y )
 
     uint32 CurrentHeightCursor = InPoint.Y;
-    while (CurrentHeightCursor <= InTexture.MipMap.Size.Y)
+    while (CurrentHeightCursor - InPoint.Y < InTexture.GetHeight())
     {
         uint8* CurrentTextureDestination = this->MipMap.Bulk.GetBulk();
-        CurrentTextureDestination += static_cast<size_t>(CurrentHeightCursor * this->MipMap.Size.X + InPoint.X);
+        CurrentTextureDestination += static_cast<LuPtrSize>((CurrentHeightCursor * this->GetWidth() + InPoint.X) * this->GetBytesPerPixel());
+        checkSlow( CurrentTextureDestination >= this->MipMap.Bulk.GetBulk() )
+        checkSlow( CurrentTextureDestination < this->MipMap.Bulk.GetBulk() + this->MipMap.Bulk.GetByteSize() )
 
         const uint8* OtherTextureSource = InTexture.MipMap.Bulk.GetBulk();
-        OtherTextureSource += static_cast<size_t>(CurrentHeightCursor * InTexture.MipMap.Size.X);
+        OtherTextureSource += static_cast<LuPtrSize>((CurrentHeightCursor - InPoint.Y) * InTexture.GetWidth() * InTexture.GetBytesPerPixel());
+        checkSlow( OtherTextureSource >= InTexture.MipMap.Bulk.GetBulk() )
+        checkSlow( OtherTextureSource < InTexture.MipMap.Bulk.GetBulk() + InTexture.MipMap.Bulk.GetByteSize() )
 
-        ::memcpy(CurrentTextureDestination, OtherTextureSource, InTexture.MipMap.Size.X);
+        ::memcpy(CurrentTextureDestination, OtherTextureSource, InTexture.GetWidth() * static_cast<LuPtrSize>(InTexture.GetBytesPerPixel()));
 
         ++CurrentHeightCursor;
 

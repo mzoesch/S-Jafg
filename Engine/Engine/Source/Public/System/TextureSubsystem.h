@@ -38,6 +38,9 @@ struct LDiskVoxelTexture final
     auto GetNormalLookUpBasedOfFileName() const -> ENormalLookup::Type;
 };
 
+/**
+ * Texture subsystem that manages the loading, caching and freeing of all textures that are present.
+ */
 DECLARE_JAFG_CLASS()
 class JTextureSubsystem final : public JApplicationInstanceSubsystem
 {

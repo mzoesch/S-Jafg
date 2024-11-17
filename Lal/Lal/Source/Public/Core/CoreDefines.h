@@ -16,3 +16,6 @@ enum Type : int32
 };
 
 } /* ~Namespace EPlatformExit. */
+
+typedef std::intptr_t  LPtrSize;
+typedef std::uintptr_t LuPtrSize;

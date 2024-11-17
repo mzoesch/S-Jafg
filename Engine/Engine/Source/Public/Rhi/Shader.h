@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreAfx.h"
-#include <glm/fwd.hpp>
+#include "System/SystemForward.h"
 
 namespace Jafg
 {
@@ -16,9 +16,9 @@ public:
 
     void Free();
 
-    // constructor reads and builds the shader
     LShader(const char* vertexPath, const char* fragmentPath);
-    // use/activate the shader
+    explicit LShader(const LEnginePath& Path);
+
     void Use() const;
 
     template <typename T>
@@ -33,6 +33,8 @@ public:
     FORCEINLINE auto GetId() const -> uint32 { return this->Id; }
 
 private:
+
+    void LoadShader(const char* vertexPath, const char* fragmentPath);
 
     uint32 Id;
 };

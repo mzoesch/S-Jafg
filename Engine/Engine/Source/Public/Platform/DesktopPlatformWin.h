@@ -14,6 +14,13 @@ struct GLFWwindow;
 namespace Jafg
 {
 
+struct LNativeWindowWin final : public LNativeDesktopWindowBase
+{
+    FORCEINLINE auto GetNativeWindow() const -> ::GLFWwindow* { return this->NativeWindow; }
+
+    ::GLFWwindow* NativeWindow = nullptr;
+};
+
 class ENGINE_API LDesktopPlatformWin final : public LDesktopPlatformBase
 {
 public:
@@ -38,22 +45,20 @@ public:
     virtual auto IsVSync() const -> bool override;
     // ~Surface implementation
 
-    FORCEINLINE auto GetMasterWindow() const -> ::GLFWwindow* { return this->MasterWindow; }
+    /**
+     * You are the owner.
+     */
+    static LNativeWindowWin* CreateNativeWindow(const LDesktopSurfaceProps& Props);
 
 private:
-
-    ::GLFWwindow* CreateNativeWindow(const LDesktopSurfaceProps& Props) const;
 
     void FramebufferSizeCallback(::GLFWwindow* Window, const int32 Width, const int32 Height);
     void MouseCallback(::GLFWwindow* Window, const double XPos, const double YPos);
     void ScrollCallback(::GLFWwindow* Window, const double XOffset, const double YOffset);
 
-    ::GLFWwindow* MasterWindow = nullptr;
+    LNativeWindowWin* MasterWindow = nullptr;
 
     bool bVSync = false;
 };
-
-/** The currently active desktop platform. */
-typedef LDesktopPlatformWin LDesktopPlatform;
 
 } /* ~Namespace Jafg */

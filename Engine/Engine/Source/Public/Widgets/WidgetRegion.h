@@ -5,6 +5,7 @@
 #include "Widgets/WidgetParent.h"
 #include "Rhi/BoxShaderContext.h"
 #include "Misc/Optional.h"
+#include "Widgets/Image.h"
 #include "WidgetRegion.generated.h"
 
 namespace Jafg
@@ -12,7 +13,8 @@ namespace Jafg
 
 struct LRegionBrush
 {
-    LColor Tint = LColor::Black;
+    LColor Tint  = LColor::White;
+    LImage Image = LImage();
 };
 
 /**
@@ -36,10 +38,21 @@ public:
     FORCEINLINE auto SetBrush(const LRegionBrush& InBrush) -> WWidgetRegion& { this->Brush = InBrush; return *this; }
     FORCEINLINE auto HasBrush() const -> bool { return this->Brush.IsSet(); }
     FORCEINLINE auto GetBrush() const -> const LRegionBrush& { return this->Brush.GetValue(); }
+    auto SetTint(const LColor& InTint) -> WWidgetRegion&;
+    auto SetTexture(const LTexture2* InTexture) -> WWidgetRegion&;
+    auto SetImage(const LImage& InImage) -> WWidgetRegion&;
 
     FORCEINLINE auto SetRegionPadding(const LPadding& InPadding) -> WWidgetRegion& { Super::SetPadding(InPadding); return *this; }
 
-    FORCEINLINE auto operator&(const LRegionBrush& InBrush) -> WWidgetRegion& { return this->SetBrush(InBrush); }
+    ///////////////////////////////////////////////////////////////////////////////
+    // Wsdsml
+    ///////////////////////////////////////////////////////////////////////////////
+
+    FORCEINLINE auto operator&(const LColor&        InTint) -> WWidgetRegion& { return this->SetTint(InTint);       }
+    FORCEINLINE auto operator&(const LColor&&       InTint) -> WWidgetRegion& { return this->SetTint(InTint);       }
+    FORCEINLINE auto operator&(const LTexture2*  InTexture) -> WWidgetRegion& { return this->SetTexture(InTexture); }
+    FORCEINLINE auto operator&(const LImage&       InImage) -> WWidgetRegion& { return this->SetImage(InImage);     }
+    FORCEINLINE auto operator&(const LRegionBrush& InBrush) -> WWidgetRegion& { return this->SetBrush(InBrush);     }
 
 private:
 

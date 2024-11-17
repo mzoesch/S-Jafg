@@ -38,7 +38,7 @@ public:
     virtual auto UpdateDesiredSize() const -> void override;
 
     FORCEINLINE void SetContent(const LSimpleString& InContent) { this->Content = InContent; }
-    FORCEINLINE void SetContent(LSimpleString&& InContent) { this->Content = std::move(InContent); }
+    FORCEINLINE auto SetContent(LSimpleString&& InContent) -> WTextBlock& { this->Content = std::move(InContent); return *this; }
     FORCEINLINE auto GetContent() const -> const LSimpleString& { return this->Content;      }
 
     FORCEINLINE auto SetColor(const LColor& InColor) -> WTextBlock& { this->Brush.Color = InColor; return *this; }
@@ -54,10 +54,10 @@ public:
     // Wsdsml
     ///////////////////////////////////////////////////////////////////////////////
 
-    FORCEINLINE auto operator&(const LColor&     InColor) -> WTextBlock& { this->SetColor(InColor);     return *this; }
-    FORCEINLINE auto operator&(const LColor&&    InColor) -> WTextBlock& { this->SetColor(InColor);     return *this; }
-    FORCEINLINE auto operator&(LSimpleString&& InContent) -> WTextBlock& { this->SetContent(std::forward<LSimpleString>(InContent)); return *this; }
-    FORCEINLINE auto operator&(LTextBlockBrush&& InBrush) -> WTextBlock& { this->SetBrush(InBrush);     return *this; }
+    FORCEINLINE auto operator&(const LColor&     InColor) -> WTextBlock& { return this->SetColor(InColor); }
+    FORCEINLINE auto operator&(const LColor&&    InColor) -> WTextBlock& { return this->SetColor(InColor); }
+    FORCEINLINE auto operator&(LSimpleString&& InContent) -> WTextBlock& { return this->SetContent(std::forward<LSimpleString>(InContent)); }
+    FORCEINLINE auto operator&(LTextBlockBrush&& InBrush) -> WTextBlock& { return this->SetBrush(InBrush); }
 
     FORCEINLINE auto operator>(LNullptrTy) -> WTextBlock&
     {

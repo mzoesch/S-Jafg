@@ -165,6 +165,8 @@
  */
 #define DO_ENSURES                      DO_CHECKS
 
+#define WITH_DEBUG_ZERO_UNBOUND         !IN_SHIPPING
+
 
 /*-----------------------------------------------------------------------------
     Jafg build tool.

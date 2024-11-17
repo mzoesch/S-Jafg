@@ -7,6 +7,7 @@
 namespace Jafg
 {
 
+class LTexture2;
 class LViewport;
 
 /**
@@ -35,16 +36,30 @@ public:
     /**
      * Draws the box.
      */
-    void Draw(const LViewport& Context, const LVector2& Size, const LVector2& TopLeft, const LColor& Color) const;
+    void Draw(
+        const LViewport& Context,
+        const LVector2&  Size,
+        const LVector2&  TopLeft,
+        const LColor&    Color,
+        const LTexture2* Texture = nullptr
+    ) const;
 
     FORCEINLINE auto IsMeaningful() const -> bool { return this->bIsMeaningful; }
 
+    void ReloadShader() const;
+
 private:
 
-    bool    bIsMeaningful = false;
-    LShader Shader;
-    uint32  Vao   = 0x0u;
-    uint32  Vbo   = 0x0u;
+    void FreeStayMeaningful() const;
+
+    bool bIsMeaningful = false;
+
+    mutable LShader Shader = {};
+    mutable uint32  Vao    = 0x0u;
+    mutable uint32  Vbo    = 0x0u;
+    mutable uint32  Tex    = 0x0u;
+    mutable uint32  Ebo    = 0x0u;
+    mutable const LTexture2* LastFrameTexture  = nullptr;
 };
 
 } /* ~Namespace Jafg */

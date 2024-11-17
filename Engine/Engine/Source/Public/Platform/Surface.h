@@ -3,15 +3,13 @@
 #pragma once
 
 #include "CoreAfx.h"
+#include "Platform/SurfaceForward.h"
 #include "User/Input/RawInput.h"
 
 namespace Jafg
 {
-class LViewport;
-}
 
-namespace Jafg
-{
+class LViewport;
 
 /** Interface for a generic surface that the RHI may use to draw on. */
 class ENGINE_API LSurface

@@ -51,7 +51,7 @@ void Jafg::LTextureMipMap2::AllocateBulk()
     check( this->Format != ERawImageFormat::Unspecified )
 
     const int32 BytesPerPixel = ERawImageFormat::GetBytesPerPixel(this->Format);
-    this->Bulk.AllocateBulk(static_cast<int32>(this->Size.X * this->Size.Y) * BytesPerPixel, true);
+    this->Bulk.AllocateBulk(static_cast<int32>(this->Size.X * this->Size.Y) * BytesPerPixel, false);
 
     check( this->Bulk.IsAllocated() )
 

@@ -16,6 +16,7 @@ class WUserWidget;
 class LViewport;
 class LSurface;
 class WWidgetParentBase;
+class LApplicationInstance;
 struct LWidgetConstructor;
 
 namespace EWidgetVisibility
@@ -63,14 +64,14 @@ struct LWidgetSlot
 /**
  * Constructs a new widget node in the given context
  * @see NewNode(TNode) (Wsdsml)
- * @see User/Frontend/DebugScreen.cpp
+ * @see User/Frontend/DebugScreen.cpp (for usage example)
  */
 template <typename TNode>
 FORCEINLINE auto ConstructWidgetNode(Private::LObjectContext* InContext) -> TNode*;
 /**
  * Constructs a new deferred widget node in the given context.
  * @see NewNode(TNode) (Wsdsml)
- * @see User/Frontend/DebugScreen.cpp
+ * @see User/Frontend/DebugScreen.cpp (for usage example)
  */
 template <typename TNode>
 FORCEINLINE auto ConstructDeferredWidgetNode(Private::LObjectContext* InContext) -> TNode*;
@@ -128,8 +129,8 @@ public:
     FORCEINLINE auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> void { this->Visibility = InVisibility; }
 
     /**
-     * Orphans the widget from its parent widget.
-     * @param bDestroy If true, the widget will be destroyed automatically.
+     * Orphans the child from its parent widget.
+     * @param bDestroy If true, this child will be killed automatically by the butcher at his next sweep.
      */
     virtual auto RemoveFromParent(const bool bDestroy = true) -> void;
             auto GetParent() const -> WWidgetParentBase*;
@@ -153,6 +154,8 @@ public:
     virtual void UpdateDesiredSize() const { }
     FORCEINLINE auto SetDesiredSize(const LVector2& InSize) const -> void { this->DesiredSize = InSize; }
     FORCEINLINE auto GetDesiredSize() const -> const LVector2& { return this->DesiredSize; }
+
+    LApplicationInstance* GetApplicationInstance() const;
 
 private:
 

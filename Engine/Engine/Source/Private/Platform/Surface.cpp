@@ -7,8 +7,6 @@
 
 void Jafg::LSurface::Initialize()
 {
-    PlatformMisc::InvalidateCachedValues();
-
     this->SurfaceViewport = new LViewport();
     this->SurfaceViewport->Initialize();
 

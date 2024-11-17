@@ -42,6 +42,12 @@ public:
 
     const LTextureMipMap2& GetFirstMipMap() const { return this->MipMap; }
 
+    FORCEINLINE auto GetWidth()  const noexcept -> uint32 { return this->MipMap.Size.X; }
+    FORCEINLINE auto GetHeight() const noexcept -> uint32 { return this->MipMap.Size.Y; }
+    FORCEINLINE auto GetFormat() const noexcept -> ERawImageFormat::Type { return this->MipMap.Format; }
+    FORCEINLINE auto GetChannelsPerPixel() const noexcept -> int32 { return this->MipMap.GetChannelsPerPixel(); }
+    FORCEINLINE auto GetBytesPerPixel() const noexcept -> int32 { return this->MipMap.GetBytesPerPixel(); }
+
 private:
 
     LTextureMipMap2 MipMap = { };

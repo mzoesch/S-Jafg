@@ -28,7 +28,8 @@ void Jafg::WWidgetRegion::Draw(LViewport& Context) const
         Context,
         this->GetDesiredSize(),
         this->GetRelativeTopLeftFromMostOuter(this),
-        this->GetBrush().Tint
+        this->GetBrush().Tint,
+        this->GetBrush().Image.GetTexture()
     );
 
     Super::Draw(Context);
@@ -49,9 +50,44 @@ void Jafg::WWidgetRegion::UpdateDesiredSize() const
         continue;
     }
 
+    DesiredSize += this->GetPadding().GetDesiredSize();
+
     this->SetDesiredSize(DesiredSize);
 
     return;
+}
+
+Jafg::WWidgetRegion& Jafg::WWidgetRegion::SetTint(const LColor& InTint)
+{
+    if (this->HasBrush())
+    {
+        this->Brush.GetValue().Tint = InTint;
+        return *this;
+    }
+
+    return this->SetBrush(LRegionBrush({.Tint = InTint}));
+}
+
+Jafg::WWidgetRegion& Jafg::WWidgetRegion::SetTexture(const LTexture2* InTexture)
+{
+    if (this->HasBrush())
+    {
+        this->Brush.GetValue().Image.SetTexture(InTexture);
+        return *this;
+    }
+
+    return this->SetBrush(LRegionBrush({.Image = LImage().SetTexture(InTexture)}));
+}
+
+Jafg::WWidgetRegion& Jafg::WWidgetRegion::SetImage(const LImage& InImage)
+{
+    if (this->HasBrush())
+    {
+        this->Brush.GetValue().Image = InImage;
+        return *this;
+    }
+
+    return this->SetBrush(LRegionBrush({.Image = InImage}));
 }
 
 void Jafg::WWidgetRegion::CreateNewShaderContext() const
