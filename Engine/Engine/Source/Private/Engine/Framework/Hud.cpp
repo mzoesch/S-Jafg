@@ -75,3 +75,13 @@ void Jafg::LHud::RemoveWidget(WUserWidget* Widget) const
 {
     this->GetMainViewport()->RemoveWidget(Widget);
 }
+
+Jafg::WWidgetNode* Jafg::LHud::GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
+{
+    return this->GetMainViewport()->GetTopLevelWidgetByClass(WidgetClass);
+}
+
+Jafg::WWidgetNode* Jafg::LHud::GetCheckedTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
+{
+    return this->GetMainViewport()->GetCheckedTopLevelWidgetByClass(WidgetClass);
+}

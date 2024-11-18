@@ -37,8 +37,11 @@ void Jafg::WWidgetParent::Draw(LViewport& Context) const
 
     for (const LWidgetSlot* ChildSlot : this->Children)
     {
-        checkSlow( ChildSlot->Content )
-        ChildSlot->Content->Draw(Context);
+        if (ChildSlot->Content->ShouldNowDraw())
+        {
+            checkSlow( ChildSlot->Content )
+            ChildSlot->Content->Draw(Context);
+        }
 
         continue;
     }

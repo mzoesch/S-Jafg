@@ -15,15 +15,12 @@
 #include "Widgets/Spacer.h"
 #include "Widgets/TextBlock.h"
 #include "Widgets/VBox.h"
-#include "System/EnginePath.h"
 
 void Jafg::WDebugScreen::Construct()
 {
     Super::Construct();
 
     JMaterialSubsystem* MaterialSubsystem = this->GetApplicationInstance()->GetSubsystem<JMaterialSubsystem>();
-
-    // TestTexture.LoadFromDisk(LEnginePath(EEnginePaths::Voxels, "Grass_Flora.png"), *GetDefault<JUserPreferences>());
 
     MakeRootNode(WVBox)
     [

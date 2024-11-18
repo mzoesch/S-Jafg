@@ -35,8 +35,13 @@ void Jafg::LViewport::Draw()
 
     for (const WUserWidget* Widget : this->TopLevelWidgets)
     {
-        Widget->UpdateDesiredSize();
-        Widget->Draw(*this);
+        if (Widget->ShouldNowDraw())
+        {
+            Widget->UpdateDesiredSize();
+            Widget->Draw(*this);
+        }
+
+        continue;
     }
 
     return;
@@ -72,6 +77,26 @@ void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
     this->Dimensions = InDimensions;
 
     return;
+}
+
+Jafg::WWidgetNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObjectClass* WidgetClass)
+{
+    for (WUserWidget* Widget : this->TopLevelWidgets)
+    {
+        if (Widget->GetVTable()->DerivesFrom(WidgetClass))
+        {
+            return Widget;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+const Jafg::WWidgetNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
+{
+    return const_cast<LViewport*>(this)->GetTopLevelWidgetByClass(WidgetClass);
 }
 
 void Jafg::LViewport::RecalculateScaleFactor()

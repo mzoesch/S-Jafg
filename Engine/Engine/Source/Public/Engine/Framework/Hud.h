@@ -33,10 +33,29 @@ public:
     void AddWidget(WUserWidget* Widget) const;
     void RemoveWidget(WUserWidget* Widget) const;
 
+    auto GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> WWidgetNode*;
+    auto GetCheckedTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> WWidgetNode*;
+    template <typename TNode> FORCEINLINE auto GetTopLevelWidgetByClass() const -> TNode*;
+    template <typename TNode> FORCEINLINE auto GetCheckedTopLevelWidgetByClass() const -> TNode*;
+
 private:
 
     Private::LObjectContext* Outer;
     LSubsystemCollection*    Collection;
 };
+
+template <typename TNode>
+TNode* LHud::GetTopLevelWidgetByClass() const
+{
+    static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
+    return CheckedStaticCast<TNode, true>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
+}
+
+template <typename TNode>
+TNode* LHud::GetCheckedTopLevelWidgetByClass() const
+{
+    static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
+    return CheckedStaticCast<TNode>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
+}
 
 } /* ~Namespace Jafg. */

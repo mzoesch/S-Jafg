@@ -42,6 +42,8 @@ enum Type : uint8
 
 } /* ~Namespace EWidgetVisibility */
 
+inline LSimpleString LexToString(const EWidgetVisibility::Type InVisibility);
+
 /** The base struct for every widget slot. */
 struct LWidgetSlot
 {
@@ -125,6 +127,7 @@ public:
 
     /** Weather this widget is allowed to tick this frame. */
     FORCEINLINE auto ShouldNowTick() const -> bool;
+    FORCEINLINE auto ShouldNowDraw() const -> bool { return this->ShouldNowTick(); }
     FORCEINLINE auto GetVisibility() const -> EWidgetVisibility::Type { return this->Visibility; }
     FORCEINLINE auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> void { this->Visibility = InVisibility; }
 
@@ -225,12 +228,25 @@ FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode)
 
 } /* ~Namespace Jafg */
 
+inline Jafg::LSimpleString Jafg::LexToString(const EWidgetVisibility::Type InVisibility)
+{
+    switch (InVisibility)
+    {
+    case EWidgetVisibility::Visible: { return "Visible"; }
+    case EWidgetVisibility::Hidden: { return "Hidden"; }
+    case EWidgetVisibility::Collapsed: { return "Collapsed"; }
+    case EWidgetVisibility::TransitiveHitTestInvisible: { return "TransitiveHitTestInvisible"; }
+    case EWidgetVisibility::IntransitiveHitTestInvisible: { return "IntransitiveHitTestInvisible"; }
+    default: checkNoEntry() return { };
+    }
+}
+
 bool Jafg::WWidgetNode::ShouldNowTick() const
 {
     return
         ( this->bDisableTick == false )
         && (
-            this->Visibility == EWidgetVisibility::Visible
+               this->Visibility == EWidgetVisibility::Visible
             || this->Visibility == EWidgetVisibility::TransitiveHitTestInvisible
             || this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible
         );

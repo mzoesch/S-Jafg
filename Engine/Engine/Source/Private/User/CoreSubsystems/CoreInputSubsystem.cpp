@@ -2,11 +2,12 @@
 
 #include "CoreAfx.h"
 #include "User/CoreSubsystems/CoreInputSubsystem.h"
+#include "Engine/Framework/Hud.h"
 #include "Engine/Framework/Pawn.h"
-#include "Engine/Framework/PersonaController.h"
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
+#include "User/Frontend/DebugScreen.h"
 #include "User/Input/UserInput.h"
 #include "User/Input/InputAction.h"
 
@@ -132,5 +133,12 @@ void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
 
 void Jafg::JCoreInputSubsystem::OnDebugScreenToggle(LInputActionValue& InValue)
 {
-    LOG_INFO(LogTemporal, "Debug screen toggled.")
+    WDebugScreen* Screen = this->GetLocalEgo()->GetHud()->GetCheckedTopLevelWidgetByClass<WDebugScreen>();
+
+    Screen->SetVisibility(Screen->GetVisibility() == EWidgetVisibility::Visible
+        ? EWidgetVisibility::Collapsed
+        : EWidgetVisibility::Visible
+    );
+
+    return;
 }
