@@ -8,7 +8,6 @@
 #include "MyWorld/MyWorldStatics.h"
 #include "Engine/Framework/Pawn.h"
 #include "Engine/Framework/PersonaController.h"
-#include "MyWorld/Blocks.h"
 #include "MyWorld/WorldGen.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "MyWorld/Meshing/ChunkMesher.h"

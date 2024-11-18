@@ -4,7 +4,6 @@
 
 #include "Engine/Engine.h"
 #include "Engine/Framework/ApplicationInstance.h"
-#include "MyWorld/Blocks.h"
 #include "MyWorld/Chunk/Chunk.h"
 #include "System/VoxelSubsystem.h"
 

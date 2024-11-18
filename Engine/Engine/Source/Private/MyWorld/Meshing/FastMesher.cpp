@@ -2,7 +2,6 @@
 
 #include "CoreAfx.h"
 #include "MyWorld/Meshing/FastMesher.h"
-#include "MyWorld/Blocks.h"
 #include "MyWorld/Chunk/Chunk.h"
 
 void Jafg::LFastChunkMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubsystem, const JMaterialSubsystem* MaterialSubsystem)
