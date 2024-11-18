@@ -73,6 +73,8 @@ struct LGenericPlatformTypes
     typedef std::wstring        LWideString;
     typedef std::string         LStringLegacy;
 
+    /** No other type more aligned than double. */
+    typedef double              LMaxAlign;
     typedef decltype(nullptr)   LNullptrTy;
 
     static LStringLegacy Ws2S(const LWideString& Ws)

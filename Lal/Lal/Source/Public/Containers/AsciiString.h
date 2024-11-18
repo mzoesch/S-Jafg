@@ -125,6 +125,7 @@ public:
     FORCEINLINE auto FindLast(const LChar InChar) const -> int32;
     FORCEINLINE auto InlineCut(const int32 InIndex) -> void;
     FORCEINLINE auto InlineSub(const int32 InIndex, const int32 InCount) -> void;
+    FORCEINLINE auto InlineSubIdx(const int32 InIndexA, const int32 InIndexB) -> void;
     FORCEINLINE auto Count(const LChar InChar) const -> int32;
 
     /** Private iterator functions for range-based loops. Do not use these directly. */
@@ -750,6 +751,14 @@ FORCEINLINE void Jafg::LAsciiString::InlineSub(const int32 InIndex, const int32 
     check( Sub.GetSize() == 0 )
     check( Sub.GetRuneCount() == 0 )
     check( Sub.Data.GetCapacity() == 0 )
+
+    return;
+}
+
+FORCEINLINE void Jafg::LAsciiString::InlineSubIdx(const int32 InIndexA, const int32 InIndexB)
+{
+    check( InIndexA <= InIndexB )
+    this->InlineSub(InIndexA, InIndexB - InIndexA);
 
     return;
 }

@@ -171,6 +171,7 @@ void Jafg::LBoxShaderContext::ReloadShader() const
         glEnableVertexAttribArray(1);
 
         glGenTextures(1, &this->Tex);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, this->Tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);

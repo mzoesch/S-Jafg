@@ -2,51 +2,40 @@
 
 #include "CoreAfx.h"
 #include "Rhi/ChunkShaderContext.h"
-#include "Rhi/Shader.h"
-#include "Forward/EngineForward.h"
 #include "Widgets/Viewport.h"
 #include <stb_image.h>
 #include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include "Engine/ObjectBaseUtility.h"
 #include "User/UserPreferences.h"
 #include "RhiVendorInclude.h"
+#include "Engine/Engine.h"
+#include "Engine/Framework/ApplicationInstance.h"
 #include "System/EnginePath.h"
+#include "System/MaterialSubsystem.h"
 
 void Jafg::LChunkShaderContext::Make()
 {
     LGenericShaderContext::Make();
 
-    check( this->Program == nullptr )
+    this->Program = LShader(LEnginePath(EEnginePaths::Shaders, "Chunk"));
+    this->Program.Use();
 
-    this->Program = new LShader(LEnginePath(EEnginePaths::Shaders, "Chunk"));
-    this->Program->Use();
-
-    glGenTextures(1, &this->Texture);
+    glGenTextures(1, &this->Tex);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, this->Texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, this->Tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    stbi_set_flip_vertically_on_load(true);
-    LStringLegacy ExecPath(PLATFORM_MAX_PATH, '\0');
-    GetModuleFileNameA(nullptr, ExecPath.data(), static_cast<uint32>(ExecPath.size()));
-    ExecPath = ExecPath.substr(0, ExecPath.find_last_of('\\'));
-    LStringLegacy TexPath = ExecPath + '/' + "Content/Textures/Map.png";
-
-    int32 Width;
-    int32 Height;
-    int32 NrChannels;
-    uint8* Data = stbi_load(TexPath.data(), &Width, &Height, &NrChannels, 0);
-    if (Data == nullptr)
-    {
-        JAFG_ENGINE_FORWARD_REQUEST_EXIT(EPlatformExit::Fatal, "Failed to load texture.")
-        return;
-    }
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, Data);
+    const JMaterialSubsystem* Subsystem = GEngine->GetApplicationInstance()->GetSubsystem<JMaterialSubsystem>();
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, GL_RGB /* out */,
+        static_cast<GLsizei>(Subsystem->GetAtlas().GetWidth()),
+        static_cast<GLsizei>(Subsystem->GetAtlas().GetHeight()),
+        0, GL_RGBA /* in */, GL_UNSIGNED_BYTE, Subsystem->GetAtlas().GetFirstMipMap().Bulk.GetBulk()
+    );
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    stbi_image_free(Data);
+    this->Program.SetUIntUniform("AtlasDomainWCount", Subsystem->GetDomainWidth());
 
     return;
 }
@@ -55,14 +44,14 @@ void Jafg::LChunkShaderContext::OnFree()
 {
     LGenericShaderContext::OnFree();
 
-    if (ensure(this->Program))
-    {
-        this->Program->Free();
-        delete this->Program;
-        this->Program = nullptr;
-    }
+    this->Program.Free();
 
     return;
+}
+
+void Jafg::LChunkShaderContext::OnReload()
+{
+    LGenericShaderContext::OnReload();
 }
 
 void Jafg::LChunkShaderContext::Draw(const LViewport& Context, LGenericShaderContextDrawArgs& InArgs) const
@@ -89,11 +78,10 @@ void Jafg::LChunkShaderContext::Draw(const LViewport& Context, LGenericShaderCon
         panic( "Encountered unknown polygon mode." )
     }
 
-    checkSlow( this->Program )
-    this->Program->Use();
+    this->Program.Use();
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, this->Texture);
+    glBindTexture(GL_TEXTURE_2D, this->Tex);
     glBindVertexArray(Args.Instance->GetVertexArrayObject());
 
     const TMatrix Projection = Maths::MakePerspectiveProjectionMatrix(
@@ -103,9 +91,9 @@ void Jafg::LChunkShaderContext::Draw(const LViewport& Context, LGenericShaderCon
     );
     LMatrix Model; Model.InlineTranslate(Args.WorldLocation);
 
-    this->Program->SetMatrixUniform("view", Args.ViewMatrix);
-    this->Program->SetMatrixUniform("projection", Projection);
-    this->Program->SetMatrixUniform("model", Model);
+    this->Program.SetMatrixUniform("View", Args.ViewMatrix);
+    this->Program.SetMatrixUniform("Projection", Projection);
+    this->Program.SetMatrixUniform("Model", Model);
 
     glDrawElements(GL_TRIANGLES, Args.NumTriangles, GL_UNSIGNED_INT, 0);
 

@@ -101,6 +101,7 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
         continue;
     }
 
+    VoxelSubsystem->SortAllVoxelMasksTextureGroups();
     this->CreateAtlas(LoadedTextures);
 
     return;
@@ -108,6 +109,11 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
 
 void Jafg::JMaterialSubsystem::CreateAtlas(const TdhArray<LTexture2>& Textures)
 {
+    if (static_cast<LuPtrSize>(Textures.GetSize()) >= static_cast<LuPtrSize>(std::numeric_limits<uint8>::max()))
+    {
+        panic( "Exceed texture count limit. Shaders need updating." )
+    }
+
     const int32 TextureSizeLimit = RendererInformation::GetLimitTextureDimension();
 
     int32 MaxTextureSize = INDEX_NONE;
@@ -125,7 +131,7 @@ void Jafg::JMaterialSubsystem::CreateAtlas(const TdhArray<LTexture2>& Textures)
     }
     this->CurrentTextureWidth = MaxTextureSize;
 
-    const int32 AtlasTextureDimensionCount = static_cast<int32>(Maths::Ceil<float>(Maths::Sqrt(static_cast<float>(Textures.GetSize()))));
+    const int32 AtlasTextureDimensionCount =  static_cast<int32>(Maths::Ceil<float>(Maths::Sqrt(static_cast<float>(Textures.GetSize()))));
     jassert(AtlasTextureDimensionCount > 0)
 
     this->Atlas.CreateEmpty(

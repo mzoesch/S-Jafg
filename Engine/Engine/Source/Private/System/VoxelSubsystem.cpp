@@ -52,6 +52,34 @@ Jafg::voxel_t Jafg::JVoxelSubsystem::GetVoxelIndex(const LSimpleString& Namespac
     return ECompileTimeVoxels::Null;
 }
 
+void Jafg::JVoxelSubsystem::SortAllVoxelMasksTextureGroups()
+{
+    for (LVoxelMask& Mask : this->VoxelMasks)
+    {
+        for (int32 i = 0; i < Mask.TextureGroups.GetSize(); ++i)
+        {
+            if (Mask.TextureGroups[i].Normal != ENormalLookup::Omnia)
+            {
+                continue;
+            }
+
+            if (i == Mask.TextureGroups.GetSize() - 1)
+            {
+                /* Already at the end. Nothing to do. */
+                continue;
+            }
+
+            Mask.TextureGroups.SwapIndices(i, Mask.TextureGroups.GetSize() - 1);
+
+            continue;
+        }
+
+        continue;
+    }
+
+    return;
+}
+
 void Jafg::JVoxelSubsystem::InitializeCompileTimeVoxels()
 {
     this->VoxelMasks.Add(LVoxelMask::Null);

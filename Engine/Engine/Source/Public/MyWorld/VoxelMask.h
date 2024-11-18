@@ -8,12 +8,13 @@
 namespace Jafg
 {
 
+class JVoxelSubsystem;
 class JMaterialSubsystem;
 
 struct LVoxelMask
 {
-    /** Needs to add the normal lookup and the texture indices. */
     friend JMaterialSubsystem;
+    friend JVoxelSubsystem;
 
     LVoxelMask() = delete;
     LVoxelMask(LSimpleString Namespace, LAsciiString Name) : Namespace(std::move(Namespace)), Name(std::move(Name)) { }

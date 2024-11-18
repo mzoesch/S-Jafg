@@ -64,6 +64,7 @@ typedef LPlatformTypes::LChar         LChar;
 typedef LPlatformTypes::LStringLegacy LStringLegacy;
 typedef LPlatformTypes::LWideString   LWideString;
 
+typedef LPlatformTypes::LMaxAlign     LMaxAlign;
 typedef LPlatformTypes::LNullptrTy    LNullptrTy;
 
 

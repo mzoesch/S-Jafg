@@ -3,6 +3,9 @@
 #include "CoreAfx.h"
 #include "MyWorld/Chunk/Chunk.h"
 #include "MyWorld/Meshing/ChunkMesher.h"
+#include "System/VoxelSubsystem.h"
+#include "System/MaterialSubsystem.h"
+#include "Engine/Framework/ApplicationInstance.h"
 
 Jafg::LChunkMesher::~LChunkMesher()
 {
@@ -26,4 +29,12 @@ void Jafg::LChunkMesher::ApplyProceduralMesh() const
     );
 
     return;
+}
+
+void Jafg::LChunkMesher::RegenerateProceduralMesh()
+{
+    this->RegenerateProceduralMesh(
+        this->GetOwner().GetApplicationInstanceSubsystem()->GetSubsystem<JVoxelSubsystem>(),
+        this->GetOwner().GetApplicationInstanceSubsystem()->GetSubsystem<JMaterialSubsystem>()
+    );
 }

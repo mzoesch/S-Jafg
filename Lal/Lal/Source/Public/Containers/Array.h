@@ -226,6 +226,7 @@ public:
 
     /** Swaps the content buffers of this array with the other array. */
     FORCEINLINE auto SwapBuffers(Self& InOther) noexcept -> void;
+    FORCEINLINE auto SwapIndices(const SizeType InA, const SizeType InB) noexcept -> void;
 
     /** Private iterator functions for range-based loops. Do not use these directly. */
     FORCEINLINE auto begin()       noexcept -> Iterator<T>       { return Iterator<T>      (this->GetData());        }
@@ -1092,6 +1093,33 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::SwapBuffers(Self& InOt
     InOther.Size     = TempSize;
     InOther.Capacity = TempCapacity;
     InOther.Data     = TempData;
+
+    return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::SwapIndices(const SizeType InA, const SizeType InB) noexcept
+{
+    check( this->IsValidIndex(InA) )
+    check( this->IsValidIndex(InB) )
+
+    if (InA == InB)
+    {
+        check( false && "Cannot switch contents with itself." )
+        /*
+         * It's okay. When encountering this in production, we'll just ignore it.
+         * I mean, the program will crash anyway soon if that happens, probably.
+         * But this array should not be the reason for the end of life.
+         */
+        return;
+    }
+
+    alignas(alignof(LMaxAlign))
+    uint8 Temp[sizeof(T)];
+
+    ::memcpy(Temp,             this->Data + InA, sizeof(T));
+    ::memcpy(this->Data + InA, this->Data + InB, sizeof(T));
+    ::memcpy(this->Data + InB, Temp,             sizeof(T));
 
     return;
 }

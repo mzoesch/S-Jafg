@@ -4,6 +4,7 @@
 
 #include "GenericShaderContext.h"
 #include "Rhi/ChunkBoxVertex.h"
+#include "Rhi/Shader.h"
 
 namespace Jafg
 {
@@ -29,17 +30,18 @@ public:
 
     virtual void Make() override;
     virtual void OnFree() override;
+    virtual void OnReload() override;
     virtual void Draw(const LViewport& Context, LGenericShaderContextDrawArgs& InArgs) const override;
 
-    FORCEINLINE auto GetProgram()       ->       LShader* { return this->Program; }
-    FORCEINLINE auto GetProgram() const -> const LShader* { return this->Program; }
+    FORCEINLINE auto GetProgram()       ->       LShader& { return this->Program; }
+    FORCEINLINE auto GetProgram() const -> const LShader& { return this->Program; }
 
-    FORCEINLINE auto GetTextureLocation() const -> uint32 { return this->Texture; }
+    FORCEINLINE auto GetTextureLocation() const -> uint32 { return this->Tex; }
 
 private:
 
-    LShader* Program = nullptr;
-    uint32   Texture = 0;
+    LShader Program = { };
+    uint32  Tex = 0;
 };
 
 /**

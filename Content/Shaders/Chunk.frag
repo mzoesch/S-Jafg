@@ -1,12 +1,15 @@
 #version 330 core
 
-in vec2 TexCoord;
+in vec2 InFragTexCoord;
 
 out vec4 FragColor;
 
-uniform sampler2D tex;
+uniform uint AtlasDomainWCount;
+uniform sampler2D TexSampler;
 
 void main()
 {
-    FragColor = texture(tex, TexCoord * 0.5);
+    float TexMultiplier = 1.0f / float(AtlasDomainWCount);
+
+    FragColor = texture(TexSampler, InFragTexCoord * TexMultiplier);
 }

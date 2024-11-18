@@ -32,6 +32,8 @@ public:
     FORCEINLINE auto HasAtlas() const -> bool { return this->Atlas.GetFirstMipMap().Bulk.IsAllocated(); }
     FORCEINLINE auto GetAtlas() const -> const LTexture2& { check( this->HasAtlas() ) return this->Atlas; }
 
+    FORCEINLINE auto GetDomainWidth() const -> uint32 { return this->Atlas.GetFirstMipMap().Size.X / this->CurrentTextureWidth; }
+
 private:
 
     void ReloadAllTextures(void);

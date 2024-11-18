@@ -9,10 +9,14 @@
 namespace Jafg
 {
 
+class JMaterialSubsystem;
+
 DECLARE_JAFG_CLASS()
 class JVoxelSubsystem final : public JApplicationInstanceSubsystem
 {
     GENERATED_CLASS_BODY()
+
+    friend JMaterialSubsystem;
 
 protected:
 
@@ -34,6 +38,13 @@ public:
     FORCEINLINE const LVoxelMask& GetVoxelMask(const voxel_t Index) const { return  this->VoxelMasks[Index]; }
 
 private:
+
+    /**
+     * Ensure that the Omnia texture group is at the end of the texture group array to allow for bitwise and
+     * operations to work correctly.
+     * @see MyWorld/Meshing/*Mesher.cpp
+     */
+    void SortAllVoxelMasksTextureGroups();
 
     void InitializeCompileTimeVoxels();
     int32 CompileTimeVoxels = INDEX_NONE;

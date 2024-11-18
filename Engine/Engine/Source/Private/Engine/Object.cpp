@@ -5,6 +5,16 @@
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 
+Jafg::LEngine* Jafg::JObject::GetEngine() const
+{
+    return GEngine;
+}
+
+Jafg::LApplicationInstance* Jafg::JObject::GetApplicationInstanceSubsystem() const
+{
+    return GEngine->GetApplicationInstance();
+}
+
 void Jafg::JObject::BeginLife()
 {
     JObjectBase::BeginLife();

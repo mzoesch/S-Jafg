@@ -39,7 +39,10 @@ public:
     void Free();
     virtual void OnFree() { }
 
-    virtual void Draw(const LViewport& Context, LGenericShaderContextDrawArgs& InArgs) const { }
+    void ReloadShader() { if (this->IsMeaningful()) { this->OnReload(); } else { this->Make(); } }
+    virtual void OnReload() { }
+
+    virtual void Draw(const LViewport& Context, LGenericShaderContextDrawArgs& InArgs) const { checkSlow( this->IsMeaningful() ) }
 
     FORCEINLINE auto IsMeaningful() const -> bool { return this->bMeaningful; }
 

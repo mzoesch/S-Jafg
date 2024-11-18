@@ -10,6 +10,7 @@ namespace Jafg
 {
 
 class LWorld;
+class LApplicationInstance;
 
 /**
  * An object that usually uses a world as its outer.
@@ -25,7 +26,10 @@ protected:
 
 public:
 
-    FORCEINLINE virtual auto GetWorld() const -> LWorld* { return this->CastedOuter; }
+    auto GetEngine() const -> LEngine*;
+    auto GetApplicationInstanceSubsystem() const -> LApplicationInstance*;
+
+    FORCEINLINE auto GetWorld() const -> LWorld* { return this->CastedOuter; }
 
     virtual void BeginLife() override;
 

@@ -1,8 +1,12 @@
 #include "CoreAfx.h"
 #include "MyWorld/WorldGen.h"
 #include <OpenSimplexNoise.hh>
+
+#include "Engine/Engine.h"
+#include "Engine/Framework/ApplicationInstance.h"
 #include "MyWorld/Blocks.h"
 #include "MyWorld/Chunk/Chunk.h"
+#include "System/VoxelSubsystem.h"
 
 void WorldGen::GenerateChunkData(int chunkX, int chunkY, int chunkZ, int chunkSize, uint32*& chunkData)
 {
@@ -13,6 +17,8 @@ void WorldGen::GenerateChunkData(int chunkX, int chunkY, int chunkZ, int chunkSi
     const int ChunkLocX = chunkX * chunkSize;
     const int ChunkLocY = chunkY * chunkSize;
     const int ChunkLocZ = chunkZ * chunkSize;
+
+    const voxel_t GrassIdx = GEngine->GetApplicationInstance()->GetSubsystem<JVoxelSubsystem>()->GetVoxelIndex("Grass");
 
     for (int X = 0; X < chunkSize; X++)
     {
@@ -44,11 +50,11 @@ void WorldGen::GenerateChunkData(int chunkX, int chunkY, int chunkZ, int chunkSi
 
                 if (Z + ChunkLocZ < Noise2D)
                 {
-                    chunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = Blocks::GRASS_BLOCK;
+                    chunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = GrassIdx;
                 }
                 else
                 {
-                    chunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = Blocks::AIR;
+                    chunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = ECompileTimeVoxels::Air;
                 }
                 //
                 // if (Z + ChunkLocZ > Noise2D || NoiseCaves > .5f)

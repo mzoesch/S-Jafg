@@ -43,7 +43,7 @@ Jafg::ENormalLookup::Type Jafg::LDiskVoxelTexture::GetNormalLookUpBasedOfFileNam
     if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 1)
     {
         LSimpleString Copy = this->Name;
-        Copy.InlineCut(Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar));
+        Copy.InlineSubIdx(Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1, Copy.GetSize() - 1);
 
         if (ENormalLookup::IsValid(Copy))
         {

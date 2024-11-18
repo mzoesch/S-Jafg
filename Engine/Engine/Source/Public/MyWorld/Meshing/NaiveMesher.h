@@ -14,7 +14,7 @@ public:
     LNaiveMesher() = delete;
     explicit LNaiveMesher(AChunk& Owner) : LChunkMesher(Owner) { }
 
-    virtual void GenerateProceduralMesh() override;
+    virtual void GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubsystem, const JMaterialSubsystem* MaterialSubsystem) override;
 };
 
 } /* ~Namespace Jafg */

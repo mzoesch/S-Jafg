@@ -9,6 +9,8 @@ namespace Jafg
 {
 
 class AChunk;
+class JMaterialSubsystem;
+class JVoxelSubsystem;
 
 class LChunkMesher
 {
@@ -19,13 +21,14 @@ public:
     virtual ~LChunkMesher();
 
             void ClearProceduralMesh();
-    virtual void GenerateProceduralMesh() = 0;
+    virtual void GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubsystem, const JMaterialSubsystem* MaterialSubsystem) = 0;
             void ApplyProceduralMesh() const;
 
-    FORCEINLINE void RegenerateProceduralMesh()
+    void RegenerateProceduralMesh();
+    FORCEINLINE void RegenerateProceduralMesh(const JVoxelSubsystem* VoxelSubsystem, const JMaterialSubsystem* MaterialSubsystem)
     {
         this->ClearProceduralMesh();
-        this->GenerateProceduralMesh();
+        this->GenerateProceduralMesh(VoxelSubsystem, MaterialSubsystem);
         this->ApplyProceduralMesh();
 
         return;
