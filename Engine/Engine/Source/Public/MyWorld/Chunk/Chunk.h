@@ -8,7 +8,6 @@
 #include "Engine/Components/RenderComponent.h"
 #include "MyWorld/ChunkKey.h"
 #include <glm/glm.hpp>
-#include "Rhi/Shader.h"
 #include "ChunkPersistency.h"
 #include "Rhi/ChunkShaderContext.h"
 #include "MyWorld/CommonTypes.h"
@@ -18,10 +17,14 @@
 namespace Jafg
 {
 
+class JMaterialSubsystem;
+class JVoxelSubsystem;
 class LChunkMesher;
+class JTextureSubsystem;
 class LFastChunkMesher;
 class AChunk;
 class JChunkGenerationSubsystem;
+class JChunkGeneratorSubsystem;
 class LChunkMesher;
 
 MAKE_MULTICAST_SIGNATURE(LChunkStateChangedDelegateSignature, EChunkState::Type /* NewChunkState */)
@@ -47,9 +50,16 @@ private:
     LChunkShaderInstance Instance = { };
 };
 
+/**
+ * Defines shared arguments that are used by every chunk inside a context.
+ */
 struct LSharedChunkArgs final
 {
     JChunkGenerationSubsystem* ChunkGenerationSubsystem;
+    JChunkGeneratorSubsystem*  ChunkGeneratorSubsystem;
+    JVoxelSubsystem*           VoxelSubsystem;
+    JMaterialSubsystem*        MaterialSubsystem;
+    JTextureSubsystem*         TextureSubsystem;
     TFunction<LChunkMesher*(AChunk& Owner)> GetNewMesher;
 };
 

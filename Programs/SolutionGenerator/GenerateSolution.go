@@ -572,16 +572,23 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
     for _, targ := range Shared.GApp.GetAllTargets() {
         var includeDirs []string
         var linkedLibs []string
+        /* Libs only in debug / development. */
+        var linkedDebugLibs []string
+        /* Libs only in shipping. */
+        var linkedShippedLibs []string
         includeDirs = append(includeDirs, Shared.GeneratedHeadersDir)
         includeDirs = append(includeDirs, fmt.Sprintf("%s/Source/Public", mod.GetRelativeModuleDir()))
         for _, dep := range mod.GetAllDependenciesTransitive(targ) {
             if dep == "CORE_DEPENDENCIES" {
-                /* Currently no core dependencies in use. */
+                includeDirs = append(includeDirs, Shared.VendorIncludeDir)
+                linkedDebugLibs   = append(linkedDebugLibs,   fmt.Sprintf("%s/FastNoiseD.lib", Shared.VendorLibDir))
+                linkedDebugLibs   = append(linkedDebugLibs,   fmt.Sprintf("%s/FastNoiseD.dll", Shared.VendorLibDir))
+                linkedShippedLibs = append(linkedShippedLibs, fmt.Sprintf("%s/FastNoise.lib",  Shared.VendorLibDir))
+                linkedShippedLibs = append(linkedShippedLibs, fmt.Sprintf("%s/FastNoise.dll",  Shared.VendorLibDir))
                 continue
             }
 
             if dep == "RHI_DEPENDENCIES" {
-                includeDirs = append(includeDirs, Shared.VendorIncludeDir)
                 /* Has to be included directly and not inside the namespace. */
                 includeDirs = append(includeDirs, fmt.Sprintf("%s/Freetype", Shared.VendorIncludeDir))
 
@@ -629,6 +636,15 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
             WriteWithIndent(builder, indent+8, "links {\n")
             for _, lib := range linkedLibs {
                 WriteWithIndent(builder, indent+12, fmt.Sprintf("'%s',\n", lib))
+            }
+            if strings.Contains(buildConfiguration, "Shipping") {
+                for _, dir := range linkedShippedLibs {
+                    WriteWithIndent(builder, indent+12, fmt.Sprintf("'%s',\n", dir))
+                }
+            } else {
+                for _, dir := range linkedDebugLibs {
+                    WriteWithIndent(builder, indent+12, fmt.Sprintf("'%s',\n", dir))
+                }
             }
             WriteWithIndent(builder, indent+8, "}\n")
 

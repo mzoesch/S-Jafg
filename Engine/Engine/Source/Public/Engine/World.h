@@ -12,6 +12,7 @@ class LEngine;
 class LShader;
 class JWorldSubsystem;
 class LTickableObject;
+class LApplicationInstance;
 struct LLevel;
 struct LSubsystemCollection;
 
@@ -76,26 +77,27 @@ public:
 
     LWorld() = delete;
     PROHIBIT_REALLOC_OF_ANY_FROM(LWorld)
-    explicit LWorld(const EWorldState::Type InWorldType)
-        : WorldState(InWorldType)
+    FORCEINLINE explicit LWorld(const EWorldState::Type InWorldType) : WorldState(InWorldType)
     {
         check( this->WorldState != EWorldState::None )
     }
 
-    LEngine* GetEngine() const;
+    auto GetEngine() const -> LEngine*;
+    auto GetApplicationInstance() const -> LApplicationInstance*;
 
-    FORCEINLINE EWorldState::Type GetWorldState() const { return this->WorldState; }
+    FORCEINLINE auto GetWorldState() const -> EWorldState::Type { return this->WorldState; }
 
     void InitializeWorld(const LLevel& Level);
 
     FORCEINLINE bool CanTick() const { return this->GetWorldState() == EWorldState::Running; }
     void Tick(const float DeltaTime);
 
+    // LObjectContext implementation
     virtual void TearDownContext() override;
+    // ~LObjectContext implementation
 
     void RegisterTickableObject(LTickableObject* Tickable);
     void UnregisterTickableObject(LTickableObject* Tickable);
-
     FORCEINLINE auto GetTickableObjects() const -> const TdhArray<LTickableObject*>& { return this->TickableObjects; }
     FORCEINLINE auto GetActors() const -> const TdhArray<AActor*>& { return this->Actors; }
 

@@ -17,6 +17,11 @@ Jafg::LEngine* Jafg::LWorld::GetEngine() const
     return GEngine;
 }
 
+Jafg::LApplicationInstance* Jafg::LWorld::GetApplicationInstance() const
+{
+    return this->GetEngine()->GetApplicationInstance();
+}
+
 void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 {
     this->RealTimeWhenWorldWasLaunched = static_cast<float>(Application::GetDeltaSinceStaticStorageInitialization());

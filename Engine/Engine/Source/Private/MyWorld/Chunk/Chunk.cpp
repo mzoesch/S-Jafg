@@ -4,11 +4,11 @@
 #include "MyWorld/Chunk/Chunk.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "MyWorld/Generation/ChunkGenerator.h"
 #include "Engine/Engine.h"
 #include "MyWorld/MyWorldStatics.h"
 #include "Engine/Framework/Pawn.h"
 #include "Engine/Framework/PersonaController.h"
-#include "MyWorld/WorldGen.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "MyWorld/Meshing/ChunkMesher.h"
 #include "User/LocalEgo.h"
@@ -209,9 +209,11 @@ void Jafg::AChunk::Shape()
     this->RawVoxelData = new uint32[MwStatics::VoxelCount];
     ::memset(this->RawVoxelData, 0, MwStatics::VoxelCount * sizeof(uint32));
 
-    WorldGen::GenerateChunkData(
-        static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z),
-        MwStatics::ChunkSize, RawVoxelData);
+    ChunkGenerator::ShapeChunk(this->SharedArgs, this->ChunkKey, this->RawVoxelData);
+
+    // WorldGen::GenerateChunkData(
+    //     static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z),
+    //     MwStatics::ChunkSize, RawVoxelData);
 
     return;
 }

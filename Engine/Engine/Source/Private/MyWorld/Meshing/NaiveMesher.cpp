@@ -125,6 +125,13 @@ void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubs
                 const voxel_t DownVoxel = this->GetOwner().GetRawVoxelDataByNonZeroOrigin(VoxelKey.GetDownKey(), ECompileTimeVoxels::Air);
                 if (DownVoxel == ECompileTimeVoxels::Air)
                 {
+                    LTextureIndex Idx = Mask.FindTextureIndex(ENormalLookup::Down);
+
+                    Vertices.Emplace(X + 1, Y + 1, Z + 0, Idx, MaterialSubsystem->GetDomainWidth(), ChunkBoxVertex::TexOffset::None);
+                    Vertices.Emplace(X + 1, Y + 0, Z + 0, Idx, MaterialSubsystem->GetDomainWidth(), ChunkBoxVertex::TexOffset::East);
+                    Vertices.Emplace(X + 0, Y + 0, Z + 0, Idx, MaterialSubsystem->GetDomainWidth(), ChunkBoxVertex::TexOffset::Both);
+                    Vertices.Emplace(X + 0, Y + 1, Z + 0, Idx, MaterialSubsystem->GetDomainWidth(), ChunkBoxVertex::TexOffset::South);
+
                     Indices.Emplace(CurrentVertex + 0);
                     Indices.Emplace(CurrentVertex + 1);
                     Indices.Emplace(CurrentVertex + 2);

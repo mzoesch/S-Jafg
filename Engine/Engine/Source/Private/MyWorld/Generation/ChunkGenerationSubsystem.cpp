@@ -4,13 +4,19 @@
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "Engine/Framework/ApplicationInstance.h"
 #include "Engine/Framework/Pawn.h"
 #include "Engine/Framework/PersonaController.h"
 #include "Rhi/ChunkShaderContext.h"
 #include "MyWorld/Chunk/ChunkStates.h"
 #include "MyWorld/Chunk/ChunkPersistency.h"
+#include "ChunkGeneratorSubsystem.h"
 #include "MyWorld/Meshing/NaiveMesher.h"
 #include "User/LocalEgo.h"
+#include "System/VoxelSubsystem.h"
+#include "System/MaterialSubsystem.h"
+#include "System/TextureSubsystem.h"
+#include "System/MaterialSubsystem.h"
 
 void GetAllChunksInDistance(const Jafg::TIntVector2<int32>& Center, const int32 Distance, std::vector<Jafg::TIntVector2<int32>>& OutChunks)
 {
@@ -80,6 +86,7 @@ FunctionEnd:
 
 void Jafg::JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
 {
+    Collection.InitializeDependency<JChunkGeneratorSubsystem>();
     Super::Initialize(Collection);
     this->SetTickInterval(0.0f);
 
@@ -88,6 +95,10 @@ void Jafg::JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Col
 
     this->SharedChunkArgs = new LSharedChunkArgs();
     this->SharedChunkArgs->ChunkGenerationSubsystem = this;
+    this->SharedChunkArgs->ChunkGeneratorSubsystem  = Collection.GetCheckedSubsystem<JChunkGeneratorSubsystem>();
+    this->SharedChunkArgs->VoxelSubsystem  = this->GetWorld()->GetApplicationInstance()->GetCheckedSubsystem<JVoxelSubsystem>();
+    this->SharedChunkArgs->MaterialSubsystem  = this->GetWorld()->GetApplicationInstance()->GetCheckedSubsystem<JMaterialSubsystem>();
+    this->SharedChunkArgs->TextureSubsystem  = this->GetWorld()->GetApplicationInstance()->GetCheckedSubsystem<JTextureSubsystem>();
     this->SharedChunkArgs->GetNewMesher = [] (AChunk& Owner) -> LChunkMesher* { return new LNaiveMesher(Owner); };
 
     return;
