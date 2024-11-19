@@ -16,7 +16,7 @@ class ENGINE_API LTickableObject
 public:
 
     LTickableObject() = default;
-    PROHIBIT_REALLOC_OF_ANY_FROM(LTickableObject)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LTickableObject)
     virtual ~LTickableObject() = default;
 
     virtual void Tick(const float DeltaTime) = 0;

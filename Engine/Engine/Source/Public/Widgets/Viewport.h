@@ -20,7 +20,7 @@ class ENGINE_API LViewport final
 public:
 
     LViewport() = default;
-    PROHIBIT_REALLOC_OF_ANY_FROM(LViewport)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LViewport)
     ~LViewport() = default;
 
     void Initialize();

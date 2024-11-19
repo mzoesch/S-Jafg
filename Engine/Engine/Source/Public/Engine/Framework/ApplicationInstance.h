@@ -24,7 +24,7 @@ class LApplicationInstance final
     friend LEngine;
 
     LApplicationInstance() = default;
-    PROHIBIT_REALLOC_OF_ANY_FROM(LApplicationInstance)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LApplicationInstance)
     ~LApplicationInstance() = default;
 
     void Initialize();

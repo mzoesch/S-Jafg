@@ -23,7 +23,7 @@ class ENGINE_API LCarnifex final
 public:
 
     LCarnifex() = default;
-    PROHIBIT_REALLOC_OF_ANY_FROM(LCarnifex)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LCarnifex)
     ~LCarnifex() = default;
 
     FORCEINLINE void AddGarbageChild(Private::JObjectBase* Child) { this->GarbageChildren.Add(Child); }

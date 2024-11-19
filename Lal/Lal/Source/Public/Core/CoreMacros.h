@@ -33,11 +33,11 @@
     }
 
 /** Prohibits copying and moving of a specific type T. */
-#define PROHIBIT_REALLOC_OF_ANY_FROM(Ty) \
+#define PROHIBIT_REALLOC_OF_ANY_FORM(Ty) \
     PROHIBIT_COPY(Ty)                    \
     PROHIBIT_MOVE(Ty)
 
-#define PROHIBIT_REALLOC_OF_ANY_FROM_NAMESPACED(TSpacedTy, Ty) \
+#define PROHIBIT_REALLOC_OF_ANY_FORM_NAMESPACED(TSpacedTy, Ty) \
     PROHIBIT_COPY_NAMESPACED(TSpacedTy, Ty)                    \
     PROHIBIT_MOVE_NAMESPACED(TSpacedTy, Ty)
 
@@ -64,11 +64,11 @@
     TSpacedType& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = delete;
 
 /** Defaults the copy and move operations of a specific type T. */
-#define DEFAULT_REALLOC_OF_ANY_FROM(Ty) \
+#define DEFAULT_REALLOC_OF_ANY_FORM(Ty) \
     DEFAULT_COPY(Ty)                    \
     DEFAULT_MOVE(Ty)
 
-#define DEFAULT_REALLOC_OF_ANY_FROM_NAMESPACED(TSpacedTy, Ty) \
+#define DEFAULT_REALLOC_OF_ANY_FORM_NAMESPACED(TSpacedTy, Ty) \
     DEFAULT_COPY_NAMESPACED(TSpacedTy, Ty)                    \
     DEFAULT_MOVE_NAMESPACED(TSpacedTy, Ty)
 

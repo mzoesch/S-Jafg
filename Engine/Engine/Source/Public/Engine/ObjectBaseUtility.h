@@ -177,7 +177,7 @@ struct LRegistrationQueuePackage final
 struct LObjectMiscellaneousAccessor final
 {
     LObjectMiscellaneousAccessor()  = delete;
-    PROHIBIT_REALLOC_OF_ANY_FROM(LObjectMiscellaneousAccessor)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LObjectMiscellaneousAccessor)
     ~LObjectMiscellaneousAccessor() = delete;
 
     template <typename TObj>
@@ -226,7 +226,7 @@ class LObjectRegistry final
 public:
 
     LObjectRegistry()  = default;
-    PROHIBIT_REALLOC_OF_ANY_FROM(LObjectRegistry)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LObjectRegistry)
     ~LObjectRegistry() = default;
 
     /**
@@ -287,7 +287,7 @@ void RegisterNewObjectType(
 struct LRegistrationCallbackHelper final
 {
     LRegistrationCallbackHelper()  = delete;
-    PROHIBIT_REALLOC_OF_ANY_FROM(LRegistrationCallbackHelper)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LRegistrationCallbackHelper)
     ~LRegistrationCallbackHelper() = delete;
 
     /**

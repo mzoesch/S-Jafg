@@ -15,7 +15,7 @@ public:
 
     LEye() = delete;
     FORCEINLINE explicit LEye(APawn* InOwningPawn) : OwningPawn(InOwningPawn) { check( this->OwningPawn ) }
-    PROHIBIT_REALLOC_OF_ANY_FROM(LEye)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LEye)
     ~LEye() = default;
 
     FORCEINLINE auto HasOwningPawn() const -> bool { return this->OwningPawn != nullptr; }

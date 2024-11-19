@@ -20,7 +20,7 @@ template <ELogVerbosityType Verbosity>
 struct LLogCategory
 {
     LLogCategory() = delete;
-    PROHIBIT_REALLOC_OF_ANY_FROM(LLogCategory)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LLogCategory)
 
     FORCEINLINE explicit LLogCategory(LStringLegacy Category) : Category(std::move(Category))
     {

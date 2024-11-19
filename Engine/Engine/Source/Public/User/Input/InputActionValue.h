@@ -37,7 +37,7 @@ struct LInputActionValue final
     {
         check( this->ValueType != EInputActionCategory::None )
     }
-    DEFAULT_REALLOC_OF_ANY_FROM(LInputActionValue)
+    DEFAULT_REALLOC_OF_ANY_FORM(LInputActionValue)
     ~LInputActionValue() = default;
 
     FORCEINLINE auto IsNonZero() const -> bool;

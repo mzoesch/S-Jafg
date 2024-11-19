@@ -12,7 +12,7 @@ namespace Jafg
     Type Forwards.
 ----------------------------------------------------------------------------*/
 
-typedef int32                                   DefaultContainerSizeType;
+typedef int32 DefaultContainerSizeType;
 
 namespace ResizePolicy
 {
@@ -36,6 +36,29 @@ enum Type : uint8
 
 } /* ~Namespace AllocationPolicy */
 
+namespace EQueueKind
+{
+
+enum Type : uint8
+{
+    /**
+     * Single producer; single consumer.
+     */
+    Spsc,
+
+    /**
+     * Multiple producers; single consumer.
+     */
+    Mpsc,
+
+    /**
+     * Multiple producers; multiple consumers.
+     */
+    Mpmc,
+};
+
+} /* ~Namespace EQueueKind */
+
 template
 <
     typename                T                   ,
@@ -47,6 +70,11 @@ class TArray;
 
 class LAsciiString;
 class LUniEightString;
+
+template <typename T, EQueueKind::Type TKind = EQueueKind::Spsc, typename TSizeType = DefaultContainerSizeType>
+class TComplexQueue;
+template <typename T, EQueueKind::Type TKind = EQueueKind::Spsc, typename TSizeType = DefaultContainerSizeType>
+class TSimpleQueue;
 
 
 /*----------------------------------------------------------------------------
@@ -65,5 +93,7 @@ template <typename T> using TdsArray                = TDynamicStackArray<T>;
 
 typedef LAsciiString        LSimpleString;
 typedef LUniEightString     LString;
+
+template <typename T, EQueueKind::Type TKind = EQueueKind::Spsc> using TQueue = TSimpleQueue<T, TKind>;
 
 } /* ~Namespace Jafg */

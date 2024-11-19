@@ -21,7 +21,7 @@ class ENGINE_API LHud final
 public:
 
     LHud() = default;
-    PROHIBIT_REALLOC_OF_ANY_FROM(LHud)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LHud)
     ~LHud() = default;
 
     void Initialize(Private::LObjectContext* InOuter);

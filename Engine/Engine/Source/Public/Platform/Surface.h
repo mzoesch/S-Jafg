@@ -17,7 +17,7 @@ class ENGINE_API LSurface
 public:
 
     LSurface() = default;
-    PROHIBIT_REALLOC_OF_ANY_FROM(LSurface)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LSurface)
     virtual ~LSurface() = default;
 
     virtual void Initialize();

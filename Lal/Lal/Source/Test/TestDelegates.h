@@ -256,7 +256,7 @@ public:
 
 inline bool MyNamedFunction(const int32 A) { return A == 0; }
 
-} /* ~Namespace Jafg::Testing */
+} /* ~Namespace Jafg::Testing::Delegates */
 
 TEST_CASE(NamedDelegateOperations, "Lal.Delegates")
 {

@@ -36,6 +36,13 @@
 
 
 /*----------------------------------------------------------------------------
+    Standard, Platform-APIs and Third-Party.
+----------------------------------------------------------------------------*/
+
+#include "PartyPCH.h"
+
+
+/*----------------------------------------------------------------------------
     Commonly used headers.
 ----------------------------------------------------------------------------*/
 
@@ -49,6 +56,10 @@
 #include "Logging/LogMacros.h"
 #include "Logging/LogPrivate.h"
 #include "Logging/CoreCategories.h"
+
+///////////////////////////////////////////////////////////////////////////////
+// Memory
+#include "Memory/Smart.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Maths Core
@@ -66,6 +77,8 @@
 #include "Containers/Iterator.h"
 #include "Containers/Array.h"
 #include "Containers/AsciiString.h"
+#include "Containers/ComplexQueue.h"
+#include "Containers/SimpleQueue.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Misc
@@ -83,10 +96,3 @@
 #include "Maths/Plane.h"
 #include "Maths/Matrix.h"
 #include "Maths/Transform.h"
-
-
-/*----------------------------------------------------------------------------
-    Standard, Platform-APIs and Third-Party.
-----------------------------------------------------------------------------*/
-
-#include "PartyPCH.h"

@@ -20,7 +20,7 @@ class LImage final
 public:
 
     LImage() = default;
-    DEFAULT_REALLOC_OF_ANY_FROM(LImage)
+    DEFAULT_REALLOC_OF_ANY_FORM(LImage)
     ~LImage() = default;
 
     FORCEINLINE auto SetTexture(const LTexture2* InTexture) -> LImage& { this->TextureRef = InTexture; return *this; }

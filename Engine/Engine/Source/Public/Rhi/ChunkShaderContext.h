@@ -52,7 +52,7 @@ class ENGINE_API LChunkShaderInstance final
 public:
 
     LChunkShaderInstance() = default;
-    DEFAULT_REALLOC_OF_ANY_FROM(LChunkShaderInstance)
+    DEFAULT_REALLOC_OF_ANY_FORM(LChunkShaderInstance)
     ~LChunkShaderInstance();
 
     void LoadMeshToGraphicsMemory(const TdhArray<ChunkBoxVertex>& Vertices, const TdhArray<uint32>& Indices);

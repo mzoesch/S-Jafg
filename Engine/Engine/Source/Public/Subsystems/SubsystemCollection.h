@@ -28,7 +28,7 @@ struct LSubsystemCollection final
 {
     LSubsystemCollection() = delete;
     ENGINE_API explicit LSubsystemCollection(Private::LObjectContext* InOuter) : Outer(InOuter) { }
-    PROHIBIT_REALLOC_OF_ANY_FROM(LSubsystemCollection)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LSubsystemCollection)
     ENGINE_API ~LSubsystemCollection() = default;
 
     ENGINE_API void LocateAllSubsystemsOfClass(const LObjectClass* InClass);

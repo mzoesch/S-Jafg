@@ -24,7 +24,7 @@ struct LInputMappedAction
 {
     LInputMappedAction() = delete;
     explicit LInputMappedAction(LInputAction* InAction) : Action(InAction) { check( InAction ) }
-    DEFAULT_REALLOC_OF_ANY_FROM(LInputMappedAction)
+    DEFAULT_REALLOC_OF_ANY_FORM(LInputMappedAction)
     ~LInputMappedAction() = default;
 
     void ResetCallback();
@@ -42,7 +42,7 @@ struct ENGINE_API LUserInputContext final
 {
     LUserInputContext() = delete;
     explicit LUserInputContext(const LSimpleString& InUniqueIdentifier);
-    DEFAULT_REALLOC_OF_ANY_FROM(LUserInputContext)
+    DEFAULT_REALLOC_OF_ANY_FORM(LUserInputContext)
     ~LUserInputContext() = default;
 
     /** @return The newly mapped action. This is not the same as the input argument. */

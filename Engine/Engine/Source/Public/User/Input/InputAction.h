@@ -16,7 +16,7 @@ struct ENGINE_API LInputActionMappedKey final
 {
     LInputActionMappedKey() = default;
     LInputActionMappedKey(const LKey InKey) : Key(InKey) { }
-    PROHIBIT_REALLOC_OF_ANY_FROM(LInputActionMappedKey)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LInputActionMappedKey)
     ~LInputActionMappedKey()
     {
         for (const LInputActionMappedKeyModifier* Modifier : this->Modifiers)
@@ -40,7 +40,7 @@ struct ENGINE_API LInputAction final
 {
     LInputAction() = default;
     explicit LInputAction(const EInputActionCategory::Type InCategory) : Category(InCategory) { }
-    DEFAULT_REALLOC_OF_ANY_FROM(LInputAction)
+    DEFAULT_REALLOC_OF_ANY_FORM(LInputAction)
     ~LInputAction() = default;
 
     EInputActionCategory::Type      Category = EInputActionCategory::None;

@@ -76,7 +76,7 @@ class ENGINE_API LWorld final : public ::Jafg::Private::LObjectContext
 public:
 
     LWorld() = delete;
-    PROHIBIT_REALLOC_OF_ANY_FROM(LWorld)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LWorld)
     FORCEINLINE explicit LWorld(const EWorldState::Type InWorldType) : WorldState(InWorldType)
     {
         check( this->WorldState != EWorldState::None )

@@ -41,7 +41,7 @@ public:                                                                         
         return MyClassSpacedName :: StaticClassReferrer;                                                        \
     }                                                                                                           \
     MyClassSpacedName() = delete;                                                                               \
-    PROHIBIT_REALLOC_OF_ANY_FROM_NAMESPACED( MyClassSpacedName, MyClassName )                                   \
+    PROHIBIT_REALLOC_OF_ANY_FORM_NAMESPACED( MyClassSpacedName, MyClassName )                                   \
     /* void operator delete(void* Ptr) = delete; */                                                             \
                                                                                                                 \
 private: /* Restore default visibility. */

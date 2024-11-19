@@ -30,7 +30,7 @@ class LObjectClass final
 public:
 
     LObjectClass()  = default;
-    PROHIBIT_REALLOC_OF_ANY_FROM(LObjectClass)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LObjectClass)
     ~LObjectClass() = default;
 
     FORCEINLINE auto GetSpacedClassName() const -> const LSimpleString& { return this->SpacedClassName; }

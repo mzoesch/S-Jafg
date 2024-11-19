@@ -28,7 +28,7 @@ class ENGINE_API LObjectContext
 public:
 
     LObjectContext();
-    PROHIBIT_REALLOC_OF_ANY_FROM(LObjectContext)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LObjectContext)
     virtual ~LObjectContext() = default;
 
     virtual void TearDownContext();

@@ -35,7 +35,7 @@ public:
 
     LLocalEgo() = default;
 
-    PROHIBIT_REALLOC_OF_ANY_FROM(LLocalEgo)
+    PROHIBIT_REALLOC_OF_ANY_FORM(LLocalEgo)
 
     void Initialize();
     void Tick(const float DeltaTime);
