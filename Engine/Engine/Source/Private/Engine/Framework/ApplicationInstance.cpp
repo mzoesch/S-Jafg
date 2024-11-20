@@ -36,6 +36,7 @@ void Jafg::LApplicationInstance::TearDown()
     delete this->Context;
     this->Context = nullptr;
 
+    return;
 }
 
 Jafg::LEngine* Jafg::LApplicationInstance::GetEngine()

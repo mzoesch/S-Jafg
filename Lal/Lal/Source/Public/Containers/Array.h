@@ -108,8 +108,12 @@ public:
      * Tries to remove the first occurrence of the provided element from the array.
      * @return True, if an element was found and successfully removed.
      */
-    FORCEINLINE auto RemoveOnce(const T& InElement) noexcept -> bool;
-    FORCEINLINE auto RemoveOnceChecked(const T& InElement) noexcept -> bool;
+    FORCEINLINE bool RemoveOnce(const T& InElement) noexcept;
+    FORCEINLINE bool RemoveOnceChecked(const T& InElement) noexcept;
+    template <typename Predicate>
+    FORCEINLINE bool RemoveOnceByPredicate(const Predicate& InPredicate) noexcept;
+    template <typename Predicate>
+    FORCEINLINE bool RemoveOnceByPredicateChecked(const Predicate& InPredicate) noexcept;
 
     /**
      * Adds a new element to the array and constructs it in place while potentially
@@ -616,6 +620,33 @@ bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceChecked(cons
     return bRemoved;
 #else /* DO_CHECKS */
     return this->RemoveOnce(InElement);
+#endif /* !DO_CHECKS */
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+template <typename Predicate>
+bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceByPredicate(const Predicate& InPredicate) noexcept
+{
+    SizeType Index = this->FindIndexByPredicate(InPredicate);
+    if (Index != INDEX_NONE)
+    {
+        this->RemoveAt(Index);
+        return true;
+    }
+
+    return false;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+template <typename Predicate>
+bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceByPredicateChecked(const Predicate& InPredicate) noexcept
+{
+#if DO_CHECKS
+    const bool bRemoved = this->RemoveOnceByPredicate(InPredicate);
+    check( bRemoved )
+    return bRemoved;
+#else /* DO_CHECKS */
+    return this->RemoveByPredicate(InPredicate);
 #endif /* !DO_CHECKS */
 }
 

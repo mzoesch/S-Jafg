@@ -145,3 +145,10 @@ static_assert(sizeof(LChar)  == 1,  "LChar  is not 1 byte.");
 #endif /* !PLATFORM_USES_LITTLE_ENDIAN */
 /* Implicitly define opposite. */
 #define PLATFORM_USES_BIG_ENDIAN        ( !PLATFORM_USES_LITTLE_ENDIAN )
+
+namespace PlatformHal
+{
+
+void Sleep(const double InSeconds);
+
+} /* ~Namespace PlatformHal */

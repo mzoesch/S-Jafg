@@ -78,7 +78,7 @@ private:
 
     AChunk* SpawnChunk(const LChunkKey& InChunkKey) const;
 
-    int RenderDistance = 2;
+    int RenderDistance = 0;
     int RenderHeight = 0;
     int LastCamX = -100, LastCamY = -100;
 

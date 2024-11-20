@@ -100,6 +100,8 @@ struct TFunctionBase<StoragePolicy, RetTy (ParamsTy ...)>
         return;
     }
 
+    FORCEINLINE auto GetRaw() { return this->Functor; }
+
 protected:
 
     /** The functor to operate on. */

@@ -3,6 +3,7 @@
 #include "CoreAfx.h"
 #include "Engine/Engine.h"
 #include "CoreGlobals.h"
+#include "Async/TaskUtility.h"
 #include "Core/Application.h"
 #include "Engine/World.h"
 #include "User/LocalEgo.h"
@@ -29,6 +30,8 @@ ENGINE_API LSimpleString GCustomExitReason         = "";
 
 void Jafg::LEngine::Initialize()
 {
+    Tasks::RegisterThread(ENamedThreads::Master);
+
     check( this->IsApplicationInstanceValid() == false )
     this->ApplicationInstance = new LApplicationInstance();
     this->ApplicationInstance->Initialize();
@@ -49,6 +52,8 @@ void Jafg::LEngine::Initialize()
 
 void Jafg::LEngine::Tick(const float DeltaTime)
 {
+    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, 5);
+
 #if WITH_LOCAL_LAYER
     this->LocalEgo->Tick(DeltaTime);
 #endif /* WITH_LOCAL_LAYER */
@@ -81,6 +86,8 @@ void Jafg::LEngine::Tick(const float DeltaTime)
 #if WITH_LOCAL_LAYER
     this->LocalEgo->OnLateTick(DeltaTime);
 #endif /* WITH_LOCAL_LAYER */
+
+    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, 5);
 
     return;
 }
@@ -123,6 +130,8 @@ void Jafg::LEngine::TearDown()
         this->LocalEgo = nullptr;
     }
 #endif /* WITH_LOCAL_LAYER */
+
+    Tasks::Private::StopAndJoinRemainingThreads();
 
     return;
 }

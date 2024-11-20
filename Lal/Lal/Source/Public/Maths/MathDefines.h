@@ -138,6 +138,70 @@
 #define JAFG_MM3_TO_M3_D                    (1e-9)
 #define JAFG_MM3_TO_CM3_D                   (1e-3)
 
+///////////////////////////////////////////////////////////////////////////////
+// Time conversion constants.
+#define JAFG_NS2MUS_F                       (1e-3f)
+#define JAFG_NS2MS_F                        (1e-6f)
+#define JAFG_NS2S_F                         (1e-9f)
+#define JAFG_NS2M_F                         (1.6667e-11f)
+#define JAFG_NS2H_F                         (2.7778e-13f)
+#define JAFG_MUS2NS_F                       (1e+3f)
+#define JAFG_MUS2MS_F                       (1e-3f)
+#define JAFG_MUS2S_F                        (1e-6f)
+#define JAFG_MUS2M_F                        (1.6667e-8f)
+#define JAFG_MUS2H_F                        (2.7778e-10f)
+#define JAFG_MS2NS_F                        (1e+6f)
+#define JAFG_MS2MUS_F                       (1e+3f)
+#define JAFG_MS2S_F                         (1e-3f)
+#define JAFG_MS2M_F                         (1.6667e-5f)
+#define JAFG_MS2H_F                         (2.7778e-7f)
+#define JAFG_S2NS_F                         (1e+9f)
+#define JAFG_S2MUS_F                        (1e+6f)
+#define JAFG_S2MS_F                         (1e+3f)
+#define JAFG_S2M_F                          (1.f / 60.f)
+#define JAFG_S2H_F                          (1.f / 3600.f)
+#define JAFG_M2NS_F                         (6e+10f)
+#define JAFG_M2MUS_F                        (6e+7f)
+#define JAFG_M2MS_F                         (60000.0f)
+#define JAFG_M2S_F                          (60.0f)
+#define JAFG_M2H_F                          (0.016666666666666666666666666666667f)
+#define JAFG_H2NS_F                         (3.6e+12f)
+#define JAFG_H2MUS_F                        (3.6e+9f)
+#define JAFG_H2MS_F                         (3.6e+6f)
+#define JAFG_H2S_F                          (3600.0f)
+#define JAFG_H2M_F                          (60.0f)
+
+#define JAFG_NS2MUS_D                       (1e-3)
+#define JAFG_NS2MS_D                        (1e-6)
+#define JAFG_NS2S_D                         (1e-9)
+#define JAFG_NS2M_D                         (1.6667e-11)
+#define JAFG_NS2H_D                         (2.7778e-13)
+#define JAFG_MUS2NS_D                       (1e+3)
+#define JAFG_MUS2MS_D                       (1e-3)
+#define JAFG_MUS2S_D                        (1e-6)
+#define JAFG_MUS2M_D                        (1.6667e-8)
+#define JAFG_MUS2H_D                        (2.7778e-10)
+#define JAFG_MS2NS_D                        (1e+6)
+#define JAFG_MS2MUS_D                       (1e+3)
+#define JAFG_MS2S_D                         (1e-3)
+#define JAFG_MS2M_D                         (1.6667e-5)
+#define JAFG_MS2H_D                         (2.7778e-7)
+#define JAFG_S2NS_D                         (1e+9)
+#define JAFG_S2MUS_D                        (1e+6)
+#define JAFG_S2MS_D                         (1e+3)
+#define JAFG_S2M_D                          (1. / 60.)
+#define JAFG_S2H_D                          (1. / 3600.)
+#define JAFG_M2NS_D                         (6e+10)
+#define JAFG_M2MUS_D                        (6e+7)
+#define JAFG_M2MS_D                         (60000.0)
+#define JAFG_M2S_D                          (60.0)
+#define JAFG_M2H_D                          (0.016666666666666666666666666666667)
+#define JAFG_H2NS_D                         (3.6e+12)
+#define JAFG_H2MUS_D                        (3.6e+9)
+#define JAFG_H2MS_D                         (3.6e+6)
+#define JAFG_H2S_D                          (3600.0)
+#define JAFG_H2M_D                          (60.0)
+
 
 /*----------------------------------------------------------------------------
     Aliases.
@@ -194,3 +258,33 @@
 #define JAFG_MM2_TO_KM3                     JAFG_MM3_TO_KM3_F
 #define JAFG_MM2_TO_M3                      JAFG_MM3_TO_M3_F
 #define JAFG_MM2_TO_CM3                     JAFG_MM3_TO_CM3_F
+#define JAFG_NS2MUS                         JAFG_NS2MUS_F
+#define JAFG_NS2MS                          JAFG_NS2MS_F
+#define JAFG_NS2S                           JAFG_NS2S_F
+#define JAFG_NS2M                           JAFG_NS2M_F
+#define JAFG_NS2H                           JAFG_NS2H_F
+#define JAFG_MUS2NS                         JAFG_MUS2NS_F
+#define JAFG_MUS2MS                         JAFG_MUS2MS_F
+#define JAFG_MUS2S                          JAFG_MUS2S_F
+#define JAFG_MUS2M                          JAFG_MUS2M_F
+#define JAFG_MUS2H                          JAFG_MUS2H_F
+#define JAFG_MS2NS                          JAFG_MS2NS_F
+#define JAFG_MS2MUS                         JAFG_MS2MUS_F
+#define JAFG_MS2S                           JAFG_MS2S_F
+#define JAFG_MS2M                           JAFG_MS2M_F
+#define JAFG_MS2H                           JAFG_MS2H_F
+#define JAFG_S2NS                           JAFG_S2NS_F
+#define JAFG_S2MUS                          JAFG_S2MUS_F
+#define JAFG_S2MS                           JAFG_S2MS_F
+#define JAFG_S2M                            JAFG_S2M_F
+#define JAFG_S2H                            JAFG_S2H_F
+#define JAFG_M2NS                           JAFG_M2NS_F
+#define JAFG_M2MUS                          JAFG_M2MUS_F
+#define JAFG_M2MS                           JAFG_M2MS_F
+#define JAFG_M2S                            JAFG_M2S_F
+#define JAFG_M2H                            JAFG_M2H_F
+#define JAFG_H2NS                           JAFG_H2NS_F
+#define JAFG_H2MUS                          JAFG_H2MUS_F
+#define JAFG_H2MS                           JAFG_H2MS_F
+#define JAFG_H2S                            JAFG_H2S_F
+#define JAFG_H2M                            JAFG_H2M_F

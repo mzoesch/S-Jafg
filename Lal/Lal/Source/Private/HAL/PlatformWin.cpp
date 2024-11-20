@@ -43,4 +43,14 @@ void LWinPlatformBreakDefines::OnProgramPanic(
     abort();
 }
 
+namespace PlatformHal
+{
+
+void Sleep(const double InSeconds)
+{
+    ::Sleep(static_cast<DWORD>(InSeconds * JAFG_S2MS_D));
+}
+
+} /* ~Namespace PlatformHal */
+
 #endif /* PLATFORM_WINDOWS */
