@@ -7,6 +7,7 @@
 #include "Core/Application.h"
 #include "Engine/ActorUtility.h"
 #include "Engine/Framework/Pawn.h"
+#include "Engine/Framework/PersonaController.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "User/LocalEgo.h"
 #include "Subsystems/SubsystemCollection.h"
@@ -20,6 +21,21 @@ Jafg::LEngine* Jafg::LWorld::GetEngine() const
 Jafg::LApplicationInstance* Jafg::LWorld::GetApplicationInstance() const
 {
     return this->GetEngine()->GetApplicationInstance();
+}
+
+Jafg::LLocalEgo* Jafg::LWorld::GetLocalEgo() const
+{
+    return this->GetEngine()->GetLocalEgo();
+}
+
+Jafg::APersonaController* Jafg::LWorld::GetLocalController() const
+{
+    return this->GetLocalEgo()->GetPossessed();
+}
+
+Jafg::APawn* Jafg::LWorld::GetLocalPawn() const
+{
+    return this->GetLocalController()->GetPossessed();
 }
 
 void Jafg::LWorld::InitializeWorld(const LLevel& Level)

@@ -90,6 +90,8 @@ void Jafg::JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Col
     Super::Initialize(Collection);
     this->SetTickInterval(0.0f);
 
+    this->LoadedChunks = new std::unordered_map<LChunkKey, AChunk*>();
+
     this->ChunkShaderContext = new LChunkShaderContext();
     this->ChunkShaderContext->Make();
 
@@ -125,6 +127,10 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
 
     delete this->SharedChunkArgs;
     this->SharedChunkArgs = nullptr;
+
+    check( this->LoadedChunks )
+    delete this->LoadedChunks;
+    this->LoadedChunks = nullptr;
 
     return;
 }

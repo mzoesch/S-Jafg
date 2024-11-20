@@ -7,8 +7,12 @@
 namespace Jafg
 {
 
-typedef LIntVector LChunkKeyTy;
-typedef int32      LChunkKeyDomainTy;
+typedef LIntVector  LChunkKeyTy;
+typedef LIntVector2 LChunkKey2Ty;
+typedef int32       LChunkKeyDomainTy;
+
+struct LChunkKey;
+struct LChunkKey2;
 
 /** Unique identifier for a chunk. */
 struct LChunkKey final
@@ -16,6 +20,18 @@ struct LChunkKey final
     using LReal = float;
 
     static_assert(sizeof(LChunkKeyTy) == sizeof(LChunkKeyDomainTy) * 3, "LChunkKeyTy is not tightly packed.");
+
+    enum EAxis : uint8
+    {
+        None = 0x00 << 0,
+        Xx   = 0x01 << 0,
+        Yx   = 0x01 << 1,
+        Zx   = 0x01 << 2,
+        XYx  = Xx | Yx,
+        XZx  = Xx | Zx,
+        YZx  = Yx | Zx,
+        XYZx = Xx | Yx | Zx,
+    };
 
     union
     {
@@ -31,15 +47,19 @@ struct LChunkKey final
 
     FORCEINLINE LChunkKey() = default;
     FORCEINLINE LChunkKey(const LChunkKeyTy& InKey) : Key(InKey) { }
-    FORCEINLINE LChunkKey(const LChunkKeyDomainTy& InX, const LChunkKeyDomainTy& InY, const LChunkKeyDomainTy& InZ)
-        : Key(InX, InY, InZ) { }
+    FORCEINLINE LChunkKey(const LChunkKeyDomainTy InX, const LChunkKeyDomainTy InY, const LChunkKeyDomainTy InZ) : Key(InX, InY, InZ) { }
+    FORCEINLINE LChunkKey(const LChunkKeyDomainTy InXyz) : Key(InXyz, InXyz, InXyz) { }
     FORCEINLINE LChunkKey(const LChunkKey& InKey) noexcept : Key(InKey.Key) { }
     FORCEINLINE LChunkKey(LChunkKey&& InKey) noexcept : Key(InKey.Key) { }
+    FORCEINLINE LChunkKey(const LVector& InVec) noexcept;
     FORCEINLINE ~LChunkKey() = default;
 
-    FORCEINLINE LChunkKey& operator =(const LChunkKey&  InKey) noexcept;
-    FORCEINLINE LChunkKey& operator =(      LChunkKey&& InKey) noexcept;
+    FORCEINLINE LChunkKey2 XY() const;
 
+    FORCEINLINE LChunkKey& operator=(const LChunkKey&  InKey) noexcept;
+    FORCEINLINE LChunkKey& operator=(      LChunkKey&& InKey) noexcept;
+
+    FORCEINLINE bool Equals(const LChunkKey& InKey, const LChunkKey::EAxis InAxis = LChunkKey::EAxis::XYZx) const;
     FORCEINLINE bool operator==(const LChunkKey& InKey) const { return Key == InKey.Key; }
     FORCEINLINE bool operator!=(const LChunkKey& InKey) const { return Key != InKey.Key; }
 
@@ -78,6 +98,83 @@ struct LChunkKey final
         return LSimpleString::SprintF("{{{}, {}, {}}}", Key.X, Key.Y, Key.Z);
     }
 };
+static_assert(sizeof(LChunkKey) == sizeof(LChunkKeyDomainTy) * 3, "LChunkKey is not tightly packed.");
+
+ENUM_CLASS_FLAGS(LChunkKey::EAxis)
+
+/** Unique identifier for a vertical chunk. */
+struct LChunkKey2 final
+{
+    using LReal = float;
+
+    static_assert(sizeof(LChunkKey2Ty) == sizeof(LChunkKeyDomainTy) * 2, "LChunkKey2Ty is not tightly packed.");
+
+    union
+    {
+        struct
+        {
+            LChunkKeyDomainTy X;
+            LChunkKeyDomainTy Y;
+        };
+
+        LChunkKey2Ty Key;
+    };
+
+    FORCEINLINE LChunkKey2() = default;
+    FORCEINLINE LChunkKey2(const LChunkKey2Ty& InKey) : Key(InKey) { }
+    FORCEINLINE LChunkKey2(const LChunkKeyDomainTy InX, const LChunkKeyDomainTy InY) : Key(InX, InY) { }
+    FORCEINLINE LChunkKey2(const LChunkKeyDomainTy InXy) : Key(InXy, InXy) { }
+    FORCEINLINE LChunkKey2(const LChunkKey2& InKey) noexcept : Key(InKey.Key) { }
+    FORCEINLINE LChunkKey2(LChunkKey2&& InKey) noexcept : Key(InKey.Key) { }
+    FORCEINLINE ~LChunkKey2() = default;
+
+    FORCEINLINE LChunkKey2& operator=(const LChunkKey2&  InKey) noexcept;
+    FORCEINLINE LChunkKey2& operator=(      LChunkKey2&& InKey) noexcept;
+    FORCEINLINE bool operator==(const LChunkKey2& InKey) const { return Key == InKey.Key; }
+    FORCEINLINE bool operator!=(const LChunkKey2& InKey) const { return Key != InKey.Key; }
+
+    FORCEINLINE auto GetNorthKey() const -> LChunkKey2 { return { Key.X + 1, Key.Y }; }
+    FORCEINLINE auto GetSouthKey() const -> LChunkKey2 { return { Key.X - 1, Key.Y }; }
+    FORCEINLINE auto GetEastKey()  const -> LChunkKey2 { return { Key.X, Key.Y + 1 }; }
+    FORCEINLINE auto GetWestKey()  const -> LChunkKey2 { return { Key.X, Key.Y - 1 }; }
+    FORCEINLINE auto GetNeighboringChunkKeys() const -> TdhArray<LChunkKey2>
+    {
+        TdhArray<LChunkKey2> Out; Out.Reserve(4);
+
+        Out.Emplace(Key.X + 1, Key.Y    );
+        Out.Emplace(Key.X - 1, Key.Y    );
+        Out.Emplace(Key.X,     Key.Y + 1);
+        Out.Emplace(Key.X,     Key.Y - 1);
+
+        return Out;
+    }
+
+    FORCEINLINE LSimpleString ToString() const
+    {
+        return LSimpleString::SprintF("{{{}, {}}}", Key.X, Key.Y);
+    }
+};
+static_assert(sizeof(LChunkKey2) == sizeof(LChunkKeyDomainTy) * 2, "LChunkKey2 is not tightly packed.");
+
+LChunkKey::LChunkKey(const LVector& InVec) noexcept
+{
+    this->Key.X = InVec.X < 0.0f
+        ? static_cast<LChunkKeyDomainTy>(Maths::Floor(InVec.X / MwStatics::ChunkSize))
+        : static_cast<LChunkKeyDomainTy>(InVec.X / MwStatics::ChunkSize);
+    this->Key.Y = InVec.Y < 0.0f
+        ? static_cast<LChunkKeyDomainTy>(Maths::Floor(InVec.Y / MwStatics::ChunkSize))
+        : static_cast<LChunkKeyDomainTy>(InVec.Y / MwStatics::ChunkSize);
+    this->Key.Z = InVec.Z < 0.0f
+        ? static_cast<LChunkKeyDomainTy>(Maths::Floor(InVec.Z / MwStatics::ChunkSize))
+        : static_cast<LChunkKeyDomainTy>(InVec.Z / MwStatics::ChunkSize);
+
+    return;
+}
+
+LChunkKey2 LChunkKey::XY() const
+{
+    return { Key.X, Key.Y };
+}
 
 LChunkKey& LChunkKey::operator=(const LChunkKey& InKey) noexcept
 {
@@ -90,6 +187,26 @@ LChunkKey& LChunkKey::operator=(LChunkKey&& InKey) noexcept
     this->Key = InKey.Key;
     return *this;
 }
+
+bool LChunkKey::Equals(const LChunkKey& InKey, const LChunkKey::EAxis InAxis /* = LChunkKey::EAxis::XYZx */) const
+{
+    return ((InAxis & LChunkKey::EAxis::Xx) ? Key.X == InKey.X : true)
+        && ((InAxis & LChunkKey::EAxis::Yx) ? Key.Y == InKey.Y : true)
+        && ((InAxis & LChunkKey::EAxis::Zx) ? Key.Z == InKey.Z : true);
+}
+
+LChunkKey2& LChunkKey2::operator=(const LChunkKey2& InKey) noexcept
+{
+    this->Key = InKey.Key;
+    return *this;
+}
+
+LChunkKey2& LChunkKey2::operator=(LChunkKey2&& InKey) noexcept
+{
+    this->Key = InKey.Key;
+    return *this;
+}
+
 } /* ~Namespace Jafg */
 
 template <>

@@ -7,12 +7,15 @@
 namespace Jafg
 {
 
+class LLocalEgo;
 class AActor;
 class LEngine;
 class LShader;
 class JWorldSubsystem;
 class LTickableObject;
 class LApplicationInstance;
+class APersonaController;
+class APawn;
 struct LLevel;
 struct LSubsystemCollection;
 
@@ -84,6 +87,9 @@ public:
 
     auto GetEngine() const -> LEngine*;
     auto GetApplicationInstance() const -> LApplicationInstance*;
+    auto GetLocalEgo() const -> LLocalEgo*;
+    auto GetLocalController() const -> APersonaController*;
+    auto GetLocalPawn() const -> APawn*;
 
     FORCEINLINE auto GetWorldState() const -> EWorldState::Type { return this->WorldState; }
 

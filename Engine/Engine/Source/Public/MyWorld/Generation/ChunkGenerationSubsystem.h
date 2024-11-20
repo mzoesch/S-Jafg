@@ -63,6 +63,10 @@ public:
         return nullptr;
     }
 
+    FORCEINLINE auto GetRenderDistance() const -> int { return this->RenderDistance; }
+
+    FORCEINLINE auto GetOptimalVerticalChunkQueue() -> TQueue<LChunkKey2>& { return this->OptimalVerticalChunkQueue; }
+
 private:
 
     void UpdateChunkQueue();
@@ -78,8 +82,21 @@ private:
 
     AChunk* SpawnChunk(const LChunkKey& InChunkKey) const;
 
+    /**
+     * Transient or persistent chunks that are loaded in any state.
+     * @remark std::unordered_map is not trivially copyable when empty. So we have to use a pointer.
+     *         We should really implement our own hash map.
+     */
+    std::unordered_map<LChunkKey, AChunk*>* LoadedChunks = nullptr;
+
+    /**
+     * Based on the current validation subsystem.
+     * If the pawns do not move these would be the remaining chunks that should be loaded.
+     */
+    TQueue<LChunkKey2> OptimalVerticalChunkQueue;
+
     int RenderDistance = 0;
-    int RenderHeight = 0;
+    int RenderHeight = 0; // Move this to usr pref.
     int LastCamX = -100, LastCamY = -100;
 
     LSharedChunkArgs*    SharedChunkArgs    = nullptr;

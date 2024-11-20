@@ -15,7 +15,7 @@ class ENGINE_API LTickedRunnable : public LRunnable
 public:
 
     virtual auto Initialize() -> ETaskExit::Type override { return LRunnable::Initialize(); }
-    virtual auto Run() -> ETaskExit::Type override;
+    virtual auto Run() -> ETaskExit::Type override final;
     virtual auto Stop(const ERunnableStopReason::Type InType) -> void override final;
     virtual auto Exit() -> void override { LRunnable::Exit(); }
 
