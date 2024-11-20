@@ -36,8 +36,17 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
 
 void Jafg::LTickedRunnable::Stop(const ERunnableStopReason::Type InType)
 {
+    LOG_TRACE(LogTasks, "Stopping ticked runnable.")
+
+    if (this->bShouldTick == false)
+    {
+        LOG_WARNING(LogTasks, "Ticked runnable already stopped.")
+        return;
+    }
+
     LRunnable::Stop(InType);
     this->bShouldTick = false;
     this->StopReason  = InType;
+
     return;
 }

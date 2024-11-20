@@ -29,7 +29,7 @@ struct LLogCategory
 
     ~LLogCategory() = default;
 
-    FORCEINLINE static auto GetVerbosity() -> ELogVerbosityType { return Verbosity; }
+    FORCEINLINE static constexpr auto GetCompileTimeVerbosity() -> ELogVerbosityType { return Verbosity; }
 
     FORCEINLINE auto GetCategory() const -> const LStringLegacy& { return this->Category; }
 

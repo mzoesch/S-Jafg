@@ -2,13 +2,22 @@
 
 #include "CoreAfx.h"
 #include "ChunkGeneratorSubsystem.h"
-#include "MyWorld/CommonTypes.h"
 #include "MyWorld/MyWorldStatics.h"
 
-void Jafg::JChunkGeneratorSubsystem::Initialize(LSubsystemCollection& Collection)
+void Jafg::JChunkGeneratorSubsystem::OnInitialize(LSubsystemCollection& Collection)
 {
-    Super::Initialize(Collection);
+    Super::OnInitialize(Collection);
+
     this->FnGenerator = FastNoise::NewFromEncodedNodeTree("DQAFAAAAAAAAQAgAAAAAAD8AAAAAAA==");
     this->UsableContainer = new float[MwStatics::VoxelCount];
+
+    return;
+}
+
+void Jafg::JChunkGeneratorSubsystem::FixedTick(const float RunnableDeltaTime)
+{
+    Super::FixedTick(RunnableDeltaTime);
+    checkSlow( Tasks::IsOnMasterThread() == false )
+
     return;
 }

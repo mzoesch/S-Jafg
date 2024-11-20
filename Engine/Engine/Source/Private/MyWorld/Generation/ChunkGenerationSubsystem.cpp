@@ -137,39 +137,39 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
 
 void Jafg::JChunkGenerationSubsystem::UpdateChunkQueue()
 {
-    LVector Translation = this->GetWorld()->GetEngine()->GetCheckedLocalEgo()->GetPossessed()->GetPossessed()->GetTranslation();
-
-    const float CamX = Translation.X;
-    const float CamY = Translation.Y;
-
-    const int32 CurrentCamX = static_cast<int32>(CamX < 0 ? floor(CamX / static_cast<float>(MwStatics::ChunkSize)) : CamX / static_cast<float>(MwStatics::ChunkSize));
-    const int32 CurrentCamY = static_cast<int32>(CamY < 0 ? floor(CamY / static_cast<float>(MwStatics::ChunkSize)) : CamY / static_cast<float>(MwStatics::ChunkSize));
-
-    if (CurrentCamX == LastCamX && CurrentCamY == LastCamY)
-    {
-        return;
-    }
-
-    LOG_TRACE(LogTemporal, "{:.2f} {:.2f} - {} {}",
-        CamX, CamY, CurrentCamX, CurrentCamY)
-
-    LastCamX = CurrentCamX;
-    LastCamY = CurrentCamY;
-
-    ChunkQueue = { };
-    const TIntVector2<int32> Center(CurrentCamX, CurrentCamY);
-    std::vector<TIntVector2<int32>> VerticalChunks;
-    GetAllChunksInDistance(Center, RenderDistance, VerticalChunks);
-
-    for (const auto& Chunk : VerticalChunks)
-    {
-        for (int32 z = 0; z <= RenderHeight; z++)
-        {
-            ChunkQueue.emplace(Chunk.X, Chunk.Y, z);
-        }
-    }
-
-    return;
+    // LVector Translation = this->GetWorld()->GetEngine()->GetCheckedLocalEgo()->GetPossessed()->GetPossessed()->GetTranslation();
+    //
+    // const float CamX = Translation.X;
+    // const float CamY = Translation.Y;
+    //
+    // const int32 CurrentCamX = static_cast<int32>(CamX < 0 ? floor(CamX / static_cast<float>(MwStatics::ChunkSize)) : CamX / static_cast<float>(MwStatics::ChunkSize));
+    // const int32 CurrentCamY = static_cast<int32>(CamY < 0 ? floor(CamY / static_cast<float>(MwStatics::ChunkSize)) : CamY / static_cast<float>(MwStatics::ChunkSize));
+    //
+    // if (CurrentCamX == LastCamX && CurrentCamY == LastCamY)
+    // {
+    //     return;
+    // }
+    //
+    // LOG_TRACE(LogTemporal, "{:.2f} {:.2f} - {} {}",
+    //     CamX, CamY, CurrentCamX, CurrentCamY)
+    //
+    // LastCamX = CurrentCamX;
+    // LastCamY = CurrentCamY;
+    //
+    // ChunkQueue = { };
+    // const TIntVector2<int32> Center(CurrentCamX, CurrentCamY);
+    // std::vector<TIntVector2<int32>> VerticalChunks;
+    // GetAllChunksInDistance(Center, RenderDistance, VerticalChunks);
+    //
+    // for (const auto& Chunk : VerticalChunks)
+    // {
+    //     for (int32 z = 0; z <= RenderHeight; z++)
+    //     {
+    //         ChunkQueue.emplace(Chunk.X, Chunk.Y, z);
+    //     }
+    // }
+    //
+    // return;
 }
 
 void Jafg::JChunkGenerationSubsystem::KillChunks()

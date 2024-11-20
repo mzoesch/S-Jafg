@@ -95,9 +95,8 @@ private:
      */
     TQueue<LChunkKey2> OptimalVerticalChunkQueue;
 
-    int RenderDistance = 0;
-    int RenderHeight = 0; // Move this to usr pref.
-    int LastCamX = -100, LastCamY = -100;
+    int RenderDistance = 3; // Move this to usr pref.
+    int RenderHeight   = 3;   // Move this to usr pref.
 
     LSharedChunkArgs*    SharedChunkArgs    = nullptr;
     LChunkShaderContext* ChunkShaderContext = nullptr;

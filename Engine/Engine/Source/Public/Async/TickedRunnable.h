@@ -34,6 +34,8 @@ protected:
      */
     virtual void FixedTick(const float RunnableDeltaTime) = 0;
 
+    FORCEINLINE bool ShouldTickRunnable() const { return this->bShouldTick; }
+
 private:
 
     /**

@@ -148,7 +148,7 @@ public:
     FORCEINLINE TFunction(InOtherFunctorTy&& Other) noexcept : Super(std::forward<InOtherFunctorTy>(Other)) { }
     FORCEINLINE TFunction& operator=(TFunction&& Other) noexcept
     {
-        this->Functor = Other.Functor;
+        this->Functor = std::move(Other.Functor);
         Other.Reset();
         return *this;
     }
@@ -355,7 +355,7 @@ public:
     FORCEINLINE TUniqueFunction(InOtherFunctorTy&& Other) noexcept : Super(std::forward<InOtherFunctorTy>(Other)) { }
     FORCEINLINE TUniqueFunction& operator=(TUniqueFunction&& Other) noexcept
     {
-        this->Functor = Other.Functor;
+        this->Functor = std::move(Other.Functor);
         Other.Reset();
         return *this;
     }

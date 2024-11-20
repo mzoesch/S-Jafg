@@ -161,37 +161,40 @@
 #if LOG_WITH_LINE_NUMBERS
     static_assert(false, "LOG_WITH_LINE_NUMBERS is not implemented yet.");
 #else /* LOG_WITH_LINE_NUMBERS */
-    #define PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Verbosity, Color, Format, ...)        \
-        if (! ( (::Jafg::ELogVerbosity::Type::Verbosity) < (Category.GetVerbosity()) ) ) \
-        {                                                                                \
-            ::Jafg::Private::LogMessage(                                                 \
-                std::format(Color "[{}] - {}: " Format "" LOG_COLOR_END,                 \
-                    Category.GetCategory(),                                              \
-                    PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC,                           \
-                    ##__VA_ARGS__                                                        \
-                )                                                                        \
-            );                                                                           \
+    #define PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Verbosity, Color, Format, ...)                             \
+        if constexpr (! ( (::Jafg::ELogVerbosity::Type::Verbosity) < (Category.GetCompileTimeVerbosity()) ) ) \
+        {                                                                                                     \
+            ::Jafg::Private::LogMessage(                                                                      \
+                std::format(Color "[{}] - {}: " Format "" LOG_COLOR_END,                                      \
+                    Category.GetCategory(),                                                                   \
+                    PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC,                                                \
+                    ##__VA_ARGS__                                                                             \
+                )                                                                                             \
+            );                                                                                                \
         }
-    #define PRIVATE_JAFG_LOG_PRIVATE_PANIC_LOG(Category, Verbosity, Color, Format, ...)  \
-        if (! ( (::Jafg::ELogVerbosity::Type::Verbosity) < (Category.GetVerbosity()) ) ) \
-        {                                                                                \
-            ::Jafg::Private::LogPanicMessage(                                            \
-                std::format("[{}] - {}: " Format "",                                     \
-                    Category.GetCategory(),                                              \
-                    PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC,                           \
-                    ##__VA_ARGS__                                                        \
-                ),                                                                       \
-                std::format(Color "[{}] - {}: " Format "" LOG_COLOR_END,                 \
-                    Category.GetCategory(),                                              \
-                    PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC,                           \
-                    ##__VA_ARGS__                                                        \
-                ),                                                                       \
-                __FILE__,                                                                \
-                __LINE__                                                                 \
-            );                                                                           \
+    #define PRIVATE_JAFG_LOG_PRIVATE_PANIC_LOG(Category, Verbosity, Color, Format, ...)                       \
+        if constexpr (! ( (::Jafg::ELogVerbosity::Type::Verbosity) < (Category.GetCompileTimeVerbosity()) ) ) \
+        {                                                                                                     \
+            ::Jafg::Private::LogPanicMessage(                                                                 \
+                std::format("[{}] - {}: " Format "",                                                          \
+                    Category.GetCategory(),                                                                   \
+                    PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC,                                                \
+                    ##__VA_ARGS__                                                                             \
+                ),                                                                                            \
+                std::format(Color "[{}] - {}: " Format "" LOG_COLOR_END,                                      \
+                    Category.GetCategory(),                                                                   \
+                    PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC,                                                \
+                    ##__VA_ARGS__                                                                             \
+                ),                                                                                            \
+                __FILE__,                                                                                     \
+                __LINE__                                                                                      \
+            );                                                                                                \
         }
 #endif /* !LOG_WITH_LINE_NUMBERS */
 
 #if LOG_TO_FILE
     static_assert(false, "LOG_TO_FILE is not implemented yet.");
 #endif /* LOG_TO_FILE */
+
+#define IS_COMPILED_LOG(Category, Verbosity) \
+    (! ( (::Jafg::ELogVerbosity::Type::Verbosity) < (Category.GetCompileTimeVerbosity()) ) )

@@ -98,9 +98,16 @@ ENGINE_API extern int32 CustomThreadCounter;
 ENGINE_API bool IsThreadRunning(const ENamedThreads::Type Thread);
 
 ENGINE_API auto TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const int32 MaxTasks) -> void;
-ENGINE_API auto LaunchNamedThread(ENamedThreads::Type Thread, LRunnable* Runnable) -> ETaskExit::Type;
+ENGINE_API auto LaunchNamedThread(ENamedThreads::Type Thread, LRunnable* Runnable, const bool bKillRunnableWhenFinished = true) -> ETaskExit::Type;
 
-ENGINE_API void StopAndJoinRemainingThreads();
+ENGINE_API void JoinThread(const ENamedThreads::Type Thread);
+ENGINE_API void StopAndJoinRemainingThreads(const bool bJoinTasks = true);
+
+FORCEINLINE ENamedThreads::Type MakeNewCustomNamedThreadId()
+{
+    check( IsOnMasterThread() )
+    return static_cast<ENamedThreads::Type>(CustomThreadCounter++);
+}
 
 } /* ~Namespace Private */
 
@@ -116,7 +123,7 @@ ENamedThreads::Type LaunchNamedThread(ETaskExit::Type& OutExit)
 {
     static_assert(std::is_base_of_v<LRunnable, T>, "T must be derived from LRunnable.");
 
-    int32 JafgThreadId = Private::CustomThreadCounter++;
+    int32 JafgThreadId = Private::MakeNewCustomNamedThreadId();
     OutExit = LaunchNamedThread<T>(static_cast<ENamedThreads::Type>(JafgThreadId));
     return static_cast<ENamedThreads::Type>(JafgThreadId);
 }

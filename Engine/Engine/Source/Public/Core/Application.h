@@ -24,6 +24,7 @@ typedef std::chrono::high_resolution_clock::time_point LHrcTimePoint;
 
 FORCEINLINE auto GetHighestNow() -> Private::LHrcTimePoint;
 FORCEINLINE auto GetTimeDifferenceFromStaticStorageInitialization(const Private::LHrcTimePoint& Point) -> double;
+FORCEINLINE auto GetTimeDiff(const Private::LHrcTimePoint& A, const Private::LHrcTimePoint& B) -> double;
 FORCEINLINE auto GetDeltaSinceStaticStorageInitialization() -> double;
 
 FORCEINLINE auto SetDeltaTime(const double DeltaTime) -> void;
@@ -86,6 +87,11 @@ FORCEINLINE Jafg::Application::Private::LHrcTimePoint Jafg::Application::GetHigh
 FORCEINLINE double Jafg::Application::GetTimeDifferenceFromStaticStorageInitialization(const Private::LHrcTimePoint& Point)
 {
     return std::chrono::duration<double>(Point - Private::StaticContainerInitializationTime).count();
+}
+
+FORCEINLINE auto Jafg::Application::GetTimeDiff(const Private::LHrcTimePoint& A, const Private::LHrcTimePoint& B) -> double
+{
+    return std::chrono::duration<double>(A - B).count();
 }
 
 FORCEINLINE double Jafg::Application::GetDeltaSinceStaticStorageInitialization()

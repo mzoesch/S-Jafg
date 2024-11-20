@@ -59,7 +59,7 @@ public:
 
 protected:
 
-    LSimpleString HumanReadableName = "Unnamed Thread";
+    LSimpleString HumanReadableName = nullptr;
 };
 
 } /* ~Namespace Jafg */

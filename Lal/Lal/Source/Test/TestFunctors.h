@@ -40,6 +40,56 @@ TEST_CASE(SimpleFunctorOperations, "Lal.Core")
     CHECK_TRUE(   "Lambda set nullptr.",     Lambda == nullptr )
     CHECK_FALSE(  "Lambda set nullptr.",        Lambda.IsSet() )
 
+    Lambda = [] (const int32 A) -> bool { return A == 2; };
+
+    TFunction<bool(const int32 A)> OtherLambda = nullptr;
+    CHECK_TRUE(   "Lambda declared with null.", OtherLambda == nullptr )
+    CHECK_FALSE(  "Lambda declared with null.",    OtherLambda.IsSet() )
+
+    OtherLambda = Lambda;
+    CHECK_FALSE( "Lambda assigned.",       Lambda == nullptr )
+    CHECK_TRUE(  "Lambda assigned.",          Lambda.IsSet() )
+    CHECK_FALSE( "Lambda assigned.",    OtherLambda == nullptr )
+    CHECK_TRUE(  "Lambda assigned.",       OtherLambda.IsSet() )
+
+    OtherLambda.Reset();
+    CHECK_TRUE(  "Lambda reset.",     OtherLambda == nullptr )
+    CHECK_FALSE( "Lambda reset.",        OtherLambda.IsSet() )
+
+    OtherLambda = std::move(Lambda);
+    CHECK_TRUE(   "Lambda moved.",      Lambda == nullptr )
+    CHECK_FALSE(  "Lambda moved.",      Lambda != nullptr )
+    CHECK_FALSE(  "Lambda moved.",         Lambda.IsSet() )
+    CHECK_FALSE(  "Lambda moved.", OtherLambda == nullptr )
+    CHECK_TRUE(   "Lambda moved.", OtherLambda != nullptr )
+    CHECK_TRUE(   "Lambda moved.",    OtherLambda.IsSet() )
+
+    return;
+}
+
+TEST_CASE(VoidFunctorOperations, "Lal.Core")
+{
+    using namespace Jafg;
+
+    TFunction<void()> Lambda;
+    CHECK_TRUE(   "Lambda is null.",         Lambda == nullptr )
+    CHECK_FALSE(  "Lambda is not null.",        Lambda.IsSet() )
+
+    Lambda = [] () -> void { return; };
+    CHECK_FALSE( "Lambda is set.",         Lambda == nullptr )
+    CHECK_TRUE(  "Lambda is set.",            Lambda.IsSet() )
+
+    TFunction<void()> OtherLambda = nullptr;
+    CHECK_TRUE(   "Lambda declared with null.", OtherLambda == nullptr )
+
+    OtherLambda = std::move(Lambda);
+    CHECK_TRUE(   "Lambda moved.",      Lambda == nullptr )
+    CHECK_FALSE(  "Lambda moved.",      Lambda != nullptr )
+    CHECK_FALSE(  "Lambda moved.",         Lambda.IsSet() )
+    CHECK_FALSE(  "Lambda moved.", OtherLambda == nullptr )
+    CHECK_TRUE(   "Lambda moved.", OtherLambda != nullptr )
+    CHECK_TRUE(   "Lambda moved.",    OtherLambda.IsSet() )
+
     return;
 }
 
