@@ -56,6 +56,8 @@ void Jafg::JChunkGeneratorSubsystem::TryToActivateVerticalChunk(const LChunkKey2
             continue;
         }
 
+        check( Target->ChunkKey == LChunkKey(ChunkKey, Z) )
+
         if (Target->GetChunkState() == EChunkState::Active || Target->GetHuntedChunkState() == EChunkState::Active)
         {
             continue;
@@ -122,9 +124,12 @@ bool Jafg::JChunkGeneratorSubsystem::TryToBringChunkToState(AChunk* Target, cons
     if (TargetState < EChunkState::Active) { check( EChunkState::SurfaceReplaced) return true; }
     if (Target->GetHuntedChunkState() == EChunkState::Active)
     {
-        return false;
+        return true;
     }
     Target->SetHuntedChunkState(TargetState);
+    checkSlow( Target->GetHuntedChunkState() == EChunkState::Active )
+
+    // Regenerate mesh here and then just apply on master thread.
 
     check( Target->GetChunkState() != EChunkState::Active )
     Tasks::Make(ENamedThreads::Master, ETaskTime::Whenever, [this, Target] (void)
@@ -135,8 +140,16 @@ bool Jafg::JChunkGeneratorSubsystem::TryToBringChunkToState(AChunk* Target, cons
         }
 
         checkSlow( Target->GetHuntedChunkState() == EChunkState::Active )
-        checkSlow( Target->GetChunkState() != EChunkState::Active )
-        Target->SetChunkState(EChunkState::Active);
+        if (Target->GetChunkState() != EChunkState::Active)
+        {
+            Target->SetChunkState(EChunkState::Active);
+        }
+        else
+        {
+            LOG_WARNING(LogRunnable, "Chunk {} already active.", Target->ChunkKey.ToString())
+        }
+
+        return;
     });
 
     return false;

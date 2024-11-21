@@ -160,7 +160,7 @@ void Jafg::LLocalEgo::OnWorldBeginLife(LWorld* InNewWorld)
     {
         APawn* Pawn = SpawnDeferredActor<APawn>(InNewWorld, ALackey::StaticClass());
         this->PersonaController->Possess(Pawn);
-        Pawn->SetTranslation(LVector(MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 0.5f, 25.0f));
+        Pawn->SetTranslation(LVector(MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 0.5f, 60.0f));
     }
 
     return;

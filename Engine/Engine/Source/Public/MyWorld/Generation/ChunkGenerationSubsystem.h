@@ -78,7 +78,7 @@ private:
 
     void SafeLoadPersistentChunkPreSpawnedChunk(const LChunkKey& ChunkKey);
 
-    int32 RenderDistance = 20; // Move this to usr pref.
+    int32 RenderDistance = 2; // Move this to usr pref.
     int32 RenderHeight   = 3; // Move this to usr pref.
 
     LSharedChunkArgs*    SharedChunkArgs    = nullptr;
