@@ -41,9 +41,12 @@ protected:
     virtual void TearDown() { }
 
     FORCEINLINE bool IsInitialized() const { return this->bIsInitialized; }
+    FORCEINLINE bool IsPriorityTearDown() const { return this->bPriorityTearDown; }
+    FORCEINLINE void SetPriorityTearDown(const bool bPriority) { this->bPriorityTearDown = bPriority; }
 
 private:
 
+    bool bPriorityTearDown = false;
     bool bIsInitialized = false;
 };
 

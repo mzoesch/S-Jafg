@@ -27,4 +27,6 @@ enum Type : uint8
 
 typedef ELogVerbosity::Type ELogVerbosityType;
 
+LSimpleString LexToString(const ELogVerbosityType Verbosity);
+
 } /* ~Namespace Jafg */

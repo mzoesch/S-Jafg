@@ -90,6 +90,13 @@ public:
 
     FORCEINLINE void SetChunkState(const EChunkState::Type NewChunkState);
     FORCEINLINE auto GetChunkState() const -> EChunkState::Type { return this->ChunkState; }
+    FORCEINLINE auto SetHuntedChunkState(const EChunkState::Type NewHuntedChunkState) -> void
+    {
+        check( EChunkState::Freed < NewHuntedChunkState && NewHuntedChunkState < EChunkState::Special )
+        check( NewHuntedChunkState > this->ChunkState )
+        this->HuntedChunkState = NewHuntedChunkState;
+    }
+    FORCEINLINE auto GetHuntedChunkState() const -> EChunkState::Type { return this->HuntedChunkState; }
 
     void OnAlloc(const LChunkKey& InChunkKey);
 
@@ -115,7 +122,8 @@ private:
     EChunkPersistency::Type ChunkPersistency = EChunkPersistency::Persistent;
 
     bool IsStateChangeValid(const EChunkState::Type NewChunkState) const;
-    EChunkState::Type ChunkState = EChunkState::Invalid;
+    EChunkState::Type ChunkState       = EChunkState::Invalid;
+    EChunkState::Type HuntedChunkState = EChunkState::Invalid;
 
     void OnSpawned();
     void Shape();

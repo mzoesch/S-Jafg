@@ -56,6 +56,7 @@
 #include "Logging/LogMacros.h"
 #include "Logging/LogPrivate.h"
 #include "Logging/CoreCategories.h"
+#include "Logging/LogUtility.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Memory

@@ -6,6 +6,7 @@
 void Jafg::JThreadedWorldSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
+    this->SetPriorityTearDown(true);
     this->OnInitialize(Collection);
 
     this->ThisSubsystemsThreadName = Tasks::Private::MakeNewCustomNamedThreadId();
@@ -28,16 +29,13 @@ void Jafg::JThreadedWorldSubsystem::TearDown()
 
     if (this->ShouldTickRunnable())
     {
-        LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
         this->Stop(ERunnableStopReason::RequestedStop);
-        LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
+        SCOPED_TIME_TAKEN_MEASURER(LogTasks, Verbose, "Joining thread")
         Tasks::Private::JoinThread(this->ThisSubsystemsThreadName);
-        LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
     }
     else
     {
         LOG_WARNING(LogTasks, "Teared down a threaded subsystem that is not ticking.")
-        LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
     }
 
     this->OnTearDown();

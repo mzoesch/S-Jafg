@@ -21,7 +21,7 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
         else
         {
             const double TimeRemaining = this->TickInterval - DeltaTime;
-            if (TimeRemaining > 0.01)
+            if (TimeRemaining > 0.001)
             {
                 /* Spare cpu time for other tasks. */
                 PlatformHal::Sleep(TimeRemaining * 0.997);

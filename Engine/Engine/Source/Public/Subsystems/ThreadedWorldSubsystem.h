@@ -18,8 +18,8 @@ namespace Jafg
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API JThreadedWorldSubsystem : public JWorldSubsystem, public LTickedRunnable
 {
-    GENERATED_CLASS_BODY()
 
+    GENERATED_CLASS_BODY()
 protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JThreadedWorldSubsystem)

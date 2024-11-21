@@ -89,9 +89,9 @@ FORCEINLINE double Jafg::Application::GetTimeDifferenceFromStaticStorageInitiali
     return std::chrono::duration<double>(Point - Private::StaticContainerInitializationTime).count();
 }
 
-FORCEINLINE auto Jafg::Application::GetTimeDiff(const Private::LHrcTimePoint& A, const Private::LHrcTimePoint& B) -> double
+FORCEINLINE double Jafg::Application::GetTimeDiff(const Private::LHrcTimePoint& A, const Private::LHrcTimePoint& B)
 {
-    return std::chrono::duration<double>(A - B).count();
+    return std::chrono::duration<double>(B - A).count();
 }
 
 FORCEINLINE double Jafg::Application::GetDeltaSinceStaticStorageInitialization()
@@ -217,7 +217,7 @@ FORCEINLINE uint64 Jafg::Application::GetStatisticsFrameCount()
     return Private::StatisticsFrameCount;
 }
 
-FORCEINLINE auto Jafg::Application::ResetStatistics() -> void
+FORCEINLINE void Jafg::Application::ResetStatistics()
 {
     Private::PreviousStatisticsStartTime  = Private::LastStatisticsTime;
     Private::PreviousStatisticsFrameCount = Private::StatisticsFrameCount;

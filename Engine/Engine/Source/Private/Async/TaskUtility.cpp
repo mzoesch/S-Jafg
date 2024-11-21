@@ -123,6 +123,7 @@ void Jafg::Tasks::RegisterThread(ENamedThreads::Type Thread)
         return;
     }
 
+    ::TaskQueue[Thread] = std::vector<LTaskQueue>();
     ::RegisteredThreadIds.Emplace(std::this_thread::get_id()._Get_underlying_id(), Thread);
 
     return;
@@ -173,14 +174,14 @@ void Jafg::Tasks::Make(const ENamedThreads::Type Thread, const ETaskTime::Type T
     check( InDelegate.IsSet() )
 
     std::vector<LTaskQueue>& Queue = ::TaskQueue[Thread];
-    Queue.emplace_back(Time);
+    Queue.emplace_back(Time, std::move(InDelegate));
 
-    checkSlow( Queue.back().Delegate->IsSet() == false )
-
-    *Queue.back().Delegate = std::move(InDelegate);
-#if DO_CHECKS
-    Queue.back().Delegate->CheckForValidCall();
-#endif /* DO_CHECKS */
+//     checkSlow( Queue.back().Delegate->IsSet() == false )
+//
+//     *Queue.back().Delegate = std::move(InDelegate);
+// #if DO_CHECKS
+//     Queue.back().Delegate->CheckForValidCall();
+// #endif /* DO_CHECKS */
 
     return;
 }

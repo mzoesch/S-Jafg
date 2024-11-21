@@ -52,6 +52,7 @@ struct LChunkKey final
     FORCEINLINE LChunkKey(const LChunkKey& InKey) noexcept : Key(InKey.Key) { }
     FORCEINLINE LChunkKey(LChunkKey&& InKey) noexcept : Key(InKey.Key) { }
     FORCEINLINE LChunkKey(const LVector& InVec) noexcept;
+    FORCEINLINE LChunkKey(const LChunkKey2& InKey2, const LChunkKeyDomainTy InZ);
     FORCEINLINE ~LChunkKey() = default;
 
     FORCEINLINE LChunkKey2 XY() const;
@@ -62,6 +63,11 @@ struct LChunkKey final
     FORCEINLINE bool Equals(const LChunkKey& InKey, const LChunkKey::EAxis InAxis = LChunkKey::EAxis::XYZx) const;
     FORCEINLINE bool operator==(const LChunkKey& InKey) const { return Key == InKey.Key; }
     FORCEINLINE bool operator!=(const LChunkKey& InKey) const { return Key != InKey.Key; }
+
+    FORCEINLINE bool operator <(const LChunkKey& InKey) const;
+    FORCEINLINE bool operator >(const LChunkKey& InKey) const;
+    FORCEINLINE bool operator<=(const LChunkKey& InKey) const;
+    FORCEINLINE bool operator>=(const LChunkKey& InKey) const;
 
     FORCEINLINE LVector ToWorldSpaceVector() const
     {
@@ -171,6 +177,14 @@ LChunkKey::LChunkKey(const LVector& InVec) noexcept
     return;
 }
 
+LChunkKey::LChunkKey(const LChunkKey2& InKey2, const LChunkKeyDomainTy InZ)
+{
+    this->Key.X = InKey2.X;
+    this->Key.Y = InKey2.Y;
+    this->Key.Z = InZ;
+    return;
+}
+
 LChunkKey2 LChunkKey::XY() const
 {
     return { Key.X, Key.Y };
@@ -193,6 +207,34 @@ bool LChunkKey::Equals(const LChunkKey& InKey, const LChunkKey::EAxis InAxis /* 
     return ((InAxis & LChunkKey::EAxis::Xx) ? Key.X == InKey.X : true)
         && ((InAxis & LChunkKey::EAxis::Yx) ? Key.Y == InKey.Y : true)
         && ((InAxis & LChunkKey::EAxis::Zx) ? Key.Z == InKey.Z : true);
+}
+
+bool LChunkKey::operator<(const LChunkKey& InKey) const
+{
+    return  Key.X < InKey.X
+        || (Key.X == InKey.X && Key.Y < InKey.Y)
+        || (Key.X == InKey.X && Key.Y == InKey.Y && Key.Z < InKey.Z);
+}
+
+bool LChunkKey::operator>(const LChunkKey& InKey) const
+{
+    return  Key.X > InKey.X
+        || (Key.X == InKey.X && Key.Y > InKey.Y)
+        || (Key.X == InKey.X && Key.Y == InKey.Y && Key.Z > InKey.Z);
+}
+
+bool LChunkKey::operator<=(const LChunkKey& InKey) const
+{
+    return  Key.X <= InKey.X
+        || (Key.X == InKey.X && Key.Y <= InKey.Y)
+        || (Key.X == InKey.X && Key.Y == InKey.Y && Key.Z <= InKey.Z);
+}
+
+bool LChunkKey::operator>=(const LChunkKey& InKey) const
+{
+    return  Key.X >= InKey.X
+        || (Key.X == InKey.X && Key.Y >= InKey.Y)
+        || (Key.X == InKey.X && Key.Y == InKey.Y && Key.Z >= InKey.Z);
 }
 
 LChunkKey2& LChunkKey2::operator=(const LChunkKey2& InKey) noexcept
@@ -221,6 +263,21 @@ struct ::std::hash<::Jafg::LChunkKey>
         std::size_t FinalHash = HashX;
         FinalHash ^= HashY + 0x9e3779b9 + (FinalHash << 6) + (FinalHash >> 2);
         FinalHash ^= HashZ + 0x9e3779b9 + (FinalHash << 6) + (FinalHash >> 2);
+
+        return FinalHash;
+    }
+};
+
+template <>
+struct ::std::hash<::Jafg::LChunkKey2>
+{
+    FORCEINLINE ::std::size_t operator()(const ::Jafg::LChunkKey2& InKey) const noexcept
+    {
+        const std::size_t HashX = std::hash<::Jafg::LChunkKeyDomainTy>()(InKey.X);
+        const std::size_t HashY = std::hash<::Jafg::LChunkKeyDomainTy>()(InKey.Y);
+
+        std::size_t FinalHash = HashX;
+        FinalHash ^= HashY + 0x9e3779b9 + (FinalHash << 6) + (FinalHash >> 2);
 
         return FinalHash;
     }

@@ -59,10 +59,28 @@ void Jafg::LSubsystemCollection::InitializeSubsystems()
 
 void Jafg::LSubsystemCollection::TearDownSubsystems()
 {
+    for (int32 i = 0; i < this->SubsystemInstances.GetSize(); ++i)
+    {
+        JSubsystem*& Subsystem = this->SubsystemInstances[i];
+        checkSlow( Subsystem )
+
+        if (Subsystem->IsPriorityTearDown())
+        {
+            Subsystem->KillYourSelfNow();
+            Subsystem = nullptr;
+            checkSlow( this->SubsystemInstances[i] == nullptr )
+        }
+
+        continue;
+    }
+
     for (JSubsystem* Subsystem : this->SubsystemInstances)
     {
-        checkSlow( Subsystem )
-        Subsystem->KillYourSelfNow();
+        if (Subsystem)
+        {
+            Subsystem->KillYourSelfNow();
+        }
+
         continue;
     }
 

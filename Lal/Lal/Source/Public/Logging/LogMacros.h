@@ -34,7 +34,6 @@
 #define LOG_COLOR_WARNING          "\033[;93m"      /* Yellow      */
 #define LOG_COLOR_ERROR            "\033[;91m"      /* Red         */
 #define LOG_COLOR_FATAL            "\033[;31m"      /* Bright red  */
-
 #define LOG_COLOR_END              "\033[0m"        /* Reset color */
 
 

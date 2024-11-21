@@ -9,6 +9,7 @@
 namespace Jafg
 {
 
+
 class JChunkGenerationSubsystem;
 
 DECLARE_JAFG_CLASS()
@@ -26,8 +27,14 @@ protected:
     virtual void TearDown() override;
     // ~JCappedTickableWorldSubsystem implementation
 
+public:
+
+    TdhArray<LChunkKey2> CopyVerticalChunksInQuestion() const;
+
 private:
 
+    std::mutex* VerticalChunksInQuestionMutex = nullptr;
+    TdhArray<LChunkKey2> VerticalChunksInQuestion;
     JChunkGenerationSubsystem* ChunkGenerationSubsystem = nullptr;
     LChunkKey LastChunkKey = { std::numeric_limits<LChunkKeyDomainTy>::max() };
 };

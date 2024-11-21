@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Async/TaskUtility.h"
 #include "Engine/Actor.h"
 #include "Engine/World.h"
 
@@ -91,6 +92,7 @@ FORCEINLINE AActor* Private::LWorldMiscellaneousAccessor::SpawnActor(LWorld* InC
 FORCEINLINE AActor* Private::LWorldMiscellaneousAccessor::SpawnDeferredActor(LWorld* InContext, const LObjectClass* InStaticClass)
 {
     check( InContext )
+    check( Tasks::IsOnMasterThread() )
 
     AActor* Actor = NewDeferredObject<AActor, true, false>(InContext, InStaticClass);
     InContext->Actors.Add(Actor);

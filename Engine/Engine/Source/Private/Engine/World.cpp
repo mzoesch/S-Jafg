@@ -47,12 +47,16 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 
     this->GetEngine()->OnWorldBeginLife.Broadcast(this);
 
+    LOG_VERBOSE(LogWorld, "Initializing {} level actors.", this->Actors.GetSize())
     for (AActor* Actor : this->Actors)
     {
         MakeDeferredActorFinal(Actor);
     }
 
-    this->InitializeSubsystems();
+    check( this->Collection == nullptr )
+    this->Collection = new LSubsystemCollection(this);
+    this->Collection->LocateAllSubsystemsOfClass(JWorldSubsystem::StaticClass());
+    this->Collection->InitializeSubsystems();
 
     this->WorldState = EWorldState::Running;
 
@@ -96,8 +100,16 @@ void Jafg::LWorld::TearDownContext()
     check( this->GetWorldState() == EWorldState::Running )
     this->WorldState = EWorldState::TearingDown;
 
-    this->TearDownSubsystems();
+    LOG_VERBOSE(LogWorld, "Tearing down world subsystems.")
+    checkSlow( this->Collection )
+    this->Collection->TearDownSubsystems();
+    delete this->Collection;
+    this->Collection = nullptr;
 
+    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, 0);
+    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, 0);
+
+    LOG_VERBOSE(LogWorld, "Killing {} actors of world.", this->Actors.GetSize())
     for (AActor* Actor : this->Actors)
     {
         Actor->KillYourSelfNow();
@@ -143,23 +155,4 @@ float Jafg::LWorld::GetRealTimeSecondsSinceWorldLaunch() const
 {
     const float Now = static_cast<float>(Application::GetDeltaSinceStaticStorageInitialization());
     return Now - this->RealTimeWhenWorldWasLaunched;
-}
-
-void Jafg::LWorld::InitializeSubsystems()
-{
-    check( this->Collection == nullptr )
-    this->Collection = new LSubsystemCollection(this);
-    this->Collection->LocateAllSubsystemsOfClass(JWorldSubsystem::StaticClass());
-    this->Collection->InitializeSubsystems();
-
-    return;
-}
-
-void Jafg::LWorld::TearDownSubsystems()
-{
-    this->Collection->TearDownSubsystems();
-    delete this->Collection;
-    this->Collection = nullptr;
-
-    return;
 }

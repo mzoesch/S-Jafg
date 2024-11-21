@@ -9,6 +9,16 @@
 namespace Jafg::Private
 {
 
+extern LSimpleString LalLogPrivateColor_Trace;
+extern LSimpleString LalLogPrivateColor_Verbose;
+extern LSimpleString LalLogPrivateColor_Info;
+extern LSimpleString LalLogPrivateColor_Warning;
+extern LSimpleString LalLogPrivateColor_Error;
+extern LSimpleString LalLogPrivateColor_Fatal;
+extern LSimpleString LalLogPrivateColor_End;
+
+LStringLegacy GetColorForVerbosity(const ELogVerbosityType Verbosity);
+
 /**
  * Defines a log category that can be used to log messages.
  *
@@ -44,6 +54,35 @@ private:
 FORCEINLINE void LogMessage(const LStringLegacy&& InAnsiMessage)
 {
     std::cout << InAnsiMessage << '\n';
+}
+
+/**
+ * Log a message inside a given category with a specific verbosity level - for manual control paths which
+ * do not allow for using the macros provided inside #Logging/LogMacros.h.
+ * @remark The compiler should optimize this function call away if the provided verbosity is too low.
+ */
+template <ELogVerbosityType Verbosity, ELogVerbosityType CategoryVerbosity>
+FORCEINLINE void LogMessage(const LLogCategory<CategoryVerbosity>& InCategory, const LStringLegacy&& Function, const LStringLegacy&& InMessage)
+{
+    /*
+     * This is not 100% safe, but the compiler should generate omit this function call if the verbosity is too low at
+     * compile time. But we should check is later on. Or let the preprocessor do the heavy lifting for killing
+     * dead code.
+     */
+    if constexpr (!(Verbosity < InCategory.GetCompileTimeVerbosity()))
+    {
+        LStringLegacy AnsiMessage = std::format("{}[{}] - {}: {}{}",
+            GetColorForVerbosity(Verbosity),
+            InCategory.GetCategory(),
+            Function,
+            InMessage,
+            LalLogPrivateColor_End
+        );
+
+        ::Jafg::Private::LogMessage(std::move(AnsiMessage));
+    }
+
+    return;
 }
 
 /**

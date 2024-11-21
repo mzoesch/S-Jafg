@@ -117,9 +117,6 @@ private:
     TdhArray<AActor*> Actors;
     EWorldState::Type WorldState;
 
-    void InitializeSubsystems();
-    void TearDownSubsystems();
-
     LSubsystemCollection* Collection = nullptr;
 
     /** Main thread only. */
