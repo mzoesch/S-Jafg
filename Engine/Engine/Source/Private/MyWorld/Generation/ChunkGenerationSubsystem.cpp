@@ -18,6 +18,7 @@ void Jafg::JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Col
     Super::Initialize(Collection);
     this->SetTickInterval(0.0f);
 
+    this->SharedLoadedChunksMutex = new std::shared_mutex();
     this->VipChunksToLoadMutex = new std::mutex();
 
     this->LoadedChunks = new std::unordered_map<LChunkKey, AChunk*>();
@@ -66,6 +67,9 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
     delete this->SharedChunkArgs;
     this->SharedChunkArgs = nullptr;
 
+    check( this->SharedLoadedChunksMutex )
+    delete this->SharedLoadedChunksMutex;
+    this->SharedLoadedChunksMutex = nullptr;
     checkSlow( this->LoadedChunks )
     delete this->LoadedChunks;
     this->LoadedChunks = nullptr;
@@ -138,6 +142,7 @@ bool Jafg::JChunkGenerationSubsystem::DequeueNextOptimalVerticalChunk()
 
 void Jafg::JChunkGenerationSubsystem::SafeLoadPersistentChunkPreSpawnedChunk(const LChunkKey& ChunkKey)
 {
+    std::unique_lock<std::shared_mutex> lock(*this->SharedLoadedChunksMutex);
     AChunk* Chunk = this->SpawnChunk(ChunkKey);
     this->LoadedChunks->emplace(ChunkKey, Chunk);
 

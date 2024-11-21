@@ -56,9 +56,9 @@ void Jafg::JChunkGeneratorSubsystem::TryToActivateVerticalChunk(const LChunkKey2
             continue;
         }
 
-        if (Target->GetChunkState() == EChunkState::Active)
+        if (Target->GetChunkState() == EChunkState::Active || Target->GetHuntedChunkState() == EChunkState::Active)
         {
-            return;
+            continue;
         }
 
         this->TryToBringChunkToState(Target, EChunkState::Active, Visited);
@@ -135,6 +135,7 @@ bool Jafg::JChunkGeneratorSubsystem::TryToBringChunkToState(AChunk* Target, cons
         }
 
         checkSlow( Target->GetHuntedChunkState() == EChunkState::Active )
+        checkSlow( Target->GetChunkState() != EChunkState::Active )
         Target->SetChunkState(EChunkState::Active);
     });
 

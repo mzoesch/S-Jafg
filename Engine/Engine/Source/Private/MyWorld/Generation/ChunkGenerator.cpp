@@ -9,8 +9,6 @@
 
 void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, voxel_t*& InOutChunkData)
 {
-    SCOPED_TIME_TAKEN_MEASURER_MsgF(LogChunkGeneration, Trace, "{}", InKey.ToString())
-
     const voxel_t StoneIdx = SharedArgs->VoxelSubsystem->GetVoxelIndex("Stone");
 
     float NoiseOutput[MwStatics::ChunkSizeSquared];

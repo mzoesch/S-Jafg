@@ -34,7 +34,6 @@ public:
     FORCEINLINE auto HasChunkShaderContext() const -> bool { return this->ChunkShaderContext != nullptr; }
     FORCEINLINE auto GetChunkShaderContext() const -> LChunkShaderContext* { return this->ChunkShaderContext; }
 
-    FORCEINLINE auto GetChunks() const -> const std::unordered_map<LChunkKey, AChunk*>& { return *this->LoadedChunks; }
     FORCEINLINE auto GetCurrentActiveChunkSnapshot() const -> TdhArray<LChunkKey>;
     FORCEINLINE auto GetPanickedChunk(const LChunkKey& InChunkKey) const -> AChunk*;
     FORCEINLINE auto FindLoadedChunkOrNull(const LChunkKey& ChunkKey) const -> AChunk*;
@@ -61,6 +60,7 @@ private:
      *         We should really implement our own hash map.
      */
     std::unordered_map<LChunkKey, AChunk*>* LoadedChunks = nullptr;
+    std::shared_mutex* SharedLoadedChunksMutex = nullptr;
 
     /**
      * Very important persistent chunks to load to the world.
@@ -78,15 +78,16 @@ private:
 
     void SafeLoadPersistentChunkPreSpawnedChunk(const LChunkKey& ChunkKey);
 
-    int32 RenderDistance = 3; // Move this to usr pref.
+    int32 RenderDistance = 20; // Move this to usr pref.
     int32 RenderHeight   = 3; // Move this to usr pref.
 
     LSharedChunkArgs*    SharedChunkArgs    = nullptr;
     LChunkShaderContext* ChunkShaderContext = nullptr;
 };
 
- TdhArray<LChunkKey> Jafg::JChunkGenerationSubsystem::GetCurrentActiveChunkSnapshot() const
+TdhArray<LChunkKey> JChunkGenerationSubsystem::GetCurrentActiveChunkSnapshot() const
 {
+    std::shared_lock<std::shared_mutex> lock(*this->SharedLoadedChunksMutex);
     TdhArray<LChunkKey> Out;
     for (const auto& [Fst, Snd] : *this->LoadedChunks)
     {
@@ -98,7 +99,7 @@ private:
     return Out;
 }
 
-AChunk* Jafg::JChunkGenerationSubsystem::GetPanickedChunk(const LChunkKey& InChunkKey) const
+AChunk* JChunkGenerationSubsystem::GetPanickedChunk(const LChunkKey& InChunkKey) const
 {
     if (AChunk* Chunk = this->FindLoadedChunkOrNull(InChunkKey); Chunk != nullptr)
     {
@@ -110,6 +111,7 @@ AChunk* Jafg::JChunkGenerationSubsystem::GetPanickedChunk(const LChunkKey& InChu
 
 AChunk* JChunkGenerationSubsystem::FindLoadedChunkOrNull(const LChunkKey& ChunkKey) const
 {
+    std::shared_lock<std::shared_mutex> lock(*this->SharedLoadedChunksMutex);
     const std::unordered_map<LChunkKey, AChunk*>::iterator It = this->LoadedChunks->find(ChunkKey);
     return It == this->LoadedChunks->end() ? nullptr : It->second;
 }
