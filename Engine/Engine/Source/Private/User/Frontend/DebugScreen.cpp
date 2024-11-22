@@ -63,7 +63,15 @@ void Jafg::WDebugScreen::Construct()
         [
             NewNode(WWidgetRegion)
             .SetRegionPadding(LPadding(100.0f))
-            & &MaterialSubsystem->GetAtlas()
+            & &MaterialSubsystem->GetBlendOpaqueAtlasTexture()
+        ]
+    ]
+    [
+        NewNode(WVBox)
+        [
+            NewNode(WWidgetRegion)
+            .SetRegionPadding(LPadding(100.0f))
+            & &MaterialSubsystem->GetBlendersAtlasTexture()
         ]
     ]
     FinishWidgetStyling()

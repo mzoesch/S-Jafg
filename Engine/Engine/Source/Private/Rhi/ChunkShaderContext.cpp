@@ -17,25 +17,43 @@ void Jafg::LChunkShaderContext::Make()
 {
     LGenericShaderContext::Make();
 
+    const JMaterialSubsystem* Subsystem = GEngine->GetApplicationInstance()->GetSubsystem<JMaterialSubsystem>();
+
     this->Program = LShader(LEnginePath(EEnginePaths::Shaders, "Chunk"));
     this->Program.Use();
 
-    glGenTextures(1, &this->Tex);
+    glGenTextures(1, &this->BlendOpaqueTex);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, this->Tex);
+    glBindTexture(GL_TEXTURE_2D, this->BlendOpaqueTex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    const JMaterialSubsystem* Subsystem = GEngine->GetApplicationInstance()->GetSubsystem<JMaterialSubsystem>();
     glTexImage2D(
         GL_TEXTURE_2D, 0, GL_RGB /* out */,
-        static_cast<GLsizei>(Subsystem->GetAtlas().GetWidth()),
-        static_cast<GLsizei>(Subsystem->GetAtlas().GetHeight()),
-        0, GL_RGBA /* in */, GL_UNSIGNED_BYTE, Subsystem->GetAtlas().GetFirstMipMap().Bulk.GetBulk()
+        static_cast<GLsizei>(Subsystem->GetBlendOpaqueAtlasTexture().GetWidth()),
+        static_cast<GLsizei>(Subsystem->GetBlendOpaqueAtlasTexture().GetHeight()),
+        0, GL_RGBA /* in */, GL_UNSIGNED_BYTE, Subsystem->GetBlendOpaqueAtlasTexture().GetFirstMipMap().Bulk.GetBulk()
     );
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    this->Program.SetUIntUniform("AtlasDomainWCount", Subsystem->GetDomainWidth());
+    glGenTextures(1, &this->BlendersTex);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, this->BlendersTex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, GL_RGBA /* out */,
+        static_cast<GLsizei>(Subsystem->GetBlendersAtlasTexture().GetWidth()),
+        static_cast<GLsizei>(Subsystem->GetBlendersAtlasTexture().GetHeight()),
+        0, GL_RGBA /* in */, GL_UNSIGNED_BYTE, Subsystem->GetBlendersAtlasTexture().GetFirstMipMap().Bulk.GetBulk()
+
+    );
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glUniform1i(glGetUniformLocation(this->Program.GetId(), "BlendOpaqueTexSampler"), 0);
+    glUniform1i(glGetUniformLocation(this->Program.GetId(), "BlendersTexSampler"),    1);
+
+    this->Program.SetUIntUniform("AtlasBlendOpaqueDomainWCount", Subsystem->GetBlendOpaqueDomainWidth());
+    this->Program.SetUIntUniform("AtlasBlendersDomainWCount", Subsystem->GetBlendersDomainWidth());
 
     return;
 }
@@ -45,6 +63,9 @@ void Jafg::LChunkShaderContext::OnFree()
     LGenericShaderContext::OnFree();
 
     this->Program.Free();
+
+    glDeleteTextures(1, &this->BlendOpaqueTex);
+    glDeleteTextures(1, &this->BlendersTex);
 
     return;
 }
@@ -81,7 +102,10 @@ void Jafg::LChunkShaderContext::Draw(const LViewport& Context, LGenericShaderCon
     this->Program.Use();
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, this->Tex);
+    glBindTexture(GL_TEXTURE_2D, this->BlendOpaqueTex);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, this->BlendersTex);
+
     glBindVertexArray(Args.Instance->GetVertexArrayObject());
 
     const TMatrix Projection = Maths::MakePerspectiveProjectionMatrix(
@@ -127,6 +151,8 @@ void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TdhArray<ChunkBo
     glEnableVertexAttribArray(1);
     glVertexAttribIPointer(2, 1, GL_BYTE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(ChunkBoxVertex, Normal)));
     glEnableVertexAttribArray(2);
+    glVertexAttribPointer(3, 2, GL_BYTE, GL_FALSE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(ChunkBoxVertex, BlendTextureGridX)));
+    glEnableVertexAttribArray(3);
 
     glGenBuffers(1, &this->Ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->Ebo);

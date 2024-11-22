@@ -2,14 +2,18 @@
 
 in vec2 InFragTexCoord;
 in vec3 InFragNormal;
+in vec2 InFragBlendTexCoord;
 
 out vec4 FragColor;
 
-uniform uint AtlasDomainWCount;
-uniform sampler2D TexSampler;
+uniform uint AtlasBlendOpaqueDomainWCount;
+uniform uint AtlasBlendersDomainWCount;
+uniform sampler2D BlendOpaqueTexSampler;
+uniform sampler2D BlendersTexSampler;
 
 vec3 Ambient = vec3(0.6);
 vec3 LightNormal = vec3(0.8, 0.7, 0.5);
+vec3 GrassColor = vec3(0.0, 0.8, 0.0);
 
 void main()
 {
@@ -18,9 +22,15 @@ void main()
     vec3 Diffuse = Diff * vec3(1);
     vec4 ResultingLight = vec4(Ambient + Diffuse, 1.0);
 
-    float TexMultiplier = 1.0f / float(AtlasDomainWCount);
-    vec4 TexRes = (texture(TexSampler, InFragTexCoord * TexMultiplier));
-    FragColor = TexRes * ResultingLight;
+    float TexMultiplier = 1.0f / float(AtlasBlendOpaqueDomainWCount);
+    vec4 TexRes = (texture(BlendOpaqueTexSampler, InFragTexCoord * TexMultiplier));
+
+    float BlendTexMultiplier = 1.0f / float(AtlasBlendersDomainWCount);
+    vec4 BlendTexRes = texture(BlendersTexSampler, InFragBlendTexCoord * BlendTexMultiplier);
+    vec4 NonBlendedColor = (TexRes * (1.0f - BlendTexRes.a));
+    vec4 BlendedColor = (TexRes * vec4(GrassColor, 1.0f) * BlendTexRes.a);
+
+    FragColor = (NonBlendedColor + BlendedColor) * ResultingLight;
 
     // FragColor = vec4(((InFragNormal + 1.0f) * 0.5f), 1.0f);
 }

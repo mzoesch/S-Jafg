@@ -6,6 +6,7 @@
 #include "Rhi/Texture2.h"
 #include "MyWorld/CommonTypes.h"
 #include "MaterialSubsystem.generated.h"
+#include "Rhi/Atlas2.h"
 
 namespace Jafg
 {
@@ -26,39 +27,26 @@ protected:
 
 public:
 
-    FORCEINLINE auto CalculateSpecificTexturePointOnAtlas(const LTextureIndex InTextureIndex) const -> LPoint;
-    FORCEINLINE auto GetCurrentTextureWidth() const -> int32 { return this->CurrentTextureWidth; }
+    FORCEINLINE auto CalculateSpecificTexturePointOnBlendOpaqueAtlas(const LTextureIndex InTextureIndex) const -> LPoint { return this->BlendOpaqueAtlas.CalculateSpecificTexturePointOnAtlas(InTextureIndex); }
+    FORCEINLINE auto HasBlendOpaqueAtlas() const -> bool { return this->BlendOpaqueAtlas.GetMostSignificantMipMap().Bulk.IsAllocated(); }
+    FORCEINLINE auto GetBlendOpaqueAtlas() const -> const LAtlas2& { check( this->HasBlendOpaqueAtlas() ) return this->BlendOpaqueAtlas; }
+    FORCEINLINE auto GetBlendOpaqueAtlasTexture() const -> const LTexture2& { check( this->HasBlendOpaqueAtlas() ) return this->BlendOpaqueAtlas.GetData(); }
+    FORCEINLINE auto GetBlendOpaqueDomainWidth() const -> uint32 { return this->BlendOpaqueAtlas.GetDomainWidth(); }
 
-    FORCEINLINE auto HasAtlas() const -> bool { return this->Atlas.GetFirstMipMap().Bulk.IsAllocated(); }
-    FORCEINLINE auto GetAtlas() const -> const LTexture2& { check( this->HasAtlas() ) return this->Atlas; }
-
-    FORCEINLINE auto GetDomainWidth() const -> uint32 { return this->Atlas.GetFirstMipMap().Size.X / this->CurrentTextureWidth; }
+    FORCEINLINE auto CalculateSpecificTexturePointOnBlendersAtlas(const LTextureIndex InTextureIndex) const -> LPoint { return this->BlendersAtlas.CalculateSpecificTexturePointOnAtlas(InTextureIndex); }
+    FORCEINLINE auto HasBlendersAtlas() const -> bool { return this->BlendersAtlas.GetMostSignificantMipMap().Bulk.IsAllocated(); }
+    FORCEINLINE auto GetBlendersAtlas() const -> const LAtlas2& { check( this->HasBlendersAtlas() ) return this->BlendersAtlas; }
+    FORCEINLINE auto GetBlendersAtlasTexture() const -> const LTexture2& { check( this->HasBlendersAtlas() ) return this->BlendersAtlas.GetData(); }
+    FORCEINLINE auto GetBlendersDomainWidth() const -> uint32 { return this->BlendersAtlas.GetDomainWidth(); }
 
 private:
 
     void ReloadAllTextures(void);
     void ClearAllTextures(void);
-
     void LoadAllTextures(void);
-    void CreateAtlas(const TdhArray<LTexture2>& Textures);
 
-    /**
-     * The texture width to use for all textures. Is guaranteed to be a power of two.
-     * Lower resolutions will be scaled up.
-     */
-    int32 CurrentTextureWidth = 0;
-
-    LTexture2 Atlas = { };
+    LAtlas2 BlendersAtlas    = { };
+    LAtlas2 BlendOpaqueAtlas = { };
 };
-
-LPoint JMaterialSubsystem::CalculateSpecificTexturePointOnAtlas(const LTextureIndex InTextureIndex) const
-{
-    const uint32 Width = this->Atlas.GetFirstMipMap().Size.X;
-
-    const uint32 X = (InTextureIndex * this->CurrentTextureWidth) % Width;
-    const uint32 Y = ((InTextureIndex * this->CurrentTextureWidth) / Width) * this->CurrentTextureWidth;
-
-    return LPoint(X, Y);
-}
 
 } /* ~Namespace Jafg */

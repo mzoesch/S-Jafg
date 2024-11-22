@@ -36,12 +36,14 @@ public:
     FORCEINLINE auto GetProgram()       ->       LShader& { return this->Program; }
     FORCEINLINE auto GetProgram() const -> const LShader& { return this->Program; }
 
-    FORCEINLINE auto GetTextureLocation() const -> uint32 { return this->Tex; }
+    FORCEINLINE auto GetBlendOpaqueTextureLocation() const -> uint32 { return this->BlendOpaqueTex; }
+    FORCEINLINE auto GetBlendersTextureLocation()    const -> uint32 { return this->BlendersTex; }
 
 private:
 
-    LShader Program = { };
-    uint32  Tex = 0;
+    LShader Program        = { };
+    uint32  BlendOpaqueTex = 0;
+    uint32  BlendersTex    = 0;
 };
 
 /**

@@ -20,14 +20,20 @@ struct ChunkBoxVertex final
 
     FORCEINLINE ChunkBoxVertex() = default;
     FORCEINLINE ChunkBoxVertex(const uint8 InLocationX, const uint8 InLocationY, const uint8 InLocationZ,
-                               const LTextureIndex Idx, const uint32 InDomainWidth, const TexOffset InTexOffset, const uint8 InNormal)
+                               const LTextureIndex Idx, const uint32 InDomainWidth,
+                               const TexOffset InTexOffset, const uint8 InNormal,
+                               const LTextureIndex BlendTexIdx, const uint32 InBlendDomainWidth)
             : LocationX(InLocationX), LocationY(InLocationY), LocationZ(InLocationZ), Normal(InNormal)
     {
-        this->TextureGridX = (InTexOffset & TexOffset::East) > 0;
+        this->TextureGridX = (InTexOffset & TexOffset::East ) > 0;
         this->TextureGridY = (InTexOffset & TexOffset::South) > 0;
-
         this->TextureGridX += (Idx % InDomainWidth);
         this->TextureGridY += (Idx / InDomainWidth);
+
+        this->BlendTextureGridX = (InTexOffset & TexOffset::East ) > 0;
+        this->BlendTextureGridY = (InTexOffset & TexOffset::South) > 0;
+        this->BlendTextureGridX += (BlendTexIdx % InBlendDomainWidth);
+        this->BlendTextureGridY += (BlendTexIdx / InBlendDomainWidth);
 
         return;
     }
@@ -40,6 +46,9 @@ struct ChunkBoxVertex final
     uint8 TextureGridY = 0;
 
     uint8 Normal = 0;
+
+    uint8 BlendTextureGridX = 0;
+    uint8 BlendTextureGridY = 0;
 };
 ENUM_CLASS_FLAGS(ChunkBoxVertex::TexOffset)
 

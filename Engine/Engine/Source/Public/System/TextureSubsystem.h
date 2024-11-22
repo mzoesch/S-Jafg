@@ -9,6 +9,9 @@
 namespace Jafg
 {
 
+struct LDiskVoxelTexture;
+struct LDiskBlendTexture;
+
 /**
  * A texture that is present in the voxel texture directory.
  *
@@ -36,6 +39,12 @@ struct LDiskVoxelTexture final
 
     auto GetVoxelName() const -> LSimpleString;
     auto GetNormalLookUpBasedOfFileName() const -> ENormalLookup::Type;
+    auto GetBlendLookUpBasedOfFileName(const TdhArray<LDiskBlendTexture>& InCurrentUsedBlends) const -> LTextureIndex;
+};
+
+struct LDiskBlendTexture final
+{
+    LSimpleString Name;
 };
 
 /**
@@ -56,9 +65,14 @@ protected:
 public:
 
     /**
-     * Returns all unique texture names that where found in all texture directories based on user preferences.
+     * @return All unique texture names that where found in all texture directories based on user preferences.
      */
     TdhArray<LDiskVoxelTexture> FindMeaningFullVoxelTextureNames() const;
+
+    /**
+     * @return All unique blend texture names that where found in all texture directories based on user preferences.
+     */
+    TdhArray<LDiskBlendTexture> FindMeaningBlendTextureNames() const;
 };
 
 } /* ~Namespace Jafg */

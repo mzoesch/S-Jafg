@@ -3,6 +3,7 @@
 layout (location = 0) in vec3 InLocation;
 layout (location = 1) in vec2 InVertTexCoord;
 layout (location = 2) in int  InNormal;
+layout (location = 3) in vec2 InVertBlendTexCoord;
 
 uniform mat4 Model;
 uniform mat4 View;
@@ -10,6 +11,7 @@ uniform mat4 Projection;
 
 out vec2 InFragTexCoord;
 out vec3 InFragNormal;
+out vec2 InFragBlendTexCoord;
 
 const vec3 Normals[] = vec3[]
 (
@@ -29,4 +31,5 @@ void main()
 
     InFragTexCoord = InVertTexCoord;
     InFragNormal = Normals[InNormal];
+    InFragBlendTexCoord = InVertBlendTexCoord;
 }

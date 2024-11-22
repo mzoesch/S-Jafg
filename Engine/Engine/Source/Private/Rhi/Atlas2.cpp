@@ -1,0 +1,57 @@
+// Copyright mzoesch. All rights reserved.
+
+#include "CoreAfx.h"
+#include "Rhi/Atlas2.h"
+#include "Rhi/RendererInformation.h"
+
+void Jafg::LAtlas2::Make(const TdhArray<LTexture2>& InTextures, const bool bFreeOld)
+{
+    if (bFreeOld)
+    {
+        this->Data.Free();
+    }
+    checkSlow( this->Data.GetFirstMipMap().Bulk.IsAllocated() == false )
+
+    if (static_cast<LuPtrSize>(InTextures.GetSize()) >= static_cast<LuPtrSize>(std::numeric_limits<uint8>::max()))
+    {
+        panic( "Exceed texture count limit. Shaders need updating." )
+    }
+
+    const int32 TextureSizeLimit = RendererInformation::GetLimitTextureDimension();
+
+    int32 MaxTextureSize = INDEX_NONE;
+    for (const LTexture2& Texture : InTextures)
+    {
+        MaxTextureSize = Maths::Max(MaxTextureSize, static_cast<int32>(Texture.GetFirstMipMap().Size.X));
+    }
+    if (MaxTextureSize > TextureSizeLimit)
+    {
+        panicMsgf(
+            "Texture size limit exceeded. Texture size limit: {}. Largest texture size: {}.",
+            TextureSizeLimit, MaxTextureSize
+        )
+        return;
+    }
+    this->TexWidth = MaxTextureSize;
+
+    const int32 AtlasTextureDimensionCount =  static_cast<int32>(Maths::Ceil<float>(Maths::Sqrt(static_cast<float>(InTextures.GetSize()))));
+    jassert(AtlasTextureDimensionCount > 0)
+
+    this->Data.CreateEmpty(
+        static_cast<uint32>(this->TexWidth * AtlasTextureDimensionCount),
+        static_cast<uint32>(this->TexWidth * AtlasTextureDimensionCount),
+        ERawImageFormat::BGRA8
+    );
+
+    for (LTextureIndex TextureIndex = 0; TextureIndex < static_cast<LTextureIndex>(InTextures.GetSize()); ++TextureIndex)
+    {
+        const LTexture2& Texture = InTextures[static_cast<int32>(TextureIndex)];
+        const LPoint TexturePoint = this->CalculateSpecificTexturePointOnAtlas(TextureIndex);
+
+        this->Data.CopyTexture(Texture, TexturePoint, true);
+
+        continue;
+    }
+
+    return;
+}

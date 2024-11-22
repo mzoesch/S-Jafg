@@ -24,6 +24,9 @@ enum Type : uint8
     /** Content/Textures/Voxels */
     Voxels,
 
+    /** Content/Textures/Blends */
+    Blends,
+
     /** Content/Shaders */
     Shaders,
 
@@ -39,6 +42,7 @@ inline LSimpleString LexToString(const EEnginePaths::Type InType)
     {
     case EEnginePaths::CustomModule: { return ""; }
     case EEnginePaths::Voxels:       { return "Content/Textures/Voxels"; }
+    case EEnginePaths::Blends:       { return "Content/Textures/Blends"; }
     case EEnginePaths::Shaders:      { return "Content/Shaders"; }
     case EEnginePaths::Fonts:        { return "Content/Fonts"; }
     default:                         { panic( "Could not resolve engine path type." )  return ""; }

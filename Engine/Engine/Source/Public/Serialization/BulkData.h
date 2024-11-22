@@ -8,7 +8,7 @@ namespace Jafg
 {
 
 template <typename InDomainTy>
-class LBulkData
+class LBulkData final
 {
 public:
 

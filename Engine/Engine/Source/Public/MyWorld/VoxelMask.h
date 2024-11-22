@@ -29,6 +29,9 @@ struct LVoxelMask
     FORCEINLINE LTextureIndex FindTextureIndex(const LVector& InNormal) const;
     FORCEINLINE LTextureIndex FindTextureIndex(const LNormalLookup InNormal) const;
 
+    FORCEINLINE LTextureIndex FindBlendTextureIndex(const LVector& InNormal) const;
+    FORCEINLINE LTextureIndex FindBlendTextureIndex(const LNormalLookup InNormal) const;
+
 private:
 
     LSimpleString Namespace;
@@ -36,8 +39,12 @@ private:
 
     struct LTextureGroup
     {
+        FORCEINLINE LTextureGroup(const LNormalLookup InNormal, const LTextureIndex InIndex, const LTextureIndex InBlendIndex)
+            : Normal(InNormal), Index(InIndex), BlendIndex(InBlendIndex) { }
+
         LNormalLookup Normal;
         LTextureIndex Index;
+        LTextureIndex BlendIndex;
     };
 
     TdhArray<LTextureGroup> TextureGroups = { };
@@ -50,11 +57,33 @@ LTextureIndex LVoxelMask::FindTextureIndex(const LVector& InNormal) const
 
 LTextureIndex LVoxelMask::FindTextureIndex(const LNormalLookup InNormal) const
 {
-    for (const auto& [Normal, Index] : this->TextureGroups)
+    for (const LTextureGroup& Group : this->TextureGroups)
     {
-        if (Normal & InNormal)
+        if (Group.Normal & InNormal)
         {
-            return Index;
+            return Group.Index;
+        }
+
+        continue;
+    }
+
+    panicMsgf( "Found malformed voxel mask in namespace '%s' with name '%s'.", this->Namespace, this->Name )
+
+    return INDEX_NONE;
+}
+
+LTextureIndex LVoxelMask::FindBlendTextureIndex(const LVector& InNormal) const
+{
+    return this->FindBlendTextureIndex(ENormalLookup::FromVector(InNormal));
+}
+
+LTextureIndex LVoxelMask::FindBlendTextureIndex(const LNormalLookup InNormal) const
+{
+    for (const LTextureGroup& Group : this->TextureGroups)
+    {
+        if (Group.Normal & InNormal)
+        {
+            return Group.BlendIndex;
         }
 
         continue;
