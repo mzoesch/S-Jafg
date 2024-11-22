@@ -140,15 +140,15 @@ public:
     FORCEINLINE bool HasRawVoxelData() const { return this->RawVoxelData; }
     FORCEINLINE static LVoxelIndex GetRawVoxelIndex(const LVoxelKey InKey)
     {
-        return InKey.X + InKey.Y * MwStatics::ChunkSize + InKey.Z * MwStatics::ChunkSizeSquared;
+        return InKey.X * MwStatics::ChunkSizeSquared + InKey.Y * MwStatics::ChunkSize + InKey.Z;
     }
     FORCEINLINE static LVoxelIndex GetRawVoxelIndex(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ)
     {
-        return InX + InY * MwStatics::ChunkSize + InZ * MwStatics::ChunkSizeSquared;
+        return InX * MwStatics::ChunkSizeSquared + InY * MwStatics::ChunkSize + InZ;
     }
     FORCEINLINE static LVoxelIndex GetRawVoxelIndex(const int32 InX, const int32 InY, const int32 InZ)
     {
-        return InX + InY * MwStatics::ChunkSize + InZ * MwStatics::ChunkSizeSquared;
+        return InX * MwStatics::ChunkSizeSquared + InY * MwStatics::ChunkSize + InZ;
     }
 
     FORCEINLINE voxel_t GetRawVoxelData(const LVoxelKey InKey) const

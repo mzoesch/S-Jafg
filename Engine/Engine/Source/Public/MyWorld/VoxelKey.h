@@ -47,6 +47,8 @@ struct LVoxelKey final
     FORCEINLINE LVoxelKey(const LVoxelKeyTy& InKey) : Key(InKey) { }
     FORCEINLINE LVoxelKey(const LVoxelKeyDomainTy& InX, const LVoxelKeyDomainTy& InY, const LVoxelKeyDomainTy& InZ)
         : Key(InX, InY, InZ) { }
+    FORCEINLINE LVoxelKey(const int32& InX, const int32& InY, const int32& InZ)
+        : Key(static_cast<LVoxelKeyDomainTy>(InX), static_cast<LVoxelKeyDomainTy>(InY), static_cast<LVoxelKeyDomainTy>(InZ)) { }
     FORCEINLINE LVoxelKey(const LVoxelKey& InKey) noexcept : Key(InKey.Key) { }
     FORCEINLINE LVoxelKey(LVoxelKey&& InKey) noexcept : Key(InKey.Key) { }
     FORCEINLINE ~LVoxelKey() = default;
