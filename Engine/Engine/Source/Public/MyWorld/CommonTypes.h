@@ -39,6 +39,10 @@ enum Type : voxel_t
 } /* ~Namespace EDefinedVoxels */
 
 typedef uint8 LNormalLookup;
+
+/**
+ * The normal lookup used by the texture subsystem.
+ */
 namespace ENormalLookup
 {
 
@@ -127,5 +131,23 @@ FORCEINLINE LSimpleString LexToString(const ENormalLookup::Type InNormal)
     default: { jassertNoEntry() return { }; }
     }
 }
+
+/**
+ * The normal mapping used by the graphics engine.
+ */
+namespace ENormalShadingMap
+{
+
+enum Type : uint8
+{
+    Up       = 0x00,
+    Down     = 0x01,
+    Forward  = 0x02,
+    Backward = 0x03,
+    Right    = 0x04,
+    Left     = 0x05,
+};
+
+} /* ~Namespace ENormalShadingMap */
 
 } /* ~Namespace Jafg */

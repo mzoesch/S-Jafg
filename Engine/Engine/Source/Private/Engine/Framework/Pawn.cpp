@@ -70,9 +70,9 @@ void Jafg::APawn::ChangeVelocity(LInputActionValue& InValue)
     {
         this->MovementSpeed = 0;
     }
-    if (this->MovementSpeed > 50)
+    if (this->MovementSpeed > 200)
     {
-        this->MovementSpeed = 50;
+        this->MovementSpeed = 200;
     }
 
     return;

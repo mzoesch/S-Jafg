@@ -12,6 +12,7 @@
 #include "Rhi/ChunkShaderContext.h"
 #include "MyWorld/CommonTypes.h"
 #include "MyWorld/VoxelKey.h"
+#include "MyWorld/Light.h"
 #include "Chunk.generated.h"
 
 namespace Jafg

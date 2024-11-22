@@ -211,10 +211,6 @@ void Jafg::AChunk::Shape()
 
     ChunkGenerator::ShapeChunk(this->SharedArgs, this->ChunkKey, this->RawVoxelData);
 
-    // WorldGen::GenerateChunkData(
-    //     static_cast<int>(ChunkPos.x), static_cast<int>(ChunkPos.y), static_cast<int>(ChunkPos.z),
-    //     MwStatics::ChunkSize, RawVoxelData);
-
     return;
 }
 

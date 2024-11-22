@@ -95,7 +95,7 @@ void Jafg::LChunkShaderContext::Draw(const LViewport& Context, LGenericShaderCon
     this->Program.SetMatrixUniform("Projection", Projection);
     this->Program.SetMatrixUniform("Model", Model);
 
-    glDrawElements(GL_TRIANGLES, Args.NumTriangles, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, Args.NumTriangles, GL_UNSIGNED_INT, nullptr);
 
     return;
 }
@@ -125,6 +125,8 @@ void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TdhArray<ChunkBo
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_BYTE, GL_FALSE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(ChunkBoxVertex, TextureGridX)));
     glEnableVertexAttribArray(1);
+    glVertexAttribIPointer(2, 1, GL_BYTE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(ChunkBoxVertex, Normal)));
+    glEnableVertexAttribArray(2);
 
     glGenBuffers(1, &this->Ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->Ebo);
