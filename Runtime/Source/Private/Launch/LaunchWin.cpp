@@ -16,14 +16,14 @@ int32 LaunchWin(HINSTANCE hInInstance, HINSTANCE hPrevInstance, char*, int32 nCm
 
     if (CmdLine == nullptr)
     {
-        CmdLine = ::GetCommandLineW();
+        /*
+         * This causes a memory leak. But who the fuck actually cares. This application
+         * is about to be evaporated from existence.
+         */
+        CmdLine = LPlatformTypes::Ws2CStr(::GetCommandLineW());
     }
 
-    /*
-     * This causes a memory leak. But who the fuck actually cares. This application
-     * is about to be evaporated from existence.
-     */
-    ErrorLevel = GuardedMain(LPlatformTypes::Ws2CStr(CmdLine));
+    ErrorLevel = GuardedMain(CmdLine);
 
     return ErrorLevel;
 }

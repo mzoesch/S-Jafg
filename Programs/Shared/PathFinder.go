@@ -12,6 +12,7 @@ import (
 )
 
 var SolutionLuaFile string = "__buildSolution.lua"
+var SolutionCmakeFile string = "CMakeLists.txt"
 
 func GetAbsolutePathToSolutionLuaFile() string {
     return fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), SolutionLuaFile)
@@ -31,6 +32,8 @@ var GeneratedProjectsDir string = fmt.Sprintf("%s/gp", VslfDir)
 var ObjectStructureCacheFile string = fmt.Sprintf("%s/jobj.jobj", VslfDir)
 var VendorIncludeDir string = "Engine/Vendor/Include"
 var VendorLibDir string = "Engine/Vendor/Lib"
+var SavedDir string = "Saved"
+var SolutionDirOut string = fmt.Sprintf("%s/Solution", SavedDir)
 
 func GetAbsolutePath(relPath string) (string /* absPath */, bool /* bExists */) {
     var absPath string = fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), relPath)

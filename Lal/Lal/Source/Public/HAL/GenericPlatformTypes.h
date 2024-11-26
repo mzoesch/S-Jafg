@@ -95,4 +95,16 @@ struct LGenericPlatformTypes
         const LStringLegacy* StrPtr = new LStringLegacy(Ws2S(Ws));
         return reinterpret_cast<const LChar*>(StrPtr->c_str());
     }
+
+    static std::wstring CStr2Ws(const char* Cs)
+    {
+        __pragma( warning(push) )
+        __pragma( warning(disable: 4996) )
+
+        typedef std::codecvt_utf8<wchar_t> TypeX;
+        std::wstring_convert<TypeX, wchar_t> Converter;
+        return Converter.from_bytes(Cs);
+
+        __pragma( warning(pop) )
+    }
 };

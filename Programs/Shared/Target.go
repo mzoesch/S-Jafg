@@ -2,7 +2,9 @@
 
 package Shared
 
-import "fmt"
+import (
+    "fmt"
+)
 
 type Target struct {
     Suffix            string

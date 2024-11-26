@@ -26,6 +26,11 @@
     #endif /* __cplusplus != 199711L */
 #endif /* __cplusplus */
 
+/**
+ * Currently required for windows.
+ */
+#define WITH_MSVC 1
+
 /* Why the duck does this even exists. This destroys so many normal functions - wtf?? */
 #define NOMINMAX
 #include <Windows.h>
@@ -141,7 +146,7 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
         const std::string  ___InFile        = InFile;                                                 \
         const std::wstring ___InMessageWide = std::wstring(___InMessage.begin(), ___InMessage.end()); \
         const std::wstring ___InFileWide    = std::wstring(___InFile.begin(),    ___InFile.end()   ); \
-        const int32        ___InLine        = InLine;                                                 \
+        const uint32       ___InLine        = InLine;                                                 \
         {                                                                                             \
             (void)                                                                                    \
             (                                                                                         \

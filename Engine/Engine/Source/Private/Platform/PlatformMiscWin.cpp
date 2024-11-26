@@ -251,9 +251,9 @@ Jafg::LSimpleString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
 {
     TCHAR Buffer[PLATFORM_MAX_PATH] = { 0 };
     GetModuleFileName(nullptr, Buffer, PLATFORM_MAX_PATH);
-    std::wstring::size_type Position = std::wstring(Buffer).find_last_of(LITERAL_WIDE("\\/"));
-    std::wstring WideEngineRootDir = std::wstring(Buffer).substr(0, Position);
-    LStringLegacy EngineRootDir = LGenericPlatformTypes::Ws2S(WideEngineRootDir);
+    const std::wstring::size_type Position = LPlatformTypes::CStr2Ws(Buffer).find_last_of(LITERAL_WIDE("\\/"));
+    const std::wstring WideEngineRootDir = LPlatformTypes::CStr2Ws(Buffer).substr(0, Position);
+    const LStringLegacy EngineRootDir = LGenericPlatformTypes::Ws2S(WideEngineRootDir);
 
     Jafg::LPath Path = Jafg::LPath(EngineRootDir.c_str());
     Path.Normalize();

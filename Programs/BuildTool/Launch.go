@@ -56,6 +56,12 @@ func LaunchPreBuildTasks(args []string) {
 
     RecursivelyScanAndOperateOnHeaders(allHeaders)
 
+    var targetedModule *Shared.Module = Shared.GApp.GetCheckedModuleByName(GBuildInfo.ModuleName)
+    Shared.CheckRelativeDir(GBuildInfo.GetRelativeGeneratedTranslationDir())
+    var pchSource = fmt.Sprintf("%s/%s%s",
+        GBuildInfo.GetRelativeGeneratedTranslationDir(), GBuildInfo.ModuleName, Shared.GeneratedTranslationsExtension)
+    ConditionallyWritePchSourceFileForModule(targetedModule.Pch.IsUse(), pchSource)
+
     return
 }
 

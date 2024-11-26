@@ -44,7 +44,9 @@ func CheckAbsoluteFile(absFilePath string) {
     if _, err := os.Stat(absFilePath); os.IsNotExist(err) {
         file, err := os.Create(absFilePath)
         if err != nil {
-            panic(err)
+            CheckAbsoluteDir(filepath.Dir(absFilePath))
+            CheckAbsoluteFile(absFilePath)
+            return
         }
 
         err = file.Close()
@@ -83,6 +85,22 @@ func DoesAbsoluteFileExist(absoluteFile string) bool {
     return true
 }
 
+func DoesRelativeDirExist(relDir string) bool {
+    return DoesAbsoluteDirExist(GetAbsolutePathNoCheck(relDir))
+}
+
+func DoesAbsoluteDirExist(absDir string) bool {
+    _, err := os.Stat(absDir);
+    if os.IsNotExist(err) {
+        return false
+    }
+    if err != nil {
+        panic(err)
+    }
+
+    return true
+}
+
 // TruncateRelativeFile truncates a file, or creates it if it doesn't exist
 func TruncateRelativeFile(relFile string) {
     TruncateAbsoluteFile(fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), relFile))
@@ -92,7 +110,7 @@ func TruncateRelativeFile(relFile string) {
 func TruncateAbsoluteFile(absFile string) {
     file, err := os.OpenFile(absFile, os.O_TRUNC|os.O_CREATE, 0644)
     if err != nil {
-        panic("Failed wth file: " + absFile + " " + err.Error())
+        panic("Failed with file: " + absFile + " " + err.Error())
     }
 
     err = file.Close()
@@ -307,4 +325,32 @@ func GetRelativeGeneratedTranslationPath(filename string) string {
 
 func GetRelativeGeneratedTranslationDirForModule(mod *Module) string {
     return fmt.Sprintf("%s/%s", GeneratedTranslationsDir, mod.GetRelativeModuleDir())
+}
+
+func CopyOnlyChangedFiles(sourceDir string, destDir string, bEmits bool) {
+    var sourceFiles []string = RecursivelyGetAllFilesInAbsoluteDir(sourceDir)
+    for _, sourceFile := range sourceFiles {
+        var relativePath string = sourceFile[len(sourceDir):]
+        var destPath string = fmt.Sprintf("%s%s", destDir, relativePath)
+
+        CheckAbsoluteFile(destPath)
+
+        var sourceFileContents string = ReadFileContentsFromAbsolutePath(sourceFile)
+        var destF *os.File = OpenAbsoluteFile(destPath, false, os.O_RDWR)
+
+        if IsFileAndStringEqual(destF, sourceFileContents, false) {
+            fmt.Printf("[%s] ... Skipped.\n", relativePath)
+        } else {
+            fmt.Printf("[%s] ... Copied.\n", relativePath)
+            TruncateFile(destF)
+            SeekFileBeginning(destF)
+            WriteToFile(destF, sourceFileContents)
+        }
+
+        CloseFile(destF)
+
+        continue
+    }
+
+    return
 }

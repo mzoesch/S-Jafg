@@ -14,10 +14,12 @@ func GenerateSolution() {
 
     //MakeVslfModuleProjects()
 
-    var handle *os.File = PrepareLuaBuildFile()
-    WriteLuaBuildFileBody(handle)
-
-    Shared.CloseFile(handle)
+    // DEPRECATED - Now using CMake.
+    //var handle *os.File = PrepareLuaBuildFile()
+    //WriteLuaBuildFileBody(handle)
+    //
+    //Shared.CloseFile(handle)
+    GenerateCmakeSolution()
 
     fmt.Println("Finished generating solution.")
 
@@ -25,10 +27,11 @@ func GenerateSolution() {
 }
 
 func GenerateLalUnitTestsSolution() {
-    var handle *os.File = PrepareLuaBuildFile()
-    WriteLuaBuildFileBodyForLalUnitTests(handle)
-
-    Shared.CloseFile(handle)
+    // DEPRECATED - Now using CMake.
+    //var handle *os.File = PrepareLuaBuildFile()
+    //WriteLuaBuildFileBodyForLalUnitTests(handle)
+    //
+    //Shared.CloseFile(handle)
 
     fmt.Println("Finished generating Lal unit tests solution.")
 
@@ -141,7 +144,6 @@ func GetAllBuildConfigurations() []string {
 
         continue
     }
-
 
     return out
 }
@@ -464,7 +466,7 @@ func GetRelativePythonProgramLaunchPath(mod *Shared.Module) string {
     var slashCount int = strings.Count(relativeDir, "/")
 
     var prefix string = ""
-    for i := 0; i < slashCount + 1; i++ {
+    for i := 0; i < slashCount+1; i++ {
         prefix += "../"
     }
 
@@ -491,7 +493,7 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
 
     WriteWithIndent(builder, indent+4, "prebuildcommands {\n")
     WriteWithIndent(builder, indent+8, "'echo Launching pre build programs ...',\n")
-    WriteWithIndent(builder, indent+8, fmt.Sprintf("'python %s --fwd --BuildTool --pre-build --BUILD_CONFIG=%%{cfg.buildcfg} " +
+    WriteWithIndent(builder, indent+8, fmt.Sprintf("'python %s --fwd --BuildTool --pre-build --BUILD_CONFIG=%%{cfg.buildcfg} "+
         "--PLATFORM=%%{cfg.platform} --MOD_NAME=%%{prj.name} --CFG_KIND=%%{cfg.kind} "+
         "--CFG_SYSTEM=%%{cfg.system} --CFG_ARCHITECTURE=%%{cfg.architecture}',\n",
         GetRelativePythonProgramLaunchPath(mod),
@@ -501,7 +503,7 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
 
     WriteWithIndent(builder, indent+4, "postbuildcommands {\n")
     WriteWithIndent(builder, indent+8, "'echo Launching post build programs ...',\n")
-    WriteWithIndent(builder, indent+8, fmt.Sprintf("'python %s --fwd --BuildTool --post-build --BUILD_CONFIG=%%{cfg.buildcfg} " +
+    WriteWithIndent(builder, indent+8, fmt.Sprintf("'python %s --fwd --BuildTool --post-build --BUILD_CONFIG=%%{cfg.buildcfg} "+
         "--PLATFORM=%%{cfg.platform} --MOD_NAME=%%{prj.name} --CFG_KIND=%%{cfg.kind} "+
         "--CFG_SYSTEM=%%{cfg.system} --CFG_ARCHITECTURE=%%{cfg.architecture}',\n",
         GetRelativePythonProgramLaunchPath(mod),
@@ -581,10 +583,10 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
         for _, dep := range mod.GetAllDependenciesTransitive(targ) {
             if dep == "CORE_DEPENDENCIES" {
                 includeDirs = append(includeDirs, Shared.VendorIncludeDir)
-                linkedDebugLibs   = append(linkedDebugLibs,   fmt.Sprintf("%s/FastNoiseD.lib", Shared.VendorLibDir))
-                linkedDebugLibs   = append(linkedDebugLibs,   fmt.Sprintf("%s/FastNoiseD.dll", Shared.VendorLibDir))
-                linkedShippedLibs = append(linkedShippedLibs, fmt.Sprintf("%s/FastNoise.lib",  Shared.VendorLibDir))
-                linkedShippedLibs = append(linkedShippedLibs, fmt.Sprintf("%s/FastNoise.dll",  Shared.VendorLibDir))
+                linkedDebugLibs = append(linkedDebugLibs, fmt.Sprintf("%s/FastNoiseD.lib", Shared.VendorLibDir))
+                linkedDebugLibs = append(linkedDebugLibs, fmt.Sprintf("%s/FastNoiseD.dll", Shared.VendorLibDir))
+                linkedShippedLibs = append(linkedShippedLibs, fmt.Sprintf("%s/FastNoise.lib", Shared.VendorLibDir))
+                linkedShippedLibs = append(linkedShippedLibs, fmt.Sprintf("%s/FastNoise.dll", Shared.VendorLibDir))
                 continue
             }
 
@@ -607,7 +609,7 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
             linkedLibs = append(linkedLibs, modDep.GetUsableName())
 
             /*
-             * Special case for the tester module. We should not hard code this but use the mod config file.
+             * Special case for the tester module. We should not hard-code this but use the mod config file.
              * But this works for now. Just a short-term solution.
              */
             if mod.GetUsableName() == "Tester" {

@@ -73,7 +73,7 @@ class MyPython:
 
 class Premake:
     """
-    Validates Premake for the build tool if if the right version
+    Validates Premake for the build tool if the right version
     is installed. If not, it will try to install the binaries.
     """
 
@@ -151,6 +151,18 @@ class Premake:
 
         return EErrorLevel.SUCCESS
 
+class Cmake:
+    """
+    Validates Cmake for the build tool if the right version
+    is installed. If not it will fail.
+    """
+
+    @classmethod
+    def validate(cls) -> EErrorLevel:
+        # Python terminates if this function call fails.
+        run_subprocess('cmake', '--version')
+        return EErrorLevel.SUCCESS
+
 def install_deps() -> EErrorLevel:
     """Will install the dependencies for the program."""
 
@@ -165,10 +177,17 @@ def install_deps() -> EErrorLevel:
         print(f'Failed to validate Python. Error level: {error_level}')
         return error_level
 
-    error_level = Premake.validate()
+    # DEPRECATED
+    # Now switched to cmake.
+    # Cmake should be installed by the usr and therefore will not be automatically installed.
+    # error_level = Premake.validate()
+    # if error_level != EErrorLevel.SUCCESS:
+    #     print(f'Failed to validate Premake. Error level: {error_level}')
+    #     return error_level
 
+    error_level = Cmake.validate()
     if error_level != EErrorLevel.SUCCESS:
-        print(f'Failed to validate Premake. Error level: {error_level}')
+        print(f'Failed to validate Cmake. Error level: {error_level}')
         return error_level
 
     return EErrorLevel.SUCCESS

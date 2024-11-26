@@ -67,7 +67,7 @@ func (app *Application) DetectAllProjects() {
 
 func (app *Application) DetectAllProjectsImpl(searchedDir string, entry *fs.DirEntry, bTopLevel bool) {
     var topLevelsToSkip []string = []string{
-        ConfigDir, BinariesDir, IntermediateDir, ContentDir, VslfDir, ProgramsDir,
+        ConfigDir, BinariesDir, IntermediateDir, ContentDir, VslfDir, ProgramsDir, SolutionDirOut, SavedDir,
     }
     var alwaysSkip []string = []string{
         ".vs", ".git", ".vscode", ".idea", ".venv", "venv", "__pycache__",
@@ -214,6 +214,38 @@ func (app *Application) GetAllTargets() []*Target {
         for _, targ := range mod.Targets {
             Out = append(Out, &targ)
         }
+    }
+
+    return Out
+}
+
+func TargetsContainsByPredicate(entries *[]Target, predicate func(entry Target) bool) bool {
+    for _, entry := range *entries {
+        if predicate(entry) {
+            return true
+        }
+    }
+
+    return false
+}
+
+// Yea this is stupid. But we have to rewrite the whole go program anyway very soon.
+// This is all just a temporary solution for a temporary problem - hopefully :).
+// I mean half the the features do not really work or are hardcoded, they worked somewhere
+// in the past but not anymore because so many things changed.
+func (app *Application) GetAllUniqueTargets() []Target {
+    var Out []Target
+
+    for _, targ := range app.GetAllTargets() {
+        if TargetsContainsByPredicate(&Out, func(entry Target) bool {
+            return entry.GetSuffix() == targ.GetSuffix()
+        }) {
+            continue
+        }
+
+        Out = append(Out, *targ)
+
+        continue
     }
 
     return Out

@@ -9,13 +9,26 @@
 namespace
 {
 
+#if WITH_MSVC
+    static_assert(std::is_same_v<::Jafg::LThreadId, _Thrd_id_t>, "Compiler specific thread id is not the same.");
+    #if _HAS_CXX23
+        /** Just use msvc std implementation. */
+        #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() \
+            std::this_thread::get_id()._Get_underlying_id()
+    #else /* _HAS_CXX23 */
+        static_assert(
+            sizeof(::Jafg::LThreadId) == sizeof(std::thread::id),
+            "The size of std::thread::id and uint32 must be the same."
+        );
+        #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() _Thrd_id()
+    #endif /* _HAS_CXX23 */
+#else /* WITH_MSVC */
+    #error "Missing thread-id getter implementation for this compiler as that is not standardtized."
+#endif /* !WITH_MSVC */
+
 static_assert(
     sizeof(::Jafg::LThreadId) == sizeof(std::thread::id),
     "The size of std::thread::id and uint32 must be the same."
-);
-static_assert(
-    std::is_same_v<::Jafg::LThreadId, _Thrd_id_t>,
-    "The maximum value of std::thread::id and uint32 must be the same."
 );
 
 /**
@@ -124,14 +137,14 @@ void Jafg::Tasks::RegisterThread(ENamedThreads::Type Thread)
     }
 
     ::TaskQueue[Thread] = std::vector<LTaskQueue>();
-    ::RegisteredThreadIds.Emplace(std::this_thread::get_id()._Get_underlying_id(), Thread);
+    ::RegisteredThreadIds.Emplace(PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID(), Thread);
 
     return;
 }
 
 Jafg::LSimpleString Jafg::Tasks::GetCurrentThreadName()
 {
-    const LThreadId CurThreadId = std::this_thread::get_id()._Get_underlying_id();
+    const LThreadId CurThreadId = PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
     for (const LRegisteredThread& Thread : ::RegisteredThreadIds)
     {
         if (Thread.Id == CurThreadId)
@@ -147,7 +160,7 @@ Jafg::LSimpleString Jafg::Tasks::GetCurrentThreadName()
 
 Jafg::LThreadId Jafg::Tasks::GetCurrentThreadId()
 {
-    return std::this_thread::get_id()._Get_underlying_id();
+    return PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
 }
 
 bool Jafg::Tasks::IsOnThread(ENamedThreads::Type InThread)
@@ -158,7 +171,7 @@ bool Jafg::Tasks::IsOnThread(ENamedThreads::Type InThread)
         return Thread.ThreadTy == InThread;
     }); ThreadTy)
     {
-        return ThreadTy->Id == std::this_thread::get_id()._Get_underlying_id();
+        return ThreadTy->Id == PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
     }
 
     return false;
@@ -498,3 +511,5 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
 
     return;
 }
+
+#undef PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID
