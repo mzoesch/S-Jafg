@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "TextureResource2.h"
 #include "System/SystemForward.h"
 

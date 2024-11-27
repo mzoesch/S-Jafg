@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Widgets/InterfaceTypes.h"
 
 namespace Jafg::RendererInformation
