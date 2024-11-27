@@ -8,6 +8,6 @@
 
 echo Calling Python to generate solution files ...
 
-python Program.py run=BuildTool --generate-solution
+python %~dp0/Program.py run=BuildTool --generate-solution
 
 pause

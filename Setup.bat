@@ -7,6 +7,6 @@
 
 echo Calling Python to generate solution files ...
 
-python Program.py --install-deps --compile-scripts --generate-solution
+python %~dp0/Program.py --install-deps --compile-scripts --generate-solution --emulate
 
 pause

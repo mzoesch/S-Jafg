@@ -76,3 +76,4 @@ venv
 __buildSolution.lua
 CMakeLists.txt
 cmake-build-*/
+Jafg.sln.lnk

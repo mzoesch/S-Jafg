@@ -105,8 +105,8 @@ func (bi *BuildInfo) CopyModuleBinariesToLaunch() {
 
     fmt.Printf("Copying shared binaries of module [%s] to launch directory.\n", bi.ModuleName)
 
-    var ShippedExtension []string = []string{ ".dll" }
-    var DevelopmentExtension []string = []string{ ".pdb" }
+    var ShippedExtension []string = []string{".dll"}
+    var DevelopmentExtension []string = []string{".pdb"}
 
     for _, mod := range Shared.GApp.GetAllModules() {
         if !mod.GetKind().IsLaunch() {
@@ -151,6 +151,67 @@ func (bi *BuildInfo) CopyWorkspaceContentToLaunch() {
     )
 
     fmt.Printf("Finished copying shared content to launch directory of module [%s].\n", bi.ModuleName)
+
+    return
+}
+
+func (bi *BuildInfo) _PrivateGetTargetDir() string {
+    return Shared.GetBinTargetRelativePath(bi.System, bi.Architecture, bi.BuildConfig.ToString(), bi.buildTarget, bi.ModuleName)
+}
+
+func (bi *BuildInfo) CopyPrecompiledSharedLibrariesToLaunch() {
+    fmt.Println("Copying precompiled shared libraries to launch directory.")
+
+    {
+        var source string = fmt.Sprintf("Engine/Vendor/Lib/FastNoise.dll")
+        var target string = fmt.Sprintf("%s/FastNoise.dll", bi._PrivateGetTargetDir())
+        Shared.CheckRelativeFile(target)
+        if Shared.CopyAbsoluteFileIfDifferent(Shared.GetCheckedAbsolutePath(source), Shared.GetAbsolutePathNoCheck(target)) {
+            fmt.Println("    Copied FastNoise.dll to[" + target + "].")
+        }
+    }
+    {
+        var source string = fmt.Sprintf("Engine/Vendor/Lib/FastNoiseD.dll")
+        var target string = fmt.Sprintf("%s/FastNoiseD.dll", bi._PrivateGetTargetDir())
+        Shared.CheckRelativeFile(target)
+        if Shared.CopyAbsoluteFileIfDifferent(Shared.GetCheckedAbsolutePath(source), Shared.GetAbsolutePathNoCheck(target)) {
+            fmt.Println("    Copied FastNoiseD.dll to[" + target + "].")
+        }
+    }
+    {
+        var source string = fmt.Sprintf("Engine/Vendor/Lib/FastNoiseD.pdb")
+        var target string = fmt.Sprintf("%s/FastNoiseD.pdb", bi._PrivateGetTargetDir())
+        Shared.CheckRelativeFile(target)
+        if Shared.CopyAbsoluteFileIfDifferent(Shared.GetCheckedAbsolutePath(source), Shared.GetAbsolutePathNoCheck(target)) {
+            fmt.Println("    Copied FastNoiseD.pdb to[" + target + "].")
+        }
+    }
+    {
+        var source string = fmt.Sprintf("Engine/Vendor/Lib/freetype.pdb")
+        var target string = fmt.Sprintf("%s/freetype.pdb", bi._PrivateGetTargetDir())
+        Shared.CheckRelativeFile(target)
+        if Shared.CopyAbsoluteFileIfDifferent(Shared.GetCheckedAbsolutePath(source), Shared.GetAbsolutePathNoCheck(target)) {
+            fmt.Println("    Copied freetype.pdb to[" + target + "].")
+        }
+    }
+    {
+        var source string = fmt.Sprintf("Engine/Vendor/Lib/libFastNoise.dll")
+        var target string = fmt.Sprintf("%s/libFastNoise.dll", bi._PrivateGetTargetDir())
+        Shared.CheckRelativeFile(target)
+        if Shared.CopyAbsoluteFileIfDifferent(Shared.GetCheckedAbsolutePath(source), Shared.GetAbsolutePathNoCheck(target)) {
+            fmt.Println("    Copied libFastNoise.dll to[" + target + "].")
+        }
+    }
+    {
+        var source string = fmt.Sprintf("Engine/Vendor/Lib/libFastNoiseD.dll")
+        var target string = fmt.Sprintf("%s/libFastNoiseD.dll", bi._PrivateGetTargetDir())
+        Shared.CheckRelativeFile(target)
+        if Shared.CopyAbsoluteFileIfDifferent(Shared.GetCheckedAbsolutePath(source), Shared.GetAbsolutePathNoCheck(target)) {
+            fmt.Println("    Copied libFastNoiseD.dll to[" + target + "].")
+        }
+    }
+
+    fmt.Println("Finished copying precompiled shared libraries to launch directory.")
 
     return
 }

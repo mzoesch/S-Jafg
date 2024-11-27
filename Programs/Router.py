@@ -37,7 +37,7 @@ def route_to_program(*args, **kwargs) -> None:
 
     if '--generate-solution' in args:
         from Programs.SolutionGenerator import GenerateSolution as generate_solution
-        generate_solution.generate_solution()
+        generate_solution.generate_solution(True if '--emulate' in args else False)
 
     if '--generate-solution-for-lal-unit-tests' in args:
         from Programs.SolutionGenerator import GenerateSolution as generate_solution

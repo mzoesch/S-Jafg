@@ -6,14 +6,14 @@ import subprocess
 from ..Shared.RunSubprocess import *
 from ..Shared.SharedDefinitions import *
 
-def generate_solution() -> None:
+def generate_solution(emulate_compilation: bool) -> None:
     """Will generate the solution for the program."""
 
     print('Generating solution for the program.')
 
     compiled_working_dir: str = get_engine_root_dir() + '/Programs/'
     target_binary: str = get_engine_root_dir() + '/Programs/Jafg.exe'
-    subprocess.check_call(f'{target_binary} --SolutionGenerator --Generate', shell=True, cwd=compiled_working_dir)
+    subprocess.check_call(f'{target_binary} --SolutionGenerator --Generate', cwd=compiled_working_dir)
 
     previous_working_dir: str = os.getcwd()
     os.chdir(get_engine_root_dir())
@@ -21,8 +21,7 @@ def generate_solution() -> None:
 
     print('Removing solution trees from the Saved directory.')
     if os.path.exists('Saved/Solution'):
-        # Delete all files except for the Jafg.sln file.
-        for file in os.listdir('Saved/Solution'): #And not contains .vcxproj
+        for file in os.listdir('Saved/Solution'):
             if (
                         file != 'CMakeCache.txt'
                     and file != '.idea'
@@ -49,15 +48,47 @@ def generate_solution() -> None:
     minimal_args =  ['cmake', '../..', '-G', 'MinGW Makefiles', '-DCMAKE_BUILD_TYPE=Debug-Client']
 
     print(f'Executing: {solution_args} in Saved/Solution')
-    subprocess.check_call(solution_args, cwd='Saved/Solution', shell=True)
+    subprocess.check_call(solution_args, cwd='Saved/Solution')
     print(f'Executing: {minimal_args} in Saved/Minimal')
-    subprocess.check_call(minimal_args, cwd='Saved/Minimal', shell=True)
+    subprocess.check_call(minimal_args, cwd='Saved/Minimal')
 
-    subprocess.check_call(f'{target_binary} --SolutionGenerator --PostLuaRun', shell=True, cwd=compiled_working_dir)
+    print('Executing: {target_binary} --SolutionGenerator --PostLuaRun')
+    subprocess.check_call(f'{target_binary} --SolutionGenerator --PostLuaRun', cwd=compiled_working_dir)
 
-    print('Solution generated successfully.')
+    if emulate_compilation:
+        print('Emulating a full all build compilation of Jafg...')
+        print(f'Executing: {target_binary} --SolutionGenerator --Emulate-Compilation-All')
+        subprocess.check_call(
+            f'{target_binary} --SolutionGenerator --Emulate-Compilation-All',
+            cwd=compiled_working_dir
+        )
+        print('Emulation complete.')
+
+        print(f'Executing: {solution_args} in Saved/Solution')
+        subprocess.check_call(solution_args, cwd='Saved/Solution')
+        print(f'Executing: {minimal_args} in Saved/Minimal')
+        subprocess.check_call(minimal_args, cwd='Saved/Minimal')
+        print('Finished reflecting emulation in the solution.')
+
+    print('Executing: {target_binary} --SolutionGenerator --PostLuaRun')
+    subprocess.check_call(f'{target_binary} --SolutionGenerator --PostLuaRun', cwd=compiled_working_dir)
+
+    if not os.path.exists('Saved/Solution/Jafg.sln'):
+        raise RuntimeError('Solution file not found in the expected location at Saved/Solution/Jafg.sln.')
+    if not os.path.exists('Jafg.sln.lnk'):
+        if Platform.is_windows():
+            subprocess.check_call([
+                'powershell',
+                '-ExecutionPolicy', 'Bypass',
+                '-File',
+                'Programs/Shell/CreateSymLinkSln.ps1',
+            ])
+            print('Created symlink to the solution file.')
+        else:
+            raise ValueError('Platform is missing implementation for this operation.')
 
     os.chdir(previous_working_dir)
+    print('Solution generated successfully.')
 
     return None
 

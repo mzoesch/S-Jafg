@@ -23,6 +23,8 @@ func Launch(args []string) {
         panic("No build task specified.")
     }
 
+    GBuildInfo = nil
+
     return
 }
 
@@ -62,12 +64,15 @@ func LaunchPreBuildTasks(args []string) {
         GBuildInfo.GetRelativeGeneratedTranslationDir(), GBuildInfo.ModuleName, Shared.GeneratedTranslationsExtension)
     ConditionallyWritePchSourceFileForModule(targetedModule.Pch.IsUse(), pchSource)
 
+    GObjectStructure = nil
+
     return
 }
 
 func LaunchPostBuildTasks(args []string) {
     if GBuildInfo.Kind.IsLaunch() {
         GBuildInfo.CopyWorkspaceContentToLaunch()
+        GBuildInfo.CopyPrecompiledSharedLibrariesToLaunch()
     }
 
     if GBuildInfo.Kind.IsShared() {

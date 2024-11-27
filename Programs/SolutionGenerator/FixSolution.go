@@ -15,6 +15,7 @@ func PostLuaRun() {
     FixAfx()
     ChangeIntermediateDir()
     CopyPchSourceFilesToIntermediate()
+    FixVcsForRider()
 
     // DEPRECATED
     //fmt.Println("Finished post lua run.")
@@ -257,7 +258,7 @@ func ChangeIntermediateDir() {
         }
 
         ChangeIntermediateDirForVcxprojFile(Shared.GetCheckedAbsolutePath(fmt.Sprintf(
-           "%s/%s", Shared.SolutionDirOut, file,
+            "%s/%s", Shared.SolutionDirOut, file,
         )), false)
         continue
     }
@@ -351,7 +352,7 @@ func ChangeIntermediateDirForVcxprojFile(absPath string, bFilters bool) {
     var fileName string = filepath.Base(absPath)
     fmt.Printf("Changing intermediate dir for module: %s.\n", fileName)
 
-    var moduleName string;
+    var moduleName string
     if bFilters {
         moduleName = strings.TrimSuffix(fileName, ".vcxproj.filters")
     } else {
@@ -382,20 +383,20 @@ func ChangeIntermediateDirForVcxprojFile(absPath string, bFilters bool) {
         var toReplaceIndexEnd int = toReplaceIndex + len(toReplace)
 
         if line[toReplaceIndex-1] != '/' && line[toReplaceIndex-1] != '\\' {
-            lines = append(lines, line[:toReplaceIndex] + absPathToIntermediateDir + line[toReplaceIndexEnd:])
+            lines = append(lines, line[:toReplaceIndex]+absPathToIntermediateDir+line[toReplaceIndexEnd:])
             continue
         }
 
         var bOk bool = false
-        for i := toReplaceIndexEnd-1; i >= 0; i-- {
+        for i := toReplaceIndexEnd - 1; i >= 0; i-- {
             if line[i] == '>' || line[i] == '"' {
-                lines = append(lines, line[:i+1] + absPathToIntermediateDir + line[toReplaceIndexEnd:])
+                lines = append(lines, line[:i+1]+absPathToIntermediateDir+line[toReplaceIndexEnd:])
                 bOk = true
                 break
             }
         }
         if !bOk {
-            panic(fmt.Sprintf("Found unexpected beginning of line for line: [%s]." , line))
+            panic(fmt.Sprintf("Found unexpected beginning of line for line: [%s].", line))
         }
 
         continue
@@ -435,9 +436,9 @@ func CopyPchSourceFilesToIntermediateForModule(mod *Shared.Module) {
     var absSourceDir string = Shared.GetCheckedAbsolutePath(fmt.Sprintf(
         "%s/CMakeFiles/%s.dir",
         Shared.SolutionDirOut, mod.GetUsableName(),
-        ))
+    ))
     if !Shared.DoesAbsoluteDirExist(absSourceDir) {
-        panic(fmt.Sprintf("absSourceDir does not exist [%s]." , absSourceDir))
+        panic(fmt.Sprintf("absSourceDir does not exist [%s].", absSourceDir))
     }
 
     var absTargetDir = Shared.GetCheckedAbsolutePath(fmt.Sprintf(
@@ -445,10 +446,36 @@ func CopyPchSourceFilesToIntermediateForModule(mod *Shared.Module) {
         Shared.IntermediateDir, mod.GetRelativeModuleDir(),
     ))
     if !Shared.DoesAbsoluteDirExist(absTargetDir) {
-        panic(fmt.Sprintf("absTargetDir does not exist [%s]." , absTargetDir))
+        panic(fmt.Sprintf("absTargetDir does not exist [%s].", absTargetDir))
     }
 
     Shared.CopyOnlyChangedFiles(absSourceDir, absTargetDir, true)
+
+    return
+}
+
+func FixVcsForRider() {
+    if Shared.DoesRelativeFileExist(fmt.Sprintf("%s/.idea/vcs.xml", Shared.SolutionDirOut)) {
+        return
+    }
+
+    fmt.Println("Fixing vcs for Rider ...")
+
+    var absfile string = Shared.GetAbsolutePathNoCheck(fmt.Sprintf(
+        "%s/.idea/.idea.Jafg/.idea/vcs.xml",
+        Shared.SolutionDirOut,
+    ))
+    Shared.CheckAbsoluteFile(absfile)
+
+    var file *os.File = Shared.OpenAbsoluteFile(absfile, true, os.O_RDWR)
+    Shared.WriteToFile(file, `<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/../.." vcs="Git" />
+  </component>
+</project>
+`)
+    Shared.CloseFile(file)
 
     return
 }

@@ -156,20 +156,22 @@ func CopyAbsoluteDirectory(absoluteSource string, absoluteTarget string, bOverwr
             continue
         }
 
-        if _, err := os.Stat(targetFile); os.IsExist(err) {
-            if bOverwrite {
-                err := os.Remove(targetFile)
-                if err != nil {
-                    panic(fmt.Sprintf("Error removing file %s: [%s].", targetFile, err))
-                }
-            } else {
-                panic(fmt.Sprintf("File %s already exists in destination directory %s", sourceFile, targetFile))
-            }
+        var _, errTarget = os.Stat(targetFile)
+        if os.IsNotExist(errTarget) {
+            CopyAbsoluteFile(sourceFile, targetFile)
+            fmt.Println(fmt.Sprintf("    Copied [%s] to [%s].", sourceFile, targetFile))
+            continue
+        }
+        if errTarget != nil {
+            panic(errTarget)
         }
 
-        CopyAbsoluteFile(sourceFile, targetFile)
-
-        fmt.Println(fmt.Sprintf("    Copied %s to %s.", sourceFile, targetFile))
+        if bOverwrite == false {
+            panic(fmt.Sprintf("File %s already exists and overwrite is disabled.", targetFile))
+        }
+        if CopyAbsoluteFileIfDifferent(sourceFile, targetFile) {
+            fmt.Println(fmt.Sprintf("    Updated [%s] to [%s].", sourceFile, targetFile))
+        }
 
         continue
     }
@@ -182,8 +184,8 @@ func CopyRelativeDirectoryByExtension(relativeSource string, relativeTarget stri
 
     absoluteTarget, bExists := GetAbsolutePath(relativeTarget)
     if !bExists {
-       CheckRelativeDir(relativeTarget)
-       absoluteTarget = GetCheckedAbsolutePath(relativeTarget)
+        CheckRelativeDir(relativeTarget)
+        absoluteTarget = GetCheckedAbsolutePath(relativeTarget)
     }
 
     CopyAbsoluteDirectoryByExtension(absoluteSource, absoluteTarget, bOverwrite, exts, bRecursively)
@@ -262,7 +264,7 @@ func CopyAbsoluteDirectoryByExtension(absoluteSource string, absoluteTarget stri
             continue
         }
 
-        var _, errTarget = os.Stat(targetFile);
+        var _, errTarget = os.Stat(targetFile)
         if os.IsNotExist(errTarget) {
             CopyAbsoluteFile(sourceFile, targetFile)
             fmt.Printf("    Copied [%s] to [%s].\n", sourceFile, targetFile)

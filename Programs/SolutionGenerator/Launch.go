@@ -24,4 +24,9 @@ func Launch(args []string) {
         PostLuaRun()
         return
     }
+
+    if slices.Contains(args, "--Emulate-Compilation-All") {
+        EmulateCompilationAll()
+        return
+    }
 }
