@@ -75,3 +75,4 @@ venv
 # Generated build files
 __buildSolution.lua
 CMakeLists.txt
+cmake-build-*/

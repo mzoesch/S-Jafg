@@ -17,17 +17,10 @@ def generate_solution() -> None:
 
     previous_working_dir: str = os.getcwd()
     os.chdir(get_engine_root_dir())
-    print(f'Current dir: {os.getcwd()}')
+    print(f'Current working dir [{os.getcwd()}].')
 
-    # if Platform.is_windows():
-    #     # premake_process: str = os.path.abspath(get_engine_root_dir() + '/Programs/Shell/RunPremake-Win.bat')
-    #     # print(f'Running premake script: {premake_process}')
-    #     # run_subprocess(premake_process)
-    # else:
-    #     raise ValueError('Platform not supported.')
-
+    print('Removing solution trees from the Saved directory.')
     if os.path.exists('Saved/Solution'):
-        print('Deleting Saved/Solution directory.')
         # Delete all files except for the Jafg.sln file.
         for file in os.listdir('Saved/Solution'): #And not contains .vcxproj
             if (
@@ -47,8 +40,18 @@ def generate_solution() -> None:
         os.makedirs('Saved')
     if not os.path.exists('Saved/Solution'):
         os.makedirs('Saved/Solution')
+    if os.path.exists('Saved/Minimal'):
+        shutil.rmtree('Saved/Minimal')
+    if not os.path.exists('Saved/Minimal'):
+        os.makedirs('Saved/Minimal')
 
-    subprocess.check_call(['cmake', '../..'], cwd='Saved/Solution', shell=True)
+    solution_args = ['cmake', '../..', '-G', 'Visual Studio 17 2022']
+    minimal_args =  ['cmake', '../..', '-G', 'MinGW Makefiles', '-DCMAKE_BUILD_TYPE=Debug-Client']
+
+    print(f'Executing: {solution_args} in Saved/Solution')
+    subprocess.check_call(solution_args, cwd='Saved/Solution', shell=True)
+    print(f'Executing: {minimal_args} in Saved/Minimal')
+    subprocess.check_call(minimal_args, cwd='Saved/Minimal', shell=True)
 
     subprocess.check_call(f'{target_binary} --SolutionGenerator --PostLuaRun', shell=True, cwd=compiled_working_dir)
 
@@ -80,5 +83,5 @@ def generate_solution_for_lal_unit_tests() -> None:
     subprocess.check_call(f'{target_binary} --SolutionGenerator --PostLuaRun', shell=True, cwd=compiled_working_dir)
 
     print('Solution generated successfully.')
-    
+
     return None

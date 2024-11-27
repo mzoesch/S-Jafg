@@ -23,9 +23,7 @@ func PrepareCmakeFile() *os.File {
     fmt.Println("Preparing CMakeLists.txt file...")
 
     Shared.CheckRelativeFile(Shared.SolutionCmakeFile)
-
     var file *os.File = Shared.OpenRelativeFile(Shared.SolutionCmakeFile, true, os.O_RDWR)
-
     Shared.WriteToFile(
         file,
         "# Copyright 2024 mzoesch. All rights reserved.\n"+
@@ -53,140 +51,313 @@ func WriteCmakeFileBody(handle *os.File) {
 }
 
 func WriteAllCmakeFileSharedLogic(builder *strings.Builder) {
-    WriteWithIndent(builder, 0, "cmake_minimum_required(VERSION 3.19...3.30)\n")
-    WriteWithIndent(builder, 0, "if (${CMAKE_VERSION} VERSION_LESS 3.12)\n")
-    WriteWithIndent(builder, 4, "cmake_policy(VERSION ${CMAKE_VERSION})\n")
-    WriteWithIndent(builder, 0, "endif()\n")
-    WriteWithIndent(builder, 0, "find_package(Python REQUIRED COMPONENTS Interpreter)\n")
-    WriteWithIndent(builder, 0, "message(STATUS \"Python_EXECUTABLE: ${Python_EXECUTABLE}\")\n")
-    WriteWithIndent(builder, 0, "set(CMAKE_CXX_STANDARD 20)\n")
-    WriteWithIndent(builder, 0, "set(CMAKE_CXX_STANDARD_REQUIRED ON)\n")
-    WriteWithIndent(builder, 0, "set(CMAKE_CXX_EXTENSIONS OFF)\n")
-    WriteWithIndent(builder, 0, "project(\n")
-    WriteWithIndent(builder, 4, "Jafg\n")
-    WriteWithIndent(builder, 4, "VERSION 0.0.1\n") /* Make this dynamic with the already currently used config file. */
-    WriteWithIndent(builder, 4, "DESCRIPTION \"S-Jafg\"\n")
-    WriteWithIndent(builder, 4, "LANGUAGES CXX\n")
-    WriteWithIndent(builder, 0, "    )\n")
+    var cxxCfgs string = ""
+    var cxxCfgsGoList []string
+    var cxxCfgsDebug []string
+    var cxxCfgsDevelopment []string
+    var cxxCfgsShipping []string
 
-    var cxxCfgDebug []string
-    var cxxCfgDevelopment []string
-    var cxxCfgShipping []string
+    var cxxFlags_Gnu string = "-fno-rtti" // Disables RTTI
+    var cxxFlags_Msvc string = "/GR-"     // Disables RTTI
+    cxxFlags_Msvc += " /Zc:__cplusplus"   // __cplusplus for using the non std __cplusplus version macro.
 
-    var cxxFlags string = "/GR-" // gcc/clang: -fno-rtti
-    cxxFlags += " /Zc:__cplusplus" // msvc only!
+    var cxxFlags_Debug_Gnu string = "-Wall -Wextra -Wpedantic"  // Enable all warnings.
+    cxxFlags_Debug_Gnu += " -g" // Generate debug info .pdb files.
+    cxxFlags_Debug_Gnu += " -O0" // Pessimistic optimization.
+    var cxxFlags_Debug_Msvc string = "/W3" // Enable level three warnings (if needed /Wall for all warnings).
+    cxxFlags_Debug_Msvc += " /Zi" // Generate debug info .pdb files.
+    cxxFlags_Debug_Msvc += " /Od" // Pessimistic optimization.
+    var lnkSharedFlags_Debug_Gnu string = "-rdynamic"
+    var lnkSharedFlags_Debug_Msvc string = "/DEBUG /NODEFAULTLIB:libcmt /NODEFAULTLIB:msvcrtd"
+    var lnkExecFlags_Debug_Gnu string = ""
+    var lnkExecFlags_Debug_Msvc string = "/DEBUG"
 
-    // gnu Flags: -Wall -Wextra -Wpedantic -g -O0 -02(DEV)
-    var cxxFlags_Debug string = "/W3 /Zi /Od"
-    var lnkSharedFlags_Debug string = "/DEBUG /NODEFAULTLIB:libcmt /NODEFAULTLIB:msvcrtd" //"-rdynamic" /* lnx */
-    var lnkExecFlags_Debug string = "/DEBUG"
+    var cxxFlags_Development_Gnu string = "-Wall -Wextra -Wpedantic"  // Enable all warnings.
+    cxxFlags_Development_Gnu += " -g" // Generate debug info .pdb files.
+    cxxFlags_Development_Gnu += " -O2" // Optimistic optimization for speed.
+    var cxxFlags_Development_Msvc string = "/W3" // Enable level three warnings.
+    cxxFlags_Development_Msvc += " /Zi" // Generate debug info .pdb files.
+    cxxFlags_Development_Msvc += " /O2" // Optimistic optimization for speed.
+    var lnkSharedFlags_Development_Gnu string = "-rdynamic"
+    var lnkSharedFlags_Development_Msvc string = "/DEBUG /NODEFAULTLIB:libcmt /NODEFAULTLIB:msvcrtd"
+    var lnkExecFlags_Development_Gnu string = ""
+    var lnkExecFlags_Development_Msvc string = "/DEBUG"
 
-    var cxxFlags_Development string = "/W3 /Zi /O2" // /Wall for max warnings - but /W4 should be enough for msvc.
-    var lnkSharedFlags_Development string = "/DEBUG /NODEFAULTLIB:libcmt /NODEFAULTLIB:msvcrtd" //"-rdynamic" /* lnx */
-    var lnkExecFlags_Development string = "/DEBUG"
-
-    /* Should we really use fast maths?? */
-    // gnu Flags: -03 -ffast-math -flto -march=native
-    var cxxFlags_Shipping string = "/fp:fast /Ox /GL"
-    var lnkSharedFlags_Shipping string = "/LTCG /DEBUG:NONE" //"-flto"
-    var lnkExecFlags_Shipping string = ""
+    var cxxFlags_Shipping_Gnu string = "-Wall -Wextra -Wpedantic"  // Enable all warnings.
+    cxxFlags_Shipping_Gnu += " -O3" // Aggressive speed optimization.
+    cxxFlags_Shipping_Gnu += " -ffast-math" // Floating point optimizations.
+    cxxFlags_Shipping_Gnu += " -flto" // Link time optimization.
+    cxxFlags_Shipping_Gnu += " -march=native" // Use the native architecture.
+    var cxxFlags_Shipping_Msvc string = "/W3" // Enable level three warnings.
+    cxxFlags_Shipping_Msvc += " /Ox" // Aggressive speed optimization.
+    cxxFlags_Shipping_Msvc += " /fp:fast" // Floating point optimizations.
+    cxxFlags_Shipping_Msvc += " /GL" // Whole program optimization.
+    var lnkSharedFlags_Shipping_Gnu string = "-rdynamic"
+    var lnkSharedFlags_Shipping_Msvc string = "/LTCG /DEBUG:NONE"
+    var lnkExecFlags_Shipping_Gnu string = ""
+    var lnkExecFlags_Shipping_Msvc string = ""
 
     var targs []Shared.Target = Shared.GApp.GetAllUniqueTargets()
     for idx, _ := range targs {
         var targ *Shared.Target = &targs[idx]
 
-        cxxCfgDebug = append(cxxCfgDebug, fmt.Sprintf("Debug-%s", targ.GetSuffix()))
-        cxxCfgDevelopment = append(cxxCfgDevelopment, fmt.Sprintf("Development-%s", targ.GetSuffix()))
-        cxxCfgShipping = append(cxxCfgShipping, fmt.Sprintf("Shipping-%s", targ.GetSuffix()))
+        cxxCfgsDebug = append(cxxCfgsDebug, fmt.Sprintf("Debug-%s", targ.GetSuffix()))
+        cxxCfgsDevelopment = append(cxxCfgsDevelopment, fmt.Sprintf("Development-%s", targ.GetSuffix()))
+        cxxCfgsShipping = append(cxxCfgsShipping, fmt.Sprintf("Shipping-%s", targ.GetSuffix()))
 
         continue
     }
-
-    if len(cxxCfgDebug) == 0 {
+    if len(cxxCfgsDebug) == 0 {
         panic("No targets found in cfg debug.")
     }
-    if len(cxxCfgDevelopment) == 0 {
+    if len(cxxCfgsDevelopment) == 0 {
         panic("No targets found in cfg development.")
     }
-    if len(cxxCfgShipping) == 0 {
+    if len(cxxCfgsShipping) == 0 {
         panic("No targets found in cfg shipping.")
     }
 
-    var cxxCfgs string = ""
-    for idx, _ := range cxxCfgDebug {
-        cxxCfgs += cxxCfgDebug[idx]
+    for idx, _ := range cxxCfgsDebug {
+        cxxCfgs += cxxCfgsDebug[idx]
         cxxCfgs += ";"
+        cxxCfgsGoList = append(cxxCfgsGoList, cxxCfgsDebug[idx])
     }
-    for idx, _ := range cxxCfgDevelopment {
-        cxxCfgs += cxxCfgDevelopment[idx]
+    for idx, _ := range cxxCfgsDevelopment {
+        cxxCfgs += cxxCfgsDevelopment[idx]
         cxxCfgs += ";"
+        cxxCfgsGoList = append(cxxCfgsGoList, cxxCfgsDevelopment[idx])
     }
-    for idx, _ := range cxxCfgShipping {
-        cxxCfgs += cxxCfgShipping[idx]
-        if idx < len(cxxCfgShipping)-1 {
+    for idx, _ := range cxxCfgsShipping {
+        cxxCfgs += cxxCfgsShipping[idx]
+        if idx < len(cxxCfgsShipping)-1 {
             cxxCfgs += ";"
         }
+        cxxCfgsGoList = append(cxxCfgsGoList, cxxCfgsShipping[idx])
     }
-    WriteWithIndent(builder, 0,
-        fmt.Sprintf(
-            "set(CMAKE_CONFIGURATION_TYPES\n    \"%s\"\n    CACHE STRING \"Limited configurations.\" FORCE\n    )\n",
-            cxxCfgs,
-        ))
 
-    WriteWithIndent(builder, 0, fmt.Sprintf(
-        "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} %s\")\n",
-        cxxFlags,
-        ))
+    WriteWithIndent(builder, 0, fmt.Sprintf(`
+cmake_minimum_required(VERSION 3.19...3.30)
+if(${CMAKE_VERSION} VERSION_LESS 3.12)
+    cmake_policy(VERSION ${CMAKE_VERSION})
+endif()
+find_package(Python REQUIRED COMPONENTS Interpreter)
+message(STATUS "Python_EXECUTABLE: ${Python_EXECUTABLE}")
+set(TARGET_PLATFORM_WIN "Windows")
+set(TARGET_PLATFROM_WASM "Wasm")
+set(TARGET_PLATFORM ${TARGET_PLATFORM_WIN} CACHE STRING "The platform to target.")
+set_property(CACHE TARGET_PLATFORM PROPERTY STRINGS ${TARGET_PLATFORM_WIN} ${TARGET_PLATFROM_WASM})
+message(STATUS "Target platform: ${TARGET_PLATFORM}.")
+project(
+    Jafg
+    VERSION 0.0.1
+    DESCRIPTION "S-Jafg"
+    LANGUAGES C CXX
+    )
+message(STATUS "Detected C compiler: ${CMAKE_C_COMPILER}.")
+message(STATUS "Detected CXX compiler: ${CMAKE_CXX_COMPILER}.")
+message(STATUS "With CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}.")
+message(STATUS "With CXX_COMPILER: ${CMAKE_CXX_COMPILER_ID}.")
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    set(USING_MSVC ON)
+    set(USING_MINIMAL OFF)
+else()
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        set(USING_MSVC OFF)
+        set(USING_MINIMAL ON)
+    else()
+        message(FATAL_ERROR "Unsupported compiler.")
+    endif()
+endif()
+if(USING_MSVC)
+    message(STATUS "Compiling for msvc...")
+    if(USING_MINIMAL)
+        message(FATAL_ERROR "Cannot compile for msvc and gnu at the same time.")
+    endif()
+endif()
+if(USING_MINIMAL)
+    message(STATUS "Compiling for gnu...")
+    if(USING_MSVC)
+        message(FATAL_ERROR "Cannot compile for msvc and gnu at the same time.")
+    endif()
+endif()
+set(CMAKE_CONFIGURATION_TYPES
+    "%s"
+    CACHE STRING "Limited configurations." FORCE
+    )
+if(USING_MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} %s")
+endif()
+if(USING_MINIMAL)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} %s")
+    if(NOT CMAKE_CONFIGURATION_TYPES)
+        message(FATAL_ERROR "CMAKE_CONFIGURATION_TYPES is not defined.")
+    endif()
+    if(NOT CMAKE_BUILD_TYPE)
+        message(FATAL_ERROR "CMAKE_BUILD_TYPE is not defined.")
+    endif()
+    message(STATUS "Compiling as ${CMAKE_BUILD_TYPE}...")
+    list(FIND CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE} INDEX)
+    if(INDEX EQUAL -1 AND CMAKE_BUILD_TYPE)
+        message(
+            FATAL_ERROR
+            "CMAKE_BUILD_TYPE is '${CMAKE_BUILD_TYPE}' but only allowed is [${CMAKE_CONFIGURATION_TYPES}]."
+            )
+    endif()
+endif()
+`,
+        cxxCfgs,
+        cxxFlags_Msvc, cxxFlags_Gnu,
+    ))
 
-    for idx, _ := range cxxCfgDebug {
-        WriteWithIndent(builder, 0, fmt.Sprintf(
+    for idx, _ := range cxxCfgsDebug {
+        WriteWithIndent(builder, 0, "if(USING_MSVC)\n")
+        WriteWithIndent(builder, 4, fmt.Sprintf(
             "set(CMAKE_CXX_FLAGS_%s \"%s\" CACHE STRING \"Flags for a debug target configuration.\" FORCE)\n",
-            strings.ToUpper(cxxCfgDebug[idx]), cxxFlags_Debug,
+            strings.ToUpper(cxxCfgsDebug[idx]), cxxFlags_Debug_Msvc,
             ))
-        WriteWithIndent(builder, 0, fmt.Sprintf(
+        WriteWithIndent(builder, 4, fmt.Sprintf(
             "set(CMAKE_SHARED_LINKER_FLAGS_%s \"%s\" CACHE STRING \"Linker flags for a debug target configuration.\" FORCE)\n",
-            strings.ToUpper(cxxCfgDebug[idx]), lnkSharedFlags_Debug,
+            strings.ToUpper(cxxCfgsDebug[idx]), lnkSharedFlags_Debug_Msvc,
             ))
-        WriteWithIndent(builder, 0, fmt.Sprintf(
+        WriteWithIndent(builder, 4, fmt.Sprintf(
             "set(CMAKE_EXE_LINKER_FLAGS_%s \"%s\" CACHE STRING \"Linker flags for a debug target configuration.\" FORCE)\n",
-            strings.ToUpper(cxxCfgDebug[idx]), lnkExecFlags_Debug,
+            strings.ToUpper(cxxCfgsDebug[idx]), lnkExecFlags_Debug_Msvc,
             ))
+        WriteWithIndent(builder, 4, "endif()\n")
+
+        WriteWithIndent(builder, 0, "if(USING_MINIMAL)\n")
+        WriteWithIndent(builder, 4, fmt.Sprintf(
+            "set(CMAKE_CXX_FLAGS_%s \"%s\" CACHE STRING \"Flags for a debug target configuration.\" FORCE)\n",
+            strings.ToUpper(cxxCfgsDebug[idx]), cxxFlags_Debug_Gnu,
+            ))
+        WriteWithIndent(builder, 4, fmt.Sprintf(
+            "set(CMAKE_SHARED_LINKER_FLAGS_%s \"%s\" CACHE STRING \"Linker flags for a debug target configuration.\" FORCE)\n",
+            strings.ToUpper(cxxCfgsDebug[idx]), lnkSharedFlags_Debug_Gnu,
+            ))
+        WriteWithIndent(builder, 4, fmt.Sprintf(
+            "set(CMAKE_EXE_LINKER_FLAGS_%s \"%s\" CACHE STRING \"Linker flags for a debug target configuration.\" FORCE)\n",
+            strings.ToUpper(cxxCfgsDebug[idx]), lnkExecFlags_Debug_Gnu,
+            ))
+        WriteWithIndent(builder, 0, "endif()\n")
 
         continue
     }
 
-    for idx, _ := range cxxCfgDevelopment {
-        WriteWithIndent(builder, 0, fmt.Sprintf(
+    for idx, _ := range cxxCfgsDevelopment {
+        WriteWithIndent(builder, 0, "if(USING_MSVC)\n")
+        WriteWithIndent(builder, 4, fmt.Sprintf(
             "set(CMAKE_CXX_FLAGS_%s \"%s\" CACHE STRING \"Flags for a development target configuration.\" FORCE)\n",
-            strings.ToUpper(cxxCfgDevelopment[idx]), cxxFlags_Development,
+            strings.ToUpper(cxxCfgsDevelopment[idx]), cxxFlags_Development_Msvc,
             ))
-        WriteWithIndent(builder, 0, fmt.Sprintf(
+        WriteWithIndent(builder, 4, fmt.Sprintf(
             "set(CMAKE_SHARED_LINKER_FLAGS_%s \"%s\" CACHE STRING \"Linker flags for a development target configuration.\" FORCE)\n",
-            strings.ToUpper(cxxCfgDevelopment[idx]), lnkSharedFlags_Development,
+            strings.ToUpper(cxxCfgsDevelopment[idx]), lnkSharedFlags_Development_Msvc,
             ))
-        WriteWithIndent(builder, 0, fmt.Sprintf(
+        WriteWithIndent(builder, 4, fmt.Sprintf(
             "set(CMAKE_EXE_LINKER_FLAGS_%s \"%s\" CACHE STRING \"Linker flags for a development target configuration.\" FORCE)\n",
-            strings.ToUpper(cxxCfgDevelopment[idx]), lnkExecFlags_Development,
+            strings.ToUpper(cxxCfgsDevelopment[idx]), lnkExecFlags_Development_Msvc,
             ))
+        WriteWithIndent(builder, 0, "endif()\n")
+
+        WriteWithIndent(builder, 0, "if(USING_MINIMAL)\n")
+        WriteWithIndent(builder, 4, fmt.Sprintf(
+            "set(CMAKE_CXX_FLAGS_%s \"%s\" CACHE STRING \"Flags for a development target configuration.\" FORCE)\n",
+            strings.ToUpper(cxxCfgsDevelopment[idx]), cxxFlags_Development_Gnu,
+            ))
+        WriteWithIndent(builder, 4, fmt.Sprintf(
+            "set(CMAKE_SHARED_LINKER_FLAGS_%s \"%s\" CACHE STRING \"Linker flags for a development target configuration.\" FORCE)\n",
+            strings.ToUpper(cxxCfgsDevelopment[idx]), lnkSharedFlags_Development_Gnu,
+            ))
+        WriteWithIndent(builder, 4, fmt.Sprintf(
+            "set(CMAKE_EXE_LINKER_FLAGS_%s \"%s\" CACHE STRING \"Linker flags for a development target configuration.\" FORCE)\n",
+            strings.ToUpper(cxxCfgsDevelopment[idx]), lnkExecFlags_Development_Gnu,
+            ))
+        WriteWithIndent(builder, 0, "endif()\n")
 
         continue
     }
 
-    for idx, _ := range cxxCfgShipping {
-        WriteWithIndent(builder, 0, fmt.Sprintf(
+    for idx, _ := range cxxCfgsShipping {
+        WriteWithIndent(builder, 0, "if(USING_MSVC)\n")
+        WriteWithIndent(builder, 4, fmt.Sprintf(
             "set(CMAKE_CXX_FLAGS_%s \"%s\" CACHE STRING \"Flags for a shipping target configuration.\" FORCE)\n",
-            strings.ToUpper(cxxCfgShipping[idx]), cxxFlags_Shipping,
+            strings.ToUpper(cxxCfgsShipping[idx]), cxxFlags_Shipping_Msvc,
             ))
-        WriteWithIndent(builder, 0, fmt.Sprintf(
+        WriteWithIndent(builder, 4, fmt.Sprintf(
             "set(CMAKE_SHARED_LINKER_FLAGS_%s \"%s\" CACHE STRING \"Linker flags for a shipping target configuration.\" FORCE)\n",
-            strings.ToUpper(cxxCfgShipping[idx]), lnkSharedFlags_Shipping,
+            strings.ToUpper(cxxCfgsShipping[idx]), lnkSharedFlags_Shipping_Msvc,
             ))
-        WriteWithIndent(builder, 0, fmt.Sprintf(
+        WriteWithIndent(builder, 4, fmt.Sprintf(
             "set(CMAKE_EXE_LINKER_FLAGS_%s \"%s\" CACHE STRING \"Linker flags for a shipping target configuration.\" FORCE)\n",
-            strings.ToUpper(cxxCfgShipping[idx]), lnkExecFlags_Shipping,
+            strings.ToUpper(cxxCfgsShipping[idx]), lnkExecFlags_Shipping_Msvc,
             ))
+        WriteWithIndent(builder, 0, "endif()\n")
+
+        WriteWithIndent(builder, 0, "if(USING_MINIMAL)\n")
+        WriteWithIndent(builder, 4, fmt.Sprintf(
+            "set(CMAKE_CXX_FLAGS_%s \"%s\" CACHE STRING \"Flags for a shipping target configuration.\" FORCE)\n",
+            strings.ToUpper(cxxCfgsShipping[idx]), cxxFlags_Shipping_Gnu,
+            ))
+        WriteWithIndent(builder, 4, fmt.Sprintf(
+            "set(CMAKE_SHARED_LINKER_FLAGS_%s \"%s\" CACHE STRING \"Linker flags for a shipping target configuration.\" FORCE)\n",
+            strings.ToUpper(cxxCfgsShipping[idx]), lnkSharedFlags_Shipping_Gnu,
+            ))
+        WriteWithIndent(builder, 4, fmt.Sprintf(
+            "set(CMAKE_EXE_LINKER_FLAGS_%s \"%s\" CACHE STRING \"Linker flags for a shipping target configuration.\" FORCE)\n",
+            strings.ToUpper(cxxCfgsShipping[idx]), lnkExecFlags_Shipping_Gnu,
+            ))
+        WriteWithIndent(builder, 0, "endif()\n")
 
         continue
+    }
+
+    WriteWithIndent(builder, 0, "message(STATUS \"Using CXX_FLAGS: [${CMAKE_CXX_FLAGS}].\")\n")
+    WriteWithIndent(builder, 0, "message(STATUS \"Using SHARED_LNK_FLAGS: [${CMAKE_SHARED_LINKER_FLAGS}].\")\n")
+    WriteWithIndent(builder, 0, "message(STATUS \"Using EXE_LNK_FLAGS: [${CMAKE_EXE_LINKER_FLAGS}].\")\n")
+    for idx, _ := range cxxCfgsDebug {
+        WriteWithIndent(builder, 0, fmt.Sprintf(
+            "message(STATUS \"Using CXX_FLAGS_%s: [${CMAKE_CXX_FLAGS_%s}].\")\n",
+            strings.ToUpper(cxxCfgsDebug[idx]), strings.ToUpper(cxxCfgsDebug[idx]),
+            ))
+        WriteWithIndent(builder, 0, fmt.Sprintf(
+            "message(STATUS \"Using SHARED_LNK_FLAGS_%s: [${CMAKE_SHARED_LINKER_FLAGS_%s}].\")\n",
+            strings.ToUpper(cxxCfgsDebug[idx]), strings.ToUpper(cxxCfgsDebug[idx]),
+            ))
+        WriteWithIndent(builder, 0, fmt.Sprintf(
+            "message(STATUS \"Using EXE_LNK_FLAGS_%s: [${CMAKE_EXE_LINKER_FLAGS_%s}].\")\n",
+            strings.ToUpper(cxxCfgsDebug[idx]), strings.ToUpper(cxxCfgsDebug[idx]),
+            ))
+    }
+    for idx, _ := range cxxCfgsDevelopment {
+        WriteWithIndent(builder, 0, fmt.Sprintf(
+            "message(STATUS \"Using CXX_FLAGS_%s: [${CMAKE_CXX_FLAGS_%s}].\")\n",
+            strings.ToUpper(cxxCfgsDevelopment[idx]), strings.ToUpper(cxxCfgsDevelopment[idx]),
+            ))
+        WriteWithIndent(builder, 0, fmt.Sprintf(
+            "message(STATUS \"Using SHARED_LNK_FLAGS_%s: [${CMAKE_SHARED_LINKER_FLAGS_%s}].\")\n",
+            strings.ToUpper(cxxCfgsDevelopment[idx]), strings.ToUpper(cxxCfgsDevelopment[idx]),
+            ))
+        WriteWithIndent(builder, 0, fmt.Sprintf(
+            "message(STATUS \"Using EXE_LNK_FLAGS_%s: [${CMAKE_EXE_LINKER_FLAGS_%s}].\")\n",
+            strings.ToUpper(cxxCfgsDevelopment[idx]), strings.ToUpper(cxxCfgsDevelopment[idx]),
+            ))
+    }
+    for idx, _ := range cxxCfgsShipping {
+        WriteWithIndent(builder, 0, fmt.Sprintf(
+            "message(STATUS \"Using CXX_FLAGS_%s: [${CMAKE_CXX_FLAGS_%s}].\")\n",
+            strings.ToUpper(cxxCfgsShipping[idx]), strings.ToUpper(cxxCfgsShipping[idx]),
+            ))
+        WriteWithIndent(builder, 0, fmt.Sprintf(
+            "message(STATUS \"Using SHARED_LNK_FLAGS_%s: [${CMAKE_SHARED_LINKER_FLAGS_%s}].\")\n",
+            strings.ToUpper(cxxCfgsShipping[idx]), strings.ToUpper(cxxCfgsShipping[idx]),
+            ))
+        WriteWithIndent(builder, 0, fmt.Sprintf(
+            "message(STATUS \"Using EXE_LNK_FLAGS_%s: [${CMAKE_EXE_LINKER_FLAGS_%s}].\")\n",
+            strings.ToUpper(cxxCfgsShipping[idx]), strings.ToUpper(cxxCfgsShipping[idx]),
+            ))
     }
 
     return
@@ -301,11 +472,16 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
     WriteWithIndent(builder, indent, fmt.Sprintf("# Module: %s\n", module.GetUsableName()))
     WriteWithIndent(builder, indent, "############################\n")
 
-    var cDefines []string /* Not just cmp flags but also cond-cmp flags - as they will be rawly defined in cmake. */
+    var cDefines []string
+    var cDefines_Msvc []string /* Not just cmp flags but also cond-cmp flags - as they will be rawly defined in cmake. */
+    var cDefines_Minimal []string
     cDefines = append(cDefines, fmt.Sprintf("CURRENT_PROJECT_NAME=\"%s\"", module.Parent.Name))
     cDefines = append(cDefines, fmt.Sprintf("CURRENT_MODULE_NAME=\"%s\"", module.GetUsableName()))
     cDefines = append(cDefines, fmt.Sprintf("PRIVATE_JAFG_CURRENT_MODULE_PREPROC_IDENT=%s", module.GetPreProcIntAsString()))
-    cDefines = append(cDefines, fmt.Sprintf("$<$<STREQUAL:$<PLATFORM_ID>,Windows>:PLATFORM_WINDOWS>"))
+    cDefines_Msvc = append(cDefines_Msvc, fmt.Sprintf("$<$<STREQUAL:${TARGET_PLATFORM},Windows>:PLATFORM_WINDOWS>"))
+    cDefines_Minimal = append(cDefines_Minimal, fmt.Sprintf(`if(${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WIN})
+        target_compile_definitions(${CUR_MOD_NAME} PRIVATE PLATFORM_WINDOWS)
+    endif()`))
     var cDefines_Debug       []string = []string{ "IN_DEBUG=1" }
     var cDefines_Development []string = []string{ "IN_DEVELOPMENT=1" }
     var cDefines_Shipping    []string = []string{ "IN_SHIPPING=1" }
@@ -321,40 +497,65 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
         //)
     }
 
+    var publicIncludeDirs_AllTargets []string // For all generators.
+    var publicIncludeDirs_AllTargets_Msvc []string
+    var publicIncludeDirs_AllTargets_Minimal []string
+    var privateIncludeDirs_AllTargets []string // For all generators.
+    var privateIncludeDirs_AllTargets_Msvc []string
+    var privateIncludeDirs_AllTargets_Minimal []string
+    var publicLinkedLibs_AllTargets []string // For all generators.
+    var publicLinkedLibs_AllTargets_Msvc []string
+    var publicLinkedLibs_AllTargets_Minimal []string
+    var privateLinkedLibs_AllTargets []string // For all generators.
+    var privateLinkedLibs_AllTargets_Msvc []string
+    var privateLinkedLibs_AllTargets_Minimal []string
+
     WriteWithIndent(builder, indent, fmt.Sprintf("set(CUR_MOD_NAME \"%s\")\n", module.GetUsableName()))
     WriteWithIndent(builder, indent, fmt.Sprintf("set(CUR_MOD_REL_PATH \"%s\")\n", module.GetRelativeModuleDir()))
     WriteWithIndent(builder, indent, fmt.Sprintf("set(CUR_PROJ_REL_PATH \"%s\")\n", module.Parent.GetRelativeProjectDir()))
 
     WriteWithIndent(builder, indent, fmt.Sprintf("message(STATUS \"Adding module ${CUR_MOD_NAME}...\")\n"))
-    WriteWithIndent(builder, indent, fmt.Sprintf(`file(GLOB_RECURSE %s_SRC_FILES
-%s    "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/**.md"
-%s    "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/**.jafgmod"
-%s    "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/*.h"
-%s    "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/*.hpp"
-%s    "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/*.c"
-%s    "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/*.cpp"
-%s    )
+    WriteWithIndent(builder, indent, fmt.Sprintf(`if(USING_MSVC)
+%s    file(GLOB_RECURSE %s_SRC_FILES
+%s        "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/**.md"
+%s        "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/**.jafgmod"
+%s        "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/*.h"
+%s        "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/*.hpp"
+%s        "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/*.c"
+%s        "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/*.cpp"
+%s        )
+%s    foreach(CUR_SRC_FILE ${%s_SRC_FILES})
+%s        file(RELATIVE_PATH CUR_SRC_FILE_REL "${CMAKE_SOURCE_DIR}/%s" ${CUR_SRC_FILE})
+%s        get_filename_component(CUR_FILE_DIR ${CUR_SRC_FILE_REL} PATH)
+%s        if("${CUR_FILE_DIR}" STREQUAL "")
+%s          set(MULTI_GEN_FILTER "")
+%s        else()
+%s          string(REPLACE "/" "\\" MULTI_GEN_FILTER ${CUR_FILE_DIR})
+%s        endif()
+%s        source_group("${MULTI_GEN_FILTER}" FILES ${CUR_SRC_FILE})
+%s    endforeach()
+%sendif()
+%sif(USING_MINIMAL)
+%s    file(GLOB_RECURSE %s_SRC_FILES
+%s        "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/*.h"
+%s        "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/*.hpp"
+%s        "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/*.c"
+%s        "${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/*.cpp"
+%s        )
+%sendif()
 `,
-        module.GetUsableName(),
+        Shared.Indent(indent), module.GetUsableName(),
         Shared.Indent(indent), Shared.Indent(indent),
         Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
-        Shared.Indent(indent),
-    ))
-    WriteWithIndent(builder, indent, fmt.Sprintf(`foreach(CUR_SRC_FILE ${%s_SRC_FILES})
-%s    file(RELATIVE_PATH CUR_SRC_FILE_REL "${CMAKE_SOURCE_DIR}/%s" ${CUR_SRC_FILE})
-%s    get_filename_component(CUR_FILE_DIR ${CUR_SRC_FILE_REL} PATH)
-%s    if("${CUR_FILE_DIR}" STREQUAL "")
-%s      set(MULTI_GEN_FILTER "")
-%s    else()
-%s      string(REPLACE "/" "\\" MULTI_GEN_FILTER ${CUR_FILE_DIR})
-%s    endif()
-%s    source_group("${MULTI_GEN_FILTER}" FILES ${CUR_SRC_FILE})
-%sendforeach()
-`,
+        Shared.Indent(indent), Shared.Indent(indent),
         module.GetUsableName(),
         Shared.Indent(indent), module.GetRelativeModuleDir(),
         Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
         Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
+        Shared.Indent(indent),
+        Shared.Indent(indent), Shared.Indent(indent), module.GetUsableName(),
+        Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
+        Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
     ))
 
     WriteWithIndent(builder, indent, fmt.Sprintf(`file(GLOB_RECURSE %s_GEN_SRC_FILES
@@ -371,17 +572,24 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
         Shared.Indent(indent), Shared.GetRelativeGeneratedTranslationDirForModule(module),
         Shared.Indent(indent),
     ))
-    WriteWithIndent(builder, indent, fmt.Sprintf("source_group(\"Generated Translation\" FILES ${%s_GEN_SRC_FILES})\n", module.GetUsableName()))
+    WriteWithIndent(builder, indent, "if(USING_MSVC)\n")
+    WriteWithIndent(builder, indent+4, fmt.Sprintf("source_group(\"Generated Translation\" FILES ${%s_GEN_SRC_FILES})\n", module.GetUsableName()))
+    WriteWithIndent(builder, indent, "endif()\n")
 
-    WriteWithIndent(builder, indent, fmt.Sprintf(`file(GLOB_RECURSE %s_MISC_FILES
-%s    "${CMAKE_SOURCE_DIR}/${CUR_PROJ_REL_PATH}/*.md"
-%s    "${CMAKE_SOURCE_DIR}/${CUR_PROJ_REL_PATH}/*.jsfgproj"
-%s    )
+    WriteWithIndent(builder, indent, "if(USING_MSVC)\n")
+    WriteWithIndent(builder, indent+4, fmt.Sprintf(`file(GLOB_RECURSE %s_MISC_FILES
+%s        "${CMAKE_SOURCE_DIR}/${CUR_PROJ_REL_PATH}/*.md"
+%s        "${CMAKE_SOURCE_DIR}/${CUR_PROJ_REL_PATH}/*.jsfgproj"
+%s        )
 `,
         module.GetUsableName(),
         Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
     ))
-    WriteWithIndent(builder, indent, fmt.Sprintf("source_group(\"\" FILES ${%s_MISC_FILES})\n", module.GetUsableName()))
+    WriteWithIndent(builder, indent+4, fmt.Sprintf("source_group(\"\" FILES ${%s_MISC_FILES})\n", module.GetUsableName()))
+    WriteWithIndent(builder, indent, "endif()\n")
+    WriteWithIndent(builder, indent, "if(USING_MINIMAL)\n")
+    WriteWithIndent(builder, indent+4, fmt.Sprintf("set(%s_MISC_FILES \"\")\n", module.GetUsableName()))
+    WriteWithIndent(builder, indent, "endif()\n")
 
     WriteWithIndent(builder, indent, fmt.Sprintf("file(GLOB_RECURSE %s_C_SRC_FILES ${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/*.c)\n", module.GetUsableName()))
 
@@ -454,24 +662,42 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
        WriteWithIndent(builder, indent, fmt.Sprintf("target_precompile_headers(${CUR_MOD_NAME} PRIVATE %s)\n", GetRelativeDirForCoreAfx()))
     }
 
-    WriteWithIndent(builder, indent, fmt.Sprintf("add_custom_command(TARGET ${CUR_MOD_NAME} PRE_BUILD\n"+
-        "%s    COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\" --fwd --BuildTool --pre-build "+
-        "--BUILD_CONFIG=$<CONFIG> --PLATFORM=$<PLATFORM_ID> --MOD_NAME=${CUR_MOD_NAME} --CFG_KIND=%s\n "+
-        "--CFG_SYSTEM=$<PLATFORM_ID> --CFG_ARCHITECTURE=${CMAKE_SYSTEM_PROCESSOR}\n%s    )\n",
-        Shared.Indent(indent), module.Kind.ToLuaString(&module.Parent.DefaultKind), Shared.Indent(indent),
+    WriteWithIndent(builder, indent, "if(USING_MSVC)\n")
+    WriteWithIndent(builder, indent+4, fmt.Sprintf("add_custom_command(TARGET ${CUR_MOD_NAME} PRE_BUILD\n"+
+        "%s        COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\"\n"+
+        "%s            --fwd --BuildTool --pre-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=$<PLATFORM_ID> --MOD_NAME=${CUR_MOD_NAME}\n"+
+        "%s            --CFG_KIND=%s --CFG_SYSTEM=$<PLATFORM_ID> --CFG_ARCHITECTURE=${CMAKE_SYSTEM_PROCESSOR}\n%s    )\n",
+        Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
+        module.Kind.ToLuaString(&module.Parent.DefaultKind), Shared.Indent(indent),
     ))
-
-    WriteWithIndent(builder, indent, fmt.Sprintf("add_custom_command(TARGET ${CUR_MOD_NAME} POST_BUILD\n"+
-        "%s    COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\" --fwd --BuildTool --post-build "+
-        "--BUILD_CONFIG=$<CONFIG> --PLATFORM=$<PLATFORM_ID> --MOD_NAME=${CUR_MOD_NAME} --CFG_KIND=%s\n "+
-        "--CFG_SYSTEM=$<PLATFORM_ID> --CFG_ARCHITECTURE=${CMAKE_SYSTEM_PROCESSOR}\n%s    )\n",
-        Shared.Indent(indent), module.Kind.ToLuaString(&module.Parent.DefaultKind), Shared.Indent(indent),
+    WriteWithIndent(builder, indent+4, fmt.Sprintf("add_custom_command(TARGET ${CUR_MOD_NAME} POST_BUILD\n"+
+        "%s        COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\"\n"+
+        "%s            --fwd --BuildTool --post-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=$<PLATFORM_ID> --MOD_NAME=${CUR_MOD_NAME}\n"+
+        "%s            --CFG_KIND=%s --CFG_SYSTEM=$<PLATFORM_ID> --CFG_ARCHITECTURE=${CMAKE_SYSTEM_PROCESSOR}\n%s    )\n",
+        Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
+        module.Kind.ToLuaString(&module.Parent.DefaultKind), Shared.Indent(indent),
     ))
-
-    var publicIncludeDirs_AllTargets []string
-    var privateIncludeDirs_AllTargets []string
-    var publicLinkedLibs_AllTargets []string
-    var privateLinkedLibs_AllTargets []string
+    WriteWithIndent(builder, indent, "endif()\n")
+    WriteWithIndent(builder, indent, "if(USING_MINIMAL)\n")
+    WriteWithIndent(builder, indent+4, fmt.Sprintf("add_custom_target(pre_build_command_%s\n", module.GetUsableName()))
+    WriteWithIndent(builder, indent+8, fmt.Sprintf("COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\"\n"+
+        "            --fwd --BuildTool --pre-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=$<PLATFORM_ID> --MOD_NAME=${CUR_MOD_NAME}\n"+
+        "            --CFG_KIND=%s --CFG_SYSTEM=$<PLATFORM_ID> --CFG_ARCHITECTURE=${CMAKE_SYSTEM_PROCESSOR}\n"+
+        "        COMMENT \"Pre-build command for module %s\"\n",
+        module.Kind.ToLuaString(&module.Parent.DefaultKind), module.GetUsableName(),
+    ))
+    WriteWithIndent(builder, indent+8, ")\n")
+    WriteWithIndent(builder, indent+4, fmt.Sprintf("add_custom_target(post_build_command_%s\n", module.GetUsableName()))
+    WriteWithIndent(builder, indent+8, fmt.Sprintf("COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\"\n"+
+        "            --fwd --BuildTool --post-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=$<PLATFORM_ID> --MOD_NAME=${CUR_MOD_NAME}\n"+
+        "            --CFG_KIND=%s --CFG_SYSTEM=$<PLATFORM_ID> --CFG_ARCHITECTURE=${CMAKE_SYSTEM_PROCESSOR}\n"+
+        "        COMMENT \"Post-build command for module %s.\"\n",
+        module.Kind.ToLuaString(&module.Parent.DefaultKind), module.GetUsableName(),
+        ))
+    WriteWithIndent(builder, indent+8, ")\n")
+    WriteWithIndent(builder, indent+4, fmt.Sprintf("add_dependencies(${CUR_MOD_NAME} pre_build_command_%s)\n", module.GetUsableName()))
+    WriteWithIndent(builder, indent+4, fmt.Sprintf("add_dependencies(${CUR_MOD_NAME} post_build_command_%s)\n", module.GetUsableName()))
+    WriteWithIndent(builder, indent, "endif()\n")
 
     /* Always include ourselves. */
     publicIncludeDirs_AllTargets = append(publicIncludeDirs_AllTargets, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/Public\""))
@@ -585,9 +811,18 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
         var privateLinkedShippingLibs []string
 
         for _, addcDef := range targ.AdditionalDefines {
-            cDefines = append(cDefines, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,Debug-%s>:%s>", targ.GetSuffix(), addcDef))
-            cDefines = append(cDefines, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,Development-%s>:%s>", targ.GetSuffix(), addcDef))
-            cDefines = append(cDefines, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,Shipping-%s>:%s>", targ.GetSuffix(), addcDef))
+            cDefines_Msvc = append(cDefines_Msvc, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,Debug-%s>:%s>", targ.GetSuffix(), addcDef))
+            cDefines_Msvc = append(cDefines_Msvc, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,Development-%s>:%s>", targ.GetSuffix(), addcDef))
+            cDefines_Msvc = append(cDefines_Msvc, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,Shipping-%s>:%s>", targ.GetSuffix(), addcDef))
+            cDefines_Minimal = append(cDefines_Minimal, fmt.Sprintf(`if(${CMAKE_BUILD_TYPE} STREQUAL "Debug-%s")
+        target_compile_definitions(${CUR_MOD_NAME} PRIVATE %s)
+    endif()`, targ.GetSuffix(), addcDef))
+            cDefines_Minimal = append(cDefines_Minimal, fmt.Sprintf(`if(${CMAKE_BUILD_TYPE} STREQUAL "Development-%s")
+        target_compile_definitions(${CUR_MOD_NAME} PRIVATE %s)
+    endif()`, targ.GetSuffix(), addcDef))
+            cDefines_Minimal = append(cDefines_Minimal, fmt.Sprintf(`if(${CMAKE_BUILD_TYPE} STREQUAL "Shipping-%s")
+        target_compile_definitions(${CUR_MOD_NAME} PRIVATE %s)
+    endif()`, targ.GetSuffix(), addcDef))
             continue
         }
 
@@ -634,76 +869,130 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
 
         if len(publicIncludeDirs) > 0 {
             for _, inc := range publicIncludeDirs {
-                publicIncludeDirs_AllTargets = append(publicIncludeDirs_AllTargets, fmt.Sprintf(
+                publicIncludeDirs_AllTargets_Msvc = append(publicIncludeDirs_AllTargets_Msvc, fmt.Sprintf(
                     "$<$<STREQUAL:$<CONFIG>,Debug-%s>:%s>",
                     targ.GetSuffix(), inc,
                 ))
-                publicIncludeDirs_AllTargets = append(publicIncludeDirs_AllTargets, fmt.Sprintf(
+                publicIncludeDirs_AllTargets_Msvc = append(publicIncludeDirs_AllTargets_Msvc, fmt.Sprintf(
                     "$<$<STREQUAL:$<CONFIG>,Development-%s>:%s>",
                     targ.GetSuffix(), inc,
                 ))
-                publicIncludeDirs_AllTargets = append(publicIncludeDirs_AllTargets, fmt.Sprintf(
+                publicIncludeDirs_AllTargets_Msvc = append(publicIncludeDirs_AllTargets_Msvc, fmt.Sprintf(
                     "$<$<STREQUAL:$<CONFIG>,Shipping-%s>:%s>",
                     targ.GetSuffix(), inc,
                 ))
+                publicIncludeDirs_AllTargets_Minimal = append(publicIncludeDirs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Debug-%s")
+        target_include_directories(${CUR_MOD_NAME} PUBLIC %s)
+    endif()`, targ.GetSuffix(), inc))
+                publicIncludeDirs_AllTargets_Minimal = append(publicIncludeDirs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Development-%s")
+        target_include_directories(${CUR_MOD_NAME} PUBLIC %s)
+    endif()`, targ.GetSuffix(), inc))
+                publicIncludeDirs_AllTargets_Minimal = append(publicIncludeDirs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Shipping-%s")
+        target_include_directories(${CUR_MOD_NAME} PUBLIC %s)
+    endif()`, targ.GetSuffix(), inc))
+                continue
             }
         }
         if len(publicLinkedLibs) > 0 {
             for _, lib := range publicLinkedLibs {
-                publicLinkedLibs_AllTargets = append(publicLinkedLibs_AllTargets, fmt.Sprintf(
+                publicLinkedLibs_AllTargets_Msvc = append(publicLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
                     "$<$<STREQUAL:$<CONFIG>,Debug-%s>:%s>",
                     targ.GetSuffix(), lib,
                 ))
-                publicLinkedLibs_AllTargets = append(publicLinkedLibs_AllTargets, fmt.Sprintf(
+                publicLinkedLibs_AllTargets_Msvc = append(publicLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
                     "$<$<STREQUAL:$<CONFIG>,Development-%s>:%s>",
                     targ.GetSuffix(), lib,
                 ))
-                publicLinkedLibs_AllTargets = append(publicLinkedLibs_AllTargets, fmt.Sprintf(
+                publicLinkedLibs_AllTargets_Msvc = append(publicLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
                     "$<$<STREQUAL:$<CONFIG>,Shipping-%s>:%s>",
                     targ.GetSuffix(), lib,
                 ))
+                publicLinkedLibs_AllTargets_Minimal = append(publicLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Debug-%s")
+        target_link_libraries(${CUR_MOD_NAME} PUBLIC %s)
+    endif()`, targ.GetSuffix(), lib))
+                publicLinkedLibs_AllTargets_Minimal = append(publicLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Development-%s")
+        target_link_libraries(${CUR_MOD_NAME} PUBLIC %s)
+    endif()`, targ.GetSuffix(), lib))
+                publicLinkedLibs_AllTargets_Minimal = append(publicLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Shipping-%s")
+        target_link_libraries(${CUR_MOD_NAME} PUBLIC %s)
+    endif()`, targ.GetSuffix(), lib))
+                continue
             }
         }
 
         if len(publicLinkedDebugLibs) > 0 {
             for _, lib := range publicLinkedDebugLibs {
-                publicLinkedLibs_AllTargets = append(publicLinkedLibs_AllTargets, fmt.Sprintf(
+                publicLinkedLibs_AllTargets_Msvc = append(publicLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
                     "$<$<STREQUAL:$<CONFIG>,Debug-%s>:%s>",
                     targ.GetSuffix(), lib,
                 ))
-                publicLinkedLibs_AllTargets = append(publicLinkedLibs_AllTargets, fmt.Sprintf(
+                publicLinkedLibs_AllTargets_Msvc = append(publicLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
                     "$<$<STREQUAL:$<CONFIG>,Development-%s>:%s>",
                     targ.GetSuffix(), lib,
                 ))
+                publicLinkedLibs_AllTargets_Minimal = append(publicLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Debug-%s")
+        target_link_libraries(${CUR_MOD_NAME} PUBLIC %s)
+    endif()`, targ.GetSuffix(), lib))
+                publicLinkedLibs_AllTargets_Minimal = append(publicLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Development-%s")
+        target_link_libraries(${CUR_MOD_NAME} PUBLIC %s)
+    endif()`, targ.GetSuffix(), lib))
+                continue
             }
         }
         if len(privateLinkedDebugLibs) > 0 {
             for _, lib := range privateLinkedDebugLibs {
-                privateLinkedLibs_AllTargets = append(privateLinkedLibs_AllTargets, fmt.Sprintf(
+                privateLinkedLibs_AllTargets_Msvc = append(privateLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
                     "$<$<STREQUAL:$<CONFIG>,Debug-%s>:%s>",
                     targ.GetSuffix(), lib,
                 ))
-                privateLinkedLibs_AllTargets = append(privateLinkedLibs_AllTargets, fmt.Sprintf(
+                privateLinkedLibs_AllTargets_Msvc = append(privateLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
                     "$<$<STREQUAL:$<CONFIG>,Development-%s>:%s>",
                     targ.GetSuffix(), lib,
                 ))
+                privateLinkedLibs_AllTargets_Minimal = append(privateLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Debug-%s")
+        target_link_libraries(${CUR_MOD_NAME} PRIVATE %s)
+    endif()`, targ.GetSuffix(), lib))
+                privateLinkedLibs_AllTargets_Minimal = append(privateLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Development-%s")
+        target_link_libraries(${CUR_MOD_NAME} PRIVATE %s)
+    endif()`, targ.GetSuffix(), lib))
+                continue
             }
         }
 
         if len(publicLinkedShippingLibs) > 0 {
             for _, lib := range publicLinkedShippingLibs {
-                publicLinkedLibs_AllTargets = append(publicLinkedLibs_AllTargets, fmt.Sprintf(
+                publicLinkedLibs_AllTargets_Msvc = append(publicLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
                     "$<$<STREQUAL:$<CONFIG>,Shipping-%s>:%s>",
                     targ.GetSuffix(), lib,
                 ))
+                publicLinkedLibs_AllTargets_Minimal = append(publicLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Shipping-%s")
+        target_link_libraries(${CUR_MOD_NAME} PUBLIC %s)
+    endif()`, targ.GetSuffix(), lib))
+                continue
             }
         }
         if len(privateLinkedShippingLibs) > 0 {
             for _, lib := range privateLinkedShippingLibs {
-                privateLinkedLibs_AllTargets = append(privateLinkedLibs_AllTargets, fmt.Sprintf(
+                privateLinkedLibs_AllTargets_Msvc = append(privateLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
                     "$<$<STREQUAL:$<CONFIG>,Shipping-%s>:%s>",
                     targ.GetSuffix(), lib,
                 ))
+                privateLinkedLibs_AllTargets_Minimal = append(privateLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Shipping-%s")
+        target_link_libraries(${CUR_MOD_NAME} PRIVATE %s)
+    endif()`, targ.GetSuffix(), lib))
+                continue
             }
         }
 
@@ -715,30 +1004,88 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
         WriteWithIndent(builder, indent+4, publicIncludeDirs_AllTargets[incIdx]+"\n")
     }
     WriteWithIndent(builder, indent+4, ")\n")
+    WriteWithIndent(builder, indent, "if(USING_MSVC)\n")
+    WriteWithIndent(builder, indent+4, "target_include_directories(${CUR_MOD_NAME} PUBLIC\n")
+    for incIdx, _ := range publicIncludeDirs_AllTargets_Msvc {
+        WriteWithIndent(builder, indent+8, publicIncludeDirs_AllTargets_Msvc[incIdx]+"\n")
+    }
+    WriteWithIndent(builder, indent+8, ")\n")
+    WriteWithIndent(builder, indent, "endif()\n")
+    WriteWithIndent(builder, indent, "if(USING_MINIMAL)\n")
+    for incIdx, _ := range publicIncludeDirs_AllTargets_Minimal {
+        WriteWithIndent(builder, indent+4, publicIncludeDirs_AllTargets_Minimal[incIdx]+"\n")
+    }
+    WriteWithIndent(builder, indent, "endif()\n")
+
     WriteWithIndent(builder, indent, "target_include_directories(${CUR_MOD_NAME} PRIVATE\n")
     for incIdx, _ := range privateIncludeDirs_AllTargets {
         WriteWithIndent(builder, indent+4, privateIncludeDirs_AllTargets[incIdx]+"\n")
     }
     WriteWithIndent(builder, indent+4, ")\n")
+    WriteWithIndent(builder, indent, "if(USING_MSVC)\n")
+    WriteWithIndent(builder, indent+4, "target_include_directories(${CUR_MOD_NAME} PRIVATE\n")
+    for incIdx, _ := range privateIncludeDirs_AllTargets_Msvc {
+        WriteWithIndent(builder, indent+8, privateIncludeDirs_AllTargets_Msvc[incIdx]+"\n")
+    }
+    WriteWithIndent(builder, indent+8, ")\n")
+    WriteWithIndent(builder, indent, "endif()\n")
+    WriteWithIndent(builder, indent, "if(USING_MINIMAL)\n")
+    for incIdx, _ := range privateIncludeDirs_AllTargets_Minimal {
+        WriteWithIndent(builder, indent+4, privateIncludeDirs_AllTargets_Minimal[incIdx]+"\n")
+    }
+    WriteWithIndent(builder, indent, "endif()\n")
+
     WriteWithIndent(builder, indent, "target_link_libraries(${CUR_MOD_NAME} PUBLIC\n")
     for libIdx, _ := range publicLinkedLibs_AllTargets {
         WriteWithIndent(builder, indent+4, publicLinkedLibs_AllTargets[libIdx]+"\n")
     }
     WriteWithIndent(builder, indent+4, ")\n")
+    WriteWithIndent(builder, indent, "if(USING_MSVC)\n")
+    WriteWithIndent(builder, indent+4, "target_link_libraries(${CUR_MOD_NAME} PUBLIC\n")
+    for libIdx, _ := range publicLinkedLibs_AllTargets_Msvc {
+        WriteWithIndent(builder, indent+8, publicLinkedLibs_AllTargets_Msvc[libIdx]+"\n")
+    }
+    WriteWithIndent(builder, indent+8, ")\n")
+    WriteWithIndent(builder, indent, "endif()\n")
+    WriteWithIndent(builder, indent, "if(USING_MINIMAL)\n")
+    for libIdx, _ := range publicLinkedLibs_AllTargets_Minimal {
+        WriteWithIndent(builder, indent+4, publicLinkedLibs_AllTargets_Minimal[libIdx]+"\n")
+    }
+    WriteWithIndent(builder, indent, "endif()\n")
+
     WriteWithIndent(builder, indent, "target_link_libraries(${CUR_MOD_NAME} PRIVATE\n")
     for libIdx, _ := range privateLinkedLibs_AllTargets {
         WriteWithIndent(builder, indent+4, privateLinkedLibs_AllTargets[libIdx]+"\n")
     }
     WriteWithIndent(builder, indent+4, ")\n")
+    WriteWithIndent(builder, indent, "if(USING_MSVC)\n")
+    WriteWithIndent(builder, indent+4, "target_link_libraries(${CUR_MOD_NAME} PRIVATE\n")
+    for libIdx, _ := range privateLinkedLibs_AllTargets_Msvc {
+        WriteWithIndent(builder, indent+8, privateLinkedLibs_AllTargets_Msvc[libIdx]+"\n")
+    }
+    WriteWithIndent(builder, indent+8, ")\n")
+    WriteWithIndent(builder, indent, "endif()\n")
+    WriteWithIndent(builder, indent, "if(USING_MINIMAL)\n")
+    for libIdx, _ := range privateLinkedLibs_AllTargets_Minimal {
+        WriteWithIndent(builder, indent+4, privateLinkedLibs_AllTargets_Minimal[libIdx]+"\n")
+    }
+    WriteWithIndent(builder, indent, "endif()\n")
 
     WriteWithIndent(builder, indent, "target_compile_definitions(${CUR_MOD_NAME} PRIVATE\n")
     for defIdx, _ := range cDefines {
         WriteWithIndent(builder, indent+4, fmt.Sprintf("%s\n", cDefines[defIdx]))
         continue
     }
+    WriteWithIndent(builder, indent+4, ")\n")
+    WriteWithIndent(builder, indent, "if(USING_MSVC)\n")
+    WriteWithIndent(builder, indent+4, "target_compile_definitions(${CUR_MOD_NAME} PRIVATE\n")
+    for defIdx, _ := range cDefines_Msvc {
+        WriteWithIndent(builder, indent+8, fmt.Sprintf("%s\n", cDefines_Msvc[defIdx]))
+        continue
+    }
     for defIdx, _ := range cDefines_Debug {
         for _, debugCfg := range GetAllUniqueDebugBuildConfigurations() {
-            WriteWithIndent(builder, indent+4, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,%s>:%s>\n",
+            WriteWithIndent(builder, indent+8, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,%s>:%s>\n",
                 debugCfg, cDefines_Debug[defIdx],
             ))
             continue
@@ -747,7 +1094,7 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
     }
     for defIdx, _ := range cDefines_Development {
       for _, developmentCfg := range GetAllUniqueDevelopmentBuildConfigurations() {
-          WriteWithIndent(builder, indent+4, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,%s>:%s>\n",
+          WriteWithIndent(builder, indent+8, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,%s>:%s>\n",
               developmentCfg, cDefines_Development[defIdx],
           ))
           continue
@@ -756,14 +1103,50 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
     }
     for defIdx, _ := range cDefines_Shipping {
        for _, shippingCfg := range GetAllUniqueShippingBuildConfigurations() {
-           WriteWithIndent(builder, indent+4, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,%s>:%s>\n",
+           WriteWithIndent(builder, indent+8, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,%s>:%s>\n",
                shippingCfg, cDefines_Shipping[defIdx],
            ))
            continue
        }
        continue
     }
-    WriteWithIndent(builder, indent+4, ")\n")
+    WriteWithIndent(builder, indent+8, ")\n")
+    WriteWithIndent(builder, indent, "endif()\n")
+
+    WriteWithIndent(builder, indent, "if(USING_MINIMAL)\n")
+    for defIdx, _ := range cDefines_Debug {
+        for _, debugCfg := range GetAllUniqueDebugBuildConfigurations() {
+            WriteWithIndent(builder, indent+4, fmt.Sprintf(`if(${CMAKE_BUILD_TYPE} STREQUAL "%s")
+        target_compile_definitions(${CUR_MOD_NAME} PRIVATE %s)
+    endif()
+`, debugCfg, cDefines_Debug[defIdx]))
+        }
+    }
+    for defIdx, _ := range cDefines_Development {
+        for _, developmentCfg := range GetAllUniqueDevelopmentBuildConfigurations() {
+            WriteWithIndent(builder, indent+4, fmt.Sprintf(`if(${CMAKE_BUILD_TYPE} STREQUAL "%s")
+        target_compile_definitions(${CUR_MOD_NAME} PRIVATE %s)
+    endif()
+`,
+                developmentCfg, cDefines_Development[defIdx],
+            ))
+        }
+    }
+    for defIdx, _ := range cDefines_Shipping {
+        for _, shippingCfg := range GetAllUniqueShippingBuildConfigurations() {
+            WriteWithIndent(builder, indent+4, fmt.Sprintf(`if(${CMAKE_BUILD_TYPE} STREQUAL "%s")
+        target_compile_definitions(${CUR_MOD_NAME} PRIVATE %s)
+    endif()
+`,
+                shippingCfg, cDefines_Shipping[defIdx],
+            ))
+        }
+    }
+    for defIdx, _ := range cDefines_Minimal {
+        WriteWithIndent(builder, indent+4, fmt.Sprintf("%s\n", cDefines_Minimal[defIdx]))
+        continue
+    }
+    WriteWithIndent(builder, indent, "endif()\n")
 
     return
 }
