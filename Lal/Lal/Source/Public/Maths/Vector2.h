@@ -47,12 +47,12 @@ struct TVector2 final
     FORCEINLINE static TVector2<T> UnitX() { return TVector2<T>(TVector2<T>::UnitVectorX); }
     FORCEINLINE static TVector2<T> UnitY() { return TVector2<T>(TVector2<T>::UnitVectorY); }
 
-    FORCEINLINE          TVector2<T>()                         noexcept = default;
-    FORCEINLINE explicit TVector2<T>(const T InFloatingPoint)  noexcept : Y(InFloatingPoint), X(InFloatingPoint) { }
-    FORCEINLINE explicit TVector2<T>(const T InX, const T InY) noexcept : X(InX), Y(InY) { }
-    FORCEINLINE explicit TVector2<T>(const T InXY[2])          noexcept : X(InXY[0]), Y(InXY[1]) { }
-    FORCEINLINE          TVector2<T>(const TVector2<T>& InVec) noexcept : X(InVec.X), Y(InVec.Y) { }
-    FORCEINLINE          TVector2<T>(TVector2<T>&& InVec)      noexcept : X(InVec.X), Y(InVec.Y) { }
+    FORCEINLINE          TVector2()                         noexcept = default;
+    FORCEINLINE explicit TVector2(const T InFloatingPoint)  noexcept : Y(InFloatingPoint), X(InFloatingPoint) { }
+    FORCEINLINE explicit TVector2(const T InX, const T InY) noexcept : X(InX), Y(InY) { }
+    FORCEINLINE explicit TVector2(const T InXY[2])          noexcept : X(InXY[0]), Y(InXY[1]) { }
+    FORCEINLINE          TVector2(const TVector2<T>& InVec) noexcept : X(InVec.X), Y(InVec.Y) { }
+    FORCEINLINE          TVector2(TVector2<T>&& InVec)      noexcept : X(InVec.X), Y(InVec.Y) { }
 
     FORCEINLINE auto GetData()       noexcept ->       T* { return &this->X; }
     FORCEINLINE auto GetData() const noexcept -> const T* { return &this->X; }

@@ -19,3 +19,6 @@
 #include <chrono>
 #include <mutex>
 #include <shared_mutex>
+#if PLATFORM_WINDOWS_WITH_GNU
+    #include <cmath>
+#endif /* PLATFORM_WINDOWS_WITH_GNU */

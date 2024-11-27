@@ -13,17 +13,21 @@ bool GPauseBeforeExit = false;
 int32 LaunchWin(HINSTANCE hInInstance, HINSTANCE hPrevInstance, char*, int32 nCmdShow, const TCHAR* CmdLine)
 {
     int32 ErrorLevel = 0;
+    LStringLegacy* CmdContainer = nullptr;
 
     if (CmdLine == nullptr)
     {
-        /*
-         * This causes a memory leak. But who the fuck actually cares. This application
-         * is about to be evaporated from existence.
-         */
-        CmdLine = LPlatformTypes::Ws2CStr(::GetCommandLineW());
+        CmdContainer = new LStringLegacy();
+        CmdLine = LPlatformTypes::Ws2CStr(::GetCommandLineW(), *CmdContainer);
     }
 
     ErrorLevel = GuardedMain(CmdLine);
+
+    if (CmdContainer != nullptr)
+    {
+        delete CmdContainer;
+        CmdContainer = nullptr;
+    }
 
     return ErrorLevel;
 }

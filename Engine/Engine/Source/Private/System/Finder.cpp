@@ -76,12 +76,12 @@ TdhArray<LSimpleString> Finder::FindFiles(
         {
             if (bKeepExtension)
             {
-                LStringLegacy Temp = LGenericPlatformTypes::Ws2S(p.path().filename().c_str());
+                LStringLegacy Temp = LPlatformTypes::Ws2S(p.path().filename().c_str());
                 Out.Add(LSimpleString(Temp.c_str()));
             }
             else
             {
-                LSimpleString SimpleTemp = LGenericPlatformTypes::Ws2S(p.path().stem()).c_str();
+                LSimpleString SimpleTemp = LPlatformTypes::Ws2S(p.path().stem()).c_str();
                 Out.Add(std::move(SimpleTemp));
             }
         }
@@ -91,12 +91,12 @@ TdhArray<LSimpleString> Finder::FindFiles(
             {
                 if (bKeepExtension)
                 {
-                    LStringLegacy Temp = LGenericPlatformTypes::Ws2S(p.path().filename().c_str());
+                    LStringLegacy Temp = LPlatformTypes::Ws2S(p.path().filename().c_str());
                     Out.Add(LSimpleString(Temp.c_str()));
                 }
                 else
                 {
-                    LSimpleString SimpleTemp = LGenericPlatformTypes::Ws2S(p.path().stem()).c_str();
+                    LSimpleString SimpleTemp = LPlatformTypes::Ws2S(p.path().stem()).c_str();
                     Out.Add(std::move(SimpleTemp));
                 }
             }

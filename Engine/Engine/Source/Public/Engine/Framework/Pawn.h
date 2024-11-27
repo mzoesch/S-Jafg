@@ -15,7 +15,7 @@ struct LInputActionValue;
 /**
  * A pawn is something that can be possessed by a controller.
  */
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
 class ENGINE_API APawn : public AActor
 {
     GENERATED_CLASS_BODY()

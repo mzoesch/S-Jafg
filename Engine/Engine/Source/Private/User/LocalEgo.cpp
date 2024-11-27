@@ -27,7 +27,7 @@ void Jafg::LLocalEgo::Initialize()
 #if PLATFORM_DESKTOP
     this->SurfaceToDrawOn = new ::Jafg::LDesktopPlatform();
 #else /* PLATFORM_DESKTOP */
-    #error "Cannot resolve surface.
+    #error "Cannot resolve surface."
 #endif /* !PLATFORM_DESKTOP */
 
     JUserPreferences* UserPreferences = GetMutableDefault<JUserPreferences>();

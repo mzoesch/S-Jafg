@@ -148,7 +148,7 @@ FORCEINLINE LSimpleString LVoxelKey::ToString() const
 } /* ~Namespace Jafg */
 
 template <>
-struct ::std::hash<::Jafg::LVoxelKey>
+struct std::hash<::Jafg::LVoxelKey>
 {
     FORCEINLINE ::std::size_t operator()(const ::Jafg::LVoxelKey& InKey) const noexcept
     {

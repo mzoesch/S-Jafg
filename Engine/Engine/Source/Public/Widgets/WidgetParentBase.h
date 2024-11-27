@@ -13,7 +13,7 @@ namespace Jafg
  * To let other widgets implement their own data structure for children.
  * TODO: Please think of a better name for this class.
  */
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
 class ENGINE_API WWidgetParentBase : public WWidgetNode
 {
     GENERATED_CLASS_BODY()

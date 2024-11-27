@@ -252,7 +252,7 @@ LChunkKey2& LChunkKey2::operator=(LChunkKey2&& InKey) noexcept
 } /* ~Namespace Jafg */
 
 template <>
-struct ::std::hash<::Jafg::LChunkKey>
+struct std::hash<::Jafg::LChunkKey>
 {
     FORCEINLINE ::std::size_t operator()(const ::Jafg::LChunkKey& InKey) const noexcept
     {
@@ -269,7 +269,7 @@ struct ::std::hash<::Jafg::LChunkKey>
 };
 
 template <>
-struct ::std::hash<::Jafg::LChunkKey2>
+struct std::hash<::Jafg::LChunkKey2>
 {
     FORCEINLINE ::std::size_t operator()(const ::Jafg::LChunkKey2& InKey) const noexcept
     {

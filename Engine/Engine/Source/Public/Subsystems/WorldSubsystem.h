@@ -9,7 +9,7 @@
 namespace Jafg
 {
 
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
 class ENGINE_API JWorldSubsystem : public JSubsystem
 {
     GENERATED_CLASS_BODY()

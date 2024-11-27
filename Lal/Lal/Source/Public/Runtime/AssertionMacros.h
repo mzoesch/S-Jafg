@@ -78,28 +78,28 @@
      */
     #define unimplemented()                 PRIVATE_JAFG_CHECK_IMPL( false && UNIMPLEMENTED_ASSERT_TEXT )
 
-    #define PRIVATE_JAFG_CHECK_IMPL(Expr)                                             \
-        {                                                                             \
-            if (UNLIKELY(!(Expr)))                                                    \
-            {                                                                         \
-                LOG_FATAL(LogJafgInternal, "Program panicked. Reason: [{}].", #Expr); \
-            }                                                                         \
+    #define PRIVATE_JAFG_CHECK_IMPL(Expr)                                                  \
+        {                                                                                  \
+            if (UNLIKELY(!(Expr)))                                                         \
+            {                                                                              \
+                LOG_FATAL(LogJafgInternal, "Program panicked. Reason: [{}].", FMT(#Expr)); \
+            }                                                                              \
         }
 
-    #define PRIVATE_JAFG_CHECK_IMPL_MSG(Expr, Msg)                                        \
-        {                                                                                 \
-            if (UNLIKELY(!(Expr)))                                                        \
-            {                                                                             \
-                LOG_FATAL(LogJafgInternal, "Program panicked: [{}] with {}", #Expr, Msg); \
-            }                                                                             \
+    #define PRIVATE_JAFG_CHECK_IMPL_MSG(Expr, Msg)                                             \
+        {                                                                                      \
+            if (UNLIKELY(!(Expr)))                                                             \
+            {                                                                                  \
+                LOG_FATAL(LogJafgInternal, "Program panicked: [{}] with {}", FMT(#Expr), Msg); \
+            }                                                                                  \
         }
 
     #define PRIVATE_JAFG_CHECK_IMPL_MSGF(Expr, Format, ...) \
-        {                                                                                                         \
-            if (UNLIKELY(!(Expr)))                                                                                \
-            {                                                                                                     \
-                LOG_FATAL(LogJafgInternal, "Program panicked because of [{}]: " Format "", #Expr, ##__VA_ARGS__); \
-            }                                                                                                     \
+        {                                                                                                              \
+            if (UNLIKELY(!(Expr)))                                                                                     \
+            {                                                                                                          \
+                LOG_FATAL(LogJafgInternal, "Program panicked because of [{}]: " Format "", FMT(#Expr), ##__VA_ARGS__); \
+            }                                                                                                          \
         }
 
 #else /* DO_CHECKS */

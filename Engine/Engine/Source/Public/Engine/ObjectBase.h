@@ -51,7 +51,7 @@ namespace Private
  * by the jafg build tool to allow for dynamic casting, network replication, etc.
  */
 PRAGMA_FOR_JAFG_BUILD_TOOL("NextIsObjectBaseClass")
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
 class ENGINE_API JObjectBase
 {
     friend LCarnifex;

@@ -68,13 +68,13 @@ struct TVector
     FORCEINLINE static TVector<T> UnitY()    { return TVector<T>::UnitVectorY;    }
     FORCEINLINE static TVector<T> UnitZ()    { return TVector<T>::UnitVectorZ;    }
 
-    FORCEINLINE          TVector<T>()                                      noexcept = default;
-    FORCEINLINE explicit TVector<T>(const T InFloatingPoint)               noexcept : X(InFloatingPoint), Y(InFloatingPoint), Z(InFloatingPoint) { }
-    FORCEINLINE explicit TVector<T>(const T InX, const T InY, const T InZ) noexcept : X(InX), Y(InY), Z(InZ) { }
-    FORCEINLINE explicit TVector<T>(const TVector2<T> InVec, const T InZ)  noexcept : X(InVec.X), Y(InVec.Y), Z(InZ) { }
-    FORCEINLINE explicit TVector<T>(const T InXYZ[3])                      noexcept : X(InXYZ[0]), Y(InXYZ[1]), Z(InXYZ[2]) { }
-    FORCEINLINE          TVector<T>(const TVector<T>& InVec)               noexcept : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
-    FORCEINLINE          TVector<T>(TVector<T>&& InVec)                    noexcept : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
+    FORCEINLINE          TVector()                                      noexcept = default;
+    FORCEINLINE explicit TVector(const T InFloatingPoint)               noexcept : X(InFloatingPoint), Y(InFloatingPoint), Z(InFloatingPoint) { }
+    FORCEINLINE explicit TVector(const T InX, const T InY, const T InZ) noexcept : X(InX), Y(InY), Z(InZ) { }
+    FORCEINLINE explicit TVector(const TVector2<T> InVec, const T InZ)  noexcept : X(InVec.X), Y(InVec.Y), Z(InZ) { }
+    FORCEINLINE explicit TVector(const T InXYZ[3])                      noexcept : X(InXYZ[0]), Y(InXYZ[1]), Z(InXYZ[2]) { }
+    FORCEINLINE          TVector(const TVector<T>& InVec)               noexcept : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
+    FORCEINLINE          TVector(TVector<T>&& InVec)                    noexcept : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
 
     FORCEINLINE auto GetData()       noexcept ->       T* { return &this->X; }
     FORCEINLINE auto GetData() const noexcept -> const T* { return &this->X; }

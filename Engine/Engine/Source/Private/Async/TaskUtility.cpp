@@ -5,6 +5,9 @@
 #include "../Engine/CoreGlobals.h"
 #include "Async/Runnable.h"
 #include "Core/Application.h"
+#if WITH_GNU
+    #include <thread>
+#endif /* WITH_GNU */
 
 namespace
 {
@@ -22,9 +25,10 @@ namespace
         );
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() _Thrd_id()
     #endif /* _HAS_CXX23 */
-#else /* WITH_MSVC */
-    #error "Missing thread-id getter implementation for this compiler as that is not standardtized."
-#endif /* !WITH_MSVC */
+#elif WITH_GNU
+    static_assert(std::is_same_v<::Jafg::LThreadId, pthread_t>, "Compiler specific thread id is not the same.");
+    #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() __gthread_self()
+#endif /* WITH_GNU */
 
 static_assert(
     sizeof(::Jafg::LThreadId) == sizeof(std::thread::id),
@@ -66,8 +70,8 @@ Jafg::TdhArray<LRegisteredThread> RegisteredThreadIds;
 /** Global queue for tasks that are being executed on the specified thread in the future. */
 struct LTaskQueue final
 {
-    FORCEINLINE LTaskQueue(const Jafg::ETaskTime::Type InTime) : Time(InTime), Delegate(new Jafg::TFunction<void(void)>()) {}
-    FORCEINLINE LTaskQueue(const Jafg::ETaskTime::Type InTime, Jafg::TFunction<void()>&& InDelegate)
+    FORCEINLINE explicit LTaskQueue(const Jafg::ETaskTime::Type InTime) : Time(InTime), Delegate(new Jafg::TFunction<void(void)>()) {}
+    FORCEINLINE explicit LTaskQueue(const Jafg::ETaskTime::Type InTime, Jafg::TFunction<void()>&& InDelegate)
         : Time(InTime)
     {
         this->Delegate = new Jafg::TFunction<void(void)>();
@@ -166,7 +170,7 @@ Jafg::LThreadId Jafg::Tasks::GetCurrentThreadId()
 bool Jafg::Tasks::IsOnThread(ENamedThreads::Type InThread)
 {
     if (const LRegisteredThread* ThreadTy = ::RegisteredThreadIds.FindByPredicate(
-    [InThread] (const LRegisteredThread& Thread)
+    [InThread] (const LRegisteredThread& Thread) -> bool
     {
         return Thread.ThreadTy == InThread;
     }); ThreadTy)
@@ -202,7 +206,7 @@ void Jafg::Tasks::Make(const ENamedThreads::Type Thread, const ETaskTime::Type T
 bool Jafg::Tasks::Private::IsThreadRunning(ENamedThreads::Type Thread)
 {
     return ::RegisteredThreadIds.ContainsByPredicate(
-        [Thread] (const LRegisteredThread& i)
+        [Thread] (const LRegisteredThread& i) -> bool
         {
             return i.ThreadTy == Thread;
         }

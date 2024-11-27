@@ -15,7 +15,7 @@ class LApplicationInstance;
 /**
  * An object that usually uses a world as its outer.
  */
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
 class ENGINE_API JObject : public ::Jafg::Private::JObjectBase
 {
     GENERATED_CLASS_BODY()

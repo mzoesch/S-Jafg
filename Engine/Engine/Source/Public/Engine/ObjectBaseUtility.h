@@ -36,11 +36,11 @@
     #define PURE_VIRTUAL(...) = 0;
 #else /* DO_PURE_VIRTUAL_COMPILER_CHECKS */
     /** Define a RetTy for non-void members if needed. */
-    #define PURE_VIRTUAL(...) { panic( "Pure virtual function was encountered." ) ##__VA_ARGS__; }
+    #define PURE_VIRTUAL(...) { panic( "Pure virtual function was encountered." ) __VA_ARGS__; }
 #endif /* !DO_PURE_VIRTUAL_COMPILER_CHECKS */
 
 /** A member that was derived but is not callable. */
-#define NON_CALLABLE_MEMBER(...) { panic( "Non-callable member function was encountered." ) ##__VA_ARGS__; }
+#define NON_CALLABLE_MEMBER(...) { panic( "Non-callable member function was encountered." ) __VA_ARGS__; }
 
 namespace Jafg
 {

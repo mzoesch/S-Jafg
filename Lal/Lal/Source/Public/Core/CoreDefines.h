@@ -17,5 +17,10 @@ enum Type : int32
 
 } /* ~Namespace EPlatformExit. */
 
-typedef std::intptr_t  LPtrSize;
-typedef std::uintptr_t LuPtrSize;
+#if PLATFORM_WINDOWS_WITH_MSVC
+    typedef ::std::intptr_t  LPtrSize;
+    typedef ::std::uintptr_t LuPtrSize;
+#elif WITH_GNU
+    typedef intptr_t  LPtrSize;
+    typedef uintptr_t LuPtrSize;
+#endif /* WITH_GNU */

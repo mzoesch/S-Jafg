@@ -5,7 +5,7 @@
 #include <codecvt>
 
 ///////////////////////////////////////////////////////////////////////////////
-// Compiler dependent features
+// Compiler dependent features for almost all compilers and platforms.
 
 #ifndef NODISCARD
     #define NODISCARD           [[nodiscard]]
@@ -19,10 +19,6 @@
     #define NORETURN            [[noreturn]]
 #endif /* !NORETURN */
 
-#ifndef FORCEINLINE
-    #define FORCEINLINE         _forceinline
-#endif /* !FORCEINLINE */
-
 #ifndef NOINLINE
     #define NOINLINE            __declspec(noinline)
 #endif /* !NOINLINE */
@@ -35,7 +31,7 @@
     #define LITERAL_WIDE(x)     L##x
 #endif /* !LITERAL_WIDE */
 
-// ~Compiler dependent features
+// ~Compiler dependent features for almost all compilers and platforms.
 ///////////////////////////////////////////////////////////////////////////////
 
 /** Generic types for almost all compilers and platforms. */
@@ -76,35 +72,4 @@ struct LGenericPlatformTypes
     /** No other type more aligned than double. */
     typedef double              LMaxAlign;
     typedef decltype(nullptr)   LNullptrTy;
-
-    static LStringLegacy Ws2S(const LWideString& Ws)
-    {
-        __pragma( warning(push) )
-        __pragma( warning(disable: 4996) )
-
-        typedef std::codecvt_utf8<wchar_t> TypeX;
-        std::wstring_convert<TypeX, wchar_t> Converter;
-        return Converter.to_bytes(Ws);
-
-        __pragma( warning(pop) )
-    }
-
-    /** @return You are the owner. Plz delete! */
-    static const LChar* Ws2CStr(const LWideString& Ws)
-    {
-        const LStringLegacy* StrPtr = new LStringLegacy(Ws2S(Ws));
-        return reinterpret_cast<const LChar*>(StrPtr->c_str());
-    }
-
-    static std::wstring CStr2Ws(const char* Cs)
-    {
-        __pragma( warning(push) )
-        __pragma( warning(disable: 4996) )
-
-        typedef std::codecvt_utf8<wchar_t> TypeX;
-        std::wstring_convert<TypeX, wchar_t> Converter;
-        return Converter.from_bytes(Cs);
-
-        __pragma( warning(pop) )
-    }
 };

@@ -2,14 +2,20 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Async/TaskForward.h"
 #include "Async/Runnable.h"
 
 namespace Jafg
 {
 
-typedef uint32 LThreadId;
+#if PLATFORM_WINDOWS_WITH_MSVC
+    typedef uint32 LThreadId;
+#elif PLATFORM_WINDOWS_WITH_GNU
+    typedef __gthread_t LThreadId;
+#else /* PLATFORM_WINDOWS_WITH_GNU */
+    #error "Missing implementation for this platform."
+#endif /* !PLATFORM_WINDOWS_WITH_GNU */
 
 namespace ENamedThreads
 {

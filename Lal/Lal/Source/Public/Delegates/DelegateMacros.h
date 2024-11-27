@@ -9,8 +9,8 @@
  * @param RetTy      The return type of the delegate (can be void).
  * @param ...        The parameter types of the delegate (can be void / or empty).
  */
-#define MAKE_DELEGATE_SIGNATURE(DelNameSig, RetTy, ...)         \
-    typedef ::Jafg::TDelegate<RetTy(##__VA_ARGS__)> DelNameSig;
+#define MAKE_DELEGATE_SIGNATURE(DelNameSig, RetTy, ...)       \
+    typedef ::Jafg::TDelegate<RetTy(__VA_ARGS__)> DelNameSig;
 
 /**
  * Declares a delegate by its signature.
@@ -60,8 +60,8 @@
  * @param DelNameSig The name of the delegate signature.
  * @param ...        The parameter types of the delegate (can be void / or empty).
  */
-#define MAKE_MULTICAST_SIGNATURE(DelNameSig, ...)                       \
-    typedef ::Jafg::TMulticastDelegate<void(##__VA_ARGS__)> DelNameSig;
+#define MAKE_MULTICAST_SIGNATURE(DelNameSig, ...)                     \
+    typedef ::Jafg::TMulticastDelegate<void(__VA_ARGS__)> DelNameSig;
 
 /**
  * Declares a multicast delegate by its signature.

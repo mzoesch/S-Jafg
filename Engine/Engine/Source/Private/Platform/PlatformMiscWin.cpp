@@ -10,7 +10,10 @@
 #include <cfgmgr32.h> /* MAX_DEVICE_ID_LEN */
 
 #include <SetupApi.h>
-#pragma comment( lib, "setupapi.lib" )
+/* For GNU/Clang, link with setupapi using '-lsetupapi' at compile time */
+#if WITH_MSVC
+    #pragma comment( lib, "setupapi.lib" )
+#endif /* WITH_MSVC */
 
 namespace
 {
@@ -253,7 +256,7 @@ Jafg::LSimpleString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
     GetModuleFileName(nullptr, Buffer, PLATFORM_MAX_PATH);
     const std::wstring::size_type Position = LPlatformTypes::CStr2Ws(Buffer).find_last_of(LITERAL_WIDE("\\/"));
     const std::wstring WideEngineRootDir = LPlatformTypes::CStr2Ws(Buffer).substr(0, Position);
-    const LStringLegacy EngineRootDir = LGenericPlatformTypes::Ws2S(WideEngineRootDir);
+    const LStringLegacy EngineRootDir = LPlatformTypes::Ws2S(WideEngineRootDir);
 
     Jafg::LPath Path = Jafg::LPath(EngineRootDir.c_str());
     Path.Normalize();

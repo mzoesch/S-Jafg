@@ -61,29 +61,29 @@ func WriteAllCmakeFileSharedLogic(builder *strings.Builder) {
     var cxxFlags_Msvc string = "/GR-"     // Disables RTTI
     cxxFlags_Msvc += " /Zc:__cplusplus"   // __cplusplus for using the non std __cplusplus version macro.
 
-    var cxxFlags_Debug_Gnu string = "-Wall -Wextra -Wpedantic"  // Enable all warnings.
+    var cxxFlags_Debug_Gnu string = "-Wall -Wextra" // -Wpedantic" // Warnings.
     cxxFlags_Debug_Gnu += " -g" // Generate debug info .pdb files.
     cxxFlags_Debug_Gnu += " -O0" // Pessimistic optimization.
     var cxxFlags_Debug_Msvc string = "/W3" // Enable level three warnings (if needed /Wall for all warnings).
     cxxFlags_Debug_Msvc += " /Zi" // Generate debug info .pdb files.
     cxxFlags_Debug_Msvc += " /Od" // Pessimistic optimization.
-    var lnkSharedFlags_Debug_Gnu string = "-rdynamic"
+    var lnkSharedFlags_Debug_Gnu string = ""
     var lnkSharedFlags_Debug_Msvc string = "/DEBUG /NODEFAULTLIB:libcmt /NODEFAULTLIB:msvcrtd"
     var lnkExecFlags_Debug_Gnu string = ""
     var lnkExecFlags_Debug_Msvc string = "/DEBUG"
 
-    var cxxFlags_Development_Gnu string = "-Wall -Wextra -Wpedantic"  // Enable all warnings.
+    var cxxFlags_Development_Gnu string = "-Wall -Wextra" // Warnings.
     cxxFlags_Development_Gnu += " -g" // Generate debug info .pdb files.
     cxxFlags_Development_Gnu += " -O2" // Optimistic optimization for speed.
     var cxxFlags_Development_Msvc string = "/W3" // Enable level three warnings.
     cxxFlags_Development_Msvc += " /Zi" // Generate debug info .pdb files.
     cxxFlags_Development_Msvc += " /O2" // Optimistic optimization for speed.
-    var lnkSharedFlags_Development_Gnu string = "-rdynamic"
+    var lnkSharedFlags_Development_Gnu string = ""
     var lnkSharedFlags_Development_Msvc string = "/DEBUG /NODEFAULTLIB:libcmt /NODEFAULTLIB:msvcrtd"
     var lnkExecFlags_Development_Gnu string = ""
     var lnkExecFlags_Development_Msvc string = "/DEBUG"
 
-    var cxxFlags_Shipping_Gnu string = "-Wall -Wextra -Wpedantic"  // Enable all warnings.
+    var cxxFlags_Shipping_Gnu string = "-Wall -Wextra"  // Enable all warnings.
     cxxFlags_Shipping_Gnu += " -O3" // Aggressive speed optimization.
     cxxFlags_Shipping_Gnu += " -ffast-math" // Floating point optimizations.
     cxxFlags_Shipping_Gnu += " -flto" // Link time optimization.
@@ -92,7 +92,7 @@ func WriteAllCmakeFileSharedLogic(builder *strings.Builder) {
     cxxFlags_Shipping_Msvc += " /Ox" // Aggressive speed optimization.
     cxxFlags_Shipping_Msvc += " /fp:fast" // Floating point optimizations.
     cxxFlags_Shipping_Msvc += " /GL" // Whole program optimization.
-    var lnkSharedFlags_Shipping_Gnu string = "-rdynamic"
+    var lnkSharedFlags_Shipping_Gnu string = ""
     var lnkSharedFlags_Shipping_Msvc string = "/LTCG /DEBUG:NONE"
     var lnkExecFlags_Shipping_Gnu string = ""
     var lnkExecFlags_Shipping_Msvc string = ""
@@ -143,9 +143,9 @@ endif()
 find_package(Python REQUIRED COMPONENTS Interpreter)
 message(STATUS "Python_EXECUTABLE: ${Python_EXECUTABLE}")
 set(TARGET_PLATFORM_WIN "Windows")
-set(TARGET_PLATFROM_WASM "Wasm")
+set(TARGET_PLATFORM_WASM "Wasm")
 set(TARGET_PLATFORM ${TARGET_PLATFORM_WIN} CACHE STRING "The platform to target.")
-set_property(CACHE TARGET_PLATFORM PROPERTY STRINGS ${TARGET_PLATFORM_WIN} ${TARGET_PLATFROM_WASM})
+set_property(CACHE TARGET_PLATFORM PROPERTY STRINGS ${TARGET_PLATFORM_WIN} ${TARGET_PLATFORM_WASM})
 message(STATUS "Target platform: ${TARGET_PLATFORM}.")
 project(
     Jafg
@@ -478,9 +478,13 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
     cDefines = append(cDefines, fmt.Sprintf("CURRENT_PROJECT_NAME=\"%s\"", module.Parent.Name))
     cDefines = append(cDefines, fmt.Sprintf("CURRENT_MODULE_NAME=\"%s\"", module.GetUsableName()))
     cDefines = append(cDefines, fmt.Sprintf("PRIVATE_JAFG_CURRENT_MODULE_PREPROC_IDENT=%s", module.GetPreProcIntAsString()))
-    cDefines_Msvc = append(cDefines_Msvc, fmt.Sprintf("$<$<STREQUAL:${TARGET_PLATFORM},Windows>:PLATFORM_WINDOWS>"))
+    cDefines_Msvc = append(cDefines_Msvc, "$<$<STREQUAL:${TARGET_PLATFORM},${TARGET_PLATFORM_WIN}>:PLATFORM_WINDOWS>")
+    cDefines_Msvc = append(cDefines_Msvc, "$<$<STREQUAL:${TARGET_PLATFORM},${TARGET_PLATFORM_WIN}>:PLATFORM_WINDOWS_WITH_MSVC>")
     cDefines_Minimal = append(cDefines_Minimal, fmt.Sprintf(`if(${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WIN})
-        target_compile_definitions(${CUR_MOD_NAME} PRIVATE PLATFORM_WINDOWS)
+        target_compile_definitions(${CUR_MOD_NAME} PRIVATE
+            PLATFORM_WINDOWS
+            PLATFORM_WINDOWS_WITH_GNU
+            )
     endif()`))
     var cDefines_Debug       []string = []string{ "IN_DEBUG=1" }
     var cDefines_Development []string = []string{ "IN_DEVELOPMENT=1" }
@@ -506,9 +510,15 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
     var publicLinkedLibs_AllTargets []string // For all generators.
     var publicLinkedLibs_AllTargets_Msvc []string
     var publicLinkedLibs_AllTargets_Minimal []string
+    var publicLinkedLibs_AllTargets_Minimal_Formatted []string
     var privateLinkedLibs_AllTargets []string // For all generators.
     var privateLinkedLibs_AllTargets_Msvc []string
     var privateLinkedLibs_AllTargets_Minimal []string
+    var privateLinkedLibs_AllTargets_Minimal_Formatted []string
+
+    if module.GetUsableName() == "Engine" {
+        privateLinkedLibs_AllTargets_Minimal_Formatted = append(privateLinkedLibs_AllTargets_Minimal_Formatted, "Setupapi.lib")
+    }
 
     WriteWithIndent(builder, indent, fmt.Sprintf("set(CUR_MOD_NAME \"%s\")\n", module.GetUsableName()))
     WriteWithIndent(builder, indent, fmt.Sprintf("set(CUR_MOD_REL_PATH \"%s\")\n", module.GetRelativeModuleDir()))
@@ -641,7 +651,16 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
     }
 
     if module.Kind.IsLaunch() || (module.Kind.IsInherit() && module.Parent.DefaultKind.IsLaunch()) {
-        WriteWithIndent(builder, indent, fmt.Sprintf("set_target_properties(${CUR_MOD_NAME} PROPERTIES LINK_FLAGS \"/SUBSYSTEM:WINDOWS\")\n"))
+        WriteWithIndent(builder, indent, fmt.Sprintf(`if(USING_MSVC)
+%s    set_target_properties(${CUR_MOD_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+%sendif()
+%sif(USING_MINIMAL)
+%s    set_target_properties(${CUR_MOD_NAME} PROPERTIES LINK_FLAGS "-mwindows")
+%sendif()
+`,
+            Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
+            Shared.Indent(indent),
+        ))
     }
 
     for idx, _ := range cxxPrivateFlags {
@@ -711,8 +730,10 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
         if dep == "RHI_DEPENDENCIES" {
             /* Has to be included directly and not inside the namespace. */
             publicIncludeDirs_AllTargets = append(publicIncludeDirs_AllTargets, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/Freetype\"", Shared.VendorIncludeDir))
-            publicLinkedLibs_AllTargets = append(publicLinkedLibs_AllTargets, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/freetype.lib", Shared.VendorLibDir))
-            publicLinkedLibs_AllTargets = append(publicLinkedLibs_AllTargets, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/glfw3.lib", Shared.VendorLibDir))
+            publicLinkedLibs_AllTargets_Minimal_Formatted = append(publicLinkedLibs_AllTargets_Minimal_Formatted, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/libfreetype.dll.a\"", Shared.VendorLibDir))
+            publicLinkedLibs_AllTargets_Msvc = append(publicLinkedLibs_AllTargets_Msvc, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/freetype.lib\"", Shared.VendorLibDir))
+            publicLinkedLibs_AllTargets_Minimal_Formatted = append(publicLinkedLibs_AllTargets_Minimal_Formatted, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/libglfw3.a\"", Shared.VendorLibDir))
+            publicLinkedLibs_AllTargets_Msvc = append(publicLinkedLibs_AllTargets_Msvc, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/glfw3.lib\"", Shared.VendorLibDir))
             continue
         }
 
@@ -744,8 +765,10 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
         if dep == "RHI_DEPENDENCIES" {
             /* Has to be included directly and not inside the namespace. */
             privateIncludeDirs_AllTargets = append(privateIncludeDirs_AllTargets, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/Freetype\"", Shared.VendorIncludeDir))
-            privateLinkedLibs_AllTargets = append(privateLinkedLibs_AllTargets, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/freetype.lib\"", Shared.VendorLibDir))
-            privateLinkedLibs_AllTargets = append(privateLinkedLibs_AllTargets, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/glfw3.lib\"", Shared.VendorLibDir))
+            privateLinkedLibs_AllTargets_Minimal_Formatted = append(privateLinkedLibs_AllTargets_Minimal_Formatted, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/libfreetype.dll.a\"", Shared.VendorLibDir))
+            privateLinkedLibs_AllTargets_Msvc = append(privateLinkedLibs_AllTargets_Msvc, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/freetype.lib\"", Shared.VendorLibDir))
+            privateLinkedLibs_AllTargets_Minimal_Formatted = append(privateLinkedLibs_AllTargets_Minimal_Formatted, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/libglfw3.a\"", Shared.VendorLibDir))
+            privateLinkedLibs_AllTargets_Msvc = append(privateLinkedLibs_AllTargets_Msvc, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/glfw3.lib\"", Shared.VendorLibDir))
             continue
         }
 
@@ -806,9 +829,18 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
         /* Libs only in debug / development. */
         var publicLinkedDebugLibs []string
         var privateLinkedDebugLibs []string
+        var publicLinkedDebugLibs_Msvc []string
+        var privateLinkedDebugLibs_Msvc []string
+        var publicLinkedDebugLibs_Minimal []string
+        var privateLinkedDebugLibs_Minimal []string
+
         /* Libs only in shipping. */
         var publicLinkedShippingLibs []string
         var privateLinkedShippingLibs []string
+        var publicLinkedShippingLibs_Msvc []string
+        var privateLinkedShippingLibs_Msvc []string
+        var publicLinkedShippingLibs_Minimal []string
+        var privateLinkedShippingLibs_Minimal []string
 
         for _, addcDef := range targ.AdditionalDefines {
             cDefines_Msvc = append(cDefines_Msvc, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,Debug-%s>:%s>", targ.GetSuffix(), addcDef))
@@ -828,10 +860,10 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
 
         for _, dep := range module.PublicDependencies {
             if dep == "CORE_DEPENDENCIES" {
-                publicLinkedDebugLibs = append(publicLinkedDebugLibs, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoiseD.lib", Shared.VendorLibDir))
-                //publicLinkedDebugLibs = append(publicLinkedDebugLibs, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoiseD.dll", Shared.VendorLibDir))
-                publicLinkedShippingLibs = append(publicLinkedShippingLibs, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoise.lib", Shared.VendorLibDir))
-                //publicLinkedShippingLibs = append(publicLinkedShippingLibs, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoise.dll", Shared.VendorLibDir))
+                publicLinkedDebugLibs_Msvc = append(publicLinkedDebugLibs_Msvc, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoiseD.lib", Shared.VendorLibDir))
+                publicLinkedShippingLibs_Msvc = append(publicLinkedShippingLibs_Msvc, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoise.lib", Shared.VendorLibDir))
+                publicLinkedDebugLibs_Minimal = append(publicLinkedDebugLibs_Minimal, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/libFastNoiseD.dll.a", Shared.VendorLibDir))
+                publicLinkedShippingLibs_Minimal = append(publicLinkedShippingLibs_Minimal, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/libFastNoise.dll.a", Shared.VendorLibDir))
                 continue
             }
             if dep == "RHI_DEPENDENCIES" {
@@ -842,10 +874,10 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
 
         for _, dep := range module.PrivateDependencies {
             if dep == "CORE_DEPENDENCIES" {
-                privateLinkedDebugLibs = append(privateLinkedDebugLibs, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoiseD.lib", Shared.VendorLibDir))
-                //privateLinkedDebugLibs = append(privateLinkedDebugLibs, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoiseD.dll", Shared.VendorLibDir))
-                privateLinkedShippingLibs = append(privateLinkedShippingLibs, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoise.lib", Shared.VendorLibDir))
-                //privateLinkedShippingLibs = append(privateLinkedShippingLibs, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoise.dll", Shared.VendorLibDir))
+                privateLinkedDebugLibs_Msvc = append(privateLinkedDebugLibs_Msvc, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoiseD.lib", Shared.VendorLibDir))
+                privateLinkedShippingLibs_Msvc = append(privateLinkedShippingLibs_Msvc, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoise.lib", Shared.VendorLibDir))
+                privateLinkedDebugLibs_Minimal = append(privateLinkedDebugLibs_Minimal, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/libFastNoiseD.dll.a", Shared.VendorLibDir))
+                privateLinkedShippingLibs_Minimal = append(privateLinkedShippingLibs_Minimal, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/libFastNoise.dll.a", Shared.VendorLibDir))
                 continue
             }
             if dep == "RHI_DEPENDENCIES" {
@@ -947,6 +979,33 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
                 continue
             }
         }
+        if len(publicLinkedDebugLibs_Msvc) > 0 {
+            for _, lib := range publicLinkedDebugLibs_Msvc {
+                publicLinkedLibs_AllTargets_Msvc = append(publicLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
+                    "$<$<STREQUAL:$<CONFIG>,Debug-%s>:%s>",
+                    targ.GetSuffix(), lib,
+                ))
+                publicLinkedLibs_AllTargets_Msvc = append(publicLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
+                    "$<$<STREQUAL:$<CONFIG>,Development-%s>:%s>",
+                    targ.GetSuffix(), lib,
+                ))
+                continue
+            }
+        }
+        if len(publicLinkedDebugLibs_Minimal) > 0 {
+            for _, lib := range publicLinkedDebugLibs_Minimal {
+                publicLinkedLibs_AllTargets_Minimal = append(publicLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Debug-%s")
+        target_link_libraries(${CUR_MOD_NAME} PUBLIC %s)
+    endif()`, targ.GetSuffix(), lib))
+                publicLinkedLibs_AllTargets_Minimal = append(publicLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Development-%s")
+        target_link_libraries(${CUR_MOD_NAME} PUBLIC %s)
+    endif()`, targ.GetSuffix(), lib))
+                continue
+            }
+        }
+
         if len(privateLinkedDebugLibs) > 0 {
             for _, lib := range privateLinkedDebugLibs {
                 privateLinkedLibs_AllTargets_Msvc = append(privateLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
@@ -957,6 +1016,32 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
                     "$<$<STREQUAL:$<CONFIG>,Development-%s>:%s>",
                     targ.GetSuffix(), lib,
                 ))
+                privateLinkedLibs_AllTargets_Minimal = append(privateLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Debug-%s")
+        target_link_libraries(${CUR_MOD_NAME} PRIVATE %s)
+    endif()`, targ.GetSuffix(), lib))
+                privateLinkedLibs_AllTargets_Minimal = append(privateLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Development-%s")
+        target_link_libraries(${CUR_MOD_NAME} PRIVATE %s)
+    endif()`, targ.GetSuffix(), lib))
+                continue
+            }
+        }
+        if len(privateLinkedDebugLibs_Msvc) > 0 {
+            for _, lib := range privateLinkedDebugLibs_Msvc {
+                privateLinkedLibs_AllTargets_Msvc = append(privateLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
+                    "$<$<STREQUAL:$<CONFIG>,Debug-%s>:%s>",
+                    targ.GetSuffix(), lib,
+                ))
+                privateLinkedLibs_AllTargets_Msvc = append(privateLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
+                    "$<$<STREQUAL:$<CONFIG>,Development-%s>:%s>",
+                    targ.GetSuffix(), lib,
+                ))
+                continue
+            }
+        }
+        if len(privateLinkedDebugLibs_Minimal) > 0 {
+            for _, lib := range privateLinkedDebugLibs_Minimal {
                 privateLinkedLibs_AllTargets_Minimal = append(privateLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
 `if(${CMAKE_BUILD_TYPE} STREQUAL "Debug-%s")
         target_link_libraries(${CUR_MOD_NAME} PRIVATE %s)
@@ -982,6 +1067,25 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
                 continue
             }
         }
+        if len(privateLinkedShippingLibs_Msvc) > 0 {
+            for _, lib := range privateLinkedShippingLibs_Msvc {
+                privateLinkedLibs_AllTargets_Msvc = append(privateLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
+                    "$<$<STREQUAL:$<CONFIG>,Shipping-%s>:%s>",
+                    targ.GetSuffix(), lib,
+                ))
+                continue
+            }
+        }
+        if len(privateLinkedShippingLibs_Minimal) > 0 {
+            for _, lib := range privateLinkedShippingLibs_Minimal {
+                privateLinkedLibs_AllTargets_Minimal = append(privateLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Shipping-%s")
+        target_link_libraries(${CUR_MOD_NAME} PRIVATE %s)
+    endif()`, targ.GetSuffix(), lib))
+                continue
+            }
+        }
+
         if len(privateLinkedShippingLibs) > 0 {
             for _, lib := range privateLinkedShippingLibs {
                 privateLinkedLibs_AllTargets_Msvc = append(privateLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
@@ -991,6 +1095,24 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
                 privateLinkedLibs_AllTargets_Minimal = append(privateLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
 `if(${CMAKE_BUILD_TYPE} STREQUAL "Shipping-%s")
         target_link_libraries(${CUR_MOD_NAME} PRIVATE %s)
+    endif()`, targ.GetSuffix(), lib))
+                continue
+            }
+        }
+        if len(publicLinkedShippingLibs_Msvc) > 0 {
+            for _, lib := range publicLinkedShippingLibs_Msvc {
+                publicLinkedLibs_AllTargets_Msvc = append(publicLinkedLibs_AllTargets_Msvc, fmt.Sprintf(
+                    "$<$<STREQUAL:$<CONFIG>,Shipping-%s>:%s>",
+                    targ.GetSuffix(), lib,
+                ))
+                continue
+            }
+        }
+        if len(publicLinkedShippingLibs_Minimal) > 0 {
+            for _, lib := range publicLinkedShippingLibs_Minimal {
+                publicLinkedLibs_AllTargets_Minimal = append(publicLinkedLibs_AllTargets_Minimal, fmt.Sprintf(
+`if(${CMAKE_BUILD_TYPE} STREQUAL "Shipping-%s")
+        target_link_libraries(${CUR_MOD_NAME} PUBLIC %s)
     endif()`, targ.GetSuffix(), lib))
                 continue
             }
@@ -1048,6 +1170,11 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
     WriteWithIndent(builder, indent+8, ")\n")
     WriteWithIndent(builder, indent, "endif()\n")
     WriteWithIndent(builder, indent, "if(USING_MINIMAL)\n")
+    WriteWithIndent(builder, indent+4, "target_link_libraries(${CUR_MOD_NAME} PUBLIC\n")
+    for libIdx, _ := range publicLinkedLibs_AllTargets_Minimal_Formatted {
+        WriteWithIndent(builder, indent+8, publicLinkedLibs_AllTargets_Minimal_Formatted[libIdx]+"\n")
+    }
+    WriteWithIndent(builder, indent+8, ")\n")
     for libIdx, _ := range publicLinkedLibs_AllTargets_Minimal {
         WriteWithIndent(builder, indent+4, publicLinkedLibs_AllTargets_Minimal[libIdx]+"\n")
     }
@@ -1066,6 +1193,11 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
     WriteWithIndent(builder, indent+8, ")\n")
     WriteWithIndent(builder, indent, "endif()\n")
     WriteWithIndent(builder, indent, "if(USING_MINIMAL)\n")
+    WriteWithIndent(builder, indent+4, "target_link_libraries(${CUR_MOD_NAME} PRIVATE\n")
+    for libIdx, _ := range privateLinkedLibs_AllTargets_Minimal_Formatted {
+        WriteWithIndent(builder, indent+8, privateLinkedLibs_AllTargets_Minimal_Formatted[libIdx]+"\n")
+    }
+    WriteWithIndent(builder, indent+8, ")\n")
     for libIdx, _ := range privateLinkedLibs_AllTargets_Minimal {
         WriteWithIndent(builder, indent+4, privateLinkedLibs_AllTargets_Minimal[libIdx]+"\n")
     }

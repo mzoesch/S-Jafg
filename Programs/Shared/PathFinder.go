@@ -3,6 +3,7 @@
 package Shared
 
 import (
+    "crypto/sha256"
     "errors"
     "fmt"
     "io"
@@ -181,13 +182,32 @@ func CopyRelativeDirectoryByExtension(relativeSource string, relativeTarget stri
 
     absoluteTarget, bExists := GetAbsolutePath(relativeTarget)
     if !bExists {
-        CheckRelativeDir(relativeTarget)
-        absoluteTarget = GetCheckedAbsolutePath(relativeTarget)
+       CheckRelativeDir(relativeTarget)
+       absoluteTarget = GetCheckedAbsolutePath(relativeTarget)
     }
 
     CopyAbsoluteDirectoryByExtension(absoluteSource, absoluteTarget, bOverwrite, exts, bRecursively)
 
     return
+}
+
+func FileHash(filePath string) ([]byte, error) {
+    file, err := os.Open(filePath)
+    if err != nil {
+        return nil, err
+    }
+    defer func(file *os.File) {
+        err := file.Close()
+        if err != nil {
+            panic(err)
+        }
+    }(file)
+
+    hasher := sha256.New()
+    if _, err := io.Copy(hasher, file); err != nil {
+        return nil, err
+    }
+    return hasher.Sum(nil), nil
 }
 
 func CopyAbsoluteDirectoryByExtension(absoluteSource string, absoluteTarget string, bOverwrite bool, exts []string, bRecursively bool) {
@@ -242,25 +262,67 @@ func CopyAbsoluteDirectoryByExtension(absoluteSource string, absoluteTarget stri
             continue
         }
 
-        if _, err := os.Stat(targetFile); os.IsExist(err) {
-            if bOverwrite {
-                err := os.Remove(targetFile)
-                if err != nil {
-                    panic(fmt.Sprintf("Error removing file [%s]: [%s].\n", targetFile, err))
-                }
-            } else {
-                panic(fmt.Sprintf("File [%s] already exists and overwrite is disabled.\n", targetFile))
-            }
+        var _, errTarget = os.Stat(targetFile);
+        if os.IsNotExist(errTarget) {
+            CopyAbsoluteFile(sourceFile, targetFile)
+            fmt.Printf("    Copied [%s] to [%s].\n", sourceFile, targetFile)
+            continue
+        }
+        if errTarget != nil {
+            panic(errTarget)
         }
 
-        CopyAbsoluteFile(sourceFile, targetFile)
-
-        fmt.Printf("    Copied [%s] to [%s].\n", sourceFile, targetFile)
+        if bOverwrite == false {
+            panic(fmt.Sprintf("File [%s] already exists and overwrite is disabled.\n", targetFile))
+        }
+        if CopyAbsoluteFileIfDifferent(sourceFile, targetFile) {
+            fmt.Printf("    Updated [%s] to [%s].\n", sourceFile, targetFile)
+        }
 
         continue
     }
 
     return
+}
+
+func CopyAbsoluteFileIfDifferent(sourceFile string, targetFile string) bool {
+    srcInfo, err := os.Stat(sourceFile)
+    if err != nil {
+        panic(err)
+        return false
+    }
+
+    tgtInfo, err := os.Stat(targetFile)
+    if err != nil {
+        panic(err)
+        return false
+    }
+
+    if srcInfo.Size() != tgtInfo.Size() {
+        DeleteAbsoluteFileIfExists(targetFile)
+        CopyAbsoluteFile(sourceFile, targetFile)
+        return true
+    }
+
+    sourceHash, err := FileHash(sourceFile)
+    if err != nil {
+        panic(err)
+        return false
+    }
+
+    targetHash, err := FileHash(targetFile)
+    if err != nil {
+        panic(err)
+        return false
+    }
+
+    if string(sourceHash) == string(targetHash) {
+        return false
+    }
+
+    DeleteAbsoluteFileIfExists(targetFile)
+    CopyAbsoluteFile(sourceFile, targetFile)
+    return true
 }
 
 // CopyAbsoluteFile copies a file from source to destination. Dest file must not exist.

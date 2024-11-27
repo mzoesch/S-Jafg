@@ -31,12 +31,12 @@ struct TIntVector2 final
     static FORCEINLINE TIntVector2<T> Zero() { return TIntVector2<T>::ZeroVector; }
     static FORCEINLINE TIntVector2<T> One()  { return TIntVector2<T>::OneVector;  }
 
-    FORCEINLINE          TIntVector2<T>()                                       = default;
-    FORCEINLINE explicit TIntVector2<T>(const T InIntegral) noexcept            : X(InIntegral), Y(InIntegral)  { }
-    FORCEINLINE explicit TIntVector2<T>(const T InX, const T InY) noexcept      : X(InX), Y(InY)                { }
-    FORCEINLINE explicit TIntVector2<T>(const T InXY[2]) noexcept               : X(InXY[0]), Y(InXY[1])        { }
-    FORCEINLINE          TIntVector2<T>(const TIntVector2<T>& InVec) noexcept   : X(InVec.X), Y(InVec.Y)        { }
-    FORCEINLINE          TIntVector2<T>(TIntVector2<T>&& InVec) noexcept        : X(InVec.X), Y(InVec.Y)        { }
+    FORCEINLINE          TIntVector2()                                       = default;
+    FORCEINLINE explicit TIntVector2(const T InIntegral) noexcept            : X(InIntegral), Y(InIntegral)  { }
+    FORCEINLINE explicit TIntVector2(const T InX, const T InY) noexcept      : X(InX), Y(InY)                { }
+    FORCEINLINE explicit TIntVector2(const T InXY[2]) noexcept               : X(InXY[0]), Y(InXY[1])        { }
+    FORCEINLINE          TIntVector2(const TIntVector2<T>& InVec) noexcept   : X(InVec.X), Y(InVec.Y)        { }
+    FORCEINLINE          TIntVector2(TIntVector2<T>&& InVec) noexcept        : X(InVec.X), Y(InVec.Y)        { }
 
     FORCEINLINE auto GetData()       noexcept ->       T* { return &this->X; }
     FORCEINLINE auto GetData() const noexcept -> const T* { return &this->X; }

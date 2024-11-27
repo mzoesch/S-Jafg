@@ -176,8 +176,14 @@ NODISCARD FORCEINLINE auto MakeOrthographicProjectionMatrix(const TVector2<T>& R
     Specializations.
 ----------------------------------------------------------------------------*/
 
-template <> FORCEINLINE float  Absolute(const float A)  { return ::fabsf(A); }
-template <> FORCEINLINE double Absolute(const double A) { return ::fabs(A); }
+#if PLATFORM_WINDOWS_WITH_MSVC
+    template <> FORCEINLINE float  Absolute(const float A)  { return ::fabsf(A); }
+    template <> FORCEINLINE double Absolute(const double A) { return ::fabs(A); }
+#elif PLATFORM_WINDOWS_WITH_GNU
+    template <> FORCEINLINE float  Absolute(const float A)  { return ::abs(A); }
+    template <> FORCEINLINE double Absolute(const double A) { return ::abs(A); }
+#endif /* PLATFORM_WINDOWS_WITH_GNU */
+
 template <> FORCEINLINE float  Min(const float A,  const float B)  { return (B < A) ? B : A; }
 template <> FORCEINLINE double Min(const double A, const double B) { return (B < A) ? B : A; }
 template <> FORCEINLINE float  Max(const float A,  const float B)  { return (B < A) ? A : B; }

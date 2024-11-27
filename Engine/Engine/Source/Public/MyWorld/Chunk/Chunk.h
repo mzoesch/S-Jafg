@@ -89,7 +89,7 @@ public:
     virtual void BeginLife() override;
     virtual void EndLife() override;
 
-    FORCEINLINE void SetChunkState(const EChunkState::Type NewChunkState);
+                void SetChunkState(const EChunkState::Type NewChunkState);
     FORCEINLINE auto GetChunkState() const -> EChunkState::Type { return this->ChunkState; }
     FORCEINLINE auto SetHuntedChunkState(const EChunkState::Type NewHuntedChunkState) -> void
     {

@@ -11,7 +11,7 @@ namespace Jafg
 /**
  * The base class for all nodes that can possess children.
  */
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
 class ENGINE_API WWidgetParent : public WWidgetParentBase
 {
     GENERATED_CLASS_BODY()

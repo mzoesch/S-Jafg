@@ -9,7 +9,7 @@
 void LWinPlatformBreakDefines::OnProgramPanic(
     const std::string& InMessage,
     const std::string& InFile,
-    const int32_t InLine
+    const LWinPlatformTypes::int32 InLine
 )
 {
     const std::string  InCaption     = "Jafg panicked";

@@ -40,7 +40,7 @@ public:                                                                         
         check( MyClassSpacedName :: StaticClassReferrer)                                                        \
         return MyClassSpacedName :: StaticClassReferrer;                                                        \
     }                                                                                                           \
-    MyClassSpacedName() = delete;                                                                               \
+    MyClassName() = delete;                                                                                     \
     PROHIBIT_REALLOC_OF_ANY_FORM_NAMESPACED( MyClassSpacedName, MyClassName )                                   \
     /* void operator delete(void* Ptr) = delete; */                                                             \
                                                                                                                 \
@@ -57,7 +57,7 @@ private: /* Restore default visibility. */
     struct PRIVATE_JAFG_CORE_JOIN_INNER_THREE(L_, MyClassName, _ConstructionHelper) final                           \
     {                                                                                                               \
         PRIVATE_JAFG_CORE_JOIN_INNER_THREE(L_, MyClassName, _ConstructionHelper)();                                 \
-        inline static ::EClassFlags::Type ClassFlags = EClassFlags::CombineFlags(EClassFlags::None, ##__VA_ARGS__); \
+        inline static ::EClassFlags::Type ClassFlags = EClassFlags::CombineFlags(__VA_ARGS__ EClassFlags::None); \
     };                                                                                                              \
 
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION(              \

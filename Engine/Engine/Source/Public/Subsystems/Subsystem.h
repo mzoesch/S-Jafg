@@ -15,7 +15,7 @@ struct LSubsystemCollection;
  *
  * To create your own subsystem lifetime:
  */
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
+DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
 class ENGINE_API JSubsystem : public Private::JObjectBase
 {
     friend LSubsystemCollection;

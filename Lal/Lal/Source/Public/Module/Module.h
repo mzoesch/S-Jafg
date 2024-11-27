@@ -10,7 +10,7 @@ namespace Jafg
 class LModuleSupervisor;
 
 /** Base class for all modules. */
-class LAL_API LModuleBase
+class LModuleBase
 {
     friend LModuleSupervisor;
 
