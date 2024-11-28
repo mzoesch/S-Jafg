@@ -35,7 +35,7 @@ var ObjectStructureCacheFile string = fmt.Sprintf("%s/jobj.jobj", VslfDir)
 var VendorIncludeDir string = "Engine/Vendor/Include"
 var VendorLibDir string = "Engine/Vendor/Lib"
 var SavedDir string = "Saved"
-var SolutionDirOut string = fmt.Sprintf("%s/Solution", SavedDir)
+var SolutionDirOut string = fmt.Sprintf("%s/SolutionWin", SavedDir)
 
 func GetAbsolutePath(relPath string) (string /* absPath */, bool /* bExists */) {
     var absPath string = fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), relPath)

@@ -35,20 +35,23 @@ def generate_solution(emulate_compilation: bool) -> None:
     #                 os.unlink(file_path)
     #             elif os.path.isdir(file_path):
     #                 shutil.rmtree(file_path)
-    # if not os.path.exists('Saved'):
-    #     os.makedirs('Saved')
-    # if not os.path.exists('Saved/Solution'):
-    #     os.makedirs('Saved/Solution')
-    # if os.path.exists('Saved/Minimal'):
-    #     shutil.rmtree('Saved/Minimal')
-    # if not os.path.exists('Saved/Minimal'):
-    #     os.makedirs('Saved/Minimal')
+    if not os.path.exists('Saved'):
+        os.makedirs('Saved')
+    if not os.path.exists('Saved/SolutionWin'):
+        os.makedirs('Saved/SolutionWin')
+    if not os.path.exists('Saved/SolutionWasm'):
+        os.makedirs('Saved/SolutionWasm')
+    if not os.path.exists('Saved/Minimal'):
+        os.makedirs('Saved/Minimal')
 
-    solution_args = ['cmake', '../..', '-G', 'Visual Studio 17 2022']
-    minimal_args =  ['cmake', '../..', '-G', 'MinGW Makefiles', '-DCMAKE_BUILD_TYPE=Debug-Client']
+    solution_args = ['cmake', '../..', '-G', 'Visual Studio 17 2022', '-DTARGET_PLATFORM=Windows']
+    solution_wasm_args = ['cmake', '../..', '-G', 'Visual Studio 17 2022', '-DTARGET_PLATFORM=Wasm']
+    minimal_args = ['cmake', '../..', '-G', 'MinGW Makefiles', '-DCMAKE_BUILD_TYPE=Debug-Client']
 
-    print(f'Executing: {solution_args} in Saved/Solution')
-    subprocess.check_call(solution_args, cwd='Saved/Solution')
+    print(f'Executing: {solution_args} in Saved/SolutionWin')
+    subprocess.check_call(solution_args, cwd='Saved/SolutionWin')
+    print(f'Executing: {solution_wasm_args} in Saved/SolutionWasm')
+    subprocess.check_call(solution_wasm_args, cwd='Saved/SolutionWasm')
     print(f'Executing: {minimal_args} in Saved/Minimal')
     subprocess.check_call(minimal_args, cwd='Saved/Minimal')
 
@@ -64,8 +67,10 @@ def generate_solution(emulate_compilation: bool) -> None:
         )
         print('Emulation complete.')
 
-        print(f'Executing: {solution_args} in Saved/Solution')
-        subprocess.check_call(solution_args, cwd='Saved/Solution')
+        print(f'Executing: {solution_args} in Saved/SolutionWasm')
+        subprocess.check_call(solution_args, cwd='Saved/SolutionWasm')
+        print(f'Executing: {solution_wasm_args} in Saved/SolutionWin')
+        subprocess.check_call(solution_wasm_args, cwd='Saved/SolutionWin')
         print(f'Executing: {minimal_args} in Saved/Minimal')
         subprocess.check_call(minimal_args, cwd='Saved/Minimal')
         print('Finished reflecting emulation in the solution.')
@@ -73,17 +78,30 @@ def generate_solution(emulate_compilation: bool) -> None:
     print('Executing: {target_binary} --SolutionGenerator --PostLuaRun')
     subprocess.check_call(f'{target_binary} --SolutionGenerator --PostLuaRun', cwd=compiled_working_dir)
 
-    if not os.path.exists('Saved/Solution/Jafg.sln'):
-        raise RuntimeError('Solution file not found in the expected location at Saved/Solution/Jafg.sln.')
-    if not os.path.exists('Jafg.sln.lnk'):
+    if not os.path.exists('Saved/SolutionWin/Jafg.sln'):
+        raise RuntimeError('Solution file not found in the expected location at Saved/SolutionWin/Jafg.sln.')
+    if not os.path.exists('JafgWin.sln.lnk'):
         if Platform.is_windows():
             subprocess.check_call([
                 'powershell',
                 '-ExecutionPolicy', 'Bypass',
                 '-File',
-                'Programs/Shell/CreateSymLinkSln.ps1',
+                'Programs/Shell/CreateSymLinkSlnWin.ps1',
             ])
-            print('Created symlink to the solution file.')
+            print('Created symlink to the win solution file.')
+        else:
+            raise ValueError('Platform is missing implementation for this operation.')
+    if not os.path.exists('Saved/SolutionWasm/Jafg.sln'):
+        raise RuntimeError('Solution file not found in the expected location at Saved/SolutionWasm/Jafg.sln.')
+    if not os.path.exists('JafgWasm.sln.lnk'):
+        if Platform.is_windows():
+            subprocess.check_call([
+                'powershell',
+                '-ExecutionPolicy', 'Bypass',
+                '-File',
+                'Programs/Shell/CreateSymLinkSlnWasm.ps1',
+            ])
+            print('Created symlink to the wasm solution file.')
         else:
             raise ValueError('Platform is missing implementation for this operation.')
 

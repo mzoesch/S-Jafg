@@ -256,6 +256,9 @@ func ChangeIntermediateDir() {
         if strings.Contains(file, "Vendor.vcxproj") {
             continue
         }
+        if strings.Contains(file, "WasmRuntime.vcxproj") {
+            continue
+        }
 
         ChangeIntermediateDirForVcxprojFile(Shared.GetCheckedAbsolutePath(fmt.Sprintf(
             "%s/%s", Shared.SolutionDirOut, file,
@@ -274,6 +277,9 @@ func ChangeIntermediateDir() {
             continue
         }
         if strings.Contains(file, "Vendor.vcxproj.filters") {
+            continue
+        }
+        if strings.Contains(file, "WasmRuntime.vcxproj.filters") {
             continue
         }
 
@@ -312,6 +318,10 @@ func RetargetDirectories() {
             continue
         }
         if strings.Contains(line, "Vendor") {
+            lines = append(lines, line)
+            continue
+        }
+        if strings.Contains(line, "WasmRuntime") {
             lines = append(lines, line)
             continue
         }

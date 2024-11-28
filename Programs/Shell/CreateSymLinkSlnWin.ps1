@@ -1,5 +1,5 @@
-$TargetPath = ".\Saved\Solution\Jafg.sln"
-$ShortcutPath = ".\Jafg.sln.lnk"
+$TargetPath = ".\Saved\SolutionWin\Jafg.sln"
+$ShortcutPath = ".\JafgWin.sln.lnk"
 
 $WScriptShell = New-Object -ComObject WScript.Shell
 $Shortcut = $WScriptShell.CreateShortcut($ShortcutPath)

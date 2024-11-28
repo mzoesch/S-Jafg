@@ -3,12 +3,17 @@
 import subprocess
 
 def run_subprocess(*args) -> None:
-    p : subprocess = subprocess.run(
-        args,
-        check=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
+    try:
+        p : subprocess = subprocess.run(
+            args,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+    except subprocess.CalledProcessError as e:
+        print(e.stdout.decode('utf-8'), end='')
+        print(e.stderr.decode('utf-8'), end='')
+        raise e
 
     print(p.stdout.decode('utf-8'), end='')
     print(p.stderr.decode('utf-8'), end='')

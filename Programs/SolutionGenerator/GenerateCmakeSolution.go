@@ -3,11 +3,11 @@
 package SolutionGenerator
 
 import (
-    "Jafg/Shared"
-    "fmt"
-    "os"
-    "slices"
-    "strings"
+	"Jafg/Shared"
+	"fmt"
+	"os"
+	"slices"
+	"strings"
 )
 
 func GenerateCmakeSolution() {
@@ -55,6 +55,7 @@ func WriteCmakeFileBody(handle *os.File) {
     WriteCmakeFileProjectSpecificSections(&builder)
     WriteCmakeFileGeneratedSection(&builder)
     WriteCmakeFileVendorSection(&builder)
+    AddCustomCmakeWasmRuntime(&builder)
 
     Shared.WriteToFile(handle, builder.String())
 
@@ -167,19 +168,26 @@ project(
 message(STATUS "Detected C compiler: ${CMAKE_C_COMPILER}.")
 message(STATUS "Detected CXX compiler: ${CMAKE_CXX_COMPILER}.")
 message(STATUS "With CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}.")
-message(STATUS "With CXX_COMPILER: ${CMAKE_CXX_COMPILER_ID}.")
+message(STATUS "With CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}.")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(USING_MSVC ON)
     set(USING_MINIMAL OFF)
+    set(CURRENT_COMPILER_SUPPORTS_SHARED_LNK ON)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    set(USING_MSVC OFF)
+    set(USING_MINIMAL ON)
+    set(CURRENT_COMPILER_SUPPORTS_SHARED_LNK ON)
 else()
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    string(REGEX MATCH ".*em\\+\\+.*" REGREX_MATCHED ${CMAKE_CXX_COMPILER})
+    if(REGREX_MATCHED)
         set(USING_MSVC OFF)
         set(USING_MINIMAL ON)
+        set(CURRENT_COMPILER_SUPPORTS_SHARED_LNK OFF)
     else()
-        message(FATAL_ERROR "Unsupported compiler.")
+        message(FATAL_ERROR "Unsupported compiler [Compiler: ${CMKAE_CXX_COMPILER}; ID: ${CMAKE_CXX_COMPILER_ID}].")
     endif()
 endif()
 if(USING_MSVC)
@@ -216,6 +224,14 @@ if(USING_MINIMAL)
             FATAL_ERROR
             "CMAKE_BUILD_TYPE is '${CMAKE_BUILD_TYPE}' but only allowed is [${CMAKE_CONFIGURATION_TYPES}]."
             )
+    endif()
+endif()
+if(USING_MSVC)
+    add_compile_definitions($<$<STREQUAL:${TARGET_PLATFORM},${TARGET_PLATFORM_WIN}>:COMPILER_SUPPORTS_SHARED_LNK>)
+endif()
+if(USING_MINIMAL)
+    if(CURRENT_COMPILER_SUPPORTS_SHARED_LNK)
+        add_compile_definitions(COMPILER_SUPPORTS_SHARED_LNK)
     endif()
 endif()
 `,
@@ -491,15 +507,21 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
     cDefines = append(cDefines, fmt.Sprintf("PRIVATE_JAFG_CURRENT_MODULE_PREPROC_IDENT=%s", module.GetPreProcIntAsString()))
     cDefines_Msvc = append(cDefines_Msvc, "$<$<STREQUAL:${TARGET_PLATFORM},${TARGET_PLATFORM_WIN}>:PLATFORM_WINDOWS>")
     cDefines_Msvc = append(cDefines_Msvc, "$<$<STREQUAL:${TARGET_PLATFORM},${TARGET_PLATFORM_WIN}>:PLATFORM_WINDOWS_WITH_MSVC>")
+    cDefines_Msvc = append(cDefines_Msvc, "$<$<STREQUAL:${TARGET_PLATFORM},${TARGET_PLATFORM_WASM}>:PLATFORM_WASM>")
     cDefines_Minimal = append(cDefines_Minimal, fmt.Sprintf(`if(${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WIN})
         target_compile_definitions(${CUR_MOD_NAME} PRIVATE
             PLATFORM_WINDOWS
             PLATFORM_WINDOWS_WITH_GNU
             )
     endif()`))
-    var cDefines_Debug       []string = []string{ "IN_DEBUG=1" }
-    var cDefines_Development []string = []string{ "IN_DEVELOPMENT=1" }
-    var cDefines_Shipping    []string = []string{ "IN_SHIPPING=1" }
+    cDefines_Minimal = append(cDefines_Minimal, fmt.Sprintf(`if(${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
+        target_compile_definitions(${CUR_MOD_NAME} PRIVATE
+            PLATFORM_WASM
+            )
+        endif()`))
+    var cDefines_Debug []string = []string{"IN_DEBUG=1"}
+    var cDefines_Development []string = []string{"IN_DEVELOPMENT=1"}
+    var cDefines_Shipping []string = []string{"IN_SHIPPING=1"}
 
     // Msvc only:
     var cxxPrivateFlags []string
@@ -617,33 +639,43 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
     if module.Kind.IsLaunch() {
         WriteWithIndent(builder, indent, fmt.Sprintf(
             "add_executable(${CUR_MOD_NAME} ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})\n",
-            module.GetUsableName(),module.GetUsableName(), module.GetUsableName(),
+            module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
         ))
     } else if module.Kind.IsShared() {
-        WriteWithIndent(builder, indent, fmt.Sprintf(
-            "add_library(${CUR_MOD_NAME} SHARED ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})\n",
-            module.GetUsableName(),module.GetUsableName(), module.GetUsableName(),
+        WriteWithIndent(builder, indent, fmt.Sprintf(`if(COMPILER_SUPPORTS_SHARED_LNK)
+    add_library(${CUR_MOD_NAME} SHARED ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})
+else()
+    add_library(${CUR_MOD_NAME} STATIC ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})
+endif()
+`,
+            module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
+            module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
         ))
     } else if module.Kind.IsStatic() {
         WriteWithIndent(builder, indent, fmt.Sprintf(
             "add_library(${CUR_MOD_NAME} STATIC ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})\n",
-            module.GetUsableName(),module.GetUsableName(), module.GetUsableName(),
+            module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
         ))
     } else if module.Kind.IsInherit() {
         if module.Parent.DefaultKind.IsLaunch() {
             WriteWithIndent(builder, indent, fmt.Sprintf(
                 "add_executable(${CUR_MOD_NAME} ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})\n",
-                module.GetUsableName(),module.GetUsableName(), module.GetUsableName(),
+                module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
             ))
         } else if module.Parent.DefaultKind.IsShared() {
-            WriteWithIndent(builder, indent, fmt.Sprintf(
-                "add_library(${CUR_MOD_NAME} SHARED ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})\n",
-                module.GetUsableName(),module.GetUsableName(), module.GetUsableName(),
+            WriteWithIndent(builder, indent, fmt.Sprintf(`if(COMPILER_SUPPORTS_SHARED_LNK)
+    add_library(${CUR_MOD_NAME} SHARED ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})
+else()
+    add_library(${CUR_MOD_NAME} STATIC ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})
+endif()
+`,
+                module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
+                module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
             ))
         } else if module.Parent.DefaultKind.IsStatic() {
             WriteWithIndent(builder, indent, fmt.Sprintf(
                 "add_library(${CUR_MOD_NAME} STATIC ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})\n",
-                module.GetUsableName(),module.GetUsableName(), module.GetUsableName(),
+                module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
             ))
         } else {
             panic(fmt.Sprintf("Unknown module kind: %d", module.Parent.DefaultKind))
@@ -689,21 +721,21 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
     WriteWithIndent(builder, indent, fmt.Sprintf("set_target_properties(${CUR_MOD_NAME} PROPERTIES FOLDER \"%s\")\n", module.Parent.GetRelativeProjectDir()))
 
     if module.Pch.IsUse() {
-       WriteWithIndent(builder, indent, fmt.Sprintf("target_precompile_headers(${CUR_MOD_NAME} PRIVATE %s)\n", GetRelativeDirForCoreAfx()))
+        WriteWithIndent(builder, indent, fmt.Sprintf("target_precompile_headers(${CUR_MOD_NAME} PRIVATE %s)\n", GetRelativeDirForCoreAfx()))
     }
 
     WriteWithIndent(builder, indent, "if(USING_MSVC)\n")
     WriteWithIndent(builder, indent+4, fmt.Sprintf("add_custom_command(TARGET ${CUR_MOD_NAME} PRE_BUILD\n"+
         "%s        COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\"\n"+
-        "%s            --fwd --BuildTool --pre-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=$<PLATFORM_ID> --MOD_NAME=${CUR_MOD_NAME}\n"+
-        "%s            --CFG_KIND=%s --CFG_SYSTEM=$<PLATFORM_ID> --CFG_ARCHITECTURE=${CMAKE_SYSTEM_PROCESSOR}\n%s    )\n",
+        "%s            --fwd --BuildTool --pre-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=${TARGET_PLATFORM} --MOD_NAME=${CUR_MOD_NAME}\n"+
+        "%s            --CFG_KIND=%s --CFG_SYSTEM=${TARGET_PLATFORM} --CFG_ARCHITECTURE=${CMAKE_GENERATOR_PLATFORM}\n%s    )\n",
         Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
         module.Kind.ToLuaString(&module.Parent.DefaultKind), Shared.Indent(indent),
     ))
     WriteWithIndent(builder, indent+4, fmt.Sprintf("add_custom_command(TARGET ${CUR_MOD_NAME} POST_BUILD\n"+
         "%s        COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\"\n"+
-        "%s            --fwd --BuildTool --post-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=$<PLATFORM_ID> --MOD_NAME=${CUR_MOD_NAME}\n"+
-        "%s            --CFG_KIND=%s --CFG_SYSTEM=$<PLATFORM_ID> --CFG_ARCHITECTURE=${CMAKE_SYSTEM_PROCESSOR}\n%s    )\n",
+        "%s            --fwd --BuildTool --post-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=${TARGET_PLATFORM} --MOD_NAME=${CUR_MOD_NAME}\n"+
+        "%s            --CFG_KIND=%s --CFG_SYSTEM=${TARGET_PLATFORM} --CFG_ARCHITECTURE=${CMAKE_GENERATOR_PLATFORM}\n%s    )\n",
         Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
         module.Kind.ToLuaString(&module.Parent.DefaultKind), Shared.Indent(indent),
     ))
@@ -711,16 +743,16 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
     WriteWithIndent(builder, indent, "if(USING_MINIMAL)\n")
     WriteWithIndent(builder, indent+4, fmt.Sprintf("add_custom_target(pre_build_command_%s\n", module.GetUsableName()))
     WriteWithIndent(builder, indent+8, fmt.Sprintf("COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\"\n"+
-        "            --fwd --BuildTool --pre-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=$<PLATFORM_ID> --MOD_NAME=${CUR_MOD_NAME}\n"+
-        "            --CFG_KIND=%s --CFG_SYSTEM=$<PLATFORM_ID> --CFG_ARCHITECTURE=${CMAKE_SYSTEM_PROCESSOR}\n"+
+        "            --fwd --BuildTool --pre-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=${TARGET_PLATFORM} --MOD_NAME=${CUR_MOD_NAME}\n"+
+        "            --CFG_KIND=%s --CFG_SYSTEM=${TARGET_PLATFORM} --CFG_ARCHITECTURE=${CMAKE_GENERATOR_PLATFORM}\n"+
         "        COMMENT \"Pre-build command for module %s\"\n",
         module.Kind.ToLuaString(&module.Parent.DefaultKind), module.GetUsableName(),
     ))
     WriteWithIndent(builder, indent+8, ")\n")
     WriteWithIndent(builder, indent+4, fmt.Sprintf("add_custom_target(post_build_command_%s\n", module.GetUsableName()))
     WriteWithIndent(builder, indent+8, fmt.Sprintf("COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\"\n"+
-        "            --fwd --BuildTool --post-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=$<PLATFORM_ID> --MOD_NAME=${CUR_MOD_NAME}\n"+
-        "            --CFG_KIND=%s --CFG_SYSTEM=$<PLATFORM_ID> --CFG_ARCHITECTURE=${CMAKE_SYSTEM_PROCESSOR}\n"+
+        "            --fwd --BuildTool --post-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=${TARGET_PLATFORM} --MOD_NAME=${CUR_MOD_NAME}\n"+
+        "            --CFG_KIND=%s --CFG_SYSTEM=${TARGET_PLATFORM} --CFG_ARCHITECTURE=${CMAKE_GENERATOR_PLATFORM}\n"+
         "        COMMENT \"Post-build command for module %s.\"\n",
         module.Kind.ToLuaString(&module.Parent.DefaultKind), module.GetUsableName(),
         ))
@@ -811,15 +843,15 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
         /* Lol, in cmake you cannot define a different folder for intermediates
            haha wtf?? We fix this in the post-run call. */
         WriteWithIndent(builder, indent, fmt.Sprintf(`set_target_properties(${CUR_MOD_NAME} PROPERTIES
-%s    ARCHIVE_OUTPUT_DIRECTORY_DEBUG-%s "${CMAKE_SOURCE_DIR}/Binaries/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/Debug-%s/${CUR_MOD_REL_PATH}"
-%s    LIBRARY_OUTPUT_DIRECTORY_DEBUG-%s "${CMAKE_SOURCE_DIR}/Binaries/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/Debug-%s/${CUR_MOD_REL_PATH}"
-%s    RUNTIME_OUTPUT_DIRECTORY_DEBUG-%s "${CMAKE_SOURCE_DIR}/Binaries/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/Debug-%s/${CUR_MOD_REL_PATH}"
-%s    ARCHIVE_OUTPUT_DIRECTORY_DEVELOPMENT-%s "${CMAKE_SOURCE_DIR}/Binaries/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/Development-%s/${CUR_MOD_REL_PATH}"
-%s    LIBRARY_OUTPUT_DIRECTORY_DEVELOPMENT-%s "${CMAKE_SOURCE_DIR}/Binaries/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/Development-%s/${CUR_MOD_REL_PATH}"
-%s    RUNTIME_OUTPUT_DIRECTORY_DEVELOPMENT-%s "${CMAKE_SOURCE_DIR}/Binaries/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/Development-%s/${CUR_MOD_REL_PATH}"
-%s    ARCHIVE_OUTPUT_DIRECTORY_SHIPPING-%s "${CMAKE_SOURCE_DIR}/Binaries/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/Shipping-%s/${CUR_MOD_REL_PATH}"
-%s    LIBRARY_OUTPUT_DIRECTORY_SHIPPING-%s "${CMAKE_SOURCE_DIR}/Binaries/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/Shipping-%s/${CUR_MOD_REL_PATH}"
-%s    RUNTIME_OUTPUT_DIRECTORY_SHIPPING-%s "${CMAKE_SOURCE_DIR}/Binaries/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/Shipping-%s/${CUR_MOD_REL_PATH}"
+%s    ARCHIVE_OUTPUT_DIRECTORY_DEBUG-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Debug-%s/${CUR_MOD_REL_PATH}"
+%s    LIBRARY_OUTPUT_DIRECTORY_DEBUG-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Debug-%s/${CUR_MOD_REL_PATH}"
+%s    RUNTIME_OUTPUT_DIRECTORY_DEBUG-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Debug-%s/${CUR_MOD_REL_PATH}"
+%s    ARCHIVE_OUTPUT_DIRECTORY_DEVELOPMENT-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Development-%s/${CUR_MOD_REL_PATH}"
+%s    LIBRARY_OUTPUT_DIRECTORY_DEVELOPMENT-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Development-%s/${CUR_MOD_REL_PATH}"
+%s    RUNTIME_OUTPUT_DIRECTORY_DEVELOPMENT-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Development-%s/${CUR_MOD_REL_PATH}"
+%s    ARCHIVE_OUTPUT_DIRECTORY_SHIPPING-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Shipping-%s/${CUR_MOD_REL_PATH}"
+%s    LIBRARY_OUTPUT_DIRECTORY_SHIPPING-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Shipping-%s/${CUR_MOD_REL_PATH}"
+%s    RUNTIME_OUTPUT_DIRECTORY_SHIPPING-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Shipping-%s/${CUR_MOD_REL_PATH}"
 %s    )
 `,
             Shared.Indent(indent), strings.ToUpper(targ.GetSuffix()), targ.GetSuffix(),
@@ -1236,22 +1268,22 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
         continue
     }
     for defIdx, _ := range cDefines_Development {
-      for _, developmentCfg := range GetAllUniqueDevelopmentBuildConfigurations() {
-          WriteWithIndent(builder, indent+8, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,%s>:%s>\n",
-              developmentCfg, cDefines_Development[defIdx],
-          ))
-          continue
-      }
-      continue
+        for _, developmentCfg := range GetAllUniqueDevelopmentBuildConfigurations() {
+            WriteWithIndent(builder, indent+8, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,%s>:%s>\n",
+                developmentCfg, cDefines_Development[defIdx],
+            ))
+            continue
+        }
+        continue
     }
     for defIdx, _ := range cDefines_Shipping {
-       for _, shippingCfg := range GetAllUniqueShippingBuildConfigurations() {
-           WriteWithIndent(builder, indent+8, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,%s>:%s>\n",
-               shippingCfg, cDefines_Shipping[defIdx],
-           ))
-           continue
-       }
-       continue
+        for _, shippingCfg := range GetAllUniqueShippingBuildConfigurations() {
+            WriteWithIndent(builder, indent+8, fmt.Sprintf("$<$<STREQUAL:$<CONFIG>,%s>:%s>\n",
+                shippingCfg, cDefines_Shipping[defIdx],
+            ))
+            continue
+        }
+        continue
     }
     WriteWithIndent(builder, indent+8, ")\n")
     WriteWithIndent(builder, indent, "endif()\n")
@@ -1317,6 +1349,29 @@ func WriteCmakeFileVendorSection(builder *strings.Builder) {
     WriteWithIndent(builder, 0, "source_group(\"Vendor\" FILES ${Vendor_SRC_FILES})\n")
     WriteWithIndent(builder, 0, "add_custom_target(Vendor SOURCES ${Vendor_SRC_FILES})\n")
     WriteWithIndent(builder, 0, "set_target_properties(Vendor PROPERTIES FOLDER \"Vendor\")\n")
+
+    return
+}
+
+func AddCustomCmakeWasmRuntime(builder *strings.Builder) {
+    WriteWithIndent(builder, 0, "\n")
+    WriteWithIndent(builder, 0, "############################\n")
+    WriteWithIndent(builder, 0, "# Wasm runtime\n")
+    WriteWithIndent(builder, 0, "############################\n")
+    WriteWithIndent(builder, 0, "if(USING_MSVC)\n")
+    WriteWithIndent(builder, 4, "add_custom_command(\n")
+    WriteWithIndent(builder, 8, "OUTPUT ${CMAKE_BINARY_DIR}/Internal/WasmRuntime.stamp\n")
+    WriteWithIndent(builder, 8, "COMMAND ${CMAKE_COMMAND} -E echo \"Running WasmRuntime with build config $<CONFIG>.\"\n")
+    WriteWithIndent(builder, 8, "COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_BINARY_DIR}/Internal/WasmRuntime.stamp\n")
+    WriteWithIndent(builder, 8, "COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\"\n")
+    WriteWithIndent(builder, 12, "--custom-command --WasmRuntime --BUILD_CONFIG=$<CONFIG> --PLATFORM=${TARGET_PLATFORM}\n")
+    WriteWithIndent(builder, 8, ")\n")
+    WriteWithIndent(builder, 4, "add_custom_target(WasmRuntime\n")
+    WriteWithIndent(builder, 8, "COMMAND ${CMAKE_COMMAND} -E echo \"Running WasmRuntime with build config $<CONFIG>.\"\n")
+    WriteWithIndent(builder, 8, "DEPENDS ${CMAKE_BINARY_DIR}/Internal/WasmRuntime.stamp\n")
+    WriteWithIndent(builder, 8, ")\n")
+    WriteWithIndent(builder, 4, "set_target_properties(\"WasmRuntime\" PROPERTIES FOLDER \"Internal\")\n")
+    WriteWithIndent(builder, 0, "endif()\n")
 
     return
 }
@@ -1404,6 +1459,12 @@ func WriteCmakePresetsFileBody(file *os.File) {
         GenerateConfigurationPreset(builder, "Windows GNU", "Development", targ.GetSuffix())
         builder.WriteString(",\n")
         GenerateConfigurationPreset(builder, "Windows GNU", "Shipping", targ.GetSuffix())
+        builder.WriteString(",\n")
+        GenerateConfigurationPreset(builder, "Wasm GNU", "Debug", targ.GetSuffix())
+        builder.WriteString(",\n")
+        GenerateConfigurationPreset(builder, "Wasm GNU", "Development", targ.GetSuffix())
+        builder.WriteString(",\n")
+        GenerateConfigurationPreset(builder, "Wasm GNU", "Shipping", targ.GetSuffix())
 
         if idx < len(targs) - 1 {
             builder.WriteString(",\n")

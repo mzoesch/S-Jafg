@@ -11,7 +11,10 @@
 
 #ifndef PLATFORM_WINDOWS
     #define PLATFORM_WINDOWS        0
-#endif
+#endif /* !PLATFORM_WINDOWS */
+#ifndef PLATFORM_WASM
+    #define PLATFORM_WASM           0
+#endif /* !PLATFORM_WASM */
 
 
 /*-----------------------------------------------------------------------------

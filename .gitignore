@@ -78,3 +78,5 @@ CMakeLists.txt
 CMakePresets.json
 cmake-build-*/
 Jafg.sln.lnk
+JafgWin.sln.lnk
+JafgWasm.sln.lnk
