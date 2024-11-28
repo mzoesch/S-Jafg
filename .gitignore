@@ -75,5 +75,6 @@ venv
 # Generated build files
 __buildSolution.lua
 CMakeLists.txt
+CMakePresets.json
 cmake-build-*/
 Jafg.sln.lnk

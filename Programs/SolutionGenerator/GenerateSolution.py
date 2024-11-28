@@ -19,30 +19,30 @@ def generate_solution(emulate_compilation: bool) -> None:
     os.chdir(get_engine_root_dir())
     print(f'Current working dir [{os.getcwd()}].')
 
-    print('Removing solution trees from the Saved directory.')
-    if os.path.exists('Saved/Solution'):
-        for file in os.listdir('Saved/Solution'):
-            if (
-                        file != 'CMakeCache.txt'
-                    and file != '.idea'
-                    and file != 'CMakeFiles'
-                    and (".vcxproj" not in file)
-                    and file != '.vs'
-                    and file != 'Jafg.sln'
-            ):
-                file_path: str = os.path.join('Saved/Solution', file)
-                if os.path.isfile(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-    if not os.path.exists('Saved'):
-        os.makedirs('Saved')
-    if not os.path.exists('Saved/Solution'):
-        os.makedirs('Saved/Solution')
-    if os.path.exists('Saved/Minimal'):
-        shutil.rmtree('Saved/Minimal')
-    if not os.path.exists('Saved/Minimal'):
-        os.makedirs('Saved/Minimal')
+    # print('Removing solution trees from the Saved directory.')
+    # if os.path.exists('Saved/Solution'):
+    #     for file in os.listdir('Saved/Solution'):
+    #         if (
+    #                     file != 'CMakeCache.txt'
+    #                 and file != '.idea'
+    #                 and file != 'CMakeFiles'
+    #                 and (".vcxproj" not in file)
+    #                 and file != '.vs'
+    #                 and file != 'Jafg.sln'
+    #         ):
+    #             file_path: str = os.path.join('Saved/Solution', file)
+    #             if os.path.isfile(file_path):
+    #                 os.unlink(file_path)
+    #             elif os.path.isdir(file_path):
+    #                 shutil.rmtree(file_path)
+    # if not os.path.exists('Saved'):
+    #     os.makedirs('Saved')
+    # if not os.path.exists('Saved/Solution'):
+    #     os.makedirs('Saved/Solution')
+    # if os.path.exists('Saved/Minimal'):
+    #     shutil.rmtree('Saved/Minimal')
+    # if not os.path.exists('Saved/Minimal'):
+    #     os.makedirs('Saved/Minimal')
 
     solution_args = ['cmake', '../..', '-G', 'Visual Studio 17 2022']
     minimal_args =  ['cmake', '../..', '-G', 'MinGW Makefiles', '-DCMAKE_BUILD_TYPE=Debug-Client']

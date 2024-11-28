@@ -14,6 +14,7 @@ import (
 
 var SolutionLuaFile string = "__buildSolution.lua"
 var SolutionCmakeFile string = "CMakeLists.txt"
+var SolutionCmakePresetsFile string = "CMakePresets.json"
 
 func GetAbsolutePathToSolutionLuaFile() string {
     return fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), SolutionLuaFile)
