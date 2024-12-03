@@ -43,7 +43,11 @@ inline LSimpleString LexToString(const EEnginePaths::Type InType)
     case EEnginePaths::CustomModule: { return ""; }
     case EEnginePaths::Voxels:       { return "Content/Textures/Voxels"; }
     case EEnginePaths::Blends:       { return "Content/Textures/Blends"; }
-    case EEnginePaths::Shaders:      { return "Content/Shaders"; }
+#if PLATFORM_WASM
+    case EEnginePaths::Shaders:      { return "Content/Shaders/Gles3"; }
+#else /* PLATFORM_WASM */
+    case EEnginePaths::Shaders:      { return "Content/Shaders/NativeGl"; }
+#endif /* !PLATFORM_WASM */
     case EEnginePaths::Fonts:        { return "Content/Fonts"; }
     default:                         { panic( "Could not resolve engine path type." )  return ""; }
     }

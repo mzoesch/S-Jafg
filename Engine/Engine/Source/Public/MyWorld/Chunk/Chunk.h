@@ -7,7 +7,6 @@
 #include "MyWorld/MyWorldStatics.h"
 #include "Engine/Components/RenderComponent.h"
 #include "MyWorld/ChunkKey.h"
-#include <glm/glm.hpp>
 #include "ChunkPersistency.h"
 #include "Rhi/ChunkShaderContext.h"
 #include "MyWorld/CommonTypes.h"
@@ -223,7 +222,6 @@ public:
     }
 
     voxel_t* RawVoxelData = nullptr;
-    glm::vec3 ChunkPos = glm::vec3(0.0f);
 
     LSharedChunkArgs* SharedArgs = nullptr;
     LChunkKey  ChunkKey      = { };

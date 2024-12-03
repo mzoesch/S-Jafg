@@ -1,8 +1,11 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
+
+#if PLATFORM_DESKTOP
+
 #include "Rhi/RendererApplier.h"
-#include "RhiVendorInclude.h"
+#include "Rhi/RhiVendorInclude.h"
 #include "Platform/DesktopPlatform.h"
 
 namespace
@@ -47,3 +50,5 @@ bool Jafg::RendererApplier::ApplyOpenGlToWindow(LNativeWindow* Window)
 
     return true;
 }
+
+#endif /* PLATFORM_DESKTOP */

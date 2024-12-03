@@ -5,6 +5,10 @@
 #include "CoreAfx.h"
 #include "Platform/Surface.h"
 
+#if !PLATFORM_DESKTOP
+    #error "Tried to include desktop platform code on a non-desktop platform."
+#endif /* !PLATFORM_DESKTOP */
+
 struct GLFWwindow;
 
 namespace Jafg

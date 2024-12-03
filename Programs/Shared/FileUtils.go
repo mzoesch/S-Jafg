@@ -323,6 +323,11 @@ func GetRelativeGeneratedTranslationPath(filename string) string {
     return fmt.Sprintf("%s/%s%s", GeneratedTranslationsDir, filename, GeneratedTranslationsExtension)
 }
 
+func GetRelativeGeneratedHeaderDirForModule(mod *Module) string {
+    return fmt.Sprintf("%s", GeneratedHeadersDir)
+}
+
+
 func GetRelativeGeneratedTranslationDirForModule(mod *Module) string {
     return fmt.Sprintf("%s/%s", GeneratedTranslationsDir, mod.GetRelativeModuleDir())
 }

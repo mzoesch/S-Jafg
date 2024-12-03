@@ -9,7 +9,9 @@ import (
     "strings"
 )
 
+
 var ObjectStructureIndent string = "    "
+var CurrentMaxStructureIndent int = 128
 
 var ObjectStructureCacheFileStub string = `
 /*-----------------------------------------------------------------------------
@@ -26,6 +28,7 @@ type ObjectNode struct {
     Name       string
     Children   []ObjectNode
     Namespaces []string
+    RelHeader  string
 }
 
 func (on *ObjectNode) GetComparableName() string {
@@ -42,6 +45,7 @@ type PrivateDeferredObjectNode struct {
     Name       string
     Super      string
     Namespaces []string
+    RelHeader  string
 }
 
 func (pdon *PrivateDeferredObjectNode) GetComparableName() string {
@@ -195,7 +199,25 @@ func (on *ObjectNode) MakeCoolStringRepresentation(indent int) string {
         out += ObjectStructureIndent
     }
 
-    out += on.GetComparableName() + "\n"
+    out += on.GetComparableName()
+
+    for {
+        if len(out) >= CurrentMaxStructureIndent {
+            break
+        }
+
+        out += " "
+
+        continue
+    }
+
+    if len(on.RelHeader) == 0 {
+        panic(fmt.Sprintf("Object %s node has no header.", on.Name))
+    }
+
+    out += " -> " + on.RelHeader
+
+    out += "\n"
 
     for _, child := range on.Children {
         out += child.MakeCoolStringRepresentation(indent + 1)
@@ -307,11 +329,29 @@ func (oh *ObjectHierarchy) LoadCache() {
             panic("Object structure cache file is illformed. Could not find namespace.")
         }
 
-        var className string = classNameSplit[len(classNameSplit)-1]
+        var classNameWithRelHeader string = classNameSplit[len(classNameSplit)-1]
         var namespaces []string = classNameSplit[:len(classNameSplit)-1]
 
+        var className string = ""
+        var relHeaderUnformatted string = ""
+        for idx2, _ := range classNameWithRelHeader {
+            if classNameWithRelHeader[idx2] == ' ' {
+                relHeaderUnformatted = classNameWithRelHeader[idx2+1:]
+                className = classNameWithRelHeader[:idx2]
+                break
+            }
+
+            continue
+        }
+
+        var splitRelHeaderIdx int = strings.Index(relHeaderUnformatted, " -> ")
+        if splitRelHeaderIdx == -1 {
+            panic("Object structure cache file is illformed. Could not split relative header.")
+        }
+        var relHeader string = relHeaderUnformatted[splitRelHeaderIdx+4:]
+
         if currentIndentationCount == 0 {
-            if !oh.AddNewObjectNode(className, "", namespaces) {
+            if !oh.AddNewObjectNode(className, "", namespaces, relHeader) {
                 panic("Object structure cache file is illformed. Could not add root object node.")
             }
         } else {
@@ -327,7 +367,7 @@ func (oh *ObjectHierarchy) LoadCache() {
             if bWasEmpty {
                 panic("Object structure cache file is illformed. Stack is empty.")
             }
-            if !oh.AddNewObjectNode(className, super, namespaces) {
+            if !oh.AddNewObjectNode(className, super, namespaces, relHeader) {
                 panic("Object structure cache file is illformed. Could not add object node. Missing super class.")
             }
         }
@@ -373,8 +413,8 @@ func (oh *ObjectHierarchy) MakeCoolStringRepresentation() string {
     return out
 }
 
-func (oh *ObjectHierarchy) AddDeferredObjectNode(name string, superName string, namespaces []string) {
-    oh.DeferredNodes = append(oh.DeferredNodes, PrivateDeferredObjectNode{name, superName, namespaces})
+func (oh *ObjectHierarchy) AddDeferredObjectNode(name string, superName string, namespaces []string, relHeader string) {
+    oh.DeferredNodes = append(oh.DeferredNodes, PrivateDeferredObjectNode{name, superName, namespaces, relHeader})
     return
 }
 
@@ -392,7 +432,7 @@ func (oh *ObjectHierarchy) ResolveDeferredNodes() {
         }
 
         var cursorNode PrivateDeferredObjectNode = oh.DeferredNodes[cursor]
-        if !oh.AddNewObjectNode(cursorNode.Name, cursorNode.Super, cursorNode.Namespaces) {
+        if !oh.AddNewObjectNode(cursorNode.Name, cursorNode.Super, cursorNode.Namespaces, cursorNode.RelHeader) {
             cursor++
             continue
         }
@@ -406,7 +446,7 @@ func (oh *ObjectHierarchy) ResolveDeferredNodes() {
     return
 }
 
-func (oh *ObjectHierarchy) AddNewObjectNode(name string, superName string, namespaces []string) bool /* bCouldAdd */ {
+func (oh *ObjectHierarchy) AddNewObjectNode(name string, superName string, namespaces []string, relHeader string) bool /* bCouldAdd */ {
     if oh.Root != nil {
         var maybeNode *ObjectNode = oh.Root.FindObjectNodeByString(name, namespaces)
         if maybeNode != nil {
@@ -446,12 +486,14 @@ func (oh *ObjectHierarchy) AddNewObjectNode(name string, superName string, names
         var newNode *ObjectNode = new(ObjectNode)
         newNode.Name = name
         newNode.Namespaces = namespaces
+        newNode.RelHeader = relHeader
         superNode.Children = append(superNode.Children, *newNode)
     } else {
         if oh.Root == nil {
             var newNode *ObjectNode = new(ObjectNode)
             newNode.Name = name
             newNode.Namespaces = namespaces
+            newNode.RelHeader = relHeader
             oh.Root = newNode
         } else {
             oh.Root.Name = name

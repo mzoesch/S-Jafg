@@ -38,7 +38,7 @@ public:
 
     virtual void BeginLife() override { Super::BeginLife(); }
     virtual void Tick(const float DeltaTime) override { check( this->IsGarbage() == false ) }
-    virtual void EndLife();
+    virtual void EndLife() override;
 
     virtual void OnGarbage() override;
 
@@ -83,7 +83,7 @@ private:
 
     /**
      * Whether this Actor should ever be able to tick or not.
-     * This bool flag can only be set in the constructor of the actor - new objects if this class
+     * This bool flag can only be set in the constructor of the actor - new objects of this class
      * will not be registered in the context tickable registry.
      */
     bool bCanEverTick : 1 = false;

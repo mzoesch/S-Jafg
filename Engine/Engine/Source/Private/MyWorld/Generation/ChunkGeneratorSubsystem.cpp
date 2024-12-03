@@ -10,7 +10,9 @@ void Jafg::JChunkGeneratorSubsystem::OnInitialize(LSubsystemCollection& Collecti
     Super::OnInitialize(Collection);
     this->SetTickInterval(0.1f);
 
+#if PLATFORM_SUPPORTS_SIMD
     this->FnGenerator = FastNoise::NewFromEncodedNodeTree("DQAFAAAAAAAAQAgAAAAAAD8AAAAAAA==");
+#endif /* PLATFORM_SUPPORTS_SIMD */
 
     this->ChunkValidationSubsystem = Collection.GetCheckedSubsystem<JChunkValidationSubsystem>();
     this->ChunkGenerationSubsystem = Collection.GetCheckedSubsystem<JChunkGenerationSubsystem>();
@@ -132,7 +134,7 @@ bool Jafg::JChunkGeneratorSubsystem::TryToBringChunkToState(AChunk* Target, cons
     // Regenerate mesh here and then just apply on master thread.
 
     check( Target->GetChunkState() != EChunkState::Active )
-    Tasks::Make(ENamedThreads::Master, ETaskTime::Whenever, [this, Target] (void)
+    Tasks::Make(ENamedThreads::Master, ETaskTime::Whenever, [Target] (void)
     {
         if (Target->GetWorld()->GetWorldState() > EWorldState::Running)
         {

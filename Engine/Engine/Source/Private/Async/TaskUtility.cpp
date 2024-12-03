@@ -8,6 +8,10 @@
 #if WITH_GNU
     #include <thread>
 #endif /* WITH_GNU */
+#if PLATFORM_WASM
+    #include <emscripten/threading.h>
+    #include <c++/v1/__threading_support>
+#endif /* PLATFORM_WASM */
 
 namespace
 {
@@ -26,8 +30,13 @@ namespace
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() _Thrd_id()
     #endif /* _HAS_CXX23 */
 #elif WITH_GNU
-    static_assert(std::is_same_v<::Jafg::LThreadId, pthread_t>, "Compiler specific thread id is not the same.");
-    #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() __gthread_self()
+    #if PLATFORM_WASM
+        static_assert(::std::is_same_v<::Jafg::LThreadId, ::std::__libcpp_thread_id>, "Compiler specific thread id is not the same.");
+        #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() pthread_self()
+    #else /* PLATFORM_WASM */
+        static_assert(std::is_same_v<::Jafg::LThreadId, pthread_t>, "Compiler specific thread id is not the same.");
+        #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() __gthread_self()
+    #endif /* !PLATFORM_WASM */
 #endif /* WITH_GNU */
 
 static_assert(

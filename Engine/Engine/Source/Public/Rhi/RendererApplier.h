@@ -2,6 +2,10 @@
 
 #pragma once
 
+#if !PLATFORM_DESKTOP
+    #error "Tried to include RendererApplier.h on a platform that is not desktop."
+#endif /* !PLATFORM_DESKTOP */
+
 #include "CoreAfx.h"
 #include "Platform/Surface.h"
 

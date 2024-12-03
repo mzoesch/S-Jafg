@@ -4,7 +4,7 @@
 
 #if PLATFORM_WINDOWS
 
-#include "HAL/PlatformWin.h"
+#include "Hal/PlatformWin.h"
 
 void LWinPlatformBreakDefines::OnProgramPanic(
     const std::string& InMessage,

@@ -2,7 +2,7 @@
 
 #include "CoreAfx.h"
 #include "Rhi/RendererInformation.h"
-#include "RhiVendorInclude.h"
+#include "Rhi/RhiVendorInclude.h"
 #include "Widgets/InterfaceTypes.h"
 
 int32 Jafg::RendererInformation::GetLimitTextureDimension()

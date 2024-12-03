@@ -1,8 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
-#if !JAFG_WITH_GLFW3
+#if JAFG_NO_GLFW3
     #error "Including Glfw library specific code without GLFW3 enabled."
-#endif /* !JAFG_WITH_GLFW3 */
+#endif /* JAFG_NO_GLFW3 */
 
 #pragma once
 

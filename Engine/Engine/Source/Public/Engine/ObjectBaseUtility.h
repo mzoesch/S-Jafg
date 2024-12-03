@@ -13,7 +13,7 @@
  * Whether the C++ compiler should check for pure virtual functions, and if they have been overriden by any derived
  * class. Usually disabled as the program may not run with this option enabled.
  * Abstract classes must still be instantiable to satisfy the object registry that runs at every module startup.
- * Usually, this program crashes if it encounters a non-implemented pure virtual method.
+ * Usually, this program panics if it encounters a non-implemented pure virtual method.
  */
 #ifndef DO_PURE_VIRTUAL_COMPILER_CHECKS
     #define DO_PURE_VIRTUAL_COMPILER_CHECKS                 0
@@ -108,7 +108,7 @@ FORCEINLINE auto DynamicCast(const Private::JObjectBase* InObject) -> const TObj
 /**
  * Only checks if the object can be casted if DO_CHECKS is true. If the object fails to cast to the
  * targeted type, the application will panic. If DO_CHECKS is false, it will assume that the object is
- * of the target type and do an unsafe cast.
+ * of the target type and will do an unsafe cast.
  * Only use this method if you are sure that the object is of the targeted type.
  *
  * @tparam bAllowForNullptr Whether to allow for nullptr to be returned if the input object is nullptr.
@@ -254,7 +254,7 @@ public:
     ENGINE_API auto GetPackageByContentDefault(const void* ContentDefaultReferrer) -> LRegistryPackage*;
     ENGINE_API auto GetPanickedPackageByContentDefault(const void* ContentDefaultReferrer) -> LRegistryPackage*;
 
-    FORCEINLINE         auto GetRegisteredObjects() -> TdhArray<LRegistryPackage>& { return this->RegisteredObjects; }
+    FORCEINLINE auto GetRegisteredObjects() -> TdhArray<LRegistryPackage>& { return this->RegisteredObjects; }
     /** Gets all registered static class that inherit in any way from InStaticClass. */
     ENGINE_API auto GetRegisteredObjectsOfClass(const LObjectClass* InStaticClass, TdhArray<const LObjectClass*>& OutArray) const -> void;
 

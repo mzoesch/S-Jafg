@@ -19,10 +19,6 @@
     #define NORETURN            [[noreturn]]
 #endif /* !NORETURN */
 
-#ifndef NOINLINE
-    #define NOINLINE            __declspec(noinline)
-#endif /* !NOINLINE */
-
 #ifndef RESTRICT
     #define RESTRICT            __restrict
 #endif /* !RESTRICT */
@@ -63,13 +59,13 @@ struct LGenericPlatformTypes
      */
     typedef wchar_t             LWideChar;
 
-    /** A switchable character - either AnsiChar or WideChar. */
+    /** A switchable character - either LAnsiChar or LWideChar. */
     typedef LAnsiChar           LChar;
 
     typedef std::wstring        LWideString;
     typedef std::string         LStringLegacy;
 
-    /** No other type more aligned than double. */
+    /** No other type is more aligned than double. */
     typedef double              LMaxAlign;
     typedef decltype(nullptr)   LNullptrTy;
 };

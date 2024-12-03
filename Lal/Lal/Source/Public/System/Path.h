@@ -85,6 +85,20 @@ public:
 
     FORCEINLINE void AddExtension(const LStringTy& Extension);
 
+    /**
+     * Will check if the last part of the path contains a dot.
+     * TODO: Ask the actual platform if the path is a file. Do not make this bugprone assumption.
+     */
+    FORCEINLINE bool IsFile() const noexcept;
+
+    /**
+     * The base of a path:
+     *    "A"  -> "A"
+     *    "A/" -> ""
+     *    ""   -> ""
+     */
+    FORCEINLINE LStringTy GetBase() const;
+
 private:
 
     LStringTy Data = nullptr;
@@ -173,7 +187,7 @@ int32 LPathBase<InTStringTy>::PopSubPaths(const int32 NumberOfSubPaths)
             break;
         }
 
-        this->Data.InlineCut(Last - 1);
+        this->Data.InlineCut(Last);
         ++Popped;
     }
 
@@ -186,6 +200,57 @@ void LPathBase<InTStringTy>::AddExtension(const LStringTy& Extension)
     this->Data.Append(Extension);
 }
 
+template <typename InTStringTy>
+bool LPathBase<InTStringTy>::IsFile() const noexcept
+{
+    if (this->Data.IsEmpty())
+    {
+        return false;
+    }
+
+    LStringTy LastPart = this->GetBase();
+    if (LastPart.IsEmpty())
+    {
+        return false;
+    }
+
+    return LastPart.Find(".") != INDEX_NONE;
+}
+
+template <typename InTStringTy>
+typename LPathBase<InTStringTy>::LStringTy LPathBase<InTStringTy>::GetBase() const
+{
+    if (this->Data.IsEmpty())
+    {
+        return { };
+    }
+
+    const int32 Last = this->Data.FindLast(LPathBase<T>::PathSeparator);
+    if (Last == INDEX_NONE)
+    {
+        return this->Data;
+    }
+
+    return this->Data.SubIdx(Last + 1, this->Data.GetRuneCount());
+}
+
 using LPath = LPathBase<LSimpleString>;
+
+#if PLATFORM_WASM
+template <> NODISCARD inline auto FormatArgLegacy(LPath& Arg)
+{
+    return Arg.GetPath().ToC();
+}
+template <> NODISCARD inline auto FormatArgLegacy(LPath&& Arg)
+{
+    LStringLegacy Out = Arg.GetPath().ToC();
+    return Out;
+}
+template <> NODISCARD inline auto FormatArgLegacy(LPath Arg)
+{
+    LStringLegacy Out = Arg.GetPath().ToC();
+    return Out;
+}
+#endif /* PLATFORM_WASM */
 
 } /* ~Namespace Jafg */

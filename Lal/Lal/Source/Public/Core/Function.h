@@ -228,6 +228,7 @@ public:
                 std::placeholders::_9, std::placeholders::_10
             );
         }
+#if !PLATFORM_WASM
         else if constexpr (Super::NumParams() == 11)
         {
             this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
@@ -320,6 +321,7 @@ public:
                 std::placeholders::_17, std::placeholders::_18, std::placeholders::_19, std::placeholders::_20
             );
         }
+#endif /* !PLATFORM_WASM */
         else
         {
             panic( "Too many parameters for function binding. Support for more than 20 parameters is not implemented." )

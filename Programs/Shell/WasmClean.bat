@@ -6,7 +6,7 @@
 @echo off
 setlocal
 
-echo "Current directory: %cd%"
+echo Current directory: %cd%
 
 if "%~1"=="" (
     echo "No argument given. Please provide a build configuration."
@@ -18,7 +18,7 @@ if "%arg1%"=="" (
     echo "No argument given. Please provide a build configuration."
     exit /b 1
 )
-echo "Build configuration: %arg1%"
+echo Build configuration: %arg1%
 
 set TARGET_DIR=Saved\MinimalWasm-%arg1%
 
@@ -28,7 +28,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo "Build output directory: %cd%"
+echo Build output directory: %cd%
 
 @REM Make actual build.
 cmake --build . --clean-first

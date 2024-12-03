@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
-#include "RhiVendorInclude.h"
+#include "Rhi/RhiVendorInclude.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_NO_JPEG

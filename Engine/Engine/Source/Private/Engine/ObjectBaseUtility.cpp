@@ -82,18 +82,25 @@ Jafg::Private::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDefe
     JObjectBase* Reinterpreted = reinterpret_cast<JObjectBase*>(Out);
     check( Reinterpreted == Out )
 
+#if PLATFORM_WASM
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* PLATFORM_WASM */
     ::memcpy(Out, InStaticClass->GetDefaultPackageReferrer(), InStaticClass->GetTotalByteSize());  // NOLINT(bugprone-undefined-memory-manipulation)
+#if PLATFORM_WASM
+    #pragma GCC diagnostic pop
+#endif /* PLATFORM_WASM */
 
     checkCode(
         checkMsgf(
-            /* Offset of VTable ptr is 8 bytes (at least on x64) - that is currently the only platform we support. */
-            ::Jafg::OffsetOf(&JObjectBase::VClass) == 8,
+            /* Offset of VTable ptr is POINTER_BYTE_SIZE bytes */
+            ::Jafg::OffsetOf(&JObjectBase::VClass) == POINTER_BYTE_SIZE,
             "Offset is [{}].", ::Jafg::OffsetOf(&JObjectBase::VClass)
         )
 
         void** ActualJafgVTableLocation    = reinterpret_cast<void**>(&Reinterpreted->VClass);
-        /* 8 Bytes offset because of compiler generated v table pointer. */
-        void** PredictedJafgVTableLocation = reinterpret_cast<void**>(reinterpret_cast<::size_t>(Out) + 8);
+        /* POINTER_BYTE_SIZE Bytes offset because of compiler generated v table pointer. */
+        void** PredictedJafgVTableLocation = reinterpret_cast<void**>(reinterpret_cast<::size_t>(Out) + POINTER_BYTE_SIZE);
         check( ActualJafgVTableLocation == PredictedJafgVTableLocation )
     )
 

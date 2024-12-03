@@ -2,7 +2,6 @@
 
 #include "CoreAfx.h"
 #include "Platform/PlatformMisc.h"
-#include "System/Path.h"
 
 namespace Jafg
 {

@@ -29,7 +29,7 @@ public:
     FORCEINLINE LAsciiString(      LAsciiString&  Other) noexcept;
     FORCEINLINE LAsciiString(const LAsciiString&  Other) noexcept;
     FORCEINLINE LAsciiString(      LAsciiString&& Other) noexcept;
-    FORCEINLINE LAsciiString(const LAsciiString&& Other) noexcept = delete;
+    FORCEINLINE LAsciiString(const LAsciiString&& Other) noexcept;
     FORCEINLINE LAsciiString(const LRune* Other)         noexcept;
     FORCEINLINE explicit LAsciiString(const int32  Number)    noexcept;
     FORCEINLINE explicit LAsciiString(const int64  Number)    noexcept;
@@ -118,14 +118,19 @@ public:
 
     FORCEINLINE bool StartsWith(const LRune* InOther) const;
     FORCEINLINE bool StartsWith(const LAsciiString& InOther) const;
+    FORCEINLINE bool EndsWith(const LRune* InOther) const;
+    FORCEINLINE bool EndsWith(const LAsciiString& InOther) const;
 
     FORCEINLINE auto Replace(const LChar Old, const LChar New) -> void;
     FORCEINLINE auto FindFirst(const LChar InChar) const -> int32;
     FORCEINLINE auto FindSecond(const LChar InChar) const -> int32;
     FORCEINLINE auto FindLast(const LChar InChar) const -> int32;
     FORCEINLINE auto InlineCut(const int32 InIndex) -> void;
+    FORCEINLINE auto Cut(const int32 InIndex) const -> LAsciiString;
     FORCEINLINE auto InlineSub(const int32 InIndex, const int32 InCount) -> void;
     FORCEINLINE auto InlineSubIdx(const int32 InIndexA, const int32 InIndexB) -> void;
+    FORCEINLINE auto Sub(const int32 InIndex, const int32 InCount) const -> LAsciiString;
+    FORCEINLINE auto SubIdx(const int32 InIndexA, const int32 InIndexB) const -> LAsciiString;
     FORCEINLINE auto Count(const LChar InChar) const -> int32;
 
     /** Private iterator functions for range-based loops. Do not use these directly. */
@@ -144,12 +149,14 @@ private:
      * Ensures that a valid c-str pointer is available and the string is null-terminated.
      */
     FORCEINLINE auto EnsureValidState() -> void;
+    FORCEINLINE auto PanicValidState() const -> void;
 
     TdhArray<LRune> Data;
 };
 
 } /* ~Namespace Jafg */
 
+#if !PLATFORM_WASM
 template <>
 struct std::formatter<Jafg::LAsciiString> : std::formatter<const char*>
 {
@@ -161,6 +168,7 @@ struct std::formatter<Jafg::LAsciiString> : std::formatter<const char*>
         return std::formatter<const char*>::format(String.ToC(), Context);
     }
 };
+#endif /* !PLATFORM_WASM */
 
 FORCEINLINE Jafg::LAsciiString::LAsciiString() noexcept
 {
@@ -203,6 +211,18 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(LAsciiString&& Other) noexcept
 #if CHECK_STRING_VALIDITY
     this->EnsureValidState();
     Other.EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+
+    return;
+}
+
+FORCEINLINE Jafg::LAsciiString::LAsciiString(const LAsciiString&& Other) noexcept
+{
+    this->Data = Other.Data;
+
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+    Other.PanicValidState();
 #endif /* CHECK_STRING_VALIDITY */
 
     return;
@@ -628,9 +648,39 @@ inline bool Jafg::LAsciiString::StartsWith(const LRune* InOther) const
     return Cursor <= this->GetSize();
 }
 
-inline bool Jafg::LAsciiString::StartsWith(const LAsciiString& InOther) const
+FORCEINLINE bool Jafg::LAsciiString::StartsWith(const LAsciiString& InOther) const
 {
     return this->StartsWith(InOther.ToPtr());
+}
+
+inline bool Jafg::LAsciiString::EndsWith(const LRune* InOther) const
+{
+    LAsciiString Helper(InOther);
+    return this->EndsWith(Helper);
+}
+
+FORCEINLINE bool Jafg::LAsciiString::EndsWith(const LAsciiString& InOther) const
+{
+    if (InOther.GetRuneCount() == 0 || InOther.GetRuneCount() > this->GetRuneCount())
+    {
+        return false;
+    }
+
+    SizeType Cursor = this->GetSize() - InOther.GetSize();
+    check( Cursor >= 0 )
+    while (Cursor < this->GetSize())
+    {
+        if (this->Data[Cursor] != InOther.Data[Cursor - this->GetSize() + InOther.GetSize()])
+        {
+            return false;
+        }
+
+        ++Cursor;
+
+        continue;
+    }
+
+    return true;
 }
 
 inline void Jafg::LAsciiString::Replace(const LChar Old, const LChar New)
@@ -719,7 +769,7 @@ FORCEINLINE void Jafg::LAsciiString::InlineCut(const int32 InIndex)
 {
     check( this->Data.IsValidIndex(InIndex) )
 
-    this->Data.Resize(InIndex + 1);
+    this->Data.Resize(InIndex);
     this->Data.Add(LAsciiString::StringTerminatorRune);
 
 #if CHECK_STRING_VALIDITY
@@ -729,10 +779,26 @@ FORCEINLINE void Jafg::LAsciiString::InlineCut(const int32 InIndex)
     return;
 }
 
+FORCEINLINE Jafg::LAsciiString Jafg::LAsciiString::Cut(const int32 InIndex) const
+{
+    check( this->Data.IsValidIndex(InIndex) )
+
+    if (InIndex == 0)
+    {
+        return { };
+    }
+
+    LAsciiString Sub;
+    Sub.Data.CopyFrom(this->Data, InIndex);
+    *Sub.Data.GetLast() = LAsciiString::StringTerminatorRune;
+
+    return Sub;
+}
+
 FORCEINLINE void Jafg::LAsciiString::InlineSub(const int32 InIndex, const int32 InCount)
 {
     check( this->Data.IsValidIndex(InIndex - 1) )
-    check( this->Data.IsValidIndex(InIndex + InCount - 1) )
+    check( this->Data.IsValidIndex(InIndex + InCount) )
     check( InCount >= 0 )
 
     LAsciiString Sub;
@@ -743,6 +809,8 @@ FORCEINLINE void Jafg::LAsciiString::InlineSub(const int32 InIndex, const int32 
     }
     check( *Sub.Data.Peek() != LAsciiString::StringTerminatorRune )
     check( Sub.Data.GetSize() == InCount )
+    check( Sub.Data.IsCapped() == false )
+
     Sub.Data.Add(LAsciiString::StringTerminatorRune);
 
     this->Empty();
@@ -761,6 +829,43 @@ FORCEINLINE void Jafg::LAsciiString::InlineSubIdx(const int32 InIndexA, const in
     this->InlineSub(InIndexA, InIndexB - InIndexA);
 
     return;
+}
+
+FORCEINLINE Jafg::LAsciiString Jafg::LAsciiString::Sub(const int32 InIndex, const int32 InCount) const
+{
+    if (InIndex == 0)
+    {
+        return this->Cut(InCount); /* Count is index. */
+    }
+
+    if (InCount == 0)
+    {
+        return { };
+    }
+
+    check( InCount > 0 )
+    check( this->Data.IsValidIndex(InIndex - 1) )
+    check( this->Data.IsValidIndex(InIndex + InCount) )
+
+    LAsciiString Sub;
+    Sub.Reserve(InCount + 1);
+    for (int32 i = InIndex; i < InIndex + InCount; ++i)
+    {
+        Sub.Data.Add(this->Data[i]);
+    }
+    check( *Sub.Data.Peek() != LAsciiString::StringTerminatorRune )
+    check( Sub.Data.GetSize() == InCount )
+    check( Sub.Data.IsCapped() == false )
+
+    Sub.Data.Add(LAsciiString::StringTerminatorRune);
+
+    return Sub;
+}
+
+FORCEINLINE Jafg::LAsciiString Jafg::LAsciiString::SubIdx(const int32 InIndexA, const int32 InIndexB) const
+{
+    check( InIndexA <= InIndexB )
+    return this->Sub(InIndexA, InIndexB - InIndexA);
 }
 
 FORCEINLINE int32 Jafg::LAsciiString::Count(const LChar InChar) const
@@ -843,9 +948,32 @@ FORCEINLINE void Jafg::LAsciiString::EnsureValidState()
     return;
 }
 
-template <typename ... ArgyTy>
-Jafg::LAsciiString Jafg::LAsciiString::SprintF(const char* Format, const ArgyTy& ... Args)
+FORCEINLINE void Jafg::LAsciiString::PanicValidState() const
 {
+    if (this->Data.IsData())
+    {
+        if (*this->Data.Peek() != LAsciiString::StringTerminatorRune)
+        {
+            LOG_FATAL(LogJafgInternal, "String is not null-terminated.")
+        }
+
+        return;
+    }
+
+    check( this->GetSize()          == 0       )
+    check( this->GetRuneCount()     == 0       )
+    check( this->Data.GetCapacity() == 0       )
+    check( this->Data.GetData()     == nullptr )
+
+    return;
+}
+
+template <typename ... ArgTy>
+Jafg::LAsciiString Jafg::LAsciiString::SprintF(const char* Format, const ArgTy& ... Args)
+{
+#if PLATFORM_WASM
+    return ::Jafg::Format(Format, Args...);
+#else /* PLATFORM_WASM */
     /**
      * Super supid solution. But who cares right now.
      * Later we write our own implementation with type safety etc.
@@ -855,4 +983,5 @@ Jafg::LAsciiString Jafg::LAsciiString::SprintF(const char* Format, const ArgyTy&
      */
     const LStringLegacy S = std::vformat(Format, std::make_format_args(Args...));
     return { S.c_str() };
+#endif /* !PLATFORM_WASM */
 }

@@ -3,7 +3,7 @@
 #include "CoreAfx.h"
 #include "Rhi/BoxShaderContext.h"
 #include "Widgets/Viewport.h"
-#include "RhiVendorInclude.h"
+#include "Rhi/RhiVendorInclude.h"
 #include "System/EnginePath.h"
 #include "Rhi/Texture2.h"
 
@@ -66,7 +66,9 @@ void Jafg::LBoxShaderContext::Draw(
         glBindVertexArray(this->Vao);
     }
 
+#if !PLATFORM_WASM
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif /* !PLATFORM_WASM */
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
@@ -173,8 +175,10 @@ void Jafg::LBoxShaderContext::ReloadShader() const
         glGenTextures(1, &this->Tex);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, this->Tex);
+#if !PLATFORM_WASM
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+#endif /* !PLATFORM_WASM */
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 

@@ -28,13 +28,27 @@
     Logging colors.
 ----------------------------------------------------------------------------*/
 
-#define LOG_COLOR_TRACE            "\033[;90m"      /* Dark gray   */
-#define LOG_COLOR_VERBOSE          "\033[;37m"      /* Light gray  */
-#define LOG_COLOR_INFO             "\033[;97m"      /* White       */
-#define LOG_COLOR_WARNING          "\033[;93m"      /* Yellow      */
-#define LOG_COLOR_ERROR            "\033[;91m"      /* Red         */
-#define LOG_COLOR_FATAL            "\033[;31m"      /* Bright red  */
-#define LOG_COLOR_END              "\033[0m"        /* Reset color */
+#if PLATFORM_SUPPORTS_ANSI_ESCAPES
+
+    #define LOG_COLOR_TRACE            "\033[;90m"      /* Dark gray   */
+    #define LOG_COLOR_VERBOSE          "\033[;37m"      /* Light gray  */
+    #define LOG_COLOR_INFO             "\033[;97m"      /* White       */
+    #define LOG_COLOR_WARNING          "\033[;93m"      /* Yellow      */
+    #define LOG_COLOR_ERROR            "\033[;91m"      /* Red         */
+    #define LOG_COLOR_FATAL            "\033[;31m"      /* Bright red  */
+    #define LOG_COLOR_END              "\033[0m"        /* Reset color */
+
+#else /* PLATFORM_SUPPORTS_ANSI_ESCAPES */
+
+    #define LOG_COLOR_TRACE            ""
+    #define LOG_COLOR_VERBOSE          ""
+    #define LOG_COLOR_INFO             ""
+    #define LOG_COLOR_WARNING          ""
+    #define LOG_COLOR_ERROR            ""
+    #define LOG_COLOR_FATAL            ""
+    #define LOG_COLOR_END              ""
+
+#endif /* !PLATFORM_SUPPORTS_ANSI_ESCAPES */
 
 
 /*----------------------------------------------------------------------------
@@ -148,11 +162,15 @@
     (PRIVATE_JAFG_LOG_TRACE_STR_CUR_FUNC + LITERAL_WIDE([) + PRIVATE_JAFG_LOG_TRACE_STR_CUR_LINE + LITERAL_WIDE(]))
 
 /** Instantly flushes log output. Caller will have to wait. */
-#define LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()                                                 \
-    {                      /* This seems weird and it is. But we currently do not really have a */ \
-        std::cout.flush(); /* logger lol. We basically just use print statements everywhere but */ \
-        std::cerr.flush(); /* hide them behind this complicated macro system to let other       */ \
-    }                      /* people think we are professional and somehow ... inhuman?         */
+#if PLATFORM_SUPPORTS_STD_FLUSH
+    #define LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()                                                 \
+        {                      /* This seems weird and it is. But we currently do not really have a */ \
+            std::cout.flush(); /* logger lol. We basically just use print statements everywhere but */ \
+            std::cerr.flush(); /* hide them behind this complicated macro system to let other       */ \
+        }                      /* people think we are professional and somehow ... inhuman?         */
+#else /* PLATFORM_SUPPORTS_STD_FLUSH */
+    #define LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
+#endif /* !PLATFORM_SUPPORTS_STD_FLUSH */
 
 #define PRIVATE_JAFG_LOG_DECLARE_INLINE_LOG_CATEGORY_IMPL(Category, Verbosity)                        \
     inline ::Jafg::Private::LLogCategory<::Jafg::ELogVerbosity::Type::Verbosity> Category(#Category);
@@ -160,35 +178,62 @@
 #if LOG_WITH_LINE_NUMBERS
     static_assert(false, "LOG_WITH_LINE_NUMBERS is not implemented yet.");
 #else /* LOG_WITH_LINE_NUMBERS */
-    #define PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Verbosity, Color, Format, ...)                             \
-        if constexpr (! ( (::Jafg::ELogVerbosity::Type::Verbosity) < (Category.GetCompileTimeVerbosity()) ) ) \
-        {                                                                                                     \
-            ::Jafg::Private::LogMessage(                                                                      \
-                std::format(Color "[{}] - {}: " Format "" LOG_COLOR_END,                                      \
-                    Category.GetCategory(),                                                                   \
-                    PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC,                                                \
-                    ##__VA_ARGS__                                                                             \
-                )                                                                                             \
-            );                                                                                                \
-        }
-    #define PRIVATE_JAFG_LOG_PRIVATE_PANIC_LOG(Category, Verbosity, Color, Format, ...)                       \
-        if constexpr (! ( (::Jafg::ELogVerbosity::Type::Verbosity) < (Category.GetCompileTimeVerbosity()) ) ) \
-        {                                                                                                     \
-            ::Jafg::Private::LogPanicMessage(                                                                 \
-                std::format("[{}] - {}: " Format "",                                                          \
-                    Category.GetCategory(),                                                                   \
-                    PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC,                                                \
-                    ##__VA_ARGS__                                                                             \
-                ),                                                                                            \
-                std::format(Color "[{}] - {}: " Format "" LOG_COLOR_END,                                      \
-                    Category.GetCategory(),                                                                   \
-                    PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC,                                                \
-                    ##__VA_ARGS__                                                                             \
-                ),                                                                                            \
-                __FILE__,                                                                                     \
-                __LINE__                                                                                      \
-            );                                                                                                \
-        }
+    #if PLATFORM_WASM
+        #define PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Verbosity, Color, Format, ...)                             \
+            if constexpr (! ( (::Jafg::ELogVerbosity::Type::Verbosity) < (Category.GetCompileTimeVerbosity()) ) ) \
+            {                                                                                                     \
+                ::Jafg::Private::LogMessageWrapper<Category.GetCompileTimeVerbosity(),                            \
+                ::Jafg::ELogVerbosity::Type::Verbosity>(                                                          \
+                    Category,                                                                                     \
+                    Color "[{}] - {}: " Format "" LOG_COLOR_END,                                                  \
+                    PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC,                                                    \
+                    ##__VA_ARGS__                                                                                 \
+                );                                                                                                \
+            }
+        #define PRIVATE_JAFG_LOG_PRIVATE_PANIC_LOG(Category, Verbosity, Color, Format, ...)                       \
+            if constexpr (! ( (::Jafg::ELogVerbosity::Type::Verbosity) < (Category.GetCompileTimeVerbosity()) ) ) \
+            {                                                                                                     \
+                ::Jafg::Private::LogPanicMessageWrapper(                                                          \
+                    Category,                                                                                     \
+                    "[{}] - {}: " Format "",                                                                      \
+                    Color "[{}] - {}: " Format "" LOG_COLOR_END,                                                  \
+                    __FILE__,                                                                                     \
+                    __LINE__,                                                                                     \
+                    PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC,                                                    \
+                    ##__VA_ARGS__                                                                                 \
+                );                                                                                                \
+            }
+    #else /* PLATFORM_WASM */
+        #define PRIVATE_JAFG_LOG_PRIVATE_LOG(Category, Verbosity, Color, Format, ...)                             \
+            if constexpr (! ( (::Jafg::ELogVerbosity::Type::Verbosity) < (Category.GetCompileTimeVerbosity()) ) ) \
+            {                                                                                                     \
+                ::Jafg::Private::LogMessage(                                                                      \
+                    std::format(Color "[{}] - {}: " Format "" LOG_COLOR_END,                                      \
+                        Category.GetCategory(),                                                                   \
+                        PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC,                                                \
+                        ##__VA_ARGS__                                                                             \
+                    )                                                                                             \
+                );                                                                                                \
+            }
+        #define PRIVATE_JAFG_LOG_PRIVATE_PANIC_LOG(Category, Verbosity, Color, Format, ...)                       \
+            if constexpr (! ( (::Jafg::ELogVerbosity::Type::Verbosity) < (Category.GetCompileTimeVerbosity()) ) ) \
+            {                                                                                                     \
+                ::Jafg::Private::LogPanicMessage(                                                                 \
+                    std::format("[{}] - {}: " Format "",                                                          \
+                        Category.GetCategory(),                                                                   \
+                        PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC,                                                \
+                        ##__VA_ARGS__                                                                             \
+                    ),                                                                                            \
+                    std::format(Color "[{}] - {}: " Format "" LOG_COLOR_END,                                      \
+                        Category.GetCategory(),                                                                   \
+                        PRIVATE_JAFG_LOG_TRACE_STR_CUR_CLASS_FUNC,                                                \
+                        ##__VA_ARGS__                                                                             \
+                    ),                                                                                            \
+                    __FILE__,                                                                                     \
+                    __LINE__                                                                                      \
+                );                                                                                                \
+            }
+    #endif /* !PLATFORM_WASM */
 #endif /* !LOG_WITH_LINE_NUMBERS */
 
 #if LOG_TO_FILE

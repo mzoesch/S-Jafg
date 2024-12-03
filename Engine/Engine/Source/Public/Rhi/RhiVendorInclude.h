@@ -7,10 +7,15 @@
     #error "This is disallowed - only include this header inside translation units."
 #endif /* !INCLUDED_RHI_VENDOR_INCLUDE_H */
 
-#include <glad/glad.h>  /* Include glad to get all the required OpenGL headers. */
+#if !JAFG_NO_GLAD
+    #include <glad/glad.h>  /* Include glad to get all the required OpenGL headers. */
+#endif /* !JAFG_NO_GLAD */
 
-#if JAFG_WITH_GLFW3
+#if !JAFG_NO_GLFW3
     #include <GLFW/glfw3.h> /* Include glfw3 after glad to avoid include order issues. */
-#endif /* JAFG_WITH_GLFW3 */
+#endif /* !JAFG_NO_GLFW3 */
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 #include <stb_image.h>

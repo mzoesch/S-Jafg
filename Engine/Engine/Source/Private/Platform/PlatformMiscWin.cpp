@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
+
 #if PLATFORM_WINDOWS
 
 #include "Widgets/InterfaceTypes.h"
@@ -10,7 +11,7 @@
 #include <cfgmgr32.h> /* MAX_DEVICE_ID_LEN */
 
 #include <SetupApi.h>
-/* For GNU/Clang, link with setupapi using '-lsetupapi' at compile time */
+/* For GNU/Clang, link with the setup api using '-lsetupapi' at compile time. */
 #if WITH_MSVC
     #pragma comment( lib, "setupapi.lib" )
 #endif /* WITH_MSVC */

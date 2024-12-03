@@ -4,8 +4,14 @@
 #include "System/Finder.h"
 #include "Platform/PlatformMisc.h"
 #include "System/EnginePath.h"
-#include <filesystem>
-namespace Fs = std::filesystem;
+#include "System/Paths.h"
+#include "System/VFilesystem.h"
+#if !WITH_VIRTUAL_FILESYSTEM
+    #include "User/UserPreferences.h"
+    #include "Engine/ObjectBaseUtility.h"
+    #include <filesystem>
+    namespace Fs = std::filesystem;
+#endif /* !WITH_VIRTUAL_FILESYSTEM */
 
 namespace Jafg
 {
@@ -13,6 +19,62 @@ namespace Jafg
 LPath Finder::GetEngineRootDir()
 {
     return PlatformMisc::GetEngineRootDir();
+}
+
+LStringLegacy Finder::ReadFile(const LEnginePath& InEnginePath)
+{
+#if WITH_VIRTUAL_FILESYSTEM
+    return GVirtualFileSystem->ReadFileAsString(InEnginePath);
+#else /* WITH_VIRTUAL_FILESYSTEM */
+    return Paths::ReadFile(InEnginePath.ResolveAbsolutePath(*GetDefault<JUserPreferences>()));
+#endif /* !WITH_VIRTUAL_FILESYSTEM */
+}
+
+void Finder::ReadFileAsBinary(const LEnginePath& InEnginePath, const uint8*& OutBuffer, uint64& OutBufferOverflowGuard)
+{
+    check( OutBuffer == nullptr )
+#if WITH_VIRTUAL_FILESYSTEM
+    GVirtualFileSystem->ReadFileAsBytes(InEnginePath, OutBuffer, OutBufferOverflowGuard);
+#else /* WITH_VIRTUAL_FILESYSTEM */
+    panic( "Not implemented." )
+    return;
+#endif /* !WITH_VIRTUAL_FILESYSTEM */
+}
+
+void Finder::FreeReadFileBinaryBuffer(const uint8*& InBuffer)
+{
+    check( InBuffer != nullptr )
+#if !WITH_VIRTUAL_FILESYSTEM
+    delete InBuffer;
+#endif /* !WITH_VIRTUAL_FILESYSTEM */
+    InBuffer = nullptr;
+    return;
+}
+
+bool Finder::DoesExists(const LEnginePath& InEnginePath)
+{
+#if WITH_VIRTUAL_FILESYSTEM
+    return GVirtualFileSystem->DoesFileExist(InEnginePath);
+#else /* WITH_VIRTUAL_FILESYSTEM */
+    return Paths::DoesFileExist(InEnginePath.ResolveAbsolutePath(*GetDefault<JUserPreferences>()));
+#endif /* WITH_VIRTUAL_FILESYSTEM */
+}
+
+bool Finder::DoesExistsChecked(const LEnginePath& InEnginePath)
+{
+    const bool bOut = Finder::DoesExists(InEnginePath);
+    check(bOut)
+    return bOut;
+}
+
+bool Finder::DoesExistsPanicked(const LEnginePath& InEnginePath)
+{
+    const bool bOut = Finder::DoesExists(InEnginePath);
+    if (bOut == false)
+    {
+        panicMsgf("File does not exist: {}", InEnginePath.GetRelativeUnresolvedPath().GetPath())
+    }
+    return bOut;
 }
 
 LPath Finder::ResolvePathToRelativeModulePath(const LEnginePath& InEnginePath)
@@ -57,6 +119,10 @@ TdhArray<LSimpleString> Finder::FindFiles(
     const LSimpleString& InFileExtension /* = ".*" */
 )
 {
+#if WITH_VIRTUAL_FILESYSTEM
+    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())
+    return { };
+#else /* WITH_VIRTUAL_FILESYSTEM */
     TdhArray<LSimpleString> Out;
 
     if (Fs::exists(InAbsolutePath.GetPath().ToC()) == false)
@@ -106,6 +172,7 @@ TdhArray<LSimpleString> Finder::FindFiles(
     }
 
     return Out;
+#endif /* WITH_VIRTUAL_FILESYSTEM */
 }
 
 TdhArray<LSimpleString> Finder::FindFiles(
@@ -115,11 +182,20 @@ TdhArray<LSimpleString> Finder::FindFiles(
     const LSimpleString& InFileExtension /* = ".*"*/
 )
 {
+#if WITH_VIRTUAL_FILESYSTEM
+    return GVirtualFileSystem->FindFiles(
+        InEnginePathTy,
+        InUserPreferences,
+        bKeepExtension,
+        InFileExtension
+    );
+#else /* WITH_VIRTUAL_FILESYSTEM */
     return Finder::FindFiles(
         Finder::ResolvePathToAbsolutePath(LEnginePath(InEnginePathTy), InUserPreferences),
         bKeepExtension,
         InFileExtension
     );
+#endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 
 } /* ~Namespace Jafg */

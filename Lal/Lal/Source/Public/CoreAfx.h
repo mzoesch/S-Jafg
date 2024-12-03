@@ -21,10 +21,11 @@
     Core includes.
 ----------------------------------------------------------------------------*/
 
-#include "HAL/GenericPlatformTypes.h"
-#include "HAL/Platform.h"
+#include "Hal/GenericPlatformTypes.h"
+#include "Hal/Platform.h"
 #include "Core/CoreMacros.h"
 #include "Core/CoreDefines.h"
+#include "Core/CoreFunctors.h"
 
 
 /*----------------------------------------------------------------------------
@@ -80,6 +81,7 @@
 #include "Containers/AsciiString.h"
 #include "Containers/ComplexQueue.h"
 #include "Containers/SimpleQueue.h"
+#include "Containers/Format.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Misc

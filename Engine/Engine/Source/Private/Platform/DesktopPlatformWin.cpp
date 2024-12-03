@@ -1,6 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
+
+#if PLATFORM_WINDOWS
+
 #include "Forward/EngineForward.h"
 #include "Platform/DesktopPlatformWin.h"
 #include <glad/glad.h>
@@ -236,6 +239,11 @@ Jafg::TIntVector2<int32> Jafg::LDesktopPlatformWin::GetDimensions() const
     return TIntVector2<int32>(Width, Height);
 }
 
+bool Jafg::LDesktopPlatformWin::CanVSync() const
+{
+    return true;
+}
+
 void Jafg::LDesktopPlatformWin::SetVSync(const bool bEnabled)
 {
     this->bVSync = bEnabled;
@@ -330,3 +338,5 @@ void Jafg::LDesktopPlatformWin::ScrollCallback(::GLFWwindow* Window, const doubl
 
     return;
 }
+
+#endif /* PLATFORM_WINDOWS */

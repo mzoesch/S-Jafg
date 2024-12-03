@@ -23,8 +23,20 @@ class LSurface;
         typedef LNativeWindowWin LNativeWindow;
         /** The currently active desktop platform. */
         typedef LDesktopPlatformWin LDesktopPlatform;
+
     #endif /* PLATFORM_WINDOWS */
 
-#endif /* PLATFORM_DESKTOP */
+    typedef LDesktopPlatform LCurrentPlatform;
+
+#elif PLATFORM_WASM
+
+    class LPlatformWasm;
+    struct LWasmNativeWindow;
+    typedef LWasmNativeWindow LNativeWindow;
+    typedef LPlatformWasm LCurrentPlatform;
+
+#else
+    #error "Could not resolve PLATFORM."
+#endif /* !PLATFORM_WASM */
 
 } /* ~Namespace Jafg */

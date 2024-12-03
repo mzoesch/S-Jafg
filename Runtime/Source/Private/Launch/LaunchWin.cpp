@@ -2,9 +2,7 @@
 
 #include "CoreAfx.h"
 
-#if !PLATFORM_WINDOWS
-    #error "Is not PLATFORM_WINDOWS but platform specific code is being compiled."
-#endif /* !PLATFORM_WINDOWS */
+#if PLATFORM_WINDOWS
 
 extern EPlatformExit::Type GuardedMain(const LChar* CmdLine);
 
@@ -64,3 +62,5 @@ int32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstanc
     return Result;
 #endif /* !WITH_TESTS */
 }
+
+#endif /* PLATFORM_WINDOWS */

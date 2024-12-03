@@ -3,11 +3,11 @@
 package SolutionGenerator
 
 import (
-	"Jafg/Shared"
-	"fmt"
-	"os"
-	"slices"
-	"strings"
+    "Jafg/Shared"
+    "fmt"
+    "os"
+    "slices"
+    "strings"
 )
 
 func GenerateCmakeSolution() {
@@ -228,10 +228,20 @@ if(USING_MINIMAL)
 endif()
 if(USING_MSVC)
     add_compile_definitions($<$<STREQUAL:${TARGET_PLATFORM},${TARGET_PLATFORM_WIN}>:COMPILER_SUPPORTS_SHARED_LNK>)
+    set(TARGET_CPU_ARCHITECTURE "x64")
 endif()
 if(USING_MINIMAL)
     if(CURRENT_COMPILER_SUPPORTS_SHARED_LNK)
         add_compile_definitions(COMPILER_SUPPORTS_SHARED_LNK)
+    endif()
+    if(${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
+        get_filename_component(EMSCRIPTEN_ROOT_PATH ${CMAKE_CXX_COMPILER} DIRECTORY)
+        set(TARGET_CPU_ARCHITECTURE "wasm32")
+    else()
+        set(EMSCRIPTEN_ROOT_PATH "")
+    endif()
+    if(${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WIN})
+        set(TARGET_CPU_ARCHITECTURE "x64")
     endif()
 endif()
 `,
@@ -550,7 +560,12 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
     var privateLinkedLibs_AllTargets_Minimal_Formatted []string
 
     if module.GetUsableName() == "Engine" {
-        privateLinkedLibs_AllTargets_Minimal_Formatted = append(privateLinkedLibs_AllTargets_Minimal_Formatted, "Setupapi.lib")
+        privateLinkedLibs_AllTargets_Minimal = append(privateLinkedLibs_AllTargets_Minimal, `if(${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WIN})
+        target_link_libraries(${CUR_MOD_NAME} PRIVATE
+            "SetupApi.lib"
+            )
+    endif()`,
+        )
     }
 
     WriteWithIndent(builder, indent, fmt.Sprintf("set(CUR_MOD_NAME \"%s\")\n", module.GetUsableName()))
@@ -629,53 +644,66 @@ func WriteCmakeFileForSpecificModule(builder *strings.Builder, indent int, modul
         Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
     ))
     WriteWithIndent(builder, indent+4, fmt.Sprintf("source_group(\"\" FILES ${%s_MISC_FILES})\n", module.GetUsableName()))
+    WriteWithIndent(builder, indent+4, fmt.Sprintf(`file(GLOB_RECURSE %s_GEN_H_FILES
+%s        "${CMAKE_SOURCE_DIR}/%s/**.h"
+%s        "${CMAKE_SOURCE_DIR}/%s/**.hpp"
+%s        )
+`,
+        module.GetUsableName(),
+        Shared.Indent(indent), Shared.GetRelativeGeneratedHeaderDirForModule(module),
+        Shared.Indent(indent), Shared.GetRelativeGeneratedHeaderDirForModule(module),
+        Shared.Indent(indent),
+    ))
+    WriteWithIndent(builder, indent+4, fmt.Sprintf("source_group(\"Generated Headers\" FILES ${%s_GEN_H_FILES})\n", module.GetUsableName()))
     WriteWithIndent(builder, indent, "endif()\n")
     WriteWithIndent(builder, indent, "if(USING_MINIMAL)\n")
     WriteWithIndent(builder, indent+4, fmt.Sprintf("set(%s_MISC_FILES \"\")\n", module.GetUsableName()))
+    WriteWithIndent(builder, indent+4, fmt.Sprintf("set(%s_GEN_H_FILES \"\")\n", module.GetUsableName()))
     WriteWithIndent(builder, indent, "endif()\n")
 
     WriteWithIndent(builder, indent, fmt.Sprintf("file(GLOB_RECURSE %s_C_SRC_FILES ${CMAKE_SOURCE_DIR}/${CUR_MOD_REL_PATH}/Source/*.c)\n", module.GetUsableName()))
 
     if module.Kind.IsLaunch() {
         WriteWithIndent(builder, indent, fmt.Sprintf(
-            "add_executable(${CUR_MOD_NAME} ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})\n",
-            module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
+            "add_executable(${CUR_MOD_NAME} ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_GEN_H_FILES} ${%s_MISC_FILES})\n",
+            module.GetUsableName(), module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
         ))
     } else if module.Kind.IsShared() {
         WriteWithIndent(builder, indent, fmt.Sprintf(`if(COMPILER_SUPPORTS_SHARED_LNK)
-    add_library(${CUR_MOD_NAME} SHARED ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})
+    add_library(${CUR_MOD_NAME} SHARED ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_GEN_H_FILES} ${%s_MISC_FILES})
 else()
-    add_library(${CUR_MOD_NAME} STATIC ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})
+    add_library(${CUR_MOD_NAME} STATIC ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_GEN_H_FILES} ${%s_MISC_FILES})
 endif()
 `,
-            module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
-            module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
+            module.GetUsableName(), module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
+            module.GetUsableName(), module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
         ))
     } else if module.Kind.IsStatic() {
         WriteWithIndent(builder, indent, fmt.Sprintf(
-            "add_library(${CUR_MOD_NAME} STATIC ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})\n",
-            module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
+            "add_library(${CUR_MOD_NAME} STATIC ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_GEN_H_FILES} ${%s_MISC_FILES})\n",
+            module.GetUsableName(), module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
         ))
     } else if module.Kind.IsInherit() {
         if module.Parent.DefaultKind.IsLaunch() {
             WriteWithIndent(builder, indent, fmt.Sprintf(
-                "add_executable(${CUR_MOD_NAME} ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})\n",
-                module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
+                "add_executable(${CUR_MOD_NAME} ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_GEN_H_FILES} ${%s_MISC_FILES})\n",
+                module.GetUsableName(), module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
             ))
         } else if module.Parent.DefaultKind.IsShared() {
             WriteWithIndent(builder, indent, fmt.Sprintf(`if(COMPILER_SUPPORTS_SHARED_LNK)
-    add_library(${CUR_MOD_NAME} SHARED ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})
+    add_library(${CUR_MOD_NAME} SHARED ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_GEN_H_FILES} ${%s_MISC_FILES})
 else()
-    add_library(${CUR_MOD_NAME} STATIC ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})
+    add_library(${CUR_MOD_NAME} STATIC ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_GEN_H_FILES} ${%s_MISC_FILES})
 endif()
 `,
                 module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
                 module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
+                module.GetUsableName(), module.GetUsableName(),
             ))
         } else if module.Parent.DefaultKind.IsStatic() {
             WriteWithIndent(builder, indent, fmt.Sprintf(
-                "add_library(${CUR_MOD_NAME} STATIC ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_MISC_FILES})\n",
-                module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
+                "add_library(${CUR_MOD_NAME} STATIC ${%s_SRC_FILES} ${%s_GEN_SRC_FILES} ${%s_GEN_H_FILES} ${%s_MISC_FILES})\n",
+                module.GetUsableName(), module.GetUsableName(), module.GetUsableName(), module.GetUsableName(),
             ))
         } else {
             panic(fmt.Sprintf("Unknown module kind: %d", module.Parent.DefaultKind))
@@ -698,13 +726,36 @@ endif()
 %s    set_target_properties(${CUR_MOD_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
 %sendif()
 %sif(USING_MINIMAL)
-%s    set_target_properties(${CUR_MOD_NAME} PROPERTIES LINK_FLAGS "-mwindows")
+%s    if(${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WIN})
+%s        set_target_properties(${CUR_MOD_NAME} PROPERTIES LINK_FLAGS "-mwindows")
+%s    endif()
+%s    if(${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
+%s        set_target_properties(${CUR_MOD_NAME} PROPERTIES
+%s            LINK_FLAGS "--shell-file ${CMAKE_SOURCE_DIR}/Content/Wasm/MinimalShell.html"
+%s            SUFFIX ".html"
+%s            )
+%s    endif()
 %sendif()
 `,
+            Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
+            Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
             Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
             Shared.Indent(indent),
         ))
     }
+
+    WriteWithIndent(builder, indent, fmt.Sprintf(`if(USING_MINIMAL)
+%s    if(${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
+%s        target_compile_definitions(${CUR_MOD_NAME} PRIVATE PLATFORM_USES_WEBGL_TWO JAFG_NO_GLAD USE_FREETYPE=1)
+%s        set_target_properties(${CUR_MOD_NAME} PROPERTIES
+%s            LINK_FLAGS "-s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -s USE_FREETYPE=1"
+%s            )
+%s    endif()
+%sendif()
+`,
+        Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
+        Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
+    ))
 
     for idx, _ := range cxxPrivateFlags {
         WriteWithIndent(builder, indent, fmt.Sprintf("target_compile_options(${CUR_MOD_NAME} PRIVATE %s)\n", cxxPrivateFlags[idx]))
@@ -728,14 +779,14 @@ endif()
     WriteWithIndent(builder, indent+4, fmt.Sprintf("add_custom_command(TARGET ${CUR_MOD_NAME} PRE_BUILD\n"+
         "%s        COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\"\n"+
         "%s            --fwd --BuildTool --pre-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=${TARGET_PLATFORM} --MOD_NAME=${CUR_MOD_NAME}\n"+
-        "%s            --CFG_KIND=%s --CFG_SYSTEM=${TARGET_PLATFORM} --CFG_ARCHITECTURE=${CMAKE_GENERATOR_PLATFORM}\n%s    )\n",
+        "%s            --CFG_KIND=%s --CFG_SYSTEM=${TARGET_PLATFORM} --CFG_ARCHITECTURE=${TARGET_CPU_ARCHITECTURE}\n%s    )\n",
         Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
         module.Kind.ToLuaString(&module.Parent.DefaultKind), Shared.Indent(indent),
     ))
     WriteWithIndent(builder, indent+4, fmt.Sprintf("add_custom_command(TARGET ${CUR_MOD_NAME} POST_BUILD\n"+
         "%s        COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\"\n"+
         "%s            --fwd --BuildTool --post-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=${TARGET_PLATFORM} --MOD_NAME=${CUR_MOD_NAME}\n"+
-        "%s            --CFG_KIND=%s --CFG_SYSTEM=${TARGET_PLATFORM} --CFG_ARCHITECTURE=${CMAKE_GENERATOR_PLATFORM}\n%s    )\n",
+        "%s            --CFG_KIND=%s --CFG_SYSTEM=${TARGET_PLATFORM} --CFG_ARCHITECTURE=${TARGET_CPU_ARCHITECTURE}\n%s    )\n",
         Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
         module.Kind.ToLuaString(&module.Parent.DefaultKind), Shared.Indent(indent),
     ))
@@ -744,7 +795,7 @@ endif()
     WriteWithIndent(builder, indent+4, fmt.Sprintf("add_custom_target(pre_build_command_%s\n", module.GetUsableName()))
     WriteWithIndent(builder, indent+8, fmt.Sprintf("COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\"\n"+
         "            --fwd --BuildTool --pre-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=${TARGET_PLATFORM} --MOD_NAME=${CUR_MOD_NAME}\n"+
-        "            --CFG_KIND=%s --CFG_SYSTEM=${TARGET_PLATFORM} --CFG_ARCHITECTURE=${CMAKE_GENERATOR_PLATFORM}\n"+
+        "            --CFG_KIND=%s --CFG_SYSTEM=${TARGET_PLATFORM} --CFG_ARCHITECTURE=${TARGET_CPU_ARCHITECTURE}\n"+
         "        COMMENT \"Pre-build command for module %s\"\n",
         module.Kind.ToLuaString(&module.Parent.DefaultKind), module.GetUsableName(),
     ))
@@ -752,7 +803,7 @@ endif()
     WriteWithIndent(builder, indent+4, fmt.Sprintf("add_custom_target(post_build_command_%s\n", module.GetUsableName()))
     WriteWithIndent(builder, indent+8, fmt.Sprintf("COMMAND ${Python_EXECUTABLE} \"${CMAKE_SOURCE_DIR}/Program.py\"\n"+
         "            --fwd --BuildTool --post-build --BUILD_CONFIG=$<CONFIG> --PLATFORM=${TARGET_PLATFORM} --MOD_NAME=${CUR_MOD_NAME}\n"+
-        "            --CFG_KIND=%s --CFG_SYSTEM=${TARGET_PLATFORM} --CFG_ARCHITECTURE=${CMAKE_GENERATOR_PLATFORM}\n"+
+        "            --CFG_KIND=%s --CFG_SYSTEM=${TARGET_PLATFORM} --CFG_ARCHITECTURE=${TARGET_CPU_ARCHITECTURE}\n"+
         "        COMMENT \"Post-build command for module %s.\"\n",
         module.Kind.ToLuaString(&module.Parent.DefaultKind), module.GetUsableName(),
         ))
@@ -773,9 +824,17 @@ endif()
         if dep == "RHI_DEPENDENCIES" {
             /* Has to be included directly and not inside the namespace. */
             publicIncludeDirs_AllTargets = append(publicIncludeDirs_AllTargets, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/Freetype\"", Shared.VendorIncludeDir))
-            publicLinkedLibs_AllTargets_Minimal_Formatted = append(publicLinkedLibs_AllTargets_Minimal_Formatted, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/libfreetype.dll.a\"", Shared.VendorLibDir))
+            publicLinkedLibs_AllTargets_Minimal = append(publicLinkedLibs_AllTargets_Minimal, fmt.Sprintf(`if(NOT ${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
+        target_link_libraries(${CUR_MOD_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/%s/libfreetype.dll.a")
+    endif()`,
+                Shared.VendorLibDir,
+            ))
             publicLinkedLibs_AllTargets_Msvc = append(publicLinkedLibs_AllTargets_Msvc, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/freetype.lib\"", Shared.VendorLibDir))
-            publicLinkedLibs_AllTargets_Minimal_Formatted = append(publicLinkedLibs_AllTargets_Minimal_Formatted, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/libglfw3.a\"", Shared.VendorLibDir))
+            publicLinkedLibs_AllTargets_Minimal = append(publicLinkedLibs_AllTargets_Minimal, fmt.Sprintf(`if(NOT ${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
+        target_link_libraries(${CUR_MOD_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/%s/libglfw3.a")
+    endif()`,
+                Shared.VendorLibDir,
+            ))
             publicLinkedLibs_AllTargets_Msvc = append(publicLinkedLibs_AllTargets_Msvc, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/glfw3.lib\"", Shared.VendorLibDir))
             continue
         }
@@ -808,9 +867,17 @@ endif()
         if dep == "RHI_DEPENDENCIES" {
             /* Has to be included directly and not inside the namespace. */
             privateIncludeDirs_AllTargets = append(privateIncludeDirs_AllTargets, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/Freetype\"", Shared.VendorIncludeDir))
-            privateLinkedLibs_AllTargets_Minimal_Formatted = append(privateLinkedLibs_AllTargets_Minimal_Formatted, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/libfreetype.dll.a\"", Shared.VendorLibDir))
+            privateLinkedLibs_AllTargets_Minimal = append(privateLinkedLibs_AllTargets_Minimal, fmt.Sprintf(`if(NOT ${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
+        target_link_libraries(${CUR_MOD_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/%s/libfreetype.dll.a")
+    endif()`,
+                Shared.VendorLibDir,
+            ))
             privateLinkedLibs_AllTargets_Msvc = append(privateLinkedLibs_AllTargets_Msvc, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/freetype.lib\"", Shared.VendorLibDir))
-            privateLinkedLibs_AllTargets_Minimal_Formatted = append(privateLinkedLibs_AllTargets_Minimal_Formatted, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/libglfw3.a\"", Shared.VendorLibDir))
+            privateLinkedLibs_AllTargets_Minimal = append(privateLinkedLibs_AllTargets_Minimal, fmt.Sprintf(`if(NOT ${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
+        target_link_libraries(${CUR_MOD_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/%s/libglfw3.a")
+    endif()`,
+                Shared.VendorLibDir,
+            ))
             privateLinkedLibs_AllTargets_Msvc = append(privateLinkedLibs_AllTargets_Msvc, fmt.Sprintf("\"${CMAKE_SOURCE_DIR}/%s/glfw3.lib\"", Shared.VendorLibDir))
             continue
         }
@@ -843,15 +910,15 @@ endif()
         /* Lol, in cmake you cannot define a different folder for intermediates
            haha wtf?? We fix this in the post-run call. */
         WriteWithIndent(builder, indent, fmt.Sprintf(`set_target_properties(${CUR_MOD_NAME} PROPERTIES
-%s    ARCHIVE_OUTPUT_DIRECTORY_DEBUG-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Debug-%s/${CUR_MOD_REL_PATH}"
-%s    LIBRARY_OUTPUT_DIRECTORY_DEBUG-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Debug-%s/${CUR_MOD_REL_PATH}"
-%s    RUNTIME_OUTPUT_DIRECTORY_DEBUG-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Debug-%s/${CUR_MOD_REL_PATH}"
-%s    ARCHIVE_OUTPUT_DIRECTORY_DEVELOPMENT-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Development-%s/${CUR_MOD_REL_PATH}"
-%s    LIBRARY_OUTPUT_DIRECTORY_DEVELOPMENT-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Development-%s/${CUR_MOD_REL_PATH}"
-%s    RUNTIME_OUTPUT_DIRECTORY_DEVELOPMENT-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Development-%s/${CUR_MOD_REL_PATH}"
-%s    ARCHIVE_OUTPUT_DIRECTORY_SHIPPING-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Shipping-%s/${CUR_MOD_REL_PATH}"
-%s    LIBRARY_OUTPUT_DIRECTORY_SHIPPING-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Shipping-%s/${CUR_MOD_REL_PATH}"
-%s    RUNTIME_OUTPUT_DIRECTORY_SHIPPING-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${CMAKE_GENERATOR_PLATFORM}/Shipping-%s/${CUR_MOD_REL_PATH}"
+%s    ARCHIVE_OUTPUT_DIRECTORY_DEBUG-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${TARGET_CPU_ARCHITECTURE}/Debug-%s/${CUR_MOD_REL_PATH}"
+%s    LIBRARY_OUTPUT_DIRECTORY_DEBUG-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${TARGET_CPU_ARCHITECTURE}/Debug-%s/${CUR_MOD_REL_PATH}"
+%s    RUNTIME_OUTPUT_DIRECTORY_DEBUG-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${TARGET_CPU_ARCHITECTURE}/Debug-%s/${CUR_MOD_REL_PATH}"
+%s    ARCHIVE_OUTPUT_DIRECTORY_DEVELOPMENT-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${TARGET_CPU_ARCHITECTURE}/Development-%s/${CUR_MOD_REL_PATH}"
+%s    LIBRARY_OUTPUT_DIRECTORY_DEVELOPMENT-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${TARGET_CPU_ARCHITECTURE}/Development-%s/${CUR_MOD_REL_PATH}"
+%s    RUNTIME_OUTPUT_DIRECTORY_DEVELOPMENT-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${TARGET_CPU_ARCHITECTURE}/Development-%s/${CUR_MOD_REL_PATH}"
+%s    ARCHIVE_OUTPUT_DIRECTORY_SHIPPING-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${TARGET_CPU_ARCHITECTURE}/Shipping-%s/${CUR_MOD_REL_PATH}"
+%s    LIBRARY_OUTPUT_DIRECTORY_SHIPPING-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${TARGET_CPU_ARCHITECTURE}/Shipping-%s/${CUR_MOD_REL_PATH}"
+%s    RUNTIME_OUTPUT_DIRECTORY_SHIPPING-%s "${CMAKE_SOURCE_DIR}/Binaries/${TARGET_PLATFORM}-${TARGET_CPU_ARCHITECTURE}/Shipping-%s/${CUR_MOD_REL_PATH}"
 %s    )
 `,
             Shared.Indent(indent), strings.ToUpper(targ.GetSuffix()), targ.GetSuffix(),
@@ -905,8 +972,27 @@ endif()
             if dep == "CORE_DEPENDENCIES" {
                 publicLinkedDebugLibs_Msvc = append(publicLinkedDebugLibs_Msvc, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoiseD.lib", Shared.VendorLibDir))
                 publicLinkedShippingLibs_Msvc = append(publicLinkedShippingLibs_Msvc, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoise.lib", Shared.VendorLibDir))
-                publicLinkedDebugLibs_Minimal = append(publicLinkedDebugLibs_Minimal, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/libFastNoiseD.dll.a", Shared.VendorLibDir))
-                publicLinkedShippingLibs_Minimal = append(publicLinkedShippingLibs_Minimal, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/libFastNoise.dll.a", Shared.VendorLibDir))
+                publicLinkedLibs_AllTargets_Minimal = append(publicLinkedLibs_AllTargets_Minimal, fmt.Sprintf(`if(NOT ${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
+        if(${CMAKE_BUILD_TYPE} STREQUAL "Debug-%s")
+            target_link_libraries(${CUR_MOD_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/%s/libFastNoiseD.dll.a")
+        endif()
+    endif()`,
+                    targ.GetSuffix(), Shared.VendorLibDir,
+                ))
+                publicLinkedLibs_AllTargets_Minimal = append(publicLinkedLibs_AllTargets_Minimal, fmt.Sprintf(`if(NOT ${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
+        if(${CMAKE_BUILD_TYPE} STREQUAL "Development-%s")
+            target_link_libraries(${CUR_MOD_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/%s/libFastNoiseD.dll.a")
+        endif()
+    endif()`,
+                    targ.GetSuffix(), Shared.VendorLibDir,
+                ))
+                publicLinkedLibs_AllTargets_Minimal = append(publicLinkedLibs_AllTargets_Minimal, fmt.Sprintf(`if(NOT ${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
+        if(${CMAKE_BUILD_TYPE} STREQUAL "Shipping-%s")
+            target_link_libraries(${CUR_MOD_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/%s/libFastNoise.dll.a")
+        endif()
+    endif()`,
+                    targ.GetSuffix(), Shared.VendorLibDir,
+                ))
                 continue
             }
             if dep == "RHI_DEPENDENCIES" {
@@ -919,8 +1005,27 @@ endif()
             if dep == "CORE_DEPENDENCIES" {
                 privateLinkedDebugLibs_Msvc = append(privateLinkedDebugLibs_Msvc, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoiseD.lib", Shared.VendorLibDir))
                 privateLinkedShippingLibs_Msvc = append(privateLinkedShippingLibs_Msvc, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/FastNoise.lib", Shared.VendorLibDir))
-                privateLinkedDebugLibs_Minimal = append(privateLinkedDebugLibs_Minimal, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/libFastNoiseD.dll.a", Shared.VendorLibDir))
-                privateLinkedShippingLibs_Minimal = append(privateLinkedShippingLibs_Minimal, fmt.Sprintf("${CMAKE_SOURCE_DIR}/%s/libFastNoise.dll.a", Shared.VendorLibDir))
+                privateLinkedLibs_AllTargets_Minimal = append(privateLinkedLibs_AllTargets_Minimal, fmt.Sprintf(`if(NOT ${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
+        if(${CMAKE_BUILD_TYPE} STREQUAL "Debug-%s")
+            target_link_libraries(${CUR_MOD_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/%s/libFastNoiseD.dll.a")
+        endif()
+    endif()`,
+                    targ.GetSuffix(), Shared.VendorLibDir,
+                ))
+                privateLinkedLibs_AllTargets_Minimal = append(privateLinkedLibs_AllTargets_Minimal, fmt.Sprintf(`if(NOT ${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
+        if(${CMAKE_BUILD_TYPE} STREQUAL "Development-%s")
+            target_link_libraries(${CUR_MOD_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/%s/libFastNoiseD.dll.a")
+        endif()
+    endif()`,
+                    targ.GetSuffix(), Shared.VendorLibDir,
+                ))
+                privateLinkedLibs_AllTargets_Minimal = append(privateLinkedLibs_AllTargets_Minimal, fmt.Sprintf(`if(NOT ${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
+        if(${CMAKE_BUILD_TYPE} STREQUAL "Shipping-%s")
+            target_link_libraries(${CUR_MOD_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/%s/libFastNoise.dll.a")
+        endif()
+    endif()`,
+                    targ.GetSuffix(), Shared.VendorLibDir,
+                ))
                 continue
             }
             if dep == "RHI_DEPENDENCIES" {

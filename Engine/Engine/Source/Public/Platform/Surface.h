@@ -2,7 +2,14 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+/**
+ * When you include this file, it will transitively include the platform-specific surface header files.
+ * There is no need to check on which platform you are and conditionally include the correct header file - this header
+ * will do that for you.
+ */
+#if PREPROCESSOR_EXCLUDE_FF
+#endif /* PREPROCESSOR_EXCLUDE_FF */
+
 #include "Platform/SurfaceForward.h"
 #include "User/Input/RawInput.h"
 
@@ -35,6 +42,8 @@ public:
     NODISCARD virtual auto GetHeight() const -> int32                   = 0;
     NODISCARD virtual auto GetDimensions() const -> TIntVector2<int32>  = 0;
 
+    /** Whether the current surface does ever support VSync. */
+    NODISCARD virtual bool CanVSync() const              = 0;
               virtual void SetVSync(const bool bEnabled) = 0;
     NODISCARD virtual bool IsVSync() const               = 0;
 
@@ -82,6 +91,8 @@ private:
 
 #if PLATFORM_DESKTOP
     #include "Platform/DesktopPlatform.h"
+#elif PLATFORM_WASM
+    #include "Platform/PlatformWasm.h"
 #else /* PLATFORM_DESKTOP */
     #error "Could not resolve PLATFORM."
 #endif /* !PLATFORM_DESKTOP */

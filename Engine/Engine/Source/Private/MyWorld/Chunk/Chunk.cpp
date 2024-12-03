@@ -111,7 +111,6 @@ void Jafg::AChunk::OnAlloc(const LChunkKey& InChunkKey)
     check( this->GetChunkState() == EChunkState::Freed )
 
     this->ChunkKey = InChunkKey;
-    this->ChunkPos = glm::vec3(this->ChunkKey.X, this->ChunkKey.Y, this->ChunkKey.Z);
     this->WorldLocation = this->ChunkKey.ToWorldSpaceVector();
 
     this->SetChunkState(EChunkState::PreSpawned);

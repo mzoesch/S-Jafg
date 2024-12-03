@@ -65,7 +65,7 @@ public:
 
     FORCEINLINE auto GetRelativeUnresolvedPath() const noexcept -> const LPathTy& { return this->Data; }
 
-    inline LPathTy ResolveRelativePath(const JUserPreferences& InUserPreferences) const;
+    inline LPathTy ResolveRelativePath() const;
     inline LPathTy ResolveRelativeEnginePath(const JUserPreferences& InUserPreferences) const;
     inline LPathTy ResolveAbsolutePath(const JUserPreferences& InUserPreferences) const;
 
@@ -78,15 +78,15 @@ private:
 };
 
 template <typename InTPathTy>
-typename LEnginePathBase<InTPathTy>::LPathTy LEnginePathBase<InTPathTy>::ResolveRelativePath(const JUserPreferences& InUserPreferences) const
+typename LEnginePathBase<InTPathTy>::LPathTy LEnginePathBase<InTPathTy>::ResolveRelativePath() const
 {
-    return Finder::ResolvePathToRelativeModulePath(this, InUserPreferences);
+    return Finder::ResolvePathToRelativeModulePath(*this);
 }
 
 template <typename InTPathTy>
 typename LEnginePathBase<InTPathTy>::LPathTy LEnginePathBase<InTPathTy>::ResolveRelativeEnginePath(const JUserPreferences& InUserPreferences) const
 {
-    return Finder::ResolvePathToRelativeEnginePath(this, InUserPreferences);
+    return Finder::ResolvePathToRelativeEnginePath(*this, InUserPreferences);
 }
 
 template <typename InTPathTy>

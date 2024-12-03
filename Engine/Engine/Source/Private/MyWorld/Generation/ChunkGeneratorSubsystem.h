@@ -3,9 +3,11 @@
 #pragma once
 
 #include "Subsystems/ThreadedWorldSubsystem.h"
-#include "FastNoise/FastNoise.h"
 #include "MyWorld/ChunkKey.h"
 #include "MyWorld/Chunk/ChunkStates.h"
+#if PLATFORM_SUPPORTS_SIMD
+    #include "FastNoise/FastNoise.h"
+#endif /* PLATFORM_SUPPORTS_SIMD */
 #include "ChunkGeneratorSubsystem.generated.h"
 
 namespace Jafg
@@ -43,7 +45,9 @@ private:
 
 public:
 
+#if PLATFORM_SUPPORTS_SIMD
     FastNoise::SmartNode<> FnGenerator;
+#endif /* PLATFORM_SUPPORTS_SIMD */
 };
 
 } /* ~Namespace Jafg */

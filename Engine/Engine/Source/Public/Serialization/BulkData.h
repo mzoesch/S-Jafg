@@ -28,7 +28,7 @@ public:
     FORCEINLINE auto GetBulk() const -> const LBulkDomainTy* { return this->Bulk; }
 
     inline void AllocateBulk(const int32 InNumberOfDomains, const bool bZeroed = false);
-    inline void Serialize(const LBulkDomainTy* const InBulk, const int32 InNumberOfDomains, const int32 InOffset = 0);
+    inline void Serialize(const LBulkDomainTy* InBulk, const int32 InNumberOfDomains, const int32 InOffset = 0);
     inline void FreeBulk();
 
 private:

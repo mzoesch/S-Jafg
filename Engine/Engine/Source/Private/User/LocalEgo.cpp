@@ -24,11 +24,7 @@ void Jafg::LLocalEgo::Initialize()
 
     this->UserInput = new LUserInput();
 
-#if PLATFORM_DESKTOP
-    this->SurfaceToDrawOn = new ::Jafg::LDesktopPlatform();
-#else /* PLATFORM_DESKTOP */
-    #error "Cannot resolve surface."
-#endif /* !PLATFORM_DESKTOP */
+    this->SurfaceToDrawOn = new ::Jafg::LCurrentPlatform();
 
     JUserPreferences* UserPreferences = GetMutableDefault<JUserPreferences>();
     UserPreferences->SetVSyncEnabled(true);

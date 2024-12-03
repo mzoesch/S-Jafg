@@ -58,8 +58,8 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
             LEnginePath Path = LEnginePath(EEnginePaths::Blends, DiskTexture.Name.ToPtr());
             Path.AddExtension(".png");
 
-            LTexture2 Texture2;
-            if (Texture2.LoadFromDisk(Path, *GetDefault<JUserPreferences>()) == false)
+            LTexture2 Texture;
+            if (Texture.LoadFromDisk(Path, *GetDefault<JUserPreferences>()) == false)
             {
                 panicMsgf(
                     "Failed to load texture: {}. Faulty path: {}.",
@@ -68,25 +68,25 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
                 continue;
             }
 
-            if (Texture2.GetFirstMipMap().Size.X != Texture2.GetFirstMipMap().Size.Y)
+            if (Texture.GetFirstMipMap().Size.X != Texture.GetFirstMipMap().Size.Y)
             {
                 panicMsgf(
                     "Texture is not square: {}. Size: {}x{}.",
-                    DiskTexture.Name, Texture2.GetFirstMipMap().Size.X, Texture2.GetFirstMipMap().Size.Y
+                    DiskTexture.Name, Texture.GetFirstMipMap().Size.X, Texture.GetFirstMipMap().Size.Y
                 )
                 continue;
             }
 
-            if (Maths::IsPowerOfTwo(Texture2.GetFirstMipMap().Size.X) == false)
+            if (Maths::IsPowerOfTwo(Texture.GetFirstMipMap().Size.X) == false)
             {
                 panicMsgf(
                     "Texture is not power of two: {}. Size: {}x{}.",
-                    DiskTexture.Name, Texture2.GetFirstMipMap().Size.X, Texture2.GetFirstMipMap().Size.Y
+                    DiskTexture.Name, Texture.GetFirstMipMap().Size.X, Texture.GetFirstMipMap().Size.Y
                 )
                 continue;
             }
 
-            LoadedTextures.Add(std::move(Texture2));
+            LoadedTextures.Add(std::move(Texture));
 
             continue;
         }

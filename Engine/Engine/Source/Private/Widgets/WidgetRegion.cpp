@@ -19,7 +19,7 @@ void Jafg::WWidgetRegion::Draw(LViewport& Context) const
 
     if (this->ShaderContext == false)
     {
-        LOG_TRACE(LogTemporal, "Creating new shader context for WWidgetRegion.")
+        LOG_TRACE(LogWidgets, "Creating new shader context for WWidgetRegion.")
         this->ShaderContext.MakeMeaningful();
         this->CreateNewShaderContext();
     }

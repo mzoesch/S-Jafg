@@ -3,11 +3,10 @@
 #include "CoreAfx.h"
 #include "Rhi/ChunkShaderContext.h"
 #include "Widgets/Viewport.h"
-#include <stb_image.h>
 #include <glm/glm.hpp>
 #include "Engine/ObjectBaseUtility.h"
 #include "User/UserPreferences.h"
-#include "RhiVendorInclude.h"
+#include "Rhi/RhiVendorInclude.h"
 #include "Engine/Engine.h"
 #include "Engine/Framework/ApplicationInstance.h"
 #include "System/EnginePath.h"
@@ -82,14 +81,18 @@ void Jafg::LChunkShaderContext::Draw(const LViewport& Context, LGenericShaderCon
     if (const JUserPreferences* Preferences = GetDefault<JUserPreferences>();
         Preferences->GetPolygonMode() == EPolygonMode::Fill)
     {
+#if !PLATFORM_WASM
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif /* !PLATFORM_WASM */
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
         glFrontFace(GL_CW);
     }
     else if (Preferences->GetPolygonMode() == EPolygonMode::Wireframe)
     {
+#if !PLATFORM_WASM
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+#endif /* !PLATFORM_WASM */
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
         glFrontFace(GL_CW);
@@ -135,15 +138,13 @@ Jafg::LChunkShaderInstance::~LChunkShaderInstance()
 
 void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TdhArray<ChunkBoxVertex>& Vertices, const TdhArray<uint32>& Indices)
 {
-    static_assert(sizeof(GLsizeiptr) == sizeof(int64), "GLsizeiptr is not 64 bits");
-
     glGenVertexArrays(1, &this->Vao);
     glBindVertexArray(this->Vao);
 
     glGenBuffers(1, &this->Vbo);
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
     glBufferData(GL_ARRAY_BUFFER,
-        Vertices.GetSize() * static_cast<int64>(sizeof(::Jafg::ChunkBoxVertex)), Vertices.GetData(), GL_STATIC_DRAW);
+        Vertices.GetSize() * static_cast<GLsizeiptr>(sizeof(::Jafg::ChunkBoxVertex)), Vertices.GetData(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_BYTE, GL_FALSE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(ChunkBoxVertex, LocationX)));
     glEnableVertexAttribArray(0);
@@ -157,7 +158,7 @@ void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TdhArray<ChunkBo
     glGenBuffers(1, &this->Ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->Ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-        Indices.GetSize() * static_cast<int64>(sizeof(uint32)), Indices.GetData(), GL_STATIC_DRAW);
+        Indices.GetSize() * static_cast<GLsizeiptr>(sizeof(uint32)), Indices.GetData(), GL_STATIC_DRAW);
 
     return;
 }

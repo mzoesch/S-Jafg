@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "HAL/Platform.h"
+#include "Hal/Platform.h"
 
 namespace Jafg
 {
@@ -95,5 +95,16 @@ typedef LAsciiString        LSimpleString;
 typedef LUniEightString     LString;
 
 template <typename T, EQueueKind::Type TKind = EQueueKind::Spsc> using TQueue = TSimpleQueue<T, TKind>;
+
+
+/*----------------------------------------------------------------------------
+    Functional Forwards.
+----------------------------------------------------------------------------*/
+
+template <typename ... ArgTy>
+LSimpleString Format(const LChar* Format, const ArgTy& ... Args);
+
+template <typename ... ArgTy>
+LStringLegacy FormatLegacy(const LChar* Format, const ArgTy& ... Args);
 
 } /* ~Namespace Jafg */

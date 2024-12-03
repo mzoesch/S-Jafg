@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "HAL/GenericPlatformTypes.h"
+#include "Hal/GenericPlatformTypes.h"
 
 
 /*-----------------------------------------------------------------------------
@@ -30,11 +30,12 @@
 -----------------------------------------------------------------------------*/
 
 #if PLATFORM_WINDOWS
-    #include "HAL/PlatformWin.h"
-#else /* PLATFORM_WINDOWS */
-    /* Add more platform types here in the future... */
+    #include "Hal/PlatformWin.h"
+#elif PLATFORM_WASM
+    #include "Hal/PlatformWasm.h"
+#else /* PLATFORM_WASM */
     #error "Could not resolve PLATFORM."
-#endif /* !PLATFORM_WINDOWS */
+#endif /* !PLATFORM_WASM */
 
 
 /*-----------------------------------------------------------------------------
@@ -46,6 +47,92 @@
 #else /* !PLATFORM_WINDOWS */
     #define PLATFORM_DESKTOP        0
 #endif /* PLATFORM_WINDOWS */
+
+#ifndef PLATFORM_WINDOWS_WITH_GNU
+    #define PLATFORM_WINDOWS_WITH_GNU       0
+#endif /* !PLATFORM_WINDOWS_WITH_GNU */
+#ifndef PLATFORM_WINDOWS_WITH_MSVC
+    #define PLATFORM_WINDOWS_WITH_MSVC      0
+#endif /* !PLATFORM_WINDOWS_WITH_MSVC */
+#ifndef WITH_GNU
+    #define WITH_GNU        0
+#endif /* !WITH_GNU */
+#ifndef WITH_MSVC
+    #define WITH_MSVC       0
+#endif /* !WITH_MSVC */
+
+/**
+ * Whether to create a virtual filesystem for the platform at compile time.
+ * @see System/VFilesystem.h
+ */
+#ifndef WITH_VIRTUAL_FILESYSTEM
+    #define WITH_VIRTUAL_FILESYSTEM                 0
+#endif /* !WITH_VIRTUAL_FILESYSTEM */
+
+/**
+ * Whether to use glad.
+ */
+#ifndef JAFG_NO_GLAD
+    #define JAFG_NO_GLAD                            0
+#endif /* !JAFG_NO_GLAD */
+
+/**
+ * Whether to use glfw3.
+ */
+#ifndef JAFG_NO_GLFW3
+    #define JAFG_NO_GLFW3                           0
+#endif /* !JAFG_NO_GLFW3 */
+
+/**
+ * If no, the platform will compile all libraries as static libraries.
+ * This will not allow for dynamic linking at runtime, and therefore all plugins must be present at compile time.
+ */
+#ifndef PLATFORM_SUPPORTS_SHARED_LIBRARIES
+    #define PLATFORM_SUPPORTS_SHARED_LIBRARIES      0
+#endif /* !PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+
+/**
+ * Whether this platforms standard output buffer stream supports flushing.
+ */
+#ifndef PLATFORM_SUPPORTS_STD_FLUSH
+    #define PLATFORM_SUPPORTS_STD_FLUSH             0
+#endif /* !PLATFORM_SUPPORTS_STD_FLUSH */
+
+/**
+ * Whether the standard output buffer stream supports ANSI escape codes.
+ */
+#ifndef PLATFORM_SUPPORTS_ANSI_ESCAPES
+    #define PLATFORM_SUPPORTS_ANSI_ESCAPES          0
+#endif /* !PLATFORM_SUPPORTS_ANSI_ESCAPES */
+
+#ifndef PLATFORM_SUPPORTS_SIMD
+    #define PLATFORM_SUPPORTS_SIMD                  0
+#endif /* !PLATFORM_SUPPORTS_SIMD */
+
+/**
+ * Whether allocated memory can be shrinked by platform intrinsics or memory shrinking is performed by allocating a
+ * new smaller bulk of memory, copying the data and freeing the old memory.
+ */
+#ifndef PLATFORM_SUPPORTS_MEMORY_SHRINK
+    #define PLATFORM_SUPPORTS_MEMORY_SHRINK         0
+#endif /* !PLATFORM_SUPPORTS_MEMORY_SHRINK */
+
+#ifndef PLATFORM_USES_NON_GENERIC_LOOP
+    #define PLATFORM_USES_NON_GENERIC_LOOP          0
+#endif /* !PLATFORM_USES_NON_GENERIC_LOOP */
+#if PLATFORM_USES_NON_GENERIC_LOOP
+    #ifndef PLATFORM_GUARDED_LOOP
+        #error "PLATFORM_GUARDED_LOOP is not defined."
+    #endif /* !PLATFORM_GUARDED_LOOP */
+#else /* PLATFORM_USES_NON_GENERIC_LOOP */
+    #ifdef PLATFORM_GUARDED_LOOP
+        #error "PLATFORM_GUARDED_LOOP is defined but platform does use the generic platform-agnostic loop."
+    #endif /* PLATFORM_GUARDED_LOOP */
+    #define PLATFORM_GUARDED_LOOP
+#endif /* !PLATFORM_USES_NON_GENERIC_LOOP */
+#ifndef PLATFORM_USES_NON_GENERIC_EXIT
+    #define PLATFORM_USES_NON_GENERIC_EXIT          0
+#endif /* !PLATFORM_USES_NON_GENERIC_EXIT */
 
 
 /*-----------------------------------------------------------------------------
@@ -84,6 +171,27 @@ static_assert(sizeof(int16)   == 2, "int16  is not 2 bytes.");
 static_assert(sizeof(int32)   == 4, "int32  is not 4 bytes.");
 static_assert(sizeof(int64)   == 8, "int64  is not 8 bytes.");
 static_assert(sizeof(LChar)   == 1, "LChar  is not 1 byte.");
+
+#ifdef PLATFORM_USES_64_BIT
+    static_assert(sizeof(uint64) == sizeof(void*), "uint64 is not the same size as a pointer.");
+    static_assert(sizeof(int64)  == sizeof(void*), "int64  is not the same size as a pointer.");
+    #ifdef PLATFORM_USES_32_BIT
+        #error "PLATFORM_USES_32_BIT and PLATFORM_USES_64_BIT are both defined."
+    #endif /* PLATFORM_USES_32_BIT */
+    #define PLATFORM_USES_32_BIT            0
+#endif /* PLATFORM_USES_64_BIT */
+#ifdef PLATFORM_USES_32_BIT
+    static_assert(sizeof(uint32) == sizeof(void*), "uint32 is not the same size as a pointer.");
+    static_assert(sizeof(int32)  == sizeof(void*), "int32  is not the same size as a pointer.");
+    #ifdef PLATFORM_USES_64_BIT
+        #error "PLATFORM_USES_32_BIT and PLATFORM_USES_64_BIT are both defined."
+    #endif /* PLATFORM_USES_64_BIT */
+    #define PLATFORM_USES_64_BIT            0
+#endif /* PLATFORM_USES_32_BIT */
+
+#ifndef NOINLINE
+    #error "NOINLINE is not defined for this platform."
+#endif /* !NOINLINE */
 
 #ifndef FORCEINLINE
     #error "FORCEINLINE is not defined for this platform."

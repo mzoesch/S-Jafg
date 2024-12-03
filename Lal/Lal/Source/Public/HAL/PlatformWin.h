@@ -136,6 +136,8 @@
      */
     #pragma GCC diagnostic error "-Wtemplate-id-cdtor"
 
+    #pragma GCC diagnostic error "-Winconsistent-missing-override"
+
     /**
      * Warn whenever a local variable is assigned to, but otherwise unused (aside from its declaration).
      * This warning is enabled by -Wall.
@@ -195,6 +197,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler dependent features
 
+#ifndef NOINLINE
+    #define NOINLINE            __declspec(noinline)
+#endif /* !NOINLINE */
+
 #ifdef FORCEINLINE
     #undef FORCEINLINE
 #endif /* FORCEINLINE */
@@ -234,7 +240,7 @@
 #endif /* PLATFORM_WINDOWS_WITH_GNU */
 #if !PLATFORM_WINDOWS_WITH_MSVC
     /*
-     * Defines it ourselves - we do not need backwards compatibility for system prior to Windows 10.
+     * Defines it ourselves - we do not need backwards compatibility for systems prior to Windows 10.
      */
     #define WINVER          0x0A00  // 0x0400 <=> Windows NT 4.0 ;;; 0x0500 <=> Windows 2000 ;;; 0x0501 <=> Windows XP
     #define _WIN32_WINNT    0x0A00  // 0x0502 <=> Windows Server 2003 ;;; 0x0600 <=> Windows Vista
@@ -297,8 +303,32 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
 #ifdef PLATFORM_MAX_PATH
     #error "PLATFORM_MAX_PATH is already defined."
 #endif /* PLATFORM_MAX_PATH */
-#define PLATFORM_MAX_PATH \
-    MAX_PATH
+#define PLATFORM_MAX_PATH                       MAX_PATH
+
+#ifdef PLATFORM_SUPPORTS_SHARED_LIBRARIES
+    #error "PLATFORM_SUPPORTS_SHARED_LIBRARIES is already defined."
+#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#define PLATFORM_SUPPORTS_SHARED_LIBRARIES      1
+
+#ifdef PLATFORM_SUPPORTS_STD_FLUSH
+    #error "PLATFORM_SUPPORTS_STD_FLUSH is already defined."
+#endif /* PLATFORM_SUPPORTS_STD_FLUSH */
+#define PLATFORM_SUPPORTS_STD_FLUSH             1
+
+#ifdef PLATFORM_SUPPORTS_ANSI_ESCAPES
+    #error "PLATFORM_SUPPORTS_ANSI_ESCAPES is already defined."
+#endif /* PLATFORM_SUPPORTS_ANSI_ESCAPES */
+#define PLATFORM_SUPPORTS_ANSI_ESCAPES          1
+
+#ifdef PLATFORM_SUPPORTS_SIMD
+    #error "PLATFORM_SUPPORTS_SIMD is already defined."
+#endif /* PLATFORM_SUPPORTS_SIMD */
+#define PLATFORM_SUPPORTS_SIMD                  1
+
+#ifdef PLATFORM_SUPPORTS_MEMORY_SHRINK
+    #error "PLATFORM_SUPPORTS_MEMORY_SHRINK is already defined."
+#endif /* PLATFORM_SUPPORTS_MEMORY_SHRINK */
+#define PLATFORM_SUPPORTS_MEMORY_SHRINK         1
 
 #if PLATFORM_WINDOWS_WITH_MSVC
     #include <intrin.h>
@@ -393,8 +423,8 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
 #ifdef PLATFORM_PANIC_BREAK_WITH_BODY
     #error "PLATFORM_PANIC_BREAK_WITH_BODY is already definded."
 #endif /* PLATFORM_PANIC_BREAK_WITH_BODY */
-    #define PLATFORM_PANIC_BREAK_WITH_BODY(InMessage, InFile, InLine)        \
-        LWinPlatformBreakDefines::OnProgramPanic(InMessage, InFile, InLine);
+#define PLATFORM_PANIC_BREAK_WITH_BODY(InMessage, InFile, InLine)        \
+    LWinPlatformBreakDefines::OnProgramPanic(InMessage, InFile, InLine);
 
 #define PLATFORM_CALLSPEC_OUT           __declspec ( dllexport )
 #define PLATFORM_CALLSPEC_IN            __declspec ( dllimport )
@@ -405,6 +435,7 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
  * https://learn.microsoft.com/en-us/cpp/mfc/windows-sockets-byte-ordering?view=msvc-170
  */
 #define PLATFORM_USES_LITTLE_ENDIAN     1
+#define PLATFORM_USES_64_BIT            1
 
 struct LWinPlatformBreakDefines final
 {

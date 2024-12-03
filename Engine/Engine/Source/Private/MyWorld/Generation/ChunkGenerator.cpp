@@ -1,9 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
-#include "Myworld/Generation/ChunkGenerator.h"
+#include "MyWorld/Generation/ChunkGenerator.h"
 #include "ChunkGeneratorSubsystem.h"
-#include "FastNoise/FastNoise.h"
 #include "MyWorld/Chunk/Chunk.h"
 #include "System/VoxelSubsystem.h"
 
@@ -14,6 +13,7 @@ void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const 
 
     const voxel_t StoneIdx = SharedArgs->VoxelSubsystem->GetVoxelIndex("Stone");
 
+#if PLATFORM_SUPPORTS_SIMD
     float NoiseOutput[MwStatics::ChunkSizeSquared];
     SharedArgs->ChunkGeneratorSubsystem->FnGenerator->GenUniformGrid2D(
         NoiseOutput,
@@ -35,6 +35,19 @@ void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const 
             }
         }
     }
+#else /* PLATFORM_SUPPORTS_SIMD */
+    for (LChunkKeyDomainTy X = 0; X < MwStatics::ChunkSize; ++X)
+    {
+        for (LChunkKeyDomainTy Y = 0; Y < MwStatics::ChunkSize; ++Y)
+        {
+            for (LChunkKeyDomainTy Z = 0; Z < MwStatics::ChunkSize; ++Z)
+            {
+                const int32 MapZ = InKey.Z * MwStatics::ChunkSize + Z;
+                InOutChunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = MapZ < 12 ? StoneIdx : ECompileTimeVoxels::Air;
+            }
+        }
+    }
+#endif /* !PLATFORM_SUPPORTS_SIMD */
 
     return;
 }

@@ -8,7 +8,7 @@
 
 EPlatformExit::Type LalLaunchTestMain(void);
 
-EPlatformExit::Type LalTestAnsiMain(char* CmdLine)
+EPlatformExit::Type LalTestAnsiMain(int32 Argc, char* Argv[])
 {
     return LalLaunchTestMain();
 }
@@ -28,10 +28,18 @@ EPlatformExit::Type LalLaunchTestMain(void)
 
 #endif /* WITH_TESTS */
 
-int32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ char* pCmdLine, _In_ int32 nCmdShow)
+#if PLATFORM_WINDOWS
+    int32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ char* pCmdLine, _In_ int32 nCmdShow)
+#else /* PLATFORM_WASM */
+    int32 main(int32 Argc, char* Argv[])
+#endif /* !PLATFORM_WASM */
 {
 #if WITH_TESTS
-    return LalTestWideMain(::GetCommandLineW());
+    #if PLATFORM_WINDOWS
+        return LalTestWideMain(::GetCommandLineW());
+    #else
+        return LalTestAnsiMain(Argc, Argv);
+    #endif
 #else /* WITH_TESTS */
     return EPlatformExit::Success;
 #endif /* !WITH_TESTS */

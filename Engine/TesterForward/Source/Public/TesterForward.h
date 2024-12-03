@@ -5,6 +5,10 @@
 namespace Jafg::TesterForward
 {
 
-__declspec( dllexport ) int DontDiscardMe();
+#ifdef PLATFORM_WASM
+    int DontDiscardMe();
+#else
+    __declspec( dllexport ) int DontDiscardMe();
+#endif
 
 } /* ~Namespace Jafg::TesterForward */

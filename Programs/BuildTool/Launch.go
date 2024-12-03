@@ -6,6 +6,7 @@ import (
     "Jafg/Shared"
     "fmt"
     "slices"
+    "strings"
 )
 
 func Launch(args []string) {
@@ -19,6 +20,15 @@ func Launch(args []string) {
         LaunchPreBuildTasks(args)
     } else if slices.Contains(args, "--post-build") {
         LaunchPostBuildTasks(args)
+    } else if slices.Contains(args, "--debug-run-make-vsystem") {
+        GCurrentHeaderState = new(CurrentHeaderState)
+        GCurrentHeaderState.filename = "VFileSystem"
+        GCurrentHeaderState.absoluteFilePath = Shared.NormalizePath(Shared.GetCheckedAbsolutePath("Engine/Engine/Source/Public/System/VFileSystem.h"))
+        GCurrentHeaderState.builder = new(strings.Builder)
+        GCurrentHeaderState.translationBuilder = new(strings.Builder)
+        MakeVirtualFilesystem()
+        ConditionallyWriteGeneratedFiles()
+        GCurrentHeaderState = nil
     } else {
         panic("No build task specified.")
     }

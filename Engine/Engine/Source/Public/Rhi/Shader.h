@@ -35,6 +35,7 @@ public:
 private:
 
     void LoadShader(const char* vertexPath, const char* fragmentPath);
+    void LoadShader(const LEnginePath& VertexPath, const LEnginePath& FragmentPath);
 
     uint32 Id;
 };

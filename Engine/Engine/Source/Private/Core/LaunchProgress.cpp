@@ -3,9 +3,10 @@
 #include "CoreAfx.h"
 #include "Platform/Surface.h"
 #include "Core/LaunchProgress.h"
-
 #include "Forward/EngineForward.h"
-#include "Rhi/RendererApplier.h"
+#if PLATFORM_DESKTOP
+    #include "Rhi/RendererApplier.h"
+#endif /* PLATFORM_DESKTOP */
 
 namespace Jafg::LaunchProgress
 {
@@ -23,6 +24,7 @@ void Jafg::LaunchProgress::PrepareBeginProgress()
 {
     check( Private::GProgressWindow == nullptr )
 
+#if PLATFORM_DESKTOP
     if (RendererApplier::IsGlfwInitialized() == false)
     {
         const bool bOk = RendererApplier::InitializeGlfw();
@@ -32,14 +34,13 @@ void Jafg::LaunchProgress::PrepareBeginProgress()
             return;
         }
     }
-
-#if PLATFORM_DESKTOP
     Private::GProgressWindow = LDesktopPlatform::CreateNativeWindow(LDesktopSurfaceProps());
-#else
-    #error "Could not resolve platform."
-#endif /* PLATFORM_DESKTOP */
-
+    check( Private::GProgressWindow )
     RendererApplier::ApplyOpenGlToWindow(Private::GProgressWindow);
+#else /* PLATFORM_DESKTOP */
+    Private::GProgressWindow = LCurrentPlatform::CreateNativeWindow();
+    check( Private::GProgressWindow )
+#endif /* !PLATFORM_DESKTOP */
 
     return;
 }
@@ -97,7 +98,8 @@ void Jafg::LaunchProgress::FinishAndGiveUpMemory()
         return;
     }
 
-    panic( "Not implemented yet." )
+    panicMsgf("w: {}, own: {}", Private::GProgressWindow ? FMT("Ok") : FMT("No"),
+        Private::bOwnerShipToken ? FMT("Yes") : FMT("No"))
 
     return;
 }

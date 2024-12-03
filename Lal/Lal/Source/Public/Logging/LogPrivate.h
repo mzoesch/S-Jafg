@@ -62,15 +62,25 @@ FORCEINLINE void LogMessage(const LStringLegacy&& InAnsiMessage)
  * @remark The compiler should optimize this function call away if the provided verbosity is too low.
  */
 template <ELogVerbosityType Verbosity, ELogVerbosityType CategoryVerbosity>
-FORCEINLINE void LogMessage(const LLogCategory<CategoryVerbosity>& InCategory, const LStringLegacy&& Function, const LStringLegacy&& InMessage)
+inline void LogMessage(const LLogCategory<CategoryVerbosity>& InCategory, const LStringLegacy&& Function, const LStringLegacy&& InMessage)
 {
     /*
-     * This is not 100% safe, but the compiler should generate omit this function call if the verbosity is too low at
+     * This is not 100% safe, but the compiler should generally omit this function call if the verbosity is too low at
      * compile time. But we should check is later on. Or let the preprocessor do the heavy lifting for killing
      * dead code.
      */
-    if constexpr (!(Verbosity < InCategory.GetCompileTimeVerbosity()))
+    if constexpr (!(Verbosity < LLogCategory<CategoryVerbosity>::GetCompileTimeVerbosity()))
     {
+#if PLATFORM_WASM
+        LStringLegacy AnsiMessage = ::Jafg::FormatLegacy(
+            "{}[{}] - {}: {}{}",
+            GetColorForVerbosity(Verbosity),
+            InCategory.GetCategory(),
+            Function,
+            InMessage,
+            LalLogPrivateColor_End
+        );
+#else /* PLATFORM_WASM */
         LStringLegacy AnsiMessage = std::format("{}[{}] - {}: {}{}",
             GetColorForVerbosity(Verbosity),
             InCategory.GetCategory(),
@@ -78,12 +88,36 @@ FORCEINLINE void LogMessage(const LLogCategory<CategoryVerbosity>& InCategory, c
             InMessage,
             LalLogPrivateColor_End
         );
+#endif /* !PLATFORM_WASM */
 
         ::Jafg::Private::LogMessage(std::move(AnsiMessage));
     }
 
     return;
 }
+
+#if PLATFORM_WASM
+template <ELogVerbosityType CategoryVerbosity, ELogVerbosityType ActualVerbosity, typename ... ArgyTy>
+FORCEINLINE void LogMessageWrapper(const LLogCategory<CategoryVerbosity>& InCategory, const LChar* InFormat, const ArgyTy& ... InArgsTy)
+{
+    const std::string Out = std::move(FormatLegacy(InFormat, InCategory.GetCategory(), InArgsTy...));
+
+    if constexpr (ActualVerbosity == ELogVerbosity::Warning)
+    {
+        ::emscripten_log(EM_LOG_CONSOLE | EM_LOG_WARN, Out.c_str());
+    }
+    else if constexpr (ActualVerbosity == ELogVerbosity::Error || ActualVerbosity == ELogVerbosity::Fatal)
+    {
+        ::emscripten_log(EM_LOG_CONSOLE | EM_LOG_ERROR, Out.c_str());
+    }
+    else
+    {
+        ::emscripten_log(EM_LOG_CONSOLE, Out.c_str());
+    }
+
+    return;
+}
+#endif /* PLATFORM_WASM */
 
 /**
  * Log a message to the stdout that may be used with Ansi strings and a message to the platform error
@@ -113,5 +147,25 @@ FORCEINLINE void LogPanicMessage(
 
     return;
 }
+
+#if PLATFORM_WASM
+template <ELogVerbosityType CategoryVerbosity, typename ... ArgyTy>
+inline void LogPanicMessageWrapper(
+    const LLogCategory<CategoryVerbosity>& InCategory,
+    const LChar*          InFormat,
+    const LStringLegacy&& InAnsiFormat,
+    const LStringLegacy&& InFile,
+    const uint32          InLine,
+    const ArgyTy& ...     InArgsTy
+)
+{
+    const std::string Out = std::move(FormatLegacy(InFormat, InCategory.GetCategory(), InArgsTy...));
+    Private::LogMessageWrapper<CategoryVerbosity, ELogVerbosity::Fatal>(InCategory, Out.c_str());
+
+    ALWAYS_BREAK_PANIC_WITH_BODY(Out.c_str(), InFile, InLine)
+
+    return;
+}
+#endif /* PLATFORM_WASM */
 
 } /* ~Namespace Jafg::Private */

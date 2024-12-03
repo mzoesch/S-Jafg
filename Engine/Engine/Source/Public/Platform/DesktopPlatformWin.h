@@ -2,12 +2,12 @@
 
 #pragma once
 
+#include "CoreAfx.h"
+#include "Platform/DesktopPlatform.h"
+
 #if !PLATFORM_WINDOWS
     #error "Tried to include Windows specific platform code on a non-Windows platform."
 #endif /* !PLATFORM_WINDOWS */
-
-#include "CoreAfx.h"
-#include "Platform/DesktopPlatform.h"
 
 struct GLFWwindow;
 
@@ -41,6 +41,7 @@ public:
     virtual auto GetWidth() const -> int32 override;
     virtual auto GetHeight() const -> int32 override;
     virtual auto GetDimensions() const -> TIntVector2<int32> override;
+    virtual auto CanVSync() const -> bool override;
     virtual auto SetVSync(const bool bEnabled) -> void override;
     virtual auto IsVSync() const -> bool override;
     // ~Surface implementation

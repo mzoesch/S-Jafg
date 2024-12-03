@@ -31,4 +31,4 @@ if errorlevel 1 (
 echo "Build output directory: %cd%"
 
 @REM Call emscripten make wrapper.
-emcmake cmake ../.. -DCMAKE_BUILD_TYPE=%arg1%
+emcmake cmake ../.. -DCMAKE_BUILD_TYPE=%arg1% -DTARGET_PLATFORM=Wasm

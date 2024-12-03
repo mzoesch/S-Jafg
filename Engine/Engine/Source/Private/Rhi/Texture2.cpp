@@ -22,14 +22,17 @@ bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const JUserPreferenc
 {
     check( this->MipMap.Bulk.IsAllocated() == false )
 
-    const LPath AbsolutePath = Path.ResolveAbsolutePath(UserPreferences);
-    Paths::DoesFileExistPanicked(AbsolutePath);
-
     int32 Width      = 0;
     int32 Height     = 0;
     int32 NrChannels = 0;
+
+    Finder::DoesExistsPanicked(Path);
+    const uint8* Bulk     = nullptr;
+    uint64       BulkSize = 0;
+    Finder::ReadFileAsBinary(Path, Bulk, BulkSize);
+
     ::stbi_set_flip_vertically_on_load(false);
-    uint8* Data      = ::stbi_load(AbsolutePath.GetPath().ToC(), &Width, &Height, &NrChannels, 4);
+    uint8* Data =::stbi_load_from_memory(Bulk, static_cast<int>(BulkSize), &Width, &Height, &NrChannels, 4);
 
     jassert( Data )
     jassert( NrChannels == 4 )
@@ -43,6 +46,7 @@ bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const JUserPreferenc
     this->MipMap.LoadFromBuffer(Data, 0);
 
     ::stbi_image_free(Data);
+    Finder::FreeReadFileBinaryBuffer(Bulk);
 
     return true;
 }

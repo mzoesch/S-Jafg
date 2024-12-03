@@ -50,7 +50,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
     const LInputAction BreakToDebugger = LInputAction(EInputActionCategory::Boolean);
     CurMapping = ContextInMyWorld->MapAction(BreakToDebugger);
     ContextInMyWorld->MapKey(CurMapping, EKeys::P, EInputActionTrigger::Triggered,
-        [this] (LInputActionValue& InValue) {
+        [] (LInputActionValue& InValue) {
             CONDITIONALLY_BREAK()
         }
     );
@@ -58,7 +58,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
     const LInputAction SwitchToWireframe = LInputAction(EInputActionCategory::Boolean);
     CurMapping = ContextInMyWorld->MapAction(SwitchToWireframe);
     ContextInMyWorld->MapKey(CurMapping, EKeys::F1, EInputActionTrigger::Triggered,
-        [this] (LInputActionValue& InValue) {
+        [] (LInputActionValue& InValue) {
             GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Wireframe);
         }
     );
@@ -66,7 +66,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
     const LInputAction SwitchToFill = LInputAction(EInputActionCategory::Boolean);
     CurMapping = ContextInMyWorld->MapAction(SwitchToWireframe);
     ContextInMyWorld->MapKey(CurMapping, EKeys::F2, EInputActionTrigger::Triggered,
-        [this] (LInputActionValue& InValue) {
+        [] (LInputActionValue& InValue) {
             GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Fill);
         }
     );

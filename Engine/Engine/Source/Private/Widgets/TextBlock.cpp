@@ -3,14 +3,11 @@
 #include "CoreAfx.h"
 #include "Widgets/TextBlock.h"
 #include "Rhi/Shader.h"
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "Rhi/RhiVendorInclude.h"
 #include <glm/fwd.hpp>
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/gtc/type_ptr.inl>
-#include <ft2build.h>
-#include FT_FREETYPE_H
 #include "Forward/EngineForward.h"
 #include "User/UserPreferences.h"
 #include "Widgets/Viewport.h"
@@ -132,7 +129,9 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(this->Vao);
 
+#if !PLATFORM_WASM
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif /* !PLATFORM_WASM */
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
