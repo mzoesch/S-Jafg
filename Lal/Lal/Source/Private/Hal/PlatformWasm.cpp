@@ -19,7 +19,7 @@ namespace PlatformHal
 
 void Sleep(const double InSeconds)
 {
-    emscripten_sleep(static_cast<uint32>(InSeconds * JAFG_S2MS_D));
+    panic( "Sleeping is not allowed in wasm." )
 }
 
 } /* ~Namespace PlatformHal */

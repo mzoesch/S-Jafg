@@ -78,8 +78,13 @@ private:
 
     void SafeLoadPersistentChunkPreSpawnedChunk(const LChunkKey& ChunkKey);
 
+#if PLATFORM_WASM
+    int32 RenderDistance = 1;
+    int32 RenderHeight   = 1;
+#else /* PLATFORM_WASM */
     int32 RenderDistance = 2; // Move this to usr pref.
     int32 RenderHeight   = 3; // Move this to usr pref.
+#endif /* !PLATFORM_WASM */
 
     LSharedChunkArgs*    SharedChunkArgs    = nullptr;
     LChunkShaderContext* ChunkShaderContext = nullptr;

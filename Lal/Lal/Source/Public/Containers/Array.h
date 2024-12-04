@@ -925,9 +925,10 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Empty() noexcept
         }
     }
 
-    this->Size = 0;
-
-    this->Shrink(0);
+    this->Size     = 0;
+    this->Capacity = 0;
+    ::free(this->Data);
+    this->Data = nullptr;
 
     return;
 }

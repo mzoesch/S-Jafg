@@ -7,6 +7,7 @@
 #include "Engine/ObjectBaseUtility.h"
 #include "Engine/Carnifex.h"
 #include "Platform/PlatformMisc.h"
+#include "Async/TaskUtility.h"
 #if WITH_VIRTUAL_FILESYSTEM
     #include "System/VFilesystem.h"
 #endif /* WITH_VIRTUAL_FILESYSTEM */
@@ -41,6 +42,8 @@ FORCEINLINE
 #endif /* !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT) */
 void EngineTick()
 {
+    checkSlow( Jafg::Tasks::IsOnMasterThread() )
+
     LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST() /* Just temporary. */
 
     GEngine->BeginExitIfRequested();
@@ -114,12 +117,25 @@ void EngineExit()
 
     if (::HasCustomExitReason())
     {
-        LOG_INFO(LogGuardedMain, "Engine exit with custom exit reason: {}", ::GetCustomExitReason())
+        if ((::GetMostSignificantExitReason() & (EPlatformExit::Error | EPlatformExit::Fatal)) > 0)
+        {
+            LOG_ERROR(LogGuardedMain, "Engine exit with custom exit reason: {}", ::GetCustomExitReason())
+        }
+        else
+        {
+            LOG_INFO(LogGuardedMain, "Engine exit with custom exit reason: {}", ::GetCustomExitReason())
+        }
     }
-
     if (::HasCustomExitStatus())
     {
-        LOG_INFO(LogGuardedMain, "Engine exit with custom exit status: {}", ::GetCustomExitStatus())
+        if ((::GetCustomExitStatus() & (EPlatformExit::Error | EPlatformExit::Fatal)) > 0)
+        {
+            LOG_ERROR(LogGuardedMain, "Engine exit with custom exit status: {}", ::GetCustomExitStatus())
+        }
+        else
+        {
+            LOG_INFO(LogGuardedMain, "Engine exit with custom exit status: {}", ::GetCustomExitStatus())
+        }
     }
 
     return;
@@ -142,6 +158,8 @@ EPlatformExit::Type GuardedMain(const LChar* CmdLine)
         "Finished static storage initialization after {} seconds.",
         Application::GetDeltaSinceStaticStorageInitialization()
     )
+
+    Tasks::RegisterThread(ENamedThreads::Master);
 
 #if WITH_VIRTUAL_FILESYSTEM
     new LVirtualFileSystem();

@@ -1,4 +1,4 @@
-#version 330 es
+#version 300 es
 
 in vec2 InLocation;
 in vec2 InVertTexCoord;

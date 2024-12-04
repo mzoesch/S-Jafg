@@ -264,6 +264,10 @@ static_assert(sizeof(LChar)   == 1, "LChar  is not 1 byte.");
 namespace PlatformHal
 {
 
+/**
+ * Very dangerous function. Use with care and never in critical code paths.
+ * Currently not supported for all platforms.
+ */
 void Sleep(const double InSeconds);
 
 } /* ~Namespace PlatformHal */

@@ -3,8 +3,7 @@
 #include "CoreAfx.h"
 #include "Rhi/Texture2.h"
 #include "System/EnginePath.h"
-#include "System/Paths.h"
-#include <stb_image.h>
+#include "Rhi/RhiVendorInclude.h"
 
 bool Jafg::LTexture2::CreateEmpty(const uint32 InWidth, const uint32 InHeight, const ERawImageFormat::Type InFormat)
 {

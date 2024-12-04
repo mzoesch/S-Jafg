@@ -18,6 +18,7 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
             this->FixedTick(static_cast<float>(DeltaTime));
             LastTickTime = Now;
         }
+#if !PLATFORM_WASM
         else
         {
             const double TimeRemaining = this->TickInterval - DeltaTime;
@@ -27,6 +28,7 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
                 PlatformHal::Sleep(TimeRemaining * 0.997);
             }
         }
+#endif /* !PLATFORM_WASM */
 
         continue;
     }

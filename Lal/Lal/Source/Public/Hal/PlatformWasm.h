@@ -6,6 +6,14 @@
     #error "Wanted to override generic platform types with wasm specific types, but platform is not wasm."
 #endif /* !PLATFORM_WASM */
 
+#ifndef __EMSCRIPTEN__
+    #error "__EMSCRIPTEN__ is not defined."
+#endif /* !__EMSCRIPTEN__ */
+
+#ifndef __EMSCRIPTEN_PTHREADS__
+    #error "__EMSCRIPTEN_PTHREADS__ is not defined."
+#endif /* !__EMSCRIPTEN_PTHREADS__ */
+
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler dependent features
 

@@ -230,7 +230,10 @@ void Jafg::WTextBlock::FirstTimeLoadCharacters()
     }
 
     FT_Face Face;
-    if (FT_New_Face(Ft, "E:/dev/c/Jafg/Content/Fonts/Core.otf", 0, &Face))
+    const uint8* FontData = nullptr;
+    uint64 FontDataSize = 0;
+    Finder::ReadFileAsBinary(LEnginePath(EEnginePaths::Fonts, "Core.otf"), FontData, FontDataSize);
+    if (FT_New_Memory_Face(Ft, reinterpret_cast<const FT_Byte*>(FontData), static_cast<FT_Long>(FontDataSize), 0, &Face))
     {
         JAFG_ENGINE_FORWARD_REQUEST_EXIT(EPlatformExit::Fatal, "Failed to load font face.")
         return;
@@ -295,6 +298,8 @@ void Jafg::WTextBlock::FirstTimeLoadCharacters()
     glBindTexture(GL_TEXTURE_2D, 1);
     FT_Done_Face(Face);
     FT_Done_FreeType(Ft);
+
+    Finder::FreeReadFileBinaryBuffer(FontData);
 
     return;
 }

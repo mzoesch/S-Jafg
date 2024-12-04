@@ -5,6 +5,7 @@
 #if PLATFORM_WASM
 
 #include "Engine/Engine.h"
+#include "Async/TaskUtility.h"
 
 namespace
 {
@@ -19,6 +20,8 @@ extern auto EngineExit() -> void;
 
 void WasmGuardedLoop()
 {
+    check( Jafg::Tasks::IsOnMasterThread() )
+
     if (::Jafg::IsTearingDown())
     {
         LOG_INFO(LogGuardedMain, "Canceling main loop ...")
@@ -38,8 +41,6 @@ void WasmGuardedLoop()
 
 int32 main(int32 Argc, char* Argv[])
 {
-    LOG_WARNING(LogTemporal, "Hello.")
-
     /*
      * Nothing to guard here. The Java Script will handle that for us.
      */
@@ -50,7 +51,10 @@ int32 main(int32 Argc, char* Argv[])
     if (bRunExit == false) // If the engine ticked at least for one tick, this control path is unreachable.
     {                      // Emscripten will not make a clean exit - call destructors, etc.
         bRunExit = true;   // When the engine started ticking, we can only exit the engine through a throw.
-        ::EngineExit();    // So this is unsafe - but who cares. This is not a native build anyways.
+                           // So this is unsafe - but who cares. This is not a native build anyways.
+        check( Jafg::Tasks::IsOnMasterThread() )
+        LOG_WARNING(LogSystem, "Engine did not tick at least once. Exiting the engine ...")
+        ::EngineExit();
     }
 
     if (ErrorLevel != EPlatformExit::Success)

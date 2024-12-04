@@ -2,6 +2,7 @@
 
 #include "CoreAfx.h"
 #include "Core/LaunchProgress.h"
+#include "Widgets/Viewport.h"
 
 #if PLATFORM_WASM
 
@@ -40,6 +41,13 @@ void Jafg::LPlatformWasm::Initialize()
     check( DocumentObjectModel == nullptr )
     DocumentObjectModel = this->NativeWindow;
 
+    if (ensure(this->GetViewport()))
+    {
+        this->GetViewport()->ChangeDimensions(this->GetDimensions());
+    }
+
+    glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
+    glEnable(GL_DEPTH_TEST);
 
     return;
 }
@@ -47,11 +55,14 @@ void Jafg::LPlatformWasm::Initialize()
 void Jafg::LPlatformWasm::OnClear()
 {
     LSurface::OnClear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    return;
 }
 
 void Jafg::LPlatformWasm::OnUpdate()
 {
     LSurface::OnUpdate();
+    return;
 }
 
 void Jafg::LPlatformWasm::TearDown()

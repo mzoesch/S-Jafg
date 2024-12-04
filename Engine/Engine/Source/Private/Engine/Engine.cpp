@@ -30,8 +30,6 @@ ENGINE_API LSimpleString GCustomExitReason         = "";
 
 void Jafg::LEngine::Initialize()
 {
-    Tasks::RegisterThread(ENamedThreads::Master);
-
     check( this->IsApplicationInstanceValid() == false )
     this->ApplicationInstance = new LApplicationInstance();
     this->ApplicationInstance->Initialize();

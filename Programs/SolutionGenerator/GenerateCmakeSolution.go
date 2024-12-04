@@ -746,15 +746,16 @@ endif()
 
     WriteWithIndent(builder, indent, fmt.Sprintf(`if(USING_MINIMAL)
 %s    if(${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
-%s        target_compile_definitions(${CUR_MOD_NAME} PRIVATE PLATFORM_USES_WEBGL_TWO JAFG_NO_GLAD USE_FREETYPE=1)
+%s        target_compile_definitions(${CUR_MOD_NAME} PRIVATE PLATFORM_USES_WEBGL_TWO JAFG_NO_GLAD USE_FREETYPE)
 %s        set_target_properties(${CUR_MOD_NAME} PROPERTIES
-%s            LINK_FLAGS "-s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -s USE_FREETYPE=1"
+%s            LINK_FLAGS "-sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sUSE_FREETYPE=1 -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE_STRICT=2 -sPTHREAD_POOL_SIZE=3"
+%s            COMPILE_FLAGS "-pthread"
 %s            )
 %s    endif()
 %sendif()
 `,
         Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
-        Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
+        Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
     ))
 
     for idx, _ := range cxxPrivateFlags {
