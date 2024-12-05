@@ -729,18 +729,10 @@ endif()
 %s    if(${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WIN})
 %s        set_target_properties(${CUR_MOD_NAME} PROPERTIES LINK_FLAGS "-mwindows")
 %s    endif()
-%s    if(${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
-%s        set_target_properties(${CUR_MOD_NAME} PROPERTIES
-%s            LINK_FLAGS "--shell-file ${CMAKE_SOURCE_DIR}/Content/Wasm/MinimalShell.html"
-%s            SUFFIX ".html"
-%s            )
-%s    endif()
 %sendif()
 `,
             Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
-            Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
-            Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
-            Shared.Indent(indent),
+            Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
         ))
     }
 
@@ -748,7 +740,8 @@ endif()
 %s    if(${TARGET_PLATFORM} STREQUAL ${TARGET_PLATFORM_WASM})
 %s        target_compile_definitions(${CUR_MOD_NAME} PRIVATE PLATFORM_USES_WEBGL_TWO JAFG_NO_GLAD USE_FREETYPE)
 %s        set_target_properties(${CUR_MOD_NAME} PROPERTIES
-%s            LINK_FLAGS "-sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sUSE_FREETYPE=1 -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE_STRICT=2 -sPTHREAD_POOL_SIZE=3"
+%s            LINK_FLAGS "-sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sUSE_FREETYPE=1 -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE_STRICT=2 -sPTHREAD_POOL_SIZE=3 --shell-file ${CMAKE_SOURCE_DIR}/Content/Wasm/MinimalShell.html"
+%s            SUFFIX ".html"
 %s            COMPILE_FLAGS "-pthread"
 %s            )
 %s    endif()
@@ -756,6 +749,7 @@ endif()
 `,
         Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
         Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent), Shared.Indent(indent),
+        Shared.Indent(indent),
     ))
 
     for idx, _ := range cxxPrivateFlags {

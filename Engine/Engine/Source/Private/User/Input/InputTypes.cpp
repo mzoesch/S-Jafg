@@ -3,7 +3,7 @@
 #include "CoreAfx.h"
 #include "User/Input/InputTypes.h"
 
-Jafg::LSimpleString Jafg::EKeys::ToString(const LKey& Key)
+Jafg::LSimpleString Jafg::EKeys::ToString(const LKey Key)
 {
     switch (Key)
     {
@@ -145,6 +145,7 @@ Jafg::LSimpleString Jafg::EKeys::ToString(const LKey& Key)
     case EKeys::RightParenthesis:   return "RightParenthesis";
     case EKeys::Quote:              return "Quote";
 
+    case EKeys::Unresolved:         return "Unresolved";
     case EKeys::PlatformDelete:     return "PlatformDelete";
 
     default:                        return "Custom";

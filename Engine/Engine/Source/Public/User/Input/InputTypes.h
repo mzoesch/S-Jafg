@@ -12,7 +12,14 @@ typedef uint8 LKey;
 namespace EKeys
 {
 
-ENGINE_API LSimpleString ToString(const LKey& Key);
+ENGINE_API LSimpleString ToString(const LKey Key);
+
+} /* ~Namespace EKeys */
+
+inline LSimpleString LexToString(const LKey Key) { return EKeys::ToString(Key); }
+
+namespace EKeys
+{
 
 inline constexpr LKey KeyBegin                  {   0 };
 inline constexpr LKey KeyEnd                    { 255 };
@@ -160,6 +167,8 @@ inline constexpr LKey RightParenthesis          { 123 };
 inline constexpr LKey Quote                     { 124 };
 /** Remember to change this here. */
 static_assert(EKeys::LastKey == EKeys::Quote, "Last key not valid.");
+
+inline constexpr LKey Unresolved                { 254 };
 
 /** Platform specific virtual delete key. */
 inline constexpr LKey PlatformDelete            { EKeys::KeyEnd };

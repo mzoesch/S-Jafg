@@ -60,6 +60,11 @@ public:
         check( this->DownKeys.FindRef(InKey) == nullptr )
         this->DownKeys.Emplace(InKey, InValue);
     }
+    FORCEINLINE auto AddKeyDown(const LRawInput& InRawInput) -> void
+    {
+        check( this->DownKeys.FindRef(InRawInput.Key) == nullptr )
+        this->DownKeys.Emplace(InRawInput);
+    }
     FORCEINLINE auto GetCurrentlyPressedKeys()       ->       TdhArray<LRawInput>& { return this->DownKeys;          }
     FORCEINLINE auto GetCurrentlyPressedKeys() const -> const TdhArray<LRawInput>& { return this->DownKeys;          }
     FORCEINLINE auto GetLastFramePressedKeys()       ->       TdhArray<LRawInput>& { return this->LastFrameDownKeys; }

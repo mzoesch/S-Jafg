@@ -10,7 +10,9 @@
         background-color: rebeccapurple; display: flex; align-items: center; justify-content: center;">
         <canvas
             id="canvas"
-            style="width: 95vw; height: 95vh;"
+            oncontextmenu="event.preventDefault"
+            tabindex="-1"
+            style="width: 100vw; height: 100vh;"
         ></canvas>
     </div>
     {{{ SCRIPT }}}
