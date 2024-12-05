@@ -208,9 +208,9 @@ EPlatformExit::Type GuardedMain(const LChar* CmdLine)
 #else /* PLATFORM_USES_NON_GENERIC_LOOP */
     while (::IsTearingDown() == false)
     {
-        EngineTick();
+        ::EngineTick();
     }
 #endif /* !PLATFORM_USES_NON_GENERIC_LOOP */
 
-    return GetMostSignificantExitReason();
+    return ::GetMostSignificantExitReason();
 }

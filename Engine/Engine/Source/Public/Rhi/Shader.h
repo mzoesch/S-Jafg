@@ -16,7 +16,6 @@ public:
 
     void Free();
 
-    LShader(const char* vertexPath, const char* fragmentPath);
     explicit LShader(const LEnginePath& Path);
 
     void Use() const;
@@ -34,7 +33,6 @@ public:
 
 private:
 
-    void LoadShader(const char* vertexPath, const char* fragmentPath);
     void LoadShader(const LEnginePath& VertexPath, const LEnginePath& FragmentPath);
 
     uint32 Id;

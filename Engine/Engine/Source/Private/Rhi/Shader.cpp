@@ -16,11 +16,6 @@ void Jafg::LShader::Free()
     return;
 }
 
-Jafg::LShader::LShader(const char* vertexPath, const char* fragmentPath)
-{
-    LoadShader(vertexPath, fragmentPath);
-}
-
 Jafg::LShader::LShader(const LEnginePath& Path)
 {
     LEnginePath VertexPath = Path;

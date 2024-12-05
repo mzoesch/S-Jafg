@@ -172,7 +172,7 @@ static_assert(sizeof(int32)   == 4, "int32  is not 4 bytes.");
 static_assert(sizeof(int64)   == 8, "int64  is not 8 bytes.");
 static_assert(sizeof(LChar)   == 1, "LChar  is not 1 byte.");
 
-#ifdef PLATFORM_USES_64_BIT
+#if PLATFORM_USES_64_BIT
     static_assert(sizeof(uint64) == sizeof(void*), "uint64 is not the same size as a pointer.");
     static_assert(sizeof(int64)  == sizeof(void*), "int64  is not the same size as a pointer.");
     #ifdef PLATFORM_USES_32_BIT
@@ -180,7 +180,7 @@ static_assert(sizeof(LChar)   == 1, "LChar  is not 1 byte.");
     #endif /* PLATFORM_USES_32_BIT */
     #define PLATFORM_USES_32_BIT            0
 #endif /* PLATFORM_USES_64_BIT */
-#ifdef PLATFORM_USES_32_BIT
+#if PLATFORM_USES_32_BIT
     static_assert(sizeof(uint32) == sizeof(void*), "uint32 is not the same size as a pointer.");
     static_assert(sizeof(int32)  == sizeof(void*), "int32  is not the same size as a pointer.");
     #ifdef PLATFORM_USES_64_BIT

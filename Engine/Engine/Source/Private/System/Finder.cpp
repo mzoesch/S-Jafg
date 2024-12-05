@@ -5,11 +5,13 @@
 #include "Platform/PlatformMisc.h"
 #include "System/EnginePath.h"
 #include "System/Paths.h"
-#include "System/VFilesystem.h"
-#if !WITH_VIRTUAL_FILESYSTEM
+#if WITH_VIRTUAL_FILESYSTEM
+    #include "System/VFilesystem.h"
+#else /* WITH_VIRTUAL_FILESYSTEM */
     #include "User/UserPreferences.h"
     #include "Engine/ObjectBaseUtility.h"
     #include <filesystem>
+    #include <fstream>
     namespace Fs = std::filesystem;
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
 
@@ -36,7 +38,33 @@ void Finder::ReadFileAsBinary(const LEnginePath& InEnginePath, const uint8*& Out
 #if WITH_VIRTUAL_FILESYSTEM
     GVirtualFileSystem->ReadFileAsBytes(InEnginePath, OutBuffer, OutBufferOverflowGuard);
 #else /* WITH_VIRTUAL_FILESYSTEM */
-    panic( "Not implemented." )
+    std::ifstream File(
+        InEnginePath.ResolveAbsolutePath(*GetDefault<JUserPreferences>()).GetPath().ToC(),
+        std::ios::binary | std::ios::ate
+    );
+
+    if (File.fail())
+    {
+        panicMsgf("Failed to open file: [{}].", InEnginePath.GetRelativeUnresolvedPath().GetPath())
+        return;
+    }
+
+    OutBufferOverflowGuard = File.tellg();
+    jassert( OutBufferOverflowGuard > 0 )
+    File.seekg(0, std::ios::beg);
+
+    OutBuffer = new uint8[OutBufferOverflowGuard];
+    jassert( OutBuffer )
+
+    if (File.read(reinterpret_cast<char*>(const_cast<uint8*>(OutBuffer)), static_cast<std::streamsize>(OutBufferOverflowGuard)).fail())
+    {
+        File.close();
+        panicMsgf("Failed to read file: [{}].", InEnginePath.GetRelativeUnresolvedPath().GetPath())
+        return;
+    }
+
+    File.close();
+
     return;
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
