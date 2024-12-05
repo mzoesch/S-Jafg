@@ -44,6 +44,7 @@ void Jafg::LPlatformWasm::Initialize()
     if (ensure(this->GetViewport()))
     {
         this->GetViewport()->ChangeDimensions(this->GetDimensions());
+        this->GetViewport()->SetPlatformDpi(96.0f); // TODO: Fetch from JavaScript.
     }
 
     glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
