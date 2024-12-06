@@ -113,7 +113,7 @@ struct LWasmPlatformTypes final : public LGenericPlatformTypes
     #error "PLATFORM_ERROR_BREAK_WITH_BODY is already definded."
 #endif /* PLATFORM_ERROR_BREAK_WITH_BODY */
 #define PLATFORM_ERROR_BREAK_WITH_BODY(InMessage, InFile, InLine) \
-    { assert(false); }
+    { ::emscripten_cancel_main_loop(); assert(false); }
 
 /**
  * Platform panic break. This signals the user via a platform-specific pop-up window that a fatal error occurred

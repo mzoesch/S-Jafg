@@ -1,5 +1,7 @@
 #version 300 es
 
+precision mediump float;
+
 in vec3 InLocation;
 in vec2 InVertTexCoord;
 in int  InNormal;

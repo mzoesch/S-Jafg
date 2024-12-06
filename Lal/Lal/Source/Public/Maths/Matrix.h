@@ -82,6 +82,8 @@ struct TMatrix final
     /** Translate this matrix inline by the given translation vector. */
     FORCEINLINE void InlineTranslate(const TVector<T>& InTranslation);
 
+    LSimpleString ToString() const;
+
 private:
 
     /**
@@ -266,6 +268,20 @@ void TMatrix<T>::InlineTranslate(const TVector<T>& InTranslation)
     this->Matrix[3][1] += InTranslation.Y;
     this->Matrix[3][2] += InTranslation.Z;
     return;
+}
+
+template <typename T>
+LSimpleString TMatrix<T>::ToString() const
+{
+    LSimpleString Result;
+
+    for (int32 Row = 0; Row < 4; ++Row)
+    {
+        Result.Append(LSimpleString::SprintF("{:.2f} {:.2f} {:.2f} {:.2f}\n",
+            this->Matrix[Row][0], this->Matrix[Row][1], this->Matrix[Row][2], this->Matrix[Row][3]));
+    }
+
+    return Result;
 }
 
 template <typename T>

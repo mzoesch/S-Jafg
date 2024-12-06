@@ -97,17 +97,20 @@ EM_BOOL KeyUpCallback(const int32 EventType, const EmscriptenKeyboardEvent *E, v
 
 EM_BOOL MouseMoveCallback(const int32 EventType, const EmscriptenMouseEvent *E, void *UserData)
 {
-    checkSlow( ::GetDownKeys().Contains(Jafg::EKeys::MouseX) == false )
-    checkSlow( ::GetDownKeys().Contains(Jafg::EKeys::MouseY) == false )
-
-    if (E->movementX > 0.0)
+    if (Jafg::Maths::Absolute(E->movementX) > 0.0)
     {
-        ::GetDownKeys().Emplace(Jafg::EKeys::MouseX, static_cast<float>(E->movementX));
+        if (Jafg::LRawInput* Input = ::GetDownKeys().FindRef(Jafg::EKeys::MouseX); Input)
+        {
+            Input->Value += static_cast<float>(E->movementX);
+        }
     }
 
-    if (E->movementY > 0.0)
+    if (Jafg::Maths::Absolute(E->movementY) > 0.0)
     {
-        ::GetDownKeys().Emplace(Jafg::EKeys::MouseY, static_cast<float>(E->movementY));
+        if (Jafg::LRawInput* Input = ::GetDownKeys().FindRef(Jafg::EKeys::MouseY); Input)
+        {
+            Input->Value += static_cast<float>(E->movementY);
+        }
     }
 
     return EM_TRUE;
@@ -234,6 +237,11 @@ void Jafg::LPlatformWasm::Initialize()
     {
         this->GetViewport()->ChangeDimensions(this->GetDimensions());
         this->GetViewport()->SetPlatformDpi(96.0f); // TODO: Fetch from JavaScript.
+        glViewport(0, 0, this->GetDimensions().X, this->GetDimensions().Y);
+    }
+    else
+    {
+        panic( "Currently a viewport must be provided." )
     }
 
     glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
