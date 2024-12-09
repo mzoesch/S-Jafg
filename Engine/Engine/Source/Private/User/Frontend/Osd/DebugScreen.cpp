@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
-#include "User/Frontend/DebugScreen.h"
+#include "User/Frontend/Osd/DebugScreen.h"
 #include "Build/EngineBuildInfo.h"
 #include "Core/Application.h"
 #include "Engine/Engine.h"
@@ -62,7 +62,7 @@ void Jafg::WDebugScreen::Construct()
         NewNode(WVBox)
         [
             NewNode(WWidgetRegion)
-            .SetRegionPadding(LPadding(100.0f))
+            .SetPadding(LPadding(100.0f))
             & &MaterialSubsystem->GetBlendOpaqueAtlasTexture()
         ]
     ]
@@ -70,7 +70,7 @@ void Jafg::WDebugScreen::Construct()
         NewNode(WVBox)
         [
             NewNode(WWidgetRegion)
-            .SetRegionPadding(LPadding(100.0f))
+            .SetPadding(LPadding(100.0f))
             & &MaterialSubsystem->GetBlendersAtlasTexture()
         ]
     ]

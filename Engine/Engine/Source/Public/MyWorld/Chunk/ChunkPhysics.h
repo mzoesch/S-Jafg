@@ -1,0 +1,36 @@
+// Copyright mzoesch. All rights reserved.
+
+#pragma once
+
+#include "Physics/PhysicCompontent.h"
+#include "MyWorld/Chunk/Chunk.h"
+
+namespace Jafg
+{
+
+class ENGINE_API LChunkPhysicsComponent final : public LPhysicsComponent
+{
+public:
+
+    LChunkPhysicsComponent() = delete;
+    explicit LChunkPhysicsComponent(AChunk* InChunk) : Owner(InChunk) { }
+    DEFAULT_REALLOC_OF_ANY_FORM(LChunkPhysicsComponent)
+    ~LChunkPhysicsComponent() override { LPhysicsComponent::~LPhysicsComponent(); }
+
+    bool IsInTheoreticalMaxBounds(const LVector& Point) const;
+
+    // LPhysicsComponent implementation
+    bool Overlaps(const LVector& Point) const override;
+    bool Overlaps(const LVector& Point, const float Radius) const override { return false; } // Currently not used. Implement this if needed.
+    bool Overlaps(const LPhysicsComponent& Other) const override { return false; } // Currently not used. Implement this if needed.
+    bool Sweep(const LVector& Start, const LVector& End, LHitResult& OutHit) const override;
+    // ~LPhysicsComponent implementation
+
+private:
+
+    AChunk* Owner = nullptr;
+    /** The step interval used for walking along the ray. */
+    static constexpr float TraceStep { 0.01f };
+};
+
+} /* ~Namespace Jafg */

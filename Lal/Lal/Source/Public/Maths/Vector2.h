@@ -95,6 +95,11 @@ struct TVector2 final
     FORCEINLINE auto Invert() -> void;
     FORCEINLINE auto InvertRet() const -> TVector2<T>&;
     FORCEINLINE auto GetInvert() const -> TVector2<T>;
+
+    LSimpleString ToString() const
+    {
+        return LSimpleString::SprintF("{} {}", this->X, this->Y);
+    }
 };
 
 template <typename T>

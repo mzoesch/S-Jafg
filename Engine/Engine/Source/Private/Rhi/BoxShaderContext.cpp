@@ -48,6 +48,8 @@ void Jafg::LBoxShaderContext::Draw(
 ) const
 {
     checkSlow( this->bIsMeaningful )
+    check( Context.GetDimensions().X >= TopLeft.X + Size.X )
+    check( Context.GetDimensions().Y >= TopLeft.Y + Size.Y )
 
     if (this->LastFrameTexture != Texture)
     {

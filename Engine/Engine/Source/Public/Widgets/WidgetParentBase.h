@@ -26,7 +26,7 @@ public:
 
     virtual void UpdateDesiredSize() const override;
 
-    virtual auto GetChildren()             const   -> const TdhArray<LWidgetSlot*>& PURE_VIRTUAL(return WWidgetParentBase::NothingReference)
+    virtual auto GetChildren() const               -> const TdhArray<LWidgetSlot*>& PURE_VIRTUAL(return WWidgetParentBase::NothingArrayReference)
     virtual auto RemoveChild(WWidgetNode* InChild) -> void PURE_VIRTUAL()
     virtual auto RemoveChild(LWidgetSlot* InSlot)  -> void PURE_VIRTUAL()
     virtual auto AddChild(WWidgetNode* InChild)    -> LWidgetSlot* PURE_VIRTUAL(return nullptr)
@@ -52,7 +52,7 @@ public:
 private:
 
     /** Empty array for unreachable code paths - just to satisfy the compiler. Has no use-case. */
-    static inline TdhArray<LWidgetSlot*> NothingReference;
+    static inline TdhArray<LWidgetSlot*> NothingArrayReference;
 };
 
 } /* ~Namespace Jafg. */

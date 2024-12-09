@@ -53,7 +53,8 @@ struct TVector4 final
     FORCEINLINE static TVector4<T> UnitZ()    { return TVector4<T>::UnitVectorZ;    }
     FORCEINLINE static TVector4<T> UnitW()    { return TVector4<T>::UnitVectorW;    }
 
-    FORCEINLINE          TVector4() : X(0.0f), Y(0.0f), Z(0.0f), W(1.0f) { }
+    FORCEINLINE          TVector4() noexcept : X(0.0f), Y(0.0f), Z(0.0f), W(1.0f) { }
+    FORCEINLINE explicit TVector4(const T InFloatingPoint) noexcept : X(InFloatingPoint), Y(InFloatingPoint), Z(InFloatingPoint), W(1.0f) { }
     FORCEINLINE explicit TVector4(const T InX, const T InY, const T InZ, const T InW = 1.0f);
     FORCEINLINE explicit TVector4(const TVector<T> InVec, const T InW) : X(InVec.X), Y(InVec.Y), Z(InVec.Z), W(InW) { }
     FORCEINLINE          TVector4(const TVector4<T>& InVector) : X(InVector.X), Y(InVector.Y), Z(InVector.Z), W(InVector.W) { }
@@ -64,6 +65,50 @@ struct TVector4 final
 
     FORCEINLINE auto operator[](const int32 InIndex)       ->       T&;
     FORCEINLINE auto operator[](const int32 InIndex) const -> const T&;
+
+    FORCEINLINE TVector2<T> XY()   const { return TVector2<T>(this->X, this->Y); }
+    FORCEINLINE TVector2<T> XZ()   const { return TVector2<T>(this->X, this->Z); }
+    FORCEINLINE TVector2<T> XW()   const { return TVector2<T>(this->X, this->W); }
+    FORCEINLINE TVector<T>  XYZ()  const { return TVector<T> (this->X, this->Y, this->Z); }
+    FORCEINLINE TVector<T>  XYW()  const { return TVector<T> (this->X, this->Y, this->W); }
+    FORCEINLINE TVector<T>  XZW()  const { return TVector<T> (this->X, this->Z, this->W); }
+    FORCEINLINE TVector2<T> YX()   const { return TVector2<T>(this->Y, this->X); }
+    FORCEINLINE TVector2<T> YZ()   const { return TVector2<T>(this->Y, this->Z); }
+    FORCEINLINE TVector2<T> YW()   const { return TVector2<T>(this->Y, this->W); }
+    FORCEINLINE TVector<T>  YXZ()  const { return TVector<T> (this->Y, this->X, this->Z); }
+    FORCEINLINE TVector<T>  YXW()  const { return TVector<T> (this->Y, this->X, this->W); }
+    FORCEINLINE TVector<T>  YZW()  const { return TVector<T> (this->Y, this->Z, this->W); }
+    FORCEINLINE TVector2<T> ZX()   const { return TVector2<T>(this->Z, this->X); }
+    FORCEINLINE TVector2<T> ZY()   const { return TVector2<T>(this->Z, this->Y); }
+    FORCEINLINE TVector2<T> ZW()   const { return TVector2<T>(this->Z, this->W); }
+    FORCEINLINE TVector<T>  ZXY()  const { return TVector<T> (this->Z, this->X, this->Y); }
+    FORCEINLINE TVector<T>  ZXW()  const { return TVector<T> (this->Z, this->X, this->W); }
+    FORCEINLINE TVector<T>  ZYW()  const { return TVector<T> (this->Z, this->Y, this->W); }
+    FORCEINLINE TVector2<T> WX()   const { return TVector2<T>(this->W, this->X); }
+    FORCEINLINE TVector2<T> WY()   const { return TVector2<T>(this->W, this->Y); }
+    FORCEINLINE TVector2<T> WZ()   const { return TVector2<T>(this->W, this->Z); }
+    FORCEINLINE TVector<T>  WXY()  const { return TVector<T> (this->W, this->X, this->Y); }
+    FORCEINLINE TVector<T>  WXZ()  const { return TVector<T> (this->W, this->X, this->Z); }
+    FORCEINLINE TVector<T>  WYZ()  const { return TVector<T> (this->W, this->Y, this->Z); }
+    FORCEINLINE TVector4<T> XYWZ() const { return TVector4<T>(this->X, this->Y, this->W, this->Z); }
+    FORCEINLINE TVector4<T> XZYW() const { return TVector4<T>(this->X, this->Z, this->Y, this->W); }
+    FORCEINLINE TVector4<T> XWYZ() const { return TVector4<T>(this->X, this->W, this->Y, this->Z); }
+    FORCEINLINE TVector4<T> XWZY() const { return TVector4<T>(this->X, this->W, this->Z, this->Y); }
+    FORCEINLINE TVector4<T> YXZW() const { return TVector4<T>(this->Y, this->X, this->Z, this->W); }
+    FORCEINLINE TVector4<T> YXWZ() const { return TVector4<T>(this->Y, this->X, this->W, this->Z); }
+    FORCEINLINE TVector4<T> YZXW() const { return TVector4<T>(this->Y, this->Z, this->X, this->W); }
+    FORCEINLINE TVector4<T> YZWX() const { return TVector4<T>(this->Y, this->Z, this->W, this->X); }
+    FORCEINLINE TVector4<T> ZXYW() const { return TVector4<T>(this->Z, this->X, this->Y, this->W); }
+    FORCEINLINE TVector4<T> ZXWY() const { return TVector4<T>(this->Z, this->X, this->W, this->Y); }
+    FORCEINLINE TVector4<T> ZYXW() const { return TVector4<T>(this->Z, this->Y, this->X, this->W); }
+    FORCEINLINE TVector4<T> ZYWX() const { return TVector4<T>(this->Z, this->Y, this->W, this->X); }
+    FORCEINLINE TVector4<T> ZWXY() const { return TVector4<T>(this->Z, this->W, this->X, this->Y); }
+    FORCEINLINE TVector4<T> ZWYX() const { return TVector4<T>(this->Z, this->W, this->Y, this->X); }
+    FORCEINLINE TVector4<T> WXYZ() const { return TVector4<T>(this->W, this->X, this->Y, this->Z); }
+    FORCEINLINE TVector4<T> WYXZ() const { return TVector4<T>(this->W, this->Y, this->X, this->Z); }
+    FORCEINLINE TVector4<T> WYZX() const { return TVector4<T>(this->W, this->Y, this->Z, this->X); }
+    FORCEINLINE TVector4<T> WZXY() const { return TVector4<T>(this->W, this->Z, this->X, this->Y); }
+    FORCEINLINE TVector4<T> WZYX() const { return TVector4<T>(this->W, this->Z, this->Y, this->X); }
 
     FORCEINLINE TVector4<T>& operator =(const TVector4<T>& InVector)  noexcept;
     FORCEINLINE TVector4<T>& operator =(      TVector4<T>&& InVector) noexcept;
@@ -111,6 +156,21 @@ struct TVector4 final
     FORCEINLINE auto InvertRet4() -> TVector4<T>&;
     FORCEINLINE auto GetInvert() const -> TVector4<T>;
     FORCEINLINE auto GetInvert4() const -> TVector4<T>;
+
+    LSimpleString ToString() const
+    {
+        return TVector4<T>::ToString4();
+    }
+
+    LSimpleString ToString3() const
+    {
+        return LSimpleString::SprintF("{:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z);
+    }
+
+    LSimpleString ToString4() const
+    {
+        return LSimpleString::SprintF("{:.2f} {:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z, this->W);
+    }
 };
 
 template <typename T>

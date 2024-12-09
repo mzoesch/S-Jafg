@@ -7,7 +7,7 @@
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
-#include "User/Frontend/DebugScreen.h"
+#include "User/Frontend/Osd/DebugScreen.h"
 #include "User/Input/UserInput.h"
 #include "User/Input/InputAction.h"
 
@@ -111,22 +111,31 @@ void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
     CurMappedKey->Modifiers.Add(MakeModifier<LInputActionMappedKeyNegateModifier>());
     CurMappedKey->Modifiers.Add(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>());
     ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Ongoing,
-        [InNew] (LInputActionValue& InValue) { InNew->AddMovementInput(InValue); }
+        [InNew] (LInputActionValue& InValue) { InNew->OnOngoingMovementInput(InValue); }
     );
 
     const LInputAction Look = LInputAction(EInputActionCategory::Axis2D);
     CurMapping = ContextInMyWorld->MapAction(Look);
     CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::MouseXY);
     ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Ongoing,
-        [InNew] (LInputActionValue& InValue) { InNew->AddRotationInput(InValue); }
+        [InNew] (LInputActionValue& InValue) { InNew->OnOngoingRotationInput(InValue); }
     );
 
     const LInputAction ChangeVelocity = LInputAction(EInputActionCategory::Axis1D);
     CurMapping = ContextInMyWorld->MapAction(ChangeVelocity);
     CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::MouseWheelAxis);
     ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Ongoing,
-        [InNew] (LInputActionValue& InValue) { InNew->ChangeVelocity(InValue); }
+        [InNew] (LInputActionValue& InValue) { InNew->OnOngoingVelocityChange(InValue); }
     );
+
+    {
+        const LInputAction Action = LInputAction(EInputActionCategory::Boolean);
+        CurMapping   = ContextInMyWorld->MapAction(Action);
+        CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::LeftMouseButton);
+        ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Triggered,
+            [this, InNew] (LInputActionValue& InValue) { InNew->OnOngoingPrimaryInput(InValue); }
+        );
+    }
 
     return;
 }

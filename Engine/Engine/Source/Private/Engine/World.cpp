@@ -9,6 +9,7 @@
 #include "Engine/Framework/Pawn.h"
 #include "Engine/Framework/PersonaController.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
+#include "Physics/PhysicCompontent.h"
 #include "User/LocalEgo.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/WorldSubsystem.h"
@@ -155,4 +156,29 @@ float Jafg::LWorld::GetRealTimeSecondsSinceWorldLaunch() const
 {
     const float Now = static_cast<float>(Application::GetDeltaSinceStaticStorageInitialization());
     return Now - this->RealTimeWhenWorldWasLaunched;
+}
+
+bool Jafg::LWorld::LineTraceByChannel(
+    TdhArray<LHitResult>& OutHits,
+    const LVector& Begin,
+    const LVector& End,
+    const ECollisionChannel::Type Channel,
+    const LCollisionQueryParams& Params
+) const
+{
+    check( (Begin - End).Magnitude() > JAFG_NOT_SO_SMALL_NUMBER && "Why trace small distances." )
+
+    LHitResult Dummy;
+    for (const AActor* Actor : this->Actors)
+    {
+        if (Actor->GetPhysicsComponent()->Sweep(Begin, End, Dummy))
+        {
+            OutHits.Add(Dummy);
+            Dummy.Reset();
+        }
+
+        continue;
+    }
+
+    return OutHits.IsEmpty() == false;
 }

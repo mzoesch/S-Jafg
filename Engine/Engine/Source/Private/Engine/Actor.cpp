@@ -3,12 +3,14 @@
 #include "CoreAfx.h"
 #include "Engine/Actor.h"
 #include "Engine/Components/RenderComponent.h"
+#include "Engine/Components/NoPhysicsCompontent.h"
 
 void Jafg::AActor::EndLife()
 {
     Super::EndLife();
 
     this->SetRendererComponent(nullptr, true);
+    this->SetPhysicsComponent(nullptr, true);
 
     return;
 }
@@ -41,6 +43,11 @@ void Jafg::AActor::OnGarbage()
     }
 
     return;
+}
+
+Jafg::LPhysicsComponent* Jafg::AActor::GetPhysicsComponent() const
+{
+    return this->PhysicsComponent ? this->PhysicsComponent : LNoPhysicsComponent::GetUsableClass();
 }
 
 void Jafg::AActor::ChangeTransform(const LTransform& InTransform, const EActorSweep::Type SweepType)
@@ -86,6 +93,18 @@ void Jafg::AActor::SetRendererComponent(LRendererComponent* InRendererComponent,
     }
 
     this->RendererComponent = InRendererComponent;
+
+    return;
+}
+
+void Jafg::AActor::SetPhysicsComponent(LPhysicsComponent* InPhysicsComponent, const bool bFreeOld)
+{
+    if (bFreeOld && this->PhysicsComponent != nullptr)
+    {
+        delete this->PhysicsComponent;
+    }
+
+    this->PhysicsComponent = InPhysicsComponent;
 
     return;
 }

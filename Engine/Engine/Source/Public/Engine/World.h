@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Engine/ObjectContext.h"
+#include "Physics/TraceUtility.h"
 
 namespace Jafg
 {
@@ -109,6 +110,18 @@ public:
 
     float GetRealTimeSecondsSinceWorldLaunch() const;
 
+    /**
+     * Trace this world for physical hits.
+     * @return True if a blocking hit was found.
+     */
+    bool LineTraceByChannel(
+        TdhArray<LHitResult>& OutHits,
+        const LVector& Begin,
+        const LVector& End,
+        const ECollisionChannel::Type Channel,
+        const LCollisionQueryParams& Params
+    ) const;
+
 private:
 
     TdhArray<LTickableObject*> TickableObjects;
@@ -120,7 +133,7 @@ private:
     LSubsystemCollection* Collection = nullptr;
 
     /** Main thread only. */
-    bool TickableObjectsPutMutex : 1 = false;
+    bool TickableObjectsPutMutex = false;
     bool IsTickableObjectsPutMutexLocked() const { return this->TickableObjectsPutMutex; }
     void AcquireTickableObjectsLock() { this->TickableObjectsPutMutex = true; }
     void ReleaseTickableObjectsLock() { this->TickableObjectsPutMutex = false; }

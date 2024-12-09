@@ -34,9 +34,17 @@ public:
     FORCEINLINE auto GetEye() -> LEye* { return this->Eye; }
     FORCEINLINE auto GetEye() const -> const LEye* { return this->Eye; }
 
-    void AddMovementInput(LInputActionValue& InValue);
-    void AddRotationInput(LInputActionValue& InValue);
-    void ChangeVelocity(LInputActionValue& InValue);
+    void OnOngoingMovementInput(LInputActionValue& InValue);
+    void OnOngoingRotationInput(LInputActionValue& InValue);
+    void OnOngoingVelocityChange(LInputActionValue& InValue);
+    void OnOngoingPrimaryInput(LInputActionValue& InValue);
+
+    bool TraceFromEyeByChannel(
+        TdhArray<LHitResult>& OutHits,
+        const float DistanceInMeters,
+        const ECollisionChannel::Type Channel,
+        const LCollisionQueryParams& Params
+    ) const;
 
 private:
 

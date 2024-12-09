@@ -177,6 +177,19 @@ void Jafg::LDesktopPlatformWin::PollInputs()
         continue;
     }
 
+    if (glfwGetMouseButton(this->MasterWindow->GetNativeWindow(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+    {
+        this->AddKeyDown(EKeys::LeftMouseButton);
+    }
+    if (glfwGetMouseButton(this->MasterWindow->GetNativeWindow(), GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+    {
+        this->AddKeyDown(EKeys::RightMouseButton);
+    }
+    if (glfwGetMouseButton(this->MasterWindow->GetNativeWindow(), GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
+    {
+        this->AddKeyDown(EKeys::MiddleMouseButton);
+    }
+
     return;
 }
 

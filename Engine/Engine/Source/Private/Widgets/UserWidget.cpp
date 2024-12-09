@@ -5,6 +5,12 @@
 #include "Widgets/Viewport.h"
 #include "Widgets/WidgetParent.h"
 
+Jafg::WUserWidget::WUserWidget(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+{
+    this->SetAnchor(EAnchor::Fill);
+    return;
+}
+
 void Jafg::WUserWidget::Draw(LViewport& Context) const
 {
     Super::Draw(Context);
@@ -48,6 +54,22 @@ void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy /* = true */)
     if (bDestroy)
     {
         this->KillYourSelfNow(true);
+    }
+
+    return;
+}
+
+void Jafg::WUserWidget::UpdateDesiredSize() const
+{
+    Super::UpdateDesiredSize();
+
+    if (this->Root)
+    {
+        this->SetDesiredSize(this->Root->Content->GetDesiredSize());
+    }
+    else
+    {
+        this->SetDesiredSize(LVector2::Zero());
     }
 
     return;

@@ -37,6 +37,7 @@ void Jafg::LViewport::Draw()
     {
         if (Widget->ShouldNowDraw())
         {
+            // LOG_WARNING(LogTemporal, "====")
             Widget->UpdateDesiredSize();
             Widget->Draw(*this);
         }

@@ -45,7 +45,7 @@ FORCEINLINE Type operator~(const Type& Lhs)
     return static_cast<Type>(~static_cast<LRotatorAxis>(Lhs));
 }
 
-template <typename  ... FlagsTy>
+template <typename ... FlagsTy>
 constexpr ERotatorAxis::Type CombineFlags(FlagsTy ... Flags)
 {
     static_assert(
@@ -119,6 +119,13 @@ struct TRotator final
 
     /** Constrains one or multiple axes to a defined constraint in the range of ]0, 180]. */
     FORCEINLINE auto ConstrainAxis(const LRotatorAxis AxisFlags, const T Constraint) -> void;
+
+    TVector<T> ToVector() const;
+
+    LSimpleString ToString() const
+    {
+        return LSimpleString::SprintF("{:.2f} {:.2f} {:.2f}", Pitch, Yaw, Roll);
+    }
 };
 
 template <typename T>
@@ -318,6 +325,20 @@ void TRotator<T>::ConstrainAxis(const LRotatorAxis AxisFlags, const T Constraint
     }
 
     return;
+}
+
+template <typename T>
+TVector<T> TRotator<T>::ToVector() const
+{
+    /* Clamp to the range of ]-360, 360[. */
+    const T PitchNoWinding = Maths::Fmod(this->Pitch, static_cast<T>(JAFG_DEG_FULL_CIRCLE_D));
+    const T YawNoWinding   = Maths::Fmod(this->Yaw,   static_cast<T>(JAFG_DEG_FULL_CIRCLE_D));
+
+    T CP, SP, CY, SY;
+    Maths::SinCos(&SP, &CP, Maths::ToRadians(PitchNoWinding));
+    Maths::SinCos(&SY, &CY, Maths::ToRadians(YawNoWinding));
+
+    return TVector<T>(CP * CY, CP * SY, SP);
 }
 
 } /* ~Namespace Jafg */

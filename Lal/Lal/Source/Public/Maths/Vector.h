@@ -143,6 +143,11 @@ struct TVector
     FORCEINLINE auto GetInvert() const -> TVector<T>;
     FORCEINLINE auto Cross(const TVector<T>& InVec) const -> TVector<T>;
     FORCEINLINE auto Dot(const TVector<T>& InVec) const -> T;
+
+    LSimpleString ToString() const
+    {
+        return LSimpleString::SprintF("{:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z);
+    }
 };
 
 template <typename T>

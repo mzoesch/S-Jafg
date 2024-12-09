@@ -53,6 +53,11 @@ struct LVoxelKey final
     FORCEINLINE LVoxelKey(LVoxelKey&& InKey) noexcept : Key(InKey.Key) { }
     FORCEINLINE ~LVoxelKey() = default;
 
+    /**
+     * From world location. Note that this function will normalize the key to the local space.
+     */
+    static LVoxelKey CreateFromWorldLocation(const LVector& InVector);
+
     FORCEINLINE LVoxelKey& operator =(const LVoxelKey&  InKey) noexcept;
     FORCEINLINE LVoxelKey& operator =(      LVoxelKey&& InKey) noexcept;
 
@@ -77,6 +82,40 @@ struct LVoxelKey final
     NODISCARD FORCEINLINE auto NormalizeKeyForNeighbor() -> EVoxelKeyLocation::Type;
     NODISCARD FORCEINLINE auto ToString() const -> LSimpleString;
 };
+
+inline LVoxelKey LVoxelKey::CreateFromWorldLocation(const LVector& InVector)
+{
+    LVoxelKey Out;
+
+    if (InVector.X < 0)
+    {
+        Out.X = static_cast<LVoxelKeyDomainTy>(static_cast<int64>(Maths::Ceil(InVector.X)) % MwStatics::ChunkSize);
+    }
+    else
+    {
+        Out.X = static_cast<LVoxelKeyDomainTy>(static_cast<int64>(Maths::Floor(InVector.X)) % MwStatics::ChunkSize);
+    }
+
+    if (InVector.Y < 0)
+    {
+        Out.Y = static_cast<LVoxelKeyDomainTy>(static_cast<int64>(Maths::Ceil(InVector.Y)) % MwStatics::ChunkSize);
+    }
+    else
+    {
+        Out.Y = static_cast<LVoxelKeyDomainTy>(static_cast<int64>(Maths::Floor(InVector.Y)) % MwStatics::ChunkSize);
+    }
+
+    if (InVector.Z < 0)
+    {
+        Out.Z = static_cast<LVoxelKeyDomainTy>(static_cast<int64>(Maths::Ceil(InVector.Z)) % MwStatics::ChunkSize);
+    }
+    else
+    {
+        Out.Z = static_cast<LVoxelKeyDomainTy>(static_cast<int64>(Maths::Floor(InVector.Z)) % MwStatics::ChunkSize);
+    }
+
+    return Out;
+}
 
 LVoxelKey& LVoxelKey::operator=(const LVoxelKey& InKey) noexcept
 {

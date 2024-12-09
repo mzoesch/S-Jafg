@@ -224,8 +224,7 @@ public:
     voxel_t* RawVoxelData = nullptr;
 
     LSharedChunkArgs* SharedArgs = nullptr;
-    LChunkKey  ChunkKey      = { };
-    LVector    WorldLocation = { };
+    LChunkKey         ChunkKey   = { };
 
     FORCEINLINE auto GetChunkRendererComponent() -> LChunkRendererComponent*
     {

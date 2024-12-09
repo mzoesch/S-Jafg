@@ -19,7 +19,7 @@ void Jafg::APawn::DeclareNewPossessor(APersonaController* InNewController)
     return;
 }
 
-void Jafg::APawn::AddMovementInput(LInputActionValue& InValue)
+void Jafg::APawn::OnOngoingMovementInput(LInputActionValue& InValue)
 {
     LVector TranslationDelta = LVector::Zero();
     TranslationDelta += this->RelativeFront * (InValue.Get<LVector3>().X * this->MovementSpeed);
@@ -31,7 +31,7 @@ void Jafg::APawn::AddMovementInput(LInputActionValue& InValue)
     return;
 }
 
-void Jafg::APawn::AddRotationInput(LInputActionValue& InValue)
+void Jafg::APawn::OnOngoingRotationInput(LInputActionValue& InValue)
 {
     // if (this->bFirstMouseCallback)
     // {
@@ -62,7 +62,7 @@ void Jafg::APawn::AddRotationInput(LInputActionValue& InValue)
     return;
 }
 
-void Jafg::APawn::ChangeVelocity(LInputActionValue& InValue)
+void Jafg::APawn::OnOngoingVelocityChange(LInputActionValue& InValue)
 {
     this->MovementSpeed += InValue.Get<float>();
 
@@ -76,6 +76,41 @@ void Jafg::APawn::ChangeVelocity(LInputActionValue& InValue)
     }
 
     return;
+}
+
+void Jafg::APawn::OnOngoingPrimaryInput(LInputActionValue& InValue)
+{
+    check( this->GetWorld() )
+
+    TdhArray<LHitResult> Hits;
+    if (this->GetWorld()->LineTraceByChannel(
+        Hits,
+        this->GetTranslation(),
+        this->GetTranslation() + this->GetRotator().ToVector() * 5.0f,
+        ECollisionChannel::Static,
+        LCollisionQueryParams()
+    ) == false)
+    {
+        LOG_WARNING(LogUserInput, "Hit nothing.")
+        return;
+    }
+
+    for (const LHitResult& Hit : Hits)
+    {
+        LOG_WARNING(LogUserInput, "Hit at {} -> {}.", Hit.GlobalWorldLocation.ToString(), Hit.Actor->GetTranslation().ToString())
+    }
+
+    return;
+}
+
+bool Jafg::APawn::TraceFromEyeByChannel(
+    TdhArray<LHitResult>& OutHits,
+    const float DistanceInMeters,
+    const ECollisionChannel::Type Channel,
+    const LCollisionQueryParams& Params
+) const
+{
+    return false;
 }
 
 void Jafg::APawn::UpdateRelativeVectors()

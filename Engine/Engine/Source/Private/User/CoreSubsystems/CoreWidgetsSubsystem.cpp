@@ -3,8 +3,9 @@
 #include "CoreAfx.h"
 #include "User/CoreSubsystems/CoreWidgetsSubsystem.h"
 #include "Engine/Framework/Hud.h"
-#include "User/Frontend/DebugScreen.h"
 #include "Widgets/UserWidget.h"
+#include "User/Frontend/Osd/DebugScreen.h"
+#include "User/Frontend/Hud/Crosshair.h"
 
 void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
 {
@@ -14,6 +15,11 @@ void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
     this->DebugScreen->AddToViewport(this->GetHud()->GetMainViewport());
     this->DebugScreen->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->DebugScreen);
+
+    this->Crosshair = ConstructDeferredWidgetNode<WCrosshair>(this->GetOuter());
+    this->Crosshair->AddToViewport(this->GetHud()->GetMainViewport());
+    this->Crosshair->SetVisibility(EWidgetVisibility::Visible);
+    MakeDeferredWidgetNodeFinal(this->Crosshair);
 
     return;
 }
@@ -26,6 +32,12 @@ void Jafg::JCoreWidgetsSubsystem::TearDown()
     {
         this->DebugScreen->RemoveFromParent();
         this->DebugScreen = nullptr;
+    }
+
+    if (ensure(this->Crosshair))
+    {
+        this->Crosshair->RemoveFromParent();
+        this->Crosshair = nullptr;
     }
 
     return;

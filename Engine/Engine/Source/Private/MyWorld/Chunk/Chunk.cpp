@@ -13,6 +13,7 @@
 #include "MyWorld/Meshing/ChunkMesher.h"
 #include "User/LocalEgo.h"
 #include "Rhi/ChunkShaderContext.h"
+#include "MyWorld/Chunk/ChunkPhysics.h"
 
 Jafg::LChunkRendererComponent::LChunkRendererComponent(AChunk& Owner)
 {
@@ -31,7 +32,7 @@ void Jafg::LChunkRendererComponent::Draw(const LViewport& Context)
     LChunkShaderDrawArgs Args;
     Args.DegYFov = Eye->GetDegYFov();
     Args.ViewMatrix.CopyFrom(Eye->GetViewMatrix());
-    Args.WorldLocation = this->Owner->WorldLocation;
+    Args.WorldLocation = this->Owner->GetTranslation();
     Args.NumTriangles = this->Owner->GetMesher()->GetNumTriangles();
     Args.Instance = &this->Instance;
     ShaderContext->Draw(Context, Args);
@@ -111,7 +112,7 @@ void Jafg::AChunk::OnAlloc(const LChunkKey& InChunkKey)
     check( this->GetChunkState() == EChunkState::Freed )
 
     this->ChunkKey = InChunkKey;
-    this->WorldLocation = this->ChunkKey.ToWorldSpaceVector();
+    this->SetTranslation(this->ChunkKey.ToWorldSpaceVector());
 
     this->SetChunkState(EChunkState::PreSpawned);
 
@@ -229,6 +230,7 @@ void Jafg::AChunk::OnActive()
 
     this->SetRendererComponent(new LChunkRendererComponent(*this));
     checkSlow( this->IsRendererComponentValid() )
+    this->SetPhysicsComponent(new LChunkPhysicsComponent(this));
 
     this->Mesher = this->SharedArgs->GetNewMesher(*this);
     checkSlow( this->Mesher )

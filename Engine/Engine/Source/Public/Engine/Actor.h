@@ -10,6 +10,7 @@ namespace Jafg
 {
 
 class LRendererComponent;
+class LPhysicsComponent;
 
 namespace EActorSweep
 {
@@ -42,8 +43,9 @@ public:
 
     virtual void OnGarbage() override;
 
-    FORCEINLINE auto IsRendererComponentValid() const -> bool { return this->RendererComponent != nullptr; }
-    FORCEINLINE auto GetRendererComponent() const -> LRendererComponent* { return this->RendererComponent; }
+    FORCEINLINE auto   IsRendererComponentValid() const -> bool { return this->RendererComponent != nullptr; }
+    FORCEINLINE auto   GetRendererComponent() const -> LRendererComponent* { return this->RendererComponent; }
+    LPhysicsComponent* GetPhysicsComponent() const;
 
     void ChangeTransform(const LTransform& InTransform, const EActorSweep::Type SweepType = EActorSweep::Teleport);
     void AddTranslation(const LVector& InLocation, const EActorSweep::Type SweepType = EActorSweep::Teleport);
@@ -70,7 +72,9 @@ public:
 protected:
 
     void SetRendererComponent(LRendererComponent* InRendererComponent, const bool bFreeOld = true);
+    void SetPhysicsComponent(LPhysicsComponent* InPhysicsComponent, const bool bFreeOld = true);
     FORCEINLINE void SetEverTickConstructorOnlyFlag() { this->bCanEverTick = true; }
+    FORCEINLINE void CancelEverTickConstructorOnlyFlag() { this->bCanEverTick = false; }
 
 private:
 
@@ -78,6 +82,7 @@ private:
     FORCEINLINE virtual bool ShouldTickableObjectTick() const override final { return this->ShouldTick(); }
 
     LRendererComponent* RendererComponent = nullptr;
+    LPhysicsComponent* PhysicsComponent = nullptr;
 
     LTransform Transform = { };
 

@@ -121,6 +121,11 @@ template <typename T> NODISCARD FORCEINLINE auto Atan(const T Value) -> T;
 template <typename T> NODISCARD FORCEINLINE auto Tanh(const T Value) -> T;
 template <typename T> NODISCARD FORCEINLINE auto ATanh(const T Value) -> T;
 
+template <typename T, typename U>
+NODISCARD FORCEINLINE void SinCos(T* SinScalar, T* CosScalar, const U InValue);
+template <typename T>
+NODISCARD FORCEINLINE void SinCos(T*  SinScalar, T*  CosScalar, const T InValue);
+
 /**
  * An affine transformation to get the transformation for objects viewed as of Eye.
  *
@@ -384,6 +389,21 @@ constexpr T NormalizeDegrees(T Degrees)
         Degrees -= static_cast<T>(JAFG_DEG_FULL_CIRCLE_D);
     }
     return Degrees;
+}
+
+template <typename T, typename U>
+void SinCos(T* SinScalar, T* CosScalar, const U InValue)
+{
+    static_assert(std::is_floating_point_v<T> && std::is_floating_point_v<U>, "Scalar and InValue must be floating point types.");
+    static_assert(std::is_same_v<T, U> == false, "Scalar and InValue must not be the same type.");
+    Maths::SinCos(SinScalar, CosScalar, static_cast<T>(InValue));
+}
+
+template <typename T>
+void SinCos(T* SinScalar, T* CosScalar, const T InValue)
+{
+    *SinScalar = Maths::Sin(InValue);
+    *CosScalar = Maths::Cos(InValue);
 }
 
 template <typename T>

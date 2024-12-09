@@ -62,7 +62,7 @@ struct ENGINE_API LWhitespace
     {
     }
 
-    FORCEINLINE explicit LWhitespace(const int32 Horizontal, const int32 Vertical)
+    FORCEINLINE LWhitespace(const int32 Horizontal, const int32 Vertical)
         : West(static_cast<float>(Horizontal))
         , North(static_cast<float>(Vertical))
         , East(static_cast<float>(Horizontal))
@@ -70,7 +70,7 @@ struct ENGINE_API LWhitespace
     {
     }
 
-    FORCEINLINE explicit LWhitespace(const float Horizontal, const float Vertical)
+    FORCEINLINE LWhitespace(const float Horizontal, const float Vertical)
         : West(Horizontal)
         , North(Vertical)
         , East(Horizontal)
@@ -78,7 +78,7 @@ struct ENGINE_API LWhitespace
     {
     }
 
-    FORCEINLINE explicit LWhitespace(const double Horizontal, const double Vertical)
+    FORCEINLINE LWhitespace(const double Horizontal, const double Vertical)
         : West(static_cast<float>(Horizontal))
         , North(static_cast<float>(Vertical))
         , East(static_cast<float>(Horizontal))
@@ -86,7 +86,7 @@ struct ENGINE_API LWhitespace
     {
     }
 
-    FORCEINLINE explicit LWhitespace(const int32 InWest, const int32 InNorth, const int32 InEast, const int32 InSouth)
+    FORCEINLINE LWhitespace(const int32 InWest, const int32 InNorth, const int32 InEast, const int32 InSouth)
         : West(static_cast<float>(InWest))
         , North(static_cast<float>(InNorth))
         , East(static_cast<float>(InEast))
@@ -94,7 +94,7 @@ struct ENGINE_API LWhitespace
     {
     }
 
-    FORCEINLINE explicit LWhitespace(const float InWest, const float InNorth, const float InEast, const float InSouth)
+    FORCEINLINE LWhitespace(const float InWest, const float InNorth, const float InEast, const float InSouth)
         : West(InWest)
         , North(InNorth)
         , East(InEast)
@@ -102,7 +102,7 @@ struct ENGINE_API LWhitespace
     {
     }
 
-    FORCEINLINE explicit LWhitespace(const double InWest, const double InNorth, const double InEast, const double InSouth)
+    FORCEINLINE LWhitespace(const double InWest, const double InNorth, const double InEast, const double InSouth)
         : West(static_cast<float>(InWest))
         , North(static_cast<float>(InNorth))
         , East(static_cast<float>(InEast))

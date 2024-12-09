@@ -26,8 +26,8 @@ void Jafg::WWidgetRegion::Draw(LViewport& Context) const
 
     this->ShaderContext->Draw(
         Context,
-        this->GetDesiredSize(),
-        this->GetRelativeTopLeftFromMostOuter(this),
+        this->GetAnchoredSize(Context),
+        this->GetAnchoredTopLeftFromMostOuter(Context, this),
         this->GetBrush().Tint,
         this->GetBrush().Image.GetTexture()
     );

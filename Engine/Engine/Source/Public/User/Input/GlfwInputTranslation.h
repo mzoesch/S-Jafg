@@ -6,8 +6,12 @@
 
 #pragma once
 
+#include "CoreAfx.h"
 #include "InputTypes.h"
-#include <GLFW/glfw3.h>
+#if !JAFG_NO_GLFW3 // Glfw3 may still be linked by the current build tool.
+                   // So we do not necessarily need to include it.
+    #include <GLFW/glfw3.h>
+#endif /* !JAFG_NO_GLFW3 */
 
 namespace Jafg::Glfw3
 {

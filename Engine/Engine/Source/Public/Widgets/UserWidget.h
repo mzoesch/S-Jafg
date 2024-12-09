@@ -23,7 +23,7 @@ class ENGINE_API WUserWidget : public WWidgetParentBase
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WUserWidget)
+    explicit WUserWidget(const LObjectInitializer& ObjectInitializer);
 
 public:
 
@@ -31,6 +31,7 @@ public:
     virtual void Draw(LViewport& Context) const override;
     virtual auto GetViewportSize() const -> LIntVector2 override;
     virtual auto RemoveFromParent(const bool bDestroy = true) -> void override;
+    virtual void UpdateDesiredSize() const override;
     // ~WWidgetNode implementation
 
     // WWidgetParentBase implementation
