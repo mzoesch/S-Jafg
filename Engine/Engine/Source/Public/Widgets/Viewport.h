@@ -118,4 +118,4 @@ FORCEINLINE const TNode* LViewport::GetCheckedTopLevelWidgetByClass() const
     return CheckedStaticCast<TNode>(this->GetCheckedTopLevelWidgetByClass(TNode::StaticClass()));
 }
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */

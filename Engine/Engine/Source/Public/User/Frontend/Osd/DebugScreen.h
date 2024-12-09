@@ -18,7 +18,7 @@ class ENGINE_API WDebugScreen final : public WUserWidget
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WDebugScreen)
+    explicit WDebugScreen(const LObjectInitializer& ObjectInitializer);
 
 public:
 

@@ -16,6 +16,12 @@
 #include "Widgets/TextBlock.h"
 #include "Widgets/VBox.h"
 
+Jafg::WDebugScreen::WDebugScreen(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+{
+    this->SetShouldTick(true);
+    return;
+}
+
 void Jafg::WDebugScreen::Construct()
 {
     Super::Construct();

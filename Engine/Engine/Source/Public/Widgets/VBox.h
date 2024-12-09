@@ -23,4 +23,4 @@ public:
     virtual auto UpdateDesiredSize() const -> void override;
 };
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */

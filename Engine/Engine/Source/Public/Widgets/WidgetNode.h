@@ -266,9 +266,11 @@ public:
 
     virtual void Draw(LViewport& Context) const { }
 
-    /** Weather this widget is allowed to tick this frame. */
+    /** Whether this widget is allowed to tick this frame. */
     FORCEINLINE auto ShouldNowTick() const -> bool;
-    FORCEINLINE auto ShouldNowDraw() const -> bool { return this->ShouldNowTick(); }
+    FORCEINLINE auto GetRawShouldTick() const -> bool { return this->bDisableTick == false; }
+    FORCEINLINE auto SetShouldTick(const bool bInShouldTick) -> void { this->bDisableTick = (bInShouldTick == false); }
+    FORCEINLINE auto ShouldNowDraw() const -> bool ;
     FORCEINLINE auto GetVisibility() const -> EWidgetVisibility::Type { return this->Visibility; }
     FORCEINLINE auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> void { this->Visibility = InVisibility; }
 
@@ -387,4 +389,11 @@ bool Jafg::WWidgetNode::ShouldNowTick() const
             || this->Visibility == EWidgetVisibility::TransitiveHitTestInvisible
             || this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible
         );
+}
+
+bool Jafg::WWidgetNode::ShouldNowDraw() const
+{
+    return this->Visibility == EWidgetVisibility::Visible
+        || this->Visibility == EWidgetVisibility::TransitiveHitTestInvisible
+        || this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible;
 }

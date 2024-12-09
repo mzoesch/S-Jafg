@@ -8,6 +8,7 @@
 Jafg::WUserWidget::WUserWidget(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
     this->SetAnchor(EAnchor::Fill);
+    this->SetShouldTick(false);
     return;
 }
 
