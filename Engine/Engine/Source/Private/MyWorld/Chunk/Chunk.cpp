@@ -2,8 +2,6 @@
 
 #include "CoreAfx.h"
 #include "MyWorld/Chunk/Chunk.h"
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include "MyWorld/Generation/ChunkGenerator.h"
 #include "Engine/Engine.h"
 #include "MyWorld/MyWorldStatics.h"

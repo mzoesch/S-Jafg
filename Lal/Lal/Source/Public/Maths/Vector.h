@@ -78,6 +78,7 @@ struct TVector
 
     FORCEINLINE auto GetData()       noexcept ->       T* { return &this->X; }
     FORCEINLINE auto GetData() const noexcept -> const T* { return &this->X; }
+    FORCEINLINE auto constexpr GetDataByteSize() const noexcept -> LuBigSizeTy;
 
     FORCEINLINE auto operator[](const int32 InIndex)       ->       T&;
     FORCEINLINE auto operator[](const int32 InIndex) const -> const T&;
@@ -149,6 +150,13 @@ struct TVector
         return LSimpleString::SprintF("{:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z);
     }
 };
+
+template <typename T>
+constexpr LuBigSizeTy TVector<T>::GetDataByteSize() const noexcept
+{
+    static_assert(sizeof(TVector<T>) == sizeof(T) * 3, "TVector<T> is not tightly packed.");
+    return sizeof(T) * 3;
+}
 
 template <typename T>
 T& TVector<T>::operator[](const int32 InIndex)

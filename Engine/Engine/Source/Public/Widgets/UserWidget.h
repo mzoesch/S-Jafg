@@ -69,10 +69,4 @@ private:
     LPadding Padding;
 };
 
-template <typename TWidget>
-FORCEINLINE auto ConstructUserWidget(Private::LObjectContext* InContext) -> TWidget*
-{
-    return NewObject<TWidget>(InContext);
-}
-
 } /* ~Namespace Jafg */

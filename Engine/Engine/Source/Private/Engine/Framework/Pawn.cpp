@@ -2,12 +2,12 @@
 
 #include "CoreAfx.h"
 #include "Engine/Framework/Pawn.h"
+#include "Debug/DebugTraceLine.h"
 #include "User/Input/InputActionValue.h"
 
 void Jafg::APawn::DeclareNewPossessor(APersonaController* InNewController)
 {
     this->OwningController = InNewController;
-
 
 #if WITH_LOCAL_LAYER
     if (InNewController)
@@ -33,19 +33,6 @@ void Jafg::APawn::OnOngoingMovementInput(LInputActionValue& InValue)
 
 void Jafg::APawn::OnOngoingRotationInput(LInputActionValue& InValue)
 {
-    // if (this->bFirstMouseCallback)
-    // {
-    //     this->LastMouseX = InValue.Get<LVector2>().X;
-    //     this->LastMouseY = InValue.Get<LVector2>().Y;
-    //     this->bFirstMouseCallback = false;
-    // }
-    //
-    // const double XOffset = static_cast<double>(InValue.Get<LVector2>().X) - this->LastMouseX;
-    // const double YOffset = this->LastMouseY - static_cast<double>(InValue.Get<LVector2>().Y);
-    //
-    // this->LastMouseX = InValue.Get<LVector2>().X;
-    // this->LastMouseY = InValue.Get<LVector2>().Y;
-
     this->AddRotator(LRotator(
         InValue.Get<LVector2>().X * this->MouseSensitivity,
         InValue.Get<LVector2>().Y * this->MouseSensitivity,
@@ -64,7 +51,7 @@ void Jafg::APawn::OnOngoingRotationInput(LInputActionValue& InValue)
 
 void Jafg::APawn::OnOngoingVelocityChange(LInputActionValue& InValue)
 {
-    this->MovementSpeed += InValue.Get<float>();
+    this->MovementSpeed += InValue.Get<float>() * 3.0f;
 
     if (this->MovementSpeed < 0)
     {
@@ -82,14 +69,13 @@ void Jafg::APawn::OnOngoingPrimaryInput(LInputActionValue& InValue)
 {
     check( this->GetWorld() )
 
+    const LVector TraceStart = this->GetTranslation();
+    const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
+
+    this->GetWorld()->AddTemporalObject(LDebugTraceLine(20.0f, TraceStart, TraceEnd, { LColor::Red }));
+
     TdhArray<LHitResult> Hits;
-    if (this->GetWorld()->LineTraceByChannel(
-        Hits,
-        this->GetTranslation(),
-        this->GetTranslation() + this->GetRotator().ToVector() * 5.0f,
-        ECollisionChannel::Static,
-        LCollisionQueryParams()
-    ) == false)
+    if (this->GetWorld()->LineTraceByChannel(Hits, TraceStart, TraceEnd, ECollisionChannel::Static, LCollisionQueryParams()) == false)
     {
         LOG_WARNING(LogUserInput, "Hit nothing.")
         return;

@@ -13,6 +13,7 @@
 #include "User/LocalEgo.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/WorldSubsystem.h"
+#include "Debug/DebugTraceLine.h"
 
 Jafg::LEngine* Jafg::LWorld::GetEngine() const
 {
@@ -92,6 +93,28 @@ void Jafg::LWorld::Tick(const float DeltaTime)
 
         continue;
     }
+
+#if AS_CLIENT
+    for (LTemporalWorldObject* const& TemporalObject : this->TemporalObjects)
+    {
+        TemporalObject->ReduceLifeTime(DeltaTime);
+    }
+    this->TemporalObjects.RemoveAllByPredicate( [] (LTemporalWorldObject*& TemporalObject)
+    {
+        if (TemporalObject->IsAlive())
+        {
+            return false;
+        }
+
+        delete TemporalObject;
+        TemporalObject = nullptr;
+        return true;
+    });
+    for (const LTemporalWorldObject* const& TemporalObject : this->TemporalObjects)
+    {
+        TemporalObject->Draw(*this);
+    }
+#endif /* AS_CLIENT */
 
     return;
 }

@@ -4,6 +4,9 @@
 
 #include "Engine/ObjectContext.h"
 #include "Physics/TraceUtility.h"
+#if AS_CLIENT
+    #include "Debug/TemporalWorldObject.h"
+#endif /* AS_CLIENT */
 
 namespace Jafg
 {
@@ -122,7 +125,16 @@ public:
         const LCollisionQueryParams& Params
     ) const;
 
+#if AS_CLIENT
+    template <typename T>
+    void AddTemporalObject(T&& InTemporalObject);
+#endif /* AS_CLIENT */
+
 private:
+
+#if AS_CLIENT
+    TdhArray<LTemporalWorldObject*> TemporalObjects;
+#endif /* AS_CLIENT */
 
     TdhArray<LTickableObject*> TickableObjects;
     TdhArray<LTickableObject*> DeletedTickableObjects;
@@ -144,5 +156,15 @@ private:
      */
     float RealTimeWhenWorldWasLaunched = 0.0f;
 };
+
+#if AS_CLIENT
+template <typename T>
+void LWorld::AddTemporalObject(T&& InTemporalObject)
+{
+    T* TemporalObject = new T(std::forward<T>(InTemporalObject));
+    this->TemporalObjects.Add(TemporalObject);
+    return;
+}
+#endif /* AS_CLIENT */
 
 } /* ~Namespace Jafg */

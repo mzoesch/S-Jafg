@@ -58,6 +58,11 @@ void Jafg::LShader::SetMatrixUniform(const LSimpleString& Name, const LMatrixF& 
     glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.ToC()), 1, GL_FALSE, Value.GetData());
 }
 
+void Jafg::LShader::SetColorUniform(const LSimpleString& Name, const LColor& Value) const
+{
+    this->SetIntUniform(Name, *reinterpret_cast<const int32*>(&Value.Bits));
+}
+
 void Jafg::LShader::LoadShader(const LEnginePath& VertexPath, const LEnginePath& FragmentPath)
 {
     const LStringLegacy UncompiledVertex   = Finder::ReadFile(VertexPath);

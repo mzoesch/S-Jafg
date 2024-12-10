@@ -28,6 +28,7 @@ public:
     void SetUIntUniform(const LSimpleString& Name, const uint32 Value) const;
     void SetFloatUniform(const LSimpleString& Name, const float Value) const;
     void SetMatrixUniform(const LSimpleString& Name, const LMatrixF& Value) const;
+    void SetColorUniform(const LSimpleString& Name, const LColor& Value) const;
 
     FORCEINLINE auto GetId() const -> uint32 { return this->Id; }
 
@@ -48,5 +49,7 @@ template <>
 FORCEINLINE void LShader::SetUniform(const LSimpleString& Name, const float Value) const { this->SetFloatUniform(Name, Value); }
 template <>
 FORCEINLINE void LShader::SetUniform(const LSimpleString& Name, const LMatrixF& Value) const { this->SetMatrixUniform(Name, Value); }
+template <>
+FORCEINLINE void LShader::SetUniform(const LSimpleString& Name, const LColor& Value) const { this->SetColorUniform(Name, Value); }
 
 } /* ~Namespace Jafg. */
