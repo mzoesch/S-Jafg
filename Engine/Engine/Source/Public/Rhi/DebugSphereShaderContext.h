@@ -8,16 +8,18 @@
 namespace Jafg
 {
 
-struct LDebugTraceLineShaderContextDrawArgs final : public LGenericShaderContextDrawArgs
+struct LDebugTraceSphereShaderContextDrawArgs final : public LGenericShaderContextDrawArgs
 {
     float DegYFov = 0.0f;
     LMatrix ViewMatrix = LMatrix(Matrix::Identity);
-    LVector Start = { };
-    LVector End = { };
+    LVector Center = { };
+    float Radius = 0.0f;
+    int32 Slices = 20;
+    int32 Stacks = 20;
     LColor  Color = { };
 };
 
-class LDebugTraceLineShaderContext final : public LGenericShaderContext
+class LDebugTraceSphereShaderContext final : public LGenericShaderContext
 {
 public:
 

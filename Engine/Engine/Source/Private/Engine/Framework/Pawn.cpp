@@ -3,6 +3,7 @@
 #include "CoreAfx.h"
 #include "Engine/Framework/Pawn.h"
 #include "Debug/DebugTraceLine.h"
+#include "Debug/DebugTraceSphere.h"
 #include "User/Input/InputActionValue.h"
 
 void Jafg::APawn::DeclareNewPossessor(APersonaController* InNewController)
@@ -71,19 +72,23 @@ void Jafg::APawn::OnOngoingPrimaryInput(LInputActionValue& InValue)
 
     const LVector TraceStart = this->GetTranslation();
     const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
-
-    this->GetWorld()->AddTemporalObject(LDebugTraceLine(20.0f, TraceStart, TraceEnd, { LColor::Red }));
-
     TdhArray<LHitResult> Hits;
-    if (this->GetWorld()->LineTraceByChannel(Hits, TraceStart, TraceEnd, ECollisionChannel::Static, LCollisionQueryParams()) == false)
-    {
-        LOG_WARNING(LogUserInput, "Hit nothing.")
-        return;
-    }
+    const bool bHit = this->GetWorld()->LineTraceByChannel(Hits, TraceStart, TraceEnd, ECollisionChannel::Static, LCollisionQueryParams());
+
+    this->GetWorld()->AddTemporalObject(LDebugTraceLine(20.0f, TraceStart, TraceEnd, { bHit ? LColor::Green : LColor::Red }));
 
     for (const LHitResult& Hit : Hits)
     {
-        LOG_WARNING(LogUserInput, "Hit at {} -> {}.", Hit.GlobalWorldLocation.ToString(), Hit.Actor->GetTranslation().ToString())
+        this->GetWorld()->AddTemporalObject(LDebugTraceSphere(
+            20.0f,
+            Hit.GlobalWorldLocation,
+            0.1f,
+            {
+                .Segments = 15,
+                .Rings    = 20,
+                .Color    = LColor::DarkRed
+            }
+        ));
     }
 
     return;

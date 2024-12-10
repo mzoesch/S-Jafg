@@ -2,9 +2,9 @@
 
 #include "CoreAfx.h"
 #include "Debug/DebugTraceLine.h"
+#include "Rhi/DebugLineShaderContext.h"
 #include "Engine/World.h"
 #include "Platform/Surface.h"
-#include "Rhi/DebugLineShaderContext.h"
 #include "User/LocalEgo.h"
 #include "Engine/Engine.h"
 #include "Engine/Framework/Eye.h"
@@ -29,7 +29,7 @@ void Jafg::LDebugTraceLine::Draw(const LWorld& InContext) const
 {
     if (::GetLineShaderContext()->IsMeaningful() == false)
     {
-        LOG_ERROR(LogTemporal, "Making trace line context.")
+        LOG_VERBOSE(LogRhi, "Creating DebugTraceLineShaderContext.")
         ::GetLineShaderContext()->Make();
     }
 

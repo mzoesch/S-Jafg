@@ -13,15 +13,11 @@ void Jafg::LDebugTraceLineShaderContext::Make()
     this->Program = LShader(LEnginePath(EEnginePaths::Shaders, "DebugTrace"));
     this->Program.Use();
 
-    this->Vertices = new float[6];
-    ::memset(this->Vertices, 0, sizeof(float) * 6);
-
     glGenVertexArrays(1, &this->Vao);
     glBindVertexArray(this->Vao);
 
     glGenBuffers(1, &this->Vbo);
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6, this->Vertices, GL_DYNAMIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
 
@@ -37,14 +33,14 @@ void Jafg::LDebugTraceLineShaderContext::Draw(const LViewport& Context, LGeneric
 {
     GENERIC_SHADER_DRAW_BODY(LDebugTraceLineShaderContextDrawArgs)
 
-    checkSlow( this->Vertices )
-    ::memcpy(this->Vertices, Args.Start.GetData(), Args.Start.GetDataByteSize());
-    ::memcpy(this->Vertices + 3, Args.End.GetData(), Args.End.GetDataByteSize());
+    float Vertices[6] = { };
+    ::memcpy(Vertices, Args.Start.GetData(), Args.Start.GetDataByteSize());
+    ::memcpy(Vertices + 3, Args.End.GetData(), Args.End.GetDataByteSize());
 
     this->Program.Use();
     glBindVertexArray(this->Vao);
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6, this->Vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6, Vertices, GL_DYNAMIC_DRAW);
 
     const TMatrix Projection = Maths::MakePerspectiveProjectionMatrix(
         Maths::ToRadians(Args.DegYFov),
@@ -71,7 +67,6 @@ void Jafg::LDebugTraceLineShaderContext::OnFree()
 {
     LGenericShaderContext::OnFree();
 
-    delete[] this->Vertices;
     glDeleteBuffers(1, &this->Vbo);
     glDeleteVertexArrays(1, &this->Vao);
     this->Program.Free();
