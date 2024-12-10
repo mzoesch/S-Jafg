@@ -49,6 +49,9 @@ namespace Private
 /**
  * The base class for all objects that share a lifetime among its owner and that are detected automatically
  * by the jafg build tool to allow for dynamic casting, network replication, etc.
+ * This class defines the bare minimum for an object to be a jafg object. If you want to make use of the utility
+ * functions that are provided by the jafg framework, use JObject.
+ * Generally speaking, inheriting from this class directly is not recommended.
  */
 PRAGMA_FOR_JAFG_BUILD_TOOL("NextIsObjectBaseClass")
 DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
@@ -92,6 +95,9 @@ public:
         this->bHasBegunLife = true;
 #endif /* DO_DOUBLE_CHECK_LIFETIMES */
     }
+#if DO_DOUBLE_CHECK_LIFETIMES
+    FORCEINLINE bool HasBegunLife() const { return this->bHasBegunLife; }
+#endif /* DO_DOUBLE_CHECK_LIFETIMES */
 
     /**
      * Marks this object instance as garbage, and it will be killed at the end of this or the next tick depending

@@ -35,7 +35,7 @@ void Jafg::JChunkGeneratorSubsystem::FixedTick(const float RunnableDeltaTime)
 
         if (this->ShouldTickRunnable() == false)
         {
-            LOG_VERBOSE(LogRunnable, "Interruped.")
+            LOG_VERBOSE(LogRunnable, "Interrupted.")
             break;
         }
     }
@@ -58,7 +58,7 @@ void Jafg::JChunkGeneratorSubsystem::TryToActivateVerticalChunk(const LChunkKey2
             continue;
         }
 
-        check( Target->ChunkKey == LChunkKey(ChunkKey, Z) )
+        check( Target->GetChunkKey() == LChunkKey(ChunkKey, Z) )
 
         if (Target->GetChunkState() == EChunkState::Active || Target->GetHuntedChunkState() == EChunkState::Active)
         {
@@ -78,7 +78,7 @@ bool Jafg::JChunkGeneratorSubsystem::TryToBringChunkToState(AChunk* Target, cons
     /* We can only generate chunks between those states. The other are special. */
     check( EChunkState::Freed < TargetState && TargetState < EChunkState::Special )
 
-    const LChunkKey ChunkKey = Target->ChunkKey;
+    const LChunkKey ChunkKey = Target->GetChunkKey();
 
     if (Visited->contains(ChunkKey))
     {
@@ -148,7 +148,7 @@ bool Jafg::JChunkGeneratorSubsystem::TryToBringChunkToState(AChunk* Target, cons
         }
         else
         {
-            LOG_WARNING(LogRunnable, "Chunk {} already active.", Target->ChunkKey.ToString())
+            LOG_WARNING(LogRunnable, "Chunk {} already active.", Target->GetChunkKey().ToString())
         }
 
         return;

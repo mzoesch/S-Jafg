@@ -20,10 +20,10 @@ Jafg::LChunkRendererComponent::LChunkRendererComponent(AChunk& Owner)
 
 void Jafg::LChunkRendererComponent::Draw(const LViewport& Context)
 {
-    checkSlow( this->Owner->SharedArgs )
+    checkSlow( this->Owner->GetSharedArgs() )
 
     const LChunkShaderContext* ShaderContext =
-        this->Owner->SharedArgs->ChunkGenerationSubsystem->GetChunkShaderContext();
+        this->Owner->GetSharedArgs()->ChunkGenerationSubsystem->GetChunkShaderContext();
 
     const LEye* Eye = GEngine->GetCheckedLocalEgo()->GetPossessed()->GetPossessed()->GetEye();
 
@@ -137,6 +137,19 @@ void Jafg::AChunk::SetChunkPersistency(const EChunkPersistency::Type NewPersiste
     return;
 }
 
+void Jafg::AChunk::SetSharedArgs(LSharedChunkArgs* NewSharedArgs)
+{
+    checkSlow( NewSharedArgs )
+    check( this->IsSharedArgsValid() == false )
+#if DO_DOUBLE_CHECK_LIFETIMES
+    check( this->HasBegunLife() == false )
+#endif /* DO_DOUBLE_CHECK_LIFETIMES */
+
+    this->SharedArgs = NewSharedArgs;
+
+    return;
+}
+
 bool Jafg::AChunk::IsStateChangeValid(const EChunkState::Type NewChunkState) const
 {
     switch (NewChunkState)
@@ -234,6 +247,25 @@ void Jafg::AChunk::OnActive()
     checkSlow( this->Mesher )
 
     this->Mesher->RegenerateProceduralMesh();
+
+    return;
+}
+
+void Jafg::AChunk::ModifySingleLocalVoxel(const LVoxelKey InKey, const voxel_t NewVoxel)
+{
+    check( this->HasRawVoxelData() )
+    check( InKey.IsLocal() )
+
+    if (this->GetRawVoxelData(InKey) == NewVoxel)
+    {
+        LOG_WARNING(LogChunkManipulation, "Attempted to modify voxel to the same value [{}]", NewVoxel)
+        return;
+    }
+
+    this->OverrideRawVoxelData(InKey, NewVoxel);
+
+    check( this->IsMesherValid() )
+    this->GetMesher()->RegenerateProceduralMesh(this->SharedArgs->VoxelSubsystem, this->SharedArgs->MaterialSubsystem);
 
     return;
 }

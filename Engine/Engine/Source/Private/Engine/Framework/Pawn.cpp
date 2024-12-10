@@ -4,6 +4,7 @@
 #include "Engine/Framework/Pawn.h"
 #include "Debug/DebugTraceLine.h"
 #include "Debug/DebugTraceSphere.h"
+#include "MyWorld/Chunk/Chunk.h"
 #include "User/Input/InputActionValue.h"
 
 void Jafg::APawn::DeclareNewPossessor(APersonaController* InNewController)
@@ -73,7 +74,11 @@ void Jafg::APawn::OnOngoingPrimaryInput(LInputActionValue& InValue)
     const LVector TraceStart = this->GetTranslation();
     const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
     TdhArray<LHitResult> Hits;
-    const bool bHit = this->GetWorld()->LineTraceByChannel(Hits, TraceStart, TraceEnd, ECollisionChannel::Static, LCollisionQueryParams());
+    const bool bHit = this->GetWorld()->LineTraceByChannel(
+        Hits, TraceStart, TraceEnd,
+        ECollisionChannel::Static, LCollisionQueryParams({.bSingleHit = true})
+    );
+    check( Hits.GetSize() <= 1 )
 
     this->GetWorld()->AddTemporalObject(LDebugTraceLine(20.0f, TraceStart, TraceEnd, { bHit ? LColor::Green : LColor::Red }));
 
@@ -89,6 +94,14 @@ void Jafg::APawn::OnOngoingPrimaryInput(LInputActionValue& InValue)
                 .Color    = LColor::DarkRed
             }
         ));
+
+        if (AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
+        {
+            const LVoxelKey Key = LVoxelKey::FromWorldLocation(Hit.GlobalWorldLocation);
+            HitChunk->ModifySingleLocalVoxel(Key, ECompileTimeVoxels::Air);
+        }
+
+        continue;
     }
 
     return;

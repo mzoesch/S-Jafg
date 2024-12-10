@@ -20,7 +20,7 @@ bool Jafg::LChunkPhysicsComponent::Overlaps(const LVector& Point) const
         return false;
     }
 
-    return this->Owner->GetRawVoxelData(LVoxelKey::CreateFromWorldLocation(Point)) > ECompileTimeVoxels::Air;
+    return this->Owner->GetRawVoxelData(LVoxelKey::FromWorldLocation(Point)) > ECompileTimeVoxels::Air;
 }
 
 bool Jafg::LChunkPhysicsComponent::Sweep(const LVector& Start, const LVector& End, LHitResult& OutHit) const
@@ -28,12 +28,6 @@ bool Jafg::LChunkPhysicsComponent::Sweep(const LVector& Start, const LVector& En
     LVector Cursor   = Start;
     float   Distance = (End - Start).Magnitude();
     const LVector Normal = (End - Start).GetUnsafeNormalized();
-
-    if (Owner->ChunkKey == LChunkKey(1, 0 ,1))
-    {
-        LOG_WARNING(LogTemporal, "{} :: {} {} ({})", Start.ToString(), Owner->GetTranslation().ToString(),
-            Owner->ChunkKey.ToString(), Normal.ToString())
-    }
 
     while (Distance > 0)
     {

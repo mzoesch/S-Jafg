@@ -16,11 +16,9 @@ void Jafg::LChunkMesher::ClearProceduralMesh()
 {
     this->Vertices.Empty();
     this->Indices.Empty();
-
-    return;
 }
 
-void Jafg::LChunkMesher::ApplyProceduralMesh() const
+void Jafg::LChunkMesher::ApplyProceduralMesh()
 {
     checkSlow( this->Owner->IsRendererComponentValid() )
 

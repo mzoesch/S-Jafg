@@ -56,7 +56,7 @@ struct LVoxelKey final
     /**
      * From world location. Note that this function will normalize the key to the local space.
      */
-    static LVoxelKey CreateFromWorldLocation(const LVector& InVector);
+    static LVoxelKey FromWorldLocation(const LVector& InVector);
 
     FORCEINLINE LVoxelKey& operator =(const LVoxelKey&  InKey) noexcept;
     FORCEINLINE LVoxelKey& operator =(      LVoxelKey&& InKey) noexcept;
@@ -83,7 +83,7 @@ struct LVoxelKey final
     NODISCARD FORCEINLINE auto ToString() const -> LSimpleString;
 };
 
-inline LVoxelKey LVoxelKey::CreateFromWorldLocation(const LVector& InVector)
+inline LVoxelKey LVoxelKey::FromWorldLocation(const LVector& InVector)
 {
     LVoxelKey Out;
 

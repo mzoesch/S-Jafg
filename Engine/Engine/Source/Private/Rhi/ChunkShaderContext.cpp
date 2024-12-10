@@ -129,36 +129,56 @@ void Jafg::LChunkShaderContext::Draw(const LViewport& Context, LGenericShaderCon
 
 Jafg::LChunkShaderInstance::~LChunkShaderInstance()
 {
-    glDeleteBuffers(1, &this->Vbo);
-    glDeleteBuffers(1, &this->Ebo);
-    glDeleteVertexArrays(1, &this->Vao);
+    if (this->bLoaded)
+    {
+        glDeleteBuffers(1, &this->Vbo);
+        glDeleteBuffers(1, &this->Ebo);
+        glDeleteVertexArrays(1, &this->Vao);
+    }
 
     return;
 }
 
 void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TdhArray<ChunkBoxVertex>& Vertices, const TdhArray<uint32>& Indices)
 {
-    glGenVertexArrays(1, &this->Vao);
+    if (this->bLoaded == false)
+    {
+        glGenVertexArrays(1, &this->Vao);
+        glBindVertexArray(this->Vao);
+        glGenBuffers(1, &this->Vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
+        glGenBuffers(1, &this->Ebo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->Ebo);
+
+        glVertexAttribPointer(0, 3, GL_BYTE, GL_FALSE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(::Jafg::ChunkBoxVertex, LocationX)));
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 2, GL_BYTE, GL_FALSE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(::Jafg::ChunkBoxVertex, TextureGridX)));
+        glEnableVertexAttribArray(1);
+        glVertexAttribIPointer(2, 1, GL_BYTE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(::Jafg::ChunkBoxVertex, Normal)));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(3, 2, GL_BYTE, GL_FALSE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(::Jafg::ChunkBoxVertex, BlendTextureGridX)));
+        glEnableVertexAttribArray(3);
+
+        this->bLoaded = true;
+    }
+
     glBindVertexArray(this->Vao);
 
-    glGenBuffers(1, &this->Vbo);
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
-    glBufferData(GL_ARRAY_BUFFER,
-        Vertices.GetSize() * static_cast<GLsizeiptr>(sizeof(::Jafg::ChunkBoxVertex)), Vertices.GetData(), GL_STATIC_DRAW);
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        Vertices.GetSize() * static_cast<GLsizeiptr>(sizeof(::Jafg::ChunkBoxVertex)),
+        Vertices.GetData(),
+        GL_STATIC_DRAW
+    );
 
-    glVertexAttribPointer(0, 3, GL_BYTE, GL_FALSE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(ChunkBoxVertex, LocationX)));
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_BYTE, GL_FALSE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(ChunkBoxVertex, TextureGridX)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribIPointer(2, 1, GL_BYTE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(ChunkBoxVertex, Normal)));
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(3, 2, GL_BYTE, GL_FALSE, sizeof(ChunkBoxVertex), reinterpret_cast<void*>(offsetof(ChunkBoxVertex, BlendTextureGridX)));
-    glEnableVertexAttribArray(3);
-
-    glGenBuffers(1, &this->Ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->Ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-        Indices.GetSize() * static_cast<GLsizeiptr>(sizeof(uint32)), Indices.GetData(), GL_STATIC_DRAW);
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,
+        Indices.GetSize() * static_cast<GLsizeiptr>(sizeof(uint32)),
+        Indices.GetData(),
+        GL_STATIC_DRAW
+    );
 
     return;
 }

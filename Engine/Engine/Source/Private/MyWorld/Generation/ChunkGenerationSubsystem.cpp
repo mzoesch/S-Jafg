@@ -88,7 +88,7 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
 Jafg::AChunk* Jafg::JChunkGenerationSubsystem::SpawnChunk(const LChunkKey& InChunkKey) const
 {
     AChunk* Chunk = SpawnDeferredActor<AChunk>(this->GetWorld());
-    Chunk->SharedArgs = this->SharedChunkArgs;
+    Chunk->SetSharedArgs(this->SharedChunkArgs);
     MakeDeferredActorFinal(Chunk);
     Chunk->OnAlloc(InChunkKey);
     return Chunk;

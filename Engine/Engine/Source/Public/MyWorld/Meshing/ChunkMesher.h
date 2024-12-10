@@ -22,7 +22,7 @@ public:
 
             void ClearProceduralMesh();
     virtual void GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubsystem, const JMaterialSubsystem* MaterialSubsystem) = 0;
-            void ApplyProceduralMesh() const;
+            void ApplyProceduralMesh();
 
     void RegenerateProceduralMesh();
     FORCEINLINE void RegenerateProceduralMesh(const JVoxelSubsystem* VoxelSubsystem, const JMaterialSubsystem* MaterialSubsystem)

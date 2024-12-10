@@ -68,6 +68,7 @@ private:
     uint32 Vao = 0;
     uint32 Vbo = 0;
     uint32 Ebo = 0;
+    bool   bLoaded = false;
 };
 
 } /* ~Namespace Jafg */

@@ -198,6 +198,11 @@ bool Jafg::LWorld::LineTraceByChannel(
         {
             OutHits.Add(Dummy);
             Dummy.Reset();
+
+            if (Params.bSingleHit)
+            {
+                break;
+            }
         }
 
         continue;
