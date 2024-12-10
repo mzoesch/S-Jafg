@@ -19,6 +19,8 @@ public:
 
     bool IsInTheoreticalMaxBounds(const LVector& Point) const;
 
+    LVector GetNormalAtLocation(const LVector& InLocation, const LVector& InTraceNormal) const;
+
     // LPhysicsComponent implementation
     bool Overlaps(const LVector& Point) const override;
     bool Overlaps(const LVector& Point, const float Radius) const override { return false; } // Currently not used. Implement this if needed.
@@ -30,7 +32,7 @@ private:
 
     AChunk* Owner = nullptr;
     /** The step interval used for walking along the ray. */
-    static constexpr float TraceStep { 0.01f };
+    static constexpr float TraceStep { 0.001f };
 };
 
 } /* ~Namespace Jafg */

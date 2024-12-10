@@ -15,6 +15,26 @@ enum Type : uint8
 
 } /* ~Namespace Matrix */
 
+namespace EVectorAxis
+{
+
+enum Type : uint8
+{
+    X = 0x00 << 0,
+    Y = 0x01 << 1,
+    Z = 0x01 << 2,
+    W = 0x01 << 3,
+    V = 0x01 << 4,
+    U = 0x01 << 5,
+    T = 0x01 << 6,
+    S = 0x01 << 7,
+};
+
+} /* ~Namespace EVectorAxis */
+ENUM_CLASS_FLAGS(EVectorAxis::Type)
+LSimpleString LexToString(const EVectorAxis::Type InAxis);
+
+
 /*----------------------------------------------------------------------------
     Type Forwards.
 ----------------------------------------------------------------------------*/

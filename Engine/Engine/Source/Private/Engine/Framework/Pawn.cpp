@@ -73,6 +73,7 @@ void Jafg::APawn::OnOngoingPrimaryInput(LInputActionValue& InValue)
 
     const LVector TraceStart = this->GetTranslation();
     const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
+
     TdhArray<LHitResult> Hits;
     const bool bHit = this->GetWorld()->LineTraceByChannel(
         Hits, TraceStart, TraceEnd,
@@ -80,25 +81,40 @@ void Jafg::APawn::OnOngoingPrimaryInput(LInputActionValue& InValue)
     );
     check( Hits.GetSize() <= 1 )
 
-    this->GetWorld()->AddTemporalObject(LDebugTraceLine(20.0f, TraceStart, TraceEnd, { bHit ? LColor::Green : LColor::Red }));
-
     for (const LHitResult& Hit : Hits)
     {
-        this->GetWorld()->AddTemporalObject(LDebugTraceSphere(
-            20.0f,
-            Hit.GlobalWorldLocation,
-            0.1f,
-            {
-                .Segments = 15,
-                .Rings    = 20,
-                .Color    = LColor::DarkRed
-            }
-        ));
-
         if (AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
         {
             const LVoxelKey Key = LVoxelKey::FromWorldLocation(Hit.GlobalWorldLocation);
             HitChunk->ModifySingleLocalVoxel(Key, ECompileTimeVoxels::Air);
+        }
+
+        continue;
+    }
+
+    return;
+}
+
+void Jafg::APawn::OnOngoingSecondaryInput(LInputActionValue& InValue)
+{
+    check( this->GetWorld() )
+
+    const LVector TraceStart = this->GetTranslation();
+    const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
+
+    TdhArray<LHitResult> Hits;
+    const bool bHit = this->GetWorld()->LineTraceByChannel(
+        Hits, TraceStart, TraceEnd,
+        ECollisionChannel::Static, LCollisionQueryParams({.bSingleHit = true})
+    );
+    check( Hits.GetSize() <= 1 )
+
+    for (const LHitResult& Hit : Hits)
+    {
+        if (AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
+        {
+            const LVoxelKey Key = HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal * 0.5f);
+            HitChunk->ModifySingleVoxelByNonZeroOrigin(Key, ECompileTimeVoxels::Num);
         }
 
         continue;

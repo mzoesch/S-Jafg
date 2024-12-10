@@ -137,6 +137,15 @@ void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
         );
     }
 
+    {
+        const LInputAction Action = LInputAction(EInputActionCategory::Boolean);
+        CurMapping   = ContextInMyWorld->MapAction(Action);
+        CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::RightMouseButton);
+        ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Triggered,
+            [this, InNew] (LInputActionValue& InValue) { InNew->OnOngoingSecondaryInput(InValue); }
+        );
+    }
+
     return;
 }
 

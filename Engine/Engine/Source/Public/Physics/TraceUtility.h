@@ -26,6 +26,7 @@ struct LHitResult final
 
     AActor* Actor               = nullptr;
     LVector GlobalWorldLocation = LVector::Zero();
+    LVector SurfaceNormal       = LVector::Zero();
 };
 
 inline void LHitResult::Initialize()
@@ -36,6 +37,7 @@ inline void LHitResult::Reset()
 {
     this->Actor = nullptr;
     this->GlobalWorldLocation = LVector::Zero();
+    this->SurfaceNormal       = LVector::Zero();
 
     return;
 }

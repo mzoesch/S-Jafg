@@ -57,6 +57,7 @@ struct LVoxelKey final
      * From world location. Note that this function will normalize the key to the local space.
      */
     static LVoxelKey FromWorldLocation(const LVector& InVector);
+    static LVoxelKey FromWorldLocationPreserveLocalSpace(const LVector& InVector);
 
     FORCEINLINE LVoxelKey& operator =(const LVoxelKey&  InKey) noexcept;
     FORCEINLINE LVoxelKey& operator =(      LVoxelKey&& InKey) noexcept;
@@ -112,6 +113,40 @@ inline LVoxelKey LVoxelKey::FromWorldLocation(const LVector& InVector)
     else
     {
         Out.Z = static_cast<LVoxelKeyDomainTy>(static_cast<int64>(Maths::Floor(InVector.Z)) % MwStatics::ChunkSize);
+    }
+
+    return Out;
+}
+
+inline LVoxelKey LVoxelKey::FromWorldLocationPreserveLocalSpace(const LVector& InVector)
+{
+    LVoxelKey Out;
+
+    if (InVector.X < 0)
+    {
+        Out.X = static_cast<LVoxelKeyDomainTy>(Maths::Ceil(InVector.X));
+    }
+    else
+    {
+        Out.X = static_cast<LVoxelKeyDomainTy>(Maths::Floor(InVector.X));
+    }
+
+    if (InVector.Y < 0)
+    {
+        Out.Y = static_cast<LVoxelKeyDomainTy>(Maths::Ceil(InVector.Y));
+    }
+    else
+    {
+        Out.Y = static_cast<LVoxelKeyDomainTy>(Maths::Floor(InVector.Y));
+    }
+
+    if (InVector.Z < 0)
+    {
+        Out.Z = static_cast<LVoxelKeyDomainTy>(Maths::Ceil(InVector.Z));
+    }
+    else
+    {
+        Out.Z = static_cast<LVoxelKeyDomainTy>(Maths::Floor(InVector.Z));
     }
 
     return Out;

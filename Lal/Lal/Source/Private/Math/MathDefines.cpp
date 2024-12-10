@@ -9,6 +9,22 @@
 namespace Jafg
 {
 
+LSimpleString LexToString(const EVectorAxis::Type InAxis)
+{
+    switch (InAxis)
+    {
+    case EVectorAxis::X: { return "X"; }
+    case EVectorAxis::Y: { return "Y"; }
+    case EVectorAxis::Z: { return "Z"; }
+    case EVectorAxis::W: { return "W"; }
+    case EVectorAxis::V: { return "V"; }
+    case EVectorAxis::U: { return "U"; }
+    case EVectorAxis::T: { return "T"; }
+    case EVectorAxis::S: { return "S"; }
+    default: { return "Combination"; } /* <-- Also resolve that when needed... */
+    }
+}
+
 template<> const LVectorF LVectorF::ZeroVector                      { LVectorF( 0.0f,  0.0f,  0.0f) };
 template<> const LVectorF LVectorF::OneVector                       { LVectorF( 1.0f,  1.0f,  1.0f) };
 template<> const LVectorF LVectorF::UpVector                        { LVectorF( 0.0f,  0.0f,  1.0f) };

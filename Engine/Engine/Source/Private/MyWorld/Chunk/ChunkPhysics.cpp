@@ -13,6 +13,49 @@ bool Jafg::LChunkPhysicsComponent::IsInTheoreticalMaxBounds(const LVector& Point
         && this->Owner->GetTranslation().Z <= Point.Z && Point.Z <= this->Owner->GetTranslation().Z + MwStatics::ChunkSize;
 }
 
+Jafg::LVector Jafg::LChunkPhysicsComponent::GetNormalAtLocation(const LVector& InLocation, const LVector& InTraceNormal) const
+{
+    LVector Out = LVector::Zero();
+
+    LVector Dummy = InLocation.GetModF();
+
+    if (InTraceNormal.X < 0 && Maths::IsNearlyEqual(Dummy.X, 1.0f, LChunkPhysicsComponent::TraceStep))
+    {
+        Dummy.X = Maths::Floor(Dummy.X);
+    }
+    if (InTraceNormal.Y < 0 && Maths::IsNearlyEqual(Dummy.Y, 1.0f, LChunkPhysicsComponent::TraceStep))
+    {
+        Dummy.Y = Maths::Floor(Dummy.Y);
+    }
+    if (InTraceNormal.Z < 0 && Maths::IsNearlyEqual(Dummy.Z, 1.0f, LChunkPhysicsComponent::TraceStep))
+    {
+        Dummy.Z = Maths::Floor(Dummy.Z);
+    }
+
+    const EVectorAxis::Type InferiorAxis = Dummy.GetMostInferiorAxis();
+
+    if (InferiorAxis == EVectorAxis::X)
+    {
+        Out.X = InTraceNormal.X < 0 ? 1.0f : -1.0f;
+    }
+    else if (InferiorAxis == EVectorAxis::Y)
+    {
+        Out.Y = InTraceNormal.Y < 0 ? 1.0f : -1.0f;
+    }
+    else if (InferiorAxis == EVectorAxis::Z)
+    {
+        Out.Z = InTraceNormal.Z < 0 ? 1.0f : -1.0f;
+    }
+    else
+    {
+        panic( "Invalid most inferior axis." )
+    }
+
+    check( Out.IsNormalized() )
+
+    return Out;
+}
+
 bool Jafg::LChunkPhysicsComponent::Overlaps(const LVector& Point) const
 {
     if (this->IsInTheoreticalMaxBounds(Point) == false)
@@ -35,6 +78,7 @@ bool Jafg::LChunkPhysicsComponent::Sweep(const LVector& Start, const LVector& En
         {
             OutHit.Actor               = this->Owner;
             OutHit.GlobalWorldLocation = Cursor;
+            OutHit.SurfaceNormal       = this->GetNormalAtLocation(Cursor, Normal);
             return true;
         }
 

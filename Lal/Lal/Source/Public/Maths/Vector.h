@@ -145,9 +145,19 @@ struct TVector
     FORCEINLINE auto Cross(const TVector<T>& InVec) const -> TVector<T>;
     FORCEINLINE auto Dot(const TVector<T>& InVec) const -> T;
 
+    /** Modf the integral part of the vector away. */
+    FORCEINLINE void ModF();
+    FORCEINLINE auto GetModF() const -> TVector<T>;
+    FORCEINLINE EVectorAxis::Type GetDominantAxis() const;
+    FORCEINLINE EVectorAxis::Type GetMostInferiorAxis() const;
+
     LSimpleString ToString() const
     {
         return LSimpleString::SprintF("{:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z);
+    }
+    LSimpleString ToHighPrecisionString() const
+    {
+        return LSimpleString::SprintF("{:.9f} {:.9f} {:.9f}", this->X, this->Y, this->Z);
     }
 };
 
@@ -486,6 +496,71 @@ template <typename T>
 T TVector<T>::Dot(const TVector<T>& InVec) const
 {
     return this->X * InVec.X + this->Y * InVec.Y + this->Z * InVec.Z;
+}
+
+template <typename T>
+void TVector<T>::ModF()
+{
+    this->X = Maths::ModF(this->X);
+    this->Y = Maths::ModF(this->Y);
+    this->Z = Maths::ModF(this->Z);
+    return;
+}
+
+template <typename T>
+TVector<T> TVector<T>::GetModF() const
+{
+    return TVector<T>(Maths::ModF(this->X), Maths::ModF(this->Y), Maths::ModF(this->Z));
+}
+
+template <typename T>
+EVectorAxis::Type TVector<T>::GetDominantAxis() const
+{
+    const T AbsX = Maths::Absolute(this->X);
+    const T AbsY = Maths::Absolute(this->Y);
+    const T AbsZ = Maths::Absolute(this->Z);
+
+    if (AbsX > AbsY)
+    {
+        if (AbsX > AbsZ)
+        {
+            return EVectorAxis::Type::X;
+        }
+
+        return EVectorAxis::Type::Z;
+    }
+
+    if (AbsY > AbsZ)
+    {
+        return EVectorAxis::Type::Y;
+    }
+
+    return EVectorAxis::Type::Z;
+}
+
+template <typename T>
+EVectorAxis::Type TVector<T>::GetMostInferiorAxis() const
+{
+    const T AbsX = Maths::Absolute(this->X);
+    const T AbsY = Maths::Absolute(this->Y);
+    const T AbsZ = Maths::Absolute(this->Z);
+
+    if (AbsX < AbsY)
+    {
+        if (AbsX < AbsZ)
+        {
+            return EVectorAxis::Type::X;
+        }
+
+        return EVectorAxis::Type::Z;
+    }
+
+    if (AbsY < AbsZ)
+    {
+        return EVectorAxis::Type::Y;
+    }
+
+    return EVectorAxis::Type::Z;
 }
 
 } /* ~Namespace Jafg */

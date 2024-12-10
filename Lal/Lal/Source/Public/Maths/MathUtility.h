@@ -93,6 +93,11 @@ NODISCARD FORCEINLINE bool IsNearlyEqual(const double A, const double B, const d
 NODISCARD FORCEINLINE float  Fmod(const float Numerator, const float Denominator);
 NODISCARD FORCEINLINE double Fmod(const double Numerator, const double Denominator);
 MIX_FLOATING_POINT_ARGS_TWO_PARAMS(Fmod)
+/** https://en.cppreference.com/w/cpp/numeric/math/modf */
+NODISCARD FORCEINLINE float  ModF(const float Numerator);
+          FORCEINLINE float  ModF(const float Numerator, float* OutIntegralPart);
+NODISCARD FORCEINLINE double ModF(const double Numerator);
+          FORCEINLINE double ModF(const double Numerator, double* OutIntegralPart);
 
 template <typename T> NODISCARD constexpr FORCEINLINE auto IsPowerOfTwo(const T Value) -> bool;
 template <typename T> NODISCARD constexpr FORCEINLINE auto Sqrt(const T Value) -> T;
@@ -280,6 +285,28 @@ double Fmod(const double Numerator, const double Denominator)
 #endif /* DO_CHECKS */
 
     return ::fmod(Numerator, Denominator);
+}
+
+float ModF(const float Numerator)
+{
+    float Dummy = 0.0;
+    return ::modff(Numerator, &Dummy);
+}
+
+float ModF(const float Numerator, float* OutIntegralPart)
+{
+    return ::modff(Numerator, OutIntegralPart);
+}
+
+double ModF(const double Numerator)
+{
+    double Dummy = 0.0;
+    return ::modf(Numerator, &Dummy);
+}
+
+double ModF(const double Numerator, double* OutIntegralPart)
+{
+    return ::modf(Numerator, OutIntegralPart);
 }
 
 template <typename T>

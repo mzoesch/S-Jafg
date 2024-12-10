@@ -38,6 +38,7 @@ public:
     void OnOngoingRotationInput(LInputActionValue& InValue);
     void OnOngoingVelocityChange(LInputActionValue& InValue);
     void OnOngoingPrimaryInput(LInputActionValue& InValue);
+    void OnOngoingSecondaryInput(LInputActionValue& InValue);
 
     bool TraceFromEyeByChannel(
         TdhArray<LHitResult>& OutHits,

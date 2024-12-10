@@ -137,19 +137,6 @@ void Jafg::AChunk::SetChunkPersistency(const EChunkPersistency::Type NewPersiste
     return;
 }
 
-void Jafg::AChunk::SetSharedArgs(LSharedChunkArgs* NewSharedArgs)
-{
-    checkSlow( NewSharedArgs )
-    check( this->IsSharedArgsValid() == false )
-#if DO_DOUBLE_CHECK_LIFETIMES
-    check( this->HasBegunLife() == false )
-#endif /* DO_DOUBLE_CHECK_LIFETIMES */
-
-    this->SharedArgs = NewSharedArgs;
-
-    return;
-}
-
 bool Jafg::AChunk::IsStateChangeValid(const EChunkState::Type NewChunkState) const
 {
     switch (NewChunkState)
@@ -267,5 +254,12 @@ void Jafg::AChunk::ModifySingleLocalVoxel(const LVoxelKey InKey, const voxel_t N
     check( this->IsMesherValid() )
     this->GetMesher()->RegenerateProceduralMesh(this->SharedArgs->VoxelSubsystem, this->SharedArgs->MaterialSubsystem);
 
+    return;
+}
+
+void Jafg::AChunk::ModifySingleVoxelByNonZeroOrigin(LVoxelKey InKey, const voxel_t NewVoxel)
+{
+    AChunk* Target = this->GetNeighboringChunk(&InKey);
+    Target->ModifySingleLocalVoxel(InKey, NewVoxel);
     return;
 }

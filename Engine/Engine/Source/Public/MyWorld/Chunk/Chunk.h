@@ -116,6 +116,11 @@ public:
     FORCEINLINE auto GetMesher() -> LChunkMesher* { return this->Mesher; }
     FORCEINLINE auto GetMesher() const -> const LChunkMesher* { return this->Mesher; }
 
+    /**
+     * Create a relative voxel key from the world location of this chunk.
+     */
+    FORCEINLINE auto CreateRelativeVoxelKey(const LVector& InWorldLocation) const -> LVoxelKey;
+
 private:
 
     /**
@@ -178,6 +183,7 @@ public:
      * Modify a single voxel in the local voxel space with all side effects.
      */
     void ModifySingleLocalVoxel(const LVoxelKey InKey, const voxel_t NewVoxel);
+    void ModifySingleVoxelByNonZeroOrigin(const LVoxelKey InKey, const voxel_t NewVoxel);
 
 public:
 
@@ -199,6 +205,9 @@ public:
     FORCEINLINE auto GetNDown() const -> AChunk* { return this->NDown; }
 
     /** Has to be local or a direct neighbor. */
+    FORCEINLINE auto GetNeighboringChunk(LVoxelKey* InOutKey) -> AChunk*;
+    FORCEINLINE auto GetCheckedNeighboringChunk(LVoxelKey* InOutKey) -> AChunk*;
+    FORCEINLINE auto GetPanickedNeighboringChunk(LVoxelKey* InOutKey) -> AChunk*;
     FORCEINLINE auto GetNeighboringChunk(LVoxelKey* InOutKey) const -> const AChunk*;
     FORCEINLINE auto GetCheckedNeighboringChunk(LVoxelKey* InOutKey) const -> const AChunk*;
     FORCEINLINE auto GetPanickedNeighboringChunk(LVoxelKey* InOutKey) const -> const AChunk*;
@@ -213,6 +222,14 @@ private:
     AChunk* NDown  = nullptr;
 };
 
+void AChunk::SetHuntedChunkState(const EChunkState::Type NewHuntedChunkState)
+{
+    check( EChunkState::Freed < NewHuntedChunkState && NewHuntedChunkState < EChunkState::Special )
+    check( NewHuntedChunkState > this->ChunkState )
+    this->HuntedChunkState = NewHuntedChunkState;
+    return;
+}
+
 bool AChunk::ShouldBeFreed() const
 {
     return this->IsTransient()
@@ -220,12 +237,22 @@ bool AChunk::ShouldBeFreed() const
            < this->GetWorld()->GetRealTimeSecondsSinceWorldLaunch();
 }
 
-void AChunk::SetHuntedChunkState(const EChunkState::Type NewHuntedChunkState)
+void AChunk::SetSharedArgs(LSharedChunkArgs* NewSharedArgs)
 {
-    check( EChunkState::Freed < NewHuntedChunkState && NewHuntedChunkState < EChunkState::Special )
-    check( NewHuntedChunkState > this->ChunkState )
-    this->HuntedChunkState = NewHuntedChunkState;
+    checkSlow( NewSharedArgs )
+    check( this->IsSharedArgsValid() == false )
+#if DO_DOUBLE_CHECK_LIFETIMES
+    check( this->HasBegunLife() == false )
+#endif /* DO_DOUBLE_CHECK_LIFETIMES */
+
+    this->SharedArgs = NewSharedArgs;
+
     return;
+}
+
+LVoxelKey AChunk::CreateRelativeVoxelKey(const LVector& InWorldLocation) const
+{
+    return LVoxelKey::FromWorldLocationPreserveLocalSpace(InWorldLocation - this->GetTranslation());
 }
 
 AChunk::LVoxelIndex AChunk::GetRawVoxelIndex(const LVoxelKey InKey)
@@ -316,6 +343,41 @@ voxel_t AChunk::GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey, const voxel_t Fa
 void AChunk::OverrideRawVoxelData(const LVoxelKey InKey, const voxel_t NewVoxel)
 {
     this->RawVoxelData[AChunk::GetRawVoxelIndex(InKey)] = NewVoxel;
+}
+
+AChunk* AChunk::GetNeighboringChunk(LVoxelKey* InOutKey)
+{
+    switch (InOutKey->NormalizeKeyForNeighbor())
+    {
+    case EVoxelKeyLocation::Local: { return this; }
+    case EVoxelKeyLocation::North: { return this->NNorth; }
+    case EVoxelKeyLocation::East:  { return this->NEast;  }
+    case EVoxelKeyLocation::South: { return this->NSouth; }
+    case EVoxelKeyLocation::West:  { return this->NWest;  }
+    case EVoxelKeyLocation::Up:    { return this->NUp;    }
+    case EVoxelKeyLocation::Down:  { return this->NDown;  }
+    default: { checkNoEntry() return nullptr; }
+    }
+}
+
+AChunk* AChunk::GetCheckedNeighboringChunk(LVoxelKey* InOutKey)
+{
+    if (AChunk* Target = this->GetNeighboringChunk(InOutKey); Target)
+    {
+        return Target;
+    }
+    checkNoEntry()
+    return nullptr;
+}
+
+AChunk* AChunk::GetPanickedNeighboringChunk(LVoxelKey* InOutKey)
+{
+    if (AChunk* Target = this->GetNeighboringChunk(InOutKey); Target)
+    {
+        return Target;
+    }
+    panic( "Failed to find target chunk by local voxel key." )
+    return nullptr;
 }
 
 const AChunk* AChunk::GetNeighboringChunk(LVoxelKey* InOutKey) const
