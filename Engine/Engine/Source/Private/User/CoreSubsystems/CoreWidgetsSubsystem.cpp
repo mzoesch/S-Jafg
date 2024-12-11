@@ -6,6 +6,7 @@
 #include "Widgets/UserWidget.h"
 #include "User/Frontend/Osd/DebugScreen.h"
 #include "User/Frontend/Hud/Crosshair.h"
+#include "User/Frontend/Osd/ChatScreen.h"
 
 void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
 {
@@ -13,13 +14,18 @@ void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
 
     this->DebugScreen = ConstructDeferredWidgetNode<WDebugScreen>(this->GetOuter());
     this->DebugScreen->AddToViewport(this->GetHud()->GetMainViewport());
-    this->DebugScreen->SetVisibility(EWidgetVisibility::Visible);
+    this->DebugScreen->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->DebugScreen);
 
     this->Crosshair = ConstructDeferredWidgetNode<WCrosshair>(this->GetOuter());
     this->Crosshair->AddToViewport(this->GetHud()->GetMainViewport());
     this->Crosshair->SetVisibility(EWidgetVisibility::Visible);
     MakeDeferredWidgetNodeFinal(this->Crosshair);
+
+    this->ChatScreen = ConstructDeferredWidgetNode<WChatScreen>(this->GetOuter());
+    this->ChatScreen->AddToViewport(this->GetHud()->GetMainViewport());
+    this->ChatScreen->SetVisibility(EWidgetVisibility::Collapsed);
+    MakeDeferredWidgetNodeFinal(this->ChatScreen);
 
     return;
 }
@@ -38,6 +44,12 @@ void Jafg::JCoreWidgetsSubsystem::TearDown()
     {
         this->Crosshair->RemoveFromParent();
         this->Crosshair = nullptr;
+    }
+
+    if (ensure(this->ChatScreen))
+    {
+        this->ChatScreen->RemoveFromParent();
+        this->ChatScreen = nullptr;
     }
 
     return;

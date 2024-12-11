@@ -210,21 +210,19 @@ void Jafg::LDesktopPlatformWin::PollEvents()
     return;
 }
 
-void Jafg::LDesktopPlatformWin::SetInputMode(const bool bShowCursor)
+void Jafg::LDesktopPlatformWin::SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor)
 {
-    LDesktopPlatformBase::SetInputMode(bShowCursor);
+    LDesktopPlatformBase::SetInputMode(InMode, bInShowCursor);
 
-    if (bShowCursor)
+    if (this->bShowCursor)
     {
         this->bFirstMouseCallback = true;
     }
 
     if (this->MasterWindow)
     {
-        glfwSetInputMode(this->MasterWindow->GetNativeWindow(), GLFW_CURSOR, bShowCursor ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+        glfwSetInputMode(this->MasterWindow->GetNativeWindow(), GLFW_CURSOR, this->bShowCursor ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
     }
-
-    this->bShowMouseCursor = bShowCursor;
 
     return;
 }

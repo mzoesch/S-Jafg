@@ -272,6 +272,9 @@ public:
     FORCEINLINE auto SetShouldTick(const bool bInShouldTick) -> void { this->bDisableTick = (bInShouldTick == false); }
     FORCEINLINE auto ShouldNowDraw() const -> bool ;
     FORCEINLINE auto GetVisibility() const -> EWidgetVisibility::Type { return this->Visibility; }
+    FORCEINLINE auto IsVisible() const -> bool { return this->Visibility == EWidgetVisibility::Visible; }
+    FORCEINLINE auto IsHidden() const -> bool { return this->Visibility == EWidgetVisibility::Hidden; }
+    FORCEINLINE auto IsCollapsed() const -> bool { return this->Visibility == EWidgetVisibility::Collapsed; }
     FORCEINLINE auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> void { this->Visibility = InVisibility; }
 
     /**

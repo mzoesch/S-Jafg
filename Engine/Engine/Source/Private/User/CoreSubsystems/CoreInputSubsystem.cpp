@@ -7,6 +7,7 @@
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
+#include "User/Frontend/Osd/ChatScreen.h"
 #include "User/Frontend/Osd/DebugScreen.h"
 #include "User/Input/UserInput.h"
 #include "User/Input/InputAction.h"
@@ -17,59 +18,122 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 
     LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
 
-    LUserInputContext PreMoveContext = LUserInputContext("InMyWorld");
-    UserInput->RegisterContext(std::move(PreMoveContext), true);
+    {
+        LUserInputContext Context = LUserInputContext("InMyWorld");
+        UserInput->RegisterContext(std::move(Context));
+    }
+    {
+        LUserInputContext Context = LUserInputContext("InConsole");
+        UserInput->RegisterContext(std::move(Context));
+    }
 
-    LUserInputContext* ContextInMyWorld = UserInput->GetCheckedContextByName("InMyWorld");
+    UserInput->ActivateContext("InMyWorld");
 
-    LInputAction* CurMapping = nullptr;
-    LInputActionMappedKey* CurMappedKey = nullptr;
+    LUserInputContext* ContextMyWorld   = UserInput->GetCheckedContextByName("InMyWorld");
+    LUserInputContext* ContextInConsole = UserInput->GetCheckedContextByName("InConsole"); check( ContextMyWorld != ContextInConsole )
 
-    const LInputAction ToggleDebugScreen = LInputAction(EInputActionCategory::Boolean);
-    CurMapping = ContextInMyWorld->MapAction(ToggleDebugScreen);
-    ContextInMyWorld->MapKey(CurMapping, EKeys::F3, EInputActionTrigger::Triggered,
-        [this] (LInputActionValue& InValue) { this->OnDebugScreenToggle(InValue); }
-    );
+    // Action: Toggle debug screen
+    {
+        LInputAction* CurMapping = ContextMyWorld->MapAction(LInputAction(EInputActionCategory::Boolean), UserInput);
+        ContextMyWorld->MapKey
+        (
+            CurMapping, EKeys::F3, EInputActionTrigger::Triggered,
+            [this] (LInputActionValue& InValue) { this->OnDebugScreenToggle(InValue); }
+        );
+    }
 
-    const LInputAction EnableMouse = LInputAction(EInputActionCategory::Boolean);
-    CurMapping = ContextInMyWorld->MapAction(EnableMouse);
-    CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::Escape);
-    ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Triggered,
-        [this] (LInputActionValue& InValue)
-        {
-            check( this )
-            check( this->GetLocalEgo() )
-            check( this->GetLocalEgo()->GetPrimarySurface() )
+    // Action: Toggle mouse cursor
+    {
+        LInputAction* CurMapping = ContextMyWorld->MapAction(LInputAction(EInputActionCategory::Boolean), UserInput);
+        ContextMyWorld->MapKey(CurMapping, EKeys::Escape);
+        ContextMyWorld->MapCallback
+        (
+            CurMapping, EInputActionTrigger::Triggered,
+            [this] (LInputActionValue& InValue)
+            {
+                check( this )
+                check( this->GetLocalEgo() )
+                check( this->GetLocalEgo()->GetPrimarySurface() )
 
-            this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(
-                !this->GetLocalEgo()->GetPrimarySurface()->IsShowMouseCursor()
-            );
-        }
-    );
+                if (this->GetLocalEgo()->GetPrimarySurface()->IsShowMouseCursor())
+                {
+                    this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+                }
+                else
+                {
+                    this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::UserInterface, ShowMouseCursor);
+                }
+            }
+        );
+    }
 
-    const LInputAction BreakToDebugger = LInputAction(EInputActionCategory::Boolean);
-    CurMapping = ContextInMyWorld->MapAction(BreakToDebugger);
-    ContextInMyWorld->MapKey(CurMapping, EKeys::P, EInputActionTrigger::Triggered,
-        [] (LInputActionValue& InValue) {
-            CONDITIONALLY_BREAK()
-        }
-    );
+    // Action: Break to debugger
+    {
+        LInputAction* CurMapping = ContextMyWorld->MapAction(LInputAction(EInputActionCategory::Boolean), UserInput);
+        ContextMyWorld->MapKey
+        (
+            CurMapping, EKeys::P, EInputActionTrigger::Triggered,
+            [] (LInputActionValue& InValue)
+            {
+                CONDITIONALLY_BREAK()
+            }
+        );
+    }
 
-    const LInputAction SwitchToWireframe = LInputAction(EInputActionCategory::Boolean);
-    CurMapping = ContextInMyWorld->MapAction(SwitchToWireframe);
-    ContextInMyWorld->MapKey(CurMapping, EKeys::F1, EInputActionTrigger::Triggered,
-        [] (LInputActionValue& InValue) {
-            GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Wireframe);
-        }
-    );
+    // Action: Switch polygon mode to wireframe
+    {
+        LInputAction* CurMapping = ContextMyWorld->MapAction(LInputAction(EInputActionCategory::Boolean), UserInput);
+        ContextMyWorld->MapKey
+        (
+            CurMapping, EKeys::F1, EInputActionTrigger::Triggered,
+            [] (LInputActionValue& InValue)
+            {
+                GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Wireframe);
+            }
+        );
+    }
 
-    const LInputAction SwitchToFill = LInputAction(EInputActionCategory::Boolean);
-    CurMapping = ContextInMyWorld->MapAction(SwitchToWireframe);
-    ContextInMyWorld->MapKey(CurMapping, EKeys::F2, EInputActionTrigger::Triggered,
-        [] (LInputActionValue& InValue) {
-            GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Fill);
-        }
-    );
+    // Action: Switch polygon mode to fill
+    {
+        LInputAction* CurMapping = ContextMyWorld->MapAction(LInputAction(EInputActionCategory::Boolean), UserInput);
+        ContextMyWorld->MapKey
+        (
+            CurMapping, EKeys::F2, EInputActionTrigger::Triggered,
+            [] (LInputActionValue& InValue)
+            {
+                GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Fill);
+            }
+        );
+    }
+
+    // Action: Toggle console
+    {
+        LInputAction* CurMapping = UserInput->RegisterAction(LInputAction(EInputActionCategory::Boolean));
+        ContextMyWorld->MapAction(CurMapping);
+        ContextMyWorld->MapKey
+        (
+            CurMapping, EKeys::T, EInputActionTrigger::Triggered,
+            [this, UserInput] (LInputActionValue& InValue)
+            {
+                UserInput->DeactivateAllContexts();
+                UserInput->ActivateContext("InConsole");
+                this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::UserInterface, ShowMouseCursor);
+                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WChatScreen>(EWidgetVisibility::Visible);
+            }
+        );
+        ContextInConsole->MapAction(CurMapping);
+        ContextInConsole->MapKey
+        (
+            CurMapping, EKeys::Escape, EInputActionTrigger::Triggered,
+            [this, UserInput] (LInputActionValue& InValue)
+            {
+                UserInput->DeactivateAllContexts();
+                UserInput->ActivateContext("InMyWorld");
+                this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WChatScreen>(EWidgetVisibility::Collapsed);
+            }
+        );
+    }
 
     return;
 }
@@ -89,8 +153,7 @@ void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
     LInputAction* CurMapping = nullptr;
     LInputActionMappedKey* CurMappedKey = nullptr;
 
-    const LInputAction Move = LInputAction(EInputActionCategory::Axis3D);
-    CurMapping = ContextInMyWorld->MapAction(Move);
+    CurMapping = ContextInMyWorld->MapAction(LInputAction(EInputActionCategory::Axis3D), UserInput);
     CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::W);
     CurMappedKey->Modifiers.Add(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>());
     CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::A);
@@ -114,23 +177,20 @@ void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
         [InNew] (LInputActionValue& InValue) { InNew->OnOngoingMovementInput(InValue); }
     );
 
-    const LInputAction Look = LInputAction(EInputActionCategory::Axis2D);
-    CurMapping = ContextInMyWorld->MapAction(Look);
+    CurMapping = ContextInMyWorld->MapAction(LInputAction(EInputActionCategory::Axis2D), UserInput);
     CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::MouseXY);
     ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Ongoing,
         [InNew] (LInputActionValue& InValue) { InNew->OnOngoingRotationInput(InValue); }
     );
 
-    const LInputAction ChangeVelocity = LInputAction(EInputActionCategory::Axis1D);
-    CurMapping = ContextInMyWorld->MapAction(ChangeVelocity);
+    CurMapping = ContextInMyWorld->MapAction(LInputAction(EInputActionCategory::Axis1D), UserInput);
     CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::MouseWheelAxis);
     ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Ongoing,
         [InNew] (LInputActionValue& InValue) { InNew->OnOngoingVelocityChange(InValue); }
     );
 
     {
-        const LInputAction Action = LInputAction(EInputActionCategory::Boolean);
-        CurMapping   = ContextInMyWorld->MapAction(Action);
+        CurMapping   = ContextInMyWorld->MapAction(LInputAction(EInputActionCategory::Boolean), UserInput);
         CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::LeftMouseButton);
         ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Triggered,
             [this, InNew] (LInputActionValue& InValue) { InNew->OnOngoingPrimaryInput(InValue); }
@@ -138,8 +198,7 @@ void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
     }
 
     {
-        const LInputAction Action = LInputAction(EInputActionCategory::Boolean);
-        CurMapping   = ContextInMyWorld->MapAction(Action);
+        CurMapping   = ContextInMyWorld->MapAction(LInputAction(EInputActionCategory::Boolean), UserInput);
         CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::RightMouseButton);
         ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Triggered,
             [this, InNew] (LInputActionValue& InValue) { InNew->OnOngoingSecondaryInput(InValue); }

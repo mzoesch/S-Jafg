@@ -34,7 +34,7 @@ public:
     virtual void TearDown() override;
     virtual void PollInputs() override;
     virtual void PollEvents() override;
-    virtual void SetInputMode(const bool bShowCursor) override;
+    virtual void SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor) override;
     // ~DesktopPlatformBase implementation
 
     // Surface implementation
@@ -60,6 +60,10 @@ private:
     LNativeWindowWin* MasterWindow = nullptr;
 
     bool bVSync = false;
+
+    bool bFirstMouseCallback = true;
+    double LastMouseX = 0.0;
+    double LastMouseY = 0.0;
 };
 
 } /* ~Namespace Jafg */

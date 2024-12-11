@@ -9,6 +9,7 @@
 namespace Jafg
 {
 
+class LUserInput;
 struct LInputAction;
 struct LInputActionValue;
 struct LInputActionMappedKey;
@@ -46,7 +47,9 @@ struct ENGINE_API LUserInputContext final
     ~LUserInputContext() = default;
 
     /** @return The newly mapped action. This is not the same as the input argument. */
-    LInputAction* MapAction(const LInputAction& InAction);
+    auto MapAction(LInputAction&& InAction, LUserInput* InUserInput) -> LInputAction*;
+    /** Map an already registered (inside the suer input) action. */
+    auto MapAction(LInputAction* InAction) -> void;
 
     auto MapKey(LInputAction* InAction, const LKey InKey) -> LInputActionMappedKey*;
     auto MapCallback(

@@ -41,14 +41,28 @@ public:
 
     ENGINE_API  auto GetContextByName(const LSimpleString& InName) -> LUserInputContext*;
     ENGINE_API  auto GetCheckedContextByName(const LSimpleString& InName) -> LUserInputContext*;
+    ENGINE_API  auto GetPanickedContextByName(const LSimpleString& InName) -> LUserInputContext*;
     ENGINE_API  void GetContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
     ENGINE_API  void GetCheckedContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
+    ENGINE_API  void GetPanickedContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
+
+    /** @return The newly mapped action. This is not the same as the input argument. */
+    ENGINE_API  auto RegisterAction(LInputAction&& InAction) -> LInputAction*;
+    FORCEINLINE auto GetRegisteredActions() const -> const TdhArray<LInputAction*>& { return this->RegisteredActions; }
+
+    ENGINE_API  void ActivateContext(const LSimpleString& InName);
+    ENGINE_API  void ActivateContext(LUserInputContext* InContext);
+    ENGINE_API  void DeactivateContext(const LSimpleString& InName);
+    ENGINE_API  void DeactivateContext(LUserInputContext* InContext);
+    ENGINE_API int32 DeactivateAllContexts();
     FORCEINLINE auto GetActiveContexts() const -> const TdhArray<LUserInputContext*>& { return this->ActiveContexts; }
     FORCEINLINE auto GetRegisteredContexts() const -> const TdhArray<LUserInputContext*>& { return this->RegisteredContexts; }
 
 private:
 
-    void DispatchInputDelegatesForAction(const TdhArray<LRawInput>& InRawInputs, const LInputMappedAction* InAction);
+    void DispatchInputDelegatesForAction(const LUserInputContext* InContext, const TdhArray<LRawInput>& InRawInputs, const LInputMappedAction* InAction);
+
+    TdhArray<LInputAction*> RegisteredActions;
 
     /**
      * The most important context is stored first.

@@ -15,7 +15,7 @@ namespace Jafg
 struct ENGINE_API LInputActionMappedKey final
 {
     LInputActionMappedKey() = default;
-    LInputActionMappedKey(const LKey InKey) : Key(InKey) { }
+    LInputActionMappedKey(LUserInputContext* InContext, const LKey InKey) : Context(InContext), Key(InKey) { }
     PROHIBIT_REALLOC_OF_ANY_FORM(LInputActionMappedKey)
     ~LInputActionMappedKey()
     {
@@ -26,6 +26,7 @@ struct ENGINE_API LInputActionMappedKey final
         this->Modifiers.Empty();
     }
 
+    LUserInputContext* Context = nullptr;
     LKey Key = EKeys::AnyKey;
     TdhArray<LInputActionMappedKeyModifier*> Modifiers;
 };

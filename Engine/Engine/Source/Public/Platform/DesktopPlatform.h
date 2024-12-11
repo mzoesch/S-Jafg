@@ -56,7 +56,7 @@ public:
     virtual void TearDown() override   { LSurface::TearDown();   }
     virtual void PollInputs() override { }
     virtual void PollEvents() override { }
-    virtual void SetInputMode(bool bShowCursor) override { }
+    virtual void SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor) override { LSurface::SetInputMode(InMode, bInShowCursor); }
     // ~Surface implementation
 };
 

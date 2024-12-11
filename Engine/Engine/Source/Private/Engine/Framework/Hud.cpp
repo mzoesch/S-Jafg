@@ -85,3 +85,26 @@ Jafg::WWidgetNode* Jafg::LHud::GetCheckedTopLevelWidgetByClass(const LObjectClas
 {
     return this->GetMainViewport()->GetCheckedTopLevelWidgetByClass(WidgetClass);
 }
+
+bool Jafg::LHud::ChangeWidgetVisibility(const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound /* = false */) const
+{
+    WWidgetNode* Widget = this->GetTopLevelWidgetByClass(WidgetClass);
+    if (Widget == nullptr)
+    {
+        if (bAllowNotFound == false)
+        {
+            panicMsgf( "Could not find widget of class [{}] to change visibility.", WidgetClass->GetSpacedClassName() )
+        }
+
+        return false;
+    }
+
+    if (Widget->GetVisibility() == InVisibility)
+    {
+        return false;
+    }
+
+    Widget->SetVisibility(InVisibility);
+
+    return true;
+}

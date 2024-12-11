@@ -10,6 +10,7 @@ namespace Jafg
 
 class WDebugScreen;
 class WCrosshair;
+class WChatScreen;
 
 DECLARE_JAFG_CLASS()
 class ENGINE_API JCoreWidgetsSubsystem final : public JHudSubsystem
@@ -27,6 +28,7 @@ private:
 
     WDebugScreen* DebugScreen = nullptr;
     WCrosshair* Crosshair = nullptr;
+    WChatScreen* ChatScreen = nullptr;
 };
 
 } /* ~Namespace Jafg */

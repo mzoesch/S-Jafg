@@ -31,7 +31,7 @@ void Jafg::LLocalEgo::Initialize()
 
     this->GetPrimarySurface()->Initialize();
     this->GetPrimarySurface()->SetVSync(UserPreferences->GetVSyncEnabled());
-    this->GetPrimarySurface()->SetInputMode(false);
+    this->GetPrimarySurface()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
 
     this->Hud = new ::Jafg::LHud();
 

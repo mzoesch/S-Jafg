@@ -3,6 +3,7 @@
 #include "CoreAfx.h"
 #include "User/Input/InputContext.h"
 #include "User/Input/InputAction.h"
+#include "User/Input/UserInput.h"
 
 void Jafg::LInputMappedAction::ResetCallback()
 {
@@ -56,13 +57,27 @@ Jafg::LUserInputContext::LUserInputContext(const LSimpleString& InUniqueIdentifi
     return;
 }
 
-Jafg::LInputAction* Jafg::LUserInputContext::MapAction(const LInputAction& InAction)
+Jafg::LInputAction* Jafg::LUserInputContext::MapAction(LInputAction&& InAction, LUserInput* InUserInput)
 {
-    LInputAction* Action = new LInputAction(InAction);
-    this->MappedActions.Add(LInputMappedAction(Action));
-    const LInputMappedAction* Last = this->MappedActions.GetLast();
-    check( Last->Action == Action )
-    return Last->Action;
+    LInputAction* RegisteredAction = InUserInput->RegisterAction(std::move(InAction));
+    this->MappedActions.Emplace(RegisteredAction);
+    check( this->MappedActions.GetLast()->Action == RegisteredAction )
+    return RegisteredAction;
+}
+
+void Jafg::LUserInputContext::MapAction(LInputAction* InAction)
+{
+    check( InAction )
+
+    if (this->FindMappedAction(InAction))
+    {
+        LOG_WARNING(LogUserInput, "Action was already mapped." )
+        return;
+    }
+
+    this->MappedActions.Emplace(InAction);
+
+    return;
 }
 
 Jafg::LInputActionMappedKey* Jafg::LUserInputContext::MapKey(LInputAction* InAction, const LKey InKey)
@@ -70,7 +85,7 @@ Jafg::LInputActionMappedKey* Jafg::LUserInputContext::MapKey(LInputAction* InAct
     check( InAction )
 
     const LInputMappedAction* MappedAction = this->FindCheckedMappedAction(InAction);
-    MappedAction->Action->MappedKeys.Emplace(InKey);
+    MappedAction->Action->MappedKeys.Emplace(this, InKey);
 
     return MappedAction->Action->MappedKeys.GetLast();
 }

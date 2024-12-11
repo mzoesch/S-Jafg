@@ -12,6 +12,7 @@
 
 #include "Platform/SurfaceForward.h"
 #include "User/Input/RawInput.h"
+#include "User/Input/InputMode.h"
 
 namespace Jafg
 {
@@ -35,7 +36,9 @@ public:
     virtual void PollInputs()       = 0;
     virtual void PollEvents()       = 0;
 
-    virtual void SetInputMode(bool bShowCursor) = 0;
+    virtual void SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor);
+    FORCEINLINE auto IsShowMouseCursor() const -> bool { return this->bShowCursor; }
+    FORCEINLINE auto GetInputMode() const -> EInputMode::Type { return this->InputMode; }
 
     FORCEINLINE       auto GetViewport() const -> LViewport* { return this->SurfaceViewport; }
     NODISCARD virtual auto GetWidth() const -> int32                    = 0;
@@ -70,14 +73,10 @@ public:
     FORCEINLINE auto GetLastFramePressedKeys()       ->       TdhArray<LRawInput>& { return this->LastFrameDownKeys; }
     FORCEINLINE auto GetLastFramePressedKeys() const -> const TdhArray<LRawInput>& { return this->LastFrameDownKeys; }
 
-    FORCEINLINE bool IsShowMouseCursor() const { return this->bShowMouseCursor; }
-
 protected:
 
-    bool bShowMouseCursor    = false;
-    bool bFirstMouseCallback = true;
-    double LastMouseX = 0.0;
-    double LastMouseY = 0.0;
+    EInputMode::Type InputMode = EInputMode::UserInterface;
+    bool bShowCursor = false;
 
 private:
 

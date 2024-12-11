@@ -50,17 +50,17 @@ void Jafg::LUserInput::DispatchInputDelegates()
         {
             if (MappedAction.Trigger == EInputActionTrigger::Triggered)
             {
-                this->DispatchInputDelegatesForAction(TriggeredKeys, &MappedAction);
+                this->DispatchInputDelegatesForAction(Context, TriggeredKeys, &MappedAction);
             }
 
             else if (MappedAction.Trigger == EInputActionTrigger::Ongoing)
             {
-                this->DispatchInputDelegatesForAction(OngoingKeys, &MappedAction);
+                this->DispatchInputDelegatesForAction(Context, OngoingKeys, &MappedAction);
             }
 
             else if (MappedAction.Trigger == EInputActionTrigger::Completed)
             {
-                this->DispatchInputDelegatesForAction(CompletedKeys, &MappedAction);
+                this->DispatchInputDelegatesForAction(Context, CompletedKeys, &MappedAction);
             }
 
             continue;
@@ -168,6 +168,17 @@ Jafg::LUserInputContext* Jafg::LUserInput::GetCheckedContextByName(const LSimple
 #endif /* !DO_CHECKS */
 }
 
+Jafg::LUserInputContext* Jafg::LUserInput::GetPanickedContextByName(const LSimpleString& InName)
+{
+    if (LUserInputContext* Context = this->GetContextByName(InName); Context)
+    {
+        return Context;
+    }
+
+    panicMsgf( "Could not find context with name [{}].", InName )
+    return nullptr;
+}
+
 void Jafg::LUserInput::GetContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const
 {
     for (LUserInputContext* Context : this->RegisteredContexts)
@@ -192,7 +203,61 @@ void Jafg::LUserInput::GetCheckedContextByName(const LSimpleString& InName, LUse
     return;
 }
 
-void Jafg::LUserInput::DispatchInputDelegatesForAction(const TdhArray<LRawInput>& InRawInputs, const LInputMappedAction* InAction)
+void Jafg::LUserInput::GetPanickedContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const
+{
+    this->GetContextByName(InName, OutContext);
+
+    if (OutContext == nullptr)
+    {
+        panicMsgf( "Could not find context with name [{}].", InName )
+    }
+
+    return;
+}
+
+Jafg::LInputAction* Jafg::LUserInput::RegisterAction(LInputAction&& InAction)
+{
+    LInputAction* Action = new LInputAction(std::move(InAction));
+    this->RegisteredActions.Add(Action);
+    return Action;
+}
+
+void Jafg::LUserInput::ActivateContext(const LSimpleString& InName)
+{
+    this->ActivateContext(this->GetPanickedContextByName(InName));
+    return;
+}
+
+void Jafg::LUserInput::ActivateContext(LUserInputContext* InContext)
+{
+    check( InContext )
+    this->ActiveContexts.Add(InContext);
+    LOG_VERBOSE(LogUserInput, "Activating context [{}].", InContext->GetUniqueIdentifier())
+    return;
+}
+
+void Jafg::LUserInput::DeactivateContext(const LSimpleString& InName)
+{
+    this->DeactivateContext(this->GetPanickedContextByName(InName));
+}
+
+void Jafg::LUserInput::DeactivateContext(LUserInputContext* InContext)
+{
+    check( InContext )
+    this->ActiveContexts.RemoveOnceChecked(InContext);
+    LOG_VERBOSE(LogUserInput, "Deactivating context [{}].", InContext->GetUniqueIdentifier())
+    return;
+}
+
+int32 Jafg::LUserInput::DeactivateAllContexts()
+{
+    const int32 NumDeactivated = this->ActiveContexts.GetSize();
+    this->ActiveContexts.Reset(1);
+    LOG_VERBOSE(LogUserInput, "Deactivated all {} contexts.", NumDeactivated)
+    return NumDeactivated;
+}
+
+void Jafg::LUserInput::DispatchInputDelegatesForAction(const LUserInputContext* InContext, const TdhArray<LRawInput>& InRawInputs, const LInputMappedAction* InAction)
 {
     LInputActionValue Value = InAction->Action->Category;
 
@@ -200,6 +265,11 @@ void Jafg::LUserInput::DispatchInputDelegatesForAction(const TdhArray<LRawInput>
     {
         for (const LInputActionMappedKey& MappedKey : InAction->Action->MappedKeys)
         {
+            if (MappedKey.Context != InContext)
+            {
+                continue;
+            }
+
             if (MappedKey.Key == RawInput.Key)
             {
                 LVector Magnitude = LVector(RawInput.Value, 0.0f, 0.0f);

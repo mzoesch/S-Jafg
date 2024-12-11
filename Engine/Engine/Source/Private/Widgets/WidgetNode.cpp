@@ -15,8 +15,8 @@ ENGINE_API const LAnchor LAnchor::VBottom        = { 0.0f, 1.0f, 0.0f, 0.0f };
 ENGINE_API const LAnchor LAnchor::HLeft          = { 0.0f, 0.0f, 0.0f, 0.0f };
 ENGINE_API const LAnchor LAnchor::HCenter        = { 0.5f, 0.0f, 0.0f, 0.0f };
 ENGINE_API const LAnchor LAnchor::HRight         = { 1.0f, 0.0f, 0.0f, 0.0f };
-ENGINE_API const LAnchor LAnchor::VFill          = { 0.0f, 0.0f, 1.0f, 0.0f };
-ENGINE_API const LAnchor LAnchor::HFill          = { 0.0f, 0.0f, 0.0f, 1.0f };
+ENGINE_API const LAnchor LAnchor::VFill          = { 0.0f, 0.0f, 0.0f, 1.0f };
+ENGINE_API const LAnchor LAnchor::HFill          = { 0.0f, 0.0f, 1.0f, 0.0f };
 
 bool LAnchor::IsNormalized() const
 {
