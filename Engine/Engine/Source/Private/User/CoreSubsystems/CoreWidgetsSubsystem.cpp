@@ -7,6 +7,7 @@
 #include "User/Frontend/Osd/DebugScreen.h"
 #include "User/Frontend/Hud/Crosshair.h"
 #include "User/Frontend/Osd/ChatScreen.h"
+#include "User/Frontend/Osd/PauseMenu.h"
 
 void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
 {
@@ -26,6 +27,11 @@ void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
     this->ChatScreen->AddToViewport(this->GetHud()->GetMainViewport());
     this->ChatScreen->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->ChatScreen);
+
+    this->PauseMenu = ConstructDeferredWidgetNode<WPauseMenu>(this->GetOuter());
+    this->PauseMenu->AddToViewport(this->GetHud()->GetMainViewport());
+    this->PauseMenu->SetVisibility(EWidgetVisibility::Collapsed);
+    MakeDeferredWidgetNodeFinal(this->PauseMenu);
 
     return;
 }

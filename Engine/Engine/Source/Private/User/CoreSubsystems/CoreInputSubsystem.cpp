@@ -9,6 +9,7 @@
 #include "User/UserPreferences.h"
 #include "User/Frontend/Osd/ChatScreen.h"
 #include "User/Frontend/Osd/DebugScreen.h"
+#include "User/Frontend/Osd/PauseMenu.h"
 #include "User/Input/UserInput.h"
 #include "User/Input/InputAction.h"
 
@@ -23,6 +24,10 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         UserInput->RegisterContext(std::move(Context));
     }
     {
+        LUserInputContext Context = LUserInputContext("InPause");
+        UserInput->RegisterContext(std::move(Context));
+    }
+    {
         LUserInputContext Context = LUserInputContext("InConsole");
         UserInput->RegisterContext(std::move(Context));
     }
@@ -30,7 +35,8 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
     UserInput->ActivateContext("InMyWorld");
 
     LUserInputContext* ContextMyWorld   = UserInput->GetCheckedContextByName("InMyWorld");
-    LUserInputContext* ContextInConsole = UserInput->GetCheckedContextByName("InConsole"); check( ContextMyWorld != ContextInConsole )
+    LUserInputContext* ContextInPause   = UserInput->GetCheckedContextByName("InPause");
+    LUserInputContext* ContextInConsole = UserInput->GetCheckedContextByName("InConsole");
 
     // Action: Toggle debug screen
     {
@@ -42,27 +48,31 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         );
     }
 
-    // Action: Toggle mouse cursor
+    // Action: Toggle pause menu
     {
-        LInputAction* CurMapping = ContextMyWorld->MapAction(LInputAction(EInputActionCategory::Boolean), UserInput);
-        ContextMyWorld->MapKey(CurMapping, EKeys::Escape);
-        ContextMyWorld->MapCallback
+        LInputAction* CurMapping = UserInput->RegisterAction(LInputAction(EInputActionCategory::Boolean));
+        ContextMyWorld->MapAction(CurMapping);
+        ContextMyWorld->MapKey
         (
-            CurMapping, EInputActionTrigger::Triggered,
-            [this] (LInputActionValue& InValue)
+            CurMapping, EKeys::Escape, EInputActionTrigger::Triggered,
+            [this, UserInput] (LInputActionValue& InValue)
             {
-                check( this )
-                check( this->GetLocalEgo() )
-                check( this->GetLocalEgo()->GetPrimarySurface() )
-
-                if (this->GetLocalEgo()->GetPrimarySurface()->IsShowMouseCursor())
-                {
-                    this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
-                }
-                else
-                {
-                    this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::UserInterface, ShowMouseCursor);
-                }
+                UserInput->DeactivateAllContexts();
+                UserInput->ActivateContext("InPause");
+                this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::UserInterface, ShowMouseCursor);
+                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WPauseMenu>(EWidgetVisibility::Visible);
+            }
+        );
+        ContextInPause->MapAction(CurMapping);
+        ContextInPause->MapKey
+        (
+            CurMapping, EKeys::Escape, EInputActionTrigger::Triggered,
+            [this, UserInput] (LInputActionValue& InValue)
+            {
+                UserInput->DeactivateAllContexts();
+                UserInput->ActivateContext("InMyWorld");
+                this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WPauseMenu>(EWidgetVisibility::Collapsed);
             }
         );
     }
