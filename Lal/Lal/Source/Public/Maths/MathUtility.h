@@ -180,6 +180,8 @@ NODISCARD FORCEINLINE auto MakePerspectiveProjectionMatrix(const T RadYFov, cons
  */
 template <typename T>
 NODISCARD FORCEINLINE auto MakeOrthographicProjectionMatrix(const TVector2<T>& RightBottom, const TVector2<T>& LeftTop = TVector2<T>::Zero()) -> TMatrix<T>;
+template <typename T, typename U = float>
+NODISCARD FORCEINLINE auto MakeOrthographicProjectionMatrix(const TIntVector2<T>& RightBottom, const TIntVector2<T>& LeftTop = TIntVector2<T>::Zero()) -> TMatrix<U>;
 
 
 /*----------------------------------------------------------------------------
@@ -485,6 +487,15 @@ TMatrix<T> MakeOrthographicProjectionMatrix(const TVector2<T>& RightBottom, cons
     Result.Matrix[3][1] = - (RightBottom.X + LeftTop.X) / (RightBottom.X - LeftTop.X);
     Result.Matrix[3][0] = - (RightBottom.Y + LeftTop.Y) / (RightBottom.Y - LeftTop.Y);
     return Result;
+}
+
+template <typename T, typename U>
+TMatrix<U> MakeOrthographicProjectionMatrix(const TIntVector2<T>& RightBottom, const TIntVector2<T>& LeftTop)
+{
+    return Maths::MakeOrthographicProjectionMatrix(
+        TVector2<U>(static_cast<U>(RightBottom.X), static_cast<U>(RightBottom.Y)),
+        TVector2<U>(static_cast<U>(LeftTop.X), static_cast<U>(LeftTop.Y))
+    );
 }
 
 } /* Namespace Jafg::Maths */

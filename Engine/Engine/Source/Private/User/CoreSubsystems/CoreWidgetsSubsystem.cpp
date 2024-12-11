@@ -13,7 +13,7 @@ void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
 
     this->DebugScreen = ConstructDeferredWidgetNode<WDebugScreen>(this->GetOuter());
     this->DebugScreen->AddToViewport(this->GetHud()->GetMainViewport());
-    this->DebugScreen->SetVisibility(EWidgetVisibility::Collapsed);
+    this->DebugScreen->SetVisibility(EWidgetVisibility::Visible);
     MakeDeferredWidgetNodeFinal(this->DebugScreen);
 
     this->Crosshair = ConstructDeferredWidgetNode<WCrosshair>(this->GetOuter());

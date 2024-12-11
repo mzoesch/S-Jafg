@@ -92,7 +92,6 @@ private:
 
     uint32  Vao               = 0x0u;
     uint32  Vbo               = 0x0u;
-    LShader* FontShaderProgram = nullptr;
     mutable LBoxShaderContext TintShaderContext = { };
 };
 

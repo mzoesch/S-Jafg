@@ -18,6 +18,11 @@ void Jafg::LShader::Free()
 
 Jafg::LShader::LShader(const LEnginePath& Path)
 {
+    this->Load(Path);
+}
+
+void Jafg::LShader::Load(const LEnginePath& Path)
+{
     LEnginePath VertexPath = Path;
     VertexPath.AddExtension(".vert");
     LEnginePath FragmentPath = Path;
@@ -53,6 +58,16 @@ void Jafg::LShader::SetFloatUniform(const LSimpleString& Name, const float Value
     glUniform1f(glGetUniformLocation(this->Id, Name.ToC()), Value);
 }
 
+void Jafg::LShader::SetVec3Uniform(const LSimpleString& Name, const LVector3& Value) const
+{
+    glUniform3f(glGetUniformLocation(this->Id, Name.ToC()), Value.X, Value.Y, Value.Z);
+}
+
+void Jafg::LShader::SetVec4Uniform(const LSimpleString& Name, const LVector4& Value) const
+{
+    glUniform4f(glGetUniformLocation(this->Id, Name.ToC()), Value.X, Value.Y, Value.Z, Value.W);
+}
+
 void Jafg::LShader::SetMatrixUniform(const LSimpleString& Name, const LMatrixF& Value) const
 {
     glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.ToC()), 1, GL_FALSE, Value.GetData());
@@ -61,6 +76,16 @@ void Jafg::LShader::SetMatrixUniform(const LSimpleString& Name, const LMatrixF& 
 void Jafg::LShader::SetColorUniform(const LSimpleString& Name, const LColor& Value) const
 {
     this->SetIntUniform(Name, *reinterpret_cast<const int32*>(&Value.Bits));
+}
+
+void Jafg::LShader::SetColorVec3Uniform(const LSimpleString& Name, const LColor& Value) const
+{
+    this->SetVec3Uniform(Name, Value.ToVector3());
+}
+
+void Jafg::LShader::SetColorVec4Uniform(const LSimpleString& Name, const LColor& Value) const
+{
+    this->SetVec4Uniform(Name, Value.ToVector4());
 }
 
 void Jafg::LShader::LoadShader(const LEnginePath& VertexPath, const LEnginePath& FragmentPath)

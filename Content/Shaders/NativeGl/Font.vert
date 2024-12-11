@@ -1,13 +1,15 @@
 #version 330 core
 
-layout (location = 0) in vec4 vertex; // <vec2 pos, vec2 tex>
+// Vertex = <vec2 Location, vec2 Texture>
+layout (location = 0) in vec4 Vertex; 
+
 out vec2 TexCoords;
 
 uniform float OrthoZDepth;
-uniform mat4  projection;
+uniform mat4  Projection;
 
 void main()
 {
-    gl_Position = projection * vec4(vertex.xy, OrthoZDepth, 1.0);
-    TexCoords = vertex.zw;
+    gl_Position = Projection * vec4(Vertex.xy, OrthoZDepth, 1.0);
+    TexCoords = Vertex.zw;
 }

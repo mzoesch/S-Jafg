@@ -77,6 +77,16 @@ struct LColor final
         return (static_cast<uint32>(B) << 24) | (static_cast<uint32>(G) << 16) | (static_cast<uint32>(R) << 8) | static_cast<uint32>(A);
     }
 
+    FORCEINLINE LVector ToVector3() const
+    {
+        return LVector(this->R / 255.0f, this->G / 255.0f, this->B / 255.0f);
+    }
+
+    FORCEINLINE LVector4 ToVector4() const
+    {
+        return LVector4(this->R / 255.0f, this->G / 255.0f, this->B / 255.0f, this->A / 255.0f);
+    }
+
     FORCEINLINE bool operator==(const LColor& Other) const { return Bits == Other.Bits; }
     FORCEINLINE bool operator!=(const LColor& Other) const { return Bits != Other.Bits; }
 
@@ -109,7 +119,7 @@ struct LColor final
 
     FORCEINLINE LSimpleString ToString() const
     {
-        return LSimpleString::SprintF("RGBA: {} {} {} {}", R, G, B, A);
+        return LSimpleString::SprintF("RGBA: {} {} {} {}", this->R, this->G, this->B, this->A);
     }
 };
 

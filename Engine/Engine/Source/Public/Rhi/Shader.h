@@ -18,6 +18,12 @@ public:
 
     explicit LShader(const LEnginePath& Path);
 
+    /**
+     * When using this method, you have to make sure to delete the previous shader from the graphic processing unit.
+     * Memory leaks will occur if you don't.
+     */
+    void Load(const LEnginePath& Path);
+
     void Use() const;
 
     template <typename T>
@@ -27,8 +33,16 @@ public:
     void SetIntUniform(const LSimpleString& Name, const int32 Value) const;
     void SetUIntUniform(const LSimpleString& Name, const uint32 Value) const;
     void SetFloatUniform(const LSimpleString& Name, const float Value) const;
+
+    void SetVec3Uniform(const LSimpleString& Name, const LVector3& Value) const;
+    void SetVec4Uniform(const LSimpleString& Name, const LVector4& Value) const;
     void SetMatrixUniform(const LSimpleString& Name, const LMatrixF& Value) const;
+
+    /** Emits an int32 from a LColor. */
     void SetColorUniform(const LSimpleString& Name, const LColor& Value) const;
+    /** Emits an vec3 from LColor (without the alpha channel). */
+    void SetColorVec3Uniform(const LSimpleString& Name, const LColor& Value) const;
+    void SetColorVec4Uniform(const LSimpleString& Name, const LColor& Value) const;
 
     FORCEINLINE auto GetId() const -> uint32 { return this->Id; }
 

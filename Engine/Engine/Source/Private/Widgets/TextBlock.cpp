@@ -16,6 +16,9 @@
 namespace
 {
 
+Jafg::LShader FontShaderProgram;
+Jafg::LShader& GetFontShaderProgram() { return ::FontShaderProgram; }
+
 struct Character final
 {
     uint32     TextureId = 0;             // ID handle of the glyph texture
@@ -65,32 +68,30 @@ void Jafg::WTextBlock::Construct()
 {
     Super::Construct();
 
-    const LIntVector2 WindowDimensions = this->GetViewportSize();
-
-    this->FontShaderProgram = new LShader(LEnginePath(EEnginePaths::Shaders, "Font"));
-    checkSlow( this->FontShaderProgram )
-    this->FontShaderProgram->Use();
-    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
-    glUniformMatrix4fv(glGetUniformLocation(FontShaderProgram->GetId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
     if (Characters.empty())
     {
-        LOG_VERBOSE(LogWidgets, "Loading standard font.")
         this->FirstTimeLoadCharacters();
     }
+
+    ::GetFontShaderProgram().Use();
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glGenVertexArrays(1, &this->Vao);
-    glGenBuffers(1, &this->Vbo);
     glBindVertexArray(this->Vao);
+
+    glGenBuffers(1, &this->Vbo);
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+
+#if WITH_DEBUG_ZERO_UNBOUND
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+#endif /* WITH_DEBUG_ZERO_UNBOUND */
 
     return;
 }
@@ -122,12 +123,6 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
     }
 
     checkSlow( Characters.empty() == false )
-    check( this->FontShaderProgram )
-
-    this->FontShaderProgram->Use();
-    glUniform3f(glGetUniformLocation(this->FontShaderProgram->GetId(), "textColor"), this->Brush.Color.R, this->Brush.Color.G, this->Brush.Color.B);
-    glActiveTexture(GL_TEXTURE0);
-    glBindVertexArray(this->Vao);
 
 #if !PLATFORM_WASM
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -136,48 +131,38 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
-    LIntVector2 WindowDimensions = this->GetViewportSize();
-    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(WindowDimensions.X), 0.0f, static_cast<float>(WindowDimensions.Y));
-    glUniformMatrix4fv(glGetUniformLocation(FontShaderProgram->GetId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    const LIntVector2 WindowDimensions = this->GetViewportSize();
+    const float       ScaleFactor      = Context.GetScaleFactor();
+    const LVector2    Offset           = this->GetRelativeTopLeftFromMostOuter(this);
+    const float       YFromBottom      = static_cast<float>(WindowDimensions.Y);
 
-    const LVector2 Offset = this->GetRelativeTopLeftFromMostOuter(this);
-    const float ScaleFactor = Context.GetScaleFactor();
-
-    const float YFromBottom = static_cast<float>(WindowDimensions.Y);
+    ::GetFontShaderProgram().Use();
+    ::GetFontShaderProgram().SetColorVec3Uniform("Color", this->Brush.Color);
+    ::GetFontShaderProgram().SetMatrixUniform("Projection", Maths::MakeOrthographicProjectionMatrix(WindowDimensions));
+    ::GetFontShaderProgram().SetFloatUniform("OrthoZDepth", Context.GetFrameOrthoZLayerDepth());
+    glBindVertexArray(this->Vao);
+    glActiveTexture(GL_TEXTURE0);
 
     float X = Offset.X + this->Padding.Left;
-
-    glUniform1f(glGetUniformLocation(this->FontShaderProgram->GetId(), "OrthoZDepth"), Context.GetFrameOrthoZLayerDepth());
-
     for (const uint8 Rune : this->Content)
     {
         const Character& Ch = Characters[Rune];
 
-        const int32 PosX = static_cast<int32>((X + Ch.Bearing.x * this->Brush.Scale) * ScaleFactor);
-        const int32 PosY =
-            static_cast<int32>
-            (
-                 YFromBottom-this->GetDesiredSize().Y -
-                 ((-this->Padding.Bottom + Offset.Y - ((Ch.Size.y - Ch.Bearing.y) * this->Brush.Scale)) * ScaleFactor)
-            );
+        const float PosX = X + static_cast<float>(Ch.Bearing.x) * this->Brush.Scale * ScaleFactor;
+        const float PosY = (YFromBottom - Offset.Y - static_cast<float>(Ch.Size.y - Ch.Bearing.y) * this->Brush.Scale - this->GetDesiredSize().Y + this->Padding.Bottom) * ScaleFactor;
 
-        const int32 CharW = static_cast<int32>(Ch.Size.x * this->Brush.Scale * ScaleFactor);
-        const int32 CharH = static_cast<int32>(Ch.Size.y * this->Brush.Scale * ScaleFactor);
-
-        const float PosXf = static_cast<float>(PosX);
-        const float PosYf = static_cast<float>(PosY);
-        const float CharWf = static_cast<float>(CharW);
-        const float CharHf = static_cast<float>(CharH);
+        const float CharW = static_cast<float>(Ch.Size.x) * this->Brush.Scale * ScaleFactor;
+        const float CharH = static_cast<float>(Ch.Size.y) * this->Brush.Scale * ScaleFactor;
 
         // update VBO for each character
         const float Vertices[6][4] = {
-            { PosXf,     PosYf + CharHf,   0.0f, 0.0f },
-            { PosXf,     PosYf,       0.0f, 1.0f },
-            { PosXf + CharWf, PosYf,       1.0f, 1.0f },
+            { PosX,         PosY + CharH, 0.0f, 0.0f },
+            { PosX,         PosY,         0.0f, 1.0f },
+            { PosX + CharW, PosY,         1.0f, 1.0f },
 
-            { PosXf,     PosYf + CharHf,   0.0f, 0.0f },
-            { PosXf + CharWf, PosYf,       1.0f, 1.0f },
-            { PosXf + CharWf, PosYf + CharHf,   1.0f, 0.0f }
+            { PosX,         PosY + CharH, 0.0f, 0.0f },
+            { PosX + CharW, PosY,         1.0f, 1.0f },
+            { PosX + CharW, PosY + CharH, 1.0f, 0.0f }
         };
         // render glyph texture over quad
         glBindTexture(GL_TEXTURE_2D, Ch.TextureId);
@@ -191,8 +176,11 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
         X += (Ch.Advance.X >> 6) * this->Brush.Scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
     }
+
+#if WITH_DEBUG_ZERO_UNBOUND
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
+#endif /* WITH_DEBUG_ZERO_UNBOUND */
 
     return;
 }
@@ -222,6 +210,10 @@ void Jafg::WTextBlock::UpdateDesiredSize() const
 
 void Jafg::WTextBlock::FirstTimeLoadCharacters()
 {
+    LOG_VERBOSE(LogFontSubsystem, "Loading characters for the first time.")
+
+    ::FontShaderProgram = LShader(LEnginePath(EEnginePaths::Shaders, "Font"));
+
     FT_Library Ft;
     if (FT_Init_FreeType(&Ft))
     {
@@ -251,20 +243,11 @@ void Jafg::WTextBlock::FirstTimeLoadCharacters()
             std::cout.flush();
             continue;
         }
+
         // generate texture
         unsigned int texture;
         glGenTextures(1, &texture);
         glBindTexture(GL_TEXTURE_2D, texture);
-
-        // int width = Face->glyph->bitmap.width;
-        // int rows = Face->glyph->bitmap.rows;
-        // uint8* flippedBuffer = new uint8[Face->glyph->bitmap.width * Face->glyph->bitmap.rows];
-        // for (int y = 0; y < rows; y++) {
-        //     // Copy each row from bottom to top
-        //     memcpy(flippedBuffer + y * width, Face->glyph->bitmap.buffer + (rows - 1 - y) * width, width);
-        // }
-
-        // FontHeight = Face->height;
 
         glTexImage2D(
             GL_TEXTURE_2D,
