@@ -24,7 +24,10 @@ protected:
 
 public:
 
+    virtual auto SweepMouse(LViewport& Context, const LVector2& InLocation) -> LCursorReply override;
+
     virtual void UpdateDesiredSize() const override;
+    virtual void UpdateAnchoredSize(const LViewport& Context) const override;
 
     virtual auto GetChildren() const               -> const TdhArray<LWidgetSlot*>& PURE_VIRTUAL(return WWidgetParentBase::NothingArrayReference)
     virtual auto RemoveChild(WWidgetNode* InChild) -> void PURE_VIRTUAL()

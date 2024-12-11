@@ -56,6 +56,7 @@ private:
     void FramebufferSizeCallback(::GLFWwindow* Window, const int32 Width, const int32 Height);
     void MouseCallback(::GLFWwindow* Window, const double XPos, const double YPos);
     void ScrollCallback(::GLFWwindow* Window, const double XOffset, const double YOffset);
+    void MouseEnterCallback(::GLFWwindow* Window, const int32 Entered);
 
     LNativeWindowWin* MasterWindow = nullptr;
 

@@ -37,8 +37,10 @@ public:
     virtual void PollEvents()       = 0;
 
     virtual void SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor);
-    FORCEINLINE auto IsShowMouseCursor() const -> bool { return this->bShowCursor; }
     FORCEINLINE auto GetInputMode() const -> EInputMode::Type { return this->InputMode; }
+    FORCEINLINE auto IsShowMouseCursor() const -> bool { return this->bShowCursor; }
+    FORCEINLINE auto IsMouseLocationMeaningful() const -> bool { return this->bMouseLocationIsMeaningful; }
+    FORCEINLINE auto GetMouseLocation() const -> LVector2 { return this->MouseLocation; }
 
     FORCEINLINE       auto GetViewport() const -> LViewport* { return this->SurfaceViewport; }
     NODISCARD virtual auto GetWidth() const -> int32                    = 0;
@@ -77,6 +79,8 @@ protected:
 
     EInputMode::Type InputMode = EInputMode::UserInterface;
     bool bShowCursor = false;
+    bool bMouseLocationIsMeaningful = false;
+    LVector2 MouseLocation = LVector2::ZeroVector;
 
 private:
 

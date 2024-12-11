@@ -52,10 +52,16 @@ void Jafg::LLocalEgo::Tick(const float DeltaTime)
     this->SurfaceToDrawOn->OnClear();
 
     this->UserInput->BeginNewFrame();
+
     this->GetPrimarySurface()->PollInputs();
     this->GetPrimarySurface()->PollEvents();
-    this->Hud->Tick();
-    this->UserInput->DispatchInputDelegates();
+
+    this->Hud->Tick(*this->GetPrimarySurface(), this->GetPrimarySurface()->GetInputMode() & EInputMode::UserInterface);
+
+    if (this->GetPrimarySurface()->GetInputMode() & EInputMode::InputSubSystem)
+    {
+        this->UserInput->DispatchInputDelegates();
+    }
 
     return;
 }

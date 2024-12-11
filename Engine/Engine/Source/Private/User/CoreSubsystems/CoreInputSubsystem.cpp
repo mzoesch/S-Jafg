@@ -59,8 +59,8 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             {
                 UserInput->DeactivateAllContexts();
                 UserInput->ActivateContext("InPause");
-                this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::UserInterface, ShowMouseCursor);
-                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WPauseMenu>(EWidgetVisibility::Visible);
+                this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::Both, ShowMouseCursor);
+                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WPauseMenu>(EWidgetVisibility::IntransitiveHitTestInvisible);
             }
         );
         ContextInPause->MapAction(CurMapping);
@@ -127,8 +127,8 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             {
                 UserInput->DeactivateAllContexts();
                 UserInput->ActivateContext("InConsole");
-                this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::UserInterface, ShowMouseCursor);
-                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WChatScreen>(EWidgetVisibility::Visible);
+                this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::Both, ShowMouseCursor);
+                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WConsoleScreen>(EWidgetVisibility::IntransitiveHitTestInvisible);
             }
         );
         ContextInConsole->MapAction(CurMapping);
@@ -140,7 +140,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
                 UserInput->DeactivateAllContexts();
                 UserInput->ActivateContext("InMyWorld");
                 this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
-                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WChatScreen>(EWidgetVisibility::Collapsed);
+                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WConsoleScreen>(EWidgetVisibility::Collapsed);
             }
         );
     }

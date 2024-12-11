@@ -428,7 +428,7 @@ Private::JObjectBase* Private::LObjectMiscellaneousAccessor::NewObject(LObjectCo
 template <typename TObj>
 TObj* DynamicCast(Private::JObjectBase* InObject)
 {
-    if (Private::LObjectMiscellaneousAccessor::DynamicCast(InObject, TObj::StaticClass()))
+    if (InObject && Private::LObjectMiscellaneousAccessor::DynamicCast(InObject, TObj::StaticClass()))
     {
         return reinterpret_cast<TObj*>(InObject);
     }

@@ -9,13 +9,13 @@ namespace Jafg
 {
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API WChatScreen final : public WUserWidget
+class ENGINE_API WConsoleScreen final : public WUserWidget
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WChatScreen)
+    DEFAULT_OBJECT_CONSTRUCTOR(WConsoleScreen)
 
 public:
 

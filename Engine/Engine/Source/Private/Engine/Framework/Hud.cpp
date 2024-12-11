@@ -26,8 +26,20 @@ void Jafg::LHud::Initialize(Private::LObjectContext* InOuter)
     return;
 }
 
-void Jafg::LHud::Tick()
+void Jafg::LHud::Tick(const LSurface& Surface, const bool bCheckInput)
 {
+    if (bCheckInput)
+    {
+        if (Surface.IsMouseLocationMeaningful())
+        {
+            this->GetMainViewport()->DispatchInputs(Surface.GetMouseLocation());
+        }
+        else
+        {
+            this->GetMainViewport()->OnMouseLeftViewport();
+        }
+    }
+
     this->Collection->ForEachSubsystem( [] (JSubsystem* Subsystem)
     {
         if (JHudSubsystem* HudSubsystem = DynamicCast<JHudSubsystem>(Subsystem); HudSubsystem)

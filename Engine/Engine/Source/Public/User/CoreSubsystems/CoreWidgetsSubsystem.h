@@ -10,7 +10,7 @@ namespace Jafg
 
 class WDebugScreen;
 class WCrosshair;
-class WChatScreen;
+class WConsoleScreen;
 class WPauseMenu;
 
 DECLARE_JAFG_CLASS()
@@ -29,7 +29,7 @@ private:
 
     WDebugScreen* DebugScreen = nullptr;
     WCrosshair* Crosshair = nullptr;
-    WChatScreen* ChatScreen = nullptr;
+    WConsoleScreen* ChatScreen = nullptr;
     WPauseMenu* PauseMenu = nullptr;
 };
 

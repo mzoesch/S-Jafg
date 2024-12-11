@@ -3,10 +3,12 @@
 #pragma once
 
 #include "CoreAfx.h"
+#include "Engine/ObjectBaseUtility.h"
 
 namespace Jafg
 {
 
+class LSurface;
 class LObjectClass;
 class WWidgetNode;
 class WUserWidget;
@@ -17,6 +19,8 @@ class WUserWidget;
  */
 class ENGINE_API LViewport final
 {
+    friend WWidgetNode;
+
 public:
 
     LViewport() = default;
@@ -24,6 +28,8 @@ public:
     ~LViewport() = default;
 
     void Initialize();
+    void DispatchInputs(const LVector2& InLocation);
+    void OnMouseLeftViewport();
     void Tick();
     void Draw();
     void TearDown();
@@ -55,6 +61,15 @@ public:
     template <typename TNode> FORCEINLINE auto GetCheckedTopLevelWidgetByClass() -> TNode*;
     template <typename TNode> FORCEINLINE auto GetCheckedTopLevelWidgetByClass() const -> const TNode*;
 
+    template <typename TNode>
+    FORCEINLINE auto GetFocusedWidget() const -> const TNode* { return DynamicCast<TNode>(this->FocusedWidget); }
+    FORCEINLINE auto GetFocusedWidget() const -> const WWidgetNode* { return this->FocusedWidget; }
+    FORCEINLINE auto IsFocusedWidgetValid() const -> bool { return this->FocusedWidget != nullptr; }
+    FORCEINLINE auto GetHoveredWidgets() const -> const TdhArray<WWidgetNode*>& { return this->HoveredWidgets; }
+
+    /** @return True if in the last frame, this node was not added. */
+    bool AddHoveredWidgetForFrame(WWidgetNode* Node);
+
 private:
 
     void RecalculateScaleFactor();
@@ -74,6 +89,10 @@ private:
     LIntVector2            Dimensions;
     /** Top level widgets that this viewport owns. */
     TdhArray<WUserWidget*> TopLevelWidgets;
+
+    const WWidgetNode* FocusedWidget = nullptr;
+    TdhArray<WWidgetNode*> HoveredWidgets = { };
+    TdhArray<WWidgetNode*> LastFrameHoveredWidgets = { };
 
     mutable float FrameZLayerDepth = 0.0f;
 };

@@ -18,22 +18,24 @@ namespace EInputMode
 
 enum Type : uint8
 {
+    None            = 0x00,
+
     /**
      * Only user interface input is checked.
      */
-    UserInterface,
+    UserInterface   = 0x01 << 0,
 
     /**
      * Only the input handled by the input subsystem is checked.
      */
-    InputSubSystem,
+    InputSubSystem  = 0x01 << 1,
 
     /**
      * Both are checked.
      * In this sequence: UserInterface, InputSubSystem.
      * If a specific input is consumed by the user interface, it will not be passed to the input subsystem.
      */
-    Both,
+    Both            = UserInterface | InputSubSystem,
 };
 
 } /* ~Namespace EInputMode */
@@ -42,9 +44,10 @@ inline LSimpleString LexToString(const EInputMode::Type InType)
 {
     switch (InType)
     {
-        case EInputMode::UserInterface: { return "UserInterface"; }
-        case EInputMode::InputSubSystem: { return "InputSubSystem"; }
-        case EInputMode::Both: { return "Both"; }
+        case EInputMode::None:              { return "None"; }
+        case EInputMode::UserInterface:     { return "UserInterface"; }
+        case EInputMode::InputSubSystem:    { return "InputSubSystem"; }
+        case EInputMode::Both:              { return "Both"; }
     }
 
     checkNoEntry()

@@ -108,6 +108,10 @@ void Jafg::LDesktopPlatformWin::Initialize()
     {
         static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->ScrollCallback(Window, XOffset, YOffset);
     });
+    glfwSetCursorEnterCallback(this->MasterWindow->GetNativeWindow(), [] (::GLFWwindow* Window, const int32 Entered)
+    {
+        static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->MouseEnterCallback(Window, Entered);
+    });
 
     glfwSetErrorCallback(OpenGlErrorCallback);
 
@@ -297,6 +301,8 @@ void Jafg::LDesktopPlatformWin::FramebufferSizeCallback(::GLFWwindow*, const int
 
 void Jafg::LDesktopPlatformWin::MouseCallback(::GLFWwindow* Window, const double XPos, const double YPos)
 {
+    this->MouseLocation = LVector2(static_cast<float>(XPos), static_cast<float>(YPos));
+
     if (this->IsShowMouseCursor())
     {
         return;
@@ -346,6 +352,20 @@ void Jafg::LDesktopPlatformWin::ScrollCallback(::GLFWwindow* Window, const doubl
     }
 
     this->AddKeyDown(EKeys::MouseWheelAxis, static_cast<float>(YOffset));
+
+    return;
+}
+
+void Jafg::LDesktopPlatformWin::MouseEnterCallback(GLFWwindow* Window, const int32 Entered)
+{
+    if (Entered == GLFW_TRUE)
+    {
+        this->bMouseLocationIsMeaningful = true;
+    }
+    else
+    {
+        this->bMouseLocationIsMeaningful = false;
+    }
 
     return;
 }

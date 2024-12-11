@@ -5,6 +5,8 @@
 #include "Engine/ObjectBase.h"
 #include "Widgets/Whitespace.h"
 #include "Widgets/InterfaceTypes.h"
+#include "User/Input/Replies.h"
+#include "User/Input/Events.h"
 #include "WidgetNode.generated.h"
 
 namespace Jafg
@@ -260,22 +262,53 @@ public:
     virtual void OnGarbage() override;
     // ~JObjectBase implementation
 
+    /**
+     * Called when this widget is constructed. This does not mean being drawn to a canvas. A widget might be
+     * constructed but never dawned on a canvas in their entire lifespan. This method replaces the #BeginLife super
+     * method.
+     */
     virtual void Construct() { }
-    virtual void Tick()      { }
-    virtual void Destruct()  { }
 
-    virtual void Draw(LViewport& Context) const { }
+    /**
+     * Called when this widget is being ticked.
+     * See EWidgetVisibility for more information about when to tick a widget.
+     */
+    virtual void Tick() { }
+
+    /**
+     * Called when this widget is being destructed. This does not mean being removed from its parent. This method
+     * replaces the #EndLife super method.
+     */
+    virtual void Destruct() { }
+
+    virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation);
+    virtual LCursorReply OnCursorEnter() { return LCursorReply::Unhandled(); }
+    virtual LCursorReply OnCursorMoved(const LVector2& InLocation) { return LCursorReply::Unhandled(); }
+    virtual LCursorReply OnCursorLeave() { return LCursorReply::Unhandled(); }
+    virtual void         OnFocusReceived() { }
+    virtual void         OnFocusLost() { }
+    virtual LReply       OnKeyDown(LKeyEvent& InKeyEvent) { return LReply::Unhandled(); }
+    virtual LReply       OnKeyUp(LKeyEvent& InKeyEvent) { return LReply::Unhandled(); }
+
+    virtual auto Draw(LViewport& Context) const -> void { }
 
     /** Whether this widget is allowed to tick this frame. */
     FORCEINLINE auto ShouldNowTick() const -> bool;
     FORCEINLINE auto GetRawShouldTick() const -> bool { return this->bDisableTick == false; }
     FORCEINLINE auto SetShouldTick(const bool bInShouldTick) -> void { this->bDisableTick = (bInShouldTick == false); }
-    FORCEINLINE auto ShouldNowDraw() const -> bool ;
+    FORCEINLINE auto ShouldNowDraw() const -> bool;
     FORCEINLINE auto GetVisibility() const -> EWidgetVisibility::Type { return this->Visibility; }
+    FORCEINLINE auto IsWidgetVisible() const -> bool { return ShouldNowDraw(); }
+    FORCEINLINE auto IsHitTestable() const -> bool { return this->Visibility == EWidgetVisibility::Visible; }
+    FORCEINLINE auto CanChildrenBeHitTestable() const -> bool { return this->IsHitTestable() || this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible; }
+    FORCEINLINE auto ShouldCheckForInputs() const -> bool { return this->IsHitTestable() || this->CanChildrenBeHitTestable(); }
     FORCEINLINE auto IsVisible() const -> bool { return this->Visibility == EWidgetVisibility::Visible; }
     FORCEINLINE auto IsHidden() const -> bool { return this->Visibility == EWidgetVisibility::Hidden; }
     FORCEINLINE auto IsCollapsed() const -> bool { return this->Visibility == EWidgetVisibility::Collapsed; }
+    FORCEINLINE auto IsTransitiveHitTestInvisible() const -> bool { return this->Visibility == EWidgetVisibility::TransitiveHitTestInvisible; }
+    FORCEINLINE auto IsIntransitiveHitTestInvisible() const -> bool { return this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible; }
     FORCEINLINE auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> void { this->Visibility = InVisibility; }
+    FORCEINLINE auto SetVisibilityRet(const EWidgetVisibility::Type InVisibility) -> WWidgetNode& { this->Visibility = InVisibility; return *this; }
 
     /**
      * Orphans the child from its parent widget.
@@ -305,7 +338,9 @@ public:
     virtual void UpdateDesiredSize() const { }
     FORCEINLINE auto SetDesiredSize(const LVector2& InSize) const -> void { this->DesiredSize = InSize; }
     FORCEINLINE auto GetDesiredSize() const -> const LVector2& { return this->DesiredSize; }
-                auto GetAnchoredSize(const LViewport& Context) const -> LVector2;
+    /** Virtual update method for the anchored size. Automatically called. */
+    virtual void UpdateAnchoredSize(const LViewport& Context) const;
+    LVector2     GetAnchoredSize() const;
 
     FORCEINLINE auto GetAnchor()           ->       LAnchor& { return this->Anchor; }
     FORCEINLINE auto GetAnchor()     const -> const LAnchor& { return this->Anchor; }
@@ -317,7 +352,7 @@ public:
 private:
 
     bool bDisableTick = false;
-    EWidgetVisibility::Type Visibility = EWidgetVisibility::Visible;
+    EWidgetVisibility::Type Visibility = EWidgetVisibility::IntransitiveHitTestInvisible;
 
     /**
      * The slot that this widget is currently in. Might be null if the widget is a standalone.
@@ -329,6 +364,12 @@ private:
      * The desired size of this widget.
      */
     mutable LVector2 DesiredSize = LVector2::Zero();
+
+    /**
+     * The anchored size of this widget.
+     */
+    mutable LVector2 AnchoredSize = LVector2::Zero();
+
     LAnchor Anchor = EAnchor::TopLeft;
 };
 
@@ -385,13 +426,7 @@ FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode)
 
 bool Jafg::WWidgetNode::ShouldNowTick() const
 {
-    return
-        ( this->bDisableTick == false )
-        && (
-               this->Visibility == EWidgetVisibility::Visible
-            || this->Visibility == EWidgetVisibility::TransitiveHitTestInvisible
-            || this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible
-        );
+    return ( this->bDisableTick == false ) && ( this->ShouldNowDraw() );
 }
 
 bool Jafg::WWidgetNode::ShouldNowDraw() const

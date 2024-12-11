@@ -2,10 +2,57 @@
 
 #include "CoreAfx.h"
 #include "Widgets/Viewport.h"
+#include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
 
 void Jafg::LViewport::Initialize()
 {
+}
+
+void Jafg::LViewport::DispatchInputs(const LVector2& InLocation)
+{
+    this->LastFrameHoveredWidgets.CopyFrom(this->HoveredWidgets);
+    this->HoveredWidgets.Reset(this->HoveredWidgets.GetSize());
+
+    for (WUserWidget* Widget : this->TopLevelWidgets)
+    {
+        if (Widget->ShouldCheckForInputs())
+        {
+            LCursorReply Reply = Widget->SweepMouse(*this, InLocation);
+
+            if (Reply.IsHandled())
+            {
+                break;
+            }
+        }
+
+        continue;
+    }
+
+    for (WWidgetNode* Node : this->LastFrameHoveredWidgets)
+    {
+        if (this->HoveredWidgets.Contains(Node) == false)
+        {
+            Node->OnCursorLeave();
+        }
+
+        continue;
+    }
+
+    return;
+}
+
+void Jafg::LViewport::OnMouseLeftViewport()
+{
+    for (WWidgetNode* Node : this->HoveredWidgets)
+    {
+        Node->OnCursorLeave();
+    }
+
+    this->HoveredWidgets.Empty();
+    this->LastFrameHoveredWidgets.Empty();
+
+    return;
 }
 
 void Jafg::LViewport::Tick()
@@ -27,18 +74,14 @@ void Jafg::LViewport::Draw()
 {
     this->FrameZLayerDepth = 0.0f;
 
-    /*
-     * Maybe we want to make a callback to this. So that we do not have to recalculate
-     * this every frame. But who cares? Its just one single floating point operation.
-     */
     this->RecalculateScaleFactor();
 
     for (const WUserWidget* Widget : this->TopLevelWidgets)
     {
         if (Widget->ShouldNowDraw())
         {
-            // LOG_WARNING(LogTemporal, "====")
             Widget->UpdateDesiredSize();
+            Widget->UpdateAnchoredSize(*this);
             Widget->Draw(*this);
         }
 
@@ -98,6 +141,13 @@ Jafg::WWidgetNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObjectClass*
 const Jafg::WWidgetNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
 {
     return const_cast<LViewport*>(this)->GetTopLevelWidgetByClass(WidgetClass);
+}
+
+bool Jafg::LViewport::AddHoveredWidgetForFrame(WWidgetNode* Node)
+{
+    check( this->HoveredWidgets.Contains(Node) == false )
+    this->HoveredWidgets.Add(Node);
+    return this->LastFrameHoveredWidgets.Contains(Node) == false;
 }
 
 void Jafg::LViewport::RecalculateScaleFactor()
