@@ -10,6 +10,7 @@
 #endif /* !PLATFORM_WINDOWS */
 
 struct GLFWwindow;
+struct GLFWcursor;
 
 namespace Jafg
 {
@@ -35,6 +36,7 @@ public:
     virtual void PollInputs() override;
     virtual void PollEvents() override;
     virtual void SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor) override;
+    virtual void SetMouseCursor(const EMouseCursor::Type InCursor) override;
     // ~DesktopPlatformBase implementation
 
     // Surface implementation
@@ -58,6 +60,7 @@ private:
     void ScrollCallback(::GLFWwindow* Window, const double XOffset, const double YOffset);
     void MouseEnterCallback(::GLFWwindow* Window, const int32 Entered);
 
+    GLFWcursor* Cursor = nullptr;
     LNativeWindowWin* MasterWindow = nullptr;
 
     bool bVSync = false;

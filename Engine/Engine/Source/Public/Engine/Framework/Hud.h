@@ -25,7 +25,7 @@ public:
     ~LHud() = default;
 
     void Initialize(Private::LObjectContext* InOuter);
-    void Tick(const LSurface& Surface, const bool bCheckInput);
+    void Tick(LSurface& Surface, const bool bCheckInput);
     void TearDown();
 
     auto GetMainViewport() const -> LViewport* ;

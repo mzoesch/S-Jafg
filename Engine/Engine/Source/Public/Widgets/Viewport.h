@@ -28,8 +28,8 @@ public:
     ~LViewport() = default;
 
     void Initialize();
-    void DispatchInputs(const LVector2& InLocation);
-    void OnMouseLeftViewport();
+    void DispatchInputs(LSurface& Context, const LVector2& InLocation);
+    void OnMouseLeftViewport(LSurface& Context);
     void Tick();
     void Draw();
     void TearDown();
@@ -90,7 +90,7 @@ private:
     /** Top level widgets that this viewport owns. */
     TdhArray<WUserWidget*> TopLevelWidgets;
 
-    const WWidgetNode* FocusedWidget = nullptr;
+    WWidgetNode* FocusedWidget = nullptr;
     TdhArray<WWidgetNode*> HoveredWidgets = { };
     TdhArray<WWidgetNode*> LastFrameHoveredWidgets = { };
 

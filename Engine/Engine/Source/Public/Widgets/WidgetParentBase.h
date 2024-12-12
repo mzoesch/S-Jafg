@@ -25,6 +25,7 @@ protected:
 public:
 
     virtual auto SweepMouse(LViewport& Context, const LVector2& InLocation) -> LCursorReply override;
+    virtual auto SweepFocusTest(LViewport& Context, const LVector2& InLocation) -> LReply override;
 
     virtual void UpdateDesiredSize() const override;
     virtual void UpdateAnchoredSize(const LViewport& Context) const override;
@@ -33,6 +34,7 @@ public:
     virtual auto RemoveChild(WWidgetNode* InChild) -> void PURE_VIRTUAL()
     virtual auto RemoveChild(LWidgetSlot* InSlot)  -> void PURE_VIRTUAL()
     virtual auto AddChild(WWidgetNode* InChild)    -> LWidgetSlot* PURE_VIRTUAL(return nullptr)
+    virtual auto FindNodeInVisiblePath(const WWidgetNode* InNode) const -> bool override;
 
     virtual auto GetPaddingPtr() const -> const LPadding* PURE_VIRTUAL(return nullptr)
     virtual auto GetPaddingPtr()       ->       LPadding* PURE_VIRTUAL(return nullptr)

@@ -57,6 +57,7 @@ public:
     virtual void PollInputs() override { }
     virtual void PollEvents() override { }
     virtual void SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor) override { LSurface::SetInputMode(InMode, bInShowCursor); }
+    virtual void SetMouseCursor(const EMouseCursor::Type InCursor) override { }
     // ~Surface implementation
 };
 

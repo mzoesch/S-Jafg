@@ -27,6 +27,27 @@ Jafg::LCursorReply Jafg::WWidgetParentBase::SweepMouse(LViewport& Context, const
     return Super::SweepMouse(Context, InLocation);
 }
 
+Jafg::LReply Jafg::WWidgetParentBase::SweepFocusTest(LViewport& Context, const LVector2& InLocation)
+{
+    if (this->CanChildrenBeHitTestable() == false)
+    {
+        return Super::SweepFocusTest(Context, InLocation);
+    }
+
+    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    {
+        const LReply Reply = ChildSlot->Content->SweepFocusTest(Context, InLocation);
+        if (Reply.IsHandled())
+        {
+            return Reply;
+        }
+
+        continue;
+    }
+
+    return WWidgetNode::SweepFocusTest(Context, InLocation);
+}
+
 void Jafg::WWidgetParentBase::UpdateDesiredSize() const
 {
     for (const LWidgetSlot* ChildSlot : this->GetChildren())
@@ -49,4 +70,29 @@ void Jafg::WWidgetParentBase::UpdateAnchoredSize(const LViewport& Context) const
     }
 
     return;
+}
+
+bool Jafg::WWidgetParentBase::FindNodeInVisiblePath(const WWidgetNode* InNode) const
+{
+    if (Super::FindNodeInVisiblePath(InNode))
+    {
+        return true;
+    }
+
+    if (this->ShouldNowDraw() == false)
+    {
+        return false;
+    }
+
+    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    {
+        if (ChildSlot->Content->FindNodeInVisiblePath(InNode))
+        {
+            return true;
+        }
+
+        continue;
+    }
+
+    return false;
 }

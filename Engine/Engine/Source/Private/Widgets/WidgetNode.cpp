@@ -65,6 +65,17 @@ void Jafg::WWidgetNode::OnGarbage()
     return;
 }
 
+bool Jafg::WWidgetNode::IsInBounds(const LViewport& Context, const LVector2& InLocation) const
+{
+    const LVector2 TopLeftMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context, this);
+    return
+            TopLeftMostOuter.X <= InLocation.X
+         && InLocation.X       <= TopLeftMostOuter.X + this->GetAnchoredSize().X
+         && TopLeftMostOuter.Y <= InLocation.Y
+         && InLocation.Y       <= TopLeftMostOuter.Y + this->GetAnchoredSize().Y
+         ;
+}
+
 Jafg::LCursorReply Jafg::WWidgetNode::SweepMouse(LViewport& Context, const LVector2& InLocation)
 {
     if (this->IsHitTestable() == false)
@@ -72,13 +83,7 @@ Jafg::LCursorReply Jafg::WWidgetNode::SweepMouse(LViewport& Context, const LVect
         return LCursorReply::Unhandled();
     }
 
-    const LVector2 TopLeftMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context, this);
-    if (
-           TopLeftMostOuter.X > InLocation.X
-        || InLocation.X       > TopLeftMostOuter.X + this->GetAnchoredSize().X
-        || TopLeftMostOuter.Y > InLocation.Y
-        || InLocation.Y       > TopLeftMostOuter.Y + this->GetAnchoredSize().Y
-    )
+    if (this->IsInBounds(Context, InLocation) == false)
     {
         return LCursorReply::Unhandled();
     }
@@ -93,6 +98,21 @@ Jafg::LCursorReply Jafg::WWidgetNode::SweepMouse(LViewport& Context, const LVect
     }
 
     return this->OnCursorMoved(InLocation);
+}
+
+Jafg::LReply Jafg::WWidgetNode::SweepFocusTest(LViewport& Context, const LVector2& InLocation)
+{
+    if (this->IsHitTestable() == false)
+    {
+        return LReply::HandledWithFocusLost();
+    }
+
+    if (this->IsInBounds(Context, InLocation) == false)
+    {
+        return LReply::Unhandled();
+    }
+
+    return { this };
 }
 
 void Jafg::WWidgetNode::RemoveFromParent(const bool bDestroy /* = true */)
@@ -119,6 +139,11 @@ auto Jafg::WWidgetNode::GetParent() const -> WWidgetParentBase*
     }
 
     return nullptr;
+}
+
+bool Jafg::WWidgetNode::FindNodeInVisiblePath(const WWidgetNode* InNode) const
+{
+    return this == InNode && this->ShouldNowDraw();
 }
 
 Jafg::LIntVector2 Jafg::WWidgetNode::GetViewportSize() const

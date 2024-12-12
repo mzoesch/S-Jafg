@@ -281,10 +281,12 @@ public:
      */
     virtual void Destruct() { }
 
+            bool         IsInBounds(const LViewport& Context, const LVector2& InLocation) const;
     virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation);
     virtual LCursorReply OnCursorEnter() { return LCursorReply::Unhandled(); }
     virtual LCursorReply OnCursorMoved(const LVector2& InLocation) { return LCursorReply::Unhandled(); }
     virtual LCursorReply OnCursorLeave() { return LCursorReply::Unhandled(); }
+    virtual LReply       SweepFocusTest(LViewport& Context, const LVector2& InLocation);
     virtual void         OnFocusReceived() { }
     virtual void         OnFocusLost() { }
     virtual LReply       OnKeyDown(LKeyEvent& InKeyEvent) { return LReply::Unhandled(); }
@@ -316,6 +318,11 @@ public:
      */
     virtual auto RemoveFromParent(const bool bDestroy = true) -> void;
             auto GetParent() const -> WWidgetParentBase*;
+    /**
+     * Searches for a node in this widget tree. Only searches leafs that are drawn.
+     * @return True, if the target node exists in this widget tree and is visible.
+     */
+    virtual bool FindNodeInVisiblePath(const WWidgetNode* InNode) const;
 
     /** @return The size of the current viewport in pixels. */
     virtual auto GetViewportSize() const -> LIntVector2;

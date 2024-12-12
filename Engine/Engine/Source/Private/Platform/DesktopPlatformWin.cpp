@@ -231,6 +231,78 @@ void Jafg::LDesktopPlatformWin::SetInputMode(const EInputMode::Type InMode, cons
     return;
 }
 
+void Jafg::LDesktopPlatformWin::SetMouseCursor(const EMouseCursor::Type InCursor)
+{
+    LDesktopPlatformBase::SetMouseCursor(InCursor);
+
+    if (this->MasterWindow == nullptr)
+    {
+        return;
+    }
+
+    if (this->Cursor)
+    {
+        glfwDestroyCursor(this->Cursor);
+        this->Cursor = nullptr;
+    }
+
+    if (InCursor == EMouseCursor::Default)
+    {
+        check( this->Cursor == nullptr )
+    }
+    else if (InCursor == EMouseCursor::Arrow)
+    {
+        this->Cursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+    }
+    else if (InCursor == EMouseCursor::Beam)
+    {
+        this->Cursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
+    }
+    else if (InCursor == EMouseCursor::Crosshair)
+    {
+        this->Cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+    }
+    else if (InCursor == EMouseCursor::Hand)
+    {
+        this->Cursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
+    }
+    else if (InCursor == EMouseCursor::ResizeNS)
+    {
+        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NS_CURSOR);
+    }
+    else if (InCursor == EMouseCursor::ResizeEW)
+    {
+        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_EW_CURSOR);
+    }
+    else if (InCursor == EMouseCursor::ResizeNESW)
+    {
+        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NESW_CURSOR);
+    }
+    else if (InCursor == EMouseCursor::ResizeNWSE)
+    {
+        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NWSE_CURSOR);
+    }
+    else if (InCursor == EMouseCursor::ResizeOmni)
+    {
+        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR);
+    }
+    else if (InCursor == EMouseCursor::NotAllowed)
+    {
+        this->Cursor = glfwCreateStandardCursor(GLFW_NOT_ALLOWED_CURSOR);
+    }
+    else
+    {
+        LOG_WARNING(LogSystem, "Unknown cursor type {}[{}].", static_cast<int32>(InCursor), LexToString(InCursor))
+    }
+
+    if (InCursor != EMouseCursor::None)
+    {
+        glfwSetCursor(this->MasterWindow->GetNativeWindow(), this->Cursor);
+    }
+
+    return;
+}
+
 int32 Jafg::LDesktopPlatformWin::GetWidth() const
 {
     return this->GetDimensions().X;
