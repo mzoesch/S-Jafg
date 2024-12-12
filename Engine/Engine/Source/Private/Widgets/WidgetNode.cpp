@@ -247,11 +247,6 @@ void Jafg::WWidgetNode::UpdateAnchoredSize(const LViewport& Context) const
     return;
 }
 
-Jafg::LVector2 Jafg::WWidgetNode::GetAnchoredSize() const
-{
-    return this->AnchoredSize;
-}
-
 Jafg::LApplicationInstance* Jafg::WWidgetNode::GetApplicationInstance() const
 {
     checkSlow( GEngine )

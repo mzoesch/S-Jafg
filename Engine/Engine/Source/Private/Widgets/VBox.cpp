@@ -25,6 +25,12 @@ Jafg::LVector2 Jafg::WVBox::GetRelativeTopLeftFromMostOuter(const WWidgetNode* W
     return Offset;
 }
 
+Jafg::LVector2 Jafg::WVBox::GetAnchoredTopLeftFromMostOuter(const LViewport& Context, const WWidgetNode* WhoAsked) const
+{
+    // TODO Fix this in the wnode with a static method
+    return this->GetRelativeTopLeftFromMostOuter(WhoAsked);
+}
+
 void Jafg::WVBox::UpdateDesiredSize() const
 {
     Super::UpdateDesiredSize();
@@ -41,6 +47,16 @@ void Jafg::WVBox::UpdateDesiredSize() const
     DesiredSize += this->GetPadding().GetDesiredSize();
 
     this->SetDesiredSize(DesiredSize);
+
+    return;
+}
+
+void Jafg::WVBox::UpdateAnchoredSize(const LViewport& Context) const
+{
+    Super::UpdateAnchoredSize(Context);
+
+    // TODO Fix this in the wnode with a static method
+    this->SetAnchoredSize(this->GetDesiredSize());
 
     return;
 }

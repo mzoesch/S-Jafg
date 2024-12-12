@@ -351,7 +351,8 @@ public:
     FORCEINLINE auto GetDesiredSize() const -> const LVector2& { return this->DesiredSize; }
     /** Virtual update method for the anchored size. Automatically called. */
     virtual void UpdateAnchoredSize(const LViewport& Context) const;
-    LVector2     GetAnchoredSize() const;
+    FORCEINLINE auto SetAnchoredSize(const LVector2& InSize) const -> void { this->AnchoredSize = InSize; }
+    FORCEINLINE auto GetAnchoredSize() const -> LVector2 { return this->AnchoredSize; }
 
     FORCEINLINE auto GetAnchor()           ->       LAnchor& { return this->Anchor; }
     FORCEINLINE auto GetAnchor()     const -> const LAnchor& { return this->Anchor; }
