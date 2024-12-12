@@ -112,6 +112,10 @@ void Jafg::LDesktopPlatformWin::Initialize()
     {
         static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->MouseEnterCallback(Window, Entered);
     });
+    glfwSetCharCallback(this->MasterWindow->GetNativeWindow(), [] (::GLFWwindow* Window, const uint32 Codepoint)
+    {
+        static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->CharCallback(Window, Codepoint);
+    });
 
     glfwSetErrorCallback(OpenGlErrorCallback);
 
@@ -439,6 +443,21 @@ void Jafg::LDesktopPlatformWin::MouseEnterCallback(GLFWwindow* Window, const int
         this->bMouseLocationIsMeaningful = false;
     }
 
+    return;
+}
+
+void Jafg::LDesktopPlatformWin::CharCallback(GLFWwindow* Window, const uint32 Codepoint)
+{
+    std::u32string Char;
+    Char.push_back(Codepoint);
+
+#pragma warning( push )
+#pragma warning(disable: 4996)
+    std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+    std::string ut8String = converter.to_bytes(Char);
+#pragma warning( pop )
+
+    LOG_WARNING(LogSystem, "Char callback: {}", ut8String)
     return;
 }
 

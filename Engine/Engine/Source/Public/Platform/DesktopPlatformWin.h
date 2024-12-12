@@ -59,6 +59,7 @@ private:
     void MouseCallback(::GLFWwindow* Window, const double XPos, const double YPos);
     void ScrollCallback(::GLFWwindow* Window, const double XOffset, const double YOffset);
     void MouseEnterCallback(::GLFWwindow* Window, const int32 Entered);
+    void CharCallback(::GLFWwindow* Window, const uint32 Codepoint);
 
     GLFWcursor* Cursor = nullptr;
     LNativeWindowWin* MasterWindow = nullptr;
