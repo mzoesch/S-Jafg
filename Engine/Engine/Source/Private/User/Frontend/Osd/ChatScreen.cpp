@@ -15,8 +15,9 @@ void Jafg::WConsoleScreen::Construct()
     .SetAnchor(EAnchor::VBottom | EAnchor::HFill)
     [
         NewNode(WEditableTextBlock)
-        .SetPadding({ 10.0f })
-        & EAnchor::Fill
+        .SetTextColor(LColor::Red)
+        .SetTextScale(0.5f)
+        & LPadding({ 5.0f, 4.5f })
         & LColor(0 , 0, 0, 164)
     ]
     FinishWidgetStyling()

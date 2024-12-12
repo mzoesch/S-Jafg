@@ -15,8 +15,8 @@ struct LRawInput
     {
     }
 
-    LKey  Key;
-    float Value;
+    LKey  Key   = EKeys::Unresolved;
+    float Value = 0.0f;
 
     FORCEINLINE bool operator <(const LRawInput& Other) const   { return this->Key < Other.Key;  }
     FORCEINLINE bool operator <(const LKey& Other) const        { return this->Key < Other;      }

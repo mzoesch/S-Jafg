@@ -1,0 +1,295 @@
+// Copyright mzoesch. All rights reserved.
+
+#include "CoreAfx.h"
+#include "Rhi/FontShaderContext.h"
+#include "Rhi/Shader.h"
+#include "Rhi/RhiVendorInclude.h"
+#include "Forward/EngineForward.h"
+#include "System/EnginePath.h"
+#include "Widgets/Viewport.h"
+#include "System/Finder.h"
+#include <glm/fwd.hpp>
+#include <glm/glm.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/gtc/type_ptr.inl>
+
+using namespace Jafg;
+
+namespace
+{
+
+LShader FontShaderProgram;
+LShader& GetFontShaderProgram() { return ::FontShaderProgram; }
+
+struct Character final
+{
+    uint32     TextureId = 0;             // ID handle of the glyph texture
+    glm::ivec2 Size      = glm::ivec2();  // Size of glyph
+    glm::ivec2 Bearing   = glm::ivec2();  // Offset from baseline to left/top of glyph
+    Jafg::LIntVector2 Advance  = Jafg::LIntVector2(); // Offset to advance to next glyph
+
+    Character() = default;
+    Character(const Character& InOther)
+    {
+        this->TextureId = InOther.TextureId;
+        this->Size      = InOther.Size;
+        this->Bearing   = InOther.Bearing;
+        this->Advance   = InOther.Advance;
+
+        return;
+    }
+
+    Character(const uint32 InTextureId, const glm::ivec2& InSize, const glm::ivec2& InBearing, const Jafg::LIntVector2& InAdvance)
+    {
+        this->TextureId = InTextureId;
+        this->Size      = InSize;
+        this->Bearing   = InBearing;
+        this->Advance   = InAdvance;
+
+        return;
+    }
+};
+
+/**
+ * Loaded characters, private storage for this translation unit but usable for all WTextBlock instances.
+ */
+std::map<uint8, Character> Characters;
+
+/** Approximated height for all characters with a scale of one. */
+float ApproxHeight = -1.0f;
+
+void LoadCharactersFromDisk()
+{
+    check( ::Characters.empty() )
+
+    LOG_VERBOSE(LogFontSubsystem, "Loading characters for the first time.")
+
+    ::FontShaderProgram = LShader(LEnginePath(EEnginePaths::Shaders, "Font"));
+
+    FT_Library Ft;
+    if (FT_Init_FreeType(&Ft))
+    {
+        JAFG_ENGINE_FORWARD_REQUEST_EXIT(EPlatformExit::Fatal, "Failed to initialize Freetype library.")
+        return;
+    }
+
+    FT_Face Face;
+    const uint8* FontData = nullptr;
+    uint64 FontDataSize = 0;
+    Finder::ReadFileAsBinary(LEnginePath(EEnginePaths::Fonts, "Core.otf"), FontData, FontDataSize);
+    if (FT_New_Memory_Face(Ft, reinterpret_cast<const FT_Byte*>(FontData), static_cast<FT_Long>(FontDataSize), 0, &Face))
+    {
+        JAFG_ENGINE_FORWARD_REQUEST_EXIT(EPlatformExit::Fatal, "Failed to load font face.")
+        return;
+    }
+
+    FT_Set_Pixel_Sizes(Face, 0, 48); // set size to load glyphs as
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
+    // load first 128 characters of ASCII set
+    for (uint8 C = 0; C < 128; C++)
+    {
+        // load character glyph
+        if (FT_Load_Char(Face, C, FT_LOAD_RENDER))
+        {
+            std::cout << "Failed to load Glyph" << '\n';
+            std::cout.flush();
+            continue;
+        }
+
+        // generate texture
+        unsigned int texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RED,
+            Face->glyph->bitmap.width,
+            Face->glyph->bitmap.rows,
+            0,
+            GL_RED,
+            GL_UNSIGNED_BYTE,
+            // flippedBuffer
+            Face->glyph->bitmap.buffer
+        );
+        // delete[] flippedBuffer;
+        // set texture options
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        // now store character for later use
+        Character character =
+        {
+            texture,
+            glm::ivec2(Face->glyph->bitmap.width, Face->glyph->bitmap.rows),
+            glm::ivec2(Face->glyph->bitmap_left, Face->glyph->bitmap_top),
+            LIntVector2(Face->glyph->advance.x, Face->glyph->advance.y)
+        };
+        Characters.insert(std::pair<uint8, Character>(C, character));
+    }
+    glBindTexture(GL_TEXTURE_2D, 1);
+    FT_Done_Face(Face);
+    FT_Done_FreeType(Ft);
+
+    Finder::FreeReadFileBinaryBuffer(FontData);
+
+    return;
+}
+
+} /* ~Anonymous Namespace */
+
+void Jafg::LFontShaderContext::Make()
+{
+    LGenericShaderContext::Make();
+
+    if (Characters.empty())
+    {
+        ::LoadCharactersFromDisk();
+    }
+
+    checkSlow( Characters.empty() == false )
+    ::GetFontShaderProgram().Use();
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glGenVertexArrays(1, &this->Vao);
+    glBindVertexArray(this->Vao);
+
+    glGenBuffers(1, &this->Vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+
+#if WITH_DEBUG_ZERO_UNBOUND
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+#endif /* WITH_DEBUG_ZERO_UNBOUND */
+
+    return;
+}
+
+void Jafg::LFontShaderContext::Draw(const LViewport& Context, LGenericShaderContextDrawArgs& InArgs) const
+{
+    GENERIC_SHADER_DRAW_BODY(LFontShaderContextDrawArgs)
+
+    checkSlow( Characters.empty() == false )
+
+    check( Args.Content )
+    check( Args.DesiredSize.X > 0.0f && Args.DesiredSize.Y > 0.0f )
+
+    if (Args.Color == LColor::Transparent)
+    {
+        LOG_ERROR(LogWidgets, "Cannot draw text with transparent color.")
+        return;
+    }
+
+#if !PLATFORM_WASM
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif /* !PLATFORM_WASM */
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
+    const LIntVector2 WindowDimensions = Context.GetDimensions();
+    const float       ScaleFactor = Context.GetScaleFactor();
+    const float       YFromBottom = static_cast<float>(WindowDimensions.Y);
+
+    ::GetFontShaderProgram().Use();
+    ::GetFontShaderProgram().SetColorVec3Uniform("Color", Args.Color);
+    ::GetFontShaderProgram().SetMatrixUniform("Projection", Maths::MakeOrthographicProjectionMatrix(WindowDimensions));
+    ::GetFontShaderProgram().SetFloatUniform("OrthoZDepth", Context.GetFrameOrthoZLayerDepth());
+    glBindVertexArray(this->Vao);
+    glActiveTexture(GL_TEXTURE0);
+
+    float X = Args.Offset.X + Args.Padding.Left;
+    for (const uint8 Rune : *Args.Content)
+    {
+        const Character& Ch = Characters[Rune];
+
+        const float PosX = X + static_cast<float>(Ch.Bearing.x) * Args.Scale * ScaleFactor;
+        const float PosY = (YFromBottom - Args.Offset.Y - static_cast<float>(Ch.Size.y - Ch.Bearing.y) * Args.Scale - Args.DesiredSize.Y + Args.Padding.Bottom) * ScaleFactor;
+
+        const float CharW = static_cast<float>(Ch.Size.x) * Args.Scale * ScaleFactor;
+        const float CharH = static_cast<float>(Ch.Size.y) * Args.Scale * ScaleFactor;
+
+        // update VBO for each character
+        const float Vertices[6][4] = {
+            { PosX,         PosY + CharH, 0.0f, 0.0f },
+            { PosX,         PosY,         0.0f, 1.0f },
+            { PosX + CharW, PosY,         1.0f, 1.0f },
+
+            { PosX,         PosY + CharH, 0.0f, 0.0f },
+            { PosX + CharW, PosY,         1.0f, 1.0f },
+            { PosX + CharW, PosY + CharH, 1.0f, 0.0f }
+        };
+        // render glyph texture over quad
+        glBindTexture(GL_TEXTURE_2D, Ch.TextureId);
+        // update content of VBO memory
+        glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertices), Vertices); // be sure to use glBufferSubData and not glBufferData
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        // render quad
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
+        X += (Ch.Advance.X >> 6) * Args.Scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+    }
+
+#if WITH_DEBUG_ZERO_UNBOUND
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+#endif /* WITH_DEBUG_ZERO_UNBOUND */
+    return;
+}
+
+void Jafg::LFontShaderContext::OnFree()
+{
+    LGenericShaderContext::OnFree();
+
+    return;
+}
+
+bool LFontShaderContext::GetDesiredSize(const LSimpleString& InContent, const float InScale, LVector2& OutSize)
+{
+    if (InContent.IsEmpty())
+    {
+        OutSize = LVector2::Zero();
+        return false;
+    }
+
+    OutSize = LVector2::Zero();
+    for (const uint8 Rune : InContent)
+    {
+        const Character& Ch = Characters.at(static_cast<int8>(Rune));
+        OutSize.X += static_cast<float>(Ch.Advance.X) * InScale / 64.0f;
+        OutSize.Y = Maths::Max(OutSize.Y, static_cast<float>(Ch.Size.y) * InScale);
+    }
+
+    return true;
+}
+
+float LFontShaderContext::GetApproximateHeight(const float InScale)
+{
+    if (Characters.empty())
+    {
+        ::LoadCharactersFromDisk();
+    }
+    checkSlow( Characters.empty() == false )
+
+    if (ApproxHeight < 0.0f)
+    {
+        LVector2 DesiredSize;
+        const LSimpleString Content = "H";
+        LFontShaderContext::GetDesiredSize(Content, 1.0f, DesiredSize);
+        ::ApproxHeight = DesiredSize.Y;
+    }
+
+    checkSlow( ApproxHeight > 0.0f )
+    return ::ApproxHeight * InScale;
+}

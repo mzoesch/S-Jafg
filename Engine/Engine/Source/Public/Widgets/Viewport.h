@@ -4,6 +4,7 @@
 
 #include "CoreAfx.h"
 #include "Engine/ObjectBaseUtility.h"
+#include "User/Input/Replies.h"
 
 namespace Jafg
 {
@@ -28,8 +29,8 @@ public:
     ~LViewport() = default;
 
     void Initialize();
-    void DispatchInputs(LSurface& Context, const LVector2& InLocation);
-    void OnMouseLeftViewport(LSurface& Context);
+    void DispatchInputs(LSurface& Context, const LVector2& InCursorLocation);
+    void OnMouseLeftViewport(LSurface& Context, const bool bInvalidateAllInputs);
     void Tick();
     void Draw();
     void TearDown();
@@ -73,6 +74,8 @@ public:
 private:
 
     void RecalculateScaleFactor();
+    void HandleReply(LSurface& Context, const LCursorReply& Reply);
+    void HandleReply(LSurface& Context, const LReply& Reply);
 
     /** The factor with which the entire orthographic projection is scaled. */
     float ScaleFactor =  1.0f;

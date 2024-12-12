@@ -294,7 +294,6 @@ public:
 
     virtual auto Draw(LViewport& Context) const -> void { }
 
-    /** Whether this widget is allowed to tick this frame. */
     FORCEINLINE auto ShouldNowTick() const -> bool;
     FORCEINLINE auto GetRawShouldTick() const -> bool { return this->bDisableTick == false; }
     FORCEINLINE auto SetShouldTick(const bool bInShouldTick) -> void { this->bDisableTick = (bInShouldTick == false); }
@@ -318,6 +317,7 @@ public:
      */
     virtual auto RemoveFromParent(const bool bDestroy = true) -> void;
             auto GetParent() const -> WWidgetParentBase*;
+
     /**
      * Searches for a node in this widget tree. Only searches leafs that are drawn.
      * @return True, if the target node exists in this widget tree and is visible.
@@ -328,7 +328,7 @@ public:
     virtual auto GetViewportSize() const -> LIntVector2;
 
     /** @return The top left corner of this widget relative to its parent. If no parent, relative to the viewport. */
-    auto GetRelativeTopLeftFromOuter() const -> LVector2;
+    LVector2 GetRelativeTopLeftFromOuter() const;
 
     /**
      * @param  WhoAsked The widget that asked for the relative top left. Must be a direct child.
@@ -336,7 +336,11 @@ public:
      *         although this is not guaranteed.
      */
     virtual auto GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const -> LVector2;
-
+    /**
+     * @param WhoAsked The widget that asked for the anchored top left. Must be a direct child.
+     * @return The anchored top left corner of this widget relative to the most outer parent. In the best case,
+     *         this should be the viewport, although this is not guaranteed.
+     */
     virtual auto GetAnchoredTopLeftFromMostOuter(const LViewport& Context, const WWidgetNode* WhoAsked) const -> LVector2;
 
     FORCEINLINE auto GetSlot() const -> LWidgetSlot* { return this->Slot; }

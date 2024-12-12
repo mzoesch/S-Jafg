@@ -10,7 +10,7 @@ void Jafg::LViewport::Initialize()
 {
 }
 
-void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InLocation)
+void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursorLocation)
 {
     this->LastFrameHoveredWidgets.CopyFrom(this->HoveredWidgets);
     this->HoveredWidgets.Reset(this->HoveredWidgets.GetSize());
@@ -23,61 +23,36 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InLocati
             continue;
         }
 
-        LCursorReply Reply = Widget->SweepMouse(*this, InLocation);
-
-        if (Reply.IsHandled() == false)
+        LCursorReply Reply = Widget->SweepMouse(*this, InCursorLocation);
+        if (Reply.IsHandled())
         {
-            continue;
-        }
-
-        if (Reply.GetCursorType() != EMouseCursor::None)
-        {
-            Context.SetMouseCursor(Reply.GetCursorType());
-        }
-
-        if (Reply.ShouldLooseFocus())
-        {
-            if (this->FocusedWidget)
-            {
-                this->FocusedWidget->OnFocusLost();
-                this->FocusedWidget = nullptr;
-            }
-        }
-
-        if (Reply.IsFocusedWidgetValid())
-        {
-            if (this->FocusedWidget != Reply.GetFocusedWidget())
-            {
-                if (this->FocusedWidget)
-                {
-                    this->FocusedWidget->OnFocusLost();
-                }
-                this->FocusedWidget = Reply.GetFocusedWidget();
-                this->FocusedWidget->OnFocusReceived();
-            }
-        }
-
-        break;
-    }
-
-    // Check for cursor leave events.
-    LCursorReply MostRecentReply = LCursorReply::Unhandled();
-    for (WWidgetNode* Node : this->LastFrameHoveredWidgets)
-    {
-        if (this->HoveredWidgets.Contains(Node) == false)
-        {
-            LCursorReply Reply = Node->OnCursorLeave();
-            if (Reply.IsHandled())
-            {
-                MostRecentReply = Reply;
-            }
+            this->HandleReply(Context, Reply);
+            break;
         }
 
         continue;
     }
-    if (MostRecentReply.IsHandled() && MostRecentReply.GetCursorType() != EMouseCursor::None)
+
+    // Check for cursor leave events.
     {
-        Context.SetMouseCursor(MostRecentReply.GetCursorType());
+        LCursorReply MostRecentReply = LCursorReply::Unhandled();
+        for (WWidgetNode* Node : this->LastFrameHoveredWidgets)
+        {
+            if (this->HoveredWidgets.Contains(Node) == false)
+            {
+                LCursorReply Reply = Node->OnCursorLeave();
+                if (Reply.IsHandled())
+                {
+                    MostRecentReply = Reply;
+                }
+            }
+
+            continue;
+        }
+        if (MostRecentReply.IsHandled())
+        {
+            this->HandleReply(Context, MostRecentReply);
+        }
     }
 
     // Check for left-mouse-button down events to focus on another widget.
@@ -90,36 +65,14 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InLocati
                 continue;
             }
 
-            LReply Reply = Widget->SweepFocusTest(*this, InLocation);
-
-            if (Reply.IsHandled() == false)
+            LReply Reply = Widget->SweepFocusTest(*this, InCursorLocation);
+            if (Reply.IsHandled())
             {
-                continue;
+                this->HandleReply(Context, Reply);
+                break;
             }
 
-            if (Reply.ShouldLooseFocus())
-            {
-                if (this->FocusedWidget)
-                {
-                    this->FocusedWidget->OnFocusLost();
-                    this->FocusedWidget = nullptr;
-                }
-            }
-
-            if (Reply.IsFocusedWidgetValid())
-            {
-                if (this->FocusedWidget != Reply.GetFocusedWidget())
-                {
-                    if (this->FocusedWidget)
-                    {
-                        this->FocusedWidget->OnFocusLost();
-                    }
-                    this->FocusedWidget = Reply.GetFocusedWidget();
-                    this->FocusedWidget->OnFocusReceived();
-                }
-            }
-
-            break;
+            continue;
         }
     }
 
@@ -145,17 +98,55 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InLocati
         }
     }
 
+    // Check for key down events.
+    if (this->FocusedWidget)
+    {
+        for (LRawInput& Input : Context.GetCurrentlyPressedKeys())
+        {
+            if (Context.IsNewKeyDown(Input) == false)
+            {
+                continue;
+            }
+
+            LKeyEvent KeyEvent = LKeyEvent(Input);
+            LReply Reply = this->FocusedWidget->OnKeyDown(KeyEvent);
+            if (Reply.IsHandled())
+            {
+                this->HandleReply(Context, Reply);
+                break;
+            }
+
+            continue;
+        }
+    }
+
+    // Check for key up events.
+    if (this->FocusedWidget)
+    {
+        for (LRawInput& Input : Context.GetLastFramePressedKeys())
+        {
+            if (Context.IsNewKeyUp(Input) == false)
+            {
+                continue;
+            }
+
+            LKeyEvent KeyEvent = LKeyEvent(Input);
+            LReply Reply = this->FocusedWidget->OnKeyUp(KeyEvent);
+            if (Reply.IsHandled())
+            {
+                this->HandleReply(Context, Reply);
+                break;
+            }
+
+            continue;
+        }
+    }
+
     return;
 }
 
-void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context)
+void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalidateAllInputs)
 {
-    if (this->FocusedWidget)
-    {
-        this->FocusedWidget->OnFocusLost();
-        this->FocusedWidget = nullptr;
-    }
-
     if (this->HoveredWidgets.IsEmpty() == false || this->LastFrameHoveredWidgets.IsEmpty() == false)
     {
         LCursorReply MostRecentReply = LCursorReply::Unhandled();
@@ -174,6 +165,12 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context)
 
         this->HoveredWidgets.Empty();
         this->LastFrameHoveredWidgets.Empty();
+    }
+
+    if (bInvalidateAllInputs && this->FocusedWidget)
+    {
+        this->FocusedWidget->OnFocusLost();
+        this->FocusedWidget = nullptr;
     }
 
     return;
@@ -277,4 +274,67 @@ bool Jafg::LViewport::AddHoveredWidgetForFrame(WWidgetNode* Node)
 void Jafg::LViewport::RecalculateScaleFactor()
 {
     this->ScaleFactor = this->PlatformDpi / this->BaseDpi;
+}
+
+void Jafg::LViewport::HandleReply(LSurface& Context, const LCursorReply& Reply)
+{
+    check( Reply.IsHandled() )
+
+    if (Reply.GetCursorType() != EMouseCursor::None)
+    {
+        Context.SetMouseCursor(Reply.GetCursorType());
+    }
+
+    if (Reply.ShouldLooseFocus())
+    {
+        if (this->FocusedWidget)
+        {
+            this->FocusedWidget->OnFocusLost();
+            this->FocusedWidget = nullptr;
+        }
+    }
+
+    if (Reply.IsFocusedWidgetValid())
+    {
+        if (this->FocusedWidget != Reply.GetFocusedWidget())
+        {
+            if (this->FocusedWidget)
+            {
+                this->FocusedWidget->OnFocusLost();
+            }
+            this->FocusedWidget = Reply.GetFocusedWidget();
+            this->FocusedWidget->OnFocusReceived();
+        }
+    }
+
+    return;
+}
+
+void Jafg::LViewport::HandleReply(LSurface& Context, const LReply& Reply)
+{
+    check( Reply.IsHandled() )
+
+    if (Reply.ShouldLooseFocus())
+    {
+        if (this->FocusedWidget)
+        {
+            this->FocusedWidget->OnFocusLost();
+            this->FocusedWidget = nullptr;
+        }
+    }
+
+    if (Reply.IsFocusedWidgetValid())
+    {
+        if (this->FocusedWidget != Reply.GetFocusedWidget())
+        {
+            if (this->FocusedWidget)
+            {
+                this->FocusedWidget->OnFocusLost();
+            }
+            this->FocusedWidget = Reply.GetFocusedWidget();
+            this->FocusedWidget->OnFocusReceived();
+        }
+    }
+
+    return;
 }

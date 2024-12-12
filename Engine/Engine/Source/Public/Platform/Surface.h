@@ -66,8 +66,13 @@ public:
     FORCEINLINE auto GetLastFramePressedKeys() const -> const TdhArray<LRawInput>& { return this->LastFrameDownKeys; }
     /** @return Whether the key is currently down. */
     bool IsKeyDown(const LKey InKey) const;
+    FORCEINLINE bool IsKeyDown(const LRawInput& InRawInput) const { return this->IsKeyDown(InRawInput.Key); }
     /** @return Whether the key was just downed this frame. */
     bool IsNewKeyDown(const LKey InKey) const;
+    FORCEINLINE bool IsNewKeyDown(const LRawInput& InRawInput) const { return this->IsNewKeyDown(InRawInput.Key); }
+    /** @return Whether the key was just released this frame. */
+    bool IsNewKeyUp(const LKey InKey) const;
+    FORCEINLINE bool IsNewKeyUp(const LRawInput& InRawInput) const { return this->IsNewKeyUp(InRawInput.Key); }
 
 protected:
 

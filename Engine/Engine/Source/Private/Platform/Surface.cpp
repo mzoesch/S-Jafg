@@ -59,3 +59,8 @@ bool Jafg::LSurface::IsNewKeyDown(const LKey InKey) const
 {
     return this->GetCurrentlyPressedKeys().Contains(InKey) && (this->GetLastFramePressedKeys().Contains(InKey) == false);
 }
+
+bool Jafg::LSurface::IsNewKeyUp(const LKey InKey) const
+{
+    return this->GetCurrentlyPressedKeys().Contains(InKey) == false && this->GetLastFramePressedKeys().Contains(InKey);
+}

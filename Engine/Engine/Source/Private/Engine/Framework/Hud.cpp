@@ -34,7 +34,7 @@ void Jafg::LHud::Tick(LSurface& Surface, const bool bCheckInput)
     }
     else
     {
-        this->GetMainViewport()->OnMouseLeftViewport(Surface);
+        this->GetMainViewport()->OnMouseLeftViewport(Surface, bCheckInput == false);
     }
 
     this->Collection->ForEachSubsystem( [] (JSubsystem* Subsystem)
