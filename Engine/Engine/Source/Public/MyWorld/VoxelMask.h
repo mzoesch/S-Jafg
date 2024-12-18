@@ -17,7 +17,7 @@ struct LVoxelMask
     friend JVoxelSubsystem;
 
     LVoxelMask() = delete;
-    LVoxelMask(LSimpleString Namespace, LAsciiString Name) : Namespace(std::move(Namespace)), Name(std::move(Name)) { }
+    LVoxelMask(LSimpleString Namespace, LSimpleString Name) : Namespace(std::move(Namespace)), Name(std::move(Name)) { }
     ~LVoxelMask() = default;
 
     FORCEINLINE const LSimpleString& GetNamespace(void) const { return this->Namespace; }
