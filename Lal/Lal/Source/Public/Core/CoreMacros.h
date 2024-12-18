@@ -16,7 +16,7 @@
  * Use this macro for formatting raw string literals.
  * @remark MSVC is by far more permissive, so it supports this feature natively as they always decay raw string
  *         literals (const char[n]) as const char pointers. While GCC and Clang are more strict (in terms of the C++
- *         type system) and they do not allow this kind of implicit conversion - therefore we have to explicitly cast
+ *         type system) and they do not allow this kind of implicit conversion - therefore, we have to explicitly cast
  *         the literal to our formatter.
  */
 #if WITH_MSVC
@@ -56,6 +56,8 @@
 #else
     #error "Missing implementation for the current compiler."
 #endif /* WITH_GNU */
+
+#define UNREACHABLE_CONTROL_PATH_STATIC(Cond) static_assert((Cond), "Unreachable control path.");
 
 /** Prohibits copying and moving of a specific type T. */
 #define PROHIBIT_REALLOC_OF_ANY_FORM(Ty) \
@@ -151,7 +153,7 @@
         Type& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;
 #else /* WITH_GNU */
     #error "Missing implementation for this platform."
-#endif /* WITH_GNU */
+#endif /* !WITH_GNU */
 
 /** Bitwise flagging operations for an enum class. */
 #define ENUM_CLASS_FLAGS(Enum)                                                                \

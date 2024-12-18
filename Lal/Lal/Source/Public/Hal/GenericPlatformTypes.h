@@ -26,6 +26,15 @@
 #ifndef LITERAL_WIDE
     #define LITERAL_WIDE(x)     L##x
 #endif /* !LITERAL_WIDE */
+#ifndef LITERAL_UTF8
+    #define LITERAL_UTF8(x)     u8##x
+#endif /* !LITERAL_UTF8 */
+#ifndef LITERAL_UTF16
+    #define LITERAL_UTF16(x)    u##x
+#endif /* !LITERAL_UTF16 */
+#ifndef LITERAL_UTF32
+    #define LITERAL_UTF32(x)    U##x
+#endif /* !LITERAL_UTF32 */
 
 // ~Compiler dependent features for almost all compilers and platforms.
 ///////////////////////////////////////////////////////////////////////////////
@@ -51,8 +60,8 @@ struct LGenericPlatformTypes
     /** 64-bit signed integer */
     typedef signed long long    int64;
 
-    /** An ANSI character. 8-bit fixed-width representation of 7-bit characters. */
-    typedef char                LAnsiChar;
+    /** An ASCII character. 8-bit fixed-width representation of 7-bit characters. */
+    typedef char                LAsciiChar;
     /**
      * A wide character. ?-bit fixed-width representation of the platform's natural wide character set. It could
      * be different sizes on different platforms.
@@ -60,7 +69,7 @@ struct LGenericPlatformTypes
     typedef wchar_t             LWideChar;
 
     /** A switchable character - either LAnsiChar or LWideChar. */
-    typedef LAnsiChar           LChar;
+    typedef LAsciiChar          LChar;
 
     typedef std::wstring        LWideString;
     typedef std::string         LStringLegacy;

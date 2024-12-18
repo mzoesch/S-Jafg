@@ -27,14 +27,14 @@ func PostLuaRun() {
 func FixAfx() {
     fmt.Println("Fixing Afx from /Yu to /Yc ...")
 
-    for _, proj := range Shared.GApp.Projects {
-        for _, mod := range proj.Modules {
-            FixAfxForModule(&mod)
-            continue
-        }
-
-        continue
-    }
+    //for _, proj := range Shared.GApp.Projects {
+    //    for _, mod := range proj.Modules {
+    //        FixAfxForModule(&mod)
+    //        continue
+    //    }
+    //
+    //    continue
+    //}
 
     // fmt.Printf("Excluding c files from afx.")
     // ExcludeCFilesFromAfx()
@@ -43,25 +43,33 @@ func FixAfx() {
 }
 
 func FixAfxForModule(mod *Shared.Module) {
-    //if mod.Pch.IsUse() {
-    //    var afxFile string = Shared.GetCheckedAbsolutePath(fmt.Sprintf(
-    //        "%s/%s.vcxproj",
-    //        mod.GetRelativeModuleDir(),
-    //        mod.GetUsableName(),
-    //    ))
-    //
-    //    FixAfxForFile(afxFile)
-    //}
+    if mod.Pch.IsUse() {
+        afxFile, bExists := Shared.GetAbsolutePath(fmt.Sprintf(
+            "%s/%s.vcxproj",
+            mod.GetRelativeModuleDir(),
+            mod.GetUsableName(),
+        ))
 
-    //if mod.Pch.IsUse() {
-    //    var afxFile string = Shared.GetCheckedAbsolutePath(fmt.Sprintf(
-    //        "%s/Vslf-%s.vcxproj",
-    //        GetVslfModuleProjectRelativeDir(mod),
-    //        mod.GetUsableName(),
-    //    ))
-    //
-    //    FixAfxForFile(afxFile)
-    //}
+        if !bExists {
+            return
+        }
+
+        FixAfxForFile(afxFile)
+    }
+
+    if mod.Pch.IsUse() {
+        afxFile, bExists := Shared.GetAbsolutePath(fmt.Sprintf(
+            "%s/Vslf-%s.vcxproj",
+            GetVslfModuleProjectRelativeDir(mod),
+            mod.GetUsableName(),
+        ))
+
+        if !bExists {
+            return
+        }
+
+        FixAfxForFile(afxFile)
+    }
 
     return
 }

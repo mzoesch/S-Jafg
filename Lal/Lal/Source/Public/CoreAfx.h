@@ -78,7 +78,7 @@
 #include "Containers/ContainerMacros.h"
 #include "Containers/Iterator.h"
 #include "Containers/Array.h"
-#include "Containers/AsciiString.h"
+#include "Containers/MyString.h"
 #include "Containers/ComplexQueue.h"
 #include "Containers/SimpleQueue.h"
 #include "Containers/Format.h"

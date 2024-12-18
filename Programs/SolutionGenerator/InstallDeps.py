@@ -117,21 +117,21 @@ class Premake:
 
     @classmethod
     def install(cls) -> EErrorLevel:
-        permission_granted: bool = False
-
-        while not permission_granted:
-            reply = str(input('Premake not found. Would you like to download Premake {0:s}? [Y/N]: '.format(
-                cls.version))).lower().strip()[:1]
-
-            if reply == 'y' or reply == 'Y':
-                permission_granted = True
-                continue
-
-            if reply == 'n' or reply == 'N':
-                print('Premake installation aborted.')
-                return EErrorLevel.FATAL
-
-            continue
+        # permission_granted: bool = False
+        #
+        # while not permission_granted:
+        #     reply = str(input('Premake not found. Would you like to download Premake {0:s}? [Y/N]: '.format(
+        #         cls.version))).lower().strip()[:1]
+        #
+        #     if reply == 'y' or reply == 'Y':
+        #         permission_granted = True
+        #         continue
+        #
+        #     if reply == 'n' or reply == 'N':
+        #         print('Premake installation aborted.')
+        #         return EErrorLevel.FATAL
+        #
+        #     continue
 
         path_file: str = cls.get_abs_install_file()
         zip_file: str = cls.get_abs_install_zip_file()
@@ -177,13 +177,10 @@ def install_deps() -> EErrorLevel:
         print(f'Failed to validate Python. Error level: {error_level}')
         return error_level
 
-    # DEPRECATED
-    # Now switched to cmake.
-    # Cmake should be installed by the usr and therefore will not be automatically installed.
-    # error_level = Premake.validate()
-    # if error_level != EErrorLevel.SUCCESS:
-    #     print(f'Failed to validate Premake. Error level: {error_level}')
-    #     return error_level
+    error_level = Premake.validate()
+    if error_level != EErrorLevel.SUCCESS:
+        print(f'Failed to validate Premake. Error level: {error_level}')
+        return error_level
 
     error_level = Cmake.validate()
     if error_level != EErrorLevel.SUCCESS:

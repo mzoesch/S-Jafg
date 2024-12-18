@@ -134,6 +134,43 @@
     #define PLATFORM_USES_NON_GENERIC_EXIT          0
 #endif /* !PLATFORM_USES_NON_GENERIC_EXIT */
 
+#ifndef PLATFORM_USES_UTF8
+    #define PLATFORM_USES_UTF8          0
+#endif /* !PLATFORM_USES_UTF8 */
+#ifndef PLATFORM_USES_UTF16
+    #define PLATFORM_USES_UTF16         0
+#endif /* !PLATFORM_USES_UTF16 */
+#ifndef PLATFORM_USES_UTF32
+    #define PLATFORM_USES_UTF32         0
+#endif /* !PLATFORM_USES_UTF32 */
+#if PLATFORM_USES_UTF8
+    #if PLATFORM_USES_UTF16
+        #error "PLATFORM_USES_UTF8 and PLATFORM_USES_UTF16 are both defined."
+    #endif /* PLATFORM_USES_UTF16 */
+    #if PLATFORM_USES_UTF32
+        #error "PLATFORM_USES_UTF8 and PLATFORM_USES_UTF32 are both defined."
+    #endif /* PLATFORM_USES_UTF32 */
+#endif /* PLATFORM_USES_UTF8 */
+#if PLATFORM_USES_UTF16
+    #if PLATFORM_USES_UTF8
+        #error "PLATFORM_USES_UTF16 and PLATFORM_USES_UTF8 are both defined."
+    #endif /* PLATFORM_USES_UTF8 */
+    #if PLATFORM_USES_UTF32
+        #error "PLATFORM_USES_UTF16 and PLATFORM_USES_UTF32 are both defined."
+    #endif /* PLATFORM_USES_UTF32 */
+#endif /* PLATFORM_USES_UTF16 */
+#if PLATFORM_USES_UTF32
+    #if PLATFORM_USES_UTF8
+        #error "PLATFORM_USES_UTF32 and PLATFORM_USES_UTF8 are both defined."
+    #endif /* PLATFORM_USES_UTF8 */
+    #if PLATFORM_USES_UTF16
+        #error "PLATFORM_USES_UTF32 and PLATFORM_USES_UTF16 are both defined."
+    #endif /* PLATFORM_USES_UTF16 */
+#endif /* PLATFORM_USES_UTF32 */
+#if !PLATFORM_USES_UTF8 && !PLATFORM_USES_UTF16 && !PLATFORM_USES_UTF32
+    #error "No platform encoding is defined."
+#endif /* !PLATFORM_USES_UTF8 && !PLATFORM_USES_UTF16 && !PLATFORM_USES_UTF32 */
+
 
 /*-----------------------------------------------------------------------------
     Generalized types based on a specific platform.
@@ -149,6 +186,8 @@ typedef LPlatformTypes::int16         int16;
 typedef LPlatformTypes::int32         int32;
 typedef LPlatformTypes::int64         int64;
 
+typedef LPlatformTypes::LAsciiChar    LAsciiChar;
+typedef LPlatformTypes::LWideChar     LWideChar;
 typedef LPlatformTypes::LChar         LChar;
 
 typedef LPlatformTypes::LStringLegacy LStringLegacy;
@@ -260,6 +299,19 @@ static_assert(sizeof(LChar)   == 1, "LChar  is not 1 byte.");
 #endif /* !PLATFORM_USES_LITTLE_ENDIAN */
 /* Implicitly define opposite. */
 #define PLATFORM_USES_BIG_ENDIAN        ( !PLATFORM_USES_LITTLE_ENDIAN )
+
+#ifndef LITERAL_WIDE
+    #error "LITERAL_WIDE is not defined."
+#endif /* !LITERAL_WIDE */
+#ifndef LITERAL_UTF8
+    #error "LITERAL_UTF8 is not defined."
+#endif /* !LITERAL_UTF8 */
+#ifndef LITERAL_UTF16
+    #error "LITERAL_UTF16 is not defined."
+#endif /* !LITERAL_UTF16 */
+#ifndef LITERAL_UTF32
+    #error "LITERAL_UTF32 is not defined."
+#endif /* !LITERAL_UTF32 */
 
 namespace PlatformHal
 {

@@ -197,6 +197,7 @@ public:
     FORCEINLINE auto operator =(const Self& InOther) noexcept -> Self&;
     FORCEINLINE auto CopyFrom  (const Self& InOther) noexcept -> Self& { return this->operator=(InOther); }
     FORCEINLINE auto CopyFrom  (const Self& InOther, const SizeType InCount) noexcept -> Self&;
+    FORCEINLINE auto CopyFrom  (const Self& InOther, const SizeType InOffset, const SizeType InCount) noexcept -> Self&;
     /** Moves the other array. No move semantics will be called. */
     FORCEINLINE auto operator =(      Self&& InOther) noexcept -> Self&;
     FORCEINLINE auto operator =(const Self&& InOther) noexcept -> Self& = delete;
@@ -1081,6 +1082,32 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::CopyFrom(const Self& InOthe
 
     this->Data = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
     ::memcpy(this->Data, InOther.Data, this->Size * sizeof(T));
+
+    return *this;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
+TArray<T, ResizePolicy, AllocationPolicy, SizeType>::CopyFrom(const Self& InOther, const SizeType InOffset, const SizeType InCount) noexcept
+{
+    check( this != &InOther )
+    check( InOther.Data )
+    check( InOther.Size >= InOffset + InCount )
+    check( InCount > 0 )
+
+    if (this->Data)
+    {
+        if constexpr (AllocationPolicy == AllocationPolicy::Heap)
+        {
+            ::free(this->Data);
+        }
+    }
+
+    this->Size     = InCount;
+    this->Capacity = InCount;
+
+    this->Data = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
+    ::memcpy(this->Data, InOther.Data + InOffset, this->Size * sizeof(T));
 
     return *this;
 }

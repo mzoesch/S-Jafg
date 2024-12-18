@@ -15,7 +15,7 @@ enum Type : int32
     Restart     = 0b0000'1000,
 };
 
-} /* ~Namespace EPlatformExit. */
+} /* ~Namespace EPlatformExit */
 
 #if PLATFORM_WINDOWS_WITH_MSVC
     typedef ::std::intptr_t  LPtrSize;
@@ -43,3 +43,17 @@ enum : int8 { POINTER_BYTE_SIZE = sizeof(LPtrSize) };
 typedef int64  LBigSizeTy;
 typedef uint64 LuBigSizeTy;
 typedef int32  LSizeTy;
+
+#define JTXTW(x)        LITERAL_WIDE(x)
+#define JTXT8(x)        LITERAL_UTF8(x)
+#define JTXTu(x)        LITERAL_UTF16(x)
+#define JTXTU(x)        LITERAL_UTF32(x)
+#if PLATFORM_USES_UTF8
+    #define JTXT(x) JTXT8(x)
+#elif PLATFORM_USES_UTF16
+    #define JTXT(x) JTXTu(x)
+#elif PLATFORM_USES_UTF32
+    #define JTXT(x) JTXTU(x)
+#else /* PLATFORM_USES_UTF32 */
+    #error "Could not resolve platform encoding."
+#endif /* !PLATFORM_USES_UTF8 */

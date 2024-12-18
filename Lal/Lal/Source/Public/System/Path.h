@@ -21,9 +21,9 @@ public:
     using TStringTy = InTStringTy;
     using LStringTy = TStringTy;
     using SizeType  = typename LStringTy::SizeType;
-    using LRune     = typename LStringTy::LRune;
+    using LRune     = typename LStringTy::CharacterTy;
 
-    inline static LRune StringTerminatorRune = LStringTy::StringTerminatorRune;
+    inline static LRune StringTerminatorRune = LStringTy::PublicTerminator;
     inline static LRune PathSeparator        = '/';
 
     FORCEINLINE  LPathBase() noexcept = default;
@@ -66,10 +66,10 @@ public:
     FORCEINLINE auto MoveOut() noexcept -> LStringTy { return std::move(this->Data); }
 
     /** Private iterator functions for range-based loops. Do not use these directly. */
-    FORCEINLINE auto begin()       noexcept -> Iterator<typename LStringTy::LRune>       { return this->Data.begin(); }
-    FORCEINLINE auto begin() const noexcept -> Iterator<const typename LStringTy::LRune> { return this->Data.begin(); }
-    FORCEINLINE auto end()         noexcept -> Iterator<typename LStringTy::LRune>       { return this->Data.end();   }
-    FORCEINLINE auto end()   const noexcept -> Iterator<const typename LStringTy::LRune> { return this->Data.end();   }
+    FORCEINLINE auto begin()       noexcept -> Iterator<LRune>       { return this->Data.begin(); }
+    FORCEINLINE auto begin() const noexcept -> Iterator<const LRune> { return this->Data.begin(); }
+    FORCEINLINE auto end()         noexcept -> Iterator<LRune>       { return this->Data.end();   }
+    FORCEINLINE auto end()   const noexcept -> Iterator<const LRune> { return this->Data.end();   }
 
     template <typename ... ArgyTy>
     static auto SprintF(const char* Format, const ArgyTy& ... Args) -> LPathBase<T> { return LSimpleString::SprintF(Format, Args ...); }
@@ -123,7 +123,7 @@ LPathBase<InTStringTy>& LPathBase<InTStringTy>::operator/=(const LRune* Other) n
 
     if (*this->Data.Peek() != LPathBase<T>::PathSeparator)
     {
-        this->Data.Add(&LPathBase<T>::PathSeparator);
+        this->Data.Add(LPathBase<T>::PathSeparator);
     }
 
     if (*Other == LPathBase<T>::PathSeparator)

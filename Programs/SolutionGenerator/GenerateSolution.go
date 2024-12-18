@@ -27,11 +27,12 @@ func GenerateSolution() {
 }
 
 func GenerateLalUnitTestsSolution() {
-    // DEPRECATED - Now using CMake.
-    //var handle *os.File = PrepareLuaBuildFile()
-    //WriteLuaBuildFileBodyForLalUnitTests(handle)
-    //
-    //Shared.CloseFile(handle)
+    MakeVslfModuleProjects()
+
+    var handle *os.File = PrepareLuaBuildFile()
+    WriteLuaBuildFileBodyForLalUnitTests(handle)
+
+    Shared.CloseFile(handle)
 
     fmt.Println("Finished generating Lal unit tests solution.")
 
@@ -57,7 +58,7 @@ func MakeVslfModuleProjects() {
 }
 
 func GetVslfModuleProjectRelativeDir(mod *Shared.Module) string {
-    return fmt.Sprintf("%s/%s/%s", Shared.GeneratedProjectsDir, mod.Parent.GetRelativeProjectDir(), mod.GetUsableName())
+    return fmt.Sprintf("%s/%s/%s", Shared.GeneratedTranslationsDir, mod.Parent.GetRelativeProjectDir(), mod.GetUsableName())
 }
 
 func MakeVslfModuleForModule(mod *Shared.Module) {
@@ -215,7 +216,7 @@ func WriteAllLuaBuildFileSharedLogic(builder *strings.Builder) {
 
     WriteWithIndent(builder, 4, "filter 'platforms:Windows64'\n")
     WriteWithIndent(builder, 8, "systemversion 'latest'\n")
-    WriteWithIndent(builder, 8, "defines { 'PLATFORM_WINDOWS' }\n")
+    WriteWithIndent(builder, 8, "defines { 'PLATFORM_WINDOWS', 'PLATFORM_WINDOWS_WITH_MSVC' }\n")
     WriteWithIndent(builder, 8, "linkoptions { '/SUBSYSTEM:WINDOWS' }\n")
     WriteWithIndent(builder, 4, "filter {}\n")
 
@@ -680,8 +681,8 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
         //    Shared.GApp.GetCheckedModuleByName("Lal").GetRelativeModuleDir(),
         //))
         WriteWithIndent(builder, indent+4, fmt.Sprintf(
-            "pchsource '%s/Source/Private/%sModule.cpp'\n",
-            mod.GetRelativeModuleDir(), mod.GetUsableName(),
+            "pchsource '%s%s/Source/Private/%sModule.cpp'\n",
+            Shared.GeneratedTranslationsDir, mod.GetRelativeModuleDir(), mod.GetUsableName(),
         ))
     }
 

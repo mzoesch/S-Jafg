@@ -23,6 +23,8 @@ EPlatformExit::Type LalLaunchTestMain(void)
     EPlatformExit::Type ExitCode = EPlatformExit::Success;
     ::Jafg::Tester::RunTests(&ExitCode);
 
+    std::cout.flush();
+
     return ExitCode;
 }
 

@@ -6,9 +6,13 @@ namespace Jafg
 {
 
 /**
+ * !!! @Deprecated Use MyString.h instead. !!!
+ *
  * Jafg interpretation of a simple american standard code for information interchange string.
  * A string is mutable and can therefore be modified in place.
  * Strings are null-terminated and can therefore be used in C-style functions.
+ *
+ * @Deprecated Use MyString.h instead.
  */
 class LAsciiString
 {

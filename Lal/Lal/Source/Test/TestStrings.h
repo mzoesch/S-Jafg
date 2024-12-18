@@ -3,6 +3,7 @@
 #pragma once
 
 #include "TestInclude.h"
+#include "Containers/AsciiString.h"
 
 TEST_CASE(SimpleAsciiStringOperations, "Lal.Strings")
 {
@@ -94,7 +95,7 @@ TEST_CASE(SimpleAsciiStringManipulations, "Lal.Strings")
 
     LAsciiString MyStr;
     CHECK_EQUALS( "Simple Manipulations.", MyStr,               "" )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr,            "\0" )
+    CHECK_EQUALS( "Simple Manipulations.", MyStr,             "\0" )
     CHECK_EQUALS( "Simple Manipulations.", MyStr.GetSize(),      0 )
     CHECK_EQUALS( "Simple Manipulations.", MyStr.GetRuneCount(), 0 )
 

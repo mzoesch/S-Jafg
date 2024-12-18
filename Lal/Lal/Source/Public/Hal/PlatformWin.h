@@ -51,6 +51,10 @@
     #endif /* __cplusplus != 199711L */
 #endif /* __cplusplus */
 
+#ifndef _MSVC_LANG
+    #error "_MSVC_LANG is not defined."
+#endif /* !_MSVC_LANG */
+
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler config
 
@@ -436,6 +440,14 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
  */
 #define PLATFORM_USES_LITTLE_ENDIAN     1
 #define PLATFORM_USES_64_BIT            1
+
+#if !(_MSVC_LANG >= 201703L)
+    #if !defined(PLATFORM_USES_UTF8) || PLATFORM_USES_UTF8 == 0
+        #error "PLATFORM_USES_UTF8 is not defined or set to 0. Missing /utf-8 compiler flag."
+    #endif /* !PLATFORM_USES_UTF8 */
+#else /* !(_MSVC_LANG >= 201703L) */
+    #define PLATFORM_USES_UTF8          1
+#endif /* _MSVC_LANG >= 201703L */
 
 struct LWinPlatformBreakDefines final
 {
