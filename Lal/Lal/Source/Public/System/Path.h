@@ -23,7 +23,7 @@ public:
     using SizeType  = typename LStringTy::SizeType;
     using LRune     = typename LStringTy::CharacterTy;
 
-    inline static LRune StringTerminatorRune = LStringTy::PublicTerminator;
+    inline static LRune StringTerminatorRune = LStringTy::Terminator;
     inline static LRune PathSeparator        = '/';
 
     FORCEINLINE  LPathBase() noexcept = default;

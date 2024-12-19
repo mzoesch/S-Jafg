@@ -82,6 +82,8 @@
 #include "Containers/ComplexQueue.h"
 #include "Containers/SimpleQueue.h"
 #include "Containers/Format.h"
+#include "Containers/StringUtility.h"
+#include "Containers/StringConversions.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Misc

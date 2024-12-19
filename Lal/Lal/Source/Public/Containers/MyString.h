@@ -25,7 +25,7 @@ public:
     template <bool Condition, typename RetVal>
     using TEnableIf = std::enable_if_t<Condition, RetVal>;
 
-    inline static const CharacterTy PublicTerminator = TraitsTy::Terminator;
+    inline static const CharacterTy Terminator = TraitsTy::Terminator;
 
     FORCEINLINE static constexpr bool IsNativeChar()  noexcept { return std::is_same_v<char,     CharacterTy>; }
     FORCEINLINE static constexpr bool IsNativeChar8() noexcept { return std::is_same_v<char8_t,  CharacterTy>; }

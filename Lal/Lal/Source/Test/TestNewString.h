@@ -4,6 +4,9 @@
 
 #include "TestInclude.h"
 
+#include "Containers/StringUtility.h"
+#include "Containers/StringConversions.h"
+
 #pragma region Simple String
 
 TEST_CASE(SimpleNewSimpleStringOperations, "Lal.Strings")
@@ -1306,6 +1309,39 @@ TEST_CASE(NewEightStringAdvancedCharacters, "Lal.Strings")
     MyStr = "これ";
     MyStr = LEightString::SprintF("{}わ{}です{}", MyStr.ToPtr(), "テスト", "。");
     CHECK_EQUALS("Advanced characters.", MyStr, "これわテストです。" )
+
+    return;
+}
+
+TEST_CASE(StringUtlity, "Lal.Strings")
+{
+    using namespace Jafg;
+
+    LEightString MyStr = "これわテストです。";
+    CHECK_EQUALS( "String utility.", MyStr, "これわテストです。" )
+    CHECK_TRUE(   "String utility.", Str::IsValidUtf8(MyStr.ToC())  )
+    CHECK_FALSE(  "String utility.", Str::IsValidAscii(MyStr.ToC()) )
+    MyStr = "Abc";
+    CHECK_EQUALS( "String utility.", MyStr, "Abc" )
+    CHECK_TRUE(   "String utility.", Str::IsValidAscii(MyStr.ToC()) )
+    CHECK_TRUE(   "String utility.", Str::IsValidUtf8(MyStr.ToC())  )
+
+    return;
+}
+
+TEST_CASE(StringConversion, "Lal.Strings")
+{
+    using namespace Jafg;
+
+    LEightString MyStr = "1234567890Abcdefg";
+    CHECK_EQUALS( "String conversion.", MyStr, "1234567890Abcdefg" )
+    LSimpleString MySimpleStr = Str::ToSimpleString(MyStr);
+    CHECK_EQUALS( "String conversion.", MySimpleStr, "1234567890Abcdefg" )
+
+    MyStr = "123Abcテスト";
+    CHECK_EQUALS( "String conversion.", MyStr, "123Abcテスト" )
+    MySimpleStr = Str::ToSimpleString(MyStr);
+    CHECK_EQUALS( "String conversion.", MySimpleStr, "123Abc" )
 
     return;
 }
