@@ -1303,6 +1303,10 @@ TEST_CASE(NewEightStringAdvancedCharacters, "Lal.Strings")
     MyStr.InlineSub(2, 5);
     CHECK_EQUALS("Advanced characters.", MyStr, "わテストで" )
 
+    MyStr = "これ";
+    MyStr = LEightString::SprintF("{}わ{}です{}", MyStr.ToPtr(), "テスト", "。");
+    CHECK_EQUALS("Advanced characters.", MyStr, "これわテストです。" )
+
     return;
 }
 
