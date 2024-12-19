@@ -68,9 +68,6 @@ struct LGenericPlatformTypes
      */
     typedef wchar_t             LWideChar;
 
-    /** A switchable character - either LAnsiChar or LWideChar. */
-    typedef LAsciiChar          LChar;
-
     typedef std::wstring        LWideString;
     typedef std::string         LStringLegacy;
 

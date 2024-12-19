@@ -675,15 +675,15 @@ func WriteLuaBuildFileForSpecificModule(builder *strings.Builder, indent int, mo
         //    WriteWithIndent(builder, indent+4, "-- Somehow this does not work??\n")
         //    WriteWithIndent(builder, indent+4, "-- The IDEA will just set the pch to /Yu but we, of course, need /Yc.\n")
         //}
-        WriteWithIndent(builder, indent+4, "pchheader 'CoreAfx.h'\n")
+        //WriteWithIndent(builder, indent+4, "pchheader 'CoreAfx.h'\n")
         //WriteWithIndent(builder, indent+4, fmt.Sprintf(
         //    "pchsource '%s/Source/Private/CoreAfx.cpp'\n",
         //    Shared.GApp.GetCheckedModuleByName("Lal").GetRelativeModuleDir(),
         //))
-        WriteWithIndent(builder, indent+4, fmt.Sprintf(
-            "pchsource '%s%s/Source/Private/%sModule.cpp'\n",
-            Shared.GeneratedTranslationsDir, mod.GetRelativeModuleDir(), mod.GetUsableName(),
-        ))
+        //WriteWithIndent(builder, indent+4, fmt.Sprintf(
+        //    "pchsource '%s%s/Source/Private/%sModule.cpp'\n",
+        //    Shared.GeneratedTranslationsDir, mod.GetRelativeModuleDir(), mod.GetUsableName(),
+        //))
     }
 
     return

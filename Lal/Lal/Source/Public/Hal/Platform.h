@@ -188,7 +188,6 @@ typedef LPlatformTypes::int64         int64;
 
 typedef LPlatformTypes::LAsciiChar    LAsciiChar;
 typedef LPlatformTypes::LWideChar     LWideChar;
-typedef LPlatformTypes::LChar         LChar;
 
 typedef LPlatformTypes::LStringLegacy LStringLegacy;
 typedef LPlatformTypes::LWideString   LWideString;
@@ -201,15 +200,21 @@ typedef LPlatformTypes::LNullptrTy    LNullptrTy;
     Statically assert that the necessary platform-specific macros are defined.
 -----------------------------------------------------------------------------*/
 
-static_assert(sizeof(uint8)   == 1, "uint8  is not 1 byte.");
-static_assert(sizeof(uint16)  == 2, "uint16 is not 2 bytes.");
-static_assert(sizeof(uint32)  == 4, "uint32 is not 4 bytes.");
-static_assert(sizeof(uint64)  == 8, "uint64 is not 8 bytes.");
-static_assert(sizeof(int8)    == 1, "int8   is not 1 byte.");
-static_assert(sizeof(int16)   == 2, "int16  is not 2 bytes.");
-static_assert(sizeof(int32)   == 4, "int32  is not 4 bytes.");
-static_assert(sizeof(int64)   == 8, "int64  is not 8 bytes.");
-static_assert(sizeof(LChar)   == 1, "LChar  is not 1 byte.");
+static_assert(sizeof(LAsciiChar) == 1, "LAsciiChar is not 1 byte.");
+static_assert(sizeof(uint8)      == 1, "uint8  is not 1 byte.");
+static_assert(sizeof(uint16)     == 2, "uint16 is not 2 bytes.");
+static_assert(sizeof(uint32)     == 4, "uint32 is not 4 bytes.");
+static_assert(sizeof(uint64)     == 8, "uint64 is not 8 bytes.");
+static_assert(sizeof(int8)       == 1, "int8   is not 1 byte.");
+static_assert(sizeof(int16)      == 2, "int16  is not 2 bytes.");
+static_assert(sizeof(int32)      == 4, "int32  is not 4 bytes.");
+static_assert(sizeof(int64)      == 8, "int64  is not 8 bytes.");
+
+static_assert(sizeof(char)     == 1, "char is not 1 byte.");
+static_assert(sizeof(wchar_t)  == 2, "wchar_t is not 2 bytes.");
+static_assert(sizeof(char16_t) == 2, "char16_t is not 2 bytes.");
+static_assert(sizeof(char32_t) == 4, "char32_t is not 4 bytes.");
+static_assert(sizeof(char8_t)  == 1, "char8_t is not 1 byte.");
 
 #if PLATFORM_USES_64_BIT
     static_assert(sizeof(uint64) == sizeof(void*), "uint64 is not the same size as a pointer.");

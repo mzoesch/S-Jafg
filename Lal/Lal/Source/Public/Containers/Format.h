@@ -9,10 +9,10 @@ namespace Jafg
 {
 
 template <typename ... ArgTy>
-NODISCARD LSimpleString Format(const LChar* Format, const ArgTy&... Args);
+NODISCARD LSimpleString Format(const char* Format, const ArgTy&... Args);
 
 template <typename ... ArgTy>
-NODISCARD LStringLegacy FormatLegacy(const LChar* Format, const ArgTy& ... Args);
+NODISCARD LStringLegacy FormatLegacy(const char* Format, const ArgTy& ... Args);
 
 template <typename ArgTy>
 inline auto FormatArgLegacy(const ArgTy Arg);
@@ -44,14 +44,14 @@ template <typename ArgTy>
 inline auto FormatArgLegacy(const ArgTy Arg) UNSUPPORTED_TEMPLATED_SPECIALIZATION(ArgTy, return ArgTy { })
 
 template <typename ... ArgTy>
-NODISCARD LSimpleString Format(const LChar* Format, const ArgTy&... Args)
+NODISCARD LSimpleString Format(const char* Format, const ArgTy&... Args)
 {
     LSimpleString Out = Jafg::FormatLegacy(Format, Args...).c_str();
     return Out;
 }
 
 template <typename ... ArgTy>
-NODISCARD LStringLegacy FormatLegacy(const LChar* Format, const ArgTy& ... Args)
+NODISCARD LStringLegacy FormatLegacy(const char* Format, const ArgTy& ... Args)
 {
     if constexpr (sizeof ... (Args) == 0)
     {

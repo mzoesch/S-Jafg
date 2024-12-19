@@ -23,7 +23,7 @@ public:
      * A rune is a single grapheme represented by a single byte.
      * Said grapheme has to be a valid ascii character.
      */
-    using LRune = LChar;
+    using LRune = char;
 
     inline static LRune StringTerminatorRune = '\0';
 
@@ -125,17 +125,17 @@ public:
     FORCEINLINE bool EndsWith(const LRune* InOther) const;
     FORCEINLINE bool EndsWith(const LAsciiString& InOther) const;
 
-    FORCEINLINE auto Replace(const LChar Old, const LChar New) -> void;
-    FORCEINLINE auto FindFirst(const LChar InChar) const -> int32;
-    FORCEINLINE auto FindSecond(const LChar InChar) const -> int32;
-    FORCEINLINE auto FindLast(const LChar InChar) const -> int32;
+    FORCEINLINE auto Replace(const char Old, const char New) -> void;
+    FORCEINLINE auto FindFirst(const char InChar) const -> int32;
+    FORCEINLINE auto FindSecond(const char InChar) const -> int32;
+    FORCEINLINE auto FindLast(const char InChar) const -> int32;
     FORCEINLINE auto InlineCut(const int32 InIndex) -> void;
     FORCEINLINE auto Cut(const int32 InIndex) const -> LAsciiString;
     FORCEINLINE auto InlineSub(const int32 InIndex, const int32 InCount) -> void;
     FORCEINLINE auto InlineSubIdx(const int32 InIndexA, const int32 InIndexB) -> void;
     FORCEINLINE auto Sub(const int32 InIndex, const int32 InCount) const -> LAsciiString;
     FORCEINLINE auto SubIdx(const int32 InIndexA, const int32 InIndexB) const -> LAsciiString;
-    FORCEINLINE auto Count(const LChar InChar) const -> int32;
+    FORCEINLINE auto Count(const char InChar) const -> int32;
 
     /** Private iterator functions for range-based loops. Do not use these directly. */
     FORCEINLINE auto begin()       noexcept -> Iterator<LRune>       ;
@@ -687,7 +687,7 @@ FORCEINLINE bool Jafg::LAsciiString::EndsWith(const LAsciiString& InOther) const
     return true;
 }
 
-inline void Jafg::LAsciiString::Replace(const LChar Old, const LChar New)
+inline void Jafg::LAsciiString::Replace(const char Old, const char New)
 {
     for (LRune& Rune : this->Data)
     {
@@ -702,7 +702,7 @@ inline void Jafg::LAsciiString::Replace(const LChar Old, const LChar New)
     return;
 }
 
-FORCEINLINE auto Jafg::LAsciiString::FindFirst(const LChar InChar) const -> int32
+FORCEINLINE auto Jafg::LAsciiString::FindFirst(const char InChar) const -> int32
 {
     if (this->Data.IsData() == false)
     {
@@ -722,7 +722,7 @@ FORCEINLINE auto Jafg::LAsciiString::FindFirst(const LChar InChar) const -> int3
     return INDEX_NONE;
 }
 
-FORCEINLINE int32 Jafg::LAsciiString::FindSecond(const LChar InChar) const
+FORCEINLINE int32 Jafg::LAsciiString::FindSecond(const char InChar) const
 {
     if (this->Data.IsData() == false)
     {
@@ -749,7 +749,7 @@ FORCEINLINE int32 Jafg::LAsciiString::FindSecond(const LChar InChar) const
     return INDEX_NONE;
 }
 
-FORCEINLINE int32 Jafg::LAsciiString::FindLast(const LChar InChar) const
+FORCEINLINE int32 Jafg::LAsciiString::FindLast(const char InChar) const
 {
     if (this->Data.IsData() == false)
     {
@@ -872,7 +872,7 @@ FORCEINLINE Jafg::LAsciiString Jafg::LAsciiString::SubIdx(const int32 InIndexA, 
     return this->Sub(InIndexA, InIndexB - InIndexA);
 }
 
-FORCEINLINE int32 Jafg::LAsciiString::Count(const LChar InChar) const
+FORCEINLINE int32 Jafg::LAsciiString::Count(const char InChar) const
 {
     int32 Count = 0;
     for (const LRune Rune : this->Data)

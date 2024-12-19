@@ -618,7 +618,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr.GetCharacterCount(),   0 )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr.GetRuneCount(),        0 )
 
-    MyStr = JTXT8("Abc");
+    MyStr = "Abc";
     CHECK_NOT_NULL( "Assigned string.", MyStr.ToC()                       )
     CHECK_EQUALS(   "Assigned string.", MyStr,                      "Abc" )
     CHECK_EQUALS(   "Assigned string.", MyStr,                    "Abc\0" )
@@ -629,7 +629,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Assigned string.", MyStr.GetCharacterCount(),      3 )
     CHECK_EQUALS(   "Assigned string.", MyStr.GetRuneCount(),           3 )
 
-    MyStr += JTXT8("d");
+    MyStr += "d";
     CHECK_NOT_NULL( "Appended string.", MyStr.ToC()                      )
     CHECK_EQUALS(   "Appended string.", MyStr,                    "Abcd" )
     CHECK_EQUALS(   "Appended string.", MyStr,                  "Abcd\0" )
@@ -646,7 +646,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Appended string.", MyStr.GetCharacterCount(),     4 )
     CHECK_EQUALS(   "Appended string.", MyStr.GetRuneCount(),          4 )
 
-    LEightString MyOtherStr = JTXT8("efgh");
+    LEightString MyOtherStr = "efgh";
     CHECK_NOT_NULL( "Implicitly constructed string.", MyOtherStr.ToC()                  )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr,                "efgh" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr,              "efgh\0" )
@@ -675,8 +675,8 @@ TEST_CASE(RawLiteralNewEightStringOperations, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LEightString MyStr  = JTXT8("Abc");
-    LEightString MyStr2 = JTXT8("Abc");
+    LEightString MyStr  = "Abc";
+    LEightString MyStr2 = "Abc";
 
     constexpr char       RawChars[]  = { 'A', 'b', 'c', '\0' };
     const char*          RawCharsPtr = RawChars;
@@ -951,7 +951,7 @@ TEST_CASE(NewEightStringStartsWith, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LEightString MyStr = JTXT8("");
+    LEightString MyStr = "";
     CHECK_TRUE(  "Empty string.", MyStr.StartsWith("")      )
     CHECK_TRUE(  "Empty string.", MyStr.StartsWith("\0")    )
     CHECK_FALSE( "Empty string.", MyStr.StartsWith("A")     )
@@ -1007,14 +1007,14 @@ TEST_CASE(NewEightStringCount, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LEightString MyStr = JTXT8("AaAAbcAAdbcAA"); // A:7; a:1; b:2; c:2; d:1
+    LEightString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
     CHECK_EQUALS( "String count.", MyStr, "AaAAbcAAdbcAA" )
 
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("A")),    7 )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("a")),    1 )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("b")),    2 )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("c")),    2 )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("d")),    1 )
+    CHECK_EQUALS( "String count.", MyStr.Count("A"),    7 )
+    CHECK_EQUALS( "String count.", MyStr.Count("a"),    1 )
+    CHECK_EQUALS( "String count.", MyStr.Count("b"),    2 )
+    CHECK_EQUALS( "String count.", MyStr.Count("c"),    2 )
+    CHECK_EQUALS( "String count.", MyStr.Count("d"),    1 )
 
     CHECK_EQUALS( "String count.", MyStr.Count('A'),    7 )
     CHECK_EQUALS( "String count.", MyStr.Count('a'),    1 )
@@ -1023,75 +1023,40 @@ TEST_CASE(NewEightStringCount, "Lal.Strings")
     CHECK_EQUALS( "String count.", MyStr.Count('d'),    1 )
 
     MyStr.Reset(0);
-    CHECK_EQUALS( "String count.", MyStr,                  "" )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("A")), 0 )
+    CHECK_EQUALS( "String count.", MyStr,           "" )
+    CHECK_EQUALS( "String count.", MyStr.Count("A"), 0 )
 
     MyStr.Empty();
-    CHECK_EQUALS( "String count.", MyStr,                  "" )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("A")), 0 )
+    CHECK_EQUALS( "String count.", MyStr,           "" )
+    CHECK_EQUALS( "String count.", MyStr.Count("A"), 0 )
 
     LEightString MyOtherStr;
-    CHECK_EQUALS( "String count.", MyOtherStr,                  "" )
-    CHECK_EQUALS( "String count.", MyOtherStr.Count(JTXT8("A")), 0 )
+    CHECK_EQUALS( "String count.", MyOtherStr,           "" )
+    CHECK_EQUALS( "String count.", MyOtherStr.Count("A"), 0 )
 
     return;
 }
 
-
-TEST_CASE(NewSimpleStringCount, "Lal.Strings")
+TEST_CASE(NewEightStringReplace, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LEightString MyStr = JTXT8("AaAAbcAAdbcAA"); // A:7; a:1; b:2; c:2; d:1
-    CHECK_EQUALS( "String count.", MyStr, "AaAAbcAAdbcAA" )
-
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("A")),    7 )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("a")),    1 )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("b")),    2 )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("c")),    2 )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("d")),    1 )
-
-    CHECK_EQUALS( "String count.", MyStr.Count('A'),    7 )
-    CHECK_EQUALS( "String count.", MyStr.Count('a'),    1 )
-    CHECK_EQUALS( "String count.", MyStr.Count('b'),    2 )
-    CHECK_EQUALS( "String count.", MyStr.Count('c'),    2 )
-    CHECK_EQUALS( "String count.", MyStr.Count('d'),    1 )
-
-    MyStr.Reset(0);
-    CHECK_EQUALS( "String count.", MyStr, "" )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("A")), 0 )
-
-    MyStr.Empty();
-    CHECK_EQUALS( "String count.", MyStr, "" )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("A")), 0 )
-
-    LEightString MyOtherStr;
-    CHECK_EQUALS( "String count.", MyOtherStr, "" )
-    CHECK_EQUALS( "String count.", MyOtherStr.Count(JTXT8("A")), 0 )
-
-    return;
-}
-
-TEST_CASE(NewSimpleStringReplace, "Lal.Strings")
-{
-    using namespace Jafg;
-
-    LEightString MyStr = JTXT8("AaAAbcAAdbcAA"); // A:7; a:1; b:2; c:2; d:1
+    LEightString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
     CHECK_EQUALS( "String count.", MyStr,     "AaAAbcAAdbcAA" )
 
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("A")), 7 )
-    MyStr.Replace(JTXT8("A"), JTXT8("X"));
-    CHECK_EQUALS( "String count.", MyStr,     "XaXXbcXXdbcXX" )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("A")), 0 )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("X")), 7 )
+    CHECK_EQUALS( "String count.", MyStr.Count("A"),    7 )
+    MyStr.Replace("A", "X");
+    CHECK_EQUALS( "String count.", MyStr, "XaXXbcXXdbcXX" )
+    CHECK_EQUALS( "String count.", MyStr.Count("A"),    0 )
+    CHECK_EQUALS( "String count.", MyStr.Count("X"),    7 )
     MyStr.Reset(0);
-    CHECK_EQUALS( "String count.", MyStr,           "" )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("A")), 0 )
+    CHECK_EQUALS( "String count.", MyStr,              "" )
+    CHECK_EQUALS( "String count.", MyStr.Count("A"),    0 )
     MyStr.Empty();
-    CHECK_EQUALS( "String count.", MyStr,           "" )
-    CHECK_EQUALS( "String count.", MyStr.Count(JTXT8("A")), 0 )
+    CHECK_EQUALS( "String count.", MyStr,              "" )
+    CHECK_EQUALS( "String count.", MyStr.Count("A"),    0 )
 
-    MyStr = JTXT8("AaAAbcAAdbcAA");
+    MyStr = "AaAAbcAAdbcAA";
     CHECK_EQUALS( "String count.", MyStr, "AaAAbcAAdbcAA" )
     CHECK_EQUALS( "String count.", MyStr.Count(*"A"),   7 )
     MyStr.Replace(*"A", *"X");
@@ -1108,19 +1073,19 @@ TEST_CASE(NewSimpleStringReplace, "Lal.Strings")
     return;
 }
 
-TEST_CASE(NewSimpleStringFindFirst, "Lal.Strings")
+TEST_CASE(NewEightStringFindFirst, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LEightString MyStr = JTXT8("AaAAbcAAdbcAA"); // A:7; a:1; b:2; c:2; d:1
+    LEightString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
     CHECK_EQUALS( "String count.", MyStr,   "AaAAbcAAdbcAA" )
 
-    CHECK_EQUALS( "String count.", MyStr.FindFirst(JTXT8("A")),  0 )
-    CHECK_EQUALS( "String count.", MyStr.FindFirst(JTXT8("a")),  1 )
-    CHECK_EQUALS( "String count.", MyStr.FindFirst(JTXT8("b")),  4 )
-    CHECK_EQUALS( "String count.", MyStr.FindFirst(JTXT8("c")),  5 )
-    CHECK_EQUALS( "String count.", MyStr.FindFirst(JTXT8("d")),  8 )
-    CHECK_EQUALS( "String count.", MyStr.FindFirst(JTXT8("e")), -1 )
+    CHECK_EQUALS( "String count.", MyStr.FindFirst("A"),   0 )
+    CHECK_EQUALS( "String count.", MyStr.FindFirst("a"),   1 )
+    CHECK_EQUALS( "String count.", MyStr.FindFirst("b"),   4 )
+    CHECK_EQUALS( "String count.", MyStr.FindFirst("c"),   5 )
+    CHECK_EQUALS( "String count.", MyStr.FindFirst("d"),   8 )
+    CHECK_EQUALS( "String count.", MyStr.FindFirst("e"),  -1 )
 
     CHECK_EQUALS( "String count.", MyStr.FindFirst(*"A"),  0 )
     CHECK_EQUALS( "String count.", MyStr.FindFirst(*"a"),  1 )
@@ -1132,19 +1097,19 @@ TEST_CASE(NewSimpleStringFindFirst, "Lal.Strings")
     return;
 }
 
-TEST_CASE(NewSimpleStringFindSecond, "Lal.Strings")
+TEST_CASE(NewEightStringFindSecond, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LEightString MyStr = JTXT8("AaAAbcAAdbcAA"); // A:7; a:1; b:2; c:2; d:1
-    CHECK_EQUALS( "String count.", MyStr,   "AaAAbcAAdbcAA" )
+    LEightString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
+    CHECK_EQUALS( "String count.", MyStr,     "AaAAbcAAdbcAA" )
 
-    CHECK_EQUALS( "String count.", MyStr.FindSecond(JTXT8("A")),  2 )
-    CHECK_EQUALS( "String count.", MyStr.FindSecond(JTXT8("a")), -1 )
-    CHECK_EQUALS( "String count.", MyStr.FindSecond(JTXT8("b")),  9 )
-    CHECK_EQUALS( "String count.", MyStr.FindSecond(JTXT8("c")), 10 )
-    CHECK_EQUALS( "String count.", MyStr.FindSecond(JTXT8("d")), -1 )
-    CHECK_EQUALS( "String count.", MyStr.FindSecond(JTXT8("e")), -1 )
+    CHECK_EQUALS( "String count.", MyStr.FindSecond("A"),   2 )
+    CHECK_EQUALS( "String count.", MyStr.FindSecond("a"),  -1 )
+    CHECK_EQUALS( "String count.", MyStr.FindSecond("b"),   9 )
+    CHECK_EQUALS( "String count.", MyStr.FindSecond("c"),  10 )
+    CHECK_EQUALS( "String count.", MyStr.FindSecond("d"),  -1 )
+    CHECK_EQUALS( "String count.", MyStr.FindSecond("e"),  -1 )
 
     CHECK_EQUALS( "String count.", MyStr.FindSecond(*"A"),  2 )
     CHECK_EQUALS( "String count.", MyStr.FindSecond(*"a"), -1 )
@@ -1156,19 +1121,19 @@ TEST_CASE(NewSimpleStringFindSecond, "Lal.Strings")
     return;
 }
 
-TEST_CASE(NewSimpleStringFindLast, "Lal.Strings")
+TEST_CASE(NewEightStringFindLast, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LEightString MyStr = JTXT8("AaAAbcAAdbcAA"); // A:7; a:1; b:2; c:2; d:1
+    LEightString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
     CHECK_EQUALS( "String count.", MyStr,   "AaAAbcAAdbcAA" )
 
-    CHECK_EQUALS( "String count.", MyStr.FindLast(JTXT8("A")), 12 )
-    CHECK_EQUALS( "String count.", MyStr.FindLast(JTXT8("a")),  1 )
-    CHECK_EQUALS( "String count.", MyStr.FindLast(JTXT8("b")),  9 )
-    CHECK_EQUALS( "String count.", MyStr.FindLast(JTXT8("c")), 10 )
-    CHECK_EQUALS( "String count.", MyStr.FindLast(JTXT8("d")),  8 )
-    CHECK_EQUALS( "String count.", MyStr.FindLast(JTXT8("e")), -1 )
+    CHECK_EQUALS( "String count.", MyStr.FindLast("A"),  12 )
+    CHECK_EQUALS( "String count.", MyStr.FindLast("a"),   1 )
+    CHECK_EQUALS( "String count.", MyStr.FindLast("b"),   9 )
+    CHECK_EQUALS( "String count.", MyStr.FindLast("c"),  10 )
+    CHECK_EQUALS( "String count.", MyStr.FindLast("d"),   8 )
+    CHECK_EQUALS( "String count.", MyStr.FindLast("e"),  -1 )
 
     CHECK_EQUALS( "String count.", MyStr.FindLast(*"A"), 12 )
     CHECK_EQUALS( "String count.", MyStr.FindLast(*"a"),  1 )
@@ -1180,11 +1145,11 @@ TEST_CASE(NewSimpleStringFindLast, "Lal.Strings")
     return;
 }
 
-TEST_CASE(NewSimpleStringCuts, "Lal.Strings")
+TEST_CASE(NewEightStringCuts, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LEightString MyStr = JTXT8("abcdefghijklmn");
+    LEightString MyStr = "abcdefghijklmn";
     CHECK_EQUALS( "String cut.", MyStr, "abcdefghijklmn" )
 
     MyStr.InlineCut(10);
@@ -1200,23 +1165,23 @@ TEST_CASE(NewSimpleStringCuts, "Lal.Strings")
     return;
 }
 
-TEST_CASE(NewSimpleStringSubs, "Lal.Strings")
+TEST_CASE(NewEightStringSubs, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LEightString MyStr = JTXT8("abcdefghijklmn");
+    LEightString MyStr = "abcdefghijklmn";
     CHECK_EQUALS( "String sub.", MyStr, "abcdefghijklmn" )
 
     MyStr.InlineSub(5, 2);
     CHECK_EQUALS( "String sub.", MyStr, "fg" )
 
-    MyStr = JTXT8("abcdefghijklmn");
+    MyStr = "abcdefghijklmn";
     CHECK_EQUALS( "String sub.", MyStr, "abcdefghijklmn" )
     MyStr.InlineSubIdx(5, 7);
     CHECK_EQUALS( "String sub.", MyStr, "fg" )
 
-    MyStr = JTXT8("abcdefghijklmn");
-    CHECK_EQUALS( "String sub.", MyStr, "abcdefghijklmn" )
+    MyStr = "abcdefghijklmn";
+    CHECK_EQUALS( "String sub.", MyStr,         "abcdefghijklmn" )
     LEightString MyOtherString = MyStr.Sub(5, 2);
     CHECK_EQUALS( "String sub.", MyStr,         "abcdefghijklmn" )
     CHECK_EQUALS( "String sub.", MyOtherString,             "fg" )
@@ -1227,6 +1192,116 @@ TEST_CASE(NewSimpleStringSubs, "Lal.Strings")
     CHECK_EQUALS( "String sub.", MyOtherString, "abcdefghijklmn" )
     MyOtherString = MyOtherString.SubIdx(5, 7);
     CHECK_EQUALS( "String sub.", MyOtherString, "fg" )
+
+    return;
+}
+
+TEST_CASE(NewEightStringAdvancedCharacters, "Lal.Strings")
+{
+    using namespace Jafg;
+
+    LEightString MyStr = "これわテストです。";
+    CHECK_EQUALS( "Advanced characters.", MyStr, "これわテストです。" )
+    CHECK_EQUALS( "Advanced characters.", MyStr.GetSize(),           28 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.GetByteSize(),       28 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.GetCharacterCount(), 27 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.GetRuneCount(),       9 )
+
+    CHECK_FALSE( "Advanced characters.", MyStr.StartsWith("")          )
+    CHECK_FALSE( "Advanced characters.", MyStr.StartsWith("\0")        )
+    CHECK_TRUE(  "Advanced characters.", MyStr.StartsWith("こ")        )
+    CHECK_TRUE(  "Advanced characters.", MyStr.StartsWith("これ")       )
+    CHECK_FALSE( "Advanced characters.", MyStr.StartsWith("これテ")     )
+
+    MyStr = "で";
+    CHECK_FALSE( "Advanced characters.", MyStr.StartsWith("")          )
+    CHECK_FALSE( "Advanced characters.", MyStr.StartsWith("\0")        )
+    CHECK_EQUALS("Advanced characters.", MyStr, "で"                   )
+    CHECK_EQUALS("Advanced characters.", MyStr.Count("で"),          1 )
+    CHECK_EQUALS("Advanced characters.", MyStr.Count("て"),          0 )
+    CHECK_EQUALS("Advanced characters.", MyStr.Count("こ"),          0 )
+    CHECK_TRUE(  "Advanced characters.", MyStr.StartsWith("で")        )
+    CHECK_FALSE( "Advanced characters.", MyStr.StartsWith("でこ")      )
+    CHECK_FALSE( "Advanced characters.", MyStr.StartsWith("て")        )
+
+    MyStr.Replace("で", "こ");
+    CHECK_FALSE( "Advanced characters.", MyStr.StartsWith("")          )
+    CHECK_FALSE( "Advanced characters.", MyStr.StartsWith("\0")        )
+    CHECK_EQUALS("Advanced characters.", MyStr, "こ"                   )
+    CHECK_EQUALS("Advanced characters.", MyStr.Count("で"),          0 )
+    CHECK_EQUALS("Advanced characters.", MyStr.Count("こ"),          1 )
+    CHECK_EQUALS("Advanced characters.", MyStr.Count("て"),          0 )
+
+    MyStr = "これわテストです。";
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindFirst("こ"),  0 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindFirst("れ"),  1 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindFirst("わ"),  2 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindFirst("テ"),  3 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindFirst("ス"),  4 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindFirst("ト"),  5 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindFirst("で"),  6 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindFirst("す"),  7 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindFirst("。"),  8 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindFirst("あ"), -1 )
+
+    MyStr = "こふふこああこあふここ"; // こ:5; ふ:3; あ:3
+    CHECK_EQUALS( "Advanced characters.", MyStr,  "こふふこああこあふここ" )
+    CHECK_EQUALS( "Advanced characters.", MyStr.GetSize(),           34 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.GetByteSize(),       34 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.GetCharacterCount(), 33 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.GetRuneCount(),      11 )
+
+    CHECK_EQUALS( "Advanced characters.", MyStr.Count("こ"),         5 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindSecond("こ"),    3 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindSecond("ふ"),    2 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindSecond("あ"),    5 )
+
+    CHECK_EQUALS( "Advanced characters.", MyStr, "こふふこああこあふここ" )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindLast("こ"),     10 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindLast("ふ"),      8 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.FindLast("あ"),      7 )
+
+    MyStr = "こふふこああこあふここ"; // こ:5; ふ:3; あ:3
+    CHECK_EQUALS("Advanced characters.", MyStr, "こふふこああこあふここ" )
+    CHECK_EQUALS("Advanced characters.", MyStr.Count("こ"),         5 )
+    CHECK_EQUALS("Advanced characters.", MyStr.Count("ふ"),         3 )
+    CHECK_EQUALS("Advanced characters.", MyStr.Count("あ"),         3 )
+    CHECK_EQUALS("Advanced characters.", MyStr.Count("ほ"),         0 )
+
+    MyStr = "äää";
+    CHECK_EQUALS("Advanced characters.", MyStr, "äää" )
+    CHECK_EQUALS("Advanced characters.", MyStr.Count("ä"),         3 )
+    CHECK_EQUALS("Advanced characters.", MyStr.Count("a"),         0 )
+
+    MyStr = "これわテストです。";
+    CHECK_EQUALS("Advanced characters.", MyStr, "これわテストです。" )
+    MyStr.InlineCut(3);
+    CHECK_EQUALS("Advanced characters.", MyStr,           "これわ" )
+    MyStr = "これわテストです。";
+    CHECK_EQUALS("Advanced characters.", MyStr, "これわテストです。" )
+    LEightString MyOtherString = MyStr.Cut(5);
+    CHECK_EQUALS("Advanced characters.", MyStr,         "これわテストです。" )
+    CHECK_EQUALS("Advanced characters.", MyOtherString,       "これわテス"  )
+    MyOtherString = MyStr.Cut(0);
+    CHECK_EQUALS("Advanced characters.", MyOtherString, "" )
+    MyOtherString = MyStr.Cut(1);
+    CHECK_EQUALS("Advanced characters.", MyOtherString, "こ" )
+    MyOtherString = MyStr;
+    CHECK_EQUALS("Advanced characters.", MyOtherString, "これわテストです。" )
+    MyOtherString.InlineSub(5, 2);
+    CHECK_EQUALS("Advanced characters.", MyOtherString, "トで" )
+    MyOtherString = MyStr;
+    CHECK_EQUALS("Advanced characters.", MyOtherString, "これわテストです。" )
+    MyOtherString.InlineSubIdx(5, 8);
+    CHECK_EQUALS("Advanced characters.", MyOtherString, "トです" )
+    MyOtherString = MyStr.Sub(2, 5);
+    CHECK_EQUALS("Advanced characters.", MyOtherString, "わテストで" )
+    MyOtherString = MyStr.Sub(2, 7);
+    CHECK_EQUALS("Advanced characters.", MyOtherString, "わテストです。" )
+    MyOtherString = MyStr.SubIdx(2, 5);
+    CHECK_EQUALS("Advanced characters.", MyOtherString, "わテス" )
+    MyStr.InlineSub(2, 5);
+    CHECK_EQUALS("Advanced characters.", MyStr, "わテストで" )
 
     return;
 }

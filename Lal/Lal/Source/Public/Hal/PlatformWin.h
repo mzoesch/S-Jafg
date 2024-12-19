@@ -283,7 +283,7 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
 #endif /* PLATFORM_WINDOWS_WITH_MSVC */
     }
 
-    static const LChar* Ws2CStr(const LWideString& Ws, LStringLegacy& OutContainer)
+    static const char* Ws2CStr(const LWideString& Ws, LStringLegacy& OutContainer)
     {
         OutContainer = Ws2S(Ws);
         return OutContainer.c_str();

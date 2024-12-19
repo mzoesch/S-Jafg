@@ -45,7 +45,7 @@ const std::string& Jafg::Tester::LSimpleTestCase::GetFilename() const
     return this->Filename;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestEqual(const LChar* What, const int32 A, const int32 B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestEqual(const char* What, const int32 A, const int32 B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -60,7 +60,7 @@ void Jafg::Tester::LSimpleTestCase::TestEqual(const LChar* What, const int32 A, 
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestEqual(const LChar* What, const int64 A, const int64 B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestEqual(const char* What, const int64 A, const int64 B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -76,7 +76,7 @@ void Jafg::Tester::LSimpleTestCase::TestEqual(const LChar* What, const int64 A, 
 }
 
 void Jafg::Tester::LSimpleTestCase::TestEqual(
-    const LChar* What,
+    const char* What,
     const float A,
     const float B,
     const int32 LineNumber,
@@ -97,7 +97,7 @@ void Jafg::Tester::LSimpleTestCase::TestEqual(
 }
 
 void Jafg::Tester::LSimpleTestCase::TestEqual(
-    const LChar* What,
+    const char* What,
     const double A,
     const double B,
     const int32 LineNumber,
@@ -117,7 +117,7 @@ void Jafg::Tester::LSimpleTestCase::TestEqual(
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestNotEqual(const LChar* What, const int32 A, const int32 B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestNotEqual(const char* What, const int32 A, const int32 B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -132,7 +132,7 @@ void Jafg::Tester::LSimpleTestCase::TestNotEqual(const LChar* What, const int32 
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestNotEqual(const LChar* What, const int64 A, const int64 B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestNotEqual(const char* What, const int64 A, const int64 B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -148,7 +148,7 @@ void Jafg::Tester::LSimpleTestCase::TestNotEqual(const LChar* What, const int64 
 }
 
 void Jafg::Tester::LSimpleTestCase::TestNotEqual(
-    const LChar* What,
+    const char* What,
     const float A,
     const float B,
     const int32 LineNumber,
@@ -169,7 +169,7 @@ void Jafg::Tester::LSimpleTestCase::TestNotEqual(
 }
 
 void Jafg::Tester::LSimpleTestCase::TestNotEqual(
-    const LChar* What,
+    const char* What,
     const double A,
     const double B,
     const int32 LineNumber,
@@ -189,7 +189,7 @@ void Jafg::Tester::LSimpleTestCase::TestNotEqual(
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestLess(const LChar* What, const int32 A, const int32 B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestLess(const char* What, const int32 A, const int32 B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -204,7 +204,7 @@ void Jafg::Tester::LSimpleTestCase::TestLess(const LChar* What, const int32 A, c
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestLess(const LChar* What, const int64 A, const int64 B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestLess(const char* What, const int64 A, const int64 B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -219,7 +219,7 @@ void Jafg::Tester::LSimpleTestCase::TestLess(const LChar* What, const int64 A, c
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestLess(const LChar* What, const float A, const float B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestLess(const char* What, const float A, const float B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -234,7 +234,7 @@ void Jafg::Tester::LSimpleTestCase::TestLess(const LChar* What, const float A, c
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestLess(const LChar* What, const double A, const double B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestLess(const char* What, const double A, const double B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -249,7 +249,7 @@ void Jafg::Tester::LSimpleTestCase::TestLess(const LChar* What, const double A, 
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestGreater(const LChar* What, const int32 A, const int32 B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestGreater(const char* What, const int32 A, const int32 B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -264,7 +264,7 @@ void Jafg::Tester::LSimpleTestCase::TestGreater(const LChar* What, const int32 A
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestGreater(const LChar* What, const int64 A, const int64 B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestGreater(const char* What, const int64 A, const int64 B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -279,7 +279,7 @@ void Jafg::Tester::LSimpleTestCase::TestGreater(const LChar* What, const int64 A
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestGreater(const LChar* What, const float A, const float B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestGreater(const char* What, const float A, const float B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -294,7 +294,7 @@ void Jafg::Tester::LSimpleTestCase::TestGreater(const LChar* What, const float A
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestGreater(const LChar* What, const double A, const double B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestGreater(const char* What, const double A, const double B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -309,7 +309,7 @@ void Jafg::Tester::LSimpleTestCase::TestGreater(const LChar* What, const double 
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const LChar* What, const int32 A, const int32 B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const char* What, const int32 A, const int32 B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -324,7 +324,7 @@ void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const LChar* What, const int
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const LChar* What, const int64 A, const int64 B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const char* What, const int64 A, const int64 B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -339,7 +339,7 @@ void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const LChar* What, const int
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const LChar* What, const float A, const float B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const char* What, const float A, const float B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -354,7 +354,7 @@ void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const LChar* What, const flo
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const LChar* What, const double A, const double B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const char* What, const double A, const double B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -369,7 +369,7 @@ void Jafg::Tester::LSimpleTestCase::TestLessOrEqual(const LChar* What, const dou
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const LChar* What, const int32 A, const int32 B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const char* What, const int32 A, const int32 B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -384,7 +384,7 @@ void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const LChar* What, const 
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const LChar* What, const int64 A, const int64 B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const char* What, const int64 A, const int64 B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -399,7 +399,7 @@ void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const LChar* What, const 
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const LChar* What, const float A, const float B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const char* What, const float A, const float B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -414,7 +414,7 @@ void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const LChar* What, const 
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const LChar* What, const double A, const double B, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const char* What, const double A, const double B, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -429,7 +429,7 @@ void Jafg::Tester::LSimpleTestCase::TestGreaterOrEqual(const LChar* What, const 
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestNull(const LChar* What, const void* A, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestNull(const char* What, const void* A, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -444,7 +444,7 @@ void Jafg::Tester::LSimpleTestCase::TestNull(const LChar* What, const void* A, c
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestNotNull(const LChar* What, const void* A, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestNotNull(const char* What, const void* A, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -459,7 +459,7 @@ void Jafg::Tester::LSimpleTestCase::TestNotNull(const LChar* What, const void* A
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestTrue(const LChar* What, const bool A, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestTrue(const char* What, const bool A, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -474,7 +474,7 @@ void Jafg::Tester::LSimpleTestCase::TestTrue(const LChar* What, const bool A, co
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::TestFalse(const LChar* What, const bool A, const int32 LineNumber)
+void Jafg::Tester::LSimpleTestCase::TestFalse(const char* What, const bool A, const int32 LineNumber)
 {
     this->IncreaseTestCount();
 
@@ -489,13 +489,13 @@ void Jafg::Tester::LSimpleTestCase::TestFalse(const LChar* What, const bool A, c
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::AddError(const LChar* What, const int32 LineNumber /* = -1 */)
+void Jafg::Tester::LSimpleTestCase::AddError(const char* What, const int32 LineNumber /* = -1 */)
 {
     this->Errors.emplace_back(std::format("FAULT {}. [Inside file {} at line {}.]", What, this->GetFilename(), LineNumber).c_str());
     return;
 }
 
-void Jafg::Tester::LSimpleTestCase::AddError(const LChar* What, const LChar* ExpectedValue, const int32 LineNumber /* = -1 */)
+void Jafg::Tester::LSimpleTestCase::AddError(const char* What, const char* ExpectedValue, const int32 LineNumber /* = -1 */)
 {
     this->Errors.emplace_back(std::format("FAULT {}. Expected: {{ {} }}. [Inside file {} at line {}.]", What, ExpectedValue, this->GetFilename(), LineNumber).c_str());
     return;

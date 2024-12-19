@@ -1020,16 +1020,18 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
     this->PanicValidState();
 #endif /* CHECK_STRING_VALIDITY */
 
+    SizeType Out    = 0;
     SizeType Cursor = 0;
     const CharacterTy* DataPtr = this->ToPtr();
     while (*(DataPtr + Cursor) != TraitsTy::Terminator)
     {
         if (TraitsTy::IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + Cursor, InRune))
         {
-            return Cursor;
+            return Out;
         }
 
         TraitsTy::GoToNextRune(DataPtr, Cursor);
+        ++Out;
 
         continue;
     }
@@ -1068,6 +1070,7 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
 #endif /* CHECK_STRING_VALIDITY */
 
     bool bFound = false;
+    SizeType Out    = 0;
     SizeType Cursor = 0;
     const CharacterTy* DataPtr = this->ToPtr();
     while (*(DataPtr + Cursor) != TraitsTy::Terminator)
@@ -1076,13 +1079,14 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
         {
             if (bFound)
             {
-                return Cursor;
+                return Out;
             }
 
             bFound = true;
         }
 
         TraitsTy::GoToNextRune(DataPtr, Cursor);
+        ++Out;
 
         continue;
     }
@@ -1118,6 +1122,7 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
         return INDEX_NONE;
     }
 
+    SizeType Out    = 0;
     SizeType Cursor = this->GetSize();
     const CharacterTy* DataPtr = this->ToPtr();
     while (Cursor >= 0)
@@ -1127,8 +1132,10 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
 
         if (TraitsTy::IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + Cursor, InRune))
         {
-            return Cursor;
+            return this->GetRuneCount() - Out;
         }
+
+        ++Out;
 
         continue;
     }
@@ -1166,7 +1173,7 @@ LStringBase<InCharacterTy, InTraitsTy> LStringBase<InCharacterTy, InTraitsTy>::C
     check( this->Data.IsValidIndex(Cursor) )
 
     LStringBase Sub;
-    Sub.Data.CopyFrom(this->Data, InRuneIndex + 1);
+    Sub.Data.CopyFrom(this->Data, Cursor + 1);
     Sub.Data[Cursor] = TraitsTy::Terminator;
 
 #if CHECK_STRING_VALIDITY
