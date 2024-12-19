@@ -33,7 +33,7 @@ struct LDiskBlendTexture;
  */
 struct LDiskVoxelTexture final
 {
-    inline static LChar TexSectionDividerChar = '_';
+    inline static char TexSectionDividerChar = '_';
 
     LSimpleString Name;
 

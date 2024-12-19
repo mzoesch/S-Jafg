@@ -4,7 +4,7 @@
 
 #if PLATFORM_WINDOWS
 
-extern EPlatformExit::Type GuardedMain(const LChar* CmdLine);
+extern EPlatformExit::Type GuardedMain(const char* CmdLine);
 
 bool GPauseBeforeExit = false;
 

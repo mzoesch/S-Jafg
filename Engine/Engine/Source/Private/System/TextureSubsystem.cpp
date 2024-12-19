@@ -10,7 +10,7 @@ Jafg::LSimpleString Jafg::LDiskVoxelTexture::GetVoxelName() const
 {
     LSimpleString Out;
 
-    for (const LChar& Rune : this->Name)
+    for (const char& Rune : this->Name)
     {
         if (Rune == LDiskVoxelTexture::TexSectionDividerChar)
         {

@@ -141,7 +141,7 @@ void EngineExit()
     return;
 }
 
-EPlatformExit::Type GuardedMain(const LChar* CmdLine)
+EPlatformExit::Type GuardedMain(const char* CmdLine)
 {
 #if !PLATFORM_USES_NON_GENERIC_EXIT
     struct GuardedMainScope
