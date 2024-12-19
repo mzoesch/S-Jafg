@@ -52,6 +52,7 @@ public:
 
     virtual void Construct() override;
     virtual void Draw(LViewport& Context) const override;
+    virtual void Tick() override;
 
     virtual void UpdateDesiredSize() const override;
 
@@ -73,7 +74,7 @@ private:
     LColor Color = LColor::Black;
     float  Scale = 1.0f;
 
-    LSimpleString      Content;
+    LString            Content;
     LFontShaderContext ShaderContext;
 };
 

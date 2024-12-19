@@ -42,6 +42,11 @@ void Jafg::LSurface::TearDown()
     return;
 }
 
+void Jafg::LSurface::BeginNewFrame()
+{
+    this->PlatformInput.Empty();
+}
+
 void Jafg::LSurface::SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor)
 {
     this->InputMode   = InMode;

@@ -12,6 +12,7 @@
 namespace Jafg
 {
 
+class LLocalEgo;
 class WWidgetNode;
 class WWidgetParent;
 class WUserWidget;
@@ -292,6 +293,10 @@ public:
     virtual LReply       OnKeyDown(LKeyEvent& InKeyEvent) { return LReply::Unhandled(); }
     virtual LReply       OnKeyUp(LKeyEvent& InKeyEvent) { return LReply::Unhandled(); }
 
+            bool IsFocusWidget() const;
+    virtual bool IsFocusWidgetTransitive() const; /* Slow. */
+    virtual bool IsFocusWidgetTransitive(const LViewport* InViewport) const;
+
     virtual auto Draw(LViewport& Context) const -> void { }
 
     FORCEINLINE auto ShouldNowTick() const -> bool;
@@ -326,6 +331,9 @@ public:
 
     /** @return The size of the current viewport in pixels. */
     virtual auto GetViewportSize() const -> LIntVector2;
+    virtual auto GetViewport() const -> LViewport*;
+    virtual auto GetCheckedViewport() const -> LViewport*;
+    virtual auto GetPanickedViewport() const -> LViewport*;
 
     /** @return The top left corner of this widget relative to its parent. If no parent, relative to the viewport. */
     LVector2 GetRelativeTopLeftFromOuter() const;
@@ -360,6 +368,8 @@ public:
     FORCEINLINE auto SetAnchor(const EAnchor::Type InAnchor) -> WWidgetNode& { this->Anchor = InAnchor; return *this; }
 
     LApplicationInstance* GetApplicationInstance() const;
+    LEngine* GetEngine() const;
+    LLocalEgo* GetLocalEgo() const;
 
 private:
 

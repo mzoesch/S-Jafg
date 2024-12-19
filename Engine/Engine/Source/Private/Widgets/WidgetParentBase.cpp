@@ -2,6 +2,24 @@
 
 #include "CoreAfx.h"
 #include "Widgets/WidgetParentBase.h"
+#include "Widgets/Viewport.h"
+
+void Jafg::WWidgetParentBase::Tick()
+{
+    Super::Tick();
+
+    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    {
+        if (ChildSlot->Content->ShouldNowTick())
+        {
+            ChildSlot->Content->Tick();
+        }
+
+        continue;
+    }
+
+    return;
+}
 
 Jafg::LCursorReply Jafg::WWidgetParentBase::SweepMouse(LViewport& Context, const LVector2& InLocation)
 {
@@ -46,6 +64,37 @@ Jafg::LReply Jafg::WWidgetParentBase::SweepFocusTest(LViewport& Context, const L
     }
 
     return WWidgetNode::SweepFocusTest(Context, InLocation);
+}
+
+bool Jafg::WWidgetParentBase::IsFocusWidgetTransitive() const
+{
+    const LViewport* Viewport = this->GetViewport();
+    if (Viewport == nullptr)
+    {
+        return false;
+    }
+
+    return this->IsFocusWidgetTransitive(Viewport);
+}
+
+bool Jafg::WWidgetParentBase::IsFocusWidgetTransitive(const LViewport* InViewport) const
+{
+    if (Super::IsFocusWidgetTransitive(InViewport))
+    {
+        return true;
+    }
+
+    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    {
+        if (ChildSlot->Content->IsFocusWidgetTransitive(InViewport))
+        {
+            return true;
+        }
+
+        continue;
+    }
+
+    return false;
 }
 
 void Jafg::WWidgetParentBase::UpdateDesiredSize() const

@@ -37,6 +37,7 @@ public:
     virtual void OnUpdate();
     virtual void TearDown();
 
+    virtual void BeginNewFrame();
     virtual void PollInputs() = 0;
     virtual void PollEvents() = 0;
 
@@ -74,12 +75,18 @@ public:
     bool IsNewKeyUp(const LKey InKey) const;
     FORCEINLINE bool IsNewKeyUp(const LRawInput& InRawInput) const { return this->IsNewKeyUp(InRawInput.Key); }
 
+    FORCEINLINE bool    HasBufferedPlatformInput() const { return this->PlatformInput.IsEmpty() == false; }
+    FORCEINLINE LString GetPlatformInput() const { return this->PlatformInput; }
+
 protected:
 
     EInputMode::Type InputMode = EInputMode::UserInterface;
     bool bShowCursor = false;
     bool bMouseLocationIsMeaningful = false;
     LVector2 MouseLocation = LVector2::ZeroVector;
+
+    /** This frame platform-localized input. */
+    LString PlatformInput;
 
 private:
 

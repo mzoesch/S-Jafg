@@ -30,6 +30,7 @@ public:
     // WWidgetNode implementation
     virtual void Draw(LViewport& Context) const override;
     virtual auto GetViewportSize() const -> LIntVector2 override;
+    virtual auto GetViewport() const -> LViewport* override;
     virtual auto RemoveFromParent(const bool bDestroy = true) -> void override;
     virtual void UpdateDesiredSize() const override;
     // ~WWidgetNode implementation

@@ -7,7 +7,7 @@
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
-#include "User/Frontend/Osd/ChatScreen.h"
+#include "User/Frontend/Osd/ConsoleScreen.h"
 #include "User/Frontend/Osd/DebugScreen.h"
 #include "User/Frontend/Osd/PauseMenu.h"
 #include "User/Input/UserInput.h"

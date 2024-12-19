@@ -27,6 +27,7 @@ public:
     virtual void OnFree() override;
 
     static bool  GetDesiredSize(const LSimpleString& InContent, const float InScale, LVector2& OutSize);
+    static bool GetDesiredSize(const LEightString& InContent, const float InScale, LVector2& OutSize);
     static float GetApproximateHeight(const float InScale);
 
 private:

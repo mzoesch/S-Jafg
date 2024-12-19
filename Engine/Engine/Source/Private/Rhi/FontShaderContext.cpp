@@ -274,6 +274,12 @@ bool LFontShaderContext::GetDesiredSize(const LSimpleString& InContent, const fl
     return true;
 }
 
+bool LFontShaderContext::GetDesiredSize(const LEightString& InContent, const float InScale, LVector2& OutSize)
+{
+    LSimpleString Content = Str::ToSimpleString(InContent);
+    return LFontShaderContext::GetDesiredSize(Content, InScale, OutSize);
+}
+
 float LFontShaderContext::GetApproximateHeight(const float InScale)
 {
     if (Characters.empty())

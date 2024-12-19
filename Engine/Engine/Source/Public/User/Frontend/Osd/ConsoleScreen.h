@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Widgets/UserWidget.h"
-#include "ChatScreen.generated.h"
+#include "ConsoleScreen.generated.h"
 
 namespace Jafg
 {

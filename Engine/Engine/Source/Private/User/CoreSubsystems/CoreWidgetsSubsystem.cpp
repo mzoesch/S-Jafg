@@ -6,7 +6,7 @@
 #include "Widgets/UserWidget.h"
 #include "User/Frontend/Osd/DebugScreen.h"
 #include "User/Frontend/Hud/Crosshair.h"
-#include "User/Frontend/Osd/ChatScreen.h"
+#include "User/Frontend/Osd/ConsoleScreen.h"
 #include "User/Frontend/Osd/PauseMenu.h"
 
 void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)

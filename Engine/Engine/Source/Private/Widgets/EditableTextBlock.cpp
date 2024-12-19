@@ -2,6 +2,9 @@
 
 #include "CoreAfx.h"
 #include "Widgets/EditableTextBlock.h"
+
+#include "Platform/Surface.h"
+#include "User/LocalEgo.h"
 #include "Widgets/Viewport.h"
 
 Jafg::LSimpleString Jafg::LexToString(const ETextCommit::Type InType)
@@ -17,8 +20,10 @@ Jafg::LSimpleString Jafg::LexToString(const ETextCommit::Type InType)
 
 Jafg::WEditableTextBlock::WEditableTextBlock(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
+    this->SetShouldTick(false);
     this->SetVisibility(EWidgetVisibility::Visible);
     this->SetAnchor(EAnchor::Fill);
+
     return;
 }
 
@@ -37,14 +42,28 @@ void Jafg::WEditableTextBlock::Draw(LViewport& Context) const
 
     if (this->Content.IsEmpty() == false && (this->GetDesiredSize().X > 0.0f && this->GetDesiredSize().Y > 0.0f))
     {
+        const LSimpleString ConvContent = Str::ToSimpleString(this->Content);
+
         LFontShaderContextDrawArgs Args;
-        Args.Content     = &this->Content;
+        Args.Content     = &ConvContent;
         Args.Offset      = this->GetAnchoredTopLeftFromMostOuter(Context, this);
         Args.Padding     = this->GetPadding();
         Args.DesiredSize = this->GetDesiredSize();
         Args.Color       = this->Color;
         Args.Scale       = this->Scale;
         this->ShaderContext.Draw(Context, Args);
+    }
+
+    return;
+}
+
+void Jafg::WEditableTextBlock::Tick()
+{
+    Super::Tick();
+
+    if (this->GetLocalEgo()->GetPrimarySurface()->HasBufferedPlatformInput())
+    {
+        this->Content += this->GetLocalEgo()->GetPrimarySurface()->GetPlatformInput();
     }
 
     return;
@@ -80,17 +99,17 @@ Jafg::LCursorReply Jafg::WEditableTextBlock::OnCursorLeave()
 void Jafg::WEditableTextBlock::OnFocusReceived()
 {
     Super::OnFocusReceived();
+    this->SetShouldTick(true);
 }
 
 void Jafg::WEditableTextBlock::OnFocusLost()
 {
     Super::OnFocusLost();
+    this->SetShouldTick(false);
 }
 
 Jafg::LReply Jafg::WEditableTextBlock::OnKeyDown(LKeyEvent& InKeyEvent)
 {
-    LOG_WARNING(LogTemporal, "{}", LexToString(InKeyEvent.GetKey()))
-    this->Content += LexToString(InKeyEvent.GetKey());
     return LReply::Handled();
 }
 

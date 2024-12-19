@@ -35,6 +35,16 @@ Jafg::LIntVector2 Jafg::WUserWidget::GetViewportSize() const
     return Super::GetViewportSize();
 }
 
+Jafg::LViewport* Jafg::WUserWidget::GetViewport() const
+{
+    if (this->AttachedViewport)
+    {
+        return this->AttachedViewport;
+    }
+
+    return Super::GetViewport();
+}
+
 void Jafg::WUserWidget::AddToViewport(LViewport* InViewport)
 {
     this->AttachedViewport = InViewport;

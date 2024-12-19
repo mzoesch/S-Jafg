@@ -53,6 +53,7 @@ void Jafg::LLocalEgo::Tick(const float DeltaTime)
 
     this->UserInput->BeginNewFrame();
 
+    this->GetPrimarySurface()->BeginNewFrame();
     this->GetPrimarySurface()->PollInputs();
     this->GetPrimarySurface()->PollEvents();
 

@@ -115,6 +115,21 @@ Jafg::LReply Jafg::WWidgetNode::SweepFocusTest(LViewport& Context, const LVector
     return { this };
 }
 
+bool Jafg::WWidgetNode::IsFocusWidget() const
+{
+    return this->GetViewport()->GetFocusedWidget() == this;
+}
+
+bool Jafg::WWidgetNode::IsFocusWidgetTransitive() const
+{
+    return this->GetViewport()->GetFocusedWidget() == this;
+}
+
+bool Jafg::WWidgetNode::IsFocusWidgetTransitive(const LViewport* InViewport) const
+{
+    return InViewport->GetFocusedWidget() == this;
+}
+
 void Jafg::WWidgetNode::RemoveFromParent(const bool bDestroy /* = true */)
 {
     if (this->Slot)
@@ -157,6 +172,36 @@ Jafg::LIntVector2 Jafg::WWidgetNode::GetViewportSize() const
     panic( "Failed to find window dimensions." )
 
     return LIntVector2::ZeroVector;
+}
+
+Jafg::LViewport* Jafg::WWidgetNode::GetViewport() const
+{
+    if (this->Slot)
+    {
+        check( this->Slot->Parent )
+        return this->Slot->Parent->GetViewport();
+    }
+
+    return nullptr;
+}
+
+Jafg::LViewport* Jafg::WWidgetNode::GetCheckedViewport() const
+{
+    LViewport* Viewport = this->GetViewport();
+    check( Viewport )
+    return Viewport;
+}
+
+Jafg::LViewport* Jafg::WWidgetNode::GetPanickedViewport() const
+{
+    if (LViewport* Viewport = this->GetViewport(); Viewport)
+    {
+        return Viewport;
+    }
+
+    panic ( "Failed to find viewport." )
+
+    return nullptr;
 }
 
 Jafg::LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromOuter() const
@@ -251,4 +296,14 @@ Jafg::LApplicationInstance* Jafg::WWidgetNode::GetApplicationInstance() const
 {
     checkSlow( GEngine )
     return GEngine->GetApplicationInstance();
+}
+
+Jafg::LEngine* Jafg::WWidgetNode::GetEngine() const
+{
+    return GEngine;
+}
+
+Jafg::LLocalEgo* Jafg::WWidgetNode::GetLocalEgo() const
+{
+    return GEngine->GetLocalEgo();
 }

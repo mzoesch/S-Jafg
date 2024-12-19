@@ -24,8 +24,13 @@ protected:
 
 public:
 
+    virtual void Tick() override;
+
     virtual auto SweepMouse(LViewport& Context, const LVector2& InLocation) -> LCursorReply override;
     virtual auto SweepFocusTest(LViewport& Context, const LVector2& InLocation) -> LReply override;
+
+    virtual bool IsFocusWidgetTransitive() const override final;
+    virtual bool IsFocusWidgetTransitive(const LViewport* InViewport) const override final;
 
     virtual void UpdateDesiredSize() const override;
     virtual void UpdateAnchoredSize(const LViewport& Context) const override;
