@@ -110,6 +110,11 @@ void Jafg::WEditableTextBlock::OnFocusLost()
 
 Jafg::LReply Jafg::WEditableTextBlock::OnKeyDown(LKeyEvent& InKeyEvent)
 {
+    if (InKeyEvent.GetKey() == EKeys::BackSpace || InKeyEvent.GetKey() == EKeys::PlatformDelete)
+    {
+        this->Content.Pop();
+    }
+
     return LReply::Handled();
 }
 

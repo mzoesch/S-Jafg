@@ -23,7 +23,7 @@ namespace EKeys
 
 inline constexpr LKey KeyBegin                  {   0 };
 inline constexpr LKey KeyEnd                    { 255 };
-inline constexpr LKey LastKey                   { 124 };
+inline constexpr LKey LastKey                   { 114 };
 /* Statically assert this so that in the future we do not forget to change begin and end - when changing the type. */
 static_assert(sizeof(LKey) == 1, "LKey must be 1 byte in size.");
 
@@ -146,27 +146,17 @@ inline constexpr LKey RightCommand              { 103 };
 inline constexpr LKey Semicolon                 { 104 };
 inline constexpr LKey Equals                    { 105 };
 inline constexpr LKey Comma                     { 106 };
-inline constexpr LKey Underscore                { 107 };
-inline constexpr LKey Hyphen                    { 108 };
-inline constexpr LKey Period                    { 109 };
-inline constexpr LKey Slash                     { 110 };
-inline constexpr LKey Tilde                     { 111 };
-inline constexpr LKey LeftBracket               { 112 };
-inline constexpr LKey Backslash                 { 113 };
-inline constexpr LKey RightBracket              { 114 };
-inline constexpr LKey Apostrophe                { 115 };
+inline constexpr LKey Hyphen                    { 107 };
+inline constexpr LKey Period                    { 108 };
+inline constexpr LKey Slash                     { 109 };
+inline constexpr LKey Tilde                     { 110 };
+inline constexpr LKey LeftBracket               { 111 };
+inline constexpr LKey Backslash                 { 112 };
+inline constexpr LKey RightBracket              { 113 };
+inline constexpr LKey Apostrophe                { 114 };
 
-inline constexpr LKey Ampersand                 { 116 };
-inline constexpr LKey Asterisk                  { 117 };
-inline constexpr LKey Caret                     { 118 };
-inline constexpr LKey Colon                     { 119 };
-inline constexpr LKey Dollar                    { 120 };
-inline constexpr LKey Exclamation               { 121 };
-inline constexpr LKey LeftParenthesis           { 122 };
-inline constexpr LKey RightParenthesis          { 123 };
-inline constexpr LKey Quote                     { 124 };
 /** Remember to change this here. */
-static_assert(EKeys::LastKey == EKeys::Quote, "Last key not valid.");
+static_assert(EKeys::LastKey == EKeys::Apostrophe, "Last key not valid.");
 
 inline constexpr LKey Unresolved                { 254 };
 

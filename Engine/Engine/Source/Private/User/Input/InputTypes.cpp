@@ -125,7 +125,6 @@ Jafg::LSimpleString Jafg::EKeys::ToString(const LKey Key)
     case EKeys::Semicolon:          return "Semicolon";
     case EKeys::Equals:             return "Equals";
     case EKeys::Comma:              return "Comma";
-    case EKeys::Underscore:         return "Underscore";
     case EKeys::Hyphen:             return "Hyphen";
     case EKeys::Period:             return "Period";
     case EKeys::Slash:              return "Slash";
@@ -134,16 +133,6 @@ Jafg::LSimpleString Jafg::EKeys::ToString(const LKey Key)
     case EKeys::Backslash:          return "Backslash";
     case EKeys::RightBracket:       return "RightBracket";
     case EKeys::Apostrophe:         return "Apostrophe";
-
-    case EKeys::Ampersand:          return "Ampersand";
-    case EKeys::Asterisk:           return "Asterisk";
-    case EKeys::Caret:              return "Caret";
-    case EKeys::Colon:              return "Colon";
-    case EKeys::Dollar:             return "Dollar";
-    case EKeys::Exclamation:        return "Exclamation";
-    case EKeys::LeftParenthesis:    return "LeftParenthesis";
-    case EKeys::RightParenthesis:   return "RightParenthesis";
-    case EKeys::Quote:              return "Quote";
 
     case EKeys::Unresolved:         return "Unresolved";
     case EKeys::PlatformDelete:     return "PlatformDelete";
