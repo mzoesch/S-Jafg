@@ -1310,6 +1310,27 @@ TEST_CASE(NewEightStringAdvancedCharacters, "Lal.Strings")
     MyStr = LEightString::SprintF("{}わ{}です{}", MyStr.ToPtr(), "テスト", "。");
     CHECK_EQUALS("Advanced characters.", MyStr, "これわテストです。" )
 
+    MyStr.Pop();
+    CHECK_EQUALS( "Advanced characters.", MyStr, "これわテストです" )
+    MyStr.Pop();
+    CHECK_EQUALS( "Advanced characters.", MyStr, "これわテストで" )
+    MyStr.Pop();
+    CHECK_EQUALS( "Advanced characters.", MyStr, "これわテスト" )
+    MyStr.Pop();
+    CHECK_EQUALS( "Advanced characters.", MyStr, "これわテス" )
+    MyStr.Pop();
+    CHECK_EQUALS( "Advanced characters.", MyStr, "これわテ" )
+    MyStr.Pop();
+    CHECK_EQUALS( "Advanced characters.", MyStr, "これわ" )
+    MyStr.Pop();
+    CHECK_EQUALS( "Advanced characters.", MyStr, "これ" )
+    MyStr.Pop();
+    CHECK_EQUALS( "Advanced characters.", MyStr, "こ" )
+    MyStr.Pop();
+    CHECK_EQUALS( "Advanced characters.", MyStr, "" )
+    CHECK_NULL(   "Advanced characters.", MyStr.GetUnderlyingDataStructure().GetData() )
+    CHECK_EQUALS( "Advanced characters.", *MyStr.Peek(), '\0' )
+
     return;
 }
 

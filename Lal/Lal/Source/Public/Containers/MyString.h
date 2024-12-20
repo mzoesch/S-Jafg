@@ -423,8 +423,12 @@ void LStringBase<InCharacterTy, InTraitsTy>::Pop()
 {
     if (this->GetCharacterCount() > 0)
     {
-        this->Data.Pop();
-        this->Data.Pop();
+        checkSlow( this->Peek() != &TraitsTy::Terminator )
+        this->Data.Pop(); /* Null terminator */
+
+        SizeType Cursor = this->GetSize(); /* Use size and not size-1 because we already popped the null terminator. */
+        TraitsTy::GoToPreviousRune(this->Data.GetData(), Cursor);
+        this->Data.Resize(Cursor);
 
         if (this->Data.IsEmpty())
         {
