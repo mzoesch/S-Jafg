@@ -1331,6 +1331,20 @@ TEST_CASE(NewEightStringAdvancedCharacters, "Lal.Strings")
     CHECK_NULL(   "Advanced characters.", MyStr.GetUnderlyingDataStructure().GetData() )
     CHECK_EQUALS( "Advanced characters.", *MyStr.Peek(), '\0' )
 
+    MyStr         = "これわです。";
+    MyOtherString = "テスト";
+    CHECK_EQUALS( "Advanced characters.", MyStr,    "これわです。" )
+    CHECK_EQUALS( "Advanced characters.", MyOtherString, "テスト" )
+    MyStr.AppendAt(3, MyOtherString.ToPtr());
+    CHECK_EQUALS( "Advanced characters.", MyStr, "これわテストです。" )
+
+    MyStr.RemoveAt(3);
+    CHECK_EQUALS( "Advanced characters.", MyStr, "これわストです。" )
+    MyStr.RemoveAt(3);
+    CHECK_EQUALS( "Advanced characters.", MyStr, "これわトです。" )
+    MyStr.RemoveAt(3);
+    CHECK_EQUALS( "Advanced characters.", MyStr, "これわです。" )
+
     return;
 }
 

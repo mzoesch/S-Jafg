@@ -86,6 +86,7 @@ public:
     template <bool Condition = IsDynamic()>
     FORCEINLINE auto Append(const Self&  InOther) noexcept -> TEnableIf<Condition, Self&>;
     FORCEINLINE auto Append(      Self&& InOther) noexcept -> Self&;
+    FORCEINLINE auto AppendAt(const SizeType InIndex, const T* InElements, const SizeType InCount) noexcept -> void;
 
     /**
      * Adds a new element to the array and zeroes the target memory while potentially
@@ -102,7 +103,8 @@ public:
     FORCEINLINE auto AddUninitialized() noexcept -> SizeType;
     FORCEINLINE auto AddUninitialized(const SizeType InCount) noexcept -> SizeType;
 
-    FORCEINLINE auto RemoveAt(const SizeType InIndex) noexcept -> void;
+    FORCEINLINE void RemoveAt(const SizeType InIndex) noexcept;
+    FORCEINLINE void RemoveAt(const SizeType InIndex, const SizeType InCount) noexcept;
 
     /**
      * Tries to remove the first occurrence of the provided element from the array.
@@ -552,6 +554,21 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Append(Self&& InOther) noex
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AppendAt(const SizeType InIndex, const T* InElements, const SizeType InCount) noexcept
+{
+    checkSlow( InElements )
+    check( this->IsValidIndex(InIndex) )
+
+    this->Reserve(this->Size + InCount);
+    ::memmove(this->Data + InIndex + InCount, this->Data + InIndex, (this->Size - InIndex) * sizeof(T));
+    ::memcpy(this->Data + InIndex, InElements, InCount * sizeof(T));
+    this->Size += InCount;
+    checkSlow( this->Size <= this->Capacity )
+
+    return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddZeroed() noexcept
 {
     if (this->IsCapped())
@@ -598,6 +615,29 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAt(const SizeTyp
     }
 
     --this->Size;
+
+    return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAt(const SizeType InIndex, const SizeType InCount) noexcept
+{
+    check( InCount > 0 )
+#if CHECK_CONTAINER_BOUNDS
+    check( this->IsValidIndex(InIndex + InCount) )
+#endif /* CHECK_CONTAINER_BOUNDS */
+
+    for (SizeType Index = InIndex; Index < InIndex + InCount; ++Index)
+    {
+        this->DestroyAt(Index);
+    }
+
+    if (InIndex + InCount < this->Size)
+    {
+        ::memmove(this->Data + InIndex, this->Data + InIndex + InCount, (this->Size - InIndex - InCount) * sizeof(T));
+    }
+
+    this->Size -= InCount;
 
     return;
 }

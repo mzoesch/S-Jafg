@@ -317,3 +317,52 @@ TEST_CASE(NonTrivialPointerTypeOperations, "Lal.Containers")
 
     return;
 }
+
+TEST_CASE(AppendAtArray, "Lal.Containers")
+{
+    using namespace Jafg;
+
+    TdhArray<int32> Arr = { 100, 101, 102, 103 };
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetSize(),                4 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetCapacity(),            4 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[0],                     100 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[1],                     101 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[2],                     102 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[3],                     103 )
+
+    int32* Data = new int32[4] { 1000, 1001, 1002, 1003 };
+    Arr.AppendAt(2, Data, 4);
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetSize(),                8 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetCapacity(),            8 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[0],                     100 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[1],                     101 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[2],                    1000 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[3],                    1001 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[4],                    1002 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[5],                    1003 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[6],                     102 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[7],                     103 )
+
+    delete Data;
+
+    return;
+}
+
+TEST_CASE(MultiRemoveAtIndexArray, "Lal.Containers")
+{
+    using namespace Jafg;
+
+    TdhArray<int32> Arr = { 100, 101, 102, 103, 104, 105, 106, 107, 108, 109 };
+    Arr.RemoveAt(5, 3);
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetSize(),                7 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetCapacity(),           10 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[0],                     100 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[1],                     101 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[2],                     102 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[3],                     103 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[4],                     104 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[5],                     108 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr[6],                     109 )
+
+    return;
+}

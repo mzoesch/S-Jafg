@@ -63,6 +63,11 @@ public:
     FORCEINLINE void Append(const CharacterTy* InString);
     FORCEINLINE void Append(const CharacterTy* InString, const SizeType InLength);
     FORCEINLINE void Append(const LStringBase& InOther);
+    FORCEINLINE void AppendAt(const SizeType InRuneIndex, const CharacterTy* InString);
+    FORCEINLINE void AppendAt(const SizeType InRuneIndex, const LStringBase& InOther);
+
+    /** Removes a single rune at a given index. */
+    FORCEINLINE void RemoveAt(const SizeType InRuneIndex);
 
     /** Pop the last rune. */
     FORCEINLINE void Pop();
@@ -410,6 +415,55 @@ void LStringBase<InCharacterTy, InTraitsTy>::Append(const LStringBase& InOther)
     }
 
     this->Data.Append(InOther.Data);
+
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+
+    return;
+}
+
+template <typename InCharacterTy, class InTraitsTy>
+void LStringBase<InCharacterTy, InTraitsTy>::AppendAt(const SizeType InRuneIndex, const CharacterTy* InString)
+{
+    checkSlow( InString )
+
+    const SizeType Length = TraitsTy::GetCharacterLength(InString);
+    if (Length == 0)
+    {
+        return;
+    }
+
+    SizeType Cursor = 0;
+    TraitsTy::GoToRune(this->Data.GetData(), InRuneIndex, Cursor);
+    checkSlow( this->Data.IsValidIndex(Cursor) )
+
+    this->Data.Reserve(this->Data.GetSize() + Length);
+    this->Data.AppendAt(Cursor, InString, Length);
+
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+
+    return;
+}
+
+template <typename InCharacterTy, class InTraitsTy>
+void LStringBase<InCharacterTy, InTraitsTy>::AppendAt(const SizeType InRuneIndex, const LStringBase& InOther)
+{
+    this->AppendAt(InRuneIndex, InOther.ToPtr());
+    return;
+}
+
+template <typename InCharacterTy, class InTraitsTy>
+void LStringBase<InCharacterTy, InTraitsTy>::RemoveAt(const SizeType InRuneIndex)
+{
+    checkSlow( this->Data.IsValidIndex(InRuneIndex) )
+
+    SizeType Cursor = 0;
+    TraitsTy::GoToRune(this->Data.GetData(), InRuneIndex, Cursor);
+    checkSlow( this->Data.IsValidIndex(Cursor) )
+    this->Data.RemoveAt(Cursor, TraitsTy::GetRuneSize(this->Data.GetData() + Cursor));
 
 #if CHECK_STRING_VALIDITY
     this->EnsureValidState();
