@@ -32,7 +32,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         UserInput->RegisterContext(std::move(Context));
     }
 
-    UserInput->ActivateContext("InConsole");
+    UserInput->ActivateContext("InMyWorld");
 
     LUserInputContext* ContextMyWorld   = UserInput->GetCheckedContextByName("InMyWorld");
     LUserInputContext* ContextInPause   = UserInput->GetCheckedContextByName("InPause");

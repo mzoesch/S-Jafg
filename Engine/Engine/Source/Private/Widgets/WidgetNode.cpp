@@ -130,6 +130,14 @@ bool Jafg::WWidgetNode::IsFocusWidgetTransitive(const LViewport* InViewport) con
     return InViewport->GetFocusedWidget() == this;
 }
 
+void Jafg::WWidgetNode::SetVisibility(const EWidgetVisibility::Type InVisibility)
+{
+    EWidgetVisibility::Type OldVisibility = this->Visibility;
+    this->Visibility = InVisibility;
+    this->OnVisibilityChanged(OldVisibility, InVisibility);
+    return;
+}
+
 void Jafg::WWidgetNode::RemoveFromParent(const bool bDestroy /* = true */)
 {
     if (this->Slot)

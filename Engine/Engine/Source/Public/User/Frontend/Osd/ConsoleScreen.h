@@ -8,6 +8,8 @@
 namespace Jafg
 {
 
+class WEditableTextBlock;
+
 DECLARE_JAFG_CLASS()
 class ENGINE_API WConsoleScreen final : public WUserWidget
 {
@@ -20,6 +22,12 @@ protected:
 public:
 
     virtual void Construct() override;
+
+    virtual void OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility) override;
+
+private:
+
+    WEditableTextBlock* EditableTextBlock = nullptr;
 };
 
 } /* ~Namespace Jafg */

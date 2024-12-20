@@ -15,8 +15,9 @@ namespace Jafg
  */
 struct LCaretBrush final
 {
-    LColor   Color = LColor::White;
-    LVector2 Size  = LVector2(1.0f, 0.85f);
+    LColor   Color   = LColor::White;
+    LVector2 Size    = LVector2(1.0f, 0.85f);
+    float    HOffset = 3.0f;
 };
 
 namespace ETextCommit
@@ -81,6 +82,9 @@ public:
     FORCEINLINE       LCaretBrush&  GetCaretBrush()                     { return this->CaretBrush; }
     FORCEINLINE const LCaretBrush&  GetCaretBrush() const               { return this->CaretBrush; }
     FORCEINLINE WEditableTextBlock& SetCaretBrush(const LCaretBrush& InBrush) { this->CaretBrush = InBrush; return *this; }
+
+    template <typename TNode> FORCEINLINE TNode& operator>>(TNode*& OutNode) { OutNode = this; return *this; }
+    template <typename TNode> FORCEINLINE TNode& operator>>(TNode& OutNode)  { OutNode = this; return *this; }
 
 private:
 

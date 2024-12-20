@@ -64,13 +64,8 @@ public:
         return *this;
     }
 
-    template <typename TNode>
-    FORCEINLINE auto operator>>(TNode*& OutNode) -> WTextBlock&
-    {
-        static_assert(std::is_base_of_v<WWidgetNode, TNode>, "TNode must be a subclass of WWidgetNode.");
-        OutNode = this;
-        return *this;
-    }
+    template <typename TNode> FORCEINLINE TNode& operator>>(TNode*& OutNode) { OutNode = this; return *this; }
+    template <typename TNode> FORCEINLINE TNode& operator>>(TNode& OutNode)  { OutNode = this; return *this; }
 
     ///////////////////////////////////////////////////////////////////////////////
     // ~Wsdsml

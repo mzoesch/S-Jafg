@@ -20,13 +20,12 @@ void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
 
     this->Crosshair = ConstructDeferredWidgetNode<WCrosshair>(this->GetOuter());
     this->Crosshair->AddToViewport(this->GetHud()->GetMainViewport());
-    // this->Crosshair->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
-    this->Crosshair->SetVisibility(EWidgetVisibility::Collapsed);
+    this->Crosshair->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
     MakeDeferredWidgetNodeFinal(this->Crosshair);
 
     this->ChatScreen = ConstructDeferredWidgetNode<WConsoleScreen>(this->GetOuter());
     this->ChatScreen->AddToViewport(this->GetHud()->GetMainViewport());
-    this->ChatScreen->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+    this->ChatScreen->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->ChatScreen);
 
     this->PauseMenu = ConstructDeferredWidgetNode<WPauseMenu>(this->GetOuter());

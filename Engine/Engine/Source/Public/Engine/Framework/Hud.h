@@ -52,6 +52,10 @@ public:
     }
     UNUSED bool ChangeWidgetVisibility(const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
 
+    bool FocusWidget(const WWidgetNode* InNode) const;
+    bool FocusWidgetChecked(const WWidgetNode* InNode) const;
+    bool FocusWidgetPanicked(const WWidgetNode* InNode) const;
+
 private:
 
     Private::LObjectContext* Outer;

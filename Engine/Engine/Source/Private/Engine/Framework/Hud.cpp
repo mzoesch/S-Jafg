@@ -34,6 +34,11 @@ void Jafg::LHud::Tick(LSurface& Surface, const bool bCheckInput)
     }
     else
     {
+        if (bCheckInput)
+        {
+            this->GetMainViewport()->DispatchInputs(Surface, LVector2(-1.0f));
+        }
+
         this->GetMainViewport()->OnMouseLeftViewport(Surface, bCheckInput == false);
     }
 
@@ -114,6 +119,29 @@ bool Jafg::LHud::ChangeWidgetVisibility(const LObjectClass* WidgetClass, const E
     }
 
     Widget->SetVisibility(InVisibility);
+
+    return true;
+}
+
+bool Jafg::LHud::FocusWidget(const WWidgetNode* InNode) const
+{
+    return this->GetMainViewport()->FocusWidgetNode(InNode);
+}
+
+bool Jafg::LHud::FocusWidgetChecked(const WWidgetNode* InNode) const
+{
+    const bool bOut = this->FocusWidget(InNode);
+    check( bOut )
+    return bOut;
+}
+
+bool Jafg::LHud::FocusWidgetPanicked(const WWidgetNode* InNode) const
+{
+    if (this->FocusWidget(InNode) == false)
+    {
+        panic( "Failed to focus widget." )
+        return false;
+    }
 
     return true;
 }

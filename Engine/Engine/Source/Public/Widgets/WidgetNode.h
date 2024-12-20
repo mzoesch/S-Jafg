@@ -185,6 +185,13 @@ enum Type : uint8
     IntransitiveHitTestInvisible,
 };
 
+FORCEINLINE bool IsDrawn(const EWidgetVisibility::Type InVisibility)
+{
+    return InVisibility == EWidgetVisibility::Visible
+        || InVisibility == EWidgetVisibility::TransitiveHitTestInvisible
+        || InVisibility == EWidgetVisibility::IntransitiveHitTestInvisible;
+}
+
 } /* ~Namespace EWidgetVisibility */
 ENGINE_API LSimpleString LexToString(const EWidgetVisibility::Type InVisibility);
 
@@ -313,8 +320,10 @@ public:
     FORCEINLINE auto IsCollapsed() const -> bool { return this->Visibility == EWidgetVisibility::Collapsed; }
     FORCEINLINE auto IsTransitiveHitTestInvisible() const -> bool { return this->Visibility == EWidgetVisibility::TransitiveHitTestInvisible; }
     FORCEINLINE auto IsIntransitiveHitTestInvisible() const -> bool { return this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible; }
-    FORCEINLINE auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> void { this->Visibility = InVisibility; }
+                auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> void ;
     FORCEINLINE auto SetVisibilityRet(const EWidgetVisibility::Type InVisibility) -> WWidgetNode& { this->Visibility = InVisibility; return *this; }
+
+    virtual void OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility) { }
 
     /**
      * Orphans the child from its parent widget.

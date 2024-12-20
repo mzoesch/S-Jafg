@@ -73,7 +73,7 @@ void Jafg::WEditableTextBlock::Draw(LViewport& Context) const
             CaretContent = this->Content;
         }
 
-        CaretTopLeft.X += LFontShaderContext::GetDesiredWidth(CaretContent, this->Scale);
+        CaretTopLeft.X += LFontShaderContext::GetDesiredWidth(CaretContent, this->Scale) + this->CaretBrush.HOffset;
 
         this->CaretShaderContext.Draw(
             Context,

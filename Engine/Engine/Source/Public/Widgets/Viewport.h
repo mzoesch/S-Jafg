@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreAfx.h"
+#include "WidgetNode.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "User/Input/Replies.h"
 
@@ -66,12 +67,15 @@ public:
     FORCEINLINE auto GetFocusedWidget() const -> const TNode* { return DynamicCast<TNode>(this->FocusedWidget); }
     FORCEINLINE auto GetFocusedWidget() const -> const WWidgetNode* { return this->FocusedWidget; }
     FORCEINLINE auto IsFocusedWidgetValid() const -> bool { return this->FocusedWidget != nullptr; }
+                bool FocusWidgetNode(const WWidgetNode* InNode);
     FORCEINLINE auto GetHoveredWidgets() const -> const TdhArray<WWidgetNode*>& { return this->HoveredWidgets; }
 
     /** @return True if in the last frame, this node was not added. */
     bool AddHoveredWidgetForFrame(WWidgetNode* Node);
 
 private:
+
+    void ChangeFocusUnsafe(const WWidgetNode* InNode);
 
     void RecalculateScaleFactor();
     void HandleReply(LSurface& Context, const LCursorReply& Reply);

@@ -12,28 +12,37 @@ void Jafg::LViewport::Initialize()
 
 void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursorLocation)
 {
-    this->LastFrameHoveredWidgets.CopyFrom(this->HoveredWidgets);
-    this->HoveredWidgets.Reset(this->HoveredWidgets.GetSize());
+    const bool bCursorLocationIsMeaningful = InCursorLocation.X >= 0.0f && InCursorLocation.Y >= 0.0f;
+
+    if (bCursorLocationIsMeaningful)
+    {
+        this->LastFrameHoveredWidgets.CopyFrom(this->HoveredWidgets);
+        this->HoveredWidgets.Reset(this->HoveredWidgets.GetSize());
+    }
 
     // Sweep cursor input over widgets.
-    for (WUserWidget* Widget : this->TopLevelWidgets)
+    if (bCursorLocationIsMeaningful)
     {
-        if (Widget->ShouldCheckForInputs() == false)
+        for (WUserWidget* Widget : this->TopLevelWidgets)
         {
+            if (Widget->ShouldCheckForInputs() == false)
+            {
+                continue;
+            }
+
+            LCursorReply Reply = Widget->SweepMouse(*this, InCursorLocation);
+            if (Reply.IsHandled())
+            {
+                this->HandleReply(Context, Reply);
+                break;
+            }
+
             continue;
         }
-
-        LCursorReply Reply = Widget->SweepMouse(*this, InCursorLocation);
-        if (Reply.IsHandled())
-        {
-            this->HandleReply(Context, Reply);
-            break;
-        }
-
-        continue;
     }
 
     // Check for cursor leave events.
+    if (bCursorLocationIsMeaningful)
     {
         LCursorReply MostRecentReply = LCursorReply::Unhandled();
         for (WWidgetNode* Node : this->LastFrameHoveredWidgets)
@@ -56,7 +65,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
     }
 
     // Check for left-mouse-button down events to focus on another widget.
-    if (Context.IsNewKeyDown(EKeys::LeftMouseButton))
+    if (bCursorLocationIsMeaningful && Context.IsNewKeyDown(EKeys::LeftMouseButton))
     {
         for (WUserWidget* Widget : this->TopLevelWidgets)
         {
@@ -264,11 +273,55 @@ const Jafg::WWidgetNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObject
     return const_cast<LViewport*>(this)->GetTopLevelWidgetByClass(WidgetClass);
 }
 
+bool Jafg::LViewport::FocusWidgetNode(const WWidgetNode* InNode)
+{
+    if (InNode == nullptr)
+    {
+        return false;
+    }
+
+    for (const WUserWidget* Widget : this->TopLevelWidgets)
+    {
+        if (Widget->FindNodeInVisiblePath(InNode))
+        {
+            this->ChangeFocusUnsafe(InNode);
+            return true;
+        }
+
+        continue;
+    }
+
+    /*
+     * The node cannot be focused because it is not visible.
+     */
+    return false;
+}
+
 bool Jafg::LViewport::AddHoveredWidgetForFrame(WWidgetNode* Node)
 {
     check( this->HoveredWidgets.Contains(Node) == false )
     this->HoveredWidgets.Add(Node);
     return this->LastFrameHoveredWidgets.Contains(Node) == false;
+}
+
+void Jafg::LViewport::ChangeFocusUnsafe(const WWidgetNode* InNode)
+{
+    if (this->FocusedWidget)
+    {
+        this->FocusedWidget->OnFocusLost();
+    }
+
+    if (InNode)
+    {
+        this->FocusedWidget = const_cast<WWidgetNode*>(InNode);
+        this->FocusedWidget->OnFocusReceived();
+    }
+    else
+    {
+        this->FocusedWidget = nullptr;
+    }
+
+    return;
 }
 
 void Jafg::LViewport::RecalculateScaleFactor()
@@ -287,23 +340,14 @@ void Jafg::LViewport::HandleReply(LSurface& Context, const LCursorReply& Reply)
 
     if (Reply.ShouldLooseFocus())
     {
-        if (this->FocusedWidget)
-        {
-            this->FocusedWidget->OnFocusLost();
-            this->FocusedWidget = nullptr;
-        }
+        this->ChangeFocusUnsafe(nullptr);
     }
 
     if (Reply.IsFocusedWidgetValid())
     {
         if (this->FocusedWidget != Reply.GetFocusedWidget())
         {
-            if (this->FocusedWidget)
-            {
-                this->FocusedWidget->OnFocusLost();
-            }
-            this->FocusedWidget = Reply.GetFocusedWidget();
-            this->FocusedWidget->OnFocusReceived();
+            this->ChangeFocusUnsafe(Reply.GetFocusedWidget());
         }
     }
 
@@ -316,23 +360,14 @@ void Jafg::LViewport::HandleReply(LSurface& Context, const LReply& Reply)
 
     if (Reply.ShouldLooseFocus())
     {
-        if (this->FocusedWidget)
-        {
-            this->FocusedWidget->OnFocusLost();
-            this->FocusedWidget = nullptr;
-        }
+        this->ChangeFocusUnsafe(nullptr);
     }
 
     if (Reply.IsFocusedWidgetValid())
     {
         if (this->FocusedWidget != Reply.GetFocusedWidget())
         {
-            if (this->FocusedWidget)
-            {
-                this->FocusedWidget->OnFocusLost();
-            }
-            this->FocusedWidget = Reply.GetFocusedWidget();
-            this->FocusedWidget->OnFocusReceived();
+            this->ChangeFocusUnsafe(Reply.GetFocusedWidget());
         }
     }
 
