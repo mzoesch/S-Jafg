@@ -255,7 +255,7 @@ void Jafg::LFontShaderContext::OnFree()
     return;
 }
 
-bool LFontShaderContext::GetDesiredSize(const LSimpleString& InContent, const float InScale, LVector2& OutSize)
+bool LFontShaderContext::GetMinimalDesiredSize(const LSimpleString& InContent, const float InScale, LVector2& OutSize)
 {
     if (InContent.IsEmpty())
     {
@@ -274,10 +274,44 @@ bool LFontShaderContext::GetDesiredSize(const LSimpleString& InContent, const fl
     return true;
 }
 
-bool LFontShaderContext::GetDesiredSize(const LEightString& InContent, const float InScale, LVector2& OutSize)
+bool LFontShaderContext::GetMinimalDesiredSize(const LEightString& InContent, const float InScale, LVector2& OutSize)
 {
     LSimpleString Content = Str::ToSimpleString(InContent);
-    return LFontShaderContext::GetDesiredSize(Content, InScale, OutSize);
+    return LFontShaderContext::GetMinimalDesiredSize(Content, InScale, OutSize);
+}
+
+LVector2 LFontShaderContext::GetDesiredSize(const LSimpleString& InContent, const float InScale)
+{
+    return LVector2(LFontShaderContext::GetDesiredWidth(InContent, InScale), LFontShaderContext::GetApproximateHeight(InScale));
+}
+
+LVector2 LFontShaderContext::GetDesiredSize(const LEightString& InContent, const float InScale)
+{
+    LSimpleString Content = Str::ToSimpleString(InContent);
+    return LFontShaderContext::GetDesiredSize(Content, InScale);
+}
+
+float LFontShaderContext::GetDesiredWidth(const LSimpleString& InContent, const float InScale)
+{
+    if (InContent.IsEmpty())
+    {
+        return 0.0f;
+    }
+
+    float Out = 0.0f;
+    for (const uint8 Rune : InContent)
+    {
+        const Character& Ch = Characters.at(static_cast<int8>(Rune));
+        Out += static_cast<float>(Ch.Advance.X) * InScale / 64.0f;
+    }
+
+    return Out;
+}
+
+float LFontShaderContext::GetDesiredWidth(const LEightString& InContent, const float InScale)
+{
+    LSimpleString Content = Str::ToSimpleString(InContent);
+    return LFontShaderContext::GetDesiredWidth(Content, InScale);
 }
 
 float LFontShaderContext::GetApproximateHeight(const float InScale)
@@ -292,7 +326,7 @@ float LFontShaderContext::GetApproximateHeight(const float InScale)
     {
         LVector2 DesiredSize;
         const LSimpleString Content = "H";
-        LFontShaderContext::GetDesiredSize(Content, 1.0f, DesiredSize);
+        LFontShaderContext::GetMinimalDesiredSize(Content, 1.0f, DesiredSize);
         ::ApproxHeight = DesiredSize.Y;
     }
 

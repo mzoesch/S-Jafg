@@ -26,9 +26,14 @@ public:
     virtual void Draw(const LViewport& Context, LGenericShaderContextDrawArgs& InArgs) const override;
     virtual void OnFree() override;
 
-    static bool  GetDesiredSize(const LSimpleString& InContent, const float InScale, LVector2& OutSize);
-    static bool GetDesiredSize(const LEightString& InContent, const float InScale, LVector2& OutSize);
-    static float GetApproximateHeight(const float InScale);
+    static bool  GetMinimalDesiredSize(const LSimpleString& InContent, const float InScale, LVector2& OutSize);
+    static bool  GetMinimalDesiredSize(const LEightString& InContent, const float InScale, LVector2& OutSize);
+
+    static LVector2 GetDesiredSize(const LSimpleString& InContent, const float InScale);
+    static LVector2 GetDesiredSize(const LEightString& InContent, const float InScale);
+    static float    GetDesiredWidth(const LSimpleString& InContent, const float InScale);
+    static float    GetDesiredWidth(const LEightString& InContent, const float InScale);
+    static float    GetApproximateHeight(const float InScale);
 
 private:
 

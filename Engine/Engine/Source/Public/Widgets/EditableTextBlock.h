@@ -2,12 +2,22 @@
 
 #pragma once
 
-#include "WidgetBox.h"
+#include "Widgets/WidgetBox.h"
 #include "Rhi/FontShaderContext.h"
 #include "EditableTextBlock.generated.h"
 
 namespace Jafg
 {
+
+/**
+ * A caret is a blinking line, block, or bitmap in the client area of a window. The caret typically indicates
+ * the place at which text or graphics will be inserted.
+ */
+struct LCaretBrush final
+{
+    LColor   Color = LColor::White;
+    LVector2 Size  = LVector2(1.0f, 0.85f);
+};
 
 namespace ETextCommit
 {
@@ -68,14 +78,26 @@ public:
 
     FORCEINLINE WEditableTextBlock& SetTextColor(const LColor& InColor) { this->Color = InColor; return *this; }
     FORCEINLINE WEditableTextBlock& SetTextScale(const float InScale)   { this->Scale = InScale; return *this; }
+    FORCEINLINE       LCaretBrush&  GetCaretBrush()                     { return this->CaretBrush; }
+    FORCEINLINE const LCaretBrush&  GetCaretBrush() const               { return this->CaretBrush; }
+    FORCEINLINE WEditableTextBlock& SetCaretBrush(const LCaretBrush& InBrush) { this->CaretBrush = InBrush; return *this; }
 
 private:
+
+    void SafelyReduceCaretCursor();
+    void SafelyIncreaseCaretCursor();
 
     LColor Color = LColor::Black;
     float  Scale = 1.0f;
 
     LString            Content;
     LFontShaderContext ShaderContext;
+
+    LCaretBrush       CaretBrush;
+    int32             CaretCursor  = 0;
+    float             CaretBlinker = 0.0f;
+    float             CaretBlinkerSpeed = 0.5f;
+    LBoxShaderContext CaretShaderContext;
 };
 
 } /* ~Namespace Jafg */
