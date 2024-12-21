@@ -2,7 +2,6 @@
 
 #include "CoreAfx.h"
 #include "User/Frontend/Osd/PauseMenu.h"
-
 #include "Widgets/WidgetRegion.h"
 
 void Jafg::WPauseMenu::Construct()

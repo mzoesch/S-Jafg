@@ -2,7 +2,6 @@
 
 #include "CoreAfx.h"
 #include "User/Frontend/Hud/Crosshair.h"
-
 #include "Widgets/WidgetRegion.h"
 
 void Jafg::WCrosshair::Construct()

@@ -40,9 +40,9 @@ public:
                 virtual auto RemoveChild(WWidgetNode* InChild) -> void override;
                 virtual auto RemoveChild(LWidgetSlot* InSlot) -> void override;
     FORCEINLINE virtual auto AddChild(WWidgetNode* InChild) -> LWidgetSlot* override NON_CALLABLE_MEMBER(return nullptr)
+    FORCEINLINE virtual void SetPadding(const LPadding& InPadding) override { this->Padding = InPadding; }
     FORCEINLINE virtual auto GetPaddingPtr() const -> const LPadding* override { return &this->Padding; }
     FORCEINLINE virtual auto GetPaddingPtr() -> LPadding* override { return &this->Padding; }
-    FORCEINLINE virtual auto SetPadding(const LPadding& InPadding) -> WWidgetParentBase& override { this->Padding = InPadding; return *this; }
     // ~WWidgetParentBase implementation
 
     /** Add this widget to the main viewport of the current active local ego. */

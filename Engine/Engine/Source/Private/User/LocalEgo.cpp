@@ -51,6 +51,11 @@ void Jafg::LLocalEgo::Tick(const float DeltaTime)
 {
     this->SurfaceToDrawOn->OnClear();
 
+    if (const int32 PurgedFactories = Private::PurgeWidgetFactories(); PurgedFactories > 0)
+    {
+        LOG_VERBOSE(LogWidgetFramework, "Purged {} widget factories.", PurgedFactories)
+    }
+
     this->UserInput->BeginNewFrame();
 
     this->GetPrimarySurface()->BeginNewFrame();

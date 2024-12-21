@@ -17,28 +17,27 @@ struct LRegionBrush
     LImage Image = LImage();
 };
 
-/**
- * Optional Wsdsml declarations for a subclass of WWidgetRegion.
- * This allows the subclass to use the Wsdsml methods with themselves as the return type.
- */
-#define WIDGET_REGION_SUBCLASS_WSDSML_DECLARATIONS(ClassName)                                                                                      \
-    FORCEINLINE auto SetBrush(const LRegionBrush& InBrush) -> ClassName& { Super::SetBrush(InBrush); return *this; }                               \
-    FORCEINLINE auto SetTint(const LColor& InTint) -> ClassName& { Super::SetTint(InTint); return *this; }                                         \
-    FORCEINLINE auto SetTexture(const LTexture2* InTexture) -> ClassName& { Super::SetTexture(InTexture); return *this; }                          \
-    FORCEINLINE auto SetImage(const LImage& InImage) -> ClassName& { Super::SetImage(InImage); return *this; }                                     \
-    FORCEINLINE auto SetPadding(const LPadding& InPadding) -> ClassName& { Super::SetPadding(InPadding); return *this; }                           \
-    FORCEINLINE auto SetAnchor(const LAnchor& InAnchor) -> ClassName& { Super::SetAnchor(InAnchor); return *this; }                                \
-    FORCEINLINE auto SetAnchor(const EAnchor::Type InAnchor) -> ClassName& { Super::SetAnchor(InAnchor); return *this; }                           \
-    FORCEINLINE auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> ClassName& { Super::SetVisibility(InVisibility); return *this; } \
-    FORCEINLINE auto operator&(const LColor&         InTint) -> ClassName& { return this->SetTint(InTint);       }                                 \
-    FORCEINLINE auto operator&(const LColor&&        InTint) -> ClassName& { return this->SetTint(InTint);       }                                 \
-    FORCEINLINE auto operator&(const LTexture2*   InTexture) -> ClassName& { return this->SetTexture(InTexture); }                                 \
-    FORCEINLINE auto operator&(const LImage&        InImage) -> ClassName& { return this->SetImage(InImage);     }                                 \
-    FORCEINLINE auto operator&(const LRegionBrush&  InBrush) -> ClassName& { return this->SetBrush(InBrush);     }                                 \
-    FORCEINLINE auto operator&(const LPadding&    InPadding) -> ClassName& { return this->SetPadding(InPadding); }                                 \
-    FORCEINLINE auto operator&(const LAnchor&      InAnchor) -> ClassName& { return this->SetAnchor(InAnchor);   }                                 \
-    FORCEINLINE auto operator&(const EAnchor::Type InAnchor) -> ClassName& { return this->SetAnchor(InAnchor);   }                                 \
-    FORCEINLINE auto operator&(const EWidgetVisibility::Type InVisibility) -> ClassName& { return this->SetVisibility(InVisibility); }
+template <typename TNode>
+class TWidgetFactoryWidgetRegion : public TWidgetFactoryParentBase<TNode>
+{
+public:
+
+    using Super         = TWidgetFactoryParentBase<TNode>;
+    using TFactoryRetTy = typename Super::TFactoryRetTy;
+
+    using Super::operator&;
+
+    FORCEINLINE TFactoryRetTy& SetBrush(const LRegionBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& SetTint(const LColor& InTint) { this->This()->SetTint(InTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& SetTexture(const LTexture2* InTexture) { this->This()->SetTexture(InTexture); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& SetImage(const LImage& InImage) { this->This()->SetImage(InImage); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& operator&(const LColor&  InTint) { return this->SetTint(InTint); }
+    FORCEINLINE TFactoryRetTy& operator&(const LColor&& InTint) { return this->SetTint(InTint); }
+    FORCEINLINE TFactoryRetTy& operator&(const LTexture2* InTexture) { return this->SetTexture(InTexture); }
+    FORCEINLINE TFactoryRetTy& operator&(const LImage&  InImage) { return this->SetImage(InImage); }
+    FORCEINLINE TFactoryRetTy& operator&(const LRegionBrush& InBrush) { return this->SetBrush(InBrush); }
+};
 
 /**
  * WWidgetRegion is a resizable Parent node. Every region has its layout bounds defined as (0, 0, width, height).
@@ -55,33 +54,17 @@ protected:
 
 public:
 
+    using TWidgetFactoryTy = TWidgetFactoryWidgetRegion<Derived>;
+
     virtual void Draw(LViewport& Context) const override;
     virtual void UpdateDesiredSize() const override;
 
-    FORCEINLINE auto SetBrush(const LRegionBrush& InBrush) -> WWidgetRegion& { this->Brush = InBrush; return *this; }
-    FORCEINLINE auto HasBrush() const -> bool { return this->Brush.IsSet(); }
-    FORCEINLINE auto GetBrush() const -> const LRegionBrush& { return this->Brush.GetValue(); }
-                auto SetTint(const LColor& InTint) -> WWidgetRegion&;
-                auto SetTexture(const LTexture2* InTexture) -> WWidgetRegion&;
-                auto SetImage(const LImage& InImage) -> WWidgetRegion&;
-    FORCEINLINE auto SetPadding(const LPadding& InPadding) -> WWidgetRegion& { Super::SetPadding(InPadding); return *this; }
-    FORCEINLINE auto SetAnchor(const LAnchor& InAnchor) -> WWidgetRegion& { Super::SetAnchor(InAnchor); return *this; }
-    FORCEINLINE auto SetAnchor(const EAnchor::Type InAnchor) -> WWidgetRegion& { Super::SetAnchor(InAnchor); return *this; }
-    FORCEINLINE auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> WWidgetRegion& { Super::SetVisibility(InVisibility); return *this; }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // Wsdsml
-    ///////////////////////////////////////////////////////////////////////////////
-
-    FORCEINLINE auto operator&(const LColor&         InTint) -> WWidgetRegion& { return this->SetTint(InTint);       }
-    FORCEINLINE auto operator&(const LColor&&        InTint) -> WWidgetRegion& { return this->SetTint(InTint);       }
-    FORCEINLINE auto operator&(const LTexture2*   InTexture) -> WWidgetRegion& { return this->SetTexture(InTexture); }
-    FORCEINLINE auto operator&(const LImage&        InImage) -> WWidgetRegion& { return this->SetImage(InImage);     }
-    FORCEINLINE auto operator&(const LRegionBrush&  InBrush) -> WWidgetRegion& { return this->SetBrush(InBrush);     }
-    FORCEINLINE auto operator&(const LPadding&    InPadding) -> WWidgetRegion& { return this->SetPadding(InPadding); }
-    FORCEINLINE auto operator&(const LAnchor&      InAnchor) -> WWidgetRegion& { return this->SetAnchor(InAnchor);   }
-    FORCEINLINE auto operator&(const EAnchor::Type InAnchor) -> WWidgetRegion& { return this->SetAnchor(InAnchor);   }
-    FORCEINLINE auto operator&(const EWidgetVisibility::Type InVisibility) -> WWidgetRegion& { return this->SetVisibility(InVisibility); }
+    void SetBrush(const LRegionBrush& InBrush) { this->Brush = InBrush; }
+    bool HasBrush() const { return this->Brush.IsSet(); }
+    auto GetBrush() const -> const LRegionBrush& { return this->Brush.GetValue(); }
+    void SetTint(const LColor& InTint);
+    void SetTexture(const LTexture2* InTexture);
+    void SetImage(const LImage& InImage);
 
 private:
 

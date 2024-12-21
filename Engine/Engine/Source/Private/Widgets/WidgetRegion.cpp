@@ -57,37 +57,40 @@ void Jafg::WWidgetRegion::UpdateDesiredSize() const
     return;
 }
 
-Jafg::WWidgetRegion& Jafg::WWidgetRegion::SetTint(const LColor& InTint)
+void Jafg::WWidgetRegion::SetTint(const LColor& InTint)
 {
     if (this->HasBrush())
     {
         this->Brush.GetValue().Tint = InTint;
-        return *this;
+        return;
     }
 
-    return this->SetBrush(LRegionBrush({.Tint = InTint}));
+    this->SetBrush(LRegionBrush({.Tint = InTint}));
+    return;
 }
 
-Jafg::WWidgetRegion& Jafg::WWidgetRegion::SetTexture(const LTexture2* InTexture)
+void Jafg::WWidgetRegion::SetTexture(const LTexture2* InTexture)
 {
     if (this->HasBrush())
     {
         this->Brush.GetValue().Image.SetTexture(InTexture);
-        return *this;
+        return;
     }
 
-    return this->SetBrush(LRegionBrush({.Image = LImage().SetTexture(InTexture)}));
+    this->SetBrush(LRegionBrush({.Image = LImage().SetTexture(InTexture)}));
+    return;
 }
 
-Jafg::WWidgetRegion& Jafg::WWidgetRegion::SetImage(const LImage& InImage)
+void Jafg::WWidgetRegion::SetImage(const LImage& InImage)
 {
     if (this->HasBrush())
     {
         this->Brush.GetValue().Image = InImage;
-        return *this;
+        return;
     }
 
-    return this->SetBrush(LRegionBrush({.Image = InImage}));
+    this->SetBrush(LRegionBrush({.Image = InImage}));
+    return;
 }
 
 void Jafg::WWidgetRegion::CreateNewShaderContext() const

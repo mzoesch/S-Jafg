@@ -16,6 +16,30 @@ struct LBoxBrush
     LImage Image = LImage();
 };
 
+template <typename TNode>
+class TWidgetFactoryWidgetBox : public TWidgetFactory<TNode>
+{
+public:
+
+    using Super         = TWidgetFactory<TNode>;
+    using TFactoryRetTy = typename Super::TFactoryRetTy;
+
+    using Super::operator&;
+
+    TFactoryRetTy& SetBrush(const LBoxBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
+    TFactoryRetTy& SetTint(const LColor& InTint) { this->This()->SetTint(InTint); return this->Self(); }
+    TFactoryRetTy& SetTexture(const LTexture2* InTexture) { this->This()->SetTexture(InTexture); return this->Self(); }
+    TFactoryRetTy& SetImage(const LImage& InImage) { this->This()->SetImage(InImage); return this->Self(); }
+    TFactoryRetTy& SetPadding(const LPadding& InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
+
+    TFactoryRetTy& operator&(const LColor& InTint) { return this->SetTint(InTint); }
+    TFactoryRetTy& operator&(const LColor&& InTint) { return this->SetTint(InTint); }
+    TFactoryRetTy& operator&(const LTexture2* InTexture) { return this->SetTexture(InTexture); }
+    TFactoryRetTy& operator&(const LImage& InImage) { return this->SetImage(InImage); }
+    TFactoryRetTy& operator&(const LBoxBrush& InBrush) { return this->SetBrush(InBrush); }
+    TFactoryRetTy& operator&(const LPadding& InPadding) { return this->SetPadding(InPadding); }
+};
+
 /**
  * A widget box is a widget that behaves roughly the same as a region but with
  * the major difference for not allowing children.
@@ -32,34 +56,20 @@ protected:
 
 public:
 
+    using TWidgetFactoryTy = TWidgetFactoryWidgetBox<Derived>;
+
     virtual void Draw(LViewport& Context) const override;
+
     virtual void UpdateDesiredSize() const override;
 
-    FORCEINLINE auto SetBrush(const LBoxBrush& InBrush) -> WWidgetBox& { this->Brush = InBrush; return *this; }
-    FORCEINLINE auto HasBrush() const -> bool { return this->Brush.IsSet(); }
+    FORCEINLINE void SetBrush(const LBoxBrush& InBrush) { this->Brush = InBrush; }
+    FORCEINLINE bool HasBrush() const { return this->Brush.IsSet(); }
     FORCEINLINE auto GetBrush() const -> const LBoxBrush& { return this->Brush.GetValue(); }
     FORCEINLINE auto GetPadding() const -> const LPadding& { return this->Padding; }
-                auto SetTint(const LColor& InTint) -> WWidgetBox&;
-                auto SetTexture(const LTexture2* InTexture) -> WWidgetBox&;
-                auto SetImage(const LImage& InImage) -> WWidgetBox&;
-    FORCEINLINE auto SetPadding(const LPadding& InPadding) -> WWidgetBox& { this->Padding = InPadding; return *this; }
-    FORCEINLINE auto SetAnchor(const LAnchor& InAnchor) -> WWidgetBox& { Super::SetAnchor(InAnchor); return *this; }
-    FORCEINLINE auto SetAnchor(const EAnchor::Type InAnchor) -> WWidgetBox& { Super::SetAnchor(InAnchor); return *this; }
-    FORCEINLINE auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> WWidgetBox& { Super::SetVisibility(InVisibility); return *this; }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // Wsdsml
-    ///////////////////////////////////////////////////////////////////////////////
-
-    FORCEINLINE auto operator&(const LColor&         InTint) -> WWidgetBox& { return this->SetTint(InTint);       }
-    FORCEINLINE auto operator&(const LColor&&        InTint) -> WWidgetBox& { return this->SetTint(InTint);       }
-    FORCEINLINE auto operator&(const LTexture2*   InTexture) -> WWidgetBox& { return this->SetTexture(InTexture); }
-    FORCEINLINE auto operator&(const LImage&        InImage) -> WWidgetBox& { return this->SetImage(InImage);     }
-    FORCEINLINE auto operator&(const LBoxBrush&     InBrush) -> WWidgetBox& { return this->SetBrush(InBrush);     }
-    FORCEINLINE auto operator&(const LPadding&    InPadding) -> WWidgetBox& { return this->SetPadding(InPadding); }
-    FORCEINLINE auto operator&(const LAnchor&      InAnchor) -> WWidgetBox& { return this->SetAnchor(InAnchor);   }
-    FORCEINLINE auto operator&(const EAnchor::Type InAnchor) -> WWidgetBox& { return this->SetAnchor(InAnchor);   }
-    FORCEINLINE auto operator&(const EWidgetVisibility::Type InVisibility) -> WWidgetBox& { return this->SetVisibility(InVisibility); }
+                void SetTint(const LColor& InTint);
+                void SetTexture(const LTexture2* InTexture);
+                void SetImage(const LImage& InImage);
+    FORCEINLINE void SetPadding(const LPadding& InPadding) { this->Padding = InPadding; }
 
 private:
 

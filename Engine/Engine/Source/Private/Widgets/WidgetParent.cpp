@@ -103,6 +103,7 @@ void Jafg::WWidgetParent::RemoveChild(LWidgetSlot* Child)
 
 Jafg::LWidgetSlot* Jafg::WWidgetParent::AddChild(WWidgetNode* Child)
 {
+    check( Child )
     LWidgetSlot* NewChildSlot = new LWidgetSlot(this, Child);
     this->Children.Add(NewChildSlot);
     NewChildSlot->Content->Slot = NewChildSlot;

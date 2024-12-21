@@ -45,37 +45,41 @@ void Jafg::WWidgetBox::UpdateDesiredSize() const
     return;
 }
 
-Jafg::WWidgetBox& Jafg::WWidgetBox::SetTint(const LColor& InTint)
+void Jafg::WWidgetBox::SetTint(const LColor& InTint)
 {
     if (this->HasBrush())
     {
         this->Brush.GetValue().Tint = InTint;
-        return *this;
+        return;
     }
 
-    return this->SetBrush(LBoxBrush({.Tint = InTint}));
+    this->SetBrush(LBoxBrush({.Tint = InTint}));
+
+    return;
 }
 
-Jafg::WWidgetBox& Jafg::WWidgetBox::SetTexture(const LTexture2* InTexture)
+void Jafg::WWidgetBox::SetTexture(const LTexture2* InTexture)
 {
     if (this->HasBrush())
     {
         this->Brush.GetValue().Image.SetTexture(InTexture);
-        return *this;
+        return;
     }
 
-    return this->SetBrush(LBoxBrush({.Image = LImage().SetTexture(InTexture)}));
+    this->SetBrush(LBoxBrush({.Image = LImage().SetTexture(InTexture)}));
+    return;
 }
 
-Jafg::WWidgetBox& Jafg::WWidgetBox::SetImage(const LImage& InImage)
+void Jafg::WWidgetBox::SetImage(const LImage& InImage)
 {
     if (this->HasBrush())
     {
         this->Brush.GetValue().Image = InImage;
-        return *this;
+        return;
     }
 
-    return this->SetBrush(LBoxBrush({.Image = InImage}));
+    this->SetBrush(LBoxBrush({.Image = InImage}));
+    return;
 }
 
 void Jafg::WWidgetBox::CreateNewShaderContext() const

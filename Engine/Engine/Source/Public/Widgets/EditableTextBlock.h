@@ -50,6 +50,22 @@ struct LEditableTextBrush : public LBoxBrush
     float  Scale = 1.0f;
 };
 
+template <typename TNode>
+class TWidgetFactoryEditableTextBlock : public TWidgetFactoryWidgetBox<TNode>
+{
+public:
+
+    using TFactoryRetTy = typename TWidgetFactoryWidgetBox<TNode>::TFactoryRetTy;
+
+    FORCEINLINE TFactoryRetTy& SetTextColor(const LColor& InColor)       { this->This()->SetTextColor(InColor);  return this->Self(); }
+    FORCEINLINE TFactoryRetTy& SetTextScale(const float InScale)         { this->This()->SetTextScale(InScale);  return this->Self(); }
+    FORCEINLINE TFactoryRetTy& SetCaretBrush(const LCaretBrush& InBrush) { this->This()->SetCaretBrush(InBrush); return this->Self(); }
+};
+
+/**
+ * A simple text block that is editable by the user with all that comes with it, e.g., caret, text selection, copy,
+ * pasting, etc.
+ */
 DECLARE_JAFG_CLASS()
 class ENGINE_API WEditableTextBlock : public WWidgetBox
 {
@@ -61,30 +77,27 @@ protected:
 
 public:
 
+    using TWidgetFactoryTy = TWidgetFactoryEditableTextBlock<Derived>;
+
     virtual void Construct() override;
     virtual void Draw(LViewport& Context) const override;
     virtual void Tick() override;
 
     virtual void UpdateDesiredSize() const override;
 
-    // WWidgetNode implementation
     virtual LCursorReply OnCursorEnter() override;
     virtual LCursorReply OnCursorLeave() override;
     virtual void         OnFocusReceived() override;
     virtual void         OnFocusLost() override;
     virtual LReply       OnKeyDown(LKeyEvent& InKeyEvent) override;
-    // ~WWidgetNode implementation
 
     void OnTextCommit(const LSimpleString& InText, const ETextCommit::Type InCommitType);
 
-    FORCEINLINE WEditableTextBlock& SetTextColor(const LColor& InColor) { this->Color = InColor; return *this; }
-    FORCEINLINE WEditableTextBlock& SetTextScale(const float InScale)   { this->Scale = InScale; return *this; }
-    FORCEINLINE       LCaretBrush&  GetCaretBrush()                     { return this->CaretBrush; }
-    FORCEINLINE const LCaretBrush&  GetCaretBrush() const               { return this->CaretBrush; }
-    FORCEINLINE WEditableTextBlock& SetCaretBrush(const LCaretBrush& InBrush) { this->CaretBrush = InBrush; return *this; }
-
-    template <typename TNode> FORCEINLINE TNode& operator>>(TNode*& OutNode) { OutNode = this; return *this; }
-    template <typename TNode> FORCEINLINE TNode& operator>>(TNode& OutNode)  { OutNode = this; return *this; }
+    FORCEINLINE void SetTextColor(const LColor& InColor) { this->Color = InColor; }
+    FORCEINLINE void SetTextScale(const float InScale)   { this->Scale = InScale; }
+    FORCEINLINE auto GetCaretBrush()       ->       LCaretBrush& { return this->CaretBrush; }
+    FORCEINLINE auto GetCaretBrush() const -> const LCaretBrush& { return this->CaretBrush; }
+    FORCEINLINE void SetCaretBrush(const LCaretBrush& InBrush) { this->CaretBrush = InBrush; }
 
 private:
 

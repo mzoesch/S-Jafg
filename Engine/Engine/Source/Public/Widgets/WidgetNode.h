@@ -18,9 +18,40 @@ class WWidgetParent;
 class WUserWidget;
 class LViewport;
 class LSurface;
+class LWidgetFactory;
 class WWidgetParentBase;
 class LApplicationInstance;
+struct LWidgetSlot;
 struct LWidgetConstructor;
+
+namespace Private
+{
+
+ENGINE_API void            AddWidgetFactory(LWidgetFactory* InFactory);
+ENGINE_API LWidgetFactory* FindOrNullWidgetFactory(const void* InNode);
+ENGINE_API LWidgetFactory& GetWidgetFactory(const void* InNode);
+ENGINE_API int32           PurgeWidgetFactories();
+
+/** Private struct that is the single factory friend. */
+struct LWidgetFactoryUtility final
+{
+    LWidgetFactoryUtility() = delete;
+    PROHIBIT_REALLOC_OF_ANY_FORM(LWidgetFactoryUtility)
+    ~LWidgetFactoryUtility() = delete;
+
+    /**
+     * Creates a Wsdsml factory for the given node. Only valid in the engine
+     * tick where the factory was requested for.
+     *
+     * @tparam TNode The node-type to create a factory for.
+     * @param InNode The node to create a factory for.
+     * @return The factory for the given node.
+     */
+    template <typename TNode>
+    NODISCARD static auto MakeWidgetFactory(const WWidgetNode* InNode) -> typename TNode::TWidgetFactoryTy&;
+};
+
+} /* ~Namespace Private */
 
 /**
  * How to anchor a child to its parent if the parent can have children.
@@ -215,6 +246,61 @@ struct LWidgetSlot
 };
 
 /**
+ * Base class of all widget factories.
+ * @see TWidgetFactory<TNode> below.
+ */
+class LWidgetFactory
+{
+public:
+
+    friend WWidgetNode;
+    friend Private::LWidgetFactoryUtility;
+
+    FORCEINLINE WWidgetNode* GetNodeRaw() const { return this->Node; }
+
+private:
+
+    WWidgetNode* Node = nullptr;
+};
+
+/** Base class of all widget factories that can be used with the declarative syntax defined by Wsdsml. */
+template <typename TNode>
+class TWidgetFactory : public LWidgetFactory
+{
+public:
+
+    friend WWidgetNode;
+    friend Private::LWidgetFactoryUtility;
+
+    using Super         = LWidgetFactory;
+
+    /** The node to target. Always valid. */
+    using TNodeTy       = TNode;
+    /** The return type of the factory. Always valid. */
+    using TFactoryRetTy = typename TNode::TWidgetFactoryTy;
+
+#if DO_SLOW_CHECKS /* This just costs too much runtime performance. So just check the cast with slow checks. */
+    FORCEINLINE TNode* GetNode() const { return CheckedStaticCast<TNode>(this->GetNodeRaw()); }
+#else /* DO_SLOW_CHECKS */
+    FORCEINLINE TNode* GetNode() const { return reinterpret_cast<TNode*>(this->GetNodeRaw()); }
+#endif /* !DO_SLOW_CHECKS */
+
+    FORCEINLINE TFactoryRetTy& Self() { return *static_cast<TFactoryRetTy*>(this); }
+    FORCEINLINE TNode*         This() { return this->GetNode(); }
+
+    FORCEINLINE TFactoryRetTy& SetAnchor(const LAnchor&      InAnchor) { this->GetNode()->SetAnchor(InAnchor); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& SetAnchor(const EAnchor::Type InAnchor) { this->GetNode()->SetAnchor(InAnchor); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& operator&(const LAnchor&      InAnchor) { return this->SetAnchor(InAnchor); }
+    FORCEINLINE TFactoryRetTy& operator&(const EAnchor::Type InAnchor) { return this->SetAnchor(InAnchor); }
+
+    FORCEINLINE TFactoryRetTy& SetVisibility(const EWidgetVisibility::Type InVisibility) { this->This()->SetVisibility(InVisibility); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& operator&(const EWidgetVisibility::Type InVisibility) { return this->SetVisibility(InVisibility); }
+
+    FORCEINLINE TFactoryRetTy& operator>>(TNode*& OutNode) { OutNode = this->GetNode(); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& operator>>(TNode&  OutNode) { OutNode = this->GetNode(); return this->Self(); }
+};
+
+/**
  * Constructs a new widget node in the given context
  * @see NewNode(TNode) (Wsdsml)
  * @see User/Frontend/DebugScreen.cpp (for usage example)
@@ -263,6 +349,23 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(WWidgetNode)
 
 public:
+
+    /**
+     * The factory to use when dealing with this node type in Wsdsml.
+     *
+     * How to define your own factory:
+     * Inherit from TWidgetFactory<TNode> or any subclass and implement the methods you need.
+     *   Inside the new factory:
+     *                           Typedef super to your super factory.
+     *                           Define and use the super TFactoryRetTy as return type for all methods. Always make
+     *                           this typedef public for children to use (if any).
+     *                           Advice C++ to use the reference operators of the super classes by: using Super::operator&.
+     *   Inside the new node:
+     *                           Typedef TWidgetFactoryTy as the new factory. !!!Exactly as below!!!
+     *
+     * @see WidgetParentBase.h / WidgetRegion.h for examples.
+     */
+    using TWidgetFactoryTy = TWidgetFactory<Derived>;
 
     // JObjectBase implementation
     virtual void BeginLife() override final { Super::BeginLife(); this->Construct(); return; }
@@ -320,8 +423,7 @@ public:
     FORCEINLINE auto IsCollapsed() const -> bool { return this->Visibility == EWidgetVisibility::Collapsed; }
     FORCEINLINE auto IsTransitiveHitTestInvisible() const -> bool { return this->Visibility == EWidgetVisibility::TransitiveHitTestInvisible; }
     FORCEINLINE auto IsIntransitiveHitTestInvisible() const -> bool { return this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible; }
-                auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> void ;
-    FORCEINLINE auto SetVisibilityRet(const EWidgetVisibility::Type InVisibility) -> WWidgetNode& { this->Visibility = InVisibility; return *this; }
+                auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> void;
 
     virtual void OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility) { }
 
@@ -371,14 +473,31 @@ public:
     FORCEINLINE auto SetAnchoredSize(const LVector2& InSize) const -> void { this->AnchoredSize = InSize; }
     FORCEINLINE auto GetAnchoredSize() const -> LVector2 { return this->AnchoredSize; }
 
+    auto GetApplicationInstance() const -> LApplicationInstance*;
+    auto GetEngine() const -> LEngine*;
+    auto GetLocalEgo() const -> LLocalEgo*;
+
+    /**
+     * Prepare and use the factory for the given node. Only valid in the engine tick where the factory was requested
+     * for. A new factory has to be requested for every new widget node and if the Wdsmml syntax is used for a given
+     * node that is already living for an x amount of time.
+     *
+     * @tparam TNode The node to get the factory for.
+     * @return The factory for that node.
+     * @remark !!! Master thread only !!!
+     * @see    #TWidgetFactory<TNode>
+     * @see    #Private::LWidgetFactoryUtility::MakeWidgetFactory<TNode>
+     */
+    template <typename TNode>
+    NODISCARD FORCEINLINE typename TNode::TWidgetFactoryTy& GetFactory()
+    {
+        return ::Jafg::Private::LWidgetFactoryUtility::MakeWidgetFactory<TNode>(this);
+    }
+
     FORCEINLINE auto GetAnchor()           ->       LAnchor& { return this->Anchor; }
     FORCEINLINE auto GetAnchor()     const -> const LAnchor& { return this->Anchor; }
-    FORCEINLINE auto SetAnchor(const LAnchor& InAnchor) -> WWidgetNode& { this->Anchor = InAnchor; return *this; }
-    FORCEINLINE auto SetAnchor(const EAnchor::Type InAnchor) -> WWidgetNode& { this->Anchor = InAnchor; return *this; }
-
-    LApplicationInstance* GetApplicationInstance() const;
-    LEngine* GetEngine() const;
-    LLocalEgo* GetLocalEgo() const;
+    FORCEINLINE void SetAnchor(const LAnchor&      InAnchor) { this->Anchor = InAnchor; }
+    FORCEINLINE void SetAnchor(const EAnchor::Type InAnchor) { this->Anchor = InAnchor; }
 
 private:
 
@@ -403,6 +522,31 @@ private:
 
     LAnchor Anchor = EAnchor::TopLeft;
 };
+
+template <typename TNode>
+typename TNode::TWidgetFactoryTy& Private::LWidgetFactoryUtility::MakeWidgetFactory(const WWidgetNode* InNode)
+{
+    using TNodeTy    = TNode;
+    using TFactoryTy = typename TNodeTy::TWidgetFactoryTy;
+    using TFacNodeTy = typename TNodeTy::TWidgetFactoryTy::TNodeTy;
+
+    static_assert(std::is_base_of_v<WWidgetNode, TNodeTy>, "The node must be a widget node.");
+    static_assert(std::is_base_of_v<WWidgetNode, TFacNodeTy>, "The factory must be a widget factory.");
+
+    check( DynamicCast<TNodeTy>(InNode) )
+
+    if (LWidgetFactory* Factory = FindOrNullWidgetFactory(InNode); Factory)
+    {
+        return *reinterpret_cast<TFactoryTy*>(Factory);
+    }
+
+    TFactoryTy* Factory = new TFactoryTy();
+    Factory->Node = const_cast<WWidgetNode*>(InNode);
+
+    AddWidgetFactory(Factory);
+
+    return *Factory;
+}
 
 template <typename TNode>
 FORCEINLINE auto ConstructWidgetNode(Private::LObjectContext* InContext) -> TNode*
@@ -448,10 +592,11 @@ FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode)
 // @see User/Frontend/Osd/DebugScreen.cpp
 ///////////////////////////////////////////////////////////////////////////////
 
-#define MakeRootNode(TRoot)   (*this->ReplaceRoot(NewNode(TRoot)))
+#define MakeRootNode(TRoot)   (*this->ReplaceRoot(NewNodeNoFactory(TRoot))).GetFactory<TRoot>()
 #define FinishWidgetStyling() ;MakeDeferredWidgetNodeFinal(this->GetRoot());
 
-#define NewNode(TNode) (*ConstructDeferredWidgetNode<TNode>())
+#define NewNodeNoFactory(TNode) (*ConstructDeferredWidgetNode<TNode>())
+#define NewNode(TNode)          (*ConstructDeferredWidgetNode<TNode>()).GetFactory<TNode>()
 
 } /* ~Namespace Jafg */
 

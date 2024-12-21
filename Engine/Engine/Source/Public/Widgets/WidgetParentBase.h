@@ -8,6 +8,32 @@
 namespace Jafg
 {
 
+template <typename TNode>
+class TWidgetFactoryParentBase : public TWidgetFactory<TNode>
+{
+public:
+
+    using Super         = TWidgetFactory<TNode>;
+    using TFactoryRetTy = typename Super::TFactoryRetTy;
+
+    using Super::operator&;
+
+    FORCEINLINE TFactoryRetTy& SetPadding(const LPadding&  InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& SetPadding(const LPadding&& InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& operator& (const LPadding&  InPadding) { return this->SetPadding(InPadding); }
+    FORCEINLINE TFactoryRetTy& operator& (const LPadding&& InPadding) { return this->SetPadding(InPadding); }
+
+    FORCEINLINE TFactoryRetTy& AddChild(WWidgetNode   *  InChild) { this->This()->AddChild(InChild);               return this->Self(); }
+    FORCEINLINE TFactoryRetTy& AddChild(LWidgetFactory & InChild) { this->This()->AddChild(InChild. GetNodeRaw()); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& AddChild(LWidgetFactory*& InChild) { this->This()->AddChild(InChild->GetNodeRaw()); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& AddChild(LWidgetFactory*  InChild) { this->This()->AddChild(InChild->GetNodeRaw()); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& operator[](WWidgetNode   *  InChild) { return this->AddChild(InChild); }
+    FORCEINLINE TFactoryRetTy& operator[](LWidgetFactory & InChild) { return this->AddChild(InChild); }
+    FORCEINLINE TFactoryRetTy& operator[](LWidgetFactory*& InChild) { return this->AddChild(InChild); }
+    FORCEINLINE TFactoryRetTy& operator[](LWidgetFactory*  InChild) { return this->AddChild(InChild); }
+};
+
 /**
  * Pure virtual abstraction of a widget parent.
  * To let other widgets implement their own data structure for children.
@@ -24,6 +50,8 @@ protected:
 
 public:
 
+    using TWidgetFactoryTy = TWidgetFactoryParentBase<Derived>;
+
     virtual void Tick() override;
 
     virtual auto SweepMouse(LViewport& Context, const LVector2& InLocation) -> LCursorReply override;
@@ -39,25 +67,13 @@ public:
     virtual auto RemoveChild(WWidgetNode* InChild) -> void PURE_VIRTUAL()
     virtual auto RemoveChild(LWidgetSlot* InSlot)  -> void PURE_VIRTUAL()
     virtual auto AddChild(WWidgetNode* InChild)    -> LWidgetSlot* PURE_VIRTUAL(return nullptr)
+    LWidgetSlot* AddChild(const LWidgetFactory& InChild) { return this->AddChild(InChild.GetNodeRaw()); }
+    LWidgetSlot* AddChild(const LWidgetFactory* InChild) { return this->AddChild(InChild->GetNodeRaw()); }
     virtual auto FindNodeInVisiblePath(const WWidgetNode* InNode) const -> bool override;
 
+    virtual void SetPadding(const LPadding& InPadding)    PURE_VIRTUAL()
     virtual auto GetPaddingPtr() const -> const LPadding* PURE_VIRTUAL(return nullptr)
     virtual auto GetPaddingPtr()       ->       LPadding* PURE_VIRTUAL(return nullptr)
-
-    virtual auto SetPadding(const LPadding& InPadding) -> WWidgetParentBase& PURE_VIRTUAL(return *this)
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // Wsdsml
-    ///////////////////////////////////////////////////////////////////////////////
-
-    FORCEINLINE auto operator[](WWidgetNode* InChild) -> WWidgetParentBase& { this->AddChild( InChild); return *this; }
-    FORCEINLINE auto operator[](WWidgetNode& InChild) -> WWidgetParentBase& { this->AddChild(&InChild); return *this; }
-
-    FORCEINLINE auto operator&(const LPadding& InPadding) -> WWidgetParentBase& { this->SetPadding(InPadding); return *this; }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // ~Wsdsml
-    ///////////////////////////////////////////////////////////////////////////////
 
 private:
 

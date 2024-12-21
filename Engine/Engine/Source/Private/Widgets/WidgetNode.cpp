@@ -6,6 +6,72 @@
 #include "Widgets/Viewport.h"
 #include "Widgets/WidgetParent.h"
 
+namespace
+{
+
+std::map<void*, Jafg::LWidgetFactory*> GWidgetFactories;
+
+} /* ~Namespace <Anonymous> */
+
+namespace Jafg::Private
+{
+
+ENGINE_API void AddWidgetFactory(LWidgetFactory* InFactory)
+{
+#if DO_CHECKS
+    check( InFactory->GetNodeRaw() )
+    const std::map<void*, Jafg::LWidgetFactory*>::iterator It = GWidgetFactories.find(InFactory->GetNodeRaw());
+    if (It != GWidgetFactories.end())
+    {
+        panic( "The widget factory is already registered." )
+    }
+#endif /* DO_CHECKS */
+
+    GWidgetFactories[InFactory->GetNodeRaw()] = InFactory;
+
+    return;
+}
+
+ENGINE_API LWidgetFactory* FindOrNullWidgetFactory(const void* InNode)
+{
+    const std::map<void*, Jafg::LWidgetFactory*>::iterator It = GWidgetFactories.find(const_cast<void*>(InNode));
+    if (It != GWidgetFactories.end())
+    {
+        return It->second;
+    }
+
+    return nullptr;
+}
+
+ENGINE_API LWidgetFactory& GetWidgetFactory(const void* InNode)
+{
+    const std::map<void*, Jafg::LWidgetFactory*>::iterator It = GWidgetFactories.find(const_cast<void*>(InNode));
+    if (It != GWidgetFactories.end())
+    {
+        check( It->second )
+        return *It->second;
+    }
+
+    panic( "The widget factory is not registered." )
+    abort();
+}
+
+ENGINE_API int32 PurgeWidgetFactories()
+{
+    int32 Count = 0;
+    for (const auto& [fst, snd] : GWidgetFactories)
+    {
+        delete snd;
+        ++Count;
+    }
+
+    GWidgetFactories.clear();
+
+    return Count;
+}
+
+} /* ~Namespace Jafg::Private */
+
 namespace Jafg
 {
 

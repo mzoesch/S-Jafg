@@ -27,16 +27,16 @@ public:
     virtual void Draw(LViewport& Context) const override;
     virtual void Destruct() override;
 
-    FORCEINLINE virtual auto GetChildren() const -> const TdhArray<LWidgetSlot*>& override { return this->Children; }
-    virtual auto RemoveChild(WWidgetNode* Child) -> void override;
-    virtual auto RemoveChild(LWidgetSlot* Child) -> void override;
-    virtual auto AddChild(WWidgetNode* Child) -> LWidgetSlot* override;
+    FORCEINLINE
+    virtual auto         GetChildren() const -> const TdhArray<LWidgetSlot*>& override { return this->Children; }
+    virtual void         RemoveChild(WWidgetNode* Child) override;
+    virtual void         RemoveChild(LWidgetSlot* Child) override;
+    virtual LWidgetSlot* AddChild(WWidgetNode* Child) override;
 
+    FORCEINLINE virtual void SetPadding(const LPadding& InPadding) override { this->Padding = InPadding; }
     FORCEINLINE         auto GetPadding()    const -> const LPadding& { return this->Padding; }
     FORCEINLINE virtual auto GetPaddingPtr() const -> const LPadding* override { return &this->Padding; }
     FORCEINLINE virtual auto GetPaddingPtr()       ->       LPadding* override { return &this->Padding; }
-
-    FORCEINLINE auto SetPadding(const LPadding& InPadding) -> WWidgetParentBase& override { this->Padding = InPadding; return *this; }
 
 private:
 

@@ -76,4 +76,4 @@ TNode* LHud::GetCheckedTopLevelWidgetByClass() const
     return CheckedStaticCast<TNode>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
 }
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */
