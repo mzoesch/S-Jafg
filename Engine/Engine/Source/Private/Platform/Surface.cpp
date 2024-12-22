@@ -45,6 +45,13 @@ void Jafg::LSurface::TearDown()
 void Jafg::LSurface::BeginNewFrame()
 {
     this->PlatformInput.Empty();
+
+    this->DownKeys.SwapBuffers(this->LastFrameDownKeys);
+    this->DownKeys.Reset(this->DownKeys.GetSize());
+
+    this->PlatformRepeatedKey.Reset();
+
+    return;
 }
 
 void Jafg::LSurface::SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor)
@@ -65,7 +72,7 @@ bool Jafg::LSurface::IsNewKeyDown(const LKey InKey) const
     return this->GetCurrentlyPressedKeys().Contains(InKey) && (this->GetLastFramePressedKeys().Contains(InKey) == false);
 }
 
-bool Jafg::LSurface::IsNewKeyUp(const LKey InKey) const
+bool Jafg::LSurface::IsKeyUp(const LKey InKey) const
 {
     return this->GetCurrentlyPressedKeys().Contains(InKey) == false && this->GetLastFramePressedKeys().Contains(InKey);
 }

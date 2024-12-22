@@ -56,8 +56,6 @@ void Jafg::LLocalEgo::Tick(const float DeltaTime)
         LOG_VERBOSE(LogWidgetFramework, "Purged {} widget factories.", PurgedFactories)
     }
 
-    this->UserInput->BeginNewFrame();
-
     this->GetPrimarySurface()->BeginNewFrame();
     this->GetPrimarySurface()->PollInputs();
     this->GetPrimarySurface()->PollEvents();

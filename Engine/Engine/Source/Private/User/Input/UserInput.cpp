@@ -10,17 +10,6 @@
 #include "User/Input/InputAction.h"
 #include "User/Input/InputActionValue.h"
 
-void Jafg::LUserInput::BeginNewFrame()
-{
-    LSurface* Context = this->GetLocalEgo()->GetPrimarySurface();
-    check( Context )
-
-    Context->GetCurrentlyPressedKeys().SwapBuffers(Context->GetLastFramePressedKeys());
-    Context->GetCurrentlyPressedKeys().Reset(Context->GetCurrentlyPressedKeys().GetSize());
-
-    return;
-}
-
 bool Jafg::LUserInput::IsNewDown(const LKey Key) const
 {
     const LSurface* Context = this->GetLocalEgo()->GetPrimarySurface();

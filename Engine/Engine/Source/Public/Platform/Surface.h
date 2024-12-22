@@ -58,13 +58,19 @@ public:
               virtual void SetVSync(const bool bEnabled) = 0;
     NODISCARD virtual bool IsVSync() const               = 0;
 
-    FORCEINLINE auto AddKeyDown(const LKey InKey) -> void;
-    FORCEINLINE auto AddKeyDown(const LKey InKey, const float InValue) -> void;
-    FORCEINLINE auto AddKeyDown(const LRawInput& InRawInput) -> void;
+    FORCEINLINE void AddKeyDown(const LKey InKey);
+    FORCEINLINE void AddKeyDown(const LKey InKey, const float InValue);
+    FORCEINLINE void AddKeyDown(const LRawInput& InRawInput);
+    FORCEINLINE void SetRepeatedKeyDown(const LKey InKey);
+    FORCEINLINE void SetRepeatedKeyDown(const LKey InKey, const float InValue);
+    FORCEINLINE void SetRepeatedKeyDown(const LRawInput& InRawInput);
     FORCEINLINE auto GetCurrentlyPressedKeys()       ->       TdhArray<LRawInput>& { return this->DownKeys;          }
     FORCEINLINE auto GetCurrentlyPressedKeys() const -> const TdhArray<LRawInput>& { return this->DownKeys;          }
     FORCEINLINE auto GetLastFramePressedKeys()       ->       TdhArray<LRawInput>& { return this->LastFrameDownKeys; }
     FORCEINLINE auto GetLastFramePressedKeys() const -> const TdhArray<LRawInput>& { return this->LastFrameDownKeys; }
+    FORCEINLINE bool HasRepeatedKey() const { return this->PlatformRepeatedKey.Key != EKeys::Unresolved; }
+    FORCEINLINE auto GetRepeatedKey()                ->       LRawInput& { return this->PlatformRepeatedKey; }
+    FORCEINLINE auto GetRepeatedKey()          const -> const LRawInput& { return this->PlatformRepeatedKey; }
     /** @return Whether the key is currently down. */
     bool IsKeyDown(const LKey InKey) const;
     FORCEINLINE bool IsKeyDown(const LRawInput& InRawInput) const { return this->IsKeyDown(InRawInput.Key); }
@@ -72,21 +78,21 @@ public:
     bool IsNewKeyDown(const LKey InKey) const;
     FORCEINLINE bool IsNewKeyDown(const LRawInput& InRawInput) const { return this->IsNewKeyDown(InRawInput.Key); }
     /** @return Whether the key was just released this frame. */
-    bool IsNewKeyUp(const LKey InKey) const;
-    FORCEINLINE bool IsNewKeyUp(const LRawInput& InRawInput) const { return this->IsNewKeyUp(InRawInput.Key); }
+    bool IsKeyUp(const LKey InKey) const;
+    FORCEINLINE bool IsKeyUp(const LRawInput& InRawInput) const { return this->IsKeyUp(InRawInput.Key); }
 
     FORCEINLINE bool    HasBufferedPlatformInput() const { return this->PlatformInput.IsEmpty() == false; }
     FORCEINLINE LString GetPlatformInput() const { return this->PlatformInput; }
 
 protected:
 
+    FORCEINLINE void AddBufferedPlatformInput(const char*    InInput) { this->PlatformInput += InInput; }
+    FORCEINLINE void AddBufferedPlatformInput(const LString& InInput) { this->PlatformInput += InInput; }
+
     EInputMode::Type InputMode = EInputMode::UserInterface;
     bool bShowCursor = false;
     bool bMouseLocationIsMeaningful = false;
     LVector2 MouseLocation = LVector2::ZeroVector;
-
-    /** This frame platform-localized input. */
-    LString PlatformInput;
 
 private:
 
@@ -97,8 +103,21 @@ private:
 
     /** The keys that are currently down for this surface this frame. */
     TdhArray<LRawInput> DownKeys;
+
     /** The keys that were down for this surface last frame. */
     TdhArray<LRawInput> LastFrameDownKeys;
+
+    /**
+     * This frame platform-localized input. Buffer is cleared every frame.
+     * So if you need this for later reference, you have to copy it.
+     */
+    LString PlatformInput;
+
+    /**
+     * The key that was down for this surface and repeated based on the user settings of the platform.
+     * @remark Only use for user input.
+     */
+    LRawInput PlatformRepeatedKey;
 };
 
 } /* ~Namespace Jafg */
@@ -121,6 +140,27 @@ void Jafg::LSurface::AddKeyDown(const LRawInput& InRawInput)
 {
     check( this->DownKeys.FindRef(InRawInput.Key) == nullptr )
     this->DownKeys.Emplace(InRawInput);
+    return;
+}
+
+void Jafg::LSurface::SetRepeatedKeyDown(const LKey InKey)
+{
+    check( this->PlatformRepeatedKey.Key == EKeys::Unresolved && this->PlatformRepeatedKey.Value == 0.0f )
+    this->PlatformRepeatedKey.Key = InKey;
+    return;
+}
+
+void Jafg::LSurface::SetRepeatedKeyDown(const LKey InKey, const float InValue)
+{
+    check( this->PlatformRepeatedKey.Key == EKeys::Unresolved && this->PlatformRepeatedKey.Value == 0.0f )
+    this->PlatformRepeatedKey.Key = InKey;
+    return;
+}
+
+void Jafg::LSurface::SetRepeatedKeyDown(const LRawInput& InRawInput)
+{
+    check( this->PlatformRepeatedKey.Key == EKeys::Unresolved && this->PlatformRepeatedKey.Value == 0.0f )
+    this->PlatformRepeatedKey = InRawInput;
     return;
 }
 

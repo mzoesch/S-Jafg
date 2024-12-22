@@ -26,6 +26,17 @@ struct LRawInput
     FORCEINLINE bool operator==(const LKey& Other) const        { return this->Key == Other;     }
     FORCEINLINE bool operator!=(const LRawInput& Other) const   { return this->Key != Other.Key; }
     FORCEINLINE bool operator!=(const LKey& Other) const        { return this->Key != Other;     }
+
+    FORCEINLINE void Reset()
+    {
+        this->Key   = EKeys::Unresolved;
+        this->Value = 0.0f;
+    }
+
+    FORCEINLINE LSimpleString ToString() const
+    {
+        return LSimpleString::SprintF("{{{}: {:.2f}}}", LexToString(Key), Value);
+    }
 };
 
 } /* ~Namespace Jafg */

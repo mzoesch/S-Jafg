@@ -19,10 +19,15 @@
 #include "User/Input/GlfwInputTranslation.h"
 #include "Core/LaunchProgress.h"
 
+namespace
+{
+
 void OpenGlErrorCallback(int error_code, const char* description)
 {
     panic( "OpenGl encountered an error." )
 }
+
+} /* ~Namespace <Anonymous> */
 
 void Jafg::LDesktopPlatformWin::Initialize()
 {
@@ -116,8 +121,12 @@ void Jafg::LDesktopPlatformWin::Initialize()
     {
         static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->CharCallback(Window, Codepoint);
     });
+    glfwSetKeyCallback(this->MasterWindow->GetNativeWindow(), [] (::GLFWwindow* Window, int32 Key, int32 Scancode, int32 Action, int32 Mods)
+    {
+        static_cast<LDesktopPlatformWin*>(glfwGetWindowUserPointer(Window))->KeyCallback(Window, Key, Scancode, Action, Mods);
+    });
 
-    glfwSetErrorCallback(OpenGlErrorCallback);
+    glfwSetErrorCallback(::OpenGlErrorCallback);
 
     glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
 
@@ -456,7 +465,21 @@ void Jafg::LDesktopPlatformWin::CharCallback(GLFWwindow* Window, const uint32 Co
     std::string ut8String = converter.to_bytes(Char);
 #pragma warning( pop )
 
-    this->PlatformInput += ut8String.c_str();
+    this->AddBufferedPlatformInput(ut8String.c_str());
+
+    return;
+}
+
+void Jafg::LDesktopPlatformWin::KeyCallback(::GLFWwindow* Window, const int32 Key, const int32 Scancode, const int32 Action, const int32 Mods)
+{
+    if (Action == GLFW_REPEAT)
+    {
+        const LKey TranslatedKey = Glfw3::TranslateKeyFromGlfw(Key);
+        if (TranslatedKey != EKeys::Unresolved)
+        {
+            this->SetRepeatedKeyDown(TranslatedKey);
+        }
+    }
 
     return;
 }

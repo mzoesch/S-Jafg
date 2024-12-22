@@ -22,8 +22,6 @@ public:
 
     LUserInput() = default;
 
-    void BeginNewFrame();
-
     /** Whether this key was just downed this frame. */
     ENGINE_API bool IsNewDown(const LKey Key) const;
 

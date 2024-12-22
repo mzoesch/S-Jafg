@@ -16,7 +16,10 @@
 namespace Jafg::Glfw3
 {
 
-FORCEINLINE int32 TranslateKeyToGlfw(const LKey InKey)
+FORCEINLINE int32 TranslateKeyToGlfw(const LKey InKey);
+FORCEINLINE LKey  TranslateKeyFromGlfw(const int32 InKey);
+
+int32 TranslateKeyToGlfw(const LKey InKey)
 {
     if (InKey == EKeys::AnyKey)
     {
@@ -97,6 +100,83 @@ FORCEINLINE int32 TranslateKeyToGlfw(const LKey InKey)
     if (InKey == EKeys::Apostrophe)     { return GLFW_KEY_APOSTROPHE; }
 
     return INDEX_NONE;
+}
+
+LKey TranslateKeyFromGlfw(const int32 InKey)
+{
+    if (InKey >= GLFW_KEY_A && InKey <= GLFW_KEY_Z)
+    {
+        return static_cast<LKey>(InKey - (GLFW_KEY_A - 1) + (static_cast<int32>(EKeys::A) - 1));
+    }
+
+    if (InKey == GLFW_KEY_BACKSPACE) { return EKeys::BackSpace; }
+    if (InKey == GLFW_KEY_TAB)       { return EKeys::Tab; }
+    if (InKey == GLFW_KEY_ENTER)     { return EKeys::Enter; }
+    if (InKey == GLFW_KEY_PAUSE)     { return EKeys::Pause; }
+    if (InKey == GLFW_KEY_CAPS_LOCK) { return EKeys::CapsLock; }
+    if (InKey == GLFW_KEY_ESCAPE)    { return EKeys::Escape; }
+    if (InKey == GLFW_KEY_SPACE)     { return EKeys::Space; }
+    if (InKey == GLFW_KEY_PAGE_UP)   { return EKeys::PageUp; }
+    if (InKey == GLFW_KEY_PAGE_DOWN) { return EKeys::PageDown; }
+    if (InKey == GLFW_KEY_END)       { return EKeys::End; }
+    if (InKey == GLFW_KEY_HOME)      { return EKeys::Home; }
+
+    if (InKey == GLFW_KEY_LEFT)      { return EKeys::Left; }
+    if (InKey == GLFW_KEY_UP)        { return EKeys::Up; }
+    if (InKey == GLFW_KEY_RIGHT)     { return EKeys::Right; }
+    if (InKey == GLFW_KEY_DOWN)      { return EKeys::Down; }
+
+    if (InKey == GLFW_KEY_INSERT)    { return EKeys::Insert; }
+    if (InKey == GLFW_KEY_DELETE)    { return EKeys::Delete; }
+
+    if (InKey >= GLFW_KEY_0 && InKey <= GLFW_KEY_9)
+    {
+        return static_cast<LKey>(InKey - (GLFW_KEY_0 - 1) + (static_cast<int32>(EKeys::Zero) - 1));
+    }
+
+    if (InKey >= GLFW_KEY_KP_0 && InKey <= GLFW_KEY_KP_9)
+    {
+        return static_cast<LKey>(InKey - (GLFW_KEY_KP_0 - 1) + (static_cast<int32>(EKeys::NumPadZero) - 1));
+    }
+
+    if (InKey == GLFW_KEY_NUM_LOCK)     { return EKeys::NumPadLock; }
+    if (InKey == GLFW_KEY_KP_DIVIDE)    { return EKeys::NumPadDivide; }
+    if (InKey == GLFW_KEY_KP_MULTIPLY)  { return EKeys::NumPadMultiply; }
+    if (InKey == GLFW_KEY_KP_SUBTRACT)  { return EKeys::NumPadSubtract; }
+    if (InKey == GLFW_KEY_KP_ADD)       { return EKeys::NumPadAdd; }
+    if (InKey == GLFW_KEY_KP_ENTER)     { return EKeys::NumPadEnter; }
+    if (InKey == GLFW_KEY_KP_DECIMAL)   { return EKeys::NumPadDecimal; }
+
+    if (InKey >= GLFW_KEY_F1 && InKey <= GLFW_KEY_F12)
+    {
+        return static_cast<LKey>(InKey - (GLFW_KEY_F1 - 1) + (static_cast<int32>(EKeys::F1) - 1));
+    }
+
+    if (InKey == GLFW_KEY_SCROLL_LOCK)     { return EKeys::ScrollLock; }
+    if (InKey == GLFW_KEY_PRINT_SCREEN)    { return EKeys::Print; }
+
+    if (InKey == GLFW_KEY_LEFT_SHIFT)      { return EKeys::LeftShift; }
+    if (InKey == GLFW_KEY_RIGHT_SHIFT)     { return EKeys::RightShift; }
+    if (InKey == GLFW_KEY_LEFT_CONTROL)    { return EKeys::LeftControl; }
+    if (InKey == GLFW_KEY_RIGHT_CONTROL)   { return EKeys::RightControl; }
+    if (InKey == GLFW_KEY_LEFT_ALT)        { return EKeys::LeftAlt; }
+    if (InKey == GLFW_KEY_RIGHT_ALT)       { return EKeys::RightAlt; }
+    if (InKey == GLFW_KEY_LEFT_SUPER)      { return EKeys::LeftCommand; }
+    if (InKey == GLFW_KEY_RIGHT_SUPER)     { return EKeys::RightCommand; }
+
+    if (InKey == GLFW_KEY_SEMICOLON)      { return EKeys::Semicolon; }
+    if (InKey == GLFW_KEY_EQUAL)          { return EKeys::Equals; }
+    if (InKey == GLFW_KEY_COMMA)          { return EKeys::Comma; }
+    if (InKey == GLFW_KEY_MINUS)          { return EKeys::Hyphen; }
+    if (InKey == GLFW_KEY_PERIOD)         { return EKeys::Period; }
+    if (InKey == GLFW_KEY_SLASH)          { return EKeys::Slash; }
+    if (InKey == GLFW_KEY_GRAVE_ACCENT)   { return EKeys::Tilde; }
+    if (InKey == GLFW_KEY_LEFT_BRACKET)   { return EKeys::LeftBracket; }
+    if (InKey == GLFW_KEY_BACKSLASH)      { return EKeys::Backslash; }
+    if (InKey == GLFW_KEY_RIGHT_BRACKET)  { return EKeys::RightBracket; }
+    if (InKey == GLFW_KEY_APOSTROPHE)     { return EKeys::Apostrophe; }
+
+    return EKeys::Unresolved;
 }
 
 } /* ~Namespace Jafg::Glfw3 */
