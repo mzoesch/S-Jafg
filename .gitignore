@@ -1,6 +1,6 @@
 # Visual Studio 2015 and 2022 / JetBrains Rider user specific files
 .vs/
-.idae/
+.idea/
 
 # Scripting
 .vscode/
@@ -41,3 +41,6 @@ __buildSolution.lua
 CMakeLists.txt
 CmakePresets.json
 cmake-build-*/
+
+# Osx
+.DS_Store
