@@ -13,8 +13,11 @@ https://www.khronos.org/files/webgl20-reference-guide.pdf
 For anything and any platform you will need `Python 3.11.x`.
 
 You will need to have the C/C++ toolchain installed for your platform. GNU/GCC and MSVC
-are supported. The target C++ dialect is `C++20`. Cmake or Premake is installed automatically
-by the build system.
+are supported. The target C++ dialect is `C++20`. Premake is installed automatically
+by the build system. For some [platforms](Documentation/Platforms.md) you will also need
+to have CMake installed. Cmake scripts will always be generated even if you do not need
+them or have CMake not installed.
+
 
 When developing / making changes to the reflection system you will need `Go 1.23.x`
 installed. A precompiled binary is automatically downloaded by the build system if Go is
