@@ -133,17 +133,7 @@ Jafg::TdhArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
 
 Jafg::LUserInputContext* Jafg::LUserInput::GetContextByName(const LSimpleString& InName)
 {
-    for (LUserInputContext* Context : this->RegisteredContexts)
-    {
-        if (Context->GetUniqueIdentifier() == InName)
-        {
-            return Context;
-        }
-
-        continue;
-    }
-
-    return nullptr;
+    return GetContextByName(GET_NAME(InName));
 }
 
 Jafg::LUserInputContext* Jafg::LUserInput::GetCheckedContextByName(const LSimpleString& InName)
@@ -170,19 +160,7 @@ Jafg::LUserInputContext* Jafg::LUserInput::GetPanickedContextByName(const LSimpl
 
 void Jafg::LUserInput::GetContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const
 {
-    for (LUserInputContext* Context : this->RegisteredContexts)
-    {
-        if (Context->GetUniqueIdentifier() == InName)
-        {
-            OutContext = Context;
-            return;
-        }
-
-        continue;
-    }
-
-    OutContext = nullptr;
-    return;
+    return this->GetContextByName(GET_NAME(InName), OutContext);
 }
 
 void Jafg::LUserInput::GetCheckedContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const
@@ -199,6 +177,79 @@ void Jafg::LUserInput::GetPanickedContextByName(const LSimpleString& InName, LUs
     if (OutContext == nullptr)
     {
         panicMsgf( "Could not find context with name [{}].", InName )
+    }
+
+    return;
+}
+
+Jafg::LUserInputContext* Jafg::LUserInput::GetContextByName(const LName InName)
+{
+    for (LUserInputContext* Context : this->RegisteredContexts)
+    {
+        if (Context->GetUniqueIdentifier() == InName)
+        {
+            return Context;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+Jafg::LUserInputContext* Jafg::LUserInput::GetCheckedContextByName(const LName InName)
+{
+#if DO_CHECKS
+    LUserInputContext* Context = this->GetContextByName(InName);
+    check( Context )
+    return Context;
+#else /* DO_CHECKS */
+    return this->GetContextByName(InName);
+#endif /* !DO_CHECKS */
+}
+
+Jafg::LUserInputContext* Jafg::LUserInput::GetPanickedContextByName(const LName InName)
+{
+    if (LUserInputContext* Context = this->GetContextByName(InName); Context)
+    {
+        return Context;
+    }
+
+    panicMsgf( "Could not find context with name [{}].", InName.ToString() )
+    return nullptr;
+}
+
+void Jafg::LUserInput::GetContextByName(const LName InName, LUserInputContext*& OutContext) const
+{
+    for (LUserInputContext* Context : this->RegisteredContexts)
+    {
+        if (Context->GetUniqueIdentifier() == InName)
+        {
+            OutContext = Context;
+            return;
+        }
+
+        continue;
+    }
+
+    OutContext = nullptr;
+    return;
+}
+
+void Jafg::LUserInput::GetCheckedContextByName(const LName InName, LUserInputContext*& OutContext) const
+{
+    this->GetContextByName(InName, OutContext);
+    check( OutContext )
+    return;
+}
+
+void Jafg::LUserInput::GetPanickedContextByName(const LName InName, LUserInputContext*& OutContext) const
+{
+    this->GetContextByName(InName, OutContext);
+
+    if (OutContext == nullptr)
+    {
+        panicMsgf( "Could not find context with name [{}].", InName.ToString() )
     }
 
     return;
@@ -221,7 +272,7 @@ void Jafg::LUserInput::ActivateContext(LUserInputContext* InContext)
 {
     check( InContext )
     this->ActiveContexts.Add(InContext);
-    LOG_VERBOSE(LogUserInput, "Activating context [{}].", InContext->GetUniqueIdentifier())
+    LOG_VERBOSE(LogUserInput, "Activating context [{}].", InContext->GetUniqueIdentifier().ToString())
     return;
 }
 
@@ -234,7 +285,7 @@ void Jafg::LUserInput::DeactivateContext(LUserInputContext* InContext)
 {
     check( InContext )
     this->ActiveContexts.RemoveOnceChecked(InContext);
-    LOG_VERBOSE(LogUserInput, "Deactivating context [{}].", InContext->GetUniqueIdentifier())
+    LOG_VERBOSE(LogUserInput, "Deactivating context [{}].", InContext->GetUniqueIdentifier().ToString())
     return;
 }
 

@@ -62,6 +62,12 @@ namespace Jafg
 
 ENGINE_API LName LName::NoName = LName::LName(NO_NAME);
 
+const LSimpleString& LName::ToString() const
+{
+    check( Private::GNameRegistry )
+    return Private::GNameRegistry->GetRealName(*this);
+}
+
 } /* ~Namespace Jafg */
 
 Jafg::LName Jafg::Private::LNameRegistry::GetName(const LSimpleString& InName, const bool bConvertToLower /* = true */) const

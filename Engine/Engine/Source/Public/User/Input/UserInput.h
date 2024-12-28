@@ -37,12 +37,18 @@ public:
     ENGINE_API TdhArray<LRawInput>& GetOngoingKeys() const;
     ENGINE_API TdhArray<LRawInput>  GetCompletedKeys() const;
 
-    ENGINE_API  auto GetContextByName(const LSimpleString& InName) -> LUserInputContext*;
-    ENGINE_API  auto GetCheckedContextByName(const LSimpleString& InName) -> LUserInputContext*;
-    ENGINE_API  auto GetPanickedContextByName(const LSimpleString& InName) -> LUserInputContext*;
-    ENGINE_API  void GetContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
-    ENGINE_API  void GetCheckedContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
-    ENGINE_API  void GetPanickedContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
+    ENGINE_API auto GetContextByName(const LSimpleString& InName) -> LUserInputContext*;
+    ENGINE_API auto GetCheckedContextByName(const LSimpleString& InName) -> LUserInputContext*;
+    ENGINE_API auto GetPanickedContextByName(const LSimpleString& InName) -> LUserInputContext*;
+    ENGINE_API void GetContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
+    ENGINE_API void GetCheckedContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
+    ENGINE_API void GetPanickedContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const;
+    ENGINE_API auto GetContextByName(const LName InName) -> LUserInputContext*;
+    ENGINE_API auto GetCheckedContextByName(const LName InName) -> LUserInputContext*;
+    ENGINE_API auto GetPanickedContextByName(const LName InName) -> LUserInputContext*;
+    ENGINE_API void GetContextByName(const LName InName, LUserInputContext*& OutContext) const;
+    ENGINE_API void GetCheckedContextByName(const LName InName, LUserInputContext*& OutContext) const;
+    ENGINE_API void GetPanickedContextByName(const LName InName, LUserInputContext*& OutContext) const;
 
     /** @return The newly mapped action. This is not the same as the input argument. */
     ENGINE_API  auto RegisterAction(LInputAction&& InAction) -> LInputAction*;

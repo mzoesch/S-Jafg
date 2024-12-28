@@ -5,10 +5,9 @@
 #include "User/Input/InputAction.h"
 #include "User/Input/UserInput.h"
 
-Jafg::LUserInputContext::LUserInputContext(const LSimpleString& InUniqueIdentifier)
-    : UniqueIdentifier(InUniqueIdentifier)
+Jafg::LUserInputContext::LUserInputContext(const LName InUniqueIdentifier) : UniqueIdentifier(InUniqueIdentifier)
 {
-    if (InUniqueIdentifier.IsEmpty())
+    if (InUniqueIdentifier.IsSet() == false)
     {
         panic( "Unique identifier must not be empty." )
     }

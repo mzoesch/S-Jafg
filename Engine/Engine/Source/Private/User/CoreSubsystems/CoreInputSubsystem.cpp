@@ -2,6 +2,7 @@
 
 #include "CoreAfx.h"
 #include "User/CoreSubsystems/CoreInputSubsystem.h"
+#include "Core/CoreNames.h"
 #include "Engine/Framework/Hud.h"
 #include "Engine/Framework/Pawn.h"
 #include "Platform/Surface.h"
@@ -20,23 +21,23 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
     LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
 
     {
-        LUserInputContext Context = LUserInputContext("InMyWorld");
+        LUserInputContext Context = LUserInputContext(Name_UicInMyWorld);
         UserInput->RegisterContext(std::move(Context));
     }
     {
-        LUserInputContext Context = LUserInputContext("InPause");
+        LUserInputContext Context = LUserInputContext(Name_UicInPause);
         UserInput->RegisterContext(std::move(Context));
     }
     {
-        LUserInputContext Context = LUserInputContext("InConsole");
+        LUserInputContext Context = LUserInputContext(Name_UicInConsole);
         UserInput->RegisterContext(std::move(Context));
     }
 
     UserInput->ActivateContext("InMyWorld");
 
-    LUserInputContext* ContextMyWorld   = UserInput->GetCheckedContextByName("InMyWorld");
-    LUserInputContext* ContextInPause   = UserInput->GetCheckedContextByName("InPause");
-    LUserInputContext* ContextInConsole = UserInput->GetCheckedContextByName("InConsole");
+    LUserInputContext* ContextMyWorld   = UserInput->GetCheckedContextByName(Name_UicInMyWorld);
+    LUserInputContext* ContextInPause   = UserInput->GetCheckedContextByName(Name_UicInPause);
+    LUserInputContext* ContextInConsole = UserInput->GetCheckedContextByName(Name_UicInConsole);
 
     // Action: Toggle debug screen
     {
@@ -148,7 +149,7 @@ void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
     }
 
     LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
-    LUserInputContext* ContextInMyWorld = UserInput->GetCheckedContextByName("InMyWorld");
+    LUserInputContext* ContextInMyWorld = UserInput->GetCheckedContextByName(Name_UicInMyWorld);
 
     LInputAction* CurMapping = nullptr;
     LInputActionMappedKey* CurMappedKey = nullptr;

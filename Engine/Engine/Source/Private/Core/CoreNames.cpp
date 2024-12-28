@@ -6,8 +6,8 @@
 namespace Jafg
 {
 
-ENGINE_API LName NameUicInMyWorld = MAKE_STATIC_NAME("InMyWorld");
-ENGINE_API LName NameUicInPause   = MAKE_STATIC_NAME("InPause");
-ENGINE_API LName NameUicInConsole = MAKE_STATIC_NAME("InConsole");
+ENGINE_API LName Name_UicInMyWorld = MAKE_STATIC_NAME("InMyWorld");
+ENGINE_API LName Name_UicInPause   = MAKE_STATIC_NAME("InPause");
+ENGINE_API LName Name_UicInConsole = MAKE_STATIC_NAME("InConsole");
 
 } /* ~Namespace Jafg */

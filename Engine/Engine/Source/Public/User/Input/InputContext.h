@@ -5,6 +5,7 @@
 #include "CoreAfx.h"
 #include "User/Input/InputTypes.h"
 #include "User/Input/InputActionTrigger.h"
+#include "Core/Name.h"
 
 namespace Jafg
 {
@@ -39,7 +40,7 @@ struct LInputMappedAction
 struct ENGINE_API LUserInputContext final
 {
     LUserInputContext() = delete;
-    explicit LUserInputContext(const LSimpleString& InUniqueIdentifier);
+    explicit LUserInputContext(const LName InUniqueIdentifier);
     DEFAULT_REALLOC_OF_ANY_FORM(LUserInputContext)
     ~LUserInputContext() = default;
 
@@ -63,7 +64,7 @@ struct ENGINE_API LUserInputContext final
         this->MapCallback(InAction, InTrigger, LUserInputActionCallback(InObject, InMember));
     }
 
-    FORCEINLINE auto GetUniqueIdentifier() const -> const LSimpleString& { return this->UniqueIdentifier; }
+    FORCEINLINE auto GetUniqueIdentifier() const -> const LName& { return this->UniqueIdentifier; }
     FORCEINLINE auto GetMappedActions()       ->       TdhArray<LInputMappedAction>& { return this->MappedActions; }
     FORCEINLINE auto GetMappedActions() const -> const TdhArray<LInputMappedAction>& { return this->MappedActions; }
 
@@ -72,7 +73,7 @@ struct ENGINE_API LUserInputContext final
 
 private:
 
-    LSimpleString UniqueIdentifier;
+    LName UniqueIdentifier;
     TdhArray<LInputMappedAction> MappedActions;
 };
 

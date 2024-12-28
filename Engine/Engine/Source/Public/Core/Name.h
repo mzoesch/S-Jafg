@@ -53,6 +53,10 @@ struct LName
     FORCEINLINE bool operator==(const LName& Other) const { return UnderlyingName == Other.UnderlyingName; }
     FORCEINLINE bool operator!=(const LName& Other) const { return UnderlyingName != Other.UnderlyingName; }
 
+    FORCEINLINE bool IsSet() const { return UnderlyingName != NO_NAME; }
+    
+    ENGINE_API const LSimpleString& ToString() const;
+
     ENGINE_API static LName NoName;
 
 private:
@@ -89,6 +93,7 @@ public:
 
     static     LName GetNameByValue(LUnderlyingName InUnderlyingName) { return { InUnderlyingName }; }
     ENGINE_API LName GetName(const LSimpleString& InName, const bool bConvertToLower = true) const;
+    FORCEINLINE auto GetRealName(const LName InName) const -> const LSimpleString& { return this->Names[InName.UnderlyingName - 1]; }
 
     ENGINE_API bool IsNameRegistered(const LSimpleString& InName, const bool bConvertToLower = true) const;
     ENGINE_API bool RegisterName(const LSimpleString& InName);
