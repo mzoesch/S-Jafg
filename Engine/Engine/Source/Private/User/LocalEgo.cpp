@@ -35,7 +35,7 @@ void Jafg::LLocalEgo::Initialize()
 
     this->Hud = new ::Jafg::LHud();
 
-    this->OnWorldBeginLifeHandle = GEngine->OnWorldBeginLife.AddMember(&LLocalEgo::OnWorldBeginLife, this);
+    this->OnWorldBeginLifeHandle = GEngine->OnWorldBeginLife.Add(this, &LLocalEgo::OnWorldBeginLife);
 
     checkSlow( this->Collection == nullptr )
     this->Collection = new LSubsystemCollection(this->Context);

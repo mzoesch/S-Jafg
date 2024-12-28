@@ -23,11 +23,15 @@ struct TDelegate<RetTy(ParamsTy...)> final
     using LRetValTy = RetTy;
     using LParamsTy = std::tuple<ParamsTy...>;
 
+    FORCEINLINE TDelegate() = default;
+    FORCEINLINE TDelegate(LNullptrTy) : Delegate(nullptr) { return; }
+
     FORCEINLINE LRetValTy Execute(ParamsTy ... InFuncParams)
     {
         check( this->Delegate.IsBound() )
         return this->Delegate(std::forward<ParamsTy>(InFuncParams)...);
     }
+    FORCEINLINE LRetValTy operator()(ParamsTy ... InFuncParams) { return this->Execute(std::forward<ParamsTy>(InFuncParams)...); }
 
     template <typename LocalFuncRetValTy = LRetValTy, TEnableIf<std::is_void_v<LocalFuncRetValTy>, void>* = nullptr>
     FORCEINLINE bool ExecuteIfBound(ParamsTy ... InFuncParams)
@@ -42,11 +46,21 @@ struct TDelegate<RetTy(ParamsTy...)> final
     }
 
     template <typename CallableTy>
+    FORCEINLINE TDelegate(CallableTy&& InCallable)
+    {
+        this->Delegate.BindStrong(std::forward<CallableTy>(InCallable));
+    }
+    template <typename CallableTy>
     FORCEINLINE void BindStrong(CallableTy&& InCallable)
     {
         this->Delegate.BindStrong(std::forward<CallableTy>(InCallable));
     }
 
+    template <typename CallableTy>
+    FORCEINLINE TDelegate(CallableTy* InCallable)
+    {
+        this->Delegate.BindWeak(InCallable);
+    }
     template <typename CallableTy>
     FORCEINLINE void BindWeak(CallableTy* InCallable)
     {
@@ -54,13 +68,24 @@ struct TDelegate<RetTy(ParamsTy...)> final
     }
 
     template <typename ObjTy, typename CallableTy>
+    FORCEINLINE TDelegate(ObjTy* InObject, CallableTy InMember)
+    {
+        this->Delegate.BindMember(InObject, InMember);
+    }
+    template <typename ObjTy, typename CallableTy>
     FORCEINLINE void BindMember(ObjTy* InObject, CallableTy InMember)
     {
         this->Delegate.BindMember(InObject, InMember);
     }
 
+    FORCEINLINE TDelegate(const TFunction<RetTy(ParamsTy...)>& InFunction) = delete;
+    FORCEINLINE TDelegate(TFunction<RetTy(ParamsTy...)>&& InFunction) { this->Delegate = std::move(InFunction); }
+    FORCEINLINE void BindFunction(const TFunction<RetTy(ParamsTy...)>& InFunction) = delete;
+    FORCEINLINE void BindFunction(TFunction<RetTy(ParamsTy...)>&& InFunction) { this->Delegate = std::move(InFunction); }
+
     FORCEINLINE bool IsBound() const { return this->Delegate.IsBound(); }
     FORCEINLINE void Unbind()        { this->Delegate.Reset();        }
+    FORCEINLINE explicit operator bool() const { return this->IsBound(); }
 
 private:
 
@@ -130,6 +155,13 @@ struct TMulticastDelegate<RetTy(ParamsTy...)> final
     FORCEINLINE LDelegateHandle AddWeak(CallableTy* InCallable);
     template <typename ObjTy, typename CallableTy>
     FORCEINLINE LDelegateHandle AddMember(ObjTy* InObj, CallableTy InMember);
+
+    template <typename CallableTy>
+    FORCEINLINE LDelegateHandle Add(CallableTy&& InCallable) { return this->AddStrong(std::forward<CallableTy>(InCallable)); }
+    template <typename CallableTy>
+    FORCEINLINE LDelegateHandle Add(CallableTy* InCallable) { return this->AddWeak(InCallable); }
+    template <typename ObjTy, typename CallableTy>
+    FORCEINLINE LDelegateHandle Add(ObjTy* InObj, CallableTy InMember) { return this->AddMember(InObj, InMember); }
 
     FORCEINLINE bool IsStillBound(const LDelegateHandle& InDelegateHandle) const;
     FORCEINLINE bool HasAny() const;

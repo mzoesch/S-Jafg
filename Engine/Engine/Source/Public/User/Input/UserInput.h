@@ -58,7 +58,7 @@ public:
 
 private:
 
-    void DispatchInputDelegatesForAction(const LUserInputContext* InContext, const TdhArray<LRawInput>& InRawInputs, const LInputMappedAction* InAction);
+    void DispatchInputDelegatesForAction(const LUserInputContext* InContext, const TdhArray<LRawInput>& InRawInputs, LInputMappedAction* InAction);
 
     TdhArray<LInputAction*> RegisteredActions;
 

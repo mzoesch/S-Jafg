@@ -246,7 +246,7 @@ int32 Jafg::LUserInput::DeactivateAllContexts()
     return NumDeactivated;
 }
 
-void Jafg::LUserInput::DispatchInputDelegatesForAction(const LUserInputContext* InContext, const TdhArray<LRawInput>& InRawInputs, const LInputMappedAction* InAction)
+void Jafg::LUserInput::DispatchInputDelegatesForAction(const LUserInputContext* InContext, const TdhArray<LRawInput>& InRawInputs, LInputMappedAction* InAction)
 {
     LInputActionValue Value = InAction->Action->Category;
 
@@ -293,8 +293,7 @@ void Jafg::LUserInput::DispatchInputDelegatesForAction(const LUserInputContext* 
 
     if (Value.IsNonZero())
     {
-        check( InAction->Callback )
-        (*InAction->Callback)(Value);
+        InAction->Callback(Value);
     }
 
     return;

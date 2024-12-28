@@ -85,7 +85,7 @@ struct LTaskQueue final
     {
         this->Delegate = new Jafg::TFunction<void(void)>();
         *this->Delegate = std::move(InDelegate);
-        checkSlow( InDelegate.IsSet() == false )
+        checkSlow( InDelegate.IsBound() == false )
     }
 
     Jafg::ETaskTime::Type        Time;
@@ -197,7 +197,7 @@ bool Jafg::Tasks::IsOnMasterThread()
 
 void Jafg::Tasks::Make(const ENamedThreads::Type Thread, const ETaskTime::Type Time, TFunction<void()>&& InDelegate)
 {
-    check( InDelegate.IsSet() )
+    check( InDelegate.IsBound() )
 
     std::vector<LTaskQueue>& Queue = ::TaskQueue[Thread];
     Queue.emplace_back(Time, std::move(InDelegate));
@@ -245,7 +245,7 @@ void Jafg::Tasks::Private::TryRunTasks(const ENamedThreads::Type Which, const ET
         LTaskQueue& Task = Queue[Idx];
         if (Task.Time & Time)
         {
-            check( Task.Delegate->IsSet() )
+            check( Task.Delegate->IsBound() )
             Task.Delegate->Call();
             Queue.erase(Queue.begin() + Idx);
             ++RunTasks;

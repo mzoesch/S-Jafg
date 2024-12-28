@@ -15,7 +15,7 @@ struct LInputActionValue;
 struct LInputActionMappedKey;
 
 typedef TFunction<void(LInputActionValue& InValue)> LUserInputActionCallback;
-
+MAKE_DELEGATE_SIGNATURE(LUserInputActionDelegate, void, LInputActionValue& InValue)
 MAKE_MULTICAST_SIGNATURE(OnActionTriggered, const LInputActionValue&)
 
 /**
@@ -28,12 +28,9 @@ struct LInputMappedAction
     DEFAULT_REALLOC_OF_ANY_FORM(LInputMappedAction)
     ~LInputMappedAction() = default;
 
-    void ResetCallback();
-    void SetCallback(const EInputActionTrigger::Type InTrigger, const LUserInputActionCallback& InCallback);
-
     LInputAction*             Action;
     EInputActionTrigger::Type Trigger  = EInputActionTrigger::None;
-    LUserInputActionCallback* Callback = nullptr;
+    LUserInputActionDelegate  Callback = nullptr;
 };
 
 /**
@@ -48,21 +45,23 @@ struct ENGINE_API LUserInputContext final
 
     /** @return The newly mapped action. This is not the same as the input argument. */
     auto MapAction(LInputAction&& InAction, LUserInput* InUserInput) -> LInputAction*;
-    /** Map an already registered (inside the suer input) action. */
-    auto MapAction(LInputAction* InAction) -> void;
+    /** Map an already registered (inside the user input) action. */
+    void MapAction(LInputAction* InAction);
 
     auto MapKey(LInputAction* InAction, const LKey InKey) -> LInputActionMappedKey*;
-    auto MapCallback(
-        const LInputAction* InAction,
-        const EInputActionTrigger::Type InTrigger,
-        const LUserInputActionCallback& InCallback
-    ) -> void;
-    auto MapKey(
-        LInputAction* InAction,
-        const LKey InKey,
-        const EInputActionTrigger::Type InTrigger,
-        const LUserInputActionCallback& InCallback
-    ) -> LInputActionMappedKey*;
+    auto MapKey(LInputAction* InAction, const LKey InKey, const EInputActionTrigger::Type InTrigger, LUserInputActionCallback&& InCallback) -> LInputActionMappedKey*;
+    template <typename ObjTy, typename CallableTy>
+    auto MapKey(LInputAction* InAction, const LKey InKey, const EInputActionTrigger::Type InTrigger, ObjTy* InObject, CallableTy InMember) -> LInputActionMappedKey*
+    {
+        return this->MapKey(InAction, InKey, InTrigger, LUserInputActionCallback(InObject, InMember));
+    }
+
+    void MapCallback(const LInputAction* InAction, const EInputActionTrigger::Type InTrigger, LUserInputActionCallback&& InCallback);
+    template <typename ObjTy, typename CallableTy>
+    void MapCallback(const LInputAction* InAction, const EInputActionTrigger::Type InTrigger, ObjTy* InObject, CallableTy InMember)
+    {
+        this->MapCallback(InAction, InTrigger, LUserInputActionCallback(InObject, InMember));
+    }
 
     FORCEINLINE auto GetUniqueIdentifier() const -> const LSimpleString& { return this->UniqueIdentifier; }
     FORCEINLINE auto GetMappedActions()       ->       TdhArray<LInputMappedAction>& { return this->MappedActions; }

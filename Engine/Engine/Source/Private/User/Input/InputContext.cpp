@@ -5,47 +5,6 @@
 #include "User/Input/InputAction.h"
 #include "User/Input/UserInput.h"
 
-void Jafg::LInputMappedAction::ResetCallback()
-{
-    if (this->Callback)
-    {
-        this->Callback->Reset();
-        delete this->Callback;
-        this->Callback = nullptr;
-    }
-    this->Trigger = EInputActionTrigger::None;
-
-    return;
-}
-
-void Jafg::LInputMappedAction::SetCallback(
-    const EInputActionTrigger::Type InTrigger,
-    const LUserInputActionCallback& InCallback
-)
-{
-    if (InTrigger == EInputActionTrigger::None)
-    {
-        panic( "Trigger must not be None." )
-        return;
-    }
-
-    if (this->Callback && this->Callback->IsSet())
-    {
-        panic( "Callback must not be set." )
-        return;
-    }
-
-    if (this->Callback == nullptr)
-    {
-        this->Callback = new LUserInputActionCallback();
-    }
-
-    this->Trigger   = InTrigger;
-    *this->Callback = InCallback;
-
-    return;
-}
-
 Jafg::LUserInputContext::LUserInputContext(const LSimpleString& InUniqueIdentifier)
     : UniqueIdentifier(InUniqueIdentifier)
 {
@@ -90,43 +49,39 @@ Jafg::LInputActionMappedKey* Jafg::LUserInputContext::MapKey(LInputAction* InAct
     return MappedAction->Action->MappedKeys.GetLast();
 }
 
-void Jafg::LUserInputContext::MapCallback(
-    const LInputAction* InAction,
-    const EInputActionTrigger::Type InTrigger,
-    const LUserInputActionCallback& InCallback
-)
-{
-    check( InAction )
-    check( InTrigger != EInputActionTrigger::None )
-    check( InCallback.IsSet() )
-
-    LInputMappedAction* MappedAction = this->FindCheckedMappedAction(InAction);
-
-    if (MappedAction->Callback)
-    {
-        LOG_WARNING(LogUserInput, "Callback was already mapped." )
-        MappedAction->Callback->Reset();
-        delete MappedAction->Callback;
-    }
-
-    MappedAction->Callback  = new LUserInputActionCallback();
-    *MappedAction->Callback = InCallback;
-    MappedAction->Trigger   = InTrigger;
-
-    check( MappedAction->Callback->IsSet() )
-
-    return;
-}
-
 Jafg::LInputActionMappedKey* Jafg::LUserInputContext::MapKey(
     LInputAction* InAction,
     const LKey InKey,
     const EInputActionTrigger::Type InTrigger,
-    const LUserInputActionCallback& InCallback
+    LUserInputActionCallback&& InCallback
 )
 {
-    this->MapCallback(InAction, InTrigger, InCallback);
+    this->MapCallback(InAction, InTrigger, std::move(InCallback));
     return this->MapKey(InAction, InKey);
+}
+
+void Jafg::LUserInputContext::MapCallback(const LInputAction* InAction, const EInputActionTrigger::Type InTrigger, LUserInputActionCallback&& InCallback)
+{
+    check( InAction )
+    check( InTrigger != EInputActionTrigger::None )
+    check( InCallback.IsBound() )
+
+    LInputMappedAction* MappedAction = this->FindCheckedMappedAction(InAction);
+
+    if constexpr (IS_COMPILED_LOG(LogUserInput, Warning))
+    {
+        if (MappedAction->Callback)
+        {
+            LOG_WARNING(LogUserInput, "Callback was already mapped." )
+        }
+    }
+
+    MappedAction->Callback = std::move(InCallback);
+    MappedAction->Trigger  = InTrigger;
+
+    check( MappedAction->Callback.IsBound() )
+
+    return;
 }
 
 Jafg::LInputMappedAction* Jafg::LUserInputContext::FindMappedAction(const LInputAction* InAction)

@@ -41,11 +41,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
     // Action: Toggle debug screen
     {
         LInputAction* CurMapping = ContextMyWorld->MapAction(LInputAction(EInputActionCategory::Boolean), UserInput);
-        ContextMyWorld->MapKey
-        (
-            CurMapping, EKeys::F3, EInputActionTrigger::Triggered,
-            [this] (LInputActionValue& InValue) { this->OnDebugScreenToggle(InValue); }
-        );
+        ContextMyWorld->MapKey(CurMapping, EKeys::F3, EInputActionTrigger::Triggered, this, &JCoreInputSubsystem::OnDebugScreenToggle);
     }
 
     // Action: Toggle pause menu
@@ -183,36 +179,26 @@ void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
     CurMappedKey->Modifiers.Add(MakeModifier<LInputActionMappedKeySwizzleXZModifier>());
     CurMappedKey->Modifiers.Add(MakeModifier<LInputActionMappedKeyNegateModifier>());
     CurMappedKey->Modifiers.Add(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>());
-    ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Ongoing,
-        [InNew] (LInputActionValue& InValue) { InNew->OnOngoingMovementInput(InValue); }
-    );
+    ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Ongoing, InNew, &APawn::OnOngoingMovementInput);
 
     CurMapping = ContextInMyWorld->MapAction(LInputAction(EInputActionCategory::Axis2D), UserInput);
     CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::MouseXY);
-    ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Ongoing,
-        [InNew] (LInputActionValue& InValue) { InNew->OnOngoingRotationInput(InValue); }
-    );
+    ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Ongoing, InNew, &APawn::OnOngoingRotationInput);
 
     CurMapping = ContextInMyWorld->MapAction(LInputAction(EInputActionCategory::Axis1D), UserInput);
     CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::MouseWheelAxis);
-    ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Ongoing,
-        [InNew] (LInputActionValue& InValue) { InNew->OnOngoingVelocityChange(InValue); }
-    );
+    ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Ongoing, InNew, &APawn::OnOngoingVelocityChange);
 
     {
         CurMapping   = ContextInMyWorld->MapAction(LInputAction(EInputActionCategory::Boolean), UserInput);
         CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::LeftMouseButton);
-        ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Triggered,
-            [this, InNew] (LInputActionValue& InValue) { InNew->OnOngoingPrimaryInput(InValue); }
-        );
+        ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Triggered, InNew, &APawn::OnOngoingPrimaryInput);
     }
 
     {
         CurMapping   = ContextInMyWorld->MapAction(LInputAction(EInputActionCategory::Boolean), UserInput);
         CurMappedKey = ContextInMyWorld->MapKey(CurMapping, EKeys::RightMouseButton);
-        ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Triggered,
-            [this, InNew] (LInputActionValue& InValue) { InNew->OnOngoingSecondaryInput(InValue); }
-        );
+        ContextInMyWorld->MapCallback(CurMapping, EInputActionTrigger::Triggered, InNew, &APawn::OnOngoingSecondaryInput);
     }
 
     return;
