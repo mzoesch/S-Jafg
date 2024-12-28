@@ -68,12 +68,6 @@
 #include "Maths/MathUtility.h"
 
 ///////////////////////////////////////////////////////////////////////////////
-// Functors
-#include "Core/Function.h"
-#include "Delegates/DelegatePrivate.h"
-#include "Delegates/DelegateMacros.h"
-
-///////////////////////////////////////////////////////////////////////////////
 // Containers
 #include "Containers/ContainerMacros.h"
 #include "Containers/Iterator.h"
@@ -84,6 +78,12 @@
 #include "Containers/Format.h"
 #include "Containers/StringUtility.h"
 #include "Containers/StringConversions.h"
+
+///////////////////////////////////////////////////////////////////////////////
+// Functors
+#include "Core/Function.h"
+#include "Delegates/DelegatePrivate.h"
+#include "Delegates/DelegateMacros.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Misc

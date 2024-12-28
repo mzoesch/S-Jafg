@@ -2,367 +2,180 @@
 
 #pragma once
 
-#include <functional>
-
 namespace Jafg
 {
 
-namespace Private
-{
-
-template <bool bAllowNull>
-struct TFunctionStoragePolicy
-{
-    FORCEINLINE static constexpr bool CanBeNull() { return bAllowNull; }
-};
-
-template <typename StoragePolicy, typename FunctorTy>
-struct TFunctionBase;
-
-template <typename StoragePolicy, typename RetTy, typename ... ParamsTy>
-struct TFunctionBase<StoragePolicy, RetTy (ParamsTy ...)>
-{
-    template <typename OtherStoragePolicy, typename OtherFunctorTy>
-    friend struct TFunctionBase;
-
-    FORCEINLINE static constexpr auto NumParams() -> int32 { return sizeof ... (ParamsTy); }
-
-    TFunctionBase() = default;
-    ~TFunctionBase() = default;
-
-    template <typename InOtherFunctorTy>
-    FORCEINLINE TFunctionBase(InOtherFunctorTy&  Other) noexcept : Functor(Other) { }
-    template <typename InOtherFunctorTy>
-    FORCEINLINE auto operator=(InOtherFunctorTy& Other) noexcept -> TFunctionBase&
-    {
-        this->Functor = Other;
-        return *this;
-    }
-
-    template <typename InOtherFunctorTy>
-    FORCEINLINE TFunctionBase(const InOtherFunctorTy&  Other) noexcept : Functor(Other) { }
-    template <typename InOtherFunctorTy>
-    FORCEINLINE auto operator=(const InOtherFunctorTy& Other) noexcept -> TFunctionBase&
-    {
-        this->Functor = Other;
-        return *this;
-    }
-
-    template <typename InOtherFunctorTy>
-    FORCEINLINE TFunctionBase(InOtherFunctorTy&& Other) noexcept
-    {
-        this->Functor = std::forward<InOtherFunctorTy>(Other);
-        return;
-    }
-    template <typename InOtherFunctorTy>
-    FORCEINLINE TFunctionBase& operator=(InOtherFunctorTy&& Other) noexcept
-    {
-        this->Functor = std::forward<InOtherFunctorTy>(Other);
-        return *this;
-    }
-
-    FORCEINLINE auto Call(ParamsTy... Params)       -> RetTy { return this->Functor(Params ...); }
-    FORCEINLINE auto operator()(ParamsTy... Params) -> RetTy
-    {
-#if DO_CHECKS
-        this->CheckForValidCall();
-#endif /* DO_CHECKS */
-
-        return this->Functor(Params ...);
-    }
-
-    FORCEINLINE auto operator==(LNullptrTy) const -> bool { return this->IsSet() == false; }
-    FORCEINLINE auto operator!=(LNullptrTy) const -> bool { return this->IsSet();          }
-
-    FORCEINLINE void CheckForValidCall() const { check( IsSet() ) return; }
-    FORCEINLINE bool IsSet() const
-    {
-        if constexpr (StoragePolicy::CanBeNull() == false)
-        {
-            if (this->Functor == nullptr)
-            {
-                panic( "Found nullptr to function reference but nullptr is prohibited." )
-            }
-        }
-
-        return this->Functor != nullptr;
-    }
-
-    FORCEINLINE void Reset()
-    {
-        if constexpr (StoragePolicy::CanBeNull() == false)
-        {
-            panic( "Cannot reset a function reference that cannot be null." )
-        }
-
-        this->Functor = nullptr;
-
-        return;
-    }
-
-    FORCEINLINE auto GetRaw() { return this->Functor; }
-
-protected:
-
-    /** The functor to operate on. */
-    /*
-     * Currently is this whole thing just a wrapper around the std library's std::function. But we should
-     * implement our own implementation just for fun.
-     */
-    std::function<RetTy(ParamsTy& ...)> Functor = nullptr;
-};
-
-} /* ~Namespace Private */
+template <typename T>
+class TFunction;
 
 /**
- * A struct that stores a function.
+ * A function object that can store any callable type.
+ * Weak / strong references to lambdas, function pointers, and member functions are supported.
  */
-template <typename FunctorTy>
-struct TFunction final : public Private::TFunctionBase<Private::TFunctionStoragePolicy<true>, FunctorTy>
+template <typename RetTy, typename ... ParamsTy>
+class TFunction<RetTy(ParamsTy...)>
 {
-private:
-
-    using Super = Private::TFunctionBase<Private::TFunctionStoragePolicy<true>, FunctorTy>;
+    template <typename T>
+    friend class TFunction;
 
 public:
 
-    TFunction(LNullptrTy = nullptr) { }
+    FORCEINLINE static constexpr int32 NumParams() { return sizeof ... (ParamsTy); }
 
-    template <typename InOtherFunctorTy>
-    FORCEINLINE TFunction(InOtherFunctorTy& Other) noexcept : Super(Other) { }
-    FORCEINLINE TFunction& operator=(TFunction& Other) noexcept
+    using LRetTy    = RetTy;
+    using LParamsTy = std::tuple<ParamsTy...>;
+
+    struct LCallableBase;
+    template <typename CallableTy>                 struct LStrongCallable;
+    template <typename CallableTy>                 struct LWeakCallable;
+    template <typename ObjTy, typename CallableTy> struct LMemberCallable;
+
+    FORCEINLINE TFunction() = default;
+    FORCEINLINE ~TFunction() { this->Reset(); return; }
+
+    FORCEINLINE TFunction(LNullptrTy) : Callable(nullptr) { }
+
+    template <typename CallableTy>
+    FORCEINLINE TFunction(CallableTy&& InCallable)
     {
-        this->Functor = Other.Functor;
-        return *this;
+        this->Reset();
+        this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LStrongCallable<std::decay_t<CallableTy>>>(std::forward<CallableTy>(InCallable));
+    }
+    template <typename CallableTy>
+    FORCEINLINE void BindStrong(CallableTy&& InCallable)
+    {
+        this->Reset();
+        this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LStrongCallable<std::decay_t<CallableTy>>>(std::forward<CallableTy>(InCallable));
     }
 
-    template <typename InOtherFunctorTy>
-    FORCEINLINE TFunction(const InOtherFunctorTy& Other) noexcept : Super(Other) { }
-    FORCEINLINE TFunction& operator=(const TFunction& Other) noexcept
+    template <typename CallableTy>
+    FORCEINLINE TFunction(CallableTy* InCallable)
     {
-        this->Functor = Other.Functor;
-        return *this;
+        this->Reset();
+        this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LWeakCallable<CallableTy>>(InCallable);
+    }
+    template <typename CallableTy>
+    FORCEINLINE void BindWeak(CallableTy* InCallable)
+    {
+        this->Reset();
+        this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LWeakCallable<CallableTy>>(InCallable);
     }
 
-    template <typename InOtherFunctorTy>
-    FORCEINLINE TFunction(InOtherFunctorTy&& Other) noexcept : Super(std::forward<InOtherFunctorTy>(Other)) { }
+    template <typename ObjTy, typename CallableTy>
+    FORCEINLINE TFunction(ObjTy* InObject, CallableTy InMember)
+    {
+        this->Reset();
+        this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LMemberCallable<ObjTy, CallableTy>>(InObject, InMember);
+    }
+    template <typename ObjTy, typename CallableTy>
+    FORCEINLINE void BindMember(ObjTy* InObject, CallableTy InMember)
+    {
+        this->Reset();
+        this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LMemberCallable<ObjTy, CallableTy>>(InObject, InMember);
+    }
+
+    FORCEINLINE TFunction& operator=(const LNullptrTy)
+    {
+        this->Reset();
+        return *this;
+    }
     FORCEINLINE TFunction& operator=(TFunction&& Other) noexcept
     {
-        this->Functor = std::move(Other.Functor);
-        Other.Reset();
+        this->Reset();
+        this->Callable = std::move(Other.Callable);
+        Other.Callable = nullptr; /* Do not reset as it would orphan the memory. */
         return *this;
     }
 
-    template <typename InMemberFunc, typename InObj>
-    FORCEINLINE void BindMember(InMemberFunc InMemberFuncPtr, InObj InObjPtr)
+    FORCEINLINE TFunction& operator=(const TFunction& Other) noexcept = delete;
+
+    FORCEINLINE RetTy Call(ParamsTy... InParams) { return this->operator()(std::forward<ParamsTy>(InParams)...); }
+    FORCEINLINE RetTy operator()(ParamsTy... InParams)
     {
-        if constexpr (Super::NumParams() == 0)
+        if (this->Callable == nullptr)
         {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr);
-        }
-        else if constexpr (Super::NumParams() == 1)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1
-            );
-        }
-        else if constexpr (Super::NumParams() == 2)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2
-            );
-        }
-        else if constexpr (Super::NumParams() == 3)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3
-            );
-        }
-        else if constexpr (Super::NumParams() == 4)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4
-            );
-        }
-        else if constexpr (Super::NumParams() == 5)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5
-            );
-        }
-        else if constexpr (Super::NumParams() == 6)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6
-            );
-        }
-        else if constexpr (Super::NumParams() == 7)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6, std::placeholders::_7
-            );
-        }
-        else if constexpr (Super::NumParams() == 8)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8
-            );
-        }
-        else if constexpr (Super::NumParams() == 9)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8,
-                std::placeholders::_9
-            );
-        }
-        else if constexpr (Super::NumParams() == 10)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8,
-                std::placeholders::_9, std::placeholders::_10
-            );
-        }
-#if !PLATFORM_WASM
-        else if constexpr (Super::NumParams() == 11)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8,
-                std::placeholders::_9, std::placeholders::_10, std::placeholders::_11
-            );
-        }
-        else if constexpr (Super::NumParams() == 12)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8,
-                std::placeholders::_9, std::placeholders::_10, std::placeholders::_11, std::placeholders::_12
-            );
-        }
-        else if constexpr (Super::NumParams() == 13)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8,
-                std::placeholders::_9, std::placeholders::_10, std::placeholders::_11, std::placeholders::_12,
-                std::placeholders::_13
-            );
-        }
-        else if constexpr (Super::NumParams() == 14)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8,
-                std::placeholders::_9, std::placeholders::_10, std::placeholders::_11, std::placeholders::_12,
-                std::placeholders::_13, std::placeholders::_14
-            );
-        }
-        else if constexpr (Super::NumParams() == 15)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8,
-                std::placeholders::_9, std::placeholders::_10, std::placeholders::_11, std::placeholders::_12,
-                std::placeholders::_13, std::placeholders::_14, std::placeholders::_15
-            );
-        }
-        else if constexpr (Super::NumParams() == 16)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8,
-                std::placeholders::_9, std::placeholders::_10, std::placeholders::_11, std::placeholders::_12,
-                std::placeholders::_13, std::placeholders::_14, std::placeholders::_15, std::placeholders::_16
-            );
-        }
-        else if constexpr (Super::NumParams() == 17)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8,
-                std::placeholders::_9, std::placeholders::_10, std::placeholders::_11, std::placeholders::_12,
-                std::placeholders::_13, std::placeholders::_14, std::placeholders::_15, std::placeholders::_16,
-                std::placeholders::_17
-            );
-        }
-        else if constexpr (Super::NumParams() == 18)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8,
-                std::placeholders::_9, std::placeholders::_10, std::placeholders::_11, std::placeholders::_12,
-                std::placeholders::_13, std::placeholders::_14, std::placeholders::_15, std::placeholders::_16,
-                std::placeholders::_17, std::placeholders::_18
-            );
-        }
-        else if constexpr (Super::NumParams() == 19)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8,
-                std::placeholders::_9, std::placeholders::_10, std::placeholders::_11, std::placeholders::_12,
-                std::placeholders::_13, std::placeholders::_14, std::placeholders::_15, std::placeholders::_16,
-                std::placeholders::_17, std::placeholders::_18, std::placeholders::_19
-            );
-        }
-        else if constexpr (Super::NumParams() == 20)
-        {
-            this->Functor = std::bind(InMemberFuncPtr, InObjPtr,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
-                std::placeholders::_5, std::placeholders::_6, std::placeholders::_7, std::placeholders::_8,
-                std::placeholders::_9, std::placeholders::_10, std::placeholders::_11, std::placeholders::_12,
-                std::placeholders::_13, std::placeholders::_14, std::placeholders::_15, std::placeholders::_16,
-                std::placeholders::_17, std::placeholders::_18, std::placeholders::_19, std::placeholders::_20
-            );
-        }
-#endif /* !PLATFORM_WASM */
-        else
-        {
-            panic( "Too many parameters for function binding. Support for more than 20 parameters is not implemented." )
+            panic( "TFunction is not valid" )
+            abort();
         }
 
-        return;
+        return this->Callable->Invoke(std::forward<ParamsTy>(InParams)...);
     }
 
-    ~TFunction() = default;
-};
+    FORCEINLINE bool operator==(const LNullptrTy) const { return this->IsBound() == false; }
+    FORCEINLINE bool operator!=(const LNullptrTy) const { return this->IsBound();          }
 
-/**
- * A struct that stores a function that is unique and can therefore only be moved.
- */
-template <typename FunctorTy>
-struct TUniqueFunction final : public Private::TFunctionBase<Private::TFunctionStoragePolicy<true>, FunctorTy>
-{
+    FORCEINLINE void Reset() { this->Callable.Reset(); }
+
+    /** Whether the callable is set. */
+    FORCEINLINE bool IsBound() const { return this->Callable != nullptr; }
+
+    /** Whether the callable is set and valid. */
+    FORCEINLINE bool IsValid() const { return this->IsBound() && this->Callable->IsValid(); }
+    FORCEINLINE void CheckValidCall() const { check( this->IsValid() ) return; }
+    FORCEINLINE explicit operator bool() const { return this->IsBound(); }
+
 private:
 
-    using Super = Private::TFunctionBase<Private::TFunctionStoragePolicy<true>, FunctorTy>;
-
-public:
-
-    FORCEINLINE TUniqueFunction(LNullptrTy = nullptr)
+    struct LCallableBase
     {
-        this->Functor = nullptr;
-        return;
-    }
+        virtual ~LCallableBase() = default;
+        virtual RetTy Invoke(ParamsTy... InParams) = 0;
+        virtual bool  IsValid() const { return false; }
+    };
 
-    PROHIBIT_COPY(TUniqueFunction)
-
-    template <typename InOtherFunctorTy>
-    FORCEINLINE TUniqueFunction(InOtherFunctorTy&& Other) noexcept : Super(std::forward<InOtherFunctorTy>(Other)) { }
-    FORCEINLINE TUniqueFunction& operator=(TUniqueFunction&& Other) noexcept
+    template <typename CallableTy>
+    struct LStrongCallable final : public LCallableBase
     {
-        this->Functor = std::move(Other.Functor);
-        Other.Reset();
-        return *this;
-    }
+        CallableTy Callable;
 
-    ~TUniqueFunction() = default;
+        FORCEINLINE LStrongCallable(CallableTy&& InCallable) : Callable(std::move(InCallable)) { }
+
+        FORCEINLINE RetTy Invoke(ParamsTy... InParams) override { return this->Callable(std::forward<ParamsTy>(InParams)...); }
+        FORCEINLINE bool  IsValid() const override { return true; }
+    };
+
+    template <typename CallableTy>
+    struct LWeakCallable final : public LCallableBase
+    {
+        CallableTy* Callable = nullptr;
+
+        FORCEINLINE LWeakCallable(CallableTy* InCallable) : Callable(InCallable) { }
+
+        FORCEINLINE RetTy Invoke(ParamsTy... InParams) override
+        {
+            if (Callable)
+            {
+                return (*Callable)(std::forward<ParamsTy>(InParams)...);
+            }
+
+            panic( "Attempt to invoke null callable" )
+            abort();
+        }
+        FORCEINLINE bool IsValid() const override { return Callable != nullptr; }
+    };
+
+    template <typename ObjTy, typename CallableTy>
+    struct LMemberCallable final : public LCallableBase
+    {
+        ObjTy*     Object = nullptr;
+        CallableTy Member = nullptr;
+
+        FORCEINLINE LMemberCallable(ObjTy* InObject, CallableTy InMember) : Object(InObject), Member(InMember) { }
+
+        FORCEINLINE RetTy Invoke(ParamsTy... InParams) override
+        {
+            if (this->Object && this->Member)
+            {
+                return (this->Object->*Member)(std::forward<ParamsTy>(InParams)...);
+            }
+
+            panic( "Invalid member function call" )
+            abort();
+        }
+        FORCEINLINE bool IsValid() const override { return this->Object != nullptr; }
+    };
+
+    Smart::TUnique<LCallableBase> Callable = nullptr;
 };
 
 } /* ~Namespace Jafg */

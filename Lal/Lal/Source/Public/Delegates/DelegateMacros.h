@@ -31,7 +31,7 @@
  */
 #define DECLARE_DELEGATE(DelNameSig, DelName, RetTy, ...)     \
     MAKE_DELEGATE_SIGNATURE(DelNameSig, RetTy, ##__VA_ARGS__) \
-    DelNameSig DelName;
+    DECLARE_DELEGATE_BY_SIG(DelNameSig, DelName);
 
 /**
  * Declares an inline delegate by its signature.
@@ -52,7 +52,7 @@
  */
 #define DECLARE_INLINE_DELEGATE(DelNameSig, DelName, RetTy, ...) \
     MAKE_DELEGATE_SIGNATURE(DelNameSig, RetTy, ##__VA_ARGS__)    \
-    inline DelNameSig DelName;
+    DECLARE_INLINE_DELEGATE_BY_SIG(DelNameSig, DelName);
 
 /**
  * Declares a multicast delegate by its signature. The return value is always void.
@@ -81,7 +81,7 @@
  */
 #define DECLARE_MULTICAST_DELEGATE(DelNameSig, DelName, ...) \
     MAKE_MULTICAST_SIGNATURE(DelNameSig, ##__VA_ARGS__)      \
-    DelNameSig DelName;
+    DECLARE_MULTICAST_DELEGATE_BY_SIG(DelNameSig, DelName);
 
 /**
  * Declares an inline multicast delegate by its signature.
@@ -101,4 +101,4 @@
  */
 #define DECLARE_INLINE_MULTICAST_DELEGATE(DelNameSig, DelName, ...) \
     MAKE_MULTICAST_SIGNATURE(DelNameSig, ##__VA_ARGS__)             \
-    inline DelNameSig DelName;
+    DECLARE_INLINE_MULTICAST_DELEGATE_BY_SIG(DelNameSig, DelName);

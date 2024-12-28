@@ -8,6 +8,9 @@ namespace Jafg
 template <typename DelegateTy>
 struct TDelegate;
 
+/**
+ * A delegate that can store a single function.
+ */
 template <typename RetTy, typename ... ParamsTy>
 struct TDelegate<RetTy(ParamsTy...)> final
 {
@@ -17,18 +20,19 @@ struct TDelegate<RetTy(ParamsTy...)> final
     template <bool Condition, typename RetVal>
     using TEnableIf = std::enable_if_t<Condition, RetVal>;
 
-    typedef RetTy RetValTy;
+    using LRetValTy = RetTy;
+    using LParamsTy = std::tuple<ParamsTy...>;
 
-    FORCEINLINE auto Execute(ParamsTy ... InFuncParams) -> RetValTy
+    FORCEINLINE LRetValTy Execute(ParamsTy ... InFuncParams)
     {
-        check( this->Delegate.IsSet() )
+        check( this->Delegate.IsBound() )
         return this->Delegate(std::forward<ParamsTy>(InFuncParams)...);
     }
 
-    template <typename LocalFuncRetValTy = RetValTy, TEnableIf<std::is_void_v<LocalFuncRetValTy>, void>* = nullptr>
-    FORCEINLINE auto ExecuteIfBound(ParamsTy ... InFuncParams) -> bool
+    template <typename LocalFuncRetValTy = LRetValTy, TEnableIf<std::is_void_v<LocalFuncRetValTy>, void>* = nullptr>
+    FORCEINLINE bool ExecuteIfBound(ParamsTy ... InFuncParams)
     {
-        if (this->Delegate.IsSet())
+        if (this->Delegate.IsBound())
         {
             this->Delegate(std::forward<ParamsTy>(InFuncParams)...);
             return true;
@@ -37,19 +41,25 @@ struct TDelegate<RetTy(ParamsTy...)> final
         return false;
     }
 
-    template <typename InOtherFunctorTy>
-    FORCEINLINE void Bind(InOtherFunctorTy&& InOtherFunctor)
+    template <typename CallableTy>
+    FORCEINLINE void BindStrong(CallableTy&& InCallable)
     {
-        this->Delegate = std::forward<InOtherFunctorTy>(InOtherFunctor);
+        this->Delegate.BindStrong(std::forward<CallableTy>(InCallable));
     }
 
-    template <typename InMemberFunc, typename InObj>
-    FORCEINLINE void BindMember(InMemberFunc InMemberFuncPtr, InObj InObjPtr)
+    template <typename CallableTy>
+    FORCEINLINE void BindWeak(CallableTy* InCallable)
     {
-        this->Delegate.BindMember(InMemberFuncPtr, InObjPtr);
+        this->Delegate.BindWeak(InCallable);
     }
 
-    FORCEINLINE bool IsBound() const { return this->Delegate.IsSet(); }
+    template <typename ObjTy, typename CallableTy>
+    FORCEINLINE void BindMember(ObjTy* InObject, CallableTy InMember)
+    {
+        this->Delegate.BindMember(InObject, InMember);
+    }
+
+    FORCEINLINE bool IsBound() const { return this->Delegate.IsBound(); }
     FORCEINLINE void Unbind()        { this->Delegate.Reset();        }
 
 private:
@@ -73,103 +83,147 @@ struct LDelegateHandle final
     friend struct TMulticastDelegate;
 
     LDelegateHandle() = delete;
-    FORCEINLINE LDelegateHandle(LNullptrTy) : Handle(nullptr) { return; }
+    FORCEINLINE LDelegateHandle(LNullptrTy) : Handle(0) { return; }
     FORCEINLINE LDelegateHandle(const LDelegateHandle& InOther) = default;
     FORCEINLINE LDelegateHandle(LDelegateHandle&& InOther) = default;
-    FORCEINLINE LDelegateHandle& operator=(LNullptrTy) { this->Handle = nullptr; return *this; }
+    FORCEINLINE LDelegateHandle& operator=(LNullptrTy) { this->Handle = 0; return *this; }
     FORCEINLINE LDelegateHandle& operator=(const LDelegateHandle& InOther) = default;
     FORCEINLINE LDelegateHandle& operator=(LDelegateHandle&& InOther) = default;
 
-    FORCEINLINE explicit LDelegateHandle(void* InHandle) : Handle(InHandle) { check( this->Handle != nullptr ) return; }
+    FORCEINLINE explicit LDelegateHandle(const uint32 InHandle) : Handle(InHandle) { check( this->Handle != 0 ) return; }
 
-    FORCEINLINE auto Reset()         -> void { this->Handle = nullptr; return; }
-    FORCEINLINE auto IsValid() const -> bool { return this->Handle != nullptr; }
+    FORCEINLINE void Reset()         { this->Handle = 0; return; }
+    FORCEINLINE bool IsValid() const { return this->Handle != 0; }
 
-#if IN_DEBUG
-    /** For unit tests. */
-    FORCEINLINE void* GetHandle() const { return this->Handle; }
-#endif /* IN_DEBUG */
+#if WITH_TESTS
+    FORCEINLINE uint32 GetHandle() const { return this->Handle; }
+#endif /* WITH_TESTS */
 
 private:
 
-    void* Handle = nullptr;
+    uint32 Handle;
 };
 
+/**
+ * A delegate that can store multiple functions and broadcast to all of them.
+ */
 template <typename RetTy, typename ... ParamsTy>
 struct TMulticastDelegate<RetTy(ParamsTy...)> final
 {
+    static_assert(std::is_same_v<RetTy, void>);
+
     template <typename DelegateTy>
     friend struct TMulticastDelegate;
 
     template <bool Condition, typename RetVal>
     using TEnableIf = std::enable_if_t<Condition, RetVal>;
 
-    typedef RetTy RetValTy;
+    using LRetValTy = RetTy;
+    using LParamsTy = std::tuple<ParamsTy...>;
 
-    FORCEINLINE auto Broadcast(ParamsTy... InFuncParams) -> void;
+    /** @return True if at least one delegate was called. */
+    FORCEINLINE bool Broadcast(ParamsTy... InFuncParams);
 
-    template <typename InOtherFunctorTy>
-    FORCEINLINE auto Add(InOtherFunctorTy&& InOtherFunctor) -> LDelegateHandle;
-    template <typename InMemberFunc, typename InObj>
-    FORCEINLINE auto AddMember(InMemberFunc InMemberFuncPtr, InObj InObjPtr) -> LDelegateHandle;
+    template <typename CallableTy>
+    FORCEINLINE LDelegateHandle AddStrong(CallableTy&& InCallable);
+    template <typename CallableTy>
+    FORCEINLINE LDelegateHandle AddWeak(CallableTy* InCallable);
+    template <typename ObjTy, typename CallableTy>
+    FORCEINLINE LDelegateHandle AddMember(ObjTy* InObj, CallableTy InMember);
 
-    FORCEINLINE auto Remove(LDelegateHandle& InDelegateHandle) -> bool;
+    FORCEINLINE bool IsStillBound(const LDelegateHandle& InDelegateHandle) const;
+    FORCEINLINE bool HasAny() const;
 
-    FORCEINLINE auto IsStillBound(const LDelegateHandle& InDelegateHandle) const -> bool;
-    FORCEINLINE auto HasAny() const -> bool ;
-    FORCEINLINE auto UnbindAll() -> int32;
+    FORCEINLINE bool  Remove(LDelegateHandle& InDelegateHandle);
+    FORCEINLINE int32 UnbindAll();
 
 private:
 
-    TdhArray<TFunction<RetTy(ParamsTy...)>*> Delegates;
+    static constexpr uint32 InvalidHandle = 0;
+    uint32           HandleCount = 0;
+    TdhArray<uint32> DelegatesHandles;
+    TdhArray<TFunction<RetTy(ParamsTy...)>> Delegates;
 };
 
 template <typename RetTy, typename ... ParamsTy>
-void TMulticastDelegate<RetTy(ParamsTy...)>::Broadcast(ParamsTy... InFuncParams)
+bool TMulticastDelegate<RetTy(ParamsTy...)>::Broadcast(ParamsTy... InFuncParams)
 {
-    for (auto& Delegate : this->Delegates)
+    for (TFunction<RetTy(ParamsTy...)>& Delegate : this->Delegates)
     {
-        (*Delegate)(std::forward<ParamsTy>(InFuncParams)...);
+        Delegate(std::forward<ParamsTy>(InFuncParams)...);
     }
 
-    return;
+    /**
+     * Delegates must never remove their handle when boradcasting, so this is safe.
+     */
+    return this->Delegates.IsEmpty() == false;
 }
 
 template <typename RetTy, typename ... ParamsTy>
-template <typename InOtherFunctorTy>
-LDelegateHandle TMulticastDelegate<RetTy(ParamsTy...)>::Add(InOtherFunctorTy&& InOtherFunctor)
+template <typename CallableTy>
+LDelegateHandle TMulticastDelegate<RetTy(ParamsTy...)>::AddStrong(CallableTy&& InCallable)
 {
-    this->Delegates.Add(new TFunction<RetTy(ParamsTy...)>(std::forward<InOtherFunctorTy>(InOtherFunctor)));
-    void** Delegate = reinterpret_cast<void**>(this->Delegates.Peek());
-    checkSlow( Delegate != nullptr )
-
-    return LDelegateHandle(*Delegate);
+    static_assert(
+        std::is_invocable_v<CallableTy, ParamsTy...>,
+        "Callable is not invocable with parameters. Was an invalid function signature provided?"
+    );
+    static_assert(
+        std::is_same_v<std::invoke_result_t<CallableTy, ParamsTy...>, void>,
+        "Callable must return void."
+    );    this->Delegates.Emplace(std::forward<CallableTy>(InCallable));
+    this->DelegatesHandles.Emplace(++HandleCount);
+    checkSlow( *this->DelegatesHandles.Peek() == this->HandleCount  )
+    return LDelegateHandle(*this->DelegatesHandles.Peek());
 }
 
 template <typename RetTy, typename ... ParamsTy>
-template <typename InMemberFunc, typename InObj>
-LDelegateHandle TMulticastDelegate<RetTy(ParamsTy...)>::AddMember(InMemberFunc InMemberFuncPtr, InObj InObjPtr)
+template <typename CallableTy>
+LDelegateHandle TMulticastDelegate<RetTy(ParamsTy...)>::AddWeak(CallableTy* InCallable)
 {
-    this->Delegates.Add(new TFunction<RetTy(ParamsTy...)>());
-    (*this->Delegates.Peek())->BindMember(InMemberFuncPtr, InObjPtr);
-    void** Delegate = reinterpret_cast<void**>(this->Delegates.Peek());
-    checkSlow( Delegate != nullptr )
+    static_assert(
+        std::is_invocable_v<CallableTy, ParamsTy...>,
+        "Callable is not invocable with parameters. Was an invalid function signature provided?"
+    );
+    static_assert(
+        std::is_same_v<std::invoke_result_t<CallableTy, ParamsTy...>, void>,
+        "Callable must return void."
+    );    this->Delegates.Emplace(InCallable);
+    this->DelegatesHandles.Emplace(++HandleCount);
+    checkSlow( *this->DelegatesHandles.Peek() == this->HandleCount  )
+    return LDelegateHandle(*this->DelegatesHandles.Peek());
+}
 
-    return LDelegateHandle(*Delegate);
+template <typename RetTy, typename ... ParamsTy>
+template <typename ObjTy, typename CallableTy>
+LDelegateHandle TMulticastDelegate<RetTy(ParamsTy...)>::AddMember(ObjTy* InObj, CallableTy InMember)
+{
+    static_assert(
+        std::is_invocable_v<CallableTy, ObjTy*, ParamsTy...>,
+        "Callable is not invocable with object and parameters. Was an invalid function signature provided?"
+    );
+    static_assert(
+        std::is_same_v<std::invoke_result_t<CallableTy, ObjTy*, ParamsTy...>, void>,
+        "Callable must return void."
+    );
+    this->Delegates.Emplace(InObj, InMember);
+    this->DelegatesHandles.Emplace(++HandleCount);
+    checkSlow( *this->DelegatesHandles.Peek() == this->HandleCount  )
+    return LDelegateHandle(*this->DelegatesHandles.Peek());
 }
 
 template <typename RetTy, typename ... ParamsTy>
 bool TMulticastDelegate<RetTy(ParamsTy...)>::Remove(LDelegateHandle& InDelegateHandle)
 {
-    for (int32 I = 0; I < this->Delegates.GetSize(); ++I)
+    for (int32 Idx = 0; Idx < this->DelegatesHandles.GetSize(); ++Idx)
     {
-        if (this->Delegates[I] == InDelegateHandle.Handle)
+        if (this->DelegatesHandles[Idx] == InDelegateHandle.Handle)
         {
-            this->Delegates[I]->Reset();
-            delete this->Delegates[I];
-            this->Delegates.RemoveAt(I);
+            this->Delegates.RemoveAt(Idx);
+            this->DelegatesHandles.RemoveAt(Idx);
 
             InDelegateHandle.Reset();
+
+            checkSlow( this->Delegates.GetSize() == this->DelegatesHandles.GetSize() )
 
             return true;
         }
@@ -183,27 +237,31 @@ bool TMulticastDelegate<RetTy(ParamsTy...)>::Remove(LDelegateHandle& InDelegateH
 template <typename RetTy, typename ... ParamsTy>
 bool TMulticastDelegate<RetTy(ParamsTy...)>::IsStillBound(const LDelegateHandle& InDelegateHandle) const
 {
-    return this->Delegates.Contains(InDelegateHandle.Handle);
+    return this->DelegatesHandles.Contains(InDelegateHandle.Handle);
 }
 
 template <typename RetTy, typename ... ParamsTy>
 bool TMulticastDelegate<RetTy(ParamsTy...)>::HasAny() const
 {
-    return this->Delegates.IsEmpty() == false;
+    return this->DelegatesHandles.IsEmpty() == false;
 }
 
 template <typename RetTy, typename ... ParamsTy>
 int32 TMulticastDelegate<RetTy(ParamsTy...)>::UnbindAll()
 {
-    for (auto& Delegate : this->Delegates)
+    for (TFunction<RetTy(ParamsTy...)>& Delegate : this->Delegates)
     {
-        Delegate->Reset();
-        delete Delegate;
+        Delegate.Reset();
     }
 
     const int32 NumDelegates = this->Delegates.GetSize();
 
     this->Delegates.Empty();
+    this->DelegatesHandles.Empty();
+
+    /*
+     * Do not reset handle count to avoid handle reuse.
+     */
 
     return NumDelegates;
 }

@@ -11,7 +11,7 @@ TEST_CASE(SimpleDelegateOperations, "Lal.Delegates")
     RetValSig RetValDel;
     CHECK_FALSE( "Delegate declaration.", RetValDel.IsBound() )
 
-    RetValDel.Bind( [] (const int32 A) -> bool { return A == 0; });
+    RetValDel.BindStrong( [] (const int32 A) -> bool { return A == 0; });
     CHECK_TRUE(  "Delegate binding.",               RetValDel.IsBound() )
     CHECK_TRUE(  "Delegate execution.",            RetValDel.Execute(0) )
     CHECK_FALSE( "Delegate execution.",            RetValDel.Execute(1) )
@@ -24,7 +24,7 @@ TEST_CASE(SimpleDelegateOperations, "Lal.Delegates")
     CHECK_FALSE( "Delegate declaration.", VoidValDel.IsBound() )
 
     int32 MyInt = 0;
-    VoidValDel.Bind( [&MyInt] (const int32 A) -> void { MyInt = A; });
+    VoidValDel.BindStrong( [&MyInt] (const int32 A) -> void { MyInt = A; });
     CHECK_TRUE(  "Delegate binding.",                       VoidValDel.IsBound() )
     CHECK_FALSE( "Delegate execution.",                               MyInt == 1 )
 
@@ -56,7 +56,7 @@ TEST_CASE(InlineDelegateOperations, "Lal.Delegates")
     CHECK_FALSE(  "Delegate declaration.",   MyInlineDel.ExecuteIfBound(0) )
 
     int32 MyInt = 0;
-    MyInlineDel.Bind( [&MyInt] (const int32 A) -> void { MyInt = A; return; });
+    MyInlineDel.BindStrong( [&MyInt] (const int32 A) -> void { MyInt = A; return; });
     CHECK_TRUE(   "Inline delegate execution.",         MyInlineDel.IsBound() )
     CHECK_TRUE(   "Inline delegate execution.",                    MyInt == 0 )
     CHECK_FALSE(  "Inline delegate execution.",                    MyInt == 1 )
@@ -74,7 +74,7 @@ TEST_CASE(SimpleMulticastDelegateOperations, "Lal.Delegates")
     DECLARE_MULTICAST_DELEGATE(MyMulticastDelSig, MyMulticastDel, const int32 A)
     CHECK_FALSE( "Delegate declaration.",       MyMulticastDel.HasAny() )
 
-    MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
     CHECK_TRUE(   "Delegate binding.",         MyMulticastDel.HasAny() )
     CHECK_EQUALS( "Delegate binding.",                        MyInt, 0 )
 
@@ -83,7 +83,7 @@ TEST_CASE(SimpleMulticastDelegateOperations, "Lal.Delegates")
     MyMulticastDel.Broadcast(1);
     CHECK_EQUALS( "After delegate broadcast.",     MyInt, 2 )
 
-    MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
     CHECK_TRUE(   "Delegate binding.",         MyMulticastDel.HasAny() )
     CHECK_EQUALS( "Delegate binding.",                        MyInt, 2 )
 
@@ -92,7 +92,7 @@ TEST_CASE(SimpleMulticastDelegateOperations, "Lal.Delegates")
     MyMulticastDel.Broadcast(1);
     CHECK_EQUALS( "After delegate broadcast.",     MyInt, 6 )
 
-    MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
     CHECK_TRUE(   "Delegate binding.",         MyMulticastDel.HasAny() )
     CHECK_EQUALS( "Delegate binding.",                        MyInt, 6 )
 
@@ -117,7 +117,7 @@ TEST_CASE(HandleMulticastDelegateOperations, "Lal.Delegates")
     DECLARE_MULTICAST_DELEGATE(MyMulticastDelSig, MyMulticastDel, const int32 A)
     CHECK_FALSE( "Delegate declaration.",       MyMulticastDel.HasAny() )
 
-    LDelegateHandle Handle = MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    LDelegateHandle Handle = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
     CHECK_TRUE(   "Delegate binding.",         MyMulticastDel.HasAny() )
     CHECK_EQUALS( "Delegate binding.",                        MyInt, 0 )
 
@@ -133,35 +133,35 @@ TEST_CASE(HandleMulticastDelegateOperations, "Lal.Delegates")
     CHECK_FALSE(  "Delegate removal.",                    MyMulticastDel.HasAny() )
     CHECK_TRUE(   "Delegate removal.",                                 MyInt == 2 )
     CHECK_FALSE(  "Delegate removal.",                           Handle.IsValid() )
-#if IN_DEBUG
-    CHECK_NULL(   "Delegate removal.",                         Handle.GetHandle() )
-#endif /* IN_DEBUG */
+#if WITH_TESTS
+    CHECK_EQUALS( "Delegate removal.",                      Handle.GetHandle(), 0 )
+#endif /* WITH_TESTS */
 
     /* Enforcing dynamic array to grow. */
-    LDelegateHandle H01 = MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H02 = MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H03 = MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H04 = MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H05 = MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H06 = MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H07 = MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H08 = MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H09 = MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H10 = MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H11 = MyMulticastDel.Add( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-#if IN_DEBUG
-    CHECK_NOT_NULL( "Delegate buffer grow.",                  H01.GetHandle() )
-    CHECK_NOT_NULL( "Delegate buffer grow.",                  H02.GetHandle() )
-    CHECK_NOT_NULL( "Delegate buffer grow.",                  H03.GetHandle() )
-    CHECK_NOT_NULL( "Delegate buffer grow.",                  H04.GetHandle() )
-    CHECK_NOT_NULL( "Delegate buffer grow.",                  H05.GetHandle() )
-    CHECK_NOT_NULL( "Delegate buffer grow.",                  H06.GetHandle() )
-    CHECK_NOT_NULL( "Delegate buffer grow.",                  H07.GetHandle() )
-    CHECK_NOT_NULL( "Delegate buffer grow.",                  H08.GetHandle() )
-    CHECK_NOT_NULL( "Delegate buffer grow.",                  H09.GetHandle() )
-    CHECK_NOT_NULL( "Delegate buffer grow.",                  H10.GetHandle() )
-    CHECK_NOT_NULL( "Delegate buffer grow.",                  H11.GetHandle() )
-#endif /* IN_DEBUG */
+    LDelegateHandle H01 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H02 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H03 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H04 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H05 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H06 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H07 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H08 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H09 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H10 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H11 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+#if WITH_TESTS
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H01.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H02.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H03.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H04.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H05.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H06.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H07.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H08.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H09.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H10.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H11.GetHandle(), 0 )
+#endif /* WITH_TESTS */
 
     MyMulticastDel.Broadcast(1);
     CHECK_EQUALS( "After delegate broadcast.",     MyInt, 13 )
@@ -182,11 +182,11 @@ TEST_CASE(HandleMulticastDelegateOperations, "Lal.Delegates")
     CHECK_TRUE(  "Delegate removal.",                    MyMulticastDel.Remove(H01) )
     CHECK_TRUE(  "Delegate removal.",                    MyMulticastDel.Remove(H02) )
     CHECK_TRUE(  "Delegate removal.",                    MyMulticastDel.Remove(H03) )
-#if IN_DEBUG
-    CHECK_NULL(  "Delegate removal.",                               H01.GetHandle() )
-    CHECK_NULL(  "Delegate removal.",                               H02.GetHandle() )
-    CHECK_NULL(  "Delegate removal.",                               H03.GetHandle() )
-#endif /* IN_DEBUG */
+#if WITH_TESTS
+    CHECK_EQUALS( "Delegate removal.",                           H01.GetHandle(), 0 )
+    CHECK_EQUALS( "Delegate removal.",                           H02.GetHandle(), 0 )
+    CHECK_EQUALS( "Delegate removal.",                           H03.GetHandle(), 0 )
+#endif /* WITH_TESTS */
     CHECK_FALSE( "Delegate removal.",              MyMulticastDel.IsStillBound(H01) )
     CHECK_FALSE( "Delegate removal.",              MyMulticastDel.IsStillBound(H02) )
     CHECK_FALSE( "Delegate removal.",              MyMulticastDel.IsStillBound(H03) )
@@ -201,14 +201,14 @@ TEST_CASE(HandleMulticastDelegateOperations, "Lal.Delegates")
     CHECK_TRUE(  "Delegate removal.",                    MyMulticastDel.Remove(H07) )
     CHECK_TRUE(  "Delegate removal.",                    MyMulticastDel.Remove(H08) )
     CHECK_TRUE(  "Delegate removal.",                    MyMulticastDel.Remove(H09) )
-#if IN_DEBUG
-    CHECK_NOT_NULL( "Delegate removal.",                            H04.GetHandle() )
-    CHECK_NOT_NULL( "Delegate removal.",                            H05.GetHandle() )
-    CHECK_NOT_NULL( "Delegate removal.",                            H06.GetHandle() )
-    CHECK_NULL(     "Delegate removal.",                            H07.GetHandle() )
-    CHECK_NULL(     "Delegate removal.",                            H08.GetHandle() )
-    CHECK_NULL(     "Delegate removal.",                            H09.GetHandle() )
-#endif /* IN_DEBUG */
+#if WITH_TESTS
+    CHECK_NOT_EQUALS( "Delegate removal.",                       H04.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate removal.",                       H05.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate removal.",                       H06.GetHandle(), 0 )
+    CHECK_EQUALS(     "Delegate removal.",                       H07.GetHandle(), 0 )
+    CHECK_EQUALS(     "Delegate removal.",                       H08.GetHandle(), 0 )
+    CHECK_EQUALS(     "Delegate removal.",                       H09.GetHandle(), 0 )
+#endif /* WITH_TESTS */
     CHECK_TRUE(  "Delegate removal.",              MyMulticastDel.IsStillBound(H04) )
     CHECK_TRUE(  "Delegate removal.",              MyMulticastDel.IsStillBound(H05) )
     CHECK_TRUE(  "Delegate removal.",              MyMulticastDel.IsStillBound(H06) )
@@ -252,9 +252,23 @@ public:
 
         return true;
     }
+
+    void MyNamedMemberConstVoidRet(const int32 A) const { /* ... */ return; }
+    void MyNamedMemberNonConstVoidRet(const int32 A) { this->Member += A; return; }
+
+    void MyNamedMemberConstVoidRetTriple(const int32 A, const int32 B, const int32 C) const { /* ... */ return; }
+    void MyNamedMemberNonConstVoidRetTriple(const int32 A, const int32 B, const int32 C)
+    {
+        this->Member += A;
+        this->Member += B;
+        this->Member += C;
+
+        return;
+    }
 };
 
 inline bool MyNamedFunction(const int32 A) { return A == 0; }
+inline void MyNamedFunctionVoidRet(const int32 A) { /* ... */ return; }
 
 } /* ~Namespace Jafg::Testing::Delegates */
 
@@ -266,7 +280,7 @@ TEST_CASE(NamedDelegateOperations, "Lal.Delegates")
     DECLARE_DELEGATE(MyNamedDelSig, MyNamedDel, bool, const int32 A)
     CHECK_FALSE( "Delegate declaration.", MyNamedDel.IsBound() )
 
-    MyNamedDel.Bind( &MyNamedFunction );
+    MyNamedDel.BindStrong( &MyNamedFunction );
     CHECK_TRUE(  "Delegate binding.",               MyNamedDel.IsBound() )
     CHECK_TRUE(  "Delegate execution.",            MyNamedDel.Execute(0) )
     CHECK_FALSE( "Delegate execution.",            MyNamedDel.Execute(1) )
@@ -276,7 +290,7 @@ TEST_CASE(NamedDelegateOperations, "Lal.Delegates")
 
     MyDelegateClass MyDelegateObject;
     MyDelegateObject.Member = 10;
-    MyNamedDel.BindMember(&MyDelegateClass::MyNamedMemberConst, &MyDelegateObject);
+    MyNamedDel.BindMember(&MyDelegateObject, &MyDelegateClass::MyNamedMemberConst);
     CHECK_TRUE(  "Delegate member execution.",             MyNamedDel.IsBound() )
     CHECK_TRUE(  "Delegate member execution.",           MyNamedDel.Execute(10) )
     CHECK_FALSE( "Delegate member execution.",           MyNamedDel.Execute(11) )
@@ -284,7 +298,7 @@ TEST_CASE(NamedDelegateOperations, "Lal.Delegates")
     DECLARE_DELEGATE(MyTripleDelSig, MyTripleDel, bool, const int32 A, const int32 B, const int32 C)
     CHECK_FALSE( "Delegate declaration.", MyTripleDel.IsBound() )
 
-    MyTripleDel.BindMember(&MyDelegateClass::MyNamedMemberNonConst, &MyDelegateObject);
+    MyTripleDel.BindMember(&MyDelegateObject, &MyDelegateClass::MyNamedMemberNonConst);
     CHECK_TRUE(   "Delegate member execution.",                  MyTripleDel.IsBound() )
     CHECK_EQUALS( "Delegate member execution.",            MyDelegateObject.Member, 10 )
     CHECK_TRUE(   "Delegate member execution.",           MyTripleDel.Execute(1, 2, 3) )
@@ -303,7 +317,7 @@ TEST_CASE(NamedMulticastDelegateOperations, "Lal.Delegates")
     DECLARE_MULTICAST_DELEGATE(MyNamedMulticastDelSig, MyNamedMulticastDel, const int32 A)
     CHECK_FALSE( "Delegate declaration.",       MyNamedMulticastDel.HasAny() )
 
-    MyNamedMulticastDel.Add( &MyNamedFunction );
+    MyNamedMulticastDel.AddWeak( &MyNamedFunctionVoidRet );
     CHECK_TRUE(   "Delegate binding.",         MyNamedMulticastDel.HasAny() )
 
     MyNamedMulticastDel.Broadcast(0);
@@ -316,16 +330,16 @@ TEST_CASE(NamedMulticastDelegateOperations, "Lal.Delegates")
     CHECK_FALSE( "Delegate declaration.",       MyNamedTripleMulticastDel.HasAny() )
 
     MyDelegateClass MyDelegateObject;
-    LDelegateHandle H1 = MyNamedTripleMulticastDel.AddMember(&MyDelegateClass::MyNamedMemberNonConst, &MyDelegateObject);
+    LDelegateHandle H1 = MyNamedTripleMulticastDel.AddMember(&MyDelegateObject, &MyDelegateClass::MyNamedMemberNonConstVoidRetTriple);
     CHECK_TRUE(   "Delegate binding.",         MyNamedTripleMulticastDel.HasAny() )
 
-    LDelegateHandle H2 = MyNamedTripleMulticastDel.AddMember(&MyDelegateClass::MyNamedMemberNonConst, &MyDelegateObject);
-    LDelegateHandle H3 = MyNamedTripleMulticastDel.AddMember(&MyDelegateClass::MyNamedMemberNonConst, &MyDelegateObject);
-#if IN_DEBUG
-    CHECK_NOT_NULL( "Delegate binding.",                  H1.GetHandle() )
-    CHECK_NOT_NULL( "Delegate binding.",                  H2.GetHandle() )
-    CHECK_NOT_NULL( "Delegate binding.",                  H3.GetHandle() )
-#endif /* IN_DEBUG */
+    LDelegateHandle H2 = MyNamedTripleMulticastDel.AddMember(&MyDelegateObject, &MyDelegateClass::MyNamedMemberNonConstVoidRetTriple);
+    LDelegateHandle H3 = MyNamedTripleMulticastDel.AddMember(&MyDelegateObject, &MyDelegateClass::MyNamedMemberNonConstVoidRetTriple);
+#if WITH_TESTS
+    CHECK_NOT_EQUALS( "Delegate binding.",             H1.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate binding.",             H2.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate binding.",             H3.GetHandle(), 0 )
+#endif /* WITH_TESTS */
     CHECK_TRUE(     "Delegate binding.",                    H1.IsValid() )
     CHECK_TRUE(     "Delegate binding.",                    H2.IsValid() )
     CHECK_TRUE(     "Delegate binding.",                    H3.IsValid() )

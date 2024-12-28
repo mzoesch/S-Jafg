@@ -37,7 +37,7 @@ TEST_CASE(SmartUniqueOperations, "Lal.Smart")
     }
     CHECK_EQUALS( "Scoped smart.", Counter, 4 )
     {
-        Smart::TUnique<LMySmartCounter> UniqueA = new LMySmartCounter(&Counter);
+        Smart::TUnique<LMySmartCounter> UniqueA = Smart::EmplaceUnique<LMySmartCounter>(&Counter);
         CHECK_EQUALS( "Scoped smart.", Counter, 5 )
     }
     CHECK_EQUALS( "Scoped smart.", Counter, 6 )
