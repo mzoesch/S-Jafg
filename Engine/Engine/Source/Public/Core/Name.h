@@ -89,7 +89,7 @@ public:
 
     LNameRegistry() = default;
     PROHIBIT_REALLOC_OF_ANY_FORM(LNameRegistry)
-    ~LNameRegistry() = default;
+    ENGINE_API ~LNameRegistry();
 
     static     LName GetNameByValue(LUnderlyingName InUnderlyingName) { return { InUnderlyingName }; }
     ENGINE_API LName GetName(const LSimpleString& InName, const bool bConvertToLower = true) const;

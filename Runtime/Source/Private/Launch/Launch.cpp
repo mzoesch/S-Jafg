@@ -116,6 +116,12 @@ void EngineExit()
     }
 #endif /* WITH_VIRTUAL_FILESYSTEM */
 
+    if (Private::GNameRegistry)
+    {
+        delete Private::GNameRegistry;
+        Private::GNameRegistry = nullptr;
+    }
+
     if (::HasCustomExitReason())
     {
         if ((::GetMostSignificantExitReason() & (EPlatformExit::Error | EPlatformExit::Fatal)) > 0)

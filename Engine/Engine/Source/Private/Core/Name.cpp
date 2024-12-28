@@ -70,6 +70,13 @@ const LSimpleString& LName::ToString() const
 
 } /* ~Namespace Jafg */
 
+Jafg::Private::LNameRegistry::~LNameRegistry()
+{
+    LOG_VERBOSE(LogNames, "Deleting {} names from the registry.", this->Names.GetSize())
+    this->Names.Empty();
+    return;
+}
+
 Jafg::LName Jafg::Private::LNameRegistry::GetName(const LSimpleString& InName, const bool bConvertToLower /* = true */) const
 {
     if (bConvertToLower)
