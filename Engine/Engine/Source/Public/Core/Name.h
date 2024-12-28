@@ -1,0 +1,106 @@
+// Copyright mzoesch. All rights reserved.
+
+#pragma once
+
+#include "CoreAFX.h"
+
+namespace Jafg
+{
+
+struct LName;
+
+namespace Private
+{
+
+class LNameRegistry;
+
+ENGINE_API extern LNameRegistry* GNameRegistry;
+ENGINE_API LNameRegistry* GetNameRegistryPtr();
+ENGINE_API LNameRegistry& GetNameRegistry();
+
+ENGINE_API void ClearStaticNameContainer();
+ENGINE_API auto GetStaticNameCount() -> int32;
+ENGINE_API auto GetStaticNameByIndex(const int32 InIndex) -> const LSimpleString&;
+ENGINE_API auto RegisterStaticName(const LSimpleString& InName) -> LName;
+ENGINE_API auto RegisterStaticName(LSimpleString&& InName) -> LName;
+
+} /* ~Namespace Private */
+
+typedef uint32 LUnderlyingName;
+
+enum : uint8 { NO_NAME = 0 };
+
+/**
+ * A name maps a string to a unique integer. Names are case-insensitive and are stored in a global registry.
+ * Names behave trivially in any context.
+ * Core names allocated at module initialization time are not allocated deterministically. The underlying name
+ * might differ between runs.
+ * Names are safe to use in networked environments.
+ */
+struct LName
+{
+    friend Private::LNameRegistry;
+
+    FORCEINLINE LName() = default;
+    FORCEINLINE LName(const LName& Other) = default;
+    FORCEINLINE LName(LName&& Other) noexcept : UnderlyingName(Other.UnderlyingName) { Other.UnderlyingName = NO_NAME; }
+    FORCEINLINE LName& operator=(const LName& Other) = default;
+    FORCEINLINE LName& operator=(LName&& Other) noexcept { UnderlyingName = Other.UnderlyingName; Other.UnderlyingName = NO_NAME; return *this; }
+    FORCEINLINE ~LName() = default;
+
+    FORCEINLINE static bool IsEqual(const LName& A, const LName& B) { return A.UnderlyingName == B.UnderlyingName; }
+    FORCEINLINE bool Equals(const LName& Other) const { return UnderlyingName == Other.UnderlyingName; }
+    FORCEINLINE bool operator==(const LName& Other) const { return UnderlyingName == Other.UnderlyingName; }
+    FORCEINLINE bool operator!=(const LName& Other) const { return UnderlyingName != Other.UnderlyingName; }
+
+    ENGINE_API static LName NoName;
+
+private:
+
+    FORCEINLINE LName(const LUnderlyingName InUnderlyingName) : UnderlyingName(InUnderlyingName) { }
+    LUnderlyingName UnderlyingName;
+};
+
+/**
+ * Register a name known at compile time.
+ */
+#define MAKE_STATIC_NAME(Name)      ::Jafg::Private::RegisterStaticName(Name)
+
+/**
+ * Dynamically register a name depending on context at runtime.
+ */
+#define MAKE_DYNAMIC_NAME(Name)     ::Jafg::Private::GNameRegistry->RegisterAndGetName(Name)
+
+/**
+ * Get a name by its string representation.
+ */
+#define GET_NAME(Name)              ::Jafg::Private::GNameRegistry->GetName(Name)
+
+namespace Private
+{
+
+class LNameRegistry
+{
+public:
+
+    LNameRegistry() = default;
+    PROHIBIT_REALLOC_OF_ANY_FORM(LNameRegistry)
+    ~LNameRegistry() = default;
+
+    static     LName GetNameByValue(LUnderlyingName InUnderlyingName) { return { InUnderlyingName }; }
+    ENGINE_API LName GetName(const LSimpleString& InName, const bool bConvertToLower = true) const;
+
+    ENGINE_API bool IsNameRegistered(const LSimpleString& InName, const bool bConvertToLower = true) const;
+    ENGINE_API bool RegisterName(const LSimpleString& InName);
+    ENGINE_API auto RegisterAndGetName(const LSimpleString& InName) -> LName;
+
+    FORCEINLINE int32 GetNameCount() const { return this->Names.GetSize(); }
+
+private:
+
+    TdhArray<LSimpleString> Names;
+};
+
+} /* ~Namespace Private */
+
+} /* ~Namespace Jafg */

@@ -4,6 +4,7 @@
 #include "Engine/Engine.h"
 #include "Core/Application.h"
 #include "Core/LaunchProgress.h"
+#include "Core/Name.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Engine/Carnifex.h"
 #include "Platform/PlatformMisc.h"
@@ -172,6 +173,16 @@ EPlatformExit::Type GuardedMain(const char* CmdLine)
 
     LaunchProgress::PrepareBeginProgress();
     LaunchProgress::BeginProgress("Core Initialization", "Engine pre-life initialization", 0.0f);
+
+    check( Private::GNameRegistry == nullptr )
+    Private::GNameRegistry = new Private::LNameRegistry();
+    LOG_VERBOSE(LogNames, "Program initialized {} names during static storage initialization.", Private::GetStaticNameCount())
+    for (int32 Index = 0; Index < Private::GetStaticNameCount(); ++Index)
+    {
+        ensure( Private::GNameRegistry->RegisterName(Private::GetStaticNameByIndex(Index)) );
+    }
+    Private::ClearStaticNameContainer();
+    LOG_INFO(LogNames, "Finished transferring static names to the name registry. With a total of {} names.", Private::GNameRegistry->GetNameCount())
 
     PlatformMisc::InvalidateCachedValues();
 
