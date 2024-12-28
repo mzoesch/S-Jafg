@@ -603,6 +603,25 @@ TEST_CASE(NewSimpleStringSubs, "Lal.Strings")
     return;
 }
 
+TEST_CASE(NewSimpleStringLowerCase, "Lal.Strings")
+{
+    using namespace Jafg;
+
+    LSimpleString MyStr = "AbCdEfGhIjKlMn";
+    CHECK_EQUALS( "String lower case.", MyStr,         "AbCdEfGhIjKlMn" )
+    LSimpleString MyOtherStr = MyStr.GetLowerCase();
+    CHECK_EQUALS( "String lower case.", MyStr,         "AbCdEfGhIjKlMn" )
+    CHECK_EQUALS( "String lower case.", MyOtherStr,    "abcdefghijklmn" )
+
+    MyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    CHECK_EQUALS( "String lower case.", MyStr,         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" )
+    MyOtherStr = MyStr.GetLowerCase();
+    CHECK_EQUALS( "String lower case.", MyStr,         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" )
+    CHECK_EQUALS( "String lower case.", MyOtherStr,    "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz" )
+
+    return;
+}
+
 #pragma endregion Simple String
 
 #pragma region Uni-Eight String
@@ -1344,6 +1363,31 @@ TEST_CASE(NewEightStringAdvancedCharacters, "Lal.Strings")
     CHECK_EQUALS( "Advanced characters.", MyStr, "これわトです。" )
     MyStr.RemoveAt(3);
     CHECK_EQUALS( "Advanced characters.", MyStr, "これわです。" )
+
+    return;
+}
+
+TEST_CASE(NewEightStringLowerCase, "Lal.Strings")
+{
+    using namespace Jafg;
+
+    LEightString MyStr = "AbCdEfGhIjKlMn";
+    CHECK_EQUALS( "String lower case.", MyStr,         "AbCdEfGhIjKlMn" )
+    LEightString MyOtherStr = MyStr.GetLowerCase();
+    CHECK_EQUALS( "String lower case.", MyStr,         "AbCdEfGhIjKlMn" )
+    CHECK_EQUALS( "String lower case.", MyOtherStr,    "abcdefghijklmn" )
+
+    MyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    CHECK_EQUALS( "String lower case.", MyStr,         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" )
+    MyOtherStr = MyStr.GetLowerCase();
+    CHECK_EQUALS( "String lower case.", MyStr,         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" )
+    CHECK_EQUALS( "String lower case.", MyOtherStr,    "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz" )
+
+    MyStr = "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z";
+    CHECK_EQUALS( "String lower case.", MyStr,         "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
+    MyOtherStr = MyStr.GetLowerCase();
+    CHECK_EQUALS( "String lower case.", MyStr,         "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
+    CHECK_EQUALS( "String lower case.", MyOtherStr,    "a123bcdefghこれわテストです。ijklmnopqr456789stuvwxyzabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
 
     return;
 }

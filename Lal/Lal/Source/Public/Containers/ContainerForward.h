@@ -122,6 +122,8 @@ struct LStringTraits : public LStringTraitsBase
     static void GoToPreviousRune(const RuneType* Self, SizeType& InOutCursor) noexcept;
 
     static void CopyRuneOfEqualSize(RuneType* Self, const RuneType* InOther) noexcept;
+
+    static void ToLowerCase(RuneType* InRuneToCheck) noexcept;
 };
 
 template <class InCharacterTy, class InSizetype>
@@ -199,6 +201,17 @@ template <class InCharacterTy, class InSizetype>
 void LStringTraits<InCharacterTy, InSizetype>::CopyRuneOfEqualSize(RuneType* Self, const RuneType* InOther) noexcept
 {
     *Self = *InOther;
+}
+
+template <class InCharacterTy, class InSizeType>
+void LStringTraits<InCharacterTy, InSizeType>::ToLowerCase(RuneType* InRuneToCheck) noexcept
+{
+    if (*InRuneToCheck >= 'A' && *InRuneToCheck <= 'Z')
+    {
+        *InRuneToCheck += 32;
+    }
+
+    return;
 }
 
 struct LAsciiStringTraits : public LStringTraits<char, DefaultContainerSizeType>

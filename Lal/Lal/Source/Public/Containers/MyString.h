@@ -189,6 +189,9 @@ public:
     FORCEINLINE SizeType Count(const CharacterTy  InRune) const;
     FORCEINLINE SizeType Count(const CharacterTy* InRune) const;
 
+    FORCEINLINE void ToLower();
+    FORCEINLINE LStringBase GetLowerCase() const;
+
     FORCEINLINE Iterator<      CharacterTy> begin()       noexcept;
     FORCEINLINE Iterator<const CharacterTy> begin() const noexcept;
     FORCEINLINE Iterator<      CharacterTy> end()         noexcept;
@@ -1357,6 +1360,33 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
         continue;
     }
 
+    return Out;
+}
+
+template <typename InCharacterTy, class InTraitsTy>
+void LStringBase<InCharacterTy, InTraitsTy>::ToLower()
+{
+#if CHECK_STRING_VALIDITY
+    this->EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+
+    SizeType Cursor = 0;
+    while (Cursor < this->GetSize())
+    {
+        TraitsTy::ToLowerCase(this->Data.GetData() + Cursor);
+        TraitsTy::GoToNextRune(this->Data.GetData(), Cursor);
+
+        continue;
+    }
+
+    return;
+}
+
+template <typename InCharacterTy, class InTraitsTy>
+LStringBase<InCharacterTy, InTraitsTy> LStringBase<InCharacterTy, InTraitsTy>::GetLowerCase() const
+{
+    LStringBase Out = *this;
+    Out.ToLower();
     return Out;
 }
 
