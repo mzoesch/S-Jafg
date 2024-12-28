@@ -119,24 +119,18 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         ContextMyWorld->MapKey
         (
             CurMapping, EKeys::T, EInputActionTrigger::Triggered,
-            [this, UserInput] (LInputActionValue& InValue)
+            [this] (LInputActionValue& InValue)
             {
-                UserInput->DeactivateAllContexts();
-                UserInput->ActivateContext("InConsole");
-                this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::Both, ShowMouseCursor);
-                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WConsoleScreen>(EWidgetVisibility::IntransitiveHitTestInvisible);
+                this->GetLocalEgo()->GetHud()->GetTopLevelWidgetByClass<WConsoleScreen>()->SetConsoleFrontendState(EConsoleScreenState::Show);
             }
         );
         ContextInConsole->MapAction(CurMapping);
         ContextInConsole->MapKey
         (
             CurMapping, EKeys::Escape, EInputActionTrigger::Triggered,
-            [this, UserInput] (LInputActionValue& InValue)
+            [this] (LInputActionValue& InValue)
             {
-                UserInput->DeactivateAllContexts();
-                UserInput->ActivateContext("InMyWorld");
-                this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
-                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WConsoleScreen>(EWidgetVisibility::Collapsed);
+                this->GetLocalEgo()->GetHud()->GetTopLevelWidgetByClass<WConsoleScreen>()->SetConsoleFrontendState(EConsoleScreenState::Hide);
             }
         );
     }

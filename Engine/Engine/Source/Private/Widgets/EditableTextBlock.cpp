@@ -169,12 +169,54 @@ Jafg::LReply Jafg::WEditableTextBlock::OnKeyDown(LKeyEvent& InKeyEvent)
         this->CaretBlinker = 0.0f;
     }
 
+    if (InKeyEvent.GetKey() == EKeys::Enter || InKeyEvent.GetKey() == EKeys::NumPadEnter)
+    {
+        this->OnTextCommit(this->Content, ETextCommit::OnEnter);
+    }
+
     return LReply::Handled();
 }
 
-void Jafg::WEditableTextBlock::OnTextCommit(const LSimpleString& InText, const ETextCommit::Type InCommitType)
+void Jafg::WEditableTextBlock::OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType)
 {
-    LOG_WARNING(LogTemporal, "{}: {}", LexToString(InCommitType), InText)
+    this->OnTextCommitted.ExecuteIfBound(InText, InCommitType);
+}
+
+void Jafg::WEditableTextBlock::SetText(const LString& InText)
+{
+    this->Content = InText;
+    this->CaretCursor = Maths::Min(this->CaretCursor, this->Content.GetRuneCount());
+
+    if (this->Content.GetByteSize() == 0)
+    {
+        this->Content = "";
+        check( this->Content.GetByteSize() > 0 )
+    }
+
+    return;
+}
+
+void Jafg::WEditableTextBlock::SetText(LString&& InText)
+{
+    this->Content = std::move(InText);
+    this->CaretCursor = Maths::Min(this->CaretCursor, this->Content.GetRuneCount());
+
+    if (this->Content.GetByteSize() == 0)
+    {
+        this->Content = "";
+        check( this->Content.GetByteSize() > 0 )
+    }
+
+    return;
+}
+
+void Jafg::WEditableTextBlock::ClearText()
+{
+    this->Content.Empty();
+    this->Content = "";
+    this->CaretCursor = 0;
+
+    return;
 }
 
 void Jafg::WEditableTextBlock::SafelyReduceCaretCursor()

@@ -23,6 +23,8 @@ struct TDelegate<RetTy(ParamsTy...)> final
     using LRetValTy = RetTy;
     using LParamsTy = std::tuple<ParamsTy...>;
 
+    using LFunctionSigTy = TFunction<RetTy(ParamsTy...)>;
+
     FORCEINLINE TDelegate() = default;
     FORCEINLINE TDelegate(LNullptrTy) : Delegate(nullptr) { return; }
 
@@ -78,18 +80,51 @@ struct TDelegate<RetTy(ParamsTy...)> final
         this->Delegate.BindMember(InObject, InMember);
     }
 
-    FORCEINLINE TDelegate(const TFunction<RetTy(ParamsTy...)>& InFunction) = delete;
-    FORCEINLINE TDelegate(TFunction<RetTy(ParamsTy...)>&& InFunction) { this->Delegate = std::move(InFunction); }
-    FORCEINLINE void BindFunction(const TFunction<RetTy(ParamsTy...)>& InFunction) = delete;
-    FORCEINLINE void BindFunction(TFunction<RetTy(ParamsTy...)>&& InFunction) { this->Delegate = std::move(InFunction); }
+    FORCEINLINE TDelegate(const LFunctionSigTy& InFunction) = delete;
+    FORCEINLINE TDelegate(LFunctionSigTy&& InFunction) { this->Delegate = std::move(InFunction); }
+    FORCEINLINE void BindFunction(const LFunctionSigTy& InFunction) = delete;
+    FORCEINLINE void BindFunction(LFunctionSigTy&& InFunction) { this->Delegate = std::move(InFunction); }
 
     FORCEINLINE bool IsBound() const { return this->Delegate.IsBound(); }
     FORCEINLINE void Unbind()        { this->Delegate.Reset();        }
     FORCEINLINE explicit operator bool() const { return this->IsBound(); }
 
+    template <typename CallableTy>
+    FORCEINLINE static LFunctionSigTy CreateStrongFunction(CallableTy&& InCallable)
+    {
+        return TFunction<RetTy(ParamsTy...)>(std::forward<CallableTy>(InCallable));
+    }
+    template <typename CallableTy>
+    FORCEINLINE static LFunctionSigTy CreateFunction(CallableTy&& InCallable)
+    {
+        return TDelegate::CreateStrongFunction(std::forward<CallableTy>(InCallable));
+    }
+
+    template <typename CallableTy>
+    FORCEINLINE static LFunctionSigTy CreateWeakFunction(CallableTy* InCallable)
+    {
+        return TFunction<RetTy(ParamsTy...)>(InCallable);
+    }
+    template <typename CallableTy>
+    FORCEINLINE static LFunctionSigTy CreateFunction(CallableTy* InCallable)
+    {
+        return TDelegate::CreateWeakFunction(InCallable);
+    }
+
+    template <typename ObjTy, typename CallableTy>
+    FORCEINLINE static LFunctionSigTy CreateMemberFunction(ObjTy* InObj, CallableTy InMember)
+    {
+        return TFunction<RetTy(ParamsTy...)>(InObj, InMember);
+    }
+    template <typename ObjTy, typename CallableTy>
+    FORCEINLINE static LFunctionSigTy CreateFunction(ObjTy* InObj, CallableTy InMember)
+    {
+        return TDelegate::CreateMemberFunction(InObj, InMember);
+    }
+
 private:
 
-    TFunction<RetTy(ParamsTy...)> Delegate;
+    LFunctionSigTy Delegate;
 };
 
 template <typename DelegateTy>

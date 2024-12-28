@@ -29,7 +29,7 @@ private:
 
     WDebugScreen* DebugScreen = nullptr;
     WCrosshair* Crosshair = nullptr;
-    WConsoleScreen* ChatScreen = nullptr;
+    WConsoleScreen* ConsoleScreen = nullptr;
     WPauseMenu* PauseMenu = nullptr;
 };
 

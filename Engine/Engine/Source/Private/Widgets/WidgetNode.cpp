@@ -198,9 +198,15 @@ bool Jafg::WWidgetNode::IsFocusWidgetTransitive(const LViewport* InViewport) con
 
 void Jafg::WWidgetNode::SetVisibility(const EWidgetVisibility::Type InVisibility)
 {
-    EWidgetVisibility::Type OldVisibility = this->Visibility;
+    if (this->Visibility == InVisibility)
+    {
+        return;
+    }
+
+    const EWidgetVisibility::Type OldVisibility = this->Visibility;
     this->Visibility = InVisibility;
     this->OnVisibilityChanged(OldVisibility, InVisibility);
+
     return;
 }
 

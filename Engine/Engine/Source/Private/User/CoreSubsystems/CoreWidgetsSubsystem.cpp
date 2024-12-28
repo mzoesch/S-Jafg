@@ -1,4 +1,4 @@
-// Copyright mzoesch. All rights reserved.
+    // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
 #include "User/CoreSubsystems/CoreWidgetsSubsystem.h"
@@ -23,10 +23,10 @@ void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
     this->Crosshair->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
     MakeDeferredWidgetNodeFinal(this->Crosshair);
 
-    this->ChatScreen = ConstructDeferredWidgetNode<WConsoleScreen>(this->GetOuter());
-    this->ChatScreen->AddToViewport(this->GetHud()->GetMainViewport());
-    this->ChatScreen->SetVisibility(EWidgetVisibility::Collapsed);
-    MakeDeferredWidgetNodeFinal(this->ChatScreen);
+    this->ConsoleScreen = ConstructDeferredWidgetNode<WConsoleScreen>(this->GetOuter());
+    this->ConsoleScreen->AddToViewport(this->GetHud()->GetMainViewport());
+    this->ConsoleScreen->SetConsoleFrontendState(EConsoleScreenState::Hide);
+    MakeDeferredWidgetNodeFinal(this->ConsoleScreen);
 
     this->PauseMenu = ConstructDeferredWidgetNode<WPauseMenu>(this->GetOuter());
     this->PauseMenu->AddToViewport(this->GetHud()->GetMainViewport());
@@ -52,10 +52,10 @@ void Jafg::JCoreWidgetsSubsystem::TearDown()
         this->Crosshair = nullptr;
     }
 
-    if (ensure(this->ChatScreen))
+    if (ensure(this->ConsoleScreen))
     {
-        this->ChatScreen->RemoveFromParent();
-        this->ChatScreen = nullptr;
+        this->ConsoleScreen->RemoveFromParent();
+        this->ConsoleScreen = nullptr;
     }
 
     return;

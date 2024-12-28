@@ -4,45 +4,11 @@
 
 #include "Widgets/WidgetBox.h"
 #include "Rhi/FontShaderContext.h"
+#include "Widgets/EditableTextBlockForward.h"
 #include "EditableTextBlock.generated.h"
 
 namespace Jafg
 {
-
-/**
- * A caret is a blinking line, block, or bitmap in the client area of a window. The caret typically indicates
- * the place at which text or graphics will be inserted.
- */
-struct LCaretBrush final
-{
-    LColor   Color   = LColor::White;
-    LVector2 Size    = LVector2(1.0f, 0.85f);
-    float    HOffset = 3.0f;
-};
-
-namespace ETextCommit
-{
-
-enum Type : uint8
-{
-    /**
-     * Text was commit via an enter key press. This does not mean a loss of focus.
-     */
-    OnEnter,
-
-    /**
-     * Focus was lost due to a press of the escape key.
-     */
-    OnCleared,
-
-    /**
-     * Focus was lost due to some other reason.
-     */
-    FocusLost,
-};
-
-} /* ~Namespace ETextCommit */
-ENGINE_API LSimpleString LexToString(const ETextCommit::Type InType);
 
 struct LEditableTextBrush : public LBoxBrush
 {
@@ -55,11 +21,17 @@ class TWidgetFactoryEditableTextBlock : public TWidgetFactoryWidgetBox<TNode>
 {
 public:
 
-    using TFactoryRetTy = typename TWidgetFactoryWidgetBox<TNode>::TFactoryRetTy;
+    using Super         = TWidgetFactoryWidgetBox<TNode>;
+    using TFactoryRetTy = typename Super::TFactoryRetTy;
 
-    FORCEINLINE TFactoryRetTy& SetTextColor(const LColor& InColor)       { this->This()->SetTextColor(InColor);  return this->Self(); }
-    FORCEINLINE TFactoryRetTy& SetTextScale(const float InScale)         { this->This()->SetTextScale(InScale);  return this->Self(); }
-    FORCEINLINE TFactoryRetTy& SetCaretBrush(const LCaretBrush& InBrush) { this->This()->SetCaretBrush(InBrush); return this->Self(); }
+    using Super::operator&;
+
+    TFactoryRetTy& SetTextColor(const LColor& InColor)       { this->This()->SetTextColor(InColor);  return this->Self(); }
+    TFactoryRetTy& SetTextScale(const float InScale)         { this->This()->SetTextScale(InScale);  return this->Self(); }
+    TFactoryRetTy& SetCaretBrush(const LCaretBrush& InBrush) { this->This()->SetCaretBrush(InBrush); return this->Self(); }
+    TFactoryRetTy& SetTextCommitCallback(LEditableTextBlockCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnTextCommitted.BindFunction(std::move(InCallback)); return this->Self(); }
+
+    TFactoryRetTy& operator&(LEditableTextBlockCommitDelegate::LFunctionSigTy&& InCallback) { return this->SetTextCommitCallback(std::move(InCallback)); }
 };
 
 /**
@@ -91,13 +63,19 @@ public:
     virtual void         OnFocusLost() override;
     virtual LReply       OnKeyDown(LKeyEvent& InKeyEvent) override;
 
-    void OnTextCommit(const LSimpleString& InText, const ETextCommit::Type InCommitType);
+    void OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType);
 
     FORCEINLINE void SetTextColor(const LColor& InColor) { this->Color = InColor; }
     FORCEINLINE void SetTextScale(const float InScale)   { this->Scale = InScale; }
     FORCEINLINE auto GetCaretBrush()       ->       LCaretBrush& { return this->CaretBrush; }
     FORCEINLINE auto GetCaretBrush() const -> const LCaretBrush& { return this->CaretBrush; }
     FORCEINLINE void SetCaretBrush(const LCaretBrush& InBrush) { this->CaretBrush = InBrush; }
+
+    LEditableTextBlockCommitDelegate OnTextCommitted;
+    void SetText(const LString& InText);
+    void SetText(     LString&& InText);
+    void ClearText();
+    FORCEINLINE auto GetText() const -> const LString& { return this->Content; }
 
 private:
 
