@@ -186,6 +186,8 @@ public:
     FORCEINLINE auto SubIdx(const SizeType InRuneStartIndex, const SizeType InRuneEndIndex) const -> LStringBase;
     FORCEINLINE auto RightChop(const SizeType InRuneCount) const -> LStringBase;
     FORCEINLINE auto InlineRightChop(const SizeType InRuneCount) -> void;
+    FORCEINLINE auto LeftChop(const SizeType InRuneCount) const -> LStringBase;
+    FORCEINLINE auto InlineLeftChop(const SizeType InRuneCount) -> void;
 
     /** Count the amounts a single rune occurred in a string. */
     FORCEINLINE SizeType Count(const CharacterTy  InRune) const;
@@ -1336,6 +1338,21 @@ template <typename InCharacterTy, class InTraitsTy>
 void LStringBase<InCharacterTy, InTraitsTy>::InlineRightChop(const SizeType InRuneCount)
 {
     this->InlineSubIdx(InRuneCount, this->GetCharacterCount());
+}
+
+template <typename InCharacterTy, class InTraitsTy>
+LStringBase<InCharacterTy, InTraitsTy> LStringBase<InCharacterTy, InTraitsTy>::LeftChop(const SizeType InRuneCount) const
+{
+    LStringBase Out;
+    this->CopyInto(Out);
+    Out.InlineLeftChop(InRuneCount);
+    return Out;
+}
+
+template <typename InCharacterTy, class InTraitsTy>
+void LStringBase<InCharacterTy, InTraitsTy>::InlineLeftChop(const SizeType InRuneCount)
+{
+    this->InlineSub(0, InRuneCount);
 }
 
 template <class InCharacterTy, class InTraitsTy>

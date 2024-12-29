@@ -1403,7 +1403,19 @@ TEST_CASE(NewEightStringChops, "Lal.Strings")
     CHECK_EQUALS( "String lower case.", MyOtherString, "IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
     MyOtherString.InlineRightChop(1);
     CHECK_EQUALS( "String lower case.", MyOtherString,  "JKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
+    MyOtherString.InlineRightChop(0);
+    CHECK_EQUALS( "String lower case.", MyOtherString,  "JKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
 
+    MyStr = "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z";
+    CHECK_EQUALS( "String lower case.", MyStr,         "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
+    MyOtherString = MyStr.LeftChop(20);
+    CHECK_EQUALS( "String lower case.", MyStr,         "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
+    CHECK_EQUALS( "String lower case.", MyOtherString, "A123BCDEFGHこれわテストです。" )
+    MyOtherString.InlineLeftChop(1);
+    CHECK_EQUALS( "String lower case.", MyOtherString,  "A" )
+    CHECK_EQUALS( "String lower case.", MyStr,         "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
+    MyOtherString.InlineLeftChop(0);
+    CHECK_EQUALS( "String lower case.", MyOtherString,  "" )
 
     return;
 }
