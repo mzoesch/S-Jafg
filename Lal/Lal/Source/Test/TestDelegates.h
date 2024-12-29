@@ -13,8 +13,8 @@ TEST_CASE(SimpleDelegateOperations, "Lal.Delegates")
 
     RetValDel.BindStrong( [] (const int32 A) -> bool { return A == 0; });
     CHECK_TRUE(  "Delegate binding.",               RetValDel.IsBound() )
-    CHECK_TRUE(  "Delegate execution.",            RetValDel.Execute(0) )
-    CHECK_FALSE( "Delegate execution.",            RetValDel.Execute(1) )
+    CHECK_TRUE(  "Delegate execution.",            RetValDel.Invoke(0) )
+    CHECK_FALSE( "Delegate execution.",            RetValDel.Invoke(1) )
 
     DECLARE_DELEGATE(VoidValSig, VoidValDel, void, const int32 A)
     // This must not compile.
@@ -28,18 +28,18 @@ TEST_CASE(SimpleDelegateOperations, "Lal.Delegates")
     CHECK_TRUE(  "Delegate binding.",                       VoidValDel.IsBound() )
     CHECK_FALSE( "Delegate execution.",                               MyInt == 1 )
 
-    VoidValDel.Execute(1);
+    VoidValDel.Invoke(1);
     CHECK_TRUE(  "Delegate execution.",                               MyInt == 1 )
 
-    VoidValDel.Execute(2);
+    VoidValDel.Invoke(2);
     CHECK_TRUE(  "Delegate execution.",                               MyInt == 2 )
-    CHECK_TRUE(  "Conditional delegate execution.", VoidValDel.ExecuteIfBound(3) )
+    CHECK_TRUE(  "Conditional delegate execution.", VoidValDel.InvokeIfBound(3) )
     CHECK_TRUE(  "Conditional delegate execution.",                   MyInt == 3 )
 
     VoidValDel.Unbind();
     CHECK_FALSE( "Delegate unbinding.",                     VoidValDel.IsBound() )
     CHECK_FALSE( "Delegate execution.",                               MyInt == 4 )
-    CHECK_FALSE( "Conditional delegate execution.", VoidValDel.ExecuteIfBound(4) )
+    CHECK_FALSE( "Conditional delegate execution.", VoidValDel.InvokeIfBound(4) )
     CHECK_FALSE( "Conditional delegate execution.",                   MyInt == 4 )
     CHECK_TRUE(  "Conditional delegate execution.",                   MyInt == 3 )
 
@@ -53,14 +53,14 @@ TEST_CASE(InlineDelegateOperations, "Lal.Delegates")
     using namespace Jafg;
 
     CHECK_FALSE(  "Delegate declaration.",           MyInlineDel.IsBound() )
-    CHECK_FALSE(  "Delegate declaration.",   MyInlineDel.ExecuteIfBound(0) )
+    CHECK_FALSE(  "Delegate declaration.",   MyInlineDel.InvokeIfBound(0) )
 
     int32 MyInt = 0;
     MyInlineDel.BindStrong( [&MyInt] (const int32 A) -> void { MyInt = A; return; });
     CHECK_TRUE(   "Inline delegate execution.",         MyInlineDel.IsBound() )
     CHECK_TRUE(   "Inline delegate execution.",                    MyInt == 0 )
     CHECK_FALSE(  "Inline delegate execution.",                    MyInt == 1 )
-    CHECK_TRUE(   "Inline delegate execution.", MyInlineDel.ExecuteIfBound(1) )
+    CHECK_TRUE(   "Inline delegate execution.", MyInlineDel.InvokeIfBound(1) )
     CHECK_TRUE(   "Inline delegate execution.",                    MyInt == 1 )
 
     return;
@@ -282,8 +282,8 @@ TEST_CASE(NamedDelegateOperations, "Lal.Delegates")
 
     MyNamedDel.BindStrong( &MyNamedFunction );
     CHECK_TRUE(  "Delegate binding.",               MyNamedDel.IsBound() )
-    CHECK_TRUE(  "Delegate execution.",            MyNamedDel.Execute(0) )
-    CHECK_FALSE( "Delegate execution.",            MyNamedDel.Execute(1) )
+    CHECK_TRUE(  "Delegate execution.",            MyNamedDel.Invoke(0) )
+    CHECK_FALSE( "Delegate execution.",            MyNamedDel.Invoke(1) )
 
     MyNamedDel.Unbind();
     CHECK_FALSE( "Delegate unbinding.",             MyNamedDel.IsBound() )
@@ -292,8 +292,8 @@ TEST_CASE(NamedDelegateOperations, "Lal.Delegates")
     MyDelegateObject.Member = 10;
     MyNamedDel.BindMember(&MyDelegateObject, &MyDelegateClass::MyNamedMemberConst);
     CHECK_TRUE(  "Delegate member execution.",             MyNamedDel.IsBound() )
-    CHECK_TRUE(  "Delegate member execution.",           MyNamedDel.Execute(10) )
-    CHECK_FALSE( "Delegate member execution.",           MyNamedDel.Execute(11) )
+    CHECK_TRUE(  "Delegate member execution.",           MyNamedDel.Invoke(10) )
+    CHECK_FALSE( "Delegate member execution.",           MyNamedDel.Invoke(11) )
 
     DECLARE_DELEGATE(MyTripleDelSig, MyTripleDel, bool, const int32 A, const int32 B, const int32 C)
     CHECK_FALSE( "Delegate declaration.", MyTripleDel.IsBound() )
@@ -301,9 +301,9 @@ TEST_CASE(NamedDelegateOperations, "Lal.Delegates")
     MyTripleDel.BindMember(&MyDelegateObject, &MyDelegateClass::MyNamedMemberNonConst);
     CHECK_TRUE(   "Delegate member execution.",                  MyTripleDel.IsBound() )
     CHECK_EQUALS( "Delegate member execution.",            MyDelegateObject.Member, 10 )
-    CHECK_TRUE(   "Delegate member execution.",           MyTripleDel.Execute(1, 2, 3) )
+    CHECK_TRUE(   "Delegate member execution.",           MyTripleDel.Invoke(1, 2, 3) )
     CHECK_EQUALS( "Delegate member execution.",            MyDelegateObject.Member, 16 )
-    CHECK_TRUE(   "Delegate member execution.",           MyTripleDel.Execute(1, 2, 3) )
+    CHECK_TRUE(   "Delegate member execution.",           MyTripleDel.Invoke(1, 2, 3) )
     CHECK_EQUALS( "Delegate member execution.",            MyDelegateObject.Member, 22 )
 
     return;

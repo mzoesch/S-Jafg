@@ -18,9 +18,9 @@ TEST_CASE(SimpleFunctorOperations, "Lal.Core")
 
     Lambda.CheckValidCall();
     CHECK_TRUE(  "Lambda is valid.",          Lambda(0) )
-    CHECK_TRUE(  "Lambda is valid.",     Lambda.Call(0) )
+    CHECK_TRUE(  "Lambda is valid.",     Lambda.Invoke(0) )
     CHECK_FALSE( "Lambda is valid.",          Lambda(1) )
-    CHECK_FALSE( "Lambda is valid.",     Lambda.Call(1) )
+    CHECK_FALSE( "Lambda is valid.",     Lambda.Invoke(1) )
 
     Lambda.Reset();
     CHECK_TRUE(  "Lambda reset.",     Lambda == nullptr )
@@ -32,9 +32,9 @@ TEST_CASE(SimpleFunctorOperations, "Lal.Core")
     CHECK_FALSE( "Scoped lambda.",     Lambda == nullptr )
     CHECK_TRUE(  "Scoped lambda.",        Lambda.IsBound() )
     CHECK_FALSE( "Scoped lambda.",             Lambda(0) )
-    CHECK_FALSE( "Scoped lambda.",        Lambda.Call(0) )
+    CHECK_FALSE( "Scoped lambda.",        Lambda.Invoke(0) )
     CHECK_TRUE(  "Scoped lambda.",             Lambda(1) )
-    CHECK_TRUE(  "Scoped lambda.",        Lambda.Call(1) )
+    CHECK_TRUE(  "Scoped lambda.",        Lambda.Invoke(1) )
 
     Lambda = nullptr;
     CHECK_TRUE(   "Lambda set nullptr.",     Lambda == nullptr )
@@ -139,7 +139,7 @@ TEST_CASE(NamedFunctorOperations, "Lal.Core")
     CHECK_TRUE(  "Member function is set.",           NamedTripleFunction.IsBound() )
     CHECK_TRUE(  "Member function execution.",       NamedTripleFunction(1, 2, 3) )
     CHECK_EQUALS("Member function execution.",         MyFunctorObject.Member, 16 )
-    CHECK_TRUE(  "Member function execution.",  NamedTripleFunction.Call(1, 2, 3) )
+    CHECK_TRUE(  "Member function execution.",  NamedTripleFunction.Invoke(1, 2, 3) )
     CHECK_EQUALS("Member function execution.",         MyFunctorObject.Member, 22 )
 
     return;

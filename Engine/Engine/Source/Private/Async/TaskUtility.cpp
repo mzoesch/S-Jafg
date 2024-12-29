@@ -79,17 +79,16 @@ Jafg::TdhArray<LRegisteredThread> RegisteredThreadIds;
 /** Global queue for tasks that are being executed on the specified thread in the future. */
 struct LTaskQueue final
 {
-    FORCEINLINE explicit LTaskQueue(const Jafg::ETaskTime::Type InTime) : Time(InTime), Delegate(new Jafg::TFunction<void(void)>()) {}
+    FORCEINLINE explicit LTaskQueue(const Jafg::ETaskTime::Type InTime)
+        : Time(InTime), Delegate(nullptr) {}
     FORCEINLINE explicit LTaskQueue(const Jafg::ETaskTime::Type InTime, Jafg::TFunction<void()>&& InDelegate)
-        : Time(InTime)
+        : Time(InTime), Delegate(std::move(InDelegate))
     {
-        this->Delegate = new Jafg::TFunction<void(void)>();
-        *this->Delegate = std::move(InDelegate);
         checkSlow( InDelegate.IsBound() == false )
     }
 
-    Jafg::ETaskTime::Type        Time;
-    Jafg::TFunction<void(void)>* Delegate = nullptr;
+    Jafg::ETaskTime::Type       Time;
+    Jafg::TFunction<void(void)> Delegate;
 };
 std::map<Jafg::ENamedThreads::Type, std::vector<LTaskQueue>> TaskQueue;
 
@@ -245,8 +244,8 @@ void Jafg::Tasks::Private::TryRunTasks(const ENamedThreads::Type Which, const ET
         LTaskQueue& Task = Queue[Idx];
         if (Task.Time & Time)
         {
-            check( Task.Delegate->IsBound() )
-            Task.Delegate->Call();
+            check( Task.Delegate.IsBound() )
+            Task.Delegate.Invoke();
             Queue.erase(Queue.begin() + Idx);
             ++RunTasks;
             continue;

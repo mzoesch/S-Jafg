@@ -179,7 +179,7 @@ Jafg::LReply Jafg::WEditableTextBlock::OnKeyDown(LKeyEvent& InKeyEvent)
 
 void Jafg::WEditableTextBlock::OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType)
 {
-    this->OnTextCommitted.ExecuteIfBound(InText, InCommitType);
+    this->OnTextCommitted.InvokeIfBound(InText, InCommitType);
 }
 
 void Jafg::WEditableTextBlock::SetText(const LString& InText)

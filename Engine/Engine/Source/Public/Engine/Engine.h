@@ -13,6 +13,7 @@ class LEngine;
 class LLocalEgo;
 class LWorld;
 class LSurface;
+class LCommandLineInterface;
 class LApplicationInstance;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -94,14 +95,14 @@ public:
     // Client Local Stuff
     ///////////////////////////////////////////////////////////////////////////////
 
-    auto CanEverRender() const -> bool;
+    bool CanEverRender() const;
 
-    auto HasPrimarySurface() const -> bool;
+    bool IsPrimarySurfaceValid() const;
     auto GetPrimarySurface() const -> LSurface*;
     auto GetCheckedPrimarySurface() const -> LSurface*;
     auto GetPanickedPrimarySurface() const -> LSurface*;
 
-    FORCEINLINE auto HasLocalEgo() const -> bool { return this->LocalEgo != nullptr; }
+    FORCEINLINE bool HasLocalEgo() const { return this->LocalEgo != nullptr; }
     FORCEINLINE auto GetLocalEgo() const -> LLocalEgo* { return this->LocalEgo; }
     FORCEINLINE auto GetCheckedLocalEgo() const -> LLocalEgo* { check( this->LocalEgo ) return this->LocalEgo; }
     FORCEINLINE auto GetPanickedLocalEgo() const -> LLocalEgo*
@@ -121,10 +122,10 @@ public:
     // Context Related
     ///////////////////////////////////////////////////////////////////////////////
 
-    FORCEINLINE static auto GetMaxContexts() -> uint8 { return LEngine::MaxContexts; }
+    FORCEINLINE static uint8 GetMaxContexts() { return LEngine::MaxContexts; }
 
-    auto GetCurrentFreeContexts() const -> uint8;
-    auto GetCurrentOccupiedContexts() const -> uint8;
+    uint8 GetCurrentFreeContexts() const;
+    uint8 GetCurrentOccupiedContexts() const;
 
     auto GetContextFromWorld(const LWorld& World) -> LWorldContext&;
 
@@ -148,10 +149,10 @@ private:
     auto InitializeContext(LWorldContext& InContext, const LSimpleString& InHumanReadableName) -> void;
 
     /** Browse to a new Url at the next opportunity. */
-    auto Browse(LWorldContext& Context, const LStringLegacy& Url) const -> void;
-    auto IsContextUrlInternal(const LStringLegacy& Url) const -> bool;
+    void Browse(LWorldContext& Context, const LStringLegacy& Url) const;
+    bool IsContextUrlInternal(const LStringLegacy& Url) const;
     void TravelContext(LWorldContext& Context);
-    auto GetLevelByInternalUrl(const LStringLegacy& Url) -> LLevel*;
+    FORCEINLINE auto GetLevelByInternalUrl(const LStringLegacy& Url) -> LLevel* { return this->RegisteredLevels.FindRef(Url); }
 
     /** The maximum amount of context this engine can handle. */
     static constexpr uint8 MaxContexts { 3 };
@@ -171,11 +172,17 @@ public:
     // Misc
     ///////////////////////////////////////////////////////////////////////////////
 
+    bool IsCommandLineInterfaceValid() const;
+    auto GetCommandLineInterface() const -> LCommandLineInterface*;
+    auto GetCheckedCommandLineInterface() const -> LCommandLineInterface*;
+    auto GetPanickedCommandLineInterface() const -> LCommandLineInterface*;
+
     FORCEINLINE auto IsApplicationInstanceValid() const -> bool { return this->ApplicationInstance; }
     FORCEINLINE auto GetApplicationInstance() const -> LApplicationInstance* { return this->ApplicationInstance; }
 
 private:
 
+    LCommandLineInterface* CommandLineInterface = nullptr;
     LApplicationInstance* ApplicationInstance = nullptr;
 };
 

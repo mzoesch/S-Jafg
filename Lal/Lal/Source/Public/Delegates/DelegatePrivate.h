@@ -27,20 +27,32 @@ struct TDelegate<RetTy(ParamsTy...)> final
 
     FORCEINLINE TDelegate() = default;
     FORCEINLINE TDelegate(LNullptrTy) : Delegate(nullptr) { return; }
+    PROHIBIT_COPY(TDelegate)
+    FORCEINLINE TDelegate(TDelegate&& InOther) noexcept : Delegate(std::move(InOther.Delegate))
+    {
+        check( InOther.Delegate.IsValid() == false );
+    }
+    FORCEINLINE TDelegate& operator=(TDelegate&& InOther) noexcept
+    {
+        this->Delegate = std::move(InOther.Delegate);
+        check( InOther.Delegate.IsValid() == false );
+        return *this;
+    }
+    FORCEINLINE ~TDelegate() { this->Unbind(); return; }
 
-    FORCEINLINE LRetValTy Execute(ParamsTy ... InFuncParams)
+    FORCEINLINE LRetValTy Invoke(ParamsTy ... InFuncParams) const
     {
         check( this->Delegate.IsBound() )
         return this->Delegate(std::forward<ParamsTy>(InFuncParams)...);
     }
-    FORCEINLINE LRetValTy operator()(ParamsTy ... InFuncParams) { return this->Execute(std::forward<ParamsTy>(InFuncParams)...); }
+    FORCEINLINE LRetValTy operator()(ParamsTy ... InFuncParams) { return this->Invoke(std::forward<ParamsTy>(InFuncParams)...); }
 
     template <typename LocalFuncRetValTy = LRetValTy, TEnableIf<std::is_void_v<LocalFuncRetValTy>, void>* = nullptr>
-    FORCEINLINE bool ExecuteIfBound(ParamsTy ... InFuncParams)
+    FORCEINLINE bool InvokeIfBound(ParamsTy ... InFuncParams) const
     {
         if (this->Delegate.IsBound())
         {
-            this->Delegate(std::forward<ParamsTy>(InFuncParams)...);
+            this->Delegate.Invoke(std::forward<ParamsTy>(InFuncParams)...);
             return true;
         }
 
@@ -120,6 +132,39 @@ struct TDelegate<RetTy(ParamsTy...)> final
     FORCEINLINE static LFunctionSigTy CreateFunction(ObjTy* InObj, CallableTy InMember)
     {
         return TDelegate::CreateMemberFunction(InObj, InMember);
+    }
+
+    template <typename CallableTy>
+    FORCEINLINE static TDelegate CreateStrongDelegate(CallableTy&& InCallable)
+    {
+        return TDelegate(std::forward<CallableTy>(InCallable));
+    }
+    template <typename CallableTy>
+    FORCEINLINE static TDelegate CreateDelegate(CallableTy&& InCallable)
+    {
+        return TDelegate::CreateStrongDelegate(std::forward<CallableTy>(InCallable));
+    }
+
+    template <typename CallableTy>
+    FORCEINLINE static TDelegate CreateWeakDelegate(CallableTy* InCallable)
+    {
+        return TDelegate(InCallable);
+    }
+    template <typename CallableTy>
+    FORCEINLINE static TDelegate CreateDelegate(CallableTy* InCallable)
+    {
+        return TDelegate::CreateWeakDelegate(InCallable);
+    }
+
+    template <typename ObjTy, typename CallableTy>
+    FORCEINLINE static TDelegate CreateMemberDelegate(ObjTy* InObj, CallableTy InMember)
+    {
+        return TDelegate(InObj, InMember);
+    }
+    template <typename ObjTy, typename CallableTy>
+    FORCEINLINE static TDelegate CreateDelegate(ObjTy* InObj, CallableTy InMember)
+    {
+        return TDelegate::CreateMemberDelegate(InObj, InMember);
     }
 
 private:

@@ -24,10 +24,6 @@ class ENGINE_API JApplicationInstanceSubsystem : public JSubsystem
 protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JApplicationInstanceSubsystem)
-
-public:
-
-    LApplicationInstance* GetApplicationInstance() const;
 };
 
 } /* Namespace Jafg */

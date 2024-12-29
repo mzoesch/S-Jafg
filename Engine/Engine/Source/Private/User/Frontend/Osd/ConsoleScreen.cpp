@@ -2,7 +2,9 @@
 
 #include "CoreAfx.h"
 #include "User/Frontend/Osd/ConsoleScreen.h"
-
+#include "Engine/Cli/CliStatics.h"
+#include "Engine/Engine.h"
+#include "Engine/Cli/CommandLineInterface.h"
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "User/Input/UserInput.h"
@@ -91,16 +93,44 @@ void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit
         return;
     }
 
+    struct LOnTextCommitScope
+    {
+        LOnTextCommitScope(WConsoleScreen* InMe) : Me(InMe) { }
+        ~LOnTextCommitScope()
+        {
+            Me->SetConsoleFrontendState(EConsoleScreenState::Hide);
+        }
+        WConsoleScreen* Me = nullptr;
+    } OnTextCommitScope(this);
+
     if (InText.IsEmpty())
     {
-        this->SetConsoleFrontendState(EConsoleScreenState::Hide);
+        return;
+    }
+
+    if (CliStatics::IsCommand(InText))
+    {
+        const LString Command = CliStatics::SafelyRemoveCommandPrefix(InText);
+        if (Command.IsEmpty())
+        {
+            return;
+        }
+
+        LCommandExecutionResponse Response;
+        this->GetEngine()->GetCheckedCommandLineInterface()->Invoke(Command, &Response);
+
+        if (Response.StdOut.IsEmpty() == false)
+        {
+            if (Response.Rc >= ECommandReturnCode::Failure)
+            {
+                LOG_ERROR(LogCli, "Command [{}] failed with return code [{}]: {}.", Command, LexToString(Response.Rc), Response.StdOut)
+            }
+        }
+
         return;
     }
 
     LOG_WARNING(LogTemporal, "{}", InText)
-
-    this->SetConsoleFrontendState(EConsoleScreenState::Hide);
-    check( InText.IsEmpty() )
 
     return;
 }

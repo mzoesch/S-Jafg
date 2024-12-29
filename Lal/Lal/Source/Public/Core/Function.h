@@ -31,9 +31,24 @@ public:
     template <typename ObjTy, typename CallableTy> struct LMemberCallable;
 
     FORCEINLINE TFunction() = default;
-    FORCEINLINE ~TFunction() { this->Reset(); return; }
-
     FORCEINLINE TFunction(LNullptrTy) : Callable(nullptr) { }
+    FORCEINLINE TFunction& operator=(LNullptrTy) { this->Reset(); return *this; }
+    PROHIBIT_COPY(TFunction)
+    FORCEINLINE TFunction(TFunction&& Other) noexcept
+    {
+        this->Reset();
+        this->Callable = std::move(Other.Callable);
+        Other.Callable = nullptr; /* Do not reset as it would orphan the memory. */
+        return;
+    }
+    FORCEINLINE TFunction& operator=(TFunction&& Other) noexcept
+    {
+        this->Reset();
+        this->Callable = std::move(Other.Callable);
+        Other.Callable = nullptr; /* Do not reset as it would orphan the memory. */
+        return *this;
+    }
+    FORCEINLINE ~TFunction() { this->Reset(); return; }
 
     template <typename CallableTy>
     FORCEINLINE TFunction(CallableTy&& InCallable)
@@ -74,23 +89,8 @@ public:
         this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LMemberCallable<ObjTy, CallableTy>>(InObject, InMember);
     }
 
-    FORCEINLINE TFunction& operator=(const LNullptrTy)
-    {
-        this->Reset();
-        return *this;
-    }
-    FORCEINLINE TFunction& operator=(TFunction&& Other) noexcept
-    {
-        this->Reset();
-        this->Callable = std::move(Other.Callable);
-        Other.Callable = nullptr; /* Do not reset as it would orphan the memory. */
-        return *this;
-    }
-
-    FORCEINLINE TFunction& operator=(const TFunction& Other) noexcept = delete;
-
-    FORCEINLINE RetTy Call(ParamsTy... InParams) { return this->operator()(std::forward<ParamsTy>(InParams)...); }
-    FORCEINLINE RetTy operator()(ParamsTy... InParams)
+    FORCEINLINE RetTy Invoke(ParamsTy... InParams) const { return this->operator()(std::forward<ParamsTy>(InParams)...); }
+    FORCEINLINE RetTy operator()(ParamsTy... InParams) const
     {
         if (this->Callable == nullptr)
         {
@@ -119,8 +119,8 @@ private:
     struct LCallableBase
     {
         virtual ~LCallableBase() = default;
-        virtual RetTy Invoke(ParamsTy... InParams) = 0;
-        virtual bool  IsValid() const { return false; }
+        virtual auto Invoke(ParamsTy... InParams) const -> RetTy = 0;
+        virtual bool IsValid() const { return false; }
     };
 
     template <typename CallableTy>
@@ -130,8 +130,19 @@ private:
 
         FORCEINLINE LStrongCallable(CallableTy&& InCallable) : Callable(std::move(InCallable)) { }
 
-        FORCEINLINE RetTy Invoke(ParamsTy... InParams) override { return this->Callable(std::forward<ParamsTy>(InParams)...); }
-        FORCEINLINE bool  IsValid() const override { return true; }
+        FORCEINLINE RetTy Invoke(ParamsTy... InParams) const override
+        {
+            static_assert(
+                std::is_invocable_v<CallableTy, ParamsTy...>,
+                "Callable is not invocable with parameters. Was an invalid function signature provided?"
+            );
+            static_assert(
+                std::is_same_v<std::invoke_result_t<CallableTy, ParamsTy...>, RetTy>,
+                "Callable must return the correct type."
+            );
+            return this->Callable(std::forward<ParamsTy>(InParams)...);
+        }
+        FORCEINLINE bool IsValid() const override { return true; }
     };
 
     template <typename CallableTy>
@@ -141,7 +152,7 @@ private:
 
         FORCEINLINE LWeakCallable(CallableTy* InCallable) : Callable(InCallable) { }
 
-        FORCEINLINE RetTy Invoke(ParamsTy... InParams) override
+        FORCEINLINE RetTy Invoke(ParamsTy... InParams) const override
         {
             if (Callable)
             {
@@ -162,7 +173,7 @@ private:
 
         FORCEINLINE LMemberCallable(ObjTy* InObject, CallableTy InMember) : Object(InObject), Member(InMember) { }
 
-        FORCEINLINE RetTy Invoke(ParamsTy... InParams) override
+        FORCEINLINE RetTy Invoke(ParamsTy... InParams) const override
         {
             if (this->Object && this->Member)
             {

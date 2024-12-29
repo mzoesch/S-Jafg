@@ -8,6 +8,7 @@
 #include "Engine/World.h"
 #include "User/LocalEgo.h"
 #include "Engine/Framework/ApplicationInstance.h"
+#include "Engine/Cli/CommandLineInterface.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
@@ -30,6 +31,10 @@ ENGINE_API LSimpleString GCustomExitReason         = "";
 
 void Jafg::LEngine::Initialize()
 {
+    check( this->IsCommandLineInterfaceValid() == false )
+    this->CommandLineInterface = new LCommandLineInterface();
+    this->CommandLineInterface->Initialize();
+
     check( this->IsApplicationInstanceValid() == false )
     this->ApplicationInstance = new LApplicationInstance();
     this->ApplicationInstance->Initialize();
@@ -131,6 +136,12 @@ void Jafg::LEngine::TearDown()
 
     Tasks::Private::StopAndJoinRemainingThreads();
 
+    if (this->CommandLineInterface)
+    {
+        delete this->CommandLineInterface;
+        this->CommandLineInterface = nullptr;
+    }
+
     return;
 }
 
@@ -228,7 +239,7 @@ bool Jafg::LEngine::CanEverRender() const
 #endif /* !WITH_FRONTEND */
 }
 
-bool Jafg::LEngine::HasPrimarySurface() const
+bool Jafg::LEngine::IsPrimarySurfaceValid() const
 {
     return this->HasLocalEgo() && this->GetLocalEgo()->HasPrimarySurface();
 }
@@ -299,67 +310,6 @@ Jafg::LWorldContext& Jafg::LEngine::GetContextFromWorld(const LWorld& World)
     jassertNoEntry()
 
     return CreateNewWorldContext();
-}
-
-void Jafg::LEngine::Browse(LWorldContext& Context, const LStringLegacy& Url) const
-{
-    if (this->IsContextUrlInternal(Url) == false)
-    {
-        unimplemented()
-        return;
-    }
-
-    if (this->IsLevelRegistered(Url) == false)
-    {
-        jassert( false && "Local Url not registered." )
-        return;
-    }
-
-    Context.TravelUrl = Url;
-
-    return;
-}
-
-bool Jafg::LEngine::IsContextUrlInternal(const LStringLegacy& Url) const
-{
-    if (Url.empty())
-    {
-        return false;
-    }
-
-    /* We have to implement this in the future. If not internal, then connect to remote server. */
-    return true;
-}
-
-void Jafg::LEngine::TravelContext(LWorldContext& Context)
-{
-    check( Context.IsWaitingForTravel() )
-
-    LLevel* Level = this->GetLevelByInternalUrl(Context.TravelUrl);
-    if (Level == nullptr)
-    {
-        jassertNoEntry()
-        return;
-    }
-
-    /* Get some args here in the future. */
-    Context.TravelUrl.clear();
-
-    check( Context.ChildWorld )
-
-    if (Context.ChildWorld->GetWorldState() == EWorldState::Running)
-    {
-        Context.ChildWorld->TearDownContext();
-    }
-
-    Context.ChildWorld->InitializeWorld(*Level);
-
-    return;
-}
-
-Jafg::LLevel* Jafg::LEngine::GetLevelByInternalUrl(const LStringLegacy& Url)
-{
-    return this->RegisteredLevels.FindRef(Url);
 }
 
 void Jafg::LEngine::Browse(const LWorld& Context, const LStringLegacy& Url)
@@ -439,4 +389,86 @@ void Jafg::LEngine::InitializeContext(LWorldContext& InContext, const LSimpleStr
     InContext.ChildWorld->SetHumanReadableName(InHumanReadableName);
 
     return;
+}
+
+void Jafg::LEngine::Browse(LWorldContext& Context, const LStringLegacy& Url) const
+{
+    if (this->IsContextUrlInternal(Url) == false)
+    {
+        unimplemented()
+        return;
+    }
+
+    if (this->IsLevelRegistered(Url) == false)
+    {
+        jassert( false && "Local Url not registered." )
+        return;
+    }
+
+    Context.TravelUrl = Url;
+
+    return;
+}
+
+bool Jafg::LEngine::IsContextUrlInternal(const LStringLegacy& Url) const
+{
+    if (Url.empty())
+    {
+        return false;
+    }
+
+    /* We have to implement this in the future. If not internal, then connect to remote server. */
+    return true;
+}
+
+void Jafg::LEngine::TravelContext(LWorldContext& Context)
+{
+    check( Context.IsWaitingForTravel() )
+
+    LLevel* Level = this->GetLevelByInternalUrl(Context.TravelUrl);
+    if (Level == nullptr)
+    {
+        jassertNoEntry()
+        return;
+    }
+
+    /* Get some args here in the future. */
+    Context.TravelUrl.clear();
+
+    check( Context.ChildWorld )
+
+    if (Context.ChildWorld->GetWorldState() == EWorldState::Running)
+    {
+        Context.ChildWorld->TearDownContext();
+    }
+
+    Context.ChildWorld->InitializeWorld(*Level);
+
+    return;
+}
+
+bool Jafg::LEngine::IsCommandLineInterfaceValid() const
+{
+    return this->CommandLineInterface != nullptr;
+}
+
+Jafg::LCommandLineInterface* Jafg::LEngine::GetCommandLineInterface() const
+{
+    return this->CommandLineInterface;
+}
+
+Jafg::LCommandLineInterface* Jafg::LEngine::GetCheckedCommandLineInterface() const
+{
+    check( this->IsCommandLineInterfaceValid() )
+    return this->CommandLineInterface;
+}
+
+Jafg::LCommandLineInterface* Jafg::LEngine::GetPanickedCommandLineInterface() const
+{
+    if (this->IsCommandLineInterfaceValid())
+    {
+        return this->CommandLineInterface;
+    }
+    panic( "Failed to get command line interface." )
+    return nullptr;
 }
