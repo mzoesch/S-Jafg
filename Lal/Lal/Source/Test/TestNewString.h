@@ -1392,6 +1392,22 @@ TEST_CASE(NewEightStringLowerCase, "Lal.Strings")
     return;
 }
 
+TEST_CASE(NewEightStringChops, "Lal.Strings")
+{
+    using namespace Jafg;
+
+    LEightString MyStr = "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z";
+    CHECK_EQUALS( "String lower case.", MyStr,         "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
+    LEightString MyOtherString = MyStr.RightChop(20);
+    CHECK_EQUALS( "String lower case.", MyStr,         "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
+    CHECK_EQUALS( "String lower case.", MyOtherString, "IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
+    MyOtherString.InlineRightChop(1);
+    CHECK_EQUALS( "String lower case.", MyOtherString,  "JKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
+
+
+    return;
+}
+
 TEST_CASE(StringUtlity, "Lal.Strings")
 {
     using namespace Jafg;
