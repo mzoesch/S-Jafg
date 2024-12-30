@@ -1337,7 +1337,7 @@ LStringBase<InCharacterTy, InTraitsTy> LStringBase<InCharacterTy, InTraitsTy>::R
 template <typename InCharacterTy, class InTraitsTy>
 void LStringBase<InCharacterTy, InTraitsTy>::InlineRightChop(const SizeType InRuneCount)
 {
-    this->InlineSubIdx(InRuneCount, this->GetCharacterCount());
+    this->InlineSubIdx(InRuneCount, this->GetRuneCount());
 }
 
 template <typename InCharacterTy, class InTraitsTy>
