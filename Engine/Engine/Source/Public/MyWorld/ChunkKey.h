@@ -50,7 +50,7 @@ struct LChunkKey final
     FORCEINLINE LChunkKey(const LChunkKeyDomainTy InX, const LChunkKeyDomainTy InY, const LChunkKeyDomainTy InZ) : Key(InX, InY, InZ) { }
     FORCEINLINE LChunkKey(const LChunkKeyDomainTy InXyz) : Key(InXyz, InXyz, InXyz) { }
     FORCEINLINE LChunkKey(const LChunkKey& InKey) noexcept : Key(InKey.Key) { }
-    FORCEINLINE LChunkKey(LChunkKey&& InKey) noexcept : Key(InKey.Key) { }
+    FORCEINLINE LChunkKey(LChunkKey&& InKey) noexcept : Key(std::move(InKey.Key)) { }
     FORCEINLINE LChunkKey(const LVector& InVec) noexcept;
     FORCEINLINE LChunkKey(const LChunkKey2& InKey2, const LChunkKeyDomainTy InZ);
     FORCEINLINE ~LChunkKey() = default;

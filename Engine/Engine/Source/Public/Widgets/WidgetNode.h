@@ -447,31 +447,30 @@ public:
     virtual auto GetPanickedViewport() const -> LViewport*;
 
     /** @return The top left corner of this widget relative to its parent. If no parent, relative to the viewport. */
-    LVector2 GetRelativeTopLeftFromOuter() const;
-
+    virtual auto GetRelativeTopLeftFromOuter(const WWidgetNode* WhoAsked) const -> LVector2;
     /**
      * @param  WhoAsked The widget that asked for the relative top left. Must be a direct child.
      * @return The top left corner relative to the most outer parent. In the best case, this should be the viewport,
      *         although this is not guaranteed.
      */
     virtual auto GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const -> LVector2;
+    /** Virtual update method for the desired size. Automatically called. */
+    virtual void UpdateDesiredSize() const { }
+    FORCEINLINE auto SetDesiredSize(const LVector2& InSize) const -> void { this->DesiredSize = InSize; }
+    FORCEINLINE auto GetDesiredSize() const -> const LVector2& { return this->DesiredSize; }
+
     /**
      * @param WhoAsked The widget that asked for the anchored top left. Must be a direct child.
      * @return The anchored top left corner of this widget relative to the most outer parent. In the best case,
      *         this should be the viewport, although this is not guaranteed.
      */
     virtual auto GetAnchoredTopLeftFromMostOuter(const LViewport& Context, const WWidgetNode* WhoAsked) const -> LVector2;
-
-    FORCEINLINE auto GetSlot() const -> LWidgetSlot* { return this->Slot; }
-
-    /** Virtual update method for the desired size. Automatically called. */
-    virtual void UpdateDesiredSize() const { }
-    FORCEINLINE auto SetDesiredSize(const LVector2& InSize) const -> void { this->DesiredSize = InSize; }
-    FORCEINLINE auto GetDesiredSize() const -> const LVector2& { return this->DesiredSize; }
     /** Virtual update method for the anchored size. Automatically called. */
     virtual void UpdateAnchoredSize(const LViewport& Context) const;
     FORCEINLINE auto SetAnchoredSize(const LVector2& InSize) const -> void { this->AnchoredSize = InSize; }
     FORCEINLINE auto GetAnchoredSize() const -> LVector2 { return this->AnchoredSize; }
+
+    FORCEINLINE auto GetSlot() const -> LWidgetSlot* { return this->Slot; }
 
     auto GetApplicationInstance() const -> LApplicationInstance*;
     auto GetEngine() const -> LEngine*;

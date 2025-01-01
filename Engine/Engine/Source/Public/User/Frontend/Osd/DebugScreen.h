@@ -36,6 +36,10 @@ private:
 
     WTextBlock* LocalPawnLocationSection = nullptr;
     WTextBlock* LocalPawnFacingSection = nullptr;
+    WTextBlock* LocalPawnChunkSection = nullptr;
+    WTextBlock* LocalPawnVoxelSection = nullptr;
+
+    WTextBlock* LocalPawnTarrgetVoxelSection = nullptr;
 
     /** The time when we should invalidate the cache in seconds. */
     double ResetTime = 0.1;

@@ -72,7 +72,7 @@ private:
     inline static constexpr float DefaultHeaderFontSize    { 0.11f };
     inline static constexpr float DefaultSubHeaderFontSize { 0.10f };
     inline static constexpr float DefaultBodyFontSize      { 0.70f };
-    inline static constexpr float DefaultSmallFontSize     { 0.50f };
+    inline static constexpr float DefaultSmallFontSize     { 0.40f };
     inline static constexpr float DefaultTinyFontSize      { 0.30f };
     float HeaderFontSize    { JUserPreferences::DefaultHeaderFontSize    };
     float SubHeaderFontSize { JUserPreferences::DefaultSubHeaderFontSize };

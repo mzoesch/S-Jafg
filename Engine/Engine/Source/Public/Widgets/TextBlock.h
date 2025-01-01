@@ -66,6 +66,7 @@ public:
 
     virtual auto UpdateDesiredSize() const -> void override;
 
+    FORCEINLINE void EmptyContent() { this->Content.Empty(); }
     FORCEINLINE void SetContent(const LSimpleString& InContent) { this->Content = InContent; }
     FORCEINLINE void SetContent(LSimpleString&& InContent) { this->Content = std::move(InContent); }
     FORCEINLINE auto GetContent() const -> const LSimpleString& { return this->Content;      }

@@ -22,9 +22,11 @@ class ENGINE_API APawn : public AActor
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(APawn)
+    explicit APawn(const LObjectInitializer& ObjectInitializer);
 
 public:
+
+    virtual void Tick(const float DeltaTime) override;
 
     FORCEINLINE auto IsPossessed() const -> bool { return this->OwningController != nullptr; }
     FORCEINLINE auto GetOwningController() const -> APersonaController* { return this->OwningController; }
@@ -40,6 +42,8 @@ public:
     void OnOngoingPrimaryInput(LInputActionValue& InValue);
     void OnOngoingSecondaryInput(LInputActionValue& InValue);
 
+    /** Cached hit results for this frame. Use this if only generic hit results information is needed.  */
+    FORCEINLINE auto GetCurrentGenericTraceResults() const -> const TdhArray<LHitResult>& { return this->CurrentGenericTraceResults; }
     bool TraceFromEyeByChannel(
         TdhArray<LHitResult>& OutHits,
         const float DistanceInMeters,
@@ -66,6 +70,8 @@ private:
     double LastMouseX = 0.0;
     double LastMouseY = 0.0;
     bool bFirstMouseCallback = true;
+
+    TdhArray<LHitResult> CurrentGenericTraceResults;
 };
 
 } /* ~Namespace Jafg */

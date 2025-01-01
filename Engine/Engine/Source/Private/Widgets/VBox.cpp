@@ -3,6 +3,28 @@
 #include "CoreAfx.h"
 #include "Widgets/VBox.h"
 
+Jafg::LVector2 Jafg::WVBox::GetRelativeTopLeftFromOuter(const WWidgetNode* WhoAsked) const
+{
+    if (WhoAsked == nullptr || this == WhoAsked)
+    {
+        return Super::GetRelativeTopLeftFromOuter(WhoAsked);
+    }
+
+    LVector2 Offset = Super::GetRelativeTopLeftFromOuter(WhoAsked);
+    int32 Idx = this->GetChildren().FindIndexByPredicate([WhoAsked] (const LWidgetSlot* const InSlot) -> bool
+    {
+        return InSlot->Content == WhoAsked;
+    });
+    check( Idx != INDEX_NONE )
+
+    while (--Idx > INDEX_NONE)
+    {
+        Offset.Y += this->GetChildren()[Idx]->Content->GetDesiredSize().Y;
+    }
+
+    return Offset;
+}
+
 Jafg::LVector2 Jafg::WVBox::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const
 {
     if (this == WhoAsked)
@@ -25,12 +47,6 @@ Jafg::LVector2 Jafg::WVBox::GetRelativeTopLeftFromMostOuter(const WWidgetNode* W
     return Offset;
 }
 
-Jafg::LVector2 Jafg::WVBox::GetAnchoredTopLeftFromMostOuter(const LViewport& Context, const WWidgetNode* WhoAsked) const
-{
-    // TODO Fix this in the wnode with a static method
-    return this->GetRelativeTopLeftFromMostOuter(WhoAsked);
-}
-
 void Jafg::WVBox::UpdateDesiredSize() const
 {
     Super::UpdateDesiredSize();
@@ -47,16 +63,6 @@ void Jafg::WVBox::UpdateDesiredSize() const
     DesiredSize += this->GetPadding().GetDesiredSize();
 
     this->SetDesiredSize(DesiredSize);
-
-    return;
-}
-
-void Jafg::WVBox::UpdateAnchoredSize(const LViewport& Context) const
-{
-    Super::UpdateAnchoredSize(Context);
-
-    // TODO Fix this in the wnode with a static method
-    this->SetAnchoredSize(this->GetDesiredSize());
 
     return;
 }

@@ -7,6 +7,27 @@
 #include "MyWorld/Chunk/Chunk.h"
 #include "User/Input/InputActionValue.h"
 
+Jafg::APawn::APawn(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+{
+    this->SetEverTickConstructorOnlyFlag();
+    return;
+}
+
+void Jafg::APawn::Tick(const float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    this->CurrentGenericTraceResults.Empty();
+    const LVector TraceStart = this->GetTranslation();
+    const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
+    this->GetWorld()->LineTraceByChannel(
+        this->CurrentGenericTraceResults, TraceStart, TraceEnd,
+        ECollisionChannel::Static, LCollisionQueryParams({.bSingleHit = true})
+    );
+
+    return;
+}
+
 void Jafg::APawn::DeclareNewPossessor(APersonaController* InNewController)
 {
     this->OwningController = InNewController;
@@ -71,22 +92,13 @@ void Jafg::APawn::OnOngoingPrimaryInput(LInputActionValue& InValue)
 {
     check( this->GetWorld() )
 
-    const LVector TraceStart = this->GetTranslation();
-    const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
-
-    TdhArray<LHitResult> Hits;
-    const bool bHit = this->GetWorld()->LineTraceByChannel(
-        Hits, TraceStart, TraceEnd,
-        ECollisionChannel::Static, LCollisionQueryParams({.bSingleHit = true})
-    );
-    check( Hits.GetSize() <= 1 )
-
-    for (const LHitResult& Hit : Hits)
+    for (const LHitResult& Hit : this->CurrentGenericTraceResults)
     {
         if (AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
         {
             const LVoxelKey Key = LVoxelKey::FromWorldLocation(Hit.GlobalWorldLocation);
             HitChunk->ModifySingleLocalVoxel(Key, ECompileTimeVoxels::Air);
+            break;
         }
 
         continue;
@@ -99,22 +111,13 @@ void Jafg::APawn::OnOngoingSecondaryInput(LInputActionValue& InValue)
 {
     check( this->GetWorld() )
 
-    const LVector TraceStart = this->GetTranslation();
-    const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
-
-    TdhArray<LHitResult> Hits;
-    const bool bHit = this->GetWorld()->LineTraceByChannel(
-        Hits, TraceStart, TraceEnd,
-        ECollisionChannel::Static, LCollisionQueryParams({.bSingleHit = true})
-    );
-    check( Hits.GetSize() <= 1 )
-
-    for (const LHitResult& Hit : Hits)
+    for (const LHitResult& Hit : this->CurrentGenericTraceResults)
     {
         if (AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
         {
             const LVoxelKey Key = HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal * 0.5f);
             HitChunk->ModifySingleVoxelByNonZeroOrigin(Key, ECompileTimeVoxels::Num);
+            break;
         }
 
         continue;

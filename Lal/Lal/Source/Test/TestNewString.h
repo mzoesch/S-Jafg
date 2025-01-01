@@ -1384,7 +1384,7 @@ TEST_CASE(NewEightStringLowerCase, "Lal.Strings")
     CHECK_EQUALS( "String lower case.", MyOtherStr,    "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz" )
 
     MyStr = "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z";
-    CHECK_EQUALS( "String lower case.", MyStr,         "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
+    CHECK_EQUALS( "String lower case.", MyStr,         "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )pp
     MyOtherStr = MyStr.GetLowerCase();
     CHECK_EQUALS( "String lower case.", MyStr,         "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
     CHECK_EQUALS( "String lower case.", MyOtherStr,    "a123bcdefghこれわテストです。ijklmnopqr456789stuvwxyzabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )

@@ -54,9 +54,15 @@ struct LVoxelKey final
     FORCEINLINE ~LVoxelKey() = default;
 
     /**
-     * From world location. Note that this function will normalize the key to the local space.
+     * From world location (or relative world location to another origin).
+     * Note that this function will normalize the key to the local space.
      */
     static LVoxelKey FromWorldLocation(const LVector& InVector);
+
+    /**
+     * From world location (or relative world location to another origin). This function will not normalize the key
+     * to the local space. Note that this only works if the given world vector does not exceed the domain space.
+     */
     static LVoxelKey FromWorldLocationPreserveLocalSpace(const LVector& InVector);
 
     FORCEINLINE LVoxelKey& operator =(const LVoxelKey&  InKey) noexcept;
@@ -90,7 +96,7 @@ inline LVoxelKey LVoxelKey::FromWorldLocation(const LVector& InVector)
 
     if (InVector.X < 0)
     {
-        Out.X = static_cast<LVoxelKeyDomainTy>(static_cast<int64>(Maths::Ceil(InVector.X)) % MwStatics::ChunkSize);
+        Out.X = static_cast<LVoxelKeyDomainTy>(MwStatics::ChunkSize + (static_cast<int64>(Maths::Ceil(InVector.X)) % MwStatics::ChunkSize) - 1);
     }
     else
     {
@@ -99,7 +105,7 @@ inline LVoxelKey LVoxelKey::FromWorldLocation(const LVector& InVector)
 
     if (InVector.Y < 0)
     {
-        Out.Y = static_cast<LVoxelKeyDomainTy>(static_cast<int64>(Maths::Ceil(InVector.Y)) % MwStatics::ChunkSize);
+        Out.Y = static_cast<LVoxelKeyDomainTy>(MwStatics::ChunkSize + (static_cast<int64>(Maths::Ceil(InVector.Y)) % MwStatics::ChunkSize) - 1);
     }
     else
     {
@@ -108,7 +114,7 @@ inline LVoxelKey LVoxelKey::FromWorldLocation(const LVector& InVector)
 
     if (InVector.Z < 0)
     {
-        Out.Z = static_cast<LVoxelKeyDomainTy>(static_cast<int64>(Maths::Ceil(InVector.Z)) % MwStatics::ChunkSize);
+        Out.Z = static_cast<LVoxelKeyDomainTy>(MwStatics::ChunkSize + (static_cast<int64>(Maths::Ceil(InVector.Z)) % MwStatics::ChunkSize) - 1);
     }
     else
     {
@@ -120,11 +126,15 @@ inline LVoxelKey LVoxelKey::FromWorldLocation(const LVector& InVector)
 
 inline LVoxelKey LVoxelKey::FromWorldLocationPreserveLocalSpace(const LVector& InVector)
 {
+    check( InVector.X >= std::numeric_limits<LVoxelKeyDomainTy>::min() && InVector.X <= std::numeric_limits<LVoxelKeyDomainTy>::max() )
+    check( InVector.Y >= std::numeric_limits<LVoxelKeyDomainTy>::min() && InVector.Y <= std::numeric_limits<LVoxelKeyDomainTy>::max() )
+    check( InVector.Z >= std::numeric_limits<LVoxelKeyDomainTy>::min() && InVector.Z <= std::numeric_limits<LVoxelKeyDomainTy>::max() )
+
     LVoxelKey Out;
 
     if (InVector.X < 0)
     {
-        Out.X = static_cast<LVoxelKeyDomainTy>(Maths::Ceil(InVector.X));
+        Out.X = static_cast<LVoxelKeyDomainTy>(Maths::Ceil(InVector.X) - 1);
     }
     else
     {
@@ -133,7 +143,7 @@ inline LVoxelKey LVoxelKey::FromWorldLocationPreserveLocalSpace(const LVector& I
 
     if (InVector.Y < 0)
     {
-        Out.Y = static_cast<LVoxelKeyDomainTy>(Maths::Ceil(InVector.Y));
+        Out.Y = static_cast<LVoxelKeyDomainTy>(Maths::Ceil(InVector.Y) - 1);
     }
     else
     {
@@ -142,7 +152,7 @@ inline LVoxelKey LVoxelKey::FromWorldLocationPreserveLocalSpace(const LVector& I
 
     if (InVector.Z < 0)
     {
-        Out.Z = static_cast<LVoxelKeyDomainTy>(Maths::Ceil(InVector.Z));
+        Out.Z = static_cast<LVoxelKeyDomainTy>(Maths::Ceil(InVector.Z) - 1);
     }
     else
     {

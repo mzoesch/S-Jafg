@@ -110,7 +110,7 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
         this->TintShaderContext.Draw(
             Context,
             this->GetDesiredSize(),
-            this->GetRelativeTopLeftFromMostOuter(this),
+            this->GetAnchoredTopLeftFromMostOuter(Context, this),
             this->Brush.Tint
         );
     }
@@ -133,7 +133,7 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
 
     const LIntVector2 WindowDimensions = this->GetViewportSize();
     const float       ScaleFactor      = Context.GetScaleFactor();
-    const LVector2    Offset           = this->GetRelativeTopLeftFromMostOuter(this);
+    const LVector2    Offset           = this->GetAnchoredTopLeftFromMostOuter(Context, this);
     const float       YFromBottom      = static_cast<float>(WindowDimensions.Y);
 
     ::GetFontShaderProgram().Use();

@@ -8,6 +8,9 @@
 #include "Engine/Framework/ApplicationInstance.h"
 #include "Engine/Framework/Pawn.h"
 #include "Engine/Framework/PersonaController.h"
+#include "MyWorld/ChunkKey.h"
+#include "MyWorld/VoxelKey.h"
+#include "MyWorld/Chunk/Chunk.h"
 #include "System/MaterialSubsystem.h"
 #include "System/TextureSubsystem.h"
 #include "User/LocalEgo.h"
@@ -28,56 +31,112 @@ void Jafg::WDebugScreen::Construct()
 
     JMaterialSubsystem* MaterialSubsystem = this->GetApplicationInstance()->GetSubsystem<JMaterialSubsystem>();
 
-    MakeRootNode(WVBox)
+    MakeRootNode(WWidgetRegion)
+    .SetAnchor(EAnchor::Fill)
     [
         NewNode(WVBox)
         [
-            NewNode(WTextBlock)
-            & LSimpleString::SprintF("JAFG v{}", BuildInfo::GetEngineVersion().ToString())
-            & LTextBlockBrush::MakeDefaultSmall()
+            NewNode(WVBox)
+            [
+                NewNode(WTextBlock)
+                & LSimpleString::SprintF("JAFG v{}", BuildInfo::GetEngineVersion().ToString())
+                & LTextBlockBrush::MakeDefaultSmall()
+            ]
+            [
+                NewNode(WTextBlock) >> this->FpsSection
+                & LTextBlockBrush::MakeDefaultSmall()
+            ]
+            [
+                NewNode(WTextBlock) >> this->TimeStatsSection
+                & LTextBlockBrush::MakeDefaultSmall()
+            ]
         ]
         [
-            NewNode(WTextBlock) >> this->FpsSection
-            & LTextBlockBrush::MakeDefaultSmall()
+            NewNode(WSpacer)
+            .SetHeight(20.0f)
         ]
         [
-            NewNode(WTextBlock) >> this->TimeStatsSection
-            & LTextBlockBrush::MakeDefaultSmall()
+            NewNode(WVBox)
+            [
+                NewNode(WTextBlock) >> this->LocalPawnLocationSection
+                & LTextBlockBrush::MakeDefaultSmall()
+            ]
+            [
+                NewNode(WTextBlock) >> this->LocalPawnFacingSection
+                & LTextBlockBrush::MakeDefaultSmall()
+            ]
+            [
+                NewNode(WTextBlock) >> this->LocalPawnChunkSection
+                & LTextBlockBrush::MakeDefaultSmall()
+            ]
+            [
+                NewNode(WTextBlock) >> this->LocalPawnVoxelSection
+                & LTextBlockBrush::MakeDefaultSmall()
+            ]
         ]
-    ]
-    [
-        NewNode(WSpacer)
-        .SetHeight(20.0f)
+        [
+            NewNode(WSpacer)
+            .SetHeight(20.0f)
+        ]
+        [
+            NewNode(WVBox)
+            [
+                NewNode(WWidgetRegion)
+                .SetPadding(LPadding(100.0f))
+                & &MaterialSubsystem->GetBlendOpaqueAtlasTexture()
+            ]
+        ]
+        [
+            NewNode(WVBox)
+            [
+                NewNode(WWidgetRegion)
+                .SetPadding(LPadding(100.0f))
+                & &MaterialSubsystem->GetBlendersAtlasTexture()
+            ]
+        ]
     ]
     [
         NewNode(WVBox)
+        .SetAnchor(EAnchor::TopRight)
         [
-            NewNode(WTextBlock) >> this->LocalPawnLocationSection
-            & LTextBlockBrush::MakeDefaultSmall()
+            NewNode(WVBox)
+            .SetAnchor(EAnchor::TopRight)
+            [
+                NewNode(WTextBlock)
+                & EAnchor::TopRight
+                & "Memory statistics"
+                & LTextBlockBrush::MakeDefaultSmall()
+            ]
+            [
+                NewNode(WTextBlock)
+                & EAnchor::TopRight
+                & "Central processing unit information"
+                & LTextBlockBrush::MakeDefaultSmall()
+            ]
+            [
+                NewNode(WTextBlock)
+                & EAnchor::TopRight
+                & "Graphics processing unit information"
+                & LTextBlockBrush::MakeDefaultSmall()
+            ]
+            [
+                NewNode(WTextBlock)
+                & EAnchor::TopRight
+                & "Display information"
+                & LTextBlockBrush::MakeDefaultSmall()
+            ]
         ]
         [
-            NewNode(WTextBlock) >> this->LocalPawnFacingSection
-            & LTextBlockBrush::MakeDefaultSmall()
+            NewNode(WSpacer)
+            .SetHeight(20.0f)
         ]
-    ]
-    [
-        NewNode(WSpacer)
-        .SetHeight(20.0f)
-    ]
-    [
-        NewNode(WVBox)
         [
-            NewNode(WWidgetRegion)
-            .SetPadding(LPadding(100.0f))
-            & &MaterialSubsystem->GetBlendOpaqueAtlasTexture()
-        ]
-    ]
-    [
-        NewNode(WVBox)
-        [
-            NewNode(WWidgetRegion)
-            .SetPadding(LPadding(100.0f))
-            & &MaterialSubsystem->GetBlendersAtlasTexture()
+            NewNode(WVBox)
+            .SetAnchor(EAnchor::TopRight)
+            [
+                NewNode(WTextBlock) >> this->LocalPawnTarrgetVoxelSection
+                & LTextBlockBrush::MakeDefaultSmall()
+            ]
         ]
     ]
     FinishWidgetStyling()
@@ -157,6 +216,81 @@ void Jafg::WDebugScreen::Tick()
         else
         {
             this->LocalPawnFacingSection->SetContent("[ERR: No possessor]");
+        }
+    }
+
+    if (this->LocalPawnChunkSection)
+    {
+        if (LocalEgo->DoesPossess())
+        {
+            const APersonaController* Controller = LocalEgo->GetPossessed();
+            if (Controller->DoesPossess())
+            {
+                const LVector Location = Controller->GetPossessed()->GetTranslation();
+                const LChunkKey Key = LChunkKey(Location);
+                this->LocalPawnChunkSection->SetContent(LSimpleString::SprintF(
+                    "Chunk: {} {} {}",
+                    Key.X, Key.Y, Key.Z
+                ));
+            }
+            else
+            {
+                this->LocalPawnChunkSection->SetContent("[ERR: No pawn]");
+            }
+        }
+        else
+        {
+            this->LocalPawnChunkSection->SetContent("[ERR: No possessor]");
+        }
+    }
+
+    if (this->LocalPawnVoxelSection)
+    {
+        if (LocalEgo->DoesPossess())
+        {
+            const APersonaController* Controller = LocalEgo->GetPossessed();
+            if (Controller->DoesPossess())
+            {
+                const LVector Location = Controller->GetPossessed()->GetTranslation();
+                const LVoxelKey Key = LVoxelKey::FromWorldLocation(Location);
+                this->LocalPawnVoxelSection->SetContent(LSimpleString::SprintF(
+                    "Local voxel: {} {} {}",
+                    Key.X, Key.Y, Key.Z
+                ));
+            }
+            else
+            {
+                this->LocalPawnVoxelSection->SetContent("[ERR: No pawn]");
+            }
+        }
+        else
+        {
+            this->LocalPawnVoxelSection->SetContent("[ERR: No possessor]");
+        }
+    }
+
+    if (this->LocalPawnTarrgetVoxelSection)
+    {
+        this->LocalPawnTarrgetVoxelSection->EmptyContent();
+        if (LocalEgo->DoesPossess())
+        {
+            const APersonaController* Controller = LocalEgo->GetPossessed();
+            if (Controller->DoesPossess())
+            {
+                for (const LHitResult& Hit : Controller->GetPossessed()->GetCurrentGenericTraceResults())
+                {
+                    if (AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
+                    {
+                        const LVoxelKey Key = LVoxelKey::FromWorldLocation(Hit.GlobalWorldLocation);
+                        this->LocalPawnTarrgetVoxelSection->SetContent(LSimpleString::SprintF("Tv: {} {} {}", Key.X, Key.Y, Key.Z));
+                        break;
+                    }
+                }
+            }
+        }
+        if (this->LocalPawnTarrgetVoxelSection->GetContent().IsEmpty())
+        {
+            this->LocalPawnTarrgetVoxelSection->SetContent("Tv: N/A");
         }
     }
 

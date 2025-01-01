@@ -322,7 +322,11 @@ func IncludeAllModuleTests() {
             continue
         }
 
-        GCurrentHeaderState.AppendString(fmt.Sprintf("#include \"Test/%s\"\n", mod.GetPredictedTestIncludeFileName()))
+        GCurrentHeaderState.AppendString(
+            fmt.Sprintf("#include \"../../%s/Source/Test/%s\"\n",
+            mod.GetRelativeModuleDir(),
+            mod.GetPredictedTestIncludeFileName()),
+        )
 
         continue
     }
