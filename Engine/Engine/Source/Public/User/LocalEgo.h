@@ -52,7 +52,9 @@ public:
 
     FORCEINLINE auto DoesPossess() const -> bool { return this->PersonaController != nullptr; }
     FORCEINLINE auto GetPossessed() const -> APersonaController* { return this->PersonaController; }
-                auto Possess(APersonaController* InNewController) -> void;
+    FORCEINLINE auto GetCheckedPossessed() const -> APersonaController* { check( this->PersonaController ) return this->PersonaController; }
+    FORCEINLINE auto GetPanickedPossessed() const -> APersonaController*;
+                void Possess(APersonaController* InNewController);
 
     FORCEINLINE auto GetContext() const -> Private::LObjectContext* { return this->Context; }
 
@@ -80,3 +82,13 @@ private:
 };
 
 } /* ~Namespace Jafg */
+
+Jafg::APersonaController* Jafg::LLocalEgo::GetPanickedPossessed() const
+{
+    if (this->PersonaController)
+    {
+        return this->PersonaController;
+    }
+    panic( "No persona controller possessed by the local ego." )
+    return nullptr;
+}

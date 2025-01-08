@@ -3,9 +3,12 @@
 #pragma once
 
 #include "Debug/TemporalWorldObject.h"
+#include "Engine/World.h"
 
 namespace Jafg
 {
+
+class LDebugTracePlane;
 
 struct LDebugTraceLineVisualParams final
 {
@@ -14,12 +17,24 @@ struct LDebugTraceLineVisualParams final
 
 class LDebugTraceLine final : public LTemporalWorldObject
 {
+    friend LDebugTracePlane;
+
 public:
 
     LDebugTraceLine() = delete;
     LDebugTraceLine(const float InTimeToLive) = delete;
     LDebugTraceLine(
         const float InTimeToLive,
+        const LVector& InStart,
+        const LVector& InEnd,
+        const LDebugTraceLineVisualParams& InVisualParams
+    )
+        : LTemporalWorldObject(InTimeToLive), Start(InStart), End(InEnd), VisualParams(InVisualParams)
+    {
+        check( (this->Start - this->End).Magnitude() > JAFG_NOT_SO_SMALL_NUMBER && "Why trace small distances." )
+    }
+    LDebugTraceLine(
+        const OneDrawCall InTimeToLive,
         const LVector& InStart,
         const LVector& InEnd,
         const LDebugTraceLineVisualParams& InVisualParams
@@ -39,6 +54,8 @@ public:
     FORCEINLINE auto GetVisualParams() const -> const LDebugTraceLineVisualParams& { return this->VisualParams; }
 
 private:
+
+    static void DrawLine(const LWorld& InContext, const LVector& InStart, const LVector& InEnd, const LColor& InColor, const bool bUseCache);
 
     LVector Start;
     LVector End;

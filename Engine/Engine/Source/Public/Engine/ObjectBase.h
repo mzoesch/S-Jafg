@@ -129,9 +129,8 @@ private:
 
     void MarkAsGarbage(const bool bAddToCarnifex);
 
-    bool                             bGarbage = false;
-    ::Jafg::Private::LObjectContext* Outer    = nullptr;
-
+    LObjectContext* Outer = nullptr;
+    bool bGarbage = false;
 #if DO_DOUBLE_CHECK_LIFETIMES
     bool bHasBegunLife = false;
 #endif /* DO_DOUBLE_CHECK_LIFETIMES */

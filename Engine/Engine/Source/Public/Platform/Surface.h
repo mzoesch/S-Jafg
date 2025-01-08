@@ -145,21 +145,39 @@ void Jafg::LSurface::AddKeyDown(const LRawInput& InRawInput)
 
 void Jafg::LSurface::SetRepeatedKeyDown(const LKey InKey)
 {
-    check( this->PlatformRepeatedKey.Key == EKeys::Unresolved && this->PlatformRepeatedKey.Value == 0.0f )
-    this->PlatformRepeatedKey.Key = InKey;
+    if constexpr (IS_COMPILED_LOG(LogSurface, Warning))
+    {
+        if (this->PlatformRepeatedKey.Key != EKeys::Unresolved || this->PlatformRepeatedKey.Value != 0.0f)
+        {
+            LOG_WARNING(LogSurface, "Invalid behavior: {} != {}", this->PlatformRepeatedKey.ToString(), LexToString(InKey))
+        }
+    }
+    this->PlatformRepeatedKey = LRawInput(InKey);
     return;
 }
 
 void Jafg::LSurface::SetRepeatedKeyDown(const LKey InKey, const float InValue)
 {
-    check( this->PlatformRepeatedKey.Key == EKeys::Unresolved && this->PlatformRepeatedKey.Value == 0.0f )
-    this->PlatformRepeatedKey.Key = InKey;
+    if constexpr (IS_COMPILED_LOG(LogSurface, Warning))
+    {
+        if (this->PlatformRepeatedKey.Key != EKeys::Unresolved || this->PlatformRepeatedKey.Value != 0.0f)
+        {
+            LOG_WARNING(LogSurface, "Invalid behavior: {} != {}", this->PlatformRepeatedKey.ToString(), LexToString(InKey))
+        }
+    }
+    this->PlatformRepeatedKey = LRawInput(InKey, InValue);
     return;
 }
 
 void Jafg::LSurface::SetRepeatedKeyDown(const LRawInput& InRawInput)
 {
-    check( this->PlatformRepeatedKey.Key == EKeys::Unresolved && this->PlatformRepeatedKey.Value == 0.0f )
+    if constexpr (IS_COMPILED_LOG(LogSurface, Warning))
+    {
+        if (this->PlatformRepeatedKey.Key != EKeys::Unresolved || this->PlatformRepeatedKey.Value != 0.0f)
+        {
+            LOG_WARNING(LogSurface, "Invalid behavior: {} != {}", this->PlatformRepeatedKey.ToString(), InRawInput.ToString())
+        }
+    }
     this->PlatformRepeatedKey = InRawInput;
     return;
 }

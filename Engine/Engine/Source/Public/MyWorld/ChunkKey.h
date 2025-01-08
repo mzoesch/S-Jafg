@@ -78,6 +78,7 @@ struct LChunkKey final
             static_cast<LReal>(Key.Z * MwStatics::ChunkSize)
         };
     }
+    FORCEINLINE auto ToVerticalKey() const -> LChunkKey2;
 
     FORCEINLINE auto GetNorthKey() const -> LChunkKey { return { Key.X + 1, Key.Y, Key.Z }; }
     FORCEINLINE auto GetSouthKey() const -> LChunkKey { return { Key.X - 1, Key.Y, Key.Z }; }
@@ -131,13 +132,15 @@ struct LChunkKey2 final
     FORCEINLINE LChunkKey2(const LChunkKeyDomainTy InX, const LChunkKeyDomainTy InY) : Key(InX, InY) { }
     FORCEINLINE LChunkKey2(const LChunkKeyDomainTy InXy) : Key(InXy, InXy) { }
     FORCEINLINE LChunkKey2(const LChunkKey2& InKey) noexcept : Key(InKey.Key) { }
-    FORCEINLINE LChunkKey2(LChunkKey2&& InKey) noexcept : Key(InKey.Key) { }
+    FORCEINLINE LChunkKey2(LChunkKey2&& InKey) noexcept : Key(std::move(InKey.Key)) { }
     FORCEINLINE ~LChunkKey2() = default;
 
     FORCEINLINE LChunkKey2& operator=(const LChunkKey2&  InKey) noexcept;
     FORCEINLINE LChunkKey2& operator=(      LChunkKey2&& InKey) noexcept;
     FORCEINLINE bool operator==(const LChunkKey2& InKey) const { return Key == InKey.Key; }
     FORCEINLINE bool operator!=(const LChunkKey2& InKey) const { return Key != InKey.Key; }
+
+    FORCEINLINE auto ToWorldSpaceVector() const -> LVector;
 
     FORCEINLINE auto GetNorthKey() const -> LChunkKey2 { return { Key.X + 1, Key.Y }; }
     FORCEINLINE auto GetSouthKey() const -> LChunkKey2 { return { Key.X - 1, Key.Y }; }
@@ -237,6 +240,11 @@ bool LChunkKey::operator>=(const LChunkKey& InKey) const
         || (Key.X == InKey.X && Key.Y == InKey.Y && Key.Z >= InKey.Z);
 }
 
+LChunkKey2 LChunkKey::ToVerticalKey() const
+{
+    return { this->Key.X, this->Key.Y };
+}
+
 LChunkKey2& LChunkKey2::operator=(const LChunkKey2& InKey) noexcept
 {
     this->Key = InKey.Key;
@@ -247,6 +255,16 @@ LChunkKey2& LChunkKey2::operator=(LChunkKey2&& InKey) noexcept
 {
     this->Key = InKey.Key;
     return *this;
+}
+
+LVector LChunkKey2::ToWorldSpaceVector() const
+{
+    return LVector
+    {
+        static_cast<LReal>(Key.X * MwStatics::ChunkSize),
+        static_cast<LReal>(Key.Y * MwStatics::ChunkSize),
+        0.0f
+    };
 }
 
 } /* ~Namespace Jafg */

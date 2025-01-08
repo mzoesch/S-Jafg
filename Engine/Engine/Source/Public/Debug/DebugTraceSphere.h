@@ -30,6 +30,16 @@ public:
     {
         check( this->Radius > JAFG_NOT_SO_SMALL_NUMBER && "Why trace small spheres." )
     }
+    LDebugTraceSphere(
+        const OneDrawCall InTimeToLive,
+        const LVector& InCenter,
+        const float InRadius,
+        const LDebugTraceSphereVisualParams& InVisualParams
+    )
+        : LTemporalWorldObject(InTimeToLive), Center(InCenter), Radius(InRadius), VisualParams(InVisualParams)
+    {
+        check( this->Radius > JAFG_NOT_SO_SMALL_NUMBER && "Why trace small spheres." )
+    }
     PROHIBIT_COPY(LDebugTraceSphere)
     DEFAULT_MOVE(LDebugTraceSphere)
     virtual ~LDebugTraceSphere() override = default;

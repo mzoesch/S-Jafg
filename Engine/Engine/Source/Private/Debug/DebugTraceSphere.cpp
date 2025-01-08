@@ -2,7 +2,7 @@
 
 #include "CoreAfx.h"
 #include "Debug/DebugTraceSphere.h"
-#include "Rhi/DebugSphereShaderContext.h"
+#include "Rhi/DebugTraceSphereShaderContext.h"
 #include "Platform/Surface.h"
 #include "Engine/World.h"
 #include "User/LocalEgo.h"

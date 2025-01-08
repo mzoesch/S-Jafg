@@ -22,8 +22,12 @@ class LTemporalWorldObject
 {
 public:
 
+    enum OneDrawCall { DrawOnce };
+
     LTemporalWorldObject() = delete;
     LTemporalWorldObject(const float InTimeToLive) : TimeToLive(InTimeToLive) { check( this->TimeToLive > 0.0f ) }
+    /** Will only be drawn once. */
+    LTemporalWorldObject(const OneDrawCall InTimeToLive) { check( this->TimeToLive == 0.f ) }
     PROHIBIT_COPY(LTemporalWorldObject)
     DEFAULT_MOVE(LTemporalWorldObject)
     virtual ~LTemporalWorldObject() = default;

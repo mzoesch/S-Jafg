@@ -18,6 +18,11 @@
 #include "Widgets/Spacer.h"
 #include "Widgets/TextBlock.h"
 #include "Widgets/VBox.h"
+#include "Debug/DebugTraceSphere.h"
+#include "Debug/DebugTraceCube.h"
+#include "Debug/DebugTraceLine.h"
+#include "Debug/DebugTracePlane.h"
+#include "MyWorld/Validation/ChunkValidationUtility.h"
 
 Jafg::WDebugScreen::WDebugScreen(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
@@ -29,7 +34,7 @@ void Jafg::WDebugScreen::Construct()
 {
     Super::Construct();
 
-    JMaterialSubsystem* MaterialSubsystem = this->GetApplicationInstance()->GetSubsystem<JMaterialSubsystem>();
+    const JMaterialSubsystem* MaterialSubsystem = this->GetApplicationInstance()->GetSubsystem<JMaterialSubsystem>();
 
     MakeRootNode(WWidgetRegion)
     .SetAnchor(EAnchor::Fill)
@@ -82,7 +87,7 @@ void Jafg::WDebugScreen::Construct()
             NewNode(WVBox)
             [
                 NewNode(WWidgetRegion)
-                .SetPadding(LPadding(100.0f))
+                .SetPadding(LPadding(70.0f))
                 & &MaterialSubsystem->GetBlendOpaqueAtlasTexture()
             ]
         ]
@@ -90,7 +95,7 @@ void Jafg::WDebugScreen::Construct()
             NewNode(WVBox)
             [
                 NewNode(WWidgetRegion)
-                .SetPadding(LPadding(100.0f))
+                .SetPadding(LPadding(70.0f))
                 & &MaterialSubsystem->GetBlendersAtlasTexture()
             ]
         ]
@@ -134,7 +139,11 @@ void Jafg::WDebugScreen::Construct()
             NewNode(WVBox)
             .SetAnchor(EAnchor::TopRight)
             [
-                NewNode(WTextBlock) >> this->LocalPawnTarrgetVoxelSection
+                NewNode(WTextBlock) >> this->LocalPawnTargetVoxelSectionDestroy
+                & LTextBlockBrush::MakeDefaultSmall()
+            ]
+            [
+                NewNode(WTextBlock) >> this->LocalPawnTargetVoxelSectionCreate
                 & LTextBlockBrush::MakeDefaultSmall()
             ]
         ]
@@ -149,150 +158,220 @@ void Jafg::WDebugScreen::Tick()
     Super::Tick();
 
     const LLocalEgo* LocalEgo = GEngine->GetCheckedLocalEgo();
-
-    if (this->LocalPawnLocationSection)
+    const APersonaController* Controller = LocalEgo->GetCheckedPossessed();
+    if (Controller->DoesPossess())
     {
-        if (LocalEgo->DoesPossess())
+        if (this->LocalPawnLocationSection)
         {
-            const APersonaController* Controller = LocalEgo->GetPossessed();
-            if (Controller->DoesPossess())
+            const LVector Location = Controller->GetPossessed()->GetTranslation();
+            this->LocalPawnLocationSection->SetContent(LSimpleString::SprintF(
+                "XYZ: {:.3f} / {:.3f} / {:.3f}",
+                Location.X,
+                Location.Y,
+                Location.Z
+            ));
+        }
+
+        if (this->LocalPawnFacingSection)
+        {
+            const LRotator Rotator = Controller->GetPossessed()->GetRotator();
+            LSimpleString YawAsText = "N/A";
+            if (Rotator.Yaw >= -45.f && Rotator.Yaw <= 45.f)
             {
-                const LVector Location = Controller->GetPossessed()->GetTranslation();
-                this->LocalPawnLocationSection->SetContent(LSimpleString::SprintF(
-                    "XYZ: {:.3f} / {:.3f} / {:.3f}",
-                    Location.X,
-                    Location.Y,
-                    Location.Z
+                YawAsText = "North (Towards positive X)";
+            }
+            else if (Rotator.Yaw > 45.f && Rotator.Yaw < 135.f)
+            {
+                YawAsText = "East (Towards positive Y)";
+            }
+            else if (Rotator.Yaw >= 135.f || Rotator.Yaw <= -135.f)
+            {
+                YawAsText = "South (Towards negative X)";
+            }
+            else if (Rotator.Yaw > -135.f && Rotator.Yaw < -45.f)
+            {
+                YawAsText = "West (Towards negative Y)";
+            }
+            this->LocalPawnFacingSection->SetContent(LSimpleString::SprintF(
+                "Facing: {} ({:.2f}Y / {:.2f}P)",
+                YawAsText, Rotator.Yaw, Rotator.Pitch
+            ));
+        }
+
+        if (this->LocalPawnChunkSection)
+        {
+            const LVector Location = Controller->GetPossessed()->GetTranslation();
+            const LChunkKey Key = LChunkKey(Location);
+            this->LocalPawnChunkSection->SetContent(LSimpleString::SprintF(
+                "Chunk: {} {} {}",
+                Key.X, Key.Y, Key.Z
+            ));
+        }
+
+        if (this->LocalPawnVoxelSection)
+        {
+            const LVector Location = Controller->GetPossessed()->GetTranslation();
+            const LVoxelKey Key = LVoxelKey::FromWorldLocation(Location);
+            this->LocalPawnVoxelSection->SetContent(LSimpleString::SprintF(
+                "Local voxel: {} {} {}",
+                Key.X, Key.Y, Key.Z
+            ));
+        }
+
+        if (this->LocalPawnTargetVoxelSectionDestroy)
+        {
+            this->LocalPawnTargetVoxelSectionDestroy->EmptyContent();
+            for (const LHitResult& Hit : Controller->GetPossessed()->GetCurrentGenericTraceResults())
+            {
+                if (const AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
+                {
+                    const LVoxelKey Key = LVoxelKey::FromWorldLocation(Hit.GlobalWorldLocation);
+                    this->LocalPawnTargetVoxelSectionDestroy->SetContent(LSimpleString::SprintF("TvD: {} {} {}", Key.X, Key.Y, Key.Z));
+                    break;
+                }
+            }
+            if (this->LocalPawnTargetVoxelSectionDestroy->GetContent().IsEmpty())
+            {
+                this->LocalPawnTargetVoxelSectionDestroy->SetContent("TvD: N/A");
+            }
+        }
+
+        if (this->LocalPawnTargetVoxelSectionCreate)
+        {
+            this->LocalPawnTargetVoxelSectionCreate->EmptyContent();
+            for (const LHitResult& Hit : Controller->GetPossessed()->GetCurrentGenericTraceResults())
+            {
+                if (const AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
+                {
+                    const LVoxelKey Key = HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal * 0.5f);
+                    this->LocalPawnTargetVoxelSectionCreate->SetContent(LSimpleString::SprintF("TvC: {} {} {}", Key.X, Key.Y, Key.Z));
+                    break;
+                }
+            }
+            if (this->LocalPawnTargetVoxelSectionCreate->GetContent().IsEmpty())
+            {
+                this->LocalPawnTargetVoxelSectionCreate->SetContent("TvC: N/A");
+            }
+        }
+
+        for (const LHitResult& Hit : Controller->GetPossessed()->GetCurrentGenericTraceResults())
+        {
+            if (const AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
+            {
+                const LVector   WorldHit = Hit.GlobalWorldLocation + Hit.SurfaceNormal * 0.5f;
+                const LVoxelKey VKey_Destroy = LVoxelKey::FromWorldLocation(Hit.GlobalWorldLocation);
+                const LVoxelKey VKey_Create = LVoxelKey::FromWorldLocation(WorldHit);
+                const LChunkKey CKey = HitChunk->GetChunkKey();
+
+                const LVector WorldSpaceCenter_Destroy = CKey.ToWorldSpaceVector() + LVector(VKey_Destroy.X, VKey_Destroy.Y, VKey_Destroy.Z);
+                const LVector WorldSpaceCenter_Create  = CKey.ToWorldSpaceVector() + LVector(VKey_Create.X, VKey_Create.Y, VKey_Create.Z);
+
+                LWorld* World = Controller->GetPossessed()->GetWorld();
+                World->AddTemporalObject(LDebugTraceSphere(
+                    LTemporalWorldObject::DrawOnce, Hit.GlobalWorldLocation, 0.1f,
+                    LDebugTraceSphereVisualParams(16, 16, LColor::Green)
+                ));
+                World->AddTemporalObject(LDebugTraceCube(
+                    LTemporalWorldObject::DrawOnce, WorldSpaceCenter_Destroy, LVector::One(),
+                    LDebugTraceCubeVisualParams(LColor::Red)
+                ));
+                World->AddTemporalObject(LDebugTraceCube(
+                    LTemporalWorldObject::DrawOnce, WorldSpaceCenter_Create, LVector::One(),
+                    LDebugTraceCubeVisualParams(LColor::Blue)
+                ));
+                break;
+            }
+        }
+
+        // Chunk debug lines
+        {
+            LWorld* World = Controller->GetPossessed()->GetWorld();
+
+            const LVector PawnTranslation = Controller->GetPossessed()->GetTranslation();
+            LChunkKey CKey = LChunkKey(PawnTranslation);
+            const LVector ChunkCenter = CKey.ToWorldSpaceVector();
+
+            World->AddTemporalObject(LDebugTraceCube(
+                LTemporalWorldObject::DrawOnce, LVector::Zero() + ChunkCenter, LVector::One() * MwStatics::ChunkSize,
+                LDebugTraceCubeVisualParams(LColor::Yellow)
+            ));
+
+            for (int32 izDelta = 2; izDelta < MwStatics::ChunkSize; izDelta += 2)
+            {
+                const float zDelta = static_cast<float>(izDelta);
+                const LVector P1 = ChunkCenter + LVector::Up() * zDelta;
+                const LVector P2 = P1 + LVector::Right() * MwStatics::ChunkSize;
+                const LVector P3 = P1 + (LVector::Right() + LVector::Forward()) * MwStatics::ChunkSize;
+                const LVector P4 = P1 + LVector::Forward() * MwStatics::ChunkSize;
+
+                World->AddTemporalObject(LDebugTracePlane(
+                    LTemporalWorldObject::DrawOnce,
+                    P1, P2, P3, P4,
+                    LDebugTracePlaneVisualParams(LColor::Yellow)
                 ));
             }
-            else
+
+            for (const LChunkKey& Key : CKey.GetNeighboringChunkKeys())
             {
-                this->LocalPawnLocationSection->SetContent("[ERR: No pawn]");
-            }
-        }
-        else
-        {
-            this->LocalPawnLocationSection->SetContent("[ERR: No possessor]");
-        }
-    }
-
-    if (this->LocalPawnFacingSection)
-    {
-        if (LocalEgo->DoesPossess())
-        {
-            const APersonaController* Controller = LocalEgo->GetPossessed();
-            if (Controller->DoesPossess())
-            {
-                const LRotator Rotator = Controller->GetPossessed()->GetRotator();
-
-                LSimpleString YawAsText = "N/A";
-                if (Rotator.Yaw >= -45.f && Rotator.Yaw <= 45.f)
-                {
-                    YawAsText = "North (Towards positive X)";
-                }
-                else if (Rotator.Yaw > 45.f && Rotator.Yaw < 135.f)
-                {
-                    YawAsText = "East (Towards positive Y)";
-                }
-                else if (Rotator.Yaw >= 135.f || Rotator.Yaw <= -135.f)
-                {
-                    YawAsText = "South (Towards negative X)";
-                }
-                else if (Rotator.Yaw > -135.f && Rotator.Yaw < -45.f)
-                {
-                    YawAsText = "West (Towards negative Y)";
-                }
-
-                this->LocalPawnFacingSection->SetContent(LSimpleString::SprintF(
-                    "Facing: {} ({:.2f}Y / {:.2f}P)",
-                    YawAsText, Rotator.Yaw, Rotator.Pitch
+                const LVector WorldSpaceCenter = Key.ToWorldSpaceVector();
+                World->AddTemporalObject(LDebugTraceCube(
+                    LTemporalWorldObject::DrawOnce, LVector::Zero() + WorldSpaceCenter, LVector::One() * MwStatics::ChunkSize,
+                    LDebugTraceCubeVisualParams(LColor::Red)
                 ));
             }
-            else
-            {
-                this->LocalPawnFacingSection->SetContent("[ERR: No pawn]");
-            }
-        }
-        else
-        {
-            this->LocalPawnFacingSection->SetContent("[ERR: No possessor]");
-        }
-    }
 
-    if (this->LocalPawnChunkSection)
-    {
-        if (LocalEgo->DoesPossess())
-        {
-            const APersonaController* Controller = LocalEgo->GetPossessed();
-            if (Controller->DoesPossess())
-            {
-                const LVector Location = Controller->GetPossessed()->GetTranslation();
-                const LChunkKey Key = LChunkKey(Location);
-                this->LocalPawnChunkSection->SetContent(LSimpleString::SprintF(
-                    "Chunk: {} {} {}",
-                    Key.X, Key.Y, Key.Z
-                ));
-            }
-            else
-            {
-                this->LocalPawnChunkSection->SetContent("[ERR: No pawn]");
-            }
-        }
-        else
-        {
-            this->LocalPawnChunkSection->SetContent("[ERR: No possessor]");
-        }
-    }
+            TdhArray<LChunkKey2> OtherChunks;
+            Validation::GetAllChunksFromCenterAsBox(CKey.ToVerticalKey(), 5, OtherChunks);
 
-    if (this->LocalPawnVoxelSection)
-    {
-        if (LocalEgo->DoesPossess())
-        {
-            const APersonaController* Controller = LocalEgo->GetPossessed();
-            if (Controller->DoesPossess())
+            for (const LChunkKey2& Key : OtherChunks)
             {
-                const LVector Location = Controller->GetPossessed()->GetTranslation();
-                const LVoxelKey Key = LVoxelKey::FromWorldLocation(Location);
-                this->LocalPawnVoxelSection->SetContent(LSimpleString::SprintF(
-                    "Local voxel: {} {} {}",
-                    Key.X, Key.Y, Key.Z
-                ));
-            }
-            else
-            {
-                this->LocalPawnVoxelSection->SetContent("[ERR: No pawn]");
-            }
-        }
-        else
-        {
-            this->LocalPawnVoxelSection->SetContent("[ERR: No possessor]");
-        }
-    }
-
-    if (this->LocalPawnTarrgetVoxelSection)
-    {
-        this->LocalPawnTarrgetVoxelSection->EmptyContent();
-        if (LocalEgo->DoesPossess())
-        {
-            const APersonaController* Controller = LocalEgo->GetPossessed();
-            if (Controller->DoesPossess())
-            {
-                for (const LHitResult& Hit : Controller->GetPossessed()->GetCurrentGenericTraceResults())
+                if (
+                       Key.X == CKey.X + 0 && Key.Y == CKey.Y + 0
+                    || Key.X == CKey.X + 1 && Key.Y == CKey.Y + 0
+                    || Key.X == CKey.X + 0 && Key.Y == CKey.Y + 1
+                    || Key.X == CKey.X + 1 && Key.Y == CKey.Y + 1
+                )
                 {
-                    if (AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
-                    {
-                        const LVoxelKey Key = LVoxelKey::FromWorldLocation(Hit.GlobalWorldLocation);
-                        this->LocalPawnTarrgetVoxelSection->SetContent(LSimpleString::SprintF("Tv: {} {} {}", Key.X, Key.Y, Key.Z));
-                        break;
-                    }
+                    continue;
                 }
+                World->AddTemporalObject(LDebugTraceLine(
+                    LTemporalWorldObject::DrawOnce,
+                    Key.ToWorldSpaceVector() + LVector::Down() * MwStatics::ChunkSize * 10,
+                    Key.ToWorldSpaceVector() + LVector::Up() * MwStatics::ChunkSize * 10,
+                    LDebugTraceLineVisualParams(LColor::Blue)
+                ));
             }
-        }
-        if (this->LocalPawnTarrgetVoxelSection->GetContent().IsEmpty())
-        {
-            this->LocalPawnTarrgetVoxelSection->SetContent("Tv: N/A");
+
         }
     }
+    else
+    {
+        if (this->LocalPawnLocationSection)
+        {
+            this->LocalPawnLocationSection->SetContent("XYZ: [ERR: No pawn]");
+        }
+        if (this->LocalPawnFacingSection)
+        {
+            this->LocalPawnFacingSection->SetContent("Facing: [ERR: No pawn]");
+        }
+        if (this->LocalPawnChunkSection)
+        {
+            this->LocalPawnChunkSection->SetContent("Chunk: [ERR: No pawn]");
+        }
+        if (this->LocalPawnVoxelSection)
+        {
+            this->LocalPawnVoxelSection->SetContent("Local voxel: [ERR: No pawn]");
+        }
+        if (this->LocalPawnTargetVoxelSectionDestroy)
+        {
+            this->LocalPawnTargetVoxelSectionDestroy->SetContent("TvD: [ERR: No pawn]");
+        }
+        if (this->LocalPawnTargetVoxelSectionCreate)
+        {
+            this->LocalPawnTargetVoxelSectionCreate->SetContent("TvC: [ERR: No pawn]");
+        }
+    }
+
 
     this->InvalidateCacheTime -= Application::GetDeltaTime();
     if (this->InvalidateCacheTime > 0.0)
@@ -300,7 +379,6 @@ void Jafg::WDebugScreen::Tick()
         return;
     }
     this->InvalidateCacheTime = this->ResetTime;
-
     this->SlowTick();
 
     return;

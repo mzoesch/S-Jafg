@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
-#include "Rhi/DebugSphereShaderContext.h"
+#include "Rhi/DebugTraceSphereShaderContext.h"
 #include "System/EnginePath.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"

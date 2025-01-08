@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
-#include "Rhi/DebugLineShaderContext.h"
+#include "Rhi/DebugTraceLineShaderContext.h"
 #include "System/EnginePath.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
@@ -42,12 +42,11 @@ void Jafg::LDebugTraceLineShaderContext::Draw(const LViewport& Context, LGeneric
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6, Vertices, GL_DYNAMIC_DRAW);
 
-    const TMatrix Projection = Maths::MakePerspectiveProjectionMatrix(
+    const LMatrix Projection = Maths::MakePerspectiveProjectionMatrix(
         Maths::ToRadians(Args.DegYFov),
         static_cast<float>(Context.GetDimensions().X) / static_cast<float>(Context.GetDimensions().Y),
         0.1f, 2000.0f
     );
-    LMatrix Model; Model.InlineTranslate(LVector::Zero());
 
     this->Program.SetColorUniform("Color", Args.Color);
     this->Program.SetMatrixUniform("View", Args.ViewMatrix);

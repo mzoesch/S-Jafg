@@ -97,6 +97,7 @@ void Jafg::LWorld::Tick(const float DeltaTime)
 #if AS_CLIENT
     for (LTemporalWorldObject* const& TemporalObject : this->TemporalObjects)
     {
+        TemporalObject->Draw(*this);
         TemporalObject->ReduceLifeTime(DeltaTime);
     }
     this->TemporalObjects.RemoveAllByPredicate( [] (LTemporalWorldObject*& TemporalObject)
@@ -110,10 +111,6 @@ void Jafg::LWorld::Tick(const float DeltaTime)
         TemporalObject = nullptr;
         return true;
     });
-    for (const LTemporalWorldObject* const& TemporalObject : this->TemporalObjects)
-    {
-        TemporalObject->Draw(*this);
-    }
 #endif /* AS_CLIENT */
 
     return;
