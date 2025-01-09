@@ -2,8 +2,9 @@
 
 #include "CoreAfx.h"
 #include "Engine/Framework/Pawn.h"
+
+#include "Debug/DebugTraceCube.h"
 #include "Debug/DebugTraceLine.h"
-#include "Debug/DebugTraceSphere.h"
 #include "MyWorld/Chunk/Chunk.h"
 #include "User/Input/InputActionValue.h"
 
@@ -24,6 +25,18 @@ void Jafg::APawn::Tick(const float DeltaTime)
         this->CurrentGenericTraceResults, TraceStart, TraceEnd,
         ECollisionChannel::Static, LCollisionQueryParams({.bSingleHit = true})
     );
+
+    if (this->CurrentGenericTraceResults.IsValidIndex(0) && this->CurrentGenericTraceResults[0].Actor->IsA<AChunk>())
+    {
+        const LVoxelKey VKey = LVoxelKey::FromWorldSpace(this->CurrentGenericTraceResults[0].GlobalWorldLocation);
+        this->GetWorld()->AddTemporalObject(LDebugTraceCube(
+            LTemporalWorldObject::DrawOnce,
+            CheckedStaticCast<AChunk>(this->CurrentGenericTraceResults[0].Actor)
+                ->GetChunkKey().ToWorldSpace() + LVector(VKey.X, VKey.Y, VKey.Z),
+            LVector::One(),
+            LDebugTraceCubeVisualParams(LColor::Black)
+        ));
+    }
 
     return;
 }
@@ -96,7 +109,7 @@ void Jafg::APawn::OnOngoingPrimaryInput(LInputActionValue& InValue)
     {
         if (AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
         {
-            const LVoxelKey Key = LVoxelKey::FromWorldLocation(Hit.GlobalWorldLocation);
+            const LVoxelKey Key = LVoxelKey::FromWorldSpace(Hit.GlobalWorldLocation);
             HitChunk->ModifySingleLocalVoxel(Key, ECompileTimeVoxels::Air);
             break;
         }
@@ -115,7 +128,7 @@ void Jafg::APawn::OnOngoingSecondaryInput(LInputActionValue& InValue)
     {
         if (AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
         {
-            const LVoxelKey Key = HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal * 0.5f);
+            const LVoxelKey Key = HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal.GetValue() * 0.5f);
             HitChunk->ModifySingleVoxelByNonZeroOrigin(Key, ECompileTimeVoxels::Num);
             break;
         }

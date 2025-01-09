@@ -110,7 +110,7 @@ void Jafg::AChunk::OnAlloc(const LChunkKey& InChunkKey)
     check( this->GetChunkState() == EChunkState::Freed )
 
     this->ChunkKey = InChunkKey;
-    this->SetTranslation(this->ChunkKey.ToWorldSpaceVector());
+    this->SetTranslation(this->ChunkKey.ToWorldSpace());
 
     this->SetChunkState(EChunkState::PreSpawned);
 

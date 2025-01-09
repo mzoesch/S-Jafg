@@ -13,47 +13,37 @@ bool Jafg::LChunkPhysicsComponent::IsInTheoreticalMaxBounds(const LVector& Point
         && this->Owner->GetTranslation().Z <= Point.Z && Point.Z <= this->Owner->GetTranslation().Z + MwStatics::ChunkSize;
 }
 
-Jafg::LVector Jafg::LChunkPhysicsComponent::GetNormalAtLocation(const LVector& InLocation, const LVector& InTraceNormal) const
+Jafg::TOptional<Jafg::LVector> Jafg::LChunkPhysicsComponent::GetNormalAtLocation(const LVector& InLocation, const LVector& InTraceNormal) const
 {
-    LVector Out = LVector::Zero();
+    LVector P1, P2, P3; // Clockwise
 
-    LVector Dummy = InLocation.GetModF();
+    LVector Origin = InLocation.GetFloor();
+    LVector P1_Hit = InLocation - Origin;
 
-    if (InTraceNormal.X < 0 && Maths::IsNearlyEqual(Dummy.X, 1.0f, LChunkPhysicsComponent::TraceStep))
-    {
-        Dummy.X = Maths::Floor(Dummy.X);
-    }
-    if (InTraceNormal.Y < 0 && Maths::IsNearlyEqual(Dummy.Y, 1.0f, LChunkPhysicsComponent::TraceStep))
-    {
-        Dummy.Y = Maths::Floor(Dummy.Y);
-    }
-    if (InTraceNormal.Z < 0 && Maths::IsNearlyEqual(Dummy.Z, 1.0f, LChunkPhysicsComponent::TraceStep))
-    {
-        Dummy.Z = Maths::Floor(Dummy.Z);
-    }
+    P1 = Origin + LVector(
+        Maths::IsNearlyEqual(P1_Hit.X, 0.0f, 0.001f) ? Maths::Floor(P1_Hit.X) : Maths::Ceil(P1_Hit.X),
+        Maths::IsNearlyEqual(P1_Hit.Y, 0.0f, 0.001f) ? Maths::Floor(P1_Hit.Y) : Maths::Ceil(P1_Hit.Y),
+        Maths::IsNearlyEqual(P1_Hit.Z, 0.0f, 0.001f) ? Maths::Floor(P1_Hit.Z) : Maths::Ceil(P1_Hit.Z)
+    );
 
-    const EVectorAxis::Type InferiorAxis = Dummy.GetMostInferiorAxis();
-
-    if (InferiorAxis == EVectorAxis::X)
-    {
-        Out.X = InTraceNormal.X < 0 ? 1.0f : -1.0f;
-    }
-    else if (InferiorAxis == EVectorAxis::Y)
-    {
-        Out.Y = InTraceNormal.Y < 0 ? 1.0f : -1.0f;
-    }
-    else if (InferiorAxis == EVectorAxis::Z)
-    {
-        Out.Z = InTraceNormal.Z < 0 ? 1.0f : -1.0f;
-    }
+         if (Maths::IsNearlyEqual(P1_Hit.X, 0.0f, 0.001f)) { P2 = P1 + LVector::Left();     P3 = P1 + LVector::Down();     }
+    else if (Maths::IsNearlyEqual(P1_Hit.X, 1.0f, 0.001f)) { P2 = P1 + LVector::Left();     P3 = P1 + LVector::Down();     }
+    else if (Maths::IsNearlyEqual(P1_Hit.Y, 0.0f, 0.001f)) { P2 = P1 + LVector::Down();     P3 = P1 + LVector::Backward(); }
+    else if (Maths::IsNearlyEqual(P1_Hit.Y, 1.0f, 0.001f)) { P2 = P1 + LVector::Down();     P3 = P1 + LVector::Backward(); }
+    else if (Maths::IsNearlyEqual(P1_Hit.Z, 0.0f, 0.001f)) { P2 = P1 + LVector::Backward(); P3 = P1 + LVector::Left();     }
+    else if (Maths::IsNearlyEqual(P1_Hit.Z, 1.0f, 0.001f)) { P2 = P1 + LVector::Backward(); P3 = P1 + LVector::Left();     }
     else
     {
-        panic( "Invalid most inferior axis." )
+        return { };
     }
 
-    check( Out.IsNormalized() )
+    LVector OutNormal = (P2 - P1).Cross(P3 - P1).GetUnsafeNormalized();
+    if ((OutNormal | InTraceNormal.GetNormalized()) > 0.0f)
+    {
+        OutNormal = -OutNormal;
+    }
 
-    return Out;
+    return OutNormal;
 }
 
 bool Jafg::LChunkPhysicsComponent::Overlaps(const LVector& Point) const
@@ -63,7 +53,7 @@ bool Jafg::LChunkPhysicsComponent::Overlaps(const LVector& Point) const
         return false;
     }
 
-    return this->Owner->GetRawVoxelData(LVoxelKey::FromWorldLocation(Point)) > ECompileTimeVoxels::Air;
+    return this->Owner->GetRawVoxelData(LVoxelKey::FromWorldSpace(Point)) > ECompileTimeVoxels::Air;
 }
 
 bool Jafg::LChunkPhysicsComponent::Sweep(const LVector& Start, const LVector& End, LHitResult& OutHit) const

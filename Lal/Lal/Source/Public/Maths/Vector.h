@@ -145,9 +145,13 @@ struct TVector
     FORCEINLINE auto Cross(const TVector<T>& InVec) const -> TVector<T>;
     FORCEINLINE auto Dot(const TVector<T>& InVec) const -> T;
 
-    /** Modf the integral part of the vector away. */
-    FORCEINLINE void ModF();
+    FORCEINLINE auto Floor() -> void;
+    FORCEINLINE auto GetFloor() const -> TVector<T>;
+    FORCEINLINE auto Ceil() -> void;
+    FORCEINLINE auto GetCeil() const -> TVector<T>;
+    FORCEINLINE auto ModF() -> void;
     FORCEINLINE auto GetModF() const -> TVector<T>;
+
     FORCEINLINE EVectorAxis::Type GetDominantAxis() const;
     FORCEINLINE EVectorAxis::Type GetMostInferiorAxis() const;
 
@@ -496,6 +500,36 @@ template <typename T>
 T TVector<T>::Dot(const TVector<T>& InVec) const
 {
     return this->X * InVec.X + this->Y * InVec.Y + this->Z * InVec.Z;
+}
+
+template <typename T>
+void TVector<T>::Floor()
+{
+    this->X = Maths::Floor(this->X);
+    this->Y = Maths::Floor(this->Y);
+    this->Z = Maths::Floor(this->Z);
+    return;
+}
+
+template <typename T>
+TVector<T> TVector<T>::GetFloor() const
+{
+    return TVector<T>(Maths::Floor(this->X), Maths::Floor(this->Y), Maths::Floor(this->Z));
+}
+
+template <typename T>
+void TVector<T>::Ceil()
+{
+    this->X = Maths::Ceil(this->X);
+    this->Y = Maths::Ceil(this->Y);
+    this->Z = Maths::Ceil(this->Z);
+    return;
+}
+
+template <typename T>
+TVector<T> TVector<T>::GetCeil() const
+{
+    return TVector<T>(Maths::Ceil(this->X), Maths::Ceil(this->Y), Maths::Ceil(this->Z));
 }
 
 template <typename T>

@@ -57,7 +57,7 @@ struct LVoxelKey final
      * From world location (or relative world location to another origin).
      * Note that this function will normalize the key to the local space.
      */
-    static LVoxelKey FromWorldLocation(const LVector& InVector);
+    static LVoxelKey FromWorldSpace(const LVector& InVector);
 
     /**
      * From world location (or relative world location to another origin). This function will not normalize the key
@@ -70,6 +70,8 @@ struct LVoxelKey final
 
     FORCEINLINE bool operator==(const LVoxelKey& InKey) const { return this->Key == InKey.Key; }
     FORCEINLINE bool operator!=(const LVoxelKey& InKey) const { return this->Key != InKey.Key; }
+
+    FORCEINLINE auto ToWorldSpace() -> LVector;
 
     FORCEINLINE bool IsLocal() const
     {
@@ -90,7 +92,7 @@ struct LVoxelKey final
     NODISCARD FORCEINLINE auto ToString() const -> LSimpleString;
 };
 
-inline LVoxelKey LVoxelKey::FromWorldLocation(const LVector& InVector)
+inline LVoxelKey LVoxelKey::FromWorldSpace(const LVector& InVector)
 {
     LVoxelKey Out;
 
@@ -172,6 +174,16 @@ LVoxelKey& LVoxelKey::operator=(LVoxelKey&& InKey) noexcept
 {
     this->Key = InKey.Key;
     return *this;
+}
+
+LVector LVoxelKey::ToWorldSpace()
+{
+    return LVector
+    {
+        static_cast<float>(this->Key.X),
+        static_cast<float>(this->Key.Y),
+        static_cast<float>(this->Key.Z)
+    };
 }
 
 FORCEINLINE TdhArray<LVoxelKey> LVoxelKey::GetNeighboringVoxelKeys() const

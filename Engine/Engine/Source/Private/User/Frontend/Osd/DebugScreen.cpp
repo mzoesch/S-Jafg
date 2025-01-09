@@ -211,7 +211,7 @@ void Jafg::WDebugScreen::Tick()
         if (this->LocalPawnVoxelSection)
         {
             const LVector Location = Controller->GetPossessed()->GetTranslation();
-            const LVoxelKey Key = LVoxelKey::FromWorldLocation(Location);
+            const LVoxelKey Key = LVoxelKey::FromWorldSpace(Location);
             this->LocalPawnVoxelSection->SetContent(LSimpleString::SprintF(
                 "Local voxel: {} {} {}",
                 Key.X, Key.Y, Key.Z
@@ -225,7 +225,7 @@ void Jafg::WDebugScreen::Tick()
             {
                 if (const AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
                 {
-                    const LVoxelKey Key = LVoxelKey::FromWorldLocation(Hit.GlobalWorldLocation);
+                    const LVoxelKey Key = LVoxelKey::FromWorldSpace(Hit.GlobalWorldLocation);
                     this->LocalPawnTargetVoxelSectionDestroy->SetContent(LSimpleString::SprintF("TvD: {} {} {}", Key.X, Key.Y, Key.Z));
                     break;
                 }
@@ -256,31 +256,44 @@ void Jafg::WDebugScreen::Tick()
 
         for (const LHitResult& Hit : Controller->GetPossessed()->GetCurrentGenericTraceResults())
         {
-            if (const AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
+            const AChunk* HitChunk = Hit.Actor->As<AChunk>();
+            if (HitChunk == nullptr)
             {
-                const LVector   WorldHit = Hit.GlobalWorldLocation + Hit.SurfaceNormal * 0.5f;
-                const LVoxelKey VKey_Destroy = LVoxelKey::FromWorldLocation(Hit.GlobalWorldLocation);
-                const LVoxelKey VKey_Create = LVoxelKey::FromWorldLocation(WorldHit);
-                const LChunkKey CKey = HitChunk->GetChunkKey();
+                continue;
+            }
 
-                const LVector WorldSpaceCenter_Destroy = CKey.ToWorldSpaceVector() + LVector(VKey_Destroy.X, VKey_Destroy.Y, VKey_Destroy.Z);
-                const LVector WorldSpaceCenter_Create  = CKey.ToWorldSpaceVector() + LVector(VKey_Create.X, VKey_Create.Y, VKey_Create.Z);
+            LWorld* World = Controller->GetPossessed()->GetWorld();
+            const LChunkKey CKey = HitChunk->GetChunkKey();
 
-                LWorld* World = Controller->GetPossessed()->GetWorld();
-                World->AddTemporalObject(LDebugTraceSphere(
-                    LTemporalWorldObject::DrawOnce, Hit.GlobalWorldLocation, 0.1f,
-                    LDebugTraceSphereVisualParams(16, 16, LColor::Green)
+            World->AddTemporalObject(LDebugTraceSphere(
+                LTemporalWorldObject::DrawOnce, Hit.GlobalWorldLocation, 0.1f,
+                LDebugTraceSphereVisualParams(16, 16, LColor::Green)
+            ));
+
+            if (Hit.SurfaceNormal)
+            {
+                const LVector   WorldHit_Create = Hit.GlobalWorldLocation + Hit.SurfaceNormal.GetValue() * 0.5f;
+                const LVoxelKey VKey_Create = LVoxelKey::FromWorldSpace(WorldHit_Create);
+                const LVector WorldSpaceCenter_Create  = CKey.ToWorldSpace() + LVector(VKey_Create.X, VKey_Create.Y, VKey_Create.Z);
+                World->AddTemporalObject(LDebugTraceLine(
+                    LTemporalWorldObject::DrawOnce, Hit.GlobalWorldLocation, Hit.GlobalWorldLocation + Hit.SurfaceNormal.GetValue(),
+                    LDebugTraceLineVisualParams(LColor::Magenta)
                 ));
-                World->AddTemporalObject(LDebugTraceCube(
-                    LTemporalWorldObject::DrawOnce, WorldSpaceCenter_Destroy, LVector::One(),
-                    LDebugTraceCubeVisualParams(LColor::Red)
+                World->AddTemporalObject(LDebugTraceSphere(
+                    LTemporalWorldObject::DrawOnce, WorldHit_Create, 0.1f,
+                    LDebugTraceSphereVisualParams(16, 16, LColor::Magenta)
+                ));
+                World->AddTemporalObject(LDebugTraceSphere(
+                    LTemporalWorldObject::DrawOnce,
+                    CKey.ToWorldSpace() + HitChunk->CreateRelativeVoxelKey(WorldHit_Create).ToWorldSpace() + LVector(0.5f), 0.6f,
+                    LDebugTraceSphereVisualParams(16, 16, LColor::Emerald)
                 ));
                 World->AddTemporalObject(LDebugTraceCube(
                     LTemporalWorldObject::DrawOnce, WorldSpaceCenter_Create, LVector::One(),
                     LDebugTraceCubeVisualParams(LColor::Blue)
                 ));
-                break;
             }
+            break;
         }
 
         // Chunk debug lines
@@ -289,7 +302,7 @@ void Jafg::WDebugScreen::Tick()
 
             const LVector PawnTranslation = Controller->GetPossessed()->GetTranslation();
             LChunkKey CKey = LChunkKey(PawnTranslation);
-            const LVector ChunkCenter = CKey.ToWorldSpaceVector();
+            const LVector ChunkCenter = CKey.ToWorldSpace();
 
             World->AddTemporalObject(LDebugTraceCube(
                 LTemporalWorldObject::DrawOnce, LVector::Zero() + ChunkCenter, LVector::One() * MwStatics::ChunkSize,
@@ -313,7 +326,7 @@ void Jafg::WDebugScreen::Tick()
 
             for (const LChunkKey& Key : CKey.GetNeighboringChunkKeys())
             {
-                const LVector WorldSpaceCenter = Key.ToWorldSpaceVector();
+                const LVector WorldSpaceCenter = Key.ToWorldSpace();
                 World->AddTemporalObject(LDebugTraceCube(
                     LTemporalWorldObject::DrawOnce, LVector::Zero() + WorldSpaceCenter, LVector::One() * MwStatics::ChunkSize,
                     LDebugTraceCubeVisualParams(LColor::Red)

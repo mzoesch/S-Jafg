@@ -69,7 +69,7 @@ struct LChunkKey final
     FORCEINLINE bool operator<=(const LChunkKey& InKey) const;
     FORCEINLINE bool operator>=(const LChunkKey& InKey) const;
 
-    FORCEINLINE LVector ToWorldSpaceVector() const
+    FORCEINLINE LVector ToWorldSpace() const
     {
         return LVector
         {

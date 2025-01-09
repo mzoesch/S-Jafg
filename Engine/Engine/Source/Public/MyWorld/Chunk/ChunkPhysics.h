@@ -19,7 +19,7 @@ public:
 
     bool IsInTheoreticalMaxBounds(const LVector& Point) const;
 
-    LVector GetNormalAtLocation(const LVector& InLocation, const LVector& InTraceNormal) const;
+    TOptional<LVector> GetNormalAtLocation(const LVector& InLocation, const LVector& InTraceNormal) const;
 
     // LPhysicsComponent implementation
     bool Overlaps(const LVector& Point) const override;
