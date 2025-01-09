@@ -80,7 +80,7 @@ void Jafg::LDebugTraceCubeShaderContext::Draw(const LViewport& Context, LGeneric
 
     glLineWidth(Args.Thickness);
     glDrawArrays(GL_LINES, 0, /* Lines */12 * /* Vertices */2);
-    glLineWidth(0); /* Reset */
+    glLineWidth(1); /* Reset */
 
 #if WITH_DEBUG_ZERO_UNBOUND
     glBindVertexArray(0);

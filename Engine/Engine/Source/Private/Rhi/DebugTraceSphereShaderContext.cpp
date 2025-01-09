@@ -108,7 +108,7 @@ void Jafg::LDebugTraceSphereShaderContext::Draw(const LViewport& Context, LGener
 
     glLineWidth(Args.Thickness);
     glDrawArrays(GL_LINES, 0, SphereVertices.GetSize());
-    glLineWidth(0); /* Reset */
+    glLineWidth(1); /* Reset */
 
 #if WITH_DEBUG_ZERO_UNBOUND
     glBindVertexArray(0);
