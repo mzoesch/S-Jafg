@@ -16,11 +16,10 @@ void Jafg::WConsoleScreen::Construct()
 {
     Super::Construct();
 
-    this->SetPadding({ 5.0f });
-
     this->SetShouldTick(true);
 
     MakeRootNode(WWidgetRegion)
+    .SetPadding(5.0f)
     .SetAnchor(EAnchor::VBottom | EAnchor::HFill)
     [
         NewNode(WEditableTextBlock)
