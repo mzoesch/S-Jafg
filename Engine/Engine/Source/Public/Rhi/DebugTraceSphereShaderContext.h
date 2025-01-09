@@ -16,7 +16,9 @@ struct LDebugTraceSphereShaderContextDrawArgs final : public LGenericShaderConte
     float Radius = 0.0f;
     int32 Slices = 20;
     int32 Stacks = 20;
-    LColor  Color = { };
+    LColor Color = { };
+    /* Depending on the hardware, the max value may vary (but usually it's not more than 10). */
+    uint8 Thickness = 1;
 };
 
 class LDebugTraceSphereShaderContext final : public LGenericShaderContext

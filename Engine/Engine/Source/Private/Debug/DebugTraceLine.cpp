@@ -46,7 +46,7 @@ void Jafg::LDebugTraceLine::Draw(const LWorld& InContext) const
     return;
 }
 
-void Jafg::LDebugTraceLine::DrawLine(const LWorld& InContext, const LVector& InStart, const LVector& InEnd, const LColor& InColor, const bool bUseCache)
+void Jafg::LDebugTraceLine::DrawLine(const LWorld& InContext, const LVector& InStart, const LVector& InEnd, const LColor& InColor, const uint8 Thickness, const bool bUseCache)
 {
     if (::GetLineShaderContext()->IsMeaningful() == false)
     {
@@ -64,6 +64,7 @@ void Jafg::LDebugTraceLine::DrawLine(const LWorld& InContext, const LVector& InS
     Args.Start = InStart;
     Args.End   = InEnd;
     Args.Color = InColor;
+    Args.Thickness = Thickness;
 
     ::GetLineShaderContext()->Draw(*InContext.GetLocalEgo()->GetPrimarySurface()->GetViewport(), Args);
 

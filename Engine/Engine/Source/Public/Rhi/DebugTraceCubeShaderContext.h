@@ -15,6 +15,8 @@ struct LDebugTraceCubeShaderContextDrawArgs final : public LGenericShaderContext
     LVector BottomNearLeft = { };
     LVector RelTopFarRight = { };
     LColor Color = { };
+    /* Depending on the hardware, the max value may vary (but usually it's not more than 10). */
+    uint8 Thickness = 1;
 };
 
 class LDebugTraceCubeShaderContext final : public LGenericShaderContext

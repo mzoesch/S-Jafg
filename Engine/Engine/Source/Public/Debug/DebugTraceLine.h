@@ -13,6 +13,8 @@ class LDebugTracePlane;
 struct LDebugTraceLineVisualParams final
 {
     LColor Color;
+    /* Depending on the hardware, the max value may vary (but usually it's not more than 10). */
+    uint8 Thickness = 1;
 };
 
 class LDebugTraceLine final : public LTemporalWorldObject
@@ -55,7 +57,7 @@ public:
 
 private:
 
-    static void DrawLine(const LWorld& InContext, const LVector& InStart, const LVector& InEnd, const LColor& InColor, const bool bUseCache);
+    static void DrawLine(const LWorld& InContext, const LVector& InStart, const LVector& InEnd, const LColor& InColor, const uint8 Thickness, const bool bUseCache);
 
     LVector Start;
     LVector End;

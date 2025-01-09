@@ -52,7 +52,20 @@ struct LColor final
         : A(InA), R(InR), G(InG), B(InB)
 #endif /* !PLATFORM_USES_LITTLE_ENDIAN */
     { }
-
+    FORCEINLINE constexpr explicit LColor(const float InColor)
+#if PLATFORM_USES_LITTLE_ENDIAN
+        : B(static_cast<uint8>(InColor * 255.0f)), G(static_cast<uint8>(InColor * 255.0f)), R(static_cast<uint8>(InColor * 255.0f)), A(0xFF)
+#else /* PLATFORM_USES_LITTLE_ENDIAN */
+        : A(0xFF), R(static_cast<uint8>(InColor * 255.0f)), G(static_cast<uint8>(InColor * 255.0f)), B(static_cast<uint8>(InColor * 255.0f))
+#endif /* !PLATFORM_USES_LITTLE_ENDIAN */
+    { }
+    FORCEINLINE constexpr explicit LColor(const double InColor)
+#if PLATFORM_USES_LITTLE_ENDIAN
+        : B(static_cast<uint8>(InColor * 255.0)), G(static_cast<uint8>(InColor * 255.0)), R(static_cast<uint8>(InColor * 255.0)), A(0xFF)
+#else /* PLATFORM_USES_LITTLE_ENDIAN */
+        : A(0xFF), R(static_cast<uint8>(InColor * 255.0)), G(static_cast<uint8>(InColor * 255.0)), B(static_cast<uint8>(InColor * 255.0))
+#endif /* !PLATFORM_USES_LITTLE_ENDIAN */
+    { }
     FORCEINLINE constexpr          LColor(const LColor& InColor) : Bits(InColor.Bits) { }
     FORCEINLINE constexpr explicit LColor(const uint32 InColor)  : Bits(InColor)      { }
     FORCEINLINE constexpr explicit LColor(uint8 InChannels[4])

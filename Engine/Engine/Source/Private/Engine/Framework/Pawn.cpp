@@ -26,15 +26,16 @@ void Jafg::APawn::Tick(const float DeltaTime)
         ECollisionChannel::Static, LCollisionQueryParams({.bSingleHit = true})
     );
 
+    // Quick user feedback. Just temp.
     if (this->CurrentGenericTraceResults.IsValidIndex(0) && this->CurrentGenericTraceResults[0].Actor->IsA<AChunk>())
     {
         const LVoxelKey VKey = LVoxelKey::FromWorldSpace(this->CurrentGenericTraceResults[0].GlobalWorldLocation);
         this->GetWorld()->AddTemporalObject(LDebugTraceCube(
             LTemporalWorldObject::DrawOnce,
             CheckedStaticCast<AChunk>(this->CurrentGenericTraceResults[0].Actor)
-                ->GetChunkKey().ToWorldSpace() + LVector(VKey.X, VKey.Y, VKey.Z),
-            LVector::One(),
-            LDebugTraceCubeVisualParams(LColor::Black)
+                ->GetChunkKey().ToWorldSpace() + LVector(VKey.X, VKey.Y, VKey.Z) + LVector(-0.001f),
+            LVector::One() + LVector(0.002f),
+            LDebugTraceCubeVisualParams(LColor(0.1f), 5)
         ));
     }
 

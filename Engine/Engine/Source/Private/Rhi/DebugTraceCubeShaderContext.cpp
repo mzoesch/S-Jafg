@@ -78,7 +78,9 @@ void Jafg::LDebugTraceCubeShaderContext::Draw(const LViewport& Context, LGeneric
     this->Program.SetMatrixUniform("View", Args.ViewMatrix);
     this->Program.SetMatrixUniform("Projection", Projection);
 
+    glLineWidth(Args.Thickness);
     glDrawArrays(GL_LINES, 0, /* Lines */12 * /* Vertices */2);
+    glLineWidth(0); /* Reset */
 
 #if WITH_DEBUG_ZERO_UNBOUND
     glBindVertexArray(0);

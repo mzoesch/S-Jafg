@@ -10,6 +10,8 @@ namespace Jafg
 struct LDebugTraceCubeVisualParams final
 {
     LColor Color;
+    /* Depending on the hardware, the max value may vary (but usually it's not more than 10). */
+    uint8 Thickness = 1;
 };
 
 class LDebugTraceCube final : public LTemporalWorldObject
