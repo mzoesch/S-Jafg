@@ -1,0 +1,12 @@
+{
+    "FriendlyName": "Jafg",
+    "Ignores": [
+        ".*",
+        "Config",
+        "Content",
+        "Documentation",
+        "Programs",
+        "Binaries",
+        "Intermediate"
+    ]
+}

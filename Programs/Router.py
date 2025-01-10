@@ -26,7 +26,7 @@ class MyPython:
         if not cls.__validate_python():
             return EErrorLevel.FATAL  # Cannot validate further
 
-        for package_name in ["requests"]:
+        for package_name in ['requests', 'filelock']:
             if not cls.__validate_package(package_name):
                 return EErrorLevel.FATAL  # Cannot validate further
 
