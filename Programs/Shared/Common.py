@@ -39,6 +39,15 @@ class Platform(Enum):
     OSX = 2
     LINUX = 3
 
+    def is_this_windows(self) -> bool:
+        return self.value == Platform.WINDOWS.value
+
+    def is_this_linux(self) -> bool:
+        return self.value == Platform.LINUX.value
+
+    def is_this_osx(self) -> bool:
+        return self.value == Platform.OSX.value
+
     @staticmethod
     def is_windows() -> bool:
         return Platform.get_current_platform() == Platform.WINDOWS

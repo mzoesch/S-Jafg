@@ -3,13 +3,14 @@
 import sys
 import os
 import time
-import requests
 import urllib
 from zipfile import ZipFile
 from .Common import EErrorLevel
 
 
 def download_file(url, filepath) -> EErrorLevel:
+    import requests
+
     filepath = os.path.abspath(filepath)
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
@@ -118,17 +119,18 @@ def unzip_file(filepath, delete_zip_file=True) -> EErrorLevel:
             except ZeroDivisionError:
                 done = 50
                 percentage = 100
-            elapsedTime = time.time() - start_time
+            elapsed_time = time.time() - start_time
             try:
-                avgKBPerSecond = (extracted_content_size / 1024) / elapsedTime
+                avg_kb_per_second = (extracted_content_size / 1024) / elapsed_time
             except ZeroDivisionError:
-                avgKBPerSecond = 0.0
-            avgSpeedString = '{:.2f} KB/s'.format(avgKBPerSecond)
-            if (avgKBPerSecond > 1024):
-                avgMBPerSecond = avgKBPerSecond / 1024
-                avgSpeedString = '{:.2f} MB/s'.format(avgMBPerSecond)
+                avg_kb_per_second = 0.0
+            avg_speed_string = '{:.2f} KB/s'.format(avg_kb_per_second)
+            if avg_kb_per_second > 1024:
+                avg_mb_per_second = avg_kb_per_second / 1024
+                avg_speed_string = '{:.2f} MB/s'.format(avg_mb_per_second)
             sys.stdout.write(
-                '\r[{}{}] {:.2f}% ({})     '.format('█' * done, '.' * (50 - done), percentage, avgSpeedString))
+                '\r[{}{}] {:.2f}% ({})     '.format('█' * done, '.' * (50 - done), percentage, avg_speed_string)
+            )
             sys.stdout.flush()
     sys.stdout.write('\n')
 

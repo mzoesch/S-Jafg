@@ -6,6 +6,7 @@ import pathlib
 from pathlib import Path
 from Programs.Shared import *
 from Programs.Shared.Files import download_file, unzip_file
+from typing import List
 
 
 def update_submodules() -> None:
@@ -62,7 +63,7 @@ class MyPython:
     def __install_package(cls, package_name) -> EErrorLevel:
         print(f"Installing {package_name} module ...")
         run_any_task('python', '-m', 'pip', 'install', package_name)
-        return cls.__validate_package(package_name)
+        return importlib_util.find_spec(package_name) is not None
 
 
 def validate_python() -> EErrorLevel:
@@ -120,7 +121,7 @@ class MyGo:
 
         raise NotImplementedError(
             f'Your platform does not have precompiled binaries for Jafg. '
-            f'You will have to install go v{cls._go_version}.'
+            f'You will have to install go v[{cls._go_version}].'
         )
 
 
@@ -136,9 +137,20 @@ class MyPremake:
     """
 
     version: str = '5.0.0-beta1'
-    zip_url: str = f'https://github.com/premake/premake-core/releases/download/v{version}/premake-{version}-windows.zip'
     license_url: str = 'https://raw.githubusercontent.com/premake/premake-core/master/LICENSE.txt'
     dir_to_locate: str = 'Programs/Vendor/Premake/Bin'
+
+    @classmethod
+    def get_zip_url(cls, platform: Platform | None) -> str:
+        if platform is None:
+            platform = Platform.get_current_platform()
+        if platform.is_this_windows():
+            return f'https://github.com/premake/premake-core/releases/download/v{cls.version}/premake-{cls.version}-windows.zip'
+        elif platform.is_this_linux():
+            return f'https://github.com/premake/premake-core/releases/download/v{cls.version}/premake-{cls.version}-linux.tar.gz'
+        elif platform.is_this_osx():
+            return f'https://github.com/premake/premake-core/releases/download/v{cls.version}/premake-{cls.version}-macosx.tar.gz'
+        raise NotImplementedError('Platform has not been implemented for using premake auto install.')
 
     @classmethod
     def get_abs_install_path(cls) -> Path:
@@ -147,16 +159,36 @@ class MyPremake:
         )
 
     @classmethod
-    def get_abs_install_file(cls) -> Path:
-        return pathlib.Path(
-            f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake5.exe'
-        )
+    def get_abs_install_file(cls, platform: Platform) -> Path:
+        if platform.is_this_windows():
+            return pathlib.Path(
+                f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake5-win.exe'
+            )
+        if platform.is_this_osx():
+            return pathlib.Path(
+                f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake-osx.app'
+            )
+        if platform.is_this_linux():
+            return pathlib.Path(
+                f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake-lnx.app'
+            )
+        raise NotImplementedError(f'Missing implementation for platform specific code for your platform [{platform.name}].')
 
     @classmethod
-    def get_abs_install_zip_file(cls) -> Path:
-        return pathlib.Path(
-            f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake5.zip'
-        )
+    def get_abs_install_zip_file(cls, platform: Platform) -> Path:
+        if platform.is_this_windows():
+            return pathlib.Path(
+                f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake5-win.zip'
+            )
+        if platform.is_this_osx():
+            return pathlib.Path(
+                f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake5-osx.tar.gz'
+            )
+        if platform.is_this_linux():
+            return pathlib.Path(
+                f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake5-lnx.tar.gz'
+            )
+        raise NotImplementedError('Missing implementation for platform specific code for your platform')
 
     @classmethod
     def get_abs_license_file(cls) -> Path:
@@ -165,31 +197,35 @@ class MyPremake:
         )
 
     @classmethod
-    def validate(cls) -> EErrorLevel:
-        if not cls.is_installed():
-            return cls.install()
+    def validate(cls, platform: Platform | None) -> EErrorLevel:
+        if platform is None:
+            platform = Platform.get_current_platform()
 
-        print('Premake is already installed. Skipping ...')
+        if not cls.is_installed(platform):
+            return cls.install(platform)
+
+        print(f'Premake is already installed for platform [{platform.name}]. Skipping ...')
         return EErrorLevel.SUCCESS
 
     @classmethod
-    def is_installed(cls) -> bool:
-        return cls.get_abs_install_file().exists()
+    def is_installed(cls, platform: Platform) -> bool:
+        return cls.get_abs_install_file(platform).exists()
 
     @classmethod
-    def install(cls) -> EErrorLevel:
-        path_file: Path = cls.get_abs_install_file()
-        zip_file: Path = cls.get_abs_install_zip_file()
+    def install(cls, platform: Platform) -> EErrorLevel:
+        path_file: Path = cls.get_abs_install_file(platform)
+        zip_file: Path = cls.get_abs_install_zip_file(platform)
 
-        print(f'Downloading Premake from {cls.zip_url} to {zip_file} ...')
-        if download_file(cls.zip_url, zip_file) is not EErrorLevel.SUCCESS:
+        print(f'Downloading Premake from {cls.get_zip_url(platform)} to {zip_file} ...')
+        if download_file(cls.get_zip_url(platform), zip_file) is not EErrorLevel.SUCCESS:
             print('Failed to download Premake.')
             return EErrorLevel.FATAL
 
-        print('Extracting Premake ...')
-        if unzip_file(zip_file, delete_zip_file=False) is not EErrorLevel.SUCCESS:
-            print('Failed to extract Premake.')
-            return EErrorLevel.FATAL
+        if platform.is_this_windows():
+            print('Extracting Premake ...')
+            if unzip_file(zip_file, delete_zip_file=False) is not EErrorLevel.SUCCESS:
+                print('Failed to extract Premake.')
+                return EErrorLevel.FATAL
 
         print(f'Premake {cls.version} has been downloaded to {cls.dir_to_locate}.')
 
@@ -204,9 +240,13 @@ class MyPremake:
         return EErrorLevel.SUCCESS
 
 
-def validate_premake(is_all_platforms: bool) -> EErrorLevel:
+def validate_premake(platforms: List[Platform]) -> EErrorLevel:
     print('Validating premake ...')
-    return MyPremake.validate()
+    for platform in platforms:
+        error_level = MyPremake.validate(platform)
+        if error_level is not EErrorLevel.SUCCESS:
+            return error_level
+    return EErrorLevel.SUCCESS
 
 
 class MyCmake:
@@ -250,7 +290,40 @@ def route_to_subprogram(*args, **kwargs) -> EErrorLevel:
             return error_level
 
     if '--ValidatePremake' in args:
-        error_level: EErrorLevel = validate_premake(True if 'AllPremakePlatforms' in args else False)
+        platforms: List[Platform] = []
+        idx: int = args.index('--ValidatePremake')
+        idx += 1
+
+        while idx < len(args):
+            if args[idx].startswith('--'):
+                break # Next argument
+            arg: str = args[idx]
+            idx += 1
+            if arg == 'AllPlatforms':
+                if platforms.__contains__(Platform.OSX) is False:
+                    platforms.append(Platform.OSX)
+                if platforms.__contains__(Platform.LINUX) is False:
+                    platforms.append(Platform.LINUX)
+                if platforms.__contains__(Platform.WINDOWS) is False:
+                    platforms.append(Platform.WINDOWS)
+                continue
+            if arg.lower() == 'osx':
+                if platforms.__contains__(Platform.OSX) is False:
+                    platforms.append(Platform.OSX)
+                continue
+            if arg.lower() == 'win':
+                if platforms.__contains__(Platform.WINDOWS) is False:
+                    platforms.append(Platform.WINDOWS)
+                continue
+            if arg.lower() == 'lnx':
+                if platforms.__contains__(Platform.LINUX) is False:
+                    platforms.append(Platform.LINUX)
+                continue
+            raise ValueError(f'Unrecognized argument [{arg}] for routing --ValidatePremake')
+
+        if len(platforms) == 0:
+            platforms.append(Platform.get_current_platform())
+        error_level: EErrorLevel = validate_premake(platforms)
         if error_level is not EErrorLevel.SUCCESS:
             return error_level
 
