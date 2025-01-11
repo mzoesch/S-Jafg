@@ -90,7 +90,17 @@ class MyGo:
 
     @classmethod
     def validate(cls) -> EErrorLevel:
-        return cls.__validate_go()
+        error_level: EErrorLevel = cls.__validate_go()
+        if error_level is not EErrorLevel.SUCCESS:
+            return error_level
+        return cls.__compile_scripts()
+
+    @classmethod
+    def __compile_scripts(cls) -> EErrorLevel:
+        print('Compiling scripts for the program.')
+        run_any_task('go', 'build', 'Jafg', wd='Programs')
+        print('Scripts compiled successfully.')
+        return EErrorLevel.SUCCESS
 
     @classmethod
     def __validate_go(cls) -> EErrorLevel:
@@ -103,7 +113,6 @@ class MyGo:
 
         idx: int = copied_stdout.stdout.find(f'go{cls._go_version}')
         if idx == -1:
-
             print('Go version not detected or incompatible version is installed. '
                   'Proceeding to install Jafg precompiled binaries.')
             cls.install_jafg_bins()  # This will just crash if no bins for the native platform.
@@ -273,6 +282,13 @@ def validate_cmake() -> EErrorLevel:
     return EErrorLevel.SUCCESS
 
 
+def update_cached_data() -> EErrorLevel:
+    print('Updating cached target- and module-information.')
+    from Programs.Reflector.Reflection import reflect_all_targets_and_modules
+    reflect_all_targets_and_modules() # Will throw if not good
+    return EErrorLevel.SUCCESS
+
+
 def route_to_subprogram(*args, **kwargs) -> EErrorLevel:
     print('Routing to subprogram ...')
 
@@ -329,6 +345,11 @@ def route_to_subprogram(*args, **kwargs) -> EErrorLevel:
 
     if '--ValidateCmake' in args:
         error_level: EErrorLevel = validate_cmake()
+        if error_level is not EErrorLevel.SUCCESS:
+            return error_level
+        
+    if '--UpdateCachedData':
+        error_level: EErrorLevel = update_cached_data()
         if error_level is not EErrorLevel.SUCCESS:
             return error_level
 

@@ -1,12 +1,16 @@
 {
     "FriendlyName": "Jafg",
+    "TpIgnores": [
+        "Config",
+        "Binaries",
+        "Documentation",
+        "Intermediate",
+        "Programs",
+        "Saved"
+    ],
     "Ignores": [
         ".*",
-        "Config",
         "Content",
-        "Documentation",
-        "Programs",
-        "Binaries",
-        "Intermediate"
+        "Vendor"
     ]
 }

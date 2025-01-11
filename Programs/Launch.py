@@ -2,15 +2,26 @@
 
 import os
 from Programs.Shared import *
-
+from Programs.Meta.Application import GApp
 
 def launch(*args, **kwargs) -> None:
     """
     Arguments:
-      - UpdateSubmodules: bool = False // Update submodules before launching.
-      - ValidatePython:   bool = False // Validate python version before launching.
-      - ValidateGo:       bool = False // Validate go version before launching.
-      - ValidatePremake:  bool = False // Validate premake binaries before launching.
+      // Update submodules before launching.
+      - UpdateSubmodules: bool = False
+
+      // Validate python version before launching.
+      - ValidatePython:   bool = False
+
+      // Validate go version before launching.
+      - ValidateGo:       bool = False
+
+      // Validate premake binaries before launching.
+      // Valid strs: 'AllPlatforms', 'win', 'lnx', 'osx'
+      - ValidatePremake:  str[] = CurrentPlatform
+
+      // Updates target- and module-infos
+      --UpdateCachedData
 
     @see Programs/Router.py for subprogram routing.
     """
@@ -22,6 +33,8 @@ def launch(*args, **kwargs) -> None:
     os.chdir(get_abs_engine_root_dir())
     print(f'Changed working directory from [{last_wd}] to [{os.getcwd()}].')
 
+    GApp._pull_cache()
+
     try:
         from .Router import route_to_subprogram
         error_level = route_to_subprogram(*args, **kwargs)
@@ -31,6 +44,8 @@ def launch(*args, **kwargs) -> None:
         import traceback
         traceback.print_exc()
         error_level = EErrorLevel.FATAL
+    finally:
+        GApp._push_cache()
 
     if error_level is None:
         error_level = EErrorLevel.SUCCESS
