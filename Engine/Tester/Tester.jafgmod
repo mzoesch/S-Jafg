@@ -1,7 +1,0 @@
-{
-    "FriendlyName": "Tester",
-    "Pch": "No",
-    "PublicDependencies": [
-        "TesterForward", "Lal"
-    ]
-}

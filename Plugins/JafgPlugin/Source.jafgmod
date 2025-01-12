@@ -1,7 +1,0 @@
-{
-    "FriendlyName": "JafgPlugin",
-    "Pch": "Use",
-    "PublicDependencies": [
-        "Engine"
-    ]
-}

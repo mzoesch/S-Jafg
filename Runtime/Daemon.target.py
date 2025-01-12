@@ -1,4 +1,7 @@
 # Copyright mzoesch. All rights reserved.
 
-def add_target():
-    return
+from Programs.Meta import *
+
+def add_target(me: Target) -> None:
+    me.defines.append('AS_DAEMON')
+    return None

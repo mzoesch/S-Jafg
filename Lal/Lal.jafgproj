@@ -1,8 +1,0 @@
-{
-    "FriendlyName": "Lal",
-    "DefaultKind": "Static",
-    "Modules": [
-        "Lal",
-        "LalTestRuntime"
-    ]
-}

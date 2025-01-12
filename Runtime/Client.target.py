@@ -2,6 +2,6 @@
 
 from Programs.Meta import *
 
-def add_target(in_const_workspace: Workspace, in_out_target: Target):
-    print('Adding target')
-    return
+def add_target(me: Target) -> None:
+    me.defines.append('AS_CLIENT')
+    return None

@@ -11,6 +11,7 @@
     "Ignores": [
         ".*",
         "Content",
-        "Vendor"
+        "Vendor",
+        "__pycache__"
     ]
 }
