@@ -8,6 +8,7 @@
 # Python
 .venv/
 venv/
+__pycache__/
 
 # Compiled source files
 Intermediate/
