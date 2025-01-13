@@ -3,6 +3,7 @@
 import sys
 import importlib.util as importlib_util
 import pathlib
+import subprocess
 from pathlib import Path
 from Programs.Shared import *
 from Programs.Shared.Files import download_file, unzip_file
@@ -62,7 +63,7 @@ class MyPython:
     @classmethod
     def __install_package(cls, package_name) -> EErrorLevel:
         print(f"Installing {package_name} module ...")
-        run_any_task('python', '-m', 'pip', 'install', package_name)
+        run_any_task(sys.executable, '-m', 'pip', 'install', package_name)
         return importlib_util.find_spec(package_name) is not None
 
 
@@ -171,7 +172,7 @@ class MyPremake:
     def get_abs_install_file(cls, platform: Platform) -> Path:
         if platform.is_this_windows():
             return pathlib.Path(
-                f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake5-win.exe'
+                f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake5.exe'
             )
         if platform.is_this_osx():
             return pathlib.Path(
@@ -218,6 +219,8 @@ class MyPremake:
 
     @classmethod
     def is_installed(cls, platform: Platform) -> bool:
+        if platform is not Platform.WINDOWS: # Currently not supported ...
+            return cls.get_abs_install_zip_file(platform).exists()
         return cls.get_abs_install_file(platform).exists()
 
     @classmethod
@@ -289,6 +292,16 @@ def update_cached_data() -> EErrorLevel:
     return EErrorLevel.SUCCESS
 
 
+def get_native_executable() -> str:
+    if Platform.is_windows():
+        return f'{get_abs_engine_root_dir()}/Programs/Jafg.exe'
+    if Platform.is_linux():
+        return f'{get_abs_engine_root_dir()}/Programs/Jafg'
+    if Platform.is_osx():
+        return f'{get_abs_engine_root_dir()}/Programs/Jafg.app'
+    raise RuntimeError('Could not determine native platform.')
+
+
 def route_to_subprogram(*args, **kwargs) -> EErrorLevel:
     print('Routing to subprogram ...')
 
@@ -348,9 +361,26 @@ def route_to_subprogram(*args, **kwargs) -> EErrorLevel:
         if error_level is not EErrorLevel.SUCCESS:
             return error_level
         
-    if '--UpdateCachedData':
+    if '--UpdateCachedData' in args:
         error_level: EErrorLevel = update_cached_data()
         if error_level is not EErrorLevel.SUCCESS:
             return error_level
+
+    if '--INVOKE' in args:
+        fwd_args: List[str] = []
+        is_add: bool = False
+        for arg in args:
+            if arg == '--INVOKE':
+                is_add = True
+                continue
+            if is_add is True:
+                fwd_args.append(arg)
+            continue
+
+        if len(fwd_args) == 0:
+            print('Error: Nothing to forward.')
+            return EErrorLevel.FATAL
+
+        run_any_task(get_native_executable(), *fwd_args)
 
     return EErrorLevel.SUCCESS

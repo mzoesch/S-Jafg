@@ -1,4 +1,5 @@
 # Copyright mzoesch. All rights reserved.
+
 import os
 import sys
 import threading
@@ -22,7 +23,7 @@ def _copy_and_print(line, copied_stdout) -> None:
     return None
 
 
-def run_any_task(*args, wd=None) -> None:
+def run_any_task(*args, wd=None, shell=False) -> None:
     """
     Emits live output of the stdout / stderr.
     """
@@ -39,7 +40,8 @@ def run_any_task(*args, wd=None) -> None:
                 args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
+                shell=shell
         ) as p:
             stdout_thread = threading.Thread(target=_stream_output,
                                             args=(p.stdout, lambda line: print(line, end='')))

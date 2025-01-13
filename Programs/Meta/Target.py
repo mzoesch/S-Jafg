@@ -24,6 +24,9 @@ class Target:
 
         """NEVER MODIFY THIS VARIABLE. Only valid in module policies apply-er functions."""
         self.volatile_build_configuration: BuildConfiguration = BuildConfiguration.UNKNOWN
+        self.volatile_runtime: str = ''
+        self.volatile_symbols: bool = False
+        self.volatile_optimize: bool = True
 
         return
 

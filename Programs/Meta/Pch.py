@@ -10,18 +10,19 @@ class PchUsage(Enum):
 
 def pch_usage_to_string(pch_usage: PchUsage) -> str:
     if pch_usage == PchUsage.ALLOW:
-        return 'ALLOW'
+        return 'Allow'
 
     if pch_usage == PchUsage.PROHIBIT:
-        return 'PROHIBIT'
+        return 'Prohibit'
 
     return 'Unknown'
 
+
 def volatile_pch_usage_to_string(pch_usage: PchUsage) -> str:
     if pch_usage == PchUsage.ALLOW:
-        return 'ALLOW'
+        return 'Allow'
 
     if pch_usage == PchUsage.PROHIBIT:
-        return 'PROHIBIT'
+        return 'Prohibit'
 
     raise ValueError('Unknown pch_usage in volatile_pch_usage_to_string.')

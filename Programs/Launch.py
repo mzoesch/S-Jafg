@@ -10,7 +10,7 @@ def launch(*args, **kwargs) -> None:
       // Update submodules before launching.
       - UpdateSubmodules: bool = False
 
-      // Validate python version before launching.
+      // Validate python version before launching and install packages into this venv.
       - ValidatePython:   bool = False
 
       // Validate go version before launching.
@@ -18,10 +18,18 @@ def launch(*args, **kwargs) -> None:
 
       // Validate premake binaries before launching.
       // Valid strs: 'AllPlatforms', 'win', 'lnx', 'osx'
-      - ValidatePremake:  str[] = CurrentPlatform
+      - ValidatePremake:  str[] = CurrentNativePlatform
 
-      // Updates target- and module-infos
-      --UpdateCachedData
+      // Validate cmake binaries before launching (not critical).
+      --ValidateCmake
+
+      // Updates target- and module-infos.
+      --UpdateCachedData: bool = False
+
+      // Invokes the reflection and meta program.
+      // All args that are after this argument are forwarded. Preceding arguments will be discarded.
+      // @see Programs/Main.go
+     --INVOKE <args-for-reflection>
 
     @see Programs/Router.py for subprogram routing.
     """

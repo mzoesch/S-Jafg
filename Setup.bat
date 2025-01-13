@@ -23,7 +23,7 @@ echo Virtual environment activated with:
 python --version
 
 echo Running Program.py ...
-python ./Program.py
+python ./Program.py --UpdateSubmodules --ValidatePython --ValidateGo --ValidatePremake AllPlatforms --ValidateCmake --UpdateCachedData
 
 call :pause_if_needed %1
 

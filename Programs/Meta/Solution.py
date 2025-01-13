@@ -16,6 +16,8 @@ class Solution:
         """NEVER MODIFY THIS VARIABLE."""
         self._name: str = ru.get_base(absolute_solution_py_path).split('.')[0]
 
+        self.startup: str = ''
+
         self.use_white_list_modules: bool = False
         self.white_list_modules: List[str] = []
 
@@ -51,5 +53,6 @@ class Solution:
             raise ValueError('Solution name cannot be empty.')
         if bool(re.fullmatch(r"[A-Za-z]+", self._name)) is False:
             raise ValueError(f'Solution name may only contain latin letters. Faulty solution: {self._name}.')
-
+        if self.startup == '':
+            raise ValueError('Startup cannot be empty.')
         return None

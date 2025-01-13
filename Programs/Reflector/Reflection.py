@@ -11,6 +11,7 @@ from Programs.Meta.Target import Target
 from Programs.Meta.Module import Module
 from Programs.Meta.Pch import volatile_pch_usage_to_string
 from Programs.Meta.ModuleKind import ModuleKind, module_kind_to_string
+from Programs.Meta.CommonVolatileTarget import set_common_volatile_target_values
 from Programs.Reflector import ReflectionUtility as ru
 
 def reflect_all_targets_and_modules() -> None:
@@ -61,6 +62,11 @@ def load_target(target: Target, absolute_path: str) -> None:
     return None
 
 
+def load_volatile_target(target: Target, absolute_path: str) -> None:
+    ru.try_exec_function(absolute_path, 'load_volatile_target', target)
+    return None
+
+
 def load_solution(solution: Solution, absolute_path: str) -> None:
     ru.exec_function(absolute_path, 'add_solution', solution)
     return None
@@ -74,7 +80,7 @@ def create_cached_program_agnostic_file() -> None:
 
     if ru.is_path_valid(os.path.join(get_abs_engine_root_dir(), 'Saved')) is False:
         os.mkdir(os.path.join(get_abs_engine_root_dir(), 'Saved'))
-    absolute_cached_file_path: str = os.path.join(get_abs_engine_root_dir(), 'Saved', 'structure.json')
+    absolute_cached_file_path: str = os.path.join(get_abs_engine_root_dir(), 'Saved', 'structure.jproject')
 
     if ru.is_path_valid(absolute_cached_file_path):  # Truncate file
         os.truncate(absolute_cached_file_path, 0)
@@ -101,18 +107,38 @@ def apply_solution(solution: Solution, out_data: dict) -> None:
     sln_cursor = out_data['Solutions'][len(out_data['Solutions']) - 1]
     sln_cursor['RelativePyPath'] = solution._relative_py_dir
     sln_cursor['Name'] = solution._name
+    sln_cursor['Startup'] = solution.startup
     sln_cursor['Targets'] = []
 
     for target in GApp.targets:
         if (solution.use_black_list_target is False
                 or solution.does_blacklist_target(target.get_unique_name(), target._name) is False):
+
             target.volatile_build_configuration = BuildConfiguration.DEBUG
+            def_len: int = len(target.defines)
+            set_common_volatile_target_values(target)
+            load_volatile_target(target, target._absolute_py_path)
             sln_cursor['Targets'].append(apply_target(solution, target))
+            target.defines = target.defines[:def_len]
+
             target.volatile_build_configuration = BuildConfiguration.DEVELOPMENT
+            def_len: int = len(target.defines)
+            set_common_volatile_target_values(target)
+            load_volatile_target(target, target._absolute_py_path)
             sln_cursor['Targets'].append(apply_target(solution, target))
+            target.defines = target.defines[:def_len]
+
             target.volatile_build_configuration = BuildConfiguration.SHIPPING
+            def_len: int = len(target.defines)
+            set_common_volatile_target_values(target)
+            load_volatile_target(target, target._absolute_py_path)
             sln_cursor['Targets'].append(apply_target(solution, target))
+            target.defines = target.defines[:def_len]
+
             target.volatile_build_configuration = BuildConfiguration.UNKNOWN
+            target.volatile_runtime = ''
+            target.volatile_symbols = False
+            target.volatile_optimize = True
 
     return None
 
@@ -120,9 +146,15 @@ def apply_solution(solution: Solution, out_data: dict) -> None:
 def apply_target(solution: Solution, target: Target) -> dict:
     """Apply a target inside a config."""
 
+    if target.volatile_runtime == '':
+        raise ValueError('Runtime is not valid.')
+
     target_cursor: dict = {
         'Name': target.get_volatile_identifier(),
         'Defines': target.get_volatile_defines(),
+        'Runtime': target.volatile_runtime,
+        'Symbols': target.volatile_symbols,
+        'Optimize': target.volatile_optimize,
         'Modules': []
     }
 

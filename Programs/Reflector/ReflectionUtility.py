@@ -31,9 +31,11 @@ def get_all_dirs_in_directory(absolute_directory: str, concat: bool = False) -> 
 def get_base(absolute_path: str) -> str:
     return os.path.basename(absolute_path)
 
+
 def get_dir(path: str) -> str:
     """A/B/C.D -> A/B"""
     return os.path.dirname(path)
+
 
 def abs_to_rel_fancy(absolute_path: str) -> str:
     return '~' + normalize_path(os.path.relpath(absolute_path))
@@ -77,6 +79,29 @@ def exec_function(absolute_path: str, function_name: str, *args, **kwargs) -> an
             raise TypeError(e)
         except AttributeError as e:
             print(f'\033[91mFailed to add target in file: [{absolute_path}].\033[0m')
-            raise TypeError(e)
+            raise AttributeError(e)
 
     raise AttributeError(f'Function "{function_name}" not found in {absolute_path}')
+
+
+def try_exec_function(absolute_path: str, function_name: str, *args, **kwargs) -> any:
+    p = Path(absolute_path).resolve()
+    module_name = p.stem
+
+    spec = importlib_util.spec_from_file_location(module_name, str(p))
+    module = importlib_util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+
+    if hasattr(module, function_name):
+        func = getattr(module, function_name)
+        try:
+            return func(*args, **kwargs)
+        except TypeError as e:
+            print(f'\033[91mFailed to add target in file: [{absolute_path}].\033[0m')
+            raise TypeError(e)
+        except AttributeError as e:
+            print(f'\033[91mFailed to add target in file: [{absolute_path}].\033[0m')
+            raise AttributeError(e)
+
+    return None
