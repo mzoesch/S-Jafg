@@ -21,6 +21,11 @@ import (
 //   - DoNothing         [Does nothing (for development purposes)]
 //
 func main() {
+    lastwd, err := os.Getwd()
+    if err != nil {
+        panic(err)
+    }
+
     wd, err := os.Executable()
     if err != nil {
         panic(err)
@@ -52,12 +57,21 @@ func main() {
         wd = innerWd
     }
 
-    Core.SetAbsoluteEngineRoot(wd)
+    Shared.SetAbsoluteEngineRoot(wd)
+    err = os.Chdir(Shared.GetAbsoluteEngineRoot())
+    if err != nil {
+        panic(err)
+    }
 
     LoadWorkspace()
 
     var args []string = os.Args
     var errorLevel error = RouteToSubProgram(args)
+
+    err = os.Chdir(lastwd)
+    if err != nil {
+        panic(err)
+    }
 
     if errorLevel != nil {
         log.Fatalf("Application failed with error: [%s].", errorLevel.Error())
@@ -130,6 +144,7 @@ func LoadModule(target *Core.Target, data map[string]interface{}) {
     module.Name = Shared.GetJsonString(data, "Name")
     module.RelativeDir = Shared.GetJsonString(data, "RelativeDir")
     module.PchUsage = Core.PchUsageFromString(Shared.GetJsonString(data, "PchUsage"))
+    module.PchContent = Shared.GetJsonString(data, "PchContent")
     module.Kind = Core.ModuleKindFromString(Shared.GetJsonString(data, "Kind"))
     for _, dep := range pubDeps {
         module.PublicDependencies = append(module.PublicDependencies, Core.DependencyFromString(dep))

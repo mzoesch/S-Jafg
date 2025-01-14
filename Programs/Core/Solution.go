@@ -2,7 +2,11 @@
 
 package Core
 
-import "fmt"
+import (
+    "Jafg/Shared"
+    "fmt"
+    "strings"
+)
 
 type Solution struct {
     Name        string
@@ -24,4 +28,8 @@ func (sln *Solution) GetFunctionalRelativeDir() string {
 
 func (sln *Solution) GetSavedRelativeDir() string {
     return fmt.Sprintf("%s/%s/SLN_P_%s", DirPath_Saved, sln.GetFunctionalRelativeDir(), sln.Name)
+}
+
+func (sln *Solution) GetChdirUpRelToBuildFile() string {
+    return "../.." + strings.Repeat("/..", Shared.CountRuneInString(sln.RelativeDir, '/')+1)
 }

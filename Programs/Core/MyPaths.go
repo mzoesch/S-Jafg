@@ -6,18 +6,7 @@ import (
     "fmt"
 )
 
-var _AbsoluteEngineRoot string = ""
-
-func SetAbsoluteEngineRoot(path string) {
-    _AbsoluteEngineRoot = path
-}
-func GetAbsoluteEngineRoot() string {
-    if _AbsoluteEngineRoot == "" {
-        panic("Engine root directory is not set.")
-    }
-    return _AbsoluteEngineRoot
-}
-
+var DirPath_Venv string = ".venv"
 var DirPath_Saved string = "Saved"
 
 var FileName_LuaOut string = "__buildSolution.lua"
@@ -33,3 +22,15 @@ var FilePath_ObjStructureCache string = fmt.Sprintf("%s/jobj.jobj", DirPath_Save
 
 var GhExtension string = ".generated.h"
 var GtExtension string = ".generated.cpp"
+
+// GtDir is the dir for generated translation files
+var GtDir string = "gt"
+// CgtDir is the dir for conditional generated translation files
+var CgtDir string = "cgt"
+// GhDir is the dir for generated header files
+var GhDir string = "gh"
+// CgtDir is the dir for conditional generated header files
+var CghDir string = "cgh"
+
+var FilePath_PchSource string = "ModulePch" + GtExtension
+var FilePath_PchHeader string = "ModulePch" + GhExtension

@@ -3,7 +3,6 @@
 package Shared
 
 import (
-    "Jafg/Core"
     "fmt"
     "io"
     "os"
@@ -12,8 +11,8 @@ import (
 
 // CheckRelativeDir checks if a directory exists and if not tries to create it.
 func CheckRelativeDir(relDir string) {
-    if _, err := os.Stat(fmt.Sprintf("%s/%s", Core.GetAbsoluteEngineRoot(), relDir)); os.IsNotExist(err) {
-        err := os.MkdirAll(fmt.Sprintf("%s/%s", Core.GetAbsoluteEngineRoot(), relDir), os.ModePerm)
+    if _, err := os.Stat(fmt.Sprintf("%s/%s", GetAbsoluteEngineRoot(), relDir)); os.IsNotExist(err) {
+        err := os.MkdirAll(fmt.Sprintf("%s/%s", GetAbsoluteEngineRoot(), relDir), os.ModePerm)
         if err != nil {
             panic(err)
         }
@@ -36,7 +35,7 @@ func CheckAbsoluteDir(absDir string) {
 
 // CheckRelativeFile checks if a file exists and if not tries to create it.
 func CheckRelativeFile(relFilePath string) {
-    CheckAbsoluteFile(fmt.Sprintf("%s/%s", Core.GetAbsoluteEngineRoot(), relFilePath))
+    CheckAbsoluteFile(fmt.Sprintf("%s/%s", GetAbsoluteEngineRoot(), relFilePath))
     return
 }
 
@@ -260,6 +259,28 @@ func IsFileAndStringEqual(file *os.File, other string, bPrintReasonToStdOut bool
         fmt.Printf("Provided file and string are not equal [%s]. Failed at line %d.\n", file.Name(), lineCount+1)
     }
     return false
+}
+
+// OpenAndWriteToRelativeFileIfDifferent does what the name says. But also it deletes the file if the content is empty.
+func OpenAndWriteToRelativeFileIfDifferent(relF string, newContent string, emit bool) bool {
+    return OpenAndWriteToAbsoluteFileIfDifferent(ToAbsolutePath(relF), newContent, emit)
+}
+func OpenAndWriteToAbsoluteFileIfDifferent(absF string, newContent string, emit bool) bool {
+    if len(newContent) == 0 {
+        DeleteAbsoluteFile(absF)
+    }
+
+    CheckAbsoluteFile(absF)
+    var f *os.File = OpenAbsoluteFile(absF, false, os.O_RDONLY)
+    if IsFileAndStringEqual(f, newContent, emit) {
+        CloseFile(f)
+        return false
+    }
+    CloseFile(f)
+    f = OpenAbsoluteFile(absF, true, os.O_RDWR)
+    WriteToFile(f, newContent)
+    CloseFile(f)
+    return true
 }
 
 func GetAllFilesInRelativeDirRecursive(relDir string) []string {

@@ -62,6 +62,8 @@ def is_path_valid(absolute_path: str) -> bool:
 
 
 def exec_function(absolute_path: str, function_name: str, *args, **kwargs) -> any:
+    """Executes a function and raises an error if that function is invalid in any way."""
+
     p = Path(absolute_path).resolve()
     module_name = p.stem
 
@@ -85,6 +87,8 @@ def exec_function(absolute_path: str, function_name: str, *args, **kwargs) -> an
 
 
 def try_exec_function(absolute_path: str, function_name: str, *args, **kwargs) -> any:
+    """Executes a function but will just proceed execution if the function is not found."""
+
     p = Path(absolute_path).resolve()
     module_name = p.stem
 

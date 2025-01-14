@@ -11,6 +11,8 @@ def add_solution(me: Solution) -> None:
 
     me.use_white_list_modules = True
     me.white_list_modules.extend([
+        "~Engine/Tester",
+        "~Engine/TesterForward",
         "~Lal/Lal",
         "~Lal/LalTestRuntime",
     ])

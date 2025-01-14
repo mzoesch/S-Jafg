@@ -23,6 +23,7 @@ class Module:
 
         """The pch to use for this module only."""
         self.pch: PchUsage = PchUsage.ALLOW
+        self.pch_content: str = ''
 
         """How the compiler and linker should treat this module."""
         self.kind: ModuleKind = ModuleKind.SHARED

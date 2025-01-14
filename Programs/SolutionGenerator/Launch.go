@@ -42,15 +42,15 @@ func GenerateAll() error {
 
     for idx, _ := range Core.GApp.Solutions {
         var sln *Core.Solution = &Core.GApp.Solutions[idx]
-        err1 := BuildTool.GenerateSolutionFromPremake(sln)
-        if err1 != nil {
-            return err1
+        err := BuildTool.GenerateSolutionFromPremake(sln)
+        if err != nil {
+            return err
         }
     }
 
-    err2 := BuildTool.MakeCmakeScripts()
-    if err2 != nil {
-        return err2
+    err := BuildTool.MakeCmakeScripts()
+    if err != nil {
+        return err
     }
 
     fmt.Println("================================")

@@ -9,7 +9,7 @@ from Programs.Meta.BuildConfig import BuildConfiguration
 from Programs.Meta.Solution import Solution
 from Programs.Meta.Target import Target
 from Programs.Meta.Module import Module
-from Programs.Meta.Pch import volatile_pch_usage_to_string
+from Programs.Meta.Pch import PchUsage, volatile_pch_usage_to_string
 from Programs.Meta.ModuleKind import ModuleKind, module_kind_to_string
 from Programs.Meta.CommonVolatileTarget import set_common_volatile_target_values
 from Programs.Reflector import ReflectionUtility as ru
@@ -162,10 +162,15 @@ def apply_target(solution: Solution, target: Target) -> dict:
         if solution.does_whitelist_module(module.get_unique_name(), module._name):
             module._reset_volatile_fields()
             apply_module(target, module)
+            if module.pch == PchUsage.PROHIBIT:
+                module.pch_content = ''
+            elif module.pch_content == '':
+                raise ValueError(f'Module {module.get_unique_name()} has no pch content.')
             target_cursor['Modules'].append({
                 'RelativeDir': module._relative_py_dir,
                 'Name': module._name,
                 'PchUsage': volatile_pch_usage_to_string(module.pch),
+                'PchContent': module.pch_content,
                 'Kind': module_kind_to_string(module.kind),
                 'PublicDependencies': module.public_dependencies,
                 'PrivateDependencies': module.private_dependencies

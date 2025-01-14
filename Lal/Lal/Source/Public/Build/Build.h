@@ -85,22 +85,6 @@
     #endif /* !WITH_TESTS */
 #endif /* !DO_TEST_UNITS */
 
-///////////////////////////////////////////////////////////////////////////////
-// Project specific.
-#ifndef CURRENT_PROJECT_NAME
-    #error "No project name specified."
-#endif /* !CURRENT_PROJECT_NAME */
-#ifndef CURRENT_MODULE_NAME
-    #error "No module name specified."
-#endif /* !CURRENT_MODULE_NAME */
-#ifndef PRIVATE_JAFG_CURRENT_MODULE_PREPROC_IDENT
-    #error "No module preprocessor identifier specified."
-#endif /* !PRIVATE_JAFG_CURRENT_MODULE_PREPROC_IDENT */
-
-///////////////////////////////////////////////////////////////////////////////
-// Include the generated build file.
-#include "Build.generated.h"
-
 
 /*-----------------------------------------------------------------------------
     Manual build override settings.
@@ -174,14 +158,6 @@
 
 /** Pragmas for the Jafg Build Tool. */
 #define PRAGMA_FOR_JAFG_BUILD_TOOL(Pragma)
-
-/** Allows one to declare a class that derives from JObjectBase in some form. */
-#define DECLARE_JAFG_CLASS(... /* ClassFlags */ )
-/** Has to be declared inside the body of a class that was marked with DECLARE_JAFG_CLASS. */
-#define GENERATED_CLASS_BODY()
-
-/** Advice the build tool to make the global workspace wide build file for this file. */
-PRAGMA_FOR_JAFG_BUILD_TOOL("MakeBuildFile")
 
 
 /*-----------------------------------------------------------------------------

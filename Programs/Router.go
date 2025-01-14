@@ -12,7 +12,7 @@ import (
 
 func RouteToSubProgram(args []string) error {
     fmt.Println("Routing to subprogram ...")
-    if slices.Contains(args, "-DoNothing") {
+    if slices.Contains(args, "--DoNothing") {
         return nil
     } else if slices.Contains(args, "--SolutionGenerator") {
         fmt.Println("Routing to SolutionGenerator ...")
@@ -24,7 +24,7 @@ func RouteToSubProgram(args []string) error {
         fmt.Println("Routing to BuildTool ...")
         BuildTool.Launch(args)
     } else {
-        return errors.New("no subprogram specified")
+        return errors.New(fmt.Sprintf("no subprogram specified. Args: %v", args))
     }
 
     return nil

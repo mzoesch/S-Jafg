@@ -9,6 +9,14 @@ const (
     PCH_PROHIBIT PchUsage = iota
 )
 
+func (pch PchUsage) IsAllowed() bool {
+    return pch == PCH_ALLOW
+}
+
+func (pch PchUsage) IsProhibited() bool {
+    return pch == PCH_PROHIBIT
+}
+
 func (pch PchUsage) ToString() string {
     switch pch {
     case PCH_ALLOW:
