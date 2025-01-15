@@ -3,7 +3,6 @@
 package SolutionGenerator
 
 import (
-    "Jafg/BuildTool"
     "Jafg/Core"
     "fmt"
     "slices"
@@ -42,13 +41,13 @@ func GenerateAll() error {
 
     for idx, _ := range Core.GApp.Solutions {
         var sln *Core.Solution = &Core.GApp.Solutions[idx]
-        err := BuildTool.GenerateSolutionFromPremake(sln)
+        err := GenerateSolutionFromPremake(sln)
         if err != nil {
             return err
         }
     }
 
-    err := BuildTool.MakeCmakeScripts()
+    err := MakeCmakeScripts()
     if err != nil {
         return err
     }

@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-package BuildTool
+package SolutionGenerator
 
 func MakeCmakeScripts() error {
     return nil
