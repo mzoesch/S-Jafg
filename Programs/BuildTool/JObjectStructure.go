@@ -11,9 +11,13 @@ import (
     "strings"
 )
 
+type JPacketCallback func(hFileId string, bH *strings.Builder, bT *strings.Builder, packet JPacket)
+
 type JPacket struct {
-    Name string `json:"Name"`
-    Line int    `json:"Line"`
+    Callback JPacketCallback
+    Name     string   `json:"Name"`
+    Line     int      `json:"Line"`
+    Args     []string `json:"Args"`
 }
 
 // JPacketWrapper wraps j-packets.

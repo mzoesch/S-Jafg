@@ -3,10 +3,73 @@
 package BuildTool
 
 import (
+    "Jafg/Core"
     "Jafg/Shared"
     "fmt"
     "strings"
 )
+
+func ConvertNameToCppValidDefine(name string) string {
+    var out string = name
+    out = strings.ReplaceAll(out, "~", "")
+    out = strings.ReplaceAll(out, "/", "___")
+    out = strings.ReplaceAll(out, ".", "__")
+    out = strings.ReplaceAll(out, "-", "_")
+    return out
+}
+
+func RemoveAllNamespaces(name string) string {
+    var out string = name
+    var lastColon int = strings.LastIndex(out, "::")
+    if lastColon != -1 {
+        out = out[lastColon+2:]
+    }
+    return out
+}
+
+func ConvertPacketWrapperPathToGhPath(relPath string) string {
+    if strings.HasPrefix(relPath, "~") == false {
+        panic("RelPath does not start with ~.")
+    }
+    relPath = relPath[1:]
+    relSource := GBuildTargetInfo.GetRelativeSourceDir()
+    if !strings.Contains(relPath, relSource) {
+        panic(fmt.Sprintf("RelPath [%s] is not a subpath of [%s].", relPath, relSource))
+    }
+
+    var lastSlash int = strings.LastIndex(relPath, "/")
+    if lastSlash == -1 {
+        panic("RelPath does not contain a slash.")
+    }
+
+    if strings.HasSuffix(relPath, ".h") == false {
+        panic("RelPath does not end with [.h].")
+    }
+
+    return GBuildTargetInfo.GetRelativeModuleGhDir() + "/" + relPath[lastSlash+1:len(relPath)-2] + Core.GhExtension
+}
+
+func ConvertPacketWrapperPathToGtPath(relPath string) string {
+    if strings.HasPrefix(relPath, "~") == false {
+        panic("RelPath does not start with ~.")
+    }
+    relPath = relPath[1:]
+    relSource := GBuildTargetInfo.GetRelativeSourceDir()
+    if !strings.Contains(relPath, relSource) {
+        panic(fmt.Sprintf("RelPath [%s] is not a subpath of [%s].", relPath, relSource))
+    }
+
+    var lastSlash int = strings.LastIndex(relPath, "/")
+    if lastSlash == -1 {
+        panic("RelPath does not contain a slash.")
+    }
+
+    if strings.HasSuffix(relPath, ".h") == false {
+        panic("RelPath does not end with [.h].")
+    }
+
+    return GBuildTargetInfo.GetRelativeModuleGtDir() + "/" + relPath[lastSlash+1:len(relPath)-2] + Core.GtExtension
+}
 
 func ReflectModule() {
     if GBuildTargetInfo == nil {
@@ -14,7 +77,17 @@ func ReflectModule() {
     }
 
     var SearchDir string = GBuildTargetInfo.GetRelativeSourceDir()
-    var filesAbs []string = Shared.GetAllFilesInRelativeDirRecursive(SearchDir)
+    var SearchDirInternal string = SearchDir + "/Internal"
+    var SearchDirPublic string = SearchDir + "/Public"
+    var filesAbs []string
+    if Shared.DoesRelativeDirExist(SearchDirInternal) {
+        var filesAbsInternal []string = Shared.GetAllFilesInRelativeDirRecursive(SearchDir + "/Internal")
+        filesAbs = append(filesAbs, filesAbsInternal...)
+    }
+    if Shared.DoesRelativeDirExist(SearchDirPublic) {
+        var filesAbsPublic []string = Shared.GetAllFilesInRelativeDirRecursive(SearchDir + "/Public")
+        filesAbs = append(filesAbs, filesAbsPublic...)
+    }
 
     var hFilesRel []string
     for _, fAbs := range filesAbs {
@@ -25,6 +98,8 @@ func ReflectModule() {
         hFilesRel = append(hFilesRel, "~"+fRel)
         continue
     }
+
+    var oldNum int = len(GJPacketContainer.Wrappers)
 
     // Remove deleted files from the cache for the current module only.
     var newWrappers []JPacketWrapper = make([]JPacketWrapper, 0)
@@ -45,22 +120,281 @@ func ReflectModule() {
         }
     }
     GJPacketContainer.Wrappers = newWrappers
+    if len(GJPacketContainer.Wrappers) != oldNum {
+        fmt.Printf("Found %d cached wrappers of interest but %d are now considered relevant.\n", oldNum, len(GJPacketContainer.Wrappers))
+    } else {
+        fmt.Printf("Found %d cached wrappers of interest and all are still relevant.\n", len(GJPacketContainer.Wrappers))
+    }
 
+    var newReflectedFiles []JPacketWrapper
     for idx, _ := range hFilesRel {
-        ReflectFile(hFilesRel[idx])
+        ReflectFile(hFilesRel[idx], &newReflectedFiles)
+    }
+
+    fmt.Printf("From %d files, %d were interesting based of reflection.\n", len(hFilesRel), len(newReflectedFiles))
+
+    for _, packetWrapper := range newReflectedFiles {
+        ConditionallyWritePacketToOut(packetWrapper)
     }
 
     return
 }
 
-func ReflectFile(fRel string) {
-    fmt.Println("Reflecting file: " + fRel)
+func ReflectFile(fRel string, newReflectedFiles *[]JPacketWrapper) {
+    if fRel == "~Engine/Engine/Source/Public/Engine/ObjectMacros.h" {
+        // Very, very special file that declares a lot of stuff. But sadly confuses our tokenizer...
+        // It would take simply too much time to implement special rules that are commonly accepted over all files
+        // so that false tokenizing does not occur. But we do not really need that - just makes everything slower and
+        // more complicated. So we just hardcode the ignore here.
+        return
+    }
+
+    var bAddedNew bool = false
+    var packetWrapper *JPacketWrapper = nil
+    for idx, _ := range GJPacketContainer.Wrappers {
+        if GJPacketContainer.Wrappers[idx].Name == fRel {
+            packetWrapper = &GJPacketContainer.Wrappers[idx]
+            break
+        }
+    }
+    if packetWrapper == nil {
+        bAddedNew = true
+        packetWrapper = new(JPacketWrapper)
+    }
 
     var tokens []Token = Tokenize(fRel, Shared.ReadRelativeFile(fRel[1:]))
 
-    for idx, _ := range tokens {
-        fmt.Println(tokens[idx].ToString())
+    for i, t := range tokens {
+        if t.Type.IsPragma() {
+            ExecuteJafgPragma(tokens, i)
+        } else if t.Type.IsDeclareClass() {
+            AddJafgClassToPacket(tokens, i, packetWrapper)
+        } else if t.Type.IsGeneratedClassBody() {
+            AddJafgClassGeneratedBodyToPacket(tokens, i, packetWrapper)
+        }
+
+        continue
     }
+
+    if bAddedNew {
+        if len(packetWrapper.Packets) > 0 {
+            // fmt.Printf("Adding new packet wrapper [%s] with a total of %d packets.\n", fRel, len(packetWrapper.Packets))
+            packetWrapper.Name = fRel
+            *newReflectedFiles = append(*newReflectedFiles, *packetWrapper)
+        }
+    }
+
+    return
+}
+
+// ExecuteJafgPragma executes a pragma token.
+// Valid pragma tokens are:
+//   "IncludeAllModuleTests"
+//   "NextIsObjectBaseClass"
+//   "MakeVirtualFilesystem"
+//   "MakeStaticClassContainer"
+func ExecuteJafgPragma(tokens []Token, idx int) {
+    if tokens[idx].Type != TOKEN_PRAGMA {
+        panic(fmt.Sprintf("Expected a pragma token at {%d}.", idx))
+    }
+
+    var t *Token = &tokens[idx]
+
+    if !(t.Content == "\"IncludeAllModuleTests\"" || t.Content == "\"NextIsObjectBaseClass\"" ||
+        t.Content == "\"MakeVirtualFilesystem\"" || t.Content == "\"MakeStaticClassContainer\"") {
+        panic(fmt.Sprintf("Unknown pragma [%s].", t.Content))
+    }
+
+    // ...
+
+    return
+}
+
+func AddJafgClassToPacket(tokens []Token, idx int, packetWrapper *JPacketWrapper) {
+    var packet JPacket = JPacket{}
+
+    var t *Token = &tokens[idx]
+    if t.Type != TOKEN_DECLARE_CLASS {
+        panic(fmt.Sprintf("Expected a class declaration token at {%d}.", idx))
+    }
+
+    var tGeneratedBodyIdx int = FindNextToken(&tokens, idx, TOKEN_GENERATED_CLASS_BODY)
+    if tGeneratedBodyIdx == -1 {
+        panic(fmt.Sprintf("Expected a generated class body token after {%d}.", idx))
+    }
+    var tGeneratedBody Token = tokens[tGeneratedBodyIdx]
+    if tGeneratedBody.Line < t.Line {
+        panic(fmt.Sprintf("Expected a generated class body token after {%d}.", idx))
+    }
+
+    packet.Callback = OnBuildJafgClassDeclaration
+    packet.Name = t.Content
+    packet.Line = t.Line
+    packet.Args = append(packet.Args, t.Info[0])
+
+    packetWrapper.Packets = append(packetWrapper.Packets, packet)
+
+    return
+}
+
+func AddJafgClassGeneratedBodyToPacket(tokens []Token, idx int, packetWrapper *JPacketWrapper) {
+    var packet JPacket = JPacket{}
+
+    var t *Token = &tokens[idx]
+    if t.Type != TOKEN_GENERATED_CLASS_BODY {
+        panic(fmt.Sprintf("Expected a generated class body token at {%d}.", idx))
+    }
+
+    var tClassDeclIdx int = FindPreviousToken(&tokens, idx, TOKEN_DECLARE_CLASS)
+    if tClassDeclIdx == -1 {
+        panic(fmt.Sprintf("Excected a class declaration toekn bevore {%d}.", idx))
+    }
+    var tClassDecl Token = tokens[tClassDeclIdx]
+    if tClassDecl.Line > t.Line {
+        panic(fmt.Sprintf("Excected a class declaration toekn bevore {%d}.", idx))
+    }
+
+    packet.Callback = OnBuildJafgClassBody
+    packet.Name = tClassDecl.Content
+    packet.Line = t.Line
+    packet.Args = append(packet.Args, tClassDecl.Info[0])
+
+    packetWrapper.Packets = append(packetWrapper.Packets, packet)
+
+    return
+}
+
+func OnBuildJafgClassDeclaration(hFileId string, bH *strings.Builder, bT *strings.Builder, packet JPacket) {
+    if bH == nil {
+        panic("Builder for header is nil.")
+    }
+    if bT == nil {
+        panic("Builder for translation is nil.")
+    }
+
+    bH.WriteString(fmt.Sprintf(`
+#ifdef %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
+    #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+#endif /* %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION */
+#define %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION(...)              \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION( \
+        /* My Class Name */          %s, /* ORIGIN VALUE: %s */                                \
+        /* Super Class Name */       %s, /* ORIGIN VALUE: %s */                                \
+        /* Line */                   __LINE__,                                                 \
+        /* Additional Class Flags */ __VA_ARGS__                                               \
+    )
+`,
+        hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
+
+        RemoveAllNamespaces(packet.Name), packet.Name,
+        RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
+    ))
+
+    return
+}
+
+func OnBuildJafgClassBody(hFileId string, bH *strings.Builder, bT *strings.Builder, packet JPacket) {
+    if bH == nil {
+        panic("Builder for header is nil.")
+    }
+    if bT == nil {
+        panic("Builder for translation is nil.")
+    }
+
+    bH.WriteString(fmt.Sprintf(`
+#ifdef %s_%d_MY_GENERATED_CLASS_BODY
+    #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+#endif /* %s_%d_MY_GENERATED_CLASS_BODY */
+#define %s_%d_MY_GENERATED_CLASS_BODY(...)                      \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_BODY_IMPL(          \
+        /* My Class Name */          %s, /* ORIGIN VALUE: %s */ \
+        /* Super Class Name */       %s, /* ORIGIN VALUE: %s */ \
+        /* Construction Helper */    %s                         \
+    )
+`,
+        hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
+
+        RemoveAllNamespaces(packet.Name), packet.Name,
+        RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
+        fmt.Sprintf("L_%s_ConstructionHelper", packet.Name),
+    ))
+
+    return
+}
+
+func ConditionallyWritePacketToOut(packetWrapper JPacketWrapper) {
+    if packetWrapper.Name == "" {
+        panic("PacketWrapper.Name is empty.")
+    }
+
+    var uniqueFileId string = ConvertNameToCppValidDefine(packetWrapper.Name)
+    GBuildTargetInfo.GetRelativeSourceDir()
+    var relTargetGh string = ConvertPacketWrapperPathToGhPath(packetWrapper.Name)
+    var relTargetGt string = ConvertPacketWrapperPathToGtPath(packetWrapper.Name)
+
+    var outH strings.Builder
+    var outT strings.Builder
+
+    var hFileId string = "FILE_ID_" + uniqueFileId
+
+    outH.WriteString(fmt.Sprintf(`
+// Copyright mzoesch. All rights reserved.
+
+
+/*-----------------------------------------------------------------------------
+   This header file was generated by the Jafg build tool.
+   Do not modify it manually.
+-----------------------------------------------------------------------------*/
+
+#ifdef PRIVATE_JAFG_GENERATED_HEADER_%s
+    #error "Generated header [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+#endif /* PRIVATE_JAFG_GENERATED_HEADER_%s */
+#define PRIVATE_JAFG_GENERATED_HEADER_%s
+
+#ifdef JAFG_PRIVATE_FILE_ID
+    #undef JAFG_PRIVATE_FILE_ID
+#endif /* JAFG_PRIVATE_FILE_ID */
+#define JAFG_PRIVATE_FILE_ID FILE_ID_%s
+
+
+/*-----------------------------------------------------------------------------
+   BEGIN Generated header content.
+-----------------------------------------------------------------------------*/
+
+`,
+        uniqueFileId, relTargetGh, uniqueFileId, uniqueFileId,
+        uniqueFileId,
+    ))
+
+    outT.WriteString(fmt.Sprintf(`
+// Copyright mzoesch. All rights reserved.
+
+/*-----------------------------------------------------------------------------
+    This translation file was generated by the Jafg build tool.
+    Do not modify it manually.
+-----------------------------------------------------------------------------*/
+
+#include "%s/%s/%s"
+
+/*-----------------------------------------------------------------------------
+    BEGIN Generated translation content.
+-----------------------------------------------------------------------------*/
+
+`,
+        GBuildTargetInfo.GetSlnPointerChecked().GetChdirUpRelToBuildFile(),
+        GBuildTargetInfo.GetModulePointerChecked().GetChdirUpRelToBuildFile(),
+        packetWrapper.Name[1:],
+    ))
+
+    for _, packet := range packetWrapper.Packets {
+        if packet.Callback == nil {
+            panic(fmt.Sprintf("Callback from [%s] is invalid.", packet.Name))
+        }
+        packet.Callback(hFileId, &outH, &outT, packet)
+    }
+
+    Shared.OpenAndWriteToRelativeFileIfDifferent(relTargetGh, outH.String(), true)
+    Shared.OpenAndWriteToRelativeFileIfDifferent(relTargetGt, outT.String(), true)
 
     return
 }

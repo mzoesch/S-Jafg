@@ -9,6 +9,13 @@ import (
 var DirPath_Venv string = ".venv"
 var DirPath_Saved string = "Saved"
 
+var DirPath_Bin string = "Binaries"
+var DirPath_Int string = "Intermediate"
+
+var DirPath_Config string = "Config"
+
+var FilePath_ConfigFile string = fmt.Sprintf("%s/Program.cfg", DirPath_Config)
+
 var FileName_LuaOut string = "__buildSolution.lua"
 func MakeFilePath_LuaOut(sln *Solution) string /* relative */ {
     return fmt.Sprintf("%s/%s", sln.GetSavedRelativeDir(), FileName_LuaOut)

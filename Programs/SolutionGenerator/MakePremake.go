@@ -125,6 +125,11 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
         }
         Wwi(b, 1, fmt.Sprintf("configurations { '%s' }", t.Name))
     }
+
+    if GbPredefineJafgMacros {
+        Wwi(b, 1, "defines { 'DECLARE_JAFG_CLASS', 'GENERATED_CLASS_BODY' }")
+    }
+
     Wwi(b, 1, "filter { 'platforms:Windows64' }")
     Wwi(b, 2, "system ('Windows')")
     Wwi(b, 2, "architecture 'x86_64'")
@@ -189,7 +194,7 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
         Wwi(b, 4, fmt.Sprintf("'%s/%s/Source/**.hpp',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
         Wwi(b, 4, fmt.Sprintf("'%s/%s/Source/**.c',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
         Wwi(b, 4, fmt.Sprintf("'%s/%s/Source/**.cpp',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
-        Wwi(b, 3, "},\n")
+        Wwi(b, 3, "},")
         Wwi(b, 2, "}")
 
         Wwi(b, 2, "includedirs {")
@@ -206,13 +211,22 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
 
             Wwi(b, 2, fmt.Sprintf("filter { 'configurations:%s' }", volatileTarget.Name))
 
-            if module.PchUsage.IsAllowed() {
+            if volatileModule.PchUsage.IsAllowed() {
                 var pchSource string = fmt.Sprintf("%s/%s/%s/%s",
                     volatileModule.GetFunctionalRelativeDir(), Core.CgtDir, volatileTarget.Name, Core.FilePath_PchSource)
                 Wwi(b, 3, fmt.Sprintf("pchheader '%s'", Core.FilePath_PchHeader))
                 Wwi(b, 3, fmt.Sprintf("pchsource '%s'", pchSource))
-                Wwi(b, 3, fmt.Sprintf("includedirs { '%s' }", volatileModule.GetFunctionalRelativeDir()))
-                Wwi(b, 3, fmt.Sprintf("forceincludes { '%s' }", Core.FilePath_PchHeader))
+                Wwi(b, 3, fmt.Sprintf("filter { 'configurations:%s', 'files:**.c' }", volatileTarget.Name))
+                Wwi(b, 4, "flags { 'NoPCH' }")
+                Wwi(b, 3, fmt.Sprintf("filter { 'configurations:%s', 'files:**.cpp' }", volatileTarget.Name))
+                Wwi(b, 4, fmt.Sprintf("forceincludes { '%s' }", Core.FilePath_PchHeader))
+                Wwi(b, 3, fmt.Sprintf("filter { 'configurations:%s' }", volatileTarget.Name))
+            }
+
+            if volatileModule.Kind.IsLaunch() {
+                Wwi(b, 3, fmt.Sprintf("filter { 'configurations:%s', 'platforms:Windows64' }", volatileTarget.Name))
+                Wwi(b, 4, "entrypoint 'WinMainCRTStartup'")
+                Wwi(b, 3, fmt.Sprintf("filter { 'configurations:%s' }", volatileTarget.Name))
             }
 
             Wwi(b, 3, "if host == 'windows' then")
@@ -220,7 +234,9 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
             Wwi(b, 5,
                 fmt.Sprintf("_WORKING_DIR .. '/%s/Scripts/python.exe ' .. _WORKING_DIR .. '/Program.py ", Core.DirPath_Venv)+
                     "--INVOKE --BuildTool pre-build "+
+                    fmt.Sprintf("SLN=%s ", sln.Name)+
                     fmt.Sprintf("MODULE=%s ", volatileModule.GetUniqueName())+
+                    "KIND=%{cfg.kind} "+
                     "SYSTEM=%{cfg.system} ARCH=%{cfg.architecture} "+
                     "TARGET=%{cfg.buildcfg} PLATFORM=%{cfg.platform}'",
                 )
@@ -229,26 +245,34 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
             Wwi(b, 5,
                 fmt.Sprintf("_WORKING_DIR .. '/%s/Scripts/python.exe ' .. _WORKING_DIR .. '/Program.py ", Core.DirPath_Venv)+
                     "--INVOKE --BuildTool post-build "+
+                    fmt.Sprintf("SLN=%s ", sln.Name)+
                     fmt.Sprintf("MODULE=%s ", volatileModule.GetUniqueName())+
+                    "KIND=%{cfg.kind} "+
                     "SYSTEM=%{cfg.system} ARCH=%{cfg.architecture} "+
                     "TARGET=%{cfg.buildcfg} PLATFORM=%{cfg.platform}'",
             )
             Wwi(b, 4, "}")
             Wwi(b, 3, "else")
             Wwi(b, 4, "prebuildcommands {")
-            Wwi(b, 5, fmt.Sprintf("_WORKING_DIR .. '/%s/bin/python3 ' .. _WORKING_DIR .. '/Program.py ", Core.DirPath_Venv)+
-                "--INVOKE --BuildTool pre-build "+
-                fmt.Sprintf("MODULE=%s ", volatileModule.GetUniqueName())+
-                "SYSTEM=%{cfg.system} ARCH=%{cfg.architecture} "+
-                "TARGET=%{cfg.buildcfg} PLATFORM=%{cfg.platform}'",
+            Wwi(b, 5,
+                fmt.Sprintf("_WORKING_DIR .. '/%s/bin/python3 ' .. _WORKING_DIR .. '/Program.py ", Core.DirPath_Venv)+
+                    "--INVOKE --BuildTool pre-build "+
+                    fmt.Sprintf("SLN=%s ", sln.Name)+
+                    fmt.Sprintf("MODULE=%s ", volatileModule.GetUniqueName())+
+                    "KIND=%{cfg.kind} "+
+                    "SYSTEM=%{cfg.system} ARCH=%{cfg.architecture} "+
+                    "TARGET=%{cfg.buildcfg} PLATFORM=%{cfg.platform}'",
             )
             Wwi(b, 4, "}")
             Wwi(b, 4, "postbuildcommands {")
-            Wwi(b, 5, fmt.Sprintf("_WORKING_DIR .. '/%s/bin/python3 ' .. _WORKING_DIR .. '/Program.py ", Core.DirPath_Venv)+
-                "--INVOKE --BuildTool post-build "+
-                fmt.Sprintf("MODULE=%s ", volatileModule.GetUniqueName())+
-                "SYSTEM=%{cfg.system} ARCH=%{cfg.architecture} "+
-                "TARGET=%{cfg.buildcfg} PLATFORM=%{cfg.platform}'",
+            Wwi(b, 5,
+                fmt.Sprintf("_WORKING_DIR .. '/%s/bin/python3 ' .. _WORKING_DIR .. '/Program.py ", Core.DirPath_Venv)+
+                    "--INVOKE --BuildTool post-build "+
+                    fmt.Sprintf("SLN=%s ", sln.Name)+
+                    fmt.Sprintf("MODULE=%s ", volatileModule.GetUniqueName())+
+                    "KIND=%{cfg.kind} "+
+                    "SYSTEM=%{cfg.system} ARCH=%{cfg.architecture} "+
+                    "TARGET=%{cfg.buildcfg} PLATFORM=%{cfg.platform}'",
             )
             Wwi(b, 4, "}")
             Wwi(b, 3, "end")
@@ -280,26 +304,30 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
             Wwi(b, 3, "}")
 
             Wwi(b, 3, "files {")
-            Wwi(b, 4, fmt.Sprintf("'%s/%s/%s/**%s',", module.GetFunctionalRelativeDir(), Core.CghDir, volatileTarget.Name, Core.GhExtension))
-            Wwi(b, 4, fmt.Sprintf("'%s/%s/%s/**%s',", module.GetFunctionalRelativeDir(), Core.CgtDir, volatileTarget.Name, Core.GtExtension))
+            Wwi(b, 4, fmt.Sprintf("'%s/%s/%s/**%s',", volatileModule.GetFunctionalRelativeDir(), Core.CghDir, volatileTarget.Name, Core.GhExtension))
+            Wwi(b, 4, fmt.Sprintf("'%s/%s/%s/**%s',", volatileModule.GetFunctionalRelativeDir(), Core.CgtDir, volatileTarget.Name, Core.GtExtension))
             Wwi(b, 3, "}")
 
             Wwi(b, 3, "includedirs {")
-            Wwi(b, 4, fmt.Sprintf("'%s/%s/%s',", module.GetFunctionalRelativeDir(), Core.CghDir, volatileTarget.Name))
-            for _, d := range volatileModule.PublicDependencies {
-                Wwi(b, 4, fmt.Sprintf("'%s/%s/Source/Public/',", sln.GetChdirUpRelToBuildFile(), volatileTarget.GetFunctionalRelativeDirFromModule(d)))
+            Wwi(b, 4, fmt.Sprintf("'%s/%s/%s',", volatileModule.GetFunctionalRelativeDir(), Core.CghDir, volatileTarget.Name))
+            for _, d := range transitiveDependencies {
+                if !d.IsEqual(volatileModule) {
+                    Wwi(b, 4, fmt.Sprintf("'%s/%s/Source/Public',", sln.GetChdirUpRelToBuildFile(), d.GetFunctionalRelativeDir()))
+                }
             }
-            for _, d := range volatileModule.PrivateDependencies {
-                Wwi(b, 4, fmt.Sprintf("'%s/%s/Source/Public/',", sln.GetChdirUpRelToBuildFile(), volatileTarget.GetFunctionalRelativeDirFromModule(d)))
+            for _, d := range volatileModule.NativeIncludeDirs {
+                Wwi(b, 4, fmt.Sprintf("'%s/%s',", sln.GetChdirUpRelToBuildFile(), d))
             }
             Wwi(b, 3, "}")
 
             Wwi(b, 3, "links {")
-            for _, d := range volatileModule.PublicDependencies {
-                Wwi(b, 4, fmt.Sprintf("'%s',", d.Name))
+            for _, d := range transitiveDependencies {
+                if !d.IsEqual(volatileModule) {
+                    Wwi(b, 4, fmt.Sprintf("'%s',", d.Name))
+                }
             }
-            for _, d := range volatileModule.PrivateDependencies {
-                Wwi(b, 4, fmt.Sprintf("'%s',", d.Name))
+            for _, d := range volatileModule.NativeDependencies {
+                Wwi(b, 4, fmt.Sprintf("'%s/%s',", sln.GetChdirUpRelToBuildFile(), d))
             }
             Wwi(b, 3, "}")
 

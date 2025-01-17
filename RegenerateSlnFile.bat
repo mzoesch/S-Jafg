@@ -12,18 +12,8 @@ IF %ERRORLEVEL% NEQ 0 (
     call :pause_if_needed %1
     exit /b 1
 )
-
-echo Creating virtual environment (%VENV_DIR%\) ...
-python3.11 -m venv %VENV_DIR%
-
-echo Activating virtual environment ...
-call %VENV_DIR%\Scripts\activate.bat
-
-echo Virtual environment activated with:
-python --version
-
 echo Running Program.py ...
-python ./Program.py --UpdateSubmodules --ValidatePython --ValidateGo --ValidatePremake AllPlatforms --ValidateCmake --UpdateCachedData --INVOKE --SolutionGenerator GenerateAll
+%VENV_DIR%\Scripts\python.exe ./Program.py --UpdateCachedData --INVOKE --SolutionGenerator GenerateAll
 
 call :pause_if_needed %1
 

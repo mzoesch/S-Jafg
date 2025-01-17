@@ -173,7 +173,10 @@ def apply_target(solution: Solution, target: Target) -> dict:
                 'PchContent': module.pch_content,
                 'Kind': module_kind_to_string(module.kind),
                 'PublicDependencies': module.public_dependencies,
-                'PrivateDependencies': module.private_dependencies
+                'PrivateDependencies': module.private_dependencies,
+                'PrivateNativeIncludeDirs': module.private_native_include_dirs,
+                'PrivateNativeDependencies': module.private_native_dependencies,
+                'PrivateAdditionalCopiedFiles': module.private_additional_copied_files,
             })
 
     return target_cursor

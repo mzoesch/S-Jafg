@@ -46,6 +46,8 @@ FORCEINLINE auto GetDefaultObjectInitializer() -> LObjectInitializer
 namespace Private
 {
 
+class NextIsObjectBaseClass;
+
 /**
  * The base class for all objects that share a lifetime among its owner and that are detected automatically
  * by the jafg build tool to allow for dynamic casting, network replication, etc.

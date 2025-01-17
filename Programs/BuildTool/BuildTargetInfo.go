@@ -15,6 +15,7 @@ type BuildTargetInfo struct {
     Arch     string
     Target   string
     Platform string
+    Kind     string
 }
 
 // GBuildTargetInfo is the global BuildTargetInfo instance. Might be nil, so do not use without checking.
@@ -34,12 +35,19 @@ func (bti *BuildTargetInfo) Initialize(args []string) {
             bti.Target = strings.Split(arg, "=")[1]
         } else if strings.Contains(arg, "PLATFORM=") {
             bti.Platform = strings.Split(arg, "=")[1]
+        } else if strings.Contains(arg, "KIND=") {
+            bti.Kind = strings.Split(arg, "=")[1]
         }
-
         continue
     }
 
-    if bti.Sln == "" || bti.Module == "" || bti.System == "" || bti.Arch == "" || bti.Target == "" || bti.Platform == "" {
+    if bti.Sln == "" ||
+        bti.Module == "" ||
+        bti.System == "" ||
+        bti.Arch == "" ||
+        bti.Target == "" ||
+        bti.Platform == "" ||
+        bti.Kind == "" {
         panic("Could not find all necessary build target information.")
     }
 
@@ -57,7 +65,6 @@ func (bti *BuildTargetInfo) PrettyPrint() {
 
     return
 }
-
 
 func (bti *BuildTargetInfo) GetSlnPointer() *Core.Solution {
     for idx, _ := range Core.GApp.Solutions {
@@ -117,18 +124,18 @@ func (bti *BuildTargetInfo) GetModulePointerChecked() *Core.Module {
 }
 
 func (bti *BuildTargetInfo) GetRelativeSavedModuleDir() string {
-    return fmt.Sprintf("%s/%s/",
+    return fmt.Sprintf("%s/%s",
         bti.GetSlnPointerChecked().GetSavedRelativeDir(),
         bti.GetModulePointerChecked().GetFunctionalRelativeDir())
 }
 func (bti *BuildTargetInfo) GetRelativeModuleGhDir() string {
-    return fmt.Sprintf("%s/%s/",
+    return fmt.Sprintf("%s/%s",
         bti.GetRelativeSavedModuleDir(),
         Core.GhDir,
     )
 }
 func (bti *BuildTargetInfo) GetRelativeModuleGtDir() string {
-    return fmt.Sprintf("%s/%s/",
+    return fmt.Sprintf("%s/%s",
         bti.GetRelativeSavedModuleDir(),
         Core.GtDir,
     )
@@ -140,3 +147,36 @@ func (bti *BuildTargetInfo) GetRelativeSourceDir() string {
 
     return bti.Module[1:] + "/Source"
 }
+
+func (bti *BuildTargetInfo) GetRelativeBinaryDirNoModules() string {
+    return fmt.Sprintf("%s/%s-%s/%s",
+        Core.DirPath_Bin,
+        bti.System, bti.Arch, bti.Target,
+    )
+}
+
+func (bti *BuildTargetInfo) GetRelativeBinaryDir() string {
+    return fmt.Sprintf("%s/%s",
+        bti.GetRelativeBinaryDirNoModules(),
+        bti.GetModulePointerChecked().GetFunctionalRelativeDir(),
+    )
+}
+
+func (bti *BuildTargetInfo) GetTranslatedKind() Core.ModuleKind {
+    return Core.ModuleKindFromString(bti.Kind)
+}
+
+func (bti *BuildTargetInfo) GetSharedLibExtension() string {
+    if bti.Platform == "Windows64" {
+        return ".dll"
+    }
+    panic(fmt.Sprintf("Platform [%s] is missing implementation.", bti.Platform))
+}
+
+func (bti *BuildTargetInfo) GetSharedLibDebugSymbolsExtension() string {
+    if bti.Platform == "Windows64" {
+        return ".pdb"
+    }
+    panic(fmt.Sprintf("Platform [%s] is missing implementation.", bti.Platform))
+}
+

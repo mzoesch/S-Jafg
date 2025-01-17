@@ -4,6 +4,7 @@ package Core
 
 import (
     "Jafg/Shared"
+    "strings"
 )
 
 type Module struct {
@@ -14,6 +15,9 @@ type Module struct {
     Kind                ModuleKind
     PublicDependencies  []Dependency
     PrivateDependencies []Dependency
+    NativeIncludeDirs   []string
+    NativeDependencies  []string
+    AdditionalCopyFiles []string
 }
 
 func (mod *Module) GetUniqueName() string {
@@ -101,4 +105,48 @@ func (mod *Module) GetTransitiveAllDependencies(target *Target, out *[]*Module) 
     }
 
     return
+}
+
+func (mod *Module) GetTransitiveAllDependenciesWithPrivate(target *Target, out *[]*Module) {
+    if Shared.ContainsByPredicate(*out, func(m *Module) bool {
+        return mod.IsEqual(m)
+    }) {
+        return
+    }
+
+    *out = append(*out, mod)
+
+    for _, d := range mod.PublicDependencies {
+        var dAsM *Module = Shared.GetByPredicate(target.Modules, func(m Module) bool {
+            return m.IsDependency(&d)
+        })
+        if dAsM == nil {
+            panic("Private dependency not found.")
+        }
+        if !Shared.ContainsByPredicate(*out, func(m *Module) bool {
+            return m.IsEqual(dAsM)
+        }) {
+            dAsM.GetTransitiveAllDependenciesWithPrivate(target, out)
+        }
+    }
+
+    for _, d := range mod.PrivateDependencies {
+        var dAsM *Module = Shared.GetByPredicate(target.Modules, func(m Module) bool {
+            return m.IsDependency(&d)
+        })
+        if dAsM == nil {
+            panic("Private dependency not found.")
+        }
+        if !Shared.ContainsByPredicate(*out, func(m *Module) bool {
+            return m.IsEqual(dAsM)
+        }) {
+            dAsM.GetTransitiveAllDependenciesWithPrivate(target, out)
+        }
+    }
+
+    return
+}
+
+func (mod *Module) GetChdirUpRelToBuildFile() string {
+    return ".." + strings.Repeat("/..", Shared.CountRuneInString(mod.RelativeDir, '/')+1)
 }

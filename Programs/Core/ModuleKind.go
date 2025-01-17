@@ -2,6 +2,8 @@
 
 package Core
 
+import "fmt"
+
 type ModuleKind int
 
 const (
@@ -50,13 +52,13 @@ func (kind ModuleKind) ToLuaString() string {
 
 func ModuleKindFromString(str string) ModuleKind {
     switch str {
-    case "Shared", "SHARED":
+    case "Shared", "SHARED", "SharedLib":
         return MODULE_KIND_SHARED
-    case "Static", "STATIC":
+    case "Static", "STATIC", "StaticLib":
         return MODULE_KIND_STATIC
-    case "Launch", "LAUNCH":
+    case "Launch", "LAUNCH", "ConsoleApp":
         return MODULE_KIND_LAUNCH
     default:
-        panic("Unknown ModuleKind value.")
+        panic(fmt.Sprintf("Unknown ModuleKind value: [%s].", str))
     }
 }

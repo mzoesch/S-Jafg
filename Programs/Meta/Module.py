@@ -42,6 +42,20 @@ class Module:
         """
         self.private_dependencies: List[str] = []
 
+        """
+        Private native include dirs and dependencies. Can be anything the compiler / linker understands.
+        Only private exists and not public so that these dependencies are never transitively included.
+        This is by design as you should always build an interface for native deps.
+        Paths are relative to the top level engine root dir.
+        """
+        self.private_native_include_dirs: List[str] = []
+        self.private_native_dependencies: List[str] = []
+
+        """
+        Files that always have to be in the same dir (not subdir) when the lib / app is being launched.
+        """
+        self.private_additional_copied_files: List[str] = []
+
         return
 
     def get_unique_name(self) -> str:
@@ -58,5 +72,8 @@ class Module:
         self.kind = ModuleKind.SHARED
         self.public_dependencies = []
         self.private_dependencies = []
+        self.private_native_include_dirs = []
+        self.private_native_dependencies = []
+        self.private_additional_copied_files = []
 
         return None

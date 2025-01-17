@@ -3,9 +3,11 @@
 package BuildTool
 
 import (
+    "Jafg/Core"
     "Jafg/Shared"
     "fmt"
     "slices"
+    "strings"
 )
 
 //
@@ -61,5 +63,80 @@ func LaunchPreBuildTasks(args []string) {
 }
 
 func LaunchPostBuildTasks(args []string) {
-    // Do something
+    if GBuildTargetInfo.GetTranslatedKind().IsLaunch() {
+        CopyRelevantBinariesToLaunch()
+    }
+
+    return
+}
+
+func CopyRelevantBinariesToLaunch() {
+    var tar *Core.Target = GBuildTargetInfo.GetTargetPointerChecked()
+    var mod *Core.Module = GBuildTargetInfo.GetModulePointerChecked()
+
+    var allDeps []*Core.Module
+    mod.GetTransitiveAllDependenciesWithPrivate(tar, &allDeps)
+
+    fmt.Println("Copying shared binaries and other dependencies to launch directory ...")
+
+    var copied int = 0
+    for idx, _ := range allDeps {
+        var dMod *Core.Module = allDeps[idx]
+        if dMod.Kind.IsShared() {
+            if CopyBinaryToLaunch(fmt.Sprintf(
+                "%s/%s/%s%s",
+                GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
+                dMod.GetFunctionalRelativeDir(),
+                dMod.Name,
+                GBuildTargetInfo.GetSharedLibExtension(),
+            )) {
+                copied++
+            }
+
+            if strings.Contains(GBuildTargetInfo.Target, "Shipping") == false {
+                if CopyBinaryToLaunch(fmt.Sprintf(
+                    "%s/%s/%s%s",
+                    GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
+                    dMod.GetFunctionalRelativeDir(),
+                    dMod.Name,
+                    GBuildTargetInfo.GetSharedLibDebugSymbolsExtension(),
+                )) {
+                    copied++
+                }
+            }
+        }
+
+        for _, bin := range allDeps[idx].NativeDependencies {
+            if CopyBinaryToLaunch(bin) {
+                copied++
+            }
+        }
+
+        for _, bin := range allDeps[idx].AdditionalCopyFiles {
+            if CopyBinaryToLaunch(bin) {
+                copied++
+            }
+        }
+
+        continue
+    }
+
+    fmt.Printf("Successfully copied %d files to launch directory.\n", copied)
+
+    return
+}
+
+func CopyBinaryToLaunch(relSource string) bool {
+    var lastSlash int = strings.LastIndex(relSource, "/")
+    if lastSlash == -1 {
+        panic(fmt.Sprintf("Path [%s] is not valid.", relSource))
+    }
+    var relTarget string = fmt.Sprintf("%s/%s", GBuildTargetInfo.GetRelativeBinaryDir(), relSource[lastSlash+1:])
+
+    if Shared.CopyFileIfDifferent(Shared.ToAbsolutePath(relSource), Shared.ToAbsolutePath(relTarget), false) {
+        fmt.Printf("Copied [%s] to [%s].\n", relSource, relTarget)
+        return true
+    }
+
+    return false
 }

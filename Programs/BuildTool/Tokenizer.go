@@ -105,10 +105,37 @@ type Token struct {
     Type    ETokenType
     Content string
     Line    int
+    Info    []string
 }
 
 func (t *Token) ToString() string {
     return fmt.Sprintf("{%s, %s, %d}", t.Type.ToString(), t.Content, t.Line)
+}
+
+func FindNextToken(tokens *[]Token, startIdx int, tokenType ETokenType) int {
+    for idx, token := range *tokens {
+        if idx <= startIdx {
+            continue
+        }
+        if token.Type == tokenType {
+            return idx
+        }
+    }
+    return -1
+}
+
+func FindPreviousToken(tokens *[]Token, startIdx int, tokenType ETokenType) int {
+    for idxSmall, _ := range *tokens {
+        var idx int = (len(*tokens)-1) - idxSmall
+        if idx > startIdx {
+            continue
+        }
+        var token *Token = &(*tokens)[idx]
+        if token.Type == tokenType {
+            return idx
+        }
+    }
+    return -1
 }
 
 // Word describes a collection of runes that are split with the C/C++ rules in mind. The most minimal categorizable
@@ -122,7 +149,7 @@ type Word struct {
 func Tokenize(debugDisplayName string, content string) []Token {
     var out []Token
 
-    var words []Word = SplitValidCppFile(content,
+    var words []Word = SplitValidCppFile(debugDisplayName, content,
         []string{
             ",", "{", "}", "(", ")", ";", "<", ">", "=", "+", "-", "*",
             "&", "|", "^", "!", "~", "?", ".", ",", "[", "]",
@@ -202,7 +229,14 @@ func Tokenize(debugDisplayName string, content string) []Token {
             }
             out = append(out, Token{Type: TOKEN_PRAGMA, Content: nextnext, Line: line})
         } else if word == "DECLARE_JAFG_CLASS" {
+            if idx > 1 {
+                if words[idx-1].Content == "#ifdef" {
+                    continue
+                }
+            }
+
             var cursor int = idx
+
             for _, word2 := range words[idx:] {
                 cursor++
                 if word2.Content == "class" {
@@ -224,7 +258,49 @@ func Tokenize(debugDisplayName string, content string) []Token {
             if cursor >= len(words) {
                 panic("Could not find class name after DECLARE_JAFG_CLASS.")
             }
-            out = append(out, Token{Type: TOKEN_DECLARE_CLASS, Content: words[cursor].Content, Line: line})
+            var classnameCursor int = cursor
+
+            for _, word2 := range words[cursor:] {
+                cursor++
+                if word2.Content == ":" {
+                    break
+                }
+            }
+            if cursor >= len(words) &&
+                len(out) > 0 &&
+                out[len(out)-1].Type == TOKEN_PRAGMA &&
+                out[len(out)-1].Content == "\"NextIsObjectBaseClass\"" {
+                out = append(out, Token{
+                    Type: TOKEN_DECLARE_CLASS,
+                    Content: words[classnameCursor].Content,
+                    Line: line,
+                    Info: []string{"NextIsObjectBaseClass"},
+                })
+            } else {
+                if cursor >= len(words) {
+                    panic("Could not find super class after DECLARE_JAFG_CLASS.")
+                }
+                if words[cursor].Content == ":" {
+                    cursor++
+                }
+                if cursor >= len(words) {
+                    panic("Could not find super class name after DECLARE_JAFG_CLASS.")
+                }
+                if words[cursor].Content != "public" {
+                    panic("Expected public keyword for super class DECLARE_JAFG_CLASS.")
+                }
+                cursor++
+                if cursor >= len(words) {
+                    panic("Could not find super class name after DECLARE_JAFG_CLASS.")
+                }
+
+                out = append(out, Token{
+                    Type: TOKEN_DECLARE_CLASS,
+                    Content: words[classnameCursor].Content,
+                    Line: line,
+                    Info: []string{words[cursor].Content},
+                })
+            }
         } else if word == "GENERATED_CLASS_BODY" {
             out = append(out, Token{Type: TOKEN_GENERATED_CLASS_BODY, Content: "", Line: line})
         }
@@ -252,7 +328,7 @@ func Tokenize(debugDisplayName string, content string) []Token {
 
 // SplitValidCppFile splits a C/C++ file by the given splits. Will not split if inside a define, string or comment.
 // Comments are ignored and not included in the output.
-func SplitValidCppFile(content string, splits []string, splitsNoOut []string) []Word {
+func SplitValidCppFile(debugDisplayName string, content string, splits []string, splitsNoOut []string) []Word {
     var out []Word
 
     var line int = 1
@@ -303,16 +379,15 @@ func SplitValidCppFile(content string, splits []string, splitsNoOut []string) []
             continue
         }
 
-        if char == '#' && lastChar == '\n' {
-            if (len(content) > idx+len("define")+1) && (content[idx+1:idx+len("define")+1] == "define") {
-                if current != "" {
-                    panic("Unexpected define.")
-                }
-                bInDefine = true
-                lastLastChar = lastChar
-                lastChar = char
-                continue
+        if char == '#' {
+            if current != "" {
+                out = append(out, Word{Content: current, Line: line})
+                current = ""
             }
+            bInDefine = true
+            lastLastChar = lastChar
+            lastChar = char
+            continue
         }
         if char == '"' && lastChar != '\\' {
             if bInString {

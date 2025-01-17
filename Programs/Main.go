@@ -139,6 +139,9 @@ func LoadTarget(sln *Core.Solution, data map[string]interface{}) {
 func LoadModule(target *Core.Target, data map[string]interface{}) {
     var pubDeps []string = Shared.GetJsonStringArray(data, "PublicDependencies")
     var prvDeps []string = Shared.GetJsonStringArray(data, "PrivateDependencies")
+    var natIncs []string = Shared.GetJsonStringArray(data, "PrivateNativeIncludeDirs")
+    var natDeps []string = Shared.GetJsonStringArray(data, "PrivateNativeDependencies")
+    var addiFls []string = Shared.GetJsonStringArray(data, "PrivateAdditionalCopiedFiles")
 
     module := Core.Module{}
     module.Name = Shared.GetJsonString(data, "Name")
@@ -151,6 +154,15 @@ func LoadModule(target *Core.Target, data map[string]interface{}) {
     }
     for _, dep := range prvDeps {
         module.PrivateDependencies = append(module.PrivateDependencies, Core.DependencyFromString(dep))
+    }
+    for _, inc := range natIncs {
+        module.NativeIncludeDirs = append(module.NativeIncludeDirs, inc)
+    }
+    for _, dep := range natDeps {
+        module.NativeDependencies = append(module.NativeDependencies, dep)
+    }
+    for _, fl := range addiFls {
+        module.AdditionalCopyFiles = append(module.AdditionalCopyFiles, fl)
     }
 
     target.Modules = append(target.Modules, module)

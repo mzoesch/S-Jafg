@@ -107,6 +107,16 @@
     Development macros.
 -----------------------------------------------------------------------------*/
 
+#ifdef __INTELLISENSE__
+    #ifndef WITH_IDEA_INTELLISENSE
+        #define WITH_IDEA_INTELLISENSE          1
+    #endif /* !WITH_IDEA_INTELLISENSE */
+#else /* __INTELLISENSE__ */
+    #ifndef WITH_IDEA_INTELLISENSE
+        #define WITH_IDEA_INTELLISENSE          0
+    #endif /* !WITH_IDEA_INTELLISENSE */
+#endif /* !__INTELLISENSE__ */
+
 /**
  * Checks are only executed in development configurations unless overridden in manual build.
  */
