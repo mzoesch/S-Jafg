@@ -2,25 +2,43 @@
 
 #pragma once
 
-#define PRIVATE_JAFG_CORE_COMMA                                           ,
+#define PRIVATE_JAFG_CORE_COMMA                                         ,
 
-#define PRIVATE_JAFG_CORE_JOIN_INNER_TWO(   A, B                        ) A##B
-#define PRIVATE_JAFG_CORE_JOIN_INNER_THREE( A, B, C                     ) A##B##C
-#define PRIVATE_JAFG_CORE_JOIN_INNER_FOUR(  A, B, C, D                  ) A##B##C##D
-#define PRIVATE_JAFG_CORE_JOIN_INNER_FIVE(  A, B, C, D, E               ) A##B##C##D##E
-#define PRIVATE_JAFG_CORE_JOIN_INNER_SIX(   A, B, C, D, E, F            ) A##B##C##D##E##F
-#define PRIVATE_JAFG_CORE_JOIN_INNER_SEVEN( A, B, C, D, E, F, G         ) A##B##C##D##E##F##G
-#define PRIVATE_JAFG_CORE_JOIN_INNER_EIGHT( A, B, C, D, E, F, G, H      ) A##B##C##D##E##F##G##H
-#define PRIVATE_JAFG_CORE_JOIN_INNER_NINE(  A, B, C, D, E, F, G, H, I   ) A##B##C##D##E##F##G##H##I
+#define PRIVATE_JAFG_CORE_JOIN_INNER_TWO(   A, B                      ) A##B
+#define PRIVATE_JAFG_CORE_JOIN_INNER_THREE( A, B, C                   ) A##B##C
+#define PRIVATE_JAFG_CORE_JOIN_INNER_FOUR(  A, B, C, D                ) A##B##C##D
+#define PRIVATE_JAFG_CORE_JOIN_INNER_FIVE(  A, B, C, D, E             ) A##B##C##D##E
+#define PRIVATE_JAFG_CORE_JOIN_INNER_SIX(   A, B, C, D, E, F          ) A##B##C##D##E##F
+#define PRIVATE_JAFG_CORE_JOIN_INNER_SEVEN( A, B, C, D, E, F, G       ) A##B##C##D##E##F##G
+#define PRIVATE_JAFG_CORE_JOIN_INNER_EIGHT( A, B, C, D, E, F, G, H    ) A##B##C##D##E##F##G##H
+#define PRIVATE_JAFG_CORE_JOIN_INNER_NINE(  A, B, C, D, E, F, G, H, I ) A##B##C##D##E##F##G##H##I
 
-#define PRIVATE_JAFG_CORE_JOIN_OUTER_TWO(   A, B                        ) PRIVATE_JAFG_CORE_JOIN_INNER_TWO(   A, B                       )
-#define PRIVATE_JAFG_CORE_JOIN_OUTER_THREE( A, B, C                     ) PRIVATE_JAFG_CORE_JOIN_INNER_THREE( A, B, C                    )
-#define PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(  A, B, C, D                  ) PRIVATE_JAFG_CORE_JOIN_INNER_FOUR(  A, B, C, D                 )
-#define PRIVATE_JAFG_CORE_JOIN_OUTER_FIVE(  A, B, C, D, E               ) PRIVATE_JAFG_CORE_JOIN_INNER_FIVE(  A, B, C, D, E              )
-#define PRIVATE_JAFG_CORE_JOIN_OUTER_SIX(   A, B, C, D, E, F            ) PRIVATE_JAFG_CORE_JOIN_INNER_SIX(   A, B, C, D, E, F           )
-#define PRIVATE_JAFG_CORE_JOIN_OUTER_SEVEN( A, B, C, D, E, F, G         ) PRIVATE_JAFG_CORE_JOIN_INNER_SEVEN( A, B, C, D, E, F, G        )
-#define PRIVATE_JAFG_CORE_JOIN_OUTER_EIGHT( A, B, C, D, E, F, G, H      ) PRIVATE_JAFG_CORE_JOIN_INNER_EIGHT( A, B, C, D, E, F, G, H     )
-#define PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(  A, B, C, D, E, F, G, H, I   ) PRIVATE_JAFG_CORE_JOIN_INNER_NINE(  A, B, C, D, E, F, G, H, I  )
+#define PRIVATE_JAFG_CORE_JOIN_OUTER_TWO(   A, B                      ) PRIVATE_JAFG_CORE_JOIN_INNER_TWO(   A, B                      )
+#define PRIVATE_JAFG_CORE_JOIN_OUTER_THREE( A, B, C                   ) PRIVATE_JAFG_CORE_JOIN_INNER_THREE( A, B, C                   )
+#define PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(  A, B, C, D                ) PRIVATE_JAFG_CORE_JOIN_INNER_FOUR(  A, B, C, D                )
+#define PRIVATE_JAFG_CORE_JOIN_OUTER_FIVE(  A, B, C, D, E             ) PRIVATE_JAFG_CORE_JOIN_INNER_FIVE(  A, B, C, D, E             )
+#define PRIVATE_JAFG_CORE_JOIN_OUTER_SIX(   A, B, C, D, E, F          ) PRIVATE_JAFG_CORE_JOIN_INNER_SIX(   A, B, C, D, E, F          )
+#define PRIVATE_JAFG_CORE_JOIN_OUTER_SEVEN( A, B, C, D, E, F, G       ) PRIVATE_JAFG_CORE_JOIN_INNER_SEVEN( A, B, C, D, E, F, G       )
+#define PRIVATE_JAFG_CORE_JOIN_OUTER_EIGHT( A, B, C, D, E, F, G, H    ) PRIVATE_JAFG_CORE_JOIN_INNER_EIGHT( A, B, C, D, E, F, G, H    )
+#define PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(  A, B, C, D, E, F, G, H, I ) PRIVATE_JAFG_CORE_JOIN_INNER_NINE(  A, B, C, D, E, F, G, H, I )
+
+#define PRIVATE_JAFG_CORE_CAT_INNER_TWO(   A, B                      ) A B
+#define PRIVATE_JAFG_CORE_CAT_INNER_THREE( A, B, C                   ) A B C
+#define PRIVATE_JAFG_CORE_CAT_INNER_FOUR(  A, B, C, D                ) A B C D
+#define PRIVATE_JAFG_CORE_CAT_INNER_FIVE(  A, B, C, D, E             ) A B C D E
+#define PRIVATE_JAFG_CORE_CAT_INNER_SIX(   A, B, C, D, E, F          ) A B C D E F
+#define PRIVATE_JAFG_CORE_CAT_INNER_SEVEN( A, B, C, D, E, F, G       ) A B C D E F G
+#define PRIVATE_JAFG_CORE_CAT_INNER_EIGHT( A, B, C, D, E, F, G, H    ) A B C D E F G H
+#define PRIVATE_JAFG_CORE_CAT_INNER_NINE(  A, B, C, D, E, F, G, H, I ) A B C D E F G H I
+
+#define PRIVATE_JAFG_CORE_CAT_OUTER_TWO(   A, B                      ) PRIVATE_JAFG_CORE_CAT_INNER_TWO(   A, B                      )
+#define PRIVATE_JAFG_CORE_CAT_OUTER_THREE( A, B, C                   ) PRIVATE_JAFG_CORE_CAT_INNER_THREE( A, B, C                   )
+#define PRIVATE_JAFG_CORE_CAT_OUTER_FOUR(  A, B, C, D                ) PRIVATE_JAFG_CORE_CAT_INNER_FOUR(  A, B, C, D                )
+#define PRIVATE_JAFG_CORE_CAT_OUTER_FIVE(  A, B, C, D, E             ) PRIVATE_JAFG_CORE_CAT_INNER_FIVE(  A, B, C, D, E             )
+#define PRIVATE_JAFG_CORE_CAT_OUTER_SIX(   A, B, C, D, E, F          ) PRIVATE_JAFG_CORE_CAT_INNER_SIX(   A, B, C, D, E, F          )
+#define PRIVATE_JAFG_CORE_CAT_OUTER_SEVEN( A, B, C, D, E, F, G       ) PRIVATE_JAFG_CORE_CAT_INNER_SEVEN( A, B, C, D, E, F, G       )
+#define PRIVATE_JAFG_CORE_CAT_OUTER_EIGHT( A, B, C, D, E, F, G, H    ) PRIVATE_JAFG_CORE_CAT_INNER_EIGHT( A, B, C, D, E, F, G, H    )
+#define PRIVATE_JAFG_CORE_CAT_OUTER_NINE(  A, B, C, D, E, F, G, H, I ) PRIVATE_JAFG_CORE_CAT_INNER_NINE(  A, B, C, D, E, F, G, H, I )
 
 /**
  * Use this macro for formatting raw string literals.

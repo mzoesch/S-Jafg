@@ -212,10 +212,14 @@ struct LDeferredRegistryPackage final
  */
 struct LRegistryPackage final
 {
-    /** Full namespaced name of the target class. */
-    LSimpleString SpacedClassName;
     /** Pointer to the static class object of the target class. */
     LObjectClass* StaticClass;
+
+    FORCEINLINE const LSimpleString& GetSpacedClassName() const
+    {
+        checkSlow( this->StaticClass )
+        return this->StaticClass->GetSpacedClassName();
+    }
 };
 
 /** Singleton registry that holds all content, that is considered default, to an object. */
@@ -243,8 +247,12 @@ public:
     ENGINE_API auto DoesPackageWithNameExist(const LSimpleString& SpacedClassName) const -> bool;
     ENGINE_API auto GetPackageByName(const LSimpleString& SpacedClassName) -> LRegistryPackage*;
     ENGINE_API auto GetPackageByName(const LSimpleString& SpacedClassName) const -> const LRegistryPackage*;
+    ENGINE_API auto GetPackageByNameWeak(const LSimpleString& Name) -> LRegistryPackage*;
+    ENGINE_API auto GetPackageByNameWeak(const LSimpleString& Name) const -> const LRegistryPackage*;
     ENGINE_API auto GetPanickedPackageByName(const LSimpleString& SpacedClassName) -> LRegistryPackage*;
     ENGINE_API auto GetPanickedPackageByName(const LSimpleString& SpacedClassName) const -> const LRegistryPackage*;
+    ENGINE_API auto GetPanickedPackageByNameWeak(const LSimpleString& Name) -> LRegistryPackage*;
+    ENGINE_API auto GetPanickedPackageByNameWeak(const LSimpleString& Name) const -> const LRegistryPackage*;
 
     ENGINE_API auto GetPackageByStaticClass(const void* StaticClass) -> LRegistryPackage*;
     ENGINE_API auto GetPanickedPackageByStaticClass(const void* StaticClass) -> LRegistryPackage*;

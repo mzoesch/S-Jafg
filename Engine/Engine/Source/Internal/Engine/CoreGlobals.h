@@ -24,3 +24,4 @@ void RequestEngineExit(const int32 CustomExitStatus);
 void RequestEngineExit(const int32 CustomExitStatus, const LSimpleString& Reason);
 
 } /* ~Namespace Jafg */
+

@@ -6,6 +6,7 @@ import (
     "Jafg/Core"
     "Jafg/Shared"
     "fmt"
+    "strconv"
     "strings"
 )
 
@@ -227,10 +228,33 @@ func AddJafgClassToPacket(tokens []Token, idx int, packetWrapper *JPacketWrapper
         panic(fmt.Sprintf("Expected a generated class body token after {%d}.", idx))
     }
 
+    var namespaces Shared.Stack[string] = Shared.NewStack[string]()
+    for _, t := range tokens {
+        if t.Line > tGeneratedBody.Line {
+            break
+        }
+        if t.Type == TOKEN_PUSHNS {
+            namespaces.Push(t.Content)
+        } else if t.Type == TOKEN_POPNS {
+            namespaces.Pop()
+        }
+    }
+    var namespaceStr string = ""
+    for _, ns := range namespaces.Data {
+        namespaceStr += ns + "::"
+    }
+    if namespaceStr == "" {
+        namespaceStr = "::"
+    }
+    if strings.HasPrefix(namespaceStr, "::") == false {
+        namespaceStr = "::" + namespaceStr
+    }
+
     packet.Callback = OnBuildJafgClassDeclaration
     packet.Name = t.Content
     packet.Line = t.Line
     packet.Args = append(packet.Args, t.Info[0])
+    packet.Args = append(packet.Args, namespaceStr)
 
     packetWrapper.Packets = append(packetWrapper.Packets, packet)
 
@@ -254,10 +278,34 @@ func AddJafgClassGeneratedBodyToPacket(tokens []Token, idx int, packetWrapper *J
         panic(fmt.Sprintf("Excected a class declaration toekn bevore {%d}.", idx))
     }
 
+    var namespaces Shared.Stack[string] = Shared.NewStack[string]()
+    for _, tInner := range tokens {
+        if tInner.Line > t.Line {
+            break
+        }
+        if tInner.Type == TOKEN_PUSHNS {
+            namespaces.Push(tInner.Content)
+        } else if tInner.Type == TOKEN_POPNS {
+            namespaces.Pop()
+        }
+    }
+    var namespaceStr string = ""
+    for _, ns := range namespaces.Data {
+        namespaceStr += ns + "::"
+    }
+    if namespaceStr == "" {
+        namespaceStr = "::"
+    }
+    if strings.HasPrefix(namespaceStr, "::") == false {
+        namespaceStr = "::" + namespaceStr
+    }
+
     packet.Callback = OnBuildJafgClassBody
     packet.Name = tClassDecl.Content
     packet.Line = t.Line
     packet.Args = append(packet.Args, tClassDecl.Info[0])
+    packet.Args = append(packet.Args, strconv.Itoa(tClassDecl.Line))
+    packet.Args = append(packet.Args, namespaceStr)
 
     packetWrapper.Packets = append(packetWrapper.Packets, packet)
 
@@ -279,14 +327,33 @@ func OnBuildJafgClassDeclaration(hFileId string, bH *strings.Builder, bT *string
 #define %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION(...)              \
     PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION( \
         /* My Class Name */          %s, /* ORIGIN VALUE: %s */                                \
+        /* My Class Spaces */        %s,                                                       \
         /* Super Class Name */       %s, /* ORIGIN VALUE: %s */                                \
-        /* Line */                   __LINE__,                                                 \
+        /* Line */                   %d,                                                       \
         /* Additional Class Flags */ __VA_ARGS__                                               \
     )
 `,
         hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
 
         RemoveAllNamespaces(packet.Name), packet.Name,
+        packet.Args[1],
+        RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
+        packet.Line,
+    ))
+
+    bT.WriteString(fmt.Sprintf(`
+#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION( \
+        /* My Class Name */          %s, /* ORIGIN VALUE: %s */                               \
+        /* My Class Spaces */        %s,                                                      \
+        /* Line Of Declaration */    %d,                                                      \
+        /* Super Class Name */       %s  /* ORIGIN VALUE: %s */                               \
+    )
+#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+`,
+        RemoveAllNamespaces(packet.Name), packet.Name,
+        packet.Args[1],
+        packet.Line,
         RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
     ))
 
@@ -301,22 +368,29 @@ func OnBuildJafgClassBody(hFileId string, bH *strings.Builder, bT *strings.Build
         panic("Builder for translation is nil.")
     }
 
+    lineHelperConstruction, err := strconv.Atoi(packet.Args[1])
+    if err != nil {
+        panic(err)
+    }
+
     bH.WriteString(fmt.Sprintf(`
 #ifdef %s_%d_MY_GENERATED_CLASS_BODY
     #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
 #endif /* %s_%d_MY_GENERATED_CLASS_BODY */
-#define %s_%d_MY_GENERATED_CLASS_BODY(...)                      \
-    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_BODY_IMPL(          \
-        /* My Class Name */          %s, /* ORIGIN VALUE: %s */ \
-        /* Super Class Name */       %s, /* ORIGIN VALUE: %s */ \
-        /* Construction Helper */    %s                         \
+#define %s_%d_MY_GENERATED_CLASS_BODY(...)                        \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_BODY_IMPL(            \
+        /* My Class Name */            %s, /* ORIGIN VALUE: %s */ \
+        /* My Class Spaces */          %s,                        \
+        /* Super Class Name */         %s, /* ORIGIN VALUE: %s */ \
+        /* Construction Helper Line */ %d                         \
     )
 `,
         hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
 
         RemoveAllNamespaces(packet.Name), packet.Name,
+        packet.Args[2],
         RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
-        fmt.Sprintf("L_%s_ConstructionHelper", packet.Name),
+        lineHelperConstruction,
     ))
 
     return

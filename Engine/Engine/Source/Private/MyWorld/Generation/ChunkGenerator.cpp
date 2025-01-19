@@ -2,7 +2,7 @@
 
 #include "CoreAfx.h"
 #include "MyWorld/Generation/ChunkGenerator.h"
-#include "ChunkGeneratorSubsystem.h"
+#include "MyWorld/Generation/ChunkGeneratorSubsystem.h"
 #include "MyWorld/Chunk/Chunk.h"
 #include "System/VoxelSubsystem.h"
 

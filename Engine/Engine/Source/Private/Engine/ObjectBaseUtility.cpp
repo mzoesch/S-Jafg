@@ -137,7 +137,6 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
         }
 
         LRegistryPackage NewPackage;
-        NewPackage.SpacedClassName                     = Package.SpacedClassName;
         NewPackage.StaticClass                         = new LObjectClass();
         NewPackage.StaticClass->SpacedClassName        = Package.SpacedClassName;
         NewPackage.StaticClass->DefaultPackageReferrer = Package.GetContentDefault();
@@ -155,7 +154,7 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
 
     for (auto& [SuperName, StaticClass] : this->DeferredPackages)
     {
-        if (SuperName == StaticClass->GetSpacedClassName())
+        if (SuperName == "NextIsObjectBaseClass")
         {
             /*
              * The root package.
@@ -163,7 +162,7 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
             continue;
         }
 
-        const LRegistryPackage* ParentPackage = GetPanickedPackageByName(SuperName);
+        const LRegistryPackage* ParentPackage = GetPanickedPackageByNameWeak(SuperName);
         if (ParentPackage->StaticClass->GetChildren().Contains(StaticClass))
         {
             panicMsgf(
@@ -183,7 +182,7 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
 
     for (int32 i = CurrentPackages; i < this->RegisteredObjects.GetSize(); ++i)
     {
-        auto& [SpacedClassName, StaticClass] = this->RegisteredObjects[i];
+        auto& [StaticClass] = this->RegisteredObjects[i];
 
         LOG_TRACE(
             LogObjectPackager,
@@ -205,7 +204,7 @@ void Jafg::Private::LObjectRegistry::ValidateLoadedPackages()
     bool bRootFound = false;
     for (const LRegistryPackage& Package : this->RegisteredObjects)
     {
-        if (Package.SpacedClassName.IsEmpty())
+        if (Package.GetSpacedClassName().IsEmpty())
         {
             panic( "Found loaded package with empty name." )
             continue;
@@ -213,13 +212,13 @@ void Jafg::Private::LObjectRegistry::ValidateLoadedPackages()
 
         if (Package.StaticClass == nullptr)
         {
-            panicMsgf( "Found loaded package [{}] with no static class.", Package.SpacedClassName )
+            panicMsgf( "Found loaded package [{}] with no static class.", Package.GetSpacedClassName() )
             continue;
         }
 
         if (Package.StaticClass->DefaultPackageReferrer == nullptr)
         {
-            panicMsgf( "Found loaded package [{}] with no default referrer.", Package.SpacedClassName )
+            panicMsgf( "Found loaded package [{}] with no default referrer.", Package.GetSpacedClassName() )
             continue;
         }
 
@@ -227,7 +226,7 @@ void Jafg::Private::LObjectRegistry::ValidateLoadedPackages()
         {
             if (bRootFound)
             {
-                panicMsgf( "Found loaded package [{}] with no parent or found multiple root objects.", Package.SpacedClassName )
+                panicMsgf( "Found loaded package [{}] with no parent or found multiple root objects.", Package.GetSpacedClassName() )
                 continue;
             }
 
@@ -237,7 +236,7 @@ void Jafg::Private::LObjectRegistry::ValidateLoadedPackages()
 
         if (Package.StaticClass->TotalByteSize == INDEX_NONE)
         {
-            panicMsgf( "Found loaded package [{}] with no byte size.", Package.SpacedClassName )
+            panicMsgf( "Found loaded package [{}] with no byte size.", Package.GetSpacedClassName() )
             continue;
         }
 
@@ -248,9 +247,9 @@ void Jafg::Private::LObjectRegistry::ValidateLoadedPackages()
                 continue;
             }
 
-            if (Package.SpacedClassName == OtherPackage.SpacedClassName)
+            if (Package.GetSpacedClassName() == OtherPackage.GetSpacedClassName())
             {
-                panicMsgf( "Found duplicate package names [%s].", Package.SpacedClassName )
+                panicMsgf( "Found duplicate package names [%s].", Package.GetSpacedClassName() )
                 continue;
             }
 
@@ -272,7 +271,7 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByNam
 {
     for (LRegistryPackage& Package : this->RegisteredObjects)
     {
-        if (Package.SpacedClassName == SpacedClassName)
+        if (Package.GetSpacedClassName() == SpacedClassName)
         {
             return &Package;
         }
@@ -285,9 +284,19 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByNam
 
 const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByName(const LSimpleString& SpacedClassName) const
 {
-    for (const LRegistryPackage& Package : this->RegisteredObjects)
+    return const_cast<LObjectRegistry*>(this)->GetPackageByName(SpacedClassName);
+}
+
+Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByNameWeak(const LSimpleString& Name)
+{
+    if (LRegistryPackage* Package = this->GetPackageByName(Name))
     {
-        if (Package.SpacedClassName == SpacedClassName)
+        return Package;
+    }
+
+    for (LRegistryPackage& Package : this->RegisteredObjects)
+    {
+        if (Package.GetSpacedClassName().Contains(Name))
         {
             return &Package;
         }
@@ -296,6 +305,11 @@ const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackag
     }
 
     return nullptr;
+}
+
+const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByNameWeak(const LSimpleString& Name) const
+{
+    return const_cast<LObjectRegistry*>(this)->GetPackageByNameWeak(Name);
 }
 
 Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByName(const LSimpleString& SpacedClassName)
@@ -312,14 +326,24 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPack
 
 const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByName(const LSimpleString& SpacedClassName) const
 {
-    if (const LRegistryPackage* Package = this->GetPackageByName(SpacedClassName))
+    return const_cast<LObjectRegistry*>(this)->GetPanickedPackageByName(SpacedClassName);
+}
+
+Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByNameWeak(const LSimpleString& Name)
+{
+    if (LRegistryPackage* Package = this->GetPackageByNameWeak(Name))
     {
         return Package;
     }
 
-    panic( "Failed to find package." )
+    panicMsgf( "Failed to find package [{}].", Name )
 
     return nullptr;
+}
+
+const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByNameWeak(const LSimpleString& Name) const
+{
+    return const_cast<LObjectRegistry*>(this)->GetPanickedPackageByNameWeak(Name);
 }
 
 Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByStaticClass(const void* StaticClass)
@@ -418,11 +442,11 @@ void Jafg::Private::LObjectRegistry::GetRegisteredObjectsOfClass(
     TdhArray<const LObjectClass*>& OutArray
 ) const
 {
-    for (const auto& [_, StaticClass] : this->RegisteredObjects)
+    for (const LRegistryPackage& Package : this->RegisteredObjects)
     {
-        if (StaticClass->DerivesFrom(InStaticClass))
+        if (Package.StaticClass->DerivesFrom(InStaticClass))
         {
-            OutArray.Add(StaticClass);
+            OutArray.Add(Package.StaticClass);
         }
 
         continue;

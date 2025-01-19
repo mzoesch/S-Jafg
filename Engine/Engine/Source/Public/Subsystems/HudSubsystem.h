@@ -16,7 +16,7 @@ class LHud;
  * Important delegates will be broadcasted to all children of this subsystem.
  * Widget construction and destruction should be done here.
  */
-DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
+DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API JHudSubsystem : public JSubsystem
 {
     GENERATED_CLASS_BODY()

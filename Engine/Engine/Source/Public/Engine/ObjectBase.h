@@ -56,7 +56,7 @@ class NextIsObjectBaseClass;
  * Generally speaking, inheriting from this class directly is not recommended.
  */
 PRAGMA_FOR_JAFG_BUILD_TOOL("NextIsObjectBaseClass")
-DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
+DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API JObjectBase
 {
     friend LCarnifex;

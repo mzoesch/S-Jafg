@@ -135,8 +135,11 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
     Wwi(b, 2, "architecture 'x86_64'")
     Wwi(b, 2, "systemversion 'latest'")
     Wwi(b, 2, "defines { 'PLATFORM_WINDOWS', 'PLATFORM_WINDOWS_WITH_MSVC' }")
-    Wwi(b, 2, "buildoptions { '/Zc:__cplusplus' }")
     Wwi(b, 2, "linkoptions { '/SUBSYSTEM:WINDOWS' }")
+    Wwi(b, 2, "filter { 'platforms:Windows64', 'toolset:msc*' }")
+    Wwi(b, 2, "buildoptions { '/Zc:__cplusplus' }")
+    Wwi(b, 2, "linkoptions { '/NODEFAULTLIB:LIBCMT', '/NODEFAULTLIB:MSVCRT' }")
+    Wwi(b, 2, "filter { 'platforms:Windows64' }")
 
     Wwi(b, 1, "filter { 'platforms:Wasm' }")
     // 'emscripten' is not supported by premake for now ... only some crazy shit with newer versions.

@@ -2,7 +2,7 @@
 
 #include "CoreAfx.h"
 #include "Async/TaskUtility.h"
-#include "../Engine/CoreGlobals.h"
+#include "Engine/CoreGlobals.h"
 #include "Async/Runnable.h"
 #include "Core/Application.h"
 #if WITH_GNU
