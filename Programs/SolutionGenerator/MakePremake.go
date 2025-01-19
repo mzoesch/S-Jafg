@@ -58,6 +58,45 @@ func GenerateSolutionFromPremake(sln *Core.Solution) error {
     }
     fmt.Println(string(stdout))
 
+    var slnF string = ""
+    if Shared.IsWindows() {
+        slnF = fmt.Sprintf("%s/Jafg.sln", sln.GetSavedRelativeDir())
+    } else {
+        panic("Not implemented.")
+    }
+    if Shared.DoesRelativeFileExist(slnF) == false {
+        panic(fmt.Sprintf("Solution file [%s] does not exist.", slnF))
+    }
+
+    var symlinkPath string = fmt.Sprintf("Jafg-%s.sln.lnk", sln.Name)
+    if Shared.DoesRelativeFileExist(symlinkPath) == false {
+
+        err2 := os.Symlink(slnF, symlinkPath)
+        if err2 != nil {
+            // Windows will probably fail here. Just ignore it and call PowerShell to create the symlink.
+            if Shared.IsWindows() {
+                var absSlnF string = Shared.ToAbsolutePath(slnF)
+                var absSymlinkPath string = Shared.ToAbsolutePath(symlinkPath)
+                absSlnF = strings.ReplaceAll(absSlnF, "/", "\\")
+                absSymlinkPath = strings.ReplaceAll(absSymlinkPath, "/", "\\")
+                var ps1 string = "Programs/Shell/CreateSymlink.ps1"
+                cmdPs1 := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ps1, absSlnF, absSymlinkPath)
+
+                cmdPs1.Stdout = os.Stdout
+                cmdPs1.Stderr = os.Stderr
+
+                err3 := cmdPs1.Run()
+                if err3 != nil {
+                    panic(err3)
+                }
+            } else {
+                panic(err2)
+            }
+        }
+    }
+
+    fmt.Printf("Created symlink [%s] -> [%s] ...\n", slnF, symlinkPath)
+
     return nil
 }
 

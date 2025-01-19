@@ -23,14 +23,7 @@ Vslf/
 Saved/
 
 # Sln files
-Jafg.sln
-Jafg.sln.lnk
-JAFG.sln
-JAFG.sln.lnk
-JafgWin.sln
-JafgWin.sln.lnk
-JafgWasm.sln
-JafgWasm.sln.lnk
+Jafg-*.sln.lnk
 Jafg.sln.DotSettings.user
 JAFG.sln.DotSettings.user
 *.vcxproj

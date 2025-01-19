@@ -1,35 +1,27 @@
 # S-Jafg
+Voxel based game. Currently in very early development.
 
-@see [Fundamental Project Structure](ProjectStructure.md)
-
-// NOTES
-mingw32-make for compiling make files on win
-https://www.khronos.org/files/webgl/webgl-reference-card-1_0.pdf
-https://www.khronos.org/files/webgl20-reference-guide.pdf
+@see [Fundamental Project Structure](Documentation/ProjectStructure.md)
 
 # Getting up and running
 
 ## Prerequisites
-For anything and any platform you will need `Python 3.11.x`.
+You will need `Python 3.11.x`.
 
-You will need to have the C/C++ toolchain installed for your platform. GNU/GCC and MSVC
-are supported. The target C++ dialect is `C++20`. Premake is installed automatically
-by the build system. For some [platforms](Documentation/Platforms.md) you will also need
-to have CMake installed. Cmake scripts will always be generated even if you do not need
-them or have CMake not installed.
+You will need to have the `C/C++ toolchain` installed for your platform. GNU/GCC and MSVC
+are supported. The target dialect is `C++20`. For some [platforms](Documentation/Platforms.md)
+you will also need to have CMake installed. Cmake scripts will always be generated even
+if it is not installed on the host machine.
 
-
-When developing / making changes to the reflection system you will need `Go 1.23.x`
-installed. A precompiled binary is automatically downloaded by the build system if Go is
-not present. Not all platforms have precompiled binaries available so for those you will
-need to have Go installed.
+When making changes to the reflection system you will need `Go 1.23.` installed.
+Otherwise a precompiled binary is automatically downloaded by the build system.
 
 ## Generate solution and build
 Double click / run the `Setup` script for your platform (`Setup.bat` for 
 Windows, `Setup.command` for Linux and MacOS). This will download and generate
 the solution files for your platform.
 
-Open the generated `Jafg.sln` file with either Rider or Visual Studio, select
+Open the generated `Jafg-All.sln` file with either Rider or Visual Studio, select
 `Debug-Client` and the `Runtime` configuration and run the project.
 
 Alternatively you can use the `CMakeLists.txt` file to generate for any (multi)-generator
