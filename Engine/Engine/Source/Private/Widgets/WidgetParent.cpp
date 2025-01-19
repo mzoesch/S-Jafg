@@ -94,11 +94,7 @@ void Jafg::WWidgetParent::RemoveChild(WWidgetNode* Child)
 
 void Jafg::WWidgetParent::RemoveChild(LWidgetSlot* Child)
 {
-    Child->Content->Slot = nullptr;
-    this->Children.RemoveOnceChecked(Child);
-    delete Child;
-
-    return;
+    this->RemoveChild(Child->Content);
 }
 
 Jafg::LWidgetSlot* Jafg::WWidgetParent::AddChild(WWidgetNode* Child)

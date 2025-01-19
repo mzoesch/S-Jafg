@@ -3,15 +3,23 @@
 #include "CoreAfx.h"
 #include "User/Frontend/Osd/PauseMenu.h"
 #include "Widgets/WidgetRegion.h"
+#include "Widgets/Compound/TabBar.h"
 
 void Jafg::WPauseMenu::Construct()
 {
     Super::Construct();
 
     MakeRootNode(WWidgetRegion)
-    .SetPadding({80.0f, 0.0f})
-    & LColor(0, 0, 0, 196)
-    & (EAnchor::HLeft | EAnchor::VFill)
+    .SetAnchor(EAnchor::Fill)
+    [
+        NewNode(WWidgetRegion)
+        .SetAnchor(EAnchor::TopRight)
+        .SetTint(LColor::Black)
+        .SetPadding(50.0f)
+    ]
+    // [
+    //     NewNode(WTabBar)
+    // ]
     FinishWidgetStyling()
 
     return;

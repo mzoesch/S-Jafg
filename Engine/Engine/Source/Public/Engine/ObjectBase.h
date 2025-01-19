@@ -139,3 +139,8 @@ private:
 } /* ~Namespace Private */
 
 } /* ~Namespace Jafg */
+
+/*
+ * Auxiliary includes.
+ */
+#include "Engine/SubclassOf.h"
