@@ -1,10 +1,2 @@
-# Ignore everything. Vendors will be installed via the solution generators.
-
-LICENSE
-*
-*.*
-./*
-/*
-
-!.gitignore
-!README.md
+# Premake is installed automatically by the build script
+Premake/*

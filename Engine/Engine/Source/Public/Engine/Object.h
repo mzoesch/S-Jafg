@@ -17,7 +17,7 @@ class LApplicationInstance;
  * Additionally, defines utility functions to help with world and engine access.
  * If you want a simpler base class, use JObjectBase.
  */
-DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
+DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API JObject : public ::Jafg::Private::JObjectBase
 {
     GENERATED_CLASS_BODY()

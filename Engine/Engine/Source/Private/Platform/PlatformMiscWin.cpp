@@ -255,11 +255,20 @@ Jafg::LSimpleString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
 {
     TCHAR Buffer[PLATFORM_MAX_PATH] = { 0 };
     GetModuleFileName(nullptr, Buffer, PLATFORM_MAX_PATH);
-    const std::wstring::size_type Position = LPlatformTypes::CStr2Ws(Buffer).find_last_of(LITERAL_WIDE("\\/"));
-    const std::wstring WideEngineRootDir = LPlatformTypes::CStr2Ws(Buffer).substr(0, Position);
+
+#if WITH_MSVC
+    const std::wstring WFromBuffer = Buffer;
+#elif WITH_GNU
+    const std::wstring WFromBuffer = LPlatformTypes::CStr2Ws(Buffer)
+#else /* WITH_GNU */
+    #error "Missing implementation for this platform."
+#endif /* !WITH_GNU */
+
+    const std::wstring::size_type Position = WFromBuffer.find_last_of(LITERAL_WIDE("\\/"));
+    const std::wstring WideEngineRootDir = WFromBuffer.substr(0, Position);
     const LStringLegacy EngineRootDir = LPlatformTypes::Ws2S(WideEngineRootDir);
 
-    Jafg::LPath Path = Jafg::LPath(EngineRootDir.c_str());
+    LPath Path = LPath(EngineRootDir.c_str());
     Path.Normalize();
 
     return { Path.MoveOut() };

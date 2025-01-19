@@ -157,6 +157,11 @@ public:
     FORCEINLINE bool Equals(const LStringBase& InOther) const;
 
     template <bool Condition = IsNativeChar()>
+    FORCEINLINE auto Contains(const char* InString) const -> TEnableIf<!Condition, bool>;
+    FORCEINLINE bool Contains(const CharacterTy* InString) const;
+    FORCEINLINE bool Contains(const LStringBase& InOther) const;
+
+    template <bool Condition = IsNativeChar()>
     FORCEINLINE auto StartsWith(const char* InString) const -> TEnableIf<!Condition, bool>;
     FORCEINLINE bool StartsWith(const CharacterTy* InString) const;
     FORCEINLINE bool StartsWith(const LStringBase& InOther) const;
@@ -927,6 +932,72 @@ template <class InCharacterTy, class InTraitsTy>
 bool LStringBase<InCharacterTy, InTraitsTy>::Equals(const LStringBase& InOther) const
 {
     return *this == InOther;
+}
+
+template <typename InCharacterTy, class InTraitsTy>
+template <bool Condition>
+typename LStringBase<InCharacterTy, InTraitsTy>::template TEnableIf<!Condition, bool>
+LStringBase<InCharacterTy, InTraitsTy>::Contains(const char* InString) const
+{
+    return this->Contains(reinterpret_cast<const InCharacterTy*>(InString));
+}
+
+template <typename InCharacterTy, class InTraitsTy>
+bool LStringBase<InCharacterTy, InTraitsTy>::Contains(const CharacterTy* InString) const
+{
+#if CHECK_STRING_VALIDITY
+    this->PanicValidState();
+#endif /* CHECK_STRING_VALIDITY */
+
+    if (*InString == TraitsTy::Terminator)
+    {
+        return true;
+    }
+
+    SizeType Cursor      = 0;
+    SizeType InnerCursor = 0;
+    const CharacterTy* DataPtr = this->ToPtr();
+    while (*(DataPtr + Cursor) != TraitsTy::Terminator)
+    {
+        SizeType InStringCursor = 0;
+
+        while (true)
+        {
+            if (*(InString + InStringCursor) == TraitsTy::Terminator)
+            {
+                return true;
+            }
+
+            if (*(DataPtr + InnerCursor) == TraitsTy::Terminator) // The InString is longer than the substr we
+            {                                                     // are comparing.
+                return false;
+            }
+
+            if (TraitsTy::IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + InnerCursor, InString + InStringCursor))
+            {
+                const SizeType CurRuneSize = TraitsTy::GetRuneSize(DataPtr + InnerCursor);
+                InnerCursor += CurRuneSize;
+                InStringCursor += CurRuneSize;
+                continue;
+            }
+
+            goto RunesAreNotEqual;
+        }
+
+        checkNoEntry()
+        RunesAreNotEqual:
+            TraitsTy::GoToNextRune(DataPtr, Cursor);
+            InnerCursor = Cursor;
+            continue;
+    }
+
+    return false;
+}
+
+template <typename InCharacterTy, class InTraitsTy>
+bool LStringBase<InCharacterTy, InTraitsTy>::Contains(const LStringBase& InOther) const
+{
+    return this->Contains(InOther.ToPtr());
 }
 
 template <typename InCharacterTy, class InTraitsTy>

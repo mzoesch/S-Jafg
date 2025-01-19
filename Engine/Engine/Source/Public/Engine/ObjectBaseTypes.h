@@ -61,7 +61,12 @@ constexpr EClassFlags::Type CombineFlags(FlagsTy ... Flags)
         "All arguments must be of type EClassFlags::Type."
     );
 
-    return (static_cast<EClassFlags::Type>(Flags) | ...);
+    if constexpr (sizeof ... (Flags) > 0)
+    {
+        return EClassFlags::None | (static_cast<EClassFlags::Type>(Flags) | ...);
+    }
+
+    return EClassFlags::None;
 }
 
 } /* ~Namespace EClassFlags */

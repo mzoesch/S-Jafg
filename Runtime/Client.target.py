@@ -1,0 +1,12 @@
+# Copyright mzoesch. All rights reserved.
+
+from Programs.Meta import *
+
+
+def add_target(me: Target) -> None:
+    me.defines.append('AS_CLIENT')
+    return None
+
+
+def load_volatile_target(me: Target) -> None:
+    return None

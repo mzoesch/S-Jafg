@@ -15,7 +15,7 @@ namespace Jafg
  * The tick of this subsystem is not synchronized with the tick of the engine.
  * If you desire synchronization, use the #JSynchronizedThreadedWorldSubsystem class instead.
  */
-DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
+DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API JThreadedWorldSubsystem : public JWorldSubsystem, public LTickedRunnable
 {
 

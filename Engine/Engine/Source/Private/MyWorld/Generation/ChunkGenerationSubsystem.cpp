@@ -7,7 +7,7 @@
 #include "Engine/Framework/Pawn.h"
 #include "Rhi/ChunkShaderContext.h"
 #include "MyWorld/Chunk/ChunkStates.h"
-#include "ChunkGeneratorSubsystem.h"
+#include "MyWorld/Generation/ChunkGeneratorSubsystem.h"
 #include "MyWorld/Meshing/NaiveMesher.h"
 #include "System/VoxelSubsystem.h"
 #include "System/MaterialSubsystem.h"

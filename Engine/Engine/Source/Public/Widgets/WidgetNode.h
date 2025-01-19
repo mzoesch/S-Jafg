@@ -334,7 +334,7 @@ FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode);
 /**
  * The base class for everything that can be interpreted as a visual element.
  */
-DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
+DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API WWidgetNode : public ::Jafg::Private::JObjectBase
 {
     GENERATED_CLASS_BODY()

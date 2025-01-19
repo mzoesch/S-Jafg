@@ -1,7 +1,0 @@
-{
-    "FriendlyName": "Runtime",
-    "DefaultKind": "Launch",
-    "Modules": [
-        "SOLO"
-    ]
-}

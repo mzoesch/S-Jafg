@@ -1,0 +1,17 @@
+{
+    "FriendlyName": "Jafg",
+    "TpIgnores": [
+        "Config",
+        "Binaries",
+        "Documentation",
+        "Intermediate",
+        "Programs",
+        "Saved"
+    ],
+    "Ignores": [
+        ".*",
+        "Content",
+        "Vendor",
+        "__pycache__"
+    ]
+}

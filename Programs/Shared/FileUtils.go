@@ -1,8 +1,9 @@
-// Copyright 2024 mzoesch. All rights reserved.
+// Copyright mzoesch. All rights reserved.
 
 package Shared
 
 import (
+    "crypto/sha256"
     "fmt"
     "io"
     "os"
@@ -11,8 +12,8 @@ import (
 
 // CheckRelativeDir checks if a directory exists and if not tries to create it.
 func CheckRelativeDir(relDir string) {
-    if _, err := os.Stat(fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), relDir)); os.IsNotExist(err) {
-        err := os.MkdirAll(fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), relDir), os.ModePerm)
+    if _, err := os.Stat(fmt.Sprintf("%s/%s", GetAbsoluteEngineRoot(), relDir)); os.IsNotExist(err) {
+        err := os.MkdirAll(fmt.Sprintf("%s/%s", GetAbsoluteEngineRoot(), relDir), os.ModePerm)
         if err != nil {
             panic(err)
         }
@@ -35,7 +36,7 @@ func CheckAbsoluteDir(absDir string) {
 
 // CheckRelativeFile checks if a file exists and if not tries to create it.
 func CheckRelativeFile(relFilePath string) {
-    CheckAbsoluteFile(fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), relFilePath))
+    CheckAbsoluteFile(fmt.Sprintf("%s/%s", GetAbsoluteEngineRoot(), relFilePath))
     return
 }
 
@@ -58,7 +59,28 @@ func CheckAbsoluteFile(absFilePath string) {
     return
 }
 
-// VerifyAbsoluteFileExistence verifies that a file exists, panicking if it doesn't
+func DoesRelativeFileExist(relFile string) bool {
+    return DoesAbsoluteFileExist(ToAbsolutePath(relFile))
+}
+func DoesAbsoluteFileExist(absoluteFile string) bool {
+    _, err := os.Stat(absoluteFile)
+    if os.IsNotExist(err) {
+        return false
+    }
+    if err != nil {
+        panic(err)
+    }
+
+    return true
+}
+
+// VerifyRelativeFileExistence verifies that a file exists, panicking if it doesn't.
+func VerifyRelativeFileExistence(relFile string) {
+    VerifyAbsoluteFileExistence(ToAbsolutePath(relFile))
+    return
+}
+
+// VerifyAbsoluteFileExistence verifies that a file exists, panicking if it doesn't.
 func VerifyAbsoluteFileExistence(absFile string) {
     if _, err := os.Stat(absFile); os.IsNotExist(err) {
         if err != nil {
@@ -69,28 +91,11 @@ func VerifyAbsoluteFileExistence(absFile string) {
     return
 }
 
-func DoesRelativeFileExist(relFile string) bool {
-    return DoesAbsoluteFileExist(GetAbsolutePathNoCheck(relFile))
-}
-
-func DoesAbsoluteFileExist(absoluteFile string) bool {
-    _, err := os.Stat(absoluteFile);
-    if os.IsNotExist(err) {
-        return false
-    }
-    if err != nil {
-        panic(err)
-    }
-
-    return true
-}
-
 func DoesRelativeDirExist(relDir string) bool {
-    return DoesAbsoluteDirExist(GetAbsolutePathNoCheck(relDir))
+    return DoesAbsoluteDirExist(ToAbsolutePath(relDir))
 }
-
 func DoesAbsoluteDirExist(absDir string) bool {
-    _, err := os.Stat(absDir);
+    _, err := os.Stat(absDir)
     if os.IsNotExist(err) {
         return false
     }
@@ -99,26 +104,6 @@ func DoesAbsoluteDirExist(absDir string) bool {
     }
 
     return true
-}
-
-// TruncateRelativeFile truncates a file, or creates it if it doesn't exist
-func TruncateRelativeFile(relFile string) {
-    TruncateAbsoluteFile(fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), relFile))
-    return
-}
-
-func TruncateAbsoluteFile(absFile string) {
-    file, err := os.OpenFile(absFile, os.O_TRUNC|os.O_CREATE, 0644)
-    if err != nil {
-        panic("Failed with file: " + absFile + " " + err.Error())
-    }
-
-    err = file.Close()
-    if err != nil {
-        panic(err)
-    }
-
-    return
 }
 
 func TruncateFile(file *os.File) {
@@ -139,23 +124,39 @@ func SeekFileBeginning(file *os.File) {
     return
 }
 
-func OpenRelativeFile(relFile string, bTruncate bool, flag int) *os.File {
-    return OpenAbsoluteFile(fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), relFile), bTruncate, flag)
+func TruncateRelativeFile(relFile string) {
+    TruncateAbsoluteFile(ToAbsolutePath(relFile))
+    return
 }
-
-func OpenAbsoluteFile(absDir string, bTruncate bool, flag int) *os.File {
-    if bTruncate {
-        TruncateAbsoluteFile(absDir)
+func TruncateAbsoluteFile(absFile string) {
+    file, err := os.OpenFile(absFile, os.O_TRUNC|os.O_RDWR, 0644)
+    if err != nil {
+        panic(err)
     }
 
-    file, err := os.OpenFile(absDir, flag, 0644)
+    err = file.Close()
+    if err != nil {
+        panic(err)
+    }
+
+    return
+}
+
+func OpenRelativeFile(relFile string, bTruncate bool, flag int) *os.File {
+    return OpenAbsoluteFile(ToAbsolutePath(relFile), bTruncate, flag)
+}
+func OpenAbsoluteFile(absFile string, bTruncate bool, flag int) *os.File {
+    if bTruncate {
+        TruncateAbsoluteFile(absFile)
+    }
+
+    file, err := os.OpenFile(absFile, flag, 0644)
     if err != nil {
         panic(err)
     }
 
     return file
 }
-
 func CloseFile(file *os.File) {
     err := file.Close()
     if err != nil {
@@ -165,18 +166,9 @@ func CloseFile(file *os.File) {
     return
 }
 
-func WriteToFile(file *os.File, data string) {
-    _, err := file.WriteString(data)
-    if err != nil {
-        panic(err)
-    }
-
-    return
-}
-
-func GetContentsFromOpenFile(file *os.File) string {
+func GetContentFromFile(file *os.File) string {
     if file == nil {
-        panic("GetContentsFromOpenFile called with nil file.")
+        panic("File is nil.")
     }
 
     data, err := io.ReadAll(file)
@@ -187,27 +179,36 @@ func GetContentsFromOpenFile(file *os.File) string {
     return string(data)
 }
 
-func ReadFileContentsFromRelativePath(relPath string) string {
-    return ReadFileContentsFromAbsolutePath(fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), relPath))
-}
+func WriteToFile(file *os.File, content string) {
+    _, err := file.WriteString(content)
+    if err != nil {
+        panic(err)
+    }
 
-func ReadFileContentsFromAbsolutePath(absPath string) string {
-    file := OpenAbsoluteFile(absPath, false, os.O_RDONLY)
-    defer CloseFile(file)
-    return GetContentsFromOpenFile(file)
-}
-
-func DeleteRelativeFileIfExists(relPath string) {
-    DeleteAbsoluteFileIfExists(GetAbsolutePathNoCheck(relPath))
     return
 }
 
-func DeleteAbsoluteFileIfExists(absPath string) {
-    if _, err := os.Stat(absPath); !os.IsNotExist(err) {
-        err := os.Remove(absPath)
-        if err != nil {
-            panic(err)
-        }
+func ReadRelativeFile(relPath string) string {
+    return ReadAbsoluteFile(ToAbsolutePath(relPath))
+}
+func ReadAbsoluteFile(absPath string) string {
+    file := OpenAbsoluteFile(absPath, false, os.O_RDONLY)
+    defer CloseFile(file)
+    return GetContentFromFile(file)
+}
+
+func DeleteRelativeFile(relPath string) {
+    DeleteAbsoluteFile(ToAbsolutePath(relPath))
+    return
+}
+func DeleteAbsoluteFile(absPath string) {
+    if _, err := os.Stat(absPath); os.IsNotExist(err) {
+        return
+    }
+
+    err := os.Remove(absPath)
+    if err != nil {
+        panic(err)
     }
 
     return
@@ -216,7 +217,7 @@ func DeleteAbsoluteFileIfExists(absPath string) {
 func IsFileAndStringEqual(file *os.File, other string, bPrintReasonToStdOut bool) bool {
     byteContent, err := io.ReadAll(file)
     if err != nil {
-       panic(err)
+        panic(err)
     }
 
     var content string = string(byteContent)
@@ -225,7 +226,6 @@ func IsFileAndStringEqual(file *os.File, other string, bPrintReasonToStdOut bool
         if bPrintReasonToStdOut {
             fmt.Printf("Provided file and string are not equal [%s]. Lengths differ.\n", file.Name())
         }
-
         return false
     }
 
@@ -244,12 +244,12 @@ func IsFileAndStringEqual(file *os.File, other string, bPrintReasonToStdOut bool
             break
         }
 
-       if i >= len(otherRunes) {
-          bEqual = false
-          break
-       }
+        if i >= len(otherRunes) {
+            bEqual = false
+            break
+        }
 
-       continue
+        continue
     }
 
     if bEqual {
@@ -259,15 +259,35 @@ func IsFileAndStringEqual(file *os.File, other string, bPrintReasonToStdOut bool
     if bPrintReasonToStdOut {
         fmt.Printf("Provided file and string are not equal [%s]. Failed at line %d.\n", file.Name(), lineCount+1)
     }
-
     return false
 }
 
-func RecursivelyGetAllFilesInRelativeDir(relativeDir string) []string {
-    return RecursivelyGetAllFilesInAbsoluteDir(fmt.Sprintf("%s/%s", GetAbsolutePathToEngineRootDir(), relativeDir))
+// OpenAndWriteToRelativeFileIfDifferent does what the name says. But also it deletes the file if the content is empty.
+func OpenAndWriteToRelativeFileIfDifferent(relF string, newContent string, emit bool) bool {
+    return OpenAndWriteToAbsoluteFileIfDifferent(ToAbsolutePath(relF), newContent, emit)
+}
+func OpenAndWriteToAbsoluteFileIfDifferent(absF string, newContent string, bEmit bool) bool {
+    if len(newContent) == 0 {
+        DeleteAbsoluteFile(absF)
+    }
+
+    CheckAbsoluteFile(absF)
+    var f *os.File = OpenAbsoluteFile(absF, false, os.O_RDONLY)
+    if IsFileAndStringEqual(f, newContent, bEmit) {
+        CloseFile(f)
+        return false
+    }
+    CloseFile(f)
+    f = OpenAbsoluteFile(absF, true, os.O_RDWR)
+    WriteToFile(f, newContent)
+    CloseFile(f)
+    return true
 }
 
-func RecursivelyGetAllFilesInAbsoluteDir(absDir string) []string {
+func GetAllFilesInRelativeDirRecursive(relDir string) []string {
+    return GetAllFilesInAbsoluteDirRecursive(ToAbsolutePath(relDir))
+}
+func GetAllFilesInAbsoluteDirRecursive(absDir string) []string {
     var files []string
     err := filepath.Walk(absDir, func(path string, info os.FileInfo, err error) error {
         if err != nil {
@@ -288,11 +308,26 @@ func RecursivelyGetAllFilesInAbsoluteDir(absDir string) []string {
 }
 
 func IsHeaderFile(file string) bool {
-    return filepath.Ext(file) == ".h" || filepath.Ext(file) == ".hpp"
+    return filepath.Ext(file) == ".h" ||
+        filepath.Ext(file) == ".hpp"  ||
+        filepath.Ext(file) == ".hh"   ||
+        filepath.Ext(file) == ".inl"  ||
+        filepath.Ext(file) == ".fwd"
+}
+func IsTranslationFile(file string ) bool {
+    return filepath.Ext(file) == ".cpp" ||
+        filepath.Ext(file) == ".c"
+}
+func IsCTranslationFile(file string) bool {
+    return filepath.Ext(file) == ".c"
+}
+func IsCppTranslationFile(file string) bool {
+    return filepath.Ext(file) == ".cpp"
 }
 
-func GetFileNameFromHeaderPath(headerPath string) string {
-    var base string = filepath.Base(headerPath)
+// GetFileNameWithoutExtension returns from "MyFile.generated.h" -> "MyFile"
+func GetFileNameWithoutExtension(file string) string {
+    var base string = filepath.Base(file)
 
     var dotIndex int = -1
     for i := len(base) - 1; i >= 0; i-- {
@@ -305,57 +340,49 @@ func GetFileNameFromHeaderPath(headerPath string) string {
     }
 
     if dotIndex == -1 {
-        panic(fmt.Sprintf("Could not find dot in header path [%s].", headerPath))
+        panic(fmt.Sprintf("File [%s] has no extension.", file))
     }
 
     return base[:dotIndex]
 }
 
-// GetRelativeGeneratedHeaderPath returns the relative path to the generated header file.
-// Do not add an extension to the filename.
-func GetRelativeGeneratedHeaderPath(filename string) string {
-    return fmt.Sprintf("%s/%s%s", GeneratedHeadersDir, filename, GeneratedHeadersExtension)
+func GetFileHash(absF string) string {
+    f := OpenAbsoluteFile(absF, false, os.O_RDONLY)
+    defer CloseFile(f)
+
+    hasher := sha256.New()
+    if _, err := io.Copy(hasher, f); err != nil {
+        panic(err)
+    }
+    return fmt.Sprintf("%x", hasher.Sum(nil))
 }
 
-// GetRelativeGeneratedTranslationPath returns the relative path to the generated translation file.
-// Do not add an extension to the filename.
-func GetRelativeGeneratedTranslationPath(filename string) string {
-    return fmt.Sprintf("%s/%s%s", GeneratedTranslationsDir, filename, GeneratedTranslationsExtension)
-}
+func CopyFileIfDifferent(absSrc string, absDst string, bEmit bool) bool {
+    if DoesAbsoluteFileExist(absSrc) == false {
+        panic(fmt.Sprintf("Source file [%s] does not exist. Cannot copy.", absSrc))
+    }
+    CheckAbsoluteFile(absDst)
 
-func GetRelativeGeneratedHeaderDirForModule(mod *Module) string {
-    return fmt.Sprintf("%s", GeneratedHeadersDir)
-}
-
-
-func GetRelativeGeneratedTranslationDirForModule(mod *Module) string {
-    return fmt.Sprintf("%s/%s", GeneratedTranslationsDir, mod.GetRelativeModuleDir())
-}
-
-func CopyOnlyChangedFiles(sourceDir string, destDir string, bEmits bool) {
-    var sourceFiles []string = RecursivelyGetAllFilesInAbsoluteDir(sourceDir)
-    for _, sourceFile := range sourceFiles {
-        var relativePath string = sourceFile[len(sourceDir):]
-        var destPath string = fmt.Sprintf("%s%s", destDir, relativePath)
-
-        CheckAbsoluteFile(destPath)
-
-        var sourceFileContents string = ReadFileContentsFromAbsolutePath(sourceFile)
-        var destF *os.File = OpenAbsoluteFile(destPath, false, os.O_RDWR)
-
-        if IsFileAndStringEqual(destF, sourceFileContents, false) {
-            fmt.Printf("[%s] ... Skipped.\n", relativePath)
-        } else {
-            fmt.Printf("[%s] ... Copied.\n", relativePath)
-            TruncateFile(destF)
-            SeekFileBeginning(destF)
-            WriteToFile(destF, sourceFileContents)
+    var srcHash string = GetFileHash(absSrc)
+    var dstHash string = GetFileHash(absDst)
+    if srcHash == dstHash {
+        if bEmit {
+            fmt.Printf("Src [%s] and dst [%s] are equal. Skipping copy.\n", absSrc, absDst)
         }
-
-        CloseFile(destF)
-
-        continue
+        return false
     }
 
-    return
+    srcFile := OpenAbsoluteFile(absSrc, false, os.O_RDONLY)
+    dstFile := OpenAbsoluteFile(absDst, false, os.O_RDWR)
+
+    w, err := io.Copy(dstFile, srcFile)
+    if err != nil {
+        panic(err)
+    }
+
+    if bEmit {
+        fmt.Printf("Copied [%s] to [%s] with [%d] bytes written.\n", absSrc, absDst, w)
+    }
+
+    return true
 }

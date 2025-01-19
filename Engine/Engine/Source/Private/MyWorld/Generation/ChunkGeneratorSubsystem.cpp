@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
-#include "ChunkGeneratorSubsystem.h"
+#include "MyWorld/Generation/ChunkGeneratorSubsystem.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "MyWorld/Validation/ChunkValidationSubsystem.h"
 

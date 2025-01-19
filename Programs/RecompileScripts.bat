@@ -2,14 +2,13 @@
 
 @echo off
 
-@REM Will install all the necessary dependencies for this project
-@REM and generate the necessary platform dependent solution files.
+@REM Will recompile the scripts for this program.
 
 pushd ..
 
 echo Calling Python to generate solution files ...
 
-python Program.py --compile-scripts --generate-solution
+.\.venv\Scripts\python.exe .\Program.py --ValidateGo
 
 popd
 

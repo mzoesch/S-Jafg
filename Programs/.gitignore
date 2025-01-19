@@ -1,14 +1,14 @@
+# Visual Studio 2015 and 2022 / JetBrains Rider user specific files
+.vs/
+.idea/
+
+# Scripting
+.vscode/
+
 # Python
-__pycache__/*
-venv/*
-.venv/*
+venv/
+.venv/
+__pycache__/
 
-# Compiled source
-Binaries/*
-Intermediate/*
-
-# Idea
-.idea/*
-
-# Compiled scripts
+# Compiled source files
 Jafg.exe

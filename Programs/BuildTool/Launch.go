@@ -1,39 +1,41 @@
-// Copyright 2024 mzoesch. All rights reserved.
+// Copyright mzoesch. All rights reserved.
 
 package BuildTool
 
 import (
+    "Jafg/Core"
     "Jafg/Shared"
     "fmt"
     "slices"
     "strings"
 )
 
+//
+// Launch is the entry point for the BuildTool
+//
+// Arguments - all arguments are mandatory:
+//   - pre-build or post-build [Which build-step to execute]
+//   - SLN=<str>               [The solution to build]
+//   - MODULE=<str>            [The module to build]
+//   - SYSTEM=<str>            [The system to build for]
+//   - ARCH=<str>              [The architecture to build for]
+//   - TARGET=<str>            [The target to build]
+//   - PLATFORM=<str>          [The platform to build for]
+//
 func Launch(args []string) {
-    var myInfo *BuildInfo = new(BuildInfo)
-    myInfo.Initialize(args)
+    GBuildTargetInfo = new(BuildTargetInfo)
+    GBuildTargetInfo.Initialize(args)
+    GBuildTargetInfo.PrettyPrint()
 
-    fmt.Println(fmt.Sprintf("Launching build tool for module [%s] ...", GBuildInfo.ModuleName))
-    fmt.Println(fmt.Sprintf("Build configuration: [%s].", GBuildInfo.ToString()))
-
-    if slices.Contains(args, "--pre-build") {
+    if slices.Contains(args, "pre-build") {
         LaunchPreBuildTasks(args)
-    } else if slices.Contains(args, "--post-build") {
+    } else if slices.Contains(args, "post-build") {
         LaunchPostBuildTasks(args)
-    } else if slices.Contains(args, "--debug-run-make-vsystem") {
-        GCurrentHeaderState = new(CurrentHeaderState)
-        GCurrentHeaderState.filename = "VFileSystem"
-        GCurrentHeaderState.absoluteFilePath = Shared.NormalizePath(Shared.GetCheckedAbsolutePath("Engine/Engine/Source/Public/System/VFileSystem.h"))
-        GCurrentHeaderState.builder = new(strings.Builder)
-        GCurrentHeaderState.translationBuilder = new(strings.Builder)
-        MakeVirtualFilesystem()
-        ConditionallyWriteGeneratedFiles()
-        GCurrentHeaderState = nil
     } else {
-        panic("No build task specified.")
+        panic(fmt.Sprintf("No build task specified. Args: %v", args))
     }
 
-    GBuildInfo = nil
+    GBuildTargetInfo = nil
 
     return
 }
@@ -45,49 +47,96 @@ func LaunchPreBuildTasks(args []string) {
      * inside a directory that currently does not exist. So we just recursively create all potential points
      * of interest directories.
      */
-    Shared.CheckRelativeDir(Shared.GeneratedHeadersDir)
-    Shared.CheckRelativeDir(Shared.GeneratedTranslationsDir)
+    Shared.CheckRelativeDir(GBuildTargetInfo.GetRelativeModuleGhDir())
+    Shared.CheckRelativeDir(GBuildTargetInfo.GetRelativeModuleGtDir())
 
-    var relativeTargetDir string = GBuildInfo.GetRelativeModuleDir()
-    var allFiles []string = Shared.RecursivelyGetAllFilesInRelativeDir(relativeTargetDir)
-    var allHeaders []string
-    for _, file := range allFiles {
-        if Shared.IsHeaderFile(file) {
-            allHeaders = append(allHeaders, file)
-        }
+    GJPacketContainer = new(JPacketContainer)
+    defer func() {
+        GJPacketContainer = nil
+    }()
 
-        continue
-    }
-
-    GObjectStructure = new(ObjectHierarchy)
-    GObjectStructure.LoadCache()
-    ScanAllHeadersForObjectStructure(allHeaders)
-    GObjectStructure.ResolveDeferredNodes()
-    GObjectStructure.RecursivelySortByName()
-    GObjectStructure.SaveToCache()
-
-    RecursivelyScanAndOperateOnHeaders(allHeaders)
-
-    var targetedModule *Shared.Module = Shared.GApp.GetCheckedModuleByName(GBuildInfo.ModuleName)
-    Shared.CheckRelativeDir(GBuildInfo.GetRelativeGeneratedTranslationDir())
-    var pchSource = fmt.Sprintf("%s/%sAfx%s",
-        GBuildInfo.GetRelativeGeneratedTranslationDir(), GBuildInfo.ModuleName, Shared.GeneratedTranslationsExtension)
-    ConditionallyWritePchSourceFileForModule(targetedModule.Pch.IsUse(), pchSource)
-
-    GObjectStructure = nil
+    GJPacketContainer.PullCache()
+    ReflectModule()
+    GJPacketContainer.PushCache()
 
     return
 }
 
 func LaunchPostBuildTasks(args []string) {
-    if GBuildInfo.Kind.IsLaunch() {
-        GBuildInfo.CopyWorkspaceContentToLaunch()
-        GBuildInfo.CopyPrecompiledSharedLibrariesToLaunch()
-    }
-
-    if GBuildInfo.Kind.IsShared() {
-        GBuildInfo.CopyModuleBinariesToLaunch()
+    if GBuildTargetInfo.GetTranslatedKind().IsLaunch() {
+        CopyRelevantBinariesToLaunch()
     }
 
     return
+}
+
+func CopyRelevantBinariesToLaunch() {
+    var tar *Core.Target = GBuildTargetInfo.GetTargetPointerChecked()
+    var mod *Core.Module = GBuildTargetInfo.GetModulePointerChecked()
+
+    var allDeps []*Core.Module
+    mod.GetTransitiveAllDependenciesWithPrivate(tar, &allDeps)
+
+    fmt.Println("Copying shared binaries and other dependencies to launch directory ...")
+
+    var copied int = 0
+    for idx, _ := range allDeps {
+        var dMod *Core.Module = allDeps[idx]
+        if dMod.Kind.IsShared() {
+            if CopyBinaryToLaunch(fmt.Sprintf(
+                "%s/%s/%s%s",
+                GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
+                dMod.GetFunctionalRelativeDir(),
+                dMod.Name,
+                GBuildTargetInfo.GetSharedLibExtension(),
+            )) {
+                copied++
+            }
+
+            if strings.Contains(GBuildTargetInfo.Target, "Shipping") == false {
+                if CopyBinaryToLaunch(fmt.Sprintf(
+                    "%s/%s/%s%s",
+                    GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
+                    dMod.GetFunctionalRelativeDir(),
+                    dMod.Name,
+                    GBuildTargetInfo.GetSharedLibDebugSymbolsExtension(),
+                )) {
+                    copied++
+                }
+            }
+        }
+
+        for _, bin := range allDeps[idx].NativeDependencies {
+            if CopyBinaryToLaunch(bin) {
+                copied++
+            }
+        }
+
+        for _, bin := range allDeps[idx].AdditionalCopyFiles {
+            if CopyBinaryToLaunch(bin) {
+                copied++
+            }
+        }
+
+        continue
+    }
+
+    fmt.Printf("Successfully copied %d files to launch directory.\n", copied)
+
+    return
+}
+
+func CopyBinaryToLaunch(relSource string) bool {
+    var lastSlash int = strings.LastIndex(relSource, "/")
+    if lastSlash == -1 {
+        panic(fmt.Sprintf("Path [%s] is not valid.", relSource))
+    }
+    var relTarget string = fmt.Sprintf("%s/%s", GBuildTargetInfo.GetRelativeBinaryDir(), relSource[lastSlash+1:])
+
+    if Shared.CopyFileIfDifferent(Shared.ToAbsolutePath(relSource), Shared.ToAbsolutePath(relTarget), false) {
+        fmt.Printf("Copied [%s] to [%s].\n", relSource, relTarget)
+        return true
+    }
+
+    return false
 }

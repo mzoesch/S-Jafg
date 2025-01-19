@@ -2,7 +2,7 @@
 
 #include "CoreAfx.h"
 #include "Engine/Engine.h"
-#include "CoreGlobals.h"
+#include "Engine/CoreGlobals.h"
 #include "Async/TaskUtility.h"
 #include "Core/Application.h"
 #include "Engine/World.h"

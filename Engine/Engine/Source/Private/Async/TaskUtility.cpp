@@ -2,7 +2,7 @@
 
 #include "CoreAfx.h"
 #include "Async/TaskUtility.h"
-#include "../Engine/CoreGlobals.h"
+#include "Engine/CoreGlobals.h"
 #include "Async/Runnable.h"
 #include "Core/Application.h"
 #if WITH_GNU
@@ -18,11 +18,11 @@ namespace
 
 #if WITH_MSVC
     static_assert(std::is_same_v<::Jafg::LThreadId, _Thrd_id_t>, "Compiler specific thread id is not the same.");
-    #if _HAS_CXX23
+    #if !_HAS_CXX23
         /** Just use msvc std implementation. */
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() \
             std::this_thread::get_id()._Get_underlying_id()
-    #else /* _HAS_CXX23 */
+    #else /* !_HAS_CXX23 */
         static_assert(
             sizeof(::Jafg::LThreadId) == sizeof(std::thread::id),
             "The size of std::thread::id and uint32 must be the same."

@@ -46,6 +46,8 @@ FORCEINLINE auto GetDefaultObjectInitializer() -> LObjectInitializer
 namespace Private
 {
 
+class NextIsObjectBaseClass;
+
 /**
  * The base class for all objects that share a lifetime among its owner and that are detected automatically
  * by the jafg build tool to allow for dynamic casting, network replication, etc.
@@ -54,7 +56,7 @@ namespace Private
  * Generally speaking, inheriting from this class directly is not recommended.
  */
 PRAGMA_FOR_JAFG_BUILD_TOOL("NextIsObjectBaseClass")
-DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
+DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API JObjectBase
 {
     friend LCarnifex;

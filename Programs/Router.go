@@ -1,4 +1,4 @@
-// Copyright 2024 mzoesch. All rights reserved.
+// Copyright mzoesch. All rights reserved.
 
 package main
 
@@ -6,18 +6,25 @@ import (
     "Jafg/BuildTool"
     "Jafg/SolutionGenerator"
     "errors"
+    "fmt"
     "slices"
 )
 
 func RouteToSubProgram(args []string) error {
-    if slices.Contains(args, "--DoNothingTestingOnly") {
+    fmt.Println("Routing to subprogram ...")
+    if slices.Contains(args, "--DoNothing") {
         return nil
     } else if slices.Contains(args, "--SolutionGenerator") {
-        SolutionGenerator.Launch(args)
+        fmt.Println("Routing to SolutionGenerator ...")
+        err := SolutionGenerator.Launch(args)
+        if err != nil {
+            return err
+        }
     } else if slices.Contains(args, "--BuildTool") {
+        fmt.Println("Routing to BuildTool ...")
         BuildTool.Launch(args)
     } else {
-        return errors.New("no subprogram specified")
+        return errors.New(fmt.Sprintf("no subprogram specified. Args: %v", args))
     }
 
     return nil

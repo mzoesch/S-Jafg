@@ -1,6 +1,20 @@
-// Copyright 2024 mzoesch. All rights reserved.
+// Copyright mzoesch. All rights reserved.
 
 package Shared
+
+import "runtime"
+
+func IsWindows() bool {
+    return runtime.GOOS == "windows"
+}
+
+func IsLinux() bool {
+    return runtime.GOOS == "linux"
+}
+
+func IsMac() bool {
+    return runtime.GOOS == "darwin"
+}
 
 func ContainsByPredicate[T any](ts []T, pred func(T) bool) bool {
     for _, t := range ts {
@@ -10,6 +24,16 @@ func ContainsByPredicate[T any](ts []T, pred func(T) bool) bool {
     }
 
     return false
+}
+
+func GetByPredicate[T any](ts []T, pred func(T) bool) *T {
+    for _, t := range ts {
+        if pred(t) {
+            return &t
+        }
+    }
+
+    return nil
 }
 
 func CountRunesInString(str string) int {
