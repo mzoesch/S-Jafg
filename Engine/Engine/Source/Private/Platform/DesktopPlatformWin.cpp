@@ -459,13 +459,14 @@ void Jafg::LDesktopPlatformWin::CharCallback(GLFWwindow* Window, const uint32 Co
 {
     std::u32string Char;
     Char.push_back(Codepoint);
+
 #pragma warning( push )
 #pragma warning(disable: 4996)
     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
-    std::string ut8String = converter.to_bytes(Char);
+    std::string utf8String = converter.to_bytes(Char);
 #pragma warning( pop )
 
-    this->AddBufferedPlatformInput(ut8String.c_str());
+    this->AddBufferedPlatformInput(utf8String.c_str());
 
     return;
 }

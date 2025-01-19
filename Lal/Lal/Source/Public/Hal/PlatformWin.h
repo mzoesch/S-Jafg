@@ -254,6 +254,10 @@
 
 #include <Windows.h>
 
+#ifdef TEXT
+    #undef TEXT
+#endif /* TEXT */
+
 #if PLATFORM_WINDOWS_WITH_GNU
     #include <locale>
 #endif /* PLATFORM_WINDOWS_WITH_GNU */

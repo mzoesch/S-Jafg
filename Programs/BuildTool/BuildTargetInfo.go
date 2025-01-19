@@ -11,7 +11,6 @@ import (
 type BuildTargetInfo struct {
     Sln      string
     Module   string
-    System   string
     Arch     string
     Target   string
     Platform string
@@ -27,8 +26,6 @@ func (bti *BuildTargetInfo) Initialize(args []string) {
             bti.Sln = strings.Split(arg, "=")[1]
         } else if strings.Contains(arg, "MODULE=") {
             bti.Module = strings.Split(arg, "=")[1]
-        } else if strings.Contains(arg, "SYSTEM=") {
-            bti.System = strings.Split(arg, "=")[1]
         } else if strings.Contains(arg, "ARCH=") {
             bti.Arch = strings.Split(arg, "=")[1]
         } else if strings.Contains(arg, "TARGET=") {
@@ -43,7 +40,6 @@ func (bti *BuildTargetInfo) Initialize(args []string) {
 
     if bti.Sln == "" ||
         bti.Module == "" ||
-        bti.System == "" ||
         bti.Arch == "" ||
         bti.Target == "" ||
         bti.Platform == "" ||
@@ -58,10 +54,9 @@ func (bti *BuildTargetInfo) PrettyPrint() {
     fmt.Println("Build target information:")
     fmt.Println(fmt.Sprintf("SLN:      %s", bti.Sln))
     fmt.Println(fmt.Sprintf("MODULE:   %s", bti.Module))
-    fmt.Println(fmt.Sprintf("SYSTEM:   %s", bti.System))
+    fmt.Println(fmt.Sprintf("PLATFORM: %s", bti.Platform))
     fmt.Println(fmt.Sprintf("ARCH:     %s", bti.Arch))
     fmt.Println(fmt.Sprintf("TARGET:   %s", bti.Target))
-    fmt.Println(fmt.Sprintf("PLATFORM: %s", bti.Platform))
 
     return
 }
@@ -151,7 +146,7 @@ func (bti *BuildTargetInfo) GetRelativeSourceDir() string {
 func (bti *BuildTargetInfo) GetRelativeBinaryDirNoModules() string {
     return fmt.Sprintf("%s/%s-%s/%s",
         Core.DirPath_Bin,
-        bti.System, bti.Arch, bti.Target,
+        bti.Platform, bti.Arch, bti.Target,
     )
 }
 
@@ -179,4 +174,3 @@ func (bti *BuildTargetInfo) GetSharedLibDebugSymbolsExtension() string {
     }
     panic(fmt.Sprintf("Platform [%s] is missing implementation.", bti.Platform))
 }
-

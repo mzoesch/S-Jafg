@@ -8,7 +8,7 @@
 namespace Jafg
 {
 
-DECLARE_JAFG_CLASS(EClassFlags::Abstract,)
+DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API WButton : public WWidgetRegion
 {
     GENERATED_CLASS_BODY()

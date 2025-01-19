@@ -81,8 +81,8 @@ public:
     bool IsKeyUp(const LKey InKey) const;
     FORCEINLINE bool IsKeyUp(const LRawInput& InRawInput) const { return this->IsKeyUp(InRawInput.Key); }
 
-    FORCEINLINE bool    HasBufferedPlatformInput() const { return this->PlatformInput.IsEmpty() == false; }
-    FORCEINLINE LString GetPlatformInput() const { return this->PlatformInput; }
+    FORCEINLINE bool HasBufferedPlatformInput() const { return this->PlatformInput.IsEmpty() == false; }
+    FORCEINLINE auto GetPlatformInput() const -> const LString& { return this->PlatformInput; }
 
 protected:
 

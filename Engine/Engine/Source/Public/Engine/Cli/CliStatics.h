@@ -35,7 +35,7 @@ ENGINE_API auto TokenizeArg(const LString& InArg) -> LCliToken*;
 
 bool CliStatics::IsCommand(const LString& InText)
 {
-    return InText.StartsWith(TEXT("/"));
+    return InText.StartsWith(FMT("/"));
 }
 
 } /* ~Namespace Jafg */

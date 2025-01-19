@@ -16,6 +16,7 @@ func Wwi(b *strings.Builder, i int, c string) {
     b.WriteString(fmt.Sprintf("%s%s\n", strings.Repeat(" ", i*4), c))
     return
 }
+
 // Wni stands for Write No Indentation.
 func Wni(b *strings.Builder, c string) {
     b.WriteString(c)
@@ -58,44 +59,67 @@ func GenerateSolutionFromPremake(sln *Core.Solution) error {
     }
     fmt.Println(string(stdout))
 
-    var slnF string = ""
-    if Shared.IsWindows() {
-        slnF = fmt.Sprintf("%s/Jafg.sln", sln.GetSavedRelativeDir())
-    } else {
-        panic("Not implemented.")
-    }
-    if Shared.DoesRelativeFileExist(slnF) == false {
-        panic(fmt.Sprintf("Solution file [%s] does not exist.", slnF))
-    }
-
-    var symlinkPath string = fmt.Sprintf("Jafg-%s.sln.lnk", sln.Name)
-    if Shared.DoesRelativeFileExist(symlinkPath) == false {
-
-        err2 := os.Symlink(slnF, symlinkPath)
-        if err2 != nil {
-            // Windows will probably fail here. Just ignore it and call PowerShell to create the symlink.
-            if Shared.IsWindows() {
-                var absSlnF string = Shared.ToAbsolutePath(slnF)
-                var absSymlinkPath string = Shared.ToAbsolutePath(symlinkPath)
-                absSlnF = strings.ReplaceAll(absSlnF, "/", "\\")
-                absSymlinkPath = strings.ReplaceAll(absSymlinkPath, "/", "\\")
-                var ps1 string = "Programs/Shell/CreateSymlink.ps1"
-                cmdPs1 := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ps1, absSlnF, absSymlinkPath)
-
-                cmdPs1.Stdout = os.Stdout
-                cmdPs1.Stderr = os.Stderr
-
-                err3 := cmdPs1.Run()
-                if err3 != nil {
-                    panic(err3)
-                }
-            } else {
-                panic(err2)
-            }
+    // Make sure JetBrains Rider can detect the vsc in the root engine dir.
+    {
+        if Shared.DoesRelativeFileExist(fmt.Sprintf("%s/.idea/.idea.Jafg/.idea/vcs.xml", sln.GetSavedRelativeDir())) == false {
+            Shared.CheckRelativeFile(fmt.Sprintf("%s/.idea/.idea.Jafg/.idea/vcs.xml", sln.GetSavedRelativeDir()))
+            Shared.OpenAndWriteToRelativeFileIfDifferent(
+                fmt.Sprintf("%s/.idea/.idea.Jafg/.idea/vcs.xml", sln.GetSavedRelativeDir()),
+                fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/%s" vcs="Git" />
+  </component>
+</project>
+`,
+                    sln.GetChdirUpRelToBuildFile(),
+                ),
+                true,
+            )
         }
     }
 
-    fmt.Printf("Created symlink [%s] -> [%s] ...\n", slnF, symlinkPath)
+    // Symlink the generated solution file to the top level dir.
+    {
+        var slnF string = ""
+        if Shared.IsWindows() {
+            slnF = fmt.Sprintf("%s/Jafg.sln", sln.GetSavedRelativeDir())
+        } else {
+            panic("Not implemented.")
+        }
+        if Shared.DoesRelativeFileExist(slnF) == false {
+            panic(fmt.Sprintf("Solution file [%s] does not exist.", slnF))
+        }
+
+        var symlinkPath string = fmt.Sprintf("Jafg-%s.sln.lnk", sln.Name)
+        if Shared.DoesRelativeFileExist(symlinkPath) == false {
+
+            err2 := os.Symlink(slnF, symlinkPath)
+            if err2 != nil {
+                // Windows will probably fail here. Just ignore it and call PowerShell to create the symlink.
+                if Shared.IsWindows() {
+                    var absSlnF string = Shared.ToAbsolutePath(slnF)
+                    var absSymlinkPath string = Shared.ToAbsolutePath(symlinkPath)
+                    absSlnF = strings.ReplaceAll(absSlnF, "/", "\\")
+                    absSymlinkPath = strings.ReplaceAll(absSymlinkPath, "/", "\\")
+                    var ps1 string = "Programs/Shell/CreateSymlink.ps1"
+                    cmdPs1 := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ps1, absSlnF, absSymlinkPath)
+
+                    cmdPs1.Stdout = os.Stdout
+                    cmdPs1.Stderr = os.Stderr
+
+                    err3 := cmdPs1.Run()
+                    if err3 != nil {
+                        panic(err3)
+                    }
+                } else {
+                    panic(err2)
+                }
+            }
+        }
+
+        fmt.Printf("Created symlink [%s] -> [%s] ...\n", slnF, symlinkPath)
+    }
 
     return nil
 }
@@ -112,7 +136,7 @@ func MakePchForAllModules(sln *Core.Solution) {
                     sln.GetSavedRelativeDir(), m.GetFunctionalRelativeDir(), Core.CghDir, t.Name, Core.FilePath_PchHeader)
                 if Shared.OpenAndWriteToRelativeFileIfDifferent(
                     pchSource, fmt.Sprintf("#include \"%s\"", fmt.Sprintf("%s", Core.FilePath_PchHeader)), false,
-                    ) {
+                ) {
                     fmt.Printf("Pch source file differs. Updated [%s].\n", pchSource)
                 }
                 if Shared.OpenAndWriteToRelativeFileIfDifferent(pchHeader, m.PchContent, false) {
@@ -209,9 +233,9 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
         Wwi(b, 2, fmt.Sprintf("location '%s'", module.GetFunctionalRelativeDir()))
         Wwi(b, 2, fmt.Sprintf("kind '%s'", module.Kind.ToLuaString()))
         Wwi(b, 2, "rtti 'Off'")
-        Wwi(b, 2, fmt.Sprintf("targetdir ('%s/Binaries/%%{cfg.system}-%%{cfg.architecture}/%%{cfg.buildcfg}/%s')",
+        Wwi(b, 2, fmt.Sprintf("targetdir ('%s/Binaries/%%{cfg.platform}-%%{cfg.architecture}/%%{cfg.buildcfg}/%s')",
             sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
-        Wwi(b, 2, fmt.Sprintf("objdir ('%s/Intermediate/%%{cfg.system}-%%{cfg.architecture}/%%{cfg.buildcfg}/%s')",
+        Wwi(b, 2, fmt.Sprintf("objdir ('%s/Intermediate/%%{cfg.platform}-%%{cfg.architecture}/%%{cfg.buildcfg}/%s')",
             sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
 
         Wwi(b, 2, "files {")
@@ -279,9 +303,9 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
                     fmt.Sprintf("SLN=%s ", sln.Name)+
                     fmt.Sprintf("MODULE=%s ", volatileModule.GetUniqueName())+
                     "KIND=%{cfg.kind} "+
-                    "SYSTEM=%{cfg.system} ARCH=%{cfg.architecture} "+
-                    "TARGET=%{cfg.buildcfg} PLATFORM=%{cfg.platform}'",
-                )
+                    "PLATFORM=%{cfg.platform} ARCH=%{cfg.architecture} "+
+                    "TARGET=%{cfg.buildcfg}'",
+            )
             Wwi(b, 4, "}")
             Wwi(b, 4, "postbuildcommands {")
             Wwi(b, 5,
@@ -290,8 +314,8 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
                     fmt.Sprintf("SLN=%s ", sln.Name)+
                     fmt.Sprintf("MODULE=%s ", volatileModule.GetUniqueName())+
                     "KIND=%{cfg.kind} "+
-                    "SYSTEM=%{cfg.system} ARCH=%{cfg.architecture} "+
-                    "TARGET=%{cfg.buildcfg} PLATFORM=%{cfg.platform}'",
+                    "PLATFORM=%{cfg.platform} ARCH=%{cfg.architecture} "+
+                    "TARGET=%{cfg.buildcfg}'",
             )
             Wwi(b, 4, "}")
             Wwi(b, 3, "else")
@@ -302,8 +326,8 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
                     fmt.Sprintf("SLN=%s ", sln.Name)+
                     fmt.Sprintf("MODULE=%s ", volatileModule.GetUniqueName())+
                     "KIND=%{cfg.kind} "+
-                    "SYSTEM=%{cfg.system} ARCH=%{cfg.architecture} "+
-                    "TARGET=%{cfg.buildcfg} PLATFORM=%{cfg.platform}'",
+                    "PLATFORM=%{cfg.platform} ARCH=%{cfg.architecture} "+
+                    "TARGET=%{cfg.buildcfg}'",
             )
             Wwi(b, 4, "}")
             Wwi(b, 4, "postbuildcommands {")
@@ -313,8 +337,8 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
                     fmt.Sprintf("SLN=%s ", sln.Name)+
                     fmt.Sprintf("MODULE=%s ", volatileModule.GetUniqueName())+
                     "KIND=%{cfg.kind} "+
-                    "SYSTEM=%{cfg.system} ARCH=%{cfg.architecture} "+
-                    "TARGET=%{cfg.buildcfg} PLATFORM=%{cfg.platform}'",
+                    "PLATFORM=%{cfg.platform} ARCH=%{cfg.architecture} "+
+                    "TARGET=%{cfg.buildcfg}'",
             )
             Wwi(b, 4, "}")
             Wwi(b, 3, "end")

@@ -17,10 +17,9 @@ import (
 //   - pre-build or post-build [Which build-step to execute]
 //   - SLN=<str>               [The solution to build]
 //   - MODULE=<str>            [The module to build]
-//   - SYSTEM=<str>            [The system to build for]
+//   - PLATFORM=<str>          [The platform to build for]
 //   - ARCH=<str>              [The architecture to build for]
 //   - TARGET=<str>            [The target to build]
-//   - PLATFORM=<str>          [The platform to build for]
 //
 func Launch(args []string) {
     GBuildTargetInfo = new(BuildTargetInfo)
@@ -63,59 +62,77 @@ func LaunchPreBuildTasks(args []string) {
 }
 
 func LaunchPostBuildTasks(args []string) {
-    if GBuildTargetInfo.GetTranslatedKind().IsLaunch() {
-        CopyRelevantBinariesToLaunch()
+    if GBuildTargetInfo.GetTranslatedKind().IsShared() {
+        CopyRelevantBinariesToAllLaunchers()
+    } else if GBuildTargetInfo.GetTranslatedKind().IsLaunch() {
+        CopyRelevantNativeBinariesToLaunch()
     }
 
     return
 }
 
-func CopyRelevantBinariesToLaunch() {
+func CopyRelevantBinariesToAllLaunchers() {
     var tar *Core.Target = GBuildTargetInfo.GetTargetPointerChecked()
     var mod *Core.Module = GBuildTargetInfo.GetModulePointerChecked()
+
+    if mod.Kind.IsShared() == false {
+        panic(fmt.Sprintf("Module [%s] is not shared.", mod.Name))
+    }
 
     var allDeps []*Core.Module
     mod.GetTransitiveAllDependenciesWithPrivate(tar, &allDeps)
 
-    fmt.Println("Copying shared binaries and other dependencies to launch directory ...")
+    var sharedBin string = fmt.Sprintf(
+        "%s/%s/%s%s",
+        GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
+        mod.GetFunctionalRelativeDir(),
+        mod.Name,
+        GBuildTargetInfo.GetSharedLibExtension(),
+    )
+    var sharedDebugDatabase string = fmt.Sprintf(
+        "%s/%s/%s%s",
+        GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
+        mod.GetFunctionalRelativeDir(),
+        mod.Name,
+        GBuildTargetInfo.GetSharedLibDebugSymbolsExtension(),
+    )
+
+    fmt.Println("Copying this binary to launch directories ...")
 
     var copied int = 0
-    for idx, _ := range allDeps {
-        var dMod *Core.Module = allDeps[idx]
-        if dMod.Kind.IsShared() {
-            if CopyBinaryToLaunch(fmt.Sprintf(
-                "%s/%s/%s%s",
-                GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
-                dMod.GetFunctionalRelativeDir(),
-                dMod.Name,
-                GBuildTargetInfo.GetSharedLibExtension(),
-            )) {
+    for idx, _ := range tar.Modules {
+        if tar.Modules[idx].Kind.IsLaunch() == false {
+            continue
+        }
+
+        var launchMod *Core.Module = &tar.Modules[idx]
+        var targetDir string = fmt.Sprintf(
+            "%s/%s",
+            GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
+            launchMod.GetFunctionalRelativeDir(),
+        )
+
+        if Shared.CopyToDirIfDifferent(sharedBin, targetDir) {
+            copied++
+        }
+        if strings.Contains(GBuildTargetInfo.Target, "Shipping") == false {
+            if Shared.CopyToDirIfDifferent(sharedDebugDatabase, targetDir) {
                 copied++
             }
+        }
 
-            if strings.Contains(GBuildTargetInfo.Target, "Shipping") == false {
-                if CopyBinaryToLaunch(fmt.Sprintf(
-                    "%s/%s/%s%s",
-                    GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
-                    dMod.GetFunctionalRelativeDir(),
-                    dMod.Name,
-                    GBuildTargetInfo.GetSharedLibDebugSymbolsExtension(),
-                )) {
+        for idxD, _ := range allDeps {
+            for _, bin := range allDeps[idxD].NativeDependencies {
+                if Shared.CopyToDirIfDifferent(bin, targetDir) {
                     copied++
                 }
             }
-        }
-
-        for _, bin := range allDeps[idx].NativeDependencies {
-            if CopyBinaryToLaunch(bin) {
-                copied++
+            for _, bin := range allDeps[idxD].AdditionalCopyFiles {
+                if Shared.CopyToDirIfDifferent(bin, targetDir) {
+                    copied++
+                }
             }
-        }
-
-        for _, bin := range allDeps[idx].AdditionalCopyFiles {
-            if CopyBinaryToLaunch(bin) {
-                copied++
-            }
+            continue
         }
 
         continue
@@ -126,17 +143,60 @@ func CopyRelevantBinariesToLaunch() {
     return
 }
 
-func CopyBinaryToLaunch(relSource string) bool {
-    var lastSlash int = strings.LastIndex(relSource, "/")
-    if lastSlash == -1 {
-        panic(fmt.Sprintf("Path [%s] is not valid.", relSource))
-    }
-    var relTarget string = fmt.Sprintf("%s/%s", GBuildTargetInfo.GetRelativeBinaryDir(), relSource[lastSlash+1:])
+func CopyRelevantNativeBinariesToLaunch() {
+    var tar *Core.Target = GBuildTargetInfo.GetTargetPointerChecked()
+    var mod *Core.Module = GBuildTargetInfo.GetModulePointerChecked()
 
-    if Shared.CopyFileIfDifferent(Shared.ToAbsolutePath(relSource), Shared.ToAbsolutePath(relTarget), false) {
-        fmt.Printf("Copied [%s] to [%s].\n", relSource, relTarget)
-        return true
+    var allDeps []*Core.Module
+    mod.GetTransitiveAllDependenciesWithPrivate(tar, &allDeps)
+
+    fmt.Println("Copying shared binaries and other dependencies to launch directory ...")
+
+    var relTarget string = GBuildTargetInfo.GetRelativeBinaryDir()
+
+    var copied int = 0
+    for idx, _ := range allDeps {
+        var dMod *Core.Module = allDeps[idx]
+        if dMod.Kind.IsShared() {
+            if Shared.CopyToDirIfDifferent(fmt.Sprintf(
+                "%s/%s/%s%s",
+                GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
+                dMod.GetFunctionalRelativeDir(),
+                dMod.Name,
+                GBuildTargetInfo.GetSharedLibExtension(),
+            ), relTarget) {
+                copied++
+            }
+
+            if strings.Contains(GBuildTargetInfo.Target, "Shipping") == false {
+                if Shared.CopyToDirIfDifferent(fmt.Sprintf(
+                    "%s/%s/%s%s",
+                    GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
+                    dMod.GetFunctionalRelativeDir(),
+                    dMod.Name,
+                    GBuildTargetInfo.GetSharedLibDebugSymbolsExtension(),
+                ), relTarget) {
+                    copied++
+                }
+            }
+        }
+
+        for _, bin := range allDeps[idx].NativeDependencies {
+            if Shared.CopyToDirIfDifferent(bin, relTarget) {
+                copied++
+            }
+        }
+
+        for _, bin := range allDeps[idx].AdditionalCopyFiles {
+            if Shared.CopyToDirIfDifferent(bin, relTarget) {
+                copied++
+            }
+        }
+
+        continue
     }
 
-    return false
+    fmt.Printf("Successfully copied %d files to launch directory.\n", copied)
+
+    return
 }

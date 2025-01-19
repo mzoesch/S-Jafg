@@ -9,60 +9,60 @@ Jafg::LSimpleString Jafg::LexToString(const ECommandReturnCode::Type& InType)
     {
     case ECommandReturnCode::Invalid:
     {
-        return TEXT("Invalid");
+        return FMT("Invalid");
     }
     case ECommandReturnCode::Success:
     {
-        return TEXT("Success");
+        return FMT("Success");
     }
     case ECommandReturnCode::SuccessNoResponse:
     {
-        return TEXT("SuccessNoResponse");
+        return FMT("SuccessNoResponse");
     }
     case ECommandReturnCode::SuccessBroadcast:
     {
-        return TEXT("SuccessBroadcast");
+        return FMT("SuccessBroadcast");
     }
     case ECommandReturnCode::SuccessBroadcastWithAuthority:
     {
-        return TEXT("SuccessBroadcastWithAuthority");
+        return FMT("SuccessBroadcastWithAuthority");
     }
     case ECommandReturnCode::Failure:
     {
-        return TEXT("Failure");
+        return FMT("Failure");
     }
     case ECommandReturnCode::Unknown:
     {
-        return TEXT("Unknown");
+        return FMT("Unknown");
     }
     case ECommandReturnCode::Forbidden:
     {
-        return TEXT("Forbidden");
+        return FMT("Forbidden");
     }
     case ECommandReturnCode::MissingArgs:
     {
-        return TEXT("MissingArgs");
+        return FMT("MissingArgs");
     }
     case ECommandReturnCode::TooManyArgs:
     {
-        return TEXT("TooManyArgs");
+        return FMT("TooManyArgs");
     }
     case ECommandReturnCode::SemanticError:
     {
-        return TEXT("SemanticError");
+        return FMT("SemanticError");
     }
     case ECommandReturnCode::SyntaxError:
     {
-        return TEXT("SyntaxError");
+        return FMT("SyntaxError");
     }
     case ECommandReturnCode::PlatformError:
     {
-        return TEXT("PlatformError");
+        return FMT("PlatformError");
     }
     default:
     {
         checkNoEntry()
-        return TEXT("Unknown");
+        return FMT("Unknown");
     }
     }
 }

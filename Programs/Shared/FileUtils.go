@@ -8,6 +8,7 @@ import (
     "io"
     "os"
     "path/filepath"
+    "strings"
 )
 
 // CheckRelativeDir checks if a directory exists and if not tries to create it.
@@ -309,12 +310,12 @@ func GetAllFilesInAbsoluteDirRecursive(absDir string) []string {
 
 func IsHeaderFile(file string) bool {
     return filepath.Ext(file) == ".h" ||
-        filepath.Ext(file) == ".hpp"  ||
-        filepath.Ext(file) == ".hh"   ||
-        filepath.Ext(file) == ".inl"  ||
+        filepath.Ext(file) == ".hpp" ||
+        filepath.Ext(file) == ".hh" ||
+        filepath.Ext(file) == ".inl" ||
         filepath.Ext(file) == ".fwd"
 }
-func IsTranslationFile(file string ) bool {
+func IsTranslationFile(file string) bool {
     return filepath.Ext(file) == ".cpp" ||
         filepath.Ext(file) == ".c"
 }
@@ -355,6 +356,21 @@ func GetFileHash(absF string) string {
         panic(err)
     }
     return fmt.Sprintf("%x", hasher.Sum(nil))
+}
+
+func CopyToDirIfDifferent(relSource string, relTargetDir string) bool {
+    var lastSlash int = strings.LastIndex(relSource, "/")
+    if lastSlash == -1 {
+        panic(fmt.Sprintf("Path [%s] is not valid.", relSource))
+    }
+    var relTarget string = fmt.Sprintf("%s/%s", relTargetDir, relSource[lastSlash+1:])
+
+    if CopyFileIfDifferent(ToAbsolutePath(relSource), ToAbsolutePath(relTarget), false) {
+        fmt.Printf("Copied [%s] to [%s].\n", relSource, relTargetDir)
+        return true
+    }
+
+    return false
 }
 
 func CopyFileIfDifferent(absSrc string, absDst string, bEmit bool) bool {
