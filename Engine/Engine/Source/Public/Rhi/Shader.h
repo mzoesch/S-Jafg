@@ -66,4 +66,4 @@ FORCEINLINE void LShader::SetUniform(const LSimpleString& Name, const LMatrixF& 
 template <>
 FORCEINLINE void LShader::SetUniform(const LSimpleString& Name, const LColor& Value) const { this->SetColorUniform(Name, Value); }
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */
