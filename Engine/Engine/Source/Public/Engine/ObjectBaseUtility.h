@@ -9,22 +9,22 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler options
 
-/**
- * Whether the C++ compiler should check for pure virtual functions, and if they have been overriden by any derived
- * class. Usually disabled as the program may not run with this option enabled.
- * Abstract classes must still be instantiable to satisfy the object registry that runs at every module startup.
- * Usually, this program panics if it encounters a non-implemented pure virtual method.
- */
+//#
+//# Whether the C++ compiler should check for pure virtual functions, and if they have been overriden by any derived
+//# class. Usually disabled as the program may not run with this option enabled.
+//# Abstract classes must still be instantiable to satisfy the object registry that runs at every module startup.
+//# Usually, this program panics if it encounters a non-implemented pure virtual method.
+//#
 #ifndef DO_PURE_VIRTUAL_COMPILER_CHECKS
     #define DO_PURE_VIRTUAL_COMPILER_CHECKS                 0
 #endif /* !DO_PURE_VIRTUAL_COMPILER_CHECKS */
 
-/**
- * Whether to double-check lifetimes of JObjectBase objects. Meaning check if an object has rightfully begun its life,
- * was marked as garbage, ended its life, then was destroyed and freed in the end.
- * These checks add a meaningful non-neglectable overhead to object creation and destruction and should therefore
- * be disabled in shipping builds.
- */
+//#
+//# Whether to double-check lifetimes of JObjectBase objects. Meaning check if an object has rightfully begun its life,
+//# was marked as garbage, ended its life, then was destroyed and freed in the end.
+//# These checks add a meaningful non-neglectable overhead to object creation and destruction and should therefore
+//# be disabled in shipping builds.
+//#
 #ifndef DO_DOUBLE_CHECK_LIFETIMES
     #define DO_DOUBLE_CHECK_LIFETIMES                       !IN_SHIPPING
 #endif /* !DO_DOUBLE_CHECK_LIFETIMES */
@@ -35,11 +35,11 @@
 #if DO_PURE_VIRTUAL_COMPILER_CHECKS
     #define PURE_VIRTUAL(...) = 0;
 #else /* DO_PURE_VIRTUAL_COMPILER_CHECKS */
-    /** Define a RetTy for non-void members if needed. */
+    //# Define a RetTy for non-void members if needed.
     #define PURE_VIRTUAL(...) { panic( "Pure virtual function was encountered." ) __VA_ARGS__; }
 #endif /* !DO_PURE_VIRTUAL_COMPILER_CHECKS */
 
-/** A member that was derived but is not callable. */
+//# A member that was derived but is not callable.
 #define NON_CALLABLE_MEMBER(...) { panic( "Non-callable member function was encountered." ) __VA_ARGS__; }
 
 namespace Jafg
@@ -63,10 +63,10 @@ typedef void (*OnRegistrationDelegate)(LObjectClass* StaticClass);
 
 } /* ~Namespace Private */
 
-/** A global context that shares the lifetime of the program (not engine!). */
+//# A global context that shares the lifetime of the program (not engine!).
 ENGINE_API extern Private::LObjectContext* GOmniVitaContext;
 
-/** Allocate a new object of type TObj. */
+//# Allocate a new object of type TObj. */
 template <typename TObj>
 FORCEINLINE auto NewObject() -> TObj*;
 template <typename TObj>
@@ -77,103 +77,103 @@ FORCEINLINE auto NewObject(const LSimpleString& InClassName) -> Private::JObject
 FORCEINLINE auto NewObject(Private::LObjectContext* InContext, const LSimpleString& InClassName) -> Private::JObjectBase*;
 FORCEINLINE auto NewObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> Private::JObjectBase*;
 
-/** Allocate a new object of type TObj. The begin-life method will not be called. */
+//# Allocate a new object of type TObj. The begin-life method will not be called.
 template <typename TObj>
 FORCEINLINE auto NewDeferredObject() -> TObj*;
 template <typename TObj>
 FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext) -> TObj*;
-/* Boolean parameters are for internal use only - __DO NOT__ change the default values. */
+// Boolean parameters are for internal use only - __DO NOT__ change the default values.
 template <typename TObj, bool bAllowActor = /*FALSE REQUIRED*/false, bool bAllowWidget = /*FALSE REQUIRED*/false>
 FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> TObj*;
 FORCEINLINE auto NewDeferredObject(const LSimpleString& InClassName) -> Private::JObjectBase*;
 FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LSimpleString& InClassName) -> Private::JObjectBase*;
 FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> Private::JObjectBase*;
 
-/**
- * Call this method to finalize an object that was deferred.
- */
+//#
+//# Call this method to finalize an object that was deferred.
+//#
 ENGINE_API void MakeDeferredObjectFinal(Private::JObjectBase* InObject);
 
-/**
- * @return The dynamic-casted object if the object is or derives from TObj, else nullptr.
- * @remark This method is fairly slow and should not be used in high proximity in performance-critical control paths.
- *         If it is known at compile time with certainty that the object is of the target type, use CheckedStaticCast
- *         as that function does not add any runtime overhead.
- */
+//#
+//# @return The dynamic-casted object if the object is or derives from TObj, else nullptr.
+//# @remark This method is fairly slow and should not be used in high proximity in performance-critical control paths.
+//#         If it is known at compile time with certainty that the object is of the target type, use CheckedStaticCast
+//#         as that function does not add any runtime overhead.
+//#
 template <typename TObj>
 FORCEINLINE auto DynamicCast(Private::JObjectBase* InObject) -> TObj*;
 template <typename TObj>
 FORCEINLINE auto DynamicCast(const Private::JObjectBase* InObject) -> const TObj*;
 
-/**
- * Only checks if the object can be casted if DO_CHECKS is true. If the object fails to cast to the
- * targeted type, the application will panic. If DO_CHECKS is false, it will assume that the object is
- * of the target type and will do an unsafe cast.
- * Only use this method if you are sure that the object is of the targeted type.
- *
- * @tparam bAllowForNullptr Whether to allow for nullptr to be returned if the input object is nullptr.
- * @return The casted object. Will never return nullptr (if bAllowForNullptr is false). But the return value might be
- *         meaningless if DO_CHECKS is false. So you cannot check if this object is valid, e.g., if it is nullptr.
- */
+//#
+//# Only checks if the object can be casted if DO_CHECKS is true. If the object fails to cast to the
+//# targeted type, the application will panic. If DO_CHECKS is false, it will assume that the object is
+//# of the target type and will do an unsafe cast.
+//# Only use this method if you are sure that the object is of the targeted type.
+//#
+//# @tparam bAllowForNullptr Whether to allow for nullptr to be returned if the input object is nullptr.
+//# @return The casted object. Will never return nullptr (if bAllowForNullptr is false). But the return value might be
+//#         meaningless if DO_CHECKS is false. So you cannot check if this object is valid, e.g., if it is nullptr.
+//#
 template <typename TObj, bool bAllowForNullptr = false>
 FORCEINLINE auto CheckedStaticCast(Private::JObjectBase* InObject) -> TObj*;
 template <typename TObj, bool bAllowForNullptr = false>
 FORCEINLINE auto CheckedStaticCast(const Private::JObjectBase* InObject) -> const TObj*;
 
-/** @return The default package referrer. */
+//# @return The default package referrer.
 template <typename TObj>
 FORCEINLINE auto GetDefault() -> const TObj*;
-/**
- * @return  The default package referrer that is mutable.
- * @remarks Mutating any members of the referrer will not affect already instantiated objects but only objects that are
- *          created after the referrer has been mutated.
- *          Generally it is bad habit to mutate the default package referrer, and therefore this method should be used
- *          sparingly - or for "singleton" like objects.
- */
+//#
+//#  @return  The default package referrer that is mutable.
+//#  @remarks Mutating any members of the referrer will not affect already instantiated objects but only objects that are
+//#           created after the referrer has been mutated.
+//#           Generally it is bad habit to mutate the default package referrer, and therefore this method should be used
+//#           sparingly - or for "singleton" like objects.
+//#
 template <typename TObj>
 FORCEINLINE auto GetMutableDefault() -> TObj*;
 
 namespace Private
 {
 
-/**
- * Global application wide singleton object registry.
- */
+//#
+//# Global application wide singleton object registry.
+//#
 ENGINE_API extern LObjectRegistry* GObjectRegistry;
-/** Referrs to a program global carnifex. This variable is not the owner. */
+//# Referrs to a program global carnifex. This variable is not the owner.
 ENGINE_API extern LCarnifex**      GCarnifexReferrer;
 
 ENGINE_API void CreateSingletonObjectRegistry(void);
 ENGINE_API void KillSingletonObjectRegistry(void);
 
-/** @return All objects that are waiting for registration. */
+//# @return All objects that are waiting for registration.
 ENGINE_API auto GetRegisterObjectQueue() -> TdhArray<LRegistrationQueuePackage>&;
 
-/** Registers a new object type to the global (in this shared translation unit) registry. */
+//# Registers a new object type to the global (in this shared translation unit) registry.
 template <typename TObj>
 FORCEINLINE auto RegisterNewObjectType(
-    /** Full namespaced name of the target class. */
+    //# Full namespaced name of the target class.
     LSimpleString            SpacedClassName,
-    /** Delegate that returns a clean default object of the target class. */
+    //# Delegate that returns a clean default object of the target class.
     GetContentDefaultFunctor GetContentDefaultDelegate,
-    /** Delegate that is called when the object has been registered. */
+    //# Delegate that is called when the object has been registered.
     OnRegistrationDelegate   Callback
 ) -> void;
 
 struct LRegistrationQueuePackage final
 {
-    /** Full namespaced name of the target class. */
+    //# Full namespaced name of the target class. /
     LSimpleString            SpacedClassName;
-    /** Delegate that returns a clean default object of the target class. */
+    //# Delegate that returns a clean default object of the target class.
     GetContentDefaultFunctor GetContentDefault;
-    /** Delegate that is called when the object has been registered. */
+    //# Delegate that is called when the object has been registered.
     OnRegistrationDelegate   Callback;
 };
 
-/**
- * Global accessor struct that is permitted to access private member attributes from all derived classes
- * of JObjectBase.
- */
+//#
+//# Global accessor struct that is permitted to access private member attributes from all derived classes
+//# of JObjectBase.
+//#
 struct LObjectMiscellaneousAccessor final
 {
     LObjectMiscellaneousAccessor()  = delete;
@@ -194,25 +194,25 @@ struct LObjectMiscellaneousAccessor final
     ENGINE_API static auto DynamicCast(const JObjectBase* InObject, const LObjectClass* InTargetClass) -> bool;
 };
 
-/**
- * Temporal private object that holds an already registered package that requires additional tasks to be done after
- * all packages have been registered.
- */
+//#
+//# Temporal private object that holds an already registered package that requires additional tasks to be done after
+//# all packages have been registered.
+//#
 struct LDeferredRegistryPackage final
 {
-    /** Full namespaced name of the target superclass that has to be resolved at a later time. */
+    //# Full namespaced name of the target superclass that has to be resolved at a later time.
     LSimpleString   SuperName;
-    /** The target child that is missing its parent. */
+    //# The target child that is missing its parent.
     LObjectClass*   StaticClass;
 };
 
-/**
- * A package that holds a generic derived JObjectBase object.
- * This object is known to the engine as it has been registered and initialized.
- */
+//#
+//# A package that holds a generic derived JObjectBase object.
+//# This object is known to the engine as it has been registered and initialized.
+//#
 struct LRegistryPackage final
 {
-    /** Pointer to the static class object of the target class. */
+    //# Pointer to the static class object of the target class.
     LObjectClass* StaticClass;
 
     FORCEINLINE const LSimpleString& GetSpacedClassName() const
@@ -222,7 +222,9 @@ struct LRegistryPackage final
     }
 };
 
-/** Singleton registry that holds all content, that is considered default, to an object. */
+//#
+//# Singleton registry that holds all content, that is considered default, to an object.
+//#
 class LObjectRegistry final
 {
     friend LRegistrationCallbackHelper;
@@ -233,15 +235,15 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LObjectRegistry)
     ~LObjectRegistry() = default;
 
-    /**
-     * Registers all pending packages that are waiting for registration.
-     * Loads them into memory and initializes the default package referrer for them.
-     */
+    //#
+    //# Registers all pending packages that are waiting for registration.
+    //# Loads them into memory and initializes the default package referrer for them.
+    //#
     ENGINE_API void LoadPendingPackages(void);
-    /**
-     * Validates all loaded packages by checking for name conflicts and for the existence
-     * of a content default referrer.
-     */
+    //#
+    //# Validates all loaded packages by checking for name conflicts and for the existence
+    //# of a content default referrer.
+    //#
     ENGINE_API void ValidateLoadedPackages(void);
 
     ENGINE_API auto DoesPackageWithNameExist(const LSimpleString& SpacedClassName) const -> bool;
@@ -263,7 +265,7 @@ public:
     ENGINE_API auto GetPanickedPackageByContentDefault(const void* ContentDefaultReferrer) -> LRegistryPackage*;
 
     FORCEINLINE auto GetRegisteredObjects() -> TdhArray<LRegistryPackage>& { return this->RegisteredObjects; }
-    /** Gets all registered static class that inherit in any way from InStaticClass. */
+    //# Gets all registered static class that inherit in any way from InStaticClass.
     ENGINE_API auto GetRegisteredObjectsOfClass(const LObjectClass* InStaticClass, TdhArray<const LObjectClass*>& OutArray) const -> void;
 
 private:
@@ -291,21 +293,21 @@ void RegisterNewObjectType(
 
 }
 
-/** Global static helper struct to allow for private member access through derived classes of JObjectBase. */
+//# Global static helper struct to allow for private member access through derived classes of JObjectBase.
 struct LRegistrationCallbackHelper final
 {
     LRegistrationCallbackHelper()  = delete;
     PROHIBIT_REALLOC_OF_ANY_FORM(LRegistrationCallbackHelper)
     ~LRegistrationCallbackHelper() = delete;
 
-    /**
-     * Registers static class information that is required for the object to be registered.
-     *
-     * @tparam TObj        The object type that is being registered.
-     * @param  StaticClass The static class that was assigned to TObj.
-     * @param  Flags       The flags that describe class-specific behavior.
-     * @param  Parent      The namespaced name of the parent class.
-     */
+    //#
+    //# Registers static class information that is required for the object to be registered.
+    //#
+    //# @tparam TObj        The object type that is being registered.
+    //# @param  StaticClass The static class that was assigned to TObj.
+    //# @param  Flags       The flags that describe class-specific behavior.
+    //# @param  Parent      The namespaced name of the parent class.
+    //#
     template <typename TObj = JObjectBase>
     static void DoRegisterContentsForClass(
         LObjectClass*           StaticClass,

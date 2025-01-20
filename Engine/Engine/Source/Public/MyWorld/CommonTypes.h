@@ -7,22 +7,22 @@
 namespace Jafg
 {
 
-/**
- * Uniquely defines a voxel in the application.
- */
+//#
+//# Uniquely defines a voxel in the application.
+//#
 typedef uint32 voxel_t;
 
-/**
- * Uniquely defines a voxel in the application.
- * Use this sparingly and never store this type in a variable, only use it for loops or similar.
- */
+//#
+//# Uniquely defines a voxel in the application.
+//# Use this sparingly and never store this type in a variable, only use it for loops or similar.
+//#
 typedef int64 voxel_t_signed;
 typedef int32 voxel_t_it;
 
-/**
- * Uniquely defines a loaded texture in the application.
- * @see MyWorld/TextureSubsystem.h
- */
+//#
+//# Uniquely defines a loaded texture in the application.
+//# @see MyWorld/TextureSubsystem.h
+//#
 typedef uint32 LTextureIndex;
 
 namespace ECompileTimeVoxels
@@ -40,9 +40,9 @@ enum Type : voxel_t
 
 typedef uint8 LNormalLookup;
 
-/**
- * The normal lookup used by the texture subsystem.
- */
+//#
+//# The normal lookup used by the texture subsystem.
+//#
 namespace ENormalLookup
 {
 
@@ -132,9 +132,9 @@ FORCEINLINE LSimpleString LexToString(const ENormalLookup::Type InNormal)
     }
 }
 
-/**
- * The normal mapping used by the graphics engine.
- */
+//#
+//# The normal mapping used by the graphics engine.
+//#
 namespace ENormalShadingMap
 {
 

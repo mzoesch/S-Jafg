@@ -20,21 +20,21 @@ enum Type : uint8
 {
     None            = 0x00,
 
-    /**
-     * Only user interface input is checked.
-     */
+    //#
+    //# Only user interface input is checked.
+    //#
     UserInterface   = 0x01 << 0,
 
-    /**
-     * Only the input handled by the input subsystem is checked.
-     */
+    //#
+    //# Only the input handled by the input subsystem is checked.
+    //#
     InputSubSystem  = 0x01 << 1,
 
-    /**
-     * Both are checked.
-     * In this sequence: UserInterface, InputSubSystem.
-     * If a specific input is consumed by the user interface, it will not be passed to the input subsystem.
-     */
+    //#
+    //# Both are checked.
+    //# In this sequence: UserInterface, InputSubSystem.
+    //# If a specific input is consumed by the user interface, it will not be passed to the input subsystem.
+    //#
     Both            = UserInterface | InputSubSystem,
 };
 

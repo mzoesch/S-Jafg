@@ -39,10 +39,10 @@ public:
     FORCEINLINE TFactoryRetTy& operator&(const LRegionBrush& InBrush) { return this->SetBrush(InBrush); }
 };
 
-/**
- * WWidgetRegion is a resizable Parent node. Every region has its layout bounds defined as (0, 0, width, height).
- * A region might still draw outside these bounds.
- */
+//#
+//# WWidgetRegion is a resizable Parent node. Every region has its layout bounds defined as (0, 0, width, height).
+//# A region might still draw outside these bounds.
+//#
 DECLARE_JAFG_CLASS()
 class ENGINE_API WWidgetRegion : public WWidgetParent
 {

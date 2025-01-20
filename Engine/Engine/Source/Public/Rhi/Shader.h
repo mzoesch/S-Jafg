@@ -18,10 +18,10 @@ public:
 
     explicit LShader(const LEnginePath& Path);
 
-    /**
-     * When using this method, you have to make sure to delete the previous shader from the graphic processing unit.
-     * Memory leaks will occur if you don't.
-     */
+    //#
+    //# When using this method, you have to make sure to delete the previous shader from the graphic processing unit.
+    //# Memory leaks will occur if you don't.
+    //#
     void Load(const LEnginePath& Path);
 
     void Use() const;
@@ -38,9 +38,9 @@ public:
     void SetVec4Uniform(const LSimpleString& Name, const LVector4& Value) const;
     void SetMatrixUniform(const LSimpleString& Name, const LMatrixF& Value) const;
 
-    /** Emits an int32 from a LColor. */
+    //# Emits an int32 from a LColor.
     void SetColorUniform(const LSimpleString& Name, const LColor& Value) const;
-    /** Emits an vec3 from LColor (without the alpha channel). */
+    //# Emits an vec3 from LColor (without the alpha channel).
     void SetColorVec3Uniform(const LSimpleString& Name, const LColor& Value) const;
     void SetColorVec4Uniform(const LSimpleString& Name, const LColor& Value) const;
 

@@ -8,9 +8,9 @@
 namespace Jafg
 {
 
-/**
- * A pawn that allows for moving around inside a world that is currently being simulated.
- */
+//#
+//# A pawn that allows for moving around inside a world that is currently being simulated.
+//#
 DECLARE_JAFG_CLASS()
 class ENGINE_API ASimulatedPawn final : public APawn
 {

@@ -7,9 +7,9 @@
 namespace Jafg
 {
 
-/**
- * A runnable that has a fixed tick interval and defines common boilerplate logic for ticking and stopping.
- */
+//#
+//# A runnable that has a fixed tick interval and defines common boilerplate logic for ticking and stopping.
+//#
 class ENGINE_API LTickedRunnable : public LRunnable
 {
 public:
@@ -24,23 +24,23 @@ public:
 
 protected:
 
-    /**
-     * Called on the tick thread to perform the tick logic.
-     * This tick is detached in any way from the tick of the engine. If you want to asynchronously tick with the
-     * engine, use the #LEngineTickedRunnable class instead.
-     *
-     * @param RunnableDeltaTime The delta time since the last call of #FixedTick. NOT the delta time of the current
-     *                          frame from the engine.
-     */
+    //#
+    //# Called on the tick thread to perform the tick logic.
+    //# This tick is detached in any way from the tick of the engine. If you want to asynchronously tick with the
+    //# engine, use the #LEngineTickedRunnable class instead.
+    //#
+    //# @param RunnableDeltaTime The delta time since the last call of #FixedTick. NOT the delta time of the current
+    //#                          frame from the engine.
+    //#
     virtual void FixedTick(const float RunnableDeltaTime) = 0;
 
     FORCEINLINE bool ShouldTickRunnable() const { return this->bShouldTick; }
 
 private:
 
-    /**
-     * The tick interval in seconds. Zero means no interval -> tick always (not recommended).
-     */
+    //#
+    //# The tick interval in seconds. Zero means no interval -> tick always (not recommended).
+    //#
     double TickInterval = 0.1f;
 
     bool bShouldTick = true;

@@ -84,13 +84,13 @@ public:
 
 private:
 
-    /**
-     * Called only once when the first instance of a WTextBlock is being constructed to load
-     * all glyphs from the font file.
-     */
+    //#
+    //# Called only once when the first instance of a WTextBlock is being constructed to load
+    //# all glyphs from the font file.
+    //#
     void FirstTimeLoadCharacters();
 
-    /** The padding area between the slot and the content it contains. */
+    //# The padding area between the slot and the content it contains.
     LPadding Padding = LPadding(4.5f);
 
     LSimpleString   Content = nullptr;

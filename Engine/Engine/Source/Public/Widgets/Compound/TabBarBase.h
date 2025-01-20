@@ -8,7 +8,7 @@
 namespace Jafg
 {
 
-/** @see Widgets/Compound/TabBar.h */
+//# @see Widgets/Compound/TabBar.h
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API WTabBarBase : public WWidgetParent
 {

@@ -8,13 +8,13 @@
 namespace Jafg
 {
 
-/**
- * An image is a brush component that wraps a loaded two-dimensional texture.
- * An image does not own the texture it wraps - therefore, many images may wrap the same texture to save a lot
- * on memory usage.
- * An image allows for further customization of the texture during the pipeline process such as tinting, scaling,
- * translating, rotating, etc.
- */
+//#
+//# An image is a brush component that wraps a loaded two-dimensional texture.
+//# An image does not own the texture it wraps - therefore, many images may wrap the same texture to save a lot
+//# on memory usage.
+//# An image allows for further customization of the texture during the pipeline process such as tinting, scaling,
+//# translating, rotating, etc.
+//#
 class LImage final
 {
 public:

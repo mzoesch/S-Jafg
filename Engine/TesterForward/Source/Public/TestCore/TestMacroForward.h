@@ -2,17 +2,17 @@
 
 #pragma once
 
-/**
- * Create a simple unit test case to test small pieces of code.
- * A very fast test as no setup or teardown is performed.
- * No engine will be created.
- *
- * Tests are automatically discovered and run by the Jafg Build Tool.
- * Run the solution with any test configuration to run all tests.
- *
- * @param PrettyName A human-readable name for the test case.
- * @param Category   A category for the test case. A dot separates subcategories.
- */
+//#
+//# Create a simple unit test case to test small pieces of code.
+//# A very fast test as no setup or teardown is performed.
+//# No engine will be created.
+//#
+//# Tests are automatically discovered and run by the Jafg Build Tool.
+//# Run the solution with any test configuration to run all tests.
+//#
+//# @param PrettyName A human-readable name for the test case.
+//# @param Category   A category for the test case. A dot separates subcategories.
+//#
 #define TEST_CASE(PrettyName, Category)              \
     PRIVATE_JAFG_TEST_MAKE_SIMPLE_TEST(              \
         PRIVATE_JAFG_TEST_MAKE_UNIQUE_NAME_FOR_FILE( \
@@ -26,13 +26,13 @@
         __LINE__                                     \
     )
 
-/**
- * Checks if A and B are equal.
- *
- * @param What Short description of the check.
- * @param A    Left-hand side of the comparison.
- * @param B    Right-hand side of the comparison.
- */
+//#
+//# Checks if A and B are equal.
+//#
+//# @param What Short description of the check.
+//# @param A    Left-hand side of the comparison.
+//# @param B    Right-hand side of the comparison.
+//#
 #define CHECK_EQUALS(What, A, B)                                          \
     /* Just doing some simple local variable initialization to get the */ \
     /* syntax highlighting and intellisense working inside an IDEA.    */ \
@@ -42,13 +42,13 @@
         auto B_ = ( B );                                                  \
     }
 
-/**
- * Checks if A and B are not equal.
- *
- * @param What Short description of the check.
- * @param A    Left-hand side of the comparison.
- * @param B    Right-hand side of the comparison.
- */
+//#
+//# Checks if A and B are not equal.
+//#
+//# @param What Short description of the check.
+//# @param A    Left-hand side of the comparison.
+//# @param B    Right-hand side of the comparison.
+//#
 #define CHECK_NOT_EQUALS(What, A, B)                                      \
     {                                                                     \
         auto What_ = ( What );                                            \
@@ -56,13 +56,13 @@
         auto B_ = ( B );                                                  \
     }
 
-/**
- * Checks if A is less than B.
- *
- * @param What Short description of the check.
- * @param A    Left-hand side of the comparison.
- * @param B    Right-hand side of the comparison.
- */
+//#
+//# Checks if A is less than B.
+//#
+//# @param What Short description of the check.
+//# @param A    Left-hand side of the comparison.
+//# @param B    Right-hand side of the comparison.
+//#
 #define CHECK_LESS(What, A, B)                                            \
     {                                                                     \
         auto What_ = ( What );                                            \
@@ -70,13 +70,13 @@
         auto B_ = ( B );                                                  \
     }
 
-/**
- * Checks if A is greater than B.
- *
- * @param What Short description of the check.
- * @param A    Left-hand side of the comparison.
- * @param B    Right-hand side of the comparison.
- */
+//#
+//# Checks if A is greater than B.
+//#
+//# @param What Short description of the check.
+//# @param A    Left-hand side of the comparison.
+//# @param B    Right-hand side of the comparison.
+//#
 #define CHECK_GREATER(What, A, B)                                         \
     {                                                                     \
         auto What_ = ( What );                                            \
@@ -84,13 +84,13 @@
         auto B_ = ( B );                                                  \
     }
 
-/**
- * Checks if A is less than or equal to B.
- *
- * @param What Short description of the check.
- * @param A    Left-hand side of the comparison.
- * @param B    Right-hand side of the comparison.
- */
+//#
+//# Checks if A is less than or equal to B.
+//#
+//# @param What Short description of the check.
+//# @param A    Left-hand side of the comparison.
+//# @param B    Right-hand side of the comparison.
+//#
 #define CHECK_LESS_OR_EQUAL(What, A, B)                                   \
     {                                                                     \
         auto What_ = ( What );                                            \
@@ -98,13 +98,13 @@
         auto B_ = ( B );                                                  \
     }
 
-/**
- * Checks if A is greater than or equal to B.
- *
- * @param What Short description of the check.
- * @param A    Left-hand side of the comparison.
- * @param B    Right-hand side of the comparison.
- */
+//#
+//# Checks if A is greater than or equal to B.
+//#
+//# @param What Short description of the check.
+//# @param A    Left-hand side of the comparison.
+//# @param B    Right-hand side of the comparison.
+//#
 #define CHECK_GREATER_OR_EQUAL(What, A, B)                                \
     {                                                                     \
         auto What_ = ( What );                                            \
@@ -112,48 +112,48 @@
         auto B_ = ( B );                                                  \
     }
 
-/**
- * Checks if A is null.
- *
- * @param What Short description of the check.
- * @param A    The pointer to check.
- */
+//#
+//# Checks if A is null.
+//#
+//# @param What Short description of the check.
+//# @param A    The pointer to check.
+//#
 #define CHECK_NULL(What, A)                                               \
     {                                                                     \
         auto What_ = ( What );                                            \
         auto A_ = ( A );                                                  \
     }
 
-/**
- * Checks if A is not null.
- *
- * @param What Short description of the check.
- * @param A    The pointer to check.
- */
+//#
+//# Checks if A is not null.
+//#
+//# @param What Short description of the check.
+//# @param A    The pointer to check.
+//#
 #define CHECK_NOT_NULL(What, A)                                           \
     {                                                                     \
         auto What_ = ( What );                                            \
         auto A_ = ( A );                                                  \
     }
 
-/**
- * Checks if A is true.
- *
- * @param What Short description of the check.
- * @param A    The condition to check.
- */
+//#
+//# Checks if A is true.
+//#
+//# @param What Short description of the check.
+//# @param A    The condition to check.
+//#
 #define CHECK_TRUE(What, A)                                               \
     {                                                                     \
         auto What_ = ( What );                                            \
         auto A_ = ( A );                                                  \
     }
 
-/**
- * Checks if A is false.
- *
- * @param What Short description of the check.
- * @param A    The condition to check.
- */
+//#
+//# Checks if A is false.
+//#
+//# @param What Short description of the check.
+//# @param A    The condition to check.
+//#
 #define CHECK_FALSE(What, A)                                              \
     {                                                                     \
         auto What_ = ( What );                                            \
@@ -172,6 +172,8 @@
 #define PRIVATE_JAFG_TEST_MAKE_UNIQUE_NAME_FOR_FILE(Prefix, Line, Counter) \
     PRIVATE_JAFG_TEST_JOIN_INNER_FIVE(Prefix, _, Line, _, Counter)
 
-/** Forward simple test macro to expand to an unused static (in translation private scope) function. */
+//#
+//Forward simple test macro to expand to an unused static (in translation private scope) function.
+//#
 #define PRIVATE_JAFG_TEST_MAKE_SIMPLE_TEST(ClassName, PrettyName, Category, FileName, LineNumber ) \
     static void PRIVATE_JAFG_TEST_JOIN_INNER_TWO(DiscardMe, ClassName)( void )

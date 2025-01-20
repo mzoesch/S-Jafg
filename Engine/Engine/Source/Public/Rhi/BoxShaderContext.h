@@ -10,9 +10,9 @@ namespace Jafg
 class LTexture2;
 class LViewport;
 
-/**
- * A simple shader helping class that renders a box on an orthographic projection.
- */
+//#
+//# A simple shader helping class that renders a box on an orthographic projection.
+//#
 class ENGINE_API LBoxShaderContext
 {
 public:
@@ -22,20 +22,17 @@ public:
     DEFAULT_MOVE(LBoxShaderContext)
     ~LBoxShaderContext() { this->Free(); }
 
-    /**
-     * Make the shader context meaningful.
-     */
+    //#
+    //# Make the shader context meaningful.
+    //#
     void Make();
 
-    /**
-     * Free the shader context from the graphical device.
-     * No C++ memory will be freed through this method.
-     */
+    //#
+    //# Free the shader context from the graphical device.
+    //# No C++ memory will be freed through this method.
+    //#
     void Free();
 
-    /**
-     * Draws the box.
-     */
     void Draw(
         const LViewport& Context,
         const LVector2&  Size,

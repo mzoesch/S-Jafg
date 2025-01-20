@@ -26,56 +26,58 @@ enum Type : uint8
     // Somehow Successful Entries
     //////////////////////////////////////////////////////////////////////////
 
-    /** Command executed successfully. The parser might want to decide to give user feedback with the command's response. */
+    //# Command executed successfully. The parser might want to decide to give user feedback with the command's response.
     Success,
 
-    /** Command executed successfully. The parser is advised to not give method feedback to the user. */
+    //# Command executed successfully. The parser is advised to not give method feedback to the user.
     SuccessNoResponse,
 
-    /** Command executed successfully. The parser is advised to broadcast the command's response. */
+    //# Command executed successfully. The parser is advised to broadcast the command's response.
     SuccessBroadcast,
 
-    /** Command executed successfully. The parser is advised to broadcast the command's response with the authority as sender. */
+    //# Command executed successfully. The parser is advised to broadcast the command's response with the authority as sender.
     SuccessBroadcastWithAuthority,
 
     //////////////////////////////////////////////////////////////////////////
     // Failure Entries - In rising order of severity
     //////////////////////////////////////////////////////////////////////////
 
-    /*
-     * It is always safe to just compare with greater or equal to ECommandReturnCodes::Failure to be sure to catch all
-     * failure states.
-     */
+    //
+    // It is always safe to just compare with greater or equal to ECommandReturnCodes::Failure to be sure to catch all
+    // failure states.
+    //
 
-    /** Command executed with an unknown failure. */
+    //# Command executed with an unknown failure.
     Failure,
 
-    /** The command was not found in the subsystem's registry. */
+    //# The command was not found in the subsystem's registry.
     Unknown,
 
-    /** Command cannot be executed due to user rights, or the current application state is blocking the command. */
+    //# Command cannot be executed due to user rights, or the current application state is blocking the command.
     Forbidden,
 
-    /** Command executed with missing arguments. */
+    //# Command executed with missing arguments.
     MissingArgs,
 
-    /** Command executed with too many arguments. */
+    //# Command executed with too many arguments.
     TooManyArgs,
 
-    /** Command executed with a semantic error. */
+    //# Command executed with a semantic error.
     SemanticError,
 
-    /** Command executed with a syntax error. */
+    //# Command executed with a syntax error.
     SyntaxError,
 
-    /** Platform reports errors or blocks request. */
+    //# Platform reports errors or blocks request.
     PlatformError,
 };
 
 } /* ~Namespace ECommandReturnCode */
 ENGINE_API LSimpleString LexToString(const ECommandReturnCode::Type& InType);
 
-/** The arguments that the command receives. */
+//#
+//# The arguments that the command receives.
+//#
 struct LCommandArgs
 {
     ~LCommandArgs()
@@ -94,7 +96,9 @@ struct LCommandArgs
     TdhArray<LCliToken*> Args;
 };
 
-/** The parameters of the command. */
+//#
+//# The parameters of the command.
+//#
 struct LCommandParams
 {
     FORCEINLINE LCommandParams() = default;
@@ -136,7 +140,7 @@ struct LCommandParams
         return std::move(*this);
     }
 
-    /** Whether the command can be invoked with the given arguments. */
+    //# Whether the command can be invoked with the given arguments.
     ENGINE_API bool IsInvocable(const LCommandArgs& Args) const;
     ENGINE_API void Invoke(const LCommandArgs& Args, LCommandExecutionResponse* OutResponse);
 
@@ -144,27 +148,31 @@ struct LCommandParams
     TdhArray<LCliToken*> Tokens;
 };
 
-/** The response of the command. */
+//#
+//# The response of the command.
+//#
 struct LCommandExecutionResponse
 {
     ECommandReturnCode::Type Rc;
 
-    /**
-     * The stdout of the command. This is the output that the command produced and should contain as much information
-     * as possible about the command's execution. This will be logged in most cases.
-     */
+    //#
+    //# The stdout of the command. This is the output that the command produced and should contain as much information
+    //# as possible about the command's execution. This will be logged in most cases.
+    //#
     LString StdOut;
 
-    /**
-     * The sanitized stdout of the command.
-     * If this is empty, the stdout will be used for the sanitized output.
-     * This parameter is used to hide sensitive information from the user. E.g. missing operation permissions. This
-     * will not be logged but will be the feedback to the user on error.
-     */
+    //#
+    //# The sanitized stdout of the command.
+    //# If this is empty, the stdout will be used for the sanitized output.
+    //# This parameter is used to hide sensitive information from the user. E.g. missing operation permissions. This
+    //# will not be logged but will be the feedback to the user on error.
+    //#
     LString SanitizedStdErr;
 };
 
-/** A command inside the cli of the engine. Can be executed. */
+//#
+//# A command inside the cli of the engine. Can be executed.
+//#
 class LCliCommand final : public LCliObject
 {
 public:

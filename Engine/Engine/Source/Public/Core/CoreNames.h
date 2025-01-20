@@ -5,9 +5,9 @@
 #include "CoreAFX.h"
 #include "Core/Name.h"
 
-/**
- * Header containing the core names used by the engine.
- */
+//#
+//# Header containing the core names used by the engine.
+//#
 #if PREPROCESSOR_EXCLUDE_FF
 #endif /* PREPROCESSOR_EXCLUDE_FF */
 

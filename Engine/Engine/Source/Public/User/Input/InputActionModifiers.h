@@ -8,19 +8,19 @@
 namespace Jafg
 {
 
-/** Base struct for input action modifiers. Inherit from this to add your own modifiers. */
+//# Base struct for input action modifiers. Inherit from this to add your own modifiers.
 struct LInputActionMappedKeyModifier;
 
-/** Negate all axes of the input value. */
+//# Negate all axes of the input value. */
 struct LInputActionMappedKeyNegateModifier;
 
-/** Swizzle the X and Y axes of the input value. Aliases as it is the most common used. */
+//# Swizzle the X and Y axes of the input value. Aliases as it is the most common used.
 struct LInputActionMappedKeySwizzleModifier;
 struct LInputActionMappedKeySwizzleXYModifier;
 struct LInputActionMappedKeySwizzleXZModifier;
 struct LInputActionMappedKeySwizzleYZModifier;
 
-/** Apply current application wide delta time to the input value. */
+//# Apply current application wide delta time to the input value.
 struct LInputActionMappedKeyDeltaTimeModifier;
 
 template <typename TModifier>

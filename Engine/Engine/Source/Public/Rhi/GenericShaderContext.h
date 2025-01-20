@@ -27,15 +27,15 @@ public:
     DEFAULT_MOVE(LGenericShaderContext)
     virtual ~LGenericShaderContext() { this->Free(); }
 
-    /**
-     * Make the shader context meaningful.
-     */
+    //#
+    //# Make the shader context meaningful.
+    //#
     virtual void Make();
 
-    /**
-     * Free the shader context from the graphical device.
-     * No C++ memory will be freed through this method.
-     */
+    //#
+    //# Free the shader context from the graphical device.
+    //# No C++ memory will be freed through this method.
+    //#
     void Free();
     virtual void OnFree() { }
 

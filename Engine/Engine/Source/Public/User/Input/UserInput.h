@@ -13,16 +13,16 @@ namespace Jafg
 class LSurface;
 class LLocalEgo;
 
-/**
- * Proxy for the raw platform physical input data and the dispatching of input delegates.
- */
+//#
+//# Proxy for the raw platform physical input data and the dispatching of input delegates.
+//#
 class LUserInput final
 {
 public:
 
     LUserInput() = default;
 
-    /** Whether this key was just downed this frame. */
+    //# Whether this key was just downed this frame.
     ENGINE_API bool IsNewDown(const LKey Key) const;
 
     void DispatchInputDelegates();
@@ -50,7 +50,7 @@ public:
     ENGINE_API void GetCheckedContextByName(const LName InName, LUserInputContext*& OutContext) const;
     ENGINE_API void GetPanickedContextByName(const LName InName, LUserInputContext*& OutContext) const;
 
-    /** @return The newly mapped action. This is not the same as the input argument. */
+    //# @return The newly mapped action. This is not the same as the input argument.
     ENGINE_API  auto RegisterAction(LInputAction&& InAction) -> LInputAction*;
     FORCEINLINE auto GetRegisteredActions() const -> const TdhArray<LInputAction*>& { return this->RegisteredActions; }
 
@@ -68,9 +68,9 @@ private:
 
     TdhArray<LInputAction*> RegisteredActions;
 
-    /**
-     * The most important context is stored first.
-     */
+    //#
+    //# The most important context is stored first.
+    //#
     TdhArray<LUserInputContext*> ActiveContexts;
     TdhArray<LUserInputContext*> RegisteredContexts;
 };

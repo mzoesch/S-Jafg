@@ -108,5 +108,4 @@ private:
     const LObjectClass* Class = nullptr;
 };
 
-
 } /* ~Namespace Jafg */

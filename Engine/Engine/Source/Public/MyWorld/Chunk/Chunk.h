@@ -50,9 +50,9 @@ private:
     LChunkShaderInstance Instance = { };
 };
 
-/**
- * Defines shared arguments that are used by every chunk inside a context.
- */
+//#
+//# Defines shared arguments that are used by every chunk inside a context.
+//#
 struct LSharedChunkArgs final
 {
     JChunkGenerationSubsystem* ChunkGenerationSubsystem;
@@ -70,7 +70,7 @@ class ENGINE_API AChunk final : public AActor
 
 public:
 
-    /** The index in the raw voxel data array. */
+    //# The index in the raw voxel data array.
     typedef int32 LVoxelIndex;
 
     static_assert(
@@ -116,18 +116,18 @@ public:
     FORCEINLINE auto GetMesher() -> LChunkMesher* { return this->Mesher; }
     FORCEINLINE auto GetMesher() const -> const LChunkMesher* { return this->Mesher; }
 
-    /**
-     * Create a relative voxel key from the world location of this chunk.
-     */
+    //#
+    //# Create a relative voxel key from the world location of this chunk.
+    //#
     FORCEINLINE auto CreateRelativeVoxelKey(const LVector& InWorldLocation) const -> LVoxelKey;
 
 private:
 
-    /**
-     * The real time (not stopped or dilated / clamped) when this chunk should be killed by the generation subsystem.
-     * The time is relative to the time when the world was launched where this AActor lives in.
-     * Only meaningful when the persistency of this chunk is transient.
-     */
+    //#
+    //# The real time (not stopped or dilated / clamped) when this chunk should be killed by the generation subsystem.
+    //# The time is relative to the time when the world was launched where this AActor lives in.
+    //# Only meaningful when the persistency of this chunk is transient.
+    //#
     float RealTimeInSecondsWhenTransientChunkShouldBeKilled = 0.0f;
     EChunkPersistency::Type ChunkPersistency = EChunkPersistency::Persistent;
 
@@ -179,9 +179,9 @@ private:
 
 public:
 
-    /**
-     * Modify a single voxel in the local voxel space with all side effects.
-     */
+    //#
+    //# Modify a single voxel in the local voxel space with all side effects.
+    //#
     void ModifySingleLocalVoxel(const LVoxelKey InKey, const voxel_t NewVoxel);
     void ModifySingleVoxelByNonZeroOrigin(const LVoxelKey InKey, const voxel_t NewVoxel);
 
@@ -204,7 +204,7 @@ public:
     FORCEINLINE auto HasNDown() const -> bool { return this->NDown != nullptr; }
     FORCEINLINE auto GetNDown() const -> AChunk* { return this->NDown; }
 
-    /** Has to be local or a direct neighbor. */
+    //# Has to be local or a direct neighbor.
     FORCEINLINE auto GetNeighboringChunk(LVoxelKey* InOutKey) -> AChunk*;
     FORCEINLINE auto GetCheckedNeighboringChunk(LVoxelKey* InOutKey) -> AChunk*;
     FORCEINLINE auto GetPanickedNeighboringChunk(LVoxelKey* InOutKey) -> AChunk*;

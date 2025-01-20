@@ -11,11 +11,11 @@ namespace Jafg
 class LViewport;
 class WWidgetParent;
 
-/**
- * A user widget is a widget node that can be added to the local ego widget viewport.
- * A user widget can consist of multiple widget nodes and can be used to create complex
- * user interfaces.
- */
+//#
+//# A user widget is a widget node that can be added to the local ego widget viewport.
+//# A user widget can consist of multiple widget nodes and can be used to create complex
+//# user interfaces.
+//#
 DECLARE_JAFG_CLASS()
 class ENGINE_API WUserWidget : public WWidgetParentBase
 {
@@ -45,10 +45,10 @@ public:
     FORCEINLINE virtual auto GetPaddingPtr() -> LPadding* override { return &this->Padding; }
     // ~WWidgetParentBase implementation
 
-    /** Add this widget to the main viewport of the current active local ego. */
+    //# Add this widget to the main viewport of the current active local ego.
     void AddToViewport(LViewport* InViewport);
 
-    /** @return The new root. */
+    //# @return The new root.
     template <typename TParent>
     auto ReplaceRoot(TParent& InRoot) -> TParent* { return static_cast<TParent*>(this->ReplaceRootImpl(InRoot)); }
     FORCEINLINE auto HasRoot() const -> bool { return this->Root != nullptr; }
@@ -60,13 +60,13 @@ private:
 
     WWidgetParent* ReplaceRootImpl(WWidgetParent& InRoot);
 
-    /** The absolute root of this widget. Attach everything to this widget. */
+    //# The absolute root of this widget. Attach everything to this widget.
     LWidgetSlot* Root = nullptr;
     TdhArray<LWidgetSlot*> SingleRootChild;
-    /** Where this widget resides in. Can be null if attached to another widget. So do not use without checking. */
+    //# Where this widget resides in. Can be null if attached to another widget. So do not use without checking.
     LViewport* AttachedViewport = nullptr;
 
-    /** The padding area between the slot and the content it contains. */
+    //# The padding area between the slot and the content it contains.
     LPadding Padding;
 };
 

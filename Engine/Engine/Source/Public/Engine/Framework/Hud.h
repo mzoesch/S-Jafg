@@ -11,11 +11,11 @@ class LViewport;
 class WUserWidget;
 struct LSubsystemCollection;
 
-/**
- * The hud is owned by the local ego and shares its lifetime.
- * The hud is the main hub for all user interface elements. Create hud subsystems to automatically
- * add multiple widgets of a type to the viewport.
- */
+//#
+//# The hud is owned by the local ego and shares its lifetime.
+//# The hud is the main hub for all user interface elements. Create hud subsystems to automatically
+//# add multiple widgets of a type to the viewport.
+//#
 class ENGINE_API LHud final
 {
 public:
@@ -38,12 +38,12 @@ public:
     template <typename TNode> FORCEINLINE auto GetTopLevelWidgetByClass() const -> TNode*;
     template <typename TNode> FORCEINLINE auto GetCheckedTopLevelWidgetByClass() const -> TNode*;
 
-    /**
-     * Change the visibility of a top level widget.
-     * @param InVisibility   The new visibility state of the widget.
-     * @param bAllowNotFound If true, nothing happens if the widget was not found. If false, the program will panic.
-     * @return True, if widget was found and made visible. False if widget was not found or was already visible.
-     */
+    //#
+    //# Change the visibility of a top level widget.
+    //# @param InVisibility   The new visibility state of the widget.
+    //# @param bAllowNotFound If true, nothing happens if the widget was not found. If false, the program will panic.
+    //# @return True, if widget was found and made visible. False if widget was not found or was already visible.
+    //#
     template <typename TNode>
     UNUSED FORCEINLINE bool ChangeWidgetVisibility(const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const
     {

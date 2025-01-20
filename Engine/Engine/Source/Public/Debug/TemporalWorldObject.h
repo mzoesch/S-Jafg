@@ -13,11 +13,11 @@ namespace Jafg
 
 class LWorld;
 
-/**
- * Skip the AActor creation hassle and just use this temporal object inside a world.
- * Local client only.
- * This object has to be trivially movable.
- */
+//#
+//# Skip the AActor creation hassle and just use this temporal object inside a world.
+//# Local client only.
+//# This object has to be trivially movable.
+//#
 class LTemporalWorldObject
 {
 public:

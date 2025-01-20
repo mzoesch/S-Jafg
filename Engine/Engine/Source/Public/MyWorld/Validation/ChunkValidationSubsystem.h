@@ -9,7 +9,6 @@
 namespace Jafg
 {
 
-
 class JChunkGenerationSubsystem;
 
 DECLARE_JAFG_CLASS()

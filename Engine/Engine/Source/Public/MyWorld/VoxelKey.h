@@ -26,7 +26,7 @@ enum Type : int8
 
 } /* ~Namespace EVoxelKeyLocation */
 
-/** Unique identifier for a voxel inside a context. */
+//# Unique identifier for a voxel inside a context.
 struct LVoxelKey final
 {
     using LReal = float;
@@ -53,16 +53,16 @@ struct LVoxelKey final
     FORCEINLINE LVoxelKey(LVoxelKey&& InKey) noexcept : Key(InKey.Key) { }
     FORCEINLINE ~LVoxelKey() = default;
 
-    /**
-     * From world location (or relative world location to another origin).
-     * Note that this function will normalize the key to the local space.
-     */
+    //#
+    //# From world location (or relative world location to another origin).
+    //# Note that this function will normalize the key to the local space.
+    //#
     static LVoxelKey FromWorldSpace(const LVector& InVector);
 
-    /**
-     * From world location (or relative world location to another origin). This function will not normalize the key
-     * to the local space. Note that this only works if the given world vector does not exceed the domain space.
-     */
+    //#
+    //# From world location (or relative world location to another origin). This function will not normalize the key
+    //# to the local space. Note that this only works if the given world vector does not exceed the domain space.
+    //#
     static LVoxelKey FromWorldLocationPreserveLocalSpace(const LVector& InVector);
 
     FORCEINLINE LVoxelKey& operator =(const LVoxelKey&  InKey) noexcept;

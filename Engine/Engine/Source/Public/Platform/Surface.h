@@ -2,11 +2,11 @@
 
 #pragma once
 
-/**
- * When you include this file, it will transitively include the platform-specific surface header files.
- * There is no need to check on which platform you are and conditionally include the correct header file - this header
- * will do that for you.
- */
+//#
+//# When you include this file, it will transitively include the platform-specific surface header files.
+//# There is no need to check on which platform you are and conditionally include the correct header file - this header
+//# will do that for you.
+//#
 #if PREPROCESSOR_EXCLUDE_FF
 #endif /* PREPROCESSOR_EXCLUDE_FF */
 
@@ -20,7 +20,9 @@ namespace Jafg
 
 class LViewport;
 
-/** Interface for a generic surface that the RHI may use to draw on. */
+//#
+//# Interface for a generic surface that the RHI may use to draw on.
+//#
 class ENGINE_API LSurface
 {
 public:
@@ -53,7 +55,7 @@ public:
     NODISCARD virtual auto GetHeight() const -> int32                   = 0;
     NODISCARD virtual auto GetDimensions() const -> TIntVector2<int32>  = 0;
 
-    /** Whether the current surface does ever support VSync. */
+    //# Whether the current surface does ever support VSync.
     NODISCARD virtual bool CanVSync() const              = 0;
               virtual void SetVSync(const bool bEnabled) = 0;
     NODISCARD virtual bool IsVSync() const               = 0;
@@ -71,13 +73,13 @@ public:
     FORCEINLINE bool HasRepeatedKey() const { return this->PlatformRepeatedKey.Key != EKeys::Unresolved; }
     FORCEINLINE auto GetRepeatedKey()                ->       LRawInput& { return this->PlatformRepeatedKey; }
     FORCEINLINE auto GetRepeatedKey()          const -> const LRawInput& { return this->PlatformRepeatedKey; }
-    /** @return Whether the key is currently down. */
+    //# @return Whether the key is currently down.
     bool IsKeyDown(const LKey InKey) const;
     FORCEINLINE bool IsKeyDown(const LRawInput& InRawInput) const { return this->IsKeyDown(InRawInput.Key); }
-    /** @return Whether the key was just downed this frame. */
+    //# @return Whether the key was just downed this frame.
     bool IsNewKeyDown(const LKey InKey) const;
     FORCEINLINE bool IsNewKeyDown(const LRawInput& InRawInput) const { return this->IsNewKeyDown(InRawInput.Key); }
-    /** @return Whether the key was just released this frame. */
+    //# @return Whether the key was just released this frame.
     bool IsKeyUp(const LKey InKey) const;
     FORCEINLINE bool IsKeyUp(const LRawInput& InRawInput) const { return this->IsKeyUp(InRawInput.Key); }
 
@@ -96,27 +98,27 @@ protected:
 
 private:
 
-    /**
-     * The viewport that is used to draw on this surface meaning the viewport that includes the whole surface screen.
-     */
+    //#
+    //# The viewport that is used to draw on this surface meaning the viewport that includes the whole surface screen.
+    //#
     LViewport* SurfaceViewport = nullptr;
 
-    /** The keys that are currently down for this surface this frame. */
+    //# The keys that are currently down for this surface this frame.
     TdhArray<LRawInput> DownKeys;
 
-    /** The keys that were down for this surface last frame. */
+    //# The keys that were down for this surface last frame.
     TdhArray<LRawInput> LastFrameDownKeys;
 
-    /**
-     * This frame platform-localized input. Buffer is cleared every frame.
-     * So if you need this for later reference, you have to copy it.
-     */
+    //#
+    //# This frame platform-localized input. Buffer is cleared every frame.
+    //# So if you need this for later reference, you have to copy it.
+    //#
     LString PlatformInput;
 
-    /**
-     * The key that was down for this surface and repeated based on the user settings of the platform.
-     * @remark Only use for user input.
-     */
+    //#
+    //# The key that was down for this surface and repeated based on the user settings of the platform.
+    //# @remark Only use for user input.
+    //#
     LRawInput PlatformRepeatedKey;
 };
 

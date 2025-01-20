@@ -38,12 +38,14 @@ struct LNativeDesktopWindowBase // <-- Do not use this struct directly but the p
     //   - GetNativeWindow() const -> Ptr*
 };
 
-/** Generic interface for a desktop platform. */
+//#
+//# Generic interface for a desktop platform.
+//#
 class ENGINE_API LDesktopPlatformBase : public LSurface
-/*
- * We do not use the name LDesktopPlatform as it is reserved for the actual platform implementation class
- * by typedef'ing itself to LDesktopPlatform.
- */
+//
+// We do not use the name LDesktopPlatform as it is reserved for the actual platform implementation class
+// by typedef'ing itself to LDesktopPlatform.
+//
 {
 public:
 

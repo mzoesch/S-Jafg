@@ -32,30 +32,32 @@ ENGINE_API LWidgetFactory* FindOrNullWidgetFactory(const void* InNode);
 ENGINE_API LWidgetFactory& GetWidgetFactory(const void* InNode);
 ENGINE_API int32           PurgeWidgetFactories();
 
-/** Private struct that is the single factory friend. */
+//#
+//# Private struct that is the single factory friend.
+//#
 struct LWidgetFactoryUtility final
 {
     LWidgetFactoryUtility() = delete;
     PROHIBIT_REALLOC_OF_ANY_FORM(LWidgetFactoryUtility)
     ~LWidgetFactoryUtility() = delete;
 
-    /**
-     * Creates a Wsdsml factory for the given node. Only valid in the engine
-     * tick where the factory was requested for.
-     *
-     * @tparam TNode The node-type to create a factory for.
-     * @param InNode The node to create a factory for.
-     * @return The factory for the given node.
-     */
+    //#
+    //# Creates a Wsdsml factory for the given node. Only valid in the engine
+    //# tick where the factory was requested for.
+    //#
+    //# @tparam TNode The node-type to create a factory for.
+    //# @param  InNode The node to create a factory for.
+    //# @return The factory for the given node.
+    //#
     template <typename TNode>
     NODISCARD static auto MakeWidgetFactory(const WWidgetNode* InNode) -> typename TNode::TWidgetFactoryTy&;
 };
 
 } /* ~Namespace Private */
 
-/**
- * How to anchor a child to its parent if the parent can have children.
- */
+//#
+//# How to anchor a child to its parent if the parent can have children.
+//#
 namespace EAnchor
 {
 
@@ -100,10 +102,10 @@ struct LAnchor final
             float MaxY;
         };
 
-        /**
-         * Minimum to maximum.
-         * Left, Top, Right, Bottom.
-         */
+        //#
+        //# Minimum to maximum.
+        //# Left, Top, Right, Bottom.
+        //#
         LVector4 Anchors;
     };
 
@@ -185,34 +187,34 @@ namespace EWidgetVisibility
 
 enum Type : uint8
 {
-    /**
-     * Visible, takes up space in the widget layout and is hit-testable.
-     * Widgets in this state will be ticked.
-     */
+    //#
+    //# Visible, takes up space in the widget layout and is hit-testable.
+    //# Widgets in this state will be ticked.
+    //#
     Visible,
 
-    /**
-     * Not visible, takes up space in the widget layout and is not hit-testable.
-     * Widgets in this state will not be ticked.
-     */
+    //#
+    //# Not visible, takes up space in the widget layout and is not hit-testable.
+    //# Widgets in this state will not be ticked.
+    //#
     Hidden,
 
-    /**
-     * Not visible, does not take up space in the widget layout and is not hit-testable.
-     * Widgets in this state will not be ticked.
-     */
+    //#
+    //# Not visible, does not take up space in the widget layout and is not hit-testable.
+    //# Widgets in this state will not be ticked.
+    //#
     Collapsed,
 
-    /**
-     * Visible, takes up space in the widget layout and is not hit-testable.
-     * Widgets in this state will be ticked.
-     */
+    //#
+    //# Visible, takes up space in the widget layout and is not hit-testable.
+    //# Widgets in this state will be ticked.
+    //#
     TransitiveHitTestInvisible,
 
-    /**
-     * Visible, takes up space in the widget layout and is itself not hit-testable, but all children are.
-     * Widgets in this state will be ticked.
-     */
+    //#
+    //# Visible, takes up space in the widget layout and is itself not hit-testable, but all children are.
+    //# Widgets in this state will be ticked.
+    //#
     IntransitiveHitTestInvisible,
 };
 
@@ -226,29 +228,31 @@ FORCEINLINE bool IsDrawn(const EWidgetVisibility::Type InVisibility)
 } /* ~Namespace EWidgetVisibility */
 ENGINE_API LSimpleString LexToString(const EWidgetVisibility::Type InVisibility);
 
-/** The base struct for every widget slot. */
+//#
+//# The base struct for every widget slot.
+//#
 struct LWidgetSlot
 {
-    /**
-     * The parent of this slot and the owner of the memory.
-     */
+    //#
+    //# The parent of this slot and the owner of the memory.
+    //#
     WWidgetParentBase* Parent;
 
-    /**
-     * The content of this slot. We interpret all names in this and derived structs as of the view of the content.
-     */
+    //#
+    //# The content of this slot. We interpret all names in this and derived structs as of the view of the content.
+    //#
     WWidgetNode* Content;
 
-    /**
-     * The padding of the parent widget aka the margin of the child widget.
-     */
+    //#
+    //# The padding of the parent widget aka the margin of the child widget.
+    //#
     LMargin* Margin;
 };
 
-/**
- * Base class of all widget factories.
- * @see TWidgetFactory<TNode> below.
- */
+//#
+//# Base class of all widget factories.
+//# @see TWidgetFactory<TNode> below.
+//#
 class LWidgetFactory
 {
 public:
@@ -263,7 +267,9 @@ private:
     WWidgetNode* Node = nullptr;
 };
 
-/** Base class of all widget factories that can be used with the declarative syntax defined by Wsdsml. */
+//#
+//# Base class of all widget factories that can be used with the declarative syntax defined by Wsdsml.
+//#
 template <typename TNode>
 class TWidgetFactory : public LWidgetFactory
 {
@@ -274,9 +280,9 @@ public:
 
     using Super         = LWidgetFactory;
 
-    /** The node to target. Always valid. */
+    //# The node to target. Always valid.
     using TNodeTy       = TNode;
-    /** The return type of the factory. Always valid. */
+    //# The return type of the factory. Always valid.
     using TFactoryRetTy = typename TNode::TWidgetFactoryTy;
 
 #if DO_SLOW_CHECKS /* This just costs too much runtime performance. So just check the cast with slow checks. */
@@ -300,40 +306,40 @@ public:
     FORCEINLINE TFactoryRetTy& operator>>(TNode&  OutNode) { OutNode = this->GetNode(); return this->Self(); }
 };
 
-/**
- * Constructs a new widget node in the given context
- * @see NewNode(TNode) (Wsdsml)
- * @see User/Frontend/DebugScreen.cpp (for usage example)
- */
+//#
+//# Constructs a new widget node in the given context
+//# @see NewNode(TNode) (Wsdsml)
+//# @see User/Frontend/DebugScreen.cpp (for usage example)
+//#
 template <typename TNode>
 FORCEINLINE auto ConstructWidgetNode(Private::LObjectContext* InContext) -> TNode*;
-/**
- * Constructs a new deferred widget node in the given context.
- * @see NewNode(TNode) (Wsdsml)
- * @see User/Frontend/DebugScreen.cpp (for usage example)
- */
+//#
+//# Constructs a new deferred widget node in the given context.
+//# @see NewNode(TNode) (Wsdsml)
+//# @see User/Frontend/DebugScreen.cpp (for usage example)
+//#
 template <typename TNode>
 FORCEINLINE auto ConstructDeferredWidgetNode(Private::LObjectContext* InContext) -> TNode*;
 
-/**
- * Before constructing empty context widget, update the global specific widget context.
- * This behaves like a state machine.
- */
+//#
+//# Before constructing empty context widget, update the global specific widget context.
+//# This behaves like a state machine.
+//#
 ENGINE_API extern Private::LObjectContext* GCurrentWidgetContextState;
 
-/** Constructs a new widget node in the current context of the current program widget state context. */
+//# Constructs a new widget node in the current context of the current program widget state context.
 template <typename TNode>
 FORCEINLINE auto ConstructWidgetNode() -> TNode*;
-/** Constructs a new deferred widget node in the current context of the current program widget state context. */
+//# Constructs a new deferred widget node in the current context of the current program widget state context.
 template <typename TNode>
 FORCEINLINE auto ConstructDeferredWidgetNode() -> TNode*;
 
-/** Call this method to finalize a widget that was deferred. */
+//# Call this method to finalize a widget that was deferred.
 FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode);
 
-/**
- * The base class for everything that can be interpreted as a visual element.
- */
+//#
+//# The base class for everything that can be interpreted as a visual element.
+//#
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API WWidgetNode : public ::Jafg::Private::JObjectBase
 {
@@ -350,21 +356,21 @@ protected:
 
 public:
 
-    /**
-     * The factory to use when dealing with this node type in Wsdsml.
-     *
-     * How to define your own factory:
-     * Inherit from TWidgetFactory<TNode> or any subclass and implement the methods you need.
-     *   Inside the new factory:
-     *                           Typedef super to your super factory.
-     *                           Define and use the super TFactoryRetTy as return type for all methods. Always make
-     *                           this typedef public for children to use (if any).
-     *                           Advice C++ to use the reference operators of the super classes by: using Super::operator&.
-     *   Inside the new node:
-     *                           Typedef TWidgetFactoryTy as the new factory. !!!Exactly as below!!!
-     *
-     * @see WidgetParentBase.h / WidgetRegion.h for examples.
-     */
+    //#
+    //# The factory to use when dealing with this node type in Wsdsml.
+    //#
+    //# How to define your own factory:
+    //# Inherit from TWidgetFactory<TNode> or any subclass and implement the methods you need.
+    //#   Inside the new factory:
+    //#                           Typedef super to your super factory.
+    //#                           Define and use the super TFactoryRetTy as return type for all methods. Always make
+    //#                           this typedef public for children to use (if any).
+    //#                           Advice C++ to use the reference operators of the super classes by: using Super::operator&.
+    //#   Inside the new node:
+    //#                           Typedef TWidgetFactoryTy as the new factory. !!!Exactly as below!!!
+    //#
+    //# @see WidgetParentBase.h / WidgetRegion.h for examples.
+    //#
     using TWidgetFactoryTy = TWidgetFactory<Derived>;
 
     // JObjectBase implementation
@@ -373,23 +379,23 @@ public:
     virtual void OnGarbage() override;
     // ~JObjectBase implementation
 
-    /**
-     * Called when this widget is constructed. This does not mean being drawn to a canvas. A widget might be
-     * constructed but never dawned on a canvas in their entire lifespan. This method replaces the #BeginLife super
-     * method.
-     */
+    //#
+    //# Called when this widget is constructed. This does not mean being drawn to a canvas. A widget might be
+    //# constructed but never dawned on a canvas in their entire lifespan. This method replaces the #BeginLife super
+    //# method.
+    //#
     virtual void Construct() { }
 
-    /**
-     * Called when this widget is being ticked.
-     * See EWidgetVisibility for more information about when to tick a widget.
-     */
+    //#
+    //# Called when this widget is being ticked.
+    //# See EWidgetVisibility for more information about when to tick a widget.
+    //#
     virtual void Tick() { }
 
-    /**
-     * Called when this widget is being destructed. This does not mean being removed from its parent. This method
-     * replaces the #EndLife super method.
-     */
+    //#
+    //# Called when this widget is being destructed. This does not mean being removed from its parent. This method
+    //# replaces the #EndLife super method.
+    //#
     virtual void Destruct() { }
 
             bool         IsInBounds(const LViewport& Context, const LVector2& InLocation) const;
@@ -427,45 +433,45 @@ public:
 
     virtual void OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility) { }
 
-    /**
-     * Orphans the child from its parent widget.
-     * @param bDestroy If true, this child will be killed automatically by the butcher at his next sweep.
-     */
+    //#
+    //# Orphans the child from its parent widget.
+    //# @param bDestroy If true, this child will be killed automatically by the butcher at his next sweep.
+    //#
     virtual auto RemoveFromParent(const bool bDestroy = true) -> void;
             auto GetParent() const -> WWidgetParentBase*;
 
-    /**
-     * Searches for a node in this widget tree. Only searches leafs that are drawn.
-     * @return True, if the target node exists in this widget tree and is visible.
-     */
+    //#
+    //# Searches for a node in this widget tree. Only searches leafs that are drawn.
+    //# @return True, if the target node exists in this widget tree and is visible.
+    //#
     virtual bool FindNodeInVisiblePath(const WWidgetNode* InNode) const;
 
-    /** @return The size of the current viewport in pixels. */
+    //# @return The size of the current viewport in pixels.
     virtual auto GetViewportSize() const -> LIntVector2;
     virtual auto GetViewport() const -> LViewport*;
     virtual auto GetCheckedViewport() const -> LViewport*;
     virtual auto GetPanickedViewport() const -> LViewport*;
 
-    /** @return The top left corner of this widget relative to its parent. If no parent, relative to the viewport. */
+    //# @return The top left corner of this widget relative to its parent. If no parent, relative to the viewport.
     virtual auto GetRelativeTopLeftFromOuter(const WWidgetNode* WhoAsked) const -> LVector2;
-    /**
-     * @param  WhoAsked The widget that asked for the relative top left. Must be a direct child.
-     * @return The top left corner relative to the most outer parent. In the best case, this should be the viewport,
-     *         although this is not guaranteed.
-     */
+    //#
+    //# @param  WhoAsked The widget that asked for the relative top left. Must be a direct child.
+    //# @return The top left corner relative to the most outer parent. In the best case, this should be the viewport,
+    //#         although this is not guaranteed.
+    //#
     virtual auto GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const -> LVector2;
-    /** Virtual update method for the desired size. Automatically called. */
+    //# Virtual update method for the desired size. Automatically called.
     virtual void UpdateDesiredSize() const { }
     FORCEINLINE auto SetDesiredSize(const LVector2& InSize) const -> void { this->DesiredSize = InSize; }
     FORCEINLINE auto GetDesiredSize() const -> const LVector2& { return this->DesiredSize; }
 
-    /**
-     * @param WhoAsked The widget that asked for the anchored top left. Must be a direct child.
-     * @return The anchored top left corner of this widget relative to the most outer parent. In the best case,
-     *         this should be the viewport, although this is not guaranteed.
-     */
+    //#
+    //# @param WhoAsked The widget that asked for the anchored top left. Must be a direct child.
+    //# @return The anchored top left corner of this widget relative to the most outer parent. In the best case,
+    //#         this should be the viewport, although this is not guaranteed.
+    //#
     virtual auto GetAnchoredTopLeftFromMostOuter(const LViewport& Context, const WWidgetNode* WhoAsked) const -> LVector2;
-    /** Virtual update method for the anchored size. Automatically called. */
+    //# Virtual update method for the anchored size. Automatically called.
     virtual void UpdateAnchoredSize(const LViewport& Context) const;
     FORCEINLINE auto SetAnchoredSize(const LVector2& InSize) const -> void { this->AnchoredSize = InSize; }
     FORCEINLINE auto GetAnchoredSize() const -> LVector2 { return this->AnchoredSize; }
@@ -476,17 +482,17 @@ public:
     auto GetEngine() const -> LEngine*;
     auto GetLocalEgo() const -> LLocalEgo*;
 
-    /**
-     * Prepare and use the factory for the given node. Only valid in the engine tick where the factory was requested
-     * for. A new factory has to be requested for every new widget node and if the Wdsmml syntax is used for a given
-     * node that is already living for an x amount of time.
-     *
-     * @tparam TNode The node to get the factory for.
-     * @return The factory for that node.
-     * @remark !!! Master thread only !!!
-     * @see    #TWidgetFactory<TNode>
-     * @see    #Private::LWidgetFactoryUtility::MakeWidgetFactory<TNode>
-     */
+    //#
+    //#  Prepare and use the factory for the given node. Only valid in the engine tick where the factory was requested
+    //#  for. A new factory has to be requested for every new widget node and if the Wdsmml syntax is used for a given
+    //#  node that is already living for an x amount of time.
+    //#
+    //#  @tparam TNode The node to get the factory for.
+    //#  @return The factory for that node.
+    //#  @remark !!! Master thread only !!!
+    //#  @see    #TWidgetFactory<TNode>
+    //#  @see    #Private::LWidgetFactoryUtility::MakeWidgetFactory<TNode>
+    //#
     template <typename TNode>
     NODISCARD FORCEINLINE typename TNode::TWidgetFactoryTy& GetFactory()
     {
@@ -503,20 +509,20 @@ private:
     bool bDisableTick = false;
     EWidgetVisibility::Type Visibility = EWidgetVisibility::IntransitiveHitTestInvisible;
 
-    /**
-     * The slot that this widget is currently in. Might be null if the widget is a standalone.
-     * This class is not the owner of this slot. But the parent holding the child is.
-     */
+    //#
+    //# The slot that this widget is currently in. Might be null if the widget is a standalone.
+    //# This class is not the owner of this slot. But the parent holding the child is.
+    //#
     LWidgetSlot* Slot = nullptr;
 
-    /**
-     * The desired size of this widget.
-     */
+    //#
+    //# The desired size of this widget.
+    //#
     mutable LVector2 DesiredSize = LVector2::Zero();
 
-    /**
-     * The anchored size of this widget.
-     */
+    //#
+    //# The anchored size of this widget.
+    //#
     mutable LVector2 AnchoredSize = LVector2::Zero();
 
     LAnchor Anchor = EAnchor::TopLeft;

@@ -15,10 +15,10 @@ class LObjectClass;
 class WWidgetNode;
 class WUserWidget;
 
-/**
- * Represents a viewport that can contain widgets.
- * A viewport has in most cases a handle to some sort of platform-specific window instance.
- */
+//#
+//# Represents a viewport that can contain widgets.
+//# A viewport has in most cases a handle to some sort of platform-specific window instance.
+//#
 class ENGINE_API LViewport final
 {
     friend WWidgetNode;
@@ -39,7 +39,7 @@ public:
     void AddWidget(WUserWidget* Widget);
     void RemoveWidget(WUserWidget* Widget);
 
-    /** The scale factor is based on the physical platform dpi in relation to the base dpi. */
+    //# The scale factor is based on the physical platform dpi in relation to the base dpi.
     FORCEINLINE auto GetScaleFactor() const -> float { return this->ScaleFactor; }
     FORCEINLINE auto SetPlatformDpi(const float InDpi) -> void { this->PlatformDpi = InDpi; }
     FORCEINLINE auto GetPlatformDpi() const -> float { return this->PlatformDpi; }
@@ -70,7 +70,7 @@ public:
                 bool FocusWidgetNode(const WWidgetNode* InNode);
     FORCEINLINE auto GetHoveredWidgets() const -> const TdhArray<WWidgetNode*>& { return this->HoveredWidgets; }
 
-    /** @return True if in the last frame, this node was not added. */
+    //# @return True if in the last frame, this node was not added.
     bool AddHoveredWidgetForFrame(WWidgetNode* Node);
 
 private:
@@ -81,20 +81,20 @@ private:
     void HandleReply(LSurface& Context, const LCursorReply& Reply);
     void HandleReply(LSurface& Context, const LReply& Reply);
 
-    /** The factor with which the entire orthographic projection is scaled. */
+    //# The factor with which the entire orthographic projection is scaled.
     float ScaleFactor =  1.0f;
-    /** The dpi fetched from the physical platform. */
+    //# The dpi fetched from the physical platform.
     float PlatformDpi =  0.0f;
-    /**
-     * The base dpi that the application was designed for.
-     * All scales are based and calculated from this value, and only for the drawing
-     * we use the platform dpi.
-     */
+    //#
+    //# The base dpi that the application was designed for.
+    //# All scales are based and calculated from this value, and only for the drawing
+    //# we use the platform dpi.
+    //#
     float BaseDpi     = 96.0f;
 
-    /** The dimensions of the viewport in px. */
+    //# The dimensions of the viewport in px.
     LIntVector2            Dimensions;
-    /** Top level widgets that this viewport owns. */
+    //# Top level widgets that this viewport owns.
     TdhArray<WUserWidget*> TopLevelWidgets;
 
     WWidgetNode* FocusedWidget = nullptr;

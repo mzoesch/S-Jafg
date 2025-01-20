@@ -48,9 +48,9 @@ public:
     virtual auto IsVSync() const -> bool override;
     // ~Surface implementation
 
-    /**
-     * You are the owner.
-     */
+    //
+    // You are the owner.
+    //
     static LNativeWindowWin* CreateNativeWindow(const LDesktopSurfaceProps& Props);
 
 private:

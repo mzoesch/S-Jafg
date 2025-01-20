@@ -40,11 +40,11 @@ public:
     TFactoryRetTy& operator&(const LPadding& InPadding) { return this->SetPadding(InPadding); }
 };
 
-/**
- * A widget box is a widget that behaves roughly the same as a region but with
- * the major difference for not allowing children.
- * @see Widgets/WidgetRegion.h
- */
+//#
+//# A widget box is a widget that behaves roughly the same as a region but with
+//# the major difference for not allowing children.
+//# @see Widgets/WidgetRegion.h
+//#
 DECLARE_JAFG_CLASS()
 class ENGINE_API WWidgetBox : public WWidgetNode
 {

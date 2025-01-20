@@ -8,9 +8,9 @@
 namespace Jafg
 {
 
-/**
- * Represents a generic two-dimensional atlas.
- */
+//#
+//# Represents a generic two-dimensional atlas.
+//#
 class LAtlas2 final
 {
 public:
@@ -20,7 +20,7 @@ public:
     DEFAULT_MOVE(LAtlas2)
     ~LAtlas2() { this->Free(); }
 
-    /** Create the atlas from the given textures. */
+    //# Create the atlas from the given textures.
     void Make(const TdhArray<LTexture2>& InTextures, const bool bFreeOld = true);
     void Free() { this->Data.Free(); this->TexWidth = 0; }
 
@@ -35,10 +35,10 @@ public:
 
 private:
 
-    /**
-     * The texture width to use for all textures. Is guaranteed to be a power of two.
-     * Lower resolutions will be scaled up.
-     */
+    //#
+    //# The texture width to use for all textures. Is guaranteed to be a power of two.
+    //# Lower resolutions will be scaled up.
+    //#
     int32     TexWidth = 0;
     LTexture2 Data     = { };
 };

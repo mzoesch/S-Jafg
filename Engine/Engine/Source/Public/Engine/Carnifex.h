@@ -14,10 +14,10 @@ class JObjectBase;
 
 } /* ~Namespace Private */
 
-/**
- * A carnifex is an object used to mascara all garbage children.
- * At the very end of every tick, it will look for them and kill them.
- */
+//#
+//# A carnifex is an object used to mascara all garbage children.
+//# At the very end of every tick, it will look for them and kill them.
+//#
 class ENGINE_API LCarnifex final
 {
 public:

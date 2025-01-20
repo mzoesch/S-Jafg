@@ -7,14 +7,14 @@
 namespace Jafg
 {
 
-/**
- * A point in the viewport.
- */
+//#
+//# A point in the viewport.
+//#
 typedef LIntVector2 LViewportPoint;
 
-/**
- * A size in the viewport.
- */
+//#
+//# A size in the viewport.
+//#
 typedef LIntVector2 LViewportSize;
 
 } /* ~Namespace Jafg. */

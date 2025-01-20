@@ -38,10 +38,10 @@ int32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstanc
 #if WITH_TESTS
     return TestWideMain(::GetCommandLineW());
 #else /* WITH_TESTS */
-    /*
-     * If LNK2019 [int __cdecl __scrt_common_main_seh(void)] make sure to set the System-Linker of the Runtime
-     * Project to use the subsystem "Not Set" (for automatic platform detection) or "Windows".
-     */
+    //
+    // If LNK2019 [int __cdecl __scrt_common_main_seh(void)] make sure to set the System-Linker of the Runtime
+    // Project to use the subsystem "Not Set" (for automatic platform detection) or "Windows".
+    //
     const int32 Result = LaunchWin(hInInstance, hPrevInstance, pCmdLine, nCmdShow, nullptr);
     LaunchWinShutdown();
     return Result;

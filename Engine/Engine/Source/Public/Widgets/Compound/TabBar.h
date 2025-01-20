@@ -10,15 +10,15 @@ namespace Jafg
 
 class WWidgetSwitcher;
 
-/**
- * A tab bar that uses the selection and focusable logic that is commonly used in Jafg.
- * The tab bar consists of three main parts:
- *   - The tab bar button: The button that represents the tab in a given collection.
- *   - The tab bar panel:  The panel that represents the content of the tab.
- *   - The tab bar:        The collection of the buttons and panels.
- *
- * Tab bars can be nested within each other with the superclass WTabBarBase.
- */
+//#
+//# A tab bar that uses the selection and focusable logic that is commonly used in Jafg.
+//#
+//# The tab bar consists of three main parts:
+//#   - The tab bar button: The button that represents the tab in a given collection.
+//#   - The tab bar panel:  The panel that represents the content of the tab.
+//#   - The tab bar:        The collection of the buttons and panels.
+//# Tab bars can be nested within each other with the superclass WTabBarBase.
+//#
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API WTabBar : public WTabBarBase
 {
@@ -39,14 +39,14 @@ public:
 
 protected:
 
-    /**
-     * The container where the buttons are stored.
-     */
+    //#
+    //# The container where the buttons are stored.
+    //#
     WWidgetParentBase* ButtonsContainer = nullptr;
 
-    /**
-     * The switcher where the panels are stored.
-     */
+    //#
+    //# The switcher where the panels are stored.
+    //#
     WWidgetSwitcher* Switcher = nullptr;
 };
 

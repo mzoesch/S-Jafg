@@ -9,9 +9,9 @@
 namespace Jafg
 {
 
-/**
- * Represents a specific physical key on the keyboard or mouse that is mapped to an action.
- */
+//#
+//# Represents a specific physical key on the keyboard or mouse that is mapped to an action.
+//#
 struct ENGINE_API LInputActionMappedKey final
 {
     LInputActionMappedKey() = default;
@@ -31,12 +31,12 @@ struct ENGINE_API LInputActionMappedKey final
     TdhArray<LInputActionMappedKeyModifier*> Modifiers;
 };
 
-/**
- * A form of an action that can be triggered by the user.
- * This is the logical representation of something the user wants to / can do (e.g., "Close frontend").
- * It is not tied to any specific physical key - but many physical keys can be bound to this action and can be
- * changed modularly based on delegates fired in the application / state of the program.
- */
+//#
+//# A form of an action that can be triggered by the user.
+//# This is the logical representation of something the user wants to / can do (e.g., "Close frontend").
+//# It is not tied to any specific physical key - but many physical keys can be bound to this action and can be
+//# changed modularly based on delegates fired in the application / state of the program.
+//#
 struct ENGINE_API LInputAction final
 {
     LInputAction() = default;

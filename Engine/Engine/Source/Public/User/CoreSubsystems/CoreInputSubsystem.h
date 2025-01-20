@@ -10,10 +10,10 @@ namespace Jafg
 
 struct LInputActionValue;
 
-/**
- * Adds core input functionality such as debugging keys, return to home, and more.
- * These keys are not intended to be overridden by other subsystems.
- */
+//#
+//# Adds core input functionality such as debugging keys, return to home, and more.
+//# These keys are not intended to be overridden by other subsystems.
+//#
 DECLARE_JAFG_CLASS()
 class ENGINE_API JCoreInputSubsystem final : public JLocalEgoSubsystem
 {

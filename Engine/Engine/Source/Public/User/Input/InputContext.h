@@ -19,9 +19,9 @@ typedef TFunction<void(LInputActionValue& InValue)> LUserInputActionCallback;
 MAKE_DELEGATE_SIGNATURE(LUserInputActionDelegate, void, LInputActionValue& InValue)
 MAKE_MULTICAST_SIGNATURE(OnActionTriggered, const LInputActionValue&)
 
-/**
- * A mapped action that is owned by a context.
- */
+//#
+//# A mapped action that is owned by a context.
+//#
 struct LInputMappedAction
 {
     LInputMappedAction() = delete;
@@ -34,9 +34,9 @@ struct LInputMappedAction
     LUserInputActionDelegate  Callback = nullptr;
 };
 
-/**
- * A context that can be used to have a set of actions that are mapped to keys and callbacks.
- */
+//#
+//# A context that can be used to have a set of actions that are mapped to keys and callbacks.
+//#
 struct ENGINE_API LUserInputContext final
 {
     LUserInputContext() = delete;
@@ -44,9 +44,9 @@ struct ENGINE_API LUserInputContext final
     DEFAULT_REALLOC_OF_ANY_FORM(LUserInputContext)
     ~LUserInputContext() = default;
 
-    /** @return The newly mapped action. This is not the same as the input argument. */
+    //# @return The newly mapped action. This is not the same as the input argument.
     auto MapAction(LInputAction&& InAction, LUserInput* InUserInput) -> LInputAction*;
-    /** Map an already registered (inside the user input) action. */
+    //# Map an already registered (inside the user input) action.
     void MapAction(LInputAction* InAction);
 
     auto MapKey(LInputAction* InAction, const LKey InKey) -> LInputActionMappedKey*;

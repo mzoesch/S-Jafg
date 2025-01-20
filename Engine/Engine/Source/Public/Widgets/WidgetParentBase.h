@@ -34,11 +34,11 @@ public:
     FORCEINLINE TFactoryRetTy& operator[](LWidgetFactory*  InChild) { return this->AddChild(InChild); }
 };
 
-/**
- * Pure virtual abstraction of a widget parent.
- * To let other widgets implement their own data structure for children.
- * TODO: Please think of a better name for this class.
- */
+//#
+//# Pure virtual abstraction of a widget parent.
+//# To let other widgets implement their own data structure for children.
+//# TODO: Please think of a better name for this class.
+//#
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API WWidgetParentBase : public WWidgetNode
 {
@@ -77,7 +77,7 @@ public:
 
 private:
 
-    /** Empty array for unreachable code paths - just to satisfy the compiler. Has no use-case. */
+    //# Empty array for unreachable code paths - just to satisfy the compiler. Has no use-case.
     static inline TdhArray<LWidgetSlot*> NothingArrayReference;
 };
 

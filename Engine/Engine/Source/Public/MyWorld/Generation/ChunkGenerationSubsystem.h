@@ -11,9 +11,9 @@ namespace Jafg
 
 class LChunkShaderContext;
 
-/**
- * Loads and unloads chunks into / from the world based on what the current validation subsystem has determined.
- */
+//#
+//# Loads and unloads chunks into / from the world based on what the current validation subsystem has determined.
+//#
 DECLARE_JAFG_CLASS()
 class JChunkGenerationSubsystem final : public JCappedTickableWorldSubsystem
 {
@@ -54,25 +54,25 @@ private:
 
     AChunk* SpawnChunk(const LChunkKey& InChunkKey) const;
 
-    /**
-     * Transient or persistent chunks that are loaded in any state.
-     * @remark std::unordered_map is not trivially copyable when empty. So we have to use a pointer.
-     *         We should really implement our own hash map.
-     */
+    //#
+    //# Transient or persistent chunks that are loaded in any state.
+    //# @remark std::unordered_map is not trivially copyable when empty. So we have to use a pointer.
+    //#         We should really implement our own hash map.
+    //#
     std::unordered_map<LChunkKey, AChunk*>* LoadedChunks = nullptr;
     std::shared_mutex* SharedLoadedChunksMutex = nullptr;
 
-    /**
-     * Very important persistent chunks to load to the world.
-     */
+    //#
+    //# Very important persistent chunks to load to the world.
+    //#
     TQueue<LChunkKey> VipChunksToLoad;
     std::mutex* VipChunksToLoadMutex = nullptr;
     void DequeueVipChunks();
 
-    /**
-     * Based on the current validation subsystem.
-     * If the pawns do not move, these would be the remaining chunks that should be loaded.
-     */
+    //#
+    //# Based on the current validation subsystem.
+    //# If the pawns do not move, these would be the remaining chunks that should be loaded.
+    //#
     TQueue<LChunkKey2> OptimalVerticalChunkQueue;
     bool DequeueNextOptimalVerticalChunk();
 

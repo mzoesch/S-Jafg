@@ -21,7 +21,7 @@ class LSurface;
         class LDesktopPlatformWin;
         struct LNativeWindowWin;
         typedef LNativeWindowWin LNativeWindow;
-        /** The currently active desktop platform. */
+        //# The currently active desktop platform.
         typedef LDesktopPlatformWin LDesktopPlatform;
 
     #endif /* PLATFORM_WINDOWS */

@@ -19,13 +19,13 @@ struct LEngineVersion
     }
 };
 
-/** @return Build time of the engine. */
+//# @return Build time of the engine.
 NOINLINE ENGINE_API auto GetBuildTime() -> const LSimpleString&;
 
-/** @return Build date of the engine. */
+//# @return Build date of the engine.
 NOINLINE ENGINE_API auto GetBuildDate() -> const LSimpleString&;
 
-/** @return Engine version when the engine library was built. */
+//# @return Engine version when the engine library was built.
 NOINLINE ENGINE_API auto GetEngineVersion() -> LEngineVersion;
 
-} /* ~Namespace Jafg::BuildInfo. */
+} /* ~Namespace Jafg::BuildInfo */

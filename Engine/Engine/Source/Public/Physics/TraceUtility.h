@@ -24,19 +24,19 @@ struct LHitResult final
     template <typename TActor>
     FORCEINLINE auto GetActor() const -> const TActor* { return DynamicCast<TActor>(this->Actor); }
 
-    /**
-     * Hit actor.
-     */
+    //#
+    //# Hit actor.
+    //#
     AActor* Actor               = nullptr;
 
-    /**
-     * Hit location in world space.
-     */
+    //#
+    //# Hit location in world space.
+    //#
     LVector GlobalWorldLocation = LVector::Zero();
 
-    /**
-     * Optional hit surface normal.
-     */
+    //#
+    //# Optional hit surface normal.
+    //#
     TOptional<LVector> SurfaceNormal = { };
 };
 

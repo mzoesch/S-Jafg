@@ -16,9 +16,9 @@ namespace Private
 class JObjectBase;
 struct LObjectMiscellaneousAccessor;
 
-/**
- * Object context that is used to determine the context and lifetimes of jafg objects.
- */
+//#
+//# Object context that is used to determine the context and lifetimes of jafg objects.
+//#
 class ENGINE_API LObjectContext
 {
     friend JObjectBase;
@@ -42,13 +42,13 @@ private:
 
     LSimpleString HumanReadableName;
 
-    /** The carnifex that is used to mascara all children within this context. */
+    //# The carnifex that is used to mascara all children within this context.
     LCarnifex** Carnifex = nullptr;
 
-    /**
-     * The employees that are working within this context.
-     * If this context dies, the employees will kill themselves.
-     */
+    //#
+    //# The employees that are working within this context.
+    //# If this context dies, the employees will kill themselves.
+    //#
     TdhArray<JObjectBase*> Employees;
 };
 

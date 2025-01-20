@@ -15,22 +15,22 @@ enum Type : uint8
 {
     None = 0,
 
-    /** Custom path relative to a module. */
+    //# Custom path relative to a module.
     CustomModule,
 
-    /** Custom path relative to the engine. */
+    //# Custom path relative to the engine.
     CustomEngine,
 
-    /** Content/Textures/Voxels */
+    //# Content/Textures/Voxels
     Voxels,
 
-    /** Content/Textures/Blends */
+    //# Content/Textures/Blends
     Blends,
 
-    /** Content/Shaders */
+    //# Content/Shaders
     Shaders,
 
-    /** Content/Fonts */
+    //# Content/Fonts
     Fonts,
 };
 

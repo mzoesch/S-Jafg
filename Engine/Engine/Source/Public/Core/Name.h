@@ -30,13 +30,13 @@ typedef uint32 LUnderlyingName;
 
 enum : uint8 { NO_NAME = 0 };
 
-/**
- * A name maps a string to a unique integer. Names are case-insensitive and are stored in a global registry.
- * Names behave trivially in any context.
- * Core names allocated at module initialization time are not allocated deterministically. The underlying name
- * might differ between runs.
- * Names are safe to use in networked environments.
- */
+//#
+//# A name maps a string to a unique integer. Names are case-insensitive and are stored in a global registry.
+//# Names behave trivially in any context.
+//# Core names allocated at module initialization time are not allocated deterministically. The underlying name
+//# might differ between runs.
+//# Names are safe to use in networked environments.
+//#
 struct LName
 {
     friend Private::LNameRegistry;
@@ -54,7 +54,7 @@ struct LName
     FORCEINLINE bool operator!=(const LName& Other) const { return UnderlyingName != Other.UnderlyingName; }
 
     FORCEINLINE bool IsSet() const { return UnderlyingName != NO_NAME; }
-    
+
     ENGINE_API const LSimpleString& ToString() const;
 
     ENGINE_API static LName NoName;
@@ -65,19 +65,19 @@ private:
     LUnderlyingName UnderlyingName;
 };
 
-/**
- * Register a name known at compile time.
- */
+//#
+//# Register a name known at compile time.
+//#
 #define MAKE_STATIC_NAME(Name)      ::Jafg::Private::RegisterStaticName(Name)
 
-/**
- * Dynamically register a name depending on context at runtime.
- */
+//#
+//# Dynamically register a name depending on context at runtime.
+//#
 #define MAKE_DYNAMIC_NAME(Name)     ::Jafg::Private::GNameRegistry->RegisterAndGetName(Name)
 
-/**
- * Get a name by its string representation.
- */
+//#
+//# Get a name by its string representation.
+//#
 #define GET_NAME(Name)              ::Jafg::Private::GNameRegistry->GetName(Name)
 
 namespace Private

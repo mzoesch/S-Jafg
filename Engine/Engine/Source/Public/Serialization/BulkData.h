@@ -33,7 +33,7 @@ public:
 
 private:
 
-    /** The number of domains. */
+    //# The number of domains.
     int32          Num  = 0;
     LBulkDomainTy* Bulk = nullptr;
 };

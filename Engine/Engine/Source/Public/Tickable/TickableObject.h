@@ -7,10 +7,10 @@
 namespace Jafg
 {
 
-/**
- * An object that can be registered with some sort of context that is ticked by the engine or a sub-tickable system
- * from the engine.
- */
+//#
+//# An object that can be registered with some sort of context that is ticked by the engine or a sub-tickable system
+//# from the engine.
+//#
 class ENGINE_API LTickableObject
 {
 public:

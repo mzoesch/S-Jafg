@@ -12,7 +12,7 @@ class ENGINE_API LTabBarButtonBase
 {
 };
 
-/** @see Widgets/Compound/TabBar.h */
+//# @see Widgets/Compound/TabBar.h
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API WTabBarButton : public WButton, public LTabBarButtonBase
 {

@@ -21,7 +21,7 @@ protected:
 
 public:
 
-    /** A scale scalar that applies to the entire application. */
+    //# A scale scalar that applies to the entire application.
     float ApplicationScale = 1.0f;
 };
 

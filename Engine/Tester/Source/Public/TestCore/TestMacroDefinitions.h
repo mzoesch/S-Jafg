@@ -2,7 +2,7 @@
 
 #pragma once
 
-/** @see Engine/TestForward/TestCore/TestMacroForward.h */
+//# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef PRIVATE_JAFG_TEST_MAKE_SIMPLE_TEST
     #undef PRIVATE_JAFG_TEST_MAKE_SIMPLE_TEST
 #endif /* PRIVATE_JAFG_TEST_MAKE_SIMPLE_TEST */
@@ -15,7 +15,7 @@
     ClassName PRIVATE_JAFG_TEST_JOIN_INNER_TWO(ClassName, ##Instance);                            \
     void ClassName::Run()                                                                         \
 
-/** @see Engine/TestForward/TestCore/TestMacroForward.h */
+//# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_EQUALS
     #undef CHECK_EQUALS
 #endif /* CHECK_EQUALS */
@@ -24,7 +24,7 @@
 #define CHECK_EQUALS_WITH_LINE(What, A, B, Line)                              \
     this->TestEqual("Equality test ["#What"]: { "#A" == "#B" }", A, B, Line);
 
-/** @see Engine/TestForward/TestCore/TestMacroForward.h */
+//# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_NOT_EQUALS
     #undef CHECK_NOT_EQUALS
 #endif /* CHECK_NOT_EQUALS */
@@ -33,7 +33,7 @@
 #define CHECK_NOT_EQUALS_WITH_LINE(What, A, B, Line)                                 \
     this->TestNotEqual("Not equality test ["#What"]: { "#A" != "#B" }", A, B, Line);
 
-/** @see Engine/TestForward/TestCore/TestMacroForward.h */
+//#* @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_LESS
     #undef CHECK_LESS
 #endif /* CHECK_LESS */
@@ -42,7 +42,7 @@
 #define CHECK_LESS_WITH_LINE(What, A, B, Line)                          \
     this->TestLess("Less test ["#What"]: { "#A" < "#B" }", A, B, Line);
 
-/** @see Engine/TestForward/TestCore/TestMacroForward.h */
+//# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_GREATER
     #undef CHECK_GREATER
 #endif /* CHECK_GREATER */
@@ -51,7 +51,7 @@
 #define CHECK_GREATER_WITH_LINE(What, A, B, Line)                             \
     this->TestGreater("Greater test ["#What"]: { "#A" > "#B" }", A, B, Line);
 
-/** @see Engine/TestForward/TestCore/TestMacroForward.h */
+//# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_LESS_OR_EQUAL
     #undef CHECK_LESS_OR_EQUAL
 #endif /* CHECK_LESS_OR_EQUAL */
@@ -60,7 +60,7 @@
 #define CHECK_LESS_OR_EQUAL_WITH_LINE(What, A, B, Line)                                  \
     this->TestLessOrEqual("Less or equal test ["#What"]: { "#A" <= "#B" }", A, B, Line);
 
-/** @see Engine/TestForward/TestCore/TestMacroForward.h */
+//# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_GREATER_OR_EQUAL
     #undef CHECK_GREATER_OR_EQUAL
 #endif /* CHECK_GREATER_OR_EQUAL */
@@ -69,7 +69,7 @@
 #define CHECK_GREATER_OR_EQUAL_WITH_LINE(What, A, B, Line)                                     \
     this->TestGreaterOrEqual("Greater or equal test ["#What"]: { "#A" >= "#B" }", A, B, Line);
 
-/** @see Engine/TestForward/TestCore/TestMacroForward.h */
+//# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_NULL
     #undef CHECK_NULL
 #endif /* CHECK_NULL */
@@ -78,7 +78,7 @@
 #define CHECK_NULL_WITH_LINE(What, A, Line)                              \
     this->TestNull("Null test ["#What"]: { "#A" == nullptr }", A, Line);
 
-/** @see Engine/TestForward/TestCore/TestMacroForward.h */
+//# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_NOT_NULL
     #undef CHECK_NOT_NULL
 #endif /* CHECK_NOT_NULL */
@@ -87,7 +87,7 @@
 #define CHECK_NOT_NULL_WITH_LINE(What, A, Line)                                 \
     this->TestNotNull("Not null test ["#What"]: { "#A" != nullptr }", A, Line);
 
-/** @see Engine/TestForward/TestCore/TestMacroForward.h */
+//# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_TRUE
     #undef CHECK_TRUE
 #endif /* CHECK_TRUE */
@@ -96,7 +96,7 @@
 #define CHECK_TRUE_WITH_LINE(What, A, Line)                           \
     this->TestTrue("True test ["#What"]: { "#A" == true }", A, Line);
 
-/** @see Engine/TestForward/TestCore/TestMacroForward.h */
+//# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_FALSE
     #undef CHECK_FALSE
 #endif /* CHECK_FALSE */

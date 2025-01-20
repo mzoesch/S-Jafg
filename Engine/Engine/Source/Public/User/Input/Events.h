@@ -18,10 +18,10 @@ struct LKeyEvent final
     LKeyEvent(const LKey InKey, const float InValue, const bool bIsPlatformRepeat) { this->Input = LRawInput(InKey, InValue); this->bIsPlatformRepeat = bIsPlatformRepeat; }
     LKeyEvent(const LRawInput& InRawInput, const bool bIsPlatformRepeat) { this->Input = InRawInput; this->bIsPlatformRepeat = bIsPlatformRepeat; }
 
-    /**
-     * Whether this key down event was triggered by a platform repeat. Meaning the repeat delay set on the platform
-     * directly by the user - based on the actual physical keyboard settings.
-     */
+    //#
+    //# Whether this key down event was triggered by a platform repeat. Meaning the repeat delay set on the platform
+    //# directly by the user - based on the actual physical keyboard settings.
+    //#
     FORCEINLINE auto IsPlatformRepeat() const -> bool { return this->bIsPlatformRepeat; }
 
     FORCEINLINE auto GetRawInput() const -> LRawInput { return { this->Input }; }

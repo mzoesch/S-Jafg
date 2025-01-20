@@ -13,11 +13,11 @@ class LApplicationInstance;
 class LCommandLineInterface;
 struct LSubsystemCollection;
 
-/**
- * A subsystem that shares its lifetime with their owning object.
- *
- * To create your own subsystem lifetime:
- */
+//#
+//# A subsystem that shares its lifetime with their owning object.
+//#
+//# To create your own subsystem lifetime:
+//#
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API JSubsystem : public Private::JObjectBase
 {
@@ -33,12 +33,12 @@ protected:
     virtual void EndLife()   override final { Super::EndLife();                     }
     virtual void OnGarbage() override final { Super::OnGarbage(); this->TearDown(); }
 
-    /**
-     * Weather a subsystem should be created given its new context.
-     *
-     * @note The object will still be instanced if ShouldCreateSubsystem returns false, but will be killed
-     *       soon after.
-     */
+    //#
+    //# Weather a subsystem should be created given its new context.
+    //#
+    //# @note The object will still be instanced if ShouldCreateSubsystem returns false, but will be killed
+    //#       soon after.
+    //#
     virtual bool ShouldCreateSubsystem(const Private::LObjectContext* InOuter) const { return true; }
     virtual void Initialize(LSubsystemCollection& Collection);
     virtual void TearDown() { }

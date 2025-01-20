@@ -12,9 +12,9 @@ namespace Jafg
 class APersonaController;
 struct LInputActionValue;
 
-/**
- * A pawn is something that can be possessed by a controller.
- */
+//#
+//# A pawn is something that can be possessed by a controller.
+//#
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API APawn : public AActor
 {
@@ -42,7 +42,7 @@ public:
     void OnOngoingPrimaryInput(LInputActionValue& InValue);
     void OnOngoingSecondaryInput(LInputActionValue& InValue);
 
-    /** Cached hit results for this frame. Use this if only generic hit results information is needed.  */
+    //# Cached hit results for this frame. Use this if only generic hit results information is needed.
     FORCEINLINE auto GetCurrentGenericTraceResults() const -> const TdhArray<LHitResult>& { return this->CurrentGenericTraceResults; }
     bool TraceFromEyeByChannel(
         TdhArray<LHitResult>& OutHits,

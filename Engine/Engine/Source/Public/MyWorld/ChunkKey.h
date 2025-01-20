@@ -14,7 +14,9 @@ typedef int32       LChunkKeyDomainTy;
 struct LChunkKey;
 struct LChunkKey2;
 
-/** Unique identifier for a chunk. */
+//#
+//# Unique identifier for a chunk.
+//#
 struct LChunkKey final
 {
     using LReal = float;
@@ -109,7 +111,7 @@ static_assert(sizeof(LChunkKey) == sizeof(LChunkKeyDomainTy) * 3, "LChunkKey is 
 
 ENUM_CLASS_FLAGS(LChunkKey::EAxis)
 
-/** Unique identifier for a vertical chunk. */
+//# Unique identifier for a vertical chunk.
 struct LChunkKey2 final
 {
     using LReal = float;

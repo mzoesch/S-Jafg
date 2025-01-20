@@ -21,13 +21,13 @@ class LApplicationInstance;
 
 ENGINE_API extern LEngine*      GEngine;
 
-/**
- * Whether the engine should exit at the next opportunity.
- */
+//#
+//# Whether the engine should exit at the next opportunity.
+//#
 ENGINE_API extern bool          bGShouldRequestExit;
-/**
- * Whether the engine has successfully received an exit request and is now beginning to tear down.
- */
+//#
+//# Whether the engine has successfully received an exit request and is now beginning to tear down.
+//#
 ENGINE_API extern bool          bGEngineRequestingExit;
 
 ENGINE_API extern int32         GCustomExitStatusOverride;
@@ -48,10 +48,10 @@ FORCEINLINE auto GetCustomExitReason() -> LSimpleString { return GCustomExitReas
 // ~Engine Globals
 ///////////////////////////////////////////////////////////////////////////////
 
-/**
- * Private engine context wrapper around a world.
- * This struct is internal to the engine and should not be used outside it.
- */
+//#
+//# Private engine context wrapper around a world.
+//# This struct is internal to the engine and should not be used outside it.
+//#
 struct LWorldContext
 {
     LStringLegacy TravelUrl;
@@ -81,9 +81,9 @@ public:
     // Private function redirects
     ///////////////////////////////////////////////////////////////////////////////
 
-    /** Internal public method. Do not use. */
+    //# Internal public method. Do not use.
     void BeginExitIfRequested();
-    /** Internal public method. Do not use. */
+    //# Internal public method. Do not use.
     void ReflectForwardedExitRequest();
 
     void RequestEngineExit();
@@ -129,17 +129,17 @@ public:
 
     auto GetContextFromWorld(const LWorld& World) -> LWorldContext&;
 
-    /** Browse to a new Url at the next opportunity. */
+    //# Browse to a new Url at the next opportunity.
     auto Browse(const LWorld& Context, const LStringLegacy& Url) -> void;
-    /** @return True if registered successfully.*/
+    //# @return True if registered successfully.
     auto RegisterLevel(const LLevel& InLevel) -> bool;
     auto RegisterLevel(const LLevel&& InLevel) -> bool;
     auto IsLevelRegistered(const LStringLegacy& Identifier) const -> bool;
 
-    /**
-     * Delegate called when a new world is shortly about to be running inside its beginning life cycle.
-     * The world pointer is guaranteed to be valid.
-     */
+    //#
+    //# Delegate called when a new world is shortly about to be running inside its beginning life cycle.
+    //# The world pointer is guaranteed to be valid.
+    //#
     LOnWorldBeginLifeDelegateSignature OnWorldBeginLife;
 
 private:
@@ -148,22 +148,22 @@ private:
     auto CreateNewWorldContext() -> LWorldContext&;
     auto InitializeContext(LWorldContext& InContext, const LSimpleString& InHumanReadableName) -> void;
 
-    /** Browse to a new Url at the next opportunity. */
+    //# Browse to a new Url at the next opportunity.
     void Browse(LWorldContext& Context, const LStringLegacy& Url) const;
     bool IsContextUrlInternal(const LStringLegacy& Url) const;
     void TravelContext(LWorldContext& Context);
     FORCEINLINE auto GetLevelByInternalUrl(const LStringLegacy& Url) -> LLevel* { return this->RegisteredLevels.FindRef(Url); }
 
-    /** The maximum amount of context this engine can handle. */
+    //# The maximum amount of context this engine can handle.
     static constexpr uint8 MaxContexts { 3 };
 
-    /**
-     * All current engine contexts.
-     * An index of a specific context is not guaranteed to stay the same. Always expect a short
-     * lifetime of the index.
-     */
+    //#
+    //# All current engine contexts.
+    //# An index of a specific context is not guaranteed to stay the same. Always expect a short
+    //# lifetime of the index.
+    //#
     LWorldContext* Contexts[LEngine::MaxContexts] = { nullptr, nullptr, nullptr, };
-    /** The registered levels that this engine can load. */
+    //# The registered levels that this engine can load.
     TdhArray<LLevel> RegisteredLevels = { };
 
 public:

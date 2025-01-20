@@ -7,9 +7,9 @@
 namespace Jafg::Tester
 {
 
-/**
- * Base class for all simple test cases.
- */
+//#
+//# Base class for all simple test cases.
+//#
 struct LSimpleTestCase
 {
     LSimpleTestCase()                                     = delete;
@@ -26,9 +26,9 @@ struct LSimpleTestCase
     FORCEINLINE auto HasErrors() const -> bool { return this->Errors.empty() == false; }
     FORCEINLINE auto GetErrors() const -> const std::vector<std::string>& { return this->Errors; }
 
-    /**
-     * Override this method to run all tests of this test case.
-     */
+    //#
+    //# Override this method to run all tests of this test case.
+    //#
     virtual void Run() = 0;
 
     TESTER_API void TestEqual(const char* What, const int32   A, const int32   B, const int32 LineNumber);

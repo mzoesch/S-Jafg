@@ -8,17 +8,17 @@
 namespace Jafg
 {
 
-/**
- * Value returned by a triggered input action to the bound delegate functor.
- */
+//#
+//# Value returned by a triggered input action to the bound delegate functor.
+//#
 struct LInputActionValue final
 {
     using LReal = float;
 
-    /**
-     * The threshold for an input action to be considered triggered.
-     * TODO: We should make this configurable by the user.
-     */
+    //#
+    //# The threshold for an input action to be considered triggered.
+    //# TODO: We should make this configurable by the user.
+    //#
     LReal ThresholdForInputActionValueTrigger = static_cast<LReal>(JAFG_DOUBLE_SMALL_NUMBER);
 
     using Axis0D = bool;

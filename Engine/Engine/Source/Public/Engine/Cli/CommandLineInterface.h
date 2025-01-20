@@ -13,9 +13,9 @@ class LCommandLineInterface;
 struct LCliCommandHandle;
 struct LCliVariableHandle;
 
-/**
- * A handle to a command line function.
- */
+//#
+//# A handle to a command line function.
+//#
 struct LCliCommandHandle
 {
     friend LCommandLineInterface;
@@ -36,9 +36,9 @@ private:
     LCliObjectUuid Uuid = LCliObject::NoUuid;
 };
 
-/**
- * A handle to a command line variable.
- */
+//#
+//# A handle to a command line variable.
+//#
 struct LCliVariableHandle
 {
     friend LCommandLineInterface;

@@ -9,24 +9,24 @@ namespace Jafg
 
 struct LPlatformMisc;
 
-/**
- * Represents an external physical monitor.
- */
+//#
+//# Represents an external physical monitor.
+//#
 struct LPhysicalViewport
 {
-    /** Physical width in mm. */
+    //# Physical width in mm.
     int32 WidthMm  = 0;
 
-    /** Physical height in mm. */
+    //# Physical height in mm.
     int32 HeightMm = 0;
 
-    /** Virtual width in pixels. */
+    //# Virtual width in pixels.
     int32 WidthPx  = 0;
 
-    /** Virtual height in pixels. */
+    //# Virtual height in pixels.
     int32 HeightPx = 0;
 
-    /** Name of the monitor. */
+    //# Name of the monitor.
     LSimpleString Name;
 
     FORCEINLINE LSimpleString ToString() const
@@ -42,30 +42,30 @@ struct LPhysicalViewport
 namespace PlatformMisc
 {
 
-/**
- * The engine root dir that is currently being used. This might not be the real engine root dir as the runtime
- * console application might not be inside this directory.
- * In shipped builds, this is the same as GetRealEngineRootDir().
- */
+//#
+//# The engine root dir that is currently being used. This might not be the real engine root dir as the runtime
+//# console application might not be inside this directory.
+//# In shipped builds, this is the same as GetRealEngineRootDir().
+//#
 ENGINE_API LSimpleString GetEngineRootDir();
 ENGINE_API LSimpleString GetEngineRootDirImpl();
 
-/**
- * The real engine root dir where the runtime console application is located and running from.
- * In shipped builds, this is the same as GetEngineRootDir().
- */
+//#
+//# The real engine root dir where the runtime console application is located and running from.
+//# In shipped builds, this is the same as GetEngineRootDir().
+//#
 ENGINE_API LSimpleString GetRealEngineRootDir();
 ENGINE_API LSimpleString GetRealEngineRootDirImpl();
 
-/**
- * Invalidate all cached values and reinitialize them inside GPlatformMisc.
- */
+//#
+//# Invalidate all cached values and reinitialize them inside GPlatformMisc.
+//#
 ENGINE_API void InvalidateCachedValues();
 
-/**
- * The number of physical viewports available on the current platform.
- * INDEX_NONE if an error occurred.
- */
+//#
+//# The number of physical viewports available on the current platform.
+//# INDEX_NONE if an error occurred.
+//#
 ENGINE_API auto GetNumberOfPhysicalViewports() -> int32;
 ENGINE_API auto SetPhysicalViewports() -> bool;
 
@@ -73,10 +73,10 @@ ENGINE_API auto SetPhysicalViewports() -> bool;
 
 ENGINE_API extern LPlatformMisc* GPlatformMisc;
 
-/**
- * Cached values of platform-specific information.
- * Loaded at startup if values have to be invalidated run PlatformMisc::InvalidateCachedValues().
- */
+//#
+//# Cached values of platform-specific information.
+//# Loaded at startup if values have to be invalidated run PlatformMisc::InvalidateCachedValues().
+//#
 struct ENGINE_API LPlatformMisc
 {
     LPlatformMisc() = default;

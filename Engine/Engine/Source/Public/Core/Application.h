@@ -15,10 +15,10 @@ typedef std::chrono::high_resolution_clock::time_point LHrcTimePoint;
 
 }
 
-/**
- * Global application functions.
- * All time related functions are measured in seconds except stated otherwise.
- */
+//#
+//# Global application functions.
+//# All time related functions are measured in seconds except stated otherwise.
+//#
 #if PREPROCESSOR_EXCLUDE_FF
 #endif /* PREPROCESSOR_EXCLUDE_FF */
 

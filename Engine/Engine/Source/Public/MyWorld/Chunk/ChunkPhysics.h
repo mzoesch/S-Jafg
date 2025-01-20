@@ -31,7 +31,7 @@ public:
 private:
 
     AChunk* Owner = nullptr;
-    /** The step interval used for walking along the ray. */
+    //# The step interval used for walking along the ray.
     static constexpr float TraceStep { 0.001f };
 };
 

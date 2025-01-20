@@ -78,7 +78,7 @@ protected:
 
 private:
 
-    /** Make this virtual private to not confuse it with #ShouldTick. */
+    //# Make this virtual private to not confuse it with #ShouldTick.
     FORCEINLINE virtual bool ShouldTickableObjectTick() const override final { return this->ShouldTick(); }
 
     LRendererComponent* RendererComponent = nullptr;
@@ -86,22 +86,22 @@ private:
 
     LTransform Transform = { };
 
-    /**
-     * Whether this Actor should ever be able to tick or not.
-     * This bool flag can only be set in the constructor of the actor - new objects of this class
-     * will not be registered in the context tickable registry.
-     */
+    //#
+    //# Whether this Actor should ever be able to tick or not.
+    //# This bool flag can only be set in the constructor of the actor - new objects of this class
+    //# will not be registered in the context tickable registry.
+    //#
     bool bCanEverTick : 1 = false;
 
-    /**
-     * Whether this actor should tick now or not. This flag does nothing if bCanEverTick is false.
-     */
+    //#
+    //# Whether this actor should tick now or not. This flag does nothing if bCanEverTick is false.
+    //#
     bool bShouldTick : 1  = true;
 };
 
 } /* ~Namespace Jafg. */
 
-/*
- * Keep this include as every action with any actor will need a ton of function from this include.
- */
+//#
+//# Keep this include as every action with any actor will need a ton of function from this include.
+//#
 #include "ActorUtility.h"

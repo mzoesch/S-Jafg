@@ -8,9 +8,9 @@
 namespace Jafg
 {
 
-/**
- * A lackey is a pawn with a physical representation and volume in the world.
- */
+//#
+//# A lackey is a pawn with a physical representation and volume in the world.
+//#
 DECLARE_JAFG_CLASS()
 class ENGINE_API ALackey final : public APawn
 {

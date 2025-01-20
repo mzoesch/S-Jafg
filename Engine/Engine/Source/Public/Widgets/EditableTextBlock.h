@@ -34,10 +34,10 @@ public:
     TFactoryRetTy& operator&(LEditableTextBlockCommitDelegate::LFunctionSigTy&& InCallback) { return this->SetTextCommitCallback(std::move(InCallback)); }
 };
 
-/**
- * A simple text block that is editable by the user with all that comes with it, e.g., caret, text selection, copy,
- * pasting, etc.
- */
+//#
+//# A simple text block that is editable by the user with all that comes with it, e.g., caret, text selection, copy,
+//# pasting, etc.
+//#
 DECLARE_JAFG_CLASS()
 class ENGINE_API WEditableTextBlock : public WWidgetBox
 {

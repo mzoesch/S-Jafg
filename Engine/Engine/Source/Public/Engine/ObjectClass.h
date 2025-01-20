@@ -17,11 +17,11 @@ struct LRegistrationCallbackHelper;
 
 } /* ~Namespace Private */
 
-/**
- * LObjectClass aka StaticClass.
- *
- * Wrapper around the jafg object referrer class that provides some extra information.
- */
+//#
+//# LObjectClass aka StaticClass.
+//#
+//# Wrapper around the jafg object referrer class that provides some extra information.
+//#
 class LObjectClass final
 {
     friend Private::LObjectRegistry;
@@ -70,19 +70,19 @@ private:
 
     LSimpleString           SpacedClassName        = { };
 
-    /** The single parent of this object. */
+    //# The single parent of this object.
     LObjectClass*           Parent                 = nullptr;
 
-    /** All the children that this object acts as a meaningful parent. */
+    //# All the children that this object acts as a meaningful parent.
     TdhArray<LObjectClass*> Children               = { };
 
-    /** The total byte size from one instance of this object. */
+    //# The total byte size from one instance of this object.
     int32                   TotalByteSize         = INDEX_NONE;
 
-    /** The flags that describe this object class. */
+    //# The flags that describe this object class. */
     LClassFlags             Flags                  = EClassFlags::None;
 
-    /** The default object initializer for this object class. */
+    //# The default object initializer for this object class.
     Private::JObjectBase*   DefaultPackageReferrer = nullptr;
 };
 

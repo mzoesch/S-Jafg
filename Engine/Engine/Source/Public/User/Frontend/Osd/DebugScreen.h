@@ -42,9 +42,9 @@ private:
     WTextBlock* LocalPawnTargetVoxelSectionDestroy = nullptr;
     WTextBlock* LocalPawnTargetVoxelSectionCreate = nullptr;
 
-    /** The time when we should invalidate the cache in seconds. */
+    //# The time when we should invalidate the cache in seconds.
     double ResetTime = 0.1;
-    /** The current time in seconds when the cache will be invalidated. */
+    //# The current time in seconds when the cache will be invalidated.
     double InvalidateCacheTime = 0.0;
 
     LTexture2 TestTexture;

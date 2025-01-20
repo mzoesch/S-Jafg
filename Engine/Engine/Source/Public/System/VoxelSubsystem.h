@@ -39,11 +39,11 @@ public:
 
 private:
 
-    /**
-     * Ensure that the Omnia texture group is at the end of the texture group array to allow for bitwise and
-     * operations to work correctly.
-     * @see MyWorld/Meshing/*Mesher.cpp
-     */
+    //#
+    //# Ensure that the Omnia texture group is at the end of the texture group array to allow for bitwise and
+    //# operations to work correctly.
+    //# @see MyWorld/Meshing/*Mesher.cpp
+    //#
     void SortAllVoxelMasksTextureGroups();
 
     void InitializeCompileTimeVoxels();

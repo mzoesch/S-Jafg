@@ -27,10 +27,10 @@ FORCEINLINE
 #endif /* !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT) */
 EPlatformExit::Type GetMostSignificantExitReason()
 {
-    /*
-     * Even if the engine is null, this will not cause a crash as this member method must always behave in a static
-     * way if itself is not defined.
-     */
+    //
+    // Even if the engine is null, this will not cause a crash as this member method must always behave in a static
+    // way if itself is not defined.
+    //
     GEngine->ReflectForwardedExitRequest();
 
     return ::HasCustomExitStatus()
@@ -74,16 +74,16 @@ void EngineExit()
         delete GEngine;
         GEngine = nullptr;
     }
-    /*
-     * Something very eccentric has happened or the pre-life-engine tasks failed to initialize before
-     * the engine was even created.
-     */
+    //
+    // Something very eccentric has happened or the pre-life-engine tasks failed to initialize before
+    // the engine was even created.
+    //
     else
     {
-        /*
-         * Even if the engine is null, this will not cause a crash as this member method must always behave in a static
-         * way if itself is not defined.
-         */
+        //
+        // Even if the engine is null, this will not cause a crash as this member method must always behave in a static
+        // way if itself is not defined.
+        //
         GEngine->ReflectForwardedExitRequest();
     }
 

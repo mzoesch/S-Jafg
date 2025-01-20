@@ -34,19 +34,19 @@ inline LSimpleString LexToString(const EMouseCursor::Type InCursor)
 {
     switch (InCursor)
     {
-    case EMouseCursor::None:       return "None";
-    case EMouseCursor::Default:    return "Default";
-    case EMouseCursor::Arrow:      return "Arrow";
-    case EMouseCursor::Beam:       return "Beam";
-    case EMouseCursor::Crosshair:  return "Crosshair";
-    case EMouseCursor::Hand:       return "Hand";
-    case EMouseCursor::ResizeNS:   return "ResizeNS";
-    case EMouseCursor::ResizeEW:   return "ResizeEW";
-    case EMouseCursor::ResizeNESW: return "ResizeNESW";
-    case EMouseCursor::ResizeNWSE: return "ResizeNWSE";
-    case EMouseCursor::ResizeOmni: return "ResizeOmni";
-    case EMouseCursor::NotAllowed: return "NotAllowed";
-    default:                       return "Custom";
+    case EMouseCursor::None:       return FMT("None");
+    case EMouseCursor::Default:    return FMT("Default");
+    case EMouseCursor::Arrow:      return FMT("Arrow");
+    case EMouseCursor::Beam:       return FMT("Beam");
+    case EMouseCursor::Crosshair:  return FMT("Crosshair");
+    case EMouseCursor::Hand:       return FMT("Hand");
+    case EMouseCursor::ResizeNS:   return FMT("ResizeNS");
+    case EMouseCursor::ResizeEW:   return FMT("ResizeEW");
+    case EMouseCursor::ResizeNESW: return FMT("ResizeNESW");
+    case EMouseCursor::ResizeNWSE: return FMT("ResizeNWSE");
+    case EMouseCursor::ResizeOmni: return FMT("ResizeOmni");
+    case EMouseCursor::NotAllowed: return FMT("NotAllowed");
+    default:                       return FMT("Custom");
     }
 }
 

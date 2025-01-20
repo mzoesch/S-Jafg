@@ -22,13 +22,13 @@ class LUserInput;
 class APersonaController;
 struct LSubsystemCollection;
 
-/**
- * Represents a from of an ego that is considered local (physically present) on the current machine where this
- * application instance is running, and it is responsible for handling input / output for it.
- * This includes inputs from physical devices and output to some kind of display device which may or may not be
- * proxied by a software surface.
- * This class is therefore never created on a dedicated server.
- */
+//#
+//# Represents a from of an ego that is considered local (physically present) on the current machine where this
+//# application instance is running, and it is responsible for handling input / output for it.
+//# This includes inputs from physical devices and output to some kind of display device which may or may not be
+//# proxied by a software surface.
+//# This class is therefore never created on a dedicated server.
+//#
 class LLocalEgo final
 {
 public:
@@ -73,10 +73,10 @@ private:
     LDelegateHandle     OnWorldBeginLifeHandle = nullptr;
     APersonaController* PersonaController = nullptr;
 
-    /**
-     * The context of the local ego. It is created when the local ego is instantiated
-     * and not destroyed until the local ego is killed.
-     */
+    //#
+    //# The context of the local ego. It is created when the local ego is instantiated
+    //# and not destroyed until the local ego is killed.
+    //#
     Private::LObjectContext* Context = nullptr;
     LSubsystemCollection* Collection = nullptr;
 };

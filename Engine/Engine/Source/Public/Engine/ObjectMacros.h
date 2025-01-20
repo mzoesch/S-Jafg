@@ -197,10 +197,10 @@ private: /* Restore default visibility. */
                                                                                                   \
     } /* ~Namespace <Anonymous> */
 
-/**
- * Required before the jafg-class declaration.
- * @see Engine/Object.h, for example.
- */
+//#
+//# Required before the jafg-class declaration.
+//# @see Engine/Object.h, for example.
+//#
 #ifdef DECLARE_JAFG_CLASS
     #undef DECLARE_JAFG_CLASS
 #endif /* DECLARE_JAFG_CLASS */
@@ -213,10 +213,10 @@ private: /* Restore default visibility. */
         MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION \
     )( __VA_ARGS__ )
 
-/**
- * Required as the first statement of a jafg-class declaration.
- * @see Engine/Object.h, for example.
- */
+//#
+//# Required as the first statement of a jafg-class declaration.
+//# @see Engine/Object.h, for example.
+//#
 #ifdef GENERATED_CLASS_BODY
     #undef GENERATED_CLASS_BODY
 #endif /* GENERATED_CLASS_BODY */
@@ -229,9 +229,9 @@ private: /* Restore default visibility. */
         MY_GENERATED_CLASS_BODY        \
     )( __VA_ARGS__ )
 
-/**
- * Default constructor for an JObject. Mandatory. It may be used to declare extra information for all objects of this
- * type. The new constructor is prohibited from changing the arguments of the constructor.
- */
+//#
+//# Default constructor for an JObject. Mandatory. It may be used to declare extra information for all objects of this
+//# type. The new constructor is prohibited from changing the arguments of the constructor.
+//#
 #define DEFAULT_OBJECT_CONSTRUCTOR(MyClassName)                                                              \
     explicit MyClassName(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) { return; }

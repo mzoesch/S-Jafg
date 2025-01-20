@@ -13,43 +13,43 @@ namespace ETaskExit
 
 enum Type : LTaskExit
 {
-    /** Ok. Nothing to do. */
+    //# Ok. Nothing to do.
     Success             = 0,
 
-    /**
-     * The engine has detected that the task is illformed.
-     * The engine will return the status to the illformed caller and will not execute said task - no further action
-     * is taken.
-     */
+    //#
+    //# The engine has detected that the task is illformed.
+    //# The engine will return the status to the illformed caller and will not execute said task - no further action
+    //# is taken.
+    //#
     Illformed           = 1,
 
-    /**
-     * The task was initialized or executed and failed. The engine will return the status to the caller but will not
-     * take further action.
-     */
+    //#
+    //# The task was initialized or executed and failed. The engine will return the status to the caller but will not
+    //# take further action.
+    //#
     TransientFailure    = 2,
-    /*
-     * RESERVED for custom transient failures.
-     */
+    //
+    // RESERVED for custom transient failures.
+    //
 
-    /**
-     * The task was initialized or executed and failed. The engine will return the status to the caller and will
-     * automatically request an engine exit. All systems will be shut-downed controlled.
-     */
+    //#
+    //# The task was initialized or executed and failed. The engine will return the status to the caller and will
+    //# automatically request an engine exit. All systems will be shut-downed controlled.
+    //#
     SanitizedFailure    = 0x40,
-    /*
-     * RESERVED for custom sanitized failures.
-     */
+    //
+    // RESERVED for custom sanitized failures.
+    //
 
-    /**
-     * The task was initialized or executed and failed. The engine will immediately request an engine exit. Only
-     * the absolute core systems will be shut-downed controlled - others will be left in an undefined state at process
-     * termination. The engine will not return the status to the caller.
-     */
+    //#
+    //# The task was initialized or executed and failed. The engine will immediately request an engine exit. Only
+    //# the absolute core systems will be shut-downed controlled - others will be left in an undefined state at process
+    //# termination. The engine will not return the status to the caller.
+    //#
     Failure             = 0x80
-    /*
-     * RESERVED for custom failures.
-     */
+    //
+    // RESERVED for custom failures.
+    //
 };
 
 } /* ~Namespace TaskExit */

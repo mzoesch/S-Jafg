@@ -50,31 +50,31 @@ namespace EWorldTimeBehavior
 
 enum Type : uint8
 {
-    /**
-     * Time behaves linearly. This is the default behavior.
-     */
+    //#
+    //# Time behaves linearly. This is the default behavior.
+    //#
     Linear,
 
-    /**
-     * Time is desisted for this world.
-     * Time will not be forwarded to employees of the world context.
-     */
+    //#
+    //# Time is desisted for this world.
+    //# Time will not be forwarded to employees of the world context.
+    //#
     Desist,
 
-    /**
-     * Time is simulated and private to world core subsystems.
-     * Time will not be forwarded to employees of the world context.
-     */
+    //#
+    //# Time is simulated and private to world core subsystems.
+    //# Time will not be forwarded to employees of the world context.
+    //#
     Simulate,
 };
 
 } /* ~Namespace EWorldTimeBehavior */
 
-/**
- * Represents a world at its core.
- * Once every frame a world will be ticked. It may register itself to the RHI to be used when
- * rendering on any kind of surface. Multiple worlds may draw to the same surface.
- */
+//#
+//# Represents a world at its core.
+//# Once every frame a world will be ticked. It may register itself to the RHI to be used when
+//# rendering on any kind of surface. Multiple worlds may draw to the same surface.
+//#
 class ENGINE_API LWorld final : public ::Jafg::Private::LObjectContext
 {
     friend AActor;
@@ -113,10 +113,10 @@ public:
 
     float GetRealTimeSecondsSinceWorldLaunch() const;
 
-    /**
-     * Trace this world for physical hits.
-     * @return True if a blocking hit was found.
-     */
+    //#
+    //# Trace this world for physical hits.
+    //# @return True if a blocking hit was found.
+    //#
     bool LineTraceByChannel(
         TdhArray<LHitResult>& OutHits,
         const LVector& Begin,
@@ -144,16 +144,16 @@ private:
 
     LSubsystemCollection* Collection = nullptr;
 
-    /** Main thread only. */
+    //# Main thread only.
     bool TickableObjectsPutMutex = false;
     bool IsTickableObjectsPutMutexLocked() const { return this->TickableObjectsPutMutex; }
     void AcquireTickableObjectsLock() { this->TickableObjectsPutMutex = true; }
     void ReleaseTickableObjectsLock() { this->TickableObjectsPutMutex = false; }
 
-    /**
-     * The real time (not stopped or dilated / clamped) when this world was launched.
-     * Real time is relative to the static storage initialization of the engine shared library.
-     */
+    //#
+    //# The real time (not stopped or dilated / clamped) when this world was launched.
+    //# Real time is relative to the static storage initialization of the engine shared library.
+    //#
     float RealTimeWhenWorldWasLaunched = 0.0f;
 };
 

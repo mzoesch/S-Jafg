@@ -60,13 +60,15 @@ public:
         return std::move(*static_cast<TToken*>(this));
     }
 
-    /**
-     * A parameter pack is a parameter that accepts zero or more arguments of the same specified type.
-     */
+    //#
+    //# A parameter pack is a parameter that accepts zero or more arguments of the same specified type.
+    //#
     bool bPack = false;
 };
 
-/** An Utf-8 encoded string. */
+//#
+//# An Utf-8 encoded string.
+//#
 class LCliToken_String final : public LCliToken
 {
 public:
@@ -84,7 +86,9 @@ public:
     LString Value = { };
 };
 
-/** A 8-bit unsigned integer. */
+//#
+//# A 8-bit unsigned integer.
+//#
 class LCliToken_Byte final : public LCliToken
 {
 public:
@@ -102,7 +106,9 @@ public:
     uint8 Value = 0;
 };
 
-/** A 32-bit signed integer. */
+//#
+//# A 32-bit signed integer.
+//#
 class LCliToken_Int final : public LCliToken
 {
 public:
@@ -120,7 +126,9 @@ public:
     int32 Value = 0;
 };
 
-/** A 32-bit floating point number. */
+//#
+//# A 32-bit floating point number.
+//#
 class LCliToken_Float final : public LCliToken
 {
 public:
@@ -138,7 +146,9 @@ public:
     float Value = 0.0f;
 };
 
-/** A boolean value. */
+//#
+//# A boolean value.
+//#
 class LCliToken_Bool final : public LCliToken
 {
 public:
@@ -156,7 +166,9 @@ public:
     bool Value = false;
 };
 
-/** A command token that represents a null value. */
+//#
+//# A command token that represents a null value.
+//#
 class LCliToken_Null final : public LCliToken
 {
 public:
@@ -169,7 +181,9 @@ public:
     FORCEINLINE virtual auto AsNull() -> LCliToken_Null* override { return this; }
 };
 
-/** Abstract base class for all command objects. */
+//#
+//# Abstract base class for all command objects.
+//#
 class LCliObject
 {
     friend LCommandLineInterface;

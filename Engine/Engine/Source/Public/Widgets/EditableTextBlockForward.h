@@ -14,10 +14,10 @@ namespace ETextCommit { enum Type : uint8; }
 
 MAKE_DELEGATE_SIGNATURE(LEditableTextBlockCommitDelegate, void, const LString&, const ETextCommit::Type)
 
-/**
- * A caret is a blinking line, block, or bitmap in the client area of a window. The caret typically indicates
- * the place at which text or graphics will be inserted.
- */
+//#
+//# A caret is a blinking line, block, or bitmap in the client area of a window. The caret typically indicates
+//# the place at which text or graphics will be inserted.
+//#
 struct LCaretBrush final
 {
     LColor   Color   = LColor::White;
@@ -30,19 +30,19 @@ namespace ETextCommit
 
 enum Type : uint8
 {
-    /**
-     * Text was commit via an enter key press. This does not mean a loss of focus.
-     */
+    //#
+    //# Text was commit via an enter key press. This does not mean a loss of focus.
+    //#
     OnEnter,
 
-    /**
-     * Focus was lost due to a press of the escape key.
-     */
+    //#
+    //# Focus was lost due to a press of the escape key.
+    //#
     OnCleared,
 
-    /**
-     * Focus was lost due to some other reason.
-     */
+    //#
+    //# Focus was lost due to some other reason.
+    //#
     FocusLost,
 };
 

@@ -10,11 +10,11 @@ namespace Jafg
 
 class JUserPreferences;
 
-/**
- * A path that is always relative to a content folder. The content folder that is used is then determined when
- * resolving the absolute path. This allows the user to add their own plugin content folders that have a higher
- * priority than the engine content folder. Absolute paths will then be redirected to the plugin content folder.
- */
+//#
+//# A path that is always relative to a content folder. The content folder that is used is then determined when
+//# resolving the absolute path. This allows the user to add their own plugin content folders that have a higher
+//# priority than the engine content folder. Absolute paths will then be redirected to the plugin content folder.
+//#
 template <typename InTPathTy>
 class LEnginePathBase final
 {

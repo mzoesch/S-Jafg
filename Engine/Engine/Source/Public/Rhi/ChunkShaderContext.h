@@ -20,10 +20,10 @@ struct LChunkShaderDrawArgs : public LGenericShaderContextDrawArgs
     LChunkShaderInstance* Instance      = nullptr;
 };
 
-/**
- * The chunk shader context for rendering them. Only one instance of this per viewport should be used.
- * Although this is not enforced.
- */
+//#
+//# The chunk shader context for rendering them. Only one instance of this per viewport should be used.
+//# Although this is not enforced.
+//#
 class ENGINE_API LChunkShaderContext final : public LGenericShaderContext
 {
 public:
@@ -46,9 +46,9 @@ private:
     uint32  BlendersTex    = 0;
 };
 
-/**
- * Instance of a shader context to use by the chunk shader context per chunk basis.
- */
+//#
+//# Instance of a shader context to use by the chunk shader context per chunk basis.
+//#
 class ENGINE_API LChunkShaderInstance final
 {
 public:

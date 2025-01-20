@@ -10,10 +10,10 @@ namespace Jafg
 namespace Private
 {
 
-/** Called at the beginning of a frame by the engine. This will be the last frame. */
+//# Called at the beginning of a frame by the engine. This will be the last frame.
 void BeginExitIfRequested();
 
-/** @return True, if an exit request was forwarded to the engine. */
+//# @return True, if an exit request was forwarded to the engine.
 bool ReflectForwardEngineExitRequest();
 
 } /* ~Namespace Private */

@@ -8,9 +8,9 @@
 namespace Jafg
 {
 
-/**
- * The base class for all nodes that can possess children.
- */
+//#
+//# The base class for all nodes that can possess children.
+//#
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API WWidgetParent : public WWidgetParentBase
 {
@@ -42,8 +42,8 @@ private:
 
     TdhArray<LWidgetSlot*> Children;
 
-    /** The padding area between the slot and the content it contains. */
+    //# The padding area between the slot and the content it contains.
     LPadding               Padding;
 };
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */
