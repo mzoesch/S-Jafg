@@ -1,6 +1,7 @@
 # Copyright mzoesch. All rights reserved.
 
 import os
+import time
 from Programs.Shared import *
 from Programs.Meta.Application import GApp
 
@@ -36,6 +37,8 @@ def launch(*args, **kwargs) -> None:
 
     error_level: EErrorLevel = EErrorLevel.SUCCESS
 
+    start: float = time.time() 
+
     print('Launching reflection wrapper ...')
     last_wd: str = os.getcwd()
     os.chdir(get_abs_engine_root_dir())
@@ -54,6 +57,7 @@ def launch(*args, **kwargs) -> None:
         error_level = EErrorLevel.FATAL
     finally:
         GApp._push_cache()
+        print(f'Program exited after {time.time() - start}s.')
 
     if error_level is None:
         error_level = EErrorLevel.SUCCESS
