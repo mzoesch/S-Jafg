@@ -3,6 +3,7 @@
 package SolutionGenerator
 
 import (
+    "Jafg/BuildTool"
     "Jafg/Core"
     "Jafg/Shared"
     "fmt"
@@ -31,12 +32,35 @@ func StringToPremakeBool(b bool) string {
     return "Off"
 }
 
-func GenerateSolutionFromPremake(sln *Core.Solution) error {
+func GenerateSolutionFromPremake(sln *Core.Solution, bEmulateAll bool) error {
     MakePchForAllModules(sln)
 
     err := MakePremakeSolutionScript(sln)
     if err != nil {
         return err
+    }
+
+    if bEmulateAll {
+        fmt.Printf("Emulating all compiler pre-build commands for solution [%s/%s] ...\n", sln.GetSavedRelativeDir(), sln.Name)
+        for idxT, _ := range sln.Targets {
+            var tar *Core.Target = &sln.Targets[idxT]
+            for idxM, _ := range tar.Modules {
+                var mod *Core.Module = &tar.Modules[idxM]
+
+                var args []string = []string{
+                    "pre-build", fmt.Sprintf("SLN=%s", sln.Name), fmt.Sprintf("MODULE=%s", mod.GetUniqueName()),
+                    fmt.Sprintf("KIND=%s", mod.Kind.ToLuaString()), "ARCH=NOT_SET",
+                    fmt.Sprintf("TARGET=%s", tar.Name), "PLATFORM=NOT_SET",
+                }
+                fmt.Printf(
+                    "Emulating compiler pre-build commands for module [%s/%s] with args [%v] ...\n",
+                    sln.GetSavedRelativeDir(), mod.Name, args,
+                )
+                BuildTool.Launch(args)
+                continue
+            }
+            continue
+        }
     }
 
     var cmd *exec.Cmd = nil
@@ -59,7 +83,7 @@ func GenerateSolutionFromPremake(sln *Core.Solution) error {
     }
     fmt.Println(string(stdout))
 
-    // Make sure JetBrains Rider can detect the vsc in the root engine dir.
+    // Make sure JetBrains Rider can detect the vcs in the root engine dir.
     {
         if Shared.DoesRelativeFileExist(fmt.Sprintf("%s/.idea/.idea.Jafg/.idea/vcs.xml", sln.GetSavedRelativeDir())) == false {
             Shared.CheckRelativeFile(fmt.Sprintf("%s/.idea/.idea.Jafg/.idea/vcs.xml", sln.GetSavedRelativeDir()))

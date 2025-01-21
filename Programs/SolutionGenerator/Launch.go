@@ -21,7 +21,7 @@ var GbPredefineJafgMacros bool = false
 // Valid arguments:
 //   - GenerateAll [Generates all files]
 //   - EmulateCompiler [Emulates all possible compiler commands. Useful for the first
-//                      run of this program to generate all generated public and translation files]
+//                      run of this program to generate all generated header and translation files]
 //
 func Launch(args []string) error {
     config := Shared.GetJsonMap(Shared.ReadRelativeFile(Core.FilePath_ConfigFile))
@@ -34,15 +34,7 @@ func Launch(args []string) error {
 
     if slices.Contains(args, "GenerateAll") {
         fmt.Println("Generating all...")
-        err := GenerateAll()
-        if err != nil {
-            return err
-        }
-    }
-
-    if slices.Contains(args, "EmulateCompiler") {
-        fmt.Println("Emulating compiler...")
-        err := EmulateCompiler()
+        err := GenerateAll(slices.Contains(args, "EmulateCompiler"))
         if err != nil {
             return err
         }
@@ -51,12 +43,12 @@ func Launch(args []string) error {
     return nil
 }
 
-func GenerateAll() error {
+func GenerateAll(bEmulateAll bool) error {
     fmt.Println("Generating solution...")
 
     for idx, _ := range Core.GApp.Solutions {
         var sln *Core.Solution = &Core.GApp.Solutions[idx]
-        err := GenerateSolutionFromPremake(sln)
+        err := GenerateSolutionFromPremake(sln, bEmulateAll)
         if err != nil {
             return err
         }
