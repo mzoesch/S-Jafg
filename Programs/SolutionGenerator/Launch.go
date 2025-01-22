@@ -7,6 +7,7 @@ import (
     "Jafg/Shared"
     "fmt"
     "slices"
+    "strings"
 )
 
 // GbPredefineJafgMacros is a global flag to enable or disable the predefined Jafg macros.
@@ -20,6 +21,7 @@ var GbPredefineJafgMacros bool = false
 //
 // Valid arguments:
 //   - GenerateAll [Generates all files]
+//   - GEN=<str>   [Generates the solution with the given name]
 //   - EmulateCompiler [Emulates all possible compiler commands. Useful for the first
 //                      run of this program to generate all generated header and translation files]
 //
@@ -33,18 +35,40 @@ func Launch(args []string) error {
     fmt.Printf("CFG: <bPredefineJafgMacros>: %v.\n", GbPredefineJafgMacros)
 
     if slices.Contains(args, "GenerateAll") {
-        fmt.Println("Generating all...")
+        fmt.Println("Generating all ...")
         err := GenerateAll(slices.Contains(args, "EmulateCompiler"))
         if err != nil {
             return err
         }
+    } else if Shared.ContainsByPredicate(args, func(arg string) bool {
+        return strings.Contains(arg, "GEN=")
+    }) {
+        var slnStr string = ""
+        for _, arg := range args {
+            if Shared.ContainsByPredicate([]string{"GEN="}, func(str string) bool {
+                return strings.Contains(arg, str)
+            }) {
+                slnStr = strings.Split(arg, "=")[1]
+                break
+            }
+        }
+        if slnStr == "" {
+            panic("Could not find the solution to generate.")
+        }
+        var sln *Core.Solution = Core.GApp.GetSolutionByNameChecked(slnStr)
+        err := GenerateSpecificSolution(sln, slices.Contains(args, "EmulateCompiler"))
+        if err != nil {
+            return err
+        }
+    } else {
+        panic(fmt.Sprintf("Invalid arguments. Args: %v", args))
     }
 
     return nil
 }
 
 func GenerateAll(bEmulateAll bool) error {
-    fmt.Println("Generating solution...")
+    fmt.Println("Generating solution ...")
 
     for idx, _ := range Core.GApp.Solutions {
         var sln *Core.Solution = &Core.GApp.Solutions[idx]
@@ -66,10 +90,22 @@ func GenerateAll(bEmulateAll bool) error {
     return nil
 }
 
-func EmulateCompiler() error {
-    fmt.Println("Emulate compiler commands...")
+func GenerateSpecificSolution(sln *Core.Solution, bEmulate bool) error {
+    fmt.Println("Generating solution ...")
+
+    err := GenerateSolutionFromPremake(sln, bEmulate)
+    if err != nil {
+        return err
+    }
+
+    //err := MakeCmakeScripts()
+    //if err != nil {
+    //    return err
+    //}
+
     fmt.Println("================================")
-    fmt.Println("Finished emulating compiler commands.")
+    fmt.Println("Finished generating solution.")
     fmt.Println("================================")
+
     return nil
 }

@@ -8,6 +8,8 @@
 namespace Jafg
 {
 
+class WTabBar;
+
 DECLARE_JAFG_CLASS()
 class ENGINE_API WPauseMenu final : public WUserWidget
 {
@@ -20,6 +22,10 @@ protected:
 public:
 
     virtual void Construct() override;
+
+private:
+
+    WTabBar* PauseTabBar = nullptr;
 };
 
 } /* ~Namespace Jafg */

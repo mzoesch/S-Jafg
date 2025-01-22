@@ -18,6 +18,7 @@ import (
 // Argument:
 //   - SolutionGenerator [Generates solution] @see SolutionGenerator/Launch.go
 //   - BuildTool         [Helps the solution to be compiled and linked] @see BuildTool/Launch.go
+//   - EmulationUtility  [Emulates solution build commands without actually building] @see EmulationUtility/Launch.go
 //   - DoNothing         [Does nothing (for development purposes)]
 //
 func main() {

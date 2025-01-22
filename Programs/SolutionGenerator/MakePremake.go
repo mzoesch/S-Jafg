@@ -140,9 +140,9 @@ func GenerateSolutionFromPremake(sln *Core.Solution, bEmulateAll bool) error {
                     panic(err2)
                 }
             }
-        }
 
-        fmt.Printf("Created symlink [%s] -> [%s] ...\n", slnF, symlinkPath)
+            fmt.Printf("Created symlink [%s] -> [%s] ...\n", slnF, symlinkPath)
+        }
     }
 
     return nil
@@ -428,6 +428,63 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
         Wni(b, "group ''")
         continue
     }
+
+    if Shared.DoesRelativeFileExist(fmt.Sprintf("%s/Utility/Reindex/README.md", sln.GetSavedRelativeDir())) == false {
+        Shared.CheckRelativeFile(fmt.Sprintf("%s/Utility/Reindex/README.md", sln.GetSavedRelativeDir()))
+        Shared.OpenAndWriteToRelativeFileIfDifferent(fmt.Sprintf("%s/Utility/Reindex/README.md", sln.GetSavedRelativeDir()), `
+# Reindex
+Reindex all modules generated macros to fix IntelliSense errors. Just hit rebuild selected project and you are done.
+# Reindex With Files
+Same as 'Reindex' but also check if new files were generated and reindex them also.
+`, true)
+    }
+    Wni(b, "group 'AAAA_Utility'")
+
+    Wwi(b, 1, "project 'Reindex'")
+    Wwi(b, 2, "location 'Utility/Reindex'")
+    Wwi(b, 2, "kind 'Utility'")
+    Wwi(b, 2, "files { 'Utility/Reindex/**.md' }")
+    Wwi(b, 2, "filter 'system:windows'")
+    Wwi(b, 3, "postbuildcommands {")
+    Wwi(b, 4,
+        fmt.Sprintf("_WORKING_DIR .. '/%s/Scripts/python.exe ' .. _WORKING_DIR .. '/Program.py ", Core.DirPath_Venv)+
+            "--INVOKE --EmulationUtility WHAT=OnlyExisting "+
+            fmt.Sprintf("SLN=%s',", sln.Name),
+    )
+    Wwi(b, 3, "}")
+    Wwi(b, 2, "filter 'system:linux or system:macosx'")
+    Wwi(b, 3, "postbuildcommands {")
+    Wwi(b, 4,
+        fmt.Sprintf("_WORKING_DIR .. '/%s/bin/python3 ' .. _WORKING_DIR .. '/Program.py ", Core.DirPath_Venv)+
+            "--INVOKE --EmulationUtility WHAT=OnlyExisting "+
+            fmt.Sprintf("SLN=%s'", sln.Name),
+    )
+    Wwi(b, 3, "}")
+    Wwi(b, 2, "filter {}")
+
+    Wwi(b, 1, "project 'ReindexNewFiles'")
+    Wwi(b, 2, "location 'Utility/Reindex'")
+    Wwi(b, 2, "kind 'Utility'")
+    Wwi(b, 2, "files { 'Utility/Reindex/**.md' }")
+    Wwi(b, 2, "filter 'system:windows'")
+    Wwi(b, 3, "postbuildcommands {")
+    Wwi(b, 4,
+        fmt.Sprintf("_WORKING_DIR .. '/%s/Scripts/python.exe ' .. _WORKING_DIR .. '/Program.py ", Core.DirPath_Venv)+
+            "--INVOKE --EmulationUtility WHAT=All "+
+            fmt.Sprintf("SLN=%s',", sln.Name),
+    )
+    Wwi(b, 3, "}")
+    Wwi(b, 2, "filter 'system:linux or system:macosx'")
+    Wwi(b, 3, "postbuildcommands {")
+    Wwi(b, 4,
+        fmt.Sprintf("_WORKING_DIR .. '/%s/bin/python3 ' .. _WORKING_DIR .. '/Program.py ", Core.DirPath_Venv)+
+            "--INVOKE --EmulationUtility WHAT=All "+
+            fmt.Sprintf("SLN=%s'", sln.Name),
+    )
+    Wwi(b, 3, "}")
+    Wwi(b, 2, "filter {}")
+
+    Wni(b, "group ''")
 
     Shared.WriteToFile(f, b.String())
     fmt.Println("Finished generating premake solution.")

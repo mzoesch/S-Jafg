@@ -19,7 +19,7 @@ class WWidgetSwitcher;
 //#   - The tab bar:        The collection of the buttons and panels.
 //# Tab bars can be nested within each other with the superclass WTabBarBase.
 //#
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
+DECLARE_JAFG_CLASS()
 class ENGINE_API WTabBar : public WTabBarBase
 {
     GENERATED_CLASS_BODY()

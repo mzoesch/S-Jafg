@@ -4,6 +4,7 @@ package main
 
 import (
     "Jafg/BuildTool"
+    "Jafg/EmulationUtility"
     "Jafg/SolutionGenerator"
     "errors"
     "fmt"
@@ -23,6 +24,9 @@ func RouteToSubProgram(args []string) error {
     } else if slices.Contains(args, "--BuildTool") {
         fmt.Println("Routing to BuildTool ...")
         BuildTool.Launch(args)
+    } else if slices.Contains(args, "--EmulationUtility") {
+        fmt.Println("Routing to EmulationUtility ...")
+        EmulationUtility.Launch(args)
     } else {
         return errors.New(fmt.Sprintf("no subprogram specified. Args: %v", args))
     }
