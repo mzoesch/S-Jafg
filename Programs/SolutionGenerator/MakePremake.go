@@ -443,7 +443,23 @@ Same as 'Reindex' but also check if new files were generated and reindex them al
     Wwi(b, 1, "project 'Reindex'")
     Wwi(b, 2, "location 'Utility/Reindex'")
     Wwi(b, 2, "kind 'Utility'")
-    Wwi(b, 2, "files { 'Utility/Reindex/**.md' }")
+    Wwi(b, 2, "files {")
+    Wwi(b, 3, "'Utility/Reindex/**.md',")
+    for idx, _ := range sln.Targets[0].Modules {
+        var module *Core.Module = &sln.Targets[0].Modules[idx]
+        Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/**.h',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
+        Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/**.hpp',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
+    }
+    Wwi(b, 2, "}")
+    Wwi(b, 2, "vpaths {")
+    Wwi(b, 3, "['/*'] = {")
+    Wwi(b, 4, "'Utility/Reindex/**.md',")
+    Wwi(b, 3, "},")
+    Wwi(b, 3, "['Internal/*'] = {")
+    Wwi(b, 4, fmt.Sprintf("'%s/**.h',", sln.GetChdirUpRelToBuildFile()))
+    Wwi(b, 4, fmt.Sprintf("'%s/**.hpp',", sln.GetChdirUpRelToBuildFile()))
+    Wwi(b, 3, "},")
+    Wwi(b, 2, "}")
     Wwi(b, 2, "filter 'system:windows'")
     Wwi(b, 3, "postbuildcommands {")
     Wwi(b, 4,
@@ -465,7 +481,23 @@ Same as 'Reindex' but also check if new files were generated and reindex them al
     Wwi(b, 1, "project 'ReindexNewFiles'")
     Wwi(b, 2, "location 'Utility/Reindex'")
     Wwi(b, 2, "kind 'Utility'")
-    Wwi(b, 2, "files { 'Utility/Reindex/**.md' }")
+    Wwi(b, 2, "files {")
+    Wwi(b, 3, "'Utility/Reindex/**.md',")
+    for idx, _ := range sln.Targets[0].Modules {
+        var module *Core.Module = &sln.Targets[0].Modules[idx]
+        Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/**.h',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
+        Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/**.hpp',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
+    }
+    Wwi(b, 2, "}")
+    Wwi(b, 2, "vpaths {")
+    Wwi(b, 3, "['/*'] = {")
+    Wwi(b, 4, "'Utility/Reindex/**.md',")
+    Wwi(b, 3, "},")
+    Wwi(b, 3, "['Internal/*'] = {")
+    Wwi(b, 4, fmt.Sprintf("'%s/**.h',", sln.GetChdirUpRelToBuildFile()))
+    Wwi(b, 4, fmt.Sprintf("'%s/**.hpp',", sln.GetChdirUpRelToBuildFile()))
+    Wwi(b, 3, "},")
+    Wwi(b, 2, "}")
     Wwi(b, 2, "filter 'system:windows'")
     Wwi(b, 3, "postbuildcommands {")
     Wwi(b, 4,
