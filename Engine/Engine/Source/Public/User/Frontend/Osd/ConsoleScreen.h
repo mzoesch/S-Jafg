@@ -22,7 +22,7 @@ enum Type : uint8
 
 } /* ~Namespace EConsoleScreenState */
 
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_WIDGET()
 class ENGINE_API WConsoleScreen final : public WUserWidget
 {
     GENERATED_CLASS_BODY()

@@ -16,7 +16,7 @@ class WWidgetParent;
 //# A user widget can consist of multiple widget nodes and can be used to create complex
 //# user interfaces.
 //#
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_WIDGET()
 class ENGINE_API WUserWidget : public WWidgetParentBase
 {
     GENERATED_CLASS_BODY()

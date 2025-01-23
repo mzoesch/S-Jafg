@@ -169,7 +169,11 @@ func ReflectFile(fRel string, newReflectedFiles *[]JPacketWrapper) {
         if t.Type.IsPragma() {
             ExecuteJafgPragma(tokens, i)
         } else if t.Type.IsDeclareClass() {
-            AddJafgClassToPacket(tokens, i, packetWrapper)
+            AddJafgClassToPacket(tokens, i, TOKEN_DECLARE_CLASS, packetWrapper)
+        } else if t.Type.IsDeclareWidget() {
+            AddJafgClassToPacket(tokens, i, TOKEN_DECLARE_WIDGET, packetWrapper)
+        } else if t.Type.IsDeclareWidgetWithFactory() {
+            AddJafgClassToPacket(tokens, i, TOKEN_DECLARE_WIDGET_WITH_FACTORY, packetWrapper)
         } else if t.Type.IsGeneratedClassBody() {
             AddJafgClassGeneratedBodyToPacket(tokens, i, packetWrapper)
         }
@@ -179,7 +183,6 @@ func ReflectFile(fRel string, newReflectedFiles *[]JPacketWrapper) {
 
     if bAddedNew {
         if len(packetWrapper.Packets) > 0 {
-            // fmt.Printf("Adding new packet wrapper [%s] with a total of %d packets.\n", fRel, len(packetWrapper.Packets))
             packetWrapper.Name = fRel
             *newReflectedFiles = append(*newReflectedFiles, *packetWrapper)
         }
@@ -211,12 +214,12 @@ func ExecuteJafgPragma(tokens []Token, idx int) {
     return
 }
 
-func AddJafgClassToPacket(tokens []Token, idx int, packetWrapper *JPacketWrapper) {
+func AddJafgClassToPacket(tokens []Token, idx int, tokenTy ETokenType, packetWrapper *JPacketWrapper) {
     var packet JPacket = JPacket{}
 
     var t *Token = &tokens[idx]
-    if t.Type != TOKEN_DECLARE_CLASS {
-        panic(fmt.Sprintf("Expected a class declaration token at {%d}.", idx))
+    if t.Type != tokenTy {
+        panic(fmt.Sprintf("Expected any class declaration token at {%d}.", idx))
     }
 
     var tGeneratedBodyIdx int = FindNextToken(&tokens, idx, TOKEN_GENERATED_CLASS_BODY)
@@ -250,7 +253,13 @@ func AddJafgClassToPacket(tokens []Token, idx int, packetWrapper *JPacketWrapper
         namespaceStr = "::" + namespaceStr
     }
 
-    packet.Callback = OnBuildJafgClassDeclaration
+    if tokenTy == TOKEN_DECLARE_CLASS {
+        packet.Callback = OnBuildJafgClassDeclaration
+    } else if tokenTy == TOKEN_DECLARE_WIDGET {
+        packet.Callback = OnBuildJafgWidgetDeclaration
+    } else if tokenTy == TOKEN_DECLARE_WIDGET_WITH_FACTORY {
+        packet.Callback = OnBuildJafgWidgetWithFactoryDeclaration
+    }
     packet.Name = t.Content
     packet.Line = t.Line
     packet.Args = append(packet.Args, t.Info[0])
@@ -270,12 +279,22 @@ func AddJafgClassGeneratedBodyToPacket(tokens []Token, idx int, packetWrapper *J
     }
 
     var tClassDeclIdx int = FindPreviousToken(&tokens, idx, TOKEN_DECLARE_CLASS)
+    var tClassToken ETokenType = TOKEN_DECLARE_CLASS
     if tClassDeclIdx == -1 {
-        panic(fmt.Sprintf("Excected a class declaration toekn bevore {%d}.", idx))
+        tClassDeclIdx = FindPreviousToken(&tokens, idx, TOKEN_DECLARE_WIDGET)
+        tClassToken = TOKEN_DECLARE_WIDGET
+        if tClassDeclIdx == -1 {
+            tClassDeclIdx = FindPreviousToken(&tokens, idx, TOKEN_DECLARE_WIDGET_WITH_FACTORY)
+            tClassToken = TOKEN_DECLARE_WIDGET_WITH_FACTORY
+        }
     }
+    if tClassDeclIdx == -1 {
+        panic(fmt.Sprintf("Excected a class declaration token before {%d}.", idx))
+    }
+
     var tClassDecl Token = tokens[tClassDeclIdx]
     if tClassDecl.Line > t.Line {
-        panic(fmt.Sprintf("Excected a class declaration toekn bevore {%d}.", idx))
+        panic(fmt.Sprintf("Excected a class declaration token before {%d}.", idx))
     }
 
     var namespaces Shared.Stack[string] = Shared.NewStack[string]()
@@ -300,7 +319,15 @@ func AddJafgClassGeneratedBodyToPacket(tokens []Token, idx int, packetWrapper *J
         namespaceStr = "::" + namespaceStr
     }
 
-    packet.Callback = OnBuildJafgClassBody
+    if tClassToken == TOKEN_DECLARE_CLASS {
+        packet.Callback = OnBuildJafgClassBody
+    } else if tClassToken == TOKEN_DECLARE_WIDGET {
+        packet.Callback = OnBuildJafgWidgetBody
+    } else if tClassToken == TOKEN_DECLARE_WIDGET_WITH_FACTORY {
+        packet.Callback = OnBuildJafgWidgetWithFactoryBody
+    } else {
+        panic("Unknown class token.")
+    }
     packet.Name = tClassDecl.Content
     packet.Line = t.Line
     packet.Args = append(packet.Args, tClassDecl.Info[0])
@@ -360,6 +387,103 @@ func OnBuildJafgClassDeclaration(hFileId string, bH *strings.Builder, bT *string
     return
 }
 
+func OnBuildJafgWidgetDeclaration(hFileId string, bH *strings.Builder, bT *strings.Builder, packet JPacket) {
+    if bH == nil {
+        panic("Builder for header is nil.")
+    }
+    if bT == nil {
+        panic("Builder for translation is nil.")
+    }
+
+    bH.WriteString(fmt.Sprintf(`
+#ifdef %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
+    #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+#endif /* %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION */
+#define %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION(...)               \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION( \
+        /* My Class Name */          %s, /* ORIGIN VALUE: %s */                                 \
+        /* My Class Spaces */        %s,                                                        \
+        /* Super Class Name */       %s, /* ORIGIN VALUE: %s */                                 \
+        /* Line */                   %d,                                                        \
+        /* Additional Class Flags */ __VA_ARGS__                                                \
+    )
+`,
+        hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
+
+        RemoveAllNamespaces(packet.Name), packet.Name,
+        packet.Args[1],
+        RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
+        packet.Line,
+    ))
+
+    bT.WriteString(fmt.Sprintf(`
+#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION( \
+        /* My Class Name */          %s, /* ORIGIN VALUE: %s */                               \
+        /* My Class Spaces */        %s,                                                      \
+        /* Line Of Declaration */    %d,                                                      \
+        /* Super Class Name */       %s  /* ORIGIN VALUE: %s */                               \
+    )
+#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+`,
+        RemoveAllNamespaces(packet.Name), packet.Name,
+        packet.Args[1],
+        packet.Line,
+        RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
+    ))
+
+    return
+}
+
+func OnBuildJafgWidgetWithFactoryDeclaration(hFileId string, bH *strings.Builder, bT *strings.Builder, packet JPacket) {
+    if bH == nil {
+        panic("Builder for header is nil.")
+    }
+    if bT == nil {
+        panic("Builder for translation is nil.")
+    }
+
+    bH.WriteString(fmt.Sprintf(`
+#ifdef %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
+    #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+#endif /* %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION */
+#define %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION(TFactoryTy, ...)                \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION( \
+        /* My Class Name */          %s, /* ORIGIN VALUE: %s */                                              \
+        /* My Class Spaces */        %s,                                                                     \
+        /* Super Class Name */       %s, /* ORIGIN VALUE: %s */                                              \
+        /* Line */                   %d,                                                                     \
+        /* Factory Type */           TFactoryTy,                                                             \
+        /* Additional Class Flags */ __VA_ARGS__                                                             \
+    )
+`,
+        hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
+
+        RemoveAllNamespaces(packet.Name), packet.Name,
+        packet.Args[1],
+        RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
+        packet.Line,
+    ))
+
+    bT.WriteString(fmt.Sprintf(`
+#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION( \
+        /* My Class Name */          %s, /* ORIGIN VALUE: %s */                               \
+        /* My Class Spaces */        %s,                                                      \
+        /* Line Of Declaration */    %d,                                                      \
+        /* Super Class Name */       %s  /* ORIGIN VALUE: %s */                               \
+    )
+#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+`,
+        RemoveAllNamespaces(packet.Name), packet.Name,
+        packet.Args[1],
+        packet.Line,
+        RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
+    ))
+
+    return
+}
+
 func OnBuildJafgClassBody(hFileId string, bH *strings.Builder, bT *strings.Builder, packet JPacket) {
     if bH == nil {
         panic("Builder for header is nil.")
@@ -378,7 +502,79 @@ func OnBuildJafgClassBody(hFileId string, bH *strings.Builder, bT *strings.Build
     #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
 #endif /* %s_%d_MY_GENERATED_CLASS_BODY */
 #define %s_%d_MY_GENERATED_CLASS_BODY(...)                        \
-    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_BODY_IMPL(            \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(      \
+        /* My Class Name */            %s, /* ORIGIN VALUE: %s */ \
+        /* My Class Spaces */          %s,                        \
+        /* Super Class Name */         %s, /* ORIGIN VALUE: %s */ \
+        /* Construction Helper Line */ %d                         \
+    )
+`,
+        hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
+
+        RemoveAllNamespaces(packet.Name), packet.Name,
+        packet.Args[2],
+        RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
+        lineHelperConstruction,
+    ))
+
+    return
+}
+
+func OnBuildJafgWidgetBody(hFileId string, bH *strings.Builder, bT *strings.Builder, packet JPacket) {
+    if bH == nil {
+        panic("Builder for header is nil.")
+    }
+    if bT == nil {
+        panic("Builder for translation is nil.")
+    }
+
+    lineHelperConstruction, err := strconv.Atoi(packet.Args[1])
+    if err != nil {
+        panic(err)
+    }
+
+    bH.WriteString(fmt.Sprintf(`
+#ifdef %s_%d_MY_GENERATED_CLASS_BODY
+    #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+#endif /* %s_%d_MY_GENERATED_CLASS_BODY */
+#define %s_%d_MY_GENERATED_CLASS_BODY(...)                        \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_BODY_IMPL(      \
+        /* My Class Name */            %s, /* ORIGIN VALUE: %s */ \
+        /* My Class Spaces */          %s,                        \
+        /* Super Class Name */         %s, /* ORIGIN VALUE: %s */ \
+        /* Construction Helper Line */ %d                         \
+    )
+`,
+        hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
+
+        RemoveAllNamespaces(packet.Name), packet.Name,
+        packet.Args[2],
+        RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
+        lineHelperConstruction,
+    ))
+
+    return
+}
+
+func OnBuildJafgWidgetWithFactoryBody(hFileId string, bH *strings.Builder, bT *strings.Builder, packet JPacket) {
+    if bH == nil {
+        panic("Builder for header is nil.")
+    }
+    if bT == nil {
+        panic("Builder for translation is nil.")
+    }
+
+    lineHelperConstruction, err := strconv.Atoi(packet.Args[1])
+    if err != nil {
+        panic(err)
+    }
+
+    bH.WriteString(fmt.Sprintf(`
+#ifdef %s_%d_MY_GENERATED_CLASS_BODY
+    #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+#endif /* %s_%d_MY_GENERATED_CLASS_BODY */
+#define %s_%d_MY_GENERATED_CLASS_BODY(...)                        \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_BODY_IMPL(      \
         /* My Class Name */            %s, /* ORIGIN VALUE: %s */ \
         /* My Class Spaces */          %s,                        \
         /* Super Class Name */         %s, /* ORIGIN VALUE: %s */ \

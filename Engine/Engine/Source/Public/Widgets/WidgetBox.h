@@ -45,7 +45,7 @@ public:
 //# the major difference for not allowing children.
 //# @see Widgets/WidgetRegion.h
 //#
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryWidgetBox)
 class ENGINE_API WWidgetBox : public WWidgetNode
 {
     GENERATED_CLASS_BODY()
@@ -55,8 +55,6 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(WWidgetBox)
 
 public:
-
-    using TWidgetFactoryTy = TWidgetFactoryWidgetBox<Derived>;
 
     virtual void Draw(LViewport& Context) const override;
 

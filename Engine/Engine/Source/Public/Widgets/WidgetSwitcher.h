@@ -11,7 +11,7 @@ namespace Jafg
 //#
 //# A widget switcher has widgets that can be switched between like tabs - at maximum one widget is visible at a time.
 //#
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_WIDGET()
 class ENGINE_API WWidgetSwitcher : public WWidgetParent
 {
     GENERATED_CLASS_BODY()

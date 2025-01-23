@@ -50,7 +50,7 @@ struct LWidgetFactoryUtility final
     //# @return The factory for the given node.
     //#
     template <typename TNode>
-    NODISCARD static auto MakeWidgetFactory(const WWidgetNode* InNode) -> typename TNode::TWidgetFactoryTy&;
+    NODISCARD static auto MakeWidgetFactory(const WWidgetNode* InNode) -> typename TNode::TWidgetFactory&;
 };
 
 } /* ~Namespace Private */
@@ -283,16 +283,16 @@ public:
     //# The node to target. Always valid.
     using TNodeTy       = TNode;
     //# The return type of the factory. Always valid.
-    using TFactoryRetTy = typename TNode::TWidgetFactoryTy;
+    using TFactoryRetTy = typename TNodeTy::TWidgetFactory;
 
 #if DO_SLOW_CHECKS /* This just costs too much runtime performance. So just check the cast with slow checks. */
-    FORCEINLINE TNode* GetNode() const { return CheckedStaticCast<TNode>(this->GetNodeRaw()); }
+    FORCEINLINE TNodeTy* GetNode() const { return CheckedStaticCast<TNodeTy>(this->GetNodeRaw()); }
 #else /* DO_SLOW_CHECKS */
     FORCEINLINE TNode* GetNode() const { return reinterpret_cast<TNode*>(this->GetNodeRaw()); }
 #endif /* !DO_SLOW_CHECKS */
 
     FORCEINLINE TFactoryRetTy& Self() { return *static_cast<TFactoryRetTy*>(this); }
-    FORCEINLINE TNode*         This() { return this->GetNode(); }
+    FORCEINLINE TNodeTy*       This() { return this->GetNode(); }
 
     FORCEINLINE TFactoryRetTy& SetAnchor(const LAnchor&      InAnchor) { this->GetNode()->SetAnchor(InAnchor); return this->Self(); }
     FORCEINLINE TFactoryRetTy& SetAnchor(const EAnchor::Type InAnchor) { this->GetNode()->SetAnchor(InAnchor); return this->Self(); }
@@ -340,7 +340,7 @@ FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode);
 //#
 //# The base class for everything that can be interpreted as a visual element.
 //#
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactory, EClassFlags::Abstract)
 class ENGINE_API WWidgetNode : public ::Jafg::Private::JObjectBase
 {
     GENERATED_CLASS_BODY()
@@ -355,23 +355,6 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(WWidgetNode)
 
 public:
-
-    //#
-    //# The factory to use when dealing with this node type in Wsdsml.
-    //#
-    //# How to define your own factory:
-    //# Inherit from TWidgetFactory<TNode> or any subclass and implement the methods you need.
-    //#   Inside the new factory:
-    //#                           Typedef super to your super factory.
-    //#                           Define and use the super TFactoryRetTy as return type for all methods. Always make
-    //#                           this typedef public for children to use (if any).
-    //#                           Advice C++ to use the reference operators of the super classes by: using Super::operator&.
-    //#   Inside the new node:
-    //#                           Typedef TWidgetFactoryTy as the new factory. !!!Exactly as below!!!
-    //#
-    //# @see WidgetParentBase.h / WidgetRegion.h for examples.
-    //#
-    using TWidgetFactoryTy = TWidgetFactory<Derived>;
 
     // JObjectBase implementation
     virtual void BeginLife() override final { Super::BeginLife(); this->Construct(); return; }
@@ -490,11 +473,11 @@ public:
     //#  @tparam TNode The node to get the factory for.
     //#  @return The factory for that node.
     //#  @remark !!! Master thread only !!!
-    //#  @see    #TWidgetFactory<TNode>
+    //#  @see    #TWidgetFactoryTy<TNode>
     //#  @see    #Private::LWidgetFactoryUtility::MakeWidgetFactory<TNode>
     //#
     template <typename TNode>
-    NODISCARD FORCEINLINE typename TNode::TWidgetFactoryTy& GetFactory()
+    NODISCARD FORCEINLINE typename TNode::TWidgetFactory& GetFactory()
     {
         return ::Jafg::Private::LWidgetFactoryUtility::MakeWidgetFactory<TNode>(this);
     }
@@ -528,24 +511,24 @@ private:
     LAnchor Anchor = EAnchor::TopLeft;
 };
 
-template <typename TNode>
-typename TNode::TWidgetFactoryTy& Private::LWidgetFactoryUtility::MakeWidgetFactory(const WWidgetNode* InNode)
+template <typename TInNode>
+typename TInNode::TWidgetFactory& Private::LWidgetFactoryUtility::MakeWidgetFactory(const WWidgetNode* InNode)
 {
-    using TNodeTy    = TNode;
-    using TFactoryTy = typename TNodeTy::TWidgetFactoryTy;
-    using TFacNodeTy = typename TNodeTy::TWidgetFactoryTy::TNodeTy;
+    using TNode    = TInNode;
+    using TFactory = typename TNode::TWidgetFactory;
+    using TFacNode = typename TNode::TWidgetFactory::TNodeTy;
 
-    static_assert(std::is_base_of_v<WWidgetNode, TNodeTy>, "The node must be a widget node.");
-    static_assert(std::is_base_of_v<WWidgetNode, TFacNodeTy>, "The factory must be a widget factory.");
+    static_assert(std::is_base_of_v<WWidgetNode, TNode>, "The node must be a widget node.");
+    static_assert(std::is_base_of_v<WWidgetNode, TFacNode>, "The factory must be a widget factory.");
 
-    check( DynamicCast<TNodeTy>(InNode) )
+    check( DynamicCast<TNode>(InNode) )
 
     if (LWidgetFactory* Factory = FindOrNullWidgetFactory(InNode); Factory)
     {
-        return *reinterpret_cast<TFactoryTy*>(Factory);
+        return *reinterpret_cast<TFactory*>(Factory);
     }
 
-    TFactoryTy* Factory = new TFactoryTy();
+    TFactory* Factory = new TFactory();
     Factory->Node = const_cast<WWidgetNode*>(InNode);
 
     AddWidgetFactory(Factory);

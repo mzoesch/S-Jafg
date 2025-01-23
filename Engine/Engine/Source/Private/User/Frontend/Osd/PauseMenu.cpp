@@ -18,9 +18,11 @@ void Jafg::WPauseMenu::Construct()
         .SetPadding(50.0f)
     ]
     [
-        NewNode(WTabBar) >> &this->PauseTabBar
+        NewNode(WTabBar) >> this->PauseTabBar
     ]
     FinishWidgetStyling()
+
+    check( this->PauseTabBar )
 
     return;
 }

@@ -38,7 +38,7 @@ public:
 //# A simple text block that is editable by the user with all that comes with it, e.g., caret, text selection, copy,
 //# pasting, etc.
 //#
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryEditableTextBlock)
 class ENGINE_API WEditableTextBlock : public WWidgetBox
 {
     GENERATED_CLASS_BODY()
@@ -48,8 +48,6 @@ protected:
     explicit WEditableTextBlock(const LObjectInitializer& ObjectInitializer);
 
 public:
-
-    using TWidgetFactoryTy = TWidgetFactoryEditableTextBlock<Derived>;
 
     virtual void Construct() override;
     virtual void Draw(LViewport& Context) const override;

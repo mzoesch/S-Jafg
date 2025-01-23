@@ -27,7 +27,7 @@ public:
     FORCEINLINE TFactoryRetTy& SetWidth(const float InWidth)   { this->This()->SetWidth(InWidth);   return this->Self(); }
 };
 
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactorySpace)
 class ENGINE_API WSpacer final : public WWidgetNode
 {
     GENERATED_CLASS_BODY()
@@ -37,8 +37,6 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(WSpacer)
 
 public:
-
-    using TWidgetFactoryTy = TWidgetFactorySpace<Derived>;
 
     virtual void UpdateDesiredSize() const override;
 

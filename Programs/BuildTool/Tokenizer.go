@@ -12,6 +12,8 @@ import (
 type ETokenType int
 
 const (
+    TOKEN_UNKNOWN ETokenType = iota
+
     TOKEN_PREPROCESSOR_INCLUDE ETokenType = iota
 
     // TOKEN_PREPROCESSOR_IF describes either #if, #ifdef or #ifndef.
@@ -27,9 +29,12 @@ const (
     TOKEN_POPNS ETokenType = iota
 
     // TOKEN_PRAGMA describes a pragma for jafg not for the preprocessor.
-    TOKEN_PRAGMA               ETokenType = iota
-    TOKEN_DECLARE_CLASS        ETokenType = iota
-    TOKEN_GENERATED_CLASS_BODY ETokenType = iota
+    TOKEN_PRAGMA                      ETokenType = iota
+    TOKEN_DECLARE_CLASS               ETokenType = iota
+    TOKEN_GENERATED_CLASS_BODY        ETokenType = iota
+    TOKEN_DECLARE_WIDGET              ETokenType = iota
+    TOKEN_DECLARE_WIDGET_WITH_FACTORY ETokenType = iota
+    TOKEN_GENERATED_WIDGET_BODY       ETokenType = iota
 )
 
 func (tk ETokenType) IsPreprocessor() bool {
@@ -75,6 +80,18 @@ func (tk ETokenType) IsGeneratedClassBody() bool {
     return tk == TOKEN_GENERATED_CLASS_BODY
 }
 
+func (tk ETokenType) IsDeclareWidget() bool {
+    return tk == TOKEN_DECLARE_WIDGET
+}
+
+func (tk ETokenType) IsDeclareWidgetWithFactory() bool {
+    return tk == TOKEN_DECLARE_WIDGET_WITH_FACTORY
+}
+
+func (tk ETokenType) IsGeneratedWidgetBody() bool {
+    return tk == TOKEN_GENERATED_WIDGET_BODY
+}
+
 func (tk ETokenType) ToString() string {
     switch tk {
     case TOKEN_PREPROCESSOR_INCLUDE:
@@ -95,6 +112,12 @@ func (tk ETokenType) ToString() string {
         return "DeclareClass"
     case TOKEN_GENERATED_CLASS_BODY:
         return "GeneratedClassBody"
+    case TOKEN_DECLARE_WIDGET:
+        return "DeclareWidget"
+    case TOKEN_DECLARE_WIDGET_WITH_FACTORY:
+        return "DeclareWidgetWithFactory"
+    case TOKEN_GENERATED_WIDGET_BODY:
+        return "GeneratedWidgetBody"
     default:
         panic("Unknown token type.")
     }
@@ -126,7 +149,7 @@ func FindNextToken(tokens *[]Token, startIdx int, tokenType ETokenType) int {
 
 func FindPreviousToken(tokens *[]Token, startIdx int, tokenType ETokenType) int {
     for idxSmall, _ := range *tokens {
-        var idx int = (len(*tokens)-1) - idxSmall
+        var idx int = (len(*tokens) - 1) - idxSmall
         if idx > startIdx {
             continue
         }
@@ -271,10 +294,10 @@ func Tokenize(debugDisplayName string, content string) []Token {
                 out[len(out)-1].Type == TOKEN_PRAGMA &&
                 out[len(out)-1].Content == "\"NextIsObjectBaseClass\"" {
                 out = append(out, Token{
-                    Type: TOKEN_DECLARE_CLASS,
+                    Type:    TOKEN_DECLARE_CLASS,
                     Content: words[classnameCursor].Content,
-                    Line: line,
-                    Info: []string{"NextIsObjectBaseClass"},
+                    Line:    line,
+                    Info:    []string{"NextIsObjectBaseClass"},
                 })
             } else {
                 if cursor >= len(words) {
@@ -294,14 +317,174 @@ func Tokenize(debugDisplayName string, content string) []Token {
                     panic("Could not find super class name after DECLARE_JAFG_CLASS.")
                 }
 
+                if strings.HasPrefix(words[classnameCursor].Content, "J") {
+                    if strings.HasPrefix(RemoveAllNamespaces(words[cursor].Content), "J") == false {
+                        panic(fmt.Sprintf("Class [%s] does not inherit from a j-object. Super class: [%s].",
+                            words[classnameCursor].Content, words[cursor].Content))
+                    }
+                } else if strings.HasPrefix(words[classnameCursor].Content, "A") {
+                    if strings.HasPrefix(RemoveAllNamespaces(words[cursor].Content), "A") == false &&
+                        words[classnameCursor].Content != "AActor" {
+                        panic(fmt.Sprintf("Class [%s] does not inherit from an aactor. Super class: [%s].",
+                            words[classnameCursor].Content, words[cursor].Content))
+                    }
+                } else {
+                    panic(fmt.Sprintf("Expected 'J' or 'A' as a prefix for a j-object. Faulty class: %s",
+                        words[classnameCursor].Content))
+                }
+
                 out = append(out, Token{
-                    Type: TOKEN_DECLARE_CLASS,
+                    Type:    TOKEN_DECLARE_CLASS,
                     Content: words[classnameCursor].Content,
-                    Line: line,
-                    Info: []string{words[cursor].Content},
+                    Line:    line,
+                    Info:    []string{words[cursor].Content},
                 })
             }
+        } else if word == "DECLARE_JAFG_WIDGET" {
+            if idx > 1 {
+                if words[idx-1].Content == "#ifdef" {
+                    continue
+                }
+            }
+
+            var cursor int = idx
+            for _, word2 := range words[idx:] {
+                cursor++
+                if word2.Content == "class" {
+                    break
+                }
+            }
+            if cursor >= len(words) {
+                panic("Could not find class after DECLARE_JAFG_WIDGET.")
+            }
+            if words[cursor].Content == "class" {
+                cursor++
+            }
+            if cursor >= len(words) {
+                panic("Could not find class name after DECLARE_JAFG_WIDGET.")
+            }
+            if strings.HasSuffix(words[cursor].Content, "_API") {
+                cursor++
+            }
+            if cursor >= len(words) {
+                panic("Could not find class name after DECLARE_JAFG_WIDGET.")
+            }
+            var classnameCursor int = cursor
+
+            for _, word2 := range words[cursor:] {
+                cursor++
+                if word2.Content == ":" {
+                    break
+                }
+            }
+            if cursor >= len(words) {
+                panic("Could not find super class after DECLARE_JAFG_WIDGET.")
+            }
+            if words[cursor].Content == ":" {
+                cursor++
+            }
+            if cursor >= len(words) {
+                panic("Could not find super class name after DECLARE_JAFG_WIDGET.")
+            }
+            if words[cursor].Content != "public" {
+                panic("Expected public keyword for super class DECLARE_JAFG_WIDGET.")
+            }
+            cursor++
+            if cursor >= len(words) {
+                panic("Could not find super class name after DECLARE_JAFG_WIDGET.")
+            }
+
+            if strings.HasPrefix(words[classnameCursor].Content, "W") == false {
+                panic(fmt.Sprintf("Expected 'W' as a prefix for a widget. Faulty class: [%s]",
+                    words[classnameCursor].Content))
+            }
+            if strings.HasPrefix(RemoveAllNamespaces(words[cursor].Content), "W") == false {
+                if words[cursor].Content != "WWidgetNode" {
+                    panic(fmt.Sprintf("Class [%s] does not inherit from a widget. Super class: [%s].",
+                        words[classnameCursor].Content, words[cursor].Content))
+                }
+            }
+
+            out = append(out, Token{
+                Type:    TOKEN_DECLARE_WIDGET,
+                Content: words[classnameCursor].Content,
+                Line:    line,
+                Info:    []string{words[cursor].Content},
+            })
+        } else if word == "DECLARE_JAFG_WIDGET_WITH_FACTORY" {
+            if idx > 1 {
+                if words[idx-1].Content == "#ifdef" {
+                    continue
+                }
+            }
+
+            var cursor int = idx
+            for _, word2 := range words[idx:] {
+                cursor++
+                if word2.Content == "class" {
+                    break
+                }
+            }
+            if cursor >= len(words) {
+                panic("Could not find class after DECLARE_JAFG_WIDGET_WITH_FACTORY.")
+            }
+            if words[cursor].Content == "class" {
+                cursor++
+            }
+            if cursor >= len(words) {
+                panic("Could not find class name after DECLARE_JAFG_WIDGET_WITH_FACTORY.")
+            }
+            if strings.HasSuffix(words[cursor].Content, "_API") {
+                cursor++
+            }
+            if cursor >= len(words) {
+                panic("Could not find class name after DECLARE_JAFG_WIDGET_WITH_FACTORY.")
+            }
+            var classnameCursor int = cursor
+
+            for _, word2 := range words[cursor:] {
+                cursor++
+                if word2.Content == ":" {
+                    break
+                }
+            }
+            if cursor >= len(words) {
+                panic("Could not find super class after DECLARE_JAFG_WIDGET_WITH_FACTORY.")
+            }
+            if words[cursor].Content == ":" {
+                cursor++
+            }
+            if cursor >= len(words) {
+                panic("Could not find super class name after DECLARE_JAFG_WIDGET_WITH_FACTORY.")
+            }
+            if words[cursor].Content != "public" {
+                panic("Expected public keyword for super class DECLARE_JAFG_WIDGET_WITH_FACTORY.")
+            }
+            cursor++
+            if cursor >= len(words) {
+                panic("Could not find super class name after DECLARE_JAFG_WIDGET_WITH_FACTORY.")
+            }
+
+            if strings.HasPrefix(words[classnameCursor].Content, "W") == false {
+                panic(fmt.Sprintf("Expected 'W' as a prefix for a widget. Faulty class: [%s]",
+                    words[classnameCursor].Content))
+            }
+            if strings.HasPrefix(words[cursor].Content, "W") == false {
+                if words[classnameCursor].Content != "WWidgetNode" {
+                    panic(fmt.Sprintf("Class [%s] does not inherit from a widget. Super class: [%s].",
+                        words[classnameCursor].Content, words[cursor].Content))
+                }
+            }
+
+            out = append(out, Token{
+                Type:    TOKEN_DECLARE_WIDGET_WITH_FACTORY,
+                Content: words[classnameCursor].Content,
+                Line:    line,
+                Info:    []string{words[cursor].Content},
+            })
         } else if word == "GENERATED_CLASS_BODY" {
+            out = append(out, Token{Type: TOKEN_GENERATED_CLASS_BODY, Content: "", Line: line})
+        } else if word == "GENERATED_WIDGET_BODY" {
             out = append(out, Token{Type: TOKEN_GENERATED_CLASS_BODY, Content: "", Line: line})
         }
     }

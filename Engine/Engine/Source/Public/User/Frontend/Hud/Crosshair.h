@@ -8,7 +8,7 @@
 namespace Jafg
 {
 
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_WIDGET()
 class WCrosshair : public WUserWidget
 {
     GENERATED_CLASS_BODY()

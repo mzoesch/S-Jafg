@@ -11,7 +11,7 @@ namespace Jafg
 
 class WTextBlock;
 
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_WIDGET()
 class ENGINE_API WDebugScreen final : public WUserWidget
 {
     GENERATED_CLASS_BODY()

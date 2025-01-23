@@ -48,7 +48,7 @@ public:
     FORCEINLINE TFactoryRetTy& operator& (const LPadding&& InPadding) { return this->SetPadding(InPadding); }
 };
 
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTextBlock)
 class ENGINE_API WTextBlock final : public WWidgetNode
 {
     GENERATED_CLASS_BODY()
@@ -58,8 +58,6 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(WTextBlock)
 
 public:
-
-    using TWidgetFactoryTy = TWidgetFactoryTextBlock<Derived>;
 
     virtual void Construct() override;
     virtual void Draw(LViewport& Context) const override;

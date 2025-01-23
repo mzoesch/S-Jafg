@@ -10,7 +10,7 @@ namespace Jafg
 
 class WTabBar;
 
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_WIDGET()
 class ENGINE_API WPauseMenu final : public WUserWidget
 {
     GENERATED_CLASS_BODY()

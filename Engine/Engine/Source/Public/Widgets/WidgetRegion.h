@@ -43,7 +43,7 @@ public:
 //# WWidgetRegion is a resizable Parent node. Every region has its layout bounds defined as (0, 0, width, height).
 //# A region might still draw outside these bounds.
 //#
-DECLARE_JAFG_CLASS()
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryWidgetRegion)
 class ENGINE_API WWidgetRegion : public WWidgetParent
 {
     GENERATED_CLASS_BODY()
@@ -53,8 +53,6 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(WWidgetRegion)
 
 public:
-
-    using TWidgetFactoryTy = TWidgetFactoryWidgetRegion<Derived>;
 
     virtual void Draw(LViewport& Context) const override;
     virtual void UpdateDesiredSize() const override;
