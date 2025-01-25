@@ -16,15 +16,10 @@ public:
     using Super         = TWidgetFactory<TNode>;
     using TFactoryRetTy = typename Super::TFactoryRetTy;
 
-    using Super::operator&;
-
     FORCEINLINE TFactoryRetTy& SetSize(const LVector2&  InSize) { this->This()->SetSize(InSize); return this->Self(); }
     FORCEINLINE TFactoryRetTy& SetSize(const LVector2&& InSize) { this->This()->SetSize(InSize); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& operator& (const LVector2&  InSize) { return this->SetSize(InSize); }
-    FORCEINLINE TFactoryRetTy& operator& (const LVector2&& InSize) { return this->SetSize(InSize); }
-
-    FORCEINLINE TFactoryRetTy& SetHeight(const float InHeight) { this->This()->SetHeight(InHeight); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& SetWidth(const float InWidth)   { this->This()->SetWidth(InWidth);   return this->Self(); }
+    FORCEINLINE TFactoryRetTy& SetHeight(const float InHeight)  { this->This()->SetHeight(InHeight); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& SetWidth(const float InWidth)    { this->This()->SetWidth(InWidth);   return this->Self(); }
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactorySpace)

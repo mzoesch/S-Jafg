@@ -8,19 +8,16 @@ void Jafg::WCrosshair::Construct()
 {
     Super::Construct();
 
-    MakeRootNode(WWidgetRegion)
-    .SetAnchor(EAnchor::Fill)
+    MakeRootNode(WWidgetRegion).Anchor(EAnchor::Fill)
     [
         NewNode(WWidgetRegion)
-        .SetPadding({1.0f, 4.0f})
-        & LColor(255, 255, 255, 255)
-        & EAnchor::CenterCenter
-    ]
-    [
-        NewNode(WWidgetRegion)
-        .SetPadding({4.0f, 1.0f})
-        & LColor(255, 255, 255, 255)
-        & EAnchor::CenterCenter
+            .Anchor(EAnchor::CenterCenter)
+            .Padding({1.0f, 4.0f})
+            .Tint(LColor::White)
+        + NewNode(WWidgetRegion)
+            .Anchor(EAnchor::CenterCenter)
+            .Padding({4.0f, 1.0f})
+            .Tint(LColor::White)
     ]
     FinishWidgetStyling()
 

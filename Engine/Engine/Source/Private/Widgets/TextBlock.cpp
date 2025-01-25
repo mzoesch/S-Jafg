@@ -55,7 +55,7 @@ std::map<uint8, Character> Characters;
 
 }
 
-Jafg::LTextBlockBrush Jafg::LTextBlockBrush::MakeDefaultSmall()
+Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Small()
 {
     return LTextBlockBrush
     {

@@ -18,7 +18,7 @@ struct LTextBlockBrush
     LColor Color = LColor::White;
     float  Scale = 1.0f;
 
-    ENGINE_API static LTextBlockBrush MakeDefaultSmall();
+    ENGINE_API static LTextBlockBrush Small();
 };
 
 template <typename TNode>
@@ -29,23 +29,14 @@ public:
     using Super         = TWidgetFactory<TNode>;
     using TFactoryRetTy = typename Super::TFactoryRetTy;
 
-    using Super::operator&;
+    FORCEINLINE TFactoryRetTy& Content(const LSimpleString&  InContent) { this->This()->SetContent(InContent); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Content(LSimpleString&& InContent) { this->This()->SetContent(std::move(InContent)); return this->Self(); }
 
-    FORCEINLINE TFactoryRetTy& SetContent(const LSimpleString&  InContent) { this->This()->SetContent(InContent); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& SetContent(LSimpleString&& InContent) { this->This()->SetContent(std::move(InContent)); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& operator& (const LSimpleString&  InContent) { return this->SetContent(InContent); }
-    FORCEINLINE TFactoryRetTy& operator& (LSimpleString&& InContent) { return this->SetContent(std::move(InContent)); }
+    FORCEINLINE TFactoryRetTy& Color(const LColor&  InColor) { this->This()->SetColor(InColor); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Brush(const LTextBlockBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
 
-    FORCEINLINE TFactoryRetTy& SetColor(const LColor&  InColor) { this->This()->SetColor(InColor); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& SetBrush(const LTextBlockBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& operator& (const LColor&  InColor) { return this->SetColor(InColor); }
-    FORCEINLINE TFactoryRetTy& operator& (LTextBlockBrush&  InBrush) { return this->SetBrush(InBrush); }
-    FORCEINLINE TFactoryRetTy& operator& (LTextBlockBrush&& InBrush) { return this->SetBrush(InBrush); }
-
-    FORCEINLINE TFactoryRetTy& SetPadding(const LPadding&  InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& SetPadding(const LPadding&& InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& operator& (const LPadding&  InPadding) { return this->SetPadding(InPadding); }
-    FORCEINLINE TFactoryRetTy& operator& (const LPadding&& InPadding) { return this->SetPadding(InPadding); }
+    FORCEINLINE TFactoryRetTy& Padding(const LPadding&  InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Padding(const LPadding&& InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTextBlock)

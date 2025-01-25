@@ -16,22 +16,11 @@ public:
     using Super         = TWidgetFactory<TNode>;
     using TFactoryRetTy = typename Super::TFactoryRetTy;
 
-    using Super::operator&;
+    FORCEINLINE TFactoryRetTy& Padding(const LPadding&  InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Padding(const LPadding&& InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
 
-    FORCEINLINE TFactoryRetTy& SetPadding(const LPadding&  InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& SetPadding(const LPadding&& InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& operator& (const LPadding&  InPadding) { return this->SetPadding(InPadding); }
-    FORCEINLINE TFactoryRetTy& operator& (const LPadding&& InPadding) { return this->SetPadding(InPadding); }
-
-    FORCEINLINE TFactoryRetTy& AddChild(WWidgetNode   *  InChild) { this->This()->AddChild(InChild);               return this->Self(); }
-    FORCEINLINE TFactoryRetTy& AddChild(LWidgetFactory & InChild) { this->This()->AddChild(InChild. GetNodeRaw()); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& AddChild(LWidgetFactory*& InChild) { this->This()->AddChild(InChild->GetNodeRaw()); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& AddChild(LWidgetFactory*  InChild) { this->This()->AddChild(InChild->GetNodeRaw()); return this->Self(); }
-
-    FORCEINLINE TFactoryRetTy& operator[](WWidgetNode   *  InChild) { return this->AddChild(InChild); }
-    FORCEINLINE TFactoryRetTy& operator[](LWidgetFactory & InChild) { return this->AddChild(InChild); }
-    FORCEINLINE TFactoryRetTy& operator[](LWidgetFactory*& InChild) { return this->AddChild(InChild); }
-    FORCEINLINE TFactoryRetTy& operator[](LWidgetFactory*  InChild) { return this->AddChild(InChild); }
+    FORCEINLINE TFactoryRetTy& AddChild(LWidgetFactory* InChild);
+    FORCEINLINE TFactoryRetTy& operator[](LWidgetFactory& InChild) { return this->AddChild(&InChild); }
 };
 
 //#
@@ -65,8 +54,6 @@ public:
     virtual auto RemoveChild(WWidgetNode* InChild) -> void PURE_VIRTUAL()
     virtual auto RemoveChild(LWidgetSlot* InSlot)  -> void PURE_VIRTUAL()
     virtual auto AddChild(WWidgetNode* InChild)    -> LWidgetSlot* PURE_VIRTUAL(return nullptr)
-    LWidgetSlot* AddChild(const LWidgetFactory& InChild) { return this->AddChild(InChild.GetNodeRaw()); }
-    LWidgetSlot* AddChild(const LWidgetFactory* InChild) { return this->AddChild(InChild->GetNodeRaw()); }
     virtual auto FindNodeInVisiblePath(const WWidgetNode* InNode) const -> bool override;
 
     virtual void SetPadding(const LPadding& InPadding)    PURE_VIRTUAL()
@@ -79,4 +66,22 @@ private:
     static inline TdhArray<LWidgetSlot*> NothingArrayReference;
 };
 
-} /* ~Namespace Jafg. */
+template <typename TNode>
+typename TWidgetFactoryParentBase<TNode>::TFactoryRetTy&
+TWidgetFactoryParentBase<TNode>::AddChild(LWidgetFactory* InChild)
+{
+    check( InChild->GetNodeRaw() )
+    this->This()->AddChild(InChild->GetNodeRaw());
+
+    for (LWidgetFactory* const& Sibling : InChild->GetSiblings())
+    {
+        check( Sibling->GetNodeRaw() )
+        this->AddChild(Sibling);
+        continue;
+    }
+    InChild->GetMutableSiblingsDangerous().Empty();
+
+    return this->Self();
+}
+
+} /* ~Namespace Jafg */

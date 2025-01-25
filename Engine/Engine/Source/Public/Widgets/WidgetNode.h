@@ -19,8 +19,13 @@ class WUserWidget;
 class LViewport;
 class LSurface;
 class LWidgetFactory;
+class LWidgetFactory;
 class WWidgetParentBase;
 class LApplicationInstance;
+template <typename TNode>
+class TWidgetFactory;
+template <typename TNode>
+class TWidgetFactoryParentBase;
 struct LWidgetSlot;
 struct LWidgetConstructor;
 
@@ -259,12 +264,22 @@ public:
 
     friend WWidgetNode;
     friend Private::LWidgetFactoryUtility;
+    template <typename TNode>
+    friend class TWidgetFactory;
+    template <typename TNode>
+    friend class TWidgetFactoryParentBase;
 
-    FORCEINLINE WWidgetNode* GetNodeRaw() const { return this->Node; }
+    FORCEINLINE WWidgetNode* GetNodeRaw() const { check( this->Node ) return this->Node; }
+
+    FORCEINLINE bool HasAnySibling() const { return this->Siblings.IsEmpty() == false; }
+    FORCEINLINE auto GetSiblings() const -> const TdhArray<LWidgetFactory*>& { return this->Siblings; }
 
 private:
 
+    FORCEINLINE auto GetMutableSiblingsDangerous() -> TdhArray<LWidgetFactory*>& { return this->Siblings; }
+
     WWidgetNode* Node = nullptr;
+    TdhArray<LWidgetFactory*> Siblings = { };
 };
 
 //#
@@ -294,16 +309,16 @@ public:
     FORCEINLINE TFactoryRetTy& Self() { return *static_cast<TFactoryRetTy*>(this); }
     FORCEINLINE TNodeTy*       This() { return this->GetNode(); }
 
-    FORCEINLINE TFactoryRetTy& SetAnchor(const LAnchor&      InAnchor) { this->GetNode()->SetAnchor(InAnchor); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& SetAnchor(const EAnchor::Type InAnchor) { this->GetNode()->SetAnchor(InAnchor); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& operator&(const LAnchor&      InAnchor) { return this->SetAnchor(InAnchor); }
-    FORCEINLINE TFactoryRetTy& operator&(const EAnchor::Type InAnchor) { return this->SetAnchor(InAnchor); }
+    FORCEINLINE TFactoryRetTy& Anchor(const LAnchor&      InAnchor) { this->This()->SetAnchor(InAnchor); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Anchor(const EAnchor::Type InAnchor) { this->This()->SetAnchor(InAnchor); return this->Self(); }
 
-    FORCEINLINE TFactoryRetTy& SetVisibility(const EWidgetVisibility::Type InVisibility) { this->This()->SetVisibility(InVisibility); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& operator&(const EWidgetVisibility::Type InVisibility) { return this->SetVisibility(InVisibility); }
+    FORCEINLINE TFactoryRetTy& Visibility(const EWidgetVisibility::Type InVisibility) { this->This()->SetVisibility(InVisibility); return this->Self(); }
 
-    FORCEINLINE TFactoryRetTy& operator>>(TNode*& OutNode) { OutNode = this->GetNode(); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& operator>>(TNode&  OutNode) { OutNode = this->GetNode(); return this->Self(); }
+    template <typename T> FORCEINLINE auto SaveTo(T*& Out) -> TFactoryRetTy&;
+    template <typename T> FORCEINLINE auto operator>>(T*& Out) -> TFactoryRetTy& { return this->SaveTo(std::forward<T*&>(Out)); }
+
+    FORCEINLINE TFactoryRetTy& AddSibling(LWidgetFactory* InSibling);
+    FORCEINLINE TFactoryRetTy& operator+(LWidgetFactory& InSibling) { return this->AddSibling(&InSibling); }
 };
 
 //#
@@ -531,9 +546,27 @@ typename TInNode::TWidgetFactory& Private::LWidgetFactoryUtility::MakeWidgetFact
     TFactory* Factory = new TFactory();
     Factory->Node = const_cast<WWidgetNode*>(InNode);
 
-    AddWidgetFactory(Factory);
+    Private::AddWidgetFactory(Factory);
 
     return *Factory;
+}
+
+template <typename TNode>
+template <typename T>
+typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::SaveTo(T*& Out)
+{
+    static_assert(std::is_base_of_v<WWidgetNode, T>);
+    static_assert(std::is_base_of_v<TNodeTy, T>);
+    Out = this->GetNode();
+    return this->Self();
+}
+
+template <typename TNode>
+typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::AddSibling(LWidgetFactory* InSibling)
+{
+    check( this->Siblings.Contains(InSibling) == false )
+    this->Siblings.Add(InSibling);
+    return this->Self();
 }
 
 template <typename TNode>

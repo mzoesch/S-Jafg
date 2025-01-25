@@ -24,14 +24,10 @@ public:
     using Super         = TWidgetFactoryWidgetBox<TNode>;
     using TFactoryRetTy = typename Super::TFactoryRetTy;
 
-    using Super::operator&;
-
-    TFactoryRetTy& SetTextColor(const LColor& InColor)       { this->This()->SetTextColor(InColor);  return this->Self(); }
-    TFactoryRetTy& SetTextScale(const float InScale)         { this->This()->SetTextScale(InScale);  return this->Self(); }
-    TFactoryRetTy& SetCaretBrush(const LCaretBrush& InBrush) { this->This()->SetCaretBrush(InBrush); return this->Self(); }
-    TFactoryRetTy& SetTextCommitCallback(LEditableTextBlockCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnTextCommitted.BindFunction(std::move(InCallback)); return this->Self(); }
-
-    TFactoryRetTy& operator&(LEditableTextBlockCommitDelegate::LFunctionSigTy&& InCallback) { return this->SetTextCommitCallback(std::move(InCallback)); }
+    FORCEINLINE TFactoryRetTy& TextColor(const LColor& InColor)       { this->This()->SetTextColor(InColor);  return this->Self(); }
+    FORCEINLINE TFactoryRetTy& TextScale(const float InScale)         { this->This()->SetTextScale(InScale);  return this->Self(); }
+    FORCEINLINE TFactoryRetTy& CaretBrush(const LCaretBrush& InBrush) { this->This()->SetCaretBrush(InBrush); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OnCommit(LEditableTextBlockCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnTextCommitted.BindFunction(std::move(InCallback)); return this->Self(); }
 };
 
 //#

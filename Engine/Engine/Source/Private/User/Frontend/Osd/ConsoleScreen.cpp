@@ -19,16 +19,15 @@ void Jafg::WConsoleScreen::Construct()
     this->SetShouldTick(true);
 
     MakeRootNode(WWidgetRegion)
-    .SetPadding(5.0f)
-    .SetAnchor(EAnchor::VBottom | EAnchor::HFill)
+    .Padding(5.0f)
+    .Anchor(EAnchor::VBottom | EAnchor::HFill)
     [
-        NewNode(WEditableTextBlock)
-        .SetTextColor(LColor::Red)
-        .SetTextScale(0.5f)
-        >> this->EditableTextBlock
-        & LPadding({ 5.0f, 4.5f })
-        & LColor(0 , 0, 0, 164)
-        & LEditableTextBlockCommitDelegate::CreateFunction(this, &WConsoleScreen::OnTextCommit)
+        NewNode(WEditableTextBlock).SaveTo(this->EditableTextBlock)
+        .TextColor(LColor::Red)
+        .TextScale(0.5f)
+        .SetPadding({ 5.0f, 4.5f })
+        .SetTint({0, 0, 0, 164 })
+        .OnCommit(LEditableTextBlockCommitDelegate::CreateFunction(this, &WConsoleScreen::OnTextCommit))
     ]
     FinishWidgetStyling()
 

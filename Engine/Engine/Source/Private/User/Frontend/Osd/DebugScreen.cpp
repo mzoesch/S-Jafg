@@ -36,115 +36,75 @@ void Jafg::WDebugScreen::Construct()
 
     const JMaterialSubsystem* MaterialSubsystem = this->GetApplicationInstance()->GetSubsystem<JMaterialSubsystem>();
 
-    MakeRootNode(WWidgetRegion)
-    .SetAnchor(EAnchor::Fill)
+    MakeRootNode(WWidgetRegion).Anchor(EAnchor::Fill)
     [
-        NewNode(WVBox)
+        NewNode(WVBox).Anchor(EAnchor::TopLeft)
         [
             NewNode(WVBox)
             [
                 NewNode(WTextBlock)
-                & LSimpleString::SprintF("JAFG v{}", BuildInfo::GetEngineVersion().ToString())
-                & LTextBlockBrush::MakeDefaultSmall()
+                    .Brush(LTextBlockBrush::Small())
+                    .Content(LSimpleString::SprintF("JAFG v{}", BuildInfo::GetEngineVersion().ToString()))
+                + NewNode(WTextBlock).SaveTo(this->FpsSection)
+                    .Brush(LTextBlockBrush::Small())
+                + NewNode(WTextBlock).SaveTo(this->TimeStatsSection)
+                    .Brush(LTextBlockBrush::Small())
             ]
+            + NewNode(WSpacer).SetHeight(20.0f)
+            + NewNode(WVBox)
             [
-                NewNode(WTextBlock) >> this->FpsSection
-                & LTextBlockBrush::MakeDefaultSmall()
+                NewNode(WTextBlock).SaveTo(this->LocalPawnLocationSection)
+                    .Brush(LTextBlockBrush::Small())
+                + NewNode(WTextBlock).SaveTo(this->LocalPawnFacingSection)
+                    .Brush(LTextBlockBrush::Small())
+                + NewNode(WTextBlock).SaveTo(this->LocalPawnChunkSection)
+                    .Brush(LTextBlockBrush::Small())
+                + NewNode(WTextBlock).SaveTo(this->LocalPawnVoxelSection)
+                    .Brush(LTextBlockBrush::Small())
             ]
-            [
-                NewNode(WTextBlock) >> this->TimeStatsSection
-                & LTextBlockBrush::MakeDefaultSmall()
-            ]
-        ]
-        [
-            NewNode(WSpacer)
-            .SetHeight(20.0f)
-        ]
-        [
-            NewNode(WVBox)
-            [
-                NewNode(WTextBlock) >> this->LocalPawnLocationSection
-                & LTextBlockBrush::MakeDefaultSmall()
-            ]
-            [
-                NewNode(WTextBlock) >> this->LocalPawnFacingSection
-                & LTextBlockBrush::MakeDefaultSmall()
-            ]
-            [
-                NewNode(WTextBlock) >> this->LocalPawnChunkSection
-                & LTextBlockBrush::MakeDefaultSmall()
-            ]
-            [
-                NewNode(WTextBlock) >> this->LocalPawnVoxelSection
-                & LTextBlockBrush::MakeDefaultSmall()
-            ]
-        ]
-        [
-            NewNode(WSpacer)
-            .SetHeight(20.0f)
-        ]
-        [
-            NewNode(WVBox)
+            + NewNode(WSpacer).SetHeight(20.0f)
+            + NewNode(WVBox)
             [
                 NewNode(WWidgetRegion)
-                .SetPadding(LPadding(70.0f))
-                & &MaterialSubsystem->GetBlendOpaqueAtlasTexture()
+                    .Padding(LPadding(70.0f))
+                    .Texture(&MaterialSubsystem->GetBlendOpaqueAtlasTexture())
             ]
-        ]
-        [
-            NewNode(WVBox)
+            + NewNode(WVBox)
             [
                 NewNode(WWidgetRegion)
-                .SetPadding(LPadding(70.0f))
-                & &MaterialSubsystem->GetBlendersAtlasTexture()
+                    .Padding(LPadding(70.0f))
+                    .Texture(&MaterialSubsystem->GetBlendersAtlasTexture())
             ]
         ]
-    ]
-    [
-        NewNode(WVBox)
-        .SetAnchor(EAnchor::TopRight)
+        + NewNode(WVBox).Anchor(EAnchor::TopRight)
         [
-            NewNode(WVBox)
-            .SetAnchor(EAnchor::TopRight)
+            NewNode(WVBox).Anchor(EAnchor::TopRight)
             [
                 NewNode(WTextBlock)
-                & EAnchor::TopRight
-                & "Memory statistics"
-                & LTextBlockBrush::MakeDefaultSmall()
+                    .Anchor(EAnchor::TopRight)
+                    .Content("Memory statistics")
+                    .Brush(LTextBlockBrush::Small())
+                + NewNode(WTextBlock)
+                    .Anchor(EAnchor::TopRight)
+                    .Content("Central processing unit information")
+                    .Brush(LTextBlockBrush::Small())
+                + NewNode(WTextBlock)
+                    .Anchor(EAnchor::TopRight)
+                    .Content("Graphics processing unit information")
+                    .Brush(LTextBlockBrush::Small())
+                + NewNode(WTextBlock)
+                    .Anchor(EAnchor::TopRight)
+                    .Content("Display information")
+                    .Brush(LTextBlockBrush::Small())
             ]
+            + NewNode(WSpacer)
+                .SetHeight(20.0f)
+            + NewNode(WVBox).Anchor(EAnchor::TopRight)
             [
-                NewNode(WTextBlock)
-                & EAnchor::TopRight
-                & "Central processing unit information"
-                & LTextBlockBrush::MakeDefaultSmall()
-            ]
-            [
-                NewNode(WTextBlock)
-                & EAnchor::TopRight
-                & "Graphics processing unit information"
-                & LTextBlockBrush::MakeDefaultSmall()
-            ]
-            [
-                NewNode(WTextBlock)
-                & EAnchor::TopRight
-                & "Display information"
-                & LTextBlockBrush::MakeDefaultSmall()
-            ]
-        ]
-        [
-            NewNode(WSpacer)
-            .SetHeight(20.0f)
-        ]
-        [
-            NewNode(WVBox)
-            .SetAnchor(EAnchor::TopRight)
-            [
-                NewNode(WTextBlock) >> this->LocalPawnTargetVoxelSectionDestroy
-                & LTextBlockBrush::MakeDefaultSmall()
-            ]
-            [
-                NewNode(WTextBlock) >> this->LocalPawnTargetVoxelSectionCreate
-                & LTextBlockBrush::MakeDefaultSmall()
+                NewNode(WTextBlock).SaveTo(this->LocalPawnTargetVoxelSectionDestroy)
+                    .Brush(LTextBlockBrush::Small())
+                + NewNode(WTextBlock).SaveTo(this->LocalPawnTargetVoxelSectionCreate)
+                    .Brush(LTextBlockBrush::Small())
             ]
         ]
     ]

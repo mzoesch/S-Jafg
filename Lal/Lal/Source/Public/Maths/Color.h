@@ -45,7 +45,7 @@ struct LColor final
     FORCEINLINE  LColor() { }
     FORCEINLINE ~LColor() { }
 
-    FORCEINLINE constexpr explicit LColor(const uint8 InR, const uint8 InG, const uint8 InB, const uint8 InA = 0xFF)
+    FORCEINLINE constexpr LColor(const uint8 InR, const uint8 InG, const uint8 InB, const uint8 InA = 0xFF)
 #if PLATFORM_USES_LITTLE_ENDIAN
         : B(InB), G(InG), R(InR), A(InA)
 #else /* PLATFORM_USES_LITTLE_ENDIAN */

@@ -24,20 +24,11 @@ public:
     using Super         = TWidgetFactory<TNode>;
     using TFactoryRetTy = typename Super::TFactoryRetTy;
 
-    using Super::operator&;
-
-    TFactoryRetTy& SetBrush(const LBoxBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
-    TFactoryRetTy& SetTint(const LColor& InTint) { this->This()->SetTint(InTint); return this->Self(); }
-    TFactoryRetTy& SetTexture(const LTexture2* InTexture) { this->This()->SetTexture(InTexture); return this->Self(); }
-    TFactoryRetTy& SetImage(const LImage& InImage) { this->This()->SetImage(InImage); return this->Self(); }
-    TFactoryRetTy& SetPadding(const LPadding& InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
-
-    TFactoryRetTy& operator&(const LColor& InTint) { return this->SetTint(InTint); }
-    TFactoryRetTy& operator&(const LColor&& InTint) { return this->SetTint(InTint); }
-    TFactoryRetTy& operator&(const LTexture2* InTexture) { return this->SetTexture(InTexture); }
-    TFactoryRetTy& operator&(const LImage& InImage) { return this->SetImage(InImage); }
-    TFactoryRetTy& operator&(const LBoxBrush& InBrush) { return this->SetBrush(InBrush); }
-    TFactoryRetTy& operator&(const LPadding& InPadding) { return this->SetPadding(InPadding); }
+    FORCEINLINE TFactoryRetTy& SetBrush(const LBoxBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& SetTint(const LColor& InTint) { this->This()->SetTint(InTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& SetTexture(const LTexture2* InTexture) { this->This()->SetTexture(InTexture); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& SetImage(const LImage& InImage) { this->This()->SetImage(InImage); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& SetPadding(const LPadding& InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
 };
 
 //#

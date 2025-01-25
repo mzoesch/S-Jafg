@@ -25,18 +25,10 @@ public:
     using Super         = TWidgetFactoryParentBase<TNode>;
     using TFactoryRetTy = typename Super::TFactoryRetTy;
 
-    using Super::operator&;
-
-    FORCEINLINE TFactoryRetTy& SetBrush(const LRegionBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& SetTint(const LColor& InTint) { this->This()->SetTint(InTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& SetTexture(const LTexture2* InTexture) { this->This()->SetTexture(InTexture); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& SetImage(const LImage& InImage) { this->This()->SetImage(InImage); return this->Self(); }
-
-    FORCEINLINE TFactoryRetTy& operator&(const LColor&  InTint) { return this->SetTint(InTint); }
-    FORCEINLINE TFactoryRetTy& operator&(const LColor&& InTint) { return this->SetTint(InTint); }
-    FORCEINLINE TFactoryRetTy& operator&(const LTexture2* InTexture) { return this->SetTexture(InTexture); }
-    FORCEINLINE TFactoryRetTy& operator&(const LImage&  InImage) { return this->SetImage(InImage); }
-    FORCEINLINE TFactoryRetTy& operator&(const LRegionBrush& InBrush) { return this->SetBrush(InBrush); }
+    FORCEINLINE TFactoryRetTy& Brush(const LRegionBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Tint(const LColor& InTint) { this->This()->SetTint(InTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Texture(const LTexture2* InTexture) { this->This()->SetTexture(InTexture); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Image(const LImage& InImage) { this->This()->SetImage(InImage); return this->Self(); }
 };
 
 //#
