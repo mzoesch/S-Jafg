@@ -54,6 +54,7 @@ public:
     virtual auto RemoveChild(WWidgetNode* InChild) -> void PURE_VIRTUAL()
     virtual auto RemoveChild(LWidgetSlot* InSlot)  -> void PURE_VIRTUAL()
     virtual auto AddChild(WWidgetNode* InChild)    -> LWidgetSlot* PURE_VIRTUAL(return nullptr)
+    virtual auto AddChildAt(const int32 InIndex, WWidgetNode* InChild) -> LWidgetSlot* PURE_VIRTUAL(return nullptr)
     virtual auto FindNodeInVisiblePath(const WWidgetNode* InNode) const -> bool override;
 
     virtual void SetPadding(const LPadding& InPadding)    PURE_VIRTUAL()

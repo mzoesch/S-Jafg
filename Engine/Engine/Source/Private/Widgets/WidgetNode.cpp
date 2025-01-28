@@ -304,6 +304,17 @@ Jafg::LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromMostOuter(const WWidgetN
     return this->GetRelativeTopLeftFromOuter(this);
 }
 
+void Jafg::WWidgetNode::SetDesiredSize(const LVector2& InSize) const
+{
+    this->DesiredSize = InSize;
+    this->DesiredSize.X = Maths::Max(this->DesiredSize.X, this->MinDesiredSize.X);
+    this->DesiredSize.Y = Maths::Max(this->DesiredSize.Y, this->MinDesiredSize.Y);
+
+    check( this->DesiredSize.X >= 0.0f && this->DesiredSize.Y >= 0.0f )
+
+    return;
+}
+
 Jafg::LVector2 Jafg::WWidgetNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Context, const WWidgetNode* WhoAsked) const
 {
     LVector2 Out;

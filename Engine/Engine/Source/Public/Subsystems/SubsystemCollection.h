@@ -115,7 +115,7 @@ struct LSubsystemCollection final
     template <typename TSubsystem, bool bAllowForNullptr = true>
     FORCEINLINE auto GetSubsystem(const LObjectClass* InStaticClass) -> TSubsystem*
     {
-        return CheckedStaticCast<TSubsystem, bAllowForNullptr>(this->GetSubsystem(InStaticClass));
+        return CheckedStaticCast<TSubsystem, std::remove_pointer_t<decltype(this->GetSubsystem(InStaticClass))>, bAllowForNullptr>(this->GetSubsystem(InStaticClass));
     }
 
     template <typename TSubsystem>

@@ -66,7 +66,15 @@ template <typename TNode>
 TNode* LHud::GetTopLevelWidgetByClass() const
 {
     static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
-    return CheckedStaticCast<TNode, true>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
+    return CheckedStaticCast
+        <
+            TNode,
+            std::remove_pointer_t<decltype(this->GetTopLevelWidgetByClass(TNode::StaticClass()))>,
+            true
+        >
+        (
+            this->GetTopLevelWidgetByClass(TNode::StaticClass())
+        );
 }
 
 template <typename TNode>

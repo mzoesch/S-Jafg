@@ -377,8 +377,8 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
                             Wwi(b, 4, fmt.Sprintf("'%s_API=PLATFORM_CALLSPEC_OUT',", strings.ToUpper(mod.Name)))
                             Wwi(b, 4, fmt.Sprintf("'%s_EXTERN=PLATFORM_EXTERNSPEC_OUT',", strings.ToUpper(mod.Name)))
                         } else {
-                            Wwi(b, 4, fmt.Sprintf("'%s_API',", strings.ToUpper(mod.Name)))
-                            Wwi(b, 4, fmt.Sprintf("'%s_EXTERN',", strings.ToUpper(mod.Name)))
+                            Wwi(b, 4, fmt.Sprintf("'%s_API=',", strings.ToUpper(mod.Name)))
+                            Wwi(b, 4, fmt.Sprintf("'%s_EXTERN=',", strings.ToUpper(mod.Name)))
                         }
                     } else if mod.Kind.IsLaunch() {
                         panic(fmt.Sprintf("Launch dependencies are not allowed. Faulty dependency: %s.", mod.Name))
@@ -386,8 +386,8 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
                         Wwi(b, 4, fmt.Sprintf("'%s_API=PLATFORM_CALLSPEC_IN',", strings.ToUpper(mod.Name)))
                         Wwi(b, 4, fmt.Sprintf("'%s_EXTERN=PLATFORM_EXTERNSPEC_IN',", strings.ToUpper(mod.Name)))
                     } else if mod.Kind.IsStatic() {
-                        Wwi(b, 4, fmt.Sprintf("'%s_API',", strings.ToUpper(mod.Name)))
-                        Wwi(b, 4, fmt.Sprintf("'%s_EXTERN',", strings.ToUpper(mod.Name)))
+                        Wwi(b, 4, fmt.Sprintf("'%s_API=',", strings.ToUpper(mod.Name)))
+                        Wwi(b, 4, fmt.Sprintf("'%s_EXTERN=',", strings.ToUpper(mod.Name)))
                     }
                 }
             }
@@ -445,11 +445,6 @@ Same as 'Reindex' but also check if new files were generated and reindex them al
     Wwi(b, 2, "kind 'Utility'")
     Wwi(b, 2, "files {")
     Wwi(b, 3, "'Utility/Reindex/**.md',")
-    for idx, _ := range sln.Targets[0].Modules {
-        var module *Core.Module = &sln.Targets[0].Modules[idx]
-        Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/**.h',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
-        Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/**.hpp',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
-    }
     Wwi(b, 2, "}")
     Wwi(b, 2, "vpaths {")
     Wwi(b, 3, "['/*'] = {")
@@ -460,6 +455,7 @@ Same as 'Reindex' but also check if new files were generated and reindex them al
     Wwi(b, 4, fmt.Sprintf("'%s/**.hpp',", sln.GetChdirUpRelToBuildFile()))
     Wwi(b, 3, "},")
     Wwi(b, 2, "}")
+    Wwi(b, 2, "buildinputs {}")
     Wwi(b, 2, "filter 'system:windows'")
     Wwi(b, 3, "postbuildcommands {")
     Wwi(b, 4,
@@ -483,11 +479,6 @@ Same as 'Reindex' but also check if new files were generated and reindex them al
     Wwi(b, 2, "kind 'Utility'")
     Wwi(b, 2, "files {")
     Wwi(b, 3, "'Utility/Reindex/**.md',")
-    for idx, _ := range sln.Targets[0].Modules {
-        var module *Core.Module = &sln.Targets[0].Modules[idx]
-        Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/**.h',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
-        Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/**.hpp',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
-    }
     Wwi(b, 2, "}")
     Wwi(b, 2, "vpaths {")
     Wwi(b, 3, "['/*'] = {")
@@ -498,6 +489,7 @@ Same as 'Reindex' but also check if new files were generated and reindex them al
     Wwi(b, 4, fmt.Sprintf("'%s/**.hpp',", sln.GetChdirUpRelToBuildFile()))
     Wwi(b, 3, "},")
     Wwi(b, 2, "}")
+    Wwi(b, 2, "buildinputs {}")
     Wwi(b, 2, "filter 'system:windows'")
     Wwi(b, 3, "postbuildcommands {")
     Wwi(b, 4,

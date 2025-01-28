@@ -57,13 +57,3 @@ void Jafg::WWidgetSwitcher::Draw(LViewport& Context) const
 
     return;
 }
-
-void Jafg::WWidgetSwitcher::RemoveChild(WWidgetNode* InSlot)
-{
-    Super::RemoveChild(InSlot);
-}
-
-Jafg::LWidgetSlot* Jafg::WWidgetSwitcher::AddChild(WWidgetNode* InChild)
-{
-    return Super::AddChild(InChild);
-}

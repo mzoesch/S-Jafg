@@ -72,6 +72,8 @@ public:
     FORCEINLINE auto Add(const T& InElement)  noexcept -> TEnableIf<Condition, Self&>;
     template <bool Condition = IsDynamic()>
     FORCEINLINE auto Add(      T&& InElement) noexcept -> TEnableIf<Condition, Self&>;
+    FORCEINLINE auto AddAt(const SizeType InIndex, const T& InElement) noexcept -> void;
+    FORCEINLINE auto AddAt(const SizeType InIndex,       T&& InElement) noexcept -> void;
 
     /** Peeks at the last element in the array. Returns nullptr if the array is empty. */
     FORCEINLINE auto Peek()                      noexcept ->       T*;
@@ -453,6 +455,58 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Add(T&& InElement) noexcept
     *(this->Data + this->Size++) = std::move(InElement);
 
     return *this;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddAt(const SizeType InIndex, const T& InElement) noexcept
+{
+    if (this->Size == InIndex)
+    {
+        this->Add(InElement);
+        return;
+    }
+
+#if CHECK_CONTAINER_BOUNDS
+    check( this->IsValidIndex(InIndex) )
+#endif  /* CHECK_CONTAINER_BOUNDS */
+
+    if (this->IsCapped())
+    {
+        this->ZeroedGrow();
+    }
+
+    ::memmove(this->Data + InIndex + 1, this->Data + InIndex, (this->Size - InIndex) * sizeof(T));
+    *(this->Data + InIndex) = InElement;
+    ++this->Size;
+    checkSlow( this->Size <= this->Capacity )
+
+    return;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddAt(const SizeType InIndex, T&& InElement) noexcept
+{
+#if CHECK_CONTAINER_BOUNDS
+    check( this->IsValidIndex(InIndex) )
+#endif  /* CHECK_CONTAINER_BOUNDS */
+
+    if (this->Size ==  InIndex)
+    {
+        this->Add(std::forward<T>(InElement));
+        return;
+    }
+
+    if (this->IsCapped())
+    {
+        this->ZeroedGrow();
+    }
+
+    ::memmove(this->Data + InIndex + 1, this->Data + InIndex, (this->Size - InIndex) * sizeof(T));
+    *(this->Data + InIndex) = std::move(InElement);
+    ++this->Size;
+    checkSlow( this->Size <= this->Capacity )
+
+    return;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>

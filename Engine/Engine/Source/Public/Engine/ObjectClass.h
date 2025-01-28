@@ -4,6 +4,7 @@
 
 #include "CoreAfx.h"
 #include "Engine/ObjectBaseTypes.h"
+#include "Core/Name.h"
 
 namespace Jafg
 {
@@ -34,6 +35,7 @@ public:
     ~LObjectClass() = default;
 
     FORCEINLINE auto GetSpacedClassName() const -> const LSimpleString& { return this->SpacedClassName; }
+    FORCEINLINE auto GetName() const -> LName { return this->ClassName; }
 
     template <typename TObj>
     FORCEINLINE auto GetDefaultPackageReferrer() const -> const TObj*
@@ -69,6 +71,7 @@ public:
 private:
 
     LSimpleString           SpacedClassName        = { };
+    LName                   ClassName              = { };
 
     //# The single parent of this object.
     LObjectClass*           Parent                 = nullptr;

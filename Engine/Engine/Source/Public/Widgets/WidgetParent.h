@@ -10,6 +10,7 @@ namespace Jafg
 
 //#
 //# The base class for all nodes that can possess children.
+//# Generally speaking, inheriting from this class directly is not recommended.
 //#
 DECLARE_JAFG_WIDGET(EClassFlags::Abstract)
 class ENGINE_API WWidgetParent : public WWidgetParentBase
@@ -31,7 +32,8 @@ public:
     virtual auto         GetChildren() const -> const TdhArray<LWidgetSlot*>& override { return this->Children; }
     virtual void         RemoveChild(WWidgetNode* Child) override;
     virtual void         RemoveChild(LWidgetSlot* Child) override;
-    virtual LWidgetSlot* AddChild(WWidgetNode* Child) override;
+    virtual LWidgetSlot* AddChild(WWidgetNode* InChild) override;
+    virtual LWidgetSlot* AddChildAt(const int32 InIndex, WWidgetNode* InChild) override;
 
     FORCEINLINE virtual void SetPadding(const LPadding& InPadding) override { this->Padding = InPadding; }
     FORCEINLINE         auto GetPadding()    const -> const LPadding& { return this->Padding; }

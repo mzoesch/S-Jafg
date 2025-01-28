@@ -43,24 +43,24 @@ void Jafg::WDebugScreen::Construct()
             NewNode(WVBox)
             [
                 NewNode(WTextBlock)
-                    .Brush(LTextBlockBrush::Small())
-                    .Content(LSimpleString::SprintF("JAFG v{}", BuildInfo::GetEngineVersion().ToString()))
+                    .Brush(LTextBlockBrush::Small().TintRet({0, 0, 0, 128}))
+                    .Content(LString::SprintF("JAFG v{}", BuildInfo::GetEngineVersion().ToString()))
                 + NewNode(WTextBlock).SaveTo(this->FpsSection)
-                    .Brush(LTextBlockBrush::Small())
+                    .Brush(LTextBlockBrush::Small().TintRet({0, 0, 0, 128}))
                 + NewNode(WTextBlock).SaveTo(this->TimeStatsSection)
-                    .Brush(LTextBlockBrush::Small())
+                    .Brush(LTextBlockBrush::Small().TintRet({0, 0, 0, 128}))
             ]
             + NewNode(WSpacer).SetHeight(20.0f)
             + NewNode(WVBox)
             [
                 NewNode(WTextBlock).SaveTo(this->LocalPawnLocationSection)
-                    .Brush(LTextBlockBrush::Small())
+                    .Brush(LTextBlockBrush::Small().TintRet({0, 0, 0, 128}))
                 + NewNode(WTextBlock).SaveTo(this->LocalPawnFacingSection)
-                    .Brush(LTextBlockBrush::Small())
+                    .Brush(LTextBlockBrush::Small().TintRet({0, 0, 0, 128}))
                 + NewNode(WTextBlock).SaveTo(this->LocalPawnChunkSection)
-                    .Brush(LTextBlockBrush::Small())
+                    .Brush(LTextBlockBrush::Small().TintRet({0, 0, 0, 128}))
                 + NewNode(WTextBlock).SaveTo(this->LocalPawnVoxelSection)
-                    .Brush(LTextBlockBrush::Small())
+                    .Brush(LTextBlockBrush::Small().TintRet({0, 0, 0, 128}))
             ]
             + NewNode(WSpacer).SetHeight(20.0f)
             + NewNode(WVBox)
@@ -83,28 +83,28 @@ void Jafg::WDebugScreen::Construct()
                 NewNode(WTextBlock)
                     .Anchor(EAnchor::TopRight)
                     .Content("Memory statistics")
-                    .Brush(LTextBlockBrush::Small())
+                    .Brush(LTextBlockBrush::Small().TintRet({0, 0, 0, 128}))
                 + NewNode(WTextBlock)
                     .Anchor(EAnchor::TopRight)
                     .Content("Central processing unit information")
-                    .Brush(LTextBlockBrush::Small())
+                    .Brush(LTextBlockBrush::Small().TintRet({0, 0, 0, 128}))
                 + NewNode(WTextBlock)
                     .Anchor(EAnchor::TopRight)
                     .Content("Graphics processing unit information")
-                    .Brush(LTextBlockBrush::Small())
+                    .Brush(LTextBlockBrush::Small().TintRet({0, 0, 0, 128}))
                 + NewNode(WTextBlock)
                     .Anchor(EAnchor::TopRight)
                     .Content("Display information")
-                    .Brush(LTextBlockBrush::Small())
+                    .Brush(LTextBlockBrush::Small().TintRet({0, 0, 0, 128}))
             ]
             + NewNode(WSpacer)
                 .SetHeight(20.0f)
             + NewNode(WVBox).Anchor(EAnchor::TopRight)
             [
                 NewNode(WTextBlock).SaveTo(this->LocalPawnTargetVoxelSectionDestroy)
-                    .Brush(LTextBlockBrush::Small())
+                    .Brush(LTextBlockBrush::Small().TintRet({0, 0, 0, 128}))
                 + NewNode(WTextBlock).SaveTo(this->LocalPawnTargetVoxelSectionCreate)
-                    .Brush(LTextBlockBrush::Small())
+                    .Brush(LTextBlockBrush::Small().TintRet({0, 0, 0, 128}))
             ]
         ]
     ]
@@ -124,7 +124,7 @@ void Jafg::WDebugScreen::Tick()
         if (this->LocalPawnLocationSection)
         {
             const LVector Location = Controller->GetPossessed()->GetTranslation();
-            this->LocalPawnLocationSection->SetContent(LSimpleString::SprintF(
+            this->LocalPawnLocationSection->SetContent(LString::SprintF(
                 "XYZ: {:.3f} / {:.3f} / {:.3f}",
                 Location.X,
                 Location.Y,
@@ -152,7 +152,7 @@ void Jafg::WDebugScreen::Tick()
             {
                 YawAsText = "West (Towards negative Y)";
             }
-            this->LocalPawnFacingSection->SetContent(LSimpleString::SprintF(
+            this->LocalPawnFacingSection->SetContent(LString::SprintF(
                 "Facing: {} ({:.2f}Y / {:.2f}P)",
                 YawAsText, Rotator.Yaw, Rotator.Pitch
             ));
@@ -162,7 +162,7 @@ void Jafg::WDebugScreen::Tick()
         {
             const LVector Location = Controller->GetPossessed()->GetTranslation();
             const LChunkKey Key = LChunkKey(Location);
-            this->LocalPawnChunkSection->SetContent(LSimpleString::SprintF(
+            this->LocalPawnChunkSection->SetContent(LString::SprintF(
                 "Chunk: {} {} {}",
                 Key.X, Key.Y, Key.Z
             ));
@@ -172,7 +172,7 @@ void Jafg::WDebugScreen::Tick()
         {
             const LVector Location = Controller->GetPossessed()->GetTranslation();
             const LVoxelKey Key = LVoxelKey::FromWorldSpace(Location);
-            this->LocalPawnVoxelSection->SetContent(LSimpleString::SprintF(
+            this->LocalPawnVoxelSection->SetContent(LString::SprintF(
                 "Local voxel: {} {} {}",
                 Key.X, Key.Y, Key.Z
             ));
@@ -186,7 +186,7 @@ void Jafg::WDebugScreen::Tick()
                 if (const AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
                 {
                     const LVoxelKey Key = LVoxelKey::FromWorldSpace(Hit.GlobalWorldLocation);
-                    this->LocalPawnTargetVoxelSectionDestroy->SetContent(LSimpleString::SprintF("TvD: {} {} {}", Key.X, Key.Y, Key.Z));
+                    this->LocalPawnTargetVoxelSectionDestroy->SetContent(LString::SprintF("TvD: {} {} {}", Key.X, Key.Y, Key.Z));
                     break;
                 }
             }
@@ -204,7 +204,7 @@ void Jafg::WDebugScreen::Tick()
                 if (const AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
                 {
                     const LVoxelKey Key = HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal * 0.5f);
-                    this->LocalPawnTargetVoxelSectionCreate->SetContent(LSimpleString::SprintF("TvC: {} {} {}", Key.X, Key.Y, Key.Z));
+                    this->LocalPawnTargetVoxelSectionCreate->SetContent(LString::SprintF("TvC: {} {} {}", Key.X, Key.Y, Key.Z));
                     break;
                 }
             }
@@ -364,7 +364,7 @@ void Jafg::WDebugScreen::SlowTick()
     if (this->FpsSection)
     {
         this->FpsSection->SetContent(
-            LSimpleString::SprintF(
+            LString::SprintF(
                 "{} Fps @ {:.2f} ms T: {}; VSync: {} - Fcsssi: {}",
                 static_cast<int32>(Application::GetCurrentFps()),
                 Application::GetDeltaTimeAsFloat() * 1'000.0f,
@@ -378,7 +378,7 @@ void Jafg::WDebugScreen::SlowTick()
     if (this->TimeStatsSection)
     {
         this->TimeStatsSection->SetContent(
-            LSimpleString::SprintF(
+            LString::SprintF(
                 "Steady: Avg {}fps/{:.2f}ms; Low: {}fps/{:.2f}ms; High: {}fps/{:.2f}ms",
                 static_cast<int32>(static_cast<double>(Application::GetPreviousFrameCount()) / Application::GetRealTimeOfPreviousStatisticsDuration()),
                 static_cast<float>(1.0 / (static_cast<double>(Application::GetPreviousFrameCount()) / Application::GetRealTimeOfPreviousStatisticsDuration())) * 1'000.0f,

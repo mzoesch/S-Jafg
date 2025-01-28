@@ -44,8 +44,6 @@ public:
 
     // WWidgetParent implementation
     virtual void Draw(LViewport& Context) const override;
-    virtual void RemoveChild(WWidgetNode* InSlot) override;
-    virtual auto AddChild(WWidgetNode* InChild) -> LWidgetSlot* override;
     // ~WWidgetParent implementation
 
 private:

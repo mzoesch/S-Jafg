@@ -79,6 +79,7 @@ public:
     FORCEINLINE auto GetVTable()        const -> const LObjectClass*  { return this->VClass; }
     FORCEINLINE auto GetMutableVTable() const ->       LObjectClass*  { return this->VClass; }
     FORCEINLINE auto GetFullName()      const -> const LSimpleString& { return this->VClass->GetSpacedClassName(); }
+    FORCEINLINE auto GetName()          const ->       LName          { return this->VClass->GetName(); }
 
     //#
     //# Gets the context that this object lives in and shares its lifetime with it.

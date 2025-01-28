@@ -18,6 +18,10 @@ struct LTextBlockBrush
     LColor Color = LColor::White;
     float  Scale = 1.0f;
 
+    FORCEINLINE LTextBlockBrush& TintRet(const LColor& InTint) { this->Tint = InTint; return *this; }
+    FORCEINLINE LTextBlockBrush& ColorRet(const LColor& InColor) { this->Color = InColor; return *this; }
+    FORCEINLINE LTextBlockBrush& ScaleRet(const float InScale) { this->Scale = InScale; return *this; }
+
     ENGINE_API static LTextBlockBrush Small();
 };
 
@@ -29,8 +33,8 @@ public:
     using Super         = TWidgetFactory<TNode>;
     using TFactoryRetTy = typename Super::TFactoryRetTy;
 
-    FORCEINLINE TFactoryRetTy& Content(const LSimpleString&  InContent) { this->This()->SetContent(InContent); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Content(LSimpleString&& InContent) { this->This()->SetContent(std::move(InContent)); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Content(const LString&  InContent) { this->This()->SetContent(InContent); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Content(LString&& InContent) { this->This()->SetContent(std::move(InContent)); return this->Self(); }
 
     FORCEINLINE TFactoryRetTy& Color(const LColor&  InColor) { this->This()->SetColor(InColor); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Brush(const LTextBlockBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
@@ -56,9 +60,9 @@ public:
     virtual auto UpdateDesiredSize() const -> void override;
 
     FORCEINLINE void EmptyContent() { this->Content.Empty(); }
-    FORCEINLINE void SetContent(const LSimpleString& InContent) { this->Content = InContent; }
-    FORCEINLINE void SetContent(LSimpleString&& InContent) { this->Content = std::move(InContent); }
-    FORCEINLINE auto GetContent() const -> const LSimpleString& { return this->Content;      }
+    FORCEINLINE void SetContent(const LString& InContent) { this->Content = InContent; }
+    FORCEINLINE void SetContent(LString&& InContent) { this->Content = std::move(InContent); }
+    FORCEINLINE auto GetContent() const -> const LString& { return this->Content;      }
 
     FORCEINLINE void SetColor(const LColor& InColor) { this->Brush.Color = InColor; }
     FORCEINLINE auto GetColor() const -> const LColor& { return this->Brush.Color; }
@@ -82,7 +86,7 @@ private:
     //# The padding area between the slot and the content it contains.
     LPadding Padding = LPadding(4.5f);
 
-    LSimpleString   Content = nullptr;
+    LString         Content = nullptr;
     LTextBlockBrush Brush   = { };
 
     uint32  Vao               = 0x0u;

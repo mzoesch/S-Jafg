@@ -5,6 +5,7 @@
 
 bool Jafg::LObjectClass::DerivesFrom(const LObjectClass* InParent) const
 {
+    check( InParent )
     const LObjectClass* Current = this;
     while (Current != nullptr)
     {

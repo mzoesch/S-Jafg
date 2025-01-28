@@ -21,8 +21,9 @@ public:
     using TObj = InTObj;
 
     TSubclassOf() = default;
-    DEFAULT_REALLOC_OF_ANY_FORM(TSubclassOf)
     ~TSubclassOf() = default;
+
+    FORCEINLINE TSubclassOf(LNullptrTy) { this->Class = nullptr; }
 
     FORCEINLINE TSubclassOf(const LObjectClass* InClass) : Class(InClass) { check( this->IsValidType() ) }
     FORCEINLINE TSubclassOf& operator=(const LObjectClass* InClass)
@@ -37,7 +38,7 @@ public:
     {
         static_assert(std::is_base_of_v<Private::JObjectBase, U>);
         static_assert(std::is_base_of_v<TObj, U>);
-        this->Class = Other->GetVTable();
+        this->Class = Other.Class;
         check( this->IsValidType() )
     }
     template <typename U>
@@ -45,7 +46,7 @@ public:
     {
         static_assert(std::is_base_of_v<Private::JObjectBase, U>);
         static_assert(std::is_base_of_v<TObj, U>);
-        this->Class = Other->GetVTable();
+        this->Class = Other.Class;
         check( this->IsValidType() )
         return *this;
     }
@@ -69,7 +70,18 @@ public:
         return *this;
     }
 
-    FORCEINLINE operator LObjectClass*() const { return **this; }
+    FORCEINLINE bool IsSet() const { return this->Class != nullptr; }
+    template <typename U>
+    FORCEINLINE void Set()
+    {
+        static_assert(std::is_base_of_v<Private::JObjectBase, U>);
+        static_assert(std::is_base_of_v<TObj, U>);
+        this->Class = U::StaticClass();
+        checkSlow( this->IsValidType() )
+        return;
+    }
+
+    FORCEINLINE operator const LObjectClass*() const { return **this; }
     FORCEINLINE const LObjectClass* Get() const { return **this; }
     FORCEINLINE const LObjectClass* operator->() const { return **this; }
     FORCEINLINE const LObjectClass* operator*() const
@@ -102,6 +114,10 @@ public:
         }
         return true;
     }
+
+    FORCEINLINE operator bool() const { return this->Class != nullptr; }
+    FORCEINLINE bool operator==(const LNullptrTy) const { return this->Class == nullptr; }
+    FORCEINLINE bool operator!=(const LNullptrTy) const { return this->Class != nullptr; }
 
 private:
 

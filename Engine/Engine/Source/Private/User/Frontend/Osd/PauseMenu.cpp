@@ -1,28 +1,61 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "User/Frontend/Osd/PauseMenu.h"
 #include "Widgets/WidgetRegion.h"
-#include "Widgets/Compound/TabBar.h"
+#include "Widgets/WidgetSwitcher.h"
+#include "Widgets/Blueprint/CommonMenuTabBar.h"
 
 void Jafg::WPauseMenu::Construct()
 {
     Super::Construct();
 
-    MakeRootNode(WWidgetRegion)
-    .Anchor(EAnchor::Fill)
+    MakeRootNode(WWidgetRegion).Anchor(EAnchor::Fill)
     [
-        NewNode(WWidgetRegion)
-        .Anchor(EAnchor::TopRight)
-        .Tint(LColor::Black)
-        .Padding(50.0f)
-    ]
-    [
-        NewNode(WTabBar) >> this->PauseTabBar
+        NewNode(WCommonMenuTabBar).SaveTo(this->PauseTabBar).Anchor(EAnchor::Fill)
     ]
     FinishWidgetStyling()
 
-    check( this->PauseTabBar )
+    {
+        LTabBarTabDescriptor Descriptor;
+        Descriptor.Identifier = "Resume";
+        this->PauseTabBar->RegisterTab(std::move(Descriptor));
+    }
+
+    {
+        LTabBarTabDescriptor Descriptor;
+        Descriptor.Identifier = "Achievements";
+        this->PauseTabBar->RegisterTab(std::move(Descriptor));
+    }
+
+    {
+        LTabBarTabDescriptor Descriptor;
+        Descriptor.Identifier = "Encyclopedia";
+        this->PauseTabBar->RegisterTab(std::move(Descriptor));
+    }
+
+    {
+        LTabBarTabDescriptor Descriptor;
+        Descriptor.Identifier = "Preferences";
+        this->PauseTabBar->RegisterTab(std::move(Descriptor));
+    }
+
+    {
+        LTabBarTabDescriptor Descriptor;
+        Descriptor.Identifier = "SessionOptions";
+        this->PauseTabBar->RegisterTab(std::move(Descriptor));
+    }
+
+    {
+        LTabBarTabDescriptor Descriptor;
+        Descriptor.Identifier = "ExitToMenu";
+        this->PauseTabBar->RegisterTab(std::move(Descriptor));
+    }
+
+    {
+        LTabBarTabDescriptor Descriptor;
+        Descriptor.Identifier = "ExitToDesktop";
+        this->PauseTabBar->RegisterTab(std::move(Descriptor));
+    }
 
     return;
 }

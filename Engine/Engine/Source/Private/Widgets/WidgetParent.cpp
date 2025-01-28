@@ -25,7 +25,7 @@ void Jafg::WWidgetParent::Construct()
 
     for (const LWidgetSlot* ChildSlot : this->Children)
     {
-        ChildSlot->Content->BeginLife();
+        MakeDeferredWidgetNodeFinal(ChildSlot->Content);
     }
 
     return;
@@ -97,11 +97,22 @@ void Jafg::WWidgetParent::RemoveChild(LWidgetSlot* Child)
     this->RemoveChild(Child->Content);
 }
 
-Jafg::LWidgetSlot* Jafg::WWidgetParent::AddChild(WWidgetNode* Child)
+Jafg::LWidgetSlot* Jafg::WWidgetParent::AddChild(WWidgetNode* InChild)
 {
-    check( Child )
-    LWidgetSlot* NewChildSlot = new LWidgetSlot(this, Child);
+    check( InChild )
+    LWidgetSlot* NewChildSlot = new LWidgetSlot(this, InChild);
     this->Children.Add(NewChildSlot);
+    NewChildSlot->Content->Slot = NewChildSlot;
+    NewChildSlot->Margin = this->GetPaddingPtr();
+
+    return NewChildSlot;
+}
+
+Jafg::LWidgetSlot* Jafg::WWidgetParent::AddChildAt(const int32 InIndex, WWidgetNode* InChild)
+{
+    check( InChild )
+    LWidgetSlot* NewChildSlot = new LWidgetSlot(this, InChild);
+    this->Children.AddAt(InIndex, NewChildSlot);
     NewChildSlot->Content->Slot = NewChildSlot;
     NewChildSlot->Margin = this->GetPaddingPtr();
 

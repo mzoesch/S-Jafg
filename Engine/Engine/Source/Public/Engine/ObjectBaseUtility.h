@@ -115,10 +115,10 @@ FORCEINLINE auto DynamicCast(const Private::JObjectBase* InObject) -> const TObj
 //# @return The casted object. Will never return nullptr (if bAllowForNullptr is false). But the return value might be
 //#         meaningless if DO_CHECKS is false. So you cannot check if this object is valid, e.g., if it is nullptr.
 //#
-template <typename TObj, bool bAllowForNullptr = false>
-FORCEINLINE auto CheckedStaticCast(Private::JObjectBase* InObject) -> TObj*;
-template <typename TObj, bool bAllowForNullptr = false>
-FORCEINLINE auto CheckedStaticCast(const Private::JObjectBase* InObject) -> const TObj*;
+template <typename TObj, typename U, bool bAllowForNullptr = false>
+FORCEINLINE auto CheckedStaticCast(U* InObject) -> TObj*;
+template <typename TObj, typename U, bool bAllowForNullptr = false>
+FORCEINLINE auto CheckedStaticCast(const U* InObject) -> const TObj*;
 
 //# @return The default package referrer.
 template <typename TObj>
@@ -239,12 +239,12 @@ public:
     //# Registers all pending packages that are waiting for registration.
     //# Loads them into memory and initializes the default package referrer for them.
     //#
-    ENGINE_API void LoadPendingPackages(void);
+    ENGINE_API void LoadPendingPackages();
     //#
     //# Validates all loaded packages by checking for name conflicts and for the existence
     //# of a content default referrer.
     //#
-    ENGINE_API void ValidateLoadedPackages(void);
+    ENGINE_API void ValidateLoadedPackages();
 
     ENGINE_API auto DoesPackageWithNameExist(const LSimpleString& SpacedClassName) const -> bool;
     ENGINE_API auto GetPackageByName(const LSimpleString& SpacedClassName) -> LRegistryPackage*;
@@ -404,7 +404,7 @@ TObj* NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* 
         static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     }
 
-    return reinterpret_cast<TObj*>(NewDeferredObject(InContext, InStaticClass));
+    return CheckedStaticCast<TObj>(NewDeferredObject(InContext, InStaticClass));
 }
 
 Private::JObjectBase* NewDeferredObject(const LSimpleString& InClassName)
@@ -440,7 +440,7 @@ TObj* DynamicCast(Private::JObjectBase* InObject)
 {
     if (InObject && Private::LObjectMiscellaneousAccessor::DynamicCast(InObject, TObj::StaticClass()))
     {
-        return reinterpret_cast<TObj*>(InObject);
+        return static_cast<TObj*>(InObject);
     }
 
     return nullptr;
@@ -452,9 +452,11 @@ const TObj* DynamicCast(const Private::JObjectBase* InObject)
     return DynamicCast<TObj>(const_cast<Private::JObjectBase*>(InObject));
 }
 
-template <typename TObj, bool bAllowForNullptr /* = false */>
-TObj* CheckedStaticCast(Private::JObjectBase* InObject)
+template <typename TObj, typename U, bool bAllowForNullptr /* = false */>
+TObj* CheckedStaticCast(U* InObject)
 {
+    static_assert(std::is_base_of_v<Private::JObjectBase, U>);
+
 #if DO_CHECKS
     if constexpr (bAllowForNullptr)
     {
@@ -477,14 +479,14 @@ TObj* CheckedStaticCast(Private::JObjectBase* InObject)
 
     return nullptr;
 #else /* DO_CHECKS */
-    return reinterpret_cast<TObj*>(InObject);
+    return static_cast<TObj*>(InObject);
 #endif /* !DO_CHECKS */
 }
 
-template <typename TObj, bool bAllowForNullptr>
-const TObj* CheckedStaticCast(const Private::JObjectBase* InObject)
+template <typename TObj, typename U, bool bAllowForNullptr /* = false */>
+const TObj* CheckedStaticCast(const U* InObject)
 {
-    return CheckedStaticCast<TObj, bAllowForNullptr>(const_cast<Private::JObjectBase*>(InObject));
+    return CheckedStaticCast<TObj, U, bAllowForNullptr>(const_cast<U*>(InObject));
 }
 
 template <typename TObj>

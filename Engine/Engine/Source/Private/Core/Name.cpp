@@ -124,6 +124,7 @@ bool Jafg::Private::LNameRegistry::RegisterName(const LSimpleString& InName)
     }
 
     this->Names.Emplace(std::move(LowerName));
+    LOG_TRACE(LogNames, "Registered name [{}].", *this->Names.GetLast())
     return true;
 }
 

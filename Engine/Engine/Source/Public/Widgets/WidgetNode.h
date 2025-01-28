@@ -312,6 +312,8 @@ public:
     FORCEINLINE TFactoryRetTy& Anchor(const LAnchor&      InAnchor) { this->This()->SetAnchor(InAnchor); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Anchor(const EAnchor::Type InAnchor) { this->This()->SetAnchor(InAnchor); return this->Self(); }
 
+    FORCEINLINE TFactoryRetTy& MinDesiredSize(const LVector2& InSize) { this->This()->SetMinDesiredSize(InSize); return this->Self(); }
+
     FORCEINLINE TFactoryRetTy& Visibility(const EWidgetVisibility::Type InVisibility) { this->This()->SetVisibility(InVisibility); return this->Self(); }
 
     template <typename T> FORCEINLINE auto SaveTo(T*& Out) -> TFactoryRetTy&;
@@ -328,6 +330,7 @@ public:
 //#
 template <typename TNode>
 FORCEINLINE auto ConstructWidgetNode(Private::LObjectContext* InContext) -> TNode*;
+FORCEINLINE auto ConstructWidgetNode(Private::LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass) -> WWidgetNode*;
 //#
 //# Constructs a new deferred widget node in the given context.
 //# @see NewNode(TNode) (Wsdsml)
@@ -335,6 +338,7 @@ FORCEINLINE auto ConstructWidgetNode(Private::LObjectContext* InContext) -> TNod
 //#
 template <typename TNode>
 FORCEINLINE auto ConstructDeferredWidgetNode(Private::LObjectContext* InContext) -> TNode*;
+FORCEINLINE auto ConstructDeferredWidgetNode(Private::LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass) -> WWidgetNode*;
 
 //#
 //# Before constructing empty context widget, update the global specific widget context.
@@ -345,12 +349,24 @@ ENGINE_API extern Private::LObjectContext* GCurrentWidgetContextState;
 //# Constructs a new widget node in the current context of the current program widget state context.
 template <typename TNode>
 FORCEINLINE auto ConstructWidgetNode() -> TNode*;
+template <typename TNode>
+FORCEINLINE auto ConstructWidgetNode(const TSubclassOf<TNode>& InClass) -> TNode*;
+FORCEINLINE auto ConstructWidgetNode(const TSubclassOf<WWidgetNode>& InClass) -> WWidgetNode*;
 //# Constructs a new deferred widget node in the current context of the current program widget state context.
 template <typename TNode>
 FORCEINLINE auto ConstructDeferredWidgetNode() -> TNode*;
+template <typename TNode>
+FORCEINLINE auto ConstructDeferredWidgetNode(const TSubclassOf<TNode>& InClass) -> TNode*;
+FORCEINLINE auto ConstructDeferredWidgetNode(const TSubclassOf<WWidgetNode>& InClass) -> WWidgetNode*;
+FORCEINLINE auto ConstructDeferredWidgetNodeImpl(const TSubclassOf<WWidgetNode>& InClass) -> WWidgetNode*;
 
 //# Call this method to finalize a widget that was deferred.
 FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode);
+
+struct LWidgetNodeData
+{
+    LName DerivedClass;
+};
 
 //#
 //# The base class for everything that can be interpreted as a visual element.
@@ -395,6 +411,9 @@ public:
     //# replaces the #EndLife super method.
     //#
     virtual void Destruct() { }
+
+    //# Use this method to pass arbitrary typesafe data to the widget.
+    virtual bool AddData(LWidgetNodeData* InData) { return false; }
 
             bool         IsInBounds(const LViewport& Context, const LVector2& InLocation) const;
     virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation);
@@ -460,8 +479,10 @@ public:
     virtual auto GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const -> LVector2;
     //# Virtual update method for the desired size. Automatically called.
     virtual void UpdateDesiredSize() const { }
-    FORCEINLINE auto SetDesiredSize(const LVector2& InSize) const -> void { this->DesiredSize = InSize; }
+            void SetDesiredSize(const LVector2& InSize) const;
     FORCEINLINE auto GetDesiredSize() const -> const LVector2& { return this->DesiredSize; }
+    FORCEINLINE auto GetMinDesiredSize() const -> const LVector2& { return this->MinDesiredSize; }
+    FORCEINLINE auto SetMinDesiredSize(const LVector2& InSize) -> void { this->MinDesiredSize = InSize; }
 
     //#
     //# @param WhoAsked The widget that asked for the anchored top left. Must be a direct child.
@@ -519,6 +540,11 @@ private:
     mutable LVector2 DesiredSize = LVector2::Zero();
 
     //#
+    //# The minimum content area.
+    //#
+    LVector2 MinDesiredSize = LVector2::Zero();
+
+    //#
     //# The anchored size of this widget.
     //#
     mutable LVector2 AnchoredSize = LVector2::Zero();
@@ -556,7 +582,7 @@ template <typename T>
 typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::SaveTo(T*& Out)
 {
     static_assert(std::is_base_of_v<WWidgetNode, T>);
-    static_assert(std::is_base_of_v<TNodeTy, T>);
+    static_assert(std::is_base_of_v<T, TNodeTy>);
     Out = this->GetNode();
     return this->Self();
 }
@@ -569,33 +595,69 @@ typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::AddSibling
     return this->Self();
 }
 
-template <typename TNode>
-FORCEINLINE auto ConstructWidgetNode(Private::LObjectContext* InContext) -> TNode*
+WWidgetNode* ConstructWidgetNode(Private::LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass)
 {
-    TNode* Node = ConstructDeferredWidgetNode<TNode>(InContext);
+    WWidgetNode* Node = ConstructDeferredWidgetNode(InContext, InClass);
     ::Jafg::MakeDeferredWidgetNodeFinal(Node);
     return Node;
 }
 
 template <typename TNode>
-FORCEINLINE auto ConstructDeferredWidgetNode(Private::LObjectContext* InContext) -> TNode*
+TNode* ConstructWidgetNode(Private::LObjectContext* InContext)
 {
-    checkSlow( InContext )
-    return NewDeferredObject<TNode, false, true>(InContext, TNode::StaticClass());
+    return CheckedStaticCast<TNode>(InContext, TNode::StaticClass());
 }
 
 template <typename TNode>
-FORCEINLINE auto ConstructWidgetNode() -> TNode*
+TNode* ConstructDeferredWidgetNode(Private::LObjectContext* InContext)
 {
-    checkSlow( GCurrentWidgetContextState != nullptr )
-    return ConstructWidgetNode<TNode>(GCurrentWidgetContextState);
+    return CheckedStaticCast<TNode>(ConstructDeferredWidgetNode(InContext, TNode::StaticClass()));
+}
+
+WWidgetNode* Jafg::ConstructDeferredWidgetNode(Private::LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass)
+{
+    return NewDeferredObject<WWidgetNode, false, true>(InContext, InClass);
 }
 
 template <typename TNode>
-FORCEINLINE auto ConstructDeferredWidgetNode() -> TNode*
+TNode* ConstructWidgetNode()
 {
-    checkSlow( GCurrentWidgetContextState != nullptr )
-    return ConstructDeferredWidgetNode<TNode>(GCurrentWidgetContextState);
+    return ConstructWidgetNode(TNode::StaticClass());
+}
+
+template <typename TNode>
+TNode* ConstructWidgetNode(const TSubclassOf<TNode>& InClass)
+{
+    return CheckedStaticCast<TNode>(ConstructWidgetNode(InClass));
+}
+
+WWidgetNode* ConstructWidgetNode(const TSubclassOf<WWidgetNode>& InClass)
+{
+    checkSlow( GCurrentWidgetContextState )
+    return ConstructWidgetNode(GCurrentWidgetContextState, InClass);
+}
+
+template <typename TNode>
+TNode* ConstructDeferredWidgetNode()
+{
+    return CheckedStaticCast<TNode>(ConstructDeferredWidgetNode(TNode::StaticClass()));
+}
+
+template <typename TNode>
+TNode* ConstructDeferredWidgetNode(const TSubclassOf<TNode>& InClass)
+{
+    return CheckedStaticCast<TNode>(ConstructDeferredWidgetNodeImpl(InClass));
+}
+
+WWidgetNode* ConstructDeferredWidgetNode(const TSubclassOf<WWidgetNode>& InClass)
+{
+    return ConstructDeferredWidgetNodeImpl(InClass);
+}
+
+WWidgetNode* ConstructDeferredWidgetNodeImpl(const TSubclassOf<WWidgetNode>& InClass)
+{
+    checkSlow( GCurrentWidgetContextState )
+    return ConstructDeferredWidgetNode(GCurrentWidgetContextState, InClass);
 }
 
 FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode)

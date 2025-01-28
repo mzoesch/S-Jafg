@@ -49,7 +49,7 @@ struct TVector2 final
 
     FORCEINLINE          TVector2()                         noexcept = default;
     FORCEINLINE explicit TVector2(const T InFloatingPoint)  noexcept : Y(InFloatingPoint), X(InFloatingPoint) { }
-    FORCEINLINE explicit TVector2(const T InX, const T InY) noexcept : X(InX), Y(InY) { }
+    FORCEINLINE          TVector2(const T InX, const T InY) noexcept : X(InX), Y(InY) { }
     FORCEINLINE explicit TVector2(const T InXY[2])          noexcept : X(InXY[0]), Y(InXY[1]) { }
     FORCEINLINE          TVector2(const TVector2<T>& InVec) noexcept : X(InVec.X), Y(InVec.Y) { }
     FORCEINLINE          TVector2(TVector2<T>&& InVec)      noexcept : X(InVec.X), Y(InVec.Y) { }

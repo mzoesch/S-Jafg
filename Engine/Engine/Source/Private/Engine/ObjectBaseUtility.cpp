@@ -139,6 +139,7 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
         LRegistryPackage NewPackage;
         NewPackage.StaticClass                         = new LObjectClass();
         NewPackage.StaticClass->SpacedClassName        = Package.SpacedClassName;
+        NewPackage.StaticClass->ClassName              = MAKE_DYNAMIC_NAME(NewPackage.StaticClass->SpacedClassName);
         NewPackage.StaticClass->DefaultPackageReferrer = Package.GetContentDefault();
         check( NewPackage.StaticClass->SpacedClassName.IsEmpty() == false )
         check( NewPackage.StaticClass->DefaultPackageReferrer != nullptr )
