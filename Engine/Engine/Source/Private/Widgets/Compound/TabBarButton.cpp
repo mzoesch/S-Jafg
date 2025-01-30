@@ -25,5 +25,15 @@ bool Jafg::WTabBarButton::AddData(LWidgetNodeData* InData)
         ];
     }
 
+    this->Context = Data->Context;
+    this->Identifier = Data->Descriptor->Identifier;
+
     return true;
+}
+
+void Jafg::WTabBarButton::OnPrimaryPress()
+{
+    Super::OnPrimaryPress();
+    this->Context->OnTabBarButtonPressed(this->Identifier);
+    return;
 }

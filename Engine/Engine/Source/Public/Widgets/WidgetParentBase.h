@@ -49,6 +49,7 @@ public:
 
     virtual void UpdateDesiredSize() const override;
     virtual void UpdateAnchoredSize(const LViewport& Context) const override;
+    virtual void UpdateAnchoredSizeOfChildren(const LViewport& Context) const override final;
 
     virtual auto GetChildren() const               -> const TdhArray<LWidgetSlot*>& PURE_VIRTUAL(return WWidgetParentBase::NothingArrayReference)
     virtual auto RemoveChild(WWidgetNode* InChild) -> void PURE_VIRTUAL()

@@ -121,6 +121,7 @@ struct LColor final
     static const LColor Transparent;
     static const LColor White;
     static const LColor Black;
+    static const LColor Gray;
     static const LColor Red;
     static const LColor DarkRed;
     static const LColor Green;

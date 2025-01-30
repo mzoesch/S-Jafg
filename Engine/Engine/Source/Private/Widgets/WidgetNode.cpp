@@ -108,6 +108,7 @@ LSimpleString LexToString(const EWidgetVisibility::Type InVisibility)
     case EWidgetVisibility::Visible: { return "Visible"; }
     case EWidgetVisibility::Hidden: { return "Hidden"; }
     case EWidgetVisibility::Collapsed: { return "Collapsed"; }
+    case EWidgetVisibility::DerivedHitTestInvisible: { return "DerivedHitTestInvisible"; }
     case EWidgetVisibility::TransitiveHitTestInvisible: { return "TransitiveHitTestInvisible"; }
     case EWidgetVisibility::IntransitiveHitTestInvisible: { return "IntransitiveHitTestInvisible"; }
     default: checkNoEntry() return { };
@@ -168,14 +169,14 @@ Jafg::LCursorReply Jafg::WWidgetNode::SweepMouse(LViewport& Context, const LVect
 
 Jafg::LReply Jafg::WWidgetNode::SweepFocusTest(LViewport& Context, const LVector2& InLocation)
 {
-    if (this->IsHitTestable() == false)
-    {
-        return LReply::HandledWithFocusLost();
-    }
-
     if (this->IsInBounds(Context, InLocation) == false)
     {
         return LReply::Unhandled();
+    }
+
+    if (this->IsHitTestable() == false)
+    {
+        return LReply::HandledWithFocusLost();
     }
 
     return { this };

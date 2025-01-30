@@ -47,6 +47,7 @@ class LCursorReply final : public TReplyBase<LCursorReply>
 {
 public:
 
+    static LCursorReply Handled()   { return { EMouseCursor::Default }; }
     static LCursorReply Unhandled() { return { }; }
 
     LCursorReply() : TReplyBase<LCursorReply>(false) { }

@@ -50,7 +50,13 @@ void Jafg::LBoxShaderContext::Draw(
     checkSlow( this->bIsMeaningful )
     check( Size.X > 0.0f )
     check( Size.Y > 0.0f )
-    check( static_cast<float>(Context.GetDimensions().X) >= TopLeft.X + Size.X )
+
+    if (!(static_cast<float>(Context.GetDimensions().X) >= TopLeft.X + Size.X))
+    {
+        LOG_ERROR(LogTemporal, "{} {}", Context.GetDimensions().X, TopLeft.X + Size.X)
+    }
+
+    // check( static_cast<float>(Context.GetDimensions().X) >= TopLeft.X + Size.X )
     check( static_cast<float>(Context.GetDimensions().Y) >= TopLeft.Y + Size.Y )
 
     if (this->LastFrameTexture != Texture)

@@ -8,6 +8,7 @@
 namespace Jafg
 {
 
+class WTabBar;
 class WTextBlock;
 
 //# @see Widgets/Compound/TabBar.h
@@ -24,6 +25,8 @@ public:
 
     virtual bool AddData(LWidgetNodeData* InData) override;
 
+    virtual void OnPrimaryPress() override;
+
     FORCEINLINE bool IsButtonTextWidgetValid() const { return this->ButtonText != nullptr; }
     FORCEINLINE auto GetButtonTextWidget() -> WTextBlock* { return this->ButtonText; }
     FORCEINLINE auto GetButtonTextWidget() const -> const WTextBlock* { return this->ButtonText; }
@@ -32,6 +35,8 @@ public:
 
 private:
 
+    WTabBar* Context = nullptr;
+    LSimpleString Identifier;
     WTextBlock* ButtonText = nullptr;
 };
 

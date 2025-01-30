@@ -16,7 +16,13 @@ class ENGINE_API WTabBarPanel : public WTabBarBase
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WTabBarPanel)
+    explicit WTabBarPanel(const LObjectInitializer& ObjectInitializer);
+
+public:
+
+    // WWidgetNode implementation
+    virtual void UpdateDesiredSize() const override;
+    // ~WWidgetNode implementation
 };
 
 } /* ~Namespace Jafg */

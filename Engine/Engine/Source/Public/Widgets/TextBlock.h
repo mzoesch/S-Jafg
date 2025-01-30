@@ -37,6 +37,8 @@ public:
     FORCEINLINE TFactoryRetTy& Content(LString&& InContent) { this->This()->SetContent(std::move(InContent)); return this->Self(); }
 
     FORCEINLINE TFactoryRetTy& Color(const LColor&  InColor) { this->This()->SetColor(InColor); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Tint(const LColor&  InTint) { this->This()->SetTint(InTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Scale(const float InScale) { this->This()->SetScale(InScale); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Brush(const LTextBlockBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
 
     FORCEINLINE TFactoryRetTy& Padding(const LPadding&  InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
@@ -66,6 +68,10 @@ public:
 
     FORCEINLINE void SetColor(const LColor& InColor) { this->Brush.Color = InColor; }
     FORCEINLINE auto GetColor() const -> const LColor& { return this->Brush.Color; }
+    FORCEINLINE void SetTint(const LColor& InTint) { this->Brush.Tint = InTint; }
+    FORCEINLINE auto GetTint() const -> const LColor& { return this->Brush.Tint; }
+    FORCEINLINE void SetScale(const float InScale) { this->Brush.Scale = InScale; }
+    FORCEINLINE auto GetScale() const -> float { return this->Brush.Scale; }
 
     FORCEINLINE void SetBrush(const LTextBlockBrush& InBrush) { this->Brush = InBrush; }
     FORCEINLINE auto GetBrush() const -> const LTextBlockBrush& { return this->Brush;    }

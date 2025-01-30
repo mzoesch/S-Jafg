@@ -19,5 +19,4 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(WTabBarBase)
 };
 
-
 } /* ~Namespace Jafg */

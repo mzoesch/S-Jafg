@@ -157,6 +157,10 @@ struct LAnchor final
     ENGINE_API bool IsNormalized() const;
     ENGINE_API void Normalize();
 
+    FORCEINLINE bool IsStretchedHorizontal() const { return this->MinX != this->MaxX; }
+    FORCEINLINE bool IsStretchedVertical() const { return this->MinY != this->MaxY; }
+    FORCEINLINE bool IsStretched() const { return this->IsStretchedHorizontal() || this->IsStretchedVertical(); }
+
     void ApplyConstraints(const EAnchor::Type InConstraints)
     {
         if (InConstraints & EAnchor::VTop)    { this->Anchors += LAnchor::VTop.Anchors; }
@@ -211,6 +215,12 @@ enum Type : uint8
     Collapsed,
 
     //#
+    //# Visible, takes up space in the widget layout and is hit-testable, but all children are not.
+    //# Widgets in this state will be ticked.
+    //#
+    DerivedHitTestInvisible,
+
+    //#
     //# Visible, takes up space in the widget layout and is not hit-testable.
     //# Widgets in this state will be ticked.
     //#
@@ -226,7 +236,25 @@ enum Type : uint8
 FORCEINLINE bool IsDrawn(const EWidgetVisibility::Type InVisibility)
 {
     return InVisibility == EWidgetVisibility::Visible
+        || InVisibility == EWidgetVisibility::DerivedHitTestInvisible
         || InVisibility == EWidgetVisibility::TransitiveHitTestInvisible
+        || InVisibility == EWidgetVisibility::IntransitiveHitTestInvisible;
+}
+
+FORCEINLINE bool IsTicked(const EWidgetVisibility::Type InVisibility)
+{
+    return EWidgetVisibility::IsDrawn(InVisibility);
+}
+
+FORCEINLINE bool IsHitTestable(const EWidgetVisibility::Type InVisibility)
+{
+    return InVisibility == EWidgetVisibility::Visible
+        || InVisibility == EWidgetVisibility::DerivedHitTestInvisible;
+}
+
+FORCEINLINE bool IsDerivedHitTestable(const EWidgetVisibility::Type InVisibility)
+{
+    return InVisibility == EWidgetVisibility::Visible
         || InVisibility == EWidgetVisibility::IntransitiveHitTestInvisible;
 }
 
@@ -432,18 +460,19 @@ public:
 
     virtual auto Draw(LViewport& Context) const -> void { }
 
-    FORCEINLINE auto ShouldNowTick() const -> bool;
+    FORCEINLINE auto ShouldNowTick() const -> bool { return ( this->bDisableTick == false ) && ( this->ShouldNowDraw() ); }
     FORCEINLINE auto GetRawShouldTick() const -> bool { return this->bDisableTick == false; }
     FORCEINLINE auto SetShouldTick(const bool bInShouldTick) -> void { this->bDisableTick = (bInShouldTick == false); }
-    FORCEINLINE auto ShouldNowDraw() const -> bool;
+    FORCEINLINE auto ShouldNowDraw() const -> bool { return EWidgetVisibility::IsDrawn(this->Visibility); }
     FORCEINLINE auto GetVisibility() const -> EWidgetVisibility::Type { return this->Visibility; }
-    FORCEINLINE auto IsWidgetVisible() const -> bool { return ShouldNowDraw(); }
-    FORCEINLINE auto IsHitTestable() const -> bool { return this->Visibility == EWidgetVisibility::Visible; }
-    FORCEINLINE auto CanChildrenBeHitTestable() const -> bool { return this->IsHitTestable() || this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible; }
+    FORCEINLINE auto IsWidgetVisible() const -> bool { return this->ShouldNowDraw(); }
+    FORCEINLINE auto IsHitTestable() const -> bool { return EWidgetVisibility::IsHitTestable(this->Visibility); }
+    FORCEINLINE auto CanChildrenBeHitTestable() const -> bool { return EWidgetVisibility::IsDerivedHitTestable(this->Visibility); }
     FORCEINLINE auto ShouldCheckForInputs() const -> bool { return this->IsHitTestable() || this->CanChildrenBeHitTestable(); }
     FORCEINLINE auto IsVisible() const -> bool { return this->Visibility == EWidgetVisibility::Visible; }
     FORCEINLINE auto IsHidden() const -> bool { return this->Visibility == EWidgetVisibility::Hidden; }
     FORCEINLINE auto IsCollapsed() const -> bool { return this->Visibility == EWidgetVisibility::Collapsed; }
+    FORCEINLINE auto IsDerivedHitTestInvisible() const -> bool { return this->Visibility == EWidgetVisibility::DerivedHitTestInvisible; }
     FORCEINLINE auto IsTransitiveHitTestInvisible() const -> bool { return this->Visibility == EWidgetVisibility::TransitiveHitTestInvisible; }
     FORCEINLINE auto IsIntransitiveHitTestInvisible() const -> bool { return this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible; }
                 auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> void;
@@ -492,25 +521,22 @@ public:
     virtual auto GetAnchoredTopLeftFromMostOuter(const LViewport& Context, const WWidgetNode* WhoAsked) const -> LVector2;
     //# Virtual update method for the anchored size. Automatically called.
     virtual void UpdateAnchoredSize(const LViewport& Context) const;
+    virtual void UpdateAnchoredSizeOfChildren(const LViewport& Context) const { }
     FORCEINLINE auto SetAnchoredSize(const LVector2& InSize) const -> void { this->AnchoredSize = InSize; }
     FORCEINLINE auto GetAnchoredSize() const -> LVector2 { return this->AnchoredSize; }
 
     FORCEINLINE auto GetSlot() const -> LWidgetSlot* { return this->Slot; }
 
-    auto GetApplicationInstance() const -> LApplicationInstance*;
-    auto GetEngine() const -> LEngine*;
-    auto GetLocalEgo() const -> LLocalEgo*;
-
     //#
-    //#  Prepare and use the factory for the given node. Only valid in the engine tick where the factory was requested
-    //#  for. A new factory has to be requested for every new widget node and if the Wdsmml syntax is used for a given
-    //#  node that is already living for an x amount of time.
+    //# Prepare and use the factory for the given node. Only valid in the engine tick where the factory was requested
+    //# for. A new factory has to be requested for every new widget node and if the Wdsmml syntax is used for a given
+    //# node that is already living for an x amount of time.
     //#
-    //#  @tparam TNode The node to get the factory for.
-    //#  @return The factory for that node.
-    //#  @remark !!! Master thread only !!!
-    //#  @see    #TWidgetFactoryTy<TNode>
-    //#  @see    #Private::LWidgetFactoryUtility::MakeWidgetFactory<TNode>
+    //# @tparam TNode The node to get the factory for.
+    //# @return The factory for that node.
+    //# @remark !!! Master thread only !!!
+    //# @see    #TWidgetFactoryTy<TNode>
+    //# @see    #Private::LWidgetFactoryUtility::MakeWidgetFactory<TNode>
     //#
     template <typename TNode>
     NODISCARD FORCEINLINE typename TNode::TWidgetFactory& GetFactory()
@@ -522,6 +548,10 @@ public:
     FORCEINLINE auto GetAnchor()     const -> const LAnchor& { return this->Anchor; }
     FORCEINLINE void SetAnchor(const LAnchor&      InAnchor) { this->Anchor = InAnchor; }
     FORCEINLINE void SetAnchor(const EAnchor::Type InAnchor) { this->Anchor = InAnchor; }
+
+    auto GetApplicationInstance() const -> LApplicationInstance*;
+    auto GetEngine() const -> LEngine*;
+    auto GetLocalEgo() const -> LLocalEgo*;
 
 private:
 
@@ -667,6 +697,8 @@ FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode)
     return;
 }
 
+} /* ~Namespace Jafg */
+
 ///////////////////////////////////////////////////////////////////////////////
 // Widget style domain-specific-macro language (Wsdsml)
 //
@@ -680,17 +712,3 @@ FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode)
 
 #define NewNodeNoFactory(TNode) (*ConstructDeferredWidgetNode<TNode>())
 #define NewNode(TNode)          (*ConstructDeferredWidgetNode<TNode>()).GetFactory<TNode>()
-
-} /* ~Namespace Jafg */
-
-bool Jafg::WWidgetNode::ShouldNowTick() const
-{
-    return ( this->bDisableTick == false ) && ( this->ShouldNowDraw() );
-}
-
-bool Jafg::WWidgetNode::ShouldNowDraw() const
-{
-    return this->Visibility == EWidgetVisibility::Visible
-        || this->Visibility == EWidgetVisibility::TransitiveHitTestInvisible
-        || this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible;
-}

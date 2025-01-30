@@ -6,10 +6,6 @@
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
 
-void Jafg::LViewport::Initialize()
-{
-}
-
 void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursorLocation)
 {
     const bool bCursorLocationIsMeaningful = InCursorLocation.X >= 0.0f && InCursorLocation.Y >= 0.0f;

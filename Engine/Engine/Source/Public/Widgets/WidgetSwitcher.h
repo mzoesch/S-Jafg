@@ -22,7 +22,7 @@ protected:
 
 public:
 
-    enum { NoActiveWidgetIndex = -1 };
+    enum { NoActiveWidgetIndex = INDEX_NONE };
 
     FORCEINLINE void  ResetWidgetIndex() { this->ActiveIndex = NoActiveWidgetIndex; }
     FORCEINLINE int32 GetActiveWidgetIndex() const { return this->ActiveIndex; }
@@ -33,11 +33,16 @@ public:
     FORCEINLINE auto GetPanickedActiveWidget() const -> WWidgetNode*;
                 void SetActiveWidget(WWidgetNode* Widget);
 
+    FORCEINLINE bool IsIndexValid() const { return this->GetChildren().IsValidIndex(this->ActiveIndex); }
+    FORCEINLINE auto GetActiveNode() -> WWidgetNode* { return this->IsIndexValid() ? this->GetChildren()[this->ActiveIndex]->Content : nullptr; }
+    FORCEINLINE auto GetActiveNode() const -> const WWidgetNode* { return this->IsIndexValid() ? this->GetChildren()[this->ActiveIndex]->Content : nullptr; }
+    FORCEINLINE auto GetActiveNodeChecked() -> WWidgetNode* { check( this->IsIndexValid() ) return this->GetChildren()[this->ActiveIndex]->Content; }
+    FORCEINLINE auto GetActiveNodeChecked() const -> const WWidgetNode* { check( this->IsIndexValid() ) return this->GetChildren()[this->ActiveIndex]->Content; }
+
     // WWidgetParentBase implementation
     virtual void Tick() override;
     virtual auto SweepMouse(LViewport& Context, const LVector2& InLocation) -> LCursorReply override;
     virtual auto SweepFocusTest(LViewport& Context, const LVector2& InLocation) -> LReply override;
-    virtual bool IsFocusWidgetTransitive(const LViewport* InViewport) const override;
     virtual void UpdateDesiredSize() const override;
     virtual void UpdateAnchoredSize(const LViewport& Context) const override;
     // ~WWidgetParentBase implementation

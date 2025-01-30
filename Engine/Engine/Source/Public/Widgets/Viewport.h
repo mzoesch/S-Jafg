@@ -29,7 +29,7 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LViewport)
     ~LViewport() = default;
 
-    void Initialize();
+    void Initialize() { }
     void DispatchInputs(LSurface& Context, const LVector2& InCursorLocation);
     void OnMouseLeftViewport(LSurface& Context, const bool bInvalidateAllInputs);
     void Tick();

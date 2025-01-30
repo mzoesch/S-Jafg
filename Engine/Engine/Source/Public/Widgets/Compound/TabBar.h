@@ -46,7 +46,20 @@ struct LTabBarTabDescriptor final
 
 struct LTabBarTabData : public LWidgetNodeData
 {
-    LTabBarTabDescriptor* Descriptor;
+    WTabBar* Context;
+    const LTabBarTabDescriptor* Descriptor;
+};
+
+template <typename TNode>
+class TWidgetFactoryTabBar : public TWidgetFactoryParentBase<TNode>
+{
+public:
+
+    using Super         = TWidgetFactoryParentBase<TNode>;
+    using TFactoryRetTy = typename Super::TFactoryRetTy;
+
+    FORCEINLINE TFactoryRetTy& AlignHorizontal() { this->This()->SetHorizontalPreference(); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& AlignVertical() { this->This()->SetVerticalPreference(); return this->Self(); }
 };
 
 //#
@@ -58,7 +71,7 @@ struct LTabBarTabData : public LWidgetNodeData
 //#   - The tab bar:        The collection of the buttons and panels.
 //# Tab bars can be nested within each other with the superclass WTabBarBase.
 //#
-DECLARE_JAFG_WIDGET()
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTabBar)
 class ENGINE_API WTabBar : public WTabBarBase
 {
     GENERATED_CLASS_BODY()
@@ -72,6 +85,12 @@ public:
     virtual void Construct() override;
 
     virtual void UpdateDesiredSize() const override;
+
+    FORCEINLINE void ResetWrapperClass() { this->WrapperClass = nullptr; }
+    FORCEINLINE void SetWrapperClass(const TSubclassOf<WWidgetParentBase>& InWrapperClass) { this->WrapperClass = InWrapperClass; }
+    FORCEINLINE void ResetDefaultAlignmentPreference() { this->bIsVertical.Reset(); }
+    FORCEINLINE void SetVerticalPreference() { this->bIsVertical = true; }
+    FORCEINLINE void SetHorizontalPreference() { this->bIsVertical = false; }
 
     FORCEINLINE bool IsButtonContainerValid() const { return this->ButtonsContainer != nullptr; }
     FORCEINLINE auto GetButtonsContainer() -> WWidgetParentBase* { return this->ButtonsContainer; }
@@ -94,13 +113,23 @@ public:
     FORCEINLINE void SetSwitcherClass(const TSubclassOf<WWidgetSwitcher>& InSwitcherClass) { this->SwitcherClass = InSwitcherClass; }
     FORCEINLINE auto GetCurrentSwitcherClass() const -> const TSubclassOf<WWidgetSwitcher>& { return this->SwitcherClass; }
 
-    FORCEINLINE auto GetTabsInOrder() const -> const TdhArray<LTabBarTabDescriptor>& { return this->TabsInOrder; }
+    void OnTabBarButtonPressed(const LSimpleString& Identifier);
 
 private:
 
-    void LoadTab(int32 InIndex);
+    void LoadTab(const LTabBarTabDescriptor& Descriptor, const int32 InIndex);
 
 protected:
+
+    //#
+    //# An optional class to set that wraps both the buttons section and the switcher.
+    //#
+    TSubclassOf<WWidgetParentBase> WrapperClass = nullptr;
+    //#
+    //# The preference for alignment of buttons and switcher if the wrapper class is not set.
+    //# If this is not set, then there will not occur any wrapping.
+    //#
+    TOptional<bool> bIsVertical = false;
 
     //#
     //# The container where the buttons are stored.
@@ -115,7 +144,14 @@ protected:
     WWidgetSwitcher* Switcher = nullptr;
     TSubclassOf<WWidgetSwitcher> SwitcherClass = nullptr;
 
-    TdhArray<LTabBarTabDescriptor> TabsInOrder = { };
+    struct LAddedTabBarTab final
+    {
+        LSimpleString Identifier;
+        WWidgetNode* Panel = nullptr;
+        int8 SwitcherIndex = INDEX_NONE;
+    };
+    TdhArray<LAddedTabBarTab> TabsInOrder = { };
+    TdhArray<LTabBarTabDescriptor> DeferredTabs = { };
 };
 
 } /* ~Namespace Jafg */

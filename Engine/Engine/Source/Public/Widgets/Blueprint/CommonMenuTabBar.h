@@ -23,6 +23,23 @@ public:
     virtual void Construct() override;
 };
 
+//#
+//# Development only. Do not use.
+//#
+DECLARE_JAFG_WIDGET()
+class ENGINE_API WDevelopmentTabBarPanelPlaceholder : public WTabBarPanel
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTOR(WDevelopmentTabBarPanelPlaceholder)
+
+    virtual void Construct() override;
+
+    WWidgetNode* Panel = nullptr;
+};
+
 DECLARE_JAFG_WIDGET()
 class ENGINE_API WCommonMenuTabBar : public WTabBar
 {

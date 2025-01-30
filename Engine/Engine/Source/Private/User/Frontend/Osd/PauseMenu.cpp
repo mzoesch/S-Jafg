@@ -11,7 +11,7 @@ void Jafg::WPauseMenu::Construct()
 
     MakeRootNode(WWidgetRegion).Anchor(EAnchor::Fill)
     [
-        NewNode(WCommonMenuTabBar).SaveTo(this->PauseTabBar).Anchor(EAnchor::Fill)
+        NewNode(WCommonMenuTabBar).SaveTo(this->PauseTabBar).AlignHorizontal().Anchor(EAnchor::Fill)
     ]
     FinishWidgetStyling()
 
@@ -24,36 +24,42 @@ void Jafg::WPauseMenu::Construct()
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "Achievements";
+        Descriptor.PanelWidgetClass.Set<WDevelopmentTabBarPanelPlaceholder>();
         this->PauseTabBar->RegisterTab(std::move(Descriptor));
     }
 
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "Encyclopedia";
+        Descriptor.PanelWidgetClass.Set<WDevelopmentTabBarPanelPlaceholder>();
         this->PauseTabBar->RegisterTab(std::move(Descriptor));
     }
 
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "Preferences";
+        Descriptor.PanelWidgetClass.Set<WDevelopmentTabBarPanelPlaceholder>();
         this->PauseTabBar->RegisterTab(std::move(Descriptor));
     }
 
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "SessionOptions";
+        Descriptor.PanelWidgetClass.Set<WDevelopmentTabBarPanelPlaceholder>();
         this->PauseTabBar->RegisterTab(std::move(Descriptor));
     }
 
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "ExitToMenu";
+        Descriptor.PanelWidgetClass.Set<WDevelopmentTabBarPanelPlaceholder>();
         this->PauseTabBar->RegisterTab(std::move(Descriptor));
     }
 
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "ExitToDesktop";
+        Descriptor.PanelWidgetClass.Set<WDevelopmentTabBarPanelPlaceholder>();
         this->PauseTabBar->RegisterTab(std::move(Descriptor));
     }
 

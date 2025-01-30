@@ -121,6 +121,18 @@ void Jafg::WWidgetParentBase::UpdateAnchoredSize(const LViewport& Context) const
     return;
 }
 
+void Jafg::WWidgetParentBase::UpdateAnchoredSizeOfChildren(const LViewport& Context) const
+{
+    Super::UpdateAnchoredSizeOfChildren(Context);
+
+    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    {
+        ChildSlot->Content->UpdateAnchoredSize(Context);
+    }
+
+    return;
+}
+
 bool Jafg::WWidgetParentBase::FindNodeInVisiblePath(const WWidgetNode* InNode) const
 {
     if (Super::FindNodeInVisiblePath(InNode))
