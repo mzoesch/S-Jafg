@@ -9,6 +9,7 @@
 #include "User/LocalEgo.h"
 #include "Engine/Framework/ApplicationInstance.h"
 #include "Engine/Cli/CommandLineInterface.h"
+#include "Rhi/RendererStateMachine.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
@@ -61,6 +62,7 @@ void Jafg::LEngine::Tick(const float DeltaTime)
     this->LocalEgo->Tick(DeltaTime);
 #endif /* WITH_LOCAL_LAYER */
 
+    RendererStateMachine::PrepareForPerspectivePainting();
     for (LWorldContext* i : this->Contexts)
     {
         if (i == nullptr)

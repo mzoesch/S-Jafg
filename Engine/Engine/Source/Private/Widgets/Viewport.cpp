@@ -3,6 +3,7 @@
 #include "CoreAfx.h"
 #include "Widgets/Viewport.h"
 #include "Platform/Surface.h"
+#include "Rhi/RendererStateMachine.h"
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
 
@@ -216,12 +217,12 @@ void Jafg::LViewport::Tick()
 
 void Jafg::LViewport::Draw()
 {
-    LFrameBuffer::ResetAndMakeDefaultDrawTarget();
-    this->LevelBuffer.PaintToViewport(*this);
-
     this->FrameZLayerDepth = 0.0f;
-
     this->RecalculateScaleFactor();
+
+    LFrameBuffer::ResetAndMakeDefaultDrawTarget();
+    RendererStateMachine::PrepareForOrthographicPainting();
+    this->LevelBuffer.PaintToViewport(*this);
 
     for (const WUserWidget* Widget : this->TopLevelWidgets)
     {

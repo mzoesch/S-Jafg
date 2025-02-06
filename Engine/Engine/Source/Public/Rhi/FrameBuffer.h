@@ -25,13 +25,15 @@ public:
 
     void MakeDrawTarget();
     void ResetAndMakeDrawTarget();
+
     static void MakeDefaultDrawTarget();
     static void ResetAndMakeDefaultDrawTarget();
 
     ENGINE_API void ReadToActive() const;
     ENGINE_API void ReadTo(const uint32 InHandle) const;
 
-    ENGINE_API void PaintToViewport(const LViewport& InViewport, const bool bToDefaultBuffer = true) const;
+    // Based of current active rhi context!
+    ENGINE_API void PaintToViewport(const LViewport& InContext) const;
 
 private:
 
@@ -39,6 +41,7 @@ private:
 
     bool bIsMeaningful = false;
     uint32 Handle = 0;
+    uint32 Depth = 0;
     uint32 Color = 0;
 };
 

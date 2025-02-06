@@ -78,30 +78,6 @@ void Jafg::LChunkShaderContext::Draw(const LViewport& Context, LGenericShaderCon
 {
     GENERIC_SHADER_DRAW_BODY(LChunkShaderDrawArgs)
 
-    if (const JUserPreferences* Preferences = GetDefault<JUserPreferences>();
-        Preferences->GetPolygonMode() == EPolygonMode::Fill)
-    {
-#if !PLATFORM_WASM
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-#endif /* !PLATFORM_WASM */
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
-        glFrontFace(GL_CW);
-    }
-    else if (Preferences->GetPolygonMode() == EPolygonMode::Wireframe)
-    {
-#if !PLATFORM_WASM
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-#endif /* !PLATFORM_WASM */
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
-        glFrontFace(GL_CW);
-    }
-    else
-    {
-        panic( "Encountered unknown polygon mode." )
-    }
-
     this->Program.Use();
 
     glActiveTexture(GL_TEXTURE0);

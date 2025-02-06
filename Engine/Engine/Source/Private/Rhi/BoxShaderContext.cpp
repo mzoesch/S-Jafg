@@ -76,13 +76,6 @@ void Jafg::LBoxShaderContext::Draw(
         glBindVertexArray(this->Vao);
     }
 
-#if !PLATFORM_WASM
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-#endif /* !PLATFORM_WASM */
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CW);
-
     const float Scale = Context.GetScaleFactor();
     const LIntVector2 WindowDimensions = Context.GetDimensions();
     const LMatrix Projection = Maths::MakeOrthographicProjectionMatrix(

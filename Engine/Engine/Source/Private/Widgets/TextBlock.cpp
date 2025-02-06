@@ -124,12 +124,7 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
 
     checkSlow( Characters.empty() == false )
 
-#if !PLATFORM_WASM
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-#endif /* !PLATFORM_WASM */
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CCW);
+    glCullFace(GL_FRONT);
 
     const LIntVector2 WindowDimensions = this->GetViewportSize();
     const float       ScaleFactor      = Context.GetScaleFactor();
@@ -181,6 +176,9 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
 #endif /* WITH_DEBUG_ZERO_UNBOUND */
+
+    // Reset to default state machine.
+    glCullFace(GL_BACK);
 
     return;
 }
