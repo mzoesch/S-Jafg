@@ -5,6 +5,7 @@
 #include "CoreAfx.h"
 #include "WidgetNode.h"
 #include "Engine/ObjectBaseUtility.h"
+#include "Rhi/FrameBuffer.h"
 #include "User/Input/Replies.h"
 
 namespace Jafg
@@ -32,6 +33,7 @@ public:
     void Initialize() { }
     void DispatchInputs(LSurface& Context, const LVector2& InCursorLocation);
     void OnMouseLeftViewport(LSurface& Context, const bool bInvalidateAllInputs);
+    void OnClear();
     void Tick();
     void Draw();
     void TearDown();
@@ -73,6 +75,8 @@ public:
     //# @return True if in the last frame, this node was not added.
     bool AddHoveredWidgetForFrame(WWidgetNode* Node);
 
+    FORCEINLINE auto GetLevelBuffer() const -> const LFrameBuffer& { return this->LevelBuffer; }
+
 private:
 
     void ChangeFocusUnsafe(const WWidgetNode* InNode);
@@ -102,6 +106,8 @@ private:
     TdhArray<WWidgetNode*> LastFrameHoveredWidgets = { };
 
     mutable float FrameZLayerDepth = 0.0f;
+
+    LFrameBuffer LevelBuffer = { };
 };
 
 FORCEINLINE auto LViewport::GetCheckedTopLevelWidgetByClass(const LObjectClass* WidgetClass) -> WWidgetNode*

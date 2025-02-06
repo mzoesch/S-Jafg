@@ -194,6 +194,11 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
     return;
 }
 
+void Jafg::LViewport::OnClear()
+{
+    this->LevelBuffer.MakeDrawTarget();
+}
+
 void Jafg::LViewport::Tick()
 {
     for (WUserWidget* Widget : this->TopLevelWidgets)
@@ -211,6 +216,9 @@ void Jafg::LViewport::Tick()
 
 void Jafg::LViewport::Draw()
 {
+    LFrameBuffer::ResetAndMakeDefaultDrawTarget();
+    this->LevelBuffer.PaintToViewport(*this);
+
     this->FrameZLayerDepth = 0.0f;
 
     this->RecalculateScaleFactor();
@@ -258,6 +266,12 @@ void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
     check( InDimensions.X > 0 && InDimensions.Y > 0 )
 
     this->Dimensions = InDimensions;
+
+    if (this->LevelBuffer.IsMeaningful())
+    {
+        this->LevelBuffer = { };
+    }
+    this->LevelBuffer.Build(this->GetDimensions());
 
     return;
 }

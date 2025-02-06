@@ -1,0 +1,45 @@
+// Copyright mzoesch. All rights reserved.
+
+#pragma once
+
+#include "CoreAFX.h"
+
+namespace Jafg
+{
+
+class LViewport;
+
+//#
+//# Buffer for a part of a frame.
+//#
+class LFrameBuffer final
+{
+public:
+
+    LFrameBuffer() = default;
+    ~LFrameBuffer();
+
+    FORCEINLINE bool IsMeaningful() const { return this->bIsMeaningful; }
+
+    void Build(const LIntVector2& InSize);
+
+    void MakeDrawTarget();
+    void ResetAndMakeDrawTarget();
+    static void MakeDefaultDrawTarget();
+    static void ResetAndMakeDefaultDrawTarget();
+
+    ENGINE_API void ReadToActive() const;
+    ENGINE_API void ReadTo(const uint32 InHandle) const;
+
+    ENGINE_API void PaintToViewport(const LViewport& InViewport, const bool bToDefaultBuffer = true) const;
+
+private:
+
+    void Orphan();
+
+    bool bIsMeaningful = false;
+    uint32 Handle = 0;
+    uint32 Color = 0;
+};
+
+} /* ~Namespace Jafg */

@@ -19,3 +19,4 @@
 #include FT_FREETYPE_H
 
 #include <stb_image.h>
+#include <stb_image_write.h>

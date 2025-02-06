@@ -23,6 +23,12 @@ void Jafg::LSurface::Initialize()
 
 void Jafg::LSurface::OnClear()
 {
+    if (this->SurfaceViewport)
+    {
+        this->SurfaceViewport->OnClear();
+    }
+
+    return;
 }
 
 void Jafg::LSurface::OnUpdate()
