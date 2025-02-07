@@ -556,7 +556,7 @@ public:
 private:
 
     bool bDisableTick = false;
-    EWidgetVisibility::Type Visibility = EWidgetVisibility::IntransitiveHitTestInvisible;
+    EWidgetVisibility::Type Visibility = EWidgetVisibility::TransitiveHitTestInvisible;
 
     //#
     //# The slot that this widget is currently in. Might be null if the widget is a standalone.

@@ -64,6 +64,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
     // Check for left-mouse-button down events to focus on another widget.
     if (bCursorLocationIsMeaningful && Context.IsNewKeyDown(EKeys::LeftMouseButton))
     {
+        bool bIsHandled = false;
         for (WUserWidget* Widget : this->TopLevelWidgets)
         {
             if (Widget->ShouldCheckForInputs() == false)
@@ -75,10 +76,15 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
             if (Reply.IsHandled())
             {
                 this->HandleReply(Context, Reply);
+                bIsHandled = true;
                 break;
             }
 
             continue;
+        }
+        if (bIsHandled == false)
+        {
+            this->HandleReply(Context, LReply::HandledWithFocusLost());
         }
     }
 

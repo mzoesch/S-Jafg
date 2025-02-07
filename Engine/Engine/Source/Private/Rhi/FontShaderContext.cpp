@@ -189,11 +189,6 @@ void Jafg::LFontShaderContext::Draw(const LViewport& Context, LGenericShaderCont
         return;
     }
 
-#if !PLATFORM_WASM
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-#endif /* !PLATFORM_WASM */
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
     const LIntVector2 WindowDimensions = Context.GetDimensions();
@@ -241,10 +236,13 @@ void Jafg::LFontShaderContext::Draw(const LViewport& Context, LGenericShaderCont
         X += (Ch.Advance.X >> 6) * Args.Scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
     }
 
+    glFrontFace(GL_CW);
+
 #if WITH_DEBUG_ZERO_UNBOUND
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
 #endif /* WITH_DEBUG_ZERO_UNBOUND */
+
     return;
 }
 

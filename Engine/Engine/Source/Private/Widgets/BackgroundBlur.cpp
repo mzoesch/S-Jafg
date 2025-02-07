@@ -41,3 +41,15 @@ void Jafg::WBackgroundBlur::Draw(LViewport& Context) const
 
     return;
 }
+
+Jafg::LReply Jafg::WBackgroundBlur::OnKeyDown(LKeyEvent& InKeyEvent)
+{
+    LOG_WARNING(LogTemporal, "A")
+    return WWidgetNode::OnKeyDown(InKeyEvent);
+}
+
+void Jafg::WBackgroundBlur::OnFocusReceived()
+{
+    Super::OnFocusReceived();
+    LOG_WARNING(LogTemporal, "A")
+}

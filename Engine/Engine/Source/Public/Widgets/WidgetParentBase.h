@@ -35,7 +35,7 @@ class ENGINE_API WWidgetParentBase : public WWidgetNode
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WWidgetParentBase)
+    explicit WWidgetParentBase(const LObjectInitializer& ObjectInitializer);
 
 public:
 

@@ -4,6 +4,12 @@
 #include "Widgets/WidgetParentBase.h"
 #include "Widgets/Viewport.h"
 
+Jafg::WWidgetParentBase::WWidgetParentBase(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+{
+    this->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+    return;
+}
+
 void Jafg::WWidgetParentBase::Tick()
 {
     Super::Tick();

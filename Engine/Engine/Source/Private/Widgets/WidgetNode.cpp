@@ -169,14 +169,9 @@ Jafg::LCursorReply Jafg::WWidgetNode::SweepMouse(LViewport& Context, const LVect
 
 Jafg::LReply Jafg::WWidgetNode::SweepFocusTest(LViewport& Context, const LVector2& InLocation)
 {
-    if (this->IsInBounds(Context, InLocation) == false)
+    if (this->IsInBounds(Context, InLocation) == false || this->IsHitTestable() == false)
     {
         return LReply::Unhandled();
-    }
-
-    if (this->IsHitTestable() == false)
-    {
-        return LReply::HandledWithFocusLost();
     }
 
     return { this };
