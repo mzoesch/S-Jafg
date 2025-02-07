@@ -4,6 +4,7 @@
 #include "Widgets/WidgetRegion.h"
 #include "Widgets/VBox.h"
 #include "Widgets/WidgetSwitcher.h"
+#include "Widgets/BackgroundBlur.h"
 #include <random>
 
 void Jafg::WCommonMenuTabBarButton::Construct()
@@ -51,6 +52,11 @@ void Jafg::WCommonMenuTabBar::Construct()
     {
         this->DefaultButtonClass.Set<WCommonMenuTabBarButton>();
     }
+
+    WBackgroundBlur* Blur = ConstructDeferredWidgetNode<WBackgroundBlur>();
+    Blur->SetAnchor(EAnchor::Fill);
+    Blur->SetBlurStrength(0.4f);
+    this->AddChild(Blur);
 
     Super::Construct();
 

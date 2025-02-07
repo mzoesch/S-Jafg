@@ -2,4 +2,32 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "Rhi/GenericShaderContext.h"
+#include "Rhi/Shader.h"
+
+namespace Jafg
+{
+
+struct LBlurShaderContextDrawArgs final : public LGenericShaderContextDrawArgs
+{
+    LVector2 Size;
+    LVector2 TopLeft;
+    float Strength = 0.0f;
+};
+
+class ENGINE_API LBlurShaderContext final : public LGenericShaderContext
+{
+public:
+
+    virtual void Make() override;
+    virtual void Draw(const LViewport& Context, LGenericShaderContextDrawArgs& InArgs) const override;
+    virtual void OnFree() override;
+
+private:
+
+    mutable LShader Shader = {};
+    mutable uint32  Vao    = 0x0u;
+    mutable uint32  Vbo    = 0x0u;
+};
+
+} /* ~Namespace Jafg */
