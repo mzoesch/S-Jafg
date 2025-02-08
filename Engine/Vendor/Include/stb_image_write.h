@@ -773,7 +773,18 @@ static int stbi_write_hdr_core(stbi__write_context *s, int x, int y, int comp, f
 #ifdef __STDC_LIB_EXT1__
       len = sprintf_s(buffer, sizeof(buffer), "EXPOSURE=          1.0000000000000\n\n-Y %d +X %d\n", y, x);
 #else
+#if WITH_MSVC
+    //
+    // Warning C4996 : 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead.
+    //                            To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+    //
+    #pragma warning( push)
+    #pragma warning( disable: 4996 )
+#endif /* WITH_MSVC */
       len = sprintf(buffer, "EXPOSURE=          1.0000000000000\n\n-Y %d +X %d\n", y, x);
+#if WITH_MSVC
+    #pragma warning( pop )
+#endif /* WITH_MSVC */
 #endif
       s->func(s->context, buffer, len);
 

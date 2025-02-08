@@ -60,6 +60,21 @@ void Jafg::LSurface::BeginNewFrame()
     return;
 }
 
+void Jafg::LSurface::PollVirtualInputs()
+{
+    for (const LRawInput& Input : this->VirtualInput)
+    {
+        if (this->DownKeys.Contains(Input.Key) == false)
+        {
+            this->AddKeyDown(Input);
+        }
+    }
+
+    this->VirtualInput.Empty();
+
+    return;
+}
+
 void Jafg::LSurface::SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor)
 {
     this->InputMode   = InMode;

@@ -24,4 +24,9 @@ constexpr LSizeTy ArgTyCount(F(*f)(ArgTy ...))
     return sizeof ... (ArgTy);
 }
 
+FORCEINLINE bool Xor(const bool A, const bool B)
+{
+    return (A + B) % 2;
+}
+
 } /* ~Namespace Jafg */

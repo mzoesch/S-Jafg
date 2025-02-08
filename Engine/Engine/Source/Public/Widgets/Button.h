@@ -40,8 +40,12 @@ public:
     FORCEINLINE void SetPressBrush(const LRegionBrush& InBrush) { this->PressBrush = InBrush; }
     FORCEINLINE auto GetPressBrush() const -> const LRegionBrush& { return this->PressBrush; }
 
+    FORCEINLINE void SetLetUiReactToEvents(const bool bInLetUiReactToEvents) { this->bLetUiReactToEvents = bInLetUiReactToEvents; }
+    FORCEINLINE auto GetLetUiReactToEvents() const -> bool { return this->bLetUiReactToEvents; }
+
 protected:
 
+    bool bLetUiReactToEvents = true;
     LRegionBrush NormalBrush = { LColor::Black };
     LRegionBrush HoverBrush  = { LColor::Gray };
     LRegionBrush PressBrush  = { LColor::White };

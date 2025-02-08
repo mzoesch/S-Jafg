@@ -19,7 +19,8 @@ class WTabBarButton;
 struct LTabBarTabDescriptor final
 {
     LTabBarTabDescriptor() { }
-    DEFAULT_REALLOC_OF_ANY_FORM(LTabBarTabDescriptor)
+    PROHIBIT_COPY(LTabBarTabDescriptor)
+    DEFAULT_MOVE(LTabBarTabDescriptor)
     ~LTabBarTabDescriptor() = default;
 
     LSimpleString Identifier;
@@ -34,8 +35,14 @@ struct LTabBarTabDescriptor final
 
     //#
     //# The button to use. Leave as nullptr to use the default button that comes with the tab bar.
+    //# ButtonWidgetClass and OnButtonPressed are mutually exclusive.
     //#
     TSubclassOf<WTabBarButton> ButtonWidgetClass = nullptr;
+    //#
+    //# Optional delegate that gets called when the button is pressed.
+    //# ButtonWidgetClass and OnButtonPressed are mutually exclusive.
+    //#
+    LOnTabBarButtonPressed OnButtonPressed = nullptr;
 
     //#
     //# An optional value that may contain the identifier of the tab that this tab should be added after (in close
@@ -114,12 +121,15 @@ public:
     FORCEINLINE auto GetCurrentSwitcherClass() const -> const TSubclassOf<WWidgetSwitcher>& { return this->SwitcherClass; }
 
     void OnTabBarButtonPressed(const LSimpleString& Identifier);
+    void OnOuterVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility);
 
 private:
 
     void LoadTab(const LTabBarTabDescriptor& Descriptor, const int32 InIndex);
 
 protected:
+
+    struct LAddedTabBarTab;
 
     //#
     //# An optional class to set that wraps both the buttons section and the switcher.
@@ -144,9 +154,15 @@ protected:
     WWidgetSwitcher* Switcher = nullptr;
     TSubclassOf<WWidgetSwitcher> SwitcherClass = nullptr;
 
+    const void* CurrentlyFocusedTab = nullptr;
+    const LAddedTabBarTab* GetCurrentlyFocusedTab() const;
+    FORCEINLINE const LAddedTabBarTab* GetCurrentlyFocusedTabChecked() const;
+    FORCEINLINE const LAddedTabBarTab* GetCurrentlyFocusedTabPanicked() const;
+
     struct LAddedTabBarTab final
     {
         LSimpleString Identifier;
+        WWidgetNode* Button = nullptr;
         WWidgetNode* Panel = nullptr;
         int8 SwitcherIndex = INDEX_NONE;
     };
@@ -155,3 +171,20 @@ protected:
 };
 
 } /* ~Namespace Jafg */
+
+const Jafg::WTabBar::LAddedTabBarTab* Jafg::WTabBar::GetCurrentlyFocusedTabChecked() const
+{
+    const LAddedTabBarTab* Out = this->GetCurrentlyFocusedTab();
+    check( Out )
+    return Out;
+}
+
+const Jafg::WTabBar::LAddedTabBarTab* Jafg::WTabBar::GetCurrentlyFocusedTabPanicked() const
+{
+    if (const LAddedTabBarTab* Out = this->GetCurrentlyFocusedTab(); Out)
+    {
+        return Out;
+    }
+    panic( "No currently focused tab found." )
+    return nullptr;
+}

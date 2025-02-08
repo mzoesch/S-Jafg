@@ -13,7 +13,7 @@ bool Jafg::WTabBarButton::AddData(LWidgetNodeData* InData)
         return false;
     }
 
-    const LTabBarTabData* Data = static_cast<LTabBarTabData*>(InData);
+    LTabBarTabData* Data = static_cast<LTabBarTabData*>(InData);
     if (Data->Descriptor->DisplayName.IsEmpty() == false)
     {
         this->GetFactory<WTabBarButton>()
@@ -28,12 +28,44 @@ bool Jafg::WTabBarButton::AddData(LWidgetNodeData* InData)
     this->Context = Data->Context;
     this->Identifier = Data->Descriptor->Identifier;
 
+    if (Data->Descriptor->OnButtonPressed)
+    {
+        // ??? Why can't we move directly into the member variable?
+        // ??? this->OnButtonPressed.operator=(std::move(Data->Descriptor->OnButtonPressed));
+        LOnTabBarButtonPressed Del = std::move(Data->Descriptor->OnButtonPressed);
+        this->OnButtonPressed = std::move(Del);
+        checkSlow( Data->Descriptor->OnButtonPressed.IsBound() == false )
+    }
+
     return true;
 }
 
 void Jafg::WTabBarButton::OnPrimaryPress()
 {
     Super::OnPrimaryPress();
+
+    if (this->OnButtonPressed && this->OnButtonPressed(*this->Context, this->Identifier))
+    {
+        return;
+    }
+
     this->Context->OnTabBarButtonPressed(this->Identifier);
+
+    return;
+}
+
+void Jafg::WTabBarButton::OnTabBarFocus(const bool bInFocus)
+{
+    if (bInFocus)
+    {
+        this->SetLetUiReactToEvents(false);
+        this->SetBrush(this->HoverBrush);
+    }
+    else
+    {
+        this->SetLetUiReactToEvents(true);
+        this->SetBrush(this->NormalBrush);
+    }
+
     return;
 }

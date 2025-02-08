@@ -201,3 +201,6 @@
         { return !(__underlying_type(Enum))E; }                                               \
     FORCEINLINE constexpr Enum  operator~ (Enum  E)                                           \
         { return (Enum)~(__underlying_type(Enum))E; }
+
+/** This or that ::Jafg::Xor(bA, bB); */
+#define XOR(A, B) ( !(!!(A)) != !(!!(B)) )

@@ -40,6 +40,9 @@ struct TUnique final
     static_assert(!std::derived_from<T, ::Jafg::Private::JObjectBase>, "TUnique does not support j objects.");
     static_assert(!std::is_same_v<T, std::nullptr_t>, "TUnique does not support nullptr.");
 
+    using UniqueInnerTy = T;
+    using StoredInnerTy = UniqueInnerTy*;
+
     TUnique() = default;
     TUnique(LNullptrTy) { this->Object = nullptr; }
     PROHIBIT_COPY(TUnique)
@@ -79,7 +82,7 @@ struct TUnique final
 private:
 
     /** @see #MakeUnique and #EmplaceUnique. */
-    TUnique(T* InObject) : Object(InObject) { }
+    explicit TUnique(T* InObject) : Object(InObject) { }
 
     T* Object = nullptr;
 };
@@ -99,6 +102,13 @@ struct LMySmartHelper
     static FORCEINLINE TUnique<T> EmplaceUnique(Args&&... InArgs)
     {
         return TUnique<T>(new T(std::forward<Args>(InArgs)...));
+    }
+
+    //# Dangerous.
+    template <typename T>
+    static FORCEINLINE void RemoveNoOrphan(TUnique<T>& InUnique)
+    {
+        InUnique.Object = nullptr;
     }
 };
 

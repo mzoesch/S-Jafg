@@ -86,11 +86,12 @@ void Jafg::WTabBar::UpdateDesiredSize() const
     return;
 }
 
-void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor)
+void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, rvalue is just to do some inline stuff... no need to move.
 {
-    if (this->TabsInOrder.ContainsByPredicate([InTabDescriptor](const LAddedTabBarTab& Tab)
+    const LSimpleString* const IdentPtr = &InTabDescriptor.Identifier;
+    if (this->TabsInOrder.ContainsByPredicate([IdentPtr](const LAddedTabBarTab& Tab)
     {
-        return Tab.Identifier == InTabDescriptor.Identifier;
+        return Tab.Identifier == *IdentPtr;
     }))
     {
         panicMsgf("Tab with identifier [{}] already exists.", InTabDescriptor.Identifier)
@@ -104,11 +105,12 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor)
     }
     else
     {
-        Index = this->TabsInOrder.FindIndexByPredicate([InTabDescriptor](const LAddedTabBarTab& Tab)
+        const LSimpleString* const AddAfterPtr = &InTabDescriptor.AddAfter;
+        Index = this->TabsInOrder.FindIndexByPredicate([AddAfterPtr](const LAddedTabBarTab& Tab)
         {
-            return Tab.Identifier == InTabDescriptor.AddAfter;
+            return Tab.Identifier == *AddAfterPtr;
         });
-        jassert( Index != INDEX_NONE )
+        check( Index != INDEX_NONE )
         ++Index;
         LAddedTabBarTab AddedTab;
         AddedTab.Identifier = InTabDescriptor.Identifier;
@@ -123,8 +125,16 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor)
 
     if (this->ButtonsContainer)
     {
+        // Do not move!!! We discard the tab descriptor just below.
         this->LoadTab(InTabDescriptor, Index);
     }
+
+    InTabDescriptor.Identifier.Empty();
+    InTabDescriptor.DisplayName.Empty();
+    InTabDescriptor.PanelWidgetClass.Set(nullptr);
+    InTabDescriptor.ButtonWidgetClass.Set(nullptr);
+    InTabDescriptor.OnButtonPressed.Reset();
+    InTabDescriptor.AddAfter.Empty();
 
     return;
 }
@@ -143,23 +153,36 @@ bool Jafg::WTabBar::UnregisterTabChecked(const LSimpleString& Identifier)
 
 void Jafg::WTabBar::OnTabBarButtonPressed(const LSimpleString& Identifier)
 {
-    int32 idx;
-    for (idx = 0; idx < this->TabsInOrder.GetSize(); ++idx)
+    if (const LAddedTabBarTab* FocusedTab = this->GetCurrentlyFocusedTab(); FocusedTab)
     {
-        if (this->TabsInOrder[idx].Identifier == Identifier)
+        if (WTabBarButton* B = DynamicCast<WTabBarButton>(FocusedTab->Button); B)
+        {
+            B->OnTabBarFocus(false);
+        }
+        this->CurrentlyFocusedTab = nullptr;
+    }
+
+    int32 Idx;
+    for (Idx = 0; Idx < this->TabsInOrder.GetSize(); ++Idx)
+    {
+        if (this->TabsInOrder[Idx].Identifier == Identifier)
         {
             break;
         }
         continue;
     }
-    jassert( idx < this->TabsInOrder.GetSize() )
+    jassert( Idx < this->TabsInOrder.GetSize() )
 
-    LAddedTabBarTab& TabDescriptor = this->TabsInOrder[idx];
-    LOG_WARNING(LogTemporal, "Tab [{}] was pressed.", TabDescriptor.Identifier)
+    LAddedTabBarTab& TabDescriptor = this->TabsInOrder[Idx];
+    this->CurrentlyFocusedTab = static_cast<const void*>(TabDescriptor.Identifier.ToPtr());
 
     if (TabDescriptor.SwitcherIndex != INDEX_NONE)
     {
         this->Switcher->SetActiveWidgetIndex(TabDescriptor.SwitcherIndex);
+        if (WTabBarButton* B = DynamicCast<WTabBarButton>(TabDescriptor.Button); B)
+        {
+            B->OnTabBarFocus(true);
+        }
     }
     else
     {
@@ -169,12 +192,35 @@ void Jafg::WTabBar::OnTabBarButtonPressed(const LSimpleString& Identifier)
     return;
 }
 
+void Jafg::WTabBar::OnOuterVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility)
+{
+    if (EWidgetVisibility::IsDrawn(InNewVisibility) == false)
+    {
+        return;
+    }
+
+    if (const LAddedTabBarTab* Tab = this->GetCurrentlyFocusedTab(); Tab)
+    {
+        if (WTabBarButton* B = DynamicCast<WTabBarButton>(Tab->Button); B)
+        {
+            B->OnTabBarFocus(false);
+        }
+    }
+    this->Switcher->ResetWidgetIndex();
+
+    return;
+}
+
 void Jafg::WTabBar::LoadTab(const LTabBarTabDescriptor& Descriptor, const int32 InIndex)
 {
+    check( !(Descriptor.ButtonWidgetClass && Descriptor.OnButtonPressed) )
+
     WWidgetNode* Button = Descriptor.ButtonWidgetClass.IsSet()
         ? ConstructDeferredWidgetNode<WWidgetNode>(Descriptor.ButtonWidgetClass)
         : ConstructDeferredWidgetNode<WWidgetNode>(this->DefaultButtonClass);
     this->ButtonsContainer->AddChildAt(InIndex, Button);
+
+    this->TabsInOrder[InIndex].Button = Button;
 
     LTabBarTabData Data;
     Data.DerivedClass = WTabBarButton::StaticClass()->GetName();
@@ -195,4 +241,20 @@ void Jafg::WTabBar::LoadTab(const LTabBarTabDescriptor& Descriptor, const int32 
     }
 
     return;
+}
+
+const Jafg::WTabBar::LAddedTabBarTab* Jafg::WTabBar::GetCurrentlyFocusedTab() const
+{
+    if (this->CurrentlyFocusedTab)
+    {
+        if (const int32 Idx= this->TabsInOrder.FindIndexByPredicate([this](const LAddedTabBarTab& Tab)
+        {
+            return Tab.Identifier.ToPtr() == this->CurrentlyFocusedTab;
+        }); Idx != INDEX_NONE)
+        {
+            return &this->TabsInOrder[Idx];
+        }
+    }
+
+    return nullptr;
 }

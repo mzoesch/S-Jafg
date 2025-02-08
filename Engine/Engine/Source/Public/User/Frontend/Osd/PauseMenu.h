@@ -31,6 +31,8 @@ public:
 
     virtual void Construct() override;
 
+    virtual void OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility) override;
+
 private:
 
     WTabBar* PauseTabBar = nullptr;

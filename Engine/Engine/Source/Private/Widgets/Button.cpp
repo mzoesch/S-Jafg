@@ -11,7 +11,12 @@ Jafg::WButton::WButton(const LObjectInitializer& ObjectInitializer): Super(Objec
 void Jafg::WButton::Construct()
 {
     Super::Construct();
-    this->SetBrush(this->NormalBrush);
+
+    if (this->bLetUiReactToEvents)
+    {
+        this->SetBrush(this->NormalBrush);
+    }
+
     return;
 }
 
@@ -22,7 +27,11 @@ Jafg::LCursorReply Jafg::WButton::OnCursorEnter()
         return Reply;
     }
 
-    this->SetBrush(this->HoverBrush);
+    if (this->bLetUiReactToEvents)
+    {
+        this->SetBrush(this->HoverBrush);
+    }
+
     return LCursorReply::Handled();
 }
 
@@ -33,7 +42,11 @@ Jafg::LCursorReply Jafg::WButton::OnCursorLeave()
         return Reply;
     }
 
-    this->SetBrush(this->NormalBrush);
+    if (this->bLetUiReactToEvents)
+    {
+        this->SetBrush(this->NormalBrush);
+    }
+
     return LCursorReply::Handled();
 }
 
@@ -46,13 +59,19 @@ Jafg::LReply Jafg::WButton::OnKeyDown(LKeyEvent& InKeyEvent)
 
     if (InKeyEvent.GetKey() == EKeys::LeftMouseButton)
     {
-        this->SetBrush(this->PressBrush);
+        if (this->bLetUiReactToEvents)
+        {
+            this->SetBrush(this->PressBrush);
+        }
         this->OnPrimaryPress();
         return LReply::Handled();
     }
     if (InKeyEvent.GetKey() == EKeys::RightMouseButton)
     {
-        this->SetBrush(this->PressBrush);
+        if (this->bLetUiReactToEvents)
+        {
+            this->SetBrush(this->PressBrush);
+        }
         this->OnSecondaryPress();
         return LReply::Handled();
     }
@@ -69,17 +88,22 @@ Jafg::LReply Jafg::WButton::OnKeyUp(LKeyEvent& InKeyEvent)
 
     if (InKeyEvent.GetKey() == EKeys::LeftMouseButton)
     {
-        this->SetBrush(this->HoverBrush);
+        if (this->bLetUiReactToEvents)
+        {
+            this->SetBrush(this->HoverBrush);
+        }
         this->OnPrimaryUnpress();
         return LReply::Handled();
     }
     if (InKeyEvent.GetKey() == EKeys::RightMouseButton)
     {
-        this->SetBrush(this->HoverBrush);
+        if (this->bLetUiReactToEvents)
+        {
+            this->SetBrush(this->HoverBrush);
+        }
         this->OnSecondaryUnpress();
         return LReply::Handled();
     }
 
     return LReply::Unhandled();
 }
-

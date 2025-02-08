@@ -80,6 +80,12 @@ public:
         checkSlow( this->IsValidType() )
         return;
     }
+    FORCEINLINE void Set(LNullptrTy)
+    {
+        this->Class = nullptr;
+        checkSlow( this->IsValidType() )
+        return;
+    }
 
     FORCEINLINE operator const LObjectClass*() const { return **this; }
     FORCEINLINE const LObjectClass* Get() const { return **this; }

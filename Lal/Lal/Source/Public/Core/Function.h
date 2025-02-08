@@ -30,6 +30,8 @@ public:
     template <typename CallableTy>                 struct LWeakCallable;
     template <typename ObjTy, typename CallableTy> struct LMemberCallable;
 
+    using LUniqueCallableTy = Smart::TUnique<LCallableBase>;
+
     FORCEINLINE TFunction() = default;
     FORCEINLINE TFunction(LNullptrTy) : Callable(nullptr) { }
     FORCEINLINE TFunction& operator=(LNullptrTy) { this->Reset(); return *this; }
@@ -54,13 +56,30 @@ public:
     FORCEINLINE TFunction(CallableTy&& InCallable)
     {
         this->Reset();
-        this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LStrongCallable<std::decay_t<CallableTy>>>(std::forward<CallableTy>(InCallable));
+
+        if constexpr (std::is_same_v<std::decay_t<CallableTy>, TFunction>)
+        {
+            this->Callable = Smart::MakeUnique(const_cast<typename CallableTy::LUniqueCallableTy::StoredInnerTy>(
+                InCallable.Callable.GetValuePtr()
+            ));
+            ::Jafg::Smart::Private::LMySmartHelper::RemoveNoOrphan(
+                const_cast<typename CallableTy::LUniqueCallableTy&>(InCallable.Callable)
+            ); /* Do not reset as it would orphan the memory. */
+        }
+        else if constexpr (std::is_invocable_v<CallableTy, ParamsTy...>)
+        {
+            this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LStrongCallable<CallableTy>>(std::forward<CallableTy>(InCallable));
+        }
+        else
+        {
+            UNREACHABLE_CONTROL_PATH_STATIC( std::is_same_v<std::decay_t<CallableTy> PRIVATE_JAFG_CORE_COMMA TFunction> )
+        }
     }
     template <typename CallableTy>
     FORCEINLINE void BindStrong(CallableTy&& InCallable)
     {
         this->Reset();
-        this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LStrongCallable<std::decay_t<CallableTy>>>(std::forward<CallableTy>(InCallable));
+        this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LStrongCallable<CallableTy>>(std::forward<CallableTy>(InCallable));
     }
 
     template <typename CallableTy>
@@ -126,9 +145,9 @@ private:
     template <typename CallableTy>
     struct LStrongCallable final : public LCallableBase
     {
-        CallableTy Callable;
+        CallableTy InnerCallable;
 
-        FORCEINLINE LStrongCallable(CallableTy&& InCallable) : Callable(std::move(InCallable)) { }
+        FORCEINLINE LStrongCallable(CallableTy&& InCallable) : InnerCallable(std::move(InCallable)) { }
 
         FORCEINLINE RetTy Invoke(ParamsTy... InParams) const override
         {
@@ -140,7 +159,7 @@ private:
                 std::is_same_v<std::invoke_result_t<CallableTy, ParamsTy...>, RetTy>,
                 "Callable must return the correct type."
             );
-            return this->Callable(std::forward<ParamsTy>(InParams)...);
+            return this->InnerCallable(std::forward<ParamsTy>(InParams)...);
         }
         FORCEINLINE bool IsValid() const override { return true; }
     };
@@ -148,21 +167,21 @@ private:
     template <typename CallableTy>
     struct LWeakCallable final : public LCallableBase
     {
-        CallableTy* Callable = nullptr;
+        CallableTy* InnerCallable = nullptr;
 
-        FORCEINLINE LWeakCallable(CallableTy* InCallable) : Callable(InCallable) { }
+        FORCEINLINE LWeakCallable(CallableTy* InCallable) : InnerCallable(InCallable) { }
 
         FORCEINLINE RetTy Invoke(ParamsTy... InParams) const override
         {
-            if (Callable)
+            if (this->InnerCallable)
             {
-                return (*Callable)(std::forward<ParamsTy>(InParams)...);
+                return (*this->InnerCallable)(std::forward<ParamsTy>(InParams)...);
             }
 
             panic( "Attempt to invoke null callable" )
             abort();
         }
-        FORCEINLINE bool IsValid() const override { return Callable != nullptr; }
+        FORCEINLINE bool IsValid() const override { return this->InnerCallable != nullptr; }
     };
 
     template <typename ObjTy, typename CallableTy>
@@ -186,7 +205,7 @@ private:
         FORCEINLINE bool IsValid() const override { return this->Object != nullptr; }
     };
 
-    Smart::TUnique<LCallableBase> Callable = nullptr;
+   LUniqueCallableTy Callable = nullptr;
 };
 
 } /* ~Namespace Jafg */

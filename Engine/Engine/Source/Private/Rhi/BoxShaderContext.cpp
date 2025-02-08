@@ -121,6 +121,7 @@ void Jafg::LBoxShaderContext::Draw(
     }
 
 #if WITH_DEBUG_ZERO_UNBOUND
+    glUseProgram(0);
     glBindVertexArray(0);
 #endif /* WITH_DEBUG_ZERO_UNBOUND */
 

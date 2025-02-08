@@ -11,7 +11,6 @@ void Jafg::WWidgetSwitcher::SetActiveWidgetIndex(const int32 Index)
     }
 
     this->ActiveIndex = Index;
-    LOG_WARNING(LogTemporal, "Set active widget index to [{}].", Index)
 
     return;
 }
