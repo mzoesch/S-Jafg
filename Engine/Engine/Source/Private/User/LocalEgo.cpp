@@ -27,10 +27,10 @@ void Jafg::LLocalEgo::Initialize()
     this->SurfaceToDrawOn = new ::Jafg::LCurrentPlatform();
 
     JUserPreferences* UserPreferences = GetMutableDefault<JUserPreferences>();
-    UserPreferences->SetVSyncEnabled(true);
+    UserPreferences->bVSyncEnabled = true;
 
     this->GetPrimarySurface()->Initialize();
-    this->GetPrimarySurface()->SetVSync(UserPreferences->GetVSyncEnabled());
+    this->GetPrimarySurface()->SetVSync(UserPreferences->bVSyncEnabled);
     this->GetPrimarySurface()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
 
     this->Hud = new ::Jafg::LHud();

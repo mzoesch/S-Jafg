@@ -45,9 +45,15 @@
 namespace Jafg
 {
 
+template <typename InTObj>
+class TSubclassOf;
+class LCarnifex;
 class JObjectBase;
 class AActor;
 class WWidgetNode;
+class NextIsObjectBaseClass;
+struct LClassField;
+struct LObjectInitializer;
 
 namespace Private
 {
@@ -137,6 +143,34 @@ ENGINE_API void PullConfigFromObject(LObjectClass* InClass);
 ENGINE_API void PushConfigFromObject(const LObjectClass* InClass);
 template <typename TObj> FORCEINLINE void PushConfigFromObject() { PushConfigFromObject(TObj::StaticClass()); }
 template <typename TObj> FORCEINLINE void PushConfigFromObject(const TObj* InObject) { PushConfigFromObject(InObject->GetVTableSlow()); }
+
+//#
+//# Make your own custom default malloc member function for members that were marked as DefaultOnly.
+//#
+template <typename TMemberField>
+FORCEINLINE void OnDefaultOnlyMallocMember(TMemberField* MemberField) UNSUPPORTED_TEMPLATED_SPECIALIZATION(TMemberField)
+//#
+//# Generic but explicit zeroing of a member field that was marked as DefaultOnly.
+//#
+template <typename TMemberField>
+FORCEINLINE void ExplicitCommonZeroOnDefaultOnlyMallocMember(TMemberField* MemberField);
+
+template <typename TMemberField>
+FORCEINLINE void OnDefaultOnlyMallocMember(TdhArray<TMemberField>* MemberField);
+template <typename InCharacterTy, class InTraitsTy>
+FORCEINLINE void OnDefaultOnlyMallocMember(LStringBase<InCharacterTy, InTraitsTy>* MemberField);
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<float>(float* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<double>(double* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<int8>(int8* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<int16>(int16* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<int32>(int32* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<int64>(int64* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<uint8>(uint8* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<uint16>(uint16* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<uint32>(uint32* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<uint64>(uint64* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<bool>(bool* MemberField) { }
+template <typename TObj> FORCEINLINE void OnDefaultOnlyMallocMember(TSubclassOf<TObj>* MemberField) { }
 
 namespace Private
 {
@@ -301,7 +335,7 @@ struct LRegistrationCallbackHelper final
 } /* ~Namespace Private */
 
 template <typename TObj>
-TObj* NewObject()
+FORCEINLINE TObj* NewObject()
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
     static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
@@ -309,7 +343,7 @@ TObj* NewObject()
 }
 
 template <typename TObj>
-TObj* NewObject(LObjectContext* InContext)
+FORCEINLINE TObj* NewObject(LObjectContext* InContext)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
     static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
@@ -317,30 +351,30 @@ TObj* NewObject(LObjectContext* InContext)
 }
 
 template <typename TObj>
-TObj* NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
+FORCEINLINE TObj* NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
     static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return reinterpret_cast<TObj*>(Private::LObjectMiscellaneousAccessor::NewObject(InContext, InStaticClass));
 }
 
-JObjectBase* NewObject(const LSimpleString& InClassName)
+FORCEINLINE JObjectBase* NewObject(const LSimpleString& InClassName)
 {
     return NewObject(GOmniVitaContext, InClassName);
 }
 
-JObjectBase* NewObject(LObjectContext* InContext, const LSimpleString& InClassName)
+FORCEINLINE JObjectBase* NewObject(LObjectContext* InContext, const LSimpleString& InClassName)
 {
     return Private::LObjectMiscellaneousAccessor::NewObject(InContext, InClassName);
 }
 
-JObjectBase* NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
+FORCEINLINE JObjectBase* NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
     return Private::LObjectMiscellaneousAccessor::NewObject(InContext, InStaticClass);
 }
 
 template <typename TObj>
-TObj* NewDeferredObject()
+FORCEINLINE TObj* NewDeferredObject()
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
     static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
@@ -348,7 +382,7 @@ TObj* NewDeferredObject()
 }
 
 template <typename TObj>
-TObj* NewDeferredObject(LObjectContext* InContext)
+FORCEINLINE TObj* NewDeferredObject(LObjectContext* InContext)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
     static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
@@ -356,7 +390,7 @@ TObj* NewDeferredObject(LObjectContext* InContext)
 }
 
 template <typename TObj, bool bAllowActor /* = false */, bool bAllowWidget /* = false */>
-TObj* NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
+FORCEINLINE TObj* NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
     if constexpr (bAllowActor == false)
     {
@@ -370,36 +404,36 @@ TObj* NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticC
     return CheckedStaticCast<TObj>(NewDeferredObject(InContext, InStaticClass));
 }
 
-JObjectBase* NewDeferredObject(const LSimpleString& InClassName)
+FORCEINLINE JObjectBase* NewDeferredObject(const LSimpleString& InClassName)
 {
     return NewDeferredObject(GOmniVitaContext, InClassName);
 }
 
-JObjectBase* NewDeferredObject(LObjectContext* InContext, const LSimpleString& InClassName)
+FORCEINLINE JObjectBase* NewDeferredObject(LObjectContext* InContext, const LSimpleString& InClassName)
 {
     return Private::LObjectMiscellaneousAccessor::NewDeferredObject(InContext, InClassName);
 }
 
-JObjectBase* NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
+FORCEINLINE JObjectBase* NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
     return Private::LObjectMiscellaneousAccessor::NewDeferredObject(InContext, InStaticClass);
 }
 
 template <typename TObj>
-TObj* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context)
+FORCEINLINE TObj* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
     static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return reinterpret_cast<TObj*>(LObjectMiscellaneousAccessor::NewObject(Context, TObj::StaticClass()));
 }
 
-JObjectBase* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context, const LSimpleString& ClassName)
+FORCEINLINE JObjectBase* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context, const LSimpleString& ClassName)
 {
     return LObjectMiscellaneousAccessor::NewObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass);
 }
 
 template <typename TObj>
-TObj* DynamicCast(JObjectBase* InObject)
+FORCEINLINE TObj* DynamicCast(JObjectBase* InObject)
 {
     if (InObject && Private::LObjectMiscellaneousAccessor::DynamicCast(InObject, TObj::StaticClass()))
     {
@@ -410,13 +444,13 @@ TObj* DynamicCast(JObjectBase* InObject)
 }
 
 template <typename TObj>
-const TObj* DynamicCast(const JObjectBase* InObject)
+FORCEINLINE const TObj* DynamicCast(const JObjectBase* InObject)
 {
     return DynamicCast<TObj>(const_cast<JObjectBase*>(InObject));
 }
 
 template <typename TObj, typename U, bool bAllowForNullptr /* = false */>
-TObj* CheckedStaticCast(U* InObject)
+FORCEINLINE TObj* CheckedStaticCast(U* InObject)
 {
     static_assert(std::is_base_of_v<JObjectBase, U>);
 
@@ -447,25 +481,25 @@ TObj* CheckedStaticCast(U* InObject)
 }
 
 template <typename TObj, typename U, bool bAllowForNullptr /* = false */>
-const TObj* CheckedStaticCast(const U* InObject)
+FORCEINLINE const TObj* CheckedStaticCast(const U* InObject)
 {
     return CheckedStaticCast<TObj, U, bAllowForNullptr>(const_cast<U*>(InObject));
 }
 
 template <typename TObj>
-const TObj* GetDefault()
+FORCEINLINE const TObj* GetDefault()
 {
     return reinterpret_cast<const TObj*>(TObj::StaticClass()->GetDefaultPackageReferrer());
 }
 
 template <typename TObj>
-TObj* GetMutableDefault()
+FORCEINLINE TObj* GetMutableDefault()
 {
     return reinterpret_cast<TObj*>(TObj::StaticClass()->GetMutableDefaultPackageReferrer());
 }
 
 template <typename TObj>
-TObj* Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObjectContext* Context)
+FORCEINLINE TObj* Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObjectContext* Context)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
     static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
@@ -473,7 +507,7 @@ TObj* Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObjectContext* C
 }
 
 template <typename TObj>
-void Private::LRegistrationCallbackHelper::DoRegisterContentsForClass(LObjectClass* StaticClass,
+FORCEINLINE void Private::LRegistrationCallbackHelper::DoRegisterContentsForClass(LObjectClass* StaticClass,
     const EClassFlags::Type Flags, LSimpleString&& Parent)
 {
     static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
@@ -495,13 +529,37 @@ void Private::LRegistrationCallbackHelper::DoRegisterContentsForClass(LObjectCla
     return;
 }
 
-JObjectBase* Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObjectContext* Context, const LSimpleString& ClassName)
+FORCEINLINE JObjectBase* Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObjectContext* Context, const LSimpleString& ClassName)
 {
     return LObjectMiscellaneousAccessor::NewDeferredObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass);
 }
 
+template <typename TMemberField>
+FORCEINLINE void ExplicitCommonZeroOnDefaultOnlyMallocMember(TMemberField* MemberField)
+{
+    static_assert( sizeof(TMemberField) == 0, "This member field type has not been specialized for default-only malloc." );
+    ::memset(MemberField, 0, sizeof(TMemberField));
+    return;
+}
+
+template <typename TMemberField>
+FORCEINLINE void OnDefaultOnlyMallocMember(TdhArray<TMemberField>* MemberField)
+{
+    MemberField->Size = 0;
+    MemberField->Capacity = 0;
+    MemberField->Data = nullptr;
+
+    return;
+}
+
+template <typename InCharacterTy, class InTraitsTy>
+FORCEINLINE void OnDefaultOnlyMallocMember(LStringBase<InCharacterTy, InTraitsTy>* MemberField)
+{
+    OnDefaultOnlyMallocMember(&MemberField->Data);
+}
+
 template <typename TObj>
-void Private::RegisterNewObjectType(
+FORCEINLINE void Private::RegisterNewObjectType(
     LSimpleString            SpacedClassName,
     GetContentDefaultFunctor GetContentDefaultDelegate,
     OnRegistrationDelegate   Callback

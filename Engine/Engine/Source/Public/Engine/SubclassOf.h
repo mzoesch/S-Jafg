@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "Engine/ObjectBase.h"
-
 namespace Jafg
 {
+
+class JObjectBase;
 
 template <typename InTObj>
 class TSubclassOf;

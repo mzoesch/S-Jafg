@@ -32,6 +32,11 @@ class TArray
     static_assert( std::is_integral_v<SizeType>, "SizeType must be an integral type."       );
     static_assert( std::is_signed_v<SizeType>,   "SizeType must be a signed integral type." );
 
+    template <typename TMemberField>
+    friend void OnDefaultOnlyMallocMember(TMemberField* MemberField);
+    template <typename TMemberField>
+    friend void OnDefaultOnlyMallocMember(TdhArray<TMemberField>* MemberField);
+
     template <bool Condition, typename RetVal>
     using TEnableIf             = std::enable_if_t<Condition, RetVal>;
     using Self                  = TArray<T, ResizePolicy, AllocationPolicy, SizeType>;

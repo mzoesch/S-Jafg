@@ -196,6 +196,14 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
     Reinterpreted->VClass = const_cast<LObjectClass*>(InStaticClass);
     Reinterpreted->Outer  = InContext;
 
+    for (LClassField& Field : Reinterpreted->GetMutableClassFieldsDangerous())
+    {
+        if (Field.Malloc)
+        {
+            Field.Malloc();
+        }
+    }
+
     InContext->Employees.Emplace(Reinterpreted);
 
     return Reinterpreted;
@@ -327,16 +335,6 @@ void Jafg::Private::LObjectRegistry::ValidateLoadedPackages()
 
             bRootFound = true;
             continue;
-        }
-
-        if (Package.StaticClass->GetParent()->IsConfig())
-        {
-            panicMsgf( "Cannot inherit from a class that is marked as config. Faulty package: [{}].", Package.GetSpacedClassName() )
-        }
-
-        if (Package.StaticClass->IsConfig() && Package.StaticClass->IsNotAbstract())
-        {
-            panicMsgf( "Config classes must be abstract. Faulty package: [{}].", Package.GetSpacedClassName() )
         }
 
         if (Package.StaticClass->TotalByteSize == INDEX_NONE)

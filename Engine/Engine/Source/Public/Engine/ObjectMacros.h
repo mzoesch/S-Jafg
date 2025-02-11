@@ -317,10 +317,10 @@ public:                                                                        \
     using TWidgetFactory = TWidgetFactoryTy<Derived>;                          \
 private: /* Restore default visibility. */
 
-#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION
-    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION already defined."
-#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION */
-#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION(MyClassMember)                     \
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config(MyClassMember)              \
     void PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(_, SetField, _, MyClassMember)(const ::Jafg::LString& _InValue) \
     {                                                                                                      \
         ::Jafg::Deserialize(&this->MyClassMember, _InValue);                                               \
@@ -328,6 +328,15 @@ private: /* Restore default visibility. */
     ::Jafg::LString PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(_, GetField, _, MyClassMember)() const               \
     {                                                                                                      \
         return ::Jafg::Serialize(this->MyClassMember);                                                     \
+    }
+
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly(MyClassMember) \
+    void PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(_, MallocField, _, MyClassMember)()                     \
+    {                                                                                              \
+        ::Jafg::OnDefaultOnlyMallocMember(&this->MyClassMember);                                   \
     }
 
 //#
@@ -409,7 +418,11 @@ private: /* Restore default visibility. */
 //#
 //# Mark a member of a j-class as something special.
 //# Allowed values are:
-//#   Config
+//#   Config      - The member of a configuration. Only affects the default class referrer. (Requires that the class is
+//#                 also marked as a "Config".)
+//#   DefaultOnly - On j-object class allocation, this member will usually be zeroed out.
+//#                 (@see Engine/ObjectBaseUtility.h::OnJObjectDefaultOnlyMallocMember)
+//#
 //#
 #ifdef CLASS_FIELD
     #undef CLASS_FIELD

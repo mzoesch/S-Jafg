@@ -68,7 +68,8 @@ public:
     FORCEINLINE bool HasAnyFlags()   const { return  this->Flags != EClassFlags::None;                           }
     FORCEINLINE bool IsAbstract()    const { return (this->Flags  & EClassFlags::Abstract) != EClassFlags::None; }
     FORCEINLINE bool IsNotAbstract() const { return (this->Flags  & EClassFlags::Abstract) == EClassFlags::None; }
-    FORCEINLINE bool IsConfig()      const { return (this->Flags  & EClassFlags::ConfigDoNotUse) != EClassFlags::None; }
+    FORCEINLINE bool IsConfig()      const { return (this->Flags  & EClassFlags::Config)   != EClassFlags::None; }
+    FORCEINLINE bool IsNotConfig()   const { return (this->Flags  & EClassFlags::Config)   == EClassFlags::None; }
 
 private:
 

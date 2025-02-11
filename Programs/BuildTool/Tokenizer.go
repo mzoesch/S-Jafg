@@ -513,6 +513,8 @@ func Tokenize(debugDisplayName string, content string) []Token {
                 }
             }
 
+            var preCursor int = idx + 1
+
             var cursor int = idx
             for _, word2 := range words[idx:] {
                 cursor++
@@ -555,10 +557,34 @@ func Tokenize(debugDisplayName string, content string) []Token {
                 continue
             }
 
+            var args []string
+            var argOpenings int = 0
+            for _, word2 := range words[preCursor:] {
+                if word2.Content == "(" {
+                    argOpenings++
+                    continue
+                }
+                if word2.Content == ")" {
+                    argOpenings--
+                    if argOpenings == 0 {
+                        break
+                    }
+                    continue
+                }
+                if word2.Content == "," && argOpenings == 1 {
+                    continue
+                }
+                args = append(args, word2.Content)
+            }
+            if argOpenings != 0 {
+                panic("Expected ')' after CLASS_FILED.")
+            }
+
             out = append(out, Token{
                 Type:    TOKEN_CLASS_FIELD,
                 Content: words[cursor].Content,
                 Line:    line,
+                Info:    args,
             })
         } else if word == "GENERATED_CLASS_BODY" {
             out = append(out, Token{Type: TOKEN_GENERATED_CLASS_BODY, Content: "", Line: line})

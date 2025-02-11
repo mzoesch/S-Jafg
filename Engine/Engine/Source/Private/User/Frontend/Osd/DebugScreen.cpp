@@ -369,7 +369,7 @@ void Jafg::WDebugScreen::SlowTick()
                 static_cast<int32>(Application::GetCurrentFps()),
                 Application::GetDeltaTimeAsFloat() * 1'000.0f,
                 "?",
-                UserPreferences->GetVSyncEnabled(),
+                UserPreferences->bVSyncEnabled,
                 Application::GetFrameCount()
             )
         );

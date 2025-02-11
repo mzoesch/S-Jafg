@@ -60,7 +60,7 @@ Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Small()
     return LTextBlockBrush
     {
         .Tint  = LColor(0, 0, 0, 0),
-        .Scale = GetDefault<JUserPreferences>()->GetDefaultSmallFontSize()
+        .Scale = GetDefault<JUserPreferences>()->SmallFontSize
     };
 }
 

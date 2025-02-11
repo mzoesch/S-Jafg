@@ -276,7 +276,15 @@ func AddJafgClassToPacket(tokens []Token, idx int, tokenTy ETokenType, packetWra
         if tokens[idx].Type != TOKEN_CLASS_FIELD {
             break
         }
-        packet.Args = append(packet.Args, tokens[idx].Content)
+        var arg string = ""
+        if Shared.ContainsByPredicate(tokens[idx].Info, func(s string) bool { return s == "Config" }) {
+            arg += "@C"
+        }
+        if Shared.ContainsByPredicate(tokens[idx].Info, func(s string) bool { return s == "DefaultOnly" }) {
+            arg += "@D"
+        }
+        arg += tokens[idx].Content
+        packet.Args = append(packet.Args, arg)
     }
 
     packetWrapper.Packets = append(packetWrapper.Packets, packet)
@@ -356,6 +364,7 @@ func AddJafgClassFieldToPacket(tokens []Token, idx int, packetWrapper *JPacketWr
     packet.Callback = OnBuildJafgClassField
     packet.Name = t.Content
     packet.Line = t.Line
+    packet.Args = append(packet.Args, t.Info...)
 
     packetWrapper.Packets = append(packetWrapper.Packets, packet)
 
@@ -371,15 +380,52 @@ func OnBuildJafgClassDeclarationGenericCommon__VA__ARGS(packet JPacket) string {
 
     for i := 2; i < len(packet.Args); i++ {
         var arg string = packet.Args[i]
-        out += fmt.Sprintf(`                                                             \
-Ref->GetMutableClassFieldsDangerous().Emplace(                                           \
-    /* Field Name   */ "%s",                                                             \
-    /* Field Setter */ LSetClassField::CreateMemberFunction(Ref, &_TObj::_SetField_%s), \
-    /* Field Getter */ LGetClassField::CreateMemberFunction(Ref, &_TObj::_GetField_%s)  \
-);                                                                                       \
+
+        var bConfig bool = strings.Contains(arg, "@C")
+        var bDefaultOnly bool = strings.Contains(arg, "@D")
+
+        var memberName string = arg
+        if bConfig {
+            memberName = memberName[2:]
+        }
+        if bDefaultOnly {
+            memberName = memberName[2:]
+        }
+
+        if bConfig && bDefaultOnly {
+            out += fmt.Sprintf(`                                                                   \
+Ref->GetMutableClassFieldsDangerous().Emplace(                                                     \
+    /* Field Name   */ "%s",                                                                       \
+    /* Field Setter */ LSetClassField::CreateMemberFunction(Ref, &_TObj::_SetField_%s),            \
+    /* Field Getter */ LGetClassField::CreateMemberFunction(Ref, &_TObj::_GetField_%s),            \
+    /* Field Malloc */ LCustomMallocClassField::CreateMemberFunction(Ref, &_TObj::_MallocField_%s) \
+);                                                                                                 \
 `,
-            arg, arg, arg,
-        )
+                memberName, memberName, memberName, memberName,
+            )
+        } else if bConfig && !bDefaultOnly {
+            out += fmt.Sprintf(`                                                        \
+Ref->GetMutableClassFieldsDangerous().Emplace(                                          \
+    /* Field Name   */ "%s",                                                            \
+    /* Field Setter */ LSetClassField::CreateMemberFunction(Ref, &_TObj::_SetField_%s), \
+    /* Field Getter */ LGetClassField::CreateMemberFunction(Ref, &_TObj::_GetField_%s), \
+    /* Field Malloc */ nullptr                                                          \
+);                                                                                      \
+`,
+                memberName, memberName, memberName,
+            )
+        } else if !bConfig && bDefaultOnly {
+            out += fmt.Sprintf(`                                                                   \
+Ref->GetMutableClassFieldsDangerous().Emplace(                                                     \
+    /* Field Name   */ "%s",                                                                       \
+    /* Field Setter */ nullptr,                                                                    \
+    /* Field Getter */ nullptr,                                                                    \
+    /* Field Malloc */ LCustomMallocClassField::CreateMemberFunction(Ref, &_TObj::_MallocField_%s) \
+);                                                                                                 \
+`,
+                memberName, memberName,
+            )
+        }
 
         continue
     }
@@ -657,19 +703,39 @@ func OnBuildJafgClassField(hFileId string, bH *strings.Builder, bT *strings.Buil
         panic("Builder for translation is nil.")
     }
 
+    if len(packet.Args) == 0 {
+        panic(fmt.Sprintf("No class fields provided: %s::%d.", packet.Name, packet.Line))
+        return
+    }
+
     bH.WriteString(fmt.Sprintf(`
 #ifdef %s_%d_MY_GENERATED_CLASS_FIELD_DECLARATION
     #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
 #endif /* %s_%d_MY_GENERATED_CLASS_FIELD_DECLARATION */
 #define %s_%d_MY_GENERATED_CLASS_FIELD_DECLARATION(...) \
-    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION( \
-        /* My Class Member */ %s                                     \
-    )
 `,
         hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
-
-        packet.Name,
     ))
+
+    if Shared.ContainsByPredicate(packet.Args, func(s string) bool { return s == "Config" }) {
+        bH.WriteString(fmt.Sprintf(`                                        \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config( \
+        /* My Class Member */ %s                                            \
+    )                                                                       \
+`,
+            packet.Name,
+        ))
+    }
+
+    if Shared.ContainsByPredicate(packet.Args, func(s string) bool { return s == "DefaultOnly" }) {
+        bH.WriteString(fmt.Sprintf(` \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly( \
+        /* My Class Member */ %s                                            \
+    )                                                                     \
+`,
+            packet.Name,
+        ))
+    }
 
     return
 }

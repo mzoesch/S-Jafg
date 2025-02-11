@@ -16,6 +16,11 @@ class LStringBase
 {
     static_assert(std::is_base_of_v<LStringTraitsBase, InTraitsTy>);
 
+    template <typename TMemberField>
+    friend void OnDefaultOnlyMallocMember(TMemberField* MemberField);
+    template <typename TMemberField>
+    friend void OnDefaultOnlyMallocMember(TdhArray<TMemberField>* MemberField);
+
 public:
 
     using CharacterTy = InCharacterTy;

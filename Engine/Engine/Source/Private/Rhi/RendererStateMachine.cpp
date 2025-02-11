@@ -9,11 +9,11 @@ void Jafg::RendererStateMachine::PrepareForPerspectivePainting()
 #if !PLATFORM_WASM
     if (const JUserPreferences* Preferences = GetDefault<JUserPreferences>())
     {
-        if (Preferences->GetPolygonMode() == EPolygonMode::Wireframe)
+        if (Preferences->PolygonMode == EPolygonMode::Wireframe)
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
-        else if (Preferences->GetPolygonMode() == EPolygonMode::Fill)
+        else if (Preferences->PolygonMode == EPolygonMode::Fill)
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }

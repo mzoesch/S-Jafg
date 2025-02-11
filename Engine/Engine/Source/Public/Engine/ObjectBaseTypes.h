@@ -18,13 +18,12 @@ enum Type : LClassFlags
 {
     //# No flags are set. This is the default value.
     None            = 0 << 0,
-    ConfigDoNotUse  = 1 << 1,
 
     //# The class is abstract and can therefore not be instantiated.
     Abstract        = 1 << 0,
 
-    //# Fields with the CLASS_FIELD macro are serialized - only for the default package.
-    Config          = ConfigDoNotUse | Abstract,
+    //# Fields with the CLASS_FIELD macro are serialized both ways - only for the default package.
+    Config          = 1 << 1,
 
     //# The class is a singleton and can only be accessed through the #DetDefault and #GetMutableDefault functions.
     Singleton       = Abstract,

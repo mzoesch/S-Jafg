@@ -8,13 +8,12 @@
 #include "Engine/ObjectClass.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Engine/ObjectMacros.h"
-#include "Serialization/SerializationCore.h"
 #include "ObjectBase.generated.h"
 
 namespace Jafg
 {
 
-class LCarnifex;
+class NextIsObjectBaseClass;
 
 //#
 //# Helper struct to initialize the default object referrers.
@@ -41,27 +40,27 @@ struct LObjectInitializer final
     LObjectContext* Outer = nullptr;
 };
 
-FORCEINLINE auto GetDefaultObjectInitializer() -> LObjectInitializer
+FORCEINLINE LObjectInitializer GetDefaultObjectInitializer()
 {
     return LObjectInitializer(GOmniVitaContext);
 }
 
 MAKE_DELEGATE_SIGNATURE(LSetClassField, void, const LString& InValue)
 MAKE_DELEGATE_SIGNATURE(LGetClassField, LString)
+MAKE_DELEGATE_SIGNATURE(LCustomMallocClassField, void)
 
 struct LClassField
 {
-    FORCEINLINE LClassField(const LStringView InIdentifier, LSetClassField&& InSet, LGetClassField&& InGet)
-        : Identifier(InIdentifier), Set(std::move(InSet)), Get(std::move(InGet)) { }
+    FORCEINLINE LClassField(const LStringView InIdentifier, LSetClassField&& InSet, LGetClassField&& InGet, LCustomMallocClassField&& InMalloc)
+        : Identifier(InIdentifier), Set(std::move(InSet)), Get(std::move(InGet)), Malloc(std::move(InMalloc)) { }
     PROHIBIT_COPY(LClassField)
     DEFAULT_MOVE(LClassField)
 
     LStringView Identifier;
     LSetClassField Set;
     LGetClassField Get;
+    LCustomMallocClassField Malloc;
 };
-
-class NextIsObjectBaseClass;
 
 //#
 //# The base class for all objects that share a lifetime among its owner and that are detected automatically
@@ -75,7 +74,7 @@ DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API JObjectBase
 {
     friend LCarnifex;
-    friend Jafg::LObjectContext;
+    friend LObjectContext;
 
     /** The jafg v table class of this object. */
     LObjectClass* VClass = nullptr;
@@ -162,6 +161,8 @@ private:
 #if DO_DOUBLE_CHECK_LIFETIMES
     bool bHasBegunLife = false;
 #endif /* DO_DOUBLE_CHECK_LIFETIMES */
+
+    CLASS_FIELD(DefaultOnly)
     TdhArray<LClassField> ClassFields;
 };
 
@@ -171,3 +172,4 @@ private:
 //# Auxiliary includes.
 //#
 #include "Engine/SubclassOf.h"
+#include "Serialization/SerializationCore.h"

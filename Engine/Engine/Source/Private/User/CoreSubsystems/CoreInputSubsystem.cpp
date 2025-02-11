@@ -95,7 +95,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             CurMapping, EKeys::F1, EInputActionTrigger::Triggered,
             [] (LInputActionValue& InValue)
             {
-                GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Wireframe);
+                GetMutableDefault<JUserPreferences>()->PolygonMode = EPolygonMode::Wireframe;
             }
         );
     }
@@ -108,7 +108,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             CurMapping, EKeys::F2, EInputActionTrigger::Triggered,
             [] (LInputActionValue& InValue)
             {
-                GetMutableDefault<JUserPreferences>()->SetPolygonMode(EPolygonMode::Fill);
+                GetMutableDefault<JUserPreferences>()->PolygonMode = EPolygonMode::Fill;
             }
         );
     }
