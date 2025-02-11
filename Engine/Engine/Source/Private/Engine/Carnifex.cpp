@@ -15,7 +15,7 @@ void Jafg::LCarnifex::KillAllGarbageChildren()
 
     while (this->GarbageChildren.IsEmpty() == false)
     {
-        Private::JObjectBase* Child = *this->GarbageChildren.Peek();
+        JObjectBase* Child = *this->GarbageChildren.Peek();
         checkSlow( Child )
         check( Child->IsGarbage() )
 
@@ -33,9 +33,9 @@ void Jafg::LCarnifex::KillAllGarbageChildren()
     return;
 }
 
-void Jafg::LCarnifex::DevourGarbageChildNow(Private::JObjectBase* Child)
+void Jafg::LCarnifex::DevourGarbageChildNow(JObjectBase* Child)
 {
-    if (Private::JObjectBase** GarbageChild = this->GarbageChildren.FindRef(Child); GarbageChild)
+    if (JObjectBase** GarbageChild = this->GarbageChildren.FindRef(Child); GarbageChild)
     {
         this->GarbageChildren.RemoveOnceChecked(*GarbageChild);
     }
@@ -50,7 +50,7 @@ void Jafg::LCarnifex::DevourGarbageChildNow(Private::JObjectBase* Child)
     return;
 }
 
-void Jafg::LCarnifex::FreeChild(Private::JObjectBase* Child)
+void Jafg::LCarnifex::FreeChild(JObjectBase* Child)
 {
     checkSlow( Child )
 

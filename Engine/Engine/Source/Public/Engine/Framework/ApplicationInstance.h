@@ -7,13 +7,7 @@
 namespace Jafg
 {
 
-namespace Private
-{
-
 class LObjectContext;
-
-} /* ~Namespace Private */
-
 class LObjectClass;
 class LEngine;
 class JApplicationInstanceSubsystem;
@@ -57,7 +51,7 @@ public:
 
 private:
 
-    Private::LObjectContext* Context      = nullptr;
+    LObjectContext* Context      = nullptr;
     LSubsystemCollection*    Collection = nullptr;
 };
 

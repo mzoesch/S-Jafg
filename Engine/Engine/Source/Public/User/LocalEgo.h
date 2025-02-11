@@ -7,13 +7,7 @@
 namespace Jafg
 {
 
-namespace Private
-{
-
 class LObjectContext;
-
-} /* ~Namespace Private */
-
 class APawn;
 class LHud;
 class LWorld;
@@ -56,7 +50,7 @@ public:
     FORCEINLINE auto GetPanickedPossessed() const -> APersonaController*;
                 void Possess(APersonaController* InNewController);
 
-    FORCEINLINE auto GetContext() const -> Private::LObjectContext* { return this->Context; }
+    FORCEINLINE auto GetContext() const -> LObjectContext* { return this->Context; }
 
     void OnNewPawnPossessed(APawn* InOld, APawn* InNew) const;
 
@@ -77,7 +71,7 @@ private:
     //# The context of the local ego. It is created when the local ego is instantiated
     //# and not destroyed until the local ego is killed.
     //#
-    Private::LObjectContext* Context = nullptr;
+    LObjectContext* Context = nullptr;
     LSubsystemCollection* Collection = nullptr;
 };
 

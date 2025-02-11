@@ -3,7 +3,11 @@
 #pragma once
 
 #include "Engine/ObjectBase.h"
+#include "User/Preferences/PreferencesTypes.h"
 #include "UserPreferences.generated.h"
+
+#define CLASS_FIELD(...)
+// #define ADD_CUSTOM_CONFIG_IDENTIFIER(Identifier)
 
 namespace Jafg
 {
@@ -21,14 +25,42 @@ enum Type : uint8
 
 } /* ~Namespace EPolygonMode. */
 
-DECLARE_JAFG_CLASS(EClassFlags::Singleton)
-class ENGINE_API JUserPreferences final : public Private::JObjectBase
+DECLARE_JAFG_CLASS(EClassFlags::Config)
+class ENGINE_API JUserPreferences final : public JObjectBase
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JUserPreferences)
+    explicit JUserPreferences(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+    {
+        this->GetMutableClassFieldsDangerous().Emplace(
+            "MasterVolume",
+            LSetClassFieldSet::CreateMemberFunction(this, &JUserPreferences::_SetField_MasterVolume),
+            LGetClassField::CreateMemberFunction(this, &JUserPreferences::_GetField_MasterVolume)
+        );
+        return;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Audio
+    ///////////////////////////////////////////////////////////////////////////////
+
+public:
+
+    void _SetField_MasterVolume(const LString& InValue) { ::Jafg::Deserialize(&this->MasterVolume, InValue); }
+    LString _GetField_MasterVolume() const { return ::Jafg::Serialize(this->MasterVolume); }
+
+private:
+
+    CLASS_FIELD(Config)
+    TPreference<float> MasterVolume { 1.0f, true };
+    CLASS_FIELD(Config)
+    TPreference<float> MusicVolume  { 1.0f, true };
+    CLASS_FIELD(Config)
+    TPreference<float> MiscVolume   { 1.0f, true };
+    CLASS_FIELD(Config)
+    TPreference<float> VoiceVolume  { 1.0f, true };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Rendering pipeline
@@ -81,4 +113,4 @@ private:
     float TinyFontSize      { JUserPreferences::DefaultTinyFontSize      };
 };
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */

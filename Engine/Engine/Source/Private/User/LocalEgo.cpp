@@ -19,7 +19,7 @@ void Jafg::LLocalEgo::Initialize()
 {
     checkSlow( this->UserInput == nullptr )
 
-    this->Context = new ::Jafg::Private::LObjectContext();
+    this->Context = new ::Jafg::LObjectContext();
     this->Context->SetHumanReadableName("LocalEgo");
 
     this->UserInput = new LUserInput();

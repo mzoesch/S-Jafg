@@ -7,14 +7,16 @@
 namespace Jafg
 {
 
+class JObjectBase;
 class LEngine;
 class LCarnifex;
 
 namespace Private
 {
 
-class JObjectBase;
 struct LObjectMiscellaneousAccessor;
+
+} /* ~Namespace Private */
 
 //#
 //# Object context that is used to determine the context and lifetimes of jafg objects.
@@ -23,7 +25,7 @@ class ENGINE_API LObjectContext
 {
     friend JObjectBase;
     friend LCarnifex;
-    friend LObjectMiscellaneousAccessor;
+    friend Private::LObjectMiscellaneousAccessor;
 
 public:
 
@@ -51,7 +53,5 @@ private:
     //#
     TdhArray<JObjectBase*> Employees;
 };
-
-} /* ~Namespace Private */
 
 } /* ~Namespace Jafg */

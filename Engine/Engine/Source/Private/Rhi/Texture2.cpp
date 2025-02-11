@@ -25,7 +25,7 @@ bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const JUserPreferenc
     int32 Height     = 0;
     int32 NrChannels = 0;
 
-    Finder::DoesExistsPanicked(Path);
+    Finder::DoesFileExistsPanicked(Path);
     const uint8* Bulk     = nullptr;
     uint64       BulkSize = 0;
     Finder::ReadFileAsBinary(Path, Bulk, BulkSize);

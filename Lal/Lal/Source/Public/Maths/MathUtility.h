@@ -82,6 +82,10 @@ NODISCARD constexpr FORCEINLINE auto Clamp(const T Value, const T MinValue, cons
 MIX_FLOATING_POINT_ARGS_THREE_PARAMS(Clamp)
 NODISCARD constexpr FORCEINLINE auto Clamp(const float Value, const float MinValue, const float MaxValue) -> float;
 NODISCARD constexpr FORCEINLINE auto Clamp(const double Value, const double MinValue, const double MaxValue) -> double;
+/** Inclusively clamp the value of type U between its minimum and maximum values and cast the result to TRet. */
+template <typename TRet, typename U>
+NODISCARD constexpr FORCEINLINE auto ClampRet(const U Value, const U MinValue, const U MaxValue) -> TRet;
+MIX_FLOATING_POINT_ARGS_THREE_PARAMS(ClampRet)
 
 template <typename T> NODISCARD constexpr FORCEINLINE auto Floor(const T Value) -> T;
 template <typename T> NODISCARD constexpr FORCEINLINE auto Ceil(const T Value) -> T;
@@ -339,6 +343,12 @@ constexpr float Clamp(const float Value, const float MinValue, const float MaxVa
 constexpr double Clamp(const double Value, const double MinValue, const double MaxValue)
 {
     return Clamp<double>(Value, MinValue, MaxValue);
+}
+
+template <typename TRet, typename U>
+constexpr TRet ClampRet(const U Value, const U MinValue, const U MaxValue)
+{
+    return static_cast<TRet>(Clamp(Value, MinValue, MaxValue));
 }
 
 template <typename T>

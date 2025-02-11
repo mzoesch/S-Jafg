@@ -8,6 +8,7 @@
 #include "Engine/ObjectClass.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Engine/ObjectMacros.h"
+#include "Serialization/SerializationCore.h"
 #include "ObjectBase.generated.h"
 
 namespace Jafg
@@ -21,7 +22,7 @@ class LCarnifex;
 struct LObjectInitializer final
 {
     LObjectInitializer() = delete;
-    FORCEINLINE explicit LObjectInitializer(::Jafg::Private::LObjectContext* InOuter) : Outer(InOuter)
+    FORCEINLINE explicit LObjectInitializer(::Jafg::LObjectContext* InOuter) : Outer(InOuter)
     {
         checkSlow( this->Outer )
         return;
@@ -37,7 +38,7 @@ struct LObjectInitializer final
     //# inside a module and is not used as a (default) outer for clients of this class.
     //# @remarks Although a client should generally not life if its package referrer died.
     //#
-    Private::LObjectContext* Outer = nullptr;
+    LObjectContext* Outer = nullptr;
 };
 
 FORCEINLINE auto GetDefaultObjectInitializer() -> LObjectInitializer
@@ -45,8 +46,20 @@ FORCEINLINE auto GetDefaultObjectInitializer() -> LObjectInitializer
     return LObjectInitializer(GOmniVitaContext);
 }
 
-namespace Private
+MAKE_DELEGATE_SIGNATURE(LSetClassFieldSet, void, const LString& InValue)
+MAKE_DELEGATE_SIGNATURE(LGetClassField, LString)
+
+struct LClassField
 {
+    FORCEINLINE LClassField(const LStringView InIdentifier, LSetClassFieldSet&& InSet, LGetClassField&& InGet)
+        : Identifier(InIdentifier), Set(std::move(InSet)), Get(std::move(InGet)) { }
+    PROHIBIT_COPY(LClassField)
+    DEFAULT_MOVE(LClassField)
+
+    LStringView Identifier;
+    LSetClassFieldSet Set;
+    LGetClassField Get;
+};
 
 class NextIsObjectBaseClass;
 
@@ -62,7 +75,7 @@ DECLARE_JAFG_CLASS(EClassFlags::Abstract)
 class ENGINE_API JObjectBase
 {
     friend LCarnifex;
-    friend LObjectContext;
+    friend Jafg::LObjectContext;
 
     /** The jafg v table class of this object. */
     LObjectClass* VClass = nullptr;
@@ -78,14 +91,19 @@ public:
 
     FORCEINLINE auto GetVTable()        const -> const LObjectClass*  { return this->VClass; }
     FORCEINLINE auto GetMutableVTable() const ->       LObjectClass*  { return this->VClass; }
-    FORCEINLINE auto GetFullName()      const -> const LSimpleString& { return this->VClass->GetSpacedClassName(); }
-    FORCEINLINE auto GetName()          const ->       LName          { return this->VClass->GetName(); }
+    FORCEINLINE auto GetVTableSlow()        const -> const LObjectClass*  { return this->VClass ? this->VClass : Private::GObjectRegistry->GetPanickedPackageByContentDefault(this)->StaticClass; }
+    FORCEINLINE auto GetMutableVTableSlow() const ->       LObjectClass*  { return this->VClass ? this->VClass : Private::GObjectRegistry->GetPanickedPackageByContentDefault(this)->StaticClass; }
+    FORCEINLINE auto IsDefault()       const -> bool  { return this->VClass == nullptr; }
+    FORCEINLINE auto GetFullName()     const -> const LSimpleString& { return this->VClass->GetSpacedClassName(); }
+    FORCEINLINE auto GetName()         const ->       LName          { return this->VClass->GetName(); }
+    FORCEINLINE auto GetFullNameSlow() const -> const LSimpleString& { return this->GetVTableSlow()->GetSpacedClassName(); }
+    FORCEINLINE auto GetNameSlow()     const ->       LName          { return this->GetVTableSlow()->GetName(); }
 
     //#
     //# Gets the context that this object lives in and shares its lifetime with it.
     //# Lifetimes can be abridged by calling either #MarkAsGarbage or #KillYourSelfNow.
     //#
-    FORCEINLINE virtual auto GetOuter() const -> ::Jafg::Private::LObjectContext* { return this->Outer; }
+    FORCEINLINE virtual auto GetOuter() const -> ::Jafg::LObjectContext* { return this->Outer; }
     FORCEINLINE virtual auto HasOuter() const -> bool { return this->Outer != nullptr; }
 
     //#
@@ -125,6 +143,9 @@ public:
     //#
     virtual void EndLife() { }
 
+    FORCEINLINE auto GetClassFields() const -> const TdhArray<LClassField>& { return this->ClassFields; }
+    FORCEINLINE auto GetMutableClassFieldsDangerous() -> TdhArray<LClassField>& { return this->ClassFields; }
+
 protected:
 
     //# Delegate called when this object was marked as garbage.
@@ -134,14 +155,15 @@ private:
 
     void MarkAsGarbage(const bool bAddToCarnifex);
 
+    void OnDefaultGarbage();
+
     LObjectContext* Outer = nullptr;
     bool bGarbage = false;
 #if DO_DOUBLE_CHECK_LIFETIMES
     bool bHasBegunLife = false;
 #endif /* DO_DOUBLE_CHECK_LIFETIMES */
+    TdhArray<LClassField> ClassFields;
 };
-
-} /* ~Namespace Private */
 
 } /* ~Namespace Jafg */
 

@@ -3,31 +3,31 @@
 #pragma once
 
 #include "Widgets/UserWidget.h"
-#include "PauseMenu.generated.h"
+#include "PauseScreen.generated.h"
 
 namespace Jafg
 {
 
 class WTabBar;
-class WPauseMenu;
+class WPauseScreen;
 
-MAKE_MULTICAST_SIGNATURE(LOnPauseMenuConstruct, WPauseMenu* PauseMenu)
+MAKE_MULTICAST_SIGNATURE(LOnPauseScreenConstruct, WPauseScreen* PauseScreen)
 
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WPauseMenu final : public WUserWidget
+class ENGINE_API WPauseScreen final : public WUserWidget
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WPauseMenu)
+    DEFAULT_OBJECT_CONSTRUCTOR(WPauseScreen)
 
 public:
 
     //#
     //# Bind to this delegate to get notified when any pause menu is being constructed.
     //#
-    static LOnPauseMenuConstruct OnPauseMenuConstruct;
+    static LOnPauseScreenConstruct OnPauseScreenConstruct;
 
     virtual void Construct() override;
 

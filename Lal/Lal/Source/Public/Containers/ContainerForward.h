@@ -427,6 +427,7 @@ using LEightString  = LStringBase<char   ,  LEightStringTraits>;
 
 template <typename T, EQueueKind::Type TKind = EQueueKind::Spsc> using TQueue = TSimpleQueue<T, TKind>;
 
+using LStringView = std::basic_string_view<char>;
 
 /*----------------------------------------------------------------------------
     Functional Forwards.

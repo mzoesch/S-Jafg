@@ -161,6 +161,24 @@ func FindPreviousToken(tokens *[]Token, startIdx int, tokenType ETokenType) int 
     return -1
 }
 
+func FindMostPreviousToken(tokens *[]Token, startIdx int, allowedTokens []ETokenType) (int /* idx */, ETokenType /* ty */) {
+    for idxSmall, _ := range *tokens {
+        var idx int = (len(*tokens) - 1) - idxSmall
+        if idx > startIdx {
+            continue
+        }
+        var token *Token = &(*tokens)[idx]
+        for _, allowed := range allowedTokens {
+            if token.Type == allowed {
+                return idx, token.Type
+            }
+            continue
+        }
+        continue
+    }
+    return -1, TOKEN_UNKNOWN
+}
+
 // Word describes a collection of runes that are split with the C/C++ rules in mind. The most minimal categorizable
 // thing that has a valid syntax.
 // This means words are relevant not only for the preprocessor but also for the compiler.
@@ -289,8 +307,7 @@ func Tokenize(debugDisplayName string, content string) []Token {
                     break
                 }
             }
-            if cursor >= len(words) &&
-                len(out) > 0 &&
+            if len(out) > 0 &&
                 out[len(out)-1].Type == TOKEN_PRAGMA &&
                 out[len(out)-1].Content == "\"NextIsObjectBaseClass\"" {
                 out = append(out, Token{

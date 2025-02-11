@@ -63,6 +63,7 @@ public:
     FORCEINLINE auto Equals(const LStringTy& Other)     const noexcept -> bool { return this->Data == Other; }
 
     FORCEINLINE auto GetPath() const noexcept -> const LStringTy& { return this->Data; }
+    FORCEINLINE auto GetMutablePath() noexcept -> LStringTy& { return this->Data; }
     FORCEINLINE auto MoveOut() noexcept -> LStringTy { return std::move(this->Data); }
 
     /** Private iterator functions for range-based loops. Do not use these directly. */

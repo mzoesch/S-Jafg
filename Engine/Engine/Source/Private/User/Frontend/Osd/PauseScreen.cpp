@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "User/Frontend/Osd/PauseMenu.h"
-
+#include "User/Frontend/Osd/PauseScreen.h"
 #include "Engine/Engine.h"
 #include "User/LocalEgo.h"
 #include "Widgets/WidgetRegion.h"
@@ -9,14 +8,18 @@
 #include "Widgets/Blueprint/CommonMenuTabBar.h"
 #include "Widgets/Viewport.h"
 #include "Platform/Surface.h"
+#include "User/Frontend/Osd/PreferencesScreen.h"
 
-void Jafg::WPauseMenu::Construct()
+void Jafg::WPauseScreen::Construct()
 {
     Super::Construct();
 
     MakeRootNode(WWidgetRegion).Anchor(EAnchor::Fill)
     [
-        NewNode(WCommonMenuTabBar).SaveTo(this->PauseTabBar).AlignHorizontal().Anchor(EAnchor::Fill)
+        NewNode(WCommonMenuTabBar).SaveTo(this->PauseTabBar)
+            .Anchor(EAnchor::Fill)
+            .AlignHorizontal()
+            .BlurBackground(true)
     ]
     FinishWidgetStyling()
 
@@ -49,7 +52,7 @@ void Jafg::WPauseMenu::Construct()
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "Preferences";
-        Descriptor.PanelWidgetClass.Set<WDevelopmentTabBarPanelPlaceholder>();
+        Descriptor.PanelWidgetClass.Set<WPreferencesScreen>();
         this->PauseTabBar->RegisterTab(std::move(Descriptor));
     }
 
@@ -81,7 +84,7 @@ void Jafg::WPauseMenu::Construct()
     return;
 }
 
-void Jafg::WPauseMenu::OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility)
+void Jafg::WPauseScreen::OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility)
 {
     Super::OnVisibilityChanged(InOldVisibility, InNewVisibility);
 

@@ -5,12 +5,7 @@
 namespace Jafg
 {
 
-namespace Private
-{
-
 class JObjectBase;
-
-} /* ~Namespace Private */
 
 namespace Smart
 {
@@ -36,8 +31,8 @@ struct TUnique final
     static_assert(!std::is_const_v<T>, "TUnique does not support const.");
     static_assert(!std::is_volatile_v<T>, "TUnique does not support volatile.");
     static_assert(!std::is_pointer_v<T>, "TUnique does not support pointers.");
-    static_assert(!std::is_same_v<T, ::Jafg::Private::JObjectBase>, "TUnique does not support j objects.");
-    static_assert(!std::derived_from<T, ::Jafg::Private::JObjectBase>, "TUnique does not support j objects.");
+    static_assert(!std::is_same_v<T, ::Jafg::JObjectBase>, "TUnique does not support j objects.");
+    static_assert(!std::derived_from<T, ::Jafg::JObjectBase>, "TUnique does not support j objects.");
     static_assert(!std::is_same_v<T, std::nullptr_t>, "TUnique does not support nullptr.");
 
     using UniqueInnerTy = T;

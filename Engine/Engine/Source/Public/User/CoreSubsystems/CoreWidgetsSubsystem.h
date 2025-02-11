@@ -11,7 +11,7 @@ namespace Jafg
 class WDebugScreen;
 class WCrosshair;
 class WConsoleScreen;
-class WPauseMenu;
+class WPauseScreen;
 
 DECLARE_JAFG_CLASS()
 class ENGINE_API JCoreWidgetsSubsystem final : public JHudSubsystem
@@ -30,7 +30,7 @@ private:
     WDebugScreen* DebugScreen = nullptr;
     WCrosshair* Crosshair = nullptr;
     WConsoleScreen* ConsoleScreen = nullptr;
-    WPauseMenu* PauseMenu = nullptr;
+    WPauseScreen* PauseScreen = nullptr;
 };
 
 } /* ~Namespace Jafg */

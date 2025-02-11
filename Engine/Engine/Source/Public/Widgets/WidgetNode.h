@@ -357,22 +357,22 @@ public:
 //# @see User/Frontend/DebugScreen.cpp (for usage example)
 //#
 template <typename TNode>
-FORCEINLINE auto ConstructWidgetNode(Private::LObjectContext* InContext) -> TNode*;
-FORCEINLINE auto ConstructWidgetNode(Private::LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass) -> WWidgetNode*;
+FORCEINLINE auto ConstructWidgetNode(LObjectContext* InContext) -> TNode*;
+FORCEINLINE auto ConstructWidgetNode(LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass) -> WWidgetNode*;
 //#
 //# Constructs a new deferred widget node in the given context.
 //# @see NewNode(TNode) (Wsdsml)
 //# @see User/Frontend/DebugScreen.cpp (for usage example)
 //#
 template <typename TNode>
-FORCEINLINE auto ConstructDeferredWidgetNode(Private::LObjectContext* InContext) -> TNode*;
-FORCEINLINE auto ConstructDeferredWidgetNode(Private::LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass) -> WWidgetNode*;
+FORCEINLINE auto ConstructDeferredWidgetNode(LObjectContext* InContext) -> TNode*;
+FORCEINLINE auto ConstructDeferredWidgetNode(LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass) -> WWidgetNode*;
 
 //#
 //# Before constructing empty context widget, update the global specific widget context.
 //# This behaves like a state machine.
 //#
-ENGINE_API extern Private::LObjectContext* GCurrentWidgetContextState;
+ENGINE_API extern LObjectContext* GCurrentWidgetContextState;
 
 //# Constructs a new widget node in the current context of the current program widget state context.
 template <typename TNode>
@@ -400,7 +400,7 @@ struct LWidgetNodeData
 //# The base class for everything that can be interpreted as a visual element.
 //#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactory, EClassFlags::Abstract)
-class ENGINE_API WWidgetNode : public ::Jafg::Private::JObjectBase
+class ENGINE_API WWidgetNode : public ::Jafg::JObjectBase
 {
     GENERATED_CLASS_BODY()
 
@@ -625,7 +625,7 @@ typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::AddSibling
     return this->Self();
 }
 
-WWidgetNode* ConstructWidgetNode(Private::LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass)
+WWidgetNode* ConstructWidgetNode(LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass)
 {
     WWidgetNode* Node = ConstructDeferredWidgetNode(InContext, InClass);
     ::Jafg::MakeDeferredWidgetNodeFinal(Node);
@@ -633,18 +633,18 @@ WWidgetNode* ConstructWidgetNode(Private::LObjectContext* InContext, const TSubc
 }
 
 template <typename TNode>
-TNode* ConstructWidgetNode(Private::LObjectContext* InContext)
+TNode* ConstructWidgetNode(LObjectContext* InContext)
 {
     return CheckedStaticCast<TNode>(InContext, TNode::StaticClass());
 }
 
 template <typename TNode>
-TNode* ConstructDeferredWidgetNode(Private::LObjectContext* InContext)
+TNode* ConstructDeferredWidgetNode(LObjectContext* InContext)
 {
     return CheckedStaticCast<TNode>(ConstructDeferredWidgetNode(InContext, TNode::StaticClass()));
 }
 
-WWidgetNode* Jafg::ConstructDeferredWidgetNode(Private::LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass)
+WWidgetNode* Jafg::ConstructDeferredWidgetNode(LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass)
 {
     return NewDeferredObject<WWidgetNode, false, true>(InContext, InClass);
 }

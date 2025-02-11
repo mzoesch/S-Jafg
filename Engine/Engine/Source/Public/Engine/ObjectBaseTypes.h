@@ -22,6 +22,9 @@ enum Type : LClassFlags
     //# The class is abstract and can therefore not be instantiated.
     Abstract        = 1 << 0,
 
+    //# Fields with the CLASS_FIELD macro are serialized - only for the default package.
+    Config          = (1 << 1) | Abstract,
+
     //# The class is a singleton and can only be accessed through the #DetDefault and #GetMutableDefault functions.
     Singleton       = Abstract,
 };

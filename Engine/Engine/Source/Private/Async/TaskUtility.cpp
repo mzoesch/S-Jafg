@@ -186,7 +186,13 @@ bool Jafg::Tasks::IsOnThread(ENamedThreads::Type InThread)
         return ThreadTy->Id == PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
     }
 
-    return false;
+    /*
+     * This is not a 100% safe. But theoretically, only the master thread should be running when
+     * ::bClosedJoinableThreadsVector is true. If this is not the case, this program is probably already burning and
+     * in an undefined state. And when this would be the case, we are already pretty much fucked; this function
+     * will not help either with the shitty state but also will not make it dramatically worse.
+     */
+    return ::RegisteredThreadIds.IsEmpty() && ::bClosedJoinableThreadsVector && InThread == ENamedThreads::Master;
 }
 
 bool Jafg::Tasks::IsOnMasterThread()

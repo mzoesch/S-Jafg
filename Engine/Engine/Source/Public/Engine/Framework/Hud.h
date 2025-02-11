@@ -24,7 +24,7 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LHud)
     ~LHud() = default;
 
-    void Initialize(Private::LObjectContext* InOuter);
+    void Initialize(LObjectContext* InOuter);
     void Tick(LSurface& Surface, const bool bCheckInput);
     void TearDown();
 
@@ -58,7 +58,7 @@ public:
 
 private:
 
-    Private::LObjectContext* Outer;
+    LObjectContext* Outer;
     LSubsystemCollection*    Collection;
 };
 

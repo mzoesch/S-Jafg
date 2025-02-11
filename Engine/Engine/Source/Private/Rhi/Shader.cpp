@@ -90,8 +90,8 @@ void Jafg::LShader::SetColorVec4Uniform(const LSimpleString& Name, const LColor&
 
 void Jafg::LShader::LoadShader(const LEnginePath& VertexPath, const LEnginePath& FragmentPath)
 {
-    const LStringLegacy UncompiledVertex   = Finder::ReadFile(VertexPath);
-    const LStringLegacy UncompiledFragment = Finder::ReadFile(FragmentPath);
+    const LStringLegacy UncompiledVertex   = Finder::ReadFileLegacy(VertexPath);
+    const LStringLegacy UncompiledFragment = Finder::ReadFileLegacy(FragmentPath);
     const char* UncompiledVertexC   = UncompiledVertex.c_str();
     const char* UncompiledFragmentC = UncompiledFragment.c_str();
 

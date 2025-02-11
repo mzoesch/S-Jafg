@@ -18,7 +18,7 @@ class LApplicationInstance;
 //# If you want a simpler base class, use JObjectBase.
 //#
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
-class ENGINE_API JObject : public ::Jafg::Private::JObjectBase
+class ENGINE_API JObject : public ::Jafg::JObjectBase
 {
     GENERATED_CLASS_BODY()
 

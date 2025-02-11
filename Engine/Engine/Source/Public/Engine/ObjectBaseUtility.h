@@ -45,13 +45,13 @@
 namespace Jafg
 {
 
+class JObjectBase;
 class AActor;
 class WWidgetNode;
 
 namespace Private
 {
 
-class JObjectBase;
 class LObjectRegistry;
 struct TRegistryPackageBase;
 struct LRegistrationQueuePackage;
@@ -64,35 +64,35 @@ typedef void (*OnRegistrationDelegate)(LObjectClass* StaticClass);
 } /* ~Namespace Private */
 
 //# A global context that shares the lifetime of the program (not engine!).
-ENGINE_API extern Private::LObjectContext* GOmniVitaContext;
+ENGINE_API extern LObjectContext* GOmniVitaContext;
 
 //# Allocate a new object of type TObj. */
 template <typename TObj>
 FORCEINLINE auto NewObject() -> TObj*;
 template <typename TObj>
-FORCEINLINE auto NewObject(Private::LObjectContext* InContext) -> TObj*;
+FORCEINLINE auto NewObject(LObjectContext* InContext) -> TObj*;
 template <typename TObj>
-FORCEINLINE auto NewObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> TObj*;
-FORCEINLINE auto NewObject(const LSimpleString& InClassName) -> Private::JObjectBase*;
-FORCEINLINE auto NewObject(Private::LObjectContext* InContext, const LSimpleString& InClassName) -> Private::JObjectBase*;
-FORCEINLINE auto NewObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> Private::JObjectBase*;
+FORCEINLINE auto NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> TObj*;
+FORCEINLINE auto NewObject(const LSimpleString& InClassName) -> JObjectBase*;
+FORCEINLINE auto NewObject(LObjectContext* InContext, const LSimpleString& InClassName) -> JObjectBase*;
+FORCEINLINE auto NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
 
 //# Allocate a new object of type TObj. The begin-life method will not be called.
 template <typename TObj>
 FORCEINLINE auto NewDeferredObject() -> TObj*;
 template <typename TObj>
-FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext) -> TObj*;
+FORCEINLINE auto NewDeferredObject(LObjectContext* InContext) -> TObj*;
 // Boolean parameters are for internal use only - __DO NOT__ change the default values.
 template <typename TObj, bool bAllowActor = /*FALSE REQUIRED*/false, bool bAllowWidget = /*FALSE REQUIRED*/false>
-FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> TObj*;
-FORCEINLINE auto NewDeferredObject(const LSimpleString& InClassName) -> Private::JObjectBase*;
-FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LSimpleString& InClassName) -> Private::JObjectBase*;
-FORCEINLINE auto NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass) -> Private::JObjectBase*;
+FORCEINLINE auto NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> TObj*;
+FORCEINLINE auto NewDeferredObject(const LSimpleString& InClassName) -> JObjectBase*;
+FORCEINLINE auto NewDeferredObject(LObjectContext* InContext, const LSimpleString& InClassName) -> JObjectBase*;
+FORCEINLINE auto NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
 
 //#
 //# Call this method to finalize an object that was deferred.
 //#
-ENGINE_API void MakeDeferredObjectFinal(Private::JObjectBase* InObject);
+ENGINE_API void MakeDeferredObjectFinal(JObjectBase* InObject);
 
 //#
 //# @return The dynamic-casted object if the object is or derives from TObj, else nullptr.
@@ -101,9 +101,9 @@ ENGINE_API void MakeDeferredObjectFinal(Private::JObjectBase* InObject);
 //#         as that function does not add any runtime overhead.
 //#
 template <typename TObj>
-FORCEINLINE auto DynamicCast(Private::JObjectBase* InObject) -> TObj*;
+FORCEINLINE auto DynamicCast(JObjectBase* InObject) -> TObj*;
 template <typename TObj>
-FORCEINLINE auto DynamicCast(const Private::JObjectBase* InObject) -> const TObj*;
+FORCEINLINE auto DynamicCast(const JObjectBase* InObject) -> const TObj*;
 
 //#
 //# Only checks if the object can be casted if DO_CHECKS is true. If the object fails to cast to the
@@ -132,6 +132,11 @@ FORCEINLINE auto GetDefault() -> const TObj*;
 //#
 template <typename TObj>
 FORCEINLINE auto GetMutableDefault() -> TObj*;
+
+ENGINE_API void PullConfigFromObject(LObjectClass* InClass);
+ENGINE_API void PushConfigFromObject(const LObjectClass* InClass);
+template <typename TObj> FORCEINLINE void PushConfigFromObject() { PushConfigFromObject(TObj::StaticClass()); }
+template <typename TObj> FORCEINLINE void PushConfigFromObject(const TObj* InObject) { PushConfigFromObject(InObject->GetVTableSlow()); }
 
 namespace Private
 {
@@ -181,12 +186,12 @@ struct LObjectMiscellaneousAccessor final
     ~LObjectMiscellaneousAccessor() = delete;
 
     template <typename TObj>
-    FORCEINLINE static auto NewObject(Private::LObjectContext* Context) -> TObj*;
-    FORCEINLINE static auto NewObject(Private::LObjectContext* Context, const LSimpleString& ClassName) -> JObjectBase*;
+    FORCEINLINE static auto NewObject(LObjectContext* Context) -> TObj*;
+    FORCEINLINE static auto NewObject(LObjectContext* Context, const LSimpleString& ClassName) -> JObjectBase*;
 
     template <typename TObj>
-    FORCEINLINE static auto NewDeferredObject(Private::LObjectContext* Context) -> TObj*;
-    FORCEINLINE static auto NewDeferredObject(Private::LObjectContext* Context, const LSimpleString& ClassName) -> JObjectBase*;
+    FORCEINLINE static auto NewDeferredObject(LObjectContext* Context) -> TObj*;
+    FORCEINLINE static auto NewDeferredObject(LObjectContext* Context, const LSimpleString& ClassName) -> JObjectBase*;
 
     ENGINE_API static auto NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
     ENGINE_API static auto NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
@@ -274,25 +279,6 @@ private:
     TdhArray<LRegistryPackage>         RegisteredObjects;
 };
 
-template <typename TObj>
-void RegisterNewObjectType(
-    LSimpleString            SpacedClassName,
-    GetContentDefaultFunctor GetContentDefaultDelegate,
-    OnRegistrationDelegate   Callback
-)
-{
-    static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
-
-    Private::GetRegisterObjectQueue().Emplace(
-        std::forward<LSimpleString>(SpacedClassName),
-        GetContentDefaultDelegate,
-        Callback
-    );
-
-    return;
-
-}
-
 //# Global static helper struct to allow for private member access through derived classes of JObjectBase.
 struct LRegistrationCallbackHelper final
 {
@@ -309,30 +295,7 @@ struct LRegistrationCallbackHelper final
     //# @param  Parent      The namespaced name of the parent class.
     //#
     template <typename TObj = JObjectBase>
-    static void DoRegisterContentsForClass(
-        LObjectClass*           StaticClass,
-        const EClassFlags::Type Flags,
-        LSimpleString&&         Parent
-    )
-    {
-        static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
-
-        jassert( StaticClass )
-        jassert( StaticClass->DefaultPackageReferrer )
-
-        TObj::StaticClassReferrer  = StaticClass;
-        StaticClass->TotalByteSize = sizeof(TObj);
-        StaticClass->Flags         = Flags;
-
-        check( TObj::StaticClass() )
-
-        GObjectRegistry->DeferredPackages.Emplace(
-            std::move(Parent),
-            const_cast<LObjectClass*>(TObj::StaticClass())
-        );
-
-        return;
-    }
+    static void DoRegisterContentsForClass(LObjectClass* StaticClass, const EClassFlags::Type Flags, LSimpleString&& Parent);
 };
 
 } /* ~Namespace Private */
@@ -346,7 +309,7 @@ TObj* NewObject()
 }
 
 template <typename TObj>
-TObj* NewObject(Private::LObjectContext* InContext)
+TObj* NewObject(LObjectContext* InContext)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
     static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
@@ -354,24 +317,24 @@ TObj* NewObject(Private::LObjectContext* InContext)
 }
 
 template <typename TObj>
-TObj* NewObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass)
+TObj* NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
     static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return reinterpret_cast<TObj*>(Private::LObjectMiscellaneousAccessor::NewObject(InContext, InStaticClass));
 }
 
-Private::JObjectBase* NewObject(const LSimpleString& InClassName)
+JObjectBase* NewObject(const LSimpleString& InClassName)
 {
     return NewObject(GOmniVitaContext, InClassName);
 }
 
-Private::JObjectBase* NewObject(Private::LObjectContext* InContext, const LSimpleString& InClassName)
+JObjectBase* NewObject(LObjectContext* InContext, const LSimpleString& InClassName)
 {
     return Private::LObjectMiscellaneousAccessor::NewObject(InContext, InClassName);
 }
 
-Private::JObjectBase* NewObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass)
+JObjectBase* NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
     return Private::LObjectMiscellaneousAccessor::NewObject(InContext, InStaticClass);
 }
@@ -385,7 +348,7 @@ TObj* NewDeferredObject()
 }
 
 template <typename TObj>
-TObj* NewDeferredObject(Private::LObjectContext* InContext)
+TObj* NewDeferredObject(LObjectContext* InContext)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
     static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
@@ -393,7 +356,7 @@ TObj* NewDeferredObject(Private::LObjectContext* InContext)
 }
 
 template <typename TObj, bool bAllowActor /* = false */, bool bAllowWidget /* = false */>
-TObj* NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass)
+TObj* NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
     if constexpr (bAllowActor == false)
     {
@@ -407,17 +370,17 @@ TObj* NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* 
     return CheckedStaticCast<TObj>(NewDeferredObject(InContext, InStaticClass));
 }
 
-Private::JObjectBase* NewDeferredObject(const LSimpleString& InClassName)
+JObjectBase* NewDeferredObject(const LSimpleString& InClassName)
 {
     return NewDeferredObject(GOmniVitaContext, InClassName);
 }
 
-Private::JObjectBase* NewDeferredObject(Private::LObjectContext* InContext, const LSimpleString& InClassName)
+JObjectBase* NewDeferredObject(LObjectContext* InContext, const LSimpleString& InClassName)
 {
     return Private::LObjectMiscellaneousAccessor::NewDeferredObject(InContext, InClassName);
 }
 
-Private::JObjectBase* NewDeferredObject(Private::LObjectContext* InContext, const LObjectClass* InStaticClass)
+JObjectBase* NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
     return Private::LObjectMiscellaneousAccessor::NewDeferredObject(InContext, InStaticClass);
 }
@@ -430,13 +393,13 @@ TObj* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context)
     return reinterpret_cast<TObj*>(LObjectMiscellaneousAccessor::NewObject(Context, TObj::StaticClass()));
 }
 
-Private::JObjectBase* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context, const LSimpleString& ClassName)
+JObjectBase* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context, const LSimpleString& ClassName)
 {
     return LObjectMiscellaneousAccessor::NewObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass);
 }
 
 template <typename TObj>
-TObj* DynamicCast(Private::JObjectBase* InObject)
+TObj* DynamicCast(JObjectBase* InObject)
 {
     if (InObject && Private::LObjectMiscellaneousAccessor::DynamicCast(InObject, TObj::StaticClass()))
     {
@@ -447,15 +410,15 @@ TObj* DynamicCast(Private::JObjectBase* InObject)
 }
 
 template <typename TObj>
-const TObj* DynamicCast(const Private::JObjectBase* InObject)
+const TObj* DynamicCast(const JObjectBase* InObject)
 {
-    return DynamicCast<TObj>(const_cast<Private::JObjectBase*>(InObject));
+    return DynamicCast<TObj>(const_cast<JObjectBase*>(InObject));
 }
 
 template <typename TObj, typename U, bool bAllowForNullptr /* = false */>
 TObj* CheckedStaticCast(U* InObject)
 {
-    static_assert(std::is_base_of_v<Private::JObjectBase, U>);
+    static_assert(std::is_base_of_v<JObjectBase, U>);
 
 #if DO_CHECKS
     if constexpr (bAllowForNullptr)
@@ -502,16 +465,57 @@ TObj* GetMutableDefault()
 }
 
 template <typename TObj>
-TObj* Private::LObjectMiscellaneousAccessor::NewDeferredObject(Private::LObjectContext* Context)
+TObj* Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObjectContext* Context)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
     static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return reinterpret_cast<TObj*>(LObjectMiscellaneousAccessor::NewDeferredObject(Context, TObj::StaticClass()));
 }
 
-Private::JObjectBase* Private::LObjectMiscellaneousAccessor::NewDeferredObject(Private::LObjectContext* Context, const LSimpleString& ClassName)
+template <typename TObj>
+void Private::LRegistrationCallbackHelper::DoRegisterContentsForClass(LObjectClass* StaticClass,
+    const EClassFlags::Type Flags, LSimpleString&& Parent)
+{
+    static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
+
+    jassert( StaticClass )
+    jassert( StaticClass->DefaultPackageReferrer )
+
+    TObj::StaticClassReferrer  = StaticClass;
+    StaticClass->TotalByteSize = sizeof(TObj);
+    StaticClass->Flags         = Flags;
+
+    check( TObj::StaticClass() )
+
+    GObjectRegistry->DeferredPackages.Emplace(
+        std::move(Parent),
+        const_cast<LObjectClass*>(TObj::StaticClass())
+    );
+
+    return;
+}
+
+JObjectBase* Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObjectContext* Context, const LSimpleString& ClassName)
 {
     return LObjectMiscellaneousAccessor::NewDeferredObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass);
+}
+
+template <typename TObj>
+void Private::RegisterNewObjectType(
+    LSimpleString            SpacedClassName,
+    GetContentDefaultFunctor GetContentDefaultDelegate,
+    OnRegistrationDelegate   Callback
+)
+{
+    static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
+
+    Private::GetRegisterObjectQueue().Emplace(
+        std::forward<LSimpleString>(SpacedClassName),
+        GetContentDefaultDelegate,
+        Callback
+    );
+
+    return;
 }
 
 } /* ~Namespace Jafg */

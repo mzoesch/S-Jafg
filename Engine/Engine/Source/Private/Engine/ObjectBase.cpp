@@ -4,7 +4,7 @@
 #include "Engine/ObjectBase.h"
 #include "Engine/Carnifex.h"
 
-Jafg::Private::JObjectBase::JObjectBase(const LObjectInitializer& ObjectInitializer)
+Jafg::JObjectBase::JObjectBase(const LObjectInitializer& ObjectInitializer)
 {
     // TODO Check if obj was already registered
 
@@ -17,7 +17,7 @@ Jafg::Private::JObjectBase::JObjectBase(const LObjectInitializer& ObjectInitiali
     return;
 }
 
-Jafg::Private::JObjectBase::~JObjectBase()
+Jafg::JObjectBase::~JObjectBase()
 {
     /*
      * If this check triggers, you might have done one of the following things that are forbidden:
@@ -32,7 +32,7 @@ Jafg::Private::JObjectBase::~JObjectBase()
     check( this->bGarbage )
 }
 
-void Jafg::Private::JObjectBase::MarkAsGarbage()
+void Jafg::JObjectBase::MarkAsGarbage()
 {
     /*
      * Might be called multiple times when tearing down complex subsystems.
@@ -48,7 +48,7 @@ void Jafg::Private::JObjectBase::MarkAsGarbage()
     return;
 }
 
-void Jafg::Private::JObjectBase::KillYourSelfNow(const bool bMayBeGarbage /* = false */)
+void Jafg::JObjectBase::KillYourSelfNow(const bool bMayBeGarbage /* = false */)
 {
 #if DO_CHECKS
     if (bMayBeGarbage == false)
@@ -70,7 +70,18 @@ void Jafg::Private::JObjectBase::KillYourSelfNow(const bool bMayBeGarbage /* = f
     return;
 }
 
-void Jafg::Private::JObjectBase::MarkAsGarbage(const bool bAddToCarnifex)
+void Jafg::JObjectBase::OnDefaultGarbage()
+{
+    check( this->IsDefault() )
+    if (this->GetVTableSlow()->IsConfig())
+    {
+        PushConfigFromObject(this);
+    }
+
+    return;
+}
+
+void Jafg::JObjectBase::MarkAsGarbage(const bool bAddToCarnifex)
 {
     checkSlow( this->bGarbage == false )
     this->bGarbage = true;

@@ -23,7 +23,30 @@ LPath Finder::GetEngineRootDir()
     return PlatformMisc::GetEngineRootDir();
 }
 
-LStringLegacy Finder::ReadFile(const LEnginePath& InEnginePath)
+LPath Finder::GetSavedDir()
+{
+    LPath Out = GetEngineRootDir();
+    Out /= "Saved";
+    return Out;
+}
+
+LPath Finder::GetUserPreferencesFile()
+{
+    LPath Out = GetSavedDir();
+    Out /= "MyPreferences.cfg";
+    return Out;
+}
+
+LStringLegacy Finder::ReadFileLegacy(const LEnginePath& InEnginePath)
+{
+#if WITH_VIRTUAL_FILESYSTEM
+    return GVirtualFileSystem->ReadFileAsString(InEnginePath);
+#else /* WITH_VIRTUAL_FILESYSTEM */
+    return Paths::ReadFileLegacy(InEnginePath.ResolveAbsolutePath(*GetDefault<JUserPreferences>()));
+#endif /* !WITH_VIRTUAL_FILESYSTEM */
+}
+
+LString Finder::ReadFile(const LEnginePath& InEnginePath)
 {
 #if WITH_VIRTUAL_FILESYSTEM
     return GVirtualFileSystem->ReadFileAsString(InEnginePath);
@@ -79,7 +102,7 @@ void Finder::FreeReadFileBinaryBuffer(const uint8*& InBuffer)
     return;
 }
 
-bool Finder::DoesExists(const LEnginePath& InEnginePath)
+bool Finder::DoesFileExists(const LEnginePath& InEnginePath)
 {
 #if WITH_VIRTUAL_FILESYSTEM
     return GVirtualFileSystem->DoesFileExist(InEnginePath);
@@ -88,21 +111,35 @@ bool Finder::DoesExists(const LEnginePath& InEnginePath)
 #endif /* WITH_VIRTUAL_FILESYSTEM */
 }
 
-bool Finder::DoesExistsChecked(const LEnginePath& InEnginePath)
+bool Finder::DoesFileExistsChecked(const LEnginePath& InEnginePath)
 {
-    const bool bOut = Finder::DoesExists(InEnginePath);
+    const bool bOut = Finder::DoesFileExists(InEnginePath);
     check(bOut)
     return bOut;
 }
 
-bool Finder::DoesExistsPanicked(const LEnginePath& InEnginePath)
+bool Finder::DoesFileExistsPanicked(const LEnginePath& InEnginePath)
 {
-    const bool bOut = Finder::DoesExists(InEnginePath);
+    const bool bOut = Finder::DoesFileExists(InEnginePath);
     if (bOut == false)
     {
         panicMsgf("File does not exist: {}", InEnginePath.GetRelativeUnresolvedPath().GetPath())
     }
     return bOut;
+}
+
+void Finder::CheckFile(const LEnginePath& InEnginePath)
+{
+    if (Finder::DoesFileExists(InEnginePath))
+    {
+        return;
+    }
+#if WITH_VIRTUAL_FILESYSTEM
+    panicMsgf( "File does not exist: {}.", InEnginePath.GetRelativeUnresolvedPath().GetPath() )
+#else /* WITH_VIRTUAL_FILESYSTEM */
+    Paths::CreateFileSlow(InEnginePath.ResolveAbsolutePath(*GetDefault<JUserPreferences>()));
+#endif /* !WITH_VIRTUAL_FILESYSTEM */
+    return;
 }
 
 LPath Finder::ResolvePathToRelativeModulePath(const LEnginePath& InEnginePath)
@@ -122,15 +159,21 @@ LPath Finder::ResolvePathToRelativeModulePath(const LEnginePath& InEnginePath)
 
 LPath Finder::ResolvePathToRelativeEnginePath(const LEnginePath& InEnginePath, const JUserPreferences& InUserPreferences)
 {
-    /*
-     * Currently not implemented, but as soon as we separate the engine with the actual content to JafgPlugin, we will
-     * need this. But this is in a long distance future :).
-     */
+    if (InEnginePath.GetPathTy() == EEnginePaths::CustomEngine)
+    {
+        return InEnginePath.GetRelativeUnresolvedPath();
+    }
+
     return Finder::ResolvePathToRelativeModulePath(InEnginePath);
 }
 
 LPath Finder::ResolvePathToAbsolutePath(const LEnginePath& InEnginePath, const JUserPreferences& InUserPreferences)
 {
+    if (InEnginePath.GetPathTy() == EEnginePaths::None)
+    {
+        return InEnginePath.GetRelativeUnresolvedPath();
+    }
+
     LPath Out = Finder::GetEngineRootDir();
     Out /= Finder::ResolvePathToRelativeEnginePath(InEnginePath, InUserPreferences);
     return Out;

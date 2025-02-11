@@ -4,13 +4,13 @@
 #include "Engine/ObjectContext.h"
 #include "Engine/ObjectBase.h"
 
-Jafg::Private::LObjectContext::LObjectContext()
+Jafg::LObjectContext::LObjectContext()
 {
-    this->Carnifex = GCarnifexReferrer;
+    this->Carnifex = Private::GCarnifexReferrer;
     return;
 }
 
-void Jafg::Private::LObjectContext::TearDownContext()
+void Jafg::LObjectContext::TearDownContext()
 {
     LOG_TRACE(
         LogCarnifex,
@@ -33,6 +33,7 @@ void Jafg::Private::LObjectContext::TearDownContext()
          */
         check( Employee->bGarbage == false )
         Employee->bGarbage = true;
+        Employee->OnDefaultGarbage();
         delete Employee;
 
         continue;

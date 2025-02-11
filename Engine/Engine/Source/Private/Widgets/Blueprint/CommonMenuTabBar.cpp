@@ -36,7 +36,7 @@ void Jafg::WDevelopmentTabBarPanelPlaceholder::Construct()
     std::random_device RandomDevice;
     std::mt19937 RandomEngine(RandomDevice());
     std::uniform_int_distribution<int> RandomColor(0, 255);
-    LColor Tint = LColor(RandomColor(RandomEngine), RandomColor(RandomEngine), RandomColor(RandomEngine), 32);
+    LColor Tint = LColor(RandomColor(RandomEngine), RandomColor(RandomEngine), RandomColor(RandomEngine), 64);
 
     ConstructDeferredWidgetNode<WWidgetRegion>()->GetFactory<WWidgetRegion>().SaveTo(this->Panel)
         .Tint(Tint).Anchor(EAnchor::Fill).MinDesiredSize({50,70});
@@ -53,10 +53,13 @@ void Jafg::WCommonMenuTabBar::Construct()
         this->DefaultButtonClass.Set<WCommonMenuTabBarButton>();
     }
 
-    WBackgroundBlur* Blur = ConstructDeferredWidgetNode<WBackgroundBlur>();
-    Blur->SetAnchor(EAnchor::Fill);
-    Blur->SetBlurStrength(0.4f);
-    this->AddChild(Blur);
+    if (this->bBlur)
+    {
+        WBackgroundBlur* Blur = ConstructDeferredWidgetNode<WBackgroundBlur>();
+        Blur->SetAnchor(EAnchor::Fill);
+        Blur->SetBlurStrength(0.4f);
+        this->AddChild(Blur);
+    }
 
     Super::Construct();
 
@@ -65,7 +68,8 @@ void Jafg::WCommonMenuTabBar::Construct()
     if (WVBox* VBox = DynamicCast<WVBox>(this->ButtonsContainer); VBox)
     {
         VBox->SetMinDesiredSize({200, 0});
-        VBox->SetTint({0, 0, 0, 128});
+
+        VBox->SetTint({0, 0, 0, Maths::ClampRet<uint8, int32>(this->Depth * 32 + 128, 128, 255)});
         VBox->SetAnchor(EAnchor::VFill);
     }
 

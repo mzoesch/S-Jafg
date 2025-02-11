@@ -29,4 +29,16 @@ FORCEINLINE bool Xor(const bool A, const bool B)
     return (A + B) % 2;
 }
 
+template <bool Predicate, typename Ret = void>
+class TEnableIf;
+template <typename Ret> class TEnableIf<true, Ret>
+{
+public: using Ty = Ret;
+};
+template <typename Ret> class TEnableIf<false, Ret>
+{
+};
+template <bool Predicate, typename Ret = void>
+using TEnableIfTy = typename TEnableIf<Predicate, Ret>::Ty;
+
 } /* ~Namespace Jafg */

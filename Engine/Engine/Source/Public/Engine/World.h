@@ -75,7 +75,7 @@ enum Type : uint8
 //# Once every frame a world will be ticked. It may register itself to the RHI to be used when
 //# rendering on any kind of surface. Multiple worlds may draw to the same surface.
 //#
-class ENGINE_API LWorld final : public ::Jafg::Private::LObjectContext
+class ENGINE_API LWorld final : public ::Jafg::LObjectContext
 {
     friend AActor;
     friend Private::LWorldMiscellaneousAccessor;

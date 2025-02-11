@@ -153,6 +153,7 @@ bool Jafg::WTabBar::UnregisterTabChecked(const LSimpleString& Identifier)
 
 void Jafg::WTabBar::OnTabBarButtonPressed(const LSimpleString& Identifier)
 {
+    const void* PreviouslyFocusedTab = this->CurrentlyFocusedTab;
     if (const LAddedTabBarTab* FocusedTab = this->GetCurrentlyFocusedTab(); FocusedTab)
     {
         if (WTabBarButton* B = DynamicCast<WTabBarButton>(FocusedTab->Button); B)
@@ -174,6 +175,13 @@ void Jafg::WTabBar::OnTabBarButtonPressed(const LSimpleString& Identifier)
     jassert( Idx < this->TabsInOrder.GetSize() )
 
     LAddedTabBarTab& TabDescriptor = this->TabsInOrder[Idx];
+
+    if (PreviouslyFocusedTab == static_cast<const void*>(TabDescriptor.Identifier.ToPtr()))
+    {
+        this->Switcher->ResetWidgetIndex();
+        return;
+    }
+
     this->CurrentlyFocusedTab = static_cast<const void*>(TabDescriptor.Identifier.ToPtr());
 
     if (TabDescriptor.SwitcherIndex != INDEX_NONE)

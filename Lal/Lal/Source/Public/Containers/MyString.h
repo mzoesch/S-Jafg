@@ -110,6 +110,8 @@ public:
     /** @return The rune that is the #InRuneIndex rune in this string. */
     FORCEINLINE const CharacterTy* GetRuneAt(const SizeType InRuneIndex);
     FORCEINLINE const CharacterTy* operator[](const SizeType InRuneIndex);
+    FORCEINLINE       CharacterTy& GetCharacterAtIndex(const SizeType InIndex)       { return this->Data[InIndex]; }
+    FORCEINLINE const CharacterTy& GetCharacterAtIndex(const SizeType InIndex) const { return this->Data[InIndex]; }
 
     FORCEINLINE bool operator==(LNullptrTy) const;
 
@@ -181,6 +183,10 @@ public:
     FORCEINLINE SizeType FindSecond(const CharacterTy* InRune) const;
     FORCEINLINE SizeType FindLast(const CharacterTy    InRune) const;
     FORCEINLINE SizeType FindLast(const CharacterTy*   InRune) const;
+
+    template <bool Condition = IsNativeChar()>
+    FORCEINLINE auto FindFirstSub(const char* InString) const -> TEnableIf<!Condition, SizeType>;
+    FORCEINLINE auto FindFirstSub(const CharacterTy* InString) const -> SizeType;
 
     /** The index of the rune. Not the index of the targeted character. */
     FORCEINLINE auto InlineCut(const SizeType InRuneIndex) -> void;
@@ -1068,7 +1074,7 @@ bool LStringBase<InCharacterTy, InTraitsTy>::EndsWith(const LStringBase& InStrin
 
     SizeType Cursor = this->GetSize() - InString.GetSize();
     check( Cursor >= 0 )
-    while (Cursor <= this->GetSize())
+    while (Cursor < this->GetSize())
     {
         if (this->Data[Cursor] != InString.Data[Cursor - this->GetSize() + InString.GetSize()])
         {
@@ -1274,6 +1280,68 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
         ++Out;
 
         continue;
+    }
+
+    return INDEX_NONE;
+}
+
+template <typename InCharacterTy, class InTraitsTy>
+template <bool Condition>
+typename LStringBase<InCharacterTy, InTraitsTy>::template TEnableIf<!Condition, typename LStringBase<InCharacterTy, InTraitsTy>::SizeType>
+LStringBase<InCharacterTy, InTraitsTy>::FindFirstSub(const char* InString) const
+{
+    return this->FindFirstSub(reinterpret_cast<const InCharacterTy*>(InString));
+}
+
+template <typename InCharacterTy, class InTraitsTy>
+typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacterTy, InTraitsTy>::FindFirstSub(const CharacterTy* InString) const
+{
+#if CHECK_STRING_VALIDITY
+    this->PanicValidState();
+#endif /* CHECK_STRING_VALIDITY */
+
+    if (*InString == TraitsTy::Terminator)
+    {
+        return INDEX_NONE;
+    }
+
+    SizeType RuneCursor  = 0;
+    SizeType Cursor      = 0;
+    SizeType InnerCursor = 0;
+    const CharacterTy* DataPtr = this->ToPtr();
+    while (*(DataPtr + Cursor) != TraitsTy::Terminator)
+    {
+        SizeType InStringCursor = 0;
+
+        while (true)
+        {
+            if (*(InString + InStringCursor) == TraitsTy::Terminator)
+            {
+                return RuneCursor;
+            }
+
+            if (*(DataPtr + InnerCursor) == TraitsTy::Terminator) // The InString is longer than the substr we
+            {                                                     // are comparing.
+                return INDEX_NONE;
+            }
+
+            if (TraitsTy::IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + InnerCursor, InString + InStringCursor))
+            {
+                const SizeType CurRuneSize = TraitsTy::GetRuneSize(DataPtr + InnerCursor);
+                InnerCursor += CurRuneSize;
+                InStringCursor += CurRuneSize;
+                ++RuneCursor;
+                continue;
+            }
+
+            goto RunesAreNotEqual;
+        }
+
+        checkNoEntry()
+        RunesAreNotEqual:
+            TraitsTy::GoToNextRune(DataPtr, Cursor);
+            InnerCursor = Cursor;
+            continue;
     }
 
     return INDEX_NONE;

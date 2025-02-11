@@ -11,7 +11,7 @@ void Jafg::LApplicationInstance::Initialize()
 {
     checkSlow( this->Context == nullptr )
 
-    this->Context = new ::Jafg::Private::LObjectContext();
+    this->Context = new ::Jafg::LObjectContext();
     this->Context->SetHumanReadableName("ApplicationInstance");
 
     checkSlow( this->Collection == nullptr )

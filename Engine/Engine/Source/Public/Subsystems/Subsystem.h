@@ -19,7 +19,7 @@ struct LSubsystemCollection;
 //# To create your own subsystem lifetime:
 //#
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
-class ENGINE_API JSubsystem : public Private::JObjectBase
+class ENGINE_API JSubsystem : public JObjectBase
 {
     friend LSubsystemCollection;
 
@@ -39,7 +39,7 @@ protected:
     //# @note The object will still be instanced if ShouldCreateSubsystem returns false, but will be killed
     //#       soon after.
     //#
-    virtual bool ShouldCreateSubsystem(const Private::LObjectContext* InOuter) const { return true; }
+    virtual bool ShouldCreateSubsystem(const LObjectContext* InOuter) const { return true; }
     virtual void Initialize(LSubsystemCollection& Collection);
     virtual void TearDown() { }
 

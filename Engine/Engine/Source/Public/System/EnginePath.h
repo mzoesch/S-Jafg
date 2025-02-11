@@ -31,9 +31,9 @@ public:
     FORCEINLINE  LEnginePathBase(LNullptrTy) noexcept { }
     FORCEINLINE  LEnginePathBase(const LEnginePathBase<T>& Other) noexcept { this->PathTy = Other.PathTy; this->Data = Other.Data; }
     FORCEINLINE  LEnginePathBase(LEnginePathBase<T>&& Other) noexcept { this->PathTy = Other.PathTy; this->Data = std::forward<LPathTy>(Other.Data); }
-    FORCEINLINE  LEnginePathBase(const LPathTy& Other) noexcept { this->Data = Other; }
-    FORCEINLINE  LEnginePathBase(LPathTy&& Other) noexcept { this->Data = std::move(Other); }
-    FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy, const LPathTy& Other) noexcept : PathTy(InPathTy), Data(Other) { }
+    FORCEINLINE  LEnginePathBase(const LPathTy& Other) noexcept;
+     FORCEINLINE LEnginePathBase(LPathTy&& Other) noexcept;
+     FORCEINLINE LEnginePathBase(const EEnginePaths::Type InPathTy, const LPathTy& Other) noexcept : PathTy(InPathTy), Data(Other) { }
     FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy, LPathTy&& Other) noexcept : PathTy(InPathTy), Data(std::move(Other)) { }
     FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy) noexcept : PathTy(InPathTy) { }
     FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy, LNullptrTy) noexcept : PathTy(InPathTy) { }
@@ -76,6 +76,34 @@ private:
     EEnginePaths::Type PathTy = EEnginePaths::None;
     LPathTy            Data   = nullptr;
 };
+
+template <typename InTPathTy>
+LEnginePathBase<InTPathTy>::LEnginePathBase(const LPathTy& Other) noexcept
+{
+    this->Data = Other;
+
+    if (this->Data.GetPath().StartsWith(Finder::GetEngineRootDir().GetPath()))
+    {
+        this->PathTy = EEnginePaths::CustomEngine;
+        this->Data.GetMutablePath().InlineRightChop(Finder::GetEngineRootDir().GetPath().GetRuneCount()+1);
+    }
+
+    return;
+}
+
+template <typename InTPathTy>
+LEnginePathBase<InTPathTy>::LEnginePathBase(LPathTy&& Other) noexcept
+{
+    this->Data = std::move(Other);
+
+    if (this->Data.GetPath().StartsWith(Finder::GetEngineRootDir().GetPath()))
+    {
+        this->PathTy = EEnginePaths::CustomEngine;
+        this->Data.GetMutablePath().InlineRightChop(Finder::GetEngineRootDir().GetPath().GetRuneCount()+1);
+    }
+
+    return;
+}
 
 template <typename InTPathTy>
 typename LEnginePathBase<InTPathTy>::LPathTy LEnginePathBase<InTPathTy>::ResolveRelativePath() const

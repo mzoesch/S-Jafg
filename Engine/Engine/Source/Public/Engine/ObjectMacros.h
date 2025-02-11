@@ -126,7 +126,7 @@
                 PRIVATE_JAFG_CORE_JOIN_INNER_TWO(MyClassSpaces, MyClassName)                      \
         >(                                                                                        \
             PRIVATE_JAFG_CORE_CAT_OUTER_TWO(#MyClassSpaces, #MyClassName),                        \
-            [] (void) -> ::Jafg::Private::JObjectBase*                                            \
+            [] (void) -> ::Jafg::JObjectBase*                                            \
             {                                                                                     \
                 return                                                                            \
                 new PRIVATE_JAFG_CORE_JOIN_INNER_TWO(MyClassSpaces, MyClassName)                  \

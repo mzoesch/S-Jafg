@@ -36,7 +36,7 @@ public:
     template <typename U>
     FORCEINLINE TSubclassOf(const TSubclassOf<U>& Other)
     {
-        static_assert(std::is_base_of_v<Private::JObjectBase, U>);
+        static_assert(std::is_base_of_v<JObjectBase, U>);
         static_assert(std::is_base_of_v<TObj, U>);
         this->Class = Other.Class;
         check( this->IsValidType() )
@@ -44,7 +44,7 @@ public:
     template <typename U>
     FORCEINLINE TSubclassOf& operator=(const TSubclassOf<U>& Other)
     {
-        static_assert(std::is_base_of_v<Private::JObjectBase, U>);
+        static_assert(std::is_base_of_v<JObjectBase, U>);
         static_assert(std::is_base_of_v<TObj, U>);
         this->Class = Other.Class;
         check( this->IsValidType() )
@@ -54,7 +54,7 @@ public:
     template <typename U>
     FORCEINLINE TSubclassOf(U* What)
     {
-        static_assert(std::is_base_of_v<Private::JObjectBase, U>);
+        static_assert(std::is_base_of_v<JObjectBase, U>);
         static_assert(std::is_base_of_v<TObj, U>);
         this->Class = What->GetVTable();
         check( this->IsValidType() )
@@ -63,7 +63,7 @@ public:
     template <typename U>
     FORCEINLINE TSubclassOf& operator=(U* What)
     {
-        static_assert(std::is_base_of_v<Private::JObjectBase, U>);
+        static_assert(std::is_base_of_v<JObjectBase, U>);
         static_assert(std::is_base_of_v<TObj, U>);
         this->Class = What->GetVTable();
         check( this->IsValidType() )
@@ -74,7 +74,7 @@ public:
     template <typename U>
     FORCEINLINE void Set()
     {
-        static_assert(std::is_base_of_v<Private::JObjectBase, U>);
+        static_assert(std::is_base_of_v<JObjectBase, U>);
         static_assert(std::is_base_of_v<TObj, U>);
         this->Class = U::StaticClass();
         checkSlow( this->IsValidType() )
@@ -104,7 +104,7 @@ public:
     {
         if (this->Class)
         {
-            Private::JObjectBase* Default = this->Class->GetDefaultPackageReferrer();
+            JObjectBase* Default = this->Class->GetDefaultPackageReferrer();
             check( Default && Default->GetVTable()->DerivesFrom(TObj::StaticClass()) )
             return static_cast<TObj*>(Default);
         }

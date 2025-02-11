@@ -278,16 +278,8 @@ func AddJafgClassGeneratedBodyToPacket(tokens []Token, idx int, packetWrapper *J
         panic(fmt.Sprintf("Expected a generated class body token at {%d}.", idx))
     }
 
-    var tClassDeclIdx int = FindPreviousToken(&tokens, idx, TOKEN_DECLARE_CLASS)
-    var tClassToken ETokenType = TOKEN_DECLARE_CLASS
-    if tClassDeclIdx == -1 {
-        tClassDeclIdx = FindPreviousToken(&tokens, idx, TOKEN_DECLARE_WIDGET)
-        tClassToken = TOKEN_DECLARE_WIDGET
-        if tClassDeclIdx == -1 {
-            tClassDeclIdx = FindPreviousToken(&tokens, idx, TOKEN_DECLARE_WIDGET_WITH_FACTORY)
-            tClassToken = TOKEN_DECLARE_WIDGET_WITH_FACTORY
-        }
-    }
+    var allowedTokens []ETokenType = []ETokenType{TOKEN_DECLARE_CLASS, TOKEN_DECLARE_WIDGET, TOKEN_DECLARE_WIDGET_WITH_FACTORY}
+    tClassDeclIdx, tClassToken := FindMostPreviousToken(&tokens, idx, allowedTokens)
     if tClassDeclIdx == -1 {
         panic(fmt.Sprintf("Excected a class declaration token before {%d}.", idx))
     }

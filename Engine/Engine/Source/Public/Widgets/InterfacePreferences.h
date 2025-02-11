@@ -11,7 +11,7 @@ namespace Jafg
 class LViewport;
 
 DECLARE_JAFG_CLASS(EClassFlags::Singleton)
-class ENGINE_API JInterfacePreferences final : public Private::JObjectBase
+class ENGINE_API JInterfacePreferences final : public JObjectBase
 {
     GENERATED_CLASS_BODY()
 

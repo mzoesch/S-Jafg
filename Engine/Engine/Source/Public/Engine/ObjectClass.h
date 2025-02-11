@@ -9,10 +9,11 @@
 namespace Jafg
 {
 
+class JObjectBase;
+
 namespace Private
 {
 
-class JObjectBase;
 class LObjectRegistry;
 struct LRegistrationCallbackHelper;
 
@@ -40,18 +41,18 @@ public:
     template <typename TObj>
     FORCEINLINE auto GetDefaultPackageReferrer() const -> const TObj*
     {
-        static_assert(std::is_base_of_v<Private::JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
+        static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
         return static_cast<const TObj*>(this->DefaultPackageReferrer);
     }
     template <typename TObj>
     FORCEINLINE auto GetMutableDefaultPackageReferrer() const -> TObj*
     {
-        static_assert(std::is_base_of_v<Private::JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
+        static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
         return static_cast<TObj*>(this->DefaultPackageReferrer);
     }
 
-    FORCEINLINE auto GetDefaultPackageReferrer()        const -> const Private::JObjectBase* { return this->DefaultPackageReferrer;}
-    FORCEINLINE auto GetMutableDefaultPackageReferrer() const ->       Private::JObjectBase* { return this->DefaultPackageReferrer;}
+    FORCEINLINE auto GetDefaultPackageReferrer()        const -> const JObjectBase* { return this->DefaultPackageReferrer;}
+    FORCEINLINE auto GetMutableDefaultPackageReferrer() const ->       JObjectBase* { return this->DefaultPackageReferrer;}
 
     FORCEINLINE auto GetParent()         ->       LObjectClass*            { return this->Parent; }
     FORCEINLINE auto GetParent()   const -> const LObjectClass*            { return this->Parent; }
@@ -64,9 +65,10 @@ public:
     FORCEINLINE auto GetTotalByteSize() const -> int32 { return this->TotalByteSize; }
 
     FORCEINLINE auto GetFlags()      const -> LClassFlags { return this->Flags; }
-    FORCEINLINE auto HasAnyFlags()   const -> bool        { return  this->Flags != EClassFlags::None;                           }
-    FORCEINLINE auto IsAbstract()    const -> bool        { return (this->Flags  & EClassFlags::Abstract) != EClassFlags::None; }
-    FORCEINLINE auto IsNotAbstract() const -> bool        { return (this->Flags  & EClassFlags::Abstract) == EClassFlags::None; }
+    FORCEINLINE bool HasAnyFlags()   const { return  this->Flags != EClassFlags::None;                           }
+    FORCEINLINE bool IsAbstract()    const { return (this->Flags  & EClassFlags::Abstract) != EClassFlags::None; }
+    FORCEINLINE bool IsNotAbstract() const { return (this->Flags  & EClassFlags::Abstract) == EClassFlags::None; }
+    FORCEINLINE bool IsConfig()      const { return (this->Flags  & EClassFlags::Config)   != EClassFlags::None; }
 
 private:
 
@@ -86,7 +88,7 @@ private:
     LClassFlags             Flags                  = EClassFlags::None;
 
     //# The default object initializer for this object class.
-    Private::JObjectBase*   DefaultPackageReferrer = nullptr;
+    JObjectBase*   DefaultPackageReferrer = nullptr;
 };
 
 } /* ~Namespace Jafg */

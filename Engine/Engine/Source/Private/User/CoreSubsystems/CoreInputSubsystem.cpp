@@ -10,7 +10,7 @@
 #include "User/UserPreferences.h"
 #include "User/Frontend/Osd/ConsoleScreen.h"
 #include "User/Frontend/Osd/DebugScreen.h"
-#include "User/Frontend/Osd/PauseMenu.h"
+#include "User/Frontend/Osd/PauseScreen.h"
 #include "User/Input/UserInput.h"
 #include "User/Input/InputAction.h"
 
@@ -57,7 +57,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
                 UserInput->DeactivateAllContexts();
                 UserInput->ActivateContext("InPause");
                 this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::Both, ShowMouseCursor);
-                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WPauseMenu>(EWidgetVisibility::IntransitiveHitTestInvisible);
+                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WPauseScreen>(EWidgetVisibility::IntransitiveHitTestInvisible);
             }
         );
         ContextInPause->MapAction(CurMapping);
@@ -69,7 +69,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
                 UserInput->DeactivateAllContexts();
                 UserInput->ActivateContext("InMyWorld");
                 this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
-                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WPauseMenu>(EWidgetVisibility::Collapsed);
+                (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WPauseScreen>(EWidgetVisibility::Collapsed);
             }
         );
     }

@@ -2,14 +2,18 @@
 
 #include "CoreAfx.h"
 #include "Engine/ObjectBaseUtility.h"
+#include "Async/TaskUtility.h"
 #include "Memory/MemoryMisc.h"
 #include "Engine/ObjectBase.h"
 #include "Engine/ObjectClass.h"
+#include "System/ConfigIo.h"
+#include "System/Finder.h"
+#include "System/Paths.h"
 
 namespace Jafg
 {
 
-ENGINE_API Private::LObjectContext* GOmniVitaContext = nullptr;
+ENGINE_API LObjectContext* GOmniVitaContext = nullptr;
 
 namespace Private
 {
@@ -19,9 +23,94 @@ ENGINE_API LCarnifex**      GCarnifexReferrer = nullptr;
 
 } /* ~Namespace Private */
 
-void MakeDeferredObjectFinal(Private::JObjectBase* InObject)
+void MakeDeferredObjectFinal(JObjectBase* InObject)
 {
     InObject->BeginLife();
+}
+
+void PullConfigFromObject(LObjectClass* InClass)
+{
+    jassert( InClass && InClass->IsConfig() )
+    checkSlow( Tasks::IsOnMasterThread() )
+
+    if (InClass->GetDefaultPackageReferrer()->GetClassFields().IsEmpty())
+    {
+        return;
+    }
+
+    const LPath CfgPath = Finder::GetUserPreferencesFile();
+    if (Paths::DoesFileExist(CfgPath) == false)
+    {
+        return;
+    }
+
+    int32 FieldsPulled = 0; /* The compiler will most likely purge this. */
+    for (LClassField& Field : InClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())
+    {
+        checkSlow( Field.Identifier.empty() == false )
+
+        if (TOptional<LString> StringValue = ConfigIo::Deserialize(CfgPath, InClass->GetSpacedClassName().ToPtr(), Field.Identifier))
+        {
+            Field.Set(StringValue.GetValue());
+            if constexpr (IS_COMPILED_LOG(LogObjectInternal, Verbose))
+            {
+                ++FieldsPulled;
+            }
+        }
+
+        continue;
+    }
+
+    if constexpr (IS_COMPILED_LOG(LogObjectInternal, Verbose))
+    {
+        if (FieldsPulled > 0)
+        {
+            LOG_VERBOSE(LogObjectInternal, "Pulled [{}] fields of package [{}].", FieldsPulled, InClass->GetSpacedClassName())
+        }
+    }
+
+    return;
+}
+
+void PushConfigFromObject(const LObjectClass* InClass)
+{
+    jassert( InClass && InClass->IsConfig() )
+    checkSlow( Tasks::IsOnMasterThread() )
+
+    if (InClass->GetDefaultPackageReferrer()->GetClassFields().IsEmpty())
+    {
+        return;
+    }
+
+    const LPath CfgPath = Finder::GetUserPreferencesFile();
+    Paths::CheckFile(CfgPath);
+    Paths::MakeFileBackup(CfgPath);
+
+    int32 FieldsPushed = 0; /* The compiler will most likely purge this. */
+    for (LClassField& Field : InClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())
+    {
+        const LString StringRepresentation = Field.Get();
+        LOG_TRACE(LogObjectInternal, "Pushing field [{}] with [{}].", Field.Identifier, StringRepresentation)
+        if (ConfigIo::Serialize(CfgPath, InClass->GetSpacedClassName().ToPtr(), Field.Identifier, StringRepresentation.ToPtr(), false))
+        {
+            if constexpr (IS_COMPILED_LOG(LogObjectInternal, Verbose))
+            {
+                ++FieldsPushed;
+            }
+        }
+
+        continue;
+    }
+
+    if constexpr (IS_COMPILED_LOG(LogObjectInternal, Verbose))
+    {
+        if (FieldsPushed > 0)
+        {
+            LOG_VERBOSE(LogObjectInternal, "Pushed [{}] fields of package [{}].", FieldsPushed, InClass->GetSpacedClassName())
+        }
+    }
+
+    return;
 }
 
 } /* ~Namespace Jafg */
@@ -51,7 +140,7 @@ Jafg::TdhArray<Jafg::Private::LRegistrationQueuePackage>& Jafg::Private::GetRegi
     return RegistrationQueue;
 }
 
-Jafg::Private::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewObject(
+Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewObject(
     LObjectContext*     InContext,
     const LObjectClass* InStaticClass
 )
@@ -61,7 +150,7 @@ Jafg::Private::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewObje
     return Out;
 }
 
-Jafg::Private::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObject(
+Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObject(
     LObjectContext*     InContext,
     const LObjectClass* InStaticClass
 )
@@ -185,6 +274,11 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
     {
         auto& [StaticClass] = this->RegisteredObjects[i];
 
+        if (StaticClass->IsConfig())
+        {
+            PullConfigFromObject(StaticClass);
+        }
+
         LOG_TRACE(
             LogObjectPackager,
             "Finished loading package for [{} ({}b)].",
@@ -233,6 +327,16 @@ void Jafg::Private::LObjectRegistry::ValidateLoadedPackages()
 
             bRootFound = true;
             continue;
+        }
+
+        if (Package.StaticClass->GetParent()->IsConfig())
+        {
+            panicMsgf( "Cannot inherit from a class that is marked as config. Faulty package: [{}].", Package.GetSpacedClassName() )
+        }
+
+        if (Package.StaticClass->IsConfig() && Package.StaticClass->IsNotAbstract())
+        {
+            panicMsgf( "Config classes must be abstract. Faulty package: [{}].", Package.GetSpacedClassName() )
         }
 
         if (Package.StaticClass->TotalByteSize == INDEX_NONE)
@@ -297,7 +401,7 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByNam
 
     for (LRegistryPackage& Package : this->RegisteredObjects)
     {
-        if (Package.GetSpacedClassName().Contains(Name))
+        if (Package.GetSpacedClassName().EndsWith(Name))
         {
             return &Package;
         }

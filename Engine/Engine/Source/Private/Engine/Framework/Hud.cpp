@@ -11,7 +11,7 @@
 #include "Widgets/Viewport.h"
 #include "Engine/Engine.h"
 
-void Jafg::LHud::Initialize(Private::LObjectContext* InOuter)
+void Jafg::LHud::Initialize(LObjectContext* InOuter)
 {
     this->Outer = InOuter;
     GCurrentWidgetContextState = this->Outer;

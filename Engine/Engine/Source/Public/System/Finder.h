@@ -10,10 +10,18 @@ namespace Jafg
 
 class JUserPreferences;
 
+//#
+//# The finder is a high-level file-system platform abstraction. All functions defined below work on any platform.
+//# Reading, checking for file existence, walking along directories, etc.
+//# The finder is not capable of creating and reading files (as this would not be possible on all platforms).
+//# If you need to create / write files, use the Jafg::Paths namespace instead.
+//#
 namespace Finder
 {
 
 ENGINE_API LPath GetEngineRootDir();
+ENGINE_API LPath GetSavedDir();
+ENGINE_API LPath GetUserPreferencesFile();
 
 //#
 //# Reads a file content.
@@ -23,7 +31,8 @@ ENGINE_API LPath GetEngineRootDir();
 //# @return The file content.
 //# @remark Works with embedded files.
 //#
-ENGINE_API LStringLegacy ReadFile(const LEnginePath& InEnginePath);
+ENGINE_API LStringLegacy ReadFileLegacy(const LEnginePath& InEnginePath);
+ENGINE_API LString ReadFile(const LEnginePath& InEnginePath);
 ENGINE_API void ReadFileAsBinary(const LEnginePath& InEnginePath, const uint8*& OutBuffer, uint64& OutBufferOverflowGuard);
 ENGINE_API void FreeReadFileBinaryBuffer(const uint8*& InBuffer);
 
@@ -31,9 +40,15 @@ ENGINE_API void FreeReadFileBinaryBuffer(const uint8*& InBuffer);
 //# @return True if the path / file exists.
 //# @remark Works with embedded files.
 //#
-ENGINE_API bool DoesExists(const LEnginePath& InEnginePath);
-ENGINE_API bool DoesExistsChecked(const LEnginePath& InEnginePath);
-ENGINE_API bool DoesExistsPanicked(const LEnginePath& InEnginePath);
+ENGINE_API bool DoesFileExists(const LEnginePath& InEnginePath);
+ENGINE_API bool DoesFileExistsChecked(const LEnginePath& InEnginePath);
+ENGINE_API bool DoesFileExistsPanicked(const LEnginePath& InEnginePath);
+
+//#
+//# Checks a file. If it does not exist, it will try to create it if filesystem access to the supporting platform is
+//# allowed. Otherwise, it will panic.
+//#
+ENGINE_API void CheckFile(const LEnginePath& InEnginePath);
 
 ENGINE_API LPath ResolvePathToRelativeModulePath(const LEnginePath& InEnginePath);
 ENGINE_API LPath ResolvePathToRelativeEnginePath(const LEnginePath& InEnginePath, const JUserPreferences& InUserPreferences);

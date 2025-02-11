@@ -7,9 +7,9 @@
 #include "User/Frontend/Osd/DebugScreen.h"
 #include "User/Frontend/Hud/Crosshair.h"
 #include "User/Frontend/Osd/ConsoleScreen.h"
-#include "User/Frontend/Osd/PauseMenu.h"
+#include "User/Frontend/Osd/PauseScreen.h"
 
-void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
+    void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
 
@@ -28,10 +28,10 @@ void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
     this->ConsoleScreen->SetConsoleFrontendState(EConsoleScreenState::Hide);
     MakeDeferredWidgetNodeFinal(this->ConsoleScreen);
 
-    this->PauseMenu = ConstructDeferredWidgetNode<WPauseMenu>(this->GetOuter());
-    this->PauseMenu->AddToViewport(this->GetHud()->GetMainViewport());
-    this->PauseMenu->SetVisibility(EWidgetVisibility::Collapsed);
-    MakeDeferredWidgetNodeFinal(this->PauseMenu);
+    this->PauseScreen = ConstructDeferredWidgetNode<WPauseScreen>(this->GetOuter());
+    this->PauseScreen->AddToViewport(this->GetHud()->GetMainViewport());
+    this->PauseScreen->SetVisibility(EWidgetVisibility::Collapsed);
+    MakeDeferredWidgetNodeFinal(this->PauseScreen);
 
     return;
 }

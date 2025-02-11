@@ -7,12 +7,7 @@
 namespace Jafg
 {
 
-namespace Private
-{
-
 class JObjectBase;
-
-} /* ~Namespace Private */
 
 //#
 //# A carnifex is an object used to mascara all garbage children.
@@ -26,16 +21,16 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LCarnifex)
     ~LCarnifex() = default;
 
-    FORCEINLINE void AddGarbageChild(Private::JObjectBase* Child) { this->GarbageChildren.Add(Child); }
+    FORCEINLINE void AddGarbageChild(JObjectBase* Child) { this->GarbageChildren.Add(Child); }
 
     void KillAllGarbageChildren();
-    void DevourGarbageChildNow(Private::JObjectBase* Child);
+    void DevourGarbageChildNow(JObjectBase* Child);
 
 private:
 
-    void FreeChild(Private::JObjectBase* Child);
+    void FreeChild(JObjectBase* Child);
 
-    TdhArray<Private::JObjectBase*> GarbageChildren;
+    TdhArray<JObjectBase*> GarbageChildren;
 };
 
 } /* ~Namespace Jafg */

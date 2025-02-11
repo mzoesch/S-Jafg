@@ -194,7 +194,7 @@ EPlatformExit::Type GuardedMain(const char* CmdLine)
 
     PrivateCarnifex            = new LCarnifex();
     Private::GCarnifexReferrer = &PrivateCarnifex;
-    GOmniVitaContext           = new Private::LObjectContext();
+    GOmniVitaContext           = new LObjectContext();
     GOmniVitaContext->SetHumanReadableName("OmniVitaContext");
     check( GOmniVitaContext->GetCarnifex() )
 

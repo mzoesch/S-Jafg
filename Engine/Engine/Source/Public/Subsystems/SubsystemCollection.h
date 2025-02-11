@@ -10,13 +10,7 @@
 namespace Jafg
 {
 
-namespace Private
-{
-
 class LObjectContext;
-
-} /* ~Namespace Private */
-
 class LWorld;
 class JSubsystem;
 
@@ -27,7 +21,7 @@ class JSubsystem;
 struct LSubsystemCollection final
 {
     LSubsystemCollection() = delete;
-    ENGINE_API explicit LSubsystemCollection(Private::LObjectContext* InOuter) : Outer(InOuter) { }
+    ENGINE_API explicit LSubsystemCollection(LObjectContext* InOuter) : Outer(InOuter) { }
     PROHIBIT_REALLOC_OF_ANY_FORM(LSubsystemCollection)
     ENGINE_API ~LSubsystemCollection() = default;
 
@@ -131,7 +125,7 @@ struct LSubsystemCollection final
 
 private:
 
-    Private::LObjectContext*      Outer;
+    LObjectContext*      Outer;
     TdhArray<const LObjectClass*> Subsystems;
     TdhArray<JSubsystem*>         SubsystemInstances;
 };

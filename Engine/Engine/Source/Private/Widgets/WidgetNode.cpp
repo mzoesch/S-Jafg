@@ -115,7 +115,7 @@ LSimpleString LexToString(const EWidgetVisibility::Type InVisibility)
     }
 }
 
-ENGINE_API Private::LObjectContext* GCurrentWidgetContextState = nullptr;
+ENGINE_API LObjectContext* GCurrentWidgetContextState = nullptr;
 
 struct LWidgetConstructor
 {
