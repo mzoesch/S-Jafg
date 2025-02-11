@@ -46,18 +46,18 @@ FORCEINLINE auto GetDefaultObjectInitializer() -> LObjectInitializer
     return LObjectInitializer(GOmniVitaContext);
 }
 
-MAKE_DELEGATE_SIGNATURE(LSetClassFieldSet, void, const LString& InValue)
+MAKE_DELEGATE_SIGNATURE(LSetClassField, void, const LString& InValue)
 MAKE_DELEGATE_SIGNATURE(LGetClassField, LString)
 
 struct LClassField
 {
-    FORCEINLINE LClassField(const LStringView InIdentifier, LSetClassFieldSet&& InSet, LGetClassField&& InGet)
+    FORCEINLINE LClassField(const LStringView InIdentifier, LSetClassField&& InSet, LGetClassField&& InGet)
         : Identifier(InIdentifier), Set(std::move(InSet)), Get(std::move(InGet)) { }
     PROHIBIT_COPY(LClassField)
     DEFAULT_MOVE(LClassField)
 
     LStringView Identifier;
-    LSetClassFieldSet Set;
+    LSetClassField Set;
     LGetClassField Get;
 };
 

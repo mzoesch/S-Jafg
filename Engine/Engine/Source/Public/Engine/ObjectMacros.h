@@ -2,6 +2,9 @@
 
 #pragma once
 
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION( \
         MyClassName,                                                                               \
         MyClassSpaces,                                                                             \
@@ -35,6 +38,9 @@
         inline static ::EClassFlags::Type ClassFlags = EClassFlags::CombineFlags(__VA_ARGS__);     \
     };
 
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION( \
         MyClassName,                                                                                \
         MyClassSpaces,                                                                              \
@@ -50,47 +56,54 @@
         __VA_ARGS__                                                                                 \
     )
 
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION( \
-    MyClassName, \
-    MyClassSpaces,\
-    SuperClassName, \
-    Line, \
-    FactoryType, \
-    ... \
-    ) \
-    struct PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                      \
-        L,                                                                                         \
-        _,                                                                                         \
-        JAFG_PRIVATE_FILE_ID,                                                                      \
-        _,                                                                                         \
-        MyClassName,                                                                               \
-        _,                                                                                         \
-        Line,                                                                                      \
-        _,                                                                                         \
-        ConstructionHelper                                                                         \
-    ) final                                                                                        \
-    {                                                                                              \
-        PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                         \
-        L,                                                                                         \
-        _,                                                                                         \
-        JAFG_PRIVATE_FILE_ID,                                                                      \
-        _,                                                                                         \
-        MyClassName,                                                                               \
-        _,                                                                                         \
-        Line,                                                                                      \
-        _,                                                                                         \
-        ConstructionHelper                                                                         \
-        )();                                                                                       \
-        inline static ::EClassFlags::Type ClassFlags = EClassFlags::CombineFlags(__VA_ARGS__);     \
-        template <typename TNode> \
-        using TWidgetFactoryTy = FactoryType<TNode>; \
+    MyClassName,                                                                                                 \
+    MyClassSpaces,                                                                                               \
+    SuperClassName,                                                                                              \
+    Line,                                                                                                        \
+    FactoryType,                                                                                                 \
+    ...                                                                                                          \
+    )                                                                                                            \
+    struct PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                                    \
+        L,                                                                                                       \
+        _,                                                                                                       \
+        JAFG_PRIVATE_FILE_ID,                                                                                    \
+        _,                                                                                                       \
+        MyClassName,                                                                                             \
+        _,                                                                                                       \
+        Line,                                                                                                    \
+        _,                                                                                                       \
+        ConstructionHelper                                                                                       \
+    ) final                                                                                                      \
+    {                                                                                                            \
+        PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                                       \
+        L,                                                                                                       \
+        _,                                                                                                       \
+        JAFG_PRIVATE_FILE_ID,                                                                                    \
+        _,                                                                                                       \
+        MyClassName,                                                                                             \
+        _,                                                                                                       \
+        Line,                                                                                                    \
+        _,                                                                                                       \
+        ConstructionHelper                                                                                       \
+        )();                                                                                                     \
+        inline static ::EClassFlags::Type ClassFlags = EClassFlags::CombineFlags(__VA_ARGS__);                   \
+        template <typename TNode>                                                                                \
+        using TWidgetFactoryTy = FactoryType<TNode>;                                                             \
     };
 
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION( \
         MyClassName,                                                                              \
         MyClassSpaces,                                                                            \
         LineOfDeclaration,                                                                        \
-        SuperClassName                                                                            \
+        SuperClassName,                                                                           \
+        ...                                                                                       \
     )                                                                                             \
                                                                                                   \
     PRIVATE_JAFG_CORE_JOIN_INNER_THREE(                                                           \
@@ -126,7 +139,7 @@
                 PRIVATE_JAFG_CORE_JOIN_INNER_TWO(MyClassSpaces, MyClassName)                      \
         >(                                                                                        \
             PRIVATE_JAFG_CORE_CAT_OUTER_TWO(#MyClassSpaces, #MyClassName),                        \
-            [] (void) -> ::Jafg::JObjectBase*                                            \
+            [] (void) -> ::Jafg::JObjectBase*                                                     \
             {                                                                                     \
                 return                                                                            \
                 new PRIVATE_JAFG_CORE_JOIN_INNER_TWO(MyClassSpaces, MyClassName)                  \
@@ -154,6 +167,10 @@
                     )::ClassFlags,                                                                \
                     #SuperClassName                                                               \
                 );                                                                                \
+                typedef PRIVATE_JAFG_CORE_JOIN_INNER_TWO(MyClassSpaces, MyClassName) _TObj;       \
+                _TObj* Ref = StaticClass->GetMutableDefaultPackageReferrer<_TObj>();              \
+                check( Ref )                                                                      \
+                __VA_ARGS__                                                                       \
                 return;                                                                           \
             }                                                                                     \
         );                                                                                        \
@@ -194,7 +211,9 @@
                                                                                                   \
     } /* ~Namespace <Anonymous> */
 
-
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(                                    \
         MyClassName,                                                                                \
         MyClassSpaces,                                                                              \
@@ -267,33 +286,49 @@ public:                                                           \
     using TWidgetFactory = TWidgetFactoryTy<Derived>;             \
 private: /* Restore default visibility. */
 
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_BODY_IMPL
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_BODY_IMPL already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_BODY_IMPL */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_BODY_IMPL( \
-    MyClassName,                                                  \
-    MyClassSpaces,                                                \
-    SuperClassName,                                               \
-    ConstructionHelperLine                                        \
-    )                                                             \
-    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(      \
-        MyClassName,                                              \
-        MyClassSpaces,                                            \
-        SuperClassName,                                           \
-        ConstructionHelperLine                                    \
-    )                                                             \
-public:                                                           \
-    template <typename TNode>                                     \
-    using TWidgetFactoryTy = PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(   \
-        L,                                                        \
-        _,                                                        \
-        JAFG_PRIVATE_FILE_ID,                                     \
-        _,                                                        \
-        MyClassName,                                              \
-        _,                                                        \
-        ConstructionHelperLine,                                   \
-        _,                                                        \
-        ConstructionHelper                                        \
-    )::TWidgetFactoryTy<TNode>;                                         \
-    using TWidgetFactory = TWidgetFactoryTy<Derived>;             \
+    MyClassName,                                                               \
+    MyClassSpaces,                                                             \
+    SuperClassName,                                                            \
+    ConstructionHelperLine                                                     \
+    )                                                                          \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(                   \
+        MyClassName,                                                           \
+        MyClassSpaces,                                                         \
+        SuperClassName,                                                        \
+        ConstructionHelperLine                                                 \
+    )                                                                          \
+public:                                                                        \
+    template <typename TNode>                                                  \
+    using TWidgetFactoryTy = PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                \
+        L,                                                                     \
+        _,                                                                     \
+        JAFG_PRIVATE_FILE_ID,                                                  \
+        _,                                                                     \
+        MyClassName,                                                           \
+        _,                                                                     \
+        ConstructionHelperLine,                                                \
+        _,                                                                     \
+        ConstructionHelper                                                     \
+    )::TWidgetFactoryTy<TNode>;                                                \
+    using TWidgetFactory = TWidgetFactoryTy<Derived>;                          \
 private: /* Restore default visibility. */
+
+#ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION
+    #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION already defined."
+#endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION(MyClassMember)                     \
+    void PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(_, SetField, _, MyClassMember)(const ::Jafg::LString& _InValue) \
+    {                                                                                                      \
+        ::Jafg::Deserialize(&this->MyClassMember, _InValue);                                               \
+    }                                                                                                      \
+    ::Jafg::LString PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(_, GetField, _, MyClassMember)() const               \
+    {                                                                                                      \
+        return ::Jafg::Serialize(this->MyClassMember);                                                     \
+    }
 
 //#
 //# Required before the jafg-class declaration.
@@ -365,5 +400,25 @@ private: /* Restore default visibility. */
 //# Default constructor for an JObject. Mandatory. It may be used to declare extra information for all objects of this
 //# type. The new constructor is prohibited from changing the arguments of the constructor.
 //#
+#ifdef DEFAULT_OBJECT_CONSTRUCTOR
+    #undef DEFAULT_OBJECT_CONSTRUCTOR
+#endif /* DEFAULT_OBJECT_CONSTRUCTOR */
 #define DEFAULT_OBJECT_CONSTRUCTOR(MyClassName)                                                              \
     explicit MyClassName(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) { return; }
+
+//#
+//# Mark a member of a j-class as something special.
+//# Allowed values are:
+//#   Config
+//#
+#ifdef CLASS_FIELD
+    #undef CLASS_FIELD
+#endif /* CLASS_FIELD */
+#define CLASS_FIELD(...)                     \
+    PRIVATE_JAFG_CORE_JOIN_OUTER_FIVE(       \
+        JAFG_PRIVATE_FILE_ID,                \
+        _,                                   \
+        __LINE__,                            \
+        _,                                   \
+        MY_GENERATED_CLASS_FIELD_DECLARATION \
+        )()

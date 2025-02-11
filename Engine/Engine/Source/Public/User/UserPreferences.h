@@ -6,9 +6,6 @@
 #include "User/Preferences/PreferencesTypes.h"
 #include "UserPreferences.generated.h"
 
-#define CLASS_FIELD(...)
-// #define ADD_CUSTOM_CONFIG_IDENTIFIER(Identifier)
-
 namespace Jafg
 {
 
@@ -32,24 +29,11 @@ class ENGINE_API JUserPreferences final : public JObjectBase
 
 protected:
 
-    explicit JUserPreferences(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
-    {
-        this->GetMutableClassFieldsDangerous().Emplace(
-            "MasterVolume",
-            LSetClassFieldSet::CreateMemberFunction(this, &JUserPreferences::_SetField_MasterVolume),
-            LGetClassField::CreateMemberFunction(this, &JUserPreferences::_GetField_MasterVolume)
-        );
-        return;
-    }
+    DEFAULT_OBJECT_CONSTRUCTOR(JUserPreferences)
 
     ///////////////////////////////////////////////////////////////////////////////
     // Audio
     ///////////////////////////////////////////////////////////////////////////////
-
-public:
-
-    void _SetField_MasterVolume(const LString& InValue) { ::Jafg::Deserialize(&this->MasterVolume, InValue); }
-    LString _GetField_MasterVolume() const { return ::Jafg::Serialize(this->MasterVolume); }
 
 private:
 

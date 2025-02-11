@@ -176,6 +176,8 @@ func ReflectFile(fRel string, newReflectedFiles *[]JPacketWrapper) {
             AddJafgClassToPacket(tokens, i, TOKEN_DECLARE_WIDGET_WITH_FACTORY, packetWrapper)
         } else if t.Type.IsGeneratedClassBody() {
             AddJafgClassGeneratedBodyToPacket(tokens, i, packetWrapper)
+        } else if t.Type.IsClassField() {
+            AddJafgClassFieldToPacket(tokens, i, packetWrapper)
         }
 
         continue
@@ -265,6 +267,18 @@ func AddJafgClassToPacket(tokens []Token, idx int, tokenTy ETokenType, packetWra
     packet.Args = append(packet.Args, t.Info[0])
     packet.Args = append(packet.Args, namespaceStr)
 
+    idx++
+    for {
+        idx++
+        if idx >= len(tokens) {
+            break
+        }
+        if tokens[idx].Type != TOKEN_CLASS_FIELD {
+            break
+        }
+        packet.Args = append(packet.Args, tokens[idx].Content)
+    }
+
     packetWrapper.Packets = append(packetWrapper.Packets, packet)
 
     return
@@ -331,6 +345,48 @@ func AddJafgClassGeneratedBodyToPacket(tokens []Token, idx int, packetWrapper *J
     return
 }
 
+func AddJafgClassFieldToPacket(tokens []Token, idx int, packetWrapper *JPacketWrapper) {
+    var packet JPacket = JPacket{}
+
+    var t *Token = &tokens[idx]
+    if t.Type != TOKEN_CLASS_FIELD {
+        panic(fmt.Sprintf("Expected a class field token at {%d}.", idx))
+    }
+
+    packet.Callback = OnBuildJafgClassField
+    packet.Name = t.Content
+    packet.Line = t.Line
+
+    packetWrapper.Packets = append(packetWrapper.Packets, packet)
+
+    return
+}
+
+func OnBuildJafgClassDeclarationGenericCommon__VA__ARGS(packet JPacket) string {
+    if len(packet.Args) < 3 {
+        return ""
+    }
+
+    var out string = ""
+
+    for i := 2; i < len(packet.Args); i++ {
+        var arg string = packet.Args[i]
+        out += fmt.Sprintf(`                                                             \
+Ref->GetMutableClassFieldsDangerous().Emplace(                                           \
+    /* Field Name   */ "%s",                                                             \
+    /* Field Setter */ LSetClassField::CreateMemberFunction(Ref, &_TObj::_SetField_%s), \
+    /* Field Getter */ LGetClassField::CreateMemberFunction(Ref, &_TObj::_GetField_%s)  \
+);                                                                                       \
+`,
+            arg, arg, arg,
+        )
+
+        continue
+    }
+
+    return out
+}
+
 func OnBuildJafgClassDeclaration(hFileId string, bH *strings.Builder, bT *strings.Builder, packet JPacket) {
     if bH == nil {
         panic("Builder for header is nil.")
@@ -366,7 +422,8 @@ func OnBuildJafgClassDeclaration(hFileId string, bH *strings.Builder, bT *string
         /* My Class Name */          %s, /* ORIGIN VALUE: %s */                               \
         /* My Class Spaces */        %s,                                                      \
         /* Line Of Declaration */    %d,                                                      \
-        /* Super Class Name */       %s  /* ORIGIN VALUE: %s */                               \
+        /* Super Class Name */       %s, /* ORIGIN VALUE: %s */                               \
+        /* __VA_ARGS__ */            %s                                                       \
     )
 #endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 `,
@@ -374,6 +431,8 @@ func OnBuildJafgClassDeclaration(hFileId string, bH *strings.Builder, bT *string
         packet.Args[1],
         packet.Line,
         RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
+
+        OnBuildJafgClassDeclarationGenericCommon__VA__ARGS(packet),
     ))
 
     return
@@ -414,7 +473,8 @@ func OnBuildJafgWidgetDeclaration(hFileId string, bH *strings.Builder, bT *strin
         /* My Class Name */          %s, /* ORIGIN VALUE: %s */                               \
         /* My Class Spaces */        %s,                                                      \
         /* Line Of Declaration */    %d,                                                      \
-        /* Super Class Name */       %s  /* ORIGIN VALUE: %s */                               \
+        /* Super Class Name */       %s, /* ORIGIN VALUE: %s */                               \
+        /* __VA_ARGS__ */            %s                                                       \
     )
 #endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 `,
@@ -422,6 +482,8 @@ func OnBuildJafgWidgetDeclaration(hFileId string, bH *strings.Builder, bT *strin
         packet.Args[1],
         packet.Line,
         RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
+
+        OnBuildJafgClassDeclarationGenericCommon__VA__ARGS(packet),
     ))
 
     return
@@ -463,7 +525,8 @@ func OnBuildJafgWidgetWithFactoryDeclaration(hFileId string, bH *strings.Builder
         /* My Class Name */          %s, /* ORIGIN VALUE: %s */                               \
         /* My Class Spaces */        %s,                                                      \
         /* Line Of Declaration */    %d,                                                      \
-        /* Super Class Name */       %s  /* ORIGIN VALUE: %s */                               \
+        /* Super Class Name */       %s, /* ORIGIN VALUE: %s */                               \
+        /* __VA_ARGS__ */            %s                                                       \
     )
 #endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 `,
@@ -471,6 +534,8 @@ func OnBuildJafgWidgetWithFactoryDeclaration(hFileId string, bH *strings.Builder
         packet.Args[1],
         packet.Line,
         RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
+
+        OnBuildJafgClassDeclarationGenericCommon__VA__ARGS(packet),
     ))
 
     return
@@ -584,13 +649,37 @@ func OnBuildJafgWidgetWithFactoryBody(hFileId string, bH *strings.Builder, bT *s
     return
 }
 
+func OnBuildJafgClassField(hFileId string, bH *strings.Builder, bT *strings.Builder, packet JPacket) {
+    if bH == nil {
+        panic("Builder for header is nil.")
+    }
+    if bT == nil {
+        panic("Builder for translation is nil.")
+    }
+
+    bH.WriteString(fmt.Sprintf(`
+#ifdef %s_%d_MY_GENERATED_CLASS_FIELD_DECLARATION
+    #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+#endif /* %s_%d_MY_GENERATED_CLASS_FIELD_DECLARATION */
+#define %s_%d_MY_GENERATED_CLASS_FIELD_DECLARATION(...) \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION( \
+        /* My Class Member */ %s                                     \
+    )
+`,
+        hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
+
+        packet.Name,
+    ))
+
+    return
+}
+
 func ConditionallyWritePacketToOut(packetWrapper JPacketWrapper) {
     if packetWrapper.Name == "" {
         panic("PacketWrapper.Name is empty.")
     }
 
     var uniqueFileId string = ConvertNameToCppValidDefine(packetWrapper.Name)
-    GBuildTargetInfo.GetRelativeSourceDir()
     var relTargetGh string = ConvertPacketWrapperPathToGhPath(packetWrapper.Name)
     var relTargetGt string = ConvertPacketWrapperPathToGtPath(packetWrapper.Name)
 

@@ -35,6 +35,7 @@ const (
     TOKEN_DECLARE_WIDGET              ETokenType = iota
     TOKEN_DECLARE_WIDGET_WITH_FACTORY ETokenType = iota
     TOKEN_GENERATED_WIDGET_BODY       ETokenType = iota
+    TOKEN_CLASS_FIELD                 ETokenType = iota
 )
 
 func (tk ETokenType) IsPreprocessor() bool {
@@ -92,6 +93,10 @@ func (tk ETokenType) IsGeneratedWidgetBody() bool {
     return tk == TOKEN_GENERATED_WIDGET_BODY
 }
 
+func (tk ETokenType) IsClassField() bool {
+    return tk == TOKEN_CLASS_FIELD
+}
+
 func (tk ETokenType) ToString() string {
     switch tk {
     case TOKEN_PREPROCESSOR_INCLUDE:
@@ -118,6 +123,8 @@ func (tk ETokenType) ToString() string {
         return "DeclareWidgetWithFactory"
     case TOKEN_GENERATED_WIDGET_BODY:
         return "GeneratedWidgetBody"
+    case TOKEN_CLASS_FIELD:
+        return "ClassField"
     default:
         panic("Unknown token type.")
     }
@@ -498,6 +505,60 @@ func Tokenize(debugDisplayName string, content string) []Token {
                 Content: words[classnameCursor].Content,
                 Line:    line,
                 Info:    []string{words[cursor].Content},
+            })
+        } else if word == "CLASS_FIELD" {
+            if idx > 1 {
+                if words[idx-1].Content == "#ifdef" {
+                    continue
+                }
+            }
+
+            var cursor int = idx
+            for _, word2 := range words[idx:] {
+                cursor++
+                if word2.Content == ")" {
+                    break
+                }
+            }
+            if cursor >= len(words) {
+                panic("Expected member variable after CLASS_FIELD.")
+            }
+            if words[cursor].Content == ")" {
+                cursor++
+            }
+            if cursor >= len(words) {
+                panic("Expected member variable after CLASS_FIELD.")
+            }
+
+            var typeOpenings int = 0
+            for {
+                cursor++
+                if cursor >= len(words) {
+                    panic("Expected member variable after CLASS_FIELD.")
+                }
+                if words[cursor].Content == ";" {
+                    panic("Expected member variable after CLASS_FIELD.")
+                }
+                if words[cursor].Content == "(" || words[cursor].Content == "<" {
+                    typeOpenings++
+                    continue
+                }
+                if words[cursor].Content == ")" || words[cursor].Content == ">" {
+                    typeOpenings--
+                    continue
+                }
+
+                if typeOpenings == 0 {
+                    break
+                }
+
+                continue
+            }
+
+            out = append(out, Token{
+                Type:    TOKEN_CLASS_FIELD,
+                Content: words[cursor].Content,
+                Line:    line,
             })
         } else if word == "GENERATED_CLASS_BODY" {
             out = append(out, Token{Type: TOKEN_GENERATED_CLASS_BODY, Content: "", Line: line})
