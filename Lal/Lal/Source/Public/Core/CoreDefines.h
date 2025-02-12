@@ -3,6 +3,10 @@
 #pragma once
 
 enum : int8 { INDEX_NONE = -1 };
+enum ELazyInit  : int8 { LazyInit  };
+enum EForceInit : int8 { ForceInit };
+enum EZeroInit  : int8 { ZeroInit  };
+enum ESkipInit  : int8 { SkipInit  }; // Dangerous.
 
 namespace EPlatformExit
 {

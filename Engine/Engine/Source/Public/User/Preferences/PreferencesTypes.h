@@ -7,23 +7,22 @@
 namespace Jafg
 {
 
-
 template <typename T> struct TIsPreferenceTypeAllowed : std::false_type { };
 template <typename T, typename TEnable = void>
 struct TPreference;
 
 // Core types. Add more if you want.
-template <>           struct TIsPreferenceTypeAllowed<int8>          : std::true_type { };
-template <>           struct TIsPreferenceTypeAllowed<int16>         : std::true_type { };
-template <>           struct TIsPreferenceTypeAllowed<int32>         : std::true_type { };
-template <>           struct TIsPreferenceTypeAllowed<int64>         : std::true_type { };
-template <>           struct TIsPreferenceTypeAllowed<uint8>         : std::true_type { };
-template <>           struct TIsPreferenceTypeAllowed<uint16>        : std::true_type { };
-template <>           struct TIsPreferenceTypeAllowed<uint32>        : std::true_type { };
-template <>           struct TIsPreferenceTypeAllowed<uint64>        : std::true_type { };
-template <>           struct TIsPreferenceTypeAllowed<bool>          : std::true_type { };
-template <>           struct TIsPreferenceTypeAllowed<LString>       : std::true_type { };
-template <>           struct TIsPreferenceTypeAllowed<LSimpleString> : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<int8>          : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<int16>         : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<int32>         : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<int64>         : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<uint8>         : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<uint16>        : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<uint32>        : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<uint64>        : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<bool>          : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<LString>       : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<LSimpleString> : std::true_type { };
 
 typedef TPreference<float>         LPreferenceFloat;
 typedef TPreference<double>        LPreferenceDouble;

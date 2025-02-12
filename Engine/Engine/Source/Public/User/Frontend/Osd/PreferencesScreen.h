@@ -9,16 +9,18 @@ namespace Jafg
 {
 
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WPreferencesPanel : public WTabBarPanel
+class ENGINE_API WPreferencesPanel : public WCommonMenuTabBarPanel
 {
     GENERATED_WIDGET_BODY()
 
 protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(WPreferencesPanel)
+
+    virtual void Construct() override;
 };
 
-DECLARE_JAFG_WIDGET()
+DECLARE_JAFG_WIDGET(EClassFlags::Config)
 class ENGINE_API WPreferencesScreen : public WCommonMenuTabBar
 {
     GENERATED_CLASS_BODY()
@@ -30,6 +32,9 @@ protected:
 public:
 
     virtual void Construct() override;
+
+    CLASS_FIELD(Config)
+    TSubclassOf<WPreferencesPanel> PanelClass = LazyInit;
 };
 
 } /* ~Namespace Jafg */

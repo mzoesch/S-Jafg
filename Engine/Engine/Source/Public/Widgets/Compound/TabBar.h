@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Widgets/Compound/TabBarBase.h"
+#include "Widgets/Compound/TabBarPanel.h"
 #include "Widgets/Compound/TabBarButton.h"
 #include "Widgets/Compound/TabBarPanel.h"
 #include "TabBar.generated.h"
@@ -10,7 +10,7 @@
 namespace Jafg
 {
 
-class WTabBarBase;
+class WTabBarPanel;
 class WTabBar;
 class WWidgetSwitcher;
 class WTabBarPanel;
@@ -31,7 +31,7 @@ struct LTabBarTabDescriptor final
     //#
     //# The panel widget to use. Required.
     //#
-    TSubclassOf<WTabBarBase> PanelWidgetClass = nullptr;
+    TSubclassOf<WTabBarPanel> PanelWidgetClass = nullptr;
 
     //#
     //# The button to use. Leave as nullptr to use the default button that comes with the tab bar.
@@ -76,16 +76,16 @@ public:
 //#   - The tab bar button: The button that represents the tab in a given collection.
 //#   - The tab bar panel:  The panel that represents the content of the tab.
 //#   - The tab bar:        The collection of the buttons and panels.
-//# Tab bars can be nested within each other with the superclass WTabBarBase.
+//# Tab bars can be nested within each other.
 //#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTabBar)
-class ENGINE_API WTabBar : public WTabBarBase
+class ENGINE_API WTabBar : public WTabBarPanel
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WTabBar)
+    explicit WTabBar(const LObjectInitializer& ObjectInitializer);
 
 public:
 

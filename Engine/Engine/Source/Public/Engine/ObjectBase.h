@@ -8,6 +8,8 @@
 #include "Engine/ObjectClass.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Engine/ObjectMacros.h"
+#include "Engine/SubclassOf.h"
+#include "Serialization/SerializationCore.h"
 #include "ObjectBase.generated.h"
 
 namespace Jafg
@@ -166,10 +168,29 @@ private:
     TdhArray<LClassField> ClassFields;
 };
 
+template <typename TObj>
+FORCEINLINE void Deserialize(TSubclassOf<TObj>* Destination, const LString& InValue)
+{
+    checkSlow( Destination )
+    const LObjectClass* X = Private::GObjectRegistry->GetPanickedPackageByName(InValue.ToPtr())->StaticClass;
+    *Destination = X;
+}
+
 } /* ~Namespace Jafg */
 
-//#
-//# Auxiliary includes.
-//#
-#include "Engine/SubclassOf.h"
-#include "Serialization/SerializationCore.h"
+template <typename T>
+struct ::std::formatter<::Jafg::TSubclassOf<T>> : ::std::formatter<const char*>
+{
+    FORCEINLINE auto format
+    (
+        const ::Jafg::TSubclassOf<T>& InClass,
+        ::std::format_context&        InContext
+    ) const -> ::std::format_context::iterator
+    {
+        if (InClass)
+        {
+            return std::formatter<const char*>::format(InClass->GetSpacedClassName().ToC(), InContext);
+        }
+        return ::std::formatter<const char*>::format("", InContext);
+    }
+};

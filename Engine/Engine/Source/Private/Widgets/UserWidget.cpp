@@ -5,7 +5,7 @@
 #include "Widgets/Viewport.h"
 #include "Widgets/WidgetParent.h"
 
-Jafg::WUserWidget::WUserWidget(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+Jafg::WUserWidget::WUserWidget(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
     this->SetAnchor(EAnchor::Fill);
     this->SetShouldTick(false);

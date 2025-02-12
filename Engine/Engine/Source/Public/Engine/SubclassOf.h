@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include "CoreAfx.h"
+#include "Async/TaskUtility.h"
+
 namespace Jafg
 {
 
@@ -24,6 +27,26 @@ public:
     ~TSubclassOf() = default;
 
     FORCEINLINE TSubclassOf(LNullptrTy) { this->Class = nullptr; }
+
+    FORCEINLINE TSubclassOf(const ELazyInit LazyInit)
+    {
+        Tasks::Make(ENamedThreads::Master, ETaskTime::Early, [this](void)
+        {
+            if
+            (
+                this &&
+                /* Soft force class init because of Config-init could happen in the meantime. */
+                this->Class == nullptr
+            )
+            {
+                this->Class = TObj::StaticClass();
+                check( this->Class ) // Type deduction failed or is no longer available.
+                                     // Do we want a soft failure by not leaving null but base type? Currently, I do not know.
+            }
+
+            return;
+        });
+    }
 
     FORCEINLINE TSubclassOf(const LObjectClass* InClass) : Class(InClass) { check( this->IsValidType() ) }
     FORCEINLINE TSubclassOf& operator=(const LObjectClass* InClass)

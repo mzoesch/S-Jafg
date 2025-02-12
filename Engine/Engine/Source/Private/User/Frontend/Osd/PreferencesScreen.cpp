@@ -2,7 +2,13 @@
 
 #include "User/Frontend/Osd/PreferencesScreen.h"
 
-Jafg::WPreferencesScreen::WPreferencesScreen(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+void Jafg::WPreferencesPanel::Construct()
+{
+    Super::Construct();
+    return;
+}
+
+Jafg::WPreferencesScreen::WPreferencesScreen(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
     this->SetHorizontalPreference();
     this->SetAnchor(EAnchor::Fill);
@@ -15,45 +21,54 @@ void Jafg::WPreferencesScreen::Construct()
 
     Super::Construct();
 
+    jassert( this->PanelClass )
+
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "Gameplay";
+        Descriptor.PanelWidgetClass = this->PanelClass;
         this->RegisterTab(std::move(Descriptor));
     }
 
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "Audio";
+        Descriptor.PanelWidgetClass = this->PanelClass;
         this->RegisterTab(std::move(Descriptor));
     }
 
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "Video";
+        Descriptor.PanelWidgetClass = this->PanelClass;
         this->RegisterTab(std::move(Descriptor));
     }
 
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "Controls";
+        Descriptor.PanelWidgetClass = this->PanelClass;
         this->RegisterTab(std::move(Descriptor));
     }
 
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "Keybindings";
+        Descriptor.PanelWidgetClass = this->PanelClass;
         this->RegisterTab(std::move(Descriptor));
     }
 
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "User Interface";
+        Descriptor.PanelWidgetClass = this->PanelClass;
         this->RegisterTab(std::move(Descriptor));
     }
 
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "Developer";
+        Descriptor.PanelWidgetClass = this->PanelClass;
         this->RegisterTab(std::move(Descriptor));
     }
 

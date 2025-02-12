@@ -38,14 +38,14 @@ void Jafg::WPauseScreen::Construct()
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "Achievements";
-        Descriptor.PanelWidgetClass.Set<WDevelopmentTabBarPanelPlaceholder>();
+        Descriptor.PanelWidgetClass.Set<WCommonMenuTabBarPanel>();
         this->PauseTabBar->RegisterTab(std::move(Descriptor));
     }
 
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "Encyclopedia";
-        Descriptor.PanelWidgetClass.Set<WDevelopmentTabBarPanelPlaceholder>();
+        Descriptor.PanelWidgetClass.Set<WCommonMenuTabBarPanel>();
         this->PauseTabBar->RegisterTab(std::move(Descriptor));
     }
 
@@ -59,7 +59,7 @@ void Jafg::WPauseScreen::Construct()
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "SessionOptions";
-        Descriptor.PanelWidgetClass.Set<WDevelopmentTabBarPanelPlaceholder>();
+        Descriptor.PanelWidgetClass.Set<WCommonMenuTabBarPanel>();
         this->PauseTabBar->RegisterTab(std::move(Descriptor));
     }
 

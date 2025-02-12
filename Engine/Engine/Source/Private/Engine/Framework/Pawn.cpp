@@ -8,7 +8,7 @@
 #include "MyWorld/Chunk/Chunk.h"
 #include "User/Input/InputActionValue.h"
 
-Jafg::APawn::APawn(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+Jafg::APawn::APawn(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
     this->SetEverTickConstructorOnlyFlag();
     return;

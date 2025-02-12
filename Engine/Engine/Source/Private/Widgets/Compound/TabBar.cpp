@@ -7,6 +7,12 @@
 #include "Widgets/HBox.h"
 #include "Widgets/VBox.h"
 
+Jafg::WTabBar::WTabBar(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+    this->SetAnchor(EAnchor::TopLeft);
+    return;
+}
+
 void Jafg::WTabBar::Construct()
 {
     Super::Construct();
@@ -74,7 +80,7 @@ void Jafg::WTabBar::Construct()
 
 void Jafg::WTabBar::UpdateDesiredSize() const
 {
-    Super::UpdateDesiredSize();
+    WWidgetParent::UpdateDesiredSize(); // NOT SUPER!!!
 
     LVector2 DesiredSize = this->ButtonsContainer->GetDesiredSize();
     DesiredSize.X = Maths::Max(DesiredSize.X, this->Switcher->GetDesiredSize().X);
@@ -240,11 +246,13 @@ void Jafg::WTabBar::LoadTab(const LTabBarTabDescriptor& Descriptor, const int32 
 
     if (Descriptor.PanelWidgetClass)
     {
-        WTabBarBase* Panel = ConstructDeferredWidgetNode(Descriptor.PanelWidgetClass);
+        Data.DerivedClass = WTabBarPanel::StaticClass()->GetName();
+        WTabBarPanel* Panel = ConstructDeferredWidgetNode(Descriptor.PanelWidgetClass);
         checkSlow( this->TabsInOrder[InIndex].Panel == nullptr )
         this->TabsInOrder[InIndex].Panel = Panel;
         this->Switcher->AddChild(Panel);
         this->TabsInOrder[InIndex].SwitcherIndex = static_cast<int8>(this->Switcher->GetChildren().GetSize() - 1);
+        Panel->AddData(&Data);
         MakeDeferredWidgetNodeFinal(Panel);
     }
 

@@ -5,7 +5,6 @@
 #include "Widgets/VBox.h"
 #include "Widgets/WidgetSwitcher.h"
 #include "Widgets/BackgroundBlur.h"
-#include <random>
 
 void Jafg::WCommonMenuTabBarButton::Construct()
 {
@@ -28,18 +27,18 @@ void Jafg::WCommonMenuTabBarButton::Construct()
     return;
 }
 
-void Jafg::WDevelopmentTabBarPanelPlaceholder::Construct()
+void Jafg::WCommonMenuTabBarPanel::Construct()
 {
     Super::Construct();
 
-    // Make a random color for the panel.
-    std::random_device RandomDevice;
-    std::mt19937 RandomEngine(RandomDevice());
-    std::uniform_int_distribution<int> RandomColor(0, 255);
-    LColor Tint = LColor(RandomColor(RandomEngine), RandomColor(RandomEngine), RandomColor(RandomEngine), 64);
+    LColor Tint = LColor::Black;
+    if (const WCommonMenuTabBar* CommonTabBar = DynamicCast<WCommonMenuTabBar>(this->GetOwningTabBar()))
+    {
+        Tint.A = WCommonMenuTabBar::GetAlphaTintBasedOfDepth(CommonTabBar->GetLeafDepth());
+    }
 
-    ConstructDeferredWidgetNode<WWidgetRegion>()->GetFactory<WWidgetRegion>().SaveTo(this->Panel)
-        .Tint(Tint).Anchor(EAnchor::Fill).MinDesiredSize({50,70});
+    NewNode(WWidgetRegion).SaveTo(this->Panel)
+        .Anchor(EAnchor::Fill).Tint(Tint);
     this->AddChild(this->Panel);
     MakeDeferredWidgetNodeFinal(this->Panel);
 
@@ -69,7 +68,7 @@ void Jafg::WCommonMenuTabBar::Construct()
     {
         VBox->SetMinDesiredSize({200, 0});
 
-        VBox->SetTint({0, 0, 0, Maths::ClampRet<uint8, int32>(this->Depth * 32 + 128, 128, 255)});
+        VBox->SetTint({0, 0, 0, WCommonMenuTabBar::GetAlphaTintBasedOfDepth(this->Depth)});
         VBox->SetAnchor(EAnchor::VFill);
     }
 

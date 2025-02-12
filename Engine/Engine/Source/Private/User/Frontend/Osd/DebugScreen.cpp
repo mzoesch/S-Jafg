@@ -24,7 +24,7 @@
 #include "Debug/DebugTracePlane.h"
 #include "MyWorld/Validation/ChunkValidationUtility.h"
 
-Jafg::WDebugScreen::WDebugScreen(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+Jafg::WDebugScreen::WDebugScreen(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
     this->SetShouldTick(true);
     return;

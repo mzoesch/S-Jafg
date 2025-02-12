@@ -34,21 +34,26 @@ public:
     virtual void Construct() override;
 };
 
-//#
-//# Development only. Do not use.
-//#
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WDevelopmentTabBarPanelPlaceholder : public WTabBarPanel
+class ENGINE_API WCommonMenuTabBarPanel : public WTabBarPanel
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WDevelopmentTabBarPanelPlaceholder)
+    DEFAULT_OBJECT_CONSTRUCTOR(WCommonMenuTabBarPanel)
 
     virtual void Construct() override;
 
-    WWidgetNode* Panel = nullptr;
+    FORCEINLINE bool IsTabBarPanelValid() const { return this->Panel != nullptr; }
+    FORCEINLINE auto GetTabBarPanel() -> WWidgetNode* { return this->Panel; }
+    FORCEINLINE auto GetTabBarPanel() const -> const WWidgetNode* { return this->Panel; }
+    FORCEINLINE auto GetTabBarPanelChecked() -> WWidgetNode* { check( this->Panel ); return this->Panel; }
+    FORCEINLINE auto GetTabBarPanelChecked() const -> const WWidgetNode* { check( this->Panel ); return this->Panel; }
+
+private:
+
+    WWidgetRegion* Panel = nullptr;
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryCommonMenuTabBar)
@@ -69,6 +74,12 @@ public:
     //# Before constructing the widget only.
     FORCEINLINE void SetTabBarDepth(const int32 InDepth) { this->Depth = InDepth; }
     FORCEINLINE auto GetTabBarDepth() const -> int32 { return this->Depth; }
+    FORCEINLINE int32 GetLeafDepth() const { return this->Depth + 1; }
+
+    FORCEINLINE static constexpr uint8 GetAlphaTintBasedOfDepth(const int32 InDepth)
+    {
+        return Maths::ClampRet<uint8, int32>(InDepth * 32 + 128, 128, 255);
+    }
 
 private:
 

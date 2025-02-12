@@ -2,7 +2,7 @@
 
 #include "Widgets/Button.h"
 
-Jafg::WButton::WButton(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+Jafg::WButton::WButton(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
     this->SetVisibility(EWidgetVisibility::DerivedHitTestInvisible);
     return;
