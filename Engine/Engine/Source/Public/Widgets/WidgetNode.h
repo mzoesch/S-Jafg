@@ -242,10 +242,8 @@ enum Type : uint8
 
 FORCEINLINE bool IsDrawn(const EWidgetVisibility::Type InVisibility)
 {
-    return InVisibility == EWidgetVisibility::Visible
-        || InVisibility == EWidgetVisibility::DerivedHitTestInvisible
-        || InVisibility == EWidgetVisibility::TransitiveHitTestInvisible
-        || InVisibility == EWidgetVisibility::IntransitiveHitTestInvisible;
+    return InVisibility != EWidgetVisibility::Hidden
+        && InVisibility != EWidgetVisibility::Collapsed;
 }
 
 FORCEINLINE bool IsTicked(const EWidgetVisibility::Type InVisibility)
@@ -263,6 +261,11 @@ FORCEINLINE bool IsDerivedHitTestable(const EWidgetVisibility::Type InVisibility
 {
     return InVisibility == EWidgetVisibility::Visible
         || InVisibility == EWidgetVisibility::IntransitiveHitTestInvisible;
+}
+
+FORCEINLINE bool TransformsWidgetLayout(const EWidgetVisibility::Type InVisibility)
+{
+    return InVisibility != EWidgetVisibility::Collapsed;
 }
 
 } /* ~Namespace EWidgetVisibility */
@@ -447,6 +450,8 @@ public:
     //#
     virtual void Destruct() { }
 
+    virtual void Draw(LViewport& Context) const { check( this->ShouldNowDraw() ) }
+
     //# Use this method to pass arbitrary typesafe data to the widget.
     virtual bool AddData(LWidgetNodeData* InData) { return false; }
 
@@ -461,76 +466,73 @@ public:
     virtual LReply       OnKeyDown(LKeyEvent& InKeyEvent) { return LReply::Unhandled(); }
     virtual LReply       OnKeyUp(LKeyEvent& InKeyEvent) { return LReply::Unhandled(); }
 
-            bool IsFocusWidget() const;
-    virtual bool IsFocusWidgetTransitive() const; /* Slow. */
+    bool IsFocusWidget() const;
+    bool IsFocusWidgetTransitive() const; /* Slow. */
     virtual bool IsFocusWidgetTransitive(const LViewport* InViewport) const;
 
-    virtual auto Draw(LViewport& Context) const -> void { }
-
-    FORCEINLINE auto ShouldNowTick() const -> bool { return ( this->bDisableTick == false ) && ( this->ShouldNowDraw() ); }
-    FORCEINLINE auto GetRawShouldTick() const -> bool { return this->bDisableTick == false; }
-    FORCEINLINE auto SetShouldTick(const bool bInShouldTick) -> void { this->bDisableTick = (bInShouldTick == false); }
-    FORCEINLINE auto ShouldNowDraw() const -> bool { return EWidgetVisibility::IsDrawn(this->Visibility); }
+    FORCEINLINE bool ShouldNowTick() const { return this->bAllowTick && EWidgetVisibility::IsTicked(this->Visibility); }
+    FORCEINLINE bool GetRawShouldTick() const { return this->bAllowTick; }
+    FORCEINLINE void SetShouldTick(const bool bInShouldTick) { this->bAllowTick = bInShouldTick; }
+    FORCEINLINE bool ShouldNowDraw() const { return EWidgetVisibility::IsDrawn(this->Visibility); }
     FORCEINLINE auto GetVisibility() const -> EWidgetVisibility::Type { return this->Visibility; }
-    FORCEINLINE auto IsWidgetVisible() const -> bool { return this->ShouldNowDraw(); }
-    FORCEINLINE auto IsHitTestable() const -> bool { return EWidgetVisibility::IsHitTestable(this->Visibility); }
-    FORCEINLINE auto CanChildrenBeHitTestable() const -> bool { return EWidgetVisibility::IsDerivedHitTestable(this->Visibility); }
-    FORCEINLINE auto ShouldCheckForInputs() const -> bool { return this->IsHitTestable() || this->CanChildrenBeHitTestable(); }
-    FORCEINLINE auto IsVisible() const -> bool { return this->Visibility == EWidgetVisibility::Visible; }
-    FORCEINLINE auto IsHidden() const -> bool { return this->Visibility == EWidgetVisibility::Hidden; }
-    FORCEINLINE auto IsCollapsed() const -> bool { return this->Visibility == EWidgetVisibility::Collapsed; }
-    FORCEINLINE auto IsDerivedHitTestInvisible() const -> bool { return this->Visibility == EWidgetVisibility::DerivedHitTestInvisible; }
-    FORCEINLINE auto IsTransitiveHitTestInvisible() const -> bool { return this->Visibility == EWidgetVisibility::TransitiveHitTestInvisible; }
-    FORCEINLINE auto IsIntransitiveHitTestInvisible() const -> bool { return this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible; }
-                auto SetVisibility(const EWidgetVisibility::Type InVisibility) -> void;
+    FORCEINLINE bool IsWidgetVisible() const { return this->ShouldNowDraw(); }
+    FORCEINLINE bool IsHitTestable() const { return EWidgetVisibility::IsHitTestable(this->Visibility); }
+    FORCEINLINE bool CanChildrenBeHitTestable() const { return EWidgetVisibility::IsDerivedHitTestable(this->Visibility); }
+    FORCEINLINE bool ShouldCheckForInputs() const { return this->IsHitTestable() || this->CanChildrenBeHitTestable(); }
+    FORCEINLINE bool TransformsWidgetLayout() const { return EWidgetVisibility::TransformsWidgetLayout(this->Visibility); }
+    FORCEINLINE bool IsVisible() const { return this->Visibility == EWidgetVisibility::Visible; }
+    FORCEINLINE bool IsHidden() const { return this->Visibility == EWidgetVisibility::Hidden; }
+    FORCEINLINE bool IsCollapsed() const { return this->Visibility == EWidgetVisibility::Collapsed; }
+    FORCEINLINE bool IsDerivedHitTestInvisible() const { return this->Visibility == EWidgetVisibility::DerivedHitTestInvisible; }
+    FORCEINLINE bool IsTransitiveHitTestInvisible() const { return this->Visibility == EWidgetVisibility::TransitiveHitTestInvisible; }
+    FORCEINLINE bool IsIntransitiveHitTestInvisible() const { return this->Visibility == EWidgetVisibility::IntransitiveHitTestInvisible; }
+                void SetVisibility(const EWidgetVisibility::Type InVisibility);
 
+    //# Only if old and new are different.
     virtual void OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility) { }
 
     //#
-    //# Orphans the child from its parent widget.
+    //# Orphans this child from its parent widget.
     //# @param bDestroy If true, this child will be killed automatically by the butcher at his next sweep.
     //#
-    virtual auto RemoveFromParent(const bool bDestroy = true) -> void;
-            auto GetParent() const -> WWidgetParentBase*;
+    virtual     void RemoveFromParent(const bool bDestroy = true);
+                auto GetParent() const -> WWidgetParentBase*;
+    FORCEINLINE auto GetParentChecked() const -> WWidgetParentBase* { WWidgetParentBase* Out = this->GetParent(); check( Out ); return Out; }
+    FORCEINLINE auto GetParentAsserted() const -> WWidgetParentBase* { WWidgetParentBase* Out = this->GetParent(); jassert( Out ); return Out; }
 
     //#
-    //# Searches for a node in this widget tree. Only searches leafs that are drawn.
+    //# Searches for a node in this widget tree. Only searches nodes that are drawn.
     //# @return True, if the target node exists in this widget tree and is visible.
     //#
     virtual bool FindNodeInVisiblePath(const WWidgetNode* InNode) const;
 
     //# @return The size of the current viewport in pixels.
-    virtual auto GetViewportSize() const -> LIntVector2;
+    LIntVector2  GetViewportSize() const;
     virtual auto GetViewport() const -> LViewport*;
-    virtual auto GetCheckedViewport() const -> LViewport*;
-    virtual auto GetPanickedViewport() const -> LViewport*;
+    FORCEINLINE virtual LViewport* GetViewportChecked() const { LViewport* Out = this->GetViewport(); check( Out ) return Out; }
+    FORCEINLINE virtual LViewport* GetViewportAsserted() const { LViewport* Out = this->GetViewport(); jassert( Out ) return Out; }
 
-    //# @return The top left corner of this widget relative to its parent. If no parent, relative to the viewport.
-    virtual auto GetRelativeTopLeftFromOuter(const WWidgetNode* WhoAsked) const -> LVector2;
-    //#
-    //# @param  WhoAsked The widget that asked for the relative top left. Must be a direct child.
-    //# @return The top left corner relative to the most outer parent. In the best case, this should be the viewport,
-    //#         although this is not guaranteed.
-    //#
-    virtual auto GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const -> LVector2;
     //# Virtual update method for the desired size. Automatically called.
-    virtual void UpdateDesiredSize() const { }
-            void SetDesiredSize(const LVector2& InSize) const;
+    virtual     void UpdateDesiredSize() const { }
+                void SetDesiredSize(const LVector2& InSize) const;
+    FORCEINLINE void SetDesiredSizeRaw(const LVector2& InSize) const { this->DesiredSize = InSize; }
     FORCEINLINE auto GetDesiredSize() const -> const LVector2& { return this->DesiredSize; }
+    FORCEINLINE auto GetDesiredSizeSmart() const -> const LVector2& { return this->TransformsWidgetLayout() ? this->DesiredSize : LVector2::ZeroVector; }
     FORCEINLINE auto GetMinDesiredSize() const -> const LVector2& { return this->MinDesiredSize; }
     FORCEINLINE auto SetMinDesiredSize(const LVector2& InSize) -> void { this->MinDesiredSize = InSize; }
+    //# @return The top left corner of the widget relative to its direct parent's top left corner.
+            LVector2 GetRelativeTopLeftFromOuter() const;
+    //# @return The top left corner of the direct child relative to this widget's top left corner.
+    virtual LVector2 GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const PURE_VIRTUAL(return { })
 
-    //#
-    //# @param WhoAsked The widget that asked for the anchored top left. Must be a direct child.
-    //# @return The anchored top left corner of this widget relative to the most outer parent. In the best case,
-    //#         this should be the viewport, although this is not guaranteed.
-    //#
-    virtual auto GetAnchoredTopLeftFromMostOuter(const LViewport& Context, const WWidgetNode* WhoAsked) const -> LVector2;
     //# Virtual update method for the anchored size. Automatically called.
-    virtual void UpdateAnchoredSize(const LViewport& Context) const;
-    virtual void UpdateAnchoredSizeOfChildren(const LViewport& Context) const { }
-    FORCEINLINE auto SetAnchoredSize(const LVector2& InSize) const -> void { this->AnchoredSize = InSize; }
+    virtual     void UpdateAnchoredSize(const LViewport& Context) const;
+    FORCEINLINE void SetAnchoredSize(const LVector2& InSize) const { this->AnchoredSize = InSize; }
     FORCEINLINE auto GetAnchoredSize() const -> LVector2 { return this->AnchoredSize; }
+    //# @return The anchored top left corner of the widget relative to the given context's top left corner.
+            LVector2 GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const;
+    //# @return The anchored top left corner of the direct child relative to the given context's top left corner.
+    virtual LVector2 GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const PURE_VIRTUAL(return { })
 
     FORCEINLINE auto GetSlot() const -> LWidgetSlot* { return this->Slot; }
 
@@ -562,7 +564,7 @@ public:
 
 private:
 
-    bool bDisableTick = false;
+    bool bAllowTick = true;
     EWidgetVisibility::Type Visibility = EWidgetVisibility::TransitiveHitTestInvisible;
 
     //#

@@ -78,20 +78,6 @@ void Jafg::WTabBar::Construct()
     return;
 }
 
-void Jafg::WTabBar::UpdateDesiredSize() const
-{
-    WWidgetParent::UpdateDesiredSize(); // NOT SUPER!!!
-
-    LVector2 DesiredSize = this->ButtonsContainer->GetDesiredSize();
-    DesiredSize.X = Maths::Max(DesiredSize.X, this->Switcher->GetDesiredSize().X);
-    DesiredSize.Y = Maths::Max(DesiredSize.Y, this->Switcher->GetDesiredSize().Y);
-    DesiredSize += this->GetPadding().GetDesiredSize();
-
-    this->SetDesiredSize(DesiredSize);
-
-    return;
-}
-
 void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, rvalue is just to do some inline stuff... no need to move.
 {
     const LSimpleString* const IdentPtr = &InTabDescriptor.Identifier;

@@ -42,8 +42,6 @@ void Jafg::LPreferenceValue_Scalar::BuildDefault(const LPreference* Self, WWidge
     WWidgetRegion* Container;
     WTextBlock* Text;
 
-    WWidgetRegion* Temp;
-
     NewNode(WWidgetRegion).SaveTo(Container)
     .Tint(LColor(0, 0, 0, 64))
     .Anchor(EAnchor::HFill)
@@ -52,25 +50,17 @@ void Jafg::LPreferenceValue_Scalar::BuildDefault(const LPreference* Self, WWidge
         NewNode(WHBox).Anchor(EAnchor::Fill)
         [
             NewNode(WTextBlock)
-                .Anchor(EAnchor::CenterLeft)
+                .Anchor(EAnchor::TopLeft)
                 .Brush(LTextBlockBrush::Body())
                 .Content(This->GetDisplayName())
-            + NewNode(WWidgetRegion).SaveTo(Temp)
-                .Anchor(EAnchor::CenterRight)
-                .Tint({0, 0, 0, 64})
-                .Padding(5.0f)
-                [
-                    NewNode(WTextBlock).SaveTo(Text)
-                        .Anchor(EAnchor::BottomRight)
-                        .Tint(LColor::Emerald)
-                        .Brush(LTextBlockBrush::Body())
-                        .Content(This->GetFormattedText())
-                ]
+            + NewNode(WTextBlock).SaveTo(Text)
+                .Anchor(EAnchor::TopLeft)
+                .Tint(LColor::Emerald)
+                .Brush(LTextBlockBrush::Body())
+                .Content(This->GetFormattedText())
         ]
     ];
     Target->AddChild(Container);
-
-    Temp->bTemp = true;
 
     return;
 }

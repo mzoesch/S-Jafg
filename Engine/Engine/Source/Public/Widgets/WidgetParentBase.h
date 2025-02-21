@@ -35,30 +35,18 @@ class ENGINE_API WWidgetParentBase : public WWidgetNode
 
 protected:
 
-    explicit WWidgetParentBase(const LObjectInitializer& ObjectInitializer);
+    DEFAULT_OBJECT_CONSTRUCTOR(WWidgetParentBase)
 
 public:
 
-    virtual void Tick() override;
+    virtual auto GetChildren() const -> const TdhArray<LWidgetSlot*>& PURE_VIRTUAL(return WWidgetParentBase::NothingArrayReference)
 
-    virtual auto SweepMouse(LViewport& Context, const LVector2& InLocation) -> LCursorReply override;
-    virtual auto SweepFocusTest(LViewport& Context, const LVector2& InLocation) -> LReply override;
-
-    virtual bool IsFocusWidgetTransitive() const override final;
-    virtual bool IsFocusWidgetTransitive(const LViewport* InViewport) const override;
-
-    virtual void UpdateDesiredSize() const override;
-    virtual void UpdateAnchoredSize(const LViewport& Context) const override;
-    virtual void UpdateAnchoredSizeOfChildren(const LViewport& Context) const override final;
-
-    virtual auto GetChildren() const               -> const TdhArray<LWidgetSlot*>& PURE_VIRTUAL(return WWidgetParentBase::NothingArrayReference)
-    virtual auto RemoveChild(WWidgetNode* InChild) -> void PURE_VIRTUAL()
-    virtual auto RemoveChild(LWidgetSlot* InSlot)  -> void PURE_VIRTUAL()
-    virtual auto AddChild(WWidgetNode* InChild)    -> LWidgetSlot* PURE_VIRTUAL(return nullptr)
+    virtual void RemoveChild(WWidgetNode* InChild) PURE_VIRTUAL()
+    virtual void RemoveChild(LWidgetSlot* InSlot) PURE_VIRTUAL()
+    virtual auto AddChild(WWidgetNode* InChild) -> LWidgetSlot* PURE_VIRTUAL(return nullptr)
     virtual auto AddChildAt(const int32 InIndex, WWidgetNode* InChild) -> LWidgetSlot* PURE_VIRTUAL(return nullptr)
-    virtual auto FindNodeInVisiblePath(const WWidgetNode* InNode) const -> bool override;
 
-    virtual void SetPadding(const LPadding& InPadding)    PURE_VIRTUAL()
+    virtual void SetPadding(const LPadding& InPadding) PURE_VIRTUAL()
     virtual auto GetPaddingPtr() const -> const LPadding* PURE_VIRTUAL(return nullptr)
     virtual auto GetPaddingPtr()       ->       LPadding* PURE_VIRTUAL(return nullptr)
 

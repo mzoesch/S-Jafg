@@ -105,86 +105,22 @@ Jafg::LWidgetSlot* Jafg::WWidgetSwitcher::AddChildAt(const int32 InIndex, WWidge
     return Ret;
 }
 
-Jafg::LCursorReply Jafg::WWidgetSwitcher::SweepMouse(LViewport& Context, const LVector2& InLocation)
-{
-    if (this->IsIndexValid() == false)
-    {
-        return LCursorReply::Unhandled();
-    }
-
-    WWidgetNode* Node = this->GetActiveNode();
-    if (Node->ShouldCheckForInputs())
-    {
-        LCursorReply Reply = Node->SweepMouse(Context, InLocation);
-        if (Reply.IsHandled())
-        {
-            return Reply;
-        }
-    }
-
-    // DO NOT CALL THE SUPER METHOD OF THE PARENT AND PARENT BASE CLASS!!!
-    return WWidgetNode::SweepMouse(Context, InLocation);
-}
-
-Jafg::LReply Jafg::WWidgetSwitcher::SweepFocusTest(LViewport& Context, const LVector2& InLocation)
-{
-    if (this->IsIndexValid() == false)
-    {
-        return LReply::Unhandled();
-    }
-
-    WWidgetNode* Node = this->GetActiveNode();
-    LReply Reply = Node->SweepFocusTest(Context, InLocation);
-    if (Reply.IsHandled())
-    {
-        return Reply;
-    }
-
-    // DO NOT CALL THE SUPER METHOD OF THE PARENT AND PARENT BASE CLASS!!!
-    return WWidgetNode::SweepFocusTest(Context, InLocation);
-}
-
 void Jafg::WWidgetSwitcher::UpdateDesiredSize() const
 {
-    if (this->IsIndexValid() == false)
+    Super::UpdateDesiredSize();
+
+    LVector2 DesiredSize = LVector2::Zero();
+    for (const LWidgetSlot* ChildSlot : this->GetChildren())
     {
-        this->SetDesiredSize({});
-        return;
+        DesiredSize.X = Maths::Max(DesiredSize.X, ChildSlot->Content->GetDesiredSize().X);
+        DesiredSize.Y = Maths::Max(DesiredSize.Y, ChildSlot->Content->GetDesiredSize().Y);
+
+        continue;
     }
 
-    const WWidgetNode* Node = this->GetActiveNode();
-    Node->UpdateDesiredSize();
-
-    LVector2 DesiredSize = Node->GetDesiredSize();
     DesiredSize += this->GetPadding().GetDesiredSize();
+
     this->SetDesiredSize(DesiredSize);
-
-    return;
-}
-
-void Jafg::WWidgetSwitcher::UpdateAnchoredSize(const LViewport& Context) const
-{
-    // DO NOT CALL THE SUPER METHOD OF THE PARENT AND PARENT BASE CLASS!!!
-    WWidgetNode::UpdateAnchoredSize(Context);
-
-    if (this->IsIndexValid())
-    {
-        this->GetActiveNode()->UpdateAnchoredSize(Context);
-    }
-
-    return;
-}
-
-void Jafg::WWidgetSwitcher::Draw(LViewport& Context) const
-{
-    if (this->IsIndexValid())
-    {
-        const WWidgetNode* Node = this->GetActiveNode();
-        if (Node->ShouldNowDraw())
-        {
-            Node->Draw(Context);
-        }
-    }
 
     return;
 }

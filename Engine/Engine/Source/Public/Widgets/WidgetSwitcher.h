@@ -39,18 +39,10 @@ public:
     FORCEINLINE auto GetActiveNodeChecked() -> WWidgetNode* { check( this->IsIndexValid() ) return this->GetChildren()[this->ActiveIndex]->Content; }
     FORCEINLINE auto GetActiveNodeChecked() const -> const WWidgetNode* { check( this->IsIndexValid() ) return this->GetChildren()[this->ActiveIndex]->Content; }
 
+    // WWidgetParent implementation
     virtual auto AddChild(WWidgetNode* InChild) -> LWidgetSlot* override;
     virtual auto AddChildAt(const int32 InIndex, WWidgetNode* InChild) -> LWidgetSlot* override;
-
-    // WWidgetParentBase implementation
-    virtual auto SweepMouse(LViewport& Context, const LVector2& InLocation) -> LCursorReply override;
-    virtual auto SweepFocusTest(LViewport& Context, const LVector2& InLocation) -> LReply override;
     virtual void UpdateDesiredSize() const override;
-    virtual void UpdateAnchoredSize(const LViewport& Context) const override;
-    // ~WWidgetParentBase implementation
-
-    // WWidgetParent implementation
-    virtual void Draw(LViewport& Context) const override;
     // ~WWidgetParent implementation
 
 private:

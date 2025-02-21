@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Widgets/WidgetParent.h"
+#include "Widgets/WidgetRegion.h"
 #include "TabBarPanel.generated.h"
 
 namespace Jafg
@@ -12,7 +12,7 @@ class WTabBar;
 
 //# @see Widgets/Compound/TabBar.h
 DECLARE_JAFG_WIDGET(EClassFlags::Abstract)
-class ENGINE_API WTabBarPanel : public WWidgetParent
+class ENGINE_API WTabBarPanel : public WWidgetRegion
 {
     GENERATED_CLASS_BODY()
 

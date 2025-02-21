@@ -33,7 +33,7 @@ void Jafg::WBackgroundBlur::Draw(LViewport& Context) const
 
     LBlurShaderContextDrawArgs Args;
     Args.Size = this->GetAnchoredSize();
-    Args.TopLeft = this->GetAnchoredTopLeftFromMostOuter(Context, this);
+    Args.TopLeft = this->GetAnchoredTopLeftFromMostOuter(Context);
     Args.Strength = this->Strength;
     BlurShader.Draw(Context, Args);
 

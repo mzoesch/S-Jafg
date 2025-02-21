@@ -3,10 +3,17 @@
 #include "CoreAfx.h"
 #include "Widgets/WidgetParent.h"
 
+Jafg::WWidgetParent::WWidgetParent(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+{
+    this->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+    return;
+}
+
 void Jafg::WWidgetParent::OnGarbage()
 {
     for (const LWidgetSlot* ChildSlot : this->Children)
     {
+        checkSlow( ChildSlot->Content )
         ChildSlot->Content->Slot = nullptr;
         ChildSlot->Content->MarkAsGarbage();
         delete ChildSlot;
@@ -23,9 +30,28 @@ void Jafg::WWidgetParent::Construct()
 {
     Super::Construct();
 
-    for (const LWidgetSlot* ChildSlot : this->Children)
+    for (const LWidgetSlot* ChildSlot : this->GetChildren())
     {
+        checkSlow( ChildSlot->Content )
         MakeDeferredWidgetNodeFinal(ChildSlot->Content);
+    }
+
+    return;
+}
+
+void Jafg::WWidgetParent::Tick()
+{
+    Super::Tick();
+
+    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    {
+        checkSlow( ChildSlot->Content )
+        if (ChildSlot->Content->ShouldNowTick())
+        {
+            ChildSlot->Content->Tick();
+        }
+
+        continue;
     }
 
     return;
@@ -35,7 +61,7 @@ void Jafg::WWidgetParent::Draw(LViewport& Context) const
 {
     Super::Draw(Context);
 
-    for (const LWidgetSlot* ChildSlot : this->Children)
+    for (const LWidgetSlot* ChildSlot : this->GetChildren())
     {
         if (ChildSlot->Content->ShouldNowDraw())
         {
@@ -47,6 +73,51 @@ void Jafg::WWidgetParent::Draw(LViewport& Context) const
     }
 
     return;
+}
+
+Jafg::LCursorReply Jafg::WWidgetParent::SweepMouse(LViewport& Context, const LVector2& InLocation)
+{
+    if (this->CanChildrenBeHitTestable() == false)
+    {
+        return Super::SweepMouse(Context, InLocation);
+    }
+
+    for (const LWidgetSlot* ChildSlot : this->Children)
+    {
+        if (ChildSlot->Content->ShouldCheckForInputs())
+        {
+            const LCursorReply Reply = ChildSlot->Content->SweepMouse(Context, InLocation);
+            if (Reply.IsHandled())
+            {
+                return Reply;
+            }
+        }
+
+        continue;
+    }
+
+    return Super::SweepMouse(Context, InLocation);
+}
+
+Jafg::LReply Jafg::WWidgetParent::SweepFocusTest(LViewport& Context, const LVector2& InLocation)
+{
+    if (this->CanChildrenBeHitTestable() == false)
+    {
+        return Super::SweepFocusTest(Context, InLocation);
+    }
+
+    for (const LWidgetSlot* ChildSlot : this->Children)
+    {
+        const LReply Reply = ChildSlot->Content->SweepFocusTest(Context, InLocation);
+        if (Reply.IsHandled())
+        {
+            return Reply;
+        }
+
+        continue;
+    }
+
+    return Super::SweepFocusTest(Context, InLocation);
 }
 
 void Jafg::WWidgetParent::Destruct()
@@ -63,6 +134,127 @@ void Jafg::WWidgetParent::Destruct()
     this->Children.Empty();
 
     return;
+}
+
+bool Jafg::WWidgetParent::IsFocusWidgetTransitive(const LViewport* InViewport) const
+{
+    if (Super::IsFocusWidgetTransitive(InViewport))
+    {
+        return true;
+    }
+
+    if (InViewport == nullptr)
+    {
+        return false;
+    }
+
+    for (const LWidgetSlot* ChildSlot : this->Children)
+    {
+        if (ChildSlot->Content->IsFocusWidgetTransitive(InViewport))
+        {
+            return true;
+        }
+
+        continue;
+    }
+
+    return false;
+}
+
+bool Jafg::WWidgetParent::FindNodeInVisiblePath(const WWidgetNode* InNode) const
+{
+    if (Super::FindNodeInVisiblePath(InNode))
+    {
+        return true;
+    }
+
+    if (this->ShouldNowDraw() == false)
+    {
+        return false;
+    }
+
+    for (const LWidgetSlot* ChildSlot : this->Children)
+    {
+        if (ChildSlot->Content->FindNodeInVisiblePath(InNode))
+        {
+            return true;
+        }
+
+        continue;
+    }
+
+    return false;
+}
+
+void Jafg::WWidgetParent::UpdateDesiredSize() const
+{
+    for (const LWidgetSlot* ChildSlot : this->Children)
+    {
+        if (ChildSlot->Content->TransformsWidgetLayout())
+        {
+            ChildSlot->Content->UpdateDesiredSize();
+        }
+        else
+        {
+            ChildSlot->Content->SetDesiredSize(LVector2::Zero());
+        }
+
+        continue;
+    }
+
+    LVector2 DesiredSize = LVector2::Zero();
+    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    {
+        const LVector2 ChildDesiredSize = ChildSlot->Content->GetDesiredSizeSmart();
+        DesiredSize.X = Maths::Max(DesiredSize.X, ChildDesiredSize.X);
+        DesiredSize.Y = Maths::Max(DesiredSize.Y, ChildDesiredSize.Y);
+        continue;
+    }
+
+    DesiredSize += this->GetPadding().GetDesiredSize();
+
+    this->SetDesiredSize(DesiredSize);
+
+    return;
+}
+
+Jafg::LVector2 Jafg::WWidgetParent::GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const
+{
+    return this->Padding.GetTopLeftOffset();
+}
+
+void Jafg::WWidgetParent::UpdateAnchoredSize(const LViewport& Context) const
+{
+    Super::UpdateAnchoredSize(Context);
+
+    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    {
+        if (ChildSlot->Content->TransformsWidgetLayout())
+        {
+            ChildSlot->Content->UpdateAnchoredSize(Context);
+        }
+        else
+        {
+            ChildSlot->Content->SetAnchoredSize(LVector2::Zero());
+        }
+
+        continue;
+    }
+
+    return;
+}
+
+Jafg::LVector2 Jafg::WWidgetParent::GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const
+{
+    check( InDirectChild )
+
+    LVector2 Out = this->GetAnchoredTopLeftFromMostOuter(Context);
+
+    Out += LVector2(this->Anchor.MinX, this->Anchor.MinY)
+         * (this->GetAnchoredSize() - InDirectChild->GetAnchoredSize() - this->Padding.GetTopLeftOffset());
+    Out += this->Padding.GetTopLeftOffset();
+
+    return Out;
 }
 
 void Jafg::WWidgetParent::RemoveChild(WWidgetNode* Child)

@@ -95,8 +95,6 @@ public:
 
     virtual void Construct() override;
 
-    virtual void UpdateDesiredSize() const override;
-
     FORCEINLINE void ResetWrapperClass() { this->WrapperClass = nullptr; }
     FORCEINLINE void SetWrapperClass(const TSubclassOf<WWidgetParentBase>& InWrapperClass) { this->WrapperClass = InWrapperClass; }
     FORCEINLINE void ResetDefaultAlignmentPreference() { this->bIsVertical.Reset(); }

@@ -2,39 +2,14 @@
 
 #include "Widgets/VBox.h"
 
-Jafg::LVector2 Jafg::WVBox::GetRelativeTopLeftFromOuter(const WWidgetNode* WhoAsked) const
+Jafg::LVector2 Jafg::WVBox::GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const
 {
-    if (WhoAsked == nullptr || this == WhoAsked)
-    {
-        return Super::GetRelativeTopLeftFromOuter(WhoAsked);
-    }
+    check( InDirectChild )
 
-    LVector2 Offset = Super::GetRelativeTopLeftFromOuter(WhoAsked);
-    int32 Idx = this->GetChildren().FindIndexByPredicate([WhoAsked] (const LWidgetSlot* const InSlot) -> bool
+    LVector2 Offset = Super::GetRelativeTopLeftForChild(InDirectChild);
+    int32 Idx = this->GetChildren().FindIndexByPredicate([InDirectChild] (const LWidgetSlot* const InSlot) -> bool
     {
-        return InSlot->Content == WhoAsked;
-    });
-    check( Idx != INDEX_NONE )
-
-    while (--Idx > INDEX_NONE)
-    {
-        Offset.Y += this->GetChildren()[Idx]->Content->GetDesiredSize().Y;
-    }
-
-    return Offset;
-}
-
-Jafg::LVector2 Jafg::WVBox::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const
-{
-    if (WhoAsked == nullptr || this == WhoAsked)
-    {
-        return Super::GetRelativeTopLeftFromMostOuter(WhoAsked);
-    }
-
-    LVector2 Offset = Super::GetRelativeTopLeftFromMostOuter(WhoAsked);
-    int32 Idx = this->GetChildren().FindIndexByPredicate([WhoAsked] (const LWidgetSlot* const InSlot) -> bool
-    {
-        return InSlot->Content == WhoAsked;
+        return InSlot->Content == InDirectChild;
     });
     check( Idx != INDEX_NONE )
 

@@ -8,6 +8,7 @@
 namespace Jafg
 {
 
+//# Horizontal region widget. TODO: Rename this to region to not confuse with the widget box.
 DECLARE_JAFG_WIDGET()
 class ENGINE_API WHBox : public WWidgetRegion
 {
@@ -19,12 +20,8 @@ protected:
 
 public:
 
-    // WWidgetNode implementation
-    virtual auto GetRelativeTopLeftFromOuter(const WWidgetNode* WhoAsked) const -> LVector2 override;
-    virtual auto GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const -> LVector2 override;
     virtual void UpdateDesiredSize() const override;
-    virtual void UpdateAnchoredSize(const LViewport& Context) const override;
-    // ~WWidgetNode implementation
+    virtual auto GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const -> LVector2 override;
 };
 
 } /* ~Namespace Jafg */

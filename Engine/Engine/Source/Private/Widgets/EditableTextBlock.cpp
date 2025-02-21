@@ -42,7 +42,7 @@ void Jafg::WEditableTextBlock::Draw(LViewport& Context) const
 {
     Super::Draw(Context);
 
-    LVector2 AnchoredTopLeftFromMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context, this);
+    LVector2 AnchoredTopLeftFromMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context);
 
     if (this->Content.IsEmpty() == false && (this->GetDesiredSize().X > 0.0f && this->GetDesiredSize().Y > 0.0f))
     {

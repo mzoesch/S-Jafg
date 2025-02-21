@@ -7,8 +7,69 @@
 
 Jafg::WUserWidget::WUserWidget(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
+    this->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
     this->SetAnchor(EAnchor::Fill);
     this->SetShouldTick(false);
+
+    return;
+}
+
+void Jafg::WUserWidget::OnGarbage()
+{
+    if (this->Root)
+    {
+        checkSlow( this->Root->Content )
+        this->Root->Content->MarkAsGarbage();
+        delete this->Root;
+        this->Root = nullptr;
+    }
+
+    Super::OnGarbage();
+
+    return;
+}
+
+void Jafg::WUserWidget::Construct()
+{
+    Super::Construct();
+
+    if (this->Root)
+    {
+        checkSlow( this->Root->Content )
+        MakeDeferredWidgetNodeFinal(this->Root->Content);
+    }
+
+    return;
+}
+
+void Jafg::WUserWidget::Tick()
+{
+    Super::Tick();
+
+    if (this->Root)
+    {
+        checkSlow( this->Root->Content )
+        if (this->Root->Content->ShouldNowTick())
+        {
+            this->Root->Content->Tick();
+        }
+    }
+
+    return;
+}
+
+void Jafg::WUserWidget::Destruct()
+{
+    Super::Destruct();
+
+    if (this->Root)
+    {
+        checkSlow( this->Root->Content )
+        this->Root->Content->MarkAsGarbage();
+        delete this->Root;
+        this->Root = nullptr;
+    }
+
     return;
 }
 
@@ -18,21 +79,168 @@ void Jafg::WUserWidget::Draw(LViewport& Context) const
 
     if (this->Root)
     {
-        checkSlow( this->Root->Parent == this )
-        this->Root->Content->Draw(Context);
+        checkSlow( this->Root->Content )
+        if (this->Root->Content->ShouldNowDraw())
+        {
+            this->Root->Content->Draw(Context);
+        }
     }
 
     return;
 }
 
-Jafg::LIntVector2 Jafg::WUserWidget::GetViewportSize() const
+Jafg::LCursorReply Jafg::WUserWidget::SweepMouse(LViewport& Context, const LVector2& InLocation)
 {
-    if (this->AttachedViewport)
+    if (this->CanChildrenBeHitTestable() == false)
     {
-        return this->AttachedViewport->GetDimensions();
+        return Super::SweepMouse(Context, InLocation);
     }
 
-    return Super::GetViewportSize();
+    if (this->Root)
+    {
+        checkSlow( this->Root->Content )
+        if (this->Root->Content->ShouldCheckForInputs())
+        {
+            const LCursorReply Reply = this->Root->Content->SweepMouse(Context, InLocation);
+            if (Reply.IsHandled())
+            {
+                return Reply;
+            }
+        }
+    }
+
+    return Super::SweepMouse(Context, InLocation);
+}
+
+Jafg::LReply Jafg::WUserWidget::SweepFocusTest(LViewport& Context, const LVector2& InLocation)
+{
+    if (this->CanChildrenBeHitTestable() == false)
+    {
+        return Super::SweepFocusTest(Context, InLocation);
+    }
+
+    if (this->Root)
+    {
+        checkSlow( this->Root->Content )
+        const LReply Reply = this->Root->Content->SweepFocusTest(Context, InLocation);
+        if (Reply.IsHandled())
+        {
+            return Reply;
+        }
+    }
+
+    return Super::SweepFocusTest(Context, InLocation);
+}
+
+bool Jafg::WUserWidget::IsFocusWidgetTransitive(const LViewport* InViewport) const
+{
+    if (Super::IsFocusWidgetTransitive(InViewport))
+    {
+        return true;
+    }
+
+    if (InViewport == nullptr)
+    {
+        return false;
+    }
+
+    if (this->Root)
+    {
+        checkSlow( this->Root->Content )
+        if (this->Root->Content->IsFocusWidgetTransitive(InViewport))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool Jafg::WUserWidget::FindNodeInVisiblePath(const WWidgetNode* InNode) const
+{
+    if (Super::FindNodeInVisiblePath(InNode))
+    {
+        return true;
+    }
+
+    if (this->ShouldNowDraw() == false)
+    {
+        return false;
+    }
+
+    if (this->Root)
+    {
+        checkSlow( this->Root->Content )
+        if (this->Root->Content->FindNodeInVisiblePath(InNode))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+void Jafg::WUserWidget::UpdateDesiredSize() const
+{
+    if (this->Root)
+    {
+        if (this->Root->Content->TransformsWidgetLayout())
+        {
+            this->Root->Content->UpdateDesiredSize();
+        }
+        else
+        {
+            this->Root->Content->SetDesiredSize(LVector2::Zero());
+        }
+        this->SetDesiredSize(this->Root->Content->GetDesiredSizeSmart() + this->Padding.GetDesiredSize());
+    }
+    else
+    {
+        this->SetDesiredSize(LVector2::Zero() + this->Padding.GetDesiredSize());
+    }
+
+    Super::UpdateDesiredSize();
+
+    return;
+}
+
+Jafg::LVector2 Jafg::WUserWidget::GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const
+{
+    return this->Padding.GetTopLeftOffset();
+}
+
+void Jafg::WUserWidget::UpdateAnchoredSize(const LViewport& Context) const
+{
+    Super::UpdateAnchoredSize(Context);
+
+    if (this->Root)
+    {
+        checkSlow( this->Root->Content )
+        if (this->Root->Content->TransformsWidgetLayout())
+        {
+            this->Root->Content->UpdateAnchoredSize(Context);
+        }
+        else
+        {
+            this->Root->Content->SetAnchoredSize(LVector2::Zero());
+        }
+    }
+
+    return;
+}
+
+Jafg::LVector2 Jafg::WUserWidget::GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const
+{
+    check( this->Root->Content == InDirectChild )
+
+    LVector2 Out = this->GetAnchoredTopLeftFromMostOuter(Context);
+
+    Out += LVector2(this->Anchor.MinX, this->Anchor.MinY)
+         * (this->GetAnchoredSize() - InDirectChild->GetAnchoredSize() - this->Padding.GetTopLeftOffset());
+    Out += this->Padding.GetTopLeftOffset();
+
+    return Out;
 }
 
 Jafg::LViewport* Jafg::WUserWidget::GetViewport() const
@@ -47,6 +255,7 @@ Jafg::LViewport* Jafg::WUserWidget::GetViewport() const
 
 void Jafg::WUserWidget::AddToViewport(LViewport* InViewport)
 {
+    check( this->AttachedViewport == nullptr ) // Handle this case?
     this->AttachedViewport = InViewport;
     this->AttachedViewport->AddWidget(this);
 
@@ -65,22 +274,6 @@ void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy /* = true */)
     if (bDestroy)
     {
         this->KillYourSelfNow(true);
-    }
-
-    return;
-}
-
-void Jafg::WUserWidget::UpdateDesiredSize() const
-{
-    Super::UpdateDesiredSize();
-
-    if (this->Root)
-    {
-        this->SetDesiredSize(this->Root->Content->GetDesiredSize());
-    }
-    else
-    {
-        this->SetDesiredSize(LVector2::Zero());
     }
 
     return;

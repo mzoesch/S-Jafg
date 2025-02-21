@@ -40,9 +40,9 @@ void Jafg::WDebugScreen::Construct()
 
     MakeRootNode(WWidgetRegion).Anchor(EAnchor::Fill)
     [
-        NewNode(WVBox).Anchor(EAnchor::TopLeft)
+        NewNode(WVBox).Anchor(EAnchor::TopLeft).Tint(LColor(255,0,0,32))
         [
-            NewNode(WVBox)
+            NewNode(WVBox).Tint(LColor(0,0,32,128))
             [
                 NewNode(WTextBlock)
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
@@ -53,7 +53,7 @@ void Jafg::WDebugScreen::Construct()
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
             ]
             + NewNode(WSpacer).SetHeight(20.0f)
-            + NewNode(WVBox)
+            + NewNode(WVBox).Tint(LColor(0,0,32,128))
             [
                 NewNode(WTextBlock).SaveTo(this->LocalPawnLocationSection)
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
@@ -78,9 +78,9 @@ void Jafg::WDebugScreen::Construct()
                     .Texture(&MaterialSubsystem->GetBlendersAtlasTexture())
             ]
         ]
-        + NewNode(WVBox).Anchor(EAnchor::TopRight)
+        + NewNode(WVBox).Anchor(EAnchor::TopRight).Tint(LColor(255,0,0,32))
         [
-            NewNode(WVBox).Anchor(EAnchor::TopRight)
+            NewNode(WVBox).Anchor(EAnchor::TopRight).Tint(LColor(0,0,32,128))
             [
                 NewNode(WTextBlock)
                     .Anchor(EAnchor::TopRight)
@@ -101,7 +101,7 @@ void Jafg::WDebugScreen::Construct()
             ]
             + NewNode(WSpacer)
                 .SetHeight(20.0f)
-            + NewNode(WVBox).Anchor(EAnchor::TopRight)
+            + NewNode(WVBox).Anchor(EAnchor::TopRight).Tint(LColor::Cyan)
             [
                 NewNode(WTextBlock).SaveTo(this->LocalPawnTargetVoxelSectionDestroy)
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))

@@ -27,15 +27,27 @@ protected:
 
 public:
 
-    // WWidgetNode implementation
+    virtual void OnGarbage() override;
+    virtual void Construct() override;
+    virtual void Tick() override;
+    virtual void Destruct() override;
     virtual void Draw(LViewport& Context) const override;
-    virtual auto GetViewportSize() const -> LIntVector2 override;
+
+    virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation) override;
+    virtual LReply       SweepFocusTest(LViewport& Context, const LVector2& InLocation) override;
+
+    virtual bool IsFocusWidgetTransitive(const LViewport* InViewport) const override;
+
+    virtual bool FindNodeInVisiblePath(const WWidgetNode* InNode) const override;
+
+    virtual void UpdateDesiredSize() const override;
+    virtual auto GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const -> LVector2 override;
+    virtual void UpdateAnchoredSize(const LViewport& Context) const override;
+    virtual auto GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const -> LVector2 override;
+
     virtual auto GetViewport() const -> LViewport* override;
     virtual auto RemoveFromParent(const bool bDestroy = true) -> void override;
-    virtual void UpdateDesiredSize() const override;
-    // ~WWidgetNode implementation
 
-    // WWidgetParentBase implementation
     FORCEINLINE virtual auto GetChildren() const -> const TdhArray<LWidgetSlot*>& override { return this->SingleRootChild; }
                 virtual auto RemoveChild(WWidgetNode* InChild) -> void override;
                 virtual auto RemoveChild(LWidgetSlot* InSlot) -> void override;
@@ -44,7 +56,6 @@ public:
     FORCEINLINE virtual void SetPadding(const LPadding& InPadding) override { this->Padding = InPadding; }
     FORCEINLINE virtual auto GetPaddingPtr() const -> const LPadding* override { return &this->Padding; }
     FORCEINLINE virtual auto GetPaddingPtr() -> LPadding* override { return &this->Padding; }
-    // ~WWidgetParentBase implementation
 
     //# Add this widget to the main viewport of the current active local ego.
     void AddToViewport(LViewport* InViewport);

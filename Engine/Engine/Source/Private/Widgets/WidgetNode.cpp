@@ -152,7 +152,7 @@ void Jafg::WWidgetNode::OnGarbage()
 
 bool Jafg::WWidgetNode::IsInBounds(const LViewport& Context, const LVector2& InLocation) const
 {
-    const LVector2 TopLeftMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context, this);
+    const LVector2 TopLeftMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context);
     return
             TopLeftMostOuter.X <= InLocation.X
          && InLocation.X       <= TopLeftMostOuter.X + this->GetAnchoredSize().X
@@ -197,17 +197,27 @@ Jafg::LReply Jafg::WWidgetNode::SweepFocusTest(LViewport& Context, const LVector
 
 bool Jafg::WWidgetNode::IsFocusWidget() const
 {
-    return this->GetViewport()->GetFocusedWidget() == this;
+    if (const LViewport* Viewport = this->GetViewport(); ensure(Viewport))
+    {
+        return Viewport->GetFocusedWidget() == this;
+    }
+
+    return false;
 }
 
 bool Jafg::WWidgetNode::IsFocusWidgetTransitive() const
 {
-    return this->GetViewport()->GetFocusedWidget() == this;
+    return this->IsFocusWidgetTransitive(this->GetViewport());
 }
 
 bool Jafg::WWidgetNode::IsFocusWidgetTransitive(const LViewport* InViewport) const
 {
-    return InViewport->GetFocusedWidget() == this;
+    if (InViewport)
+    {
+        return InViewport->GetFocusedWidget() == this;
+    }
+
+    return false;
 }
 
 void Jafg::WWidgetNode::SetVisibility(const EWidgetVisibility::Type InVisibility)
@@ -257,15 +267,7 @@ bool Jafg::WWidgetNode::FindNodeInVisiblePath(const WWidgetNode* InNode) const
 
 Jafg::LIntVector2 Jafg::WWidgetNode::GetViewportSize() const
 {
-    if (this->Slot)
-    {
-        check( this->Slot->Parent )
-        return this->Slot->Parent->GetViewportSize();
-    }
-
-    panic( "Failed to find window dimensions." )
-
-    return LIntVector2::ZeroVector;
+    return this->GetViewportChecked()->GetDimensions();
 }
 
 Jafg::LViewport* Jafg::WWidgetNode::GetViewport() const
@@ -279,45 +281,6 @@ Jafg::LViewport* Jafg::WWidgetNode::GetViewport() const
     return nullptr;
 }
 
-Jafg::LViewport* Jafg::WWidgetNode::GetCheckedViewport() const
-{
-    LViewport* Viewport = this->GetViewport();
-    check( Viewport )
-    return Viewport;
-}
-
-Jafg::LViewport* Jafg::WWidgetNode::GetPanickedViewport() const
-{
-    if (LViewport* Viewport = this->GetViewport(); Viewport)
-    {
-        return Viewport;
-    }
-
-    panic ( "Failed to find viewport." )
-
-    return nullptr;
-}
-
-Jafg::LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromOuter(const WWidgetNode* WhoAsked) const
-{
-    if (this->Slot)
-    {
-        return this->Slot->Margin->GetTopLeftOffset();
-    }
-
-    return LVector2::Zero();
-}
-
-Jafg::LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const
-{
-    if (this->Slot)
-    {
-        return this->Slot->Parent->GetRelativeTopLeftFromMostOuter(this) + this->GetRelativeTopLeftFromOuter(this);
-    }
-
-    return this->GetRelativeTopLeftFromOuter(this);
-}
-
 void Jafg::WWidgetNode::SetDesiredSize(const LVector2& InSize) const
 {
     this->DesiredSize = InSize;
@@ -329,98 +292,52 @@ void Jafg::WWidgetNode::SetDesiredSize(const LVector2& InSize) const
     return;
 }
 
-Jafg::LVector2 Jafg::WWidgetNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Context, const WWidgetNode* WhoAsked) const
+Jafg::LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromOuter() const
 {
-    LVector2 Out;
-
     if (this->Slot)
     {
-        const LVector2 ThisAnchoredSize   = this->GetAnchoredSize();
-        const LVector2 ParentAnchorSize   = this->Slot->Parent->GetAnchoredSize();
-        const LVector2 ParentTopLeftOuter = this->Slot->Parent->GetRelativeTopLeftFromOuter(this);
-
-        Out = this->Slot->Parent->GetAnchoredTopLeftFromMostOuter(Context, this);
-
-        if (auto A = DynamicCast<WWidgetRegion>(this); A)
-        {
-            if (A->bTemp)
-            {
-                PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH();
-            }
-        }
-
-        if (this->Anchor.IsPushedHorizontal())
-        {
-            Out.X -= ParentTopLeftOuter.X;
-        }
-        if (this->Anchor.IsPushedVertical())
-        {
-            Out.Y -= ParentTopLeftOuter.Y;
-        }
-
-        // Top left from outer.
-        Out += (-LVector2(this->Anchor.MinX, this->Anchor.MinY) + 1.0f) * this->GetRelativeTopLeftFromOuter(WhoAsked);
-        // Out += (-LVector2(this->Anchor.MinX, this->Anchor.MinY) + 1.0f) * this->Slot->Parent->GetRelativeTopLeftFromOuter(this);
-
-        // Clamp right / bottom
-        Out.X += this->Anchor.MinX * (ParentAnchorSize.X - ThisAnchoredSize.X - this->Slot->Margin->Left);
-        Out.Y += this->Anchor.MinY * (ParentAnchorSize.Y - ThisAnchoredSize.Y - this->Slot->Margin->Top);
-    }
-    else
-    {
-        const LVector2 TopLeftMostOuter = this->GetRelativeTopLeftFromMostOuter(WhoAsked);
-        Out = TopLeftMostOuter;
-        Out.X +=
-            this->Anchor.MinX
-            * (static_cast<float>(Context.GetDimensions().X) - (this->DesiredSize.X + TopLeftMostOuter.X));
-        Out.Y +=
-            this->Anchor.MinY
-            * (static_cast<float>(Context.GetDimensions().Y) - (this->DesiredSize.Y + TopLeftMostOuter.Y));
+        return this->Slot->Parent->GetRelativeTopLeftForChild(this);
     }
 
-    return Out;
+    return LVector2::Zero();
 }
 
 void Jafg::WWidgetNode::UpdateAnchoredSize(const LViewport& Context) const
 {
-    LVector2 Out = this->GetDesiredSize();
-
+    check( this->TransformsWidgetLayout() )
     check( this->Anchor.IsNormalized() )
+
+    LVector2 Out;
 
     if (this->Slot)
     {
-        const LVector2 ParentAnchorSize = this->Slot->Parent->GetAnchoredSize();
-
-        Out.X +=
-            this->Anchor.MaxX
-            * (ParentAnchorSize.X - (this->GetRelativeTopLeftFromOuter(nullptr).X + this->GetDesiredSize().X));
-        if (Out.X + this->Slot->Margin->Left + this->Slot->Margin->Right > ParentAnchorSize.X)
-        {
-            Out.X = ParentAnchorSize.X - this->Slot->Margin->Left - this->Slot->Margin->Right;
-        }
-
-        Out.Y +=
-            this->Anchor.MaxY
-            * (ParentAnchorSize.Y - (this->GetRelativeTopLeftFromOuter(nullptr).Y + this->GetDesiredSize().Y));
-        if (Out.Y + this->Slot->Margin->Top + this->Slot->Margin->Bottom > ParentAnchorSize.Y)
-        {
-            Out.Y = ParentAnchorSize.Y - this->Slot->Margin->Top - this->Slot->Margin->Bottom;
-        }
+        const LVector2 ParentAnchorSize  = this->Slot->Parent->GetAnchoredSize();
+        Out.X = Maths::Max(this->Anchor.MaxX * ParentAnchorSize.X - this->Slot->Margin->GetDesiredSize().X, this->DesiredSize.X);
+        Out.Y = Maths::Max(this->Anchor.MaxY * ParentAnchorSize.Y - this->Slot->Margin->GetDesiredSize().Y, this->DesiredSize.Y);
     }
     else
     {
-        Out.X +=
-            this->Anchor.MaxX
-            * static_cast<float>(Context.GetDimensions().X) - (this->GetRelativeTopLeftFromOuter(nullptr).X + this->GetDesiredSize().X);
-
-        Out.Y +=
-            this->Anchor.MaxY
-            * static_cast<float>(Context.GetDimensions().Y) - (this->GetRelativeTopLeftFromOuter(nullptr).Y + this->GetDesiredSize().Y);
+        Out.X = Maths::Max(this->Anchor.MaxX * static_cast<float>(Context.GetDimensions().X), this->DesiredSize.X);
+        Out.Y = Maths::Max(this->Anchor.MaxY * static_cast<float>(Context.GetDimensions().Y), this->DesiredSize.Y);
     }
 
     this->AnchoredSize = Out;
 
     return;
+}
+
+Jafg::LVector2 Jafg::WWidgetNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const
+{
+    if (this->Slot)
+    {
+        return this->Slot->Parent->GetAnchoredTopLeftFromMostOuterForChild(Context, this);
+    }
+
+    LVector2 Out;
+    Out.X = this->Anchor.MinX * (static_cast<float>(Context.GetDimensions().X) * this->DesiredSize.X);
+    Out.Y = this->Anchor.MinY * (static_cast<float>(Context.GetDimensions().Y) * this->DesiredSize.Y);
+
+    return Out;
 }
 
 Jafg::LApplicationInstance* Jafg::WWidgetNode::GetApplicationInstance() const

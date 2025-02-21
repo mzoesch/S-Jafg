@@ -19,9 +19,8 @@ protected:
 
 public:
 
-    virtual auto GetRelativeTopLeftFromOuter(const WWidgetNode* WhoAsked) const -> LVector2 override;
-    virtual auto GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const -> LVector2 override;
-    virtual auto UpdateDesiredSize() const -> void override;
+    virtual auto GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const -> LVector2 override;
+    virtual void UpdateDesiredSize() const override;
 };
 
 } /* ~Namespace Jafg */

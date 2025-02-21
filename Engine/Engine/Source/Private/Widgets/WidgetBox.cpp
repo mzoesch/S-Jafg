@@ -27,7 +27,7 @@ void Jafg::WWidgetBox::Draw(LViewport& Context) const
     this->ShaderContext->Draw(
         Context,
         this->GetAnchoredSize(),
-        this->GetAnchoredTopLeftFromMostOuter(Context, this),
+        this->GetAnchoredTopLeftFromMostOuter(Context),
         this->Brush.GetValue().Tint,
         this->Brush.GetValue().Image.GetTexture()
     );

@@ -234,11 +234,14 @@ void Jafg::LViewport::Draw()
 
     for (const WUserWidget* Widget : this->TopLevelWidgets)
     {
-        if (Widget->ShouldNowDraw())
+        if (Widget->TransformsWidgetLayout())
         {
             Widget->UpdateDesiredSize();
             Widget->UpdateAnchoredSize(*this);
-            Widget->Draw(*this);
+            if (Widget->ShouldNowDraw())
+            {
+                Widget->Draw(*this);
+            }
         }
 
         continue;

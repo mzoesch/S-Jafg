@@ -19,14 +19,27 @@ class ENGINE_API WWidgetParent : public WWidgetParentBase
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WWidgetParent)
+    explicit WWidgetParent(const LObjectInitializer& ObjectInitializer);
 
 public:
 
     virtual void OnGarbage() override;
     virtual void Construct() override;
-    virtual void Draw(LViewport& Context) const override;
+    virtual void Tick() override;
     virtual void Destruct() override;
+    virtual void Draw(LViewport& Context) const override;
+
+    virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation) override;
+    virtual LReply       SweepFocusTest(LViewport& Context, const LVector2& InLocation) override;
+
+    virtual bool IsFocusWidgetTransitive(const LViewport* InViewport) const override;
+
+    virtual bool FindNodeInVisiblePath(const WWidgetNode* InNode) const override;
+
+    virtual void UpdateDesiredSize() const override;
+    virtual auto GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const -> LVector2 override;
+    virtual void UpdateAnchoredSize(const LViewport& Context) const override;
+    virtual auto GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const -> LVector2 override;
 
     FORCEINLINE
     virtual auto         GetChildren() const -> const TdhArray<LWidgetSlot*>& override { return this->Children; }
