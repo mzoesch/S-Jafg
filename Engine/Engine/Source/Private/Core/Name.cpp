@@ -61,11 +61,12 @@ namespace Jafg
 {
 
 ENGINE_API LName LName::NoName = LName::LName(NO_NAME);
+ENGINE_API LSimpleString LName::NoNameStringRepresentation = "NoName";
 
 const LSimpleString& LName::ToString() const
 {
     check( Private::GNameRegistry )
-    return Private::GNameRegistry->GetRealName(*this);
+    return Private::GNameRegistry->GetRealNameSafe(*this);
 }
 
 } /* ~Namespace Jafg */
@@ -98,6 +99,11 @@ Jafg::LName Jafg::Private::LNameRegistry::GetName(const LSimpleString& InName, c
     }
 
     return LName::NoName;
+}
+
+Jafg::LName Jafg::Private::LNameRegistry::GetName(const LString& InName, const bool bConvertToLower /* = true */) const
+{
+    return this->GetName(LSimpleString(InName.ToPtr()), bConvertToLower);
 }
 
 bool Jafg::Private::LNameRegistry::IsNameRegistered(const LSimpleString& InName, const bool bConvertToLower /* = true */) const

@@ -16,6 +16,8 @@ class WWidgetSwitcher;
 class WTabBarPanel;
 class WTabBarButton;
 
+MAKE_DELEGATE_SIGNATURE(LOnTabBarLoaded, void, WTabBar* TabBar, WWidgetNode* Button, WTabBarPanel* Panel)
+
 struct LTabBarTabDescriptor final
 {
     LTabBarTabDescriptor() { }
@@ -25,6 +27,8 @@ struct LTabBarTabDescriptor final
 
     LSimpleString Identifier;
     LString DisplayName;
+
+    LOnTabBarLoaded Callback;
 
     LPadding Padding = LPadding(0.0f);
 

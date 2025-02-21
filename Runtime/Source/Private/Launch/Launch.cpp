@@ -204,15 +204,21 @@ EPlatformExit::Type GuardedMain(const char* CmdLine)
         return EPlatformExit::Fatal;
     }
     Private::GObjectRegistry->LoadPendingPackages();
-
-    if (GEngine)
+    if (::IsEngineExitRequested() || GEngine)
     {
         return EPlatformExit::Fatal;
     }
+
+    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous, Tasks::Private::RunAllTasks);
+    if (::IsEngineExitRequested() || GEngine)
+    {
+        return EPlatformExit::Fatal;
+    }
+
     GEngine = new LEngine();
     GEngine->Initialize();
 
-    if (::IsEngineExitRequested())
+    if (GEngine == nullptr || ::IsEngineExitRequested())
     {
         return ::GetMostSignificantExitReason();
     }

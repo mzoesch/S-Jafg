@@ -21,9 +21,7 @@ public:
 
     virtual auto GetRelativeTopLeftFromOuter(const WWidgetNode* WhoAsked) const -> LVector2 override;
     virtual auto GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const -> LVector2 override;
-    // virtual auto GetAnchoredTopLeftFromMostOuter(const LViewport& Context, const WWidgetNode* WhoAsked) const -> LVector2 override;
     virtual auto UpdateDesiredSize() const -> void override;
-    // virtual auto UpdateAnchoredSize(const LViewport& Context) const -> void override;
 };
 
 } /* ~Namespace Jafg */

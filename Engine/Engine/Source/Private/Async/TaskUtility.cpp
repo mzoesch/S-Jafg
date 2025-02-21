@@ -488,7 +488,7 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
 
     if (bJoinTasks)
     {
-        Jafg::Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, 0);
+        TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, RunAllTasks);
     }
 
     ::JoinableThreadsMutex.lock();

@@ -55,6 +55,8 @@ struct TUnique final
     FORCEINLINE auto GetValue(T&& DefaultValue) const -> T& { return this->Object ? *this->Object : std::move(DefaultValue); }
     FORCEINLINE auto GetValuePtr() -> T* { return this->Object; }
     FORCEINLINE auto GetValuePtr() const -> const T* { return this->Object; }
+    FORCEINLINE      operator T*() { return this->Object; }
+    FORCEINLINE      operator const T*() const { return this->Object; }
 
     FORCEINLINE auto MoveOut() -> TUnique { return std::move(*this); }
 
@@ -113,9 +115,29 @@ struct LMySmartHelper
  * Make a raw pointer unique.
  */
 template <typename T>
+FORCEINLINE TUnique<T> MakeUnique(T* InObject);
+template <typename T, typename U>
+FORCEINLINE TUnique<T> MakeUnique(TUnique<U>&& InObject);
+template <typename T, typename U>
+FORCEINLINE TUnique<T> UpcastUnique(TUnique<U>&& InObject);
+
+template <typename T>
 FORCEINLINE TUnique<T> MakeUnique(T* InObject)
 {
     return Private::LMySmartHelper::MakeUnique(InObject);
+}
+template <typename T, typename U>
+FORCEINLINE TUnique<T> MakeUnique(TUnique<U>&& InObject)
+{
+    return UpcastUnique<T, U>(std::move(InObject));
+}
+template <typename T, typename U>
+FORCEINLINE TUnique<T> UpcastUnique(TUnique<U>&& InObject)
+{
+    static_assert(std::is_base_of_v<T, U>, "Cannot upcast to a type that is not a base of the current type.");
+    U* Weak = InObject.GetValuePtr();
+    Private::LMySmartHelper::RemoveNoOrphan(InObject);
+    return Private::LMySmartHelper::MakeUnique(static_cast<T*>(Weak));
 }
 
 /**

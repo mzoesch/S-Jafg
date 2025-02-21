@@ -22,7 +22,12 @@ struct LTextBlockBrush
     FORCEINLINE LTextBlockBrush& ColorRet(const LColor& InColor) { this->Color = InColor; return *this; }
     FORCEINLINE LTextBlockBrush& ScaleRet(const float InScale) { this->Scale = InScale; return *this; }
 
+    ENGINE_API static LTextBlockBrush Header();
+    ENGINE_API static LTextBlockBrush SubHeader();
+    ENGINE_API static LTextBlockBrush Body();
+    ENGINE_API static LTextBlockBrush Compact();
     ENGINE_API static LTextBlockBrush Small();
+    ENGINE_API static LTextBlockBrush Tiny();
 };
 
 template <typename TNode>

@@ -3,6 +3,16 @@
 #include "CoreAfx.h"
 #include "Widgets/WidgetRegion.h"
 
+void Jafg::WWidgetRegion::UpdateAnchoredSize(const LViewport& Context) const
+{
+    if (this->bTemp)
+    {
+        PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH();
+    }
+
+    Super::UpdateAnchoredSize(Context);
+}
+
 void Jafg::WWidgetRegion::Draw(LViewport& Context) const
 {
     if (this->HasBrush() == false)
@@ -22,6 +32,11 @@ void Jafg::WWidgetRegion::Draw(LViewport& Context) const
         LOG_TRACE(LogWidgets, "Creating new shader context for WWidgetRegion.")
         this->ShaderContext.MakeMeaningful();
         this->CreateNewShaderContext();
+    }
+
+    if (this->bTemp)
+    {
+        PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH();
     }
 
     this->ShaderContext->Draw(

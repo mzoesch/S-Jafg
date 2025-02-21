@@ -30,7 +30,7 @@ public:
 
     FORCEINLINE TSubclassOf(const ELazyInit LazyInit)
     {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::Early, [this](void)
+        Tasks::Make(ENamedThreads::Master, ETaskTime::NoTick, [this](void)
         {
             if
             (

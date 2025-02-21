@@ -175,7 +175,7 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
 #endif /* PLATFORM_WASM */
-    ::memcpy(Out, InStaticClass->GetDefaultPackageReferrer(), InStaticClass->GetTotalByteSize());  // NOLINT(bugprone-undefined-memory-manipulation)
+    ::memcpy(Out, InStaticClass->GetDefaultPackageReferrer(), InStaticClass->GetTotalByteSize());  // NOLINT(bugprone-undefined-memory-manipulation, clang-diagnostic-dynamic-class-memaccess)
 #if PLATFORM_WASM
     #pragma GCC diagnostic pop
 #endif /* PLATFORM_WASM */
@@ -189,14 +189,16 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
 
         void** ActualJafgVTableLocation    = reinterpret_cast<void**>(&Reinterpreted->VClass);
         /* POINTER_BYTE_SIZE Bytes offset because of compiler generated v table pointer. */
-        void** PredictedJafgVTableLocation = reinterpret_cast<void**>(reinterpret_cast<::size_t>(Out) + POINTER_BYTE_SIZE);
+        void** PredictedJafgVTableLocation = reinterpret_cast<void**>(reinterpret_cast<::size_t>(Out) + POINTER_BYTE_SIZE);  // NOLINT(performance-no-int-to-ptr)
         check( ActualJafgVTableLocation == PredictedJafgVTableLocation )
     )
 
     Reinterpreted->VClass = const_cast<LObjectClass*>(InStaticClass);
     Reinterpreted->Outer  = InContext;
+    ::memset(&Reinterpreted->ClassFields, 0, sizeof(Reinterpreted->ClassFields));  // NOLINT(bugprone-undefined-memory-manipulation)
+    check( Reinterpreted->ClassFields.GetSize() == 0 && Reinterpreted->ClassFields.IsData() == false )
 
-    for (LClassField& Field : Reinterpreted->GetMutableClassFieldsDangerous())
+    for (LClassField& Field : InStaticClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())
     {
         if (Field.Malloc)
         {

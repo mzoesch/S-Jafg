@@ -118,6 +118,10 @@ public:
         jassert( this->bHasBegunLife == false )
         this->bHasBegunLife = true;
 #endif /* DO_DOUBLE_CHECK_LIFETIMES */
+        //#
+        //# Only the default class referrer may contain fields.
+        //#
+        check( this->ClassFields.IsData() == false )
     }
 #if DO_DOUBLE_CHECK_LIFETIMES
     FORCEINLINE bool HasBegunLife() const { return this->bHasBegunLife; }

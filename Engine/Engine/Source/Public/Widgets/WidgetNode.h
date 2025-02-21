@@ -157,8 +157,10 @@ struct LAnchor final
     ENGINE_API bool IsNormalized() const;
     ENGINE_API void Normalize();
 
-    FORCEINLINE bool IsStretchedHorizontal() const { return this->MinX != this->MaxX; }
-    FORCEINLINE bool IsStretchedVertical() const { return this->MinY != this->MaxY; }
+    FORCEINLINE bool IsPushedHorizontal() const { return this->MinX > 0.0f; }
+    FORCEINLINE bool IsPushedVertical() const { return this->MinY > 0.0f; }
+    FORCEINLINE bool IsStretchedHorizontal() const { return this->MaxX > 0.0f; }
+    FORCEINLINE bool IsStretchedVertical() const { return this->MaxY > 0.0f; }
     FORCEINLINE bool IsStretched() const { return this->IsStretchedHorizontal() || this->IsStretchedVertical(); }
 
     void ApplyConstraints(const EAnchor::Type InConstraints)
@@ -179,6 +181,11 @@ struct LAnchor final
 
     bool operator==(const LAnchor& InOther) const { return this->Anchors == InOther.Anchors; }
     bool operator!=(const LAnchor& InOther) const { return this->Anchors != InOther.Anchors; }
+
+    FORCEINLINE LSimpleString ToString() const
+    {
+        return this->Anchors.ToString();
+    }
 
     ENGINE_API static const LAnchor VTop;
     ENGINE_API static const LAnchor VCenter;

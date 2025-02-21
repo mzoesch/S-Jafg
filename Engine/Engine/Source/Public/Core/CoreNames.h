@@ -18,4 +18,12 @@ ENGINE_API extern LName Name_UicInMyWorld;
 ENGINE_API extern LName Name_UicInPause;
 ENGINE_API extern LName Name_UicInConsole;
 
+ENGINE_API extern LName Name_PrefGameplay;
+ENGINE_API extern LName Name_PrefAudio;
+ENGINE_API extern LName Name_PrefVideo;
+ENGINE_API extern LName Name_PrefControls;
+ENGINE_API extern LName Name_PrefKeybindings;
+ENGINE_API extern LName Name_PrefUserInterface;
+ENGINE_API extern LName Name_PrefDeveloper;
+
 } /* ~Namespace Jafg */

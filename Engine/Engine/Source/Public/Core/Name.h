@@ -58,6 +58,7 @@ struct LName
     ENGINE_API const LSimpleString& ToString() const;
 
     ENGINE_API static LName NoName;
+    ENGINE_API static LSimpleString NoNameStringRepresentation;
 
 private:
 
@@ -79,6 +80,7 @@ private:
 //# Get a name by its string representation.
 //#
 #define GET_NAME(Name)              ::Jafg::Private::GNameRegistry->GetName(Name)
+#define GET_NAME_CHECKED(Name)      ::Jafg::Private::GNameRegistry->GetNameChecked(Name)
 
 namespace Private
 {
@@ -91,9 +93,13 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LNameRegistry)
     ENGINE_API ~LNameRegistry();
 
-    static     LName GetNameByValue(LUnderlyingName InUnderlyingName) { return { InUnderlyingName }; }
-    ENGINE_API LName GetName(const LSimpleString& InName, const bool bConvertToLower = true) const;
-    FORCEINLINE auto GetRealName(const LName InName) const -> const LSimpleString& { return this->Names[InName.UnderlyingName - 1]; }
+    static      LName GetNameByValue(LUnderlyingName InUnderlyingName) { return { InUnderlyingName }; }
+    ENGINE_API  LName GetName(const LSimpleString& InName, const bool bConvertToLower = true) const;
+    ENGINE_API  LName GetName(const LString& InName, const bool bConvertToLower = true) const;
+    FORCEINLINE LName GetNameChecked(const LSimpleString& InName, const bool bConvertToLower = true) const;
+    FORCEINLINE LName GetNameChecked(const LString& InName, const bool bConvertToLower = true) const;
+    FORCEINLINE auto  GetRealNameFast(const LName InName) const -> const LSimpleString& { check( InName.IsSet() ) return this->Names[InName.UnderlyingName - 1]; }
+    FORCEINLINE auto  GetRealNameSafe(const LName InName) const -> const LSimpleString&;
 
     ENGINE_API bool IsNameRegistered(const LSimpleString& InName, const bool bConvertToLower = true) const;
     ENGINE_API bool RegisterName(const LSimpleString& InName);
@@ -105,6 +111,30 @@ private:
 
     TdhArray<LSimpleString> Names;
 };
+
+FORCEINLINE LName LNameRegistry::GetNameChecked(const LSimpleString& InName, const bool bConvertToLower /* = true */) const
+{
+    const LName Name = this->GetName(InName, bConvertToLower);
+    check( Name.IsSet() )
+    return Name;
+}
+
+FORCEINLINE LName LNameRegistry::GetNameChecked(const LString& InName, const bool bConvertToLower /* = true */) const
+{
+    const LName Name = this->GetName(InName, bConvertToLower);
+    check( Name.IsSet() )
+    return Name;
+}
+
+FORCEINLINE const LSimpleString& LNameRegistry::GetRealNameSafe(const LName InName) const
+{
+    if (InName.IsSet())
+    {
+        return this->GetRealNameFast(InName);
+    }
+
+    return LName::NoNameStringRepresentation;
+}
 
 } /* ~Namespace Private */
 

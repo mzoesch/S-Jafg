@@ -54,6 +54,11 @@
 #define JAFG_DOUBLE_INFIMUM                 (2.2250738585072014e-308)   /* Min normalized positive dbl value. */
 #define JAFG_DOUBLE_TRUE_MINIMUM            (4.9406564584124654e-324)   /* Min positive dbl value. */
 
+#define JAFG_FROM_PERCENT_F                 (0.01f)
+#define JAFG_FROM_PERCENT_D                 (0.01 )
+#define JAFG_TO_PERCENT_F                   (100.0f)
+#define JAFG_TO_PERCENT_D                   (100.0 )
+
 ///////////////////////////////////////////////////////////////////////////////
 // Scalar conversion constants for metric units.
 #define JAFG_KM2M_F                         (1e+3f)
@@ -222,6 +227,8 @@
 #define JAFG_RAD_HALF_CIRCLE                JAFG_RAD_HALF_CIRCLE_F
 #define JAFG_DEB_THREE_THIRD_CIRCLE         JAFG_DEG_THREE_THIRD_CIRCLE_F
 #define JAFG_RAD_THREE_THIRD_CIRCLE         JAFG_RAD_THREE_THIRD_CIRCLE_F
+#define JAFG_FROM_PERCENT                   JAFG_FROM_PERCENT_F
+#define JAFG_TO_PERCENT                     JAFG_TO_PERCENT_F
 #define JAFG_KM2M                           JAFG_KM2M_F
 #define JAFG_KM2CM                          JAFG_KM2CM_F
 #define JAFG_KM2MM                          JAFG_KM2MM_F

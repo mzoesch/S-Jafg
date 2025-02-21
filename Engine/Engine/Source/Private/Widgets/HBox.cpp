@@ -26,7 +26,7 @@ Jafg::LVector2 Jafg::WHBox::GetRelativeTopLeftFromOuter(const WWidgetNode* WhoAs
 
 Jafg::LVector2 Jafg::WHBox::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const
 {
-    if (this == WhoAsked)
+    if (WhoAsked == nullptr || this == WhoAsked)
     {
         return Super::GetRelativeTopLeftFromMostOuter(WhoAsked);
     }
@@ -71,9 +71,12 @@ void Jafg::WHBox::UpdateAnchoredSize(const LViewport& Context) const
     // DO NOT CALL THE SUPER METHOD OF THE PARENT AND PARENT BASE CLASS!!!
     WWidgetNode::UpdateAnchoredSize(Context);
 
+    this->UpdateAnchoredSizeOfChildren(Context);
+
+    float TotalSizeX = 0.0f;
     for (const LWidgetSlot* ChildSlot : this->GetChildren())
     {
-        ChildSlot->Content->UpdateAnchoredSize(Context);
+        TotalSizeX += ChildSlot->Content->GetAnchoredSize().X;
     }
 
     for (const LWidgetSlot* ChildSlot : this->GetChildren())
@@ -83,17 +86,9 @@ void Jafg::WHBox::UpdateAnchoredSize(const LViewport& Context) const
             continue;
         }
 
-        float SizeOfOtherNodeX = 0.0f;
-        for (const LWidgetSlot* ChildSlot2 : this->GetChildren())
-        {
-            if (ChildSlot2->Content != ChildSlot->Content)
-            {
-                SizeOfOtherNodeX += ChildSlot2->Content->GetAnchoredSize().X;
-            }
-        }
-
+        const float DeltaSize = TotalSizeX - ChildSlot->Content->GetAnchoredSize().X;
         ChildSlot->Content->SetAnchoredSize({
-            ChildSlot->Content->GetAnchoredSize().X - SizeOfOtherNodeX,
+            ChildSlot->Content->GetAnchoredSize().X - DeltaSize,
             ChildSlot->Content->GetAnchoredSize().Y,
         });
 
@@ -102,7 +97,12 @@ void Jafg::WHBox::UpdateAnchoredSize(const LViewport& Context) const
 
     for (const LWidgetSlot* ChildSlot : this->GetChildren())
     {
-        ChildSlot->Content->UpdateAnchoredSizeOfChildren(Context);
+        if (ChildSlot->Content->IsWidgetVisible())
+        {
+            ChildSlot->Content->UpdateAnchoredSizeOfChildren(Context);
+        }
+
+        continue;
     }
 
     return;

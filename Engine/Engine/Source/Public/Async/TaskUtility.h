@@ -52,11 +52,17 @@ enum Type : uint8
     Fail = 0,
 
     //# Run as early as possible on the thread.
-    Early    = 0x01 << 0,
+    Early = 0x01 << 0,
+
     //# Run as late as possible on the thread.
-    Late     = 0x01 << 1,
+    Late = 0x01 << 1,
+
+    //# Run early or outside of threads' tick - e.g., during an undefined program state...
+    NoTickDangerous = 0x01 << 2, // Only during undefined states. May never happen.
+    NoTick = NoTickDangerous | Early, // <-- very safe.
+
     //# Run whenever possible on the thread (late or early).
-    Whenever = Early | Late,
+    Whenever = Early | Late | NoTick,
 };
 
 } /* ~Namespace TaskTime */
@@ -96,6 +102,8 @@ template <typename T> ENamedThreads::Type LaunchNamedThread(ETaskExit::Type& Out
 
 namespace Private
 {
+
+enum ERunAllTasks : int32 { RunAllTasks = 0, };
 
 ENGINE_API extern int32 CustomThreadCounter;
 

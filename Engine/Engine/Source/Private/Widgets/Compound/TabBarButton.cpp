@@ -19,9 +19,10 @@ bool Jafg::WTabBarButton::AddData(LWidgetNodeData* InData)
         this->GetFactory<WTabBarButton>()
         [
             NewNode(WTextBlock).SaveTo(this->ButtonText)
-                .Brush(LTextBlockBrush::Small())
+                .Brush(LTextBlockBrush::SubHeader())
                 .Content(Data->Descriptor->DisplayName)
                 .Anchor(EAnchor::CenterCenter)
+                .Padding(Data->Descriptor->Padding)
         ];
     }
 

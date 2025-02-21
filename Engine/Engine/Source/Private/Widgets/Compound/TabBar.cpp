@@ -244,10 +244,11 @@ void Jafg::WTabBar::LoadTab(const LTabBarTabDescriptor& Descriptor, const int32 
 
     MakeDeferredWidgetNodeFinal(Button);
 
+    WTabBarPanel* Panel = nullptr;
     if (Descriptor.PanelWidgetClass)
     {
         Data.DerivedClass = WTabBarPanel::StaticClass()->GetName();
-        WTabBarPanel* Panel = ConstructDeferredWidgetNode(Descriptor.PanelWidgetClass);
+        Panel = ConstructDeferredWidgetNode(Descriptor.PanelWidgetClass);
         checkSlow( this->TabsInOrder[InIndex].Panel == nullptr )
         this->TabsInOrder[InIndex].Panel = Panel;
         this->Switcher->AddChild(Panel);
@@ -255,6 +256,8 @@ void Jafg::WTabBar::LoadTab(const LTabBarTabDescriptor& Descriptor, const int32 
         Panel->AddData(&Data);
         MakeDeferredWidgetNodeFinal(Panel);
     }
+
+    Descriptor.Callback.InvokeIfBound(this, Button, Panel);
 
     return;
 }

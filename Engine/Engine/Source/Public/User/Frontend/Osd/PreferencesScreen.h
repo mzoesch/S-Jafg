@@ -8,6 +8,13 @@
 namespace Jafg
 {
 
+class LPreference;
+
+struct LPreferencesPanelData : public LWidgetNodeData
+{
+    const LPreference* Preference = nullptr;
+};
+
 DECLARE_JAFG_WIDGET()
 class ENGINE_API WPreferencesPanel : public WCommonMenuTabBarPanel
 {
@@ -18,6 +25,7 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(WPreferencesPanel)
 
     virtual void Construct() override;
+    virtual bool AddData(LWidgetNodeData* InData) override;
 };
 
 DECLARE_JAFG_WIDGET(EClassFlags::Config)

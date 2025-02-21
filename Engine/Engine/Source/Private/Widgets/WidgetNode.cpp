@@ -6,6 +6,8 @@
 #include "Widgets/Viewport.h"
 #include "Widgets/WidgetParent.h"
 
+#include "Widgets/WidgetRegion.h"
+
 namespace
 {
 
@@ -88,15 +90,31 @@ bool LAnchor::IsNormalized() const
 {
     return
            this->Anchors.X >= 0.0f && this->Anchors.Y >= 0.0f && this->Anchors.Z >= 0.0f && this->Anchors.W >= 0.0f
-        && this->Anchors.X <= 1.0f && this->Anchors.Y <= 1.0f && this->Anchors.Z <= 1.0f && this->Anchors.W <= 1.0f;
+        && this->Anchors.X <= 1.0f && this->Anchors.Y <= 1.0f && this->Anchors.Z <= 1.0f && this->Anchors.W <= 1.0f
+        && this->MinX + this->MaxX <= 1.0f
+        && this->MinY + this->MaxY <= 1.0f;
 }
 
 void LAnchor::Normalize()
 {
+#if DO_CHECKS
+    LAnchor Old = *this;
+#endif /* DO_CHECKS */
+
     this->Anchors.X = Maths::Clamp(this->Anchors.X, 0.0f, 1.0f);
     this->Anchors.Y = Maths::Clamp(this->Anchors.Y, 0.0f, 1.0f);
     this->Anchors.Z = Maths::Clamp(this->Anchors.Z, 0.0f, 1.0f);
     this->Anchors.W = Maths::Clamp(this->Anchors.W, 0.0f, 1.0f);
+
+    this->MaxX = Maths::Min(this->MaxX, 1.0f - this->MinX);
+    this->MaxY = Maths::Min(this->MaxY, 1.0f - this->MinY);
+
+#if DO_CHECKS
+    if (Old != *this)
+    {
+        LOG_WARNING(LogWidgetFramework, "Anchor was not normalized correctly: {} -> {}.", Old.ToString(), this->ToString())
+    }
+#endif /* DO_CHECKS */
 
     return;
 }
@@ -317,11 +335,34 @@ Jafg::LVector2 Jafg::WWidgetNode::GetAnchoredTopLeftFromMostOuter(const LViewpor
 
     if (this->Slot)
     {
-        const LVector2 ThisAnchoredSize = this->GetAnchoredSize();
-        const LVector2 ParentAnchorSize = this->Slot->Parent->GetAnchoredSize();
+        const LVector2 ThisAnchoredSize   = this->GetAnchoredSize();
+        const LVector2 ParentAnchorSize   = this->Slot->Parent->GetAnchoredSize();
+        const LVector2 ParentTopLeftOuter = this->Slot->Parent->GetRelativeTopLeftFromOuter(this);
+
         Out = this->Slot->Parent->GetAnchoredTopLeftFromMostOuter(Context, this);
-        Out += (-LVector2(this->Anchor.MinX, this->Anchor.MinY) + 1.0f)
-             * (this->Slot->Parent->GetRelativeTopLeftFromOuter(this) + this->GetRelativeTopLeftFromOuter(this));
+
+        if (auto A = DynamicCast<WWidgetRegion>(this); A)
+        {
+            if (A->bTemp)
+            {
+                PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH();
+            }
+        }
+
+        if (this->Anchor.IsPushedHorizontal())
+        {
+            Out.X -= ParentTopLeftOuter.X;
+        }
+        if (this->Anchor.IsPushedVertical())
+        {
+            Out.Y -= ParentTopLeftOuter.Y;
+        }
+
+        // Top left from outer.
+        Out += (-LVector2(this->Anchor.MinX, this->Anchor.MinY) + 1.0f) * this->GetRelativeTopLeftFromOuter(WhoAsked);
+        // Out += (-LVector2(this->Anchor.MinX, this->Anchor.MinY) + 1.0f) * this->Slot->Parent->GetRelativeTopLeftFromOuter(this);
+
+        // Clamp right / bottom
         Out.X += this->Anchor.MinX * (ParentAnchorSize.X - ThisAnchoredSize.X - this->Slot->Margin->Left);
         Out.Y += this->Anchor.MinY * (ParentAnchorSize.Y - ThisAnchoredSize.Y - this->Slot->Margin->Top);
     }
@@ -343,6 +384,8 @@ Jafg::LVector2 Jafg::WWidgetNode::GetAnchoredTopLeftFromMostOuter(const LViewpor
 void Jafg::WWidgetNode::UpdateAnchoredSize(const LViewport& Context) const
 {
     LVector2 Out = this->GetDesiredSize();
+
+    check( this->Anchor.IsNormalized() )
 
     if (this->Slot)
     {

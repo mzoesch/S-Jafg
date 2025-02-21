@@ -24,7 +24,7 @@ public:
 
     enum { NoActiveWidgetIndex = INDEX_NONE };
 
-    FORCEINLINE void  ResetWidgetIndex() { this->ActiveIndex = NoActiveWidgetIndex; }
+    FORCEINLINE void  ResetWidgetIndex() { this->SetActiveWidgetIndex(NoActiveWidgetIndex); }
     FORCEINLINE int32 GetActiveWidgetIndex() const { return this->ActiveIndex; }
                 void  SetActiveWidgetIndex(const int32 Index);
 
@@ -39,8 +39,10 @@ public:
     FORCEINLINE auto GetActiveNodeChecked() -> WWidgetNode* { check( this->IsIndexValid() ) return this->GetChildren()[this->ActiveIndex]->Content; }
     FORCEINLINE auto GetActiveNodeChecked() const -> const WWidgetNode* { check( this->IsIndexValid() ) return this->GetChildren()[this->ActiveIndex]->Content; }
 
+    virtual auto AddChild(WWidgetNode* InChild) -> LWidgetSlot* override;
+    virtual auto AddChildAt(const int32 InIndex, WWidgetNode* InChild) -> LWidgetSlot* override;
+
     // WWidgetParentBase implementation
-    virtual void Tick() override;
     virtual auto SweepMouse(LViewport& Context, const LVector2& InLocation) -> LCursorReply override;
     virtual auto SweepFocusTest(LViewport& Context, const LVector2& InLocation) -> LReply override;
     virtual void UpdateDesiredSize() const override;
@@ -54,6 +56,12 @@ public:
 private:
 
     int32 ActiveIndex = NoActiveWidgetIndex;
+    struct LRecentVisibility
+    {
+        const void* Target = nullptr;
+        EWidgetVisibility::Type Visibility = EWidgetVisibility::Visible;
+    };
+    TdhArray<LRecentVisibility> RecentVisibilities;
 };
 
 WWidgetNode* WWidgetSwitcher::GetActiveWidget() const

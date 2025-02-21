@@ -26,7 +26,7 @@ Jafg::LVector2 Jafg::WVBox::GetRelativeTopLeftFromOuter(const WWidgetNode* WhoAs
 
 Jafg::LVector2 Jafg::WVBox::GetRelativeTopLeftFromMostOuter(const WWidgetNode* WhoAsked) const
 {
-    if (this == WhoAsked)
+    if (WhoAsked == nullptr || this == WhoAsked)
     {
         return Super::GetRelativeTopLeftFromMostOuter(WhoAsked);
     }

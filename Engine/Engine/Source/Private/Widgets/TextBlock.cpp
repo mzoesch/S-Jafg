@@ -53,6 +53,42 @@ struct Character final
  */
 std::map<uint8, Character> Characters;
 
+} /* ~Namespace <Anonymous> */
+
+Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Header()
+{
+    return LTextBlockBrush
+    {
+        .Tint  = LColor(0, 0, 0, 0),
+        .Scale = GetDefault<JUserPreferences>()->HeaderFontSize
+    };
+}
+
+Jafg::LTextBlockBrush Jafg::LTextBlockBrush::SubHeader()
+{
+    return LTextBlockBrush
+    {
+        .Tint  = LColor(0, 0, 0, 0),
+        .Scale = GetDefault<JUserPreferences>()->SubHeaderFontSize
+    };
+}
+
+Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Body()
+{
+    return LTextBlockBrush
+    {
+        .Tint  = LColor(0, 0, 0, 0),
+        .Scale = GetDefault<JUserPreferences>()->BodyFontSize
+    };
+}
+
+Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Compact()
+{
+    return LTextBlockBrush
+    {
+        .Tint  = LColor(0, 0, 0, 0),
+        .Scale = GetDefault<JUserPreferences>()->CompactFontSize
+    };
 }
 
 Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Small()
@@ -61,6 +97,15 @@ Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Small()
     {
         .Tint  = LColor(0, 0, 0, 0),
         .Scale = GetDefault<JUserPreferences>()->SmallFontSize
+    };
+}
+
+Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Tiny()
+{
+    return LTextBlockBrush
+    {
+        .Tint  = LColor(0, 0, 0, 0),
+        .Scale = GetDefault<JUserPreferences>()->TinyFontSize
     };
 }
 

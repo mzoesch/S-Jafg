@@ -107,7 +107,16 @@ void Jafg::WWidgetParentBase::UpdateDesiredSize() const
 {
     for (const LWidgetSlot* ChildSlot : this->GetChildren())
     {
-        ChildSlot->Content->UpdateDesiredSize();
+        if (ChildSlot->Content->IsWidgetVisible())
+        {
+            ChildSlot->Content->UpdateDesiredSize();
+        }
+        else
+        {
+            ChildSlot->Content->SetDesiredSize(LVector2::Zero());
+        }
+
+        continue;
     }
 
     Super::UpdateDesiredSize();
@@ -121,7 +130,16 @@ void Jafg::WWidgetParentBase::UpdateAnchoredSize(const LViewport& Context) const
 
     for (const LWidgetSlot* ChildSlot : this->GetChildren())
     {
-        ChildSlot->Content->UpdateAnchoredSize(Context);
+        if (ChildSlot->Content->IsWidgetVisible())
+        {
+            ChildSlot->Content->UpdateAnchoredSize(Context);
+        }
+        else
+        {
+            ChildSlot->Content->SetAnchoredSize(LVector2::Zero());
+        }
+
+        continue;
     }
 
     return;
@@ -133,7 +151,16 @@ void Jafg::WWidgetParentBase::UpdateAnchoredSizeOfChildren(const LViewport& Cont
 
     for (const LWidgetSlot* ChildSlot : this->GetChildren())
     {
-        ChildSlot->Content->UpdateAnchoredSize(Context);
+        if (ChildSlot->Content->IsWidgetVisible())
+        {
+            ChildSlot->Content->UpdateAnchoredSize(Context);
+        }
+        else
+        {
+            ChildSlot->Content->SetAnchoredSize(LVector2::Zero());
+        }
+
+        continue;
     }
 
     return;

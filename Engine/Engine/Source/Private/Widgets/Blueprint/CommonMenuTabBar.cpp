@@ -21,7 +21,6 @@ void Jafg::WCommonMenuTabBarButton::Construct()
     if (this->IsButtonTextWidgetValid())
     {
         this->GetButtonTextWidget()->SetAnchor(EAnchor::CenterLeft);
-        this->GetButtonTextWidget()->SetPadding({});
     }
 
     return;

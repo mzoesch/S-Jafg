@@ -127,8 +127,10 @@ void Jafg::LWorld::TearDownContext()
     delete this->Collection;
     this->Collection = nullptr;
 
-    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, 0);
-    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, 0);
+    // Preserve order!
+    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, Tasks::Private::RunAllTasks);
+    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::Private::RunAllTasks);
+    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::Private::RunAllTasks);
 
     LOG_VERBOSE(LogWorld, "Killing {} actors of world.", this->Actors.GetSize())
     for (AActor* Actor : this->Actors)

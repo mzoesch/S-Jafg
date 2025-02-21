@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Engine/ObjectBase.h"
-#include "User/Preferences/PreferencesTypes.h"
+#include "User/Preferences/PreferenceTypes.h"
 #include "UserPreferences.generated.h"
 
 namespace Jafg
@@ -70,15 +70,17 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
-    LPreferenceFloat HeaderFontSize    { 1.30f };
+    LPreferenceFloat HeaderFontSize    { 0.70f };
     CLASS_FIELD(Config)
-    LPreferenceFloat SubHeaderFontSize { 1.00f };
+    LPreferenceFloat SubHeaderFontSize { 0.40f };
     CLASS_FIELD(Config)
-    LPreferenceFloat BodyFontSize      { 0.70f };
+    LPreferenceFloat BodyFontSize      { 0.30f };
     CLASS_FIELD(Config)
-    LPreferenceFloat SmallFontSize     { 0.40f };
+    LPreferenceFloat CompactFontSize   { 0.25f };
     CLASS_FIELD(Config)
-    LPreferenceFloat TinyFontSize      { 0.30f };
+    LPreferenceFloat SmallFontSize     { 0.20f };
+    CLASS_FIELD(Config)
+    LPreferenceFloat TinyFontSize      { 0.18f };
 };
 
 } /* ~Namespace Jafg */
