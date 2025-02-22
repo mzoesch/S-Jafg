@@ -46,11 +46,7 @@ protected:
 
 public:
 
-    bool bTemp = false;
-    virtual void UpdateAnchoredSize(const LViewport& Context) const override;
-
     virtual void Draw(LViewport& Context) const override;
-    virtual void UpdateDesiredSize() const override;
 
     void SetBrush(const LRegionBrush& InBrush) { this->Brush = InBrush; }
     bool HasBrush() const { return this->Brush.IsSet(); }

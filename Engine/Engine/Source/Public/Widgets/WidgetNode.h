@@ -512,7 +512,7 @@ public:
     FORCEINLINE virtual LViewport* GetViewportChecked() const { LViewport* Out = this->GetViewport(); check( Out ) return Out; }
     FORCEINLINE virtual LViewport* GetViewportAsserted() const { LViewport* Out = this->GetViewport(); jassert( Out ) return Out; }
 
-    //# Virtual update method for the desired size. Automatically called.
+    //# Virtual update method for the desired size. Automatically called. Do not call manually.
     virtual     void UpdateDesiredSize() const { }
                 void SetDesiredSize(const LVector2& InSize) const;
     FORCEINLINE void SetDesiredSizeRaw(const LVector2& InSize) const { this->DesiredSize = InSize; }
@@ -525,8 +525,10 @@ public:
     //# @return The top left corner of the direct child relative to this widget's top left corner.
     virtual LVector2 GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const PURE_VIRTUAL(return { })
 
-    //# Virtual update method for the anchored size. Automatically called.
+    //# Virtual update method for the anchored size. Automatically called. Do not call manually.
     virtual     void UpdateAnchoredSize(const LViewport& Context) const;
+    //# Virtual update method for the anchored size of a child. Automatically called. Do not call manually.
+    virtual     void UpdateAnchoredSizeForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const PURE_VIRTUAL()
     FORCEINLINE void SetAnchoredSize(const LVector2& InSize) const { this->AnchoredSize = InSize; }
     FORCEINLINE auto GetAnchoredSize() const -> LVector2 { return this->AnchoredSize; }
     //# @return The anchored top left corner of the widget relative to the given context's top left corner.

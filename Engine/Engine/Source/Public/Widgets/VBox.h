@@ -21,6 +21,7 @@ public:
 
     virtual auto GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const -> LVector2 override;
     virtual void UpdateDesiredSize() const override;
+    virtual auto GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const -> LVector2 override;
 };
 
 } /* ~Namespace Jafg */

@@ -1,17 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Widgets/WidgetRegion.h"
-
-void Jafg::WWidgetRegion::UpdateAnchoredSize(const LViewport& Context) const
-{
-    if (this->bTemp)
-    {
-        PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH();
-    }
-
-    Super::UpdateAnchoredSize(Context);
-}
 
 void Jafg::WWidgetRegion::Draw(LViewport& Context) const
 {
@@ -34,11 +23,6 @@ void Jafg::WWidgetRegion::Draw(LViewport& Context) const
         this->CreateNewShaderContext();
     }
 
-    if (this->bTemp)
-    {
-        PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH();
-    }
-
     this->ShaderContext->Draw(
         Context,
         this->GetAnchoredSize(),
@@ -48,26 +32,6 @@ void Jafg::WWidgetRegion::Draw(LViewport& Context) const
     );
 
     Super::Draw(Context);
-
-    return;
-}
-
-void Jafg::WWidgetRegion::UpdateDesiredSize() const
-{
-    Super::UpdateDesiredSize();
-
-    LVector2 DesiredSize = LVector2::Zero();
-    for (const LWidgetSlot* ChildSlot : this->GetChildren())
-    {
-        DesiredSize.X = Maths::Max(DesiredSize.X, ChildSlot->Content->GetDesiredSize().X);
-        DesiredSize.Y = Maths::Max(DesiredSize.Y, ChildSlot->Content->GetDesiredSize().Y);
-
-        continue;
-    }
-
-    DesiredSize += this->GetPadding().GetDesiredSize();
-
-    this->SetDesiredSize(DesiredSize);
 
     return;
 }

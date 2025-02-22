@@ -40,3 +40,16 @@ void Jafg::WVBox::UpdateDesiredSize() const
 
     return;
 }
+
+Jafg::LVector2 Jafg::WVBox::GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const
+{
+    check( InDirectChild )
+
+    LVector2 Out = this->GetAnchoredTopLeftFromMostOuter(Context);
+    LVector2 Offset = this->GetRelativeTopLeftForChild(InDirectChild);
+    Out += LVector2(InDirectChild->GetAnchor().MinX, 0.0f)
+        * (this->GetAnchoredSize() - InDirectChild->GetAnchoredSize() - Offset);
+    Out += Offset;
+
+    return Out;
+}

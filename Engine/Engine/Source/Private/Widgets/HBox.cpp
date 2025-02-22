@@ -40,3 +40,16 @@ Jafg::LVector2 Jafg::WHBox::GetRelativeTopLeftForChild(const WWidgetNode* InDire
 
     return Offset;
 }
+
+Jafg::LVector2 Jafg::WHBox::GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const
+{
+    check( InDirectChild )
+
+    LVector2 Out = this->GetAnchoredTopLeftFromMostOuter(Context);
+    LVector2 Offset = this->GetRelativeTopLeftForChild(InDirectChild);
+    Out += LVector2(0.0f, InDirectChild->GetAnchor().MinY)
+        * (this->GetAnchoredSize() - InDirectChild->GetAnchoredSize() - Offset);
+    Out += Offset;
+
+    return Out;
+}

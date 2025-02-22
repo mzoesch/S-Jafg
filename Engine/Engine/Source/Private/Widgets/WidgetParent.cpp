@@ -57,6 +57,22 @@ void Jafg::WWidgetParent::Tick()
     return;
 }
 
+void Jafg::WWidgetParent::Destruct()
+{
+    Super::Destruct();
+
+    for (const LWidgetSlot* ChildSlot : this->Children)
+    {
+        ChildSlot->Content->Slot = nullptr;
+        ChildSlot->Content->MarkAsGarbage();
+        delete ChildSlot;
+    }
+
+    this->Children.Empty();
+
+    return;
+}
+
 void Jafg::WWidgetParent::Draw(LViewport& Context) const
 {
     Super::Draw(Context);
@@ -118,22 +134,6 @@ Jafg::LReply Jafg::WWidgetParent::SweepFocusTest(LViewport& Context, const LVect
     }
 
     return Super::SweepFocusTest(Context, InLocation);
-}
-
-void Jafg::WWidgetParent::Destruct()
-{
-    Super::Destruct();
-
-    for (const LWidgetSlot* ChildSlot : this->Children)
-    {
-        ChildSlot->Content->Slot = nullptr;
-        ChildSlot->Content->MarkAsGarbage();
-        delete ChildSlot;
-    }
-
-    this->Children.Empty();
-
-    return;
 }
 
 bool Jafg::WWidgetParent::IsFocusWidgetTransitive(const LViewport* InViewport) const
@@ -244,15 +244,29 @@ void Jafg::WWidgetParent::UpdateAnchoredSize(const LViewport& Context) const
     return;
 }
 
+void Jafg::WWidgetParent::UpdateAnchoredSizeForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const
+{
+    check( InDirectChild )
+
+    LVector2 Out;
+
+    const LVector2 ParentAnchorSize = this->GetAnchoredSize();
+    Out.X = Maths::Max(InDirectChild->Anchor.MaxX * ParentAnchorSize.X - this->Padding.GetDesiredSize().X, InDirectChild->DesiredSize.X);
+    Out.Y = Maths::Max(InDirectChild->Anchor.MaxY * ParentAnchorSize.Y - this->Padding.GetDesiredSize().Y, InDirectChild->DesiredSize.Y);
+
+    InDirectChild->SetAnchoredSize(Out);
+
+    return;
+}
+
 Jafg::LVector2 Jafg::WWidgetParent::GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const
 {
     check( InDirectChild )
 
     LVector2 Out = this->GetAnchoredTopLeftFromMostOuter(Context);
-
-    Out += LVector2(this->Anchor.MinX, this->Anchor.MinY)
-         * (this->GetAnchoredSize() - InDirectChild->GetAnchoredSize() - this->Padding.GetTopLeftOffset());
-    Out += this->Padding.GetTopLeftOffset();
+    Out += LVector2(InDirectChild->Anchor.MinX, InDirectChild->Anchor.MinY)
+         * ((this->GetAnchoredSize() - this->Padding.GetTopLeftOffset()) - InDirectChild->GetAnchoredSize());
+    Out += this->Padding.GetTopLeftOffset() * (LVector2::OneVector - LVector2(InDirectChild->Anchor.MinX, InDirectChild->Anchor.MinY));
 
     return Out;
 }

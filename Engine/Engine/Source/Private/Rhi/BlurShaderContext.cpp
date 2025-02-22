@@ -34,8 +34,15 @@ void Jafg::LBlurShaderContext::Draw(const LViewport& Context, LGenericShaderCont
 
     check( Args.Size.X > 0.0f )
     check( Args.Size.Y > 0.0f )
-    check( static_cast<float>(Context.GetDimensions().X) >= Args.TopLeft.X + Args.Size.X )
-    check( static_cast<float>(Context.GetDimensions().Y) >= Args.TopLeft.Y + Args.Size.Y )
+
+    if (static_cast<float>(Context.GetDimensions().X) < Args.TopLeft.X + Args.Size.X)
+    {
+        LOG_ERROR(LogWidgetFramework, "BlurBox X-Axis constraint: {} < {} + {}.", Context.GetDimensions().X, Args.TopLeft.X, Args.Size.X)
+    }
+    if (static_cast<float>(Context.GetDimensions().Y) < Args.TopLeft.Y + Args.Size.Y)
+    {
+        LOG_ERROR(LogWidgetFramework, "BlurBox Y-Axis constraint: {} < {} + {}.", Context.GetDimensions().Y, Args.TopLeft.Y, Args.Size.Y)
+    }
 
     const LVector2 Size = Args.Size;
     const LVector2 TopLeft = Args.TopLeft;

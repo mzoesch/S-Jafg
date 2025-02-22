@@ -16,14 +16,21 @@ TString AddSpacesToCamelCase(const TString& InString)
     TString Out;
     Out.Reserve(InString.GetByteSize());
 
+    bool bFirst = true;
     for (const char& Char : InString)
     {
         if (Char >= 'A' && Char <= 'Z')
         {
-            Out.Add(' ');
+            if (bFirst == false)
+            {
+                Out.Add(' ');
+            }
         }
 
         Out.Add(Char);
+
+        bFirst = false;
+        continue;
     }
 
     return Out;

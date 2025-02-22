@@ -307,21 +307,16 @@ void Jafg::WWidgetNode::UpdateAnchoredSize(const LViewport& Context) const
     check( this->TransformsWidgetLayout() )
     check( this->Anchor.IsNormalized() )
 
-    LVector2 Out;
-
     if (this->Slot)
     {
-        const LVector2 ParentAnchorSize  = this->Slot->Parent->GetAnchoredSize();
-        Out.X = Maths::Max(this->Anchor.MaxX * ParentAnchorSize.X - this->Slot->Margin->GetDesiredSize().X, this->DesiredSize.X);
-        Out.Y = Maths::Max(this->Anchor.MaxY * ParentAnchorSize.Y - this->Slot->Margin->GetDesiredSize().Y, this->DesiredSize.Y);
-    }
-    else
-    {
-        Out.X = Maths::Max(this->Anchor.MaxX * static_cast<float>(Context.GetDimensions().X), this->DesiredSize.X);
-        Out.Y = Maths::Max(this->Anchor.MaxY * static_cast<float>(Context.GetDimensions().Y), this->DesiredSize.Y);
+        this->Slot->Parent->UpdateAnchoredSizeForChild(Context, this);
+        return;
     }
 
-    this->AnchoredSize = Out;
+    LVector2 Out;
+    Out.X = Maths::Max(this->Anchor.MaxX * static_cast<float>(Context.GetDimensions().X), this->DesiredSize.X);
+    Out.Y = Maths::Max(this->Anchor.MaxY * static_cast<float>(Context.GetDimensions().Y), this->DesiredSize.Y);
+    this->SetAnchoredSize(Out);
 
     return;
 }

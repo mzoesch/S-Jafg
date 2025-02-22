@@ -7,7 +7,6 @@
 
 Jafg::WUserWidget::WUserWidget(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-    this->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
     this->SetAnchor(EAnchor::Fill);
     this->SetShouldTick(false);
 
@@ -16,44 +15,8 @@ Jafg::WUserWidget::WUserWidget(const LObjectInitializer& ObjectInitializer) : Su
 
 void Jafg::WUserWidget::OnGarbage()
 {
-    if (this->Root)
-    {
-        checkSlow( this->Root->Content )
-        this->Root->Content->MarkAsGarbage();
-        delete this->Root;
-        this->Root = nullptr;
-    }
-
     Super::OnGarbage();
-
-    return;
-}
-
-void Jafg::WUserWidget::Construct()
-{
-    Super::Construct();
-
-    if (this->Root)
-    {
-        checkSlow( this->Root->Content )
-        MakeDeferredWidgetNodeFinal(this->Root->Content);
-    }
-
-    return;
-}
-
-void Jafg::WUserWidget::Tick()
-{
-    Super::Tick();
-
-    if (this->Root)
-    {
-        checkSlow( this->Root->Content )
-        if (this->Root->Content->ShouldNowTick())
-        {
-            this->Root->Content->Tick();
-        }
-    }
+    this->Root = nullptr;
 
     return;
 }
@@ -61,186 +24,9 @@ void Jafg::WUserWidget::Tick()
 void Jafg::WUserWidget::Destruct()
 {
     Super::Destruct();
-
-    if (this->Root)
-    {
-        checkSlow( this->Root->Content )
-        this->Root->Content->MarkAsGarbage();
-        delete this->Root;
-        this->Root = nullptr;
-    }
+    this->Root = nullptr;
 
     return;
-}
-
-void Jafg::WUserWidget::Draw(LViewport& Context) const
-{
-    Super::Draw(Context);
-
-    if (this->Root)
-    {
-        checkSlow( this->Root->Content )
-        if (this->Root->Content->ShouldNowDraw())
-        {
-            this->Root->Content->Draw(Context);
-        }
-    }
-
-    return;
-}
-
-Jafg::LCursorReply Jafg::WUserWidget::SweepMouse(LViewport& Context, const LVector2& InLocation)
-{
-    if (this->CanChildrenBeHitTestable() == false)
-    {
-        return Super::SweepMouse(Context, InLocation);
-    }
-
-    if (this->Root)
-    {
-        checkSlow( this->Root->Content )
-        if (this->Root->Content->ShouldCheckForInputs())
-        {
-            const LCursorReply Reply = this->Root->Content->SweepMouse(Context, InLocation);
-            if (Reply.IsHandled())
-            {
-                return Reply;
-            }
-        }
-    }
-
-    return Super::SweepMouse(Context, InLocation);
-}
-
-Jafg::LReply Jafg::WUserWidget::SweepFocusTest(LViewport& Context, const LVector2& InLocation)
-{
-    if (this->CanChildrenBeHitTestable() == false)
-    {
-        return Super::SweepFocusTest(Context, InLocation);
-    }
-
-    if (this->Root)
-    {
-        checkSlow( this->Root->Content )
-        const LReply Reply = this->Root->Content->SweepFocusTest(Context, InLocation);
-        if (Reply.IsHandled())
-        {
-            return Reply;
-        }
-    }
-
-    return Super::SweepFocusTest(Context, InLocation);
-}
-
-bool Jafg::WUserWidget::IsFocusWidgetTransitive(const LViewport* InViewport) const
-{
-    if (Super::IsFocusWidgetTransitive(InViewport))
-    {
-        return true;
-    }
-
-    if (InViewport == nullptr)
-    {
-        return false;
-    }
-
-    if (this->Root)
-    {
-        checkSlow( this->Root->Content )
-        if (this->Root->Content->IsFocusWidgetTransitive(InViewport))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool Jafg::WUserWidget::FindNodeInVisiblePath(const WWidgetNode* InNode) const
-{
-    if (Super::FindNodeInVisiblePath(InNode))
-    {
-        return true;
-    }
-
-    if (this->ShouldNowDraw() == false)
-    {
-        return false;
-    }
-
-    if (this->Root)
-    {
-        checkSlow( this->Root->Content )
-        if (this->Root->Content->FindNodeInVisiblePath(InNode))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
-void Jafg::WUserWidget::UpdateDesiredSize() const
-{
-    if (this->Root)
-    {
-        if (this->Root->Content->TransformsWidgetLayout())
-        {
-            this->Root->Content->UpdateDesiredSize();
-        }
-        else
-        {
-            this->Root->Content->SetDesiredSize(LVector2::Zero());
-        }
-        this->SetDesiredSize(this->Root->Content->GetDesiredSizeSmart() + this->Padding.GetDesiredSize());
-    }
-    else
-    {
-        this->SetDesiredSize(LVector2::Zero() + this->Padding.GetDesiredSize());
-    }
-
-    Super::UpdateDesiredSize();
-
-    return;
-}
-
-Jafg::LVector2 Jafg::WUserWidget::GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const
-{
-    return this->Padding.GetTopLeftOffset();
-}
-
-void Jafg::WUserWidget::UpdateAnchoredSize(const LViewport& Context) const
-{
-    Super::UpdateAnchoredSize(Context);
-
-    if (this->Root)
-    {
-        checkSlow( this->Root->Content )
-        if (this->Root->Content->TransformsWidgetLayout())
-        {
-            this->Root->Content->UpdateAnchoredSize(Context);
-        }
-        else
-        {
-            this->Root->Content->SetAnchoredSize(LVector2::Zero());
-        }
-    }
-
-    return;
-}
-
-Jafg::LVector2 Jafg::WUserWidget::GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const
-{
-    check( this->Root->Content == InDirectChild )
-
-    LVector2 Out = this->GetAnchoredTopLeftFromMostOuter(Context);
-
-    Out += LVector2(this->Anchor.MinX, this->Anchor.MinY)
-         * (this->GetAnchoredSize() - InDirectChild->GetAnchoredSize() - this->Padding.GetTopLeftOffset());
-    Out += this->Padding.GetTopLeftOffset();
-
-    return Out;
 }
 
 Jafg::LViewport* Jafg::WUserWidget::GetViewport() const
@@ -281,64 +67,47 @@ void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy /* = true */)
 
 void Jafg::WUserWidget::RemoveChild(WWidgetNode* InChild)
 {
-    check( this->SingleRootChild.GetSize() == 1 )
+    check( this->Root )
+    check( this->GetChildren().GetSize() == 1 )
 
-    if (this->SingleRootChild[0]->Content == InChild)
-    {
-        this->RemoveChild(this->SingleRootChild[0]);
-        return;
-    }
+    Super::RemoveChild(InChild);
 
-    panic( "The in child is not the root of this widget." )
+    check( this->GetChildren().IsEmpty() )
+    this->Root = nullptr;
 
     return;
 }
 
-void Jafg::WUserWidget::RemoveChild(LWidgetSlot* InSlot)
+Jafg::LWidgetSlot* Jafg::WUserWidget::AddChild(WWidgetNode* InChild)
 {
-    check( this->SingleRootChild.GetSize() == 1 )
-
-    if (this->SingleRootChild[0] == InSlot)
-    {
-        this->SingleRootChild.Empty();
-        this->Root = nullptr;
-        delete InSlot;
-    }
-    else
-    {
-        panic( "The in slot is not the root of this widget." )
-    }
-
-    return;
+    check( this->Root == nullptr && this->GetChildren().GetSize() == 0 )
+    LWidgetSlot* Out = Super::AddChild(InChild);
+    check( Out )
+    this->Root = Out;
+    return Out;
 }
 
-Jafg::WWidgetParent* Jafg::WUserWidget::ReplaceRootImpl(WWidgetParent& InRoot)
+Jafg::LWidgetSlot* Jafg::WUserWidget::AddChildAt(const int32 InIndex, WWidgetNode* InChild)
 {
-    check( this->Slot == nullptr )
+    check( this->Root == nullptr && this->GetChildren().GetSize() == 0 )
+    LWidgetSlot* Out = Super::AddChildAt(InIndex, InChild);
+    check( Out )
+    this->Root = Out;
+    return Out;
+}
 
-    if (this->HasRoot())
+Jafg::WWidgetParentBase* Jafg::WUserWidget::ReplaceRootImpl(WWidgetParentBase& InRoot)
+{
+    if (this->IsRootValid())
     {
-        check( this->Root )
-        check( this->Root == this->SingleRootChild[0] )
-        check( this->Root->Parent == this )
-        check( this->Root->Content )
-        this->Root->Content->RemoveFromParent();
+        this->RemoveChild(this->Root);
         check( this->Root == nullptr )
-        check( this->SingleRootChild.IsEmpty() )
     }
 
-    check( InRoot.Slot == nullptr )
-    check( this->Root == nullptr )
-    check( this->SingleRootChild.IsEmpty() )
+    const LWidgetSlot* Out = this->AddChild(&InRoot);
+    check( this->Root != nullptr )
+    check( this->GetChildren().GetSize() == 1 )
 
-    this->SingleRootChild.Emplace(new LWidgetSlot(this, &InRoot));
-    // this->Root = new LWidgetSlot(this, &InRoot);
-    this->Root = this->SingleRootChild[0];
-
-    this->Root->Content->Slot = this->Root;
-    this->Root->Margin = this->GetPaddingPtr();
-
-    check( this->Root == this->SingleRootChild[0] )
-
-    return &InRoot;
+    /* Typesafe this is. Look at function parameters. */
+    return static_cast<WWidgetParentBase*>(Out->Content);
 }
