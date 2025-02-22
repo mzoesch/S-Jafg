@@ -536,7 +536,10 @@ public:
     //# @return The anchored top left corner of the direct child relative to the given context's top left corner.
     virtual LVector2 GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const PURE_VIRTUAL(return { })
 
+    FORCEINLINE bool IsSlotValid() const { return this->Slot != nullptr; }
     FORCEINLINE auto GetSlot() const -> LWidgetSlot* { return this->Slot; }
+    FORCEINLINE auto GetSlotChecked() const -> LWidgetSlot* { LWidgetSlot* Out = this->GetSlot(); check( Out ); return Out; }
+    FORCEINLINE auto GetSlotAsserted() const -> LWidgetSlot* { LWidgetSlot* Out = this->GetSlot(); jassert( Out ); return Out; }
 
     //#
     //# Prepare and use the factory for the given node. Only valid in the engine tick where the factory was requested

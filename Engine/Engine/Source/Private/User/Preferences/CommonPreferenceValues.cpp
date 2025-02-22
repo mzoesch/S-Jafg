@@ -39,27 +39,26 @@ void Jafg::LPreferenceValue_Scalar::BuildDefault(const LPreference* Self, WWidge
 {
     const LPreferenceValue_Scalar* This = static_cast<const LPreferenceValue_Scalar*>(Self);
 
-    WWidgetRegion* Container;
-    WTextBlock* Text;
+    WWidgetParentBase* Container;
+    WTextBlock*        Text;
 
-    NewNode(WWidgetRegion).SaveTo(Container)
-    .Tint(LColor(0, 0, 0, 64))
+    NewNode(WHBox).SaveTo(Container)
     .Anchor(EAnchor::HFill)
     .Padding({15.0f, 10.0f})
+    .MinDesiredSize({0, 10})
+    .Tint({0, 0, 0, 64})
     [
-        NewNode(WHBox).Anchor(EAnchor::Fill)
-        [
-            NewNode(WTextBlock)
-                .Anchor(EAnchor::TopLeft)
-                .Brush(LTextBlockBrush::Body())
-                .Content(This->GetDisplayName())
-            + NewNode(WTextBlock).SaveTo(Text)
-                .Anchor(EAnchor::TopLeft)
-                .Tint(LColor::Emerald)
-                .Brush(LTextBlockBrush::Body())
-                .Content(This->GetFormattedText())
-        ]
+        NewNode(WTextBlock)
+            .Anchor(EAnchor::CenterLeft)
+            .Brush(LTextBlockBrush::Body())
+            .Content(This->GetDisplayName())
+        + NewNode(WTextBlock).SaveTo(Text)
+            .Anchor(EAnchor::VCenter | EAnchor::HFill)
+            .Brush(LTextBlockBrush::Body())
+            .Align(ETextAlign::Right)
+            .Content(This->GetFormattedText())
     ];
+
     Target->AddChild(Container);
 
     return;

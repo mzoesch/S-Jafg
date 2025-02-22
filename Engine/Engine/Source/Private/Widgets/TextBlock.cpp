@@ -59,7 +59,6 @@ Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Header()
 {
     return LTextBlockBrush
     {
-        .Tint  = LColor(0, 0, 0, 0),
         .Scale = GetDefault<JUserPreferences>()->HeaderFontSize
     };
 }
@@ -68,7 +67,6 @@ Jafg::LTextBlockBrush Jafg::LTextBlockBrush::SubHeader()
 {
     return LTextBlockBrush
     {
-        .Tint  = LColor(0, 0, 0, 0),
         .Scale = GetDefault<JUserPreferences>()->SubHeaderFontSize
     };
 }
@@ -77,7 +75,6 @@ Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Body()
 {
     return LTextBlockBrush
     {
-        .Tint  = LColor(0, 0, 0, 0),
         .Scale = GetDefault<JUserPreferences>()->BodyFontSize
     };
 }
@@ -86,7 +83,6 @@ Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Compact()
 {
     return LTextBlockBrush
     {
-        .Tint  = LColor(0, 0, 0, 0),
         .Scale = GetDefault<JUserPreferences>()->CompactFontSize
     };
 }
@@ -95,7 +91,6 @@ Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Small()
 {
     return LTextBlockBrush
     {
-        .Tint  = LColor(0, 0, 0, 0),
         .Scale = GetDefault<JUserPreferences>()->SmallFontSize
     };
 }
@@ -104,7 +99,6 @@ Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Tiny()
 {
     return LTextBlockBrush
     {
-        .Tint  = LColor(0, 0, 0, 0),
         .Scale = GetDefault<JUserPreferences>()->TinyFontSize
     };
 }
@@ -154,7 +148,7 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
 
         this->TintShaderContext.Draw(
             Context,
-            this->GetDesiredSize(),
+            this->GetAnchoredSize(),
             this->GetAnchoredTopLeftFromMostOuter(Context),
             this->Brush.Tint
         );
@@ -167,14 +161,21 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
         }
     }
 
+    check( this->IsSlotValid() )
     checkSlow( Characters.empty() == false )
 
     glCullFace(GL_FRONT);
 
     const LIntVector2 WindowDimensions = this->GetViewportSize();
     const float       ScaleFactor      = Context.GetScaleFactor();
-    const LVector2    Offset           = this->GetAnchoredTopLeftFromMostOuter(Context);
     const float       YFromBottom      = static_cast<float>(WindowDimensions.Y);
+    const LVector2    Offset           =
+        this->GetAnchoredTopLeftFromMostOuter(Context)
+        + ((this->GetAnchoredSize() - this->Padding.GetDesiredSize() - this->TextDesiredSize) * LVector2
+        (
+            this->Brush.IsLeftAligned() ? 0.0f : (this->Brush.IsHCenterAligned() ? 0.5f : 1.0f),
+            this->Brush.IsTopAligned()  ? 0.0f : (this->Brush.IsVCenterAligned() ? 0.5f : 1.0f)
+        ));
 
     ::GetFontShaderProgram().Use();
     ::GetFontShaderProgram().SetColorVec3Uniform("Color", this->Brush.Color);
@@ -189,7 +190,7 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
         const Character& Ch = Characters[Rune];
 
         const float PosX = X + static_cast<float>(Ch.Bearing.x) * this->Brush.Scale * ScaleFactor;
-        const float PosY = (YFromBottom - Offset.Y - static_cast<float>(Ch.Size.y - Ch.Bearing.y) * this->Brush.Scale - this->GetDesiredSize().Y + this->Padding.Bottom) * ScaleFactor;
+        const float PosY = (YFromBottom - Offset.Y - (static_cast<float>(Ch.Size.y - Ch.Bearing.y) * this->Brush.Scale) - this->TextDesiredSize.Y - this->Padding.Top) * ScaleFactor;
 
         const float CharW = static_cast<float>(Ch.Size.x) * this->Brush.Scale * ScaleFactor;
         const float CharH = static_cast<float>(Ch.Size.y) * this->Brush.Scale * ScaleFactor;
@@ -243,9 +244,9 @@ void Jafg::WTextBlock::UpdateDesiredSize() const
         DesiredSize.X += static_cast<float>(Ch.Advance.X) * this->Brush.Scale / 64.0f;
         DesiredSize.Y = Maths::Max(DesiredSize.Y, static_cast<float>(Ch.Size.y) * this->Brush.Scale);
     }
+    this->TextDesiredSize = DesiredSize;
 
     DesiredSize += this->Padding.GetDesiredSize();
-
     this->SetDesiredSize(DesiredSize);
 
     return;

@@ -247,6 +247,7 @@ void Jafg::WWidgetParent::UpdateAnchoredSize(const LViewport& Context) const
 void Jafg::WWidgetParent::UpdateAnchoredSizeForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const
 {
     check( InDirectChild )
+    checkSlow( InDirectChild->TransformsWidgetLayout() )
 
     LVector2 Out;
 

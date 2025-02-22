@@ -24,7 +24,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
         Smart::TUnique<LPreferenceCollection> Screen = Smart::MakeUnique<LPreferenceCollection>(new LPreferenceCollection(Name_PrefAudio, "Audio"));
 
         {
-            Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::MakeUnique<LPreferenceValue_Scalar>(new LPreferenceValue_Scalar(MAKE_DYNAMIC_NAME("MasterVolume"), "A"));
+            Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::MakeUnique<LPreferenceValue_Scalar>(new LPreferenceValue_Scalar(MAKE_DYNAMIC_NAME("MasterVolume"), "Master Volume"));
             Preference->SetDefaultValue(UserPreferences->MasterVolume);
             Preference->SetValueGetter([UserPreferences](void) -> double { return UserPreferences->MasterVolume; });
             Preference->SetValueSetter([UserPreferences](const double Value) -> void { UserPreferences->MasterVolume = static_cast<float>(Value); });
