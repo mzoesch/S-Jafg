@@ -2,6 +2,7 @@
 
 #include "CoreAfx.h"
 #include "User/LocalEgo.h"
+#include "Core/LaunchProgress.h"
 #include "Engine/Engine.h"
 #include "Engine/Framework/Hud.h"
 #include "User/Input/UserInput.h"
@@ -17,6 +18,7 @@
 
 void Jafg::LLocalEgo::Initialize()
 {
+    check( Tasks::IsOnMasterThread() )
     checkSlow( this->UserInput == nullptr )
 
     this->Context = new ::Jafg::LObjectContext();
@@ -24,13 +26,17 @@ void Jafg::LLocalEgo::Initialize()
 
     this->UserInput = new LUserInput();
 
-    this->SurfaceToDrawOn = new ::Jafg::LCurrentPlatform();
+    if (LaunchProgress::Private::GProgressSurface && LaunchProgress::Private::bOwnerShipToken == false)
+    {
+        LaunchProgress::Private::bOwnerShipToken = true;
+        this->SurfaceToDrawOn = LaunchProgress::Private::GProgressSurface;
+    }
+    else
+    {
+        this->SurfaceToDrawOn = new ::Jafg::LCurrentSurface();
+        this->SurfaceToDrawOn->Initialize();
+    }
 
-    JUserPreferences* UserPreferences = GetMutableDefault<JUserPreferences>();
-    UserPreferences->bVSyncEnabled = true;
-
-    this->GetPrimarySurface()->Initialize();
-    this->GetPrimarySurface()->SetVSync(UserPreferences->bVSyncEnabled);
     this->GetPrimarySurface()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
 
     this->Hud = new ::Jafg::LHud();

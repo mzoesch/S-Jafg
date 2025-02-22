@@ -70,18 +70,32 @@
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
 
 /**
- * Whether to use glad.
+ * Whether to include and link glad. Some compilers may precede this.
  */
 #ifndef JAFG_NO_GLAD
     #define JAFG_NO_GLAD                            0
 #endif /* !JAFG_NO_GLAD */
 
 /**
- * Whether to use glfw3.
+ * Whether to include and link glfw3. Some compilers may precede this.
  */
 #ifndef JAFG_NO_GLFW3
     #define JAFG_NO_GLFW3                           0
 #endif /* !JAFG_NO_GLFW3 */
+
+/**
+ * Whether this platform uses the GLFW3 abstraction layer under the hood.
+ */
+#ifndef PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
+    #define PLATFORM_USES_GLFW3_ABSTRACTION_LAYER    0
+#endif /* !PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
+
+/**
+ * Whether this platform uses JavaScript as its frontend.
+ */
+#ifndef PLATFORM_USES_JAVA_SCRIPT_FRONTEND
+    #define PLATFORM_USES_JAVA_SCRIPT_FRONTEND       0
+#endif /* !PLATFORM_USES_JAVA_SCRIPT_FRONTEND */
 
 /**
  * If no, the platform will compile all libraries as static libraries.
@@ -143,33 +157,7 @@
 #ifndef PLATFORM_USES_UTF32
     #define PLATFORM_USES_UTF32         0
 #endif /* !PLATFORM_USES_UTF32 */
-#if PLATFORM_USES_UTF8
-    #if PLATFORM_USES_UTF16
-        #error "PLATFORM_USES_UTF8 and PLATFORM_USES_UTF16 are both defined."
-    #endif /* PLATFORM_USES_UTF16 */
-    #if PLATFORM_USES_UTF32
-        #error "PLATFORM_USES_UTF8 and PLATFORM_USES_UTF32 are both defined."
-    #endif /* PLATFORM_USES_UTF32 */
-#endif /* PLATFORM_USES_UTF8 */
-#if PLATFORM_USES_UTF16
-    #if PLATFORM_USES_UTF8
-        #error "PLATFORM_USES_UTF16 and PLATFORM_USES_UTF8 are both defined."
-    #endif /* PLATFORM_USES_UTF8 */
-    #if PLATFORM_USES_UTF32
-        #error "PLATFORM_USES_UTF16 and PLATFORM_USES_UTF32 are both defined."
-    #endif /* PLATFORM_USES_UTF32 */
-#endif /* PLATFORM_USES_UTF16 */
-#if PLATFORM_USES_UTF32
-    #if PLATFORM_USES_UTF8
-        #error "PLATFORM_USES_UTF32 and PLATFORM_USES_UTF8 are both defined."
-    #endif /* PLATFORM_USES_UTF8 */
-    #if PLATFORM_USES_UTF16
-        #error "PLATFORM_USES_UTF32 and PLATFORM_USES_UTF16 are both defined."
-    #endif /* PLATFORM_USES_UTF16 */
-#endif /* PLATFORM_USES_UTF32 */
-#if !PLATFORM_USES_UTF8 && !PLATFORM_USES_UTF16 && !PLATFORM_USES_UTF32
-    #error "No platform encoding is defined."
-#endif /* !PLATFORM_USES_UTF8 && !PLATFORM_USES_UTF16 && !PLATFORM_USES_UTF32 */
+
 
 
 /*-----------------------------------------------------------------------------
@@ -317,6 +305,41 @@ static_assert(sizeof(char8_t)  == 1, "char8_t is not 1 byte.");
 #ifndef LITERAL_UTF32
     #error "LITERAL_UTF32 is not defined."
 #endif /* !LITERAL_UTF32 */
+
+#if !PLATFORM_USES_GLFW3_ABSTRACTION_LAYER && !PLATFORM_USES_JAVA_SCRIPT_FRONTEND
+    #error "PLATFORM_USES_GLFW3_ABSTRACTION_LAYER is not defined."
+#endif /* !PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
+#if PLATFORM_USES_GLFW3_ABSTRACTION_LAYER && PLATFORM_USES_JAVA_SCRIPT_FRONTEND
+    #error "Both PLATFORM_USES_GLFW3_ABSTRACTION_LAYER and PLATFORM_USES_JAVA_SCRIPT_FRONTEND evaluate to true."
+#endif /* PLATFORM_USES_GLFW3_ABSTRACTION_LAYER && PLATFORM_USES_JAVA_SCRIPT_FRONTEND */
+
+#if PLATFORM_USES_UTF8
+    #if PLATFORM_USES_UTF16
+        #error "PLATFORM_USES_UTF8 and PLATFORM_USES_UTF16 are both defined."
+    #endif /* PLATFORM_USES_UTF16 */
+    #if PLATFORM_USES_UTF32
+        #error "PLATFORM_USES_UTF8 and PLATFORM_USES_UTF32 are both defined."
+    #endif /* PLATFORM_USES_UTF32 */
+#endif /* PLATFORM_USES_UTF8 */
+#if PLATFORM_USES_UTF16
+    #if PLATFORM_USES_UTF8
+        #error "PLATFORM_USES_UTF16 and PLATFORM_USES_UTF8 are both defined."
+    #endif /* PLATFORM_USES_UTF8 */
+    #if PLATFORM_USES_UTF32
+        #error "PLATFORM_USES_UTF16 and PLATFORM_USES_UTF32 are both defined."
+    #endif /* PLATFORM_USES_UTF32 */
+#endif /* PLATFORM_USES_UTF16 */
+#if PLATFORM_USES_UTF32
+    #if PLATFORM_USES_UTF8
+        #error "PLATFORM_USES_UTF32 and PLATFORM_USES_UTF8 are both defined."
+    #endif /* PLATFORM_USES_UTF8 */
+    #if PLATFORM_USES_UTF16
+        #error "PLATFORM_USES_UTF32 and PLATFORM_USES_UTF16 are both defined."
+    #endif /* PLATFORM_USES_UTF16 */
+#endif /* PLATFORM_USES_UTF32 */
+#if !PLATFORM_USES_UTF8 && !PLATFORM_USES_UTF16 && !PLATFORM_USES_UTF32
+    #error "No platform encoding is defined."
+#endif /* !PLATFORM_USES_UTF8 && !PLATFORM_USES_UTF16 && !PLATFORM_USES_UTF32 */
 
 namespace PlatformHal
 {

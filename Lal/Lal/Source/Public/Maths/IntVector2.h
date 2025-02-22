@@ -33,7 +33,7 @@ struct TIntVector2 final
 
     FORCEINLINE          TIntVector2()                                       = default;
     FORCEINLINE explicit TIntVector2(const T InIntegral) noexcept            : X(InIntegral), Y(InIntegral)  { }
-    FORCEINLINE explicit TIntVector2(const T InX, const T InY) noexcept      : X(InX), Y(InY)                { }
+    FORCEINLINE          TIntVector2(const T InX, const T InY) noexcept      : X(InX), Y(InY)                { }
     FORCEINLINE explicit TIntVector2(const T InXY[2]) noexcept               : X(InXY[0]), Y(InXY[1])        { }
     FORCEINLINE          TIntVector2(const TIntVector2<T>& InVec) noexcept   : X(InVec.X), Y(InVec.Y)        { }
     FORCEINLINE          TIntVector2(TIntVector2<T>&& InVec) noexcept        : X(InVec.X), Y(InVec.Y)        { }

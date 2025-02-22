@@ -10,33 +10,14 @@ namespace Jafg
 class LViewport;
 class LSurface;
 
-#if PLATFORM_DESKTOP
-
-    class LDesktopPlatformBase;
-
-    struct LDesktopSurfaceProps;
-    struct LNativeDesktopWindowBase;
-
-    #if PLATFORM_WINDOWS
-        class LDesktopPlatformWin;
-        struct LNativeWindowWin;
-        typedef LNativeWindowWin LNativeWindow;
-        //# The currently active desktop platform.
-        typedef LDesktopPlatformWin LDesktopPlatform;
-
-    #endif /* PLATFORM_WINDOWS */
-
-    typedef LDesktopPlatform LCurrentPlatform;
-
-#elif PLATFORM_WASM
-
-    class LPlatformWasm;
-    struct LWasmNativeWindow;
-    typedef LWasmNativeWindow LNativeWindow;
-    typedef LPlatformWasm LCurrentPlatform;
-
-#else
+#if PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
+    class LGlfw3Surface;
+    typedef LGlfw3Surface LCurrentSurface;
+#elif PLATFORM_USES_JAVA_SCRIPT_FRONTEND
+    class   LWasmSurface;
+    typedef LWasmSurface LCurrentSurface;
+#else /* PLATFORM_USES_JAVA_SCRIPT_FRONTEND */
     #error "Could not resolve PLATFORM."
-#endif /* !PLATFORM_WASM */
+#endif /* !PLATFORM_USES_JAVA_SCRIPT_FRONTEND */
 
 } /* ~Namespace Jafg */

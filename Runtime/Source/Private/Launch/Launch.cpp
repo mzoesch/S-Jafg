@@ -177,6 +177,8 @@ EPlatformExit::Type GuardedMain(const char* CmdLine)
     LOG_INFO(LogSystem, "Found {} embedded files.", GVirtualFileSystem->GetTotalEmbeddedFileCount())
 #endif /* WITH_VIRTUAL_FILESYSTEM */
 
+    PlatformMisc::InvalidateCachedValues();
+
     LaunchProgress::PrepareBeginProgress();
     LaunchProgress::BeginProgress("Core Initialization", "Engine pre-life initialization", 0.0f);
 
@@ -189,8 +191,6 @@ EPlatformExit::Type GuardedMain(const char* CmdLine)
     }
     Private::ClearStaticNameContainer();
     LOG_INFO(LogNames, "Finished transferring static names to the name registry. With a total of {} names.", Private::GNameRegistry->GetNameCount())
-
-    PlatformMisc::InvalidateCachedValues();
 
     PrivateCarnifex            = new LCarnifex();
     Private::GCarnifexReferrer = &PrivateCarnifex;
@@ -209,7 +209,7 @@ EPlatformExit::Type GuardedMain(const char* CmdLine)
         return EPlatformExit::Fatal;
     }
 
-    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous, Tasks::Private::RunAllTasks);
+    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterCorePackageLoadDangerous, Tasks::Private::RunAllTasks);
     if (::IsEngineExitRequested() || GEngine)
     {
         return EPlatformExit::Fatal;

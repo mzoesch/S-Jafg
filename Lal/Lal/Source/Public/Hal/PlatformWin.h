@@ -121,12 +121,36 @@
     #pragma warning(disable : 4251)
 
     /**
+     * Warning C4275 (compiler warning level 1)   ===>   Raise to error:
+     * 'modifier': used more than once
+     *
+     * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4141?view=msvc-170
+     */
+    #pragma warning(error : 4141)
+
+    /**
      * Warning C4553 (compiler warning level 1)   ===>   Raise to error:
      * 'operator' : operator has no effect; did you intend 'operator'?
      *
      * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4553?view=msvc-170
      */
     #pragma warning(error : 4553)
+
+    /**
+     * Warning C4700 (compiler warning level 1)   ===>   Raise to error:
+     * uninitialized local variable 'name' used
+     *
+     * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-and-level-4-c4700?view=msvc-170
+     */
+    #pragma warning(error : 4700)
+
+    /**
+     * Warning C4717 (compiler warning level 1)   ===>   Raise to error:
+     * 'function' : recursive on all control paths, function will cause runtime stack overflow
+     *
+     * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4717?view=msvc-170
+     */
+    #pragma warning(error : 4717)
 #endif /* PLATFORM_WINDOWS_WITH_MSVC */
 
 #if PLATFORM_WINDOWS_WITH_GNU
@@ -442,8 +466,9 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
 /**
  * https://learn.microsoft.com/en-us/cpp/mfc/windows-sockets-byte-ordering?view=msvc-170
  */
-#define PLATFORM_USES_LITTLE_ENDIAN     1
-#define PLATFORM_USES_64_BIT            1
+#define PLATFORM_USES_LITTLE_ENDIAN             1
+#define PLATFORM_USES_64_BIT                    1
+#define PLATFORM_USES_GLFW3_ABSTRACTION_LAYER   1
 
 #if !(_MSVC_LANG >= 201703L)
     #if !defined(PLATFORM_USES_UTF8) || PLATFORM_USES_UTF8 == 0

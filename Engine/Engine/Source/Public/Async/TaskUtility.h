@@ -61,6 +61,10 @@ enum Type : uint8
     NoTickDangerous = 0x01 << 2, // Only during undefined states. May never happen.
     NoTick = NoTickDangerous | Early, // <-- very safe.
 
+    //# Run after the core package has been loaded.
+    AfterCorePackageLoadDangerous = 0x01 << 3,
+    AfterCorePackageLoad = AfterCorePackageLoadDangerous | Early,
+
     //# Run whenever possible on the thread (late or early).
     Whenever = Early | Late | NoTick,
 };

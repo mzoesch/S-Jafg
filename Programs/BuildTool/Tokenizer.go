@@ -238,7 +238,19 @@ func Tokenize(debugDisplayName string, content string) []Token {
                 out = append(out, Token{Type: TOKEN_PREPROCESSOR_ENDIF, Content: word, Line: line})
             }
         } else if word == "namespace" {
-            out = append(out, Token{Type: TOKEN_PUSHNS, Content: next, Line: line})
+            var bIsAliasNamespace bool = false
+            for _, word2 := range words[idx:] {
+                if word2.Content == "=" {
+                    bIsAliasNamespace = true
+                    break
+                }
+                if word2.Content == "{" {
+                    break
+                }
+            }
+            if !bIsAliasNamespace {
+                out = append(out, Token{Type: TOKEN_PUSHNS, Content: next, Line: line})
+            }
         } else if word == "}" {
             var bracketOpen int = 0
             var namespaceOpen []int

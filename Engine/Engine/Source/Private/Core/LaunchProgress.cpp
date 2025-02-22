@@ -4,43 +4,26 @@
 #include "Platform/Surface.h"
 #include "Core/LaunchProgress.h"
 #include "Forward/EngineForward.h"
-#if PLATFORM_DESKTOP
-    #include "Rhi/RendererApplier.h"
-#endif /* PLATFORM_DESKTOP */
 
 namespace Jafg::LaunchProgress
 {
 
-ENGINE_API float          Private::GProgress            = 0.0f;
-ENGINE_API double         Private::GProgressStep        = 0.0;
-ENGINE_API LSimpleString  Private::GProgressName        = "Intermediate";
-ENGINE_API LSimpleString  Private::GProgressDescription = "Intermediate";
-ENGINE_API LNativeWindow* Private::GProgressWindow      = nullptr;
-ENGINE_API bool           Private::bOwnerShipToken      = false;
+ENGINE_API float            Private::GProgress            = 0.0f;
+ENGINE_API double           Private::GProgressStep        = 0.0;
+ENGINE_API LSimpleString    Private::GProgressName        = "Intermediate";
+ENGINE_API LSimpleString    Private::GProgressDescription = "Intermediate";
+ENGINE_API LCurrentSurface* Private::GProgressSurface     = nullptr;
+ENGINE_API bool             Private::bOwnerShipToken      = false;
 
 } /* ~Namespace Jafg::LaunchProgress */
 
 void Jafg::LaunchProgress::PrepareBeginProgress()
 {
-    check( Private::GProgressWindow == nullptr )
+    check( Private::GProgressSurface == nullptr )
+    check( Private::bOwnerShipToken == false )
 
-#if PLATFORM_DESKTOP
-    if (RendererApplier::IsGlfwInitialized() == false)
-    {
-        const bool bOk = RendererApplier::InitializeGlfw();
-        if (bOk == false)
-        {
-            JAFG_ENGINE_FORWARD_REQUEST_EXIT(EPlatformExit::Fatal, "Failed to initialize glfw window.")
-            return;
-        }
-    }
-    Private::GProgressWindow = LDesktopPlatform::CreateNativeWindow(LDesktopSurfaceProps());
-    check( Private::GProgressWindow )
-    RendererApplier::ApplyOpenGlToWindow(Private::GProgressWindow);
-#else /* PLATFORM_DESKTOP */
-    Private::GProgressWindow = LCurrentPlatform::CreateNativeWindow();
-    check( Private::GProgressWindow )
-#endif /* !PLATFORM_DESKTOP */
+    Private::GProgressSurface = new LCurrentSurface();
+    Private::GProgressSurface->Initialize();
 
     return;
 }
@@ -86,20 +69,20 @@ void Jafg::LaunchProgress::BeginProgress(const LSimpleString& Description, const
 
 void Jafg::LaunchProgress::FinishAndGiveUpMemory()
 {
-    Private::GProgressDescription.Empty();
-    Private::GProgressName.Empty();
     Private::GProgress = 0.0f;
     Private::GProgressStep = 0.0;
+    Private::GProgressName.Empty();
+    Private::GProgressDescription.Empty();
 
-    if (Private::GProgressWindow == nullptr || Private::bOwnerShipToken)
+    if (Private::GProgressSurface == nullptr || Private::bOwnerShipToken)
     {
-        Private::GProgressWindow = nullptr;
+        Private::GProgressSurface = nullptr;
         Private::bOwnerShipToken = false;
         return;
     }
 
-    panicMsgf("w: {}, own: {}", Private::GProgressWindow ? FMT("Ok") : FMT("No"),
-        Private::bOwnerShipToken ? FMT("Yes") : FMT("No"))
+    delete Private::GProgressSurface;
+    Private::GProgressSurface = nullptr;
 
     return;
 }

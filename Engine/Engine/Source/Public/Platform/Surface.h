@@ -23,7 +23,7 @@ class LViewport;
 //#
 //# Interface for a generic surface that the RHI may use to draw on.
 //#
-class ENGINE_API LSurface
+class LSurface
 {
 public:
 
@@ -34,10 +34,14 @@ public:
     template <class T = LSurface>
     NODISCARD T* As() { return static_cast<T*>(this); }
 
+    //# Initialize should make the handle to a native surface screen valid or panic if not possible.
     virtual void Initialize();
     virtual void OnClear();
     virtual void OnUpdate();
+    //# TearDown should release the handle to the native surface screen or panic if not possible.
     virtual void TearDown();
+
+    virtual bool IsValid() = 0;
 
     virtual void BeginNewFrame();
     virtual void PollInputs() = 0;
@@ -196,10 +200,10 @@ void Jafg::LSurface::SetRepeatedKeyDown(const LRawInput& InRawInput)
     return;
 }
 
-#if PLATFORM_DESKTOP
-    #include "Platform/DesktopPlatform.h"
-#elif PLATFORM_WASM
+#if PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
+    #include "Platform/Glfw3Surface.h"
+#elif PLATFORM_USES_JAVA_SCRIPT_FRONTEND
     #include "Platform/PlatformWasm.h"
-#else /* PLATFORM_DESKTOP */
+#else /* PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
     #error "Could not resolve PLATFORM."
-#endif /* !PLATFORM_DESKTOP */
+#endif /* !PLATFORM_USES_JAVA_SCRIPT_FRONTEND */

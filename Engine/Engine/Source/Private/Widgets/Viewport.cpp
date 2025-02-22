@@ -2,6 +2,8 @@
 
 #include "CoreAfx.h"
 #include "Widgets/Viewport.h"
+
+#include "Engine/Engine.h"
 #include "Platform/Surface.h"
 #include "Rhi/RendererStateMachine.h"
 #include "User/Input/Replies.h"
@@ -283,7 +285,15 @@ void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
     {
         this->LevelBuffer = { };
     }
-    this->LevelBuffer.Build(this->GetDimensions());
+
+    if (GEngine)
+    {
+        this->LevelBuffer.Build(this->GetDimensions());
+    }
+    else
+    {
+        Tasks::Make(ENamedThreads::Master, ETaskTime::AfterCorePackageLoad, [this] { this->LevelBuffer.Build(this->GetDimensions()); });
+    }
 
     return;
 }
