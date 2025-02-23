@@ -48,15 +48,15 @@
     #define PLATFORM_DESKTOP        0
 #endif /* PLATFORM_WINDOWS */
 
-#ifndef PLATFORM_WINDOWS_WITH_GNU
-    #define PLATFORM_WINDOWS_WITH_GNU       0
-#endif /* !PLATFORM_WINDOWS_WITH_GNU */
+#ifndef PLATFORM_WINDOWS_WITH_GCC
+    #define PLATFORM_WINDOWS_WITH_GCC       0
+#endif /* !PLATFORM_WINDOWS_WITH_GCC */
 #ifndef PLATFORM_WINDOWS_WITH_MSVC
     #define PLATFORM_WINDOWS_WITH_MSVC      0
 #endif /* !PLATFORM_WINDOWS_WITH_MSVC */
-#ifndef WITH_GNU
-    #define WITH_GNU        0
-#endif /* !WITH_GNU */
+#ifndef WITH_GCC
+    #define WITH_GCC        0
+#endif /* !WITH_GCC */
 #ifndef WITH_MSVC
     #define WITH_MSVC       0
 #endif /* !WITH_MSVC */

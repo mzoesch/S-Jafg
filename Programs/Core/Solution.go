@@ -27,7 +27,15 @@ func (sln *Solution) GetFunctionalRelativeDir() string {
 }
 
 func (sln *Solution) GetSavedRelativeDir() string {
-    return fmt.Sprintf("%s/%s/SLN_P_%s", DirPath_Saved, sln.GetFunctionalRelativeDir(), sln.Name)
+    return fmt.Sprintf("%s/%s/SLN_%s", DirPath_Saved, sln.GetFunctionalRelativeDir(), sln.Name)
+}
+
+func (sln *Solution) GetSavedRelativeDir_Premake() string {
+    return fmt.Sprintf("%s/%s/P_SLN_%s", DirPath_Saved, sln.GetFunctionalRelativeDir(), sln.Name)
+}
+
+func (sln *Solution) GetSavedRelativeDir_CMake() string {
+    return fmt.Sprintf("%s/%s/C_SLN_%s", DirPath_Saved, sln.GetFunctionalRelativeDir(), sln.Name)
 }
 
 func (sln *Solution) GetChdirUpRelToBuildFile() string {

@@ -6,32 +6,34 @@
     #error "Wanted to override generic platform types with windows specific types, but platform is not windows."
 #endif /* !PLATFORM_WINDOWS */
 
-#ifdef PLATFORM_WINDOWS_WITH_GNU
+#ifdef PLATFORM_WINDOWS_WITH_GCC
     #ifdef PLATFORM_WINDOWS_WITH_MSVC
-        #error "Both PLATFORM_WINDOWS_WITH_GNU and PLATFORM_WINDOWS_WITH_MSVC are defined."
+        #error "Both PLATFORM_WINDOWS_WITH_GCC and PLATFORM_WINDOWS_WITH_MSVC are defined."
     #endif /* PLATFORM_WINDOWS_WITH_MSVC */
     #ifdef _MSC_VER
-        #error "Compiling with gnu but _MSC_VER is defined."
+        #if !WITH_IDEA_INTELLISENSE /* We might still wanna use msvc intellisense because it's cool. */
+            #error "Compiling with gcc but _MSC_VER is defined."
+        #endif /* !WITH_IDEA_INTELLISENSE */
     #endif /* _MSC_VER */
-    // #warning "Compiling windows target with the GNU toolchain. This is allowed but not recommended."
-#endif /* PLATFORM_WINDOWS_WITH_GNU */
+    // #warning "Compiling windows target with the GCC toolchain. This is allowed but not recommended."
+#endif /* PLATFORM_WINDOWS_WITH_GCC */
 #ifdef PLATFORM_WINDOWS_WITH_MSVC
-    #ifdef PLATFORM_WINDOWS_WITH_GNU
-        #error "Both PLATFORM_WINDOWS_WITH_GNU and PLATFORM_WINDOWS_WITH_MSVC are defined."
-    #endif /* PLATFORM_WINDOWS_WITH_GNU */
+    #ifdef PLATFORM_WINDOWS_WITH_GCC
+        #error "Both PLATFORM_WINDOWS_WITH_GCC and PLATFORM_WINDOWS_WITH_MSVC are defined."
+    #endif /* PLATFORM_WINDOWS_WITH_GCC */
     #if _MSC_VER < 1930
         #error "Program requires at least verion \"Visual Studio 2022 RTW 17.0\" of the MSVC compiler."
     #endif /* _MSC_VER < 1930 */
 #endif /* PLATFORM_WINDOWS_WITH_MSVC */
 
-#if PLATFORM_WINDOWS_WITH_GNU
+#if PLATFORM_WINDOWS_WITH_GCC
     #define PLATFORM_WINDOWS_WITH_MSVC      0
-    #define WITH_GNU                        1
+    #define WITH_GCC                        1
     #define WITH_MSVC                       0
-#endif /* PLATFORM_WINDOWS_WITH_GNU */
+#endif /* PLATFORM_WINDOWS_WITH_GCC */
 #if PLATFORM_WINDOWS_WITH_MSVC
-    #define PLATFORM_WINDOWS_WITH_GNU       0
-    #define WITH_GNU                        0
+    #define PLATFORM_WINDOWS_WITH_GCC       0
+    #define WITH_GCC                        0
     #define WITH_MSVC                       1
 #endif /* PLATFORM_WINDOWS_WITH_MSVC */
 
@@ -64,9 +66,9 @@
  *
  * https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wpragmas
  */
-#if PLATFORM_WINDOWS_WITH_GNU
+#if PLATFORM_WINDOWS_WITH_GCC
     #pragma GCC diagnostic error "-Wpragmas"
-#endif /* PLATFORM_WINDOWS_WITH_GNU */
+#endif /* PLATFORM_WINDOWS_WITH_GCC */
 
 /**
  * Warn when a #pragma directive is encountered that is not understood by GCC.
@@ -75,9 +77,9 @@
  *
  * https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunknown-pragmas
  */
-#if PLATFORM_WINDOWS_WITH_GNU
+#if PLATFORM_WINDOWS_WITH_GCC
     #pragma GCC diagnostic error "-Wunknown-pragmas"
-#endif /* PLATFORM_WINDOWS_WITH_GNU */
+#endif /* PLATFORM_WINDOWS_WITH_GCC */
 
 #if PLATFORM_WINDOWS_WITH_MSVC
     /**
@@ -153,7 +155,7 @@
     #pragma warning(error : 4717)
 #endif /* PLATFORM_WINDOWS_WITH_MSVC */
 
-#if PLATFORM_WINDOWS_WITH_GNU
+#if PLATFORM_WINDOWS_WITH_GCC
     // #pragma GCC diagnostic ignored "-Wno-gnu-anonymous-struct" // <--- Currently not using pedantic.
 
     #pragma GCC diagnostic error "-Wbuiltin-macro-redefined"
@@ -217,7 +219,7 @@
      * https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wmissing-field-initializers
      */
     #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-#endif /* PLATFORM_WINDOWS_WITH_GNU */
+#endif /* PLATFORM_WINDOWS_WITH_GCC */
 
 // ~Compiler config
 ///////////////////////////////////////////////////////////////////////////////
@@ -241,9 +243,9 @@
 #else /* IN_DEBUG */
     #if PLATFORM_WINDOWS_WITH_MSVC
         #define FORCEINLINE _forceinline
-    #elif PLATFORM_WINDOWS_WITH_GNU
+    #elif PLATFORM_WINDOWS_WITH_GCC
         #define FORCEINLINE __attribute__((always_inline))
-    #endif /* PLATFORM_WINDOWS_WITH_GNU */
+    #endif /* PLATFORM_WINDOWS_WITH_GCC */
 #endif /* !IN_DEBUG */
 
 // ~Compiler dependent features
@@ -258,14 +260,14 @@
 /**
  * https://learn.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=msvc-170
  */
-#if PLATFORM_WINDOWS_WITH_GNU
+#if PLATFORM_WINDOWS_WITH_GCC
     #ifdef WINVER
         #undef WINVER
     #endif /* WINVER */
     #ifdef _WIN32_WINNT
         #undef _WIN32_WINNT /* @see _mingw.h <--- Wants to compile with Windows Vista??? Bro. Shame. */
     #endif /* _WIN32_WINNT */
-#endif /* PLATFORM_WINDOWS_WITH_GNU */
+#endif /* PLATFORM_WINDOWS_WITH_GCC */
 #if !PLATFORM_WINDOWS_WITH_MSVC
     /*
      * Defines it ourselves - we do not need backwards compatibility for systems prior to Windows 10.
@@ -282,9 +284,9 @@
     #undef TEXT
 #endif /* TEXT */
 
-#if PLATFORM_WINDOWS_WITH_GNU
+#if PLATFORM_WINDOWS_WITH_GCC
     #include <locale>
-#endif /* PLATFORM_WINDOWS_WITH_GNU */
+#endif /* PLATFORM_WINDOWS_WITH_GCC */
 
 /*
  * We forward declare this shit, as this file should only be included implicitly by including Platform.h
@@ -366,7 +368,7 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
     #include <intrin.h>
     #define PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH() \
         __nop()
-#elif PLATFORM_WINDOWS_WITH_GNU
+#elif PLATFORM_WINDOWS_WITH_GCC
     #define PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH() \
         __asm__ __volatile__ ("nop")
 #endif /* WITH_MSVC */
@@ -391,7 +393,7 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
             )                                                     \
             ;                                                     \
         }}
-#elif PLATFORM_WINDOWS_WITH_GNU
+#elif PLATFORM_WINDOWS_WITH_GCC
     #define PLATFORM_BREAK()                                      \
         {{                                                        \
             {                                                     \
@@ -404,7 +406,7 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
                 PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH(); \
             }();                                                  \
         }}
-#endif /* PLATFORM_WINDOWS_WITH_GNU */
+#endif /* PLATFORM_WINDOWS_WITH_GCC */
 
 /**
  * Platform error break. This signals the user via a platform-specific pop-up window that an error occurred and the

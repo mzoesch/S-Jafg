@@ -11,13 +11,13 @@ namespace Jafg
 
 #if PLATFORM_WINDOWS_WITH_MSVC
     typedef uint32 LThreadId;
-#elif PLATFORM_WINDOWS_WITH_GNU
+#elif PLATFORM_WINDOWS_WITH_GCC
     typedef __gthread_t LThreadId;
 #elif PLATFORM_WASM
     typedef unsigned long LThreadId;
-#else /* PLATFORM_WINDOWS_WITH_GNU */
+#else /* PLATFORM_WINDOWS_WITH_GCC */
     #error "Missing implementation for this platform."
-#endif /* !PLATFORM_WINDOWS_WITH_GNU */
+#endif /* !PLATFORM_WINDOWS_WITH_GCC */
 
 namespace ENamedThreads
 {

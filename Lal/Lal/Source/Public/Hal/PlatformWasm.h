@@ -29,9 +29,9 @@
 // ~Compiler dependent features
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef WITH_GNU
-    #define WITH_GNU            1
-#endif /* !WITH_GNU */
+#ifndef WITH_GCC
+    #define WITH_GCC            1
+#endif /* !WITH_GCC */
 
 #pragma GCC diagnostic error "-Wpragmas"
 #pragma GCC diagnostic error "-Wunknown-pragmas"

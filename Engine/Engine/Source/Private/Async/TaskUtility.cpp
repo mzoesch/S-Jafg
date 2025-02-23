@@ -5,9 +5,9 @@
 #include "Engine/CoreGlobals.h"
 #include "Async/Runnable.h"
 #include "Core/Application.h"
-#if WITH_GNU
+#if WITH_GCC
     #include <thread>
-#endif /* WITH_GNU */
+#endif /* WITH_GCC */
 #if PLATFORM_WASM
     #include <emscripten/threading.h>
     #include <c++/v1/__threading_support>
@@ -29,7 +29,7 @@ namespace
         );
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() _Thrd_id()
     #endif /* _HAS_CXX23 */
-#elif WITH_GNU
+#elif WITH_GCC
     #if PLATFORM_WASM
         static_assert(::std::is_same_v<::Jafg::LThreadId, ::std::__libcpp_thread_id>, "Compiler specific thread id is not the same.");
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() pthread_self()
@@ -37,7 +37,7 @@ namespace
         static_assert(std::is_same_v<::Jafg::LThreadId, pthread_t>, "Compiler specific thread id is not the same.");
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() __gthread_self()
     #endif /* !PLATFORM_WASM */
-#endif /* WITH_GNU */
+#endif /* WITH_GCC */
 
 static_assert(
     sizeof(::Jafg::LThreadId) == sizeof(std::thread::id),

@@ -32,7 +32,7 @@ func StringToPremakeBool(b bool) string {
     return "Off"
 }
 
-func GenerateSolutionFromPremake(sln *Core.Solution, bEmulateAll bool) error {
+func GenerateSolutionFromPremake(sln *Core.Solution, bEmulate bool) error {
     MakePchForAllModules(sln)
 
     err := MakePremakeSolutionScript(sln)
@@ -40,8 +40,8 @@ func GenerateSolutionFromPremake(sln *Core.Solution, bEmulateAll bool) error {
         return err
     }
 
-    if bEmulateAll {
-        fmt.Printf("Emulating all compiler pre-build commands for solution [%s/%s] ...\n", sln.GetSavedRelativeDir(), sln.Name)
+    if bEmulate {
+        fmt.Printf("Emulating all compiler pre-build commands for solution [%s/%s] ...\n", sln.GetSavedRelativeDir_Premake(), sln.Name)
         for idxT, _ := range sln.Targets {
             var tar *Core.Target = &sln.Targets[idxT]
             for idxM, _ := range tar.Modules {
@@ -54,7 +54,7 @@ func GenerateSolutionFromPremake(sln *Core.Solution, bEmulateAll bool) error {
                 }
                 fmt.Printf(
                     "Emulating compiler pre-build commands for module [%s/%s] with args [%v] ...\n",
-                    sln.GetSavedRelativeDir(), mod.Name, args,
+                    sln.GetSavedRelativeDir_Premake(), mod.Name, args,
                 )
                 BuildTool.Launch(args)
                 continue
@@ -85,10 +85,10 @@ func GenerateSolutionFromPremake(sln *Core.Solution, bEmulateAll bool) error {
 
     // Make sure JetBrains Rider can detect the vcs in the root engine dir.
     {
-        if Shared.DoesRelativeFileExist(fmt.Sprintf("%s/.idea/.idea.Jafg/.idea/vcs.xml", sln.GetSavedRelativeDir())) == false {
-            Shared.CheckRelativeFile(fmt.Sprintf("%s/.idea/.idea.Jafg/.idea/vcs.xml", sln.GetSavedRelativeDir()))
+        if Shared.DoesRelativeFileExist(fmt.Sprintf("%s/.idea/.idea.Jafg/.idea/vcs.xml", sln.GetSavedRelativeDir_Premake())) == false {
+            Shared.CheckRelativeFile(fmt.Sprintf("%s/.idea/.idea.Jafg/.idea/vcs.xml", sln.GetSavedRelativeDir_Premake()))
             Shared.OpenAndWriteToRelativeFileIfDifferent(
-                fmt.Sprintf("%s/.idea/.idea.Jafg/.idea/vcs.xml", sln.GetSavedRelativeDir()),
+                fmt.Sprintf("%s/.idea/.idea.Jafg/.idea/vcs.xml", sln.GetSavedRelativeDir_Premake()),
                 fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="VcsDirectoryMappings">
@@ -107,7 +107,7 @@ func GenerateSolutionFromPremake(sln *Core.Solution, bEmulateAll bool) error {
     {
         var slnF string = ""
         if Shared.IsWindows() {
-            slnF = fmt.Sprintf("%s/Jafg.sln", sln.GetSavedRelativeDir())
+            slnF = fmt.Sprintf("%s/Jafg.sln", sln.GetSavedRelativeDir_Premake())
         } else {
             panic("Not implemented.")
         }
@@ -205,7 +205,7 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
         panic("Startup project is not set.")
     }
     Wwi(b, 1, fmt.Sprintf("startproject '%s'", sln.Startup))
-    Wwi(b, 1, "platforms { 'Windows64', 'Wasm' }")
+    Wwi(b, 1, "platforms { 'Windows64', 'Windows32FastWasm', 'Wasm' }")
     for _, t := range sln.Targets {
         if len(t.Name) == 0 {
             panic("Target name is empty.")
@@ -218,15 +218,24 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
     }
 
     Wwi(b, 1, "filter { 'platforms:Windows64' }")
-    Wwi(b, 2, "system ('Windows')")
+    Wwi(b, 2, "system 'Windows'")
     Wwi(b, 2, "architecture 'x86_64'")
     Wwi(b, 2, "systemversion 'latest'")
+    Wwi(b, 2, "toolset 'msc' ")
     Wwi(b, 2, "defines { 'PLATFORM_WINDOWS', 'PLATFORM_WINDOWS_WITH_MSVC' }")
     Wwi(b, 2, "linkoptions { '/SUBSYSTEM:WINDOWS' }")
-    Wwi(b, 2, "filter { 'platforms:Windows64', 'toolset:msc*' }")
-    Wwi(b, 2, "buildoptions { '/Zc:__cplusplus' }")
+    Wwi(b, 2, "buildoptions { '/Zc:__cplusplus, /GR-' }")
     Wwi(b, 2, "linkoptions { '/NODEFAULTLIB:LIBCMT', '/NODEFAULTLIB:MSVCRT' }")
-    Wwi(b, 2, "filter { 'platforms:Windows64' }")
+
+    Wwi(b, 1, "filter { 'platforms:Windows32FastWasm' }")
+    Wwi(b, 2, "system 'Windows'")
+    Wwi(b, 2, "architecture 'x86'")
+    Wwi(b, 2, "systemversion 'latest'")
+    Wwi(b, 2, "toolset 'gcc' ")
+    Wwi(b, 2, "defines { 'PLATFORM_WINDOWS', 'PLATFORM_WINDOWS_WITH_GCC' }")
+    Wwi(b, 2, "linkoptions { '-mwindows' }")
+    Wwi(b, 2, "buildoptions { '-fno-rtti' }")
+    //Wwi(b, 2, "linkoptions { }")
 
     Wwi(b, 1, "filter { 'platforms:Wasm' }")
     // 'emscripten' is not supported by premake for now ... only some crazy shit with newer versions.
@@ -269,14 +278,16 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
         Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/**.hpp',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
         Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/**.c',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
         Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/**.cpp',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
-        Wwi(b, 3, fmt.Sprintf("'%s/%s/**%s',", module.GetFunctionalRelativeDir(), Core.GhDir, Core.GhExtension))
-        Wwi(b, 3, fmt.Sprintf("'%s/%s/**%s',", module.GetFunctionalRelativeDir(), Core.GtDir, Core.GtExtension))
+        Wwi(b, 3, fmt.Sprintf("'%s/%s/%s/%s/**%s',", sln.GetChdirUpRelToBuildFile(), sln.GetSavedRelativeDir(), module.GetFunctionalRelativeDir(), Core.GhDir, Core.GhExtension))
+        Wwi(b, 3, fmt.Sprintf("'%s/%s/%s/%s/**%s',", sln.GetChdirUpRelToBuildFile(), sln.GetSavedRelativeDir(), module.GetFunctionalRelativeDir(), Core.GtDir, Core.GtExtension))
         Wwi(b, 2, "}")
 
         Wwi(b, 2, "vpaths {")
         Wwi(b, 3, "['/*'] = {")
         Wwi(b, 4, fmt.Sprintf("'%s/%s/*.md',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
         Wwi(b, 4, fmt.Sprintf("'%s/%s/**.py',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
+        Wwi(b, 4, fmt.Sprintf("'%s/%s/%s/**%s',", sln.GetChdirUpRelToBuildFile(), sln.GetSavedRelativeDir(), module.GetFunctionalRelativeDir(), Core.GhExtension))
+        Wwi(b, 4, fmt.Sprintf("'%s/%s/%s/**%s',", sln.GetChdirUpRelToBuildFile(), sln.GetSavedRelativeDir(), module.GetFunctionalRelativeDir(), Core.GtExtension))
         Wwi(b, 3, "},")
         Wwi(b, 3, "['Source/*'] = { ")
         Wwi(b, 4, fmt.Sprintf("'%s/%s/Source/**.md',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
@@ -290,7 +301,7 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
         Wwi(b, 2, "includedirs {")
         Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/Internal',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
         Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/Public',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
-        Wwi(b, 3, fmt.Sprintf("'%s/%s',", module.GetFunctionalRelativeDir(), Core.GhDir))
+        Wwi(b, 3, fmt.Sprintf("'%s/%s/%s/%s',", sln.GetChdirUpRelToBuildFile(), sln.GetSavedRelativeDir(), module.GetFunctionalRelativeDir(), Core.GhDir))
         Wwi(b, 2, "}")
 
         for i, _ := range sln.Targets {
@@ -302,8 +313,8 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
             Wwi(b, 2, fmt.Sprintf("filter { 'configurations:%s' }", volatileTarget.Name))
 
             if volatileModule.PchUsage.IsAllowed() {
-                var pchSource string = fmt.Sprintf("%s/%s/%s/%s",
-                    volatileModule.GetFunctionalRelativeDir(), Core.CgtDir, volatileTarget.Name, Core.FilePath_PchSource)
+                var pchSource string = fmt.Sprintf("%s/%s/%s/%s/%s/%s",
+                    sln.GetChdirUpRelToBuildFile(), sln.GetSavedRelativeDir(), volatileModule.GetFunctionalRelativeDir(), Core.CgtDir, volatileTarget.Name, Core.FilePath_PchSource)
                 Wwi(b, 3, fmt.Sprintf("pchheader '%s'", Core.FilePath_PchHeader))
                 Wwi(b, 3, fmt.Sprintf("pchsource '%s'", pchSource))
                 Wwi(b, 3, fmt.Sprintf("filter { 'configurations:%s', 'files:**.c' }", volatileTarget.Name))
@@ -314,7 +325,7 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
             }
 
             if volatileModule.Kind.IsLaunch() {
-                Wwi(b, 3, fmt.Sprintf("filter { 'configurations:%s', 'platforms:Windows64' }", volatileTarget.Name))
+                Wwi(b, 3, fmt.Sprintf("filter { 'configurations:%s', 'platforms:Windows64 or Windows32FastWasm' }", volatileTarget.Name))
                 Wwi(b, 4, "entrypoint 'WinMainCRTStartup'")
                 Wwi(b, 3, fmt.Sprintf("filter { 'configurations:%s' }", volatileTarget.Name))
             }
@@ -394,12 +405,12 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
             Wwi(b, 3, "}")
 
             Wwi(b, 3, "files {")
-            Wwi(b, 4, fmt.Sprintf("'%s/%s/%s/**%s',", volatileModule.GetFunctionalRelativeDir(), Core.CghDir, volatileTarget.Name, Core.GhExtension))
-            Wwi(b, 4, fmt.Sprintf("'%s/%s/%s/**%s',", volatileModule.GetFunctionalRelativeDir(), Core.CgtDir, volatileTarget.Name, Core.GtExtension))
+            Wwi(b, 4, fmt.Sprintf("'%s/%s/%s/%s/%s/**%s',", sln.GetChdirUpRelToBuildFile(), sln.GetSavedRelativeDir(), volatileModule.GetFunctionalRelativeDir(), Core.CghDir, volatileTarget.Name, Core.GhExtension))
+            Wwi(b, 4, fmt.Sprintf("'%s/%s/%s/%s/%s/**%s',", sln.GetChdirUpRelToBuildFile(), sln.GetSavedRelativeDir(), volatileModule.GetFunctionalRelativeDir(), Core.CgtDir, volatileTarget.Name, Core.GtExtension))
             Wwi(b, 3, "}")
 
             Wwi(b, 3, "includedirs {")
-            Wwi(b, 4, fmt.Sprintf("'%s/%s/%s',", volatileModule.GetFunctionalRelativeDir(), Core.CghDir, volatileTarget.Name))
+            Wwi(b, 4, fmt.Sprintf("'%s/%s/%s/%s/%s',", sln.GetChdirUpRelToBuildFile(), sln.GetSavedRelativeDir(), volatileModule.GetFunctionalRelativeDir(), Core.CghDir, volatileTarget.Name))
             for _, d := range transitiveDependencies {
                 if !d.IsEqual(volatileModule) {
                     Wwi(b, 4, fmt.Sprintf("'%s/%s/Source/Public',", sln.GetChdirUpRelToBuildFile(), d.GetFunctionalRelativeDir()))
@@ -429,9 +440,9 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
         continue
     }
 
-    if Shared.DoesRelativeFileExist(fmt.Sprintf("%s/Utility/Reindex/README.md", sln.GetSavedRelativeDir())) == false {
-        Shared.CheckRelativeFile(fmt.Sprintf("%s/Utility/Reindex/README.md", sln.GetSavedRelativeDir()))
-        Shared.OpenAndWriteToRelativeFileIfDifferent(fmt.Sprintf("%s/Utility/Reindex/README.md", sln.GetSavedRelativeDir()), `
+    if Shared.DoesRelativeFileExist(fmt.Sprintf("%s/Utility/Reindex/README.md", sln.GetSavedRelativeDir_Premake())) == false {
+        Shared.CheckRelativeFile(fmt.Sprintf("%s/Utility/Reindex/README.md", sln.GetSavedRelativeDir_Premake()))
+        Shared.OpenAndWriteToRelativeFileIfDifferent(fmt.Sprintf("%s/Utility/Reindex/README.md", sln.GetSavedRelativeDir_Premake()), `
 # Reindex
 Reindex all modules generated macros to fix IntelliSense errors. Just hit rebuild selected project and you are done.
 # Reindex With Files

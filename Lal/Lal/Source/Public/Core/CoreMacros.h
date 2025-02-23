@@ -49,11 +49,11 @@
  */
 #if WITH_MSVC
     #define FMT(X)      X
-#elif WITH_GNU
+#elif WITH_GCC
     #define FMT(X)      static_cast<const char*>(X)
-#else /* WITH_GNU */
+#else /* WITH_GCC */
     #error "Missing implementation for this platform."
-#endif /* !WITH_GNU */
+#endif /* !WITH_GCC */
 
 /**
  * Advice the preprocessor to exclude the following code without the interactive intellisense mocking at us
@@ -75,7 +75,7 @@
             static_assert(sizeof(Ty) == UNREACHABLE_BYTE_SIZE_FOR_TYPE, "Templated specialization not supported."); \
             ##__VA_ARGS__;                                                                                          \
         }
-#elif WITH_GNU
+#elif WITH_GCC
     #define UNSUPPORTED_TEMPLATED_SPECIALIZATION(Ty, ...)                                                           \
         {                                                                                                           \
             static_assert(sizeof(Ty) == UNREACHABLE_BYTE_SIZE_FOR_TYPE, "Templated specialization not supported."); \
@@ -83,7 +83,7 @@
         }
 #else
     #error "Missing implementation for the current compiler."
-#endif /* WITH_GNU */
+#endif /* WITH_GCC */
 
 #define UNREACHABLE_CONTROL_PATH_STATIC(Cond) static_assert((Cond), "Unreachable control path.");
 
@@ -108,14 +108,14 @@
         TSpacedType(      TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
         TSpacedType(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
         TSpacedType& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = delete;
-#elif WITH_GNU
+#elif WITH_GCC
     #define PROHIBIT_COPY_NAMESPACED(TSpacedType, Type)                                         \
         Type(      TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
         Type(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
         Type& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = delete;
-#else /* WITH_GNU */
+#else /* WITH_GCC */
     #error "Missing implementation for this platform."
-#endif /* !WITH_GNU */
+#endif /* !WITH_GCC */
 
 /** Prohibits moving of a specific type T. */
 #define PROHIBIT_MOVE(Type)                                                     \
@@ -127,13 +127,13 @@
     #define PROHIBIT_MOVE_NAMESPACED(TSpacedType, Type)                                           \
         TSpacedType(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
         TSpacedType& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = delete;
-#elif WITH_GNU
+#elif WITH_GCC
     #define PROHIBIT_MOVE_NAMESPACED(TSpacedType, Type)                                    \
         Type(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = delete; \
         Type& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = delete;
-#else /* WITH_GNU */
+#else /* WITH_GCC */
     #error "Missing implementation for this platform."
-#endif /* !WITH_GNU */
+#endif /* !WITH_GCC */
 
 /** Defaults the copy and move operations of a specific type T. */
 #define DEFAULT_REALLOC_OF_ANY_FORM(Ty) \
@@ -156,14 +156,14 @@
         TSpacedType(      TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
         TSpacedType(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
         TSpacedType& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;
-#elif WITH_GNU
+#elif WITH_GCC
     #define DEFAULT_COPY_NAMESPACED(TSpacedType, Type)                                           \
         Type(      TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
         Type(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
         Type& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;
-#else /* WITH_GNU */
+#else /* WITH_GCC */
     #error "Missing implementation for this platform."
-#endif /* !WITH_GNU */
+#endif /* !WITH_GCC */
 
 /** Defaults the move operations of a specific type T. */
 #define DEFAULT_MOVE(Type)                                                       \
@@ -175,13 +175,13 @@
     #define DEFAULT_MOVE_NAMESPACED(TSpacedType, Type)                                             \
         TSpacedType(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
         TSpacedType& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;
-#elif WITH_GNU
+#elif WITH_GCC
     #define DEFAULT_MOVE_NAMESPACED(TSpacedType, Type)                                      \
         Type(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
         Type& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;
-#else /* WITH_GNU */
+#else /* WITH_GCC */
     #error "Missing implementation for this platform."
-#endif /* !WITH_GNU */
+#endif /* !WITH_GCC */
 
 /** Bitwise flagging operations for an enum class. */
 #define ENUM_CLASS_FLAGS(Enum)                                                                \

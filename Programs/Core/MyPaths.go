@@ -18,7 +18,7 @@ var FilePath_ConfigFile string = fmt.Sprintf("%s/Program.cfg", DirPath_Config)
 
 var FileName_LuaOut string = "__buildSolution.lua"
 func MakeFilePath_LuaOut(sln *Solution) string /* relative */ {
-    return fmt.Sprintf("%s/%s", sln.GetSavedRelativeDir(), FileName_LuaOut)
+    return fmt.Sprintf("%s/%s", sln.GetSavedRelativeDir_Premake(), FileName_LuaOut)
 }
 
 var FileName_CmakeOut string = "CMakeLists.txt"

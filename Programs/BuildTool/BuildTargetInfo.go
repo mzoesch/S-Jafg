@@ -165,12 +165,19 @@ func (bti *BuildTargetInfo) GetSharedLibExtension() string {
     if bti.Platform == "Windows64" {
         return ".dll"
     }
+    if bti.Platform == "Windows32FastWasm" {
+        return ".dll.a"
+    }
+
     panic(fmt.Sprintf("Platform [%s] is missing implementation.", bti.Platform))
 }
 
 func (bti *BuildTargetInfo) GetSharedLibDebugSymbolsExtension() string {
     if bti.Platform == "Windows64" {
         return ".pdb"
+    }
+    if bti.Platform == "Windows32FastWasm" {
+        return ".THIS_DOES_NOT_EXIST"
     }
     panic(fmt.Sprintf("Platform [%s] is missing implementation.", bti.Platform))
 }

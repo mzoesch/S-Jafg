@@ -67,20 +67,23 @@ func Launch(args []string) error {
     return nil
 }
 
-func GenerateAll(bEmulateAll bool) error {
+func GenerateAll(bEmulate bool) error {
     fmt.Println("Generating solution ...")
 
     for idx, _ := range Core.GApp.Solutions {
         var sln *Core.Solution = &Core.GApp.Solutions[idx]
-        err := GenerateSolutionFromPremake(sln, bEmulateAll)
+        err := GenerateSolutionFromPremake(sln, bEmulate)
         if err != nil {
             return err
         }
     }
 
-    err := MakeCmakeScripts()
-    if err != nil {
-        return err
+    for idx, _ := range Core.GApp.Solutions {
+        var sln *Core.Solution = &Core.GApp.Solutions[idx]
+        err := MakeCmakeScripts(sln, bEmulate)
+        if err != nil {
+            return err
+        }
     }
 
     fmt.Println("================================")
@@ -98,10 +101,10 @@ func GenerateSpecificSolution(sln *Core.Solution, bEmulate bool) error {
         return err
     }
 
-    //err := MakeCmakeScripts()
-    //if err != nil {
-    //    return err
-    //}
+    err = MakeCmakeScripts(sln, bEmulate)
+    if err != nil {
+        return err
+    }
 
     fmt.Println("================================")
     fmt.Println("Finished generating solution.")

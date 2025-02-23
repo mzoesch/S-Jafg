@@ -24,10 +24,10 @@ enum Type : int32
 #if PLATFORM_WINDOWS_WITH_MSVC
     typedef ::std::intptr_t  LPtrSize;
     typedef ::std::uintptr_t LuPtrSize;
-#elif WITH_GNU
+#elif WITH_GCC
     typedef intptr_t  LPtrSize;
     typedef uintptr_t LuPtrSize;
-#endif /* WITH_GNU */
+#endif /* WITH_GCC */
 enum : int8 { POINTER_BYTE_SIZE = sizeof(LPtrSize) };
 #if PLATFORM_USES_32_BIT
     static_assert(sizeof(LPtrSize) == 4, "LPtrSize is not 4 bytes.");

@@ -2,6 +2,8 @@
 
 package SolutionGenerator
 
-func MakeCmakeScripts() error {
+import "Jafg/Core"
+
+func MakeCmakeScripts(sln *Core.Solution, bEmulateAll bool) error {
     return nil
 }

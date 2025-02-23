@@ -11,7 +11,7 @@
 #include <cfgmgr32.h> /* MAX_DEVICE_ID_LEN */
 
 #include <SetupApi.h>
-/* For GNU/Clang, link with the setup api using '-lsetupapi' at compile time. */
+/* For GCC/Clang, link with the setup api using '-lsetupapi' at compile time. */
 #if WITH_MSVC
     #pragma comment( lib, "setupapi.lib" )
 #endif /* WITH_MSVC */
@@ -258,11 +258,11 @@ Jafg::LSimpleString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
 
 #if WITH_MSVC
     const std::wstring WFromBuffer = Buffer;
-#elif WITH_GNU
+#elif WITH_GCC
     const std::wstring WFromBuffer = LPlatformTypes::CStr2Ws(Buffer)
-#else /* WITH_GNU */
+#else /* WITH_GCC */
     #error "Missing implementation for this platform."
-#endif /* !WITH_GNU */
+#endif /* !WITH_GCC */
 
     const std::wstring::size_type Position = WFromBuffer.find_last_of(LITERAL_WIDE("\\/"));
     const std::wstring WideEngineRootDir = WFromBuffer.substr(0, Position);

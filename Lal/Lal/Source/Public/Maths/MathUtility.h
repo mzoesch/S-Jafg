@@ -203,10 +203,10 @@ NODISCARD FORCEINLINE constexpr TMatrix<U> MakeOrthographicProjectionMatrix(cons
 #if PLATFORM_WINDOWS_WITH_MSVC // Missing constexpr!
     template <> FORCEINLINE float  Absolute(const float A)  { return ::fabsf(A); }
     template <> FORCEINLINE double Absolute(const double A) { return ::fabs(A); }
-#elif PLATFORM_WINDOWS_WITH_GNU
+#elif PLATFORM_WINDOWS_WITH_GCC
     template <> FORCEINLINE float  Absolute(const float A)  { return ::abs(A); }
     template <> FORCEINLINE double Absolute(const double A) { return ::abs(A); }
-#endif /* PLATFORM_WINDOWS_WITH_GNU */
+#endif /* PLATFORM_WINDOWS_WITH_GCC */
 
 template <> NODISCARD FORCEINLINE constexpr float  Min(const float A,  const float B)  { return (B < A) ? B : A; }
 template <> NODISCARD FORCEINLINE constexpr double Min(const double A, const double B) { return (B < A) ? B : A; }
