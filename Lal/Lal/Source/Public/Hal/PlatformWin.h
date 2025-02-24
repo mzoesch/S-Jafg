@@ -257,6 +257,13 @@
 #endif /* NOMINMAX */
 #define NOMINMAX        1 // <--- Always block. Jafg will not compile otherwise.
 
+#ifndef UNICODE /* Always use wides on Windows. */
+    #define UNICODE
+#endif /* UNICODE */
+#ifndef _UNICODE
+    #define _UNICODE
+#endif /* _UNICODE */
+
 /**
  * https://learn.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=msvc-170
  */

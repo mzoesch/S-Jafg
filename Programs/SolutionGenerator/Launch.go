@@ -71,11 +71,11 @@ func GenerateAll(bEmulate bool) error {
     fmt.Println("Generating solution ...")
 
     for idx, _ := range Core.GApp.Solutions {
-        var sln *Core.Solution = &Core.GApp.Solutions[idx]
-        err := GenerateSolutionFromPremake(sln, bEmulate)
-        if err != nil {
-            return err
-        }
+       var sln *Core.Solution = &Core.GApp.Solutions[idx]
+       err := GenerateSolutionFromPremake(sln, bEmulate)
+       if err != nil {
+           return err
+       }
     }
 
     for idx, _ := range Core.GApp.Solutions {
@@ -98,7 +98,7 @@ func GenerateSpecificSolution(sln *Core.Solution, bEmulate bool) error {
 
     err := GenerateSolutionFromPremake(sln, bEmulate)
     if err != nil {
-        return err
+       return err
     }
 
     err = MakeCmakeScripts(sln, bEmulate)
@@ -111,4 +111,52 @@ func GenerateSpecificSolution(sln *Core.Solution, bEmulate bool) error {
     fmt.Println("================================")
 
     return nil
+}
+
+// Wwi stands for Write With Indentation (abbreviated because used literally in every line here - sorry).
+func Wwi(b *strings.Builder, i int, c string) {
+    b.WriteString(fmt.Sprintf("%s%s\n", strings.Repeat(" ", i*4), c))
+    return
+}
+
+// Wwinnl stands for Write With Indentation No New Line.
+func Wwinnl(b *strings.Builder, i int, c string) {
+    b.WriteString(fmt.Sprintf("%s%s", strings.Repeat(" ", i*4), c))
+    return
+}
+
+// Wni stands for Write No Indentation.
+func Wni(b *strings.Builder, c string) {
+    b.WriteString(c)
+    b.WriteString("\n")
+    return
+}
+
+func MakePchForAllModules(sln *Core.Solution) {
+    fmt.Println("Making PCH for all modules ...")
+
+    for _, t := range sln.Targets {
+        for _, m := range t.Modules {
+            if m.PchUsage.IsAllowed() {
+                var pchSource string = fmt.Sprintf("%s/%s/%s/%s/%s",
+                    sln.GetSavedRelativeDir(), m.GetFunctionalRelativeDir(), Core.CgtDir, t.Name, Core.FilePath_PchSource)
+                var pchHeader string = fmt.Sprintf("%s/%s/%s/%s/%s",
+                    sln.GetSavedRelativeDir(), m.GetFunctionalRelativeDir(), Core.CghDir, t.Name, Core.FilePath_PchHeader)
+                if Shared.OpenAndWriteToRelativeFileIfDifferent(
+                    pchSource, fmt.Sprintf("#include \"%s\"", fmt.Sprintf("%s", Core.FilePath_PchHeader)), false,
+                ) {
+                    fmt.Printf("Pch source file differs. Updated [%s].\n", pchSource)
+                }
+                if Shared.OpenAndWriteToRelativeFileIfDifferent(pchHeader, m.PchContent, false) {
+                    fmt.Printf("Pch header file differs. Updated [%s].\n", pchHeader)
+                }
+            }
+
+            continue
+        }
+
+        continue
+    }
+
+    return
 }

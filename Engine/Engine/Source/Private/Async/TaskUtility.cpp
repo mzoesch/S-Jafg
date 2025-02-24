@@ -18,7 +18,7 @@ namespace
 
 #if WITH_MSVC
     static_assert(std::is_same_v<::Jafg::LThreadId, _Thrd_id_t>, "Compiler specific thread id is not the same.");
-    #if !_HAS_CXX23
+    #if 0 // !_HAS_CXX23 Even better just use the xthreads.h implementation.
         /** Just use msvc std implementation. */
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() \
             std::this_thread::get_id()._Get_underlying_id()

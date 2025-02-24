@@ -12,19 +12,6 @@ import (
     "strings"
 )
 
-// Wwi stands for Write With Indentation (abbreviated because used literally in every line here - sorry).
-func Wwi(b *strings.Builder, i int, c string) {
-    b.WriteString(fmt.Sprintf("%s%s\n", strings.Repeat(" ", i*4), c))
-    return
-}
-
-// Wni stands for Write No Indentation.
-func Wni(b *strings.Builder, c string) {
-    b.WriteString(c)
-    b.WriteString("\n")
-    return
-}
-
 func StringToPremakeBool(b bool) string {
     if b {
         return "On"
@@ -148,37 +135,8 @@ func GenerateSolutionFromPremake(sln *Core.Solution, bEmulate bool) error {
     return nil
 }
 
-func MakePchForAllModules(sln *Core.Solution) {
-    fmt.Println("Making PCH for all modules ...")
-
-    for _, t := range sln.Targets {
-        for _, m := range t.Modules {
-            if m.PchUsage.IsAllowed() {
-                var pchSource string = fmt.Sprintf("%s/%s/%s/%s/%s",
-                    sln.GetSavedRelativeDir(), m.GetFunctionalRelativeDir(), Core.CgtDir, t.Name, Core.FilePath_PchSource)
-                var pchHeader string = fmt.Sprintf("%s/%s/%s/%s/%s",
-                    sln.GetSavedRelativeDir(), m.GetFunctionalRelativeDir(), Core.CghDir, t.Name, Core.FilePath_PchHeader)
-                if Shared.OpenAndWriteToRelativeFileIfDifferent(
-                    pchSource, fmt.Sprintf("#include \"%s\"", fmt.Sprintf("%s", Core.FilePath_PchHeader)), false,
-                ) {
-                    fmt.Printf("Pch source file differs. Updated [%s].\n", pchSource)
-                }
-                if Shared.OpenAndWriteToRelativeFileIfDifferent(pchHeader, m.PchContent, false) {
-                    fmt.Printf("Pch header file differs. Updated [%s].\n", pchHeader)
-                }
-            }
-
-            continue
-        }
-
-        continue
-    }
-
-    return
-}
-
 func MakePremakeSolutionScript(sln *Core.Solution) error {
-    fmt.Printf("Generating premake solution [%s] ...\n", sln.Name)
+    fmt.Printf("Making Premake script for solution [%s/%s] ...\n", sln.GetSavedRelativeDir_Premake(), sln.Name)
 
     var fPath string = Core.MakeFilePath_LuaOut(sln)
     Shared.CheckRelativeFile(fPath)
@@ -399,6 +357,8 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
                     } else if mod.Kind.IsStatic() {
                         Wwi(b, 4, fmt.Sprintf("'%s_API=',", strings.ToUpper(mod.Name)))
                         Wwi(b, 4, fmt.Sprintf("'%s_EXTERN=',", strings.ToUpper(mod.Name)))
+                    } else {
+                        panic(fmt.Sprintf("Unknown module kind: %s.", mod.Kind.ToLuaString()))
                     }
                 }
             }

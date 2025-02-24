@@ -50,13 +50,24 @@ func (kind ModuleKind) ToLuaString() string {
     }
 }
 
+func (kind ModuleKind) ToCMakeString() string {
+    switch kind {
+    case MODULE_KIND_SHARED:
+        return "SHARED"
+    case MODULE_KIND_STATIC:
+        return "STATIC"
+    default:
+        panic("Unknown ModuleKind value.")
+    }
+}
+
 func ModuleKindFromString(str string) ModuleKind {
     switch str {
-    case "Shared", "SHARED", "SharedLib":
+    case "Shared", "SHARED", "SharedLib", "SHARED_LIBRARY":
         return MODULE_KIND_SHARED
-    case "Static", "STATIC", "StaticLib":
+    case "Static", "STATIC", "StaticLib", "STATIC_LIBRARY":
         return MODULE_KIND_STATIC
-    case "Launch", "LAUNCH", "ConsoleApp":
+    case "Launch", "LAUNCH", "ConsoleApp", "EXECUTABLE":
         return MODULE_KIND_LAUNCH
     default:
         panic(fmt.Sprintf("Unknown ModuleKind value: [%s].", str))
