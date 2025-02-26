@@ -812,10 +812,9 @@ func OnBuildJafgMakeVirtualFilesystem(hFileId string, bH *strings.Builder, bT *s
         panic("Builder for translation is nil.")
     }
 
+    bT.WriteString("#if WITH_VIRTUAL_FILESYSTEM\n")
     bT.WriteString("#include \"CoreAfx.h\"\n")
     bT.WriteString("#include \"System/VFilesystem.h\"\n")
-    //bH.WriteString(fmt.Sprintf("#ifndef %s_VSYSTEM_INLINE_DECLARATIONS\n", hFileId))
-    //bH.WriteString(fmt.Sprintf("#define %s_VSYSTEM_INLINE_DECLARATIONS\n", hFileId))
 
     var absFiles []string = Shared.GetAllFilesInRelativeDirRecursive(Core.DirPath_Content)
     for _, file := range absFiles {
@@ -871,8 +870,7 @@ ENGINE_API const uint8* ___FILE_EXTERN___%s = ___%s;`,
         continue
     }
 
-    //bH.WriteString(fmt.Sprintf("\n\n#endif /* %s_VSYSTEM_INLINE_DECLARATIONS */\n", hFileId))
-    //bT.WriteString("\n\n#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */\n")
+    bT.WriteString("\n#endif /* WITH_VIRTUAL_FILESYSTEM */\n")
 
     return
 }
@@ -886,6 +884,7 @@ func OnBuildJafgMakeStaticClassContainer(hFileId string, bH *strings.Builder, bT
     }
 
     bT.WriteString("#include \"CoreAfx.h\"\n\n")
+    bT.WriteString("#if !PRIVATE_JAFG_PLATFORM_SUPPORTS_SHARED_LIBRARIES\n")
 
     // All modules have to exist in the same solution. So we just iterate over the first one.
     for idx, _ := range GBuildTargetInfo.GetSlnPointerChecked().Targets[0].Modules {
@@ -1003,6 +1002,8 @@ func OnBuildJafgMakeStaticClassContainer(hFileId string, bH *strings.Builder, bT
         continue
     }
 
+    bT.WriteString("\n#endif /* !PRIVATE_JAFG_PLATFORM_SUPPORTS_SHARED_LIBRARIES */\n")
+
     return
 }
 
@@ -1059,7 +1060,17 @@ func ConditionallyWritePacketToOut(packetWrapper JPacketWrapper) {
     Do not modify it manually.
 -----------------------------------------------------------------------------*/
 
+#ifdef PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION
+    #undef PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION
+#endif /* PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION */
+#define PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION               1
+
 #include "%s"
+
+#ifdef PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION
+    #undef PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION
+#endif /* PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION */
+
 
 /*-----------------------------------------------------------------------------
     BEGIN Generated translation content.

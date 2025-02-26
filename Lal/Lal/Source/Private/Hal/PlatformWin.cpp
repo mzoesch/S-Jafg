@@ -1,7 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
-
 #if PLATFORM_WINDOWS
 
 #include "Hal/PlatformWin.h"

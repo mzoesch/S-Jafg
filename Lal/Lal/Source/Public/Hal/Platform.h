@@ -104,10 +104,15 @@
 /**
  * If no, the platform will compile all libraries as static libraries.
  * This will not allow for dynamic linking at runtime, and therefore all plugins must be present at compile time.
+ * Generated translation units for _all_ modules will be deferred and then compiled and linked directly into the main executable.
  */
 #ifndef PLATFORM_SUPPORTS_SHARED_LIBRARIES
     #define PLATFORM_SUPPORTS_SHARED_LIBRARIES      0
 #endif /* !PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#ifdef PRIVATE_JAFG_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+    #error "PRIVATE_JAFG_PLATFORM_SUPPORTS_SHARED_LIBRARIES is for internal use only and should never be defined manually."
+#endif /* PRIVATE_JAFG_PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#define PRIVATE_JAFG_PLATFORM_SUPPORTS_SHARED_LIBRARIES         PLATFORM_SUPPORTS_SHARED_LIBRARIES
 
 /**
  * Whether this platforms standard output buffer stream supports flushing.

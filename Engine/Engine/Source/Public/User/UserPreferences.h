@@ -31,11 +31,11 @@ FORCEINLINE void Deserialize<TPreference<EPolygonMode::Type>>(TPreference<EPolyg
     Jafg::Deserialize<uint8>(reinterpret_cast<uint8*>(&Destination->Value), InValue);
     return;
 }
-// #if PLATFORM_WASM
+#if PLATFORM_WASM
     template <> NODISCARD inline auto FormatArgLegacy<const TPreference<EPolygonMode::Type>&>(const TPreference<EPolygonMode::Type>& Arg) { return static_cast<uint8>(Arg.Value); }
     template <> NODISCARD inline auto FormatArgLegacy<TPreference<EPolygonMode::Type>>(TPreference<EPolygonMode::Type> Arg) { return static_cast<uint8>(Arg.Value); }
     template <> NODISCARD inline auto FormatArgLegacy<TPreference<EPolygonMode::Type>&>(TPreference<EPolygonMode::Type>& Arg) { return static_cast<uint8>(Arg.Value); }
-// #endif /* PLATFORM_WASM */
+#endif /* PLATFORM_WASM */
 
 DECLARE_JAFG_CLASS(EClassFlags::Config, EClassFlags::Singleton)
 class ENGINE_API JUserPreferences final : public JObjectBase

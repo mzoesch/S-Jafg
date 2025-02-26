@@ -257,6 +257,7 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
         Wwi(b, 2, "}")
 
         Wwi(b, 2, "includedirs {")
+        Wwi(b, 3, fmt.Sprintf("'%s',", sln.GetChdirUpRelToBuildFile())) // For generated files only. NOT FOR SOURCE FILES.
         Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/Internal',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
         Wwi(b, 3, fmt.Sprintf("'%s/%s/Source/Public',", sln.GetChdirUpRelToBuildFile(), module.GetFunctionalRelativeDir()))
         Wwi(b, 3, fmt.Sprintf("'%s/%s/%s/%s',", sln.GetChdirUpRelToBuildFile(), sln.GetSavedRelativeDir(), module.GetFunctionalRelativeDir(), Core.GhDir))

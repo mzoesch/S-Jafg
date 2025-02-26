@@ -4,9 +4,9 @@
 
 #include "CoreAfx.h"
 
-#if !WITH_VIRTUAL_FILESYSTEM
+#if !WITH_VIRTUAL_FILESYSTEM && !PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION
     #error "This file should only be included when WITH_VIRTUAL_FILESYSTEM is defined."
-#endif /* !WITH_VIRTUAL_FILESYSTEM */
+#endif /* !WITH_VIRTUAL_FILESYSTEM && !PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION */
 
 #include "System/SystemForward.h"
 
