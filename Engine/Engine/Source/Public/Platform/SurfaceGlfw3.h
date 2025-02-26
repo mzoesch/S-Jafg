@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Platform/Surface.h"
 
 #if !PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
@@ -22,7 +22,7 @@ struct LGlfw3Bridge;
 
 } /* ~Namespace Jafg::Private */
 
-class LGlfw3Surface : public LSurface
+class LSurfaceGlfw3 : public LSurface
 {
 public:
 

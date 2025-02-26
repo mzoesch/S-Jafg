@@ -25,10 +25,14 @@ public:
     using LRetTy    = RetTy;
     using LParamsTy = std::tuple<ParamsTy...>;
 
+private:
+
     struct LCallableBase;
     template <typename CallableTy>                 struct LStrongCallable;
     template <typename CallableTy>                 struct LWeakCallable;
     template <typename ObjTy, typename CallableTy> struct LMemberCallable;
+
+public:
 
     using LUniqueCallableTy = Smart::TUnique<LCallableBase>;
 

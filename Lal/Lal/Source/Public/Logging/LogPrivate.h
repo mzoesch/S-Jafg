@@ -98,7 +98,7 @@ inline void LogMessage(const LLogCategory<CategoryVerbosity>& InCategory, const 
 
 #if PLATFORM_WASM
 template <ELogVerbosityType CategoryVerbosity, ELogVerbosityType ActualVerbosity, typename ... ArgyTy>
-FORCEINLINE void LogMessageWrapper(const LLogCategory<CategoryVerbosity>& InCategory, const LChar* InFormat, const ArgyTy& ... InArgsTy)
+FORCEINLINE void LogMessageWrapper(const LLogCategory<CategoryVerbosity>& InCategory, const LAsciiChar* InFormat, const ArgyTy& ... InArgsTy)
 {
     const std::string Out = std::move(FormatLegacy(InFormat, InCategory.GetCategory(), InArgsTy...));
 
@@ -152,7 +152,7 @@ FORCEINLINE void LogPanicMessage(
 template <ELogVerbosityType CategoryVerbosity, typename ... ArgyTy>
 inline void LogPanicMessageWrapper(
     const LLogCategory<CategoryVerbosity>& InCategory,
-    const LChar*          InFormat,
+    const LAsciiChar*     InFormat,
     const LStringLegacy&& InAnsiFormat,
     const LStringLegacy&& InFile,
     const uint32          InLine,

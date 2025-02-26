@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "User/input/InputTypes.h"
+#include "User/Input/InputTypes.h"
 #include "User/Input/RawInput.h"
 
 namespace Jafg

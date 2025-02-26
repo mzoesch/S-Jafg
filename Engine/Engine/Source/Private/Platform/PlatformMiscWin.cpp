@@ -259,7 +259,11 @@ Jafg::LSimpleString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
 #if WITH_MSVC
     const std::wstring WFromBuffer = Buffer;
 #elif WITH_GCC
-    const std::wstring WFromBuffer = LPlatformTypes::CStr2Ws(Buffer)
+    #ifdef UNICODE
+        const std::wstring WFromBuffer = Buffer;
+    #else /* UNICODE */
+        const std::wstring WFromBuffer = LPlatformTypes::CStr2Ws(reinterpret_cast<const char *>(*&Buffer));
+    #endif /* !UNICODE */
 #else /* WITH_GCC */
     #error "Missing implementation for this platform."
 #endif /* !WITH_GCC */

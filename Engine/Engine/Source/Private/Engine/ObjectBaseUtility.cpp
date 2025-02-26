@@ -140,20 +140,14 @@ Jafg::TdhArray<Jafg::Private::LRegistrationQueuePackage>& Jafg::Private::GetRegi
     return RegistrationQueue;
 }
 
-Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewObject(
-    LObjectContext*     InContext,
-    const LObjectClass* InStaticClass
-)
+Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
     JObjectBase* Out = LObjectMiscellaneousAccessor::NewDeferredObject(InContext, InStaticClass);
     Out->BeginLife();
     return Out;
 }
 
-Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObject(
-    LObjectContext*     InContext,
-    const LObjectClass* InStaticClass
-)
+Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
     check( InContext     )
     check( InStaticClass )
@@ -195,7 +189,15 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
 
     Reinterpreted->VClass = const_cast<LObjectClass*>(InStaticClass);
     Reinterpreted->Outer  = InContext;
+
+#if PLATFORM_WASM
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+#endif /* PLATFORM_WASM */
     ::memset(&Reinterpreted->ClassFields, 0, sizeof(Reinterpreted->ClassFields));  // NOLINT(bugprone-undefined-memory-manipulation)
+#if PLATFORM_WASM
+    #pragma GCC diagnostic pop
+#endif /* PLATFORM_WASM */
     check( Reinterpreted->ClassFields.GetSize() == 0 && Reinterpreted->ClassFields.IsData() == false )
 
     for (LClassField& Field : InStaticClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())

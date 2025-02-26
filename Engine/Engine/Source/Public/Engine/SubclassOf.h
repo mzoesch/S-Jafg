@@ -4,11 +4,10 @@
 
 #include "CoreAfx.h"
 #include "Async/TaskUtility.h"
+#include "Engine/ObjectBase.h"
 
 namespace Jafg
 {
-
-class JObjectBase;
 
 template <typename InTObj>
 class TSubclassOf;
@@ -34,7 +33,6 @@ public:
         {
             if
             (
-                this &&
                 /* Soft force class init because of Config-init could happen in the meantime. */
                 this->Class == nullptr
             )
@@ -46,6 +44,7 @@ public:
 
             return;
         });
+        return;
     }
 
     FORCEINLINE TSubclassOf(const LObjectClass* InClass) : Class(InClass) { check( this->IsValidType() ) }
@@ -63,6 +62,7 @@ public:
         static_assert(std::is_base_of_v<TObj, U>);
         this->Class = Other.Class;
         check( this->IsValidType() )
+        return;
     }
     template <typename U>
     FORCEINLINE TSubclassOf& operator=(const TSubclassOf<U>& Other)
@@ -81,7 +81,7 @@ public:
         static_assert(std::is_base_of_v<TObj, U>);
         this->Class = What->GetVTable();
         check( this->IsValidType() )
-        return *this;
+        return;
     }
     template <typename U>
     FORCEINLINE TSubclassOf& operator=(U* What)
@@ -127,9 +127,9 @@ public:
     {
         if (this->Class)
         {
-            JObjectBase* Default = this->Class->GetDefaultPackageReferrer();
+            const JObjectBase* Default = this->Class->GetDefaultPackageReferrer();
             check( Default && Default->GetVTable()->DerivesFrom(TObj::StaticClass()) )
-            return static_cast<TObj*>(Default);
+            return static_cast<const TObj*>(Default);
         }
 
         return nullptr;

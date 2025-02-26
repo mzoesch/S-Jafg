@@ -984,7 +984,7 @@ bool LStringBase<InCharacterTy, InTraitsTy>::Contains(const CharacterTy* InStrin
                 return false;
             }
 
-            if (TraitsTy::IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + InnerCursor, InString + InStringCursor))
+            if (TraitsTy::template IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + InnerCursor, InString + InStringCursor))
             {
                 const SizeType CurRuneSize = TraitsTy::GetRuneSize(DataPtr + InnerCursor);
                 InnerCursor += CurRuneSize;
@@ -1126,7 +1126,7 @@ void LStringBase<InCharacterTy, InTraitsTy>::Replace(const InCharacterTy* InOldR
         SizeType Cursor = 0;
         while (Cursor < this->GetSize())
         {
-            if (TraitsTy::IsRuneEqual<TraitsTy::GetEncodingType()>(this->Data.GetData() + Cursor, InOldRune))
+            if (TraitsTy::template IsRuneEqual<TraitsTy::GetEncodingType()>(this->Data.GetData() + Cursor, InOldRune))
             {
                 TraitsTy::CopyRuneOfEqualSize(this->Data.GetData() + Cursor, InNewRune);
             }
@@ -1172,7 +1172,7 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
     const CharacterTy* DataPtr = this->ToPtr();
     while (*(DataPtr + Cursor) != TraitsTy::Terminator)
     {
-        if (TraitsTy::IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + Cursor, InRune))
+        if (TraitsTy::template IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + Cursor, InRune))
         {
             return Out;
         }
@@ -1222,7 +1222,7 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
     const CharacterTy* DataPtr = this->ToPtr();
     while (*(DataPtr + Cursor) != TraitsTy::Terminator)
     {
-        if (TraitsTy::IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + Cursor, InRune))
+        if (TraitsTy::template IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + Cursor, InRune))
         {
             if (bFound)
             {
@@ -1277,7 +1277,7 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
         /* We instantly go to the previous rune as we start on the null-terminator. */
         TraitsTy::GoToPreviousRune(DataPtr, Cursor);
 
-        if (TraitsTy::IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + Cursor, InRune))
+        if (TraitsTy::template IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + Cursor, InRune))
         {
             return this->GetRuneCount() - Out;
         }
@@ -1330,7 +1330,7 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
                 return INDEX_NONE;
             }
 
-            if (TraitsTy::IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + InnerCursor, InString + InStringCursor))
+            if (TraitsTy::template IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + InnerCursor, InString + InStringCursor))
             {
                 const SizeType CurRuneSize = TraitsTy::GetRuneSize(DataPtr + InnerCursor);
                 InnerCursor += CurRuneSize;
@@ -1528,7 +1528,7 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
     const CharacterTy* DataPtr = this->ToPtr();
     while (*(DataPtr + Cursor) != TraitsTy::Terminator)
     {
-        if (TraitsTy::IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + Cursor, InRune))
+        if (TraitsTy::template IsRuneEqual<TraitsTy::GetEncodingType()>(DataPtr + Cursor, InRune))
         {
             ++Out;
         }
@@ -1617,7 +1617,7 @@ template <typename ... ArgTy>
 LStringBase<InCharacterTy, InTraitsTy> LStringBase<InCharacterTy, InTraitsTy>::SprintF(const char* InFormat, const ArgTy&... InArgs)
 {
 #if PLATFORM_WASM
-    return ::Jafg::Format(Format, Args...);
+    return ::Jafg::Format<LStringBase>(InFormat, InArgs...);
 #else /* PLATFORM_WASM */
     /**
      * Super supid solution. But who cares right now.
@@ -1686,7 +1686,7 @@ void LStringBase<InCharacterTy, InTraitsTy>::PanicValidState() const
 
 #if !PLATFORM_WASM
 template <>
-struct ::std::formatter<::Jafg::LSimpleString> : ::std::formatter<const char*>
+struct std::formatter<::Jafg::LSimpleString> : std::formatter<const char*>
 {
     FORCEINLINE auto format
     (
@@ -1698,7 +1698,7 @@ struct ::std::formatter<::Jafg::LSimpleString> : ::std::formatter<const char*>
     }
 };
 template <>
-struct ::std::formatter<::Jafg::LEightString> : ::std::formatter<const char*>
+struct std::formatter<::Jafg::LEightString> : std::formatter<const char*>
 {
     FORCEINLINE auto format
     (

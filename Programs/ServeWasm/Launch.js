@@ -3,7 +3,7 @@
 const http = require('http-server');
 
 const options = {
-    root: '../../Binaries/Wasm-wasm32/Debug-Client/Runtime',
+    root: '../../Binaries/Wasm-x86/Client-Debug/Runtime',
     headers: {
         'Cross-Origin-Embedder-Policy': 'require-corp',
         'Cross-Origin-Opener-Policy': 'same-origin',

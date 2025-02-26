@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Engine/Cli/CliCommand.h"
 #include "Engine/Cli/CliVariable.h"
 

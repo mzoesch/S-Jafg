@@ -20,6 +20,10 @@ func (s *Stack[T]) Pop() (T, bool) {
         return t, false
     }
     s.Data = s.Data[:len(s.Data)-1]
+    if len(s.Data) == 0 {
+        var t T
+        return t, false
+    }
     return s.Data[len(s.Data)-1], true
 }
 

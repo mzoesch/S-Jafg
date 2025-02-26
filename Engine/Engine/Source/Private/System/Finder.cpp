@@ -40,7 +40,7 @@ LPath Finder::GetUserPreferencesFile()
 LStringLegacy Finder::ReadFileLegacy(const LEnginePath& InEnginePath)
 {
 #if WITH_VIRTUAL_FILESYSTEM
-    return GVirtualFileSystem->ReadFileAsString(InEnginePath);
+    return GVirtualFileSystem->ReadFileAsStringLegacy(InEnginePath);
 #else /* WITH_VIRTUAL_FILESYSTEM */
     return Paths::ReadFileLegacy(InEnginePath.ResolveAbsolutePath(*GetDefault<JUserPreferences>()));
 #endif /* !WITH_VIRTUAL_FILESYSTEM */

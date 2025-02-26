@@ -7,6 +7,8 @@
 
 void Jafg::LSurface::Initialize()
 {
+    check( this->IsValid() == false )
+
     this->SurfaceViewport = new LViewport();
     this->SurfaceViewport->Initialize();
 

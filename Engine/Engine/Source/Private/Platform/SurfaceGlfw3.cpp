@@ -2,11 +2,10 @@
 
 #if PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
 
-#include "CoreAfx.h"
+#include "Platform/Surface.h"
 #include "User/UserPreferences.h"
 #include "Engine/CoreGlobals.h"
 #include "Engine/Engine.h"
-#include "Platform/Glfw3Surface.h"
 #include "Async/TaskUtility.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "GLFW/glfw3.h"
@@ -48,54 +47,53 @@ struct LGlfw3Bridge final
 
 void LGlfw3Bridge::FramebufferSizeCallback(::GLFWwindow* Window, const int32 Width, const int32 Height)
 {
-    checkSlow( static_cast<::Jafg::LGlfw3Surface*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
-    static_cast<Jafg::LGlfw3Surface*>(glfwGetWindowUserPointer(Window))->FramebufferSizeCallback(Width, Height);
+    checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+    static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->FramebufferSizeCallback(Width, Height);
     return;
 }
 
 void LGlfw3Bridge::MouseCallback(GLFWwindow* Window, const double XPos, const double YPos)
 {
-    checkSlow( static_cast<::Jafg::LGlfw3Surface*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
-    static_cast<Jafg::LGlfw3Surface*>(glfwGetWindowUserPointer(Window))->MouseCallback(XPos, YPos);
+    checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+    static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->MouseCallback(XPos, YPos);
     return;
 }
 
 void LGlfw3Bridge::ScrollCallback(GLFWwindow* Window, const double XOffset, const double YOffset)
 {
-    checkSlow( static_cast<::Jafg::LGlfw3Surface*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
-    static_cast<Jafg::LGlfw3Surface*>(glfwGetWindowUserPointer(Window))->ScrollCallback(XOffset, YOffset);
+    checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+    static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->ScrollCallback(XOffset, YOffset);
     return;
 }
 
 void LGlfw3Bridge::MouseEnterCallback(GLFWwindow* Window, const int32 Entered)
 {
-    checkSlow( static_cast<::Jafg::LGlfw3Surface*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
-    static_cast<Jafg::LGlfw3Surface*>(glfwGetWindowUserPointer(Window))->MouseEnterCallback(Entered);
+    checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+    static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->MouseEnterCallback(Entered);
     return;
 }
 
 void LGlfw3Bridge::CharCallback(GLFWwindow* Window, const uint32 Codepoint)
 {
-    checkSlow( static_cast<::Jafg::LGlfw3Surface*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
-    static_cast<Jafg::LGlfw3Surface*>(glfwGetWindowUserPointer(Window))->CharCallback(Codepoint);
+    checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+    static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->CharCallback(Codepoint);
     return;
 }
 
 void LGlfw3Bridge::KeyCallback(GLFWwindow* Window, const int32 Key, const int32 Scancode, const int32 Action, const int32 Mods)
 {
-    checkSlow( static_cast<::Jafg::LGlfw3Surface*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
-    static_cast<Jafg::LGlfw3Surface*>(glfwGetWindowUserPointer(Window))->KeyCallback(Key, Scancode, Action, Mods);
+    checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+    static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->KeyCallback(Key, Scancode, Action, Mods);
     return;
 }
 
 } /* ~Namespace Jafg::Private */
 
-void Jafg::LGlfw3Surface::Initialize()
+void Jafg::LSurfaceGlfw3::Initialize()
 {
     Super::Initialize();
 
     check( Tasks::IsOnMasterThread() )
-    check( this->IsValid() == false )
 
     if (bInitializedGlfw == false)
     {
@@ -177,7 +175,7 @@ void Jafg::LGlfw3Surface::Initialize()
     return;
 }
 
-void Jafg::LGlfw3Surface::OnClear()
+void Jafg::LSurfaceGlfw3::OnClear()
 {
     Super::OnClear();
     checkSlow( this->Handle )
@@ -190,7 +188,7 @@ void Jafg::LGlfw3Surface::OnClear()
     return;
 }
 
-void Jafg::LGlfw3Surface::OnUpdate()
+void Jafg::LSurfaceGlfw3::OnUpdate()
 {
     Super::OnUpdate();
 
@@ -204,7 +202,7 @@ void Jafg::LGlfw3Surface::OnUpdate()
     return;
 }
 
-void Jafg::LGlfw3Surface::TearDown()
+void Jafg::LSurfaceGlfw3::TearDown()
 {
     Super::TearDown();
 
@@ -225,7 +223,7 @@ void Jafg::LGlfw3Surface::TearDown()
     return;
 }
 
-void Jafg::LGlfw3Surface::PollInputs()
+void Jafg::LSurfaceGlfw3::PollInputs()
 {
     LKey KeyCursor = EKeys::A;
     while (KeyCursor <= EKeys::LastKey)
@@ -263,7 +261,7 @@ void Jafg::LGlfw3Surface::PollInputs()
     return;
 }
 
-void Jafg::LGlfw3Surface::PollEvents()
+void Jafg::LSurfaceGlfw3::PollEvents()
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
@@ -279,7 +277,7 @@ void Jafg::LGlfw3Surface::PollEvents()
     return;
 }
 
-void Jafg::LGlfw3Surface::SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor)
+void Jafg::LSurfaceGlfw3::SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor)
 {
     Super::SetInputMode(InMode, bInShowCursor);
     checkSlow( this->Handle )
@@ -296,7 +294,7 @@ void Jafg::LGlfw3Surface::SetInputMode(const EInputMode::Type InMode, const bool
     return;
 }
 
-void Jafg::LGlfw3Surface::SetMouseCursor(const EMouseCursor::Type InCursor)
+void Jafg::LSurfaceGlfw3::SetMouseCursor(const EMouseCursor::Type InCursor)
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
@@ -365,7 +363,7 @@ void Jafg::LGlfw3Surface::SetMouseCursor(const EMouseCursor::Type InCursor)
     return;
 }
 
-Jafg::TIntVector2<int> Jafg::LGlfw3Surface::GetDimensions() const
+Jafg::TIntVector2<int> Jafg::LSurfaceGlfw3::GetDimensions() const
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
@@ -380,12 +378,12 @@ Jafg::TIntVector2<int> Jafg::LGlfw3Surface::GetDimensions() const
     return LIntVector2(Width, Height);
 }
 
-bool Jafg::LGlfw3Surface::CanVSync() const
+bool Jafg::LSurfaceGlfw3::CanVSync() const
 {
     return true;
 }
 
-void Jafg::LGlfw3Surface::SetVSync(const bool bEnabled)
+void Jafg::LSurfaceGlfw3::SetVSync(const bool bEnabled)
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
@@ -403,7 +401,7 @@ void Jafg::LGlfw3Surface::SetVSync(const bool bEnabled)
     return;
 }
 
-void Jafg::LGlfw3Surface::FramebufferSizeCallback(const int32 Width, const int32 Height)
+void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const int32 Width, const int32 Height)
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
@@ -419,7 +417,7 @@ void Jafg::LGlfw3Surface::FramebufferSizeCallback(const int32 Width, const int32
     return;
 }
 
-void Jafg::LGlfw3Surface::MouseCallback(const double XPos, const double YPos)
+void Jafg::LSurfaceGlfw3::MouseCallback(const double XPos, const double YPos)
 {
     this->MouseLocation = LVector2(static_cast<float>(XPos), static_cast<float>(YPos));
 
@@ -455,7 +453,7 @@ void Jafg::LGlfw3Surface::MouseCallback(const double XPos, const double YPos)
     return;
 }
 
-void Jafg::LGlfw3Surface::ScrollCallback(const double XOffset, const double YOffset)
+void Jafg::LSurfaceGlfw3::ScrollCallback(const double XOffset, const double YOffset)
 {
     if (this->GetCurrentlyPressedKeys().Contains(EKeys::MouseWheelAxis))
     {
@@ -476,7 +474,7 @@ void Jafg::LGlfw3Surface::ScrollCallback(const double XOffset, const double YOff
     return;
 }
 
-void Jafg::LGlfw3Surface::MouseEnterCallback(const int32 Entered)
+void Jafg::LSurfaceGlfw3::MouseEnterCallback(const int32 Entered)
 {
     if (Entered == GLFW_TRUE)
     {
@@ -490,23 +488,27 @@ void Jafg::LGlfw3Surface::MouseEnterCallback(const int32 Entered)
     return;
 }
 
-void Jafg::LGlfw3Surface::CharCallback(const uint32 Codepoint)
+void Jafg::LSurfaceGlfw3::CharCallback(const uint32 Codepoint)
 {
     std::u32string Char;
     Char.push_back(Codepoint);
 
-#pragma warning( push )
-#pragma warning(disable: 4996)
+#if WITH_MSVC
+    #pragma warning( push )
+    #pragma warning(disable: 4996)
+#endif /* WITH_MSVC */
     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
     std::string utf8String = converter.to_bytes(Char);
-#pragma warning( pop )
+#if WITH_MSVC
+    #pragma warning( pop )
+#endif /* WITH_MSVC */
 
     this->AddBufferedPlatformInput(utf8String.c_str());
 
     return;
 }
 
-void Jafg::LGlfw3Surface::KeyCallback(const int32 Key, const int32 Scancode, const int32 Action, const int32 Mods)
+void Jafg::LSurfaceGlfw3::KeyCallback(const int32 Key, const int32 Scancode, const int32 Action, const int32 Mods)
 {
     if (Action == GLFW_REPEAT)
     {

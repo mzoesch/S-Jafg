@@ -162,22 +162,29 @@ func (bti *BuildTargetInfo) GetTranslatedKind() Core.ModuleKind {
 }
 
 func (bti *BuildTargetInfo) GetSharedLibExtension() string {
-    if bti.Platform == "Windows64" {
+    if bti.Platform == "Windows64" { // msvc
         return ".dll"
     }
-    if bti.Platform == "Windows32FastWasm" {
+    if bti.Platform == "Windows32FastWasm" { // gcc mingw
         return ".dll.a"
+    }
+    if bti.Platform == "Wasm" { // em++
+        return ".THIS_DOES_NOT_EXIST"
     }
 
     panic(fmt.Sprintf("Platform [%s] is missing implementation.", bti.Platform))
 }
 
 func (bti *BuildTargetInfo) GetSharedLibDebugSymbolsExtension() string {
-    if bti.Platform == "Windows64" {
+    if bti.Platform == "Windows64" { // msvc
         return ".pdb"
     }
-    if bti.Platform == "Windows32FastWasm" {
+    if bti.Platform == "Windows32FastWasm" { // gcc mingw - included in .dll.a - strip it
         return ".THIS_DOES_NOT_EXIST"
     }
+    if bti.Platform == "Wasm" { // em++
+        return ".THIS_DOES_NOT_EXIST"
+    }
+
     panic(fmt.Sprintf("Platform [%s] is missing implementation.", bti.Platform))
 }

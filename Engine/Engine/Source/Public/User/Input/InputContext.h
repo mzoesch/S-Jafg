@@ -26,7 +26,8 @@ struct LInputMappedAction
 {
     LInputMappedAction() = delete;
     explicit LInputMappedAction(LInputAction* InAction) : Action(InAction) { check( InAction ) }
-    DEFAULT_REALLOC_OF_ANY_FORM(LInputMappedAction)
+    DEFAULT_MOVE(LInputMappedAction)
+    PROHIBIT_COPY(LInputMappedAction)
     ~LInputMappedAction() = default;
 
     LInputAction*             Action;

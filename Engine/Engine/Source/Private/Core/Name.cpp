@@ -60,7 +60,7 @@ LName RegisterStaticName(LSimpleString&& InName)
 namespace Jafg
 {
 
-ENGINE_API LName LName::NoName = LName::LName(NO_NAME);
+ENGINE_API LName LName::NoName = LName(NO_NAME);
 ENGINE_API LSimpleString LName::NoNameStringRepresentation = "NoName";
 
 const LSimpleString& LName::ToString() const

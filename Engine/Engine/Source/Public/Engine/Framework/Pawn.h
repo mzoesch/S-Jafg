@@ -20,6 +20,7 @@ class ENGINE_API APawn : public AActor
 {
     GENERATED_CLASS_BODY()
 
+
 protected:
 
     explicit APawn(const LObjectInitializer& ObjectInitializer);

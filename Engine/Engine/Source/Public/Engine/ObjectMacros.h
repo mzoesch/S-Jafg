@@ -106,8 +106,8 @@
         ...                                                                                       \
     )                                                                                             \
                                                                                                   \
-    PRIVATE_JAFG_CORE_JOIN_INNER_THREE(                                                           \
-        PRIVATE_JAFG_CORE_JOIN_INNER_TWO(                                                         \
+    JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_TWO(                                                    \
+        JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(                                                \
             MyClassSpaces,                                                                        \
             PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                    \
                 L,                                                                                \
@@ -121,7 +121,6 @@
                 ConstructionHelper                                                                \
             )                                                                                     \
         ),                                                                                        \
-        ::,                                                                                       \
         PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                        \
             L,                                                                                    \
             _,                                                                                    \
@@ -136,22 +135,22 @@
     )()                                                                                           \
     {                                                                                             \
         ::Jafg::Private::RegisterNewObjectType<                                                   \
-                PRIVATE_JAFG_CORE_JOIN_INNER_TWO(MyClassSpaces, MyClassName)                      \
+                JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)             \
         >(                                                                                        \
-            PRIVATE_JAFG_CORE_CAT_OUTER_TWO(#MyClassSpaces, #MyClassName),                        \
+            PRIVATE_JAFG_CORE_CAT_OUTER_THREE(#MyClassSpaces, "::", #MyClassName),                \
             [] (void) -> ::Jafg::JObjectBase*                                                     \
             {                                                                                     \
                 return                                                                            \
-                new PRIVATE_JAFG_CORE_JOIN_INNER_TWO(MyClassSpaces, MyClassName)                  \
+                new JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)         \
                     (::Jafg::GetDefaultObjectInitializer());                                      \
             },                                                                                    \
             [] (::Jafg::LObjectClass* StaticClass) -> void                                        \
             {                                                                                     \
                 ::Jafg::Private::LRegistrationCallbackHelper::DoRegisterContentsForClass<         \
-                    PRIVATE_JAFG_CORE_JOIN_INNER_TWO(MyClassSpaces, MyClassName)                  \
+                    JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)         \
                 >(                                                                                \
                     StaticClass,                                                                  \
-                    PRIVATE_JAFG_CORE_JOIN_INNER_TWO(                                             \
+                    JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(                                    \
                         MyClassSpaces,                                                            \
                         PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                        \
                             L,                                                                    \
@@ -167,7 +166,9 @@
                     )::ClassFlags,                                                                \
                     #SuperClassName                                                               \
                 );                                                                                \
-                typedef PRIVATE_JAFG_CORE_JOIN_INNER_TWO(MyClassSpaces, MyClassName) _TObj;       \
+                typedef                                                                           \
+                    JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)         \
+                    _TObj;                                                                        \
                 _TObj* Ref = StaticClass->GetMutableDefaultPackageReferrer<_TObj>();              \
                 check( Ref )                                                                      \
                 __VA_ARGS__                                                                       \
@@ -180,7 +181,7 @@
     namespace                                                                                     \
     {                                                                                             \
                                                                                                   \
-    PRIVATE_JAFG_CORE_JOIN_INNER_TWO(                                                             \
+    JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_TWO(                                                    \
         MyClassSpaces,                                                                            \
         PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                        \
             L,                                                                                    \
@@ -224,7 +225,7 @@
 private:                                                                                            \
                                                                                                     \
     typedef SuperClassName Super;                                                                   \
-    typedef PRIVATE_JAFG_CORE_JOIN_INNER_TWO(MyClassSpaces, MyClassName) Derived;                   \
+    typedef JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName) Derived;          \
     friend class  ::Jafg::Private::LObjectRegistry;                                                 \
     friend struct ::Jafg::Private::LRegistrationCallbackHelper;                                     \
     friend struct ::Jafg::Private::LObjectMiscellaneousAccessor;                                    \

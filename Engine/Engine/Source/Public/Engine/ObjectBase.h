@@ -8,7 +8,6 @@
 #include "Engine/ObjectClass.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Engine/ObjectMacros.h"
-#include "Engine/SubclassOf.h"
 #include "Serialization/SerializationCore.h"
 #include "ObjectBase.generated.h"
 
@@ -172,8 +171,16 @@ private:
     TdhArray<LClassField> ClassFields;
 };
 
+} /* ~Namespace Jafg */
+
+#include "Engine/SubclassOf.h"
+#include "User/Preferences/PreferenceTypes.h"
+
+namespace Jafg
+{
+
 template <typename TObj>
-FORCEINLINE void Deserialize(TSubclassOf<TObj>* Destination, const LString& InValue)
+FORCEINLINE void Deserialize(Jafg::TSubclassOf<TObj>* Destination, const Jafg::LString& InValue)
 {
     checkSlow( Destination )
     const LObjectClass* X = Private::GObjectRegistry->GetPanickedPackageByName(InValue.ToPtr())->StaticClass;
@@ -183,7 +190,7 @@ FORCEINLINE void Deserialize(TSubclassOf<TObj>* Destination, const LString& InVa
 } /* ~Namespace Jafg */
 
 template <typename T>
-struct ::std::formatter<::Jafg::TSubclassOf<T>> : ::std::formatter<const char*>
+struct std::formatter<::Jafg::TSubclassOf<T>> : std::formatter<const char*>
 {
     FORCEINLINE auto format
     (

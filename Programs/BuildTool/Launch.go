@@ -89,6 +89,14 @@ func CopyRelevantBinariesToAllLaunchers() {
         mod.Name,
         GBuildTargetInfo.GetSharedLibExtension(),
     )
+    var sharedBinLib string = fmt.Sprintf(
+        "%s/%s/lib%s%s",
+        GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
+        mod.GetFunctionalRelativeDir(),
+        mod.Name,
+        GBuildTargetInfo.GetSharedLibExtension(),
+    )
+
     var sharedDebugDatabase string = fmt.Sprintf(
         "%s/%s/%s%s",
         GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
@@ -112,12 +120,21 @@ func CopyRelevantBinariesToAllLaunchers() {
             launchMod.GetFunctionalRelativeDir(),
         )
 
-        if Shared.CopyToDirIfDifferent(sharedBin, targetDir) {
-            copied++
-        }
-        if strings.Contains(GBuildTargetInfo.Target, "Shipping") == false {
-            if Shared.CopyToDirIfDifferent(sharedDebugDatabase, targetDir) {
+        if Shared.DoesRelativeFileExist(sharedBin) {
+            if Shared.CopyToDirIfDifferent(sharedBin, targetDir) {
                 copied++
+            }
+        } else {
+            if Shared.CopyToDirIfDifferent(sharedBinLib, targetDir) {
+                copied++
+            }
+        }
+
+        if strings.Contains(GBuildTargetInfo.Target, "Shipping") == false {
+            if Shared.DoesRelativeFileExist(sharedDebugDatabase) {
+                if Shared.CopyToDirIfDifferent(sharedDebugDatabase, targetDir) {
+                    copied++
+                }
             }
         }
 
@@ -158,25 +175,31 @@ func CopyRelevantNativeBinariesToLaunch() {
     for idx, _ := range allDeps {
         var dMod *Core.Module = allDeps[idx]
         if dMod.Kind.IsShared() {
-            if Shared.CopyToDirIfDifferent(fmt.Sprintf(
+            source := fmt.Sprintf(
                 "%s/%s/%s%s",
                 GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
                 dMod.GetFunctionalRelativeDir(),
                 dMod.Name,
                 GBuildTargetInfo.GetSharedLibExtension(),
-            ), relTarget) {
-                copied++
+            )
+            if Shared.DoesRelativeFileExist(source) {
+                if Shared.CopyToDirIfDifferent(source, relTarget) {
+                    copied++
+                }
             }
 
             if strings.Contains(GBuildTargetInfo.Target, "Shipping") == false {
-                if Shared.CopyToDirIfDifferent(fmt.Sprintf(
+                source := fmt.Sprintf(
                     "%s/%s/%s%s",
                     GBuildTargetInfo.GetRelativeBinaryDirNoModules(),
                     dMod.GetFunctionalRelativeDir(),
                     dMod.Name,
                     GBuildTargetInfo.GetSharedLibDebugSymbolsExtension(),
-                ), relTarget) {
-                    copied++
+                )
+                if Shared.DoesRelativeFileExist(source) {
+                    if Shared.CopyToDirIfDifferent(source, relTarget) {
+                        copied++
+                    }
                 }
             }
         }

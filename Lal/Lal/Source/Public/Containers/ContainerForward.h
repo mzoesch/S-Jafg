@@ -434,8 +434,8 @@ using LStringView = std::basic_string_view<char>;
 ----------------------------------------------------------------------------*/
 
 #if PLATFORM_WASM
-template <typename ... ArgTy>
-LSimpleString Format(const char* Format, const ArgTy& ... Args);
+template <typename TString, typename ... ArgTy>
+TString Format(const char* Format, const ArgTy& ... Args);
 
 template <typename ... ArgTy>
 LStringLegacy FormatLegacy(const char* Format, const ArgTy& ... Args);

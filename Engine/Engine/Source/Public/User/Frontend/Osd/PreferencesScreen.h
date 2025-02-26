@@ -9,11 +9,17 @@ namespace Jafg
 {
 
 class LPreference;
+class WPreferencesPanel;
+class WPreferencesScreen;
 
 struct LPreferencesPanelData : public LWidgetNodeData
 {
     const LPreference* Preference = nullptr;
 };
+
+#if PLATFORM_WASM
+template <> NODISCARD inline auto FormatArgLegacy<TSubclassOf<WPreferencesPanel>>(TSubclassOf<WPreferencesPanel> Arg) { return Arg->GetSpacedClassName().ToC(); }
+#endif /* PLATFORM_WASM */
 
 DECLARE_JAFG_WIDGET()
 class ENGINE_API WPreferencesPanel : public WCommonMenuTabBarPanel

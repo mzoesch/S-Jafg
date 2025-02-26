@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 #include "Physics/TraceUtility.h"
 
 namespace Jafg

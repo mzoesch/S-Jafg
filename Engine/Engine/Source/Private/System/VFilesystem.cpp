@@ -1,7 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
-
 #if WITH_VIRTUAL_FILESYSTEM
 
 #include "System/VFilesystem.h"
@@ -116,7 +114,15 @@ bool Jafg::LVirtualFileSystem::DoesFileExist(const LEnginePath& InEnginePath) co
     return false;
 }
 
-LStringLegacy Jafg::LVirtualFileSystem::ReadFileAsString(const LEnginePath& InEnginePath) const
+Jafg::LString Jafg::LVirtualFileSystem::ReadFileAsString(const LEnginePath& InEnginePath) const
+{
+    const Private::LVirtualFile* File = this->GetPanickedVirtualFileHandle(InEnginePath);
+    const LStringLegacy OutLegacy = LStringLegacy{reinterpret_cast<const char*>(File->GetBulk()), static_cast<uint32>(File->GetFileSize()) };
+    LString Out = OutLegacy.c_str();
+    return Out;
+}
+
+LStringLegacy Jafg::LVirtualFileSystem::ReadFileAsStringLegacy(const LEnginePath& InEnginePath) const
 {
     const Private::LVirtualFile* File = this->GetPanickedVirtualFileHandle(InEnginePath);
     return { reinterpret_cast<const char*>(File->GetBulk()), static_cast<uint32>(File->GetFileSize()) };

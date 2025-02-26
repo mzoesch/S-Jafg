@@ -14,6 +14,9 @@
     #error "__EMSCRIPTEN_PTHREADS__ is not defined."
 #endif /* !__EMSCRIPTEN_PTHREADS__ */
 
+//# For now. But we should make this an option in cmake.
+#define PLATFORM_USES_WEBGL_TWO 1
+
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler dependent features
 
@@ -51,13 +54,11 @@
 #pragma GCC diagnostic ignored "-Wcomment"
 #pragma GCC diagnostic ignored "-Wcomments"
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic ignored "-Wlogical-op-parentheses"
 
 #include <emscripten/emscripten.h>
 #include <emscripten/console.h>
 #include <emscripten/html5.h>
-#if PLATFORM_USES_WEBGL_TWO
-    #include <GLES3/gl3.h>
-#endif /* PLATFORM_USES_WEBGL_TWO */
 
 struct LGenericPlatformTypes;
 
@@ -74,6 +75,9 @@ struct LWasmPlatformTypes final : public LGenericPlatformTypes
 #define PLATFORM_MAX_PATH                   _MAX_PATH
 
 #define WITH_VIRTUAL_FILESYSTEM             1
+#define PLATFORM_USES_JAVA_SCRIPT_FRONTEND  1
+#define PLATFORM_WCHAR_SIZE                 4
+#define PLATFORM_USES_UTF8                  1
 
 #define JAFG_NO_GLAD                        1 /* Let the compiler handle that - so emscripten. */
 #define JAFG_NO_GLFW3                       1

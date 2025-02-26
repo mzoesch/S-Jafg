@@ -1,11 +1,13 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
-
 #if PLATFORM_WASM
 
+#include "CoreAfx.h"
+#include "Launch/LaunchWasm.h"
 #include "Engine/Engine.h"
 #include "Async/TaskUtility.h"
+#include "System/VFilesystem.h"
+#include "LaunchWasm.generated.h"
 
 namespace
 {
@@ -14,9 +16,9 @@ bool bRunExit = false;
 
 } /* ~Namespace <Anonymous> */
 
-extern auto GuardedMain(const LChar* CmdLine) -> EPlatformExit::Type;
-extern auto EngineTick() -> void;
-extern auto EngineExit() -> void;
+extern auto GuardedMain(const char* CmdLine) -> EPlatformExit::Type;
+extern void EngineTick();
+extern void EngineExit();
 
 void WasmGuardedLoop()
 {

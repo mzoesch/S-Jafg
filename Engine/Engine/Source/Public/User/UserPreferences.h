@@ -2,8 +2,8 @@
 
 #pragma once
 
+
 #include "Engine/ObjectBase.h"
-#include "User/Preferences/PreferenceTypes.h"
 #include "UserPreferences.generated.h"
 
 namespace Jafg
@@ -23,7 +23,7 @@ enum Type : uint8
 } /* ~Namespace EPolygonMode. */
 template <> struct TIsPreferenceTypeAllowed<EPolygonMode::Type> : std::true_type { };
 template <>
-FORCEINLINE void ::Jafg::Deserialize<TPreference<EPolygonMode::Type>>(TPreference<EPolygonMode::Type>* Destination, const LString& InValue)
+FORCEINLINE void Deserialize<TPreference<EPolygonMode::Type>>(TPreference<EPolygonMode::Type>* Destination, const LString& InValue)
 {
     static_assert(std::is_enum_v<EPolygonMode::Type>);
     static_assert(std::is_same_v<uint8, std::underlying_type_t<EPolygonMode::Type>>);
@@ -31,6 +31,11 @@ FORCEINLINE void ::Jafg::Deserialize<TPreference<EPolygonMode::Type>>(TPreferenc
     Jafg::Deserialize<uint8>(reinterpret_cast<uint8*>(&Destination->Value), InValue);
     return;
 }
+// #if PLATFORM_WASM
+    template <> NODISCARD inline auto FormatArgLegacy<const TPreference<EPolygonMode::Type>&>(const TPreference<EPolygonMode::Type>& Arg) { return static_cast<uint8>(Arg.Value); }
+    template <> NODISCARD inline auto FormatArgLegacy<TPreference<EPolygonMode::Type>>(TPreference<EPolygonMode::Type> Arg) { return static_cast<uint8>(Arg.Value); }
+    template <> NODISCARD inline auto FormatArgLegacy<TPreference<EPolygonMode::Type>&>(TPreference<EPolygonMode::Type>& Arg) { return static_cast<uint8>(Arg.Value); }
+// #endif /* PLATFORM_WASM */
 
 DECLARE_JAFG_CLASS(EClassFlags::Config, EClassFlags::Singleton)
 class ENGINE_API JUserPreferences final : public JObjectBase
@@ -86,7 +91,7 @@ public:
 } /* ~Namespace Jafg */
 
 template <>
-struct ::std::formatter<::Jafg::EPolygonMode::Type> : ::std::formatter<uint8>
+struct std::formatter<::Jafg::EPolygonMode::Type> : std::formatter<uint8>
 {
     static_assert(std::is_enum_v<::Jafg::EPolygonMode::Type>);
     static_assert(std::is_same_v<uint8, std::underlying_type_t<::Jafg::EPolygonMode::Type>>);

@@ -5,7 +5,10 @@ package BuildTool
 import (
     "Jafg/Core"
     "Jafg/Shared"
+    "bytes"
     "fmt"
+    "os"
+    "path"
     "strconv"
     "strings"
 )
@@ -24,6 +27,15 @@ func RemoveAllNamespaces(name string) string {
     var lastColon int = strings.LastIndex(out, "::")
     if lastColon != -1 {
         out = out[lastColon+2:]
+    }
+    return out
+}
+
+func RemoveDoubleColonGccShenanigansSuffix(name string) string {
+    var out string = name
+    var lastColon int = strings.LastIndex(out, "::")
+    if lastColon != -1 {
+        out = out[:lastColon]
     }
     return out
 }
@@ -167,7 +179,7 @@ func ReflectFile(fRel string, newReflectedFiles *[]JPacketWrapper) {
 
     for i, t := range tokens {
         if t.Type.IsPragma() {
-            ExecuteJafgPragma(tokens, i)
+            ExecuteJafgPragma(tokens, i, packetWrapper)
         } else if t.Type.IsDeclareClass() {
             AddJafgClassToPacket(tokens, i, TOKEN_DECLARE_CLASS, packetWrapper)
         } else if t.Type.IsDeclareWidget() {
@@ -199,7 +211,7 @@ func ReflectFile(fRel string, newReflectedFiles *[]JPacketWrapper) {
 //   "NextIsObjectBaseClass"
 //   "MakeVirtualFilesystem"
 //   "MakeStaticClassContainer"
-func ExecuteJafgPragma(tokens []Token, idx int) {
+func ExecuteJafgPragma(tokens []Token, idx int, packetWrapper *JPacketWrapper) {
     if tokens[idx].Type != TOKEN_PRAGMA {
         panic(fmt.Sprintf("Expected a pragma token at {%d}.", idx))
     }
@@ -211,7 +223,45 @@ func ExecuteJafgPragma(tokens []Token, idx int) {
         panic(fmt.Sprintf("Unknown pragma [%s].", t.Content))
     }
 
-    // ...
+    if t.Content == "\"MakeVirtualFilesystem\"" {
+        ExecuteJafgPragma_MakeVirtualFilesystem(tokens, idx, packetWrapper)
+    }
+
+    if t.Content == "\"MakeStaticClassContainer\"" {
+        ExecuteJafgPragma_MakeStaticClassContainer(tokens, idx, packetWrapper)
+    }
+
+    return
+}
+
+func ExecuteJafgPragma_MakeVirtualFilesystem(tokens []Token, idx int, packetWrapper *JPacketWrapper) {
+    var packet JPacket = JPacket{}
+
+    var t *Token = &tokens[idx]
+    if t.Type != TOKEN_PRAGMA {
+        panic(fmt.Sprintf("Expected a class field token at {%d}.", idx))
+    }
+
+    packet.Callback = OnBuildJafgMakeVirtualFilesystem
+    packet.Name = t.Content
+    packet.Line = t.Line
+    packetWrapper.Packets = append(packetWrapper.Packets, packet)
+
+    return
+}
+
+func ExecuteJafgPragma_MakeStaticClassContainer(tokens []Token, idx int, packetWrapper *JPacketWrapper) {
+    var packet JPacket = JPacket{}
+
+    var t *Token = &tokens[idx]
+    if t.Type != TOKEN_PRAGMA {
+        panic(fmt.Sprintf("Expected a class field token at {%d}.", idx))
+    }
+
+    packet.Callback = OnBuildJafgMakeStaticClassContainer
+    packet.Name = t.Content
+    packet.Line = t.Line
+    packetWrapper.Packets = append(packetWrapper.Packets, packet)
 
     return
 }
@@ -443,12 +493,14 @@ func OnBuildJafgClassDeclaration(hFileId string, bH *strings.Builder, bT *string
 
     bH.WriteString(fmt.Sprintf(`
 #ifdef %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
-    #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #if !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS
+        #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #endif /* !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS */
 #endif /* %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION */
 #define %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION(...)              \
     PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION( \
         /* My Class Name */          %s, /* ORIGIN VALUE: %s */                                \
-        /* My Class Spaces */        %s,                                                       \
+        /* My Class Spaces */        %s, /* ORIGIN ARG VALUE: %s */                            \
         /* Super Class Name */       %s, /* ORIGIN VALUE: %s */                                \
         /* Line */                   %d,                                                       \
         /* Additional Class Flags */ __VA_ARGS__                                               \
@@ -457,7 +509,7 @@ func OnBuildJafgClassDeclaration(hFileId string, bH *strings.Builder, bT *string
         hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
 
         RemoveAllNamespaces(packet.Name), packet.Name,
-        packet.Args[1],
+        RemoveDoubleColonGccShenanigansSuffix(packet.Args[1]), packet.Args[1],
         RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
         packet.Line,
     ))
@@ -466,7 +518,7 @@ func OnBuildJafgClassDeclaration(hFileId string, bH *strings.Builder, bT *string
 #if PLATFORM_SUPPORTS_SHARED_LIBRARIES
     PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION( \
         /* My Class Name */          %s, /* ORIGIN VALUE: %s */                               \
-        /* My Class Spaces */        %s,                                                      \
+        /* My Class Spaces */        %s, /* ORIGIN ARG VALUE: %s */                           \
         /* Line Of Declaration */    %d,                                                      \
         /* Super Class Name */       %s, /* ORIGIN VALUE: %s */                               \
         /* __VA_ARGS__ */            %s                                                       \
@@ -474,7 +526,7 @@ func OnBuildJafgClassDeclaration(hFileId string, bH *strings.Builder, bT *string
 #endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 `,
         RemoveAllNamespaces(packet.Name), packet.Name,
-        packet.Args[1],
+        RemoveDoubleColonGccShenanigansSuffix(packet.Args[1]), packet.Args[1],
         packet.Line,
         RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
 
@@ -494,12 +546,14 @@ func OnBuildJafgWidgetDeclaration(hFileId string, bH *strings.Builder, bT *strin
 
     bH.WriteString(fmt.Sprintf(`
 #ifdef %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
-    #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #if!PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS
+        #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #endif /* !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS */
 #endif /* %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION */
 #define %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION(...)               \
     PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION( \
         /* My Class Name */          %s, /* ORIGIN VALUE: %s */                                 \
-        /* My Class Spaces */        %s,                                                        \
+        /* My Class Spaces */        %s, /* ORIGIN ARG VALUE: %s */                             \
         /* Super Class Name */       %s, /* ORIGIN VALUE: %s */                                 \
         /* Line */                   %d,                                                        \
         /* Additional Class Flags */ __VA_ARGS__                                                \
@@ -508,7 +562,7 @@ func OnBuildJafgWidgetDeclaration(hFileId string, bH *strings.Builder, bT *strin
         hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
 
         RemoveAllNamespaces(packet.Name), packet.Name,
-        packet.Args[1],
+        RemoveDoubleColonGccShenanigansSuffix(packet.Args[1]), packet.Args[1],
         RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
         packet.Line,
     ))
@@ -517,7 +571,7 @@ func OnBuildJafgWidgetDeclaration(hFileId string, bH *strings.Builder, bT *strin
 #if PLATFORM_SUPPORTS_SHARED_LIBRARIES
     PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION( \
         /* My Class Name */          %s, /* ORIGIN VALUE: %s */                               \
-        /* My Class Spaces */        %s,                                                      \
+        /* My Class Spaces */        %s, /* ORIGIN ARG VALUE: %s */                           \
         /* Line Of Declaration */    %d,                                                      \
         /* Super Class Name */       %s, /* ORIGIN VALUE: %s */                               \
         /* __VA_ARGS__ */            %s                                                       \
@@ -525,7 +579,7 @@ func OnBuildJafgWidgetDeclaration(hFileId string, bH *strings.Builder, bT *strin
 #endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 `,
         RemoveAllNamespaces(packet.Name), packet.Name,
-        packet.Args[1],
+        RemoveDoubleColonGccShenanigansSuffix(packet.Args[1]), packet.Args[1],
         packet.Line,
         RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
 
@@ -545,12 +599,14 @@ func OnBuildJafgWidgetWithFactoryDeclaration(hFileId string, bH *strings.Builder
 
     bH.WriteString(fmt.Sprintf(`
 #ifdef %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
-    #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #if !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS
+        #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #endif /* !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS */
 #endif /* %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION */
 #define %s_%d_MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION(TFactoryTy, ...)                \
     PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION( \
         /* My Class Name */          %s, /* ORIGIN VALUE: %s */                                              \
-        /* My Class Spaces */        %s,                                                                     \
+        /* My Class Spaces */        %s, /* ORIGIN ARG VALUE: %s */                                          \
         /* Super Class Name */       %s, /* ORIGIN VALUE: %s */                                              \
         /* Line */                   %d,                                                                     \
         /* Factory Type */           TFactoryTy,                                                             \
@@ -560,7 +616,7 @@ func OnBuildJafgWidgetWithFactoryDeclaration(hFileId string, bH *strings.Builder
         hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
 
         RemoveAllNamespaces(packet.Name), packet.Name,
-        packet.Args[1],
+        RemoveDoubleColonGccShenanigansSuffix(packet.Args[1]), packet.Args[1],
         RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
         packet.Line,
     ))
@@ -569,7 +625,7 @@ func OnBuildJafgWidgetWithFactoryDeclaration(hFileId string, bH *strings.Builder
 #if PLATFORM_SUPPORTS_SHARED_LIBRARIES
     PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DEFINITION( \
         /* My Class Name */          %s, /* ORIGIN VALUE: %s */                               \
-        /* My Class Spaces */        %s,                                                      \
+        /* My Class Spaces */        %s, /* ORIGIN ARG VALUE: %s */                           \
         /* Line Of Declaration */    %d,                                                      \
         /* Super Class Name */       %s, /* ORIGIN VALUE: %s */                               \
         /* __VA_ARGS__ */            %s                                                       \
@@ -577,7 +633,7 @@ func OnBuildJafgWidgetWithFactoryDeclaration(hFileId string, bH *strings.Builder
 #endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 `,
         RemoveAllNamespaces(packet.Name), packet.Name,
-        packet.Args[1],
+        RemoveDoubleColonGccShenanigansSuffix(packet.Args[1]), packet.Args[1],
         packet.Line,
         RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
 
@@ -602,20 +658,22 @@ func OnBuildJafgClassBody(hFileId string, bH *strings.Builder, bT *strings.Build
 
     bH.WriteString(fmt.Sprintf(`
 #ifdef %s_%d_MY_GENERATED_CLASS_BODY
-    #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #if !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS
+        #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #endif /* !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS */
 #endif /* %s_%d_MY_GENERATED_CLASS_BODY */
-#define %s_%d_MY_GENERATED_CLASS_BODY(...)                        \
-    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(      \
-        /* My Class Name */            %s, /* ORIGIN VALUE: %s */ \
-        /* My Class Spaces */          %s,                        \
-        /* Super Class Name */         %s, /* ORIGIN VALUE: %s */ \
-        /* Construction Helper Line */ %d                         \
+#define %s_%d_MY_GENERATED_CLASS_BODY(...)                            \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(          \
+        /* My Class Name */            %s, /* ORIGIN VALUE: %s */     \
+        /* My Class Spaces */          %s, /* ORIGIN ARG VALUE: %s */ \
+        /* Super Class Name */         %s, /* ORIGIN VALUE: %s */     \
+        /* Construction Helper Line */ %d                             \
     )
 `,
         hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
 
         RemoveAllNamespaces(packet.Name), packet.Name,
-        packet.Args[2],
+        RemoveDoubleColonGccShenanigansSuffix(packet.Args[2]), packet.Args[2],
         RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
         lineHelperConstruction,
     ))
@@ -638,20 +696,22 @@ func OnBuildJafgWidgetBody(hFileId string, bH *strings.Builder, bT *strings.Buil
 
     bH.WriteString(fmt.Sprintf(`
 #ifdef %s_%d_MY_GENERATED_CLASS_BODY
-    #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #if !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS
+        #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #endif /* !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS */
 #endif /* %s_%d_MY_GENERATED_CLASS_BODY */
-#define %s_%d_MY_GENERATED_CLASS_BODY(...)                        \
-    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_BODY_IMPL(      \
-        /* My Class Name */            %s, /* ORIGIN VALUE: %s */ \
-        /* My Class Spaces */          %s,                        \
-        /* Super Class Name */         %s, /* ORIGIN VALUE: %s */ \
-        /* Construction Helper Line */ %d                         \
+#define %s_%d_MY_GENERATED_CLASS_BODY(...)                            \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_BODY_IMPL(         \
+        /* My Class Name */            %s, /* ORIGIN VALUE: %s */     \
+        /* My Class Spaces */          %s, /* ORIGIN ARG VALUE: %s */ \
+        /* Super Class Name */         %s, /* ORIGIN VALUE: %s */     \
+        /* Construction Helper Line */ %d                             \
     )
 `,
         hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
 
         RemoveAllNamespaces(packet.Name), packet.Name,
-        packet.Args[2],
+        RemoveDoubleColonGccShenanigansSuffix(packet.Args[2]), packet.Args[2],
         RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
         lineHelperConstruction,
     ))
@@ -674,20 +734,22 @@ func OnBuildJafgWidgetWithFactoryBody(hFileId string, bH *strings.Builder, bT *s
 
     bH.WriteString(fmt.Sprintf(`
 #ifdef %s_%d_MY_GENERATED_CLASS_BODY
-    #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #if !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS
+        #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #endif /* !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS */
 #endif /* %s_%d_MY_GENERATED_CLASS_BODY */
-#define %s_%d_MY_GENERATED_CLASS_BODY(...)                        \
-    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_BODY_IMPL(      \
-        /* My Class Name */            %s, /* ORIGIN VALUE: %s */ \
-        /* My Class Spaces */          %s,                        \
-        /* Super Class Name */         %s, /* ORIGIN VALUE: %s */ \
-        /* Construction Helper Line */ %d                         \
+#define %s_%d_MY_GENERATED_CLASS_BODY(...)                                 \
+    PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_BODY_IMPL( \
+        /* My Class Name */            %s, /* ORIGIN VALUE: %s */          \
+        /* My Class Spaces */          %s, /* ORIGIN ARG VALUE: %s */      \
+        /* Super Class Name */         %s, /* ORIGIN VALUE: %s */          \
+        /* Construction Helper Line */ %d                                  \
     )
 `,
         hFileId, packet.Line, packet.Name, hFileId, packet.Line, hFileId, packet.Line,
 
         RemoveAllNamespaces(packet.Name), packet.Name,
-        packet.Args[2],
+        RemoveDoubleColonGccShenanigansSuffix(packet.Args[2]), packet.Args[2],
         RemoveAllNamespaces(packet.Args[0]), packet.Args[0],
         lineHelperConstruction,
     ))
@@ -710,7 +772,9 @@ func OnBuildJafgClassField(hFileId string, bH *strings.Builder, bT *strings.Buil
 
     bH.WriteString(fmt.Sprintf(`
 #ifdef %s_%d_MY_GENERATED_CLASS_FIELD_DECLARATION
-    #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #if !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS
+        #error "Generated packet [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #endif /* !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS */
 #endif /* %s_%d_MY_GENERATED_CLASS_FIELD_DECLARATION */
 #define %s_%d_MY_GENERATED_CLASS_FIELD_DECLARATION(...) \
 `,
@@ -740,6 +804,208 @@ func OnBuildJafgClassField(hFileId string, bH *strings.Builder, bT *strings.Buil
     return
 }
 
+func OnBuildJafgMakeVirtualFilesystem(hFileId string, bH *strings.Builder, bT *strings.Builder, packet JPacket) {
+    if bH == nil {
+        panic("Builder for header is nil.")
+    }
+    if bT == nil {
+        panic("Builder for translation is nil.")
+    }
+
+    bT.WriteString("#include \"CoreAfx.h\"\n")
+    bT.WriteString("#include \"System/VFilesystem.h\"\n")
+    //bH.WriteString(fmt.Sprintf("#ifndef %s_VSYSTEM_INLINE_DECLARATIONS\n", hFileId))
+    //bH.WriteString(fmt.Sprintf("#define %s_VSYSTEM_INLINE_DECLARATIONS\n", hFileId))
+
+    var absFiles []string = Shared.GetAllFilesInRelativeDirRecursive(Core.DirPath_Content)
+    for _, file := range absFiles {
+        if strings.Contains(file, ".gitignore") {
+            continue
+        }
+        if strings.Contains(file, ".gitkeep") {
+            continue
+        }
+
+        content, err := os.ReadFile(file);
+        if err != nil {
+            panic(err)
+        }
+
+        var indices int = 0;
+        var buffer bytes.Buffer = bytes.Buffer{}
+        for i, b := range content {
+            indices++
+            buffer.WriteString(fmt.Sprintf("0x%02X", b))
+            if i < len(content)-1 {
+                buffer.WriteString(", ")
+            }
+
+            continue
+        }
+
+        var relFile string = strings.ReplaceAll(file, "\\", "/")
+        var contentIdx int = strings.Index(relFile, Core.DirPath_Content)
+        relFile = relFile[contentIdx:]
+
+        var formattedFileName string = strings.ReplaceAll(file, "\\", "/")
+        formattedFileName = strings.ReplaceAll(formattedFileName, ":", "_")
+        formattedFileName = strings.ReplaceAll(formattedFileName, "/", "__")
+        formattedFileName = strings.ReplaceAll(formattedFileName, ".", "_")
+
+        bH.WriteString(fmt.Sprintf(`
+ENGINE_API extern const uint8* ___FILE_EXTERN___%s;
+inline Jafg::Private::LVirtualFile __%s(Jafg::LPath("%s"), ___FILE_EXTERN___%s, %d);`,
+            formattedFileName,
+            formattedFileName, relFile, formattedFileName, indices,
+        ))
+
+        bT.WriteString(fmt.Sprintf(`
+namespace
+{
+const uint8 ___%s[] = { %s };
+} /* ~Namespace <Anonymous> */
+ENGINE_API const uint8* ___FILE_EXTERN___%s = ___%s;`,
+            formattedFileName, buffer.String(), formattedFileName, formattedFileName,
+        ))
+
+        continue
+    }
+
+    //bH.WriteString(fmt.Sprintf("\n\n#endif /* %s_VSYSTEM_INLINE_DECLARATIONS */\n", hFileId))
+    //bT.WriteString("\n\n#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */\n")
+
+    return
+}
+
+func OnBuildJafgMakeStaticClassContainer(hFileId string, bH *strings.Builder, bT *strings.Builder, packet JPacket) {
+    if bH == nil {
+        panic("Builder for header is nil.")
+    }
+    if bT == nil {
+        panic("Builder for translation is nil.")
+    }
+
+    bT.WriteString("#include \"CoreAfx.h\"\n\n")
+
+    // All modules have to exist in the same solution. So we just iterate over the first one.
+    for idx, _ := range GBuildTargetInfo.GetSlnPointerChecked().Targets[0].Modules {
+        var module *Core.Module = &GBuildTargetInfo.GetSlnPointerChecked().Targets[0].Modules[idx]
+        if module.GetFunctionalRelativeDir() == GBuildTargetInfo.GetModulePointerChecked().GetFunctionalRelativeDir() {
+            continue
+        }
+
+        var generatedTranslationDir string = fmt.Sprintf("%s/%s/%s",
+            GBuildTargetInfo.GetSlnPointerChecked().GetSavedRelativeDir(),
+            module.GetFunctionalRelativeDir(),
+            Core.GtDir,
+        )
+        var generteHeaderDir string = fmt.Sprintf("%s/%s/%s",
+            GBuildTargetInfo.GetSlnPointerChecked().GetSavedRelativeDir(),
+            module.GetFunctionalRelativeDir(),
+            Core.GhDir,
+        )
+
+        var absHFilesReal []string = Shared.GetAllFilesInRelativeDirRecursive(generteHeaderDir)
+        var absHFiles []string = make([]string, 0)
+        for _, file := range absHFilesReal {
+            var relFile string = strings.ReplaceAll(file, "\\", "/")
+            var contentIdx int = strings.Index(relFile, Core.DirPath_Saved)
+            relFile = relFile[contentIdx:]
+            absHFiles = append(absHFiles, relFile)
+        }
+        var absFiles []string = Shared.GetAllFilesInRelativeDirRecursive(generatedTranslationDir)
+        for _, file := range absFiles {
+            if strings.Contains(file, ".gitignore") {
+                continue
+            }
+            if strings.Contains(file, ".gitkeep") {
+                continue
+            }
+            if strings.Contains(file, fmt.Sprintf("LaunchWasm%s", Core.GtExtension)) {
+                continue
+            }
+            if strings.Contains(file, fmt.Sprintf("VFilesystem%s", Core.GtExtension)) {
+                continue
+            }
+
+            var filename string = path.Base(file)
+            filename = Shared.GetFileNameWithoutExtension(filename)
+            potentialHeaderFile := fmt.Sprintf("%s/%s%s", generteHeaderDir, filename, ".h")
+            for _, hFile := range absHFiles {
+                if hFile != potentialHeaderFile {
+                    continue
+                }
+
+                content, err := os.ReadFile(potentialHeaderFile)
+                if err != nil {
+                    panic(err)
+                }
+
+                bT.WriteString(fmt.Sprintf(`
+#ifdef PLATFORM_SUPPORTS_SHARED_LIBRARIES
+    #undef PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#define PLATFORM_SUPPORTS_SHARED_LIBRARIES          1 /* Cheecky but works. */
+#ifdef PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS
+    #undef PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS
+#endif /* PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS */
+#define PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS         1
+
+/* --- */
+%s
+/* --- */
+
+#ifdef PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS
+    #undef PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS
+#endif /* PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS */
+#define PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS         1 /* Could be overriden, we do not know. Just reset here for safety. */
+`,
+                    content,
+                ))
+                break
+            }
+
+
+            content, err := os.ReadFile(file)
+            if err != nil {
+                panic(err)
+            }
+
+            var relFile string = strings.ReplaceAll(file, "\\", "/")
+            var contentIdx int = strings.Index(relFile, Core.DirPath_Saved)
+            relFile = relFile[contentIdx:]
+            var formattedFileName string = strings.ReplaceAll(file, "\\", "/")
+            formattedFileName = strings.ReplaceAll(formattedFileName, ":", "_")
+            formattedFileName = strings.ReplaceAll(formattedFileName, "/", "__")
+            formattedFileName = strings.ReplaceAll(formattedFileName, ".", "_")
+
+            bT.WriteString(fmt.Sprintf(`
+#ifdef PLATFORM_SUPPORTS_SHARED_LIBRARIES
+    #undef PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#define PLATFORM_SUPPORTS_SHARED_LIBRARIES          1 /* Cheecky but works. */
+#ifndef %s_%d_%s_SHARED_CONTAINER_DECLARATION
+#define %s_%d_%s_SHARED_CONTAINER_DECLARATION
+%s
+#endif /* %s_%d_%s_SHARED_CONTAINER_DECLARATION */
+`,
+        hFileId, packet.Line, formattedFileName,
+        hFileId, packet.Line, formattedFileName,
+        content,
+        hFileId, packet.Line, formattedFileName,
+    ))
+
+
+
+            continue
+        }
+
+        continue
+    }
+
+    return
+}
+
 func ConditionallyWritePacketToOut(packetWrapper JPacketWrapper) {
     if packetWrapper.Name == "" {
         panic("PacketWrapper.Name is empty.")
@@ -764,7 +1030,9 @@ func ConditionallyWritePacketToOut(packetWrapper JPacketWrapper) {
 -----------------------------------------------------------------------------*/
 
 #ifdef PRIVATE_JAFG_GENERATED_HEADER_%s
-    #error "Generated header [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #if !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS
+        #error "Generated header [%s] included multiple times. Missing #pragma once or #ifndef guard?"
+    #endif /* !PRIVATE_JAFG_IGNORE_GUARD_FOR_GENERATED_HEADERS */
 #endif /* PRIVATE_JAFG_GENERATED_HEADER_%s */
 #define PRIVATE_JAFG_GENERATED_HEADER_%s
 
@@ -791,15 +1059,13 @@ func ConditionallyWritePacketToOut(packetWrapper JPacketWrapper) {
     Do not modify it manually.
 -----------------------------------------------------------------------------*/
 
-#include "%s/%s/%s"
+#include "%s"
 
 /*-----------------------------------------------------------------------------
     BEGIN Generated translation content.
 -----------------------------------------------------------------------------*/
 
 `,
-        GBuildTargetInfo.GetSlnPointerChecked().GetChdirUpRelToBuildFile(),
-        GBuildTargetInfo.GetModulePointerChecked().GetChdirUpRelToBuildFile(),
         packetWrapper.Name[1:],
     ))
 
@@ -809,6 +1075,11 @@ func ConditionallyWritePacketToOut(packetWrapper JPacketWrapper) {
         }
         packet.Callback(hFileId, &outH, &outT, packet)
     }
+
+    // May happen if we do not do this:
+    // [warning]: backslash-newline at end of file
+    outH.WriteString("\n\n")
+    outT.WriteString("\n\n")
 
     Shared.OpenAndWriteToRelativeFileIfDifferent(relTargetGh, outH.String(), true)
     Shared.OpenAndWriteToRelativeFileIfDifferent(relTargetGt, outT.String(), true)

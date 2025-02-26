@@ -38,15 +38,16 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LVirtualFileSystem)
     ENGINE_API ~LVirtualFileSystem();
 
-    ENGINE_API auto GetTotalEmbeddedFileCount() const -> int32;
+    ENGINE_API int32 GetTotalEmbeddedFileCount() const;
 
-    ENGINE_API auto DoesFileExist(const LEnginePath& InEnginePath) const -> bool;
-    ENGINE_API auto ReadFileAsString(const LEnginePath& InEnginePath) const -> LStringLegacy;
+    ENGINE_API bool DoesFileExist(const LEnginePath& InEnginePath) const;
+    ENGINE_API auto ReadFileAsString(const LEnginePath& InEnginePath) const -> LString;
+    ENGINE_API auto ReadFileAsStringLegacy(const LEnginePath& InEnginePath) const -> LStringLegacy;
     //#
     //# Modifying the raw data is in no case recommended. Better make a copy of it,
     //# or even better use the save jafg array type.
     //#
-    ENGINE_API auto ReadFileAsBytes(const LEnginePath& InEnginePath, const uint8*& OutBuffer, uint64& OutBufferOverflowGuard) const -> void;
+    ENGINE_API void ReadFileAsBytes(const LEnginePath& InEnginePath, const uint8*& OutBuffer, uint64& OutBufferOverflowGuard) const;
     ENGINE_API auto ReadFileAsJafgByteArray(const LEnginePath& InEnginePath) const -> TdhArray<uint8>;
 
     ENGINE_API auto FindFiles(

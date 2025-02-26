@@ -658,7 +658,7 @@ TNode* ConstructDeferredWidgetNode(LObjectContext* InContext)
     return CheckedStaticCast<TNode>(ConstructDeferredWidgetNode(InContext, TNode::StaticClass()));
 }
 
-WWidgetNode* Jafg::ConstructDeferredWidgetNode(LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass)
+WWidgetNode* ConstructDeferredWidgetNode(LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass)
 {
     return NewDeferredObject<WWidgetNode, false, true>(InContext, InClass);
 }

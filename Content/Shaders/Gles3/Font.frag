@@ -1,13 +1,16 @@
 #version 300 es
 
-in  mediump vec2 TexCoords;
-out mediump vec4 color;
+precision highp float;
 
-uniform sampler2D text;
-uniform mediump vec3 textColor;
+in  vec2 TexCoords;
+
+out vec4 FragColor;
+
+uniform vec3 Color;
+uniform sampler2D Text;
 
 void main()
 {    
-    mediump vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);
-    color = vec4(textColor, 1.0) * sampled;
+    vec4 Sampled = vec4(1.0, 1.0, 1.0, texture(Text, TexCoords).r);
+    FragColor = vec4(Color, 1.0) * Sampled;
 }

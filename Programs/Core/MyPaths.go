@@ -8,6 +8,7 @@ import (
 
 var DirPath_Venv string = ".venv"
 var DirPath_Saved string = "Saved"
+var DirPath_Content string = "Content"
 
 var DirPath_Bin string = "Binaries"
 var DirPath_Int string = "Intermediate"
@@ -27,7 +28,8 @@ var FileName_CmakeOut string = "CMakeLists.txt"
 var FileName_CmakePresets string = "CMakePresets.json"
 var FileName_CmakeSetupBat string = "generate_files.bat"
 var FileName_ActivateMsvcBat string = "activate_msvc.bat"
-var FileName_CmakeNinjaBat string = "build.bat"
+var FileName_CmakeBuildBat string = "build.bat"
+var FileName_CmakeCleanBuildBat string = "clean_build.bat"
 func MakeFilePath_CmakeOut(sln *Solution) string /* relative */ {
     return fmt.Sprintf("%s/%s", sln.GetSavedRelativeDir_CMake(), FileName_CmakeOut)
 }

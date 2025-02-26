@@ -8,8 +8,8 @@
 namespace Jafg
 {
 
-template <typename ... ArgTy>
-NODISCARD LSimpleString Format(const char* Format, const ArgTy&... Args);
+template <typename TString, typename ... ArgTy>
+NODISCARD TString Format(const char* Format, const ArgTy&... Args);
 
 template <typename ... ArgTy>
 NODISCARD LStringLegacy FormatLegacy(const char* Format, const ArgTy& ... Args);
@@ -24,6 +24,10 @@ template <> NODISCARD inline auto FormatArgLegacy(LStringLegacy& Arg) { return A
 template <> NODISCARD inline auto FormatArgLegacy(const LStringLegacy& Arg) { return Arg; }
 template <> NODISCARD inline auto FormatArgLegacy(LStringLegacy&& Arg) { return std::forward<LStringLegacy>(Arg); }
 template <> NODISCARD inline auto FormatArgLegacy(const LStringLegacy&& Arg) { return Arg; }
+template <> NODISCARD inline auto FormatArgLegacy(const LStringView Arg) { return Arg; }
+template <> NODISCARD inline auto FormatArgLegacy(const LStringView& Arg) { return Arg; }
+template <> NODISCARD inline auto FormatArgLegacy(const LString Arg) { LStringLegacy Out = Arg.ToC(); return Out; }
+template <> NODISCARD inline auto FormatArgLegacy(const LString& Arg) { return Arg.ToC(); }
 template <> NODISCARD inline auto FormatArgLegacy(const LSimpleString Arg) { LStringLegacy Out = Arg.ToC(); return Out; }
 template <> NODISCARD inline auto FormatArgLegacy(const LSimpleString& Arg) { return Arg.ToC(); }
 template <> NODISCARD inline auto FormatArgLegacy(const float Arg) { return Arg; }
@@ -40,13 +44,10 @@ template <> NODISCARD inline auto FormatArgLegacy(const uint64 Arg) { return Arg
 template <> NODISCARD inline auto FormatArgLegacy(const long int Arg) { return Arg; }
 template <> NODISCARD inline auto FormatArgLegacy(const unsigned long int Arg) { return Arg; }
 
-template <typename ArgTy>
-inline auto FormatArgLegacy(const ArgTy Arg) UNSUPPORTED_TEMPLATED_SPECIALIZATION(ArgTy, return ArgTy { })
-
-template <typename ... ArgTy>
-NODISCARD LSimpleString Format(const char* Format, const ArgTy&... Args)
+template <typename TString, typename ... ArgTy>
+NODISCARD TString Format(const char* Format, const ArgTy&... Args)
 {
-    LSimpleString Out = Jafg::FormatLegacy(Format, Args...).c_str();
+    TString Out = Jafg::FormatLegacy(Format, Args...).c_str();
     return Out;
 }
 
@@ -75,4 +76,4 @@ NODISCARD LStringLegacy FormatLegacy(const char* Format, const ArgTy& ... Args)
 
 } /* ~Namespace Jafg */
 
-#endif /* !PLATFORM_WASM */
+#endif /* PLATFORM_WASM */

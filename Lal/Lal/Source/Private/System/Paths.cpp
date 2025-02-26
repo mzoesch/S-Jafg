@@ -114,7 +114,7 @@ void Paths::OverrideFile(const LPath& InAbsolutePath, const LStringView& InConte
     return;
 #else /* WITH_VIRTUAL_FILESYSTEM */
     Paths::CheckFile(InAbsolutePath);
-    std::ofstream Out { InAbsolutePath.GetPath().ToC(), std::ios::out | std::ios::trunc | (bUseNativeLineEndings ? 0 : std::ios::binary) };
+    std::ofstream Out { InAbsolutePath.GetPath().ToC(), std::ios::out | std::ios::trunc | (bUseNativeLineEndings ? static_cast<std::ios::openmode>(0) : std::ios::binary) };
     Out << InContent.data();
     Out.close();
     return;
@@ -176,7 +176,7 @@ void Paths::CheckFile(const LPath& InAbsolutePath)
 {
 #if WITH_VIRTUAL_FILESYSTEM
     LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())
-    return false;
+    return;
 #else /* WITH_VIRTUAL_FILESYSTEM */
     if (DoesFileExist(InAbsolutePath) == false)
     {
@@ -189,7 +189,8 @@ void Paths::CheckFile(const LPath& InAbsolutePath)
 bool Paths::AreFilesIdentical(const LPath& InFirst, const LPath& InSecond)
 {
 #if WITH_VIRTUAL_FILESYSTEM
-    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())
+    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InFirst.GetPath())
+    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InSecond.GetPath())
     return false;
 #else /* WITH_VIRTUAL_FILESYSTEM */
     namespace Fs = std::filesystem;

@@ -10,7 +10,7 @@
 #endif /* WITH_GCC */
 #if PLATFORM_WASM
     #include <emscripten/threading.h>
-    #include <c++/v1/__threading_support>
+    // #include <c++/v1/__threading_support>
 #endif /* PLATFORM_WASM */
 
 namespace

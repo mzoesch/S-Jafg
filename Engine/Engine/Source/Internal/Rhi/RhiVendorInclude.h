@@ -20,3 +20,7 @@
 
 #include <stb_image.h>
 #include <stb_image_write.h>
+
+#if PLATFORM_USES_WEBGL_TWO
+    #include <GLES3/gl3.h>
+#endif /* PLATFORM_USES_WEBGL_TWO */

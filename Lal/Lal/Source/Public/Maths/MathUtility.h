@@ -132,9 +132,9 @@ template <typename T> NODISCARD FORCEINLINE auto Tanh(const T Value) -> T;
 template <typename T> NODISCARD FORCEINLINE auto ATanh(const T Value) -> T;
 
 template <typename T, typename U>
-NODISCARD FORCEINLINE constexpr void SinCos(T* SinScalar, T* CosScalar, const U InValue);
+FORCEINLINE constexpr void SinCos(T* SinScalar, T* CosScalar, const U InValue);
 template <typename T>
-NODISCARD FORCEINLINE constexpr void SinCos(T*  SinScalar, T*  CosScalar, const T InValue);
+FORCEINLINE constexpr void SinCos(T*  SinScalar, T*  CosScalar, const T InValue);
 
 /** Round with common sense: 0.3 => 0.0; 0.7 => 1.0; 0.5 => 1.0; -0.5 => -1.0. */
 NODISCARD FORCEINLINE float  Round(const float  Value) { return ::roundf(Value); }
@@ -388,7 +388,7 @@ template <typename T> NODISCARD FORCEINLINE T Tanh(const T Value)  UNSUPPORTED_T
 template <typename T> NODISCARD FORCEINLINE T ATanh(const T Value) UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
 
 template <typename T, typename U>
-NODISCARD FORCEINLINE constexpr void SinCos(T* SinScalar, T* CosScalar, const U InValue)
+FORCEINLINE constexpr void SinCos(T* SinScalar, T* CosScalar, const U InValue)
 {
     static_assert(std::is_floating_point_v<T> && std::is_floating_point_v<U>, "Scalar and InValue must be floating point types.");
     static_assert(std::is_same_v<T, U> == false, "Scalar and InValue must not be the same type.");
@@ -397,7 +397,7 @@ NODISCARD FORCEINLINE constexpr void SinCos(T* SinScalar, T* CosScalar, const U 
 }
 
 template <typename T>
-NODISCARD FORCEINLINE constexpr void SinCos(T* SinScalar, T* CosScalar, const T InValue)
+FORCEINLINE constexpr void SinCos(T* SinScalar, T* CosScalar, const T InValue)
 {
     *SinScalar = Maths::Sin(InValue);
     *CosScalar = Maths::Cos(InValue);

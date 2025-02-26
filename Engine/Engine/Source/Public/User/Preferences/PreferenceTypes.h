@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 
 namespace Jafg
 {
@@ -186,7 +186,7 @@ FORCEINLINE LString Serialize<TPreference<float>>(const TPreference<float>& InVa
 } /* ~Namespace Jafg */
 
 template <typename T>
-struct ::std::formatter<::Jafg::TPreference<T>> : ::std::formatter<T>
+struct std::formatter<::Jafg::TPreference<T>> : std::formatter<T>
 {
     FORCEINLINE auto format
     (
@@ -204,3 +204,20 @@ FORCEINLINE void ::Jafg::Deserialize<Jafg::LPreferenceBool>(LPreferenceBool* Des
     checkSlow( Destination )
     Jafg::Deserialize<bool>(&Destination->Value, InValue);
 }
+
+#if PLATFORM_WASM
+namespace Jafg
+{
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<bool>>(TPreference<bool> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<uint8>>(TPreference<uint8> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<uint16>>(TPreference<uint16> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<uint32>>(TPreference<uint32> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<uint64>>(TPreference<uint64> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<int8>>(TPreference<int8> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<int16>>(TPreference<int16> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<int32>>(TPreference<int32> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<int64>>(TPreference<int64> Arg) { return Arg.Value; }
+template <typename T> NODISCARD inline auto FormatArgLegacy(const TPreference<T>& Arg) { return Arg.Value; }
+template <typename T> NODISCARD inline auto FormatArgLegacy(      TPreference<T>  Arg) { return Arg.Value; }
+} /* ~Namespace Jafg */
+#endif /* PLATFORM_WASM */

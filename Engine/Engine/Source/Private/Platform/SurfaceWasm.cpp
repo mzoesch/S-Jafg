@@ -1,23 +1,14 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
-
 #if PLATFORM_WASM
 
-#include "Core/LaunchProgress.h"
+#include "Platform/SurfaceWasm.h"
 #include "Widgets/Viewport.h"
-#include "Platform/PlatformWasm.h"
+#include "Rhi/RhiVendorInclude.h"
+#include "Async/TaskUtility.h"
 
 namespace
 {
-
-/**
- * Singleton instance of the native window - this is the document, DOM or window object.
- *
- * @see https://developer.mozilla.org/en-US/docs/Web/API/Document
- * @see https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Using_the_Document_Object_Model#what_is_a_dom_tree
- */
-Jafg::LWasmNativeWindow* DocumentObjectModel = nullptr;
 
 /*
  * We have to do this with the extra array as we have to poll the keys outside the main engine loop (because of Wasm,
@@ -59,9 +50,9 @@ Jafg::LKey TranslateKeyFromJavaScript(const uint32 InKey)
     return Jafg::EKeys::Unresolved;
 }
 
-EM_BOOL KeyDownCallback(const int32 EventType, const EmscriptenKeyboardEvent *E, void *UserData)
+EM_BOOL KeyDownCallback(const int32 EventType, const EmscriptenKeyboardEvent* E, void* UserData)
 {
-    check( E )
+    checkSlow( E )
     const Jafg::LKey TargetJafgKey = ::TranslateKeyFromJavaScript(E->keyCode);
 
     if (TargetJafgKey == Jafg::EKeys::Unresolved)
@@ -77,9 +68,9 @@ EM_BOOL KeyDownCallback(const int32 EventType, const EmscriptenKeyboardEvent *E,
     return EM_TRUE;
 }
 
-EM_BOOL KeyUpCallback(const int32 EventType, const EmscriptenKeyboardEvent *E, void *UserData)
+EM_BOOL KeyUpCallback(const int32 EventType, const EmscriptenKeyboardEvent* E, void* UserData)
 {
-    check( E )
+    checkSlow( E )
     const Jafg::LKey TargetJafgKey = ::TranslateKeyFromJavaScript(E->keyCode);
 
     if (TargetJafgKey == Jafg::EKeys::Unresolved)
@@ -95,7 +86,7 @@ EM_BOOL KeyUpCallback(const int32 EventType, const EmscriptenKeyboardEvent *E, v
     return EM_TRUE;
 }
 
-EM_BOOL MouseMoveCallback(const int32 EventType, const EmscriptenMouseEvent *E, void *UserData)
+EM_BOOL MouseMoveCallback(const int32 EventType, const EmscriptenMouseEvent* E, void* UserData)
 {
     if (Jafg::Maths::Absolute(E->movementX) > 0.0)
     {
@@ -116,7 +107,7 @@ EM_BOOL MouseMoveCallback(const int32 EventType, const EmscriptenMouseEvent *E, 
     return EM_TRUE;
 }
 
-EM_BOOL MouseDownCallback(const int32 EventType, const EmscriptenMouseEvent *E, void *UserData)
+EM_BOOL MouseDownCallback(const int32 EventType, const EmscriptenMouseEvent* E, void* UserData)
 {
     if (E->button == 0)
     {
@@ -150,7 +141,7 @@ EM_BOOL MouseDownCallback(const int32 EventType, const EmscriptenMouseEvent *E, 
     return EM_TRUE;
 }
 
-EM_BOOL MouseUpCallback(const int32 EventType, const EmscriptenMouseEvent *E, void *UserData)
+EM_BOOL MouseUpCallback(const int32 EventType, const EmscriptenMouseEvent* E, void* UserData)
 {
     if (E->button == 0)
     {
@@ -184,9 +175,14 @@ EM_BOOL MouseUpCallback(const int32 EventType, const EmscriptenMouseEvent *E, vo
     return EM_TRUE;
 }
 
-EM_BOOL MouseWheelCallback(const int32 EventType, const EmscriptenWheelEvent *E, void *UserData)
+EM_BOOL MouseWheelCallback(const int32 EventType, const EmscriptenWheelEvent* E, void* UserData)
 {
-    checkSlow( ::GetDownKeys().Contains(Jafg::EKeys::MouseWheelUp) == false )
+    if (::GetDownKeys().Contains(Jafg::EKeys::MouseWheelAxis))
+    {
+        return EM_TRUE;
+    }
+
+    checkSlow( ::GetDownKeys().Contains(Jafg::EKeys::MouseWheelUp)   == false )
     checkSlow( ::GetDownKeys().Contains(Jafg::EKeys::MouseWheelDown) == false )
     checkSlow( ::GetDownKeys().Contains(Jafg::EKeys::MouseWheelAxis) == false )
 
@@ -213,81 +209,67 @@ EM_BOOL MouseWheelCallback(const int32 EventType, const EmscriptenWheelEvent *E,
 
 } /* ~Namespace <Anonymous> */
 
-void Jafg::LPlatformWasm::Initialize()
+void Jafg::LSurfaceDom::Initialize()
 {
-    LSurface::Initialize();
+    Super::Initialize();
 
-    check( this->NativeWindow == nullptr )
+    check( Tasks::IsOnMasterThread() )
 
-    if (LaunchProgress::Private::GProgressWindow)
-    {
-        LaunchProgress::Private::bOwnerShipToken = true;
-        this->NativeWindow = LaunchProgress::Private::GProgressWindow;
-    }
-    else
-    {
-        LOG_WARNING(LogSystem, "Launch progress did not create a window. Creating one now.")
-        this->NativeWindow = LPlatformWasm::CreateNativeWindow();
-    }
+    ::emscripten_set_canvas_element_size("#canvas", 1920, 1080);
+    EmscriptenWebGLContextAttributes Attr;
+    ::emscripten_webgl_init_context_attributes(&Attr);
+    Attr.majorVersion = 2; // TODO Maybe we want to use WebGL 3.0 in the future? -sFULL_ES3
+    Attr.minorVersion = 0;
 
-    check( DocumentObjectModel == nullptr )
-    DocumentObjectModel = this->NativeWindow;
+    /* We create this extra handle here to allow for save valid checks. */
+    this->_Handle = ::emscripten_webgl_create_context("#canvas", &Attr);
+    this->Handle = &this->_Handle;
 
-    if (ensure(this->GetViewport()))
-    {
-        this->GetViewport()->ChangeDimensions(this->GetDimensions());
-        this->GetViewport()->SetPlatformDpi(96.0f); // TODO: Fetch from JavaScript.
-        glViewport(0, 0, this->GetDimensions().X, this->GetDimensions().Y);
-    }
-    else
-    {
-        panic( "Currently a viewport must be provided." )
-    }
+    ::emscripten_webgl_make_context_current(this->_Handle);
+
+    check( this->GetViewport() )
+    this->GetViewport()->ChangeDimensions(this->GetDimensions());
+    this->GetViewport()->SetPlatformDpi(96.0f); // TODO: Fetch from JavaScript.
+    glViewport(0, 0, this->GetDimensions().X, this->GetDimensions().Y);
+
+    ::emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_TRUE, KeyDownCallback);
+    ::emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_TRUE, KeyUpCallback);
+    ::emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_TRUE, MouseMoveCallback);
+    ::emscripten_set_mousedown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_TRUE, MouseDownCallback);
+    ::emscripten_set_mouseup_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_TRUE, MouseUpCallback);
+    ::emscripten_set_wheel_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_TRUE, MouseWheelCallback);
 
     glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
-    glEnable(GL_DEPTH_TEST);
-
-    emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_TRUE, KeyDownCallback);
-    emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_TRUE, KeyUpCallback);
-    emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_TRUE, MouseMoveCallback);
-    emscripten_set_mousedown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_TRUE, MouseDownCallback);
-    emscripten_set_mouseup_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_TRUE, MouseUpCallback);
-    emscripten_set_wheel_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_TRUE, MouseWheelCallback);
 
     return;
 }
 
-void Jafg::LPlatformWasm::OnClear()
+void Jafg::LSurfaceDom::OnClear()
 {
-    LSurface::OnClear();
+    Super::OnClear();
+    checkSlow( this->Handle )
+    checkSlow( Tasks::IsOnMasterThread() )
+
+    ::emscripten_webgl_make_context_current(this->_Handle);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     return;
 }
 
-void Jafg::LPlatformWasm::OnUpdate()
+void Jafg::LSurfaceDom::TearDown()
 {
-    LSurface::OnUpdate();
-    return;
-}
+    Super::TearDown();
 
-void Jafg::LPlatformWasm::TearDown()
-{
-    LSurface::TearDown();
-
-    if (this->NativeWindow)
+    if (this->IsValid())
     {
-        check( NativeWindow == DocumentObjectModel )
-        delete this->NativeWindow;
-        this->NativeWindow = nullptr;
-        DocumentObjectModel = nullptr;
+        this->_Handle = 0;
+        this->Handle = nullptr;
     }
 
-    check( DocumentObjectModel == nullptr )
-
     return;
 }
 
-void Jafg::LPlatformWasm::PollInputs()
+void Jafg::LSurfaceDom::PollInputs()
 {
     for (const LRawInput& DownKey : ::GetDownKeys())
     {
@@ -298,32 +280,34 @@ void Jafg::LPlatformWasm::PollInputs()
      * Keys only get called once by the JavaScript if they change (down / up).
      * But the mouse will not call a clean (zero movement) event.
      */
-    ::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseX));
-    ::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseY));
-    ::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseWheelUp));
-    ::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseWheelDown));
-    ::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseWheelAxis));
+    while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseX)))         { }
+    while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseY)))         { }
+    while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseWheelUp)))   { }
+    while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseWheelDown))) { }
+    while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseWheelAxis))) { }
 
     return;
 }
 
-void Jafg::LPlatformWasm::PollEvents()
+void Jafg::LSurfaceDom::SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor)
 {
-    /*
-     * Nothing to do here. Events are polled in JavaScript.
-     */
-}
+    const bool bOldShowCursor = this->bShowCursor;
 
-void Jafg::LPlatformWasm::SetInputMode(const bool bShowCursor)
-{
-    if (bShowCursor)
+    Super::SetInputMode(InMode, bInShowCursor);
+
+    if (bOldShowCursor == this->bShowCursor)
+    {
+        return;
+    }
+
+    if (this->bShowCursor)
     {
         this->bFirstMouseCallback = true;
     }
 
-    if (bShowCursor)
+    if (this->bShowCursor)
     {
-        emscripten_exit_pointerlock();
+        ::emscripten_exit_pointerlock();
         EM_ASM({
             var canvas = document.getElementById("canvas");
             if (canvas)
@@ -334,7 +318,7 @@ void Jafg::LPlatformWasm::SetInputMode(const bool bShowCursor)
     }
     else
     {
-        emscripten_request_pointerlock("#canvas", EM_TRUE);
+        ::emscripten_request_pointerlock("#canvas", EM_TRUE);
         EM_ASM({
             var canvas = document.getElementById("canvas");
             if (canvas)
@@ -344,61 +328,32 @@ void Jafg::LPlatformWasm::SetInputMode(const bool bShowCursor)
         });
     }
 
-    this->bShowMouseCursor = bShowCursor;
-
     return;
 }
 
-int32 Jafg::LPlatformWasm::GetWidth() const
+void Jafg::LSurfaceDom::SetMouseCursor(const EMouseCursor::Type InCursor)
 {
-    return this->GetDimensions().X;
+    LOG_WARNING(LogPlatform, "Custom cursor semantics are not supported on this platform for now.")
 }
 
-int32 Jafg::LPlatformWasm::GetHeight() const
+Jafg::TIntVector2<int32> Jafg::LSurfaceDom::GetDimensions() const
 {
-    return this->GetDimensions().Y;
+    return { 1920, 1080 };
 }
 
-Jafg::TIntVector2<int32> Jafg::LPlatformWasm::GetDimensions() const
-{
-    return LIntVector2(1920, 1080);
-}
-
-bool Jafg::LPlatformWasm::CanVSync() const
+bool Jafg::LSurfaceDom::CanVSync() const
 {
     return false;
 }
 
-void Jafg::LPlatformWasm::SetVSync(const bool bEnabled)
+void Jafg::LSurfaceDom::SetVSync(const bool bEnabled)
 {
-    LOG_WARNING(LogPlatform, "VSync is not supported on this platform.");
+    LOG_WARNING(LogPlatform, "VSync is not supported on this platform.")
 }
 
-bool Jafg::LPlatformWasm::IsVSync() const
+bool Jafg::LSurfaceDom::IsVSync() const
 {
     return false;
-}
-
-Jafg::LWasmNativeWindow* Jafg::LPlatformWasm::CreateNativeWindow()
-{
-    jassert( DocumentObjectModel == nullptr )
-
-    LWasmNativeWindow* Window = new LWasmNativeWindow();
-
-    emscripten_set_canvas_element_size("#canvas", 1920, 1080);
-    EmscriptenWebGLContextAttributes Attr;
-    emscripten_webgl_init_context_attributes(&Attr);
-    Attr.majorVersion = 3;
-    Attr.minorVersion = 0;
-
-    Window->Handle = emscripten_webgl_create_context("#canvas", &Attr);
-
-    /*
-     * We can do this as Wasm will never allow for more than one window.
-     */
-    emscripten_webgl_make_context_current(Window->Handle);
-
-    return Window;
 }
 
 #endif /* PLATFORM_WASM */

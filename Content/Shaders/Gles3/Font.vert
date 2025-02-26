@@ -1,5 +1,7 @@
 #version 300 es
 
+precision highp float;
+
 in vec4 vertex; // <vec2 pos, vec2 tex>
 out vec2 TexCoords;
 

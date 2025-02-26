@@ -53,9 +53,11 @@
     #endif /* __cplusplus != 199711L */
 #endif /* __cplusplus */
 
-#ifndef _MSVC_LANG
-    #error "_MSVC_LANG is not defined."
-#endif /* !_MSVC_LANG */
+#if WITH_MSVC 
+    #ifndef _MSVC_LANG
+        #error "_MSVC_LANG is not defined."
+    #endif /* !_MSVC_LANG */
+#endif /* WITH_MSVC */
 
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler config
@@ -165,8 +167,6 @@
      * http://eel.is/c++draft/diff.cpp17.class#2
      */
     #pragma GCC diagnostic error "-Wtemplate-id-cdtor"
-
-    #pragma GCC diagnostic error "-Winconsistent-missing-override"
 
     /**
      * Warn whenever a local variable is assigned to, but otherwise unused (aside from its declaration).
@@ -475,17 +475,25 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
 /**
  * https://learn.microsoft.com/en-us/cpp/mfc/windows-sockets-byte-ordering?view=msvc-170
  */
-#define PLATFORM_USES_LITTLE_ENDIAN             1
-#define PLATFORM_USES_64_BIT                    1
-#define PLATFORM_USES_GLFW3_ABSTRACTION_LAYER   1
+#define PLATFORM_USES_LITTLE_ENDIAN                 1
 
-#if !(_MSVC_LANG >= 201703L)
+#define PLATFORM_USES_GLFW3_ABSTRACTION_LAYER       1
+
+#define PLATFORM_WCHAR_SIZE                         2
+
+#if WITH_MSVC
+    #define PLATFORM_USES_64_BIT                    1
+#elif WITH_GCC
+    #define PLATFORM_USES_32_BIT                    1
+#endif /* WITH_MSVC */
+
+#if (defined(WITH_MSVC) && WITH_MSVC != 0) && !(_MSVC_LANG >= 201703L)
     #if !defined(PLATFORM_USES_UTF8) || PLATFORM_USES_UTF8 == 0
         #error "PLATFORM_USES_UTF8 is not defined or set to 0. Missing /utf-8 compiler flag."
     #endif /* !PLATFORM_USES_UTF8 */
-#else /* !(_MSVC_LANG >= 201703L) */
+#else /* (defined(WITH_MSVC) && WITH_MSVC != 0) && !(_MSVC_LANG >= 201703L) */
     #define PLATFORM_USES_UTF8          1
-#endif /* _MSVC_LANG >= 201703L */
+#endif /* !defined(WITH_MSVC) || WITH_MSVC == 0 || _MSVC_LANG >= 201703L */
 
 struct LWinPlatformBreakDefines final
 {

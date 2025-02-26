@@ -10,12 +10,13 @@ ENGINE_API LPlatformMisc* GPlatformMisc = nullptr;
 
 LSimpleString PlatformMisc::GetEngineRootDir()
 {
+#if  !WITH_VIRTUAL_FILESYSTEM
     if (GPlatformMisc->EngineRootDir.IsEmpty())
     {
         GPlatformMisc->EngineRootDir = PlatformMisc::GetEngineRootDirImpl();
     }
-
     check( GPlatformMisc->EngineRootDir.IsEmpty() == false )
+#endif /* !WITH_VIRTUAL_FILESYSTEM */
 
     return GPlatformMisc->EngineRootDir;
 }

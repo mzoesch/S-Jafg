@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAFX.h"
+#include "CoreAfx.h"
 
 #if !AS_CLIENT
     #error "This file is for local client only."

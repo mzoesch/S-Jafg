@@ -41,6 +41,28 @@
 #define PRIVATE_JAFG_CORE_CAT_OUTER_NINE(  A, B, C, D, E, F, G, H, I ) PRIVATE_JAFG_CORE_CAT_INNER_NINE(  A, B, C, D, E, F, G, H, I )
 
 /**
+ * We cannot concat :: in GCC, because it is too strict for that kind of operation and actually thinks that :: is a
+ * fucking operator. In the goodlike MSVC world, we can do that without any problems. Why tf.
+ */
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(   A, B                      ) A::B
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_THREE( A, B, C                   ) A::B::C
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_FOUR(  A, B, C, D                ) A::B::C::D
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_FIVE(  A, B, C, D, E             ) A::B::C::D::E
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_SIX(   A, B, C, D, E, F          ) A::B::C::D::E::F
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_SEVEN( A, B, C, D, E, F, G       ) A::B::C::D::E::F::G
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_EIGHT( A, B, C, D, E, F, G, H    ) A::B::C::D::E::F::G::H
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_NINE(  A, B, C, D, E, F, G, H, I ) A::B::C::D::E::F::G::H::I
+
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_TWO(   A, B                      ) JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(   A, B                      )
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_THREE( A, B, C                   ) JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_THREE( A, B, C                   )
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_FOUR(  A, B, C, D                ) JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_FOUR(  A, B, C, D                )
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_FIVE(  A, B, C, D, E             ) JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_FIVE(  A, B, C, D, E             )
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_SIX(   A, B, C, D, E, F          ) JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_SIX(   A, B, C, D, E, F          )
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_SEVEN( A, B, C, D, E, F, G       ) JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_SEVEN( A, B, C, D, E, F, G       )
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_EIGHT( A, B, C, D, E, F, G, H    ) JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_EIGHT( A, B, C, D, E, F, G, H    )
+#define JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_NINE(  A, B, C, D, E, F, G, H, I ) JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_NINE(  A, B, C, D, E, F, G, H, I )
+
+/**
  * Use this macro for formatting raw string literals.
  * @remark MSVC is by far more permissive, so it supports this feature natively as they always decay raw string
  *         literals (const char[n]) as const char pointers. While GCC and Clang are more strict (in terms of the C++
@@ -59,7 +81,7 @@
  * Advice the preprocessor to exclude the following code without the interactive intellisense mocking at us
  * that we excluded content of a condition that is always false.
  */
-#define PREPROCESSOR_EXCLUDE_FF     0
+#define PREPROCESSOR_EXCLUDE_FF             0
 
 /** A struct must always be at least one byte in size. */
 #define UNREACHABLE_BYTE_SIZE_FOR_STRUCT    0x00

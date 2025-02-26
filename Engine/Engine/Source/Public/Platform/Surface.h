@@ -102,7 +102,7 @@ protected:
     FORCEINLINE void AddBufferedPlatformInput(const LString& InInput) { this->PlatformInput += InInput; }
 
     EInputMode::Type InputMode = EInputMode::UserInterface;
-    bool bShowCursor = false;
+    bool bShowCursor = true;
     bool bMouseLocationIsMeaningful = false;
     LVector2 MouseLocation = LVector2::ZeroVector;
 
@@ -201,9 +201,9 @@ void Jafg::LSurface::SetRepeatedKeyDown(const LRawInput& InRawInput)
 }
 
 #if PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
-    #include "Platform/Glfw3Surface.h"
+    #include "Platform/SurfaceGlfw3.h"
 #elif PLATFORM_USES_JAVA_SCRIPT_FRONTEND
-    #include "Platform/PlatformWasm.h"
+    #include "Platform/SurfaceWasm.h"
 #else /* PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
     #error "Could not resolve PLATFORM."
 #endif /* !PLATFORM_USES_JAVA_SCRIPT_FRONTEND */
