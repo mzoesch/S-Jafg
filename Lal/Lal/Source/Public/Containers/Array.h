@@ -117,12 +117,16 @@ public:
      * Tries to remove the first occurrence of the provided element from the array.
      * @return True, if an element was found and successfully removed.
      */
-    FORCEINLINE auto RemoveOnce(const T& InElement) noexcept -> bool;
-    FORCEINLINE auto RemoveOnceChecked(const T& InElement) noexcept -> bool;
+    FORCEINLINE bool RemoveOnce(const T& InElement) noexcept;
+    FORCEINLINE bool RemoveOnceChecked(const T& InElement) noexcept;
+    template <typename InOtherElement>
+    FORCEINLINE bool RemoveOnce(const InOtherElement& InElement) noexcept;
+    template <typename InOtherElement>
+    FORCEINLINE bool RemoveOnceChecked(const InOtherElement& InElement) noexcept;
     template <typename Predicate>
-    FORCEINLINE auto RemoveOnceByPredicate(const Predicate& InPredicate) noexcept -> bool;
+    FORCEINLINE bool RemoveOnceByPredicate(const Predicate& InPredicate) noexcept;
     template <typename Predicate>
-    FORCEINLINE auto RemoveOnceByPredicateChecked(const Predicate& InPredicate) noexcept -> bool;
+    FORCEINLINE bool RemoveOnceByPredicateChecked(const Predicate& InPredicate) noexcept;
     template <typename Predicate>
     FORCEINLINE auto RemoveAllByPredicate(const Predicate& InPredicate) noexcept -> SizeType;
 
@@ -716,6 +720,33 @@ bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnce(const T& In
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceChecked(const T& InElement) noexcept
+{
+#if DO_CHECKS
+    const bool bRemoved = this->RemoveOnce(InElement);
+    check( bRemoved )
+    return bRemoved;
+#else /* DO_CHECKS */
+    return this->RemoveOnce(InElement);
+#endif /* !DO_CHECKS */
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+template <typename InOtherElement>
+bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnce(const InOtherElement& InElement) noexcept
+{
+    SizeType Index = this->Find(InElement);
+    if (Index != INDEX_NONE)
+    {
+        this->RemoveAt(Index);
+        return true;
+    }
+
+    return false;
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+template <typename InOtherElement>
+bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceChecked(const InOtherElement& InElement) noexcept
 {
 #if DO_CHECKS
     const bool bRemoved = this->RemoveOnce(InElement);

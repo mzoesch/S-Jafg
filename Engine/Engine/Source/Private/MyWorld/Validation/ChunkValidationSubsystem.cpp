@@ -13,7 +13,6 @@ void Jafg::JChunkValidationSubsystem::Initialize(LSubsystemCollection& Collectio
     Super::Initialize(Collection);
     this->SetTickInterval(0.5f);
 
-    this->VerticalChunksInQuestionMutex = new std::mutex();
     this->ChunkGenerationSubsystem = Collection.GetCheckedSubsystem<JChunkGenerationSubsystem>();
 
     return;
@@ -38,28 +37,22 @@ void Jafg::JChunkValidationSubsystem::FixedTick(const float EngineDeltaTime, con
     Validation::GetAllChunksFromCenterAsBox(CurrentKey.XY(), this->ChunkGenerationSubsystem->GetRenderDistance(), NowVerticalChunksInQuestion);
 
     TQueue<LChunkKey2>& OptimalQueue = this->ChunkGenerationSubsystem->GetOptimalVerticalChunkQueue();
+    LOG_WARNING(LogTemporal, "OptimalQueue: {}", OptimalQueue.UnsafeSize())
+    OptimalQueue.Empty();
     for (const LChunkKey2& Chunk : NowVerticalChunksInQuestion)
     {
         OptimalQueue.Enqueue(Chunk);
     }
 
-    this->VerticalChunksInQuestionMutex->lock();
+    std::unique_lock Lock(this->VerticalChunksInQuestionMutex);
     this->VerticalChunksInQuestion.SwapBuffers(NowVerticalChunksInQuestion);
-    this->VerticalChunksInQuestionMutex->unlock();
 
     return;
 }
 
-void Jafg::JChunkValidationSubsystem::TearDown()
-{
-    Super::TearDown();
-}
-
 Jafg::TdhArray<Jafg::LChunkKey2> Jafg::JChunkValidationSubsystem::CopyVerticalChunksInQuestion() const
 {
-    checkSlow( this->VerticalChunksInQuestionMutex )
-
-    std::lock_guard<std::mutex> Lock(*this->VerticalChunksInQuestionMutex);
+    std::shared_lock Lock(this->VerticalChunksInQuestionMutex);
     TdhArray<LChunkKey2> Copy = this->VerticalChunksInQuestion;
     return Copy;
 }

@@ -17,6 +17,9 @@ class AChunk;
 class JChunkGenerationSubsystem;
 class JChunkValidationSubsystem;
 
+//#
+//# The chunk generator system. This system is responsible for generating the content of all chunks.
+//#
 DECLARE_JAFG_CLASS()
 class JChunkGeneratorSubsystem final : public JThreadedWorldSubsystem
 {

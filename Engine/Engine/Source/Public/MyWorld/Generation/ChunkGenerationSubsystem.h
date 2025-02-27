@@ -38,17 +38,13 @@ public:
     FORCEINLINE auto GetPanickedChunk(const LChunkKey& InChunkKey) const -> AChunk*;
     FORCEINLINE auto FindLoadedChunkOrNull(const LChunkKey& ChunkKey) const -> AChunk*;
 
-    FORCEINLINE auto GetRenderDistance() const -> int32 { return this->RenderDistance; }
-    FORCEINLINE auto GetRenderHeight() const -> int32 { return this->RenderHeight; }
+    FORCEINLINE int32 GetRenderDistance() const { return *this->RenderDistance; }
+    FORCEINLINE int32 GetRenderHeight() const { return *this->RenderHeight; }
 
     FORCEINLINE auto GetOptimalVerticalChunkQueue() -> TQueue<LChunkKey2>& { return this->OptimalVerticalChunkQueue; }
 
-    FORCEINLINE TQueue<LChunkKey>& AcquireVipChunksToLoad()
-    {
-        this->VipChunksToLoadMutex->lock();
-        return this->VipChunksToLoad;
-    }
-    FORCEINLINE void ReleaseVipChunksToLoad() { this->VipChunksToLoadMutex->unlock(); }
+    FORCEINLINE auto AcquireVipChunksToLoad() -> TQueue<LChunkKey>&;
+    FORCEINLINE void ReleaseVipChunksToLoad() { this->VipChunksToLoadMutex.unlock(); }
 
 private:
 
@@ -60,13 +56,13 @@ private:
     //#         We should really implement our own hash map.
     //#
     std::unordered_map<LChunkKey, AChunk*>* LoadedChunks = nullptr;
-    std::shared_mutex* SharedLoadedChunksMutex = nullptr;
+    mutable std::shared_mutex LoadedChunksMutex;
 
     //#
     //# Very important persistent chunks to load to the world.
     //#
     TQueue<LChunkKey> VipChunksToLoad;
-    std::mutex* VipChunksToLoadMutex = nullptr;
+    std::mutex VipChunksToLoadMutex;
     void DequeueVipChunks();
 
     //#
@@ -78,21 +74,15 @@ private:
 
     void SafeLoadPersistentChunkPreSpawnedChunk(const LChunkKey& ChunkKey);
 
-#if PLATFORM_WASM
-    int32 RenderDistance = 1;
-    int32 RenderHeight   = 1;
-#else /* PLATFORM_WASM */
-    int32 RenderDistance = 2; // Move this to usr pref.
-    int32 RenderHeight   = 3; // Move this to usr pref.
-#endif /* !PLATFORM_WASM */
-
     LSharedChunkArgs*    SharedChunkArgs    = nullptr;
     LChunkShaderContext* ChunkShaderContext = nullptr;
+    const int32* RenderDistance = nullptr;
+    const int32* RenderHeight   = nullptr;
 };
 
 TdhArray<LChunkKey> JChunkGenerationSubsystem::GetCurrentActiveChunkSnapshot() const
 {
-    std::shared_lock<std::shared_mutex> lock(*this->SharedLoadedChunksMutex);
+    std::shared_lock Lock(this->LoadedChunksMutex);
     TdhArray<LChunkKey> Out;
     for (const auto& [Fst, Snd] : *this->LoadedChunks)
     {
@@ -116,9 +106,15 @@ AChunk* JChunkGenerationSubsystem::GetPanickedChunk(const LChunkKey& InChunkKey)
 
 AChunk* JChunkGenerationSubsystem::FindLoadedChunkOrNull(const LChunkKey& ChunkKey) const
 {
-    std::shared_lock<std::shared_mutex> lock(*this->SharedLoadedChunksMutex);
+    std::shared_lock Lock(this->LoadedChunksMutex);
     const std::unordered_map<LChunkKey, AChunk*>::iterator It = this->LoadedChunks->find(ChunkKey);
     return It == this->LoadedChunks->end() ? nullptr : It->second;
+}
+
+FORCEINLINE TQueue<LChunkKey>& JChunkGenerationSubsystem::AcquireVipChunksToLoad()
+{
+    this->VipChunksToLoadMutex.lock();
+    return this->VipChunksToLoad;
 }
 
 } /* ~Namespace Jafg */

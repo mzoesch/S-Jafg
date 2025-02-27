@@ -30,6 +30,7 @@ bool Jafg::Private::ReflectForwardEngineExitRequest()
     return false;
 }
 
+// TODO Make threadsafe
 void Jafg::RequestEngineExit()
 {
     if (WillShortlyTerminate())

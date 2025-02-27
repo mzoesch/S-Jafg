@@ -99,30 +99,30 @@ public:
 private:
 #endif /* !WITH_TESTS */
 
+    FORCEINLINE bool PopAlreadyLocked();
+
     struct TNode final
     {
-        TNode* volatile NextNode;
+        TNode* volatile NextNode = nullptr;
         T Content;
-        FORCEINLINE TNode() : NextNode(nullptr) { }
-        FORCEINLINE TNode(LNullptrTy) : NextNode(nullptr) { }
-        FORCEINLINE TNode(const T& InContent) : NextNode(nullptr), Content(InContent) { }
-        FORCEINLINE TNode(T&& InContent) : NextNode(nullptr), Content(std::move(InContent)) { }
-        ~TNode() = default;
+
+        FORCEINLINE TNode() { }
+        FORCEINLINE TNode(LNullptrTy) { }
+        FORCEINLINE TNode(const T& InContent) : Content(InContent) { }
+        FORCEINLINE TNode(T&& InContent) : Content(std::move(InContent)) { }
+        FORCEINLINE ~TNode() = default;
     };
 
-    TNode* volatile Head = nullptr;
-    TNode*          Tail = nullptr;
-    Smart::TUnique<std::mutex> Mutex = nullptr;
+    TNode* volatile   Head = nullptr;
+    TNode*            Tail = nullptr;
+    std::shared_mutex Mutex;
 };
 
 template <typename T, EQueueKind::Type TKind, typename TSizeType>
 TSimpleQueue<T, TKind, TSizeType>::~TSimpleQueue()
 {
-    if (this->Mutex)
-    {
-        this->Empty();
-    }
-
+    this->Mutex.lock();
+    while (this->PopAlreadyLocked()) { }
     check( this->Tail == nullptr )
     check( this->Head == nullptr )
 
@@ -146,26 +146,19 @@ bool TSimpleQueue<T, TKind, TSizeType>::Dequeue(T& OutContent)
 template <typename T, EQueueKind::Type TKind, typename TSizeType>
 void TSimpleQueue<T, TKind, TSizeType>::Enqueue(const T& InContent)
 {
-    if (this->Mutex == false)
-    {
-        /*
-         * The first mutex can only be allocated once by the producer. Therefore, this is thread-safe.
-         */
-        this->Mutex = Smart::MakeUnique(new std::mutex());
-    }
-
     TNode* NewNode = new TNode(InContent);
     checkSlow( NewNode )
 
     static_assert(TKind == EQueueKind::Spsc, "Missing enqueue implementation for this queue kind.");
-    this->Mutex.GetValue().lock();
+
+    std::unique_lock Lock(this->Mutex);
     if (this->Head)
     {
         TNode* OldHead = this->Head;
         this->Head = NewNode;
         std::atomic_thread_fence(std::memory_order_acq_rel);
         OldHead->NextNode = NewNode;
-        checkSlow( this->Tail != nullptr )
+        check( this->Tail != nullptr )
     }
     else
     {
@@ -173,7 +166,6 @@ void TSimpleQueue<T, TKind, TSizeType>::Enqueue(const T& InContent)
         this->Tail = NewNode;
         check( this->Tail->NextNode == nullptr )
     }
-    this->Mutex.GetValue().unlock();
 
     return;
 }
@@ -181,26 +173,19 @@ void TSimpleQueue<T, TKind, TSizeType>::Enqueue(const T& InContent)
 template <typename T, EQueueKind::Type TKind, typename TSizeType>
 void TSimpleQueue<T, TKind, TSizeType>::Enqueue(T&& InContent)
 {
-    if (this->Mutex == false)
-    {
-        /*
-         * The first mutex can only be allocated once by the producer. Therefore, this is thread-safe.
-         */
-        this->Mutex = Smart::MakeUnique(new std::mutex());
-    }
-
     TNode* NewNode = new TNode(std::move(InContent));
     checkSlow( NewNode )
 
     static_assert(TKind == EQueueKind::Spsc, "Missing enqueue implementation for this queue kind.");
-    this->Mutex.GetValue().lock();
+
+    std::unique_lock Lock(this->Mutex);
     if (this->Head)
     {
         TNode* OldHead = this->Head;
         this->Head = NewNode;
         std::atomic_thread_fence(std::memory_order_acq_rel);
         OldHead->NextNode = NewNode;
-        checkSlow( this->Tail != nullptr )
+        check( this->Tail != nullptr )
     }
     else
     {
@@ -208,7 +193,6 @@ void TSimpleQueue<T, TKind, TSizeType>::Enqueue(T&& InContent)
         this->Tail = NewNode;
         check( this->Tail->NextNode == nullptr )
     }
-    this->Mutex.GetValue().unlock();
 
     return;
 }
@@ -223,14 +207,14 @@ bool TSimpleQueue<T, TKind, TSizeType>::Pop()
 
     const TNode* Popped = this->Tail;
 
-    this->Mutex.GetValue().lock();
+    this->Mutex.lock();
     this->Tail = this->Tail->NextNode;
     if (this->Tail == nullptr)
     {
         check( Popped == this->Head )
         this->Head = nullptr;
     }
-    this->Mutex.GetValue().unlock();
+    this->Mutex.unlock();
 
     delete Popped;
 
@@ -313,6 +297,28 @@ bool TSimpleQueue<T, TKind, TSizeType>::UnsafeContains(const T& InContent) const
     }
 
     return false;
+}
+
+template <typename T, EQueueKind::Type TKind, typename TSizeType>
+bool TSimpleQueue<T, TKind, TSizeType>::PopAlreadyLocked()
+{
+    check( this->Mutex.try_lock() == false )
+    if (this->Tail == nullptr)
+    {
+        return false;
+    }
+
+    const TNode* Popped = this->Tail;
+    this->Tail = this->Tail->NextNode;
+    if (this->Tail == nullptr)
+    {
+        check( Popped == this->Head )
+        this->Head = nullptr;
+    }
+
+    delete Popped;
+
+    return true;
 }
 
 } /* ~Namespace Jafg */

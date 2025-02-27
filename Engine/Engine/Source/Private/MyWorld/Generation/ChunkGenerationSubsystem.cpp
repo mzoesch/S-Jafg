@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "Engine/World.h"
 #include "Engine/Framework/ApplicationInstance.h"
@@ -12,14 +11,12 @@
 #include "System/VoxelSubsystem.h"
 #include "System/MaterialSubsystem.h"
 #include "System/TextureSubsystem.h"
+#include "User/UserPreferences.h"
 
 void Jafg::JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
     this->SetTickInterval(0.0f);
-
-    this->SharedLoadedChunksMutex = new std::shared_mutex();
-    this->VipChunksToLoadMutex = new std::mutex();
 
     this->LoadedChunks = new std::unordered_map<LChunkKey, AChunk*>();
 
@@ -33,6 +30,10 @@ void Jafg::JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Col
     this->SharedChunkArgs->MaterialSubsystem  = this->GetWorld()->GetApplicationInstance()->GetCheckedSubsystem<JMaterialSubsystem>();
     this->SharedChunkArgs->TextureSubsystem  = this->GetWorld()->GetApplicationInstance()->GetCheckedSubsystem<JTextureSubsystem>();
     this->SharedChunkArgs->GetNewMesher = [] (AChunk& Owner) -> LChunkMesher* { return new LNaiveMesher(Owner); };
+
+    const JUserPreferences* Preferences = GetDefault<JUserPreferences>();
+    this->RenderDistance = &Preferences->ChunkRenderDistance;
+    this->RenderHeight   = &Preferences->ChunkRenderHeight;
 
     return;
 }
@@ -59,6 +60,8 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
 {
     Super::TearDown();
 
+    check( Tasks::IsOnMasterThread() )
+
     this->ChunkShaderContext->Free();
     delete this->ChunkShaderContext;
     this->ChunkShaderContext = nullptr;
@@ -67,20 +70,12 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
     delete this->SharedChunkArgs;
     this->SharedChunkArgs = nullptr;
 
-    check( this->SharedLoadedChunksMutex )
-    delete this->SharedLoadedChunksMutex;
-    this->SharedLoadedChunksMutex = nullptr;
+    this->LoadedChunksMutex.lock();
+    this->VipChunksToLoadMutex.lock();
+
     checkSlow( this->LoadedChunks )
     delete this->LoadedChunks;
     this->LoadedChunks = nullptr;
-
-    checkSlow( this->VipChunksToLoadMutex )
-    checkCode(
-        check( this->VipChunksToLoadMutex->try_lock() )
-        this->VipChunksToLoadMutex->unlock();
-    )
-    delete this->VipChunksToLoadMutex;
-    this->VipChunksToLoadMutex = nullptr;
 
     return;
 }
@@ -96,13 +91,13 @@ Jafg::AChunk* Jafg::JChunkGenerationSubsystem::SpawnChunk(const LChunkKey& InChu
 
 void Jafg::JChunkGenerationSubsystem::DequeueVipChunks()
 {
-    this->VipChunksToLoadMutex->lock();
+    this->VipChunksToLoadMutex.lock();
     LChunkKey VipChunkKey;
     while (this->VipChunksToLoad.Dequeue(VipChunkKey))
     {
         this->SafeLoadPersistentChunkPreSpawnedChunk(VipChunkKey);
     }
-    this->VipChunksToLoadMutex->unlock();
+    this->VipChunksToLoadMutex.unlock();
 
     return;
 }
@@ -117,7 +112,7 @@ bool Jafg::JChunkGenerationSubsystem::DequeueNextOptimalVerticalChunk()
     }
 
     bool Ret = false;
-    for (int32 Z = 0; Z <= this->RenderHeight; ++Z)
+    for (int32 Z = 0; Z <= this->GetRenderHeight(); ++Z)
     {
         AChunk* Chunk;
         if (Chunk = this->FindLoadedChunkOrNull(LChunkKey(OptimalVerticalChunk, Z)); Chunk == nullptr)
@@ -142,7 +137,7 @@ bool Jafg::JChunkGenerationSubsystem::DequeueNextOptimalVerticalChunk()
 
 void Jafg::JChunkGenerationSubsystem::SafeLoadPersistentChunkPreSpawnedChunk(const LChunkKey& ChunkKey)
 {
-    std::unique_lock<std::shared_mutex> lock(*this->SharedLoadedChunksMutex);
+    std::unique_lock Lock(this->LoadedChunksMutex);
     AChunk* Chunk = this->SpawnChunk(ChunkKey);
     this->LoadedChunks->emplace(ChunkKey, Chunk);
 

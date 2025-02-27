@@ -70,6 +70,11 @@ public:
     CLASS_FIELD(Config)
     TPreference<EPolygonMode::Type> PolygonMode { EPolygonMode::Fill };
 
+    CLASS_FIELD(Config)
+    int32 ChunkRenderDistance { 2 };
+    CLASS_FIELD(Config)
+    int32 ChunkRenderHeight   { 2 };
+
     ///////////////////////////////////////////////////////////////////////////////
     // Interface
     ///////////////////////////////////////////////////////////////////////////////

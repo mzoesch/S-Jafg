@@ -19,6 +19,8 @@ namespace Jafg
     #error "Missing implementation for this platform."
 #endif /* !PLATFORM_WINDOWS_WITH_GCC */
 
+typedef TFunction<void(void)> LTaskDelegate;
+
 namespace ENamedThreads
 {
 
@@ -36,6 +38,8 @@ enum Type : int32
     //
     // RESERVED for custom threads. Resolved at runtime.
     //
+
+    Failure         = 0x7FFFFFFF,
 };
 
 } /* ~Namespace NamedThreads */
@@ -79,20 +83,25 @@ namespace Tasks
 //#
 //# Map a named thread to a thread id. To be called by the thread itself.
 //#
-ENGINE_API void RegisterThread(ENamedThreads::Type Thread);
+ENGINE_API void RegisterThread(ENamedThreads::Type InThreadName);
 
-ENGINE_API LSimpleString GetCurrentThreadName();
-ENGINE_API LThreadId GetCurrentThreadId();
+ENGINE_API  auto GetCurrentThreadDisplayName() -> LSimpleString;
+ENGINE_API  auto GetCurrentThreadDisplayNameChecked() -> LSimpleString;
+ENGINE_API  auto GetCurrentThreadDisplayNameAsserted() -> LSimpleString;
+ENGINE_API  auto GetCurrentThreadName() -> ENamedThreads::Type;
+FORCEINLINE auto GetCurrentThreadNameChecked() -> ENamedThreads::Type;
+FORCEINLINE auto GetCurrentThreadNameAsserted() -> ENamedThreads::Type;
+ENGINE_API  auto GetCurrentThreadId() -> LThreadId;
 
-ENGINE_API bool IsOnThread(ENamedThreads::Type InThread);
-ENGINE_API bool IsOnMasterThread();
+ENGINE_API  bool IsOnThread(const ENamedThreads::Type InThreadName);
+FORCEINLINE bool IsOnMasterThread() { return IsOnThread(ENamedThreads::Master); }
 
 //#
 //# Make a new task that is being executed on the specified thread in the future.
 //# Is undefined when the task is being executed. It may be this tick or the tenth tick from now - depending on the
 //# current system load.
 //#
-ENGINE_API void Make(ENamedThreads::Type Thread, ETaskTime::Type Time, TFunction<void()>&& InDelegate);
+ENGINE_API void Make(const ENamedThreads::Type InThreadName, const ETaskTime::Type InPreferredTime, LTaskDelegate&& InDelegate);
 
 //# Launch a named thread. This thread is globally accessible by its ENamedThreads::Type.
 template <typename T> ETaskExit::Type LaunchNamedThread(ENamedThreads::Type Thread);
@@ -102,7 +111,7 @@ template <typename T> ETaskExit::Type LaunchNamedThread(ENamedThreads::Type Thre
 //# @remark This function should generally be preferred over #LaunchNamedThread(ENameThreads::Type) as it avoids
 //#         identifier clashing.
 //#
-template <typename T> ENamedThreads::Type LaunchNamedThread(ETaskExit::Type& OutExit);
+template <typename T> ENamedThreads::Type LaunchNamedThread(ETaskExit::Type* OutExit);
 
 namespace Private
 {
@@ -111,12 +120,12 @@ enum ERunAllTasks : int32 { RunAllTasks = 0, };
 
 ENGINE_API extern int32 CustomThreadCounter;
 
-ENGINE_API bool IsThreadRunning(const ENamedThreads::Type Thread);
+ENGINE_API bool IsThreadRunning(const ENamedThreads::Type InThreadName);
 
-ENGINE_API auto TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const int32 MaxTasks) -> void;
-ENGINE_API auto LaunchNamedThread(ENamedThreads::Type Thread, LRunnable* Runnable, const bool bKillRunnableWhenFinished = true) -> ETaskExit::Type;
+ENGINE_API void TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const int32 MaxTasks);
+ENGINE_API auto LaunchNamedThread(ENamedThreads::Type ThreadName, LRunnable* Runnable, const bool bKillRunnableWhenFinished = true) -> ETaskExit::Type;
 
-ENGINE_API void JoinThread(const ENamedThreads::Type Thread);
+ENGINE_API void JoinThread(const ENamedThreads::Type ThreadName);
 ENGINE_API void StopAndJoinRemainingThreads(const bool bJoinTasks = true);
 
 FORCEINLINE ENamedThreads::Type MakeNewCustomNamedThreadId()
@@ -127,20 +136,35 @@ FORCEINLINE ENamedThreads::Type MakeNewCustomNamedThreadId()
 
 } /* ~Namespace Private */
 
+FORCEINLINE ENamedThreads::Type GetCurrentThreadNameChecked()
+{
+    const ENamedThreads::Type Thread = GetCurrentThreadName();
+    check( Thread != ENamedThreads::Failure )
+    return Thread;
+}
+
+FORCEINLINE ENamedThreads::Type GetCurrentThreadNameAsserted()
+{
+    const ENamedThreads::Type Thread = GetCurrentThreadName();
+    jassert( Thread != ENamedThreads::Failure )
+    return Thread;
+}
+
 template <typename T>
-ETaskExit::Type LaunchNamedThread(ENamedThreads::Type Thread)
+FORCEINLINE ETaskExit::Type LaunchNamedThread(ENamedThreads::Type Thread)
 {
     static_assert(std::is_base_of_v<LRunnable, T>, "T must be derived from LRunnable.");
     return Private::LaunchNamedThread(Thread, new T());
 }
 
 template <typename T>
-ENamedThreads::Type LaunchNamedThread(ETaskExit::Type& OutExit)
+FORCEINLINE ENamedThreads::Type LaunchNamedThread(ETaskExit::Type* OutExit)
 {
     static_assert(std::is_base_of_v<LRunnable, T>, "T must be derived from LRunnable.");
+    check( OutExit )
 
     int32 JafgThreadId = Private::MakeNewCustomNamedThreadId();
-    OutExit = LaunchNamedThread<T>(static_cast<ENamedThreads::Type>(JafgThreadId));
+    *OutExit = LaunchNamedThread<T>(static_cast<ENamedThreads::Type>(JafgThreadId));
     return static_cast<ENamedThreads::Type>(JafgThreadId);
 }
 

@@ -6,79 +6,48 @@ namespace Jafg
 {
 
 /**
- * A Jafg implementation of a queue.
- * The queue is always thread-safe, unbounded and non-intrusive. This class is complex as it requires move and
- * copy semantics to function correctly.
- * @remark This class is not compatible with j objects. If you need to attach queues inside a j object, use
- *         TSimpleQueue instead.
+ * This is a thread safe, unbounded, non-intrusive and locked queue.
+ * Produces push back and the consumer pops from the front OR in the middle.
+ * @remark This queue is not lock-free because non-lock-free queues will never be able to satisfy all data-structure
+ *         requirements for J-Objects.
  */
-template <typename T, EQueueKind::Type TKind, typename TSizeType>
-class TComplexQueue final
+template <typename T, typename TSizeType>
+class TMpscQueue final
 {
 public:
 
-    static_assert(
-        TKind == EQueueKind::Spsc || TKind == EQueueKind::Mpsc,
-        "TComplexQueue only supports Spsc and Mpsc queues for now."
-    );
+    using LItemTy = T;
+    using LSizeTy = TSizeType;
 
-    using LSizeType = TSizeType;
+    FORCEINLINE TMpscQueue() = default;
+    PROHIBIT_COPY(TMpscQueue)
+    FORCEINLINE ~TMpscQueue() { this->Empty(); }
 
-    TComplexQueue() { this->Head = new TNode(); this->Tail = this->Head; }
-    PROHIBIT_COPY(TComplexQueue)
-    DEFAULT_MOVE(TComplexQueue)
-    ~TComplexQueue();
+    /** @remark Producer only. */
+    FORCEINLINE void Enqueue(const T& InContent) { this->EnqueueImpl(new TNode(InContent)); }
+    FORCEINLINE void Enqueue(T&& InContent) { this->EnqueueImpl(new TNode(std::move(InContent))); }
+    template <typename... TArgs>
+    FORCEINLINE void EnqueueByEmplace(TArgs&&... Args) { this->EnqueueImpl(new TNode(std::forward<TArgs>(Args)...)); }
 
-    /**
-     * Removes the content from the tail of the queue.
-     * @param OutContent The content of the dequeued item.
-     * @return Whether the out content is meaningful.
-     * @remark Consumer only.
-     */
-    FORCEINLINE bool Dequeue(T& OutContent);
+    /** @remark Consumer only. */
+    FORCEINLINE bool Dequeue(T* OutContent);
+    FORCEINLINE bool DequeueByMove(T* OutContent);
+    /** Allows to deque the first item for which the comparison is true. */
+    template <typename TOther>
+    FORCEINLINE bool DequeueWithComparison(T* OutContent, const TOther& InContent);
+    template <typename Predicate>
+    FORCEINLINE bool DequeueWithPredicate(T* OutContent, const Predicate& InPredicate);
+    template <typename TOther>
+    FORCEINLINE bool DequeueByMoveWithComparison(T* OutContent, const TOther& InContent);
+    template <typename Predicate>
+    FORCEINLINE bool DequeueByMoveWithPredicate(T* OutContent, const Predicate& InPredicate);
 
-    /**
-     * Adds new content to the head of the queue.
-     * @param InContent The content to add.
-     * @remark Producer only.
-     */
-    FORCEINLINE void Enqueue(const T& InContent);
-    FORCEINLINE void Enqueue(T&& InContent);
-
-    /**
-     * Removes the item from the tail of the queue.
-     * @return Whether the queue was not empty and a node was successfully removed.
-     * @remark Consumer only.
-     */
+    /** @remark Consumer only. */
     FORCEINLINE bool Pop();
 
-    /**
-     * Discards all items in the queue.
-     * @remark Consumer only.
-     */
-    FORCEINLINE void Empty() { while (this->Pop()) { } }
-
-    /**
-     * @return True if the queue was empty, false otherwise.
-     * @remark Consumer only.
-     */
-    FORCEINLINE bool IsEmpty() const { return this->Tail->NextNode == nullptr; }
-
-    /**
-     * Peeks at the queue's tail item without removing it.
-     * @param OutContent The content of the peeked item.
-     * @return Whether the out content is meaningful.
-     * @remark Consumer only.
-     */
-    FORCEINLINE bool Peek(T& OutContent) const;
-
-    /**
-     * Peeks at the queue's tail item without removing it.
-     * @return Pointer to the item, or nullptr if queue is empty.
-     * @remark Consumer only.
-     */
-    FORCEINLINE auto Peek() -> T*;
-    FORCEINLINE auto Peek() const -> const T*;
+    /** @remark Consumer only. */
+    FORCEINLINE void Empty();
+    FORCEINLINE bool IsEmpty() const;
 
     /**
      * Non-thread-safe num getter. For statistics, dev-checks and debugging purposes only.
@@ -86,15 +55,7 @@ public:
      * @remark If you feel the need to check the number of items in the queue apart from the above reasons, you should
      *         really reevaluate if a queue is the right data structure for your use case.
      */
-    FORCEINLINE LSizeType UnsafeSize() const;
-
-    /**
-     * Non-thread-safe contains check. For statistics, assertions and debugging purposes only.
-     * @remark Consumer only.
-     * @remark If you feel the need to check the existence of an item inside the queue apart from the above reasons,
-     *         you should really reevaluate if a queue is the right data structure for your use case.
-     */
-    FORCEINLINE bool UnsafeContains(const T& InContent) const;
+    FORCEINLINE LSizeTy UnsafeSize() const;
 
 #if WITH_TESTS
 public:
@@ -102,151 +63,303 @@ public:
 private:
 #endif /* !WITH_TESTS */
 
+    struct TNode;
+
+    FORCEINLINE void EnqueueImpl(TNode* NewNode);
+
     struct TNode final
     {
-        TNode* volatile NextNode;
-        T Content;
-        FORCEINLINE TNode() : NextNode(nullptr) { }
-        FORCEINLINE TNode(LNullptrTy) : NextNode(nullptr) { }
-        FORCEINLINE TNode(const T& InContent) : NextNode(nullptr), Content(InContent) { }
-        FORCEINLINE TNode(T&& InContent) : NextNode(nullptr), Content(std::move(InContent)) { }
-        ~TNode() = default;
+        TNode* NextNode = nullptr;
+        T      Content;
+
+        FORCEINLINE TNode() = delete;
+        FORCEINLINE TNode(const T& InContent) : Content(InContent) { }
+        FORCEINLINE TNode(T&& InContent) : Content(std::move(InContent)) { }
+        template <typename... TArgs>
+        FORCEINLINE TNode(TArgs&&... Args) : Content(std::forward<TArgs>(Args)...) { }
+        FORCEINLINE ~TNode() = default;
     };
 
-    TNode* volatile Head;
-    TNode*          Tail;
+    TNode*     Head = nullptr;
+    TNode*     Tail = nullptr;
+    std::mutex Mutex;
 };
 
-template <typename T, EQueueKind::Type TKind, typename TSizeType>
-TComplexQueue<T, TKind, TSizeType>::~TComplexQueue()
+template <typename T, typename TSizeType>
+bool TMpscQueue<T, TSizeType>::Dequeue(T* OutContent)
 {
-    while (this->Tail != nullptr)
-    {
-        const TNode* Node = this->Tail;
-        this->Tail = this->Tail->NextNode;
+    checkSlow( OutContent )
 
-        delete Node;
-    }
-
-    return;
-}
-
-template <typename T, EQueueKind::Type TKind, typename TSizeType>
-bool TComplexQueue<T, TKind, TSizeType>::Dequeue(T& OutContent)
-{
-    TNode* Popped = this->Tail->NextNode;
-
-    if (Popped == nullptr)
+    if (this->Tail == nullptr)
     {
         return false;
     }
 
-    OutContent = std::move(Popped->Content);
-
-    const TNode* OldTail = this->Tail;
-    this->Tail = Popped;
-    this->Tail->Content = T();
-    delete OldTail;
+    *OutContent = this->Tail->Content;
+    ensure(this->Pop());
 
     return true;
 }
 
-template <typename T, EQueueKind::Type TKind, typename TSizeType>
-void TComplexQueue<T, TKind, TSizeType>::Enqueue(const T& InContent)
+template <typename T, typename TSizeType>
+bool TMpscQueue<T, TSizeType>::DequeueByMove(T* OutContent)
 {
-    TNode* NewNode = new TNode(InContent);
-    checkSlow( NewNode )
+    checkSlow( OutContent )
 
-    if constexpr (TKind == EQueueKind::Spsc)
-    {
-        TNode* OldHead = this->Head;
-        this->Head = NewNode;
-        std::atomic_thread_fence(std::memory_order_acq_rel);
-        OldHead->NextNode = NewNode;
-    }
-    else
-    {
-        unimplemented()
-    }
-
-    return;
-}
-
-template <typename T, EQueueKind::Type TKind, typename TSizeType>
-void TComplexQueue<T, TKind, TSizeType>::Enqueue(T&& InContent)
-{
-    TNode* NewNode = new TNode(std::move(InContent));
-    checkSlow( NewNode )
-
-    if constexpr (TKind == EQueueKind::Spsc)
-    {
-        TNode* OldHead = this->Head;
-        this->Head = NewNode;
-        std::atomic_thread_fence(std::memory_order_acq_rel);
-        OldHead->NextNode = NewNode;
-    }
-    else
-    {
-        unimplemented()
-    }
-
-    return;
-}
-
-template <typename T, EQueueKind::Type TKind, typename TSizeType>
-bool TComplexQueue<T, TKind, TSizeType>::Pop()
-{
-    TNode* Popped = this->Tail->NextNode;
-
-    if (Popped == nullptr)
+    if (this->Tail == nullptr)
     {
         return false;
     }
 
-    const TNode* OldTail = this->Tail;
-    this->Tail = Popped;
-    this->Tail->Content = T();
-    delete OldTail;
+    *OutContent = std::move(this->Tail->Content);
+    ensure(this->Pop());
 
     return true;
 }
 
-template <typename T, EQueueKind::Type TKind, typename TSizeType>
-bool TComplexQueue<T, TKind, TSizeType>::Peek(T& OutContent) const
+template <typename T, typename TSizeType>
+template <typename TOther>
+bool TMpscQueue<T, TSizeType>::DequeueWithComparison(T* OutContent, const TOther& InContent)
 {
-    if (this->Tail->NextNode == nullptr)
+    checkSlow( OutContent )
+
+    if (this->Tail == nullptr)
     {
         return false;
     }
 
-    OutContent = this->Tail->NextNode->Content;
+    TNode* PrevCursor = nullptr;
+    TNode* Cursor     = this->Tail;
+    while (Cursor != nullptr)
+    {
+        if (Cursor->Content == InContent)
+        {
+            if (PrevCursor == nullptr)
+            {
+                return this->Dequeue(OutContent);
+            }
+
+            *OutContent = Cursor->Content;
+            std::unique_lock Lock(this->Mutex);
+            PrevCursor->NextNode = Cursor->NextNode;
+            if (this->Head == Cursor)
+            {
+                this->Head = PrevCursor->NextNode;
+                if (this->Head == nullptr)
+                {
+                    this->Head = this->Tail;
+                }
+            }
+            checkSlow( this->Head )
+            Lock.unlock();
+            delete Cursor;
+
+            return true;
+        }
+
+        PrevCursor = Cursor;
+        Cursor = Cursor->NextNode;
+
+        continue;
+    }
+
+    return false;
+}
+
+template <typename T, typename TSizeType>
+template <typename Predicate>
+bool TMpscQueue<T, TSizeType>::DequeueWithPredicate(T* OutContent, const Predicate& InPredicate)
+{
+    checkSlow( OutContent )
+
+    if (this->Tail == nullptr)
+    {
+        return false;
+    }
+
+    TNode* PrevCursor = nullptr;
+    TNode* Cursor     = this->Tail;
+    while (Cursor != nullptr)
+    {
+        if (InPredicate(Cursor->Content))
+        {
+            if (PrevCursor == nullptr)
+            {
+                return this->Dequeue(OutContent);
+            }
+
+            *OutContent = Cursor->Content;
+            std::unique_lock Lock(this->Mutex);
+            PrevCursor->NextNode = Cursor->NextNode;
+            if (this->Head == Cursor)
+            {
+                this->Head = PrevCursor->NextNode;
+                if (this->Head == nullptr)
+                {
+                    this->Head = this->Tail;
+                }
+            }
+            checkSlow( this->Head )
+            Lock.unlock();
+            delete Cursor;
+
+            return true;
+        }
+
+        PrevCursor = Cursor;
+        Cursor = Cursor->NextNode;
+
+        continue;
+    }
+
+    return false;
+}
+
+template <typename T, typename TSizeType>
+template <typename TOther>
+bool TMpscQueue<T, TSizeType>::DequeueByMoveWithComparison(T* OutContent, const TOther& InContent)
+{
+    checkSlow( OutContent )
+
+    if (this->Tail == nullptr)
+    {
+        return false;
+    }
+
+    TNode* PrevCursor = nullptr;
+    TNode* Cursor     = this->Tail;
+    while (Cursor != nullptr)
+    {
+        if (Cursor->Content == InContent)
+        {
+            if (PrevCursor == nullptr)
+            {
+                return this->DequeueByMove(OutContent);
+            }
+
+            *OutContent = std::move(Cursor->Content);
+            std::unique_lock Lock(this->Mutex);
+            PrevCursor->NextNode = Cursor->NextNode;
+            if (this->Head == Cursor)
+            {
+                this->Head = PrevCursor->NextNode;
+                if (this->Head == nullptr)
+                {
+                    this->Head = this->Tail;
+                }
+            }
+            checkSlow( this->Head )
+            Lock.unlock();
+            delete Cursor;
+
+            return true;
+        }
+
+        PrevCursor = Cursor;
+        Cursor = Cursor->NextNode;
+
+        continue;
+    }
+
+    return false;
+}
+
+template <typename T, typename TSizeType>
+template <typename Predicate>
+bool TMpscQueue<T, TSizeType>::DequeueByMoveWithPredicate(T* OutContent, const Predicate& InPredicate)
+{
+    checkSlow( OutContent )
+
+    if (this->Tail == nullptr)
+    {
+        return false;
+    }
+
+    TNode* PrevCursor = nullptr;
+    TNode* Cursor     = this->Tail;
+    while (Cursor != nullptr)
+    {
+        if (InPredicate(Cursor->Content))
+        {
+            if (PrevCursor == nullptr)
+            {
+                return this->DequeueByMove(OutContent);
+            }
+
+            *OutContent = std::move(Cursor->Content);
+            std::unique_lock Lock(this->Mutex);
+            PrevCursor->NextNode = Cursor->NextNode;
+            if (this->Head == Cursor)
+            {
+                this->Head = PrevCursor->NextNode;
+                if (this->Head == nullptr)
+                {
+                    this->Head = this->Tail;
+                }
+            }
+            checkSlow( this->Head )
+            Lock.unlock();
+            delete Cursor;
+
+            return true;
+        }
+
+        PrevCursor = Cursor;
+        Cursor = Cursor->NextNode;
+
+        continue;
+    }
+
+    return false;
+}
+
+template <typename T, typename TSizeType>
+bool TMpscQueue<T, TSizeType>::Pop()
+{
+    if (this->Tail == nullptr)
+    {
+        return false;
+    }
+
+    const TNode* Popped = this->Tail;
+
+    std::unique_lock Lock(this->Mutex);
+    this->Tail = this->Tail->NextNode;
+    if (this->Tail == nullptr)
+    {
+        check( Popped == this->Head )
+        this->Head = nullptr;
+    }
+    Lock.unlock();
+
+    delete Popped;
 
     return true;
 }
 
-template <typename T, EQueueKind::Type TKind, typename TSizeType>
-T* TComplexQueue<T, TKind, TSizeType>::Peek()
+template <typename T, typename TSizeType>
+void TMpscQueue<T, TSizeType>::Empty()
 {
-    if (this->Tail->NextNode == nullptr)
+    while (this->Pop()) { }
+}
+
+template <typename T, typename TSizeType>
+bool TMpscQueue<T, TSizeType>::IsEmpty() const
+{
+    return this->Tail == nullptr;
+}
+
+template <typename T, typename TSizeType>
+typename TMpscQueue<T, TSizeType>::LSizeTy TMpscQueue<T, TSizeType>::UnsafeSize() const
+{
+    if (this->Tail == nullptr)
     {
-        return nullptr;
+        return 0;
     }
 
-    return &this->Tail->NextNode->Content;
-}
+    LSizeTy Count = 0;
 
-template <typename T, EQueueKind::Type TKind, typename TSizeType>
-const T* TComplexQueue<T, TKind, TSizeType>::Peek() const
-{
-    return const_cast<TComplexQueue*>(this)->Peek();
-}
-
-template <typename T, EQueueKind::Type TKind, typename TSizeType>
-typename TComplexQueue<T, TKind, TSizeType>::LSizeType TComplexQueue<T, TKind, TSizeType>::UnsafeSize() const
-{
-    LSizeType Count = 0;
-
-    for (TNode* Node = this->Tail->NextNode; Node != nullptr; Node = Node->NextNode)
+    for (TNode* Node = this->Tail; Node != nullptr; Node = Node->NextNode)
     {
         ++Count;
     }
@@ -254,18 +367,26 @@ typename TComplexQueue<T, TKind, TSizeType>::LSizeType TComplexQueue<T, TKind, T
     return Count;
 }
 
-template <typename T, EQueueKind::Type TKind, typename TSizeType>
-bool TComplexQueue<T, TKind, TSizeType>::UnsafeContains(const T& InContent) const
+template <typename T, typename TSizeType>
+void TMpscQueue<T, TSizeType>::EnqueueImpl(TNode* NewNode)
 {
-    for (TNode* Node = this->Tail->NextNode; Node != nullptr; Node = Node->NextNode)
+    checkSlow( NewNode )
+
+    std::unique_lock Lock(this->Mutex);
+    if (this->Head)
     {
-        if (Node->Content == InContent)
-        {
-            return true;
-        }
+        TNode* OldHead = this->Head;
+        this->Head = NewNode;
+        OldHead->NextNode = NewNode;
+    }
+    else
+    {
+        this->Head = NewNode;
+        this->Tail = NewNode;
+        check( this->Tail->NextNode == nullptr )
     }
 
-    return false;
+    return;
 }
 
 } /* ~Namespace Jafg */

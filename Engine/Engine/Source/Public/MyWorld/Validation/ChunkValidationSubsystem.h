@@ -23,7 +23,6 @@ protected:
     // JCappedTickableWorldSubsystem implementation
     virtual void Initialize(LSubsystemCollection& Collection) override;
     virtual void FixedTick(const float EngineDeltaTime, const float SubsystemDeltaTime) override;
-    virtual void TearDown() override;
     // ~JCappedTickableWorldSubsystem implementation
 
 public:
@@ -32,10 +31,10 @@ public:
 
 private:
 
-    std::mutex* VerticalChunksInQuestionMutex = nullptr;
+    LChunkKey LastChunkKey = { std::numeric_limits<LChunkKeyDomainTy>::max() };
     TdhArray<LChunkKey2> VerticalChunksInQuestion;
     JChunkGenerationSubsystem* ChunkGenerationSubsystem = nullptr;
-    LChunkKey LastChunkKey = { std::numeric_limits<LChunkKeyDomainTy>::max() };
+    mutable std::shared_mutex VerticalChunksInQuestionMutex;
 };
 
 } /* ~Namespace Jafg */

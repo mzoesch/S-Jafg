@@ -85,8 +85,8 @@ struct LStringTraitsBase;
 template <typename InCharacterTy, class InTraitsTy>
 class LStringBase;
 
-template <typename T, EQueueKind::Type TKind = EQueueKind::Spsc, typename TSizeType = DefaultContainerSizeType>
-class TComplexQueue;
+template <typename T, typename TSizeType = DefaultContainerSizeType>
+class TMpscQueue;
 template <typename T, EQueueKind::Type TKind = EQueueKind::Spsc, typename TSizeType = DefaultContainerSizeType>
 class TSimpleQueue;
 
