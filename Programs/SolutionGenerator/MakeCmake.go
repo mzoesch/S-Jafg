@@ -638,6 +638,7 @@ func MakeCmakeScript(sln *Core.Solution) error {
             for _, d := range transitiveDependencies {
                 if !d.IsEqual(volatileModule) {
                     Wwi(b, 2, fmt.Sprintf("\"${REAL_ENGINE_ROOT_DIR}/%s/Source/Public\"", d.GetFunctionalRelativeDir()))
+                    Wwi(b, 2, fmt.Sprintf("\"${REAL_ENGINE_ROOT_DIR}/%s/%s/%s\"", sln.GetSavedRelativeDir(), d.GetFunctionalRelativeDir(), Core.GhDir))
                 }
             }
             for _, d := range volatileModule.NativeIncludeDirs {

@@ -375,6 +375,7 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
             for _, d := range transitiveDependencies {
                 if !d.IsEqual(volatileModule) {
                     Wwi(b, 4, fmt.Sprintf("'%s/%s/Source/Public',", sln.GetChdirUpRelToBuildFile(), d.GetFunctionalRelativeDir()))
+                    Wwi(b, 4, fmt.Sprintf("'%s/%s/%s/%s',", sln.GetChdirUpRelToBuildFile(), sln.GetSavedRelativeDir(), d.GetFunctionalRelativeDir(), Core.GhDir))
                 }
             }
             for _, d := range volatileModule.NativeIncludeDirs {
