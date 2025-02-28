@@ -145,7 +145,10 @@ void Jafg::LSurfaceGlfw3::Initialize()
     }
     else
     {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::AfterCorePackageLoad, [this](void){ this->SetVSync(GetDefault<JUserPreferences>()); });
+        Tasks::Make(ENamedThreads::Master, ETaskTime::AfterCorePackageLoad, [this](void)
+        {
+            this->SetVSync(GetDefault<JUserPreferences>()->bVSyncEnabled);
+        });
     }
 
 #if PLATFORM_WINDOWS
@@ -396,7 +399,7 @@ void Jafg::LSurfaceGlfw3::SetVSync(const bool bEnabled)
     this->bVSync = bEnabled;
 
     glfwMakeContextCurrent(this->Handle);
-    glfwSwapInterval(bEnabled ? 1 : 0);
+    glfwSwapInterval(this->bVSync ? 1 : 0);
 
     return;
 }

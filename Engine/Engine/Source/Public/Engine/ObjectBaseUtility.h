@@ -180,7 +180,7 @@ namespace Private
 //#
 ENGINE_API extern LObjectRegistry* GObjectRegistry;
 //# Referrs to a program global carnifex. This variable is not the owner.
-ENGINE_API extern LCarnifex**      GCarnifexReferrer;
+ENGINE_API extern LCarnifex* GCarnifexReferrer;
 
 ENGINE_API void CreateSingletonObjectRegistry(void);
 ENGINE_API void KillSingletonObjectRegistry(void);

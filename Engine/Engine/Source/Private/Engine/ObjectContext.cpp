@@ -12,7 +12,8 @@ Jafg::LObjectContext::LObjectContext()
 
 void Jafg::LObjectContext::TearDownContext()
 {
-    LOG_TRACE(
+    LOG_TRACE
+    (
         LogCarnifex,
         "Context [{}] found {} garbage employees. Begin to kill them.",
         this->HumanReadableName, this->Employees.GetSize()

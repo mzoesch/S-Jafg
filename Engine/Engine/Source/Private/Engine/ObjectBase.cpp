@@ -63,8 +63,7 @@ void Jafg::JObjectBase::KillYourSelfNow(const bool bMayBeGarbage /* = false */)
     }
 
     check( this->Outer )
-    check( this->Outer->Carnifex )
-    check( this->Outer->GetCarnifex() )
+    check( this->Outer->IsCarnifexValid() )
     this->Outer->GetCarnifex()->DevourGarbageChildNow(this);
 
     return;
@@ -97,8 +96,7 @@ void Jafg::JObjectBase::MarkAsGarbage(const bool bAddToCarnifex)
 
     if (bAddToCarnifex)
     {
-        check( this->Outer->Carnifex )
-        check( this->Outer->GetCarnifex() )
+        check( this->Outer->IsCarnifexValid() )
         this->Outer->GetCarnifex()->AddGarbageChild(this);
     }
 

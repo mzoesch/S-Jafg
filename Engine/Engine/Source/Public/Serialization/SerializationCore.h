@@ -87,7 +87,21 @@ template <>
 FORCEINLINE void Deserialize<bool>(bool* Destination, const LString& InValue)
 {
     checkSlow( Destination )
-    *Destination = InValue == "1";
+    if (InValue == "false" || InValue == "0")
+    {
+        *Destination = false;
+        return;
+    }
+
+    if (InValue == "true" || InValue == "1")
+    {
+        *Destination = true;
+        return;
+    }
+
+    panicMsgf( "Invalid boolean value [{}].", InValue.ToPtr() )
+
+    return;
 }
 
 } /* ~Namespace Jafg */

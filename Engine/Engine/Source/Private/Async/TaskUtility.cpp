@@ -566,14 +566,14 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
         TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, RunAllTasks);
     }
 
-    const Application::Private::LHrcTimePoint TimeBeforeJoinedAllThreads = Application::GetHighestNow();
+    const Application::LHrcTimePoint TimeBeforeJoinedAllThreads = Application::GetHighestNow();
     for (LEngineThread& Thread : ::EngineThreads)
     {
         if (Thread.Runnable)
         {
             check( Thread.Thread.IsSet())
             Thread.Runnable->Stop(ERunnableStopReason::EngineTermination);
-            const Application::Private::LHrcTimePoint TimeBeforeJoin = Application::GetHighestNow();
+            const Application::LHrcTimePoint TimeBeforeJoin = Application::GetHighestNow();
             if (Thread.Thread->joinable())
             {
                 Thread.Thread->join();
@@ -602,9 +602,7 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
         LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
         ::EngineThreadsMutex.lock();
     }
-    LOG_TRACE(LogTemporal, "F")
     ::EngineThreads.Empty();
-    LOG_TRACE(LogTemporal, "G")
     ::EngineThreadsMutex.unlock();
 
     LOG_INFO(LogTaskSystem, "Joined all threads after {} seconds.",

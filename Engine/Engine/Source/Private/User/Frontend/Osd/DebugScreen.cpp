@@ -369,12 +369,15 @@ void Jafg::WDebugScreen::SlowTick()
     {
         this->FpsSection->SetContent(
             LString::SprintF(
-                "{} Fps @ {:.2f} ms T: {}; VSync: {} - Fcsssi: {}",
+                "{} Fps @ {:.2f} ms T: {}; VSync: {} - Fcsssi: {}; L@{:.2f} Lh@{:.2f} I@{:.2f}",
                 static_cast<int32>(Application::GetCurrentFps()),
                 Application::GetDeltaTimeAsFloat() * 1'000.0f,
-                "?",
+                UserPreferences->MaxFps,
                 UserPreferences->bVSyncEnabled,
-                Application::GetFrameCount()
+                Application::GetFrameCount(),
+                Application::GetLostDeltaTime() * 1'000.0f,
+                Application::GetHighestLostDeltaTime() * 1'000.0f,
+                Application::GetIdleDeltaTime() * 1'000.0f
             )
         );
     }

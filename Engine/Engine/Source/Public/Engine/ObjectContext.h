@@ -35,7 +35,8 @@ public:
 
     virtual void TearDownContext();
 
-    FORCEINLINE auto GetCarnifex() const -> LCarnifex* { return *this->Carnifex; }
+    FORCEINLINE bool IsCarnifexValid() const { return this->Carnifex != nullptr; }
+    FORCEINLINE auto GetCarnifex() const -> LCarnifex* { return this->Carnifex; }
 
     FORCEINLINE auto SetHumanReadableName(const LSimpleString& InS) -> void { this->HumanReadableName = InS; }
     FORCEINLINE auto GetHumanReadableName() const -> const LSimpleString& { return this->HumanReadableName; }
@@ -45,7 +46,7 @@ private:
     LSimpleString HumanReadableName;
 
     //# The carnifex that is used to mascara all children within this context.
-    LCarnifex** Carnifex = nullptr;
+    LCarnifex* Carnifex = nullptr;
 
     //#
     //# The employees that are working within this context.

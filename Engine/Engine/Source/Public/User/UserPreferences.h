@@ -23,12 +23,12 @@ enum Type : uint8
 } /* ~Namespace EPolygonMode. */
 template <> struct TIsPreferenceTypeAllowed<EPolygonMode::Type> : std::true_type { };
 template <>
-FORCEINLINE void Deserialize<TPreference<EPolygonMode::Type>>(TPreference<EPolygonMode::Type>* Destination, const LString& InValue)
+FORCEINLINE void Deserialize<EPolygonMode::Type>(EPolygonMode::Type* Destination, const LString& InValue)
 {
     static_assert(std::is_enum_v<EPolygonMode::Type>);
     static_assert(std::is_same_v<uint8, std::underlying_type_t<EPolygonMode::Type>>);
     checkSlow( Destination )
-    Jafg::Deserialize<uint8>(reinterpret_cast<uint8*>(&Destination->Value), InValue);
+    Deserialize<uint8>(reinterpret_cast<uint8*>(&Destination), InValue);
     return;
 }
 #if PLATFORM_WASM
@@ -46,11 +46,13 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JUserPreferences)
 
+public:
+
+    enum { UnlimitedFps = 0 };
+
     ///////////////////////////////////////////////////////////////////////////////
     // Audio
     ///////////////////////////////////////////////////////////////////////////////
-
-public:
 
     CLASS_FIELD(Config)
     LPreferenceFloat MasterVolume { 1.0f, true };
@@ -67,6 +69,10 @@ public:
 
     CLASS_FIELD(Config)
     LPreferenceBool bVSyncEnabled { true };
+    //# Number of maximum frames per second. Zero means no limit. This requires VSync to be disabled.
+    CLASS_FIELD(Config)
+    LPreferenceInt32 MaxFps       { UnlimitedFps };
+
     CLASS_FIELD(Config)
     TPreference<EPolygonMode::Type> PolygonMode { EPolygonMode::Fill };
 

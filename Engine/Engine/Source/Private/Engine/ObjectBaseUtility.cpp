@@ -19,7 +19,7 @@ namespace Private
 {
 
 ENGINE_API LObjectRegistry* GObjectRegistry   = nullptr;
-ENGINE_API LCarnifex**      GCarnifexReferrer = nullptr;
+ENGINE_API LCarnifex*       GCarnifexReferrer = nullptr;
 
 } /* ~Namespace Private */
 

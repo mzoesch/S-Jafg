@@ -37,7 +37,6 @@ void Jafg::JChunkValidationSubsystem::FixedTick(const float EngineDeltaTime, con
     Validation::GetAllChunksFromCenterAsBox(CurrentKey.XY(), this->ChunkGenerationSubsystem->GetRenderDistance(), NowVerticalChunksInQuestion);
 
     TQueue<LChunkKey2>& OptimalQueue = this->ChunkGenerationSubsystem->GetOptimalVerticalChunkQueue();
-    LOG_WARNING(LogTemporal, "OptimalQueue: {}", OptimalQueue.UnsafeSize())
     OptimalQueue.Empty();
     for (const LChunkKey2& Chunk : NowVerticalChunksInQuestion)
     {

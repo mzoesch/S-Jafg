@@ -147,47 +147,6 @@ void Jafg::LEngine::TearDown()
     return;
 }
 
-/* It does not really make sense to make this static, as if there is no global engine object we cannot update time. */
-// ReSharper disable once CppMemberFunctionMayBeStatic
-void Jafg::LEngine::UpdateTime()
-{
-    using namespace Jafg;
-
-    Application::SetPreviousFrameTime(Application::GetCurrentFrameTime());
-    Application::SetCurrentFrameTime(
-        Application::GetTimeDifferenceFromStaticStorageInitialization(
-            Application::GetHighestNow()
-        )
-    );
-    Application::SetDeltaTime(Application::GetCurrentFrameTime() - Application::GetPreviousFrameTime());
-    if (Application::GetDeltaTime() < Application::GetLowestDeltaTime())
-    {
-        Application::SetLowestDeltaTime(Application::GetDeltaTime());
-    }
-    if (Application::GetDeltaTime() > Application::GetHighestDeltaTime())
-    {
-        Application::SetHighestDeltaTime(Application::GetDeltaTime());
-    }
-
-    Application::UpdateFrameCount();
-
-    const Application::Private::LHrcTimePoint CurrentSteadyTime = Application::GetHighestNow();
-    if (
-            std::chrono::duration<double>(CurrentSteadyTime - Application::GetLastStatisticsTime()).count()
-        >
-            Application::GetStatisticsPeriod()
-    )
-    {
-        Application::ResetStatistics();
-    }
-
-    return;
-}
-
-void Jafg::LEngine::EnforceTickRate()
-{
-}
-
 /* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
 // ReSharper disable once CppMemberFunctionMayBeStatic
 void Jafg::LEngine::BeginExitIfRequested()

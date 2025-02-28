@@ -177,8 +177,16 @@ FORCEINLINE void Deserialize<TPreference<float>>(TPreference<float>* Destination
     return;
 }
 
-template <>
-FORCEINLINE LString Serialize<TPreference<float>>(const TPreference<float>& InValue)
+template <typename T>
+FORCEINLINE void Deserialize(TPreference<T>* Destination, const LString& InValue)
+{
+    checkSlow( Destination )
+    Deserialize<T>(&Destination->Value, InValue);
+    return;
+}
+
+template <typename T>
+FORCEINLINE LString Serialize(const TPreference<T>& InValue)
 {
     return LString::SprintF("{}", InValue.GetCurrentValue());
 }

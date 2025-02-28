@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Engine/Engine.h"
 #include "Core/Application.h"
 #include "Core/LaunchProgress.h"
@@ -9,6 +8,7 @@
 #include "Engine/Carnifex.h"
 #include "Platform/PlatformMisc.h"
 #include "Async/TaskUtility.h"
+#include "User/UserPreferences.h"
 #if WITH_VIRTUAL_FILESYSTEM
     #include "System/VFilesystem.h"
 #endif /* WITH_VIRTUAL_FILESYSTEM */
@@ -18,9 +18,24 @@ using namespace Jafg;
 namespace
 {
 
-LCarnifex* PrivateCarnifex = nullptr;
+LCarnifex PrivateCarnifex;
 
 } /* ~Namespace <Anonymous> */
+
+#if IN_SHIPPING
+    #define FORCE_LOG_FLUSH_INTERVAL        10.0
+    #define LOG_TIME_FOR_VERY_LONG_FRAMES   2.0
+#else /* IN_SHIPPING */
+    #define FORCE_LOG_FLUSH_INTERVAL        0.2
+    #define LOG_TIME_FOR_VERY_LONG_FRAMES   0.7
+#endif /* !IN_SHIPPING */
+
+FORCEINLINE void FlushLogs()
+{
+    LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
+    Application::Private::LastStdOutFlushTime = Application::GetHighestNow();
+    return;
+}
 
 #if !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT)
 FORCEINLINE
@@ -43,20 +58,82 @@ FORCEINLINE
 #endif /* !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT) */
 void EngineTick()
 {
-    checkSlow( Jafg::Tasks::IsOnMasterThread() )
+    checkSlow( Tasks::IsOnMasterThread() )
 
-    LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST() /* Just temporary. */
+    if (Application::GetTimeDiff(Application::Private::LastStdOutFlushTime, Application::GetHighestNow()) > FORCE_LOG_FLUSH_INTERVAL)
+    {
+        ::FlushLogs();
+    }
 
     GEngine->BeginExitIfRequested();
 
     {
-        GEngine->UpdateTime();
-        GEngine->EnforceTickRate();
+        const JUserPreferences* UserPreferences = GetDefault<JUserPreferences>();
+
+        Application::Private::LostDeltaTime = 0.0;
+        Application::Private::IdleDeltaTime = 0.0;
+
+        const double ThisFrameTime = Application::GetTimeDifferenceFromStaticStorageInitialization(Application::GetHighestNow()) - Application::GetCurrentFrameTime();
+        if (UserPreferences->bVSyncEnabled == false && UserPreferences->MaxFps != JUserPreferences::UnlimitedFps)
+        {
+            if (ThisFrameTime < 1.0 / UserPreferences->MaxFps)
+            {
+                const Application::LHrcTimePoint SleepStart = Application::GetHighestNow();
+                const double SleepTime = (1.0 / UserPreferences->MaxFps) - ThisFrameTime;
+                PlatformHal::Sleep(Maths::Max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
+                Application::Private::IdleDeltaTime = Application::GetTimeDiff(SleepStart, Application::GetHighestNow());
+            }
+        }
+
+        Application::Private::PreviousFrameTime = Application::GetCurrentFrameTime();
+        Application::Private::CurrentFrameTime  = Application::GetTimeDifferenceFromStaticStorageInitialization(Application::GetHighestNow());
+        Application::Private::DeltaTime         = Application::GetCurrentFrameTime() - Application::GetPreviousFrameTime();
+        Application::Private::RealDeltaTime     = Application::GetDeltaTime();
+
+        if (Application::GetDeltaTime() < Application::GetLowestDeltaTime())
+        {
+            Application::Private::LowestDeltaTime = Application::GetDeltaTime();
+        }
+        if (Application::GetDeltaTime() > Application::GetHighestDeltaTime())
+        {
+            Application::Private::HighestDeltaTime = Application::GetDeltaTime();
+        }
+
+        ++Application::Private::FrameCount;
+        ++Application::Private::StatisticsFrameCount;
+
+        if (Application::GetDeltaTime() > Application::MaxDeltaTime)
+        {
+            if constexpr (IS_COMPILED_LOG(LogGuardedMain, Warning))
+            {
+                if (Application::GetDeltaTime() > LOG_TIME_FOR_VERY_LONG_FRAMES)
+                {
+                    LOG_WARNING(LogGuardedMain, "Very long frame detected: {} seconds.", Application::GetDeltaTime())
+                }
+            }
+            Application::Private::LostDeltaTime += Application::GetDeltaTime() - Application::MaxDeltaTime;
+            if (Application::GetHighestLostDeltaTime() < Application::GetLostDeltaTime())
+            {
+                Application::Private::HighestLostDeltaTime = Application::GetLostDeltaTime();
+            }
+            Application::Private::DeltaTime = Application::MaxDeltaTime;
+        }
+
+        const Application::LHrcTimePoint CurrentSteadyTime = Application::GetHighestNow();
+        if
+        (
+                std::chrono::duration<double>(CurrentSteadyTime - Application::GetLastStatisticsTime()).count()
+            >
+                Application::GetStatisticsPeriod()
+        )
+        {
+            Application::ResetStatistics();
+        }
     }
 
     GEngine->Tick(Application::GetDeltaTimeAsFloat());
 
-    PrivateCarnifex->KillAllGarbageChildren();
+    PrivateCarnifex.KillAllGarbageChildren();
 
     return;
 }
@@ -94,14 +171,8 @@ void EngineExit()
         GOmniVitaContext = nullptr;
     }
 
-    if (PrivateCarnifex)
-    {
-        PrivateCarnifex->KillAllGarbageChildren();
-        check( Private::GCarnifexReferrer == nullptr || PrivateCarnifex == *Private::GCarnifexReferrer )
-        delete PrivateCarnifex;
-        Private::GCarnifexReferrer = nullptr;
-        PrivateCarnifex = nullptr;
-    }
+    PrivateCarnifex.KillAllGarbageChildren();
+    Private::GCarnifexReferrer = nullptr;
 
     if (Private::GObjectRegistry)
     {
@@ -148,7 +219,7 @@ void EngineExit()
     return;
 }
 
-EPlatformExit::Type GuardedMain(const char* CmdLine)
+EPlatformExit::Type GuardedMain()
 {
 #if !PLATFORM_USES_NON_GENERIC_EXIT
     struct GuardedMainScope
@@ -160,7 +231,8 @@ EPlatformExit::Type GuardedMain(const char* CmdLine)
     } GuardedMainScope;
 #endif /* !PLATFORM_USES_NON_GENERIC_EXIT */
 
-    LOG_INFO(
+    LOG_INFO
+    (
         LogGuardedMain,
         "Finished static storage initialization after {} seconds.",
         Application::GetDeltaSinceStaticStorageInitialization()
@@ -192,7 +264,6 @@ EPlatformExit::Type GuardedMain(const char* CmdLine)
     Private::ClearStaticNameContainer();
     LOG_INFO(LogNames, "Finished transferring static names to the name registry. With a total of {} names.", Private::GNameRegistry->GetNameCount())
 
-    PrivateCarnifex            = new LCarnifex();
     Private::GCarnifexReferrer = &PrivateCarnifex;
     GOmniVitaContext           = new LObjectContext();
     GOmniVitaContext->SetHumanReadableName("OmniVitaContext");
@@ -224,6 +295,7 @@ EPlatformExit::Type GuardedMain(const char* CmdLine)
     }
 
     LaunchProgress::BeginProgress("End of initialization", "Starting ticking ...", 1.0f);
+    ::FlushLogs();
     LaunchProgress::FinishAndGiveUpMemory();
 
 #if PLATFORM_USES_NON_GENERIC_LOOP
