@@ -112,8 +112,6 @@ void Jafg::LSurfaceGlfw3::Initialize()
         return;
     }
 
-    check( this->GetViewport() )
-
     glfwMakeContextCurrent(this->Handle);
     glfwSetWindowUserPointer(this->Handle, reinterpret_cast<void*>(this));
 
@@ -159,11 +157,11 @@ void Jafg::LSurfaceGlfw3::Initialize()
     const uint32 PlatformDpi = 96; // Sketchy
 #endif /* !PLATFORM_WINDOWS */
 
-    this->GetViewport()->SetPlatformDpi(static_cast<float>(PlatformDpi));
+    this->GetViewport().SetPlatformDpi(static_cast<float>(PlatformDpi));
 
     const LIntVector2 WindowDimensions = this->GetDimensions();
     glViewport(0, 0, WindowDimensions.X, WindowDimensions.Y);
-    this->GetViewport()->ChangeDimensions(WindowDimensions);
+    this->GetViewport().ChangeDimensions(WindowDimensions);
 
     glfwSetErrorCallback(::OpenGlErrorCallback);
     glfwSetFramebufferSizeCallback(this->Handle, Private::LGlfw3Bridge::FramebufferSizeCallback);
@@ -411,11 +409,7 @@ void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const int32 Width, const int32
     glfwMakeContextCurrent(this->Handle);
 
     glViewport(0, 0, Width, Height);
-
-    if (this->GetViewport())
-    {
-        this->GetViewport()->ChangeDimensions({Width, Height});
-    }
+    this->GetViewport().ChangeDimensions({Width, Height});
 
     return;
 }

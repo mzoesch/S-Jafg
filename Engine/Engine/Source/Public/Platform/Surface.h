@@ -14,11 +14,10 @@
 #include "User/Input/RawInput.h"
 #include "User/Input/InputMode.h"
 #include "Platform/MouseCursor.h"
+#include "Widgets/Viewport.h"
 
 namespace Jafg
 {
-
-class LViewport;
 
 //#
 //# Interface for a generic surface that the RHI may use to draw on.
@@ -36,8 +35,8 @@ public:
 
     //# Initialize should make the handle to a native surface screen valid or panic if not possible.
     virtual void Initialize();
-    virtual void OnClear();
-    virtual void OnUpdate();
+    virtual void OnClear() { this->SurfaceViewport.OnClear(); }
+    virtual void OnUpdate() { this->SurfaceViewport.Draw(); }
     //# TearDown should release the handle to the native surface screen or panic if not possible.
     virtual void TearDown();
 
@@ -55,7 +54,8 @@ public:
     FORCEINLINE auto GetMouseLocation() const -> LVector2 { return this->MouseLocation; }
     virtual     void SetMouseCursor(const EMouseCursor::Type InCursor) = 0;
 
-    FORCEINLINE       auto GetViewport() const -> LViewport* { return this->SurfaceViewport; }
+    FORCEINLINE       auto GetViewport()       ->       LViewport& { return this->SurfaceViewport; }
+    FORCEINLINE       auto GetViewport() const -> const LViewport& { return this->SurfaceViewport; }
     NODISCARD virtual auto GetWidth() const -> int32                    = 0;
     NODISCARD virtual auto GetHeight() const -> int32                   = 0;
     NODISCARD virtual auto GetDimensions() const -> TIntVector2<int32>  = 0;
@@ -111,7 +111,8 @@ private:
     //#
     //# The viewport that is used to draw on this surface meaning the viewport that includes the whole surface screen.
     //#
-    LViewport* SurfaceViewport = nullptr;
+    LViewport SurfaceViewport;
+    bool bSurfaceViewportValid = false;
 
     //# The keys that are currently down for this surface this frame.
     TdhArray<LRawInput> DownKeys;

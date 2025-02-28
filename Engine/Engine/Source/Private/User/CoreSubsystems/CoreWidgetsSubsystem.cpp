@@ -14,22 +14,22 @@
     Super::Initialize(Collection);
 
     this->DebugScreen = ConstructDeferredWidgetNode<WDebugScreen>(this->GetOuter());
-    this->DebugScreen->AddToViewport(this->GetHud()->GetMainViewport());
+    this->DebugScreen->AddToViewport(&this->GetHud()->GetMainViewport());
     this->DebugScreen->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->DebugScreen);
 
     this->Crosshair = ConstructDeferredWidgetNode<WCrosshair>(this->GetOuter());
-    this->Crosshair->AddToViewport(this->GetHud()->GetMainViewport());
+    this->Crosshair->AddToViewport(&this->GetHud()->GetMainViewport());
     this->Crosshair->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
     MakeDeferredWidgetNodeFinal(this->Crosshair);
 
     this->ConsoleScreen = ConstructDeferredWidgetNode<WConsoleScreen>(this->GetOuter());
-    this->ConsoleScreen->AddToViewport(this->GetHud()->GetMainViewport());
+    this->ConsoleScreen->AddToViewport(&this->GetHud()->GetMainViewport());
     this->ConsoleScreen->SetConsoleFrontendState(EConsoleScreenState::Hide);
     MakeDeferredWidgetNodeFinal(this->ConsoleScreen);
 
     this->PauseScreen = ConstructDeferredWidgetNode<WPauseScreen>(this->GetOuter());
-    this->PauseScreen->AddToViewport(this->GetHud()->GetMainViewport());
+    this->PauseScreen->AddToViewport(&this->GetHud()->GetMainViewport());
     this->PauseScreen->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->PauseScreen);
 

@@ -56,14 +56,10 @@ public:
         return this->FrameZLayerDepth;
     }
 
-    auto GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) -> WWidgetNode*;
-    auto GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> const WWidgetNode*;
-    FORCEINLINE auto GetCheckedTopLevelWidgetByClass(const LObjectClass* WidgetClass) -> WWidgetNode*;
-    FORCEINLINE auto GetCheckedTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> const WWidgetNode*;
-    template <typename TNode> FORCEINLINE auto GetTopLevelWidgetByClass() -> TNode*;
-    template <typename TNode> FORCEINLINE auto GetTopLevelWidgetByClass() const -> const TNode*;
-    template <typename TNode> FORCEINLINE auto GetCheckedTopLevelWidgetByClass() -> TNode*;
-    template <typename TNode> FORCEINLINE auto GetCheckedTopLevelWidgetByClass() const -> const TNode*;
+                auto GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> WWidgetNode*;
+    FORCEINLINE auto GetCheckedTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> WWidgetNode*;
+    template <typename TNode> FORCEINLINE auto GetTopLevelWidgetByClass() const -> TNode*;
+    template <typename TNode> FORCEINLINE auto GetCheckedTopLevelWidgetByClass() const -> TNode*;
 
     template <typename TNode>
     FORCEINLINE auto GetFocusedWidget() const -> const TNode* { return DynamicCast<TNode>(this->FocusedWidget); }
@@ -110,42 +106,22 @@ private:
     LFrameBuffer LevelBuffer = { };
 };
 
-FORCEINLINE auto LViewport::GetCheckedTopLevelWidgetByClass(const LObjectClass* WidgetClass) -> WWidgetNode*
+FORCEINLINE auto LViewport::GetCheckedTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> WWidgetNode*
 {
     WWidgetNode* Widget = this->GetTopLevelWidgetByClass(WidgetClass);
     check( Widget )
     return Widget;
 }
 
-FORCEINLINE auto LViewport::GetCheckedTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> const WWidgetNode*
-{
-    const WWidgetNode* Widget = this->GetTopLevelWidgetByClass(WidgetClass);
-    check( Widget )
-    return Widget;
-}
-
 template <typename TNode>
-FORCEINLINE TNode* LViewport::GetTopLevelWidgetByClass()
+FORCEINLINE TNode* LViewport::GetTopLevelWidgetByClass() const
 {
     static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
     return CheckedStaticCast<TNode, true>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
 }
 
 template <typename TNode>
-FORCEINLINE const TNode* LViewport::GetTopLevelWidgetByClass() const
-{
-    static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
-    return CheckedStaticCast<TNode, true>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
-}
-
-template <typename TNode>
-FORCEINLINE TNode* LViewport::GetCheckedTopLevelWidgetByClass()
-{
-    return CheckedStaticCast<TNode>(this->GetCheckedTopLevelWidgetByClass(TNode::StaticClass()));
-}
-
-template <typename TNode>
-FORCEINLINE const TNode* LViewport::GetCheckedTopLevelWidgetByClass() const
+FORCEINLINE TNode* LViewport::GetCheckedTopLevelWidgetByClass() const
 {
     return CheckedStaticCast<TNode>(this->GetCheckedTopLevelWidgetByClass(TNode::StaticClass()));
 }

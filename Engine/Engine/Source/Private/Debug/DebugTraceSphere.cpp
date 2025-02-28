@@ -44,7 +44,7 @@ void Jafg::LDebugTraceSphere::Draw(const LWorld& InContext) const
     Args.Stacks = this->VisualParams.Segments;
     Args.Color = this->VisualParams.Color;
     Args.Thickness = this->VisualParams.Thickness;
-    ::GetSphereShaderContext()->Draw(*InContext.GetLocalEgo()->GetPrimarySurface()->GetViewport(), Args);
+    ::GetSphereShaderContext()->Draw(InContext.GetLocalEgo()->GetPrimarySurface()->GetViewport(), Args);
 
     return;
 }

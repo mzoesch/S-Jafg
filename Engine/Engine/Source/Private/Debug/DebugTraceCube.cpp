@@ -41,7 +41,7 @@ void Jafg::LDebugTraceCube::Draw(const LWorld& InContext) const
     Args.RelTopFarRight = this->TopRelFarRight;
     Args.Color = this->VisualParams.Color;
     Args.Thickness = this->VisualParams.Thickness;
-    ::GetCubeShaderContext()->Draw(*InContext.GetLocalEgo()->GetPrimarySurface()->GetViewport(), Args);
+    ::GetCubeShaderContext()->Draw(InContext.GetLocalEgo()->GetPrimarySurface()->GetViewport(), Args);
 
     return;
 }

@@ -21,8 +21,6 @@ void Jafg::LHud::Initialize(LObjectContext* InOuter)
     this->Collection->LocateAllSubsystemsOfClass(JHudSubsystem::StaticClass());
     this->Collection->InitializeSubsystems();
 
-    check( this->GetMainViewport() )
-
     return;
 }
 
@@ -30,16 +28,16 @@ void Jafg::LHud::Tick(LSurface& Surface, const bool bCheckInput)
 {
     if (bCheckInput && Surface.IsMouseLocationMeaningful())
     {
-        this->GetMainViewport()->DispatchInputs(Surface, Surface.GetMouseLocation());
+        this->GetMainViewport().DispatchInputs(Surface, Surface.GetMouseLocation());
     }
     else
     {
         if (bCheckInput)
         {
-            this->GetMainViewport()->DispatchInputs(Surface, LVector2(-1.0f));
+            this->GetMainViewport().DispatchInputs(Surface, LVector2(-1.0f));
         }
 
-        this->GetMainViewport()->OnMouseLeftViewport(Surface, bCheckInput == false);
+        this->GetMainViewport().OnMouseLeftViewport(Surface, bCheckInput == false);
     }
 
     this->Collection->ForEachSubsystem( [] (JSubsystem* Subsystem)
@@ -59,7 +57,7 @@ void Jafg::LHud::Tick(LSurface& Surface, const bool bCheckInput)
         return;
     });
 
-    this->GetMainViewport()->Tick();
+    this->GetMainViewport().Tick();
 
     return;
 }
@@ -75,29 +73,34 @@ void Jafg::LHud::TearDown()
     return;
 }
 
-Jafg::LViewport* Jafg::LHud::GetMainViewport() const
+Jafg::LViewport& Jafg::LHud::GetMainViewport()
 {
     return GEngine->GetPanickedLocalEgo()->GetPrimarySurface()->GetViewport();
 }
 
-void Jafg::LHud::AddWidget(WUserWidget* Widget) const
+const Jafg::LViewport& Jafg::LHud::GetMainViewport() const
 {
-    this->GetMainViewport()->AddWidget(Widget);
+    return GEngine->GetPanickedLocalEgo()->GetPrimarySurface()->GetViewport();
 }
 
-void Jafg::LHud::RemoveWidget(WUserWidget* Widget) const
+void Jafg::LHud::AddWidget(WUserWidget* Widget)
 {
-    this->GetMainViewport()->RemoveWidget(Widget);
+    this->GetMainViewport().AddWidget(Widget);
+}
+
+void Jafg::LHud::RemoveWidget(WUserWidget* Widget)
+{
+    this->GetMainViewport().RemoveWidget(Widget);
 }
 
 Jafg::WWidgetNode* Jafg::LHud::GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
 {
-    return this->GetMainViewport()->GetTopLevelWidgetByClass(WidgetClass);
+    return this->GetMainViewport().GetTopLevelWidgetByClass(WidgetClass);
 }
 
 Jafg::WWidgetNode* Jafg::LHud::GetCheckedTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
 {
-    return this->GetMainViewport()->GetCheckedTopLevelWidgetByClass(WidgetClass);
+    return this->GetMainViewport().GetCheckedTopLevelWidgetByClass(WidgetClass);
 }
 
 bool Jafg::LHud::ChangeWidgetVisibility(const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound /* = false */) const
@@ -123,19 +126,19 @@ bool Jafg::LHud::ChangeWidgetVisibility(const LObjectClass* WidgetClass, const E
     return true;
 }
 
-bool Jafg::LHud::FocusWidget(const WWidgetNode* InNode) const
+bool Jafg::LHud::FocusWidget(const WWidgetNode* InNode)
 {
-    return this->GetMainViewport()->FocusWidgetNode(InNode);
+    return this->GetMainViewport().FocusWidgetNode(InNode);
 }
 
-bool Jafg::LHud::FocusWidgetChecked(const WWidgetNode* InNode) const
+bool Jafg::LHud::FocusWidgetChecked(const WWidgetNode* InNode)
 {
     const bool bOut = this->FocusWidget(InNode);
     check( bOut )
     return bOut;
 }
 
-bool Jafg::LHud::FocusWidgetPanicked(const WWidgetNode* InNode) const
+bool Jafg::LHud::FocusWidgetPanicked(const WWidgetNode* InNode)
 {
     if (this->FocusWidget(InNode) == false)
     {

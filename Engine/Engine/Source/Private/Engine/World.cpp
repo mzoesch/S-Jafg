@@ -79,8 +79,8 @@ void Jafg::LWorld::Tick(const float DeltaTime)
     }
     this->DeletedTickableObjects.Empty();
 
-    const LViewport* ViewportContext = this->GetEngine()->GetCheckedLocalEgo()->GetPrimarySurface()->GetViewport();
-    check( ViewportContext )
+    const LViewport& ViewportContext = this->GetEngine()->GetCheckedLocalEgo()->GetPrimarySurface()->GetViewport();
+
     for (const AActor* Actor : this->Actors)
     {
         check( Actor->IsGarbage() == false )
@@ -88,7 +88,7 @@ void Jafg::LWorld::Tick(const float DeltaTime)
         if (Actor->IsRendererComponentValid())
         {
             // And add eye here.
-            Actor->GetRendererComponent()->Draw(*ViewportContext);
+            Actor->GetRendererComponent()->Draw(ViewportContext);
         }
 
         continue;

@@ -298,7 +298,7 @@ void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
     return;
 }
 
-Jafg::WWidgetNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObjectClass* WidgetClass)
+Jafg::WWidgetNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
 {
     for (WUserWidget* Widget : this->TopLevelWidgets)
     {
@@ -310,13 +310,7 @@ Jafg::WWidgetNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObjectClass*
         continue;
     }
 
-    return nullptr;
-}
-
-const Jafg::WWidgetNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
-{
-    return const_cast<LViewport*>(this)->GetTopLevelWidgetByClass(WidgetClass);
-}
+    return nullptr;}
 
 bool Jafg::LViewport::FocusWidgetNode(const WWidgetNode* InNode)
 {

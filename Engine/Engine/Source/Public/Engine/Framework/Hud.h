@@ -28,10 +28,11 @@ public:
     void Tick(LSurface& Surface, const bool bCheckInput);
     void TearDown();
 
-    auto GetMainViewport() const -> LViewport* ;
+    auto GetMainViewport() -> LViewport&;
+    auto GetMainViewport() const -> const LViewport&;
 
-    void AddWidget(WUserWidget* Widget) const;
-    void RemoveWidget(WUserWidget* Widget) const;
+    void AddWidget(WUserWidget* Widget);
+    void RemoveWidget(WUserWidget* Widget);
 
     auto GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> WWidgetNode*;
     auto GetCheckedTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> WWidgetNode*;
@@ -52,14 +53,14 @@ public:
     }
     UNUSED bool ChangeWidgetVisibility(const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
 
-    bool FocusWidget(const WWidgetNode* InNode) const;
-    bool FocusWidgetChecked(const WWidgetNode* InNode) const;
-    bool FocusWidgetPanicked(const WWidgetNode* InNode) const;
+    bool FocusWidget(const WWidgetNode* InNode);
+    bool FocusWidgetChecked(const WWidgetNode* InNode);
+    bool FocusWidgetPanicked(const WWidgetNode* InNode);
 
 private:
 
-    LObjectContext* Outer;
-    LSubsystemCollection*    Collection;
+    LObjectContext*       Outer;
+    LSubsystemCollection* Collection;
 };
 
 template <typename TNode>

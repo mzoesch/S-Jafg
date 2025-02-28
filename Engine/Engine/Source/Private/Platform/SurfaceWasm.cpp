@@ -227,9 +227,8 @@ void Jafg::LSurfaceDom::Initialize()
 
     ::emscripten_webgl_make_context_current(this->_Handle);
 
-    check( this->GetViewport() )
-    this->GetViewport()->ChangeDimensions(this->GetDimensions());
-    this->GetViewport()->SetPlatformDpi(96.0f); // TODO: Fetch from JavaScript.
+    this->GetViewport().ChangeDimensions(this->GetDimensions());
+    this->GetViewport().SetPlatformDpi(96.0f); // TODO: Fetch from JavaScript.
     glViewport(0, 0, this->GetDimensions().X, this->GetDimensions().Y);
 
     ::emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, EM_TRUE, KeyDownCallback);

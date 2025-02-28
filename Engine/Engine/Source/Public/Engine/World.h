@@ -13,6 +13,7 @@ namespace Jafg
 
 class LLocalEgo;
 class AActor;
+class LViewport;
 class LEngine;
 class LShader;
 class JWorldSubsystem;

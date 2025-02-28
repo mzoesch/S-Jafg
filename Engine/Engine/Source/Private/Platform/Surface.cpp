@@ -9,8 +9,7 @@ void Jafg::LSurface::Initialize()
 {
     check( this->IsValid() == false )
 
-    this->SurfaceViewport = new LViewport();
-    this->SurfaceViewport->Initialize();
+    this->SurfaceViewport.Initialize();
 
     LOG_VERBOSE(LogSurface, "Created surface viewport.")
     LOG_INFO(LogSurface, "Platform stats:")
@@ -23,31 +22,9 @@ void Jafg::LSurface::Initialize()
     return;
 }
 
-void Jafg::LSurface::OnClear()
-{
-    if (this->SurfaceViewport)
-    {
-        this->SurfaceViewport->OnClear();
-    }
-
-    return;
-}
-
-void Jafg::LSurface::OnUpdate()
-{
-    this->SurfaceViewport->Draw();
-}
-
 void Jafg::LSurface::TearDown()
 {
-    if (ensure(this->SurfaceViewport))
-    {
-        this->SurfaceViewport->TearDown();
-        delete this->SurfaceViewport;
-        this->SurfaceViewport = nullptr;
-    }
-
-    return;
+    this->SurfaceViewport.TearDown();
 }
 
 void Jafg::LSurface::BeginNewFrame()
