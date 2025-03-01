@@ -22,13 +22,21 @@ struct LGlfw3Bridge;
 
 } /* ~Namespace Jafg::Private */
 
-class LSurfaceGlfw3 : public LSurface
+class LSurfaceGlfw3 : public LSurfaceBase
 {
 public:
 
     friend Private::LGlfw3Bridge;
 
-    typedef LSurface Super;
+    typedef LSurfaceBase Super;
+
+    static_assert(std::is_same_v<LSurfaceGlfw3, LSurface>);
+
+    LSurfaceGlfw3() = default;
+    PROHIBIT_COPY(LSurfaceGlfw3)
+    LSurfaceGlfw3(LSurfaceGlfw3&& Other) noexcept;
+    LSurfaceGlfw3& operator=(LSurfaceGlfw3&& Other) noexcept;
+    ~LSurfaceGlfw3() override;
 
     virtual void Initialize() override;
     virtual void OnClear() override;

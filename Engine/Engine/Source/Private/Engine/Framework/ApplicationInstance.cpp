@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Engine/Engine.h"
 #include "Engine/ObjectContext.h"
 #include "Subsystems/SubsystemCollection.h"
@@ -9,32 +8,21 @@
 
 void Jafg::LApplicationInstance::Initialize()
 {
-    checkSlow( this->Context == nullptr )
+    check( this->Context.GetHumanReadableName().IsEmpty() )
+    this->Context.SetHumanReadableName("ApplicationInstance");
 
-    this->Context = new ::Jafg::LObjectContext();
-    this->Context->SetHumanReadableName("ApplicationInstance");
-
-    checkSlow( this->Collection == nullptr )
-    this->Collection = new LSubsystemCollection(this->Context);
-    this->Collection->LocateAllSubsystemsOfClass(JApplicationInstanceSubsystem::StaticClass());
-    this->Collection->InitializeSubsystems();
+    this->Collection.DeferredInitialize(&this->Context);
+    this->Collection.InitializeSubsystems(JApplicationInstanceSubsystem::StaticClass());
 
     return;
 }
 
 void Jafg::LApplicationInstance::TearDown()
 {
-    if (ensure(this->Collection))
-    {
-        this->Collection->TearDownSubsystems();
-        delete this->Collection;
-        this->Collection = nullptr;
-    }
+    this->Collection.TearDownSubsystems();
 
-    check( this->Context )
-    this->Context->TearDownContext();
-    delete this->Context;
-    this->Context = nullptr;
+    check( this->Context.GetHumanReadableName().IsEmpty() == false )
+    this->Context.TearDownContext();
 
     return;
 }
@@ -49,24 +37,4 @@ const Jafg::LEngine* Jafg::LApplicationInstance::GetEngine() const
 {
     checkSlow( GEngine )
     return GEngine;
-}
-
-Jafg::JApplicationInstanceSubsystem* Jafg::LApplicationInstance::GetSubsystem(const LObjectClass* InStaticClass)
-{
-    return this->Collection->GetSubsystem<JApplicationInstanceSubsystem>(InStaticClass);
-}
-
-const Jafg::JApplicationInstanceSubsystem* Jafg::LApplicationInstance::GetSubsystem(const LObjectClass* InStaticClass) const
-{
-    return this->Collection->GetSubsystem<JApplicationInstanceSubsystem>(InStaticClass);
-}
-
-Jafg::JApplicationInstanceSubsystem* Jafg::LApplicationInstance::GetCheckedSubsystem(const LObjectClass* InStaticClass)
-{
-    return this->Collection->GetCheckedSubsystem<JApplicationInstanceSubsystem>(InStaticClass);
-}
-
-const Jafg::JApplicationInstanceSubsystem* Jafg::LApplicationInstance::GetCheckedSubsystem(const LObjectClass* InStaticClass) const
-{
-    return this->Collection->GetCheckedSubsystem<JApplicationInstanceSubsystem>(InStaticClass);
 }

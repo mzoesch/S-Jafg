@@ -2,21 +2,23 @@
 
 #pragma once
 
+#include "Platform/Surface.h"
 #include "Widgets/WidgetNode.h"
+#include "Subsystems/SubsystemCollection.h"
 
 namespace Jafg
 {
 
+class LUserInput;
 class LViewport;
 class WUserWidget;
-struct LSubsystemCollection;
 
 //#
 //# The hud is owned by the local ego and shares its lifetime.
 //# The hud is the main hub for all user interface elements. Create hud subsystems to automatically
-//# add multiple widgets of a type to the viewport.
+//# add multiple widgets of a type any viewport.
 //#
-class ENGINE_API LHud final
+class LHud final
 {
 public:
 
@@ -25,19 +27,44 @@ public:
     ~LHud() = default;
 
     void Initialize(LObjectContext* InOuter);
-    void Tick(LSurface& Surface, const bool bCheckInput);
+    void Tick(LUserInput* UserInput);
     void TearDown();
 
-    auto GetMainViewport() -> LViewport&;
-    auto GetMainViewport() const -> const LViewport&;
+    ENGINE_API LLocalEgo*  GetLocalEgo() const;
+    ENGINE_API LLocalEgo*  GetLocalEgoChecked() const;
+    ENGINE_API LUserInput* GetUserInput() const;
+    ENGINE_API LUserInput* GetUserInputChecked() const;
 
-    void AddWidget(WUserWidget* Widget);
-    void RemoveWidget(WUserWidget* Widget);
+    FORCEINLINE int32 GetSurfaceCount() const { return this->Surfaces.GetSize(); }
+    FORCEINLINE auto  GetSurfaces() -> TdhArray<LSurface>& { return this->Surfaces; }
+    FORCEINLINE auto  GetSurfaces() const -> const TdhArray<LSurface>& { return this->Surfaces; }
 
-    auto GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> WWidgetNode*;
-    auto GetCheckedTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> WWidgetNode*;
-    template <typename TNode> FORCEINLINE auto GetTopLevelWidgetByClass() const -> TNode*;
-    template <typename TNode> FORCEINLINE auto GetCheckedTopLevelWidgetByClass() const -> TNode*;
+    FORCEINLINE bool IsFocusedSurfaceValid() const { return this->FocusedSurface > INDEX_NONE; }
+    FORCEINLINE auto GetFocusedSurface() -> LSurface* { return this->IsFocusedSurfaceValid() ? &this->Surfaces[this->FocusedSurface] : nullptr; }
+    FORCEINLINE auto GetFocusedSurfaceChecked() -> LSurface* { check( this->IsFocusedSurfaceValid() ) return &this->Surfaces[this->FocusedSurface]; }
+    FORCEINLINE auto GetFocusedSurfaceAsserted() -> LSurface* { jassert( this->IsFocusedSurfaceValid() ) return &this->Surfaces[this->FocusedSurface]; }
+    FORCEINLINE auto GetFocusedSurface() const -> const LSurface* { return this->IsFocusedSurfaceValid() ? &this->Surfaces[this->FocusedSurface] : nullptr; }
+    FORCEINLINE auto GetFocusedSurfaceChecked() const -> const LSurface* { check( this->IsFocusedSurfaceValid() ) return &this->Surfaces[this->FocusedSurface]; }
+    FORCEINLINE auto GetFocusedSurfaceAsserted() const -> const LSurface* { jassert( this->IsFocusedSurfaceValid() ) return &this->Surfaces[this->FocusedSurface]; }
+
+    ENGINE_API void AddWidget(LViewport* Context, WUserWidget* Widget);
+    ENGINE_API void AddWidget(LSurface* Context, WUserWidget* Widget);
+    ENGINE_API void RemoveWidget(WUserWidget* Widget);
+
+    ENGINE_API WWidgetNode* GetTopLevelWidgetByClass(const LViewport* Context, const LObjectClass* WidgetClass) const { return Context->GetTopLevelWidgetByClass(WidgetClass); }
+    ENGINE_API WWidgetNode* GetTopLevelWidgetByClass(const LSurface* Context, const LObjectClass* WidgetClass) const { return Context->GetViewport().GetTopLevelWidgetByClass(WidgetClass); }
+    ENGINE_API WWidgetNode* GetTopLevelWidgetByClassChecked(LViewport* Context, const LObjectClass* WidgetClass) const { return Context->GetTopLevelWidgetByClassChecked(WidgetClass); }
+    ENGINE_API WWidgetNode* GetTopLevelWidgetByClassChecked(LSurface* Context, const LObjectClass* WidgetClass) const { return Context->GetViewport().GetTopLevelWidgetByClassChecked(WidgetClass); }
+    template <typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClass(LViewport* Context) const { return Context->GetTopLevelWidgetByClass<TNode>(Context); }
+    template <typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClass(LSurface* Context) const { return Context->GetViewport().GetTopLevelWidgetByClass<TNode>(); }
+    template <typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClassChecked(LViewport* Context) const { return Context->GetTopLevelWidgetByClassChecked<TNode>(); }
+    template <typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClassChecked(LSurface* Context) const { return Context->GetViewport().GetTopLevelWidgetByClassChecked<TNode>(); }
+
+    //# Checks first the currently focused surface, then all others. Returns the first valid result.
+    ENGINE_API  WWidgetNode* GetFirstTopLevelWidgetByClass(const LObjectClass* WidgetClass) const;
+    FORCEINLINE WWidgetNode* GetFirstTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const;
+    template <typename TNode> FORCEINLINE TNode* GetFirstTopLevelWidgetByClass() const;
+    template <typename TNode> FORCEINLINE TNode* GetFirstTopLevelWidgetByClassChecked() const;
 
     //#
     //# Change the visibility of a top level widget.
@@ -46,43 +73,79 @@ public:
     //# @return True, if widget was found and made visible. False if widget was not found or was already visible.
     //#
     template <typename TNode>
-    UNUSED FORCEINLINE bool ChangeWidgetVisibility(const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const
-    {
-        static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
-        return this->ChangeWidgetVisibility(TNode::StaticClass(), InVisibility, bAllowNotFound);
-    }
-    UNUSED bool ChangeWidgetVisibility(const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
+    UNUSED FORCEINLINE bool ChangeWidgetVisibility(const LViewport* Context, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
+    template <typename TNode>
+    UNUSED FORCEINLINE bool ChangeWidgetVisibility(const LSurface* Context, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
+    UNUSED ENGINE_API  bool ChangeWidgetVisibility(const LViewport* Context, const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
+    UNUSED ENGINE_API  bool ChangeWidgetVisibility(const LSurface* Context, const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
+    //# Instead of searching inside a specific context, this method search algorithm works just like the #GetFirstTopLevelWidgetByClass method.
+    template <typename TNode>
+    UNUSED FORCEINLINE bool ChangeWidgetVisibility(const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
+    UNUSED ENGINE_API  bool ChangeWidgetVisibility(const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
 
-    bool FocusWidget(const WWidgetNode* InNode);
-    bool FocusWidgetChecked(const WWidgetNode* InNode);
-    bool FocusWidgetPanicked(const WWidgetNode* InNode);
+    ENGINE_API  bool FocusWidget(LViewport* Context, const WWidgetNode* InNode);
+    ENGINE_API  bool FocusWidgetChecked(LViewport* Context, const WWidgetNode* InNode);
+    ENGINE_API  bool FocusWidgetAsserted(LViewport* Context, const WWidgetNode* InNode);
+    FORCEINLINE bool FocusWidget(LSurface* Context, const WWidgetNode* InNode) { return this->FocusWidget(&Context->GetViewport(), InNode); }
+    FORCEINLINE bool FocusWidgetChecked(LSurface* Context, const WWidgetNode* InNode) { return this->FocusWidgetChecked(&Context->GetViewport(), InNode); }
+    FORCEINLINE bool FocusWidgetAsserted(LSurface* Context, const WWidgetNode* InNode) { return this->FocusWidgetAsserted(&Context->GetViewport(), InNode); }
 
 private:
 
-    LObjectContext*       Outer;
-    LSubsystemCollection* Collection;
+    LSurface CreateNewSurface();
+
+    TdhArray<LSurface>   Surfaces;
+    int32                FocusedSurface;
+    LObjectContext*      CachedOuter;
+    LSubsystemCollection Collection;
 };
 
-template <typename TNode>
-TNode* LHud::GetTopLevelWidgetByClass() const
+FORCEINLINE WWidgetNode* LHud::GetFirstTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const
 {
-    static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
-    return CheckedStaticCast
-        <
-            TNode,
-            std::remove_pointer_t<decltype(this->GetTopLevelWidgetByClass(TNode::StaticClass()))>,
-            true
-        >
-        (
-            this->GetTopLevelWidgetByClass(TNode::StaticClass())
-        );
+    WWidgetNode* Out = this->GetFirstTopLevelWidgetByClass(WidgetClass);
+    check( Out )
+    return Out;
 }
 
 template <typename TNode>
-TNode* LHud::GetCheckedTopLevelWidgetByClass() const
+FORCEINLINE TNode* LHud::GetFirstTopLevelWidgetByClass() const
 {
     static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
-    return CheckedStaticCast<TNode>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
+    return CheckedStaticCast<TNode>(this->GetFirstTopLevelWidgetByClass(TNode::StaticClass()));
+}
+
+template <typename TNode>
+FORCEINLINE TNode* LHud::GetFirstTopLevelWidgetByClassChecked() const
+{
+    static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
+    return CheckedStaticCast<TNode>(this->GetFirstTopLevelWidgetByClassChecked(TNode::StaticClass()));
+}
+
+template <typename TNode>
+FORCEINLINE bool LHud::ChangeWidgetVisibility(const LViewport* Context, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+{
+    static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
+    return this->ChangeWidgetVisibility(Context, TNode::StaticClass(), InVisibility, bAllowNotFound);
+}
+
+template <typename TNode>
+FORCEINLINE bool LHud::ChangeWidgetVisibility(const LSurface* Context, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+{
+    static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
+    return this->ChangeWidgetVisibility(Context, TNode::StaticClass(), InVisibility, bAllowNotFound);
+}
+
+template <typename TNode>
+bool LHud::ChangeWidgetVisibility(const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+{
+    static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
+    return this->ChangeWidgetVisibility(TNode::StaticClass(), InVisibility, bAllowNotFound);
+}
+
+FORCEINLINE bool LHud::ChangeWidgetVisibility(const LSurface* Context, const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+{
+    check( Context )
+    return this->ChangeWidgetVisibility(&Context->GetViewport(), WidgetClass, InVisibility, bAllowNotFound);
 }
 
 } /* ~Namespace Jafg */

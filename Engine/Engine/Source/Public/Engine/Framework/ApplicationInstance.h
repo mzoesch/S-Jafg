@@ -2,16 +2,16 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Engine/ObjectBase.h"
+#include "Engine/ObjectContext.h"
+#include "Subsystems/SubsystemCollection.h"
 
 namespace Jafg
 {
 
-class LObjectContext;
 class LObjectClass;
 class LEngine;
 class JApplicationInstanceSubsystem;
-struct LSubsystemCollection;
 
 class LApplicationInstance final
 {
@@ -44,15 +44,15 @@ public:
     template <typename T>
     FORCEINLINE auto GetCheckedSubsystem() const -> const T* { return CheckedStaticCast<T>(this->GetCheckedSubsystem(T::StaticClass())); }
 
-    ENGINE_API auto GetSubsystem(const LObjectClass* InStaticClass) -> JApplicationInstanceSubsystem*;
-    ENGINE_API auto GetSubsystem(const LObjectClass* InStaticClass) const -> const JApplicationInstanceSubsystem*;
-    ENGINE_API auto GetCheckedSubsystem(const LObjectClass* InStaticClass) -> JApplicationInstanceSubsystem*;
-    ENGINE_API auto GetCheckedSubsystem(const LObjectClass* InStaticClass) const -> const JApplicationInstanceSubsystem*;
+    FORCEINLINE auto GetSubsystem(const LObjectClass* InStaticClass) -> JApplicationInstanceSubsystem* { return this->Collection.GetSubsystem<JApplicationInstanceSubsystem>(InStaticClass); }
+    FORCEINLINE auto GetSubsystem(const LObjectClass* InStaticClass) const -> const JApplicationInstanceSubsystem* { return this->Collection.GetSubsystem<JApplicationInstanceSubsystem>(InStaticClass); }
+    FORCEINLINE auto GetCheckedSubsystem(const LObjectClass* InStaticClass) -> JApplicationInstanceSubsystem* { return this->Collection.GetCheckedSubsystem<JApplicationInstanceSubsystem>(InStaticClass); }
+    FORCEINLINE auto GetCheckedSubsystem(const LObjectClass* InStaticClass) const -> const JApplicationInstanceSubsystem* { return this->Collection.GetCheckedSubsystem<JApplicationInstanceSubsystem>(InStaticClass); }
 
 private:
 
-    LObjectContext* Context      = nullptr;
-    LSubsystemCollection*    Collection = nullptr;
+    LObjectContext       Context;
+    LSubsystemCollection Collection;
 };
 
 } /* ~Namespace Jafg */

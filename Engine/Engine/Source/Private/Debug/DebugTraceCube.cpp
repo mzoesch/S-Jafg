@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Debug/DebugTraceCube.h"
 #include "Engine/Engine.h"
 #include "Engine/Framework/Eye.h"
@@ -32,7 +31,7 @@ void Jafg::LDebugTraceCube::Draw(const LWorld& InContext) const
         ::GetCubeShaderContext()->Make();
     }
 
-    const LEye* Eye = GEngine->GetCheckedLocalEgo()->GetPossessed()->GetPossessed()->GetEye();
+    const LEye* Eye = GEngine->GetLocalEgoChecked()->GetPossessed()->GetPossessed()->GetEye();
 
     LDebugTraceCubeShaderContextDrawArgs Args;
     Args.DegYFov = Eye->GetDegYFov();
@@ -41,7 +40,7 @@ void Jafg::LDebugTraceCube::Draw(const LWorld& InContext) const
     Args.RelTopFarRight = this->TopRelFarRight;
     Args.Color = this->VisualParams.Color;
     Args.Thickness = this->VisualParams.Thickness;
-    ::GetCubeShaderContext()->Draw(InContext.GetLocalEgo()->GetPrimarySurface()->GetViewport(), Args);
+    ::GetCubeShaderContext()->Draw(InContext.GetLocalEgo()->GetHud()->GetSurfaces()[0].GetViewport(), Args);
 
     return;
 }

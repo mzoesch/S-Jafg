@@ -167,40 +167,40 @@
     DEFAULT_MOVE_NAMESPACED(TSpacedTy, Ty)
 
 /** Defaults the copy operations of a specific type T. */
-#define DEFAULT_COPY(Type)                                                            \
-    Type(      Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
-    Type(const Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
-    Type& operator=(const Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;
+#define DEFAULT_COPY(Type)                                                                     \
+    Type(      Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+    Type(const Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+    Type& operator=(const Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
 
 /** Defaults the copy operations of a specific type T. */
 #if WITH_MSVC
-    #define DEFAULT_COPY_NAMESPACED(TSpacedType, Type)                                                  \
-        TSpacedType(      TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
-        TSpacedType(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
-        TSpacedType& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;
+    #define DEFAULT_COPY_NAMESPACED(TSpacedType, Type)                                                           \
+        TSpacedType(      TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+        TSpacedType(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+        TSpacedType& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
 #elif WITH_GCC
-    #define DEFAULT_COPY_NAMESPACED(TSpacedType, Type)                                           \
-        Type(      TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
-        Type(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
-        Type& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;
+    #define DEFAULT_COPY_NAMESPACED(TSpacedType, Type)                                                    \
+        Type(      TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+        Type(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+        Type& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
 #else /* WITH_GCC */
     #error "Missing implementation for this platform."
 #endif /* !WITH_GCC */
 
 /** Defaults the move operations of a specific type T. */
-#define DEFAULT_MOVE(Type)                                                       \
-    Type(Type&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
-    Type& operator=(Type&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;
+#define DEFAULT_MOVE(Type)                                                                \
+    Type(Type&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+    Type& operator=(Type&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
 
 /** Defaults the move operations of a specific type T. */
 #if WITH_MSVC
-    #define DEFAULT_MOVE_NAMESPACED(TSpacedType, Type)                                             \
-        TSpacedType(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
-        TSpacedType& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;
+    #define DEFAULT_MOVE_NAMESPACED(TSpacedType, Type)                                                       \
+        TSpacedType(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept  = default; \
+        TSpacedType& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept  = default;
 #elif WITH_GCC
-    #define DEFAULT_MOVE_NAMESPACED(TSpacedType, Type)                                      \
-        Type(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            = default; \
-        Type& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) = default;
+    #define DEFAULT_MOVE_NAMESPACED(TSpacedType, Type)                                               \
+        Type(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+        Type& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
 #else /* WITH_GCC */
     #error "Missing implementation for this platform."
 #endif /* !WITH_GCC */

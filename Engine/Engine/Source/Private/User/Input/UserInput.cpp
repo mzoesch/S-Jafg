@@ -1,10 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "User/Input/UserInput.h"
 #include "Engine/Engine.h"
-#include "Engine/World.h"
-#include "Engine/Framework/PersonaController.h"
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "User/Input/InputAction.h"
@@ -12,23 +9,13 @@
 
 bool Jafg::LUserInput::IsNewDown(const LKey Key) const
 {
-    const LSurface* Context = this->GetLocalEgo()->GetPrimarySurface();
+    const LSurface* Context = this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked();
     check( Context )
     return Context->GetCurrentlyPressedKeys().Contains(Key) && (Context->GetLastFramePressedKeys().Contains(Key) == false);
 }
 
 void Jafg::LUserInput::DispatchInputDelegates()
 {
-    const LLocalEgo* LocalEgo = this->GetCheckedLocalEgo();
-    if (!LocalEgo->DoesPossess() || !LocalEgo->HasPrimarySurface())
-    {
-        return;
-    }
-    check( LocalEgo->GetPossessed()->GetWorld() )
-
-    LWorld*   TargetWorld    = LocalEgo->GetPossessed()->GetWorld(); check( TargetWorld )
-    LSurface* PrimarySurface = LocalEgo->GetPrimarySurface(); check( PrimarySurface )
-
     const TdhArray<LRawInput> TriggeredKeys = this->GetTriggeredKeys();
     const TdhArray<LRawInput> OngoingKeys   = this->GetOngoingKeys();
     const TdhArray<LRawInput> CompletedKeys = this->GetCompletedKeys();
@@ -70,13 +57,13 @@ Jafg::LLocalEgo* Jafg::LUserInput::GetLocalEgo() const
 Jafg::LLocalEgo* Jafg::LUserInput::GetCheckedLocalEgo() const
 {
     checkSlow( GEngine )
-    return GEngine->GetCheckedLocalEgo();
+    return GEngine->GetLocalEgoChecked();
 }
 
 Jafg::LLocalEgo* Jafg::LUserInput::GetPanickedLocalEgo() const
 {
     checkSlow( GEngine )
-    return GEngine->GetPanickedLocalEgo();
+    return GEngine->GetLocalEgoAsserted();
 }
 
 void Jafg::LUserInput::RegisterContext(LUserInputContext&& Context, const bool bMakeActive /* = false */)
@@ -96,9 +83,9 @@ Jafg::TdhArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
 {
     TdhArray<LRawInput> TriggeredKeys;
 
-    for (const LRawInput& Key : this->GetLocalEgo()->GetPrimarySurface()->GetCurrentlyPressedKeys())
+    for (const LRawInput& Key : this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys())
     {
-        if (this->GetLocalEgo()->GetPrimarySurface()->GetLastFramePressedKeys().Contains(Key) == false)
+        if (this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->GetLastFramePressedKeys().Contains(Key) == false)
         {
             TriggeredKeys.Emplace(Key);
         }
@@ -111,16 +98,16 @@ Jafg::TdhArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
 
 Jafg::TdhArray<Jafg::LRawInput>& Jafg::LUserInput::GetOngoingKeys() const
 {
-    return this->GetLocalEgo()->GetPrimarySurface()->GetCurrentlyPressedKeys();
+    return this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys();
 }
 
 Jafg::TdhArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
 {
     TdhArray<LRawInput> CompletedKeys;
 
-    for (const LRawInput& Key : this->GetLocalEgo()->GetPrimarySurface()->GetLastFramePressedKeys())
+    for (const LRawInput& Key : this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->GetLastFramePressedKeys())
     {
-        if (this->GetLocalEgo()->GetPrimarySurface()->GetCurrentlyPressedKeys().Contains(Key) == false)
+        if (this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys().Contains(Key) == false)
         {
             CompletedKeys.Emplace(Key);
         }
@@ -295,6 +282,16 @@ int32 Jafg::LUserInput::DeactivateAllContexts()
     this->ActiveContexts.Reset(1);
     LOG_VERBOSE(LogUserInput, "Deactivated all {} contexts.", NumDeactivated)
     return NumDeactivated;
+}
+
+bool Jafg::LUserInput::HasBufferedPlatformInput() const
+{
+    return this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->HasBufferedPlatformInput();
+}
+
+const Jafg::LString& Jafg::LUserInput::GetBufferedPlatformInput() const
+{
+    return this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->GetBufferedPlatformInput();
 }
 
 void Jafg::LUserInput::DispatchInputDelegatesForAction(const LUserInputContext* InContext, const TdhArray<LRawInput>& InRawInputs, LInputMappedAction* InAction)

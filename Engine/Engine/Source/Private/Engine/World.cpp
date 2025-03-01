@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "Platform/Surface.h"
@@ -55,10 +54,8 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
         MakeDeferredActorFinal(Actor);
     }
 
-    check( this->Collection == nullptr )
-    this->Collection = new LSubsystemCollection(this);
-    this->Collection->LocateAllSubsystemsOfClass(JWorldSubsystem::StaticClass());
-    this->Collection->InitializeSubsystems();
+    this->Collection.DeferredInitialize(this);
+    this->Collection.InitializeSubsystems(JWorldSubsystem::StaticClass());
 
     this->WorldState = EWorldState::Running;
 
@@ -79,7 +76,7 @@ void Jafg::LWorld::Tick(const float DeltaTime)
     }
     this->DeletedTickableObjects.Empty();
 
-    const LViewport& ViewportContext = this->GetEngine()->GetCheckedLocalEgo()->GetPrimarySurface()->GetViewport();
+    const LViewport& ViewportContext = this->GetEngine()->GetLocalEgoChecked()->GetHud()->GetSurfaces()[0].GetViewport();
 
     for (const AActor* Actor : this->Actors)
     {
@@ -122,10 +119,7 @@ void Jafg::LWorld::TearDownContext()
     this->WorldState = EWorldState::TearingDown;
 
     LOG_VERBOSE(LogWorld, "Tearing down world subsystems.")
-    checkSlow( this->Collection )
-    this->Collection->TearDownSubsystems();
-    delete this->Collection;
-    this->Collection = nullptr;
+    this->Collection.TearDownSubsystems();
 
     // Preserve order!
     Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, Tasks::Private::RunAllTasks);

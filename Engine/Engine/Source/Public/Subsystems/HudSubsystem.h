@@ -29,15 +29,15 @@ protected:
 
     // JSubsystem implementation
     virtual void Initialize(LSubsystemCollection& Collection) override;
-    virtual void TearDown() override;
     // ~JSubsystem implementation
 
-    virtual void Tick(const float DeltaTime);
+    virtual void Tick(const float DeltaTime) { }
 
-    FORCEINLINE auto ShouldTick() const -> bool { return this->bShouldTick; }
+    FORCEINLINE bool ShouldTick() const { return this->bShouldTick; }
     FORCEINLINE void SetShouldTick(const bool bShouldTick) { this->bShouldTick = bShouldTick; }
 
-    FORCEINLINE auto GetHud() const -> LHud* { return this->OwningHud; }
+    FORCEINLINE       LHud* GetHud() { return this->OwningHud; }
+    FORCEINLINE const LHud* GetHud() const { return this->OwningHud; }
 
 private:
 

@@ -3,16 +3,17 @@
 #pragma once
 
 #include "CoreAfx.h"
+#include "User/Input/UserInput.h"
+#include "Engine/Framework/Hud.h"
+#include "Subsystems/SubsystemCollection.h"
+#include "Platform/SurfaceForward.h"
 
 namespace Jafg
 {
 
 class LObjectContext;
 class APawn;
-class LHud;
 class LWorld;
-class LSurface;
-class LUserInput;
 class APersonaController;
 struct LSubsystemCollection;
 
@@ -28,7 +29,6 @@ class LLocalEgo final
 public:
 
     LLocalEgo() = default;
-
     PROHIBIT_REALLOC_OF_ANY_FORM(LLocalEgo)
 
     void Initialize();
@@ -36,13 +36,10 @@ public:
     void OnLateTick(const float DeltaTime);
     void TearDown();
 
-    FORCEINLINE auto IsUserInputValid() const -> bool { return this->UserInput != nullptr; }
-    FORCEINLINE auto GetUserInput() -> LUserInput* { return this->UserInput; }
-    FORCEINLINE auto GetUserInput() const -> const LUserInput* { return this->UserInput; }
-    FORCEINLINE auto IsHud() const -> bool { return this->Hud != nullptr; }
-    FORCEINLINE auto GetHud() const -> LHud* { return this->Hud; }
-    FORCEINLINE auto HasPrimarySurface() const -> bool { return this->SurfaceToDrawOn != nullptr; }
-    FORCEINLINE auto GetPrimarySurface() const -> LSurface* { return this->SurfaceToDrawOn; }
+    FORCEINLINE auto GetHud() -> LHud* { return &this->Hud; }
+    FORCEINLINE auto GetHud() const -> const LHud* { return &this->Hud; }
+    FORCEINLINE auto GetUserInput() -> LUserInput* { return &this->UserInput; }
+    FORCEINLINE auto GetUserInput() const -> const LUserInput* { return &this->UserInput; }
 
     FORCEINLINE auto DoesPossess() const -> bool { return this->PersonaController != nullptr; }
     FORCEINLINE auto GetPossessed() const -> APersonaController* { return this->PersonaController; }
@@ -50,7 +47,9 @@ public:
     FORCEINLINE auto GetPanickedPossessed() const -> APersonaController*;
                 void Possess(APersonaController* InNewController);
 
-    FORCEINLINE auto GetContext() const -> LObjectContext* { return this->Context; }
+    FORCEINLINE auto GetContext() -> LObjectContext& { return this->Context; }
+    FORCEINLINE auto GetContext() const -> const LObjectContext& { return this->Context; }
+    FORCEINLINE auto GetCollection() const -> const LSubsystemCollection& { return this->Collection; }
 
     void OnNewPawnPossessed(APawn* InOld, APawn* InNew) const;
 
@@ -60,19 +59,20 @@ protected:
 
 private:
 
-    LUserInput* UserInput = nullptr;
-    LHud*       Hud = nullptr;
-    LSurface*   SurfaceToDrawOn = nullptr;
+    LHud       Hud;
+    LUserInput UserInput;
 
-    LDelegateHandle     OnWorldBeginLifeHandle = nullptr;
+    LDelegateHandle OnWorldBeginLifeHandle = nullptr;
+
+    //# Currently possessed persona controller.
     APersonaController* PersonaController = nullptr;
 
     //#
     //# The context of the local ego. It is created when the local ego is instantiated
     //# and not destroyed until the local ego is killed.
     //#
-    LObjectContext* Context = nullptr;
-    LSubsystemCollection* Collection = nullptr;
+    LObjectContext       Context;
+    LSubsystemCollection Collection;
 };
 
 } /* ~Namespace Jafg */

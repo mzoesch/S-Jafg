@@ -17,6 +17,7 @@ Jafg::LUserInputContext::LUserInputContext(const LName InUniqueIdentifier) : Uni
 
 Jafg::LInputAction* Jafg::LUserInputContext::MapAction(LInputAction&& InAction, LUserInput* InUserInput)
 {
+    check( InUserInput )
     LInputAction* RegisteredAction = InUserInput->RegisterAction(std::move(InAction));
     this->MappedActions.Emplace(RegisteredAction);
     check( this->MappedActions.GetLast()->Action == RegisteredAction )

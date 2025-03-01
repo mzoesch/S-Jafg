@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Debug/DebugTracePlane.h"
 #include "Debug/DebugTraceLine.h"
 

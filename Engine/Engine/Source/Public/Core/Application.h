@@ -12,6 +12,7 @@ typedef std::chrono::high_resolution_clock::time_point LHrcTimePoint;
 
 namespace Private
 {
+
 //#
 //# The command line. A parameter is defined as the following:
 //#   -parameter

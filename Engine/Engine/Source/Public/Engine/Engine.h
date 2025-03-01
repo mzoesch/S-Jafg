@@ -4,6 +4,7 @@
 
 #include "CoreAfx.h"
 #include "Level.h"
+#include "Platform/SurfaceForward.h"
 
 namespace Jafg
 {
@@ -12,7 +13,6 @@ class JObject;
 class LEngine;
 class LLocalEgo;
 class LWorld;
-class LSurface;
 class LCommandLineInterface;
 class LApplicationInstance;
 
@@ -62,7 +62,7 @@ struct LWorldContext
 
 MAKE_MULTICAST_SIGNATURE(LOnWorldBeginLifeDelegateSignature, LWorld* /* InNewWorld */)
 
-class ENGINE_API LEngine
+class LEngine
 {
     typedef std::chrono::steady_clock::time_point LSteadyStatisticsTimePoint;
 
@@ -70,44 +70,34 @@ class ENGINE_API LEngine
 
 public:
 
-    void Initialize();
-    void Tick(const float DeltaTime);
-    void TearDown();
+    ENGINE_API void Initialize();
+    ENGINE_API void Tick(const float DeltaTime);
+    ENGINE_API void TearDown();
 
     ///////////////////////////////////////////////////////////////////////////////
     // Private function redirects
     ///////////////////////////////////////////////////////////////////////////////
 
     //# Internal public method. Do not use.
-    void BeginExitIfRequested();
+    ENGINE_API void BeginExitIfRequested();
     //# Internal public method. Do not use.
-    void ReflectForwardedExitRequest();
+    ENGINE_API void ReflectForwardedExitRequest();
 
-    void RequestEngineExit();
-    void RequestEngineExit(const LSimpleString& Reason);
-    void RequestEngineExit(const int32 CustomExitStatus);
-    void RequestEngineExit(const int32 CustomExitStatus, const LSimpleString& Reason);
+    ENGINE_API void RequestEngineExit();
+    ENGINE_API void RequestEngineExit(const LSimpleString& Reason);
+    ENGINE_API void RequestEngineExit(const int32 CustomExitStatus);
+    ENGINE_API void RequestEngineExit(const int32 CustomExitStatus, const LSimpleString& Reason);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Client Local Stuff
     ///////////////////////////////////////////////////////////////////////////////
 
-    bool CanEverRender() const;
-
-    bool IsPrimarySurfaceValid() const;
-    auto GetPrimarySurface() const -> LSurface*;
-    auto GetCheckedPrimarySurface() const -> LSurface*;
-    auto GetPanickedPrimarySurface() const -> LSurface*;
+    ENGINE_API bool CanEverRender() const;
 
     FORCEINLINE bool HasLocalEgo() const { return this->LocalEgo != nullptr; }
     FORCEINLINE auto GetLocalEgo() const -> LLocalEgo* { return this->LocalEgo; }
-    FORCEINLINE auto GetCheckedLocalEgo() const -> LLocalEgo* { check( this->LocalEgo ) return this->LocalEgo; }
-    FORCEINLINE auto GetPanickedLocalEgo() const -> LLocalEgo*
-    {
-        if (this->HasLocalEgo()) { return this->GetLocalEgo(); }
-        panic( "Could not find local ego instance." )
-        return nullptr;
-    }
+    FORCEINLINE auto GetLocalEgoChecked() const -> LLocalEgo* { check( this->LocalEgo ) return this->LocalEgo; }
+    FORCEINLINE auto GetLocalEgoAsserted() const -> LLocalEgo* { jassert( this->LocalEgo) return this->LocalEgo; }
 
 private:
 
@@ -121,17 +111,17 @@ public:
 
     FORCEINLINE static uint8 GetMaxContexts() { return LEngine::MaxContexts; }
 
-    uint8 GetCurrentFreeContexts() const;
-    uint8 GetCurrentOccupiedContexts() const;
+    ENGINE_API uint8 GetCurrentFreeContexts() const;
+    ENGINE_API uint8 GetCurrentOccupiedContexts() const;
 
-    auto GetContextFromWorld(const LWorld& World) -> LWorldContext&;
+    ENGINE_API auto GetContextFromWorld(const LWorld& World) -> LWorldContext&;
 
     //# Browse to a new Url at the next opportunity.
-    auto Browse(const LWorld& Context, const LStringLegacy& Url) -> void;
+    ENGINE_API auto Browse(const LWorld& Context, const LStringLegacy& Url) -> void;
     //# @return True if registered successfully.
-    auto RegisterLevel(const LLevel& InLevel) -> bool;
-    auto RegisterLevel(const LLevel&& InLevel) -> bool;
-    auto IsLevelRegistered(const LStringLegacy& Identifier) const -> bool;
+    ENGINE_API auto RegisterLevel(const LLevel& InLevel) -> bool;
+    ENGINE_API auto RegisterLevel(const LLevel&& InLevel) -> bool;
+    ENGINE_API auto IsLevelRegistered(const LStringLegacy& Identifier) const -> bool;
 
     //#
     //# Delegate called when a new world is shortly about to be running inside its beginning life cycle.
@@ -169,10 +159,10 @@ public:
     // Misc
     ///////////////////////////////////////////////////////////////////////////////
 
-    bool IsCommandLineInterfaceValid() const;
-    auto GetCommandLineInterface() const -> LCommandLineInterface*;
-    auto GetCheckedCommandLineInterface() const -> LCommandLineInterface*;
-    auto GetPanickedCommandLineInterface() const -> LCommandLineInterface*;
+    ENGINE_API bool IsCommandLineInterfaceValid() const;
+    ENGINE_API auto GetCommandLineInterface() const -> LCommandLineInterface*;
+    ENGINE_API auto GetCheckedCommandLineInterface() const -> LCommandLineInterface*;
+    ENGINE_API auto GetPanickedCommandLineInterface() const -> LCommandLineInterface*;
 
     FORCEINLINE auto IsApplicationInstanceValid() const -> bool { return this->ApplicationInstance; }
     FORCEINLINE auto GetApplicationInstance() const -> LApplicationInstance* { return this->ApplicationInstance; }

@@ -22,19 +22,21 @@ namespace Jafg
 //#
 //# Interface for a generic surface that the RHI may use to draw on.
 //#
-class LSurface
+class LSurfaceBase
 {
 public:
 
-    LSurface() = default;
-    PROHIBIT_REALLOC_OF_ANY_FORM(LSurface)
-    virtual ~LSurface() = default;
+    LSurfaceBase() = default;
+    PROHIBIT_COPY(LSurfaceBase)
+    DEFAULT_MOVE(LSurfaceBase)
+    virtual ~LSurfaceBase() = default;
 
-    template <class T = LSurface>
+    template <class T = LSurfaceBase>
     NODISCARD T* As() { return static_cast<T*>(this); }
 
     //# Initialize should make the handle to a native surface screen valid or panic if not possible.
     virtual void Initialize();
+    virtual void Tick();
     virtual void OnClear() { this->SurfaceViewport.OnClear(); }
     virtual void OnUpdate() { this->SurfaceViewport.Draw(); }
     //# TearDown should release the handle to the native surface screen or panic if not possible.
@@ -45,7 +47,7 @@ public:
     virtual void BeginNewFrame();
     virtual void PollInputs() = 0;
     virtual void PollEvents() = 0;
-    void PollVirtualInputs();
+            void PollVirtualInputs();
 
     virtual     void SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor);
     FORCEINLINE auto GetInputMode() const -> EInputMode::Type { return this->InputMode; }
@@ -94,7 +96,7 @@ public:
     FORCEINLINE bool IsKeyUp(const LRawInput& InRawInput) const { return this->IsKeyUp(InRawInput.Key); }
 
     FORCEINLINE bool HasBufferedPlatformInput() const { return this->PlatformInput.IsEmpty() == false; }
-    FORCEINLINE auto GetPlatformInput() const -> const LString& { return this->PlatformInput; }
+    FORCEINLINE auto GetBufferedPlatformInput() const -> const LString& { return this->PlatformInput; }
 
 protected:
 
@@ -141,28 +143,28 @@ private:
 
 } /* ~Namespace Jafg */
 
-void Jafg::LSurface::AddKeyDown(const LKey InKey)
+void Jafg::LSurfaceBase::AddKeyDown(const LKey InKey)
 {
     check( this->DownKeys.FindRef(InKey) == nullptr )
     this->DownKeys.Emplace(InKey);
     return;
 }
 
-void Jafg::LSurface::AddKeyDown(const LKey InKey, const float InValue)
+void Jafg::LSurfaceBase::AddKeyDown(const LKey InKey, const float InValue)
 {
     check( this->DownKeys.FindRef(InKey) == nullptr )
     this->DownKeys.Emplace(InKey, InValue);
     return;
 }
 
-void Jafg::LSurface::AddKeyDown(const LRawInput& InRawInput)
+void Jafg::LSurfaceBase::AddKeyDown(const LRawInput& InRawInput)
 {
     check( this->DownKeys.FindRef(InRawInput.Key) == nullptr )
     this->DownKeys.Emplace(InRawInput);
     return;
 }
 
-void Jafg::LSurface::SetRepeatedKeyDown(const LKey InKey)
+void Jafg::LSurfaceBase::SetRepeatedKeyDown(const LKey InKey)
 {
     if constexpr (IS_COMPILED_LOG(LogSurface, Warning))
     {
@@ -175,7 +177,7 @@ void Jafg::LSurface::SetRepeatedKeyDown(const LKey InKey)
     return;
 }
 
-void Jafg::LSurface::SetRepeatedKeyDown(const LKey InKey, const float InValue)
+void Jafg::LSurfaceBase::SetRepeatedKeyDown(const LKey InKey, const float InValue)
 {
     if constexpr (IS_COMPILED_LOG(LogSurface, Warning))
     {
@@ -188,7 +190,7 @@ void Jafg::LSurface::SetRepeatedKeyDown(const LKey InKey, const float InValue)
     return;
 }
 
-void Jafg::LSurface::SetRepeatedKeyDown(const LRawInput& InRawInput)
+void Jafg::LSurfaceBase::SetRepeatedKeyDown(const LRawInput& InRawInput)
 {
     if constexpr (IS_COMPILED_LOG(LogSurface, Warning))
     {

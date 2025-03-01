@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreAfx.h"
 #include "User/Input/RawInput.h"
 #include "InputContext.h"
 #include "User/Input/InputTypes.h"
@@ -10,7 +9,6 @@
 namespace Jafg
 {
 
-class LSurface;
 class LLocalEgo;
 
 //#
@@ -21,6 +19,8 @@ class LUserInput final
 public:
 
     LUserInput() = default;
+    PROHIBIT_REALLOC_OF_ANY_FORM(LUserInput)
+    ~LUserInput() = default;
 
     //# Whether this key was just downed this frame.
     ENGINE_API bool IsNewDown(const LKey Key) const;
@@ -61,6 +61,12 @@ public:
     ENGINE_API int32 DeactivateAllContexts();
     FORCEINLINE auto GetActiveContexts() const -> const TdhArray<LUserInputContext*>& { return this->ActiveContexts; }
     FORCEINLINE auto GetRegisteredContexts() const -> const TdhArray<LUserInputContext*>& { return this->RegisteredContexts; }
+
+    //#
+    //# This frame platform-localized input.
+    //#
+    ENGINE_API bool HasBufferedPlatformInput() const;
+    ENGINE_API auto GetBufferedPlatformInput() const -> const LString&;
 
 private:
 

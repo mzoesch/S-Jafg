@@ -201,9 +201,9 @@ void Jafg::LFrameBuffer::Orphan()
 
     LOG_VERBOSE(LogRhi, "Orphaning frame buffer [{}].", this->Handle)
 
-    glDeleteFramebuffers(1, &this->Handle);
-    glDeleteTextures(1, &this->Color);
-    glDeleteRenderbuffers(1, &this->Depth);
+    // glDeleteFramebuffers(1, &this->Handle);
+    // glDeleteTextures(1, &this->Color);
+    // glDeleteRenderbuffers(1, &this->Depth);
 
 #if WITH_DEBUG_ZERO_UNBOUND
     this->Handle = 0;

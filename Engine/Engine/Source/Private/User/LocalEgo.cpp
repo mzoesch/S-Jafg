@@ -1,95 +1,58 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "User/LocalEgo.h"
-#include "Core/LaunchProgress.h"
 #include "Engine/Engine.h"
 #include "Engine/Framework/Hud.h"
-#include "User/Input/UserInput.h"
 #include "Platform/Surface.h"
-#include "User/UserPreferences.h"
 #include "Engine/ActorUtility.h"
 #include "Engine/Framework/Pawn.h"
 #include "Engine/Framework/PersonaController.h"
 #include "Engine/Framework/Lackey.h"
 #include "MyWorld/MyWorldStatics.h"
 #include "Subsystems/LocalEgoSubsystem.h"
-#include "Subsystems/SubsystemCollection.h"
 
 void Jafg::LLocalEgo::Initialize()
 {
     check( Tasks::IsOnMasterThread() )
-    checkSlow( this->UserInput == nullptr )
+    check( this->Context.GetHumanReadableName().IsEmpty() )
 
-    this->Context = new ::Jafg::LObjectContext();
-    this->Context->SetHumanReadableName("LocalEgo");
-
-    this->UserInput = new LUserInput();
-
-    if (LaunchProgress::Private::GProgressSurface && LaunchProgress::Private::bOwnerShipToken == false)
-    {
-        LaunchProgress::Private::bOwnerShipToken = true;
-        this->SurfaceToDrawOn = LaunchProgress::Private::GProgressSurface;
-    }
-    else
-    {
-        this->SurfaceToDrawOn = new ::Jafg::LCurrentSurface();
-        this->SurfaceToDrawOn->Initialize();
-    }
-
-    this->GetPrimarySurface()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
-
-    this->Hud = new ::Jafg::LHud();
+    this->Context.SetHumanReadableName("LocalEgo");
 
     this->OnWorldBeginLifeHandle = GEngine->OnWorldBeginLife.Add(this, &LLocalEgo::OnWorldBeginLife);
 
-    checkSlow( this->Collection == nullptr )
-    this->Collection = new LSubsystemCollection(this->Context);
-    this->Collection->LocateAllSubsystemsOfClass(JLocalEgoSubsystem::StaticClass());
-    this->Collection->InitializeSubsystems();
+    this->Collection.DeferredInitialize(&this->Context);
+    this->Collection.InitializeSubsystems(JLocalEgoSubsystem::StaticClass());
 
-    this->Hud->Initialize(this->GetContext());
+    this->Hud.Initialize(&this->GetContext());
 
     return;
 }
 
 void Jafg::LLocalEgo::Tick(const float DeltaTime)
 {
-    this->SurfaceToDrawOn->OnClear();
-
     if (const int32 PurgedFactories = Private::PurgeWidgetFactories(); PurgedFactories > 0)
     {
         LOG_VERBOSE(LogWidgetFramework, "Purged {} widget factories.", PurgedFactories)
     }
 
-    this->GetPrimarySurface()->BeginNewFrame();
-    this->GetPrimarySurface()->PollInputs();
-    this->GetPrimarySurface()->PollEvents();
-    this->GetPrimarySurface()->PollVirtualInputs();
-
-    this->Hud->Tick(*this->GetPrimarySurface(), this->GetPrimarySurface()->GetInputMode() & EInputMode::UserInterface);
-
-    if (this->GetPrimarySurface()->GetInputMode() & EInputMode::InputSubSystem)
-    {
-        this->UserInput->DispatchInputDelegates();
-    }
+    this->Hud.Tick(&this->UserInput);
 
     return;
 }
 
 void Jafg::LLocalEgo::OnLateTick(const float DeltaTime)
 {
-    this->GetPrimarySurface()->OnUpdate();
+    for (LSurface& Surface : this->Hud.GetSurfaces())
+    {
+        Surface.OnUpdate();
+    }
 
     return;
 }
 
 void Jafg::LLocalEgo::TearDown()
 {
-    checkSlow( this->Collection )
-    this->Collection->TearDownSubsystems();
-    delete this->Collection;
-    this->Collection = nullptr;
+    this->Collection.TearDownSubsystems();
 
     if (ensure(this->OnWorldBeginLifeHandle.IsValid()))
     {
@@ -97,30 +60,8 @@ void Jafg::LLocalEgo::TearDown()
         this->OnWorldBeginLifeHandle.Reset();
     }
 
-    if (ensure(this->Hud))
-    {
-        this->Hud->TearDown();
-        delete this->Hud;
-        this->Hud = nullptr;
-    }
-
-    if (ensure(this->UserInput))
-    {
-        delete this->UserInput;
-        this->UserInput = nullptr;
-    }
-
-    if (ensure(this->SurfaceToDrawOn))
-    {
-        this->SurfaceToDrawOn->TearDown();
-        delete this->SurfaceToDrawOn;
-        this->SurfaceToDrawOn = nullptr;
-    }
-
-    check( this->Context )
-    this->Context->TearDownContext();
-    delete this->Context;
-    this->Context = nullptr;
+    this->Hud.TearDown();
+    this->Context.TearDownContext();
 
     return;
 }
@@ -139,7 +80,7 @@ void Jafg::LLocalEgo::Possess(APersonaController* InNewController)
         InNewController->SetLocalEgo(this);
     }
 
-    this->Collection->ForEachSubsystem<JLocalEgoSubsystem>(
+    this->Collection.ForEachSubsystem<JLocalEgoSubsystem>(
     [Old, InNewController] (JLocalEgoSubsystem* Subsystem)
     {
         Subsystem->OnNewPersonaControllerPossessed(Old, InNewController);
@@ -150,8 +91,8 @@ void Jafg::LLocalEgo::Possess(APersonaController* InNewController)
 
 void Jafg::LLocalEgo::OnNewPawnPossessed(APawn* InOld, APawn* InNew) const
 {
-    this->Collection->ForEachSubsystem<JLocalEgoSubsystem>(
-    [InOld, InNew] (JLocalEgoSubsystem* Subsystem)
+    const_cast<LLocalEgo*>(this)->Collection.ForEachSubsystem<JLocalEgoSubsystem>(
+    [InOld, InNew](JLocalEgoSubsystem* Subsystem)
     {
         Subsystem->OnNewPawnPossessed(InOld, InNew);
     });

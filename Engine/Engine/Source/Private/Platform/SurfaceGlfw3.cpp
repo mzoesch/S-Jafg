@@ -1,5 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
+#include "User/LocalEgo.h"
 #if PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
 
 #include "Platform/Surface.h"
@@ -88,6 +89,42 @@ void LGlfw3Bridge::KeyCallback(GLFWwindow* Window, const int32 Key, const int32 
 }
 
 } /* ~Namespace Jafg::Private */
+
+Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceGlfw3&& Other) noexcept
+{
+    *this = std::move(Other);
+}
+
+Jafg::LSurfaceGlfw3& Jafg::LSurfaceGlfw3::operator=(LSurfaceGlfw3&& Other) noexcept
+{
+    Super::operator=(std::move(Other));
+
+
+    this->Cursor = Other.Cursor;
+    this->Handle = Other.Handle;
+    this->bVSync = Other.bVSync;
+    this->bFirstMouseCallback = Other.bFirstMouseCallback;
+    this->LastMouseX = Other.LastMouseX;
+    this->LastMouseY = Other.LastMouseY;
+
+    glfwMakeContextCurrent(this->Handle);
+    glfwSetWindowUserPointer(this->Handle, reinterpret_cast<void*>(this));
+
+    Other.Cursor = nullptr;
+    Other.Handle = nullptr;
+
+    return *this;
+}
+
+Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
+{
+    if (this->Handle)
+    {
+        LSurfaceGlfw3::TearDown();
+    }
+
+    return;
+}
 
 void Jafg::LSurfaceGlfw3::Initialize()
 {
@@ -178,13 +215,11 @@ void Jafg::LSurfaceGlfw3::Initialize()
 
 void Jafg::LSurfaceGlfw3::OnClear()
 {
-    Super::OnClear();
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
-
     glfwMakeContextCurrent(this->Handle);
 
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    Super::OnClear();
 
     return;
 }
@@ -197,7 +232,6 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
     checkSlow( Tasks::IsOnMasterThread() )
 
     glfwMakeContextCurrent(this->Handle);
-
     glfwSwapBuffers(this->Handle);
 
     return;
@@ -215,17 +249,26 @@ void Jafg::LSurfaceGlfw3::TearDown()
 
     if (this->Handle)
     {
+        LOG_INFO(LogSurface, "Destroying glfw window.")
         glfwDestroyWindow(this->Handle);
         this->Handle = nullptr;
     }
 
-    glfwTerminate();
+    if (IsEngineExitRequested() && GEngine->GetLocalEgoAsserted()->GetHud()->GetSurfaceCount() == 0)
+    {
+        LOG_INFO(LogSurface, "Terminating glfw.")
+        glfwTerminate();
+    }
 
     return;
 }
 
 void Jafg::LSurfaceGlfw3::PollInputs()
 {
+    checkSlow( this->Handle )
+    checkSlow( Tasks::IsOnMasterThread() )
+    glfwMakeContextCurrent(this->Handle);
+
     LKey KeyCursor = EKeys::A;
     while (KeyCursor <= EKeys::LastKey)
     {
@@ -270,7 +313,7 @@ void Jafg::LSurfaceGlfw3::PollEvents()
 
     if (glfwWindowShouldClose(this->Handle))
     {
-        Jafg::RequestEngineExit("Window closed by user.");
+        GEngine->RequestEngineExit("Window closed by user.");
     }
 
     glfwPollEvents();

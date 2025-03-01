@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "User/CoreSubsystems/CoreInputSubsystem.h"
 #include "Core/CoreNames.h"
 #include "Engine/Framework/Hud.h"
@@ -56,7 +55,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             {
                 UserInput->DeactivateAllContexts();
                 UserInput->ActivateContext("InPause");
-                this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::Both, ShowMouseCursor);
+                this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both, ShowMouseCursor);
                 (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WPauseScreen>(EWidgetVisibility::IntransitiveHitTestInvisible);
             }
         );
@@ -64,12 +63,13 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         ContextInPause->MapKey
         (
             CurMapping, EKeys::Escape, EInputActionTrigger::Triggered,
-            [this, UserInput] (LInputActionValue& InValue)
+            [this, UserInput](LInputActionValue& InValue) -> void
             {
                 UserInput->DeactivateAllContexts();
                 UserInput->ActivateContext("InMyWorld");
-                this->GetLocalEgo()->GetPrimarySurface()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+                this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
                 (void)this->GetLocalEgo()->GetHud()->ChangeWidgetVisibility<WPauseScreen>(EWidgetVisibility::Collapsed);
+                return;
             }
         );
     }
@@ -122,7 +122,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             CurMapping, EKeys::T, EInputActionTrigger::Triggered,
             [this] (LInputActionValue& InValue)
             {
-                this->GetLocalEgo()->GetHud()->GetTopLevelWidgetByClass<WConsoleScreen>()->SetConsoleFrontendState(EConsoleScreenState::Show);
+                this->GetLocalEgo()->GetHud()->GetFirstTopLevelWidgetByClassChecked<WConsoleScreen>()->SetConsoleFrontendState(EConsoleScreenState::Show);
             }
         );
         ContextInConsole->MapAction(CurMapping);
@@ -131,7 +131,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             CurMapping, EKeys::Escape, EInputActionTrigger::Triggered,
             [this] (LInputActionValue& InValue)
             {
-                this->GetLocalEgo()->GetHud()->GetTopLevelWidgetByClass<WConsoleScreen>()->SetConsoleFrontendState(EConsoleScreenState::Hide);
+                this->GetLocalEgo()->GetHud()->GetFirstTopLevelWidgetByClassChecked<WConsoleScreen>()->SetConsoleFrontendState(EConsoleScreenState::Hide);
             }
         );
     }
@@ -199,9 +199,9 @@ void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
     return;
 }
 
-void Jafg::JCoreInputSubsystem::OnDebugScreenToggle(LInputActionValue& InValue)
+void Jafg::JCoreInputSubsystem::OnDebugScreenToggle(LInputActionValue& InValue) const
 {
-    WDebugScreen* Screen = this->GetLocalEgo()->GetHud()->GetCheckedTopLevelWidgetByClass<WDebugScreen>();
+    WDebugScreen* Screen = this->GetLocalEgo()->GetHud()->GetFirstTopLevelWidgetByClassChecked<WDebugScreen>();
 
     Screen->SetVisibility(Screen->GetVisibility() == EWidgetVisibility::Visible
         ? EWidgetVisibility::Collapsed

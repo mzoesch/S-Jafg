@@ -31,7 +31,7 @@ public:
 
     LObjectContext();
     PROHIBIT_REALLOC_OF_ANY_FORM(LObjectContext)
-    virtual ~LObjectContext() = default;
+    virtual ~LObjectContext() { check( this->Carnifex == nullptr ) }
 
     virtual void TearDownContext();
 

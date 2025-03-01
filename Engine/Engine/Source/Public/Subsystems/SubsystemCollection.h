@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreAfx.h"
 #include "Subsystems/Subsystem.h"
 #include "Engine/ObjectClass.h"
 #include "Engine/ObjectBaseUtility.h"
@@ -20,14 +19,16 @@ class JSubsystem;
 //#
 struct LSubsystemCollection final
 {
-    LSubsystemCollection() = delete;
+    LSubsystemCollection() = default;
     ENGINE_API explicit LSubsystemCollection(LObjectContext* InOuter) : Outer(InOuter) { }
     PROHIBIT_REALLOC_OF_ANY_FORM(LSubsystemCollection)
     ENGINE_API ~LSubsystemCollection() = default;
 
-    ENGINE_API void LocateAllSubsystemsOfClass(const LObjectClass* InClass);
+    FORCEINLINE bool IsValid() const { return this->Outer != nullptr; }
 
-    ENGINE_API void InitializeSubsystems();
+    ENGINE_API void DeferredInitialize(LObjectContext* InOuter);
+
+    ENGINE_API void InitializeSubsystems(const LObjectClass* InClass);
     ENGINE_API void TearDownSubsystems();
 
     //#
@@ -42,6 +43,8 @@ struct LSubsystemCollection final
     template <typename Predicate>
     FORCEINLINE void ForEachSubsystem(Predicate&& InPredicate)
     {
+        check( Outer )
+
         for (JSubsystem* Subsystem : this->SubsystemInstances)
         {
             checkSlow( Subsystem )
@@ -55,6 +58,8 @@ struct LSubsystemCollection final
     template <typename TSubsystem, typename Predicate, bool bAllowMissCast = false>
     FORCEINLINE void ForEachSubsystem(Predicate&& InPredicate)
     {
+        check( Outer )
+
         for (JSubsystem* Subsystem : this->SubsystemInstances)
         {
             checkSlow( Subsystem )
@@ -69,11 +74,13 @@ struct LSubsystemCollection final
                 continue;
             }
 
-            panicMsgf(
+            panicMsgf
+            (
                 "Failed to dynamically cast subsystem [{}] to [{}].",
                 Subsystem->GetFullName(),
                 TSubsystem::StaticClass()->GetSpacedClassName()
             )
+
             continue;
         }
 
@@ -83,51 +90,109 @@ struct LSubsystemCollection final
     template <typename TSubsystem, typename Predicate>
     FORCEINLINE void ForEachSubsystemUnsafe(Predicate&& InPredicate)
     {
+        check( Outer )
+
         for (JSubsystem* Subsystem : this->SubsystemInstances)
         {
             checkSlow( Subsystem )
-            std::forward<Predicate>(InPredicate)(reinterpret_cast<TSubsystem*>(Subsystem));
+            std::forward<Predicate>(InPredicate)(CheckedStaticCast<TSubsystem*>(Subsystem));
             continue;
         }
 
         return;
     }
 
-    ENGINE_API auto GetSubsystem(const LObjectClass* InStaticClass) -> JSubsystem*;
-    FORCEINLINE auto GetCheckedSubsystem(const LObjectClass* InStaticClass) -> JSubsystem*
-    {
-        JSubsystem* Out = this->GetSubsystem(InStaticClass);
-        check( Out )
-        return Out;
-    }
+    ENGINE_API        JSubsystem* GetSubsystem(const LObjectClass* InStaticClass);
+    ENGINE_API  const JSubsystem* GetSubsystem(const LObjectClass* InStaticClass) const;
+    FORCEINLINE       JSubsystem* GetCheckedSubsystem(const LObjectClass* InStaticClass);
+    FORCEINLINE const JSubsystem* GetCheckedSubsystem(const LObjectClass* InStaticClass) const;
 
     template <typename TSubsystem, bool bAllowForNullptr = true>
-    FORCEINLINE auto GetSubsystem() -> TSubsystem*
-    {
-        return CheckedStaticCast<TSubsystem, bAllowForNullptr>(this->GetSubsystem(TSubsystem::StaticClass()));
-    }
+    FORCEINLINE       TSubsystem* GetSubsystem();
     template <typename TSubsystem, bool bAllowForNullptr = true>
-    FORCEINLINE auto GetSubsystem(const LObjectClass* InStaticClass) -> TSubsystem*
-    {
-        return CheckedStaticCast<TSubsystem, std::remove_pointer_t<decltype(this->GetSubsystem(InStaticClass))>, bAllowForNullptr>(this->GetSubsystem(InStaticClass));
-    }
+    FORCEINLINE const TSubsystem* GetSubsystem() const;
+
+    template <typename TSubsystem, bool bAllowForNullptr = true>
+    FORCEINLINE       TSubsystem* GetSubsystem(const LObjectClass* InStaticClass);
+    template <typename TSubsystem, bool bAllowForNullptr = true>
+    FORCEINLINE const TSubsystem* GetSubsystem(const LObjectClass* InStaticClass) const;
 
     template <typename TSubsystem>
-    FORCEINLINE auto GetCheckedSubsystem() -> TSubsystem*
-    {
-        return CheckedStaticCast<TSubsystem>(this->GetCheckedSubsystem(TSubsystem::StaticClass()));
-    }
+    FORCEINLINE       TSubsystem* GetCheckedSubsystem();
     template <typename TSubsystem>
-    FORCEINLINE auto GetCheckedSubsystem(const LObjectClass* InStaticClass) -> TSubsystem*
-    {
-        return CheckedStaticCast<TSubsystem>(this->GetCheckedSubsystem(InStaticClass));
-    }
+    FORCEINLINE const TSubsystem* GetCheckedSubsystem() const;
+
+    template <typename TSubsystem>
+    FORCEINLINE       TSubsystem* GetCheckedSubsystem(const LObjectClass* InStaticClass);
+    template <typename TSubsystem>
+    FORCEINLINE const TSubsystem* GetCheckedSubsystem(const LObjectClass* InStaticClass) const;
 
 private:
 
-    LObjectContext*      Outer;
-    TdhArray<const LObjectClass*> Subsystems;
-    TdhArray<JSubsystem*>         SubsystemInstances;
+    LObjectContext*       Outer = nullptr;
+    TdhArray<JSubsystem*> SubsystemInstances;
 };
 
-} /* Namespace Jafg */
+FORCEINLINE JSubsystem* LSubsystemCollection::GetCheckedSubsystem(const LObjectClass* InStaticClass)
+{
+    JSubsystem* Out = this->GetSubsystem(InStaticClass);
+    check( Out )
+    return Out;
+}
+
+FORCEINLINE const JSubsystem* LSubsystemCollection::GetCheckedSubsystem(const LObjectClass* InStaticClass) const
+{
+    const JSubsystem* Out = this->GetSubsystem(InStaticClass);
+    check( Out )
+    return Out;
+}
+
+template <typename TSubsystem, bool bAllowForNullptr>
+FORCEINLINE TSubsystem* LSubsystemCollection::GetSubsystem()
+{
+    return CheckedStaticCast<TSubsystem, bAllowForNullptr>(this->GetSubsystem(TSubsystem::StaticClass()));
+}
+
+template <typename TSubsystem, bool bAllowForNullptr>
+const TSubsystem* LSubsystemCollection::GetSubsystem() const
+{
+    return CheckedStaticCast<TSubsystem, bAllowForNullptr>(this->GetSubsystem(TSubsystem::StaticClass()));
+}
+
+template <typename TSubsystem, bool bAllowForNullptr>
+auto LSubsystemCollection::GetSubsystem(const LObjectClass* InStaticClass) -> TSubsystem*
+{
+    return CheckedStaticCast<TSubsystem, std::remove_pointer_t<decltype(this->GetSubsystem(InStaticClass))>, bAllowForNullptr>(this->GetSubsystem(InStaticClass));
+}
+
+template <typename TSubsystem, bool bAllowForNullptr>
+const TSubsystem* LSubsystemCollection::GetSubsystem(const LObjectClass* InStaticClass) const
+{
+    return CheckedStaticCast<TSubsystem, std::remove_pointer_t<decltype(this->GetSubsystem(InStaticClass))>, bAllowForNullptr>(this->GetSubsystem(InStaticClass));
+}
+
+template <typename TSubsystem>
+auto LSubsystemCollection::GetCheckedSubsystem() -> TSubsystem*
+{
+    return CheckedStaticCast<TSubsystem>(this->GetCheckedSubsystem(TSubsystem::StaticClass()));
+}
+
+template <typename TSubsystem>
+const TSubsystem* LSubsystemCollection::GetCheckedSubsystem() const
+{
+    return CheckedStaticCast<TSubsystem>(this->GetCheckedSubsystem(TSubsystem::StaticClass()));
+}
+
+template <typename TSubsystem>
+auto LSubsystemCollection::GetCheckedSubsystem(const LObjectClass* InStaticClass) -> TSubsystem*
+{
+    return CheckedStaticCast<TSubsystem>(this->GetCheckedSubsystem(InStaticClass));
+}
+
+template <typename TSubsystem>
+const TSubsystem* LSubsystemCollection::GetCheckedSubsystem(const LObjectClass* InStaticClass) const
+{
+    return CheckedStaticCast<TSubsystem>(this->GetCheckedSubsystem(InStaticClass));
+}
+
+} /* ~Namespace Jafg */

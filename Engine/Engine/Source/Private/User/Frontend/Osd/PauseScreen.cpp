@@ -29,7 +29,7 @@ void Jafg::WPauseScreen::Construct()
         Descriptor.OnButtonPressed = [](WTabBar& Self, const LSimpleString& InIdentifier) -> bool
         {
             Self.OnTabBarButtonPressed(InIdentifier);
-            Self.GetLocalEgo()->GetPrimarySurface()->AddVirtualKeyDown(EKeys::Escape);
+            Self.GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->AddVirtualKeyDown(EKeys::Escape);
             return true;
         };
         this->PauseTabBar->RegisterTab(std::move(Descriptor));

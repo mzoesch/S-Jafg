@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Debug/DebugTraceLine.h"
 #include "Rhi/DebugTraceLineShaderContext.h"
 #include "Engine/World.h"
@@ -33,7 +32,7 @@ void Jafg::LDebugTraceLine::Draw(const LWorld& InContext) const
         ::GetLineShaderContext()->Make();
     }
 
-    const LEye* Eye = GEngine->GetCheckedLocalEgo()->GetPossessed()->GetPossessed()->GetEye();
+    const LEye* Eye = GEngine->GetLocalEgoChecked()->GetPossessed()->GetPossessed()->GetEye();
 
     LDebugTraceLineShaderContextDrawArgs Args;
     Args.DegYFov = Eye->GetDegYFov();
@@ -41,7 +40,7 @@ void Jafg::LDebugTraceLine::Draw(const LWorld& InContext) const
     Args.Start = this->Start;
     Args.End   = this->End;
     Args.Color = this->VisualParams.Color;
-    ::GetLineShaderContext()->Draw(InContext.GetLocalEgo()->GetPrimarySurface()->GetViewport(), Args);
+    ::GetLineShaderContext()->Draw(InContext.GetLocalEgo()->GetHud()->GetSurfaces()[0].GetViewport(), Args);
 
     return;
 }
@@ -57,7 +56,7 @@ void Jafg::LDebugTraceLine::DrawLine(const LWorld& InContext, const LVector& InS
     static LDebugTraceLineShaderContextDrawArgs Args;
     if (bUseCache == false)
     {
-        const LEye* Eye = GEngine->GetCheckedLocalEgo()->GetPossessed()->GetPossessed()->GetEye();
+        const LEye* Eye = GEngine->GetLocalEgoChecked()->GetPossessed()->GetPossessed()->GetEye();
         Args.DegYFov = Eye->GetDegYFov();
         Args.ViewMatrix.CopyFrom(Eye->GetViewMatrix());
     }
@@ -66,7 +65,7 @@ void Jafg::LDebugTraceLine::DrawLine(const LWorld& InContext, const LVector& InS
     Args.Color = InColor;
     Args.Thickness = Thickness;
 
-    ::GetLineShaderContext()->Draw(InContext.GetLocalEgo()->GetPrimarySurface()->GetViewport(), Args);
+    ::GetLineShaderContext()->Draw(InContext.GetLocalEgo()->GetHud()->GetSurfaces()[0].GetViewport(), Args);
 
     return;
 }

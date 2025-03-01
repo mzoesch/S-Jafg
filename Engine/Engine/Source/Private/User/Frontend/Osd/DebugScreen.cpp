@@ -121,7 +121,7 @@ void Jafg::WDebugScreen::Tick()
 {
     Super::Tick();
 
-    const LLocalEgo* LocalEgo = GEngine->GetCheckedLocalEgo();
+    const LLocalEgo* LocalEgo = GEngine->GetLocalEgoChecked();
     const APersonaController* Controller = LocalEgo->GetCheckedPossessed();
     if (Controller->DoesPossess())
     {

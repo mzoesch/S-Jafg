@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Debug/DebugTraceSphere.h"
 #include "Rhi/DebugTraceSphereShaderContext.h"
 #include "Platform/Surface.h"
@@ -33,7 +32,7 @@ void Jafg::LDebugTraceSphere::Draw(const LWorld& InContext) const
         ::GetSphereShaderContext()->Make();
     }
 
-    const LEye* Eye = GEngine->GetCheckedLocalEgo()->GetPossessed()->GetPossessed()->GetEye();
+    const LEye* Eye = GEngine->GetLocalEgoChecked()->GetPossessed()->GetPossessed()->GetEye();
 
     LDebugTraceSphereShaderContextDrawArgs Args;
     Args.DegYFov = Eye->GetDegYFov();
@@ -44,7 +43,7 @@ void Jafg::LDebugTraceSphere::Draw(const LWorld& InContext) const
     Args.Stacks = this->VisualParams.Segments;
     Args.Color = this->VisualParams.Color;
     Args.Thickness = this->VisualParams.Thickness;
-    ::GetSphereShaderContext()->Draw(InContext.GetLocalEgo()->GetPrimarySurface()->GetViewport(), Args);
+    ::GetSphereShaderContext()->Draw(InContext.GetLocalEgo()->GetHud()->GetSurfaces()[0].GetViewport(), Args);
 
     return;
 }

@@ -8,14 +8,15 @@ namespace Jafg
 {
 
 class LViewport;
-class LSurface;
+class LSurfaceBase;
+class LSurfaceProxy;
 
 #if PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
     class LSurfaceGlfw3;
-    typedef LSurfaceGlfw3 LCurrentSurface;
+    typedef LSurfaceGlfw3 LSurface;
 #elif PLATFORM_USES_JAVA_SCRIPT_FRONTEND
     class   LSurfaceDom;
-    typedef LSurfaceDom LCurrentSurface;
+    typedef LSurfaceDom LSurface;
 #else /* PLATFORM_USES_JAVA_SCRIPT_FRONTEND */
     #error "Could not resolve PLATFORM."
 #endif /* !PLATFORM_USES_JAVA_SCRIPT_FRONTEND */

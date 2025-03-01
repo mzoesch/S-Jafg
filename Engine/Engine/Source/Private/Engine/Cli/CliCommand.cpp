@@ -84,6 +84,11 @@ Jafg::LString Jafg::LCommandArgs::GetCatRepresentation() const
 
 bool Jafg::LCommandParams::IsInvocable(const LCommandArgs& Args) const
 {
+    if (this->Tokens.GetSize() == Args.GetArgCount() && this->Tokens.GetSize() == 0)
+    {
+        return true;
+    }
+
     int32 ParamCursor = 0;
     int32 ArgCursor   = 0;
 

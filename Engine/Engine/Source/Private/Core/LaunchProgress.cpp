@@ -8,12 +8,12 @@
 namespace Jafg::LaunchProgress
 {
 
-ENGINE_API float            Private::GProgress            = 0.0f;
-ENGINE_API double           Private::GProgressStep        = 0.0;
-ENGINE_API LSimpleString    Private::GProgressName        = "Intermediate";
-ENGINE_API LSimpleString    Private::GProgressDescription = "Intermediate";
-ENGINE_API LCurrentSurface* Private::GProgressSurface     = nullptr;
-ENGINE_API bool             Private::bOwnerShipToken      = false;
+ENGINE_API float         Private::GProgress            = 0.0f;
+ENGINE_API double        Private::GProgressStep        = 0.0;
+ENGINE_API LSimpleString Private::GProgressName        = "Intermediate";
+ENGINE_API LSimpleString Private::GProgressDescription = "Intermediate";
+ENGINE_API LSurface*     Private::GProgressSurface     = nullptr;
+ENGINE_API bool          Private::bOwnerShipToken      = false;
 
 } /* ~Namespace Jafg::LaunchProgress */
 
@@ -22,7 +22,7 @@ void Jafg::LaunchProgress::PrepareBeginProgress()
     check( Private::GProgressSurface == nullptr )
     check( Private::bOwnerShipToken == false )
 
-    Private::GProgressSurface = new LCurrentSurface();
+    Private::GProgressSurface = new LSurface();
     Private::GProgressSurface->Initialize();
 
     return;

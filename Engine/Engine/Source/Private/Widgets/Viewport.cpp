@@ -1,15 +1,11 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Widgets/Viewport.h"
-
 #include "Engine/Engine.h"
 #include "Platform/Surface.h"
 #include "Rhi/RendererStateMachine.h"
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
-
-#include "User/Frontend/Osd/PauseScreen.h"
 
 void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursorLocation)
 {
@@ -207,7 +203,7 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
 
 void Jafg::LViewport::OnClear()
 {
-    this->LevelBuffer.MakeDrawTarget();
+    this->LevelBuffer.ResetAndMakeDrawTarget();
 }
 
 void Jafg::LViewport::Tick()
@@ -273,6 +269,11 @@ void Jafg::LViewport::AddWidget(WUserWidget* Widget)
 void Jafg::LViewport::RemoveWidget(WUserWidget* Widget)
 {
     this->TopLevelWidgets.RemoveOnceChecked(Widget);
+}
+
+bool Jafg::LViewport::TryRemoveWidget(WUserWidget* Widget)
+{
+    return this->TopLevelWidgets.RemoveOnce(Widget);
 }
 
 void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)

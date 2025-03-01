@@ -1,25 +1,15 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Subsystems/HudSubsystem.h"
 #include "User/LocalEgo.h"
 #include "Engine/Engine.h"
 
 void Jafg::JHudSubsystem::Initialize(LSubsystemCollection& Collection)
 {
-    JSubsystem::Initialize(Collection);
+    Super::Initialize(Collection);
 
-    this->OwningHud = GEngine->GetPanickedLocalEgo()->GetHud();
+    this->OwningHud = GEngine->GetLocalEgoAsserted()->GetHud();
     checkSlow( this->OwningHud )
 
     return;
-}
-
-void Jafg::JHudSubsystem::TearDown()
-{
-    JSubsystem::TearDown();
-}
-
-void Jafg::JHudSubsystem::Tick(const float DeltaTime)
-{
 }

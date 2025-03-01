@@ -29,7 +29,7 @@ protected:
 
 private:
 
-    void OnDebugScreenToggle(LInputActionValue& InValue);
+    void OnDebugScreenToggle(LInputActionValue& InValue) const;
 };
 
 } /* ~Namespace Jafg */

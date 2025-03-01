@@ -7,6 +7,7 @@
 #include "Widgets/InterfaceTypes.h"
 #include "User/Input/Replies.h"
 #include "User/Input/Events.h"
+#include "Platform/SurfaceForward.h"
 #include "WidgetNode.generated.h"
 
 namespace Jafg
@@ -17,7 +18,6 @@ class WWidgetNode;
 class WWidgetParent;
 class WUserWidget;
 class LViewport;
-class LSurface;
 class LWidgetFactory;
 class LWidgetFactory;
 class WWidgetParentBase;

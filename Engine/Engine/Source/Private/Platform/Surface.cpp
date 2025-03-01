@@ -5,7 +5,7 @@
 #include "Platform/PlatformMisc.h"
 #include "Widgets/Viewport.h"
 
-void Jafg::LSurface::Initialize()
+void Jafg::LSurfaceBase::Initialize()
 {
     check( this->IsValid() == false )
 
@@ -22,12 +22,34 @@ void Jafg::LSurface::Initialize()
     return;
 }
 
-void Jafg::LSurface::TearDown()
+void Jafg::LSurfaceBase::Tick()
+{
+    const bool bCheckInput = this->InputMode & EInputMode::UserInterface;
+    if (bCheckInput && this->IsMouseLocationMeaningful())
+    {
+        this->GetViewport().DispatchInputs(*static_cast<LSurface*>(this), this->GetMouseLocation());
+    }
+    else
+    {
+        if (bCheckInput)
+        {
+            this->GetViewport().DispatchInputs(*static_cast<LSurface*>(this), LVector2(-1.0f));
+        }
+
+        this->GetViewport().OnMouseLeftViewport(*static_cast<LSurface*>(this), bCheckInput == false);
+    }
+
+    this->SurfaceViewport.Tick();
+
+    return;
+}
+
+void Jafg::LSurfaceBase::TearDown()
 {
     this->SurfaceViewport.TearDown();
 }
 
-void Jafg::LSurface::BeginNewFrame()
+void Jafg::LSurfaceBase::BeginNewFrame()
 {
     this->PlatformInput.Empty();
 
@@ -39,7 +61,7 @@ void Jafg::LSurface::BeginNewFrame()
     return;
 }
 
-void Jafg::LSurface::PollVirtualInputs()
+void Jafg::LSurfaceBase::PollVirtualInputs()
 {
     for (const LRawInput& Input : this->VirtualInput)
     {
@@ -54,7 +76,7 @@ void Jafg::LSurface::PollVirtualInputs()
     return;
 }
 
-void Jafg::LSurface::SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor)
+void Jafg::LSurfaceBase::SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor)
 {
     this->InputMode   = InMode;
     this->bShowCursor = bInShowCursor;
@@ -62,17 +84,17 @@ void Jafg::LSurface::SetInputMode(const EInputMode::Type InMode, const bool bInS
     return;
 }
 
-bool Jafg::LSurface::IsKeyDown(const LKey InKey) const
+bool Jafg::LSurfaceBase::IsKeyDown(const LKey InKey) const
 {
     return this->GetCurrentlyPressedKeys().Contains(InKey);
 }
 
-bool Jafg::LSurface::IsNewKeyDown(const LKey InKey) const
+bool Jafg::LSurfaceBase::IsNewKeyDown(const LKey InKey) const
 {
     return this->GetCurrentlyPressedKeys().Contains(InKey) && (this->GetLastFramePressedKeys().Contains(InKey) == false);
 }
 
-bool Jafg::LSurface::IsKeyUp(const LKey InKey) const
+bool Jafg::LSurfaceBase::IsKeyUp(const LKey InKey) const
 {
     return this->GetCurrentlyPressedKeys().Contains(InKey) == false && this->GetLastFramePressedKeys().Contains(InKey);
 }

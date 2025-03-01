@@ -1,17 +1,30 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Subsystems/Subsystem.h"
 
-void Jafg::LSubsystemCollection::LocateAllSubsystemsOfClass(const LObjectClass* InClass)
+void Jafg::LSubsystemCollection::DeferredInitialize(LObjectContext* InOuter)
 {
+    check( InOuter )
+    check( this->Outer == nullptr )
+    check( this->SubsystemInstances.IsEmpty() )
+
+    this->Outer = InOuter;
+
+    return;
+}
+
+void Jafg::LSubsystemCollection::InitializeSubsystems(const LObjectClass* InClass)
+{
+    check( this->Outer )
+
     LOG_VERBOSE(LogSubsystemCollection, "Locating all subsystems of class {}.", InClass->GetSpacedClassName())
 
-    Private::GObjectRegistry->GetRegisteredObjectsOfClass(InClass, this->Subsystems);
+    TdhArray<const LObjectClass*> SubsystemsClasses;
+    Private::GObjectRegistry->GetRegisteredObjectsOfClass(InClass, SubsystemsClasses);
 
-    for (const LObjectClass* SubsystemClass : this->Subsystems)
+    for (const LObjectClass* SubsystemClass : SubsystemsClasses)
     {
         if (SubsystemClass->IsAbstract())
         {
@@ -23,11 +36,6 @@ void Jafg::LSubsystemCollection::LocateAllSubsystemsOfClass(const LObjectClass* 
         continue;
     }
 
-    return;
-}
-
-void Jafg::LSubsystemCollection::InitializeSubsystems()
-{
     for (int32 i = 0; i < this->SubsystemInstances.GetSize();)
     {
         JSubsystem* Subsystem = this->SubsystemInstances[i];
@@ -59,6 +67,8 @@ void Jafg::LSubsystemCollection::InitializeSubsystems()
 
 void Jafg::LSubsystemCollection::TearDownSubsystems()
 {
+    check( this->Outer )
+
     for (int32 i = 0; i < this->SubsystemInstances.GetSize(); ++i)
     {
         JSubsystem*& Subsystem = this->SubsystemInstances[i];
@@ -85,6 +95,7 @@ void Jafg::LSubsystemCollection::TearDownSubsystems()
     }
 
     this->SubsystemInstances.Empty();
+    this->Outer = nullptr;
 
     return;
 }
@@ -117,6 +128,22 @@ void Jafg::LSubsystemCollection::InitializeDependency(const LObjectClass* InStat
 Jafg::JSubsystem* Jafg::LSubsystemCollection::GetSubsystem(const LObjectClass* InStaticClass)
 {
     for (JSubsystem* Subsystem : this->SubsystemInstances)
+    {
+        checkSlow( Subsystem )
+        if (Subsystem->GetVTable() == InStaticClass)
+        {
+            return Subsystem;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+const Jafg::JSubsystem* Jafg::LSubsystemCollection::GetSubsystem(const LObjectClass* InStaticClass) const
+{
+    for (const JSubsystem* Subsystem : this->SubsystemInstances)
     {
         checkSlow( Subsystem )
         if (Subsystem->GetVTable() == InStaticClass)

@@ -24,6 +24,7 @@ protected:
 private:
 
     LCliCommandHandle CommandHandle_Say;
+    LCliCommandHandle CommandHandle_CreateNewSurface;
 };
 
 } /* ~Namespace Jafg */

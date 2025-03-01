@@ -90,9 +90,9 @@ void Jafg::WEditableTextBlock::Tick()
 {
     Super::Tick();
 
-    if (this->GetLocalEgo()->GetPrimarySurface()->HasBufferedPlatformInput())
+    if (this->GetLocalEgo()->GetUserInput()->HasBufferedPlatformInput())
     {
-        const char* Input = this->GetLocalEgo()->GetPrimarySurface()->GetPlatformInput().ToPtr();
+        const char* Input = this->GetLocalEgo()->GetUserInput()->GetBufferedPlatformInput().ToPtr();
         this->Content.AppendAt(this->CaretCursor, Input);
         const LEightStringTraits::SizeType Count = LEightStringTraits::GetRuneCount(Input);
         for (LEightStringTraits::SizeType I = 0; I < Count; ++I)

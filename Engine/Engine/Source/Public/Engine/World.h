@@ -4,6 +4,7 @@
 
 #include "Engine/ObjectContext.h"
 #include "Physics/TraceUtility.h"
+#include "Subsystems/SubsystemCollection.h"
 #if AS_CLIENT
     #include "Debug/TemporalWorldObject.h"
 #endif /* AS_CLIENT */
@@ -76,7 +77,7 @@ enum Type : uint8
 //# Once every frame a world will be ticked. It may register itself to the RHI to be used when
 //# rendering on any kind of surface. Multiple worlds may draw to the same surface.
 //#
-class ENGINE_API LWorld final : public ::Jafg::LObjectContext
+class ENGINE_API LWorld final : public LObjectContext
 {
     friend AActor;
     friend Private::LWorldMiscellaneousAccessor;
@@ -143,7 +144,7 @@ private:
     TdhArray<AActor*> Actors;
     EWorldState::Type WorldState;
 
-    LSubsystemCollection* Collection = nullptr;
+    LSubsystemCollection Collection;
 
     //# Main thread only.
     bool TickableObjectsPutMutex = false;

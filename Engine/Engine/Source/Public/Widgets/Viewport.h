@@ -11,7 +11,6 @@
 namespace Jafg
 {
 
-class LSurface;
 class LObjectClass;
 class WWidgetNode;
 class WUserWidget;
@@ -20,14 +19,15 @@ class WUserWidget;
 //# Represents a viewport that can contain widgets.
 //# A viewport has in most cases a handle to some sort of platform-specific window instance.
 //#
-class ENGINE_API LViewport final
+class LViewport final
 {
     friend WWidgetNode;
 
 public:
 
     LViewport() = default;
-    PROHIBIT_REALLOC_OF_ANY_FORM(LViewport)
+    PROHIBIT_COPY(LViewport)
+    DEFAULT_MOVE(LViewport)
     ~LViewport() = default;
 
     void Initialize() { }
@@ -38,8 +38,9 @@ public:
     void Draw();
     void TearDown();
 
-    void AddWidget(WUserWidget* Widget);
-    void RemoveWidget(WUserWidget* Widget);
+    ENGINE_API void AddWidget(WUserWidget* Widget);
+    ENGINE_API void RemoveWidget(WUserWidget* Widget);
+    ENGINE_API bool TryRemoveWidget(WUserWidget* Widget);
 
     //# The scale factor is based on the physical platform dpi in relation to the base dpi.
     FORCEINLINE auto GetScaleFactor() const -> float { return this->ScaleFactor; }
@@ -47,19 +48,15 @@ public:
     FORCEINLINE auto GetPlatformDpi() const -> float { return this->PlatformDpi; }
     FORCEINLINE auto GetBaseDpi() const -> float { return this->BaseDpi; }
 
-    auto ChangeDimensions(const LIntVector2& InDimensions) -> void;
+                auto ChangeDimensions(const LIntVector2& InDimensions) -> void;
     FORCEINLINE auto GetDimensions() const -> LIntVector2 { return this->Dimensions; }
 
-    FORCEINLINE auto GetFrameOrthoZLayerDepth() const -> float
-    {
-        this->FrameZLayerDepth += 0.0001f;
-        return this->FrameZLayerDepth;
-    }
+    FORCEINLINE auto GetFrameOrthoZLayerDepth() const -> float { this->FrameZLayerDepth += 0.0001f; return this->FrameZLayerDepth; }
 
-                auto GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> WWidgetNode*;
-    FORCEINLINE auto GetCheckedTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> WWidgetNode*;
-    template <typename TNode> FORCEINLINE auto GetTopLevelWidgetByClass() const -> TNode*;
-    template <typename TNode> FORCEINLINE auto GetCheckedTopLevelWidgetByClass() const -> TNode*;
+    ENGINE_API  WWidgetNode* GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const;
+    FORCEINLINE WWidgetNode* GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const;
+    template <typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClass() const;
+    template <typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClassChecked() const;
 
     template <typename TNode>
     FORCEINLINE auto GetFocusedWidget() const -> const TNode* { return DynamicCast<TNode>(this->FocusedWidget); }
@@ -106,7 +103,7 @@ private:
     LFrameBuffer LevelBuffer = { };
 };
 
-FORCEINLINE auto LViewport::GetCheckedTopLevelWidgetByClass(const LObjectClass* WidgetClass) const -> WWidgetNode*
+FORCEINLINE WWidgetNode* LViewport::GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const
 {
     WWidgetNode* Widget = this->GetTopLevelWidgetByClass(WidgetClass);
     check( Widget )
@@ -121,9 +118,10 @@ FORCEINLINE TNode* LViewport::GetTopLevelWidgetByClass() const
 }
 
 template <typename TNode>
-FORCEINLINE TNode* LViewport::GetCheckedTopLevelWidgetByClass() const
+FORCEINLINE TNode* LViewport::GetTopLevelWidgetByClassChecked() const
 {
-    return CheckedStaticCast<TNode>(this->GetCheckedTopLevelWidgetByClass(TNode::StaticClass()));
+    static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
+    return CheckedStaticCast<TNode>(this->GetTopLevelWidgetByClassChecked(TNode::StaticClass()));
 }
 
 } /* ~Namespace Jafg */

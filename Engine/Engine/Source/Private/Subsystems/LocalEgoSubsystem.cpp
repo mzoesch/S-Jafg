@@ -6,5 +6,5 @@
 
 Jafg::LLocalEgo* Jafg::JLocalEgoSubsystem::GetLocalEgo() const
 {
-    return GEngine->GetCheckedLocalEgo();
+    return GEngine->GetLocalEgoChecked();
 }

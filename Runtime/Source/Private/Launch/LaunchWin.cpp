@@ -4,14 +4,21 @@
 
 #include "Core/Application.h"
 
-using namespace Jafg;
-
-extern EPlatformExit::Type GuardedMain();
-
 #if WITH_TESTS
     extern EPlatformExit::Type TestAnsiMain(char* CmdLine);
     extern EPlatformExit::Type TestWideMain(wchar_t* CmdLine);
+
+    #ifdef UNICODE
+        #define TestMain        TestWideMain
+    #else /* UNICODE */
+        #define TestMain        TestAnsiMain
+    #endif /* !UNICODE */
+
 #endif /* WITH_TESTS */
+
+using namespace Jafg;
+
+extern EPlatformExit::Type GuardedMain();
 
 namespace
 {
@@ -27,11 +34,7 @@ int32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstanc
     // Project to use the subsystem "Not Set" (for automatic platform detection) or "Windows".
     //
 #if WITH_TESTS
-    #ifdef UNICODE
-        return TestAnsiMain(::GetCommandLineA());
-    #else /* UNICODE */
-        return TestWideMain(::GetCommandLineW());
-    #endif /* UNICODE */
+    TestMain(::GetCommandLine());
 #else /* WITH_TESTS */
 
     int32 ErrorLevel = 0;
@@ -99,5 +102,9 @@ int32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstanc
 
 #endif /* !WITH_TESTS */
 }
+
+#ifdef TestMain
+    #undef TestMain
+#endif /* TestMain */
 
 #endif /* PLATFORM_WINDOWS */

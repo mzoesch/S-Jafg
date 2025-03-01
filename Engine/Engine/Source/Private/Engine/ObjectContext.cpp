@@ -12,6 +12,8 @@ Jafg::LObjectContext::LObjectContext()
 
 void Jafg::LObjectContext::TearDownContext()
 {
+    check( this->Carnifex )
+
     LOG_TRACE
     (
         LogCarnifex,
@@ -41,6 +43,8 @@ void Jafg::LObjectContext::TearDownContext()
     }
 
     this->Employees.Empty();
+
+    this->Carnifex = nullptr;
 
     return;
 }

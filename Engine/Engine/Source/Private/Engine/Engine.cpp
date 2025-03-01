@@ -4,10 +4,10 @@
 #include "Engine/Engine.h"
 #include "Engine/CoreGlobals.h"
 #include "Async/TaskUtility.h"
-#include "Core/Application.h"
 #include "Engine/World.h"
 #include "User/LocalEgo.h"
 #include "Engine/Framework/ApplicationInstance.h"
+#include "Subsystems/ApplicationInstanceSubsystem.h"
 #include "Engine/Cli/CommandLineInterface.h"
 #include "Rhi/RendererStateMachine.h"
 
@@ -198,45 +198,6 @@ bool Jafg::LEngine::CanEverRender() const
 #else /* WITH_FRONTEND */
     return false;
 #endif /* !WITH_FRONTEND */
-}
-
-bool Jafg::LEngine::IsPrimarySurfaceValid() const
-{
-    return this->HasLocalEgo() && this->GetLocalEgo()->HasPrimarySurface();
-}
-
-Jafg::LSurface* Jafg::LEngine::GetPrimarySurface() const
-{
-    if (this->HasLocalEgo())
-    {
-        return this->GetLocalEgo()->GetPrimarySurface();
-    }
-
-    return nullptr;
-}
-
-Jafg::LSurface* Jafg::LEngine::GetCheckedPrimarySurface() const
-{
-    if (LSurface* Surface = this->GetPrimarySurface(); Surface)
-    {
-        return Surface;
-    }
-
-    check( false && "Failed to get primary surface." )
-
-    return nullptr;
-}
-
-Jafg::LSurface* Jafg::LEngine::GetPanickedPrimarySurface() const
-{
-    if (LSurface* Surface = this->GetPrimarySurface(); Surface)
-    {
-        return Surface;
-    }
-
-    panic( "Failed to get primary surface." )
-
-    return nullptr;
 }
 
 uint8 Jafg::LEngine::GetCurrentFreeContexts() const

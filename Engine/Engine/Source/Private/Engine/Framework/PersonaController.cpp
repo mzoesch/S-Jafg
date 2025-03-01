@@ -17,7 +17,7 @@ void Jafg::APersonaController::EndLife()
     AActor::EndLife();
 
     this->Possess(nullptr);
-    this->GetWorld()->GetEngine()->GetCheckedLocalEgo()->Possess(nullptr);
+    this->GetWorld()->GetEngine()->GetLocalEgoChecked()->Possess(nullptr);
 
     return;
 }
