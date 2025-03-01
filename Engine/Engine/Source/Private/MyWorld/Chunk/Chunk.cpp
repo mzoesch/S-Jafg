@@ -25,7 +25,7 @@ void Jafg::LChunkRendererComponent::Draw(const LViewport& Context)
     const LChunkShaderContext* ShaderContext =
         this->Owner->GetSharedArgs()->ChunkGenerationSubsystem->GetChunkShaderContext();
 
-    const LEye* Eye = GEngine->GetLocalEgoChecked()->GetPossessed()->GetPossessed()->GetEye();
+    const LEye* Eye = GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()->GetEye();
 
     LChunkShaderDrawArgs Args;
     Args.DegYFov = Eye->GetDegYFov();

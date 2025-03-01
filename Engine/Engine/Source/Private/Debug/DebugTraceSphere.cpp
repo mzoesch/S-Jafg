@@ -32,7 +32,7 @@ void Jafg::LDebugTraceSphere::Draw(const LWorld& InContext) const
         ::GetSphereShaderContext()->Make();
     }
 
-    const LEye* Eye = GEngine->GetLocalEgoChecked()->GetPossessed()->GetPossessed()->GetEye();
+    const LEye* Eye = GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()->GetEye();
 
     LDebugTraceSphereShaderContextDrawArgs Args;
     Args.DegYFov = Eye->GetDegYFov();

@@ -265,7 +265,8 @@ EPlatformExit::Type GuardedMain()
     LOG_INFO(LogNames, "Finished transferring static names to the name registry. With a total of {} names.", Private::GNameRegistry->GetNameCount())
 
     Private::GCarnifexReferrer = &PrivateCarnifex;
-    GOmniVitaContext           = new LObjectContext();
+    GOmniVitaContext = new LObjectContext();
+    GOmniVitaContext->DeferredInitialize(Private::GCarnifexReferrer);
     GOmniVitaContext->SetHumanReadableName("OmniVitaContext");
     check( GOmniVitaContext->GetCarnifex() )
 

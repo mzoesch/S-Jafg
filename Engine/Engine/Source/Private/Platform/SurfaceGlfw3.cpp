@@ -254,7 +254,7 @@ void Jafg::LSurfaceGlfw3::TearDown()
         this->Handle = nullptr;
     }
 
-    if (IsEngineExitRequested() && GEngine->GetLocalEgoAsserted()->GetFrontend()->GetSurfaceCount() == 0)
+    if (IsEngineExitRequested() && GEngine->GetLocalEgo()->GetFrontend()->GetSurfaceCount() == 0)
     {
         LOG_INFO(LogSurface, "Terminating glfw.")
         glfwTerminate();

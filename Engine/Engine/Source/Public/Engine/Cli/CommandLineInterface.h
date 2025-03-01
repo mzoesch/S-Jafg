@@ -59,7 +59,7 @@ private:
     LCliObjectUuid Uuid = LCliObject::NoUuid;
 };
 
-class LCommandLineInterface
+class LCommandLineInterface final
 {
 public:
 
@@ -67,7 +67,7 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LCommandLineInterface)
     ~LCommandLineInterface() = default;
 
-    void Initialize();
+    ENGINE_API void TearDown();
 
     ENGINE_API void Invoke(const LString& InCommandLine, LCommandExecutionResponse* OutResponse = nullptr);
 

@@ -31,7 +31,7 @@ void Jafg::LDebugTraceCube::Draw(const LWorld& InContext) const
         ::GetCubeShaderContext()->Make();
     }
 
-    const LEye* Eye = GEngine->GetLocalEgoChecked()->GetPossessed()->GetPossessed()->GetEye();
+    const LEye* Eye = GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()->GetEye();
 
     LDebugTraceCubeShaderContextDrawArgs Args;
     Args.DegYFov = Eye->GetDegYFov();

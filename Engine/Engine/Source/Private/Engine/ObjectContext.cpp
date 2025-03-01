@@ -1,13 +1,26 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Engine/ObjectContext.h"
 #include "Engine/ObjectBase.h"
 
-Jafg::LObjectContext::LObjectContext()
+Jafg::LObjectContext::LObjectContext(EGlobalCarnifex)
 {
-    this->Carnifex = Private::GCarnifexReferrer;
+    check( Private::GCarnifexReferrer )
+    check( this->IsValid() == false )
+    this->DeferredInitialize(Private::GCarnifexReferrer);
+    check( this->IsValid() )
+
     return;
+}
+
+Jafg::LObjectContext& Jafg::LObjectContext::operator=(EGlobalCarnifex)
+{
+    check( Private::GCarnifexReferrer )
+    check( this->IsValid() == false )
+    this->DeferredInitialize(Private::GCarnifexReferrer);
+    check( this->IsValid() )
+
+    return *this;
 }
 
 void Jafg::LObjectContext::TearDownContext()

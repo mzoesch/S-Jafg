@@ -335,14 +335,9 @@ Jafg::LVector2 Jafg::WWidgetNode::GetAnchoredTopLeftFromMostOuter(const LViewpor
     return Out;
 }
 
-Jafg::LApplicationInstance* Jafg::WWidgetNode::GetApplicationInstance() const
-{
-    checkSlow( GEngine )
-    return GEngine->GetApplicationInstance();
-}
-
 Jafg::LEngine* Jafg::WWidgetNode::GetEngine() const
 {
+    check( GEngine )
     return GEngine;
 }
 

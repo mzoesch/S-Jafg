@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Subsystems/ApplicationInstanceSubsystem.h"
+#include "Subsystems/EngineSubsystem.h"
 #include "MyWorld/VoxelMask.h"
 #include "VoxelSubsystem.generated.h"
 
@@ -12,7 +12,7 @@ namespace Jafg
 class JMaterialSubsystem;
 
 DECLARE_JAFG_CLASS()
-class JVoxelSubsystem final : public JApplicationInstanceSubsystem
+class JVoxelSubsystem final : public JEngineSubsystem
 {
     GENERATED_CLASS_BODY()
 

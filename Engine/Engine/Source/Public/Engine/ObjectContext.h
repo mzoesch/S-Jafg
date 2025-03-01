@@ -18,6 +18,8 @@ struct LObjectMiscellaneousAccessor;
 
 } /* ~Namespace Private */
 
+enum EGlobalCarnifex { GlobalCarnifex };
+
 //#
 //# Object context that is used to determine the context and lifetimes of jafg objects.
 //#
@@ -29,16 +31,21 @@ class ENGINE_API LObjectContext
 
 public:
 
-    LObjectContext();
+    LObjectContext() = default;
+    LObjectContext(EGlobalCarnifex);
+    LObjectContext& operator=(EGlobalCarnifex);
+    void DeferredInitialize(LCarnifex* InCarnifex) { check( this->Carnifex == nullptr ) this->Carnifex = InCarnifex; }
     PROHIBIT_REALLOC_OF_ANY_FORM(LObjectContext)
     virtual ~LObjectContext() { check( this->Carnifex == nullptr ) }
+
+    FORCEINLINE bool IsValid() const { return this->IsCarnifexValid(); }
 
     virtual void TearDownContext();
 
     FORCEINLINE bool IsCarnifexValid() const { return this->Carnifex != nullptr; }
     FORCEINLINE auto GetCarnifex() const -> LCarnifex* { return this->Carnifex; }
 
-    FORCEINLINE auto SetHumanReadableName(const LSimpleString& InS) -> void { this->HumanReadableName = InS; }
+    FORCEINLINE auto SetHumanReadableName(const LSimpleString& InS) -> void { check( this->IsValid() ) this->HumanReadableName = InS; }
     FORCEINLINE auto GetHumanReadableName() const -> const LSimpleString& { return this->HumanReadableName; }
 
 private:

@@ -7,6 +7,7 @@
 #include "Engine/Framework/Frontend.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Platform/SurfaceForward.h"
+#include "Subsystems/LocalEgoSubsystem.h"
 
 namespace Jafg
 {
@@ -30,11 +31,14 @@ public:
 
     LLocalEgo() = default;
     PROHIBIT_REALLOC_OF_ANY_FORM(LLocalEgo)
+    ~LLocalEgo() { check( this->Context.IsValid() == false ) }
 
     void Initialize();
     void Tick(const float DeltaTime);
     void OnLateTick(const float DeltaTime);
     void TearDown();
+
+    FORCEINLINE bool IsValid() const { return this->bValid; }
 
     FORCEINLINE auto GetFrontend() -> LFrontend* { return &this->Frontend; }
     FORCEINLINE auto GetFrontend() const -> const LFrontend* { return &this->Frontend; }
@@ -49,7 +53,8 @@ public:
 
     FORCEINLINE auto GetContext() -> LObjectContext& { return this->Context; }
     FORCEINLINE auto GetContext() const -> const LObjectContext& { return this->Context; }
-    FORCEINLINE auto GetCollection() const -> const LSubsystemCollection& { return this->Collection; }
+
+    SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JLocalEgoSubsystem)
 
     void OnNewPawnPossessed(APawn* InOld, APawn* InNew) const;
 
@@ -58,6 +63,8 @@ protected:
     void OnWorldBeginLife(LWorld* InNewWorld);
 
 private:
+
+    bool bValid = false;
 
     LFrontend  Frontend;
     LUserInput UserInput;
@@ -71,7 +78,7 @@ private:
     //# The context of the local ego. It is created when the local ego is instantiated
     //# and not destroyed until the local ego is killed.
     //#
-    LObjectContext       Context;
+    LObjectContext       Context = GlobalCarnifex;
     LSubsystemCollection Collection;
 };
 

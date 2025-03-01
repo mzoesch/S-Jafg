@@ -14,14 +14,18 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "Debug/DebugTraceLine.h"
 
+Jafg::LWorld::LWorld(const LSimpleString& InHumanReadableName, const EWorldState::Type InWorldType): WorldState(InWorldType)
+{
+    LObjectContext::operator=(GlobalCarnifex);
+    this->SetHumanReadableName(InHumanReadableName);
+    check( this->WorldState != EWorldState::None )
+
+    return;
+}
+
 Jafg::LEngine* Jafg::LWorld::GetEngine() const
 {
     return GEngine;
-}
-
-Jafg::LApplicationInstance* Jafg::LWorld::GetApplicationInstance() const
-{
-    return this->GetEngine()->GetApplicationInstance();
 }
 
 Jafg::LLocalEgo* Jafg::LWorld::GetLocalEgo() const
@@ -76,7 +80,7 @@ void Jafg::LWorld::Tick(const float DeltaTime)
     }
     this->DeletedTickableObjects.Empty();
 
-    const LViewport& ViewportContext = this->GetEngine()->GetLocalEgoChecked()->GetFrontend()->GetSurfaces()[0].GetViewport();
+    const LViewport& ViewportContext = this->GetEngine()->GetLocalEgo()->GetFrontend()->GetSurfaces()[0].GetViewport();
 
     for (const AActor* Actor : this->Actors)
     {
@@ -118,7 +122,7 @@ void Jafg::LWorld::TearDownContext()
     check( this->GetWorldState() == EWorldState::Running )
     this->WorldState = EWorldState::TearingDown;
 
-    LOG_VERBOSE(LogWorld, "Tearing down world subsystems.")
+    LOG_VERBOSE(LogWorld, "Tearing down world subsystems for world [{}].", this->GetHumanReadableName())
     this->Collection.TearDownSubsystems();
 
     // Preserve order!
@@ -126,7 +130,7 @@ void Jafg::LWorld::TearDownContext()
     Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::Private::RunAllTasks);
     Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::Private::RunAllTasks);
 
-    LOG_VERBOSE(LogWorld, "Killing {} actors of world.", this->Actors.GetSize())
+    LOG_VERBOSE(LogWorld, "Killing {} actors of world [{}].", this->Actors.GetSize(), this->GetHumanReadableName())
     for (AActor* Actor : this->Actors)
     {
         Actor->KillYourSelfNow();

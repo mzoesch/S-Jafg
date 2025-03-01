@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "MyWorld/Generation/ChunkGenerator.h"
 #include "MyWorld/Generation/ChunkGeneratorSubsystem.h"
 #include "MyWorld/Chunk/Chunk.h"

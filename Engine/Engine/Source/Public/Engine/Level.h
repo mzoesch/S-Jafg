@@ -7,10 +7,10 @@
 namespace Jafg
 {
 
-struct ENGINE_API LLevel
+struct ENGINE_API LLevel final
 {
     LLevel() = default;
-    explicit LLevel(LStringLegacy InIdentifier) : Identifier(std::move(InIdentifier))
+    explicit LLevel(LString InIdentifier) : Identifier(std::move(InIdentifier))
     {
     }
 
@@ -24,25 +24,24 @@ struct ENGINE_API LLevel
         this->Identifier = std::move(Other.Identifier);
     }
 
-    FORCEINLINE auto operator=(const LLevel& Other) noexcept -> LLevel&
+    FORCEINLINE LLevel& operator=(const LLevel& Other) noexcept
     {
-        this->Identifier = " ";
         this->Identifier = Other.Identifier;
         return *this;
     }
 
-    FORCEINLINE auto operator=(LLevel&& Other) noexcept -> LLevel&
+    FORCEINLINE LLevel& operator=(LLevel&& Other) noexcept
     {
         this->Identifier = std::move(Other.Identifier);
         return *this;
     }
 
-    LStringLegacy Identifier;
+    LString Identifier;
 
     FORCEINLINE auto operator==(const LLevel& Other) const -> bool  { return Identifier == Other.Identifier; }
     FORCEINLINE auto operator!=(const LLevel& Other) const -> bool  { return !(*this == Other);              }
-    FORCEINLINE auto operator==(const LStringLegacy& Other) const -> bool { return Identifier == Other;            }
-    FORCEINLINE auto operator!=(const LStringLegacy& Other) const -> bool { return !(*this == Other);              }
+    FORCEINLINE auto operator==(const LString& Other) const -> bool { return Identifier == Other;            }
+    FORCEINLINE auto operator!=(const LString& Other) const -> bool { return !(*this == Other);              }
 };
 
 } /* Namespace Jafg */

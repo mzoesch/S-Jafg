@@ -54,18 +54,6 @@ Jafg::LLocalEgo* Jafg::LUserInput::GetLocalEgo() const
     return GEngine->GetLocalEgo();
 }
 
-Jafg::LLocalEgo* Jafg::LUserInput::GetCheckedLocalEgo() const
-{
-    checkSlow( GEngine )
-    return GEngine->GetLocalEgoChecked();
-}
-
-Jafg::LLocalEgo* Jafg::LUserInput::GetPanickedLocalEgo() const
-{
-    checkSlow( GEngine )
-    return GEngine->GetLocalEgoAsserted();
-}
-
 void Jafg::LUserInput::RegisterContext(LUserInputContext&& Context, const bool bMakeActive /* = false */)
 {
     LUserInputContext* ContextPtr = new LUserInputContext(std::move(Context));

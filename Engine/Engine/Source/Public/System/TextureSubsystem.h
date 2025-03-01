@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Subsystems/ApplicationInstanceSubsystem.h"
+#include "Subsystems/EngineSubsystem.h"
 #include "MyWorld/CommonTypes.h"
 #include "TextureSubsystem.generated.h"
 
@@ -51,7 +51,7 @@ struct LDiskBlendTexture final
 //# Texture subsystem that manages the loading, caching and freeing of all textures that are present.
 //#
 DECLARE_JAFG_CLASS()
-class JTextureSubsystem final : public JApplicationInstanceSubsystem
+class JTextureSubsystem final : public JEngineSubsystem
 {
     GENERATED_CLASS_BODY()
 

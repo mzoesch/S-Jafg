@@ -2,19 +2,20 @@
 
 #pragma once
 
-#include "CoreAfx.h"
 #include "Level.h"
 #include "Platform/SurfaceForward.h"
+#include "Subsystems/EngineSubsystem.h"
+#include "Engine/Cli/CommandLineInterface.h"
+#include "User/LocalEgo.h"
+#include "Engine/World.h"
 
 namespace Jafg
 {
 
 class JObject;
 class LEngine;
-class LLocalEgo;
 class LWorld;
 class LCommandLineInterface;
-class LApplicationInstance;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
@@ -33,16 +34,16 @@ ENGINE_API extern bool          bGEngineRequestingExit;
 ENGINE_API extern int32         GCustomExitStatusOverride;
 ENGINE_API extern LSimpleString GCustomExitReason;
 
-FORCEINLINE auto IsEngine() -> bool { return GEngine; }
+FORCEINLINE bool IsEngineValid() { return GEngine; }
 FORCEINLINE auto GetEngine() -> LEngine* { return GEngine; }
 
-FORCEINLINE auto IsEngineExitRequested() -> bool { return bGShouldRequestExit; }
-FORCEINLINE auto IsTearingDown() -> bool { return bGEngineRequestingExit; }
-FORCEINLINE auto WillShortlyTerminate() -> bool { return bGShouldRequestExit || bGEngineRequestingExit; }
+FORCEINLINE bool IsEngineExitRequested() { return bGShouldRequestExit; }
+FORCEINLINE bool IsTearingDown() { return bGEngineRequestingExit; }
+FORCEINLINE bool WillShortlyTerminate() { return bGShouldRequestExit || bGEngineRequestingExit; }
 
-FORCEINLINE auto HasCustomExitStatus() -> bool { return GCustomExitStatusOverride != INDEX_NONE; }
+FORCEINLINE bool HasCustomExitStatus() { return GCustomExitStatusOverride != INDEX_NONE; }
 FORCEINLINE auto GetCustomExitStatus() -> int32 { return GCustomExitStatusOverride; }
-FORCEINLINE auto HasCustomExitReason() -> bool { return GCustomExitReason.IsEmpty() == false; }
+FORCEINLINE bool HasCustomExitReason() { return GCustomExitReason.IsEmpty() == false; }
 FORCEINLINE auto GetCustomExitReason() -> LSimpleString { return GCustomExitReason; }
 
 // ~Engine Globals
@@ -54,15 +55,24 @@ FORCEINLINE auto GetCustomExitReason() -> LSimpleString { return GCustomExitReas
 //#
 struct LWorldContext
 {
-    LStringLegacy TravelUrl;
+    LWorldContext() = delete;
+    LWorldContext(const LSimpleString& InHumanReadableName)
+    {
+        this->ChildWorld = new LWorld(InHumanReadableName, EWorldState::Uninitialized);
+    }
+    ~LWorldContext() { check( this->ChildWorld == nullptr ) }
+
+    FORCEINLINE bool IsValid() const { return this->ChildWorld && this->ChildWorld->IsValid(); }
+
+    LString TravelUrl;
     LWorld* ChildWorld;
 
-    FORCEINLINE bool IsWaitingForTravel() const { return this->TravelUrl.empty() == false; }
+    FORCEINLINE bool IsWaitingForTravel() const { return this->TravelUrl.IsEmpty() == false; }
 };
 
-MAKE_MULTICAST_SIGNATURE(LOnWorldBeginLifeDelegateSignature, LWorld* /* InNewWorld */)
+MAKE_MULTICAST_SIGNATURE(LOnWorldBeginLife, LWorld* /* InNewWorld */)
 
-class LEngine
+class LEngine final
 {
     typedef std::chrono::steady_clock::time_point LSteadyStatisticsTimePoint;
 
@@ -92,16 +102,15 @@ public:
     // Client Local Stuff
     ///////////////////////////////////////////////////////////////////////////////
 
-    ENGINE_API bool CanEverRender() const;
+    ENGINE_API  bool CanEverRender() const;
 
-    FORCEINLINE bool HasLocalEgo() const { return this->LocalEgo != nullptr; }
-    FORCEINLINE auto GetLocalEgo() const -> LLocalEgo* { return this->LocalEgo; }
-    FORCEINLINE auto GetLocalEgoChecked() const -> LLocalEgo* { check( this->LocalEgo ) return this->LocalEgo; }
-    FORCEINLINE auto GetLocalEgoAsserted() const -> LLocalEgo* { jassert( this->LocalEgo) return this->LocalEgo; }
+    FORCEINLINE bool IsLocalEgoValid() const { return this->LocalEgo.IsValid(); }
+    FORCEINLINE auto GetLocalEgo() -> LLocalEgo* { check( this->IsLocalEgoValid() ) return &this->LocalEgo; }
+    FORCEINLINE auto GetLocalEgo() const -> const LLocalEgo* { check( this->IsLocalEgoValid() ) return &this->LocalEgo; }
 
 private:
 
-    LLocalEgo* LocalEgo = nullptr;
+    LLocalEgo LocalEgo;
 
 public:
 
@@ -109,49 +118,48 @@ public:
     // Context Related
     ///////////////////////////////////////////////////////////////////////////////
 
-    FORCEINLINE static uint8 GetMaxContexts() { return LEngine::MaxContexts; }
-
-    ENGINE_API uint8 GetCurrentFreeContexts() const;
-    ENGINE_API uint8 GetCurrentOccupiedContexts() const;
-
-    ENGINE_API auto GetContextFromWorld(const LWorld& World) -> LWorldContext&;
+    ENGINE_API auto GetContextFromWorld(const LWorld* World) -> LWorldContext&;
 
     //# Browse to a new Url at the next opportunity.
-    ENGINE_API auto Browse(const LWorld& Context, const LStringLegacy& Url) -> void;
+    ENGINE_API void Browse(const LWorld* World, const LString& Url);
+
     //# @return True if registered successfully.
-    ENGINE_API auto RegisterLevel(const LLevel& InLevel) -> bool;
-    ENGINE_API auto RegisterLevel(const LLevel&& InLevel) -> bool;
-    ENGINE_API auto IsLevelRegistered(const LStringLegacy& Identifier) const -> bool;
+    ENGINE_API bool RegisterLevel(const LLevel& InLevel);
+    ENGINE_API bool RegisterLevel(LLevel&& InLevel);
+    ENGINE_API bool IsLevelRegistered(const LString& Identifier) const;
 
     //#
     //# Delegate called when a new world is shortly about to be running inside its beginning life cycle.
     //# The world pointer is guaranteed to be valid.
     //#
-    LOnWorldBeginLifeDelegateSignature OnWorldBeginLife;
+    LOnWorldBeginLife OnWorldBeginLife;
+
+    FORCEINLINE auto GetContexts() const -> const TdhArray<LWorldContext>& { return this->Contexts; }
+    FORCEINLINE auto GetRegisteredLevels() const -> const TdhArray<LLevel>& { return this->RegisteredLevels; }
+
+    SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JEngineSubsystem)
 
 private:
 
-    auto GetFirstAvailableContextIndex() const -> uint8;
-    auto CreateNewWorldContext() -> LWorldContext&;
-    auto InitializeContext(LWorldContext& InContext, const LSimpleString& InHumanReadableName) -> void;
+    LWorldContext& CreateNewWorldContext(const LSimpleString& InHumanReadableName);
 
     //# Browse to a new Url at the next opportunity.
-    void Browse(LWorldContext& Context, const LStringLegacy& Url) const;
-    bool IsContextUrlInternal(const LStringLegacy& Url) const;
+    void Browse(LWorldContext& Context, const LString& Url) const;
+    bool IsContextUrlInternal(const LString& Url) const;
     void TravelContext(LWorldContext& Context);
-    FORCEINLINE auto GetLevelByInternalUrl(const LStringLegacy& Url) -> LLevel* { return this->RegisteredLevels.FindRef(Url); }
-
-    //# The maximum amount of context this engine can handle.
-    static constexpr uint8 MaxContexts { 3 };
+    FORCEINLINE auto GetLevelByInternalUrl(const LString& Url) -> LLevel* { return this->RegisteredLevels.FindRef(Url); }
 
     //#
     //# All current engine contexts.
     //# An index of a specific context is not guaranteed to stay the same. Always expect a short
     //# lifetime of the index.
     //#
-    LWorldContext* Contexts[LEngine::MaxContexts] = { nullptr, nullptr, nullptr, };
+    TdhArray<LWorldContext> Contexts;
     //# The registered levels that this engine can load.
     TdhArray<LLevel> RegisteredLevels = { };
+
+    LObjectContext ObjectContext = GlobalCarnifex;
+    LSubsystemCollection Collection;
 
 public:
 
@@ -159,18 +167,12 @@ public:
     // Misc
     ///////////////////////////////////////////////////////////////////////////////
 
-    ENGINE_API bool IsCommandLineInterfaceValid() const;
-    ENGINE_API auto GetCommandLineInterface() const -> LCommandLineInterface*;
-    ENGINE_API auto GetCheckedCommandLineInterface() const -> LCommandLineInterface*;
-    ENGINE_API auto GetPanickedCommandLineInterface() const -> LCommandLineInterface*;
-
-    FORCEINLINE auto IsApplicationInstanceValid() const -> bool { return this->ApplicationInstance; }
-    FORCEINLINE auto GetApplicationInstance() const -> LApplicationInstance* { return this->ApplicationInstance; }
+    FORCEINLINE       LCommandLineInterface* GetCommandLineInterface() { return &this->CommandLineInterface; }
+    FORCEINLINE const LCommandLineInterface* GetCommandLineInterface() const { return &this->CommandLineInterface; }
 
 private:
 
-    LCommandLineInterface* CommandLineInterface = nullptr;
-    LApplicationInstance* ApplicationInstance = nullptr;
+    LCommandLineInterface CommandLineInterface;
 };
 
 } /* ~Namespace Jafg */

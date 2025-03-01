@@ -32,7 +32,7 @@ void Jafg::LDebugTraceLine::Draw(const LWorld& InContext) const
         ::GetLineShaderContext()->Make();
     }
 
-    const LEye* Eye = GEngine->GetLocalEgoChecked()->GetPossessed()->GetPossessed()->GetEye();
+    const LEye* Eye = GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()->GetEye();
 
     LDebugTraceLineShaderContextDrawArgs Args;
     Args.DegYFov = Eye->GetDegYFov();
@@ -56,7 +56,7 @@ void Jafg::LDebugTraceLine::DrawLine(const LWorld& InContext, const LVector& InS
     static LDebugTraceLineShaderContextDrawArgs Args;
     if (bUseCache == false)
     {
-        const LEye* Eye = GEngine->GetLocalEgoChecked()->GetPossessed()->GetPossessed()->GetEye();
+        const LEye* Eye = GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()->GetEye();
         Args.DegYFov = Eye->GetDegYFov();
         Args.ViewMatrix.CopyFrom(Eye->GetViewMatrix());
     }

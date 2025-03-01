@@ -115,7 +115,7 @@ void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit
         }
 
         LCommandExecutionResponse Response;
-        this->GetEngine()->GetCheckedCommandLineInterface()->Invoke(Command, &Response);
+        this->GetEngine()->GetCommandLineInterface()->Invoke(Command, &Response);
 
         if (Response.StdOut.IsEmpty() == false)
         {

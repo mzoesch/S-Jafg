@@ -1,11 +1,15 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Engine/Cli/CommandLineInterface.h"
 #include "Engine/Cli/CliStatics.h"
 
-void Jafg::LCommandLineInterface::Initialize()
+void Jafg::LCommandLineInterface::TearDown()
 {
+    LOG_VERBOSE(LogCli, "Tearing down command line interface with [{}] commands.", this->Commands.GetSize())
+    this->UuidCursor = 0;
+    this->Commands.Empty();
+
+    return;
 }
 
 void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandExecutionResponse* OutResponse)

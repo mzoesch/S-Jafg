@@ -5,7 +5,6 @@
 #include "Build/EngineBuildInfo.h"
 #include "Core/Application.h"
 #include "Engine/Engine.h"
-#include "Engine/Framework/ApplicationInstance.h"
 #include "Engine/Framework/Pawn.h"
 #include "Engine/Framework/PersonaController.h"
 #include "MyWorld/ChunkKey.h"
@@ -36,7 +35,7 @@ void Jafg::WDebugScreen::Construct()
 
 #define TEXT_BLOCK_FONT_SIZE Body
 
-    const JMaterialSubsystem* MaterialSubsystem = this->GetApplicationInstance()->GetSubsystem<JMaterialSubsystem>();
+    const JMaterialSubsystem* MaterialSubsystem = this->GetEngine()->GetSubsystem<JMaterialSubsystem>();
 
     MakeRootNode(WWidgetRegion).Anchor(EAnchor::Fill)
     [
@@ -121,7 +120,7 @@ void Jafg::WDebugScreen::Tick()
 {
     Super::Tick();
 
-    const LLocalEgo* LocalEgo = GEngine->GetLocalEgoChecked();
+    const LLocalEgo* LocalEgo = GEngine->GetLocalEgo();
     const APersonaController* Controller = LocalEgo->GetCheckedPossessed();
     if (Controller->DoesPossess())
     {

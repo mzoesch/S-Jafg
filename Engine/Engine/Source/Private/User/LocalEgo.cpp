@@ -14,7 +14,9 @@
 void Jafg::LLocalEgo::Initialize()
 {
     check( Tasks::IsOnMasterThread() )
-    check( this->Context.GetHumanReadableName().IsEmpty() )
+    check( this->IsValid() == false )
+
+    this->bValid = true;
 
     this->Context.SetHumanReadableName("LocalEgo");
 
@@ -62,6 +64,9 @@ void Jafg::LLocalEgo::TearDown()
 
     this->Frontend.TearDown();
     this->Context.TearDownContext();
+    check( this->Context.IsValid() == false )
+
+    this->bValid = false;
 
     return;
 }

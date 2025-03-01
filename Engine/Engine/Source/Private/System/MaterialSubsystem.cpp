@@ -1,8 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Engine/Engine.h"
 #include "System/MaterialSubsystem.h"
-#include "Engine/Framework/ApplicationInstance.h"
 #include "System/Finder.h"
 #include "System/TextureSubsystem.h"
 #include "System/VoxelSubsystem.h"
@@ -45,8 +44,8 @@ void Jafg::JMaterialSubsystem::ClearAllTextures()
 
 void Jafg::JMaterialSubsystem::LoadAllTextures()
 {
-    JVoxelSubsystem* VoxelSubsystem = this->GetApplicationInstance()->GetCheckedSubsystem<JVoxelSubsystem>();
-    JTextureSubsystem* TextureSubsystem = this->GetApplicationInstance()->GetCheckedSubsystem<JTextureSubsystem>();
+    JVoxelSubsystem* VoxelSubsystem = this->GetEngine()->GetCheckedSubsystem<JVoxelSubsystem>();
+    JTextureSubsystem* TextureSubsystem = this->GetEngine()->GetCheckedSubsystem<JTextureSubsystem>();
 
 #pragma region Blending
     TdhArray<LDiskBlendTexture> BlendedTextureNames = TextureSubsystem->FindMeaningBlendTextureNames();

@@ -6,8 +6,7 @@
 #include "Async/TaskUtility.h"
 #include "Engine/World.h"
 #include "User/LocalEgo.h"
-#include "Engine/Framework/ApplicationInstance.h"
-#include "Subsystems/ApplicationInstanceSubsystem.h"
+#include "Subsystems/EngineSubsystem.h"
 #include "Engine/Cli/CommandLineInterface.h"
 #include "Rhi/RendererStateMachine.h"
 
@@ -32,23 +31,18 @@ ENGINE_API LSimpleString GCustomExitReason         = "";
 
 void Jafg::LEngine::Initialize()
 {
-    check( this->IsCommandLineInterfaceValid() == false )
-    this->CommandLineInterface = new LCommandLineInterface();
-    this->CommandLineInterface->Initialize();
-
-    check( this->IsApplicationInstanceValid() == false )
-    this->ApplicationInstance = new LApplicationInstance();
-    this->ApplicationInstance->Initialize();
+    this->ObjectContext.SetHumanReadableName("Engine");
+    this->Collection.DeferredInitialize(&this->ObjectContext);
+    this->Collection.InitializeSubsystems(JEngineSubsystem::StaticClass());
 
 #if WITH_LOCAL_LAYER
-    check( this->LocalEgo == nullptr )
-    this->LocalEgo = new LLocalEgo();
-    this->LocalEgo->Initialize();
+    check( this->LocalEgo.IsValid() == false )
+    this->LocalEgo.Initialize();
 #endif /* WITH_LOCAL_LAYER */
 
-    LWorldContext& Context = this->CreateNewWorldContext();
-    this->InitializeContext(Context, "StartUpWorld");
     this->RegisterLevel(LLevel("LWorld"));
+
+    LWorldContext& Context = this->CreateNewWorldContext("StartUpWorld");
     this->Browse(Context, "LWorld");
 
     return;
@@ -59,37 +53,32 @@ void Jafg::LEngine::Tick(const float DeltaTime)
     Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, 5);
 
 #if WITH_LOCAL_LAYER
-    this->LocalEgo->Tick(DeltaTime);
+    this->LocalEgo.Tick(DeltaTime);
 #endif /* WITH_LOCAL_LAYER */
 
     RendererStateMachine::PrepareForPerspectivePainting();
-    for (LWorldContext* i : this->Contexts)
+    for (LWorldContext& Context : this->Contexts)
     {
-        if (i == nullptr)
+        checkSlow( Context.IsValid() )
+
+        if (Context.IsWaitingForTravel())
+        {
+            this->TravelContext(Context);
+            continue;
+        }
+
+        if (Context.ChildWorld->CanTick() == false)
         {
             continue;
         }
 
-        check( i->ChildWorld )
-
-        if (i->IsWaitingForTravel())
-        {
-            this->TravelContext(*i);
-            continue;
-        }
-
-        if (i->ChildWorld->CanTick() == false)
-        {
-            continue;
-        }
-
-        i->ChildWorld->Tick(DeltaTime);
+        Context.ChildWorld->Tick(DeltaTime);
 
         continue;
     }
 
 #if WITH_LOCAL_LAYER
-    this->LocalEgo->OnLateTick(DeltaTime);
+    this->LocalEgo.OnLateTick(DeltaTime);
 #endif /* WITH_LOCAL_LAYER */
 
     Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, 5);
@@ -99,50 +88,35 @@ void Jafg::LEngine::Tick(const float DeltaTime)
 
 void Jafg::LEngine::TearDown()
 {
-    for (LWorldContext* i : this->Contexts)
+    LOG_VERBOSE(LogEngine, "Tearing down engine.")
+
+    LOG_VERBOSE(LogEngine, "Deallocating {} registered contexts.", this->Contexts.GetSize())
+    for (LWorldContext& Context : this->Contexts)
     {
-        if (i != nullptr)
-        {
-            if (i->ChildWorld != nullptr)
-            {
-                i->ChildWorld->TearDownContext();
-
-                check( i->ChildWorld->GetWorldState() == EWorldState::WaitingForKill )
-
-                delete i->ChildWorld;
-                i->ChildWorld = nullptr;
-            }
-
-            delete i;
-            i = nullptr;
-        }
-
+        Context.ChildWorld->TearDownContext();
+        check( Context.ChildWorld->GetWorldState() == EWorldState::WaitingForKill )
+        delete Context.ChildWorld;
+        Context.ChildWorld = nullptr;
         continue;
     }
+    this->Contexts.Empty();
 
-    if (ensure(this->ApplicationInstance))
-    {
-        this->ApplicationInstance->TearDown();
-        delete this->ApplicationInstance;
-        this->ApplicationInstance = nullptr;
-    }
+    this->Collection.TearDownSubsystems();
+    this->ObjectContext.TearDownContext();
 
 #if WITH_LOCAL_LAYER
-    if (this->LocalEgo)
+    if (ensure(this->LocalEgo.IsValid()))
     {
-        this->LocalEgo->TearDown();
-        delete this->LocalEgo;
-        this->LocalEgo = nullptr;
+        this->LocalEgo.TearDown();
     }
 #endif /* WITH_LOCAL_LAYER */
 
     Tasks::Private::StopAndJoinRemainingThreads();
 
-    if (this->CommandLineInterface)
-    {
-        delete this->CommandLineInterface;
-        this->CommandLineInterface = nullptr;
-    }
+    LOG_VERBOSE(LogJafgInternal, "Deallocating  {} registered levels.", this->RegisteredLevels.GetSize())
+    this->RegisteredLevels.Empty();
+
+    this->CommandLineInterface.TearDown();
 
     return;
 }
@@ -200,43 +174,27 @@ bool Jafg::LEngine::CanEverRender() const
 #endif /* !WITH_FRONTEND */
 }
 
-uint8 Jafg::LEngine::GetCurrentFreeContexts() const
+Jafg::LWorldContext& Jafg::LEngine::GetContextFromWorld(const LWorld* World)
 {
-    return LEngine::GetMaxContexts() - this->GetCurrentOccupiedContexts();
-}
+    check( World )
 
-uint8 Jafg::LEngine::GetCurrentOccupiedContexts() const
-{
-    uint8 OccupiedContexts = 0;
-    for (const LWorldContext* i : this->Contexts)
+    for (LWorldContext& Context : this->Contexts)
     {
-        if (i != nullptr)
+        if (Context.ChildWorld == World)
         {
-            ++OccupiedContexts;
+            return Context;
         }
-    }
 
-    return OccupiedContexts;
-}
-
-Jafg::LWorldContext& Jafg::LEngine::GetContextFromWorld(const LWorld& World)
-{
-    for (LWorldContext* i : this->Contexts)
-    {
-        if (i != nullptr && i->ChildWorld == &World)
-        {
-            return *i;
-        }
+        continue;
     }
 
     jassertNoEntry()
-
-    return CreateNewWorldContext();
+    abort();
 }
 
-void Jafg::LEngine::Browse(const LWorld& Context, const LStringLegacy& Url)
+void Jafg::LEngine::Browse(const LWorld* World, const LString& Url)
 {
-    this->Browse(this->GetContextFromWorld(Context), Url);
+    this->Browse(this->GetContextFromWorld(World), Url);
 }
 
 bool Jafg::LEngine::RegisterLevel(const LLevel& InLevel)
@@ -251,19 +209,19 @@ bool Jafg::LEngine::RegisterLevel(const LLevel& InLevel)
     return true;
 }
 
-bool Jafg::LEngine::RegisterLevel(const LLevel&& InLevel)
+bool Jafg::LEngine::RegisterLevel(LLevel&& InLevel)
 {
     if (this->IsLevelRegistered(InLevel.Identifier))
     {
         return false;
     }
 
-    this->RegisteredLevels.Add(InLevel);
+    this->RegisteredLevels.Emplace(std::move(InLevel));
 
     return true;
 }
 
-bool Jafg::LEngine::IsLevelRegistered(const LStringLegacy& Identifier) const
+bool Jafg::LEngine::IsLevelRegistered(const LString& Identifier) const
 {
     return this->RegisteredLevels.ContainsByPredicate(
         [&Identifier] (const LLevel& i)
@@ -273,47 +231,14 @@ bool Jafg::LEngine::IsLevelRegistered(const LStringLegacy& Identifier) const
     );
 }
 
-uint8 Jafg::LEngine::GetFirstAvailableContextIndex() const
+Jafg::LWorldContext& Jafg::LEngine::CreateNewWorldContext(const LSimpleString& InHumanReadableName)
 {
-    for (uint8 i = 0; i < LEngine::GetMaxContexts(); ++i)
-    {
-        if (this->Contexts[i] == nullptr)
-        {
-            return i;
-        }
-    }
-
-    jassertNoEntry()
-
-    return INDEX_NONE;
+    check( Tasks::IsOnMasterThread() )
+    this->Contexts.Emplace(InHumanReadableName);
+    return *this->Contexts.GetLast();
 }
 
-Jafg::LWorldContext& Jafg::LEngine::CreateNewWorldContext()
-{
-    if (this->GetCurrentFreeContexts() <= 0)
-    {
-        jassertNoEntry()
-    }
-
-    const uint8 Index = this->GetFirstAvailableContextIndex();
-    check( this->Contexts[Index] == nullptr )
-
-    this->Contexts[Index] = new LWorldContext();
-
-    return *this->Contexts[Index];
-}
-
-void Jafg::LEngine::InitializeContext(LWorldContext& InContext, const LSimpleString& InHumanReadableName)
-{
-    jassert( InContext.ChildWorld == nullptr )
-
-    InContext.ChildWorld = new LWorld(EWorldState::Uninitialized);
-    InContext.ChildWorld->SetHumanReadableName(InHumanReadableName);
-
-    return;
-}
-
-void Jafg::LEngine::Browse(LWorldContext& Context, const LStringLegacy& Url) const
+void Jafg::LEngine::Browse(LWorldContext& Context, const LString& Url) const
 {
     if (this->IsContextUrlInternal(Url) == false)
     {
@@ -332,9 +257,9 @@ void Jafg::LEngine::Browse(LWorldContext& Context, const LStringLegacy& Url) con
     return;
 }
 
-bool Jafg::LEngine::IsContextUrlInternal(const LStringLegacy& Url) const
+bool Jafg::LEngine::IsContextUrlInternal(const LString& Url) const
 {
-    if (Url.empty())
+    if (Url.IsEmpty())
     {
         return false;
     }
@@ -348,14 +273,10 @@ void Jafg::LEngine::TravelContext(LWorldContext& Context)
     check( Context.IsWaitingForTravel() )
 
     LLevel* Level = this->GetLevelByInternalUrl(Context.TravelUrl);
-    if (Level == nullptr)
-    {
-        jassertNoEntry()
-        return;
-    }
+    jassert( Level )
 
     /* Get some args here in the future. */
-    Context.TravelUrl.clear();
+    Context.TravelUrl.Empty();
 
     check( Context.ChildWorld )
 
@@ -367,30 +288,4 @@ void Jafg::LEngine::TravelContext(LWorldContext& Context)
     Context.ChildWorld->InitializeWorld(*Level);
 
     return;
-}
-
-bool Jafg::LEngine::IsCommandLineInterfaceValid() const
-{
-    return this->CommandLineInterface != nullptr;
-}
-
-Jafg::LCommandLineInterface* Jafg::LEngine::GetCommandLineInterface() const
-{
-    return this->CommandLineInterface;
-}
-
-Jafg::LCommandLineInterface* Jafg::LEngine::GetCheckedCommandLineInterface() const
-{
-    check( this->IsCommandLineInterfaceValid() )
-    return this->CommandLineInterface;
-}
-
-Jafg::LCommandLineInterface* Jafg::LEngine::GetPanickedCommandLineInterface() const
-{
-    if (this->IsCommandLineInterfaceValid())
-    {
-        return this->CommandLineInterface;
-    }
-    panic( "Failed to get command line interface." )
-    return nullptr;
 }

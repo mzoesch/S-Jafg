@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Engine/Framework/PersonaController.h"
 #include "Engine/World.h"
 #include "Engine/Framework/Pawn.h"
@@ -17,7 +16,7 @@ void Jafg::APersonaController::EndLife()
     AActor::EndLife();
 
     this->Possess(nullptr);
-    this->GetWorld()->GetEngine()->GetLocalEgoChecked()->Possess(nullptr);
+    this->GetWorld()->GetEngine()->GetLocalEgo()->Possess(nullptr);
 
     return;
 }

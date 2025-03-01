@@ -21,7 +21,6 @@ class LViewport;
 class LWidgetFactory;
 class LWidgetFactory;
 class WWidgetParentBase;
-class LApplicationInstance;
 template <typename TNode>
 class TWidgetFactory;
 template <typename TNode>
@@ -563,7 +562,6 @@ public:
     FORCEINLINE void SetAnchor(const LAnchor&      InAnchor) { this->Anchor = InAnchor; }
     FORCEINLINE void SetAnchor(const EAnchor::Type InAnchor) { this->Anchor = InAnchor; }
 
-    auto GetApplicationInstance() const -> LApplicationInstance*;
     auto GetEngine() const -> LEngine*;
     auto GetLocalEgo() const -> LLocalEgo*;
 

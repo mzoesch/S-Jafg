@@ -2,7 +2,6 @@
 
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "Engine/World.h"
-#include "Engine/Framework/ApplicationInstance.h"
 #include "Engine/Framework/Pawn.h"
 #include "Rhi/ChunkShaderContext.h"
 #include "MyWorld/Chunk/ChunkStates.h"
@@ -12,8 +11,9 @@
 #include "System/MaterialSubsystem.h"
 #include "System/TextureSubsystem.h"
 #include "User/UserPreferences.h"
+#include "Engine/Engine.h"
 
-void Jafg::JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Collection)
+void Jafg::JChunkGenerationSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
     this->SetTickInterval(0.0f);
@@ -26,9 +26,9 @@ void Jafg::JChunkGenerationSubsystem::Initialize(Jafg::LSubsystemCollection& Col
     this->SharedChunkArgs = new LSharedChunkArgs();
     this->SharedChunkArgs->ChunkGenerationSubsystem = this;
     this->SharedChunkArgs->ChunkGeneratorSubsystem  = Collection.GetCheckedSubsystem<JChunkGeneratorSubsystem>();
-    this->SharedChunkArgs->VoxelSubsystem  = this->GetWorld()->GetApplicationInstance()->GetCheckedSubsystem<JVoxelSubsystem>();
-    this->SharedChunkArgs->MaterialSubsystem  = this->GetWorld()->GetApplicationInstance()->GetCheckedSubsystem<JMaterialSubsystem>();
-    this->SharedChunkArgs->TextureSubsystem  = this->GetWorld()->GetApplicationInstance()->GetCheckedSubsystem<JTextureSubsystem>();
+    this->SharedChunkArgs->VoxelSubsystem  = this->GetEngine()->GetCheckedSubsystem<JVoxelSubsystem>();
+    this->SharedChunkArgs->MaterialSubsystem  = this->GetEngine()->GetCheckedSubsystem<JMaterialSubsystem>();
+    this->SharedChunkArgs->TextureSubsystem  = this->GetEngine()->GetCheckedSubsystem<JTextureSubsystem>();
     this->SharedChunkArgs->GetNewMesher = [] (AChunk& Owner) -> LChunkMesher* { return new LNaiveMesher(Owner); };
 
     const JUserPreferences* Preferences = GetDefault<JUserPreferences>();

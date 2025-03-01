@@ -109,7 +109,7 @@ Jafg::LLocalEgo* Jafg::LFrontend::GetLocalEgo() const
 Jafg::LLocalEgo* Jafg::LFrontend::GetLocalEgoChecked() const
 {
     check( GEngine )
-    return GEngine->GetLocalEgoChecked();
+    return GEngine->GetLocalEgo();
 }
 
 Jafg::LUserInput* Jafg::LFrontend::GetUserInput() const
@@ -120,8 +120,8 @@ Jafg::LUserInput* Jafg::LFrontend::GetUserInput() const
 
 Jafg::LUserInput* Jafg::LFrontend::GetUserInputChecked() const
 {
-    check( GEngine && GEngine->GetLocalEgoChecked() )
-    return GEngine->GetLocalEgoChecked()->GetUserInput();
+    check( GEngine )
+    return GEngine->GetLocalEgo()->GetUserInput();
 }
 
 void Jafg::LFrontend::AddWidget(LViewport* Context, WUserWidget* Widget)

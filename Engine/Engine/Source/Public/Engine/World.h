@@ -5,6 +5,7 @@
 #include "Engine/ObjectContext.h"
 #include "Physics/TraceUtility.h"
 #include "Subsystems/SubsystemCollection.h"
+#include "Subsystems/WorldSubsystem.h"
 #if AS_CLIENT
     #include "Debug/TemporalWorldObject.h"
 #endif /* AS_CLIENT */
@@ -19,7 +20,6 @@ class LEngine;
 class LShader;
 class JWorldSubsystem;
 class LTickableObject;
-class LApplicationInstance;
 class APersonaController;
 class APawn;
 struct LLevel;
@@ -77,7 +77,7 @@ enum Type : uint8
 //# Once every frame a world will be ticked. It may register itself to the RHI to be used when
 //# rendering on any kind of surface. Multiple worlds may draw to the same surface.
 //#
-class ENGINE_API LWorld final : public LObjectContext
+class LWorld final : public LObjectContext
 {
     friend AActor;
     friend Private::LWorldMiscellaneousAccessor;
@@ -86,34 +86,30 @@ public:
 
     LWorld() = delete;
     PROHIBIT_REALLOC_OF_ANY_FORM(LWorld)
-    FORCEINLINE explicit LWorld(const EWorldState::Type InWorldType) : WorldState(InWorldType)
-    {
-        check( this->WorldState != EWorldState::None )
-    }
+    LWorld(const LSimpleString& InHumanReadableName, const EWorldState::Type InWorldType);
 
-    auto GetEngine() const -> LEngine*;
-    auto GetApplicationInstance() const -> LApplicationInstance*;
-    auto GetLocalEgo() const -> LLocalEgo*;
-    auto GetLocalController() const -> APersonaController*;
-    auto GetLocalPawn() const -> APawn*;
+    ENGINE_API auto GetEngine() const -> LEngine*;
+    ENGINE_API auto GetLocalEgo() const -> LLocalEgo*;
+    ENGINE_API auto GetLocalController() const -> APersonaController*;
+    ENGINE_API auto GetLocalPawn() const -> APawn*;
 
     FORCEINLINE auto GetWorldState() const -> EWorldState::Type { return this->WorldState; }
 
     void InitializeWorld(const LLevel& Level);
 
     FORCEINLINE bool CanTick() const { return this->GetWorldState() == EWorldState::Running; }
-    void Tick(const float DeltaTime);
+                void Tick(const float DeltaTime);
 
     // LObjectContext implementation
     virtual void TearDownContext() override;
     // ~LObjectContext implementation
 
-    void RegisterTickableObject(LTickableObject* Tickable);
-    void UnregisterTickableObject(LTickableObject* Tickable);
+    ENGINE_API void RegisterTickableObject(LTickableObject* Tickable);
+    ENGINE_API void UnregisterTickableObject(LTickableObject* Tickable);
     FORCEINLINE auto GetTickableObjects() const -> const TdhArray<LTickableObject*>& { return this->TickableObjects; }
     FORCEINLINE auto GetActors() const -> const TdhArray<AActor*>& { return this->Actors; }
 
-    float GetRealTimeSecondsSinceWorldLaunch() const;
+    ENGINE_API float GetRealTimeSecondsSinceWorldLaunch() const;
 
     //#
     //# Trace this world for physical hits.
@@ -131,6 +127,8 @@ public:
     template <typename T>
     void AddTemporalObject(T&& InTemporalObject);
 #endif /* AS_CLIENT */
+
+    SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JWorldSubsystem)
 
 private:
 

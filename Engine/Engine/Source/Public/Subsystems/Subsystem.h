@@ -8,8 +8,8 @@
 namespace Jafg
 {
 
+class LLocalEgo;
 class LEngine;
-class LApplicationInstance;
 class LCommandLineInterface;
 struct LSubsystemCollection;
 
@@ -48,8 +48,8 @@ protected:
     FORCEINLINE void SetPriorityTearDown(const bool bPriority) { this->bPriorityTearDown = bPriority; }
 
     auto GetEngine() const -> LEngine*;
+    auto GetLocalEgo() const -> LLocalEgo*;
     auto GetCommandLineInterface() const -> LCommandLineInterface*;
-    auto GetApplicationInstance() const -> LApplicationInstance*;
 
 private:
 

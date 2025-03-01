@@ -24,7 +24,7 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(JChunkGenerationSubsystem)
 
     // JTickableWorldSubsystem implementation
-    virtual void Initialize(Jafg::LSubsystemCollection& Collection) override;
+    virtual void Initialize(LSubsystemCollection& Collection) override;
     virtual void FixedTick(const float EngineDeltaTime, const float SubsystemDeltaTime) override;
     virtual void TearDown() override;
     // ~JTickableWorldSubsystem implementation

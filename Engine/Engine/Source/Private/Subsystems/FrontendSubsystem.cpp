@@ -8,7 +8,7 @@ void Jafg::JFrontendSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
 
-    this->OwningFrontend = GEngine->GetLocalEgoAsserted()->GetFrontend();
+    this->OwningFrontend = GEngine->GetLocalEgo()->GetFrontend();
     checkSlow( this->OwningFrontend )
 
     return;

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Subsystems/ApplicationInstanceSubsystem.h"
+#include "Subsystems/EngineSubsystem.h"
 #include "Rhi/Texture2.h"
 #include "MyWorld/CommonTypes.h"
 #include "MaterialSubsystem.generated.h"
@@ -14,7 +14,7 @@ namespace Jafg
 class LTexture2;
 
 DECLARE_JAFG_CLASS()
-class JMaterialSubsystem final : public JApplicationInstanceSubsystem
+class JMaterialSubsystem final : public JEngineSubsystem
 {
     GENERATED_CLASS_BODY()
 

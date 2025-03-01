@@ -28,8 +28,6 @@ public:
     void DispatchInputDelegates();
 
     ENGINE_API auto GetLocalEgo() const -> LLocalEgo*;
-    ENGINE_API auto GetCheckedLocalEgo() const -> LLocalEgo*;
-    ENGINE_API auto GetPanickedLocalEgo() const -> LLocalEgo*;
 
     ENGINE_API void RegisterContext(LUserInputContext&& Context, const bool bMakeActive = false);
 

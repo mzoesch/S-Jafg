@@ -77,7 +77,7 @@ class ENGINE_API JObjectBase
     friend LCarnifex;
     friend LObjectContext;
 
-    /** The jafg v table class of this object. */
+    //# The jafg v table class of this object.
     LObjectClass* VClass = nullptr;
 
     GENERATED_CLASS_BODY()

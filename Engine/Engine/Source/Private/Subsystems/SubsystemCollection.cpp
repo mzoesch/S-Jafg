@@ -69,6 +69,8 @@ void Jafg::LSubsystemCollection::TearDownSubsystems()
 {
     check( this->Outer )
 
+    LOG_VERBOSE(LogSubsystemCollection, "Tearing down {} subsystems for outer [{}].", this->SubsystemInstances.GetSize(), this->Outer->GetHumanReadableName())
+
     for (int32 i = 0; i < this->SubsystemInstances.GetSize(); ++i)
     {
         JSubsystem*& Subsystem = this->SubsystemInstances[i];

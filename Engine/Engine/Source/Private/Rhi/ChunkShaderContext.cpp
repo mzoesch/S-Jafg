@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Rhi/ChunkShaderContext.h"
 #include "Widgets/Viewport.h"
 #include <glm/glm.hpp>
@@ -8,7 +7,6 @@
 #include "User/UserPreferences.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "Engine/Engine.h"
-#include "Engine/Framework/ApplicationInstance.h"
 #include "System/EnginePath.h"
 #include "System/MaterialSubsystem.h"
 
@@ -16,7 +14,7 @@ void Jafg::LChunkShaderContext::Make()
 {
     LGenericShaderContext::Make();
 
-    const JMaterialSubsystem* Subsystem = GEngine->GetApplicationInstance()->GetSubsystem<JMaterialSubsystem>();
+    const JMaterialSubsystem* Subsystem = GEngine->GetSubsystem<JMaterialSubsystem>();
 
     this->Program = LShader(LEnginePath(EEnginePaths::Shaders, "Chunk"));
     this->Program.Use();
