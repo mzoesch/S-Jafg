@@ -2,7 +2,7 @@
 
 #include "User/LocalEgo.h"
 #include "Engine/Engine.h"
-#include "Engine/Framework/Hud.h"
+#include "Engine/Framework/Frontend.h"
 #include "Platform/Surface.h"
 #include "Engine/ActorUtility.h"
 #include "Engine/Framework/Pawn.h"
@@ -23,7 +23,7 @@ void Jafg::LLocalEgo::Initialize()
     this->Collection.DeferredInitialize(&this->Context);
     this->Collection.InitializeSubsystems(JLocalEgoSubsystem::StaticClass());
 
-    this->Hud.Initialize(&this->GetContext());
+    this->Frontend.Initialize(&this->GetContext());
 
     return;
 }
@@ -35,14 +35,14 @@ void Jafg::LLocalEgo::Tick(const float DeltaTime)
         LOG_VERBOSE(LogWidgetFramework, "Purged {} widget factories.", PurgedFactories)
     }
 
-    this->Hud.Tick(&this->UserInput);
+    this->Frontend.Tick(&this->UserInput);
 
     return;
 }
 
 void Jafg::LLocalEgo::OnLateTick(const float DeltaTime)
 {
-    for (LSurface& Surface : this->Hud.GetSurfaces())
+    for (LSurface& Surface : this->Frontend.GetSurfaces())
     {
         Surface.OnUpdate();
     }
@@ -60,7 +60,7 @@ void Jafg::LLocalEgo::TearDown()
         this->OnWorldBeginLifeHandle.Reset();
     }
 
-    this->Hud.TearDown();
+    this->Frontend.TearDown();
     this->Context.TearDownContext();
 
     return;

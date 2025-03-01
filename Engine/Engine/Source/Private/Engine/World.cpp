@@ -76,7 +76,7 @@ void Jafg::LWorld::Tick(const float DeltaTime)
     }
     this->DeletedTickableObjects.Empty();
 
-    const LViewport& ViewportContext = this->GetEngine()->GetLocalEgoChecked()->GetHud()->GetSurfaces()[0].GetViewport();
+    const LViewport& ViewportContext = this->GetEngine()->GetLocalEgoChecked()->GetFrontend()->GetSurfaces()[0].GetViewport();
 
     for (const AActor* Actor : this->Actors)
     {

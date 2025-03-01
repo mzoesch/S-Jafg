@@ -407,7 +407,7 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
         Shared.OpenAndWriteToRelativeFileIfDifferent(fmt.Sprintf("%s/Utility/Reindex/README.md", sln.GetSavedRelativeDir_Premake()), `
 # Reindex
 Reindex all modules generated macros to fix IntelliSense errors. Just hit rebuild selected project and you are done.
-# Reindex With Files
+# Reindex New Files
 Same as 'Reindex' but also check if new files were generated and reindex them also.
 `, true)
     }

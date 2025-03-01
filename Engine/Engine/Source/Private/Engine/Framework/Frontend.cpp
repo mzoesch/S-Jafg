@@ -1,9 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Engine/Framework/Hud.h"
+#include "Engine/Framework/Frontend.h"
 #include "Core/Application.h"
 #include "Platform/Surface.h"
-#include "Subsystems/HudSubsystem.h"
+#include "Subsystems/FrontendSubsystem.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Widgets/WidgetNode.h"
 #include "Widgets/Viewport.h"
@@ -13,7 +13,7 @@
 #include "User/Input/UserInput.h"
 #include "Widgets/UserWidget.h"
 
-void Jafg::LHud::Initialize(LObjectContext* InOuter)
+void Jafg::LFrontend::Initialize(LObjectContext* InOuter)
 {
     this->CachedOuter = InOuter;
     GCurrentWidgetContextState = this->CachedOuter;
@@ -30,12 +30,12 @@ void Jafg::LHud::Initialize(LObjectContext* InOuter)
     check( this->IsFocusedSurfaceValid() )
 
     this->Collection.DeferredInitialize(this->CachedOuter);
-    this->Collection.InitializeSubsystems(JHudSubsystem::StaticClass());
+    this->Collection.InitializeSubsystems(JFrontendSubsystem::StaticClass());
 
     return;
 }
 
-void Jafg::LHud::Tick(LUserInput* UserInput)
+void Jafg::LFrontend::Tick(LUserInput* UserInput)
 {
     for (LSurface& Surface : this->Surfaces)
     {
@@ -65,17 +65,17 @@ void Jafg::LHud::Tick(LUserInput* UserInput)
 
     this->Collection.ForEachSubsystem( [] (JSubsystem* Subsystem)
     {
-        if (JHudSubsystem* HudSubsystem = DynamicCast<JHudSubsystem>(Subsystem); HudSubsystem)
+        if (JFrontendSubsystem* FrontendSubsystem = DynamicCast<JFrontendSubsystem>(Subsystem); FrontendSubsystem)
         {
-            if (HudSubsystem->ShouldTick())
+            if (FrontendSubsystem->ShouldTick())
             {
-                HudSubsystem->Tick(Application::GetDeltaTimeAsFloat());
+                FrontendSubsystem->Tick(Application::GetDeltaTimeAsFloat());
             }
 
             return;
         }
 
-        panicMsgf( "Could not cast predicated hud subsystem [{}] to JHudSubsystem.", Subsystem->GetFullName() )
+        panicMsgf( "Could not cast predicated frontend subsystem [{}] to JFrontendSubsystem.", Subsystem->GetFullName() )
 
         return;
     });
@@ -83,7 +83,7 @@ void Jafg::LHud::Tick(LUserInput* UserInput)
     return;
 }
 
-void Jafg::LHud::TearDown()
+void Jafg::LFrontend::TearDown()
 {
     check( this->CachedOuter )
 
@@ -100,45 +100,45 @@ void Jafg::LHud::TearDown()
     return;
 }
 
-Jafg::LLocalEgo* Jafg::LHud::GetLocalEgo() const
+Jafg::LLocalEgo* Jafg::LFrontend::GetLocalEgo() const
 {
     check( GEngine )
     return GEngine->GetLocalEgo();
 }
 
-Jafg::LLocalEgo* Jafg::LHud::GetLocalEgoChecked() const
+Jafg::LLocalEgo* Jafg::LFrontend::GetLocalEgoChecked() const
 {
     check( GEngine )
     return GEngine->GetLocalEgoChecked();
 }
 
-Jafg::LUserInput* Jafg::LHud::GetUserInput() const
+Jafg::LUserInput* Jafg::LFrontend::GetUserInput() const
 {
     check( GEngine )
     return GEngine->GetLocalEgo()->GetUserInput();
 }
 
-Jafg::LUserInput* Jafg::LHud::GetUserInputChecked() const
+Jafg::LUserInput* Jafg::LFrontend::GetUserInputChecked() const
 {
     check( GEngine && GEngine->GetLocalEgoChecked() )
     return GEngine->GetLocalEgoChecked()->GetUserInput();
 }
 
-void Jafg::LHud::AddWidget(LViewport* Context, WUserWidget* Widget)
+void Jafg::LFrontend::AddWidget(LViewport* Context, WUserWidget* Widget)
 {
     check( Context )
     Context->AddWidget(Widget);
     return;
 }
 
-void Jafg::LHud::AddWidget(LSurface* Context, WUserWidget* Widget)
+void Jafg::LFrontend::AddWidget(LSurface* Context, WUserWidget* Widget)
 {
     check( Context )
     Context->GetViewport().AddWidget(Widget);
     return;
 }
 
-void Jafg::LHud::RemoveWidget(WUserWidget* Widget)
+void Jafg::LFrontend::RemoveWidget(WUserWidget* Widget)
 {
     for (LSurface& Surface : this->Surfaces)
     {
@@ -155,7 +155,7 @@ void Jafg::LHud::RemoveWidget(WUserWidget* Widget)
     return;
 }
 
-Jafg::WWidgetNode* Jafg::LHud::GetFirstTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
+Jafg::WWidgetNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
 {
     if (this->IsFocusedSurfaceValid())
     {
@@ -184,7 +184,7 @@ Jafg::WWidgetNode* Jafg::LHud::GetFirstTopLevelWidgetByClass(const LObjectClass*
     return nullptr;
 }
 
-bool Jafg::LHud::ChangeWidgetVisibility(const LViewport* Context, const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+bool Jafg::LFrontend::ChangeWidgetVisibility(const LViewport* Context, const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
     WWidgetNode* Widget = this->GetTopLevelWidgetByClass(Context, WidgetClass);
     if (Widget == nullptr)
@@ -207,7 +207,7 @@ bool Jafg::LHud::ChangeWidgetVisibility(const LViewport* Context, const LObjectC
     return true;
 }
 
-bool Jafg::LHud::ChangeWidgetVisibility(const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+bool Jafg::LFrontend::ChangeWidgetVisibility(const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
     WWidgetNode* Widget = this->GetFirstTopLevelWidgetByClass(WidgetClass);
     if (Widget == nullptr)
@@ -230,13 +230,13 @@ bool Jafg::LHud::ChangeWidgetVisibility(const LObjectClass* WidgetClass, const E
     return true;
 }
 
-bool Jafg::LHud::FocusWidget(LViewport* Context, const WWidgetNode* InNode)
+bool Jafg::LFrontend::FocusWidget(LViewport* Context, const WWidgetNode* InNode)
 {
     check( Context )
     return Context->FocusWidgetNode(InNode);
 }
 
-bool Jafg::LHud::FocusWidgetChecked(LViewport* Context, const WWidgetNode* InNode)
+bool Jafg::LFrontend::FocusWidgetChecked(LViewport* Context, const WWidgetNode* InNode)
 {
     check( Context )
     const bool bOut = this->FocusWidget(Context, InNode);
@@ -244,7 +244,7 @@ bool Jafg::LHud::FocusWidgetChecked(LViewport* Context, const WWidgetNode* InNod
     return bOut;
 }
 
-bool Jafg::LHud::FocusWidgetAsserted(LViewport* Context, const WWidgetNode* InNode)
+bool Jafg::LFrontend::FocusWidgetAsserted(LViewport* Context, const WWidgetNode* InNode)
 {
     check( Context )
     const bool bOut = this->FocusWidget(Context, InNode);
@@ -252,7 +252,7 @@ bool Jafg::LHud::FocusWidgetAsserted(LViewport* Context, const WWidgetNode* InNo
     return bOut;
 }
 
-Jafg::LSurface Jafg::LHud::CreateNewSurface()
+Jafg::LSurface Jafg::LFrontend::CreateNewSurface()
 {
     LSurface Out;
 

@@ -1,7 +1,7 @@
     // Copyright mzoesch. All rights reserved.
 
 #include "User/CoreSubsystems/CoreWidgetsSubsystem.h"
-#include "Engine/Framework/Hud.h"
+#include "Engine/Framework/Frontend.h"
 #include "Widgets/UserWidget.h"
 #include "User/Frontend/Osd/DebugScreen.h"
 #include "User/Frontend/Hud/Crosshair.h"
@@ -13,22 +13,22 @@ void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
     Super::Initialize(Collection);
 
     this->DebugScreen = ConstructDeferredWidgetNode<WDebugScreen>(this->GetOuter());
-    this->DebugScreen->AddToViewport(&this->GetHud()->GetFocusedSurfaceChecked()->GetViewport());
+    this->DebugScreen->AddToViewport(&this->GetFrontend()->GetFocusedSurfaceChecked()->GetViewport());
     this->DebugScreen->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->DebugScreen);
 
     this->Crosshair = ConstructDeferredWidgetNode<WCrosshair>(this->GetOuter());
-    this->Crosshair->AddToViewport(&this->GetHud()->GetFocusedSurfaceChecked()->GetViewport());
+    this->Crosshair->AddToViewport(&this->GetFrontend()->GetFocusedSurfaceChecked()->GetViewport());
     this->Crosshair->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
     MakeDeferredWidgetNodeFinal(this->Crosshair);
 
     this->ConsoleScreen = ConstructDeferredWidgetNode<WConsoleScreen>(this->GetOuter());
-    this->ConsoleScreen->AddToViewport(&this->GetHud()->GetFocusedSurfaceChecked()->GetViewport());
+    this->ConsoleScreen->AddToViewport(&this->GetFrontend()->GetFocusedSurfaceChecked()->GetViewport());
     this->ConsoleScreen->SetConsoleFrontendState(EConsoleScreenState::Hide);
     MakeDeferredWidgetNodeFinal(this->ConsoleScreen);
 
     this->PauseScreen = ConstructDeferredWidgetNode<WPauseScreen>(this->GetOuter());
-    this->PauseScreen->AddToViewport(&this->GetHud()->GetFocusedSurfaceChecked()->GetViewport());
+    this->PauseScreen->AddToViewport(&this->GetFrontend()->GetFocusedSurfaceChecked()->GetViewport());
     this->PauseScreen->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->PauseScreen);
 

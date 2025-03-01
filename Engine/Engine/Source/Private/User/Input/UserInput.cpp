@@ -9,7 +9,7 @@
 
 bool Jafg::LUserInput::IsNewDown(const LKey Key) const
 {
-    const LSurface* Context = this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked();
+    const LSurface* Context = this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked();
     check( Context )
     return Context->GetCurrentlyPressedKeys().Contains(Key) && (Context->GetLastFramePressedKeys().Contains(Key) == false);
 }
@@ -83,9 +83,9 @@ Jafg::TdhArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
 {
     TdhArray<LRawInput> TriggeredKeys;
 
-    for (const LRawInput& Key : this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys())
+    for (const LRawInput& Key : this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys())
     {
-        if (this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->GetLastFramePressedKeys().Contains(Key) == false)
+        if (this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetLastFramePressedKeys().Contains(Key) == false)
         {
             TriggeredKeys.Emplace(Key);
         }
@@ -98,16 +98,16 @@ Jafg::TdhArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
 
 Jafg::TdhArray<Jafg::LRawInput>& Jafg::LUserInput::GetOngoingKeys() const
 {
-    return this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys();
+    return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys();
 }
 
 Jafg::TdhArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
 {
     TdhArray<LRawInput> CompletedKeys;
 
-    for (const LRawInput& Key : this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->GetLastFramePressedKeys())
+    for (const LRawInput& Key : this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetLastFramePressedKeys())
     {
-        if (this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys().Contains(Key) == false)
+        if (this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys().Contains(Key) == false)
         {
             CompletedKeys.Emplace(Key);
         }
@@ -286,12 +286,12 @@ int32 Jafg::LUserInput::DeactivateAllContexts()
 
 bool Jafg::LUserInput::HasBufferedPlatformInput() const
 {
-    return this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->HasBufferedPlatformInput();
+    return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->HasBufferedPlatformInput();
 }
 
 const Jafg::LString& Jafg::LUserInput::GetBufferedPlatformInput() const
 {
-    return this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->GetBufferedPlatformInput();
+    return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetBufferedPlatformInput();
 }
 
 void Jafg::LUserInput::DispatchInputDelegatesForAction(const LUserInputContext* InContext, const TdhArray<LRawInput>& InRawInputs, LInputMappedAction* InAction)

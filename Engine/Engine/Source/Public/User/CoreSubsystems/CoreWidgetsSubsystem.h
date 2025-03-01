@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Subsystems/HudSubsystem.h"
+#include "Subsystems/FrontendSubsystem.h"
 #include "CoreWidgetsSubsystem.generated.h"
 
 namespace Jafg
@@ -14,7 +14,7 @@ class WConsoleScreen;
 class WPauseScreen;
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API JCoreWidgetsSubsystem final : public JHudSubsystem
+class ENGINE_API JCoreWidgetsSubsystem final : public JFrontendSubsystem
 {
     GENERATED_CLASS_BODY()
 

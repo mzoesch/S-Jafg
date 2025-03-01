@@ -40,7 +40,7 @@ void Jafg::LDebugTraceLine::Draw(const LWorld& InContext) const
     Args.Start = this->Start;
     Args.End   = this->End;
     Args.Color = this->VisualParams.Color;
-    ::GetLineShaderContext()->Draw(InContext.GetLocalEgo()->GetHud()->GetSurfaces()[0].GetViewport(), Args);
+    ::GetLineShaderContext()->Draw(InContext.GetLocalEgo()->GetFrontend()->GetSurfaces()[0].GetViewport(), Args);
 
     return;
 }
@@ -65,7 +65,7 @@ void Jafg::LDebugTraceLine::DrawLine(const LWorld& InContext, const LVector& InS
     Args.Color = InColor;
     Args.Thickness = Thickness;
 
-    ::GetLineShaderContext()->Draw(InContext.GetLocalEgo()->GetHud()->GetSurfaces()[0].GetViewport(), Args);
+    ::GetLineShaderContext()->Draw(InContext.GetLocalEgo()->GetFrontend()->GetSurfaces()[0].GetViewport(), Args);
 
     return;
 }

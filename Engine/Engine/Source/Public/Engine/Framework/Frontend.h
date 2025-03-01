@@ -14,17 +14,17 @@ class LViewport;
 class WUserWidget;
 
 //#
-//# The hud is owned by the local ego and shares its lifetime.
-//# The hud is the main hub for all user interface elements. Create hud subsystems to automatically
+//# The frontend is owned by the local ego and shares its lifetime.
+//# The frontend is the main hub for all user interface elements. Create frontend subsystems to automatically
 //# add multiple widgets of a type any viewport.
 //#
-class LHud final
+class LFrontend final
 {
 public:
 
-    LHud() = default;
-    PROHIBIT_REALLOC_OF_ANY_FORM(LHud)
-    ~LHud() = default;
+    LFrontend() = default;
+    PROHIBIT_REALLOC_OF_ANY_FORM(LFrontend)
+    ~LFrontend() = default;
 
     void Initialize(LObjectContext* InOuter);
     void Tick(LUserInput* UserInput);
@@ -100,7 +100,7 @@ private:
     LSubsystemCollection Collection;
 };
 
-FORCEINLINE WWidgetNode* LHud::GetFirstTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const
+FORCEINLINE WWidgetNode* LFrontend::GetFirstTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const
 {
     WWidgetNode* Out = this->GetFirstTopLevelWidgetByClass(WidgetClass);
     check( Out )
@@ -108,41 +108,41 @@ FORCEINLINE WWidgetNode* LHud::GetFirstTopLevelWidgetByClassChecked(const LObjec
 }
 
 template <typename TNode>
-FORCEINLINE TNode* LHud::GetFirstTopLevelWidgetByClass() const
+FORCEINLINE TNode* LFrontend::GetFirstTopLevelWidgetByClass() const
 {
     static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
     return CheckedStaticCast<TNode>(this->GetFirstTopLevelWidgetByClass(TNode::StaticClass()));
 }
 
 template <typename TNode>
-FORCEINLINE TNode* LHud::GetFirstTopLevelWidgetByClassChecked() const
+FORCEINLINE TNode* LFrontend::GetFirstTopLevelWidgetByClassChecked() const
 {
     static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
     return CheckedStaticCast<TNode>(this->GetFirstTopLevelWidgetByClassChecked(TNode::StaticClass()));
 }
 
 template <typename TNode>
-FORCEINLINE bool LHud::ChangeWidgetVisibility(const LViewport* Context, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+FORCEINLINE bool LFrontend::ChangeWidgetVisibility(const LViewport* Context, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
     static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
     return this->ChangeWidgetVisibility(Context, TNode::StaticClass(), InVisibility, bAllowNotFound);
 }
 
 template <typename TNode>
-FORCEINLINE bool LHud::ChangeWidgetVisibility(const LSurface* Context, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+FORCEINLINE bool LFrontend::ChangeWidgetVisibility(const LSurface* Context, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
     static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
     return this->ChangeWidgetVisibility(Context, TNode::StaticClass(), InVisibility, bAllowNotFound);
 }
 
 template <typename TNode>
-bool LHud::ChangeWidgetVisibility(const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+bool LFrontend::ChangeWidgetVisibility(const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
     static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
     return this->ChangeWidgetVisibility(TNode::StaticClass(), InVisibility, bAllowNotFound);
 }
 
-FORCEINLINE bool LHud::ChangeWidgetVisibility(const LSurface* Context, const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+FORCEINLINE bool LFrontend::ChangeWidgetVisibility(const LSurface* Context, const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
     check( Context )
     return this->ChangeWidgetVisibility(&Context->GetViewport(), WidgetClass, InVisibility, bAllowNotFound);

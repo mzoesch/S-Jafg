@@ -4,7 +4,7 @@
 
 #include "CoreAfx.h"
 #include "User/Input/UserInput.h"
-#include "Engine/Framework/Hud.h"
+#include "Engine/Framework/Frontend.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Platform/SurfaceForward.h"
 
@@ -36,8 +36,8 @@ public:
     void OnLateTick(const float DeltaTime);
     void TearDown();
 
-    FORCEINLINE auto GetHud() -> LHud* { return &this->Hud; }
-    FORCEINLINE auto GetHud() const -> const LHud* { return &this->Hud; }
+    FORCEINLINE auto GetFrontend() -> LFrontend* { return &this->Frontend; }
+    FORCEINLINE auto GetFrontend() const -> const LFrontend* { return &this->Frontend; }
     FORCEINLINE auto GetUserInput() -> LUserInput* { return &this->UserInput; }
     FORCEINLINE auto GetUserInput() const -> const LUserInput* { return &this->UserInput; }
 
@@ -59,7 +59,7 @@ protected:
 
 private:
 
-    LHud       Hud;
+    LFrontend  Frontend;
     LUserInput UserInput;
 
     LDelegateHandle OnWorldBeginLifeHandle = nullptr;

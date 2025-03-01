@@ -139,7 +139,7 @@ void Jafg::WConsoleScreen::HideConsoleScreenWithSideEffects()
     LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
     UserInput->DeactivateAllContexts();
     UserInput->ActivateContext("InMyWorld");
-    this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+    this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
 
     if (this->EditableTextBlock)
     {
@@ -155,7 +155,7 @@ void Jafg::WConsoleScreen::ShowConsoleScreenWithSideEffects()
     LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
     UserInput->DeactivateAllContexts();
     UserInput->ActivateContext("InConsole");
-    this->GetLocalEgo()->GetHud()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both, ShowMouseCursor);
+    this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both, ShowMouseCursor);
 
     return;
 }
