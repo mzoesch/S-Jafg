@@ -1,9 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
-#include "Engine/World.h"
 #include "Engine/Framework/Pawn.h"
-#include "Rhi/ChunkShaderContext.h"
 #include "MyWorld/Chunk/ChunkStates.h"
 #include "MyWorld/Generation/ChunkGeneratorSubsystem.h"
 #include "MyWorld/Meshing/NaiveMesher.h"
@@ -12,6 +10,7 @@
 #include "System/TextureSubsystem.h"
 #include "User/UserPreferences.h"
 #include "Engine/Engine.h"
+#include "Rhi/ChunkShader.h"
 
 void Jafg::JChunkGenerationSubsystem::Initialize(LSubsystemCollection& Collection)
 {
@@ -20,16 +19,13 @@ void Jafg::JChunkGenerationSubsystem::Initialize(LSubsystemCollection& Collectio
 
     this->LoadedChunks = new std::unordered_map<LChunkKey, AChunk*>();
 
-    this->ChunkShaderContext = new LChunkShaderContext();
-    this->ChunkShaderContext->Make();
-
-    this->SharedChunkArgs = new LSharedChunkArgs();
-    this->SharedChunkArgs->ChunkGenerationSubsystem = this;
-    this->SharedChunkArgs->ChunkGeneratorSubsystem  = Collection.GetCheckedSubsystem<JChunkGeneratorSubsystem>();
-    this->SharedChunkArgs->VoxelSubsystem  = this->GetEngine()->GetCheckedSubsystem<JVoxelSubsystem>();
-    this->SharedChunkArgs->MaterialSubsystem  = this->GetEngine()->GetCheckedSubsystem<JMaterialSubsystem>();
-    this->SharedChunkArgs->TextureSubsystem  = this->GetEngine()->GetCheckedSubsystem<JTextureSubsystem>();
-    this->SharedChunkArgs->GetNewMesher = [] (AChunk& Owner) -> LChunkMesher* { return new LNaiveMesher(Owner); };
+    this->SharedChunkArgs.ChunkGenerationSubsystem = this;
+    this->SharedChunkArgs.ChunkGeneratorSubsystem  = Collection.GetCheckedSubsystem<JChunkGeneratorSubsystem>();
+    this->SharedChunkArgs.VoxelSubsystem  = this->GetEngine()->GetCheckedSubsystem<JVoxelSubsystem>();
+    this->SharedChunkArgs.MaterialSubsystem  = this->GetEngine()->GetCheckedSubsystem<JMaterialSubsystem>();
+    this->SharedChunkArgs.TextureSubsystem  = this->GetEngine()->GetCheckedSubsystem<JTextureSubsystem>();
+    this->SharedChunkArgs.ChunkShaderHandle = this->SharedChunkArgs.ChunkShader.Make();
+    this->SharedChunkArgs.GetNewMesher = [] (AChunk& Owner) -> LChunkMesher* { return new LNaiveMesher(Owner); };
 
     const JUserPreferences* Preferences = GetDefault<JUserPreferences>();
     this->RenderDistance = &Preferences->ChunkRenderDistance;
@@ -62,14 +58,6 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
 
     check( Tasks::IsOnMasterThread() )
 
-    this->ChunkShaderContext->Free();
-    delete this->ChunkShaderContext;
-    this->ChunkShaderContext = nullptr;
-
-    checkSlow( this->SharedChunkArgs )
-    delete this->SharedChunkArgs;
-    this->SharedChunkArgs = nullptr;
-
     this->LoadedChunksMutex.lock();
     this->VipChunksToLoadMutex.lock();
 
@@ -77,13 +65,15 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
     delete this->LoadedChunks;
     this->LoadedChunks = nullptr;
 
+    GEngine->RemoveShader(this->SharedChunkArgs.ChunkShaderHandle, false);
+
     return;
 }
 
-Jafg::AChunk* Jafg::JChunkGenerationSubsystem::SpawnChunk(const LChunkKey& InChunkKey) const
+Jafg::AChunk* Jafg::JChunkGenerationSubsystem::SpawnChunk(const LChunkKey& InChunkKey)
 {
     AChunk* Chunk = SpawnDeferredActor<AChunk>(this->GetWorld());
-    Chunk->SetSharedArgs(this->SharedChunkArgs);
+    Chunk->SetSharedArgs(&this->SharedChunkArgs);
     MakeDeferredActorFinal(Chunk);
     Chunk->OnAlloc(InChunkKey);
     return Chunk;

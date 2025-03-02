@@ -17,21 +17,23 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LEye)
     ~LEye() noexcept = default;
 
-    FORCEINLINE auto IsOwnerValid() const -> bool { return this->Owner != nullptr; }
-    FORCEINLINE void SetOwner(APawn* InOwner) { this->Owner = InOwner; }
-    FORCEINLINE auto GetOwner() const -> APawn* { return this->Owner; }
+    FORCEINLINE bool IsOwnerValid() const noexcept { return this->Owner != nullptr; }
+    FORCEINLINE void SetOwner(APawn* InOwner) noexcept { this->Owner = InOwner; }
+    FORCEINLINE auto GetOwner() const noexcept -> APawn* { return this->Owner; }
 
-    LMatrix GetViewMatrix() const;
-    FORCEINLINE auto GetRelativeFront() const -> const LVector& { return this->RelativeFront; }
-    FORCEINLINE auto GetRelativeRight() const -> const LVector& { return this->RelativeRight; }
-    FORCEINLINE auto GetRelativeUp() const -> const LVector& { return this->RelativeUp; }
+    void UpdateViewMatrix();
+    FORCEINLINE const LMatrix& GetViewMatrix() const noexcept { return this->CachedViewMatrix; }
+    FORCEINLINE const LVector& GetRelativeFront() const noexcept { return this->RelativeFront; }
+    FORCEINLINE const LVector& GetRelativeRight() const noexcept { return this->RelativeRight; }
+    FORCEINLINE const LVector& GetRelativeUp() const noexcept { return this->RelativeUp; }
 
-    FORCEINLINE auto GetDegYFov() const -> float { return this->DegYFov; }
+    FORCEINLINE auto GetDegYFov() const noexcept -> float { return this->DegYFov; }
     FORCEINLINE void SetDegYFov(const float InDegYFov) { this->DegYFov = InDegYFov; }
 
 private:
 
-    APawn* Owner = nullptr;
+    APawn*  Owner = nullptr;
+    LMatrix CachedViewMatrix = LMatrix::Identity;
 
     void UpdateRelativeVectors() const;
     mutable LVector RelativeFront = LVector::ForwardVector;

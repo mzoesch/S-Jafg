@@ -8,10 +8,9 @@
 #include "Engine/Components/RenderComponent.h"
 #include "MyWorld/ChunkKey.h"
 #include "ChunkPersistency.h"
-#include "Rhi/ChunkShaderContext.h"
 #include "MyWorld/CommonTypes.h"
 #include "MyWorld/VoxelKey.h"
-#include "MyWorld/Light.h"
+#include "Rhi/ChunkShader.h"
 #include "Chunk.generated.h"
 
 namespace Jafg
@@ -26,6 +25,7 @@ class AChunk;
 class JChunkGenerationSubsystem;
 class JChunkGeneratorSubsystem;
 class LChunkMesher;
+class LChunkShader;
 
 MAKE_MULTICAST_SIGNATURE(LChunkStateChangedDelegateSignature, EChunkState::Type /* NewChunkState */)
 
@@ -34,15 +34,15 @@ class ENGINE_API LChunkRendererComponent final : public LRendererComponent
 public:
 
     LChunkRendererComponent() = delete;
-    explicit LChunkRendererComponent(AChunk& Owner);
+    FORCEINLINE explicit LChunkRendererComponent(AChunk& Owner) : Owner(&Owner) { }
     ~LChunkRendererComponent() override = default;
 
     virtual void Draw(const LViewport& Context, const LEye& Eye) override;
 
-    FORCEINLINE auto GetOwner()       ->       AChunk& { return *this->Owner; }
-    FORCEINLINE auto GetOwner() const -> const AChunk& { return *this->Owner; }
-    FORCEINLINE auto GetShaderInstance()       ->       LChunkShaderInstance* { return &this->Instance; }
-    FORCEINLINE auto GetShaderInstance() const -> const LChunkShaderInstance* { return &this->Instance; }
+    FORCEINLINE auto GetOwner()       noexcept ->       AChunk& { return *this->Owner; }
+    FORCEINLINE auto GetOwner() const noexcept -> const AChunk& { return *this->Owner; }
+    FORCEINLINE auto GetShaderInstance()       noexcept ->       LChunkShaderInstance* { return &this->Instance; }
+    FORCEINLINE auto GetShaderInstance() const noexcept -> const LChunkShaderInstance* { return &this->Instance; }
 
 private:
 
@@ -55,12 +55,14 @@ private:
 //#
 struct LSharedChunkArgs final
 {
-    JChunkGenerationSubsystem* ChunkGenerationSubsystem;
-    JChunkGeneratorSubsystem*  ChunkGeneratorSubsystem;
-    JVoxelSubsystem*           VoxelSubsystem;
-    JMaterialSubsystem*        MaterialSubsystem;
-    JTextureSubsystem*         TextureSubsystem;
-    TFunction<LChunkMesher*(AChunk& Owner)> GetNewMesher;
+    JChunkGenerationSubsystem* ChunkGenerationSubsystem  = nullptr;
+    JChunkGeneratorSubsystem*  ChunkGeneratorSubsystem   = nullptr;
+    JVoxelSubsystem*           VoxelSubsystem            = nullptr;
+    JMaterialSubsystem*        MaterialSubsystem         = nullptr;
+    JTextureSubsystem*         TextureSubsystem          = nullptr;
+    LChunkShader               ChunkShader;
+    uint32                     ChunkShaderHandle         = NULL;
+    TFunction<LChunkMesher*(AChunk& Owner)> GetNewMesher = nullptr;
 };
 
 DECLARE_JAFG_CLASS()
@@ -107,10 +109,10 @@ public:
 
     FORCEINLINE auto GetChunkKey() const -> const LChunkKey& { return this->ChunkKey; }
 
-    FORCEINLINE auto IsSharedArgsValid() const -> bool { return this->SharedArgs != nullptr; }
-    FORCEINLINE auto GetSharedArgs() -> LSharedChunkArgs* { return this->SharedArgs; }
-    FORCEINLINE auto GetSharedArgs() const -> const LSharedChunkArgs* { return this->SharedArgs; }
-    FORCEINLINE auto SetSharedArgs(LSharedChunkArgs* NewSharedArgs) -> void;
+    FORCEINLINE bool IsSharedArgsValid() const noexcept { return this->SharedArgs != nullptr; }
+    FORCEINLINE auto GetSharedArgs() noexcept -> LSharedChunkArgs* { return this->SharedArgs; }
+    FORCEINLINE auto GetSharedArgs() const noexcept -> const LSharedChunkArgs* { return this->SharedArgs; }
+    FORCEINLINE void SetSharedArgs(LSharedChunkArgs* NewSharedArgs);
 
     FORCEINLINE auto IsMesherValid() const -> bool { return this->Mesher != nullptr; }
     FORCEINLINE auto GetMesher() -> LChunkMesher* { return this->Mesher; }

@@ -178,7 +178,7 @@ void Jafg::LEngine::RequestEngineExit(const int32 CustomExitStatus, const LSimpl
 
 /* It does not really make sense to make this static, as if there is no global engine object we cannot check for rendering state. */
 // ReSharper disable once CppMemberFunctionMayBeStatic
-bool Jafg::LEngine::CanEverRender() const
+bool Jafg::LEngine::CanEverRender() const noexcept
 {
 #if WITH_FRONTEND
     return true;

@@ -48,7 +48,7 @@ public:
 
 private:
 
-    AChunk* SpawnChunk(const LChunkKey& InChunkKey) const;
+    AChunk* SpawnChunk(const LChunkKey& InChunkKey);
 
     //#
     //# Transient or persistent chunks that are loaded in any state.
@@ -74,7 +74,7 @@ private:
 
     void SafeLoadPersistentChunkPreSpawnedChunk(const LChunkKey& ChunkKey);
 
-    LSharedChunkArgs*    SharedChunkArgs    = nullptr;
+    LSharedChunkArgs SharedChunkArgs;
     LChunkShaderContext* ChunkShaderContext = nullptr;
     const int32* RenderDistance = nullptr;
     const int32* RenderHeight   = nullptr;

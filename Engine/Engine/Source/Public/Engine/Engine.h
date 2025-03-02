@@ -8,6 +8,7 @@
 #include "Engine/Cli/CommandLineInterface.h"
 #include "User/LocalEgo.h"
 #include "Engine/World.h"
+#include "Rhi/EngineShader.h"
 
 namespace Jafg
 {
@@ -77,6 +78,7 @@ class LEngine final
     typedef std::chrono::steady_clock::time_point LSteadyStatisticsTimePoint;
 
     friend JObject;
+    friend LEngineShader;
 
 public:
 
@@ -85,7 +87,7 @@ public:
     ENGINE_API void TearDown();
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Private function redirects
+    // Private Function Redirects
     ///////////////////////////////////////////////////////////////////////////////
 
     //# Internal public method. Do not use.
@@ -102,15 +104,28 @@ public:
     // Client Local Stuff
     ///////////////////////////////////////////////////////////////////////////////
 
-    ENGINE_API  bool CanEverRender() const;
+    ENGINE_API  bool CanEverRender() const noexcept;
 
-    FORCEINLINE bool IsLocalEgoValid() const { return this->LocalEgo.IsValid(); }
+    FORCEINLINE bool IsLocalEgoValid() const noexcept { return this->LocalEgo.IsValid(); }
     FORCEINLINE auto GetLocalEgo() -> LLocalEgo* { check( this->IsLocalEgoValid() ) return &this->LocalEgo; }
     FORCEINLINE auto GetLocalEgo() const -> const LLocalEgo* { check( this->IsLocalEgoValid() ) return &this->LocalEgo; }
 
+    FORCEINLINE auto GetShader(const uint32 InShaderUuid) noexcept -> LEngineShader*;
+    FORCEINLINE auto GetShaderChecked(const uint32 InShaderUuid) noexceptcheck -> LEngineShader* { LEngineShader* Out = this->GetShader(InShaderUuid); check( Out ) return Out; }
+    FORCEINLINE auto GetShaderAsserted(const uint32 InShaderUuid) -> LEngineShader* { LEngineShader* Out = this->GetShader(InShaderUuid); jassert( Out ) return Out; }
+    FORCEINLINE auto GetShaders() noexcept -> TdhArray<LEngineShader*>& { return this->Shaders; }
+    FORCEINLINE auto GetShaders() const noexcept -> const TdhArray<LEngineShader*>& { return this->Shaders; }
+    FORCEINLINE bool RemoveShader(const uint32 InShaderUuid, const bool bFree = true) noexcept;
+    FORCEINLINE bool RemoveShaderChecked(const uint32 InShaderUuid, const bool bFree = true) noexceptcheck;
+
 private:
 
+    FORCEINLINE uint32 AddShader(LEngineShader* InShader);
+    FORCEINLINE uint32 MakeShaderUuid() { return ++this->ShaderUuid; }
+
+    uint32 ShaderUuid = NULL;
     LLocalEgo LocalEgo;
+    TdhArray<LEngineShader*> Shaders;
 
 public:
 
@@ -134,8 +149,8 @@ public:
     //#
     LOnWorldBeginLife OnWorldBeginLife;
 
-    FORCEINLINE auto GetContexts() const -> const TdhArray<LWorldContext>& { return this->Contexts; }
-    FORCEINLINE auto GetRegisteredLevels() const -> const TdhArray<LLevel>& { return this->RegisteredLevels; }
+    FORCEINLINE auto GetContexts() const noexcept -> const TdhArray<LWorldContext>& { return this->Contexts; }
+    FORCEINLINE auto GetRegisteredLevels() const noexcept -> const TdhArray<LLevel>& { return this->RegisteredLevels; }
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JEngineSubsystem)
 
@@ -143,7 +158,6 @@ private:
 
     LWorldContext& CreateNewWorldContext(const LSimpleString& InHumanReadableName);
 
-    //# Browse to a new Url at the next opportunity.
     void Browse(LWorldContext& Context, const LString& Url) const;
     bool IsContextUrlInternal(const LString& Url) const;
     void TravelContext(LWorldContext& Context);
@@ -167,12 +181,59 @@ public:
     // Misc
     ///////////////////////////////////////////////////////////////////////////////
 
-    FORCEINLINE       LCommandLineInterface* GetCommandLineInterface() { return &this->CommandLineInterface; }
-    FORCEINLINE const LCommandLineInterface* GetCommandLineInterface() const { return &this->CommandLineInterface; }
+    FORCEINLINE       LCommandLineInterface* GetCommandLineInterface() noexcept { return &this->CommandLineInterface; }
+    FORCEINLINE const LCommandLineInterface* GetCommandLineInterface() const noexcept  { return &this->CommandLineInterface; }
 
 private:
 
     LCommandLineInterface CommandLineInterface;
 };
+
+FORCEINLINE LEngineShader* LEngine::GetShader(const uint32 InShaderUuid) noexcept
+{
+    LEngineShader** Out = this->Shaders.FindByPredicate(
+        [InShaderUuid] (const LEngineShader* i)
+        {
+            return i->GetUuid() == InShaderUuid;
+        }
+    );
+
+    if (Out)
+    {
+        return *Out;
+    }
+
+    return nullptr;
+}
+
+FORCEINLINE uint32 LEngine::AddShader(LEngineShader* InShader)
+{
+    check( InShader )
+    check( InShader->GetUuid() == 0 )
+    this->Shaders.Emplace(std::move(InShader));
+    InShader->Uuid = this->MakeShaderUuid();
+    LOG_VERBOSE(LogEngine, "Added new engine shader [{}] with a total of {} shaders.", InShader->GetUuid(), this->Shaders.GetSize())
+    return InShader->GetUuid();
+}
+
+FORCEINLINE bool LEngine::RemoveShader(const uint32 InShaderUuid, const bool bFree /* = true */) noexcept
+{
+    LOG_VERBOSE(LogEngine, "Removing engine shader [{}].", InShaderUuid)
+
+    if (bFree)
+    {
+        const LEngineShader* Shader = this->GetShader(InShaderUuid);
+        delete Shader;
+    }
+
+    return this->Shaders.RemoveOnceByPredicate([InShaderUuid](const LEngineShader* i) { return i->GetUuid() == InShaderUuid; });
+}
+
+FORCEINLINE bool LEngine::RemoveShaderChecked(const uint32 InShaderUuid, const bool bFree /* = true */) noexceptcheck
+{
+    const bool bOut = this->RemoveShader(InShaderUuid, bFree);
+    check( bOut )
+    return bOut;
+}
 
 } /* ~Namespace Jafg */

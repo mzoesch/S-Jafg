@@ -50,7 +50,7 @@ private:
 
     void LoadShader(const LEnginePath& VertexPath, const LEnginePath& FragmentPath);
 
-    uint32 Id;
+    uint32 Id = NULL;
 };
 
 template <>

@@ -158,6 +158,8 @@ NODISCARD FORCEINLINE double RoundToZero(const double Value);
  */
 template <typename T>
 NODISCARD FORCEINLINE constexpr TMatrix<T> MakeViewMatrix(const TVector<T>& Eye, const TVector<T>& Center, const TVector<T>& Up);
+template <typename T>
+FORCEINLINE constexpr void MakeViewMatrixInline(TMatrix<T>* Out, const TVector<T>& Eye, const TVector<T>& Center, const TVector<T>& Up);
 
 /**
  * An affine transformation to get the transformation for objects to be projected perspectively while keeping the
@@ -453,6 +455,32 @@ NODISCARD FORCEINLINE constexpr TMatrix<T> MakeViewMatrix(const TVector<T>& Eye,
     Result.Matrix[3][3] =  1.0f;
 
     return Result;
+}
+
+template <typename T>
+FORCEINLINE constexpr void MakeViewMatrixInline(TMatrix<T>* Out, const TVector<T>& Eye, const TVector<T>& Center, const TVector<T>& Up)
+{
+    checkSlow( Out )
+
+    const TVector<T> F = (Center - Eye).NormalizeRet();
+    const TVector<T> R = F.Cross(Up).NormalizeRet();
+    const TVector<T> U = R.Cross(F);
+
+    Out->Matrix[0][0] =  R.X;
+    Out->Matrix[1][0] =  R.Y;
+    Out->Matrix[2][0] =  R.Z;
+    Out->Matrix[0][1] =  U.X;
+    Out->Matrix[1][1] =  U.Y;
+    Out->Matrix[2][1] =  U.Z;
+    Out->Matrix[0][2] = -F.X;
+    Out->Matrix[1][2] = -F.Y;
+    Out->Matrix[2][2] = -F.Z;
+    Out->Matrix[3][0] = -(R | Eye);
+    Out->Matrix[3][1] = -(U | Eye);
+    Out->Matrix[3][2] =  (F | Eye);
+    Out->Matrix[3][3] =  1.0f;
+
+    return;
 }
 
 template <typename T>

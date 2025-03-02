@@ -3,11 +3,18 @@
 #include "Engine/Framework/Eye.h"
 #include "Engine/Framework/Pawn.h"
 
-Jafg::LMatrix Jafg::LEye::GetViewMatrix() const
+void Jafg::LEye::UpdateViewMatrix()
 {
     this->UpdateRelativeVectors();
-    return Maths::MakeViewMatrix(this->Owner->GetTranslation(),
-        this->Owner->GetTranslation() + this->RelativeFront, this->RelativeUp);
+
+    Maths::MakeViewMatrixInline(
+        &this->CachedViewMatrix,
+        this->Owner->GetTranslation(),
+        this->Owner->GetTranslation() + this->RelativeFront,
+        this->RelativeUp
+    );
+
+    return;
 }
 
 void Jafg::LEye::UpdateRelativeVectors() const

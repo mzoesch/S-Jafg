@@ -61,3 +61,14 @@ typedef int32  LSizeTy;
 #else /* PLATFORM_USES_UTF32 */
     #error "Could not resolve platform encoding."
 #endif /* !PLATFORM_USES_UTF8 */
+
+#if DO_SLOW_CHECKS
+    #define noexceptslow
+#else /* DO_SLOW_CHECKS */
+    #define noexceptslow noexcept
+#endif /* DO_SLOW_CHECKS */
+#if DO_CHECKS
+    #define noexceptcheck
+#else /* DO_CHECKS */
+    #define noexceptcheck noexcept
+#endif  /* DO_CHECKS */

@@ -2,7 +2,9 @@
 
 #include "Widgets/Viewport.h"
 #include "Engine/Engine.h"
+#include "Engine/Framework/Eye.h"
 #include "Platform/Surface.h"
+#include "Rhi/EngineShader.h"
 #include "Rhi/RendererStateMachine.h"
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
@@ -232,6 +234,15 @@ void Jafg::LViewport::Draw()
     for (const LBackgroundContext& Context : this->BackgroundContexts)
     {
         check( Context.Eye && Context.World )
+        Context.Eye->UpdateViewMatrix();
+
+        for (LEngineShader* Shader : GEngine->GetShaders())
+        {
+            checkSlow( Shader )
+            Shader->UpdateUniforms(*this, *Context.World, *Context.Eye);
+            continue;
+        }
+
         Context.World->Draw(*this, *Context.Eye);
 
         continue;

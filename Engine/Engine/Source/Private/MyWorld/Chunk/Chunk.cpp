@@ -7,28 +7,27 @@
 #include "Engine/Framework/Pawn.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "MyWorld/Meshing/ChunkMesher.h"
-#include "Rhi/ChunkShaderContext.h"
 #include "MyWorld/Chunk/ChunkPhysics.h"
-
-Jafg::LChunkRendererComponent::LChunkRendererComponent(AChunk& Owner)
-{
-    this->Owner = &Owner;
-}
+#include "Rhi/RhiVendorInclude.h"
 
 void Jafg::LChunkRendererComponent::Draw(const LViewport& Context, const LEye& Eye)
 {
     checkSlow( this->Owner->GetSharedArgs() )
 
-    const LChunkShaderContext* ShaderContext =
-        this->Owner->GetSharedArgs()->ChunkGenerationSubsystem->GetChunkShaderContext();
+    LChunkShader& Shader = this->Owner->GetSharedArgs()->ChunkShader;
 
-    LChunkShaderDrawArgs Args;
-    Args.DegYFov = Eye.GetDegYFov();
-    Args.ViewMatrix.CopyFrom(Eye.GetViewMatrix());
-    Args.WorldLocation = this->Owner->GetTranslation();
-    Args.NumTriangles = this->Owner->GetMesher()->GetNumTriangles();
-    Args.Instance = &this->Instance;
-    ShaderContext->Draw(Context, Args);
+    Shader.Use();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, Shader.GetBlendOpaqueTextureLocation());
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, Shader.GetBlendersTextureLocation());
+
+    glBindVertexArray(this->Instance.GetVertexArrayObject());
+
+    LMatrix Model; Model.InlineTranslate(this->Owner->GetTranslation());
+    Shader.GetProgram().SetMatrixUniform("Model", Model);
+
+    glDrawElements(GL_TRIANGLES, this->Owner->GetMesher()->GetNumTriangles(), GL_UNSIGNED_INT, nullptr);
 
     return;
 }

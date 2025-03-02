@@ -1,18 +1,15 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Rhi/ChunkShaderContext.h"
-#include "Widgets/Viewport.h"
-#include <glm/glm.hpp>
-#include "Engine/ObjectBaseUtility.h"
-#include "User/UserPreferences.h"
-#include "Rhi/RhiVendorInclude.h"
+#include "Rhi/ChunkShader.h"
 #include "Engine/Engine.h"
-#include "System/EnginePath.h"
+#include "Engine/Framework/Eye.h"
+#include "Rhi/RhiVendorInclude.h"
 #include "System/MaterialSubsystem.h"
+#include "System/EnginePath.h"
 
-void Jafg::LChunkShaderContext::Make()
+uint32 Jafg::LChunkShader::Make()
 {
-    LGenericShaderContext::Make();
+    const uint32 Out = Super::Make();
 
     const JMaterialSubsystem* Subsystem = GEngine->GetSubsystem<JMaterialSubsystem>();
 
@@ -52,51 +49,34 @@ void Jafg::LChunkShaderContext::Make()
     this->Program.SetUIntUniform("AtlasBlendOpaqueDomainWCount", Subsystem->GetBlendOpaqueDomainWidth());
     this->Program.SetUIntUniform("AtlasBlendersDomainWCount", Subsystem->GetBlendersDomainWidth());
 
+    return Out;
+}
+
+void Jafg::LChunkShader::UpdateUniforms(const LViewport& Viewport, const LWorld& World, const LEye& Eye)
+{
+    this->Program.Use();
+
+    const LMatrix Projection = Maths::MakePerspectiveProjectionMatrix
+    (
+        Maths::ToRadians(Eye.GetDegYFov()),
+        static_cast<float>(Viewport.GetDimensions().X) / static_cast<float>(Viewport.GetDimensions().Y),
+        0.1f, 2000.0f
+    );
+
+    this->Program.SetMatrixUniform("View", Eye.GetViewMatrix());
+    this->Program.SetMatrixUniform("Projection", Projection);
+
     return;
 }
 
-void Jafg::LChunkShaderContext::OnFree()
+void Jafg::LChunkShader::OnFree()
 {
-    LGenericShaderContext::OnFree();
+    Super::OnFree();
 
     this->Program.Free();
 
     glDeleteTextures(1, &this->BlendOpaqueTex);
     glDeleteTextures(1, &this->BlendersTex);
-
-    return;
-}
-
-void Jafg::LChunkShaderContext::OnReload()
-{
-    LGenericShaderContext::OnReload();
-}
-
-void Jafg::LChunkShaderContext::Draw(const LViewport& Context, LGenericShaderContextDrawArgs& InArgs) const
-{
-    GENERIC_SHADER_DRAW_BODY(LChunkShaderDrawArgs)
-
-    this->Program.Use();
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, this->BlendOpaqueTex);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, this->BlendersTex);
-
-    glBindVertexArray(Args.Instance->GetVertexArrayObject());
-
-    const TMatrix Projection = Maths::MakePerspectiveProjectionMatrix(
-        Maths::ToRadians(Args.DegYFov),
-        static_cast<float>(Context.GetDimensions().X) / static_cast<float>(Context.GetDimensions().Y),
-        0.1f, 2000.0f
-    );
-    LMatrix Model; Model.InlineTranslate(Args.WorldLocation);
-
-    this->Program.SetMatrixUniform("View", Args.ViewMatrix);
-    this->Program.SetMatrixUniform("Projection", Projection);
-    this->Program.SetMatrixUniform("Model", Model);
-
-    glDrawElements(GL_TRIANGLES, Args.NumTriangles, GL_UNSIGNED_INT, nullptr);
 
     return;
 }
