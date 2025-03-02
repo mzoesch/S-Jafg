@@ -182,7 +182,7 @@ func MakePremakeSolutionScript(sln *Core.Solution) error {
     Wwi(b, 2, "toolset 'msc' ")
     Wwi(b, 2, "defines { 'PLATFORM_WINDOWS', 'PLATFORM_WINDOWS_WITH_MSVC' }")
     Wwi(b, 2, "linkoptions { '/SUBSYSTEM:WINDOWS' }")
-    Wwi(b, 2, "buildoptions { '/Zc:__cplusplus, /GR-' }")
+    Wwi(b, 2, "buildoptions { '/Zc:__cplusplus, /GR-, /MP' }")
     Wwi(b, 2, "linkoptions { '/NODEFAULTLIB:LIBCMT', '/NODEFAULTLIB:MSVCRT' }")
 
     Wwi(b, 1, "filter { 'platforms:Windows32FastWasm' }")
