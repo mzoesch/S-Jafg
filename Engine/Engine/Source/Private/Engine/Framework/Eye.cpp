@@ -1,19 +1,18 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Engine/Framework/Eye.h"
 #include "Engine/Framework/Pawn.h"
 
 Jafg::LMatrix Jafg::LEye::GetViewMatrix() const
 {
     this->UpdateRelativeVectors();
-    return Maths::MakeViewMatrix(this->OwningPawn->GetTranslation(),
-        this->OwningPawn->GetTranslation() + this->RelativeFront, this->RelativeUp);
+    return Maths::MakeViewMatrix(this->Owner->GetTranslation(),
+        this->Owner->GetTranslation() + this->RelativeFront, this->RelativeUp);
 }
 
 void Jafg::LEye::UpdateRelativeVectors() const
 {
-    const LRotator Rotator = this->OwningPawn->GetRotator();
+    const LRotator Rotator = this->Owner->GetRotator();
 
     this->RelativeFront.X =
     Maths::Cos(Maths::ToRadians(Rotator.Yaw)) * Maths::Cos(Maths::ToRadians(Rotator.Pitch));

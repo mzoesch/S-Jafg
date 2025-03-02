@@ -31,7 +31,12 @@ public:
     FORCEINLINE LEngine* GetEngineChecked() const { check( this->GetEngine() ) return this->GetEngine(); }
 
     FORCEINLINE auto IsWorldValid() const -> bool { return this->CastedOuter != nullptr; }
+                LWorld* GetOrCalculateCastedOuter();
+    FORCEINLINE LWorld* GetOrCalculateCastedOuterChecked() { LWorld* Out = this->GetOrCalculateCastedOuter(); check( Out) return Out; }
+    FORCEINLINE LWorld* GetOrCalculateCastedOuterAsserted() { LWorld* Out = this->GetOrCalculateCastedOuter(); jassert( Out ) return Out; }
     FORCEINLINE auto GetWorld() const -> LWorld* { return this->CastedOuter; }
+    FORCEINLINE auto GetWorldChecked() const -> LWorld* { check( this->GetWorld() ) return this->GetWorld(); }
+    FORCEINLINE auto GetWorldAsserted() const -> LWorld* { jassert( this->GetWorld() ) return this->GetWorld(); }
 
     virtual void BeginLife() override;
 

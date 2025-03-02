@@ -30,11 +30,11 @@ public:
 
     FORCEINLINE auto IsPossessed() const -> bool { return this->OwningController != nullptr; }
     FORCEINLINE auto GetOwningController() const -> APersonaController* { return this->OwningController; }
-                auto DeclareNewPossessor(APersonaController* InNewController) -> void;
+                void DeclareNewPossessor(APersonaController* InNewController);
 
-    FORCEINLINE auto HasEye() const -> bool { return this->Eye != nullptr; }
-    FORCEINLINE auto GetEye() -> LEye* { return this->Eye; }
-    FORCEINLINE auto GetEye() const -> const LEye* { return this->Eye; }
+    FORCEINLINE auto IsEyeValid() const -> bool { return this->Eye.IsOwnerValid(); }
+    FORCEINLINE auto GetEye() -> LEye* { return &this->Eye; }
+    FORCEINLINE auto GetEye() const -> const LEye* { return &this->Eye; }
 
     void OnOngoingMovementInput(LInputActionValue& InValue);
     void OnOngoingRotationInput(LInputActionValue& InValue);
@@ -54,7 +54,7 @@ public:
 private:
 
 #if WITH_LOCAL_LAYER
-    LEye* Eye = nullptr;
+    LEye Eye;
 #endif /* WITH_LOCAL_LAYER */
 
     void UpdateRelativeVectors();

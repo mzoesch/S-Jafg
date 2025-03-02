@@ -156,9 +156,9 @@ private:
     //#
     TdhArray<LWorldContext> Contexts;
     //# The registered levels that this engine can load.
-    TdhArray<LLevel> RegisteredLevels = { };
+    TdhArray<LLevel> RegisteredLevels;
 
-    LObjectContext ObjectContext = GlobalCarnifex;
+    LObjectContext ObjectContext { GlobalCarnifex };
     LSubsystemCollection Collection;
 
 public:

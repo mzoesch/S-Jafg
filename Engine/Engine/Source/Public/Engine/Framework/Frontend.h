@@ -22,7 +22,7 @@ class LFrontend final
 {
 public:
 
-    LFrontend() = default;
+    LFrontend() noexcept = default;
     PROHIBIT_REALLOC_OF_ANY_FORM(LFrontend)
     ~LFrontend() = default;
 
@@ -95,8 +95,8 @@ private:
     LSurface CreateNewSurface();
 
     TdhArray<LSurface>   Surfaces;
-    int32                FocusedSurface;
-    LObjectContext*      CachedOuter;
+    int32                FocusedSurface = 0;
+    LObjectContext*      CachedOuter = nullptr;
     LSubsystemCollection Collection;
 };
 

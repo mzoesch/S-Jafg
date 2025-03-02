@@ -49,7 +49,7 @@ public:
     DEFAULT_MOVE(LDebugTraceLine)
     virtual ~LDebugTraceLine() override = default;
 
-    void Draw(const LWorld& InContext) const override;
+    virtual void Draw(const LWorld& InContext, const LViewport& InViewport, const LEye& InEye) const override;
 
     FORCEINLINE auto GetStart() const -> const LVector& { return this->Start; }
     FORCEINLINE auto GetEnd() const -> const LVector& { return this->End; }
@@ -57,7 +57,12 @@ public:
 
 private:
 
-    static void DrawLine(const LWorld& InContext, const LVector& InStart, const LVector& InEnd, const LColor& InColor, const uint8 Thickness, const bool bUseCache);
+    static void DrawLine(
+        const LViewport& InViewport, const LEye& InEye,
+        const LVector& InStart, const LVector& InEnd,
+        const LColor& InColor, const uint8 Thickness
+    );
+    static void DrawLineCachedValues(const LVector& InStart, const LVector& InEnd, const LColor& InColor, const uint8 Thickness);
 
     LVector Start;
     LVector End;

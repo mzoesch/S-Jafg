@@ -1,15 +1,12 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "MyWorld/Chunk/Chunk.h"
 #include "MyWorld/Generation/ChunkGenerator.h"
 #include "Engine/Engine.h"
 #include "MyWorld/MyWorldStatics.h"
 #include "Engine/Framework/Pawn.h"
-#include "Engine/Framework/PersonaController.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "MyWorld/Meshing/ChunkMesher.h"
-#include "User/LocalEgo.h"
 #include "Rhi/ChunkShaderContext.h"
 #include "MyWorld/Chunk/ChunkPhysics.h"
 
@@ -18,18 +15,16 @@ Jafg::LChunkRendererComponent::LChunkRendererComponent(AChunk& Owner)
     this->Owner = &Owner;
 }
 
-void Jafg::LChunkRendererComponent::Draw(const LViewport& Context)
+void Jafg::LChunkRendererComponent::Draw(const LViewport& Context, const LEye& Eye)
 {
     checkSlow( this->Owner->GetSharedArgs() )
 
     const LChunkShaderContext* ShaderContext =
         this->Owner->GetSharedArgs()->ChunkGenerationSubsystem->GetChunkShaderContext();
 
-    const LEye* Eye = GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()->GetEye();
-
     LChunkShaderDrawArgs Args;
-    Args.DegYFov = Eye->GetDegYFov();
-    Args.ViewMatrix.CopyFrom(Eye->GetViewMatrix());
+    Args.DegYFov = Eye.GetDegYFov();
+    Args.ViewMatrix.CopyFrom(Eye.GetViewMatrix());
     Args.WorldLocation = this->Owner->GetTranslation();
     Args.NumTriangles = this->Owner->GetMesher()->GetNumTriangles();
     Args.Instance = &this->Instance;

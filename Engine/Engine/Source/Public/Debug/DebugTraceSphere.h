@@ -46,7 +46,7 @@ public:
     DEFAULT_MOVE(LDebugTraceSphere)
     virtual ~LDebugTraceSphere() override = default;
 
-    void Draw(const LWorld& InContext) const override;
+    virtual void Draw(const LWorld& InContext, const LViewport& InViewport, const LEye& InEye) const override;
 
     FORCEINLINE auto GetCenter() const -> const LVector& { return this->Center; }
     FORCEINLINE auto GetRadius() const -> float { return this->Radius; }

@@ -94,9 +94,25 @@ void Jafg::LLocalEgo::Possess(APersonaController* InNewController)
     return;
 }
 
-void Jafg::LLocalEgo::OnNewPawnPossessed(APawn* InOld, APawn* InNew) const
+void Jafg::LLocalEgo::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
 {
-    const_cast<LLocalEgo*>(this)->Collection.ForEachSubsystem<JLocalEgoSubsystem>(
+    if (LSurface* Surface = this->GetFrontend()->GetFocusedSurface(); Surface)
+    {
+        if (InOld)
+        {
+            Surface->GetViewport().GetMutableBackgroundContexts().RemoveOnceByPredicate([InOld](const LBackgroundContext& LambdaContext)
+            {
+                return LambdaContext.Eye == InOld->GetEye();
+            });
+        }
+
+        if (InNew)
+        {
+            Surface->GetViewport().GetMutableBackgroundContexts().Emplace(InNew->GetEye(), InNew->GetOrCalculateCastedOuterAsserted());
+        }
+    }
+
+    this->Collection.ForEachSubsystem<JLocalEgoSubsystem>(
     [InOld, InNew](JLocalEgoSubsystem* Subsystem)
     {
         Subsystem->OnNewPawnPossessed(InOld, InNew);

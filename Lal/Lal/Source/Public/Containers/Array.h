@@ -48,7 +48,7 @@ class TArray
 
 public:
 
-    FORCEINLINE  TArray() noexcept;
+    FORCEINLINE  TArray() noexcept = default;
     FORCEINLINE  TArray(const Self&  InOther) noexcept;
     FORCEINLINE  TArray(      Self&& InOther) noexcept;
     FORCEINLINE  TArray(std::initializer_list<T> InList) noexcept;
@@ -273,20 +273,10 @@ private:
 
     FORCEINLINE auto DestroyAt(const SizeType InIndex) noexcept -> void;
 
-    SizeType    Size;
-    SizeType    Capacity;
-    T*          Data;
+    SizeType    Size     = 0;
+    SizeType    Capacity = 0;
+    T*          Data     = nullptr;
 };
-
-template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray() noexcept
-{
-    this->Size        = 0;
-    this->Capacity    = 0;
-    this->Data        = nullptr;
-
-    return;
-}
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(const Self& InOther) noexcept
@@ -297,13 +287,13 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(const Self& InOther)
     if (InOther.Data)
     {
         this->Data = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
+        check( this->Data )
         ::memset(this->Data, 0, this->Capacity * sizeof(T));
         ::memcpy(this->Data, InOther.Data, this->Size * sizeof(T));
     }
     else
     {
-        this->Data = nullptr;
-        check( this->Size == 0 && this->Capacity == 0 )
+        check( this->Size == 0 && this->Capacity == 0 && this->Data == nullptr )
     }
 
     return;
@@ -326,12 +316,10 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(Self&& InOther) noex
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(std::initializer_list<T> InList) noexcept
 {
-    this->Size        = 0;
-    this->Capacity    = 0;
-    this->Data        = nullptr;
+    check( this->Size == 0 && this->Capacity == 0 && this->Data == nullptr )
 
     this->Reserve(static_cast<SizeType>(InList.size()));
-    this->Size        = static_cast<SizeType>(InList.size());
+    this->Size = static_cast<SizeType>(InList.size());
 
     ::memcpy(this->Data, InList.begin(), this->Size * sizeof(T));
 

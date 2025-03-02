@@ -2,13 +2,9 @@
 
 #include "Debug/DebugTraceSphere.h"
 #include "Rhi/DebugTraceSphereShaderContext.h"
-#include "Platform/Surface.h"
 #include "Engine/World.h"
 #include "User/LocalEgo.h"
-#include "Engine/Engine.h"
 #include "Engine/Framework/Eye.h"
-#include "Engine/Framework/PersonaController.h"
-#include "Engine/Framework/Pawn.h"
 
 namespace
 {
@@ -24,7 +20,7 @@ Jafg::LDebugTraceSphereShaderContext* GetSphereShaderContext()
 
 } /* ~Anonymous Namespace */
 
-void Jafg::LDebugTraceSphere::Draw(const LWorld& InContext) const
+void Jafg::LDebugTraceSphere::Draw(const LWorld& InContext, const LViewport& InViewport, const LEye& InEye) const
 {
     if (::GetSphereShaderContext()->IsMeaningful() == false)
     {
@@ -32,18 +28,16 @@ void Jafg::LDebugTraceSphere::Draw(const LWorld& InContext) const
         ::GetSphereShaderContext()->Make();
     }
 
-    const LEye* Eye = GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()->GetEye();
-
     LDebugTraceSphereShaderContextDrawArgs Args;
-    Args.DegYFov = Eye->GetDegYFov();
-    Args.ViewMatrix.CopyFrom(Eye->GetViewMatrix());
+    Args.DegYFov = InEye.GetDegYFov();
+    Args.ViewMatrix.CopyFrom(InEye.GetViewMatrix());
     Args.Center = this->Center;
     Args.Radius = this->Radius;
     Args.Slices = this->VisualParams.Rings;
     Args.Stacks = this->VisualParams.Segments;
     Args.Color = this->VisualParams.Color;
     Args.Thickness = this->VisualParams.Thickness;
-    ::GetSphereShaderContext()->Draw(InContext.GetLocalEgo()->GetFrontend()->GetSurfaces()[0].GetViewport(), Args);
+    ::GetSphereShaderContext()->Draw(InViewport, Args);
 
     return;
 }

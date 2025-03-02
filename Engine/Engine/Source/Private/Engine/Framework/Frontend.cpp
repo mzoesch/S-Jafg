@@ -53,29 +53,20 @@ void Jafg::LFrontend::Tick(LUserInput* UserInput)
         Surface.Tick();
     }
 
-    for (LSurface& Surface : this->Surfaces)
+    if (this->IsFocusedSurfaceValid())
     {
-        if (Surface.GetInputMode() & EInputMode::InputSubSystem)
+        if (this->GetFocusedSurface()->GetInputMode() & EInputMode::InputSubSystem)
         {
             UserInput->DispatchInputDelegates();
         }
-
-        continue;
     }
 
-    this->Collection.ForEachSubsystem( [] (JSubsystem* Subsystem)
+    this->Collection.ForEachSubsystem<JFrontendSubsystem>([](JFrontendSubsystem* Subsystem)
     {
-        if (JFrontendSubsystem* FrontendSubsystem = DynamicCast<JFrontendSubsystem>(Subsystem); FrontendSubsystem)
+        if (Subsystem->ShouldTick())
         {
-            if (FrontendSubsystem->ShouldTick())
-            {
-                FrontendSubsystem->Tick(Application::GetDeltaTimeAsFloat());
-            }
-
-            return;
+            Subsystem->Tick(Application::GetDeltaTimeAsFloat());
         }
-
-        panicMsgf( "Could not cast predicated frontend subsystem [{}] to JFrontendSubsystem.", Subsystem->GetFullName() )
 
         return;
     });

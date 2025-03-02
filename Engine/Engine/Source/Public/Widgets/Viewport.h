@@ -14,6 +14,14 @@ namespace Jafg
 class LObjectClass;
 class WWidgetNode;
 class WUserWidget;
+class LEye;
+class LWorld;
+
+struct LBackgroundContext final
+{
+    LEye*   Eye = nullptr;
+    LWorld* World = nullptr;
+};
 
 //#
 //# Represents a viewport that can contain widgets.
@@ -68,7 +76,9 @@ public:
     //# @return True if in the last frame, this node was not added.
     bool AddHoveredWidgetForFrame(WWidgetNode* Node);
 
-    FORCEINLINE auto GetLevelBuffer() const -> const LFrameBuffer& { return this->LevelBuffer; }
+    FORCEINLINE auto GetBackgroundContexts() const -> const TdhArray<LBackgroundContext>& { return this->BackgroundContexts; }
+    FORCEINLINE auto GetMutableBackgroundContexts() -> TdhArray<LBackgroundContext>& { return this->BackgroundContexts; }
+    FORCEINLINE auto GetBackgroundBuffer() const -> const LFrameBuffer& { return this->BackgroundBuffer; }
 
 private:
 
@@ -95,12 +105,13 @@ private:
     TdhArray<WUserWidget*> TopLevelWidgets;
 
     WWidgetNode* FocusedWidget = nullptr;
-    TdhArray<WWidgetNode*> HoveredWidgets = { };
-    TdhArray<WWidgetNode*> LastFrameHoveredWidgets = { };
+    TdhArray<WWidgetNode*> HoveredWidgets;
+    TdhArray<WWidgetNode*> LastFrameHoveredWidgets;
 
     mutable float FrameZLayerDepth = 0.0f;
 
-    LFrameBuffer LevelBuffer = { };
+    TdhArray<LBackgroundContext> BackgroundContexts;
+    LFrameBuffer BackgroundBuffer;
 };
 
 FORCEINLINE WWidgetNode* LViewport::GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const

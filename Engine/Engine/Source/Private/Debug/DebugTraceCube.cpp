@@ -1,13 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Debug/DebugTraceCube.h"
-#include "Engine/Engine.h"
 #include "Engine/Framework/Eye.h"
-#include "Engine/Framework/Pawn.h"
 #include "Engine/Framework/PersonaController.h"
-#include "Platform/Surface.h"
 #include "Rhi/DebugTraceCubeShaderContext.h"
-#include "User/LocalEgo.h"
 
 namespace
 {
@@ -23,7 +19,7 @@ Jafg::LDebugTraceCubeShaderContext* GetCubeShaderContext()
 
 } /* ~Anonymous Namespace */
 
-void Jafg::LDebugTraceCube::Draw(const LWorld& InContext) const
+void Jafg::LDebugTraceCube::Draw(const LWorld& InContext, const LViewport& InViewport, const LEye& InEye) const
 {
     if (::GetCubeShaderContext()->IsMeaningful() == false)
     {
@@ -31,16 +27,14 @@ void Jafg::LDebugTraceCube::Draw(const LWorld& InContext) const
         ::GetCubeShaderContext()->Make();
     }
 
-    const LEye* Eye = GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()->GetEye();
-
     LDebugTraceCubeShaderContextDrawArgs Args;
-    Args.DegYFov = Eye->GetDegYFov();
-    Args.ViewMatrix.CopyFrom(Eye->GetViewMatrix());
+    Args.DegYFov = InEye.GetDegYFov();
+    Args.ViewMatrix.CopyFrom(InEye.GetViewMatrix());
     Args.BottomNearLeft = this->BottomNearLeft;
     Args.RelTopFarRight = this->TopRelFarRight;
     Args.Color = this->VisualParams.Color;
     Args.Thickness = this->VisualParams.Thickness;
-    ::GetCubeShaderContext()->Draw(InContext.GetLocalEgo()->GetFrontend()->GetSurfaces()[0].GetViewport(), Args);
+    ::GetCubeShaderContext()->Draw(InViewport, Args);
 
     return;
 }

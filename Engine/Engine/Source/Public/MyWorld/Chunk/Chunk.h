@@ -37,7 +37,7 @@ public:
     explicit LChunkRendererComponent(AChunk& Owner);
     ~LChunkRendererComponent() override = default;
 
-    virtual void Draw(const LViewport& Context) override;
+    virtual void Draw(const LViewport& Context, const LEye& Eye) override;
 
     FORCEINLINE auto GetOwner()       ->       AChunk& { return *this->Owner; }
     FORCEINLINE auto GetOwner() const -> const AChunk& { return *this->Owner; }

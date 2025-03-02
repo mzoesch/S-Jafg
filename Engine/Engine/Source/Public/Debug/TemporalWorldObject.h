@@ -12,11 +12,17 @@ namespace Jafg
 {
 
 class LWorld;
+class LViewport;
+class LEye;
+class LTemporalWorldObject;
+
 
 //#
 //# Skip the AActor creation hassle and just use this temporal object inside a world.
-//# Local client only.
+//# Local client only, no replication, dynamic creation, etc.
 //# This object has to be trivially movable.
+//# If you need access to the tick event, inherit from LTickableObject - but this goes against
+//# the temporal nature of this object and usually should be avoided due to bad design.
 //#
 class LTemporalWorldObject
 {
@@ -35,7 +41,7 @@ public:
     FORCEINLINE void ReduceLifeTime(const float DeltaTime) { this->TimeToLive -= DeltaTime; }
     FORCEINLINE bool IsAlive() const { return this->TimeToLive > 0.0f; }
 
-    virtual void Draw(const LWorld& InContext) const = 0;
+    virtual void Draw(const LWorld& InContext, const LViewport& InViewport, const LEye& InEye) const = 0;
 
 private:
 

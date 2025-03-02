@@ -9,7 +9,7 @@ namespace Jafg
 
 //#
 //# An object that can be registered with some sort of context that is ticked by the engine or a sub-tickable system
-//# from the engine.
+//# from the engine-tick.
 //#
 class ENGINE_API LTickableObject
 {
@@ -24,4 +24,4 @@ public:
     FORCEINLINE virtual bool ShouldTickableObjectTick() const { return true; }
 };
 
-} /* Namespace Jafg */
+} /* ~Namespace Jafg */

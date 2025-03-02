@@ -2,9 +2,8 @@
 
 #pragma once
 
-#include "CoreAfx.h"
-#include "WorldSubsystem.h"
-#include "Tickable/TickableObject.h"
+#include "Subsystems/WorldSubsystem.h"
+#include "Engine/TickableObject.h"
 #include "TickableWorldSubsystem.generated.h"
 
 namespace Jafg

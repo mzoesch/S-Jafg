@@ -9,6 +9,26 @@ Jafg::LEngine* Jafg::JObject::GetEngine() const
     return GEngine;
 }
 
+Jafg::LWorld* Jafg::JObject::GetOrCalculateCastedOuter()
+{
+    if (this->CastedOuter)
+    {
+        return this->CastedOuter;
+    }
+
+    for (const LWorldContext& Context : GEngine->GetContexts())
+    {
+        check( Context.ChildWorld )
+        if (Context.ChildWorld == this->GetOuter())
+        {
+            this->CastedOuter = Context.ChildWorld;
+            return this->CastedOuter;
+        }
+    }
+
+    return nullptr;
+}
+
 void Jafg::JObject::BeginLife()
 {
     JObjectBase::BeginLife();

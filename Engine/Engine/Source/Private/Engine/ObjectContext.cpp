@@ -5,9 +5,8 @@
 
 Jafg::LObjectContext::LObjectContext(EGlobalCarnifex)
 {
-    check( Private::GCarnifexReferrer )
     check( this->IsValid() == false )
-    this->DeferredInitialize(Private::GCarnifexReferrer);
+    this->Carnifex = Private::GCarnifexReferrer;
     check( this->IsValid() )
 
     return;
@@ -15,9 +14,8 @@ Jafg::LObjectContext::LObjectContext(EGlobalCarnifex)
 
 Jafg::LObjectContext& Jafg::LObjectContext::operator=(EGlobalCarnifex)
 {
-    check( Private::GCarnifexReferrer )
     check( this->IsValid() == false )
-    this->DeferredInitialize(Private::GCarnifexReferrer);
+    this->Carnifex = Private::GCarnifexReferrer;
     check( this->IsValid() )
 
     return *this;

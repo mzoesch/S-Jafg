@@ -103,8 +103,8 @@ public:
     //# Gets the context that this object lives in and shares its lifetime with it.
     //# Lifetimes can be abridged by calling either #MarkAsGarbage or #KillYourSelfNow.
     //#
-    FORCEINLINE virtual auto GetOuter() const -> ::Jafg::LObjectContext* { return this->Outer; }
-    FORCEINLINE virtual auto HasOuter() const -> bool { return this->Outer != nullptr; }
+    FORCEINLINE auto GetOuter() const -> LObjectContext* { return this->Outer; }
+    FORCEINLINE bool IsOuterValid() const { return this->Outer != nullptr; }
 
     //#
     //# The first thing that is being called after this object is being created.

@@ -56,7 +56,6 @@ void Jafg::LEngine::Tick(const float DeltaTime)
     this->LocalEgo.Tick(DeltaTime);
 #endif /* WITH_LOCAL_LAYER */
 
-    RendererStateMachine::PrepareForPerspectivePainting();
     for (LWorldContext& Context : this->Contexts)
     {
         checkSlow( Context.IsValid() )
@@ -79,6 +78,20 @@ void Jafg::LEngine::Tick(const float DeltaTime)
 
 #if WITH_LOCAL_LAYER
     this->LocalEgo.OnLateTick(DeltaTime);
+#endif /* WITH_LOCAL_LAYER */
+
+#if WITH_LOCAL_LAYER
+    for (LWorldContext& Context : this->Contexts)
+    {
+        checkSlow( Context.IsValid() )
+
+        if (Context.ChildWorld->CanTick())
+        {
+            Context.ChildWorld->LateTick(DeltaTime);
+        }
+
+        continue;
+    }
 #endif /* WITH_LOCAL_LAYER */
 
     Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, 5);

@@ -22,6 +22,7 @@ class JWorldSubsystem;
 class LTickableObject;
 class APersonaController;
 class APawn;
+class LEye;
 struct LLevel;
 struct LSubsystemCollection;
 
@@ -75,7 +76,8 @@ enum Type : uint8
 //#
 //# Represents a world at its core.
 //# Once every frame a world will be ticked. It may register itself to the RHI to be used when
-//# rendering on any kind of surface. Multiple worlds may draw to the same surface.
+//# rendering on any kind of surface. Multiple worlds may draw to the same surface, and a world
+//# may draw to multiple surfaces.
 //#
 class LWorld final : public LObjectContext
 {
@@ -91,14 +93,21 @@ public:
     ENGINE_API auto GetEngine() const -> LEngine*;
     ENGINE_API auto GetLocalEgo() const -> LLocalEgo*;
     ENGINE_API auto GetLocalController() const -> APersonaController*;
-    ENGINE_API auto GetLocalPawn() const -> APawn*;
+    //# Only valid if the pawn is in this world.
+    ENGINE_API  auto GetLocalPawn() const -> APawn*;
+    FORCEINLINE auto GetLocalPawnChecked() const -> APawn* { APawn* Out = this->GetLocalPawn(); check( Out ) return Out; }
+    FORCEINLINE auto GetLocalPawnAsserted() const -> APawn* { APawn* Out = this->GetLocalPawn(); jassert( Out ) return Out; }
 
     FORCEINLINE auto GetWorldState() const -> EWorldState::Type { return this->WorldState; }
 
     void InitializeWorld(const LLevel& Level);
 
     FORCEINLINE bool CanTick() const { return this->GetWorldState() == EWorldState::Running; }
-                void Tick(const float DeltaTime);
+    void Tick(const float DeltaTime);
+    void Draw(const LViewport& Viewport, const LEye& Eye) const;
+#if AS_CLIENT
+    void LateTick(const float DeltaTime);
+#endif /* AS_CLIENT */
 
     // LObjectContext implementation
     virtual void TearDownContext() override;

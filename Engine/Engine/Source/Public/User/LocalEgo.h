@@ -29,7 +29,7 @@ class LLocalEgo final
 {
 public:
 
-    LLocalEgo() = default;
+    LLocalEgo() noexcept = default;
     PROHIBIT_REALLOC_OF_ANY_FORM(LLocalEgo)
     ~LLocalEgo() { check( this->Context.IsValid() == false ) }
 
@@ -56,7 +56,7 @@ public:
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JLocalEgoSubsystem)
 
-    void OnNewPawnPossessed(APawn* InOld, APawn* InNew) const;
+    void OnNewPawnPossessed(APawn* InOld, APawn* InNew);
 
 protected:
 

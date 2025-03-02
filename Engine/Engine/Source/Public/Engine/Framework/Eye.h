@@ -13,13 +13,13 @@ class ENGINE_API LEye final
 {
 public:
 
-    LEye() = delete;
-    FORCEINLINE explicit LEye(APawn* InOwningPawn) : OwningPawn(InOwningPawn) { check( this->OwningPawn ) }
+    LEye() noexcept = default;
     PROHIBIT_REALLOC_OF_ANY_FORM(LEye)
-    ~LEye() = default;
+    ~LEye() noexcept = default;
 
-    FORCEINLINE auto HasOwningPawn() const -> bool { return this->OwningPawn != nullptr; }
-    FORCEINLINE auto GetOwningPawn() const -> APawn* { return this->OwningPawn; }
+    FORCEINLINE auto IsOwnerValid() const -> bool { return this->Owner != nullptr; }
+    FORCEINLINE void SetOwner(APawn* InOwner) { this->Owner = InOwner; }
+    FORCEINLINE auto GetOwner() const -> APawn* { return this->Owner; }
 
     LMatrix GetViewMatrix() const;
     FORCEINLINE auto GetRelativeFront() const -> const LVector& { return this->RelativeFront; }
@@ -31,14 +31,14 @@ public:
 
 private:
 
-    APawn* OwningPawn = nullptr;
+    APawn* Owner = nullptr;
 
     void UpdateRelativeVectors() const;
     mutable LVector RelativeFront = LVector::ForwardVector;
     mutable LVector RelativeRight = LVector::RightVector;
     mutable LVector RelativeUp    = LVector::UpVector;
 
-    float DegYFov            = 70.0f;
+    float DegYFov = 70.0f;
 };
 
 } /* ~Namespace Jafg */

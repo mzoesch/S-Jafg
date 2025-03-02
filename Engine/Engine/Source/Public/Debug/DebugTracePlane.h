@@ -38,7 +38,7 @@ public:
     DEFAULT_MOVE(LDebugTracePlane)
     virtual ~LDebugTracePlane() override = default;
 
-    void Draw(const LWorld& InContext) const override;
+    virtual void Draw(const LWorld& InContext, const LViewport& InViewport, const LEye& InEye) const override;
 
     FORCEINLINE auto GetP1() const -> const LVector& { return this->P1; }
     FORCEINLINE auto GetP2() const -> const LVector& { return this->P2; }

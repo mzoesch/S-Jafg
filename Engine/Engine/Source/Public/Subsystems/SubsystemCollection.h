@@ -88,6 +88,12 @@ struct LSubsystemCollection final
     ENGINE_API void InitializeSubsystems(const LObjectClass* InClass);
     ENGINE_API void TearDownSubsystems();
 
+    FORCEINLINE bool IsOuterValid() const { return this->Outer != nullptr; }
+    FORCEINLINE auto GetOuter() const -> const LObjectContext* { return this->Outer; }
+    FORCEINLINE bool IsOuterClassValid() const { return this->OuterClass != nullptr; }
+    FORCEINLINE auto GetOuterClass() const -> const LObjectClass* { return this->OuterClass; }
+    FORCEINLINE auto GetSubsystems() const -> const TdhArray<JSubsystem*>& { return this->SubsystemInstances; }
+
     //#
     //# Try to initialize a subsystem of the given class. The target subsystem must be in this collection where this
     //# this method was called on.
@@ -97,12 +103,17 @@ struct LSubsystemCollection final
     template <typename TSubsystem>
     FORCEINLINE void InitializeDependency() { this->InitializeDependency(TSubsystem::StaticClass()); }
 
+    //# Use this if you execute the predicate on all subsystems in the collection and do not need any specific subsystem.
     template <typename Predicate>
     FORCEINLINE void ForEachSubsystem(Predicate&& InPredicate);
-    template <typename TSubsystem, typename Predicate, bool bAllowMissCast = false>
-    FORCEINLINE void ForEachSubsystem(Predicate&& InPredicate);
+
+    //# Use this if you execute the predicate on all subsystems in the collection with the type it was initialized with.
     template <typename TSubsystem, typename Predicate>
-    FORCEINLINE void ForEachSubsystemUnsafe(Predicate&& InPredicate);
+    FORCEINLINE void ForEachSubsystem(Predicate&& InPredicate);
+
+    //# Use this if you only want to execute the predicate on subsystems that are a subtype of the collection type.
+    template <typename TSubsystem, typename Predicate, bool bAllowMissCast = false>
+    FORCEINLINE void ForEachSubtypeSubsystem(Predicate&& InPredicate);
 
     ENGINE_API JSubsystem* GetSubsystem(const LObjectClass* InStaticClass);
     ENGINE_API  const JSubsystem* GetSubsystem(const LObjectClass* InStaticClass) const;
@@ -132,13 +143,14 @@ struct LSubsystemCollection final
 private:
 
     LObjectContext*       Outer = nullptr;
+    const LObjectClass*   OuterClass = nullptr;
     TdhArray<JSubsystem*> SubsystemInstances;
 };
 
 template <typename Predicate>
 FORCEINLINE void LSubsystemCollection::ForEachSubsystem(Predicate&& InPredicate)
 {
-    check( Outer )
+    check( this->Outer )
 
     for (JSubsystem* Subsystem : this->SubsystemInstances)
     {
@@ -150,10 +162,27 @@ FORCEINLINE void LSubsystemCollection::ForEachSubsystem(Predicate&& InPredicate)
     return;
 }
 
-template <typename TSubsystem, typename Predicate, bool bAllowMissCast>
+template <typename TSubsystem, typename Predicate>
 FORCEINLINE void LSubsystemCollection::ForEachSubsystem(Predicate&& InPredicate)
 {
-    check( Outer )
+    check( this->Outer )
+    check( TSubsystem::StaticClass() == this->OuterClass )
+
+    for (JSubsystem* Subsystem : this->SubsystemInstances)
+    {
+        checkSlow( Subsystem )
+        std::forward<Predicate>(InPredicate)(CheckedStaticCast<TSubsystem>(Subsystem));
+        continue;
+    }
+
+    return;
+}
+
+template <typename TSubsystem, typename Predicate, bool bAllowMissCast>
+FORCEINLINE void LSubsystemCollection::ForEachSubtypeSubsystem(Predicate&& InPredicate)
+{
+    check( this->Outer )
+    check( TSubsystem::StaticClass()->DerivesFrom(this->OuterClass) )
 
     for (JSubsystem* Subsystem : this->SubsystemInstances)
     {
@@ -176,21 +205,6 @@ FORCEINLINE void LSubsystemCollection::ForEachSubsystem(Predicate&& InPredicate)
             TSubsystem::StaticClass()->GetSpacedClassName()
         )
 
-        continue;
-    }
-
-    return;
-}
-
-template <typename TSubsystem, typename Predicate>
-FORCEINLINE void LSubsystemCollection::ForEachSubsystemUnsafe(Predicate&& InPredicate)
-{
-    check( Outer )
-
-    for (JSubsystem* Subsystem : this->SubsystemInstances)
-    {
-        checkSlow( Subsystem )
-        std::forward<Predicate>(InPredicate)(CheckedStaticCast<TSubsystem*>(Subsystem));
         continue;
     }
 

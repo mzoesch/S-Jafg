@@ -203,7 +203,7 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
 
 void Jafg::LViewport::OnClear()
 {
-    this->LevelBuffer.ResetAndMakeDrawTarget();
+    this->BackgroundBuffer.ResetAndMakeDrawTarget();
 }
 
 void Jafg::LViewport::Tick()
@@ -226,9 +226,20 @@ void Jafg::LViewport::Draw()
     this->FrameZLayerDepth = 0.0f;
     this->RecalculateScaleFactor();
 
+    this->BackgroundBuffer.MakeDrawTarget();
+
+    RendererStateMachine::PrepareForPerspectivePainting();
+    for (const LBackgroundContext& Context : this->BackgroundContexts)
+    {
+        check( Context.Eye && Context.World )
+        Context.World->Draw(*this, *Context.Eye);
+
+        continue;
+    }
+
     LFrameBuffer::ResetAndMakeDefaultDrawTarget();
     RendererStateMachine::PrepareForOrthographicPainting();
-    this->LevelBuffer.PaintToViewport(*this);
+    this->BackgroundBuffer.PaintToViewport(*this);
 
     for (const WUserWidget* Widget : this->TopLevelWidgets)
     {
@@ -282,18 +293,18 @@ void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
 
     this->Dimensions = InDimensions;
 
-    if (this->LevelBuffer.IsMeaningful())
+    if (this->BackgroundBuffer.IsMeaningful())
     {
-        this->LevelBuffer = { };
+        this->BackgroundBuffer = { };
     }
 
     if (GEngine)
     {
-        this->LevelBuffer.Build(this->GetDimensions());
+        this->BackgroundBuffer.Build(this->GetDimensions());
     }
     else
     {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::AfterCorePackageLoad, [this] { this->LevelBuffer.Build(this->GetDimensions()); });
+        Tasks::Make(ENamedThreads::Master, ETaskTime::AfterCorePackageLoad, [this] { this->BackgroundBuffer.Build(this->GetDimensions()); });
     }
 
     return;

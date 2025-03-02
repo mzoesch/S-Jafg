@@ -35,7 +35,7 @@ public:
 
     FORCEINLINE auto DoesPossess() const -> bool { return this->PossessedPawn != nullptr; }
     FORCEINLINE auto GetPossessed() const -> APawn* { return this->PossessedPawn; }
-                auto Possess(APawn* InNewPawn, const bool bKillOld = true) -> void;
+                void Possess(APawn* InNewPawn, const bool bKillOld = true);
 
 private:
 

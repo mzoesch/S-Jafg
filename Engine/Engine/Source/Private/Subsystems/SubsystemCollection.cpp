@@ -18,6 +18,8 @@ void Jafg::LSubsystemCollection::DeferredInitialize(LObjectContext* InOuter)
 void Jafg::LSubsystemCollection::InitializeSubsystems(const LObjectClass* InClass)
 {
     check( this->Outer )
+    check( this->OuterClass == nullptr )
+    check( this->SubsystemInstances.IsEmpty() )
 
     LOG_VERBOSE(LogSubsystemCollection, "Locating all subsystems of class {}.", InClass->GetSpacedClassName())
 
@@ -61,6 +63,8 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(const LObjectClass* InClas
 
         continue;
     }
+
+    this->OuterClass = InClass;
 
     return;
 }

@@ -25,6 +25,7 @@ Jafg::LWorld::LWorld(const LSimpleString& InHumanReadableName, const EWorldState
 
 Jafg::LEngine* Jafg::LWorld::GetEngine() const
 {
+    check( GEngine )
     return GEngine;
 }
 
@@ -40,7 +41,14 @@ Jafg::APersonaController* Jafg::LWorld::GetLocalController() const
 
 Jafg::APawn* Jafg::LWorld::GetLocalPawn() const
 {
-    return this->GetLocalController()->GetPossessed();
+    APawn* Out = this->GetLocalController()->GetPossessed();
+
+    if (Out && Out->GetOuter() == this)
+    {
+        return Out;
+    }
+
+    return nullptr;
 }
 
 void Jafg::LWorld::InitializeWorld(const LLevel& Level)
@@ -80,25 +88,36 @@ void Jafg::LWorld::Tick(const float DeltaTime)
     }
     this->DeletedTickableObjects.Empty();
 
-    const LViewport& ViewportContext = this->GetEngine()->GetLocalEgo()->GetFrontend()->GetSurfaces()[0].GetViewport();
+    return;
+}
 
+void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
+{
     for (const AActor* Actor : this->Actors)
     {
         check( Actor->IsGarbage() == false )
 
         if (Actor->IsRendererComponentValid())
         {
-            // And add eye here.
-            Actor->GetRendererComponent()->Draw(ViewportContext);
+            Actor->GetRendererComponent()->Draw(Viewport, Eye);
         }
 
         continue;
     }
 
-#if AS_CLIENT
     for (LTemporalWorldObject* const& TemporalObject : this->TemporalObjects)
     {
-        TemporalObject->Draw(*this);
+        TemporalObject->Draw(*this, Viewport, Eye);
+    }
+
+    return;
+}
+
+#if AS_CLIENT
+void Jafg::LWorld::LateTick(const float DeltaTime)
+{
+    for (LTemporalWorldObject* const& TemporalObject : this->TemporalObjects)
+    {
         TemporalObject->ReduceLifeTime(DeltaTime);
     }
     this->TemporalObjects.RemoveAllByPredicate( [] (LTemporalWorldObject*& TemporalObject)
@@ -112,10 +131,10 @@ void Jafg::LWorld::Tick(const float DeltaTime)
         TemporalObject = nullptr;
         return true;
     });
-#endif /* AS_CLIENT */
 
     return;
 }
+#endif /* AS_CLIENT */
 
 void Jafg::LWorld::TearDownContext()
 {

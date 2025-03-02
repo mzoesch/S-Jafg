@@ -1,8 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Engine/Framework/Pawn.h"
-
 #include "Debug/DebugTraceCube.h"
 #include "Debug/DebugTraceLine.h"
 #include "MyWorld/Chunk/Chunk.h"
@@ -49,7 +47,7 @@ void Jafg::APawn::DeclareNewPossessor(APersonaController* InNewController)
 #if WITH_LOCAL_LAYER
     if (InNewController)
     {
-        this->Eye = new LEye(this);
+        this->Eye.SetOwner(this);
     }
 #endif /* WITH_LOCAL_LAYER */
 

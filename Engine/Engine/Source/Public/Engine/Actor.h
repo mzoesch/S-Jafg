@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Engine/Object.h"
-#include "Tickable/TickableObject.h"
+#include "Engine/TickableObject.h"
 #include "Actor.generated.h"
 
 namespace Jafg

@@ -42,7 +42,7 @@ public:
     DEFAULT_MOVE(LDebugTraceCube)
     virtual ~LDebugTraceCube() override = default;
 
-    void Draw(const LWorld& InContext) const override;
+    virtual void Draw(const LWorld& InContext, const LViewport& InViewport, const LEye& InEye) const override;
 
     FORCEINLINE auto GetBottomNearLeft() const -> const LVector& { return this->BottomNearLeft; }
     FORCEINLINE auto GetRelTopFarRight() const -> const LVector& { return this->TopRelFarRight; }

@@ -31,7 +31,7 @@ class ENGINE_API LObjectContext
 
 public:
 
-    LObjectContext() = default;
+    LObjectContext() noexcept = default;
     LObjectContext(EGlobalCarnifex);
     LObjectContext& operator=(EGlobalCarnifex);
     void DeferredInitialize(LCarnifex* InCarnifex) { check( this->Carnifex == nullptr ) this->Carnifex = InCarnifex; }
