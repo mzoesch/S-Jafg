@@ -10,7 +10,7 @@ from Programs.Meta.Solution import BufferedSolution, Solution
 from Programs.Meta.Platform import BufferedPlatform, Platform
 from Programs.Meta.Target import BufferedTarget, Target
 from Programs.Meta.Module import BufferedModule, Module
-from Programs.Meta.Pch import PchUsage, volatile_pch_usage_to_string
+from Programs.Meta.Pch import PchUsage, pch_usage_to_bool
 from Programs.Meta.ModuleKind import ModuleKind, module_kind_to_string
 from Programs.Reflector import ReflectionUtility as ru
 
@@ -213,7 +213,7 @@ def apply_module(solution: Solution, platform: Platform, build_configuration: Bu
         'name': module._name,
         'friendly_name': volatile_module.friendly_name,
         'relative_dir': module._relative_py_dir,
-        'pch': volatile_pch_usage_to_string(volatile_module.pch),
+        'pch': pch_usage_to_bool(volatile_module.pch),
         'pch_content': volatile_module.pch_content,
         'kind': module_kind_to_string(volatile_module.kind),
         'public_dependencies': volatile_module.public_dependencies,

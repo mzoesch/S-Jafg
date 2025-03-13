@@ -8,6 +8,16 @@ class PchUsage(Enum):
     PROHIBIT = 0
 
 
+def pch_usage_to_bool(pch_usage: PchUsage) -> bool:
+    if pch_usage == PchUsage.ALLOW:
+        return True
+
+    if pch_usage == PchUsage.PROHIBIT:
+        return False
+
+    raise ValueError(f'Cannot convert [{pch_usage}] to bool.')
+
+
 def pch_usage_to_string(pch_usage: PchUsage) -> str:
     if pch_usage == PchUsage.ALLOW:
         return 'Allow'
