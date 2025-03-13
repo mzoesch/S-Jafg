@@ -32,6 +32,15 @@ pub struct Solution
 pub struct Platform
 {
     pub name: String,
+    pub defines: Vec<String>,
+    pub configs: Vec<BuildConfig>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BuildConfig
+{
+    pub name: String,
+    pub defines: Vec<String>,
     pub targets: Vec<Target>,
 }
 
@@ -41,8 +50,8 @@ pub struct Target
     pub name: String,
     pub defines: Vec<String>,
     pub runtime: String,
-    pub symbols: Vec<String>,
-    pub optimize: String,
+    pub symbols: bool,
+    pub optimize: bool,
     pub modules: Vec<Module>,
 }
 
@@ -58,6 +67,7 @@ pub enum ModuleKind
 pub struct Module
 {
     pub name: String,
+    pub friendly_name: String,
     pub relative_dir: String,
     pub pch: bool,
     pub pch_content: String,

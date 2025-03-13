@@ -4,14 +4,10 @@
 
 mod core;
 
-use std::path::PathBuf;
 use clap::{ArgAction, Parser};
-use log::error;
-use core::application::Application;
-use serde::{Serialize, Deserialize};
-use serde_json::Error;
-use crate::core::finder;
+use crate::core::application::Application;
 use crate::core::paths;
+use crate::core::finder;
 
 /// Main CLI structure for the motor of Jafg.
 #[derive(Parser, Debug)]
@@ -37,18 +33,16 @@ struct Cli
 
 fn main()
 {
-    let cwd: PathBuf = std::env::current_dir().unwrap();
+    let cwd: std::path::PathBuf = std::env::current_dir().unwrap();
     let new_cwd: String = paths::get_engine_root_dir();
     println!("Changing working directory from [{}] to [{}]", cwd.to_str().unwrap(), new_cwd);
     std::env::set_current_dir(&new_cwd).unwrap();
 
-    // let args: Cli = Cli::parse();
-    let mut app: Application = Application::default();
-
-    env_logger::init();
+    let args: Cli = Cli::parse();
+    let mut app: Application = Default::default();
 
     load_workspace(&mut app);
-    // route_to_subprogram(&mut app, args);
+    route_to_subprogram(&mut app, args);
 
     print!("Popping working directory from [{}] to [{}]", new_cwd, cwd.to_str().unwrap());
     std::env::set_current_dir(cwd).unwrap();
@@ -70,10 +64,10 @@ fn load_workspace(app: &mut Application)
         return;
     }
 
-    let cached_app: Result<Application, Error> = serde_json::from_str(&cache);
+    let cached_app: Result<Application, serde_json::Error> = serde_json::from_str(&cache);
     if cached_app.is_err()
     {
-        error!("Failed to load workspace from cache.");
+        println!("Failed to load cache.");
         cached_app.unwrap();
         return;
     }
@@ -83,10 +77,10 @@ fn load_workspace(app: &mut Application)
     return;
 }
 
-// fn route_to_subprogram(app: &mut Application, args: Cli)
-// {
-//     // println!("SolutionGenerator: {:?}", args.solution_generator);
-//     // println!("BuildTool: {:?}", args.build_tool);
-//     // println!("EmulationTool: {:?}", args.emulation_tool);
-//     // println!("DoNothing: {:?}", args.do_nothing);
-// }
+fn route_to_subprogram(_app: &mut Application, args: Cli)
+{
+    println!("SolutionGenerator: {:?}", args.solution_generator);
+    println!("BuildTool: {:?}", args.build_tool);
+    println!("EmulationTool: {:?}", args.emulation_tool);
+    println!("DoNothing: {:?}", args.do_nothing);
+}
