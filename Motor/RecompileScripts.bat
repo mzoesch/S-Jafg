@@ -8,7 +8,7 @@ pushd ..
 
 echo Calling Python to generate solution files ...
 
-.\.venv\Scripts\python.exe .\Program.py --ValidateGo --UpdateCachedData --INVOKE --SolutionGenerator GenerateAll
+.\.venv\Scripts\python.exe .\Program.py --ValidateRust
 
 popd
 

@@ -15,7 +15,7 @@
             #error "Compiling with gcc but _MSC_VER is defined."
         #endif /* !WITH_IDEA_INTELLISENSE */
     #endif /* _MSC_VER */
-    // #warning "Compiling windows target with the GCC toolchain. This is allowed but not recommended."
+    #warning "Compiling windows target with the GCC toolchain. This is allowed but not recommended."
 #endif /* PLATFORM_WINDOWS_WITH_GCC */
 #ifdef PLATFORM_WINDOWS_WITH_MSVC
     #ifdef PLATFORM_WINDOWS_WITH_GCC

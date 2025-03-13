@@ -24,5 +24,6 @@ class Workspace:
                 ignore_stub: str = ignore[:idx]
                 if ignore_stub in base:
                     return True
+            continue
 
         return False

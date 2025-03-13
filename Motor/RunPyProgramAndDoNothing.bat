@@ -6,7 +6,7 @@
 
 pushd ..
 
-.\.venv\Scripts\python.exe .\Program.py
+.\.venv\Scripts\python.exe .\Program.py -DevRun
 
 popd
 

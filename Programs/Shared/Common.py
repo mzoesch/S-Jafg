@@ -32,7 +32,7 @@ class EErrorLevel(Enum):
     FATAL = 1
 
 
-class Platform(Enum):
+class HostPlatform(Enum):
     """The platform of the native operating system that runs this script not the target build platform."""
 
     WINDOWS = 1
@@ -40,35 +40,35 @@ class Platform(Enum):
     LINUX = 3
 
     def is_this_windows(self) -> bool:
-        return self.value == Platform.WINDOWS.value
+        return self.value == HostPlatform.WINDOWS.value
 
     def is_this_linux(self) -> bool:
-        return self.value == Platform.LINUX.value
+        return self.value == HostPlatform.LINUX.value
 
     def is_this_osx(self) -> bool:
-        return self.value == Platform.OSX.value
+        return self.value == HostPlatform.OSX.value
 
     @staticmethod
     def is_windows() -> bool:
-        return Platform.get_current_platform() == Platform.WINDOWS
+        return HostPlatform.get_current_platform() == HostPlatform.WINDOWS
 
     @staticmethod
     def is_osx() -> bool:
-        return Platform.get_current_platform() == Platform.OSX
+        return HostPlatform.get_current_platform() == HostPlatform.OSX
 
     @staticmethod
     def is_linux() -> bool:
-        return Platform.get_current_platform() == Platform.LINUX
+        return HostPlatform.get_current_platform() == HostPlatform.LINUX
 
     @staticmethod
-    def get_current_platform() -> 'Platform':
+    def get_current_platform() -> 'HostPlatform':
         if platform.system() == 'Windows':
-            return Platform.WINDOWS
+            return HostPlatform.WINDOWS
 
         if platform.system() == 'Darwin':
-            return Platform.OSX
+            return HostPlatform.OSX
 
         if platform.system() == 'Linux':
-            return Platform.LINUX
+            return HostPlatform.LINUX
 
         raise NotImplementedError(f'Unsupported platform: {platform.system()}.')

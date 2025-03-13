@@ -5,11 +5,10 @@ import Programs.Reflector.ReflectionUtility as ru
 from typing import List
 from Programs.Meta.Solution import Solution
 from Programs.Meta.Platform import Platform
-from Programs.Meta.BuildConfiguration import BuildConfiguration
 
 
-class BufferedTarget:
-    """A target that has not yet executed its associated python script."""
+class BufferedBuildConfiguration:
+    """A build configuration that has not yet executed its associated python script."""
 
     def __init__(self, absolute_solution_py_path: str):
         """..."""
@@ -25,48 +24,45 @@ class BufferedTarget:
 
     def validate(self):
         if self._absolute_py_path == '':
-            raise ValueError('Target path cannot be empty.')
+            raise ValueError('Solution path cannot be empty.')
         if self._relative_py_dir == '':
-            raise ValueError('Target path cannot be empty.')
+            raise ValueError('Solution path cannot be empty.')
         if self._name == '':
-            raise ValueError('Target name cannot be empty.')
+            raise ValueError('Solution name cannot be empty.')
         if bool(re.fullmatch(r"[A-Za-z]+", self._name)) is False:
-            raise ValueError(f'Target name may only contain latin letters. Faulty target: [{self._name}].')
+            raise ValueError(f'Solution name may only contain latin letters. Faulty solution: [{self._name}].')
         return None
 
-    def get_unique_name(self):
-        return f'{self._relative_py_dir}/{self._name}'
 
-
-class TargetArgs:
-    def __init__(self, solution: Solution, platform: Platform, build_configuration: BuildConfiguration):
+class BuildConfigurationArgs:
+    def __init__(self, solution: Solution, platform: Platform):
         self.solution: Solution = solution
         self.platform: Platform = platform
-        self.build_configuration: BuildConfiguration = build_configuration
         return
 
-class Target:
-    """A fully qualified target."""
 
-    def __init__(self, parent: BufferedTarget):
-        self._parent: BufferedTarget = parent
+class BuildConfiguration:
+    """A fully qualified build configuration."""
+
+    def __init__(self, parent: BufferedBuildConfiguration) -> None:
+        self._parent = parent
         self._loaded: bool = False
 
         self.defines: List[str] = []
-        self.runtime: str = ''
-        self.symbols: bool = False
-        self.optimize: bool = True
 
         return
+
+    def get_name(self) -> str:
+        return self._parent._name
 
     def validate(self) -> None:
         self._parent.validate()
         return None
 
-    def load(self, solution: Solution, platform: Platform, build_configuration: BuildConfiguration) -> None:
+    def load(self, solution: Solution, platform: Platform) -> None:
         if self._loaded:
             raise ValueError('Solution already loaded.')
         self._loaded = True
-        args: TargetArgs = TargetArgs(solution, platform, build_configuration)
-        ru.exec_function(self._parent._absolute_py_path, 'add_target', self, args)
+        args: BuildConfigurationArgs = BuildConfigurationArgs(solution, platform)
+        ru.exec_function(self._parent._absolute_py_path, 'add_build_configuration', self, args)
         return None

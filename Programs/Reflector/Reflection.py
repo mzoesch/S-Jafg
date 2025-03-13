@@ -5,70 +5,76 @@ import sys
 import json
 from Programs.Shared import *
 from Programs.Meta.Application import GApp
-from Programs.Meta.BuildConfig import BuildConfiguration
-from Programs.Meta.Solution import Solution
-from Programs.Meta.Target import Target
-from Programs.Meta.Module import Module
+from Programs.Meta.BuildConfiguration import BuildConfiguration, BufferedBuildConfiguration
+from Programs.Meta.Solution import BufferedSolution, Solution
+from Programs.Meta.Platform import BufferedPlatform, Platform
+from Programs.Meta.Target import BufferedTarget, Target
+from Programs.Meta.Module import BufferedModule, Module
 from Programs.Meta.Pch import PchUsage, volatile_pch_usage_to_string
 from Programs.Meta.ModuleKind import ModuleKind, module_kind_to_string
-from Programs.Meta.CommonVolatileTarget import set_common_volatile_target_values
 from Programs.Reflector import ReflectionUtility as ru
 
-def reflect_all_targets_and_modules() -> None:
+
+def reflect_all_of_engine() -> None:
     root_dir = str(get_abs_engine_root_dir())
     for entry in ru.get_all_dirs_in_directory(root_dir, True):
-        if (GApp.workspace.is_tl_ignored(ru.get_base(entry))
-                or GApp.workspace.is_ignored(ru.get_base(entry))):
+        if GApp.workspace.is_tl_ignored(ru.get_base(entry)) or GApp.workspace.is_ignored(ru.get_base(entry)):
             continue
-        scan_dir_for_targets_and_modules(entry)
+
+        scan_dir_for_sln_p_bc_t_m(entry)
+        continue
 
     create_cached_program_agnostic_file()
-
     return None
 
 
-def scan_dir_for_targets_and_modules(absolute_path: str) -> None:
-    print(f'Scanning: {absolute_path}')
-
-    for f_entry in ru.get_all_files_in_directory(absolute_path):
-        if '.target.py' not in f_entry:
-            continue
-        target: Target = Target(os.path.join(absolute_path, f_entry))
-        load_target(target, target._absolute_py_path)
-        GApp.add_target(target)
+def scan_dir_for_sln_p_bc_t_m(absolute_path: str) -> None:
+    print(f'Scanning [{absolute_path}].')
 
     for f_entry in ru.get_all_files_in_directory(absolute_path):
         if '.solution.py' not in f_entry:
             continue
-        solution: Solution = Solution(os.path.join(absolute_path, f_entry))
-        load_solution(solution, solution._absolute_py_path)
+        solution: BufferedSolution = BufferedSolution(os.path.join(absolute_path, f_entry))
         GApp.add_solution(solution)
+        continue
+
+    for f_entry in ru.get_all_files_in_directory(absolute_path):
+        if '.platform.py' not in f_entry:
+            continue
+        platform: BufferedPlatform = BufferedPlatform(os.path.join(absolute_path, f_entry))
+        GApp.add_platform(platform)
+        continue
+
+    for f_entry in ru.get_all_files_in_directory(absolute_path):
+        if '.build_configuration.py' not in f_entry:
+            continue
+        build_configuration: BufferedBuildConfiguration = BufferedBuildConfiguration(os.path.join(absolute_path, f_entry))
+        GApp.add_build_configuration(build_configuration)
+        continue
+
+    for f_entry in ru.get_all_files_in_directory(absolute_path):
+        if '.target.py' not in f_entry:
+            continue
+        target: BufferedTarget = BufferedTarget(os.path.join(absolute_path, f_entry))
+        GApp.add_target(target)
+        continue
 
     module_init_py: str = f'{ru.get_base(absolute_path)}.module.py'
+    for f_entry in ru.get_all_files_in_directory(absolute_path):
+        if '.module.py' not in f_entry:
+            continue
+        entry: str = os.path.join(absolute_path, f_entry)
+        if module_init_py not in entry:
+            raise ValueError(f'Faulty module file: [{entry}]. Does not match parent.')
     if ru.is_path_valid(os.path.join(absolute_path, module_init_py)):
-        module: Module = Module(os.path.join(absolute_path, module_init_py))
+        module: BufferedModule = BufferedModule(os.path.join(absolute_path, module_init_py))
         GApp.add_module(module)
         return None  # Do not scan further (nested modules are not allowed).
 
     for entry in ru.get_all_dirs_in_directory(absolute_path, True):
         if GApp.workspace.is_ignored(ru.get_base(entry)):
             continue
-        scan_dir_for_targets_and_modules(entry)
-    return None
-
-
-def load_target(target: Target, absolute_path: str) -> None:
-    ru.exec_function(absolute_path, 'add_target', target)
-    return None
-
-
-def load_volatile_target(target: Target, absolute_path: str) -> None:
-    ru.try_exec_function(absolute_path, 'load_volatile_target', target)
-    return None
-
-
-def load_solution(solution: Solution, absolute_path: str) -> None:
-    ru.exec_function(absolute_path, 'add_solution', solution)
+        scan_dir_for_sln_p_bc_t_m(entry)
     return None
 
 
@@ -88,9 +94,10 @@ def create_cached_program_agnostic_file() -> None:
         with open(absolute_cached_file_path, 'w') as _:
             pass
 
-    data: dict = {'Solutions': []}
+    data: dict = {'solutions': []}
     for solution in GApp.solutions:
-        apply_solution(solution, data)
+        data['solutions'].append(apply_solution(solution))
+        continue
 
     with open(absolute_cached_file_path, 'w') as f:
         json.dump(data, f, indent=2)
@@ -99,95 +106,121 @@ def create_cached_program_agnostic_file() -> None:
     return None
 
 
-def apply_solution(solution: Solution, out_data: dict) -> None:
-    """Apply a config to all targets."""
+def apply_solution(solution: BufferedSolution) -> dict:
+    volatile_solution: Solution = Solution(solution)
+    volatile_solution.load()
+    volatile_solution.validate()
 
-    out_data['Solutions'].append({})
-
-    sln_cursor = out_data['Solutions'][len(out_data['Solutions']) - 1]
-    sln_cursor['RelativePyPath'] = solution._relative_py_dir
-    sln_cursor['Name'] = solution._name
-    sln_cursor['Startup'] = solution.startup
-    sln_cursor['Targets'] = []
-
-    for target in GApp.targets:
-        if (solution.use_black_list_target is False
-                or solution.does_blacklist_target(target.get_unique_name(), target._name) is False):
-
-            target.volatile_build_configuration = BuildConfiguration.DEBUG
-            def_len: int = len(target.defines)
-            set_common_volatile_target_values(target)
-            load_volatile_target(target, target._absolute_py_path)
-            sln_cursor['Targets'].append(apply_target(solution, target))
-            target.defines = target.defines[:def_len]
-
-            target.volatile_build_configuration = BuildConfiguration.DEVELOPMENT
-            def_len: int = len(target.defines)
-            set_common_volatile_target_values(target)
-            load_volatile_target(target, target._absolute_py_path)
-            sln_cursor['Targets'].append(apply_target(solution, target))
-            target.defines = target.defines[:def_len]
-
-            target.volatile_build_configuration = BuildConfiguration.SHIPPING
-            def_len: int = len(target.defines)
-            set_common_volatile_target_values(target)
-            load_volatile_target(target, target._absolute_py_path)
-            sln_cursor['Targets'].append(apply_target(solution, target))
-            target.defines = target.defines[:def_len]
-
-            target.volatile_build_configuration = BuildConfiguration.UNKNOWN
-            target.volatile_runtime = ''
-            target.volatile_symbols = False
-            target.volatile_optimize = True
-
-    return None
-
-
-def apply_target(solution: Solution, target: Target) -> dict:
-    """Apply a target inside a config."""
-
-    if target.volatile_runtime == '':
-        raise ValueError('Runtime is not valid.')
-
-    target_cursor: dict = {
-        'Name': target.get_volatile_identifier(),
-        'Defines': target.get_volatile_defines(),
-        'Runtime': target.volatile_runtime,
-        'Symbols': target.volatile_symbols,
-        'Optimize': target.volatile_optimize,
-        'Modules': []
+    out_data: dict = {
+        'name': solution._name,
+        'rel_dir': solution._relative_py_dir,
+        'startup': volatile_solution.startup,
+        'platforms': []
     }
 
+    for platform in GApp.platforms:
+        out_data['platforms'].append(apply_platform(volatile_solution, platform))
+        continue
+
+    return out_data
+
+
+def apply_platform(solution: Solution, platform: BufferedPlatform) -> dict:
+    volatile_platform: Platform = Platform(platform)
+    volatile_platform.load(solution)
+    volatile_platform.validate()
+
+    out_data: dict = {
+        'name': platform._name,
+        'defines': [],
+        'configs': []
+    }
+
+    for d in volatile_platform.defines:
+        if d == '':
+            raise ValueError('Platform defines cannot be empty.')
+        out_data['defines'].append(d)
+        continue
+
+    for build_configuration in GApp.builds:
+        out_data['configs'].append(apply_build_configuration(solution, volatile_platform, build_configuration))
+        continue
+
+    return out_data
+
+
+def apply_build_configuration(solution: Solution, platform: Platform, build_configuration: BufferedBuildConfiguration) -> dict:
+        volatile_build_configuration: BuildConfiguration = BuildConfiguration(build_configuration)
+        volatile_build_configuration.load(solution, platform)
+        volatile_build_configuration.validate()
+
+        out_data: dict = {
+            'name': build_configuration._name,
+            'defines': [],
+            'targets': [],
+        }
+
+        for d in volatile_build_configuration.defines:
+            if d == '':
+                raise ValueError('Build configuration defines cannot be empty.')
+            out_data['defines'].append(d)
+            continue
+
+        for target in GApp.targets:
+            if solution.use_black_list_target and solution.does_blacklist_target(target.get_unique_name(), target._name):
+                continue
+            out_data['targets'].append(apply_target(solution, platform, volatile_build_configuration, target))
+            continue
+
+        return out_data
+
+
+def apply_target(solution: Solution, platform: Platform, build_configuration: BuildConfiguration, target: BufferedTarget) -> dict:
+    volatile_target: Target = Target(target)
+    volatile_target.load(solution, platform, build_configuration)
+    volatile_target.validate()
+
+    out_data: dict = {
+        'name': target._name,
+        'defines': [],
+        'runtime': volatile_target.runtime,
+        'symbols': volatile_target.symbols,
+        'optimize': volatile_target.optimize,
+        'modules': [],
+    }
+
+    for d in volatile_target.defines:
+        if d == '':
+            raise ValueError('Target defines cannot be empty.')
+        out_data['defines'].append(d)
+        continue
+
     for module in GApp.modules:
-        if solution.does_whitelist_module(module.get_unique_name(), module._name):
-            module._reset_volatile_fields()
-            apply_module(target, module)
-            if module.pch == PchUsage.PROHIBIT:
-                module.pch_content = ''
-            elif module.pch_content == '':
-                raise ValueError(f'Module {module.get_unique_name()} has no pch content.')
-            target_cursor['Modules'].append({
-                'RelativeDir': module._relative_py_dir,
-                'Name': module._name,
-                'PchUsage': volatile_pch_usage_to_string(module.pch),
-                'PchContent': module.pch_content,
-                'Kind': module_kind_to_string(module.kind),
-                'PublicDependencies': module.public_dependencies,
-                'PrivateDependencies': module.private_dependencies,
-                'PrivateNativeIncludeDirs': module.private_native_include_dirs,
-                'PrivateNativeDependencies': module.private_native_dependencies,
-                'PrivateAdditionalCopiedFiles': module.private_additional_copied_files,
-            })
+        if solution.use_white_list_modules and not solution.does_whitelist_module(module._relative_py_dir, module._name):
+            continue
+        out_data['modules'].append(apply_module(solution, platform, build_configuration, volatile_target, module))
+        continue
 
-    return target_cursor
+    return out_data
 
 
-def apply_module(target: Target, module: Module) -> None:
-    """Apply a module with the policies of a target."""
+def apply_module(solution: Solution, platform: Platform, build_configuration: BuildConfiguration, target: Target, module: BufferedModule) -> dict:
+    volatile_module: Module = Module(module)
+    volatile_module.load(solution, platform, build_configuration, target)
+    volatile_module.validate()
 
-    if target.volatile_build_configuration == BuildConfiguration.UNKNOWN:
-        raise ValueError('Tried to apply volatile policies for module without build configuration.')
+    out_data: dict = {
+        'name': module._name,
+        'friendly_name': volatile_module.friendly_name,
+        'relative_dir': module._relative_py_dir,
+        'pch': volatile_pch_usage_to_string(volatile_module.pch),
+        'pch_content': volatile_module.pch_content,
+        'kind': module_kind_to_string(volatile_module.kind),
+        'public_dependencies': volatile_module.public_dependencies,
+        'private_dependencies': volatile_module.private_dependencies,
+        'native_includes': volatile_module.native_includes,
+        'native_dependencies': volatile_module.native_dependencies,
+        'native_runtime_dependencies': volatile_module.native_runtime_dependencies,
+    }
 
-    ru.exec_function(module._absolute_py_path, 'apply_policies', target, module)
-
-    return None
+    return out_data
