@@ -5,12 +5,14 @@ from Programs.Meta import *
 
 def add_module(me: Module, args: ModuleArgs) -> None:
     me.pch = PchUsage.ALLOW
-    me.pch_content = '#include "CoreAfx.h"'
     me.kind = ModuleKind.LAUNCH
 
-    me.public_dependencies.append('Engine')
+    me.public_dependencies.append('~Engine/Engine')
 
     if 'WITH_TESTS' in args.target.defines:
-        me.public_dependencies.append('Tester')
+        me.public_dependencies.append('~Engine/Tester')
+
+    if args.platform == 'Windows':
+        me.entry = 'WIN_MAIN'
 
     return None

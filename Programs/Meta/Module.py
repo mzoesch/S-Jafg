@@ -47,8 +47,15 @@ class ModuleArgs:
         return
 
 
+#   Exceptions off?
+#   Unity build here?
 class Module:
-    """A fully qualified module."""
+    """
+    A fully qualified module.
+
+    Things to consider:
+      RTTI is always off in any configuration for all modules.
+    """
 
     def __init__(self, parent: BufferedModule):
         self._parent: BufferedModule = parent
@@ -65,32 +72,69 @@ class Module:
         self.kind: ModuleKind = ModuleKind.SHARED
 
         """
-        Public dependencies. This dependencies are transitively linked.
-        Either the module name, module relative path to the engine root or the relative path
-        to a static library / shared dynamically linked library.
+        Entry for a module: [MAIN, WIN_MAIN].
+        """
+        self.entry: str = 'MAIN'
+
+        """
+        Pre build steps.
+        Expanded variables: 
+          $PythonExecutable     The absolute path to the venv of the jafg python executable.
+          $PythonScript         The relative path to the entry point of the jafg python script.
+          $RootDir              The absolute path to the engine root.
+          $Kind                 The kind of the module it is currently compiled for.
+          $Platform             The target platform to compile for.
+          $Arch                 The target architecture to compile for.
+          $Target               The target to compile for.
+        """
+        self.pre_builds: List[str] = []
+
+        """
+        Post build steps.
+        See #pre_builds for expanded variables.
+        """
+        self.post_builds: List[str] = []
+
+        """
+        Public module dependencies. These modules are transitively linked.
+        Automatically includes the public directories of said dependencies and links against them.
+        Specify either the module name or module relative path to the engine root, e.g. '~Engine/Engine' or 'Engine'.
         """
         self.public_dependencies: List[str] = []
 
         """
-        Private dependencies. This dependencies are intransitively linked.
-        Either the module name, module relative path to the engine root or the relative path
-        to a static library / shared dynamically linked library.
+        Private module dependencies. These modules are intransitively linked.
+        Automatically includes the public directories of said dependencies and links against them.
+        Specify either the module name or module relative path to the engine root,
+        e.g. '~Engine/EngineForward' or 'EngineForward'.
         """
         self.private_dependencies: List[str] = []
 
         """
-        Private native include dirs and dependencies. Can be anything the compiler / linker understands.
-        Only private exists and not public so that these dependencies are never transitively included.
+        Native include paths. Can be anything the compiler / linker understands.
+        These includes are intransitively included and therefore always private.
         This is by design as you should always build an interface for native deps.
-        Paths are relative to the top level engine root dir.
         """
         self.native_includes: List[str] = []
+
+        """
+        Native dependencies that are used during linking. Can be anything the linker understands.
+        These dependencies are intransitively included and therefore always private.
+        This is by design as you should always build an interface for native deps.
+        """
         self.native_dependencies: List[str] = []
 
         """
-        Files that always have to be in the same dir (not subdir) when the lib / app is being launched.
+        Native runtime dependencies that are used during linking and at runtime. Path has to be relative to the
+        to level engine root. E.g. 'Engine/Vendor/Lib/MySharedLib.dylib'.
         """
         self.native_runtime_dependencies: List[str] = []
+
+        """
+        Native additional runtime dependencies that are only used at runtime. Path has to be relative to the
+        to level engine root. E.g. 'Engine/Vendor/Lib/MySharedLib.pdb'.
+        """
+        self.native_additional_runtime_dependencies: List[str] = []
 
         return
 
@@ -104,6 +148,14 @@ class Module:
         self._loaded = True
         args: ModuleArgs = ModuleArgs(solution, platform, build_configuration, target)
         ru.exec_function(self._parent._absolute_py_path, 'add_module', self, args)
+        return None
+
+    def _add_default_flags(self, solution: Solution, platform: Platform, build_configuration: BuildConfiguration, target: Target) -> None:
+        if len(self.pre_builds) > 0 or len(self.post_builds) > 0:
+            raise ValueError('Expected zero but got >0.')
+
+        self.pre_builds.append(f'$PythonExecutable $PythonScript -INVOKE -- --BuildTool pre-build SLN={solution._parent._name} MODULE={self._parent._relative_py_dir} KIND=$Kind PLATFORM=$Platform ARCH=$Arch TARGET=$Target')
+
         return None
 
     @staticmethod

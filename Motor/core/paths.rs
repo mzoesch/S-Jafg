@@ -4,6 +4,12 @@ pub const PATH_WORKSPACE: &str = "jafg.jafgworkspace";
 pub const PATH_SAVED_DIR: &str = "Saved";
 pub const PATH_MOD_CACHE: &str = "Saved/structure.jproject";
 
+pub const PATH_BINARIES: &str = "Binaries";
+pub const PATH_INTERMEDIATES: &str = "Intermediate";
+
+pub const FILE_PCH_H: &str = "ModulePch.generated.h";
+pub const FILE_PCH_T: &str = "ModulePch.generated.cpp";
+
 pub fn get_engine_root_dir() -> String
 {
     let exe: std::path::PathBuf = std::env::current_exe().unwrap();

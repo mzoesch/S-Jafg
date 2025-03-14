@@ -113,13 +113,38 @@ def apply_solution(solution: BufferedSolution) -> dict:
 
     out_data: dict = {
         'name': solution._name,
-        'rel_dir': solution._relative_py_dir,
+        'relative_dir': solution._relative_py_dir,
         'startup': volatile_solution.startup,
+        'max_modules': [],
         'platforms': []
     }
 
     for platform in GApp.platforms:
         out_data['platforms'].append(apply_platform(volatile_solution, platform))
+        continue
+
+    class _Module:
+        def __init__(self, name: str, relative_dir: str):
+            self.name = name
+            self.relative_dir = relative_dir
+    _modules: list[_Module] = []
+
+    for p in out_data['platforms']:
+        for c in p['configs']:
+            for t in c['targets']:
+                for m in t['modules']:
+                    if m['relative_dir'] not in [x.relative_dir for x in _modules]:
+                        _modules.append(_Module(m['name'], m['relative_dir']))
+                    continue
+                continue
+            continue
+        continue
+
+    for m in _modules:
+        out_data['max_modules'].append({
+            'name': m.name,
+            'relative_dir': m.relative_dir
+        })
         continue
 
     return out_data
@@ -132,6 +157,11 @@ def apply_platform(solution: Solution, platform: BufferedPlatform) -> dict:
 
     out_data: dict = {
         'name': platform._name,
+        'version': volatile_platform.version,
+        'architecture': volatile_platform.architecture,
+        'toolset': volatile_platform.toolset,
+        'lnk_flags': volatile_platform.lnk_flags,
+        'build_flags': volatile_platform.build_flags,
         'defines': [],
         'configs': []
     }
@@ -156,6 +186,9 @@ def apply_build_configuration(solution: Solution, platform: Platform, build_conf
 
         out_data: dict = {
             'name': build_configuration._name,
+            'runtime': volatile_build_configuration.runtime,
+            'symbols': volatile_build_configuration.symbols,
+            'optimize': volatile_build_configuration.optimize,
             'defines': [],
             'targets': [],
         }
@@ -183,9 +216,6 @@ def apply_target(solution: Solution, platform: Platform, build_configuration: Bu
     out_data: dict = {
         'name': target._name,
         'defines': [],
-        'runtime': volatile_target.runtime,
-        'symbols': volatile_target.symbols,
-        'optimize': volatile_target.optimize,
         'modules': [],
     }
 
@@ -206,6 +236,7 @@ def apply_target(solution: Solution, platform: Platform, build_configuration: Bu
 
 def apply_module(solution: Solution, platform: Platform, build_configuration: BuildConfiguration, target: Target, module: BufferedModule) -> dict:
     volatile_module: Module = Module(module)
+    volatile_module._add_default_flags(solution, platform, build_configuration, target)
     volatile_module.load(solution, platform, build_configuration, target)
     volatile_module.validate()
 
@@ -216,11 +247,15 @@ def apply_module(solution: Solution, platform: Platform, build_configuration: Bu
         'pch': pch_usage_to_bool(volatile_module.pch),
         'pch_content': volatile_module.pch_content,
         'kind': module_kind_to_string(volatile_module.kind),
+        'entry': volatile_module.entry,
+        'pre_builds': volatile_module.pre_builds,
+        'post_builds': volatile_module.post_builds,
         'public_dependencies': volatile_module.public_dependencies,
         'private_dependencies': volatile_module.private_dependencies,
         'native_includes': volatile_module.native_includes,
         'native_dependencies': volatile_module.native_dependencies,
         'native_runtime_dependencies': volatile_module.native_runtime_dependencies,
+        'native_additional_runtime_dependencies': volatile_module.native_additional_runtime_dependencies,
     }
 
     return out_data

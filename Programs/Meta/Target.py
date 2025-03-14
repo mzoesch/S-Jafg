@@ -53,9 +53,6 @@ class Target:
         self._loaded: bool = False
 
         self.defines: List[str] = []
-        self.runtime: str = ''
-        self.symbols: bool = False
-        self.optimize: bool = True
 
         return
 

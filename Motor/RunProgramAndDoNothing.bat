@@ -6,7 +6,7 @@
 
 pushd ..
 
-.\.venv\Scripts\python.exe .\Program.py --INVOKE -- --DoNothing
+.\.venv\Scripts\python.exe .\Program.py -INVOKE -- --DoNothing
 
 popd
 

@@ -49,6 +49,9 @@ class BuildConfiguration:
         self._loaded: bool = False
 
         self.defines: List[str] = []
+        self.runtime: str = ''
+        self.symbols: bool = False
+        self.optimize: bool = True
 
         return
 
@@ -57,6 +60,10 @@ class BuildConfiguration:
 
     def validate(self) -> None:
         self._parent.validate()
+
+        if self.runtime == '':
+            raise ValueError('Build configuration runtime cannot be empty.')
+
         return None
 
     def load(self, solution: Solution, platform: Platform) -> None:

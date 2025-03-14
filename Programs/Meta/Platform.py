@@ -43,10 +43,12 @@ class Platform:
         self._parent: BufferedPlatform = parent
         self._loaded: bool = False
 
-        """
-        The defines for this platform.
-        """
         self.defines: list[str] = []
+        self.version: str = 'latest'
+        self.architecture: str = ''
+        self.toolset: str = ''
+        self.lnk_flags: list[str] = []
+        self.build_flags: list[str] = []
 
         return
 
@@ -55,6 +57,11 @@ class Platform:
 
     def validate(self) -> None:
         self._parent.validate()
+        if self.version == '':
+            raise ValueError('Platform version cannot be empty.')
+        if self.architecture == '':
+            raise ValueError('Platform architecture cannot be empty.')
+
         return None
 
     def load(self, solution: Solution) -> None:

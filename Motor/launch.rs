@@ -3,6 +3,8 @@
 #![allow(dead_code)]
 
 mod core;
+mod solution_generator;
+mod build_tool;
 
 use clap::{ArgAction, Parser};
 use crate::core::application::Application;
@@ -19,7 +21,8 @@ struct Cli
     solution_generator: Vec<String>,
 
     /// Build tool working before and after module compilation.
-    #[arg(short = 'B', long = "BuildTool", action = ArgAction::Append)]
+    /// Usage: [pre-build | post-build; SLN=<str>; MODULE=<str>; PLATFORM=<str>; ARCH=<str>; TARGET=<str>]
+    #[arg(short = 'B', long = "BuildTool", action = ArgAction::Append, num_args = 1..)]
     build_tool: Vec<String>,
 
     /// Emulate MSVC, emscripten, ... compiler commands.
@@ -42,7 +45,7 @@ fn main()
     let mut app: Application = Default::default();
 
     load_workspace(&mut app);
-    route_to_subprogram(&mut app, args);
+    route_to_subprogram(&app, args);
 
     print!("Popping working directory from [{}] to [{}]", new_cwd, cwd.to_str().unwrap());
     std::env::set_current_dir(cwd).unwrap();
@@ -77,10 +80,33 @@ fn load_workspace(app: &mut Application)
     return;
 }
 
-fn route_to_subprogram(_app: &mut Application, args: Cli)
+fn route_to_subprogram(app: &Application, args: Cli)
 {
-    println!("SolutionGenerator: {:?}", args.solution_generator);
-    println!("BuildTool: {:?}", args.build_tool);
-    println!("EmulationTool: {:?}", args.emulation_tool);
-    println!("DoNothing: {:?}", args.do_nothing);
+    if args.solution_generator.len() == 0 && args.build_tool.len() == 0 && args.emulation_tool.len() == 0
+    {
+        if args.do_nothing == false
+        {
+            panic!("No subprogram selected.");
+        }
+        return;
+    }
+
+    if args.solution_generator.len() > 0
+    {
+        solution_generator::launch::launch(app, &args);
+    }
+
+    if args.build_tool.len() > 0
+    {
+        println!("Build tool not implemented yet. Args: {:?}", args.build_tool);
+        // build_tool::launch::launch(app, &args);
+    }
+
+    if args.emulation_tool.len() > 0
+    {
+        println!("Emulation tool not implemented yet. Args: {:?}", args.emulation_tool);
+        // emulation_tool::launch::launch(app, &args);
+    }
+
+    return;
 }
