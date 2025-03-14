@@ -9,9 +9,9 @@ def add_module(me: Module, args: ModuleArgs) -> None:
     me.kind = ModuleKind.LAUNCH
 
     me.public_dependencies.extend([
-        'Lal',
-        'TesterForward',
-        'Tester',
+        '~Lal/Lal',
+        '~Engine/TesterForward',
+        '~Engine/Tester',
     ])
 
     return None

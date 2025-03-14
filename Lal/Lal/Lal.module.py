@@ -9,6 +9,6 @@ def add_module(me: Module, args: ModuleArgs) -> None:
     me.kind = ModuleKind.STATIC
 
     if 'WITH_TESTS' in args.target.defines:
-        me.public_dependencies.append('TesterForward')
+        me.public_dependencies.append('~Engine/TesterForward')
 
     return None

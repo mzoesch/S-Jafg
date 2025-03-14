@@ -115,7 +115,7 @@ fn get_host_python_executable() -> String
     }
 }
 
-fn expand_variables_for_step(in_step: &str, solution: &Solution) -> Vec<String>
+fn expand_variables_for_step(in_step: &str) -> Vec<String>
 {
     let mut out: Vec<String> = Vec::new();
     out.push(in_step.to_string());
@@ -531,8 +531,8 @@ fn make_script(solution: &Solution)
                         wwi(b, 3, format!("_WORKING_DIR .. '/{}',", solution.construct_relative_cgh_path(platform, config, target, module)));
                         for dependency in transitive_dependencies.iter()
                         {
-                            wwi(b, 3, format!("_WORKING_DIR .. '/{}/Source/Public',", target.get_module_by_name_checked(dependency).get_functional_rel_dir()));
-                            wwi(b, 3, format!("_WORKING_DIR .. '/{}',", solution.construct_relative_gh_path(platform, target.get_module_by_name_checked(dependency))));
+                            wwi(b, 3, format!("_WORKING_DIR .. '/{}/Source/Public',", target.find_module_by_name_checked(dependency).get_functional_rel_dir()));
+                            wwi(b, 3, format!("_WORKING_DIR .. '/{}',", solution.construct_relative_gh_path(platform, target.find_module_by_name_checked(dependency))));
                         }
                         for dependency in module.native_includes.iter()
                         {
@@ -543,7 +543,7 @@ fn make_script(solution: &Solution)
                         wwi(b, 2, "links {");
                         for dependency in transitive_dependencies.iter()
                         {
-                            wwi(b, 3, format!("'{}',", target.get_module_by_name_checked(dependency).name));
+                            wwi(b, 3, format!("'{}',", target.find_module_by_name_checked(dependency).name));
                         }
                         for dependency in module.native_dependencies.iter()
                         {
@@ -598,7 +598,7 @@ fn make_script(solution: &Solution)
                         wwi(b, 2, "prebuildcommands {");
                         for _step in module.pre_builds.iter()
                         {
-                            let steps: Vec<String> = expand_variables_for_step(&_step, solution);
+                            let steps: Vec<String> = expand_variables_for_step(&_step);
                             let compound: String = steps.join(" ");
                             wwi(b, 3, compound);
                             continue

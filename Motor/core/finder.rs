@@ -26,6 +26,16 @@ pub fn check_file(path: &str)
     panic!("[{}]: No such file.", path);
 }
 
+pub fn check_dir(path: &str)
+{
+    if std::path::Path::new(path).exists()
+    {
+        return;
+    }
+
+    panic!("[{}]: No such directory.", path);
+}
+
 pub fn ensure_path(path: &str)
 {
     if !std::path::Path::new(path).exists()
@@ -49,6 +59,11 @@ pub fn read_file(path: &str) -> String
 }
 
 pub fn exists_file(path: &str) -> bool
+{
+    return std::path::Path::new(path).exists();
+}
+
+pub fn exists_dir(path: &str) -> bool
 {
     return std::path::Path::new(path).exists();
 }

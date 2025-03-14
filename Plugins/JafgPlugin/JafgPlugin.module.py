@@ -8,6 +8,6 @@ def add_module(me: Module, args: ModuleArgs) -> None:
     me.pch_content = '#include "CoreAfx.h"'
     me.kind = ModuleKind.SHARED
 
-    me.public_dependencies.append('Lal')
+    me.public_dependencies.append('~Lal/Lal')
 
     return None

@@ -21,7 +21,7 @@ struct Cli
     solution_generator: Vec<String>,
 
     /// Build tool working before and after module compilation.
-    /// Usage: [pre-build | post-build; SLN=<str>; MODULE=<str>; PLATFORM=<str>; ARCH=<str>; TARGET=<str>]
+    /// Usage: [pre-build | post-build; SLN=<str>; MODULE=<str>; KIND=<str>; PLATFORM=<str>; ARCH=<str>; TARGET=<str>]
     #[arg(short = 'B', long = "BuildTool", action = ArgAction::Append, num_args = 1..)]
     build_tool: Vec<String>,
 
@@ -98,8 +98,7 @@ fn route_to_subprogram(app: &Application, args: Cli)
 
     if args.build_tool.len() > 0
     {
-        println!("Build tool not implemented yet. Args: {:?}", args.build_tool);
-        // build_tool::launch::launch(app, &args);
+        build_tool::launch::launch(app, &args);
     }
 
     if args.emulation_tool.len() > 0

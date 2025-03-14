@@ -7,6 +7,6 @@ def add_module(me: Module, args: ModuleArgs) -> None:
     me.pch = PchUsage.PROHIBIT
     me.kind = ModuleKind.SHARED
 
-    me.public_dependencies.extend(['Lal', 'TesterForward'])
+    me.public_dependencies.extend(['~Lal/Lal', '~Engine/TesterForward'])
 
     return None

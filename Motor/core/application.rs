@@ -123,6 +123,28 @@ impl Solution
     {
         return format!("{}/{}/SLN_{}/{}/{}/gt", paths::PATH_SAVED_DIR, self.get_functional_rel_dir(), self.name, m.get_functional_rel_dir(), p.name);
     }
+
+    pub fn find_platform_by_name(&self, name: &str) -> Option<&Platform>
+    {
+        for platform in self.platforms.iter()
+        {
+            if platform.name == name
+            {
+                return Some(platform);
+            }
+        }
+
+        return None;
+    }
+
+    pub fn find_platform_by_name_checked(&self, name: &str) -> &Platform
+    {
+        match self.find_platform_by_name(name)
+        {
+            Some(platform) => platform,
+            None => panic!("Could not find platform with name [{}].", name),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -138,6 +160,31 @@ pub struct Platform
     pub configs: Vec<BuildConfig>,
 }
 
+impl Platform
+{
+    pub fn find_config_by_name(&self, name: &str) -> Option<&BuildConfig>
+    {
+        for config in self.configs.iter()
+        {
+            if config.name == name
+            {
+                return Some(config);
+            }
+        }
+
+        return None;
+    }
+
+    pub fn find_config_by_name_checked(&self, name: &str) -> &BuildConfig
+    {
+        match self.find_config_by_name(name)
+        {
+            Some(config) => config,
+            None => panic!("Could not find config with name [{}].", name),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct BuildConfig
 {
@@ -147,6 +194,31 @@ pub struct BuildConfig
     pub optimize: bool,
     pub defines: Vec<String>,
     pub targets: Vec<Target>,
+}
+
+impl BuildConfig
+{
+    pub fn find_target_by_name(&self, name: &str) -> Option<&Target>
+    {
+        for target in self.targets.iter()
+        {
+            if target.name == name
+            {
+                return Some(target);
+            }
+        }
+
+        return None;
+    }
+
+    pub fn find_target_by_name_checked(&self, name: &str) -> &Target
+    {
+        match self.find_target_by_name(name)
+        {
+            Some(target) => target,
+            None => panic!("Could not find target with name [{}].", name),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -164,7 +236,7 @@ impl Target
         return format!("{}-{}", self.name, build_config.name);
     }
 
-    pub fn get_module_by_name(&self, name: &str) -> Option<&Module>
+    pub fn find_module_by_name(&self, name: &str) -> Option<&Module>
     {
         for module in self.modules.iter()
         {
@@ -185,9 +257,9 @@ impl Target
         return None;
     }
 
-    pub fn get_module_by_name_checked(&self, name: &str) -> &Module
+    pub fn find_module_by_name_checked(&self, name: &str) -> &Module
     {
-        match self.get_module_by_name(name)
+        match self.find_module_by_name(name)
         {
             Some(module) => module,
             None => panic!("Could not find module with name [{}].", name),
@@ -265,6 +337,11 @@ impl Module
         return self.relative_dir[1..].to_string();
     }
 
+    pub fn get_functional_rel_source_dir(&self) -> String
+    {
+        return format!("{}/Source", self.get_functional_rel_dir());
+    }
+
     pub fn get_functional_parent_rel_dir(&self) -> String
     {
         let mut parts: Vec<&str> = self.relative_dir[1..].split('/').collect();
@@ -302,7 +379,7 @@ impl Module
             if out.contains(dependency) == false
             {
                 out.push(dependency.clone());
-                target.get_module_by_name_checked(dependency).get_public_dependencies_transitive(target, out);
+                target.find_module_by_name_checked(dependency).get_public_dependencies_transitive(target, out);
             }
 
             continue
