@@ -145,6 +145,11 @@ impl Solution
             None => panic!("Could not find platform with name [{}].", name),
         }
     }
+
+    pub(crate) fn get_ch_dir_up_rel_to_build_file(&self) -> String
+    {
+        return format!("../../..{}", "/..".repeat(self.relative_dir.chars().filter(|c| *c == '/').count()));
+    }
 }
 
 #[derive(Serialize, Deserialize)]

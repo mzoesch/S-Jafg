@@ -28,8 +28,14 @@ pub(crate) fn make_premake(solution: &Solution, emulate: bool)
             .expect("Failed to run premake script");
 
         println!("Status: {}", output.status);
-        println!("{}", String::from_utf8_lossy(&output.stdout));
-        println!("{}", String::from_utf8_lossy(&output.stderr));
+        if output.stdout.len() > 0
+        {
+            println!("{}", String::from_utf8_lossy(&output.stdout));
+        }
+        if output.stderr.len() > 0
+        {
+            println!("{}", String::from_utf8_lossy(&output.stderr));
+        }
         if !output.status.success()
         {
             panic!("Premake failed.");
@@ -40,9 +46,74 @@ pub(crate) fn make_premake(solution: &Solution, emulate: bool)
         panic!("Missing implementation for this platform.");
     }
 
+    // Make sure JetBrain's IDEAs (really in every fucking one of them) can detect the vcs in the root engine dir.
+    if finder::exists_file(&format!("{}/.idea/.idea.Jafg/.idea/vcs.xml", solution.get_saved_rel_dir_premake())) == false
+    {
+        ensure_file(&format!("{}/.idea/.idea.Jafg/.idea/vcs.xml", solution.get_saved_rel_dir_premake()));
+        finder::write_to_file_if_different(
+            &format!("{}/.idea/.idea.Jafg/.idea/vcs.xml", solution.get_saved_rel_dir_premake()),
+            true,
+            &format!(r##"<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/{}" vcs="Git" />
+  </component>
+</project>
+    "##,
+                solution.get_ch_dir_up_rel_to_build_file()
+            )
+        );
+    }
+
+    // Symlink the generated solution file to the top level dir.
+    let sln_file: String = format!("{}/Jafg.sln", solution.get_saved_rel_dir_premake());
+    let sln_link: String = format!("Jafg-{}.sln.lnk", solution.name);
+    if finder::exists_file(sln_file.as_str()) == false
+    {
+        panic!("No such file: [{}].", sln_file);
+    }
+    if finder::exists_file(sln_link.as_str()) == false
+    {
+        if cfg!(windows)
+        {
+            let abs_sln_file: String = paths::to_absolute_path(sln_file.as_str());
+            let abs_sln_link: String = paths::to_absolute_path(sln_link.as_str());
+            let ps1: &str = "Programs/Shell/CreateSymlink.ps1";
+            let output = std::process::Command::new("powershell")
+                .arg("-NoProfile")
+                .arg("-ExecutionPolicy")
+                .arg("Bypass")
+                .arg("-File")
+                .arg(ps1)
+                .arg(&sln_file)
+                .arg(&sln_link)
+                .output()
+                .expect("Failed to run powershell symlink script");
+
+            println!("Status: {}", output.status);
+            if output.stdout.len() > 0
+            {
+                println!("{}", String::from_utf8_lossy(&output.stdout));
+            }
+            if output.stderr.len() > 0
+            {
+                println!("{}", String::from_utf8_lossy(&output.stderr));
+            }
+            if !output.status.success()
+            {
+                panic!("Symlink failed.");
+            }
+        }
+        else
+        {
+            unimplemented!("Missing implementation for this platform.");
+        }
+    }
+
     return;
 }
 
+// Wwi stands for Write With Indentation (abbreviated because used literally in every line here - sorry).
 fn wwi<T: Display>(builder: &mut String, indent: usize, content: T)
 {
     for _ in 0..indent
@@ -56,6 +127,7 @@ fn wwi<T: Display>(builder: &mut String, indent: usize, content: T)
     return;
 }
 
+// Wni stands for Write No Indentation.
 fn wni(builder: &mut String, content: &str)
 {
     builder.push_str(content);

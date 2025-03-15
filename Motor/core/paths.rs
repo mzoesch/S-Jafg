@@ -41,6 +41,23 @@ pub fn get_engine_root_dir() -> String
     return out.to_str().unwrap().to_string();
 }
 
+pub fn to_absolute_path(path: &str) -> String
+{
+    let mut result: String = String::new();
+    if path.starts_with("/")
+    {
+        result.push_str(path);
+    }
+    else
+    {
+        result.push_str(get_engine_root_dir().as_str());
+        result.push('/');
+        result.push_str(path);
+    }
+
+    return result;
+}
+
 pub fn to_posix_path(path: &str) -> String
 {
     let mut result: String = String::new();
