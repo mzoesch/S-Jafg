@@ -6,9 +6,14 @@ use crate::core::finder;
 use crate::core::paths;
 use crate::core::finder::ensure_file;
 
-pub(crate) fn make_premake(solution: &Solution)
+pub(crate) fn make_premake(solution: &Solution, emulate: bool)
 {
     make_script(solution);
+
+    if emulate
+    {
+        crate::build_tool::launch::emulate(solution);
+    }
 
     if cfg!(windows)
     {

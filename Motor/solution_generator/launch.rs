@@ -9,27 +9,20 @@ use crate::core::finder;
 
 pub fn launch(app: &Application, args: &Cli)
 {
-    if args.solution_generator.len() != 1
-    {
-        panic!("Expected exactly one solution generator argument but got {}.", args.solution_generator.len());
-    }
+    let emulate: bool = args.solution_generator.contains(&"EmulateCompiler".to_string());
 
-    if args.solution_generator[0] == "GenerateAll"
+    if args.solution_generator.contains(&"GenerateAll".to_string())
     {
         for solution in app.solutions.iter()
         {
-            generate_solution(solution);
+            generate_solution(solution, emulate);
         }
     }
-    else if args.solution_generator[0].starts_with("GEN=")
+    else if args.solution_generator.iter().any(|x| x.contains(&"GEN=".to_string()))
     {
         let name: &str = &args.solution_generator[0][4..];
         let sln: &Solution = app.find_solution_by_name_checked(name);
-        generate_solution(sln);
-    }
-    else
-    {
-        panic!("Could not parse solution generator argument: [{}].", args.solution_generator[0]);
+        generate_solution(sln, emulate);
     }
 
     println!("================================");
@@ -39,14 +32,14 @@ pub fn launch(app: &Application, args: &Cli)
     return;
 }
 
-fn generate_solution(solution: &Solution)
+fn generate_solution(solution: &Solution, emulate: bool)
 {
     println!("Generating solution [{}] ...", solution.name);
 
     make_pch_for_all_modules(solution);
 
-    make_cmake(solution);
-    make_premake(solution);
+    make_cmake(solution, emulate);
+    make_premake(solution, emulate);
 
     return;
 }

@@ -45,6 +45,35 @@ impl PartialEq for BuildStep
     }
 }
 
+pub fn emulate(solution: &Solution)
+{
+    for platform in solution.platforms.iter()
+    {
+        for config in platform.configs.iter()
+        {
+            for target in config.targets.iter()
+            {
+                for module in target.modules.iter()
+                {
+                    launch_pre_build(BuildTarget
+                    {
+                        solution: solution,
+                        platform: platform,
+                        config: config,
+                        target: target,
+                        module: module,
+                    });
+                }
+                continue
+            }
+            continue
+        }
+        continue
+    }
+
+    return;
+}
+
 pub fn launch(app: &Application, args: &Cli)
 {
     let step: BuildStep = match args.build_tool.len()
@@ -153,10 +182,10 @@ fn launch_pre_build(b: BuildTarget)
 
     // Construct paths so we do not have to deal with that even we just create random files in them
     // but the dirs do not exist. Also better for the IDE.
-    finder::ensure_file(&b.solution.construct_relative_gh_path(b.platform, b.module));
-    finder::ensure_file(&b.solution.construct_relative_cgh_path(b.platform, b.config, b.target, b.module));
-    finder::ensure_file(&b.solution.construct_relative_gt_path(b.platform, b.module));
-    finder::ensure_file(&b.solution.construct_relative_cgt_path(b.platform, b.config, b.target, b.module));
+    finder::ensure_path(&b.solution.construct_relative_gh_path(b.platform, b.module));
+    finder::ensure_path(&b.solution.construct_relative_cgh_path(b.platform, b.config, b.target, b.module));
+    finder::ensure_path(&b.solution.construct_relative_gt_path(b.platform, b.module));
+    finder::ensure_path(&b.solution.construct_relative_cgt_path(b.platform, b.config, b.target, b.module));
 
     reflect_module(&b);
 

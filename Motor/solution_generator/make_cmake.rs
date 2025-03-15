@@ -2,6 +2,6 @@
 
 use crate::core::application::{Solution};
 
-pub(crate) fn make_cmake(_solution: &Solution)
+pub(crate) fn make_cmake(_solution: &Solution, _emulate: bool)
 {
 }

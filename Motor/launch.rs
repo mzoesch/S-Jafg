@@ -17,17 +17,13 @@ use crate::core::finder;
 struct Cli
 {
     /// Solution generator for C++ projects. Usage: [GEN=SOLUTION_NAME | GenerateAll]
-    #[arg(short = 'S', long = "SolutionGenerator", action = ArgAction::Append)]
+    #[arg(short = 'S', long = "SolutionGenerator", action = ArgAction::Append, num_args = 1..=2)]
     solution_generator: Vec<String>,
 
     /// Build tool working before and after module compilation.
     /// Usage: [pre-build | post-build; SLN=<str>; MODULE=<str>; KIND=<str>; PLATFORM=<str>; ARCH=<str>; TARGET=<str>]
     #[arg(short = 'B', long = "BuildTool", action = ArgAction::Append, num_args = 1..)]
     build_tool: Vec<String>,
-
-    /// Emulate MSVC, emscripten, ... compiler commands.
-    #[arg(short = 'E', long = "EmulationTool", action = ArgAction::Append)]
-    emulation_tool: Vec<String>,
 
     /// Does nothing. For debugging purposes.
     #[arg(long = "DoNothing")]
@@ -82,7 +78,7 @@ fn load_workspace(app: &mut Application)
 
 fn route_to_subprogram(app: &Application, args: Cli)
 {
-    if args.solution_generator.len() == 0 && args.build_tool.len() == 0 && args.emulation_tool.len() == 0
+    if args.solution_generator.len() == 0 && args.build_tool.len() == 0
     {
         if args.do_nothing == false
         {
@@ -99,12 +95,6 @@ fn route_to_subprogram(app: &Application, args: Cli)
     if args.build_tool.len() > 0
     {
         build_tool::launch::launch(app, &args);
-    }
-
-    if args.emulation_tool.len() > 0
-    {
-        println!("Emulation tool not implemented yet. Args: {:?}", args.emulation_tool);
-        // emulation_tool::launch::launch(app, &args);
     }
 
     return;
