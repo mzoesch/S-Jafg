@@ -1,6 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
+use std::arch::asm;
 use crate::core::finder;
+
+pub const SUPER_CLASS: usize = 0;
 
 /// Word describes a collection of runes that are split with the C/C++ rules in mind.
 /// The most minimal categorizable thing that has a valid syntax.
@@ -11,6 +14,7 @@ struct Word
     pub line: u32,
 }
 
+#[derive(Debug)]
 pub enum TokenType
 {
     Undefined,
@@ -21,7 +25,6 @@ pub enum TokenType
     WidgetDeclaration,
     WidgetDeclarationWithFactory,
     ClassBody,
-    WidgetBody,
     ClassField,
 }
 
@@ -99,20 +102,31 @@ impl TokenType
         }
     }
 
-    pub fn is_widget_body(&self) -> bool
-    {
-        match self
-        {
-            TokenType::WidgetBody => true,
-            _ => false,
-        }
-    }
-
     pub fn is_class_field(&self) -> bool
     {
         match self
         {
             TokenType::ClassField => true,
+            _ => false,
+        }
+    }
+}
+
+impl PartialEq for TokenType
+{
+    fn eq(&self, other: &Self) -> bool
+    {
+        match (self, other)
+        {
+            (TokenType::Undefined, TokenType::Undefined) => true,
+            (TokenType::NamespacePush, TokenType::NamespacePush) => true,
+            (TokenType::NamespacePop, TokenType::NamespacePop) => true,
+            (TokenType::Pragma, TokenType::Pragma) => true,
+            (TokenType::ClassDeclaration, TokenType::ClassDeclaration) => true,
+            (TokenType::WidgetDeclaration, TokenType::WidgetDeclaration) => true,
+            (TokenType::WidgetDeclarationWithFactory, TokenType::WidgetDeclarationWithFactory) => true,
+            (TokenType::ClassBody, TokenType::ClassBody) => true,
+            (TokenType::ClassField, TokenType::ClassField) => true,
             _ => false,
         }
     }
@@ -128,6 +142,14 @@ pub struct Token
 
 pub fn tokenize_file(file: &str) -> Vec<Token>
 {
+    if file.contains("PreferencesScreen.h")
+    {
+        unsafe
+        {
+            asm!("nop")
+        }
+    }
+
     let words = split_file(
         file,
         vec![
@@ -266,7 +288,7 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
 
             if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsObjectBaseClass\""
             {
-                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["\"NextIsObjectBaseClass\"".to_string()] });
+                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsObjectBaseClass".to_string()] });
             }
             else
             {
@@ -341,7 +363,7 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
 
             if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsObjectBaseClass\""
             {
-                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["\"NextIsObjectBaseClass\"".to_string()] });
+                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsObjectBaseClass".to_string()] });
             }
             else
             {
@@ -409,7 +431,7 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
 
             if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsObjectBaseClass\""
             {
-                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["\"NextIsObjectBaseClass\"".to_string()] });
+                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsObjectBaseClass".to_string()] });
             }
             else
             {
@@ -452,18 +474,46 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
         }
         else if w.content == "CLASS_FIELD"
         {
+            let mut args: Vec<String> = Vec::new();
             let mut inner_idx: usize = idx + 1;
+            let mut arg_opens: u32 = 0;
+            let mut inner_content: String = String::new();
             for inner_w in words.iter().skip(idx + 1)
             {
                 inner_idx += 1;
-                if inner_w.content == ")"
+                if inner_w.content == "("
                 {
-                    break
+                    arg_opens += 1;
+                }
+                else if inner_w.content == ")"
+                {
+                    arg_opens -= 1;
+                    if arg_opens == 0
+                    {
+                        break
+                    }
+                }
+                else if inner_w.content == "," && arg_opens == 1
+                {
+                    if inner_content.is_empty() == false
+                    {
+                        args.push(inner_content.clone());
+                        inner_content.clear();
+                    }
+                }
+                else
+                {
+                    inner_content.push_str(&inner_w.content);
                 }
             }
-            if inner_idx >= words.len()
+            if inner_content.is_empty() == false
             {
-                panic!("[{}]: Excepted ')' after CLASS_FIELD.", file);
+                args.push(inner_content.clone());
+                inner_content.clear();
+            }
+            if arg_opens != 0
+            {
+                panic!("[{}]: Excepted ')' after CLASS_FIELD declaration.", file);
             }
 
             let mut type_opens: u32 = 0;
@@ -495,52 +545,17 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
             {
                 panic!("[{}]: Excepted ')' after CLASS_FIELD declaration.", file);
             }
-
-            let mut args: Vec<String> = Vec::new();
-            let mut arg_opens: u32 = 0;
-            let mut inner_content: String = String::new();
-            for inner_w in words.iter().skip(idx + 1)
+            let member_idx: usize = inner_idx;
+            if member_idx >= words.len()
             {
-                inner_idx += 1;
-                if inner_w.content == "("
-                {
-                    arg_opens += 1;
-                }
-                else if inner_w.content == ")"
-                {
-                    arg_opens -= 1;
-                    if arg_opens == 0
-                    {
-                        break
-                    }
-                }
-                else if inner_w.content == "," && arg_opens == 1
-                {
-                    if inner_content.is_empty() == false
-                    {
-                        args.push(inner_content.clone());
-                        inner_content.clear();
-                    }
-                }
-                else
-                {
-                    inner_content.push_str(&inner_w.content);
-                }
-            }
-            if arg_opens != 0
-            {
-                panic!("[{}]: Excepted ')' after CLASS_FIELD declaration.", file);
+                panic!("[{}]: Excepted member variable after CLASS_FIELD declaration.", file);
             }
 
-            tokens.push(Token { ty: TokenType::ClassField, line: w.line, content: String::from(&words[inner_idx].content), info: args });
+            tokens.push(Token { ty: TokenType::ClassField, line: w.line, content: String::from(&words[member_idx].content), info: args });
         }
         else if w.content == "GENERATED_CLASS_BODY"
         {
             tokens.push(Token { ty: TokenType::ClassBody, line: w.line, content: "".to_string(), info: vec![] });
-        }
-        else if w.content == "GENERATED_WIDGET_BODY"
-        {
-            tokens.push(Token { ty: TokenType::WidgetBody, line: w.line, content: "".to_string(), info: vec![] });
         }
 
         continue

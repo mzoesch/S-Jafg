@@ -18,11 +18,28 @@ pub struct JPacketUnit
     pub packets: Vec<JPacket>,
 }
 
+impl JPacketUnit
+{
+    pub fn new(name: String) -> JPacketUnit
+    {
+        JPacketUnit
+        {
+            name: name,
+            packets: Vec::new(),
+        }
+    }
+}
+
 /// A packet for a call of the source.
 pub struct JPacket
 {
     pub name: String,
     pub line: u32,
     pub args: Vec<String>,
-    pub callback: Option<Box<dyn Fn(&Vec<String>) -> String>>,
+    pub callback: Box<dyn Fn(
+        /* h_file_id */ &String,
+        /* h_builder */ &mut String,
+        /* t_builder */ &mut String,
+        /* self */ &JPacket,
+    )>,
 }

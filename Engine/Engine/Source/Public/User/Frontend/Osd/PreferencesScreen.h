@@ -24,7 +24,7 @@ template <> NODISCARD inline auto FormatArgLegacy<TSubclassOf<WPreferencesPanel>
 DECLARE_JAFG_WIDGET()
 class ENGINE_API WPreferencesPanel : public WCommonMenuTabBarPanel
 {
-    GENERATED_WIDGET_BODY()
+    GENERATED_CLASS_BODY()
 
 protected:
 

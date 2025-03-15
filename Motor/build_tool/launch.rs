@@ -149,7 +149,7 @@ pub fn launch(app: &Application, args: &Cli)
 
 fn launch_pre_build(b: BuildTarget)
 {
-    println!("Launching pre-build for [{}] ... ", b.module.name);
+    println!("Launching pre-build for [{}] ...", b.module.name);
 
     // Construct paths so we do not have to deal with that even we just create random files in them
     // but the dirs do not exist. Also better for the IDE.
@@ -160,11 +160,14 @@ fn launch_pre_build(b: BuildTarget)
 
     reflect_module(&b);
 
+    println!("Launching pre-build for [{}] ... Ok.", b.module.name);
     return;
 }
 
 fn launch_post_build(b: BuildTarget)
 {
     print!("Launching post-build for [{}] ... ", b.module.name);
+
+    println!("Ok.");
     return;
 }

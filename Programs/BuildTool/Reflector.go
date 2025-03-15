@@ -3,14 +3,14 @@
 package BuildTool
 
 import (
-    "Jafg/Core"
-    "Jafg/Shared"
-    "bytes"
-    "fmt"
-    "os"
-    "path"
-    "strconv"
-    "strings"
+	"Jafg/Core"
+	"Jafg/Shared"
+	"bytes"
+	"fmt"
+	"os"
+	"path"
+	"strconv"
+	"strings"
 )
 
 func ConvertNameToCppValidDefine(name string) string {

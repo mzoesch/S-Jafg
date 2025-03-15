@@ -68,34 +68,32 @@ pub fn exists_dir(path: &str) -> bool
     return std::path::Path::new(path).exists();
 }
 
-pub fn delete_file(path: &str)
+pub fn delete_file(path: &str) -> bool
 {
-    ensure_path(std::path::Path::new(path).parent().unwrap().to_str().unwrap());
-
-    if !std::path::Path::new(path).exists()
+    if std::path::Path::new(path).exists()
     {
-        return;
+        std::fs::remove_file(path).unwrap();
+        return true;
     }
 
-    std::fs::remove_file(path).unwrap();
-    return;
+    return false;
 }
 
-pub fn write_to_file_if_different(path: &str, emit: bool, content: &str)
+pub fn write_to_file_if_different(path: &str, emit: bool, content: &str) -> bool
 {
     ensure_path(std::path::Path::new(path).parent().unwrap().to_str().unwrap());
 
     if content.len() == 0
     {
-        if exists_file(path)
+        if delete_file(path)
         {
-            delete_file(path);
             if emit
             {
                 println!("[{}]: New file content is empty. Deleting file.", path);
             }
+            return true;
         }
-        return;
+        return false;
     }
 
     ensure_file(path);
@@ -108,7 +106,7 @@ pub fn write_to_file_if_different(path: &str, emit: bool, content: &str)
             println!("[{}]: New content length differs from current content. Writing new content.", path);
         }
         std::fs::write(path, content).unwrap();
-        return;
+        return true;
     }
 
     if cur_content != content
@@ -118,8 +116,8 @@ pub fn write_to_file_if_different(path: &str, emit: bool, content: &str)
             println!("[{}]: New content differs from current content. Writing new content.", path);
         }
         std::fs::write(path, content).unwrap();
-        return;
+        return true;
     }
 
-    return;
+    return false;
 }

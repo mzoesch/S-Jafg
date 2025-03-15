@@ -13,7 +13,7 @@ IF %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 echo Running Program.py ...
-%VENV_DIR%\Scripts\python.exe ./Program.py -UpdateCachedData -INVOKE --SolutionGenerator GenerateAll
+%VENV_DIR%\Scripts\python.exe .\Program.py -UpdateCachedData -INVOKE -- --SolutionGenerator GenerateAll
 
 call :pause_if_needed %1
 
