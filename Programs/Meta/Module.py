@@ -155,6 +155,7 @@ class Module:
             raise ValueError('Expected zero but got >0.')
 
         self.pre_builds.append(f'$PythonExecutable $PythonScript -INVOKE -- --BuildTool pre-build SLN={solution._parent._name} MODULE={self._parent._relative_py_dir} KIND=$Kind PLATFORM=$Platform ARCH=$Arch TARGET=$Target')
+        self.post_builds.append(f'$PythonExecutable $PythonScript -INVOKE -- --BuildTool post-build SLN={solution._parent._name} MODULE={self._parent._relative_py_dir} KIND=$Kind PLATFORM=$Platform ARCH=$Arch TARGET=$Target')
 
         return None
 

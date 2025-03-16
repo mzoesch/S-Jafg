@@ -47,6 +47,11 @@ pub fn ensure_path(path: &str)
     return;
 }
 
+pub fn get_file_name(path: &str) -> String
+{
+    return std::path::Path::new(path).file_name().unwrap().to_str().unwrap().to_string();
+}
+
 pub fn read_file(path: &str) -> String
 {
     ensure_file(path);
@@ -116,6 +121,51 @@ pub fn write_to_file_if_different(path: &str, emit: bool, content: &str) -> bool
             println!("[{}]: New content differs from current content. Writing new content.", path);
         }
         std::fs::write(path, content).unwrap();
+        return true;
+    }
+
+    return false;
+}
+
+pub fn copy_to_dir_if_different(src: &str, dst: &str, emit: bool) -> bool
+{
+    ensure_path(std::path::Path::new(dst).parent().unwrap().to_str().unwrap());
+
+    if !std::path::Path::new(src).exists()
+    {
+        panic!("[{}]: No such file.", src);
+    }
+
+    if !std::path::Path::new(dst).exists()
+    {
+        if emit
+        {
+            println!("[{}]: No such file. Copying it.", dst);
+        }
+        std::fs::copy(src, dst).unwrap();
+        return true;
+    }
+
+    let src_content: Vec<u8> = std::fs::read(src).unwrap();
+    let dst_content: Vec<u8> = std::fs::read(dst).unwrap();
+
+    if src_content.len() != dst_content.len()
+    {
+        if emit
+        {
+            println!("[{}]: New content length differs from current content. Copying new content.", dst);
+        }
+        std::fs::copy(src, dst).unwrap();
+        return true;
+    }
+
+    if src_content != dst_content
+    {
+        if emit
+        {
+            println!("[{}]: New content differs from current content. Copying new content.", dst);
+        }
+        std::fs::copy(src, dst).unwrap();
         return true;
     }
 

@@ -60,13 +60,18 @@ pub(crate) fn reflect_module(b: &BuildTarget)
         deletes += delete_packet(b, unit);
     }
 
-    if writes > 0
+    if writes > 0 || deletes > 0
     {
-        print!("w[{}] ", writes);
-    }
-    if deletes > 0
-    {
-        print!("d[{}] ", deletes);
+        print!("Launching pre-build for [{}] ... ", b.module.name);
+        if writes > 0
+        {
+            print!("w[{}] ", writes);
+        }
+        if deletes > 0
+        {
+            print!("d[{}]", deletes);
+        }
+        println!();
     }
 
     return;
@@ -345,11 +350,11 @@ fn write_packet(b: &BuildTarget, unit: JPacketUnit) -> i32
     h_builder.push_str("\n\n");
     t_builder.push_str("\n\n");
 
-    if (finder::write_to_file_if_different(&gh_file, false, &h_builder))
+    if finder::write_to_file_if_different(&gh_file, false, &h_builder)
     {
         changes += 1;
     }
-    if (finder::write_to_file_if_different(&gt_file, false, &t_builder))
+    if finder::write_to_file_if_different(&gt_file, false, &t_builder)
     {
         changes += 1;
     }
@@ -400,6 +405,7 @@ fn add_pragma(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Option<JP
     panic!("[{}:{}]: Unknown pragma: [{}].", file, tokens[i].line, t.content);
 }
 
+#[allow(non_snake_case)]
 fn on_add_class__VA__ARGS(packet: &JPacket) -> String
 {
     let mut out: String = String::new();
@@ -644,7 +650,7 @@ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DE
     });
 }
 
-fn add_class_field(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Option<JPacket>
+fn add_class_field(_file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Option<JPacket>
 {
     assert_eq!(t.ty.is_class_field(), true);
     assert_eq!(tokens[i].ty.is_class_field(), true);
@@ -654,7 +660,7 @@ fn add_class_field(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Opti
         name: t.content.clone(),
         line: t.line,
         args: t.info.clone(),
-        callback: Box::new(|h_file_id, h_builder, t_builder, self_packet|
+        callback: Box::new(|h_file_id, h_builder, _t_builder, self_packet|
             {
                 h_builder.push_str(&format!(r##"
 #ifdef {}_{}_MY_GENERATED_CLASS_FIELD_DECLARATION
@@ -712,7 +718,7 @@ fn add_class_body(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Optio
         args: vec![class_decl.info[SUPER_CLASS].clone(), class_decl.line.to_string()],
         callback: match class_decl.ty
         {
-            TokenType::ClassDeclaration => Box::new(|h_file_id, h_builder, t_builder, self_packet|
+            TokenType::ClassDeclaration => Box::new(|h_file_id, h_builder, _t_builder, self_packet|
             {
                 h_builder.push_str(&format!(r##"
 #ifdef {}_{}_MY_GENERATED_CLASS_BODY
@@ -738,7 +744,7 @@ fn add_class_body(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Optio
                     self_packet.args[1],
                 ));
             }),
-            TokenType::WidgetDeclaration => Box::new(|h_file_id, h_builder, t_builder, self_packet|
+            TokenType::WidgetDeclaration => Box::new(|h_file_id, h_builder, _t_builder, self_packet|
             {
                 h_builder.push_str(&format!(r##"
 #ifdef {}_{}_MY_GENERATED_CLASS_BODY
@@ -764,7 +770,7 @@ fn add_class_body(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Optio
                     self_packet.args[1],
                 ));
             }),
-            TokenType::WidgetDeclarationWithFactory => Box::new(|h_file_id, h_builder, t_builder, self_packet|
+            TokenType::WidgetDeclarationWithFactory => Box::new(|h_file_id, h_builder, _t_builder, self_packet|
             {
                 h_builder.push_str(&format!(r##"
 #ifdef {}_{}_MY_GENERATED_CLASS_BODY

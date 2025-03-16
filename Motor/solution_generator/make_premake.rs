@@ -76,8 +76,6 @@ pub(crate) fn make_premake(solution: &Solution, emulate: bool)
     {
         if cfg!(windows)
         {
-            let abs_sln_file: String = paths::to_absolute_path(sln_file.as_str());
-            let abs_sln_link: String = paths::to_absolute_path(sln_link.as_str());
             let ps1: &str = "Programs/Shell/CreateSymlink.ps1";
             let output = std::process::Command::new("powershell")
                 .arg("-NoProfile")
@@ -674,6 +672,16 @@ fn make_script(solution: &Solution)
 
                         wwi(b, 2, "prebuildcommands {");
                         for _step in module.pre_builds.iter()
+                        {
+                            let steps: Vec<String> = expand_variables_for_step(&_step);
+                            let compound: String = steps.join(" ");
+                            wwi(b, 3, compound);
+                            continue
+                        }
+                        wwi(b, 3, "}");
+
+                        wwi(b, 2, "postbuildcommands {");
+                        for _step in module.post_builds.iter()
                         {
                             let steps: Vec<String> = expand_variables_for_step(&_step);
                             let compound: String = steps.join(" ");

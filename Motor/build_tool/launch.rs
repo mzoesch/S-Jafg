@@ -10,20 +10,21 @@ use crate::core::finder;
 struct BuildTargetUnprocessed
 {
     pub solution: String,
-    pub module: String,
-    pub kind: String,
     pub platform: String,
-    pub arch: String,
-    pub target: String,
+    pub arch:     String,
+    pub kind:     String,
+    pub target:   String,
+    pub module:   String,
 }
 
 struct _BuildTarget<'a>
 {
     pub solution: Option<&'a Solution>,
     pub platform: Option<&'a Platform>,
-    pub config: Option<&'a BuildConfig>,
-    pub target: Option<&'a Target>,
-    pub module: Option<&'a Module>,
+    pub arch:     Option<String>,
+    pub config:   Option<&'a BuildConfig>,
+    pub target:   Option<&'a Target>,
+    pub module:   Option<&'a Module>,
 }
 
 enum BuildStep
@@ -55,10 +56,12 @@ pub fn emulate(solution: &Solution)
             {
                 for module in target.modules.iter()
                 {
+                    // Obviously we cannot emulate post build tasks.
                     launch_pre_build(BuildTarget
                     {
                         solution: solution,
                         platform: platform,
+                        arch: "".to_string(),
                         config: config,
                         target: target,
                         module: module,
@@ -142,6 +145,7 @@ pub fn launch(app: &Application, args: &Cli)
     {
         solution: None,
         platform: None,
+        arch: None,
         config: None,
         target: None,
         module: None,
@@ -151,17 +155,19 @@ pub fn launch(app: &Application, args: &Cli)
 
     build_target.solution = Option::from(app.find_solution_by_name_checked(&build_target_unprocessed.solution));
     build_target.platform = Option::from(build_target.solution.unwrap().find_platform_by_name_checked(&build_target_unprocessed.platform));
-    build_target.config = Option::from(build_target.platform.unwrap().find_config_by_name_checked(parts[1]));
-    build_target.target = Option::from(build_target.config.unwrap().find_target_by_name_checked(parts[0]));
-    build_target.module = Option::from(build_target.target.unwrap().find_module_by_name_checked(&build_target_unprocessed.module));
+    build_target.arch =     Option::from(build_target_unprocessed.arch);
+    build_target.config =   Option::from(build_target.platform.unwrap().find_config_by_name_checked(parts[1]));
+    build_target.target =   Option::from(build_target.config.unwrap().find_target_by_name_checked(parts[0]));
+    build_target.module =   Option::from(build_target.target.unwrap().find_module_by_name_checked(&build_target_unprocessed.module));
 
     let out: BuildTarget = BuildTarget
     {
         solution: build_target.solution.unwrap(),
         platform: build_target.platform.unwrap(),
-        config: build_target.config.unwrap(),
-        target: build_target.target.unwrap(),
-        module: build_target.module.unwrap(),
+        arch:     build_target.arch.unwrap(),
+        config:   build_target.config.unwrap(),
+        target:   build_target.target.unwrap(),
+        module:   build_target.module.unwrap(),
     };
 
     if step == BuildStep::PreBuild
@@ -180,8 +186,9 @@ fn launch_pre_build(b: BuildTarget)
 {
     println!("Launching pre-build for [{}] ...", b.module.name);
 
-    // Construct paths so we do not have to deal with that even we just create random files in them
-    // but the dirs do not exist. Also better for the IDE.
+    // Construct paths so we do not have to deal with missing dirs when crating random files in
+    // them - some platforms forbid to create files in dirs that don't exist.
+    // Also better for the target IDE performance.
     finder::ensure_path(&b.solution.construct_relative_gh_path(b.platform, b.module));
     finder::ensure_path(&b.solution.construct_relative_cgh_path(b.platform, b.config, b.target, b.module));
     finder::ensure_path(&b.solution.construct_relative_gt_path(b.platform, b.module));
@@ -195,8 +202,59 @@ fn launch_pre_build(b: BuildTarget)
 
 fn launch_post_build(b: BuildTarget)
 {
-    print!("Launching post-build for [{}] ... ", b.module.name);
+    println!("Launching post-build for [{}] ...", b.module.name);
 
-    println!("Ok.");
+    if b.module.kind.is_shared()
+    {
+        let shared_bin_dir: String = b.get_bin_dir();
+        finder::check_dir(&shared_bin_dir);
+
+        for module in b.target.modules.iter().filter(|m| m.kind.is_launch())
+        {
+            let launch_bin_dir: String = b.get_bin_dir_for_module(module);
+            finder::ensure_path(&launch_bin_dir);
+
+            let src_runtime_lib: String = format!("{}/{}{}", shared_bin_dir, b.module.name, b.get_shared_bin_ext());
+            let dst_runtime_lib: String = format!("{}/{}{}", launch_bin_dir, b.module.name, b.get_shared_bin_ext());
+            finder::check_file(&src_runtime_lib);
+
+            let src_runtime_pdb: String = format!("{}/{}{}", shared_bin_dir, b.module.name, b.get_symbols_bin_ext()); // ok if not exists
+            let dst_runtime_pdb: String = format!("{}/{}{}", launch_bin_dir, b.module.name, b.get_symbols_bin_ext());
+
+            finder::copy_to_dir_if_different(&src_runtime_lib, &dst_runtime_lib, true);
+            if finder::exists_file(&src_runtime_lib)
+            {
+                finder::copy_to_dir_if_different(&src_runtime_pdb, &dst_runtime_pdb, true);
+            }
+
+            continue
+        }
+    }
+
+    for module in b.target.modules.iter().filter(|m| m.kind.is_launch())
+    {
+        let launch_bin_dir: String = b.get_bin_dir_for_module(module);
+        finder::ensure_path(&launch_bin_dir);
+
+        for dependency in b.module.native_runtime_dependencies.iter()
+        {
+            finder::check_file(dependency);
+            let dst_dependency: String = format!("{}/{}", launch_bin_dir, finder::get_file_name(dependency));
+            finder::copy_to_dir_if_different(dependency, &dst_dependency, true);
+            continue
+        }
+
+        for dependency in b.module.native_additional_runtime_dependencies.iter()
+        {
+            finder::check_file(dependency);
+            let dst_dependency: String = format!("{}/{}", launch_bin_dir, finder::get_file_name(dependency));
+            finder::copy_to_dir_if_different(dependency, &dst_dependency, true);
+            continue
+        }
+
+        continue
+    }
+
+    println!("Launching post-build for [{}] ... Ok.", b.module.name);
     return;
 }
