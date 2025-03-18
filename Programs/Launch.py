@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import sys
 import time
 from Programs.Shared import *
 from Programs.Meta.Application import GApp
@@ -42,6 +43,7 @@ def launch(*args, **kwargs) -> None:
     except Exception as e:
         print(f'Error: {e}')
         print('Failed to route to subprogram.')
+        sys.stdout.flush()
         import traceback
         traceback.print_exc()
         error_level = EErrorLevel.FATAL
@@ -56,6 +58,7 @@ def launch(*args, **kwargs) -> None:
     print(f'Popped working directory to [{last_wd}].')
 
     print(f'Exiting reflection wrapper with {error_level}.')
+    sys.stdout.flush()
     exit(error_level.value)
 
 

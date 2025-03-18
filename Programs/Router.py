@@ -7,7 +7,7 @@ import subprocess
 import shutil
 from pathlib import Path
 from Programs.Shared import *
-from Programs.Shared.Files import download_file, unzip_file
+from Programs.Shared.Files import download_file, unzip_file, detar_file
 from typing import List
 
 
@@ -161,6 +161,11 @@ class MyRust:
                 shutil.copyfile('Motor/target/debug/motor.exe', 'Motor/motor.exe')
             except shutil.SameFileError as _:
                 print('Nothing to copy.')
+        elif HostPlatform.is_linux():
+            try:
+                shutil.copy('Motor/target/debug/motor', 'Motor/motor')
+            except shutil.SameFileError as _:
+                print('Nothing to copy.')
         else:
             raise NotImplementedError('Platform has not been implemented for using rust auto install.')
         print('Scripts compiled successfully.')
@@ -205,7 +210,7 @@ class MyRust:
         if HostPlatform.is_windows():
             ...  # Download win binaries, etc.
 
-        raise NotImplementedError(
+        raise RuntimeError(
             f'Your platform does not have precompiled binaries for Jafg. '
             f'You will have to install rust v[{cls._rust_version}] or higher.'
         )
@@ -252,11 +257,23 @@ class MyPremake:
             )
         if platform.is_this_osx():
             return pathlib.Path(
-                f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake-osx.app'
+                f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake-osx/premake5'
             )
         if platform.is_this_linux():
             return pathlib.Path(
-                f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake-lnx.app'
+                f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake-lnx/premake5'
+            )
+        raise NotImplementedError(f'Missing implementation for platform specific code for your platform [{platform.name}].')
+
+    @classmethod
+    def get_abs_install_dir(cls, platform: HostPlatform) -> Path:
+        if platform.is_this_osx():
+            return pathlib.Path(
+                f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake-osx'
+            )
+        if platform.is_this_linux():
+            return pathlib.Path(
+                f'{pathlib.Path(get_abs_engine_root_dir()).joinpath(cls.dir_to_locate).as_posix()}/premake-lnx'
             )
         raise NotImplementedError(f'Missing implementation for platform specific code for your platform [{platform.name}].')
 
@@ -287,36 +304,6 @@ class MyPremake:
         if platform is None:
             platform = HostPlatform.get_current_platform()
 
-        if not cls.is_installed(platform):
-            return cls.install(platform)
-
-        print(f'Premake is already installed for platform [{platform.name}]. Skipping ...')
-        return EErrorLevel.SUCCESS
-
-    @classmethod
-    def is_installed(cls, platform: HostPlatform) -> bool:
-        if platform is not HostPlatform.WINDOWS: # Currently not supported ...
-            return cls.get_abs_install_zip_file(platform).exists()
-        return cls.get_abs_install_file(platform).exists()
-
-    @classmethod
-    def install(cls, platform: HostPlatform) -> EErrorLevel:
-        path_file: Path = cls.get_abs_install_file(platform)
-        zip_file: Path = cls.get_abs_install_zip_file(platform)
-
-        print(f'Downloading Premake from {cls.get_zip_url(platform)} to {zip_file} ...')
-        if download_file(cls.get_zip_url(platform), zip_file) is not EErrorLevel.SUCCESS:
-            print('Failed to download Premake.')
-            return EErrorLevel.FATAL
-
-        if platform.is_this_windows():
-            print('Extracting Premake ...')
-            if unzip_file(zip_file, delete_zip_file=False) is not EErrorLevel.SUCCESS:
-                print('Failed to extract Premake.')
-                return EErrorLevel.FATAL
-
-        print(f'Premake {cls.version} has been downloaded to {cls.dir_to_locate}.')
-
         if cls.get_abs_license_file().exists():
             print('Premake License file already exists. Skipping ...')
         else:
@@ -325,6 +312,39 @@ class MyPremake:
             download_file(cls.license_url, license_path_file)
             print(f"Premake License file has been downloaded to '{cls.dir_to_locate}'")
 
+        if not cls.is_installed(platform):
+            return cls.install(platform)
+
+        print(f'Premake is already installed for platform [{platform.name}] at [{cls.get_abs_install_file(platform)}]. Skipping ...')
+        return EErrorLevel.SUCCESS
+
+    @classmethod
+    def is_installed(cls, platform: HostPlatform) -> bool:
+        return cls.get_abs_install_file(platform).exists()
+
+    @classmethod
+    def install(cls, platform: HostPlatform) -> EErrorLevel:
+        zip_file: Path = cls.get_abs_install_zip_file(platform)
+
+        if zip_file.exists():
+            print(f'Premake [{platform.name}] already cached locally at [{zip_file}]. Skipping download ...')
+        else:
+            print(f'Downloading Premake [{platform.name}] from {cls.get_zip_url(platform)} to {zip_file} ...')
+            if download_file(cls.get_zip_url(platform), zip_file) is not EErrorLevel.SUCCESS:
+                print('Failed to download Premake.')
+                return EErrorLevel.FATAL
+
+        print(f'Extracting Premake for [{platform.name}] ...')
+        if platform.is_this_windows():
+            if unzip_file(zip_file, delete_zip_file=False) is not EErrorLevel.SUCCESS:
+                print(f'Failed to extract Premake [{platform.name}].')
+                return EErrorLevel.FATAL
+        else:
+            if detar_file(zip_file, delete_tar_file=False, dst=cls.get_abs_install_dir(platform)) is not EErrorLevel.SUCCESS:
+                print(f'Failed to extract Premake [{platform.name}].')
+                return EErrorLevel.FATAL
+
+        print(f'Premake {cls.version} has been downloaded to {cls.dir_to_locate} for platform [{platform.name}].')
         return EErrorLevel.SUCCESS
 
 
@@ -345,7 +365,6 @@ class MyCmake:
 
     @classmethod
     def validate(cls) -> EErrorLevel:
-        # Python terminates if this function call fails.
         if run_any_task_ok_to_fail('cmake', '--version') == 0:
             return EErrorLevel.SUCCESS
         return EErrorLevel.FATAL

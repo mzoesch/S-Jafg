@@ -29,7 +29,7 @@ Only when making changes to the reflection system you will additionally need `Go
 ## Generate solution and build
 
 ### For Native Target Platforms
-1. Double click / run the `~/Setup` script for your platform (`~/Setup.bat` or `~/Setup.command`). This will download and generate the solution files for your platform.
+1. Double click / run the `~/Setup` script for your platform (`~/Setup.bat` (Win), `~/Setup.command` (Darwin) or `~/Setup.sh` (Linux)). This will download and generate the solution files for your platform.
 2. Open the generated `~/Jafg-All.sln` file with JetBrain's Rider, Visual Studio, XCode or any IDE that can read and understand solution files. Select your native Platform, `Client-Debug` and the `Runtime` configuration and run the project.
 
 ### For WebAssembly (Wasm)

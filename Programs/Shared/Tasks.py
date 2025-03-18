@@ -5,6 +5,8 @@ import sys
 import threading
 import subprocess
 
+from Programs.Shared import HostPlatform
+
 
 def _stream_output(stream, output_func) -> None:
     for line in iter(stream.readline, ''):
@@ -23,6 +25,15 @@ def _copy_and_print(line, copied_stdout) -> None:
     return None
 
 
+def _get_shell_args(*args) -> any:
+    if HostPlatform.is_windows():
+        return args
+    if HostPlatform.is_linux():
+        return " ".join(args)
+
+    raise NotImplementedError(f'Unsupported platform [{sys.platform}].')
+
+
 def run_any_task(*args, wd=None, shell=False) -> None:
     """
     Emits live output of the stdout / stderr.
@@ -35,13 +46,16 @@ def run_any_task(*args, wd=None, shell=False) -> None:
         print(f'Changed working directory from [{cwd}] to [{os.getcwd()}] to execute subprocess.')
 
     print(f'Running subprocess with args [{" ".join(args)}].')
+
+    if shell:
+        args = _get_shell_args(*args)
     try:
         with subprocess.Popen(
                 args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                shell=shell
+                shell=shell,
         ) as p:
             stdout_thread = threading.Thread(target=_stream_output,
                                             args=(p.stdout, lambda line: print(line, end='')))
@@ -75,11 +89,12 @@ def run_any_task_with_stdout(copied_stdout, *args) -> None:
     """
 
     print(f'Running subprocess with args [{" ".join(args)}].')
+
     with subprocess.Popen(
             args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True
+            text=True,
     ) as p:
 
         stdout_thread = threading.Thread(target=_stream_output,
@@ -112,12 +127,14 @@ def run_any_task_ok_to_fail(*args) -> int:
     """
 
     print(f'Running subprocess with args [{" ".join(args)}].')
+
+    args = _get_shell_args(*args)
     with subprocess.Popen(
             args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            shell=True
+            shell=True,
     ) as p:
         stdout_thread = threading.Thread(target=_stream_output,
                                          args=(p.stdout, lambda line: print(line, end='')))
@@ -143,11 +160,14 @@ def run_any_task_with_stdout_ok_to_fail(copied_stdout, *args) -> int:
     """
 
     print(f'Running subprocess with args [{" ".join(args)}].')
+
+    args = _get_shell_args(*args)
     with subprocess.Popen(
             args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True
+            text=True,
+            shell=True,
     ) as p:
 
         stdout_thread = threading.Thread(target=_stream_output,

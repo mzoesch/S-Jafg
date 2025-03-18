@@ -5,6 +5,7 @@ import os
 import time
 import urllib
 from zipfile import ZipFile
+from tarfile import TarFile
 from .Common import EErrorLevel
 
 
@@ -136,5 +137,18 @@ def unzip_file(filepath, delete_zip_file=True) -> EErrorLevel:
 
     if delete_zip_file:
         os.remove(zip_file_path)  # delete zip file
+
+    return EErrorLevel.SUCCESS
+
+
+def detar_file(filepath, delete_tar_file=True, dst=None) -> EErrorLevel:
+    if dst is None:
+        dst = os.path.dirname(filepath)
+
+    with TarFile.open(filepath, 'r') as tarFile:
+        tarFile.extractall(path=dst)
+
+    if delete_tar_file:
+        os.remove(filepath)
 
     return EErrorLevel.SUCCESS
