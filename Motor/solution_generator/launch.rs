@@ -39,7 +39,11 @@ fn generate_solution(solution: &Solution, emulate: bool)
     make_pch_for_all_modules(solution);
 
     make_cmake(solution, emulate);
-    make_premake(solution, emulate);
+
+    if cfg!(target_os = "windows")
+    {
+        make_premake(solution, emulate);
+    }
 
     return;
 }

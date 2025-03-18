@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 use std::fmt::{Display};
+use std::os::unix::fs::symlink;
 use crate::core::application::{ModuleKind, Solution};
 use crate::core::finder;
 use crate::core::paths;
@@ -15,35 +16,50 @@ pub(crate) fn make_premake(solution: &Solution, emulate: bool)
         crate::build_tool::launch::emulate(solution);
     }
 
-    if cfg!(windows)
+    let premake_executable: String;
+    let premake_generator: String;
+    
+    if cfg!(target_os = "windows")
     {
-        let premake_executable: String = format!("{}/Programs/Vendor/Premake/Bin/premake5.exe", paths::get_engine_root_dir());
-        let target_script: String = format!("{}/{}/__buildSolution.lua", paths::get_engine_root_dir(), solution.get_saved_rel_dir_premake());
-        finder::check_file(&premake_executable);
-        finder::check_file(&target_script);
-        let output = std::process::Command::new(premake_executable)
-            .arg(format!("--file={}", target_script))
-            .arg("vs2022")
-            .output()
-            .expect("Failed to run premake script");
-
-        println!("Status: {}", output.status);
-        if output.stdout.len() > 0
-        {
-            println!("{}", String::from_utf8_lossy(&output.stdout));
-        }
-        if output.stderr.len() > 0
-        {
-            println!("{}", String::from_utf8_lossy(&output.stderr));
-        }
-        if !output.status.success()
-        {
-            panic!("Premake failed.");
-        }
+        premake_executable = format!("{}/Programs/Vendor/Premake/Bin/premake5.exe", paths::get_engine_root_dir());
+        premake_generator = "vs2022".to_string();
+    }
+    else if cfg!(target_os = "linux")
+    {
+        premake_executable = format!("{}/Programs/Vendor/Premake/Bin/premake-lnx/premake5", paths::get_engine_root_dir());
+        premake_generator = "gmake2".to_string();
+    }
+    else if cfg!(target_os = "macos")
+    {
+        premake_executable = format!("{}/Programs/Vendor/Premake/Bin/premake-osx/premake5", paths::get_engine_root_dir());
+        premake_generator = "gmake2".to_string();
     }
     else
     {
         panic!("Missing implementation for this platform.");
+    }
+
+    let target_script: String = format!("{}/{}/__buildSolution.lua", paths::get_engine_root_dir(), solution.get_saved_rel_dir_premake());
+    finder::check_file(&premake_executable);
+    finder::check_file(&target_script);
+    let output: std::process::Output = std::process::Command::new(premake_executable)
+        .arg(format!("--file={}", target_script))
+        .arg(premake_generator)
+        .output()
+        .expect("Failed to run premake script");
+
+    println!("Status: {}", output.status);
+    if output.stdout.len() > 0
+    {
+        println!("{}", String::from_utf8_lossy(&output.stdout));
+    }
+    if output.stderr.len() > 0
+    {
+        println!("{}", String::from_utf8_lossy(&output.stderr));
+    }
+    if !output.status.success()
+    {
+        panic!("Premake failed.");
     }
 
     // Make sure JetBrain's IDEAs (really in every fucking one of them) can detect the vcs in the root engine dir.
@@ -67,15 +83,22 @@ pub(crate) fn make_premake(solution: &Solution, emulate: bool)
 
     // Symlink the generated solution file to the top level dir.
     let sln_file: String = format!("{}/Jafg.sln", solution.get_saved_rel_dir_premake());
-    let sln_link: String = format!("Jafg-{}.sln.lnk", solution.name);
+    let sln_link: String = match cfg!(target_os = "windows") 
+    {
+        true => format!("Jafg-{}.sln.lnk", solution.name),
+        false => format!("Jafg-{}.sln", solution.name),
+    };
+    
     if finder::exists_file(sln_file.as_str()) == false
     {
         panic!("No such file: [{}].", sln_file);
     }
     if finder::exists_file(sln_link.as_str()) == false
     {
-        if cfg!(windows)
-        {
+        if cfg!(target_os = "windows")
+        {                // Because of symlink needs admin rights except when creating .lnk file
+                         // through ps1. Is this a bug in the winapi or they just forgot to change
+                         // the permissions for the symlink function in powershell, lol??
             let ps1: &str = "Programs/Shell/CreateSymlink.ps1";
             let output = std::process::Command::new("powershell")
                 .arg("-NoProfile")
@@ -104,7 +127,11 @@ pub(crate) fn make_premake(solution: &Solution, emulate: bool)
         }
         else
         {
-            unimplemented!("Missing implementation for this platform.");
+            match symlink(sln_file, sln_link)
+            {
+                Ok(_) => { println!("Symlink succeeded for solution [{}].", solution.name) },
+                Err(e) => panic!("Failed to create symlink: [{}].", e),
+            }
         }
     }
 
@@ -181,12 +208,12 @@ fn entry_to_lua(entry: &str) -> &'static str
 
 fn get_host_python_executable() -> String
 {
-    return if cfg!(windows)
+    return if cfg!(target_os = "windows")
     {
-        "python.exe".to_string()
+        "/.venv/Scripts/python.exe".to_string()
     } else
     {
-        "python3".to_string()
+        "/.venv/bin/python3".to_string()
     }
 }
 
@@ -221,7 +248,7 @@ fn expand_variables_for_step(in_step: &str) -> Vec<String>
 
                 out.insert(i, "_WORKING_DIR".to_string());
                 out.insert(i+1, "..".to_string());
-                out.insert(i+2, format!("/.venv/Scripts/{}", get_host_python_executable()));
+                out.insert(i+2, format!("{}", get_host_python_executable()));
 
                 if after.len() > 0
                 {
