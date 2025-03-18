@@ -101,7 +101,7 @@ impl Solution
 
     pub fn construct_relative_root_saved_dir(&self, p: &Platform, m: &Module) -> String
     {
-        return format!("{}/SLN_{}/{}/{}/{}", paths::PATH_SAVED_DIR, self.get_functional_rel_dir(), self.name, m.get_functional_rel_dir(), p.name);
+        return format!("{}/{}/SLN_{}/{}/{}", paths::PATH_SAVED_DIR, self.get_functional_rel_dir(), self.name, m.get_functional_rel_dir(), p.name);
     }
 
     pub fn construct_relative_cgh_path(&self, p: &Platform, c: &BuildConfig, t: &Target, m: &Module) -> String

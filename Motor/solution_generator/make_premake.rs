@@ -1,21 +1,15 @@
 // Copyright mzoesch. All rights reserved.
 
 use std::fmt::{Display};
+#[cfg(unix)]
 use std::os::unix::fs::symlink;
 use crate::core::application::{ModuleKind, Solution};
 use crate::core::finder;
 use crate::core::paths;
-use crate::core::finder::ensure_file;
+use crate::solution_generator::launch::ScriptType;
 
-pub(crate) fn make_premake(solution: &Solution, emulate: bool)
+pub(crate) fn make_premake(solution: &Solution)
 {
-    make_script(solution);
-
-    if emulate
-    {
-        crate::build_tool::launch::emulate(solution);
-    }
-
     let premake_executable: String;
     let premake_generator: String;
     
@@ -65,7 +59,7 @@ pub(crate) fn make_premake(solution: &Solution, emulate: bool)
     // Make sure JetBrain's IDEAs (really in every fucking one of them) can detect the vcs in the root engine dir.
     if finder::exists_file(&format!("{}/.idea/.idea.Jafg/.idea/vcs.xml", solution.get_saved_rel_dir_premake())) == false
     {
-        ensure_file(&format!("{}/.idea/.idea.Jafg/.idea/vcs.xml", solution.get_saved_rel_dir_premake()));
+        finder::ensure_file(&format!("{}/.idea/.idea.Jafg/.idea/vcs.xml", solution.get_saved_rel_dir_premake()));
         finder::write_to_file_if_different(
             &format!("{}/.idea/.idea.Jafg/.idea/vcs.xml", solution.get_saved_rel_dir_premake()),
             true,
@@ -127,11 +121,14 @@ pub(crate) fn make_premake(solution: &Solution, emulate: bool)
         }
         else
         {
+            #[cfg(unix)]
             match symlink(sln_file, sln_link)
             {
                 Ok(_) => { println!("Symlink succeeded for solution [{}].", solution.name) },
                 Err(e) => panic!("Failed to create symlink: [{}].", e),
             }
+            #[cfg(not(unix))]
+            panic!("Symlinks are not supported on this platform.");
         }
     }
 
@@ -206,267 +203,12 @@ fn entry_to_lua(entry: &str) -> &'static str
     }
 }
 
-fn get_host_python_executable() -> String
-{
-    return if cfg!(target_os = "windows")
-    {
-        "/.venv/Scripts/python.exe".to_string()
-    } else
-    {
-        "/.venv/bin/python3".to_string()
-    }
-}
-
-fn expand_variables_for_step(in_step: &str) -> Vec<String>
-{
-    let mut out: Vec<String> = Vec::new();
-    out.push(in_step.to_string());
-
-    let mut modified: bool = true;
-    while modified
-    {
-        modified = false;
-        for mut i in 0..out.len()
-        {
-            let idx: Option<usize> = out[i].find("$PythonExecutable");
-            if idx.is_some()
-            {
-                modified = true;
-                let before: String = out[i].split_at(idx.unwrap()).0.to_string();
-                let after: String = out[i].split_at(idx.unwrap() + "$PythonExecutable".len()).1.to_string();
-
-                if before.len() > 0
-                {
-                    out[i] = format!("{}", before.to_string());
-                    out.insert(i+1, "..".to_string());
-                    i += 2;
-                }
-                else
-                {
-                    out.remove(i);
-                }
-
-                out.insert(i, "_WORKING_DIR".to_string());
-                out.insert(i+1, "..".to_string());
-                out.insert(i+2, format!("{}", get_host_python_executable()));
-
-                if after.len() > 0
-                {
-                    out.insert(i+3, "..".to_string());
-                    out.insert(i+4, after.to_string());
-                }
-
-                break;
-            }
-
-            let idx: Option<usize> = out[i].find("$PythonScript");
-            if idx.is_some()
-            {
-                modified = true;
-                let before: String = out[i].split_at(idx.unwrap()).0.to_string();
-                let after: String = out[i].split_at(idx.unwrap() + "$PythonScript".len()).1.to_string();
-
-                if before.len() > 0
-                {
-                    out[i] = before.to_string();
-                    out.insert(i+1, "..".to_string());
-                    i += 2;
-                }
-                else
-                {
-                    out.remove(i);
-                }
-
-                out.insert(i, "_WORKING_DIR".to_string());
-                out.insert(i+1, "..".to_string());
-                out.insert(i+2, "/Program.py".to_string());
-
-                if after.len() > 0
-                {
-                    out.insert(i+3, "..".to_string());
-                    out.insert(i+4, after.to_string());
-                }
-
-                break
-            }
-
-            let idx: Option<usize> = out[i].find("$RootDir");
-            if idx.is_some()
-            {
-                modified = true;
-                let before: String = out[i].split_at(idx.unwrap()).0.to_string();
-                let after: String = out[i].split_at(idx.unwrap() + "$RootDir".len()).1.to_string();
-
-                if before.len() > 0
-                {
-                    out[i] = before.to_string();
-                    out.insert(i+1, "..".to_string());
-                    i += 2;
-                }
-                else
-                {
-                    out.remove(i);
-                }
-
-                out.insert(i, "_WORKING_DIR".to_string());
-
-                if after.len() > 0
-                {
-                    out.insert(i+1, "..".to_string());
-                    out.insert(i+2, after.to_string());
-                }
-
-                break
-            }
-
-            let idx: Option<usize> = out[i].find("$Kind");
-            if idx.is_some()
-            {
-                modified = true;
-                let before: String = out[i].split_at(idx.unwrap()).0.to_string();
-                let after: String = out[i].split_at(idx.unwrap() + "$Kind".len()).1.to_string();
-
-                if before.len() > 0
-                {
-                    out[i] = before.to_string();
-                    out.insert(i+1, "..".to_string());
-                    i += 2;
-                }
-                else
-                {
-                    out.remove(i);
-                }
-
-                out.insert(i, "%{cfg.kind}".to_string());
-
-                if after.len() > 0
-                {
-                    out.insert(i+1, "..".to_string());
-                    out.insert(i+2, after.to_string());
-                }
-
-                break
-            }
-
-            let idx: Option<usize> = out[i].find("$Platform");
-            if idx.is_some()
-            {
-                modified = true;
-                let before: String = out[i].split_at(idx.unwrap()).0.to_string();
-                let after: String = out[i].split_at(idx.unwrap() + "$Platform".len()).1.to_string();
-
-                if before.len() > 0
-                {
-                    out[i] = before.to_string();
-                    out.insert(i+1, "..".to_string());
-                    i += 2;
-                }
-                else
-                {
-                    out.remove(i);
-                }
-
-                out.insert(i, "%{cfg.platform}".to_string());
-
-                if after.len() > 0
-                {
-                    out.insert(i+1, "..".to_string());
-                    out.insert(i+2, after.to_string());
-                }
-
-                break
-            }
-
-            let idx: Option<usize> = out[i].find("$Arch");
-            if idx.is_some()
-            {
-                modified = true;
-                let before: String = out[i].split_at(idx.unwrap()).0.to_string();
-                let after: String = out[i].split_at(idx.unwrap() + "$Arch".len()).1.to_string();
-
-                if before.len() > 0
-                {
-                    out[i] = before.to_string();
-                    out.insert(i+1, "..".to_string());
-                    i += 2;
-                }
-                else
-                {
-                    out.remove(i);
-                }
-
-                out.insert(i, "%{cfg.architecture}".to_string());
-
-                if after.len() > 0
-                {
-                    out.insert(i+1, "..".to_string());
-                    out.insert(i+2, after.to_string());
-                }
-
-                break
-            }
-
-            let idx: Option<usize> = out[i].find("$Target");
-            if idx.is_some()
-            {
-                modified = true;
-                let before: String = out[i].split_at(idx.unwrap()).0.to_string();
-                let after: String = out[i].split_at(idx.unwrap() + "$Target".len()).1.to_string();
-
-                if before.len() > 0
-                {
-                    out[i] = before.to_string();
-                    out.insert(i+1, "..".to_string());
-                    i += 2;
-                }
-                else
-                {
-                    out.remove(i);
-                }
-
-                out.insert(i, "%{cfg.buildcfg}".to_string());
-
-                if after.len() > 0
-                {
-                    out.insert(i+1, "..".to_string());
-                    out.insert(i+2, after.to_string());
-                }
-
-                break
-            }
-
-            continue
-        }
-
-        continue
-    }
-
-    let mut real_out: Vec<String> = Vec::new();
-    for step in out.iter()
-    {
-        if step == ".."
-        {
-            real_out.push(step.to_string());
-        }
-        else if step == "_WORKING_DIR"
-        {
-            real_out.push(step.to_string());
-        }
-        else
-        {
-            real_out.push(format!("'{}'", step));
-        }
-    }
-
-    return real_out;
-}
-
-fn make_script(solution: &Solution)
+pub(crate) fn make_script(solution: &Solution)
 {
     let premake_root_dir: String = solution.get_saved_rel_dir_premake();
     println!("Making premake script at [{}].", premake_root_dir);
     let premake_file: String = format!("{}/__buildSolution.lua", premake_root_dir);
-    ensure_file(premake_file.as_str());
+    finder::ensure_file(premake_file.as_str());
 
     let mut content: String = String::new();
     let b: &mut String = &mut content;
@@ -514,11 +256,21 @@ fn make_script(solution: &Solution)
 
     for platform in solution.platforms.iter()
     {
+        let toolset: String; // Only some legacy premake versions support this. But we use cmake anyway
+        if platform.toolset == "em"
+        {
+            toolset = "gcc".to_string();
+        }
+        else
+        {
+            toolset = platform.toolset.clone();
+        }
+        
         wwi(b, 1, format!("filter {{ 'platforms:{}' }}", platform.name));
         wwi(b, 2, format!("system '{}'", platform_to_lua_system(&platform.name)));
         wwi(b, 2, format!("systemversion '{}'", platform.version));
         wwi(b, 2, format!("architecture '{}'", platform.architecture));
-        wwi(b, 2, format!("toolset '{}'", platform.toolset));
+        wwi(b, 2, format!("toolset '{}'", toolset));
         wwi(b, 2, "defines {");
         for define in platform.defines.iter()
         {
@@ -700,7 +452,7 @@ fn make_script(solution: &Solution)
                         wwi(b, 2, "prebuildcommands {");
                         for _step in module.pre_builds.iter()
                         {
-                            let steps: Vec<String> = expand_variables_for_step(&_step);
+                            let steps: Vec<String> = crate::solution_generator::launch::expand_variables_for_step(&_step, ScriptType::Premake);
                             let compound: String = steps.join(" ");
                             wwi(b, 3, compound);
                             continue
@@ -710,7 +462,7 @@ fn make_script(solution: &Solution)
                         wwi(b, 2, "postbuildcommands {");
                         for _step in module.post_builds.iter()
                         {
-                            let steps: Vec<String> = expand_variables_for_step(&_step);
+                            let steps: Vec<String> = crate::solution_generator::launch::expand_variables_for_step(&_step, ScriptType::Premake);
                             let compound: String = steps.join(" ");
                             wwi(b, 3, compound);
                             continue
