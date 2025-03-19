@@ -40,6 +40,8 @@ fn generate_solution(solution: &Solution, emulate: bool)
     make_pch_for_all_modules(solution);
 
     make_cmake::make_script(solution);
+    // Sadly currently gmake fails to compile. This is a problem with premake5 - so no easy way to
+    // fix this. Therefore, only Windows user can use the solution-based development environment.
     if cfg!(target_os = "windows")
     {
         make_premake::make_script(solution);

@@ -24,37 +24,78 @@ pub(crate) fn make_cmake(solution: &Solution)
         {
             for target in config.targets.iter() 
             {
-                let target_path: String = format!("{}/{}-{}/{}-{}", solution.get_saved_rel_dir_cmake(), platform.name, platform.architecture, target.name, config.name);
-                let gen_file: String = format!("{}/generate.bat", target_path);
-                let build_file: String = format!("{}/build.bat", target_path);
-                let clean_build_file: String = format!("{}/clean_build.bat", target_path);
-
-                let mut gen_bat: String = finder::read_file("Programs/Shell/Stubs/CmakeGenerateForTarget.bat");
-                expand_cmake_vars(&mut gen_bat, solution, platform, config, target);
-                gen_bat = match platform.toolset.as_str()
+                // bat
                 {
-                    "msc" => gen_bat.replace("$PRE_EXECUTION_COMMAND", &finder::read_file("Programs/Shell/Stubs/MakeEnvForLatestMsvc.bat")),
-                    _ => gen_bat.replace("$PRE_EXECUTION_COMMAND", ""),
-                };
-                finder::write_to_file_if_different(&gen_file, true, &gen_bat);
+                    let target_path: String = format!("{}/{}-{}/{}-{}", solution.get_saved_rel_dir_cmake(), platform.name, platform.architecture, target.name, config.name);
+                    let gen_file: String = format!("{}/generate.bat", target_path);
+                    let build_file: String = format!("{}/build.bat", target_path);
+                    let clean_build_file: String = format!("{}/clean_build.bat", target_path);
 
-                let mut build_bat: String = finder::read_file("Programs/Shell/Stubs/CmakeBuildForTarget.bat");
-                expand_cmake_vars(&mut build_bat, solution, platform, config, target);
-                build_bat = match platform.toolset.as_str()
-                {
-                    "msc" => build_bat.replace("$PRE_EXECUTION_COMMAND", &finder::read_file("Programs/Shell/Stubs/MakeEnvForLatestMsvc.bat")),
-                    _ => build_bat.replace("$PRE_EXECUTION_COMMAND", ""),
-                };
-                finder::write_to_file_if_different(&build_file, true, &build_bat);
+                    let mut gen_bat: String = finder::read_file("Programs/Shell/Stubs/CmakeGenerateForTarget.bat");
+                    expand_cmake_vars(&mut gen_bat, solution, platform, config, target);
+                    gen_bat = match platform.toolset.as_str()
+                    {
+                        "msc" => gen_bat.replace("$PRE_EXECUTION_COMMAND", &finder::read_file("Programs/Shell/Stubs/MakeEnvForLatestMsvc.bat")),
+                        _ => gen_bat.replace("$PRE_EXECUTION_COMMAND", ""),
+                    };
+                    finder::write_to_file_if_different(&gen_file, true, &gen_bat);
 
-                let mut clean_build_bat: String = finder::read_file("Programs/Shell/Stubs/CmakeCleanBuildForTarget.bat");
-                expand_cmake_vars(&mut clean_build_bat, solution, platform, config, target);
-                clean_build_bat = match platform.toolset.as_str()
+                    let mut build_bat: String = finder::read_file("Programs/Shell/Stubs/CmakeBuildForTarget.bat");
+                    expand_cmake_vars(&mut build_bat, solution, platform, config, target);
+                    build_bat = match platform.toolset.as_str()
+                    {
+                        "msc" => build_bat.replace("$PRE_EXECUTION_COMMAND", &finder::read_file("Programs/Shell/Stubs/MakeEnvForLatestMsvc.bat")),
+                        _ => build_bat.replace("$PRE_EXECUTION_COMMAND", ""),
+                    };
+                    finder::write_to_file_if_different(&build_file, true, &build_bat);
+
+                    let mut clean_build_bat: String = finder::read_file("Programs/Shell/Stubs/CmakeCleanBuildForTarget.bat");
+                    expand_cmake_vars(&mut clean_build_bat, solution, platform, config, target);
+                    clean_build_bat = match platform.toolset.as_str()
+                    {
+                        "msc" => clean_build_bat.replace("$PRE_EXECUTION_COMMAND", &finder::read_file("Programs/Shell/Stubs/MakeEnvForLatestMsvc.bat")),
+                        _ => clean_build_bat.replace("$PRE_EXECUTION_COMMAND", ""),
+                    };
+                    finder::write_to_file_if_different(&clean_build_file, true, &clean_build_bat);
+                }
+
+                // sh
                 {
-                    "msc" => clean_build_bat.replace("$PRE_EXECUTION_COMMAND", &finder::read_file("Programs/Shell/Stubs/MakeEnvForLatestMsvc.bat")),
-                    _ => clean_build_bat.replace("$PRE_EXECUTION_COMMAND", ""),
-                };
-                finder::write_to_file_if_different(&clean_build_file, true, &clean_build_bat);
+                    let target_path: String = format!("{}/{}-{}/{}-{}", solution.get_saved_rel_dir_cmake(), platform.name, platform.architecture, target.name, config.name);
+                    let gen_file: String = format!("{}/generate.sh", target_path);
+                    let build_file: String = format!("{}/build.sh", target_path);
+                    let clean_build_file: String = format!("{}/clean_build.sh", target_path);
+
+                    let mut gen_sh: String = finder::read_file("Programs/Shell/Stubs/CmakeGenerateForTarget.sh");
+                    expand_cmake_vars(&mut gen_sh, solution, platform, config, target);
+                    gen_sh = match platform.toolset.as_str()
+                    {
+                        "msc" => gen_sh.replace("$PRE_EXECUTION_COMMAND", &finder::read_file("Programs/Shell/Stubs/MakeEnvForLatestMsvc.sh")),
+                        _ => gen_sh.replace("$PRE_EXECUTION_COMMAND", ""),
+                    };
+                    finder::write_to_file_if_different(&gen_file, true, &gen_sh);
+                    std::process::Command::new("chmod").arg("+x").arg(&gen_file).output().expect("Failed to chmod +x generate.sh.");
+
+                    let mut build_sh: String = finder::read_file("Programs/Shell/Stubs/CmakeBuildForTarget.sh");
+                    expand_cmake_vars(&mut build_sh, solution, platform, config, target);
+                    build_sh = match platform.toolset.as_str()
+                    {
+                        "msc" => build_sh.replace("$PRE_EXECUTION_COMMAND", &finder::read_file("Programs/Shell/Stubs/MakeEnvForLatestMsvc.sh")),
+                        _ => build_sh.replace("$PRE_EXECUTION_COMMAND", ""),
+                    };
+                    finder::write_to_file_if_different(&build_file, true, &build_sh);
+                    std::process::Command::new("chmod").arg("+x").arg(&build_file).output().expect("Failed to chmod +x generate.sh.");
+
+                    let mut clean_build_sh: String = finder::read_file("Programs/Shell/Stubs/CmakeCleanBuildForTarget.ah");
+                    expand_cmake_vars(&mut clean_build_sh, solution, platform, config, target);
+                    clean_build_sh = match platform.toolset.as_str()
+                    {
+                        "msc" => clean_build_sh.replace("$PRE_EXECUTION_COMMAND", &finder::read_file("Programs/Shell/Stubs/MakeEnvForLatestMsvc.sh")),
+                        _ => clean_build_sh.replace("$PRE_EXECUTION_COMMAND", ""),
+                    };
+                    finder::write_to_file_if_different(&clean_build_file, true, &clean_build_sh);
+                    std::process::Command::new("chmod").arg("+x").arg(&clean_build_file).output().expect("Failed to chmod +x generate.sh.");
+                }
 
                 continue
             }
