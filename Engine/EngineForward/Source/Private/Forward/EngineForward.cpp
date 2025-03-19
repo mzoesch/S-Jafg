@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Forward/EngineForward.h"
 
 namespace Jafg::EngineForward

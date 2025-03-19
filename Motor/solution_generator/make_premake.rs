@@ -406,8 +406,16 @@ pub(crate) fn make_script(solution: &Solution)
                         wwi(b, 3, "}");
 
                         wwi(b, 2, "defines {");
-                        wwi(b, 3, format!("'{}_API=PLATFORM_CALLSPEC_OUT',", module.name.to_uppercase()));
-                        wwi(b, 3, format!("'{}_EXTERN=PLATFORM_EXTERNSPEC_OUT',", module.name.to_uppercase()));
+                        if module.kind.is_shared()
+                        {
+                            wwi(b, 3, format!("'{}_API=PLATFORM_CALLSPEC_OUT',", module.name.to_uppercase()));
+                            wwi(b, 3, format!("'{}_EXTERN=PLATFORM_EXTERNSPEC_OUT',", module.name.to_uppercase()));
+                        }
+                        else
+                        {
+                            wwi(b, 3, format!("'{}_API=',", module.name.to_uppercase()));
+                            wwi(b, 3, format!("'{}_EXTERN=',", module.name.to_uppercase()));
+                        }
                         for target_module in target.modules.iter()
                         {
                             for dependency in transitive_dependencies.iter()

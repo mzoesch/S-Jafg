@@ -1,12 +1,13 @@
 // Copyright mzoesch. All rights reserved.
 
-use crate::core::application::{BuildConfig, Module, Platform, Solution, Target};
+use crate::core::application::{BuildConfig, Module, ModuleKind, Platform, Solution, Target};
 
 pub struct BuildTarget<'a>
 {
     pub solution: &'a Solution,
     pub platform: &'a Platform,
     pub arch:     String,
+    pub kind:     ModuleKind,
     pub config:   &'a BuildConfig,
     pub target:   &'a Target,
     pub module:   &'a Module,
@@ -29,21 +30,24 @@ impl BuildTarget<'_>
         format!("{}/{}", self.get_root_bin_dir(), module.get_functional_rel_dir())
     }
 
+    pub fn get_shared_counterpart(&self) -> String
+    {
+        return self.platform.get_shared_counterpart();
+    }
+
     pub fn get_shared_bin_ext(&self) -> String
     {
-        match self.platform.name.as_str()
-        {
-            "Windows" => ".dll",
-            _         => ".not_supported",
-        }.to_string()
+        return self.platform.get_shared_bin_extension();
     }
+
+    pub fn get_static_bin_ext(&self) -> String
+    {
+        return self.platform.get_static_bin_extension();
+    }
+
     pub fn get_symbols_bin_ext(&self) -> String
     {
-        match self.platform.name.as_str()
-        {
-            "Windows" => ".pdb",
-            _         => ".not_supported",
-        }.to_string()
+        return self.platform.get_symbols_bin_extension();
     }
 }
 

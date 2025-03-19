@@ -4,7 +4,7 @@ use std::cmp::PartialEq;
 use crate::Cli;
 use crate::build_tool::core::BuildTarget;
 use crate::build_tool::reflector::reflect_module;
-use crate::core::application::{Application, BuildConfig, Module, Platform, Solution, Target};
+use crate::core::application::{Application, BuildConfig, Module, ModuleKind, Platform, Solution, Target};
 use crate::core::finder;
 
 struct BuildTargetUnprocessed
@@ -22,6 +22,7 @@ struct _BuildTarget<'a>
     pub solution: Option<&'a Solution>,
     pub platform: Option<&'a Platform>,
     pub arch:     Option<String>,
+    pub kind:     Option<ModuleKind>,
     pub config:   Option<&'a BuildConfig>,
     pub target:   Option<&'a Target>,
     pub module:   Option<&'a Module>,
@@ -62,9 +63,10 @@ pub fn emulate(solution: &Solution)
                         solution: solution,
                         platform: platform,
                         arch: "".to_string(),
+                        kind: module.kind.clone(),
                         config: config,
                         target: target,
-                        module: module,
+                        module,
                     });
                 }
                 continue
@@ -146,6 +148,7 @@ pub fn launch(app: &Application, args: &Cli)
         solution: None,
         platform: None,
         arch: None,
+        kind: None,
         config: None,
         target: None,
         module: None,
@@ -155,16 +158,18 @@ pub fn launch(app: &Application, args: &Cli)
 
     build_target.solution = Option::from(app.find_solution_by_name_checked(&build_target_unprocessed.solution));
     build_target.platform = Option::from(build_target.solution.unwrap().find_platform_by_name_checked(&build_target_unprocessed.platform));
-    build_target.arch =     Option::from(build_target_unprocessed.arch);
-    build_target.config =   Option::from(build_target.platform.unwrap().find_config_by_name_checked(parts[1]));
-    build_target.target =   Option::from(build_target.config.unwrap().find_target_by_name_checked(parts[0]));
-    build_target.module =   Option::from(build_target.target.unwrap().find_module_by_name_checked(&build_target_unprocessed.module));
+    build_target.arch     = Option::from(build_target_unprocessed.arch);
+    build_target.kind     = ModuleKind::from_str(&build_target_unprocessed.kind);
+    build_target.config   = Option::from(build_target.platform.unwrap().find_config_by_name_checked(parts[1]));
+    build_target.target   = Option::from(build_target.config.unwrap().find_target_by_name_checked(parts[0]));
+    build_target.module   = Option::from(build_target.target.unwrap().find_module_by_name_checked(&build_target_unprocessed.module));
 
     let out: BuildTarget = BuildTarget
     {
         solution: build_target.solution.unwrap(),
         platform: build_target.platform.unwrap(),
         arch:     build_target.arch.unwrap(),
+        kind:     build_target.kind.unwrap(),
         config:   build_target.config.unwrap(),
         target:   build_target.target.unwrap(),
         module:   build_target.module.unwrap(),

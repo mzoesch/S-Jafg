@@ -53,7 +53,7 @@ fn generate_solution(solution: &Solution, emulate: bool)
     make_cmake::make_cmake(solution);
     if cfg!(target_os = "windows")
     {
-        // make_premake::make_premake(solution);
+        make_premake::make_premake(solution);
     }
 
     return;

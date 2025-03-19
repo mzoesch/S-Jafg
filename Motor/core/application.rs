@@ -188,6 +188,42 @@ impl Platform
             None => panic!("Could not find config with name [{}].", name),
         }
     }
+
+    pub fn get_shared_counterpart(&self) -> String
+    {
+        return match self.name.as_str()
+        {
+            "Windows" => ".lib",
+            _ => ".not_supported",
+        }.to_string()
+    }
+
+    pub fn get_shared_bin_extension(&self) -> String
+    {
+        return match self.name.as_str()
+        {
+            "Windows" => ".dll",
+            _ => ".not_supported",
+        }.to_string()
+    }
+
+    pub fn get_static_bin_extension(&self) -> String
+    {
+        return match self.name.as_str()
+        {
+            "Windows" => ".lib",
+            _ => ".not_supported",
+        }.to_string()
+    }
+
+    pub fn get_symbols_bin_extension(&self) -> String
+    {
+        return match self.name.as_str()
+        {
+            "Windows" => ".pdb",
+            _ => ".not_supported",
+        }.to_string()
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -282,6 +318,16 @@ pub enum ModuleKind
 
 impl ModuleKind
 {
+    pub fn clone(&self) -> ModuleKind
+    {
+        match self
+        {
+            ModuleKind::Shared => ModuleKind::Shared,
+            ModuleKind::Static => ModuleKind::Static,
+            ModuleKind::Launch => ModuleKind::Launch,
+        }
+    }
+
     pub fn is_shared(&self) -> bool
     {
         match self
@@ -306,6 +352,23 @@ impl ModuleKind
         {
             ModuleKind::Launch => true,
             _ => false,
+        }
+    }
+
+    pub fn from_str(kind: &str) -> Option<ModuleKind>
+    {
+        return match kind
+        {
+            "Shared" => Some(ModuleKind::Shared),
+            "SharedLib" => Some(ModuleKind::Shared),
+            "SHARED_LIBRARY" => Some(ModuleKind::Shared),
+            "Static" => Some(ModuleKind::Static),
+            "StaticLib" => Some(ModuleKind::Static),
+            "STATIC_LIBRARY" => Some(ModuleKind::Static),
+            "Launch" => Some(ModuleKind::Launch),
+            "ConsoleApp" => Some(ModuleKind::Launch),
+            "EXECUTABLE" => Some(ModuleKind::Launch),
+            _ => None,
         }
     }
 }
