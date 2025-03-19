@@ -8,7 +8,7 @@ cd ..
 
 echo "Calling Python to generate solution files ..."
 
-./.venv/bin/python ./Program.py ValidateRust -UpdateCachedData -INVOKE -- --SolutionGenerator GenerateAll
+./.venv/bin/python ./Program.py -ValidateRust -UpdateCachedData -INVOKE -- --SolutionGenerator GenerateAll
 
 cd -
 
