@@ -24,7 +24,7 @@ You will need to have a `C/C++ toolchain` installed for your hosting platform fo
   - [GCC](https://gcc.gnu.org/), [Emscripten](https://emscripten.org/) (and [CMake](https://cmake.org/) - only recommended) for your (host) platform.
   - Windows only: Additionally install either [WSL](https://learn.microsoft.com/en-Us/windows/wsl/install) (if WSL install GCC,... for WSL not for Windows) or [MSYS2 MINGW-x64](https://www.mingw-w64.org/).
   - For serving only:
-    - Any web-server that allows XOrigin-Embedder policies AND XOrigin-Opener policies.
+    - Any web-server that allows XOrigin-Embedder policies AND XOrigin-Opener policies. Opening the generated `.html` files emitted by the compiler directly in the browser will not work as the browser will block the execution of the WebAssembly code from untrusted sources.
     - An optional development Node server is provided. (If you want to use that, then you will obviously need to have Node and npm installed.)
 
 Only when making changes to the reflection system you will additionally need `>= Rust 1.85.x`.
