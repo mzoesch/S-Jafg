@@ -32,7 +32,7 @@ Only when making changes to the reflection system you will additionally need `>=
 
 ## Generate solution and build
 
-### Windows with Visual Studio (recommended on Windows)
+### For Windows with Visual Studio (recommended on Windows)
 1. Double click / run the `~/Setup.bat` script. This will download dependencies and generate the solution files (works with JetBrains Rider and Visual Studio 2022).
 2. Open the generated `~/Jafg-All.sln` file (when in Rider select "Use VCX Project Filters (experimental)" and restart Rider).
 3. Select `Windows`, `Client-Debug` and the !!`Runtime`!! configuration and run the project.
