@@ -5,7 +5,7 @@
 #include "Async/Runnable.h"
 #include "Containers/ComplexQueue.h"
 #include "Core/Application.h"
-#if WITH_GCC
+#if WITH_GCC || PLATFORM_LINUX
     #include <thread>
 #endif /* WITH_GCC */
 #if PLATFORM_WASM
@@ -29,7 +29,7 @@ namespace
         );
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() _Thrd_id()
     #endif /* _HAS_CXX23 */
-#elif WITH_GCC
+#elif WITH_GCC || WITH_CLANG
     #if PLATFORM_WASM
         static_assert(::std::is_same_v<::Jafg::LThreadId, ::std::__libcpp_thread_id>, "Compiler specific thread id is not the same.");
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() pthread_self()

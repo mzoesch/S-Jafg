@@ -1,5 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
+use std::collections::HashMap;
+use serde::{Serialize, Deserialize};
 use std::fmt::{Display};
 use crate::core::application::{BuildConfig, Module, ModuleKind, Platform, Solution, Target};
 use crate::core::paths;
@@ -14,6 +16,28 @@ fn expand_cmake_vars(content: &mut String, s: &Solution, p: &Platform, c: &Build
     *content = content.replace("$NATIVE_BUILD_TARGET", format!("{}-{}", t.name, c.name).as_str());
 
     return;
+}
+
+fn expand_toolset_to_compiler_c(toolset: &str) -> &str
+{
+    return match toolset
+    {
+        "msc" => "cl.exe",
+        "em" => "gcc",
+        "clang" => "clang",
+        _ => panic!("Unrecognized toolset [{}].", toolset),
+    };
+}
+
+fn expand_toolset_to_compiler_cxx(toolset: &str) -> &str
+{
+    return match toolset
+    {
+        "msc" => "cl.exe",
+        "em" => "g++",
+        "clang" => "clang++",
+        _ => panic!("Unrecognized toolset [{}].", toolset),
+    };
 }
 
 pub(crate) fn make_cmake(solution: &Solution)
@@ -86,7 +110,7 @@ pub(crate) fn make_cmake(solution: &Solution)
                     finder::write_to_file_if_different(&build_file, true, &build_sh);
                     std::process::Command::new("chmod").arg("+x").arg(&build_file).output().expect("Failed to chmod +x generate.sh.");
 
-                    let mut clean_build_sh: String = finder::read_file("Programs/Shell/Stubs/CmakeCleanBuildForTarget.ah");
+                    let mut clean_build_sh: String = finder::read_file("Programs/Shell/Stubs/CmakeCleanBuildForTarget.sh");
                     expand_cmake_vars(&mut clean_build_sh, solution, platform, config, target);
                     clean_build_sh = match platform.toolset.as_str()
                     {
@@ -103,6 +127,65 @@ pub(crate) fn make_cmake(solution: &Solution)
         }
         continue
     }
+
+    // Presets
+    {
+        #[derive(Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Out
+        {
+            pub version: i32,
+            pub configure_presets: Vec<ConfigurePreset>,
+        }
+
+        #[derive(Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct ConfigurePreset
+        {
+            pub name: String,
+            pub display_name: String,
+            pub generator: String,
+            pub binary_dir: String,
+            pub cache_variables: HashMap<String, String>,
+        }
+
+        let mut out: Out = Out
+        {
+            version: 3,
+            configure_presets: Vec::new(),
+        };
+
+        for platform in solution.platforms.iter()
+        {
+            for config in platform.configs.iter()
+            {
+                for target in config.targets.iter()
+                {
+                    let mut map: HashMap<String, String> = HashMap::new();
+                    map.insert("JAFG_TARGET_PLATFORM".to_string(), platform.name.clone());
+                    map.insert("JAFG_TARGET_ARCHITECTURE".to_string(), platform.architecture.clone());
+                    map.insert("JAFG_TARGET_CONFIGURATION".to_string(), target.make_build_target_name(config));
+                    map.insert("CMAKE_C_COMPILER".to_string(), expand_toolset_to_compiler_c(&platform.toolset).to_string());
+                    map.insert("CMAKE_CXX_COMPILER".to_string(), expand_toolset_to_compiler_cxx(&platform.toolset).to_string());
+
+                    out.configure_presets.push(ConfigurePreset
+                    {
+                        name: format!("{}_{}", platform.name, target.make_build_target_name(config)),
+                        display_name: format!("{} | {}", platform.name, target.make_build_target_name(config)),
+                        generator: "Ninja".to_string(),
+                        binary_dir: format!("{}-{}/{}-{}", platform.name, platform.architecture, target.name, config.name),
+                        cache_variables: map,
+                    });
+                }
+            }
+        }
+
+        let mut builder: String = String::new();
+        let b: &mut String = &mut builder;
+        b.push_str(&serde_json::to_string(&out).unwrap());
+        finder::write_to_file_if_different(&format!("{}/CMakePresets.json", solution.get_saved_rel_dir_cmake()), true, &builder);
+    }
+
 
     return;
 }
@@ -214,6 +297,7 @@ pub(crate) fn make_script(solution: &Solution)
     wni(b, "set(CMAKE_CXX_STANDARD 20)");
     wni(b, "set(CMAKE_CXX_STANDARD_REQUIRED ON)");
     wni(b, "set(CMAKE_CXX_EXTENSIONS ON)");
+    wni(b, "set(CMAKE_POSITION_INDEPENDENT_CODE ON)");
     wni(b, format!("set(REL_ENGINE_ROOT_DIR \"${{CMAKE_SOURCE_DIR}}/{}\")", solution.get_ch_dir_up_rel_to_build_file()));
     wni(b, "get_filename_component(REAL_ENGINE_ROOT_DIR \"${REL_ENGINE_ROOT_DIR}\" REALPATH)");
     wni(b, "if(NOT REAL_ENGINE_ROOT_DIR)");
@@ -246,6 +330,14 @@ pub(crate) fn make_script(solution: &Solution)
             wwi(b, 2, "message(FATAL_ERROR \"CXX compiler [EM] is required for this platform [${JAFG_TARGET_PLATFORM}].\")");
             wwi(b, 1, "endif()");
             // Do not set CMAKE_GENERATOR_PLATFORM for emscripten they will do that for us.
+        }
+        else if platform.toolset == "clang"
+        {
+            wwi(b, 1, "string(REGEX MATCH \".*clang\\\\+\\\\+.*\" REGREX_MATCHED ${CMAKE_CXX_COMPILER})");
+            wwi(b, 1, "if(NOT REGREX_MATCHED)");
+            wwi(b, 2, "message(FATAL_ERROR \"CXX compiler [Clang] is required for this platform [${JAFG_TARGET_PLATFORM}].\")");
+            wwi(b, 1, "endif()");
+            wwi(b, 1, "set(CMAKE_GENERATOR_PLATFORM ${JAFG_TARGET_ARCHITECTURE})");
         }
         else
         {
@@ -414,6 +506,7 @@ pub(crate) fn make_script(solution: &Solution)
                     wwi(b, 2, "endforeach()");
 
                     wwi(b, 2, format!("set_target_properties({} PROPERTIES", module.name));
+                    wwi(b, 3, "PREFIX \"\"");
                     wwi(b, 3, format!("ARCHIVE_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", module.get_functional_rel_dir()));
                     wwi(b, 3, format!("LIBRARY_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", module.get_functional_rel_dir()));
                     wwi(b, 3, format!("RUNTIME_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", module.get_functional_rel_dir()));
@@ -450,8 +543,8 @@ pub(crate) fn make_script(solution: &Solution)
                             d.name,
                             match d.kind
                             {
-                                ModuleKind::Shared => platform.get_shared_counterpart(),
-                                ModuleKind::Static => platform.get_static_bin_extension(),
+                                ModuleKind::Shared => platform.get_shared_counterpart_suffix(),
+                                ModuleKind::Static => platform.get_static_bin_suffix(),
                                 _ => panic!("Module kind not allowed for linking."),
                             }
                         ));
@@ -463,7 +556,14 @@ pub(crate) fn make_script(solution: &Solution)
 
                     for dependency in module.native_dependencies.iter()
                     {
-                        wwi(b, 2, format!("target_link_libraries({} PRIVATE \"${{REAL_ENGINE_ROOT_DIR}}/{}\")",
+                        wwi(b, 2, format!("target_link_libraries({} PUBLIC \"${{REAL_ENGINE_ROOT_DIR}}/{}\")",
+                            module.name,
+                            dependency,
+                        ));
+                    }
+                    for dependency in module.native_runtime_dependencies.iter()
+                    {
+                        wwi(b, 2, format!("target_link_libraries({} PUBLIC \"${{REAL_ENGINE_ROOT_DIR}}/{}\")",
                             module.name,
                             dependency,
                         ));

@@ -13,6 +13,6 @@ pause_if_needed()
 
 VENV_DIR="./.venv"
 echo "Running Program.py ..."
-$VENV_DIR/bin/python ./Program.py -UpdateCachedData -INVOKE -- --SolutionGenerator GenerateAll EmulateCompiler
+$VENV_DIR/bin/python ./Program.py -UpdateCachedData -INVOKE -- --SolutionGenerator GenerateAll
 
 pause_if_needed "$1"

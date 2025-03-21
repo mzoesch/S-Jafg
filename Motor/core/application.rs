@@ -189,29 +189,32 @@ impl Platform
         }
     }
 
-    pub fn get_shared_counterpart(&self) -> String
-    {
-        return match self.name.as_str()
-        {
-            "Windows" => ".lib",
-            _ => ".not_supported",
-        }.to_string()
-    }
-
-    pub fn get_shared_bin_extension(&self) -> String
+    pub fn get_shared_bin_suffix(&self) -> String
     {
         return match self.name.as_str()
         {
             "Windows" => ".dll",
+            "Linux" => ".so",
             _ => ".not_supported",
         }.to_string()
     }
 
-    pub fn get_static_bin_extension(&self) -> String
+    pub fn get_shared_counterpart_suffix(&self) -> String
     {
         return match self.name.as_str()
         {
             "Windows" => ".lib",
+            "Linux" => ".so",
+            _ => ".not_supported",
+        }.to_string()
+    }
+
+    pub fn get_static_bin_suffix(&self) -> String
+    {
+        return match self.name.as_str()
+        {
+            "Windows" => ".lib",
+            "Linux" => ".a",
             _ => ".not_supported",
         }.to_string()
     }

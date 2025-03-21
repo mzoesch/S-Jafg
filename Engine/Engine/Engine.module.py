@@ -15,6 +15,15 @@ def add_module(me: Module, args: ModuleArgs) -> None:
     if args.platform.get_name() != 'Wasm':
         me.native_includes.append('Engine/Vendor/Include/Freetype')
 
+    if args.platform.get_name() == 'Linux':
+        me.native_dependencies.append('Engine/Vendor/Lib/libglfw3.a')
+        me.native_runtime_dependencies.append('Engine/Vendor/Lib/libfreetype.so')
+
+        if args.build_configuration.get_name() == 'Debug' or args.build_configuration.get_name() == 'Development':
+            me.native_runtime_dependencies.append('Engine/Vendor/Lib/libFastNoiseD.so')
+        if args.build_configuration.get_name() == 'Shipping':
+            me.native_runtime_dependencies.append('Engine/Vendor/Lib/libFastNoise.so')
+
     if args.platform.get_name() == 'Windows':
         me.native_dependencies.extend([
             'Engine/Vendor/Lib/glfw3.lib',
@@ -23,14 +32,14 @@ def add_module(me: Module, args: ModuleArgs) -> None:
 
         if args.build_configuration.get_name() == 'Debug' or args.build_configuration.get_name() == 'Development':
             me.native_dependencies.append('Engine/Vendor/Lib/FastNoiseD.lib')
-            me.native_runtime_dependencies.append('Engine/Vendor/Lib/FastNoiseD.dll')
             me.native_additional_runtime_dependencies.extend([
+                'Engine/Vendor/Lib/FastNoiseD.dll',
                 'Engine/Vendor/Lib/FastNoiseD.pdb',
                 'Engine/Vendor/Lib/freetype.pdb',
             ])
 
         if args.build_configuration.get_name() == 'Shipping':
             me.native_dependencies.append('Engine/Vendor/Lib/FastNoise.lib')
-            me.native_runtime_dependencies.append('Engine/Vendor/Lib/FastNoise.dll')
+            me.native_additional_runtime_dependencies.append('Engine/Vendor/Lib/FastNoise.dll')
 
     return None

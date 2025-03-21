@@ -227,7 +227,7 @@ fn launch_post_build(b: BuildTarget)
             let dst_runtime_pdb: String = format!("{}/{}{}", launch_bin_dir, b.module.name, b.get_symbols_bin_ext());
 
             finder::copy_to_dir_if_different(&src_runtime_lib, &dst_runtime_lib, true);
-            if finder::exists_file(&src_runtime_lib)
+            if finder::exists_file(&src_runtime_pdb)
             {
                 finder::copy_to_dir_if_different(&src_runtime_pdb, &dst_runtime_pdb, true);
             }

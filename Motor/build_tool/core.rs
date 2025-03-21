@@ -32,17 +32,17 @@ impl BuildTarget<'_>
 
     pub fn get_shared_counterpart(&self) -> String
     {
-        return self.platform.get_shared_counterpart();
+        return self.platform.get_shared_counterpart_suffix();
     }
 
     pub fn get_shared_bin_ext(&self) -> String
     {
-        return self.platform.get_shared_bin_extension();
+        return self.platform.get_shared_bin_suffix();
     }
 
     pub fn get_static_bin_ext(&self) -> String
     {
-        return self.platform.get_static_bin_extension();
+        return self.platform.get_static_bin_suffix();
     }
 
     pub fn get_symbols_bin_ext(&self) -> String

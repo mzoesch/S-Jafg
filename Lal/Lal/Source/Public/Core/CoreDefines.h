@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #pragma once
+#include <cstdint>
 
 enum : int8 { INDEX_NONE = -1 };
 enum ELazyInit  : int8 { LazyInit  };
@@ -27,7 +28,12 @@ enum Type : int32
 #elif WITH_GCC
     typedef intptr_t  LPtrSize;
     typedef uintptr_t LuPtrSize;
-#endif /* WITH_GCC */
+#elif WITH_CLANG
+    typedef intptr_t  LPtrSize;
+    typedef uintptr_t LuPtrSize;
+#else /* WITH_CLANG */
+    #error "Missing implementation for this platform."
+#endif /* WITH_CLANG */
 enum : int8 { POINTER_BYTE_SIZE = sizeof(LPtrSize) };
 #if PLATFORM_USES_32_BIT
     static_assert(sizeof(LPtrSize) == 4, "LPtrSize is not 4 bytes.");

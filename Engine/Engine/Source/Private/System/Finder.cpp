@@ -213,13 +213,21 @@ TdhArray<LSimpleString> Finder::FindFiles(
         {
             if (bKeepExtension)
             {
+#if PLATFORM_WINDOWS && UNICODE
                 LStringLegacy Temp = LPlatformTypes::Ws2S(p.path().filename().c_str());
                 Out.Add(LSimpleString(Temp.c_str()));
+#else /* PLATFORM_WINDOWS && UNICODE */
+                Out.Add(p.path().filename().c_str());
+#endif /* !(PLATFORM_WINDOWS && UNICODE) */
             }
             else
             {
+#if PLATFORM_WINDOWS && UNICODE
                 LSimpleString SimpleTemp = LPlatformTypes::Ws2S(p.path().stem()).c_str();
                 Out.Add(std::move(SimpleTemp));
+#else /* PLATFORM_WINDOWS && UNICODE */
+                Out.Add(p.path().stem().c_str());
+#endif /* !(PLATFORM_WINDOWS && UNICODE) */
             }
         }
         else
@@ -228,13 +236,21 @@ TdhArray<LSimpleString> Finder::FindFiles(
             {
                 if (bKeepExtension)
                 {
+#if PLATFORM_WINDOWS && UNICODE
                     LStringLegacy Temp = LPlatformTypes::Ws2S(p.path().filename().c_str());
                     Out.Add(LSimpleString(Temp.c_str()));
+#else /* PLATFORM_WINDOWS && UNICODE */
+                    Out.Add(p.path().filename().c_str());
+#endif /* !(PLATFORM_WINDOWS && UNICODE) */
                 }
                 else
                 {
+#if PLATFORM_WINDOWS && UNICODE
                     LSimpleString SimpleTemp = LPlatformTypes::Ws2S(p.path().stem()).c_str();
                     Out.Add(std::move(SimpleTemp));
+#else /* PLATFORM_WINDOWS && UNICODE */
+                    Out.Add(p.path().stem().c_str());
+#endif /* !(PLATFORM_WINDOWS && UNICODE) */
                 }
             }
         }
