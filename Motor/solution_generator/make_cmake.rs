@@ -387,6 +387,10 @@ pub(crate) fn make_script(solution: &Solution)
                 else if platform.toolset == "em"
                 {
                 }
+                else if platform.toolset == "clang"
+                {
+                    wwi(b, 2, "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -g\")");
+                }
             }
             else
             {
@@ -399,6 +403,10 @@ pub(crate) fn make_script(solution: &Solution)
                 else if platform.toolset == "em"
                 {
                 }
+                else if platform.toolset == "clang"
+                {
+                    wwi(b, 2, "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -g0\")");
+                }
             }
 
             if config.optimize == false
@@ -410,6 +418,10 @@ pub(crate) fn make_script(solution: &Solution)
                 else if platform.toolset == "em"
                 {
                 }
+                else if platform.toolset == "clang"
+                {
+                    wwi(b, 2, "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -O0\")");
+                }
             }
             else if config.optimize && config.symbols
             {
@@ -419,6 +431,10 @@ pub(crate) fn make_script(solution: &Solution)
                 }
                 else if platform.toolset == "em"
                 {
+                }
+                else if platform.toolset == "clang"
+                {
+                    wwi(b, 2, "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -O2\")");
                 }
             }
             else if config.optimize && config.symbols == false
@@ -430,6 +446,10 @@ pub(crate) fn make_script(solution: &Solution)
                 }
                 else if platform.toolset == "em"
                 {
+                }
+                else if platform.toolset == "clang"
+                {
+                    wwi(b, 2, "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -O3\")");
                 }
             }
 
