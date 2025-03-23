@@ -30,24 +30,44 @@ impl BuildTarget<'_>
         format!("{}/{}", self.get_root_bin_dir(), module.get_functional_rel_dir())
     }
 
-    pub fn get_shared_counterpart(&self) -> String
+    pub fn get_shared_bin_prefix(&self) -> String
     {
-        return self.platform.get_shared_counterpart_suffix();
+        return self.platform.get_shared_bin_prefix();
     }
 
-    pub fn get_shared_bin_ext(&self) -> String
+    pub fn get_shared_bin_suffix(&self) -> String
     {
         return self.platform.get_shared_bin_suffix();
     }
 
-    pub fn get_static_bin_ext(&self) -> String
+    pub fn get_shared_counterpart_prefix(&self) -> String
+    {
+        return self.platform.get_shared_counterpart_prefix();
+    }
+
+    pub fn get_shared_counterpart_suffix(&self) -> String
+    {
+        return self.platform.get_shared_counterpart_suffix();
+    }
+
+    pub fn get_static_bin_prefix(&self) -> String
+    {
+        return self.platform.get_static_bin_prefix();
+    }
+
+    pub fn get_static_bin_suffix(&self) -> String
     {
         return self.platform.get_static_bin_suffix();
     }
 
-    pub fn get_symbols_bin_ext(&self) -> String
+    pub fn get_symbols_bin_prefix(&self) -> String
     {
-        return self.platform.get_symbols_bin_extension();
+        return self.platform.get_symbols_bin_prefix();
+    }
+
+    pub fn get_symbols_bin_suffix(&self) -> String
+    {
+        return self.platform.get_symbols_bin_suffix();
     }
 }
 

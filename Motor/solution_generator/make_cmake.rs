@@ -506,7 +506,6 @@ pub(crate) fn make_script(solution: &Solution)
                     wwi(b, 2, "endforeach()");
 
                     wwi(b, 2, format!("set_target_properties({} PROPERTIES", module.name));
-                    wwi(b, 3, "PREFIX \"\"");
                     wwi(b, 3, format!("ARCHIVE_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", module.get_functional_rel_dir()));
                     wwi(b, 3, format!("LIBRARY_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", module.get_functional_rel_dir()));
                     wwi(b, 3, format!("RUNTIME_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", module.get_functional_rel_dir()));
@@ -537,9 +536,15 @@ pub(crate) fn make_script(solution: &Solution)
                             panic!("Dependency [{}] is not allowed for launch module [{}].", d.name, d.relative_dir);
                         }
                         wwi(b, 2, format!("add_dependencies({} {})", module.name, d.name));
-                        wwi(b, 2, format!("target_link_libraries({} PRIVATE \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}/{}{}\")",
+                        wwi(b, 2, format!("target_link_libraries({} PRIVATE \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}/{}{}{}\")",
                             module.name,
                             d.get_functional_rel_dir(),
+                            match d.kind
+                            {
+                                ModuleKind::Shared => platform.get_shared_counterpart_prefix(),
+                                ModuleKind::Static => platform.get_static_bin_prefix(),
+                                _ => panic!("Module kind not allowed for linking."),
+                            },
                             d.name,
                             match d.kind
                             {
@@ -548,22 +553,18 @@ pub(crate) fn make_script(solution: &Solution)
                                 _ => panic!("Module kind not allowed for linking."),
                             }
                         ));
-                        // wwi(b, 2, format!("target_link_libraries({} PRIVATE {})",
-                        //     module.name,
-                        //     d.name,
-                        // ));
                     }
 
                     for dependency in module.native_dependencies.iter()
                     {
-                        wwi(b, 2, format!("target_link_libraries({} PUBLIC \"${{REAL_ENGINE_ROOT_DIR}}/{}\")",
+                        wwi(b, 2, format!("target_link_libraries({} PRIVATE \"${{REAL_ENGINE_ROOT_DIR}}/{}\")",
                             module.name,
                             dependency,
                         ));
                     }
                     for dependency in module.native_runtime_dependencies.iter()
                     {
-                        wwi(b, 2, format!("target_link_libraries({} PUBLIC \"${{REAL_ENGINE_ROOT_DIR}}/{}\")",
+                        wwi(b, 2, format!("target_link_libraries({} PRIVATE \"${{REAL_ENGINE_ROOT_DIR}}/{}\")",
                             module.name,
                             dependency,
                         ));

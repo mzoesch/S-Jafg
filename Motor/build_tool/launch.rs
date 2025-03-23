@@ -219,12 +219,12 @@ fn launch_post_build(b: BuildTarget)
             let launch_bin_dir: String = b.get_bin_dir_for_module(module);
             finder::ensure_path(&launch_bin_dir);
 
-            let src_runtime_lib: String = format!("{}/{}{}", shared_bin_dir, b.module.name, b.get_shared_bin_ext());
-            let dst_runtime_lib: String = format!("{}/{}{}", launch_bin_dir, b.module.name, b.get_shared_bin_ext());
+            let src_runtime_lib: String = format!("{}/{}{}{}", shared_bin_dir, b.get_shared_bin_prefix(), b.module.name, b.get_shared_bin_suffix());
+            let dst_runtime_lib: String = format!("{}/{}{}{}", launch_bin_dir, b.get_shared_bin_prefix(), b.module.name, b.get_shared_bin_suffix());
             finder::check_file(&src_runtime_lib);
 
-            let src_runtime_pdb: String = format!("{}/{}{}", shared_bin_dir, b.module.name, b.get_symbols_bin_ext()); // ok if not exists
-            let dst_runtime_pdb: String = format!("{}/{}{}", launch_bin_dir, b.module.name, b.get_symbols_bin_ext());
+            let src_runtime_pdb: String = format!("{}/{}{}{}", shared_bin_dir, b.get_symbols_bin_prefix(), b.module.name, b.get_symbols_bin_suffix()); // ok if not exists
+            let dst_runtime_pdb: String = format!("{}/{}{}{}", launch_bin_dir, b.get_symbols_bin_prefix(), b.module.name, b.get_symbols_bin_suffix());
 
             finder::copy_to_dir_if_different(&src_runtime_lib, &dst_runtime_lib, true);
             if finder::exists_file(&src_runtime_pdb)

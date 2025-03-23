@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreAFX.h"
-
 namespace Jafg
 {
 
