@@ -1,49 +1,69 @@
 # Copyright mzoesch. All rights reserved.
 
+import re
 import Programs.Reflector.ReflectionUtility as ru
-from Programs.Meta.BuildConfig import BuildConfiguration, build_configuration_to_string, build_configuration_to_define
-
 from typing import List
+from Programs.Meta.Solution import Solution
+from Programs.Meta.Platform import Platform
+from Programs.Meta.BuildConfiguration import BuildConfiguration
 
 
-class Target:
-    def __init__(self, absolute_target_py_path: str):
+class BufferedTarget:
+    """A target that has not yet executed its associated python script."""
+
+    def __init__(self, absolute_solution_py_path: str):
         """..."""
 
         """NEVER MODIFY THIS VARIABLE."""
-        self._absolute_py_path: str = absolute_target_py_path
+        self._absolute_py_path = ru.normalize_path(absolute_solution_py_path)
         """NEVER MODIFY THIS VARIABLE."""
-        self._relative_py_dir: str = ru.abs_to_rel_fancy(ru.get_dir(self._absolute_py_path))
+        self._relative_py_dir = ru.abs_to_rel_fancy(ru.get_dir(self._absolute_py_path))
         """NEVER MODIFY THIS VARIABLE."""
-        self._name: str = ru.get_base(self._absolute_py_path).split('.')[0]
-
-        """
-        The defines for this target. All defines are treated as if they were public.
-        """
-        self.defines: List[str] = []
-
-        """NEVER MODIFY THIS VARIABLE. Only valid in module policies apply-er functions."""
-        self.volatile_build_configuration: BuildConfiguration = BuildConfiguration.UNKNOWN
-        self.volatile_runtime: str = ''
-        self.volatile_symbols: bool = False
-        self.volatile_optimize: bool = True
+        self._name: str = ru.get_base(absolute_solution_py_path).split('.')[0]
 
         return
+
+    def validate(self):
+        if self._absolute_py_path == '':
+            raise ValueError('Target path cannot be empty.')
+        if self._relative_py_dir == '':
+            raise ValueError('Target path cannot be empty.')
+        if self._name == '':
+            raise ValueError('Target name cannot be empty.')
+        if bool(re.fullmatch(r"[A-Za-z]+", self._name)) is False:
+            raise ValueError(f'Target name may only contain latin letters. Faulty target: [{self._name}].')
+        return None
 
     def get_unique_name(self):
         return f'{self._relative_py_dir}/{self._name}'
 
-    def get_volatile_identifier(self) -> str:
-        if self.volatile_build_configuration == BuildConfiguration.UNKNOWN:
-            raise ValueError('Tried to access volatile identifier without volatile build configuration.')
-        return f'{self._name}-{build_configuration_to_string(self.volatile_build_configuration)}'
 
-    def get_volatile_defines(self) -> List[str]:
-        if self.volatile_build_configuration == BuildConfiguration.UNKNOWN:
-            raise ValueError('Tried to access volatile define without volatile build configuration.')
+class TargetArgs:
+    def __init__(self, solution: Solution, platform: Platform, build_configuration: BuildConfiguration):
+        self.solution: Solution = solution
+        self.platform: Platform = platform
+        self.build_configuration: BuildConfiguration = build_configuration
+        return
 
-        copied_defines: List[str] = list()
-        copied_defines.append(build_configuration_to_define(self.volatile_build_configuration))
-        for define_name in self.defines:
-            copied_defines.append(define_name)
-        return copied_defines
+class Target:
+    """A fully qualified target."""
+
+    def __init__(self, parent: BufferedTarget):
+        self._parent: BufferedTarget = parent
+        self._loaded: bool = False
+
+        self.defines: List[str] = []
+
+        return
+
+    def validate(self) -> None:
+        self._parent.validate()
+        return None
+
+    def load(self, solution: Solution, platform: Platform, build_configuration: BuildConfiguration) -> None:
+        if self._loaded:
+            raise ValueError('Solution already loaded.')
+        self._loaded = True
+        args: TargetArgs = TargetArgs(solution, platform, build_configuration)
+        ru.exec_function(self._parent._absolute_py_path, 'add_target', self, args)
+        return None

@@ -165,14 +165,21 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
     JObjectBase* Reinterpreted = reinterpret_cast<JObjectBase*>(Out);
     check( Reinterpreted == Out )
 
-#if PLATFORM_WASM
+#if WITH_GCC
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* PLATFORM_WASM */
+#endif /* WITH_GCC */
+#if WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_CLANG */
     ::memcpy(Out, InStaticClass->GetDefaultPackageReferrer(), InStaticClass->GetTotalByteSize());  // NOLINT(bugprone-undefined-memory-manipulation, clang-diagnostic-dynamic-class-memaccess)
-#if PLATFORM_WASM
+#if WITH_GCC
     #pragma GCC diagnostic pop
-#endif /* PLATFORM_WASM */
+#endif /* WITH_GCC */
+#if WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* WITH_CLANG */
 
     checkCode(
         checkMsgf(

@@ -3,7 +3,6 @@
 #if PLATFORM_WASM
 
 #include "Core/Application.h"
-#include "Launch/LaunchWasm.h"
 #include "Engine/Engine.h"
 #include "Async/TaskUtility.h"
 

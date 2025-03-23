@@ -2,11 +2,11 @@
 
 from Programs.Meta import *
 
-def apply_policies(in_const_target: Target, me: Module) -> None:
+
+def add_module(me: Module, args: ModuleArgs) -> None:
     me.pch = PchUsage.PROHIBIT
     me.kind = ModuleKind.SHARED
 
-    me.public_dependencies.extend(['Lal', 'TesterForward'])
+    me.public_dependencies.append('~Lal/Lal')
 
     return None
-

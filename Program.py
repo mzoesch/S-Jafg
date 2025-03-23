@@ -6,4 +6,4 @@ if __name__ == '__main__':
     """
     import sys
     from Programs import Launch as launch
-    launch.launch(*sys.argv[:])
+    launch.launch(*sys.argv[1:])

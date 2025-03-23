@@ -11,13 +11,13 @@ namespace Jafg
 
 #if PLATFORM_WINDOWS_WITH_MSVC
     typedef uint32 LThreadId;
-#elif PLATFORM_WINDOWS_WITH_GCC
+#elif PLATFORM_WINDOWS_WITH_GCC || WITH_CLANG
     typedef __gthread_t LThreadId;
 #elif PLATFORM_WASM
     typedef unsigned long LThreadId;
-#else /* PLATFORM_WINDOWS_WITH_GCC */
+#else /* PLATFORM_WASM */
     #error "Missing implementation for this platform."
-#endif /* !PLATFORM_WINDOWS_WITH_GCC */
+#endif /* !PLATFORM_WASM */
 
 typedef TFunction<void(void)> LTaskDelegate;
 

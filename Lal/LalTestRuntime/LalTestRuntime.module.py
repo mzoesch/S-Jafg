@@ -2,15 +2,15 @@
 
 from Programs.Meta import *
 
-def apply_policies(in_const_target: Target, me: Module) -> None:
+
+def add_module(me: Module, args: ModuleArgs) -> None:
     me.pch = PchUsage.ALLOW
     me.pch_content = '#include "CoreAfx.h"'
     me.kind = ModuleKind.LAUNCH
 
-    me.public_dependencies.extend([
-        'Lal',
-        'TesterForward',
-        'Tester',
-    ])
+    me.public_dependencies.append('~Lal/Lal')
+
+    if 'WITH_TESTS' in args.target.defines:
+        me.public_dependencies.append('~Engine/Tester')
 
     return None

@@ -5,65 +5,98 @@ import os.path
 import re
 from typing import List
 from Programs.Shared import *
-from .Solution import Solution
-from .Module import Module
-from .Target import Target
 from .Workspace import Workspace
+from .Solution import BufferedSolution, Solution
+from .Platform import BufferedPlatform, Platform
+from .Target import BufferedTarget, Target
+from .Module import BufferedModule, Module
+from .BuildConfiguration import BufferedBuildConfiguration, BuildConfiguration
 
 
 class GApp:
     workspace: Workspace = Workspace()
-    targets: List[Target] = []
-    modules: List[Module] = []
-    solutions: List[Solution] = []
+    solutions: List[BufferedSolution]           = []
+    platforms: List[BufferedPlatform]           = []
+    builds:    List[BufferedBuildConfiguration] = []
+    targets:   List[BufferedTarget]             = []
+    modules:   List[BufferedModule]             = []
 
     def __init__(self):  # deleted
         pass
 
     @classmethod
-    def add_target(cls, target: Target) -> None:
-        if target._name == '':
-            raise ValueError('Target name cannot be empty.')
-        if bool(re.fullmatch(r'[A-Za-z]+', target._name)) is False:
-            raise ValueError(f'Target name may only contain latin letters. Faulty target: {target._name}.')
+    def add_solution(cls, solution: BufferedSolution) -> None:
+        solution.validate()
+
+        if solution in cls.solutions:
+            raise ValueError(f'Solution already defined. Faulty solution: [{solution._name}].')
+        for sln in cls.solutions:
+            if sln._name == solution._name:
+                raise ValueError(f'Solution with the name [{solution._name}] is already defined.')
+            continue
+
+        cls.solutions.append(solution)
+        print(f'Added solution [{solution._name}].')
+        return None
+
+    @classmethod
+    def add_platform(cls, platform: BufferedPlatform) -> None:
+        platform.validate()
+
+        if platform in cls.platforms:
+            raise ValueError(f'Platform already defined. Faulty platform: [{platform._name}].')
+        for plat in cls.platforms:
+            if plat._name == platform._name:
+                raise ValueError(f'Platform with the name [{platform._name}] is already defined.')
+            continue
+
+        cls.platforms.append(platform)
+        print(f'Added platform [{platform._name}].')
+        return None
+
+    @classmethod
+    def add_build_configuration(cls, build: BufferedBuildConfiguration) -> None:
+        build.validate()
+
+        if build in cls.builds:
+            raise ValueError(f'Build configuration already defined. Faulty build configuration: [{build._name}].')
+        for bld in cls.builds:
+            if bld._name == build._name:
+                raise ValueError(f'Build configuration with the name [{build._name}] is already defined.')
+            continue
+
+        cls.builds.append(build)
+        print(f'Added build configuration [{build._name}].')
+        return None
+
+    @classmethod
+    def add_target(cls, target: BufferedTarget) -> None:
+        target.validate()
+
         if target in cls.targets:
-            raise ValueError(f'Target already defined. Faulty target: {target._name}.')
+            raise ValueError(f'Target already defined. Faulty target: [{target._name}].')
         for tar in cls.targets:
             if tar._name == target._name:
-                raise ValueError(f'Target with the name {target._name} is already defined.')
+                raise ValueError(f'Target with the name [{target._name}] is already defined.')
+            continue
 
         cls.targets.append(target)
         print(f'Added target {target._name}.')
         return None
 
     @classmethod
-    def add_module(cls, module: Module) -> None:
-        if module._name == '':
-            raise ValueError('Module name cannot be empty.')
-        if bool(re.fullmatch(r"[A-Za-z]+", module._name)) is False:
-            raise ValueError(f'Module name may only contain latin letters. Faulty module: {module._name}.')
+    def add_module(cls, module: BufferedModule) -> None:
+        module.validate()
+
         if module in cls.modules:
-            raise ValueError(f'Module already defined. Faulty module: {module._name}.')
+            raise ValueError(f'Module already defined. Faulty module: [{module._name}].')
         for mod in cls.modules:
             if mod._name == module._name:
-                raise ValueError(f'Module with the name {module._name} is already defined.')
+                raise ValueError(f'Module with the name [{module._name}] is already defined.')
+            continue
 
         cls.modules.append(module)
         print(f'Added module {module._name}.')
-        return None
-
-    @classmethod
-    def add_solution(cls, solution: Solution) -> None:
-        solution.validate()
-
-        if solution in cls.solutions:
-            raise ValueError(f'Solution already defined. Faulty solution: {solution._name}.')
-        for sln in cls.solutions:
-            if sln._name == solution._name:
-                raise ValueError(f'Solution with the name {solution._name} is already defined.')
-
-        cls.solutions.append(solution)
-        print(f'Added solution {solution._name}.')
         return None
 
     @classmethod

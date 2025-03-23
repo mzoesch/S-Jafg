@@ -1,8 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "User/LocalEgo.h"
 #if PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
 
+#include "User/LocalEgo.h"
 #include "Platform/Surface.h"
 #include "User/UserPreferences.h"
 #include "Engine/CoreGlobals.h"
@@ -10,8 +10,10 @@
 #include "Async/TaskUtility.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "GLFW/glfw3.h"
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h>
+#if PLATFORM_WINDOWS
+    #define GLFW_EXPOSE_NATIVE_WIN32
+    #include <GLFW/glfw3native.h>
+#endif /* PLATFORM_WINDOWS */
 #include "User/Input/GlfwInputTranslation.h"
 #include "Widgets/Viewport.h"
 

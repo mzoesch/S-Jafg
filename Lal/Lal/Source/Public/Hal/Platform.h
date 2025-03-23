@@ -15,6 +15,9 @@
 #ifndef PLATFORM_WASM
     #define PLATFORM_WASM           0
 #endif /* !PLATFORM_WASM */
+#ifndef PLATFORM_LINUX
+    #define PLATFORM_LINUX          0
+#endif /* !PLATFORM_LINUX */
 
 
 /*-----------------------------------------------------------------------------
@@ -33,6 +36,8 @@
     #include "Hal/PlatformWin.h"
 #elif PLATFORM_WASM
     #include "Hal/PlatformWasm.h"
+#elif PLATFORM_LINUX
+    #include "Hal/PlatformLinux.h"
 #else /* PLATFORM_WASM */
     #error "Could not resolve PLATFORM."
 #endif /* !PLATFORM_WASM */
@@ -60,6 +65,12 @@
 #ifndef WITH_MSVC
     #define WITH_MSVC       0
 #endif /* !WITH_MSVC */
+#ifndef WITH_CLANG
+    #define WITH_CLANG      0
+#endif /* !WITH_CLANG */
+#if !WITH_GCC && !WITH_MSVC && !WITH_CLANG
+    #error "No compiler spcified."
+#endif /* WITHGCC0 || WITH_MSVC0 || WITH_CLANG0 */
 
 /**
  * Whether to create a virtual filesystem for the platform at compile time.

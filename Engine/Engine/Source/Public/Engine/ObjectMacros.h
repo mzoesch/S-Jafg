@@ -225,7 +225,7 @@
 private:                                                                                            \
                                                                                                     \
     typedef SuperClassName Super;                                                                   \
-    typedef JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName) Derived;          \
+    typedef MyClassName    Derived;                                                                 \
     friend class  ::Jafg::Private::LObjectRegistry;                                                 \
     friend struct ::Jafg::Private::LRegistrationCallbackHelper;                                     \
     friend struct ::Jafg::Private::LObjectMiscellaneousAccessor;                                    \
@@ -396,15 +396,6 @@ private: /* Restore default visibility. */
         _,                                                             \
         MY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION \
         )(TFactoryTy, __VA_ARGS__ )
-
-//#
-//# Required as the first statement of a jafg-widget-class declaration.
-//# @see Widgets/WidgetNode.h
-//#
-#ifdef GENERATED_WIDGET_BODY
-    #undef GENERATED_WIDGET_BODY
-#endif /* GENERATED_WIDGET_BODY */
-#define GENERATED_WIDGET_BODY(...) GENERATED_CLASS_BODY(__VA_ARGS__)
 
 //#
 //# Default constructor for an JObject. Mandatory. It may be used to declare extra information for all objects of this

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Core/CoreDefines.h"
+#include "CoreAfx.h"
 
 //#
 //# Only for modules that cannot load the engine module.

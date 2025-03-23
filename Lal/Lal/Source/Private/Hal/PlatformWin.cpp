@@ -48,13 +48,13 @@ void Sleep(const double InSeconds)
 {
     const DWORD Milli = static_cast<DWORD>(InSeconds * JAFG_S2MS_D);
 
-    if (Milli == 0)
+    if (Milli > 0)
+    {
+        ::Sleep(Milli);
+    }
     {
         ::SwitchToThread();
-        return;
     }
-
-    ::Sleep(Milli);
 
     return;
 }
