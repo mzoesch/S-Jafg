@@ -88,6 +88,18 @@ struct LEngineThread final
     {
     }
 
+    FORCEINLINE explicit LEngineThread(
+        const Jafg::ENamedThreads::Type InThreadName,
+        Jafg::LRunnable*                InRunnable,
+        const bool                      bInKillRunnableWhenFinished
+    )
+        // The #Id is deferred to when the thread is running autarcik. This ctor is called on the aggregating thread so
+        // we have to wait for the platform to assign an id to the thread.
+        : Id(0), ThreadName(InThreadName), Thread(nullptr),
+          Runnable(InRunnable), bKillRunnableWhenFinished(bInKillRunnableWhenFinished)
+    {
+    }
+
     FORCEINLINE ~LEngineThread()
     {
         if (this->bKillRunnableWhenFinished)
@@ -443,6 +455,8 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
         return ETaskExit::Illformed;
     }
 
+    ::EngineThreads.Emplace(ThreadName, Runnable, bKillRunnableWhenFinished);
+
     std::thread ThreadObj = std::thread(
         [ThreadName, Runnable] (void) -> void
         {
@@ -523,7 +537,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
         }
     );
 
-    ::EngineThreads.Emplace(ThreadName, std::move(ThreadObj), Runnable, bKillRunnableWhenFinished);
+    ::EngineThreads.GetLast()->Thread = std::move(ThreadObj);
 
     return ErrorLevel;
 }
