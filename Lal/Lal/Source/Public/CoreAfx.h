@@ -101,3 +101,4 @@
 #include "Maths/Plane.h"
 #include "Maths/Matrix.h"
 #include "Maths/Transform.h"
+#include "Maths/Matrix3.h"

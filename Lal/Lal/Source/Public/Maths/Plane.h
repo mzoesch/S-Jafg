@@ -44,6 +44,8 @@ struct TPlane final : public TVector<T>
     FORCEINLINE explicit TPlane(TVector<T> A, TVector<T> B, TVector<T> C);
     FORCEINLINE          TPlane(const TPlane<T>& InPlane) : TVector<T>(InPlane), W(InPlane.W) { }
     FORCEINLINE          TPlane(TPlane<T>&& InPlane) noexcept : TVector<T>(InPlane), W(InPlane.W) { }
+
+    FORCEINLINE TVector<T> GetPlaneNormal() const { return TVector<T>(*this); }
 };
 
 template <typename T>

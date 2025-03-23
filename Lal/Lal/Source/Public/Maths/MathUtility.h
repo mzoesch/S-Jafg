@@ -92,6 +92,8 @@ template <typename T> NODISCARD FORCEINLINE constexpr T Ceil(const T Value);
 
 NODISCARD FORCEINLINE bool IsNearlyEqual(const float A, const float B, const float Tolerance = JAFG_FLOAT_SMALL_NUMBER);
 NODISCARD FORCEINLINE bool IsNearlyEqual(const double A, const double B, const double Tolerance = JAFG_DOUBLE_SMALL_NUMBER);
+NODISCARD FORCEINLINE bool IsNearlyZero(const float Value, const float Tolerance = JAFG_FLOAT_SMALL_NUMBER);
+NODISCARD FORCEINLINE bool IsNearlyZero(const double Value, const double Tolerance = JAFG_DOUBLE_SMALL_NUMBER);
 
 /** https://en.cppreference.com/w/c/numeric/math/fmod */
 NODISCARD FORCEINLINE float  Fmod(const float Numerator, const float Denominator);
@@ -250,6 +252,8 @@ template <> NODISCARD FORCEINLINE           double Ceil(const double Value)  { r
 
 NODISCARD FORCEINLINE bool IsNearlyEqual(const float A, const float B, const float Tolerance /* = JAFG_FLOAT_SMALL_NUMBER */) { return Maths::Absolute(A - B) < Tolerance; }
 NODISCARD FORCEINLINE bool IsNearlyEqual(const double A, const double B, const double Tolerance /* = JAFG_DOUBLE_SMALL_NUMBER */) { return Maths::Absolute(A - B) < Tolerance; }
+NODISCARD FORCEINLINE bool IsNearlyZero(const float Value, const float Tolerance /* = JAFG_FLOAT_SMALL_NUMBER */) { return Maths::Absolute(Value) < Tolerance; }
+NODISCARD FORCEINLINE bool IsNearlyZero(const double Value, const double Tolerance /* = JAFG_DOUBLE_SMALL_NUMBER */) { return Maths::Absolute(Value) < Tolerance; }
 
 NODISCARD FORCEINLINE float Fmod(const float Numerator, const float Denominator)
 {

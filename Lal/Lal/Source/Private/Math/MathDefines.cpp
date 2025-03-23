@@ -2,6 +2,7 @@
 
 #include "CoreAfx.h"
 
+
 /*----------------------------------------------------------------------------
     Globals.
 ----------------------------------------------------------------------------*/
@@ -9,7 +10,7 @@
 namespace Jafg
 {
 
-LSimpleString LexToString(const EVectorAxis::Type InAxis)
+LAL_API LSimpleString LexToString(const EVectorAxis::Type InAxis)
 {
     switch (InAxis)
     {
@@ -21,8 +22,9 @@ LSimpleString LexToString(const EVectorAxis::Type InAxis)
     case EVectorAxis::U: { return "U"; }
     case EVectorAxis::T: { return "T"; }
     case EVectorAxis::S: { return "S"; }
-    default: { return "Combination"; } /* <-- Also resolve that when needed... */
     }
+    panic( "Combination of axes not yet supported." );
+    return { };
 }
 
 template<> const LVectorF LVectorF::ZeroVector                      { LVectorF( 0.0f,  0.0f,  0.0f) };
@@ -171,7 +173,9 @@ template<> const LPlaneD LPlaneD::UnitPlaneY                        { LPlaneD( 0
 template<> const LPlaneD LPlaneD::UnitPlaneZ                        { LPlaneD( 0.0 , 0.0 , 1.0 , 0.0 ) };
 template<> const LPlaneD LPlaneD::UnitPlaneW                        { LPlaneD( 0.0 , 0.0 , 0.0 , 1.0 ) };
 
-template<> const LMatrixF LMatrixF::Identity { LPlaneF::UnitPlaneX, LPlaneF::UnitPlaneY, LPlaneF::UnitPlaneZ, LPlaneF::UnitPlaneW };
-template<> const LMatrixD LMatrixD::Identity { LPlaneD::UnitPlaneX, LPlaneD::UnitPlaneY, LPlaneD::UnitPlaneZ, LPlaneD::UnitPlaneW };
+template<> const LMatrixF  LMatrixF::Identity  { LPlaneF::UnitPlaneX, LPlaneF::UnitPlaneY, LPlaneF::UnitPlaneZ, LPlaneF::UnitPlaneW };
+template<> const LMatrixD  LMatrixD::Identity  { LPlaneD::UnitPlaneX, LPlaneD::UnitPlaneY, LPlaneD::UnitPlaneZ, LPlaneD::UnitPlaneW };
+template<> const LMatrix3F LMatrix3F::Identity { LVector3F::UnitVectorX, LVector3F::UnitVectorY, LVector3F::UnitVectorZ };
+template<> const LMatrix3D LMatrix3D::Identity { LVector3D::UnitVectorX, LVector3D::UnitVectorY, LVector3D::UnitVectorZ };
 
 } /* ~Namespace Jafg */

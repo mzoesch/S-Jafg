@@ -8,6 +8,8 @@
 #include "Rhi/RendererStateMachine.h"
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_access.hpp"
 
 void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursorLocation)
 {
@@ -223,6 +225,18 @@ void Jafg::LViewport::Tick()
     return;
 }
 
+Jafg::LVector3 PlaneIntersection(const Jafg::LPlane& Plane1, const Jafg::LPlane& Plane2, const Jafg::LPlane& Plane3)
+{
+    using namespace Jafg;
+    LMatrix3 A = LMatrix3(Plane1.GetPlaneNormal(), Plane2.GetPlaneNormal(), Plane3.GetPlaneNormal());
+    LVector3 B = LVector3(-Plane1.W, -Plane2.W, -Plane3.W);
+
+    glm::mat3 Ac;
+    inverse(Ac)
+
+    return A.GetInverse() * B;
+}
+
 void Jafg::LViewport::Draw()
 {
     this->FrameZLayerDepth = 0.0f;
@@ -231,19 +245,41 @@ void Jafg::LViewport::Draw()
     this->BackgroundBuffer.MakeDrawTarget();
 
     RendererStateMachine::PrepareForPerspectivePainting();
-    for (const LBackgroundContext& Context : this->BackgroundContexts)
+    for (const auto& [Eye, World] : this->BackgroundContexts)
     {
-        check( Context.Eye && Context.World )
-        Context.Eye->UpdateViewMatrix();
+        check( Eye && World )
+        Eye->UpdateViewMatrix();
+
+        const LMatrix P = Maths::MakePerspectiveProjectionMatrix
+        (
+            Maths::ToRadians(Eye->GetDegYFov()),
+            static_cast<float>(this->GetDimensions().X) / static_cast<float>(this->GetDimensions().Y),
+            0.1f, 2000.0f
+        );
+        const LMatrix V = Eye->GetViewMatrix();
+        const LMatrix PV = P * V;
+        const LVector4 Rx = PV.GetRow(LMatrix::X);
+        const LVector4 Ry = PV.GetRow(LMatrix::Y);
+        const LVector4 Rz = PV.GetRow(LMatrix::Z);
+        const LVector4 Rw = PV.GetRow(LMatrix::W);
+
+        const LVector4 FrustumL = Rw + Rx;
+        const LVector4 FrustumR = Rw - Rx;
+        const LVector4 FrustumT = Rw - Ry;
+        const LVector4 FrustumB = Rw + Ry;
+        const LVector4 FrustumN = Rw + Rz;
+        const LVector4 FrustumF = Rw - Rz;
+
+        glm::mat4
 
         for (LEngineShader* Shader : GEngine->GetShaders())
         {
             checkSlow( Shader )
-            Shader->UpdateUniforms(*this, *Context.World, *Context.Eye);
+            Shader->UpdateUniforms(*this, *World, *Eye);
             continue;
         }
 
-        Context.World->Draw(*this, *Context.Eye);
+        World->Draw(*this, *Eye);
 
         continue;
     }

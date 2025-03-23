@@ -32,7 +32,7 @@ enum Type : uint8
 
 } /* ~Namespace EVectorAxis */
 ENUM_CLASS_FLAGS(EVectorAxis::Type)
-LSimpleString LexToString(const EVectorAxis::Type InAxis);
+LAL_API LSimpleString LexToString(const EVectorAxis::Type InAxis);
 
 
 /*----------------------------------------------------------------------------
@@ -47,6 +47,7 @@ template <typename T> struct TIntVector2;
 template <typename T> struct TRotator;
 template <typename T> struct TPlane;
 template <typename T> struct TMatrix;
+template <typename T> struct TMatrix3;
 template <typename T> struct TTransform;
 
 
@@ -83,6 +84,8 @@ using LPlaneD           = TPlane<double>;
 
 using LMatrixF          = TMatrix<float>;
 using LMatrixD          = TMatrix<double>;
+using LMatrix3F         = TMatrix3<float>;
+using LMatrix3D         = TMatrix3<double>;
 
 using LTransformF       = TTransform<float>;
 using LTransformD       = TTransform<double>;
@@ -107,7 +110,10 @@ typedef LInt32Vector     LIntVector;
 typedef LInt32Vector2    LIntVector2;
 typedef LRotatorF        LRotator;
 typedef LPlaneF          LPlane;
+typedef LMatrixF         LMatrix4;
+typedef LMatrixD         LMatrix4D;
 typedef LMatrixF         LMatrix;
+typedef LMatrix3F        LMatrix3;
 typedef LTransformF      LTransform;
 typedef LuInt8Vector2    LSize8;
 typedef LuInt16Vector2   LSize16;

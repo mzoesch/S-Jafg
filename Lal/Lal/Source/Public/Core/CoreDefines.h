@@ -3,6 +3,7 @@
 #pragma once
 
 enum : int8 { INDEX_NONE = -1 };
+
 enum ELazyInit  : int8 { LazyInit  };
 enum EForceInit : int8 { ForceInit };
 enum EZeroInit  : int8 { ZeroInit  };
@@ -22,11 +23,11 @@ enum Type : int32
 } /* ~Namespace EPlatformExit */
 
 #if PLATFORM_WINDOWS_WITH_MSVC
-    typedef ::std::intptr_t  LPtrSize;
-    typedef ::std::uintptr_t LuPtrSize;
+    typedef ::std::intptr_t         LPtrSize;
+    typedef ::std::uintptr_t        LuPtrSize;
 #elif WITH_GCC
-    typedef intptr_t  LPtrSize;
-    typedef uintptr_t LuPtrSize;
+    typedef intptr_t                LPtrSize;
+    typedef uintptr_t               LuPtrSize;
 #endif /* WITH_GCC */
 enum : int8 { POINTER_BYTE_SIZE = sizeof(LPtrSize) };
 #if PLATFORM_USES_32_BIT
@@ -62,13 +63,23 @@ typedef int32  LSizeTy;
     #error "Could not resolve platform encoding."
 #endif /* !PLATFORM_USES_UTF8 */
 
+//# We define this because some methods / functions may be noexcept.
+//# But may contain development checks that are not present in release builds.
+// TODO Move this to platform specific code, maybe? Some platforms may behave differently when encountering exceptions. Looking at you Wasm :()
 #if DO_SLOW_CHECKS
-    #define noexceptslow
+    #define noexceptslow        // May throw.
 #else /* DO_SLOW_CHECKS */
-    #define noexceptslow noexcept
-#endif /* DO_SLOW_CHECKS */
+    #define noexceptslow        noexcept // Slow check will not compile so just mark as noexcept.
+#endif /* !DO_SLOW_CHECKS */
 #if DO_CHECKS
-    #define noexceptcheck
+    #define noexceptcheck       // May throw.
 #else /* DO_CHECKS */
-    #define noexceptcheck noexcept
-#endif  /* DO_CHECKS */
+    #define noexceptcheck       noexcept // Check will not compile so just mark as noexcept.
+#endif  /* !DO_CHECKS */
+
+#ifndef FALSE
+    #define FALSE       0
+#endif /* !FALSE */
+#ifndef TRUE
+    #define TRUE        1
+#endif /* !TRUE */

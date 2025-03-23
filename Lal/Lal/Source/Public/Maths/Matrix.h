@@ -11,6 +11,15 @@ struct TMatrix final
 {
     static_assert(std::is_floating_point_v<T>, "Generic type T of TMatrix must be a floating point type.");
 
+    enum EMatrixAxis : uint8
+    {
+        None = 0,
+        X = 1 << 0,
+        Y = 1 << 1,
+        Z = 1 << 2,
+        W = 1 << 3,
+    };
+
     union
     {
         T Matrix[4][4];
@@ -57,6 +66,19 @@ struct TMatrix final
 
     FORCEINLINE auto operator[](const int32 InIndex)       -> TVector4<T>&;
     FORCEINLINE auto operator[](const int32 InIndex) const -> const TVector4<T>&;
+
+    FORCEINLINE TVector4<T> GetRow(const EMatrixAxis Axis) const
+    {
+        switch (Axis)
+        {
+            case EMatrixAxis::X: return TVector4<T>(this->Matrix[0][0], this->Matrix[0][1], this->Matrix[0][2], this->Matrix[0][3]);
+            case EMatrixAxis::Y: return TVector4<T>(this->Matrix[1][0], this->Matrix[1][1], this->Matrix[1][2], this->Matrix[1][3]);
+            case EMatrixAxis::Z: return TVector4<T>(this->Matrix[2][0], this->Matrix[2][1], this->Matrix[2][2], this->Matrix[2][3]);
+            case EMatrixAxis::W: return TVector4<T>(this->Matrix[3][0], this->Matrix[3][1], this->Matrix[3][2], this->Matrix[3][3]);
+        }
+        panicMsgf( "Unknown matrix axis [{}].", Axis )
+        return { };
+    }
 
     /*
      * This is quite a large data structure. Do not copy it around as you like.
