@@ -22,4 +22,4 @@ cd -
 
 cd "$(dirname "$0")"
 
-read -n1 -r -p "Press any key to continue..."
+# read -n1 -r -p "Press any key to continue..."

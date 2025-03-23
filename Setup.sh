@@ -7,11 +7,10 @@ pause_if_needed()
 {
     if [[ "$1" == "from_setup_command" ]];
     then
-        read -p "Press [Enter] to exit."
+        read -p read -n1 -r -p "Press any key to continue..."
     fi
 }
 
-# Set cwd.
 cd "$(dirname "$0")"
 
 VENV_DIR="./.venv"

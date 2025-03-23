@@ -15,4 +15,4 @@ cd "$(dirname "$0")"
 
 cmake --build . --clean-first
 
-read -n1 -r -p "Press any key to continue..."
+# read -n1 -r -p "Press any key to continue..."
