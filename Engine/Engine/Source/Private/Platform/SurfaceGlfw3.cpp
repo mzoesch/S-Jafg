@@ -2,8 +2,8 @@
 
 #if PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
 
-#include "User/LocalEgo.h"
 #include "Platform/Surface.h"
+#include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
 #include "Engine/CoreGlobals.h"
 #include "Engine/Engine.h"

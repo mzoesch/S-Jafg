@@ -662,7 +662,15 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAt(const SizeTyp
 
     if (InIndex < this->Size - 1)
     {
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
         ::memmove(this->Data + InIndex, this->Data + InIndex + 1, (this->Size - InIndex - 1) * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
     }
 
     --this->Size;
@@ -1387,7 +1395,15 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow() noexcept
         this->Data = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
         checkSlow( sizeof(*this->Data) == sizeof(T) )
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
         ::memset(this->Data, 0, this->Capacity * sizeof(*this->Data));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
 
         return;
     }
@@ -1403,7 +1419,16 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow() noexcept
     }
 #endif /* !IN_SHIPPING */
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
     ::memset(NewData + this->Capacity, 0, (NewCapacity - this->Capacity) * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
 
     this->Data      = NewData;
     this->Capacity  = NewCapacity;
@@ -1448,7 +1473,15 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow(const SizeType I
         this->Data = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
         checkSlow( sizeof(*this->Data) == sizeof(T) )
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
         ::memset(this->Data, 0, this->Capacity * sizeof(*this->Data));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
 
         return;
     }
@@ -1462,7 +1495,15 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow(const SizeType I
     }
 #endif /* !IN_SHIPPING */
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
     ::memset(NewData + this->Capacity, 0, (InTotalCapacity - this->Capacity) * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
 
     this->Data      = NewData;
     this->Capacity  = InTotalCapacity;

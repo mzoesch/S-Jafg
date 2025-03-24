@@ -1,11 +1,11 @@
 // Copyright mzoesch. All rights reserved.
 
+#if PLATFORM_LINUX
+
 #include "Platform/PlatformMisc.h"
 #include "System/Path.h"
 #include <unistd.h>
 #include <wayland-client.h>
-
-#if PLATFORM_LINUX
 
 namespace
 {

@@ -518,7 +518,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
             }
 
             Tasks::Make(ENamedThreads::Master, ETaskTime::Whenever,
-                [ThreadName, Runnable] (void) -> void
+                [ThreadName](void) -> void
                 {
                     std::unique_lock RemoveLock(::EngineThreadsMutex);
                     if (::bTearingDown)

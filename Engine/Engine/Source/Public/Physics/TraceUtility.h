@@ -32,7 +32,7 @@ struct LHitResult final
     //#
     //# Hit location in world space.
     //#
-    LVector GlobalWorldLocation = LVector::Zero();
+    LVector GlobalWorldLocation = LVector::ZeroVector;
 
     //#
     //# Optional hit surface normal.
@@ -47,7 +47,7 @@ inline void LHitResult::Initialize()
 inline void LHitResult::Reset()
 {
     this->Actor = nullptr;
-    this->GlobalWorldLocation = LVector::Zero();
+    this->GlobalWorldLocation = LVector::ZeroVector;
     this->SurfaceNormal.Reset();
 
     return;

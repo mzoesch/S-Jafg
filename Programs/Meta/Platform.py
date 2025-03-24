@@ -47,8 +47,12 @@ class Platform:
         self.version: str = 'latest'
         self.architecture: str = ''
         self.toolset: str = ''
+        self.unity = False
         self.lnk_flags: list[str] = []
         self.build_flags: list[str] = []
+        self.target_props_lnk_flags: list[str] = []
+        self.target_props_build_flags: list[str] = []
+        self.target_props_sfx: str = ''
 
         return
 

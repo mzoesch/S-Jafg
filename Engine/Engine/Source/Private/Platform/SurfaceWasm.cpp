@@ -2,7 +2,7 @@
 
 #if PLATFORM_WASM
 
-#include "Platform/SurfaceWasm.h"
+#include "Platform/Surface.h"
 #include "Widgets/Viewport.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "Async/TaskUtility.h"
@@ -10,14 +10,14 @@
 namespace
 {
 
-/*
- * We have to do this with the extra array as we have to poll the keys outside the main engine loop (because of Wasm,
- * how it is implemented and communicates with JavaScript). Basically, when JavaScript is updating
- * the DOM we poll everything. But we, of course, do not want at that time to update player inputs - No, we have to do
- * this in the LPlatformWasm::PollEvents() method.
- *
- * Also this can be a singleton as there will never be more than one DOM in a Wasm application.
- */
+//#
+//# We have to do this with the extra array as we have to poll the keys outside the main engine loop (because of Wasm,
+//# how it is implemented and communicates with JavaScript). Basically, when JavaScript is updating
+//# the DOM we poll everything. But we, of course, do not want at that time to update player inputs - No, we have to do
+//# this in the LPlatformWasm::PollEvents() method.
+//#
+//# Also this can be a singleton as there will never be more than one DOM in a Wasm application.
+//#
 Jafg::TdhArray<Jafg::LRawInput>& GetDownKeys()
 {
     static Jafg::TdhArray<Jafg::LRawInput> DownKeys;
@@ -209,6 +209,38 @@ EM_BOOL MouseWheelCallback(const int32 EventType, const EmscriptenWheelEvent* E,
 
 } /* ~Namespace <Anonymous> */
 
+Jafg::LSurfaceDom::LSurfaceDom(LSurfaceDom &&Other) noexcept
+{
+    *this = std::move(Other);
+}
+
+Jafg::LSurfaceDom & Jafg::LSurfaceDom::operator=(LSurfaceDom &&Other) noexcept
+{
+    Super::operator=(std::move(Other));
+
+    this->Handle = Other.Handle;
+    this->_Handle = Other._Handle;
+    this->bFirstMouseCallback = Other.bFirstMouseCallback;
+
+    ::emscripten_webgl_make_context_current(this->_Handle);
+
+    Other.Handle = nullptr;
+    Other._Handle = NULL;
+    Other.bFirstMouseCallback = false;
+
+    return *this;
+}
+
+Jafg::LSurfaceDom::~LSurfaceDom()
+{
+    if (this->Handle)
+    {
+        LSurfaceDom::TearDown();
+    }
+
+    return;
+}
+
 void Jafg::LSurfaceDom::Initialize()
 {
     Super::Initialize();
@@ -250,7 +282,19 @@ void Jafg::LSurfaceDom::OnClear()
     checkSlow( Tasks::IsOnMasterThread() )
 
     ::emscripten_webgl_make_context_current(this->_Handle);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    Super::OnClear();
+
+    return;
+}
+
+void Jafg::LSurfaceDom::OnUpdate()
+{
+    checkSlow( this->Handle )
+    checkSlow( Tasks::IsOnMasterThread() )
+    ::emscripten_webgl_make_context_current(this->_Handle);
+
+    Super::OnUpdate();
 
     return;
 }
@@ -261,6 +305,7 @@ void Jafg::LSurfaceDom::TearDown()
 
     if (this->IsValid())
     {
+        LOG_INFO(LogSurface, "Destroying DOM surface.")
         this->_Handle = 0;
         this->Handle = nullptr;
     }
@@ -270,40 +315,39 @@ void Jafg::LSurfaceDom::TearDown()
 
 void Jafg::LSurfaceDom::PollInputs()
 {
+    checkSlow( this->Handle )
+    checkSlow( Tasks::IsOnMasterThread() )
+
     for (const LRawInput& DownKey : ::GetDownKeys())
     {
         this->AddKeyDown(DownKey);
     }
 
-    /*
-     * Keys only get called once by the JavaScript if they change (down / up).
-     * But the mouse will not call a clean (zero movement) event.
-     */
-    while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseX)))         { }
-    while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseY)))         { }
-    while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseWheelUp)))   { }
-    while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseWheelDown))) { }
-    while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseWheelAxis))) { }
+    // /*
+    //  * Keys only get called once by the JavaScript if they change (down / up).
+    //  * But the mouse will not call a clean (zero movement) event.
+    //  */
+    // while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseX)))         { }
+    // while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseY)))         { }
+    // while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseWheelUp)))   { }
+    // while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseWheelDown))) { }
+    // while (::GetDownKeys().RemoveOnce(LRawInput(EKeys::MouseWheelAxis))) { }
 
     return;
 }
 
 void Jafg::LSurfaceDom::SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor)
 {
-    const bool bOldShowCursor = this->bShowCursor;
-
     Super::SetInputMode(InMode, bInShowCursor);
-
-    if (bOldShowCursor == this->bShowCursor)
-    {
-        return;
-    }
+    checkSlow( this->Handle )
+    checkSlow( Tasks::IsOnMasterThread() )
 
     if (this->bShowCursor)
     {
         this->bFirstMouseCallback = true;
     }
 
+    ::emscripten_webgl_make_context_current(this->_Handle);
     if (this->bShowCursor)
     {
         ::emscripten_exit_pointerlock();

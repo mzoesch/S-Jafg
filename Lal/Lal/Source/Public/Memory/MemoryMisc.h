@@ -8,14 +8,14 @@ namespace Jafg
 template <typename T, typename U>
 FORCEINLINE constexpr size_t OffsetOf(U T::*member)
 {
-#if PLATFORM_WASM
+#if WITH_GCC
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
-#endif /* PLATFORM_WASM */
+#endif /* WITH_GCC */
     return (char*)&((T*)nullptr->*member) - (char*)nullptr;
-#if PLATFORM_WASM
+#if WITH_GCC
     #pragma GCC diagnostic pop
-#endif /* PLATFORM_WASM */
+#endif /* WITH_GCC */
 }
 
 } /* ~Namespace Jafg. */

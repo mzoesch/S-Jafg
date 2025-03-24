@@ -7,6 +7,7 @@ def add_module(me: Module, args: ModuleArgs) -> None:
     me.pch = PchUsage.ALLOW
     me.pch_content = '#include "CoreAfx.h"'
     me.kind = ModuleKind.STATIC
+    me.preserve_unity = False
 
     if 'WITH_TESTS' in args.target.defines:
         me.public_dependencies.append('~Engine/TesterForward')

@@ -197,14 +197,14 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
     Reinterpreted->VClass = const_cast<LObjectClass*>(InStaticClass);
     Reinterpreted->Outer  = InContext;
 
-#if PLATFORM_WASM
+#if WITH_GCC
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
-#endif /* PLATFORM_WASM */
+#endif /* WITH_GCC */
     ::memset(&Reinterpreted->ClassFields, 0, sizeof(Reinterpreted->ClassFields));  // NOLINT(bugprone-undefined-memory-manipulation)
-#if PLATFORM_WASM
+#if WITH_GCC
     #pragma GCC diagnostic pop
-#endif /* PLATFORM_WASM */
+#endif /* WITH_GCC */
     check( Reinterpreted->ClassFields.GetSize() == 0 && Reinterpreted->ClassFields.IsData() == false )
 
     for (LClassField& Field : InStaticClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())

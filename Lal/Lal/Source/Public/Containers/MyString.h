@@ -1616,9 +1616,9 @@ template <typename InCharacterTy, class InTraitsTy>
 template <typename ... ArgTy>
 LStringBase<InCharacterTy, InTraitsTy> LStringBase<InCharacterTy, InTraitsTy>::SprintF(const char* InFormat, const ArgTy&... InArgs)
 {
-#if PLATFORM_WASM
-    return ::Jafg::Format<LStringBase>(InFormat, InArgs...);
-#else /* PLATFORM_WASM */
+// #if PLATFORM_WASM
+//     return ::Jafg::Format<LStringBase>(InFormat, InArgs...);
+// #else /* PLATFORM_WASM */
     /**
      * Super supid solution. But who cares right now.
      * Later we write our own implementation with type safety etc.
@@ -1628,7 +1628,7 @@ LStringBase<InCharacterTy, InTraitsTy> LStringBase<InCharacterTy, InTraitsTy>::S
      */
     const LStringLegacy S = std::vformat(InFormat, std::make_format_args(InArgs...));
     return { S.c_str() };
-#endif /* !PLATFORM_WASM */
+// #endif /* !PLATFORM_WASM */
 }
 
 template <class InCharacterTy, class InTraitsTy>
@@ -1684,7 +1684,6 @@ void LStringBase<InCharacterTy, InTraitsTy>::PanicValidState() const
 
 } /* ~Namespace Jafg */
 
-#if !PLATFORM_WASM
 template <>
 struct std::formatter<::Jafg::LSimpleString> : std::formatter<const char*>
 {
@@ -1709,4 +1708,3 @@ struct std::formatter<::Jafg::LEightString> : std::formatter<const char*>
         return ::std::formatter<const char*>::format(InString.ToC(), InContext);
     }
 };
-#endif /* !PLATFORM_WASM */

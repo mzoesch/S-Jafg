@@ -15,8 +15,11 @@
     #include <GLFW/glfw3.h> /* Include glfw3 after glad to avoid include order issues. */
 #endif /* !JAFG_NO_GLFW3 */
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
+
+#if !JAFG_NO_FREETYPE
+    #include <ft2build.h>
+    #include FT_FREETYPE_H
+#endif /* !JAFG_NO_FREETYPE */
 
 #include <stb_image.h>
 #include <stb_image_write.h>

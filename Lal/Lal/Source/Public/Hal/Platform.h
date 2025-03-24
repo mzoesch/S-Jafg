@@ -94,6 +94,13 @@
     #define JAFG_NO_GLFW3                           0
 #endif /* !JAFG_NO_GLFW3 */
 
+/**
+ * Whether to include and link freetype. Some compilers may precede this.
+ */
+#ifndef JAFG_NO_FREETYPE
+    #define JAFG_NO_FREETYPE                        0
+#endif /* !JAFG_NO_FREETYPE */
+
 #ifndef PLATFORM_USES_WEBGL_TWO
     #define PLATFORM_USES_WEBGL_TWO                 0
 #endif /* PLATFORM_USES_WEBGL_TWO */

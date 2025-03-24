@@ -41,12 +41,14 @@
 #pragma GCC diagnostic error "-Wbuiltin-macro-redefined"
 #pragma GCC diagnostic error "-Wunknown-warning-option"
 #pragma GCC diagnostic error "-Winconsistent-missing-override"
+#pragma GCC diagnostic error "-Wnontrivial-memcall"
 #pragma GCC diagnostic error "-Wdynamic-class-memaccess"
 #pragma GCC diagnostic error "-Wnonportable-include-path"
 #pragma GCC diagnostic error "-Wunused-lambda-capture"
 #pragma GCC diagnostic error "-Wreturn-type"
 #pragma GCC diagnostic error "-Wmacro-redefined"
 #pragma GCC diagnostic error "-Wundefined-inline"
+#pragma GCC diagnostic error "-Wundefined-var-template"
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -81,6 +83,7 @@ struct LWasmPlatformTypes final : public LGenericPlatformTypes
 
 #define JAFG_NO_GLAD                        1 /* Let the compiler handle that - so emscripten. */
 #define JAFG_NO_GLFW3                       1
+#define JAFG_NO_FREETYPE                    1
 
 #define PLATFORM_USES_NON_GENERIC_LOOP      1
 #define PLATFORM_GUARDED_LOOP                              \

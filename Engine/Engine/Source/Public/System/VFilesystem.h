@@ -23,6 +23,27 @@ namespace Private
 
 struct LVirtualFile;
 
+#if PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION || PRIVATE_JAFG_DEFINE_VIRTUAL_FILE
+    struct LVirtualFile final
+    {
+        ENGINE_API LVirtualFile(const LPath& RelativeContentPath, const uint8* InFileContents, const uint64 InFileSize);
+        PROHIBIT_COPY(LVirtualFile)
+        DEFAULT_MOVE(LVirtualFile)
+        ~LVirtualFile() = default;
+
+        FORCEINLINE auto GetFileSize() const -> LuBigSizeTy { return this->FileSize; }
+        FORCEINLINE auto GetRelativeContentPath() const -> const LPath& { return this->RelativeContentPath; }
+        FORCEINLINE auto GetFileName() const -> LSimpleString { return this->RelativeContentPath.GetBase(); }
+        FORCEINLINE auto GetBulk() const -> const uint8* { return this->FileContents; }
+
+    private:
+
+        uint64       FileSize;
+        LPath        RelativeContentPath;
+        const uint8* FileContents;
+    };
+#endif /* PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION || PRIVATE_JAFG_DEFINE_VIRTUAL_FILE */
+
 } /* ~Namespace Private */
 
 //#

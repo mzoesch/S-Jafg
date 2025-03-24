@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #pragma once
+
 #include <cstdint>
 
 enum : int8 { INDEX_NONE = -1 };

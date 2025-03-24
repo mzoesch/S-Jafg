@@ -22,7 +22,7 @@ struct LGlfw3Bridge;
 
 } /* ~Namespace Jafg::Private */
 
-class LSurfaceGlfw3 : public LSurfaceBase
+class LSurfaceGlfw3 final : public LSurfaceBase
 {
 public:
 
@@ -36,7 +36,7 @@ public:
     PROHIBIT_COPY(LSurfaceGlfw3)
     LSurfaceGlfw3(LSurfaceGlfw3&& Other) noexcept;
     LSurfaceGlfw3& operator=(LSurfaceGlfw3&& Other) noexcept;
-    ~LSurfaceGlfw3() override;
+    virtual ~LSurfaceGlfw3() override;
 
     virtual void Initialize() override;
     virtual void OnClear() override;

@@ -131,7 +131,7 @@ struct LAnchor final
     }
     LAnchor(const EAnchor::Type InAnchors)
     {
-        this->Anchors = LVector4::Zero();
+        this->Anchors = LVector4::ZeroVector;
         this->ApplyConstraints(InAnchors);
         return;
     }

@@ -336,7 +336,16 @@ template <typename T>
 void TMatrix<T>::FastCopy(const TMatrix<T>& InMatrix, TMatrix<T>* OutMatrix)
 {
     static_assert(sizeof(TMatrix<T>) == 16 * sizeof(T), "TMatrix<T> is not 16 * sizeof(T) bytes large.");
+
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+#endif /* WITH_GCC */
     ::memcpy(OutMatrix, &InMatrix, sizeof(TMatrix<T>));  // NOLINT(bugprone-undefined-memory-manipulation)
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
     return;
 }
 

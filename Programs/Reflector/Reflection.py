@@ -160,10 +160,14 @@ def apply_platform(solution: Solution, platform: BufferedPlatform) -> dict:
         'version': volatile_platform.version,
         'architecture': volatile_platform.architecture,
         'toolset': volatile_platform.toolset,
+        'unity': volatile_platform.unity,
         'lnk_flags': volatile_platform.lnk_flags,
         'build_flags': volatile_platform.build_flags,
         'defines': [],
-        'configs': []
+        'configs': [],
+        'target_props_lnk_flags': volatile_platform.target_props_lnk_flags,
+        'target_props_build_flags': volatile_platform.target_props_build_flags,
+        'target_props_sfx': volatile_platform.target_props_sfx,
     }
 
     for d in volatile_platform.defines:
@@ -247,6 +251,7 @@ def apply_module(solution: Solution, platform: Platform, build_configuration: Bu
         'pch': pch_usage_to_bool(volatile_module.pch),
         'pch_content': volatile_module.pch_content,
         'kind': module_kind_to_string(volatile_module.kind),
+        'preserve_unity': volatile_module.preserve_unity,
         'entry': volatile_module.entry,
         'pre_builds': volatile_module.pre_builds,
         'post_builds': volatile_module.post_builds,

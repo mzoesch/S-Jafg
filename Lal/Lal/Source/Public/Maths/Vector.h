@@ -24,37 +24,37 @@ struct TVector
     };
 
     /** Global zero vector constant (0, 0, 0). */
-    static const TVector<T> ZeroVector;
+    LAL_API static const TVector<T> ZeroVector;
 
     /** Global one vector constant (1, 1, 1). */
-    static const TVector<T> OneVector;
+    LAL_API static const TVector<T> OneVector;
 
     /** Global up vector constant (0, 0, 1). */
-    static const TVector<T> UpVector;
+    LAL_API static const TVector<T> UpVector;
 
     /** Global down vector constant (0, 0, -1). */
-    static const TVector<T> DownVector;
+    LAL_API static const TVector<T> DownVector;
 
     /** Global forward vector constant (1, 0, 0). */
-    static const TVector<T> ForwardVector;
+    LAL_API static const TVector<T> ForwardVector;
 
     /** Global backward vector constant (-1, 0, 0). */
-    static const TVector<T> BackwardVector;
+    LAL_API static const TVector<T> BackwardVector;
 
     /** Global right vector constant (0, 1, 0). */
-    static const TVector<T> RightVector;
+    LAL_API static const TVector<T> RightVector;
 
     /** Global left vector constant (0, -1, 0). */
-    static const TVector<T> LeftVector;
+    LAL_API static const TVector<T> LeftVector;
 
     /** Global unit vector constant along the x-axis (1, 0, 0). */
-    static const TVector<T> UnitVectorX;
+    LAL_API static const TVector<T> UnitVectorX;
 
     /** Global unit vector constant along the y-axis (0, 1, 0). */
-    static const TVector<T> UnitVectorY;
+    LAL_API static const TVector<T> UnitVectorY;
 
     /** Global unit vector constant along the z-axis (0, 0, 1). */
-    static const TVector<T> UnitVectorZ;
+    LAL_API static const TVector<T> UnitVectorZ;
 
     FORCEINLINE static TVector<T> Zero()     { return TVector<T>::ZeroVector;     }
     FORCEINLINE static TVector<T> One()      { return TVector<T>::OneVector;      }

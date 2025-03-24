@@ -159,10 +159,14 @@ pub struct Platform
     pub version: String,
     pub architecture: String,
     pub toolset: String,
+    pub unity: bool,
     pub lnk_flags: Vec<String>,
     pub build_flags: Vec<String>,
     pub defines: Vec<String>,
     pub configs: Vec<BuildConfig>,
+    pub target_props_lnk_flags: Vec<String>,
+    pub target_props_build_flags: Vec<String>,
+    pub target_props_sfx: String,
 }
 
 impl Platform
@@ -235,7 +239,7 @@ impl Platform
         {
             "Windows" => "",
             "Linux" => "lib",
-            "Wasm" => "",
+            "Wasm" => "lib",
             _ => "not_supported",
         }.to_string()
     }
@@ -246,6 +250,7 @@ impl Platform
         {
             "Windows" => ".lib",
             "Linux" => ".a",
+            "Wasm" => ".html",
             _ => ".not_supported",
         }.to_string()
     }
@@ -255,7 +260,7 @@ impl Platform
         return match self.name.as_str()
         {
             "Windows" => "",
-            _ => ".not_supported",
+            _ => "not_supported",
         }.to_string()
     }
 
@@ -425,6 +430,7 @@ pub struct Module
     pub pch: bool,
     pub pch_content: String,
     pub kind: ModuleKind,
+    pub preserve_unity: bool,
     pub entry: String,
     pub pre_builds: Vec<String>,
     pub post_builds: Vec<String>,

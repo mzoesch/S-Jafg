@@ -1,8 +1,13 @@
 // Copyright mzoesch. All rights reserved.
 
+#include "CoreAfx.h"
+
 #if WITH_VIRTUAL_FILESYSTEM
 
+#define PRIVATE_JAFG_DEFINE_VIRTUAL_FILE 1
 #include "System/VFilesystem.h"
+#undef PRIVATE_JAFG_DEFINE_VIRTUAL_FILE
+
 #include "Engine/ObjectBaseUtility.h"
 #include "System/EnginePath.h"
 #include "System/Paths.h"
@@ -18,27 +23,7 @@ ENGINE_API LVirtualFileSystem* GVirtualFileSystem;
 namespace Jafg::Private
 {
 
-struct LVirtualFile;
 TdhArray<LVirtualFile>& GetVirtualFiles();
-
-struct LVirtualFile final
-{
-    LVirtualFile(const LPath& RelativeContentPath, const uint8* InFileContents, const uint64 InFileSize);
-    PROHIBIT_COPY(LVirtualFile)
-    DEFAULT_MOVE(LVirtualFile)
-    ~LVirtualFile() = default;
-
-    FORCEINLINE auto GetFileSize() const -> LuBigSizeTy { return this->FileSize; }
-    FORCEINLINE auto GetRelativeContentPath() const -> const LPath& { return this->RelativeContentPath; }
-    FORCEINLINE auto GetFileName() const -> LSimpleString { return this->RelativeContentPath.GetBase(); }
-    FORCEINLINE auto GetBulk() const -> const uint8* { return this->FileContents; }
-
-private:
-
-    uint64       FileSize;
-    LPath        RelativeContentPath;
-    const uint8* FileContents;
-};
 
 LVirtualFile::LVirtualFile(const LPath& RelativeContentPath, const uint8* InFileContents, const uint64 InFileSize)
 {

@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 use std::io::Read;
+use walkdir::WalkDir;
 
 /// Ensures that a file exists at the given path. If not found, the file is created.
 pub fn ensure_file(path: &str)
@@ -170,4 +171,21 @@ pub fn copy_to_dir_if_different(src: &str, dst: &str, emit: bool) -> bool
     }
 
     return false;
+}
+
+/// Files relative to the engine root directory.
+pub fn get_files_recursive(dir: &str) -> Vec<String>
+{
+    check_dir(dir);
+
+    let mut files: Vec<String> = Vec::new();
+    for entry in WalkDir::new(dir).into_iter().filter_map(|e| e.ok())
+    {
+        if entry.path().is_file()
+        {
+            files.push(entry.path().to_str().unwrap().to_string());
+        }
+    }
+
+    return files;
 }

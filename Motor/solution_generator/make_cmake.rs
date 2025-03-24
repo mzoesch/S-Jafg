@@ -23,7 +23,7 @@ fn expand_toolset_to_compiler_c(toolset: &str) -> &str
     return match toolset
     {
         "msc" => "cl.exe",
-        "em" => "gcc",
+        "em" => "emcc",
         "clang" => "clang",
         _ => panic!("Unrecognized toolset [{}].", toolset),
     };
@@ -34,7 +34,7 @@ fn expand_toolset_to_compiler_cxx(toolset: &str) -> &str
     return match toolset
     {
         "msc" => "cl.exe",
-        "em" => "g++",
+        "em" => "em++",
         "clang" => "clang++",
         _ => panic!("Unrecognized toolset [{}].", toolset),
     };
@@ -48,14 +48,21 @@ pub(crate) fn make_cmake(solution: &Solution)
         {
             for target in config.targets.iter() 
             {
+                let platform_suffix: &str = match platform.name.as_str()
+                {
+                    "Wasm" => "-wasm",
+                    _ => "",
+                };
+
                 // bat
                 {
+
                     let target_path: String = format!("{}/{}-{}/{}-{}", solution.get_saved_rel_dir_cmake(), platform.name, platform.architecture, target.name, config.name);
                     let gen_file: String = format!("{}/generate.bat", target_path);
                     let build_file: String = format!("{}/build.bat", target_path);
                     let clean_build_file: String = format!("{}/clean_build.bat", target_path);
 
-                    let mut gen_bat: String = finder::read_file("Programs/Shell/Stubs/CmakeGenerateForTarget.bat");
+                    let mut gen_bat: String = finder::read_file(&format!("Programs/Shell/Stubs/CmakeGenerateForTarget{}.bat", &platform_suffix));
                     expand_cmake_vars(&mut gen_bat, solution, platform, config, target);
                     gen_bat = match platform.toolset.as_str()
                     {
@@ -90,7 +97,7 @@ pub(crate) fn make_cmake(solution: &Solution)
                     let build_file: String = format!("{}/build.sh", target_path);
                     let clean_build_file: String = format!("{}/clean_build.sh", target_path);
 
-                    let mut gen_sh: String = finder::read_file("Programs/Shell/Stubs/CmakeGenerateForTarget.sh");
+                    let mut gen_sh: String = finder::read_file(&format!("Programs/Shell/Stubs/CmakeGenerateForTarget{}.sh", &platform_suffix));
                     expand_cmake_vars(&mut gen_sh, solution, platform, config, target);
                     gen_sh = match platform.toolset.as_str()
                     {
@@ -319,7 +326,9 @@ pub(crate) fn make_script(solution: &Solution)
         if platform.toolset == "msc"
         {
             wwi(b, 1, "if(NOT CMAKE_CXX_COMPILER_ID STREQUAL \"MSVC\")");
-            wwi(b, 2, "message(FATAL_ERROR \"CXX compiler [MSVC] is required for this platform [${JAFG_TARGET_PLATFORM}].\")");
+            wwi(b, 2, "set(CMAKE_C_COMPILER \"cl.exe\")");
+            wwi(b, 2, "set(CMAKE_CXX_COMPILER \"cl.exe\")");
+            // wwi(b, 2, "message(FATAL_ERROR \"CXX compiler [MSVC] is required for this platform [${JAFG_TARGET_PLATFORM}].\")");
             wwi(b, 1, "endif()");
             wwi(b, 1, "set(CMAKE_GENERATOR_PLATFORM ${JAFG_TARGET_ARCHITECTURE})");
         }
@@ -335,7 +344,9 @@ pub(crate) fn make_script(solution: &Solution)
         {
             wwi(b, 1, "string(REGEX MATCH \".*clang\\\\+\\\\+.*\" REGREX_MATCHED ${CMAKE_CXX_COMPILER})");
             wwi(b, 1, "if(NOT REGREX_MATCHED)");
-            wwi(b, 2, "message(FATAL_ERROR \"CXX compiler [Clang] is required for this platform [${JAFG_TARGET_PLATFORM}].\")");
+            wwi(b, 2, "set(CMAKE_C_COMPILER \"clang\")");
+            wwi(b, 2, "set(CMAKE_CXX_COMPILER \"clang++\")");
+            // wwi(b, 2, "message(FATAL_ERROR \"CXX compiler [Clang] is required for this platform [${JAFG_TARGET_PLATFORM}].\")");
             wwi(b, 1, "endif()");
             wwi(b, 1, "set(CMAKE_GENERATOR_PLATFORM ${JAFG_TARGET_ARCHITECTURE})");
         }
@@ -472,6 +483,17 @@ pub(crate) fn make_script(solution: &Solution)
             {
                 let native_name: String = target.make_build_target_name(config);
                 wwi(b, 1, format!("if(JAFG_TARGET_CONFIGURATION STREQUAL \"{}\")", native_name));
+
+                let mut unity_runtimes: Vec<String> = Vec::new();
+                let mut native_dependencies: Vec<String> = Vec::new();
+                let mut pre_build_commands: Vec<String> = Vec::new();
+                let mut post_build_commands: Vec<String> = Vec::new();
+                if platform.unity
+                {
+                    wwi(b, 2, format!("set({}_GLOBAL_UNITY_FILES \"\")", platform.name.to_uppercase()));
+                    wwi(b, 2, format!("set({}_GLOBAL_UNITY_INCLUDES \"\")", platform.name.to_uppercase()));
+                }
+
                 for module in target.modules.iter()
                 {
                     let transitive_dependencies: Vec<String> = module.get_dependencies_transitive(target);
@@ -499,40 +521,91 @@ pub(crate) fn make_script(solution: &Solution)
                     wwi(b, 3, ")");
                     wwi(b, 2, format!("source_group(TREE \"${{REAL_ENGINE_ROOT_DIR}}/{}\" FILES ${{{}_GEN_SRC_FILES}})", solution.construct_relative_root_saved_dir(platform, module), module.name));
 
-                    if module.kind.is_launch()
+                    if platform.unity && module.preserve_unity == false && module.kind.is_launch()
                     {
-                        wwi(b, 2, format!("add_executable({}{} ${{{}_SRC_FILES}} ${{{}_C_SRC_FILES}} ${{{}_GEN_SRC_FILES}})",
-                            module.name,
-                            match platform.name.as_str()
-                            {
-                                "Windows" => " WIN32",
-                                _ => "",
-                            },
-                            module.name, module.name, module.name
-                        ));
+                        panic!("Launch module [{}] is not allowed to be preserved in unity build.", module.name);
                     }
-                    else if module.kind.is_static()
+                    else if platform.unity && module.preserve_unity == false
                     {
-                        wwi(b, 2, format!("add_library({} STATIC ${{{}_SRC_FILES}} ${{{}_C_SRC_FILES}} ${{{}_GEN_SRC_FILES}})", module.name, module.name, module.name, module.name));
+                        if module.kind.is_static()
+                        {
+                            wwi(b, 2, format!("add_library({} STATIC ${{{}_SRC_FILES}} ${{{}_C_SRC_FILES}} ${{{}_GEN_SRC_FILES}})", module.name, module.name, module.name, module.name));
+                        }
+                        else if module.kind.is_shared()
+                        {
+                            wwi(b, 2, format!("add_library({} SHARED ${{{}_SRC_FILES}} ${{{}_C_SRC_FILES}} ${{{}_GEN_SRC_FILES}})", module.name, module.name, module.name, module.name));
+                        }
                     }
-                    else if module.kind.is_shared()
+                    else if platform.unity
                     {
-                        wwi(b, 2, format!("add_library({} SHARED ${{{}_SRC_FILES}} ${{{}_C_SRC_FILES}} ${{{}_GEN_SRC_FILES}})", module.name, module.name, module.name, module.name));
+                        if module.kind.is_launch()
+                        {
+                            unity_runtimes.push(module.name.to_string());
+                        }
+                        wwi(b, 2, format!("list(APPEND {}_GLOBAL_UNITY_FILES ${{{}_SRC_FILES}} ${{{}_C_SRC_FILES}} ${{{}_GEN_SRC_FILES}})", platform.name.to_uppercase(), module.name, module.name, module.name));
+                    }
+                    else
+                    {
+                        if module.kind.is_launch()
+                        {
+                            wwi(b, 2, format!("add_executable({}{} ${{{}_SRC_FILES}} ${{{}_C_SRC_FILES}} ${{{}_GEN_SRC_FILES}})",
+                                module.name,
+                                match platform.name.as_str()
+                                {
+                                    "Windows" => " WIN32",
+                                    _ => "",
+                                },
+                                module.name, module.name, module.name
+                            ));
+                        }
+                        else if module.kind.is_static()
+                        {
+                            wwi(b, 2, format!("add_library({} STATIC ${{{}_SRC_FILES}} ${{{}_C_SRC_FILES}} ${{{}_GEN_SRC_FILES}})", module.name, module.name, module.name, module.name));
+                        }
+                        else if module.kind.is_shared()
+                        {
+                            wwi(b, 2, format!("add_library({} SHARED ${{{}_SRC_FILES}} ${{{}_C_SRC_FILES}} ${{{}_GEN_SRC_FILES}})", module.name, module.name, module.name, module.name));
+                        }
                     }
 
-                    wwi(b, 2, format!("foreach(src_file ${{{}_C_SRC_FILES}})", module.name));
-                    wwi(b, 3, "set_source_files_properties(${src_file} PROPERTIES LANGUAGE C)");
-                    wwi(b, 3, "set_source_files_properties(${src_file} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)");
-                    wwi(b, 2, "endforeach()");
+                    if platform.unity == false || module.preserve_unity == false
+                    {
+                        wwi(b, 2, format!("foreach(src_file ${{{}_C_SRC_FILES}})", module.name));
+                        wwi(b, 3, "set_source_files_properties(${src_file} PROPERTIES LANGUAGE C)");
+                        wwi(b, 3, "set_source_files_properties(${src_file} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)");
+                        wwi(b, 2, "endforeach()");
+                    }
 
-                    wwi(b, 2, format!("set_target_properties({} PROPERTIES", module.name));
-                    wwi(b, 3, format!("ARCHIVE_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", module.get_functional_rel_dir()));
-                    wwi(b, 3, format!("LIBRARY_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", module.get_functional_rel_dir()));
-                    wwi(b, 3, format!("RUNTIME_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", module.get_functional_rel_dir()));
-                    wwi(b, 3, ")");
+                    if platform.unity == false || module.preserve_unity == false
+                    {
+                        wwi(b, 2, format!("set_target_properties({} PROPERTIES", module.name));
+                        wwi(b, 3, format!("ARCHIVE_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", module.get_functional_rel_dir()));
+                        wwi(b, 3, format!("LIBRARY_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", module.get_functional_rel_dir()));
+                        wwi(b, 3, format!("RUNTIME_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", module.get_functional_rel_dir()));
+                        if platform.target_props_lnk_flags.len() > 0
+                        {
+                            wwi(b, 3, format!("LINK_FLAGS \"{}\"", platform.target_props_lnk_flags.join(" ")));
+                        }
+                        if platform.target_props_build_flags.len() > 0
+                        {
+                            wwi(b, 3, format!("COMPILE_FLAGS \"{}\"", platform.target_props_build_flags.join(" ")));
+                        }
+                        if platform.target_props_sfx.len() > 0
+                        {
+                            wwi(b, 3, format!("SUFFIX \"{}\"", &platform.target_props_sfx));
+                        }
+                        wwi(b, 3, ")");
+                    }
 
-                    wwi(b, 2, format!("target_include_directories({} PRIVATE", module.name));
-                    wwi(b, 3, "\"${REAL_ENGINE_ROOT_DIR}\"");
+                    if platform.unity && module.preserve_unity
+                    {
+                        wwi(b, 2, format!("list(APPEND {}_GLOBAL_UNITY_INCLUDES", platform.name.to_uppercase()));
+                    }
+                    else
+                    {
+                        wwi(b, 2, format!("target_include_directories({} PRIVATE", module.name));
+                        wwi(b, 3, "\"${REAL_ENGINE_ROOT_DIR}\"");
+                    }
                     wwi(b, 3, format!("\"${{REAL_ENGINE_ROOT_DIR}}/{}/Internal\"", module.get_functional_rel_source_dir()));
                     wwi(b, 3, format!("\"${{REAL_ENGINE_ROOT_DIR}}/{}/Public\"", module.get_functional_rel_source_dir()));
                     wwi(b, 3, format!("\"${{REAL_ENGINE_ROOT_DIR}}/{}\"", solution.construct_relative_gh_path(platform, module)));
@@ -548,95 +621,117 @@ pub(crate) fn make_script(solution: &Solution)
                     }
                     wwi(b, 3, ")");
 
-                    for dependency in transitive_dependencies.iter()
+                    if platform.unity == false || module.preserve_unity == false
                     {
-                        let d: &Module = target.find_module_by_name_checked(dependency);
-                        if d.kind.is_launch()
+                        for dependency in transitive_dependencies.iter()
                         {
-                            panic!("Dependency [{}] is not allowed for launch module [{}].", d.name, d.relative_dir);
-                        }
-                        wwi(b, 2, format!("add_dependencies({} {})", module.name, d.name));
-                        wwi(b, 2, format!("target_link_libraries({} PRIVATE \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}/{}{}{}\")",
-                            module.name,
-                            d.get_functional_rel_dir(),
-                            match d.kind
+                            let d: &Module = target.find_module_by_name_checked(dependency);
+                            if d.kind.is_launch()
                             {
-                                ModuleKind::Shared => platform.get_shared_counterpart_prefix(),
-                                ModuleKind::Static => platform.get_static_bin_prefix(),
-                                _ => panic!("Module kind not allowed for linking."),
-                            },
-                            d.name,
-                            match d.kind
-                            {
-                                ModuleKind::Shared => platform.get_shared_counterpart_suffix(),
-                                ModuleKind::Static => platform.get_static_bin_suffix(),
-                                _ => panic!("Module kind not allowed for linking."),
+                                panic!("Dependency [{}] is not allowed for launch module [{}].", d.name, d.relative_dir);
                             }
-                        ));
+                            wwi(b, 2, format!("add_dependencies({} {})", module.name, d.name));
+                            wwi(b, 2, format!("target_link_libraries({} PRIVATE \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}/{}{}{}\")",
+                                module.name,
+                                d.get_functional_rel_dir(),
+                                match d.kind
+                                {
+                                    ModuleKind::Shared => platform.get_shared_counterpart_prefix(),
+                                    ModuleKind::Static => platform.get_static_bin_prefix(),
+                                    _ => panic!("Module kind not allowed for linking."),
+                                },
+                                d.name,
+                                match d.kind
+                                {
+                                    ModuleKind::Shared => platform.get_shared_counterpart_suffix(),
+                                    ModuleKind::Static => platform.get_static_bin_suffix(),
+                                    _ => panic!("Module kind not allowed for linking."),
+                                }
+                            ));
+                        }
                     }
 
                     for dependency in module.native_dependencies.iter()
                     {
-                        wwi(b, 2, format!("target_link_libraries({} PRIVATE \"${{REAL_ENGINE_ROOT_DIR}}/{}\")",
-                            module.name,
-                            dependency,
-                        ));
+                        let d: String = format!("${{REAL_ENGINE_ROOT_DIR}}/{}", dependency);
+                        if platform.unity && module.preserve_unity
+                        {
+                            if native_dependencies.contains(&d) == false
+                            {
+                                native_dependencies.push(d);
+                            }
+                        }
+                        else
+                        {
+                            wwi(b, 2, format!("target_link_libraries({} PRIVATE \"{}\")", module.name, d));
+                        }
                     }
                     for dependency in module.native_runtime_dependencies.iter()
                     {
-                        wwi(b, 2, format!("target_link_libraries({} PRIVATE \"${{REAL_ENGINE_ROOT_DIR}}/{}\")",
-                            module.name,
-                            dependency,
-                        ));
+                        let d: String = format!("${{REAL_ENGINE_ROOT_DIR}}/{}", dependency);
+                        if platform.unity && module.preserve_unity
+                        {
+                            if native_dependencies.contains(&d) == false
+                            {
+                                native_dependencies.push(d);
+                            }
+                        }
+                        else
+                        {
+                            wwi(b, 2, format!("target_link_libraries({} PRIVATE \"{}\")", module.name, d));
+                        }
                     }
 
-                    if module.kind.is_shared()
+                    if platform.unity == false || module.preserve_unity == false
                     {
-                        wwi(b, 2, format!("target_compile_definitions({} PRIVATE {} {})",
-                            module.name,
-                            format!("{}_API=PLATFORM_CALLSPEC_OUT", module.name.to_uppercase()),
-                            format!("{}_EXTERN=PLATFORM_EXTERNSPEC_OUT", module.name.to_uppercase())
-                        ));
-                    }
-                    else
-                    {
-                        wwi(b, 2, format!("target_compile_definitions({} PRIVATE {} {})",
-                            module.name,
-                            format!("{}_API=", module.name.to_uppercase()),
-                            format!("{}_EXTERN=", module.name.to_uppercase())
-                        ));
-                    }
-                    for target_module in target.modules.iter()
-                    {
-                        for dependency in transitive_dependencies.iter()
+                        if module.kind.is_shared()
                         {
-                            if target_module.is_equal_str(dependency)
+                            wwi(b, 2, format!("target_compile_definitions({} PRIVATE {} {})",
+                                module.name,
+                                format!("{}_API=PLATFORM_CALLSPEC_OUT", module.name.to_uppercase()),
+                                format!("{}_EXTERN=PLATFORM_EXTERNSPEC_OUT", module.name.to_uppercase())
+                            ));
+                        }
+                        else
+                        {
+                            wwi(b, 2, format!("target_compile_definitions({} PRIVATE {} {})",
+                                module.name,
+                                format!("{}_API=", module.name.to_uppercase()),
+                                format!("{}_EXTERN=", module.name.to_uppercase())
+                            ));
+                        }
+                        for target_module in target.modules.iter()
+                        {
+                            for dependency in transitive_dependencies.iter()
                             {
-                                if target_module.kind.is_launch()
+                                if target_module.is_equal_str(dependency)
                                 {
-                                    panic!("Dependency [{}] is not allowed for launch module [{}].", dependency, target_module.relative_dir);
-                                }
-                                else if target_module.kind.is_shared()
-                                {
-                                    wwi(b, 2, format!("target_compile_definitions({} PRIVATE {} {})",
-                                        module.name,
-                                        format!("{}_API=PLATFORM_CALLSPEC_IN", target_module.name.to_uppercase()),
-                                        format!("{}_EXTERN=PLATFORM_EXTERNSPEC_IN", target_module.name.to_uppercase())
-                                    ));
-                                }
-                                else
-                                {
-                                    wwi(b, 2, format!("target_compile_definitions({} PRIVATE {} {})",
-                                        module.name,
-                                        format!("{}_API=", target_module.name.to_uppercase()),
-                                        format!("{}_EXTERN=", target_module.name.to_uppercase())
-                                    ));
+                                    if target_module.kind.is_launch()
+                                    {
+                                        panic!("Dependency [{}] is not allowed for launch module [{}].", dependency, target_module.relative_dir);
+                                    }
+                                    else if target_module.kind.is_shared()
+                                    {
+                                        wwi(b, 2, format!("target_compile_definitions({} PRIVATE {} {})",
+                                            module.name,
+                                            format!("{}_API=PLATFORM_CALLSPEC_IN", target_module.name.to_uppercase()),
+                                            format!("{}_EXTERN=PLATFORM_EXTERNSPEC_IN", target_module.name.to_uppercase())
+                                        ));
+                                    }
+                                    else
+                                    {
+                                        wwi(b, 2, format!("target_compile_definitions({} PRIVATE {} {})",
+                                            module.name,
+                                            format!("{}_API=", target_module.name.to_uppercase()),
+                                            format!("{}_EXTERN=", target_module.name.to_uppercase())
+                                        ));
+                                    }
                                 }
                             }
                         }
                     }
 
-                    if module.pch
+                    if (platform.unity == false || module.preserve_unity == false) && module.pch
                     {
                         wwi(b, 2, format!("target_precompile_headers({} PRIVATE \"${{REAL_ENGINE_ROOT_DIR}}/{}/{}\")",
                             module.name,
@@ -644,35 +739,161 @@ pub(crate) fn make_script(solution: &Solution)
                             paths::FILE_PCH_H
                         ));
                     }
-                    
-                    if module.kind.is_launch() && entry_to_lnk_flag(&module.entry) != ""
+
+                    if (platform.unity == false || module.preserve_unity == false) && module.kind.is_launch() && entry_to_lnk_flag(&module.entry) != ""
                     {
                         wwi(b, 2, format!("set_target_properties({} PROPERTIES LINK_FLAGS \"{}\")", module.name, entry_to_lnk_flag(&module.entry)));
                     }
-                    
-                    wwi(b, 2, format!("get_target_property(CUR_TARGET_KIND {} TYPE)", module.name));
-                    wwi(b, 2, format!("add_custom_target({}_PRE_BUILD_COMMAND", module.name));
+
+                    if platform.unity == false || module.preserve_unity == false
+                    {
+                        wwi(b, 2, format!("get_target_property(CUR_TARGET_KIND {} TYPE)", module.name));
+                        wwi(b, 2, format!("add_custom_target({}_PRE_BUILD_COMMAND", module.name));
+                    }
                     for _step in module.pre_builds.iter()
                     {
                         let steps: Vec<String> = crate::solution_generator::launch::expand_variables_for_step(&_step, ScriptType::Cmake);
                         let compound: String = steps.join("");
-                        wwi(b, 3, format!("COMMAND {}", compound));
+                        if platform.unity && module.preserve_unity
+                        {
+                            pre_build_commands.push(compound);
+                        }
+                        else
+                        {
+                            wwi(b, 3, format!("COMMAND {}", compound));
+                        }
                         continue
                     }
-                    wwi(b, 3, ")");
-                    wwi(b, 2, format!("add_dependencies({} {}_PRE_BUILD_COMMAND)", module.name, module.name));
-                    wwi(b, 2, format!("add_custom_command(TARGET {} POST_BUILD", module.name));
+                    if platform.unity == false || module.preserve_unity == false
+                    {
+                        wwi(b, 3, ")");
+                        wwi(b, 2, format!("add_dependencies({} {}_PRE_BUILD_COMMAND)", module.name, module.name));
+                    }
+
+                    if platform.unity == false || module.preserve_unity == false
+                    {
+                        wwi(b, 2, format!("add_custom_command(TARGET {} POST_BUILD", module.name));
+                    }
                     for _step in module.post_builds.iter()
                     {
                         let steps: Vec<String> = crate::solution_generator::launch::expand_variables_for_step(&_step, ScriptType::Cmake);
                         let compound: String = steps.join("");
-                        wwi(b, 3, format!("COMMAND {}", compound));
+                        if platform.unity && module.preserve_unity
+                        {
+                            post_build_commands.push(compound);
+                        }
+                        else
+                        {
+                            wwi(b, 3, format!("COMMAND {}", compound));
+                        }
                         continue
                     }
-                    wwi(b, 3, ")");
+                    if platform.unity == false || module.preserve_unity == false
+                    {
+                        wwi(b, 3, ")");
+                    }
 
                     continue;
                 }
+
+                if platform.unity
+                {
+                    for runtime in unity_runtimes.iter()
+                    {
+                        wwi(b, 2, format!("add_executable({} ${{{}_GLOBAL_UNITY_FILES}})", runtime, platform.name.to_uppercase()));
+                        wwi(b, 2, format!("target_include_directories({} PRIVATE \"${{REAL_ENGINE_ROOT_DIR}}\" ${{{}_GLOBAL_UNITY_INCLUDES}})", runtime, platform.name.to_uppercase()));
+                        // wwi(b, 2, format!("target_compile_options({} PRIVATE -include CoreAfx.h)", runtime));
+                        wwi(b, 2, format!("set_target_properties({} PROPERTIES", runtime));
+                        wwi(b, 3, format!("ARCHIVE_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", target.find_module_by_name_checked(runtime).get_functional_rel_dir()));
+                        wwi(b, 3, format!("LIBRARY_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", target.find_module_by_name_checked(runtime).get_functional_rel_dir()));
+                        wwi(b, 3, format!("RUNTIME_OUTPUT_DIRECTORY \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}\"", target.find_module_by_name_checked(runtime).get_functional_rel_dir()));
+                        if platform.target_props_lnk_flags.len() > 0
+                        {
+                            wwi(b, 3, format!("LINK_FLAGS \"{}\"", platform.target_props_lnk_flags.join(" ")));
+                        }
+                        if platform.target_props_build_flags.len() > 0
+                        {
+                            wwi(b, 3, format!("COMPILE_FLAGS \"{}\"", platform.target_props_build_flags.join(" ")));
+                        }
+                        if platform.target_props_sfx.len() > 0
+                        {
+                            wwi(b, 3, format!("SUFFIX \"{}\"", &platform.target_props_sfx));
+                        }
+                        wwi(b, 3, ")");
+                        for module in target.modules.iter()
+                        {
+                            if module.preserve_unity == false
+                            {
+                                if module.kind.is_launch()
+                                {
+                                    panic!("Launch module [{}] is not allowed to be non preserved in unity build.", module.name);
+                                }
+                                else if module.kind.is_shared()
+                                {
+                                    wwi(b, 2, format!("target_compile_definitions({} PRIVATE {} {})",
+                                        runtime,
+                                        format!("{}_API=PLATFORM_CALLSPEC_IN", module.name.to_uppercase()),
+                                        format!("{}_EXTERN=PLATFORM_EXTERNSPEC_IN", module.name.to_uppercase())
+                                    ));
+                                }
+                                else
+                                {
+                                    wwi(b, 2, format!("target_compile_definitions({} PRIVATE {} {})",
+                                        runtime,
+                                        format!("{}_API=", module.name.to_uppercase()),
+                                        format!("{}_EXTERN=", module.name.to_uppercase())
+                                    ));
+                                }
+                                wwi(b, 2, format!("add_dependencies({} {})", runtime, module.name));
+                                wwi(b, 2, format!("target_link_libraries({} PRIVATE \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}/{}{}{}\")",
+                                    runtime,
+                                    module.get_functional_rel_dir(),
+                                    match module.kind
+                                    {
+                                        ModuleKind::Shared => platform.get_shared_counterpart_prefix(),
+                                        ModuleKind::Static => platform.get_static_bin_prefix(),
+                                        _ => panic!("Module kind not allowed for linking."),
+                                    },
+                                    module.name,
+                                    match module.kind
+                                    {
+                                        ModuleKind::Shared => platform.get_shared_counterpart_suffix(),
+                                        ModuleKind::Static => platform.get_static_bin_suffix(),
+                                        _ => panic!("Module kind not allowed for linking."),
+                                    }
+                                ));
+                            }
+                            else
+                            {
+                                wwi(b, 2,
+                                    format!("target_compile_definitions({} PRIVATE {}_API= {}_EXTERN=)",
+                                    runtime, module.name.to_uppercase(), module.name.to_uppercase()
+                                ));
+                            }
+                        }
+                        for d in native_dependencies.iter()
+                        {
+                            wwi(b, 1, format!("target_link_libraries({} PRIVATE \"{}\")", runtime, d));
+                        }
+
+                        wwi(b, 2, format!("get_target_property(CUR_TARGET_KIND {} TYPE)", runtime));
+                        wwi(b, 2, format!("add_custom_target({}_PRE_BUILD_COMMAND", runtime));
+                        for command in pre_build_commands.iter()
+                        {
+                            wwi(b, 3, format!("COMMAND {}", command));
+                        }
+                        wwi(b, 3, ")");
+                        wwi(b, 2, format!("add_dependencies({} {}_PRE_BUILD_COMMAND)", runtime, runtime));
+
+                        wwi(b, 2, format!("add_custom_command(TARGET {} POST_BUILD", runtime));
+                        for command in post_build_commands.iter()
+                        {
+                            wwi(b, 3, format!("COMMAND {}", command));
+                        }
+                        wwi(b, 3, ")");
+                    }
+                }
+
                 wwi(b, 1, "endif()");
                 continue;
             }

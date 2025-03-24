@@ -47,8 +47,7 @@ class ModuleArgs:
         return
 
 
-#   Exceptions off?
-#   Unity build here?
+# Exceptions off?
 class Module:
     """
     A fully qualified module.
@@ -70,6 +69,12 @@ class Module:
 
         """How the compiler and linker should treat this module."""
         self.kind: ModuleKind = ModuleKind.SHARED
+
+        """
+        Whether to preserve the unity state of this module when compiling for unity builds.
+        Should generally be true and not modified.
+        """
+        self.preserve_unity: bool = True
 
         """
         Entry for a module: [MAIN, WIN_MAIN].
