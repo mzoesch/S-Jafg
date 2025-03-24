@@ -105,8 +105,9 @@ pub(crate) fn make_cmake(solution: &Solution)
                         _ => gen_sh.replace("$PRE_EXECUTION_COMMAND", ""),
                     };
                     finder::write_to_file_if_different(&gen_file, true, &gen_sh);
+                    #[cfg(unix)]
                     std::process::Command::new("chmod").arg("+x").arg(&gen_file).output().expect("Failed to chmod +x generate.sh.");
-
+                    
                     let mut build_sh: String = finder::read_file("Programs/Shell/Stubs/CmakeBuildForTarget.sh");
                     expand_cmake_vars(&mut build_sh, solution, platform, config, target);
                     build_sh = match platform.toolset.as_str()
@@ -115,8 +116,9 @@ pub(crate) fn make_cmake(solution: &Solution)
                         _ => build_sh.replace("$PRE_EXECUTION_COMMAND", ""),
                     };
                     finder::write_to_file_if_different(&build_file, true, &build_sh);
+                    #[cfg(unix)]
                     std::process::Command::new("chmod").arg("+x").arg(&build_file).output().expect("Failed to chmod +x generate.sh.");
-
+                    
                     let mut clean_build_sh: String = finder::read_file("Programs/Shell/Stubs/CmakeCleanBuildForTarget.sh");
                     expand_cmake_vars(&mut clean_build_sh, solution, platform, config, target);
                     clean_build_sh = match platform.toolset.as_str()
@@ -125,6 +127,7 @@ pub(crate) fn make_cmake(solution: &Solution)
                         _ => clean_build_sh.replace("$PRE_EXECUTION_COMMAND", ""),
                     };
                     finder::write_to_file_if_different(&clean_build_file, true, &clean_build_sh);
+                    #[cfg(unix)]
                     std::process::Command::new("chmod").arg("+x").arg(&clean_build_file).output().expect("Failed to chmod +x generate.sh.");
                 }
 

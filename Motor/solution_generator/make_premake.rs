@@ -189,6 +189,7 @@ fn platform_to_lua_system(platform: &str) -> &'static str
     {
         "Windows" => "windows",
         "Wasm" => "windows", // emscripten, but premake doing premake things... just use windows for better intellisense. We have to rely on cmake for compiling anyway.
+        "Linux" => "linux",
         _ => panic!("Unknown platform: [{}].", platform),
     }
 }
