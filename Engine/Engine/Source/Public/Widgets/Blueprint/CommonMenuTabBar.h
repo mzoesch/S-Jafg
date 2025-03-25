@@ -72,19 +72,19 @@ public:
     //# Before constructing the widget only.
     FORCEINLINE void SetDoBlurBackground(const bool bInBlur) { this->bBlur = bInBlur; }
     //# Before constructing the widget only.
-    FORCEINLINE void SetTabBarDepth(const int32 InDepth) { this->Depth = InDepth; }
-    FORCEINLINE auto GetTabBarDepth() const -> int32 { return this->Depth; }
-    FORCEINLINE int32 GetLeafDepth() const { return this->Depth + 1; }
+    FORCEINLINE void SetTabBarDepth(const i32 InDepth) { this->Depth = InDepth; }
+    FORCEINLINE auto GetTabBarDepth() const -> i32 { return this->Depth; }
+    FORCEINLINE i32 GetLeafDepth() const { return this->Depth + 1; }
 
-    FORCEINLINE static constexpr uint8 GetAlphaTintBasedOfDepth(const int32 InDepth)
+    FORCEINLINE static constexpr u8 GetAlphaTintBasedOfDepth(const i32 InDepth)
     {
-        return Maths::ClampRet<uint8, int32>(InDepth * 32 + 128, 128, 255);
+        return Maths::ClampRet<u8, i32>(InDepth * 32 + 128, 128, 255);
     }
 
 private:
 
     bool bBlur = false;
-    int32 Depth = 0;
+    i32 Depth = 0;
 };
 
 } /* ~Namespace Jafg */

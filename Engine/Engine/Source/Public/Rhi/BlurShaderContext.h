@@ -26,8 +26,8 @@ public:
 private:
 
     mutable LShader Shader = {};
-    mutable uint32  Vao    = 0x0u;
-    mutable uint32  Vbo    = 0x0u;
+    mutable u32  Vao    = 0x0u;
+    mutable u32  Vbo    = 0x0u;
 };
 
 } /* ~Namespace Jafg */

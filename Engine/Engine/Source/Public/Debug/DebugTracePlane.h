@@ -11,7 +11,7 @@ struct LDebugTracePlaneVisualParams final
 {
     LColor Color;
     /* Depending on the hardware, the max value may vary (but usually it's not more than 10). */
-    uint8 Thickness = 1;
+    u8 Thickness = 1;
 };
 
 class LDebugTracePlane final : public LTemporalWorldObject

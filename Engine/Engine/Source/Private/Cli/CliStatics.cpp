@@ -63,7 +63,7 @@ void Jafg::CliStatics::SafelyAddCommandPrefixInline(LString& InText)
 
 Jafg::LString Jafg::CliStatics::GetCommandFromText(const LString& InText)
 {
-    const int32 Space = InText.FindFirst(" ");
+    const i32 Space = InText.FindFirst(" ");
 
     if (Space == INDEX_NONE)
     {
@@ -79,7 +79,7 @@ Jafg::LString Jafg::CliStatics::GetCommandFromText(const LString& InText)
 
 Jafg::LString Jafg::CliStatics::GetArgsFromText(const LString& InText)
 {
-    const int32 Space = InText.FindFirst(" ");
+    const i32 Space = InText.FindFirst(" ");
 
     if (Space == INDEX_NONE)
     {
@@ -97,7 +97,7 @@ void Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine, LCommandArgs* Ou
 
     while (true)
     {
-        const int32 Idx = CommandLine.FindFirst(" ");
+        const i32 Idx = CommandLine.FindFirst(" ");
         if (Idx == INDEX_NONE)
         {
             if (CommandLine.IsEmpty() == false)

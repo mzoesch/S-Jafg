@@ -22,19 +22,19 @@ public:
 
     FORCEINLINE bool IsAllocated() const { return this->Bulk != nullptr; }
 
-    FORCEINLINE auto GetNum() const -> int32 { return this->Num; }
+    FORCEINLINE auto GetNum() const -> i32 { return this->Num; }
     FORCEINLINE auto GetByteSize() const -> LuPtrSize { return this->Num * sizeof(LBulkDomainTy); }
     FORCEINLINE auto GetBulk()       ->       LBulkDomainTy* { return this->Bulk; }
     FORCEINLINE auto GetBulk() const -> const LBulkDomainTy* { return this->Bulk; }
 
-    inline void AllocateBulk(const int32 InNumberOfDomains, const bool bZeroed = false);
-    inline void Serialize(const LBulkDomainTy* InBulk, const int32 InNumberOfDomains, const int32 InOffset = 0);
+    inline void AllocateBulk(const i32 InNumberOfDomains, const bool bZeroed = false);
+    inline void Serialize(const LBulkDomainTy* InBulk, const i32 InNumberOfDomains, const i32 InOffset = 0);
     inline void FreeBulk();
 
 private:
 
     //# The number of domains.
-    int32          Num  = 0;
+    i32          Num  = 0;
     LBulkDomainTy* Bulk = nullptr;
 };
 
@@ -75,7 +75,7 @@ LBulkData<InDomainTy>::~LBulkData()
 }
 
 template <typename InDomainTy>
-void LBulkData<InDomainTy>::AllocateBulk(const int32 InNumberOfDomains, const bool bZeroed /* = false */)
+void LBulkData<InDomainTy>::AllocateBulk(const i32 InNumberOfDomains, const bool bZeroed /* = false */)
 {
     if (this->Bulk)
     {
@@ -97,7 +97,7 @@ void LBulkData<InDomainTy>::AllocateBulk(const int32 InNumberOfDomains, const bo
 }
 
 template <typename InDomainTy>
-void LBulkData<InDomainTy>::Serialize(const LBulkDomainTy* InBulk, const int32 InNumberOfDomains, const int32 InOffset /* = 0 */)
+void LBulkData<InDomainTy>::Serialize(const LBulkDomainTy* InBulk, const i32 InNumberOfDomains, const i32 InOffset /* = 0 */)
 {
     if (this->Bulk)
     {
@@ -134,7 +134,7 @@ void LBulkData<InDomainTy>::FreeBulk()
     return;
 }
 
-using LByteBulkData = LBulkData<uint8>;
+using LByteBulkData = LBulkData<u8>;
 using LfBulkData    = LBulkData<float>;
 using LdBulkData    = LBulkData<double>;
 

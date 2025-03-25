@@ -437,7 +437,7 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
         const std::string  ___InFile        = InFile;                                                 \
         const std::wstring ___InMessageWide = std::wstring(___InMessage.begin(), ___InMessage.end()); \
         const std::wstring ___InFileWide    = std::wstring(___InFile.begin(),    ___InFile.end()   ); \
-        const uint32       ___InLine        = InLine;                                                 \
+        const u32       ___InLine        = InLine;                                                 \
         {                                                                                             \
             (void)                                                                                    \
             (                                                                                         \
@@ -498,5 +498,5 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
 struct LWinPlatformBreakDefines final
 {
     NORETURN NOINLINE
-    static void OnProgramPanic(const std::string& InMessage, const std::string& InFile, const LWinPlatformTypes::int32 InLine);
+    static void OnProgramPanic(const std::string& InMessage, const std::string& InFile, const LWinPlatformTypes::i32 InLine);
 };

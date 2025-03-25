@@ -24,7 +24,7 @@ Jafg::TdhArray<Jafg::LRawInput>& GetDownKeys()
     return DownKeys;
 }
 
-Jafg::LKey TranslateKeyFromJavaScript(const uint32 InKey)
+Jafg::LKey TranslateKeyFromJavaScript(const u32 InKey)
 {
     if (InKey >= 65 && InKey <= 90) /* A-Z */
     {
@@ -50,7 +50,7 @@ Jafg::LKey TranslateKeyFromJavaScript(const uint32 InKey)
     return Jafg::EKeys::Unresolved;
 }
 
-EM_BOOL KeyDownCallback(const int32 EventType, const EmscriptenKeyboardEvent* E, void* UserData)
+EM_BOOL KeyDownCallback(const i32 EventType, const EmscriptenKeyboardEvent* E, void* UserData)
 {
     checkSlow( E )
     const Jafg::LKey TargetJafgKey = ::TranslateKeyFromJavaScript(E->keyCode);
@@ -68,7 +68,7 @@ EM_BOOL KeyDownCallback(const int32 EventType, const EmscriptenKeyboardEvent* E,
     return EM_TRUE;
 }
 
-EM_BOOL KeyUpCallback(const int32 EventType, const EmscriptenKeyboardEvent* E, void* UserData)
+EM_BOOL KeyUpCallback(const i32 EventType, const EmscriptenKeyboardEvent* E, void* UserData)
 {
     checkSlow( E )
     const Jafg::LKey TargetJafgKey = ::TranslateKeyFromJavaScript(E->keyCode);
@@ -86,7 +86,7 @@ EM_BOOL KeyUpCallback(const int32 EventType, const EmscriptenKeyboardEvent* E, v
     return EM_TRUE;
 }
 
-EM_BOOL MouseMoveCallback(const int32 EventType, const EmscriptenMouseEvent* E, void* UserData)
+EM_BOOL MouseMoveCallback(const i32 EventType, const EmscriptenMouseEvent* E, void* UserData)
 {
     if (Jafg::Maths::Absolute(E->movementX) > 0.0)
     {
@@ -107,7 +107,7 @@ EM_BOOL MouseMoveCallback(const int32 EventType, const EmscriptenMouseEvent* E, 
     return EM_TRUE;
 }
 
-EM_BOOL MouseDownCallback(const int32 EventType, const EmscriptenMouseEvent* E, void* UserData)
+EM_BOOL MouseDownCallback(const i32 EventType, const EmscriptenMouseEvent* E, void* UserData)
 {
     if (E->button == 0)
     {
@@ -141,7 +141,7 @@ EM_BOOL MouseDownCallback(const int32 EventType, const EmscriptenMouseEvent* E, 
     return EM_TRUE;
 }
 
-EM_BOOL MouseUpCallback(const int32 EventType, const EmscriptenMouseEvent* E, void* UserData)
+EM_BOOL MouseUpCallback(const i32 EventType, const EmscriptenMouseEvent* E, void* UserData)
 {
     if (E->button == 0)
     {
@@ -175,7 +175,7 @@ EM_BOOL MouseUpCallback(const int32 EventType, const EmscriptenMouseEvent* E, vo
     return EM_TRUE;
 }
 
-EM_BOOL MouseWheelCallback(const int32 EventType, const EmscriptenWheelEvent* E, void* UserData)
+EM_BOOL MouseWheelCallback(const i32 EventType, const EmscriptenWheelEvent* E, void* UserData)
 {
     if (::GetDownKeys().Contains(Jafg::EKeys::MouseWheelAxis))
     {
@@ -379,7 +379,7 @@ void Jafg::LSurfaceDom::SetMouseCursor(const EMouseCursor::Type InCursor)
     LOG_WARNING(LogPlatform, "Custom cursor semantics are not supported on this platform for now.")
 }
 
-Jafg::TIntVector2<int32> Jafg::LSurfaceDom::GetDimensions() const
+Jafg::TIntVector2<i32> Jafg::LSurfaceDom::GetDimensions() const
 {
     return { 1920, 1080 };
 }

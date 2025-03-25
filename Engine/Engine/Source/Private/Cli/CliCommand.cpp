@@ -88,8 +88,8 @@ bool Jafg::LCommandParams::IsInvocable(const LCommandArgs& Args) const
         return true;
     }
 
-    int32 ParamCursor = 0;
-    int32 ArgCursor   = 0;
+    i32 ParamCursor = 0;
+    i32 ArgCursor   = 0;
 
     while (ParamCursor < this->Tokens.GetSize())
     {

@@ -82,7 +82,7 @@ public:
 
     FORCEINLINE void Normalize() noexcept;
     /** @return The number of sub paths that were actually popped. */
-    FORCEINLINE int32 PopSubPaths(const int32 NumberOfSubPaths);
+    FORCEINLINE i32 PopSubPaths(const i32 NumberOfSubPaths);
 
     FORCEINLINE void AddExtension(const LStringTy& Extension);
 
@@ -168,20 +168,20 @@ void LPathBase<InTStringTy>::Normalize() noexcept
 }
 
 template <typename InTStringTy>
-int32 LPathBase<InTStringTy>::PopSubPaths(const int32 NumberOfSubPaths)
+i32 LPathBase<InTStringTy>::PopSubPaths(const i32 NumberOfSubPaths)
 {
-    int32 Popped = 0;
+    i32 Popped = 0;
 
     this->Normalize();
 
-    for (int32 i = 0; i < NumberOfSubPaths; ++i)
+    for (i32 i = 0; i < NumberOfSubPaths; ++i)
     {
         if (this->Data.IsEmpty())
         {
             break;
         }
 
-        const int32 Last = this->Data.FindLast(LPathBase<T>::PathSeparator);
+        const i32 Last = this->Data.FindLast(LPathBase<T>::PathSeparator);
         if (Last == INDEX_NONE)
         {
             this->Data.Empty();
@@ -226,7 +226,7 @@ typename LPathBase<InTStringTy>::LStringTy LPathBase<InTStringTy>::GetBase() con
         return { };
     }
 
-    const int32 Last = this->Data.FindLast(LPathBase<T>::PathSeparator);
+    const i32 Last = this->Data.FindLast(LPathBase<T>::PathSeparator);
     if (Last == INDEX_NONE)
     {
         return this->Data;

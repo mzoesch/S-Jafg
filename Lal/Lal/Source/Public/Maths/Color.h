@@ -15,37 +15,37 @@ struct LColor final
     {
         struct
         {
-            uint8 B;
-            uint8 G;
-            uint8 R;
-            uint8 A;
+            u8 B;
+            u8 G;
+            u8 R;
+            u8 A;
         };
 
-        uint32 Bits = 0x00u;
+        u32 Bits = 0x00u;
 
-        uint8  Channels[4];
+        u8  Channels[4];
     };
 #else /* PLATFORM_USES_LITTLE_ENDIAN */
     union
     {
         struct
         {
-            uint8 A;
-            uint8 R;
-            uint8 G;
-            uint8 B;
+            u8 A;
+            u8 R;
+            u8 G;
+            u8 B;
         };
 
-        uint32 Bits = 0x00u;
+        u32 Bits = 0x00u;
 
-        uint8  Channels[4];
+        u8  Channels[4];
     };
 #endif /* !PLATFORM_USES_LITTLE_ENDIAN */
 
     FORCEINLINE  LColor() { }
     FORCEINLINE ~LColor() { }
 
-    FORCEINLINE constexpr LColor(const uint8 InR, const uint8 InG, const uint8 InB, const uint8 InA = 0xFF)
+    FORCEINLINE constexpr LColor(const u8 InR, const u8 InG, const u8 InB, const u8 InA = 0xFF)
 #if PLATFORM_USES_LITTLE_ENDIAN
         : B(InB), G(InG), R(InR), A(InA)
 #else /* PLATFORM_USES_LITTLE_ENDIAN */
@@ -54,26 +54,26 @@ struct LColor final
     { }
     FORCEINLINE constexpr explicit LColor(const float InColor)
 #if PLATFORM_USES_LITTLE_ENDIAN
-        : B(static_cast<uint8>(InColor * 255.0f)), G(static_cast<uint8>(InColor * 255.0f)), R(static_cast<uint8>(InColor * 255.0f)), A(0xFF)
+        : B(static_cast<u8>(InColor * 255.0f)), G(static_cast<u8>(InColor * 255.0f)), R(static_cast<u8>(InColor * 255.0f)), A(0xFF)
 #else /* PLATFORM_USES_LITTLE_ENDIAN */
-        : A(0xFF), R(static_cast<uint8>(InColor * 255.0f)), G(static_cast<uint8>(InColor * 255.0f)), B(static_cast<uint8>(InColor * 255.0f))
+        : A(0xFF), R(static_cast<u8>(InColor * 255.0f)), G(static_cast<u8>(InColor * 255.0f)), B(static_cast<u8>(InColor * 255.0f))
 #endif /* !PLATFORM_USES_LITTLE_ENDIAN */
     { }
     FORCEINLINE constexpr explicit LColor(const double InColor)
 #if PLATFORM_USES_LITTLE_ENDIAN
-        : B(static_cast<uint8>(InColor * 255.0)), G(static_cast<uint8>(InColor * 255.0)), R(static_cast<uint8>(InColor * 255.0)), A(0xFF)
+        : B(static_cast<u8>(InColor * 255.0)), G(static_cast<u8>(InColor * 255.0)), R(static_cast<u8>(InColor * 255.0)), A(0xFF)
 #else /* PLATFORM_USES_LITTLE_ENDIAN */
-        : A(0xFF), R(static_cast<uint8>(InColor * 255.0)), G(static_cast<uint8>(InColor * 255.0)), B(static_cast<uint8>(InColor * 255.0))
+        : A(0xFF), R(static_cast<u8>(InColor * 255.0)), G(static_cast<u8>(InColor * 255.0)), B(static_cast<u8>(InColor * 255.0))
 #endif /* !PLATFORM_USES_LITTLE_ENDIAN */
     { }
     FORCEINLINE constexpr          LColor(const LColor& InColor) : Bits(InColor.Bits) { }
-    FORCEINLINE constexpr explicit LColor(const uint32 InColor)  : Bits(InColor)      { }
-    FORCEINLINE constexpr explicit LColor(uint8 InChannels[4])
+    FORCEINLINE constexpr explicit LColor(const u32 InColor)  : Bits(InColor)      { }
+    FORCEINLINE constexpr explicit LColor(u8 InChannels[4])
         : Channels{ InChannels[0], InChannels[1], InChannels[2], InChannels[3] }      { }
 
     FORCEINLINE void operator=(const LColor& Other)      { this->Bits = Other.Bits; }
-    FORCEINLINE void operator=(const uint32 InColor)     { this->Bits = InColor;    }
-    FORCEINLINE void operator=(const uint8 InChannels[])
+    FORCEINLINE void operator=(const u32 InColor)     { this->Bits = InColor;    }
+    FORCEINLINE void operator=(const u8 InChannels[])
     {
         this->Channels[0] = InChannels[0];
         this->Channels[1] = InChannels[1];
@@ -81,13 +81,13 @@ struct LColor final
         this->Channels[3] = InChannels[3];
     }
 
-    FORCEINLINE uint32 RGBA() const
+    FORCEINLINE u32 RGBA() const
     {
-        return (static_cast<uint32>(R) << 24) | (static_cast<uint32>(G) << 16) | (static_cast<uint32>(B) << 8) | static_cast<uint32>(A);
+        return (static_cast<u32>(R) << 24) | (static_cast<u32>(G) << 16) | (static_cast<u32>(B) << 8) | static_cast<u32>(A);
     }
-    FORCEINLINE uint32 BGRA() const
+    FORCEINLINE u32 BGRA() const
     {
-        return (static_cast<uint32>(B) << 24) | (static_cast<uint32>(G) << 16) | (static_cast<uint32>(R) << 8) | static_cast<uint32>(A);
+        return (static_cast<u32>(B) << 24) | (static_cast<u32>(G) << 16) | (static_cast<u32>(R) << 8) | static_cast<u32>(A);
     }
 
     FORCEINLINE LVector ToVector3() const
@@ -105,17 +105,17 @@ struct LColor final
 
     FORCEINLINE void operator+=(const LColor& Other)
     {
-        R += static_cast<uint8>(Maths::Min(static_cast<uint32>(R) + static_cast<uint32>(Other.R), 0xFFu));
-        G += static_cast<uint8>(Maths::Min(static_cast<uint32>(R) + static_cast<uint32>(Other.R), 0xFFu));
-        B += static_cast<uint8>(Maths::Min(static_cast<uint32>(R) + static_cast<uint32>(Other.R), 0xFFu));
-        A += static_cast<uint8>(Maths::Min(static_cast<uint32>(R) + static_cast<uint32>(Other.R), 0xFFu));
+        R += static_cast<u8>(Maths::Min(static_cast<u32>(R) + static_cast<u32>(Other.R), 0xFFu));
+        G += static_cast<u8>(Maths::Min(static_cast<u32>(R) + static_cast<u32>(Other.R), 0xFFu));
+        B += static_cast<u8>(Maths::Min(static_cast<u32>(R) + static_cast<u32>(Other.R), 0xFFu));
+        A += static_cast<u8>(Maths::Min(static_cast<u32>(R) + static_cast<u32>(Other.R), 0xFFu));
     }
     FORCEINLINE void operator-=(const LColor& Other)
     {
-        R -= static_cast<uint8>(Maths::Max(static_cast<int32>(R) - static_cast<int32>(Other.R), 0x00));
-        G -= static_cast<uint8>(Maths::Max(static_cast<int32>(G) - static_cast<int32>(Other.G), 0x00));
-        B -= static_cast<uint8>(Maths::Max(static_cast<int32>(B) - static_cast<int32>(Other.B), 0x00));
-        A -= static_cast<uint8>(Maths::Max(static_cast<int32>(A) - static_cast<int32>(Other.A), 0x00));
+        R -= static_cast<u8>(Maths::Max(static_cast<i32>(R) - static_cast<i32>(Other.R), 0x00));
+        G -= static_cast<u8>(Maths::Max(static_cast<i32>(G) - static_cast<i32>(Other.G), 0x00));
+        B -= static_cast<u8>(Maths::Max(static_cast<i32>(B) - static_cast<i32>(Other.B), 0x00));
+        A -= static_cast<u8>(Maths::Max(static_cast<i32>(A) - static_cast<i32>(Other.A), 0x00));
     }
 
     static const LColor Transparent;

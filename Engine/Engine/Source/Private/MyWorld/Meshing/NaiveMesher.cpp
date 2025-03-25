@@ -10,7 +10,7 @@
 
 void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubsystem, const JMaterialSubsystem* MaterialSubsystem)
 {
-    uint32 CurrentVertex = 0;
+    u32 CurrentVertex = 0;
     for (LVoxelKeyDomainTy X = 0; X < MwStatics::ChunkSize; ++X)
     {
         for (LVoxelKeyDomainTy Y = 0; Y < MwStatics::ChunkSize; ++Y)

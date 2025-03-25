@@ -33,8 +33,8 @@ ENGINE_API LPath GetUserPreferencesFile();
 //#
 ENGINE_API LStringLegacy ReadFileLegacy(const LEnginePath& InEnginePath);
 ENGINE_API LString ReadFile(const LEnginePath& InEnginePath);
-ENGINE_API void ReadFileAsBinary(const LEnginePath& InEnginePath, const uint8*& OutBuffer, uint64& OutBufferOverflowGuard);
-ENGINE_API void FreeReadFileBinaryBuffer(const uint8*& InBuffer);
+ENGINE_API void ReadFileAsBinary(const LEnginePath& InEnginePath, const u8*& OutBuffer, u64& OutBufferOverflowGuard);
+ENGINE_API void FreeReadFileBinaryBuffer(const u8*& InBuffer);
 
 //#
 //# @return True if the path / file exists.

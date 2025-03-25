@@ -34,7 +34,7 @@ namespace Private
 ENGINE_API void            AddWidgetFactory(LWidgetFactory* InFactory);
 ENGINE_API LWidgetFactory* FindOrNullWidgetFactory(const void* InNode);
 ENGINE_API LWidgetFactory& GetWidgetFactory(const void* InNode);
-ENGINE_API int32           PurgeWidgetFactories();
+ENGINE_API i32           PurgeWidgetFactories();
 
 //#
 //# Private struct that is the single factory friend.
@@ -65,7 +65,7 @@ struct LWidgetFactoryUtility final
 namespace EAnchor
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Default    = 0x0 << 0,
     VTop       = 0x1 << 0,
@@ -200,7 +200,7 @@ struct LAnchor final
 namespace EWidgetVisibility
 {
 
-enum Type : uint8
+enum Type : u8
 {
     //#
     //# Visible, takes up space in the widget layout and is hit-testable.

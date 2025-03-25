@@ -20,8 +20,8 @@ bool ReflectForwardEngineExitRequest();
 
 void RequestEngineExit();
 void RequestEngineExit(const LSimpleString& Reason);
-void RequestEngineExit(const int32 CustomExitStatus);
-void RequestEngineExit(const int32 CustomExitStatus, const LSimpleString& Reason);
+void RequestEngineExit(const i32 CustomExitStatus);
+void RequestEngineExit(const i32 CustomExitStatus, const LSimpleString& Reason);
 
 } /* ~Namespace Jafg */
 

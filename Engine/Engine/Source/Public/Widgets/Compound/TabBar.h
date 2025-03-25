@@ -127,7 +127,7 @@ public:
 
 private:
 
-    void LoadTab(const LTabBarTabDescriptor& Descriptor, const int32 InIndex);
+    void LoadTab(const LTabBarTabDescriptor& Descriptor, const i32 InIndex);
 
 protected:
 
@@ -166,7 +166,7 @@ protected:
         LSimpleString Identifier;
         WWidgetNode* Button = nullptr;
         WWidgetNode* Panel = nullptr;
-        int8 SwitcherIndex = INDEX_NONE;
+        i8 SwitcherIndex = INDEX_NONE;
     };
     TdhArray<LAddedTabBarTab> TabsInOrder = { };
     TdhArray<LTabBarTabDescriptor> DeferredTabs = { };

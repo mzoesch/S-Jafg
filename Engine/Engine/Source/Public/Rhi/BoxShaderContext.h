@@ -52,10 +52,10 @@ private:
     bool bIsMeaningful = false;
 
     mutable LShader Shader = {};
-    mutable uint32  Vao    = 0x0u;
-    mutable uint32  Vbo    = 0x0u;
-    mutable uint32  Tex    = 0x0u;
-    mutable uint32  Ebo    = 0x0u;
+    mutable u32  Vao    = 0x0u;
+    mutable u32  Vbo    = 0x0u;
+    mutable u32  Tex    = 0x0u;
+    mutable u32  Ebo    = 0x0u;
     mutable const LTexture2* LastFrameTexture  = nullptr;
 };
 

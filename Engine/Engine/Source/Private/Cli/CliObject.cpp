@@ -2,7 +2,7 @@
 
 #include "Cli/CliObject.h"
 
-bool Jafg::LCliToken_String::IsInvocable(TdhArray<LCliToken*> InArgs, int32* InOutArgCursor) const
+bool Jafg::LCliToken_String::IsInvocable(TdhArray<LCliToken*> InArgs, i32* InOutArgCursor) const
 {
     if (this->bPack)
     {

@@ -36,7 +36,7 @@ struct LWorldMiscellaneousAccessor;
 namespace EWorldState
 {
 
-enum Type : uint8
+enum Type : u8
 {
     None,
     Uninitialized,
@@ -51,7 +51,7 @@ enum Type : uint8
 namespace EWorldTimeBehavior
 {
 
-enum Type : uint8
+enum Type : u8
 {
     //#
     //# Time behaves linearly. This is the default behavior.

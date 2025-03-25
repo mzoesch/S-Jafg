@@ -6,7 +6,7 @@
 
 #include "Hal/PlatformWasm.h"
 
-void LWasmPlatformBreakDefines::OnProgramPanic(const char* InMessage, const char* InFile, LWasmPlatformTypes::int32 InLine)
+void LWasmPlatformBreakDefines::OnProgramPanic(const char* InMessage, const char* InFile, LWasmPlatformTypes::i32 InLine)
 {
     ::emscripten_cancel_main_loop();
 

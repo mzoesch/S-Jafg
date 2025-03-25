@@ -10,14 +10,14 @@ namespace Jafg
 namespace ERawImageFormat
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Unspecified,
     BGRA8,
 };
 
-int32 GetChannelsPerPixel(const ERawImageFormat::Type InFormat);
-int32 GetBytesPerPixel(const ERawImageFormat::Type InFormat);
+i32 GetChannelsPerPixel(const ERawImageFormat::Type InFormat);
+i32 GetBytesPerPixel(const ERawImageFormat::Type InFormat);
 
 } /* ~Namespace ERawImageFormat */
 

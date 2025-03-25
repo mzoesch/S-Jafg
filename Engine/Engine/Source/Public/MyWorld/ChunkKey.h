@@ -9,7 +9,7 @@ namespace Jafg
 
 typedef LIntVector  LChunkKeyTy;
 typedef LIntVector2 LChunkKey2Ty;
-typedef int32       LChunkKeyDomainTy;
+typedef i32       LChunkKeyDomainTy;
 
 struct LChunkKey;
 struct LChunkKey2;
@@ -23,7 +23,7 @@ struct LChunkKey final
 
     static_assert(sizeof(LChunkKeyTy) == sizeof(LChunkKeyDomainTy) * 3, "LChunkKeyTy is not tightly packed.");
 
-    enum EAxis : uint8
+    enum EAxis : u8
     {
         None = 0x00 << 0,
         Xx   = 0x01 << 0,

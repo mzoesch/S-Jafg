@@ -4,7 +4,7 @@
 
 #include "CoreAfx.h"
 
-typedef uint8 LClassFlags;
+typedef u8 LClassFlags;
 
 //#
 //# Class flags that can be used to describe a jafg object class.

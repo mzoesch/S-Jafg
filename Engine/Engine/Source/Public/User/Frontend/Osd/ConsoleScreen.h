@@ -14,7 +14,7 @@ class WEditableTextBlock;
 namespace EConsoleScreenState
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Show,
     Hide,

@@ -5,7 +5,7 @@
 #include "System/EnginePath.h"
 #include "Rhi/RhiVendorInclude.h"
 
-bool Jafg::LTexture2::CreateEmpty(const uint32 InWidth, const uint32 InHeight, const ERawImageFormat::Type InFormat)
+bool Jafg::LTexture2::CreateEmpty(const u32 InWidth, const u32 InHeight, const ERawImageFormat::Type InFormat)
 {
     check( this->MipMap.Bulk.IsAllocated() == false )
 
@@ -21,17 +21,17 @@ bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const JUserPreferenc
 {
     check( this->MipMap.Bulk.IsAllocated() == false )
 
-    int32 Width      = 0;
-    int32 Height     = 0;
-    int32 NrChannels = 0;
+    i32 Width      = 0;
+    i32 Height     = 0;
+    i32 NrChannels = 0;
 
     Finder::DoesFileExistsPanicked(Path);
-    const uint8* Bulk     = nullptr;
-    uint64       BulkSize = 0;
+    const u8* Bulk     = nullptr;
+    u64       BulkSize = 0;
     Finder::ReadFileAsBinary(Path, Bulk, BulkSize);
 
     ::stbi_set_flip_vertically_on_load(false);
-    uint8* Data =::stbi_load_from_memory(Bulk, static_cast<int>(BulkSize), &Width, &Height, &NrChannels, 4);
+    u8* Data =::stbi_load_from_memory(Bulk, static_cast<int>(BulkSize), &Width, &Height, &NrChannels, 4);
 
     jassert( Data )
     jassert( NrChannels == 4 )
@@ -65,15 +65,15 @@ void Jafg::LTexture2::CopyTexture(const LTexture2& InTexture, const LPoint& InPo
     check( InPoint.X + InTexture.MipMap.Size.X <= this->MipMap.Size.X )
     check( InPoint.Y + InTexture.MipMap.Size.Y <= this->MipMap.Size.Y )
 
-    uint32 CurrentHeightCursor = InPoint.Y;
+    u32 CurrentHeightCursor = InPoint.Y;
     while (CurrentHeightCursor - InPoint.Y < InTexture.GetHeight())
     {
-        uint8* CurrentTextureDestination = this->MipMap.Bulk.GetBulk();
+        u8* CurrentTextureDestination = this->MipMap.Bulk.GetBulk();
         CurrentTextureDestination += static_cast<LuPtrSize>((CurrentHeightCursor * this->GetWidth() + InPoint.X) * this->GetBytesPerPixel());
         checkSlow( CurrentTextureDestination >= this->MipMap.Bulk.GetBulk() )
         checkSlow( CurrentTextureDestination < this->MipMap.Bulk.GetBulk() + this->MipMap.Bulk.GetByteSize() )
 
-        const uint8* OtherTextureSource = InTexture.MipMap.Bulk.GetBulk();
+        const u8* OtherTextureSource = InTexture.MipMap.Bulk.GetBulk();
         OtherTextureSource += static_cast<LuPtrSize>((CurrentHeightCursor - InPoint.Y) * InTexture.GetWidth() * InTexture.GetBytesPerPixel());
         checkSlow( OtherTextureSource >= InTexture.MipMap.Bulk.GetBulk() )
         checkSlow( OtherTextureSource < InTexture.MipMap.Bulk.GetBulk() + InTexture.MipMap.Bulk.GetByteSize() )

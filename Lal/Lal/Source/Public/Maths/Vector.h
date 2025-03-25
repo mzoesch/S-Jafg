@@ -80,8 +80,8 @@ struct TVector
     FORCEINLINE auto GetData() const noexcept -> const T* { return &this->X; }
     FORCEINLINE auto constexpr GetDataByteSize() const noexcept -> LuBigSizeTy;
 
-    FORCEINLINE auto operator[](const int32 InIndex)       ->       T&;
-    FORCEINLINE auto operator[](const int32 InIndex) const -> const T&;
+    FORCEINLINE auto operator[](const i32 InIndex)       ->       T&;
+    FORCEINLINE auto operator[](const i32 InIndex) const -> const T&;
 
     FORCEINLINE TVector2<T> XY() const { return TVector2<T>(this->X, this->Y); }
     FORCEINLINE TVector2<T> XZ() const { return TVector2<T>(this->X, this->Z); }
@@ -173,14 +173,14 @@ constexpr LuBigSizeTy TVector<T>::GetDataByteSize() const noexcept
 }
 
 template <typename T>
-T& TVector<T>::operator[](const int32 InIndex)
+T& TVector<T>::operator[](const i32 InIndex)
 {
     check( InIndex > INDEX_NONE && InIndex < 3 )
     return this->XYZ[InIndex];
 }
 
 template <typename T>
-const T& TVector<T>::operator[](const int32 InIndex) const
+const T& TVector<T>::operator[](const i32 InIndex) const
 {
     check( InIndex > INDEX_NONE && InIndex < 3 )
     return this->XYZ[InIndex];

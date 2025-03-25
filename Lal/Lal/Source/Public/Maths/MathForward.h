@@ -8,7 +8,7 @@ namespace Jafg
 namespace Matrix
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Identity, Zero
 };
@@ -18,7 +18,7 @@ enum Type : uint8
 namespace EVectorAxis
 {
 
-enum Type : uint8
+enum Type : u8
 {
     X = 0x00 << 0,
     Y = 0x01 << 1,
@@ -62,19 +62,19 @@ using LVector2D         = TVector2<double>;
 using LVector4F         = TVector4<float>;
 using LVector4D         = TVector4<double>;
 
-using LInt8Vector       = TIntVector<int8>;
-using LInt16Vector      = TIntVector<int16>;
-using LInt32Vector      = TIntVector<int32>;
-using LInt64Vector      = TIntVector<int64>;
+using Li8Vector         = TIntVector<i8>;
+using Li16Vector        = TIntVector<i16>;
+using Li32Vector        = TIntVector<i32>;
+using Li64Vector        = TIntVector<i64>;
 
-using LInt8Vector2      = TIntVector2<int8>;
-using LInt16Vector2     = TIntVector2<int16>;
-using LInt32Vector2     = TIntVector2<int32>;
-using LInt64Vector2     = TIntVector2<int64>;
-using LuInt8Vector2     = TIntVector2<uint8>;
-using LuInt16Vector2    = TIntVector2<uint16>;
-using LuInt32Vector2    = TIntVector2<uint32>;
-using LuInt64Vector2    = TIntVector2<uint64>;
+using Li8Vector2        = TIntVector2<i8>;
+using Li16Vector2       = TIntVector2<i16>;
+using Li32Vector2       = TIntVector2<i32>;
+using Li64Vector2       = TIntVector2<i64>;
+using Lu8Vector2        = TIntVector2<u8>;
+using Lu16Vector2       = TIntVector2<u16>;
+using Lu32Vector2       = TIntVector2<u32>;
+using Lu64Vector2       = TIntVector2<u64>;
 
 using LRotatorF         = TRotator<float>;
 using LRotatorD         = TRotator<double>;
@@ -106,8 +106,8 @@ typedef LVectorF         LVector;
 typedef LVector3F        LVector3;
 typedef LVector2F        LVector2;
 typedef LVector4F        LVector4;
-typedef LInt32Vector     LIntVector;
-typedef LInt32Vector2    LIntVector2;
+typedef Li32Vector       LIntVector;
+typedef Li32Vector2      LIntVector2;
 typedef LRotatorF        LRotator;
 typedef LPlaneF          LPlane;
 typedef LMatrixF         LMatrix4;
@@ -115,11 +115,11 @@ typedef LMatrixD         LMatrix4D;
 typedef LMatrixF         LMatrix;
 typedef LMatrix3F        LMatrix3;
 typedef LTransformF      LTransform;
-typedef LuInt8Vector2    LSize8;
-typedef LuInt16Vector2   LSize16;
-typedef LuInt32Vector2   LSize32;
-typedef LuInt64Vector2   LSize64;
+typedef Lu8Vector2       LSize8;
+typedef Lu16Vector2      LSize16;
+typedef Lu32Vector2      LSize32;
+typedef Lu64Vector2      LSize64;
 typedef LSize32          LSize;
-typedef LInt32Vector2    LPoint;
+typedef Li32Vector2      LPoint;
 
 } /* ~Namespace Jafg */

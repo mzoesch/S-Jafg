@@ -198,15 +198,15 @@
     Generalized types based on a specific platform.
 -----------------------------------------------------------------------------*/
 
-typedef LPlatformTypes::uint8         uint8;
-typedef LPlatformTypes::uint16        uint16;
-typedef LPlatformTypes::uint32        uint32;
-typedef LPlatformTypes::uint64        uint64;
+typedef LPlatformTypes::u8            u8;
+typedef LPlatformTypes::u16           u16;
+typedef LPlatformTypes::u32           u32;
+typedef LPlatformTypes::u64           u64;
 
-typedef LPlatformTypes::int8          int8;
-typedef LPlatformTypes::int16         int16;
-typedef LPlatformTypes::int32         int32;
-typedef LPlatformTypes::int64         int64;
+typedef LPlatformTypes::i8            i8;
+typedef LPlatformTypes::i16           i16;
+typedef LPlatformTypes::i32           i32;
+typedef LPlatformTypes::i64           i64;
 
 typedef LPlatformTypes::LAsciiChar    LAsciiChar;
 typedef LPlatformTypes::LWideChar     LWideChar;
@@ -227,14 +227,14 @@ typedef LPlatformTypes::LNullptrTy    LNullptrTy;
 #endif /* !PLATFORM_WCHAR_SIZE */
 
 static_assert(sizeof(LAsciiChar) == 1, "LAsciiChar is not 1 byte.");
-static_assert(sizeof(uint8)      == 1, "uint8  is not 1 byte.");
-static_assert(sizeof(uint16)     == 2, "uint16 is not 2 bytes.");
-static_assert(sizeof(uint32)     == 4, "uint32 is not 4 bytes.");
-static_assert(sizeof(uint64)     == 8, "uint64 is not 8 bytes.");
-static_assert(sizeof(int8)       == 1, "int8   is not 1 byte.");
-static_assert(sizeof(int16)      == 2, "int16  is not 2 bytes.");
-static_assert(sizeof(int32)      == 4, "int32  is not 4 bytes.");
-static_assert(sizeof(int64)      == 8, "int64  is not 8 bytes.");
+static_assert(sizeof(u8)         == 1, "u8  is not 1 byte.");
+static_assert(sizeof(u16)        == 2, "u16 is not 2 bytes.");
+static_assert(sizeof(u32)        == 4, "u32 is not 4 bytes.");
+static_assert(sizeof(u64)        == 8, "u64 is not 8 bytes.");
+static_assert(sizeof(i8)         == 1, "i8   is not 1 byte.");
+static_assert(sizeof(i16)        == 2, "i16  is not 2 bytes.");
+static_assert(sizeof(i32)        == 4, "i32  is not 4 bytes.");
+static_assert(sizeof(i64)        == 8, "i64  is not 8 bytes.");
 
 static_assert(sizeof(char)     == 1,                   "char is not 1 byte.");
 static_assert(sizeof(wchar_t)  == PLATFORM_WCHAR_SIZE, "wchar_t is not 2 bytes.");
@@ -243,16 +243,16 @@ static_assert(sizeof(char32_t) == 4,                   "char32_t is not 4 bytes.
 static_assert(sizeof(char8_t)  == 1,                   "char8_t is not 1 byte.");
 
 #if PLATFORM_USES_64_BIT
-    static_assert(sizeof(uint64) == sizeof(void*), "uint64 is not the same size as a pointer.");
-    static_assert(sizeof(int64)  == sizeof(void*), "int64  is not the same size as a pointer.");
+    static_assert(sizeof(u64) == sizeof(void*), "u64 is not the same size as a pointer.");
+    static_assert(sizeof(i64)  == sizeof(void*), "i64  is not the same size as a pointer.");
     #ifdef PLATFORM_USES_32_BIT
         #error "PLATFORM_USES_32_BIT and PLATFORM_USES_64_BIT are both defined."
     #endif /* PLATFORM_USES_32_BIT */
     #define PLATFORM_USES_32_BIT            0
 #endif /* PLATFORM_USES_64_BIT */
 #if PLATFORM_USES_32_BIT
-    static_assert(sizeof(uint32) == sizeof(void*), "uint32 is not the same size as a pointer.");
-    static_assert(sizeof(int32)  == sizeof(void*), "int32  is not the same size as a pointer.");
+    static_assert(sizeof(u32) == sizeof(void*), "u32 is not the same size as a pointer.");
+    static_assert(sizeof(i32)  == sizeof(void*), "i32  is not the same size as a pointer.");
     #ifdef PLATFORM_USES_64_BIT
         #error "PLATFORM_USES_32_BIT and PLATFORM_USES_64_BIT are both defined."
     #endif /* PLATFORM_USES_64_BIT */

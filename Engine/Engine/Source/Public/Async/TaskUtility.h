@@ -10,7 +10,7 @@ namespace Jafg
 {
 
 #if PLATFORM_WINDOWS_WITH_MSVC
-    typedef uint32 LThreadId;
+    typedef u32 LThreadId;
 #elif PLATFORM_WINDOWS_WITH_GCC || WITH_CLANG
     typedef __gthread_t LThreadId;
 #elif PLATFORM_WASM
@@ -24,7 +24,7 @@ typedef TFunction<void(void)> LTaskDelegate;
 namespace ENamedThreads
 {
 
-enum Type : int32
+enum Type : i32
 {
     Master          = 0x0,
 
@@ -51,7 +51,7 @@ ENGINE_API LSimpleString LexToString(const ENamedThreads::Type Thread);
 namespace ETaskTime
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Fail = 0,
 
@@ -116,13 +116,13 @@ template <typename T> ENamedThreads::Type LaunchNamedThread(ETaskExit::Type* Out
 namespace Private
 {
 
-enum ERunAllTasks : int32 { RunAllTasks = 0, };
+enum ERunAllTasks : i32 { RunAllTasks = 0, };
 
-ENGINE_API extern int32 CustomThreadCounter;
+ENGINE_API extern i32 CustomThreadCounter;
 
 ENGINE_API bool IsThreadRunning(const ENamedThreads::Type InThreadName);
 
-ENGINE_API void TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const int32 MaxTasks);
+ENGINE_API void TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const i32 MaxTasks);
 ENGINE_API auto LaunchNamedThread(ENamedThreads::Type ThreadName, LRunnable* Runnable, const bool bKillRunnableWhenFinished = true) -> ETaskExit::Type;
 
 ENGINE_API void JoinThread(const ENamedThreads::Type ThreadName);
@@ -163,7 +163,7 @@ FORCEINLINE ENamedThreads::Type LaunchNamedThread(ETaskExit::Type* OutExit)
     static_assert(std::is_base_of_v<LRunnable, T>, "T must be derived from LRunnable.");
     check( OutExit )
 
-    int32 JafgThreadId = Private::MakeNewCustomNamedThreadId();
+    i32 JafgThreadId = Private::MakeNewCustomNamedThreadId();
     *OutExit = LaunchNamedThread<T>(static_cast<ENamedThreads::Type>(JafgThreadId));
     return static_cast<ENamedThreads::Type>(JafgThreadId);
 }

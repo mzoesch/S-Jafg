@@ -47,7 +47,7 @@ public:
     virtual void         RemoveChild(WWidgetNode* Child) override;
     virtual void         RemoveChild(LWidgetSlot* Child) override;
     virtual LWidgetSlot* AddChild(WWidgetNode* InChild) override;
-    virtual LWidgetSlot* AddChildAt(const int32 InIndex, WWidgetNode* InChild) override;
+    virtual LWidgetSlot* AddChildAt(const i32 InIndex, WWidgetNode* InChild) override;
 
     FORCEINLINE virtual void SetPadding(const LPadding& InPadding) override { this->Padding = InPadding; }
     FORCEINLINE         auto GetPadding()    const -> const LPadding& { return this->Padding; }

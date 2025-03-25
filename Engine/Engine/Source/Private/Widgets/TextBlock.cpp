@@ -21,7 +21,7 @@ Jafg::LShader& GetFontShaderProgram() { return ::FontShaderProgram; }
 
 struct Character final
 {
-    uint32     TextureId = 0;             // ID handle of the glyph texture
+    u32     TextureId = 0;             // ID handle of the glyph texture
     glm::ivec2 Size      = glm::ivec2();  // Size of glyph
     glm::ivec2 Bearing   = glm::ivec2();  // Offset from baseline to left/top of glyph
     Jafg::LIntVector2 Advance  = Jafg::LIntVector2(); // Offset to advance to next glyph
@@ -37,7 +37,7 @@ struct Character final
         return;
     }
 
-    Character(const uint32 InTextureId, const glm::ivec2& InSize, const glm::ivec2& InBearing, const Jafg::LIntVector2& InAdvance)
+    Character(const u32 InTextureId, const glm::ivec2& InSize, const glm::ivec2& InBearing, const Jafg::LIntVector2& InAdvance)
     {
         this->TextureId = InTextureId;
         this->Size      = InSize;
@@ -51,7 +51,7 @@ struct Character final
 /**
  * Loaded characters, private storage for this translation unit but usable for all WTextBlock instances.
  */
-std::map<uint8, Character> Characters;
+std::map<u8, Character> Characters;
 
 } /* ~Namespace <Anonymous> */
 
@@ -185,7 +185,7 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
     glActiveTexture(GL_TEXTURE0);
 
     float X = Offset.X + this->Padding.Left;
-    for (const uint8 Rune : this->Content)
+    for (const u8 Rune : this->Content)
     {
         const Character& Ch = Characters[Rune];
 
@@ -238,9 +238,9 @@ void Jafg::WTextBlock::UpdateDesiredSize() const
     }
 
     LVector2 DesiredSize = LVector2::Zero();
-    for (const uint8 Rune : this->Content)
+    for (const u8 Rune : this->Content)
     {
-        const Character& Ch = Characters.at(static_cast<int8>(Rune));
+        const Character& Ch = Characters.at(static_cast<i8>(Rune));
         DesiredSize.X += static_cast<float>(Ch.Advance.X) * this->Brush.Scale / 64.0f;
         DesiredSize.Y = Maths::Max(DesiredSize.Y, static_cast<float>(Ch.Size.y) * this->Brush.Scale);
     }
@@ -266,8 +266,8 @@ void Jafg::WTextBlock::FirstTimeLoadCharacters()
     }
 
     FT_Face Face;
-    const uint8* FontData = nullptr;
-    uint64 FontDataSize = 0;
+    const u8* FontData = nullptr;
+    u64 FontDataSize = 0;
     Finder::ReadFileAsBinary(LEnginePath(EEnginePaths::Fonts, "Core.otf"), FontData, FontDataSize);
     if (FT_New_Memory_Face(Ft, reinterpret_cast<const FT_Byte*>(FontData), static_cast<FT_Long>(FontDataSize), 0, &Face))
     {
@@ -278,7 +278,7 @@ void Jafg::WTextBlock::FirstTimeLoadCharacters()
     FT_Set_Pixel_Sizes(Face, 0, 48); // set size to load glyphs as
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
     // load first 128 characters of ASCII set
-    for (uint8 C = 0; C < 128; C++)
+    for (u8 C = 0; C < 128; C++)
     {
         // load character glyph
         if (FT_Load_Char(Face, C, FT_LOAD_RENDER))
@@ -320,7 +320,7 @@ void Jafg::WTextBlock::FirstTimeLoadCharacters()
             glm::ivec2(Face->glyph->bitmap_left, Face->glyph->bitmap_top),
             LIntVector2(Face->glyph->advance.x, Face->glyph->advance.y)
         };
-        Characters.insert(std::pair<uint8, Character>(C, character));
+        Characters.insert(std::pair<u8, Character>(C, character));
     }
     glBindTexture(GL_TEXTURE_2D, 1);
     FT_Done_Face(Face);

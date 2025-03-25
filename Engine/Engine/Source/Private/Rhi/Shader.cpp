@@ -43,12 +43,12 @@ void Jafg::LShader::SetBoolUniform(const LSimpleString& Name, const bool Value) 
     glUniform1i(glGetUniformLocation(this->Id, Name.ToC()), static_cast<int>(Value));
 }
 
-void Jafg::LShader::SetIntUniform(const LSimpleString& Name, const int32 Value) const
+void Jafg::LShader::SetIntUniform(const LSimpleString& Name, const i32 Value) const
 {
     glUniform1i(glGetUniformLocation(this->Id, Name.ToC()), Value);
 }
 
-void Jafg::LShader::SetUIntUniform(const LSimpleString& Name, const uint32 Value) const
+void Jafg::LShader::SetUIntUniform(const LSimpleString& Name, const u32 Value) const
 {
     glUniform1ui(glGetUniformLocation(this->Id, Name.ToC()), Value);
 }
@@ -75,7 +75,7 @@ void Jafg::LShader::SetMatrixUniform(const LSimpleString& Name, const LMatrixF& 
 
 void Jafg::LShader::SetColorUniform(const LSimpleString& Name, const LColor& Value) const
 {
-    this->SetIntUniform(Name, *reinterpret_cast<const int32*>(&Value.Bits));
+    this->SetIntUniform(Name, *reinterpret_cast<const i32*>(&Value.Bits));
 }
 
 void Jafg::LShader::SetColorVec3Uniform(const LSimpleString& Name, const LColor& Value) const
@@ -95,10 +95,10 @@ void Jafg::LShader::LoadShader(const LEnginePath& VertexPath, const LEnginePath&
     const char* UncompiledVertexC   = UncompiledVertex.c_str();
     const char* UncompiledFragmentC = UncompiledFragment.c_str();
 
-    int32 Success;
+    i32 Success;
     char InfoLog[512];
 
-    const uint32 Vertex = glCreateShader(GL_VERTEX_SHADER);
+    const u32 Vertex = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(Vertex, 1, &UncompiledVertexC, nullptr);
     glCompileShader(Vertex);
 
@@ -110,7 +110,7 @@ void Jafg::LShader::LoadShader(const LEnginePath& VertexPath, const LEnginePath&
         return;
     }
 
-    const uint32 Fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    const u32 Fragment = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(Fragment, 1, &UncompiledFragmentC, nullptr);
     glCompileShader(Fragment);
     glGetShaderiv(Fragment, GL_COMPILE_STATUS, &Success);

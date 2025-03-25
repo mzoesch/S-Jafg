@@ -17,17 +17,17 @@ public:
 
     typedef LEngineShader Super;
 
-    virtual uint32 Make() override;
+    virtual u32 Make() override;
     virtual void   UpdateUniforms(const LViewport& Viewport, const LWorld& World, const LEye& Eye) override;
     virtual void   OnFree() override;
 
-    FORCEINLINE auto GetBlendOpaqueTextureLocation() const noexcept -> uint32 { return this->BlendOpaqueTex; }
-    FORCEINLINE auto GetBlendersTextureLocation()    const noexcept -> uint32 { return this->BlendersTex; }
+    FORCEINLINE auto GetBlendOpaqueTextureLocation() const noexcept -> u32 { return this->BlendOpaqueTex; }
+    FORCEINLINE auto GetBlendersTextureLocation()    const noexcept -> u32 { return this->BlendersTex; }
 
 private:
 
-    uint32 BlendOpaqueTex = NULL;
-    uint32 BlendersTex    = NULL;
+    u32 BlendOpaqueTex = NULL;
+    u32 BlendersTex    = NULL;
 };
 
 //#
@@ -41,17 +41,17 @@ public:
     DEFAULT_REALLOC_OF_ANY_FORM(LChunkShaderInstance)
     ~LChunkShaderInstance();
 
-    void LoadMeshToGraphicsMemory(const TdhArray<ChunkBoxVertex>& Vertices, const TdhArray<uint32>& Indices);
+    void LoadMeshToGraphicsMemory(const TdhArray<ChunkBoxVertex>& Vertices, const TdhArray<u32>& Indices);
 
-    FORCEINLINE uint32 GetVertexArrayObject()   const noexcept { return this->Vao; }
-    FORCEINLINE uint32 GetVertexBufferObject()  const noexcept { return this->Vbo; }
-    FORCEINLINE uint32 GetElementBufferObject() const noexcept { return this->Ebo; }
+    FORCEINLINE u32 GetVertexArrayObject()   const noexcept { return this->Vao; }
+    FORCEINLINE u32 GetVertexBufferObject()  const noexcept { return this->Vbo; }
+    FORCEINLINE u32 GetElementBufferObject() const noexcept { return this->Ebo; }
 
 private:
 
-    uint32 Vao = NULL;
-    uint32 Vbo = NULL;
-    uint32 Ebo = NULL;
+    u32 Vao = NULL;
+    u32 Vbo = NULL;
+    u32 Ebo = NULL;
     bool   bLoaded = false;
 };
 

@@ -7,7 +7,7 @@
 namespace Jafg
 {
 
-typedef uint8 LTaskExit;
+typedef u8 LTaskExit;
 namespace ETaskExit
 {
 

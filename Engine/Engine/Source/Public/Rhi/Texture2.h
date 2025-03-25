@@ -24,7 +24,7 @@ public:
     LTexture2& operator=(LTexture2&& InOther) noexcept { this->MipMap = std::move(InOther.MipMap); return *this; }
     ~LTexture2() { this->Free(); }
 
-    bool CreateEmpty(const uint32 InWidth, const uint32 InHeight, const ERawImageFormat::Type InFormat);
+    bool CreateEmpty(const u32 InWidth, const u32 InHeight, const ERawImageFormat::Type InFormat);
     bool LoadFromDisk(const LEnginePath& Path, const JUserPreferences& UserPreferences);
     void Free() { this->MipMap.FreeBulk(); }
 
@@ -42,11 +42,11 @@ public:
 
     const LTextureMipMap2& GetFirstMipMap() const { return this->MipMap; }
 
-    FORCEINLINE auto GetWidth()  const noexcept -> uint32 { return this->MipMap.Size.X; }
-    FORCEINLINE auto GetHeight() const noexcept -> uint32 { return this->MipMap.Size.Y; }
+    FORCEINLINE auto GetWidth()  const noexcept -> u32 { return this->MipMap.Size.X; }
+    FORCEINLINE auto GetHeight() const noexcept -> u32 { return this->MipMap.Size.Y; }
     FORCEINLINE auto GetFormat() const noexcept -> ERawImageFormat::Type { return this->MipMap.Format; }
-    FORCEINLINE auto GetChannelsPerPixel() const noexcept -> int32 { return this->MipMap.GetChannelsPerPixel(); }
-    FORCEINLINE auto GetBytesPerPixel() const noexcept -> int32 { return this->MipMap.GetBytesPerPixel(); }
+    FORCEINLINE auto GetChannelsPerPixel() const noexcept -> i32 { return this->MipMap.GetChannelsPerPixel(); }
+    FORCEINLINE auto GetBytesPerPixel() const noexcept -> i32 { return this->MipMap.GetBytesPerPixel(); }
 
 private:
 

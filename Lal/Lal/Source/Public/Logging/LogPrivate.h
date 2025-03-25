@@ -132,7 +132,7 @@ FORCEINLINE void LogPanicMessage(
     const LStringLegacy&& InMessage,
     const LStringLegacy&& InAnsiMessage,
     const LStringLegacy&& InFile,
-    const uint32          InLine
+    const u32          InLine
 )
 {
     std::cout << InAnsiMessage << '\n';
@@ -155,7 +155,7 @@ inline void LogPanicMessageWrapper(
     const LAsciiChar*     InFormat,
     const LStringLegacy&& InAnsiFormat,
     const LStringLegacy&& InFile,
-    const uint32          InLine,
+    const u32          InLine,
     const ArgyTy& ...     InArgsTy
 )
 {

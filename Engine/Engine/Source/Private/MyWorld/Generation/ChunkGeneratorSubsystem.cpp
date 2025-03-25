@@ -50,7 +50,7 @@ void Jafg::JChunkGeneratorSubsystem::FixedTick(const float RunnableDeltaTime)
 
 void Jafg::JChunkGeneratorSubsystem::TryToActivateVerticalChunk(const LChunkKey2& ChunkKey, std::set<LChunkKey>* Visited)
 {
-    for (int32 Z = 0; Z < this->ChunkGenerationSubsystem->GetRenderHeight(); ++Z)
+    for (i32 Z = 0; Z < this->ChunkGenerationSubsystem->GetRenderHeight(); ++Z)
     {
         AChunk* Target;
         if (Target = this->ChunkGenerationSubsystem->FindLoadedChunkOrNull(LChunkKey(ChunkKey, Z)); Target == nullptr)

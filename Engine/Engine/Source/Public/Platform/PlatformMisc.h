@@ -15,16 +15,16 @@ struct LPlatformMisc;
 struct LPhysicalViewport
 {
     //# Physical width in mm.
-    int32 WidthMm  = 0;
+    i32 WidthMm  = 0;
 
     //# Physical height in mm.
-    int32 HeightMm = 0;
+    i32 HeightMm = 0;
 
     //# Virtual width in pixels.
-    int32 WidthPx  = 0;
+    i32 WidthPx  = 0;
 
     //# Virtual height in pixels.
-    int32 HeightPx = 0;
+    i32 HeightPx = 0;
 
     //# Name of the monitor.
     LSimpleString Name;
@@ -66,7 +66,7 @@ ENGINE_API void InvalidateCachedValues();
 //# The number of physical viewports available on the current platform.
 //# INDEX_NONE if an error occurred.
 //#
-ENGINE_API auto GetNumberOfPhysicalViewports() -> int32;
+ENGINE_API auto GetNumberOfPhysicalViewports() -> i32;
 ENGINE_API auto SetPhysicalViewports() -> bool;
 
 } /* ~Namespace PlatformMisc */
@@ -82,7 +82,7 @@ struct ENGINE_API LPlatformMisc
     LPlatformMisc() = default;
     void MakeCachedValuesValid();
 
-    int32 NumberOfPhysicalViewports = INDEX_NONE;
+    i32 NumberOfPhysicalViewports = INDEX_NONE;
     TdhArray<LPhysicalViewport> PhysicalViewports;
     LSimpleString EngineRootDir;
     LSimpleString RealEngineRootDir;

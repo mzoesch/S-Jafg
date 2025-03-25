@@ -10,7 +10,7 @@ namespace Jafg
 namespace EChunkPersistency
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Persistent,
     Transient,

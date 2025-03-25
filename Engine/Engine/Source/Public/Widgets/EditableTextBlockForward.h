@@ -10,7 +10,7 @@ namespace Jafg
 class WEditableTextBlock;
 struct LCaretBrush;
 struct LEditableTextBrush;
-namespace ETextCommit { enum Type : uint8; }
+namespace ETextCommit { enum Type : u8; }
 
 MAKE_DELEGATE_SIGNATURE(LEditableTextBlockCommitDelegate, void, const LString&, const ETextCommit::Type)
 
@@ -28,7 +28,7 @@ struct LCaretBrush final
 namespace ETextCommit
 {
 
-enum Type : uint8
+enum Type : u8
 {
     //#
     //# Text was commit via an enter key press. This does not mean a loss of focus.

@@ -3,7 +3,7 @@
 #include "CoreAfx.h"
 #include "Rhi/TextureCore.h"
 
-int32 Jafg::ERawImageFormat::GetChannelsPerPixel(const ERawImageFormat::Type InFormat)
+i32 Jafg::ERawImageFormat::GetChannelsPerPixel(const ERawImageFormat::Type InFormat)
 {
     switch (InFormat)
     {
@@ -12,7 +12,7 @@ int32 Jafg::ERawImageFormat::GetChannelsPerPixel(const ERawImageFormat::Type InF
     }
 }
 
-int32 Jafg::ERawImageFormat::GetBytesPerPixel(const ERawImageFormat::Type InFormat)
+i32 Jafg::ERawImageFormat::GetBytesPerPixel(const ERawImageFormat::Type InFormat)
 {
     switch (InFormat)
     {

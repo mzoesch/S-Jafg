@@ -1027,7 +1027,7 @@ bool LStringBase<InCharacterTy, InTraitsTy>::StartsWith(const InCharacterTy* InS
         return *this->Peek() == *InString;
     }
 
-    int32 Cursor = 0;
+    i32 Cursor = 0;
     while (*InString != TraitsTy::Terminator)
     {
         if (this->GetCharacterCount() <= Cursor)
@@ -1244,7 +1244,7 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
 template <class InCharacterTy, class InTraitsTy>
 typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacterTy, InTraitsTy>::FindLast(const InCharacterTy InRune) const
 {
-    for (int32 Index = this->GetSize() - 1; Index >= 0; --Index)
+    for (i32 Index = this->GetSize() - 1; Index >= 0; --Index)
     {
         if (this->Data[Index] == InRune)
         {

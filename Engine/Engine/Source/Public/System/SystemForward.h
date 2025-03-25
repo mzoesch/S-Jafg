@@ -11,7 +11,7 @@ namespace Jafg
 namespace EEnginePaths
 {
 
-enum Type : uint8
+enum Type : u8
 {
     None = 0,
 

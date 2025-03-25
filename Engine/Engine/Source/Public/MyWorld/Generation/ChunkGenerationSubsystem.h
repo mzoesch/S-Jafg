@@ -38,8 +38,8 @@ public:
     FORCEINLINE auto GetPanickedChunk(const LChunkKey& InChunkKey) const -> AChunk*;
     FORCEINLINE auto FindLoadedChunkOrNull(const LChunkKey& ChunkKey) const -> AChunk*;
 
-    FORCEINLINE int32 GetRenderDistance() const { return *this->RenderDistance; }
-    FORCEINLINE int32 GetRenderHeight() const { return *this->RenderHeight; }
+    FORCEINLINE i32 GetRenderDistance() const { return *this->RenderDistance; }
+    FORCEINLINE i32 GetRenderHeight() const { return *this->RenderHeight; }
 
     FORCEINLINE auto GetOptimalVerticalChunkQueue() -> TQueue<LChunkKey2>& { return this->OptimalVerticalChunkQueue; }
 
@@ -76,8 +76,8 @@ private:
 
     LSharedChunkArgs SharedChunkArgs;
     LChunkShaderContext* ChunkShaderContext = nullptr;
-    const int32* RenderDistance = nullptr;
-    const int32* RenderHeight   = nullptr;
+    const i32* RenderDistance = nullptr;
+    const i32* RenderHeight   = nullptr;
 };
 
 TdhArray<LChunkKey> JChunkGenerationSubsystem::GetCurrentActiveChunkSnapshot() const

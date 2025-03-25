@@ -10,7 +10,7 @@ namespace Jafg
 namespace EInputActionTrigger
 {
 
-enum Type : uint8
+enum Type : u8
 {
     None      = 0x0 << 0,
 

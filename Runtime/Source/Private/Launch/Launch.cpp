@@ -257,7 +257,7 @@ EPlatformExit::Type GuardedMain()
     check( Private::GNameRegistry == nullptr )
     Private::GNameRegistry = new Private::LNameRegistry();
     LOG_VERBOSE(LogNames, "Program initialized {} names during static storage initialization.", Private::GetStaticNameCount())
-    for (int32 Index = 0; Index < Private::GetStaticNameCount(); ++Index)
+    for (i32 Index = 0; Index < Private::GetStaticNameCount(); ++Index)
     {
         ensure( Private::GNameRegistry->RegisterName(Private::GetStaticNameByIndex(Index)) );
     }

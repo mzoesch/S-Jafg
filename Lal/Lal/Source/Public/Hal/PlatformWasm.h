@@ -155,7 +155,7 @@ struct LWasmPlatformTypes final : public LGenericPlatformTypes
 struct LWasmPlatformBreakDefines final
 {
     NORETURN NOINLINE /* Ambiguous symbol error can be ignored. Visual Studio is just too stupid to understand. */
-    static void OnProgramPanic(const char* InMessage, const char* InFile, LWasmPlatformTypes::int32 InLine);
+    static void OnProgramPanic(const char* InMessage, const char* InFile, LWasmPlatformTypes::i32 InLine);
 };
 
 extern void WasmGuardedLoop();

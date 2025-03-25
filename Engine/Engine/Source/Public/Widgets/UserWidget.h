@@ -36,7 +36,7 @@ public:
     virtual void RemoveChild(WWidgetNode* InChild) override;
     using Super::RemoveChild;
     virtual auto AddChild(WWidgetNode* InChild) -> LWidgetSlot* override;
-    virtual auto AddChildAt(const int32 InIndex, WWidgetNode* InChild) -> LWidgetSlot* override;
+    virtual auto AddChildAt(const i32 InIndex, WWidgetNode* InChild) -> LWidgetSlot* override;
 
     //# Add this widget to the main viewport of the current active local ego.
     void AddToViewport(LViewport* InViewport);

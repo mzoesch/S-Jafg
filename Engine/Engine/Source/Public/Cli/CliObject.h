@@ -9,7 +9,7 @@ namespace Jafg
 
 class LCommandLineInterface;
 
-typedef uint32 LCliObjectUuid;
+typedef u32 LCliObjectUuid;
 
 class LCliToken;
 class LCliToken_String;
@@ -25,7 +25,7 @@ public:
 
     virtual ~LCliToken() = default;
 
-    virtual bool IsInvocable(TdhArray<LCliToken*> InArgs, int32* InOutArgCursor) const = 0;
+    virtual bool IsInvocable(TdhArray<LCliToken*> InArgs, i32* InOutArgCursor) const = 0;
 
     virtual LString GetStringRepresentation() const = 0;
 
@@ -48,8 +48,8 @@ public:
     virtual bool IsCastableToFloat() const { return false; }
     virtual bool IsCastableToBool() const { return false; }
     virtual auto CastToString() -> LString { checkNoEntry() return { }; }
-    virtual auto CastToByte() -> uint8 { checkNoEntry() return 0; }
-    virtual auto CastToInt() -> int32 { checkNoEntry() return 0; }
+    virtual auto CastToByte() -> u8 { checkNoEntry() return 0; }
+    virtual auto CastToInt() -> i32 { checkNoEntry() return 0; }
     virtual auto CastToFloat() -> float { checkNoEntry() return 0.0f; }
     virtual auto CastToBool() -> bool { checkNoEntry() return false; }
 
@@ -73,7 +73,7 @@ class LCliToken_String final : public LCliToken
 {
 public:
 
-    virtual bool IsInvocable(TdhArray<LCliToken*> InArgs, int32* InOutArgCursor) const override;
+    virtual bool IsInvocable(TdhArray<LCliToken*> InArgs, i32* InOutArgCursor) const override;
 
     virtual LString GetStringRepresentation() const override { return this->Value; }
 
@@ -93,7 +93,7 @@ class LCliToken_Byte final : public LCliToken
 {
 public:
 
-    virtual bool IsInvocable(TdhArray<LCliToken*> InArgs, int32* InOutArgCursor) const override { return false; }
+    virtual bool IsInvocable(TdhArray<LCliToken*> InArgs, i32* InOutArgCursor) const override { return false; }
 
     virtual LString GetStringRepresentation() const override { return LString::SprintF("{}", this->Value); }
 
@@ -103,7 +103,7 @@ public:
     FORCEINLINE virtual bool IsCastableToString() const override { return true; }
     FORCEINLINE virtual auto CastToString() -> LString override { return LString::SprintF("{}", this->Value); }
 
-    uint8 Value = 0;
+    u8 Value = 0;
 };
 
 //#
@@ -113,7 +113,7 @@ class LCliToken_Int final : public LCliToken
 {
 public:
 
-    virtual bool IsInvocable(TdhArray<LCliToken*> InArgs, int32* InOutArgCursor) const override { return false; }
+    virtual bool IsInvocable(TdhArray<LCliToken*> InArgs, i32* InOutArgCursor) const override { return false; }
 
     virtual LString GetStringRepresentation() const override { return LString::SprintF("{}", this->Value); }
 
@@ -123,7 +123,7 @@ public:
     FORCEINLINE virtual bool IsCastableToString() const override { return true; }
     FORCEINLINE virtual auto CastToString() -> LString override { return LString::SprintF("{}", this->Value); }
 
-    int32 Value = 0;
+    i32 Value = 0;
 };
 
 //#
@@ -133,7 +133,7 @@ class LCliToken_Float final : public LCliToken
 {
 public:
 
-    virtual bool IsInvocable(TdhArray<LCliToken*> InArgs, int32* InOutArgCursor) const override { return false; }
+    virtual bool IsInvocable(TdhArray<LCliToken*> InArgs, i32* InOutArgCursor) const override { return false; }
 
     virtual LString GetStringRepresentation() const override { return LString::SprintF("{}", this->Value); }
 
@@ -153,7 +153,7 @@ class LCliToken_Bool final : public LCliToken
 {
 public:
 
-    virtual bool IsInvocable(TdhArray<LCliToken*> InArgs, int32* InOutArgCursor) const override { return false; }
+    virtual bool IsInvocable(TdhArray<LCliToken*> InArgs, i32* InOutArgCursor) const override { return false; }
 
     virtual LString GetStringRepresentation() const override { return this->Value ? "true" : "false"; }
 
@@ -173,7 +173,7 @@ class LCliToken_Null final : public LCliToken
 {
 public:
 
-    virtual bool IsInvocable(TdhArray<LCliToken*> InArgs, int32* InOutArgCursor) const override { return false; }
+    virtual bool IsInvocable(TdhArray<LCliToken*> InArgs, i32* InOutArgCursor) const override { return false; }
 
     virtual LString GetStringRepresentation() const override { return "null"; }
 

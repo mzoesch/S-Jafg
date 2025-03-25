@@ -10,7 +10,7 @@ namespace Jafg
 namespace EMouseCursor
 {
 
-enum Type : uint8
+enum Type : u8
 {
 
     None,       // Do not affect the current cursor state.

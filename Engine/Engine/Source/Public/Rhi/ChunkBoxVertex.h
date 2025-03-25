@@ -10,7 +10,7 @@ namespace Jafg
 
 struct ChunkBoxVertex final
 {
-    enum TexOffset : uint8
+    enum TexOffset : u8
     {
         None  = 0x00 << 0,
         East  = 0x01 << 0,
@@ -19,10 +19,10 @@ struct ChunkBoxVertex final
     };
 
     FORCEINLINE ChunkBoxVertex() = default;
-    FORCEINLINE ChunkBoxVertex(const uint8 InLocationX, const uint8 InLocationY, const uint8 InLocationZ,
-                               const LTextureIndex Idx, const uint32 InDomainWidth,
-                               const TexOffset InTexOffset, const uint8 InNormal,
-                               const LTextureIndex BlendTexIdx, const uint32 InBlendDomainWidth)
+    FORCEINLINE ChunkBoxVertex(const u8 InLocationX, const u8 InLocationY, const u8 InLocationZ,
+                               const LTextureIndex Idx, const u32 InDomainWidth,
+                               const TexOffset InTexOffset, const u8 InNormal,
+                               const LTextureIndex BlendTexIdx, const u32 InBlendDomainWidth)
             : LocationX(InLocationX), LocationY(InLocationY), LocationZ(InLocationZ), Normal(InNormal)
     {
         this->TextureGridX = (InTexOffset & TexOffset::East ) > 0;
@@ -38,17 +38,17 @@ struct ChunkBoxVertex final
         return;
     }
 
-    uint8 LocationX = 0;
-    uint8 LocationY = 0;
-    uint8 LocationZ = 0;
+    u8 LocationX = 0;
+    u8 LocationY = 0;
+    u8 LocationZ = 0;
 
-    uint8 TextureGridX = 0;
-    uint8 TextureGridY = 0;
+    u8 TextureGridX = 0;
+    u8 TextureGridY = 0;
 
-    uint8 Normal = 0;
+    u8 Normal = 0;
 
-    uint8 BlendTextureGridX = 0;
-    uint8 BlendTextureGridY = 0;
+    u8 BlendTextureGridX = 0;
+    u8 BlendTextureGridY = 0;
 };
 ENUM_CLASS_FLAGS(ChunkBoxVertex::TexOffset)
 

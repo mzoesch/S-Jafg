@@ -44,7 +44,7 @@ public:
     virtual void RemoveChild(WWidgetNode* InChild) PURE_VIRTUAL()
     virtual void RemoveChild(LWidgetSlot* InSlot) PURE_VIRTUAL()
     virtual auto AddChild(WWidgetNode* InChild) -> LWidgetSlot* PURE_VIRTUAL(return nullptr)
-    virtual auto AddChildAt(const int32 InIndex, WWidgetNode* InChild) -> LWidgetSlot* PURE_VIRTUAL(return nullptr)
+    virtual auto AddChildAt(const i32 InIndex, WWidgetNode* InChild) -> LWidgetSlot* PURE_VIRTUAL(return nullptr)
 
     virtual void SetPadding(const LPadding& InPadding) PURE_VIRTUAL()
     virtual auto GetPaddingPtr() const -> const LPadding* PURE_VIRTUAL(return nullptr)

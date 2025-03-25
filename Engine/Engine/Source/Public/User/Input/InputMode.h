@@ -7,7 +7,7 @@
 namespace Jafg
 {
 
-enum : uint8
+enum : u8
 {
     HideMouseCursor = 0,
     ShowMouseCursor = 1,
@@ -16,7 +16,7 @@ enum : uint8
 namespace EInputMode
 {
 
-enum Type : uint8
+enum Type : u8
 {
     None            = 0x00,
 

@@ -35,14 +35,14 @@ public:
     }
 
     FORCEINLINE auto GetOwner() const -> AChunk& { return *this->Owner; }
-    FORCEINLINE auto GetNumTriangles() const -> int32 { return this->Indices.GetSize(); }
+    FORCEINLINE auto GetNumTriangles() const -> i32 { return this->Indices.GetSize(); }
     FORCEINLINE auto GetVertices() const -> const TdhArray<ChunkBoxVertex>& { return this->Vertices; }
-    FORCEINLINE auto GetIndices() const -> const TdhArray<uint32>& { return this->Indices; }
+    FORCEINLINE auto GetIndices() const -> const TdhArray<u32>& { return this->Indices; }
 
 protected:
 
     TdhArray<ChunkBoxVertex> Vertices = { };
-    TdhArray<uint32>         Indices  = { };
+    TdhArray<u32>         Indices  = { };
 
 private:
 

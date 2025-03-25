@@ -7,7 +7,7 @@
 namespace Jafg
 {
 
-typedef uint8 LKey;
+typedef u8 LKey;
 
 namespace EKeys
 {

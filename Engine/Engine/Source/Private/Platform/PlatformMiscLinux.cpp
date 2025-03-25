@@ -22,7 +22,7 @@ Jafg::LSimpleString Jafg::PlatformMisc::GetEngineRootDirImpl()
 Jafg::LSimpleString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
 {
     char Buffer[PLATFORM_MAX_PATH] = { 0 };
-    const uint64 Ret = readlink("/proc/self/exe", Buffer, PLATFORM_MAX_PATH);
+    const u64 Ret = readlink("/proc/self/exe", Buffer, PLATFORM_MAX_PATH);
     if (Ret == -1)
     {
         panic("Failed to read the symbolic link.");
@@ -39,7 +39,7 @@ Jafg::LSimpleString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
     return { Path.MoveOut() };
 }
 
-int32 Jafg::PlatformMisc::GetNumberOfPhysicalViewports()
+i32 Jafg::PlatformMisc::GetNumberOfPhysicalViewports()
 {
     return 1;
 }

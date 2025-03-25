@@ -40,7 +40,7 @@ void Jafg::JChunkGenerationSubsystem::FixedTick(const float EngineDeltaTime, con
 
     this->DequeueVipChunks();
 
-    int32 GeneratedChunks = 0;
+    i32 GeneratedChunks = 0;
     while (this->OptimalVerticalChunkQueue.IsEmpty() == false && GeneratedChunks < 5)
     {
         if (this->DequeueNextOptimalVerticalChunk())
@@ -102,7 +102,7 @@ bool Jafg::JChunkGenerationSubsystem::DequeueNextOptimalVerticalChunk()
     }
 
     bool Ret = false;
-    for (int32 Z = 0; Z <= this->GetRenderHeight(); ++Z)
+    for (i32 Z = 0; Z <= this->GetRenderHeight(); ++Z)
     {
         AChunk* Chunk;
         if (Chunk = this->FindLoadedChunkOrNull(LChunkKey(OptimalVerticalChunk, Z)); Chunk == nullptr)

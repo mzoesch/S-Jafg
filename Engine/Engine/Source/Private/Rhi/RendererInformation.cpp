@@ -5,9 +5,9 @@
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/InterfaceTypes.h"
 
-int32 Jafg::RendererInformation::GetLimitTextureDimension()
+i32 Jafg::RendererInformation::GetLimitTextureDimension()
 {
-    int32 Out = 0;
+    i32 Out = 0;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &Out);
     return Out;
 }

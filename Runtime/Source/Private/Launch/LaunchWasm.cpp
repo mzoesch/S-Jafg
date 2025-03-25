@@ -46,7 +46,7 @@ void WasmGuardedLoop()
     return;
 }
 
-int32 main(int32 Argc, char* Argv[])
+i32 main(i32 Argc, char* Argv[])
 {
     /*
      * This is kinda stupid. When serving over the Internet, we cannot get the command line arguments.
@@ -54,7 +54,7 @@ int32 main(int32 Argc, char* Argv[])
      * For a more future problem.
      */
     LString CmdLine;
-    for (int32 Index = 0; Index < Argc; ++Index)
+    for (i32 Index = 0; Index < Argc; ++Index)
     {
         CmdLine += Argv[Index];
         CmdLine += " ";
@@ -80,10 +80,10 @@ int32 main(int32 Argc, char* Argv[])
 
     if (ErrorLevel != EPlatformExit::Success)
     {
-        LOG_ERROR(LogGuardedMain, "Wasm error occurred. Error level: {}.", static_cast<int32>(ErrorLevel))
+        LOG_ERROR(LogGuardedMain, "Wasm error occurred. Error level: {}.", static_cast<i32>(ErrorLevel))
     }
 
-    return static_cast<int32>(ErrorLevel);
+    return static_cast<i32>(ErrorLevel);
 }
 
 #endif /* PLATFORM_WASM */

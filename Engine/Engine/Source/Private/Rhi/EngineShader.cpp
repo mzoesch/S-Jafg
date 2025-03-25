@@ -3,7 +3,7 @@
 #include "Rhi/EngineShader.h"
 #include "Engine/Engine.h"
 
-uint32 Jafg::LEngineShader::Make()
+u32 Jafg::LEngineShader::Make()
 {
     check( this->bMeaningful == false )
     this->bMeaningful = true;

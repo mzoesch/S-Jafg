@@ -38,7 +38,7 @@ struct ENGINE_API LWhitespace
     {
     }
 
-    FORCEINLINE LWhitespace(const int32 UniformWhitespace)
+    FORCEINLINE LWhitespace(const i32 UniformWhitespace)
         : West(static_cast<float>(UniformWhitespace))
         , North(static_cast<float>(UniformWhitespace))
         , East(static_cast<float>(UniformWhitespace))
@@ -62,7 +62,7 @@ struct ENGINE_API LWhitespace
     {
     }
 
-    FORCEINLINE LWhitespace(const int32 Horizontal, const int32 Vertical)
+    FORCEINLINE LWhitespace(const i32 Horizontal, const i32 Vertical)
         : West(static_cast<float>(Horizontal))
         , North(static_cast<float>(Vertical))
         , East(static_cast<float>(Horizontal))
@@ -86,7 +86,7 @@ struct ENGINE_API LWhitespace
     {
     }
 
-    FORCEINLINE LWhitespace(const int32 InWest, const int32 InNorth, const int32 InEast, const int32 InSouth)
+    FORCEINLINE LWhitespace(const i32 InWest, const i32 InNorth, const i32 InEast, const i32 InSouth)
         : West(static_cast<float>(InWest))
         , North(static_cast<float>(InNorth))
         , East(static_cast<float>(InEast))

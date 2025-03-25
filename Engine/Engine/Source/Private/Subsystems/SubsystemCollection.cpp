@@ -38,7 +38,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(const LObjectClass* InClas
         continue;
     }
 
-    for (int32 i = 0; i < this->SubsystemInstances.GetSize();)
+    for (i32 i = 0; i < this->SubsystemInstances.GetSize();)
     {
         JSubsystem* Subsystem = this->SubsystemInstances[i];
 
@@ -75,7 +75,7 @@ void Jafg::LSubsystemCollection::TearDownSubsystems()
 
     LOG_VERBOSE(LogSubsystemCollection, "Tearing down {} subsystems for outer [{}].", this->SubsystemInstances.GetSize(), this->Outer->GetHumanReadableName())
 
-    for (int32 i = 0; i < this->SubsystemInstances.GetSize(); ++i)
+    for (i32 i = 0; i < this->SubsystemInstances.GetSize(); ++i)
     {
         JSubsystem*& Subsystem = this->SubsystemInstances[i];
         checkSlow( Subsystem )

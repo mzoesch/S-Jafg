@@ -61,7 +61,7 @@ struct LSharedChunkArgs final
     JMaterialSubsystem*        MaterialSubsystem         = nullptr;
     JTextureSubsystem*         TextureSubsystem          = nullptr;
     LChunkShader               ChunkShader;
-    uint32                     ChunkShaderHandle         = NULL;
+    u32                     ChunkShaderHandle         = NULL;
     TFunction<LChunkMesher*(AChunk& Owner)> GetNewMesher = nullptr;
 };
 
@@ -73,7 +73,7 @@ class ENGINE_API AChunk final : public AActor
 public:
 
     //# The index in the raw voxel data array.
-    typedef int32 LVoxelIndex;
+    typedef i32 LVoxelIndex;
 
     static_assert(
         MwStatics::ChunkSize < std::numeric_limits<LVoxelKeyDomainTy>::max() - 1,
@@ -156,15 +156,15 @@ public:
 
     FORCEINLINE static LVoxelIndex GetRawVoxelIndex(const LVoxelKey InKey);
     FORCEINLINE static LVoxelIndex GetRawVoxelIndex(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ);
-    FORCEINLINE static LVoxelIndex GetRawVoxelIndex(const int32 InX, const int32 InY, const int32 InZ);
+    FORCEINLINE static LVoxelIndex GetRawVoxelIndex(const i32 InX, const i32 InY, const i32 InZ);
 
     FORCEINLINE voxel_t GetRawVoxelData(const LVoxelKey InKey) const;
     FORCEINLINE voxel_t GetRawVoxelData(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ) const;
-    FORCEINLINE voxel_t GetRawVoxelData(const int32 InX, const int32 InY, const int32 InZ) const;
+    FORCEINLINE voxel_t GetRawVoxelData(const i32 InX, const i32 InY, const i32 InZ) const;
 
     FORCEINLINE voxel_t GetSafeRawVoxelData(const LVoxelKey InKey, const voxel_t InFallback = ECompileTimeVoxels::Air) const;
     FORCEINLINE voxel_t GetSafeRawVoxelData(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ, const voxel_t InFallback = ECompileTimeVoxels::Air) const;
-    FORCEINLINE voxel_t GetSafeRawVoxelData(const int32 InX, const int32 InY, const int32 InZ, const voxel_t InFallback = ECompileTimeVoxels::Air) const;
+    FORCEINLINE voxel_t GetSafeRawVoxelData(const i32 InX, const i32 InY, const i32 InZ, const voxel_t InFallback = ECompileTimeVoxels::Air) const;
 
     FORCEINLINE voxel_t GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey) const;
     FORCEINLINE voxel_t GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey, const voxel_t Fallback) const;
@@ -267,7 +267,7 @@ AChunk::LVoxelIndex AChunk::GetRawVoxelIndex(const LVoxelKeyDomainTy InX, const 
     return InX * MwStatics::ChunkSizeSquared + InY * MwStatics::ChunkSize + InZ;
 }
 
-AChunk::LVoxelIndex AChunk::GetRawVoxelIndex(const int32 InX, const int32 InY, const int32 InZ)
+AChunk::LVoxelIndex AChunk::GetRawVoxelIndex(const i32 InX, const i32 InY, const i32 InZ)
 {
     return InX * MwStatics::ChunkSizeSquared + InY * MwStatics::ChunkSize + InZ;
 }
@@ -284,7 +284,7 @@ voxel_t AChunk::GetRawVoxelData(const LVoxelKeyDomainTy InX, const LVoxelKeyDoma
     return this->RawVoxelData[AChunk::GetRawVoxelIndex(InX, InY, InZ)];
 }
 
-voxel_t AChunk::GetRawVoxelData(const int32 InX, const int32 InY, const int32 InZ) const
+voxel_t AChunk::GetRawVoxelData(const i32 InX, const i32 InY, const i32 InZ) const
 {
     checkSlow( this->HasRawVoxelData() )
     return this->RawVoxelData[AChunk::GetRawVoxelIndex(InX, InY, InZ)];
@@ -310,7 +310,7 @@ voxel_t AChunk::GetSafeRawVoxelData(const LVoxelKeyDomainTy InX, const LVoxelKey
     return InFallback;
 }
 
-voxel_t AChunk::GetSafeRawVoxelData(const int32 InX, const int32 InY, const int32 InZ, const voxel_t InFallback /* = ECompileTimeVoxels::Air */) const
+voxel_t AChunk::GetSafeRawVoxelData(const i32 InX, const i32 InY, const i32 InZ, const voxel_t InFallback /* = ECompileTimeVoxels::Air */) const
 {
     checkSlow( this->HasRawVoxelData() )
     if (LVoxelKey(InX, InY, InZ).IsLocal())

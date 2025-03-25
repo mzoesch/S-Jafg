@@ -30,7 +30,7 @@ public:
     static void ResetAndMakeDefaultDrawTarget();
 
     ENGINE_API void ReadToActive() const;
-    ENGINE_API void ReadTo(const uint32 InHandle) const;
+    ENGINE_API void ReadTo(const u32 InHandle) const;
 
     // Based of current active rhi context!
     ENGINE_API void PaintToViewport(const LViewport& InContext) const;
@@ -40,9 +40,9 @@ private:
     void Orphan();
 
     bool bIsMeaningful = false;
-    uint32 Handle = 0;
-    uint32 Depth = 0;
-    uint32 Color = 0;
+    u32 Handle = 0;
+    u32 Depth = 0;
+    u32 Color = 0;
 };
 
 } /* ~Namespace Jafg */

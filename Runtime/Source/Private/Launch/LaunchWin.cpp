@@ -27,7 +27,7 @@ bool GPauseBeforeExit = false;
 
 } /* ~Namespace <Anonymous> */
 
-int32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ char* pCmdLine, _In_ int32 nCmdShow)
+i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ char* pCmdLine, _In_ i32 nCmdShow)
 {
     //
     // If LNK2019 [int __cdecl __scrt_common_main_seh(void)] make sure to set the System-Linker of the Runtime
@@ -37,7 +37,7 @@ int32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstanc
     TestMain(::GetCommandLine());
 #else /* WITH_TESTS */
 
-    int32 ErrorLevel = 0;
+    i32 ErrorLevel = 0;
 
     LString CmdLine;
     if (const wchar_t* CmdLineW = GetCommandLineW(); CmdLineW)

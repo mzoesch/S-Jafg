@@ -31,12 +31,12 @@ void ClearStaticNameContainer()
     GetStaticNameContainer().Empty();
 }
 
-int32 GetStaticNameCount()
+i32 GetStaticNameCount()
 {
     return GetStaticNameContainer().GetSize();
 }
 
-const LSimpleString& GetStaticNameByIndex(const int32 InIndex)
+const LSimpleString& GetStaticNameByIndex(const i32 InIndex)
 {
     return GetStaticNameContainer()[InIndex];
 }
@@ -83,7 +83,7 @@ Jafg::LName Jafg::Private::LNameRegistry::GetName(const LSimpleString& InName, c
     if (bConvertToLower)
     {
         const LSimpleString LowerName = InName.GetLowerCase();
-        int32 Index = 0;
+        i32 Index = 0;
         if (const LSimpleString* Ref = this->Names.FindRef(LowerName, Index); Ref)
         {
             return { static_cast<LUnderlyingName>(Index + 1) };
@@ -91,7 +91,7 @@ Jafg::LName Jafg::Private::LNameRegistry::GetName(const LSimpleString& InName, c
     }
     else
     {
-        int32 Index = 0;
+        i32 Index = 0;
         if (const LSimpleString* Ref = this->Names.FindRef(InName, Index); Ref)
         {
             return { static_cast<LUnderlyingName>(Index + 1) };

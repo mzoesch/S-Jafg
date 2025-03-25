@@ -272,7 +272,7 @@ void Jafg::WDebugScreen::Tick()
                 LDebugTraceCubeVisualParams(LColor::Yellow)
             ));
 
-            for (int32 izDelta = 2; izDelta < MwStatics::ChunkSize; izDelta += 2)
+            for (i32 izDelta = 2; izDelta < MwStatics::ChunkSize; izDelta += 2)
             {
                 const float zDelta = static_cast<float>(izDelta);
                 const LVector P1 = ChunkCenter + LVector::Up() * zDelta;
@@ -369,7 +369,7 @@ void Jafg::WDebugScreen::SlowTick()
         this->FpsSection->SetContent(
             LString::SprintF(
                 "{} Fps @ {:.2f} ms T: {}; VSync: {} - Fcsssi: {}; L@{:.2f} Lh@{:.2f} I@{:.2f}",
-                static_cast<int32>(Application::GetCurrentFps()),
+                static_cast<i32>(Application::GetCurrentFps()),
                 Application::GetDeltaTimeAsFloat() * 1'000.0f,
                 UserPreferences->MaxFps,
                 UserPreferences->bVSyncEnabled,
@@ -386,11 +386,11 @@ void Jafg::WDebugScreen::SlowTick()
         this->TimeStatsSection->SetContent(
             LString::SprintF(
                 "Steady: Avg {}fps/{:.2f}ms; Low: {}fps/{:.2f}ms; High: {}fps/{:.2f}ms",
-                static_cast<int32>(static_cast<double>(Application::GetPreviousFrameCount()) / Application::GetRealTimeOfPreviousStatisticsDuration()),
+                static_cast<i32>(static_cast<double>(Application::GetPreviousFrameCount()) / Application::GetRealTimeOfPreviousStatisticsDuration()),
                 static_cast<float>(1.0 / (static_cast<double>(Application::GetPreviousFrameCount()) / Application::GetRealTimeOfPreviousStatisticsDuration())) * 1'000.0f,
-                static_cast<int32>(1.0 / Application::GetPreviousHighestDeltaTime()),
+                static_cast<i32>(1.0 / Application::GetPreviousHighestDeltaTime()),
                 Application::GetPreviousHighestDeltaTime() * 1'000.0f,
-                static_cast<int32>(1.0 / Application::GetPreviousLowestDeltaTime()),
+                static_cast<i32>(1.0 / Application::GetPreviousLowestDeltaTime()),
                 Application::GetPreviousLowestDeltaTime() * 1'000.0f
             )
         );

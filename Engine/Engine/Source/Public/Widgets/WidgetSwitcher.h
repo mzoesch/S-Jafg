@@ -25,8 +25,8 @@ public:
     enum { NoActiveWidgetIndex = INDEX_NONE };
 
     FORCEINLINE void  ResetWidgetIndex() { this->SetActiveWidgetIndex(NoActiveWidgetIndex); }
-    FORCEINLINE int32 GetActiveWidgetIndex() const { return this->ActiveIndex; }
-                void  SetActiveWidgetIndex(const int32 Index);
+    FORCEINLINE i32 GetActiveWidgetIndex() const { return this->ActiveIndex; }
+                void  SetActiveWidgetIndex(const i32 Index);
 
     FORCEINLINE auto GetActiveWidget() const -> WWidgetNode*;
     FORCEINLINE auto GetCheckedActiveWidget() const -> WWidgetNode*;
@@ -41,13 +41,13 @@ public:
 
     // WWidgetParent implementation
     virtual auto AddChild(WWidgetNode* InChild) -> LWidgetSlot* override;
-    virtual auto AddChildAt(const int32 InIndex, WWidgetNode* InChild) -> LWidgetSlot* override;
+    virtual auto AddChildAt(const i32 InIndex, WWidgetNode* InChild) -> LWidgetSlot* override;
     virtual void UpdateDesiredSize() const override;
     // ~WWidgetParent implementation
 
 private:
 
-    int32 ActiveIndex = NoActiveWidgetIndex;
+    i32 ActiveIndex = NoActiveWidgetIndex;
     struct LRecentVisibility
     {
         const void* Target = nullptr;

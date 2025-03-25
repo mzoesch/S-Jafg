@@ -56,7 +56,7 @@ public:
     ENGINE_API  void ActivateContext(LUserInputContext* InContext);
     ENGINE_API  void DeactivateContext(const LSimpleString& InName);
     ENGINE_API  void DeactivateContext(LUserInputContext* InContext);
-    ENGINE_API int32 DeactivateAllContexts();
+    ENGINE_API i32 DeactivateAllContexts();
     FORCEINLINE auto GetActiveContexts() const -> const TdhArray<LUserInputContext*>& { return this->ActiveContexts; }
     FORCEINLINE auto GetRegisteredContexts() const -> const TdhArray<LUserInputContext*>& { return this->RegisteredContexts; }
 

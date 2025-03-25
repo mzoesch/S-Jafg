@@ -37,8 +37,8 @@ public:
 
 private:
 
-    uint32  Vao = 0;
-    uint32  Vbo = 0;
+    u32  Vao = 0;
+    u32  Vbo = 0;
 };
 
 } /* ~Namespace Jafg */

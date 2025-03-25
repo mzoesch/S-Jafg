@@ -18,7 +18,7 @@ Jafg::LSimpleString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
     return "";
 }
 
-int32 Jafg::PlatformMisc::GetNumberOfPhysicalViewports()
+i32 Jafg::PlatformMisc::GetNumberOfPhysicalViewports()
 {
     LOG_WARNING(LogSystem, "GetNumberOfPhysicalViewports() is not implemented for the WASM platform.");
     return 0;

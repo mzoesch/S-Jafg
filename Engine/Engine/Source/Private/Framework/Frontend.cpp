@@ -156,7 +156,7 @@ Jafg::WWidgetNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(const LObjectC
         }
     }
 
-    for (int32 i = 0; i < this->Surfaces.GetSize(); ++i)
+    for (i32 i = 0; i < this->Surfaces.GetSize(); ++i)
     {
         if (this->FocusedSurface == i)
         {

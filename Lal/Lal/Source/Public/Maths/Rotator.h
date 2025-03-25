@@ -5,7 +5,7 @@
 namespace Jafg
 {
 
-typedef uint8 LRotatorAxis;
+typedef u8 LRotatorAxis;
 
 namespace ERotatorAxis
 {

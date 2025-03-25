@@ -50,23 +50,23 @@ void Jafg::LTextureMipMap2::AllocateBulk()
     check( this->Size.X > 0 && this->Size.Y > 0 )
     check( this->Format != ERawImageFormat::Unspecified )
 
-    const int32 BytesPerPixel = ERawImageFormat::GetBytesPerPixel(this->Format);
-    this->Bulk.AllocateBulk(static_cast<int32>(this->Size.X * this->Size.Y) * BytesPerPixel, true);
+    const i32 BytesPerPixel = ERawImageFormat::GetBytesPerPixel(this->Format);
+    this->Bulk.AllocateBulk(static_cast<i32>(this->Size.X * this->Size.Y) * BytesPerPixel, true);
 
     check( this->Bulk.IsAllocated() )
 
     return;
 }
 
-void Jafg::LTextureMipMap2::LoadFromBuffer(const uint8* Buffer, const int32 Offset)
+void Jafg::LTextureMipMap2::LoadFromBuffer(const u8* Buffer, const i32 Offset)
 {
     check( this->Bulk.IsAllocated() == false )
     check( this->Size.X > 0 && this->Size.Y > 0 )
     check( this->Format != ERawImageFormat::Unspecified )
     check( Buffer != nullptr )
 
-    const int32 BytesPerPixel = ERawImageFormat::GetBytesPerPixel(this->Format);
-    this->Bulk.Serialize(Buffer, static_cast<int32>(this->Size.X * this->Size.Y) * BytesPerPixel, Offset);
+    const i32 BytesPerPixel = ERawImageFormat::GetBytesPerPixel(this->Format);
+    this->Bulk.Serialize(Buffer, static_cast<i32>(this->Size.X * this->Size.Y) * BytesPerPixel, Offset);
 
     check( this->Bulk.IsAllocated() )
 

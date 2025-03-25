@@ -9,9 +9,9 @@ namespace Jafg::BuildInfo
 
 struct LEngineVersion
 {
-    uint8 Major = 0;
-    uint8 Minor = 0;
-    uint8 Patch = 0;
+    u8 Major = 0;
+    u8 Minor = 0;
+    u8 Patch = 0;
 
     FORCEINLINE auto ToString() const -> LSimpleString
     {

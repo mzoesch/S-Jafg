@@ -57,8 +57,8 @@ struct TVector2 final
     FORCEINLINE auto GetData()       noexcept ->       T* { return &this->X; }
     FORCEINLINE auto GetData() const noexcept -> const T* { return &this->X; }
 
-    FORCEINLINE auto operator[](const int32 InIndex)       noexcept ->       T&;
-    FORCEINLINE auto operator[](const int32 InIndex) const noexcept -> const T&;
+    FORCEINLINE auto operator[](const i32 InIndex)       noexcept ->       T&;
+    FORCEINLINE auto operator[](const i32 InIndex) const noexcept -> const T&;
 
     FORCEINLINE TVector2<T>& operator =(const TVector2<T>&  InVec) noexcept;
     FORCEINLINE TVector2<T>& operator =(      TVector2<T>&& InVec) noexcept;
@@ -103,14 +103,14 @@ struct TVector2 final
 };
 
 template <typename T>
-T& TVector2<T>::operator[](const int32 InIndex) noexcept
+T& TVector2<T>::operator[](const i32 InIndex) noexcept
 {
     check( InIndex > INDEX_NONE && InIndex < 2 )
     return this->XY[InIndex];
 }
 
 template <typename T>
-const T& TVector2<T>::operator[](const int32 InIndex) const noexcept
+const T& TVector2<T>::operator[](const i32 InIndex) const noexcept
 {
     check( InIndex > INDEX_NONE && InIndex < 2 )
     return this->XY[InIndex];

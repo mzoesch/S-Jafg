@@ -11,7 +11,7 @@ struct TMatrix3 final
 {
     static_assert(std::is_floating_point_v<T>, "Generic type T of TMatrix must be a floating point type.");
 
-    enum EMatrixAxis : uint8
+    enum EMatrixAxis : u8
     {
         X    = 0,
         Y    = 1,
@@ -146,9 +146,9 @@ template <typename T>
 FORCEINLINE constexpr TMatrix3<T> TMatrix3<T>::operator+(const TMatrix3& InMatrix) const noexcept
 {
     TMatrix3 Result = SkipInit;
-    for (int32 Col = 0; Col < 3; ++Col)
+    for (i32 Col = 0; Col < 3; ++Col)
     {
-        for (int32 Row = 0; Row < 3; ++Row)
+        for (i32 Row = 0; Row < 3; ++Row)
         {
             Result[Col][Row] = this->Matrix[Col][Row] + InMatrix.Matrix[Col][Row];
         }
@@ -161,9 +161,9 @@ template <typename T>
 FORCEINLINE constexpr TMatrix3<T> TMatrix3<T>::operator-(const TMatrix3& InMatrix) const noexcept
 {
     TMatrix3 Result = SkipInit;
-    for (int32 Col = 0; Col < 3; ++Col)
+    for (i32 Col = 0; Col < 3; ++Col)
     {
-        for (int32 Row = 0; Row < 3; ++Row)
+        for (i32 Row = 0; Row < 3; ++Row)
         {
             Result[Col][Row] = this->Matrix[Col][Row] - InMatrix.Matrix[Col][Row];
         }
@@ -319,9 +319,9 @@ FORCEINLINE TMatrix3<T> TMatrix3<T>::operator-() const noexcept
 template <typename T>
 FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator+=(const TMatrix3& InMatrix) noexcept
 {
-    for (int32 Col = 0; Col < 3; ++Col)
+    for (i32 Col = 0; Col < 3; ++Col)
     {
-        for (int32 Row = 0; Row < 3; ++Row)
+        for (i32 Row = 0; Row < 3; ++Row)
         {
             this->Matrix[Col][Row] += InMatrix.Matrix[Col][Row];
         }
@@ -333,9 +333,9 @@ FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator+=(const TMatrix3& InMat
 template <typename T>
 FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator-=(const TMatrix3& InMatrix) noexcept
 {
-    for (int32 Col = 0; Col < 3; ++Col)
+    for (i32 Col = 0; Col < 3; ++Col)
     {
-        for (int32 Row = 0; Row < 3; ++Row)
+        for (i32 Row = 0; Row < 3; ++Row)
         {
             this->Matrix[Col][Row] -= InMatrix.Matrix[Col][Row];
         }
@@ -401,9 +401,9 @@ FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator/=(const T Scalar) noexc
 template <typename T>
 FORCEINLINE constexpr bool TMatrix3<T>::Equals(const TMatrix3& InMatrix, const T InTolerance) const noexcept
 {
-    for (int32 Col = 0; Col < 3; ++Col)
+    for (i32 Col = 0; Col < 3; ++Col)
     {
-        for (int32 Row = 0; Row < 3; ++Row)
+        for (i32 Row = 0; Row < 3; ++Row)
         {
             if (Maths::Absolute(this->Matrix[Col][Row] - InMatrix.Matrix[Col][Row]) > InTolerance)
             {
@@ -491,7 +491,7 @@ template <typename T>
 LString TMatrix3<T>::ToString() const
 {
     LString Result;
-    for (int32 Col = 0; Col < 3; ++Col)
+    for (i32 Col = 0; Col < 3; ++Col)
     {
         Result.Append(LString::SprintF("{:.2f} {:.2f} {:.2f}\n",
             this->Matrix[Col][0], this->Matrix[Col][1], this->Matrix[Col][2]));

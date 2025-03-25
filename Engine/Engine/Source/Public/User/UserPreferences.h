@@ -12,7 +12,7 @@ namespace Jafg
 namespace EPolygonMode
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Fill      = 0,
     Wireframe = 1,
@@ -26,15 +26,15 @@ template <>
 FORCEINLINE void Deserialize<EPolygonMode::Type>(EPolygonMode::Type* Destination, const LString& InValue)
 {
     static_assert(std::is_enum_v<EPolygonMode::Type>);
-    static_assert(std::is_same_v<uint8, std::underlying_type_t<EPolygonMode::Type>>);
+    static_assert(std::is_same_v<u8, std::underlying_type_t<EPolygonMode::Type>>);
     checkSlow( Destination )
-    Deserialize<uint8>(reinterpret_cast<uint8*>(&Destination), InValue);
+    Deserialize<u8>(reinterpret_cast<u8*>(&Destination), InValue);
     return;
 }
 #if PLATFORM_WASM
-    template <> NODISCARD inline auto FormatArgLegacy<const TPreference<EPolygonMode::Type>&>(const TPreference<EPolygonMode::Type>& Arg) { return static_cast<uint8>(Arg.Value); }
-    template <> NODISCARD inline auto FormatArgLegacy<TPreference<EPolygonMode::Type>>(TPreference<EPolygonMode::Type> Arg) { return static_cast<uint8>(Arg.Value); }
-    template <> NODISCARD inline auto FormatArgLegacy<TPreference<EPolygonMode::Type>&>(TPreference<EPolygonMode::Type>& Arg) { return static_cast<uint8>(Arg.Value); }
+    template <> NODISCARD inline auto FormatArgLegacy<const TPreference<EPolygonMode::Type>&>(const TPreference<EPolygonMode::Type>& Arg) { return static_cast<u8>(Arg.Value); }
+    template <> NODISCARD inline auto FormatArgLegacy<TPreference<EPolygonMode::Type>>(TPreference<EPolygonMode::Type> Arg) { return static_cast<u8>(Arg.Value); }
+    template <> NODISCARD inline auto FormatArgLegacy<TPreference<EPolygonMode::Type>&>(TPreference<EPolygonMode::Type>& Arg) { return static_cast<u8>(Arg.Value); }
 #endif /* PLATFORM_WASM */
 
 DECLARE_JAFG_CLASS(EClassFlags::Config, EClassFlags::Singleton)
@@ -71,15 +71,15 @@ public:
     LPreferenceBool bVSyncEnabled { true };
     //# Number of maximum frames per second. Zero means no limit. This requires VSync to be disabled.
     CLASS_FIELD(Config)
-    LPreferenceInt32 MaxFps       { UnlimitedFps };
+    LPreferencei32 MaxFps       { UnlimitedFps };
 
     CLASS_FIELD(Config)
     TPreference<EPolygonMode::Type> PolygonMode { EPolygonMode::Fill };
 
     CLASS_FIELD(Config)
-    int32 ChunkRenderDistance { 2 };
+    i32 ChunkRenderDistance { 2 };
     CLASS_FIELD(Config)
-    int32 ChunkRenderHeight   { 2 };
+    i32 ChunkRenderHeight   { 2 };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Interface
@@ -102,16 +102,16 @@ public:
 } /* ~Namespace Jafg */
 
 template <>
-struct std::formatter<::Jafg::EPolygonMode::Type> : std::formatter<uint8>
+struct std::formatter<::Jafg::EPolygonMode::Type> : std::formatter<u8>
 {
     static_assert(std::is_enum_v<::Jafg::EPolygonMode::Type>);
-    static_assert(std::is_same_v<uint8, std::underlying_type_t<::Jafg::EPolygonMode::Type>>);
+    static_assert(std::is_same_v<u8, std::underlying_type_t<::Jafg::EPolygonMode::Type>>);
     FORCEINLINE auto format
     (
         const ::Jafg::EPolygonMode::Type& InMode,
         ::std::format_context&            InContext
     ) const -> ::std::format_context::iterator
     {
-        return ::std::formatter<uint8>::format(static_cast<uint8>(InMode), InContext);
+        return ::std::formatter<u8>::format(static_cast<u8>(InMode), InContext);
     }
 };

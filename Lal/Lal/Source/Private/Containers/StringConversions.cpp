@@ -35,7 +35,7 @@ Jafg::LSimpleString Jafg::Str::ToSimpleString
             (
                 LogJafgInternal,
                 "Invalid character in string: [{}].",
-                static_cast<int32>(*reinterpret_cast<const uint8*>(&Char))
+                static_cast<i32>(*reinterpret_cast<const u8*>(&Char))
             )
         }
 
@@ -45,7 +45,7 @@ Jafg::LSimpleString Jafg::Str::ToSimpleString
             (
                 LogJafgInternal,
                 "Invalid character in string: [{}].",
-                static_cast<int32>(*reinterpret_cast<const uint8*>(&Char))
+                static_cast<i32>(*reinterpret_cast<const u8*>(&Char))
             )
         }
 
@@ -55,7 +55,7 @@ Jafg::LSimpleString Jafg::Str::ToSimpleString
             (
                 LogJafgInternal,
                 "Invalid character in string: [{}].",
-                static_cast<int32>(*reinterpret_cast<const uint8*>(&Char))
+                static_cast<i32>(*reinterpret_cast<const u8*>(&Char))
             )
         }
 

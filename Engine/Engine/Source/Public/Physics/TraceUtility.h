@@ -56,7 +56,7 @@ inline void LHitResult::Reset()
 namespace ECollisionChannel
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Invalid,
     Static,

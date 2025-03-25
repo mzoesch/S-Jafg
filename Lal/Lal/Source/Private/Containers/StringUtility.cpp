@@ -2,11 +2,11 @@
 
 #include "CoreAfx.h"
 
-bool Jafg::Str::IsValidAscii(const char* InString, const int32 InRuneLenghtToCheck)
+bool Jafg::Str::IsValidAscii(const char* InString, const i32 InRuneLenghtToCheck)
 {
-    const uint8* Bytes = reinterpret_cast<const uint8*>(InString);
+    const u8* Bytes = reinterpret_cast<const u8*>(InString);
 
-    int32 RuneCount = 0;
+    i32 RuneCount = 0;
     while (*Bytes)
     {
         ++RuneCount;
@@ -29,11 +29,11 @@ bool Jafg::Str::IsValidAscii(const char* InString, const int32 InRuneLenghtToChe
     return true;
 }
 
-bool Jafg::Str::IsValidUtf8(const char* InString, const int32 InRuneLenghtToCheck)
+bool Jafg::Str::IsValidUtf8(const char* InString, const i32 InRuneLenghtToCheck)
 {
-    const uint8* Bytes = reinterpret_cast<const uint8*>(InString);
+    const u8* Bytes = reinterpret_cast<const u8*>(InString);
 
-    int32 RuneCount = 0;
+    i32 RuneCount = 0;
     while (*Bytes)
     {
         ++RuneCount;

@@ -22,7 +22,7 @@ public:
 
     void Free() { if (this->bMeaningful) { this->bMeaningful = false; this->OnFree(); } }
 
-    virtual uint32 Make();
+    virtual u32 Make();
     virtual void   UpdateUniforms(const LViewport& Viewport, const LWorld& World, const LEye& Eye) = 0;
     virtual void   OnFree() { this->bMeaningful = false; }
 
@@ -31,7 +31,7 @@ public:
     FORCEINLINE auto GetProgram()       noexcept ->       LShader& { return this->Program; }
     FORCEINLINE auto GetProgram() const noexcept -> const LShader& { return this->Program; }
 
-    FORCEINLINE uint32 GetUuid() const noexceptcheck { check( this->IsMeaningful() ) return this->Uuid; }
+    FORCEINLINE u32 GetUuid() const noexceptcheck { check( this->IsMeaningful() ) return this->Uuid; }
     FORCEINLINE bool   IsMeaningful() const noexcept { return this->bMeaningful; }
 
 protected:
@@ -41,7 +41,7 @@ protected:
 
 private:
 
-    uint32 Uuid = 0;
+    u32 Uuid = 0;
     bool   bMeaningful = false;
 };
 

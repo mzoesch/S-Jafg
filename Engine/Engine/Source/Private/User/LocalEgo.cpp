@@ -32,7 +32,7 @@ void Jafg::LLocalEgo::Initialize()
 
 void Jafg::LLocalEgo::Tick(const float DeltaTime)
 {
-    if (const int32 PurgedFactories = Private::PurgeWidgetFactories(); PurgedFactories > 0)
+    if (const i32 PurgedFactories = Private::PurgeWidgetFactories(); PurgedFactories > 0)
     {
         LOG_VERBOSE(LogWidgetFramework, "Purged {} widget factories.", PurgedFactories)
     }

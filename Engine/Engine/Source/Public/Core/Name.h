@@ -19,16 +19,16 @@ ENGINE_API LNameRegistry* GetNameRegistryPtr();
 ENGINE_API LNameRegistry& GetNameRegistry();
 
 ENGINE_API void ClearStaticNameContainer();
-ENGINE_API auto GetStaticNameCount() -> int32;
-ENGINE_API auto GetStaticNameByIndex(const int32 InIndex) -> const LSimpleString&;
+ENGINE_API auto GetStaticNameCount() -> i32;
+ENGINE_API auto GetStaticNameByIndex(const i32 InIndex) -> const LSimpleString&;
 ENGINE_API auto RegisterStaticName(const LSimpleString& InName) -> LName;
 ENGINE_API auto RegisterStaticName(LSimpleString&& InName) -> LName;
 
 } /* ~Namespace Private */
 
-typedef uint32 LUnderlyingName;
+typedef u32 LUnderlyingName;
 
-enum : uint8 { NO_NAME = 0 };
+enum : u8 { NO_NAME = 0 };
 
 //#
 //# A name maps a string to a unique integer. Names are case-insensitive and are stored in a global registry.
@@ -105,7 +105,7 @@ public:
     ENGINE_API bool RegisterName(const LSimpleString& InName);
     ENGINE_API auto RegisterAndGetName(const LSimpleString& InName) -> LName;
 
-    FORCEINLINE int32 GetNameCount() const { return this->Names.GetSize(); }
+    FORCEINLINE i32 GetNameCount() const { return this->Names.GetSize(); }
 
 private:
 

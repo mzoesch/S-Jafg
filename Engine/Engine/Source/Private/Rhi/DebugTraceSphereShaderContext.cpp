@@ -15,14 +15,14 @@ namespace
  *     y = r * sin(phi) * sin(theta)              theta is the azimuthal angle (0 <= theta < 2PI).
  *     z = r * cos(phi)
  */
-void MakeSphereVertices(const float InRadius, const int32 InSlices, const int32 InStacks, Jafg::TdhArray<Jafg::LVector>& OutLocations)
+void MakeSphereVertices(const float InRadius, const i32 InSlices, const i32 InStacks, Jafg::TdhArray<Jafg::LVector>& OutLocations)
 {
     using namespace Jafg;
 
-    for (int32 i = 0; i <= InStacks; ++i)
+    for (i32 i = 0; i <= InStacks; ++i)
     {
         const float Phi = static_cast<float>(i) * JAFG_PI / static_cast<float>(InStacks);
-        for (int32 j = 0; j <= InSlices; ++j)
+        for (i32 j = 0; j <= InSlices; ++j)
         {
             const float Theta = static_cast<float>(j) * 2.0f * JAFG_PI / static_cast<float>(InSlices);
 

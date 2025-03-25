@@ -22,10 +22,10 @@ struct LTextureMipMap2 final
 
     void FreeBulk();
     void AllocateBulk();
-    void LoadFromBuffer(const uint8* Buffer, const int32 Offset);
+    void LoadFromBuffer(const u8* Buffer, const i32 Offset);
 
-    FORCEINLINE int32 GetChannelsPerPixel() const { return ERawImageFormat::GetChannelsPerPixel(this->Format); }
-    FORCEINLINE int32 GetBytesPerPixel() const { return ERawImageFormat::GetBytesPerPixel(this->Format); }
+    FORCEINLINE i32 GetChannelsPerPixel() const { return ERawImageFormat::GetChannelsPerPixel(this->Format); }
+    FORCEINLINE i32 GetBytesPerPixel() const { return ERawImageFormat::GetBytesPerPixel(this->Format); }
 };
 
 } /* ~Namespace Jafg */

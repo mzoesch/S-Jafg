@@ -87,7 +87,7 @@ Jafg::LWidgetSlot* Jafg::WUserWidget::AddChild(WWidgetNode* InChild)
     return Out;
 }
 
-Jafg::LWidgetSlot* Jafg::WUserWidget::AddChildAt(const int32 InIndex, WWidgetNode* InChild)
+Jafg::LWidgetSlot* Jafg::WUserWidget::AddChildAt(const i32 InIndex, WWidgetNode* InChild)
 {
     check( this->Root == nullptr && this->GetChildren().GetSize() == 0 )
     LWidgetSlot* Out = Super::AddChildAt(InIndex, InChild);

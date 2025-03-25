@@ -44,7 +44,7 @@ void PullConfigFromObject(LObjectClass* InClass)
         return;
     }
 
-    int32 FieldsPulled = 0; /* The compiler will most likely purge this. */
+    i32 FieldsPulled = 0; /* The compiler will most likely purge this. */
     for (LClassField& Field : InClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())
     {
         checkSlow( Field.Identifier.empty() == false )
@@ -86,7 +86,7 @@ void PushConfigFromObject(const LObjectClass* InClass)
     Paths::CheckFile(CfgPath);
     Paths::MakeFileBackup(CfgPath);
 
-    int32 FieldsPushed = 0; /* The compiler will most likely purge this. */
+    i32 FieldsPushed = 0; /* The compiler will most likely purge this. */
     for (LClassField& Field : InClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())
     {
         const LString StringRepresentation = Field.Get();
@@ -232,7 +232,7 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
         return;
     }
 
-    const int32 CurrentPackages = this->RegisteredObjects.GetSize();
+    const i32 CurrentPackages = this->RegisteredObjects.GetSize();
 
     LOG_VERBOSE(LogObjectPackager, "Loading [{}] pending packages.", Private::GetRegisterObjectQueue().GetSize())
 
@@ -289,7 +289,7 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
 
     this->DeferredPackages.Empty();
 
-    for (int32 i = CurrentPackages; i < this->RegisteredObjects.GetSize(); ++i)
+    for (i32 i = CurrentPackages; i < this->RegisteredObjects.GetSize(); ++i)
     {
         auto& [StaticClass] = this->RegisteredObjects[i];
 

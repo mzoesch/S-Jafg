@@ -35,7 +35,7 @@ public:
     ENGINE_API LUserInput* GetUserInput() const;
     ENGINE_API LUserInput* GetUserInputChecked() const;
 
-    FORCEINLINE int32 GetSurfaceCount() const { return this->Surfaces.GetSize(); }
+    FORCEINLINE i32 GetSurfaceCount() const { return this->Surfaces.GetSize(); }
     FORCEINLINE auto  GetSurfaces() -> TdhArray<LSurface>& { return this->Surfaces; }
     FORCEINLINE auto  GetSurfaces() const -> const TdhArray<LSurface>& { return this->Surfaces; }
 
@@ -95,7 +95,7 @@ private:
     LSurface CreateNewSurface();
 
     TdhArray<LSurface>   Surfaces;
-    int32                FocusedSurface = 0;
+    i32                FocusedSurface = 0;
     LObjectContext*      CachedOuter = nullptr;
     LSubsystemCollection Collection;
 };

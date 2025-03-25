@@ -53,7 +53,7 @@ bool DoesFileExistPanicked(const LPath& InAbsolutePath);
 void CreateFileSlow(const LPath& InAbsolutePath);
 void OverrideFile(const LPath& InAbsolutePath, const LStringView& InContent, const bool bUseNativeLineEndings = false);
 /** @param InBackupCount At least one. */
-void MakeFileBackup(const LPath& InAbsolutePath, const bool bMakeIfSame = false, const int32 InBackupCount = 5, const LStringView& InBackupExtension = ".old");
+void MakeFileBackup(const LPath& InAbsolutePath, const bool bMakeIfSame = false, const i32 InBackupCount = 5, const LStringView& InBackupExtension = ".old");
 
 /**
  * Check a file.

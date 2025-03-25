@@ -264,9 +264,9 @@ void Jafg::LUserInput::DeactivateContext(LUserInputContext* InContext)
     return;
 }
 
-int32 Jafg::LUserInput::DeactivateAllContexts()
+i32 Jafg::LUserInput::DeactivateAllContexts()
 {
-    const int32 NumDeactivated = this->ActiveContexts.GetSize();
+    const i32 NumDeactivated = this->ActiveContexts.GetSize();
     this->ActiveContexts.Reset(1);
     LOG_VERBOSE(LogUserInput, "Deactivated all {} contexts.", NumDeactivated)
     return NumDeactivated;

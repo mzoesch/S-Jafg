@@ -9,9 +9,9 @@
 namespace
 {
 
-uint32 Vao = 0;
-uint32 Vbo = 0;
-uint32 Ebo = 0;
+u32 Vao = 0;
+u32 Vbo = 0;
+u32 Ebo = 0;
 Jafg::LShader BufferShader = { };
 
 void ConditionallyLoadShader()
@@ -52,7 +52,7 @@ void ConditionallyLoadShader()
         -1.0f, -1.0f,     0.0f, 0.0f, /* Bottom Left  */
          1.0f, -1.0f,     1.0f, 0.0f, /* Bottom Right */
     };
-    const uint32 Indices[] = { 0, 1, 2, /*  ||  */ 1, 3, 2 };
+    const u32 Indices[] = { 0, 1, 2, /*  ||  */ 1, 3, 2 };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
@@ -157,7 +157,7 @@ void Jafg::LFrameBuffer::ReadToActive() const
     return;
 }
 
-void Jafg::LFrameBuffer::ReadTo(const uint32 InHandle) const
+void Jafg::LFrameBuffer::ReadTo(const u32 InHandle) const
 {
     checkSlow( InHandle >= GL_TEXTURE0 && InHandle <= GL_TEXTURE31 )
     glActiveTexture(InHandle);

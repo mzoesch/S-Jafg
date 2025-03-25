@@ -55,7 +55,7 @@ LString Finder::ReadFile(const LEnginePath& InEnginePath)
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 
-void Finder::ReadFileAsBinary(const LEnginePath& InEnginePath, const uint8*& OutBuffer, uint64& OutBufferOverflowGuard)
+void Finder::ReadFileAsBinary(const LEnginePath& InEnginePath, const u8*& OutBuffer, u64& OutBufferOverflowGuard)
 {
     check( OutBuffer == nullptr )
 #if WITH_VIRTUAL_FILESYSTEM
@@ -76,10 +76,10 @@ void Finder::ReadFileAsBinary(const LEnginePath& InEnginePath, const uint8*& Out
     jassert( OutBufferOverflowGuard > 0 )
     File.seekg(0, std::ios::beg);
 
-    OutBuffer = new uint8[OutBufferOverflowGuard];
+    OutBuffer = new u8[OutBufferOverflowGuard];
     jassert( OutBuffer )
 
-    if (File.read(reinterpret_cast<char*>(const_cast<uint8*>(OutBuffer)), static_cast<std::streamsize>(OutBufferOverflowGuard)).fail())
+    if (File.read(reinterpret_cast<char*>(const_cast<u8*>(OutBuffer)), static_cast<std::streamsize>(OutBufferOverflowGuard)).fail())
     {
         File.close();
         panicMsgf("Failed to read file: [{}].", InEnginePath.GetRelativeUnresolvedPath().GetPath())
@@ -92,7 +92,7 @@ void Finder::ReadFileAsBinary(const LEnginePath& InEnginePath, const uint8*& Out
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 
-void Finder::FreeReadFileBinaryBuffer(const uint8*& InBuffer)
+void Finder::FreeReadFileBinaryBuffer(const u8*& InBuffer)
 {
     check( InBuffer != nullptr )
 #if !WITH_VIRTUAL_FILESYSTEM

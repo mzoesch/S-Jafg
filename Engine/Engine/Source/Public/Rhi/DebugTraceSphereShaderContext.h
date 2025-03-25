@@ -14,11 +14,11 @@ struct LDebugTraceSphereShaderContextDrawArgs final : public LGenericShaderConte
     LMatrix ViewMatrix = LMatrix(Matrix::Identity);
     LVector Center = { };
     float Radius = 0.0f;
-    int32 Slices = 20;
-    int32 Stacks = 20;
+    i32 Slices = 20;
+    i32 Stacks = 20;
     LColor Color = { };
     /* Depending on the hardware, the max value may vary (but usually it's not more than 10). */
-    uint8 Thickness = 1;
+    u8 Thickness = 1;
 };
 
 class LDebugTraceSphereShaderContext final : public LGenericShaderContext
@@ -32,8 +32,8 @@ public:
 private:
 
     LShader Program = { };
-    uint32  Vao = 0;
-    uint32  Vbo = 0;
+    u32  Vao = 0;
+    u32  Vbo = 0;
 };
 
 } /* ~Namespace Jafg */

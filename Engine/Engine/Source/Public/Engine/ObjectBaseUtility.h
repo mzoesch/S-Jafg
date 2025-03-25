@@ -161,14 +161,14 @@ template <typename InCharacterTy, class InTraitsTy>
 FORCEINLINE void OnDefaultOnlyMallocMember(LStringBase<InCharacterTy, InTraitsTy>* MemberField);
 template <> FORCEINLINE void OnDefaultOnlyMallocMember<float>(float* MemberField) { }
 template <> FORCEINLINE void OnDefaultOnlyMallocMember<double>(double* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<int8>(int8* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<int16>(int16* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<int32>(int32* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<int64>(int64* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<uint8>(uint8* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<uint16>(uint16* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<uint32>(uint32* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<uint64>(uint64* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<i8>(i8* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<i16>(i16* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<i32>(i32* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<i64>(i64* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<u8>(u8* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<u16>(u16* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<u32>(u32* MemberField) { }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<u64>(u64* MemberField) { }
 template <> FORCEINLINE void OnDefaultOnlyMallocMember<bool>(bool* MemberField) { }
 template <typename TObj> FORCEINLINE void OnDefaultOnlyMallocMember(TSubclassOf<TObj>* MemberField) { }
 

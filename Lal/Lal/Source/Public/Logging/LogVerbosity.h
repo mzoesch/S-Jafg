@@ -8,7 +8,7 @@ namespace Jafg
 namespace ELogVerbosity
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Trace       = 1,
     Verbose     = 2,

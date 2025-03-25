@@ -11,7 +11,7 @@ namespace Jafg
 namespace ERunnableStopReason
 {
 
-enum Type : uint8
+enum Type : u8
 {
     EngineTermination = 0,
     RequestedStop     = 1,

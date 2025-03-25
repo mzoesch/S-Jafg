@@ -11,14 +11,14 @@ class LCliCommand;
 struct LCommandExecutionResponse;
 struct LCommandArgs;
 struct LCommandParams;
-namespace ECommandReturnCode { enum Type : uint8; }
+namespace ECommandReturnCode { enum Type : u8; }
 
 MAKE_DELEGATE_SIGNATURE(LOnCommandExec, void, const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
 
 namespace ECommandReturnCode
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Invalid = 0,
 
@@ -90,7 +90,7 @@ struct LCommandArgs
         return;
     }
 
-    FORCEINLINE int32  GetArgCount() const { return this->Args.GetSize(); }
+    FORCEINLINE i32  GetArgCount() const { return this->Args.GetSize(); }
     ENGINE_API LString GetCatRepresentation(void) const;
 
     TdhArray<LCliToken*> Args;
@@ -189,7 +189,7 @@ public:
         return *this;
     }
 
-    ENGINE_API int32 GetOverloadCount() const { return this->Params.GetSize(); }
+    ENGINE_API i32 GetOverloadCount() const { return this->Params.GetSize(); }
     FORCEINLINE auto GetOverloads()       ->       TdhArray<LCommandParams>& { return this->Params; }
     FORCEINLINE auto GetOverloads() const -> const TdhArray<LCommandParams>& { return this->Params; }
     FORCEINLINE void AddOverload(LCommandParams&& InParams) { this->Params.Add(std::move(InParams)); }

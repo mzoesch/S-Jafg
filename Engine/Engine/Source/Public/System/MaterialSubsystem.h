@@ -31,13 +31,13 @@ public:
     FORCEINLINE auto HasBlendOpaqueAtlas() const -> bool { return this->BlendOpaqueAtlas.GetMostSignificantMipMap().Bulk.IsAllocated(); }
     FORCEINLINE auto GetBlendOpaqueAtlas() const -> const LAtlas2& { check( this->HasBlendOpaqueAtlas() ) return this->BlendOpaqueAtlas; }
     FORCEINLINE auto GetBlendOpaqueAtlasTexture() const -> const LTexture2& { check( this->HasBlendOpaqueAtlas() ) return this->BlendOpaqueAtlas.GetData(); }
-    FORCEINLINE auto GetBlendOpaqueDomainWidth() const -> uint32 { return this->BlendOpaqueAtlas.GetDomainWidth(); }
+    FORCEINLINE auto GetBlendOpaqueDomainWidth() const -> u32 { return this->BlendOpaqueAtlas.GetDomainWidth(); }
 
     FORCEINLINE auto CalculateSpecificTexturePointOnBlendersAtlas(const LTextureIndex InTextureIndex) const -> LPoint { return this->BlendersAtlas.CalculateSpecificTexturePointOnAtlas(InTextureIndex); }
     FORCEINLINE auto HasBlendersAtlas() const -> bool { return this->BlendersAtlas.GetMostSignificantMipMap().Bulk.IsAllocated(); }
     FORCEINLINE auto GetBlendersAtlas() const -> const LAtlas2& { check( this->HasBlendersAtlas() ) return this->BlendersAtlas; }
     FORCEINLINE auto GetBlendersAtlasTexture() const -> const LTexture2& { check( this->HasBlendersAtlas() ) return this->BlendersAtlas.GetData(); }
-    FORCEINLINE auto GetBlendersDomainWidth() const -> uint32 { return this->BlendersAtlas.GetDomainWidth(); }
+    FORCEINLINE auto GetBlendersDomainWidth() const -> u32 { return this->BlendersAtlas.GetDomainWidth(); }
 
 private:
 

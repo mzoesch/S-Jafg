@@ -12,12 +12,12 @@ namespace Jafg
     Type Forwards.
 ----------------------------------------------------------------------------*/
 
-typedef int32 DefaultContainerSizeType;
+typedef i32 DefaultContainerSizeType;
 
 namespace ResizePolicy
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Static,
     Dynamic
@@ -28,7 +28,7 @@ enum Type : uint8
 namespace AllocationPolicy
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Stack,
     Heap
@@ -39,7 +39,7 @@ enum Type : uint8
 namespace EQueueKind
 {
 
-enum Type : uint8
+enum Type : u8
 {
     /**
      * Single producer; single consumer.
@@ -289,7 +289,7 @@ inline LEightStringTraits::SizeType LEightStringTraits::GetRuneCount(const RuneT
     return Out;
 }
 
-inline LStringTraits<char, int32>::SizeType LEightStringTraits::GetRuneSize(const RuneType* InRuneToCheck) noexcept
+inline LStringTraits<char, i32>::SizeType LEightStringTraits::GetRuneSize(const RuneType* InRuneToCheck) noexcept
 {
     const unsigned char* Bytes = reinterpret_cast<const unsigned char*>(InRuneToCheck);
 

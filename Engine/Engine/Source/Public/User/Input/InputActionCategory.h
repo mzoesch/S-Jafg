@@ -10,7 +10,7 @@ namespace Jafg
 namespace EInputActionCategory
 {
 
-enum Type : uint8
+enum Type : u8
 {
     None    = 0x0 << 0,
     Boolean = 0x1 << 0,

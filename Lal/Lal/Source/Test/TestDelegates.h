@@ -6,25 +6,25 @@
 
 TEST_CASE(SimpleDelegateOperations, "Lal.Delegates")
 {
-    MAKE_DELEGATE_SIGNATURE(RetValSig, bool, const int32 A)
+    MAKE_DELEGATE_SIGNATURE(RetValSig, bool, const i32 A)
 
     RetValSig RetValDel;
     CHECK_FALSE( "Delegate declaration.", RetValDel.IsBound() )
 
-    RetValDel.BindStrong( [] (const int32 A) -> bool { return A == 0; });
+    RetValDel.BindStrong( [] (const i32 A) -> bool { return A == 0; });
     CHECK_TRUE(  "Delegate binding.",               RetValDel.IsBound() )
     CHECK_TRUE(  "Delegate execution.",            RetValDel.Invoke(0) )
     CHECK_FALSE( "Delegate execution.",            RetValDel.Invoke(1) )
 
-    DECLARE_DELEGATE(VoidValSig, VoidValDel, void, const int32 A)
+    DECLARE_DELEGATE(VoidValSig, VoidValDel, void, const i32 A)
     // This must not compile.
     /* RetValDel.ExecuteIfBound(0); */
     // This is okay;
     /* VoidValDel.ExecuteIfBound(0); */
     CHECK_FALSE( "Delegate declaration.", VoidValDel.IsBound() )
 
-    int32 MyInt = 0;
-    VoidValDel.BindStrong( [&MyInt] (const int32 A) -> void { MyInt = A; });
+    i32 MyInt = 0;
+    VoidValDel.BindStrong( [&MyInt] (const i32 A) -> void { MyInt = A; });
     CHECK_TRUE(  "Delegate binding.",                       VoidValDel.IsBound() )
     CHECK_FALSE( "Delegate execution.",                               MyInt == 1 )
 
@@ -46,7 +46,7 @@ TEST_CASE(SimpleDelegateOperations, "Lal.Delegates")
     return;
 }
 
-DECLARE_INLINE_DELEGATE(MyInlineDelSig, MyInlineDel, void, const int32 A)
+DECLARE_INLINE_DELEGATE(MyInlineDelSig, MyInlineDel, void, const i32 A)
 
 TEST_CASE(InlineDelegateOperations, "Lal.Delegates")
 {
@@ -55,8 +55,8 @@ TEST_CASE(InlineDelegateOperations, "Lal.Delegates")
     CHECK_FALSE(  "Delegate declaration.",           MyInlineDel.IsBound() )
     CHECK_FALSE(  "Delegate declaration.",   MyInlineDel.InvokeIfBound(0) )
 
-    int32 MyInt = 0;
-    MyInlineDel.BindStrong( [&MyInt] (const int32 A) -> void { MyInt = A; return; });
+    i32 MyInt = 0;
+    MyInlineDel.BindStrong( [&MyInt] (const i32 A) -> void { MyInt = A; return; });
     CHECK_TRUE(   "Inline delegate execution.",         MyInlineDel.IsBound() )
     CHECK_TRUE(   "Inline delegate execution.",                    MyInt == 0 )
     CHECK_FALSE(  "Inline delegate execution.",                    MyInt == 1 )
@@ -70,11 +70,11 @@ TEST_CASE(SimpleMulticastDelegateOperations, "Lal.Delegates")
 {
     using namespace Jafg;
 
-    int32 MyInt = 0;
-    DECLARE_MULTICAST_DELEGATE(MyMulticastDelSig, MyMulticastDel, const int32 A)
+    i32 MyInt = 0;
+    DECLARE_MULTICAST_DELEGATE(MyMulticastDelSig, MyMulticastDel, const i32 A)
     CHECK_FALSE( "Delegate declaration.",       MyMulticastDel.HasAny() )
 
-    MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
     CHECK_TRUE(   "Delegate binding.",         MyMulticastDel.HasAny() )
     CHECK_EQUALS( "Delegate binding.",                        MyInt, 0 )
 
@@ -83,7 +83,7 @@ TEST_CASE(SimpleMulticastDelegateOperations, "Lal.Delegates")
     MyMulticastDel.Broadcast(1);
     CHECK_EQUALS( "After delegate broadcast.",     MyInt, 2 )
 
-    MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
     CHECK_TRUE(   "Delegate binding.",         MyMulticastDel.HasAny() )
     CHECK_EQUALS( "Delegate binding.",                        MyInt, 2 )
 
@@ -92,7 +92,7 @@ TEST_CASE(SimpleMulticastDelegateOperations, "Lal.Delegates")
     MyMulticastDel.Broadcast(1);
     CHECK_EQUALS( "After delegate broadcast.",     MyInt, 6 )
 
-    MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
     CHECK_TRUE(   "Delegate binding.",         MyMulticastDel.HasAny() )
     CHECK_EQUALS( "Delegate binding.",                        MyInt, 6 )
 
@@ -113,11 +113,11 @@ TEST_CASE(HandleMulticastDelegateOperations, "Lal.Delegates")
 {
     using namespace Jafg;
 
-    int32 MyInt = 0;
-    DECLARE_MULTICAST_DELEGATE(MyMulticastDelSig, MyMulticastDel, const int32 A)
+    i32 MyInt = 0;
+    DECLARE_MULTICAST_DELEGATE(MyMulticastDelSig, MyMulticastDel, const i32 A)
     CHECK_FALSE( "Delegate declaration.",       MyMulticastDel.HasAny() )
 
-    LDelegateHandle Handle = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    LDelegateHandle Handle = MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
     CHECK_TRUE(   "Delegate binding.",         MyMulticastDel.HasAny() )
     CHECK_EQUALS( "Delegate binding.",                        MyInt, 0 )
 
@@ -138,17 +138,17 @@ TEST_CASE(HandleMulticastDelegateOperations, "Lal.Delegates")
 #endif /* WITH_TESTS */
 
     /* Enforcing dynamic array to grow. */
-    LDelegateHandle H01 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H02 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H03 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H04 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H05 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H06 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H07 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H08 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H09 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H10 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
-    LDelegateHandle H11 = MyMulticastDel.AddStrong( [&MyInt] (const int32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H01 = MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H02 = MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H03 = MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H04 = MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H05 = MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H06 = MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H07 = MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H08 = MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H09 = MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H10 = MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
+    LDelegateHandle H11 = MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
 #if WITH_TESTS
     CHECK_NOT_EQUALS( "Delegate buffer grow.", H01.GetHandle(), 0 )
     CHECK_NOT_EQUALS( "Delegate buffer grow.", H02.GetHandle(), 0 )
@@ -241,10 +241,10 @@ class MyDelegateClass final
 {
 public:
 
-    int32 Member = 0;
+    i32 Member = 0;
 
-    bool MyNamedMemberConst(const int32 A)    const { return A == this->Member; }
-    bool MyNamedMemberNonConst(const int32 A, const int32 B, const int32 C)
+    bool MyNamedMemberConst(const i32 A)    const { return A == this->Member; }
+    bool MyNamedMemberNonConst(const i32 A, const i32 B, const i32 C)
     {
         this->Member += A;
         this->Member += B;
@@ -253,11 +253,11 @@ public:
         return true;
     }
 
-    void MyNamedMemberConstVoidRet(const int32 A) const { /* ... */ return; }
-    void MyNamedMemberNonConstVoidRet(const int32 A) { this->Member += A; return; }
+    void MyNamedMemberConstVoidRet(const i32 A) const { /* ... */ return; }
+    void MyNamedMemberNonConstVoidRet(const i32 A) { this->Member += A; return; }
 
-    void MyNamedMemberConstVoidRetTriple(const int32 A, const int32 B, const int32 C) const { /* ... */ return; }
-    void MyNamedMemberNonConstVoidRetTriple(const int32 A, const int32 B, const int32 C)
+    void MyNamedMemberConstVoidRetTriple(const i32 A, const i32 B, const i32 C) const { /* ... */ return; }
+    void MyNamedMemberNonConstVoidRetTriple(const i32 A, const i32 B, const i32 C)
     {
         this->Member += A;
         this->Member += B;
@@ -267,8 +267,8 @@ public:
     }
 };
 
-inline bool MyNamedFunction(const int32 A) { return A == 0; }
-inline void MyNamedFunctionVoidRet(const int32 A) { /* ... */ return; }
+inline bool MyNamedFunction(const i32 A) { return A == 0; }
+inline void MyNamedFunctionVoidRet(const i32 A) { /* ... */ return; }
 
 } /* ~Namespace Jafg::Testing::Delegates */
 
@@ -277,7 +277,7 @@ TEST_CASE(NamedDelegateOperations, "Lal.Delegates")
     using namespace Jafg;
     using namespace Jafg::Testing::Delegates;
 
-    DECLARE_DELEGATE(MyNamedDelSig, MyNamedDel, bool, const int32 A)
+    DECLARE_DELEGATE(MyNamedDelSig, MyNamedDel, bool, const i32 A)
     CHECK_FALSE( "Delegate declaration.", MyNamedDel.IsBound() )
 
     MyNamedDel.BindStrong( &MyNamedFunction );
@@ -295,7 +295,7 @@ TEST_CASE(NamedDelegateOperations, "Lal.Delegates")
     CHECK_TRUE(  "Delegate member execution.",           MyNamedDel.Invoke(10) )
     CHECK_FALSE( "Delegate member execution.",           MyNamedDel.Invoke(11) )
 
-    DECLARE_DELEGATE(MyTripleDelSig, MyTripleDel, bool, const int32 A, const int32 B, const int32 C)
+    DECLARE_DELEGATE(MyTripleDelSig, MyTripleDel, bool, const i32 A, const i32 B, const i32 C)
     CHECK_FALSE( "Delegate declaration.", MyTripleDel.IsBound() )
 
     MyTripleDel.BindMember(&MyDelegateObject, &MyDelegateClass::MyNamedMemberNonConst);
@@ -314,7 +314,7 @@ TEST_CASE(NamedMulticastDelegateOperations, "Lal.Delegates")
     using namespace Jafg;
     using namespace Jafg::Testing::Delegates;
 
-    DECLARE_MULTICAST_DELEGATE(MyNamedMulticastDelSig, MyNamedMulticastDel, const int32 A)
+    DECLARE_MULTICAST_DELEGATE(MyNamedMulticastDelSig, MyNamedMulticastDel, const i32 A)
     CHECK_FALSE( "Delegate declaration.",       MyNamedMulticastDel.HasAny() )
 
     MyNamedMulticastDel.AddWeak( &MyNamedFunctionVoidRet );
@@ -326,7 +326,7 @@ TEST_CASE(NamedMulticastDelegateOperations, "Lal.Delegates")
     MyNamedMulticastDel.UnbindAll();
     CHECK_FALSE( "Delegate unbinding.",        MyNamedMulticastDel.HasAny() )
 
-    DECLARE_MULTICAST_DELEGATE(MyNamedTripleMulticastDelSig, MyNamedTripleMulticastDel, const int32 A, const int32 B, const int32 C)
+    DECLARE_MULTICAST_DELEGATE(MyNamedTripleMulticastDelSig, MyNamedTripleMulticastDel, const i32 A, const i32 B, const i32 C)
     CHECK_FALSE( "Delegate declaration.",       MyNamedTripleMulticastDel.HasAny() )
 
     MyDelegateClass MyDelegateObject;

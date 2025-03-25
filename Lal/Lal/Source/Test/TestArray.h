@@ -8,7 +8,7 @@ TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
 {
     using namespace Jafg;
 
-    TdhArray<int32> Arr;
+    TdhArray<i32> Arr;
     CHECK_EQUALS( "Array with zero size.", Arr.GetSize(),              0 )
     CHECK_EQUALS( "Array with zero size.", Arr.GetCapacity(),          0 )
     CHECK_EQUALS( "Array with zero size.", Arr.GetData(),        nullptr )
@@ -89,7 +89,7 @@ TEST_CASE(MidArrayOperations, "Lal.Containers")
 {
     using namespace Jafg;
 
-    TdhArray<int32> Arr = { 100, 101, 102, 103 };
+    TdhArray<i32> Arr = { 100, 101, 102, 103 };
     CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetSize(),                4 )
     CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetCapacity(),            4 )
     CHECK_EQUALS( "Array with std::initializer_list.", Arr[0],                     100 )
@@ -139,12 +139,12 @@ TEST_CASE(NonTrivialTypeOperations, "Lal.Containers")
 {
     using namespace Jafg;
 
-    int32 ConstructorCounter = 0;
-    int32 DestructorCounter  = 0;
+    i32 ConstructorCounter = 0;
+    i32 DestructorCounter  = 0;
 
     struct MyStruct final
     {
-        FORCEINLINE explicit MyStruct(int32* InCCounter, int32* InDCounter) : CCounter(InCCounter), DCounter(InDCounter) { ++*CCounter; }
+        FORCEINLINE explicit MyStruct(i32* InCCounter, i32* InDCounter) : CCounter(InCCounter), DCounter(InDCounter) { ++*CCounter; }
         FORCEINLINE ~MyStruct() { ++*DCounter; }
         MyStruct(MyStruct& O) noexcept : CCounter(O.CCounter), DCounter(O.DCounter) { }
         MyStruct(MyStruct&& O) noexcept : CCounter(O.CCounter), DCounter(O.DCounter) { }
@@ -170,8 +170,8 @@ TEST_CASE(NonTrivialTypeOperations, "Lal.Containers")
             return *this;
         }
 
-        int32* CCounter;
-        int32* DCounter;
+        i32* CCounter;
+        i32* DCounter;
     };
 
     TdhArray<MyStruct> Arr;
@@ -213,12 +213,12 @@ TEST_CASE(NonTrivialPointerTypeOperations, "Lal.Containers")
 {
     using namespace Jafg;
 
-    int32 ConstructorCounter = 0;
-    int32 DestructorCounter  = 0;
+    i32 ConstructorCounter = 0;
+    i32 DestructorCounter  = 0;
 
     struct MyStruct final
     {
-        FORCEINLINE explicit MyStruct(int32* InCCounter, int32* InDCounter) : CCounter(InCCounter), DCounter(InDCounter) { ++*CCounter; }
+        FORCEINLINE explicit MyStruct(i32* InCCounter, i32* InDCounter) : CCounter(InCCounter), DCounter(InDCounter) { ++*CCounter; }
         FORCEINLINE ~MyStruct() { ++*DCounter; }
         MyStruct(MyStruct& O) noexcept : CCounter(O.CCounter), DCounter(O.DCounter) { }
         MyStruct(MyStruct&& O) noexcept : CCounter(O.CCounter), DCounter(O.DCounter) { }
@@ -244,8 +244,8 @@ TEST_CASE(NonTrivialPointerTypeOperations, "Lal.Containers")
             return *this;
         }
 
-        int32* CCounter;
-        int32* DCounter;
+        i32* CCounter;
+        i32* DCounter;
     };
 
     TdhArray<const MyStruct*> Arr;
@@ -322,7 +322,7 @@ TEST_CASE(AppendAtArray, "Lal.Containers")
 {
     using namespace Jafg;
 
-    TdhArray<int32> Arr = { 100, 101, 102, 103 };
+    TdhArray<i32> Arr = { 100, 101, 102, 103 };
     CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetSize(),                4 )
     CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetCapacity(),            4 )
     CHECK_EQUALS( "Array with std::initializer_list.", Arr[0],                     100 )
@@ -330,7 +330,7 @@ TEST_CASE(AppendAtArray, "Lal.Containers")
     CHECK_EQUALS( "Array with std::initializer_list.", Arr[2],                     102 )
     CHECK_EQUALS( "Array with std::initializer_list.", Arr[3],                     103 )
 
-    int32* Data = new int32[4] { 1000, 1001, 1002, 1003 };
+    i32* Data = new i32[4] { 1000, 1001, 1002, 1003 };
     Arr.AppendAt(2, Data, 4);
     CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetSize(),                8 )
     CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetCapacity(),            8 )
@@ -352,7 +352,7 @@ TEST_CASE(MultiRemoveAtIndexArray, "Lal.Containers")
 {
     using namespace Jafg;
 
-    TdhArray<int32> Arr = { 100, 101, 102, 103, 104, 105, 106, 107, 108, 109 };
+    TdhArray<i32> Arr = { 100, 101, 102, 103, 104, 105, 106, 107, 108, 109 };
     Arr.RemoveAt(5, 3);
     CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetSize(),                7 )
     CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetCapacity(),           10 )

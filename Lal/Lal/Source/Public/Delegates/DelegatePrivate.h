@@ -195,18 +195,18 @@ struct LDelegateHandle final
     FORCEINLINE LDelegateHandle& operator=(const LDelegateHandle& InOther) = default;
     FORCEINLINE LDelegateHandle& operator=(LDelegateHandle&& InOther) = default;
 
-    FORCEINLINE explicit LDelegateHandle(const uint32 InHandle) : Handle(InHandle) { check( this->Handle != 0 ) return; }
+    FORCEINLINE explicit LDelegateHandle(const u32 InHandle) : Handle(InHandle) { check( this->Handle != 0 ) return; }
 
     FORCEINLINE void Reset()         { this->Handle = 0; return; }
     FORCEINLINE bool IsValid() const { return this->Handle != 0; }
 
 #if WITH_TESTS
-    FORCEINLINE uint32 GetHandle() const { return this->Handle; }
+    FORCEINLINE u32 GetHandle() const { return this->Handle; }
 #endif /* WITH_TESTS */
 
 private:
 
-    uint32 Handle;
+    u32 Handle;
 };
 
 /**
@@ -247,13 +247,13 @@ struct TMulticastDelegate<RetTy(ParamsTy...)> final
     FORCEINLINE bool HasAny() const;
 
     FORCEINLINE bool  Remove(LDelegateHandle& InDelegateHandle);
-    FORCEINLINE int32 UnbindAll();
+    FORCEINLINE i32 UnbindAll();
 
 private:
 
-    static constexpr uint32 InvalidHandle = 0;
-    uint32           HandleCount = 0;
-    TdhArray<uint32> DelegatesHandles;
+    static constexpr u32 InvalidHandle = 0;
+    u32           HandleCount = 0;
+    TdhArray<u32> DelegatesHandles;
     TdhArray<TFunction<RetTy(ParamsTy...)>> Delegates;
 };
 
@@ -326,7 +326,7 @@ LDelegateHandle TMulticastDelegate<RetTy(ParamsTy...)>::AddMember(ObjTy* InObj, 
 template <typename RetTy, typename ... ParamsTy>
 bool TMulticastDelegate<RetTy(ParamsTy...)>::Remove(LDelegateHandle& InDelegateHandle)
 {
-    for (int32 Idx = 0; Idx < this->DelegatesHandles.GetSize(); ++Idx)
+    for (i32 Idx = 0; Idx < this->DelegatesHandles.GetSize(); ++Idx)
     {
         if (this->DelegatesHandles[Idx] == InDelegateHandle.Handle)
         {
@@ -359,14 +359,14 @@ bool TMulticastDelegate<RetTy(ParamsTy...)>::HasAny() const
 }
 
 template <typename RetTy, typename ... ParamsTy>
-int32 TMulticastDelegate<RetTy(ParamsTy...)>::UnbindAll()
+i32 TMulticastDelegate<RetTy(ParamsTy...)>::UnbindAll()
 {
     for (TFunction<RetTy(ParamsTy...)>& Delegate : this->Delegates)
     {
         Delegate.Reset();
     }
 
-    const int32 NumDelegates = this->Delegates.GetSize();
+    const i32 NumDelegates = this->Delegates.GetSize();
 
     this->Delegates.Empty();
     this->DelegatesHandles.Empty();

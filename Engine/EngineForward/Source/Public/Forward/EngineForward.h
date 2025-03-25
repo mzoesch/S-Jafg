@@ -16,7 +16,7 @@ namespace Jafg::EngineForward
 {
 
 ENGINEFORWARD_API extern bool          bForwardExitRequest;
-ENGINEFORWARD_API extern int32         ForwardCustomExitStatus;
+ENGINEFORWARD_API extern i32         ForwardCustomExitStatus;
 ENGINEFORWARD_API extern LSimpleString ForwardCustomExitReason;
 
 } /* ~Namespace Jafg::EngineForward */

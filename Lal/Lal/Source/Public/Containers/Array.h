@@ -193,7 +193,7 @@ public:
      * Resizes the array to the new size. The new size has to be less or equal to the current size.
      * Use reserve if you need to grow the array.
      */
-    FORCEINLINE auto Resize(const int32 InSize, const bool bInAllowShrinking = true) noexcept -> void;
+    FORCEINLINE auto Resize(const i32 InSize, const bool bInAllowShrinking = true) noexcept -> void;
 
     /** @return True, if the array has to be reallocated to push / emplace a new element. */
     FORCEINLINE auto IsCapped()                           const noexcept -> bool;
@@ -1101,7 +1101,7 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Empty() noexcept
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Resize(const int32 InSize, const bool bInAllowShrinking) noexcept
+void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Resize(const i32 InSize, const bool bInAllowShrinking) noexcept
 {
 #if CHECK_CONTAINER_BOUNDS
     check( InSize >= 0 && InSize <= this->Size )
@@ -1367,7 +1367,7 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::SwapIndices(const Size
     }
 
     alignas(alignof(LMaxAlign))
-    uint8 Temp[sizeof(T)];
+    u8 Temp[sizeof(T)];
 
     ::memcpy(Temp,             this->Data + InA, sizeof(T));
     ::memcpy(this->Data + InA, this->Data + InB, sizeof(T));

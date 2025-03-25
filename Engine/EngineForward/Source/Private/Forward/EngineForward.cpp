@@ -6,7 +6,7 @@ namespace Jafg::EngineForward
 {
 
 ENGINEFORWARD_API bool          bForwardExitRequest     = false;
-ENGINEFORWARD_API int32         ForwardCustomExitStatus = INDEX_NONE;
+ENGINEFORWARD_API i32         ForwardCustomExitStatus = INDEX_NONE;
 ENGINEFORWARD_API LSimpleString ForwardCustomExitReason = "";
 
 } /* ~Namespace Jafg::EngineForward */

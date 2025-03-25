@@ -56,7 +56,7 @@ Jafg::ENormalLookup::Type Jafg::LDiskVoxelTexture::GetNormalLookUpBasedOfFileNam
     check( this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 2 )
 
     LSimpleString Copy = this->Name;
-    const int32 FirstOccurrence = Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1;
+    const i32 FirstOccurrence = Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1;
     Copy.InlineSub(FirstOccurrence, Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar) - FirstOccurrence);
 
     if (ENormalLookup::IsValid(Copy))
@@ -65,7 +65,7 @@ Jafg::ENormalLookup::Type Jafg::LDiskVoxelTexture::GetNormalLookUpBasedOfFileNam
     }
 
     Copy = this->Name;
-    const int32 SecondOccurrence = Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar);
+    const i32 SecondOccurrence = Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar);
     Copy.InlineSub(SecondOccurrence, Copy.GetRuneCount() - SecondOccurrence - 1);
 
     if (ENormalLookup::IsValid(Copy))
@@ -120,7 +120,7 @@ Jafg::LTextureIndex Jafg::LDiskVoxelTexture::GetBlendLookUpBasedOfFileName(const
     check( this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 2 )
 
     LSimpleString Copy = this->Name;
-    const int32 FirstOccurrence = Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1;
+    const i32 FirstOccurrence = Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1;
     Copy.InlineSub(FirstOccurrence, Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar) - FirstOccurrence);
 
     if (const DefaultContainerSizeType MaybeIdx = InCurrentUsedBlends.FindIndexByPredicate([Copy] (const LDiskBlendTexture& InElement) -> bool
@@ -132,7 +132,7 @@ Jafg::LTextureIndex Jafg::LDiskVoxelTexture::GetBlendLookUpBasedOfFileName(const
     }
 
     Copy = this->Name;
-    const int32 SecondOccurrence = Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar);
+    const i32 SecondOccurrence = Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar);
     Copy.InlineSub(SecondOccurrence + 1, Copy.GetRuneCount() - SecondOccurrence - 1);
 
     if (const DefaultContainerSizeType MaybeIdx = InCurrentUsedBlends.FindIndexByPredicate([Copy] (const LDiskBlendTexture& InElement) -> bool

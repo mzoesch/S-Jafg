@@ -46,9 +46,9 @@ bool StartsWith(const char* InString, const char* InPrefix)
 }
 
 // @return True if valid.
-bool GoToValue(const char* InString, int32* Cursor)
+bool GoToValue(const char* InString, i32* Cursor)
 {
-    for (int32 i = *Cursor; i < static_cast<int32>(strlen(InString)); ++i)
+    for (i32 i = *Cursor; i < static_cast<i32>(strlen(InString)); ++i)
     {
         if (InString[i] == '\n')
         {
@@ -69,9 +69,9 @@ bool GoToValue(const char* InString, int32* Cursor)
 }
 
 // @return True if valid.
-bool GoToKey(const char* InString, const char* InKey, int32* Cursor)
+bool GoToKey(const char* InString, const char* InKey, i32* Cursor)
 {
-    for (int32 i = *Cursor; i < static_cast<int32>(strlen(InString)); ++i)
+    for (i32 i = *Cursor; i < static_cast<i32>(strlen(InString)); ++i)
     {
         if (InString[i] == '[')
         {
@@ -91,9 +91,9 @@ bool GoToKey(const char* InString, const char* InKey, int32* Cursor)
 }
 
 // @return True, if end of file was found.
-bool GoToNextLine(const LString& InFileContent, int32* Cursor)
+bool GoToNextLine(const LString& InFileContent, i32* Cursor)
 {
-    for (int32 i = *Cursor; i < InFileContent.GetCharacterCount(); ++i)
+    for (i32 i = *Cursor; i < InFileContent.GetCharacterCount(); ++i)
     {
         if (InFileContent.GetCharacterAtIndex(i) == '\n')
         {
@@ -106,7 +106,7 @@ bool GoToNextLine(const LString& InFileContent, int32* Cursor)
 }
 
 // @return True, if end of file was found.
-bool GoToNextMeaningfulLine(const LString& InFileContent, int32* Cursor)
+bool GoToNextMeaningfulLine(const LString& InFileContent, i32* Cursor)
 {
     while (true)
     {
@@ -127,16 +127,16 @@ bool GoToNextMeaningfulLine(const LString& InFileContent, int32* Cursor)
     return false;
 }
 
-int32 FindSection(const LString& InFileContent, const LStringView& InSection)
+i32 FindSection(const LString& InFileContent, const LStringView& InSection)
 {
-    for (int32 i = 0; i < InFileContent.GetCharacterCount(); ++i)
+    for (i32 i = 0; i < InFileContent.GetCharacterCount(); ++i)
     {
         const LString::CharacterTy Char = InFileContent.GetCharacterAtIndex(i);
         if (Char != '[')
         {
             continue;
         }
-        if (InFileContent.GetCharacterAtIndex(i+static_cast<int32>(InSection.size())+1) != ']')
+        if (InFileContent.GetCharacterAtIndex(i+static_cast<i32>(InSection.size())+1) != ']')
         {
             continue;
         }
@@ -182,7 +182,7 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
         }
     }
 
-    int32 Cursor = ::FindSection(FileContent, InSection);
+    i32 Cursor = ::FindSection(FileContent, InSection);
     if (Cursor == INDEX_NONE)
     {
         ::AppendNewSection(&FileContent, InSection);
@@ -195,7 +195,7 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
     {
         GoToNextLine(FileContent, &Cursor);
         LString NewFileContent; NewFileContent.Reserve(FileContent.GetSize());
-        for (int32 i = 0; i < Cursor; ++i)
+        for (i32 i = 0; i < Cursor; ++i)
         {
             NewFileContent.Add(FileContent.GetCharacterAtIndex(i));
         }
@@ -203,7 +203,7 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
         NewFileContent.Add('=');
         NewFileContent += InValue.data();
         NewFileContent.Add('\n');
-        for (int32 i = Cursor; i < FileContent.GetCharacterCount(); ++i)
+        for (i32 i = Cursor; i < FileContent.GetCharacterCount(); ++i)
         {
             NewFileContent.Add(FileContent.GetCharacterAtIndex(i));
         }
@@ -223,10 +223,10 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
         return false;
     }
 
-    const int32 ValueSize = static_cast<int32>(::strlen(InValue.data()));
-    int32 ValueCursor = 0;
+    const i32 ValueSize = static_cast<i32>(::strlen(InValue.data()));
+    i32 ValueCursor = 0;
     bool  bUpdateNew = true;
-    for (int32 i = Cursor; i < FileContent.GetCharacterCount(); ++i)
+    for (i32 i = Cursor; i < FileContent.GetCharacterCount(); ++i)
     {
         if (ValueSize == ValueCursor)
         {
@@ -262,7 +262,7 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
     }
 
     LString NewFileContent; NewFileContent.Reserve(FileContent.GetSize());
-    for (int32 i = 0; i < Cursor; ++i)
+    for (i32 i = 0; i < Cursor; ++i)
     {
         NewFileContent.Add(FileContent.GetCharacterAtIndex(i));
     }
@@ -275,7 +275,7 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
     NewFileContent.Add('\n');
     if (::GoToNextMeaningfulLine(FileContent, &Cursor) == false)
     {
-        for (int32 i = Cursor; i < FileContent.GetCharacterCount(); ++i)
+        for (i32 i = Cursor; i < FileContent.GetCharacterCount(); ++i)
         {
             NewFileContent.Add(FileContent.GetCharacterAtIndex(i));
         }
@@ -299,7 +299,7 @@ TOptional<LString> ConfigIo::Deserialize(const LPath& InPath, const LStringView&
 
     const LString FileContent = Finder::ReadFile(InPath);
 
-    int32 Cursor = ::FindSection(FileContent, InSection);
+    i32 Cursor = ::FindSection(FileContent, InSection);
     if (Cursor == INDEX_NONE)
     {
         return { };

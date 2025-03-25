@@ -47,7 +47,7 @@ private:
     void SortAllVoxelMasksTextureGroups();
 
     void InitializeCompileTimeVoxels();
-    int32 CompileTimeVoxels = INDEX_NONE;
+    i32 CompileTimeVoxels = INDEX_NONE;
 
     void InitializeOptionalVoxels();
 

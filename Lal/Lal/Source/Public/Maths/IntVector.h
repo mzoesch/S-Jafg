@@ -81,8 +81,8 @@ struct TIntVector final
     FORCEINLINE auto GetData()       noexcept ->       T* { return &this->X; }
     FORCEINLINE auto GetData() const noexcept -> const T* { return &this->X; }
 
-    FORCEINLINE auto operator[](const int32 InIndex)       ->       T&;
-    FORCEINLINE auto operator[](const int32 InIndex) const -> const T&;
+    FORCEINLINE auto operator[](const i32 InIndex)       ->       T&;
+    FORCEINLINE auto operator[](const i32 InIndex) const -> const T&;
 
     FORCEINLINE TIntVector<T>& operator =(const TIntVector<T>&  InVec) noexcept;
     FORCEINLINE TIntVector<T>& operator =(      TIntVector<T>&& InVec) noexcept;
@@ -119,14 +119,14 @@ struct TIntVector final
 };
 
 template <typename T>
-T& TIntVector<T>::operator[](const int32 InIndex)
+T& TIntVector<T>::operator[](const i32 InIndex)
 {
     check( InIndex > INDEX_NONE && InIndex < 3 )
     return this->XYZ[InIndex];
 }
 
 template <typename T>
-const T& TIntVector<T>::operator[](const int32 InIndex) const
+const T& TIntVector<T>::operator[](const i32 InIndex) const
 {
     check( InIndex > INDEX_NONE && InIndex < 3 )
     return this->XYZ[InIndex];

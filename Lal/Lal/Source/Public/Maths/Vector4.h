@@ -63,8 +63,8 @@ struct TVector4 final
     FORCEINLINE auto GetData()       ->       T* { return &this->X; }
     FORCEINLINE auto GetData() const -> const T* { return &this->X; }
 
-    FORCEINLINE auto operator[](const int32 InIndex)       ->       T&;
-    FORCEINLINE auto operator[](const int32 InIndex) const -> const T&;
+    FORCEINLINE auto operator[](const i32 InIndex)       ->       T&;
+    FORCEINLINE auto operator[](const i32 InIndex) const -> const T&;
 
     FORCEINLINE TVector2<T> XY()   const { return TVector2<T>(this->X, this->Y); }
     FORCEINLINE TVector2<T> XZ()   const { return TVector2<T>(this->X, this->Z); }
@@ -180,14 +180,14 @@ TVector4<T>::TVector4(const T InX, const T InY, const T InZ, const T InW): X(InX
 }
 
 template <typename T>
-T& TVector4<T>::operator[](const int32 InIndex)
+T& TVector4<T>::operator[](const i32 InIndex)
 {
     check( InIndex > INDEX_NONE && InIndex < 4 )
     return this->XYZW[InIndex];
 }
 
 template <typename T>
-const T& TVector4<T>::operator[](const int32 InIndex) const
+const T& TVector4<T>::operator[](const i32 InIndex) const
 {
     check( InIndex > INDEX_NONE && InIndex < 4 )
     return this->XYZW[InIndex];

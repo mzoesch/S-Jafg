@@ -85,7 +85,7 @@ void Jafg::LBoxShaderContext::Draw(
 
     this->Shader.SetMatrixUniform("Projection", Projection);
     this->Shader.SetFloatUniform("OrthoZDepth", Context.GetFrameOrthoZLayerDepth());
-    this->Shader.SetIntUniform("BoxColor", *reinterpret_cast<const int32*>(&Color.Bits));
+    this->Shader.SetIntUniform("BoxColor", *reinterpret_cast<const i32*>(&Color.Bits));
 
     if (this->LastFrameTexture)
     {
@@ -97,7 +97,7 @@ void Jafg::LBoxShaderContext::Draw(
             (TopLeft.X + Size.X) * Scale, (TopLeft.Y + Size.Y) * Scale, 1.0f, 1.0f, /* Bottom Right */
         };
         for (float& Vertex : Vertices) { Vertex = Maths::Floor(Vertex); }
-        const uint32 Indices[] = { 0, 1, 2, /*  ||  */ 1, 3, 2 };
+        const u32 Indices[] = { 0, 1, 2, /*  ||  */ 1, 3, 2 };
 
         glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
         glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_DYNAMIC_DRAW);

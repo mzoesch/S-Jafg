@@ -7,9 +7,9 @@
 #include "System/MaterialSubsystem.h"
 #include "System/EnginePath.h"
 
-uint32 Jafg::LChunkShader::Make()
+u32 Jafg::LChunkShader::Make()
 {
-    const uint32 Out = Super::Make();
+    const u32 Out = Super::Make();
 
     const JMaterialSubsystem* Subsystem = GEngine->GetSubsystem<JMaterialSubsystem>();
 
@@ -93,7 +93,7 @@ Jafg::LChunkShaderInstance::~LChunkShaderInstance()
     return;
 }
 
-void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TdhArray<ChunkBoxVertex>& Vertices, const TdhArray<uint32>& Indices)
+void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TdhArray<ChunkBoxVertex>& Vertices, const TdhArray<u32>& Indices)
 {
     if (this->bLoaded == false)
     {
@@ -129,7 +129,7 @@ void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TdhArray<ChunkBo
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->Ebo);
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,
-        Indices.GetSize() * static_cast<GLsizeiptr>(sizeof(uint32)),
+        Indices.GetSize() * static_cast<GLsizeiptr>(sizeof(u32)),
         Indices.GetData(),
         GL_STATIC_DRAW
     );

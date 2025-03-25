@@ -7,13 +7,13 @@
 namespace Jafg
 {
 
-typedef LInt8Vector LVoxelKeyTy;
-typedef int8        LVoxelKeyDomainTy;
+typedef Li8Vector LVoxelKeyTy;
+typedef i8        LVoxelKeyDomainTy;
 
 namespace EVoxelKeyLocation
 {
 
-enum Type : int8
+enum Type : i8
 {
     Local,
     North,
@@ -47,7 +47,7 @@ struct LVoxelKey final
     FORCEINLINE LVoxelKey(const LVoxelKeyTy& InKey) : Key(InKey) { }
     FORCEINLINE LVoxelKey(const LVoxelKeyDomainTy& InX, const LVoxelKeyDomainTy& InY, const LVoxelKeyDomainTy& InZ)
         : Key(InX, InY, InZ) { }
-    FORCEINLINE LVoxelKey(const int32& InX, const int32& InY, const int32& InZ)
+    FORCEINLINE LVoxelKey(const i32& InX, const i32& InY, const i32& InZ)
         : Key(static_cast<LVoxelKeyDomainTy>(InX), static_cast<LVoxelKeyDomainTy>(InY), static_cast<LVoxelKeyDomainTy>(InZ)) { }
     FORCEINLINE LVoxelKey(const LVoxelKey& InKey) noexcept : Key(InKey.Key) { }
     FORCEINLINE LVoxelKey(LVoxelKey&& InKey) noexcept : Key(InKey.Key) { }
@@ -98,29 +98,29 @@ inline LVoxelKey LVoxelKey::FromWorldSpace(const LVector& InVector)
 
     if (InVector.X < 0)
     {
-        Out.X = static_cast<LVoxelKeyDomainTy>(MwStatics::ChunkSize + (static_cast<int64>(Maths::Ceil(InVector.X)) % MwStatics::ChunkSize) - 1);
+        Out.X = static_cast<LVoxelKeyDomainTy>(MwStatics::ChunkSize + (static_cast<i64>(Maths::Ceil(InVector.X)) % MwStatics::ChunkSize) - 1);
     }
     else
     {
-        Out.X = static_cast<LVoxelKeyDomainTy>(static_cast<int64>(Maths::Floor(InVector.X)) % MwStatics::ChunkSize);
+        Out.X = static_cast<LVoxelKeyDomainTy>(static_cast<i64>(Maths::Floor(InVector.X)) % MwStatics::ChunkSize);
     }
 
     if (InVector.Y < 0)
     {
-        Out.Y = static_cast<LVoxelKeyDomainTy>(MwStatics::ChunkSize + (static_cast<int64>(Maths::Ceil(InVector.Y)) % MwStatics::ChunkSize) - 1);
+        Out.Y = static_cast<LVoxelKeyDomainTy>(MwStatics::ChunkSize + (static_cast<i64>(Maths::Ceil(InVector.Y)) % MwStatics::ChunkSize) - 1);
     }
     else
     {
-        Out.Y = static_cast<LVoxelKeyDomainTy>(static_cast<int64>(Maths::Floor(InVector.Y)) % MwStatics::ChunkSize);
+        Out.Y = static_cast<LVoxelKeyDomainTy>(static_cast<i64>(Maths::Floor(InVector.Y)) % MwStatics::ChunkSize);
     }
 
     if (InVector.Z < 0)
     {
-        Out.Z = static_cast<LVoxelKeyDomainTy>(MwStatics::ChunkSize + (static_cast<int64>(Maths::Ceil(InVector.Z)) % MwStatics::ChunkSize) - 1);
+        Out.Z = static_cast<LVoxelKeyDomainTy>(MwStatics::ChunkSize + (static_cast<i64>(Maths::Ceil(InVector.Z)) % MwStatics::ChunkSize) - 1);
     }
     else
     {
-        Out.Z = static_cast<LVoxelKeyDomainTy>(static_cast<int64>(Maths::Floor(InVector.Z)) % MwStatics::ChunkSize);
+        Out.Z = static_cast<LVoxelKeyDomainTy>(static_cast<i64>(Maths::Floor(InVector.Z)) % MwStatics::ChunkSize);
     }
 
     return Out;

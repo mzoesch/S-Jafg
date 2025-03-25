@@ -101,7 +101,7 @@ bool Jafg::LCommandLineInterface::UnregisterCommand(LCliCommandHandle* InHandle)
         return false;
     }
 
-    if (const int32 Idx = this->Commands.FindIndexByPredicate([InHandle](const LCliCommand& Command)
+    if (const i32 Idx = this->Commands.FindIndexByPredicate([InHandle](const LCliCommand& Command)
     {
         return Command.Uuid == InHandle->Uuid;
     }); Idx != INDEX_NONE)

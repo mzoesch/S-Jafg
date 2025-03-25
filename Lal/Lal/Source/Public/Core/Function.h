@@ -20,7 +20,7 @@ class TFunction<RetTy(ParamsTy...)>
 
 public:
 
-    FORCEINLINE static constexpr int32 NumParams() { return sizeof ... (ParamsTy); }
+    FORCEINLINE static constexpr i32 NumParams() { return sizeof ... (ParamsTy); }
 
     using LRetTy    = RetTy;
     using LParamsTy = std::tuple<ParamsTy...>;

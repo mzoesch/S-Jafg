@@ -16,10 +16,10 @@
 namespace Jafg::Glfw3
 {
 
-FORCEINLINE int32 TranslateKeyToGlfw(const LKey InKey);
-FORCEINLINE LKey  TranslateKeyFromGlfw(const int32 InKey);
+FORCEINLINE i32 TranslateKeyToGlfw(const LKey InKey);
+FORCEINLINE LKey  TranslateKeyFromGlfw(const i32 InKey);
 
-int32 TranslateKeyToGlfw(const LKey InKey)
+i32 TranslateKeyToGlfw(const LKey InKey)
 {
     if (InKey == EKeys::AnyKey)
     {
@@ -102,11 +102,11 @@ int32 TranslateKeyToGlfw(const LKey InKey)
     return INDEX_NONE;
 }
 
-LKey TranslateKeyFromGlfw(const int32 InKey)
+LKey TranslateKeyFromGlfw(const i32 InKey)
 {
     if (InKey >= GLFW_KEY_A && InKey <= GLFW_KEY_Z)
     {
-        return static_cast<LKey>(InKey - (GLFW_KEY_A - 1) + (static_cast<int32>(EKeys::A) - 1));
+        return static_cast<LKey>(InKey - (GLFW_KEY_A - 1) + (static_cast<i32>(EKeys::A) - 1));
     }
 
     if (InKey == GLFW_KEY_BACKSPACE) { return EKeys::BackSpace; }
@@ -131,12 +131,12 @@ LKey TranslateKeyFromGlfw(const int32 InKey)
 
     if (InKey >= GLFW_KEY_0 && InKey <= GLFW_KEY_9)
     {
-        return static_cast<LKey>(InKey - (GLFW_KEY_0 - 1) + (static_cast<int32>(EKeys::Zero) - 1));
+        return static_cast<LKey>(InKey - (GLFW_KEY_0 - 1) + (static_cast<i32>(EKeys::Zero) - 1));
     }
 
     if (InKey >= GLFW_KEY_KP_0 && InKey <= GLFW_KEY_KP_9)
     {
-        return static_cast<LKey>(InKey - (GLFW_KEY_KP_0 - 1) + (static_cast<int32>(EKeys::NumPadZero) - 1));
+        return static_cast<LKey>(InKey - (GLFW_KEY_KP_0 - 1) + (static_cast<i32>(EKeys::NumPadZero) - 1));
     }
 
     if (InKey == GLFW_KEY_NUM_LOCK)     { return EKeys::NumPadLock; }
@@ -149,7 +149,7 @@ LKey TranslateKeyFromGlfw(const int32 InKey)
 
     if (InKey >= GLFW_KEY_F1 && InKey <= GLFW_KEY_F12)
     {
-        return static_cast<LKey>(InKey - (GLFW_KEY_F1 - 1) + (static_cast<int32>(EKeys::F1) - 1));
+        return static_cast<LKey>(InKey - (GLFW_KEY_F1 - 1) + (static_cast<i32>(EKeys::F1) - 1));
     }
 
     if (InKey == GLFW_KEY_SCROLL_LOCK)     { return EKeys::ScrollLock; }

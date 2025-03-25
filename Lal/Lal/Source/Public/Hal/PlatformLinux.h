@@ -179,7 +179,7 @@ noexcept (true) __attribute__ ((__noreturn__)); // __attribute__ ((__cold));
 struct LLinuxPlatformBreakDefines final
 {
     NORETURN NOINLINE
-    static void OnProgramPanic(const std::string& InMessage, const std::string& InFile, const LLinuxPlatformTypes::int32 InLine);
+    static void OnProgramPanic(const std::string& InMessage, const std::string& InFile, const LLinuxPlatformTypes::i32 InLine);
 };
 
 #include <cmath>

@@ -198,8 +198,8 @@ void Jafg::AChunk::Shape()
 {
     check( this->ChunkState == EChunkState::Shaped )
 
-    this->RawVoxelData = new uint32[MwStatics::VoxelCount];
-    // ::memset(this->RawVoxelData, 0, MwStatics::VoxelCount * sizeof(uint32));
+    this->RawVoxelData = new u32[MwStatics::VoxelCount];
+    // ::memset(this->RawVoxelData, 0, MwStatics::VoxelCount * sizeof(u32));
 
     ChunkGenerator::ShapeChunk(this->SharedArgs, this->ChunkKey, this->RawVoxelData);
 

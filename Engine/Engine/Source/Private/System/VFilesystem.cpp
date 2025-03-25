@@ -25,7 +25,7 @@ namespace Jafg::Private
 
 TdhArray<LVirtualFile>& GetVirtualFiles();
 
-LVirtualFile::LVirtualFile(const LPath& RelativeContentPath, const uint8* InFileContents, const uint64 InFileSize)
+LVirtualFile::LVirtualFile(const LPath& RelativeContentPath, const u8* InFileContents, const u64 InFileSize)
 {
     this->FileSize            = InFileSize;
     this->RelativeContentPath = RelativeContentPath;
@@ -77,7 +77,7 @@ Jafg::LVirtualFileSystem::~LVirtualFileSystem()
     return;
 }
 
-int32 Jafg::LVirtualFileSystem::GetTotalEmbeddedFileCount() const
+i32 Jafg::LVirtualFileSystem::GetTotalEmbeddedFileCount() const
 {
     return Private::GetVirtualFiles().GetSize();
 }
@@ -102,7 +102,7 @@ bool Jafg::LVirtualFileSystem::DoesFileExist(const LEnginePath& InEnginePath) co
 Jafg::LString Jafg::LVirtualFileSystem::ReadFileAsString(const LEnginePath& InEnginePath) const
 {
     const Private::LVirtualFile* File = this->GetPanickedVirtualFileHandle(InEnginePath);
-    const LStringLegacy OutLegacy = LStringLegacy{reinterpret_cast<const char*>(File->GetBulk()), static_cast<uint32>(File->GetFileSize()) };
+    const LStringLegacy OutLegacy = LStringLegacy{reinterpret_cast<const char*>(File->GetBulk()), static_cast<u32>(File->GetFileSize()) };
     LString Out = OutLegacy.c_str();
     return Out;
 }
@@ -110,10 +110,10 @@ Jafg::LString Jafg::LVirtualFileSystem::ReadFileAsString(const LEnginePath& InEn
 LStringLegacy Jafg::LVirtualFileSystem::ReadFileAsStringLegacy(const LEnginePath& InEnginePath) const
 {
     const Private::LVirtualFile* File = this->GetPanickedVirtualFileHandle(InEnginePath);
-    return { reinterpret_cast<const char*>(File->GetBulk()), static_cast<uint32>(File->GetFileSize()) };
+    return { reinterpret_cast<const char*>(File->GetBulk()), static_cast<u32>(File->GetFileSize()) };
 }
 
-void Jafg::LVirtualFileSystem::ReadFileAsBytes(const LEnginePath& InEnginePath, const uint8*& OutBuffer, uint64& OutBufferOverflowGuard) const
+void Jafg::LVirtualFileSystem::ReadFileAsBytes(const LEnginePath& InEnginePath, const u8*& OutBuffer, u64& OutBufferOverflowGuard) const
 {
     const Private::LVirtualFile* File = this->GetPanickedVirtualFileHandle(InEnginePath);
 
@@ -126,11 +126,11 @@ void Jafg::LVirtualFileSystem::ReadFileAsBytes(const LEnginePath& InEnginePath, 
     return;
 }
 
-Jafg::TdhArray<uint8> Jafg::LVirtualFileSystem::ReadFileAsJafgByteArray(const LEnginePath& InEnginePath) const
+Jafg::TdhArray<u8> Jafg::LVirtualFileSystem::ReadFileAsJafgByteArray(const LEnginePath& InEnginePath) const
 {
     const Private::LVirtualFile* File = this->GetPanickedVirtualFileHandle(InEnginePath);
 
-    TdhArray<uint8> Out;
+    TdhArray<u8> Out;
     Out.Reserve(File->GetFileSize());
 
     /*

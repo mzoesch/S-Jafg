@@ -2,7 +2,7 @@
 
 #include "Widgets/WidgetSwitcher.h"
 
-void Jafg::WWidgetSwitcher::SetActiveWidgetIndex(const int32 Index)
+void Jafg::WWidgetSwitcher::SetActiveWidgetIndex(const i32 Index)
 {
     if (this->ActiveIndex == Index)
     {
@@ -64,7 +64,7 @@ void Jafg::WWidgetSwitcher::SetActiveWidget(WWidgetNode* Widget)
 {
     checkSlow( Widget )
 
-    if (const int32 Idx = this->GetChildren().FindIndexByPredicate([Widget](const LWidgetSlot* Slot)
+    if (const i32 Idx = this->GetChildren().FindIndexByPredicate([Widget](const LWidgetSlot* Slot)
     {
         return Slot->Content == Widget;
     }); Idx != INDEX_NONE)
@@ -94,7 +94,7 @@ Jafg::LWidgetSlot* Jafg::WWidgetSwitcher::AddChild(WWidgetNode* InChild)
     return Ret;
 }
 
-Jafg::LWidgetSlot* Jafg::WWidgetSwitcher::AddChildAt(const int32 InIndex, WWidgetNode* InChild)
+Jafg::LWidgetSlot* Jafg::WWidgetSwitcher::AddChildAt(const i32 InIndex, WWidgetNode* InChild)
 {
     LWidgetSlot* Ret = Super::AddChildAt(InIndex, InChild);
 

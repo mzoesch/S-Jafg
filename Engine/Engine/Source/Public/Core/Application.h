@@ -55,7 +55,7 @@ FORCEINLINE bool HasLostDeltaTime();
 FORCEINLINE auto GetLostDeltaTime() -> double;
 FORCEINLINE bool HasIdleDeltaTime();
 FORCEINLINE auto GetIdleDeltaTime() -> double;
-FORCEINLINE auto GetFrameCount() -> uint64;
+FORCEINLINE auto GetFrameCount() -> u64;
 
 FORCEINLINE auto GetCurrentFrameTime() -> double;
 FORCEINLINE auto GetPreviousFrameTime() -> double;
@@ -65,14 +65,14 @@ FORCEINLINE auto GetLowestDeltaTime() -> double;
 FORCEINLINE auto GetHighestDeltaTime() -> double;
 FORCEINLINE auto GetHighestLostDeltaTime() -> double;
 FORCEINLINE auto GetRealTimeOfPreviousStatisticsDuration() -> double;
-FORCEINLINE auto GetPreviousFrameCount() -> uint64;
+FORCEINLINE auto GetPreviousFrameCount() -> u64;
 FORCEINLINE auto GetPreviousLowestDeltaTime() -> double;
 FORCEINLINE auto GetPreviousHighestDeltaTime() -> double;
 FORCEINLINE auto CalculateLowestFps() -> float;
 FORCEINLINE auto CalculateHighestFps() -> float;
 FORCEINLINE auto GetLastStatisticsTime() -> LHrcTimePoint;
 FORCEINLINE auto SetLastStatisticsTime(const LHrcTimePoint LastStatisticsTime) -> void;
-FORCEINLINE auto GetStatisticsFrameCount() -> uint64;
+FORCEINLINE auto GetStatisticsFrameCount() -> u64;
 FORCEINLINE void ResetStatistics();
 FORCEINLINE auto GetStatisticsPeriod() -> float;
 
@@ -89,7 +89,7 @@ ENGINE_API extern double DeltaTime;
 ENGINE_API extern double RealDeltaTime;
 ENGINE_API extern double LostDeltaTime;
 ENGINE_API extern double IdleDeltaTime;
-ENGINE_API extern uint64 FrameCount;
+ENGINE_API extern u64 FrameCount;
 
 ENGINE_API extern double CurrentFrameTime;
 ENGINE_API extern double PreviousFrameTime;
@@ -99,11 +99,11 @@ ENGINE_API extern double        LowestDeltaTime;
 ENGINE_API extern double        HighestDeltaTime;
 ENGINE_API extern double        HighestLostDeltaTime;
 ENGINE_API extern LHrcTimePoint PreviousStatisticsStartTime;
-ENGINE_API extern uint64        PreviousStatisticsFrameCount;
+ENGINE_API extern u64        PreviousStatisticsFrameCount;
 ENGINE_API extern double        PreviousLowestDeltaTime;
 ENGINE_API extern double        PreviousHighestDeltaTime;
 ENGINE_API extern LHrcTimePoint LastStatisticsTime;
-ENGINE_API extern uint64        StatisticsFrameCount;
+ENGINE_API extern u64        StatisticsFrameCount;
 ENGINE_API extern float         StatisticsPeriod;
 
 ENGINE_API extern LHrcTimePoint LastStdOutFlushTime;
@@ -172,7 +172,7 @@ FORCEINLINE double Jafg::Application:: GetIdleDeltaTime()
     return Private::IdleDeltaTime;
 }
 
-FORCEINLINE uint64 Jafg::Application::GetFrameCount()
+FORCEINLINE u64 Jafg::Application::GetFrameCount()
 {
     return Private::FrameCount;
 }
@@ -212,7 +212,7 @@ FORCEINLINE double Jafg::Application::GetRealTimeOfPreviousStatisticsDuration()
     return std::chrono::duration<double>(Private::LastStatisticsTime - Private::PreviousStatisticsStartTime).count();
 }
 
-FORCEINLINE uint64 Jafg::Application::GetPreviousFrameCount()
+FORCEINLINE u64 Jafg::Application::GetPreviousFrameCount()
 {
     return Private::PreviousStatisticsFrameCount;
 }
@@ -247,7 +247,7 @@ FORCEINLINE void Jafg::Application::SetLastStatisticsTime(const LHrcTimePoint La
     Private::LastStatisticsTime = LastStatisticsTime;
 }
 
-FORCEINLINE uint64 Jafg::Application::GetStatisticsFrameCount()
+FORCEINLINE u64 Jafg::Application::GetStatisticsFrameCount()
 {
     return Private::StatisticsFrameCount;
 }

@@ -8,7 +8,7 @@ TEST_CASE(SpScQueueOperations, "Lal.Containers")
 {
     using namespace Jafg;
 
-    TMpscQueue<int32> Queue;
+    TMpscQueue<i32> Queue;
     CHECK_TRUE(     "Queue with zero size.", Queue.IsEmpty()        )
     CHECK_NULL(     "Queue with zero size.", Queue.Peek()           )
     CHECK_FALSE(    "Queue with zero size.", Queue.Pop()            )
@@ -22,7 +22,7 @@ TEST_CASE(SpScQueueOperations, "Lal.Containers")
     CHECK_EQUALS(     "Queue with one item.", *Queue.Peek(),       5 )
     CHECK_NOT_EQUALS( "Queue with one item.", Queue.Head, Queue.Tail )
 
-    int32 A = 0;
+    i32 A = 0;
     CHECK_TRUE(   "Queue with one item.", Queue.Dequeue(A)        )
     CHECK_EQUALS( "Queue with zero size.", A,                   5 )
     CHECK_TRUE(   "Queue with zero size.", Queue.IsEmpty()        )
@@ -55,7 +55,7 @@ TEST_CASE(SimpleQueueOperations, "Lal.Containers")
 {
     using namespace Jafg;
 
-    TQueue<int32> Queue;
+    TQueue<i32> Queue;
     CHECK_TRUE(     "Queue with zero size.", Queue.IsEmpty()        )
     CHECK_NULL(     "Queue with zero size.", Queue.Peek()           )
     CHECK_FALSE(    "Queue with zero size.", Queue.Pop()            )
@@ -69,7 +69,7 @@ TEST_CASE(SimpleQueueOperations, "Lal.Containers")
     CHECK_EQUALS(   "Queue with one item.", *Queue.Peek(),       5 )
     CHECK_EQUALS(   "Queue with one item.", Queue.Head, Queue.Tail )
 
-    int32 A = 0;
+    i32 A = 0;
     CHECK_TRUE(     "Queue with one item.", Queue.Dequeue(A)        )
     CHECK_EQUALS(   "Queue with zero size.", A,                   5 )
     CHECK_TRUE(     "Queue with zero size.", Queue.IsEmpty()        )

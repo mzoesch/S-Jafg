@@ -12,28 +12,28 @@ template <typename T, typename TEnable = void>
 struct TPreference;
 
 // Core types. Add more if you want.
-template <> struct TIsPreferenceTypeAllowed<int8>          : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<int16>         : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<int32>         : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<int64>         : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<uint8>         : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<uint16>        : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<uint32>        : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<uint64>        : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<i8>          : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<i16>         : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<i32>         : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<i64>         : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<u8>         : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<u16>        : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<u32>        : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<u64>        : std::true_type { };
 template <> struct TIsPreferenceTypeAllowed<bool>          : std::true_type { };
 template <> struct TIsPreferenceTypeAllowed<LString>       : std::true_type { };
 template <> struct TIsPreferenceTypeAllowed<LSimpleString> : std::true_type { };
 
 typedef TPreference<float>         LPreferenceFloat;
 typedef TPreference<double>        LPreferenceDouble;
-typedef TPreference<int8>          LPreferenceInt8;
-typedef TPreference<int16>         LPreferenceInt16;
-typedef TPreference<int32>         LPreferenceInt32;
-typedef TPreference<int64>         LPreferenceInt64;
-typedef TPreference<uint8>         LPreferenceUInt8;
-typedef TPreference<uint16>        LPreferenceUInt16;
-typedef TPreference<uint32>        LPreferenceUInt32;
-typedef TPreference<uint64>        LPreferenceUInt64;
+typedef TPreference<i8>          LPreferencei8;
+typedef TPreference<i16>         LPreferencei16;
+typedef TPreference<i32>         LPreferencei32;
+typedef TPreference<i64>         LPreferencei64;
+typedef TPreference<u8>         LPreferenceu8;
+typedef TPreference<u16>        LPreferenceu16;
+typedef TPreference<u32>        LPreferenceu32;
+typedef TPreference<u64>        LPreferenceu64;
 typedef TPreference<bool>          LPreferenceBool;
 typedef TPreference<LSimpleString> LPreferenceSimpleString;
 typedef TPreference<LString>       LPreferenceString;
@@ -217,14 +217,14 @@ FORCEINLINE void ::Jafg::Deserialize<Jafg::LPreferenceBool>(LPreferenceBool* Des
 namespace Jafg
 {
 template <> NODISCARD inline auto FormatArgLegacy<TPreference<bool>>(TPreference<bool> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<uint8>>(TPreference<uint8> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<uint16>>(TPreference<uint16> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<uint32>>(TPreference<uint32> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<uint64>>(TPreference<uint64> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<int8>>(TPreference<int8> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<int16>>(TPreference<int16> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<int32>>(TPreference<int32> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<int64>>(TPreference<int64> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<u8>>(TPreference<u8> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<u16>>(TPreference<u16> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<u32>>(TPreference<u32> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<u64>>(TPreference<u64> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<i8>>(TPreference<i8> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<i16>>(TPreference<i16> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<i32>>(TPreference<i32> Arg) { return Arg.Value; }
+template <> NODISCARD inline auto FormatArgLegacy<TPreference<i64>>(TPreference<i64> Arg) { return Arg.Value; }
 template <typename T> NODISCARD inline auto FormatArgLegacy(const TPreference<T>& Arg) { return Arg.Value; }
 template <typename T> NODISCARD inline auto FormatArgLegacy(      TPreference<T>  Arg) { return Arg.Value; }
 } /* ~Namespace Jafg */

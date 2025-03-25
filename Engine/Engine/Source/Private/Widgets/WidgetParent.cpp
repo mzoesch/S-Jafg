@@ -315,7 +315,7 @@ Jafg::LWidgetSlot* Jafg::WWidgetParent::AddChild(WWidgetNode* InChild)
     return NewChildSlot;
 }
 
-Jafg::LWidgetSlot* Jafg::WWidgetParent::AddChildAt(const int32 InIndex, WWidgetNode* InChild)
+Jafg::LWidgetSlot* Jafg::WWidgetParent::AddChildAt(const i32 InIndex, WWidgetNode* InChild)
 {
     check( InChild )
     LWidgetSlot* NewChildSlot = new LWidgetSlot(this, InChild);

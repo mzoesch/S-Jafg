@@ -25,7 +25,7 @@ namespace
     #else /* !_HAS_CXX23 */
         static_assert(
             sizeof(::Jafg::LThreadId) == sizeof(std::thread::id),
-            "The size of std::thread::id and uint32 must be the same."
+            "The size of std::thread::id and u32 must be the same."
         );
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() _Thrd_id()
     #endif /* _HAS_CXX23 */
@@ -41,7 +41,7 @@ namespace
 
 static_assert(
     sizeof(::Jafg::LThreadId) == sizeof(std::thread::id),
-    "The size of std::thread::id and uint32 must be the same."
+    "The size of std::thread::id and u32 must be the same."
 );
 
 struct LEngineThread;
@@ -132,7 +132,7 @@ Jafg::TdhArray<LEngineThread> EngineThreads;
 namespace Jafg::Tasks::Private
 {
 
-ENGINE_API int32 CustomThreadCounter = ENamedThreads::Custom + 1;
+ENGINE_API i32 CustomThreadCounter = ENamedThreads::Custom + 1;
 
 } /* ~Namespace Jafg::Tasks::Private */
 
@@ -329,9 +329,9 @@ bool Jafg::Tasks::Private::IsThreadRunning(const ENamedThreads::Type InThreadNam
     return ::EngineThreads.Contains(InThreadName);
 }
 
-void Jafg::Tasks::Private::TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const int32 MaxTasks)
+void Jafg::Tasks::Private::TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const i32 MaxTasks)
 {
-    int32 RunTasks = 0;
+    i32 RunTasks = 0;
     while (true)
     {
         if (RunTasks >= MaxTasks && MaxTasks != RunAllTasks)
@@ -388,7 +388,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
 
     if (IsThreadRunning(ThreadName))
     {
-        LOG_ERROR(LogTaskSystem, "Thread {}[{}] already running.", LexToString(ThreadName), static_cast<int32>(ThreadName))
+        LOG_ERROR(LogTaskSystem, "Thread {}[{}] already running.", LexToString(ThreadName), static_cast<i32>(ThreadName))
         if (bKillRunnableWhenFinished == false)
         {
             delete Runnable;
@@ -527,7 +527,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                     }
 
                     ::EngineThreads.RemoveOnceChecked(ThreadName);
-                    LOG_VERBOSE(LogTaskSystem, "Removed thread {}[{}].", LexToString(ThreadName), static_cast<int32>(ThreadName))
+                    LOG_VERBOSE(LogTaskSystem, "Removed thread {}[{}].", LexToString(ThreadName), static_cast<i32>(ThreadName))
 
                     return;
                 }
@@ -555,12 +555,12 @@ void Jafg::Tasks::Private::JoinThread(const ENamedThreads::Type ThreadName)
         }
         else
         {
-            LOG_WARNING(LogTaskSystem, "Thread {}[{}] is not joinable.", LexToString(ThreadName), static_cast<int32>(ThreadName))
+            LOG_WARNING(LogTaskSystem, "Thread {}[{}] is not joinable.", LexToString(ThreadName), static_cast<i32>(ThreadName))
         }
     }
     else
     {
-        LOG_WARNING(LogTaskSystem, "Thread {}[{}] is not joinable.", LexToString(ThreadName), static_cast<int32>(ThreadName))
+        LOG_WARNING(LogTaskSystem, "Thread {}[{}] is not joinable.", LexToString(ThreadName), static_cast<i32>(ThreadName))
     }
 
     return;

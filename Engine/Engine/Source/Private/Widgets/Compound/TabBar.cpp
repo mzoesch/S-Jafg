@@ -89,7 +89,7 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, r
         panicMsgf("Tab with identifier [{}] already exists.", InTabDescriptor.Identifier)
     }
 
-    int32 Index;
+    i32 Index;
     if (InTabDescriptor.AddAfter.IsEmpty())
     {
         this->TabsInOrder.Add(LAddedTabBarTab({.Identifier = InTabDescriptor.Identifier}));
@@ -155,7 +155,7 @@ void Jafg::WTabBar::OnTabBarButtonPressed(const LSimpleString& Identifier)
         this->CurrentlyFocusedTab = nullptr;
     }
 
-    int32 Idx;
+    i32 Idx;
     for (Idx = 0; Idx < this->TabsInOrder.GetSize(); ++Idx)
     {
         if (this->TabsInOrder[Idx].Identifier == Identifier)
@@ -211,7 +211,7 @@ void Jafg::WTabBar::OnOuterVisibilityChanged(const EWidgetVisibility::Type InOld
     return;
 }
 
-void Jafg::WTabBar::LoadTab(const LTabBarTabDescriptor& Descriptor, const int32 InIndex)
+void Jafg::WTabBar::LoadTab(const LTabBarTabDescriptor& Descriptor, const i32 InIndex)
 {
     check( !(Descriptor.ButtonWidgetClass && Descriptor.OnButtonPressed) )
 
@@ -238,7 +238,7 @@ void Jafg::WTabBar::LoadTab(const LTabBarTabDescriptor& Descriptor, const int32 
         checkSlow( this->TabsInOrder[InIndex].Panel == nullptr )
         this->TabsInOrder[InIndex].Panel = Panel;
         this->Switcher->AddChild(Panel);
-        this->TabsInOrder[InIndex].SwitcherIndex = static_cast<int8>(this->Switcher->GetChildren().GetSize() - 1);
+        this->TabsInOrder[InIndex].SwitcherIndex = static_cast<i8>(this->Switcher->GetChildren().GetSize() - 1);
         Panel->AddData(&Data);
         MakeDeferredWidgetNodeFinal(Panel);
     }
@@ -252,7 +252,7 @@ const Jafg::WTabBar::LAddedTabBarTab* Jafg::WTabBar::GetCurrentlyFocusedTab() co
 {
     if (this->CurrentlyFocusedTab)
     {
-        if (const int32 Idx= this->TabsInOrder.FindIndexByPredicate([this](const LAddedTabBarTab& Tab)
+        if (const i32 Idx= this->TabsInOrder.FindIndexByPredicate([this](const LAddedTabBarTab& Tab)
         {
             return Tab.Identifier.ToPtr() == this->CurrentlyFocusedTab;
         }); Idx != INDEX_NONE)

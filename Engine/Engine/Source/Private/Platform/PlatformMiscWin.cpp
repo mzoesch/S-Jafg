@@ -113,8 +113,8 @@ NOINLINE DevNameToDevId GetDeviceNamesToIdMap()
 {
     DevNameToDevId NamesToIdMap;
 
-    UINT32 NrPaths;
-    UINT32 NrModes;
+    u32 NrPaths;
+    u32 NrModes;
     GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &NrPaths, &NrModes);
 
     std::vector<DISPLAYCONFIG_PATH_INFO> Paths(NrPaths);
@@ -278,7 +278,7 @@ Jafg::LSimpleString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
     return { Path.MoveOut() };
 }
 
-int32 Jafg::PlatformMisc::GetNumberOfPhysicalViewports()
+i32 Jafg::PlatformMisc::GetNumberOfPhysicalViewports()
 {
     return GetSystemMetrics(SM_CMONITORS);
 }
@@ -288,12 +288,12 @@ bool Jafg::PlatformMisc::SetPhysicalViewports()
     // DISPLAY_DEVICE Dd;
     // Dd.cb = sizeof(Dd);
     //
-    // int32 DIdx = 0;
+    // i32 DIdx = 0;
     // while (EnumDisplayDevices(nullptr, DIdx, &Dd, 0x0))
     // {
     //     std::wstring DName = Dd.DeviceName;
     //
-    //     int32 MonitorIndex = 0;
+    //     i32 MonitorIndex = 0;
     //     while (EnumDisplayDevices(DName.c_str(), MonitorIndex, &Dd, 0x0))
     //     {
     //         std::wcout << Dd.DeviceName << L", " <<Dd.DeviceString << L"\n";

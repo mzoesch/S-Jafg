@@ -15,7 +15,7 @@ class LPhysicsComponent;
 namespace EActorSweep
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Teleport,
     Sweep,

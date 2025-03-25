@@ -10,7 +10,7 @@ namespace Jafg
 namespace EChunkState
 {
 
-enum Type : uint8
+enum Type : u8
 {
     //#
     //# Marks an invalid state. A chunk must never have this state.

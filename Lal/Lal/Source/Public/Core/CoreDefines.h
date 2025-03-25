@@ -4,17 +4,17 @@
 
 #include <cstdint>
 
-enum : int8 { INDEX_NONE = -1 };
+enum : i8 { INDEX_NONE = -1 };
 
-enum ELazyInit  : int8 { LazyInit  };
-enum EForceInit : int8 { ForceInit };
-enum EZeroInit  : int8 { ZeroInit  };
-enum ESkipInit  : int8 { SkipInit  }; // Dangerous.
+enum ELazyInit  : i8 { LazyInit  };
+enum EForceInit : i8 { ForceInit };
+enum EZeroInit  : i8 { ZeroInit  };
+enum ESkipInit  : i8 { SkipInit  }; // Dangerous.
 
 namespace EPlatformExit
 {
 
-enum Type : int32
+enum Type : i32
 {
     Success     = 0b0000'0000,
     Error       = 0b0000'0010,
@@ -36,7 +36,7 @@ enum Type : int32
 #else /* WITH_CLANG */
     #error "Missing implementation for this platform."
 #endif /* WITH_CLANG */
-enum : int8 { POINTER_BYTE_SIZE = sizeof(LPtrSize) };
+enum : i8 { POINTER_BYTE_SIZE = sizeof(LPtrSize) };
 #if PLATFORM_USES_32_BIT
     static_assert(sizeof(LPtrSize) == 4, "LPtrSize is not 4 bytes.");
     static_assert(sizeof(LuPtrSize) == 4, "LuPtrSize is not 4 bytes.");
@@ -52,9 +52,9 @@ enum : int8 { POINTER_BYTE_SIZE = sizeof(LPtrSize) };
     static_assert(POINTER_BYTE_SIZE == 8, "POINTER_BYTE_SIZE is not 8 bytes.");
 #endif /* PLATFORM_USES_64_BIT */
 
-typedef int64  LBigSizeTy;
-typedef uint64 LuBigSizeTy;
-typedef int32  LSizeTy;
+typedef i64  LBigSizeTy;
+typedef u64 LuBigSizeTy;
+typedef i32  LSizeTy;
 
 #define JTXTW(x)        LITERAL_WIDE(x)
 #define JTXT8(x)        LITERAL_UTF8(x)

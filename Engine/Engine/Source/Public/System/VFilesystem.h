@@ -26,7 +26,7 @@ struct LVirtualFile;
 #if PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION || PRIVATE_JAFG_DEFINE_VIRTUAL_FILE
     struct LVirtualFile final
     {
-        ENGINE_API LVirtualFile(const LPath& RelativeContentPath, const uint8* InFileContents, const uint64 InFileSize);
+        ENGINE_API LVirtualFile(const LPath& RelativeContentPath, const u8* InFileContents, const u64 InFileSize);
         PROHIBIT_COPY(LVirtualFile)
         DEFAULT_MOVE(LVirtualFile)
         ~LVirtualFile() = default;
@@ -34,13 +34,13 @@ struct LVirtualFile;
         FORCEINLINE auto GetFileSize() const -> LuBigSizeTy { return this->FileSize; }
         FORCEINLINE auto GetRelativeContentPath() const -> const LPath& { return this->RelativeContentPath; }
         FORCEINLINE auto GetFileName() const -> LSimpleString { return this->RelativeContentPath.GetBase(); }
-        FORCEINLINE auto GetBulk() const -> const uint8* { return this->FileContents; }
+        FORCEINLINE auto GetBulk() const -> const u8* { return this->FileContents; }
 
     private:
 
-        uint64       FileSize;
+        u64       FileSize;
         LPath        RelativeContentPath;
-        const uint8* FileContents;
+        const u8* FileContents;
     };
 #endif /* PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION || PRIVATE_JAFG_DEFINE_VIRTUAL_FILE */
 
@@ -59,7 +59,7 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LVirtualFileSystem)
     ENGINE_API ~LVirtualFileSystem();
 
-    ENGINE_API int32 GetTotalEmbeddedFileCount() const;
+    ENGINE_API i32 GetTotalEmbeddedFileCount() const;
 
     ENGINE_API bool DoesFileExist(const LEnginePath& InEnginePath) const;
     ENGINE_API auto ReadFileAsString(const LEnginePath& InEnginePath) const -> LString;
@@ -68,8 +68,8 @@ public:
     //# Modifying the raw data is in no case recommended. Better make a copy of it,
     //# or even better use the save jafg array type.
     //#
-    ENGINE_API void ReadFileAsBytes(const LEnginePath& InEnginePath, const uint8*& OutBuffer, uint64& OutBufferOverflowGuard) const;
-    ENGINE_API auto ReadFileAsJafgByteArray(const LEnginePath& InEnginePath) const -> TdhArray<uint8>;
+    ENGINE_API void ReadFileAsBytes(const LEnginePath& InEnginePath, const u8*& OutBuffer, u64& OutBufferOverflowGuard) const;
+    ENGINE_API auto ReadFileAsJafgByteArray(const LEnginePath& InEnginePath) const -> TdhArray<u8>;
 
     ENGINE_API auto FindFiles(
         const EEnginePaths::Type InEnginePathTy,

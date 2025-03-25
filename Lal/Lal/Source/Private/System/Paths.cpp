@@ -55,7 +55,7 @@ LString Paths::ReadFile(const LPath& InAbsolutePath)
 
 LSimpleString Paths::GetStem(const LSimpleString& InFileName)
 {
-    const int32 LastDot = InFileName.FindLast('.');
+    const i32 LastDot = InFileName.FindLast('.');
     if (LastDot == INDEX_NONE)
     {
         return InFileName;
@@ -66,7 +66,7 @@ LSimpleString Paths::GetStem(const LSimpleString& InFileName)
 
 void Paths::GetStemInline(LSimpleString& InOutFileName)
 {
-    const int32 LastDot = InOutFileName.FindLast('.');
+    const i32 LastDot = InOutFileName.FindLast('.');
     if (LastDot == INDEX_NONE)
     {
         return;
@@ -121,7 +121,7 @@ void Paths::OverrideFile(const LPath& InAbsolutePath, const LStringView& InConte
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 
-void Paths::MakeFileBackup(const LPath& InAbsolutePath, const bool bMakeIfSame /* = false */, int32 InBackupCount /* = 5 */, const LStringView& InBackupExtension /* = ".old" */)
+void Paths::MakeFileBackup(const LPath& InAbsolutePath, const bool bMakeIfSame /* = false */, i32 InBackupCount /* = 5 */, const LStringView& InBackupExtension /* = ".old" */)
 {
 #if WITH_VIRTUAL_FILESYSTEM
     LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())

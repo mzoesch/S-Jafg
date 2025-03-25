@@ -58,9 +58,9 @@ public:
 
     FORCEINLINE       auto GetViewport()       ->       LViewport& { return this->SurfaceViewport; }
     FORCEINLINE       auto GetViewport() const -> const LViewport& { return this->SurfaceViewport; }
-    NODISCARD virtual auto GetWidth() const -> int32                    = 0;
-    NODISCARD virtual auto GetHeight() const -> int32                   = 0;
-    NODISCARD virtual auto GetDimensions() const -> TIntVector2<int32>  = 0;
+    NODISCARD virtual auto GetWidth() const -> i32                    = 0;
+    NODISCARD virtual auto GetHeight() const -> i32                   = 0;
+    NODISCARD virtual auto GetDimensions() const -> TIntVector2<i32>  = 0;
 
     //# Whether the current surface does ever support VSync.
     NODISCARD virtual bool CanVSync() const              = 0;

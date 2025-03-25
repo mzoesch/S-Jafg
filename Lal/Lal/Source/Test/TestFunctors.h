@@ -8,11 +8,11 @@ TEST_CASE(SimpleFunctorOperations, "Lal.Core")
 {
     using namespace Jafg;
 
-    TFunction<bool(const int32 A)> Lambda;
+    TFunction<bool(const i32 A)> Lambda;
     CHECK_TRUE(   "Lambda is null.",         Lambda == nullptr )
     CHECK_FALSE(  "Lambda is not null.",        Lambda.IsBound() )
 
-    Lambda = [] (const int32 A) -> bool { return A == 0; };
+    Lambda = [] (const i32 A) -> bool { return A == 0; };
     CHECK_FALSE( "Lambda is set.",         Lambda == nullptr )
     CHECK_TRUE(  "Lambda is set.",            Lambda.IsBound() )
 
@@ -27,7 +27,7 @@ TEST_CASE(SimpleFunctorOperations, "Lal.Core")
     CHECK_FALSE( "Lambda reset.",        Lambda.IsBound() )
 
     {
-        Lambda = [] (const int32 A) -> bool { return A == 1; };
+        Lambda = [] (const i32 A) -> bool { return A == 1; };
     }
     CHECK_FALSE( "Scoped lambda.",     Lambda == nullptr )
     CHECK_TRUE(  "Scoped lambda.",        Lambda.IsBound() )
@@ -40,9 +40,9 @@ TEST_CASE(SimpleFunctorOperations, "Lal.Core")
     CHECK_TRUE(   "Lambda set nullptr.",     Lambda == nullptr )
     CHECK_FALSE(  "Lambda set nullptr.",        Lambda.IsBound() )
 
-    Lambda = [] (const int32 A) -> bool { return A == 2; };
+    Lambda = [] (const i32 A) -> bool { return A == 2; };
 
-    TFunction<bool(const int32 A)> OtherLambda = nullptr;
+    TFunction<bool(const i32 A)> OtherLambda = nullptr;
     CHECK_TRUE(   "Lambda declared with null.", OtherLambda == nullptr )
     CHECK_FALSE(  "Lambda declared with null.",    OtherLambda.IsBound() )
 
@@ -90,10 +90,10 @@ class MyFunctorClass final
 {
 public:
 
-    int32 Member = 0;
+    i32 Member = 0;
 
-    bool MyNamedMemberConst(const int32 A)    const { return A == this->Member; }
-    bool MyNamedMemberNonConst(const int32 A, const int32 B, const int32 C)
+    bool MyNamedMemberConst(const i32 A)    const { return A == this->Member; }
+    bool MyNamedMemberNonConst(const i32 A, const i32 B, const i32 C)
     {
         Member += A;
         Member += B;
@@ -103,7 +103,7 @@ public:
     }
 };
 
-inline bool MyNamedFunction(const int32 A) { return A == 0; }
+inline bool MyNamedFunction(const i32 A) { return A == 0; }
 
 } /* ~Namespace Jafg::Testing::Functors */
 
@@ -115,7 +115,7 @@ TEST_CASE(NamedFunctorOperations, "Lal.Core")
     MyFunctorClass MyFunctorObject;
     MyFunctorObject.Member = 10;
 
-    TFunction<bool(const int32 A)> NamedFunction = nullptr;
+    TFunction<bool(const i32 A)> NamedFunction = nullptr;
     CHECK_TRUE(  "Function is null.",     NamedFunction == nullptr )
     CHECK_FALSE( "Function is not null.",    NamedFunction.IsBound() )
 
@@ -131,7 +131,7 @@ TEST_CASE(NamedFunctorOperations, "Lal.Core")
     CHECK_TRUE(  "Member function execution.",       NamedFunction(10) )
     CHECK_FALSE( "Member function execution.",       NamedFunction(11) )
 
-    TFunction<bool(const int32 A, const int32 B, const int32 C)> NamedTripleFunction = nullptr;
+    TFunction<bool(const i32 A, const i32 B, const i32 C)> NamedTripleFunction = nullptr;
     CHECK_TRUE( "Function is null.",     NamedTripleFunction == nullptr )
     CHECK_FALSE("Function is null.",        NamedTripleFunction.IsBound() )
 

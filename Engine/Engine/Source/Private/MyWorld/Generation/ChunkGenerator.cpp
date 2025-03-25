@@ -26,10 +26,10 @@ void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const 
     {
         for (LChunkKeyDomainTy Y = 0; Y < MwStatics::ChunkSize; ++Y)
         {
-            const int32 Height = static_cast<int32>(Maths::Floor(NoiseOutput[++Index] * 32.0f) + 32.0f);
+            const i32 Height = static_cast<i32>(Maths::Floor(NoiseOutput[++Index] * 32.0f) + 32.0f);
             for (LChunkKeyDomainTy Z = 0; Z < MwStatics::ChunkSize; ++Z)
             {
-                const int32 MapZ = InKey.Z * MwStatics::ChunkSize + Z;
+                const i32 MapZ = InKey.Z * MwStatics::ChunkSize + Z;
                 InOutChunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = MapZ < Height ? StoneIdx : ECompileTimeVoxels::Air;
             }
         }
@@ -41,7 +41,7 @@ void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const 
         {
             for (LChunkKeyDomainTy Z = 0; Z < MwStatics::ChunkSize; ++Z)
             {
-                const int32 MapZ = InKey.Z * MwStatics::ChunkSize + Z;
+                const i32 MapZ = InKey.Z * MwStatics::ChunkSize + Z;
                 InOutChunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = MapZ < 12 ? StoneIdx : ECompileTimeVoxels::Air;
             }
         }
@@ -57,7 +57,7 @@ void Jafg::ChunkGenerator::ReplaceSurface(const LSharedChunkArgs* SharedArgs, co
     checkSlow( Target )
     checkSlow( InOutChunkData )
 
-    constexpr int32 DirtHeight { 3 };
+    constexpr i32 DirtHeight { 3 };
 
     const voxel_t GrassIdx = SharedArgs->VoxelSubsystem->GetVoxelIndex("Grass");
     const voxel_t DirtIdx  = SharedArgs->VoxelSubsystem->GetVoxelIndex("Dirt");
@@ -66,7 +66,7 @@ void Jafg::ChunkGenerator::ReplaceSurface(const LSharedChunkArgs* SharedArgs, co
     {
         for (LChunkKeyDomainTy Y = 0; Y < MwStatics::ChunkSize; ++Y)
         {
-            uint8 CurrentDirtDepth = 0;
+            u8 CurrentDirtDepth = 0;
 
             for (LChunkKeyDomainTy Z = MwStatics::ChunkSize - 1 + DirtHeight; Z >= MwStatics::ChunkSize; --Z)
             {

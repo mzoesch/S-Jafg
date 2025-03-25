@@ -18,7 +18,7 @@ class LAsciiString
 {
 public:
 
-    using SizeType = int32;
+    using SizeType = i32;
     /**
      * A rune is a single grapheme represented by a single byte.
      * Said grapheme has to be a valid ascii character.
@@ -35,10 +35,10 @@ public:
     FORCEINLINE LAsciiString(      LAsciiString&& Other) noexcept;
     FORCEINLINE LAsciiString(const LAsciiString&& Other) noexcept;
     FORCEINLINE LAsciiString(const LRune* Other)         noexcept;
-    FORCEINLINE explicit LAsciiString(const int32  Number)    noexcept;
-    FORCEINLINE explicit LAsciiString(const int64  Number)    noexcept;
-    FORCEINLINE explicit LAsciiString(const uint32 Number)    noexcept;
-    FORCEINLINE explicit LAsciiString(const uint64 Number)    noexcept;
+    FORCEINLINE explicit LAsciiString(const i32  Number)    noexcept;
+    FORCEINLINE explicit LAsciiString(const i64  Number)    noexcept;
+    FORCEINLINE explicit LAsciiString(const u32 Number)    noexcept;
+    FORCEINLINE explicit LAsciiString(const u64 Number)    noexcept;
 
     FORCEINLINE auto operator=(const LRune* Other)         noexcept -> LAsciiString&;
     FORCEINLINE auto operator=(const LAsciiString&  Other) noexcept -> LAsciiString&;
@@ -126,16 +126,16 @@ public:
     FORCEINLINE bool EndsWith(const LAsciiString& InOther) const;
 
     FORCEINLINE auto Replace(const char Old, const char New) -> void;
-    FORCEINLINE auto FindFirst(const char InChar) const -> int32;
-    FORCEINLINE auto FindSecond(const char InChar) const -> int32;
-    FORCEINLINE auto FindLast(const char InChar) const -> int32;
-    FORCEINLINE auto InlineCut(const int32 InIndex) -> void;
-    FORCEINLINE auto Cut(const int32 InIndex) const -> LAsciiString;
-    FORCEINLINE auto InlineSub(const int32 InIndex, const int32 InCount) -> void;
-    FORCEINLINE auto InlineSubIdx(const int32 InIndexA, const int32 InIndexB) -> void;
-    FORCEINLINE auto Sub(const int32 InIndex, const int32 InCount) const -> LAsciiString;
-    FORCEINLINE auto SubIdx(const int32 InIndexA, const int32 InIndexB) const -> LAsciiString;
-    FORCEINLINE auto Count(const char InChar) const -> int32;
+    FORCEINLINE auto FindFirst(const char InChar) const -> i32;
+    FORCEINLINE auto FindSecond(const char InChar) const -> i32;
+    FORCEINLINE auto FindLast(const char InChar) const -> i32;
+    FORCEINLINE auto InlineCut(const i32 InIndex) -> void;
+    FORCEINLINE auto Cut(const i32 InIndex) const -> LAsciiString;
+    FORCEINLINE auto InlineSub(const i32 InIndex, const i32 InCount) -> void;
+    FORCEINLINE auto InlineSubIdx(const i32 InIndexA, const i32 InIndexB) -> void;
+    FORCEINLINE auto Sub(const i32 InIndex, const i32 InCount) const -> LAsciiString;
+    FORCEINLINE auto SubIdx(const i32 InIndexA, const i32 InIndexB) const -> LAsciiString;
+    FORCEINLINE auto Count(const char InChar) const -> i32;
 
     /** Private iterator functions for range-based loops. Do not use these directly. */
     FORCEINLINE auto begin()       noexcept -> Iterator<LRune>       ;
@@ -260,7 +260,7 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const LRune* Other) noexcept
     return;
 }
 
-FORCEINLINE Jafg::LAsciiString::LAsciiString(const int32 Number) noexcept
+FORCEINLINE Jafg::LAsciiString::LAsciiString(const i32 Number) noexcept
 {
     /* Super sketchy, we will have to implement this somehow on our own. */
     const std::string NumberString = std::to_string(Number);
@@ -272,7 +272,7 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const int32 Number) noexcept
     return;
 }
 
-FORCEINLINE Jafg::LAsciiString::LAsciiString(const int64 Number) noexcept
+FORCEINLINE Jafg::LAsciiString::LAsciiString(const i64 Number) noexcept
 {
     const std::string NumberString = std::to_string(Number);
 
@@ -283,7 +283,7 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const int64 Number) noexcept
     return;
 }
 
-FORCEINLINE Jafg::LAsciiString::LAsciiString(const uint32 Number) noexcept
+FORCEINLINE Jafg::LAsciiString::LAsciiString(const u32 Number) noexcept
 {
     const std::string NumberString = std::to_string(Number);
 
@@ -294,7 +294,7 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const uint32 Number) noexcept
     return;
 }
 
-FORCEINLINE Jafg::LAsciiString::LAsciiString(const uint64 Number) noexcept
+FORCEINLINE Jafg::LAsciiString::LAsciiString(const u64 Number) noexcept
 {
     const std::string NumberString = std::to_string(Number);
 
@@ -631,7 +631,7 @@ inline bool Jafg::LAsciiString::StartsWith(const LRune* InOther) const
         return *this->Peek() == *InOther;
     }
 
-    int32 Cursor = 0;
+    i32 Cursor = 0;
     while (*InOther != LAsciiString::StringTerminatorRune)
     {
         if (this->GetRuneCount() <= Cursor)
@@ -702,14 +702,14 @@ inline void Jafg::LAsciiString::Replace(const char Old, const char New)
     return;
 }
 
-FORCEINLINE auto Jafg::LAsciiString::FindFirst(const char InChar) const -> int32
+FORCEINLINE auto Jafg::LAsciiString::FindFirst(const char InChar) const -> i32
 {
     if (this->Data.IsData() == false)
     {
         return INDEX_NONE;
     }
 
-    for (int32 Index = 0; Index < this->GetSize(); ++Index)
+    for (i32 Index = 0; Index < this->GetSize(); ++Index)
     {
         if (this->Data[Index] == InChar)
         {
@@ -722,7 +722,7 @@ FORCEINLINE auto Jafg::LAsciiString::FindFirst(const char InChar) const -> int32
     return INDEX_NONE;
 }
 
-FORCEINLINE int32 Jafg::LAsciiString::FindSecond(const char InChar) const
+FORCEINLINE i32 Jafg::LAsciiString::FindSecond(const char InChar) const
 {
     if (this->Data.IsData() == false)
     {
@@ -731,7 +731,7 @@ FORCEINLINE int32 Jafg::LAsciiString::FindSecond(const char InChar) const
 
     bool Found = false;
 
-    for (int32 Index = 0; Index < this->GetSize(); ++Index)
+    for (i32 Index = 0; Index < this->GetSize(); ++Index)
     {
         if (this->Data[Index] == InChar)
         {
@@ -749,14 +749,14 @@ FORCEINLINE int32 Jafg::LAsciiString::FindSecond(const char InChar) const
     return INDEX_NONE;
 }
 
-FORCEINLINE int32 Jafg::LAsciiString::FindLast(const char InChar) const
+FORCEINLINE i32 Jafg::LAsciiString::FindLast(const char InChar) const
 {
     if (this->Data.IsData() == false)
     {
         return INDEX_NONE;
     }
 
-    for (int32 Index = this->GetSize() - 1; Index >= 0; --Index)
+    for (i32 Index = this->GetSize() - 1; Index >= 0; --Index)
     {
         if (this->Data[Index] == InChar)
         {
@@ -769,7 +769,7 @@ FORCEINLINE int32 Jafg::LAsciiString::FindLast(const char InChar) const
     return INDEX_NONE;
 }
 
-FORCEINLINE void Jafg::LAsciiString::InlineCut(const int32 InIndex)
+FORCEINLINE void Jafg::LAsciiString::InlineCut(const i32 InIndex)
 {
     check( this->Data.IsValidIndex(InIndex) )
 
@@ -783,7 +783,7 @@ FORCEINLINE void Jafg::LAsciiString::InlineCut(const int32 InIndex)
     return;
 }
 
-FORCEINLINE Jafg::LAsciiString Jafg::LAsciiString::Cut(const int32 InIndex) const
+FORCEINLINE Jafg::LAsciiString Jafg::LAsciiString::Cut(const i32 InIndex) const
 {
     check( this->Data.IsValidIndex(InIndex) )
 
@@ -799,7 +799,7 @@ FORCEINLINE Jafg::LAsciiString Jafg::LAsciiString::Cut(const int32 InIndex) cons
     return Sub;
 }
 
-FORCEINLINE void Jafg::LAsciiString::InlineSub(const int32 InIndex, const int32 InCount)
+FORCEINLINE void Jafg::LAsciiString::InlineSub(const i32 InIndex, const i32 InCount)
 {
     check( this->Data.IsValidIndex(InIndex - 1) )
     check( this->Data.IsValidIndex(InIndex + InCount) )
@@ -807,7 +807,7 @@ FORCEINLINE void Jafg::LAsciiString::InlineSub(const int32 InIndex, const int32 
 
     LAsciiString Sub;
     Sub.Reserve(InCount + 1);
-    for (int32 i = InIndex; i < InIndex + InCount; ++i)
+    for (i32 i = InIndex; i < InIndex + InCount; ++i)
     {
         Sub.Data.Add(this->Data[i]);
     }
@@ -827,7 +827,7 @@ FORCEINLINE void Jafg::LAsciiString::InlineSub(const int32 InIndex, const int32 
     return;
 }
 
-FORCEINLINE void Jafg::LAsciiString::InlineSubIdx(const int32 InIndexA, const int32 InIndexB)
+FORCEINLINE void Jafg::LAsciiString::InlineSubIdx(const i32 InIndexA, const i32 InIndexB)
 {
     check( InIndexA <= InIndexB )
     this->InlineSub(InIndexA, InIndexB - InIndexA);
@@ -835,7 +835,7 @@ FORCEINLINE void Jafg::LAsciiString::InlineSubIdx(const int32 InIndexA, const in
     return;
 }
 
-FORCEINLINE Jafg::LAsciiString Jafg::LAsciiString::Sub(const int32 InIndex, const int32 InCount) const
+FORCEINLINE Jafg::LAsciiString Jafg::LAsciiString::Sub(const i32 InIndex, const i32 InCount) const
 {
     if (InIndex == 0)
     {
@@ -853,7 +853,7 @@ FORCEINLINE Jafg::LAsciiString Jafg::LAsciiString::Sub(const int32 InIndex, cons
 
     LAsciiString Sub;
     Sub.Reserve(InCount + 1);
-    for (int32 i = InIndex; i < InIndex + InCount; ++i)
+    for (i32 i = InIndex; i < InIndex + InCount; ++i)
     {
         Sub.Data.Add(this->Data[i]);
     }
@@ -866,15 +866,15 @@ FORCEINLINE Jafg::LAsciiString Jafg::LAsciiString::Sub(const int32 InIndex, cons
     return Sub;
 }
 
-FORCEINLINE Jafg::LAsciiString Jafg::LAsciiString::SubIdx(const int32 InIndexA, const int32 InIndexB) const
+FORCEINLINE Jafg::LAsciiString Jafg::LAsciiString::SubIdx(const i32 InIndexA, const i32 InIndexB) const
 {
     check( InIndexA <= InIndexB )
     return this->Sub(InIndexA, InIndexB - InIndexA);
 }
 
-FORCEINLINE int32 Jafg::LAsciiString::Count(const char InChar) const
+FORCEINLINE i32 Jafg::LAsciiString::Count(const char InChar) const
 {
-    int32 Count = 0;
+    i32 Count = 0;
     for (const LRune Rune : this->Data)
     {
         if (Rune == InChar)

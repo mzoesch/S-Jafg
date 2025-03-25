@@ -32,7 +32,7 @@ Jafg::LString Jafg::LPreferenceValue_Scalar::Fmt_ZeroToOneAsPercent(const double
         return "ERROR";
     }
 
-    return LString::SprintF("{}%", static_cast<int32>(Maths::Round(JAFG_TO_PERCENT * Value)));
+    return LString::SprintF("{}%", static_cast<i32>(Maths::Round(JAFG_TO_PERCENT * Value)));
 }
 
 void Jafg::LPreferenceValue_Scalar::BuildDefault(const LPreference* Self, WWidgetParentBase* Target)

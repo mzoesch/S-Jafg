@@ -27,7 +27,7 @@ Jafg::LVector2 Jafg::WVBox::GetRelativeTopLeftForChild(const WWidgetNode* InDire
     check( InDirectChild )
 
     LVector2 Offset = Super::GetRelativeTopLeftForChild(InDirectChild);
-    int32 Idx = this->GetChildren().FindIndexByPredicate([InDirectChild] (const LWidgetSlot* const InSlot) -> bool
+    i32 Idx = this->GetChildren().FindIndexByPredicate([InDirectChild] (const LWidgetSlot* const InSlot) -> bool
     {
         return InSlot->Content == InDirectChild;
     });

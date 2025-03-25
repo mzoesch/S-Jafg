@@ -16,7 +16,7 @@ struct LDebugTraceLineShaderContextDrawArgs final : public LGenericShaderContext
     LVector End = { };
     LColor  Color = { };
     /* Depending on the hardware, the max value may vary (but usually it's not more than 10). */
-    uint8 Thickness = 1;
+    u8 Thickness = 1;
 };
 
 class LDebugTraceLineShaderContext final : public LGenericShaderContext
@@ -30,8 +30,8 @@ public:
 private:
 
     LShader Program = { };
-    uint32  Vao = 0;
-    uint32  Vbo = 0;
+    u32  Vao = 0;
+    u32  Vbo = 0;
 };
 
 } /* ~Namespace Jafg */

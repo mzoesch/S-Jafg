@@ -32,7 +32,7 @@ ENGINE_API extern bool          bGShouldRequestExit;
 //#
 ENGINE_API extern bool          bGEngineRequestingExit;
 
-ENGINE_API extern int32         GCustomExitStatusOverride;
+ENGINE_API extern i32         GCustomExitStatusOverride;
 ENGINE_API extern LSimpleString GCustomExitReason;
 
 FORCEINLINE bool IsEngineValid() { return GEngine; }
@@ -43,7 +43,7 @@ FORCEINLINE bool IsTearingDown() { return bGEngineRequestingExit; }
 FORCEINLINE bool WillShortlyTerminate() { return bGShouldRequestExit || bGEngineRequestingExit; }
 
 FORCEINLINE bool HasCustomExitStatus() { return GCustomExitStatusOverride != INDEX_NONE; }
-FORCEINLINE auto GetCustomExitStatus() -> int32 { return GCustomExitStatusOverride; }
+FORCEINLINE auto GetCustomExitStatus() -> i32 { return GCustomExitStatusOverride; }
 FORCEINLINE bool HasCustomExitReason() { return GCustomExitReason.IsEmpty() == false; }
 FORCEINLINE auto GetCustomExitReason() -> LSimpleString { return GCustomExitReason; }
 
@@ -97,8 +97,8 @@ public:
 
     ENGINE_API void RequestEngineExit();
     ENGINE_API void RequestEngineExit(const LSimpleString& Reason);
-    ENGINE_API void RequestEngineExit(const int32 CustomExitStatus);
-    ENGINE_API void RequestEngineExit(const int32 CustomExitStatus, const LSimpleString& Reason);
+    ENGINE_API void RequestEngineExit(const i32 CustomExitStatus);
+    ENGINE_API void RequestEngineExit(const i32 CustomExitStatus, const LSimpleString& Reason);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Client Local Stuff
@@ -110,20 +110,20 @@ public:
     FORCEINLINE auto GetLocalEgo() -> LLocalEgo* { check( this->IsLocalEgoValid() ) return &this->LocalEgo; }
     FORCEINLINE auto GetLocalEgo() const -> const LLocalEgo* { check( this->IsLocalEgoValid() ) return &this->LocalEgo; }
 
-    FORCEINLINE auto GetShader(const uint32 InShaderUuid) noexcept -> LEngineShader*;
-    FORCEINLINE auto GetShaderChecked(const uint32 InShaderUuid) noexceptcheck -> LEngineShader* { LEngineShader* Out = this->GetShader(InShaderUuid); check( Out ) return Out; }
-    FORCEINLINE auto GetShaderAsserted(const uint32 InShaderUuid) -> LEngineShader* { LEngineShader* Out = this->GetShader(InShaderUuid); jassert( Out ) return Out; }
+    FORCEINLINE auto GetShader(const u32 InShaderUuid) noexcept -> LEngineShader*;
+    FORCEINLINE auto GetShaderChecked(const u32 InShaderUuid) noexceptcheck -> LEngineShader* { LEngineShader* Out = this->GetShader(InShaderUuid); check( Out ) return Out; }
+    FORCEINLINE auto GetShaderAsserted(const u32 InShaderUuid) -> LEngineShader* { LEngineShader* Out = this->GetShader(InShaderUuid); jassert( Out ) return Out; }
     FORCEINLINE auto GetShaders() noexcept -> TdhArray<LEngineShader*>& { return this->Shaders; }
     FORCEINLINE auto GetShaders() const noexcept -> const TdhArray<LEngineShader*>& { return this->Shaders; }
-    FORCEINLINE bool RemoveShader(const uint32 InShaderUuid, const bool bFree = true) noexcept;
-    FORCEINLINE bool RemoveShaderChecked(const uint32 InShaderUuid, const bool bFree = true) noexceptcheck;
+    FORCEINLINE bool RemoveShader(const u32 InShaderUuid, const bool bFree = true) noexcept;
+    FORCEINLINE bool RemoveShaderChecked(const u32 InShaderUuid, const bool bFree = true) noexceptcheck;
 
 private:
 
-    FORCEINLINE uint32 AddShader(LEngineShader* InShader);
-    FORCEINLINE uint32 MakeShaderUuid() { return ++this->ShaderUuid; }
+    FORCEINLINE u32 AddShader(LEngineShader* InShader);
+    FORCEINLINE u32 MakeShaderUuid() { return ++this->ShaderUuid; }
 
-    uint32 ShaderUuid = NULL;
+    u32 ShaderUuid = NULL;
     LLocalEgo LocalEgo;
     TdhArray<LEngineShader*> Shaders;
 
@@ -189,7 +189,7 @@ private:
     LCommandLineInterface CommandLineInterface;
 };
 
-FORCEINLINE LEngineShader* LEngine::GetShader(const uint32 InShaderUuid) noexcept
+FORCEINLINE LEngineShader* LEngine::GetShader(const u32 InShaderUuid) noexcept
 {
     LEngineShader** Out = this->Shaders.FindByPredicate(
         [InShaderUuid] (const LEngineShader* i)
@@ -206,7 +206,7 @@ FORCEINLINE LEngineShader* LEngine::GetShader(const uint32 InShaderUuid) noexcep
     return nullptr;
 }
 
-FORCEINLINE uint32 LEngine::AddShader(LEngineShader* InShader)
+FORCEINLINE u32 LEngine::AddShader(LEngineShader* InShader)
 {
     check( InShader )
     check( InShader->GetUuid() == 0 )
@@ -216,7 +216,7 @@ FORCEINLINE uint32 LEngine::AddShader(LEngineShader* InShader)
     return InShader->GetUuid();
 }
 
-FORCEINLINE bool LEngine::RemoveShader(const uint32 InShaderUuid, const bool bFree /* = true */) noexcept
+FORCEINLINE bool LEngine::RemoveShader(const u32 InShaderUuid, const bool bFree /* = true */) noexcept
 {
     LOG_VERBOSE(LogEngine, "Removing engine shader [{}].", InShaderUuid)
 
@@ -229,7 +229,7 @@ FORCEINLINE bool LEngine::RemoveShader(const uint32 InShaderUuid, const bool bFr
     return this->Shaders.RemoveOnceByPredicate([InShaderUuid](const LEngineShader* i) { return i->GetUuid() == InShaderUuid; });
 }
 
-FORCEINLINE bool LEngine::RemoveShaderChecked(const uint32 InShaderUuid, const bool bFree /* = true */) noexceptcheck
+FORCEINLINE bool LEngine::RemoveShaderChecked(const u32 InShaderUuid, const bool bFree /* = true */) noexceptcheck
 {
     const bool bOut = this->RemoveShader(InShaderUuid, bFree);
     check( bOut )

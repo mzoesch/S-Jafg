@@ -21,7 +21,7 @@ bool IsGdb()
 {
     char Buffer[4096];
 
-    const int32 Fd = ::open("/proc/self/status", O_RDONLY);
+    const i32 Fd = ::open("/proc/self/status", O_RDONLY);
     if (Fd == -1)
     {
         return false;
@@ -58,12 +58,12 @@ bool IsGdb()
 
 } /* ~Namespace <Anonymous> */
 
-int32 main(int32 argc, char *argv[])
+i32 main(i32 argc, char *argv[])
 {
-    int32 ErrorLevel = 0;
+    i32 ErrorLevel = 0;
 
     LString CmdLine;
-    for (int32 i = 1; i < argc; ++i)
+    for (i32 i = 1; i < argc; ++i)
     {
         CmdLine += argv[i];
         if (i < argc - 1)

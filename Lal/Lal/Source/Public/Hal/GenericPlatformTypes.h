@@ -43,22 +43,22 @@
 struct LGenericPlatformTypes
 {
     /** 8-bit unsigned integer */
-    typedef unsigned char       uint8;
+    typedef unsigned char       u8;
     /** 16-bit unsigned integer */
-    typedef unsigned short int  uint16;
+    typedef unsigned short int  u16;
     /** 32-bit unsigned integer */
-    typedef unsigned int        uint32;
+    typedef unsigned int        u32;
     /** 64-bit unsigned integer */
-    typedef unsigned long long  uint64;
+    typedef unsigned long long  u64;
 
     /** 8-bit signed integer */
-    typedef signed char         int8;
+    typedef signed char         i8;
     /** 16-bit signed integer  */
-    typedef signed short int    int16;
+    typedef signed short int    i16;
     /** 32-bit signed integer */
-    typedef signed int          int32;
+    typedef signed int          i32;
     /** 64-bit signed integer */
-    typedef signed long long    int64;
+    typedef signed long long    i64;
 
     /** An ASCII character. 8-bit fixed-width representation of 7-bit characters. */
     typedef char                LAsciiChar;

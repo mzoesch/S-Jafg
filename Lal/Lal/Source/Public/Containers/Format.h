@@ -33,14 +33,14 @@ template <> NODISCARD inline auto FormatArgLegacy(const LSimpleString& Arg) { re
 template <> NODISCARD inline auto FormatArgLegacy(const float Arg) { return Arg; }
 template <> NODISCARD inline auto FormatArgLegacy(const double Arg) { return Arg; }
 template <> NODISCARD inline auto FormatArgLegacy(const bool Arg) { return Arg; }
-template <> NODISCARD inline auto FormatArgLegacy(const int8 Arg) { return Arg; }
-template <> NODISCARD inline auto FormatArgLegacy(const int16 Arg) { return Arg; }
-template <> NODISCARD inline auto FormatArgLegacy(const int32 Arg) { return Arg; }
-template <> NODISCARD inline auto FormatArgLegacy(const int64 Arg) { return Arg; }
-template <> NODISCARD inline auto FormatArgLegacy(const uint8 Arg) { return Arg; }
-template <> NODISCARD inline auto FormatArgLegacy(const uint16 Arg) { return Arg; }
-template <> NODISCARD inline auto FormatArgLegacy(const uint32 Arg) { return Arg; }
-template <> NODISCARD inline auto FormatArgLegacy(const uint64 Arg) { return Arg; }
+template <> NODISCARD inline auto FormatArgLegacy(const i8 Arg) { return Arg; }
+template <> NODISCARD inline auto FormatArgLegacy(const i16 Arg) { return Arg; }
+template <> NODISCARD inline auto FormatArgLegacy(const i32 Arg) { return Arg; }
+template <> NODISCARD inline auto FormatArgLegacy(const i64 Arg) { return Arg; }
+template <> NODISCARD inline auto FormatArgLegacy(const u8 Arg) { return Arg; }
+template <> NODISCARD inline auto FormatArgLegacy(const u16 Arg) { return Arg; }
+template <> NODISCARD inline auto FormatArgLegacy(const u32 Arg) { return Arg; }
+template <> NODISCARD inline auto FormatArgLegacy(const u64 Arg) { return Arg; }
 template <> NODISCARD inline auto FormatArgLegacy(const long int Arg) { return Arg; }
 template <> NODISCARD inline auto FormatArgLegacy(const unsigned long int Arg) { return Arg; }
 

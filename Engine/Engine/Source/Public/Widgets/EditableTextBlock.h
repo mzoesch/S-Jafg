@@ -83,7 +83,7 @@ private:
     LFontShaderContext ShaderContext;
 
     LCaretBrush       CaretBrush;
-    int32             CaretCursor  = 0;
+    i32             CaretCursor  = 0;
     float             CaretBlinker = 0.0f;
     float             CaretBlinkerSpeed = 0.5f;
     LBoxShaderContext CaretShaderContext;

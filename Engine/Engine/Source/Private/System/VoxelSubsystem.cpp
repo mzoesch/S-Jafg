@@ -56,7 +56,7 @@ void Jafg::JVoxelSubsystem::SortAllVoxelMasksTextureGroups()
 {
     for (LVoxelMask& Mask : this->VoxelMasks)
     {
-        for (int32 i = 0; i < Mask.TextureGroups.GetSize(); ++i)
+        for (i32 i = 0; i < Mask.TextureGroups.GetSize(); ++i)
         {
             if (Mask.TextureGroups[i].Normal != ENormalLookup::Omnia)
             {

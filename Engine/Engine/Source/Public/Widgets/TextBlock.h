@@ -11,8 +11,8 @@ namespace Jafg
 
 class LShader;
 class LViewport;
-namespace ETextHAlign { enum Type : uint8; }
-namespace ETextVAlign { enum Type : uint8; }
+namespace ETextHAlign { enum Type : u8; }
+namespace ETextVAlign { enum Type : u8; }
 
 //#
 //# Vertical text alignment is not often used, so we just use the horizontal alignment.
@@ -21,7 +21,7 @@ namespace ETextAlign = ETextHAlign;
 namespace ETextHAlign
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Left,
     Center,
@@ -38,7 +38,7 @@ FORCEINLINE bool IsRight(const Type InAlign)  { return InAlign == Right; }
 namespace ETextVAlign
 {
 
-enum Type : uint8
+enum Type : u8
 {
     Top,
     Center,
@@ -166,8 +166,8 @@ private:
 
     mutable LVector2 TextDesiredSize = LVector2::Zero();
 
-    uint32  Vao               = 0x0u;
-    uint32  Vbo               = 0x0u;
+    u32  Vao               = 0x0u;
+    u32  Vbo               = 0x0u;
     mutable LBoxShaderContext TintShaderContext = { };
 };
 

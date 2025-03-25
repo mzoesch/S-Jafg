@@ -58,9 +58,9 @@ ENGINE_API LWidgetFactory& GetWidgetFactory(const void* InNode)
     abort();
 }
 
-ENGINE_API int32 PurgeWidgetFactories()
+ENGINE_API i32 PurgeWidgetFactories()
 {
-    int32 Count = 0;
+    i32 Count = 0;
     for (const auto& [fst, snd] : GWidgetFactories)
     {
         delete snd;

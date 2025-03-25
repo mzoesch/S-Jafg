@@ -44,9 +44,9 @@ public:
     virtual void SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor) override;
     virtual void SetMouseCursor(const EMouseCursor::Type InCursor) override;
 
-    virtual int32 GetWidth() const override { return this->GetDimensions().X; }
-    virtual int32 GetHeight() const override { return this->GetDimensions().Y; }
-    virtual auto  GetDimensions() const -> TIntVector2<int32> override;
+    virtual i32 GetWidth() const override { return this->GetDimensions().X; }
+    virtual i32 GetHeight() const override { return this->GetDimensions().Y; }
+    virtual auto  GetDimensions() const -> TIntVector2<i32> override;
 
     virtual bool CanVSync() const override;
     virtual void SetVSync(const bool bEnabled) override;

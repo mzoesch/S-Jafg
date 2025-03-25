@@ -11,7 +11,7 @@ struct TMatrix final
 {
     static_assert(std::is_floating_point_v<T>, "Generic type T of TMatrix must be a floating point type.");
 
-    enum EMatrixAxis : uint8
+    enum EMatrixAxis : u8
     {
         None = 0,
         X = 1 << 0,
@@ -64,8 +64,8 @@ struct TMatrix final
     FORCEINLINE auto GetData()       ->       T* { return &this->Matrix[0][0]; }
     FORCEINLINE auto GetData() const -> const T* { return &this->Matrix[0][0]; }
 
-    FORCEINLINE auto operator[](const int32 InIndex)       -> TVector4<T>&;
-    FORCEINLINE auto operator[](const int32 InIndex) const -> const TVector4<T>&;
+    FORCEINLINE auto operator[](const i32 InIndex)       -> TVector4<T>&;
+    FORCEINLINE auto operator[](const i32 InIndex) const -> const TVector4<T>&;
 
     FORCEINLINE TVector4<T> GetRow(const EMatrixAxis Axis) const
     {
@@ -137,14 +137,14 @@ TMatrix<T>::TMatrix(const Matrix::Type InType)
 }
 
 template <typename T>
-TVector4<T>& TMatrix<T>::operator[](const int32 InIndex)
+TVector4<T>& TMatrix<T>::operator[](const i32 InIndex)
 {
     check( InIndex > INDEX_NONE && InIndex < 4 )
     return &this->Matrix[InIndex][0];
 }
 
 template <typename T>
-const TVector4<T>& TMatrix<T>::operator[](const int32 InIndex) const
+const TVector4<T>& TMatrix<T>::operator[](const i32 InIndex) const
 {
     check( InIndex > INDEX_NONE && InIndex < 4 )
     return &this->Matrix[InIndex][0];
@@ -206,7 +206,7 @@ TMatrix<T> TMatrix<T>::operator+(const TMatrix<T>& InMatrix) const
 {
     TMatrix<T> Result;
 
-    for (int32 Row = 0; Row < 4; ++Row)
+    for (i32 Row = 0; Row < 4; ++Row)
     {
         Result.Matrix[Row][0] = this->Matrix[Row][0] + InMatrix.Matrix[Row][0];
         Result.Matrix[Row][1] = this->Matrix[Row][1] + InMatrix.Matrix[Row][1];
@@ -222,7 +222,7 @@ TMatrix<T> TMatrix<T>::operator+(const TMatrix<T>& InMatrix) const
 template <typename T>
 TMatrix<T>& TMatrix<T>::operator+=(const TMatrix<T>& InMatrix)
 {
-    for (int32 Row = 0; Row < 4; ++Row)
+    for (i32 Row = 0; Row < 4; ++Row)
     {
         this->Matrix[Row][0] += InMatrix.Matrix[Row][0];
         this->Matrix[Row][1] += InMatrix.Matrix[Row][1];
@@ -238,9 +238,9 @@ TMatrix<T>& TMatrix<T>::operator+=(const TMatrix<T>& InMatrix)
 template <typename T>
 bool TMatrix<T>::Equals(const TMatrix<T>& InMatrix, const T InTolerance) const
 {
-    for (int32 Row = 0; Row < 4; ++Row)
+    for (i32 Row = 0; Row < 4; ++Row)
     {
-        for (int32 Col = 0; Col < 4; ++Col)
+        for (i32 Col = 0; Col < 4; ++Col)
         {
             if (Maths::Absolute(this->Matrix[Row][Col] - InMatrix.Matrix[Row][Col]) > InTolerance)
             {
@@ -259,9 +259,9 @@ bool TMatrix<T>::Equals(const TMatrix<T>& InMatrix, const T InTolerance) const
 template <typename T>
 bool TMatrix<T>::operator==(const TMatrix<T>& InMatrix) const
 {
-    for (int32 Row = 0; Row < 4; ++Row)
+    for (i32 Row = 0; Row < 4; ++Row)
     {
-        for (int32 Col = 0; Col < 4; ++Col)
+        for (i32 Col = 0; Col < 4; ++Col)
         {
             if (this->Matrix[Row][Col] != InMatrix.Matrix[Row][Col])
             {
@@ -297,7 +297,7 @@ LSimpleString TMatrix<T>::ToString() const
 {
     LSimpleString Result;
 
-    for (int32 Row = 0; Row < 4; ++Row)
+    for (i32 Row = 0; Row < 4; ++Row)
     {
         Result.Append(LSimpleString::SprintF("{:.2f} {:.2f} {:.2f} {:.2f}\n",
             this->Matrix[Row][0], this->Matrix[Row][1], this->Matrix[Row][2], this->Matrix[Row][3]));

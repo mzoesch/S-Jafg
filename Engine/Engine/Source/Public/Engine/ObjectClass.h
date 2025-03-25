@@ -62,7 +62,7 @@ public:
     /** Check if this object derives from the given parent. */
     ENGINE_API auto DerivesFrom(const LObjectClass* InParent) const -> bool;
 
-    FORCEINLINE auto GetTotalByteSize() const -> int32 { return this->TotalByteSize; }
+    FORCEINLINE auto GetTotalByteSize() const -> i32 { return this->TotalByteSize; }
 
     FORCEINLINE auto GetFlags()      const -> LClassFlags { return this->Flags; }
     FORCEINLINE bool HasAnyFlags()   const { return  this->Flags != EClassFlags::None;                           }
@@ -83,7 +83,7 @@ private:
     TdhArray<LObjectClass*> Children               = { };
 
     //# The total byte size from one instance of this object.
-    int32                   TotalByteSize         = INDEX_NONE;
+    i32                   TotalByteSize         = INDEX_NONE;
 
     //# The flags that describe this object class. */
     LClassFlags             Flags                  = EClassFlags::None;

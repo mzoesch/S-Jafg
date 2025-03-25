@@ -21,7 +21,7 @@ ENGINE_API LEngine*      GEngine                   = nullptr;
 ENGINE_API bool          bGShouldRequestExit       = false;
 ENGINE_API bool          bGEngineRequestingExit    = false;
 
-ENGINE_API int32         GCustomExitStatusOverride = INDEX_NONE;
+ENGINE_API i32         GCustomExitStatusOverride = INDEX_NONE;
 ENGINE_API LSimpleString GCustomExitReason         = "";
 
 } /* ~Namespace Jafg. */
@@ -164,14 +164,14 @@ void Jafg::LEngine::RequestEngineExit(const LSimpleString& Reason)
 
 /* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
 // ReSharper disable once CppMemberFunctionMayBeStatic
-void Jafg::LEngine::RequestEngineExit(const int32 CustomExitStatus)
+void Jafg::LEngine::RequestEngineExit(const i32 CustomExitStatus)
 {
     ::Jafg::RequestEngineExit(CustomExitStatus);
 }
 
 /* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
 // ReSharper disable once CppMemberFunctionMayBeStatic
-void Jafg::LEngine::RequestEngineExit(const int32 CustomExitStatus, const LSimpleString& Reason)
+void Jafg::LEngine::RequestEngineExit(const i32 CustomExitStatus, const LSimpleString& Reason)
 {
     ::Jafg::RequestEngineExit(CustomExitStatus, Reason);
 }

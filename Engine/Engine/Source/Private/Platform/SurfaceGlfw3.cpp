@@ -40,15 +40,15 @@ struct LGlfw3Bridge final
     PROHIBIT_REALLOC_OF_ANY_FORM(LGlfw3Bridge)
     ~LGlfw3Bridge() = delete;
 
-    static void FramebufferSizeCallback(::GLFWwindow* Window, const int32 Width, const int32 Height);
+    static void FramebufferSizeCallback(::GLFWwindow* Window, const i32 Width, const i32 Height);
     static void MouseCallback(::GLFWwindow* Window, const double XPos, const double YPos);
     static void ScrollCallback(::GLFWwindow* Window, const double XOffset, const double YOffset);
-    static void MouseEnterCallback(::GLFWwindow* Window, const int32 Entered);
-    static void CharCallback(::GLFWwindow* Window, const uint32 Codepoint);
-    static void KeyCallback(::GLFWwindow* Window, const int32 Key, const int32 Scancode, const int32 Action, const int32 Mods);
+    static void MouseEnterCallback(::GLFWwindow* Window, const i32 Entered);
+    static void CharCallback(::GLFWwindow* Window, const u32 Codepoint);
+    static void KeyCallback(::GLFWwindow* Window, const i32 Key, const i32 Scancode, const i32 Action, const i32 Mods);
 };
 
-void LGlfw3Bridge::FramebufferSizeCallback(::GLFWwindow* Window, const int32 Width, const int32 Height)
+void LGlfw3Bridge::FramebufferSizeCallback(::GLFWwindow* Window, const i32 Width, const i32 Height)
 {
     checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
     static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->FramebufferSizeCallback(Width, Height);
@@ -69,21 +69,21 @@ void LGlfw3Bridge::ScrollCallback(GLFWwindow* Window, const double XOffset, cons
     return;
 }
 
-void LGlfw3Bridge::MouseEnterCallback(GLFWwindow* Window, const int32 Entered)
+void LGlfw3Bridge::MouseEnterCallback(GLFWwindow* Window, const i32 Entered)
 {
     checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
     static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->MouseEnterCallback(Entered);
     return;
 }
 
-void LGlfw3Bridge::CharCallback(GLFWwindow* Window, const uint32 Codepoint)
+void LGlfw3Bridge::CharCallback(GLFWwindow* Window, const u32 Codepoint)
 {
     checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
     static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->CharCallback(Codepoint);
     return;
 }
 
-void LGlfw3Bridge::KeyCallback(GLFWwindow* Window, const int32 Key, const int32 Scancode, const int32 Action, const int32 Mods)
+void LGlfw3Bridge::KeyCallback(GLFWwindow* Window, const i32 Key, const i32 Scancode, const i32 Action, const i32 Mods)
 {
     checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
     static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->KeyCallback(Key, Scancode, Action, Mods);
@@ -191,9 +191,9 @@ void Jafg::LSurfaceGlfw3::Initialize()
 #if PLATFORM_WINDOWS
     const HWND NativeWindowHandle = glfwGetWin32Window(this->Handle);
     check( NativeWindowHandle )
-    const uint32 PlatformDpi = ::GetDpiForWindow(NativeWindowHandle);
+    const u32 PlatformDpi = ::GetDpiForWindow(NativeWindowHandle);
 #else /* PLATFORM_WINDOWS */
-    const uint32 PlatformDpi = 96; // Sketchy
+    const u32 PlatformDpi = 96; // Sketchy
 #endif /* !PLATFORM_WINDOWS */
 
     this->GetViewport().SetPlatformDpi(static_cast<float>(PlatformDpi));
@@ -274,7 +274,7 @@ void Jafg::LSurfaceGlfw3::PollInputs()
     LKey KeyCursor = EKeys::A;
     while (KeyCursor <= EKeys::LastKey)
     {
-        const int32 TranslatedKey = Glfw3::TranslateKeyToGlfw(KeyCursor);
+        const i32 TranslatedKey = Glfw3::TranslateKeyToGlfw(KeyCursor);
         if (TranslatedKey == INDEX_NONE)
         {
             ++KeyCursor;
@@ -398,7 +398,7 @@ void Jafg::LSurfaceGlfw3::SetMouseCursor(const EMouseCursor::Type InCursor)
     }
     else
     {
-        LOG_WARNING(LogSystem, "Unknown cursor type {}[{}].", static_cast<int32>(InCursor), LexToString(InCursor))
+        LOG_WARNING(LogSystem, "Unknown cursor type {}[{}].", static_cast<i32>(InCursor), LexToString(InCursor))
     }
 
     if (InCursor != EMouseCursor::None)
@@ -419,7 +419,7 @@ Jafg::TIntVector2<int> Jafg::LSurfaceGlfw3::GetDimensions() const
      * Do we want to cache this value?
      * How long does it take to get the window size?
      */
-    int32 Width, Height;
+    i32 Width, Height;
     glfwGetWindowSize(this->Handle, &Width, &Height);
     return LIntVector2(Width, Height);
 }
@@ -447,7 +447,7 @@ void Jafg::LSurfaceGlfw3::SetVSync(const bool bEnabled)
     return;
 }
 
-void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const int32 Width, const int32 Height)
+void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const i32 Width, const i32 Height)
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
@@ -516,7 +516,7 @@ void Jafg::LSurfaceGlfw3::ScrollCallback(const double XOffset, const double YOff
     return;
 }
 
-void Jafg::LSurfaceGlfw3::MouseEnterCallback(const int32 Entered)
+void Jafg::LSurfaceGlfw3::MouseEnterCallback(const i32 Entered)
 {
     if (Entered == GLFW_TRUE)
     {
@@ -530,7 +530,7 @@ void Jafg::LSurfaceGlfw3::MouseEnterCallback(const int32 Entered)
     return;
 }
 
-void Jafg::LSurfaceGlfw3::CharCallback(const uint32 Codepoint)
+void Jafg::LSurfaceGlfw3::CharCallback(const u32 Codepoint)
 {
     std::u32string Char;
     Char.push_back(Codepoint);
@@ -550,7 +550,7 @@ void Jafg::LSurfaceGlfw3::CharCallback(const uint32 Codepoint)
     return;
 }
 
-void Jafg::LSurfaceGlfw3::KeyCallback(const int32 Key, const int32 Scancode, const int32 Action, const int32 Mods)
+void Jafg::LSurfaceGlfw3::KeyCallback(const i32 Key, const i32 Scancode, const i32 Action, const i32 Mods)
 {
     if (Action == GLFW_REPEAT)
     {
