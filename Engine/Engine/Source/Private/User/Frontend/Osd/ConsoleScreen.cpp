@@ -2,9 +2,9 @@
 
 #include "CoreAfx.h"
 #include "User/Frontend/Osd/ConsoleScreen.h"
-#include "Engine/Cli/CliStatics.h"
 #include "Engine/Engine.h"
-#include "Engine/Cli/CommandLineInterface.h"
+#include "Cli/CliStatics.h"
+#include "Cli/CommandLineInterface.h"
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "User/Input/UserInput.h"

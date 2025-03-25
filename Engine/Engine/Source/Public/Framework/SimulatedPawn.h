@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/Framework/Pawn.h"
+#include "Framework/Pawn.h"
 #include "SimulatedPawn.generated.h"
 
 namespace Jafg

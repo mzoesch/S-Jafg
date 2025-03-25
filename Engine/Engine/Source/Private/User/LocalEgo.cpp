@@ -2,12 +2,12 @@
 
 #include "User/LocalEgo.h"
 #include "Engine/Engine.h"
-#include "Engine/Framework/Frontend.h"
 #include "Platform/Surface.h"
 #include "Engine/ActorUtility.h"
-#include "Engine/Framework/Pawn.h"
-#include "Engine/Framework/PersonaController.h"
-#include "Engine/Framework/Lackey.h"
+#include "Framework/Frontend.h"
+#include "Framework/Pawn.h"
+#include "Framework/PersonaController.h"
+#include "Framework/Lackey.h"
 #include "MyWorld/MyWorldStatics.h"
 #include "Subsystems/LocalEgoSubsystem.h"
 

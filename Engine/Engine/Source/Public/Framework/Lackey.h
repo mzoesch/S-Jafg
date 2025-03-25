@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/Framework/Pawn.h"
+#include "Framework/Pawn.h"
 #include "Lackey.generated.h"
 
 namespace Jafg

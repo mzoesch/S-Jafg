@@ -3,7 +3,7 @@
 #include "CoreAfx.h"
 #include "MyWorld/Validation/ChunkValidationSubsystem.h"
 #include "Engine/World.h"
-#include "Engine/Framework/Pawn.h"
+#include "Framework/Pawn.h"
 #include "MyWorld/Validation/ChunkValidationUtility.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 

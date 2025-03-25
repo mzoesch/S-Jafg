@@ -1,10 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
-#include "Engine/Cli/CliStatics.h"
-
-#include "Engine/Cli/CliCommand.h"
-#include "Engine/Cli/CliObject.h"
+#include "Cli/CliStatics.h"
+#include "Cli/CliCommand.h"
+#include "Cli/CliObject.h"
 
 Jafg::LString Jafg::CliStatics::SafelyRemoveCommandPrefix(const LString& InText)
 {

@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Engine/Cli/CommandLineInterface.h"
-#include "Engine/Cli/CliStatics.h"
+#include "Cli/CommandLineInterface.h"
+#include "Cli/CliStatics.h"
 
 void Jafg::LCommandLineInterface::TearDown()
 {

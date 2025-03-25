@@ -5,7 +5,7 @@
 #include "Level.h"
 #include "Platform/SurfaceForward.h"
 #include "Subsystems/EngineSubsystem.h"
-#include "Engine/Cli/CommandLineInterface.h"
+#include "Cli/CommandLineInterface.h"
 #include "User/LocalEgo.h"
 #include "Engine/World.h"
 #include "Rhi/EngineShader.h"

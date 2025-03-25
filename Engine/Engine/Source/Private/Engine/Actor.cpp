@@ -2,8 +2,8 @@
 
 #include "CoreAfx.h"
 #include "Engine/Actor.h"
-#include "Engine/Components/RenderComponent.h"
-#include "Engine/Components/NoPhysicsCompontent.h"
+#include "Components/RenderComponent.h"
+#include "Components/NoPhysicsCompontent.h"
 
 void Jafg::AActor::EndLife()
 {

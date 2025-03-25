@@ -4,7 +4,7 @@
 
 #include "Subsystems/LocalEgoSubsystem.h"
 #include "CoreCommandSubsystem.generated.h"
-#include "Engine/Cli/CommandLineInterface.h"
+#include "Cli/CommandLineInterface.h"
 
 namespace Jafg
 {

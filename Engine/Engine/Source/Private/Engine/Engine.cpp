@@ -7,7 +7,7 @@
 #include "Engine/World.h"
 #include "User/LocalEgo.h"
 #include "Subsystems/EngineSubsystem.h"
-#include "Engine/Cli/CommandLineInterface.h"
+#include "Cli/CommandLineInterface.h"
 #include "Rhi/RendererStateMachine.h"
 
 ///////////////////////////////////////////////////////////////////////////////

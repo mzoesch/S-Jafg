@@ -4,7 +4,7 @@
 #include "MyWorld/Generation/ChunkGenerator.h"
 #include "Engine/Engine.h"
 #include "MyWorld/MyWorldStatics.h"
-#include "Engine/Framework/Pawn.h"
+#include "Framework/Pawn.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "MyWorld/Meshing/ChunkMesher.h"
 #include "MyWorld/Chunk/ChunkPhysics.h"

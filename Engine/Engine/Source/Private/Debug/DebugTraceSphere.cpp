@@ -4,7 +4,7 @@
 #include "Rhi/DebugTraceSphereShaderContext.h"
 #include "Engine/World.h"
 #include "User/LocalEgo.h"
-#include "Engine/Framework/Eye.h"
+#include "Framework/Eye.h"
 
 namespace
 {

@@ -5,7 +5,7 @@
 #include "Engine/Actor.h"
 #include "MyWorld/Chunk/ChunkStates.h"
 #include "MyWorld/MyWorldStatics.h"
-#include "Engine/Components/RenderComponent.h"
+#include "Components/RenderComponent.h"
 #include "MyWorld/ChunkKey.h"
 #include "ChunkPersistency.h"
 #include "MyWorld/CommonTypes.h"

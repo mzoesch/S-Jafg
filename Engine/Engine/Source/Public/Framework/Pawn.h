@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Engine/Actor.h"
-#include "Engine/Framework/Eye.h"
+#include "Framework/Eye.h"
 #include "Pawn.generated.h"
 
 namespace Jafg

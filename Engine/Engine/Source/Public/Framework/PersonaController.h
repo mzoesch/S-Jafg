@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/Framework/Controller.h"
+#include "Framework/Controller.h"
 #include "PersonaController.generated.h"
 
 namespace Jafg

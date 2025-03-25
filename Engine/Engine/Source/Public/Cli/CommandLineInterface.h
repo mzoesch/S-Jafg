@@ -2,9 +2,8 @@
 
 #pragma once
 
-#include "CoreAfx.h"
-#include "Engine/Cli/CliCommand.h"
-#include "Engine/Cli/CliVariable.h"
+#include "Cli/CliCommand.h"
+#include "Cli/CliVariable.h"
 
 namespace Jafg
 {

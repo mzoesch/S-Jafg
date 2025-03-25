@@ -3,7 +3,7 @@
 #include "User/CoreSubsystems/CoreCommandSubsystem.h"
 #include "Engine/Engine.h"
 #include "User/LocalEgo.h"
-#include "Engine/Cli/CliCommand.h"
+#include "Cli/CliCommand.h"
 
 DECLARE_INLINE_LOG_CATEGORY(LogCoreCommands, Trace)
 

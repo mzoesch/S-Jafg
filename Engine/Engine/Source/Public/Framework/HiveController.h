@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/Framework/Controller.h"
+#include "Framework/Controller.h"
 #include "HiveController.generated.h"
 
 namespace Jafg

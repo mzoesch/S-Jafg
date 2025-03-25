@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/Cli/CliObject.h"
+#include "Cli/CliObject.h"
 
 namespace Jafg
 {

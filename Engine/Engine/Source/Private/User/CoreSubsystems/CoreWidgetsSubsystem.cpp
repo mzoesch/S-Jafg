@@ -1,7 +1,7 @@
     // Copyright mzoesch. All rights reserved.
 
 #include "User/CoreSubsystems/CoreWidgetsSubsystem.h"
-#include "Engine/Framework/Frontend.h"
+#include "Framework/Frontend.h"
 #include "Widgets/UserWidget.h"
 #include "User/Frontend/Osd/DebugScreen.h"
 #include "User/Frontend/Hud/Crosshair.h"

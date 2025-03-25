@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
-#include "Engine/Cli/CliObject.h"
+#include "Cli/CliObject.h"
 
 bool Jafg::LCliToken_String::IsInvocable(TdhArray<LCliToken*> InArgs, int32* InOutArgCursor) const
 {

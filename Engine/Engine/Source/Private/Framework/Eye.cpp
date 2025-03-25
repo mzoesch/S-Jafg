@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Engine/Framework/Eye.h"
-#include "Engine/Framework/Pawn.h"
+#include "Framework/Eye.h"
+#include "Framework/Pawn.h"
 
 void Jafg::LEye::UpdateViewMatrix()
 {

@@ -1,8 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Engine/Framework/PersonaController.h"
+#include "Framework/PersonaController.h"
 #include "Engine/World.h"
-#include "Engine/Framework/Pawn.h"
+#include "Framework/Pawn.h"
 #include "User/LocalEgo.h"
 #include "Engine/Engine.h"
 

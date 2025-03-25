@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
-#include "Engine/Framework/Pawn.h"
+#include "Framework/Pawn.h"
 #include "MyWorld/Chunk/ChunkStates.h"
 #include "MyWorld/Generation/ChunkGeneratorSubsystem.h"
 #include "MyWorld/Meshing/NaiveMesher.h"

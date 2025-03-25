@@ -4,7 +4,7 @@
 
 #include "CoreAfx.h"
 #include "User/Input/UserInput.h"
-#include "Engine/Framework/Frontend.h"
+#include "Framework/Frontend.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Platform/SurfaceForward.h"
 #include "Subsystems/LocalEgoSubsystem.h"

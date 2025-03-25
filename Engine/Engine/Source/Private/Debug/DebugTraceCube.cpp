@@ -1,8 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Debug/DebugTraceCube.h"
-#include "Engine/Framework/Eye.h"
-#include "Engine/Framework/PersonaController.h"
+#include "Framework/Eye.h"
+#include "Framework/PersonaController.h"
 #include "Rhi/DebugTraceCubeShaderContext.h"
 
 namespace

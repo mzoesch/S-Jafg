@@ -2,8 +2,8 @@
 
 #include "User/CoreSubsystems/CoreInputSubsystem.h"
 #include "Core/CoreNames.h"
-#include "Engine/Framework/Frontend.h"
-#include "Engine/Framework/Pawn.h"
+#include "Framework/Frontend.h"
+#include "Framework/Pawn.h"
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"

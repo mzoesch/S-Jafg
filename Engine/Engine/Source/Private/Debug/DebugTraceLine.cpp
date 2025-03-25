@@ -5,7 +5,7 @@
 #include "Engine/World.h"
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
-#include "Engine/Framework/Eye.h"
+#include "Framework/Eye.h"
 
 namespace
 {

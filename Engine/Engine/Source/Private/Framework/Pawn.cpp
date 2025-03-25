@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Engine/Framework/Pawn.h"
+#include "Framework/Pawn.h"
 #include "Debug/DebugTraceCube.h"
 #include "Debug/DebugTraceLine.h"
 #include "MyWorld/Chunk/Chunk.h"

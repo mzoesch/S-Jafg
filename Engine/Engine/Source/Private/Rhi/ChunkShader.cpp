@@ -2,7 +2,7 @@
 
 #include "Rhi/ChunkShader.h"
 #include "Engine/Engine.h"
-#include "Engine/Framework/Eye.h"
+#include "Framework/Eye.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "System/MaterialSubsystem.h"
 #include "System/EnginePath.h"

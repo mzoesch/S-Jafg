@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
-#include "Engine/Cli/CliCommand.h"
+#include "Cli/CliCommand.h"
 
 Jafg::LSimpleString Jafg::LexToString(const ECommandReturnCode::Type& InType)
 {
