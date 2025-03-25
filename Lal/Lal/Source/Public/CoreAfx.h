@@ -102,3 +102,8 @@
 #include "Maths/Matrix.h"
 #include "Maths/Transform.h"
 #include "Maths/Matrix3.h"
+
+#if PLATFORM_USES_INLINE_MATH_DEFINES
+    #define PRIVATE_JAFG_MAKE_INLINE
+    #include "Lal/Lal/Source/Private/Math/MathDefines.cpp"
+#endif /* PLATFORM_USES_INLINE_MATH_DEFINES */

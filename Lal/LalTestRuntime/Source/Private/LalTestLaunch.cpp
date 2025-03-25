@@ -28,8 +28,6 @@ EPlatformExit::Type LalLaunchTestMain(void)
     return ExitCode;
 }
 
-#endif /* WITH_TESTS */
-
 #if PLATFORM_WINDOWS
     int32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ char* pCmdLine, _In_ int32 nCmdShow)
 #else /* PLATFORM_WASM */
@@ -46,3 +44,5 @@ EPlatformExit::Type LalLaunchTestMain(void)
     return EPlatformExit::Success;
 #endif /* !WITH_TESTS */
 }
+
+#endif /* WITH_TESTS */

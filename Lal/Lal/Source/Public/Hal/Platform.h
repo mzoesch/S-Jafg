@@ -120,6 +120,13 @@
 #endif /* !PLATFORM_USES_JAVA_SCRIPT_FRONTEND */
 
 /**
+ * Whether compiler supports extern template specifications.
+ */
+#ifndef PLATFORM_USES_INLINE_MATH_DEFINES
+    #define PLATFORM_USES_INLINE_MATH_DEFINES        0
+#endif /* !PLATFORM_USES_INLINE_MATH_DEFINES */
+
+/**
  * If no, the platform will compile all libraries as static libraries.
  * This will not allow for dynamic linking at runtime, and therefore all plugins must be present at compile time.
  * Generated translation units for _all_ modules will be deferred and then compiled and linked directly into the main executable.

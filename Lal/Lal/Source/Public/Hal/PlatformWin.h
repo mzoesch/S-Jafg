@@ -258,10 +258,10 @@
 #define NOMINMAX        1 // <--- Always block. Jafg will not compile otherwise.
 
 #ifndef UNICODE /* Always use wides on Windows. */
-    #define UNICODE
+    #define UNICODE     1
 #endif /* UNICODE */
 #ifndef _UNICODE
-    #define _UNICODE
+    #define _UNICODE    1
 #endif /* _UNICODE */
 
 /**

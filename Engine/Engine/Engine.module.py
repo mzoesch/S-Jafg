@@ -11,9 +11,7 @@ def add_module(me: Module, args: ModuleArgs) -> None:
     me.private_dependencies.append('~Engine/EngineForward')
 
     me.native_includes.append('Engine/Vendor/Include')
-
-    if args.platform.get_name() != 'Wasm':
-        me.native_includes.append('Engine/Vendor/Include/Freetype')
+    me.native_includes.append('Engine/Vendor/Include/Freetype')
 
     if args.platform.get_name() == 'Linux':
         me.native_dependencies.append('Engine/Vendor/Lib/libglfw3.a')

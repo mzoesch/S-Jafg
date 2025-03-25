@@ -400,6 +400,7 @@ pub(crate) fn make_script(solution: &Solution)
                 }
                 else if platform.toolset == "em"
                 {
+                    wwi(b, 2, "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -g\")");
                 }
                 else if platform.toolset == "clang"
                 {
@@ -416,6 +417,7 @@ pub(crate) fn make_script(solution: &Solution)
                 }
                 else if platform.toolset == "em"
                 {
+                    wwi(b, 2, "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -g0\")");
                 }
                 else if platform.toolset == "clang"
                 {
@@ -431,6 +433,7 @@ pub(crate) fn make_script(solution: &Solution)
                 }
                 else if platform.toolset == "em"
                 {
+                    wwi(b, 2, "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -O0\")");
                 }
                 else if platform.toolset == "clang"
                 {
@@ -445,6 +448,7 @@ pub(crate) fn make_script(solution: &Solution)
                 }
                 else if platform.toolset == "em"
                 {
+                    wwi(b, 2, "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -O2\")");
                 }
                 else if platform.toolset == "clang"
                 {
@@ -460,6 +464,7 @@ pub(crate) fn make_script(solution: &Solution)
                 }
                 else if platform.toolset == "em"
                 {
+                    wwi(b, 2, "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -O3\")");
                 }
                 else if platform.toolset == "clang"
                 {
@@ -847,24 +852,25 @@ pub(crate) fn make_script(solution: &Solution)
                                         format!("{}_EXTERN=", module.name.to_uppercase())
                                     ));
                                 }
-                                wwi(b, 2, format!("add_dependencies({} {})", runtime, module.name));
-                                wwi(b, 2, format!("target_link_libraries({} PRIVATE \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}/{}{}{}\")",
-                                    runtime,
-                                    module.get_functional_rel_dir(),
-                                    match module.kind
-                                    {
-                                        ModuleKind::Shared => platform.get_shared_counterpart_prefix(),
-                                        ModuleKind::Static => platform.get_static_bin_prefix(),
-                                        _ => panic!("Module kind not allowed for linking."),
-                                    },
-                                    module.name,
-                                    match module.kind
-                                    {
-                                        ModuleKind::Shared => platform.get_shared_counterpart_suffix(),
-                                        ModuleKind::Static => platform.get_static_bin_suffix(),
-                                        _ => panic!("Module kind not allowed for linking."),
-                                    }
-                                ));
+                                wwi(b, 2, format!("target_link_libraries({} PRIVATE {})", runtime, module.name));
+                                // wwi(b, 2, format!("add_dependencies({} {})", runtime, module.name));
+                                // wwi(b, 2, format!("target_link_libraries({} PRIVATE \"${{REAL_ENGINE_ROOT_DIR}}/Binaries/${{JAFG_TARGET_PLATFORM}}-${{JAFG_TARGET_ARCHITECTURE}}/${{JAFG_TARGET_CONFIGURATION}}/{}/{}{}{}\")",
+                                //     runtime,
+                                //     module.get_functional_rel_dir(),
+                                //     match module.kind
+                                //     {
+                                //         ModuleKind::Shared => platform.get_shared_counterpart_prefix(),
+                                //         ModuleKind::Static => platform.get_static_bin_prefix(),
+                                //         _ => panic!("Module kind not allowed for linking."),
+                                //     },
+                                //     module.name,
+                                //     match module.kind
+                                //     {
+                                //         ModuleKind::Shared => platform.get_shared_counterpart_suffix(),
+                                //         ModuleKind::Static => platform.get_static_bin_suffix(),
+                                //         _ => panic!("Module kind not allowed for linking."),
+                                //     }
+                                // ));
                             }
                             else
                             {

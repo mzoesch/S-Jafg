@@ -288,8 +288,16 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(const Self& InOther)
     {
         this->Data = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
         check( this->Data )
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
         ::memset(this->Data, 0, this->Capacity * sizeof(T));
         ::memcpy(this->Data, InOther.Data, this->Size * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
     }
     else
     {
@@ -498,7 +506,16 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddAt(const SizeType I
         this->ZeroedGrow();
     }
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
     ::memmove(this->Data + InIndex + 1, this->Data + InIndex, (this->Size - InIndex) * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
     *(this->Data + InIndex) = std::move(InElement);
     ++this->Size;
     checkSlow( this->Size <= this->Capacity )
@@ -1428,7 +1445,6 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow() noexcept
 #if WITH_GCC
     #pragma GCC diagnostic pop
 #endif /* WITH_GCC */
-
 
     this->Data      = NewData;
     this->Capacity  = NewCapacity;

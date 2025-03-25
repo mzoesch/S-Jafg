@@ -1,7 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
-
 #if WITH_TESTS
 
 #include "TesterInclude.h"

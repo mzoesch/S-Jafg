@@ -233,9 +233,10 @@ Jafg::Private::LVirtualFile* Jafg::LVirtualFileSystem::GetPanickedVirtualFileHan
 
     if (File == nullptr)
     {
+        const LPath RelPath = InEnginePath.ResolveRelativeEnginePath(*GetDefault<JUserPreferences>());
         panicMsgf(
-            "File not found in virtual filesystem. Faulty path: {}.",
-            InEnginePath.GetRelativeUnresolvedPath()
+            "File not found in virtual filesystem. Faulty path: [{} => {}].",
+            InEnginePath.GetRelativeUnresolvedPath(), RelPath.GetBase()
         )
     }
 

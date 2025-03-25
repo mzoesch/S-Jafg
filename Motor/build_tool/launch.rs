@@ -209,7 +209,7 @@ fn launch_post_build(b: BuildTarget)
 {
     println!("Launching post-build for [{}] ...", b.module.name);
 
-    if b.module.kind.is_shared()
+    if (b.module.kind.is_shared() && b.platform.unity == false) || (b.module.kind.is_shared() && b.module.preserve_unity == false)
     {
         let shared_bin_dir: String = b.get_bin_dir();
         finder::check_dir(&shared_bin_dir);

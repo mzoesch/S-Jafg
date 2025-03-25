@@ -461,7 +461,7 @@ const uint8 PrivateJafgExternFileData_{}[] = {{ {} }};
 "##,
                         cxx_symbol, bin_str,
                         module_api, cxx_symbol,
-                        f_name, cxx_symbol, cxx_symbol,
+                        f, cxx_symbol, cxx_symbol,
                     ));
 
                     continue

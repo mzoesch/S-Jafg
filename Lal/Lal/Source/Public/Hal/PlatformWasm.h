@@ -80,10 +80,11 @@ struct LWasmPlatformTypes final : public LGenericPlatformTypes
 #define PLATFORM_USES_JAVA_SCRIPT_FRONTEND  1
 #define PLATFORM_WCHAR_SIZE                 4
 #define PLATFORM_USES_UTF8                  1
+#define PLATFORM_USES_INLINE_MATH_DEFINES   1
 
 #define JAFG_NO_GLAD                        1 /* Let the compiler handle that - so emscripten. */
 #define JAFG_NO_GLFW3                       1
-#define JAFG_NO_FREETYPE                    1
+#define JAFG_NO_FREETYPE                    0
 
 #define PLATFORM_USES_NON_GENERIC_LOOP      1
 #define PLATFORM_GUARDED_LOOP                              \

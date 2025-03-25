@@ -225,7 +225,7 @@ Jafg::LSurfaceDom & Jafg::LSurfaceDom::operator=(LSurfaceDom &&Other) noexcept
     ::emscripten_webgl_make_context_current(this->_Handle);
 
     Other.Handle = nullptr;
-    Other._Handle = NULL;
+    Other._Handle = static_cast<LDomHandle>(NULL);
     Other.bFirstMouseCallback = false;
 
     return *this;
