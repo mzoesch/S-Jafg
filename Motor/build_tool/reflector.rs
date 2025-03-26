@@ -468,6 +468,8 @@ const u8 PrivateJafgExternFileData_{}[] = {{ {} }};
                 }
 
                 t_builder.push_str("#endif /* WITH_VIRTUAL_FILESYSTEM */\n");
+
+                return;
             }),
         });
     }
@@ -479,7 +481,31 @@ const u8 PrivateJafgExternFileData_{}[] = {{ {} }};
 
     if t.content == "\"IncludeAllModuleTests\""
     {
-        return None;
+        let mut includes: Vec<String> = Vec::new();
+        for module in bt.target.modules.iter()
+        {
+            let test_file: String = format!("{}/Test/Test{}.h", module.get_functional_rel_source_dir(), module.name);
+            if finder::exists_file(&test_file)
+            {
+                includes.push(test_file);
+            }
+            continue
+        }
+
+        return Some(JPacket{
+            name: t.content.to_string(),
+            line: t.line,
+            args: includes,
+            callback: Box::new(|_h_file_id, h_builder, _t_builder, _self_packet|
+            {
+                for include in _self_packet.args.iter()
+                {
+                    h_builder.push_str(&format!("#include \"{}\"\n", include));
+                }
+
+                return
+            }),
+        });
     }
 
     panic!("[{}:{}]: Unknown pragma: [{}].", file, tokens[i].line, t.content);
