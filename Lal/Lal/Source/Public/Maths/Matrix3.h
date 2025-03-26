@@ -24,18 +24,22 @@ struct TMatrix3 final
         T Bits[9];
     };
 
-    typedef TVector<T> ColumnTy;
-    typedef TVector<T> RowTy;
+    typedef TVector3<T> ColumnTy;
+    typedef TVector3<T> RowTy;
+    typedef TMatrix3<T> Self;
 
     /** Global identity matrix constant. */
-    LAL_API static const TMatrix3<T> Identity;
+    LAL_API static const Self Identity;
 
-    FORCEINLINE constexpr TMatrix3() noexcept : TMatrix3(TMatrix3<T>::Identity) { }
-    FORCEINLINE constexpr TMatrix3(EForceInit) noexcept : TMatrix3(Matrix::Identity) { }
-    FORCEINLINE constexpr TMatrix3(EZeroInit) noexcept : TMatrix3(Matrix::Zero) { }
+    /** Global zero matrix constant. */
+    LAL_API static const Self Zero;
+
+    FORCEINLINE           TMatrix3() noexcept { Self::FastCopy(Self::Identity, this); }
+    FORCEINLINE           TMatrix3(EForceInit) noexcept { Self::FastCopy(Self::Identity, this); }
+    FORCEINLINE           TMatrix3(EZeroInit) noexcept { Self::FastCopy(Self::Identity, this); }
     FORCEINLINE constexpr TMatrix3(ESkipInit) noexcept { }
     FORCEINLINE           TMatrix3(const Matrix::Type InType) noexcept;
-    FORCEINLINE constexpr TMatrix3(const TVector<T>& InX, const TVector<T>& InY, const TVector<T>& InZ) noexcept
+    FORCEINLINE constexpr TMatrix3(const ColumnTy& InX, const ColumnTy& InY, const ColumnTy& InZ) noexcept
         : Matrix
         {
             { InX.X, InX.Y, InX.Z },
@@ -44,53 +48,61 @@ struct TMatrix3 final
         }
     {
     }
-    FORCEINLINE constexpr TMatrix3(const TMatrix3& InMatrix) noexcept { TMatrix3::FastCopy(InMatrix, this); return; }
-    FORCEINLINE constexpr TMatrix3(TMatrix3&& InMatrix) noexcept { TMatrix3::FastCopy(InMatrix, this); return; }
+    FORCEINLINE TMatrix3(const TMatrix3&  InMatrix) noexcept { Self::FastCopy( InMatrix, this); return; }
+    FORCEINLINE TMatrix3(      TMatrix3&& InMatrix) noexcept { Self::FastMove(&InMatrix, this); return; }
 
     FORCEINLINE constexpr       T* GetData()       noexcept { return static_cast<T*>(this); }
-    FORCEINLINE constexpr const T* GetData() const noexcept { return static_cast<T*>(this); }
+    FORCEINLINE constexpr const T* GetData() const noexcept { return reinterpret_cast<const T*>(this); }
 
-    FORCEINLINE constexpr TVector<T> GetRow(const EMatrixAxis Axis) const;
-    FORCEINLINE constexpr TVector<T> GetColumn(const EMatrixAxis Axis) const;
+    FORCEINLINE constexpr ColumnTy GetRow(const EMatrixAxis Axis) const noexcept { return { this->Matrix[Axis][0], this->Matrix[Axis][1], this->Matrix[Axis][2] }; }
+    FORCEINLINE constexpr RowTy    GetColumn(const EMatrixAxis Axis) const noexcept { return { this->Matrix[0][Axis], this->Matrix[1][Axis], this->Matrix[2][Axis] }; }
 
-    FORCEINLINE void SetIdentity() noexcept;
+    FORCEINLINE void SetIdentity() noexcept { Self::FastCopy(Self::Identity, this); }
+    FORCEINLINE void SetZero() noexcept { Self::FastCopy(Self::Zero, this); }
 
-    FORCEINLINE           TMatrix3& operator =(const TMatrix3&  InMatrix) noexcept;
-    FORCEINLINE           TMatrix3& operator =(      TMatrix3&& InMatrix) noexcept;
+    FORCEINLINE Self& operator =(const Self&  InMatrix) noexcept { Self::FastCopy( InMatrix, this); return *this; }
+    FORCEINLINE Self& operator =(      Self&& InMatrix) noexcept { Self::FastMove(&InMatrix, this); return *this; }
 
-    FORCEINLINE constexpr TMatrix3  operator +(const TMatrix3& InMatrix) const noexcept;
-    FORCEINLINE constexpr TMatrix3  operator -(const TMatrix3& InMatrix) const noexcept;
-    FORCEINLINE constexpr TMatrix3  operator *(const TMatrix3& InMatrix) const noexcept;
-    FORCEINLINE constexpr TMatrix3  operator /(const TMatrix3& InMatrix) const noexcept;
-    FORCEINLINE           TMatrix3  operator +(const T Scalar) const noexcept;
-    FORCEINLINE           TMatrix3  operator -(const T Scalar) const noexcept;
-    FORCEINLINE           TMatrix3  operator *(const T Scalar) const noexcept;
-    FORCEINLINE           TMatrix3  operator /(const T Scalar) const noexcept;
-    FORCEINLINE           TMatrix3  operator -() const noexcept;
-    FORCEINLINE constexpr TMatrix3& operator+=(const TMatrix3& InMatrix) noexcept;
-    FORCEINLINE constexpr TMatrix3& operator-=(const TMatrix3& InMatrix) noexcept;
-    FORCEINLINE constexpr TMatrix3& operator*=(const TMatrix3& InMatrix) noexcept;
-    FORCEINLINE constexpr TMatrix3& operator/=(const TMatrix3& InMatrix) noexcept;
-    FORCEINLINE constexpr TMatrix3& operator+=(const T Scalar) noexcept;
-    FORCEINLINE constexpr TMatrix3& operator-=(const T Scalar) noexcept;
-    FORCEINLINE constexpr TMatrix3& operator*=(const T Scalar) noexcept;
-    FORCEINLINE constexpr TMatrix3& operator/=(const T Scalar) noexcept;
+    FORCEINLINE constexpr Self  operator +(const Self& InMatrix) const noexcept;
+    FORCEINLINE constexpr Self  operator -(const Self& InMatrix) const noexcept;
+    FORCEINLINE constexpr Self  operator *(const Self& InMatrix) const noexcept;
+    FORCEINLINE constexpr Self  operator /(const Self& InMatrix) const noexcept;
+    FORCEINLINE           Self  operator +(const T Scalar) const noexcept;
+    FORCEINLINE           Self  operator -(const T Scalar) const noexcept;
+    FORCEINLINE           Self  operator *(const T Scalar) const noexcept;
+    FORCEINLINE           Self  operator /(const T Scalar) const noexcept;
+    FORCEINLINE           Self  operator -() const noexcept;
+    FORCEINLINE constexpr Self& operator+=(const Self& InMatrix) noexcept;
+    FORCEINLINE constexpr Self& operator-=(const Self& InMatrix) noexcept;
+    FORCEINLINE constexpr Self& operator*=(const Self& InMatrix) noexcept;
+    FORCEINLINE constexpr Self& operator/=(const Self& InMatrix) noexcept;
+    FORCEINLINE constexpr Self& operator+=(const T Scalar) noexcept;
+    FORCEINLINE constexpr Self& operator-=(const T Scalar) noexcept;
+    FORCEINLINE constexpr Self& operator*=(const T Scalar) noexcept;
+    FORCEINLINE constexpr Self& operator/=(const T Scalar) noexcept;
 
-    FORCEINLINE constexpr bool Equals(const TMatrix3& InMatrix, const T InTolerance = JAFG_SMALL_NUMBER) const noexcept;
-    FORCEINLINE constexpr bool operator==(const TMatrix3& InMatrix) const noexcept;
-    FORCEINLINE constexpr bool operator!=(const TMatrix3& InMatrix) const noexcept;
+    FORCEINLINE constexpr bool Equals(const Self& InMatrix, const T InTolerance = static_cast<T>(JAFG_DOUBLE_SMALL_NUMBER)) const noexcept;
+    FORCEINLINE           bool operator==(const Self& InMatrix) const noexcept;
+    FORCEINLINE           bool operator!=(const Self& InMatrix) const noexcept;
 
     FORCEINLINE constexpr  T GetDeterminant() const noexcept;
     FORCEINLINE constexpr  T GetOneOverDeterminant() const noexcept;
     FORCEINLINE constexpr  T GetOneOverDeterminantChecked() const noexcept;
     FORCEINLINE constexpr  T GetOneOverDeterminantSafe() const noexcept;
-    FORCEINLINE constexpr  TMatrix3 GetInverse() const noexcept;
+    FORCEINLINE constexpr  Self GetInverse() const noexcept;
 
     LString ToString() const;
 
 private:
 
-    FORCEINLINE static void FastCopy(const TMatrix3<T>& InMatrix, TMatrix3<T>* OutMatrix) noexcept;
+    /**
+     * @param A         Left-hand side matrix.
+     * @param B         Right-hand side matrix.
+     * @param OutMatrix Resulting matrix. Must fulfill OutMatrix != InMatrixA && OutMatrix != InMatrixB.
+     */
+    FORCEINLINE static void FastMultiply(const Self& A, const Self& B, Self* OutMatrix);
+    FORCEINLINE static void FastCopy(const Self& InMatrix, Self* OutMatrix) noexcept;
+    FORCEINLINE static void FastMove(Self* InMatrix, Self* OutMatrix) noexcept;
 };
 
 template <typename T>
@@ -111,69 +123,39 @@ FORCEINLINE TMatrix3<T>::TMatrix3(const Matrix::Type InType) noexcept
 }
 
 template <typename T>
-FORCEINLINE constexpr TVector<T> TMatrix3<T>::GetRow(const EMatrixAxis Axis) const
+FORCEINLINE constexpr typename TMatrix3<T>::Self TMatrix3<T>::operator+(const Self& InMatrix) const noexcept
 {
-    return { this->Matrix[Axis][0], this->Matrix[Axis][1], this->Matrix[Axis][2] };
-}
-
-template <typename T>
-FORCEINLINE constexpr TVector<T> TMatrix3<T>::GetColumn(const EMatrixAxis Axis) const
-{
-    return { *reinterpret_cast<TVector<T>*>(&this->Matrix[Axis]) };
-}
-
-template <typename T>
-FORCEINLINE void TMatrix3<T>::SetIdentity() noexcept
-{
-    ::memcpy(this->GetData(), &TMatrix3<T>::Identity, sizeof(TMatrix3));
-}
-
-template <typename T>
-FORCEINLINE TMatrix3<T>& TMatrix3<T>::operator=(const TMatrix3& InMatrix) noexcept
-{
-    TMatrix3::FastCopy(InMatrix, this);
-    return *this;
-}
-
-template <typename T>
-FORCEINLINE TMatrix3<T>& TMatrix3<T>::operator=(TMatrix3&& InMatrix) noexcept
-{
-    TMatrix3::FastCopy(InMatrix, this);
-    return *this;
-}
-
-template <typename T>
-FORCEINLINE constexpr TMatrix3<T> TMatrix3<T>::operator+(const TMatrix3& InMatrix) const noexcept
-{
-    TMatrix3 Result = SkipInit;
+    Self Result = SkipInit;
     for (i32 Col = 0; Col < 3; ++Col)
     {
-        for (i32 Row = 0; Row < 3; ++Row)
-        {
-            Result[Col][Row] = this->Matrix[Col][Row] + InMatrix.Matrix[Col][Row];
-        }
+        Result.Matrix[Col][0] = this->Matrix[Col][0] + InMatrix.Matrix[Col][0];
+        Result.Matrix[Col][1] = this->Matrix[Col][1] + InMatrix.Matrix[Col][1];
+        Result.Matrix[Col][2] = this->Matrix[Col][2] + InMatrix.Matrix[Col][2];
+
+        continue;
     }
 
     return Result;
 }
 
 template <typename T>
-FORCEINLINE constexpr TMatrix3<T> TMatrix3<T>::operator-(const TMatrix3& InMatrix) const noexcept
+FORCEINLINE constexpr typename TMatrix3<T>::Self TMatrix3<T>::operator-(const Self& InMatrix) const noexcept
 {
-    TMatrix3 Result = SkipInit;
+    Self Result = SkipInit;
     for (i32 Col = 0; Col < 3; ++Col)
     {
-        for (i32 Row = 0; Row < 3; ++Row)
-        {
-            Result[Col][Row] = this->Matrix[Col][Row] - InMatrix.Matrix[Col][Row];
-        }
+        Result.Matrix[Col][0] = this->Matrix[Col][0] - InMatrix.Matrix[Col][0];
+        Result.Matrix[Col][1] = this->Matrix[Col][1] - InMatrix.Matrix[Col][1];
+        Result.Matrix[Col][2] = this->Matrix[Col][2] - InMatrix.Matrix[Col][2];
+
+        continue;
     }
 
     return Result;
 }
 
 template <typename T>
-FORCEINLINE constexpr TMatrix3<T> TMatrix3<T>::operator*(const TMatrix3& InMatrix) const noexcept
+FORCEINLINE constexpr typename TMatrix3<T>::Self TMatrix3<T>::operator*(const Self& InMatrix) const noexcept
 {
     const T Me00 = this->Matrix[0][0];
     const T Me01 = this->Matrix[0][1];
@@ -195,21 +177,21 @@ FORCEINLINE constexpr TMatrix3<T> TMatrix3<T>::operator*(const TMatrix3& InMatri
     const T In21 = InMatrix.Matrix[2][1];
     const T In22 = InMatrix.Matrix[2][2];
 
-    TMatrix3 Result = SkipInit;
-    Result[0][0] = Me00 * In00 + Me10 * In01 + Me20 * In02;
-    Result[0][1] = Me01 * In00 + Me11 * In01 + Me21 * In02;
-    Result[0][2] = Me02 * In00 + Me12 * In01 + Me22 * In02;
-    Result[1][0] = Me00 * In10 + Me10 * In11 + Me20 * In12;
-    Result[1][1] = Me01 * In10 + Me11 * In11 + Me21 * In12;
-    Result[1][2] = Me02 * In10 + Me12 * In11 + Me22 * In12;
-    Result[2][0] = Me00 * In20 + Me10 * In21 + Me20 * In22;
-    Result[2][1] = Me01 * In20 + Me11 * In21 + Me21 * In22;
-    Result[2][2] = Me02 * In20 + Me12 * In21 + Me22 * In22;
+    Self Result = SkipInit;
+    Result.Matrix[0][0] = Me00 * In00 + Me10 * In01 + Me20 * In02;
+    Result.Matrix[0][1] = Me01 * In00 + Me11 * In01 + Me21 * In02;
+    Result.Matrix[0][2] = Me02 * In00 + Me12 * In01 + Me22 * In02;
+    Result.Matrix[1][0] = Me00 * In10 + Me10 * In11 + Me20 * In12;
+    Result.Matrix[1][1] = Me01 * In10 + Me11 * In11 + Me21 * In12;
+    Result.Matrix[1][2] = Me02 * In10 + Me12 * In11 + Me22 * In12;
+    Result.Matrix[2][0] = Me00 * In20 + Me10 * In21 + Me20 * In22;
+    Result.Matrix[2][1] = Me01 * In20 + Me11 * In21 + Me21 * In22;
+    Result.Matrix[2][2] = Me02 * In20 + Me12 * In21 + Me22 * In22;
     return Result;
 }
 
 template <typename T>
-FORCEINLINE constexpr TMatrix3<T> TMatrix3<T>::operator/(const TMatrix3& InMatrix) const noexcept
+FORCEINLINE constexpr typename TMatrix3<T>::Self TMatrix3<T>::operator/(const Self& InMatrix) const noexcept
 {
     const T Me00 = this->Matrix[0][0];
     const T Me01 = this->Matrix[0][1];
@@ -231,135 +213,135 @@ FORCEINLINE constexpr TMatrix3<T> TMatrix3<T>::operator/(const TMatrix3& InMatri
     const T In21 = InMatrix.Matrix[2][1];
     const T In22 = InMatrix.Matrix[2][2];
 
-    TMatrix3 Result = SkipInit;
-    Result[0][0] = Me00 / In00 + Me10 / In01 + Me20 / In02;
-    Result[0][1] = Me01 / In00 + Me11 / In01 + Me21 / In02;
-    Result[0][2] = Me02 / In00 + Me12 / In01 + Me22 / In02;
-    Result[1][0] = Me00 / In10 + Me10 / In11 + Me20 / In12;
-    Result[1][1] = Me01 / In10 + Me11 / In11 + Me21 / In12;
-    Result[1][2] = Me02 / In10 + Me12 / In11 + Me22 / In12;
-    Result[2][0] = Me00 / In20 + Me10 / In21 + Me20 / In22;
-    Result[2][1] = Me01 / In20 + Me11 / In21 + Me21 / In22;
-    Result[2][2] = Me02 / In20 + Me12 / In21 + Me22 / In22;
+    Self Result = SkipInit;
+    Result.Matrix[0][0] = Me00 / In00 + Me10 / In01 + Me20 / In02;
+    Result.Matrix[0][1] = Me01 / In00 + Me11 / In01 + Me21 / In02;
+    Result.Matrix[0][2] = Me02 / In00 + Me12 / In01 + Me22 / In02;
+    Result.Matrix[1][0] = Me00 / In10 + Me10 / In11 + Me20 / In12;
+    Result.Matrix[1][1] = Me01 / In10 + Me11 / In11 + Me21 / In12;
+    Result.Matrix[1][2] = Me02 / In10 + Me12 / In11 + Me22 / In12;
+    Result.Matrix[2][0] = Me00 / In20 + Me10 / In21 + Me20 / In22;
+    Result.Matrix[2][1] = Me01 / In20 + Me11 / In21 + Me21 / In22;
+    Result.Matrix[2][2] = Me02 / In20 + Me12 / In21 + Me22 / In22;
 
     return Result;
 }
 
 template <typename T>
-FORCEINLINE TMatrix3<T> TMatrix3<T>::operator+(const T Scalar) const noexcept
+FORCEINLINE typename TMatrix3<T>::Self TMatrix3<T>::operator+(const T Scalar) const noexcept
 {
-    TMatrix3 Result = SkipInit;
-    TMatrix3::FastCopy(*this, &Result);
+    Self Result = SkipInit;
+    Self::FastCopy(*this, &Result);
 
-    Result[0][0] += Scalar;
-    Result[1][1] += Scalar;
-    Result[2][2] += Scalar;
+    Result.Matrix[0][0] += Scalar;
+    Result.Matrix[1][1] += Scalar;
+    Result.Matrix[2][2] += Scalar;
 
     return Result;
 }
 
 template <typename T>
-FORCEINLINE TMatrix3<T> TMatrix3<T>::operator-(const T Scalar) const noexcept
+FORCEINLINE typename TMatrix3<T>::Self TMatrix3<T>::operator-(const T Scalar) const noexcept
 {
-    TMatrix3 Result = SkipInit;
-    TMatrix3::FastCopy(*this, &Result);
+    Self Result = SkipInit;
+    Self::FastCopy(*this, &Result);
 
-    Result[0][0] -= Scalar;
-    Result[1][1] -= Scalar;
-    Result[2][2] -= Scalar;
+    Result.Matrix[0][0] -= Scalar;
+    Result.Matrix[1][1] -= Scalar;
+    Result.Matrix[2][2] -= Scalar;
 
     return Result;
 }
 
 template <typename T>
-FORCEINLINE TMatrix3<T> TMatrix3<T>::operator*(const T Scalar) const noexcept
+FORCEINLINE typename TMatrix3<T>::Self TMatrix3<T>::operator*(const T Scalar) const noexcept
 {
-    TMatrix3 Result = SkipInit;
-    TMatrix3::FastCopy(*this, &Result);
+    Self Result = SkipInit;
+    Self::FastCopy(*this, &Result);
 
-    Result[0][0] *= Scalar;
-    Result[1][1] *= Scalar;
-    Result[2][2] *= Scalar;
+    Result.Matrix[0][0] *= Scalar;
+    Result.Matrix[1][1] *= Scalar;
+    Result.Matrix[2][2] *= Scalar;
 
     return Result;
 }
 
 template <typename T>
-FORCEINLINE TMatrix3<T> TMatrix3<T>::operator/(const T Scalar) const noexcept
+FORCEINLINE typename TMatrix3<T>::Self TMatrix3<T>::operator/(const T Scalar) const noexcept
 {
-    TMatrix3 Result = SkipInit;
-    TMatrix3::FastCopy(*this, &Result);
+    Self Result = SkipInit;
+    Self::FastCopy(*this, &Result);
 
-    Result[0][0] /= Scalar;
-    Result[1][1] /= Scalar;
-    Result[2][2] /= Scalar;
+    Result.Matrix[0][0] /= Scalar;
+    Result.Matrix[1][1] /= Scalar;
+    Result.Matrix[2][2] /= Scalar;
 
     return Result;
 }
 
 template <typename T>
-FORCEINLINE TMatrix3<T> TMatrix3<T>::operator-() const noexcept
+FORCEINLINE typename TMatrix3<T>::Self TMatrix3<T>::operator-() const noexcept
 {
-    TMatrix3 Result = SkipInit;
-    TMatrix3::FastCopy(*this, &Result);
-
-    Result[0][0] = -Result[0][0];
-    Result[0][1] = -Result[0][1];
-    Result[0][2] = -Result[0][2];
-    Result[1][0] = -Result[1][0];
-    Result[1][1] = -Result[1][1];
-    Result[1][2] = -Result[1][2];
-    Result[2][0] = -Result[2][0];
-    Result[2][1] = -Result[2][1];
-    Result[2][2] = -Result[2][2];
+    Self Result = SkipInit;
+    Result.Matrix[0][0] = -this->Matrix[0][0];
+    Result.Matrix[0][1] = -this->Matrix[0][1];
+    Result.Matrix[0][2] = -this->Matrix[0][2];
+    Result.Matrix[1][0] = -this->Matrix[1][0];
+    Result.Matrix[1][1] = -this->Matrix[1][1];
+    Result.Matrix[1][2] = -this->Matrix[1][2];
+    Result.Matrix[2][0] = -this->Matrix[2][0];
+    Result.Matrix[2][1] = -this->Matrix[2][1];
+    Result.Matrix[2][2] = -this->Matrix[2][2];
 
     return Result;
 }
 
 template <typename T>
-FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator+=(const TMatrix3& InMatrix) noexcept
+FORCEINLINE constexpr typename TMatrix3<T>::Self& TMatrix3<T>::operator+=(const Self& InMatrix) noexcept
 {
     for (i32 Col = 0; Col < 3; ++Col)
     {
-        for (i32 Row = 0; Row < 3; ++Row)
-        {
-            this->Matrix[Col][Row] += InMatrix.Matrix[Col][Row];
-        }
+        this->Matrix[Col][0] += InMatrix.Matrix[Col][0];
+        this->Matrix[Col][1] += InMatrix.Matrix[Col][1];
+        this->Matrix[Col][2] += InMatrix.Matrix[Col][2];
+
+        continue;
     }
 
     return *this;
 }
 
 template <typename T>
-FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator-=(const TMatrix3& InMatrix) noexcept
+FORCEINLINE constexpr typename TMatrix3<T>::Self& TMatrix3<T>::operator-=(const Self& InMatrix) noexcept
 {
     for (i32 Col = 0; Col < 3; ++Col)
     {
-        for (i32 Row = 0; Row < 3; ++Row)
-        {
-            this->Matrix[Col][Row] -= InMatrix.Matrix[Col][Row];
-        }
+        this->Matrix[Col][0] -= InMatrix.Matrix[Col][0];
+        this->Matrix[Col][1] -= InMatrix.Matrix[Col][1];
+        this->Matrix[Col][2] -= InMatrix.Matrix[Col][2];
+
+        continue;
     }
 
     return *this;
 }
 
 template <typename T>
-FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator*=(const TMatrix3& InMatrix) noexcept
+FORCEINLINE constexpr typename TMatrix3<T>::Self& TMatrix3<T>::operator*=(const Self& InMatrix) noexcept
 {
     *this = *this * InMatrix;
     return *this;
 }
 
 template <typename T>
-FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator/=(const TMatrix3& InMatrix) noexcept
+FORCEINLINE constexpr typename TMatrix3<T>::Self& TMatrix3<T>::operator/=(const Self& InMatrix) noexcept
 {
     *this = *this / InMatrix;
     return *this;
 }
 
 template <typename T>
-FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator+=(const T Scalar) noexcept
+FORCEINLINE constexpr typename TMatrix3<T>::Self& TMatrix3<T>::operator+=(const T Scalar) noexcept
 {
     this->Matrix[0][0] += Scalar;
     this->Matrix[1][1] += Scalar;
@@ -369,7 +351,7 @@ FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator+=(const T Scalar) noexc
 }
 
 template <typename T>
-FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator-=(const T Scalar) noexcept
+FORCEINLINE constexpr typename TMatrix3<T>::Self& TMatrix3<T>::operator-=(const T Scalar) noexcept
 {
     this->Matrix[0][0] -= Scalar;
     this->Matrix[1][1] -= Scalar;
@@ -379,7 +361,7 @@ FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator-=(const T Scalar) noexc
 }
 
 template <typename T>
-FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator*=(const T Scalar) noexcept
+FORCEINLINE constexpr typename TMatrix3<T>::Self& TMatrix3<T>::operator*=(const T Scalar) noexcept
 {
     this->Matrix[0][0] *= Scalar;
     this->Matrix[1][1] *= Scalar;
@@ -389,7 +371,7 @@ FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator*=(const T Scalar) noexc
 }
 
 template <typename T>
-FORCEINLINE constexpr TMatrix3<T>& TMatrix3<T>::operator/=(const T Scalar) noexcept
+FORCEINLINE constexpr typename TMatrix3<T>::Self& TMatrix3<T>::operator/=(const T Scalar) noexcept
 {
     this->Matrix[0][0] /= Scalar;
     this->Matrix[1][1] /= Scalar;
@@ -420,13 +402,14 @@ FORCEINLINE constexpr bool TMatrix3<T>::Equals(const TMatrix3& InMatrix, const T
 }
 
 template <typename T>
-FORCEINLINE constexpr bool TMatrix3<T>::operator==(const TMatrix3& InMatrix) const noexcept
+FORCEINLINE bool TMatrix3<T>::operator==(const TMatrix3& InMatrix) const noexcept
 {
+    static_assert(sizeof(Self) == 9 * sizeof(T), "TMatrix3<T> is not 9 * sizeof(T) bytes large.");
     return ::memcmp(this->GetData(), InMatrix.GetData(), sizeof(TMatrix3)) == FALSE;
 }
 
 template <typename T>
-FORCEINLINE constexpr bool TMatrix3<T>::operator!=(const TMatrix3& InMatrix) const noexcept
+FORCEINLINE bool TMatrix3<T>::operator!=(const TMatrix3& InMatrix) const noexcept
 {
     return !(*this == InMatrix);
 }
@@ -500,11 +483,51 @@ LString TMatrix3<T>::ToString() const
     return Result;
 }
 
-template <typename T>
-FORCEINLINE void TMatrix3<T>::FastCopy(const TMatrix3<T>& InMatrix, TMatrix3<T>* OutMatrix) noexcept
+template<typename T>
+FORCEINLINE void TMatrix3<T>::FastMultiply(const Self& A, const Self& B, Self* OutMatrix)
 {
-    static_assert(sizeof(TMatrix3<T>) == 9 * sizeof(T), "TMatrix3<T> is not 9 * sizeof(T) bytes large.");
-    ::memcpy(OutMatrix, &InMatrix, sizeof(TMatrix3<T>));  // NOLINT(bugprone-undefined-memory-manipulation)
+    checkSlow( OutMatrix )
+
+    OutMatrix[0][0] = A[0][0] * B[0][0] + A[0][1] * B[1][0] + A[0][2] * B[2][0];
+    OutMatrix[0][1] = A[0][0] * B[0][1] + A[0][1] * B[1][1] + A[0][2] * B[2][1];
+    OutMatrix[0][2] = A[0][0] * B[0][2] + A[0][1] * B[1][2] + A[0][2] * B[2][2];
+
+    OutMatrix[1][0] = A[1][0] * B[0][0] + A[1][1] * B[1][0] + A[1][2] * B[2][0];
+    OutMatrix[1][1] = A[1][0] * B[0][1] + A[1][1] * B[1][1] + A[1][2] * B[2][1];
+    OutMatrix[1][2] = A[1][0] * B[0][2] + A[1][1] * B[1][2] + A[1][2] * B[2][2];
+
+    OutMatrix[2][0] = A[2][0] * B[0][0] + A[2][1] * B[1][0] + A[2][2] * B[2][0];
+    OutMatrix[2][1] = A[2][0] * B[0][1] + A[2][1] * B[1][1] + A[2][2] * B[2][1];
+    OutMatrix[2][2] = A[2][0] * B[0][2] + A[2][1] * B[1][2] + A[2][2] * B[2][2];
+
+    return;
+}
+
+template <typename T>
+FORCEINLINE void TMatrix3<T>::FastCopy(const Self& InMatrix, Self* OutMatrix) noexcept
+{
+    static_assert(sizeof(Self) == 9 * sizeof(T), "TMatrix3<T> is not 9 * sizeof(T) bytes large.");
+
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+#endif /* WITH_GCC */
+    ::memcpy(OutMatrix, &InMatrix, sizeof(Self));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
+    return;
+}
+
+template<typename T>
+FORCEINLINE void TMatrix3<T>::FastMove(Self* InMatrix, Self* OutMatrix) noexcept
+{
+    static_assert(sizeof(Self) == 16 * sizeof(T), "TMatrix<T> is not 16 * sizeof(T) bytes large.");
+
+    Self::FastCopy(*InMatrix, OutMatrix);
+    InMatrix->SetIdentity();
+
     return;
 }
 

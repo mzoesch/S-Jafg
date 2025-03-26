@@ -92,14 +92,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Maths
 #include "Maths/Vector2.h"
-#include "Maths/Vector.h"
+#include "Maths/Vector3.h"
 #include "Maths/Vector4.h"
 #include "Maths/IntVector2.h"
 #include "Maths/IntVector.h"
 #include "Maths/Color.h"
 #include "Maths/Rotator.h"
 #include "Maths/Plane.h"
-#include "Maths/Matrix.h"
+#include "Maths/Matrix4.h"
 #include "Maths/Transform.h"
 #include "Maths/Matrix3.h"
 

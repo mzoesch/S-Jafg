@@ -41,30 +41,6 @@ TRANSLATION_API LSimpleString LexToString(const EVectorAxis::Type InAxis)
     return { };
 }
 
-template<> SPECIALIZATION_API const LVectorF LVectorF::ZeroVector                      { LVectorF( 0.0f,  0.0f,  0.0f) };
-template<> SPECIALIZATION_API const LVectorF LVectorF::OneVector                       { LVectorF( 1.0f,  1.0f,  1.0f) };
-template<> SPECIALIZATION_API const LVectorF LVectorF::UpVector                        { LVectorF( 0.0f,  0.0f,  1.0f) };
-template<> SPECIALIZATION_API const LVectorF LVectorF::DownVector                      { LVectorF( 0.0f,  0.0f, -1.0f) };
-template<> SPECIALIZATION_API const LVectorF LVectorF::ForwardVector                   { LVectorF( 1.0f,  0.0f,  0.0f) };
-template<> SPECIALIZATION_API const LVectorF LVectorF::BackwardVector                  { LVectorF(-1.0f,  0.0f,  0.0f) };
-template<> SPECIALIZATION_API const LVectorF LVectorF::RightVector                     { LVectorF( 0.0f,  1.0f,  0.0f) };
-template<> SPECIALIZATION_API const LVectorF LVectorF::LeftVector                      { LVectorF( 0.0f, -1.0f,  0.0f) };
-template<> SPECIALIZATION_API const LVectorF LVectorF::UnitVectorX                     { LVectorF( 1.0f,  0.0f,  0.0f) };
-template<> SPECIALIZATION_API const LVectorF LVectorF::UnitVectorY                     { LVectorF( 0.0f,  1.0f,  0.0f) };
-template<> SPECIALIZATION_API const LVectorF LVectorF::UnitVectorZ                     { LVectorF( 0.0f,  0.0f,  1.0f) };
-
-template<> SPECIALIZATION_API const LVectorD LVectorD::ZeroVector                      { LVectorD( 0.0,  0.0,  0.0) };
-template<> SPECIALIZATION_API const LVectorD LVectorD::OneVector                       { LVectorD( 1.0,  1.0,  1.0) };
-template<> SPECIALIZATION_API const LVectorD LVectorD::UpVector                        { LVectorD( 0.0,  0.0,  1.0) };
-template<> SPECIALIZATION_API const LVectorD LVectorD::DownVector                      { LVectorD( 0.0,  0.0, -1.0) };
-template<> SPECIALIZATION_API const LVectorD LVectorD::ForwardVector                   { LVectorD( 1.0,  0.0,  0.0) };
-template<> SPECIALIZATION_API const LVectorD LVectorD::BackwardVector                  { LVectorD(-1.0,  0.0,  0.0) };
-template<> SPECIALIZATION_API const LVectorD LVectorD::RightVector                     { LVectorD( 0.0,  1.0,  0.0) };
-template<> SPECIALIZATION_API const LVectorD LVectorD::LeftVector                      { LVectorD( 0.0, -1.0,  0.0) };
-template<> SPECIALIZATION_API const LVectorD LVectorD::UnitVectorX                     { LVectorD( 1.0,  0.0,  0.0) };
-template<> SPECIALIZATION_API const LVectorD LVectorD::UnitVectorY                     { LVectorD( 0.0,  1.0,  0.0) };
-template<> SPECIALIZATION_API const LVectorD LVectorD::UnitVectorZ                     { LVectorD( 0.0,  0.0,  1.0) };
-
 template<> SPECIALIZATION_API const LVector2F LVector2F::ZeroVector                    { LVector2F( 0.0f,  0.0f) };
 template<> SPECIALIZATION_API const LVector2F LVector2F::OneVector                     { LVector2F( 1.0f,  1.0f) };
 template<> SPECIALIZATION_API const LVector2F LVector2F::UnitVector
@@ -84,6 +60,30 @@ template<> SPECIALIZATION_API const LVector2D LVector2D::UnitVector
 ) };
 template<> SPECIALIZATION_API const LVector2D LVector2D::UnitVectorX                   { LVector2D( 1.0,  0.0) };
 template<> SPECIALIZATION_API const LVector2D LVector2D::UnitVectorY                   { LVector2D( 0.0,  1.0) };
+
+template<> SPECIALIZATION_API const LVector3F LVector3F::ZeroVector                    { LVector3F( 0.0f,  0.0f,  0.0f) };
+template<> SPECIALIZATION_API const LVector3F LVector3F::OneVector                     { LVector3F( 1.0f,  1.0f,  1.0f) };
+template<> SPECIALIZATION_API const LVector3F LVector3F::UpVector                      { LVector3F( 0.0f,  0.0f,  1.0f) };
+template<> SPECIALIZATION_API const LVector3F LVector3F::DownVector                    { LVector3F( 0.0f,  0.0f, -1.0f) };
+template<> SPECIALIZATION_API const LVector3F LVector3F::ForwardVector                 { LVector3F( 1.0f,  0.0f,  0.0f) };
+template<> SPECIALIZATION_API const LVector3F LVector3F::BackwardVector                { LVector3F(-1.0f,  0.0f,  0.0f) };
+template<> SPECIALIZATION_API const LVector3F LVector3F::RightVector                   { LVector3F( 0.0f,  1.0f,  0.0f) };
+template<> SPECIALIZATION_API const LVector3F LVector3F::LeftVector                    { LVector3F( 0.0f, -1.0f,  0.0f) };
+template<> SPECIALIZATION_API const LVector3F LVector3F::UnitVectorX                   { LVector3F( 1.0f,  0.0f,  0.0f) };
+template<> SPECIALIZATION_API const LVector3F LVector3F::UnitVectorY                   { LVector3F( 0.0f,  1.0f,  0.0f) };
+template<> SPECIALIZATION_API const LVector3F LVector3F::UnitVectorZ                   { LVector3F( 0.0f,  0.0f,  1.0f) };
+
+template<> SPECIALIZATION_API const LVector3D LVector3D::ZeroVector                    { LVector3D( 0.0,  0.0,  0.0) };
+template<> SPECIALIZATION_API const LVector3D LVector3D::OneVector                     { LVector3D( 1.0,  1.0,  1.0) };
+template<> SPECIALIZATION_API const LVector3D LVector3D::UpVector                      { LVector3D( 0.0,  0.0,  1.0) };
+template<> SPECIALIZATION_API const LVector3D LVector3D::DownVector                    { LVector3D( 0.0,  0.0, -1.0) };
+template<> SPECIALIZATION_API const LVector3D LVector3D::ForwardVector                 { LVector3D( 1.0,  0.0,  0.0) };
+template<> SPECIALIZATION_API const LVector3D LVector3D::BackwardVector                { LVector3D(-1.0,  0.0,  0.0) };
+template<> SPECIALIZATION_API const LVector3D LVector3D::RightVector                   { LVector3D( 0.0,  1.0,  0.0) };
+template<> SPECIALIZATION_API const LVector3D LVector3D::LeftVector                    { LVector3D( 0.0, -1.0,  0.0) };
+template<> SPECIALIZATION_API const LVector3D LVector3D::UnitVectorX                   { LVector3D( 1.0,  0.0,  0.0) };
+template<> SPECIALIZATION_API const LVector3D LVector3D::UnitVectorY                   { LVector3D( 0.0,  1.0,  0.0) };
+template<> SPECIALIZATION_API const LVector3D LVector3D::UnitVectorZ                   { LVector3D( 0.0,  0.0,  1.0) };
 
 template<> SPECIALIZATION_API const LVector4F LVector4F::ZeroVector                    { LVector4F( 0.0f, 0.0f, 0.0f, 0.0f) };
 template<> SPECIALIZATION_API const LVector4F LVector4F::IdentityVector                { LVector4F( 0.0f, 0.0f, 0.0f, 1.0f) };
@@ -187,10 +187,14 @@ template<> SPECIALIZATION_API const LPlaneD LPlaneD::UnitPlaneY                 
 template<> SPECIALIZATION_API const LPlaneD LPlaneD::UnitPlaneZ                        { LPlaneD( 0.0 , 0.0 , 1.0 , 0.0 ) };
 template<> SPECIALIZATION_API const LPlaneD LPlaneD::UnitPlaneW                        { LPlaneD( 0.0 , 0.0 , 0.0 , 1.0 ) };
 
-template<> SPECIALIZATION_API const LMatrixF  LMatrixF::Identity                       { LPlaneF::UnitPlaneX, LPlaneF::UnitPlaneY, LPlaneF::UnitPlaneZ, LPlaneF::UnitPlaneW };
-template<> SPECIALIZATION_API const LMatrixD  LMatrixD::Identity                       { LPlaneD::UnitPlaneX, LPlaneD::UnitPlaneY, LPlaneD::UnitPlaneZ, LPlaneD::UnitPlaneW };
 template<> SPECIALIZATION_API const LMatrix3F LMatrix3F::Identity                      { LVector3F::UnitVectorX, LVector3F::UnitVectorY, LVector3F::UnitVectorZ };
 template<> SPECIALIZATION_API const LMatrix3D LMatrix3D::Identity                      { LVector3D::UnitVectorX, LVector3D::UnitVectorY, LVector3D::UnitVectorZ };
+template<> SPECIALIZATION_API const LMatrix3F LMatrix3F::Zero                          { LVector3F::ZeroVector, LVector3F::ZeroVector, LVector3F::ZeroVector };
+template<> SPECIALIZATION_API const LMatrix3D LMatrix3D::Zero                          { LVector3D::ZeroVector, LVector3D::ZeroVector, LVector3D::ZeroVector };
+template<> SPECIALIZATION_API const LMatrix4F LMatrix4F::Identity                      { LPlaneF::UnitPlaneX, LPlaneF::UnitPlaneY, LPlaneF::UnitPlaneZ, LPlaneF::UnitPlaneW };
+template<> SPECIALIZATION_API const LMatrix4D LMatrix4D::Identity                      { LPlaneD::UnitPlaneX, LPlaneD::UnitPlaneY, LPlaneD::UnitPlaneZ, LPlaneD::UnitPlaneW };
+template<> SPECIALIZATION_API const LMatrix4F LMatrix4F::Zero                          { LPlaneF::ZeroPlane, LPlaneF::ZeroPlane, LPlaneF::ZeroPlane, LPlaneF::ZeroPlane };
+template<> SPECIALIZATION_API const LMatrix4D LMatrix4D::Zero                          { LPlaneD::ZeroPlane, LPlaneD::ZeroPlane, LPlaneD::ZeroPlane, LPlaneD::ZeroPlane };
 
 } /* ~Namespace Jafg */
 

@@ -29,7 +29,7 @@ void Jafg::LDebugTraceCube::Draw(const LWorld& InContext, const LViewport& InVie
 
     LDebugTraceCubeShaderContextDrawArgs Args;
     Args.DegYFov = InEye.GetDegYFov();
-    Args.ViewMatrix.CopyFrom(InEye.GetViewMatrix());
+    Args.ViewMatrix = InEye.GetViewMatrix();
     Args.BottomNearLeft = this->BottomNearLeft;
     Args.RelTopFarRight = this->TopRelFarRight;
     Args.Color = this->VisualParams.Color;

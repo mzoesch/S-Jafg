@@ -33,7 +33,7 @@ void Jafg::LDebugTraceLine::Draw(const LWorld& InContext, const LViewport& InVie
 
     LDebugTraceLineShaderContextDrawArgs Args;
     Args.DegYFov = InEye.GetDegYFov();
-    Args.ViewMatrix.CopyFrom(InEye.GetViewMatrix());
+    Args.ViewMatrix = InEye.GetViewMatrix();
     Args.Start = this->Start;
     Args.End   = this->End;
     Args.Color = this->VisualParams.Color;
@@ -57,7 +57,7 @@ void Jafg::LDebugTraceLine::DrawLine(
     CacheViewport = &InViewport;
 
     CacheArgs.DegYFov = InEye.GetDegYFov();
-    CacheArgs.ViewMatrix.CopyFrom(InEye.GetViewMatrix());
+    CacheArgs.ViewMatrix = InEye.GetViewMatrix();
     CacheArgs.Start = InStart;
     CacheArgs.End   = InEnd;
     CacheArgs.Color = InColor;

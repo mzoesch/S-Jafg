@@ -30,7 +30,7 @@ void Jafg::LDebugTraceSphere::Draw(const LWorld& InContext, const LViewport& InV
 
     LDebugTraceSphereShaderContextDrawArgs Args;
     Args.DegYFov = InEye.GetDegYFov();
-    Args.ViewMatrix.CopyFrom(InEye.GetViewMatrix());
+    Args.ViewMatrix = InEye.GetViewMatrix();
     Args.Center = this->Center;
     Args.Radius = this->Radius;
     Args.Slices = this->VisualParams.Rings;
