@@ -482,16 +482,6 @@ const u8 PrivateJafgExternFileData_{}[] = {{ {} }};
         return None;
     }
 
-    let _: i8 = 0;
-    let _: i16 = 0;
-    let _: i32 = 0;
-    let _: i64 = 0;
-    let _: u8 = 0;
-    let _: u16 = 0;
-    let _: u32 = 0;
-    let _: u64 = 0;
-
-
     panic!("[{}:{}]: Unknown pragma: [{}].", file, tokens[i].line, t.content);
 }
 
