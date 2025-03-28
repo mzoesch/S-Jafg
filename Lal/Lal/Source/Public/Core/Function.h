@@ -25,6 +25,8 @@ public:
     using LRetTy    = RetTy;
     using LParamsTy = std::tuple<ParamsTy...>;
 
+    typedef TFunction<RetTy(ParamsTy...)> Self;
+
 private:
 
     struct LCallableBase;
@@ -78,12 +80,39 @@ public:
         {
             UNREACHABLE_CONTROL_PATH_STATIC( std::is_same_v<std::decay_t<CallableTy> PRIVATE_JAFG_CORE_COMMA TFunction> )
         }
+
+        return;
     }
     template <typename CallableTy>
     FORCEINLINE void BindStrong(CallableTy&& InCallable)
     {
         this->Reset();
-        this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LStrongCallable<CallableTy>>(std::forward<CallableTy>(InCallable));
+        if constexpr (std::is_same_v<std::decay_t<CallableTy>, TFunction>)
+        {
+            this->Callable = Smart::MakeUnique(const_cast<typename CallableTy::LUniqueCallableTy::StoredInnerTy>(
+                InCallable.Callable.GetValuePtr()
+            ));
+            ::Jafg::Smart::Private::LMySmartHelper::RemoveNoOrphan(
+                const_cast<typename CallableTy::LUniqueCallableTy&>(InCallable.Callable)
+            ); /* Do not reset as it would orphan the memory. */
+        }
+        else if constexpr (std::is_invocable_v<CallableTy, ParamsTy...>)
+        {
+            this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LStrongCallable<CallableTy>>(std::forward<CallableTy>(InCallable));
+        }
+        else
+        {
+            UNREACHABLE_CONTROL_PATH_STATIC( std::is_same_v<std::decay_t<CallableTy> PRIVATE_JAFG_CORE_COMMA TFunction> )
+        }
+
+        return;
+    }
+    template <typename CallableTy>
+    FORCEINLINE static Self CreateStrong(CallableTy&& InCallable)
+    {
+        Self Result;
+        Result.BindStrong(std::forward<CallableTy>(InCallable));
+        return Result;
     }
 
     template <typename CallableTy>
@@ -98,6 +127,13 @@ public:
         this->Reset();
         this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LWeakCallable<CallableTy>>(InCallable);
     }
+    template <typename CallableTy>
+    FORCEINLINE static Self CreateWeak(CallableTy* InCallable)
+    {
+        Self Result;
+        Result.BindWeak(InCallable);
+        return Result;
+    }
 
     template <typename ObjTy, typename CallableTy>
     FORCEINLINE TFunction(ObjTy* InObject, CallableTy InMember)
@@ -110,6 +146,13 @@ public:
     {
         this->Reset();
         this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LMemberCallable<ObjTy, CallableTy>>(InObject, InMember);
+    }
+    template <typename ObjTy, typename CallableTy>
+    FORCEINLINE static Self CreateMember(ObjTy* InObject, CallableTy InMember)
+    {
+        Self Result;
+        Result.BindMember(InObject, InMember);
+        return Result;
     }
 
     FORCEINLINE RetTy Invoke(ParamsTy... InParams) const { return this->operator()(std::forward<ParamsTy>(InParams)...); }

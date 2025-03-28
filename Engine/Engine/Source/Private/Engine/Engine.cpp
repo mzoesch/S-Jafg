@@ -8,7 +8,6 @@
 #include "User/LocalEgo.h"
 #include "Subsystems/EngineSubsystem.h"
 #include "Cli/CommandLineInterface.h"
-#include "Rhi/RendererStateMachine.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
@@ -21,7 +20,7 @@ ENGINE_API LEngine*      GEngine                   = nullptr;
 ENGINE_API bool          bGShouldRequestExit       = false;
 ENGINE_API bool          bGEngineRequestingExit    = false;
 
-ENGINE_API i32         GCustomExitStatusOverride = INDEX_NONE;
+ENGINE_API i32           GCustomExitStatusOverride = INDEX_NONE;
 ENGINE_API LSimpleString GCustomExitReason         = "";
 
 } /* ~Namespace Jafg. */
@@ -31,6 +30,55 @@ ENGINE_API LSimpleString GCustomExitReason         = "";
 
 void Jafg::LEngine::Initialize()
 {
+    // Register primitives
+    {
+        ensure(this->CommandLineInterface.RegisterType({"Integer", "A 32 bit signed Integer.",
+        LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+        {
+            return false;
+        })}).IsValid());
+
+        ensure(this->CommandLineInterface.RegisterType({"Byte", "A 8 bit unsigned integer.",
+        LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+        {
+            return false;
+        })}).IsValid());
+
+        ensure(this->CommandLineInterface.RegisterType({"Float", "A 32 bit floating point number.",
+        LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+        {
+            return false;
+        })}).IsValid());
+
+        ensure(this->CommandLineInterface.RegisterType({"String", "A string.",
+        LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+        {
+            check( *Cursor <= Args.GetArgCount() )
+            ++*Cursor;
+            return true;
+        })}).IsValid());
+
+        ensure(this->CommandLineInterface.RegisterType({"Bool", "A boolean.",
+        LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+        {
+            return false;
+        })}).IsValid());
+
+        ensure(this->CommandLineInterface.RegisterCommand({"Set", "Set any variable.",
+        LCommandParams()
+        .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+        {
+            LOG_WARNING(LogTemporal, "Set any variable.")
+        }))}).IsValid());
+
+        ensure(this->CommandLineInterface.RegisterCommand({"Get", "Get any variable.",
+        LCommandParams()
+        .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+        {
+            LOG_WARNING(LogTemporal, "Get any variable.");
+        }))}).IsValid());
+    }
+
     this->ObjectContext.SetHumanReadableName("Engine");
     this->Collection.DeferredInitialize(&this->ObjectContext);
     this->Collection.InitializeSubsystems(JEngineSubsystem::StaticClass());

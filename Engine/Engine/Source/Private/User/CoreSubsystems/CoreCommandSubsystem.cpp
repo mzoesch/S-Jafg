@@ -2,8 +2,8 @@
 
 #include "User/CoreSubsystems/CoreCommandSubsystem.h"
 #include "Engine/Engine.h"
-#include "User/LocalEgo.h"
 #include "Cli/CliCommand.h"
+#include "Cli/CliStatics.h"
 
 DECLARE_INLINE_LOG_CATEGORY(LogCoreCommands, Trace)
 
@@ -14,18 +14,31 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
     LCommandLineInterface* CommandLineInterface = this->GetCommandLineInterface();
     check( CommandLineInterface )
 
+    // Command: quit
+    {
+
+        this->CommandHandle_Quit = CommandLineInterface->RegisterCommand({"Quit", "Quit to desktop.",
+        LCommandParams()
+        .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+        {
+            LOG_VERBOSE(LogCoreCommands, "Received quit request.")
+            GEngine->RequestEngineExit("Invoked by CLI command.");
+            OutResponse->Rc = ECommandReturnCode::SuccessNoResponse;
+        }))});
+        check( this->CommandHandle_Quit.IsValid() )
+    }
+
     // Command: say
     {
-        LCliCommand Command("Say");
-        Command.AddOverload(
-            LCommandParams()
-            .AddToken(LCliToken_String().MakePack<LCliToken_String>())
-            .AddExec(LOnCommandExec::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
-            {
-                LOG_WARNING(LogTemporal, "{}", InArgs.GetCatRepresentation())
-            })
-        ));
-        this->CommandHandle_Say = CommandLineInterface->RegisterCommand(std::move(Command));
+        this->CommandHandle_Say = CommandLineInterface->RegisterCommand({"Say", "Say something.",
+        LCommandParams()
+        .AddToken(LCliType("String"))
+        .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+        {
+            LOG_WARNING(LogTemporal, "{}", InArgs.GetCatRepresentation())
+            OutResponse->Rc = ECommandReturnCode::SuccessNoResponse;
+        }))});
+        check( this->CommandHandle_Say.IsValid() )
     }
 
     // Command: CreateNewSurface
@@ -33,9 +46,10 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
         LCliCommand Command("a");
         Command.AddOverload(
             LCommandParams()
-            .AddExec(LOnCommandExec::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+            .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
             {
                 LOG_WARNING(LogTemporal, "Creating new surface...")
+                OutResponse->Rc = ECommandReturnCode::SuccessNoResponse;
             })
 
         ));
@@ -60,6 +74,7 @@ void Jafg::JCoreCommandSubsystem::TearDown()
     }                                                                                      \
     check( this->CommandHandle.IsValid() == false )                                        \
 
+    UNREGISTER_COMMAND(CommandHandle_Quit)
     UNREGISTER_COMMAND(CommandHandle_Say)
     UNREGISTER_COMMAND(CommandHandle_CreateNewSurface)
 

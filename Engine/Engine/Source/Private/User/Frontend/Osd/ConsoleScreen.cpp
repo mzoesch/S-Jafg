@@ -123,6 +123,10 @@ void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit
             {
                 LOG_ERROR(LogCli, "Command [{}] failed with return code [{}]: {}.", Command, LexToString(Response.Rc), Response.StdOut)
             }
+            else
+            {
+                LOG_INFO(LogCli, "Command [{}] succeeded with return code [{}]: {}.", Command, LexToString(Response.Rc), Response.StdOut)
+            }
         }
 
         return;

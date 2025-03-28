@@ -1,22 +1,18 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Cli/CliObject.h"
+#include "Engine/Engine.h"
 
-bool Jafg::LCliToken_String::IsInvocable(TdhArray<LCliToken*> InArgs, i32* InOutArgCursor) const
+void Jafg::LCliObject::ExpandUuid()
 {
-    if (this->bPack)
-    {
-        *InOutArgCursor = InArgs.GetSize();
-        return true;
-    }
+    check( this->Uuid == LCliObject::NoUuid )
+    LCliObject* Obj = GEngine->GetCommandLineInterface()->GetObjectAsserted(this->Identifier);
 
-    check( InArgs[*InOutArgCursor] )
+    this->Uuid = Obj->Uuid;
+    this->Identifier.Empty();
+    this->Help.Empty();
 
-    if (InArgs[*InOutArgCursor]->IsCastableToString())
-    {
-        *InOutArgCursor += 1;
-        return true;
-    }
+    check( this->Uuid != LCliObject::NoUuid )
 
-    return false;
+    return;
 }

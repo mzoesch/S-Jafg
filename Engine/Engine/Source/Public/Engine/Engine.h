@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Level.h"
-#include "Platform/SurfaceForward.h"
 #include "Subsystems/EngineSubsystem.h"
 #include "Cli/CommandLineInterface.h"
 #include "User/LocalEgo.h"
@@ -182,7 +181,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
 
     FORCEINLINE       LCommandLineInterface* GetCommandLineInterface() noexcept { return &this->CommandLineInterface; }
-    FORCEINLINE const LCommandLineInterface* GetCommandLineInterface() const noexcept  { return &this->CommandLineInterface; }
+    FORCEINLINE const LCommandLineInterface* GetCommandLineInterface() const noexcept { return &this->CommandLineInterface; }
 
 private:
 

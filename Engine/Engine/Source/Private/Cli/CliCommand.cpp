@@ -38,13 +38,9 @@ Jafg::LSimpleString Jafg::LexToString(const ECommandReturnCode::Type& InType)
     {
         return FMT("Forbidden");
     }
-    case ECommandReturnCode::MissingArgs:
+    case ECommandReturnCode::NoMatchingOverload:
     {
-        return FMT("MissingArgs");
-    }
-    case ECommandReturnCode::TooManyArgs:
-    {
-        return FMT("TooManyArgs");
+        return FMT("NoMatchingOverload");
     }
     case ECommandReturnCode::SemanticError:
     {
@@ -69,49 +65,56 @@ Jafg::LSimpleString Jafg::LexToString(const ECommandReturnCode::Type& InType)
 Jafg::LString Jafg::LCommandArgs::GetCatRepresentation() const
 {
     LString Cat;
-    for (const LCliToken* Arg : this->Args)
+    this->GetCatRepresentation(&Cat);
+    return Cat;
+}
+
+void Jafg::LCommandArgs::GetCatRepresentation(LString* AppendTo) const
+{
+    checkSlow( AppendTo )
+    check( this->IsValid() )
+
+    if (this->Name.IsEmpty() == false && AppendTo->IsEmpty() == false)
     {
-        if (Cat.IsEmpty() == false)
-        {
-            Cat += " ";
-        }
-        Cat += Arg->GetStringRepresentation();
+        AppendTo->Append(" ");
+    }
+    AppendTo->Append(this->Name);
+
+    for (const LCommandArgs& SubArg : this->SubArgs)
+    {
+        SubArg.GetCatRepresentation(AppendTo);
     }
 
-    return Cat;
+    return;
 }
 
 bool Jafg::LCommandParams::IsInvocable(const LCommandArgs& Args) const
 {
-    if (this->Tokens.GetSize() == Args.GetArgCount() && this->Tokens.GetSize() == 0)
+    if (this->Signature.GetSize() == 0 && Args.GetArgCount() == 0)
     {
         return true;
     }
 
-    i32 ParamCursor = 0;
-    i32 ArgCursor   = 0;
-
-    while (ParamCursor < this->Tokens.GetSize())
+    i32 ArgCursor = 0;
+    for (const LCliType& Param : this->Signature)
     {
-        if (ArgCursor >= Args.GetArgCount())
+        if (ArgCursor > Args.GetArgCount())
         {
             return false;
         }
 
-        LCliToken* const& Param = this->Tokens[ParamCursor];
-        if (Param->IsInvocable(Args.Args, &ArgCursor))
+        if (Param.CanParse(Args, &ArgCursor))
         {
-            ++ParamCursor;
             continue;
         }
 
         return false;
     }
 
-    return this->Tokens.GetSize() != 0;
-}
+    if (ArgCursor != Args.GetArgCount())
+    {
+        return false;
+    }
 
-void Jafg::LCommandParams::Invoke(const LCommandArgs& Args, LCommandExecutionResponse* OutResponse)
-{
-    this->OnExec.Invoke(Args, OutResponse);
+    return this->Signature.GetSize() > 0;
 }

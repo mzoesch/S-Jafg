@@ -9,11 +9,11 @@ namespace Jafg
 
 struct LDebugTraceSphereVisualParams final
 {
-    i32  Segments;
-    i32  Rings;
+    i32    Segments;
+    i32    Rings;
     LColor Color;
     /* Depending on the hardware, the max value may vary (but usually it's not more than 10). */
-    u8  Thickness = 1;
+    u8     Thickness = 1;
 };
 
 class LDebugTraceSphere final : public LTemporalWorldObject
@@ -25,8 +25,8 @@ public:
     LDebugTraceSphere(
         const float InTimeToLive,
         const LVector& InCenter,
-        const float InRadius,
-        const LDebugTraceSphereVisualParams& InVisualParams
+        const float InRadius = 0.5f,
+        const LDebugTraceSphereVisualParams& InVisualParams = { 10, 10, LColor::Red }
     )
         : LTemporalWorldObject(InTimeToLive), Center(InCenter), Radius(InRadius), VisualParams(InVisualParams)
     {
@@ -35,8 +35,8 @@ public:
     LDebugTraceSphere(
         const OneDrawCall InTimeToLive,
         const LVector& InCenter,
-        const float InRadius,
-        const LDebugTraceSphereVisualParams& InVisualParams
+        const float InRadius = 0.5f,
+        const LDebugTraceSphereVisualParams& InVisualParams = { 10, 10, LColor::Red }
     )
         : LTemporalWorldObject(InTimeToLive), Center(InCenter), Radius(InRadius), VisualParams(InVisualParams)
     {

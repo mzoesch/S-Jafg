@@ -7,7 +7,6 @@
 namespace Jafg
 {
 
-class LCliToken;
 struct LCommandArgs;
 struct LCommandParams;
 
@@ -28,8 +27,7 @@ ENGINE_API LString GetCommandFromText(const LString& InText);
 ENGINE_API LString GetArgsFromText(const LString& InText);
 
 //# @param InCommandLine The commandline without the command to parse.
-ENGINE_API void TokenizeCommand(LString&& InCommandLine, LCommandArgs* OutArgs);
-ENGINE_API auto TokenizeArg(const LString& InArg) -> LCliToken*;
+ENGINE_API LCommandArgs TokenizeCommand(LString&& InCommandLine);
 
 } /* ~Namespace CliStatics */
 

@@ -3,6 +3,7 @@
 #include "Cli/CliStatics.h"
 #include "Cli/CliCommand.h"
 #include "Cli/CliObject.h"
+#include "Core/Application.h"
 
 Jafg::LString Jafg::CliStatics::SafelyRemoveCommandPrefix(const LString& InText)
 {
@@ -86,46 +87,84 @@ Jafg::LString Jafg::CliStatics::GetArgsFromText(const LString& InText)
         return "";
     }
 
-    return InText.RightChop(Space);
+    if (InText.GetSize()-1 <= Space + 1)
+    {
+        return "";
+    }
+
+    return InText.RightChop(Space + 1);
 }
 
-void Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine, LCommandArgs* OutTokens)
+Jafg::LCommandArgs Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine)
 {
-    check(OutTokens->GetArgCount() == 0 )
+    LCommandArgs Out;
 
-    LString CommandLine = std::move(InCommandLine);
-
-    while (true)
+    LString Cur; Cur.Reserve(InCommandLine.GetSize());
+    i32 Cursor = INDEX_NONE;
+    bool bInString = false;
+    char LastChar = 0;
+    while (++Cursor < InCommandLine.GetRuneCount())
     {
-        const i32 Idx = CommandLine.FindFirst(" ");
-        if (Idx == INDEX_NONE)
+        const char CurChar = *InCommandLine[Cursor];
+        if (bInString)
         {
-            if (CommandLine.IsEmpty() == false)
+            if (CurChar == '"' && LastChar != '\\')
             {
-                OutTokens->Args.Add(CliStatics::TokenizeArg(CommandLine));
+                if (Cur.IsEmpty() == false)
+                {
+                    Out.SubArgs.Emplace(LCommandArgs(std::move(Cur)));
+                }
+                check( Cur.IsEmpty() )
+                LastChar = CurChar;
+                continue;
             }
-            return;
-        }
 
-        LString Arg = CommandLine.LeftChop(Idx);
-        if (Arg.IsEmpty())
-        {
-            CommandLine.InlineRightChop(Idx + 1);
+            if (CurChar != '\\')
+            {
+                Cur += CurChar;
+            }
+
+            LastChar = CurChar;
             continue;
         }
 
-        OutTokens->Args.Add(CliStatics::TokenizeArg(Arg));
+        if (CurChar == '"')
+        {
+            if (Cur.IsEmpty() == false)
+            {
+                Out.SubArgs.Emplace(LCommandArgs(std::move(Cur)));
+            }
+            check( Cur.IsEmpty() )
+            bInString = true;
+            LastChar = CurChar;
+            continue;
+        }
 
-        CommandLine.InlineRightChop(Idx + 1);
+        if (CurChar == ' ')
+        {
+            if (Cur.IsEmpty() == false)
+            {
+                Out.SubArgs.Emplace(LCommandArgs(std::move(Cur)));
+            }
+            check( Cur.IsEmpty() )
+            LastChar = CurChar;
+            continue;
+        }
+
+        Cur += CurChar;
+        LastChar = CurChar;
         continue;
     }
 
-    return;
-}
+    if (Cur.IsEmpty() == false)
+    {
+        Out.SubArgs.Emplace(LCommandArgs(std::move(Cur)));
+    }
 
-Jafg::LCliToken* Jafg::CliStatics::TokenizeArg(const LString& InArg)
-{
-    LCliToken_String* MyToken = new LCliToken_String();
-    MyToken->Value = InArg;
-    return MyToken;
+    if (bInString)
+    {
+        return LCommandArgs();
+    }
+
+    return Out;
 }

@@ -865,8 +865,8 @@ bool LStringBase<InCharacterTy, InTraitsTy>::operator>=(const InCharacterTy* InS
 template <class InCharacterTy, class InTraitsTy>
 LStringBase<InCharacterTy, InTraitsTy>& LStringBase<InCharacterTy, InTraitsTy>::operator+=(const InCharacterTy InRune)
 {
-    CharacterTy Characters[2] = { InRune, TraitsTy::Terminator };
-    this->Append(Characters, 2);
+    CharacterTy Characters[1] = { InRune };
+    this->Append(Characters, 1);
     return *this;
 }
 

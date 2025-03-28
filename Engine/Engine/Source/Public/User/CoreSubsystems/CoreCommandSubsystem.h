@@ -23,6 +23,7 @@ protected:
 
 private:
 
+    LCliCommandHandle CommandHandle_Quit;
     LCliCommandHandle CommandHandle_Say;
     LCliCommandHandle CommandHandle_CreateNewSurface;
 };

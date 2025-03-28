@@ -3,17 +3,20 @@
 #pragma once
 
 #include "Cli/CliObject.h"
+#include "Cli/CliType.h"
 
 namespace Jafg
 {
 
+class LCliObject;
 class LCliCommand;
+class LCliVariable;
 struct LCommandExecutionResponse;
 struct LCommandArgs;
 struct LCommandParams;
 namespace ECommandReturnCode { enum Type : u8; }
 
-MAKE_DELEGATE_SIGNATURE(LOnCommandExec, void, const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+MAKE_DELEGATE_SIGNATURE(LOnCommandInvokation, void, const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
 
 namespace ECommandReturnCode
 {
@@ -26,16 +29,19 @@ enum Type : u8
     // Somehow Successful Entries
     //////////////////////////////////////////////////////////////////////////
 
-    //# Command executed successfully. The parser might want to decide to give user feedback with the command's response.
+    //# Command executed successfully. The parser might want to decide to give user feedback
+    //# with the command's response.
     Success,
 
-    //# Command executed successfully. The parser is advised to not give method feedback to the user.
+    //# Command executed successfully. The parser is advised to not give user feedback.
     SuccessNoResponse,
 
-    //# Command executed successfully. The parser is advised to broadcast the command's response.
+    //# Command executed successfully. The parser is advised to give user feedback with
+    //# the command's response by broadcasting it to all listeners.
     SuccessBroadcast,
 
-    //# Command executed successfully. The parser is advised to broadcast the command's response with the authority as sender.
+    //# Command executed successfully. The parser is advised to give user feedback with
+    //# the command's response by broadcasting it to all listeners with the hosting authority as sender.
     SuccessBroadcastWithAuthority,
 
     //////////////////////////////////////////////////////////////////////////
@@ -56,11 +62,8 @@ enum Type : u8
     //# Command cannot be executed due to user rights, or the current application state is blocking the command.
     Forbidden,
 
-    //# Command executed with missing arguments.
-    MissingArgs,
-
-    //# Command executed with too many arguments.
-    TooManyArgs,
+    //# Command found but could not match any overload to the provided arguments.
+    NoMatchingOverload,
 
     //# Command executed with a semantic error.
     SemanticError,
@@ -80,20 +83,20 @@ ENGINE_API LSimpleString LexToString(const ECommandReturnCode::Type& InType);
 //#
 struct LCommandArgs
 {
-    ~LCommandArgs()
-    {
-        for (LCliToken* Arg : this->Args)
-        {
-            delete Arg;
-        }
-        this->Args.Empty();
-        return;
-    }
+    FORCEINLINE LCommandArgs() = default;
+    FORCEINLINE LCommandArgs(const LString& InName) : Name(InName) { }
+    FORCEINLINE LCommandArgs(LString&& InName) : Name(std::move(InName)) { }
+    DEFAULT_REALLOC_OF_ANY_FORM(LCommandArgs)
+    FORCEINLINE ~LCommandArgs() = default;
 
-    FORCEINLINE i32  GetArgCount() const { return this->Args.GetSize(); }
-    ENGINE_API LString GetCatRepresentation(void) const;
+    FORCEINLINE i32    GetArgCount() const { check( this->IsValid() ) return this->SubArgs.GetSize(); }
+    ENGINE_API LString GetCatRepresentation() const;
+    ENGINE_API void    GetCatRepresentation(LString* AppendTo) const;
 
-    TdhArray<LCliToken*> Args;
+    FORCEINLINE bool IsValid() const { return Name.IsEmpty() ? true : this->SubArgs.IsEmpty(); }
+
+    LString Name;
+    TdhArray<LCommandArgs> SubArgs;
 };
 
 //#
@@ -103,49 +106,30 @@ struct LCommandParams
 {
     FORCEINLINE LCommandParams() = default;
     PROHIBIT_COPY(LCommandParams)
-    FORCEINLINE LCommandParams(LCommandParams&& InOther) noexcept
-    {
-        this->OnExec = std::move(InOther.OnExec);
-        this->Tokens = std::move(InOther.Tokens);
-        return;
-    }
-    FORCEINLINE LCommandParams& operator=(LCommandParams&& InOther) noexcept
-    {
-        this->OnExec = std::move(InOther.OnExec);
-        this->Tokens = std::move(InOther.Tokens);
-        return *this;
-    }
-    FORCEINLINE ~LCommandParams()
-    {
-        this->OnExec.Unbind();
-        for (const LCliToken* Token : this->Tokens)
-        {
-            delete Token;
-        }
-        this->Tokens.Empty();
-        return;
-    }
+    DEFAULT_MOVE(LCommandParams)
+    FORCEINLINE ~LCommandParams() = default;
 
-    FORCEINLINE LCommandParams&& AddExec(LOnCommandExec&& InExec)
+    FORCEINLINE LCommandParams&& SetExec(LOnCommandInvokation&& InExec)
     {
         this->OnExec = std::move(InExec);
         return std::move(*this);
     }
 
-    template <typename TToken>
-    FORCEINLINE LCommandParams&& AddToken(TToken&& InToken)
+    FORCEINLINE LCommandParams&& AddToken(LCliType&& InToken)
     {
-        TToken* Token = new TToken(std::forward<TToken>(InToken));
-        this->Tokens.Add(Token);
+        this->Signature.Emplace(std::move(InToken));
         return std::move(*this);
     }
 
     //# Whether the command can be invoked with the given arguments.
-    ENGINE_API bool IsInvocable(const LCommandArgs& Args) const;
-    ENGINE_API void Invoke(const LCommandArgs& Args, LCommandExecutionResponse* OutResponse);
+    ENGINE_API  bool IsInvocable(const LCommandArgs& Args) const;
+    FORCEINLINE void Invoke(const LCommandArgs& Args, LCommandExecutionResponse* OutResponse) const
+    {
+        this->OnExec.Invoke(Args, OutResponse);
+    }
 
-    LOnCommandExec       OnExec;
-    TdhArray<LCliToken*> Tokens;
+    LOnCommandInvokation OnExec;
+    TdhArray<LCliType>   Signature;
 };
 
 //#
@@ -153,19 +137,29 @@ struct LCommandParams
 //#
 struct LCommandExecutionResponse
 {
-    ECommandReturnCode::Type Rc;
+    //# Return code of the command. @see #ECommandReturnCode for meaning.
+    ECommandReturnCode::Type Rc = ECommandReturnCode::Invalid;
 
     //#
-    //# The stdout of the command. This is the output that the command produced and should contain as much information
-    //# as possible about the command's execution. This will be logged in most cases.
+    //# The stdout of the command. If applicable, this will be the user feedback to all listeners of this command.
+    //# Do not put sensitive information here.
     //#
     LString StdOut;
+
+    //#
+    //# The stderr of the command. This is internal feedback to listeners of the command that have the authority and
+    //# permission to see this information - based of the command internal administrator permissions.
+    //# Only put that much sensitive information here that should be visible to administrators of the given
+    //# command role or higher.
+    //# This will be logged in most cases.
+    //#
+    LString StdErr;
 
     //#
     //# The sanitized stdout of the command.
     //# If this is empty, the stdout will be used for the sanitized output.
     //# This parameter is used to hide sensitive information from the user. E.g. missing operation permissions. This
-    //# will not be logged but will be the feedback to the user on error.
+    //# will not be logged but will most likely server as a user feedback for all attached listeners.
     //#
     LString SanitizedStdErr;
 };
@@ -177,26 +171,46 @@ class LCliCommand final : public LCliObject
 {
 public:
 
-    LCliCommand() = delete;
-    LCliCommand(const LSimpleString& InIdentifier) : LCliObject(InIdentifier) { }
-    LCliCommand(const LSimpleString& InIdentifier, const LString& InHelp) : LCliObject(InIdentifier, InHelp) { }
+    FORCEINLINE LCliCommand() = delete;
+    FORCEINLINE LCliCommand(const LSimpleString& InIdentifier) : LCliObject(InIdentifier) { }
+    FORCEINLINE LCliCommand(const LSimpleString& InIdentifier, const LString& InHelp) : LCliObject(InIdentifier, InHelp) { }
+    template <typename... TArgs>
+    FORCEINLINE LCliCommand(const LSimpleString& InIdentifier, const LString& InHelp, TArgs&&... InArgs) : LCliObject(InIdentifier, InHelp)
+    {
+        this->AddOverload(std::forward<TArgs>(InArgs)...);
+    }
+
     PROHIBIT_COPY(LCliCommand)
-    FORCEINLINE LCliCommand(LCliCommand&& InOther) noexcept = delete;
+    FORCEINLINE LCliCommand(LCliCommand&& InOther) noexcept
+    {
+        this->Overloads = std::move(InOther.Overloads);
+        this->LCliObject::operator=(std::move(InOther));
+        return;
+    }
     FORCEINLINE LCliCommand& operator=(LCliCommand&& InOther) noexcept
     {
-        this->Params = std::move(InOther.Params);
+        this->Overloads = std::move(InOther.Overloads);
         this->LCliObject::operator=(std::move(InOther));
         return *this;
     }
 
-    ENGINE_API i32 GetOverloadCount() const { return this->Params.GetSize(); }
-    FORCEINLINE auto GetOverloads()       ->       TdhArray<LCommandParams>& { return this->Params; }
-    FORCEINLINE auto GetOverloads() const -> const TdhArray<LCommandParams>& { return this->Params; }
-    FORCEINLINE void AddOverload(LCommandParams&& InParams) { this->Params.Add(std::move(InParams)); }
+    FORCEINLINE i32  GetOverloadCount() const { return this->Overloads.GetSize(); }
+    FORCEINLINE auto GetOverloads()       ->       TdhArray<LCommandParams>& { return this->Overloads; }
+    FORCEINLINE auto GetOverloads() const -> const TdhArray<LCommandParams>& { return this->Overloads; }
+    FORCEINLINE void AddOverload(LCommandParams&& InParams) { this->Overloads.Emplace(std::move(InParams)); }
 
 private:
 
-    TdhArray<LCommandParams> Params;
+    template <typename T, typename... TArgs>
+    FORCEINLINE void AddOverload(T&& InOverload, TArgs&&... InOverloads)
+    {
+        static_assert(std::is_constructible_v<LCommandParams, T>, "InOverload must be constructible to LCommandParams");
+        this->AddOverload(std::forward<T>(InOverload));
+        this->AddOverload(std::forward<TArgs>(InOverloads)...);
+        return;
+    }
+
+    TdhArray<LCommandParams> Overloads;
 };
 
 } /* ~Namespace Jafg */
