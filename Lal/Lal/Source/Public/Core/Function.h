@@ -58,7 +58,7 @@ public:
     }
     FORCEINLINE ~TFunction() { this->Reset(); return; }
 
-    template <typename CallableTy>
+    template <typename CallableTy, typename = typename TEnableIf<std::is_invocable_v<CallableTy, ParamsTy...>>::Ty>
     FORCEINLINE TFunction(CallableTy&& InCallable)
     {
         this->Reset();
@@ -115,19 +115,19 @@ public:
         return Result;
     }
 
-    template <typename CallableTy>
+    template <typename CallableTy, typename = typename TEnableIf<std::is_invocable_v<CallableTy, ParamsTy...>>::Ty>
     FORCEINLINE TFunction(CallableTy* InCallable)
     {
         this->Reset();
         this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LWeakCallable<CallableTy>>(InCallable);
     }
-    template <typename CallableTy>
+    template <typename CallableTy, typename = typename TEnableIf<std::is_invocable_v<CallableTy, ParamsTy...>>::Ty>
     FORCEINLINE void BindWeak(CallableTy* InCallable)
     {
         this->Reset();
         this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LWeakCallable<CallableTy>>(InCallable);
     }
-    template <typename CallableTy>
+    template <typename CallableTy, typename = typename TEnableIf<std::is_invocable_v<CallableTy, ParamsTy...>>::Ty>
     FORCEINLINE static Self CreateWeak(CallableTy* InCallable)
     {
         Self Result;

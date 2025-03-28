@@ -209,6 +209,21 @@ bool Jafg::LCommandLineInterface::UnregisterVariable(LCliVariableHandle* InHandl
     return false;
 }
 
+Jafg::LCliObject* Jafg::LCommandLineInterface::GetObject(const LCliObject& InHandle)
+{
+    if (LCliType* Type = this->GetType(InHandle.Uuid); Type)
+    {
+        return Type;
+    }
+
+    if (LCliCommand* Command = this->GetCommand(InHandle.Uuid); Command)
+    {
+        return Command;
+    }
+
+    return this->GetVariable(InHandle.Uuid);
+}
+
 Jafg::LCliObject* Jafg::LCommandLineInterface::GetObject(const LCliObjectHandle& InHandle)
 {
     if (LCliType* Type = this->GetType(InHandle); Type)

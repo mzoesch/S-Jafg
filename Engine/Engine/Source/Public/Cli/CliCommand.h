@@ -65,6 +65,9 @@ enum Type : u8
     //# Command found but could not match any overload to the provided arguments.
     NoMatchingOverload,
 
+    //# Command executed with a type error.
+    TypeError,
+
     //# Command executed with a semantic error.
     SemanticError,
 

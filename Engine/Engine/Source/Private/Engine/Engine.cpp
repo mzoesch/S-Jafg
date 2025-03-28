@@ -32,25 +32,25 @@ void Jafg::LEngine::Initialize()
 {
     // Register primitives
     {
-        ensure(this->CommandLineInterface.RegisterType({"Integer", "A 32 bit signed Integer.",
+        ensure(this->CommandLineInterface.RegisterType({"Integer", "A 32 bit signed Integer.", "0",
         LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
         {
             return false;
         })}).IsValid());
 
-        ensure(this->CommandLineInterface.RegisterType({"Byte", "A 8 bit unsigned integer.",
+        ensure(this->CommandLineInterface.RegisterType({"Byte", "A 8 bit unsigned integer.", "0",
         LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
         {
             return false;
         })}).IsValid());
 
-        ensure(this->CommandLineInterface.RegisterType({"Float", "A 32 bit floating point number.",
+        ensure(this->CommandLineInterface.RegisterType({"Float", "A 32 bit floating point number.", "0.0",
         LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
         {
             return false;
         })}).IsValid());
 
-        ensure(this->CommandLineInterface.RegisterType({"String", "A string.",
+        ensure(this->CommandLineInterface.RegisterType({"String", "A string.", "",
         LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
         {
             checkSlow( *Cursor < Args.GetArgCount() )
@@ -62,13 +62,54 @@ void Jafg::LEngine::Initialize()
             return true;
         })}).IsValid());
 
-        ensure(this->CommandLineInterface.RegisterType({"Bool", "A boolean.",
+        ensure(this->CommandLineInterface.RegisterType({"Bool", "A boolean.", "false",
         LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
         {
+            checkSlow( *Cursor < Args.GetArgCount() )
+            if (Args[*Cursor].Name.IsEmpty())
+            {
+                return false;
+            }
+
+            if
+            (
+                   Args[*Cursor].Name.Equals("true")  == false
+                && Args[*Cursor].Name.Equals("false") == false
+                && Args[*Cursor].Name.Equals("1")     == false
+                && Args[*Cursor].Name.Equals("0")     == false
+            )
+            {
+                return false;
+            }
+
+            ++*Cursor;
+            return true;
+        }),
+        LOnValueSetDelegate::CreateStrong([](const LCommandArgs& InValue, LString* OutValue) -> bool
+        {
+            check( InValue.IsValid() && InValue.Name.IsEmpty() == false )
+
+            if (InValue.Name.Equals("true") || InValue.Name.Equals("1"))
+            {
+                if (*OutValue != "true")
+                {
+                    *OutValue = "true";
+                    return true;
+                }
+            }
+            else if (InValue.Name.Equals("false") || InValue.Name.Equals("0"))
+            {
+                if (*OutValue != "false")
+                {
+                    *OutValue = "false";
+                    return true;
+                }
+            }
+
             return false;
         })}).IsValid());
 
-        ensure(this->CommandLineInterface.RegisterType({"Any", "Any value.",
+        ensure(this->CommandLineInterface.RegisterType({"Any", "Any value.", "",
         LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
         {
             checkSlow( *Cursor < Args.GetArgCount() )
@@ -80,7 +121,7 @@ void Jafg::LEngine::Initialize()
             return true;
         })}).IsValid());
 
-        ensure(this->CommandLineInterface.RegisterType({"Var", "A variable.",
+        ensure(this->CommandLineInterface.RegisterType({"Var", "A variable.", "NULL",
         LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
         {
             checkSlow( *Cursor < Args.GetArgCount() )
@@ -94,14 +135,21 @@ void Jafg::LEngine::Initialize()
 
         ensure(this->CommandLineInterface.RegisterCommand({"Set", "Set any variable.",
         LCommandParams()
-        .AddToken(LCliType::Type("Var"))
-        .AddToken(LCliType::Type("Any"))
+        .AddToken(LCliType::Type("Var", "The variable to set."))
+        .AddToken(LCliType::Type("Any", "The value to set."))
         .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {
             check( InArgs.GetArgCount() == 2 )
-            LOG_WARNING(LogTemporal, "Seting {} to {}.", InArgs[0].Name, InArgs[1].Name);
             if (LCliVariable* Var = GEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)
             {
+                i32 Cursor = 1;
+                if (Var->GetType()->CanParse(InArgs, &Cursor) == false)
+                {
+                    OutResponse->Rc = ECommandReturnCode::TypeError;
+                    OutResponse->StdOut = LString::SprintF("Cannot parse [{}] as [{}]", InArgs[1].Name, Var->GetType()->GetIdentifier());
+                    return;
+                }
+
                 if (Var->SetValue(InArgs[1].Name))
                 {
                     OutResponse->Rc = ECommandReturnCode::Success;
@@ -123,7 +171,7 @@ void Jafg::LEngine::Initialize()
 
         ensure(this->CommandLineInterface.RegisterCommand({"Get", "Get any variable.",
         LCommandParams()
-        .AddToken(LCliType::Type("Var"))
+        .AddToken(LCliType::Type("Var", "The variable to get."))
         .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {
             check( InArgs.GetArgCount() == 1 )

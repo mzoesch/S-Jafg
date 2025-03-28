@@ -15,8 +15,15 @@ void Jafg::LLocalEgo::Initialize()
 {
     check( Tasks::IsOnMasterThread() )
     check( this->IsValid() == false )
-
     this->bValid = true;
+
+    this->VariableHandle_UpdateFrustum = GEngine->GetCommandLineInterface()->RegisterVariable(
+    {
+        "UpdateFrustum", LCliType::Type("Bool"), "true", LOnVariableChangedDelegate::CreateStrong([](const LString& InValue)
+        {
+            LOG_WARNING(LogTemporal, "Updating frustum internal: {}", InValue)
+        })
+    });
 
     this->Context.SetHumanReadableName("LocalEgo");
 
@@ -119,6 +126,16 @@ void Jafg::LLocalEgo::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
     });
 
     return;
+}
+
+Jafg::LEngine* Jafg::LLocalEgo::GetEngine()
+{
+    return GEngine;
+}
+
+Jafg::LCommandLineInterface* Jafg::LLocalEgo::GetCommandLineInterface()
+{
+    return GEngine->GetCommandLineInterface();
 }
 
 void Jafg::LLocalEgo::OnWorldBeginLife(LWorld* InNewWorld)

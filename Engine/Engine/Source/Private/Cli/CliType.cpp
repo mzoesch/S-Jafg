@@ -6,10 +6,10 @@
 bool Jafg::LCliType::CanParse(const LCommandArgs& Args, i32* Cursor) const
 {
     check( Cursor )
-    if (this->OnParseType.IsBound())
+    if (this->OnParseTypeDelegate.IsBound())
     {
-        return this->OnParseType.Invoke(Args, Cursor);
+        return this->OnParseTypeDelegate.Invoke(Args, Cursor);
     }
 
-    return GEngine->GetCommandLineInterface()->GetTypeAsserted(this->GetUuid())->OnParseType.Invoke(Args, Cursor);
+    return GEngine->GetCommandLineInterface()->GetTypeAsserted(this->GetUuid())->OnParseTypeDelegate.Invoke(Args, Cursor);
 }

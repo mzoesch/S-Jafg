@@ -125,7 +125,7 @@ void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit
             }
             else
             {
-                LOG_INFO(LogCli, "{}", Response.StdOut)
+                LOG_INFO(LogCli, "{}.", Response.StdOut)
             }
         }
 

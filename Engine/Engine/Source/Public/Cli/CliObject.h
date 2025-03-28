@@ -55,7 +55,7 @@ public:
 
 protected:
 
-    ENGINE_API  void ExpandUuid();
+    ENGINE_API  void ExpandToUuid();
     FORCEINLINE auto GetUuid() const -> LCliObjectUuid { return this->Uuid; }
 
 private:

@@ -6,14 +6,15 @@
 #include "User/Input/UserInput.h"
 #include "Framework/Frontend.h"
 #include "Subsystems/SubsystemCollection.h"
-#include "Platform/SurfaceForward.h"
 #include "Subsystems/LocalEgoSubsystem.h"
+#include "Cli/CommandLineInterface.h"
 
 namespace Jafg
 {
 
 class LObjectContext;
 class APawn;
+class LEngine;
 class LWorld;
 class APersonaController;
 struct LSubsystemCollection;
@@ -45,11 +46,11 @@ public:
     FORCEINLINE auto GetUserInput() -> LUserInput* { return &this->UserInput; }
     FORCEINLINE auto GetUserInput() const -> const LUserInput* { return &this->UserInput; }
 
-    FORCEINLINE auto DoesPossess() const -> bool { return this->PersonaController != nullptr; }
+    FORCEINLINE bool DoesPossess() const { return this->PersonaController != nullptr; }
     FORCEINLINE auto GetPossessed() const -> APersonaController* { return this->PersonaController; }
     FORCEINLINE auto GetCheckedPossessed() const -> APersonaController* { check( this->PersonaController ) return this->PersonaController; }
     FORCEINLINE auto GetPanickedPossessed() const -> APersonaController*;
-                void Possess(APersonaController* InNewController);
+    ENGINE_API  void Possess(APersonaController* InNewController);
 
     FORCEINLINE auto GetContext() -> LObjectContext& { return this->Context; }
     FORCEINLINE auto GetContext() const -> const LObjectContext& { return this->Context; }
@@ -58,11 +59,12 @@ public:
 
     void OnNewPawnPossessed(APawn* InOld, APawn* InNew);
 
-protected:
-
-    void OnWorldBeginLife(LWorld* InNewWorld);
+    ENGINE_API LEngine* GetEngine();
+    ENGINE_API LCommandLineInterface* GetCommandLineInterface();
 
 private:
+
+    void OnWorldBeginLife(LWorld* InNewWorld);
 
     bool bValid = false;
 
@@ -80,6 +82,8 @@ private:
     //#
     LObjectContext       Context = GlobalCarnifex;
     LSubsystemCollection Collection;
+
+    LCliVariableHandle VariableHandle_UpdateFrustum;
 };
 
 } /* ~Namespace Jafg */

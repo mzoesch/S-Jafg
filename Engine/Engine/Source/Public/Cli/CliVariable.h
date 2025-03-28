@@ -3,11 +3,12 @@
 #pragma once
 
 #include "Cli/CliObject.h"
+#include "Cli/CliType.h"
 
 namespace Jafg
 {
 
-typedef TFunction<bool(const LString& InValue, LString* OutValue)> LOnVariableChangedDelegate;
+typedef TFunction<void(const LString& InValue)> LOnVariableChangedDelegate;
 
 //#
 //# A variable inside the cli of the engine.
@@ -17,44 +18,47 @@ class LCliVariable final : public LCliObject
 public:
 
     FORCEINLINE LCliVariable() = delete;
-    FORCEINLINE LCliVariable(const LString& InIdentifier) : LCliObject(InIdentifier) { }
-    FORCEINLINE LCliVariable(const LString& InIdentifier, LOnVariableChangedDelegate&& InDelegate)
-    : LCliObject(InIdentifier), OnVariableChangedDelegate(std::move(InDelegate)) { }
-    FORCEINLINE LCliVariable(const LString& InIdentifier, const LString& InHelp, LOnVariableChangedDelegate&& InDelegate)
-    : LCliObject(InIdentifier, InHelp), OnVariableChangedDelegate(std::move(InDelegate)) { }
+    //# If no default value is provided, the default value of the provided type will be used.
+    ENGINE_API  LCliVariable(const LString& InIdentifier, LCliType&& InType);
+    ENGINE_API  LCliVariable(const LString& InIdentifier, LCliType&& InType, const LString& InDefault);
+    ENGINE_API  LCliVariable(const LString& InIdentifier, LCliType&& InType, const LString& InDefault, LOnVariableChangedDelegate&& InDelegate);
+    ENGINE_API  LCliVariable(const LString& InIdentifier, LCliType&& InType, LOnVariableChangedDelegate&& InDelegate);
+    ENGINE_API  LCliVariable(const LString& InIdentifier, const LString& InHelp, LCliType&& InType);
+    ENGINE_API  LCliVariable(const LString& InIdentifier, const LString& InHelp, LCliType&& InType, const LString& InDefault);
+    ENGINE_API  LCliVariable(const LString& InIdentifier, const LString& InHelp, LCliType&& InType, const LString& InDefault, LOnVariableChangedDelegate&& InDelegate);
+    ENGINE_API  LCliVariable(const LString& InIdentifier, const LString& InHelp, LCliType&& InType, LOnVariableChangedDelegate&& InDelegate);
     PROHIBIT_COPY(LCliVariable)
     FORCEINLINE LCliVariable(LCliVariable&& InOther) noexcept
+    : Type(std::move(InOther.Type)), Value(std::move(InOther.Value)), OnVariableChangedDelegate(std::move(InOther.OnVariableChangedDelegate))
     {
-        this->Value = std::move(InOther.Value);
         this->LCliObject::operator=(std::move(InOther));
+        check( InOther.GetUuid() == LCliObject::NoUuid && InOther.GetIdentifier().IsEmpty() && InOther.GetHelp().IsEmpty() )
+        check( InOther.Type.GetDefault().IsEmpty() && InOther.Type.IsTypeDelegateValid() == false && InOther.Type.IsValueSetDelegateValid() == false )
+        check( InOther.Value.IsEmpty() && InOther.OnVariableChangedDelegate.IsValid() == false )
+
         return;
     }
     FORCEINLINE LCliVariable& operator=(LCliVariable&& InOther) noexcept
     {
+        this->Type = std::move(InOther.Type);
         this->Value = std::move(InOther.Value);
+        this->OnVariableChangedDelegate = std::move(InOther.OnVariableChangedDelegate);
+
         this->LCliObject::operator=(std::move(InOther));
+        check( InOther.GetUuid() == LCliObject::NoUuid && InOther.GetIdentifier().IsEmpty() && InOther.GetHelp().IsEmpty() )
+        check( InOther.Type.GetDefault().IsEmpty() && InOther.Type.IsTypeDelegateValid() == false && InOther.Type.IsValueSetDelegateValid() == false )
+        check( InOther.Value.IsEmpty() && InOther.OnVariableChangedDelegate.IsValid() == false )
+
         return *this;
     }
 
-    FORCEINLINE const LString& GetValue() const { return this->Value; }
-    FORCEINLINE bool SetValue(const LString& InValue)
-    {
-        if (this->Value == InValue)
-        {
-            return false;
-        }
-
-        if (this->OnVariableChangedDelegate)
-        {
-            return this->OnVariableChangedDelegate(InValue, &this->Value);
-        }
-
-        this->Value = InValue;
-        return true;
-    }
+    ENGINE_API  auto GetType() const -> const LCliType*;
+    ENGINE_API  bool SetValue(const LString& InValue);
+    FORCEINLINE auto GetValue() const -> const LString& { return this->Value; }
 
 private:
 
+    LCliType Type;
     LString Value;
     LOnVariableChangedDelegate OnVariableChangedDelegate;
 };

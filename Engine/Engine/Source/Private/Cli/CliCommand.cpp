@@ -42,6 +42,10 @@ Jafg::LSimpleString Jafg::LexToString(const ECommandReturnCode::Type& InType)
     {
         return FMT("NoMatchingOverload");
     }
+    case ECommandReturnCode::TypeError:
+    {
+        return FMT("TypeError");
+    }
     case ECommandReturnCode::SemanticError:
     {
         return FMT("SemanticError");
