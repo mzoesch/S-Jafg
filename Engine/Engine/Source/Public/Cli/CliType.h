@@ -19,9 +19,8 @@ class LCliType final : public LCliObject
 public:
 
     FORCEINLINE LCliType() = delete;
-    FORCEINLINE LCliType(const LSimpleString& InIdentifier) : LCliObject(InIdentifier) { this->ExpandUuid(); }
-    FORCEINLINE LCliType(const LSimpleString& InIdentifier, LOnParseTypeDelegate&& InOnParseType) : LCliObject(InIdentifier), OnParseType(std::move(InOnParseType)) { }
-    FORCEINLINE LCliType(const LSimpleString& InIdentifier, const LString& InHelp, LOnParseTypeDelegate&& InOnParseType) : LCliObject(InIdentifier, InHelp), OnParseType(std::move(InOnParseType)) { }
+    FORCEINLINE LCliType(const LString& InIdentifier, LOnParseTypeDelegate&& InOnParseType) : LCliObject(InIdentifier), OnParseType(std::move(InOnParseType)) { }
+    FORCEINLINE LCliType(const LString& InIdentifier, const LString& InHelp, LOnParseTypeDelegate&& InOnParseType) : LCliObject(InIdentifier, InHelp), OnParseType(std::move(InOnParseType)) { }
     PROHIBIT_COPY(LCliType)
     FORCEINLINE LCliType(LCliType&& InOther) noexcept
     {
@@ -36,10 +35,16 @@ public:
         return *this;
     }
 
+    FORCEINLINE static LCliType Type(const LString& InIdentifier)
+    {
+        return LCliType(InIdentifier);
+    }
+
     ENGINE_API bool CanParse(const LCommandArgs& Args, i32* Cursor) const;
 
 private:
 
+    FORCEINLINE explicit LCliType(const LString& InIdentifier) : LCliObject(InIdentifier) { this->ExpandUuid(); }
     LOnParseTypeDelegate OnParseType;
 };
 

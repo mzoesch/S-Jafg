@@ -17,34 +17,33 @@ void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandE
 {
     check( OutResponse )
 
-    const LString ComplexCommandStr = CliStatics::GetCommandFromText(InCommandLine);
-    if (ComplexCommandStr.IsEmpty())
+    const LString CommandStr = CliStatics::GetCommandFromText(InCommandLine);
+    if (CommandStr.IsEmpty())
     {
         OutResponse->Rc = ECommandReturnCode::Failure;
         OutResponse->StdOut = "Failed to extract command from input";
         return;
     }
 
-    if (Str::IsValidAscii(ComplexCommandStr.ToC()) == false)
+    if (Str::IsValidAscii(CommandStr.ToC()) == false)
     {
         OutResponse->Rc = ECommandReturnCode::Failure;
         OutResponse->StdOut = "Command contains invalid characters";
         return;
     }
-    const LSimpleString SimpleCommandStr = Str::ToSimpleString(ComplexCommandStr, EConvErrorHandling::Panic);
 
-    LCliCommand* Cmd = this->GetCommand(SimpleCommandStr);
+    LCliCommand* Cmd = this->GetCommand(CommandStr);
     if (Cmd == nullptr)
     {
         OutResponse->Rc = ECommandReturnCode::Unknown;
-        OutResponse->StdOut = LString::SprintF("No such command [{}]", SimpleCommandStr.ToC());
+        OutResponse->StdOut = LString::SprintF("No such command [{}]", CommandStr.ToC());
         return;
     }
 
     if (Cmd->GetOverloadCount() == 0)
     {
         OutResponse->Rc = ECommandReturnCode::Failure;
-        OutResponse->StdOut = LString::SprintF("Command [{}] has no overloads and is therefore not invokable", SimpleCommandStr.ToC());
+        OutResponse->StdOut = LString::SprintF("Command [{}] has no overloads and is therefore not invokable", CommandStr.ToC());
         return;
     }
 
@@ -243,7 +242,7 @@ Jafg::LCliObject* Jafg::LCommandLineInterface::GetObject(const LCliObjectHandle&
     return this->GetVariable(InHandle);
 }
 
-Jafg::LCliObject* Jafg::LCommandLineInterface::GetObject(const LSimpleString& InName)
+Jafg::LCliObject* Jafg::LCommandLineInterface::GetObject(const LString& InName)
 {
     if (LCliType* Type = this->GetType(InName); Type)
     {
@@ -258,7 +257,7 @@ Jafg::LCliObject* Jafg::LCommandLineInterface::GetObject(const LSimpleString& In
     return this->GetVariable(InName);
 }
 
-Jafg::LCliObject* Jafg::LCommandLineInterface::GetObject(const LSimpleString& InName, ECliType::Type* OutType)
+Jafg::LCliObject* Jafg::LCommandLineInterface::GetObject(const LString& InName, ECliType::Type* OutType)
 {
     check( OutType )
 

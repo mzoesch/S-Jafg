@@ -89,18 +89,18 @@ public:
     FORCEINLINE const LCliObject* GetObjectChecked(const LCliObjectHandle& InHandle, ECliType::Type* OutType) const { const LCliObject* Out = this->GetObject(InHandle, OutType); check(Out); return Out; }
     FORCEINLINE       LCliObject* GetObjectAsserted(const LCliObjectHandle& InHandle, ECliType::Type* OutType) { LCliObject* Out = this->GetObject(InHandle, OutType); jassert(Out); return Out; }
     FORCEINLINE const LCliObject* GetObjectAsserted(const LCliObjectHandle& InHandle, ECliType::Type* OutType) const { const LCliObject* Out = this->GetObject(InHandle, OutType); jassert(Out); return Out; }
-    ENGINE_API        LCliObject* GetObject(const LSimpleString& InName);
-    FORCEINLINE const LCliObject* GetObject(const LSimpleString& InName) const { return const_cast<LCommandLineInterface*>(this)->GetObject(InName); }
-    FORCEINLINE       LCliObject* GetObjectChecked(const LSimpleString& InName) { LCliObject* Out = this->GetObject(InName); check(Out); return Out; }
-    FORCEINLINE const LCliObject* GetObjectChecked(const LSimpleString& InName) const { const LCliObject* Out = this->GetObject(InName); check(Out); return Out; }
-    FORCEINLINE       LCliObject* GetObjectAsserted(const LSimpleString& InName) { LCliObject* Out = this->GetObject(InName); jassert(Out); return Out; }
-    FORCEINLINE const LCliObject* GetObjectAsserted(const LSimpleString& InName) const { const LCliObject* Out = this->GetObject(InName); jassert(Out); return Out; }
-    ENGINE_API        LCliObject* GetObject(const LSimpleString& InName, ECliType::Type* OutType);
-    FORCEINLINE const LCliObject* GetObject(const LSimpleString& InName, ECliType::Type* OutType) const { return const_cast<LCommandLineInterface*>(this)->GetObject(InName, OutType); }
-    FORCEINLINE       LCliObject* GetObjectChecked(const LSimpleString& InName, ECliType::Type* OutType) { LCliObject* Out = this->GetObject(InName, OutType); check(Out); return Out; }
-    FORCEINLINE const LCliObject* GetObjectChecked(const LSimpleString& InName, ECliType::Type* OutType) const { const LCliObject* Out = this->GetObject(InName, OutType); check(Out); return Out; }
-    FORCEINLINE       LCliObject* GetObjectAsserted(const LSimpleString& InName, ECliType::Type* OutType) { LCliObject* Out = this->GetObject(InName, OutType); jassert(Out); return Out; }
-    FORCEINLINE const LCliObject* GetObjectAsserted(const LSimpleString& InName, ECliType::Type* OutType) const { const LCliObject* Out = this->GetObject(InName, OutType); jassert(Out); return Out; }
+    ENGINE_API        LCliObject* GetObject(const LString& InName);
+    FORCEINLINE const LCliObject* GetObject(const LString& InName) const { return const_cast<LCommandLineInterface*>(this)->GetObject(InName); }
+    FORCEINLINE       LCliObject* GetObjectChecked(const LString& InName) { LCliObject* Out = this->GetObject(InName); check(Out); return Out; }
+    FORCEINLINE const LCliObject* GetObjectChecked(const LString& InName) const { const LCliObject* Out = this->GetObject(InName); check(Out); return Out; }
+    FORCEINLINE       LCliObject* GetObjectAsserted(const LString& InName) { LCliObject* Out = this->GetObject(InName); jassert(Out); return Out; }
+    FORCEINLINE const LCliObject* GetObjectAsserted(const LString& InName) const { const LCliObject* Out = this->GetObject(InName); jassert(Out); return Out; }
+    ENGINE_API        LCliObject* GetObject(const LString& InName, ECliType::Type* OutType);
+    FORCEINLINE const LCliObject* GetObject(const LString& InName, ECliType::Type* OutType) const { return const_cast<LCommandLineInterface*>(this)->GetObject(InName, OutType); }
+    FORCEINLINE       LCliObject* GetObjectChecked(const LString& InName, ECliType::Type* OutType) { LCliObject* Out = this->GetObject(InName, OutType); check(Out); return Out; }
+    FORCEINLINE const LCliObject* GetObjectChecked(const LString& InName, ECliType::Type* OutType) const { const LCliObject* Out = this->GetObject(InName, OutType); check(Out); return Out; }
+    FORCEINLINE       LCliObject* GetObjectAsserted(const LString& InName, ECliType::Type* OutType) { LCliObject* Out = this->GetObject(InName, OutType); jassert(Out); return Out; }
+    FORCEINLINE const LCliObject* GetObjectAsserted(const LString& InName, ECliType::Type* OutType) const { const LCliObject* Out = this->GetObject(InName, OutType); jassert(Out); return Out; }
 
     FORCEINLINE       LCliType* GetType(const LCliTypeHandle& InHandle) { return this->Types.FindByPredicate([InHandle](const LCliType& Type) { return Type.Uuid == InHandle.Uuid; }); }
     FORCEINLINE const LCliType* GetType(const LCliTypeHandle& InHandle) const { return const_cast<LCommandLineInterface*>(this)->GetType(InHandle); }
@@ -108,12 +108,12 @@ public:
     FORCEINLINE const LCliType* GetTypeChecked(const LCliTypeHandle& InHandle) const { const LCliType* Out = this->GetType(InHandle); check(Out); return Out; }
     FORCEINLINE       LCliType* GetTypeAsserted(const LCliTypeHandle& InHandle) { LCliType* Out = this->GetType(InHandle); jassert(Out); return Out; }
     FORCEINLINE const LCliType* GetTypeAsserted(const LCliTypeHandle& InHandle) const { const LCliType* Out = this->GetType(InHandle); jassert(Out); return Out; }
-    FORCEINLINE       LCliType* GetType(const LSimpleString& InTypeName) { return this->Types.FindByPredicate([InTypeName](const LCliType& Type) { return Type.GetIdentifier() == InTypeName; }); }
-    FORCEINLINE const LCliType* GetType(const LSimpleString& InTypeName) const { return const_cast<LCommandLineInterface*>(this)->GetType(InTypeName); }
-    FORCEINLINE       LCliType* GetTypeChecked(const LSimpleString& InTypeName) { LCliType* Out = this->GetType(InTypeName); check(Out); return Out; }
-    FORCEINLINE const LCliType* GetTypeChecked(const LSimpleString& InTypeName) const { const LCliType* Out = this->GetType(InTypeName); check(Out); return Out; }
-    FORCEINLINE       LCliType* GetTypeAsserted(const LSimpleString& InTypeName) { LCliType* Out = this->GetType(InTypeName); jassert(Out); return Out; }
-    FORCEINLINE const LCliType* GetTypeAsserted(const LSimpleString& InTypeName) const { const LCliType* Out = this->GetType(InTypeName); jassert(Out); return Out; }
+    FORCEINLINE       LCliType* GetType(const LString& InTypeName) { return this->Types.FindByPredicate([InTypeName](const LCliType& Type) { return Type.GetIdentifier() == InTypeName; }); }
+    FORCEINLINE const LCliType* GetType(const LString& InTypeName) const { return const_cast<LCommandLineInterface*>(this)->GetType(InTypeName); }
+    FORCEINLINE       LCliType* GetTypeChecked(const LString& InTypeName) { LCliType* Out = this->GetType(InTypeName); check(Out); return Out; }
+    FORCEINLINE const LCliType* GetTypeChecked(const LString& InTypeName) const { const LCliType* Out = this->GetType(InTypeName); check(Out); return Out; }
+    FORCEINLINE       LCliType* GetTypeAsserted(const LString& InTypeName) { LCliType* Out = this->GetType(InTypeName); jassert(Out); return Out; }
+    FORCEINLINE const LCliType* GetTypeAsserted(const LString& InTypeName) const { const LCliType* Out = this->GetType(InTypeName); jassert(Out); return Out; }
 
     FORCEINLINE       LCliCommand* GetCommand(const LCliCommandHandle& InHandle) { return this->Commands.FindByPredicate([InHandle](const LCliCommand& Command) { return Command.Uuid == InHandle.Uuid; }); }
     FORCEINLINE const LCliCommand* GetCommand(const LCliCommandHandle& InHandle) const { return const_cast<LCommandLineInterface*>(this)->GetCommand(InHandle); }
@@ -121,12 +121,12 @@ public:
     FORCEINLINE const LCliCommand* GetCommandChecked(const LCliCommandHandle& InHandle) const { const LCliCommand* Out = this->GetCommand(InHandle); check(Out); return Out; }
     FORCEINLINE       LCliCommand* GetCommandAsserted(const LCliCommandHandle& InHandle) { LCliCommand* Out = this->GetCommand(InHandle); jassert(Out); return Out; }
     FORCEINLINE const LCliCommand* GetCommandAsserted(const LCliCommandHandle& InHandle) const { const LCliCommand* Out = this->GetCommand(InHandle); jassert(Out); return Out; }
-    FORCEINLINE       LCliCommand* GetCommand(const LSimpleString& InCommandName) { return this->Commands.FindByPredicate([InCommandName](const LCliCommand& Command) { return Command.GetIdentifier() == InCommandName; }); }
-    FORCEINLINE const LCliCommand* GetCommand(const LSimpleString& InCommandName) const { return const_cast<LCommandLineInterface*>(this)->GetCommand(InCommandName); }
-    FORCEINLINE       LCliCommand* GetCommandChecked(const LSimpleString& InCommandName) { LCliCommand* Out = this->GetCommand(InCommandName); check(Out); return Out; }
-    FORCEINLINE const LCliCommand* GetCommandChecked(const LSimpleString& InCommandName) const { const LCliCommand* Out = this->GetCommand(InCommandName); check(Out); return Out; }
-    FORCEINLINE       LCliCommand* GetCommandAsserted(const LSimpleString& InCommandName) { LCliCommand* Out = this->GetCommand(InCommandName); jassert(Out); return Out; }
-    FORCEINLINE const LCliCommand* GetCommandAsserted(const LSimpleString& InCommandName) const { const LCliCommand* Out = this->GetCommand(InCommandName); jassert(Out); return Out; }
+    FORCEINLINE       LCliCommand* GetCommand(const LString& InCommandName) { return this->Commands.FindByPredicate([InCommandName](const LCliCommand& Command) { return Command.GetIdentifier() == InCommandName; }); }
+    FORCEINLINE const LCliCommand* GetCommand(const LString& InCommandName) const { return const_cast<LCommandLineInterface*>(this)->GetCommand(InCommandName); }
+    FORCEINLINE       LCliCommand* GetCommandChecked(const LString& InCommandName) { LCliCommand* Out = this->GetCommand(InCommandName); check(Out); return Out; }
+    FORCEINLINE const LCliCommand* GetCommandChecked(const LString& InCommandName) const { const LCliCommand* Out = this->GetCommand(InCommandName); check(Out); return Out; }
+    FORCEINLINE       LCliCommand* GetCommandAsserted(const LString& InCommandName) { LCliCommand* Out = this->GetCommand(InCommandName); jassert(Out); return Out; }
+    FORCEINLINE const LCliCommand* GetCommandAsserted(const LString& InCommandName) const { const LCliCommand* Out = this->GetCommand(InCommandName); jassert(Out); return Out; }
 
     FORCEINLINE       LCliVariable* GetVariable(const LCliVariableHandle& InHandle) { return this->Variables.FindByPredicate([InHandle](const LCliVariable& Variable) { return Variable.Uuid == InHandle.Uuid; }); }
     FORCEINLINE const LCliVariable* GetVariable(const LCliVariableHandle& InHandle) const { return const_cast<LCommandLineInterface*>(this)->GetVariable(InHandle); }
@@ -134,12 +134,12 @@ public:
     FORCEINLINE const LCliVariable* GetVariableChecked(const LCliVariableHandle& InHandle) const { const LCliVariable* Out = this->GetVariable(InHandle); check(Out); return Out; }
     FORCEINLINE       LCliVariable* GetVariableAsserted(const LCliVariableHandle& InHandle) { LCliVariable* Out = this->GetVariable(InHandle); jassert(Out); return Out; }
     FORCEINLINE const LCliVariable* GetVariableAsserted(const LCliVariableHandle& InHandle) const { const LCliVariable* Out = this->GetVariable(InHandle); jassert(Out); return Out; }
-    FORCEINLINE       LCliVariable* GetVariable(const LSimpleString& InVariableName) { return this->Variables.FindByPredicate([InVariableName](const LCliVariable& Variable) { return Variable.GetIdentifier() == InVariableName; }); }
-    FORCEINLINE const LCliVariable* GetVariable(const LSimpleString& InVariableName) const { return const_cast<LCommandLineInterface*>(this)->GetVariable(InVariableName); }
-    FORCEINLINE       LCliVariable* GetVariableChecked(const LSimpleString& InVariableName) { LCliVariable* Out = this->GetVariable(InVariableName); check(Out); return Out; }
-    FORCEINLINE const LCliVariable* GetVariableChecked(const LSimpleString& InVariableName) const { const LCliVariable* Out = this->GetVariable(InVariableName); check(Out); return Out; }
-    FORCEINLINE       LCliVariable* GetVariableAsserted(const LSimpleString& InVariableName) { LCliVariable* Out = this->GetVariable(InVariableName); jassert(Out); return Out; }
-    FORCEINLINE const LCliVariable* GetVariableAsserted(const LSimpleString& InVariableName) const { const LCliVariable* Out = this->GetVariable(InVariableName); jassert(Out); return Out; }
+    FORCEINLINE       LCliVariable* GetVariable(const LString& InVariableName) { return this->Variables.FindByPredicate([InVariableName](const LCliVariable& Variable) { return Variable.GetIdentifier() == InVariableName; }); }
+    FORCEINLINE const LCliVariable* GetVariable(const LString& InVariableName) const { return const_cast<LCommandLineInterface*>(this)->GetVariable(InVariableName); }
+    FORCEINLINE       LCliVariable* GetVariableChecked(const LString& InVariableName) { LCliVariable* Out = this->GetVariable(InVariableName); check(Out); return Out; }
+    FORCEINLINE const LCliVariable* GetVariableChecked(const LString& InVariableName) const { const LCliVariable* Out = this->GetVariable(InVariableName); check(Out); return Out; }
+    FORCEINLINE       LCliVariable* GetVariableAsserted(const LString& InVariableName) { LCliVariable* Out = this->GetVariable(InVariableName); jassert(Out); return Out; }
+    FORCEINLINE const LCliVariable* GetVariableAsserted(const LString& InVariableName) const { const LCliVariable* Out = this->GetVariable(InVariableName); jassert(Out); return Out; }
 
     template <typename T>
     FORCEINLINE auto Get(const LCliObjectHandle& InHandle)
@@ -169,7 +169,7 @@ public:
     }
 
     template <typename T>
-    FORCEINLINE auto Get(const LSimpleString& InName)
+    FORCEINLINE auto Get(const LString& InName)
     {
         if constexpr (std::is_same_v<T, LCliType>)
         {
@@ -190,7 +190,7 @@ public:
     }
 
     template <typename T>
-    FORCEINLINE auto Get(const LSimpleString& InName) const -> decltype(this->Get<T>(InName))
+    FORCEINLINE auto Get(const LString& InName) const -> decltype(this->Get<T>(InName))
     {
         return const_cast<LCommandLineInterface*>(this)->Get<T>(InName);
     }

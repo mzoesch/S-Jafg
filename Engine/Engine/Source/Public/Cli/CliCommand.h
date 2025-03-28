@@ -95,6 +95,8 @@ struct LCommandArgs
 
     FORCEINLINE bool IsValid() const { return Name.IsEmpty() ? true : this->SubArgs.IsEmpty(); }
 
+    FORCEINLINE const LCommandArgs& operator[](const i32 Index) const { return this->SubArgs[Index]; }
+
     LString Name;
     TdhArray<LCommandArgs> SubArgs;
 };
@@ -172,10 +174,10 @@ class LCliCommand final : public LCliObject
 public:
 
     FORCEINLINE LCliCommand() = delete;
-    FORCEINLINE LCliCommand(const LSimpleString& InIdentifier) : LCliObject(InIdentifier) { }
-    FORCEINLINE LCliCommand(const LSimpleString& InIdentifier, const LString& InHelp) : LCliObject(InIdentifier, InHelp) { }
+    FORCEINLINE LCliCommand(const LString& InIdentifier) : LCliObject(InIdentifier) { }
+    FORCEINLINE LCliCommand(const LString& InIdentifier, const LString& InHelp) : LCliObject(InIdentifier, InHelp) { }
     template <typename... TArgs>
-    FORCEINLINE LCliCommand(const LSimpleString& InIdentifier, const LString& InHelp, TArgs&&... InArgs) : LCliObject(InIdentifier, InHelp)
+    FORCEINLINE LCliCommand(const LString& InIdentifier, const LString& InHelp, TArgs&&... InArgs) : LCliObject(InIdentifier, InHelp)
     {
         this->AddOverload(std::forward<TArgs>(InArgs)...);
     }

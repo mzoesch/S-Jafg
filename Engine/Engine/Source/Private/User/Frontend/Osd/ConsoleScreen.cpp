@@ -125,8 +125,24 @@ void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit
             }
             else
             {
-                LOG_INFO(LogCli, "Command [{}] succeeded with return code [{}]: {}.", Command, LexToString(Response.Rc), Response.StdOut)
+                LOG_INFO(LogCli, "{}", Response.StdOut)
             }
+        }
+
+        if (Response.StdErr.IsEmpty() == false)
+        {
+            LOG_ERROR(LogCli, "Command [{}] failed with return code [{}]: {}.", Command, LexToString(Response.Rc), Response.StdErr)
+        }
+
+        if (Response.SanitizedStdErr.IsEmpty() == false)
+        {
+            LOG_ERROR(LogCli, "Command [{}] failed with return code [{}]. User feedback: {}.", Command, LexToString(Response.Rc), Response.SanitizedStdErr)
+        }
+
+        // If the cmd did not give feedback on failure, we log a general error.
+        if (Response.Rc >= ECommandReturnCode::Failure && Response.StdOut.IsEmpty() && Response.StdErr.IsEmpty())
+        {
+            LOG_ERROR(LogCli, "Command [{}] failed with return code [{}].", Command, LexToString(Response.Rc))
         }
 
         return;

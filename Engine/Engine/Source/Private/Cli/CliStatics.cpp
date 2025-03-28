@@ -2,8 +2,29 @@
 
 #include "Cli/CliStatics.h"
 #include "Cli/CliCommand.h"
-#include "Cli/CliObject.h"
-#include "Core/Application.h"
+
+namespace
+{
+
+bool IsValidArgs(const Jafg::LCommandArgs& InArgs)
+{
+    if (InArgs.Name.IsEmpty() == false)
+    {
+        return InArgs.SubArgs.IsEmpty();
+    }
+
+    for (const Jafg::LCommandArgs& SubArg : InArgs.SubArgs)
+    {
+        if (::IsValidArgs(SubArg) == false)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+} /* ~Namespace <Anonymous> */
 
 Jafg::LString Jafg::CliStatics::SafelyRemoveCommandPrefix(const LString& InText)
 {
@@ -166,5 +187,6 @@ Jafg::LCommandArgs Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine)
         return LCommandArgs();
     }
 
+    check( ::IsValidArgs(Out) )
     return Out;
 }

@@ -23,8 +23,8 @@ public:
     static constexpr LCliObjectUuid NoUuid { 0 };
 
     FORCEINLINE LCliObject() = default;
-    FORCEINLINE LCliObject(const LSimpleString& InName) : Identifier(InName) { }
-    FORCEINLINE LCliObject(const LSimpleString& InName, const LString& InHelp) : Identifier(InName), Help(InHelp) { }
+    FORCEINLINE LCliObject(const LString& InName) : Identifier(InName) { }
+    FORCEINLINE LCliObject(const LString& InName, const LString& InHelp) : Identifier(InName), Help(InHelp) { }
     PROHIBIT_COPY(LCliObject)
     FORCEINLINE LCliObject(LCliObject&& InOther) noexcept
     {
@@ -46,8 +46,8 @@ public:
     }
     virtual ~LCliObject() = default;
 
-    FORCEINLINE auto GetIdentifier() const -> LSimpleString { return this->Identifier; }
-    FORCEINLINE void SetIdentifier(const LSimpleString& InIdentifier) { this->Identifier = InIdentifier; }
+    FORCEINLINE auto GetIdentifier() const -> LString { return this->Identifier; }
+    FORCEINLINE void SetIdentifier(const LString& InIdentifier) { this->Identifier = InIdentifier; }
     FORCEINLINE auto GetHelp() const -> LString { return this->Help; }
     FORCEINLINE void SetHelp(const LString& InHelp) { this->Help = InHelp; }
 
@@ -61,7 +61,7 @@ protected:
 private:
 
     LCliObjectUuid Uuid = NoUuid;
-    LSimpleString Identifier;
+    LString Identifier;
     LString Help;
 };
 

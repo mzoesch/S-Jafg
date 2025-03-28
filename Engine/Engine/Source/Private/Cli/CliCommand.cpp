@@ -98,7 +98,7 @@ bool Jafg::LCommandParams::IsInvocable(const LCommandArgs& Args) const
     i32 ArgCursor = 0;
     for (const LCliType& Param : this->Signature)
     {
-        if (ArgCursor > Args.GetArgCount())
+        if (ArgCursor >= Args.GetArgCount())
         {
             return false;
         }

@@ -32,7 +32,7 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
     {
         this->CommandHandle_Say = CommandLineInterface->RegisterCommand({"Say", "Say something.",
         LCommandParams()
-        .AddToken(LCliType("String"))
+        .AddToken(LCliType::Type("String"))
         .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
         {
             LOG_WARNING(LogTemporal, "{}", InArgs.GetCatRepresentation())

@@ -53,7 +53,11 @@ void Jafg::LEngine::Initialize()
         ensure(this->CommandLineInterface.RegisterType({"String", "A string.",
         LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
         {
-            check( *Cursor <= Args.GetArgCount() )
+            checkSlow( *Cursor < Args.GetArgCount() )
+            if (Args[*Cursor].Name.IsEmpty())
+            {
+                return false;
+            }
             ++*Cursor;
             return true;
         })}).IsValid());
@@ -64,18 +68,77 @@ void Jafg::LEngine::Initialize()
             return false;
         })}).IsValid());
 
+        ensure(this->CommandLineInterface.RegisterType({"Any", "Any value.",
+        LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+        {
+            checkSlow( *Cursor < Args.GetArgCount() )
+            if (Args[*Cursor].Name.IsEmpty())
+            {
+                return false;
+            }
+            ++*Cursor;
+            return true;
+        })}).IsValid());
+
+        ensure(this->CommandLineInterface.RegisterType({"Var", "A variable.",
+        LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+        {
+            checkSlow( *Cursor < Args.GetArgCount() )
+            if (Args[*Cursor].Name.IsEmpty())
+            {
+                return false;
+            }
+            ++*Cursor;
+            return true;
+        })}).IsValid());
+
         ensure(this->CommandLineInterface.RegisterCommand({"Set", "Set any variable.",
         LCommandParams()
-        .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+        .AddToken(LCliType::Type("Var"))
+        .AddToken(LCliType::Type("Any"))
+        .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {
-            LOG_WARNING(LogTemporal, "Set any variable.")
+            check( InArgs.GetArgCount() == 2 )
+            LOG_WARNING(LogTemporal, "Seting {} to {}.", InArgs[0].Name, InArgs[1].Name);
+            if (LCliVariable* Var = GEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)
+            {
+                if (Var->SetValue(InArgs[1].Name))
+                {
+                    OutResponse->Rc = ECommandReturnCode::Success;
+                    OutResponse->StdOut = LString::SprintF("Updated [{}] to [{}]", Var->GetIdentifier(), Var->GetValue());
+                }
+                else
+                {
+                    OutResponse->Rc = ECommandReturnCode::Success;
+                }
+            }
+            else
+            {
+                OutResponse->Rc = ECommandReturnCode::SemanticError;
+                OutResponse->StdOut = LString::SprintF("No such variable [{}]", InArgs[0].Name);
+            }
+
+            return;
         }))}).IsValid());
 
         ensure(this->CommandLineInterface.RegisterCommand({"Get", "Get any variable.",
         LCommandParams()
-        .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+        .AddToken(LCliType::Type("Var"))
+        .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {
-            LOG_WARNING(LogTemporal, "Get any variable.");
+            check( InArgs.GetArgCount() == 1 )
+            if (const LCliVariable* Var = GEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)
+            {
+                OutResponse->Rc = ECommandReturnCode::Success;
+                OutResponse->StdOut = LString::SprintF("[{}] == [{}]", Var->GetIdentifier(), Var->GetValue());
+            }
+            else
+            {
+                OutResponse->Rc = ECommandReturnCode::SemanticError;
+                OutResponse->StdOut = LString::SprintF("No such variable [{}]", InArgs[0].Name);
+            }
+
+            return;
         }))}).IsValid());
     }
 
