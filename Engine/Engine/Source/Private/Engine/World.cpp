@@ -103,12 +103,9 @@ void Jafg::LWorld::Tick(const float DeltaTime)
 
 void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
 {
-    const bool bUpdateFrustum    = this->GetLocalEgo()->GetVariable_UpdateFrustum();
-    const bool bVisualizeFrustum = this->GetLocalEgo()->GetVariable_VisualizeFrustum();
-
-    LMatrix P;
-    LMatrix V;
-    if (const auto Cache = this->EyeToMatrices.find(&Eye); bUpdateFrustum || Cache == this->EyeToMatrices.end())
+    LMatrix P{SkipInit};
+    LMatrix V{SkipInit};
+    if (const auto Cache = this->EyeToMatrices.find(&Eye); this->GetLocalEgo()->GetVariable_UpdateFrustum() || Cache == this->EyeToMatrices.end())
     {
         P = Maths::MakePerspectiveProjectionMatrix(
             Maths::ToRadians(Eye.GetDegYFov()),
@@ -124,31 +121,26 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
         V = Cache->second.V;
     }
 
-    // const LMatrix Projection = Maths::MakePerspectiveProjectionMatrix
-    // (
-    //     Maths::ToRadians(Eye.GetDegYFov()),
-    //     static_cast<float>(Viewport.GetDimensions().X) / static_cast<float>(Viewport.GetDimensions().Y),
-    //     0.1f, 10.0f
-    // );
-    // const LMatrix View = Eye.GetViewMatrix();
-    glm::vec4 ndcCorners[8] = {
-        {-1, -1, -1, 1}, // Near Bottom Left
-        { 1, -1, -1, 1}, // Near Bottom Right
-        {-1,  1, -1, 1}, // Near Top Left
-        { 1,  1, -1, 1}, // Near Top Right
-        {-1, -1,  1, 1}, // Far Bottom Left
-        { 1, -1,  1, 1}, // Far Bottom Right
-        {-1,  1,  1, 1}, // Far Top Left
-        { 1,  1,  1, 1}  // Far Top Right
+    const LMatrix4 InversePV = (P * V).GetInverse();
+
+    LVector Corners[8];
+    constexpr LVector4 NdcCorners[8]
+    {
+        {-1, -1, -1,  1}, /* Near Bottom Left */
+        { 1, -1, -1,  1}, /* Near Bottom Right */
+        {-1,  1, -1,  1}, /* Near Top Left */
+        { 1,  1, -1,  1}, /* Near Top Right */
+        {-1, -1,  1,  1}, /* Far Bottom Left */
+        { 1, -1,  1,  1}, /* Far Bottom Right */
+        {-1,  1,  1,  1}, /* Far Top Left */
+        { 1,  1,  1,  1}  /* Far Top Right */
     };
-    glm::mat4 projMatrix = glm::make_mat4(&P.Matrix[0][0]);
-    glm::mat4 viewMatrix = glm::make_mat4(&V.Matrix[0][0]);
-    glm::mat4 invVP = glm::inverse(projMatrix * viewMatrix);
-    glm::vec3 worldCorners[8];
-    for (int i = 0; i < 8; i++) {
-        glm::vec4 worldPos = invVP * ndcCorners[i];
-        worldCorners[i] = glm::vec3(worldPos) / worldPos.w; // Perspective divide
+    for (int i = 0; i < 8; i++)
+    {
+        LVector4 WorldLocation = InversePV * NdcCorners[i];
+        Corners[i] = WorldLocation.XYZ() / WorldLocation.W; /* Perspective divide */
     }
+
     // std::vector<std::pair<int, int>> frustumEdges = {
     //     {0, 1}, {1, 3}, {3, 2}, {2, 0}, // Near Plane Edges
     //     {4, 5}, {5, 7}, {7, 6}, {6, 4}, // Far Plane Edges
@@ -167,39 +159,39 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
         continue;
     }
 
-    if (bVisualizeFrustum)
+    if (this->GetLocalEgo()->GetVariable_VisualizeFrustum())
     {
         const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
             LTemporalWorldObject::DrawOnce,
-            LVector(worldCorners[0].x, worldCorners[0].y, worldCorners[0].z)
+            LVector(Corners[0].X, Corners[0].Y, Corners[0].Z)
         ));
         const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
             LTemporalWorldObject::DrawOnce,
-            LVector(worldCorners[1].x, worldCorners[1].y, worldCorners[1].z)
+            LVector(Corners[1].X, Corners[1].Y, Corners[1].Z)
         ));
         const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
             LTemporalWorldObject::DrawOnce,
-            LVector(worldCorners[2].x, worldCorners[2].y, worldCorners[2].z)
+            LVector(Corners[2].X, Corners[2].Y, Corners[2].Z)
         ));
         const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
             LTemporalWorldObject::DrawOnce,
-            LVector(worldCorners[3].x, worldCorners[3].y, worldCorners[3].z)
+            LVector(Corners[3].X, Corners[3].Y, Corners[3].Z)
         ));
         const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
             LTemporalWorldObject::DrawOnce,
-            LVector(worldCorners[4].x, worldCorners[4].y, worldCorners[4].z)
+            LVector(Corners[4].X, Corners[4].Y, Corners[4].Z)
         ));
         const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
             LTemporalWorldObject::DrawOnce,
-            LVector(worldCorners[5].x, worldCorners[5].y, worldCorners[5].z)
+            LVector(Corners[5].X, Corners[5].Y, Corners[5].Z)
         ));
         const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
             LTemporalWorldObject::DrawOnce,
-            LVector(worldCorners[6].x, worldCorners[6].y, worldCorners[6].z)
+            LVector(Corners[6].X, Corners[6].Y, Corners[6].Z)
         ));
         const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
             LTemporalWorldObject::DrawOnce,
-            LVector(worldCorners[7].x, worldCorners[7].y, worldCorners[7].z)
+            LVector(Corners[7].X, Corners[7].Y, Corners[7].Z)
         ));
     }
 

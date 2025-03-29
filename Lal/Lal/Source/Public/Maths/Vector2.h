@@ -23,23 +23,23 @@ struct TVector2 final
     };
 
     /** Global 2d zero vector constant (0, 0). */
-    static const TVector2<T> ZeroVector;
+    LAL_API static const TVector2<T> ZeroVector;
 
     /** Global 2d one vector constant (1, 1). */
-    static const TVector2<T> OneVector;
+    LAL_API static const TVector2<T> OneVector;
 
     /**
      * Global 2d unit vector constant along the 45 degree angle or symmetrical
      * positive axes (sqrt(.5), sqrt(.5)) or (0.707, 0.707).
      * @see https://en.wikipedia.org/wiki/Unit_vector
      */
-    static const TVector2<T> UnitVector;
+    LAL_API static const TVector2<T> UnitVector;
 
     /** Global 2d unit vector constant along the x-axis (1, 0). */
-    static const TVector2<T> UnitVectorX;
+    LAL_API static const TVector2<T> UnitVectorX;
 
     /** Global 2d unit vector constant along the y-axis (0, 1). */
-    static const TVector2<T> UnitVectorY;
+    LAL_API static const TVector2<T> UnitVectorY;
 
     FORCEINLINE static TVector2<T> Zero()  { return TVector2<T>(TVector2<T>::ZeroVector);  }
     FORCEINLINE static TVector2<T> One()   { return TVector2<T>(TVector2<T>::OneVector);   }
@@ -47,15 +47,15 @@ struct TVector2 final
     FORCEINLINE static TVector2<T> UnitX() { return TVector2<T>(TVector2<T>::UnitVectorX); }
     FORCEINLINE static TVector2<T> UnitY() { return TVector2<T>(TVector2<T>::UnitVectorY); }
 
-    FORCEINLINE          TVector2()                         noexcept = default;
-    FORCEINLINE explicit TVector2(const T InFloatingPoint)  noexcept : Y(InFloatingPoint), X(InFloatingPoint) { }
-    FORCEINLINE          TVector2(const T InX, const T InY) noexcept : X(InX), Y(InY) { }
-    FORCEINLINE explicit TVector2(const T InXY[2])          noexcept : X(InXY[0]), Y(InXY[1]) { }
-    FORCEINLINE          TVector2(const TVector2<T>& InVec) noexcept : X(InVec.X), Y(InVec.Y) { }
-    FORCEINLINE          TVector2(TVector2<T>&& InVec)      noexcept : X(InVec.X), Y(InVec.Y) { }
+    FORCEINLINE constexpr          TVector2()                         noexcept = default;
+    FORCEINLINE constexpr explicit TVector2(const T InFloatingPoint)  noexcept : Y(InFloatingPoint), X(InFloatingPoint) { }
+    FORCEINLINE constexpr          TVector2(const T InX, const T InY) noexcept : X(InX), Y(InY) { }
+    FORCEINLINE constexpr explicit TVector2(const T InXY[2])          noexcept : X(InXY[0]), Y(InXY[1]) { }
+    FORCEINLINE constexpr          TVector2(const TVector2<T>& InVec) noexcept : X(InVec.X), Y(InVec.Y) { }
+    FORCEINLINE constexpr          TVector2(TVector2<T>&& InVec)      noexcept : X(InVec.X), Y(InVec.Y) { }
 
-    FORCEINLINE auto GetData()       noexcept ->       T* { return &this->X; }
-    FORCEINLINE auto GetData() const noexcept -> const T* { return &this->X; }
+    FORCEINLINE constexpr       T* GetData()       noexcept { return &this->X; }
+    FORCEINLINE constexpr const T* GetData() const noexcept { return &this->X; }
 
     FORCEINLINE auto operator[](const i32 InIndex)       noexcept ->       T&;
     FORCEINLINE auto operator[](const i32 InIndex) const noexcept -> const T&;

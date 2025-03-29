@@ -25,25 +25,25 @@ struct TVector4 final
     };
 
     /** Global zero vector constant (0, 0, 0, 0). */
-    static const TVector4<T> ZeroVector;
+    LAL_API static const TVector4<T> ZeroVector;
 
     /** Global identity vector constant (0, 0, 0, 1). */
-    static const TVector4<T> IdentityVector;
+    LAL_API static const TVector4<T> IdentityVector;
 
     /** Global one vector constant (1, 1, 1, 1). */
-    static const TVector4<T> OneVector;
+    LAL_API static const TVector4<T> OneVector;
 
     /** Global unit vector constant along the x-axis (1, 0, 0, 0). */
-    static const TVector4<T> UnitVectorX;
+    LAL_API static const TVector4<T> UnitVectorX;
 
     /** Global unit vector constant along the y-axis (0, 1, 0, 0). */
-    static const TVector4<T> UnitVectorY;
+    LAL_API static const TVector4<T> UnitVectorY;
 
     /** Global unit vector constant along the z-axis (0, 0, 1, 0). */
-    static const TVector4<T> UnitVectorZ;
+    LAL_API static const TVector4<T> UnitVectorZ;
 
     /** Global unit vector constant along the w-axis (0, 0, 0, 1). */
-    static const TVector4<T> UnitVectorW;
+    LAL_API static const TVector4<T> UnitVectorW;
 
     FORCEINLINE static TVector4<T> Zero()     { return TVector4<T>::ZeroVector;     }
     FORCEINLINE static TVector4<T> Identity() { return TVector4<T>::IdentityVector; }
@@ -53,18 +53,19 @@ struct TVector4 final
     FORCEINLINE static TVector4<T> UnitZ()    { return TVector4<T>::UnitVectorZ;    }
     FORCEINLINE static TVector4<T> UnitW()    { return TVector4<T>::UnitVectorW;    }
 
-    FORCEINLINE          TVector4() noexcept : X(0.0f), Y(0.0f), Z(0.0f), W(1.0f) { }
-    FORCEINLINE explicit TVector4(const T InFloatingPoint) noexcept : X(InFloatingPoint), Y(InFloatingPoint), Z(InFloatingPoint), W(1.0f) { }
-    FORCEINLINE explicit TVector4(const T InX, const T InY, const T InZ, const T InW = 1.0f);
-    FORCEINLINE explicit TVector4(const TVector<T> InVec, const T InW) : X(InVec.X), Y(InVec.Y), Z(InVec.Z), W(InW) { }
-    FORCEINLINE          TVector4(const TVector4<T>& InVector) : X(InVector.X), Y(InVector.Y), Z(InVector.Z), W(InVector.W) { }
-    FORCEINLINE          TVector4(TVector4<T>&& InVector) noexcept : X(InVector.X), Y(InVector.Y), Z(InVector.Z), W(InVector.W) { }
+    FORCEINLINE constexpr          TVector4() noexcept : X(0.0f), Y(0.0f), Z(0.0f), W(1.0f) { }
+    FORCEINLINE constexpr explicit TVector4(const T InFloatingPoint) noexcept : X(InFloatingPoint), Y(InFloatingPoint), Z(InFloatingPoint), W(InFloatingPoint) { }
+    FORCEINLINE constexpr          TVector4(const T InX, const T InY, const T InZ, const T InW = static_cast<T>(1.0));
+    FORCEINLINE constexpr          TVector4(const T InArray[4]) : X(InArray[0]), Y(InArray[1]), Z(InArray[2]), W(InArray[3]) { }
+    FORCEINLINE constexpr explicit TVector4(const TVector<T> InVec, const T InW) : X(InVec.X), Y(InVec.Y), Z(InVec.Z), W(InW) { }
+    FORCEINLINE constexpr          TVector4(const TVector4<T>& InVector) : X(InVector.X), Y(InVector.Y), Z(InVector.Z), W(InVector.W) { }
+    FORCEINLINE constexpr          TVector4(TVector4<T>&& InVector) noexcept : X(InVector.X), Y(InVector.Y), Z(InVector.Z), W(InVector.W) { }
 
-    FORCEINLINE auto GetData()       ->       T* { return &this->X; }
-    FORCEINLINE auto GetData() const -> const T* { return &this->X; }
+    FORCEINLINE constexpr       T* GetData()       { return &this->X; }
+    FORCEINLINE constexpr const T* GetData() const { return &this->X; }
 
-    FORCEINLINE auto operator[](const i32 InIndex)       ->       T&;
-    FORCEINLINE auto operator[](const i32 InIndex) const -> const T&;
+    FORCEINLINE constexpr       T& operator[](const i32 InIndex);
+    FORCEINLINE constexpr const T& operator[](const i32 InIndex) const;
 
     FORCEINLINE TVector2<T> XY()   const { return TVector2<T>(this->X, this->Y); }
     FORCEINLINE TVector2<T> XZ()   const { return TVector2<T>(this->X, this->Z); }
@@ -174,20 +175,20 @@ struct TVector4 final
 };
 
 template <typename T>
-TVector4<T>::TVector4(const T InX, const T InY, const T InZ, const T InW): X(InX), Y(InY), Z(InZ), W(InW)
+FORCEINLINE constexpr TVector4<T>::TVector4(const T InX, const T InY, const T InZ, const T InW /* = 1.0 */): X(InX), Y(InY), Z(InZ), W(InW)
 {
     return;
 }
 
 template <typename T>
-T& TVector4<T>::operator[](const i32 InIndex)
+constexpr T& TVector4<T>::operator[](const i32 InIndex)
 {
     check( InIndex > INDEX_NONE && InIndex < 4 )
     return this->XYZW[InIndex];
 }
 
 template <typename T>
-const T& TVector4<T>::operator[](const i32 InIndex) const
+constexpr const T& TVector4<T>::operator[](const i32 InIndex) const
 {
     check( InIndex > INDEX_NONE && InIndex < 4 )
     return this->XYZW[InIndex];

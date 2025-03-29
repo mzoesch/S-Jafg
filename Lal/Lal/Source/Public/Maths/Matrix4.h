@@ -75,23 +75,24 @@ struct TMatrix4 final
     FORCEINLINE Self& operator =(const Self&  InMatrix) noexcept { Self::FastCopy( InMatrix, this); return *this; }
     FORCEINLINE Self& operator =(      Self&& InMatrix) noexcept { Self::FastMove(&InMatrix, this); return *this; }
 
-    FORCEINLINE constexpr Self  operator +(const Self& InMatrix) const noexcept;
-    FORCEINLINE constexpr Self  operator -(const Self& InMatrix) const noexcept;
-    FORCEINLINE constexpr Self  operator *(const Self& InMatrix) const noexcept;
-    FORCEINLINE constexpr Self  operator /(const Self& InMatrix) const noexcept;
-    FORCEINLINE           Self  operator +(const T Scalar) const noexcept;
-    FORCEINLINE           Self  operator -(const T Scalar) const noexcept;
-    FORCEINLINE           Self  operator *(const T Scalar) const noexcept;
-    FORCEINLINE           Self  operator /(const T Scalar) const noexcept;
-    FORCEINLINE           Self  operator -() const noexcept;
-    FORCEINLINE constexpr Self& operator+=(const Self& InMatrix) noexcept;
-    FORCEINLINE constexpr Self& operator-=(const Self& InMatrix) noexcept;
-    FORCEINLINE constexpr Self& operator*=(const Self& InMatrix) noexcept;
-    FORCEINLINE constexpr Self& operator/=(const Self& InMatrix) noexcept;
-    FORCEINLINE constexpr Self& operator+=(const T Scalar) noexcept;
-    FORCEINLINE constexpr Self& operator-=(const T Scalar) noexcept;
-    FORCEINLINE constexpr Self& operator*=(const T Scalar) noexcept;
-    FORCEINLINE constexpr Self& operator/=(const T Scalar) noexcept;
+    FORCEINLINE constexpr Self     operator +(const Self& InMatrix) const noexcept;
+    FORCEINLINE constexpr Self     operator -(const Self& InMatrix) const noexcept;
+    FORCEINLINE constexpr Self     operator *(const Self& InMatrix) const noexcept;
+    FORCEINLINE constexpr Self     operator /(const Self& InMatrix) const noexcept;
+    FORCEINLINE           Self     operator +(const T Scalar) const noexcept;
+    FORCEINLINE           Self     operator -(const T Scalar) const noexcept;
+    FORCEINLINE           Self     operator *(const T Scalar) const noexcept;
+    FORCEINLINE           Self     operator /(const T Scalar) const noexcept;
+    FORCEINLINE constexpr ColumnTy operator *(const ColumnTy& Vector) const noexcept;
+    FORCEINLINE           Self     operator -() const noexcept;
+    FORCEINLINE constexpr Self&    operator+=(const Self& InMatrix) noexcept;
+    FORCEINLINE constexpr Self&    operator-=(const Self& InMatrix) noexcept;
+    FORCEINLINE constexpr Self&    operator*=(const Self& InMatrix) noexcept;
+    FORCEINLINE constexpr Self&    operator/=(const Self& InMatrix) noexcept;
+    FORCEINLINE constexpr Self&    operator+=(const T Scalar) noexcept;
+    FORCEINLINE constexpr Self&    operator-=(const T Scalar) noexcept;
+    FORCEINLINE constexpr Self&    operator*=(const T Scalar) noexcept;
+    FORCEINLINE constexpr Self&    operator/=(const T Scalar) noexcept;
 
     FORCEINLINE constexpr bool Equals(const Self& InMatrix, const T InTolerance = static_cast<T>(JAFG_DOUBLE_SMALL_NUMBER)) const noexcept;
     FORCEINLINE           bool operator==(const Self& InMatrix) const noexcept;
@@ -100,12 +101,15 @@ struct TMatrix4 final
     /** Translate this matrix inline by the given translation vector. */
     FORCEINLINE void InlineTranslate(const TVector3<T>& InTranslation);
 
+    FORCEINLINE Self GetInverse() const;
+
     LString ToString() const;
 
 private:
 
     FORCEINLINE static void FastCopy(const Self& InMatrix, Self* OutMatrix);
     FORCEINLINE static void FastMove(Self* InMatrix, Self* OutMatrix);
+    FORCEINLINE        void SetColumn(const EMatrixAxis Axis, const ColumnTy& Vector);
 };
 
 template<typename T>
@@ -162,21 +166,21 @@ FORCEINLINE constexpr typename TMatrix4<T>::Self TMatrix4<T>::operator-(const Se
 template <typename T>
 FORCEINLINE constexpr typename TMatrix4<T>::Self TMatrix4<T>::operator*(const Self& InMatrix) const noexcept
 {
-    ColumnTy const Me0 = this->Matrix[0];
-    ColumnTy const Me1 = this->Matrix[1];
-    ColumnTy const Me2 = this->Matrix[2];
-    ColumnTy const Me3 = this->Matrix[3];
+    const ColumnTy Me0 = this->Matrix[0];
+    const ColumnTy Me1 = this->Matrix[1];
+    const ColumnTy Me2 = this->Matrix[2];
+    const ColumnTy Me3 = this->Matrix[3];
 
-    ColumnTy const In0 = InMatrix.Matrix[0];
-    ColumnTy const In1 = InMatrix.Matrix[1];
-    ColumnTy const In2 = InMatrix.Matrix[2];
-    ColumnTy const In3 = InMatrix.Matrix[3];
+    const ColumnTy In0 = InMatrix.Matrix[0];
+    const ColumnTy In1 = InMatrix.Matrix[1];
+    const ColumnTy In2 = InMatrix.Matrix[2];
+    const ColumnTy In3 = InMatrix.Matrix[3];
 
     Self Result = SkipInit;
-    Result.Matrix[0] = Me0 * In0[0] + Me1 * In0[1] + Me2 * In0[2] + Me3 * In0[3];
-    Result.Matrix[1] = Me0 * In1[0] + Me1 * In1[1] + Me2 * In1[2] + Me3 * In1[3];
-    Result.Matrix[2] = Me0 * In2[0] + Me1 * In2[1] + Me2 * In2[2] + Me3 * In2[3];
-    Result.Matrix[3] = Me0 * In3[0] + Me1 * In3[1] + Me2 * In3[2] + Me3 * In3[3];
+    Result.SetColumn(X, Me0 * In0[0] + Me1 * In0[1] + Me2 * In0[2] + Me3 * In0[3]);
+    Result.SetColumn(Y, Me0 * In1[0] + Me1 * In1[1] + Me2 * In1[2] + Me3 * In1[3]);
+    Result.SetColumn(Z, Me0 * In2[0] + Me1 * In2[1] + Me2 * In2[2] + Me3 * In2[3]);
+    Result.SetColumn(W, Me0 * In3[0] + Me1 * In3[1] + Me2 * In3[2] + Me3 * In3[3]);
 
     return Result;
 }
@@ -184,21 +188,21 @@ FORCEINLINE constexpr typename TMatrix4<T>::Self TMatrix4<T>::operator*(const Se
 template <typename T>
 FORCEINLINE constexpr typename TMatrix4<T>::Self TMatrix4<T>::operator/(const Self& InMatrix) const noexcept
 {
-    ColumnTy const Me0 = this->Matrix[0];
-    ColumnTy const Me1 = this->Matrix[1];
-    ColumnTy const Me2 = this->Matrix[2];
-    ColumnTy const Me3 = this->Matrix[3];
+    const ColumnTy Me0 = this->Matrix[0];
+    const ColumnTy Me1 = this->Matrix[1];
+    const ColumnTy Me2 = this->Matrix[2];
+    const ColumnTy Me3 = this->Matrix[3];
 
-    ColumnTy const In0 = InMatrix.Matrix[0];
-    ColumnTy const In1 = InMatrix.Matrix[1];
-    ColumnTy const In2 = InMatrix.Matrix[2];
-    ColumnTy const In3 = InMatrix.Matrix[3];
+    const ColumnTy In0 = InMatrix.Matrix[0];
+    const ColumnTy In1 = InMatrix.Matrix[1];
+    const ColumnTy In2 = InMatrix.Matrix[2];
+    const ColumnTy In3 = InMatrix.Matrix[3];
 
     Self Result = SkipInit;
-    Result.Matrix[0] = Me0 / In0[0] + Me1 / In0[1] + Me2 / In0[2] + Me3 / In0[3];
-    Result.Matrix[1] = Me0 / In1[0] + Me1 / In1[1] + Me2 / In1[2] + Me3 / In1[3];
-    Result.Matrix[2] = Me0 / In2[0] + Me1 / In2[1] + Me2 / In2[2] + Me3 / In2[3];
-    Result.Matrix[3] = Me0 / In3[0] + Me1 / In3[1] + Me2 / In3[2] + Me3 / In3[3];
+    Result.SetColumn(X, Me0 / In0[0] + Me1 / In0[1] + Me2 / In0[2] + Me3 / In0[3]);
+    Result.SetColumn(Y, Me0 / In1[0] + Me1 / In1[1] + Me2 / In1[2] + Me3 / In1[3]);
+    Result.SetColumn(Z, Me0 / In2[0] + Me1 / In2[1] + Me2 / In2[2] + Me3 / In2[3]);
+    Result.SetColumn(W, Me0 / In3[0] + Me1 / In3[1] + Me2 / In3[2] + Me3 / In3[3]);
 
     return Result;
 }
@@ -210,8 +214,20 @@ FORCEINLINE typename TMatrix4<T>::Self TMatrix4<T>::operator+(const T Scalar) co
     Self::FastCopy(*this, &Result);
 
     Result.Matrix[0][0] += Scalar;
+    Result.Matrix[0][1] += Scalar;
+    Result.Matrix[0][2] += Scalar;
+    Result.Matrix[0][3] += Scalar;
+    Result.Matrix[1][0] += Scalar;
     Result.Matrix[1][1] += Scalar;
+    Result.Matrix[1][2] += Scalar;
+    Result.Matrix[1][3] += Scalar;
+    Result.Matrix[2][0] += Scalar;
+    Result.Matrix[2][1] += Scalar;
     Result.Matrix[2][2] += Scalar;
+    Result.Matrix[2][3] += Scalar;
+    Result.Matrix[3][0] += Scalar;
+    Result.Matrix[3][1] += Scalar;
+    Result.Matrix[3][2] += Scalar;
     Result.Matrix[3][3] += Scalar;
 
     return Result;
@@ -224,8 +240,20 @@ FORCEINLINE typename TMatrix4<T>::Self TMatrix4<T>::operator-(const T Scalar) co
     Self::FastCopy(*this, &Result);
 
     Result.Matrix[0][0] -= Scalar;
+    Result.Matrix[0][1] -= Scalar;
+    Result.Matrix[0][2] -= Scalar;
+    Result.Matrix[0][3] -= Scalar;
+    Result.Matrix[1][0] -= Scalar;
     Result.Matrix[1][1] -= Scalar;
+    Result.Matrix[1][2] -= Scalar;
+    Result.Matrix[1][3] -= Scalar;
+    Result.Matrix[2][0] -= Scalar;
+    Result.Matrix[2][1] -= Scalar;
     Result.Matrix[2][2] -= Scalar;
+    Result.Matrix[2][3] -= Scalar;
+    Result.Matrix[3][0] -= Scalar;
+    Result.Matrix[3][1] -= Scalar;
+    Result.Matrix[3][2] -= Scalar;
     Result.Matrix[3][3] -= Scalar;
 
     return Result;
@@ -238,8 +266,20 @@ FORCEINLINE typename TMatrix4<T>::Self TMatrix4<T>::operator*(const T Scalar) co
     Self::FastCopy(*this, &Result);
 
     Result.Matrix[0][0] *= Scalar;
+    Result.Matrix[0][1] *= Scalar;
+    Result.Matrix[0][2] *= Scalar;
+    Result.Matrix[0][3] *= Scalar;
+    Result.Matrix[1][0] *= Scalar;
     Result.Matrix[1][1] *= Scalar;
+    Result.Matrix[1][2] *= Scalar;
+    Result.Matrix[1][3] *= Scalar;
+    Result.Matrix[2][0] *= Scalar;
+    Result.Matrix[2][1] *= Scalar;
     Result.Matrix[2][2] *= Scalar;
+    Result.Matrix[2][3] *= Scalar;
+    Result.Matrix[3][0] *= Scalar;
+    Result.Matrix[3][1] *= Scalar;
+    Result.Matrix[3][2] *= Scalar;
     Result.Matrix[3][3] *= Scalar;
 
     return Result;
@@ -252,11 +292,41 @@ FORCEINLINE typename TMatrix4<T>::Self TMatrix4<T>::operator/(const T Scalar) co
     Self::FastCopy(*this, &Result);
 
     Result.Matrix[0][0] /= Scalar;
+    Result.Matrix[0][1] /= Scalar;
+    Result.Matrix[0][2] /= Scalar;
+    Result.Matrix[0][3] /= Scalar;
+    Result.Matrix[1][0] /= Scalar;
     Result.Matrix[1][1] /= Scalar;
+    Result.Matrix[1][2] /= Scalar;
+    Result.Matrix[1][3] /= Scalar;
+    Result.Matrix[2][0] /= Scalar;
+    Result.Matrix[2][1] /= Scalar;
     Result.Matrix[2][2] /= Scalar;
+    Result.Matrix[2][3] /= Scalar;
+    Result.Matrix[3][0] /= Scalar;
+    Result.Matrix[3][1] /= Scalar;
+    Result.Matrix[3][2] /= Scalar;
     Result.Matrix[3][3] /= Scalar;
 
     return Result;
+}
+
+template<typename T>
+FORCEINLINE constexpr typename TMatrix4<T>::ColumnTy TMatrix4<T>::operator*(const ColumnTy& Vector) const noexcept
+{
+    const ColumnTy Mov0(Vector[0]);
+    const ColumnTy Mov1(Vector[1]);
+    const ColumnTy Mul0 = ColumnTy(this->Matrix[0]) * Mov0;
+    const ColumnTy Mul1 = ColumnTy(this->Matrix[1]) * Mov1;
+    const ColumnTy Add0 = Mul0 + Mul1;
+    const ColumnTy Mov2(Vector[2]);
+    const ColumnTy Mov3(Vector[3]);
+    const ColumnTy Mul2 = ColumnTy(this->Matrix[2]) * Mov2;
+    const ColumnTy Mul3 = ColumnTy(this->Matrix[3]) * Mov3;
+    const ColumnTy Add1 = Mul2 + Mul3;
+    const ColumnTy Add2 = Add0 + Add1;
+
+    return Add2;
 }
 
 template <typename T>
@@ -333,8 +403,20 @@ template<typename T>
 FORCEINLINE constexpr typename TMatrix4<T>::Self& TMatrix4<T>::operator+=(const T Scalar) noexcept
 {
     this->Matrix[0][0] += Scalar;
+    this->Matrix[0][1] += Scalar;
+    this->Matrix[0][2] += Scalar;
+    this->Matrix[0][3] += Scalar;
+    this->Matrix[1][0] += Scalar;
     this->Matrix[1][1] += Scalar;
+    this->Matrix[1][2] += Scalar;
+    this->Matrix[1][3] += Scalar;
+    this->Matrix[2][0] += Scalar;
+    this->Matrix[2][1] += Scalar;
     this->Matrix[2][2] += Scalar;
+    this->Matrix[2][3] += Scalar;
+    this->Matrix[3][0] += Scalar;
+    this->Matrix[3][1] += Scalar;
+    this->Matrix[3][2] += Scalar;
     this->Matrix[3][3] += Scalar;
 
     return *this;
@@ -344,8 +426,20 @@ template<typename T>
 FORCEINLINE constexpr typename TMatrix4<T>::Self& TMatrix4<T>::operator-=(const T Scalar) noexcept
 {
     this->Matrix[0][0] -= Scalar;
+    this->Matrix[0][1] -= Scalar;
+    this->Matrix[0][2] -= Scalar;
+    this->Matrix[0][3] -= Scalar;
+    this->Matrix[1][0] -= Scalar;
     this->Matrix[1][1] -= Scalar;
+    this->Matrix[1][2] -= Scalar;
+    this->Matrix[1][3] -= Scalar;
+    this->Matrix[2][0] -= Scalar;
+    this->Matrix[2][1] -= Scalar;
     this->Matrix[2][2] -= Scalar;
+    this->Matrix[2][3] -= Scalar;
+    this->Matrix[3][0] -= Scalar;
+    this->Matrix[3][1] -= Scalar;
+    this->Matrix[3][2] -= Scalar;
     this->Matrix[3][3] -= Scalar;
 
     return *this;
@@ -355,8 +449,20 @@ template<typename T>
 FORCEINLINE constexpr typename TMatrix4<T>::Self& TMatrix4<T>::operator*=(const T Scalar) noexcept
 {
     this->Matrix[0][0] *= Scalar;
+    this->Matrix[0][1] *= Scalar;
+    this->Matrix[0][2] *= Scalar;
+    this->Matrix[0][3] *= Scalar;
+    this->Matrix[1][0] *= Scalar;
     this->Matrix[1][1] *= Scalar;
+    this->Matrix[1][2] *= Scalar;
+    this->Matrix[1][3] *= Scalar;
+    this->Matrix[2][0] *= Scalar;
+    this->Matrix[2][1] *= Scalar;
     this->Matrix[2][2] *= Scalar;
+    this->Matrix[2][3] *= Scalar;
+    this->Matrix[3][0] *= Scalar;
+    this->Matrix[3][1] *= Scalar;
+    this->Matrix[3][2] *= Scalar;
     this->Matrix[3][3] *= Scalar;
 
     return *this;
@@ -366,8 +472,20 @@ template<typename T>
 FORCEINLINE constexpr typename TMatrix4<T>::Self& TMatrix4<T>::operator/=(const T Scalar) noexcept
 {
     this->Matrix[0][0] /= Scalar;
+    this->Matrix[0][1] /= Scalar;
+    this->Matrix[0][2] /= Scalar;
+    this->Matrix[0][3] /= Scalar;
+    this->Matrix[1][0] /= Scalar;
     this->Matrix[1][1] /= Scalar;
+    this->Matrix[1][2] /= Scalar;
+    this->Matrix[1][3] /= Scalar;
+    this->Matrix[2][0] /= Scalar;
+    this->Matrix[2][1] /= Scalar;
     this->Matrix[2][2] /= Scalar;
+    this->Matrix[2][3] /= Scalar;
+    this->Matrix[3][0] /= Scalar;
+    this->Matrix[3][1] /= Scalar;
+    this->Matrix[3][2] /= Scalar;
     this->Matrix[3][3] /= Scalar;
 
     return *this;
@@ -418,6 +536,64 @@ FORCEINLINE void TMatrix4<T>::InlineTranslate(const TVector3<T>& InTranslation)
 }
 
 template<typename T>
+FORCEINLINE typename TMatrix4<T>::Self TMatrix4<T>::GetInverse() const
+{
+    T Coef00 = this->Matrix[2][2] * this->Matrix[3][3] - this->Matrix[3][2] * this->Matrix[2][3];
+    T Coef02 = this->Matrix[1][2] * this->Matrix[3][3] - this->Matrix[3][2] * this->Matrix[1][3];
+    T Coef03 = this->Matrix[1][2] * this->Matrix[2][3] - this->Matrix[2][2] * this->Matrix[1][3];
+
+    T Coef04 = this->Matrix[2][1] * this->Matrix[3][3] - this->Matrix[3][1] * this->Matrix[2][3];
+    T Coef06 = this->Matrix[1][1] * this->Matrix[3][3] - this->Matrix[3][1] * this->Matrix[1][3];
+    T Coef07 = this->Matrix[1][1] * this->Matrix[2][3] - this->Matrix[2][1] * this->Matrix[1][3];
+
+    T Coef08 = this->Matrix[2][1] * this->Matrix[3][2] - this->Matrix[3][1] * this->Matrix[2][2];
+    T Coef10 = this->Matrix[1][1] * this->Matrix[3][2] - this->Matrix[3][1] * this->Matrix[1][2];
+    T Coef11 = this->Matrix[1][1] * this->Matrix[2][2] - this->Matrix[2][1] * this->Matrix[1][2];
+
+    T Coef12 = this->Matrix[2][0] * this->Matrix[3][3] - this->Matrix[3][0] * this->Matrix[2][3];
+    T Coef14 = this->Matrix[1][0] * this->Matrix[3][3] - this->Matrix[3][0] * this->Matrix[1][3];
+    T Coef15 = this->Matrix[1][0] * this->Matrix[2][3] - this->Matrix[2][0] * this->Matrix[1][3];
+
+    T Coef16 = this->Matrix[2][0] * this->Matrix[3][2] - this->Matrix[3][0] * this->Matrix[2][2];
+    T Coef18 = this->Matrix[1][0] * this->Matrix[3][2] - this->Matrix[3][0] * this->Matrix[1][2];
+    T Coef19 = this->Matrix[1][0] * this->Matrix[2][2] - this->Matrix[2][0] * this->Matrix[1][2];
+
+    T Coef20 = this->Matrix[2][0] * this->Matrix[3][1] - this->Matrix[3][0] * this->Matrix[2][1];
+    T Coef22 = this->Matrix[1][0] * this->Matrix[3][1] - this->Matrix[3][0] * this->Matrix[1][1];
+    T Coef23 = this->Matrix[1][0] * this->Matrix[2][1] - this->Matrix[2][0] * this->Matrix[1][1];
+
+    TVector4<T> Fac0(Coef00, Coef00, Coef02, Coef03);
+    TVector4<T> Fac1(Coef04, Coef04, Coef06, Coef07);
+    TVector4<T> Fac2(Coef08, Coef08, Coef10, Coef11);
+    TVector4<T> Fac3(Coef12, Coef12, Coef14, Coef15);
+    TVector4<T> Fac4(Coef16, Coef16, Coef18, Coef19);
+    TVector4<T> Fac5(Coef20, Coef20, Coef22, Coef23);
+
+    TVector4<T> Vec0(this->Matrix[1][0], this->Matrix[0][0], this->Matrix[0][0], this->Matrix[0][0]);
+    TVector4<T> Vec1(this->Matrix[1][1], this->Matrix[0][1], this->Matrix[0][1], this->Matrix[0][1]);
+    TVector4<T> Vec2(this->Matrix[1][2], this->Matrix[0][2], this->Matrix[0][2], this->Matrix[0][2]);
+    TVector4<T> Vec3(this->Matrix[1][3], this->Matrix[0][3], this->Matrix[0][3], this->Matrix[0][3]);
+
+    TVector4<T> Inv0(Vec1 * Fac0 - Vec2 * Fac1 + Vec3 * Fac2);
+    TVector4<T> Inv1(Vec0 * Fac0 - Vec2 * Fac3 + Vec3 * Fac4);
+    TVector4<T> Inv2(Vec0 * Fac1 - Vec1 * Fac3 + Vec3 * Fac5);
+    TVector4<T> Inv3(Vec0 * Fac2 - Vec1 * Fac4 + Vec2 * Fac5);
+
+    TVector4<T> SignA(+1, -1, +1, -1);
+    TVector4<T> SignB(-1, +1, -1, +1);
+    Self        Inverse(Inv0 * SignA, Inv1 * SignB, Inv2 * SignA, Inv3 * SignB);
+
+    TVector4<T> Row0(Inverse.Matrix[0][0], Inverse.Matrix[1][0], Inverse.Matrix[2][0], Inverse.Matrix[3][0]);
+
+    TVector4<T> Dot0(TVector4<T>(this->Matrix[0]) * Row0);
+    T Dot1 = (Dot0.X + Dot0.Y) + (Dot0.Z + Dot0.W);
+
+    T OneOverDeterminant = static_cast<T>(1) / Dot1;
+
+    return Inverse * OneOverDeterminant;
+}
+
+template<typename T>
 LString TMatrix4<T>::ToString() const
 {
     LString Result;
@@ -456,6 +632,12 @@ FORCEINLINE void TMatrix4<T>::FastMove(Self* InMatrix, Self* OutMatrix)
     InMatrix->SetIdentity();
 
     return;
+}
+
+template<typename T>
+FORCEINLINE void TMatrix4<T>::SetColumn(const EMatrixAxis Axis, const ColumnTy& Vector)
+{
+    ::memcpy(this->Matrix[Axis], &Vector, sizeof(ColumnTy));
 }
 
 } /* ~Namespace Jafg */
