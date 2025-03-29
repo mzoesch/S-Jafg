@@ -18,7 +18,8 @@ public:
     ~LEye() noexcept = default;
 
     FORCEINLINE bool IsOwnerValid() const noexcept { return this->Owner != nullptr; }
-    FORCEINLINE void SetOwner(APawn* InOwner) noexcept { this->Owner = InOwner; }
+    ENGINE_API  void SetOwner(APawn* InOwner) noexcept;
+
     FORCEINLINE auto GetOwner() const noexcept -> APawn* { return this->Owner; }
 
     void UpdateViewMatrix();
@@ -30,6 +31,11 @@ public:
     FORCEINLINE auto GetDegYFov() const noexcept -> float { return this->DegYFov; }
     FORCEINLINE void SetDegYFov(const float InDegYFov) { this->DegYFov = InDegYFov; }
 
+    FORCEINLINE f32  GetNearFrustum() const noexcept { return this->NearFrustum; }
+    FORCEINLINE void SetNearFrustum(const f32 InNearFrustum) { this->NearFrustum = InNearFrustum; }
+    FORCEINLINE f32  GetFarFrustum() const noexcept { return this->FarFrustum; }
+    FORCEINLINE void SetFarFrustum(const f32 InFarFrustum) { this->FarFrustum = InFarFrustum; }
+
 private:
 
     APawn*  Owner = nullptr;
@@ -40,7 +46,10 @@ private:
     mutable LVector RelativeRight = LVector::RightVector;
     mutable LVector RelativeUp    = LVector::UpVector;
 
-    float DegYFov = 70.0f;
+    f32 DegYFov = 70.0f;
+
+    f32 NearFrustum = 0.1f;
+    f32 FarFrustum  = 1.0f;
 };
 
 } /* ~Namespace Jafg */

@@ -41,7 +41,7 @@ void Jafg::APersonaController::Possess(APawn* InNewPawn, const bool bKillOld /* 
         this->PossessedPawn->DeclareNewPossessor(this);
     }
 
-    if (this->HasLocalEgo())
+    if (this->IsLocalEgoValid())
     {
         this->LocalEgo->OnNewPawnPossessed(OldPawn, this->PossessedPawn);
     }

@@ -1,8 +1,14 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Cli/CommandLineInterface.h"
+#include "Engine/Engine.h"
 #include "Cli/CliStatics.h"
 #include "Async/TaskUtility.h"
+
+Jafg::LCommandLineInterface* Jafg::LCliObjectHandle::GetCommandLineInterface() const
+{
+    return GEngine->GetCommandLineInterface();
+}
 
 void Jafg::LCommandLineInterface::TearDown()
 {

@@ -17,13 +17,43 @@ void Jafg::LLocalEgo::Initialize()
     check( this->IsValid() == false )
     this->bValid = true;
 
-    this->VariableHandle_UpdateFrustum = GEngine->GetCommandLineInterface()->RegisterVariable(
+    LCommandLineInterface* Cli = GEngine->GetCommandLineInterface();
+    this->VariableHandle_UpdateFrustum = Cli->RegisterVariable({"uf", LCliType::Type("Bool"), "true"});
+    this->VariableHandle_VisualizeFrustum = Cli->RegisterVariable({"vf", LCliType::Type("Bool"), "false"});
+    this->VariableHandle_FrustumNearPlane = Cli->RegisterVariable({"fnp", LCliType::Type("Float"), "0.1f",
+    LOnVariableChangedDelegate::CreateStrong([](const LString& InValue) -> void
     {
-        "UpdateFrustum", LCliType::Type("Bool"), "true", LOnVariableChangedDelegate::CreateStrong([](const LString& InValue)
+        if
+        (
+               GEngine
+            && GEngine->GetLocalEgo()
+            && GEngine->GetLocalEgo()->GetPossessed()
+            && GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()
+        )
         {
-            LOG_WARNING(LogTemporal, "Updating frustum internal: {}", InValue)
-        })
-    });
+            f32 NearFrustum; Deserialize<float>(&NearFrustum, InValue);
+            GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()->GetEye()->SetNearFrustum(NearFrustum);
+            LOG_VERBOSE(LogEgo, "Set current possessed eye near frustum to [{}].", NearFrustum)
+        }
+        return;
+    })});
+    this->VariableHandle_FrustumFarPlane = Cli->RegisterVariable({"ffp", LCliType::Type("Float"), "5.0f",
+    LOnVariableChangedDelegate::CreateStrong([](const LString& InValue) -> void
+    {
+        if
+        (
+               GEngine
+            && GEngine->GetLocalEgo()
+            && GEngine->GetLocalEgo()->GetPossessed()
+            && GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()
+        )
+        {
+            f32 FarFrustum; Deserialize<float>(&FarFrustum, InValue);
+            GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()->GetEye()->SetFarFrustum(FarFrustum);
+            LOG_VERBOSE(LogEgo, "Set current possessed eye far frustum to [{}].", FarFrustum)
+        }
+        return;
+    })});
 
     this->Context.SetHumanReadableName("LocalEgo");
 
@@ -61,6 +91,11 @@ void Jafg::LLocalEgo::OnLateTick(const float DeltaTime)
 
 void Jafg::LLocalEgo::TearDown()
 {
+    if (ensure(this->bValid) == false)
+    {
+        return;
+    }
+
     this->Collection.TearDownSubsystems();
 
     if (ensure(this->OnWorldBeginLifeHandle.IsValid()))
@@ -73,8 +108,10 @@ void Jafg::LLocalEgo::TearDown()
     this->Context.TearDownContext();
     check( this->Context.IsValid() == false )
 
-    this->bValid = false;
+    GEngine->GetCommandLineInterface()->UnregisterVariable(&this->VariableHandle_UpdateFrustum);
+    GEngine->GetCommandLineInterface()->UnregisterVariable(&this->VariableHandle_VisualizeFrustum);
 
+    this->bValid = false;
     return;
 }
 

@@ -27,8 +27,12 @@ protected:
 
 public:
 
-                LEngine* GetEngine() const;
-    FORCEINLINE LEngine* GetEngineChecked() const { check( this->GetEngine() ) return this->GetEngine(); }
+                LEngine*   GetEngine() const;
+    FORCEINLINE LEngine*   GetEngineChecked() const { LEngine* Out = this->GetEngine(); check( Out ) return Out; }
+    FORCEINLINE LEngine*   GetEngineAsserted() const { LEngine* Out = this->GetEngine(); jassert( Out ) return Out; }
+    LCommandLineInterface* GetCommandLineInterface() const;
+    LCommandLineInterface* GetCommandLineInterfaceChecked() const { LCommandLineInterface* Out = this->GetCommandLineInterface(); check( Out ) return Out; }
+    LCommandLineInterface* GetCommandLineInterfaceAsserted() const { LCommandLineInterface* Out = this->GetCommandLineInterface(); jassert( Out ) return Out; }
 
     FORCEINLINE auto IsWorldValid() const -> bool { return this->CastedOuter != nullptr; }
                 LWorld* GetOrCalculateCastedOuter();

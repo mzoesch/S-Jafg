@@ -208,6 +208,9 @@ typedef LPlatformTypes::i16           i16;
 typedef LPlatformTypes::i32           i32;
 typedef LPlatformTypes::i64           i64;
 
+typedef LPlatformTypes::f32           f32;
+typedef LPlatformTypes::f64           f64;
+
 typedef LPlatformTypes::LAsciiChar    LAsciiChar;
 typedef LPlatformTypes::LWideChar     LWideChar;
 

@@ -4,6 +4,7 @@
 
 #include "Cli/CliObject.h"
 #include "Cli/CliType.h"
+#include "Serialization/SerializationCore.h"
 
 namespace Jafg
 {
@@ -55,6 +56,9 @@ public:
     ENGINE_API  auto GetType() const -> const LCliType*;
     ENGINE_API  bool SetValue(const LString& InValue);
     FORCEINLINE auto GetValue() const -> const LString& { return this->Value; }
+
+    template <typename TField>
+    FORCEINLINE void GetValue(TField* Destination) const { Deserialize<TField>(Destination, this->Value); }
 
 private:
 

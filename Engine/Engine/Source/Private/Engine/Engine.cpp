@@ -35,19 +35,58 @@ void Jafg::LEngine::Initialize()
         ensure(this->CommandLineInterface.RegisterType({"Integer", "A 32 bit signed Integer.", "0",
         LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
         {
-            return false;
+            checkSlow( *Cursor < Args.GetArgCount() )
+            const LString& String = Args[*Cursor].Name;
+            if (String.IsEmpty())
+            {
+                return false;
+            }
+            i32 Value;
+            auto [ptr, ec] = std::from_chars(
+                String.ToC(),
+                String.ToC() + String.GetCharacterCount(),
+                Value
+            );
+            ++*Cursor;
+            return ec == std::errc{} && ptr == String.ToC() + String.GetCharacterCount();
         })}).IsValid());
 
         ensure(this->CommandLineInterface.RegisterType({"Byte", "A 8 bit unsigned integer.", "0",
         LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
         {
-            return false;
+            checkSlow( *Cursor < Args.GetArgCount() )
+            const LString& String = Args[*Cursor].Name;
+            if (String.IsEmpty())
+            {
+                return false;
+            }
+            i32 Value;
+            auto [ptr, ec] = std::from_chars(
+                String.ToC(),
+                String.ToC() + String.GetCharacterCount(),
+                Value
+            );
+            ++*Cursor;
+            return ec == std::errc{} && ptr == String.ToC() + String.GetCharacterCount() && (Value >= 0 && Value <= 255);
         })}).IsValid());
 
         ensure(this->CommandLineInterface.RegisterType({"Float", "A 32 bit floating point number.", "0.0",
         LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
         {
-            return false;
+            checkSlow( *Cursor < Args.GetArgCount() )
+            const LString& String = Args[*Cursor].Name;
+            if (String.IsEmpty())
+            {
+                return false;
+            }
+            f32 Value;
+            auto [ptr, ec] = std::from_chars(
+                String.ToC(),
+                String.ToC() + String.GetCharacterCount(),
+                Value
+            );
+            ++*Cursor;
+            return ec == std::errc{} && ptr == String.ToC() + String.GetCharacterCount();
         })}).IsValid());
 
         ensure(this->CommandLineInterface.RegisterType({"String", "A string.", "",

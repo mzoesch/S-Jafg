@@ -26,11 +26,11 @@ public:
     virtual void BeginLife() override;
     virtual void EndLife() override;
 
-    FORCEINLINE bool HasLocalEgo() const { return this->LocalEgo != nullptr; }
+    FORCEINLINE bool IsLocalEgoValid() const { return this->LocalEgo != nullptr; }
     FORCEINLINE auto GetLocalEgo() -> LLocalEgo* { return this->LocalEgo; }
     FORCEINLINE auto GetLocalEgo() const -> const LLocalEgo* { return this->LocalEgo; }
-    FORCEINLINE auto GetCheckedLocalEgo() -> LLocalEgo* { check( this->LocalEgo ); return this->LocalEgo; }
-    FORCEINLINE auto GetCheckedLocalEgo() const -> const LLocalEgo* { check( this->LocalEgo ); return this->LocalEgo; }
+    FORCEINLINE auto GetLocalEgoChecked() -> LLocalEgo* { check( this->LocalEgo ); return this->LocalEgo; }
+    FORCEINLINE auto GetLocalEgoChecked() const -> const LLocalEgo* { check( this->LocalEgo ); return this->LocalEgo; }
     FORCEINLINE auto SetLocalEgo(LLocalEgo* InLocalEgo) -> void { this->LocalEgo = InLocalEgo; }
 
     FORCEINLINE auto DoesPossess() const -> bool { return this->PossessedPawn != nullptr; }

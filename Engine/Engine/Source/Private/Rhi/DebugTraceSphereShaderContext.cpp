@@ -1,10 +1,10 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Rhi/DebugTraceSphereShaderContext.h"
 #include "System/EnginePath.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
+#include "Framework/Eye.h"
 
 namespace
 {
@@ -95,15 +95,15 @@ void Jafg::LDebugTraceSphereShaderContext::Draw(const LViewport& Context, LGener
     );
 
     const TMatrix Projection = Maths::MakePerspectiveProjectionMatrix(
-        Maths::ToRadians(Args.DegYFov),
+        Maths::ToRadians(Args.Eye->GetDegYFov()),
         static_cast<float>(Context.GetDimensions().X) / static_cast<float>(Context.GetDimensions().Y),
-        0.1f, 2000.0f
+        Args.Eye->GetNearFrustum(), Args.Eye->GetFarFrustum()
     );
     LMatrix Model; Model.InlineTranslate(Args.Center);
 
     this->Program.SetMatrixUniform("Model", Model);
     this->Program.SetColorUniform("Color", Args.Color);
-    this->Program.SetMatrixUniform("View", Args.ViewMatrix);
+    this->Program.SetMatrixUniform("View", Args.Eye->GetViewMatrix());
     this->Program.SetMatrixUniform("Projection", Projection);
 
     glLineWidth(Args.Thickness);

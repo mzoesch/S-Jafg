@@ -23,6 +23,7 @@ class LTickableObject;
 class APersonaController;
 class APawn;
 class LEye;
+class LCommandLineInterface;
 struct LLevel;
 struct LSubsystemCollection;
 
@@ -84,6 +85,13 @@ class LWorld final : public LObjectContext
     friend AActor;
     friend Private::LWorldMiscellaneousAccessor;
 
+    struct LEyeToMatricesMapSecond
+    {
+        LMatrix P;
+        LMatrix V;
+    };
+    typedef std::unordered_map<const void*, LEyeToMatricesMapSecond> LEyeToMatricesMap;
+
 public:
 
     LWorld() = delete;
@@ -93,6 +101,7 @@ public:
     ENGINE_API auto GetEngine() const -> LEngine*;
     ENGINE_API auto GetLocalEgo() const -> LLocalEgo*;
     ENGINE_API auto GetLocalController() const -> APersonaController*;
+    ENGINE_API auto GetCommandLineInterface() const -> LCommandLineInterface*;
     //# Only valid if the pawn is in this world.
     ENGINE_API  auto GetLocalPawn() const -> APawn*;
     FORCEINLINE auto GetLocalPawnChecked() const -> APawn* { APawn* Out = this->GetLocalPawn(); check( Out ) return Out; }
@@ -149,6 +158,7 @@ private:
     TdhArray<LTickableObject*> DeletedTickableObjects;
 
     TdhArray<AActor*> Actors;
+    mutable LEyeToMatricesMap EyeToMatrices;
     EWorldState::Type WorldState;
 
     LSubsystemCollection Collection;

@@ -55,12 +55,9 @@ public:
     //#
     //# Set a variable typesafe through the engine with this method.
     //#
-    FORCEINLINE bool SetVariable(const LCommandArgs& InValue, LString* OutValue) const
-    {
-        return this->OnValueSetDelegate(InValue, OutValue);
-    }
+    ENGINE_API bool SetVariable(const LCommandArgs& InValue, LString* OutValue) const;
 
-    ENGINE_API  bool CanParse(const LCommandArgs& Args, i32* Cursor) const;
+    ENGINE_API bool CanParse(const LCommandArgs& Args, i32* Cursor) const;
 
     FORCEINLINE auto GetDefault() const -> const LString& { return this->Default; }
     FORCEINLINE bool IsTypeDelegateValid() const { return this->OnParseTypeDelegate.IsValid(); }

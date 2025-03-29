@@ -9,6 +9,7 @@ namespace Jafg
 
 class LShader;
 class LViewport;
+class LEye;
 
 #define GENERIC_SHADER_DRAW_BODY(ArgsTy) \
     LGenericShaderContext::Draw(Context, InArgs); \
@@ -16,6 +17,11 @@ class LViewport;
 
 struct LGenericShaderContextDrawArgs
 {
+};
+
+struct LGenericPerspectiveShaderContextDrawArgs : public LGenericShaderContextDrawArgs
+{
+    const LEye* Eye = nullptr;
 };
 
 class ENGINE_API LGenericShaderContext

@@ -62,6 +62,15 @@ public:
     ENGINE_API LEngine* GetEngine();
     ENGINE_API LCommandLineInterface* GetCommandLineInterface();
 
+    FORCEINLINE bool GetVariable_UpdateFrustum() const { bool bOut = false; this->VariableHandle_UpdateFrustum.GetValue(&bOut); return bOut; }
+    FORCEINLINE auto GetVariableHandle_UpdateFrustum() const -> const LCliVariableHandle& { return this->VariableHandle_UpdateFrustum; }
+    FORCEINLINE bool GetVariable_VisualizeFrustum() const { bool bOut = false; this->VariableHandle_VisualizeFrustum.GetValue(&bOut); return bOut; }
+    FORCEINLINE auto GetVariableHandle_VisualizeFrustum() const -> const LCliVariableHandle& { return this->VariableHandle_VisualizeFrustum; }
+    FORCEINLINE f32  GetVariable_FrustumNearPlane() const { f32 Out = 0.0f; this->VariableHandle_FrustumNearPlane.GetValue(&Out); return Out; }
+    FORCEINLINE auto GetVariableHandle_FrustumNearPlane() const -> const LCliVariableHandle& { return this->VariableHandle_FrustumNearPlane; }
+    FORCEINLINE f32  GetVariable_FrustumFarPlane() const { f32 Out = 0.0f; this->VariableHandle_FrustumFarPlane.GetValue(&Out); return Out; }
+    FORCEINLINE auto GetVariableHandle_FrustumFarPlane() const -> const LCliVariableHandle& { return this->VariableHandle_FrustumFarPlane; }
+
 private:
 
     void OnWorldBeginLife(LWorld* InNewWorld);
@@ -84,6 +93,9 @@ private:
     LSubsystemCollection Collection;
 
     LCliVariableHandle VariableHandle_UpdateFrustum;
+    LCliVariableHandle VariableHandle_VisualizeFrustum;
+    LCliVariableHandle VariableHandle_FrustumNearPlane;
+    LCliVariableHandle VariableHandle_FrustumFarPlane;
 };
 
 } /* ~Namespace Jafg */

@@ -13,3 +13,21 @@ bool Jafg::LCliType::CanParse(const LCommandArgs& Args, i32* Cursor) const
 
     return GEngine->GetCommandLineInterface()->GetTypeAsserted(this->GetUuid())->OnParseTypeDelegate.Invoke(Args, Cursor);
 }
+
+bool Jafg::LCliType::SetVariable(const LCommandArgs& InValue, LString* OutValue) const
+{
+    check( OutValue )
+
+    if (this->OnValueSetDelegate)
+    {
+        return this->OnValueSetDelegate(InValue, OutValue);
+    }
+
+    if (InValue.Name.Equals(*OutValue))
+    {
+        return false;
+    }
+
+    *OutValue = InValue.Name;
+    return true;
+}

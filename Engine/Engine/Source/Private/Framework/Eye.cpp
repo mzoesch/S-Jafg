@@ -2,6 +2,25 @@
 
 #include "Framework/Eye.h"
 #include "Framework/Pawn.h"
+#include "User/LocalEgo.h"
+
+void Jafg::LEye::SetOwner(APawn* InOwner) noexcept
+{
+    this->Owner = InOwner;
+
+    if (this->Owner == nullptr)
+    {
+        return;
+    }
+
+    if (const LLocalEgo* Ego = this->GetOwner()->GetPossessedEgo(); Ego)
+    {
+        this->NearFrustum = Ego->GetVariable_FrustumNearPlane();
+        this->FarFrustum  = Ego->GetVariable_FrustumFarPlane();
+    }
+
+    return;
+}
 
 void Jafg::LEye::UpdateViewMatrix()
 {

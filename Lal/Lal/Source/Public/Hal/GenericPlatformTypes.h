@@ -60,6 +60,9 @@ struct LGenericPlatformTypes
     /** 64-bit signed integer */
     typedef signed long long    i64;
 
+    typedef float                f32;
+    typedef double               f64;
+
     /** An ASCII character. 8-bit fixed-width representation of 7-bit characters. */
     typedef char                LAsciiChar;
     /**

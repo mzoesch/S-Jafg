@@ -60,7 +60,7 @@ void Jafg::LChunkShader::UpdateUniforms(const LViewport& Viewport, const LWorld&
     (
         Maths::ToRadians(Eye.GetDegYFov()),
         static_cast<float>(Viewport.GetDimensions().X) / static_cast<float>(Viewport.GetDimensions().Y),
-        0.1f, 2000.0f
+        Eye.GetNearFrustum(), Eye.GetFarFrustum()
     );
 
     this->Program.SetMatrixUniform("View", Eye.GetViewMatrix());

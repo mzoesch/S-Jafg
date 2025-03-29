@@ -19,6 +19,7 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LRendererComponent)
     virtual ~LRendererComponent() = default;
 
+    // virtual bool Cull(const LViewport& Context, const LEye& Eye) const = 0;
     virtual void Draw(const LViewport& Context, const LEye& Eye) = 0;
 };
 

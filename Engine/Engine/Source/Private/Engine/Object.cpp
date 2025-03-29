@@ -9,6 +9,11 @@ Jafg::LEngine* Jafg::JObject::GetEngine() const
     return GEngine;
 }
 
+Jafg::LCommandLineInterface* Jafg::JObject::GetCommandLineInterface() const
+{
+    return GEngine ? GEngine->GetCommandLineInterface() : nullptr;
+}
+
 Jafg::LWorld* Jafg::JObject::GetOrCalculateCastedOuter()
 {
     if (this->CastedOuter)

@@ -1,10 +1,10 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Rhi/DebugTraceCubeShaderContext.h"
 #include "System/EnginePath.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
+#include "Framework/Eye.h"
 
 void Jafg::LDebugTraceCubeShaderContext::Make()
 {
@@ -69,13 +69,13 @@ void Jafg::LDebugTraceCubeShaderContext::Draw(const LViewport& Context, LGeneric
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (/* Lines */12 * /* Vertices */2 * /* Domains */3), Vertices, GL_DYNAMIC_DRAW);
 
     const LMatrix Projection = Maths::MakePerspectiveProjectionMatrix(
-        Maths::ToRadians(Args.DegYFov),
+        Maths::ToRadians(Args.Eye->GetDegYFov()),
         static_cast<float>(Context.GetDimensions().X) / static_cast<float>(Context.GetDimensions().Y),
-        0.1f, 2000.0f
+        Args.Eye->GetNearFrustum(), Args.Eye->GetFarFrustum()
     );
 
     this->Program.SetColorUniform("Color", Args.Color);
-    this->Program.SetMatrixUniform("View", Args.ViewMatrix);
+    this->Program.SetMatrixUniform("View", Args.Eye->GetViewMatrix());
     this->Program.SetMatrixUniform("Projection", Projection);
 
     glLineWidth(Args.Thickness);

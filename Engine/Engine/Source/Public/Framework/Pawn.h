@@ -29,6 +29,11 @@ public:
     virtual void Tick(const float DeltaTime) override;
 
     FORCEINLINE auto IsPossessed() const -> bool { return this->OwningController != nullptr; }
+                bool IsPossessedLocally() const;
+                LLocalEgo* GetPossessedEgo() const;
+    FORCEINLINE LLocalEgo* GetPossessedEgoChecked() const { LLocalEgo* Out = this->GetPossessedEgo(); check( Out ) return Out; }
+    FORCEINLINE LLocalEgo* GetPossessedEgoAsserted() const { LLocalEgo* Out = this->GetPossessedEgo(); jassert( Out ) return Out; }
+
     FORCEINLINE auto GetOwningController() const -> APersonaController* { return this->OwningController; }
                 void DeclareNewPossessor(APersonaController* InNewController);
 
@@ -64,11 +69,10 @@ private:
 
     APersonaController* OwningController = nullptr;
 
-    float MovementSpeed    = 2.5f;
-    float MouseSensitivity = 0.1f;
-
-    double LastMouseX = 0.0;
-    double LastMouseY = 0.0;
+    f32  MovementSpeed    = 2.5f;
+    f32  MouseSensitivity = 0.1f;
+    f64  LastMouseX       = 0.0;
+    f64  LastMouseY       = 0.0;
     bool bFirstMouseCallback = true;
 
     TdhArray<LHitResult> CurrentGenericTraceResults;

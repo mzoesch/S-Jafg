@@ -5,6 +5,7 @@
 #include "Debug/DebugTraceLine.h"
 #include "MyWorld/Chunk/Chunk.h"
 #include "User/Input/InputActionValue.h"
+#include "Framework/PersonaController.h"
 
 Jafg::APawn::APawn(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -38,6 +39,16 @@ void Jafg::APawn::Tick(const float DeltaTime)
     }
 
     return;
+}
+
+bool Jafg::APawn::IsPossessedLocally() const
+{
+    return this->OwningController && this->OwningController->IsLocalEgoValid();
+}
+
+Jafg::LLocalEgo* Jafg::APawn::GetPossessedEgo() const
+{
+    return this->OwningController ? this->OwningController->GetLocalEgo() : nullptr;
 }
 
 void Jafg::APawn::DeclareNewPossessor(APersonaController* InNewController)

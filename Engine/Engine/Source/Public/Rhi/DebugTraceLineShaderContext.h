@@ -8,10 +8,8 @@
 namespace Jafg
 {
 
-struct LDebugTraceLineShaderContextDrawArgs final : public LGenericShaderContextDrawArgs
+struct LDebugTraceLineShaderContextDrawArgs final : public LGenericPerspectiveShaderContextDrawArgs
 {
-    float DegYFov = 0.0f;
-    LMatrix ViewMatrix = LMatrix(Matrix::Identity);
     LVector Start = { };
     LVector End = { };
     LColor  Color = { };

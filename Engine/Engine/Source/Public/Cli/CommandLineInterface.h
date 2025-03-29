@@ -31,7 +31,11 @@ struct LCliObjectHandle final
     FORCEINLINE bool IsValid() const { return this->Uuid != LCliObject::NoUuid; }
     FORCEINLINE void Reset() { this->Uuid = LCliObject::NoUuid; }
 
+    template <typename TField> FORCEINLINE void GetValue(TField* Destination) const;
+
 private:
+
+    ENGINE_API LCommandLineInterface* GetCommandLineInterface() const;
 
     LCliObjectUuid Uuid = LCliObject::NoUuid;
 };
@@ -226,5 +230,11 @@ private:
     TdhArray<LCliCommand>  Commands;
     TdhArray<LCliVariable> Variables;
 };
+
+template<typename TField>
+void LCliObjectHandle::GetValue(TField* Destination) const
+{
+    this->GetCommandLineInterface()->GetVariable(this->Uuid)->GetValue<TField>(Destination);
+}
 
 } /* ~Namespace Jafg */
