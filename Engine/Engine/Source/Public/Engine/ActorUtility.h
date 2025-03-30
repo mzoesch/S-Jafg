@@ -19,16 +19,16 @@ struct LWorldMiscellaneousAccessor;
 } /* ~Namespace Private. */
 
 template <typename TActor>
-FORCEINLINE auto SpawnActor(LWorld* InContext) -> TActor*;
+FORCEINLINE TActor* SpawnActor(LWorld* InContext);
 template <typename TActor>
-FORCEINLINE auto SpawnActor(LWorld* InContext, const LObjectClass* InStaticClass) -> TActor*;
-FORCEINLINE auto SpawnActor(LWorld* InContext, const LObjectClass* InStaticClass) -> AActor*;
+FORCEINLINE TActor* SpawnActor(LWorld* InContext, const LObjectClass* InStaticClass);
+FORCEINLINE AActor* SpawnActor(LWorld* InContext, const LObjectClass* InStaticClass);
 
 template <typename TActor>
-FORCEINLINE auto SpawnDeferredActor(LWorld* InContext) -> TActor*;
+FORCEINLINE TActor* SpawnDeferredActor(LWorld* InContext);
 template <typename TActor>
-FORCEINLINE auto SpawnDeferredActor(LWorld* InContext, const LObjectClass* InStaticClass) -> TActor*;
-FORCEINLINE auto SpawnDeferredActor(LWorld* InContext, const LObjectClass* InStaticClass) -> AActor*;
+FORCEINLINE TActor* SpawnDeferredActor(LWorld* InContext, const LObjectClass* InStaticClass);
+FORCEINLINE AActor* SpawnDeferredActor(LWorld* InContext, const LObjectClass* InStaticClass);
 
 FORCEINLINE void MakeDeferredActorFinal(AActor* InActor);
 
@@ -38,6 +38,7 @@ namespace Private
 struct LWorldMiscellaneousAccessor final
 {
     FORCEINLINE static AActor* SpawnActor(LWorld* InContext, const LObjectClass* InStaticClass);
+    FORCEINLINE static AActor* SpawnActorWeak(LWorld* InContext, const LObjectClass* InStaticClass);
     FORCEINLINE static AActor* SpawnDeferredActor(LWorld* InContext, const LObjectClass* InStaticClass);
 };
 
@@ -89,19 +90,25 @@ FORCEINLINE AActor* Private::LWorldMiscellaneousAccessor::SpawnActor(LWorld* InC
     return Actor;
 }
 
-FORCEINLINE AActor* Private::LWorldMiscellaneousAccessor::SpawnDeferredActor(LWorld* InContext, const LObjectClass* InStaticClass)
+FORCEINLINE AActor* Private::LWorldMiscellaneousAccessor::SpawnActorWeak(LWorld* InContext, const LObjectClass* InStaticClass)
 {
     check( InContext )
     check( Tasks::IsOnMasterThread() )
 
     AActor* Actor = NewDeferredObject<AActor, true, false>(InContext, InStaticClass);
-    InContext->Actors.Add(Actor);
 
     if (Actor->CanEverTick())
     {
         InContext->TickableObjects.Add(Actor);
     }
 
+    return Actor;
+}
+
+FORCEINLINE AActor* Private::LWorldMiscellaneousAccessor::SpawnDeferredActor(LWorld* InContext, const LObjectClass* InStaticClass)
+{
+    AActor* Actor = SpawnActorWeak(InContext, InStaticClass);
+    InContext->Actors.Add(Actor);
     return Actor;
 }
 

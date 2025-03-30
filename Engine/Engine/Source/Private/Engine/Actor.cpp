@@ -33,7 +33,7 @@ void Jafg::AActor::OnGarbage()
         }
     }
 
-    if (this->GetWorld()->GetWorldState() != EWorldState::TearingDown)
+    if (this->bWeakContext == false && this->GetWorld()->GetWorldState() != EWorldState::TearingDown)
     {
         /*
          * Though we keep the pointer to the world to let this actor's children unsubscribe to world-specific

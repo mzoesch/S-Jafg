@@ -37,7 +37,7 @@ public:
     FORCEINLINE explicit LChunkRendererComponent(AChunk& Owner) : Owner(&Owner) { }
     ~LChunkRendererComponent() override = default;
 
-    virtual bool Cull(std::span<LVector> Corners) const override;
+    virtual bool Cull(const std::span<LVector>& Corners) const override;
     virtual void Draw(const LViewport& Context, const LEye& Eye) override;
 
     FORCEINLINE auto GetOwner()       noexcept ->       AChunk& { return *this->Owner; }
@@ -84,7 +84,7 @@ public:
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(AChunk)
+    explicit AChunk(const LObjectInitializer& ObjectInitializer);
 
 public:
 

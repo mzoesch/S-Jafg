@@ -48,6 +48,25 @@ public:
 
 private:
 
+    // BEGIN
+    // World optimization stuff not part of the chunk generation subsystem and logic.
+    // Just helper functions for really heavy optimizations.
+    bool LineTraceByChannel(
+        TdhArray<LHitResult>& OutHits,
+        const LVector& Start,
+        const LVector& End,
+        const LCollisionQueryParams& Params
+    ) const;
+
+    void LOnStaticDraw(
+        const LViewport& Viewport,
+        const LEye& Eye,
+        const std::span<LVector>& Corners
+    ) const;
+    //
+    // END World optimization stuff
+    //
+
     AChunk* SpawnChunk(const LChunkKey& InChunkKey);
 
     //#
@@ -55,7 +74,7 @@ private:
     //# @remark std::unordered_map is not trivially copyable when empty. So we have to use a pointer.
     //#         We should really implement our own hash map.
     //#
-    std::unordered_map<LChunkKey, AChunk*>* LoadedChunks = nullptr;
+    std::optional<std::unordered_map<LChunkKey, AChunk*>> LoadedChunks;
     mutable std::shared_mutex LoadedChunksMutex;
 
     //#
@@ -107,7 +126,7 @@ AChunk* JChunkGenerationSubsystem::GetPanickedChunk(const LChunkKey& InChunkKey)
 AChunk* JChunkGenerationSubsystem::FindLoadedChunkOrNull(const LChunkKey& ChunkKey) const
 {
     std::shared_lock Lock(this->LoadedChunksMutex);
-    const std::unordered_map<LChunkKey, AChunk*>::iterator It = this->LoadedChunks->find(ChunkKey);
+    std::unordered_map<LChunkKey, AChunk*>::const_iterator It = this->LoadedChunks->find(ChunkKey);
     return It == this->LoadedChunks->end() ? nullptr : It->second;
 }
 

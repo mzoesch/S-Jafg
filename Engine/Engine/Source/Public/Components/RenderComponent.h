@@ -31,7 +31,7 @@ public:
     //#   Far Top Right
     //#
     NODISCARD
-    virtual bool Cull(std::span<LVector> Corners) const = 0;
+    virtual bool Cull(const std::span<LVector>& Corners) const = 0;
     virtual void Draw(const LViewport& Context, const LEye& Eye) = 0;
 };
 

@@ -34,6 +34,18 @@ struct LWorldMiscellaneousAccessor;
 
 } /* ~Namespace Private */
 
+MAKE_DELEGATE_SIGNATURE(LOnStaticLineTrace, bool,
+    TdhArray<LHitResult>& OutHits,
+    const LVector& Start,
+    const LVector& End,
+    const LCollisionQueryParams& Params
+)
+MAKE_DELEGATE_SIGNATURE(LOnStaticDraw, void,
+    const LViewport& Viewport,
+    const LEye& Eye,
+    const std::span<LVector>& Corners
+)
+
 namespace EWorldState
 {
 
@@ -113,7 +125,10 @@ public:
 
     FORCEINLINE bool CanTick() const { return this->GetWorldState() == EWorldState::Running; }
     void Tick(const float DeltaTime);
+
     void Draw(const LViewport& Viewport, const LEye& Eye) const;
+    LOnStaticDraw OnStaticDraw;
+
 #if AS_CLIENT
     void LateTick(const float DeltaTime);
 #endif /* AS_CLIENT */
@@ -140,6 +155,8 @@ public:
         const ECollisionChannel::Type Channel,
         const LCollisionQueryParams& Params
     ) const;
+
+    LOnStaticLineTrace OnStaticLineTrace;
 
 #if AS_CLIENT
     template <typename T>

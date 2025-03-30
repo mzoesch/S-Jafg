@@ -76,6 +76,8 @@ protected:
     FORCEINLINE void SetEverTickConstructorOnlyFlag() { this->bCanEverTick = true; }
     FORCEINLINE void CancelEverTickConstructorOnlyFlag() { this->bCanEverTick = false; }
 
+    FORCEINLINE void DisableStrongActorContext() { this->bWeakContext = false; return; }
+
 private:
 
     //# Make this virtual private to not confuse it with #ShouldTick.
@@ -97,6 +99,8 @@ private:
     //# Whether this actor should tick now or not. This flag does nothing if bCanEverTick is false.
     //#
     bool bShouldTick : 1  = true;
+
+    bool bWeakContext : 1 = false;
 };
 
 } /* ~Namespace Jafg. */

@@ -45,7 +45,7 @@ struct TDelegate<RetTy(ParamsTy...)> final
         check( this->Delegate.IsBound() )
         return this->Delegate(std::forward<ParamsTy>(InFuncParams)...);
     }
-    FORCEINLINE LRetValTy operator()(ParamsTy ... InFuncParams) { return this->Invoke(std::forward<ParamsTy>(InFuncParams)...); }
+    FORCEINLINE LRetValTy operator()(ParamsTy ... InFuncParams) const { return this->Invoke(std::forward<ParamsTy>(InFuncParams)...); }
 
     template <typename LocalFuncRetValTy = LRetValTy, TEnableIf<std::is_void_v<LocalFuncRetValTy>, void>* = nullptr>
     UNUSED FORCEINLINE bool InvokeIfBound(ParamsTy ... InFuncParams) const

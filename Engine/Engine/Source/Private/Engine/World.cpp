@@ -154,6 +154,10 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
     //     {0, 4}, {1, 5}, {2, 6}, {3, 7}  // Connecting Near and Far Planes
     // };
 
+    const std::span CornersSpan{Corners};
+
+    this->OnStaticDraw.InvokeIfBound(Viewport, Eye, CornersSpan);
+
     for (const AActor* Actor : this->Actors)
     {
         check( Actor->IsGarbage() == false )
@@ -161,7 +165,7 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
         if
         (
                Actor->IsRendererComponentValid()
-            && Actor->GetRendererComponent()->Cull(std::span(Corners)) == false
+            && Actor->GetRendererComponent()->Cull(CornersSpan) == false
         )
         {
             Actor->GetRendererComponent()->Draw(Viewport, Eye);
@@ -314,6 +318,18 @@ bool Jafg::LWorld::LineTraceByChannel(
 
     check( (Begin - End).Magnitude() > JAFG_NOT_SO_SMALL_NUMBER && "Why trace small distances." )
 
+    if (Channel == ECollisionChannel::Static)
+    {
+        if (this->OnStaticLineTrace.IsBound())
+        {
+            STAT_QUICK_CYCLE_START("OnStaticLineTrace")
+            return this->OnStaticLineTrace(OutHits, Begin, End, Params);
+        }
+
+        return false;
+    }
+
+    STAT_QUICK_CYCLE_START("LineTraceByChannelImpl")
     LHitResult Dummy;
     for (const AActor* Actor : this->Actors)
     {

@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "MyWorld/CommonTypes.h"
 #include "MyWorld/Chunk/ChunkPhysics.h"
 
@@ -61,6 +60,7 @@ bool Jafg::LChunkPhysicsComponent::Sweep(const LVector& Start, const LVector& En
     LVector Cursor   = Start;
     float   Distance = (End - Start).Magnitude();
     const LVector Normal = (End - Start).GetUnsafeNormalized();
+    const LVector NormalStep = Normal * LChunkPhysicsComponent::TraceStep;
 
     while (Distance > 0)
     {
@@ -72,8 +72,10 @@ bool Jafg::LChunkPhysicsComponent::Sweep(const LVector& Start, const LVector& En
             return true;
         }
 
-        Cursor += Normal * LChunkPhysicsComponent::TraceStep;
+        Cursor += NormalStep;
         Distance -= LChunkPhysicsComponent::TraceStep;
+
+        continue;
     }
 
     return false;

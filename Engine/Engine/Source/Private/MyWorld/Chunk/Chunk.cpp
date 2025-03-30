@@ -10,7 +10,7 @@
 #include "MyWorld/Chunk/ChunkPhysics.h"
 #include "Rhi/RhiVendorInclude.h"
 
-bool Jafg::LChunkRendererComponent::Cull(std::span<LVector> Corners) const
+bool Jafg::LChunkRendererComponent::Cull(const std::span<LVector>& Corners) const
 {
     return false;
 }
@@ -34,6 +34,12 @@ void Jafg::LChunkRendererComponent::Draw(const LViewport& Context, const LEye& E
 
     glDrawElements(GL_TRIANGLES, this->Owner->GetMesher()->GetNumTriangles(), GL_UNSIGNED_INT, nullptr);
 
+    return;
+}
+
+Jafg::AChunk::AChunk(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+{
+    this->DisableStrongActorContext();
     return;
 }
 

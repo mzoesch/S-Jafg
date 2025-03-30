@@ -27,7 +27,7 @@ struct LHitResult final
     //#
     //# Hit actor.
     //#
-    AActor* Actor               = nullptr;
+    AActor* Actor = nullptr;
 
     //#
     //# Hit location in world space.
@@ -37,7 +37,7 @@ struct LHitResult final
     //#
     //# Optional hit surface normal.
     //#
-    TOptional<LVector> SurfaceNormal = { };
+    TOptional<LVector> SurfaceNormal;
 };
 
 inline void LHitResult::Initialize()
