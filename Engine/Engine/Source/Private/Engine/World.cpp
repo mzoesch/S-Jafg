@@ -151,7 +151,11 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
     {
         check( Actor->IsGarbage() == false )
 
-        if (Actor->IsRendererComponentValid())
+        if
+        (
+               Actor->IsRendererComponentValid()
+            && Actor->GetRendererComponent()->Cull(std::span(Corners)) == false
+        )
         {
             Actor->GetRendererComponent()->Draw(Viewport, Eye);
         }

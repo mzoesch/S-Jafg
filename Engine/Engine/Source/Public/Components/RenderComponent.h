@@ -19,7 +19,19 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LRendererComponent)
     virtual ~LRendererComponent() = default;
 
-    // virtual bool Cull(const LViewport& Context, const LEye& Eye) const = 0;
+    //#
+    //# In order:
+    //#   Near Bottom Left
+    //#   Near Bottom Right
+    //#   Near Top Left
+    //#   Near Top Right
+    //#   Far Bottom Left
+    //#   Far Bottom Right
+    //#   Far Top Left
+    //#   Far Top Right
+    //#
+    NODISCARD
+    virtual bool Cull(std::span<LVector> Corners) const = 0;
     virtual void Draw(const LViewport& Context, const LEye& Eye) = 0;
 };
 

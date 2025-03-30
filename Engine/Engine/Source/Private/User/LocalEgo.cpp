@@ -37,7 +37,7 @@ void Jafg::LLocalEgo::Initialize()
         }
         return;
     })});
-    this->VariableHandle_FrustumFarPlane = Cli->RegisterVariable({"ffp", LCliType::Type("Float"), "5.0f",
+    this->VariableHandle_FrustumFarPlane = Cli->RegisterVariable({"ffp", LCliType::Type("Float"), "2000.0f",
     LOnVariableChangedDelegate::CreateStrong([](const LString& InValue) -> void
     {
         if

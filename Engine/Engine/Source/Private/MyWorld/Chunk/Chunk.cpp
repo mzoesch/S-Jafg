@@ -10,6 +10,11 @@
 #include "MyWorld/Chunk/ChunkPhysics.h"
 #include "Rhi/RhiVendorInclude.h"
 
+bool Jafg::LChunkRendererComponent::Cull(std::span<LVector> Corners) const
+{
+    return false;
+}
+
 void Jafg::LChunkRendererComponent::Draw(const LViewport& Context, const LEye& Eye)
 {
     checkSlow( this->Owner->GetSharedArgs() )
