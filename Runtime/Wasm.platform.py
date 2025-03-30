@@ -4,7 +4,7 @@ from Programs.Meta import *
 
 
 def add_platform(me: Platform, args: PlatformArgs) -> None:
-    me.defines.extend(['PLATFORM_WASM'])
+    me.defines.extend(['PLATFORM_WASM', 'WITH_STATS=0'])
     me.architecture = 'x86'
 
     # !!EM!!! but premake does not support it now. Only some random legacy versions

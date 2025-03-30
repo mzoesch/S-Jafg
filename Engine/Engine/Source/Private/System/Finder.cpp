@@ -128,7 +128,7 @@ bool Finder::DoesFileExistsPanicked(const LEnginePath& InEnginePath)
     return bOut;
 }
 
-void Finder::CheckFile(const LEnginePath& InEnginePath)
+void Finder::EnsureFile(const LEnginePath& InEnginePath)
 {
     if (Finder::DoesFileExists(InEnginePath))
     {
@@ -140,6 +140,16 @@ void Finder::CheckFile(const LEnginePath& InEnginePath)
     Paths::CreateFileSlow(InEnginePath.ResolveAbsolutePath(*GetDefault<JUserPreferences>()));
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
     return;
+}
+
+void Finder::CheckFile(const LEnginePath& InEnginePath)
+{
+    if (Finder::DoesFileExists(InEnginePath))
+    {
+        return;
+    }
+
+    panicMsgf( "No such file: {}.", InEnginePath.GetRelativeUnresolvedPath().GetPath() )
 }
 
 LPath Finder::ResolvePathToRelativeModulePath(const LEnginePath& InEnginePath)

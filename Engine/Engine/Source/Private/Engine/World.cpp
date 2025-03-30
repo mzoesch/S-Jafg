@@ -18,6 +18,7 @@
 #include <glm/fwd.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "Stats/Stats.h"
 
 Jafg::LWorld::LWorld(const LSimpleString& InHumanReadableName, const EWorldState::Type InWorldType): WorldState(InWorldType)
 {
@@ -63,6 +64,8 @@ Jafg::APawn* Jafg::LWorld::GetLocalPawn() const
 
 void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 {
+    STAT_CYCLE_FUNCTION()
+
     this->RealTimeWhenWorldWasLaunched = static_cast<float>(Application::GetDeltaSinceStaticStorageInitialization());
     check( this->RealTimeWhenWorldWasLaunched > 0.0f )
 
@@ -86,6 +89,8 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 
 void Jafg::LWorld::Tick(const float DeltaTime)
 {
+    STAT_CYCLE_FUNCTION()
+
     this->AcquireTickableObjectsLock();
     for (LTickableObject* Tickable : this->TickableObjects)
     {
@@ -103,6 +108,8 @@ void Jafg::LWorld::Tick(const float DeltaTime)
 
 void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
 {
+    STAT_CYCLE_FUNCTION()
+
     LMatrix P{SkipInit};
     LMatrix V{SkipInit};
     if (const auto Cache = this->EyeToMatrices.find(&Eye); this->GetLocalEgo()->GetVariable_UpdateFrustum() || Cache == this->EyeToMatrices.end())
@@ -210,6 +217,8 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
 #if AS_CLIENT
 void Jafg::LWorld::LateTick(const float DeltaTime)
 {
+    STAT_CYCLE_FUNCTION()
+
     for (LTemporalWorldObject* const& TemporalObject : this->TemporalObjects)
     {
         TemporalObject->ReduceLifeTime(DeltaTime);
@@ -232,6 +241,8 @@ void Jafg::LWorld::LateTick(const float DeltaTime)
 
 void Jafg::LWorld::TearDownContext()
 {
+    STAT_CYCLE_FUNCTION()
+
     check( this->GetWorldState() == EWorldState::Running )
     this->WorldState = EWorldState::TearingDown;
 
@@ -299,6 +310,8 @@ bool Jafg::LWorld::LineTraceByChannel(
     const LCollisionQueryParams& Params
 ) const
 {
+    STAT_CYCLE_FUNCTION()
+
     check( (Begin - End).Magnitude() > JAFG_NOT_SO_SMALL_NUMBER && "Why trace small distances." )
 
     LHitResult Dummy;

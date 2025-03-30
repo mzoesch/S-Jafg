@@ -27,7 +27,7 @@ class BufferedPlatform:
             raise ValueError('Platform path cannot be empty.')
         if self._name == '':
             raise ValueError('Platform name cannot be empty.')
-        if bool(re.fullmatch(r"[A-Za-z]+", self._name)) is False:
+        if bool(re.fullmatch(r'[A-Za-z_]+', self._name)) is False:
             raise ValueError(f'Platform name may only contain latin letters. Faulty platform: [{self._name}].')
         return None
 

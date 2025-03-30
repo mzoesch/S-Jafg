@@ -4,6 +4,7 @@
 #include "Platform/Surface.h"
 #include "Core/LaunchProgress.h"
 #include "Forward/EngineForward.h"
+#include "Stats/Stats.h"
 
 namespace Jafg::LaunchProgress
 {
@@ -19,6 +20,8 @@ ENGINE_API bool          Private::bOwnerShipToken      = false;
 
 void Jafg::LaunchProgress::PrepareBeginProgress()
 {
+    STAT_CYCLE_FUNCTION()
+
     check( Private::GProgressSurface == nullptr )
     check( Private::bOwnerShipToken == false )
 

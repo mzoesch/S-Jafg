@@ -1,8 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Engine/Carnifex.h"
 #include "Engine/ObjectBase.h"
+#include "Stats/Stats.h"
 
 void Jafg::LCarnifex::KillAllGarbageChildren()
 {
@@ -10,6 +10,8 @@ void Jafg::LCarnifex::KillAllGarbageChildren()
     {
         return;
     }
+
+    STAT_CYCLE_FUNCTION()
 
     LOG_TRACE(LogCarnifex, "Found {} garbage children. Begin to kill them.", this->GarbageChildren.GetSize())
 

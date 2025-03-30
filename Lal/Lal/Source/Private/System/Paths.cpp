@@ -103,6 +103,12 @@ void Paths::CreateFileSlow(const LPath& InAbsolutePath)
     LOG_TRACE(LogPlatform, "Creating file [{}].", InAbsolutePath.GetPath())
     std::ofstream Out { InAbsolutePath.GetPath().ToC() };
     Out.close();
+
+    if (Out.fail())
+    {
+        panicMsgf( "Failed to create file: {}.", InAbsolutePath.GetPath() )
+    }
+
     return;
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
 }

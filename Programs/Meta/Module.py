@@ -33,7 +33,7 @@ class BufferedModule:
             raise ValueError('Module path cannot be empty.')
         if self._name == '':
             raise ValueError('Module name cannot be empty.')
-        if bool(re.fullmatch(r"[A-Za-z]+", self._name)) is False:
+        if bool(re.fullmatch(r'[A-Za-z_]+', self._name)) is False:
             raise ValueError(f'Module name may only contain latin letters. Faulty Module: [{self._name}].')
         return None
 

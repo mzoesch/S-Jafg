@@ -2,9 +2,104 @@
 
 #include "CoreAfx.h"
 
+namespace
+{
+
+bool StartsWith(const char* InString, const char* InPrefix) noexcept
+{
+    while (*InString == *InPrefix)
+    {
+        if (*InPrefix == '\0')
+        {
+            return true;
+        }
+
+        ++InString;
+        ++InPrefix;
+    }
+
+    return false;
+}
+
+const char* ConsumeType(const char* Begin, const char* End) noexcept
+{
+    static const char* const Signed("signed");
+    static const char* const Unsigned("unsigned");
+
+    const char* It = Begin;
+    if (::StartsWith(It, Signed))
+    {
+        It += ::strlen(Signed) + 1;
+    }
+    else if (::StartsWith(It, Unsigned))
+    {
+        It += strlen(Unsigned) + 1;
+    }
+
+    i32 TemplateNest = 0;
+    while (It != End)
+    {
+        if (*It == ' ' && TemplateNest == 0)
+        {
+            break;
+        }
+
+        if (*It == '<')
+        {
+            ++TemplateNest;
+        }
+        else if (*It == '>' && TemplateNest > 0)
+        {
+            --TemplateNest;
+        }
+
+        ++It;
+    }
+
+    return It;
+}
+
+} /* ~Namespace <Anonymous> */
 
 namespace Jafg::Private
 {
+
+std::string_view PrettyFunctionName(const char* InFunctionName) noexcept
+{
+    const char* Begin = InFunctionName;
+    const char* End   = InFunctionName;
+    while (*End != '\0')
+    {
+        ++End;
+    }
+
+    Begin = ::ConsumeType(Begin, End);
+    if (Begin == End)
+    {
+        return InFunctionName;
+    }
+
+    /* Space after return type */
+    ++Begin;
+    if (Begin == End)
+    {
+        return InFunctionName;
+    }
+
+    if (*Begin == '(')
+    {
+        Begin = ::ConsumeType(++Begin, End);
+
+        /* Space after return type */
+        ++Begin;
+        if (Begin == End)
+        {
+            return InFunctionName;
+        }
+    }
+
+    return { Begin, static_cast<std::string_view::size_type>(std::find(Begin, End, '(') - Begin) };
+}
 
 LSimpleString LalLogPrivateColor_Trace   = LOG_COLOR_TRACE;
 LSimpleString LalLogPrivateColor_Verbose = LOG_COLOR_VERBOSE;

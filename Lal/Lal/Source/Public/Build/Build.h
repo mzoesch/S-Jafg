@@ -161,6 +161,13 @@
 
 #define WITH_DEBUG_ZERO_UNBOUND         !IN_SHIPPING
 
+#ifndef WITH_STATS
+    #define WITH_STATS                  !IN_SHIPPING
+#endif /* !WITH_STATS */
+#ifndef JAFG_STATS_USE_GOOGLE_CHROME_TRACER
+    #define JAFG_STATS_USE_GOOGLE_CHROME_TRACER      1
+#endif /* !JAFG_STATS_USE_GOOGLE_CHROME_TRACER */
+
 
 /*-----------------------------------------------------------------------------
     Jafg build tool.

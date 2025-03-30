@@ -12,6 +12,7 @@
 #include "User/LocalEgo.h"
 #include "User/Input/UserInput.h"
 #include "Widgets/UserWidget.h"
+#include "Stats/Stats.h"
 
 void Jafg::LFrontend::Initialize(LObjectContext* InOuter)
 {
@@ -37,6 +38,8 @@ void Jafg::LFrontend::Initialize(LObjectContext* InOuter)
 
 void Jafg::LFrontend::Tick(LUserInput* UserInput)
 {
+    STAT_CYCLE_FUNCTION()
+
     for (LSurface& Surface : this->Surfaces)
     {
         Surface.OnClear();

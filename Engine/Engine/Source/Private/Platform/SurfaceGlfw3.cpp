@@ -16,6 +16,7 @@
 #endif /* PLATFORM_WINDOWS */
 #include "User/Input/GlfwInputTranslation.h"
 #include "Widgets/Viewport.h"
+#include "Stats/Stats.h"
 
 namespace
 {
@@ -130,6 +131,8 @@ Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
 
 void Jafg::LSurfaceGlfw3::Initialize()
 {
+    STAT_CYCLE_FUNCTION()
+
     Super::Initialize();
 
     check( Tasks::IsOnMasterThread() )
@@ -144,7 +147,10 @@ void Jafg::LSurfaceGlfw3::Initialize()
         bInitializedGlfw = true;
     }
 
-    this->Handle = glfwCreateWindow(1280, 720, "Jafg - mzoesch", nullptr, nullptr);
+    {
+        STAT_QUICK_CYCLE_START("Glfw3WindowCreation")
+        this->Handle = glfwCreateWindow(1280, 720, "Jafg - mzoesch", nullptr, nullptr);
+    }
     if (this->Handle == nullptr)
     {
         panic( "Failed to create glfw window." )

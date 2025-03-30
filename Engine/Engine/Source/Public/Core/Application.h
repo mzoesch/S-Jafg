@@ -89,7 +89,7 @@ ENGINE_API extern double DeltaTime;
 ENGINE_API extern double RealDeltaTime;
 ENGINE_API extern double LostDeltaTime;
 ENGINE_API extern double IdleDeltaTime;
-ENGINE_API extern u64 FrameCount;
+ENGINE_API extern u64    FrameCount;
 
 ENGINE_API extern double CurrentFrameTime;
 ENGINE_API extern double PreviousFrameTime;
@@ -99,11 +99,11 @@ ENGINE_API extern double        LowestDeltaTime;
 ENGINE_API extern double        HighestDeltaTime;
 ENGINE_API extern double        HighestLostDeltaTime;
 ENGINE_API extern LHrcTimePoint PreviousStatisticsStartTime;
-ENGINE_API extern u64        PreviousStatisticsFrameCount;
+ENGINE_API extern u64           PreviousStatisticsFrameCount;
 ENGINE_API extern double        PreviousLowestDeltaTime;
 ENGINE_API extern double        PreviousHighestDeltaTime;
 ENGINE_API extern LHrcTimePoint LastStatisticsTime;
-ENGINE_API extern u64        StatisticsFrameCount;
+ENGINE_API extern u64           StatisticsFrameCount;
 ENGINE_API extern float         StatisticsPeriod;
 
 ENGINE_API extern LHrcTimePoint LastStdOutFlushTime;

@@ -27,7 +27,7 @@ class BufferedSolution:
             raise ValueError('Solution path cannot be empty.')
         if self._name == '':
             raise ValueError('Solution name cannot be empty.')
-        if bool(re.fullmatch(r"[A-Za-z]+", self._name)) is False:
+        if bool(re.fullmatch(r'[A-Za-z_]+', self._name)) is False:
             raise ValueError(f'Solution name may only contain latin letters. Faulty solution: [{self._name}].')
         return None
 

@@ -5,6 +5,7 @@
 #include "Async/Runnable.h"
 #include "Containers/ComplexQueue.h"
 #include "Core/Application.h"
+#include "Stats/Stats.h"
 #if WITH_GCC || PLATFORM_LINUX
     #include <thread>
 #endif /* WITH_GCC */
@@ -331,6 +332,8 @@ bool Jafg::Tasks::Private::IsThreadRunning(const ENamedThreads::Type InThreadNam
 
 void Jafg::Tasks::Private::TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const i32 MaxTasks)
 {
+    STAT_CYCLE_FUNCTION_START(Trt)
+
     i32 RunTasks = 0;
     while (true)
     {
@@ -373,11 +376,20 @@ void Jafg::Tasks::Private::TryRunTasks(const ENamedThreads::Type Which, const ET
         }
     }
 
+#if WITH_STATS
+    if (RunTasks < 1)
+    {
+        STAT_DISCARD(Trt)
+    }
+#endif /* WITH_STATS */
+
     return;
 }
 
 Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThreads::Type ThreadName, LRunnable* Runnable, const bool bKillRunnableWhenFinished /* = true */)
 {
+    STAT_CYCLE_FUNCTION()
+
     checkSlow( Runnable )
 
     if (::bTearingDown)
@@ -544,6 +556,8 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
 
 void Jafg::Tasks::Private::JoinThread(const ENamedThreads::Type ThreadName)
 {
+    STAT_CYCLE_FUNCTION()
+
     std::shared_lock Lock(::EngineThreadsMutex);
     LEngineThread* Thread = ::EngineThreads.FindRef(ThreadName);
     if (Thread->Thread.IsSet())
@@ -568,6 +582,8 @@ void Jafg::Tasks::Private::JoinThread(const ENamedThreads::Type ThreadName)
 
 void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* = true */)
 {
+    STAT_CYCLE_FUNCTION()
+
     check( IsOnMasterThread() )
 
     ::EngineThreadsMutex.lock();

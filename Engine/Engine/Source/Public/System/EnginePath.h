@@ -32,8 +32,8 @@ public:
     FORCEINLINE  LEnginePathBase(const LEnginePathBase<T>& Other) noexcept { this->PathTy = Other.PathTy; this->Data = Other.Data; }
     FORCEINLINE  LEnginePathBase(LEnginePathBase<T>&& Other) noexcept { this->PathTy = Other.PathTy; this->Data = std::forward<LPathTy>(Other.Data); }
     FORCEINLINE  LEnginePathBase(const LPathTy& Other) noexcept;
-     FORCEINLINE LEnginePathBase(LPathTy&& Other) noexcept;
-     FORCEINLINE LEnginePathBase(const EEnginePaths::Type InPathTy, const LPathTy& Other) noexcept : PathTy(InPathTy), Data(Other) { }
+    FORCEINLINE  LEnginePathBase(LPathTy&& Other) noexcept;
+    FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy, const LPathTy& Other) noexcept : PathTy(InPathTy), Data(Other) { }
     FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy, LPathTy&& Other) noexcept : PathTy(InPathTy), Data(std::move(Other)) { }
     FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy) noexcept : PathTy(InPathTy) { }
     FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy, LNullptrTy) noexcept : PathTy(InPathTy) { }

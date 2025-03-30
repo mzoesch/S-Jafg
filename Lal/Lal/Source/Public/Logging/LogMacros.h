@@ -125,6 +125,29 @@
     Internal and private logging macros.
 ----------------------------------------------------------------------------*/
 
+#if WITH_GCC || WITH_CLANG
+    #define JAFG_FUNCTION_SIG       __PRETTY_FUNCTION__
+    #define JAFG_REAL_FUNC_SIG      JAFG_FUNCTION_SIG
+#elif WITH_MSVC
+    #define JAFG_FUNCTION_SIG       __FUNCSIG__
+    #define JAFG_REAL_FUNC_SIG      __FUNCDNAME__
+#else /* WITH_MSVC */
+    #error "Compiler missing implementation."
+#endif /* !WITH_MSVC */
+
+namespace Jafg::Private
+{
+
+LAL_API std::string_view PrettyFunctionName(const char* InFunctionName) noexcept;
+
+} /* ~Namespace Jafg::Private */
+
+/**
+ * Pretty function name as [MyNameSpace::MyClass::MyFunction].
+ */
+#define JAFG_PRETTY_FUNCTION                               \
+    (::Jafg::Private::PrettyFunctionName(JAFG_FUNCTION_SIG))
+
 /**
  * Current class name.
  */
@@ -135,13 +158,13 @@
  * Current function name.
  */
 #define PRIVATE_JAFG_LOG_TRACE_STR_CUR_FUNC \
-    (LStringLegacy(__FUNCDNAME__))
+    (LStringLegacy(JAFG_REAL_FUNC_SIG))
 
 /**
  * Current function signature.
  */
 #define PRIVATE_JAFG_LOG_TRACE_STR_CUR_FUNC_SIG \
-    (LStringLegacy(__FUNCSIG__))
+    (LStringLegacy(JAFG_FUNCTION_SIG))
 
 /**
  * Current line number.

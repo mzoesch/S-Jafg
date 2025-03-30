@@ -19,6 +19,8 @@
 #include <chrono>
 #include <mutex>
 #include <shared_mutex>
+#include <fstream>
+#include <filesystem>
 #if PLATFORM_WINDOWS_WITH_GCC
     #include <cmath>
 #endif /* PLATFORM_WINDOWS_WITH_GCC */

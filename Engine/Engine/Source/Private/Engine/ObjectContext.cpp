@@ -2,6 +2,7 @@
 
 #include "Engine/ObjectContext.h"
 #include "Engine/ObjectBase.h"
+#include "Stats/Stats.h"
 
 Jafg::LObjectContext::LObjectContext(EGlobalCarnifex)
 {
@@ -25,35 +26,40 @@ void Jafg::LObjectContext::TearDownContext()
 {
     check( this->Carnifex )
 
-    LOG_TRACE
-    (
-        LogCarnifex,
-        "Context [{}] found {} garbage employees. Begin to kill them.",
-        this->HumanReadableName, this->Employees.GetSize()
-    )
-
-    for (JObjectBase* const& Employee : this->Employees)
+    if (this->Employees.IsEmpty() == false)
     {
-        checkSlow( Employee )
+        STAT_CYCLE_FUNCTION()
 
-        if (Employee->GetVTable())
+        LOG_TRACE
+        (
+            LogCarnifex,
+            "Context [{}] found {} garbage employees. Begin to kill them.",
+            this->HumanReadableName, this->Employees.GetSize()
+        )
+
+        for (JObjectBase* const& Employee : this->Employees)
         {
-            Employee->MarkAsGarbage();
+            checkSlow( Employee )
+
+            if (Employee->GetVTable())
+            {
+                Employee->MarkAsGarbage();
+                continue;
+            }
+
+            /*
+             * The default content referrer.
+             */
+            check( Employee->bGarbage == false )
+            Employee->bGarbage = true;
+            Employee->OnDefaultGarbage();
+            delete Employee;
+
             continue;
         }
 
-        /*
-         * The default content referrer.
-         */
-        check( Employee->bGarbage == false )
-        Employee->bGarbage = true;
-        Employee->OnDefaultGarbage();
-        delete Employee;
-
-        continue;
+        this->Employees.Empty();
     }
-
-    this->Employees.Empty();
 
     this->Carnifex = nullptr;
 

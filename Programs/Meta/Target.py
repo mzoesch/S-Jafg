@@ -30,7 +30,7 @@ class BufferedTarget:
             raise ValueError('Target path cannot be empty.')
         if self._name == '':
             raise ValueError('Target name cannot be empty.')
-        if bool(re.fullmatch(r"[A-Za-z]+", self._name)) is False:
+        if bool(re.fullmatch(r'[A-Za-z_]+', self._name)) is False:
             raise ValueError(f'Target name may only contain latin letters. Faulty target: [{self._name}].')
         return None
 

@@ -3,6 +3,7 @@
 #include "Subsystems/SubsystemCollection.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Subsystems/Subsystem.h"
+#include "Stats/Stats.h"
 
 void Jafg::LSubsystemCollection::DeferredInitialize(LObjectContext* InOuter)
 {
@@ -17,6 +18,8 @@ void Jafg::LSubsystemCollection::DeferredInitialize(LObjectContext* InOuter)
 
 void Jafg::LSubsystemCollection::InitializeSubsystems(const LObjectClass* InClass)
 {
+    STAT_CYCLE_FUNCTION()
+
     check( this->Outer )
     check( this->OuterClass == nullptr )
     check( this->SubsystemInstances.IsEmpty() )
@@ -71,6 +74,8 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(const LObjectClass* InClas
 
 void Jafg::LSubsystemCollection::TearDownSubsystems()
 {
+    STAT_CYCLE_FUNCTION()
+
     check( this->Outer )
 
     LOG_VERBOSE(LogSubsystemCollection, "Tearing down {} subsystems for outer [{}].", this->SubsystemInstances.GetSize(), this->Outer->GetHumanReadableName())

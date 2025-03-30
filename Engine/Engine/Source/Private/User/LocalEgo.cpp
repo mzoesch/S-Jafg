@@ -10,9 +10,12 @@
 #include "Framework/Lackey.h"
 #include "MyWorld/MyWorldStatics.h"
 #include "Subsystems/LocalEgoSubsystem.h"
+#include "Stats/Stats.h"
 
 void Jafg::LLocalEgo::Initialize()
 {
+    STAT_CYCLE_FUNCTION()
+
     check( Tasks::IsOnMasterThread() )
     check( this->IsValid() == false )
     this->bValid = true;
@@ -69,6 +72,8 @@ void Jafg::LLocalEgo::Initialize()
 
 void Jafg::LLocalEgo::Tick(const float DeltaTime)
 {
+    STAT_CYCLE_FUNCTION()
+
     if (const i32 PurgedFactories = Private::PurgeWidgetFactories(); PurgedFactories > 0)
     {
         LOG_VERBOSE(LogWidgetFramework, "Purged {} widget factories.", PurgedFactories)
@@ -81,6 +86,8 @@ void Jafg::LLocalEgo::Tick(const float DeltaTime)
 
 void Jafg::LLocalEgo::OnLateTick(const float DeltaTime)
 {
+    STAT_CYCLE_FUNCTION()
+
     for (LSurface& Surface : this->Frontend.GetSurfaces())
     {
         Surface.OnUpdate();

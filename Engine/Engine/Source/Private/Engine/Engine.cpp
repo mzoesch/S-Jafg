@@ -8,6 +8,7 @@
 #include "User/LocalEgo.h"
 #include "Subsystems/EngineSubsystem.h"
 #include "Cli/CommandLineInterface.h"
+#include "Stats/Stats.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
@@ -30,8 +31,12 @@ ENGINE_API LSimpleString GCustomExitReason         = "";
 
 void Jafg::LEngine::Initialize()
 {
+    STAT_CYCLE_FUNCTION()
+
     // Register primitives
     {
+        STAT_QUICK_CYCLE_START("AddCliPrimitives")
+
         ensure(this->CommandLineInterface.RegisterType({"Integer", "A 32 bit signed Integer.", "0",
         LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
         {
@@ -248,6 +253,8 @@ void Jafg::LEngine::Initialize()
 
 void Jafg::LEngine::Tick(const float DeltaTime)
 {
+    STAT_CYCLE_FUNCTION()
+
     Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, 5);
 
 #if WITH_LOCAL_LAYER
@@ -299,6 +306,8 @@ void Jafg::LEngine::Tick(const float DeltaTime)
 
 void Jafg::LEngine::TearDown()
 {
+    STAT_CYCLE_FUNCTION()
+
     LOG_VERBOSE(LogEngine, "Tearing down engine.")
 
     LOG_VERBOSE(LogEngine, "Deallocating {} registered contexts.", this->Contexts.GetSize())

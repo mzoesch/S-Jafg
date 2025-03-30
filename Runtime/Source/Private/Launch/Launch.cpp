@@ -9,6 +9,7 @@
 #include "Platform/PlatformMisc.h"
 #include "Async/TaskUtility.h"
 #include "User/UserPreferences.h"
+#include "Stats/Stats.h"
 #if WITH_VIRTUAL_FILESYSTEM
     #include "System/VFilesystem.h"
 #endif /* WITH_VIRTUAL_FILESYSTEM */
@@ -19,6 +20,10 @@ namespace
 {
 
 LCarnifex PrivateCarnifex;
+
+#if WITH_STATS
+    Stats::LTracer PrivateTracer;
+#endif /* WITH_STATS */
 
 } /* ~Namespace <Anonymous> */
 
@@ -58,6 +63,8 @@ FORCEINLINE
 #endif /* !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT) */
 void EngineTick()
 {
+    STAT_CYCLE_FUNCTION()
+
     checkSlow( Tasks::IsOnMasterThread() )
 
     if (Application::GetTimeDiff(Application::Private::LastStdOutFlushTime, Application::GetHighestNow()) > FORCE_LOG_FLUSH_INTERVAL)
@@ -68,6 +75,7 @@ void EngineTick()
     GEngine->BeginExitIfRequested();
 
     {
+        STAT_QUICK_CYCLE_START("UpdateTime")
         const JUserPreferences* UserPreferences = GetDefault<JUserPreferences>();
 
         Application::Private::LostDeltaTime = 0.0;
@@ -143,6 +151,16 @@ FORCEINLINE
 #endif /* !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT) */
 void EngineExit()
 {
+#if WITH_STATS
+    if (Stats::Private::GTracer)
+    {
+        Stats::Private::GTracer->TryEndSession();
+        Stats::Private::GTracer->BeginSession("Exit");
+    }
+#endif /* WITH_STATS */
+
+    STAT_CYCLE_FUNCTION()
+
     LOG_INFO(LogGuardedMain, "Engine is exiting ...")
 
     if (GEngine)
@@ -251,9 +269,14 @@ EPlatformExit::Type GuardedMain()
 
     PlatformMisc::InvalidateCachedValues();
 
+    Stats::Private::GTracer = &::PrivateTracer;
+    Stats::Private::GTracer->BeginSession("GettingUp");
+    STAT_CYCLE_FUNCTION_START(GuardedMainCycle)
+
     LaunchProgress::PrepareBeginProgress();
     LaunchProgress::BeginProgress("Core Initialization", "Engine pre-life initialization", 0.0f);
 
+    STAT_CYCLE_START(GmNames, "StaticNameRegistration")
     check( Private::GNameRegistry == nullptr )
     Private::GNameRegistry = new Private::LNameRegistry();
     LOG_VERBOSE(LogNames, "Program initialized {} names during static storage initialization.", Private::GetStaticNameCount())
@@ -263,8 +286,10 @@ EPlatformExit::Type GuardedMain()
     }
     Private::ClearStaticNameContainer();
     LOG_INFO(LogNames, "Finished transferring static names to the name registry. With a total of {} names.", Private::GNameRegistry->GetNameCount())
+    STAT_CYCLE_END(GmNames)
 
-    Private::GCarnifexReferrer = &PrivateCarnifex;
+    STAT_CYCLE_START(GmObjects, "JafgObjectInitialization")
+    Private::GCarnifexReferrer = &::PrivateCarnifex;
     GOmniVitaContext = new LObjectContext();
     GOmniVitaContext->DeferredInitialize(Private::GCarnifexReferrer);
     GOmniVitaContext->SetHumanReadableName("OmniVitaContext");
@@ -280,6 +305,7 @@ EPlatformExit::Type GuardedMain()
     {
         return EPlatformExit::Fatal;
     }
+    STAT_CYCLE_END(GmObjects)
 
     Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterCorePackageLoadDangerous, Tasks::Private::RunAllTasks);
     if (::IsEngineExitRequested() || GEngine)
@@ -299,6 +325,10 @@ EPlatformExit::Type GuardedMain()
     ::FlushLogs();
     LaunchProgress::FinishAndGiveUpMemory();
 
+    STAT_CYCLE_FUNCTION_END(GuardedMainCycle)
+    Stats::Private::GTracer->EndSession();
+
+    Stats::Private::GTracer->BeginSession("Loop");
 #if PLATFORM_USES_NON_GENERIC_LOOP
     PLATFORM_GUARDED_LOOP;
 #else /* PLATFORM_USES_NON_GENERIC_LOOP */

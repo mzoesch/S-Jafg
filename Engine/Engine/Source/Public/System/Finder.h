@@ -45,8 +45,13 @@ ENGINE_API bool DoesFileExistsChecked(const LEnginePath& InEnginePath);
 ENGINE_API bool DoesFileExistsPanicked(const LEnginePath& InEnginePath);
 
 //#
-//# Checks a file. If it does not exist, it will try to create it if filesystem access to the supporting platform is
-//# allowed. Otherwise, it will panic.
+//# Ensures a file existence. If it does not exist, it will try to create it if filesystem access to the
+//# supporting platform is allowed. Otherwise, it will panic.
+//#
+ENGINE_API void EnsureFile(const LEnginePath& InEnginePath);
+
+//#
+//# Checks if a file exists. If it does not exist the program will panic.
 //#
 ENGINE_API void CheckFile(const LEnginePath& InEnginePath);
 
