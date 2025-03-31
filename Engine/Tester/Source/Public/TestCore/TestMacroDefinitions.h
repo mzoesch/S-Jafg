@@ -12,7 +12,7 @@
         ClassName() : LSimpleTestCase(PrettyName, Category, FileName) { }                         \
         virtual void Run() override;                                                              \
     };                                                                                            \
-    ClassName PRIVATE_JAFG_TEST_JOIN_INNER_TWO(ClassName, ##Instance);                            \
+    ClassName PRIVATE_JAFG_TEST_JOIN_INNER_TWO(ClassName, Instance);                              \
     void ClassName::Run()                                                                         \
 
 //# @see Engine/TestForward/TestCore/TestMacroForward.h

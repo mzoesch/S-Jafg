@@ -18,7 +18,7 @@ EPlatformExit::Type LalTestWideMain(wchar_t* CmdLine)
     return LalLaunchTestMain();
 }
 
-EPlatformExit::Type LalLaunchTestMain(void)
+EPlatformExit::Type LalLaunchTestMain()
 {
     EPlatformExit::Type ExitCode = EPlatformExit::Success;
     ::Jafg::Tester::RunTests(&ExitCode);
@@ -35,11 +35,13 @@ EPlatformExit::Type LalLaunchTestMain(void)
 #endif /* !PLATFORM_WASM */
 {
 #if WITH_TESTS
-    #if PLATFORM_WINDOWS
+    #if PLATFORM_WINDOWS && UNICODE
         return LalTestWideMain(::GetCommandLineW());
-    #else
+    #elif PLATFORM_WINDOWS
+        return LalLaunchTestMain();
+    #else /* PLATFORM_WINDOWS */
         return LalTestAnsiMain(Argc, Argv);
-    #endif
+    #endif /* !PLATFORM_WINDOWS */
 #else /* WITH_TESTS */
     return EPlatformExit::Success;
 #endif /* !WITH_TESTS */

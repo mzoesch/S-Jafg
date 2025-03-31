@@ -343,7 +343,7 @@ TEST_CASE(AppendAtArray, "Lal.Containers")
     CHECK_EQUALS( "Array with std::initializer_list.", Arr[6],                     102 )
     CHECK_EQUALS( "Array with std::initializer_list.", Arr[7],                     103 )
 
-    delete Data;
+    delete[] Data;
 
     return;
 }

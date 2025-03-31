@@ -19,6 +19,30 @@ struct LLinuxPlatformTypes final : public LGenericPlatformTypes
 {
 };
 
+#ifndef WITH_CLANG
+    #define WITH_CLANG                          1
+#endif /* !WITH_CLANG */
+
+#pragma clang diagnostic error "-Wpragmas"
+#pragma clang diagnostic error "-Wunknown-pragmas"
+#pragma clang diagnostic error "-Wbuiltin-macro-redefined"
+#pragma clang diagnostic error "-Wunknown-warning-option"
+#pragma clang diagnostic error "-Winconsistent-missing-override"
+#pragma clang diagnostic error "-Wunused-lambda-capture"
+#pragma clang diagnostic error "-Wreturn-type"
+#pragma clang diagnostic error "-Wmacro-redefined"
+#pragma clang diagnostic error "-Wundefined-inline"
+#pragma clang diagnostic error "-Wmismatched-new-delete"
+#pragma clang diagnostic ignored "-Wundefined-var-template" // ??? Why
+#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#pragma clang diagnostic ignored "-Wunused-function"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wcomment"
+#pragma clang diagnostic ignored "-Wcomments"
+#pragma clang diagnostic ignored "-Wmissing-field-initializers"
+#pragma clang diagnostic ignored "-Wlogical-op-parentheses"
+
 #ifdef NOINLINE
     #error "NOINLINE is already defined."
 #endif /* NOINLINE */

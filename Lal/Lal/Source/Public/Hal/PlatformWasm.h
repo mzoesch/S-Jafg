@@ -49,6 +49,7 @@
 #pragma GCC diagnostic error "-Wmacro-redefined"
 #pragma GCC diagnostic error "-Wundefined-inline"
 #pragma GCC diagnostic error "-Wundefined-var-template"
+#pragma GCC diagnostic error "-Wmismatched-new-delete"
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-parameter"

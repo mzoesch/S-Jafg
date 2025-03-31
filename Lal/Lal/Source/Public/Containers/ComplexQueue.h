@@ -45,6 +45,14 @@ public:
     /** @remark Consumer only. */
     FORCEINLINE bool Pop();
 
+    /**
+     * Peeks at the queue's tail item without removing it.
+     * @return Pointer to the item, or nullptr if queue is empty.
+     * @remark Consumer only.
+     */
+    FORCEINLINE       T* Peek();
+    FORCEINLINE const T* Peek() const;
+
     /** @remark Consumer only. */
     FORCEINLINE void Empty();
     FORCEINLINE bool IsEmpty() const;
@@ -335,6 +343,18 @@ bool TMpscQueue<T, TSizeType>::Pop()
     delete Popped;
 
     return true;
+}
+
+template<typename T, typename TSizeType>
+T* TMpscQueue<T, TSizeType>::Peek()
+{
+    return this->Tail ? &this->Tail->Content : nullptr;
+}
+
+template<typename T, typename TSizeType>
+const T* TMpscQueue<T, TSizeType>::Peek() const
+{
+    return this->Tail ? &this->Tail->Content : nullptr;
 }
 
 template <typename T, typename TSizeType>
