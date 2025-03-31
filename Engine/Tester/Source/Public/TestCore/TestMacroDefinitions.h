@@ -23,6 +23,13 @@
     CHECK_EQUALS_WITH_LINE(What, A, B, __LINE__)
 #define CHECK_EQUALS_WITH_LINE(What, A, B, Line)                              \
     this->TestEqual("Equality test ["#What"]: { "#A" == "#B" }", A, B, Line);
+#ifdef QUICK_CHECK_EQUALS
+    #undef QUICK_CHECK_EQUALS
+#endif /* QUICK_CHECK_EQUALS */
+#define QUICK_CHECK_EQUALS(A, B)                 \
+    QUICK_CHECK_EQUALS_WITH_LINE(A, B, __LINE__)
+#define QUICK_CHECK_EQUALS_WITH_LINE(A, B, Line)                    \
+    this->TestEqual("Equality test: { "#A" == "#B" }", A, B, Line);
 
 //# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_NOT_EQUALS
@@ -32,6 +39,13 @@
     CHECK_NOT_EQUALS_WITH_LINE(What, A, B, __LINE__)
 #define CHECK_NOT_EQUALS_WITH_LINE(What, A, B, Line)                                 \
     this->TestNotEqual("Not equality test ["#What"]: { "#A" != "#B" }", A, B, Line);
+#ifdef QUICK_CHECK_NOT_EQUALS
+    #undef QUICK_CHECK_NOT_EQUALS
+#endif /* QUICK_CHECK_NOT_EQUALS */
+#define QUICK_CHECK_NOT_EQUALS(A, B)                 \
+    QUICK_CHECK_NOT_EQUALS_WITH_LINE(A, B, __LINE__)
+#define QUICK_CHECK_NOT_EQUALS_WITH_LINE(A, B, Line)                    \
+    this->TestNotEqual("Not equality test: { "#A" != "#B" }", A, B, Line);
 
 //#* @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_LESS
@@ -41,6 +55,13 @@
     CHECK_LESS_WITH_LINE(What, A, B, __LINE__)
 #define CHECK_LESS_WITH_LINE(What, A, B, Line)                          \
     this->TestLess("Less test ["#What"]: { "#A" < "#B" }", A, B, Line);
+#ifdef QUICK_CHECK_LESS
+    #undef QUICK_CHECK_LESS
+#endif /* QUICK_CHECK_LESS */
+#define QUICK_CHECK_LESS(A, B)                 \
+    QUICK_CHECK_LESS_WITH_LINE(A, B, __LINE__)
+#define QUICK_CHECK_LESS_WITH_LINE(A, B, Line)                \
+    this->TestLess("Less test: { "#A" < "#B" }", A, B, Line);
 
 //# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_GREATER
@@ -50,6 +71,13 @@
     CHECK_GREATER_WITH_LINE(What, A, B, __LINE__)
 #define CHECK_GREATER_WITH_LINE(What, A, B, Line)                             \
     this->TestGreater("Greater test ["#What"]: { "#A" > "#B" }", A, B, Line);
+#ifdef QUICK_CHECK_GREATER
+    #undef QUICK_CHECK_GREATER
+#endif /* QUICK_CHECK_GREATER */
+#define QUICK_CHECK_GREATER(A, B)                 \
+    QUICK_CHECK_GREATER_WITH_LINE(A, B, __LINE__)
+#define QUICK_CHECK_GREATER_WITH_LINE(A, B, Line)                   \
+    this->TestGreater("Greater test: { "#A" > "#B" }", A, B, Line);
 
 //# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_LESS_OR_EQUAL
@@ -59,6 +87,13 @@
     CHECK_LESS_OR_EQUAL_WITH_LINE(What, A, B, __LINE__)
 #define CHECK_LESS_OR_EQUAL_WITH_LINE(What, A, B, Line)                                  \
     this->TestLessOrEqual("Less or equal test ["#What"]: { "#A" <= "#B" }", A, B, Line);
+#ifdef QUICK_CHECK_LESS_OR_EQUAL
+    #undef QUICK_CHECK_LESS_OR_EQUAL
+#endif /* QUICK_CHECK_LESS_OR_EQUAL */
+#define QUICK_CHECK_LESS_OR_EQUAL(A, B)                 \
+    QUICK_CHECK_LESS_OR_EQUAL_WITH_LINE(A, B, __LINE__)
+#define QUICK_CHECK_LESS_OR_EQUAL_WITH_LINE(A, B, Line)                        \
+    this->TestLessOrEqual("Less or equal test: { "#A" <= "#B" }", A, B, Line);
 
 //# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_GREATER_OR_EQUAL
@@ -68,6 +103,13 @@
     CHECK_GREATER_OR_EQUAL_WITH_LINE(What, A, B, __LINE__)
 #define CHECK_GREATER_OR_EQUAL_WITH_LINE(What, A, B, Line)                                     \
     this->TestGreaterOrEqual("Greater or equal test ["#What"]: { "#A" >= "#B" }", A, B, Line);
+#ifdef QUICK_CHECK_GREATER_OR_EQUAL
+    #undef QUICK_CHECK_GREATER_OR_EQUAL
+#endif /* CHECK_GREATER_OR_EQUAL */
+#define QUICK_CHECK_GREATER_OR_EQUAL(A, B)                 \
+    QUICK_CHECK_GREATER_OR_EQUAL_WITH_LINE(A, B, __LINE__)
+#define QUICK_CHECK_GREATER_OR_EQUAL_WITH_LINE(A, B, Line)                           \
+    this->TestGreaterOrEqual("Greater or equal test: { "#A" >= "#B" }", A, B, Line);
 
 //# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_NULL
@@ -77,6 +119,13 @@
     CHECK_NULL_WITH_LINE(What, A, __LINE__)
 #define CHECK_NULL_WITH_LINE(What, A, Line)                              \
     this->TestNull("Null test ["#What"]: { "#A" == nullptr }", A, Line);
+#ifdef QUICK_CHECK_NULL
+    #undef QUICK_CHECK_NULL
+#endif /* QUICK_CHECK_NULL */
+#define QUICK_CHECK_NULL(A)                 \
+    QUICK_CHECK_NULL_WITH_LINE(A, __LINE__)
+#define QUICK_CHECK_NULL_WITH_LINE(A, Line)                    \
+    this->TestNull("Null test: { "#A" == nullptr }", A, Line);
 
 //# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_NOT_NULL
@@ -86,6 +135,13 @@
     CHECK_NOT_NULL_WITH_LINE(What, A, __LINE__)
 #define CHECK_NOT_NULL_WITH_LINE(What, A, Line)                                 \
     this->TestNotNull("Not null test ["#What"]: { "#A" != nullptr }", A, Line);
+#ifdef QUICK_CHECK_NOT_NULL
+    #undef QUICK_CHECK_NOT_NULL
+#endif /* QUICK_CHECK_NOT_NULL */
+#define QUICK_CHECK_NOT_NULL(A)                 \
+    QUICK_CHECK_NOT_NULL_WITH_LINE(A, __LINE__)
+#define QUICK_CHECK_NOT_NULL_WITH_LINE(A, Line)                       \
+    this->TestNotNull("Not null test: { "#A" != nullptr }", A, Line);
 
 //# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_TRUE
@@ -95,6 +151,13 @@
     CHECK_TRUE_WITH_LINE(What, A, __LINE__)
 #define CHECK_TRUE_WITH_LINE(What, A, Line)                           \
     this->TestTrue("True test ["#What"]: { "#A" == true }", A, Line);
+#ifdef QUICK_CHECK_TRUE
+    #undef QUICK_CHECK_TRUE
+#endif /* QUICK_CHECK_TRUE */
+#define QUICK_CHECK_TRUE(A)                 \
+    QUICK_CHECK_TRUE_WITH_LINE(A, __LINE__)
+#define QUICK_CHECK_TRUE_WITH_LINE(A, Line)                 \
+    this->TestTrue("True test: { "#A" == true }", A, Line);
 
 //# @see Engine/TestForward/TestCore/TestMacroForward.h
 #ifdef CHECK_FALSE
@@ -104,3 +167,10 @@
     CHECK_FALSE_WITH_LINE(What, A, __LINE__)
 #define CHECK_FALSE_WITH_LINE(What, A, Line)                             \
     this->TestFalse("False test ["#What"]: { "#A" == false }", A, Line);
+#ifdef QUICK_CHECK_FALSE
+    #undef QUICK_CHECK_FALSE
+#endif /* QUICK_CHECK_FALSE */
+#define QUICK_CHECK_FALSE(A)                 \
+    QUICK_CHECK_FALSE_WITH_LINE(A, __LINE__)
+#define QUICK_CHECK_FALSE_WITH_LINE(A, Line)                   \
+    this->TestFalse("False test: { "#A" == false }", A, Line);

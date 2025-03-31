@@ -14,3 +14,4 @@
 #include "TestPath.h"
 #include "TestQueue.h"
 #include "TestSmart.h"
+#include "TestJafgArray.h"
