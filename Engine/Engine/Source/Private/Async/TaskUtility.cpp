@@ -630,7 +630,7 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
     {
         LOG_ERROR(LogTaskSystem, "Failed to lock engine threads mutex. But in this state there should not be any other threads running.")
         LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
-        ::EngineThreadsMutex.lock();
+        ::EngineThreadsMutex.lock(); // Hang this. Probably a deadlock. Let it idle forever. Highly unlikely.
     }
     ::EngineThreads.Empty();
     ::EngineThreadsMutex.unlock();

@@ -20,13 +20,6 @@ using namespace Jafg;
 
 extern EPlatformExit::Type GuardedMain();
 
-namespace
-{
-
-bool GPauseBeforeExit = false;
-
-} /* ~Namespace <Anonymous> */
-
 i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ char* pCmdLine, _In_ i32 nCmdShow)
 {
     //
@@ -45,10 +38,26 @@ i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance,
         CmdLine = LPlatformTypes::Ws2S(CmdLineW).c_str();
     }
 
-    Application::Private::CommandLine      = std::move(CmdLine);
+    Application::Private::CommandLine = std::move(CmdLine);
+
+    if (Application::Private::CommandLine.FindFirstSub("WaitForDebugger") != INDEX_NONE)
+    {
+        LOG_INFO(LogJafgInternal, "Waiting for debugger ...");
+        LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
+        {
+            while (static_cast<bool>(::IsDebuggerPresent()) == false)
+            {
+                PlatformHal::Sleep(1.0);
+                continue;
+            }
+        }
+        LOG_INFO(LogJafgInternal, "Debugger attached - continuing.");
+        LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
+        PLATFORM_BREAK()
+    }
+
     Application::Private::bDebuggerPresent = static_cast<bool>(::IsDebuggerPresent());
     Application::Private::UpdateApplicationCommandLineVariables();
-    GPauseBeforeExit = Application::HasCmdLineParameter("PauseBeforeExit");
 
     if (Application::IsDebuggerPresent() && !Application::IsAlwaysReportCrash())
     {
@@ -90,7 +99,7 @@ i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance,
 
     LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
 
-    if (GPauseBeforeExit)
+    if (Application::IsPauseBeforeExit())
     {
         LOG_INFO(LogPlatform, "Pausing before exit.")
         LOG_INFO(LogPlatform, "Press any key to continue...")

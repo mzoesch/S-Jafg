@@ -15,8 +15,6 @@ extern EPlatformExit::Type GuardedMain();
 namespace
 {
 
-bool GPauseBeforeExit = false;
-
 bool IsGdb()
 {
     char Buffer[4096];
@@ -58,7 +56,7 @@ bool IsGdb()
 
 } /* ~Namespace <Anonymous> */
 
-i32 main(i32 argc, char *argv[])
+i32 main(const i32 argc, char *argv[])
 {
     i32 ErrorLevel = 0;
 
@@ -74,10 +72,26 @@ i32 main(i32 argc, char *argv[])
         continue;
     }
 
-    Application::Private::CommandLine      = std::move(CmdLine);
+    Application::Private::CommandLine = std::move(CmdLine);
+
+    if (Application::Private::CommandLine.FindFirstSub("WaitForDebugger") != INDEX_NONE)
+    {
+        LOG_INFO(LogJafgInternal, "Waiting for debugger ...");
+        LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
+        {
+            while (::IsGdb() == false)
+            {
+                PlatformHal::Sleep(1.0);
+                continue;
+            }
+        }
+        LOG_INFO(LogJafgInternal, "Debugger attached - continuing.");
+        LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
+        PLATFORM_BREAK()
+    }
+
     Application::Private::bDebuggerPresent = ::IsGdb();
     Application::Private::UpdateApplicationCommandLineVariables();
-    GPauseBeforeExit = Application::HasCmdLineParameter("PauseBeforeExit");
 
     if (Application::IsDebuggerPresent() && !Application::IsAlwaysReportCrash())
     {
@@ -117,7 +131,7 @@ i32 main(i32 argc, char *argv[])
         }
     }
 
-    if (::GPauseBeforeExit)
+    if (Application::IsPauseBeforeExit())
     {
         LOG_INFO(LogPlatform, "Pausing before exit.")
         LOG_INFO(LogPlatform, "Press any key to continue...")

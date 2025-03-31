@@ -159,7 +159,7 @@ void EngineExit()
     }
 #endif /* WITH_STATS */
 
-    STAT_CYCLE_FUNCTION()
+    STAT_CYCLE_FUNCTION_START(ExitCycle)
 
     LOG_INFO(LogGuardedMain, "Engine is exiting ...")
 
@@ -234,6 +234,15 @@ void EngineExit()
         }
     }
 
+    STAT_CYCLE_FUNCTION_END(ExitCycle)
+#if WITH_STATS
+    if (Stats::Private::GTracer)
+    {
+        Stats::Private::GTracer->EndSession();
+        Stats::Private::GTracer = nullptr;
+    }
+#endif /* WITH_STATS */
+
     return;
 }
 
@@ -269,8 +278,13 @@ EPlatformExit::Type GuardedMain()
 
     PlatformMisc::InvalidateCachedValues();
 
-    Stats::Private::GTracer = &::PrivateTracer;
-    Stats::Private::GTracer->BeginSession("GettingUp");
+#if WITH_STATS
+    if (Application::IsAllowProfiling())
+    {
+        Stats::Private::GTracer = &::PrivateTracer;
+        Stats::Private::GTracer->BeginSession("GettingUp");
+    }
+#endif /* WITH_STATS */
     STAT_CYCLE_FUNCTION_START(GuardedMainCycle)
 
     LaunchProgress::PrepareBeginProgress();
@@ -305,13 +319,13 @@ EPlatformExit::Type GuardedMain()
     {
         return EPlatformExit::Fatal;
     }
-    STAT_CYCLE_END(GmObjects)
 
     Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterCorePackageLoadDangerous, Tasks::Private::RunAllTasks);
     if (::IsEngineExitRequested() || GEngine)
     {
         return EPlatformExit::Fatal;
     }
+    STAT_CYCLE_END(GmObjects)
 
     GEngine = new LEngine();
     GEngine->Initialize();
@@ -326,9 +340,14 @@ EPlatformExit::Type GuardedMain()
     LaunchProgress::FinishAndGiveUpMemory();
 
     STAT_CYCLE_FUNCTION_END(GuardedMainCycle)
-    Stats::Private::GTracer->EndSession();
+#if WITH_STATS
+    if (Stats::Private::GTracer)
+    {
+        Stats::Private::GTracer->EndSession();
+        Stats::Private::GTracer->BeginSession("Loop");
+    }
+#endif /* WITH_STATS */
 
-    Stats::Private::GTracer->BeginSession("Loop");
 #if PLATFORM_USES_NON_GENERIC_LOOP
     PLATFORM_GUARDED_LOOP;
 #else /* PLATFORM_USES_NON_GENERIC_LOOP */

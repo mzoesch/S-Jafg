@@ -17,11 +17,6 @@ namespace Jafg::Stats::Private
 
 ENGINE_API extern LTracer* GTracer;
 
-} /* ~Namespace Jafg::Stats::Private */
-
-namespace Jafg::Stats::Private
-{
-
 struct LStat final
 {
     FORCEINLINE LStat(const std::string_view& InName) noexcept;
@@ -54,7 +49,10 @@ FORCEINLINE LStat::LStat(const std::string_view& InName) noexcept
 
 FORCEINLINE void LStat::Stop()
 {
-    checkSlow( this->bStopped == false )
+    if (this->bStopped)
+    {
+        return;
+    }
 
     GTracer->AddEvent(
     {
@@ -65,6 +63,7 @@ FORCEINLINE void LStat::Stop()
     });
 
     this->bStopped = true;
+
     return;
 }
 

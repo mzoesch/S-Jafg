@@ -22,9 +22,17 @@ namespace Private
 //#   -parameter="item item item"
 //#   -parameter="\"item\" \"item\" \"item\""
 //#
+//# Core application command line parameters:
+//#   -PauseBeforeExit
+//#   -WaitForDebugger
+//#   -AlwaysReportCrash
+//#   -AllowProfiling
+//#
 ENGINE_API extern LString CommandLine;
+ENGINE_API extern bool    bPauseBeforeExit; // Not all platforms respect this.
 ENGINE_API extern bool    bDebuggerPresent;
 ENGINE_API extern bool    bAlwaysReportCrash;
+ENGINE_API extern bool    bAllowProfiling;
 
 ENGINE_API void UpdateApplicationCommandLineVariables();
 
@@ -32,8 +40,10 @@ ENGINE_API void UpdateApplicationCommandLineVariables();
 
 FORCEINLINE auto GetCmdLine() -> const LString& { return Private::CommandLine; }
 ENGINE_API  bool HasCmdLineParameter(const LString& Parameter);
+FORCEINLINE bool IsPauseBeforeExit() { return Private::bPauseBeforeExit; }
 FORCEINLINE bool IsDebuggerPresent() { return Private::bDebuggerPresent; }
 FORCEINLINE bool IsAlwaysReportCrash() { return Private::bAlwaysReportCrash; }
+FORCEINLINE bool IsAllowProfiling() { return Private::bAllowProfiling; }
 
 //#
 //# Global application functions.
@@ -43,68 +53,68 @@ FORCEINLINE bool IsAlwaysReportCrash() { return Private::bAlwaysReportCrash; }
 #endif /* PREPROCESSOR_EXCLUDE_FF */
 
 FORCEINLINE auto GetHighestNow() -> LHrcTimePoint;
-FORCEINLINE auto GetTimeDifferenceFromStaticStorageInitialization(const LHrcTimePoint& Point) -> double;
-FORCEINLINE auto GetTimeDiff(const LHrcTimePoint& A, const LHrcTimePoint& B) -> double;
-FORCEINLINE auto GetDeltaSinceStaticStorageInitialization() -> double;
+FORCEINLINE f64  GetTimeDifferenceFromStaticStorageInitialization(const LHrcTimePoint& Point);
+FORCEINLINE f64  GetTimeDiff(const LHrcTimePoint& A, const LHrcTimePoint& B);
+FORCEINLINE f64  GetDeltaSinceStaticStorageInitialization();
 
-FORCEINLINE auto GetDeltaTime() -> double;
-FORCEINLINE auto GetDeltaTimeAsFloat() -> float;
-FORCEINLINE auto GetRealDeltaTime() -> double;
-FORCEINLINE auto GetRealDeltaTimeAsFloat() -> double;
+FORCEINLINE f64  GetDeltaTime();
+FORCEINLINE f32  GetDeltaTimeAsFloat();
+FORCEINLINE f64  GetRealDeltaTime();
+FORCEINLINE f32  GetRealDeltaTimeAsFloat();
 FORCEINLINE bool HasLostDeltaTime();
-FORCEINLINE auto GetLostDeltaTime() -> double;
+FORCEINLINE f64  GetLostDeltaTime();
 FORCEINLINE bool HasIdleDeltaTime();
-FORCEINLINE auto GetIdleDeltaTime() -> double;
-FORCEINLINE auto GetFrameCount() -> u64;
+FORCEINLINE f64  GetIdleDeltaTime();
+FORCEINLINE u64  GetFrameCount();
 
-FORCEINLINE auto GetCurrentFrameTime() -> double;
-FORCEINLINE auto GetPreviousFrameTime() -> double;
+FORCEINLINE f64 GetCurrentFrameTime();
+FORCEINLINE f64 GetPreviousFrameTime();
 
-FORCEINLINE auto GetCurrentFps() -> float;
-FORCEINLINE auto GetLowestDeltaTime() -> double;
-FORCEINLINE auto GetHighestDeltaTime() -> double;
-FORCEINLINE auto GetHighestLostDeltaTime() -> double;
-FORCEINLINE auto GetRealTimeOfPreviousStatisticsDuration() -> double;
-FORCEINLINE auto GetPreviousFrameCount() -> u64;
-FORCEINLINE auto GetPreviousLowestDeltaTime() -> double;
-FORCEINLINE auto GetPreviousHighestDeltaTime() -> double;
-FORCEINLINE auto CalculateLowestFps() -> float;
-FORCEINLINE auto CalculateHighestFps() -> float;
+FORCEINLINE f32  GetCurrentFps();
+FORCEINLINE f64  GetLowestDeltaTime();
+FORCEINLINE f64  GetHighestDeltaTime();
+FORCEINLINE f64  GetHighestLostDeltaTime();
+FORCEINLINE f64  GetRealTimeOfPreviousStatisticsDuration();
+FORCEINLINE u64  GetPreviousFrameCount();
+FORCEINLINE f64  GetPreviousLowestDeltaTime();
+FORCEINLINE f64  GetPreviousHighestDeltaTime();
+FORCEINLINE f32  CalculateLowestFps();
+FORCEINLINE f32  CalculateHighestFps();
 FORCEINLINE auto GetLastStatisticsTime() -> LHrcTimePoint;
-FORCEINLINE auto SetLastStatisticsTime(const LHrcTimePoint LastStatisticsTime) -> void;
-FORCEINLINE auto GetStatisticsFrameCount() -> u64;
+FORCEINLINE void SetLastStatisticsTime(const LHrcTimePoint LastStatisticsTime);
+FORCEINLINE u64  GetStatisticsFrameCount();
 FORCEINLINE void ResetStatistics();
-FORCEINLINE auto GetStatisticsPeriod() -> float;
+FORCEINLINE f32  GetStatisticsPeriod();
 
 //#
 //# The maximum delta time allowed between frames.
 //# See the #Private::LostDeltaTime for the time that is lost when lag spikes occur.
 //#
-FORCEINLINE constexpr double MaxDeltaTime { 1.0 / 3.0 };
+FORCEINLINE constexpr f64 MaxDeltaTime { 1.0 / 3.0 };
 
 namespace Private
 {
 
-ENGINE_API extern double DeltaTime;
-ENGINE_API extern double RealDeltaTime;
-ENGINE_API extern double LostDeltaTime;
-ENGINE_API extern double IdleDeltaTime;
-ENGINE_API extern u64    FrameCount;
+ENGINE_API extern f64 DeltaTime;
+ENGINE_API extern f64 RealDeltaTime;
+ENGINE_API extern f64 LostDeltaTime;
+ENGINE_API extern f64 IdleDeltaTime;
+ENGINE_API extern u64 FrameCount;
 
-ENGINE_API extern double CurrentFrameTime;
-ENGINE_API extern double PreviousFrameTime;
+ENGINE_API extern f64 CurrentFrameTime;
+ENGINE_API extern f64 PreviousFrameTime;
 
 ENGINE_API extern LHrcTimePoint StaticContainerInitializationTime;
-ENGINE_API extern double        LowestDeltaTime;
-ENGINE_API extern double        HighestDeltaTime;
-ENGINE_API extern double        HighestLostDeltaTime;
+ENGINE_API extern f64           LowestDeltaTime;
+ENGINE_API extern f64           HighestDeltaTime;
+ENGINE_API extern f64           HighestLostDeltaTime;
 ENGINE_API extern LHrcTimePoint PreviousStatisticsStartTime;
 ENGINE_API extern u64           PreviousStatisticsFrameCount;
-ENGINE_API extern double        PreviousLowestDeltaTime;
-ENGINE_API extern double        PreviousHighestDeltaTime;
+ENGINE_API extern f64           PreviousLowestDeltaTime;
+ENGINE_API extern f64           PreviousHighestDeltaTime;
 ENGINE_API extern LHrcTimePoint LastStatisticsTime;
 ENGINE_API extern u64           StatisticsFrameCount;
-ENGINE_API extern float         StatisticsPeriod;
+ENGINE_API extern f32           StatisticsPeriod;
 
 ENGINE_API extern LHrcTimePoint LastStdOutFlushTime;
 
@@ -117,39 +127,39 @@ FORCEINLINE Jafg::Application::LHrcTimePoint Jafg::Application::GetHighestNow()
     return Hrc::now();
 }
 
-FORCEINLINE double Jafg::Application::GetTimeDifferenceFromStaticStorageInitialization(const LHrcTimePoint& Point)
+FORCEINLINE f64 Jafg::Application::GetTimeDifferenceFromStaticStorageInitialization(const LHrcTimePoint& Point)
 {
-    return std::chrono::duration<double>(Point - Private::StaticContainerInitializationTime).count();
+    return std::chrono::duration<f64>(Point - Private::StaticContainerInitializationTime).count();
 }
 
-FORCEINLINE double Jafg::Application::GetTimeDiff(const LHrcTimePoint& A, const LHrcTimePoint& B)
+FORCEINLINE f64 Jafg::Application::GetTimeDiff(const LHrcTimePoint& A, const LHrcTimePoint& B)
 {
-    return std::chrono::duration<double>(B - A).count();
+    return std::chrono::duration<f64>(B - A).count();
 }
 
-FORCEINLINE double Jafg::Application::GetDeltaSinceStaticStorageInitialization()
+FORCEINLINE f64 Jafg::Application::GetDeltaSinceStaticStorageInitialization()
 {
     return GetTimeDifferenceFromStaticStorageInitialization(GetHighestNow());
 }
 
-FORCEINLINE double Jafg::Application::GetDeltaTime()
+FORCEINLINE f64 Jafg::Application::GetDeltaTime()
 {
     return Private::DeltaTime;
 }
 
-FORCEINLINE float Jafg::Application::GetDeltaTimeAsFloat()
+FORCEINLINE f32 Jafg::Application::GetDeltaTimeAsFloat()
 {
-    return static_cast<float>(Private::DeltaTime);
+    return static_cast<f32>(Private::DeltaTime);
 }
 
-FORCEINLINE double Jafg::Application::GetRealDeltaTime()
+FORCEINLINE f64 Jafg::Application::GetRealDeltaTime()
 {
     return Private::RealDeltaTime;
 }
 
-FORCEINLINE double Jafg::Application::GetRealDeltaTimeAsFloat()
+FORCEINLINE f32 Jafg::Application::GetRealDeltaTimeAsFloat()
 {
-    return static_cast<float>(Private::RealDeltaTime);
+    return static_cast<f32>(Private::RealDeltaTime);
 }
 
 FORCEINLINE bool Jafg::Application:: HasLostDeltaTime()
@@ -157,7 +167,7 @@ FORCEINLINE bool Jafg::Application:: HasLostDeltaTime()
     return Private::LostDeltaTime > 0.0;
 }
 
-FORCEINLINE double Jafg::Application:: GetLostDeltaTime()
+FORCEINLINE f64 Jafg::Application:: GetLostDeltaTime()
 {
     return Private::LostDeltaTime;
 }
@@ -167,7 +177,7 @@ FORCEINLINE bool Jafg::Application:: HasIdleDeltaTime()
     return Private::IdleDeltaTime > 0.0;
 }
 
-FORCEINLINE double Jafg::Application:: GetIdleDeltaTime()
+FORCEINLINE f64 Jafg::Application:: GetIdleDeltaTime()
 {
     return Private::IdleDeltaTime;
 }
@@ -177,39 +187,39 @@ FORCEINLINE u64 Jafg::Application::GetFrameCount()
     return Private::FrameCount;
 }
 
-FORCEINLINE double Jafg::Application::GetCurrentFrameTime()
+FORCEINLINE f64 Jafg::Application::GetCurrentFrameTime()
 {
     return Private::CurrentFrameTime;
 }
 
-FORCEINLINE double Jafg::Application::GetPreviousFrameTime()
+FORCEINLINE f64 Jafg::Application::GetPreviousFrameTime()
 {
     return Private::PreviousFrameTime;
 }
 
-FORCEINLINE float Jafg::Application::GetCurrentFps()
+FORCEINLINE f32 Jafg::Application::GetCurrentFps()
 {
-    return static_cast<float>(1.0 / Private::RealDeltaTime);
+    return static_cast<f32>(1.0 / Private::RealDeltaTime);
 }
 
-FORCEINLINE double Jafg::Application::GetLowestDeltaTime()
+FORCEINLINE f64 Jafg::Application::GetLowestDeltaTime()
 {
     return Private::LowestDeltaTime;
 }
 
-FORCEINLINE double Jafg::Application::GetHighestDeltaTime()
+FORCEINLINE f64 Jafg::Application::GetHighestDeltaTime()
 {
     return Private::HighestDeltaTime;
 }
 
-FORCEINLINE double Jafg::Application::GetHighestLostDeltaTime()
+FORCEINLINE f64 Jafg::Application::GetHighestLostDeltaTime()
 {
     return Private::HighestLostDeltaTime;
 }
 
-FORCEINLINE double Jafg::Application::GetRealTimeOfPreviousStatisticsDuration()
+FORCEINLINE f64 Jafg::Application::GetRealTimeOfPreviousStatisticsDuration()
 {
-    return std::chrono::duration<double>(Private::LastStatisticsTime - Private::PreviousStatisticsStartTime).count();
+    return std::chrono::duration<f64>(Private::LastStatisticsTime - Private::PreviousStatisticsStartTime).count();
 }
 
 FORCEINLINE u64 Jafg::Application::GetPreviousFrameCount()
@@ -217,24 +227,24 @@ FORCEINLINE u64 Jafg::Application::GetPreviousFrameCount()
     return Private::PreviousStatisticsFrameCount;
 }
 
-FORCEINLINE double Jafg::Application::GetPreviousLowestDeltaTime()
+FORCEINLINE f64 Jafg::Application::GetPreviousLowestDeltaTime()
 {
     return Private::PreviousLowestDeltaTime;
 }
 
-FORCEINLINE double Jafg::Application::GetPreviousHighestDeltaTime()
+FORCEINLINE f64 Jafg::Application::GetPreviousHighestDeltaTime()
 {
     return Private::PreviousHighestDeltaTime;
 }
 
-FORCEINLINE float Jafg::Application::CalculateLowestFps()
+FORCEINLINE f32 Jafg::Application::CalculateLowestFps()
 {
-    return static_cast<float>(1.0 / Private::PreviousLowestDeltaTime);
+    return static_cast<f32>(1.0 / Private::PreviousLowestDeltaTime);
 }
 
-FORCEINLINE float Jafg::Application::CalculateHighestFps()
+FORCEINLINE f32 Jafg::Application::CalculateHighestFps()
 {
-    return static_cast<float>(1.0 / Private::PreviousHighestDeltaTime);
+    return static_cast<f32>(1.0 / Private::PreviousHighestDeltaTime);
 }
 
 FORCEINLINE Jafg::Application::LHrcTimePoint Jafg::Application::GetLastStatisticsTime()
@@ -261,14 +271,14 @@ FORCEINLINE void Jafg::Application::ResetStatistics()
 
     Private::LastStatisticsTime   = Application::GetHighestNow();
     Private::StatisticsFrameCount = 0;
-    Private::LowestDeltaTime      = std::numeric_limits<double>::max();
+    Private::LowestDeltaTime      = std::numeric_limits<f64>::max();
     Private::HighestDeltaTime     = -1.0;
     Private::HighestLostDeltaTime =  0.0;
 
     return;
 }
 
-FORCEINLINE float Jafg::Application::GetStatisticsPeriod()
+FORCEINLINE f32 Jafg::Application::GetStatisticsPeriod()
 {
     return Private::StatisticsPeriod;
 }
