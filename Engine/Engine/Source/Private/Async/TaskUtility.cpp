@@ -126,7 +126,7 @@ struct LEngineThread final
 //# Not when adding or running (removing) tasks from the linked list on an already existing thread.
 std::shared_mutex EngineThreadsMutex;
 //# Map for all queses for all tasks.
-Jafg::TdhArray<LEngineThread> EngineThreads;
+Jafg::TArray<LEngineThread> EngineThreads;
 
 } /* ~Namespace <Anonymous> */
 

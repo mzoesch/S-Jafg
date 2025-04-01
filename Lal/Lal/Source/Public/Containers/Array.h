@@ -5,7 +5,50 @@
 namespace Jafg
 {
 
+namespace ResizePolicy
+{
+
+    enum Type : unsigned char
+    {
+        Static,
+        Dynamic
+    };
+
+} /* ~Namespace ResizePolicy */
+
+namespace AllocationPolicy
+{
+
+    enum Type : unsigned char
+    {
+        Stack,
+        Heap
+    };
+
+} /* ~Namespace AllocationPolicy */
+
+template
+<
+    typename                T                   ,
+    ResizePolicy::Type      ResizePolicy        ,
+    AllocationPolicy::Type  AllocationPolicy    ,
+    typename                SizeType            = int
+>
+class TArrayOld;
+
+template <typename T> using TStaticHeapArray        = TArrayOld<T, ResizePolicy::Static , AllocationPolicy::Heap >;
+template <typename T> using TDynamicHeapArray       = TArrayOld<T, ResizePolicy::Dynamic, AllocationPolicy::Heap >;
+template <typename T> using TStaticStackArray       = TArrayOld<T, ResizePolicy::Static , AllocationPolicy::Stack>;
+template <typename T> using TDynamicStackArray      = TArrayOld<T, ResizePolicy::Dynamic, AllocationPolicy::Stack>;
+
+template <typename T> using TshArray                = TStaticHeapArray<T>;
+template <typename T> using TdhArray                = TDynamicHeapArray<T>;
+template <typename T> using TssArray                = TStaticStackArray<T>;
+template <typename T> using TdsArray                = TDynamicStackArray<T>;
+
 /**
+ * * !!! @Deprecated Use JafgArray.h instead. !!!
+ *
  * An array container with a fixed or dynamic size policy allocated on the stack or heap.
  * Fixed size arrays have zero runtime overhead and are equivalent to c arrays.
  *
@@ -27,7 +70,7 @@ template
     AllocationPolicy::Type  AllocationPolicy,
     typename                SizeType
 >
-class TArray
+class TArrayOld
 {
     static_assert( std::is_integral_v<SizeType>, "SizeType must be an integral type."       );
     static_assert( std::is_signed_v<SizeType>,   "SizeType must be a signed integral type." );
@@ -39,7 +82,7 @@ class TArray
 
     template <bool Condition, typename RetVal>
     using TEnableIf             = std::enable_if_t<Condition, RetVal>;
-    using Self                  = TArray<T, ResizePolicy, AllocationPolicy, SizeType>;
+    using Self                  = TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>;
 
     FORCEINLINE static constexpr bool IsDynamic() noexcept { return ResizePolicy     == ::Jafg::ResizePolicy::Dynamic;   }
     FORCEINLINE static constexpr bool IsStatic()  noexcept { return ResizePolicy     == ::Jafg::ResizePolicy::Static;    }
@@ -48,11 +91,11 @@ class TArray
 
 public:
 
-    FORCEINLINE  TArray() noexcept = default;
-    FORCEINLINE  TArray(const Self&  InOther) noexcept;
-    FORCEINLINE  TArray(      Self&& InOther) noexcept;
-    FORCEINLINE  TArray(std::initializer_list<T> InList) noexcept;
-    FORCEINLINE ~TArray() noexcept;
+    FORCEINLINE  TArrayOld() noexcept = default;
+    FORCEINLINE  TArrayOld(const Self&  InOther) noexcept;
+    FORCEINLINE  TArrayOld(      Self&& InOther) noexcept;
+    FORCEINLINE  TArrayOld(std::initializer_list<T> InList) noexcept;
+    FORCEINLINE ~TArrayOld() noexcept;
 
     FORCEINLINE auto GetSize()        const noexcept -> SizeType { return this->Size;            }
     FORCEINLINE auto IsEmpty()        const noexcept -> bool     { return this->GetSize() == 0;  }
@@ -279,7 +322,7 @@ private:
 };
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(const Self& InOther) noexcept
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::TArrayOld(const Self& InOther) noexcept
 {
     this->Size     = InOther.Size;
     this->Capacity = InOther.Capacity;
@@ -308,7 +351,7 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(const Self& InOther)
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(Self&& InOther) noexcept
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::TArrayOld(Self&& InOther) noexcept
 {
     this->Size     = InOther.Size;
     this->Capacity = InOther.Capacity;
@@ -322,7 +365,7 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(Self&& InOther) noex
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(std::initializer_list<T> InList) noexcept
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::TArrayOld(std::initializer_list<T> InList) noexcept
 {
     check( this->Size == 0 && this->Capacity == 0 && this->Data == nullptr )
 
@@ -335,7 +378,7 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::TArray(std::initializer_lis
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::~TArray() noexcept
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::~TArrayOld() noexcept
 {
     if (this->Data)
     {
@@ -353,7 +396,7 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::~TArray() noexcept
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetSlack() noexcept
+T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetSlack() noexcept
 {
 #if CHECK_CONTAINER_BOUNDS
     check( this->IsData() )
@@ -363,7 +406,7 @@ T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetSlack() noexcept
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetSlack() const noexcept
+const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetSlack() const noexcept
 {
 #if CHECK_CONTAINER_BOUNDS
     check( this->IsData() )
@@ -373,29 +416,19 @@ const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetSlack() const n
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetUnsafeSlack() noexcept
+T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetUnsafeSlack() noexcept
 {
     return this->GetData() + this->Size;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetUnsafeSlack() const noexcept
+const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetUnsafeSlack() const noexcept
 {
     return this->GetData() + this->Size;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetFirst() noexcept
-{
-#if CHECK_CONTAINER_BOUNDS
-    check( this->IsData() )
-#endif /* CHECK_CONTAINER_BOUNDS */
-
-    return this->GetData();
-}
-
-template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetFirst() const noexcept
+T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetFirst() noexcept
 {
 #if CHECK_CONTAINER_BOUNDS
     check( this->IsData() )
@@ -405,7 +438,17 @@ const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetFirst() const n
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetLast() noexcept
+const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetFirst() const noexcept
+{
+#if CHECK_CONTAINER_BOUNDS
+    check( this->IsData() )
+#endif /* CHECK_CONTAINER_BOUNDS */
+
+    return this->GetData();
+}
+
+template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
+T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetLast() noexcept
 {
 #if CHECK_CONTAINER_BOUNDS
     check( this->IsData() )
@@ -415,7 +458,7 @@ T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetLast() noexcept
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetLast() const noexcept
+const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetLast() const noexcept
 {
 #if CHECK_CONTAINER_BOUNDS
     check( this->IsData() )
@@ -426,12 +469,12 @@ const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::GetLast() const no
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <bool Condition>
-typename TArray<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf
+typename TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf
 <
     Condition,
-    TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
+    TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>&
 >
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Add(const T& InElement) noexcept
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Add(const T& InElement) noexcept
 {
     if (this->IsCapped())
     {
@@ -445,12 +488,12 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Add(const T& InElement) noe
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <bool Condition>
-typename TArray<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf
+typename TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf
 <
     Condition,
-    TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
+    TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>&
 >
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Add(T&& InElement) noexcept
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Add(T&& InElement) noexcept
 {
     if (this->IsCapped())
     {
@@ -463,7 +506,7 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Add(T&& InElement) noexcept
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddAt(const SizeType InIndex, const T& InElement) noexcept
+void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::AddAt(const SizeType InIndex, const T& InElement) noexcept
 {
     if (this->Size == InIndex)
     {
@@ -489,7 +532,7 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddAt(const SizeType I
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddAt(const SizeType InIndex, T&& InElement) noexcept
+void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::AddAt(const SizeType InIndex, T&& InElement) noexcept
 {
 #if CHECK_CONTAINER_BOUNDS
     check( this->IsValidIndex(InIndex) )
@@ -524,7 +567,7 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddAt(const SizeType I
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Peek() noexcept
+T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Peek() noexcept
 {
     if (this->IsData())
     {
@@ -535,7 +578,7 @@ T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Peek() noexcept
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Peek() const noexcept
+const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Peek() const noexcept
 {
     if (this->IsData())
     {
@@ -546,7 +589,7 @@ const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Peek() const noexc
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Pop() noexcept
+void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Pop() noexcept
 {
     if (this->Size > 0)
     {
@@ -557,7 +600,7 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Pop() noexcept
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Pop(SizeType InCount) noexcept
+void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Pop(SizeType InCount) noexcept
 {
     while (this->Size > 0 && InCount > 0)
     {
@@ -572,12 +615,12 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Pop(SizeType InCount) 
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <bool Condition>
-typename TArray<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf
+typename TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf
 <
     Condition,
-    TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
+    TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>&
 >
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Append(const Self& InOther) noexcept
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Append(const Self& InOther) noexcept
 {
     this->Reserve(this->GetSize() + InOther.Size);
 
@@ -588,8 +631,8 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Append(const Self& InOther)
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Append(Self&& InOther) noexcept
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>&
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Append(Self&& InOther) noexcept
 {
     if (this->IsData())
     {
@@ -622,7 +665,7 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Append(Self&& InOther) noex
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AppendAt(const SizeType InIndex, const T* InElements, const SizeType InCount) noexcept
+void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::AppendAt(const SizeType InIndex, const T* InElements, const SizeType InCount) noexcept
 {
     checkSlow( InElements )
     check( this->IsValidIndex(InIndex) )
@@ -637,7 +680,7 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AppendAt(const SizeTyp
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddZeroed() noexcept
+SizeType TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::AddZeroed() noexcept
 {
     if (this->IsCapped())
     {
@@ -648,28 +691,28 @@ SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddZeroed() noexce
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddZeroed(const SizeType InCount) noexcept
+SizeType TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::AddZeroed(const SizeType InCount) noexcept
 {
     unimplemented()
     return 0;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddUninitialized() noexcept
+SizeType TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::AddUninitialized() noexcept
 {
     unimplemented()
     return 0;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::AddUninitialized(const SizeType InCount) noexcept
+SizeType TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::AddUninitialized(const SizeType InCount) noexcept
 {
     unimplemented()
     return 0;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAt(const SizeType InIndex) noexcept
+void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAt(const SizeType InIndex) noexcept
 {
 #if CHECK_CONTAINER_BOUNDS
     check( this->IsValidIndex(InIndex) )
@@ -696,7 +739,7 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAt(const SizeTyp
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAt(const SizeType InIndex, const SizeType InCount) noexcept
+void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAt(const SizeType InIndex, const SizeType InCount) noexcept
 {
     check( InCount > 0 )
 #if CHECK_CONTAINER_BOUNDS
@@ -719,7 +762,7 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAt(const SizeTyp
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnce(const T& InElement) noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnce(const T& InElement) noexcept
 {
     SizeType Index = this->Find(InElement);
     if (Index != INDEX_NONE)
@@ -732,7 +775,7 @@ bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnce(const T& In
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceChecked(const T& InElement) noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceChecked(const T& InElement) noexcept
 {
 #if DO_CHECKS
     const bool bRemoved = this->RemoveOnce(InElement);
@@ -745,7 +788,7 @@ bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceChecked(cons
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename InOtherElement>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnce(const InOtherElement& InElement) noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnce(const InOtherElement& InElement) noexcept
 {
     SizeType Index = this->Find(InElement);
     if (Index != INDEX_NONE)
@@ -759,7 +802,7 @@ bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnce(const InOth
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename InOtherElement>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceChecked(const InOtherElement& InElement) noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceChecked(const InOtherElement& InElement) noexcept
 {
 #if DO_CHECKS
     const bool bRemoved = this->RemoveOnce(InElement);
@@ -772,7 +815,7 @@ bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceChecked(cons
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename Predicate>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceByPredicate(const Predicate& InPredicate) noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceByPredicate(const Predicate& InPredicate) noexcept
 {
     SizeType Index = this->FindIndexByPredicate(InPredicate);
     if (Index != INDEX_NONE)
@@ -786,7 +829,7 @@ bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceByPredicate(
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename Predicate>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceByPredicateChecked(const Predicate& InPredicate) noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceByPredicateChecked(const Predicate& InPredicate) noexcept
 {
 #if DO_CHECKS
     const bool bRemoved = this->RemoveOnceByPredicate(InPredicate);
@@ -799,7 +842,7 @@ bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceByPredicateC
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename Predicate>
-SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAllByPredicate(const Predicate& InPredicate) noexcept
+SizeType TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAllByPredicate(const Predicate& InPredicate) noexcept
 {
     SizeType Removed = 0;
     for (SizeType Index = 0; Index < this->Size;)
@@ -820,8 +863,8 @@ SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAllByPredica
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename ... Args>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Emplace(Args&&... InArgs) noexcept
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>&
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Emplace(Args&&... InArgs) noexcept
 {
     // !!! We want to use AddUninitialized() to safe some runtime overhead. But we need to implement it first. Lol. !!!
     SizeType Index = this->AddZeroed();
@@ -831,7 +874,7 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Emplace(Args&&... InArgs) n
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename Predicate>
-SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindIndexByPredicate(const Predicate& InPredicate) const noexcept
+SizeType TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::FindIndexByPredicate(const Predicate& InPredicate) const noexcept
 {
     if (this->IsData() == false)
     {
@@ -856,7 +899,7 @@ SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindIndexByPredica
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename Predicate>
-T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindByPredicate(const Predicate& InPredicate) noexcept
+T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::FindByPredicate(const Predicate& InPredicate) noexcept
 {
     if (this->IsData() == false)
     {
@@ -878,14 +921,14 @@ T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindByPredicate(const Pr
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename Predicate>
-const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindByPredicate(const Predicate& InPredicate) const noexcept
+const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::FindByPredicate(const Predicate& InPredicate) const noexcept
 {
     return this->FindByPredicate(InPredicate);
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename InOtherElement>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Find(const InOtherElement& InElement, SizeType& OutIndex) const noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Find(const InOtherElement& InElement, SizeType& OutIndex) const noexcept
 {
     OutIndex = this->Find(InElement);
     return OutIndex != INDEX_NONE;
@@ -893,7 +936,7 @@ bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Find(const InOtherElem
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename InOtherElement>
-SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Find(const InOtherElement& InElement) const noexcept
+SizeType TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Find(const InOtherElement& InElement) const noexcept
 {
     if (this->IsData() == false)
     {
@@ -914,14 +957,14 @@ SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Find(const InOther
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Find(const T& InElement, SizeType& OutIndex) const noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Find(const T& InElement, SizeType& OutIndex) const noexcept
 {
     OutIndex = this->Find(InElement);
     return OutIndex != INDEX_NONE;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Find(const T& InElement) const noexcept
+SizeType TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Find(const T& InElement) const noexcept
 {
     if (this->IsData() == false)
     {
@@ -943,7 +986,7 @@ SizeType TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Find(const T& InEl
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename InOtherElement>
-T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const InOtherElement& InElement, SizeType& OutIndex) noexcept
+T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const InOtherElement& InElement, SizeType& OutIndex) noexcept
 {
     if (this->Find(InElement, OutIndex))
     {
@@ -955,14 +998,14 @@ T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const InOtherEle
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename InOtherElement>
-const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const InOtherElement& InElement, SizeType& OutIndex) const noexcept
+const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const InOtherElement& InElement, SizeType& OutIndex) const noexcept
 {
     return this->FindRef(InElement, OutIndex);
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename InOtherElement>
-T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const InOtherElement& InElement) noexcept
+T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const InOtherElement& InElement) noexcept
 {
     if (SizeType Index = this->Find(InElement); Index != INDEX_NONE)
     {
@@ -974,13 +1017,13 @@ T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const InOtherEle
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename InOtherElement>
-const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const InOtherElement& InElement) const noexcept
+const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const InOtherElement& InElement) const noexcept
 {
-    return (const_cast<TArray*>(this))->FindRef(InElement);
+    return (const_cast<TArrayOld*>(this))->FindRef(InElement);
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& InElement, SizeType& OutIndex) noexcept
+T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& InElement, SizeType& OutIndex) noexcept
 {
     if (this->Find(InElement, OutIndex))
     {
@@ -991,13 +1034,13 @@ T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& InEleme
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& InElement, SizeType& OutIndex) const noexcept
+const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& InElement, SizeType& OutIndex) const noexcept
 {
-    return (const_cast<TArray*>(this))->FindRef(InElement, OutIndex);
+    return (const_cast<TArrayOld*>(this))->FindRef(InElement, OutIndex);
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& InElement) noexcept
+T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& InElement) noexcept
 {
     if (SizeType Index = this->Find(InElement); Index != INDEX_NONE)
     {
@@ -1008,33 +1051,33 @@ T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& InEleme
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-const T* TArray<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& InElement) const noexcept
+const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::FindRef(const T& InElement) const noexcept
 {
-    return (const_cast<TArray*>(this))->FindRef(InElement);
+    return (const_cast<TArrayOld*>(this))->FindRef(InElement);
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename InOtherElement>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Contains(const InOtherElement& InElement) const noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Contains(const InOtherElement& InElement) const noexcept
 {
     return this->Find(InElement) != INDEX_NONE;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <typename Predicate>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ContainsByPredicate(const Predicate& InPredicate) const noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::ContainsByPredicate(const Predicate& InPredicate) const noexcept
 {
-    return (const_cast<TArray*>(this))->FindByPredicate(InPredicate) != nullptr;
+    return (const_cast<TArrayOld*>(this))->FindByPredicate(InPredicate) != nullptr;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Contains(const T& InElement) const noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Contains(const T& InElement) const noexcept
 {
     return this->Find(InElement) != INDEX_NONE;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Reserve(const SizeType InReserve) noexcept
+void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Reserve(const SizeType InReserve) noexcept
 {
     if (InReserve > this->Capacity)
     {
@@ -1045,7 +1088,7 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Reserve(const SizeType
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Reset(const SizeType InReserve) noexcept
+void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Reset(const SizeType InReserve) noexcept
 {
     if (this->IsData() == false)
     {
@@ -1073,7 +1116,7 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Reset(const SizeType I
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Empty() noexcept
+void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Empty() noexcept
 {
     if (this->IsData() == false)
     {
@@ -1101,7 +1144,7 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Empty() noexcept
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Resize(const i32 InSize, const bool bInAllowShrinking) noexcept
+void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Resize(const i32 InSize, const bool bInAllowShrinking) noexcept
 {
 #if CHECK_CONTAINER_BOUNDS
     check( InSize >= 0 && InSize <= this->Size )
@@ -1113,7 +1156,7 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Resize(const i32 InSiz
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::IsCapped() const noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::IsCapped() const noexcept
 {
     if constexpr (std::is_unsigned_v<SizeType>)
     {
@@ -1127,13 +1170,13 @@ bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::IsCapped() const noexc
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::IsValidIndex(const SizeType InIndex) const noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::IsValidIndex(const SizeType InIndex) const noexcept
 {
     return InIndex > INDEX_NONE && InIndex < this->Size;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-T& TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator[](const SizeType InIndex) noexcept
+T& TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::operator[](const SizeType InIndex) noexcept
 {
 #if CHECK_CONTAINER_BOUNDS
     if (this->IsValidIndex(InIndex) == false)
@@ -1146,7 +1189,7 @@ T& TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator[](const SizeTyp
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-const T& TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator[](const SizeType InIndex) const noexcept
+const T& TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::operator[](const SizeType InIndex) const noexcept
 {
 #if CHECK_CONTAINER_BOUNDS
     if (this->IsValidIndex(InIndex) == false)
@@ -1159,8 +1202,8 @@ const T& TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator[](const S
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator=(const Self& InOther) noexcept
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>&
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::operator=(const Self& InOther) noexcept
 {
     if (this == &InOther)
     {
@@ -1204,8 +1247,8 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator=(const Self& InOth
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::CopyFrom(const Self& InOther, const SizeType InCount) noexcept
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>&
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::CopyFrom(const Self& InOther, const SizeType InCount) noexcept
 {
     check( this != &InOther )
     check( InOther.Data )
@@ -1230,8 +1273,8 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::CopyFrom(const Self& InOthe
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::CopyFrom(const Self& InOther, const SizeType InOffset, const SizeType InCount) noexcept
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>&
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::CopyFrom(const Self& InOther, const SizeType InOffset, const SizeType InCount) noexcept
 {
     check( this != &InOther )
     check( InOther.Data )
@@ -1256,8 +1299,8 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::CopyFrom(const Self& InOthe
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>&
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator=(Self&& InOther) noexcept
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>&
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::operator=(Self&& InOther) noexcept
 {
     if (this == &InOther)
     {
@@ -1285,13 +1328,13 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::operator=(Self&& InOther) n
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::IsSameArray(const Self& InOther) const noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::IsSameArray(const Self& InOther) const noexcept
 {
     return this->Data == InOther.Data;
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::IsDataEqual(const Self& InOther) const noexcept
+bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::IsDataEqual(const Self& InOther) const noexcept
 {
     if (this->Size != InOther.Size)
     {
@@ -1315,7 +1358,7 @@ bool TArray<T, ResizePolicy, AllocationPolicy, SizeType>::IsDataEqual(const Self
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::SwapBuffers(Self& InOther) noexcept
+void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::SwapBuffers(Self& InOther) noexcept
 {
     if (this == &InOther)
     {
@@ -1350,7 +1393,7 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::SwapBuffers(Self& InOt
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::SwapIndices(const SizeType InA, const SizeType InB) noexcept
+void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::SwapIndices(const SizeType InA, const SizeType InB) noexcept
 {
     check( this->IsValidIndex(InA) )
     check( this->IsValidIndex(InB) )
@@ -1378,8 +1421,8 @@ void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::SwapIndices(const Size
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <bool Condition>
-typename TArray<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf<Condition, void>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow() noexcept
+typename TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf<Condition, void>
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow() noexcept
 {
     static_assert(ResizePolicy == ResizePolicy::Dynamic, "Only dynamic arrays may grow.");
 
@@ -1431,7 +1474,7 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow() noexcept
 #if !IN_SHIPPING /* This will anyway never happen. Trust me, bro. */
     if (NewData == nullptr)
     {
-        panic( false && "Failed to reallocate memory for TArray." )
+        panic( false && "Failed to reallocate memory for TArrayOld." )
         return;
     }
 #endif /* !IN_SHIPPING */
@@ -1457,8 +1500,8 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow() noexcept
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <bool Condition>
-typename TArray<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf<Condition, void>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow(const SizeType InTotalCapacity) noexcept
+typename TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf<Condition, void>
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow(const SizeType InTotalCapacity) noexcept
 {
     static_assert(ResizePolicy == ResizePolicy::Dynamic, "Only dynamic arrays may grow.");
 
@@ -1506,7 +1549,7 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow(const SizeType I
 #if !IN_SHIPPING /* This will anyway never happen. Trust me, bro. */
     if (NewData == nullptr)
     {
-        panic( false && "Failed to reallocate memory for TArray." )
+        panic( false && "Failed to reallocate memory for TArrayOld." )
         return;
     }
 #endif /* !IN_SHIPPING */
@@ -1529,16 +1572,16 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow(const SizeType I
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <bool Condition>
-typename TArray<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf<Condition, void>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Shrink() noexcept
+typename TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf<Condition, void>
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Shrink() noexcept
 {
     unimplemented()
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 template <bool Condition>
-typename TArray<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf<Condition, void>
-TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Shrink(const SizeType InTotalCapacity) noexcept
+typename TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::template TEnableIf<Condition, void>
+TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Shrink(const SizeType InTotalCapacity) noexcept
 {
     static_assert(ResizePolicy == ResizePolicy::Dynamic, "Only dynamic arrays may grow.");
 
@@ -1561,12 +1604,12 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Shrink(const SizeType InTot
     T* NewData = static_cast<T*>(::realloc(this->Data, InTotalCapacity * sizeof(T)));
     if (NewData == nullptr && InTotalCapacity > 0)
     {
-        panic( "Failed to reallocate memory for TArray." )
+        panic( "Failed to reallocate memory for TArrayOld." )
         return;
     }
 
 #if PLATFORM_SUPPORTS_MEMORY_SHRINK
-    check( NewData != this->Data && "Failed to shrink memory for TArray. Got a new malloc instead." )
+    check( NewData != this->Data && "Failed to shrink memory for TArrayOld. Got a new malloc instead." )
 #endif /* PLATFORM_SUPPORTS_MEMORY_SHRINK */
 
     this->Data      = NewData;
@@ -1587,7 +1630,7 @@ TArray<T, ResizePolicy, AllocationPolicy, SizeType>::Shrink(const SizeType InTot
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-void TArray<T, ResizePolicy, AllocationPolicy, SizeType>::DestroyAt(const SizeType InIndex) noexcept
+void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::DestroyAt(const SizeType InIndex) noexcept
 {
     this->Data[InIndex].~T();
 }

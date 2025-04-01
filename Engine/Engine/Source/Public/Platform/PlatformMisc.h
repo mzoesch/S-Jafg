@@ -83,7 +83,7 @@ struct ENGINE_API LPlatformMisc
     void MakeCachedValuesValid();
 
     i32 NumberOfPhysicalViewports = INDEX_NONE;
-    TdhArray<LPhysicalViewport> PhysicalViewports;
+    TArray<LPhysicalViewport> PhysicalViewports;
     LSimpleString EngineRootDir;
     LSimpleString RealEngineRootDir;
 };

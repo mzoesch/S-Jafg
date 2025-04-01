@@ -21,7 +21,7 @@ public:
     ~LAtlas2() { this->Free(); }
 
     //# Create the atlas from the given textures.
-    void Make(const TdhArray<LTexture2>& InTextures, const bool bFreeOld = true);
+    void Make(const TArray<LTexture2>& InTextures, const bool bFreeOld = true);
     void Free() { this->Data.Free(); this->TexWidth = 0; }
 
     FORCEINLINE auto GetData() const -> const LTexture2& { return this->Data; }

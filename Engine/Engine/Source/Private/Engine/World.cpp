@@ -227,7 +227,7 @@ void Jafg::LWorld::LateTick(const float DeltaTime)
     {
         TemporalObject->ReduceLifeTime(DeltaTime);
     }
-    this->TemporalObjects.RemoveAllByPredicate( [] (LTemporalWorldObject*& TemporalObject)
+    this->TemporalObjects.RemoveByPredicate( [] (LTemporalWorldObject*& TemporalObject)
     {
         if (TemporalObject->IsAlive())
         {
@@ -307,7 +307,7 @@ float Jafg::LWorld::GetRealTimeSecondsSinceWorldLaunch() const
 }
 
 bool Jafg::LWorld::LineTraceByChannel(
-    TdhArray<LHitResult>& OutHits,
+    TArray<LHitResult>& OutHits,
     const LVector& Begin,
     const LVector& End,
     const ECollisionChannel::Type Channel,

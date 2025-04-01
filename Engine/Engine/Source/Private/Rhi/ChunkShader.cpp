@@ -93,7 +93,7 @@ Jafg::LChunkShaderInstance::~LChunkShaderInstance()
     return;
 }
 
-void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TdhArray<ChunkBoxVertex>& Vertices, const TdhArray<u32>& Indices)
+void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TArray<ChunkBoxVertex>& Vertices, const TArray<u32>& Indices)
 {
     if (this->bLoaded == false)
     {

@@ -39,7 +39,7 @@ protected:
 
 public:
 
-    virtual auto GetChildren() const -> const TdhArray<LWidgetSlot*>& PURE_VIRTUAL(return WWidgetParentBase::NothingArrayReference)
+    virtual auto GetChildren() const -> const TArray<LWidgetSlot*>& PURE_VIRTUAL(return WWidgetParentBase::NothingArrayReference)
 
     virtual void RemoveChild(WWidgetNode* InChild) PURE_VIRTUAL()
     virtual void RemoveChild(LWidgetSlot* InSlot) PURE_VIRTUAL()
@@ -53,7 +53,7 @@ public:
 private:
 
     //# Empty array for unreachable code paths - just to satisfy the compiler. Has no use-case.
-    static inline TdhArray<LWidgetSlot*> NothingArrayReference;
+    static inline TArray<LWidgetSlot*> NothingArrayReference;
 };
 
 template <typename TNode>

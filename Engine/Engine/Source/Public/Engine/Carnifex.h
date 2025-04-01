@@ -30,7 +30,7 @@ private:
 
     void FreeChild(JObjectBase* Child);
 
-    TdhArray<JObjectBase*> GarbageChildren;
+    TArray<JObjectBase*> GarbageChildren;
 };
 
 } /* ~Namespace Jafg */

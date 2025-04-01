@@ -66,8 +66,8 @@ struct ENGINE_API LUserInputContext final
     }
 
     FORCEINLINE auto GetUniqueIdentifier() const -> const LName& { return this->UniqueIdentifier; }
-    FORCEINLINE auto GetMappedActions()       ->       TdhArray<LInputMappedAction>& { return this->MappedActions; }
-    FORCEINLINE auto GetMappedActions() const -> const TdhArray<LInputMappedAction>& { return this->MappedActions; }
+    FORCEINLINE auto GetMappedActions()       ->       TArray<LInputMappedAction>& { return this->MappedActions; }
+    FORCEINLINE auto GetMappedActions() const -> const TArray<LInputMappedAction>& { return this->MappedActions; }
 
     auto FindMappedAction(const LInputAction* InAction) -> LInputMappedAction*;
     auto FindCheckedMappedAction(const LInputAction* InAction) -> LInputMappedAction*;
@@ -75,7 +75,7 @@ struct ENGINE_API LUserInputContext final
 private:
 
     LName UniqueIdentifier;
-    TdhArray<LInputMappedAction> MappedActions;
+    TArray<LInputMappedAction> MappedActions;
 };
 
 } /* ~Namespace Jafg */

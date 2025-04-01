@@ -53,7 +53,7 @@ private:
         const void* Target = nullptr;
         EWidgetVisibility::Type Visibility = EWidgetVisibility::Visible;
     };
-    TdhArray<LRecentVisibility> RecentVisibilities;
+    TArray<LRecentVisibility> RecentVisibilities;
 };
 
 WWidgetNode* WWidgetSwitcher::GetActiveWidget() const

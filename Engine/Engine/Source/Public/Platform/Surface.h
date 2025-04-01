@@ -76,15 +76,15 @@ public:
     FORCEINLINE void AddVirtualKeyDown(const LKey InKey) { this->VirtualInput.Emplace(InKey); }
     FORCEINLINE void AddVirtualKeyDown(const LKey InKey, const float InValue) { this->VirtualInput.Emplace(InKey, InValue); }
     FORCEINLINE void AddVirtualKeyDown(const LRawInput& InRawInput) { this->VirtualInput.Emplace(InRawInput); }
-    FORCEINLINE auto GetCurrentlyPressedKeys()       ->       TdhArray<LRawInput>& { return this->DownKeys;          }
-    FORCEINLINE auto GetCurrentlyPressedKeys() const -> const TdhArray<LRawInput>& { return this->DownKeys;          }
-    FORCEINLINE auto GetLastFramePressedKeys()       ->       TdhArray<LRawInput>& { return this->LastFrameDownKeys; }
-    FORCEINLINE auto GetLastFramePressedKeys() const -> const TdhArray<LRawInput>& { return this->LastFrameDownKeys; }
+    FORCEINLINE auto GetCurrentlyPressedKeys()       ->       TArray<LRawInput>& { return this->DownKeys;          }
+    FORCEINLINE auto GetCurrentlyPressedKeys() const -> const TArray<LRawInput>& { return this->DownKeys;          }
+    FORCEINLINE auto GetLastFramePressedKeys()       ->       TArray<LRawInput>& { return this->LastFrameDownKeys; }
+    FORCEINLINE auto GetLastFramePressedKeys() const -> const TArray<LRawInput>& { return this->LastFrameDownKeys; }
     FORCEINLINE bool HasRepeatedKey() const { return this->PlatformRepeatedKey.Key != EKeys::Unresolved; }
     FORCEINLINE auto GetRepeatedKey()       ->       LRawInput& { return this->PlatformRepeatedKey; }
     FORCEINLINE auto GetRepeatedKey() const -> const LRawInput& { return this->PlatformRepeatedKey; }
-    FORCEINLINE auto GetVirtualInput()       ->       TdhArray<LRawInput>& { return this->VirtualInput; }
-    FORCEINLINE auto GetVirtualInput() const -> const TdhArray<LRawInput>& { return this->VirtualInput; }
+    FORCEINLINE auto GetVirtualInput()       ->       TArray<LRawInput>& { return this->VirtualInput; }
+    FORCEINLINE auto GetVirtualInput() const -> const TArray<LRawInput>& { return this->VirtualInput; }
     //# @return Whether the key is currently down.
     bool IsKeyDown(const LKey InKey) const;
     FORCEINLINE bool IsKeyDown(const LRawInput& InRawInput) const { return this->IsKeyDown(InRawInput.Key); }
@@ -117,16 +117,16 @@ private:
     bool bSurfaceViewportValid = false;
 
     //# The keys that are currently down for this surface this frame.
-    TdhArray<LRawInput> DownKeys;
+    TArray<LRawInput> DownKeys;
 
     //# The keys that were down for this surface last frame.
-    TdhArray<LRawInput> LastFrameDownKeys;
+    TArray<LRawInput> LastFrameDownKeys;
 
     //#
     //# Virtual input for mock input.
     //# Only mocked if physical input is not available for said physical action.
     //#
-    TdhArray<LRawInput> VirtualInput;
+    TArray<LRawInput> VirtualInput;
 
     //#
     //# This frame platform-localized input. Buffer is cleared every frame.

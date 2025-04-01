@@ -51,7 +51,7 @@ private:
 
     void InitializeOptionalVoxels();
 
-    TdhArray<LVoxelMask> VoxelMasks;
+    TArray<LVoxelMask> VoxelMasks;
 };
 
 voxel_t JVoxelSubsystem::GetCheckedVoxelIndex(const LSimpleString& Name) const

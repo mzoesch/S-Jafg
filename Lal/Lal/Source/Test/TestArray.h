@@ -3,6 +3,7 @@
 #pragma once
 
 #include "TestInclude.h"
+#include "Containers/Array.h"
 
 TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
 {

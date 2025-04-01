@@ -283,7 +283,7 @@ void Jafg::WWidgetParent::RemoveChild(WWidgetNode* Child)
             this->Children.RemoveOnceChecked(ChildSlot);
             delete ChildSlot;
 
-            check( this->Children.FindByPredicate([Child] (const LWidgetSlot* Slot)
+            check( this->Children.FindRefByPredicate([Child] (const LWidgetSlot* Slot)
             {
                 return Slot->Content == Child;
             }) == nullptr )

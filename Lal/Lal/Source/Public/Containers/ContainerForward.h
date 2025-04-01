@@ -14,28 +14,6 @@ namespace Jafg
 
 typedef i32 DefaultContainerSizeType;
 
-namespace ResizePolicy
-{
-
-enum Type : u8
-{
-    Static,
-    Dynamic
-};
-
-} /* ~Namespace ResizePolicy */
-
-namespace AllocationPolicy
-{
-
-enum Type : u8
-{
-    Stack,
-    Heap
-};
-
-} /* ~Namespace AllocationPolicy */
-
 namespace EQueueKind
 {
 
@@ -72,14 +50,15 @@ enum Type
 
 } /* ~Namespace ELiteralEncoding */
 
-template
-<
-    typename                T                   ,
-    ResizePolicy::Type      ResizePolicy        ,
-    AllocationPolicy::Type  AllocationPolicy    ,
-    typename                SizeType            = DefaultContainerSizeType
->
-class TArray;
+
+template <typename InSizeType>
+struct TArrayAllocatorTraits;
+
+template <typename InT, typename InSizeType, typename InTraits>
+struct TArrayAllocator;
+
+template <typename InT, typename InAlloc>
+class TArrayBase;
 
 struct LStringTraitsBase;
 template <typename InCharacterTy, class InTraitsTy>
@@ -390,15 +369,7 @@ struct L32StringTraits : public LStringTraits<char32_t, DefaultContainerSizeType
     Aliases.
 ----------------------------------------------------------------------------*/
 
-template <typename T> using TStaticHeapArray        = TArray<T, ResizePolicy::Static , AllocationPolicy::Heap >;
-template <typename T> using TDynamicHeapArray       = TArray<T, ResizePolicy::Dynamic, AllocationPolicy::Heap >;
-template <typename T> using TStaticStackArray       = TArray<T, ResizePolicy::Static , AllocationPolicy::Stack>;
-template <typename T> using TDynamicStackArray      = TArray<T, ResizePolicy::Dynamic, AllocationPolicy::Stack>;
-
-template <typename T> using TshArray                = TStaticHeapArray<T>;
-template <typename T> using TdhArray                = TDynamicHeapArray<T>;
-template <typename T> using TssArray                = TStaticStackArray<T>;
-template <typename T> using TdsArray                = TDynamicStackArray<T>;
+template <typename T> using TArray = TArrayBase<T, TArrayAllocator<T, DefaultContainerSizeType, TArrayAllocatorTraits<DefaultContainerSizeType>>>;
 
 /**
  * A string that uses only simple (ascii) characters.

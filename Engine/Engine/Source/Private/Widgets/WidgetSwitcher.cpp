@@ -11,7 +11,7 @@ void Jafg::WWidgetSwitcher::SetActiveWidgetIndex(const i32 Index)
 
     if (WWidgetNode* CurrentNode = this->GetActiveNode(); CurrentNode)
     {
-        if (LRecentVisibility* Recent = this->RecentVisibilities.FindByPredicate([CurrentNode](const LRecentVisibility& InRecent)
+        if (LRecentVisibility* Recent = this->RecentVisibilities.FindRefByPredicate([CurrentNode](const LRecentVisibility& InRecent)
         {
             return InRecent.Target == CurrentNode;
         }))
@@ -40,7 +40,7 @@ void Jafg::WWidgetSwitcher::SetActiveWidgetIndex(const i32 Index)
 
     if (WWidgetNode* NewNode = this->GetActiveNode(); NewNode)
     {
-        if (LRecentVisibility* Recent = this->RecentVisibilities.FindByPredicate([NewNode](const LRecentVisibility& InRecent)
+        if (LRecentVisibility* Recent = this->RecentVisibilities.FindRefByPredicate([NewNode](const LRecentVisibility& InRecent)
         {
             return InRecent.Target == NewNode;
         }))
@@ -64,7 +64,7 @@ void Jafg::WWidgetSwitcher::SetActiveWidget(WWidgetNode* Widget)
 {
     checkSlow( Widget )
 
-    if (const i32 Idx = this->GetChildren().FindIndexByPredicate([Widget](const LWidgetSlot* Slot)
+    if (const i32 Idx = this->GetChildren().FindByPredicate([Widget](const LWidgetSlot* Slot)
     {
         return Slot->Content == Widget;
     }); Idx != INDEX_NONE)
@@ -87,7 +87,7 @@ Jafg::LWidgetSlot* Jafg::WWidgetSwitcher::AddChild(WWidgetNode* InChild)
 {
     LWidgetSlot* Ret = Super::AddChild(InChild);
 
-    check( this->RecentVisibilities.FindByPredicate([InChild](const LRecentVisibility& InRecent){ return InRecent.Target == InChild; }) == nullptr )
+    check( this->RecentVisibilities.FindRefByPredicate([InChild](const LRecentVisibility& InRecent){ return InRecent.Target == InChild; }) == nullptr )
     this->RecentVisibilities.Emplace(InChild, InChild->GetVisibility());
     InChild->SetVisibility(EWidgetVisibility::Collapsed);
 
@@ -98,7 +98,7 @@ Jafg::LWidgetSlot* Jafg::WWidgetSwitcher::AddChildAt(const i32 InIndex, WWidgetN
 {
     LWidgetSlot* Ret = Super::AddChildAt(InIndex, InChild);
 
-    check( this->RecentVisibilities.FindByPredicate([InChild](const LRecentVisibility& InRecent){ return InRecent.Target == InChild; }) == nullptr )
+    check( this->RecentVisibilities.FindRefByPredicate([InChild](const LRecentVisibility& InRecent){ return InRecent.Target == InChild; }) == nullptr )
     this->RecentVisibilities.Emplace(InChild, InChild->GetVisibility());
     InChild->SetVisibility(EWidgetVisibility::Collapsed);
 

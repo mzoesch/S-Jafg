@@ -106,7 +106,7 @@ bool Jafg::LCommandLineInterface::UnregisterType(LCliTypeHandle* InHandle)
         return false;
     }
 
-    if (const i32 Idx = this->Types.FindIndexByPredicate([InHandle](const LCliType& Type)
+    if (const i32 Idx = this->Types.FindByPredicate([InHandle](const LCliType& Type)
     {
         return Type.Uuid == InHandle->Uuid;
     }); Idx != INDEX_NONE)
@@ -153,7 +153,7 @@ bool Jafg::LCommandLineInterface::UnregisterCommand(LCliCommandHandle* InHandle)
         return false;
     }
 
-    if (const i32 Idx = this->Commands.FindIndexByPredicate([InHandle](const LCliCommand& Command)
+    if (const i32 Idx = this->Commands.FindByPredicate([InHandle](const LCliCommand& Command)
     {
         return Command.Uuid == InHandle->Uuid;
     }); Idx != INDEX_NONE)
@@ -200,7 +200,7 @@ bool Jafg::LCommandLineInterface::UnregisterVariable(LCliVariableHandle* InHandl
         return false;
     }
 
-    if (const i32 Idx = this->Variables.FindIndexByPredicate([InHandle](const LCliVariable& Variable)
+    if (const i32 Idx = this->Variables.FindByPredicate([InHandle](const LCliVariable& Variable)
     {
         return Variable.Uuid == InHandle->Uuid;
     }); Idx != INDEX_NONE)

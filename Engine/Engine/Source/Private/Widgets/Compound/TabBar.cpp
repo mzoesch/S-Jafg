@@ -98,7 +98,7 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, r
     else
     {
         const LSimpleString* const AddAfterPtr = &InTabDescriptor.AddAfter;
-        Index = this->TabsInOrder.FindIndexByPredicate([AddAfterPtr](const LAddedTabBarTab& Tab)
+        Index = this->TabsInOrder.FindByPredicate([AddAfterPtr](const LAddedTabBarTab& Tab)
         {
             return Tab.Identifier == *AddAfterPtr;
         });
@@ -252,7 +252,7 @@ const Jafg::WTabBar::LAddedTabBarTab* Jafg::WTabBar::GetCurrentlyFocusedTab() co
 {
     if (this->CurrentlyFocusedTab)
     {
-        if (const i32 Idx= this->TabsInOrder.FindIndexByPredicate([this](const LAddedTabBarTab& Tab)
+        if (const i32 Idx= this->TabsInOrder.FindByPredicate([this](const LAddedTabBarTab& Tab)
         {
             return Tab.Identifier.ToPtr() == this->CurrentlyFocusedTab;
         }); Idx != INDEX_NONE)

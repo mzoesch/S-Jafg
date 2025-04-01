@@ -15,7 +15,7 @@ namespace
  *     y = r * sin(phi) * sin(theta)              theta is the azimuthal angle (0 <= theta < 2PI).
  *     z = r * cos(phi)
  */
-void MakeSphereVertices(const float InRadius, const i32 InSlices, const i32 InStacks, Jafg::TdhArray<Jafg::LVector>& OutLocations)
+void MakeSphereVertices(const float InRadius, const i32 InSlices, const i32 InStacks, Jafg::TArray<Jafg::LVector>& OutLocations)
 {
     using namespace Jafg;
 
@@ -81,7 +81,7 @@ void Jafg::LDebugTraceSphereShaderContext::Draw(const LViewport& Context, LGener
 {
     GENERIC_SHADER_DRAW_BODY(LDebugTraceSphereShaderContextDrawArgs)
 
-    TdhArray<LVector> SphereVertices;
+    TArray<LVector> SphereVertices;
     MakeSphereVertices(Args.Radius, Args.Slices, Args.Stacks, SphereVertices);
 
     this->Program.Use();

@@ -48,9 +48,9 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
     JTextureSubsystem* TextureSubsystem = this->GetEngine()->GetCheckedSubsystem<JTextureSubsystem>();
 
 #pragma region Blending
-    TdhArray<LDiskBlendTexture> BlendedTextureNames = TextureSubsystem->FindMeaningBlendTextureNames();
+    TArray<LDiskBlendTexture> BlendedTextureNames = TextureSubsystem->FindMeaningBlendTextureNames();
     {
-        TdhArray<LTexture2> LoadedTextures;
+        TArray<LTexture2> LoadedTextures;
 
         for (const LDiskBlendTexture& DiskTexture : BlendedTextureNames)
         {
@@ -96,8 +96,8 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
 
 #pragma region Actual textures
     {
-        TdhArray<LTexture2> LoadedTextures;
-        TdhArray<LDiskVoxelTexture> TextureNames = TextureSubsystem->FindMeaningFullVoxelTextureNames();
+        TArray<LTexture2> LoadedTextures;
+        TArray<LDiskVoxelTexture> TextureNames = TextureSubsystem->FindMeaningFullVoxelTextureNames();
 
         for (const LDiskVoxelTexture& DiskTexture : TextureNames)
         {

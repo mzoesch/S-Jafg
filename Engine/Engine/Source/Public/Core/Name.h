@@ -109,7 +109,7 @@ public:
 
 private:
 
-    TdhArray<LSimpleString> Names;
+    TArray<LSimpleString> Names;
 };
 
 FORCEINLINE LName LNameRegistry::GetNameChecked(const LSimpleString& InName, const bool bConvertToLower /* = true */) const

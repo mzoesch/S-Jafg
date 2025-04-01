@@ -134,9 +134,9 @@ void Jafg::Private::KillSingletonObjectRegistry()
     return;
 }
 
-Jafg::TdhArray<Jafg::Private::LRegistrationQueuePackage>& Jafg::Private::GetRegisterObjectQueue()
+Jafg::TArray<Jafg::Private::LRegistrationQueuePackage>& Jafg::Private::GetRegisterObjectQueue()
 {
-    static Jafg::TdhArray<Jafg::Private::LRegistrationQueuePackage> RegistrationQueue = { };
+    static Jafg::TArray<Jafg::Private::LRegistrationQueuePackage> RegistrationQueue = { };
     return RegistrationQueue;
 }
 
@@ -553,7 +553,7 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPack
 
 void Jafg::Private::LObjectRegistry::GetRegisteredObjectsOfClass(
     const LObjectClass*            InStaticClass,
-    TdhArray<const LObjectClass*>& OutArray
+    TArray<const LObjectClass*>& OutArray
 ) const
 {
     for (const LRegistryPackage& Package : this->RegisteredObjects)

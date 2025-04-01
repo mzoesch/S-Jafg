@@ -83,7 +83,7 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
 }
 
 bool Jafg::JChunkGenerationSubsystem::LineTraceByChannel(
-    TdhArray<LHitResult>& OutHits,
+    TArray<LHitResult>& OutHits,
     const LVector& Start,
     const LVector& End,
     const LCollisionQueryParams& Params

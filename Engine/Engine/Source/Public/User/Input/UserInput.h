@@ -31,9 +31,9 @@ public:
 
     ENGINE_API void RegisterContext(LUserInputContext&& Context, const bool bMakeActive = false);
 
-    ENGINE_API TdhArray<LRawInput>  GetTriggeredKeys() const;
-    ENGINE_API TdhArray<LRawInput>& GetOngoingKeys() const;
-    ENGINE_API TdhArray<LRawInput>  GetCompletedKeys() const;
+    ENGINE_API TArray<LRawInput>  GetTriggeredKeys() const;
+    ENGINE_API TArray<LRawInput>& GetOngoingKeys() const;
+    ENGINE_API TArray<LRawInput>  GetCompletedKeys() const;
 
     ENGINE_API auto GetContextByName(const LSimpleString& InName) -> LUserInputContext*;
     ENGINE_API auto GetCheckedContextByName(const LSimpleString& InName) -> LUserInputContext*;
@@ -50,15 +50,15 @@ public:
 
     //# @return The newly mapped action. This is not the same as the input argument.
     ENGINE_API  auto RegisterAction(LInputAction&& InAction) -> LInputAction*;
-    FORCEINLINE auto GetRegisteredActions() const -> const TdhArray<LInputAction*>& { return this->RegisteredActions; }
+    FORCEINLINE auto GetRegisteredActions() const -> const TArray<LInputAction*>& { return this->RegisteredActions; }
 
     ENGINE_API  void ActivateContext(const LSimpleString& InName);
     ENGINE_API  void ActivateContext(LUserInputContext* InContext);
     ENGINE_API  void DeactivateContext(const LSimpleString& InName);
     ENGINE_API  void DeactivateContext(LUserInputContext* InContext);
     ENGINE_API i32 DeactivateAllContexts();
-    FORCEINLINE auto GetActiveContexts() const -> const TdhArray<LUserInputContext*>& { return this->ActiveContexts; }
-    FORCEINLINE auto GetRegisteredContexts() const -> const TdhArray<LUserInputContext*>& { return this->RegisteredContexts; }
+    FORCEINLINE auto GetActiveContexts() const -> const TArray<LUserInputContext*>& { return this->ActiveContexts; }
+    FORCEINLINE auto GetRegisteredContexts() const -> const TArray<LUserInputContext*>& { return this->RegisteredContexts; }
 
     //#
     //# This frame platform-localized input.
@@ -68,15 +68,15 @@ public:
 
 private:
 
-    void DispatchInputDelegatesForAction(const LUserInputContext* InContext, const TdhArray<LRawInput>& InRawInputs, LInputMappedAction* InAction);
+    void DispatchInputDelegatesForAction(const LUserInputContext* InContext, const TArray<LRawInput>& InRawInputs, LInputMappedAction* InAction);
 
-    TdhArray<LInputAction*> RegisteredActions;
+    TArray<LInputAction*> RegisteredActions;
 
     //#
     //# The most important context is stored first.
     //#
-    TdhArray<LUserInputContext*> ActiveContexts;
-    TdhArray<LUserInputContext*> RegisteredContexts;
+    TArray<LUserInputContext*> ActiveContexts;
+    TArray<LUserInputContext*> RegisteredContexts;
 };
 
 } /* ~Namespace Jafg */

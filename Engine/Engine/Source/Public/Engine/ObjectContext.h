@@ -59,7 +59,7 @@ private:
     //# The employees that are working within this context.
     //# If this context dies, the employees will kill themselves.
     //#
-    TdhArray<JObjectBase*> Employees;
+    TArray<JObjectBase*> Employees;
 };
 
 } /* ~Namespace Jafg */

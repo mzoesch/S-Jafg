@@ -34,9 +34,9 @@ public:
     FORCEINLINE const LName& GetName(void) const { return this->Name; }
     FORCEINLINE const LString& GetDisplayName(void) const { return this->DisplayName; }
 
-    FORCEINLINE virtual const TdhArray<Smart::TUnique<LPreference>>& GetChildPreferences(void) const
+    FORCEINLINE virtual const TArray<Smart::TUnique<LPreference>>& GetChildPreferences(void) const
     {
-        static const TdhArray<Smart::TUnique<LPreference>> _; return _;
+        static const TArray<Smart::TUnique<LPreference>> _; return _;
     }
 
     FORCEINLINE virtual bool IsLeaf() const { return true; }

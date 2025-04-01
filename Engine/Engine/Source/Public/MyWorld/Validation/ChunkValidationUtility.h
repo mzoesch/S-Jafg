@@ -21,6 +21,6 @@ namespace Jafg::Validation
 //#  +Y-Axis X X X X X
 //#          X X X X X
 //#
-void GetAllChunksFromCenterAsBox(const LChunkKey2& Center, const i32 Distance, TdhArray<LChunkKey2>& OutChunks);
+void GetAllChunksFromCenterAsBox(const LChunkKey2& Center, const i32 Distance, TArray<LChunkKey2>& OutChunks);
 
 } /* ~Namespace Jafg::Validation */

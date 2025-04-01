@@ -168,8 +168,8 @@ protected:
         WWidgetNode* Panel = nullptr;
         i8 SwitcherIndex = INDEX_NONE;
     };
-    TdhArray<LAddedTabBarTab> TabsInOrder = { };
-    TdhArray<LTabBarTabDescriptor> DeferredTabs = { };
+    TArray<LAddedTabBarTab> TabsInOrder = { };
+    TArray<LTabBarTabDescriptor> DeferredTabs = { };
 };
 
 } /* ~Namespace Jafg */

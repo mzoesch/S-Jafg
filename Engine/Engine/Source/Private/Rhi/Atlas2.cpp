@@ -4,7 +4,7 @@
 #include "Rhi/Atlas2.h"
 #include "Rhi/RendererInformation.h"
 
-void Jafg::LAtlas2::Make(const TdhArray<LTexture2>& InTextures, const bool bFreeOld)
+void Jafg::LAtlas2::Make(const TArray<LTexture2>& InTextures, const bool bFreeOld)
 {
     if (bFreeOld)
     {

@@ -33,7 +33,7 @@ void Jafg::JChunkValidationSubsystem::FixedTick(const float EngineDeltaTime, con
     LOG_TRACE(LogChunkValidation, "Local pawn moved to chunk: {}.", CurrentKey.ToString())
     this->LastChunkKey = CurrentKey;
 
-    TdhArray<LChunkKey2> NowVerticalChunksInQuestion;
+    TArray<LChunkKey2> NowVerticalChunksInQuestion;
     Validation::GetAllChunksFromCenterAsBox(CurrentKey.XY(), this->ChunkGenerationSubsystem->GetRenderDistance(), NowVerticalChunksInQuestion);
 
     TQueue<LChunkKey2>& OptimalQueue = this->ChunkGenerationSubsystem->GetOptimalVerticalChunkQueue();
@@ -49,9 +49,9 @@ void Jafg::JChunkValidationSubsystem::FixedTick(const float EngineDeltaTime, con
     return;
 }
 
-Jafg::TdhArray<Jafg::LChunkKey2> Jafg::JChunkValidationSubsystem::CopyVerticalChunksInQuestion() const
+Jafg::TArray<Jafg::LChunkKey2> Jafg::JChunkValidationSubsystem::CopyVerticalChunksInQuestion() const
 {
     std::shared_lock Lock(this->VerticalChunksInQuestionMutex);
-    TdhArray<LChunkKey2> Copy = this->VerticalChunksInQuestion;
+    TArray<LChunkKey2> Copy = this->VerticalChunksInQuestion;
     return Copy;
 }

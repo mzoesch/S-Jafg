@@ -43,7 +43,7 @@ public:
     virtual auto GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const -> LVector2 override;
 
     FORCEINLINE
-    virtual auto         GetChildren() const -> const TdhArray<LWidgetSlot*>& override { return this->Children; }
+    virtual auto         GetChildren() const -> const TArray<LWidgetSlot*>& override { return this->Children; }
     virtual void         RemoveChild(WWidgetNode* Child) override;
     virtual void         RemoveChild(LWidgetSlot* Child) override;
     virtual LWidgetSlot* AddChild(WWidgetNode* InChild) override;
@@ -56,7 +56,7 @@ public:
 
 private:
 
-    TdhArray<LWidgetSlot*> Children;
+    TArray<LWidgetSlot*> Children;
 
     //# The padding area between the slot and the content it contains.
     LPadding               Padding;

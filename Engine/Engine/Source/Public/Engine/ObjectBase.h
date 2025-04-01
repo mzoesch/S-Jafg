@@ -147,8 +147,8 @@ public:
     //#
     virtual void EndLife() { }
 
-    FORCEINLINE auto GetClassFields() const -> const TdhArray<LClassField>& { return this->ClassFields; }
-    FORCEINLINE auto GetMutableClassFieldsDangerous() -> TdhArray<LClassField>& { return this->ClassFields; }
+    FORCEINLINE auto GetClassFields() const -> const TArray<LClassField>& { return this->ClassFields; }
+    FORCEINLINE auto GetMutableClassFieldsDangerous() -> TArray<LClassField>& { return this->ClassFields; }
 
 protected:
 
@@ -168,7 +168,7 @@ private:
 #endif /* DO_DOUBLE_CHECK_LIFETIMES */
 
     CLASS_FIELD(DefaultOnly)
-    TdhArray<LClassField> ClassFields;
+    TArray<LClassField> ClassFields;
 };
 
 } /* ~Namespace Jafg */

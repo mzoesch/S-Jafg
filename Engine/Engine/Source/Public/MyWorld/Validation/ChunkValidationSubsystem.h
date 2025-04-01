@@ -27,12 +27,12 @@ protected:
 
 public:
 
-    TdhArray<LChunkKey2> CopyVerticalChunksInQuestion() const;
+    TArray<LChunkKey2> CopyVerticalChunksInQuestion() const;
 
 private:
 
     LChunkKey LastChunkKey = { std::numeric_limits<LChunkKeyDomainTy>::max() };
-    TdhArray<LChunkKey2> VerticalChunksInQuestion;
+    TArray<LChunkKey2> VerticalChunksInQuestion;
     JChunkGenerationSubsystem* ChunkGenerationSubsystem = nullptr;
     mutable std::shared_mutex VerticalChunksInQuestionMutex;
 };

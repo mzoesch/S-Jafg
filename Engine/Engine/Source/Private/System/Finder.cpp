@@ -194,7 +194,7 @@ LPath Finder::ResolvePathToAbsolutePath(const EEnginePaths::Type& InEnginePath, 
     return Finder::ResolvePathToAbsolutePath(LEnginePath(InEnginePath), InUserPreferences);
 }
 
-TdhArray<LSimpleString> Finder::FindFiles(
+TArray<LSimpleString> Finder::FindFiles(
     const LPath& InAbsolutePath,
     const bool bKeepExtension /* = false */,
     const LSimpleString& InFileExtension /* = ".*" */
@@ -204,7 +204,7 @@ TdhArray<LSimpleString> Finder::FindFiles(
     LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())
     return { };
 #else /* WITH_VIRTUAL_FILESYSTEM */
-    TdhArray<LSimpleString> Out;
+    TArray<LSimpleString> Out;
 
     if (Fs::exists(InAbsolutePath.GetPath().ToC()) == false)
     {
@@ -272,7 +272,7 @@ TdhArray<LSimpleString> Finder::FindFiles(
 #endif /* WITH_VIRTUAL_FILESYSTEM */
 }
 
-TdhArray<LSimpleString> Finder::FindFiles(
+TArray<LSimpleString> Finder::FindFiles(
     const EEnginePaths::Type InEnginePathTy,
     const JUserPreferences& InUserPreferences,
     const bool bKeepExtension /* = false */,

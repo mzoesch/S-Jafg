@@ -26,7 +26,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(const LObjectClass* InClas
 
     LOG_VERBOSE(LogSubsystemCollection, "Locating all subsystems of class {}.", InClass->GetSpacedClassName())
 
-    TdhArray<const LObjectClass*> SubsystemsClasses;
+    TArray<const LObjectClass*> SubsystemsClasses;
     Private::GObjectRegistry->GetRegisteredObjectsOfClass(InClass, SubsystemsClasses);
 
     for (const LObjectClass* SubsystemClass : SubsystemsClasses)

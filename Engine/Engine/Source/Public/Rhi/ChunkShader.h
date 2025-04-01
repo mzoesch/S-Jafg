@@ -41,7 +41,7 @@ public:
     DEFAULT_REALLOC_OF_ANY_FORM(LChunkShaderInstance)
     ~LChunkShaderInstance();
 
-    void LoadMeshToGraphicsMemory(const TdhArray<ChunkBoxVertex>& Vertices, const TdhArray<u32>& Indices);
+    void LoadMeshToGraphicsMemory(const TArray<ChunkBoxVertex>& Vertices, const TArray<u32>& Indices);
 
     FORCEINLINE u32 GetVertexArrayObject()   const noexcept { return this->Vao; }
     FORCEINLINE u32 GetVertexBufferObject()  const noexcept { return this->Vbo; }

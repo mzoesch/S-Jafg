@@ -296,7 +296,7 @@ void Jafg::WDebugScreen::Tick()
                 ));
             }
 
-            TdhArray<LChunkKey2> OtherChunks;
+            TArray<LChunkKey2> OtherChunks;
             Validation::GetAllChunksFromCenterAsBox(CKey.ToVerticalKey(), 5, OtherChunks);
 
             for (const LChunkKey2& Key : OtherChunks)

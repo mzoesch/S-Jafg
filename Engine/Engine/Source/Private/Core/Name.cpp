@@ -7,9 +7,9 @@
 namespace Jafg::Private
 {
 
-TdhArray<LSimpleString>& GetStaticNameContainer()
+TArray<LSimpleString>& GetStaticNameContainer()
 {
-    static TdhArray<LSimpleString> StaticNameContainer;
+    static TArray<LSimpleString> StaticNameContainer;
     return StaticNameContainer;
 }
 
@@ -84,7 +84,7 @@ Jafg::LName Jafg::Private::LNameRegistry::GetName(const LSimpleString& InName, c
     {
         const LSimpleString LowerName = InName.GetLowerCase();
         i32 Index = 0;
-        if (const LSimpleString* Ref = this->Names.FindRef(LowerName, Index); Ref)
+        if (const LSimpleString* Ref = this->Names.FindRef(LowerName, &Index); Ref)
         {
             return { static_cast<LUnderlyingName>(Index + 1) };
         }
@@ -92,7 +92,7 @@ Jafg::LName Jafg::Private::LNameRegistry::GetName(const LSimpleString& InName, c
     else
     {
         i32 Index = 0;
-        if (const LSimpleString* Ref = this->Names.FindRef(InName, Index); Ref)
+        if (const LSimpleString* Ref = this->Names.FindRef(InName, &Index); Ref)
         {
             return { static_cast<LUnderlyingName>(Index + 1) };
         }

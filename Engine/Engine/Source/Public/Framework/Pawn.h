@@ -48,9 +48,9 @@ public:
     void OnOngoingSecondaryInput(LInputActionValue& InValue);
 
     //# Cached hit results for this frame. Use this if only generic hit results information is needed.
-    FORCEINLINE auto GetCurrentGenericTraceResults() const -> const TdhArray<LHitResult>& { return this->CurrentGenericTraceResults; }
+    FORCEINLINE auto GetCurrentGenericTraceResults() const -> const TArray<LHitResult>& { return this->CurrentGenericTraceResults; }
     bool TraceFromEyeByChannel(
-        TdhArray<LHitResult>& OutHits,
+        TArray<LHitResult>& OutHits,
         const float DistanceInMeters,
         const ECollisionChannel::Type Channel,
         const LCollisionQueryParams& Params
@@ -75,7 +75,7 @@ private:
     f64  LastMouseY       = 0.0;
     bool bFirstMouseCallback = true;
 
-    TdhArray<LHitResult> CurrentGenericTraceResults;
+    TArray<LHitResult> CurrentGenericTraceResults;
 };
 
 } /* ~Namespace Jafg */

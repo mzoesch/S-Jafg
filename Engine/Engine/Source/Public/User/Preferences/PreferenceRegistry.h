@@ -24,11 +24,11 @@ public:
     void AddTopLevelPreference(Smart::TUnique<TPref>&& InPreference);
     void AddTopLevelPreference(Smart::TUnique<LPreference>&& InPreference);
 
-    FORCEINLINE virtual auto GetPreferences(void) const -> const TdhArray<Smart::TUnique<LPreference>>& { return this->Preferences; }
+    FORCEINLINE virtual auto GetPreferences(void) const -> const TArray<Smart::TUnique<LPreference>>& { return this->Preferences; }
 
 protected:
 
-    TdhArray<Smart::TUnique<LPreference>> Preferences;
+    TArray<Smart::TUnique<LPreference>> Preferences;
 };
 
 template <typename TPref>

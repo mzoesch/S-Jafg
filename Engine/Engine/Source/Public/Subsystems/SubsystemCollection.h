@@ -92,7 +92,7 @@ struct LSubsystemCollection final
     FORCEINLINE auto GetOuter() const -> const LObjectContext* { return this->Outer; }
     FORCEINLINE bool IsOuterClassValid() const { return this->OuterClass != nullptr; }
     FORCEINLINE auto GetOuterClass() const -> const LObjectClass* { return this->OuterClass; }
-    FORCEINLINE auto GetSubsystems() const -> const TdhArray<JSubsystem*>& { return this->SubsystemInstances; }
+    FORCEINLINE auto GetSubsystems() const -> const TArray<JSubsystem*>& { return this->SubsystemInstances; }
 
     //#
     //# Try to initialize a subsystem of the given class. The target subsystem must be in this collection where this
@@ -144,7 +144,7 @@ private:
 
     LObjectContext*       Outer = nullptr;
     const LObjectClass*   OuterClass = nullptr;
-    TdhArray<JSubsystem*> SubsystemInstances;
+    TArray<JSubsystem*> SubsystemInstances;
 };
 
 template <typename Predicate>

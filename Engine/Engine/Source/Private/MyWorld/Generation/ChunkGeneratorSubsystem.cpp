@@ -28,7 +28,7 @@ void Jafg::JChunkGeneratorSubsystem::FixedTick(const float RunnableDeltaTime)
     this->VipChunksToLoad.Empty();
 
     std::set<LChunkKey> Visited;
-    TdhArray<LChunkKey2> OptimalVerticalChunks = this->ChunkValidationSubsystem->CopyVerticalChunksInQuestion();
+    TArray<LChunkKey2> OptimalVerticalChunks = this->ChunkValidationSubsystem->CopyVerticalChunksInQuestion();
     for (const LChunkKey2& ChunkKey : OptimalVerticalChunks)
     {
         this->TryToActivateVerticalChunk(ChunkKey, &Visited);

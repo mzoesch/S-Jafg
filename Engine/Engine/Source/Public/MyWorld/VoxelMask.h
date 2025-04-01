@@ -47,7 +47,7 @@ private:
         LTextureIndex BlendIndex;
     };
 
-    TdhArray<LTextureGroup> TextureGroups = { };
+    TArray<LTextureGroup> TextureGroups = { };
 };
 
 LTextureIndex LVoxelMask::FindTextureIndex(const LVector& InNormal) const

@@ -253,8 +253,8 @@ private:
 
     static constexpr u32 InvalidHandle = 0;
     u32           HandleCount = 0;
-    TdhArray<u32> DelegatesHandles;
-    TdhArray<TFunction<RetTy(ParamsTy...)>> Delegates;
+    TArray<u32> DelegatesHandles;
+    TArray<TFunction<RetTy(ParamsTy...)>> Delegates;
 };
 
 template <typename RetTy, typename ... ParamsTy>

@@ -60,12 +60,12 @@ ENGINE_API LPath ResolvePathToRelativeEnginePath(const LEnginePath& InEnginePath
 ENGINE_API LPath ResolvePathToAbsolutePath(const LEnginePath& InEnginePath, const JUserPreferences& InUserPreferences);
 ENGINE_API LPath ResolvePathToAbsolutePath(const EEnginePaths::Type& InEnginePath, const JUserPreferences& InUserPreferences);
 
-ENGINE_API TdhArray<LSimpleString> FindFiles(
+ENGINE_API TArray<LSimpleString> FindFiles(
     const LPath& InAbsolutePath,
     const bool bKeepExtension = false,
     const LSimpleString& InFileExtension = ".*"
 );
-ENGINE_API TdhArray<LSimpleString> FindFiles(
+ENGINE_API TArray<LSimpleString> FindFiles(
     const EEnginePaths::Type InEnginePathTy,
     const JUserPreferences& InUserPreferences,
     const bool bKeepExtension = false,

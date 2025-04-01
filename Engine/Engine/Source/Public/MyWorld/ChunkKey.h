@@ -88,9 +88,9 @@ struct LChunkKey final
     FORCEINLINE auto GetWestKey()  const -> LChunkKey { return { Key.X, Key.Y - 1, Key.Z }; }
     FORCEINLINE auto GetUpKey()    const -> LChunkKey { return { Key.X, Key.Y, Key.Z + 1 }; }
     FORCEINLINE auto GetDownKey()  const -> LChunkKey { return { Key.X, Key.Y, Key.Z - 1 }; }
-    FORCEINLINE auto GetNeighboringChunkKeys() const -> TdhArray<LChunkKey>
+    FORCEINLINE auto GetNeighboringChunkKeys() const -> TArray<LChunkKey>
     {
-        TdhArray<LChunkKey> Out; Out.Reserve(6);
+        TArray<LChunkKey> Out; Out.Reserve(6);
 
         Out.Emplace(Key.X + 1, Key.Y,     Key.Z    );
         Out.Emplace(Key.X - 1, Key.Y,     Key.Z    );
@@ -148,9 +148,9 @@ struct LChunkKey2 final
     FORCEINLINE auto GetSouthKey() const -> LChunkKey2 { return { Key.X - 1, Key.Y }; }
     FORCEINLINE auto GetEastKey()  const -> LChunkKey2 { return { Key.X, Key.Y + 1 }; }
     FORCEINLINE auto GetWestKey()  const -> LChunkKey2 { return { Key.X, Key.Y - 1 }; }
-    FORCEINLINE auto GetNeighboringChunkKeys() const -> TdhArray<LChunkKey2>
+    FORCEINLINE auto GetNeighboringChunkKeys() const -> TArray<LChunkKey2>
     {
-        TdhArray<LChunkKey2> Out; Out.Reserve(4);
+        TArray<LChunkKey2> Out; Out.Reserve(4);
 
         Out.Emplace(Key.X + 1, Key.Y    );
         Out.Emplace(Key.X - 1, Key.Y    );

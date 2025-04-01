@@ -101,7 +101,7 @@ struct LCommandArgs
     FORCEINLINE const LCommandArgs& operator[](const i32 Index) const { return this->SubArgs[Index]; }
 
     LString Name;
-    TdhArray<LCommandArgs> SubArgs;
+    TArray<LCommandArgs> SubArgs;
 };
 
 //#
@@ -134,7 +134,7 @@ struct LCommandParams
     }
 
     LOnCommandInvokation OnExec;
-    TdhArray<LCliType>   Signature;
+    TArray<LCliType>   Signature;
 };
 
 //#
@@ -200,8 +200,8 @@ public:
     }
 
     FORCEINLINE i32  GetOverloadCount() const { return this->Overloads.GetSize(); }
-    FORCEINLINE auto GetOverloads()       ->       TdhArray<LCommandParams>& { return this->Overloads; }
-    FORCEINLINE auto GetOverloads() const -> const TdhArray<LCommandParams>& { return this->Overloads; }
+    FORCEINLINE auto GetOverloads()       ->       TArray<LCommandParams>& { return this->Overloads; }
+    FORCEINLINE auto GetOverloads() const -> const TArray<LCommandParams>& { return this->Overloads; }
     FORCEINLINE void AddOverload(LCommandParams&& InParams) { this->Overloads.Emplace(std::move(InParams)); }
 
 private:
@@ -215,7 +215,7 @@ private:
         return;
     }
 
-    TdhArray<LCommandParams> Overloads;
+    TArray<LCommandParams> Overloads;
 };
 
 } /* ~Namespace Jafg */

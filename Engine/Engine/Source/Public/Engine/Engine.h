@@ -112,8 +112,8 @@ public:
     FORCEINLINE auto GetShader(const u32 InShaderUuid) noexcept -> LEngineShader*;
     FORCEINLINE auto GetShaderChecked(const u32 InShaderUuid) noexceptcheck -> LEngineShader* { LEngineShader* Out = this->GetShader(InShaderUuid); check( Out ) return Out; }
     FORCEINLINE auto GetShaderAsserted(const u32 InShaderUuid) -> LEngineShader* { LEngineShader* Out = this->GetShader(InShaderUuid); jassert( Out ) return Out; }
-    FORCEINLINE auto GetShaders() noexcept -> TdhArray<LEngineShader*>& { return this->Shaders; }
-    FORCEINLINE auto GetShaders() const noexcept -> const TdhArray<LEngineShader*>& { return this->Shaders; }
+    FORCEINLINE auto GetShaders() noexcept -> TArray<LEngineShader*>& { return this->Shaders; }
+    FORCEINLINE auto GetShaders() const noexcept -> const TArray<LEngineShader*>& { return this->Shaders; }
     FORCEINLINE bool RemoveShader(const u32 InShaderUuid, const bool bFree = true) noexcept;
     FORCEINLINE bool RemoveShaderChecked(const u32 InShaderUuid, const bool bFree = true) noexceptcheck;
 
@@ -124,7 +124,7 @@ private:
 
     u32 ShaderUuid = NULL;
     LLocalEgo LocalEgo;
-    TdhArray<LEngineShader*> Shaders;
+    TArray<LEngineShader*> Shaders;
 
 public:
 
@@ -148,8 +148,8 @@ public:
     //#
     LOnWorldBeginLife OnWorldBeginLife;
 
-    FORCEINLINE auto GetContexts() const noexcept -> const TdhArray<LWorldContext>& { return this->Contexts; }
-    FORCEINLINE auto GetRegisteredLevels() const noexcept -> const TdhArray<LLevel>& { return this->RegisteredLevels; }
+    FORCEINLINE auto GetContexts() const noexcept -> const TArray<LWorldContext>& { return this->Contexts; }
+    FORCEINLINE auto GetRegisteredLevels() const noexcept -> const TArray<LLevel>& { return this->RegisteredLevels; }
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JEngineSubsystem)
 
@@ -167,9 +167,9 @@ private:
     //# An index of a specific context is not guaranteed to stay the same. Always expect a short
     //# lifetime of the index.
     //#
-    TdhArray<LWorldContext> Contexts;
+    TArray<LWorldContext> Contexts;
     //# The registered levels that this engine can load.
-    TdhArray<LLevel> RegisteredLevels;
+    TArray<LLevel> RegisteredLevels;
 
     LObjectContext ObjectContext { GlobalCarnifex };
     LSubsystemCollection Collection;
@@ -190,7 +190,7 @@ private:
 
 FORCEINLINE LEngineShader* LEngine::GetShader(const u32 InShaderUuid) noexcept
 {
-    LEngineShader** Out = this->Shaders.FindByPredicate(
+    LEngineShader** Out = this->Shaders.FindRefByPredicate(
         [InShaderUuid] (const LEngineShader* i)
         {
             return i->GetUuid() == InShaderUuid;

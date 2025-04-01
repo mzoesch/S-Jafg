@@ -2,9 +2,15 @@
 
 #pragma once
 
-#ifndef JAFG_CHECK_ARRAY
-    #define JAFG_CHECK_ARRAY(Expr)      check(Expr)
-#endif /* JAFG_CHECK_ARRAY */
+#if CHECK_CONTAINER_BOUNDS
+    #ifndef JAFG_CHECK_ARRAY
+        #define JAFG_CHECK_ARRAY(Expr)      jassert(Expr)
+    #endif /* JAFG_CHECK_ARRAY */
+#else /* CHECK_CONTAINER_BOUNDS */
+    #ifndef JAFG_CHECK_ARRAY
+        #define JAFG_CHECK_ARRAY(Expr)
+    #endif /* JAFG_CHECK_ARRAY */
+#endif /* !CHECK_CONTAINER_BOUNDS */
 
 namespace Jafg
 {
@@ -23,7 +29,7 @@ struct TArrayAllocatorTraits
     }
 };
 
-template <typename InT, typename InSizeType, typename InTraits = TArrayAllocatorTraits<InSizeType>>
+template <typename InT, typename InSizeType, typename InTraits>
 struct TArrayAllocator
 {
     typedef InT        T;
@@ -62,7 +68,7 @@ struct TArrayAllocator
  * This array may not handle complex types that require move semantics as it was designed to be a fast and simple
  * container for extreme fast-paced memory read and write operations.
  */
-template <typename InT, typename InAlloc = TArrayAllocator<InT, i32>>
+template <typename InT, typename InAlloc>
 class TArrayBase
 {
 public:
@@ -76,6 +82,11 @@ public:
     static_assert(std::is_integral_v<SizeType>, "SizeType must be an integral type.");
     static_assert(std::is_signed_v<SizeType>,   "SizeType must be a signed integral type.");
 
+    template <typename TMemberField>
+    friend void OnDefaultOnlyMallocMember(TMemberField* MemberField);
+    template <typename TMemberField>
+    friend void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField);
+
     FORCEINLINE  TArrayBase() noexcept = default;
     FORCEINLINE  TArrayBase(const Self& InOther) noexcept : Impl() { Self::Copy(*this, InOther); }
     FORCEINLINE  TArrayBase(Self&& InOther) noexcept : Impl() { Self::Move(*this, std::move(InOther)); }
@@ -85,6 +96,10 @@ public:
     FORCEINLINE Self& operator=(const Self& InOther) noexcept { Self::Copy(*this, InOther); return *this; }
     FORCEINLINE Self& operator=(Self&& InOther) noexcept { Self::Move(*this, std::move(InOther)); return *this; }
     FORCEINLINE Self& operator=(std::initializer_list<T> InList) noexcept;
+
+    FORCEINLINE Self& CopyFrom(const Self& InOther) noexcept { Self::Copy(*this, InOther); return *this; }
+    FORCEINLINE Self& CopyFrom(const Self& InOther, const SizeType InCount) noexcept;
+    FORCEINLINE Self& CopyFrom(const Self& InOther, const SizeType InOffset, const SizeType InCount) noexcept;
 
     NODISCARD FORCEINLINE SizeType GetSize()     const noexcept { return this->Impl.Slack - this->Impl.Data;  }
     NODISCARD FORCEINLINE bool     IsEmpty()     const noexcept { return this->Impl.Data == this->Impl.Slack; }
@@ -123,6 +138,12 @@ public:
      * Try to shrink the array to the current size or reallocate the array to the new size.
      */
     FORCEINLINE void Shrink() noexcept { this->Impl.Shrink(); }
+
+    /**
+     * Resize the array to the new size. The new size has to be less or equal to the current size.
+     * @param bInShrinkToFit Whether to shrink the array buffer to fit the new size.
+     */
+    FORCEINLINE void Resize(const i32 InSize, const bool bInShrinkToFit);
 
     /**
      * Completely empties the array and sets the size to zero. The memory buffer will be orphaned.
@@ -262,11 +283,11 @@ public:
     FORCEINLINE const T* FindRef(const InOtherElement& InElement) const noexcept { return const_cast<Self*>(this)->FindRef(InElement); }
 
     template <typename Predicate>
-    FORCEINLINE       T* FindRefByPredicate(const Predicate& InPredicate, SizeType* OutIndex) const noexcept;
+    FORCEINLINE       T* FindRefByPredicate(const Predicate& InPredicate, SizeType* OutIndex) noexcept;
     template <typename Predicate>
     FORCEINLINE const T* FindRefByPredicate(const Predicate& InPredicate, SizeType* OutIndex) const noexcept { return const_cast<Self*>(this)->FindRefByPredicate(InPredicate, OutIndex); }
     template <typename Predicate>
-    FORCEINLINE       T* FindRefByPredicate(const Predicate& InPredicate) const noexcept;
+    FORCEINLINE       T* FindRefByPredicate(const Predicate& InPredicate) noexcept;
     template <typename Predicate>
     FORCEINLINE const T* FindRefByPredicate(const Predicate& InPredicate) const noexcept { return const_cast<Self*>(this)->FindRefByPredicate(InPredicate); }
 
@@ -298,6 +319,7 @@ private:
     FORCEINLINE static void Move(Self& Dst, Self&& Src) noexcept { Dst.Impl = std::move(Src.Impl); }
 
     FORCEINLINE void DestroyAt(const SizeType InIndex) noexcept;
+    FORCEINLINE void DestroyAt(T* InAddress) noexcept;
 
     Alloc Impl;
 };
@@ -569,6 +591,44 @@ typename TArrayBase<InT, InAlloc>::Self& TArrayBase<InT, InAlloc>::operator=(std
 }
 
 template<typename InT, typename InAlloc>
+typename TArrayBase<InT, InAlloc>::Self& TArrayBase<InT, InAlloc>::CopyFrom(const Self& InOther, const SizeType InCount) noexcept
+{
+    this->Reset(InCount);
+
+    T* Me = this->Impl.Data;
+    SizeType Added = 0;
+    for (const T* RESTRICT Bulk = InOther.Impl.Data; Bulk != InOther.Impl.Slack && Added < InCount; ++Bulk, ++Added, ++Me)
+    {
+        *Me = *Bulk;
+    }
+
+    this->Impl.Slack = Me;
+
+    checkSlow( this->Impl.Slack <= this->Impl.End )
+
+    return *this;
+}
+
+template<typename InT, typename InAlloc>
+typename TArrayBase<InT, InAlloc>::Self& TArrayBase<InT, InAlloc>::CopyFrom(const Self& InOther, const SizeType InOffset, const SizeType InCount) noexcept
+{
+    this->Reset(InCount);
+
+    T* Me = this->Impl.Data;
+    SizeType Added = 0;
+    for (const T* RESTRICT Bulk = InOther.Impl.Data + InOffset; Bulk != InOther.Impl.Slack && Added < InCount; ++Bulk, ++Added, ++Me)
+    {
+        *Me = *Bulk;
+    }
+
+    this->Impl.Slack = Me;
+
+    checkSlow( this->Impl.Slack <= this->Impl.End )
+
+    return *this;
+}
+
+template<typename InT, typename InAlloc>
 FORCEINLINE typename TArrayBase<InT, InAlloc>::T& TArrayBase<InT, InAlloc>::operator[](const SizeType InIndex) noexcept
 {
     check( this->IsValidIndex(InIndex) )
@@ -595,6 +655,26 @@ FORCEINLINE void TArrayBase<InT, InAlloc>::Reset(const SizeType InAmount) noexce
     this->Impl.Slack = this->Impl.Data;
 
     checkSlow( this->Impl.Slack <= this->Impl.End )
+
+    return;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE void TArrayBase<InT, InAlloc>::Resize(const i32 InSize, const bool bInShrinkToFit)
+{
+    JAFG_CHECK_ARRAY( InSize >= 0 && InSize <= this->GetSize() )
+
+    T* NewSlack = this->Impl.Data + InSize;
+    for (T* RESTRICT Bulk = NewSlack; Bulk != this->Impl.Slack ; ++Bulk)
+    {
+        Bulk->~T();
+    }
+    this->Impl.Slack = NewSlack;
+
+    if (bInShrinkToFit)
+    {
+        this->Shrink();
+    }
 
     return;
 }
@@ -676,7 +756,7 @@ typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::Add(const 
         this->Grow();
     }
 
-    std::construct_at(this->Impl.Slack++, std::forward<T>(InElement));
+    std::construct_at(this->Impl.Slack++, InElement);
 
     checkSlow( this->Impl.Slack <= this->Impl.End )
 
@@ -721,7 +801,7 @@ void TArrayBase<InT, InAlloc>::AddAt(const SizeType InIndex, const T& InElement)
     #pragma GCC diagnostic pop
 #endif /* WITH_GCC */
 
-    std::construct_at(this->Impl.Data + InIndex, std::forward<T>(InElement));
+    std::construct_at(this->Impl.Data + InIndex, InElement);
 
     return;
 }
@@ -1096,7 +1176,7 @@ FORCEINLINE void TArrayBase<InT, InAlloc>::RemoveAt(const SizeType InIndex, cons
         this->DestroyAt(Index);
     }
 
-    if (InIndex + InCount < this->GetSize() - 1)
+    if (InIndex + InCount < this->GetSize())
     {
 #if WITH_GCC
     #pragma GCC diagnostic push
@@ -1202,7 +1282,7 @@ template<typename InT, typename InAlloc>
 template<typename Predicate>
 FORCEINLINE typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::RemoveByPredicate(const Predicate& InPredicate) noexcept
 {
-    const SizeType Removed = 0;
+    SizeType Removed = 0;
 
     for (SizeType Index = 0; Index < this->GetSize();)
     {
@@ -1433,7 +1513,7 @@ FORCEINLINE typename TArrayBase<InT, InAlloc>::T* TArrayBase<InT, InAlloc>::Find
 
 template<typename InT, typename InAlloc>
 template<typename Predicate>
-typename TArrayBase<InT, InAlloc>::T* TArrayBase<InT, InAlloc>::FindRefByPredicate(const Predicate& InPredicate, SizeType* OutIndex) const noexcept
+typename TArrayBase<InT, InAlloc>::T* TArrayBase<InT, InAlloc>::FindRefByPredicate(const Predicate& InPredicate, SizeType* OutIndex) noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -1455,7 +1535,7 @@ typename TArrayBase<InT, InAlloc>::T* TArrayBase<InT, InAlloc>::FindRefByPredica
 
 template<typename InT, typename InAlloc>
 template<typename Predicate>
-typename TArrayBase<InT, InAlloc>::T* TArrayBase<InT, InAlloc>::FindRefByPredicate(const Predicate& InPredicate) const noexcept
+typename TArrayBase<InT, InAlloc>::T* TArrayBase<InT, InAlloc>::FindRefByPredicate(const Predicate& InPredicate) noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -1525,7 +1605,8 @@ FORCEINLINE void TArrayBase<InT, InAlloc>::Pop() noexcept
 {
     if (this->GetSize() > 0)
     {
-        this->DestroyAt(--this->Impl.Slack);
+        this->DestroyAt(this->Impl.Slack - 1);
+        --this->Impl.Slack;
     }
 
     return;
@@ -1536,7 +1617,8 @@ FORCEINLINE void TArrayBase<InT, InAlloc>::Pop(SizeType InCount) noexcept
 {
     while (this->GetSize() > 0 && InCount > 0)
     {
-        this->DestroyAt(--this->Impl.Slack);
+        this->DestroyAt(this->Impl.Slack - 1);
+        --this->Impl.Slack;
         --InCount;
 
         continue;
@@ -1550,6 +1632,14 @@ FORCEINLINE void TArrayBase<InT, InAlloc>::DestroyAt(const SizeType InIndex) noe
 {
     check( this->IsValidIndex(InIndex) )
     this->Impl.Data[InIndex].~T();
+    return;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE void TArrayBase<InT, InAlloc>::DestroyAt(T* InAddress) noexcept
+{
+    check( InAddress >= this->Impl.Data && InAddress < this->Impl.Slack )
+    InAddress->~T();
     return;
 }
 

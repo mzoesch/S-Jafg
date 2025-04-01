@@ -39,7 +39,7 @@ struct LDiskVoxelTexture final
 
     auto GetVoxelName() const -> LSimpleString;
     auto GetNormalLookUpBasedOfFileName() const -> ENormalLookup::Type;
-    auto GetBlendLookUpBasedOfFileName(const TdhArray<LDiskBlendTexture>& InCurrentUsedBlends) const -> LTextureIndex;
+    auto GetBlendLookUpBasedOfFileName(const TArray<LDiskBlendTexture>& InCurrentUsedBlends) const -> LTextureIndex;
 };
 
 struct LDiskBlendTexture final
@@ -67,12 +67,12 @@ public:
     //#
     //# @return All unique texture names that where found in all texture directories based on user preferences.
     //#
-    TdhArray<LDiskVoxelTexture> FindMeaningFullVoxelTextureNames() const;
+    TArray<LDiskVoxelTexture> FindMeaningFullVoxelTextureNames() const;
 
     //#
     //# @return All unique blend texture names that where found in all texture directories based on user preferences.
     //#
-    TdhArray<LDiskBlendTexture> FindMeaningBlendTextureNames() const;
+    TArray<LDiskBlendTexture> FindMeaningBlendTextureNames() const;
 };
 
 } /* ~Namespace Jafg */

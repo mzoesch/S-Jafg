@@ -6,7 +6,7 @@
 namespace Jafg::Validation
 {
 
-void GetAllChunksFromCenterAsBox(const LChunkKey2& Center, const i32 Distance, TdhArray<LChunkKey2>& OutChunks)
+void GetAllChunksFromCenterAsBox(const LChunkKey2& Center, const i32 Distance, TArray<LChunkKey2>& OutChunks)
 {
     const i32 PredictedOutChunkCount = (Distance * 2 + 1) * (Distance * 2 + 1);
     OutChunks.Reserve(PredictedOutChunkCount);

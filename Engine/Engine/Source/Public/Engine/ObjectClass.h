@@ -56,8 +56,8 @@ public:
 
     FORCEINLINE auto GetParent()         ->       LObjectClass*            { return this->Parent; }
     FORCEINLINE auto GetParent()   const -> const LObjectClass*            { return this->Parent; }
-    FORCEINLINE auto GetChildren()       ->       TdhArray<LObjectClass*>& { return this->Children; }
-    FORCEINLINE auto GetChildren() const -> const TdhArray<LObjectClass*>& { return this->Children; }
+    FORCEINLINE auto GetChildren()       ->       TArray<LObjectClass*>& { return this->Children; }
+    FORCEINLINE auto GetChildren() const -> const TArray<LObjectClass*>& { return this->Children; }
 
     /** Check if this object derives from the given parent. */
     ENGINE_API auto DerivesFrom(const LObjectClass* InParent) const -> bool;
@@ -80,7 +80,7 @@ private:
     LObjectClass*           Parent                 = nullptr;
 
     //# All the children that this object acts as a meaningful parent.
-    TdhArray<LObjectClass*> Children               = { };
+    TArray<LObjectClass*> Children               = { };
 
     //# The total byte size from one instance of this object.
     i32                   TotalByteSize         = INDEX_NONE;

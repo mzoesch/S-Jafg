@@ -34,7 +34,7 @@ public:
     FORCEINLINE auto HasChunkShaderContext() const -> bool { return this->ChunkShaderContext != nullptr; }
     FORCEINLINE auto GetChunkShaderContext() const -> LChunkShaderContext* { return this->ChunkShaderContext; }
 
-    FORCEINLINE auto GetCurrentActiveChunkSnapshot() const -> TdhArray<LChunkKey>;
+    FORCEINLINE auto GetCurrentActiveChunkSnapshot() const -> TArray<LChunkKey>;
     FORCEINLINE auto GetPanickedChunk(const LChunkKey& InChunkKey) const -> AChunk*;
     FORCEINLINE auto FindLoadedChunkOrNull(const LChunkKey& ChunkKey) const -> AChunk*;
 
@@ -52,7 +52,7 @@ private:
     // World optimization stuff not part of the chunk generation subsystem and logic.
     // Just helper functions for really heavy optimizations.
     bool LineTraceByChannel(
-        TdhArray<LHitResult>& OutHits,
+        TArray<LHitResult>& OutHits,
         const LVector& Start,
         const LVector& End,
         const LCollisionQueryParams& Params
@@ -99,10 +99,10 @@ private:
     const i32* RenderHeight   = nullptr;
 };
 
-TdhArray<LChunkKey> JChunkGenerationSubsystem::GetCurrentActiveChunkSnapshot() const
+TArray<LChunkKey> JChunkGenerationSubsystem::GetCurrentActiveChunkSnapshot() const
 {
     std::shared_lock Lock(this->LoadedChunksMutex);
-    TdhArray<LChunkKey> Out;
+    TArray<LChunkKey> Out;
     for (const auto& [Fst, Snd] : *this->LoadedChunks)
     {
         if (Snd->GetChunkState() == EChunkState::Active)

@@ -35,7 +35,7 @@ struct LWorldMiscellaneousAccessor;
 } /* ~Namespace Private */
 
 MAKE_DELEGATE_SIGNATURE(LOnStaticLineTrace, bool,
-    TdhArray<LHitResult>& OutHits,
+    TArray<LHitResult>& OutHits,
     const LVector& Start,
     const LVector& End,
     const LCollisionQueryParams& Params
@@ -139,8 +139,8 @@ public:
 
     ENGINE_API void RegisterTickableObject(LTickableObject* Tickable);
     ENGINE_API void UnregisterTickableObject(LTickableObject* Tickable);
-    FORCEINLINE auto GetTickableObjects() const -> const TdhArray<LTickableObject*>& { return this->TickableObjects; }
-    FORCEINLINE auto GetActors() const -> const TdhArray<AActor*>& { return this->Actors; }
+    FORCEINLINE auto GetTickableObjects() const -> const TArray<LTickableObject*>& { return this->TickableObjects; }
+    FORCEINLINE auto GetActors() const -> const TArray<AActor*>& { return this->Actors; }
 
     ENGINE_API float GetRealTimeSecondsSinceWorldLaunch() const;
 
@@ -149,7 +149,7 @@ public:
     //# @return True if a blocking hit was found.
     //#
     bool LineTraceByChannel(
-        TdhArray<LHitResult>& OutHits,
+        TArray<LHitResult>& OutHits,
         const LVector& Begin,
         const LVector& End,
         const ECollisionChannel::Type Channel,
@@ -168,13 +168,13 @@ public:
 private:
 
 #if AS_CLIENT
-    TdhArray<LTemporalWorldObject*> TemporalObjects;
+    TArray<LTemporalWorldObject*> TemporalObjects;
 #endif /* AS_CLIENT */
 
-    TdhArray<LTickableObject*> TickableObjects;
-    TdhArray<LTickableObject*> DeletedTickableObjects;
+    TArray<LTickableObject*> TickableObjects;
+    TArray<LTickableObject*> DeletedTickableObjects;
 
-    TdhArray<AActor*> Actors;
+    TArray<AActor*> Actors;
     mutable LEyeToMatricesMap EyeToMatrices;
     EWorldState::Type WorldState;
 

@@ -156,7 +156,7 @@ template <typename TMemberField>
 FORCEINLINE void ExplicitCommonZeroOnDefaultOnlyMallocMember(TMemberField* MemberField);
 
 template <typename TMemberField>
-FORCEINLINE void OnDefaultOnlyMallocMember(TdhArray<TMemberField>* MemberField);
+FORCEINLINE void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField);
 template <typename InCharacterTy, class InTraitsTy>
 FORCEINLINE void OnDefaultOnlyMallocMember(LStringBase<InCharacterTy, InTraitsTy>* MemberField);
 template <> FORCEINLINE void OnDefaultOnlyMallocMember<float>(float* MemberField) { }
@@ -186,7 +186,7 @@ ENGINE_API void CreateSingletonObjectRegistry(void);
 ENGINE_API void KillSingletonObjectRegistry(void);
 
 //# @return All objects that are waiting for registration.
-ENGINE_API auto GetRegisterObjectQueue() -> TdhArray<LRegistrationQueuePackage>&;
+ENGINE_API auto GetRegisterObjectQueue() -> TArray<LRegistrationQueuePackage>&;
 
 //# Registers a new object type to the global (in this shared translation unit) registry.
 template <typename TObj>
@@ -303,14 +303,14 @@ public:
     ENGINE_API auto GetPackageByContentDefault(const void* ContentDefaultReferrer) -> LRegistryPackage*;
     ENGINE_API auto GetPanickedPackageByContentDefault(const void* ContentDefaultReferrer) -> LRegistryPackage*;
 
-    FORCEINLINE auto GetRegisteredObjects() -> TdhArray<LRegistryPackage>& { return this->RegisteredObjects; }
+    FORCEINLINE auto GetRegisteredObjects() -> TArray<LRegistryPackage>& { return this->RegisteredObjects; }
     //# Gets all registered static class that inherit in any way from InStaticClass.
-    ENGINE_API auto GetRegisteredObjectsOfClass(const LObjectClass* InStaticClass, TdhArray<const LObjectClass*>& OutArray) const -> void;
+    ENGINE_API auto GetRegisteredObjectsOfClass(const LObjectClass* InStaticClass, TArray<const LObjectClass*>& OutArray) const -> void;
 
 private:
 
-    TdhArray<LDeferredRegistryPackage> DeferredPackages;
-    TdhArray<LRegistryPackage>         RegisteredObjects;
+    TArray<LDeferredRegistryPackage> DeferredPackages;
+    TArray<LRegistryPackage>         RegisteredObjects;
 };
 
 //# Global static helper struct to allow for private member access through derived classes of JObjectBase.
@@ -543,11 +543,11 @@ FORCEINLINE void ExplicitCommonZeroOnDefaultOnlyMallocMember(TMemberField* Membe
 }
 
 template <typename TMemberField>
-FORCEINLINE void OnDefaultOnlyMallocMember(TdhArray<TMemberField>* MemberField)
+FORCEINLINE void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField)
 {
-    MemberField->Size = 0;
-    MemberField->Capacity = 0;
-    MemberField->Data = nullptr;
+    MemberField->Impl.Data  = nullptr;
+    MemberField->Impl.Slack = nullptr;
+    MemberField->Impl.End   = nullptr;
 
     return;
 }

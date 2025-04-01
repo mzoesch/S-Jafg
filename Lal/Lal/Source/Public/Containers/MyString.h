@@ -19,7 +19,7 @@ class LStringBase
     template <typename TMemberField>
     friend void OnDefaultOnlyMallocMember(TMemberField* MemberField);
     template <typename TMemberField>
-    friend void OnDefaultOnlyMallocMember(TdhArray<TMemberField>* MemberField);
+    friend void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField);
 
 public:
 
@@ -110,7 +110,7 @@ public:
     /** Convert to a char pointer. The output encoding is not defined. */
     FORCEINLINE const char* ToCUnsafe() const;
     FORCEINLINE const CharacterTy* ToPtr() const;
-    FORCEINLINE const TdhArray<CharacterTy>& GetUnderlyingDataStructure() const { return this->Data; }
+    FORCEINLINE const TArray<CharacterTy>& GetUnderlyingDataStructure() const { return this->Data; }
 
     /** @return The rune that is the #InRuneIndex rune in this string. */
     FORCEINLINE const CharacterTy* GetRuneAt(const SizeType InRuneIndex);
@@ -225,7 +225,7 @@ private:
     FORCEINLINE void EnsureValidState();
     FORCEINLINE void PanicValidState() const;
 
-    TArray<CharacterTy, ResizePolicy::Dynamic, AllocationPolicy::Heap, SizeType> Data;
+    TArray<CharacterTy> Data;
 };
 
 template <class InCharacterTy, class InTraitsTy>
@@ -320,7 +320,7 @@ LStringBase<InCharacterTy, InTraitsTy>::LStringBase(const LStringBase& InOther)
 template <class InCharacterTy, class InTraitsTy>
 LStringBase<InCharacterTy, InTraitsTy>::LStringBase(LStringBase&& InOther) noexcept
 {
-    this->Data = std::forward<TdhArray<CharacterTy>>(InOther.Data);
+    this->Data = std::forward<TArray<CharacterTy>>(InOther.Data);
 
 #if CHECK_STRING_VALIDITY
     this->EnsureValidState();
@@ -356,7 +356,7 @@ LStringBase<InCharacterTy, InTraitsTy>& LStringBase<InCharacterTy, InTraitsTy>::
 template <class InCharacterTy, class InTraitsTy>
 LStringBase<InCharacterTy, InTraitsTy>& LStringBase<InCharacterTy, InTraitsTy>::operator=(LStringBase&& InOther) noexcept
 {
-    this->Data = std::forward<TdhArray<CharacterTy>>(InOther.Data);
+    this->Data = std::forward<TArray<CharacterTy>>(InOther.Data);
 
 #if CHECK_STRING_VALIDITY
     this->EnsureValidState();
@@ -403,7 +403,7 @@ void LStringBase<InCharacterTy, InTraitsTy>::Append(const CharacterTy* InString,
     checkSlow( InString )
     checkSlow( InLength > 0 )
 
-    if (this->Data.IsData())
+    if (this->Data.IsEmpty() == false)
     {
         this->Data.Pop(); /* Null terminator. */
     }
@@ -432,7 +432,7 @@ void LStringBase<InCharacterTy, InTraitsTy>::Append(const LStringBase& InOther)
         return;
     }
 
-    if (this->Data.IsData())
+    if (this->Data.IsEmpty() == false)
     {
         this->Data.Pop(); /* Null terminator. */
     }
@@ -505,7 +505,7 @@ void LStringBase<InCharacterTy, InTraitsTy>::Pop()
 
         SizeType Cursor = this->GetSize(); /* Use size and not size-1 because we already popped the null terminator. */
         TraitsTy::GoToPreviousRune(this->Data.GetData(), Cursor);
-        this->Data.Resize(Cursor);
+        this->Data.Resize(Cursor, false);
 
         if (this->Data.IsEmpty())
         {
@@ -528,7 +528,7 @@ void LStringBase<InCharacterTy, InTraitsTy>::Pop()
 template <class InCharacterTy, class InTraitsTy>
 const typename LStringBase<InCharacterTy, InTraitsTy>::CharacterTy* LStringBase<InCharacterTy, InTraitsTy>::Peek() const
 {
-    if (this->Data.IsData())
+    if (this->Data.IsEmpty() == false)
     {
         return TraitsTy::GetLastRunePointer(this->Data.GetData(), this->GetSize());
     }
@@ -603,7 +603,7 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
 template <class InCharacterTy, class InTraitsTy>
 const char* LStringBase<InCharacterTy, InTraitsTy>::ToC() const
 {
-    if (this->Data.IsData() == false)
+    if (this->Data.IsEmpty())
     {
         return reinterpret_cast<const char*>(&TraitsTy::Terminator);
     }
@@ -620,7 +620,7 @@ const char* LStringBase<InCharacterTy, InTraitsTy>::ToC() const
 template <typename InCharacterTy, class InTraitsTy>
 const char* LStringBase<InCharacterTy, InTraitsTy>::ToCUnsafe() const
 {
-    if (this->Data.IsData())
+    if (this->Data.IsEmpty() == false)
     {
         return reinterpret_cast<const char*>(this->Data.GetData());
     }
@@ -631,7 +631,7 @@ const char* LStringBase<InCharacterTy, InTraitsTy>::ToCUnsafe() const
 template <class InCharacterTy, class InTraitsTy>
 const InCharacterTy* LStringBase<InCharacterTy, InTraitsTy>::ToPtr() const
 {
-    if (this->Data.IsData())
+    if (this->Data.IsEmpty() == false)
     {
         return this->Data.GetData();
     }
@@ -642,7 +642,7 @@ const InCharacterTy* LStringBase<InCharacterTy, InTraitsTy>::ToPtr() const
 template <class InCharacterTy, class InTraitsTy>
 const InCharacterTy* LStringBase<InCharacterTy, InTraitsTy>::GetRuneAt(const SizeType InRuneIndex)
 {
-    if (this->Data.IsData())
+    if (this->Data.IsEmpty() == false)
     {
         checkSlow( InRuneIndex >= 0 )
         checkSlow( InRuneIndex < this->GetCharacterCount() )
@@ -662,7 +662,7 @@ const InCharacterTy* LStringBase<InCharacterTy, InTraitsTy>::operator[](const Si
 template <typename InCharacterTy, class InTraitsTy>
 bool LStringBase<InCharacterTy, InTraitsTy>::operator==(LNullptrTy) const
 {
-    return this->Data.IsData();
+    return this->Data.IsEmpty();
 }
 
 template <typename InCharacterTy, class InTraitsTy>
@@ -755,7 +755,7 @@ bool LStringBase<InCharacterTy, InTraitsTy>::operator==(const InCharacterTy* InS
 {
     checkSlow( InString != nullptr )
 
-    if (this->Data.IsData() == false)
+    if (this->Data.IsEmpty())
     {
         return *InString == TraitsTy::Terminator;
     }
@@ -785,7 +785,7 @@ bool LStringBase<InCharacterTy, InTraitsTy>::operator<(const InCharacterTy* InSt
 {
     checkSlow( InString != nullptr )
 
-    if (this->Data.IsData() == false)
+    if (this->Data.IsEmpty())
     {
         return *InString != TraitsTy::Terminator;
     }
@@ -820,7 +820,7 @@ bool LStringBase<InCharacterTy, InTraitsTy>::operator>(const InCharacterTy* InSt
 {
     checkSlow( InString != nullptr )
 
-    if (this->Data.IsData() == false)
+    if (this->Data.IsEmpty())
     {
         return false;
     }
@@ -1113,7 +1113,7 @@ void LStringBase<InCharacterTy, InTraitsTy>::Replace(const InCharacterTy InOldRu
 template <class InCharacterTy, class InTraitsTy>
 void LStringBase<InCharacterTy, InTraitsTy>::Replace(const InCharacterTy* InOldRune, const InCharacterTy* InNewRune)
 {
-    if (this->Data.IsData() == false)
+    if (this->Data.IsEmpty())
     {
         return;
     }
@@ -1264,7 +1264,7 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
     this->PanicValidState();
 #endif /* CHECK_STRING_VALIDITY */
 
-    if (this->Data.IsData() == false)
+    if (this->Data.IsEmpty())
     {
         return INDEX_NONE;
     }
@@ -1359,7 +1359,7 @@ void LStringBase<InCharacterTy, InTraitsTy>::InlineCut(const SizeType InRuneInde
     TraitsTy::GoToRune(this->ToPtr(), InRuneIndex, Cursor);
     check( this->Data.IsValidIndex(Cursor) )
 
-    this->Data.Resize(Cursor + /* Terminator */1);
+    this->Data.Resize(Cursor + /* Terminator */1, true);
     this->Data[Cursor] = TraitsTy::Terminator;
 
 #if CHECK_STRING_VALIDITY
@@ -1571,7 +1571,7 @@ LStringBase<InCharacterTy, InTraitsTy> LStringBase<InCharacterTy, InTraitsTy>::G
 template <class InCharacterTy, class InTraitsTy>
 Iterator<InCharacterTy> LStringBase<InCharacterTy, InTraitsTy>::begin() noexcept
 {
-    if (this->Data.IsData() == false)
+    if (this->Data.IsEmpty())
     {
         return { nullptr };
     }
@@ -1582,7 +1582,7 @@ Iterator<InCharacterTy> LStringBase<InCharacterTy, InTraitsTy>::begin() noexcept
 template <class InCharacterTy, class InTraitsTy>
 Iterator<const InCharacterTy> LStringBase<InCharacterTy, InTraitsTy>::begin() const noexcept
 {
-    if (this->Data.IsData() == false)
+    if (this->Data.IsEmpty())
     {
         return { nullptr };
     }
@@ -1593,7 +1593,7 @@ Iterator<const InCharacterTy> LStringBase<InCharacterTy, InTraitsTy>::begin() co
 template <class InCharacterTy, class InTraitsTy>
 Iterator<InCharacterTy> LStringBase<InCharacterTy, InTraitsTy>::end() noexcept
 {
-    if (this->Data.IsData() == false)
+    if (this->Data.IsEmpty())
     {
         return { nullptr };
     }
@@ -1604,7 +1604,7 @@ Iterator<InCharacterTy> LStringBase<InCharacterTy, InTraitsTy>::end() noexcept
 template <class InCharacterTy, class InTraitsTy>
 Iterator<const InCharacterTy> LStringBase<InCharacterTy, InTraitsTy>::end() const noexcept
 {
-    if (this->Data.IsData() == false)
+    if (this->Data.IsEmpty())
     {
         return { nullptr };
     }
@@ -1634,7 +1634,7 @@ LStringBase<InCharacterTy, InTraitsTy> LStringBase<InCharacterTy, InTraitsTy>::S
 template <class InCharacterTy, class InTraitsTy>
 void LStringBase<InCharacterTy, InTraitsTy>::EnsureValidState()
 {
-    if (this->Data.IsData())
+    if (this->Data.IsEmpty() == false)
     {
         if (*this->Data.Peek() != TraitsTy::Terminator)
         {
@@ -1660,7 +1660,7 @@ void LStringBase<InCharacterTy, InTraitsTy>::EnsureValidState()
 template <class InCharacterTy, class InTraitsTy>
 void LStringBase<InCharacterTy, InTraitsTy>::PanicValidState() const
 {
-    if (this->Data.IsData())
+    if (this->Data.IsEmpty() == false)
     {
         if (*this->Data.Peek() != TraitsTy::Terminator)
         {

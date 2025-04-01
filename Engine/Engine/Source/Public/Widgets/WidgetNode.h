@@ -309,14 +309,14 @@ public:
     FORCEINLINE WWidgetNode* GetNodeRaw() const { check( this->Node ) return this->Node; }
 
     FORCEINLINE bool HasAnySibling() const { return this->Siblings.IsEmpty() == false; }
-    FORCEINLINE auto GetSiblings() const -> const TdhArray<LWidgetFactory*>& { return this->Siblings; }
+    FORCEINLINE auto GetSiblings() const -> const TArray<LWidgetFactory*>& { return this->Siblings; }
 
 private:
 
-    FORCEINLINE auto GetMutableSiblingsDangerous() -> TdhArray<LWidgetFactory*>& { return this->Siblings; }
+    FORCEINLINE auto GetMutableSiblingsDangerous() -> TArray<LWidgetFactory*>& { return this->Siblings; }
 
     WWidgetNode* Node = nullptr;
-    TdhArray<LWidgetFactory*> Siblings = { };
+    TArray<LWidgetFactory*> Siblings = { };
 };
 
 //#

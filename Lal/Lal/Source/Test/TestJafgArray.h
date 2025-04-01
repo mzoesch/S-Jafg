@@ -10,7 +10,7 @@ TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
 {
     using namespace Jafg;
 
-    TArrayBase<i32> Arr1;
+    TArray<i32> Arr1;
     CHECK_EQUALS( "Array with zero size.", Arr1.GetSize(),              0 )
     CHECK_EQUALS( "Array with zero size.", Arr1.GetCapacity(),          0 )
     CHECK_EQUALS( "Array with zero size.", Arr1.GetData(),        nullptr )
@@ -74,7 +74,7 @@ TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
     CHECK_EQUALS( "Array with std::initializer_list.", Arr1[3],           103 )
     CHECK_EQUALS( "Array with std::initializer_list.", Arr1[4],           104 )
 
-    TArrayBase<i32> Arr2 = { 200, 201, 202, 203, 204 };
+    TArray<i32> Arr2 = { 200, 201, 202, 203, 204 };
     CHECK_EQUALS( "Array with std::initializer_list.", Arr2.GetSize(),   5 )
     CHECK_EQUALS( "Array with std::initializer_list.", Arr2[0],        200 )
     CHECK_EQUALS( "Array with std::initializer_list.", Arr2[1],        201 )
@@ -288,7 +288,7 @@ TEST_CASE(SemanticsArray, "Lal.Containers")
         FORCEINLINE  S& operator=(S&&) noexcept { ++Move; return *this; }
     };
 
-    TArrayBase<S> Arr1;
+    TArray<S> Arr1;
     QUICK_CHECK_EQUALS(Ctor,                0)
     QUICK_CHECK_EQUALS(Dtor,                0)
     QUICK_CHECK_EQUALS(Copy,                0)
@@ -336,7 +336,7 @@ TEST_CASE(SemanticsArray, "Lal.Containers")
     QUICK_CHECK_EQUALS(Copy,                0)
     QUICK_CHECK_EQUALS(Move,                0)
 
-    TArrayBase<S> Arr2 = { S(), S(), S(), S(), S() };
+    TArray<S> Arr2 = { S(), S(), S(), S(), S() };
     QUICK_CHECK_EQUALS(Arr2.GetSize(),      5)
     QUICK_CHECK_EQUALS(Ctor,               16)
     QUICK_CHECK_EQUALS(Dtor,               18)
@@ -390,6 +390,61 @@ TEST_CASE(SemanticsArray, "Lal.Containers")
     QUICK_CHECK_EQUALS(Dtor,               18)
     QUICK_CHECK_EQUALS(Copy,               24)
     QUICK_CHECK_EQUALS(Move,                0)
+
+    return;
+}
+
+TEST_CASE(CapacityArray, "Lal.Containers")
+{
+    using namespace Jafg;
+
+    TArray<i32> Arr;
+    CHECK_EQUALS( "Array with zero size.", Arr.GetSize(),              0 )
+    CHECK_EQUALS( "Array with zero size.", Arr.GetCapacity(),          0 )
+    CHECK_EQUALS( "Array with zero size.", Arr.GetData(),        nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr.GetSlack(),       nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr.GetFirst(),       nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr.GetLast(),        nullptr )
+
+    Arr.Reserve(500);
+    CHECK_EQUALS(    "Array with reserved size.", Arr.GetSize(),                  0 )
+    CHECK_EQUALS(    "Array with reserved size.", Arr.GetCapacity(),            500 )
+    CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetData()                     )
+    CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetSlack()                    )
+    CHECK_NULL(      "Array with reserved size.", Arr.GetFirst()                    )
+    CHECK_NULL(      "Array with reserved size.", Arr.GetLast()                     )
+
+    Arr.Shrink();
+    CHECK_EQUALS( "Array with zero size.", Arr.GetSize(),              0 )
+    CHECK_EQUALS( "Array with zero size.", Arr.GetCapacity(),          0 )
+    CHECK_EQUALS( "Array with zero size.", Arr.GetData(),        nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr.GetSlack(),       nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr.GetFirst(),       nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr.GetLast(),        nullptr )
+
+    Arr.Reserve(500);
+    CHECK_EQUALS(    "Array with reserved size.", Arr.GetSize(),                  0 )
+    CHECK_EQUALS(    "Array with reserved size.", Arr.GetCapacity(),            500 )
+    CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetData()                     )
+    CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetSlack()                    )
+    CHECK_NULL(      "Array with reserved size.", Arr.GetFirst()                    )
+    CHECK_NULL(      "Array with reserved size.", Arr.GetLast()                     )
+
+    Arr.AddDefault(); Arr.AddDefault(); Arr.AddDefault(); Arr.AddDefault(); Arr.AddDefault();
+    CHECK_EQUALS(    "Array with reserved size.", Arr.GetSize(),                  5 )
+    CHECK_EQUALS(    "Array with reserved size.", Arr.GetCapacity(),            500 )
+    CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetData()                     )
+    CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetSlack()                    )
+    CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetFirst()                    )
+    CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetLast()                     )
+
+    Arr.Shrink();
+    CHECK_EQUALS(    "Array with reserved size.", Arr.GetSize(),                  5 )
+    CHECK_EQUALS(    "Array with reserved size.", Arr.GetCapacity(),              5 )
+    CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetData()                     )
+    CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetSlack()                    )
+    CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetFirst()                    )
+    CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetLast()                     )
 
     return;
 }

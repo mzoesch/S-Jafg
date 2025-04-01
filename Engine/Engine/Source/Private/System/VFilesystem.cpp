@@ -23,7 +23,7 @@ ENGINE_API LVirtualFileSystem* GVirtualFileSystem;
 namespace Jafg::Private
 {
 
-TdhArray<LVirtualFile>& GetVirtualFiles();
+TArray<LVirtualFile>& GetVirtualFiles();
 
 LVirtualFile::LVirtualFile(const LPath& RelativeContentPath, const u8* InFileContents, const u64 InFileSize)
 {
@@ -36,9 +36,9 @@ LVirtualFile::LVirtualFile(const LPath& RelativeContentPath, const u8* InFileCon
     return;
 }
 
-TdhArray<LVirtualFile>& GetVirtualFiles()
+TArray<LVirtualFile>& GetVirtualFiles()
 {
-    static TdhArray<LVirtualFile> VirtualFiles = { };
+    static TArray<LVirtualFile> VirtualFiles = { };
     return VirtualFiles;
 }
 
@@ -126,11 +126,11 @@ void Jafg::LVirtualFileSystem::ReadFileAsBytes(const LEnginePath& InEnginePath, 
     return;
 }
 
-Jafg::TdhArray<u8> Jafg::LVirtualFileSystem::ReadFileAsJafgByteArray(const LEnginePath& InEnginePath) const
+Jafg::TArray<u8> Jafg::LVirtualFileSystem::ReadFileAsJafgByteArray(const LEnginePath& InEnginePath) const
 {
     const Private::LVirtualFile* File = this->GetPanickedVirtualFileHandle(InEnginePath);
 
-    TdhArray<u8> Out;
+    TArray<u8> Out;
     Out.Reserve(File->GetFileSize());
 
     /*
@@ -145,14 +145,14 @@ Jafg::TdhArray<u8> Jafg::LVirtualFileSystem::ReadFileAsJafgByteArray(const LEngi
     return Out;
 }
 
-Jafg::TdhArray<Jafg::LSimpleString> Jafg::LVirtualFileSystem::FindFiles(
+Jafg::TArray<Jafg::LSimpleString> Jafg::LVirtualFileSystem::FindFiles(
     const EEnginePaths::Type InEnginePathTy,
     const JUserPreferences& InUserPreferences,
     const bool bKeepExtension /* = false */,
     const LSimpleString& InFileExtension /* = ".*"*/
 )
 {
-    TdhArray<LSimpleString> Out;
+    TArray<LSimpleString> Out;
     const LPath RelPath = LEnginePath(InEnginePathTy).ResolveRelativeEnginePath(InUserPreferences);
 
     for (const Private::LVirtualFile& File : Private::GetVirtualFiles())

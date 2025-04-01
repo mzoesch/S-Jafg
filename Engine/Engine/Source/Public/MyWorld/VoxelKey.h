@@ -86,7 +86,7 @@ struct LVoxelKey final
     FORCEINLINE auto GetWestKey()  const -> LVoxelKey { return { this->Key.X, static_cast<LVoxelKeyDomainTy>(this->Key.Y - 1), this->Key.Z }; }
     FORCEINLINE auto GetUpKey()    const -> LVoxelKey { return { this->Key.X, this->Key.Y, static_cast<LVoxelKeyDomainTy>(this->Key.Z + 1) }; }
     FORCEINLINE auto GetDownKey()  const -> LVoxelKey { return { this->Key.X, this->Key.Y, static_cast<LVoxelKeyDomainTy>(this->Key.Z - 1) }; }
-    FORCEINLINE auto GetNeighboringVoxelKeys() const -> TdhArray<LVoxelKey>;
+    FORCEINLINE auto GetNeighboringVoxelKeys() const -> TArray<LVoxelKey>;
 
     NODISCARD FORCEINLINE auto NormalizeKeyForNeighbor() -> EVoxelKeyLocation::Type;
     NODISCARD FORCEINLINE auto ToString() const -> LSimpleString;
@@ -186,9 +186,9 @@ LVector LVoxelKey::ToWorldSpace()
     };
 }
 
-FORCEINLINE TdhArray<LVoxelKey> LVoxelKey::GetNeighboringVoxelKeys() const
+FORCEINLINE TArray<LVoxelKey> LVoxelKey::GetNeighboringVoxelKeys() const
 {
-    TdhArray<LVoxelKey> Out; Out.Reserve(6);
+    TArray<LVoxelKey> Out; Out.Reserve(6);
 
     Out.Emplace(static_cast<LVoxelKeyDomainTy>(this->Key.X + 1), this->Key.Y, this->Key.Z);
     Out.Emplace(static_cast<LVoxelKeyDomainTy>(this->Key.X - 1), this->Key.Y, this->Key.Z);

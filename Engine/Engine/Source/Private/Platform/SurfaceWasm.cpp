@@ -18,9 +18,9 @@ namespace
 //#
 //# Also this can be a singleton as there will never be more than one DOM in a Wasm application.
 //#
-Jafg::TdhArray<Jafg::LRawInput>& GetDownKeys()
+Jafg::TArray<Jafg::LRawInput>& GetDownKeys()
 {
-    static Jafg::TdhArray<Jafg::LRawInput> DownKeys;
+    static Jafg::TArray<Jafg::LRawInput> DownKeys;
     return DownKeys;
 }
 

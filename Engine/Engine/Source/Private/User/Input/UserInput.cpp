@@ -16,9 +16,9 @@ bool Jafg::LUserInput::IsNewDown(const LKey Key) const
 
 void Jafg::LUserInput::DispatchInputDelegates()
 {
-    const TdhArray<LRawInput> TriggeredKeys = this->GetTriggeredKeys();
-    const TdhArray<LRawInput> OngoingKeys   = this->GetOngoingKeys();
-    const TdhArray<LRawInput> CompletedKeys = this->GetCompletedKeys();
+    const TArray<LRawInput> TriggeredKeys = this->GetTriggeredKeys();
+    const TArray<LRawInput> OngoingKeys   = this->GetOngoingKeys();
+    const TArray<LRawInput> CompletedKeys = this->GetCompletedKeys();
 
     for (LUserInputContext* Context : this->ActiveContexts)
     {
@@ -67,9 +67,9 @@ void Jafg::LUserInput::RegisterContext(LUserInputContext&& Context, const bool b
     return;
 }
 
-Jafg::TdhArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
+Jafg::TArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
 {
-    TdhArray<LRawInput> TriggeredKeys;
+    TArray<LRawInput> TriggeredKeys;
 
     for (const LRawInput& Key : this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys())
     {
@@ -84,14 +84,14 @@ Jafg::TdhArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
     return TriggeredKeys;
 }
 
-Jafg::TdhArray<Jafg::LRawInput>& Jafg::LUserInput::GetOngoingKeys() const
+Jafg::TArray<Jafg::LRawInput>& Jafg::LUserInput::GetOngoingKeys() const
 {
     return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys();
 }
 
-Jafg::TdhArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
+Jafg::TArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
 {
-    TdhArray<LRawInput> CompletedKeys;
+    TArray<LRawInput> CompletedKeys;
 
     for (const LRawInput& Key : this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetLastFramePressedKeys())
     {
@@ -282,7 +282,7 @@ const Jafg::LString& Jafg::LUserInput::GetBufferedPlatformInput() const
     return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetBufferedPlatformInput();
 }
 
-void Jafg::LUserInput::DispatchInputDelegatesForAction(const LUserInputContext* InContext, const TdhArray<LRawInput>& InRawInputs, LInputMappedAction* InAction)
+void Jafg::LUserInput::DispatchInputDelegatesForAction(const LUserInputContext* InContext, const TArray<LRawInput>& InRawInputs, LInputMappedAction* InAction)
 {
     LInputActionValue Value = InAction->Action->Category;
 

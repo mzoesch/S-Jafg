@@ -36,8 +36,8 @@ public:
     ENGINE_API LUserInput* GetUserInputChecked() const;
 
     FORCEINLINE i32 GetSurfaceCount() const { return this->Surfaces.GetSize(); }
-    FORCEINLINE auto  GetSurfaces() -> TdhArray<LSurface>& { return this->Surfaces; }
-    FORCEINLINE auto  GetSurfaces() const -> const TdhArray<LSurface>& { return this->Surfaces; }
+    FORCEINLINE auto  GetSurfaces() -> TArray<LSurface>& { return this->Surfaces; }
+    FORCEINLINE auto  GetSurfaces() const -> const TArray<LSurface>& { return this->Surfaces; }
 
     FORCEINLINE bool IsFocusedSurfaceValid() const { return this->FocusedSurface > INDEX_NONE; }
     FORCEINLINE auto GetFocusedSurface() -> LSurface* { return this->IsFocusedSurfaceValid() ? &this->Surfaces[this->FocusedSurface] : nullptr; }
@@ -94,7 +94,7 @@ private:
 
     LSurface CreateNewSurface();
 
-    TdhArray<LSurface>   Surfaces;
+    TArray<LSurface>   Surfaces;
     i32                FocusedSurface = 0;
     LObjectContext*      CachedOuter = nullptr;
     LSubsystemCollection Collection;

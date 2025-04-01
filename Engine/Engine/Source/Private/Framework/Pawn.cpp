@@ -150,7 +150,7 @@ void Jafg::APawn::OnOngoingSecondaryInput(LInputActionValue& InValue)
 }
 
 bool Jafg::APawn::TraceFromEyeByChannel(
-    TdhArray<LHitResult>& OutHits,
+    TArray<LHitResult>& OutHits,
     const float DistanceInMeters,
     const ECollisionChannel::Type Channel,
     const LCollisionQueryParams& Params

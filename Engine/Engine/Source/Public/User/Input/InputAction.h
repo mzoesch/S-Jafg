@@ -28,7 +28,7 @@ struct ENGINE_API LInputActionMappedKey final
 
     LUserInputContext* Context = nullptr;
     LKey Key = EKeys::AnyKey;
-    TdhArray<LInputActionMappedKeyModifier*> Modifiers;
+    TArray<LInputActionMappedKeyModifier*> Modifiers;
 };
 
 //#
@@ -45,7 +45,7 @@ struct ENGINE_API LInputAction final
     ~LInputAction() = default;
 
     EInputActionCategory::Type      Category = EInputActionCategory::None;
-    TdhArray<LInputActionMappedKey> MappedKeys;
+    TArray<LInputActionMappedKey> MappedKeys;
 };
 
 } /* ~Namespace Jafg */

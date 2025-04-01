@@ -31,11 +31,11 @@ public:
     FORCEINLINE auto GetPreferenceByIdentifier(const LString& InIdentifier) const -> const LPreference*;
     FORCEINLINE auto GetPreferenceByIdentifierChecked(const LString& InIdentifier) -> LPreference*;
     FORCEINLINE auto GetPreferenceByIdentifierChecked(const LString& InIdentifier) const -> const LPreference*;
-    FORCEINLINE auto GetChildPreferences(void) const -> const TdhArray<Smart::TUnique<LPreference>>&  override { return this->Preferences; }
+    FORCEINLINE auto GetChildPreferences(void) const -> const TArray<Smart::TUnique<LPreference>>&  override { return this->Preferences; }
 
 private:
 
-    TdhArray<Smart::TUnique<LPreference>> Preferences;
+    TArray<Smart::TUnique<LPreference>> Preferences;
 };
 
 template<typename TPref>

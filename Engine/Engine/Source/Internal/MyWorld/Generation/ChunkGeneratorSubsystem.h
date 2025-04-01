@@ -44,7 +44,7 @@ private:
     JChunkValidationSubsystem* ChunkValidationSubsystem = nullptr;
     JChunkGenerationSubsystem* ChunkGenerationSubsystem = nullptr;
 
-    TdhArray<LChunkKey> VipChunksToLoad;
+    TArray<LChunkKey> VipChunksToLoad;
 
 public:
 

@@ -71,13 +71,13 @@ public:
     FORCEINLINE auto GetFocusedWidget() const -> const WWidgetNode* { return this->FocusedWidget; }
     FORCEINLINE auto IsFocusedWidgetValid() const -> bool { return this->FocusedWidget != nullptr; }
                 bool FocusWidgetNode(const WWidgetNode* InNode);
-    FORCEINLINE auto GetHoveredWidgets() const -> const TdhArray<WWidgetNode*>& { return this->HoveredWidgets; }
+    FORCEINLINE auto GetHoveredWidgets() const -> const TArray<WWidgetNode*>& { return this->HoveredWidgets; }
 
     //# @return True if in the last frame, this node was not added.
     bool AddHoveredWidgetForFrame(WWidgetNode* Node);
 
-    FORCEINLINE auto GetBackgroundContexts() const -> const TdhArray<LBackgroundContext>& { return this->BackgroundContexts; }
-    FORCEINLINE auto GetMutableBackgroundContexts() -> TdhArray<LBackgroundContext>& { return this->BackgroundContexts; }
+    FORCEINLINE auto GetBackgroundContexts() const -> const TArray<LBackgroundContext>& { return this->BackgroundContexts; }
+    FORCEINLINE auto GetMutableBackgroundContexts() -> TArray<LBackgroundContext>& { return this->BackgroundContexts; }
     FORCEINLINE auto GetBackgroundBuffer() const -> const LFrameBuffer& { return this->BackgroundBuffer; }
 
 private:
@@ -102,15 +102,15 @@ private:
     //# The dimensions of the viewport in px.
     LIntVector2            Dimensions;
     //# Top level widgets that this viewport owns.
-    TdhArray<WUserWidget*> TopLevelWidgets;
+    TArray<WUserWidget*> TopLevelWidgets;
 
     WWidgetNode* FocusedWidget = nullptr;
-    TdhArray<WWidgetNode*> HoveredWidgets;
-    TdhArray<WWidgetNode*> LastFrameHoveredWidgets;
+    TArray<WWidgetNode*> HoveredWidgets;
+    TArray<WWidgetNode*> LastFrameHoveredWidgets;
 
     mutable float FrameZLayerDepth = 0.0f;
 
-    TdhArray<LBackgroundContext> BackgroundContexts;
+    TArray<LBackgroundContext> BackgroundContexts;
     LFrameBuffer BackgroundBuffer;
 };
 

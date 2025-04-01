@@ -69,14 +69,14 @@ public:
     //# or even better use the save jafg array type.
     //#
     ENGINE_API void ReadFileAsBytes(const LEnginePath& InEnginePath, const u8*& OutBuffer, u64& OutBufferOverflowGuard) const;
-    ENGINE_API auto ReadFileAsJafgByteArray(const LEnginePath& InEnginePath) const -> TdhArray<u8>;
+    ENGINE_API auto ReadFileAsJafgByteArray(const LEnginePath& InEnginePath) const -> TArray<u8>;
 
     ENGINE_API auto FindFiles(
         const EEnginePaths::Type InEnginePathTy,
         const JUserPreferences& InUserPreferences,
         const bool bKeepExtension = false,
         const LSimpleString& InFileExtension = ".*"
-    ) -> TdhArray<LSimpleString>;
+    ) -> TArray<LSimpleString>;
 
 private:
 

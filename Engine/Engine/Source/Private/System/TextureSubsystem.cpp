@@ -78,7 +78,7 @@ Jafg::ENormalLookup::Type Jafg::LDiskVoxelTexture::GetNormalLookUpBasedOfFileNam
     return ENormalLookup::None;
 }
 
-Jafg::LTextureIndex Jafg::LDiskVoxelTexture::GetBlendLookUpBasedOfFileName(const TdhArray<LDiskBlendTexture>& InCurrentUsedBlends) const
+Jafg::LTextureIndex Jafg::LDiskVoxelTexture::GetBlendLookUpBasedOfFileName(const TArray<LDiskBlendTexture>& InCurrentUsedBlends) const
 {
     if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) > 2)
     {
@@ -88,7 +88,7 @@ Jafg::LTextureIndex Jafg::LDiskVoxelTexture::GetBlendLookUpBasedOfFileName(const
 
     if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 0)
     {
-        const DefaultContainerSizeType Idx = InCurrentUsedBlends.FindIndexByPredicate([] (const LDiskBlendTexture& InElement) -> bool
+        const DefaultContainerSizeType Idx = InCurrentUsedBlends.FindByPredicate([] (const LDiskBlendTexture& InElement) -> bool
         {
             return InElement.Name == "None";
         });
@@ -101,7 +101,7 @@ Jafg::LTextureIndex Jafg::LDiskVoxelTexture::GetBlendLookUpBasedOfFileName(const
         LSimpleString Copy = this->Name;
         Copy.InlineSubIdx(Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1, Copy.GetRuneCount());
 
-        const DefaultContainerSizeType MaybeIdx = InCurrentUsedBlends.FindIndexByPredicate([Copy] (const LDiskBlendTexture& InElement) -> bool
+        const DefaultContainerSizeType MaybeIdx = InCurrentUsedBlends.FindByPredicate([Copy] (const LDiskBlendTexture& InElement) -> bool
         {
             return InElement.Name == Copy;
         });
@@ -109,7 +109,7 @@ Jafg::LTextureIndex Jafg::LDiskVoxelTexture::GetBlendLookUpBasedOfFileName(const
         {
             return static_cast<LTextureIndex>(MaybeIdx);
         }
-        const DefaultContainerSizeType NoneIdx = InCurrentUsedBlends.FindIndexByPredicate([] (const LDiskBlendTexture& InElement) -> bool
+        const DefaultContainerSizeType NoneIdx = InCurrentUsedBlends.FindByPredicate([] (const LDiskBlendTexture& InElement) -> bool
         {
             return InElement.Name == "None";
         });
@@ -123,7 +123,7 @@ Jafg::LTextureIndex Jafg::LDiskVoxelTexture::GetBlendLookUpBasedOfFileName(const
     const i32 FirstOccurrence = Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1;
     Copy.InlineSub(FirstOccurrence, Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar) - FirstOccurrence);
 
-    if (const DefaultContainerSizeType MaybeIdx = InCurrentUsedBlends.FindIndexByPredicate([Copy] (const LDiskBlendTexture& InElement) -> bool
+    if (const DefaultContainerSizeType MaybeIdx = InCurrentUsedBlends.FindByPredicate([Copy] (const LDiskBlendTexture& InElement) -> bool
     {
         return InElement.Name == Copy;
     }); MaybeIdx != INDEX_NONE)
@@ -135,7 +135,7 @@ Jafg::LTextureIndex Jafg::LDiskVoxelTexture::GetBlendLookUpBasedOfFileName(const
     const i32 SecondOccurrence = Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar);
     Copy.InlineSub(SecondOccurrence + 1, Copy.GetRuneCount() - SecondOccurrence - 1);
 
-    if (const DefaultContainerSizeType MaybeIdx = InCurrentUsedBlends.FindIndexByPredicate([Copy] (const LDiskBlendTexture& InElement) -> bool
+    if (const DefaultContainerSizeType MaybeIdx = InCurrentUsedBlends.FindByPredicate([Copy] (const LDiskBlendTexture& InElement) -> bool
     {
         return InElement.Name == Copy;
     }); MaybeIdx != INDEX_NONE)
@@ -145,7 +145,7 @@ Jafg::LTextureIndex Jafg::LDiskVoxelTexture::GetBlendLookUpBasedOfFileName(const
 
     panicMsgf( "Encountered invalid texture name '{}'.", this->Name )
 
-    const DefaultContainerSizeType NoneIdx = InCurrentUsedBlends.FindIndexByPredicate([] (const LDiskBlendTexture& InElement) -> bool
+    const DefaultContainerSizeType NoneIdx = InCurrentUsedBlends.FindByPredicate([] (const LDiskBlendTexture& InElement) -> bool
     {
         return InElement.Name == "None";
     });
@@ -166,11 +166,11 @@ void Jafg::JTextureSubsystem::TearDown()
     Super::TearDown();
 }
 
-Jafg::TdhArray<Jafg::LDiskVoxelTexture> Jafg::JTextureSubsystem::FindMeaningFullVoxelTextureNames() const
+Jafg::TArray<Jafg::LDiskVoxelTexture> Jafg::JTextureSubsystem::FindMeaningFullVoxelTextureNames() const
 {
-    TdhArray<LSimpleString> Names = Finder::FindFiles(EEnginePaths::Voxels, *GetDefault<JUserPreferences>(), false, ".png");
+    TArray<LSimpleString> Names = Finder::FindFiles(EEnginePaths::Voxels, *GetDefault<JUserPreferences>(), false, ".png");
 
-    TdhArray<LDiskVoxelTexture> Out;
+    TArray<LDiskVoxelTexture> Out;
     for (LSimpleString& Name : Names)
     {
         Out.Emplace(Name.MoveOut());
@@ -179,11 +179,11 @@ Jafg::TdhArray<Jafg::LDiskVoxelTexture> Jafg::JTextureSubsystem::FindMeaningFull
     return Out;
 }
 
-Jafg::TdhArray<Jafg::LDiskBlendTexture> Jafg::JTextureSubsystem::FindMeaningBlendTextureNames() const
+Jafg::TArray<Jafg::LDiskBlendTexture> Jafg::JTextureSubsystem::FindMeaningBlendTextureNames() const
 {
-    TdhArray<LSimpleString> Names = Finder::FindFiles(EEnginePaths::Blends, *GetDefault<JUserPreferences>(), false, ".png");
+    TArray<LSimpleString> Names = Finder::FindFiles(EEnginePaths::Blends, *GetDefault<JUserPreferences>(), false, ".png");
 
-    TdhArray<LDiskBlendTexture> Out;
+    TArray<LDiskBlendTexture> Out;
     for (LSimpleString& Name : Names)
     {
         Out.Emplace(Name.MoveOut());
