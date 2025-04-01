@@ -10,69 +10,69 @@ TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
 {
     using namespace Jafg;
 
-    TArrayBase<i32> Arr;
-    CHECK_EQUALS( "Array with zero size.", Arr.GetSize(),              0 )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetCapacity(),          0 )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetData(),        nullptr )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetSlack(),       nullptr )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetFirst(),       nullptr )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetLast(),        nullptr )
+    TArrayBase<i32> Arr1;
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetSize(),              0 )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetCapacity(),          0 )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetData(),        nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetSlack(),       nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetFirst(),       nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetLast(),        nullptr )
 
-    Arr.Add(1);
-    QUICK_CHECK_EQUALS(Arr.GetSize(), 1)
+    Arr1.Add(1);
+    QUICK_CHECK_EQUALS(Arr1.GetSize(), 1)
 
-    Arr.Add(10);
-    Arr.Add(100);
-    Arr.Add(1000);
-    QUICK_CHECK_EQUALS(Arr.GetSize(), 4)
+    Arr1.Add(10);
+    Arr1.Add(100);
+    Arr1.Add(1000);
+    QUICK_CHECK_EQUALS(Arr1.GetSize(), 4)
 
-    Arr.Add(50);
-    Arr.Add(51);
-    Arr.Add(52);
-    Arr.Add(53);
-    Arr.Add(54);
-    Arr.Add(55);
-    Arr.Add(56);
-    Arr.Add(57);
-    Arr.Add(58);
-    Arr.Add(59);
-    QUICK_CHECK_EQUALS(Arr.GetSize(), 14)
+    Arr1.Add(50);
+    Arr1.Add(51);
+    Arr1.Add(52);
+    Arr1.Add(53);
+    Arr1.Add(54);
+    Arr1.Add(55);
+    Arr1.Add(56);
+    Arr1.Add(57);
+    Arr1.Add(58);
+    Arr1.Add(59);
+    QUICK_CHECK_EQUALS(Arr1.GetSize(), 14)
 
-    Arr.AddAt(0, -5);
-    Arr.AddAt(1, -4);
-    Arr.AddAt(2, -3);
-    Arr.AddAt(3, -2);
-    Arr.AddAt(4, -1);
-    Arr.AddAt(5,  0);
-    QUICK_CHECK_EQUALS(Arr.GetSize(), 20)
-    QUICK_CHECK_EQUALS(Arr[0],   -5)
-    QUICK_CHECK_EQUALS(Arr[1],   -4)
-    QUICK_CHECK_EQUALS(Arr[2],   -3)
-    QUICK_CHECK_EQUALS(Arr[3],   -2)
-    QUICK_CHECK_EQUALS(Arr[4],   -1)
-    QUICK_CHECK_EQUALS(Arr[5],    0)
-    QUICK_CHECK_EQUALS(Arr[6],    1)
-    QUICK_CHECK_EQUALS(Arr[7],   10)
-    QUICK_CHECK_EQUALS(Arr[8],  100)
-    QUICK_CHECK_EQUALS(Arr[9], 1000)
-    QUICK_CHECK_EQUALS(*Arr.GetLast(),  59)
-    QUICK_CHECK_EQUALS(*Arr.GetFirst(), -5)
+    Arr1.AddAt(0, -5);
+    Arr1.AddAt(1, -4);
+    Arr1.AddAt(2, -3);
+    Arr1.AddAt(3, -2);
+    Arr1.AddAt(4, -1);
+    Arr1.AddAt(5,  0);
+    QUICK_CHECK_EQUALS(Arr1.GetSize(), 20)
+    QUICK_CHECK_EQUALS(Arr1[0],   -5)
+    QUICK_CHECK_EQUALS(Arr1[1],   -4)
+    QUICK_CHECK_EQUALS(Arr1[2],   -3)
+    QUICK_CHECK_EQUALS(Arr1[3],   -2)
+    QUICK_CHECK_EQUALS(Arr1[4],   -1)
+    QUICK_CHECK_EQUALS(Arr1[5],    0)
+    QUICK_CHECK_EQUALS(Arr1[6],    1)
+    QUICK_CHECK_EQUALS(Arr1[7],   10)
+    QUICK_CHECK_EQUALS(Arr1[8],  100)
+    QUICK_CHECK_EQUALS(Arr1[9], 1000)
+    QUICK_CHECK_EQUALS(*Arr1.GetLast(),  59)
+    QUICK_CHECK_EQUALS(*Arr1.GetFirst(), -5)
 
-    Arr.Empty();
-    CHECK_EQUALS( "Array with zero size.", Arr.GetSize(),              0 )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetCapacity(),          0 )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetData(),        nullptr )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetSlack(),       nullptr )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetFirst(),       nullptr )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetLast(),        nullptr )
+    Arr1.Empty();
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetSize(),              0 )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetCapacity(),          0 )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetData(),        nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetSlack(),       nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetFirst(),       nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetLast(),        nullptr )
 
-    Arr = { 100, 101, 102, 103, 104 };
-    CHECK_EQUALS( "Array with std::initializer_list.", Arr.GetSize(),      5 )
-    CHECK_EQUALS( "Array with std::initializer_list.", Arr[0],           100 )
-    CHECK_EQUALS( "Array with std::initializer_list.", Arr[1],           101 )
-    CHECK_EQUALS( "Array with std::initializer_list.", Arr[2],           102 )
-    CHECK_EQUALS( "Array with std::initializer_list.", Arr[3],           103 )
-    CHECK_EQUALS( "Array with std::initializer_list.", Arr[4],           104 )
+    Arr1 = { 100, 101, 102, 103, 104 };
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr1.GetSize(),      5 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr1[0],           100 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr1[1],           101 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr1[2],           102 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr1[3],           103 )
+    CHECK_EQUALS( "Array with std::initializer_list.", Arr1[4],           104 )
 
     TArrayBase<i32> Arr2 = { 200, 201, 202, 203, 204 };
     CHECK_EQUALS( "Array with std::initializer_list.", Arr2.GetSize(),   5 )
@@ -83,13 +83,13 @@ TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
     CHECK_EQUALS( "Array with std::initializer_list.", Arr2[4],        204 )
 
     void* DataPtr = Arr2.GetData();
-    Arr2 = Arr;
-    CHECK_EQUALS( "Array copied.", Arr.GetSize(),          5 )
-    CHECK_EQUALS( "Array copied.", Arr[0],               100 )
-    CHECK_EQUALS( "Array copied.", Arr[1],               101 )
-    CHECK_EQUALS( "Array copied.", Arr[2],               102 )
-    CHECK_EQUALS( "Array copied.", Arr[3],               103 )
-    CHECK_EQUALS( "Array copied.", Arr[4],               104 )
+    Arr2 = Arr1;
+    CHECK_EQUALS( "Array copied.", Arr1.GetSize(),         5 )
+    CHECK_EQUALS( "Array copied.", Arr1[0],              100 )
+    CHECK_EQUALS( "Array copied.", Arr1[1],              101 )
+    CHECK_EQUALS( "Array copied.", Arr1[2],              102 )
+    CHECK_EQUALS( "Array copied.", Arr1[3],              103 )
+    CHECK_EQUALS( "Array copied.", Arr1[4],              104 )
     CHECK_EQUALS( "Array copied.", Arr2.GetSize(),         5 )
     CHECK_EQUALS( "Array copied.", Arr2[0],              100 )
     CHECK_EQUALS( "Array copied.", Arr2[1],              101 )
@@ -106,21 +106,21 @@ TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
     CHECK_EQUALS( "Array with zero size.", Arr2.GetFirst(),       nullptr )
     CHECK_EQUALS( "Array with zero size.", Arr2.GetLast(),        nullptr )
 
-    DataPtr = Arr.GetData();
-    Arr2 = std::move(Arr);
-    CHECK_EQUALS( "Array moved.", Arr.GetSize(),              0 )
-    CHECK_EQUALS( "Array moved.", Arr.GetCapacity(),          0 )
-    CHECK_EQUALS( "Array moved.", Arr.GetData(),        nullptr )
-    CHECK_EQUALS( "Array moved.", Arr.GetSlack(),       nullptr )
-    CHECK_EQUALS( "Array moved.", Arr.GetFirst(),       nullptr )
-    CHECK_EQUALS( "Array moved.", Arr.GetLast(),        nullptr )
-    CHECK_EQUALS( "Array moved.", Arr2.GetSize(),             5 )
-    CHECK_EQUALS( "Array moved.", Arr2[0],                  100 )
-    CHECK_EQUALS( "Array moved.", Arr2[1],                  101 )
-    CHECK_EQUALS( "Array moved.", Arr2[2],                  102 )
-    CHECK_EQUALS( "Array moved.", Arr2[3],                  103 )
-    CHECK_EQUALS( "Array moved.", Arr2[4],                  104 )
-    CHECK_EQUALS( "Array moved.", Arr2.GetData(),       DataPtr )
+    DataPtr = Arr1.GetData();
+    Arr2 = std::move(Arr1);
+    CHECK_EQUALS( "Array moved.", Arr1.GetSize(),              0 )
+    CHECK_EQUALS( "Array moved.", Arr1.GetCapacity(),          0 )
+    CHECK_EQUALS( "Array moved.", Arr1.GetData(),        nullptr )
+    CHECK_EQUALS( "Array moved.", Arr1.GetSlack(),       nullptr )
+    CHECK_EQUALS( "Array moved.", Arr1.GetFirst(),       nullptr )
+    CHECK_EQUALS( "Array moved.", Arr1.GetLast(),        nullptr )
+    CHECK_EQUALS( "Array moved.", Arr2.GetSize(),              5 )
+    CHECK_EQUALS( "Array moved.", Arr2[0],                   100 )
+    CHECK_EQUALS( "Array moved.", Arr2[1],                   101 )
+    CHECK_EQUALS( "Array moved.", Arr2[2],                   102 )
+    CHECK_EQUALS( "Array moved.", Arr2[3],                   103 )
+    CHECK_EQUALS( "Array moved.", Arr2[4],                   104 )
+    CHECK_EQUALS( "Array moved.", Arr2.GetData(),        DataPtr )
 
     const i32* OtherData = new i32[5]{ 400, 401, 402, 403, 404 };
 
@@ -137,8 +137,8 @@ TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
     CHECK_EQUALS( "Array with raw memory.", Arr2[8],                      103 )
     CHECK_EQUALS( "Array with raw memory.", Arr2[9],                      104 )
 
-    Arr = { 900, 901, 902, 903, 904 };
-    Arr2.AppendAt(1, Arr);
+    Arr1 = { 900, 901, 902, 903, 904 };
+    Arr2.AppendAt(1, Arr1);
     QUICK_CHECK_EQUALS(Arr2.GetSize(),   15 )
     QUICK_CHECK_EQUALS(Arr2[0],         100 )
     QUICK_CHECK_EQUALS(Arr2[1],         900 )
@@ -156,8 +156,8 @@ TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
     QUICK_CHECK_EQUALS(Arr2[13],        103 )
     QUICK_CHECK_EQUALS(Arr2[14],        104 )
 
-    Arr = { 2000, 2001, 2002, 2003, 2004 };
-    Arr2.AppendAt(0, Arr);
+    Arr1 = { 2000, 2001, 2002, 2003, 2004 };
+    Arr2.AppendAt(0, Arr1);
     QUICK_CHECK_EQUALS( Arr2.GetSize(),     20 )
     QUICK_CHECK_EQUALS( Arr2[0],          2000 )
     QUICK_CHECK_EQUALS( Arr2[1],          2001 )
@@ -190,7 +190,7 @@ TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
     QUICK_CHECK_EQUALS( Arr2[23],          403 )
     QUICK_CHECK_EQUALS( Arr2[24],          404 )
 
-    Arr2.AppendAt(Arr2.GetSize(), std::move(Arr)),
+    Arr2.AppendAt(Arr2.GetSize(), std::move(Arr1)),
     QUICK_CHECK_EQUALS( Arr2.GetSize(),     30 )
     QUICK_CHECK_EQUALS( Arr2[0],          2000 )
     QUICK_CHECK_EQUALS( Arr2[19],          104 )
@@ -204,12 +204,12 @@ TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
     QUICK_CHECK_EQUALS( Arr2[27],         2002 )
     QUICK_CHECK_EQUALS( Arr2[28],         2003 )
     QUICK_CHECK_EQUALS( Arr2[29],         2004 )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetSize(),              0 )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetCapacity(),          0 )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetData(),        nullptr )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetSlack(),       nullptr )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetFirst(),       nullptr )
-    CHECK_EQUALS( "Array with zero size.", Arr.GetLast(),        nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetSize(),              0 )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetCapacity(),          0 )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetData(),        nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetSlack(),       nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetFirst(),       nullptr )
+    CHECK_EQUALS( "Array with zero size.", Arr1.GetLast(),        nullptr )
 
     Arr2.Empty();
     CHECK_EQUALS( "Array with zero size.", Arr2.GetSize(),              0 )
@@ -218,6 +218,46 @@ TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
     CHECK_EQUALS( "Array with zero size.", Arr2.GetSlack(),       nullptr )
     CHECK_EQUALS( "Array with zero size.", Arr2.GetFirst(),       nullptr )
     CHECK_EQUALS( "Array with zero size.", Arr2.GetLast(),        nullptr )
+
+    Arr1 = { 1, 2, 3, 4, 5, 10, 20, 30, 40, 50 };
+    QUICK_CHECK_TRUE(   Arr1.Contains( 1) )
+    QUICK_CHECK_TRUE(   Arr1.Contains( 2) )
+    QUICK_CHECK_TRUE(   Arr1.Contains( 3) )
+    QUICK_CHECK_TRUE(   Arr1.Contains( 4) )
+    QUICK_CHECK_TRUE(   Arr1.Contains( 5) )
+    QUICK_CHECK_FALSE(  Arr1.Contains( 6) )
+    QUICK_CHECK_FALSE(  Arr1.Contains( 7) )
+    QUICK_CHECK_TRUE(   Arr1.Contains(50) )
+    QUICK_CHECK_TRUE(   Arr1.Contains(40) )
+    QUICK_CHECK_TRUE(   Arr1.Contains(30) )
+    QUICK_CHECK_FALSE(  Arr1.Contains(51) )
+
+    QUICK_CHECK_TRUE(   Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element ==  1; } ) )
+    QUICK_CHECK_TRUE(   Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element ==  2; } ) )
+    QUICK_CHECK_TRUE(   Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element ==  3; } ) )
+    QUICK_CHECK_TRUE(   Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element ==  4; } ) )
+    QUICK_CHECK_TRUE(   Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element ==  5; } ) )
+    QUICK_CHECK_FALSE(  Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element ==  6; } ) )
+    QUICK_CHECK_FALSE(  Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element ==  7; } ) )
+    QUICK_CHECK_TRUE(   Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element == 50; } ) )
+    QUICK_CHECK_TRUE(   Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element == 40; } ) )
+    QUICK_CHECK_TRUE(   Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element == 30; } ) )
+    QUICK_CHECK_FALSE(  Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element == 51; } ) )
+
+    QUICK_CHECK_EQUALS( Arr1.Remove(1),        1 )
+    QUICK_CHECK_EQUALS( Arr1.Remove(2),        1 )
+    QUICK_CHECK_EQUALS( Arr1.RemoveOnce(3), true )
+    QUICK_CHECK_FALSE(  Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element ==  1; } ) )
+    QUICK_CHECK_FALSE(  Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element ==  2; } ) )
+    QUICK_CHECK_FALSE(  Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element ==  3; } ) )
+    QUICK_CHECK_TRUE(   Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element ==  4; } ) )
+    QUICK_CHECK_TRUE(   Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element ==  5; } ) )
+    QUICK_CHECK_FALSE(  Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element ==  6; } ) )
+    QUICK_CHECK_FALSE(  Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element ==  7; } ) )
+    QUICK_CHECK_TRUE(   Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element == 50; } ) )
+    QUICK_CHECK_TRUE(   Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element == 40; } ) )
+    QUICK_CHECK_TRUE(   Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element == 30; } ) )
+    QUICK_CHECK_FALSE(  Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element == 51; } ) )
 
     delete[] OtherData;
     return;

@@ -52,9 +52,9 @@ enum : i8 { POINTER_BYTE_SIZE = sizeof(LPtrSize) };
     static_assert(POINTER_BYTE_SIZE == 8, "POINTER_BYTE_SIZE is not 8 bytes.");
 #endif /* PLATFORM_USES_64_BIT */
 
-typedef i64  LBigSizeTy;
+typedef i64 LBigSizeTy;
 typedef u64 LuBigSizeTy;
-typedef i32  LSizeTy;
+typedef i32 LSizeTy;
 
 #define JTXTW(x)        LITERAL_WIDE(x)
 #define JTXT8(x)        LITERAL_UTF8(x)

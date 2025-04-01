@@ -45,6 +45,8 @@ struct TArrayAllocator
     void Grow() noexcept;
     void Grow(const SizeType InAmount) noexcept;
 
+    void Shrink() noexcept;
+
     void Orphan() noexcept;
 
     T* Data;
@@ -52,6 +54,14 @@ struct TArrayAllocator
     T* End;
 };
 
+/**
+ * An array container that may use any form of allocated memory.
+ *
+ * This container checks OOB accesses during debug and development builds but will not check in release builds.
+ *
+ * This array may not handle complex types that require move semantics as it was designed to be a fast and simple
+ * container for extreme fast-paced memory read and write operations.
+ */
 template <typename InT, typename InAlloc = TArrayAllocator<InT, i32>>
 class TArrayBase
 {
@@ -76,20 +86,20 @@ public:
     FORCEINLINE Self& operator=(Self&& InOther) noexcept { Self::Move(*this, std::move(InOther)); return *this; }
     FORCEINLINE Self& operator=(std::initializer_list<T> InList) noexcept;
 
-    FORCEINLINE SizeType GetSize()     const noexcept { return this->Impl.Slack - this->Impl.Data;  }
-    FORCEINLINE bool     IsEmpty()     const noexcept { return this->Impl.Data == this->Impl.Slack; }
-    FORCEINLINE SizeType GetCapacity() const noexcept { return this->Impl.End - this->Impl.Data;   }
-    FORCEINLINE bool     IsData()      const noexcept { return this->Impl.Data  != nullptr; }
-    FORCEINLINE bool     IsSlack()     const noexcept { return this->Impl.Slack != nullptr; }
-    FORCEINLINE       T* GetData()           noexcept { return this->Impl.Data; }
-    FORCEINLINE const T* GetData()     const noexcept { return this->Impl.Data; }
-    FORCEINLINE       T* GetSlack()          noexcept { return this->Impl.Slack; }
-    FORCEINLINE const T* GetSlack()    const noexcept { return this->Impl.Slack; }
-    FORCEINLINE       T* GetFirst()          noexcept { return this->GetSize() > 0 ? this->Impl.Data  : nullptr; }
-    FORCEINLINE const T* GetFirst()    const noexcept { return this->GetSize() > 0 ? this->Impl.Data  : nullptr; }
-    FORCEINLINE       T* GetLast()           noexcept { return this->GetSize() > 0 ? this->Impl.Slack - 1: nullptr; }
-    FORCEINLINE const T* GetLast()     const noexcept { return this->GetSize() > 0 ? this->Impl.Slack - 1: nullptr; }
-    FORCEINLINE bool     IsCapped()    const noexcept { return this->Impl.Slack == this->Impl.End; }
+    NODISCARD FORCEINLINE SizeType GetSize()     const noexcept { return this->Impl.Slack - this->Impl.Data;  }
+    NODISCARD FORCEINLINE bool     IsEmpty()     const noexcept { return this->Impl.Data == this->Impl.Slack; }
+    NODISCARD FORCEINLINE SizeType GetCapacity() const noexcept { return this->Impl.End - this->Impl.Data;   }
+    NODISCARD FORCEINLINE bool     IsData()      const noexcept { return this->Impl.Data  != nullptr; }
+    NODISCARD FORCEINLINE bool     IsSlack()     const noexcept { return this->Impl.Slack != nullptr; }
+    NODISCARD FORCEINLINE       T* GetData()           noexcept { return this->Impl.Data; }
+    NODISCARD FORCEINLINE const T* GetData()     const noexcept { return this->Impl.Data; }
+    NODISCARD FORCEINLINE       T* GetSlack()          noexcept { return this->Impl.Slack; }
+    NODISCARD FORCEINLINE const T* GetSlack()    const noexcept { return this->Impl.Slack; }
+    NODISCARD FORCEINLINE       T* GetFirst()          noexcept { return this->GetSize() > 0 ? this->Impl.Data  : nullptr; }
+    NODISCARD FORCEINLINE const T* GetFirst()    const noexcept { return this->GetSize() > 0 ? this->Impl.Data  : nullptr; }
+    NODISCARD FORCEINLINE       T* GetLast()           noexcept { return this->GetSize() > 0 ? this->Impl.Slack - 1: nullptr; }
+    NODISCARD FORCEINLINE const T* GetLast()     const noexcept { return this->GetSize() > 0 ? this->Impl.Slack - 1: nullptr; }
+    NODISCARD FORCEINLINE bool     IsCapped()    const noexcept { return this->Impl.Slack == this->Impl.End; }
 
     FORCEINLINE bool IsValidIndex(const SizeType InIndex) const noexcept { return InIndex > INDEX_NONE && InIndex < this->GetSize(); }
 
@@ -100,19 +110,63 @@ public:
      * Will reserve memory for the array such that the buffer can hold at least InAmount elements.
      * This action cannot perform a shrink under the hood.
      */
-    void Reserve(const SizeType InAmount) noexcept { this->Grow(InAmount); }
+    FORCEINLINE void Reserve(const SizeType InAmount) noexcept { this->Grow(InAmount); }
 
     /**
      * Will clear out all elements in the array and set the size to zero. It will not deallocate or reallocate
      * the current memory buffer unless the InReserve parameter is greater than the current capacity and growing
      * the current memory buffer is not possible.
      */
-    void Reset(const SizeType InAmount) noexcept;
+    FORCEINLINE void Reset(const SizeType InAmount) noexcept;
+
+    /**
+     * Try to shrink the array to the current size or reallocate the array to the new size.
+     */
+    FORCEINLINE void Shrink() noexcept { this->Impl.Shrink(); }
 
     /**
      * Completely empties the array and sets the size to zero. The memory buffer will be orphaned.
      */
-    void Empty() noexcept { this->Impl.Orphan(); }
+    FORCEINLINE void Empty() noexcept { this->Impl.Orphan(); }
+
+    /**
+     * Swaps the content buffers of this array with the other array.
+     */
+    FORCEINLINE void SwapBuffers(Self& InOther) noexcept;
+
+    /**
+     * Swap two indices in the array.
+     */
+    FORCEINLINE void SwapIndices(const SizeType InIndexA, const SizeType InIndexB) noexcept;
+
+    /**
+     * Do not use std operators as ...
+     *    - they are ambiguous in terms of meaning (compare by size, value or reference?).
+     *    - we might accidentally do comparisons inside templated paths of arrays that are very expensive in terms of
+     *      runtime performance.
+     * Better be explicit about it with the named functions #EqualSize, #IsSameArray and #IsDataEqual.
+     */
+    FORCEINLINE bool operator==(      Self& InOther)       noexcept = delete;
+    FORCEINLINE bool operator==(const Self& InOther) const noexcept = delete;
+    FORCEINLINE bool operator!=(      Self& InOther)       noexcept = delete;
+    FORCEINLINE bool operator!=(const Self& InOther) const noexcept = delete;
+
+    FORCEINLINE bool operator <(const Self& InOther) const noexcept { return this->GetSize()  < InOther.GetSize(); }
+    FORCEINLINE bool operator >(const Self& InOther) const noexcept { return this->GetSize()  > InOther.GetSize(); }
+    FORCEINLINE bool operator<=(const Self& InOther) const noexcept { return this->GetSize() <= InOther.GetSize(); }
+    FORCEINLINE bool operator>=(const Self& InOther) const noexcept { return this->GetSize() >= InOther.GetSize(); }
+    FORCEINLINE bool EqualSize (const Self& InOther) const noexcept { return this->GetSize() == InOther.GetSize(); }
+
+    /**
+     * Checks if both instances point to the same memory location.
+     */
+    NODISCARD FORCEINLINE bool IsSameArray(const Self& InOther) const noexcept { return this->Impl.Data == InOther.Impl.Data; }
+
+    /**
+     * Checks if both instances have the same meaningful data. The capacity is not checked.
+     */
+    NODISCARD FORCEINLINE bool IsDataEqual(const Self& InOther) const noexcept;
+    NODISCARD FORCEINLINE bool IsDataUnequal(const Self& InOther) const noexcept { return !this->IsDataEqual(InOther); }
 
     /**
      * Add a new element to the array while potentially reallocating the whole array to fit.
@@ -135,9 +189,9 @@ public:
      * @return The index of the newly added element.
      */
     template <typename ... InTArgs>
-    SizeType Emplace(InTArgs&&... InArgs) noexcept;
+    FORCEINLINE SizeType Emplace(InTArgs&&... InArgs) noexcept;
     template <typename ... InTArgs>
-    void EmplaceAt(const SizeType InIndex, InTArgs&&... InArgs) noexcept;
+    FORCEINLINE void EmplaceAt(const SizeType InIndex, InTArgs&&... InArgs) noexcept;
 
     /**
      * Appends new elements to the array while potentially reallocating the whole array to fit.
@@ -149,6 +203,86 @@ public:
     void AppendAt(const SizeType InIndex, Self&& InOther) noexcept;
     void AppendAt(      SizeType InIndex, const T* InElements, const SizeType InCount) noexcept;
 
+    FORCEINLINE void RemoveAt(const SizeType InIndex) noexcept;
+    FORCEINLINE void RemoveAt(const SizeType InIndex, const SizeType InCount) noexcept;
+
+    FORCEINLINE SizeType Remove(const T& InElement) noexcept;
+    FORCEINLINE bool     RemoveOnce(const T& InElement) noexcept;
+    FORCEINLINE bool     RemoveOnceChecked(const T& InElement) noexcept { const bool bOut = this->RemoveOnce(InElement); check(bOut); return bOut; }
+    FORCEINLINE bool     RemoveOnceAsserted(const T& InElement) noexcept { const bool bOut = this->RemoveOnce(InElement); jassert(bOut); return bOut; }
+
+    template <typename InOtherElement>
+    FORCEINLINE SizeType Remove(const InOtherElement& InElement) noexcept;
+    template <typename InOtherElement>
+    FORCEINLINE bool     RemoveOnce(const InOtherElement& InElement) noexcept;
+    template <typename InOtherElement>
+    FORCEINLINE bool     RemoveOnceChecked(const InOtherElement& InElement) noexcept { const bool bOut = this->RemoveOnce(InElement); check(bOut); return bOut; }
+    template <typename InOtherElement>
+    FORCEINLINE bool     RemoveOnceAsserted(const InOtherElement& InElement) noexcept { const bool bOut = this->RemoveOnce(InElement); jassert(bOut); return bOut; }
+
+    template <typename Predicate>
+    FORCEINLINE SizeType RemoveByPredicate(const Predicate& InPredicate) noexcept;
+    template <typename Predicate>
+    FORCEINLINE bool     RemoveOnceByPredicate(const Predicate& InPredicate) noexcept;
+    template <typename Predicate>
+    FORCEINLINE bool     RemoveOnceByPredicateChecked(const Predicate& InPredicate) noexcept { const bool bOut = this->RemoveOnceByPredicate(InPredicate); check(bOut); return bOut; }
+    template <typename Predicate>
+    FORCEINLINE bool     RemoveOnceByPredicateAsserted(const Predicate& InPredicate) noexcept { const bool bOut = this->RemoveOnceByPredicate(InPredicate); jassert(bOut); return bOut; }
+
+    FORCEINLINE SizeType Find(const T& InElement, T** OutElement) noexcept;
+    FORCEINLINE SizeType Find(const T& InElement, const T** OutElement) const noexcept { return const_cast<Self*>(this)->Find(InElement, OutElement); }
+    FORCEINLINE SizeType Find(const T& InElement) const noexcept;
+
+    template <typename InOtherElement>
+    FORCEINLINE SizeType Find(const InOtherElement& InElement, T** OutElement) noexcept;
+    template <typename InOtherElement>
+    FORCEINLINE SizeType Find(const InOtherElement& InElement, const T** OutElement) const noexcept { return const_cast<Self*>(this)->Find(InElement, OutElement); }
+    template <typename InOtherElement>
+    FORCEINLINE SizeType Find(const InOtherElement& InElement) const noexcept;
+
+    template <typename Predicate>
+    FORCEINLINE SizeType FindByPredicate(const Predicate& InPredicate, T** OutElement) const noexcept;
+    template <typename Predicate>
+    FORCEINLINE SizeType FindByPredicate(const Predicate& InPredicate, const T** OutElement) const noexcept { return const_cast<Self*>(this)->FindByPredicate(InPredicate, OutElement); }
+    template <typename Predicate>
+    FORCEINLINE SizeType FindByPredicate(const Predicate& InPredicate) const noexcept;
+
+    FORCEINLINE       T* FindRef(const T& InElement, SizeType* OutIndex) noexcept;
+    FORCEINLINE const T* FindRef(const T& InElement, SizeType* OutIndex) const noexcept { return const_cast<Self*>(this)->FindRef(InElement, OutIndex); }
+    FORCEINLINE       T* FindRef(const T& InElement) noexcept;
+    FORCEINLINE const T* FindRef(const T& InElement) const noexcept { return const_cast<Self*>(this)->FindRef(InElement); }
+
+    template <typename InOtherElement>
+    FORCEINLINE      T* FindRef(const InOtherElement& InElement, SizeType* OutIndex) noexcept;
+    template <typename InOtherElement>
+    FORCEINLINE const T* FindRef(const InOtherElement& InElement, SizeType* OutIndex) const noexcept { return const_cast<Self*>(this)->FindRef(InElement, OutIndex); }
+    template <typename InOtherElement>
+    FORCEINLINE       T* FindRef(const InOtherElement& InElement) noexcept;
+    template <typename InOtherElement>
+    FORCEINLINE const T* FindRef(const InOtherElement& InElement) const noexcept { return const_cast<Self*>(this)->FindRef(InElement); }
+
+    template <typename Predicate>
+    FORCEINLINE       T* FindRefByPredicate(const Predicate& InPredicate, SizeType* OutIndex) const noexcept;
+    template <typename Predicate>
+    FORCEINLINE const T* FindRefByPredicate(const Predicate& InPredicate, SizeType* OutIndex) const noexcept { return const_cast<Self*>(this)->FindRefByPredicate(InPredicate, OutIndex); }
+    template <typename Predicate>
+    FORCEINLINE       T* FindRefByPredicate(const Predicate& InPredicate) const noexcept;
+    template <typename Predicate>
+    FORCEINLINE const T* FindRefByPredicate(const Predicate& InPredicate) const noexcept { return const_cast<Self*>(this)->FindRefByPredicate(InPredicate); }
+
+    FORCEINLINE bool Contains(const T& InElement) const noexcept;
+    template <typename InOtherElement>
+    FORCEINLINE bool Contains(const InOtherElement& InElement) const noexcept;
+    template <typename Predicate>
+    FORCEINLINE bool ContainsByPredicate(const Predicate& InPredicate) const noexcept;
+
+    /** Peeks at the last element in the array. Returns nullptr if the array is empty. */
+    FORCEINLINE       T* Peek()       noexcept { return this->GetLast(); }
+    FORCEINLINE const T* Peek() const noexcept { return this->GetLast(); }
+    /** Removes the last element in the array. */
+    FORCEINLINE void Pop() noexcept;
+    FORCEINLINE void Pop(SizeType InCount) noexcept;
+
     /** Private iterator functions for range-based loops. Do not use these directly. */
     FORCEINLINE Iterator<T>       begin()       noexcept { return Iterator<T>      (this->Impl.Data);  }
     FORCEINLINE Iterator<const T> begin() const noexcept { return Iterator<const T>(this->Impl.Data);  }
@@ -157,11 +291,13 @@ public:
 
 private:
 
-    void Grow() noexcept { this->Impl.Grow(); }
-    void Grow(const SizeType InAmount) noexcept { this->Impl.Grow(InAmount); }
+    FORCEINLINE void Grow() noexcept { this->Impl.Grow(); }
+    FORCEINLINE void Grow(const SizeType InAmount) noexcept { this->Impl.Grow(InAmount); }
 
-    static void Copy(Self& Dst, const Self& Src) noexcept { Dst.Impl = Src.Impl; }
-    static void Move(Self& Dst, Self&& Src) noexcept { Dst.Impl = std::move(Src.Impl); }
+    FORCEINLINE static void Copy(Self& Dst, const Self& Src) noexcept { Dst.Impl = Src.Impl; }
+    FORCEINLINE static void Move(Self& Dst, Self&& Src) noexcept { Dst.Impl = std::move(Src.Impl); }
+
+    FORCEINLINE void DestroyAt(const SizeType InIndex) noexcept;
 
     Alloc Impl;
 };
@@ -252,22 +388,40 @@ void TArrayAllocator<InT, InSizeType, InTraits>::Grow() noexcept
 
     if (this->Data == nullptr)
     {
+#if WITH_GCC
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+        #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
         this->Data  = static_cast<T*>(::malloc(NewCapacity * sizeof(T)));
+#if WITH_GCC
+        #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
         this->Slack = this->Data;
         this->End   = this->Data + NewCapacity;
 
-        JAFG_CHECK_ARRAY(this->Data)
+        JAFG_CHECK_ARRAY( this->Data )
 
         return;
     }
 
     const SizeType UsedSize = this->Slack - this->Data;
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
     this->Data  = static_cast<T*>(::realloc(this->Data, NewCapacity * sizeof(T)));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
     this->Slack = this->Data + UsedSize;
     this->End   = this->Data + NewCapacity;
 
-    JAFG_CHECK_ARRAY(this->Data)
+    JAFG_CHECK_ARRAY( this->Data )
 
     return;
 }
@@ -282,7 +436,16 @@ void TArrayAllocator<InT, InSizeType, InTraits>::Grow(const SizeType InAmount) n
 
     if (this->Data == nullptr)
     {
+#if WITH_GCC
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+        #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
         this->Data  = static_cast<T*>(::malloc(InAmount * sizeof(T)));
+#if WITH_GCC
+        #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
         this->Slack = this->Data;
         this->End   = this->Data + InAmount;
 
@@ -293,11 +456,54 @@ void TArrayAllocator<InT, InSizeType, InTraits>::Grow(const SizeType InAmount) n
 
     const SizeType UsedSize = this->Slack - this->Data;
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
     this->Data  = static_cast<T*>(::realloc(this->Data, InAmount * sizeof(T)));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
     this->Slack = this->Data + UsedSize;
     this->End   = this->Data + InAmount;
 
     JAFG_CHECK_ARRAY(this->Data)
+
+    return;
+}
+
+template<typename InT, typename InSizeType, typename InTraits>
+void TArrayAllocator<InT, InSizeType, InTraits>::Shrink() noexcept
+{
+    if (this->Data == nullptr)
+    {
+        return;
+    }
+
+    const SizeType UsedSize = this->Slack - this->Data;
+
+    if (UsedSize == 0)
+    {
+        this->Orphan();
+        return;
+    }
+
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
+    this->Data  = static_cast<T*>(::realloc(this->Data, UsedSize * sizeof(T)));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
+    this->Slack = this->Data + UsedSize;
+    this->End   = this->Data + UsedSize;
+
+    JAFG_CHECK_ARRAY( this->Data )
 
     return;
 }
@@ -377,7 +583,7 @@ FORCEINLINE const typename TArrayBase<InT, InAlloc>::T& TArrayBase<InT, InAlloc>
 }
 
 template<typename InT, typename InAlloc>
-void TArrayBase<InT, InAlloc>::Reset(const SizeType InAmount) noexcept
+FORCEINLINE void TArrayBase<InT, InAlloc>::Reset(const SizeType InAmount) noexcept
 {
     this->Reserve(InAmount);
 
@@ -391,6 +597,75 @@ void TArrayBase<InT, InAlloc>::Reset(const SizeType InAmount) noexcept
     checkSlow( this->Impl.Slack <= this->Impl.End )
 
     return;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE void TArrayBase<InT, InAlloc>::SwapBuffers(Self& InOther) noexcept
+{
+    check( this != &InOther )
+
+    T* TempData  = this->Impl.Data;
+    T* TempSlack = this->Impl.Slack;
+    T* TempEnd   = this->Impl.End;
+
+    this->Impl.Data  = InOther.Impl.Data;
+    this->Impl.Slack = InOther.Impl.Slack;
+    this->Impl.End   = InOther.Impl.End;
+
+    InOther.Impl.Data  = TempData;
+    InOther.Impl.Slack = TempSlack;
+    InOther.Impl.End   = TempEnd;
+
+    return;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE void TArrayBase<InT, InAlloc>::SwapIndices(const SizeType InIndexA, const SizeType InIndexB) noexcept
+{
+    check( this->IsValidIndex(InIndexA) && this->IsValidIndex(InIndexB) )
+
+    if (InIndexA == InIndexB)
+    {
+        return;
+    }
+
+    alignas(T)
+    u8 Temp[sizeof(T)];
+
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
+    ::memcpy(Temp,                       this->Impl.Data + InIndexA, sizeof(T));
+    ::memcpy(this->Impl.Data + InIndexA, this->Impl.Data + InIndexB, sizeof(T));
+    ::memcpy(this->Impl.Data + InIndexB, Temp,                       sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
+    return;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE bool TArrayBase<InT, InAlloc>::IsDataEqual(const Self& InOther) const noexcept
+{
+    if (this->GetSize() != InOther.GetSize())
+    {
+        return false;
+    }
+
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] != InOther.Impl.Data[Index])
+        {
+            return false;
+        }
+
+        continue;
+    }
+
+    return true;
 }
 
 template<typename InT, typename InAlloc>
@@ -436,7 +711,16 @@ void TArrayBase<InT, InAlloc>::AddAt(const SizeType InIndex, const T& InElement)
 
     this->AddUninitialized();
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
     ::memmove(this->Impl.Data + InIndex + 1, this->Impl.Data + InIndex, (this->GetSize() - InIndex - 1) * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
     std::construct_at(this->Impl.Data + InIndex, std::forward<T>(InElement));
 
     return;
@@ -455,7 +739,16 @@ void TArrayBase<InT, InAlloc>::AddAt(const SizeType InIndex, T&& InElement) noex
 
     this->AddUninitialized();
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
     ::memmove(this->Impl.Data + InIndex + 1, this->Impl.Data + InIndex, (this->GetSize() - InIndex - 1) * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
     std::construct_at(this->Impl.Data + InIndex, std::forward<T>(InElement));
 
     return;
@@ -500,7 +793,15 @@ typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::AddZeroed(
         this->Grow();
     }
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
     ::memset(this->Impl.Slack++, 0, sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
 
     checkSlow( this->Impl.Slack <= this->Impl.End )
 
@@ -512,7 +813,16 @@ void TArrayBase<InT, InAlloc>::AddZeroed(const SizeType InCount) noexcept
 {
     this->Reserve(InCount);
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
     ::memset(this->Impl.Slack, 0, InCount * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
     this->Impl.Slack += InCount;
 
     checkSlow( this->Impl.Slack <= this->Impl.End )
@@ -548,7 +858,7 @@ void TArrayBase<InT, InAlloc>::AddUninitialized(const SizeType InCount) noexcept
 
 template<typename InT, typename InAlloc>
 template<typename ... InTArgs>
-typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::Emplace(InTArgs&&... InArgs) noexcept
+FORCEINLINE typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::Emplace(InTArgs&&... InArgs) noexcept
 {
     if (this->IsCapped())
     {
@@ -562,7 +872,7 @@ typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::Emplace(In
 
 template<typename InT, typename InAlloc>
 template<typename ... InTArgs>
-void TArrayBase<InT, InAlloc>::EmplaceAt(const SizeType InIndex, InTArgs&&... InArgs) noexcept
+FORCEINLINE void TArrayBase<InT, InAlloc>::EmplaceAt(const SizeType InIndex, InTArgs&&... InArgs) noexcept
 {
     if (this->GetSize() == InIndex)
     {
@@ -574,7 +884,16 @@ void TArrayBase<InT, InAlloc>::EmplaceAt(const SizeType InIndex, InTArgs&&... In
 
     this->AddUninitialized();
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
     ::memmove(this->Impl.Data + InIndex + 1, this->Impl.Data + InIndex, (this->GetSize() - InIndex - 1) * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
     std::construct_at(this->Impl.Data + InIndex, std::forward<InTArgs>(InArgs)...);
 
     return;
@@ -605,7 +924,16 @@ void TArrayBase<InT, InAlloc>::Append(Self&& InOther) noexcept
     {
         this->Reserve(this->GetSize() + InOther.GetSize());
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
         ::memcpy(this->Impl.Slack, InOther.Impl.Data, InOther.GetSize() * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
         this->Impl.Slack += InOther.GetSize();
 
         InOther.Impl.Slack = InOther.Impl.Data;
@@ -645,7 +973,16 @@ void TArrayBase<InT, InAlloc>::AppendAt(const SizeType InIndex, const Self& InOt
 
     this->Reserve(this->GetSize() + InOther.GetSize());
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
     ::memmove(this->Impl.Data + InIndex + InOther.GetSize(), this->Impl.Data + InIndex, (this->GetSize() - InIndex) * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
     T* Me = this->Impl.Data + InIndex;
     for (const T* RESTRICT Bulk = InOther.Impl.Data; Bulk != InOther.Impl.Slack; ++Bulk)
     {
@@ -669,8 +1006,17 @@ void TArrayBase<InT, InAlloc>::AppendAt(const SizeType InIndex, Self&& InOther) 
 
     this->Reserve(this->GetSize() + InOther.GetSize());
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
     ::memmove(this->Impl.Data + InIndex + InOther.GetSize(), this->Impl.Data + InIndex, (this->GetSize() - InIndex) * sizeof(T));
     ::memcpy(this->Impl.Data + InIndex, InOther.Impl.Data, InOther.GetSize() * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
     this->Impl.Slack = this->Impl.Data + this->GetSize() + InOther.GetSize();
 
     InOther.Impl.Slack = InOther.Impl.Data;
@@ -691,7 +1037,16 @@ void TArrayBase<InT, InAlloc>::AppendAt(SizeType InIndex, const T* InElements, c
 
     this->Reserve(this->GetSize() + InCount);
 
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
     ::memmove(this->Impl.Data + InIndex + InCount, this->Impl.Data + InIndex, (this->GetSize() - InIndex) * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+
     for (const T* RESTRICT Bulk = InElements; Bulk != InElements + InCount; ++Bulk)
     {
         std::construct_at(this->Impl.Data + InIndex, *Bulk);
@@ -701,6 +1056,500 @@ void TArrayBase<InT, InAlloc>::AppendAt(SizeType InIndex, const T* InElements, c
 
     checkSlow( this->Impl.Slack <= this->Impl.End )
 
+    return;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE void TArrayBase<InT, InAlloc>::RemoveAt(const SizeType InIndex) noexcept
+{
+    check( this->IsValidIndex(InIndex) )
+
+    this->DestroyAt(InIndex);
+
+    if (InIndex < this->GetSize() - 1)
+    {
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
+        ::memmove(this->Impl.Data + InIndex, this->Impl.Data + InIndex + 1, (this->GetSize() - InIndex - 1) * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+    }
+
+    --this->Impl.Slack;
+
+    checkSlow( this->Impl.Slack <= this->Impl.End )
+
+    return;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE void TArrayBase<InT, InAlloc>::RemoveAt(const SizeType InIndex, const SizeType InCount) noexcept
+{
+    check( InCount > 0 && InIndex >= 0 && this->IsValidIndex(InIndex + InCount) )
+
+    for (SizeType Index = InIndex; Index < InIndex + InCount; ++Index)
+    {
+        this->DestroyAt(Index);
+    }
+
+    if (InIndex + InCount < this->GetSize() - 1)
+    {
+#if WITH_GCC
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
+    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* WITH_GCC */
+        ::memmove(this->Impl.Data + InIndex, this->Impl.Data + InIndex + InCount, (this->GetSize() - InIndex - InCount) * sizeof(T));
+#if WITH_GCC
+    #pragma GCC diagnostic pop
+#endif /* WITH_GCC */
+    }
+
+    this->Impl.Slack -= InCount;
+
+    checkSlow( this->Impl.Slack <= this->Impl.End )
+
+    return;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::Remove(const T& InElement) noexcept
+{
+    SizeType Removed = 0;
+
+    for (SizeType Index = 0; Index < this->GetSize();)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            this->RemoveAt(Index);
+            ++Removed;
+        }
+        else
+        {
+            ++Index;
+        }
+
+        continue;
+    }
+
+    return Removed;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE bool TArrayBase<InT, InAlloc>::RemoveOnce(const T& InElement) noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            this->RemoveAt(Index);
+            return true;
+        }
+
+        continue;
+    }
+
+    return false;
+}
+
+template<typename InT, typename InAlloc>
+template<typename InOtherElement>
+FORCEINLINE typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::Remove(const InOtherElement& InElement) noexcept
+{
+    SizeType Removed = 0;
+
+    for (SizeType Index = 0; Index < this->GetSize();)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            this->RemoveAt(Index);
+            ++Removed;
+        }
+        else
+        {
+            ++Index;
+        }
+
+        continue;
+    }
+
+    return Removed;
+}
+
+template<typename InT, typename InAlloc>
+template<typename InOtherElement>
+FORCEINLINE bool TArrayBase<InT, InAlloc>::RemoveOnce(const InOtherElement& InElement) noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            this->RemoveAt(Index);
+            return true;
+        }
+
+        continue;
+    }
+
+    return false;
+}
+
+template<typename InT, typename InAlloc>
+template<typename Predicate>
+FORCEINLINE typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::RemoveByPredicate(const Predicate& InPredicate) noexcept
+{
+    const SizeType Removed = 0;
+
+    for (SizeType Index = 0; Index < this->GetSize();)
+    {
+        if (InPredicate(this->Impl.Data[Index]))
+        {
+            this->RemoveAt(Index);
+            ++Removed;
+        }
+        else
+        {
+            ++Index;
+        }
+
+        continue;
+    }
+
+    return Removed;
+}
+
+template<typename InT, typename InAlloc>
+template<typename Predicate>
+FORCEINLINE bool TArrayBase<InT, InAlloc>::RemoveOnceByPredicate(const Predicate& InPredicate) noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (InPredicate(this->Impl.Data[Index]))
+        {
+            this->RemoveAt(Index);
+            return true;
+        }
+
+        continue;
+    }
+
+    return false;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::Find(const T& InElement, T** OutElement) noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            if (OutElement)
+            {
+                *OutElement = this->Impl.Data[Index];
+            }
+
+            return Index;
+        }
+
+        continue;
+    }
+
+    return INDEX_NONE;
+}
+
+template<typename InT, typename InAlloc>
+typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::Find(const T& InElement) const noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            return Index;
+        }
+
+        continue;
+    }
+
+    return INDEX_NONE;
+}
+
+template<typename InT, typename InAlloc>
+template<typename InOtherElement>
+FORCEINLINE typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::Find(const InOtherElement& InElement, T** OutElement) noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            if (OutElement)
+            {
+                *OutElement = this->Impl.Data[Index];
+            }
+
+            return Index;
+        }
+
+        continue;
+    }
+
+    return INDEX_NONE;
+}
+
+template<typename InT, typename InAlloc>
+template<typename InOtherElement>
+typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::Find(const InOtherElement& InElement) const noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            return Index;
+        }
+
+        continue;
+    }
+
+    return INDEX_NONE;
+}
+
+template<typename InT, typename InAlloc>
+template<typename Predicate>
+FORCEINLINE typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::FindByPredicate(const Predicate& InPredicate, T** OutElement) const noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (InPredicate(this->Impl.Data[Index]))
+        {
+            if (OutElement)
+            {
+                *OutElement = this->Impl.Data[Index];
+            }
+
+            return Index;
+        }
+
+        continue;
+    }
+
+    return INDEX_NONE;
+}
+
+template<typename InT, typename InAlloc>
+template<typename Predicate>
+typename TArrayBase<InT, InAlloc>::SizeType TArrayBase<InT, InAlloc>::FindByPredicate(const Predicate& InPredicate) const noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (InPredicate(this->Impl.Data[Index]))
+        {
+            return Index;
+        }
+
+        continue;
+    }
+
+    return INDEX_NONE;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE typename TArrayBase<InT, InAlloc>::T* TArrayBase<InT, InAlloc>::FindRef(const T& InElement, SizeType* OutIndex) noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            if (OutIndex)
+            {
+                *OutIndex = Index;
+            }
+
+            return this->Impl.Data + Index;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE typename TArrayBase<InT, InAlloc>::T* TArrayBase<InT, InAlloc>::FindRef(const T& InElement) noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            return this->Impl.Data + Index;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+template<typename InT, typename InAlloc>
+template<typename InOtherElement>
+FORCEINLINE typename TArrayBase<InT, InAlloc>::T* TArrayBase<InT, InAlloc>::FindRef(const InOtherElement& InElement, SizeType* OutIndex) noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            if (OutIndex)
+            {
+                *OutIndex = Index;
+            }
+
+            return this->Impl.Data + Index;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+template<typename InT, typename InAlloc>
+template<typename InOtherElement>
+FORCEINLINE typename TArrayBase<InT, InAlloc>::T* TArrayBase<InT, InAlloc>::FindRef(const InOtherElement& InElement) noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            return this->Impl.Data + Index;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+template<typename InT, typename InAlloc>
+template<typename Predicate>
+typename TArrayBase<InT, InAlloc>::T* TArrayBase<InT, InAlloc>::FindRefByPredicate(const Predicate& InPredicate, SizeType* OutIndex) const noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (InPredicate(this->Impl.Data[Index]))
+        {
+            if (OutIndex)
+            {
+                *OutIndex = Index;
+            }
+
+            return this->Impl.Data + Index;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+template<typename InT, typename InAlloc>
+template<typename Predicate>
+typename TArrayBase<InT, InAlloc>::T* TArrayBase<InT, InAlloc>::FindRefByPredicate(const Predicate& InPredicate) const noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (InPredicate(this->Impl.Data[Index]))
+        {
+            return this->Impl.Data + Index;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE bool TArrayBase<InT, InAlloc>::Contains(const T& InElement) const noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            return true;
+        }
+
+        continue;
+    }
+
+    return false;
+}
+
+template<typename InT, typename InAlloc>
+template<typename InOtherElement>
+FORCEINLINE bool TArrayBase<InT, InAlloc>::Contains(const InOtherElement& InElement) const noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            return true;
+        }
+
+        continue;
+    }
+
+    return false;
+}
+
+template<typename InT, typename InAlloc>
+template<typename Predicate>
+FORCEINLINE bool TArrayBase<InT, InAlloc>::ContainsByPredicate(const Predicate& InPredicate) const noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (InPredicate(this->Impl.Data[Index]))
+        {
+            return true;
+        }
+
+        continue;
+    }
+
+    return false;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE void TArrayBase<InT, InAlloc>::Pop() noexcept
+{
+    if (this->GetSize() > 0)
+    {
+        this->DestroyAt(--this->Impl.Slack);
+    }
+
+    return;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE void TArrayBase<InT, InAlloc>::Pop(SizeType InCount) noexcept
+{
+    while (this->GetSize() > 0 && InCount > 0)
+    {
+        this->DestroyAt(--this->Impl.Slack);
+        --InCount;
+
+        continue;
+    }
+
+    return;
+}
+
+template<typename InT, typename InAlloc>
+FORCEINLINE void TArrayBase<InT, InAlloc>::DestroyAt(const SizeType InIndex) noexcept
+{
+    check( this->IsValidIndex(InIndex) )
+    this->Impl.Data[InIndex].~T();
     return;
 }
 
