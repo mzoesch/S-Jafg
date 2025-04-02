@@ -4,8 +4,6 @@
 
 #include "TestInclude.h"
 
-#include "Containers/JafgArray.h"
-
 TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
 {
     using namespace Jafg;

@@ -2,14 +2,10 @@
 
 #pragma once
 
-#if IN_DEBUG || IN_DEVELOPMENT
+#if DO_CHECKS
     #define CHECK_CONTAINER_BOUNDS          1
-#else /* IN_DEBUG || IN_DEVELOPMENT */
-    #define CHECK_CONTAINER_BOUNDS          0
-#endif /* !(IN_DEBUG || IN_DEVELOPMENT) */
-
-#if IN_DEBUG || IN_DEVELOPMENT
     #define CHECK_STRING_VALIDITY           1
-#else /* IN_DEBUG || IN_DEVELOPMENT */
+#else /* DO_CHECKS */
+    #define CHECK_CONTAINER_BOUNDS          0
     #define CHECK_STRING_VALIDITY           0
-#endif /* !(IN_DEBUG || IN_DEVELOPMENT) */
+#endif /* !DO_CHECKS */

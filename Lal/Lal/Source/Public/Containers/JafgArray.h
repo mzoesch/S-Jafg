@@ -3,13 +3,9 @@
 #pragma once
 
 #if CHECK_CONTAINER_BOUNDS
-    #ifndef JAFG_CHECK_ARRAY
-        #define JAFG_CHECK_ARRAY(Expr)      jassert(Expr)
-    #endif /* JAFG_CHECK_ARRAY */
+    #define JAFG_CHECK_ARRAY(Expr)      jassert(Expr)
 #else /* CHECK_CONTAINER_BOUNDS */
-    #ifndef JAFG_CHECK_ARRAY
-        #define JAFG_CHECK_ARRAY(Expr)
-    #endif /* JAFG_CHECK_ARRAY */
+    #define JAFG_CHECK_ARRAY(Expr)
 #endif /* !CHECK_CONTAINER_BOUNDS */
 
 namespace Jafg
@@ -55,8 +51,11 @@ struct TArrayAllocator
 
     void Orphan() noexcept;
 
+    /** The first element of the data or nullptr. */
     T* Data;
+    /** The first element of the slack or nullptr. */
     T* Slack;
+    /** The first element of unowned memory or nullptr. */
     T* End;
 };
 
@@ -102,6 +101,7 @@ public:
     FORCEINLINE Self& CopyFrom(const Self& InOther, const SizeType InOffset, const SizeType InCount) noexcept;
 
     NODISCARD FORCEINLINE SizeType GetSize()     const noexcept { return this->Impl.Slack - this->Impl.Data;  }
+    NODISCARD FORCEINLINE SizeType GetByteSize() const noexcept { return this->GetSize() * static_cast<SizeType>(sizeof(T)); }
     NODISCARD FORCEINLINE bool     IsEmpty()     const noexcept { return this->Impl.Data == this->Impl.Slack; }
     NODISCARD FORCEINLINE SizeType GetCapacity() const noexcept { return this->Impl.End - this->Impl.Data;   }
     NODISCARD FORCEINLINE bool     IsData()      const noexcept { return this->Impl.Data  != nullptr; }
@@ -143,7 +143,7 @@ public:
      * Resize the array to the new size. The new size has to be less or equal to the current size.
      * @param bInShrinkToFit Whether to shrink the array buffer to fit the new size.
      */
-    FORCEINLINE void Resize(const i32 InSize, const bool bInShrinkToFit);
+    FORCEINLINE void Resize(const SizeType InSize, const bool bInShrinkToFit);
 
     /**
      * Completely empties the array and sets the size to zero. The memory buffer will be orphaned.
@@ -301,14 +301,16 @@ public:
     FORCEINLINE       T* Peek()       noexcept { return this->GetLast(); }
     FORCEINLINE const T* Peek() const noexcept { return this->GetLast(); }
     /** Removes the last element in the array. */
-    FORCEINLINE void Pop() noexcept;
+    FORCEINLINE bool Pop() noexcept;
     FORCEINLINE void Pop(SizeType InCount) noexcept;
 
-    /** Private iterator functions for range-based loops. Do not use these directly. */
     FORCEINLINE Iterator<T>       begin()       noexcept { return Iterator<T>      (this->Impl.Data);  }
     FORCEINLINE Iterator<const T> begin() const noexcept { return Iterator<const T>(this->Impl.Data);  }
     FORCEINLINE Iterator<T>       end()         noexcept { return Iterator<T>      (this->Impl.Slack); }
     FORCEINLINE Iterator<const T> end()   const noexcept { return Iterator<const T>(this->Impl.Slack); }
+
+    FORCEINLINE       Alloc& GetUnderlyingDataStructure()       noexcept { return this->Impl; }
+    FORCEINLINE const Alloc& GetUnderlyingDataStructure() const noexcept { return this->Impl; }
 
 private:
 
@@ -327,7 +329,7 @@ private:
 template<typename InT, typename InSizeType, typename InTraits>
 FORCEINLINE TArrayAllocator<InT, InSizeType, InTraits>::TArrayAllocator(const Self& Other) noexcept : Data(), Slack(), End()
 {
-    check( this != &Other )
+    JAFG_CHECK_ARRAY( this != &Other )
     this->Grow(Other.Slack - Other.Data);
 
     T* Me = this->Data;
@@ -346,7 +348,7 @@ FORCEINLINE TArrayAllocator<InT, InSizeType, InTraits>::TArrayAllocator(const Se
 template<typename InT, typename InSizeType, typename InTraits>
 FORCEINLINE TArrayAllocator<InT, InSizeType, InTraits>::TArrayAllocator(Self&& Other) noexcept
 {
-    check( this != &Other )
+    JAFG_CHECK_ARRAY( this != &Other )
 
     this->Data  = Other.Data;
     this->Slack = Other.Slack;
@@ -362,7 +364,7 @@ FORCEINLINE TArrayAllocator<InT, InSizeType, InTraits>::TArrayAllocator(Self&& O
 template<typename InT, typename InSizeType, typename InTraits>
 FORCEINLINE typename TArrayAllocator<InT, InSizeType, InTraits>::Self& TArrayAllocator<InT, InSizeType, InTraits>::operator=(const Self& Other) noexcept
 {
-    check( this != &Other )
+    JAFG_CHECK_ARRAY( this != &Other )
 
     for (T* RESTRICT Bulk = this->Data; Bulk != this->Slack ; ++Bulk)
     {
@@ -388,7 +390,7 @@ FORCEINLINE typename TArrayAllocator<InT, InSizeType, InTraits>::Self& TArrayAll
 template<typename InT, typename InSizeType, typename InTraits>
 FORCEINLINE typename TArrayAllocator<InT, InSizeType, InTraits>::Self& TArrayAllocator<InT, InSizeType, InTraits>::operator=(Self&& Other) noexcept
 {
-    check( this != &Other )
+    JAFG_CHECK_ARRAY( this != &Other )
     this->Orphan();
 
     this->Data  = Other.Data;
@@ -406,7 +408,7 @@ template<typename InT, typename InSizeType, typename InTraits>
 void TArrayAllocator<InT, InSizeType, InTraits>::Grow() noexcept
 {
     const SizeType NewCapacity = Traits::GetGrowSize(this->End - this->Data);
-    check( NewCapacity > 0 && NewCapacity >= this->End - this->Data )
+    JAFG_CHECK_ARRAY( NewCapacity > 0 && NewCapacity >= this->End - this->Data )
 
     if (this->Data == nullptr)
     {
@@ -631,14 +633,14 @@ typename TArrayBase<InT, InAlloc>::Self& TArrayBase<InT, InAlloc>::CopyFrom(cons
 template<typename InT, typename InAlloc>
 FORCEINLINE typename TArrayBase<InT, InAlloc>::T& TArrayBase<InT, InAlloc>::operator[](const SizeType InIndex) noexcept
 {
-    check( this->IsValidIndex(InIndex) )
+    JAFG_CHECK_ARRAY( this->IsValidIndex(InIndex) )
     return this->Impl.Data[InIndex];
 }
 
 template<typename InT, typename InAlloc>
 FORCEINLINE const typename TArrayBase<InT, InAlloc>::T& TArrayBase<InT, InAlloc>::operator[](const SizeType InIndex) const noexcept
 {
-    check( this->IsValidIndex(InIndex) )
+    JAFG_CHECK_ARRAY( this->IsValidIndex(InIndex) )
     return this->Impl.Data[InIndex];
 }
 
@@ -660,7 +662,7 @@ FORCEINLINE void TArrayBase<InT, InAlloc>::Reset(const SizeType InAmount) noexce
 }
 
 template<typename InT, typename InAlloc>
-FORCEINLINE void TArrayBase<InT, InAlloc>::Resize(const i32 InSize, const bool bInShrinkToFit)
+FORCEINLINE void TArrayBase<InT, InAlloc>::Resize(const SizeType InSize, const bool bInShrinkToFit)
 {
     JAFG_CHECK_ARRAY( InSize >= 0 && InSize <= this->GetSize() )
 
@@ -682,7 +684,7 @@ FORCEINLINE void TArrayBase<InT, InAlloc>::Resize(const i32 InSize, const bool b
 template<typename InT, typename InAlloc>
 FORCEINLINE void TArrayBase<InT, InAlloc>::SwapBuffers(Self& InOther) noexcept
 {
-    check( this != &InOther )
+    JAFG_CHECK_ARRAY( this != &InOther )
 
     T* TempData  = this->Impl.Data;
     T* TempSlack = this->Impl.Slack;
@@ -702,7 +704,7 @@ FORCEINLINE void TArrayBase<InT, InAlloc>::SwapBuffers(Self& InOther) noexcept
 template<typename InT, typename InAlloc>
 FORCEINLINE void TArrayBase<InT, InAlloc>::SwapIndices(const SizeType InIndexA, const SizeType InIndexB) noexcept
 {
-    check( this->IsValidIndex(InIndexA) && this->IsValidIndex(InIndexB) )
+    JAFG_CHECK_ARRAY( this->IsValidIndex(InIndexA) && this->IsValidIndex(InIndexB) )
 
     if (InIndexA == InIndexB)
     {
@@ -787,7 +789,7 @@ void TArrayBase<InT, InAlloc>::AddAt(const SizeType InIndex, const T& InElement)
         return;
     }
 
-    check( this->IsValidIndex(InIndex) )
+    JAFG_CHECK_ARRAY( this->IsValidIndex(InIndex) )
 
     this->AddUninitialized();
 
@@ -815,7 +817,7 @@ void TArrayBase<InT, InAlloc>::AddAt(const SizeType InIndex, T&& InElement) noex
         return;
     }
 
-    check( this->IsValidIndex(InIndex) )
+    JAFG_CHECK_ARRAY( this->IsValidIndex(InIndex) )
 
     this->AddUninitialized();
 
@@ -960,7 +962,7 @@ FORCEINLINE void TArrayBase<InT, InAlloc>::EmplaceAt(const SizeType InIndex, InT
         return;
     }
 
-    check( this->IsValidIndex(InIndex) )
+    JAFG_CHECK_ARRAY( this->IsValidIndex(InIndex) )
 
     this->AddUninitialized();
 
@@ -1142,7 +1144,7 @@ void TArrayBase<InT, InAlloc>::AppendAt(SizeType InIndex, const T* InElements, c
 template<typename InT, typename InAlloc>
 FORCEINLINE void TArrayBase<InT, InAlloc>::RemoveAt(const SizeType InIndex) noexcept
 {
-    check( this->IsValidIndex(InIndex) )
+    JAFG_CHECK_ARRAY( this->IsValidIndex(InIndex) )
 
     this->DestroyAt(InIndex);
 
@@ -1169,7 +1171,7 @@ FORCEINLINE void TArrayBase<InT, InAlloc>::RemoveAt(const SizeType InIndex) noex
 template<typename InT, typename InAlloc>
 FORCEINLINE void TArrayBase<InT, InAlloc>::RemoveAt(const SizeType InIndex, const SizeType InCount) noexcept
 {
-    check( InCount > 0 && InIndex >= 0 && this->IsValidIndex(InIndex + InCount) )
+    JAFG_CHECK_ARRAY( InCount > 0 && InIndex >= 0 && this->IsValidIndex(InIndex + InCount) )
 
     for (SizeType Index = InIndex; Index < InIndex + InCount; ++Index)
     {
@@ -1601,15 +1603,16 @@ FORCEINLINE bool TArrayBase<InT, InAlloc>::ContainsByPredicate(const Predicate& 
 }
 
 template<typename InT, typename InAlloc>
-FORCEINLINE void TArrayBase<InT, InAlloc>::Pop() noexcept
+FORCEINLINE bool TArrayBase<InT, InAlloc>::Pop() noexcept
 {
     if (this->GetSize() > 0)
     {
         this->DestroyAt(this->Impl.Slack - 1);
         --this->Impl.Slack;
+        return true;
     }
 
-    return;
+    return false;
 }
 
 template<typename InT, typename InAlloc>
@@ -1630,7 +1633,7 @@ FORCEINLINE void TArrayBase<InT, InAlloc>::Pop(SizeType InCount) noexcept
 template<typename InT, typename InAlloc>
 FORCEINLINE void TArrayBase<InT, InAlloc>::DestroyAt(const SizeType InIndex) noexcept
 {
-    check( this->IsValidIndex(InIndex) )
+    JAFG_CHECK_ARRAY( this->IsValidIndex(InIndex) )
     this->Impl.Data[InIndex].~T();
     return;
 }
@@ -1638,9 +1641,11 @@ FORCEINLINE void TArrayBase<InT, InAlloc>::DestroyAt(const SizeType InIndex) noe
 template<typename InT, typename InAlloc>
 FORCEINLINE void TArrayBase<InT, InAlloc>::DestroyAt(T* InAddress) noexcept
 {
-    check( InAddress >= this->Impl.Data && InAddress < this->Impl.Slack )
+    JAFG_CHECK_ARRAY( InAddress >= this->Impl.Data && InAddress < this->Impl.Slack )
     InAddress->~T();
     return;
 }
 
 } /* ~Namespace Jafg */
+
+#undef JAFG_CHECK_ARRAY
