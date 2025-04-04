@@ -49,19 +49,10 @@ public:
     FORCEINLINE auto operator=(LStringTy&& Other) noexcept -> LPathBase<T>& { this->Data = std::move(Other); return *this; }
 
     FORCEINLINE auto operator==(const LPathBase<T>& Other) const noexcept -> bool { return this->Data == Other.Data; }
-    FORCEINLINE auto operator!=(const LPathBase<T>& Other) const noexcept -> bool { return this->Data != Other.Data; }
-    FORCEINLINE auto operator <(const LPathBase<T>& Other) const noexcept -> bool { return this->Data  < Other.Data; }
-    FORCEINLINE auto operator >(const LPathBase<T>& Other) const noexcept -> bool { return this->Data  > Other.Data; }
-    FORCEINLINE auto operator<=(const LPathBase<T>& Other) const noexcept -> bool { return this->Data <= Other.Data; }
-    FORCEINLINE auto operator>=(const LPathBase<T>& Other) const noexcept -> bool { return this->Data >= Other.Data; }
     FORCEINLINE auto Equals(const LPathBase<T>& Other)     const noexcept -> bool { return this->Data == Other.Data; }
 
     FORCEINLINE auto operator==(const LStringTy& Other) const noexcept -> bool { return this->Data == Other; }
     FORCEINLINE auto operator!=(const LStringTy& Other) const noexcept -> bool { return this->Data != Other; }
-    FORCEINLINE auto operator <(const LStringTy& Other) const noexcept -> bool { return this->Data  < Other; }
-    FORCEINLINE auto operator >(const LStringTy& Other) const noexcept -> bool { return this->Data  > Other; }
-    FORCEINLINE auto operator<=(const LStringTy& Other) const noexcept -> bool { return this->Data <= Other; }
-    FORCEINLINE auto operator>=(const LStringTy& Other) const noexcept -> bool { return this->Data >= Other; }
     FORCEINLINE auto Equals(const LStringTy& Other)     const noexcept -> bool { return this->Data == Other; }
 
     FORCEINLINE auto GetPath() const noexcept -> const LStringTy& { return this->Data; }
@@ -112,7 +103,7 @@ LPathBase<InTStringTy> LPathBase<InTStringTy>::operator/(const LRune* Other) con
 {
     LPathBase<T> Out;
     Out.Reserve(this->Data.GetSize());
-    Out.Data.CopyFrom(this->Data);
+    Out.Data = this->Data;
     return Out /= Other;
 }
 

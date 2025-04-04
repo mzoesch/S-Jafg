@@ -96,7 +96,7 @@ public:
     FORCEINLINE void SwapStrings(Self& InOther) noexcept { this->Impl.SwapBuffers(InOther.Impl); }
 
     FORCEINLINE bool operator==(LNullptrTy) const noexcept { return this->IsEmpty(); }
-    FORCEINLINE bool operator==(const Self& InOther) const noexcept { return this->Impl.IsDataEqual(InOther.Impl); }
+    FORCEINLINE bool operator==(const Self& InOther) const noexcept;
     FORCEINLINE bool operator==(const T* InString) const noexcept;
     FORCEINLINE bool operator!=(LNullptrTy) const noexcept { return !(*this == nullptr); }
     FORCEINLINE bool operator!=(const Self& InOther) const noexcept { return !(*this == InOther); }
@@ -412,8 +412,24 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTrai
 }
 
 template<typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<InTraits, InAlloc>::operator==(const Self& InOther) const noexcept
+{
+    if (this->IsEmpty())
+    {
+        return InOther.IsEmpty();
+    }
+
+    return this->Impl.IsDataEqual(InOther.Impl);
+}
+
+template<typename InTraits, typename InAlloc>
 FORCEINLINE bool TStringBase<InTraits, InAlloc>::operator==(const T* InString) const noexcept
 {
+    if (this->IsEmpty())
+    {
+        return InString == nullptr || *InString == Traits::Terminator;
+    }
+
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
         if (*(this->Impl.GetData() + Index) != *(InString + Index))

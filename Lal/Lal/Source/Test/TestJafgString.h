@@ -683,7 +683,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr,                      "" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr,                    "\0" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr.GetByteSize(),         0 )
-    CHECK_EQUALS(   "Implicitly constructed string.", MyStr.GetTraitCount(),       0 )
+    CHECK_EQUALS(   "Implicitly constructed string.", MyStr.GetCharacterCount(),       0 )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr.GetRuneCount(),        0 )
 
     MyStr = "Abc";
@@ -692,7 +692,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Assigned string.", MyStr,                    "Abc\0" )
     CHECK_EQUALS(   "Assigned string.", MyStr.GetSize(),                4 )
     CHECK_EQUALS(   "Assigned string.", MyStr.GetByteSize(),            4 )
-    CHECK_EQUALS(   "Assigned string.", MyStr.GetTraitCount(),      3 )
+    CHECK_EQUALS(   "Assigned string.", MyStr.GetCharacterCount(),      3 )
     CHECK_EQUALS(   "Assigned string.", MyStr.GetRuneCount(),           3 )
 
     MyStr += "d";
@@ -703,7 +703,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
     CHECK_FALSE(    "Appended string.", MyStr != "Abcd"                  )
     CHECK_EQUALS(   "Appended string.", MyStr.GetSize(),               5 )
     CHECK_EQUALS(   "Appended string.", MyStr.GetByteSize(),           5 )
-    CHECK_EQUALS(   "Appended string.", MyStr.GetTraitCount(),         4 )
+    CHECK_EQUALS(   "Appended string.", MyStr.GetCharacterCount(),         4 )
     CHECK_EQUALS(   "Appended string.", MyStr.GetRuneCount(),          4 )
 
     LString MyOtherStr = "efgh";
@@ -712,7 +712,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr,              "efgh\0" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr.GetSize(),           5 )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr.GetByteSize(),       5 )
-    CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr.GetTraitCount(),     4 )
+    CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr.GetCharacterCount(),     4 )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr.GetRuneCount(),      4 )
 
     MyStr += MyOtherStr;
@@ -721,7 +721,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Appended string.", MyStr,              "Abcdefgh\0" )
     CHECK_EQUALS(   "Appended string.", MyStr.GetSize(),               9 )
     CHECK_EQUALS(   "Appended string.", MyStr.GetByteSize(),           9 )
-    CHECK_EQUALS(   "Appended string.", MyStr.GetTraitCount(),         8 )
+    CHECK_EQUALS(   "Appended string.", MyStr.GetCharacterCount(),         8 )
     CHECK_EQUALS(   "Appended string.", MyStr.GetRuneCount(),          8 )
 
 
@@ -813,7 +813,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS( "Simple Manipulations.", MyStr,                  "\0" )
     CHECK_EQUALS( "Simple Manipulations.", MyStr.GetSize(),           0 )
     CHECK_EQUALS( "Simple Manipulations.", MyStr.GetByteSize(),       0 )
-    CHECK_EQUALS( "Simple Manipulations.", MyStr.GetTraitCount(),     0 )
+    CHECK_EQUALS( "Simple Manipulations.", MyStr.GetCharacterCount(),     0 )
     CHECK_EQUALS( "Simple Manipulations.", MyStr.GetRuneCount(),      0 )
 
     MyStr.Append("");
@@ -821,7 +821,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,                  "\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           0 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       0 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     0 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     0 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      0 )
 
     MyStr.Append("\0");
@@ -829,7 +829,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,                  "\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           0 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       0 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     0 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     0 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      0 )
 
     MyStr.Append("A");
@@ -837,7 +837,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,                 "A\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           2 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       2 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     1 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     1 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      1 )
 
     MyStr.Append("");
@@ -845,7 +845,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,                 "A\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           2 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       2 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     1 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     1 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      1 )
 
     MyStr.Append("\0");
@@ -853,7 +853,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,                 "A\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           2 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       2 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     1 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     1 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      1 )
 
     MyStr.Append("B");
@@ -861,7 +861,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,                "AB\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           3 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       3 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     2 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     2 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      2 )
 
     MyStr.Append("");
@@ -869,7 +869,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,                "AB\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           3 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       3 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     2 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     2 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      2 )
 
     MyStr.Append("\0");
@@ -877,7 +877,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,                "AB\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           3 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       3 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     2 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     2 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      2 )
 
     MyStr.Append("C");
@@ -885,7 +885,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,               "ABC\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           4 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       4 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     3 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     3 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      3 )
 
     MyStr.Append("");
@@ -893,7 +893,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,               "ABC\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           4 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       4 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     3 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     3 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      3 )
 
     MyStr.Append("\0");
@@ -901,7 +901,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,               "ABC\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           4 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       4 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     3 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     3 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      3 )
 
     CHECK_EQUALS(  "Not so simple manipulations.", *MyStr.Peek(),           'C' )
@@ -910,7 +910,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr,                "AB\0" )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetSize(),           3 )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetByteSize(),       3 )
-    CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetTraitCount(),     2 )
+    CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetCharacterCount(),     2 )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetRuneCount(),      2 )
     CHECK_EQUALS(  "Not so simple manipulations.", *MyStr.Peek(),           'B' )
     MyStr.Pop();
@@ -918,7 +918,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr,                 "A\0" )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetSize(),           2 )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetByteSize(),       2 )
-    CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetTraitCount(),     1 )
+    CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetCharacterCount(),     1 )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetRuneCount(),      1 )
     CHECK_EQUALS(  "Not so simple manipulations.", *MyStr.Peek(),           'A' )
     MyStr.Pop();
@@ -926,7 +926,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr,                  "\0" )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetSize(),           0 )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetByteSize(),       0 )
-    CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetTraitCount(),     0 )
+    CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetCharacterCount(),     0 )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetRuneCount(),      0 )
     CHECK_EQUALS(  "Not so simple manipulations.", *MyStr.Peek(),          '\0' )
     MyStr.Pop();
@@ -934,7 +934,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr,                  "\0" )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetSize(),           0 )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetByteSize(),       0 )
-    CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetTraitCount(),     0 )
+    CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetCharacterCount(),     0 )
     CHECK_EQUALS(  "Not so simple manipulations.", MyStr.GetRuneCount(),      0 )
     CHECK_EQUALS(  "Not so simple manipulations.", *MyStr.Peek(),          '\0' )
 
@@ -945,7 +945,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,                  "\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           0 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       0 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     0 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     0 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      0 )
 
     MyStr.Append("ABC");
@@ -953,7 +953,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,               "ABC\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           4 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       4 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     3 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     3 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      3 )
 
     MyStr.Empty();
@@ -961,7 +961,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,                  "\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           0 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       0 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     0 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     0 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      0 )
 
     MyStr.Reserve(5);
@@ -969,7 +969,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
     CHECK_EQUALS(  "Simple Manipulations.", MyStr,                  "\0" )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetSize(),           0 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetByteSize(),       0 )
-    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetTraitCount(),     0 )
+    CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetCharacterCount(),     0 )
     CHECK_EQUALS(  "Simple Manipulations.", MyStr.GetRuneCount(),      0 )
 
     return;
@@ -1310,7 +1310,7 @@ TEST_CASE(NewEightStringAdvancedCharacters, "Lal.Strings")
     CHECK_EQUALS( "Advanced characters.", MyStr, "これわテストです。" )
     CHECK_EQUALS( "Advanced characters.", MyStr.GetSize(),           28 )
     CHECK_EQUALS( "Advanced characters.", MyStr.GetByteSize(),       28 )
-    CHECK_EQUALS( "Advanced characters.", MyStr.GetTraitCount(),      9 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.GetCharacterCount(),      9 )
     CHECK_EQUALS( "Advanced characters.", MyStr.GetRuneCount(),      27 )
 
     CHECK_FALSE( "Advanced characters.", MyStr.StartsWith("")          )
@@ -1334,11 +1334,11 @@ TEST_CASE(NewEightStringAdvancedCharacters, "Lal.Strings")
     CHECK_EQUALS( "Advanced characters.", MyStr, "スススこれスわステスストです。ススス" )
     CHECK_EQUALS( "Advanced characters.", MyStr.GetSize(),            55 )
     CHECK_EQUALS( "Advanced characters.", MyStr.GetRuneCount(),       54 )
-    CHECK_EQUALS( "Advanced characters.", MyStr.GetTraitCount(),      18 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.GetCharacterCount(),      18 )
     QUICK_CHECK_EQUALS( MyStr.Replace("ス", "こ"),                     10 )
     CHECK_EQUALS( "Advanced characters.", MyStr.GetSize(),            55 )
     CHECK_EQUALS( "Advanced characters.", MyStr.GetRuneCount(),       54 )
-    CHECK_EQUALS( "Advanced characters.", MyStr.GetTraitCount(),      18 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.GetCharacterCount(),      18 )
     CHECK_EQUALS( "Advanced characters.", MyStr, "ここここれこわこテここトです。こここ" )
 
     MyStr = "で";
@@ -1375,7 +1375,7 @@ TEST_CASE(NewEightStringAdvancedCharacters, "Lal.Strings")
     CHECK_EQUALS( "Advanced characters.", MyStr,  "こふふこああこあふここ" )
     CHECK_EQUALS( "Advanced characters.", MyStr.GetSize(),           34 )
     CHECK_EQUALS( "Advanced characters.", MyStr.GetByteSize(),       34 )
-    CHECK_EQUALS( "Advanced characters.", MyStr.GetTraitCount(),     11 )
+    CHECK_EQUALS( "Advanced characters.", MyStr.GetCharacterCount(),     11 )
     CHECK_EQUALS( "Advanced characters.", MyStr.GetRuneCount(),      33 )
 
     CHECK_EQUALS( "Advanced characters.", MyStr.Count("こ"),         5 )
@@ -1566,6 +1566,54 @@ TEST_CASE(StringPaths, "Lal.Strings")
     CHECK_EQUALS( "String paths.", MyStr, "abc/def/ghi/jkl/" )
     MyStr /= "mno";
     CHECK_EQUALS( "String paths.", MyStr, "abc/def/ghi/jkl/mno" )
+
+    return;
+}
+
+TEST_CASE(StringLoops, "Lal.Strings")
+{
+    using namespace Jafg;
+
+    i32 i = 0;
+
+    LString MyStr;
+    for (const LString::T x: MyStr)
+    {
+        ++i;
+    }
+    CHECK_EQUALS( "String loops.", i, 0 )
+
+    MyStr = "";
+    for (const LString::T x: MyStr)
+    {
+        ++i;
+    }
+    CHECK_EQUALS( "String loops.", i, 0 )
+
+    MyStr = "A";
+    for (const LString::T x: MyStr)
+    {
+        ++i;
+    }
+    CHECK_EQUALS( "String loops.", i, 1 )
+    i = 0;
+
+    MyStr = "Abcdefgh";
+    for (const LString::T x: MyStr)
+    {
+        ++i;
+    }
+    CHECK_EQUALS( "String loops.", i, 8 )
+    i = 0;
+
+    MyStr.Empty();
+    CHECK_EQUALS( "String loops.", MyStr, "" )
+
+    for (const LString::T x: MyStr)
+    {
+        ++i;
+    }
+    CHECK_EQUALS( "String loops.", i, 0 )
 
     return;
 }
