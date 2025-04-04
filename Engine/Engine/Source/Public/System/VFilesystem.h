@@ -33,7 +33,7 @@ struct LVirtualFile;
 
         FORCEINLINE auto GetFileSize() const -> LuBigSizeTy { return this->FileSize; }
         FORCEINLINE auto GetRelativeContentPath() const -> const LPath& { return this->RelativeContentPath; }
-        FORCEINLINE auto GetFileName() const -> LSimpleString { return this->RelativeContentPath.GetBase(); }
+        FORCEINLINE auto GetFileName() const -> LString { return this->RelativeContentPath.GetBase(); }
         FORCEINLINE auto GetBulk() const -> const u8* { return this->FileContents; }
 
     private:
@@ -75,8 +75,8 @@ public:
         const EEnginePaths::Type InEnginePathTy,
         const JUserPreferences& InUserPreferences,
         const bool bKeepExtension = false,
-        const LSimpleString& InFileExtension = ".*"
-    ) -> TArray<LSimpleString>;
+        const LString& InFileExtension = ".*"
+    ) -> TArray<LString>;
 
 private:
 

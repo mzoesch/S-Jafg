@@ -20,9 +20,9 @@ ENGINE_API LNameRegistry& GetNameRegistry();
 
 ENGINE_API void ClearStaticNameContainer();
 ENGINE_API auto GetStaticNameCount() -> i32;
-ENGINE_API auto GetStaticNameByIndex(const i32 InIndex) -> const LSimpleString&;
-ENGINE_API auto RegisterStaticName(const LSimpleString& InName) -> LName;
-ENGINE_API auto RegisterStaticName(LSimpleString&& InName) -> LName;
+ENGINE_API auto GetStaticNameByIndex(const i32 InIndex) -> const LString&;
+ENGINE_API auto RegisterStaticName(const LString& InName) -> LName;
+ENGINE_API auto RegisterStaticName(LString&& InName) -> LName;
 
 } /* ~Namespace Private */
 
@@ -41,7 +41,7 @@ struct LName
 {
     friend Private::LNameRegistry;
 
-    FORCEINLINE LName() = default;
+    FORCEINLINE LName() : UnderlyingName(NO_NAME) { }
     FORCEINLINE LName(const LName& Other) = default;
     FORCEINLINE LName(LName&& Other) noexcept : UnderlyingName(Other.UnderlyingName) { Other.UnderlyingName = NO_NAME; }
     FORCEINLINE LName& operator=(const LName& Other) = default;
@@ -55,10 +55,10 @@ struct LName
 
     FORCEINLINE bool IsSet() const { return UnderlyingName != NO_NAME; }
 
-    ENGINE_API const LSimpleString& ToString() const;
+    ENGINE_API const LString& ToString() const;
 
     ENGINE_API static LName NoName;
-    ENGINE_API static LSimpleString NoNameStringRepresentation;
+    ENGINE_API static LString NoNameStringRepresentation;
 
 private:
 
@@ -94,30 +94,21 @@ public:
     ENGINE_API ~LNameRegistry();
 
     static      LName GetNameByValue(LUnderlyingName InUnderlyingName) { return { InUnderlyingName }; }
-    ENGINE_API  LName GetName(const LSimpleString& InName, const bool bConvertToLower = true) const;
     ENGINE_API  LName GetName(const LString& InName, const bool bConvertToLower = true) const;
-    FORCEINLINE LName GetNameChecked(const LSimpleString& InName, const bool bConvertToLower = true) const;
     FORCEINLINE LName GetNameChecked(const LString& InName, const bool bConvertToLower = true) const;
-    FORCEINLINE auto  GetRealNameFast(const LName InName) const -> const LSimpleString& { check( InName.IsSet() ) return this->Names[InName.UnderlyingName - 1]; }
-    FORCEINLINE auto  GetRealNameSafe(const LName InName) const -> const LSimpleString&;
+    FORCEINLINE auto  GetRealNameFast(const LName InName) const -> const LString& { check( InName.IsSet() ) return this->Names[InName.UnderlyingName - 1]; }
+    FORCEINLINE auto  GetRealNameSafe(const LName InName) const -> const LString&;
 
-    ENGINE_API bool IsNameRegistered(const LSimpleString& InName, const bool bConvertToLower = true) const;
-    ENGINE_API bool RegisterName(const LSimpleString& InName);
-    ENGINE_API auto RegisterAndGetName(const LSimpleString& InName) -> LName;
+    ENGINE_API bool IsNameRegistered(const LString& InName, const bool bConvertToLower = true) const;
+    ENGINE_API bool RegisterName(const LString& InName);
+    ENGINE_API auto RegisterAndGetName(const LString& InName) -> LName;
 
     FORCEINLINE i32 GetNameCount() const { return this->Names.GetSize(); }
 
 private:
 
-    TArray<LSimpleString> Names;
+    TArray<LString> Names;
 };
-
-FORCEINLINE LName LNameRegistry::GetNameChecked(const LSimpleString& InName, const bool bConvertToLower /* = true */) const
-{
-    const LName Name = this->GetName(InName, bConvertToLower);
-    check( Name.IsSet() )
-    return Name;
-}
 
 FORCEINLINE LName LNameRegistry::GetNameChecked(const LString& InName, const bool bConvertToLower /* = true */) const
 {
@@ -126,7 +117,7 @@ FORCEINLINE LName LNameRegistry::GetNameChecked(const LString& InName, const boo
     return Name;
 }
 
-FORCEINLINE const LSimpleString& LNameRegistry::GetRealNameSafe(const LName InName) const
+FORCEINLINE const LString& LNameRegistry::GetRealNameSafe(const LName InName) const
 {
     if (InName.IsSet())
     {

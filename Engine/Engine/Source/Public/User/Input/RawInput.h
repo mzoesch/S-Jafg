@@ -33,9 +33,9 @@ struct LRawInput
         this->Value = 0.0f;
     }
 
-    FORCEINLINE LSimpleString ToString() const
+    FORCEINLINE LString ToString() const
     {
-        return LSimpleString::SprintF("{{{}: {:.2f}}}", LexToString(Key), Value);
+        return LString::SprintF("{{{}: {:.2f}}}", LexToString(Key), Value);
     }
 };
 

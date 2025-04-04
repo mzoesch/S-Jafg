@@ -102,9 +102,9 @@ struct LChunkKey final
         return Out;
     }
 
-    FORCEINLINE LSimpleString ToString() const
+    FORCEINLINE LString ToString() const
     {
-        return LSimpleString::SprintF("{{{}, {}, {}}}", Key.X, Key.Y, Key.Z);
+        return LString::SprintF("{{{}, {}, {}}}", Key.X, Key.Y, Key.Z);
     }
 };
 static_assert(sizeof(LChunkKey) == sizeof(LChunkKeyDomainTy) * 3, "LChunkKey is not tightly packed.");
@@ -160,9 +160,9 @@ struct LChunkKey2 final
         return Out;
     }
 
-    FORCEINLINE LSimpleString ToString() const
+    FORCEINLINE LString ToString() const
     {
-        return LSimpleString::SprintF("{{{}, {}}}", Key.X, Key.Y);
+        return LString::SprintF("{{{}, {}}}", Key.X, Key.Y);
     }
 };
 static_assert(sizeof(LChunkKey2) == sizeof(LChunkKeyDomainTy) * 2, "LChunkKey2 is not tightly packed.");

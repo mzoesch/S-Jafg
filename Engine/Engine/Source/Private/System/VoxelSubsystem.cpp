@@ -22,7 +22,7 @@ void Jafg::JVoxelSubsystem::TearDown()
     Super::TearDown();
 }
 
-Jafg::voxel_t Jafg::JVoxelSubsystem::GetVoxelIndex(const LSimpleString& Name) const
+Jafg::voxel_t Jafg::JVoxelSubsystem::GetVoxelIndex(const LString& Name) const
 {
     for (voxel_t_it i = 0; i < this->VoxelMasks.GetSize(); ++i)
     {
@@ -37,7 +37,7 @@ Jafg::voxel_t Jafg::JVoxelSubsystem::GetVoxelIndex(const LSimpleString& Name) co
     return ECompileTimeVoxels::Null;
 }
 
-Jafg::voxel_t Jafg::JVoxelSubsystem::GetVoxelIndex(const LSimpleString& Namespace, const LSimpleString& Name) const
+Jafg::voxel_t Jafg::JVoxelSubsystem::GetVoxelIndex(const LString& Namespace, const LString& Name) const
 {
     for (voxel_t_it i = 0; i < this->VoxelMasks.GetSize(); ++i)
     {

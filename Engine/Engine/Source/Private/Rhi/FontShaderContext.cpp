@@ -192,8 +192,8 @@ void Jafg::LFontShaderContext::Draw(const LViewport& Context, LGenericShaderCont
     glFrontFace(GL_CCW);
 
     const LIntVector2 WindowDimensions = Context.GetDimensions();
-    const float       ScaleFactor = Context.GetScaleFactor();
-    const float       YFromBottom = static_cast<float>(WindowDimensions.Y);
+    const f32 ScaleFactor = Context.GetScaleFactor();
+    const f32 YFromBottom = static_cast<f32>(WindowDimensions.Y);
 
     ::GetFontShaderProgram().Use();
     ::GetFontShaderProgram().SetColorVec3Uniform("Color", Args.Color);
@@ -203,6 +203,7 @@ void Jafg::LFontShaderContext::Draw(const LViewport& Context, LGenericShaderCont
     glActiveTexture(GL_TEXTURE0);
 
     float X = Args.Offset.X + Args.Padding.Left;
+
     for (const u8 Rune : *Args.Content)
     {
         const Character& Ch = Characters[Rune];
@@ -253,7 +254,7 @@ void Jafg::LFontShaderContext::OnFree()
     return;
 }
 
-bool LFontShaderContext::GetMinimalDesiredSize(const LSimpleString& InContent, const float InScale, LVector2& OutSize)
+bool LFontShaderContext::GetMinimalDesiredSize(const LString& InContent, const f32 InScale, LVector2& OutSize)
 {
     if (InContent.IsEmpty())
     {
@@ -265,54 +266,38 @@ bool LFontShaderContext::GetMinimalDesiredSize(const LSimpleString& InContent, c
     for (const u8 Rune : InContent)
     {
         const Character& Ch = Characters.at(static_cast<i8>(Rune));
-        OutSize.X += static_cast<float>(Ch.Advance.X) * InScale / 64.0f;
-        OutSize.Y = Maths::Max(OutSize.Y, static_cast<float>(Ch.Size.y) * InScale);
+        OutSize.X += static_cast<f32>(Ch.Advance.X) * InScale / 64.0f;
+        OutSize.Y = Maths::Max(OutSize.Y, static_cast<f32>(Ch.Size.y) * InScale);
     }
 
     return true;
 }
 
-bool LFontShaderContext::GetMinimalDesiredSize(const LEightString& InContent, const float InScale, LVector2& OutSize)
-{
-    LSimpleString Content = Str::ToSimpleString(InContent);
-    return LFontShaderContext::GetMinimalDesiredSize(Content, InScale, OutSize);
-}
-
-LVector2 LFontShaderContext::GetDesiredSize(const LSimpleString& InContent, const float InScale)
+LVector2 LFontShaderContext::GetDesiredSize(const LString& InContent, const f32 InScale)
 {
     return LVector2(LFontShaderContext::GetDesiredWidth(InContent, InScale), LFontShaderContext::GetApproximateHeight(InScale));
 }
 
-LVector2 LFontShaderContext::GetDesiredSize(const LEightString& InContent, const float InScale)
-{
-    LSimpleString Content = Str::ToSimpleString(InContent);
-    return LFontShaderContext::GetDesiredSize(Content, InScale);
-}
-
-float LFontShaderContext::GetDesiredWidth(const LSimpleString& InContent, const float InScale)
+f32 LFontShaderContext::GetDesiredWidth(const LString& InContent, const f32 InScale)
 {
     if (InContent.IsEmpty())
     {
         return 0.0f;
     }
 
-    float Out = 0.0f;
-    for (const u8 Rune : InContent)
+    f32 Out = 0.0f;
+    for (const LString::T Rune : InContent)
     {
-        const Character& Ch = Characters.at(static_cast<i8>(Rune));
-        Out += static_cast<float>(Ch.Advance.X) * InScale / 64.0f;
+        if (auto It = Characters.find(static_cast<u8>(Rune)); It != Characters.end())
+        {
+            Out += static_cast<f32>(It->second.Advance.X) * InScale / 64.0f;
+        }
     }
 
     return Out;
 }
 
-float LFontShaderContext::GetDesiredWidth(const LEightString& InContent, const float InScale)
-{
-    LSimpleString Content = Str::ToSimpleString(InContent);
-    return LFontShaderContext::GetDesiredWidth(Content, InScale);
-}
-
-float LFontShaderContext::GetApproximateHeight(const float InScale)
+f32 LFontShaderContext::GetApproximateHeight(const f32 InScale)
 {
     if (Characters.empty())
     {
@@ -323,7 +308,7 @@ float LFontShaderContext::GetApproximateHeight(const float InScale)
     if (ApproxHeight < 0.0f)
     {
         LVector2 DesiredSize;
-        const LSimpleString Content = "H";
+        const LString Content = "H";
         LFontShaderContext::GetMinimalDesiredSize(Content, 1.0f, DesiredSize);
         ::ApproxHeight = DesiredSize.Y;
     }

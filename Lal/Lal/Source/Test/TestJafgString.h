@@ -4,13 +4,11 @@
 
 #include "TestInclude.h"
 
-#include "Containers/JafgString.h"
-
 TEST_CASE(SimpleNewSimpleStringOperations, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr;
+    LString MyStr;
     CHECK_EQUALS(   "Implicitly constructed string.",*MyStr.ToC(),              '\0' )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr,                      "" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr,                    "\0" )
@@ -37,7 +35,7 @@ TEST_CASE(SimpleNewSimpleStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Appended string.", MyStr.GetByteSize(),           5 )
     CHECK_EQUALS(   "Appended string.", MyStr.GetRuneCount(),          4 )
 
-    LNewString MyOtherStr = "efgh";
+    LString MyOtherStr = "efgh";
     CHECK_NOT_NULL( "Implicitly constructed string.", MyOtherStr.ToC()                  )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr,                "efgh" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr,              "efgh\0" )
@@ -56,12 +54,12 @@ TEST_CASE(SimpleNewSimpleStringOperations, "Lal.Strings")
     return;
 }
 
-TEST_CASE(RawLiteralNewStringOperations, "Lal.Strings")
+TEST_CASE(RawLiteraLStringOperations, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr  = "Abc";
-    LNewString MyStr2 = "Abc";
+    LString MyStr  = "Abc";
+    LString MyStr2 = "Abc";
 
     constexpr char       RawChars[]  = { 'A', 'b', 'c', '\0' };
     const char*          RawCharsPtr = RawChars;
@@ -86,7 +84,7 @@ TEST_CASE(SimpleNewSimpleStringManipulations, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr;
+    LString MyStr;
     CHECK_EQUALS( "Simple Manipulations.", MyStr,                    "" )
     CHECK_EQUALS( "Simple Manipulations.", MyStr,                  "\0" )
     CHECK_EQUALS( "Simple Manipulations.", MyStr.GetSize(),           0 )
@@ -237,8 +235,8 @@ TEST_CASE(NewSimpleStringCopyingAndMoving, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr1;
-    LNewString MyStr2 = MyStr1;
+    LString MyStr1;
+    LString MyStr2 = MyStr1;
 
     CHECK_EQUALS(   "Copy constructed string.", MyStr1,                 MyStr2 )
     CHECK_EQUALS(   "Copy constructed string.", MyStr1.ToC(),     MyStr2.ToC() )
@@ -259,7 +257,7 @@ TEST_CASE(NewSimpleStringCopyingAndMoving, "Lal.Strings")
     CHECK_EQUALS(       "Move assigned string.", MyStr2,                 "\0" )
     CHECK_NOT_EQUALS(   "Move assigned string.", MyStr1.ToC(),   MyStr2.ToC() )
 
-    LNewString MyStr3 = std::move(MyStr1);
+    LString MyStr3 = std::move(MyStr1);
     CHECK_EQUALS(       "Move constructed string.", MyStr3,           "Abcdefgh" )
     CHECK_EQUALS(       "Move constructed string.", MyStr1,                   "" )
     CHECK_EQUALS(       "Move constructed string.", MyStr1,                 "\0" )
@@ -315,7 +313,7 @@ TEST_CASE(NewSimpleStringStartsWith, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "";
+    LString MyStr = "";
     CHECK_TRUE(  "Empty string.", MyStr.StartsWith("")      )
     CHECK_TRUE(  "Empty string.", MyStr.StartsWith('\0')    )
     CHECK_TRUE(  "Empty string.", MyStr.StartsWith('\0')    )
@@ -379,7 +377,7 @@ TEST_CASE(NewSimpleStringCount, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
+    LString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
     CHECK_EQUALS( "String count.", MyStr, "AaAAbcAAdbcAA" )
 
     CHECK_EQUALS( "String count.", MyStr.Count('A'),    7 )
@@ -416,7 +414,7 @@ TEST_CASE(NewSimpleStringCount, "Lal.Strings")
     CHECK_EQUALS( "String count.", MyStr, "" )
     CHECK_EQUALS( "String count.", MyStr.Count("A"), 0 )
 
-    LNewString MyOtherStr;
+    LString MyOtherStr;
     CHECK_EQUALS( "String count.", MyOtherStr, "" )
     CHECK_EQUALS( "String count.", MyOtherStr.Count("A"), 0 )
 
@@ -427,7 +425,7 @@ TEST_CASE(NewSimpleStringReplace, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
+    LString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
     CHECK_EQUALS( "String count.", MyStr, "AaAAbcAAdbcAA" )
 
     CHECK_EQUALS( "String count.", MyStr.Count("A"),    7 )
@@ -463,7 +461,7 @@ TEST_CASE(NewSimpleStringFindFirst, "Lal.Strings")
 {
     using namespace Jafg;
 
-    const LNewString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
+    const LString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
     CHECK_EQUALS( "String count.", MyStr,   "AaAAbcAAdbcAA" )
 
     CHECK_EQUALS( "String find first.", MyStr.FindFirst("A"),     0 )
@@ -511,7 +509,7 @@ TEST_CASE(NewSimpleStringFindSecond, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
+    LString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
     CHECK_EQUALS( "String find second.", MyStr,   "AaAAbcAAdbcAA" )
 
     CHECK_EQUALS( "String find second.", MyStr.FindSecond("A"),      2 )
@@ -537,7 +535,7 @@ TEST_CASE(NewSimpleStringFindLast, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
+    LString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
     CHECK_EQUALS( "String find last.", MyStr,   "AaAAbcAAdbcAA" )
 
     CHECK_EQUALS( "String find last.", MyStr.FindLast("A"),     12 )
@@ -569,13 +567,13 @@ TEST_CASE(NewSimpleStringCuts, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "abcdefghijklmn";
+    LString MyStr = "abcdefghijklmn";
     CHECK_EQUALS( "String cut.", MyStr, "abcdefghijklmn" )
 
     MyStr.InlineCut(10);
     CHECK_EQUALS( "String cut.", MyStr, "abcdefghij" )
 
-    LNewString MyOtherString = MyStr.Cut(5);
+    LString MyOtherString = MyStr.Cut(5);
     CHECK_EQUALS( "String cut.", MyStr,         "abcdefghij" )
     CHECK_EQUALS( "String cut.", MyOtherString, "abcde"      )
 
@@ -589,7 +587,7 @@ TEST_CASE(NewSimpleStringSubs, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "abcdefghijklmn";
+    LString MyStr = "abcdefghijklmn";
     CHECK_EQUALS( "String sub.", MyStr, "abcdefghijklmn" )
 
     MyStr.InlineSub(5, 2);
@@ -602,7 +600,7 @@ TEST_CASE(NewSimpleStringSubs, "Lal.Strings")
 
     MyStr = "abcdefghijklmn";
     CHECK_EQUALS( "String sub.", MyStr, "abcdefghijklmn" )
-    LNewString MyOtherString = MyStr.Sub(5, 2);
+    LString MyOtherString = MyStr.Sub(5, 2);
     CHECK_EQUALS( "String sub.", MyStr,         "abcdefghijklmn" )
     CHECK_EQUALS( "String sub.", MyOtherString,             "fg" )
 
@@ -620,7 +618,7 @@ TEST_CASE(NewSimpleStringSubs, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "abcdefghijklmn";
+    LString MyStr = "abcdefghijklmn";
     CHECK_EQUALS( "String sub.", MyStr, "abcdefghijklmn" )
 
     MyStr.InlineRightChop(0);
@@ -661,9 +659,9 @@ TEST_CASE(NewSimpleStringLowerCase, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "AbCdEfGhIjKlMn";
+    LString MyStr = "AbCdEfGhIjKlMn";
     CHECK_EQUALS( "String lower case.", MyStr,         "AbCdEfGhIjKlMn" )
-    LNewString MyOtherStr = MyStr.GetLowerCase();
+    LString MyOtherStr = MyStr.GetLowerCase();
     CHECK_EQUALS( "String lower case.", MyStr,         "AbCdEfGhIjKlMn" )
     CHECK_EQUALS( "String lower case.", MyOtherStr,    "abcdefghijklmn" )
 
@@ -680,7 +678,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr;
+    LString MyStr;
     CHECK_NOT_NULL( "Implicitly constructed string.", MyStr.ToC()                    )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr,                      "" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr,                    "\0" )
@@ -708,7 +706,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Appended string.", MyStr.GetTraitCount(),         4 )
     CHECK_EQUALS(   "Appended string.", MyStr.GetRuneCount(),          4 )
 
-    LNewString MyOtherStr = "efgh";
+    LString MyOtherStr = "efgh";
     CHECK_NOT_NULL( "Implicitly constructed string.", MyOtherStr.ToC()                  )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr,                "efgh" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr,              "efgh\0" )
@@ -784,8 +782,8 @@ TEST_CASE(RawLiteralNewEightStringOperations, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr  = "Abc";
-    LNewString MyStr2 = "Abc";
+    LString MyStr  = "Abc";
+    LString MyStr2 = "Abc";
 
     constexpr char       RawChars[]  = { 'A', 'b', 'c', '\0' };
     const char*          RawCharsPtr = RawChars;
@@ -810,7 +808,7 @@ TEST_CASE(SimpleNewEightStringManipulations, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr;
+    LString MyStr;
     CHECK_EQUALS( "Simple Manipulations.", MyStr,                    "" )
     CHECK_EQUALS( "Simple Manipulations.", MyStr,                  "\0" )
     CHECK_EQUALS( "Simple Manipulations.", MyStr.GetSize(),           0 )
@@ -981,8 +979,8 @@ TEST_CASE(NewEightStringCopyingAndMoving, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr1;
-    LNewString MyStr2 = MyStr1;
+    LString MyStr1;
+    LString MyStr2 = MyStr1;
 
     CHECK_EQUALS(   "Copy constructed string.", MyStr1,                 MyStr2 )
     CHECK_EQUALS(   "Copy constructed string.", MyStr1.ToC(),     MyStr2.ToC() )
@@ -1003,7 +1001,7 @@ TEST_CASE(NewEightStringCopyingAndMoving, "Lal.Strings")
     CHECK_EQUALS(       "Move assigned string.", MyStr2,                 "\0" )
     CHECK_NOT_EQUALS(   "Move assigned string.", MyStr1.ToC(),   MyStr2.ToC() )
 
-    LNewString MyStr3 = std::move(MyStr1);
+    LString MyStr3 = std::move(MyStr1);
     CHECK_EQUALS(       "Move constructed string.", MyStr3,           "Abcdefgh" )
     CHECK_EQUALS(       "Move constructed string.", MyStr1,                   "" )
     CHECK_EQUALS(       "Move constructed string.", MyStr1,                 "\0" )
@@ -1059,7 +1057,7 @@ TEST_CASE(NewEightStringStartsWith, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "";
+    LString MyStr = "";
     CHECK_TRUE(  "Empty string.", MyStr.StartsWith("")      )
     CHECK_TRUE(  "Empty string.", MyStr.StartsWith("\0")    )
     CHECK_FALSE( "Empty string.", MyStr.StartsWith("A")     )
@@ -1115,7 +1113,7 @@ TEST_CASE(NewEightStringCount, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
+    LString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
     CHECK_EQUALS( "String count.", MyStr, "AaAAbcAAdbcAA" )
 
     CHECK_EQUALS( "String count.", MyStr.Count("A"),    7 )
@@ -1138,7 +1136,7 @@ TEST_CASE(NewEightStringCount, "Lal.Strings")
     CHECK_EQUALS( "String count.", MyStr,           "" )
     CHECK_EQUALS( "String count.", MyStr.Count("A"), 0 )
 
-    LNewString MyOtherStr;
+    LString MyOtherStr;
     CHECK_EQUALS( "String count.", MyOtherStr,           "" )
     CHECK_EQUALS( "String count.", MyOtherStr.Count("A"), 0 )
 
@@ -1149,7 +1147,7 @@ TEST_CASE(NewEightStringReplace, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
+    LString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
     CHECK_EQUALS( "String count.", MyStr,     "AaAAbcAAdbcAA" )
 
     CHECK_EQUALS( "String count.", MyStr.Count("A"),    7 )
@@ -1185,7 +1183,7 @@ TEST_CASE(NewEightStringFindFirst, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
+    LString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
     CHECK_EQUALS( "String count.", MyStr,   "AaAAbcAAdbcAA" )
 
     CHECK_EQUALS( "String count.", MyStr.FindFirst("A"),   0 )
@@ -1209,7 +1207,7 @@ TEST_CASE(NewEightStringFindSecond, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
+    LString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
     CHECK_EQUALS( "String count.", MyStr,     "AaAAbcAAdbcAA" )
 
     CHECK_EQUALS( "String count.", MyStr.FindSecond("A"),   2 )
@@ -1233,7 +1231,7 @@ TEST_CASE(NewEightStringFindLast, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
+    LString MyStr = "AaAAbcAAdbcAA"; // A:7; a:1; b:2; c:2; d:1
     CHECK_EQUALS( "String count.", MyStr,   "AaAAbcAAdbcAA" )
 
     CHECK_EQUALS( "String count.", MyStr.FindLast("A"),  12 )
@@ -1257,13 +1255,13 @@ TEST_CASE(NewEightStringCuts, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "abcdefghijklmn";
+    LString MyStr = "abcdefghijklmn";
     CHECK_EQUALS( "String cut.", MyStr, "abcdefghijklmn" )
 
     MyStr.InlineCut(10);
     CHECK_EQUALS( "String cut.", MyStr, "abcdefghij" )
 
-    LNewString MyOtherString = MyStr.Cut(5);
+    LString MyOtherString = MyStr.Cut(5);
     CHECK_EQUALS( "String cut.", MyStr,         "abcdefghij" )
     CHECK_EQUALS( "String cut.", MyOtherString, "abcde"      )
 
@@ -1277,7 +1275,7 @@ TEST_CASE(NewEightStringSubs, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "abcdefghijklmn";
+    LString MyStr = "abcdefghijklmn";
     CHECK_EQUALS( "String sub.", MyStr, "abcdefghijklmn" )
 
     MyStr.InlineSub(5, 2);
@@ -1290,7 +1288,7 @@ TEST_CASE(NewEightStringSubs, "Lal.Strings")
 
     MyStr = "abcdefghijklmn";
     CHECK_EQUALS( "String sub.", MyStr,         "abcdefghijklmn" )
-    LNewString MyOtherString = MyStr.Sub(5, 2);
+    LString MyOtherString = MyStr.Sub(5, 2);
     CHECK_EQUALS( "String sub.", MyStr,         "abcdefghijklmn" )
     CHECK_EQUALS( "String sub.", MyOtherString,             "fg" )
 
@@ -1308,7 +1306,7 @@ TEST_CASE(NewEightStringAdvancedCharacters, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "これわテストです。";
+    LString MyStr = "これわテストです。";
     CHECK_EQUALS( "Advanced characters.", MyStr, "これわテストです。" )
     CHECK_EQUALS( "Advanced characters.", MyStr.GetSize(),           28 )
     CHECK_EQUALS( "Advanced characters.", MyStr.GetByteSize(),       28 )
@@ -1408,7 +1406,7 @@ TEST_CASE(NewEightStringAdvancedCharacters, "Lal.Strings")
     CHECK_EQUALS("Advanced characters.", MyStr,           "これわ" )
     MyStr = "これわテストです。";
     CHECK_EQUALS("Advanced characters.", MyStr, "これわテストです。" )
-    LNewString MyOtherString = MyStr.Cut(MyStr.FindFirst("ト"));
+    LString MyOtherString = MyStr.Cut(MyStr.FindFirst("ト"));
     CHECK_EQUALS("Advanced characters.", MyStr,         "これわテストです。" )
     CHECK_EQUALS("Advanced characters.", MyOtherString,       "これわテス"  )
     MyOtherString = MyStr.Cut(0);
@@ -1433,7 +1431,7 @@ TEST_CASE(NewEightStringAdvancedCharacters, "Lal.Strings")
     CHECK_EQUALS("Advanced characters.", MyStr, "わテストで" )
 
     MyStr = "これ";
-    MyStr = LNewString::SprintF("{}わ{}です{}", MyStr.ToPtr(), "テスト", "。");
+    MyStr = LString::SprintF("{}わ{}です{}", MyStr.ToPtr(), "テスト", "。");
     CHECK_EQUALS("Advanced characters.", MyStr, "これわテストです。" )
 
     QUICK_CHECK_TRUE( MyStr.PopCharacter() )
@@ -1484,9 +1482,9 @@ TEST_CASE(NewEightStringLowerCase, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "AbCdEfGhIjKlMn";
+    LString MyStr = "AbCdEfGhIjKlMn";
     CHECK_EQUALS( "String lower case.", MyStr,         "AbCdEfGhIjKlMn" )
-    LNewString MyOtherStr = MyStr.GetLowerCase();
+    LString MyOtherStr = MyStr.GetLowerCase();
     CHECK_EQUALS( "String lower case.", MyStr,         "AbCdEfGhIjKlMn" )
     CHECK_EQUALS( "String lower case.", MyOtherStr,    "abcdefghijklmn" )
 
@@ -1509,9 +1507,9 @@ TEST_CASE(NewEightStringChops, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z";
+    LString MyStr = "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z";
     CHECK_EQUALS( "String lower case.", MyStr,         "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
-    LNewString MyOtherString = MyStr.RightChop(38);
+    LString MyOtherString = MyStr.RightChop(38);
     CHECK_EQUALS( "String lower case.", MyStr,         "A123BCDEFGHこれわテストです。IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
     CHECK_EQUALS( "String lower case.", MyOtherString, "IJKLMNOPQR456789STUVWXYZabcdeこれわテストです。fghijklmnopqrstuvwxy0z" )
     MyOtherString.InlineRightChop(1);
@@ -1537,7 +1535,7 @@ TEST_CASE(StringUtlity, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "これわテストです。";
+    LString MyStr = "これわテストです。";
     CHECK_EQUALS( "String utility.", MyStr, "これわテストです。" )
     CHECK_TRUE(   "String utility.", Str::IsValidUtf8(MyStr.ToC())  )
     CHECK_FALSE(  "String utility.", Str::IsValidAscii(MyStr.ToC()) )
@@ -1553,7 +1551,7 @@ TEST_CASE(StringPaths, "Lal.Strings")
 {
     using namespace Jafg;
 
-    LNewString MyStr = "";
+    LString MyStr = "";
     CHECK_TRUE(   "String paths.", MyStr.IsEmpty() )
 
     MyStr /= "abc";

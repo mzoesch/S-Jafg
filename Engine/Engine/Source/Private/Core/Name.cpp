@@ -7,9 +7,9 @@
 namespace Jafg::Private
 {
 
-TArray<LSimpleString>& GetStaticNameContainer()
+TArray<LString>& GetStaticNameContainer()
 {
-    static TArray<LSimpleString> StaticNameContainer;
+    static TArray<LString> StaticNameContainer;
     return StaticNameContainer;
 }
 
@@ -36,19 +36,19 @@ i32 GetStaticNameCount()
     return GetStaticNameContainer().GetSize();
 }
 
-const LSimpleString& GetStaticNameByIndex(const i32 InIndex)
+const LString& GetStaticNameByIndex(const i32 InIndex)
 {
     return GetStaticNameContainer()[InIndex];
 }
 
-LName RegisterStaticName(const LSimpleString& InName)
+LName RegisterStaticName(const LString& InName)
 {
     check( GNameRegistry == nullptr )
     GetStaticNameContainer().Emplace(InName);
     return LNameRegistry::GetNameByValue(GetStaticNameCount());
 }
 
-LName RegisterStaticName(LSimpleString&& InName)
+LName RegisterStaticName(LString&& InName)
 {
     check( GNameRegistry == nullptr )
     GetStaticNameContainer().Emplace(std::move(InName));
@@ -61,9 +61,9 @@ namespace Jafg
 {
 
 ENGINE_API LName LName::NoName = LName(NO_NAME);
-ENGINE_API LSimpleString LName::NoNameStringRepresentation = "NoName";
+ENGINE_API LString LName::NoNameStringRepresentation = "NoName";
 
-const LSimpleString& LName::ToString() const
+const LString& LName::ToString() const
 {
     check( Private::GNameRegistry )
     return Private::GNameRegistry->GetRealNameSafe(*this);
@@ -78,13 +78,13 @@ Jafg::Private::LNameRegistry::~LNameRegistry()
     return;
 }
 
-Jafg::LName Jafg::Private::LNameRegistry::GetName(const LSimpleString& InName, const bool bConvertToLower /* = true */) const
+Jafg::LName Jafg::Private::LNameRegistry::GetName(const LString& InName, const bool bConvertToLower /* = true */) const
 {
     if (bConvertToLower)
     {
-        const LSimpleString LowerName = InName.GetLowerCase();
+        const LString LowerName = InName.GetLowerCase();
         i32 Index = 0;
-        if (const LSimpleString* Ref = this->Names.FindRef(LowerName, &Index); Ref)
+        if (const LString* Ref = this->Names.FindRef(LowerName, &Index); Ref)
         {
             return { static_cast<LUnderlyingName>(Index + 1) };
         }
@@ -92,7 +92,7 @@ Jafg::LName Jafg::Private::LNameRegistry::GetName(const LSimpleString& InName, c
     else
     {
         i32 Index = 0;
-        if (const LSimpleString* Ref = this->Names.FindRef(InName, &Index); Ref)
+        if (const LString* Ref = this->Names.FindRef(InName, &Index); Ref)
         {
             return { static_cast<LUnderlyingName>(Index + 1) };
         }
@@ -101,27 +101,22 @@ Jafg::LName Jafg::Private::LNameRegistry::GetName(const LSimpleString& InName, c
     return LName::NoName;
 }
 
-Jafg::LName Jafg::Private::LNameRegistry::GetName(const LString& InName, const bool bConvertToLower /* = true */) const
-{
-    return this->GetName(LSimpleString(InName.ToPtr()), bConvertToLower);
-}
-
-bool Jafg::Private::LNameRegistry::IsNameRegistered(const LSimpleString& InName, const bool bConvertToLower /* = true */) const
+bool Jafg::Private::LNameRegistry::IsNameRegistered(const LString& InName, const bool bConvertToLower /* = true */) const
 {
     if (bConvertToLower)
     {
-        const LSimpleString LowerName = InName.GetLowerCase();
+        const LString LowerName = InName.GetLowerCase();
         return this->Names.Contains(LowerName);
     }
 
     return this->Names.Contains(InName);
 }
 
-bool Jafg::Private::LNameRegistry::RegisterName(const LSimpleString& InName)
+bool Jafg::Private::LNameRegistry::RegisterName(const LString& InName)
 {
     check( Tasks::IsOnMasterThread() )
 
-    LSimpleString LowerName = InName.GetLowerCase();
+    LString LowerName = InName.GetLowerCase();
 
     if (this->IsNameRegistered(LowerName, false))
     {
@@ -134,14 +129,14 @@ bool Jafg::Private::LNameRegistry::RegisterName(const LSimpleString& InName)
     return true;
 }
 
-Jafg::LName Jafg::Private::LNameRegistry::RegisterAndGetName(const LSimpleString& InName)
+Jafg::LName Jafg::Private::LNameRegistry::RegisterAndGetName(const LString& InName)
 {
     if (this->RegisterName(InName))
     {
         return { static_cast<LUnderlyingName>(this->Names.GetSize()) };
     }
 
-    const LSimpleString LowerName = InName.GetLowerCase();
+    const LString LowerName = InName.GetLowerCase();
 
     if (this->IsNameRegistered(InName, false))
     {

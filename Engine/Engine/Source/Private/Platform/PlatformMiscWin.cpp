@@ -227,7 +227,7 @@ BOOL CALLBACK MonitorEnumProc(const HMONITOR HMonitor, HDC HdcMonitor, LPRECT Lp
         Viewport.WidthMm  = Size.X;
         Viewport.HeightMm = Size.Y;
 
-        Viewport.Name = LSimpleString::SprintF("[{}] Generic Pnp Monitor ({}x{}px)",
+        Viewport.Name = LString::SprintF("[{}] Generic Pnp Monitor ({}x{}px)",
             GPlatformMisc->PhysicalViewports.GetSize(),
             Viewport.WidthPx, Viewport.HeightPx
         );
@@ -244,14 +244,14 @@ BOOL CALLBACK MonitorEnumProc(const HMONITOR HMonitor, HDC HdcMonitor, LPRECT Lp
 
 } /* ~Namespace <Anonymous> */
 
-Jafg::LSimpleString Jafg::PlatformMisc::GetEngineRootDirImpl()
+Jafg::LString Jafg::PlatformMisc::GetEngineRootDirImpl()
 {
     LPath RealRootDir = PlatformMisc::GetRealEngineRootDir();
     RealRootDir.PopSubPaths(4);
     return RealRootDir.MoveOut();
 }
 
-Jafg::LSimpleString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
+Jafg::LString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
 {
     TCHAR Buffer[PLATFORM_MAX_PATH] = { 0 };
     GetModuleFileName(nullptr, Buffer, PLATFORM_MAX_PATH);

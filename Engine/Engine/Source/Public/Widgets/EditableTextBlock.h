@@ -77,15 +77,15 @@ private:
     void SafelyIncreaseCaretCursor();
 
     LColor Color = LColor::Black;
-    float  Scale = 1.0f;
+    f32    Scale = 1.0f;
 
-    LString            Content;
+    LString Content;
     LFontShaderContext ShaderContext;
 
-    LCaretBrush       CaretBrush;
-    i32             CaretCursor  = 0;
-    float             CaretBlinker = 0.0f;
-    float             CaretBlinkerSpeed = 0.5f;
+    LCaretBrush CaretBrush;
+    i32 CaretCursor  = 0;
+    f32 CaretBlinker = 0.0f;
+    f32 CaretBlinkerSpeed = 0.5f;
     LBoxShaderContext CaretShaderContext;
 };
 

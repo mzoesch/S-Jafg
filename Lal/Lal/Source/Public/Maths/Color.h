@@ -131,9 +131,9 @@ struct LColor final
     static const LColor Cyan;
     static const LColor Magenta;
 
-    FORCEINLINE LSimpleString ToString() const
+    FORCEINLINE LString ToString() const
     {
-        return LSimpleString::SprintF("RGBA: {} {} {} {}", this->R, this->G, this->B, this->A);
+        return LString::SprintF("RGBA: {} {} {} {}", this->R, this->G, this->B, this->A);
     }
 };
 

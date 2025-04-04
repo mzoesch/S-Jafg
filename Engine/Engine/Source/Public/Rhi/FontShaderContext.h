@@ -10,7 +10,7 @@ namespace Jafg
 
 struct LFontShaderContextDrawArgs final : public LGenericShaderContextDrawArgs
 {
-    const LSimpleString* Content = nullptr;
+    const LString* Content = nullptr;
     LVector2 Offset;
     LPadding Padding;
     LVector2 DesiredSize = LVector2::Zero();
@@ -26,14 +26,11 @@ public:
     virtual void Draw(const LViewport& Context, LGenericShaderContextDrawArgs& InArgs) const override;
     virtual void OnFree() override;
 
-    static bool  GetMinimalDesiredSize(const LSimpleString& InContent, const float InScale, LVector2& OutSize);
-    static bool  GetMinimalDesiredSize(const LEightString& InContent, const float InScale, LVector2& OutSize);
+    static bool  GetMinimalDesiredSize(const LString& InContent, const float InScale, LVector2& OutSize);
 
-    static LVector2 GetDesiredSize(const LSimpleString& InContent, const float InScale);
-    static LVector2 GetDesiredSize(const LEightString& InContent, const float InScale);
-    static float    GetDesiredWidth(const LSimpleString& InContent, const float InScale);
-    static float    GetDesiredWidth(const LEightString& InContent, const float InScale);
-    static float    GetApproximateHeight(const float InScale);
+    static LVector2 GetDesiredSize(const LString& InContent, const float InScale);
+    static f32      GetDesiredWidth(const LString& InContent, const float InScale);
+    static f32      GetApproximateHeight(const float InScale);
 
 private:
 

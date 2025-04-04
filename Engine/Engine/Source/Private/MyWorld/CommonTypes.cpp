@@ -9,14 +9,14 @@ namespace Jafg
 namespace ENormalLookup
 {
 
-ENGINE_API LSimpleString NorthStr    = "North";
-ENGINE_API LSimpleString EastStr     = "East";
-ENGINE_API LSimpleString SouthStr    = "South";
-ENGINE_API LSimpleString WestStr     = "West";
-ENGINE_API LSimpleString UpStr       = "Up";
-ENGINE_API LSimpleString DownStr     = "Down";
-ENGINE_API LSimpleString VerticalStr = "Vertical";
-ENGINE_API LSimpleString SidesStr    = "Sides";
+ENGINE_API LString NorthStr    = "North";
+ENGINE_API LString EastStr     = "East";
+ENGINE_API LString SouthStr    = "South";
+ENGINE_API LString WestStr     = "West";
+ENGINE_API LString UpStr       = "Up";
+ENGINE_API LString DownStr     = "Down";
+ENGINE_API LString VerticalStr = "Vertical";
+ENGINE_API LString SidesStr    = "Sides";
 
 } /* ~Namespace ENormalLookup */
 

@@ -119,7 +119,7 @@ void LAnchor::Normalize()
     return;
 }
 
-LSimpleString LexToString(const EWidgetVisibility::Type InVisibility)
+LString LexToString(const EWidgetVisibility::Type InVisibility)
 {
     switch (InVisibility)
     {

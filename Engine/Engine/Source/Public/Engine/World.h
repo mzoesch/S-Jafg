@@ -108,7 +108,7 @@ public:
 
     LWorld() = delete;
     PROHIBIT_REALLOC_OF_ANY_FORM(LWorld)
-    LWorld(const LSimpleString& InHumanReadableName, const EWorldState::Type InWorldType);
+    LWorld(const LString& InHumanReadableName, const EWorldState::Type InWorldType);
 
     ENGINE_API auto GetEngine() const -> LEngine*;
     ENGINE_API auto GetLocalEgo() const -> LLocalEgo*;
@@ -142,7 +142,7 @@ public:
     FORCEINLINE auto GetTickableObjects() const -> const TArray<LTickableObject*>& { return this->TickableObjects; }
     FORCEINLINE auto GetActors() const -> const TArray<AActor*>& { return this->Actors; }
 
-    ENGINE_API float GetRealTimeSecondsSinceWorldLaunch() const;
+    ENGINE_API f32 GetRealTimeSecondsSinceWorldLaunch() const;
 
     //#
     //# Trace this world for physical hits.
@@ -190,7 +190,7 @@ private:
     //# The real time (not stopped or dilated / clamped) when this world was launched.
     //# Real time is relative to the static storage initialization of the engine shared library.
     //#
-    float RealTimeWhenWorldWasLaunched = 0.0f;
+    f32 RealTimeWhenWorldWasLaunched = 0.0f;
 };
 
 #if AS_CLIENT

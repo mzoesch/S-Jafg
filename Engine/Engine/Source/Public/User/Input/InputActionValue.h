@@ -62,7 +62,7 @@ struct LInputActionValue final
     FORCEINLINE auto operator+=(const Axis3D& InValue) -> LInputActionValue& { this->Value   += InValue; return *this; }
     FORCEINLINE auto operator-=(const Axis3D& InValue) -> LInputActionValue& { this->Value   -= InValue; return *this; }
 
-    FORCEINLINE LSimpleString ToString() const;
+    FORCEINLINE LString ToString() const;
 
 private:
 
@@ -115,7 +115,7 @@ inline LInputActionValue::Axis3D LInputActionValue::Get<LInputActionValue::Axis3
     return this->Value;
 }
 
-LSimpleString LInputActionValue::ToString() const
+LString LInputActionValue::ToString() const
 {
     check( this->ValueType != EInputActionCategory::None )
 
@@ -125,11 +125,11 @@ LSimpleString LInputActionValue::ToString() const
     }
     if (this->ValueType == EInputActionCategory::Axis1D)
     {
-        return LSimpleString::SprintF("{:.3f}", this->Value.X);
+        return LString::SprintF("{:.3f}", this->Value.X);
     }
     if (this->ValueType == EInputActionCategory::Axis2D)
     {
-        return LSimpleString::SprintF("{:.3f},{:.3f}", this->Value.X, this->Value.Y);
+        return LString::SprintF("{:.3f},{:.3f}", this->Value.X, this->Value.Y);
     }
 
     checkNoEntry()

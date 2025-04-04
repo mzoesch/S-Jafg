@@ -63,7 +63,7 @@ public:
     FORCEINLINE  TStringBase(LNullptrTy) noexcept : Impl() { }
     FORCEINLINE  TStringBase(const TStringBase& Other) noexcept = default;
     FORCEINLINE  TStringBase(TStringBase&& Other) noexcept = default;
-    FORCEINLINE  TStringBase(const T InRune);
+    explicit     TStringBase(const T InRune);
     FORCEINLINE  TStringBase(const T* InString);
     FORCEINLINE  TStringBase(const T* InString, const SizeType InLength);
     FORCEINLINE ~TStringBase() noexcept = default;
@@ -77,7 +77,8 @@ public:
     NODISCARD FORCEINLINE const T* ToC()   const noexcept { const T* Out = this->Impl.GetFirst(); return Out ? Out : &Traits::Terminator; }
     NODISCARD FORCEINLINE const T* ToPtr() const noexcept { const T* Out = this->Impl.GetFirst(); return Out ? Out : &Traits::Terminator; }
     NODISCARD FORCEINLINE SizeType GetRuneCount() const noexcept { return Maths::Max(this->GetSize() - /*Terminator*/1, 0); }
-    NODISCARD FORCEINLINE SizeType GetTraitCount() const noexcept { return  Traits::template GetCharacterCount<SizeType>(this->ToPtr()); }
+    NODISCARD FORCEINLINE SizeType GetCharacterCount() const noexcept { return  Traits::template GetCharacterCount<SizeType>(this->ToPtr()); }
+    NODISCARD FORCEINLINE SizeType GetRuneCountOfCharacterAt(const SizeType InRuneIndex) const noexcept;
 
     NODISCARD FORCEINLINE SizeType GetSize()     const noexcept { return this->Impl.GetSize();      }
     NODISCARD FORCEINLINE SizeType GetByteSize() const noexcept { return this->Impl.GetByteSize();  }
@@ -132,8 +133,9 @@ public:
 
     FORCEINLINE void RemoveAt(const SizeType InRuneIndex) noexcept;
     FORCEINLINE void RemoveAt(const SizeType InRuneIndex, const SizeType InLength) noexcept;
-    FORCEINLINE void RemoveCharacterAt(const SizeType InRuneIndex) noexcept;
-    FORCEINLINE void RemoveCharacterAt(const SizeType InRuneIndex, const SizeType InCharacters) noexcept;
+    //# @return The number of runes removed.
+    FORCEINLINE SizeType RemoveCharacterAt(const SizeType InRuneIndex) noexcept;
+    FORCEINLINE SizeType RemoveCharacterAt(const SizeType InRuneIndex, const SizeType InCharacters) noexcept;
 
     FORCEINLINE const T* Peek() const noexcept;
     FORCEINLINE bool Pop() noexcept;
@@ -202,10 +204,15 @@ public:
     template <typename ... TArgs>
     static Self SprintF(const T* InFormat, const TArgs& ... InArgs) noexcept;
 
+    FORCEINLINE       T* GetBegin()       noexcept { return this->Impl.GetData(); }
+    FORCEINLINE const T* GetBegin() const noexcept { return this->Impl.GetData(); }
+    FORCEINLINE       T* GetEnd()         noexcept { return this->Impl.GetSlack(); }
+    FORCEINLINE const T* GetEnd()   const noexcept { return this->Impl.GetSlack(); }
+
     FORCEINLINE Iterator<T>       begin()       noexcept { return this->Impl.begin(); }
     FORCEINLINE Iterator<const T> begin() const noexcept { return this->Impl.begin(); }
-    FORCEINLINE Iterator<const T> end()   const noexcept { return this->Impl.end();   }
-    FORCEINLINE Iterator<T>       end()         noexcept { return this->Impl.end();   }
+    FORCEINLINE Iterator<const T> end()   const noexcept { auto It = this->Impl.end(); return It == this->begin() ? It : --It; }
+    FORCEINLINE Iterator<T>       end()         noexcept { auto It = this->Impl.end(); return It == this->begin() ? It : --It; }
 
     FORCEINLINE       Alloc& GetUnderlyingDataStructure()       noexcept { return this->Impl; }
     FORCEINLINE const Alloc& GetUnderlyingDataStructure() const noexcept { return this->Impl; }
@@ -396,6 +403,12 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self& TStringBase<InTraits,
 
     PRIVATE_JAFG_CHECK_STRING_STATE()
     return *this;
+}
+
+template<typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::GetRuneCountOfCharacterAt(const SizeType InRuneIndex) const noexcept
+{
+    return Traits::template GetCharacterSize<SizeType>(this->ToPtr() + InRuneIndex);
 }
 
 template<typename InTraits, typename InAlloc>
@@ -647,18 +660,18 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::RemoveAt(const SizeType InRuneI
 }
 
 template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::RemoveCharacterAt(const SizeType InRuneIndex) noexcept
+FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::RemoveCharacterAt(const SizeType InRuneIndex) noexcept
 {
     JAFG_CHECK_STRING( this->IsValidIndex(InRuneIndex) )
     const SizeType CharacterSize = Traits::template GetCharacterSize<SizeType>(this->Impl.GetData() + InRuneIndex);
     this->Impl.RemoveAt(InRuneIndex, CharacterSize);
 
     PRIVATE_JAFG_CHECK_STRING_STATE()
-    return;
+    return CharacterSize;
 }
 
 template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::RemoveCharacterAt(const SizeType InRuneIndex, const SizeType InCharacters) noexcept
+FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::RemoveCharacterAt(const SizeType InRuneIndex, const SizeType InCharacters) noexcept
 {
     JAFG_CHECK_STRING( this->IsValidIndex(InRuneIndex) )
 
@@ -673,7 +686,7 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::RemoveCharacterAt(const SizeTyp
 
     this->RemoveAt(InRuneIndex, TotalRunes);
 
-    return;
+    return TotalRunes;
 }
 
 template<typename InTraits, typename InAlloc>
@@ -838,6 +851,11 @@ FORCEINLINE bool TStringBase<InTraits, InAlloc>::EndsWith(const T* InString, con
         if (*(this->Impl.GetSlack() - 1 - Cursor) != *(InString + InLength - Cursor))
         {
             return false;
+        }
+
+        if (Cursor == InLength)
+        {
+            return true;
         }
 
         ++Cursor;
@@ -1414,15 +1432,20 @@ void TStringBase<InTraits, InAlloc>::EnsureValidState() const
 }
 #endif /* CHECK_STRING_VALIDITY */
 
-template <typename InTraits, typename InAlloc>
-class TStringBase;
-
-template <typename InT>
-using TStringBasic = TStringBase<TStringTraits<InT>, TArray<InT>>;
-
-typedef TStringBasic<char> LNewString;
-
 } /* ~Namespace Jafg */
 
 #undef PRIVATE_JAFG_CHECK_STRING_STATE
 #undef JAFG_CHECK_STRING
+
+template <>
+struct std::formatter<::Jafg::LString> : std::formatter<const char*>
+{
+    FORCEINLINE auto format
+    (
+        const ::Jafg::LString& InString,
+        ::std::format_context& InContext
+    ) const -> ::std::format_context::iterator
+    {
+        return ::std::formatter<const char*>::format(InString.ToC(), InContext);
+    }
+};

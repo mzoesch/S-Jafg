@@ -181,7 +181,7 @@ struct LAnchor final
     bool operator==(const LAnchor& InOther) const { return this->Anchors == InOther.Anchors; }
     bool operator!=(const LAnchor& InOther) const { return this->Anchors != InOther.Anchors; }
 
-    FORCEINLINE LSimpleString ToString() const
+    FORCEINLINE LString ToString() const
     {
         return this->Anchors.ToString();
     }
@@ -268,7 +268,7 @@ FORCEINLINE bool TransformsWidgetLayout(const EWidgetVisibility::Type InVisibili
 }
 
 } /* ~Namespace EWidgetVisibility */
-ENGINE_API LSimpleString LexToString(const EWidgetVisibility::Type InVisibility);
+ENGINE_API LString LexToString(const EWidgetVisibility::Type InVisibility);
 
 //#
 //# The base struct for every widget slot.

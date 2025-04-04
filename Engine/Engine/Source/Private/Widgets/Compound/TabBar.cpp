@@ -80,7 +80,7 @@ void Jafg::WTabBar::Construct()
 
 void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, rvalue is just to do some inline stuff... no need to move.
 {
-    const LSimpleString* const IdentPtr = &InTabDescriptor.Identifier;
+    const LString* const IdentPtr = &InTabDescriptor.Identifier;
     if (this->TabsInOrder.ContainsByPredicate([IdentPtr](const LAddedTabBarTab& Tab)
     {
         return Tab.Identifier == *IdentPtr;
@@ -97,7 +97,7 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, r
     }
     else
     {
-        const LSimpleString* const AddAfterPtr = &InTabDescriptor.AddAfter;
+        const LString* const AddAfterPtr = &InTabDescriptor.AddAfter;
         Index = this->TabsInOrder.FindByPredicate([AddAfterPtr](const LAddedTabBarTab& Tab)
         {
             return Tab.Identifier == *AddAfterPtr;
@@ -111,7 +111,7 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, r
 
     if (InTabDescriptor.DisplayName.IsEmpty())
     {
-        const LSimpleString S = Strings::AddSpacesToCamelCase(InTabDescriptor.Identifier);
+        const LString S = Strings::AddSpacesToCamelCase(InTabDescriptor.Identifier);
         InTabDescriptor.DisplayName = S.ToPtr();
     }
 
@@ -131,19 +131,19 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, r
     return;
 }
 
-bool Jafg::WTabBar::UnregisterTab(const LSimpleString& Identifier)
+bool Jafg::WTabBar::UnregisterTab(const LString& Identifier)
 {
     return false;
 }
 
-bool Jafg::WTabBar::UnregisterTabChecked(const LSimpleString& Identifier)
+bool Jafg::WTabBar::UnregisterTabChecked(const LString& Identifier)
 {
     const bool bOut = this->UnregisterTab(Identifier);
     check( bOut )
     return bOut;
 }
 
-void Jafg::WTabBar::OnTabBarButtonPressed(const LSimpleString& Identifier)
+void Jafg::WTabBar::OnTabBarButtonPressed(const LString& Identifier)
 {
     const void* PreviouslyFocusedTab = this->CurrentlyFocusedTab;
     if (const LAddedTabBarTab* FocusedTab = this->GetCurrentlyFocusedTab(); FocusedTab)

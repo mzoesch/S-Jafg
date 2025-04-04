@@ -52,7 +52,7 @@ enum Type : u8
 
 } /* ~Namespace EChunkState */
 
-inline LSimpleString LexToString(const EChunkState::Type ChunkState)
+inline LString LexToString(const EChunkState::Type ChunkState)
 {
     switch (ChunkState)
     {

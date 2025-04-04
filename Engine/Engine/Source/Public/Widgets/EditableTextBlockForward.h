@@ -47,6 +47,6 @@ enum Type : u8
 };
 
 } /* ~Namespace ETextCommit */
-ENGINE_API LSimpleString LexToString(const ETextCommit::Type InType);
+ENGINE_API LString LexToString(const ETextCommit::Type InType);
 
 } /* ~Namespace Jafg */

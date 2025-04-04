@@ -2,7 +2,7 @@
 
 #include "CoreAfx.h"
 
-bool Jafg::Str::IsValidAscii(const char* InString, const i32 InRuneLenghtToCheck)
+bool Jafg::Str::IsValidAscii(const char* InString, const i32 InRuneLengthToCheck)
 {
     const u8* Bytes = reinterpret_cast<const u8*>(InString);
 
@@ -20,7 +20,7 @@ bool Jafg::Str::IsValidAscii(const char* InString, const i32 InRuneLenghtToCheck
             return false;
         }
 
-        if (InRuneLenghtToCheck > 0 && RuneCount >= InRuneLenghtToCheck)
+        if (InRuneLengthToCheck > 0 && RuneCount >= InRuneLengthToCheck)
         {
             break;
         }
@@ -29,7 +29,7 @@ bool Jafg::Str::IsValidAscii(const char* InString, const i32 InRuneLenghtToCheck
     return true;
 }
 
-bool Jafg::Str::IsValidUtf8(const char* InString, const i32 InRuneLenghtToCheck)
+bool Jafg::Str::IsValidUtf8(const char* InString, const i32 InRuneLengthToCheck)
 {
     const u8* Bytes = reinterpret_cast<const u8*>(InString);
 
@@ -68,7 +68,7 @@ bool Jafg::Str::IsValidUtf8(const char* InString, const i32 InRuneLenghtToCheck)
             return false;
         }
 
-        if (InRuneLenghtToCheck > 0 && RuneCount >= InRuneLenghtToCheck)
+        if (InRuneLengthToCheck > 0 && RuneCount >= InRuneLengthToCheck)
         {
             break;
         }

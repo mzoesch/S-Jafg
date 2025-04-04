@@ -60,16 +60,16 @@ ENGINE_API LPath ResolvePathToRelativeEnginePath(const LEnginePath& InEnginePath
 ENGINE_API LPath ResolvePathToAbsolutePath(const LEnginePath& InEnginePath, const JUserPreferences& InUserPreferences);
 ENGINE_API LPath ResolvePathToAbsolutePath(const EEnginePaths::Type& InEnginePath, const JUserPreferences& InUserPreferences);
 
-ENGINE_API TArray<LSimpleString> FindFiles(
+ENGINE_API TArray<LString> FindFiles(
     const LPath& InAbsolutePath,
     const bool bKeepExtension = false,
-    const LSimpleString& InFileExtension = ".*"
+    const LString& InFileExtension = ".*"
 );
-ENGINE_API TArray<LSimpleString> FindFiles(
+ENGINE_API TArray<LString> FindFiles(
     const EEnginePaths::Type InEnginePathTy,
     const JUserPreferences& InUserPreferences,
     const bool bKeepExtension = false,
-    const LSimpleString& InFileExtension = ".*"
+    const LString& InFileExtension = ".*"
 );
 
 } /* ~Namespace Finder */

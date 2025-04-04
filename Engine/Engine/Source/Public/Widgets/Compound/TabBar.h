@@ -25,7 +25,7 @@ struct LTabBarTabDescriptor final
     DEFAULT_MOVE(LTabBarTabDescriptor)
     ~LTabBarTabDescriptor() = default;
 
-    LSimpleString Identifier;
+    LString Identifier;
     LString DisplayName;
 
     LOnTabBarLoaded Callback;
@@ -52,7 +52,7 @@ struct LTabBarTabDescriptor final
     //# An optional value that may contain the identifier of the tab that this tab should be added after (in close
     //# proximity to it).
     //#
-    LSimpleString AddAfter;
+    LString AddAfter;
 };
 
 struct LTabBarTabData : public LWidgetNodeData
@@ -109,8 +109,8 @@ public:
     FORCEINLINE auto GetSwitcher() const -> const WWidgetSwitcher* { return this->Switcher; }
 
     void RegisterTab(LTabBarTabDescriptor&& InTabDescriptor);
-    bool UnregisterTab(const LSimpleString& Identifier);
-    bool UnregisterTabChecked(const LSimpleString& Identifier);
+    bool UnregisterTab(const LString& Identifier);
+    bool UnregisterTabChecked(const LString& Identifier);
 
     template <typename TNode>
     FORCEINLINE void SetButtonsContainerClass() { this->SetButtonsContainerClass(TNode::StaticClass()); }
@@ -122,7 +122,7 @@ public:
     FORCEINLINE void SetSwitcherClass(const TSubclassOf<WWidgetSwitcher>& InSwitcherClass) { this->SwitcherClass = InSwitcherClass; }
     FORCEINLINE auto GetCurrentSwitcherClass() const -> const TSubclassOf<WWidgetSwitcher>& { return this->SwitcherClass; }
 
-    void OnTabBarButtonPressed(const LSimpleString& Identifier);
+    void OnTabBarButtonPressed(const LString& Identifier);
     void OnOuterVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility);
 
 private:
@@ -163,7 +163,7 @@ protected:
 
     struct LAddedTabBarTab final
     {
-        LSimpleString Identifier;
+        LString Identifier;
         WWidgetNode* Button = nullptr;
         WWidgetNode* Panel = nullptr;
         i8 SwitcherIndex = INDEX_NONE;

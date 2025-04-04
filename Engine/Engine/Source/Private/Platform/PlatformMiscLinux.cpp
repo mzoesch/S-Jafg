@@ -12,14 +12,14 @@ namespace
 
 } /* ~Namespace <Anonymous> */
 
-Jafg::LSimpleString Jafg::PlatformMisc::GetEngineRootDirImpl()
+Jafg::LString Jafg::PlatformMisc::GetEngineRootDirImpl()
 {
     LPath RealRootDir = PlatformMisc::GetRealEngineRootDir();
     RealRootDir.PopSubPaths(4);
     return RealRootDir.MoveOut();
 }
 
-Jafg::LSimpleString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
+Jafg::LString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
 {
     char Buffer[PLATFORM_MAX_PATH] = { 0 };
     const u64 Ret = readlink("/proc/self/exe", Buffer, PLATFORM_MAX_PATH);

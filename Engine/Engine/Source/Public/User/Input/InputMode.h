@@ -40,7 +40,7 @@ enum Type : u8
 
 } /* ~Namespace EInputMode */
 
-inline LSimpleString LexToString(const EInputMode::Type InType)
+inline LString LexToString(const EInputMode::Type InType)
 {
     switch (InType)
     {

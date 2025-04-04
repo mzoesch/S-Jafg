@@ -13,19 +13,19 @@ struct LEngineVersion
     u8 Minor = 0;
     u8 Patch = 0;
 
-    FORCEINLINE auto ToString() const -> LSimpleString
+    FORCEINLINE LString ToString() const
     {
-        return LSimpleString::SprintF("{}.{}.{}", this->Major, this->Minor, this->Patch);
+        return LString::SprintF("{}.{}.{}", this->Major, this->Minor, this->Patch);
     }
 };
 
 //# @return Build time of the engine.
-NOINLINE ENGINE_API auto GetBuildTime() -> const LSimpleString&;
+NOINLINE ENGINE_API const LString& GetBuildTime();
 
 //# @return Build date of the engine.
-NOINLINE ENGINE_API auto GetBuildDate() -> const LSimpleString&;
+NOINLINE ENGINE_API const LString& GetBuildDate() ;
 
 //# @return Engine version when the engine library was built.
-NOINLINE ENGINE_API auto GetEngineVersion() -> LEngineVersion;
+NOINLINE ENGINE_API LEngineVersion GetEngineVersion();
 
 } /* ~Namespace Jafg::BuildInfo */

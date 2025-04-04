@@ -8,7 +8,7 @@ namespace Jafg
 
 ENGINE_API LPlatformMisc* GPlatformMisc = nullptr;
 
-LSimpleString PlatformMisc::GetEngineRootDir()
+LString PlatformMisc::GetEngineRootDir()
 {
 #if  !WITH_VIRTUAL_FILESYSTEM
     if (GPlatformMisc->EngineRootDir.IsEmpty())
@@ -21,7 +21,7 @@ LSimpleString PlatformMisc::GetEngineRootDir()
     return GPlatformMisc->EngineRootDir;
 }
 
-LSimpleString PlatformMisc::GetRealEngineRootDir()
+LString PlatformMisc::GetRealEngineRootDir()
 {
     if (GPlatformMisc->RealEngineRootDir.IsEmpty())
     {

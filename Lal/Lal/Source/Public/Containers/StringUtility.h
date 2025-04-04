@@ -5,7 +5,7 @@
 namespace Jafg::Str
 {
 
-bool IsValidAscii(const char* InString, const i32 InRuneLenghtToCheck = -1);
-bool IsValidUtf8(const char* InString, const i32 InRuneLenghtToCheck = -1);
+LAL_API bool IsValidAscii(const char* InString, const i32 InRuneLengthToCheck = INDEX_NONE);
+LAL_API bool IsValidUtf8(const char* InString, const i32 InRuneLengthToCheck = INDEX_NONE);
 
 } /* ~Namespace Jafg::Str */

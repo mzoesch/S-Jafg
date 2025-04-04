@@ -17,14 +17,16 @@ class LPathBase final
 {
 public:
 
-    using T         = InTStringTy;
-    using TStringTy = InTStringTy;
-    using LStringTy = TStringTy;
-    using SizeType  = typename LStringTy::SizeType;
-    using LRune     = typename LStringTy::CharacterTy;
+    using T          = InTStringTy;
+    using TStringTy  = InTStringTy;
+    using LStringTy  = TStringTy;
+    using SizeType   = typename LStringTy::SizeType;
+    using LRune      = typename LStringTy::T;
+    using Traits     = typename LStringTy::Traits;
 
-    inline static LRune StringTerminatorRune = LStringTy::Terminator;
     inline static LRune PathSeparator        = '/';
+
+    using Self = LPathBase<T>;
 
     FORCEINLINE  LPathBase() noexcept = default;
     FORCEINLINE  LPathBase(LNullptrTy) noexcept { }
@@ -73,7 +75,7 @@ public:
     FORCEINLINE auto end()   const noexcept -> Iterator<const LRune> { return this->Data.end();   }
 
     template <typename ... ArgyTy>
-    static auto SprintF(const char* Format, const ArgyTy& ... Args) -> LPathBase<T> { return LSimpleString::SprintF(Format, Args ...); }
+    static auto SprintF(const char* Format, const ArgyTy& ... Args) -> LPathBase<T> { return LString::SprintF(Format, Args ...); }
 
     FORCEINLINE auto operator /(const LRune* Other) const noexcept -> LPathBase<T>;
     FORCEINLINE auto operator/=(const LRune* Other) noexcept -> LPathBase<T>&;
@@ -117,7 +119,7 @@ LPathBase<InTStringTy> LPathBase<InTStringTy>::operator/(const LRune* Other) con
 template <typename InTStringTy>
 LPathBase<InTStringTy>& LPathBase<InTStringTy>::operator/=(const LRune* Other) noexcept
 {
-    if (*Other == LPathBase<T>::StringTerminatorRune)
+    if (*Other == Traits::Terminator)
     {
         return *this;
     }
@@ -132,7 +134,7 @@ LPathBase<InTStringTy>& LPathBase<InTStringTy>::operator/=(const LRune* Other) n
         ++Other;
     }
 
-    if (*Other == LPathBase<T>::StringTerminatorRune)
+    if (*Other == Traits::Terminator)
     {
         return *this;
     }
@@ -235,7 +237,7 @@ typename LPathBase<InTStringTy>::LStringTy LPathBase<InTStringTy>::GetBase() con
     return this->Data.SubIdx(Last + 1, this->Data.GetRuneCount());
 }
 
-using LPath = LPathBase<LSimpleString>;
+using LPath = LPathBase<LString>;
 
 #if PLATFORM_WASM
 template <> NODISCARD inline auto FormatArgLegacy(LPath& Arg)

@@ -16,13 +16,13 @@
 namespace Jafg
 {
 
-ENGINE_API LEngine*      GEngine                   = nullptr;
+ENGINE_API LEngine* GEngine = nullptr;
 
-ENGINE_API bool          bGShouldRequestExit       = false;
-ENGINE_API bool          bGEngineRequestingExit    = false;
+ENGINE_API bool bGShouldRequestExit = false;
+ENGINE_API bool bGEngineRequestingExit = false;
 
-ENGINE_API i32           GCustomExitStatusOverride = INDEX_NONE;
-ENGINE_API LSimpleString GCustomExitReason         = "";
+ENGINE_API i32     GCustomExitStatusOverride = INDEX_NONE;
+ENGINE_API LString GCustomExitReason;
 
 } /* ~Namespace Jafg. */
 
@@ -48,12 +48,12 @@ void Jafg::LEngine::Initialize()
             }
             i32 Value;
             auto [ptr, ec] = std::from_chars(
-                String.ToC(),
-                String.ToC() + String.GetCharacterCount(),
+                String.GetBegin(),
+                String.GetEnd(),
                 Value
             );
             ++*Cursor;
-            return ec == std::errc{} && ptr == String.ToC() + String.GetCharacterCount();
+            return ec == std::errc{} && ptr == String.GetEnd();
         })}).IsValid());
 
         ensure(this->CommandLineInterface.RegisterType({"Byte", "A 8 bit unsigned integer.", "0",
@@ -67,12 +67,12 @@ void Jafg::LEngine::Initialize()
             }
             i32 Value;
             auto [ptr, ec] = std::from_chars(
-                String.ToC(),
-                String.ToC() + String.GetCharacterCount(),
+                String.GetBegin(),
+                String.GetEnd(),
                 Value
             );
             ++*Cursor;
-            return ec == std::errc{} && ptr == String.ToC() + String.GetCharacterCount() && (Value >= 0 && Value <= 255);
+            return ec == std::errc{} && ptr == String.GetEnd() && (Value >= 0 && Value <= 255);
         })}).IsValid());
 
         ensure(this->CommandLineInterface.RegisterType({"Float", "A 32 bit floating point number.", "0.0",
@@ -86,12 +86,12 @@ void Jafg::LEngine::Initialize()
             }
             f32 Value;
             auto [ptr, ec] = std::from_chars(
-                String.ToC(),
-                String.ToC() + String.GetCharacterCount(),
+                String.GetBegin(),
+                String.GetEnd(),
                 Value
             );
             ++*Cursor;
-            return ec == std::errc{} && ptr == String.ToC() + String.GetCharacterCount();
+            return ec == std::errc{} && ptr == String.GetEnd();
         })}).IsValid());
 
         ensure(this->CommandLineInterface.RegisterType({"String", "A string.", "",
@@ -364,7 +364,7 @@ void Jafg::LEngine::RequestEngineExit()
 
 /* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
 // ReSharper disable once CppMemberFunctionMayBeStatic
-void Jafg::LEngine::RequestEngineExit(const LSimpleString& Reason)
+void Jafg::LEngine::RequestEngineExit(const LString& Reason)
 {
     ::Jafg::RequestEngineExit(Reason);
 }
@@ -378,7 +378,7 @@ void Jafg::LEngine::RequestEngineExit(const i32 CustomExitStatus)
 
 /* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
 // ReSharper disable once CppMemberFunctionMayBeStatic
-void Jafg::LEngine::RequestEngineExit(const i32 CustomExitStatus, const LSimpleString& Reason)
+void Jafg::LEngine::RequestEngineExit(const i32 CustomExitStatus, const LString& Reason)
 {
     ::Jafg::RequestEngineExit(CustomExitStatus, Reason);
 }
@@ -451,7 +451,7 @@ bool Jafg::LEngine::IsLevelRegistered(const LString& Identifier) const
     );
 }
 
-Jafg::LWorldContext& Jafg::LEngine::CreateNewWorldContext(const LSimpleString& InHumanReadableName)
+Jafg::LWorldContext& Jafg::LEngine::CreateNewWorldContext(const LString& InHumanReadableName)
 {
     check( Tasks::IsOnMasterThread() )
     this->Contexts.Emplace(InHumanReadableName);

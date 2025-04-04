@@ -36,7 +36,7 @@ enum Type : u8
 
 } /* ~Namespace EEnginePaths */
 
-inline LSimpleString LexToString(const EEnginePaths::Type InType)
+inline LString LexToString(const EEnginePaths::Type InType)
 {
     switch (InType)
     {

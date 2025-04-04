@@ -12,11 +12,11 @@ typedef u8 LKey;
 namespace EKeys
 {
 
-ENGINE_API LSimpleString ToString(const LKey Key);
+ENGINE_API LString ToString(const LKey Key);
 
 } /* ~Namespace EKeys */
 
-inline LSimpleString LexToString(const LKey Key) { return EKeys::ToString(Key); }
+inline LString LexToString(const LKey Key) { return EKeys::ToString(Key); }
 
 namespace EKeys
 {

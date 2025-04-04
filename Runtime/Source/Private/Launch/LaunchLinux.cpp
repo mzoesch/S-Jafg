@@ -74,7 +74,7 @@ i32 main(const i32 argc, char *argv[])
 
     Application::Private::CommandLine = std::move(CmdLine);
 
-    if (Application::Private::CommandLine.FindFirstSub("WaitForDebugger") != INDEX_NONE)
+    if (Application::Private::CommandLine.FindFirst("WaitForDebugger") != INDEX_NONE)
     {
         LOG_INFO(LogJafgInternal, "Waiting for debugger ...");
         LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()

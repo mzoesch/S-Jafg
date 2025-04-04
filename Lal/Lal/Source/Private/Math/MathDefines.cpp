@@ -24,7 +24,7 @@
 namespace Jafg
 {
 
-TRANSLATION_API LSimpleString LexToString(const EVectorAxis::Type InAxis)
+TRANSLATION_API LString LexToString(const EVectorAxis::Type InAxis)
 {
     switch (InAxis)
     {

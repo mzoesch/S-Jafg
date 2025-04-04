@@ -9,13 +9,13 @@
 namespace Jafg::Private
 {
 
-extern LSimpleString LalLogPrivateColor_Trace;
-extern LSimpleString LalLogPrivateColor_Verbose;
-extern LSimpleString LalLogPrivateColor_Info;
-extern LSimpleString LalLogPrivateColor_Warning;
-extern LSimpleString LalLogPrivateColor_Error;
-extern LSimpleString LalLogPrivateColor_Fatal;
-extern LSimpleString LalLogPrivateColor_End;
+LAL_API extern LString LalLogPrivateColor_Trace;
+LAL_API extern LString LalLogPrivateColor_Verbose;
+LAL_API extern LString LalLogPrivateColor_Info;
+LAL_API extern LString LalLogPrivateColor_Warning;
+LAL_API extern LString LalLogPrivateColor_Error;
+LAL_API extern LString LalLogPrivateColor_Fatal;
+LAL_API extern LString LalLogPrivateColor_End;
 
 LStringLegacy GetColorForVerbosity(const ELogVerbosityType Verbosity);
 

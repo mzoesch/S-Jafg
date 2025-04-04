@@ -35,16 +35,16 @@ struct LDiskVoxelTexture final
 {
     inline static char TexSectionDividerChar = '_';
 
-    LSimpleString Name;
+    LString Name;
 
-    auto GetVoxelName() const -> LSimpleString;
+    auto GetVoxelName() const -> LString;
     auto GetNormalLookUpBasedOfFileName() const -> ENormalLookup::Type;
     auto GetBlendLookUpBasedOfFileName(const TArray<LDiskBlendTexture>& InCurrentUsedBlends) const -> LTextureIndex;
 };
 
 struct LDiskBlendTexture final
 {
-    LSimpleString Name;
+    LString Name;
 };
 
 //#

@@ -8,19 +8,19 @@ namespace Jafg::LaunchProgress
 {
 
 ENGINE_API void PrepareBeginProgress();
-ENGINE_API void BeginProgress(const LSimpleString& Name, const LSimpleString& Description, const float Progress = 0.0f, const double ProgressStep = 0.0);
-ENGINE_API void BeginProgress(const LSimpleString& Description, const float Progress = 0.0f);
+ENGINE_API void BeginProgress(const LString& Name, const LString& Description, const f32 Progress = 0.0f, const f64 ProgressStep = 0.0);
+ENGINE_API void BeginProgress(const LString& Description, const f32 Progress = 0.0f);
 ENGINE_API void FinishAndGiveUpMemory();
 
 namespace Private
 {
 
-ENGINE_API extern float         GProgress;
-ENGINE_API extern double        GProgressStep;
-ENGINE_API extern LSimpleString GProgressName;
-ENGINE_API extern LSimpleString GProgressDescription;
-ENGINE_API extern LSurface*     GProgressSurface;
-ENGINE_API extern bool          bOwnerShipToken;
+ENGINE_API extern f32       GProgress;
+ENGINE_API extern f64       GProgressStep;
+ENGINE_API extern LString   GProgressName;
+ENGINE_API extern LString   GProgressDescription;
+ENGINE_API extern LSurface* GProgressSurface;
+ENGINE_API extern bool      bOwnerShipToken;
 
 } /* ~Namespace Private */
 

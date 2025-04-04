@@ -6,9 +6,9 @@
 #include "System/VoxelSubsystem.h"
 #include "User/UserPreferences.h"
 
-Jafg::LSimpleString Jafg::LDiskVoxelTexture::GetVoxelName() const
+Jafg::LString Jafg::LDiskVoxelTexture::GetVoxelName() const
 {
-    LSimpleString Out;
+    LString Out;
 
     for (const char& Rune : this->Name)
     {
@@ -42,7 +42,7 @@ Jafg::ENormalLookup::Type Jafg::LDiskVoxelTexture::GetNormalLookUpBasedOfFileNam
 
     if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 1)
     {
-        LSimpleString Copy = this->Name;
+        LString Copy = this->Name;
         Copy.InlineSubIdx(Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1, Copy.GetRuneCount());
 
         if (ENormalLookup::IsValid(Copy))
@@ -55,7 +55,7 @@ Jafg::ENormalLookup::Type Jafg::LDiskVoxelTexture::GetNormalLookUpBasedOfFileNam
 
     check( this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 2 )
 
-    LSimpleString Copy = this->Name;
+    LString Copy = this->Name;
     const i32 FirstOccurrence = Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1;
     Copy.InlineSub(FirstOccurrence, Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar) - FirstOccurrence);
 
@@ -98,7 +98,7 @@ Jafg::LTextureIndex Jafg::LDiskVoxelTexture::GetBlendLookUpBasedOfFileName(const
 
     if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 1)
     {
-        LSimpleString Copy = this->Name;
+        LString Copy = this->Name;
         Copy.InlineSubIdx(Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1, Copy.GetRuneCount());
 
         const DefaultContainerSizeType MaybeIdx = InCurrentUsedBlends.FindByPredicate([Copy] (const LDiskBlendTexture& InElement) -> bool
@@ -119,7 +119,7 @@ Jafg::LTextureIndex Jafg::LDiskVoxelTexture::GetBlendLookUpBasedOfFileName(const
 
     check( this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 2 )
 
-    LSimpleString Copy = this->Name;
+    LString Copy = this->Name;
     const i32 FirstOccurrence = Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1;
     Copy.InlineSub(FirstOccurrence, Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar) - FirstOccurrence);
 
@@ -168,12 +168,12 @@ void Jafg::JTextureSubsystem::TearDown()
 
 Jafg::TArray<Jafg::LDiskVoxelTexture> Jafg::JTextureSubsystem::FindMeaningFullVoxelTextureNames() const
 {
-    TArray<LSimpleString> Names = Finder::FindFiles(EEnginePaths::Voxels, *GetDefault<JUserPreferences>(), false, ".png");
+    TArray<LString> Names = Finder::FindFiles(EEnginePaths::Voxels, *GetDefault<JUserPreferences>(), false, ".png");
 
     TArray<LDiskVoxelTexture> Out;
-    for (LSimpleString& Name : Names)
+    for (LString& Name : Names)
     {
-        Out.Emplace(Name.MoveOut());
+        Out.Emplace(std::move(Name));
     }
 
     return Out;
@@ -181,12 +181,12 @@ Jafg::TArray<Jafg::LDiskVoxelTexture> Jafg::JTextureSubsystem::FindMeaningFullVo
 
 Jafg::TArray<Jafg::LDiskBlendTexture> Jafg::JTextureSubsystem::FindMeaningBlendTextureNames() const
 {
-    TArray<LSimpleString> Names = Finder::FindFiles(EEnginePaths::Blends, *GetDefault<JUserPreferences>(), false, ".png");
+    TArray<LString> Names = Finder::FindFiles(EEnginePaths::Blends, *GetDefault<JUserPreferences>(), false, ".png");
 
     TArray<LDiskBlendTexture> Out;
-    for (LSimpleString& Name : Names)
+    for (LString& Name : Names)
     {
-        Out.Emplace(Name.MoveOut());
+        Out.Emplace(std::move(Name));
     }
 
     return Out;

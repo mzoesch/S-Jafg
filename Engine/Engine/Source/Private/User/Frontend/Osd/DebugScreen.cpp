@@ -138,7 +138,7 @@ void Jafg::WDebugScreen::Tick()
         if (this->LocalPawnFacingSection)
         {
             const LRotator Rotator = Controller->GetPossessed()->GetRotator();
-            LSimpleString YawAsText = "N/A";
+            LString YawAsText = "N/A";
             if (Rotator.Yaw >= -45.f && Rotator.Yaw <= 45.f)
             {
                 YawAsText = "North (Towards positive X)";

@@ -40,8 +40,8 @@ LString ReadFile(const LPath& InAbsolutePath);
  *    "A"     -> "A"
  *    ""      -> ""
  */
-LSimpleString GetStem(const LSimpleString& InFileName); /* File or path. Does not matter. */
-void GetStemInline(LSimpleString& InOutFileName);
+LString GetStem(const LString& InFileName); /* File or path. Does not matter. */
+void GetStemInline(LString& InOutFileName);
 
 /**
  * @remark Does not work with embedded files.
@@ -77,7 +77,7 @@ inline bool Paths::DoesFileExistPanicked(const LPath& InAbsolutePath)
     const bool Out = Paths::DoesFileExist(InAbsolutePath);
     if (Out == false)
     {
-        panicMsgf( "File does not exist: %s.", InAbsolutePath.GetPath() )
+        panicMsgf( "File does not exist: %s.", InAbsolutePath.GetPath().ToC() )
     }
     return Out;
 }

@@ -9,12 +9,12 @@
 namespace Jafg::LaunchProgress
 {
 
-ENGINE_API float         Private::GProgress            = 0.0f;
-ENGINE_API double        Private::GProgressStep        = 0.0;
-ENGINE_API LSimpleString Private::GProgressName        = "Intermediate";
-ENGINE_API LSimpleString Private::GProgressDescription = "Intermediate";
-ENGINE_API LSurface*     Private::GProgressSurface     = nullptr;
-ENGINE_API bool          Private::bOwnerShipToken      = false;
+ENGINE_API f32       Private::GProgress            = 0.0f;
+ENGINE_API f64       Private::GProgressStep        = 0.0;
+ENGINE_API LString   Private::GProgressName        = "Intermediate";
+ENGINE_API LString   Private::GProgressDescription = "Intermediate";
+ENGINE_API LSurface* Private::GProgressSurface     = nullptr;
+ENGINE_API bool      Private::bOwnerShipToken      = false;
 
 } /* ~Namespace Jafg::LaunchProgress */
 
@@ -32,10 +32,10 @@ void Jafg::LaunchProgress::PrepareBeginProgress()
 }
 
 void Jafg::LaunchProgress::BeginProgress(
-    const LSimpleString& Name,
-    const LSimpleString& Description,
-    const float Progress, /* = 0.0f */
-    const double ProgressStep /* = 0.0 */
+    const LString& Name,
+    const LString& Description,
+    const f32 Progress, /* = 0.0f */
+    const f64 ProgressStep /* = 0.0 */
 )
 {
     if (Maths::IsNearlyEqual(Progress, 0.0f) == false)
@@ -52,7 +52,7 @@ void Jafg::LaunchProgress::BeginProgress(
     return;
 }
 
-void Jafg::LaunchProgress::BeginProgress(const LSimpleString& Description, const float Progress)
+void Jafg::LaunchProgress::BeginProgress(const LString& Description, const f32 Progress)
 {
     if (Maths::IsNearlyEqual(Progress, 0.0f) == false)
     {
@@ -60,7 +60,7 @@ void Jafg::LaunchProgress::BeginProgress(const LSimpleString& Description, const
     }
     else if (Private::GProgressStep > 0.0)
     {
-        Private::GProgress += static_cast<float>(Private::GProgressStep);
+        Private::GProgress += static_cast<f32>(Private::GProgressStep);
     }
 
     Private::GProgressDescription = Description;

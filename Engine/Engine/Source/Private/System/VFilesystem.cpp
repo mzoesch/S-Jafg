@@ -145,14 +145,14 @@ Jafg::TArray<u8> Jafg::LVirtualFileSystem::ReadFileAsJafgByteArray(const LEngine
     return Out;
 }
 
-Jafg::TArray<Jafg::LSimpleString> Jafg::LVirtualFileSystem::FindFiles(
+Jafg::TArray<Jafg::LString> Jafg::LVirtualFileSystem::FindFiles(
     const EEnginePaths::Type InEnginePathTy,
     const JUserPreferences& InUserPreferences,
     const bool bKeepExtension /* = false */,
-    const LSimpleString& InFileExtension /* = ".*"*/
+    const LString& InFileExtension /* = ".*"*/
 )
 {
-    TArray<LSimpleString> Out;
+    TArray<LString> Out;
     const LPath RelPath = LEnginePath(InEnginePathTy).ResolveRelativeEnginePath(InUserPreferences);
 
     for (const Private::LVirtualFile& File : Private::GetVirtualFiles())
@@ -175,7 +175,7 @@ Jafg::TArray<Jafg::LSimpleString> Jafg::LVirtualFileSystem::FindFiles(
             }
             else
             {
-                LSimpleString Name = File.GetFileName();
+                LString Name = File.GetFileName();
                 Paths::GetStemInline(Name);
                 Out.Add(std::move(Name));
             }
@@ -190,7 +190,7 @@ Jafg::TArray<Jafg::LSimpleString> Jafg::LVirtualFileSystem::FindFiles(
                 }
                 else
                 {
-                    LSimpleString Name = File.GetFileName();
+                    LString Name = File.GetFileName();
                     Paths::GetStemInline(Name);
                     Out.Add(std::move(Name));
                 }

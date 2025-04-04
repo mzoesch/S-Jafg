@@ -18,7 +18,7 @@ enum Type : u8
 
 } /* ~Namespace EChunkPersistency */
 
-inline LSimpleString LexToString(const EChunkPersistency::Type ChunkPersistency)
+inline LString LexToString(const EChunkPersistency::Type ChunkPersistency)
 {
     switch (ChunkPersistency)
     {

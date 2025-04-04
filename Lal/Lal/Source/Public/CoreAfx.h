@@ -72,12 +72,11 @@
 #include "Containers/ContainerMacros.h"
 #include "Containers/Iterator.h"
 #include "Containers/JafgArray.h"
-#include "Containers/MyString.h"
+#include "Containers/JafgString.h"
 #include "Containers/ComplexQueue.h"
 #include "Containers/SimpleQueue.h"
 #include "Containers/Format.h"
 #include "Containers/StringUtility.h"
-#include "Containers/StringConversions.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Functors

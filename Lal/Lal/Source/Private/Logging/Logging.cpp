@@ -101,13 +101,13 @@ std::string_view PrettyFunctionName(const char* InFunctionName) noexcept
     return { Begin, static_cast<std::string_view::size_type>(std::find(Begin, End, '(') - Begin) };
 }
 
-LSimpleString LalLogPrivateColor_Trace   = LOG_COLOR_TRACE;
-LSimpleString LalLogPrivateColor_Verbose = LOG_COLOR_VERBOSE;
-LSimpleString LalLogPrivateColor_Info    = LOG_COLOR_INFO;
-LSimpleString LalLogPrivateColor_Warning = LOG_COLOR_WARNING;
-LSimpleString LalLogPrivateColor_Error   = LOG_COLOR_ERROR;
-LSimpleString LalLogPrivateColor_Fatal   = LOG_COLOR_FATAL;
-LSimpleString LalLogPrivateColor_End     = LOG_COLOR_END;
+LAL_API LString LalLogPrivateColor_Trace   = LOG_COLOR_TRACE;
+LAL_API LString LalLogPrivateColor_Verbose = LOG_COLOR_VERBOSE;
+LAL_API LString LalLogPrivateColor_Info    = LOG_COLOR_INFO;
+LAL_API LString LalLogPrivateColor_Warning = LOG_COLOR_WARNING;
+LAL_API LString LalLogPrivateColor_Error   = LOG_COLOR_ERROR;
+LAL_API LString LalLogPrivateColor_Fatal   = LOG_COLOR_FATAL;
+LAL_API LString LalLogPrivateColor_End     = LOG_COLOR_END;
 
 LStringLegacy GetColorForVerbosity(const ELogVerbosityType Verbosity)
 {
@@ -126,7 +126,7 @@ LStringLegacy GetColorForVerbosity(const ELogVerbosityType Verbosity)
 namespace Jafg
 {
 
-LSimpleString LexToString(const ELogVerbosityType Verbosity)
+LString LexToString(const ELogVerbosityType Verbosity)
 {
     switch (Verbosity)
     {

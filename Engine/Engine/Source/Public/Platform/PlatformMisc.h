@@ -27,11 +27,11 @@ struct LPhysicalViewport
     i32 HeightPx = 0;
 
     //# Name of the monitor.
-    LSimpleString Name;
+    LString Name;
 
-    FORCEINLINE LSimpleString ToString() const
+    FORCEINLINE LString ToString() const
     {
-        return LSimpleString::SprintF("Monitor{{{},{}x{}mm,{}x{}px}}",
+        return LString::SprintF("Monitor{{{},{}x{}mm,{}x{}px}}",
             this->Name,
             this->WidthMm, this->HeightMm,
             this->WidthPx, this->HeightPx
@@ -47,15 +47,15 @@ namespace PlatformMisc
 //# console application might not be inside this directory.
 //# In shipped builds, this is the same as GetRealEngineRootDir().
 //#
-ENGINE_API LSimpleString GetEngineRootDir();
-ENGINE_API LSimpleString GetEngineRootDirImpl();
+ENGINE_API LString GetEngineRootDir();
+ENGINE_API LString GetEngineRootDirImpl();
 
 //#
 //# The real engine root dir where the runtime console application is located and running from.
 //# In shipped builds, this is the same as GetEngineRootDir().
 //#
-ENGINE_API LSimpleString GetRealEngineRootDir();
-ENGINE_API LSimpleString GetRealEngineRootDirImpl();
+ENGINE_API LString GetRealEngineRootDir();
+ENGINE_API LString GetRealEngineRootDirImpl();
 
 //#
 //# Invalidate all cached values and reinitialize them inside GPlatformMisc.
@@ -84,8 +84,8 @@ struct ENGINE_API LPlatformMisc
 
     i32 NumberOfPhysicalViewports = INDEX_NONE;
     TArray<LPhysicalViewport> PhysicalViewports;
-    LSimpleString EngineRootDir;
-    LSimpleString RealEngineRootDir;
+    LString EngineRootDir;
+    LString RealEngineRootDir;
 };
 
 } /* ~Namespace Jafg */

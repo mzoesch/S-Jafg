@@ -20,19 +20,19 @@ class LCommandLineInterface;
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
 
-ENGINE_API extern LEngine*      GEngine;
+ENGINE_API extern LEngine* GEngine;
 
 //#
 //# Whether the engine should exit at the next opportunity.
 //#
-ENGINE_API extern bool          bGShouldRequestExit;
+ENGINE_API extern bool bGShouldRequestExit;
 //#
 //# Whether the engine has successfully received an exit request and is now beginning to tear down.
 //#
-ENGINE_API extern bool          bGEngineRequestingExit;
+ENGINE_API extern bool bGEngineRequestingExit;
 
-ENGINE_API extern i32         GCustomExitStatusOverride;
-ENGINE_API extern LSimpleString GCustomExitReason;
+ENGINE_API extern i32     GCustomExitStatusOverride;
+ENGINE_API extern LString GCustomExitReason;
 
 FORCEINLINE bool IsEngineValid() { return GEngine; }
 FORCEINLINE auto GetEngine() -> LEngine* { return GEngine; }
@@ -42,9 +42,9 @@ FORCEINLINE bool IsTearingDown() { return bGEngineRequestingExit; }
 FORCEINLINE bool WillShortlyTerminate() { return bGShouldRequestExit || bGEngineRequestingExit; }
 
 FORCEINLINE bool HasCustomExitStatus() { return GCustomExitStatusOverride != INDEX_NONE; }
-FORCEINLINE auto GetCustomExitStatus() -> i32 { return GCustomExitStatusOverride; }
+FORCEINLINE i32  GetCustomExitStatus() { return GCustomExitStatusOverride; }
 FORCEINLINE bool HasCustomExitReason() { return GCustomExitReason.IsEmpty() == false; }
-FORCEINLINE auto GetCustomExitReason() -> LSimpleString { return GCustomExitReason; }
+FORCEINLINE auto GetCustomExitReason() -> LString { return GCustomExitReason; }
 
 // ~Engine Globals
 ///////////////////////////////////////////////////////////////////////////////
@@ -56,7 +56,7 @@ FORCEINLINE auto GetCustomExitReason() -> LSimpleString { return GCustomExitReas
 struct LWorldContext
 {
     LWorldContext() = delete;
-    LWorldContext(const LSimpleString& InHumanReadableName)
+    LWorldContext(const LString& InHumanReadableName)
     {
         this->ChildWorld = new LWorld(InHumanReadableName, EWorldState::Uninitialized);
     }
@@ -95,9 +95,9 @@ public:
     ENGINE_API void ReflectForwardedExitRequest();
 
     ENGINE_API void RequestEngineExit();
-    ENGINE_API void RequestEngineExit(const LSimpleString& Reason);
+    ENGINE_API void RequestEngineExit(const LString& Reason);
     ENGINE_API void RequestEngineExit(const i32 CustomExitStatus);
-    ENGINE_API void RequestEngineExit(const i32 CustomExitStatus, const LSimpleString& Reason);
+    ENGINE_API void RequestEngineExit(const i32 CustomExitStatus, const LString& Reason);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Client Local Stuff
@@ -155,7 +155,7 @@ public:
 
 private:
 
-    LWorldContext& CreateNewWorldContext(const LSimpleString& InHumanReadableName);
+    LWorldContext& CreateNewWorldContext(const LString& InHumanReadableName);
 
     void Browse(LWorldContext& Context, const LString& Url) const;
     bool IsContextUrlInternal(const LString& Url) const;

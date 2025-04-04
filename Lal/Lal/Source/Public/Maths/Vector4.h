@@ -158,19 +158,19 @@ struct TVector4 final
     FORCEINLINE auto GetInvert() const -> TVector4<T>;
     FORCEINLINE auto GetInvert4() const -> TVector4<T>;
 
-    LSimpleString ToString() const
+    LString ToString() const
     {
         return TVector4<T>::ToString4();
     }
 
-    LSimpleString ToString3() const
+    LString ToString3() const
     {
-        return LSimpleString::SprintF("{:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z);
+        return LString::SprintF("{:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z);
     }
 
-    LSimpleString ToString4() const
+    LString ToString4() const
     {
-        return LSimpleString::SprintF("{:.2f} {:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z, this->W);
+        return LString::SprintF("{:.2f} {:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z, this->W);
     }
 };
 

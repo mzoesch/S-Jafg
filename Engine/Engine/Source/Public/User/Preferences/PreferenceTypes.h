@@ -12,31 +12,29 @@ template <typename T, typename TEnable = void>
 struct TPreference;
 
 // Core types. Add more if you want.
-template <> struct TIsPreferenceTypeAllowed<i8>          : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<i16>         : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<i32>         : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<i64>         : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<u8>         : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<u16>        : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<u32>        : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<u64>        : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<bool>          : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<LString>       : std::true_type { };
-template <> struct TIsPreferenceTypeAllowed<LSimpleString> : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<i8>      : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<i16>     : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<i32>     : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<i64>     : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<u8>      : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<u16>     : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<u32>     : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<u64>     : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<bool>    : std::true_type { };
+template <> struct TIsPreferenceTypeAllowed<LString> : std::true_type { };
 
-typedef TPreference<float>         LPreferenceFloat;
-typedef TPreference<double>        LPreferenceDouble;
-typedef TPreference<i8>          LPreferencei8;
-typedef TPreference<i16>         LPreferencei16;
-typedef TPreference<i32>         LPreferencei32;
-typedef TPreference<i64>         LPreferencei64;
-typedef TPreference<u8>         LPreferenceu8;
-typedef TPreference<u16>        LPreferenceu16;
-typedef TPreference<u32>        LPreferenceu32;
-typedef TPreference<u64>        LPreferenceu64;
-typedef TPreference<bool>          LPreferenceBool;
-typedef TPreference<LSimpleString> LPreferenceSimpleString;
-typedef TPreference<LString>       LPreferenceString;
+typedef TPreference<f32>     LPreferenceFloat;
+typedef TPreference<f64>     LPreferenceDouble;
+typedef TPreference<i8>      LPreferencei8;
+typedef TPreference<i16>     LPreferencei16;
+typedef TPreference<i32>     LPreferencei32;
+typedef TPreference<i64>     LPreferencei64;
+typedef TPreference<u8>      LPreferenceu8;
+typedef TPreference<u16>     LPreferenceu16;
+typedef TPreference<u32>     LPreferenceu32;
+typedef TPreference<u64>     LPreferenceu64;
+typedef TPreference<bool>    LPreferenceBool;
+typedef TPreference<LString> LPreferenceString;
 
 template <typename T>
 struct TPreference<T, TEnableIfTy<TIsPreferenceTypeAllowed<T>::value>>

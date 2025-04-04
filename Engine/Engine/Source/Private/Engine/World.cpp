@@ -20,7 +20,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "Stats/Stats.h"
 
-Jafg::LWorld::LWorld(const LSimpleString& InHumanReadableName, const EWorldState::Type InWorldType): WorldState(InWorldType)
+Jafg::LWorld::LWorld(const LString& InHumanReadableName, const EWorldState::Type InWorldType): WorldState(InWorldType)
 {
     LObjectContext::operator=(GlobalCarnifex);
     this->SetHumanReadableName(InHumanReadableName);
@@ -300,9 +300,9 @@ void Jafg::LWorld::UnregisterTickableObject(LTickableObject* Tickable)
     return;
 }
 
-float Jafg::LWorld::GetRealTimeSecondsSinceWorldLaunch() const
+f32 Jafg::LWorld::GetRealTimeSecondsSinceWorldLaunch() const
 {
-    const float Now = static_cast<float>(Application::GetDeltaSinceStaticStorageInitialization());
+    const f32 Now = static_cast<f32>(Application::GetDeltaSinceStaticStorageInitialization());
     return Now - this->RealTimeWhenWorldWasLaunched;
 }
 

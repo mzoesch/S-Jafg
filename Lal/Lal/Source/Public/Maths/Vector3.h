@@ -157,13 +157,13 @@ struct TVector3
     FORCEINLINE EVectorAxis::Type GetDominantAxis() const;
     FORCEINLINE EVectorAxis::Type GetMostInferiorAxis() const;
 
-    LSimpleString ToString() const
+    LString ToString() const
     {
-        return LSimpleString::SprintF("{:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z);
+        return LString::SprintF("{:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z);
     }
-    LSimpleString ToHighPrecisionString() const
+    LString ToHighPrecisionString() const
     {
-        return LSimpleString::SprintF("{:.9f} {:.9f} {:.9f}", this->X, this->Y, this->Z);
+        return LString::SprintF("{:.9f} {:.9f} {:.9f}", this->X, this->Y, this->Z);
     }
 };
 

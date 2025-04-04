@@ -89,7 +89,7 @@ struct LVoxelKey final
     FORCEINLINE auto GetNeighboringVoxelKeys() const -> TArray<LVoxelKey>;
 
     NODISCARD FORCEINLINE auto NormalizeKeyForNeighbor() -> EVoxelKeyLocation::Type;
-    NODISCARD FORCEINLINE auto ToString() const -> LSimpleString;
+    NODISCARD FORCEINLINE auto ToString() const -> LString;
 };
 
 inline LVoxelKey LVoxelKey::FromWorldSpace(const LVector& InVector)
@@ -236,9 +236,9 @@ FORCEINLINE EVoxelKeyLocation::Type LVoxelKey::NormalizeKeyForNeighbor()
     return EVoxelKeyLocation::Local;
 }
 
-FORCEINLINE LSimpleString LVoxelKey::ToString() const
+FORCEINLINE LString LVoxelKey::ToString() const
 {
-    return LSimpleString::SprintF("{{{},{},{}}}", this->Key.X, this->Key.Y, this->Key.Z);
+    return LString::SprintF("{{{},{},{}}}", this->Key.X, this->Key.Y, this->Key.Z);
 }
 
 } /* ~Namespace Jafg */

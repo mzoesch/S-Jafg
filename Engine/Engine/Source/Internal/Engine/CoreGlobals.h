@@ -19,9 +19,9 @@ bool ReflectForwardEngineExitRequest();
 } /* ~Namespace Private */
 
 void RequestEngineExit();
-void RequestEngineExit(const LSimpleString& Reason);
+void RequestEngineExit(const LString& Reason);
 void RequestEngineExit(const i32 CustomExitStatus);
-void RequestEngineExit(const i32 CustomExitStatus, const LSimpleString& Reason);
+void RequestEngineExit(const i32 CustomExitStatus, const LString& Reason);
 
 } /* ~Namespace Jafg */
 

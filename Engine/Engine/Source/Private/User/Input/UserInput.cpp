@@ -106,12 +106,12 @@ Jafg::TArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
     return CompletedKeys;
 }
 
-Jafg::LUserInputContext* Jafg::LUserInput::GetContextByName(const LSimpleString& InName)
+Jafg::LUserInputContext* Jafg::LUserInput::GetContextByName(const LString& InName)
 {
     return GetContextByName(GET_NAME(InName));
 }
 
-Jafg::LUserInputContext* Jafg::LUserInput::GetCheckedContextByName(const LSimpleString& InName)
+Jafg::LUserInputContext* Jafg::LUserInput::GetCheckedContextByName(const LString& InName)
 {
 #if DO_CHECKS
     LUserInputContext* Context = this->GetContextByName(InName);
@@ -122,7 +122,7 @@ Jafg::LUserInputContext* Jafg::LUserInput::GetCheckedContextByName(const LSimple
 #endif /* !DO_CHECKS */
 }
 
-Jafg::LUserInputContext* Jafg::LUserInput::GetPanickedContextByName(const LSimpleString& InName)
+Jafg::LUserInputContext* Jafg::LUserInput::GetPanickedContextByName(const LString& InName)
 {
     if (LUserInputContext* Context = this->GetContextByName(InName); Context)
     {
@@ -133,19 +133,19 @@ Jafg::LUserInputContext* Jafg::LUserInput::GetPanickedContextByName(const LSimpl
     return nullptr;
 }
 
-void Jafg::LUserInput::GetContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const
+void Jafg::LUserInput::GetContextByName(const LString& InName, LUserInputContext*& OutContext) const
 {
     return this->GetContextByName(GET_NAME(InName), OutContext);
 }
 
-void Jafg::LUserInput::GetCheckedContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const
+void Jafg::LUserInput::GetCheckedContextByName(const LString& InName, LUserInputContext*& OutContext) const
 {
     this->GetContextByName(InName, OutContext);
     check( OutContext )
     return;
 }
 
-void Jafg::LUserInput::GetPanickedContextByName(const LSimpleString& InName, LUserInputContext*& OutContext) const
+void Jafg::LUserInput::GetPanickedContextByName(const LString& InName, LUserInputContext*& OutContext) const
 {
     this->GetContextByName(InName, OutContext);
 
@@ -237,7 +237,7 @@ Jafg::LInputAction* Jafg::LUserInput::RegisterAction(LInputAction&& InAction)
     return Action;
 }
 
-void Jafg::LUserInput::ActivateContext(const LSimpleString& InName)
+void Jafg::LUserInput::ActivateContext(const LString& InName)
 {
     this->ActivateContext(this->GetPanickedContextByName(InName));
     return;
@@ -251,7 +251,7 @@ void Jafg::LUserInput::ActivateContext(LUserInputContext* InContext)
     return;
 }
 
-void Jafg::LUserInput::DeactivateContext(const LSimpleString& InName)
+void Jafg::LUserInput::DeactivateContext(const LString& InName)
 {
     this->DeactivateContext(this->GetPanickedContextByName(InName));
 }

@@ -2,7 +2,7 @@
 
 #include "Cli/CliCommand.h"
 
-Jafg::LSimpleString Jafg::LexToString(const ECommandReturnCode::Type& InType)
+Jafg::LString Jafg::LexToString(const ECommandReturnCode::Type& InType)
 {
     switch (InType)
     {

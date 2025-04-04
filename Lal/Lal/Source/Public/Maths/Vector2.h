@@ -96,9 +96,9 @@ struct TVector2 final
     FORCEINLINE auto InvertRet() const -> TVector2<T>&;
     FORCEINLINE auto GetInvert() const -> TVector2<T>;
 
-    LSimpleString ToString() const
+    LString ToString() const
     {
-        return LSimpleString::SprintF("{} {}", this->X, this->Y);
+        return LString::SprintF("{} {}", this->X, this->Y);
     }
 };
 

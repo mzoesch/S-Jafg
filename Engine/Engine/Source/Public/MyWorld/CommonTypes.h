@@ -76,16 +76,16 @@ FORCEINLINE LNormalLookup FromVector(const LVector& InNormal)
     return ENormalLookup::None;
 }
 
-ENGINE_API extern LSimpleString NorthStr;    /* "North"    */
-ENGINE_API extern LSimpleString EastStr;     /* "East"     */
-ENGINE_API extern LSimpleString SouthStr;    /* "South"    */
-ENGINE_API extern LSimpleString WestStr;     /* "West"     */
-ENGINE_API extern LSimpleString UpStr;       /* "Up"       */
-ENGINE_API extern LSimpleString DownStr;     /* "Down"     */
-ENGINE_API extern LSimpleString VerticalStr; /* "Vertical" */
-ENGINE_API extern LSimpleString SidesStr;    /* "Sides"    */
+ENGINE_API extern LString NorthStr;    /* "North"    */
+ENGINE_API extern LString EastStr;     /* "East"     */
+ENGINE_API extern LString SouthStr;    /* "South"    */
+ENGINE_API extern LString WestStr;     /* "West"     */
+ENGINE_API extern LString UpStr;       /* "Up"       */
+ENGINE_API extern LString DownStr;     /* "Down"     */
+ENGINE_API extern LString VerticalStr; /* "Vertical" */
+ENGINE_API extern LString SidesStr;    /* "Sides"    */
 
-FORCEINLINE bool IsValid(const LSimpleString& InNormal)
+FORCEINLINE bool IsValid(const LString& InNormal)
 {
     return InNormal == NorthStr
         || InNormal == EastStr
@@ -97,7 +97,7 @@ FORCEINLINE bool IsValid(const LSimpleString& InNormal)
         || InNormal == SidesStr;
 }
 
-FORCEINLINE ENormalLookup::Type FromString(const LSimpleString& InNormal)
+FORCEINLINE ENormalLookup::Type FromString(const LString& InNormal)
 {
     if (InNormal == NorthStr)    { return ENormalLookup::North; }
     if (InNormal == EastStr)     { return ENormalLookup::East; }
@@ -116,7 +116,7 @@ FORCEINLINE ENormalLookup::Type FromString(const LSimpleString& InNormal)
 } /* ~Namespace ENormalLookup */
 ENUM_CLASS_FLAGS(ENormalLookup::Type)
 
-FORCEINLINE LSimpleString LexToString(const ENormalLookup::Type InNormal)
+FORCEINLINE LString LexToString(const ENormalLookup::Type InNormal)
 {
     switch (InNormal)
     {

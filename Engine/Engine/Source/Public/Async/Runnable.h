@@ -55,11 +55,11 @@ public:
     //#
     virtual void Exit() { }
 
-    FORCEINLINE LSimpleString GetHumanReadableName() const { return this->HumanReadableName; }
+    FORCEINLINE LString GetHumanReadableName() const { return this->HumanReadableName; }
 
 protected:
 
-    LSimpleString HumanReadableName = nullptr;
+    LString HumanReadableName = nullptr;
 };
 
 } /* ~Namespace Jafg */

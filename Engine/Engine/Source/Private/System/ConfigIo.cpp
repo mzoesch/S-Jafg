@@ -93,9 +93,9 @@ bool GoToKey(const char* InString, const char* InKey, i32* Cursor)
 // @return True, if end of file was found.
 bool GoToNextLine(const LString& InFileContent, i32* Cursor)
 {
-    for (i32 i = *Cursor; i < InFileContent.GetCharacterCount(); ++i)
+    for (i32 i = *Cursor; i < InFileContent.GetRuneCount(); ++i)
     {
-        if (InFileContent.GetCharacterAtIndex(i) == '\n')
+        if (InFileContent[i] == '\n')
         {
             *Cursor = ++i;
             return false;
@@ -115,7 +115,7 @@ bool GoToNextMeaningfulLine(const LString& InFileContent, i32* Cursor)
             return true;
         }
 
-        if (InFileContent.GetCharacterAtIndex(*Cursor) == '\n')
+        if (InFileContent[*Cursor] == '\n')
         {
             *Cursor += 1;
             continue;
@@ -129,19 +129,19 @@ bool GoToNextMeaningfulLine(const LString& InFileContent, i32* Cursor)
 
 i32 FindSection(const LString& InFileContent, const LStringView& InSection)
 {
-    for (i32 i = 0; i < InFileContent.GetCharacterCount(); ++i)
+    for (i32 i = 0; i < InFileContent.GetRuneCount(); ++i)
     {
-        const LString::CharacterTy Char = InFileContent.GetCharacterAtIndex(i);
+        const LString::T Char = InFileContent[i];
         if (Char != '[')
         {
             continue;
         }
-        if (InFileContent.GetCharacterAtIndex(i+static_cast<i32>(InSection.size())+1) != ']')
+        if (InFileContent[i+static_cast<i32>(InSection.size())+1] != ']')
         {
             continue;
         }
 
-        const LString::CharacterTy* Section = &InFileContent.GetUnderlyingDataStructure()[i+1];
+        const LString::T* Section = &InFileContent.GetUnderlyingDataStructure()[i+1];
 
         if (::strncmp(Section, InSection.data(), ::strlen(InSection.data())) == 0)
         {
@@ -197,15 +197,15 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
         LString NewFileContent; NewFileContent.Reserve(FileContent.GetSize());
         for (i32 i = 0; i < Cursor; ++i)
         {
-            NewFileContent.Add(FileContent.GetCharacterAtIndex(i));
+            NewFileContent.Add(FileContent[i]);
         }
         NewFileContent += InKey.data();
         NewFileContent.Add('=');
         NewFileContent += InValue.data();
         NewFileContent.Add('\n');
-        for (i32 i = Cursor; i < FileContent.GetCharacterCount(); ++i)
+        for (i32 i = Cursor; i < FileContent.GetRuneCount(); ++i)
         {
-            NewFileContent.Add(FileContent.GetCharacterAtIndex(i));
+            NewFileContent.Add(FileContent[i]);
         }
 
         if (bDoBackup)
@@ -226,11 +226,11 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
     const i32 ValueSize = static_cast<i32>(::strlen(InValue.data()));
     i32 ValueCursor = 0;
     bool  bUpdateNew = true;
-    for (i32 i = Cursor; i < FileContent.GetCharacterCount(); ++i)
+    for (i32 i = Cursor; i < FileContent.GetRuneCount(); ++i)
     {
         if (ValueSize == ValueCursor)
         {
-            if (FileContent.GetCharacterAtIndex(i) == '\n')
+            if (FileContent[i] == '\n')
             {
                 return false;
             }
@@ -243,12 +243,12 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
             break;
         }
 
-        if (FileContent.GetCharacterAtIndex(i) == '\n')
+        if (FileContent[i] == '\n')
         {
             break;
         }
 
-        if (FileContent.GetCharacterAtIndex(i) != InValue[ValueCursor])
+        if (FileContent[i] != InValue[ValueCursor])
         {
             break;
         }
@@ -264,7 +264,7 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
     LString NewFileContent; NewFileContent.Reserve(FileContent.GetSize());
     for (i32 i = 0; i < Cursor; ++i)
     {
-        NewFileContent.Add(FileContent.GetCharacterAtIndex(i));
+        NewFileContent.Add(FileContent[i]);
     }
     if (*NewFileContent.Peek() != '=')
     {
@@ -275,9 +275,9 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
     NewFileContent.Add('\n');
     if (::GoToNextMeaningfulLine(FileContent, &Cursor) == false)
     {
-        for (i32 i = Cursor; i < FileContent.GetCharacterCount(); ++i)
+        for (i32 i = Cursor; i < FileContent.GetRuneCount(); ++i)
         {
-            NewFileContent.Add(FileContent.GetCharacterAtIndex(i));
+            NewFileContent.Add(FileContent[i]);
         }
     }
 

@@ -12,7 +12,7 @@ class WTabBar;
 class WTextBlock;
 
 //# @return True if event was handled.
-typedef TFunction<bool(WTabBar& Self, const LSimpleString& InIdentifier)> LOnTabBarButtonPressed;
+typedef TFunction<bool(WTabBar& Self, const LString& InIdentifier)> LOnTabBarButtonPressed;
 
 //# @see Widgets/Compound/TabBar.h
 DECLARE_JAFG_WIDGET(EClassFlags::Abstract)
@@ -42,7 +42,7 @@ public:
 protected:
 
     WTabBar* Context = nullptr;
-    LSimpleString Identifier;
+    LString Identifier;
     WTextBlock* ButtonText = nullptr;
     LOnTabBarButtonPressed OnButtonPressed = nullptr;
 };

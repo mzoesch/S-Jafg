@@ -101,7 +101,7 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
 
         for (const LDiskVoxelTexture& DiskTexture : TextureNames)
         {
-            LSimpleString VoxelName  = DiskTexture.GetVoxelName();
+            LString VoxelName  = DiskTexture.GetVoxelName();
             const voxel_t VoxelIndex = VoxelSubsystem->GetPanickedVoxelIndex(VoxelName);
             LVoxelMask*   VoxelMask  = VoxelSubsystem->GetVoxelMask(VoxelIndex);
             checkSlow( VoxelMask->GetName() == DiskTexture.GetVoxelName() )

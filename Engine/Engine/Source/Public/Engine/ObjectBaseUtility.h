@@ -79,8 +79,8 @@ template <typename TObj>
 FORCEINLINE auto NewObject(LObjectContext* InContext) -> TObj*;
 template <typename TObj>
 FORCEINLINE auto NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> TObj*;
-FORCEINLINE auto NewObject(const LSimpleString& InClassName) -> JObjectBase*;
-FORCEINLINE auto NewObject(LObjectContext* InContext, const LSimpleString& InClassName) -> JObjectBase*;
+FORCEINLINE auto NewObject(const LString& InClassName) -> JObjectBase*;
+FORCEINLINE auto NewObject(LObjectContext* InContext, const LString& InClassName) -> JObjectBase*;
 FORCEINLINE auto NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
 
 //# Allocate a new object of type TObj. The begin-life method will not be called.
@@ -91,8 +91,8 @@ FORCEINLINE auto NewDeferredObject(LObjectContext* InContext) -> TObj*;
 // Boolean parameters are for internal use only - __DO NOT__ change the default values.
 template <typename TObj, bool bAllowActor = /*FALSE REQUIRED*/false, bool bAllowWidget = /*FALSE REQUIRED*/false>
 FORCEINLINE auto NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> TObj*;
-FORCEINLINE auto NewDeferredObject(const LSimpleString& InClassName) -> JObjectBase*;
-FORCEINLINE auto NewDeferredObject(LObjectContext* InContext, const LSimpleString& InClassName) -> JObjectBase*;
+FORCEINLINE auto NewDeferredObject(const LString& InClassName) -> JObjectBase*;
+FORCEINLINE auto NewDeferredObject(LObjectContext* InContext, const LString& InClassName) -> JObjectBase*;
 FORCEINLINE auto NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
 
 //#
@@ -155,22 +155,27 @@ FORCEINLINE void OnDefaultOnlyMallocMember(TMemberField* MemberField) UNSUPPORTE
 template <typename TMemberField>
 FORCEINLINE void ExplicitCommonZeroOnDefaultOnlyMallocMember(TMemberField* MemberField);
 
+//# Primitive types.
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<f32>(f32* MemberField)   { *MemberField = static_cast<f32>(0.0f); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<f64>(f64* MemberField)   { *MemberField = static_cast<f64>(0.0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<i8>(i8* MemberField)     { *MemberField = static_cast<i8>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<i16>(i16* MemberField)   { *MemberField = static_cast<i16>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<i32>(i32* MemberField)   { *MemberField = static_cast<i32>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<i64>(i64* MemberField)   { *MemberField = static_cast<i64>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<u8>(u8* MemberField)     { *MemberField = static_cast<u8>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<u16>(u16* MemberField)   { *MemberField = static_cast<u16>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<u32>(u32* MemberField)   { *MemberField = static_cast<u32>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<u64>(u64* MemberField)   { *MemberField = static_cast<u64>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<bool>(bool* MemberField) { *MemberField = false; }
+
 template <typename TMemberField>
 FORCEINLINE void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField);
-template <typename InCharacterTy, class InTraitsTy>
-FORCEINLINE void OnDefaultOnlyMallocMember(LStringBase<InCharacterTy, InTraitsTy>* MemberField);
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<float>(float* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<double>(double* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<i8>(i8* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<i16>(i16* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<i32>(i32* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<i64>(i64* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<u8>(u8* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<u16>(u16* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<u32>(u32* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<u64>(u64* MemberField) { }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<bool>(bool* MemberField) { }
-template <typename TObj> FORCEINLINE void OnDefaultOnlyMallocMember(TSubclassOf<TObj>* MemberField) { }
+
+template <typename InTraits, typename InAlloc>
+FORCEINLINE void OnDefaultOnlyMallocMember(TStringBase<InTraits, InAlloc>* MemberField);
+
+template <typename TObj>
+FORCEINLINE void OnDefaultOnlyMallocMember(TSubclassOf<TObj>* MemberField) { *MemberField = nullptr; }
 
 namespace Private
 {
@@ -192,21 +197,21 @@ ENGINE_API auto GetRegisterObjectQueue() -> TArray<LRegistrationQueuePackage>&;
 template <typename TObj>
 FORCEINLINE auto RegisterNewObjectType(
     //# Full namespaced name of the target class.
-    LSimpleString            SpacedClassName,
+    LString SpacedClassName,
     //# Delegate that returns a clean default object of the target class.
     GetContentDefaultFunctor GetContentDefaultDelegate,
     //# Delegate that is called when the object has been registered.
-    OnRegistrationDelegate   Callback
+    OnRegistrationDelegate Callback
 ) -> void;
 
 struct LRegistrationQueuePackage final
 {
     //# Full namespaced name of the target class. /
-    LSimpleString            SpacedClassName;
+    LString SpacedClassName;
     //# Delegate that returns a clean default object of the target class.
     GetContentDefaultFunctor GetContentDefault;
     //# Delegate that is called when the object has been registered.
-    OnRegistrationDelegate   Callback;
+    OnRegistrationDelegate Callback;
 };
 
 //#
@@ -221,11 +226,11 @@ struct LObjectMiscellaneousAccessor final
 
     template <typename TObj>
     FORCEINLINE static auto NewObject(LObjectContext* Context) -> TObj*;
-    FORCEINLINE static auto NewObject(LObjectContext* Context, const LSimpleString& ClassName) -> JObjectBase*;
+    FORCEINLINE static auto NewObject(LObjectContext* Context, const LString& ClassName) -> JObjectBase*;
 
     template <typename TObj>
     FORCEINLINE static auto NewDeferredObject(LObjectContext* Context) -> TObj*;
-    FORCEINLINE static auto NewDeferredObject(LObjectContext* Context, const LSimpleString& ClassName) -> JObjectBase*;
+    FORCEINLINE static auto NewDeferredObject(LObjectContext* Context, const LString& ClassName) -> JObjectBase*;
 
     ENGINE_API static auto NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
     ENGINE_API static auto NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
@@ -240,9 +245,9 @@ struct LObjectMiscellaneousAccessor final
 struct LDeferredRegistryPackage final
 {
     //# Full namespaced name of the target superclass that has to be resolved at a later time.
-    LSimpleString   SuperName;
+    LString SuperName;
     //# The target child that is missing its parent.
-    LObjectClass*   StaticClass;
+    LObjectClass* StaticClass;
 };
 
 //#
@@ -254,7 +259,7 @@ struct LRegistryPackage final
     //# Pointer to the static class object of the target class.
     LObjectClass* StaticClass;
 
-    FORCEINLINE const LSimpleString& GetSpacedClassName() const
+    FORCEINLINE const LString& GetSpacedClassName() const
     {
         checkSlow( this->StaticClass )
         return this->StaticClass->GetSpacedClassName();
@@ -285,15 +290,15 @@ public:
     //#
     ENGINE_API void ValidateLoadedPackages();
 
-    ENGINE_API auto DoesPackageWithNameExist(const LSimpleString& SpacedClassName) const -> bool;
-    ENGINE_API auto GetPackageByName(const LSimpleString& SpacedClassName) -> LRegistryPackage*;
-    ENGINE_API auto GetPackageByName(const LSimpleString& SpacedClassName) const -> const LRegistryPackage*;
-    ENGINE_API auto GetPackageByNameWeak(const LSimpleString& Name) -> LRegistryPackage*;
-    ENGINE_API auto GetPackageByNameWeak(const LSimpleString& Name) const -> const LRegistryPackage*;
-    ENGINE_API auto GetPanickedPackageByName(const LSimpleString& SpacedClassName) -> LRegistryPackage*;
-    ENGINE_API auto GetPanickedPackageByName(const LSimpleString& SpacedClassName) const -> const LRegistryPackage*;
-    ENGINE_API auto GetPanickedPackageByNameWeak(const LSimpleString& Name) -> LRegistryPackage*;
-    ENGINE_API auto GetPanickedPackageByNameWeak(const LSimpleString& Name) const -> const LRegistryPackage*;
+    ENGINE_API auto DoesPackageWithNameExist(const LString& SpacedClassName) const -> bool;
+    ENGINE_API auto GetPackageByName(const LString& SpacedClassName) -> LRegistryPackage*;
+    ENGINE_API auto GetPackageByName(const LString& SpacedClassName) const -> const LRegistryPackage*;
+    ENGINE_API auto GetPackageByNameWeak(const LString& Name) -> LRegistryPackage*;
+    ENGINE_API auto GetPackageByNameWeak(const LString& Name) const -> const LRegistryPackage*;
+    ENGINE_API auto GetPanickedPackageByName(const LString& SpacedClassName) -> LRegistryPackage*;
+    ENGINE_API auto GetPanickedPackageByName(const LString& SpacedClassName) const -> const LRegistryPackage*;
+    ENGINE_API auto GetPanickedPackageByNameWeak(const LString& Name) -> LRegistryPackage*;
+    ENGINE_API auto GetPanickedPackageByNameWeak(const LString& Name) const -> const LRegistryPackage*;
 
     ENGINE_API auto GetPackageByStaticClass(const void* StaticClass) -> LRegistryPackage*;
     ENGINE_API auto GetPanickedPackageByStaticClass(const void* StaticClass) -> LRegistryPackage*;
@@ -329,7 +334,7 @@ struct LRegistrationCallbackHelper final
     //# @param  Parent      The namespaced name of the parent class.
     //#
     template <typename TObj = JObjectBase>
-    static void DoRegisterContentsForClass(LObjectClass* StaticClass, const EClassFlags::Type Flags, LSimpleString&& Parent);
+    static void DoRegisterContentsForClass(LObjectClass* StaticClass, const EClassFlags::Type Flags, LString&& Parent);
 };
 
 } /* ~Namespace Private */
@@ -358,12 +363,12 @@ FORCEINLINE TObj* NewObject(LObjectContext* InContext, const LObjectClass* InSta
     return reinterpret_cast<TObj*>(Private::LObjectMiscellaneousAccessor::NewObject(InContext, InStaticClass));
 }
 
-FORCEINLINE JObjectBase* NewObject(const LSimpleString& InClassName)
+FORCEINLINE JObjectBase* NewObject(const LString& InClassName)
 {
     return NewObject(GOmniVitaContext, InClassName);
 }
 
-FORCEINLINE JObjectBase* NewObject(LObjectContext* InContext, const LSimpleString& InClassName)
+FORCEINLINE JObjectBase* NewObject(LObjectContext* InContext, const LString& InClassName)
 {
     return Private::LObjectMiscellaneousAccessor::NewObject(InContext, InClassName);
 }
@@ -404,12 +409,12 @@ FORCEINLINE TObj* NewDeferredObject(LObjectContext* InContext, const LObjectClas
     return CheckedStaticCast<TObj>(NewDeferredObject(InContext, InStaticClass));
 }
 
-FORCEINLINE JObjectBase* NewDeferredObject(const LSimpleString& InClassName)
+FORCEINLINE JObjectBase* NewDeferredObject(const LString& InClassName)
 {
     return NewDeferredObject(GOmniVitaContext, InClassName);
 }
 
-FORCEINLINE JObjectBase* NewDeferredObject(LObjectContext* InContext, const LSimpleString& InClassName)
+FORCEINLINE JObjectBase* NewDeferredObject(LObjectContext* InContext, const LString& InClassName)
 {
     return Private::LObjectMiscellaneousAccessor::NewDeferredObject(InContext, InClassName);
 }
@@ -427,7 +432,7 @@ FORCEINLINE TObj* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContex
     return reinterpret_cast<TObj*>(LObjectMiscellaneousAccessor::NewObject(Context, TObj::StaticClass()));
 }
 
-FORCEINLINE JObjectBase* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context, const LSimpleString& ClassName)
+FORCEINLINE JObjectBase* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context, const LString& ClassName)
 {
     return LObjectMiscellaneousAccessor::NewObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass);
 }
@@ -508,7 +513,7 @@ FORCEINLINE TObj* Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObje
 
 template <typename TObj>
 FORCEINLINE void Private::LRegistrationCallbackHelper::DoRegisterContentsForClass(LObjectClass* StaticClass,
-    const EClassFlags::Type Flags, LSimpleString&& Parent)
+    const EClassFlags::Type Flags, LString&& Parent)
 {
     static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
 
@@ -529,7 +534,7 @@ FORCEINLINE void Private::LRegistrationCallbackHelper::DoRegisterContentsForClas
     return;
 }
 
-FORCEINLINE JObjectBase* Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObjectContext* Context, const LSimpleString& ClassName)
+FORCEINLINE JObjectBase* Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObjectContext* Context, const LString& ClassName)
 {
     return LObjectMiscellaneousAccessor::NewDeferredObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass);
 }
@@ -552,23 +557,23 @@ FORCEINLINE void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField)
     return;
 }
 
-template <typename InCharacterTy, class InTraitsTy>
-FORCEINLINE void OnDefaultOnlyMallocMember(LStringBase<InCharacterTy, InTraitsTy>* MemberField)
+template <typename InTraits, typename InAlloc>
+FORCEINLINE void OnDefaultOnlyMallocMember(TStringBase<InTraits, InAlloc>* MemberField)
 {
-    OnDefaultOnlyMallocMember(&MemberField->Data);
+    ExplicitCommonZeroOnDefaultOnlyMallocMember(MemberField);
 }
 
 template <typename TObj>
 FORCEINLINE void Private::RegisterNewObjectType(
-    LSimpleString            SpacedClassName,
+    LString SpacedClassName,
     GetContentDefaultFunctor GetContentDefaultDelegate,
-    OnRegistrationDelegate   Callback
+    OnRegistrationDelegate Callback
 )
 {
     static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
 
     Private::GetRegisterObjectQueue().Emplace(
-        std::forward<LSimpleString>(SpacedClassName),
+        std::forward<LString>(SpacedClassName),
         GetContentDefaultDelegate,
         Callback
     );

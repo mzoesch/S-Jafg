@@ -23,7 +23,7 @@ LStringLegacy Paths::ReadFileLegacy(const LPath& InAbsolutePath)
 
     if (!File)
     {
-        panicMsgf( "Failed to open file: {}.", InAbsolutePath.GetPath() )
+        panicMsgf( "Failed to open file: {}.", InAbsolutePath.GetPath().ToC() )
         return { };
     }
 
@@ -43,7 +43,7 @@ LString Paths::ReadFile(const LPath& InAbsolutePath)
 
     if (!File)
     {
-        panicMsgf( "Failed to open file: {}.", InAbsolutePath.GetPath() )
+        panicMsgf( "Failed to open file: {}.", InAbsolutePath.GetPath().ToC() )
         return { };
     }
 
@@ -53,7 +53,7 @@ LString Paths::ReadFile(const LPath& InAbsolutePath)
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 
-LSimpleString Paths::GetStem(const LSimpleString& InFileName)
+LString Paths::GetStem(const LString& InFileName)
 {
     const i32 LastDot = InFileName.FindLast('.');
     if (LastDot == INDEX_NONE)
@@ -64,7 +64,7 @@ LSimpleString Paths::GetStem(const LSimpleString& InFileName)
     return InFileName.Cut(LastDot);
 }
 
-void Paths::GetStemInline(LSimpleString& InOutFileName)
+void Paths::GetStemInline(LString& InOutFileName)
 {
     const i32 LastDot = InOutFileName.FindLast('.');
     if (LastDot == INDEX_NONE)
@@ -96,11 +96,11 @@ void Paths::CreateFileSlow(const LPath& InAbsolutePath)
 
     if (DoesFileExist(InAbsolutePath))
     {
-        LOG_WARNING(LogPlatform, "Trying to create the file [{}] but it already exists.", InAbsolutePath.GetPath())
+        LOG_WARNING(LogPlatform, "Trying to create the file [{}] but it already exists.", InAbsolutePath.GetPath() )
         return;
     }
 
-    LOG_TRACE(LogPlatform, "Creating file [{}].", InAbsolutePath.GetPath())
+    LOG_TRACE(LogPlatform, "Creating file [{}].", InAbsolutePath.GetPath() )
     std::ofstream Out { InAbsolutePath.GetPath().ToC() };
     Out.close();
 

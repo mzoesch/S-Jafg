@@ -1,13 +1,12 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Widgets/EditableTextBlock.h"
 #include "Core/Application.h"
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "Widgets/Viewport.h"
 
-Jafg::LSimpleString Jafg::LexToString(const ETextCommit::Type InType)
+Jafg::LString Jafg::LexToString(const ETextCommit::Type InType)
 {
     switch (InType)
     {
@@ -33,7 +32,6 @@ void Jafg::WEditableTextBlock::Construct()
 
     this->ShaderContext.Make();
     this->CaretShaderContext.Make();
-    this->Content = "";
 
     return;
 }
@@ -46,10 +44,8 @@ void Jafg::WEditableTextBlock::Draw(LViewport& Context) const
 
     if (this->Content.IsEmpty() == false && (this->GetDesiredSize().X > 0.0f && this->GetDesiredSize().Y > 0.0f))
     {
-        const LSimpleString ConvContent = Str::ToSimpleString(this->Content);
-
         LFontShaderContextDrawArgs Args;
-        Args.Content     = &ConvContent;
+        Args.Content     = &this->Content;
         Args.Offset      = AnchoredTopLeftFromMostOuter;
         Args.Padding     = this->GetPadding();
         Args.DesiredSize = this->GetDesiredSize();
@@ -92,13 +88,15 @@ void Jafg::WEditableTextBlock::Tick()
 
     if (this->GetLocalEgo()->GetUserInput()->HasBufferedPlatformInput())
     {
-        const char* Input = this->GetLocalEgo()->GetUserInput()->GetBufferedPlatformInput().ToPtr();
+        const LString::T* Input = this->GetLocalEgo()->GetUserInput()->GetBufferedPlatformInput().ToPtr();
         this->Content.AppendAt(this->CaretCursor, Input);
-        const LEightStringTraits::SizeType Count = LEightStringTraits::GetRuneCount(Input);
-        for (LEightStringTraits::SizeType I = 0; I < Count; ++I)
+
+        const LString::SizeType Length = LString::Traits::GetStringLength<LString::SizeType>(Input);
+        for (LString::SizeType I = 0; I < Length; ++I)
         {
             this->SafelyIncreaseCaretCursor();
         }
+
         this->CaretBlinker = 0.0f;
     }
     else
@@ -151,21 +149,32 @@ Jafg::LReply Jafg::WEditableTextBlock::OnKeyDown(LKeyEvent& InKeyEvent)
     {
         if (this->Content.IsEmpty() == false && this->CaretCursor > 0)
         {
-            this->Content.RemoveAt(this->CaretCursor - 1);
-            this->SafelyReduceCaretCursor();
+            const LString::SizeType Removed = this->Content.RemoveCharacterAt(this->CaretCursor - 1);
+            for (LString::SizeType I = 0; I < Removed; ++I)
+            {
+                this->SafelyReduceCaretCursor();
+            }
             this->CaretBlinker = 0.0f;
         }
     }
 
     if (InKeyEvent.GetKey() == EKeys::Left)
     {
-        this->SafelyReduceCaretCursor();
+        const LString::SizeType Size = this->Content.GetRuneCountOfCharacterAt(this->CaretBlinker);
+        for (LString::SizeType I = 0; I < Size; ++I)
+        {
+            this->SafelyReduceCaretCursor();
+        }
         this->CaretBlinker = 0.0f;
     }
 
     if (InKeyEvent.GetKey() == EKeys::Right)
     {
-        this->SafelyIncreaseCaretCursor();
+        const LString::SizeType Size = this->Content.GetRuneCountOfCharacterAt(this->CaretBlinker);
+        for (LString::SizeType I = 0; I < Size; ++I)
+        {
+            this->SafelyIncreaseCaretCursor();
+        }
         this->CaretBlinker = 0.0f;
     }
 
@@ -201,19 +210,12 @@ void Jafg::WEditableTextBlock::SetText(LString&& InText)
     this->Content = std::move(InText);
     this->CaretCursor = Maths::Min(this->CaretCursor, this->Content.GetRuneCount());
 
-    if (this->Content.GetByteSize() == 0)
-    {
-        this->Content = "";
-        check( this->Content.GetByteSize() > 0 )
-    }
-
     return;
 }
 
 void Jafg::WEditableTextBlock::ClearText()
 {
     this->Content.Empty();
-    this->Content = "";
     this->CaretCursor = 0;
 
     return;

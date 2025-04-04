@@ -32,7 +32,7 @@ enum Type : u8
 
 } /* ~Namespace EVectorAxis */
 ENUM_CLASS_FLAGS(EVectorAxis::Type)
-LAL_API LSimpleString LexToString(const EVectorAxis::Type InAxis);
+LAL_API LString LexToString(const EVectorAxis::Type InAxis);
 
 
 /*----------------------------------------------------------------------------

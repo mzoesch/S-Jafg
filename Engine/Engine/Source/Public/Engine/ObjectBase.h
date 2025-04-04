@@ -94,10 +94,10 @@ public:
     FORCEINLINE auto GetVTableSlow()        const -> const LObjectClass*  { return this->VClass ? this->VClass : Private::GObjectRegistry->GetPanickedPackageByContentDefault(this)->StaticClass; }
     FORCEINLINE auto GetMutableVTableSlow() const ->       LObjectClass*  { return this->VClass ? this->VClass : Private::GObjectRegistry->GetPanickedPackageByContentDefault(this)->StaticClass; }
     FORCEINLINE auto IsDefault()       const -> bool  { return this->VClass == nullptr; }
-    FORCEINLINE auto GetFullName()     const -> const LSimpleString& { return this->VClass->GetSpacedClassName(); }
-    FORCEINLINE auto GetName()         const ->       LName          { return this->VClass->GetName(); }
-    FORCEINLINE auto GetFullNameSlow() const -> const LSimpleString& { return this->GetVTableSlow()->GetSpacedClassName(); }
-    FORCEINLINE auto GetNameSlow()     const ->       LName          { return this->GetVTableSlow()->GetName(); }
+    FORCEINLINE auto GetFullName()     const -> const LString& { return this->VClass->GetSpacedClassName(); }
+    FORCEINLINE auto GetName()         const ->       LName    { return this->VClass->GetName(); }
+    FORCEINLINE auto GetFullNameSlow() const -> const LString& { return this->GetVTableSlow()->GetSpacedClassName(); }
+    FORCEINLINE auto GetNameSlow()     const ->       LName    { return this->GetVTableSlow()->GetName(); }
 
     //#
     //# Gets the context that this object lives in and shares its lifetime with it.

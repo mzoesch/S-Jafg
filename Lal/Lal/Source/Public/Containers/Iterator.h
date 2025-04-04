@@ -22,7 +22,9 @@ struct Iterator
     FORCEINLINE auto operator *() const -> ValRef { return *this->Ptr;                             }
     FORCEINLINE auto operator->() const -> ValPtr { return this->Ptr;                              }
     FORCEINLINE auto operator++()       -> Self&  { ++this->Ptr; return *this;                     }
-    FORCEINLINE auto operator++(i32)  -> Self   { const Self Temp = *this; ++*this; return Temp; }
+    FORCEINLINE auto operator++(i32)    -> Self   { const Self Temp = *this; ++*this; return Temp; }
+    FORCEINLINE auto operator--()       -> Self&  { --this->Ptr; return *this;                     }
+    FORCEINLINE auto operator--(i32)    -> Self   { const Self Temp = *this; --*this; return Temp; }
     friend FORCEINLINE auto operator==(const Self& Lhs, const Self& Rhs) -> bool { return Lhs.Ptr == Rhs.Ptr; }
     friend FORCEINLINE auto operator!=(const Self& Lhs, const Self& Rhs) -> bool { return !(Lhs == Rhs);      }
 

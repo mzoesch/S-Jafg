@@ -35,7 +35,7 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LObjectClass)
     ~LObjectClass() = default;
 
-    FORCEINLINE auto GetSpacedClassName() const -> const LSimpleString& { return this->SpacedClassName; }
+    FORCEINLINE auto GetSpacedClassName() const -> const LString& { return this->SpacedClassName; }
     FORCEINLINE auto GetName() const -> LName { return this->ClassName; }
 
     template <typename TObj>
@@ -73,23 +73,23 @@ public:
 
 private:
 
-    LSimpleString           SpacedClassName        = { };
-    LName                   ClassName              = { };
+    LString SpacedClassName;
+    LName   ClassName;
 
     //# The single parent of this object.
-    LObjectClass*           Parent                 = nullptr;
+    LObjectClass* Parent = nullptr;
 
     //# All the children that this object acts as a meaningful parent.
-    TArray<LObjectClass*> Children               = { };
+    TArray<LObjectClass*> Children;
 
     //# The total byte size from one instance of this object.
-    i32                   TotalByteSize         = INDEX_NONE;
+    i32 TotalByteSize = INDEX_NONE;
 
     //# The flags that describe this object class. */
-    LClassFlags             Flags                  = EClassFlags::None;
+    LClassFlags Flags = EClassFlags::None;
 
     //# The default object initializer for this object class.
-    JObjectBase*   DefaultPackageReferrer = nullptr;
+    JObjectBase* DefaultPackageReferrer = nullptr;
 };
 
 } /* ~Namespace Jafg */

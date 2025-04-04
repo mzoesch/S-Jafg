@@ -45,12 +45,12 @@ public:
     FORCEINLINE bool IsCarnifexValid() const { return this->Carnifex != nullptr; }
     FORCEINLINE auto GetCarnifex() const -> LCarnifex* { return this->Carnifex; }
 
-    FORCEINLINE auto SetHumanReadableName(const LSimpleString& InS) -> void { check( this->IsValid() ) this->HumanReadableName = InS; }
-    FORCEINLINE auto GetHumanReadableName() const -> const LSimpleString& { return this->HumanReadableName; }
+    FORCEINLINE auto SetHumanReadableName(const LString& InS) -> void { check( this->IsValid() ) this->HumanReadableName = InS; }
+    FORCEINLINE auto GetHumanReadableName() const -> const LString& { return this->HumanReadableName; }
 
 private:
 
-    LSimpleString HumanReadableName;
+    LString HumanReadableName;
 
     //# The carnifex that is used to mascara all children within this context.
     LCarnifex* Carnifex = nullptr;

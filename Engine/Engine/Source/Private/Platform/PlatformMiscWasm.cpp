@@ -6,13 +6,13 @@
 
 #include "Platform/PlatformMisc.h"
 
-Jafg::LSimpleString Jafg::PlatformMisc::GetEngineRootDirImpl()
+Jafg::LString Jafg::PlatformMisc::GetEngineRootDirImpl()
 {
     LOG_WARNING(LogSystem, "GetEngineRootDirImpl() is not implemented for the WASM platform.");
     return "";
 }
 
-Jafg::LSimpleString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
+Jafg::LString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
 {
     LOG_WARNING(LogSystem, "GetRealEngineRootDirImpl() is not implemented for the WASM platform.");
     return "";

@@ -79,7 +79,7 @@ enum Type : u8
 };
 
 } /* ~Namespace ECommandReturnCode */
-ENGINE_API LSimpleString LexToString(const ECommandReturnCode::Type& InType);
+ENGINE_API LString LexToString(const ECommandReturnCode::Type& InType);
 
 //#
 //# The arguments that the command receives.

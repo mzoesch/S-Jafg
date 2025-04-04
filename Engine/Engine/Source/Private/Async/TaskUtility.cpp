@@ -137,7 +137,7 @@ ENGINE_API i32 CustomThreadCounter = ENamedThreads::Custom + 1;
 
 } /* ~Namespace Jafg::Tasks::Private */
 
-Jafg::LSimpleString Jafg::LexToString(const ENamedThreads::Type Thread)
+Jafg::LString Jafg::LexToString(const ENamedThreads::Type Thread)
 {
     switch (Thread)
     {
@@ -147,7 +147,7 @@ Jafg::LSimpleString Jafg::LexToString(const ENamedThreads::Type Thread)
     }
 }
 
-Jafg::LSimpleString Jafg::LexToString(const ETaskTime::Type Time)
+Jafg::LString Jafg::LexToString(const ETaskTime::Type Time)
 {
     if (Time & ETaskTime::Fail)                          { return "Fail"; }
     if (Time & ETaskTime::NoTickDangerous)               { return "NoTick"; }
@@ -185,7 +185,7 @@ void Jafg::Tasks::RegisterThread(ENamedThreads::Type InThreadName)
     return;
 }
 
-Jafg::LSimpleString Jafg::Tasks::GetCurrentThreadDisplayName()
+Jafg::LString Jafg::Tasks::GetCurrentThreadDisplayName()
 {
     const LThreadId Me = PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
 
@@ -204,7 +204,7 @@ Jafg::LSimpleString Jafg::Tasks::GetCurrentThreadDisplayName()
     return "NotRegistered";
 }
 
-Jafg::LSimpleString Jafg::Tasks::GetCurrentThreadDisplayNameChecked()
+Jafg::LString Jafg::Tasks::GetCurrentThreadDisplayNameChecked()
 {
     const LThreadId Me = PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
 
@@ -225,7 +225,7 @@ Jafg::LSimpleString Jafg::Tasks::GetCurrentThreadDisplayNameChecked()
     return "NotRegistered";
 }
 
-Jafg::LSimpleString Jafg::Tasks::GetCurrentThreadDisplayNameAsserted()
+Jafg::LString Jafg::Tasks::GetCurrentThreadDisplayNameAsserted()
 {
     const LThreadId Me = PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
 
@@ -425,7 +425,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
 
         if (ErrorLevel >= ETaskExit::SanitizedFailure)
         {
-            LSimpleString ErrorLevelStr = LSimpleString::SprintF(
+            LString ErrorLevelStr = LString::SprintF(
                 "Thread {}[{}] with aggregator {}[{}] failed to initialize with a sanitized failure code: {}[{}].",
                 Runnable->GetHumanReadableName(), LexToString(ThreadName),
                 GetCurrentThreadDisplayName(), GetCurrentThreadId(),
@@ -493,7 +493,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                 }
                 if (LambdaErrorLevel >= ETaskExit::SanitizedFailure)
                 {
-                    LSimpleString ErrorLevelStr = LSimpleString::SprintF(
+                    LString ErrorLevelStr = LString::SprintF(
                         "Thread {}[{}] failed to initialize with a sanitized failure code: {}[{}].",
                         Runnable->GetHumanReadableName(), LexToString(ThreadName),
                         LexToString(LambdaErrorLevel), static_cast<LTaskExit>(LambdaErrorLevel)

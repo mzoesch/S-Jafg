@@ -43,7 +43,7 @@ enum Type : i32
 };
 
 } /* ~Namespace NamedThreads */
-ENGINE_API LSimpleString LexToString(const ENamedThreads::Type Thread);
+ENGINE_API LString LexToString(const ENamedThreads::Type Thread);
 
 //#
 //# Allows one to specify when a task should be executed on a specific thread if said thread supports it.
@@ -75,7 +75,7 @@ enum Type : u8
 
 } /* ~Namespace TaskTime */
 ENUM_CLASS_FLAGS(ETaskTime::Type)
-ENGINE_API LSimpleString LexToString(const ETaskTime::Type Time);
+ENGINE_API LString LexToString(const ETaskTime::Type Time);
 
 namespace Tasks
 {
@@ -85,9 +85,9 @@ namespace Tasks
 //#
 ENGINE_API void RegisterThread(ENamedThreads::Type InThreadName);
 
-ENGINE_API  auto GetCurrentThreadDisplayName() -> LSimpleString;
-ENGINE_API  auto GetCurrentThreadDisplayNameChecked() -> LSimpleString;
-ENGINE_API  auto GetCurrentThreadDisplayNameAsserted() -> LSimpleString;
+ENGINE_API  auto GetCurrentThreadDisplayName() -> LString;
+ENGINE_API  auto GetCurrentThreadDisplayNameChecked() -> LString;
+ENGINE_API  auto GetCurrentThreadDisplayNameAsserted() -> LString;
 ENGINE_API  auto GetCurrentThreadName() -> ENamedThreads::Type;
 FORCEINLINE auto GetCurrentThreadNameChecked() -> ENamedThreads::Type;
 FORCEINLINE auto GetCurrentThreadNameAsserted() -> ENamedThreads::Type;

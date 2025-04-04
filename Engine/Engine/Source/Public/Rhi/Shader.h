@@ -27,22 +27,22 @@ public:
     void Use() const;
 
     template <typename T>
-    void SetUniform(const LSimpleString& Name, const T Value) const UNSUPPORTED_TEMPLATED_SPECIALIZATION(T)
+    void SetUniform(const LString& Name, const T Value) const UNSUPPORTED_TEMPLATED_SPECIALIZATION(T)
 
-    void SetBoolUniform(const LSimpleString& Name, const bool Value) const;
-    void SetIntUniform(const LSimpleString& Name, const i32 Value) const;
-    void SetUIntUniform(const LSimpleString& Name, const u32 Value) const;
-    void SetFloatUniform(const LSimpleString& Name, const float Value) const;
+    void SetBoolUniform(const LString& Name, const bool Value) const;
+    void SetIntUniform(const LString& Name, const i32 Value) const;
+    void SetUIntUniform(const LString& Name, const u32 Value) const;
+    void SetFloatUniform(const LString& Name, const f32 Value) const;
 
-    void SetVec3Uniform(const LSimpleString& Name, const LVector3& Value) const;
-    void SetVec4Uniform(const LSimpleString& Name, const LVector4& Value) const;
-    void SetMatrixUniform(const LSimpleString& Name, const LMatrixF& Value) const;
+    void SetVec3Uniform(const LString& Name, const LVector3& Value) const;
+    void SetVec4Uniform(const LString& Name, const LVector4& Value) const;
+    void SetMatrixUniform(const LString& Name, const LMatrixF& Value) const;
 
     //# Emits an i32 from a LColor.
-    void SetColorUniform(const LSimpleString& Name, const LColor& Value) const;
+    void SetColorUniform(const LString& Name, const LColor& Value) const;
     //# Emits an vec3 from LColor (without the alpha channel).
-    void SetColorVec3Uniform(const LSimpleString& Name, const LColor& Value) const;
-    void SetColorVec4Uniform(const LSimpleString& Name, const LColor& Value) const;
+    void SetColorVec3Uniform(const LString& Name, const LColor& Value) const;
+    void SetColorVec4Uniform(const LString& Name, const LColor& Value) const;
 
     FORCEINLINE auto GetId() const -> u32 { return this->Id; }
 
@@ -54,16 +54,16 @@ private:
 };
 
 template <>
-FORCEINLINE void LShader::SetUniform(const LSimpleString& Name, const bool Value) const { this->SetBoolUniform(Name, Value); }
+FORCEINLINE void LShader::SetUniform(const LString& Name, const bool Value) const { this->SetBoolUniform(Name, Value); }
 template <>
-FORCEINLINE void LShader::SetUniform(const LSimpleString& Name, const i32 Value) const { this->SetIntUniform(Name, Value); }
+FORCEINLINE void LShader::SetUniform(const LString& Name, const i32 Value) const { this->SetIntUniform(Name, Value); }
 template <>
-FORCEINLINE void LShader::SetUniform(const LSimpleString& Name, const u32 Value) const { this->SetUIntUniform(Name, Value); }
+FORCEINLINE void LShader::SetUniform(const LString& Name, const u32 Value) const { this->SetUIntUniform(Name, Value); }
 template <>
-FORCEINLINE void LShader::SetUniform(const LSimpleString& Name, const float Value) const { this->SetFloatUniform(Name, Value); }
+FORCEINLINE void LShader::SetUniform(const LString& Name, const f32 Value) const { this->SetFloatUniform(Name, Value); }
 template <>
-FORCEINLINE void LShader::SetUniform(const LSimpleString& Name, const LMatrixF& Value) const { this->SetMatrixUniform(Name, Value); }
+FORCEINLINE void LShader::SetUniform(const LString& Name, const LMatrixF& Value) const { this->SetMatrixUniform(Name, Value); }
 template <>
-FORCEINLINE void LShader::SetUniform(const LSimpleString& Name, const LColor& Value) const { this->SetColorUniform(Name, Value); }
+FORCEINLINE void LShader::SetUniform(const LString& Name, const LColor& Value) const { this->SetColorUniform(Name, Value); }
 
 } /* ~Namespace Jafg */

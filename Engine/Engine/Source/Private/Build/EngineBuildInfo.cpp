@@ -3,15 +3,15 @@
 #include "CoreAfx.h"
 #include "Build/EngineBuildInfo.h"
 
-const Jafg::LSimpleString& Jafg::BuildInfo::GetBuildTime()
+const Jafg::LString& Jafg::BuildInfo::GetBuildTime()
 {
-    static LSimpleString BuildTime = __TIME__;
+    static LString BuildTime = __TIME__;
     return BuildTime;
 }
 
-const Jafg::LSimpleString& Jafg::BuildInfo::GetBuildDate()
+const Jafg::LString& Jafg::BuildInfo::GetBuildDate()
 {
-    static LSimpleString BuildDate = __DATE__;
+    static LString BuildDate = __DATE__;
     return BuildDate;
 }
 

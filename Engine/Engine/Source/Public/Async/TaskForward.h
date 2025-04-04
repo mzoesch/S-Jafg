@@ -54,7 +54,7 @@ enum Type : LTaskExit
 
 } /* ~Namespace TaskExit */
 
-inline LSimpleString LexToString(const ETaskExit::Type Exit)
+inline LString LexToString(const ETaskExit::Type Exit)
 {
     if (Exit == ETaskExit::Success) { return "Success"; }
     if (Exit == ETaskExit::Illformed) { return "Illformed"; }

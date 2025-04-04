@@ -30,7 +30,7 @@ enum Type : u8
 
 } /* ~Namespace EMouseCursor */
 
-inline LSimpleString LexToString(const EMouseCursor::Type InCursor)
+inline LString LexToString(const EMouseCursor::Type InCursor)
 {
     switch (InCursor)
     {

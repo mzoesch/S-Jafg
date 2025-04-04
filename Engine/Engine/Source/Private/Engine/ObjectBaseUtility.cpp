@@ -376,12 +376,12 @@ void Jafg::Private::LObjectRegistry::ValidateLoadedPackages()
     return;
 }
 
-bool Jafg::Private::LObjectRegistry::DoesPackageWithNameExist(const LSimpleString& SpacedClassName) const
+bool Jafg::Private::LObjectRegistry::DoesPackageWithNameExist(const LString& SpacedClassName) const
 {
     return this->GetPackageByName(SpacedClassName) != nullptr;
 }
 
-Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByName(const LSimpleString& SpacedClassName)
+Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByName(const LString& SpacedClassName)
 {
     for (LRegistryPackage& Package : this->RegisteredObjects)
     {
@@ -396,12 +396,12 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByNam
     return nullptr;
 }
 
-const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByName(const LSimpleString& SpacedClassName) const
+const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByName(const LString& SpacedClassName) const
 {
     return const_cast<LObjectRegistry*>(this)->GetPackageByName(SpacedClassName);
 }
 
-Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByNameWeak(const LSimpleString& Name)
+Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByNameWeak(const LString& Name)
 {
     if (LRegistryPackage* Package = this->GetPackageByName(Name))
     {
@@ -421,12 +421,12 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByNam
     return nullptr;
 }
 
-const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByNameWeak(const LSimpleString& Name) const
+const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByNameWeak(const LString& Name) const
 {
     return const_cast<LObjectRegistry*>(this)->GetPackageByNameWeak(Name);
 }
 
-Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByName(const LSimpleString& SpacedClassName)
+Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByName(const LString& SpacedClassName)
 {
     if (LRegistryPackage* Package = this->GetPackageByName(SpacedClassName))
     {
@@ -438,12 +438,12 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPack
     return nullptr;
 }
 
-const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByName(const LSimpleString& SpacedClassName) const
+const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByName(const LString& SpacedClassName) const
 {
     return const_cast<LObjectRegistry*>(this)->GetPanickedPackageByName(SpacedClassName);
 }
 
-Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByNameWeak(const LSimpleString& Name)
+Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByNameWeak(const LString& Name)
 {
     if (LRegistryPackage* Package = this->GetPackageByNameWeak(Name))
     {
@@ -455,7 +455,7 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPack
     return nullptr;
 }
 
-const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByNameWeak(const LSimpleString& Name) const
+const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPackageByNameWeak(const LString& Name) const
 {
     return const_cast<LObjectRegistry*>(this)->GetPanickedPackageByNameWeak(Name);
 }

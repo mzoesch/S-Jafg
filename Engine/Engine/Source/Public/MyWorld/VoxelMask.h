@@ -17,11 +17,11 @@ struct LVoxelMask
     friend JVoxelSubsystem;
 
     LVoxelMask() = delete;
-    LVoxelMask(LSimpleString Namespace, LSimpleString Name) : Namespace(std::move(Namespace)), Name(std::move(Name)) { }
+    LVoxelMask(LString Namespace, LString Name) : Namespace(std::move(Namespace)), Name(std::move(Name)) { }
     ~LVoxelMask() = default;
 
-    FORCEINLINE const LSimpleString& GetNamespace(void) const { return this->Namespace; }
-    FORCEINLINE const LSimpleString& GetName(void) const { return this->Name; }
+    FORCEINLINE const LString& GetNamespace(void) const { return this->Namespace; }
+    FORCEINLINE const LString& GetName(void) const { return this->Name; }
 
     static LVoxelMask Null;
     static LVoxelMask Air;
@@ -34,8 +34,8 @@ struct LVoxelMask
 
 private:
 
-    LSimpleString Namespace;
-    LSimpleString Name;
+    LString Namespace;
+    LString Name;
 
     struct LTextureGroup
     {

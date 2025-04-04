@@ -38,52 +38,52 @@ void Jafg::LShader::Use() const
     glUseProgram(this->Id);
 }
 
-void Jafg::LShader::SetBoolUniform(const LSimpleString& Name, const bool Value) const
+void Jafg::LShader::SetBoolUniform(const LString& Name, const bool Value) const
 {
     glUniform1i(glGetUniformLocation(this->Id, Name.ToC()), static_cast<int>(Value));
 }
 
-void Jafg::LShader::SetIntUniform(const LSimpleString& Name, const i32 Value) const
+void Jafg::LShader::SetIntUniform(const LString& Name, const i32 Value) const
 {
     glUniform1i(glGetUniformLocation(this->Id, Name.ToC()), Value);
 }
 
-void Jafg::LShader::SetUIntUniform(const LSimpleString& Name, const u32 Value) const
+void Jafg::LShader::SetUIntUniform(const LString& Name, const u32 Value) const
 {
     glUniform1ui(glGetUniformLocation(this->Id, Name.ToC()), Value);
 }
 
-void Jafg::LShader::SetFloatUniform(const LSimpleString& Name, const float Value) const
+void Jafg::LShader::SetFloatUniform(const LString& Name, const f32 Value) const
 {
     glUniform1f(glGetUniformLocation(this->Id, Name.ToC()), Value);
 }
 
-void Jafg::LShader::SetVec3Uniform(const LSimpleString& Name, const LVector3& Value) const
+void Jafg::LShader::SetVec3Uniform(const LString& Name, const LVector3& Value) const
 {
     glUniform3f(glGetUniformLocation(this->Id, Name.ToC()), Value.X, Value.Y, Value.Z);
 }
 
-void Jafg::LShader::SetVec4Uniform(const LSimpleString& Name, const LVector4& Value) const
+void Jafg::LShader::SetVec4Uniform(const LString& Name, const LVector4& Value) const
 {
     glUniform4f(glGetUniformLocation(this->Id, Name.ToC()), Value.X, Value.Y, Value.Z, Value.W);
 }
 
-void Jafg::LShader::SetMatrixUniform(const LSimpleString& Name, const LMatrixF& Value) const
+void Jafg::LShader::SetMatrixUniform(const LString& Name, const LMatrixF& Value) const
 {
     glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.ToC()), 1, GL_FALSE, Value.GetData());
 }
 
-void Jafg::LShader::SetColorUniform(const LSimpleString& Name, const LColor& Value) const
+void Jafg::LShader::SetColorUniform(const LString& Name, const LColor& Value) const
 {
     this->SetIntUniform(Name, *reinterpret_cast<const i32*>(&Value.Bits));
 }
 
-void Jafg::LShader::SetColorVec3Uniform(const LSimpleString& Name, const LColor& Value) const
+void Jafg::LShader::SetColorVec3Uniform(const LString& Name, const LColor& Value) const
 {
     this->SetVec3Uniform(Name, Value.ToVector3());
 }
 
-void Jafg::LShader::SetColorVec4Uniform(const LSimpleString& Name, const LColor& Value) const
+void Jafg::LShader::SetColorVec4Uniform(const LString& Name, const LColor& Value) const
 {
     this->SetVec4Uniform(Name, Value.ToVector4());
 }

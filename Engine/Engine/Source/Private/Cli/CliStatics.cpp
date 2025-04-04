@@ -126,7 +126,7 @@ Jafg::LCommandArgs Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine)
     char LastChar = 0;
     while (++Cursor < InCommandLine.GetRuneCount())
     {
-        const char CurChar = *InCommandLine[Cursor];
+        const char CurChar = InCommandLine[Cursor];
         if (bInString)
         {
             if (CurChar == '"' && LastChar != '\\')
