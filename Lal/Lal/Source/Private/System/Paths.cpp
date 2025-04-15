@@ -1,56 +1,71 @@
 // Copyright mzoesch. All rights reserved.
 
+#if !WITH_VIRTUAL_FILESYSTEM
+
 #include "System/Paths.h"
 #include <filesystem>
-#if !PLATFORM_WASM
-    #include <fstream>
-#endif /* !PLATFORM_WASM */
+#include <fstream>
 
 #if PLATFORM_WINDOWS /* Just some windows nonsense... */
     #pragma push_macro( "CreateFile" )
     #undef CreateFile
 #endif /* PLATFORM_WINDOWS */
 
+namespace Fs = std::filesystem;
+
 namespace Jafg
 {
-LStringLegacy Paths::ReadFileLegacy(const LPath& InAbsolutePath)
+
+namespace Private
 {
-#if WITH_VIRTUAL_FILESYSTEM
-    panicMsgf( "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath() )
-    return { };
-#else /* WITH_VIRTUAL_FILESYSTEM */
-    const std::ifstream File(InAbsolutePath.GetPath().ToC(), std::ios::in | std::ios::binary);
 
-    if (!File)
-    {
-        panicMsgf( "Failed to open file: {}.", InAbsolutePath.GetPath().ToC() )
-        return { };
-    }
-
-    std::ostringstream Buffer;
-    Buffer << File.rdbuf();
-    return Buffer.str();
-#endif /* !WITH_VIRTUAL_FILESYSTEM */
+bool TPathBase_DoesExist(const char* InPath)
+{
+    return Paths::DoesFileExist(LPath(InPath));
 }
 
-LString Paths::ReadFile(const LPath& InAbsolutePath)
+bool TPathBase_IsFile(const char* InPath)
 {
-#if WITH_VIRTUAL_FILESYSTEM
-    panicMsgf( "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath() )
-    return { };
-#else /* WITH_VIRTUAL_FILESYSTEM */
-    const std::ifstream File(InAbsolutePath.GetPath().ToC(), std::ios::in | std::ios::binary);
+    return Paths::DoesFileExist(LPath(InPath));
+}
+
+bool TPathBase_IsDir(const char* InPath)
+{
+    return Paths::DoesDirExist(LPath(InPath));
+}
+
+} /* ~Namespace Private */
+
+LString Paths::ReadFile(const LPath& InFilePath)
+{
+    LString Error;
+    const TOptional<LString> FileContent = Paths::TryReadFile(InFilePath, &Error);
+    if (!FileContent)
+    {
+        panicMsgf( "{}", Error )
+        return { };
+    }
+
+    return FileContent.GetValue();
+}
+
+TOptional<LString> Paths::TryReadFile(const LPath& InFilePath, LString* OutHumanReadableError /* = nullptr */)
+{
+    const std::ifstream File(InFilePath.ToPtr(), std::ios::in | std::ios::binary);
 
     if (!File)
     {
-        panicMsgf( "Failed to open file: {}.", InAbsolutePath.GetPath().ToC() )
+        if (OutHumanReadableError)
+        {
+            *OutHumanReadableError = LString::SprintF("Failed to open file: [{}].", InFilePath.ToPtr());
+        }
+
         return { };
     }
 
     std::ostringstream Buffer;
     Buffer << File.rdbuf();
-    return Buffer.str().c_str();
-#endif /* !WITH_VIRTUAL_FILESYSTEM */
+    return LString(Buffer.str().c_str());
 }
 
 LString Paths::GetStem(const LString& InFileName)
@@ -77,72 +92,69 @@ void Paths::GetStemInline(LString& InOutFileName)
     return;
 }
 
-bool Paths::DoesFileExist(const LPath& InAbsolutePath)
+bool Paths::DoesPathExist(const LPath& InPath)
 {
-#if WITH_VIRTUAL_FILESYSTEM
-    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())
-    return false;
-#else /* WITH_VIRTUAL_FILESYSTEM */
-    return std::filesystem::exists(InAbsolutePath.GetPath().ToC());
-#endif /* !WITH_VIRTUAL_FILESYSTEM */
+    return std::filesystem::exists(InPath.ToPtr());
 }
 
-void Paths::CreateFileSlow(const LPath& InAbsolutePath)
+bool Paths::DoesFileExist(const LPath& InFilePath)
 {
-#if WITH_VIRTUAL_FILESYSTEM
-    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())
-    return;
-#else /* WITH_VIRTUAL_FILESYSTEM */
+    return DoesPathExist(InFilePath) && std::filesystem::is_regular_file(InFilePath.ToPtr());
+}
 
-    if (DoesFileExist(InAbsolutePath))
+bool Paths::DoesDirExist(const LPath& InDirPath)
+{
+    return DoesPathExist(InDirPath) && std::filesystem::is_directory(InDirPath.ToPtr());
+}
+
+void Paths::CreateFileSlow(const LPath& InFilePath)
+{
+    if (DoesFileExist(InFilePath))
     {
-        LOG_WARNING(LogPlatform, "Trying to create the file [{}] but it already exists.", InAbsolutePath.GetPath() )
+        LOG_WARNING(LogPlatform, "Trying to create the file [{}] but it already exists.", InFilePath )
         return;
     }
 
-    LOG_TRACE(LogPlatform, "Creating file [{}].", InAbsolutePath.GetPath() )
-    std::ofstream Out { InAbsolutePath.GetPath().ToC() };
+    LOG_TRACE(LogPlatform, "Creating file [{}].", InFilePath )
+    std::ofstream Out { InFilePath.ToPtr() };
     Out.close();
 
     if (Out.fail())
     {
-        panicMsgf( "Failed to create file: {}.", InAbsolutePath.GetPath() )
+        panicMsgf( "Failed to create file: {}.", InFilePath )
     }
 
     return;
-#endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 
-void Paths::OverrideFile(const LPath& InAbsolutePath, const LStringView& InContent, const bool bUseNativeLineEndings /* = false */)
+void Paths::OverrideFile(const LPath& InFileName, const LStringView& InContent, const bool bUseNativeLineEndings /* = false */)
 {
-#if WITH_VIRTUAL_FILESYSTEM
-    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())
-    return;
-#else /* WITH_VIRTUAL_FILESYSTEM */
-    Paths::CheckFile(InAbsolutePath);
-    std::ofstream Out { InAbsolutePath.GetPath().ToC(), std::ios::out | std::ios::trunc | (bUseNativeLineEndings ? static_cast<std::ios::openmode>(0) : std::ios::binary) };
-    Out << InContent.data();
+    Paths::EnsureFile(InFileName);
+
+    std::ofstream Out
+    {
+        InFileName.ToPtr(),
+        std::ios::out | std::ios::trunc | (bUseNativeLineEndings ? static_cast<std::ios::openmode>(0) : std::ios::binary)
+    };
+    Out.write(InContent.GetBegin(), InContent.GetSize());
     Out.close();
+
     return;
-#endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 
-void Paths::MakeFileBackup(const LPath& InAbsolutePath, const bool bMakeIfSame /* = false */, i32 InBackupCount /* = 5 */, const LStringView& InBackupExtension /* = ".old" */)
+void Paths::MakeFileBackup(const LPath& InFileName, const bool bMakeIfSame /* = false */, i32 InBackupCount /* = 5 */, const LStringView& InBackupExtension /* = ".old" */)
 {
-#if WITH_VIRTUAL_FILESYSTEM
-    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())
-    return;
-#else /* WITH_VIRTUAL_FILESYSTEM */
-    namespace Fs = std::filesystem;
-    Paths::DoesFileExistPanicked(InAbsolutePath);
+    check( InBackupCount > 0 )
+
+    Paths::DoesFileExistAsserted(InFileName);
 
     if (bMakeIfSame == false)
     {
-        LPath BackupPath = InAbsolutePath;
-        BackupPath.GetMutablePath().Append(InBackupExtension.data());
-        BackupPath.GetMutablePath().Append("1");
-        Paths::CheckFile(BackupPath);
-        if (Paths::AreFilesIdentical(InAbsolutePath, BackupPath))
+        LPath BackupPath = InFileName;
+        BackupPath.Append(InBackupExtension.GetBegin(), InBackupExtension.GetSize());
+        BackupPath.Append("1");
+        Paths::EnsureFile(BackupPath);
+        if (Paths::AreFilesIdentical(InFileName, BackupPath))
         {
             return;
         }
@@ -155,58 +167,52 @@ void Paths::MakeFileBackup(const LPath& InAbsolutePath, const bool bMakeIfSame /
 
     for (int i = InBackupCount; i > 0; --i)
     {
-        LPath BackupPath = InAbsolutePath;
-        BackupPath.GetMutablePath().Append(InBackupExtension.data());
-        BackupPath.GetMutablePath().Append(std::to_string(i).c_str());
-        LPath PreviousBackupPath = InAbsolutePath;
-        PreviousBackupPath.GetMutablePath().Append(InBackupExtension.data());
-        PreviousBackupPath.GetMutablePath().Append(std::to_string(i - 1).c_str());
+        LPath BackupPath = InFileName;
+        BackupPath.Append(InBackupExtension.GetBegin(), InBackupExtension.GetSize());
+        BackupPath.Append(std::to_string(i).c_str());
+        LPath PreviousBackupPath = InFileName;
+        PreviousBackupPath.Append(InBackupExtension.GetBegin(), InBackupExtension.GetSize());
+        PreviousBackupPath.Append(std::to_string(i - 1).c_str());
 
         if (i == 1)
         {
-            PreviousBackupPath = InAbsolutePath;
+            PreviousBackupPath = InFileName;
         }
 
-        if (Fs::exists(PreviousBackupPath.GetPath().ToC()))
+        if (Fs::exists(PreviousBackupPath.ToPtr()))
         {
-            Paths::CheckFile(BackupPath);
-            Fs::copy_file(PreviousBackupPath.GetPath().ToC(), BackupPath.GetPath().ToC(), Fs::copy_options::overwrite_existing);
+            Paths::EnsureFile(BackupPath);
+            Fs::copy_file(PreviousBackupPath.ToPtr(), BackupPath.ToPtr(), Fs::copy_options::overwrite_existing);
         }
     }
 
     return;
-#endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 
-void Paths::CheckFile(const LPath& InAbsolutePath)
+void Paths::EnsureFile(const LPath& InFileName)
 {
-#if WITH_VIRTUAL_FILESYSTEM
-    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())
-    return;
-#else /* WITH_VIRTUAL_FILESYSTEM */
-    if (DoesFileExist(InAbsolutePath) == false)
+    if (DoesFileExist(InFileName) == false)
     {
-        Paths::CreateFileSlow(InAbsolutePath);
+        CreateFileSlow(InFileName);
     }
+
     return;
-#endif /* !WITH_VIRTUAL_FILESYSTEM */
+}
+
+void Paths::CheckFile(const LPath& InFileName)
+{
+    jassert( DoesFileExist(InFileName) )
 }
 
 bool Paths::AreFilesIdentical(const LPath& InFirst, const LPath& InSecond)
 {
-#if WITH_VIRTUAL_FILESYSTEM
-    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InFirst.GetPath())
-    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InSecond.GetPath())
-    return false;
-#else /* WITH_VIRTUAL_FILESYSTEM */
-    namespace Fs = std::filesystem;
 
-    std::ifstream f1(InFirst.GetPath().ToC(), std::ios::binary);
-    std::ifstream f2(InSecond.GetPath().ToC(), std::ios::binary);
+    std::ifstream f1(InFirst.ToPtr(), std::ios::binary);
+    std::ifstream f2(InSecond.ToPtr(), std::ios::binary);
 
     if (!f1 || !f2)
     {
-        panicMsgf( "Error opening files: [{}] || [{}].", InFirst.GetPath(), InSecond.GetPath() )
+        panicMsgf( "Error opening files: [{}] || [{}].", InFirst, InSecond )
         return false;
     }
 
@@ -233,7 +239,6 @@ bool Paths::AreFilesIdentical(const LPath& InFirst, const LPath& InSecond)
     }
 
     return f1.eof() && f2.eof();
-#endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 
 } /* ~Namespace Jafg::Paths */
@@ -241,3 +246,5 @@ bool Paths::AreFilesIdentical(const LPath& InFirst, const LPath& InSecond)
 #if PLATFORM_WINDOWS
     #pragma pop_macro( "CreateFile" )
 #endif /* PLATFORM_WINDOWS */
+
+#endif /* !WITH_VIRTUAL_FILESYSTEM */

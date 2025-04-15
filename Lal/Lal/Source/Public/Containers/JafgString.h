@@ -13,7 +13,7 @@
 namespace Jafg
 {
 
-/** Common traits. Define your own if you need to. These are the most basic UTF-8 traits. */
+//# Common traits. Define your own if you need to. These are the most basic UTF-8 traits.
 template <typename InT>
 struct TStringTraits
 {
@@ -29,6 +29,9 @@ struct TStringTraits
     static SizeType GetCharacterCount(const T* InString) noexcept; // In Characters. But just basic UFT-8 stuff; So no compound shit.
 
     template <typename SizeType>
+    static SizeType GetCharacterCount(const T* InString, const T* InEnd) noexcept;
+
+    template <typename SizeType>
     static SizeType GetCharacterSize(const T* InCharacter) noexcept;
 
     template <typename SizeType>
@@ -37,18 +40,18 @@ struct TStringTraits
     FORCEINLINE static T ToLower(const T InRune);
 };
 
-/**
- * The base class for all strings.
- */
-template <typename InTraits, typename InAlloc>
+//#
+//# The base class for all strings.
+//#
+template <typename Derived, typename InTraits, typename InAlloc>
 class TStringBase
 {
 public:
 
+    using Self       = Derived;
     using Traits     = InTraits;
-    using T          = typename Traits::T;
     using Alloc      = InAlloc;
-    using Self       = TStringBase<Traits, Alloc>;
+    using T          = typename Traits::T;
     using SizeType   = typename Alloc::SizeType;
 
     static_assert(std::is_integral_v<SizeType>, "SizeType must be an integral type.");
@@ -59,25 +62,69 @@ public:
     template <typename TMemberField>
     friend void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField);
 
+    //# Default implementation but may be shadowed by a derived class.
+    FORCEINLINE consteval static bool IsDynamic()        noexcept { return Alloc::IsDynamic();     }
+    FORCEINLINE consteval static bool IsWeakAlloc()      noexcept { return Alloc::IsWeakAlloc();   }
+    FORCEINLINE consteval static bool IsStrongAlloc()    noexcept { return Alloc::IsStrongAlloc(); }
+    FORCEINLINE consteval static bool IsContentConst()   noexcept { return Alloc::IsContentConst(); }
+    FORCEINLINE consteval static bool IsContentMutable() noexcept { return Alloc::IsContentMutable(); }
+
+    static_assert(TStringBase::IsWeakAlloc()    ? TStringBase::IsDynamic()      == false : true, "Weak allocators must not be dynamic.");
+    static_assert(TStringBase::IsDynamic()      ? TStringBase::IsWeakAlloc()    == false : true, "Dynamic allocators must not be weak.");
+    static_assert(TStringBase::IsDynamic()      ? TStringBase::IsContentConst() == false : true, "Dynamic allocators must not be content.");
+    static_assert(TStringBase::IsContentConst() ? TStringBase::IsDynamic()      == false : true, "Const content allocators must not be dynamic.");
+
     FORCEINLINE  TStringBase() noexcept = default;
     FORCEINLINE  TStringBase(LNullptrTy) noexcept : Impl() { }
     FORCEINLINE  TStringBase(const TStringBase& Other) noexcept = default;
     FORCEINLINE  TStringBase(TStringBase&& Other) noexcept = default;
-    explicit     TStringBase(const T InRune);
-    FORCEINLINE  TStringBase(const T* InString);
-    FORCEINLINE  TStringBase(const T* InString, const SizeType InLength);
+    explicit     TStringBase(const T InRune) noexcept requires (Self::IsStrongAlloc());
+    explicit     TStringBase(const T& InRune) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst());
+    explicit     TStringBase(      T& InRune) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable());
+    FORCEINLINE  TStringBase(const T* InString) noexcept requires (Self::IsStrongAlloc());
+    FORCEINLINE  TStringBase(const T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst());
+    FORCEINLINE  TStringBase(      T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable());
+    FORCEINLINE  TStringBase(const T* InString, const SizeType InLength) noexcept requires (Self::IsStrongAlloc());
+    FORCEINLINE  TStringBase(const T* InString, const SizeType InLength) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst());
+    FORCEINLINE  TStringBase(      T* InString, const SizeType InLength) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable());
+    FORCEINLINE  TStringBase(const T* InString, const T* InEnd) noexcept requires (Self::IsStrongAlloc());
+    FORCEINLINE  TStringBase(const T* InString, const T* InEnd) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst());
+    FORCEINLINE  TStringBase(      T* InString,       T* InEnd) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable());
     FORCEINLINE ~TStringBase() noexcept = default;
+    template <typename TOtherDerived>
+    FORCEINLINE  TStringBase(const TOtherDerived& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<Self, TOtherDerived> == false);
 
-    FORCEINLINE Self& operator=(LNullptrTy) noexcept { this->Empty();  return *this; }
-    FORCEINLINE Self& operator=(const Self& InOther) noexcept = default;
-    FORCEINLINE Self& operator=(Self&& InOther) noexcept = default;
-    FORCEINLINE Self& operator=(const T InRune);
-    FORCEINLINE Self& operator=(const T* InString);
+    FORCEINLINE Self& operator=(LNullptrTy) noexcept requires (Self::IsStrongAlloc()) { this->Empty(); return this->GetSelf(); }
+    FORCEINLINE Self& operator=(LNullptrTy) noexcept requires (Self::IsWeakAlloc()) { this->GetUnderlyingDataStructure().Invalidate(); return this->GetSelf(); }
+    FORCEINLINE Self& operator=(const Self& InOther) noexcept { this->Impl = InOther.Impl; return this->GetSelf(); }
+    FORCEINLINE Self& operator=(Self&& InOther) noexcept { this->Impl = std::move(InOther.Impl); return this->GetSelf(); }
+    FORCEINLINE Self& operator=(const T InRune) noexcept requires (Self::IsStrongAlloc());
+    FORCEINLINE Self& operator=(const T& InRune) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst());
+    FORCEINLINE Self& operator=(      T& InRune) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable());
+    FORCEINLINE Self& operator=(const T* InString) noexcept requires (Self::IsStrongAlloc());
+    FORCEINLINE Self& operator=(const T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst());
+    FORCEINLINE Self& operator=(      T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable());
+    template <typename TOtherDerived>
+    FORCEINLINE Self& operator=(const TOtherDerived& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<Self, TOtherDerived> == false);
 
-    NODISCARD FORCEINLINE const T* ToC()   const noexcept { const T* Out = this->Impl.GetFirst(); return Out ? Out : &Traits::Terminator; }
-    NODISCARD FORCEINLINE const T* ToPtr() const noexcept { const T* Out = this->Impl.GetFirst(); return Out ? Out : &Traits::Terminator; }
-    NODISCARD FORCEINLINE SizeType GetRuneCount() const noexcept { return Maths::Max(this->GetSize() - /*Terminator*/1, 0); }
-    NODISCARD FORCEINLINE SizeType GetCharacterCount() const noexcept { return  Traits::template GetCharacterCount<SizeType>(this->ToPtr()); }
+    FORCEINLINE void     Invalidate() requires (Self::IsWeakAlloc()) { this->Impl.Invalidate(); }
+    FORCEINLINE T*       MoveDataPointerUp(T* NewDataPointer) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) { return this->Impl.MoveDataPointerUp(NewDataPointer); }
+    FORCEINLINE const T* MoveDataPointerUp(const T* NewDataPointer) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst()) { return this->Impl.MoveDataPointerUp(NewDataPointer); }
+    FORCEINLINE bool     MoveDataPointerUp() noexcept requires (Self::IsWeakAlloc()) { return this->Impl.MoveDataPointerUp(); }
+    FORCEINLINE SizeType MoveDataPointerUp(const SizeType InOffset) noexcept requires (Self::IsWeakAlloc()) { return this->Impl.MoveDataPointerUp(InOffset); }
+    FORCEINLINE T*       MoveSlackPointerDown(T* NewSlackPointer) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) { return this->Impl.MoveSlackPointerDown(NewSlackPointer); }
+    FORCEINLINE const T* MoveSlackPointerDown(const T* NewSlackPointer) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst()) { return this->Impl.MoveSlackPointerDown(NewSlackPointer); }
+    FORCEINLINE bool     MoveSlackPointerDown() noexcept requires (Self::IsWeakAlloc()) { return this->Impl.MoveSlackPointerDown(); }
+    FORCEINLINE SizeType MoveSlackPointerDown(const SizeType InOffset) noexcept requires (Self::IsWeakAlloc()) { return this->Impl.MoveSlackPointerDown(InOffset); }
+
+    NODISCARD FORCEINLINE       Self& GetSelf()       noexcept { return *static_cast<Self*>(this); }
+    NODISCARD FORCEINLINE const Self& GetSelf() const noexcept { return *static_cast<const Self*>(this); }
+
+    NODISCARD FORCEINLINE const T* ToPtr() const noexcept requires (Self::IsStrongAlloc()) { const T* Out = this->Impl.GetFirst(); return Out ? Out : &Traits::Terminator; }
+    NODISCARD FORCEINLINE SizeType GetRuneCount() const noexcept requires (Self::IsStrongAlloc()) { return Maths::Max(this->GetSize() - /*Terminator*/1, 0); }
+    NODISCARD FORCEINLINE SizeType GetRuneCount() const noexcept requires (Self::IsWeakAlloc());
+    NODISCARD FORCEINLINE SizeType GetCharacterCount() const noexcept requires (Self::IsStrongAlloc()) { return Traits::template GetCharacterCount<SizeType>(this->ToPtr()); }
+    NODISCARD FORCEINLINE SizeType GetCharacterCount() const noexcept requires (Self::IsWeakAlloc()) { return Traits::template GetCharacterCount<SizeType>(this->GetBegin(), this->GetEnd()); }
     NODISCARD FORCEINLINE SizeType GetRuneCountOfCharacterAt(const SizeType InRuneIndex) const noexcept;
 
     NODISCARD FORCEINLINE SizeType GetSize()     const noexcept { return this->Impl.GetSize();      }
@@ -86,62 +133,67 @@ public:
 
     FORCEINLINE bool IsValidIndex(const SizeType InRuneIndex) const noexcept { return InRuneIndex > INDEX_NONE && InRuneIndex < this->Impl.GetSize() - 1; }
 
-    FORCEINLINE       T& operator[](const SizeType InRuneIndex)       noexcept { JAFG_CHECK_STRING( this->IsValidIndex(InRuneIndex) ) return *(this->Impl.GetData() + InRuneIndex); }
-    FORCEINLINE const T& operator[](const SizeType InRuneIndex) const noexcept { JAFG_CHECK_STRING( this->IsValidIndex(InRuneIndex) ) return *(this->Impl.GetData() + InRuneIndex); }
+    FORCEINLINE       T& operator[](const SizeType InRuneIndex)       noexcept requires (Self::IsStrongAlloc() && Self::IsContentMutable());
+    FORCEINLINE const T& operator[](const SizeType InRuneIndex) const noexcept requires (Self::IsStrongAlloc());
+    FORCEINLINE       T& operator[](const SizeType InRuneIndex)       noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable());
+    FORCEINLINE const T& operator[](const SizeType InRuneIndex) const noexcept requires (Self::IsWeakAlloc());
 
-    FORCEINLINE void Reserve(const SizeType InRuneCount) noexcept { this->Impl.Reserve(InRuneCount + /*Terminator*/1); }
-    FORCEINLINE void Reset(const SizeType InRuneCount) noexcept { this->Impl.Reset(InRuneCount + /*Terminator*/1); }
-    FORCEINLINE void Shrink() noexcept { this->Impl.Shrink(); }
-    FORCEINLINE void Empty() noexcept { this->Impl.Empty(); }
+    FORCEINLINE void Reserve(const SizeType InRuneCount) noexcept requires (Self::IsDynamic()) { this->Impl.Reserve(InRuneCount + /*Terminator*/1); }
+    FORCEINLINE void Reset(const SizeType InRuneCount) noexcept requires (Self::IsDynamic()) { this->Impl.Reset(InRuneCount + /*Terminator*/1); }
+    FORCEINLINE void Shrink() noexcept requires (Self::IsDynamic()) { this->Impl.Shrink(); }
+    FORCEINLINE void Empty() noexcept requires (Self::IsDynamic()) { this->Impl.Empty(); }
     FORCEINLINE void SwapStrings(Self& InOther) noexcept { this->Impl.SwapBuffers(InOther.Impl); }
 
     FORCEINLINE bool operator==(LNullptrTy) const noexcept { return this->IsEmpty(); }
     FORCEINLINE bool operator==(const Self& InOther) const noexcept;
     FORCEINLINE bool operator==(const T* InString) const noexcept;
+    FORCEINLINE bool operator==(const T InRune) const noexcept;
     FORCEINLINE bool operator!=(LNullptrTy) const noexcept { return !(*this == nullptr); }
     FORCEINLINE bool operator!=(const Self& InOther) const noexcept { return !(*this == InOther); }
     FORCEINLINE bool operator!=(const T* InString) const noexcept { return !(*this == InString); }
+    FORCEINLINE bool operator!=(const T InRune) const noexcept { return !(*this == InRune); }
     FORCEINLINE bool Equals(LNullptrTy) const noexcept { return *this == nullptr; }
     FORCEINLINE bool Equals(const Self& InOther) const noexcept { return *this == InOther; }
     FORCEINLINE bool Equals(const T* InString) const noexcept { return *this == InString; }
+    FORCEINLINE bool Equals(const T InRune) const noexcept { return *this == InRune; }
 
-    FORCEINLINE Self& operator+=(const Self& InOther) noexcept { this->Append(InOther); return *this; }
-    FORCEINLINE Self& operator+=(const T InRune) noexcept { this->Add(InRune); return *this; }
-    FORCEINLINE Self& operator+=(const T* InString) noexcept { this->Append(InString); return *this; }
+    FORCEINLINE Self& operator+=(const Self& InOther) noexcept requires (Self::IsDynamic()) { this->Append(InOther); return this->GetSelf(); }
+    FORCEINLINE Self& operator+=(const T InRune) noexcept requires (Self::IsDynamic()) { this->Add(InRune); return this->GetSelf(); }
+    FORCEINLINE Self& operator+=(const T* InString) noexcept requires (Self::IsDynamic()) { this->Append(InString); return this->GetSelf(); }
 
-    FORCEINLINE Self  operator /(const T InRune) const noexcept;
-    FORCEINLINE Self  operator /(const T* InString) const noexcept;
-    FORCEINLINE Self  operator /(const Self& InOther) const noexcept;
-    FORCEINLINE Self& operator/=(const T InRune) noexcept { return this->AppendPath(InRune); }
-    FORCEINLINE Self& operator/=(const T* InString) noexcept { return this->AppendPath(InString); }
-    FORCEINLINE Self& operator/=(const Self& InOther) noexcept { return this->AppendPath(InOther); }
-    FORCEINLINE Self& AppendPath(const T InRune) noexcept;
-    FORCEINLINE Self& AppendPath(const T* InString) noexcept;
-    FORCEINLINE Self& AppendPath(const T* InString, const SizeType InLength) noexcept;
-    FORCEINLINE Self& AppendPath(const Self& InOther) noexcept;
-    FORCEINLINE Self& AppendPath(const Self& InOther, const SizeType InLength) noexcept;
+    FORCEINLINE Self  operator /(const T InRune) const noexcept requires (Self::IsStrongAlloc());
+    FORCEINLINE Self  operator /(const T* InString) const noexcept requires (Self::IsStrongAlloc());
+    FORCEINLINE Self  operator /(const Self& InOther) const noexcept requires (Self::IsStrongAlloc());
+    FORCEINLINE Self& operator/=(const T InRune) noexcept requires (Self::IsDynamic()) { return this->AppendPath(InRune); }
+    FORCEINLINE Self& operator/=(const T* InString) noexcept requires (Self::IsDynamic()) { return this->AppendPath(InString); }
+    FORCEINLINE Self& operator/=(const Self& InOther) noexcept requires (Self::IsDynamic()) { return this->AppendPath(InOther); }
+    FORCEINLINE Self& AppendPath(const T InRune) noexcept requires (Self::IsDynamic());
+    FORCEINLINE Self& AppendPath(const T* InString) noexcept requires (Self::IsDynamic());
+    FORCEINLINE Self& AppendPath(const T* InString, const SizeType InLength) noexcept requires (Self::IsDynamic());
+    FORCEINLINE Self& AppendPath(const Self& InOther) noexcept requires (Self::IsDynamic());
+    FORCEINLINE Self& AppendPath(const Self& InOther, const SizeType InLength) noexcept requires (Self::IsDynamic());
 
-    FORCEINLINE SizeType Add(const T InRune) noexcept;
-    FORCEINLINE void     AddAt(const SizeType InRuneIndex, const T InRune) noexcept;
+    FORCEINLINE SizeType Add(const T InRune) noexcept requires (Self::IsDynamic());
+    FORCEINLINE void     AddAt(const SizeType InRuneIndex, const T InRune) noexcept requires (Self::IsDynamic());
 
-    FORCEINLINE void Append(const Self& InOther) noexcept;
-    FORCEINLINE void Append(const T* InString) noexcept;
-    FORCEINLINE void Append(const T* InString, const SizeType InLength) noexcept;
-    FORCEINLINE void AppendAt(const SizeType InRuneIndex, const Self& InOther) noexcept;
-    FORCEINLINE void AppendAt(const SizeType InRuneIndex, const T* InString) noexcept;
-    FORCEINLINE void AppendAt(const SizeType InRuneIndex, const T* InString, const SizeType InLength) noexcept;
+    FORCEINLINE void Append(const Self& InOther) noexcept requires (Self::IsDynamic());
+    FORCEINLINE void Append(const T* InString) noexcept requires (Self::IsDynamic());
+    FORCEINLINE void Append(const T* InString, const SizeType InLength) noexcept requires (Self::IsDynamic());
+    FORCEINLINE void AppendAt(const SizeType InRuneIndex, const Self& InOther) noexcept requires (Self::IsDynamic());
+    FORCEINLINE void AppendAt(const SizeType InRuneIndex, const T* InString) noexcept requires (Self::IsDynamic());
+    FORCEINLINE void AppendAt(const SizeType InRuneIndex, const T* InString, const SizeType InLength) noexcept requires (Self::IsDynamic());
 
-    FORCEINLINE void RemoveAt(const SizeType InRuneIndex) noexcept;
-    FORCEINLINE void RemoveAt(const SizeType InRuneIndex, const SizeType InLength) noexcept;
+    FORCEINLINE void RemoveAt(const SizeType InRuneIndex) noexcept requires (Self::IsDynamic());
+    FORCEINLINE void RemoveAt(const SizeType InRuneIndex, const SizeType InLength) noexcept requires (Self::IsDynamic());
     //# @return The number of runes removed.
-    FORCEINLINE SizeType RemoveCharacterAt(const SizeType InRuneIndex) noexcept;
-    FORCEINLINE SizeType RemoveCharacterAt(const SizeType InRuneIndex, const SizeType InCharacters) noexcept;
+    FORCEINLINE SizeType RemoveCharacterAt(const SizeType InRuneIndex) noexcept requires (Self::IsDynamic());
+    FORCEINLINE SizeType RemoveCharacterAt(const SizeType InRuneIndex, const SizeType InCharacters) noexcept requires (Self::IsDynamic());
 
     FORCEINLINE const T* Peek() const noexcept;
-    FORCEINLINE bool Pop() noexcept;
-    FORCEINLINE bool PopCharacter() noexcept;
-    FORCEINLINE void Pop(const SizeType InRuneCount) noexcept;
-    FORCEINLINE void PopCharacter(SizeType InCharacterCount) noexcept;
+    FORCEINLINE bool Pop() noexcept requires (Self::IsDynamic());
+    FORCEINLINE bool PopCharacter() noexcept requires (Self::IsDynamic());
+    FORCEINLINE void Pop(const SizeType InRuneCount) noexcept requires (Self::IsDynamic());
+    FORCEINLINE void PopCharacter(SizeType InCharacterCount) noexcept requires (Self::IsDynamic());
 
     FORCEINLINE bool StartsWith(const T InRune) const noexcept;
     FORCEINLINE bool StartsWith(const T* InString) const noexcept;
@@ -169,6 +221,11 @@ public:
     FORCEINLINE SizeType FindLast(const T* InString, const SizeType InLength) const noexcept;
     FORCEINLINE SizeType FindLast(const Self& InOther) const noexcept;
     FORCEINLINE SizeType FindLast(const Self& InOther, const SizeType InLength) const noexcept;
+    FORCEINLINE SizeType FindSecondLast(const T InRune) const noexcept;
+    FORCEINLINE SizeType FindSecondLast(const T* InString) const noexcept;
+    FORCEINLINE SizeType FindSecondLast(const T* InString, const SizeType InLength) const noexcept;
+    FORCEINLINE SizeType FindSecondLast(const Self& InOther) const noexcept;
+    FORCEINLINE SizeType FindSecondLast(const Self& InOther, const SizeType InLength) const noexcept;
 
     FORCEINLINE bool Contains(const T InRune) const noexcept;
     FORCEINLINE bool Contains(const T* InString) const noexcept;
@@ -189,8 +246,8 @@ public:
     FORCEINLINE void InlineLeftChop(const SizeType InRuneIndex) noexcept;
     FORCEINLINE Self LeftChop(const SizeType InRuneIndex) const noexcept;
 
-    FORCEINLINE SizeType Replace(const T InRune, const T InReplacement) noexcept;
-    FORCEINLINE SizeType Replace(const T* InString, const T* InReplacement) noexcept;
+    FORCEINLINE SizeType Replace(const T InRune, const T InReplacement) noexcept requires (Self::IsContentMutable());
+    FORCEINLINE SizeType Replace(const T* InString, const T* InReplacement) noexcept requires (Self::IsContentMutable());
 
     FORCEINLINE SizeType Count(const T InRune) const noexcept;
     FORCEINLINE SizeType Count(const T* InString) const noexcept;
@@ -198,32 +255,95 @@ public:
     FORCEINLINE SizeType Count(const Self& InOther) const noexcept;
     FORCEINLINE SizeType Count(const Self& InOther, const SizeType InLength) const noexcept;
 
-    FORCEINLINE void ToLower() noexcept;
-    FORCEINLINE Self GetLowerCase() const noexcept;
+    FORCEINLINE void ToLower() noexcept requires (Self::IsContentMutable());
+    FORCEINLINE Self GetLowerCase() const noexcept requires (Self::IsStrongAlloc());
 
     template <typename ... TArgs>
-    static Self SprintF(const T* InFormat, const TArgs& ... InArgs) noexcept;
+    static Self SprintF(const T* InFormat, const TArgs& ... InArgs) noexcept  requires (Self::IsStrongAlloc());
 
-    FORCEINLINE       T* GetBegin()       noexcept { return this->Impl.GetData(); }
+    FORCEINLINE       T* GetBegin()       noexcept requires (Self::IsContentMutable()) { return this->Impl.GetData(); }
     FORCEINLINE const T* GetBegin() const noexcept { return this->Impl.GetData(); }
-    FORCEINLINE       T* GetEnd()         noexcept { return this->Impl.GetSlack(); }
+    FORCEINLINE       T* GetEnd()         noexcept requires (Self::IsContentMutable()) { return this->Impl.GetSlack(); }
     FORCEINLINE const T* GetEnd()   const noexcept { return this->Impl.GetSlack(); }
 
-    FORCEINLINE Iterator<T>       begin()       noexcept { return this->Impl.begin(); }
+    FORCEINLINE Iterator<T>       begin()       noexcept requires (Self::IsContentMutable()) { return this->Impl.begin(); }
     FORCEINLINE Iterator<const T> begin() const noexcept { return this->Impl.begin(); }
-    FORCEINLINE Iterator<const T> end()   const noexcept { auto It = this->Impl.end(); return It == this->begin() ? It : --It; }
-    FORCEINLINE Iterator<T>       end()         noexcept { auto It = this->Impl.end(); return It == this->begin() ? It : --It; }
+    FORCEINLINE Iterator<const T> end()   const noexcept requires (Self::IsStrongAlloc()) { auto It = this->Impl.end(); return It == this->begin() ? It : /*Terminator*/ --It; }
+    FORCEINLINE Iterator<T>       end()         noexcept requires (Self::IsStrongAlloc() && Self::IsContentMutable()) { auto It = this->Impl.end(); return It == this->begin() ? It : /*Terminator*/ --It; }
+    FORCEINLINE Iterator<const T> end()   const noexcept requires (Self::IsWeakAlloc()) { return this->Impl.end(); }
+    FORCEINLINE Iterator<T>       end()         noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) { return this->Impl.end(); }
 
     FORCEINLINE       Alloc& GetUnderlyingDataStructure()       noexcept { return this->Impl; }
     FORCEINLINE const Alloc& GetUnderlyingDataStructure() const noexcept { return this->Impl; }
 
-private:
+protected:
 
 #if CHECK_STRING_VALIDITY
     void EnsureValidState() const;
 #endif /* CHECK_STRING_VALIDITY */
 
     Alloc Impl;
+};
+
+template <typename InTraits, typename InAlloc>
+class _TStringBase : public TStringBase<_TStringBase<InTraits, InAlloc>, InTraits, InAlloc>
+{
+public:
+
+    using Super = TStringBase<_TStringBase<InTraits, InAlloc>, InTraits, InAlloc>;
+
+    using Self     = typename Super::Self;
+    using Traits   = typename Super::Traits;
+    using Alloc    = typename Super::Alloc;
+    using T        = typename Super::T;
+    using SizeType = typename Super::SizeType;
+
+    template <typename TOtherAlloc>
+    using TOtherStringBase = _TStringBase<InTraits, TOtherAlloc>;
+
+    friend void OnDefaultOnlyMallocMember(Self* MemberField);
+    friend void OnDefaultOnlyMallocMember(TArray<Self>* MemberField);
+
+    template <typename TOtherTraits, typename TOtherAlloc>
+    friend class _TStringBase;
+
+    FORCEINLINE consteval static bool IsDynamic()        noexcept { return Super::IsDynamic();        }
+    FORCEINLINE consteval static bool IsWeakAlloc()      noexcept { return Super::IsWeakAlloc();      }
+    FORCEINLINE consteval static bool IsStrongAlloc()    noexcept { return Super::IsStrongAlloc();    }
+    FORCEINLINE consteval static bool IsContentConst()   noexcept { return Super::IsContentConst();   }
+    FORCEINLINE consteval static bool IsContentMutable() noexcept { return Super::IsContentMutable(); }
+
+    FORCEINLINE  _TStringBase() noexcept = default;
+    FORCEINLINE  _TStringBase(LNullptrTy) noexcept : Super(nullptr) { }
+    FORCEINLINE  _TStringBase(const Self& InOther) noexcept : Super(InOther) { }
+    FORCEINLINE  _TStringBase(Self&& InOther) noexcept : Super(std::move(InOther)) { }
+    explicit     _TStringBase(const T InRune) noexcept requires (Self::IsStrongAlloc()) : Super(InRune) { }
+    explicit     _TStringBase(const T& InRune) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst()) : Super(InRune) { }
+    explicit     _TStringBase(      T& InRune) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) : Super(InRune) { }
+    FORCEINLINE  _TStringBase(const T* InString) noexcept requires (Self::IsStrongAlloc()) : Super(InString) { }
+    FORCEINLINE  _TStringBase(const T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst()) : Super(InString) { }
+    FORCEINLINE  _TStringBase(      T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) : Super(InString) { }
+    FORCEINLINE  _TStringBase(const T* InString, const SizeType InLength) noexcept requires (Self::IsStrongAlloc()) : Super(InString, InLength) { }
+    FORCEINLINE  _TStringBase(const T* InString, const SizeType InLength) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst()) : Super(InString, InLength) { }
+    FORCEINLINE  _TStringBase(      T* InString, const SizeType InLength) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) : Super(InString, InLength) { }
+    FORCEINLINE  _TStringBase(const T* InString, const T* InEnd) noexcept requires (Self::IsStrongAlloc()) : Super(InString, InEnd) { }
+    FORCEINLINE  _TStringBase(const T* InString, const T* InEnd) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst()) : Super(InString, InEnd) { }
+    FORCEINLINE  _TStringBase(      T* InString,       T* InEnd) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) : Super(InString, InEnd) { }
+    FORCEINLINE ~_TStringBase() noexcept = default;
+    template <typename TOtherAlloc>
+    FORCEINLINE  _TStringBase(const TOtherStringBase<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false) : Super(Other) { }
+
+    FORCEINLINE Self& operator=(LNullptrTy) noexcept { return this->Super::operator=(nullptr); }
+    FORCEINLINE Self& operator=(const Self& InOther) noexcept { return this->Super::operator=(InOther); }
+    FORCEINLINE Self& operator=(Self&& InOther) noexcept { return this->Super::operator=(std::move(InOther)); }
+    FORCEINLINE Self& operator=(const T InRune) noexcept requires (Self::IsStrongAlloc()) { return this->Super::operator=(InRune); }
+    FORCEINLINE Self& operator=(const T& InRune) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst()) { return this->Super::operator=(InRune); }
+    FORCEINLINE Self& operator=(      T& InRune) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) { return this->Super::operator=(InRune); }
+    FORCEINLINE Self& operator=(const T* InString) noexcept requires (Self::IsStrongAlloc()) { return this->Super::operator=(InString); }
+    FORCEINLINE Self& operator=(const T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst()) { return this->Super::operator=(InString); }
+    FORCEINLINE Self& operator=(      T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) { return this->Super::operator=(InString); }
+    template <typename TOtherAlloc>
+    FORCEINLINE Self& operator=(const TOtherStringBase<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
 };
 
 template<typename InT>
@@ -280,6 +400,64 @@ SizeType TStringTraits<InT>::GetCharacterCount(const T* InString) noexcept
 
         continue;
     }
+
+    return Out;
+}
+
+template<typename InT>
+template<typename SizeType>
+FORCEINLINE SizeType TStringTraits<InT>::GetCharacterCount(const T* InString, const T* InEnd) noexcept
+{
+    SizeType Out = 0;
+
+    const auto GetSize = [](const T InFirstByte)
+    {
+        if ((InFirstByte & 0x80) == 0)
+        { /* ASCII byte. */
+            return 1;
+        }
+
+        if ((InFirstByte & 0xE0) == 0xC0)
+        { /* 2-byte sequence. */
+            return 2;
+        }
+
+        if ((InFirstByte & 0xF0) == 0xE0)
+        { /* 3-byte sequence. */
+            return 3;
+        }
+
+        if ((InFirstByte & 0xF8) == 0xF0)
+        { /* 4-byte sequence. */
+            return 4;
+        }
+
+        checkNoEntry()
+        /* Invalid UTF-8. */
+        // Return 1; So we do not hang indefinitely.
+        return 1;
+    };
+
+    while (InString != InEnd)
+    {
+        if (*InString == Self::Terminator)
+        {
+            break;
+        }
+
+        ++Out;
+        InString += GetSize(*InString);
+
+        continue;
+    }
+
+    checkCode
+    (
+        if (InString != InEnd)
+        {
+            check( ++InString == InEnd )
+        }
+    )
 
     return Out;
 }
@@ -346,8 +524,8 @@ FORCEINLINE typename TStringTraits<InT>::T TStringTraits<InT>::ToLower(const T I
     return InRune;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE TStringBase<InTraits, InAlloc>::TStringBase(const T InRune) : Impl()
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(const T InRune) noexcept requires (Self::IsStrongAlloc()) : Impl()
 {
     this->Reserve(1);
     this->Impl.Add(InRune);
@@ -357,8 +535,28 @@ FORCEINLINE TStringBase<InTraits, InAlloc>::TStringBase(const T InRune) : Impl()
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE TStringBase<InTraits, InAlloc>::TStringBase(const T* InString) : Impl()
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(const T& InRune) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst())
+{
+    this->Impl.GetUnderlyingDataStructure().Data  = &InRune;
+    this->Impl.GetUnderlyingDataStructure().Slack = &InRune + 1;
+    this->Impl.GetUnderlyingDataStructure().End   = &InRune + 1;
+
+    return;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(T& InRune) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable())
+{
+    this->Impl.GetUnderlyingDataStructure().Data  = &InRune;
+    this->Impl.GetUnderlyingDataStructure().Slack = &InRune + 1;
+    this->Impl.GetUnderlyingDataStructure().End   = &InRune + 1;
+
+    return;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(const T* InString) noexcept requires (Self::IsStrongAlloc()) : Impl()
 {
     const SizeType Length = Traits::template GetStringLength<SizeType>(InString);
     this->Reserve(Length);
@@ -369,8 +567,34 @@ FORCEINLINE TStringBase<InTraits, InAlloc>::TStringBase(const T* InString) : Imp
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE TStringBase<InTraits, InAlloc>::TStringBase(const T* InString, const SizeType InLength) : Impl()
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(const T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst())
+{
+    const SizeType Length = Traits::template GetStringLength<SizeType>(InString);
+
+    this->Impl.GetUnderlyingDataStructure().Data  = InString;
+    this->Impl.GetUnderlyingDataStructure().Slack = InString + Length;
+    this->Impl.GetUnderlyingDataStructure().End   = InString + Length;
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable())
+{
+    const SizeType Length = Traits::template GetStringLength<SizeType>(InString);
+
+    this->Impl.GetUnderlyingDataStructure().Data  = InString;
+    this->Impl.GetUnderlyingDataStructure().Slack = InString + Length;
+    this->Impl.GetUnderlyingDataStructure().End   = InString + Length;
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(const T* InString, const SizeType InLength) noexcept requires (Self::IsStrongAlloc()) : Impl()
 {
     this->Reserve(InLength);
 
@@ -381,8 +605,80 @@ FORCEINLINE TStringBase<InTraits, InAlloc>::TStringBase(const T* InString, const
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self& TStringBase<InTraits, InAlloc>::operator=(const T InRune)
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(const T* InString, const SizeType InLength) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst())
+{
+    this->Impl.GetUnderlyingDataStructure().Data  = InString;
+    this->Impl.GetUnderlyingDataStructure().Slack = InString + InLength;
+    this->Impl.GetUnderlyingDataStructure().End   = InString + InLength;
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(T* InString, const SizeType InLength) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable())
+{
+    this->Impl.GetUnderlyingDataStructure().Data  = InString;
+    this->Impl.GetUnderlyingDataStructure().Slack = InString + InLength;
+    this->Impl.GetUnderlyingDataStructure().End   = InString + InLength;
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(const T* InString, const T* InEnd) noexcept requires (Self::IsStrongAlloc()) : Impl()
+{
+    const bool bEndWithTerminator = *InEnd == Traits::Terminator;
+    this->Impl.Reserve(InEnd - InString + (bEndWithTerminator ? 0 : 1));
+
+    this->Impl.Append(InString, InEnd);
+    if (bEndWithTerminator)
+    {
+        this->Impl.Add(Traits::Terminator);
+    }
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(const T* InString, const T* InEnd) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst())
+{
+    check( InString <= InEnd )
+
+    this->Impl.GetUnderlyingDataStructure().Data  = InString;
+    this->Impl.GetUnderlyingDataStructure().Slack = InEnd;
+    this->Impl.GetUnderlyingDataStructure().End   = InEnd;
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(T* InString, T* InEnd) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable())
+{
+    check( InString <= InEnd )
+
+    this->Impl.GetUnderlyingDataStructure().Data  = InString;
+    this->Impl.GetUnderlyingDataStructure().Slack = InEnd;
+    this->Impl.GetUnderlyingDataStructure().End   = InEnd;
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+template<typename TOtherDerived>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(const TOtherDerived& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<Self, TOtherDerived> == false) : Impl(Other.GetUnderlyingDataStructure())
+{
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::operator=(const T InRune) noexcept requires (Self::IsStrongAlloc())
 {
     this->Reset(1);
 
@@ -390,11 +686,33 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self& TStringBase<InTraits,
     this->Impl.Add(Traits::Terminator);
 
     PRIVATE_JAFG_CHECK_STRING_STATE()
-    return *this;
+    return this->GetSelf();
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self& TStringBase<InTraits, InAlloc>::operator=(const T* InString)
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::operator=(const T& InRune) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst())
+{
+    this->Impl.GetUnderlyingDataStructure().Data  = &InRune;
+    this->Impl.GetUnderlyingDataStructure().Slack = &InRune + 1;
+    this->Impl.GetUnderlyingDataStructure().End   = &InRune + 1;
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return this->GetSelf();
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::operator=(T& InRune) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable())
+{
+    this->Impl.GetUnderlyingDataStructure().Data  = &InRune;
+    this->Impl.GetUnderlyingDataStructure().Slack = &InRune + 1;
+    this->Impl.GetUnderlyingDataStructure().End   = &InRune + 1;
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return this->GetSelf();
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::operator=(const T* InString) noexcept requires (Self::IsStrongAlloc())
 {
     const SizeType Length = Traits::template GetStringLength<SizeType>(InString);
     this->Reset(Length);
@@ -402,17 +720,92 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self& TStringBase<InTraits,
     this->Impl.Append(InString, Length + /*Terminator*/1);
 
     PRIVATE_JAFG_CHECK_STRING_STATE()
-    return *this;
+    return this->GetSelf();
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::GetRuneCountOfCharacterAt(const SizeType InRuneIndex) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::operator=(const T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst())
 {
-    return Traits::template GetCharacterSize<SizeType>(this->ToPtr() + InRuneIndex);
+    const SizeType Length = Traits::template GetStringLength<SizeType>(InString);
+
+    this->Impl.GetUnderlyingDataStructure().Data  = InString;
+    this->Impl.GetUnderlyingDataStructure().Slack = InString + Length;
+    this->Impl.GetUnderlyingDataStructure().End   = InString + Length;
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return this->GetSelf();
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::operator==(const Self& InOther) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::operator=(T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable())
+{
+    const SizeType Length = Traits::template GetStringLength<SizeType>(InString);
+
+    this->Impl.GetUnderlyingDataStructure().Data  = InString;
+    this->Impl.GetUnderlyingDataStructure().Slack = InString + Length;
+    this->Impl.GetUnderlyingDataStructure().End   = InString + Length;
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return this->GetSelf();
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+template<typename TOtherDerived>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::operator=(const TOtherDerived& Other)
+    noexcept requires (Self::IsWeakAlloc() && std::is_same_v<Self, TOtherDerived> == false)
+{
+    this->Impl = Other.GetUnderlyingDataStructure();
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return this->GetSelf();
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::GetRuneCount() const noexcept requires (Self::IsWeakAlloc())
+{
+    if (const SizeType Size = this->GetSize(); Size > 0)
+    {
+        return *(this->Impl.GetData() + Size - 1) == Traits::Terminator ? Size - 1 : Size;
+    }
+
+    return 0;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::GetRuneCountOfCharacterAt(const SizeType InRuneIndex) const noexcept
+{
+    return Traits::template GetCharacterSize<SizeType>(this->GetBegin() + InRuneIndex);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::T& TStringBase<Derived, InTraits, InAlloc>::operator[](const SizeType InRuneIndex) noexcept requires (Self::IsStrongAlloc() && Self::IsContentMutable())
+{
+    JAFG_CHECK_STRING( this->IsValidIndex(InRuneIndex) )
+    return *(this->Impl.GetData() + InRuneIndex);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE const typename TStringBase<Derived, InTraits, InAlloc>::T& TStringBase<Derived, InTraits, InAlloc>::operator[](const SizeType InRuneIndex) const noexcept requires (Self::IsStrongAlloc())
+{
+    JAFG_CHECK_STRING( this->IsValidIndex(InRuneIndex) )
+    return *(this->Impl.GetData() + InRuneIndex);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::T& TStringBase<Derived, InTraits, InAlloc>::operator[](const SizeType InRuneIndex) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable())
+{
+    JAFG_CHECK_STRING( this->Impl.IsValidIndex(InRuneIndex) )
+    return *(this->Impl.GetData() + InRuneIndex);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE const typename TStringBase<Derived, InTraits, InAlloc>::T& TStringBase<Derived, InTraits, InAlloc>::operator[](const SizeType InRuneIndex) const noexcept requires (Self::IsWeakAlloc())
+{
+    JAFG_CHECK_STRING( this->Impl.IsValidIndex(InRuneIndex) )
+    return *(this->Impl.GetData() + InRuneIndex);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::operator==(const Self& InOther) const noexcept
 {
     if (this->IsEmpty())
     {
@@ -422,8 +815,8 @@ FORCEINLINE bool TStringBase<InTraits, InAlloc>::operator==(const Self& InOther)
     return this->Impl.IsDataEqual(InOther.Impl);
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::operator==(const T* InString) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::operator==(const T* InString) const noexcept
 {
     if (this->IsEmpty())
     {
@@ -443,8 +836,17 @@ FORCEINLINE bool TStringBase<InTraits, InAlloc>::operator==(const T* InString) c
     return true;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, InAlloc>::operator/(const T InRune) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+bool TStringBase<Derived, InTraits, InAlloc>::operator==(const T InRune) const noexcept
+{
+    return
+           (this->GetRuneCount() == 1 && *this->Peek() == InRune)
+        || (this->GetRuneCount() == 0 && InRune == Traits::Terminator);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::operator/(const T InRune) const noexcept requires (Self::IsStrongAlloc())
+
 {
     Self Out;
     if (*this->Peek() == '/')
@@ -464,8 +866,8 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, 
     return Out;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, InAlloc>::operator/(const T* InString) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::operator/(const T* InString) const noexcept requires (Self::IsStrongAlloc())
 {
     const SizeType Length = Traits::template GetStringLength<SizeType>(InString);
 
@@ -473,13 +875,13 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, 
     if (*this->Peek() == '/')
     {
         Out.Reserve(this->GetRuneCount() + Length);
-        Out = *this;
+        Out = this->GetSelf();
         Out.Append(InString, Length);
     }
     else
     {
         Out.Reserve(this->GetRuneCount() + Length + 1);
-        Out = *this;
+        Out = this->GetSelf();
         Out.Add('/');
         Out.Append(InString, Length);
     }
@@ -487,14 +889,14 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, 
     return Out;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, InAlloc>::operator/(const Self& InOther) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::operator/(const Self& InOther) const noexcept requires (Self::IsStrongAlloc())
 {
     return this->operator/(InOther.ToPtr());
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self& TStringBase<InTraits, InAlloc>::AppendPath(const T InRune) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::AppendPath(const T InRune) noexcept requires (Self::IsDynamic())
 {
     if (*this->Peek() == '/')
     {
@@ -510,21 +912,28 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self& TStringBase<InTraits,
         this->Add(InRune);
     }
 
-    return *this;
+    return this->GetSelf();
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self& TStringBase<InTraits, InAlloc>::AppendPath(const T* InString) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::AppendPath(const T* InString) noexcept requires (Self::IsDynamic())
 {
     return this->AppendPath(InString, Traits::template GetStringLength<SizeType>(InString));
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self& TStringBase<InTraits, InAlloc>::AppendPath(const T* InString, const SizeType InLength) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::AppendPath(const T* InString, const SizeType InLength) noexcept requires (Self::IsDynamic())
 {
     if (*this->Peek() == '/')
     {
-        this->Append(InString, InLength);
+        if (InLength > 0 && *InString == '/')
+        {
+            this->Append(InString + 1, InLength - 1);
+        }
+        else
+        {
+            this->Append(InString, InLength);
+        }
     }
     else
     {
@@ -533,26 +942,33 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self& TStringBase<InTraits,
             this->Reserve(InLength + 1);
             this->Add('/');
         }
-        this->Append(InString, InLength);
+        if (InLength > 0 && *InString == '/')
+        {
+            this->Append(InString + 1, InLength - 1);
+        }
+        else
+        {
+            this->Append(InString, InLength);
+        }
     }
 
-    return *this;
+    return this->GetSelf();
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self& TStringBase<InTraits, InAlloc>::AppendPath(const Self& InOther) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::AppendPath(const Self& InOther) noexcept requires (Self::IsDynamic())
 {
     return this->AppendPath(InOther.ToPtr(), InOther.GetRuneCount());
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self& TStringBase<InTraits, InAlloc>::AppendPath(const Self& InOther, const SizeType InLength) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::AppendPath(const Self& InOther, const SizeType InLength) noexcept requires (Self::IsDynamic())
 {
     return this->AppendPath(InOther.ToPtr(), InLength);
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::Add(const T InRune) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::Add(const T InRune) noexcept requires (Self::IsDynamic())
 {
     this->Impl.Pop(); /* Terminator */
     this->Impl.Add(InRune);
@@ -562,8 +978,8 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTrai
     return this->GetRuneCount();
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::AddAt(const SizeType InRuneIndex, const T InRune) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::AddAt(const SizeType InRuneIndex, const T InRune) noexcept requires (Self::IsDynamic())
 {
     this->Impl.Pop(); /* Terminator */
     this->Impl.AddAt(InRuneIndex, InRune);
@@ -573,8 +989,8 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::AddAt(const SizeType InRuneInde
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::Append(const Self& InOther) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::Append(const Self& InOther) noexcept requires (Self::IsDynamic())
 {
     this->Impl.Pop(); /* Terminator */
     this->Impl.Append(InOther.Impl);
@@ -583,8 +999,8 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::Append(const Self& InOther) noe
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::Append(const T* InString) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::Append(const T* InString) noexcept requires (Self::IsDynamic())
 {
     const SizeType Length = Traits::template GetStringLength<SizeType>(InString);
     if (Length > 0)
@@ -597,8 +1013,8 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::Append(const T* InString) noexc
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::Append(const T* InString, const SizeType InLength) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::Append(const T* InString, const SizeType InLength) noexcept requires (Self::IsDynamic())
 {
     if (InLength > 0)
     {
@@ -611,8 +1027,8 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::Append(const T* InString, const
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::AppendAt(const SizeType InRuneIndex, const Self& InOther) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::AppendAt(const SizeType InRuneIndex, const Self& InOther) noexcept requires (Self::IsDynamic())
 {
     if (const SizeType OtherRuneCount = InOther.GetRuneCount(); OtherRuneCount > 0)
     {
@@ -625,8 +1041,8 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::AppendAt(const SizeType InRuneI
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::AppendAt(const SizeType InRuneIndex, const T* InString) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::AppendAt(const SizeType InRuneIndex, const T* InString) noexcept requires (Self::IsDynamic())
 {
     const SizeType Length = Traits::template GetStringLength<SizeType>(InString);
 
@@ -641,8 +1057,8 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::AppendAt(const SizeType InRuneI
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::AppendAt(const SizeType InRuneIndex, const T* InString, const SizeType InLength) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::AppendAt(const SizeType InRuneIndex, const T* InString, const SizeType InLength) noexcept requires (Self::IsDynamic())
 {
     if (InLength > 0)
     {
@@ -655,8 +1071,8 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::AppendAt(const SizeType InRuneI
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::RemoveAt(const SizeType InRuneIndex) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::RemoveAt(const SizeType InRuneIndex) noexcept requires (Self::IsDynamic())
 {
     JAFG_CHECK_STRING( this->IsValidIndex(InRuneIndex) )
     this->Impl.RemoveAt(InRuneIndex);
@@ -665,8 +1081,8 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::RemoveAt(const SizeType InRuneI
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::RemoveAt(const SizeType InRuneIndex, const SizeType InLength) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::RemoveAt(const SizeType InRuneIndex, const SizeType InLength) noexcept requires (Self::IsDynamic())
 {
     JAFG_CHECK_STRING( this->IsValidIndex(InRuneIndex + InLength - 1) )
     this->Impl.RemoveAt(InRuneIndex, InLength);
@@ -675,8 +1091,8 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::RemoveAt(const SizeType InRuneI
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::RemoveCharacterAt(const SizeType InRuneIndex) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::RemoveCharacterAt(const SizeType InRuneIndex) noexcept requires (Self::IsDynamic())
 {
     JAFG_CHECK_STRING( this->IsValidIndex(InRuneIndex) )
     const SizeType CharacterSize = Traits::template GetCharacterSize<SizeType>(this->Impl.GetData() + InRuneIndex);
@@ -686,8 +1102,8 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTrai
     return CharacterSize;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::RemoveCharacterAt(const SizeType InRuneIndex, const SizeType InCharacters) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::RemoveCharacterAt(const SizeType InRuneIndex, const SizeType InCharacters) noexcept requires (Self::IsDynamic())
 {
     JAFG_CHECK_STRING( this->IsValidIndex(InRuneIndex) )
 
@@ -705,15 +1121,15 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTrai
     return TotalRunes;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE const typename TStringBase<InTraits, InAlloc>::T* TStringBase<InTraits, InAlloc>::Peek() const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE const typename TStringBase<Derived, InTraits, InAlloc>::T* TStringBase<Derived, InTraits, InAlloc>::Peek() const noexcept
 {
     PRIVATE_JAFG_CHECK_STRING_STATE()
     return this->Impl.GetSize() > 1 ? this->Impl.GetData() + this->GetRuneCount() - 1 : &Traits::Terminator;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::Pop() noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::Pop() noexcept requires (Self::IsDynamic())
 {
     const bool bOut = this->GetSize() > 1;
 
@@ -732,8 +1148,8 @@ FORCEINLINE bool TStringBase<InTraits, InAlloc>::Pop() noexcept
     return bOut;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::PopCharacter() noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::PopCharacter() noexcept requires (Self::IsDynamic())
 {
     const bool bOut = this->GetSize() > 1;
 
@@ -759,8 +1175,8 @@ FORCEINLINE bool TStringBase<InTraits, InAlloc>::PopCharacter() noexcept
     return bOut;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::Pop(const SizeType InRuneCount) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::Pop(const SizeType InRuneCount) noexcept requires (Self::IsDynamic())
 {
     this->Impl.Pop(InRuneCount + 1); /* Terminator */
 
@@ -776,8 +1192,8 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::Pop(const SizeType InRuneCount)
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::PopCharacter(SizeType InCharacterCount) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::PopCharacter(SizeType InCharacterCount) noexcept requires (Self::IsDynamic())
 {
     while (InCharacterCount > 0)
     {
@@ -793,20 +1209,20 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::PopCharacter(SizeType InCharact
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::StartsWith(const T InRune) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::StartsWith(const T InRune) const noexcept
 {
     return *this->ToPtr() == InRune;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::StartsWith(const T* InString) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::StartsWith(const T* InString) const noexcept
 {
     return this->StartsWith(InString, Traits::template GetStringLength<SizeType>(InString));
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::StartsWith(const T* InString, const SizeType InLength) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::StartsWith(const T* InString, const SizeType InLength) const noexcept
 {
     if (*InString == Traits::Terminator)
     {
@@ -833,32 +1249,32 @@ FORCEINLINE bool TStringBase<InTraits, InAlloc>::StartsWith(const T* InString, c
 
     return Cursor <= this->GetRuneCount();}
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::StartsWith(const Self& InOther) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::StartsWith(const Self& InOther) const noexcept
 {
     return this->StartsWith(InOther.ToPtr(), InOther.GetRuneCount());
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::StartsWith(const Self& InOther, const SizeType InLength) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::StartsWith(const Self& InOther, const SizeType InLength) const noexcept
 {
     return this->StartsWith(InOther.ToPtr(), InLength);
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::EndsWith(const T InRune) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::EndsWith(const T InRune) const noexcept
 {
     return *this->Peek() == InRune;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::EndsWith(const T* InString) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::EndsWith(const T* InString) const noexcept
 {
     return this->EndsWith(InString, Traits::template GetStringLength<SizeType>(InString));
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::EndsWith(const T* InString, const SizeType InLength) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::EndsWith(const T* InString, const SizeType InLength) const noexcept
 {
     SizeType Cursor = 0;
     const SizeType StringSize = this->GetSize();
@@ -882,20 +1298,20 @@ FORCEINLINE bool TStringBase<InTraits, InAlloc>::EndsWith(const T* InString, con
     return Cursor == StringSize;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::EndsWith(const Self& InOther) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::EndsWith(const Self& InOther) const noexcept
 {
     return this->EndsWith(InOther.ToPtr(), InOther.GetRuneCount());
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::EndsWith(const Self& InOther, const SizeType InLength) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::EndsWith(const Self& InOther, const SizeType InLength) const noexcept
 {
     return this->EndsWith(InOther.ToPtr(), InLength);
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindFirst(const T InRune) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T InRune) const noexcept
 {
     const SizeType Size = this->GetSize();
     for (SizeType Index = 0; Index < Size; ++Index)
@@ -911,14 +1327,14 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTrai
     return INDEX_NONE;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindFirst(const T* InString) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString) const noexcept
 {
     return this->FindFirst(InString, Traits::template GetStringLength<SizeType>(InString));
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindFirst(const T* InString, const SizeType InLength) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const SizeType InLength) const noexcept
 {
     SizeType MainCursor = 0;
     SizeType MainStringSize = this->GetSize();
@@ -956,20 +1372,20 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTrai
     return INDEX_NONE;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindFirst(const Self& InOther) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const Self& InOther) const noexcept
 {
     return this->FindFirst(InOther.ToPtr(), InOther.GetRuneCount());
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindFirst(const Self& InOther, const SizeType InLength) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const Self& InOther, const SizeType InLength) const noexcept
 {
     return this->FindFirst(InOther.ToPtr(), InLength);
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindSecond(const T InRune) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindSecond(const T InRune) const noexcept
 {
     bool bFound = false;
 
@@ -994,14 +1410,14 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTrai
     return INDEX_NONE;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindSecond(const T* InString) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindSecond(const T* InString) const noexcept
 {
     return this->FindSecond(InString, Traits::template GetStringLength<SizeType>(InString));
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindSecond(const T* InString, const SizeType InLength) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindSecond(const T* InString, const SizeType InLength) const noexcept
 {
     bool bFound = false;
 
@@ -1048,20 +1464,20 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTrai
     return INDEX_NONE;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindSecond(const Self& InOther) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindSecond(const Self& InOther) const noexcept
 {
     return this->FindSecond(InOther.ToPtr(), InOther.GetRuneCount());
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindSecond(const Self& InOther, const SizeType InLength) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindSecond(const Self& InOther, const SizeType InLength) const noexcept
 {
     return this->FindSecond(InOther.ToPtr(), InLength);
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindLast(const T InRune) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindLast(const T InRune) const noexcept
 {
     for (SizeType Index = this->GetSize() - 1; Index > INDEX_NONE; --Index)
     {
@@ -1076,14 +1492,14 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTrai
     return INDEX_NONE;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindLast(const T* InString) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindLast(const T* InString) const noexcept
 {
     return this->FindLast(InString, Traits::template GetStringLength<SizeType>(InString));
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindLast(const T* InString, const SizeType InLength) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindLast(const T* InString, const SizeType InLength) const noexcept
 {
     // This is not efficient at all, so if we use this frequently in larger strings,
     // we must revisit this.
@@ -1128,50 +1544,145 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTrai
     return Last;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindLast(const Self& InOther) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindLast(const Self& InOther) const noexcept
 {
     return this->FindLast(InOther.ToPtr(), InOther.GetRuneCount());
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::FindLast(const Self& InOther, const SizeType InLength) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindLast(const Self& InOther, const SizeType InLength) const noexcept
 {
     return this->FindLast(InOther.ToPtr(), InLength);
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::Contains(const T InRune) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindSecondLast(const T InRune) const noexcept
+{
+    bool bFound = false;
+
+    for (SizeType Index = this->GetSize() - 1; Index > INDEX_NONE; --Index)
+    {
+        if (*(this->Impl.GetData() + Index) == InRune)
+        {
+            if (bFound)
+            {
+                return Index;
+            }
+
+            bFound = true;
+        }
+
+        continue;
+    }
+
+    return INDEX_NONE;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindSecondLast(const T* InString) const noexcept
+{
+    return this->FindSecondLast(InString, Traits::template GetStringLength<SizeType>(InString));
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindSecondLast(const T* InString, const SizeType InLength) const noexcept
+{
+    // This is not efficient at all, so if we use this frequently in larger strings,
+    // we must revisit this.
+    // Currently only very sparingly used in the codebase - so it doesn't fucking matter.
+
+    bool bFound = false;
+
+    SizeType Last = INDEX_NONE;
+
+    SizeType MainCursor = 0;
+    SizeType MainStringSize = this->GetSize();
+    while (MainCursor < MainStringSize)
+    {
+        SizeType SubCursor  = 0;
+
+        while (SubCursor < InLength)
+        {
+            JAFG_CHECK_STRING(*(InString + SubCursor) != Traits::Terminator)
+
+            if (SubCursor == MainStringSize)
+            {
+                if (bFound)
+                {
+                    return Last;
+                }
+
+                bFound = true;
+                break;
+            }
+
+            if (*(this->Impl.GetData() + MainCursor + SubCursor) != *(InString + SubCursor))
+            {
+                break;
+            }
+
+            ++SubCursor;
+            if (SubCursor == InLength)
+            {
+                Last = MainCursor;
+                break;
+            }
+
+            continue;
+        }
+
+        ++MainCursor;
+        continue;
+    }
+
+    return Last;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindSecondLast(const Self& InOther) const noexcept
+{
+    return this->FindSecondLast(InOther.ToPtr(), InOther.GetRuneCount());
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindSecondLast(const Self& InOther, const SizeType InLength) const noexcept
+{
+    return this->FindSecondLast(InOther.ToPtr(), InLength);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::Contains(const T InRune) const noexcept
 {
     return this->FindFirst(InRune) != INDEX_NONE;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::Contains(const T* InString) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::Contains(const T* InString) const noexcept
 {
     return this->Contains(InString, Traits::template GetStringLength<SizeType>(InString));
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::Contains(const T* InString, const SizeType InLength) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::Contains(const T* InString, const SizeType InLength) const noexcept
 {
     return this->FindFirst(InString, InLength) != INDEX_NONE;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::Contains(const Self& InOther) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::Contains(const Self& InOther) const noexcept
 {
     return this->Contains(InOther.ToPtr(), InOther.GetRuneCount());
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE bool TStringBase<InTraits, InAlloc>::Contains(const Self& InOther, const SizeType InLength) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::Contains(const Self& InOther, const SizeType InLength) const noexcept
 {
     return this->Contains(InOther.ToPtr(), InLength);
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::InlineCut(const SizeType InRuneIndex) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineCut(const SizeType InRuneIndex) noexcept
 {
     this->Impl.Resize(InRuneIndex + /*Terminator*/1, true);
     this->Impl[InRuneIndex] = Traits::Terminator;
@@ -1180,8 +1691,8 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::InlineCut(const SizeType InRune
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, InAlloc>::Cut(const SizeType InRuneIndex) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::Cut(const SizeType InRuneIndex) const noexcept
 {
     Self Out;
     Out.Impl.CopyFrom(this->Impl, InRuneIndex + 1);
@@ -1193,22 +1704,22 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, 
     return Out;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::InlineSub(const SizeType InRuneStartIndex, const SizeType InRuneCount) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineSub(const SizeType InRuneStartIndex, const SizeType InRuneCount) noexcept
 {
     *this = this->Sub(InRuneStartIndex, InRuneCount);
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::InlineSubIdx(const SizeType InRuneStartIndex, const SizeType InRuneEndIndex) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineSubIdx(const SizeType InRuneStartIndex, const SizeType InRuneEndIndex) noexcept
 {
     this->InlineSub(InRuneStartIndex, InRuneEndIndex - InRuneStartIndex);
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, InAlloc>::Sub(const SizeType InRuneStartIndex, const SizeType InRuneCount) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::Sub(const SizeType InRuneStartIndex, const SizeType InRuneCount) const noexcept
 {
     JAFG_CHECK_STRING( InRuneCount > INDEX_NONE )
 
@@ -1227,40 +1738,40 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, 
     return Out;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, InAlloc>::SubIdx(const SizeType InRuneStartIndex, const SizeType InRuneEndIndex) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::SubIdx(const SizeType InRuneStartIndex, const SizeType InRuneEndIndex) const noexcept
 {
     return this->Sub(InRuneStartIndex, InRuneEndIndex - InRuneStartIndex);
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::InlineRightChop(const SizeType InRuneIndex) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineRightChop(const SizeType InRuneIndex) noexcept
 {
     this->InlineSub(InRuneIndex, this->GetRuneCount() - InRuneIndex);
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, InAlloc>::RightChop(const SizeType InRuneIndex) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::RightChop(const SizeType InRuneIndex) const noexcept
 {
     return this->Sub(InRuneIndex, this->GetRuneCount() - InRuneIndex);
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::InlineLeftChop(const SizeType InRuneIndex) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineLeftChop(const SizeType InRuneIndex) noexcept
 {
     this->InlineCut(InRuneIndex);
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, InAlloc>::LeftChop(const SizeType InRuneIndex) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::LeftChop(const SizeType InRuneIndex) const noexcept
 {
     return this->Cut(InRuneIndex);
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::Replace(const T InRune, const T InReplacement) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::Replace(const T InRune, const T InReplacement) noexcept requires (Self::IsContentMutable())
 {
     SizeType Out = 0;
 
@@ -1279,8 +1790,8 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTrai
     return Out;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::Replace(const T* InString, const T* InReplacement) noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::Replace(const T* InString, const T* InReplacement) noexcept requires (Self::IsContentMutable())
 {
     SizeType Out = 0;
 
@@ -1302,8 +1813,8 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTrai
     return Out;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::Count(const T InRune) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::Count(const T InRune) const noexcept
 {
     SizeType Out = 0;
 
@@ -1320,14 +1831,14 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTrai
     return Out;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::Count(const T* InString) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::Count(const T* InString) const noexcept
 {
     return this->Count(InString, Traits::template GetStringLength<SizeType>(InString));
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::Count(const T* InString, const SizeType InLength) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::Count(const T* InString, const SizeType InLength) const noexcept
 {
     SizeType Out = 0;
 
@@ -1368,20 +1879,20 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTrai
     return Out;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::Count(const Self& InOther) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::Count(const Self& InOther) const noexcept
 {
     return this->Count(InOther.ToPtr(), InOther.GetRuneCount());
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::SizeType TStringBase<InTraits, InAlloc>::Count(const Self& InOther, const SizeType InLength) const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::Count(const Self& InOther, const SizeType InLength) const noexcept
 {
     return this->Count(InOther.ToPtr(), InLength);
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<InTraits, InAlloc>::ToLower() noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::ToLower() noexcept requires (Self::IsContentMutable())
 {
     for (T* RESTRICT Bulk = this->Impl.GetData(), *RESTRICT BulkEnd = this->Impl.GetSlack(); Bulk != BulkEnd; ++Bulk)
     {
@@ -1392,8 +1903,8 @@ FORCEINLINE void TStringBase<InTraits, InAlloc>::ToLower() noexcept
     return;
 }
 
-template<typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, InAlloc>::GetLowerCase() const noexcept
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::GetLowerCase() const noexcept requires (Self::IsStrongAlloc())
 {
     Self Out; Out.Reserve(this->GetSize());
 
@@ -1406,9 +1917,9 @@ FORCEINLINE typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, 
     return Out;
 }
 
-template<typename InTraits, typename InAlloc>
+template<typename Derived, typename InTraits, typename InAlloc>
 template<typename ... TArgs>
-typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, InAlloc>::SprintF(const T* InFormat, const TArgs&... InArgs) noexcept
+typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::SprintF(const T* InFormat, const TArgs&... InArgs) noexcept requires (Self::IsStrongAlloc())
 {
     /**
      * Super supid solution. But who cares right now.
@@ -1423,8 +1934,8 @@ typename TStringBase<InTraits, InAlloc>::Self TStringBase<InTraits, InAlloc>::Sp
 }
 
 #if CHECK_STRING_VALIDITY
-template<typename InTraits, typename InAlloc>
-void TStringBase<InTraits, InAlloc>::EnsureValidState() const
+template<typename Derived, typename InTraits, typename InAlloc>
+void TStringBase<Derived, InTraits, InAlloc>::EnsureValidState() const
 {
     for (const T *RESTRICT Bulk = this->Impl.GetData(), *RESTRICT BulkEnd = this->Impl.GetSlack(); Bulk != BulkEnd; ++Bulk)
     {
@@ -1436,16 +1947,29 @@ void TStringBase<InTraits, InAlloc>::EnsureValidState() const
         continue;
     }
 
-    if (this->Impl.IsEmpty() == false)
+    if constexpr (Self::IsStrongAlloc())
     {
-        if (*this->Impl.Peek() != Traits::Terminator)
+        if (this->Impl.IsEmpty() == false)
         {
-            panic("String does not end with a null terminator.")
+            if (*this->Impl.Peek() != Traits::Terminator)
+            {
+                panic("String does not end with a null terminator.")
+            }
         }
     }
 
     return;
 }
+
+template<typename InTraits, typename InAlloc>
+template<typename TOtherAlloc>
+FORCEINLINE typename _TStringBase<InTraits, InAlloc>::Self& _TStringBase<InTraits, InAlloc>::operator=(const TOtherStringBase<TOtherAlloc>& Other)
+    noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, typename TStringBase<_TStringBase, InTraits, InAlloc>::Alloc> == false)
+{
+    this->Impl = Other.GetUnderlyingDataStructure();
+    return this->GetSelf();
+}
+
 #endif /* CHECK_STRING_VALIDITY */
 
 } /* ~Namespace Jafg */
@@ -1462,6 +1986,6 @@ struct std::formatter<::Jafg::LString> : std::formatter<const char*>
         ::std::format_context& InContext
     ) const -> ::std::format_context::iterator
     {
-        return ::std::formatter<const char*>::format(InString.ToC(), InContext);
+        return ::std::formatter<const char*>::format(InString.ToPtr(), InContext);
     }
 };

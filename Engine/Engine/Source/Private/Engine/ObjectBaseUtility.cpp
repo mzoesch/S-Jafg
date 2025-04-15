@@ -83,8 +83,7 @@ void PushConfigFromObject(const LObjectClass* InClass)
     }
 
     const LPath CfgPath = Finder::GetUserPreferencesFile();
-    Paths::CheckFile(CfgPath);
-    Paths::MakeFileBackup(CfgPath);
+    Paths::EnsureFile(CfgPath);
 
     i32 FieldsPushed = 0; /* The compiler will most likely purge this. */
     for (LClassField& Field : InClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())

@@ -257,6 +257,17 @@ TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
     QUICK_CHECK_TRUE(   Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element == 30; } ) )
     QUICK_CHECK_FALSE(  Arr1.ContainsByPredicate([](const i32& Element) -> bool { return Element == 51; } ) )
 
+    Arr1 = { 1, 2, 3, 4, 5, 10, 20, 30, 40, 50 };
+    Arr1.ForEach([this](const i32 Element) -> bool
+    {
+        QUICK_CHECK_TRUE
+        (
+            Element == 1 || Element == 2 || Element == 3 || Element == 4 || Element == 5 ||
+            Element == 10 || Element == 20 || Element == 30 || Element == 40 || Element == 50
+        )
+        return true;
+    });
+
     delete[] OtherData;
     return;
 }
@@ -443,6 +454,435 @@ TEST_CASE(CapacityArray, "Lal.Containers")
     CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetSlack()                    )
     CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetFirst()                    )
     CHECK_NOT_NULL(  "Array with reserved size.", Arr.GetLast()                     )
+
+    return;
+}
+
+TEST_CASE(ViewArray, "Lal.Containers")
+{
+    using namespace Jafg;
+
+    TArray<i32> Arr;
+    QUICK_CHECK_EQUALS(Arr.GetSize(),           0 )
+    TArrayView<i32> ArrView = Arr;
+    QUICK_CHECK_EQUALS(ArrView.GetSize(),       0 )
+    Arr.Append({10, 5, 3, 2, 1});
+    QUICK_CHECK_EQUALS(Arr.GetSize(),           5 )
+    QUICK_CHECK_EQUALS(ArrView.GetSize(),       0 )
+    ArrView = Arr;
+    QUICK_CHECK_EQUALS(ArrView.GetSize(),       5 )
+    QUICK_CHECK_EQUALS(ArrView[0],             10 )
+    QUICK_CHECK_EQUALS(ArrView[1],              5 )
+    QUICK_CHECK_EQUALS(ArrView[2],              3 )
+    QUICK_CHECK_EQUALS(ArrView[3],              2 )
+    QUICK_CHECK_EQUALS(ArrView[4],              1 )
+    QUICK_CHECK_FALSE( ArrView.IsValidIndex(5)    )
+    Arr[0] = 100;
+    Arr[4] = 500;
+    QUICK_CHECK_EQUALS(ArrView[0],           100 )
+    QUICK_CHECK_EQUALS(ArrView[1],             5 )
+    QUICK_CHECK_EQUALS(ArrView[2],             3 )
+    QUICK_CHECK_EQUALS(ArrView[3],             2 )
+    QUICK_CHECK_EQUALS(ArrView[4],           500 )
+    QUICK_CHECK_EQUALS(Arr[0],               100 )
+    QUICK_CHECK_EQUALS(Arr[1],                 5 )
+    QUICK_CHECK_EQUALS(Arr[2],                 3 )
+    QUICK_CHECK_EQUALS(Arr[3],                 2 )
+    QUICK_CHECK_EQUALS(Arr[4],               500 )
+
+    TArrayView<i32> ArrView2 = ArrView;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),      5 )
+    QUICK_CHECK_EQUALS(ArrView2[0],           100 )
+    QUICK_CHECK_EQUALS(ArrView2[1],             5 )
+    QUICK_CHECK_EQUALS(ArrView2[2],             3 )
+    QUICK_CHECK_EQUALS(ArrView2[3],             2 )
+    QUICK_CHECK_EQUALS(ArrView2[4],           500 )
+    QUICK_CHECK_FALSE(ArrView2.IsValidIndex(5)    )
+    ArrView2.Invalidate();
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),      0 )
+    QUICK_CHECK_EQUALS(ArrView.GetSize(),       5 )
+    ArrView2 = std::move(ArrView);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),      5 )
+    QUICK_CHECK_EQUALS(ArrView.GetSize(),       0 )
+    QUICK_CHECK_EQUALS(ArrView2[0],           100 )
+    QUICK_CHECK_EQUALS(ArrView2[1],             5 )
+    QUICK_CHECK_EQUALS(ArrView2[2],             3 )
+    QUICK_CHECK_EQUALS(ArrView2[3],             2 )
+    QUICK_CHECK_EQUALS(ArrView2[4],           500 )
+
+    QUICK_CHECK_TRUE(ArrView2.MoveDataPointerUp()  )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),       4 )
+    QUICK_CHECK_EQUALS(ArrView2[0],              5 )
+    QUICK_CHECK_EQUALS(ArrView2[3],            500 )
+    QUICK_CHECK_TRUE(ArrView2.MoveDataPointerUp()  )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),       3 )
+    QUICK_CHECK_EQUALS(ArrView2[0],              3 )
+    QUICK_CHECK_EQUALS(ArrView2[2],            500 )
+    QUICK_CHECK_TRUE(ArrView2.MoveDataPointerUp()  )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),       2 )
+    QUICK_CHECK_EQUALS(ArrView2[0],              2 )
+    QUICK_CHECK_EQUALS(ArrView2[1],            500 )
+    QUICK_CHECK_TRUE(ArrView2.MoveDataPointerUp()  )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),       1 )
+    QUICK_CHECK_EQUALS(ArrView2[0],            500 )
+    QUICK_CHECK_TRUE(ArrView2.MoveDataPointerUp()  )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),       0 )
+    QUICK_CHECK_FALSE(ArrView2.MoveDataPointerUp() )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),       0 )
+
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     100 )
+    QUICK_CHECK_EQUALS(ArrView2[1],                       5 )
+    QUICK_CHECK_EQUALS(ArrView2[2],                       3 )
+    QUICK_CHECK_EQUALS(ArrView2[3],                       2 )
+    QUICK_CHECK_EQUALS(ArrView2[4],                     500 )
+    QUICK_CHECK_TRUE(  ArrView2.MoveSlackPointerDown()      )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                4 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     100 )
+    QUICK_CHECK_EQUALS(ArrView2[3],                       2 )
+    QUICK_CHECK_TRUE( ArrView2.MoveSlackPointerDown()       )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                3 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     100 )
+    QUICK_CHECK_EQUALS(ArrView2[2],                       3 )
+    QUICK_CHECK_TRUE( ArrView2.MoveSlackPointerDown()       )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                2 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     100 )
+    QUICK_CHECK_EQUALS(ArrView2[1],                       5 )
+    QUICK_CHECK_TRUE( ArrView2.MoveSlackPointerDown()       )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                1 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     100 )
+    QUICK_CHECK_TRUE( ArrView2.MoveSlackPointerDown()       )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    QUICK_CHECK_FALSE(ArrView2.MoveSlackPointerDown()       )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveDataPointerUp(2),     2 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                3 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                       3 )
+    QUICK_CHECK_EQUALS(ArrView2[1],                       2 )
+    QUICK_CHECK_EQUALS(ArrView2[2],                     500 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveDataPointerUp(2),     2 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                1 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     500 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveDataPointerUp(2),     1 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveDataPointerUp(2),     0 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveDataPointerUp(100),   5 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() + 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                3 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() - 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                3 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                       3 )
+    QUICK_CHECK_EQUALS(ArrView2[1],                       2 )
+    QUICK_CHECK_EQUALS(ArrView2[2],                     500 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() + 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                1 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() - 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                1 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     500 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() + 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() - 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() + 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() - 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() + 100);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() - 100);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                 5 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveSlackPointerDown(2),   2 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                 3 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                      100 )
+    QUICK_CHECK_EQUALS(ArrView2[1],                        5 )
+    QUICK_CHECK_EQUALS(ArrView2[2],                        3 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveSlackPointerDown(2),   2 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                 1 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                      100 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveSlackPointerDown(2),   1 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                 0 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveSlackPointerDown(2),   0 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                 0 )
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                 5 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveSlackPointerDown(100), 5 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                 0 )
+
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() + 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() - 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                3 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     100 )
+    QUICK_CHECK_EQUALS(ArrView2[1],                       5 )
+    QUICK_CHECK_EQUALS(ArrView2[2],                       3 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() + 50);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                3 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() - 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                1 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() + 50);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                1 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     100 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() - 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() + 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() - 100);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() + 100);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+
+    ArrView  = Arr;
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(Arr[4],                     500 )
+    QUICK_CHECK_EQUALS(ArrView[4],                 500 )
+    QUICK_CHECK_EQUALS(ArrView2[4],                500 )
+    Arr[4] = 1000;
+    QUICK_CHECK_EQUALS(Arr[4],                  1000 )
+    QUICK_CHECK_EQUALS(ArrView[4],              1000 )
+    QUICK_CHECK_EQUALS(ArrView2[4],             1000 )
+    Arr[4] = 2000;
+    QUICK_CHECK_EQUALS(Arr[4],                  2000 )
+    QUICK_CHECK_EQUALS(ArrView[4],              2000 )
+    QUICK_CHECK_EQUALS(ArrView2[4],             2000 )
+    Arr[4] = 3000;
+    QUICK_CHECK_EQUALS(Arr[4],                  3000 )
+    QUICK_CHECK_EQUALS(ArrView[4],              3000 )
+    QUICK_CHECK_EQUALS(ArrView2[4],             3000 )
+
+    return;
+}
+
+
+TEST_CASE(MutableViewArray, "Lal.Containers")
+{
+    using namespace Jafg;
+
+    TArray<i32> Arr;
+    QUICK_CHECK_EQUALS(Arr.GetSize(),           0 )
+    TMutableArrayView<i32> ArrView = Arr;
+    QUICK_CHECK_EQUALS(ArrView.GetSize(),       0 )
+    Arr.Append({10, 5, 3, 2, 1});
+    QUICK_CHECK_EQUALS(Arr.GetSize(),           5 )
+    QUICK_CHECK_EQUALS(ArrView.GetSize(),       0 )
+    ArrView = Arr;
+    QUICK_CHECK_EQUALS(ArrView.GetSize(),       5 )
+    QUICK_CHECK_EQUALS(ArrView[0],             10 )
+    QUICK_CHECK_EQUALS(ArrView[1],              5 )
+    QUICK_CHECK_EQUALS(ArrView[2],              3 )
+    QUICK_CHECK_EQUALS(ArrView[3],              2 )
+    QUICK_CHECK_EQUALS(ArrView[4],              1 )
+    QUICK_CHECK_FALSE( ArrView.IsValidIndex(5)    )
+    ArrView[0] = 100;
+    ArrView[4] = 500;
+    QUICK_CHECK_EQUALS(ArrView[0],           100 )
+    QUICK_CHECK_EQUALS(ArrView[1],             5 )
+    QUICK_CHECK_EQUALS(ArrView[2],             3 )
+    QUICK_CHECK_EQUALS(ArrView[3],             2 )
+    QUICK_CHECK_EQUALS(ArrView[4],           500 )
+    QUICK_CHECK_EQUALS(Arr[0],               100 )
+    QUICK_CHECK_EQUALS(Arr[1],                 5 )
+    QUICK_CHECK_EQUALS(Arr[2],                 3 )
+    QUICK_CHECK_EQUALS(Arr[3],                 2 )
+    QUICK_CHECK_EQUALS(Arr[4],               500 )
+
+    TMutableArrayView<i32> ArrView2 = ArrView;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),      5 )
+    QUICK_CHECK_EQUALS(ArrView2[0],           100 )
+    QUICK_CHECK_EQUALS(ArrView2[1],             5 )
+    QUICK_CHECK_EQUALS(ArrView2[2],             3 )
+    QUICK_CHECK_EQUALS(ArrView2[3],             2 )
+    QUICK_CHECK_EQUALS(ArrView2[4],           500 )
+    QUICK_CHECK_FALSE(ArrView2.IsValidIndex(5)    )
+    ArrView2.Invalidate();
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),      0 )
+    QUICK_CHECK_EQUALS(ArrView.GetSize(),       5 )
+    ArrView2 = std::move(ArrView);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),      5 )
+    QUICK_CHECK_EQUALS(ArrView.GetSize(),       0 )
+    QUICK_CHECK_EQUALS(ArrView2[0],           100 )
+    QUICK_CHECK_EQUALS(ArrView2[1],             5 )
+    QUICK_CHECK_EQUALS(ArrView2[2],             3 )
+    QUICK_CHECK_EQUALS(ArrView2[3],             2 )
+    QUICK_CHECK_EQUALS(ArrView2[4],           500 )
+
+    QUICK_CHECK_TRUE(ArrView2.MoveDataPointerUp()  )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),       4 )
+    QUICK_CHECK_EQUALS(ArrView2[0],              5 )
+    QUICK_CHECK_EQUALS(ArrView2[3],            500 )
+    QUICK_CHECK_TRUE(ArrView2.MoveDataPointerUp()  )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),       3 )
+    QUICK_CHECK_EQUALS(ArrView2[0],              3 )
+    QUICK_CHECK_EQUALS(ArrView2[2],            500 )
+    QUICK_CHECK_TRUE(ArrView2.MoveDataPointerUp()  )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),       2 )
+    QUICK_CHECK_EQUALS(ArrView2[0],              2 )
+    QUICK_CHECK_EQUALS(ArrView2[1],            500 )
+    QUICK_CHECK_TRUE(ArrView2.MoveDataPointerUp()  )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),       1 )
+    QUICK_CHECK_EQUALS(ArrView2[0],            500 )
+    QUICK_CHECK_TRUE(ArrView2.MoveDataPointerUp()  )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),       0 )
+    QUICK_CHECK_FALSE(ArrView2.MoveDataPointerUp() )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),       0 )
+
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     100 )
+    QUICK_CHECK_EQUALS(ArrView2[1],                       5 )
+    QUICK_CHECK_EQUALS(ArrView2[2],                       3 )
+    QUICK_CHECK_EQUALS(ArrView2[3],                       2 )
+    QUICK_CHECK_EQUALS(ArrView2[4],                     500 )
+    QUICK_CHECK_TRUE(  ArrView2.MoveSlackPointerDown()      )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                4 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     100 )
+    QUICK_CHECK_EQUALS(ArrView2[3],                       2 )
+    QUICK_CHECK_TRUE( ArrView2.MoveSlackPointerDown()       )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                3 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     100 )
+    QUICK_CHECK_EQUALS(ArrView2[2],                       3 )
+    QUICK_CHECK_TRUE( ArrView2.MoveSlackPointerDown()       )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                2 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     100 )
+    QUICK_CHECK_EQUALS(ArrView2[1],                       5 )
+    QUICK_CHECK_TRUE( ArrView2.MoveSlackPointerDown()       )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                1 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     100 )
+    QUICK_CHECK_TRUE( ArrView2.MoveSlackPointerDown()       )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    QUICK_CHECK_FALSE(ArrView2.MoveSlackPointerDown()       )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveDataPointerUp(2),     2 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                3 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                       3 )
+    QUICK_CHECK_EQUALS(ArrView2[1],                       2 )
+    QUICK_CHECK_EQUALS(ArrView2[2],                     500 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveDataPointerUp(2),     2 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                1 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     500 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveDataPointerUp(2),     1 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveDataPointerUp(2),     0 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveDataPointerUp(100),   5 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() + 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                3 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() - 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                3 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                       3 )
+    QUICK_CHECK_EQUALS(ArrView2[1],                       2 )
+    QUICK_CHECK_EQUALS(ArrView2[2],                     500 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() + 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                1 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() - 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                1 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     500 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() + 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() - 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() + 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() - 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() + 100);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2.MoveDataPointerUp(ArrView2.GetData() - 100);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                 5 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveSlackPointerDown(2),   2 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                 3 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                      100 )
+    QUICK_CHECK_EQUALS(ArrView2[1],                        5 )
+    QUICK_CHECK_EQUALS(ArrView2[2],                        3 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveSlackPointerDown(2),   2 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                 1 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                      100 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveSlackPointerDown(2),   1 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                 0 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveSlackPointerDown(2),   0 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                 0 )
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                 5 )
+    QUICK_CHECK_EQUALS(ArrView2.MoveSlackPointerDown(100), 5 )
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                 0 )
+
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() + 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() - 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                3 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     100 )
+    QUICK_CHECK_EQUALS(ArrView2[1],                       5 )
+    QUICK_CHECK_EQUALS(ArrView2[2],                       3 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() + 50);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                3 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() - 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                1 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() + 50);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                1 )
+    QUICK_CHECK_EQUALS(ArrView2[0],                     100 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() - 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() + 2);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                5 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() - 100);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+    ArrView2.MoveSlackPointerDown(ArrView2.GetSlack() + 100);
+    QUICK_CHECK_EQUALS(ArrView2.GetSize(),                0 )
+
+    ArrView  = Arr;
+    ArrView2 = Arr;
+    QUICK_CHECK_EQUALS(Arr[4],                     500 )
+    QUICK_CHECK_EQUALS(ArrView[4],                 500 )
+    QUICK_CHECK_EQUALS(ArrView2[4],                500 )
+    Arr[4] = 1000;
+    QUICK_CHECK_EQUALS(Arr[4],                  1000 )
+    QUICK_CHECK_EQUALS(ArrView[4],              1000 )
+    QUICK_CHECK_EQUALS(ArrView2[4],             1000 )
+    ArrView[4] = 2000;
+    QUICK_CHECK_EQUALS(Arr[4],                  2000 )
+    QUICK_CHECK_EQUALS(ArrView[4],              2000 )
+    QUICK_CHECK_EQUALS(ArrView2[4],             2000 )
+    ArrView2[4] = 3000;
+    QUICK_CHECK_EQUALS(Arr[4],                  3000 )
+    QUICK_CHECK_EQUALS(ArrView[4],              3000 )
+    QUICK_CHECK_EQUALS(ArrView2[4],             3000 )
 
     return;
 }

@@ -9,7 +9,7 @@ TEST_CASE(SimpleNewSimpleStringOperations, "Lal.Strings")
     using namespace Jafg;
 
     LString MyStr;
-    CHECK_EQUALS(   "Implicitly constructed string.",*MyStr.ToC(),              '\0' )
+    CHECK_EQUALS(   "Implicitly constructed string.",*MyStr.ToPtr(),              '\0' )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr,                      "" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr,                    "\0" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr.GetSize(),             0 )
@@ -18,7 +18,7 @@ TEST_CASE(SimpleNewSimpleStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Implicitly constructed string.", *MyStr.Peek(),            '\0' )
 
     MyStr = "Abc";
-    CHECK_NOT_NULL( "Assigned string.", MyStr.ToC()                       )
+    CHECK_NOT_NULL( "Assigned string.", MyStr.ToPtr()                       )
     CHECK_EQUALS(   "Assigned string.", MyStr,                      "Abc" )
     CHECK_EQUALS(   "Assigned string.", MyStr,                    "Abc\0" )
     CHECK_EQUALS(   "Assigned string.", MyStr.GetSize(),                4 )
@@ -26,7 +26,7 @@ TEST_CASE(SimpleNewSimpleStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Assigned string.", MyStr.GetRuneCount(),           3 )
 
     MyStr += "d";
-    CHECK_NOT_NULL( "Appended string.", MyStr.ToC()                      )
+    CHECK_NOT_NULL( "Appended string.", MyStr.ToPtr()                      )
     CHECK_EQUALS(   "Appended string.", MyStr,                    "Abcd" )
     CHECK_EQUALS(   "Appended string.", MyStr,                  "Abcd\0" )
     CHECK_TRUE(     "Appended string.", MyStr == "Abcd"                  )
@@ -36,7 +36,7 @@ TEST_CASE(SimpleNewSimpleStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Appended string.", MyStr.GetRuneCount(),          4 )
 
     LString MyOtherStr = "efgh";
-    CHECK_NOT_NULL( "Implicitly constructed string.", MyOtherStr.ToC()                  )
+    CHECK_NOT_NULL( "Implicitly constructed string.", MyOtherStr.ToPtr()                  )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr,                "efgh" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr,              "efgh\0" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr.GetSize(),           5 )
@@ -44,7 +44,7 @@ TEST_CASE(SimpleNewSimpleStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr.GetRuneCount(),      4 )
 
     MyStr += MyOtherStr;
-    CHECK_NOT_NULL( "Appended string.", MyStr.ToC()                  )
+    CHECK_NOT_NULL( "Appended string.", MyStr.ToPtr()                  )
     CHECK_EQUALS(   "Appended string.", MyStr,            "Abcdefgh" )
     CHECK_EQUALS(   "Appended string.", MyStr,          "Abcdefgh\0" )
     CHECK_EQUALS(   "Appended string.", MyStr.GetSize(),           9 )
@@ -65,8 +65,8 @@ TEST_CASE(RawLiteraLStringOperations, "Lal.Strings")
     const char*          RawCharsPtr = RawChars;
     const std::string    StdString   = "Abc";
 
-    CHECK_EQUALS( "Raw literal string.", MyStr,        MyStr2.ToC() )
-    CHECK_TRUE  ( "Raw literal string.", MyStr.Equals(MyStr2.ToC()) )
+    CHECK_EQUALS( "Raw literal string.", MyStr,        MyStr2.ToPtr() )
+    CHECK_TRUE  ( "Raw literal string.", MyStr.Equals(MyStr2.ToPtr()) )
 
     CHECK_EQUALS( "Raw literal string.", MyStr,        RawCharsPtr )
     CHECK_TRUE  ( "Raw literal string.", MyStr.Equals(RawCharsPtr) )
@@ -239,7 +239,7 @@ TEST_CASE(NewSimpleStringCopyingAndMoving, "Lal.Strings")
     LString MyStr2 = MyStr1;
 
     CHECK_EQUALS(   "Copy constructed string.", MyStr1,                 MyStr2 )
-    CHECK_EQUALS(   "Copy constructed string.", MyStr1.ToC(),     MyStr2.ToC() )
+    CHECK_EQUALS(   "Copy constructed string.", MyStr1.ToPtr(),     MyStr2.ToPtr() )
 
     MyStr2.Append("Abcdefgh");
     CHECK_EQUALS(       "Copy constructed string.", MyStr1,                   "" )
@@ -247,7 +247,7 @@ TEST_CASE(NewSimpleStringCopyingAndMoving, "Lal.Strings")
 
     MyStr1 = MyStr2;
     CHECK_EQUALS(       "Copy assigned string.", MyStr1,                 MyStr2 )
-    CHECK_NOT_EQUALS(   "Copy assigned string.", MyStr1.ToC(),     MyStr2.ToC() )
+    CHECK_NOT_EQUALS(   "Copy assigned string.", MyStr1.ToPtr(),     MyStr2.ToPtr() )
 
     MyStr1.Append("Ijklmnop");
     CHECK_EQUALS(       "Copy assigned string.", MyStr1,   "AbcdefghIjklmnop" )
@@ -255,51 +255,51 @@ TEST_CASE(NewSimpleStringCopyingAndMoving, "Lal.Strings")
     CHECK_EQUALS(       "Move assigned string.", MyStr1,           "Abcdefgh" )
     CHECK_EQUALS(       "Move assigned string.", MyStr2,                   "" )
     CHECK_EQUALS(       "Move assigned string.", MyStr2,                 "\0" )
-    CHECK_NOT_EQUALS(   "Move assigned string.", MyStr1.ToC(),   MyStr2.ToC() )
+    CHECK_NOT_EQUALS(   "Move assigned string.", MyStr1.ToPtr(),   MyStr2.ToPtr() )
 
     LString MyStr3 = std::move(MyStr1);
     CHECK_EQUALS(       "Move constructed string.", MyStr3,           "Abcdefgh" )
     CHECK_EQUALS(       "Move constructed string.", MyStr1,                   "" )
     CHECK_EQUALS(       "Move constructed string.", MyStr1,                 "\0" )
-    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr3.ToC(),   MyStr1.ToC() )
+    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr3.ToPtr(),   MyStr1.ToPtr() )
     CHECK_EQUALS(       "Move constructed string.", MyStr2,                   "" )
 
     MyStr2 = std::move(MyStr3);
     CHECK_EQUALS(       "Move constructed string.", MyStr2,           "Abcdefgh" )
     CHECK_EQUALS(       "Move constructed string.", MyStr3,                   "" )
-    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToC(),   MyStr3.ToC() )
+    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToPtr(),   MyStr3.ToPtr() )
 
     MyStr3 = std::move(MyStr2);
     CHECK_EQUALS(       "Move constructed string.", MyStr3,           "Abcdefgh" )
     CHECK_EQUALS(       "Move constructed string.", MyStr2,                   "" )
-    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToC(),   MyStr3.ToC() )
-    const char* OldDataOfMyStr2 = MyStr2.ToC();
-    const char* OldDataOfMyStr3 = MyStr3.ToC();
+    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToPtr(),   MyStr3.ToPtr() )
+    const char* OldDataOfMyStr2 = MyStr2.ToPtr();
+    const char* OldDataOfMyStr3 = MyStr3.ToPtr();
 
     MyStr2.SwapStrings(MyStr3);
     CHECK_EQUALS(       "Move constructed string.", MyStr2,           "Abcdefgh" )
     CHECK_EQUALS(       "Move constructed string.", MyStr3,                   "" )
-    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToC(),   MyStr3.ToC() )
-    CHECK_EQUALS(       "Move constructed string.", MyStr2.ToC(), OldDataOfMyStr3 )
-    CHECK_EQUALS(       "Move constructed string.", MyStr3.ToC(), OldDataOfMyStr2 )
+    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToPtr(),   MyStr3.ToPtr() )
+    CHECK_EQUALS(       "Move constructed string.", MyStr2.ToPtr(), OldDataOfMyStr3 )
+    CHECK_EQUALS(       "Move constructed string.", MyStr3.ToPtr(), OldDataOfMyStr2 )
 
     OldDataOfMyStr2 = nullptr;
     OldDataOfMyStr3 = nullptr;
     MyStr3 = MyStr2;
     CHECK_EQUALS(       "Move constructed string.", MyStr2,           "Abcdefgh" )
     CHECK_EQUALS(       "Move constructed string.", MyStr3,           "Abcdefgh" )
-    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToC(),   MyStr3.ToC() )
+    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToPtr(),   MyStr3.ToPtr() )
 
     MyStr2.Empty();
     CHECK_EQUALS(       "Move constructed string.", MyStr2,                   "" )
     CHECK_EQUALS(       "Move constructed string.", MyStr2,                 "\0" )
     CHECK_EQUALS(       "Move constructed string.", MyStr3,           "Abcdefgh" )
-    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToC(),   MyStr3.ToC() )
+    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToPtr(),   MyStr3.ToPtr() )
 
     MyStr2 = MyStr3;
     CHECK_EQUALS(       "Move constructed string.", MyStr2,           "Abcdefgh" )
     CHECK_EQUALS(       "Move constructed string.", MyStr3,           "Abcdefgh" )
-    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToC(),   MyStr3.ToC() )
+    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToPtr(),   MyStr3.ToPtr() )
 
     CHECK_EQUALS(       "Move constructed string.", MyStr2.GetSize(),           9 )
     CHECK_EQUALS(       "Move constructed string.", MyStr2.GetRuneCount(),      8 )
@@ -679,7 +679,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
     using namespace Jafg;
 
     LString MyStr;
-    CHECK_NOT_NULL( "Implicitly constructed string.", MyStr.ToC()                    )
+    CHECK_NOT_NULL( "Implicitly constructed string.", MyStr.ToPtr()                    )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr,                      "" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr,                    "\0" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr.GetByteSize(),         0 )
@@ -687,7 +687,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Implicitly constructed string.", MyStr.GetRuneCount(),        0 )
 
     MyStr = "Abc";
-    CHECK_NOT_NULL( "Assigned string.", MyStr.ToC()                       )
+    CHECK_NOT_NULL( "Assigned string.", MyStr.ToPtr()                       )
     CHECK_EQUALS(   "Assigned string.", MyStr,                      "Abc" )
     CHECK_EQUALS(   "Assigned string.", MyStr,                    "Abc\0" )
     CHECK_EQUALS(   "Assigned string.", MyStr.GetSize(),                4 )
@@ -696,7 +696,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Assigned string.", MyStr.GetRuneCount(),           3 )
 
     MyStr += "d";
-    CHECK_NOT_NULL( "Appended string.", MyStr.ToC()                      )
+    CHECK_NOT_NULL( "Appended string.", MyStr.ToPtr()                      )
     CHECK_EQUALS(   "Appended string.", MyStr,                    "Abcd" )
     CHECK_EQUALS(   "Appended string.", MyStr,                  "Abcd\0" )
     CHECK_TRUE(     "Appended string.", MyStr == "Abcd"                  )
@@ -707,7 +707,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Appended string.", MyStr.GetRuneCount(),          4 )
 
     LString MyOtherStr = "efgh";
-    CHECK_NOT_NULL( "Implicitly constructed string.", MyOtherStr.ToC()                  )
+    CHECK_NOT_NULL( "Implicitly constructed string.", MyOtherStr.ToPtr()                  )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr,                "efgh" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr,              "efgh\0" )
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr.GetSize(),           5 )
@@ -716,7 +716,7 @@ TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
     CHECK_EQUALS(   "Implicitly constructed string.", MyOtherStr.GetRuneCount(),      4 )
 
     MyStr += MyOtherStr;
-    CHECK_NOT_NULL( "Appended string.", MyStr.ToC()                      )
+    CHECK_NOT_NULL( "Appended string.", MyStr.ToPtr()                      )
     CHECK_EQUALS(   "Appended string.", MyStr,                "Abcdefgh" )
     CHECK_EQUALS(   "Appended string.", MyStr,              "Abcdefgh\0" )
     CHECK_EQUALS(   "Appended string.", MyStr.GetSize(),               9 )
@@ -789,8 +789,8 @@ TEST_CASE(RawLiteralNewEightStringOperations, "Lal.Strings")
     const char*          RawCharsPtr = RawChars;
     const std::string    StdString   = "Abc";
 
-    CHECK_EQUALS( "Raw literal string.", MyStr,        MyStr2.ToC() )
-    CHECK_TRUE  ( "Raw literal string.", MyStr.Equals(MyStr2.ToC()) )
+    CHECK_EQUALS( "Raw literal string.", MyStr,        MyStr2.ToPtr() )
+    CHECK_TRUE  ( "Raw literal string.", MyStr.Equals(MyStr2.ToPtr()) )
 
     CHECK_EQUALS( "Raw literal string.", MyStr,        RawCharsPtr )
     CHECK_TRUE  ( "Raw literal string.", MyStr.Equals(RawCharsPtr) )
@@ -983,7 +983,7 @@ TEST_CASE(NewEightStringCopyingAndMoving, "Lal.Strings")
     LString MyStr2 = MyStr1;
 
     CHECK_EQUALS(   "Copy constructed string.", MyStr1,                 MyStr2 )
-    CHECK_EQUALS(   "Copy constructed string.", MyStr1.ToC(),     MyStr2.ToC() )
+    CHECK_EQUALS(   "Copy constructed string.", MyStr1.ToPtr(),     MyStr2.ToPtr() )
 
     MyStr2.Append("Abcdefgh");
     CHECK_EQUALS(       "Copy constructed string.", MyStr1,                   "" )
@@ -991,7 +991,7 @@ TEST_CASE(NewEightStringCopyingAndMoving, "Lal.Strings")
 
     MyStr1 = MyStr2;
     CHECK_EQUALS(       "Copy assigned string.", MyStr1,                 MyStr2 )
-    CHECK_NOT_EQUALS(   "Copy assigned string.", MyStr1.ToC(),     MyStr2.ToC() )
+    CHECK_NOT_EQUALS(   "Copy assigned string.", MyStr1.ToPtr(),     MyStr2.ToPtr() )
 
     MyStr1.Append("Ijklmnop");
     CHECK_EQUALS(       "Copy assigned string.", MyStr1,   "AbcdefghIjklmnop" )
@@ -999,51 +999,51 @@ TEST_CASE(NewEightStringCopyingAndMoving, "Lal.Strings")
     CHECK_EQUALS(       "Move assigned string.", MyStr1,           "Abcdefgh" )
     CHECK_EQUALS(       "Move assigned string.", MyStr2,                   "" )
     CHECK_EQUALS(       "Move assigned string.", MyStr2,                 "\0" )
-    CHECK_NOT_EQUALS(   "Move assigned string.", MyStr1.ToC(),   MyStr2.ToC() )
+    CHECK_NOT_EQUALS(   "Move assigned string.", MyStr1.ToPtr(),   MyStr2.ToPtr() )
 
     LString MyStr3 = std::move(MyStr1);
     CHECK_EQUALS(       "Move constructed string.", MyStr3,           "Abcdefgh" )
     CHECK_EQUALS(       "Move constructed string.", MyStr1,                   "" )
     CHECK_EQUALS(       "Move constructed string.", MyStr1,                 "\0" )
-    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr3.ToC(),   MyStr1.ToC() )
+    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr3.ToPtr(),   MyStr1.ToPtr() )
     CHECK_EQUALS(       "Move constructed string.", MyStr2,                   "" )
 
     MyStr2 = std::move(MyStr3);
     CHECK_EQUALS(       "Move constructed string.", MyStr2,           "Abcdefgh" )
     CHECK_EQUALS(       "Move constructed string.", MyStr3,                   "" )
-    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToC(),   MyStr3.ToC() )
+    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToPtr(),   MyStr3.ToPtr() )
 
     MyStr3 = std::move(MyStr2);
     CHECK_EQUALS(       "Move constructed string.", MyStr3,           "Abcdefgh" )
     CHECK_EQUALS(       "Move constructed string.", MyStr2,                   "" )
-    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToC(),   MyStr3.ToC() )
-    const char* OldDataOfMyStr2 = MyStr2.ToC();
-    const char* OldDataOfMyStr3 = MyStr3.ToC();
+    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToPtr(),   MyStr3.ToPtr() )
+    const char* OldDataOfMyStr2 = MyStr2.ToPtr();
+    const char* OldDataOfMyStr3 = MyStr3.ToPtr();
 
     MyStr2.SwapStrings(MyStr3);
     CHECK_EQUALS(       "Move constructed string.", MyStr2,           "Abcdefgh" )
     CHECK_EQUALS(       "Move constructed string.", MyStr3,                   "" )
-    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToC(),   MyStr3.ToC() )
-    CHECK_EQUALS(       "Move constructed string.", MyStr2.ToC(), OldDataOfMyStr3 )
-    CHECK_EQUALS(       "Move constructed string.", MyStr3.ToC(), OldDataOfMyStr2 )
+    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToPtr(),   MyStr3.ToPtr() )
+    CHECK_EQUALS(       "Move constructed string.", MyStr2.ToPtr(), OldDataOfMyStr3 )
+    CHECK_EQUALS(       "Move constructed string.", MyStr3.ToPtr(), OldDataOfMyStr2 )
 
     OldDataOfMyStr2 = nullptr;
     OldDataOfMyStr3 = nullptr;
     MyStr3 = MyStr2;
     CHECK_EQUALS(       "Move constructed string.", MyStr2,           "Abcdefgh" )
     CHECK_EQUALS(       "Move constructed string.", MyStr3,           "Abcdefgh" )
-    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToC(),   MyStr3.ToC() )
+    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToPtr(),   MyStr3.ToPtr() )
 
     MyStr2.Empty();
     CHECK_EQUALS(       "Move constructed string.", MyStr2,                   "" )
     CHECK_EQUALS(       "Move constructed string.", MyStr2,                 "\0" )
     CHECK_EQUALS(       "Move constructed string.", MyStr3,           "Abcdefgh" )
-    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToC(),   MyStr3.ToC() )
+    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToPtr(),   MyStr3.ToPtr() )
 
     MyStr2 = MyStr3;
     CHECK_EQUALS(       "Move constructed string.", MyStr2,           "Abcdefgh" )
     CHECK_EQUALS(       "Move constructed string.", MyStr3,           "Abcdefgh" )
-    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToC(),   MyStr3.ToC() )
+    CHECK_NOT_EQUALS(   "Move constructed string.", MyStr2.ToPtr(),   MyStr3.ToPtr() )
 
     CHECK_EQUALS(       "Move constructed string.", MyStr2.GetSize(),           9 )
     CHECK_EQUALS(       "Move constructed string.", MyStr2.GetRuneCount(),      8 )
@@ -1537,12 +1537,12 @@ TEST_CASE(StringUtlity, "Lal.Strings")
 
     LString MyStr = "これわテストです。";
     CHECK_EQUALS( "String utility.", MyStr, "これわテストです。" )
-    CHECK_TRUE(   "String utility.", Str::IsValidUtf8(MyStr.ToC())  )
-    CHECK_FALSE(  "String utility.", Str::IsValidAscii(MyStr.ToC()) )
+    CHECK_TRUE(   "String utility.", Str::IsValidUtf8(MyStr.ToPtr())  )
+    CHECK_FALSE(  "String utility.", Str::IsValidAscii(MyStr.ToPtr()) )
     MyStr = "Abc";
     CHECK_EQUALS( "String utility.", MyStr, "Abc" )
-    CHECK_TRUE(   "String utility.", Str::IsValidAscii(MyStr.ToC()) )
-    CHECK_TRUE(   "String utility.", Str::IsValidUtf8(MyStr.ToC())  )
+    CHECK_TRUE(   "String utility.", Str::IsValidAscii(MyStr.ToPtr()) )
+    CHECK_TRUE(   "String utility.", Str::IsValidUtf8(MyStr.ToPtr())  )
 
     return;
 }
@@ -1614,6 +1614,180 @@ TEST_CASE(StringLoops, "Lal.Strings")
         ++i;
     }
     CHECK_EQUALS( "String loops.", i, 0 )
+
+    return;
+}
+
+TEST_CASE(StringView, "Lal.Strings")
+{
+    using namespace Jafg;
+
+    LStringView MyStrView("Hello World!");
+    QUICK_CHECK_EQUALS(MyStrView,           "Hello World!")
+    QUICK_CHECK_EQUALS(MyStrView.GetSize(),             12)
+    QUICK_CHECK_EQUALS(MyStrView.GetRuneCount(),        12)
+    QUICK_CHECK_EQUALS(MyStrView.GetCharacterCount(),   12)
+    LStringView::SizeType i = 0;
+    for (const LStringView::T x : MyStrView)
+    {
+        CHECK_EQUALS( "String view.", x, MyStrView[i] )
+        ++i;
+    }
+    CHECK_EQUALS( "String view.", i, 12 )
+
+    MyStrView = "Abcdefgh";
+    CHECK_EQUALS( "String view.", MyStrView,           "Abcdefgh" )
+    CHECK_EQUALS( "String view.", MyStrView.GetSize(),           8 )
+    CHECK_EQUALS( "String view.", MyStrView.GetRuneCount(),      8 )
+    CHECK_EQUALS( "String view.", MyStrView.GetCharacterCount(), 8 )
+    CHECK_EQUALS( "String view.", MyStrView[0],           *"A" )
+    CHECK_EQUALS( "String view.", MyStrView[1],           *"b" )
+    CHECK_EQUALS( "String view.", MyStrView[2],           *"c" )
+    CHECK_EQUALS( "String view.", MyStrView[3],           *"d" )
+    CHECK_EQUALS( "String view.", MyStrView[4],           *"e" )
+    CHECK_EQUALS( "String view.", MyStrView[5],           *"f" )
+    CHECK_EQUALS( "String view.", MyStrView[6],           *"g" )
+    CHECK_EQUALS( "String view.", MyStrView[7],           *"h" )
+    CHECK_EQUALS( "String view.", MyStrView[0],            'A' )
+    CHECK_EQUALS( "String view.", MyStrView[1],            'b' )
+    CHECK_EQUALS( "String view.", MyStrView[2],            'c' )
+    CHECK_EQUALS( "String view.", MyStrView[3],            'd' )
+    CHECK_EQUALS( "String view.", MyStrView[4],            'e' )
+    CHECK_EQUALS( "String view.", MyStrView[5],            'f' )
+    CHECK_EQUALS( "String view.", MyStrView[6],            'g' )
+    CHECK_EQUALS( "String view.", MyStrView[7],            'h' )
+    i = 0;
+    for (const LStringView::T x : MyStrView)
+    {
+        CHECK_EQUALS( "String view.", x, MyStrView[i] )
+        ++i;
+    }
+    CHECK_EQUALS( "String view.", i, 8 )
+
+    QUICK_CHECK_TRUE( MyStrView.MoveDataPointerUp()                )
+    CHECK_EQUALS( "String view.", MyStrView,             "bcdefgh" )
+    CHECK_EQUALS( "String view.", MyStrView.GetSize(),           7 )
+    CHECK_EQUALS( "String view.", MyStrView.GetRuneCount(),      7 )
+    CHECK_EQUALS( "String view.", MyStrView.GetCharacterCount(), 7 )
+    QUICK_CHECK_TRUE( MyStrView.MoveDataPointerUp(3)               )
+    CHECK_EQUALS( "String view.", MyStrView,                "efgh" )
+    CHECK_EQUALS( "String view.", MyStrView.GetSize(),           4 )
+    CHECK_EQUALS( "String view.", MyStrView.GetRuneCount(),      4 )
+    CHECK_EQUALS( "String view.", MyStrView.GetCharacterCount(), 4 )
+    QUICK_CHECK_TRUE( MyStrView.MoveDataPointerUp(MyStrView.GetEnd() - 1) )
+    CHECK_EQUALS( "String view.", MyStrView,                   "h" )
+    CHECK_EQUALS( "String view.", MyStrView.GetSize(),           1 )
+    CHECK_EQUALS( "String view.", MyStrView.GetRuneCount(),      1 )
+    CHECK_EQUALS( "String view.", MyStrView.GetCharacterCount(), 1 )
+
+    MyStrView = "";
+    CHECK_EQUALS( "String view.", MyStrView, "" )
+    CHECK_EQUALS( "String view.", MyStrView.GetSize(),           0 )
+    CHECK_EQUALS( "String view.", MyStrView.GetRuneCount(),      0 )
+    CHECK_EQUALS( "String view.", MyStrView.GetCharacterCount(), 0 )
+    i = 0;
+    for (const LStringView::T x : MyStrView)
+    {
+        CHECK_EQUALS( "String view.", x, MyStrView[i] )
+        ++i;
+    }
+    CHECK_EQUALS( "String view.", i, 0 )
+
+    MyStrView.Invalidate();
+    CHECK_EQUALS( "String view.", MyStrView, "" )
+    CHECK_EQUALS( "String view.", MyStrView.GetSize(),           0 )
+    CHECK_EQUALS( "String view.", MyStrView.GetRuneCount(),      0 )
+    CHECK_EQUALS( "String view.", MyStrView.GetCharacterCount(), 0 )
+    i = 0;
+    for (const LStringView::T x : MyStrView)
+    {
+        CHECK_EQUALS( "String view.", x, MyStrView[i] )
+        ++i;
+    }
+    CHECK_EQUALS( "String view.", i, 0 )
+
+    MyStrView = "A";
+    CHECK_EQUALS( "String view.", MyStrView, "A" )
+    CHECK_EQUALS( "String view.", MyStrView.GetSize(),           1 )
+    CHECK_EQUALS( "String view.", MyStrView.GetRuneCount(),      1 )
+    CHECK_EQUALS( "String view.", MyStrView.GetCharacterCount(), 1 )
+    CHECK_EQUALS( "String view.", MyStrView[0],           *"A" )
+    CHECK_EQUALS( "String view.", MyStrView[0],            'A' )
+    i = 0;
+    for (const LStringView::T x : MyStrView)
+    {
+        CHECK_EQUALS( "String view.", x, MyStrView[i] )
+        ++i;
+    }
+    CHECK_EQUALS( "String view.", i, 1 )
+    QUICK_CHECK_TRUE( MyStrView.MoveDataPointerUp(500) )
+    CHECK_EQUALS( "String view.", MyStrView, "" )
+    CHECK_EQUALS( "String view.", MyStrView.GetSize(),           0 )
+    CHECK_EQUALS( "String view.", MyStrView.GetRuneCount(),      0 )
+    CHECK_EQUALS( "String view.", MyStrView.GetCharacterCount(), 0 )
+
+    LString MyStr = "Hello World!";
+    QUICK_CHECK_EQUALS(MyStr, "Hello World!" )
+    MyStrView = MyStr;
+    CHECK_EQUALS( "String view.", MyStrView,           "Hello World!" )
+    CHECK_EQUALS( "String view.", MyStrView.GetSize(),             13 )
+    CHECK_EQUALS( "String view.", MyStrView.GetRuneCount(),        12 )
+    CHECK_EQUALS( "String view.", MyStrView.GetCharacterCount(),   12 )
+    CHECK_EQUALS( "String view.", MyStrView[0],           *"H" )
+    CHECK_EQUALS( "String view.", MyStrView[1],           *"e" )
+    CHECK_EQUALS( "String view.", MyStrView[2],           *"l" )
+    CHECK_EQUALS( "String view.", MyStrView[3],           *"l" )
+    CHECK_EQUALS( "String view.", MyStrView[4],           *"o" )
+    CHECK_EQUALS( "String view.", MyStrView[5],           *" " )
+    CHECK_EQUALS( "String view.", MyStrView[6],           *"W" )
+    CHECK_EQUALS( "String view.", MyStrView[7],           *"o" )
+    CHECK_EQUALS( "String view.", MyStrView[8],           *"r" )
+    CHECK_EQUALS( "String view.", MyStrView[9],           *"l" )
+    CHECK_EQUALS( "String view.", MyStrView[10],          *"d" )
+    CHECK_EQUALS( "String view.", MyStrView[11],          *"!" )
+    CHECK_EQUALS( "String view.", MyStrView[0],            'H' )
+    CHECK_EQUALS( "String view.", MyStrView[1],            'e' )
+    CHECK_EQUALS( "String view.", MyStrView[2],            'l' )
+    CHECK_EQUALS( "String view.", MyStrView[3],            'l' )
+    CHECK_EQUALS( "String view.", MyStrView[4],            'o' )
+    CHECK_EQUALS( "String view.", MyStrView[5],            ' ' )
+    CHECK_EQUALS( "String view.", MyStrView[6],            'W' )
+    CHECK_EQUALS( "String view.", MyStrView[7],            'o' )
+    CHECK_EQUALS( "String view.", MyStrView[8],            'r' )
+    CHECK_EQUALS( "String view.", MyStrView[9],            'l' )
+    CHECK_EQUALS( "String view.", MyStrView[10],           'd' )
+    CHECK_EQUALS( "String view.", MyStrView[11],           '!' )
+    MyStr.Append("Abcdefgh");
+    CHECK_EQUALS( "String view.", MyStrView,          "Hello World!A" )
+    CHECK_EQUALS( "String view.", MyStrView.GetSize(),             13 )
+    CHECK_EQUALS( "String view.", MyStrView.GetRuneCount(),        13 )
+    CHECK_EQUALS( "String view.", MyStrView.GetCharacterCount(),   13 )
+    CHECK_EQUALS( "String view.", MyStrView[0],           *"H" )
+    CHECK_EQUALS( "String view.", MyStrView[1],           *"e" )
+    CHECK_EQUALS( "String view.", MyStrView[2],           *"l" )
+    CHECK_EQUALS( "String view.", MyStrView[3],           *"l" )
+    CHECK_EQUALS( "String view.", MyStrView[4],           *"o" )
+    CHECK_EQUALS( "String view.", MyStrView[5],           *" " )
+    CHECK_EQUALS( "String view.", MyStrView[6],           *"W" )
+    CHECK_EQUALS( "String view.", MyStrView[7],           *"o" )
+    CHECK_EQUALS( "String view.", MyStrView[8],           *"r" )
+    CHECK_EQUALS( "String view.", MyStrView[9],           *"l" )
+    CHECK_EQUALS( "String view.", MyStrView[10],          *"d" )
+    CHECK_EQUALS( "String view.", MyStrView[11],          *"!" )
+    CHECK_EQUALS( "String view.", MyStrView[12],          *"A" )
+    CHECK_EQUALS( "String view.", MyStrView[0],            'H' )
+    CHECK_EQUALS( "String view.", MyStrView[1],            'e' )
+    CHECK_EQUALS( "String view.", MyStrView[2],            'l' )
+    CHECK_EQUALS( "String view.", MyStrView[3],            'l' )
+    CHECK_EQUALS( "String view.", MyStrView[4],            'o' )
+    CHECK_EQUALS( "String view.", MyStrView[5],            ' ' )
+    CHECK_EQUALS( "String view.", MyStrView[6],            'W' )
+    CHECK_EQUALS( "String view.", MyStrView[7],            'o' )
+    CHECK_EQUALS( "String view.", MyStrView[8],            'r' )
+    CHECK_EQUALS( "String view.", MyStrView[9],            'l' )
+    CHECK_EQUALS( "String view.", MyStrView[10],           'd' )
+    CHECK_EQUALS( "String view.", MyStrView[11],           '!' )
+    CHECK_EQUALS( "String view.", MyStrView[12],           'A' )
 
     return;
 }

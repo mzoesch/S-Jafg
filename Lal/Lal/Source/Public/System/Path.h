@@ -7,244 +7,165 @@
 namespace Jafg
 {
 
-/**
- * A simple string that represents a path.
- * Works very will with jafg finder as it can easily be used to search in relative directories in the jafg folder
- * hierarchy.
- */
-template <typename InTStringTy>
-class LPathBase final
+namespace Private
+{
+
+LAL_API bool TPathBase_DoesExist(const char* InPath);
+LAL_API bool TPathBase_IsFile(const char* InPath);
+LAL_API bool TPathBase_IsDir(const char* InPath);
+
+} /* ~Namespace Private */
+
+//#
+//# The base class for all paths.
+//#
+template <typename InTraits, typename InAlloc>
+class TPathBase;
+
+template <typename InT>
+using TPathBasic = TPathBase<TStringTraits<InT>, TArray<InT>>;
+
+typedef TPathBasic<char> LPath;
+
+template <typename InTraits, typename InAlloc>
+class TPathBase : public TStringBase<TPathBase<InTraits, InAlloc>, InTraits, InAlloc>
 {
 public:
 
-    using T          = InTStringTy;
-    using TStringTy  = InTStringTy;
-    using LStringTy  = TStringTy;
-    using SizeType   = typename LStringTy::SizeType;
-    using LRune      = typename LStringTy::T;
-    using Traits     = typename LStringTy::Traits;
+    using Super = TStringBase<TPathBase<InTraits, InAlloc>, InTraits, InAlloc>;
 
-    inline static LRune PathSeparator        = '/';
+    using Traits   = typename Super::Traits;
+    using T        = typename Super::T;
+    using Alloc    = typename Super::Alloc;
+    using Self     = typename Super::Self;
+    using SizeType = typename Super::SizeType;
 
-    using Self = LPathBase<T>;
+    FORCEINLINE TPathBase() noexcept = default;
+    FORCEINLINE TPathBase(LNullptrTy) noexcept : Super(nullptr) { }
+    FORCEINLINE TPathBase(const Self& InOther) noexcept : Super(InOther) { }
+    FORCEINLINE TPathBase(Self&& InOther) noexcept : Super(std::move(InOther)) { }
+    explicit    TPathBase(const T InRune) : Super(InRune) { }
+    FORCEINLINE TPathBase(const T* InString) : Super(InString) { }
+    FORCEINLINE TPathBase(const T* InString, const SizeType InLength) : Super(InString, InLength) { }
+    FORCEINLINE ~TPathBase() noexcept = default;
 
-    FORCEINLINE  LPathBase() noexcept = default;
-    FORCEINLINE  LPathBase(LNullptrTy) noexcept { }
-    FORCEINLINE  LPathBase(const LPathBase<T>& Other) noexcept { this->Data = Other.Data; }
-    FORCEINLINE  LPathBase(LPathBase<T>&& Other) noexcept { this->Data = std::forward<LStringTy>(Other.Data); }
-    FORCEINLINE  LPathBase(const LStringTy& Other) noexcept { this->Data = Other; }
-    FORCEINLINE  LPathBase(LStringTy&& Other) noexcept { this->Data = std::move(Other); }
-    FORCEINLINE ~LPathBase() noexcept = default;
+    FORCEINLINE Self& operator =(LNullptrTy) noexcept { return this->Super::operator =(nullptr); }
+    FORCEINLINE Self& operator =(const Self& InOther) noexcept { return this->Super::operator=(InOther); }
+    FORCEINLINE Self& operator =(Self&& InOther) noexcept { return this->Super::operator=(std::move(InOther)); }
+    FORCEINLINE Self& operator =(const T InRune) noexcept { return this->Super::operator=(InRune); }
+    FORCEINLINE Self& operator =(const T* InString) noexcept { return this->Super::operator=(InString); }
 
-    FORCEINLINE auto GetSize() const noexcept -> SizeType { return this->Data.GetSize(); }
-    FORCEINLINE auto IsEmpty() const noexcept -> bool     { return this->Data.IsEmpty(); }
-    FORCEINLINE auto Reset(const SizeType InReserve) noexcept -> void { this->Data.Reset(InReserve); }
-    FORCEINLINE auto Empty() noexcept -> void { this->Data.Empty(); }
+    //# The amount of directory separators in the path that were normalized.
+    FORCEINLINE SizeType Normalize() noexcept;
 
-    FORCEINLINE auto Reserve(const SizeType Size) noexcept -> void { this->Data.Reserve(Size); }
+    //# Try to pop the last sub-path.
+    FORCEINLINE bool PopSubPath() noexcept;
+    FORCEINLINE bool PopSubPath(const bool bNormalize) noexcept;
+    //# Try to pop the last sub-paths and return the number of the actually popped sub-paths.
+    FORCEINLINE SizeType PopSubPaths(const SizeType NumberOfSubPaths) noexcept;
+    FORCEINLINE SizeType PopSubPaths(const SizeType NumberOfSubPaths, const bool bNormalize) noexcept;
 
-    FORCEINLINE auto operator=(const LPathBase<T>& Other) noexcept -> LPathBase<T>& = default;
-    FORCEINLINE auto operator=(LPathBase<T>&& Other) noexcept -> LPathBase<T>& { this->Data = std::forward<LStringTy>(Other.Data); return *this; }
-    FORCEINLINE auto operator=(const LStringTy& Other) noexcept -> LPathBase<T>& { this->Data = Other; return *this; }
-    FORCEINLINE auto operator=(LStringTy&& Other) noexcept -> LPathBase<T>& { this->Data = std::move(Other); return *this; }
+    FORCEINLINE void AddExtension(const Self& InExtension) noexcept;
 
-    FORCEINLINE auto operator==(const LPathBase<T>& Other) const noexcept -> bool { return this->Data == Other.Data; }
-    FORCEINLINE auto Equals(const LPathBase<T>& Other)     const noexcept -> bool { return this->Data == Other.Data; }
+    FORCEINLINE bool DoesExist() const noexcept { return Private::TPathBase_DoesExist(static_cast<const char*>(this->ToPtr())); }
+    FORCEINLINE bool IsFile() const noexcept { return Private::TPathBase_IsFile(static_cast<const char*>(this->ToPtr())); }
+    FORCEINLINE bool IsDir() const noexcept { return Private::TPathBase_IsDir(static_cast<const char*>(this->ToPtr())); }
 
-    FORCEINLINE auto operator==(const LStringTy& Other) const noexcept -> bool { return this->Data == Other; }
-    FORCEINLINE auto operator!=(const LStringTy& Other) const noexcept -> bool { return this->Data != Other; }
-    FORCEINLINE auto Equals(const LStringTy& Other)     const noexcept -> bool { return this->Data == Other; }
-
-    FORCEINLINE auto GetPath() const noexcept -> const LStringTy& { return this->Data; }
-    FORCEINLINE auto GetMutablePath() noexcept -> LStringTy& { return this->Data; }
-    FORCEINLINE auto MoveOut() noexcept -> LStringTy { return std::move(this->Data); }
-
-    /** Private iterator functions for range-based loops. Do not use these directly. */
-    FORCEINLINE auto begin()       noexcept -> Iterator<LRune>       { return this->Data.begin(); }
-    FORCEINLINE auto begin() const noexcept -> Iterator<const LRune> { return this->Data.begin(); }
-    FORCEINLINE auto end()         noexcept -> Iterator<LRune>       { return this->Data.end();   }
-    FORCEINLINE auto end()   const noexcept -> Iterator<const LRune> { return this->Data.end();   }
-
-    template <typename ... ArgyTy>
-    static auto SprintF(const char* Format, const ArgyTy& ... Args) -> LPathBase<T> { return LString::SprintF(Format, Args ...); }
-
-    FORCEINLINE auto operator /(const LRune* Other) const noexcept -> LPathBase<T>;
-    FORCEINLINE auto operator/=(const LRune* Other) noexcept -> LPathBase<T>&;
-    FORCEINLINE auto operator /(const LPathBase<T>& Other) const noexcept -> LPathBase<T>;
-    FORCEINLINE auto operator/=(const LPathBase<T>& Other) noexcept -> LPathBase<T>&;
-
-    FORCEINLINE void Normalize() noexcept;
-    /** @return The number of sub paths that were actually popped. */
-    FORCEINLINE i32 PopSubPaths(const i32 NumberOfSubPaths);
-
-    FORCEINLINE void AddExtension(const LStringTy& Extension);
-
-    /**
-     * Will check if the last part of the path contains a dot.
-     * TODO: Ask the actual platform if the path is a file. Do not make this bugprone assumption.
-     */
-    FORCEINLINE bool IsFile() const noexcept;
-
-    /**
-     * The base of a path:
-     *    "A"  -> "A"
-     *    "A/" -> ""
-     *    ""   -> ""
-     */
-    FORCEINLINE LStringTy GetBase() const;
-
-private:
-
-    LStringTy Data = nullptr;
+    FORCEINLINE Self GetBase() const noexcept;
 };
 
-template <typename InTStringTy>
-LPathBase<InTStringTy> LPathBase<InTStringTy>::operator/(const LRune* Other) const noexcept
+template<typename InTraits, typename InAlloc>
+FORCEINLINE typename TPathBase<InTraits, InAlloc>::SizeType TPathBase<InTraits, InAlloc>::Normalize() noexcept
 {
-    LPathBase<T> Out;
-    Out.Reserve(this->Data.GetSize());
-    Out.Data = this->Data;
-    return Out /= Other;
+    return this->Replace('\\', '/');
 }
 
-template <typename InTStringTy>
-LPathBase<InTStringTy>& LPathBase<InTStringTy>::operator/=(const LRune* Other) noexcept
+template<typename InTraits, typename InAlloc>
+FORCEINLINE bool TPathBase<InTraits, InAlloc>::PopSubPath() noexcept
 {
-    if (*Other == Traits::Terminator)
+    if (const SizeType Last = this->FindLast('/'); Last != INDEX_NONE)
     {
-        return *this;
+        this->InlineLeftChop(Last);
+        return true;
     }
 
-    if (*this->Data.Peek() != LPathBase<T>::PathSeparator)
-    {
-        this->Data.Add(LPathBase<T>::PathSeparator);
-    }
-
-    if (*Other == LPathBase<T>::PathSeparator)
-    {
-        ++Other;
-    }
-
-    if (*Other == Traits::Terminator)
-    {
-        return *this;
-    }
-
-    this->Data += Other;
-
-    return *this;
-}
-
-template <typename InTStringTy>
-LPathBase<InTStringTy> LPathBase<InTStringTy>::operator/(const LPathBase<T>& Other) const noexcept
-{
-    return *this / Other.GetPath().ToPtr();
-}
-
-template <typename InTStringTy>
-LPathBase<InTStringTy>& LPathBase<InTStringTy>::operator/=(const LPathBase<T>& Other) noexcept
-{
-    return *this /= Other.GetPath().ToPtr();
-}
-
-template <typename InTStringTy>
-void LPathBase<InTStringTy>::Normalize() noexcept
-{
-    this->Data.Replace('\\', '/');
-
-    if (*this->Data.Peek() == LPathBase<T>::PathSeparator)
-    {
-        this->Data.Pop();
-    }
-
-    return;
-}
-
-template <typename InTStringTy>
-i32 LPathBase<InTStringTy>::PopSubPaths(const i32 NumberOfSubPaths)
-{
-    i32 Popped = 0;
-
-    this->Normalize();
-
-    for (i32 i = 0; i < NumberOfSubPaths; ++i)
-    {
-        if (this->Data.IsEmpty())
-        {
-            break;
-        }
-
-        const i32 Last = this->Data.FindLast(LPathBase<T>::PathSeparator);
-        if (Last == INDEX_NONE)
-        {
-            this->Data.Empty();
-            break;
-        }
-
-        this->Data.InlineCut(Last);
-        ++Popped;
-    }
-
-    return Popped;
-}
-
-template <typename InTStringTy>
-void LPathBase<InTStringTy>::AddExtension(const LStringTy& Extension)
-{
-    this->Data.Append(Extension);
-}
-
-template <typename InTStringTy>
-bool LPathBase<InTStringTy>::IsFile() const noexcept
-{
-    if (this->Data.IsEmpty())
+    if (this->IsEmpty())
     {
         return false;
     }
 
-    LStringTy LastPart = this->GetBase();
-    if (LastPart.IsEmpty())
-    {
-        return false;
-    }
-
-    return LastPart.Find(".") != INDEX_NONE;
+    this->Empty();
+    return true;
 }
 
-template <typename InTStringTy>
-typename LPathBase<InTStringTy>::LStringTy LPathBase<InTStringTy>::GetBase() const
+template<typename InTraits, typename InAlloc>
+FORCEINLINE bool TPathBase<InTraits, InAlloc>::PopSubPath(const bool bNormalize) noexcept
 {
-    if (this->Data.IsEmpty())
+    if (bNormalize)
     {
-        return { };
+        this->Normalize();
     }
 
-    const i32 Last = this->Data.FindLast(LPathBase<T>::PathSeparator);
-    if (Last == INDEX_NONE)
+    return this->PopSubPath();
+}
+
+template<typename InTraits, typename InAlloc>
+FORCEINLINE typename TPathBase<InTraits, InAlloc>::SizeType TPathBase<InTraits, InAlloc>::PopSubPaths(const SizeType NumberOfSubPaths) noexcept
+{
+    SizeType Out = 0;
+    while (Out < NumberOfSubPaths)
     {
-        return this->Data;
+        if (this->PopSubPath() == false)
+        {
+            return Out;
+        }
+
+        ++Out;
+        continue;
     }
 
-    return this->Data.SubIdx(Last + 1, this->Data.GetRuneCount());
-}
-
-using LPath = LPathBase<LString>;
-
-#if PLATFORM_WASM
-template <> NODISCARD inline auto FormatArgLegacy(LPath& Arg)
-{
-    return Arg.GetPath().ToC();
-}
-template <> NODISCARD inline auto FormatArgLegacy(LPath&& Arg)
-{
-    LStringLegacy Out = Arg.GetPath().ToC();
     return Out;
 }
-template <> NODISCARD inline auto FormatArgLegacy(LPath Arg)
+
+template<typename InTraits, typename InAlloc>
+FORCEINLINE typename TPathBase<InTraits, InAlloc>::SizeType TPathBase<InTraits, InAlloc>::PopSubPaths(const SizeType NumberOfSubPaths, const bool bNormalize) noexcept
 {
-    LStringLegacy Out = Arg.GetPath().ToC();
-    return Out;
+    if (bNormalize)
+    {
+        this->Normalize();
+    }
+
+    return this->PopSubPaths(NumberOfSubPaths);
 }
-#endif /* PLATFORM_WASM */
+
+template<typename InTraits, typename InAlloc>
+FORCEINLINE void TPathBase<InTraits, InAlloc>::AddExtension(const Self& InExtension) noexcept
+{
+    this->Append(InExtension);
+}
+
+template<typename InTraits, typename InAlloc>
+FORCEINLINE typename TPathBase<InTraits, InAlloc>::Self TPathBase<InTraits, InAlloc>::GetBase() const noexcept
+{
+    if (SizeType Last = this->FindLast('/'); Last != INDEX_NONE)
+    {
+        return this->RightChop(Last + 1);
+    }
+
+    return this->GetSelf();
+}
 
 } /* ~Namespace Jafg */
+
+template <>
+struct std::formatter<::Jafg::LPath> : std::formatter<const char*>
+{
+    FORCEINLINE auto format
+    (
+        const ::Jafg::LPath& InPath,
+        ::std::format_context& InContext
+    ) const -> ::std::format_context::iterator
+    {
+        return ::std::formatter<const char*>::format(InPath.ToPtr(), InContext);
+    }
+};

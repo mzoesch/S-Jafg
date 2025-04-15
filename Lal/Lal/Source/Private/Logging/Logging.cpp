@@ -111,12 +111,12 @@ LAL_API LString LalLogPrivateColor_End     = LOG_COLOR_END;
 
 LStringLegacy GetColorForVerbosity(const ELogVerbosityType Verbosity)
 {
-    if (Verbosity == ELogVerbosity::Trace)   { return LalLogPrivateColor_Trace.ToC(); }
-    if (Verbosity == ELogVerbosity::Verbose) { return LalLogPrivateColor_Verbose.ToC(); }
-    if (Verbosity == ELogVerbosity::Info)    { return LalLogPrivateColor_Info.ToC(); }
-    if (Verbosity == ELogVerbosity::Warning) { return LalLogPrivateColor_Warning.ToC(); }
-    if (Verbosity == ELogVerbosity::Error)   { return LalLogPrivateColor_Error.ToC(); }
-    if (Verbosity == ELogVerbosity::Fatal)   { return LalLogPrivateColor_Fatal.ToC(); }
+    if (Verbosity == ELogVerbosity::Trace)   { return LalLogPrivateColor_Trace.ToPtr(); }
+    if (Verbosity == ELogVerbosity::Verbose) { return LalLogPrivateColor_Verbose.ToPtr(); }
+    if (Verbosity == ELogVerbosity::Info)    { return LalLogPrivateColor_Info.ToPtr(); }
+    if (Verbosity == ELogVerbosity::Warning) { return LalLogPrivateColor_Warning.ToPtr(); }
+    if (Verbosity == ELogVerbosity::Error)   { return LalLogPrivateColor_Error.ToPtr(); }
+    if (Verbosity == ELogVerbosity::Fatal)   { return LalLogPrivateColor_Fatal.ToPtr(); }
 
     return "";
 }

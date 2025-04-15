@@ -31,7 +31,6 @@ ENGINE_API LPath GetUserPreferencesFile();
 //# @return The file content.
 //# @remark Works with embedded files.
 //#
-ENGINE_API LStringLegacy ReadFileLegacy(const LEnginePath& InEnginePath);
 ENGINE_API LString ReadFile(const LEnginePath& InEnginePath);
 ENGINE_API void ReadFileAsBinary(const LEnginePath& InEnginePath, const u8*& OutBuffer, u64& OutBufferOverflowGuard);
 ENGINE_API void FreeReadFileBinaryBuffer(const u8*& InBuffer);
