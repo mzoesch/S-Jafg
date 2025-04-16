@@ -171,8 +171,8 @@ template <> FORCEINLINE void OnDefaultOnlyMallocMember<bool>(bool* MemberField) 
 template <typename TMemberField>
 FORCEINLINE void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField);
 
-template <typename InTraits, typename InAlloc>
-FORCEINLINE void OnDefaultOnlyMallocMember(TStringBase<InTraits, InAlloc>* MemberField);
+template <typename InDerived, typename InTraits, typename InAlloc>
+FORCEINLINE void OnDefaultOnlyMallocMember(TStringBase<InDerived, InTraits, InAlloc>* MemberField);
 
 template <typename TObj>
 FORCEINLINE void OnDefaultOnlyMallocMember(TSubclassOf<TObj>* MemberField) { *MemberField = nullptr; }
@@ -557,8 +557,8 @@ FORCEINLINE void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField)
     return;
 }
 
-template <typename InTraits, typename InAlloc>
-FORCEINLINE void OnDefaultOnlyMallocMember(TStringBase<InTraits, InAlloc>* MemberField)
+template <typename InDerived, typename InTraits, typename InAlloc>
+FORCEINLINE void OnDefaultOnlyMallocMember(TStringBase<InDerived, InTraits, InAlloc>* MemberField)
 {
     ExplicitCommonZeroOnDefaultOnlyMallocMember(MemberField);
 }

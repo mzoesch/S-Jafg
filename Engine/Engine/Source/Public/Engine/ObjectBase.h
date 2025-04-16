@@ -200,7 +200,7 @@ struct std::formatter<::Jafg::TSubclassOf<T>> : std::formatter<const char*>
     {
         if (InClass)
         {
-            return std::formatter<const char*>::format(InClass->GetSpacedClassName().ToC(), InContext);
+            return std::formatter<const char*>::format(InClass->GetSpacedClassName().ToPtr(), InContext);
         }
         return ::std::formatter<const char*>::format("", InContext);
     }

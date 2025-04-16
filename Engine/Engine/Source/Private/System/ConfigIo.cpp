@@ -93,7 +93,7 @@ bool GoToKey(const char* InString, const char* InKey, i32* Cursor)
 // @return True, if end of file was found.
 bool GoToNextLine(const LString& InFileContent, i32* Cursor)
 {
-    for (i32 i = *Cursor; i < InFileContent.GetRuneCount(); ++i)
+    for (i32 i = *Cursor; i < InFileContent.GetSize(); ++i)
     {
         if (InFileContent[i] == '\n')
         {
@@ -111,6 +111,11 @@ bool GoToNextMeaningfulLine(const LString& InFileContent, i32* Cursor)
     while (true)
     {
         if (::GoToNextLine(InFileContent, Cursor))
+        {
+            return true;
+        }
+
+        if (InFileContent.IsValidIndex(*Cursor) == false)
         {
             return true;
         }
@@ -136,14 +141,14 @@ i32 FindSection(const LString& InFileContent, const LStringView& InSection)
         {
             continue;
         }
-        if (InFileContent[i+static_cast<i32>(InSection.size())+1] != ']')
+        if (InFileContent[i+static_cast<i32>(InSection.GetSize())+1] != ']')
         {
             continue;
         }
 
         const LString::T* Section = &InFileContent.GetUnderlyingDataStructure()[i+1];
 
-        if (::strncmp(Section, InSection.data(), ::strlen(InSection.data())) == 0)
+        if (::strncmp(Section, InSection.GetBegin(), ::strlen(InSection.GetBegin())) == 0)
         {
             return i;
         }
@@ -158,7 +163,7 @@ void AppendNewSection(LString* InFileContent, const LStringView& InSection)
 {
     checkSlow( FindSection(*InFileContent, InSection) == INDEX_NONE )
     InFileContent->Append("[");
-    InFileContent->Append(InSection.data());
+    InFileContent->Append(InSection.GetBegin());
     InFileContent->Append("]\n");
     return;
 }
@@ -170,13 +175,13 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
     checkSlow( Tasks::IsOnMasterThread() )
     check( Paths::DoesFileExist(InPath) )
 
-    LOG_VERBOSE(LogConfigIo, "Pushing field [{}::{}] with [{}] to [{}].", InSection, InKey, InValue, InPath.GetPath())
+    LOG_VERBOSE(LogConfigIo, "Pushing field [{}::{}] with [{}] to [{}].", InSection, InKey, InValue, InPath)
 
     LString FileContent = Finder::ReadFile(InPath);
 
     if (const TOptional<LString> StoredValue = Deserialize(InPath, InSection, InKey); StoredValue)
     {
-        if (::strcmp(StoredValue.GetValue().ToC(), InValue.data()) == 0)
+        if (::strcmp(StoredValue.GetValue().ToPtr(), InValue.GetBegin()) == 0)
         {
             return false;
         }
@@ -191,7 +196,7 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
     }
     ::GoToNextMeaningfulLine(FileContent, &Cursor);
 
-    if (::GoToKey(FileContent.ToC(), InKey.data(), &Cursor) == false)
+    if (::GoToKey(FileContent.ToPtr(), InKey.GetBegin(), &Cursor) == false)
     {
         GoToNextLine(FileContent, &Cursor);
         LString NewFileContent; NewFileContent.Reserve(FileContent.GetSize());
@@ -199,9 +204,9 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
         {
             NewFileContent.Add(FileContent[i]);
         }
-        NewFileContent += InKey.data();
+        NewFileContent += InKey.GetBegin();
         NewFileContent.Add('=');
-        NewFileContent += InValue.data();
+        NewFileContent += InValue.GetBegin();
         NewFileContent.Add('\n');
         for (i32 i = Cursor; i < FileContent.GetRuneCount(); ++i)
         {
@@ -212,18 +217,18 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
         {
             Paths::MakeFileBackup(InPath);
         }
-        Paths::OverrideFile(InPath, NewFileContent.ToC());
+        Paths::OverrideFile(InPath, NewFileContent.ToPtr());
 
         return true;
     }
 
-    if (::GoToValue(FileContent.ToC(), &Cursor) == false)
+    if (::GoToValue(FileContent.ToPtr(), &Cursor) == false)
     {
         panic( "Could not find value." )
         return false;
     }
 
-    const i32 ValueSize = static_cast<i32>(::strlen(InValue.data()));
+    const i32 ValueSize = static_cast<i32>(::strlen(InValue.GetBegin()));
     i32 ValueCursor = 0;
     bool  bUpdateNew = true;
     for (i32 i = Cursor; i < FileContent.GetRuneCount(); ++i)
@@ -271,7 +276,7 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
         panic( "Invalid state" )
         return false;
     }
-    NewFileContent += InValue.data();
+    NewFileContent += InValue.GetBegin();
     NewFileContent.Add('\n');
     if (::GoToNextMeaningfulLine(FileContent, &Cursor) == false)
     {
@@ -285,7 +290,7 @@ bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, cons
     {
         Paths::MakeFileBackup(InPath);
     }
-    Paths::OverrideFile(InPath, NewFileContent.ToC());
+    Paths::OverrideFile(InPath, NewFileContent.ToPtr());
 
     return true;
 }
@@ -295,7 +300,7 @@ TOptional<LString> ConfigIo::Deserialize(const LPath& InPath, const LStringView&
     checkSlow( Tasks::IsOnMasterThread() )
     check( Finder::DoesFileExists(InPath) )
 
-    LOG_VERBOSE(LogConfigIo, "Pulling field [{}::{}] from [{}].", InSection, InKey, InPath.GetPath())
+    LOG_VERBOSE(LogConfigIo, "Pulling field [{}::{}] from [{}].", InSection, InKey, InPath)
 
     const LString FileContent = Finder::ReadFile(InPath);
 
@@ -311,7 +316,7 @@ TOptional<LString> ConfigIo::Deserialize(const LPath& InPath, const LStringView&
 
     while (true)
     {
-        if (::StartsWith(&FileContent.GetUnderlyingDataStructure()[Cursor], InKey.data()))
+        if (::StartsWith(&FileContent.GetUnderlyingDataStructure()[Cursor], InKey.GetBegin()))
         {
             break;
         }

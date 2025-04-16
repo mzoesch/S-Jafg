@@ -7,21 +7,31 @@
 namespace Jafg
 {
 
+
+/*----------------------------------------------------------------------------
+    Forwards.
+----------------------------------------------------------------------------*/
+
 template <typename TField>
 void Deserialize(TField* Destination, const LString& InValue) UNSUPPORTED_TEMPLATED_SPECIALIZATION(TField)
 
 template <typename TField>
 LString Serialize(const TField& InValue) { return LString::SprintF("{}", InValue); }
 
+
+/*----------------------------------------------------------------------------
+    Deserialize.
+----------------------------------------------------------------------------*/
+
 template <>
-FORCEINLINE void Deserialize<float>(float* Destination, const LString& InValue)
+FORCEINLINE void Deserialize<f32>(f32* Destination, const LString& InValue)
 {
     checkSlow( Destination )
     *Destination = std::stof(InValue.ToPtr());
 }
 
 template <>
-FORCEINLINE void Deserialize<double>(double* Destination, const LString& InValue)
+FORCEINLINE void Deserialize<f64>(f64* Destination, const LString& InValue)
 {
     checkSlow( Destination )
     *Destination = std::stod(InValue.ToPtr());
@@ -102,6 +112,88 @@ FORCEINLINE void Deserialize<bool>(bool* Destination, const LString& InValue)
     panicMsgf( "Invalid boolean value [{}].", InValue.ToPtr() )
 
     return;
+}
+
+template <>
+FORCEINLINE void Deserialize<LString>(LString* Destination, const LString& InValue)
+{
+    checkSlow( Destination )
+    *Destination = InValue;
+}
+
+template <typename TField>
+FORCEINLINE void Deserialize(TArray<TField>* Destination, const LString& InValue)
+{
+    checkSlow( Destination )
+
+    const auto AddToDestination = [Destination](const LString& Lambda) -> void
+    {
+        TField Temp;
+        Deserialize<TField>(&Temp, Lambda);
+        Destination->Add(Temp);
+
+        return;
+    };
+
+    LString Temp;
+    const i32 Count = InValue.GetRuneCount();
+    for (i32 i = 0; i < Count; ++i)
+    {
+        if (i == 0 || i == Count - 1)
+        {
+            check( InValue[i] == '[' || InValue[i] == ']' )
+            continue;
+        }
+
+        if (InValue[i] == ',')
+        {
+            if (Temp.IsEmpty())
+            {
+                continue;
+            }
+
+            AddToDestination(Temp);
+            Temp.Empty();
+            continue;
+        }
+
+        Temp += InValue[i];
+
+        continue;
+    }
+
+    if (Temp.IsEmpty() == false)
+    {
+        AddToDestination(Temp);
+    }
+
+    return;
+}
+
+
+/*----------------------------------------------------------------------------
+    Serialize.
+----------------------------------------------------------------------------*/
+
+template <typename TField>
+FORCEINLINE LString Serialize(const TArray<TField>& InValue)
+{
+    LString Result = "[";
+
+    for (i32 Index = 0; Index < InValue.GetSize(); ++Index)
+    {
+        Result += Serialize(InValue[Index]);
+        if (Index < InValue.GetSize() - 1)
+        {
+            Result += ',';
+        }
+
+        continue;
+    }
+
+    Result += "]";
+
+    return Result;
 }
 
 } /* ~Namespace Jafg */

@@ -60,16 +60,18 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
             LTexture2 Texture;
             if (Texture.LoadFromDisk(Path, *GetDefault<JUserPreferences>()) == false)
             {
-                panicMsgf(
+                panicMsgf
+                (
                     "Failed to load texture: {}. Faulty path: {}.",
-                    DiskTexture.Name, Path.GetRelativeUnresolvedPath().GetPath()
+                    DiskTexture.Name, Path.GetRelativeUnresolvedPath()
                 )
                 continue;
             }
 
             if (Texture.GetFirstMipMap().Size.X != Texture.GetFirstMipMap().Size.Y)
             {
-                panicMsgf(
+                panicMsgf
+                (
                     "Texture is not square: {}. Size: {}x{}.",
                     DiskTexture.Name, Texture.GetFirstMipMap().Size.X, Texture.GetFirstMipMap().Size.Y
                 )
@@ -78,7 +80,8 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
 
             if (Maths::IsPowerOfTwo(Texture.GetFirstMipMap().Size.X) == false)
             {
-                panicMsgf(
+                panicMsgf
+                (
                     "Texture is not power of two: {}. Size: {}x{}.",
                     DiskTexture.Name, Texture.GetFirstMipMap().Size.X, Texture.GetFirstMipMap().Size.Y
                 )
@@ -118,16 +121,18 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
             LTexture2 Texture;
             if (Texture.LoadFromDisk(Path, *GetDefault<JUserPreferences>()) == false)
             {
-                panicMsgf(
+                panicMsgf
+                (
                     "Failed to load texture: {}. Faulty path: {}.",
-                    DiskTexture.Name, Path.GetRelativeUnresolvedPath().GetPath()
+                    DiskTexture.Name, Path.GetRelativeUnresolvedPath()
                 )
                 continue;
             }
 
             if (Texture.GetFirstMipMap().Size.X != Texture.GetFirstMipMap().Size.Y)
             {
-                panicMsgf(
+                panicMsgf
+                (
                     "Texture is not square: {}. Size: {}x{}.",
                     DiskTexture.Name, Texture.GetFirstMipMap().Size.X, Texture.GetFirstMipMap().Size.Y
                 )
@@ -136,7 +141,8 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
 
             if (Maths::IsPowerOfTwo(Texture.GetFirstMipMap().Size.X) == false)
             {
-                panicMsgf(
+                panicMsgf
+                (
                     "Texture is not power of two: {}. Size: {}x{}.",
                     DiskTexture.Name, Texture.GetFirstMipMap().Size.X, Texture.GetFirstMipMap().Size.Y
                 )

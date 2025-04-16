@@ -3,11 +3,13 @@
 #pragma once
 
 #include "CoreAfx.h"
+#include "System/Path.h"
 
 namespace Jafg
 {
 
 struct LPlatformMisc;
+struct LPhysicalViewport;
 
 //#
 //# Represents an external physical monitor.
@@ -47,15 +49,15 @@ namespace PlatformMisc
 //# console application might not be inside this directory.
 //# In shipped builds, this is the same as GetRealEngineRootDir().
 //#
-ENGINE_API LString GetEngineRootDir();
-ENGINE_API LString GetEngineRootDirImpl();
+ENGINE_API LPath GetEngineRootDir();
+ENGINE_API LPath GetEngineRootDirImpl();
 
 //#
 //# The real engine root dir where the runtime console application is located and running from.
 //# In shipped builds, this is the same as GetEngineRootDir().
 //#
-ENGINE_API LString GetRealEngineRootDir();
-ENGINE_API LString GetRealEngineRootDirImpl();
+ENGINE_API LPath GetRealEngineRootDir();
+ENGINE_API LPath GetRealEngineRootDirImpl();
 
 //#
 //# Invalidate all cached values and reinitialize them inside GPlatformMisc.
@@ -66,8 +68,8 @@ ENGINE_API void InvalidateCachedValues();
 //# The number of physical viewports available on the current platform.
 //# INDEX_NONE if an error occurred.
 //#
-ENGINE_API auto GetNumberOfPhysicalViewports() -> i32;
-ENGINE_API auto SetPhysicalViewports() -> bool;
+ENGINE_API i32  GetNumberOfPhysicalViewports();
+ENGINE_API bool SetPhysicalViewports();
 
 } /* ~Namespace PlatformMisc */
 
@@ -84,8 +86,8 @@ struct ENGINE_API LPlatformMisc
 
     i32 NumberOfPhysicalViewports = INDEX_NONE;
     TArray<LPhysicalViewport> PhysicalViewports;
-    LString EngineRootDir;
-    LString RealEngineRootDir;
+    LPath EngineRootDir;
+    LPath RealEngineRootDir;
 };
 
 } /* ~Namespace Jafg */

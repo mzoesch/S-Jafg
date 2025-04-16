@@ -40,37 +40,37 @@ void Jafg::LShader::Use() const
 
 void Jafg::LShader::SetBoolUniform(const LString& Name, const bool Value) const
 {
-    glUniform1i(glGetUniformLocation(this->Id, Name.ToC()), static_cast<int>(Value));
+    glUniform1i(glGetUniformLocation(this->Id, Name.ToPtr()), static_cast<int>(Value));
 }
 
 void Jafg::LShader::SetIntUniform(const LString& Name, const i32 Value) const
 {
-    glUniform1i(glGetUniformLocation(this->Id, Name.ToC()), Value);
+    glUniform1i(glGetUniformLocation(this->Id, Name.ToPtr()), Value);
 }
 
 void Jafg::LShader::SetUIntUniform(const LString& Name, const u32 Value) const
 {
-    glUniform1ui(glGetUniformLocation(this->Id, Name.ToC()), Value);
+    glUniform1ui(glGetUniformLocation(this->Id, Name.ToPtr()), Value);
 }
 
 void Jafg::LShader::SetFloatUniform(const LString& Name, const f32 Value) const
 {
-    glUniform1f(glGetUniformLocation(this->Id, Name.ToC()), Value);
+    glUniform1f(glGetUniformLocation(this->Id, Name.ToPtr()), Value);
 }
 
 void Jafg::LShader::SetVec3Uniform(const LString& Name, const LVector3& Value) const
 {
-    glUniform3f(glGetUniformLocation(this->Id, Name.ToC()), Value.X, Value.Y, Value.Z);
+    glUniform3f(glGetUniformLocation(this->Id, Name.ToPtr()), Value.X, Value.Y, Value.Z);
 }
 
 void Jafg::LShader::SetVec4Uniform(const LString& Name, const LVector4& Value) const
 {
-    glUniform4f(glGetUniformLocation(this->Id, Name.ToC()), Value.X, Value.Y, Value.Z, Value.W);
+    glUniform4f(glGetUniformLocation(this->Id, Name.ToPtr()), Value.X, Value.Y, Value.Z, Value.W);
 }
 
 void Jafg::LShader::SetMatrixUniform(const LString& Name, const LMatrixF& Value) const
 {
-    glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.ToC()), 1, GL_FALSE, Value.GetData());
+    glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.ToPtr()), 1, GL_FALSE, Value.GetData());
 }
 
 void Jafg::LShader::SetColorUniform(const LString& Name, const LColor& Value) const
@@ -92,8 +92,8 @@ void Jafg::LShader::LoadShader(const LEnginePath& VertexPath, const LEnginePath&
 {
     const LString UncompiledVertex   = Finder::ReadFile(VertexPath);
     const LString UncompiledFragment = Finder::ReadFile(FragmentPath);
-    const char* UncompiledVertexC   = UncompiledVertex.ToC();
-    const char* UncompiledFragmentC = UncompiledFragment.ToC();
+    const char* UncompiledVertexC   = UncompiledVertex.ToPtr();
+    const char* UncompiledFragmentC = UncompiledFragment.ToPtr();
 
     i32 Success;
     char InfoLog[512];

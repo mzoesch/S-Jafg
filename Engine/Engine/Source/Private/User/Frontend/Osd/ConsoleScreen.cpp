@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "User/Frontend/Osd/ConsoleScreen.h"
 #include "Engine/Engine.h"
 #include "Cli/CliStatics.h"
@@ -84,6 +83,28 @@ void Jafg::WConsoleScreen::OnVisibilityChanged(const EWidgetVisibility::Type InO
     return;
 }
 
+void Jafg::WConsoleScreen::AddToHistory(const LString& InText)
+{
+    TArray<LString> MutableHistory = GetMutableDefault<WConsoleScreen>()->History;
+
+    if (const LString* Last = MutableHistory.Peek(); Last)
+    {
+        if (*Last == InText)
+        {
+            return;
+        }
+    }
+
+    if (MutableHistory.GetSize() > MaxHistorySize)
+    {
+        MutableHistory.RemoveAt(0);
+    }
+
+    MutableHistory.Add(InText);
+
+    return;
+}
+
 void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType)
 {
     if (InCommitType != ETextCommit::OnEnter)
@@ -105,6 +126,8 @@ void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit
     {
         return;
     }
+
+    this->AddToHistory(InText);
 
     if (CliStatics::IsCommand(InText))
     {

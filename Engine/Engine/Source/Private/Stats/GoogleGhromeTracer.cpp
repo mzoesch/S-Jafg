@@ -28,10 +28,10 @@ void Jafg::Stats::Vendor::LGoogleChromeTracer::BeginSession(LString&& InName)
     const LString Path = this->GetPath();
 
     // Do not use finder, as it may not exist yet.
-    const std::filesystem::path P{Path.ToC()};
+    const std::filesystem::path P{Path.ToPtr()};
     std::filesystem::create_directories(P.parent_path());
 
-    this->Stream.open(Path.ToC(), std::ios::out | std::ios::trunc);
+    this->Stream.open(Path.ToPtr(), std::ios::out | std::ios::trunc);
     this->Stream << R"({"otherData": {},"traceEvents":[)";
 
     return;
@@ -87,7 +87,7 @@ void Jafg::Stats::Vendor::LGoogleChromeTracer::EndSession()
 
     if (this->Stream.fail())
     {
-        LOG_ERROR(LogStats, "Failed to write file: [{}].", this->GetPath().ToC())
+        LOG_ERROR(LogStats, "Failed to write file: [{}].", this->GetPath())
     }
 
     this->Session.Name.Empty();
@@ -103,10 +103,10 @@ Jafg::LString Jafg::Stats::Vendor::LGoogleChromeTracer::GetPath() const
 
     LPath Path = Finder::GetSavedDir();
     Path /= "GoogleChrome";
-    Path /= this->Session.Name.ToC();
+    Path /= this->Session.Name.ToPtr();
     Path.AddExtension(".json");
 
-    return { Path.GetPath().ToPtr() };
+    return { Path.ToPtr() };
 }
 
 #endif /* WITH_STATS && JAFG_STATS_USE_GOOGLE_CHROME_TRACER */

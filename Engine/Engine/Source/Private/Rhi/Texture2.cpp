@@ -25,10 +25,10 @@ bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const JUserPreferenc
     i32 Height     = 0;
     i32 NrChannels = 0;
 
-    Finder::DoesFileExistsPanicked(Path);
+    Finder::DoesFileExistsAsserted(Path);
     const u8* Bulk     = nullptr;
     u64       BulkSize = 0;
-    Finder::ReadFileAsBinary(Path, Bulk, BulkSize);
+    Finder::ReadFileAsBinary(Path, &Bulk, &BulkSize);
 
     ::stbi_set_flip_vertically_on_load(false);
     u8* Data =::stbi_load_from_memory(Bulk, static_cast<int>(BulkSize), &Width, &Height, &NrChannels, 4);
@@ -45,7 +45,7 @@ bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const JUserPreferenc
     this->MipMap.LoadFromBuffer(Data, 0);
 
     ::stbi_image_free(Data);
-    Finder::FreeReadFileBinaryBuffer(Bulk);
+    Finder::FreeReadFileBinaryBuffer(&Bulk);
 
     return true;
 }

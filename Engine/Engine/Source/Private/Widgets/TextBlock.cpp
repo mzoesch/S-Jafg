@@ -268,7 +268,7 @@ void Jafg::WTextBlock::FirstTimeLoadCharacters()
     FT_Face Face;
     const u8* FontData = nullptr;
     u64 FontDataSize = 0;
-    Finder::ReadFileAsBinary(LEnginePath(EEnginePaths::Fonts, "Core.otf"), FontData, FontDataSize);
+    Finder::ReadFileAsBinary(LEnginePath(EEnginePaths::Fonts, "Core.otf"), &FontData, &FontDataSize);
     if (FT_New_Memory_Face(Ft, reinterpret_cast<const FT_Byte*>(FontData), static_cast<FT_Long>(FontDataSize), 0, &Face))
     {
         JAFG_ENGINE_FORWARD_REQUEST_EXIT(EPlatformExit::Fatal, "Failed to load font face.")
@@ -326,7 +326,7 @@ void Jafg::WTextBlock::FirstTimeLoadCharacters()
     FT_Done_Face(Face);
     FT_Done_FreeType(Ft);
 
-    Finder::FreeReadFileBinaryBuffer(FontData);
+    Finder::FreeReadFileBinaryBuffer(&FontData);
 
     return;
 }

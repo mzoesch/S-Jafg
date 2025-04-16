@@ -13,8 +13,8 @@ class JUserPreferences;
 //#
 //# The finder is a high-level file-system platform abstraction. All functions defined below work on any platform.
 //# Reading, checking for file existence, walking along directories, etc.
-//# The finder is not capable of creating and reading files (as this would not be possible on all platforms).
-//# If you need to create / write files, use the Jafg::Paths namespace instead.
+//# The finder is not capable of creating, deleting or writing to files (as this would not be possible on
+//# all platforms). If you need to create, delete or write to files, use the Jafg::Paths namespace instead.
 //#
 namespace Finder
 {
@@ -29,19 +29,17 @@ ENGINE_API LPath GetUserPreferencesFile();
 //# ask the current platform to read the file.
 //# This function will panic if something goes wrong.
 //# @return The file content.
-//# @remark Works with embedded files.
 //#
 ENGINE_API LString ReadFile(const LEnginePath& InEnginePath);
-ENGINE_API void ReadFileAsBinary(const LEnginePath& InEnginePath, const u8*& OutBuffer, u64& OutBufferOverflowGuard);
-ENGINE_API void FreeReadFileBinaryBuffer(const u8*& InBuffer);
+ENGINE_API void ReadFileAsBinary(const LEnginePath& InEnginePath, const u8** OutBuffer, u64* OutBufferOverflowGuard);
+ENGINE_API void FreeReadFileBinaryBuffer(const u8** InBuffer);
 
 //#
 //# @return True if the path / file exists.
-//# @remark Works with embedded files.
 //#
-ENGINE_API bool DoesFileExists(const LEnginePath& InEnginePath);
-ENGINE_API bool DoesFileExistsChecked(const LEnginePath& InEnginePath);
-ENGINE_API bool DoesFileExistsPanicked(const LEnginePath& InEnginePath);
+ENGINE_API  bool DoesFileExists(const LEnginePath& InEnginePath);
+FORCEINLINE bool DoesFileExistsChecked(const LEnginePath& InEnginePath) { const bool bOut = Finder::DoesFileExists(InEnginePath); check( bOut ); return bOut; }
+FORCEINLINE bool DoesFileExistsAsserted(const LEnginePath& InEnginePath) { const bool bOut = Finder::DoesFileExists(InEnginePath); jassert( bOut ); return bOut; }
 
 //#
 //# Ensures a file existence. If it does not exist, it will try to create it if filesystem access to the
@@ -62,13 +60,13 @@ ENGINE_API LPath ResolvePathToAbsolutePath(const EEnginePaths::Type& InEnginePat
 ENGINE_API TArray<LString> FindFiles(
     const LPath& InAbsolutePath,
     const bool bKeepExtension = false,
-    const LString& InFileExtension = ".*"
+    const LStringView& InFileExtension = ".*"
 );
 ENGINE_API TArray<LString> FindFiles(
     const EEnginePaths::Type InEnginePathTy,
     const JUserPreferences& InUserPreferences,
     const bool bKeepExtension = false,
-    const LString& InFileExtension = ".*"
+    const LStringView& InFileExtension = ".*"
 );
 
 } /* ~Namespace Finder */

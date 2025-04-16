@@ -39,7 +39,7 @@ struct LVirtualFile;
     private:
 
         u64       FileSize;
-        LPath        RelativeContentPath;
+        LPath     RelativeContentPath;
         const u8* FileContents;
     };
 #endif /* PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION || PRIVATE_JAFG_DEFINE_VIRTUAL_FILE */

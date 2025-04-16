@@ -91,8 +91,12 @@ public:
     FORCEINLINE  TStringBase(const T* InString, const T* InEnd) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst());
     FORCEINLINE  TStringBase(      T* InString,       T* InEnd) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable());
     FORCEINLINE ~TStringBase() noexcept = default;
-    template <typename TOtherDerived>
-    FORCEINLINE  TStringBase(const TOtherDerived& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<Self, TOtherDerived> == false);
+    template <typename TOtherString>
+    FORCEINLINE  TStringBase(const TOtherString& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<Self, TOtherString> == false);
+    template <typename TOtherString>
+    FORCEINLINE  TStringBase(TOtherString&& InString) noexcept requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && std::is_same_v<TOtherString, Self> == false);
+    template <typename TOtherString>
+    FORCEINLINE  TStringBase(TOtherString&& InString) noexcept requires (Self::IsStrongAlloc() && TOtherString::IsStrongAlloc() && std::is_same_v<TOtherString, Self> == false);
 
     FORCEINLINE Self& operator=(LNullptrTy) noexcept requires (Self::IsStrongAlloc()) { this->Empty(); return this->GetSelf(); }
     FORCEINLINE Self& operator=(LNullptrTy) noexcept requires (Self::IsWeakAlloc()) { this->GetUnderlyingDataStructure().Invalidate(); return this->GetSelf(); }
@@ -104,8 +108,12 @@ public:
     FORCEINLINE Self& operator=(const T* InString) noexcept requires (Self::IsStrongAlloc());
     FORCEINLINE Self& operator=(const T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst());
     FORCEINLINE Self& operator=(      T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable());
-    template <typename TOtherDerived>
-    FORCEINLINE Self& operator=(const TOtherDerived& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<Self, TOtherDerived> == false);
+    template <typename TOtherString>
+    FORCEINLINE Self& operator=(const TOtherString& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<Self, TOtherString> == false);
+    template <typename TOtherString>
+    FORCEINLINE Self& operator=(TOtherString&& InString) noexcept requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && std::is_same_v<TOtherString, Self> == false);
+    template <typename TOtherString>
+    FORCEINLINE Self& operator=(TOtherString&& InString) noexcept requires (Self::IsStrongAlloc() && TOtherString::IsStrongAlloc() && std::is_same_v<TOtherString, Self> == false);
 
     FORCEINLINE void     Invalidate() requires (Self::IsWeakAlloc()) { this->Impl.Invalidate(); }
     FORCEINLINE T*       MoveDataPointerUp(T* NewDataPointer) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) { return this->Impl.MoveDataPointerUp(NewDataPointer); }
@@ -330,8 +338,12 @@ public:
     FORCEINLINE  _TStringBase(const T* InString, const T* InEnd) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst()) : Super(InString, InEnd) { }
     FORCEINLINE  _TStringBase(      T* InString,       T* InEnd) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) : Super(InString, InEnd) { }
     FORCEINLINE ~_TStringBase() noexcept = default;
-    template <typename TOtherAlloc>
-    FORCEINLINE  _TStringBase(const TOtherStringBase<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false) : Super(Other) { }
+    template <typename TOtherString>
+    FORCEINLINE  _TStringBase(const TOtherStringBase<TOtherString>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherString, Alloc> == false) : Super(Other) { }
+    template <typename TOtherString>
+    FORCEINLINE  _TStringBase(TOtherString&& InString) noexcept requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && std::is_same_v<TOtherString, Alloc> == false) : Super(std::move(InString)) { }
+    template <typename TOtherString>
+    FORCEINLINE  _TStringBase(TOtherString&& InString) noexcept requires (Self::IsStrongAlloc() && TOtherString::IsStrongAlloc() && std::is_same_v<TOtherString, Alloc> == false) : Super(std::move(InString)) { }
 
     FORCEINLINE Self& operator=(LNullptrTy) noexcept { return this->Super::operator=(nullptr); }
     FORCEINLINE Self& operator=(const Self& InOther) noexcept { return this->Super::operator=(InOther); }
@@ -344,6 +356,10 @@ public:
     FORCEINLINE Self& operator=(      T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) { return this->Super::operator=(InString); }
     template <typename TOtherAlloc>
     FORCEINLINE Self& operator=(const TOtherStringBase<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
+    template <typename TOtherAlloc>
+    FORCEINLINE Self& operator=(TOtherStringBase<TOtherAlloc>&& InString) noexcept requires (Self::IsWeakAlloc() && TOtherAlloc::IsWeakAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
+    template <typename TOtherAlloc>
+    FORCEINLINE Self& operator=(TOtherStringBase<TOtherAlloc>&& InString) noexcept requires (Self::IsStrongAlloc() && TOtherAlloc::IsStrongAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
 };
 
 template<typename InT>
@@ -678,6 +694,24 @@ FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(const TOtherDer
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
+template<typename TOtherString>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(TOtherString&& InString) noexcept
+    requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && std::is_same_v<TOtherString, Derived> == false) : Impl(std::move(InString.GetUnderlyingDataStructure()))
+{
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+template<typename TOtherString>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(TOtherString&& InString) noexcept
+    requires (Self::IsStrongAlloc() && TOtherString::IsStrongAlloc() && std::is_same_v<TOtherString, Derived> == false) : Impl(std::move(InString.GetUnderlyingDataStructure()))
+{
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
 FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::operator=(const T InRune) noexcept requires (Self::IsStrongAlloc())
 {
     this->Reset(1);
@@ -755,6 +789,29 @@ FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<
     noexcept requires (Self::IsWeakAlloc() && std::is_same_v<Self, TOtherDerived> == false)
 {
     this->Impl = Other.GetUnderlyingDataStructure();
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return this->GetSelf();
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+template<typename TOtherString>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::operator=(TOtherString&& InString) noexcept
+    requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && std::is_same_v<TOtherString, Derived> == false)
+{
+    this->Impl = std::move(InString.GetUnderlyingDataStructure());
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return this->GetSelf();
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+template<typename TOtherString>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self& TStringBase<Derived, InTraits, InAlloc>::operator=(TOtherString&& InString) noexcept
+    requires (Self::IsStrongAlloc() && TOtherString::IsStrongAlloc() && std::is_same_v<TOtherString, Derived> == false)
+{
+    this->Impl = std::move(InString.GetUnderlyingDataStructure());
+
     PRIVATE_JAFG_CHECK_STRING_STATE()
     return this->GetSelf();
 }
@@ -1963,11 +2020,26 @@ void TStringBase<Derived, InTraits, InAlloc>::EnsureValidState() const
 
 template<typename InTraits, typename InAlloc>
 template<typename TOtherAlloc>
-FORCEINLINE typename _TStringBase<InTraits, InAlloc>::Self& _TStringBase<InTraits, InAlloc>::operator=(const TOtherStringBase<TOtherAlloc>& Other)
-    noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, typename TStringBase<_TStringBase, InTraits, InAlloc>::Alloc> == false)
+FORCEINLINE typename _TStringBase<InTraits, InAlloc>::Self& _TStringBase<InTraits, InAlloc>::operator=(const TOtherStringBase<TOtherAlloc>& Other) noexcept
+    requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, typename TStringBase<_TStringBase, InTraits, InAlloc>::Alloc> == false)
 {
-    this->Impl = Other.GetUnderlyingDataStructure();
-    return this->GetSelf();
+    return this->Super::operator=(Other);
+}
+
+template<typename InTraits, typename InAlloc>
+template<typename TOtherAlloc>
+FORCEINLINE typename _TStringBase<InTraits, InAlloc>::Self& _TStringBase<InTraits, InAlloc>::operator=(TOtherStringBase<TOtherAlloc>&& InString) noexcept
+    requires (Self::IsWeakAlloc() && TOtherAlloc::IsWeakAlloc() && std::is_same_v<TOtherAlloc, typename TStringBase<_TStringBase, InTraits, InAlloc>::Alloc> == false)
+{
+    return this->Super::operator=(std::move(InString));
+}
+
+template<typename InTraits, typename InAlloc>
+template<typename TOtherAlloc>
+FORCEINLINE typename _TStringBase<InTraits, InAlloc>::Self& _TStringBase<InTraits, InAlloc>::operator=(TOtherStringBase<TOtherAlloc>&& InString) noexcept
+    requires (Self::IsStrongAlloc() && TOtherAlloc::IsStrongAlloc() && std::is_same_v<TOtherAlloc, typename TStringBase<_TStringBase, InTraits, InAlloc>::Alloc> == false)
+{
+    return this->Super::operator=(std::move(InString));
 }
 
 #endif /* CHECK_STRING_VALIDITY */
@@ -1987,5 +2059,18 @@ struct std::formatter<::Jafg::LString> : std::formatter<const char*>
     ) const -> ::std::format_context::iterator
     {
         return ::std::formatter<const char*>::format(InString.ToPtr(), InContext);
+    }
+};
+
+template <>
+struct std::formatter<::Jafg::LStringView> : std::formatter<::std::string_view>
+{
+    FORCEINLINE auto format
+    (
+        const ::Jafg::LStringView& InStringView,
+        ::std::format_context& InContext
+    ) const -> ::std::format_context::iterator
+    {
+        return ::std::formatter<::std::string_view>::format(::std::string_view(InStringView.GetBegin(), InStringView.GetEnd()), InContext);
     }
 };

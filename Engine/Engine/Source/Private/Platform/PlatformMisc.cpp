@@ -8,29 +8,36 @@ namespace Jafg
 
 ENGINE_API LPlatformMisc* GPlatformMisc = nullptr;
 
-LString PlatformMisc::GetEngineRootDir()
+LPath PlatformMisc::GetEngineRootDir()
 {
-#if  !WITH_VIRTUAL_FILESYSTEM
+#if WITH_VIRTUAL_FILESYSTEM
+    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: [ENGINE_ROOT_DIR].")
+    return "";
+#else /* WITH_VIRTUAL_FILESYSTEM */
+    checkSlow( GPlatformMisc )
     if (GPlatformMisc->EngineRootDir.IsEmpty())
     {
         GPlatformMisc->EngineRootDir = PlatformMisc::GetEngineRootDirImpl();
     }
     check( GPlatformMisc->EngineRootDir.IsEmpty() == false )
-#endif /* !WITH_VIRTUAL_FILESYSTEM */
-
     return GPlatformMisc->EngineRootDir;
+#endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 
-LString PlatformMisc::GetRealEngineRootDir()
+LPath PlatformMisc::GetRealEngineRootDir()
 {
+#if WITH_VIRTUAL_FILESYSTEM
+    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: [REAL_ENGINE_ROOT_DIR].")
+    return "";
+#else /* WITH_VIRTUAL_FILESYSTEM */
+    checkSlow( GPlatformMisc )
     if (GPlatformMisc->RealEngineRootDir.IsEmpty())
     {
         GPlatformMisc->RealEngineRootDir = PlatformMisc::GetRealEngineRootDirImpl();
     }
-
     check( GPlatformMisc->RealEngineRootDir.IsEmpty() == false )
-
     return GPlatformMisc->RealEngineRootDir;
+#endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 
 void PlatformMisc::InvalidateCachedValues()

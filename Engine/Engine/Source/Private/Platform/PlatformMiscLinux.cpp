@@ -12,14 +12,14 @@ namespace
 
 } /* ~Namespace <Anonymous> */
 
-Jafg::LString Jafg::PlatformMisc::GetEngineRootDirImpl()
+Jafg::LPath Jafg::PlatformMisc::GetEngineRootDirImpl()
 {
     LPath RealRootDir = PlatformMisc::GetRealEngineRootDir();
     RealRootDir.PopSubPaths(4);
-    return RealRootDir.MoveOut();
+    return RealRootDir;
 }
 
-Jafg::LString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
+Jafg::LPath Jafg::PlatformMisc::GetRealEngineRootDirImpl()
 {
     char Buffer[PLATFORM_MAX_PATH] = { 0 };
     const u64 Ret = readlink("/proc/self/exe", Buffer, PLATFORM_MAX_PATH);
@@ -36,7 +36,7 @@ Jafg::LString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
     LPath Path = LPath(FromBuffer.substr(0, Position).c_str());
     Path.Normalize();
 
-    return { Path.MoveOut() };
+    return Path;
 }
 
 i32 Jafg::PlatformMisc::GetNumberOfPhysicalViewports()

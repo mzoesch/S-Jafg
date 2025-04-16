@@ -31,7 +31,7 @@ void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandE
         return;
     }
 
-    if (Str::IsValidAscii(CommandStr.ToC()) == false)
+    if (Str::IsValidAscii(CommandStr.ToPtr()) == false)
     {
         OutResponse->Rc = ECommandReturnCode::Failure;
         OutResponse->StdOut = "Command contains invalid characters";
@@ -42,14 +42,14 @@ void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandE
     if (Cmd == nullptr)
     {
         OutResponse->Rc = ECommandReturnCode::Unknown;
-        OutResponse->StdOut = LString::SprintF("No such command [{}]", CommandStr.ToC());
+        OutResponse->StdOut = LString::SprintF("No such command [{}]", CommandStr);
         return;
     }
 
     if (Cmd->GetOverloadCount() == 0)
     {
         OutResponse->Rc = ECommandReturnCode::Failure;
-        OutResponse->StdOut = LString::SprintF("Command [{}] has no overloads and is therefore not invokable", CommandStr.ToC());
+        OutResponse->StdOut = LString::SprintF("Command [{}] has no overloads and is therefore not invokable", CommandStr);
         return;
     }
 

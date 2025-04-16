@@ -87,14 +87,14 @@ LAL_API bool AreFilesIdentical(const LPath& InFirst, const LPath& InSecond);
 
 inline bool Paths::DoesPathExistChecked(const LPath& InPath)
 {
-    const bool Out = Paths::DoesFileExist(InPath);
+    const bool Out = Paths::DoesPathExist(InPath);
     check( Out )
     return Out;
 }
 
 inline bool Paths::DoesPathExistAsserted(const LPath& InPath)
 {
-    const bool Out = Paths::DoesFileExist(InPath);
+    const bool Out = Paths::DoesPathExist(InPath);
     jassert( Out )
     return Out;
 }
@@ -115,14 +115,14 @@ inline bool Paths::DoesFileExistAsserted(const LPath& InFilePath)
 
 inline bool Paths::DoesDirExistChecked(const LPath& InDirPath)
 {
-    const bool Out = Paths::DoesFileExist(InDirPath);
+    const bool Out = Paths::DoesDirExist(InDirPath);
     check( Out )
     return Out;
 }
 
 inline bool Paths::DoesDirExistAsserted(const LPath& InDirPath)
 {
-    const bool Out = Paths::DoesFileExist(InDirPath);
+    const bool Out = Paths::DoesDirExist(InDirPath);
     jassert( Out )
     return Out;
 }

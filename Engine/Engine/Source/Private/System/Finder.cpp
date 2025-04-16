@@ -25,16 +25,12 @@ LPath Finder::GetEngineRootDir()
 
 LPath Finder::GetSavedDir()
 {
-    LPath Out = GetEngineRootDir();
-    Out /= "Saved";
-    return Out;
+    return Finder::GetEngineRootDir().AppendPath("Saved");
 }
 
 LPath Finder::GetUserPreferencesFile()
 {
-    LPath Out = GetSavedDir();
-    Out /= "MyPreferences.cfg";
-    return Out;
+    return Finder::GetSavedDir().AppendPath("MyPreferences.cfg");
 }
 
 LString Finder::ReadFile(const LEnginePath& InEnginePath)
@@ -46,34 +42,35 @@ LString Finder::ReadFile(const LEnginePath& InEnginePath)
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 
-void Finder::ReadFileAsBinary(const LEnginePath& InEnginePath, const u8*& OutBuffer, u64& OutBufferOverflowGuard)
+void Finder::ReadFileAsBinary(const LEnginePath& InEnginePath, const u8** OutBuffer, u64* OutBufferOverflowGuard)
 {
-    check( OutBuffer == nullptr )
+    check( OutBuffer && OutBufferOverflowGuard && *OutBuffer == nullptr && *OutBufferOverflowGuard == 0 )
 #if WITH_VIRTUAL_FILESYSTEM
     GVirtualFileSystem->ReadFileAsBytes(InEnginePath, OutBuffer, OutBufferOverflowGuard);
 #else /* WITH_VIRTUAL_FILESYSTEM */
-    std::ifstream File(
-        InEnginePath.ResolveAbsolutePath(*GetDefault<JUserPreferences>()).GetPath().ToC(),
+    std::ifstream File
+    (
+        InEnginePath.ResolveAbsolutePath(*GetDefault<JUserPreferences>()).ToPtr(),
         std::ios::binary | std::ios::ate
     );
 
     if (File.fail())
     {
-        panicMsgf("Failed to open file: [{}].", InEnginePath.GetRelativeUnresolvedPath().GetPath())
+        panicMsgf("Failed to open file: [{}].", InEnginePath.GetRelativeUnresolvedPath())
         return;
     }
 
-    OutBufferOverflowGuard = File.tellg();
-    jassert( OutBufferOverflowGuard > 0 )
+    *OutBufferOverflowGuard = File.tellg();
+    jassert( *OutBufferOverflowGuard > 0 )
     File.seekg(0, std::ios::beg);
 
-    OutBuffer = new u8[OutBufferOverflowGuard];
+    *OutBuffer = new u8[*OutBufferOverflowGuard];
     jassert( OutBuffer )
 
-    if (File.read(reinterpret_cast<char*>(const_cast<u8*>(OutBuffer)), static_cast<std::streamsize>(OutBufferOverflowGuard)).fail())
+    if (File.read(reinterpret_cast<char*>(const_cast<u8*>(*OutBuffer)), static_cast<std::streamsize>(*OutBufferOverflowGuard)).fail())
     {
         File.close();
-        panicMsgf("Failed to read file: [{}].", InEnginePath.GetRelativeUnresolvedPath().GetPath())
+        panicMsgf("Failed to read file: [{}].", InEnginePath.GetRelativeUnresolvedPath())
         return;
     }
 
@@ -83,13 +80,13 @@ void Finder::ReadFileAsBinary(const LEnginePath& InEnginePath, const u8*& OutBuf
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 
-void Finder::FreeReadFileBinaryBuffer(const u8*& InBuffer)
+void Finder::FreeReadFileBinaryBuffer(const u8** InBuffer)
 {
-    check( InBuffer != nullptr )
+    check( InBuffer && *InBuffer != nullptr )
 #if !WITH_VIRTUAL_FILESYSTEM
-    delete InBuffer;
+    delete *InBuffer;
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
-    InBuffer = nullptr;
+    *InBuffer = nullptr;
     return;
 }
 
@@ -102,23 +99,6 @@ bool Finder::DoesFileExists(const LEnginePath& InEnginePath)
 #endif /* WITH_VIRTUAL_FILESYSTEM */
 }
 
-bool Finder::DoesFileExistsChecked(const LEnginePath& InEnginePath)
-{
-    const bool bOut = Finder::DoesFileExists(InEnginePath);
-    check(bOut)
-    return bOut;
-}
-
-bool Finder::DoesFileExistsPanicked(const LEnginePath& InEnginePath)
-{
-    const bool bOut = Finder::DoesFileExists(InEnginePath);
-    if (bOut == false)
-    {
-        panicMsgf("File does not exist: {}", InEnginePath.GetRelativeUnresolvedPath().GetPath())
-    }
-    return bOut;
-}
-
 void Finder::EnsureFile(const LEnginePath& InEnginePath)
 {
     if (Finder::DoesFileExists(InEnginePath))
@@ -126,7 +106,7 @@ void Finder::EnsureFile(const LEnginePath& InEnginePath)
         return;
     }
 #if WITH_VIRTUAL_FILESYSTEM
-    panicMsgf( "File does not exist: {}.", InEnginePath.GetRelativeUnresolvedPath().GetPath() )
+    panicMsgf( "File does not exist: {}.", InEnginePath.GetRelativeUnresolvedPath() )
 #else /* WITH_VIRTUAL_FILESYSTEM */
     Paths::CreateFileSlow(InEnginePath.ResolveAbsolutePath(*GetDefault<JUserPreferences>()));
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
@@ -140,21 +120,15 @@ void Finder::CheckFile(const LEnginePath& InEnginePath)
         return;
     }
 
-    panicMsgf( "No such file: {}.", InEnginePath.GetRelativeUnresolvedPath().GetPath() )
+    panicMsgf( "No such file: {}.", InEnginePath.GetRelativeUnresolvedPath() )
+
+    return;
 }
 
 LPath Finder::ResolvePathToRelativeModulePath(const LEnginePath& InEnginePath)
 {
-    if (InEnginePath.GetPathTy() == EEnginePaths::CustomEngine)
-    {
-        panicMsgf(
-            "Cannot resolve path to relative module path. Engine path type is CustomEngine. Faulty path: {}.",
-            InEnginePath.GetRelativeUnresolvedPath().GetPath()
-        )
-        return { };
-    }
-
-    LPath Out = LexToString(InEnginePath.GetPathTy());
+    check( InEnginePath.GetPathTy() != EEnginePaths::CustomEngine )
+    LPath Out(std::move(LexToString(InEnginePath.GetPathTy())));
     return Out /= InEnginePath.GetRelativeUnresolvedPath();
 }
 
@@ -188,22 +162,18 @@ LPath Finder::ResolvePathToAbsolutePath(const EEnginePaths::Type& InEnginePath, 
 TArray<LString> Finder::FindFiles(
     const LPath& InAbsolutePath,
     const bool bKeepExtension /* = false */,
-    const LString& InFileExtension /* = ".*" */
+    const LStringView& InFileExtension /* = ".*" */
 )
 {
 #if WITH_VIRTUAL_FILESYSTEM
     LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())
     return { };
 #else /* WITH_VIRTUAL_FILESYSTEM */
+    Paths::DoesPathExistAsserted(InAbsolutePath);
+
     TArray<LString> Out;
 
-    if (Fs::exists(InAbsolutePath.GetPath().ToC()) == false)
-    {
-        panicMsgf("Path does not exist: {}", InAbsolutePath.GetPath().ToC())
-        return Out;
-    }
-
-    for (auto &p : Fs::directory_iterator(InAbsolutePath.GetPath().ToC()))
+    for (auto& p : Fs::directory_iterator(InAbsolutePath.ToPtr()))
     {
         if (p.is_directory())
         {
@@ -233,7 +203,7 @@ TArray<LString> Finder::FindFiles(
         }
         else
         {
-            if (p.path().extension() == InFileExtension.ToC())
+            if (InFileExtension == p.path().extension().c_str())
             {
                 if (bKeepExtension)
                 {
@@ -267,7 +237,7 @@ TArray<LString> Finder::FindFiles(
     const EEnginePaths::Type InEnginePathTy,
     const JUserPreferences& InUserPreferences,
     const bool bKeepExtension /* = false */,
-    const LString& InFileExtension /* = ".*"*/
+    const LStringView& InFileExtension /* = ".*"*/
 )
 {
 #if WITH_VIRTUAL_FILESYSTEM

@@ -47,7 +47,7 @@ void PullConfigFromObject(LObjectClass* InClass)
     i32 FieldsPulled = 0; /* The compiler will most likely purge this. */
     for (LClassField& Field : InClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())
     {
-        checkSlow( Field.Identifier.empty() == false )
+        checkSlow( Field.Identifier.IsEmpty() == false )
 
         if (TOptional<LString> StringValue = ConfigIo::Deserialize(CfgPath, InClass->GetSpacedClassName().ToPtr(), Field.Identifier))
         {
