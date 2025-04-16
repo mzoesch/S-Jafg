@@ -1,12 +1,12 @@
 // Copyright mzoesch. All rights reserved.
 
-#include <bits/fs_path.h>
 #if WITH_STATS && JAFG_STATS_USE_GOOGLE_CHROME_TRACER
 
 #include "Stats/GoogleChromeTracer.h"
 #include "Stats/StatsCore.h"
 #include "System/Finder.h"
 #include "System/EnginePath.h"
+#include <bits/fs_path.h>
 
 Jafg::Stats::Vendor::LGoogleChromeTracer::~LGoogleChromeTracer()
 {

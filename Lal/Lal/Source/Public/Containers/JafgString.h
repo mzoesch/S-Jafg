@@ -10,6 +10,13 @@
     #define JAFG_CHECK_STRING(Expr)
 #endif /* !CHECK_STRING_VALIDITY */
 
+template <typename TOtherStringCandidate>
+concept Jafg_HasTAndTraits = requires(TOtherStringCandidate OtherString)
+{
+    typename TOtherStringCandidate::T;
+    typename TOtherStringCandidate::Traits;
+};
+
 namespace Jafg
 {
 
@@ -62,6 +69,21 @@ public:
     template <typename TMemberField>
     friend void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField);
 
+    //# @return True, if the TOtherString a valid string in terms of its rune type and traits.
+    template <typename TOtherString>
+    FORCEINLINE consteval static bool IsValidOtherString() noexcept requires (Jafg_HasTAndTraits<TOtherString> == false)
+    {
+        return false; // Default no. We might wanna do something weaker here in the future but this works for now.
+                      // But only for Jafg::TStringBase... So more like a future problem.
+    }
+    template <typename TOtherString>
+    FORCEINLINE consteval static bool IsValidOtherString() noexcept requires (Jafg_HasTAndTraits<TOtherString>)
+    {
+        return std::is_same_v<Self, TOtherString> == false
+            && std::is_same_v<typename TOtherString::T, T>
+            && std::is_same_v<typename TOtherString::Traits, Traits>;
+    }
+
     //# Default implementation but may be shadowed by a derived class.
     FORCEINLINE consteval static bool IsDynamic()        noexcept { return Alloc::IsDynamic();     }
     FORCEINLINE consteval static bool IsWeakAlloc()      noexcept { return Alloc::IsWeakAlloc();   }
@@ -71,7 +93,7 @@ public:
 
     static_assert(TStringBase::IsWeakAlloc()    ? TStringBase::IsDynamic()      == false : true, "Weak allocators must not be dynamic.");
     static_assert(TStringBase::IsDynamic()      ? TStringBase::IsWeakAlloc()    == false : true, "Dynamic allocators must not be weak.");
-    static_assert(TStringBase::IsDynamic()      ? TStringBase::IsContentConst() == false : true, "Dynamic allocators must not be content.");
+    static_assert(TStringBase::IsDynamic()      ? TStringBase::IsContentConst() == false : true, "Dynamic allocators must not be content const.");
     static_assert(TStringBase::IsContentConst() ? TStringBase::IsDynamic()      == false : true, "Const content allocators must not be dynamic.");
 
     FORCEINLINE  TStringBase() noexcept = default;
@@ -92,11 +114,15 @@ public:
     FORCEINLINE  TStringBase(      T* InString,       T* InEnd) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable());
     FORCEINLINE ~TStringBase() noexcept = default;
     template <typename TOtherString>
-    FORCEINLINE  TStringBase(const TOtherString& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<Self, TOtherString> == false);
+    FORCEINLINE  TStringBase(const TOtherString& Other) noexcept requires (Self::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>());
     template <typename TOtherString>
-    FORCEINLINE  TStringBase(TOtherString&& InString) noexcept requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && std::is_same_v<TOtherString, Self> == false);
+    FORCEINLINE  TStringBase(TOtherString&& Other) noexcept requires (Self::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>()) = delete;
     template <typename TOtherString>
-    FORCEINLINE  TStringBase(TOtherString&& InString) noexcept requires (Self::IsStrongAlloc() && TOtherString::IsStrongAlloc() && std::is_same_v<TOtherString, Self> == false);
+    FORCEINLINE  TStringBase(const TOtherString&& Other) noexcept requires (Self::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>()) = delete;
+    template <typename TOtherString>
+    FORCEINLINE  TStringBase(TOtherString&& InString) noexcept requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>());
+    template <typename TOtherString>
+    FORCEINLINE  TStringBase(TOtherString&& InString) noexcept requires (Self::IsStrongAlloc() && TOtherString::IsStrongAlloc() && Self::template IsValidOtherString<TOtherString>());
 
     FORCEINLINE Self& operator=(LNullptrTy) noexcept requires (Self::IsStrongAlloc()) { this->Empty(); return this->GetSelf(); }
     FORCEINLINE Self& operator=(LNullptrTy) noexcept requires (Self::IsWeakAlloc()) { this->GetUnderlyingDataStructure().Invalidate(); return this->GetSelf(); }
@@ -110,6 +136,10 @@ public:
     FORCEINLINE Self& operator=(      T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable());
     template <typename TOtherString>
     FORCEINLINE Self& operator=(const TOtherString& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<Self, TOtherString> == false);
+    template <typename TOtherString>
+    FORCEINLINE Self& operator=(TOtherString&& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<Self, TOtherString> == false) = delete;
+    template <typename TOtherString>
+    FORCEINLINE Self& operator=(const TOtherString&& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<Self, TOtherString> == false) = delete;
     template <typename TOtherString>
     FORCEINLINE Self& operator=(TOtherString&& InString) noexcept requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && std::is_same_v<TOtherString, Self> == false);
     template <typename TOtherString>
@@ -139,7 +169,7 @@ public:
     NODISCARD FORCEINLINE SizeType GetByteSize() const noexcept { return this->Impl.GetByteSize();  }
     NODISCARD FORCEINLINE bool     IsEmpty()     const noexcept { return this->GetRuneCount() == 0; }
 
-    FORCEINLINE bool IsValidIndex(const SizeType InRuneIndex) const noexcept { return InRuneIndex > INDEX_NONE && InRuneIndex < this->Impl.GetSize() - 1; }
+    FORCEINLINE bool IsValidIndex(const SizeType InRuneIndex) const noexcept { return InRuneIndex > INDEX_NONE && InRuneIndex <= this->GetRuneCount(); }
 
     FORCEINLINE       T& operator[](const SizeType InRuneIndex)       noexcept requires (Self::IsStrongAlloc() && Self::IsContentMutable());
     FORCEINLINE const T& operator[](const SizeType InRuneIndex) const noexcept requires (Self::IsStrongAlloc());
@@ -241,18 +271,30 @@ public:
     FORCEINLINE bool Contains(const Self& InOther) const noexcept;
     FORCEINLINE bool Contains(const Self& InOther, const SizeType InLength) const noexcept;
 
-    FORCEINLINE void InlineCut(const SizeType InRuneIndex) noexcept;
-    FORCEINLINE Self Cut(const SizeType InRuneIndex) const noexcept;
+    FORCEINLINE void InlineCut(const SizeType InRuneIndex) noexcept requires (Self::IsDynamic());
+    FORCEINLINE Self Cut(const SizeType InRuneIndex) const noexcept requires (Self::IsStrongAlloc());
+    FORCEINLINE Self Cut(const SizeType InRuneIndex) const noexcept requires (Self::IsWeakAlloc());
+    template <typename TOtherString>
+    FORCEINLINE TOtherString Cut(const SizeType InRuneIndex) const noexcept requires (Self::template IsValidOtherString<TOtherString>());
 
-    FORCEINLINE void InlineSub(const SizeType InRuneStartIndex, const SizeType InRuneCount) noexcept;
-    FORCEINLINE void InlineSubIdx(const SizeType InRuneStartIndex, const SizeType InRuneEndIndex) noexcept;
-    FORCEINLINE Self Sub(const SizeType InRuneStartIndex, const SizeType InRuneCount) const noexcept;
+    FORCEINLINE void InlineSub(const SizeType InRuneStartIndex, const SizeType InRuneCount) noexcept requires (Self::IsDynamic());
+    FORCEINLINE void InlineSubIdx(const SizeType InRuneStartIndex, const SizeType InRuneEndIndex) noexcept requires (Self::IsDynamic());
+    FORCEINLINE Self Sub(const SizeType InRuneStartIndex, const SizeType InRuneCount) const noexcept requires (Self::IsStrongAlloc());
+    FORCEINLINE Self Sub(const SizeType InRuneStartIndex, const SizeType InRuneCount) const noexcept requires (Self::IsWeakAlloc());
     FORCEINLINE Self SubIdx(const SizeType InRuneStartIndex, const SizeType InRuneEndIndex) const noexcept;
+    template <typename TOtherString>
+    FORCEINLINE TOtherString Sub(const SizeType InRuneStartIndex, const SizeType InRuneCount) const noexcept requires (Self::template IsValidOtherString<TOtherString>());
+    template <typename TOtherString>
+    FORCEINLINE TOtherString SubIdx(const SizeType InRuneStartIndex, const SizeType InRuneEndIndex) const noexcept requires (Self::template IsValidOtherString<TOtherString>());
 
-    FORCEINLINE void InlineRightChop(const SizeType InRuneIndex) noexcept;
+    FORCEINLINE void InlineRightChop(const SizeType InRuneIndex) noexcept requires (Self::IsDynamic());
     FORCEINLINE Self RightChop(const SizeType InRuneIndex) const noexcept;
-    FORCEINLINE void InlineLeftChop(const SizeType InRuneIndex) noexcept;
+    template <typename TOtherString>
+    FORCEINLINE TOtherString RightChop(const SizeType InRuneIndex) const noexcept requires (Self::template IsValidOtherString<TOtherString>());
+    FORCEINLINE void InlineLeftChop(const SizeType InRuneIndex) noexcept requires (Self::IsDynamic());
     FORCEINLINE Self LeftChop(const SizeType InRuneIndex) const noexcept;
+    template <typename TOtherString>
+    FORCEINLINE TOtherString LeftChop(const SizeType InRuneIndex) const noexcept requires (Self::template IsValidOtherString<TOtherString>());
 
     FORCEINLINE SizeType Replace(const T InRune, const T InReplacement) noexcept requires (Self::IsContentMutable());
     FORCEINLINE SizeType Replace(const T* InString, const T* InReplacement) noexcept requires (Self::IsContentMutable());
@@ -265,6 +307,10 @@ public:
 
     FORCEINLINE void ToLower() noexcept requires (Self::IsContentMutable());
     FORCEINLINE Self GetLowerCase() const noexcept requires (Self::IsStrongAlloc());
+    template <typename TOtherString>
+    FORCEINLINE TOtherString GetLowerCase() const noexcept requires (TOtherString::IsStrongAlloc() && Self::template IsValidOtherString<TOtherString>());
+
+    FORCEINLINE SizeType GetLineNumber(const SizeType InRuneIndex) const;
 
     template <typename ... TArgs>
     static Self SprintF(const T* InFormat, const TArgs& ... InArgs) noexcept  requires (Self::IsStrongAlloc());
@@ -281,14 +327,15 @@ public:
     FORCEINLINE Iterator<const T> end()   const noexcept requires (Self::IsWeakAlloc()) { return this->Impl.end(); }
     FORCEINLINE Iterator<T>       end()         noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) { return this->Impl.end(); }
 
-    FORCEINLINE       Alloc& GetUnderlyingDataStructure()       noexcept { return this->Impl; }
-    FORCEINLINE const Alloc& GetUnderlyingDataStructure() const noexcept { return this->Impl; }
-
-protected:
+    FORCEINLINE constexpr       Alloc& GetUnderlyingDataStructure()       noexcept { return this->Impl; }
+    FORCEINLINE constexpr const Alloc& GetUnderlyingDataStructure() const noexcept { return this->Impl; }
 
 #if CHECK_STRING_VALIDITY
-    void EnsureValidState() const;
+    //# THIS IS FOR INTERNAL USE ONLY. DO NOT CALL MANUALLY.
+    void EnsureValidState() const; // Private function. DO NOT CALL MANUALLY.
 #endif /* CHECK_STRING_VALIDITY */
+
+protected:
 
     Alloc Impl;
 };
@@ -306,14 +353,14 @@ public:
     using T        = typename Super::T;
     using SizeType = typename Super::SizeType;
 
-    template <typename TOtherAlloc>
-    using TOtherStringBase = _TStringBase<InTraits, TOtherAlloc>;
-
     friend void OnDefaultOnlyMallocMember(Self* MemberField);
     friend void OnDefaultOnlyMallocMember(TArray<Self>* MemberField);
 
     template <typename TOtherTraits, typename TOtherAlloc>
     friend class _TStringBase;
+
+    template <typename TOtherString>
+    FORCEINLINE consteval static bool IsValidOtherString() noexcept { return Super::template IsValidOtherString<TOtherString>(); }
 
     FORCEINLINE consteval static bool IsDynamic()        noexcept { return Super::IsDynamic();        }
     FORCEINLINE consteval static bool IsWeakAlloc()      noexcept { return Super::IsWeakAlloc();      }
@@ -339,11 +386,15 @@ public:
     FORCEINLINE  _TStringBase(      T* InString,       T* InEnd) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) : Super(InString, InEnd) { }
     FORCEINLINE ~_TStringBase() noexcept = default;
     template <typename TOtherString>
-    FORCEINLINE  _TStringBase(const TOtherStringBase<TOtherString>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherString, Alloc> == false) : Super(Other) { }
+    FORCEINLINE  _TStringBase(const TOtherString& Other) noexcept requires (Self::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>()) : Super(Other) { }
     template <typename TOtherString>
-    FORCEINLINE  _TStringBase(TOtherString&& InString) noexcept requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && std::is_same_v<TOtherString, Alloc> == false) : Super(std::move(InString)) { }
+    FORCEINLINE  _TStringBase(TOtherString&& Other) noexcept requires (Self::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>()) = delete;
     template <typename TOtherString>
-    FORCEINLINE  _TStringBase(TOtherString&& InString) noexcept requires (Self::IsStrongAlloc() && TOtherString::IsStrongAlloc() && std::is_same_v<TOtherString, Alloc> == false) : Super(std::move(InString)) { }
+    FORCEINLINE  _TStringBase(const TOtherString&& Other) noexcept requires (Self::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>()) = delete;
+    template <typename TOtherString>
+    FORCEINLINE  _TStringBase(TOtherString&& InString) noexcept requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>()) : Super(std::move(InString)) { }
+    template <typename TOtherString>
+    FORCEINLINE  _TStringBase(TOtherString&& InString) noexcept requires (Self::IsStrongAlloc() && TOtherString::IsStrongAlloc() && Self::template IsValidOtherString<TOtherString>()) : Super(std::move(InString)) { }
 
     FORCEINLINE Self& operator=(LNullptrTy) noexcept { return this->Super::operator=(nullptr); }
     FORCEINLINE Self& operator=(const Self& InOther) noexcept { return this->Super::operator=(InOther); }
@@ -354,12 +405,16 @@ public:
     FORCEINLINE Self& operator=(const T* InString) noexcept requires (Self::IsStrongAlloc()) { return this->Super::operator=(InString); }
     FORCEINLINE Self& operator=(const T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst()) { return this->Super::operator=(InString); }
     FORCEINLINE Self& operator=(      T* InString) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable()) { return this->Super::operator=(InString); }
-    template <typename TOtherAlloc>
-    FORCEINLINE Self& operator=(const TOtherStringBase<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
-    template <typename TOtherAlloc>
-    FORCEINLINE Self& operator=(TOtherStringBase<TOtherAlloc>&& InString) noexcept requires (Self::IsWeakAlloc() && TOtherAlloc::IsWeakAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
-    template <typename TOtherAlloc>
-    FORCEINLINE Self& operator=(TOtherStringBase<TOtherAlloc>&& InString) noexcept requires (Self::IsStrongAlloc() && TOtherAlloc::IsStrongAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
+    template <typename TOtherString>
+    FORCEINLINE Self& operator=(const TOtherString& Other) noexcept requires (Self::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>());
+    template <typename TOtherString>
+    FORCEINLINE Self& operator=(TOtherString&& Other) noexcept requires (Self::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>()) = delete;
+    template <typename TOtherString>
+    FORCEINLINE Self& operator=(const TOtherString&& Other) noexcept requires (Self::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>()) = delete;
+    template <typename TOtherString>
+    FORCEINLINE Self& operator=(TOtherString&& InString) noexcept requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>());
+    template <typename TOtherString>
+    FORCEINLINE Self& operator=(TOtherString&& InString) noexcept requires (Self::IsStrongAlloc() && TOtherString::IsStrongAlloc() && Self::template IsValidOtherString<TOtherString>());
 };
 
 template<typename InT>
@@ -686,8 +741,8 @@ FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(T* InString, T*
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
-template<typename TOtherDerived>
-FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(const TOtherDerived& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<Self, TOtherDerived> == false) : Impl(Other.GetUnderlyingDataStructure())
+template<typename TOtherString>
+FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(const TOtherString& Other) noexcept requires (Self::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>()) : Impl(Other.GetUnderlyingDataStructure())
 {
     PRIVATE_JAFG_CHECK_STRING_STATE()
     return;
@@ -696,7 +751,7 @@ FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(const TOtherDer
 template<typename Derived, typename InTraits, typename InAlloc>
 template<typename TOtherString>
 FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(TOtherString&& InString) noexcept
-    requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && std::is_same_v<TOtherString, Derived> == false) : Impl(std::move(InString.GetUnderlyingDataStructure()))
+    requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>()) : Impl(std::move(InString.GetUnderlyingDataStructure()))
 {
     PRIVATE_JAFG_CHECK_STRING_STATE()
     return;
@@ -705,7 +760,7 @@ FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(TOtherString&& 
 template<typename Derived, typename InTraits, typename InAlloc>
 template<typename TOtherString>
 FORCEINLINE TStringBase<Derived, InTraits, InAlloc>::TStringBase(TOtherString&& InString) noexcept
-    requires (Self::IsStrongAlloc() && TOtherString::IsStrongAlloc() && std::is_same_v<TOtherString, Derived> == false) : Impl(std::move(InString.GetUnderlyingDataStructure()))
+    requires (Self::IsStrongAlloc() && TOtherString::IsStrongAlloc() && Self::template IsValidOtherString<TOtherString>()) : Impl(std::move(InString.GetUnderlyingDataStructure()))
 {
     PRIVATE_JAFG_CHECK_STRING_STATE()
     return;
@@ -1739,7 +1794,7 @@ FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::Contains(const Self& I
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineCut(const SizeType InRuneIndex) noexcept
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineCut(const SizeType InRuneIndex) noexcept requires (Self::IsDynamic())
 {
     this->Impl.Resize(InRuneIndex + /*Terminator*/1, true);
     this->Impl[InRuneIndex] = Traits::Terminator;
@@ -1749,7 +1804,7 @@ FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineCut(const SizeTy
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::Cut(const SizeType InRuneIndex) const noexcept
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::Cut(const SizeType InRuneIndex) const noexcept requires (Self::IsStrongAlloc())
 {
     Self Out;
     Out.Impl.CopyFrom(this->Impl, InRuneIndex + 1);
@@ -1762,21 +1817,59 @@ FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<D
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineSub(const SizeType InRuneStartIndex, const SizeType InRuneCount) noexcept
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::Cut(const SizeType InRuneIndex) const noexcept requires (Self::IsWeakAlloc())
+{
+    Self Out;
+    Out.Impl.GetUnderlyingDataStructure().Data  = this->GetBegin();
+    Out.Impl.GetUnderlyingDataStructure().Slack = this->GetBegin() + InRuneIndex;
+    Out.Impl.GetUnderlyingDataStructure().End   = this->GetBegin() + InRuneIndex;
+
+#if CHECK_STRING_VALIDITY
+    Out.EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+    return Out;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+template<typename TOtherString>
+FORCEINLINE TOtherString TStringBase<Derived, InTraits, InAlloc>::Cut(const SizeType InRuneIndex) const noexcept requires (Self::template IsValidOtherString<TOtherString>())
+{
+    TOtherString Out;
+
+    if constexpr (TOtherString::IsStrongAlloc())
+    {
+        Out.GetUnderlyingDataStructure().CopyFrom(this->Impl, InRuneIndex + 1);
+        Out.GetUnderlyingDataStructure()[InRuneIndex] = Traits::Terminator;
+    }
+    else
+    {
+        Out.GetUnderlyingDataStructure().GetUnderlyingDataStructure().Data  = this->GetBegin();
+        Out.GetUnderlyingDataStructure().GetUnderlyingDataStructure().Slack = this->GetBegin() + InRuneIndex;
+        Out.GetUnderlyingDataStructure().GetUnderlyingDataStructure().End   = this->GetBegin() + InRuneIndex;
+    }
+
+#if CHECK_STRING_VALIDITY
+    Out.EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+    return Out;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineSub(const SizeType InRuneStartIndex, const SizeType InRuneCount) noexcept requires (Self::IsDynamic())
 {
     *this = this->Sub(InRuneStartIndex, InRuneCount);
     return;
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineSubIdx(const SizeType InRuneStartIndex, const SizeType InRuneEndIndex) noexcept
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineSubIdx(const SizeType InRuneStartIndex, const SizeType InRuneEndIndex) noexcept requires (Self::IsDynamic())
 {
     this->InlineSub(InRuneStartIndex, InRuneEndIndex - InRuneStartIndex);
     return;
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::Sub(const SizeType InRuneStartIndex, const SizeType InRuneCount) const noexcept
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::Sub(const SizeType InRuneStartIndex, const SizeType InRuneCount) const noexcept requires (Self::IsStrongAlloc())
 {
     JAFG_CHECK_STRING( InRuneCount > INDEX_NONE )
 
@@ -1796,13 +1889,70 @@ FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<D
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::Sub(const SizeType InRuneStartIndex, const SizeType InRuneCount) const noexcept requires (Self::IsWeakAlloc())
+{
+    JAFG_CHECK_STRING( InRuneCount > INDEX_NONE )
+
+    Self Out;
+
+    if (InRuneCount > 0)
+    {
+        Out.Impl.GetUnderlyingDataStructure().Data  = this->GetBegin() + InRuneStartIndex;
+        Out.Impl.GetUnderlyingDataStructure().Slack = this->GetBegin() + InRuneStartIndex + InRuneCount;
+        Out.Impl.GetUnderlyingDataStructure().End   = this->GetBegin() + InRuneStartIndex + InRuneCount;
+    }
+
+#if CHECK_STRING_VALIDITY
+    Out.EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+    return Out;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
 FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::SubIdx(const SizeType InRuneStartIndex, const SizeType InRuneEndIndex) const noexcept
 {
     return this->Sub(InRuneStartIndex, InRuneEndIndex - InRuneStartIndex);
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineRightChop(const SizeType InRuneIndex) noexcept
+template<typename TOtherString>
+FORCEINLINE TOtherString TStringBase<Derived, InTraits, InAlloc>::Sub(const SizeType InRuneStartIndex, const SizeType InRuneCount) const noexcept requires (Self::template IsValidOtherString<TOtherString>())
+{
+    JAFG_CHECK_STRING( InRuneCount > INDEX_NONE )
+
+    TOtherString Out;
+
+    if (InRuneCount > 0)
+    {
+        if constexpr (TOtherString::IsStrongAlloc())
+        {
+            Out.Reserve(InRuneCount + /*Terminator*/1);
+            Out.GetUnderlyingDataStructure().CopyFrom(this->Impl, InRuneStartIndex, InRuneCount);
+            Out.GetUnderlyingDataStructure().Add(Traits::Terminator);
+        }
+        else
+        {
+            Out.GetUnderlyingDataStructure().GetUnderlyingDataStructure().Data  = this->GetBegin() + InRuneStartIndex;
+            Out.GetUnderlyingDataStructure().GetUnderlyingDataStructure().Slack = this->GetBegin() + InRuneStartIndex + InRuneCount;
+            Out.GetUnderlyingDataStructure().GetUnderlyingDataStructure().End   = this->GetBegin() + InRuneStartIndex + InRuneCount;
+        }
+    }
+
+#if CHECK_STRING_VALIDITY
+    Out.EnsureValidState();
+#endif /* CHECK_STRING_VALIDITY */
+    return Out;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+template<typename TOtherString>
+FORCEINLINE TOtherString TStringBase<Derived, InTraits, InAlloc>::SubIdx(const SizeType InRuneStartIndex, const SizeType InRuneEndIndex) const noexcept requires (Self::template IsValidOtherString<TOtherString>())
+{
+    return this->Sub<TOtherString>(InRuneStartIndex, InRuneEndIndex - InRuneStartIndex);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineRightChop(const SizeType InRuneIndex) noexcept requires (Self::IsDynamic())
 {
     this->InlineSub(InRuneIndex, this->GetRuneCount() - InRuneIndex);
     return;
@@ -1815,7 +1965,14 @@ FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<D
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
-FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineLeftChop(const SizeType InRuneIndex) noexcept
+template<typename TOtherString>
+FORCEINLINE TOtherString TStringBase<Derived, InTraits, InAlloc>::RightChop(const SizeType InRuneIndex) const noexcept requires (Self::template IsValidOtherString<TOtherString>())
+{
+    return this->Sub<TOtherString>(InRuneIndex, this->GetRuneCount() - InRuneIndex);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::InlineLeftChop(const SizeType InRuneIndex) noexcept requires (Self::IsDynamic())
 {
     this->InlineCut(InRuneIndex);
     return;
@@ -1825,6 +1982,13 @@ template<typename Derived, typename InTraits, typename InAlloc>
 FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::LeftChop(const SizeType InRuneIndex) const noexcept
 {
     return this->Cut(InRuneIndex);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+template<typename TOtherString>
+FORCEINLINE TOtherString TStringBase<Derived, InTraits, InAlloc>::LeftChop(const SizeType InRuneIndex) const noexcept requires (Self::template IsValidOtherString<TOtherString>())
+{
+    return this->Cut<TOtherString>(InRuneIndex);
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
@@ -1975,6 +2139,40 @@ FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<D
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
+template<typename TOtherString>
+FORCEINLINE TOtherString TStringBase<Derived, InTraits, InAlloc>::GetLowerCase() const noexcept requires (TOtherString::IsStrongAlloc() && Self::template IsValidOtherString<TOtherString>())
+{
+    TOtherString Out; Out.Reserve(this->GetSize());
+
+    for (const T* RESTRICT Bulk = this->Impl.GetData(), *RESTRICT BulkEnd = this->Impl.GetSlack(); Bulk != BulkEnd; ++Bulk)
+    {
+        Out.GetUnderlyingDataStructure().Add(Traits::ToLower(*Bulk));
+    }
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return Out;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::GetLineNumber(const SizeType InRuneIndex) const
+{
+    SizeType Out = 0;
+    SizeType Cursor = 0;
+    while (Cursor <= this->GetSize())
+    {
+        if (this->operator[](Cursor) == '\n')
+        {
+            ++Out;
+        }
+
+        ++Cursor;
+        continue;
+    }
+
+    return Out;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
 template<typename ... TArgs>
 typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::SprintF(const T* InFormat, const TArgs&... InArgs) noexcept requires (Self::IsStrongAlloc())
 {
@@ -2019,25 +2217,25 @@ void TStringBase<Derived, InTraits, InAlloc>::EnsureValidState() const
 }
 
 template<typename InTraits, typename InAlloc>
-template<typename TOtherAlloc>
-FORCEINLINE typename _TStringBase<InTraits, InAlloc>::Self& _TStringBase<InTraits, InAlloc>::operator=(const TOtherStringBase<TOtherAlloc>& Other) noexcept
-    requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, typename TStringBase<_TStringBase, InTraits, InAlloc>::Alloc> == false)
+template<typename TOtherString>
+FORCEINLINE typename _TStringBase<InTraits, InAlloc>::Self& _TStringBase<InTraits, InAlloc>::operator=(const TOtherString& Other) noexcept
+    requires (Self::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>())
 {
     return this->Super::operator=(Other);
 }
 
 template<typename InTraits, typename InAlloc>
-template<typename TOtherAlloc>
-FORCEINLINE typename _TStringBase<InTraits, InAlloc>::Self& _TStringBase<InTraits, InAlloc>::operator=(TOtherStringBase<TOtherAlloc>&& InString) noexcept
-    requires (Self::IsWeakAlloc() && TOtherAlloc::IsWeakAlloc() && std::is_same_v<TOtherAlloc, typename TStringBase<_TStringBase, InTraits, InAlloc>::Alloc> == false)
+template<typename TOtherString>
+FORCEINLINE typename _TStringBase<InTraits, InAlloc>::Self& _TStringBase<InTraits, InAlloc>::operator=(TOtherString&& InString) noexcept
+    requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>())
 {
     return this->Super::operator=(std::move(InString));
 }
 
 template<typename InTraits, typename InAlloc>
-template<typename TOtherAlloc>
-FORCEINLINE typename _TStringBase<InTraits, InAlloc>::Self& _TStringBase<InTraits, InAlloc>::operator=(TOtherStringBase<TOtherAlloc>&& InString) noexcept
-    requires (Self::IsStrongAlloc() && TOtherAlloc::IsStrongAlloc() && std::is_same_v<TOtherAlloc, typename TStringBase<_TStringBase, InTraits, InAlloc>::Alloc> == false)
+template<typename TOtherString>
+FORCEINLINE typename _TStringBase<InTraits, InAlloc>::Self& _TStringBase<InTraits, InAlloc>::operator=(TOtherString&& InString) noexcept
+    requires (Self::IsStrongAlloc() && TOtherString::IsStrongAlloc() && Self::template IsValidOtherString<TOtherString>())
 {
     return this->Super::operator=(std::move(InString));
 }

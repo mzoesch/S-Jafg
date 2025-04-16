@@ -395,13 +395,17 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
     if (::bTearingDown)
     {
         LOG_ERROR(LogTaskUtility, "Failed to launch thread {}.", LexToString(ThreadName))
+        if (bKillRunnableWhenFinished)
+        {
+            delete Runnable;
+        }
         return ETaskExit::Illformed;
     }
 
     if (IsThreadRunning(ThreadName))
     {
         LOG_ERROR(LogTaskSystem, "Thread {}[{}] already running.", LexToString(ThreadName), static_cast<i32>(ThreadName))
-        if (bKillRunnableWhenFinished == false)
+        if (bKillRunnableWhenFinished)
         {
             delete Runnable;
         }
@@ -420,6 +424,10 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                 GetCurrentThreadDisplayName(), GetCurrentThreadId(),
                 LexToString(ErrorLevel), static_cast<LTaskExit>(ErrorLevel)
             )
+            if (bKillRunnableWhenFinished)
+            {
+                delete Runnable;
+            }
             return ErrorLevel;
         }
 
@@ -431,6 +439,11 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                 GetCurrentThreadDisplayName(), GetCurrentThreadId(),
                 LexToString(ErrorLevel), static_cast<LTaskExit>(ErrorLevel)
             );
+
+            if (bKillRunnableWhenFinished)
+            {
+                delete Runnable;
+            }
 
             LOG_ERROR(LogTaskSystem, "{}", ErrorLevelStr)
             ::Jafg::RequestEngineExit(EPlatformExit::Fatal, ErrorLevelStr);
@@ -447,6 +460,10 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                 GetCurrentThreadDisplayName(), GetCurrentThreadId(),
                 LexToString(ErrorLevel), static_cast<LTaskExit>(ErrorLevel)
             )
+            if (bKillRunnableWhenFinished)
+            {
+                delete Runnable;
+            }
             return ErrorLevel;
         }
 
@@ -457,6 +474,10 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
             GetCurrentThreadDisplayName(), GetCurrentThreadId(),
             LexToString(ErrorLevel), static_cast<LTaskExit>(ErrorLevel)
         )
+        if (bKillRunnableWhenFinished)
+        {
+            delete Runnable;
+        }
         return ErrorLevel;
     }
 
@@ -464,6 +485,10 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
     if (::bTearingDown)
     {
         LOG_ERROR(LogTaskSystem, "Failed to launch thread {}[{}].", Runnable->GetHumanReadableName(), LexToString(ThreadName))
+        if (bKillRunnableWhenFinished)
+        {
+            delete Runnable;
+        }
         return ETaskExit::Illformed;
     }
 
