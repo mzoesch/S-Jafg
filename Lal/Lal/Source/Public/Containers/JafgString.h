@@ -244,11 +244,28 @@ public:
     FORCEINLINE bool EndsWith(const Self& InOther) const noexcept;
     FORCEINLINE bool EndsWith(const Self& InOther, const SizeType InLength) const noexcept;
 
-    FORCEINLINE SizeType FindFirst(const T InRune) const noexcept;
-    FORCEINLINE SizeType FindFirst(const T* InString) const noexcept;
-    FORCEINLINE SizeType FindFirst(const T* InString, const SizeType InLength) const noexcept;
-    FORCEINLINE SizeType FindFirst(const Self& InOther) const noexcept;
-    FORCEINLINE SizeType FindFirst(const Self& InOther, const SizeType InLength) const noexcept;
+    FORCEINLINE        SizeType FindFirst(                                              const T InRune) const noexcept;
+    FORCEINLINE static SizeType FindFirst(const T* InString, const T* InEnd,            const T InRune) noexcept;
+    FORCEINLINE static SizeType FindFirst(const T* InString, const SizeType InLength,   const T InRune) noexcept;
+    FORCEINLINE        SizeType FindFirst(                                              const T* InSubString) const noexcept;
+    FORCEINLINE static SizeType FindFirst(const T* InString, const T* InEnd,            const T* InSubString) noexcept;
+    FORCEINLINE static SizeType FindFirst(const T* InString, const SizeType InLength,   const T* InSubString) noexcept;
+    FORCEINLINE        SizeType FindFirst(                                              const T* InSubString, const T* InSubEnd) const noexcept;
+    FORCEINLINE static SizeType FindFirst(const T* InString, const T* InEnd,            const T* InSubString, const T* InSubEnd) noexcept;
+    FORCEINLINE static SizeType FindFirst(const T* InString, const SizeType InLength,   const T* InSubString, const T* InSubEnd) noexcept;
+    FORCEINLINE        SizeType FindFirst(                                              const T* InSubString, const SizeType InSubLength) const noexcept;
+    FORCEINLINE static SizeType FindFirst(const T* InString, const T* InEnd,            const T* InSubString, const SizeType InSubLength) noexcept;
+    FORCEINLINE static SizeType FindFirst(const T* InString, const SizeType InLength,   const T* InSubString, const SizeType InSubLength) noexcept;
+    FORCEINLINE        SizeType FindFirst(                                              const Self& InSubString) const noexcept;
+    FORCEINLINE static SizeType FindFirst(const T* InString, const T* InEnd,            const Self& InSubString) noexcept;
+    FORCEINLINE static SizeType FindFirst(const T* InString, const SizeType InLength,   const Self& InSubString) noexcept;
+    FORCEINLINE        SizeType FindFirst(                                              const Self& InSubString, const T* InSubEnd) const noexcept;
+    FORCEINLINE static SizeType FindFirst(const T* InString, const T* InEnd,            const Self& InSubString, const T* InSubEnd) noexcept;
+    FORCEINLINE static SizeType FindFirst(const T* InString, const SizeType InLength,   const Self& InSubString, const T* InSubEnd) noexcept;
+    FORCEINLINE        SizeType FindFirst(                                              const Self& InSubString, const SizeType InSubLength) const noexcept;
+    FORCEINLINE static SizeType FindFirst(const T* InString, const T* InEnd,            const Self& InSubString, const SizeType InSubLength) noexcept;
+    FORCEINLINE static SizeType FindFirst(const T* InString, const SizeType InLength,   const Self& InSubString, const SizeType InSubLength) noexcept;
+
     FORCEINLINE SizeType FindSecond(const T InRune) const noexcept;
     FORCEINLINE SizeType FindSecond(const T* InString) const noexcept;
     FORCEINLINE SizeType FindSecond(const T* InString, const SizeType InLength) const noexcept;
@@ -315,10 +332,13 @@ public:
     template <typename ... TArgs>
     static Self SprintF(const T* InFormat, const TArgs& ... InArgs) noexcept  requires (Self::IsStrongAlloc());
 
-    FORCEINLINE       T* GetBegin()       noexcept requires (Self::IsContentMutable()) { return this->Impl.GetData(); }
-    FORCEINLINE const T* GetBegin() const noexcept { return this->Impl.GetData(); }
-    FORCEINLINE       T* GetEnd()         noexcept requires (Self::IsContentMutable()) { return this->Impl.GetSlack(); }
-    FORCEINLINE const T* GetEnd()   const noexcept { return this->Impl.GetSlack(); }
+    FORCEINLINE       T* GetBegin()           noexcept requires (Self::IsContentMutable()) { return this->Impl.GetData(); }
+    FORCEINLINE const T* GetBegin()     const noexcept { return this->Impl.GetData(); }
+    FORCEINLINE       T* GetEnd()             noexcept requires (Self::IsContentMutable()) { return this->Impl.GetSlack(); }
+    FORCEINLINE const T* GetEnd()       const noexcept { return this->Impl.GetSlack(); }
+    //# The end of the actual string. The null terminator is not included (if even available).
+    FORCEINLINE       T* GetStringEnd()       noexcept requires (Self::IsContentMutable()) { return this->GetBegin() + this->GetRuneCount(); }
+    FORCEINLINE const T* GetStringEnd() const noexcept { return this->GetBegin() + this->GetRuneCount(); }
 
     FORCEINLINE Iterator<T>       begin()       noexcept requires (Self::IsContentMutable()) { return this->Impl.begin(); }
     FORCEINLINE Iterator<const T> begin() const noexcept { return this->Impl.begin(); }
@@ -1425,56 +1445,92 @@ FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::EndsWith(const Self& I
 template<typename Derived, typename InTraits, typename InAlloc>
 FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T InRune) const noexcept
 {
-    const SizeType Size = this->GetSize();
-    for (SizeType Index = 0; Index < Size; ++Index)
+    return Self::FindFirst(this->GetBegin(), this->GetStringEnd(), InRune);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const T* InEnd, const T InRune) noexcept
+{
+    check( InString <= InEnd )
+
+    const T* Cursor = InString;
+    while (Cursor != InEnd)
     {
-        if (*(this->Impl.GetData() + Index) == InRune)
+        if (*Cursor == InRune)
         {
-            return Index;
+            return Cursor - InString;
         }
 
-        continue;
+        ++Cursor;
     }
 
     return INDEX_NONE;
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString) const noexcept
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const SizeType InLength, const T InRune) noexcept
 {
-    return this->FindFirst(InString, Traits::template GetStringLength<SizeType>(InString));
+    return Self::FindFirst(InString, InString + InLength, InRune);
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const SizeType InLength) const noexcept
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InSubString) const noexcept
 {
-    SizeType MainCursor = 0;
-    SizeType MainStringSize = this->GetSize();
-    while (MainCursor < MainStringSize)
+    return Self::FindFirst(this->GetBegin(), this->GetStringEnd(), InSubString, InSubString + Self::Traits::template GetStringLength<SizeType>(InSubString));
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const T* InEnd, const T* InSubString) noexcept
+{
+    return Self::FindFirst(InString, InEnd, InSubString, InSubString + Traits::template GetStringLength<SizeType>(InSubString));
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const SizeType InLength, const T* InSubString) noexcept
+{
+    return Self::FindFirst(InString, InString + InLength, InSubString, InSubString + Self::Traits::template GetStringLength<SizeType>(InSubString));
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InSubString, const T* InSubEnd) const noexcept
+{
+    return Self::FindFirst(this->GetBegin(), this->GetStringEnd(), InSubString, InSubEnd);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const T* InEnd, const T* InSubString, const T* InSubEnd) noexcept
+{
+    JAFG_CHECK_STRING( InString <= InEnd )
+    JAFG_CHECK_STRING( InSubString <= InSubEnd )
+
+    const T* MainCursor = InString;
+    const SizeType SubLength = InSubEnd - InSubString;
+    while (MainCursor != InEnd)
     {
-        SizeType SubCursor  = 0;
+        JAFG_CHECK_STRING( *MainCursor != Self::Traits::Terminator )
 
-        while (SubCursor < InLength)
+        if (static_cast<SizeType>(InEnd - MainCursor) < SubLength)
         {
-            JAFG_CHECK_STRING(*(InString + SubCursor) != Traits::Terminator)
+            return INDEX_NONE;
+        }
 
-            if (SubCursor == MainStringSize)
-            {
-                return INDEX_NONE;
-            }
+        const T* SubCursor = InSubString;
+        while (SubCursor != InSubEnd)
+        {
+            JAFG_CHECK_STRING( *SubCursor != Self::Traits::Terminator )
 
-            if (*(this->Impl.GetData() + MainCursor + SubCursor) != *(InString + SubCursor))
+            if (*(MainCursor + (SubCursor - InSubString)) != *SubCursor)
             {
                 break;
             }
 
             ++SubCursor;
-            if (SubCursor == InLength)
-            {
-                return MainCursor;
-            }
-
             continue;
+        }
+
+        if (SubCursor == InSubEnd)
+        {
+            return MainCursor - InString;
         }
 
         ++MainCursor;
@@ -1485,15 +1541,87 @@ FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBa
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const Self& InOther) const noexcept
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const SizeType InLength, const T* InSubString, const T* InSubEnd) noexcept
 {
-    return this->FindFirst(InOther.ToPtr(), InOther.GetRuneCount());
+    return Self::FindFirst(InString, InString + InLength, InSubString, InSubEnd);
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
-FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const Self& InOther, const SizeType InLength) const noexcept
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InSubString, const SizeType InSubLength) const noexcept
 {
-    return this->FindFirst(InOther.ToPtr(), InLength);
+    return Self::FindFirst(this->GetBegin(), this->GetStringEnd(), InSubString, InSubString + InSubLength);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const T* InEnd, const T* InSubString, const SizeType InSubLength) noexcept
+{
+    return Self::FindFirst(InString, InEnd, InSubString, InSubString + InSubLength);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const SizeType InLength, const T* InSubString, const SizeType InSubLength) noexcept
+{
+    return Self::FindFirst(InString, InString + InLength, InSubString, InSubString + InSubLength);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const Self& InSubString) const noexcept
+{
+    return Self::FindFirst(this->GetBegin(), this->GetStringEnd(), InSubString.GetBegin(), InSubString.GetStringEnd());
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const T* InEnd, const Self& InSubString) noexcept
+{
+    return Self::FindFirst(InString, InEnd, InSubString.GetBegin(), InSubString.GetStringEnd());
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const SizeType InLength, const Self& InSubString) noexcept
+{
+    return Self::FindFirst(InString, InString + InLength, InSubString.GetBegin(), InSubString.GetStringEnd());
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const Self& InSubString, const T* InSubEnd) const noexcept
+{
+    check( InSubString.GetStringEnd() >= InSubEnd )
+    return Self::FindFirst(this->GetBegin(), this->GetStringEnd(), InSubString.GetBegin(), InSubEnd);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const T* InEnd, const Self& InSubString, const T* InSubEnd) noexcept
+{
+    check( InSubString.GetStringEnd() >= InSubEnd )
+    return Self::FindFirst(InString, InEnd, InSubString.GetBegin(), InSubEnd);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const SizeType InLength, const Self& InSubString, const T* InSubEnd) noexcept
+{
+    check( InSubString.GetStringEnd() >= InSubEnd )
+    return Self::FindFirst(InString, InString + InLength, InSubString.GetBegin(), InSubEnd);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const Self& InSubString, const SizeType InSubLength) const noexcept
+{
+    check( InSubString.GetRuneCount() >= InSubLength )
+    return Self::FindFirst(this->GetBegin(), this->GetStringEnd(), InSubString.GetBegin(), InSubLength.GetStringEnd() + InSubLength);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const T* InEnd, const Self& InSubString, const SizeType InSubLength) noexcept
+{
+    check( InSubString.GetRuneCount() >= InSubLength )
+    return Self::FindFirst(InString, InEnd, InSubString.GetBegin(), InSubString.GetBegin() + InSubLength);
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const T* InString, const SizeType InLength, const Self& InSubString, const SizeType InSubLength) noexcept
+{
+    check( InSubString.GetRuneCount() >= InSubLength )
+    return Self::FindFirst(InString, InString + InLength, InSubString.GetBegin(), InSubString.GetBegin() + InSubLength);
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
