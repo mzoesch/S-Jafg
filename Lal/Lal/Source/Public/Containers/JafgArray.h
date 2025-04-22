@@ -42,9 +42,13 @@ struct TArrayAllocator
     FORCEINLINE TArrayAllocator() noexcept : Data(), Slack(), End() { }
     FORCEINLINE TArrayAllocator(const Self& Other) noexcept;
     FORCEINLINE TArrayAllocator(Self&& Other) noexcept;
+    template <typename TOtherAlloc>
+    FORCEINLINE TArrayAllocator(const TOtherAlloc& Other) noexcept requires (std::is_same_v<TOtherAlloc, T> == false);
 
     FORCEINLINE Self& operator=(const Self& Other) noexcept;
     FORCEINLINE Self& operator=(Self&& Other) noexcept;
+    template <typename TOtherAlloc>
+    FORCEINLINE Self& operator=(const TOtherAlloc& Other) noexcept requires (std::is_same_v<TOtherAlloc, T> == false);
 
     void Grow() noexcept;
     void Grow(const SizeType InAmount) noexcept;
@@ -85,9 +89,19 @@ struct TArrayViewAllocator
     FORCEINLINE TArrayViewAllocator() noexcept : Data(), Slack() { }
     FORCEINLINE TArrayViewAllocator(const Self& Other) noexcept;
     FORCEINLINE TArrayViewAllocator(Self&& Other) noexcept;
+    template <typename TOtherAlloc>
+    FORCEINLINE TArrayViewAllocator(const TOtherAlloc& Other) noexcept requires (std::is_same_v<TOtherAlloc, T> == false);
+    template <typename TOtherAlloc>
+    FORCEINLINE TArrayViewAllocator(const TOtherAlloc&& Other) noexcept requires (std::is_same_v<TOtherAlloc, T> == false) = delete;
 
     FORCEINLINE Self& operator=(const Self& Other) noexcept;
     FORCEINLINE Self& operator=(Self&& Other) noexcept;
+    template <typename TOtherAlloc>
+    FORCEINLINE Self& operator=(const TOtherAlloc& Other) noexcept requires (std::is_same_v<TOtherAlloc, T> == false);
+    template <typename TOtherAlloc>
+    FORCEINLINE Self& operator=(const TOtherAlloc&& Other) noexcept requires (std::is_same_v<TOtherAlloc, T> == false) = delete;
+
+    FORCEINLINE void Invalidate() noexcept;
 
     //# The first element of the data or nullptr.
     const T* Data;
@@ -127,6 +141,8 @@ struct TMutableArrayViewAllocator
 
     FORCEINLINE Self& operator=(const Self& Other) noexcept;
     FORCEINLINE Self& operator=(Self&& Other) noexcept;
+
+    FORCEINLINE void Invalidate() noexcept;
 
     //# The first element of the data or nullptr.
     T* Data;
@@ -204,12 +220,16 @@ public:
     FORCEINLINE ~TArrayBase() noexcept;
     template <typename TOtherAlloc>
     FORCEINLINE TArrayBase(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
+    template <typename TOtherAlloc>
+    FORCEINLINE TArrayBase(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsStrongAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
 
     FORCEINLINE Self& operator=(const Self& InOther) noexcept { Self::Copy(*this, InOther); return *this; }
     FORCEINLINE Self& operator=(Self&& InOther) noexcept { Self::Move(*this, std::move(InOther)); return *this; }
     FORCEINLINE Self& operator=(std::initializer_list<T> InList) noexcept requires (Self::IsStrongAlloc());
     template <typename TOtherAlloc>
     FORCEINLINE Self& operator=(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
+    template <typename TOtherAlloc>
+    FORCEINLINE Self& operator=(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsStrongAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
 
     //#
     //# Invalidate the array. This will not deallocate the memory but set the pointers to null.
@@ -264,10 +284,10 @@ public:
     NODISCARD FORCEINLINE const T* GetData()     const noexcept { return this->Impl.Data; }
     NODISCARD FORCEINLINE       T* GetSlack()          noexcept requires (Self::IsContentMutable()) { return this->Impl.Slack; }
     NODISCARD FORCEINLINE const T* GetSlack()    const noexcept { return this->Impl.Slack; }
-    NODISCARD FORCEINLINE       T* GetFirst()          noexcept requires (Self::IsContentMutable()) { return this->GetSize() > 0 ? this->Impl.Data  : nullptr; }
-    NODISCARD FORCEINLINE const T* GetFirst()    const noexcept { return this->GetSize() > 0 ? this->Impl.Data  : nullptr; }
-    NODISCARD FORCEINLINE       T* GetLast()           noexcept requires (Self::IsContentMutable()) { return this->GetSize() > 0 ? this->Impl.Slack - 1: nullptr; }
-    NODISCARD FORCEINLINE const T* GetLast()     const noexcept { return this->GetSize() > 0 ? this->Impl.Slack - 1: nullptr; }
+    NODISCARD FORCEINLINE       T* GetFirst()          noexcept requires (Self::IsContentMutable()) { return this->GetSize() > 0 ? this->Impl.Data : nullptr; }
+    NODISCARD FORCEINLINE const T* GetFirst()    const noexcept { return this->GetSize() > 0 ? this->Impl.Data : nullptr; }
+    NODISCARD FORCEINLINE       T* GetLast()           noexcept requires (Self::IsContentMutable()) { return this->GetSize() > 0 ? this->Impl.Slack - 1 : nullptr; }
+    NODISCARD FORCEINLINE const T* GetLast()     const noexcept { return this->GetSize() > 0 ? this->Impl.Slack - 1 : nullptr; }
     NODISCARD FORCEINLINE bool     IsCapped()    const noexcept requires (Self::IsStrongAlloc()) { return this->Impl.Slack == this->Impl.End; }
 
     FORCEINLINE bool IsValidIndex(const SizeType InIndex) const noexcept { return InIndex > INDEX_NONE && InIndex < this->GetSize(); }
@@ -537,6 +557,26 @@ FORCEINLINE TArrayAllocator<InT, InSizeType, InTraits>::TArrayAllocator(Self&& O
 }
 
 template<typename InT, typename InSizeType, typename InTraits>
+template<typename TOtherAlloc>
+FORCEINLINE TArrayAllocator<InT, InSizeType, InTraits>::TArrayAllocator(const TOtherAlloc& Other) noexcept requires (std::is_same_v<TOtherAlloc, InT> == false) : Data(), Slack(), End()
+{
+    JAFG_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Other) )
+    this->Grow(Other.Slack - Other.Data);
+
+    T* Me = this->Data;
+    for (const T* RESTRICT Bulk = Other.Data; Bulk != Other.Slack ; ++Bulk)
+    {
+        std::construct_at(Me, *Bulk);
+        ++Me;
+    }
+    this->Slack = Me;
+
+    checkSlow( this->Slack <= this->End )
+
+    return;
+}
+
+template<typename InT, typename InSizeType, typename InTraits>
 FORCEINLINE typename TArrayAllocator<InT, InSizeType, InTraits>::Self& TArrayAllocator<InT, InSizeType, InTraits>::operator=(const Self& Other) noexcept
 {
     JAFG_CHECK_ARRAY( this != &Other )
@@ -575,6 +615,33 @@ FORCEINLINE typename TArrayAllocator<InT, InSizeType, InTraits>::Self& TArrayAll
     Other.Data  = nullptr;
     Other.Slack = nullptr;
     Other.End   = nullptr;
+
+    return *this;
+}
+
+template<typename InT, typename InSizeType, typename InTraits>
+template<typename TOtherAlloc>
+FORCEINLINE typename TArrayAllocator<InT, InSizeType, InTraits>::Self& TArrayAllocator<InT, InSizeType, InTraits>::operator=(const TOtherAlloc& Other) noexcept requires (std::is_same_v<TOtherAlloc, InT> == false)
+{
+    JAFG_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Other) )
+
+    for (T* RESTRICT Bulk = this->Data; Bulk != this->Slack ; ++Bulk)
+    {
+        Bulk->~T();
+    }
+    this->Slack = this->Data;
+
+    this->Grow(Other.Slack - Other.Data);
+
+    T* Me = this->Data;
+    for (const T* RESTRICT Bulk = Other.Data; Bulk != Other.Slack ; ++Bulk)
+    {
+        std::construct_at(Me, *Bulk);
+        ++Me;
+    }
+    this->Slack = Me;
+
+    checkSlow( this->Slack <= this->End )
 
     return *this;
 }
@@ -759,6 +826,20 @@ FORCEINLINE TArrayViewAllocator<InT, InSizeType, InTraits>::TArrayViewAllocator(
 }
 
 template<typename InT, typename InSizeType, typename InTraits>
+template<typename TOtherAlloc>
+FORCEINLINE TArrayViewAllocator<InT, InSizeType, InTraits>::TArrayViewAllocator(const TOtherAlloc& Other) noexcept requires (std::is_same_v<TOtherAlloc, InT> == false)
+{
+    JAFG_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Other) )
+
+    this->Data  = Other.Data;
+    this->Slack = Other.Slack;
+
+    checkSlow( this->Data <= this->Slack )
+
+    return;
+}
+
+template<typename InT, typename InSizeType, typename InTraits>
 FORCEINLINE typename TArrayViewAllocator<InT, InSizeType, InTraits>::Self& TArrayViewAllocator<InT, InSizeType, InTraits>::operator=(const Self& Other) noexcept
 {
     JAFG_CHECK_ARRAY( this != &Other )
@@ -785,6 +866,27 @@ FORCEINLINE typename TArrayViewAllocator<InT, InSizeType, InTraits>::Self& TArra
     checkSlow( this->Data <= this->Slack )
 
     return *this;
+}
+
+template<typename InT, typename InSizeType, typename InTraits>
+template<typename TOtherAlloc>
+FORCEINLINE typename TArrayViewAllocator<InT, InSizeType, InTraits>::Self& TArrayViewAllocator<InT, InSizeType, InTraits>::operator=(const TOtherAlloc& Other) noexcept requires (std::is_same_v<TOtherAlloc, InT> == false)
+{
+    JAFG_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Other) )
+
+    this->Data  = Other.Data;
+    this->Slack = Other.Slack;
+
+    return *this;
+}
+
+template<typename InT, typename InSizeType, typename InTraits>
+FORCEINLINE void TArrayViewAllocator<InT, InSizeType, InTraits>::Invalidate() noexcept
+{
+    this->Data  = nullptr;
+    this->Slack = nullptr;
+
+    return;
 }
 
 template<typename InT, typename InSizeType, typename InTraits>
@@ -845,6 +947,15 @@ FORCEINLINE typename TMutableArrayViewAllocator<InT, InSizeType, InTraits>::Self
     return *this;
 }
 
+template<typename InT, typename InSizeType, typename InTraits>
+FORCEINLINE void TMutableArrayViewAllocator<InT, InSizeType, InTraits>::Invalidate() noexcept
+{
+    this->Data  = nullptr;
+    this->Slack = nullptr;
+
+    return;
+}
+
 template<typename InAlloc>
 FORCEINLINE TArrayBase<InAlloc>::TArrayBase(std::initializer_list<T> InList) noexcept requires (Self::IsStrongAlloc()) : Impl()
 {
@@ -880,9 +991,28 @@ FORCEINLINE TArrayBase<InAlloc>::TArrayBase(const TArrayBase<TOtherAlloc>& Other
 {
     JAFG_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Other) )
 
-    this->Impl.Data  = Other.Impl.Data;
-    this->Impl.Slack = Other.Impl.Slack;
-    this->Impl.End   = Other.Impl.End;
+    this->Impl = Other.Impl;
+
+    checkSlow( this->Impl.Data <= this->Impl.Slack && this->Impl.Slack <= this->Impl.End )
+
+    return;
+}
+
+template<typename InAlloc>
+template<typename TOtherAlloc>
+FORCEINLINE TArrayBase<InAlloc>::TArrayBase(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsStrongAlloc() && std::is_same_v<TOtherAlloc, InAlloc> == false) : Impl()
+{
+    JAFG_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Other) )
+
+    this->Reserve(Other.GetSize());
+
+    T* Me = this->Impl.Data;
+    for (const T& Element : Other)
+    {
+        std::construct_at(Me, Element);
+        ++Me;
+    }
+    this->Impl.Slack = Me;
 
     checkSlow( this->Impl.Data <= this->Impl.Slack && this->Impl.Slack <= this->Impl.End )
 
@@ -914,9 +1044,28 @@ FORCEINLINE typename TArrayBase<InAlloc>::Self& TArrayBase<InAlloc>::operator=(c
 {
     JAFG_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Other) )
 
-    this->Impl.Data  = Other.Impl.Data;
-    this->Impl.Slack = Other.Impl.Slack;
-    this->Impl.End   = Other.Impl.End;
+    this->Impl = Other.Impl;
+
+    checkSlow( this->Impl.Data <= this->Impl.Slack && this->Impl.Slack <= this->Impl.End )
+
+    return *this;
+}
+
+template<typename InAlloc>
+template<typename TOtherAlloc>
+FORCEINLINE typename TArrayBase<InAlloc>::Self& TArrayBase<InAlloc>::operator=(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsStrongAlloc() && std::is_same_v<TOtherAlloc, InAlloc> == false)
+{
+    JAFG_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Other) )
+
+    this->Reset(Other.GetSize());
+
+    T* Me = this->Impl.Data;
+    for (const T& Element : Other)
+    {
+        std::construct_at(Me, Element);
+        ++Me;
+    }
+    this->Impl.Slack = Me;
 
     checkSlow( this->Impl.Data <= this->Impl.Slack && this->Impl.Slack <= this->Impl.End )
 
@@ -926,10 +1075,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::Self& TArrayBase<InAlloc>::operator=(c
 template<typename InAlloc>
 void TArrayBase<InAlloc>::Invalidate() requires (Self::IsWeakAlloc())
 {
-    this->Impl.Data  = nullptr;
-    this->Impl.Slack = nullptr;
-    this->Impl.End   = nullptr;
-
+    this->Impl.Invalidate();
     return;
 }
 

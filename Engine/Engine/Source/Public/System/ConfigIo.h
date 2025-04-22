@@ -7,6 +7,13 @@
 namespace Jafg::ConfigIo
 {
 
+struct Entry
+{
+    LString InSection;
+    LString InKey;
+    LString InValue;
+};
+
 //#
 //# Serialize a value to a configuration file.
 //#
@@ -17,6 +24,7 @@ namespace Jafg::ConfigIo
 //# @return True if something was written, changed or updated, false otherwise.
 //#
 ENGINE_API bool Serialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey, const LStringView& InValue, const bool bDoBackup = true);
+ENGINE_API bool SerializeBulk(const LPath& InPath, const TArray<Entry>& InEntries, const bool bDoBackup = true);
 
 //#
 //# Deserialize a value from a configuration file.

@@ -31,7 +31,7 @@ struct TOptional final
     FORCEINLINE auto operator=(const T& InValue) -> TOptional& { this->Value = InValue; this->bMeaningful = true; return *this; }
     FORCEINLINE auto operator=(T&& InValue) -> TOptional& { this->Value = std::move(InValue); this->bMeaningful = true; return *this; }
 
-    FORCEINLINE auto IsSet() const -> bool { return bMeaningful; }
+    FORCEINLINE auto IsSet() const -> bool { return this->bMeaningful; }
     FORCEINLINE auto MakeMeaningful() -> void { this->bMeaningful = true; }
     FORCEINLINE void SetValue(const T& InValue) { this->Value = InValue; this->bMeaningful = true; }
     FORCEINLINE void Reset() { this->bMeaningful = false; }

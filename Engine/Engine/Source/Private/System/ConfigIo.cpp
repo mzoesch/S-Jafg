@@ -1,348 +1,380 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "System/ConfigIo.h"
-#include "Async/TaskUtility.h"
 #include "System/Paths.h"
-
-using namespace Jafg;
+#include "Async/TaskUtility.h"
 
 namespace
 {
 
-void CopyUntilChar(const char* InSource, char* OutDestination, const char InCustomTerminator, const size_t InMaxSize) {
-    size_t i = 0;
-    while (InSource[i] && InSource[i] != InCustomTerminator && i < InMaxSize - 1)
-    {
-        OutDestination[i] = InSource[i];
-        ++i;
-    }
-    OutDestination[i] = '\0';
+void GoToNextLine(const Jafg::LString& InContentF, LSizeTy* Cursor);
+//#
+//# Given the current cursor position, find the first non whitespace / tab character in this line
+//# or the next meaningful line (if this line is not meaningful). That is also not a comment
+//# character or only contains whitespace / tab characters.
+//#
+void GoToThisLineStart(const Jafg::LString& InContentF, LSizeTy* Cursor);
+auto FindSection(const Jafg::LString& InContentF, const Jafg::LStringView& InSection) -> Jafg::TOptional<LSizeTy>;
+//#
+//# Find the specified key in the specified section (where the cursor is currently positioned). Searches
+//# until the key is found or the end of the section is reached.
+//#
+auto FindKey(const Jafg::LString& InContentF, const LSizeTy& InCursor, const Jafg::LStringView& InKey) -> Jafg::TOptional<LSizeTy>;
+auto FindKeyValue(const Jafg::LString& InContentF, const LSizeTy& InCursor, const Jafg::LStringView& InKey) -> Jafg::TOptional<Jafg::LStringView>;
+bool Serialize(Jafg::LString* ContentF, const Jafg::LStringView& InSection, const Jafg::LStringView& InKey, const Jafg::LStringView& InValue);
+auto Deserialize(const Jafg::LString& InContentF, const Jafg::LStringView& InSection, const Jafg::LStringView& InKey) -> Jafg::TOptional<Jafg::LStringView>;
 
-    if (i == InMaxSize)
+void GoToNextLine(const Jafg::LString& InContentF, LSizeTy* Cursor)
+{
+    checkSlow( Cursor )
+
+    while (InContentF.IsValidIndex(*Cursor))
     {
-        panic( "Buffer overflow." )
+        if (InContentF[*Cursor] == '\n')
+        {
+            ++*Cursor;
+            break;
+        }
+
+        ++*Cursor;
     }
+
 
     return;
 }
 
-// @note Remember to free the destination.
-void CopyUntilChar(const char* InSource, char** OutDestinationPtr, const char InCustomTerminator)
+void GoToThisLineStart(const Jafg::LString& InContentF, LSizeTy* Cursor)
 {
-    constexpr size_t BufferSize { 512 };
-    checkSlow( *OutDestinationPtr == nullptr )
-    *OutDestinationPtr =  static_cast<char*>(::malloc(BufferSize));
-    checkSlow( *OutDestinationPtr != nullptr )
-    ::memset(*OutDestinationPtr, 0, BufferSize);
+    checkSlow( Cursor )
 
-    ::CopyUntilChar(InSource, *OutDestinationPtr, InCustomTerminator, BufferSize);
-
-    return;
-}
-
-bool StartsWith(const char* InString, const char* InPrefix)
-{
-    return ::strncmp(InString, InPrefix, strlen(InPrefix)) == 0;
-}
-
-// @return True if valid.
-bool GoToValue(const char* InString, i32* Cursor)
-{
-    for (i32 i = *Cursor; i < static_cast<i32>(strlen(InString)); ++i)
+    while (InContentF.IsValidIndex(*Cursor))
     {
-        if (InString[i] == '\n')
+        if (InContentF[*Cursor] == ';')
         {
-            panic( "Could not find value of value." )
-            return false;
+            ::GoToNextLine(InContentF, Cursor);
+            continue;
         }
 
-        if (InString[i] == '=')
+        if (InContentF[*Cursor] == ' ' || InContentF[*Cursor] == '\t')
         {
-            *Cursor = ++i;
-            return true;
+            ++*Cursor;
+            continue;
         }
 
-        continue;
-    }
-
-    return false;
-}
-
-// @return True if valid.
-bool GoToKey(const char* InString, const char* InKey, i32* Cursor)
-{
-    for (i32 i = *Cursor; i < static_cast<i32>(strlen(InString)); ++i)
-    {
-        if (InString[i] == '[')
+        if (InContentF[*Cursor] == '\n' || InContentF[*Cursor] == '\r')
         {
-            return false;
-        }
-
-        if (::StartsWith(&InString[i], InKey) && InString[i+strlen(InKey)] == '=')
-        {
-            *Cursor = i;
-            return true;
-        }
-
-        continue;
-    }
-
-    return false;
-}
-
-// @return True, if end of file was found.
-bool GoToNextLine(const LString& InFileContent, i32* Cursor)
-{
-    for (i32 i = *Cursor; i < InFileContent.GetSize(); ++i)
-    {
-        if (InFileContent[i] == '\n')
-        {
-            *Cursor = ++i;
-            return false;
-        }
-    }
-
-    return true;
-}
-
-// @return True, if end of file was found.
-bool GoToNextMeaningfulLine(const LString& InFileContent, i32* Cursor)
-{
-    while (true)
-    {
-        if (::GoToNextLine(InFileContent, Cursor))
-        {
-            return true;
-        }
-
-        if (InFileContent.IsValidIndex(*Cursor) == false)
-        {
-            return true;
-        }
-
-        if (InFileContent[*Cursor] == '\n')
-        {
-            *Cursor += 1;
+            ++*Cursor;
             continue;
         }
 
         break;
     }
 
-    return false;
-}
-
-i32 FindSection(const LString& InFileContent, const LStringView& InSection)
-{
-    for (i32 i = 0; i < InFileContent.GetRuneCount(); ++i)
-    {
-        const LString::T Char = InFileContent[i];
-        if (Char != '[')
-        {
-            continue;
-        }
-        if (InFileContent[i+static_cast<i32>(InSection.GetSize())+1] != ']')
-        {
-            continue;
-        }
-
-        const LString::T* Section = &InFileContent.GetUnderlyingDataStructure()[i+1];
-
-        if (::strncmp(Section, InSection.GetBegin(), ::strlen(InSection.GetBegin())) == 0)
-        {
-            return i;
-        }
-
-        continue;
-    }
-
-    return INDEX_NONE;
-}
-
-void AppendNewSection(LString* InFileContent, const LStringView& InSection)
-{
-    checkSlow( FindSection(*InFileContent, InSection) == INDEX_NONE )
-    InFileContent->Append("[");
-    InFileContent->Append(InSection.GetBegin());
-    InFileContent->Append("]\n");
     return;
 }
 
-} /* ~Namespace <Anonymous> */
-
-bool ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey, const LStringView& InValue, const bool bDoBackup /* = ture */)
+void GoToNextLineStart(const Jafg::LString& InContentF, LSizeTy* Cursor)
 {
-    checkSlow( Tasks::IsOnMasterThread() )
-    check( Paths::DoesFileExist(InPath) )
+    ::GoToNextLine(InContentF, Cursor);
+    ::GoToThisLineStart(InContentF, Cursor);
 
-    LOG_VERBOSE(LogConfigIo, "Pushing field [{}::{}] with [{}] to [{}].", InSection, InKey, InValue, InPath)
+    return;
+}
 
-    LString FileContent = Finder::ReadFile(InPath);
+Jafg::TOptional<LSizeTy> FindSection(const Jafg::LString& InContentF, const Jafg::LStringView& InSection)
+{
+    using namespace Jafg;
 
-    if (const TOptional<LString> StoredValue = Deserialize(InPath, InSection, InKey); StoredValue)
+    LSizeTy Cursor = 0;
+    while (InContentF.IsValidIndex(Cursor))
     {
-        if (::strcmp(StoredValue.GetValue().ToPtr(), InValue.GetBegin()) == 0)
-        {
-            return false;
-        }
-    }
+        ::GoToThisLineStart(InContentF, &Cursor);
 
-    i32 Cursor = ::FindSection(FileContent, InSection);
-    if (Cursor == INDEX_NONE)
-    {
-        ::AppendNewSection(&FileContent, InSection);
-        Cursor = ::FindSection(FileContent, InSection);
-        checkSlow( Cursor != INDEX_NONE )
-    }
-    ::GoToNextMeaningfulLine(FileContent, &Cursor);
-
-    if (::GoToKey(FileContent.ToPtr(), InKey.GetBegin(), &Cursor) == false)
-    {
-        GoToNextLine(FileContent, &Cursor);
-        LString NewFileContent; NewFileContent.Reserve(FileContent.GetSize());
-        for (i32 i = 0; i < Cursor; ++i)
+        if (InContentF.IsValidIndex(Cursor) == false)
         {
-            NewFileContent.Add(FileContent[i]);
-        }
-        NewFileContent += InKey.GetBegin();
-        NewFileContent.Add('=');
-        NewFileContent += InValue.GetBegin();
-        NewFileContent.Add('\n');
-        for (i32 i = Cursor; i < FileContent.GetRuneCount(); ++i)
-        {
-            NewFileContent.Add(FileContent[i]);
+            return { };
         }
 
-        if (bDoBackup)
+        if (InContentF[Cursor] == '[')
         {
-            Paths::MakeFileBackup(InPath);
-        }
-        Paths::OverrideFile(InPath, NewFileContent.ToPtr());
+            ++Cursor;
+            LSizeTy Start = Cursor;
 
-        return true;
-    }
-
-    if (::GoToValue(FileContent.ToPtr(), &Cursor) == false)
-    {
-        panic( "Could not find value." )
-        return false;
-    }
-
-    const i32 ValueSize = static_cast<i32>(::strlen(InValue.GetBegin()));
-    i32 ValueCursor = 0;
-    bool  bUpdateNew = true;
-    for (i32 i = Cursor; i < FileContent.GetRuneCount(); ++i)
-    {
-        if (ValueSize == ValueCursor)
-        {
-            if (FileContent[i] == '\n')
+            while (InContentF.IsValidIndex(Cursor) && InContentF[Cursor] != ']')
             {
-                return false;
+                if (InContentF[Cursor] == ';' || InContentF[Cursor] == '\n' || InContentF[Cursor] == '\r')
+                {
+                    panicMsgf
+                    (
+                        "Invalid syntax in config file at line [{}] when trying to find [{}].",
+                        InContentF.GetLineNumber(static_cast<LString::SizeType>(Cursor)),
+                        InSection
+                    )
+                    return { };
+                }
+
+                ++Cursor;
+                continue;
             }
-            bUpdateNew = false;
-            break;
+
+            if (InContentF.IsValidIndex(Cursor) == false)
+            {
+                panicMsgf
+                (
+                    "Invalid syntax in config file at line [{}] when trying to find [{}].",
+                    InContentF.GetLineNumber(static_cast<LString::SizeType>(Cursor)),
+                    InSection
+                )
+                return { };
+            }
+
+            check( InContentF[Cursor] == ']' )
+            const LStringView Section = InContentF.Sub<LStringView>(Start, Cursor - Start);
+            if (Section == InSection)
+            {
+                return Start - 1;
+            }
         }
 
-        if (InValue[ValueCursor] == '\0')
+        GoToNextLine(InContentF, &Cursor);
+    }
+
+    return { };
+}
+
+Jafg::TOptional<LSizeTy> FindKey(const Jafg::LString& InContentF, const LSizeTy& InCursor, const Jafg::LStringView& InKey)
+{
+    checkCode
+    (
+        if (InContentF.IsValidIndex(InCursor))
+        {
+            check( InContentF[InCursor] == '[' )
+        }
+    )
+
+    using namespace Jafg;
+    LSizeTy Cursor = InCursor;
+
+    ::GoToNextLineStart(InContentF, &Cursor);
+    while (true)
+    {
+        if (InContentF.IsValidIndex(Cursor) == false)
+        {
+            return { };
+        }
+
+        if (InContentF[Cursor] == '[')
+        {
+            return { };
+        }
+
+        if (LString::StartsWith(InContentF.GetBegin() + Cursor, InContentF.GetEnd(), InKey.GetBegin(), InKey.GetEnd()) == false)
+        {
+            ::GoToNextLineStart(InContentF, &Cursor);
+            continue;
+        }
+
+        const LSizeTy OutCandidate = Cursor;
+
+        Cursor += InKey.GetSize();
+        if (InContentF.IsValidIndex(Cursor) == false)
+        {
+            return { };
+        }
+
+        if (InContentF[Cursor] != '=')
+        {
+            ::GoToNextLineStart(InContentF, &Cursor);
+            continue;
+        }
+
+        Cursor += /* = */1;
+        if (InContentF.IsValidIndex(Cursor) == false)
+        {
+            return { };
+        }
+
+        return OutCandidate;
+    }
+}
+
+Jafg::TOptional<Jafg::LStringView> FindKeyValue(const Jafg::LString& InContentF, const LSizeTy& InCursor, const Jafg::LStringView& InKey)
+{
+    Jafg::TOptional<LSizeTy> Key = FindKey(InContentF, InCursor, InKey);
+    if (!Key)
+    {
+        return { };
+    }
+
+    LSizeTy Cursor = *Key;
+    Cursor += InKey.GetSize();
+    check( InContentF.IsValidIndex(Cursor) && InContentF[Cursor] == '=' )
+    Cursor += /* = */1;
+
+    const Jafg::LString::T* Begin = InContentF.GetBegin() + Cursor;
+    while (InContentF.IsValidIndex(Cursor))
+    {
+        if (InContentF[Cursor] == ';' || InContentF[Cursor] == '\n' || InContentF[Cursor] == '\r')
         {
             break;
         }
 
-        if (FileContent[i] == '\n')
-        {
-            break;
-        }
+        ++Cursor;
 
-        if (FileContent[i] != InValue[ValueCursor])
-        {
-            break;
-        }
-
-        ++ValueCursor;
         continue;
     }
-    if (bUpdateNew == false)
-    {
-        return false;
-    }
 
-    LString NewFileContent; NewFileContent.Reserve(FileContent.GetSize());
-    for (i32 i = 0; i < Cursor; ++i)
+    const Jafg::LString::T* End = InContentF.GetBegin() + Cursor;
+
+    return Jafg::LStringView(Begin, End);
+}
+
+
+bool Serialize(Jafg::LString* ContentF, const Jafg::LStringView& InSection, const Jafg::LStringView& InKey, const Jafg::LStringView& InValue)
+{
+    using namespace Jafg;
+
+    checkSlow( ContentF )
+
+    if (const TOptional<LStringView> DeserializedValue = ::Deserialize(*ContentF, InSection, InKey); DeserializedValue)
     {
-        NewFileContent.Add(FileContent[i]);
-    }
-    if (*NewFileContent.Peek() != '=')
-    {
-        panic( "Invalid state" )
-        return false;
-    }
-    NewFileContent += InValue.GetBegin();
-    NewFileContent.Add('\n');
-    if (::GoToNextMeaningfulLine(FileContent, &Cursor) == false)
-    {
-        for (i32 i = Cursor; i < FileContent.GetRuneCount(); ++i)
+        const LStringView& Value = *DeserializedValue;
+        if (Value.Equals(InValue.GetBegin(), InValue.GetEnd()) == false)
         {
-            NewFileContent.Add(FileContent[i]);
+            ContentF->Replace(Value.GetBegin(), Value.GetEnd(), InValue.GetBegin(), InValue.GetEnd());
+            return true;
         }
+
+        return false;
     }
 
-    if (bDoBackup)
+    TOptional<LSizeTy> SectionMaybe = ::FindSection(*ContentF, InSection);
+    if (!SectionMaybe)
     {
-        Paths::MakeFileBackup(InPath);
+        ContentF->Append(LString::SprintF("[{}]\n", InSection));
+        SectionMaybe = ::FindSection(*ContentF, InSection);
     }
-    Paths::OverrideFile(InPath, NewFileContent.ToPtr());
+    LSizeTy Section = *SectionMaybe;
+
+    ::GoToNextLine(*ContentF, &Section);
+    ContentF->AppendAt(Section, LString::SprintF("{}={}\n", InKey, InValue));
 
     return true;
 }
 
-TOptional<LString> ConfigIo::Deserialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey)
+Jafg::TOptional<Jafg::LStringView> Deserialize(const Jafg::LString& InContentF, const Jafg::LStringView& InSection, const Jafg::LStringView& InKey)
 {
-    checkSlow( Tasks::IsOnMasterThread() )
-    check( Finder::DoesFileExists(InPath) )
-
-    LOG_VERBOSE(LogConfigIo, "Pulling field [{}::{}] from [{}].", InSection, InKey, InPath)
-
-    const LString FileContent = Finder::ReadFile(InPath);
-
-    i32 Cursor = ::FindSection(FileContent, InSection);
-    if (Cursor == INDEX_NONE)
+    Jafg::TOptional<LSizeTy> Section = ::FindSection(InContentF, InSection);
+    if (!Section)
     {
         return { };
     }
-    if (::GoToNextMeaningfulLine(FileContent, &Cursor))
+    LSizeTy Cursor = *Section;
+    ::GoToThisLineStart(InContentF, &Cursor);
+    Jafg::TOptional<LSizeTy> KeyCursor = ::FindKey(InContentF, Cursor, InKey);
+    if (!KeyCursor)
     {
         return { };
     }
 
-    while (true)
+    Cursor = *KeyCursor;
+
+    Cursor += InKey.GetSize();
+    check( InContentF.IsValidIndex(Cursor) && InContentF[Cursor] == '=' )
+    Cursor += /* = */1;
+
+    if (InContentF.IsValidIndex(Cursor) == false)
     {
-        if (::StartsWith(&FileContent.GetUnderlyingDataStructure()[Cursor], InKey.GetBegin()))
+        return { };
+    }
+
+    const Jafg::LString::T* Begin = InContentF.GetBegin() + Cursor;
+    while (InContentF.IsValidIndex(Cursor))
+    {
+        if (InContentF[Cursor] == ';' || InContentF[Cursor] == '\n' || InContentF[Cursor] == '\r')
         {
             break;
         }
-        if (FileContent.GetUnderlyingDataStructure()[Cursor] == '[')
-        {
-            return { };
-        }
-        if (::GoToNextMeaningfulLine(FileContent, &Cursor))
-        {
-            return { };
-        }
+
+        ++Cursor;
 
         continue;
     }
 
-    if (::GoToValue(FileContent.ToPtr(), &Cursor) == false)
+    const Jafg::LString::T* End = InContentF.GetBegin() + Cursor;
+
+    return Jafg::LStringView(Begin, End);
+}
+
+} /* ~Namespace <Anonymous> */
+
+bool Jafg::ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey, const LStringView& InValue, const bool bDoBackup /* = true */)
+{
+    checkSlow( Tasks::IsOnMasterThread() )
+    check( Paths::DoesFileExist(InPath) )
+
+    LString ContentF = Paths::ReadFile(InPath);
+
+    const bool bUpdated = ::Serialize(&ContentF, InSection, InKey, InValue);
+
+    if (bUpdated)
     {
-        return { };
+        if (bDoBackup)
+        {
+            Paths::MakeFileBackup(InPath);
+        }
+
+        Paths::OverrideFile(InPath, ContentF);
+
+        LOG_VERBOSE(LogConfigIo, "Pushed field [{}::{}] with [{}].", InSection, InKey, InValue);
     }
 
-    LString Out;
-    while (FileContent.GetUnderlyingDataStructure()[Cursor] != '\n')
+    return bUpdated;
+}
+
+bool Jafg::ConfigIo::SerializeBulk(const LPath& InPath, const TArray<Entry>& InEntries, const bool bDoBackup /* = true */)
+{
+    checkSlow( Tasks::IsOnMasterThread() )
+    check( Paths::DoesFileExist(InPath) )
+
+    LString ContentF = Finder::ReadFile(InPath);
+
+    bool bUpdated = false;
+    for (const Entry& E : InEntries)
     {
-        Out.Append(&FileContent.GetUnderlyingDataStructure()[Cursor], 1);
-        ++Cursor;
+        if (::Serialize(&ContentF, E.InSection, E.InKey, E.InValue))
+        {
+            bUpdated = true;
+            LOG_VERBOSE(LogConfigIo, "Pushed field [{}::{}] with [{}].", E.InSection, E.InKey, E.InValue);
+        }
     }
 
-    return Out;
+    if (bUpdated)
+    {
+        if (bDoBackup)
+        {
+            Paths::MakeFileBackup(InPath);
+        }
+
+        Paths::OverrideFile(InPath, ContentF);
+    }
+
+    return bUpdated;
+}
+
+Jafg::TOptional<Jafg::LString> Jafg::ConfigIo::Deserialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey)
+{
+    checkSlow( Tasks::IsOnMasterThread() )
+    check( Paths::DoesFileExist(InPath) )
+
+    const LString ContentF = Paths::ReadFile(InPath);
+    TOptional<LStringView> Out = ::Deserialize(ContentF, InSection, InKey);
+
+    if (Out)
+    {
+        LOG_VERBOSE(LogConfigIo, "Pulled field [{}::{}] with [{}].", InSection, InKey, *Out);
+        return  Out->GetSize() == 0 ? LString("NULL") : LString(*Out);
+    }
+
+    return { };
 }

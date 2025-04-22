@@ -44,29 +44,16 @@ void PullConfigFromObject(LObjectClass* InClass)
         return;
     }
 
-    i32 FieldsPulled = 0; /* The compiler will most likely purge this. */
     for (LClassField& Field : InClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())
     {
         checkSlow( Field.Identifier.IsEmpty() == false )
 
-        if (TOptional<LString> StringValue = ConfigIo::Deserialize(CfgPath, InClass->GetSpacedClassName().ToPtr(), Field.Identifier))
+        if (TOptional<LString> StringValue = ConfigIo::Deserialize(CfgPath, InClass->GetSpacedClassName(), Field.Identifier); StringValue)
         {
-            Field.Set(StringValue.GetValue());
-            if constexpr (IS_COMPILED_LOG(LogObjectInternal, Verbose))
-            {
-                ++FieldsPulled;
-            }
+            Field.Set(std::move(*StringValue));
         }
 
         continue;
-    }
-
-    if constexpr (IS_COMPILED_LOG(LogObjectInternal, Verbose))
-    {
-        if (FieldsPulled > 0)
-        {
-            LOG_VERBOSE(LogObjectInternal, "Pulled [{}] fields of package [{}].", FieldsPulled, InClass->GetSpacedClassName())
-        }
     }
 
     return;
@@ -85,29 +72,13 @@ void PushConfigFromObject(const LObjectClass* InClass)
     const LPath CfgPath = Finder::GetUserPreferencesFile();
     Paths::EnsureFile(CfgPath);
 
-    i32 FieldsPushed = 0; /* The compiler will most likely purge this. */
+    TArray<ConfigIo::Entry> Entries;
     for (LClassField& Field : InClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())
     {
-        const LString StringRepresentation = Field.Get();
-        LOG_TRACE(LogObjectInternal, "Pushing field [{}] with [{}].", Field.Identifier, StringRepresentation)
-        if (ConfigIo::Serialize(CfgPath, InClass->GetSpacedClassName().ToPtr(), Field.Identifier, StringRepresentation.ToPtr(), false))
-        {
-            if constexpr (IS_COMPILED_LOG(LogObjectInternal, Verbose))
-            {
-                ++FieldsPushed;
-            }
-        }
-
-        continue;
+        Entries.Emplace(InClass->GetSpacedClassName(), Field.Identifier, Field.Get());
     }
 
-    if constexpr (IS_COMPILED_LOG(LogObjectInternal, Verbose))
-    {
-        if (FieldsPushed > 0)
-        {
-            LOG_VERBOSE(LogObjectInternal, "Pushed [{}] fields of package [{}].", FieldsPushed, InClass->GetSpacedClassName())
-        }
-    }
+    ConfigIo::SerializeBulk(CfgPath, Entries);
 
     return;
 }

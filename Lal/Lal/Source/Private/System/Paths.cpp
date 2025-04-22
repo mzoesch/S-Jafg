@@ -139,11 +139,15 @@ void Paths::OverrideFile(const LPath& InFileName, const LStringView& InContent, 
     Out.write(InContent.GetBegin(), InContent.GetSize());
     Out.close();
 
+    LOG_TRACE(LogSystem, "File [{}] overridden.", InFileName )
+
     return;
 }
 
 void Paths::MakeFileBackup(const LPath& InFileName, const bool bMakeIfSame /* = false */, i32 InBackupCount /* = 5 */, const LStringView& InBackupExtension /* = ".old" */)
 {
+    LOG_VERBOSE(LogSystem, "Making backup of file [{}].", InFileName )
+
     check( InBackupCount > 0 )
 
     Paths::DoesFileExistAsserted(InFileName);
