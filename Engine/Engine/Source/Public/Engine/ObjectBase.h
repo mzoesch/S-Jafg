@@ -48,7 +48,7 @@ FORCEINLINE LObjectInitializer GetDefaultObjectInitializer()
 
 MAKE_DELEGATE_SIGNATURE(LSetClassField, void, const LString& InValue)
 MAKE_DELEGATE_SIGNATURE(LGetClassField, LString)
-MAKE_DELEGATE_SIGNATURE(LCustomMallocClassField, void)
+MAKE_DELEGATE_SIGNATURE(LCustomMallocClassField, void, void* InMemory)
 
 struct LClassField
 {

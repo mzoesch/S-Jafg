@@ -335,9 +335,9 @@ private: /* Restore default visibility. */
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly(MyClassMember) \
-    void PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(_, MallocField, _, MyClassMember)()                     \
+    void PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(_, MallocField, _, MyClassMember)(void* InMemory)       \
     {                                                                                              \
-        ::Jafg::OnDefaultOnlyMallocMember(&this->MyClassMember);                                   \
+        ::Jafg::OnDefaultOnlyMallocMember(&static_cast<Derived*>(InMemory)->MyClassMember);        \
     }
 
 //#

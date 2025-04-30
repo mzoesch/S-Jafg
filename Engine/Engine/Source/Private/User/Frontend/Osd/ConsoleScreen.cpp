@@ -85,7 +85,7 @@ void Jafg::WConsoleScreen::OnVisibilityChanged(const EWidgetVisibility::Type InO
 
 void Jafg::WConsoleScreen::AddToHistory(const LString& InText)
 {
-    TArray<LString> MutableHistory = GetMutableDefault<WConsoleScreen>()->History;
+    TArray<LString>& MutableHistory = GetMutableDefault<WConsoleScreen>()->History;
 
     if (const LString* Last = MutableHistory.Peek(); Last)
     {
@@ -95,7 +95,7 @@ void Jafg::WConsoleScreen::AddToHistory(const LString& InText)
         }
     }
 
-    if (MutableHistory.GetSize() > MaxHistorySize)
+    if (MutableHistory.GetSize() > GetMutableDefault<WConsoleScreen>()->MaxHistorySize)
     {
         MutableHistory.RemoveAt(0);
     }

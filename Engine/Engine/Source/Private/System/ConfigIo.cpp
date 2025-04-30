@@ -241,7 +241,7 @@ bool Serialize(Jafg::LString* ContentF, const Jafg::LStringView& InSection, cons
         const LStringView& Value = *DeserializedValue;
         if (Value.Equals(InValue.GetBegin(), InValue.GetEnd()) == false)
         {
-            ContentF->Replace(Value.GetBegin(), Value.GetEnd(), InValue.GetBegin(), InValue.GetEnd());
+            ContentF->Substitute(const_cast<LString::T*>(Value.GetBegin()), const_cast<LString::T*>(Value.GetEnd()), InValue.GetBegin(), InValue.GetEnd());
             return true;
         }
 

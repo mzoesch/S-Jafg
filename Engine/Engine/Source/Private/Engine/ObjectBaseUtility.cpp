@@ -151,8 +151,10 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
     #pragma clang diagnostic pop
 #endif /* WITH_CLANG */
 
-    checkCode(
-        checkMsgf(
+    checkCode
+    (
+        checkMsgf
+        (
             /* Offset of VTable ptr is POINTER_BYTE_SIZE bytes */
             ::Jafg::OffsetOf(&JObjectBase::VClass) == POINTER_BYTE_SIZE,
             "Offset is [{}].", ::Jafg::OffsetOf(&JObjectBase::VClass)
@@ -177,11 +179,11 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
 #endif /* WITH_GCC */
     check( Reinterpreted->ClassFields.GetSize() == 0 && Reinterpreted->ClassFields.IsData() == false )
 
-    for (LClassField& Field : InStaticClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())
+    for (const LClassField& Field : InStaticClass->GetDefaultPackageReferrer()->GetClassFields())
     {
         if (Field.Malloc)
         {
-            Field.Malloc();
+            Field.Malloc(Reinterpreted);
         }
     }
 
@@ -268,7 +270,8 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
             PullConfigFromObject(StaticClass);
         }
 
-        LOG_TRACE(
+        LOG_TRACE
+        (
             LogObjectPackager,
             "Finished loading package for [{} ({}b)].",
             StaticClass->GetSpacedClassName(),

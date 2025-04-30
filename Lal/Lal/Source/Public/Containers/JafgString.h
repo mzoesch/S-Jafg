@@ -319,9 +319,18 @@ public:
     template <typename TOtherString>
     FORCEINLINE TOtherString LeftChop(const SizeType InRuneIndex) const noexcept requires (Self::template IsValidOtherString<TOtherString>());
 
+    //#
+    //# Replace all occurrences of the input string with the replacement string.
+    //# @return The number of substrings replaced.
+    //#
     FORCEINLINE SizeType Replace(const T InRune, const T InReplacement) noexcept requires (Self::IsContentMutable());
     FORCEINLINE SizeType Replace(const T* InString, const T* InReplacement) noexcept requires (Self::IsContentMutable());
     FORCEINLINE SizeType Replace(const T* InString, const T* InEnd, const T* InReplacement, const T* InReplacementEnd) noexcept requires (Self::IsContentMutable());
+
+    //#
+    //# Substitute the range of runes [InStart, InEnd[ with the range of runes [InReplacement, InReplacementEnd[.
+    //#
+    FORCEINLINE void Substitute(T* InStart, T* InEnd, const T* InReplacement, const T* InReplacementEnd) noexcept requires (Self::IsDynamic());
 
     FORCEINLINE SizeType Count(const T InRune) const noexcept;
     FORCEINLINE SizeType Count(const T* InString) const noexcept;
@@ -2275,6 +2284,36 @@ FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBa
     }
 
     return Out;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::Substitute(T* InStart, T* InEnd, const T* InReplacement, const T* InReplacementEnd) noexcept requires (Self::IsDynamic())
+{
+    check( InStart <= InEnd )
+    check( InStart >= this->GetBegin() && InEnd < this->GetEnd() )
+    check( InReplacement <= InReplacementEnd )
+    check( InReplacement < this->GetBegin() || InReplacementEnd > this->Impl.GetUnderlyingDataStructure().End )
+
+    const SizeType DeltaSize = (InReplacementEnd - InReplacement) - (InEnd - InStart);
+    if (DeltaSize == 0)
+    {
+        ::memcpy(InStart, InReplacement, InReplacementEnd - InReplacement);
+        return;
+    }
+
+    const SizeType InRelStart = InStart - this->GetBegin();
+    const SizeType InRelEnd   = InEnd   - this->GetBegin();
+    check( InRelStart >= 0 && InRelEnd <= this->GetSize() )
+
+    this->Impl.Reserve(this->GetSize() + DeltaSize);
+
+    ::memmove(this->GetBegin() + InRelEnd + DeltaSize, this->GetBegin() + InRelEnd, this->Impl.GetUnderlyingDataStructure().Slack - this->GetBegin() - InRelEnd);
+    ::memcpy(this->GetBegin() + InRelStart, InReplacement, InReplacementEnd - InReplacement);
+
+    this->Impl.GetUnderlyingDataStructure().Slack += DeltaSize;
+
+    PRIVATE_JAFG_CHECK_STRING_STATE()
+    return;
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
