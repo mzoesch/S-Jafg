@@ -71,6 +71,11 @@ public:
     void ClearText();
     FORCEINLINE auto GetText() const -> const LString& { return this->Content; }
 
+    //# @return The actual caret that was set.
+    i32 SetCaretCursor(const i32 InCaretCursor);
+    i32 SetCaretCursorToBegin();
+    i32 SetCaretCursorToEnd();
+
 private:
 
     void SafelyReduceCaretCursor();

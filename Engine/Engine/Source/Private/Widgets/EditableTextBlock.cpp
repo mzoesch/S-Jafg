@@ -156,34 +156,44 @@ Jafg::LReply Jafg::WEditableTextBlock::OnKeyDown(LKeyEvent& InKeyEvent)
             }
             this->CaretBlinker = 0.0f;
         }
+        return LReply::Handled();
     }
 
     if (InKeyEvent.GetKey() == EKeys::Left)
     {
-        const LString::SizeType Size = this->Content.GetRuneCountOfCharacterAt(this->CaretBlinker);
-        for (LString::SizeType I = 0; I < Size; ++I)
+        if (this->Content.IsValidIndex(this->CaretCursor-1))
         {
-            this->SafelyReduceCaretCursor();
+            const LString::SizeType Size = this->Content.GetRuneCountOfCharacterAt(this->CaretCursor);
+            for (LString::SizeType I = 0; I < Size; ++I)
+            {
+                this->SafelyReduceCaretCursor();
+            }
         }
         this->CaretBlinker = 0.0f;
+        return LReply::Handled();
     }
 
     if (InKeyEvent.GetKey() == EKeys::Right)
     {
-        const LString::SizeType Size = this->Content.GetRuneCountOfCharacterAt(this->CaretBlinker);
-        for (LString::SizeType I = 0; I < Size; ++I)
+        if (this->Content.IsValidIndex(this->CaretCursor))
         {
-            this->SafelyIncreaseCaretCursor();
+            const LString::SizeType Size = this->Content.GetRuneCountOfCharacterAt(this->CaretCursor);
+            for (LString::SizeType I = 0; I < Size; ++I)
+            {
+                this->SafelyIncreaseCaretCursor();
+            }
         }
         this->CaretBlinker = 0.0f;
+        return LReply::Handled();
     }
 
     if (InKeyEvent.GetKey() == EKeys::Enter || InKeyEvent.GetKey() == EKeys::NumPadEnter)
     {
         this->OnTextCommit(this->Content, ETextCommit::OnEnter);
+        return LReply::Handled();
     }
 
-    return LReply::Handled();
+    return Super::OnKeyDown(InKeyEvent);
 }
 
 void Jafg::WEditableTextBlock::OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType)
@@ -202,6 +212,8 @@ void Jafg::WEditableTextBlock::SetText(const LString& InText)
         check( this->Content.GetByteSize() > 0 )
     }
 
+    this->SetCaretCursorToEnd();
+
     return;
 }
 
@@ -209,6 +221,7 @@ void Jafg::WEditableTextBlock::SetText(LString&& InText)
 {
     this->Content = std::move(InText);
     this->CaretCursor = Maths::Min(this->CaretCursor, this->Content.GetRuneCount());
+    this->SetCaretCursorToEnd();
 
     return;
 }
@@ -219,6 +232,24 @@ void Jafg::WEditableTextBlock::ClearText()
     this->CaretCursor = 0;
 
     return;
+}
+
+i32 Jafg::WEditableTextBlock::SetCaretCursor(const i32 InCaretCursor)
+{
+    this->CaretCursor = Maths::Clamp(InCaretCursor, 0, this->Content.GetRuneCount());
+    return this->CaretCursor;
+}
+
+i32 Jafg::WEditableTextBlock::SetCaretCursorToBegin()
+{
+    this->CaretCursor = 0;
+    return this->CaretCursor;
+}
+
+i32 Jafg::WEditableTextBlock::SetCaretCursorToEnd()
+{
+    this->CaretCursor = this->Content.GetRuneCount();
+    return this->CaretCursor;
 }
 
 void Jafg::WEditableTextBlock::SafelyReduceCaretCursor()

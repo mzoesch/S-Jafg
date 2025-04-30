@@ -33,6 +33,25 @@ void Jafg::WConsoleScreen::Construct()
     return;
 }
 
+void Jafg::WConsoleScreen::Tick()
+{
+    Super::Tick();
+
+    this->GetViewportChecked()->GetCachedContextChecked()->ForEachNewKeyDown([this](const LRawInput& InKey)
+    {
+        if (InKey.Key == EKeys::Up)
+        {
+            this->GoHistoryBack();
+        }
+        else if (InKey.Key == EKeys::Down)
+        {
+            this->GoHistoryForward();
+        }
+    });
+
+    return;
+}
+
 void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Type InState)
 {
     if (InState == EConsoleScreenState::Show)
@@ -105,6 +124,76 @@ void Jafg::WConsoleScreen::AddToHistory(const LString& InText)
     return;
 }
 
+void Jafg::WConsoleScreen::GoHistoryBack()
+{
+    const i32 LastHistoryCursor = this->HistoryCursor;
+
+    const TArray<LString>& DefaultHistory = GetDefault<WConsoleScreen>()->History;
+
+    this->HistoryCursor = Maths::Clamp(this->HistoryCursor + 1, static_cast<i32>(INDEX_NONE), DefaultHistory.GetSize() - 1);
+
+    if (this->HistoryCursor == INDEX_NONE || this->HistoryCursor == LastHistoryCursor)
+    {
+        return;
+    }
+
+    this->GetImplChecked()->SetText(*this->GetCurrentHistoryItemChecked());
+
+    return;
+}
+
+void Jafg::WConsoleScreen::GoHistoryForward()
+{
+    const i32 LastHistoryCursor = this->HistoryCursor;
+
+    this->HistoryCursor = Maths::Clamp(this->HistoryCursor - 1, static_cast<i32>(INDEX_NONE), GetDefault<WConsoleScreen>()->History.GetSize() - 1);
+
+    if (this->HistoryCursor == INDEX_NONE || this->HistoryCursor == LastHistoryCursor)
+    {
+        if (this->HistoryCursor != LastHistoryCursor)
+        {
+            this->GetImpl()->SetText("");
+        }
+
+        return;
+    }
+
+    this->GetImplChecked()->SetText(*this->GetCurrentHistoryItemChecked());
+
+    return;
+}
+
+void Jafg::WConsoleScreen::HideConsoleScreenWithSideEffects()
+{
+    check( this->GetVisibility() == EWidgetVisibility::Collapsed )
+    LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
+    UserInput->DeactivateAllContexts();
+    UserInput->ActivateContext("InMyWorld");
+    this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+
+    if (this->EditableTextBlock)
+    {
+        this->EditableTextBlock->ClearText();
+    }
+
+    this->HistoryCursor = INDEX_NONE;
+
+    return;
+}
+
+void Jafg::WConsoleScreen::ShowConsoleScreenWithSideEffects()
+{
+    check( this->GetVisibility() == EWidgetVisibility::IntransitiveHitTestInvisible )
+    LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
+    UserInput->DeactivateAllContexts();
+    UserInput->ActivateContext("InConsole");
+    this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both, ShowMouseCursor);
+
+    this->HistoryCursor = INDEX_NONE;
+
+    return;
+}
+
 void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType)
 {
     if (InCommitType != ETextCommit::OnEnter)
@@ -172,33 +261,6 @@ void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit
     }
 
     LOG_WARNING(LogTemporal, "{}", InText)
-
-    return;
-}
-
-void Jafg::WConsoleScreen::HideConsoleScreenWithSideEffects()
-{
-    check( this->GetVisibility() == EWidgetVisibility::Collapsed )
-    LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
-    UserInput->DeactivateAllContexts();
-    UserInput->ActivateContext("InMyWorld");
-    this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
-
-    if (this->EditableTextBlock)
-    {
-        this->EditableTextBlock->ClearText();
-    }
-
-    return;
-}
-
-void Jafg::WConsoleScreen::ShowConsoleScreenWithSideEffects()
-{
-    check( this->GetVisibility() == EWidgetVisibility::IntransitiveHitTestInvisible )
-    LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
-    UserInput->DeactivateAllContexts();
-    UserInput->ActivateContext("InConsole");
-    this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both, ShowMouseCursor);
 
     return;
 }

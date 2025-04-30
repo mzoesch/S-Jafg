@@ -13,6 +13,8 @@
 
 void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursorLocation)
 {
+    this->CachedContext = &Context;
+
     const bool bCursorLocationIsMeaningful = InCursorLocation.X >= 0.0f && InCursorLocation.Y >= 0.0f;
 
     if (bCursorLocationIsMeaningful)
@@ -176,6 +178,8 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
 
 void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalidateAllInputs)
 {
+    this->CachedContext = &Context;
+
     if (this->HoveredWidgets.IsEmpty() == false || this->LastFrameHoveredWidgets.IsEmpty() == false)
     {
         LCursorReply MostRecentReply = LCursorReply::Unhandled();

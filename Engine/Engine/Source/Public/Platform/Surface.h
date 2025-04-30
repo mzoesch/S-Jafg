@@ -98,6 +98,9 @@ public:
     FORCEINLINE bool HasBufferedPlatformInput() const { return this->PlatformInput.IsEmpty() == false; }
     FORCEINLINE auto GetBufferedPlatformInput() const -> const LString& { return this->PlatformInput; }
 
+    template <typename Predicate>
+    FORCEINLINE void ForEachNewKeyDown(Predicate InPredicate);
+
 protected:
 
     FORCEINLINE void AddBufferedPlatformInput(const char*    InInput) { this->PlatformInput += InInput; }
@@ -200,6 +203,22 @@ void Jafg::LSurfaceBase::SetRepeatedKeyDown(const LRawInput& InRawInput)
         }
     }
     this->PlatformRepeatedKey = InRawInput;
+    return;
+}
+
+template<typename Predicate>
+void Jafg::LSurfaceBase::ForEachNewKeyDown(Predicate InPredicate)
+{
+    for (const LRawInput& Input : this->DownKeys)
+    {
+        if (this->IsNewKeyDown(Input.Key))
+        {
+            InPredicate(Input);
+        }
+
+        continue;
+    }
+
     return;
 }
 

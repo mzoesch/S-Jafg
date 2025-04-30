@@ -34,6 +34,9 @@ namespace Jafg::Maths
         typename Arg3                                                           \
     >                                                                           \
     FORCEINLINE static auto Func(Arg1 X, Arg2 Y, Arg3 Z) -> decltype(X * Y * Z) \
+        requires std::is_floating_point_v<Arg1>                                 \
+              || std::is_floating_point_v<Arg2>                                 \
+              || std::is_floating_point_v<Arg3>                                 \
     {                                                                           \
         static_assert(                                                          \
                (                                                                \

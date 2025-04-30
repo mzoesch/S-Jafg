@@ -80,6 +80,13 @@ public:
     FORCEINLINE auto GetMutableBackgroundContexts() -> TArray<LBackgroundContext>& { return this->BackgroundContexts; }
     FORCEINLINE auto GetBackgroundBuffer() const -> const LFrameBuffer& { return this->BackgroundBuffer; }
 
+    //#
+    //# Get the most recent context that was used on this viewport. Might be null, so do not use without checking.
+    //#
+    FORCEINLINE LSurface* GetCachedContext() { return this->CachedContext; }
+    FORCEINLINE LSurface* GetCachedContextChecked() { check( this->CachedContext ) return this->CachedContext; }
+    FORCEINLINE LSurface* GetCachedContextAsserted() { jassert( this->CachedContext ) return this->CachedContext; }
+
 private:
 
     void ChangeFocusUnsafe(const WWidgetNode* InNode);
@@ -112,6 +119,8 @@ private:
 
     TArray<LBackgroundContext> BackgroundContexts;
     LFrameBuffer BackgroundBuffer;
+
+    LSurface* CachedContext = nullptr;
 };
 
 FORCEINLINE WWidgetNode* LViewport::GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const
