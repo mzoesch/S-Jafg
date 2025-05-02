@@ -18,9 +18,9 @@ void Jafg::JChunkValidationSubsystem::Initialize(LSubsystemCollection& Collectio
     return;
 }
 
-void Jafg::JChunkValidationSubsystem::FixedTick(const float EngineDeltaTime, const float SubsystemDeltaTime)
+void Jafg::JChunkValidationSubsystem::FixedTick(const float EngineDeltaTime, const f32 FixedDeltaTime)
 {
-    Super::FixedTick(EngineDeltaTime, SubsystemDeltaTime);
+    Super::FixedTick(EngineDeltaTime, FixedDeltaTime);
 
     const LVector   Translation = this->GetWorld()->GetLocalPawn()->GetTranslation();
     const LChunkKey CurrentKey  = LChunkKey(Translation);

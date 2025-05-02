@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Subsystems/CappedTickableWorldSubsystem.h"
+#include "Subsystems/FixedTickableWorldSubsystem.h"
 #include "MyWorld/ChunkKey.h"
 #include "ChunkValidationSubsystem.generated.h"
 
@@ -12,7 +12,7 @@ namespace Jafg
 class JChunkGenerationSubsystem;
 
 DECLARE_JAFG_CLASS()
-class JChunkValidationSubsystem final : public JCappedTickableWorldSubsystem
+class JChunkValidationSubsystem final : public JFixedTickableWorldSubsystem
 {
     GENERATED_CLASS_BODY()
 
@@ -20,10 +20,10 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JChunkValidationSubsystem)
 
-    // JCappedTickableWorldSubsystem implementation
+    // JFixedTickableWorldSubsystem implementation
     virtual void Initialize(LSubsystemCollection& Collection) override;
-    virtual void FixedTick(const float EngineDeltaTime, const float SubsystemDeltaTime) override;
-    // ~JCappedTickableWorldSubsystem implementation
+    virtual void FixedTick(const float EngineDeltaTime, const float FixedDeltaTime) override;
+    // ~JFixedTickableWorldSubsystem implementation
 
 public:
 

@@ -3,46 +3,46 @@
 #pragma once
 
 #include "Subsystems/TickableWorldSubsystem.h"
-#include "CappedTickableWorldSubsystem.generated.h"
+#include "FixedTickableWorldSubsystem.generated.h"
 
 namespace Jafg
 {
 
 DECLARE_JAFG_CLASS(EClassFlags::Abstract)
-class ENGINE_API JCappedTickableWorldSubsystem : public JTickableWorldSubsystem
+class ENGINE_API JFixedTickableWorldSubsystem : public JTickableWorldSubsystem
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JCappedTickableWorldSubsystem)
+    DEFAULT_OBJECT_CONSTRUCTOR(JFixedTickableWorldSubsystem)
 
     // JTickableWorldSubsystem implementation
-    virtual void Tick(const float DeltaTime) override final;
+    virtual void Tick(const f32 DeltaTime) override final;
     // JTickableWorldSubsystem implementation
 
     //#
-    //# Override this method to implement the capped tick logic.
+    //# Override this method to implement the fixed tick logic.
     //#
     //# @param EngineDeltaTime    The delta time of the engine.
     //# @param SubsystemDeltaTime The delta time since the lass call of #CappedTick.
     //#
-    virtual void FixedTick(const float EngineDeltaTime, const float SubsystemDeltaTime) { }
+    virtual void FixedTick(const f32 EngineDeltaTime, const f32 FixedDeltaTime) { }
 
-    FORCEINLINE auto GetTickInterval() const -> float { return this->TickInterval; }
-    FORCEINLINE auto SetTickInterval(const float Interval) -> void { this->TickInterval = Interval; }
+    FORCEINLINE f32  GetTickInterval() const { return this->TickInterval; }
+    FORCEINLINE void SetTickInterval(const f32 Interval) { this->TickInterval = Interval; }
 
 private:
 
     //#
     //# The tick interval in seconds. Zero means no interval -> tick every frame.
     //#
-    float TickInterval = 0.0f;
+    f32 TickInterval = 0.0f;
 
     //#
     //# The last time the subsystem was ticked.
     //#
-    float LastTickTime = 0.0f;
+    f32 LastTickTime = 0.0f;
 };
 
 } /* ~Namespace Jafg */

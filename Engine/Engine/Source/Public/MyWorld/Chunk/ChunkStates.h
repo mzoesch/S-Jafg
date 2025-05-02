@@ -37,9 +37,9 @@ enum Type : u8
     /*----------------------------------------------------------------------------*/
 
     //#
-    //#  Chunk has been marked as a pending kill and is no longer visible to the LEye in the world (the mesh
-    //#  has been cleared to save memory).
-    //#  The validation system will remove this chunk from the world in the near future.
+    //# Chunk has been marked as a pending kill and is no longer visible to the LEye in the world (the mesh
+    //# has been cleared to save memory).
+    //# The validation system will remove this chunk from the world in the near future.
     //#
     PendingKill,
 

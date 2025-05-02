@@ -39,11 +39,11 @@ void Jafg::JChunkGenerationSubsystem::Initialize(LSubsystemCollection& Collectio
     return;
 }
 
-void Jafg::JChunkGenerationSubsystem::FixedTick(const float EngineDeltaTime, const float SubsystemDeltaTime)
+void Jafg::JChunkGenerationSubsystem::FixedTick(const float EngineDeltaTime, const float FixedDeltaTime)
 {
     STAT_CYCLE_FUNCTION()
 
-    Super::FixedTick(EngineDeltaTime, SubsystemDeltaTime);
+    Super::FixedTick(EngineDeltaTime, FixedDeltaTime);
 
     this->DequeueVipChunks();
 

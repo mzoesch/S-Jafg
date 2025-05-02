@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Subsystems/CappedTickableWorldSubsystem.h"
+#include "Subsystems/FixedTickableWorldSubsystem.h"
 #include "MyWorld/Chunk/Chunk.h"
 #include "ChunkGenerationSubsystem.generated.h"
 
@@ -15,7 +15,7 @@ class LChunkShaderContext;
 //# Loads and unloads chunks into / from the world based on what the current validation subsystem has determined.
 //#
 DECLARE_JAFG_CLASS()
-class JChunkGenerationSubsystem final : public JCappedTickableWorldSubsystem
+class JChunkGenerationSubsystem final : public JFixedTickableWorldSubsystem
 {
     GENERATED_CLASS_BODY()
 
@@ -23,11 +23,11 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JChunkGenerationSubsystem)
 
-    // JTickableWorldSubsystem implementation
+    // JFixedTickableWorldSubsystem implementation
     virtual void Initialize(LSubsystemCollection& Collection) override;
-    virtual void FixedTick(const float EngineDeltaTime, const float SubsystemDeltaTime) override;
+    virtual void FixedTick(const f32 EngineDeltaTime, const f32 FixedDeltaTime) override;
     virtual void TearDown() override;
-    // ~JTickableWorldSubsystem implementation
+    // ~JFixedTickableWorldSubsystem implementation
 
 public:
 

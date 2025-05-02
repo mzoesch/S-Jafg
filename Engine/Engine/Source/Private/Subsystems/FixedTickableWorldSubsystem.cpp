@@ -1,9 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
-#include "Subsystems/CappedTickableWorldSubsystem.h"
+#include "Subsystems/FixedTickableWorldSubsystem.h"
 
-void Jafg::JCappedTickableWorldSubsystem::Tick(const float DeltaTime)
+void Jafg::JFixedTickableWorldSubsystem::Tick(const float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
