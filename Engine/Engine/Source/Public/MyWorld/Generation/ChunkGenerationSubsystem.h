@@ -19,6 +19,10 @@ class JChunkGenerationSubsystem final : public JFixedTickableWorldSubsystem
 {
     GENERATED_CLASS_BODY()
 
+public:
+
+    typedef std::optional<std::unordered_map<LChunkKey, AChunk*>> LLoadedChunks;
+
 protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JChunkGenerationSubsystem)
@@ -48,9 +52,11 @@ public:
 
 private:
 
+    //
     // BEGIN
     // World optimization stuff not part of the chunk generation subsystem and logic.
     // Just helper functions for really heavy optimizations.
+    //
     bool LineTraceByChannel(
         TArray<LHitResult>& OutHits,
         const LVector& Start,
@@ -74,7 +80,7 @@ private:
     //# @remark std::unordered_map is not trivially copyable when empty. So we have to use a pointer.
     //#         We should really implement our own hash map.
     //#
-    std::optional<std::unordered_map<LChunkKey, AChunk*>> LoadedChunks;
+    LLoadedChunks LoadedChunks;
     mutable std::shared_mutex LoadedChunksMutex;
 
     //#

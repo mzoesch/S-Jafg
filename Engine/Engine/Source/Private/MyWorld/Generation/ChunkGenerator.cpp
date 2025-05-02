@@ -13,27 +13,29 @@ void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const 
     const voxel_t StoneIdx = SharedArgs->VoxelSubsystem->GetVoxelIndex("Stone");
 
 #if PLATFORM_SUPPORTS_SIMD
-    float NoiseOutput[MwStatics::ChunkSizeSquared];
-    SharedArgs->ChunkGeneratorSubsystem->FnGenerator->GenUniformGrid2D(
+
+    f32 NoiseOutput[MwStatics::ChunkSizeCubed];
+    SharedArgs->ChunkGeneratorSubsystem->FnGenerator->GenUniformGrid3D(
         NoiseOutput,
-        InKey.Y * MwStatics::ChunkSize, InKey.X * MwStatics::ChunkSize,
-        MwStatics::ChunkSize, MwStatics::ChunkSize,
-        0.02f, 1337
+        InKey.X * MwStatics::ChunkSize, InKey.Y * MwStatics::ChunkSize, InKey.Z * MwStatics::ChunkSize,
+        MwStatics::ChunkSize, MwStatics::ChunkSize, MwStatics::ChunkSize,
+        0.01f, 1337
     );
 
     LChunkKeyDomainTy Index = INDEX_NONE;
-    for (LChunkKeyDomainTy X = 0; X < MwStatics::ChunkSize; ++X)
+    for (LChunkKeyDomainTy Z = 0; Z < MwStatics::ChunkSize; ++Z)
     {
         for (LChunkKeyDomainTy Y = 0; Y < MwStatics::ChunkSize; ++Y)
         {
-            const i32 Height = static_cast<i32>(Maths::Floor(NoiseOutput[++Index] * 32.0f) + 32.0f);
-            for (LChunkKeyDomainTy Z = 0; Z < MwStatics::ChunkSize; ++Z)
+            for (LChunkKeyDomainTy X = 0; X < MwStatics::ChunkSize; ++X)
             {
-                const i32 MapZ = InKey.Z * MwStatics::ChunkSize + Z;
-                InOutChunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = MapZ < Height ? StoneIdx : ECompileTimeVoxels::Air;
+                InOutChunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = NoiseOutput[++Index]
+                    < 0.0f ? ECompileTimeVoxels::Air : StoneIdx;
             }
         }
     }
+
+
 #else /* PLATFORM_SUPPORTS_SIMD */
     for (LChunkKeyDomainTy X = 0; X < MwStatics::ChunkSize; ++X)
     {

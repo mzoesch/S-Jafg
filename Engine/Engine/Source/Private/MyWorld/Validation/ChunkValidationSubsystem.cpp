@@ -2,6 +2,8 @@
 
 #include "CoreAfx.h"
 #include "MyWorld/Validation/ChunkValidationSubsystem.h"
+
+#include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Framework/Pawn.h"
 #include "MyWorld/Validation/ChunkValidationUtility.h"
@@ -21,6 +23,13 @@ void Jafg::JChunkValidationSubsystem::Initialize(LSubsystemCollection& Collectio
 void Jafg::JChunkValidationSubsystem::FixedTick(const float EngineDeltaTime, const f32 FixedDeltaTime)
 {
     Super::FixedTick(EngineDeltaTime, FixedDeltaTime);
+
+    bool bVerifyChunks = true;
+    this->GetEngine()->GetCommandLineInterface()->GetVariableChecked("vc")->GetValue<bool>(&bVerifyChunks);
+    if (bVerifyChunks == false)
+    {
+        return;
+    }
 
     const LVector   Translation = this->GetWorld()->GetLocalPawn()->GetTranslation();
     const LChunkKey CurrentKey  = LChunkKey(Translation);

@@ -57,6 +57,7 @@ void Jafg::LLocalEgo::Initialize()
         }
         return;
     })});
+    this->VariableHandle_VerifyChunks = Cli->RegisterVariable({"vc", LCliType::Type("Bool"), "true"});
 
     this->Context.SetHumanReadableName("LocalEgo");
 
@@ -117,6 +118,9 @@ void Jafg::LLocalEgo::TearDown()
 
     GEngine->GetCommandLineInterface()->UnregisterVariable(&this->VariableHandle_UpdateFrustum);
     GEngine->GetCommandLineInterface()->UnregisterVariable(&this->VariableHandle_VisualizeFrustum);
+    GEngine->GetCommandLineInterface()->UnregisterVariable(&this->VariableHandle_FrustumNearPlane);
+    GEngine->GetCommandLineInterface()->UnregisterVariable(&this->VariableHandle_FrustumFarPlane);
+    GEngine->GetCommandLineInterface()->UnregisterVariable(&this->VariableHandle_VerifyChunks);
 
     this->bValid = false;
     return;

@@ -11,7 +11,11 @@ void Jafg::JChunkGeneratorSubsystem::OnInitialize(LSubsystemCollection& Collecti
     this->SetTickInterval(0.1f);
 
 #if PLATFORM_SUPPORTS_SIMD
-    this->FnGenerator = FastNoise::NewFromEncodedNodeTree("DQAFAAAAAAAAQAgAAAAAAD8AAAAAAA==");
+
+    FastNoise::SmartNode<FastNoise::Perlin> Root = FastNoise::New<FastNoise::Perlin>();
+    this->FnGenerator = std::move(Root);
+    LOG_INFO(LogChunkGeneration, "Using SIMD: [{}].", static_cast<FastSIMD::Level_BitFlags>(this->FnGenerator->GetSIMDLevel()));
+
 #endif /* PLATFORM_SUPPORTS_SIMD */
 
     this->ChunkValidationSubsystem = Collection.GetCheckedSubsystem<JChunkValidationSubsystem>();

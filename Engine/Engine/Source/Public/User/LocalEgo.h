@@ -96,6 +96,8 @@ private:
     LCliVariableHandle VariableHandle_VisualizeFrustum;
     LCliVariableHandle VariableHandle_FrustumNearPlane;
     LCliVariableHandle VariableHandle_FrustumFarPlane;
+
+    LCliVariableHandle VariableHandle_VerifyChunks;
 };
 
 } /* ~Namespace Jafg */

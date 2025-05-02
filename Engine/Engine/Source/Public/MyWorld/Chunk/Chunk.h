@@ -62,7 +62,7 @@ struct LSharedChunkArgs final
     JMaterialSubsystem*        MaterialSubsystem         = nullptr;
     JTextureSubsystem*         TextureSubsystem          = nullptr;
     LChunkShader               ChunkShader;
-    u32                     ChunkShaderHandle         = NULL;
+    u32                        ChunkShaderHandle         = NULL;
     TFunction<LChunkMesher*(AChunk& Owner)> GetNewMesher = nullptr;
 };
 

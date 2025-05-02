@@ -77,9 +77,9 @@ public:
     TPreference<EPolygonMode::Type> PolygonMode { EPolygonMode::Fill };
 
     CLASS_FIELD(Config)
-    i32 ChunkRenderDistance { 2 };
+    i32 ChunkRenderDistance { 6 };
     CLASS_FIELD(Config)
-    i32 ChunkRenderHeight   { 2 };
+    i32 ChunkRenderHeight   { 6 };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Interface
