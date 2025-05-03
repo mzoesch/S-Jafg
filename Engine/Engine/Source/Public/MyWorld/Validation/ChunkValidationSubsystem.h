@@ -25,16 +25,10 @@ protected:
     virtual void FixedTick(const float EngineDeltaTime, const float FixedDeltaTime) override;
     // ~JFixedTickableWorldSubsystem implementation
 
-public:
-
-    TArray<LChunkKey2> CopyVerticalChunksInQuestion() const;
-
 private:
 
-    LChunkKey LastChunkKey = { std::numeric_limits<LChunkKeyDomainTy>::max() };
-    TArray<LChunkKey2> VerticalChunksInQuestion;
+    LChunkKey LastChunkKey = { std::numeric_limits<LChunkKeyDomain>::max() };
     JChunkGenerationSubsystem* ChunkGenerationSubsystem = nullptr;
-    mutable std::shared_mutex VerticalChunksInQuestionMutex;
 };
 
 } /* ~Namespace Jafg */

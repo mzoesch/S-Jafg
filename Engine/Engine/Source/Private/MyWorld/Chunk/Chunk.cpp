@@ -67,17 +67,8 @@ void Jafg::AChunk::EndLife()
 {
     Super::EndLife();
 
-    if (this->Mesher)
-    {
-        delete this->Mesher;
-        this->Mesher = nullptr;
-    }
-
-    if (this->RawVoxelData)
-    {
-        delete[] RawVoxelData;
-        RawVoxelData = nullptr;
-    }
+    this->Mesher.Reset();
+    this->RawVoxelData.Reset();
 
     return;
 }
@@ -86,13 +77,12 @@ void Jafg::AChunk::SetChunkState(const EChunkState::Type NewChunkState)
 {
     if (this->IsStateChangeValid(NewChunkState) == false)
     {
-        LOG_FATAL(
-            LogChunkValidation,
+        panicMsgf
+        (
             "Encountered invalid state change from {} to {}",
             LexToString(this->ChunkState),
             LexToString(NewChunkState)
         )
-
         return;
     }
 
@@ -122,7 +112,7 @@ void Jafg::AChunk::OnAlloc(const LChunkKey& InChunkKey)
     return;
 }
 
-void Jafg::AChunk::SetChunkPersistency(const EChunkPersistency::Type NewPersistency, const float TimeToLive /* = 10.0f */)
+void Jafg::AChunk::SetChunkPersistency(const EChunkPersistency::Type NewPersistency, const f32 TimeToLive /* = 10.0f */) noexcept
 {
     this->ChunkPersistency = NewPersistency;
 
@@ -131,8 +121,9 @@ void Jafg::AChunk::SetChunkPersistency(const EChunkPersistency::Type NewPersiste
         return;
     }
 
-    if (
-        const float EndOfLive = this->GetWorld()->GetRealTimeSecondsSinceWorldLaunch() + TimeToLive;
+    if
+    (
+        const f32 EndOfLive = this->GetWorld()->GetRealTimeSecondsSinceWorldLaunch() + TimeToLive;
         EndOfLive > this->RealTimeInSecondsWhenTransientChunkShouldBeKilled
     )
     {
@@ -186,21 +177,14 @@ void Jafg::AChunk::OnSpawned()
 {
     check( this->ChunkState == EChunkState::Spawned )
 
-    JChunkGenerationSubsystem* Subsystem = this->SharedArgs->ChunkGenerationSubsystem;
+    const JChunkGenerationSubsystem* Subsystem = this->SharedArgs->ChunkGenerationSubsystem;
 
-    this->NNorth = Subsystem->GetPanickedChunk(this->ChunkKey.GetNorthKey());
-    this->NEast  = Subsystem->GetPanickedChunk(this->ChunkKey.GetEastKey());
-    this->NSouth = Subsystem->GetPanickedChunk(this->ChunkKey.GetSouthKey());
-    this->NWest  = Subsystem->GetPanickedChunk(this->ChunkKey.GetWestKey());
-    this->NUp    = Subsystem->GetPanickedChunk(this->ChunkKey.GetUpKey());
-    this->NDown  = Subsystem->GetPanickedChunk(this->ChunkKey.GetDownKey());
-
-    checkSlow( this->NNorth )
-    checkSlow( this->NEast  )
-    checkSlow( this->NSouth )
-    checkSlow( this->NWest  )
-    checkSlow( this->NUp    )
-    checkSlow( this->NDown  )
+    this->NNorth = Subsystem->FindChunkChecked(this->ChunkKey.GetNorthKey());
+    this->NEast  = Subsystem->FindChunkChecked(this->ChunkKey.GetEastKey());
+    this->NSouth = Subsystem->FindChunkChecked(this->ChunkKey.GetSouthKey());
+    this->NWest  = Subsystem->FindChunkChecked(this->ChunkKey.GetWestKey());
+    this->NUp    = Subsystem->FindChunkChecked(this->ChunkKey.GetUpKey());
+    this->NDown  = Subsystem->FindChunkChecked(this->ChunkKey.GetDownKey());
 
     return;
 }
@@ -209,10 +193,14 @@ void Jafg::AChunk::Shape()
 {
     check( this->ChunkState == EChunkState::Shaped )
 
-    this->RawVoxelData = new u32[MwStatics::VoxelCount];
-    // ::memset(this->RawVoxelData, 0, MwStatics::VoxelCount * sizeof(u32));
+    struct HelperMalloc
+    {
+        u32 Data[MwStatics::ChunkSizeCubed];
+    };
+    check( this->RawVoxelData == nullptr )
+    this->RawVoxelData = Smart::MakeUnique(reinterpret_cast<u32*>(new HelperMalloc));
 
-    ChunkGenerator::ShapeChunk(this->SharedArgs, this->ChunkKey, this->RawVoxelData);
+    ChunkGenerator::ShapeChunk(this->SharedArgs, this->ChunkKey, this->RawVoxelData.GetValuePtrChecked());
 
     return;
 }
@@ -235,7 +223,7 @@ void Jafg::AChunk::OnActive()
     checkSlow( this->IsRendererComponentValid() )
     this->SetPhysicsComponent(new LChunkPhysicsComponent(this));
 
-    this->Mesher = this->SharedArgs->GetNewMesher(*this);
+    this->Mesher = Smart::MakeUnique(this->SharedArgs->GetNewMesher(*this));
     checkSlow( this->Mesher )
 
     this->Mesher->RegenerateProceduralMesh();

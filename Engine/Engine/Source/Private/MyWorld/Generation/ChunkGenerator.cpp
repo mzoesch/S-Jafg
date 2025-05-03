@@ -5,7 +5,7 @@
 #include "MyWorld/Chunk/Chunk.h"
 #include "System/VoxelSubsystem.h"
 
-void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, voxel_t*& InOutChunkData)
+void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, voxel_t* InOutChunkData)
 {
     checkSlow( SharedArgs )
     checkSlow( InOutChunkData )
@@ -22,12 +22,12 @@ void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const 
         0.01f, 1337
     );
 
-    LChunkKeyDomainTy Index = INDEX_NONE;
-    for (LChunkKeyDomainTy Z = 0; Z < MwStatics::ChunkSize; ++Z)
+    LChunkKeyDomain Index = INDEX_NONE;
+    for (LChunkKeyDomain Z = 0; Z < MwStatics::ChunkSize; ++Z)
     {
-        for (LChunkKeyDomainTy Y = 0; Y < MwStatics::ChunkSize; ++Y)
+        for (LChunkKeyDomain Y = 0; Y < MwStatics::ChunkSize; ++Y)
         {
-            for (LChunkKeyDomainTy X = 0; X < MwStatics::ChunkSize; ++X)
+            for (LChunkKeyDomain X = 0; X < MwStatics::ChunkSize; ++X)
             {
                 InOutChunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = NoiseOutput[++Index]
                     < 0.0f ? ECompileTimeVoxels::Air : StoneIdx;
@@ -53,7 +53,7 @@ void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const 
     return;
 }
 
-void Jafg::ChunkGenerator::ReplaceSurface(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, AChunk* Target, voxel_t*& InOutChunkData)
+void Jafg::ChunkGenerator::ReplaceSurface(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, AChunk* Target, voxel_t* InOutChunkData)
 {
     checkSlow( SharedArgs )
     checkSlow( Target )
@@ -64,13 +64,13 @@ void Jafg::ChunkGenerator::ReplaceSurface(const LSharedChunkArgs* SharedArgs, co
     const voxel_t GrassIdx = SharedArgs->VoxelSubsystem->GetVoxelIndex("Grass");
     const voxel_t DirtIdx  = SharedArgs->VoxelSubsystem->GetVoxelIndex("Dirt");
 
-    for (LChunkKeyDomainTy X = 0; X < MwStatics::ChunkSize; ++X)
+    for (LChunkKeyDomain X = 0; X < MwStatics::ChunkSize; ++X)
     {
-        for (LChunkKeyDomainTy Y = 0; Y < MwStatics::ChunkSize; ++Y)
+        for (LChunkKeyDomain Y = 0; Y < MwStatics::ChunkSize; ++Y)
         {
             u8 CurrentDirtDepth = 0;
 
-            for (LChunkKeyDomainTy Z = MwStatics::ChunkSize - 1 + DirtHeight; Z >= MwStatics::ChunkSize; --Z)
+            for (LChunkKeyDomain Z = MwStatics::ChunkSize - 1 + DirtHeight; Z >= MwStatics::ChunkSize; --Z)
             {
                 if (Target->GetRawVoxelDataByNonZeroOrigin(LVoxelKey(X, Y, Z)) == ECompileTimeVoxels::Air)
                 {
@@ -83,7 +83,7 @@ void Jafg::ChunkGenerator::ReplaceSurface(const LSharedChunkArgs* SharedArgs, co
                 continue;
             }
 
-            for (LChunkKeyDomainTy Z = MwStatics::ChunkSize - 1; Z >= 0; --Z)
+            for (LChunkKeyDomain Z = MwStatics::ChunkSize - 1; Z >= 0; --Z)
             {
                 voxel_t& Voxel = InOutChunkData[AChunk::GetRawVoxelIndex(X, Y, Z)];
                 if (Voxel == ECompileTimeVoxels::Air)

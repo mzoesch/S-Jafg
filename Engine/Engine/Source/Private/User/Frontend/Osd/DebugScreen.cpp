@@ -296,10 +296,8 @@ void Jafg::WDebugScreen::Tick()
                 ));
             }
 
-            TArray<LChunkKey2> OtherChunks;
-            Validation::GetAllChunksFromCenterAsBox(CKey.ToVerticalKey(), 5, OtherChunks);
-
-            for (const LChunkKey2& Key : OtherChunks)
+            const TArray<LChunkKey> OtherChunks = Validation::GetAllChunksFromCenterAsBox(CKey, 5, 3, CKey.Z - 1);
+            for (const LChunkKey& Key : OtherChunks)
             {
                 if (
                        Key.X == CKey.X + 0 && Key.Y == CKey.Y + 0
@@ -310,14 +308,17 @@ void Jafg::WDebugScreen::Tick()
                 {
                     continue;
                 }
-                World->AddTemporalObject(LDebugTraceLine(
+
+                World->AddTemporalObject(LDebugTraceLine
+                (
                     LTemporalWorldObject::DrawOnce,
-                    Key.ToWorldSpaceVector() + LVector::Down() * MwStatics::ChunkSize * 10,
-                    Key.ToWorldSpaceVector() + LVector::Up() * MwStatics::ChunkSize * 10,
+                    Key.ToWorldSpace() + LVector::Down() * MwStatics::ChunkSize * 10,
+                    Key.ToWorldSpace() + LVector::Up() * MwStatics::ChunkSize * 10,
                     LDebugTraceLineVisualParams(LColor::Blue)
                 ));
-            }
 
+                continue;
+            }
         }
     }
     else

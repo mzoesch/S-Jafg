@@ -9,8 +9,6 @@
 namespace Jafg
 {
 
-class LChunkShaderContext;
-
 //#
 //# Loads and unloads chunks into / from the world based on what the current validation subsystem has determined.
 //#
@@ -21,7 +19,8 @@ class JChunkGenerationSubsystem final : public JFixedTickableWorldSubsystem
 
 public:
 
-    typedef std::optional<std::unordered_map<LChunkKey, AChunk*>> LLoadedChunks;
+    typedef std::unordered_map<LChunkKey, AChunk*> LChunkMap;
+    typedef std::optional<LChunkMap>               LLoadedChunks;
 
 protected:
 
@@ -35,20 +34,24 @@ protected:
 
 public:
 
-    FORCEINLINE auto HasChunkShaderContext() const -> bool { return this->ChunkShaderContext != nullptr; }
-    FORCEINLINE auto GetChunkShaderContext() const -> LChunkShaderContext* { return this->ChunkShaderContext; }
+    //# Threadsafe but is heavy. Do not use in high proximity.
+    FORCEINLINE TArray<LChunkKey> GetCurrentActiveChunkSnapshot() const;
+    FORCEINLINE TArray<LChunkKey> GetRequestedChunksSnapshot() const;
 
-    FORCEINLINE auto GetCurrentActiveChunkSnapshot() const -> TArray<LChunkKey>;
-    FORCEINLINE auto GetPanickedChunk(const LChunkKey& InChunkKey) const -> AChunk*;
-    FORCEINLINE auto FindLoadedChunkOrNull(const LChunkKey& ChunkKey) const -> AChunk*;
+    //# Threadsafe.
+    FORCEINLINE AChunk* FindChunk(const LChunkKey& ChunkKey) const;
+    FORCEINLINE AChunk* FindChunkChecked(const LChunkKey& InChunkKey) const;
+    FORCEINLINE AChunk* FindChunkAsserted(const LChunkKey& InChunkKey) const;
 
     FORCEINLINE i32 GetRenderDistance() const { return *this->RenderDistance; }
     FORCEINLINE i32 GetRenderHeight() const { return *this->RenderHeight; }
 
-    FORCEINLINE auto GetOptimalVerticalChunkQueue() -> TQueue<LChunkKey2>& { return this->OptimalVerticalChunkQueue; }
+    //# Not thread safe. Only use on master thread.
+    FORCEINLINE void SetRequestedChunks(TArray<LChunkKey>&& InChunks);
+    FORCEINLINE auto GetRequestedChunks() const -> const TArray<LChunkKey>& { check( Tasks::IsOnMasterThread() ) return this->RequestedChunks; }
 
-    FORCEINLINE auto AcquireVipChunksToLoad() -> TQueue<LChunkKey>&;
-    FORCEINLINE void ReleaseVipChunksToLoad() { this->VipChunksToLoadMutex.unlock(); }
+    template <typename Predicate>
+    FORCEINLINE void MutateRequestedPreSpawnedChunks(Predicate&& InPredicate);
 
 private:
 
@@ -64,7 +67,7 @@ private:
         const LCollisionQueryParams& Params
     ) const;
 
-    void LOnStaticDraw(
+    void OnStaticDraw(
         const LViewport& Viewport,
         const LEye& Eye,
         const std::span<LVector>& Corners
@@ -73,40 +76,52 @@ private:
     // END World optimization stuff
     //
 
-    AChunk* SpawnChunk(const LChunkKey& InChunkKey);
+    AChunk* SpawnWeakChunk(const LChunkKey& InChunkKey);
+    void SafeLoadPersistentPreSpawnedChunk(const LChunkKey& ChunkKey);
 
     //#
     //# Transient or persistent chunks that are loaded in any state.
-    //# @remark std::unordered_map is not trivially copyable when empty. So we have to use a pointer.
+    //# @remark std::unordered_map is not trivially copyable when empty. So we have to use an optional.
     //#         We should really implement our own hash map.
     //#
     LLoadedChunks LoadedChunks;
     mutable std::shared_mutex LoadedChunksMutex;
 
     //#
-    //# Very important persistent chunks to load to the world.
-    //#
-    TQueue<LChunkKey> VipChunksToLoad;
-    std::mutex VipChunksToLoadMutex;
-    void DequeueVipChunks();
-
-    //#
     //# Based on the current validation subsystem.
-    //# If the pawns do not move, these would be the remaining chunks that should be loaded.
+    //# If points of interest do not move, these would be the remaining chunks that should be pre spawned and loaded.
     //#
-    TQueue<LChunkKey2> OptimalVerticalChunkQueue;
-    bool DequeueNextOptimalVerticalChunk();
+    TArray<LChunkKey> RequestedChunks;
+    //# Same as #RequestedChunks, but these are the chunks that have not yet been processed and loaded into the world.
+    TArray<LChunkKey> RequestedRemainingChunks;
+    mutable std::shared_mutex RequestedChunksMutex;
 
-    void SafeLoadPersistentChunkPreSpawnedChunk(const LChunkKey& ChunkKey);
+    //# Requested chunks that should be pre spawned immediately.
+    TArray<LChunkKey> RequestedPreSpawnedChunks;
+    mutable std::shared_mutex RequestedPreSpawnedChunksMutex;
 
     LSharedChunkArgs SharedChunkArgs;
-    LChunkShaderContext* ChunkShaderContext = nullptr;
+
+    //# Cached args common attributes.
     const i32* RenderDistance = nullptr;
     const i32* RenderHeight   = nullptr;
 };
 
-TArray<LChunkKey> JChunkGenerationSubsystem::GetCurrentActiveChunkSnapshot() const
+template<typename Predicate>
+FORCEINLINE void JChunkGenerationSubsystem::MutateRequestedPreSpawnedChunks(Predicate&& InPredicate)
 {
+    check( Tasks::IsOnMasterThread() == false && "No. This is bad design.")
+
+    std::unique_lock Lock(this->RequestedPreSpawnedChunksMutex);
+    InPredicate(this->RequestedPreSpawnedChunks);
+
+    return;
+}
+
+FORCEINLINE TArray<LChunkKey> JChunkGenerationSubsystem::GetCurrentActiveChunkSnapshot() const
+{
+    check( Tasks::IsOnMasterThread() == false && "No. This is bad design.")
+
     std::shared_lock Lock(this->LoadedChunksMutex);
     TArray<LChunkKey> Out;
     for (const auto& [Fst, Snd] : *this->LoadedChunks)
@@ -119,27 +134,42 @@ TArray<LChunkKey> JChunkGenerationSubsystem::GetCurrentActiveChunkSnapshot() con
     return Out;
 }
 
-AChunk* JChunkGenerationSubsystem::GetPanickedChunk(const LChunkKey& InChunkKey) const
+FORCEINLINE TArray<LChunkKey> JChunkGenerationSubsystem::GetRequestedChunksSnapshot() const
 {
-    if (AChunk* Chunk = this->FindLoadedChunkOrNull(InChunkKey); Chunk != nullptr)
-    {
-        return Chunk;
-    }
-    panicMsgf( "Chunk {} not found.", InChunkKey.ToString() )
-    return nullptr;
+    check( Tasks::IsOnMasterThread() == false && "No. This is bad design.")
+    std::shared_lock Lock(this->RequestedChunksMutex);
+    return this->RequestedChunks;
 }
 
-AChunk* JChunkGenerationSubsystem::FindLoadedChunkOrNull(const LChunkKey& ChunkKey) const
+FORCEINLINE AChunk* JChunkGenerationSubsystem::FindChunk(const LChunkKey& ChunkKey) const
 {
     std::shared_lock Lock(this->LoadedChunksMutex);
-    std::unordered_map<LChunkKey, AChunk*>::const_iterator It = this->LoadedChunks->find(ChunkKey);
+    const std::unordered_map<LChunkKey, AChunk*>::const_iterator It = this->LoadedChunks->find(ChunkKey);
     return It == this->LoadedChunks->end() ? nullptr : It->second;
 }
 
-FORCEINLINE TQueue<LChunkKey>& JChunkGenerationSubsystem::AcquireVipChunksToLoad()
+FORCEINLINE AChunk* JChunkGenerationSubsystem::FindChunkChecked(const LChunkKey& InChunkKey) const
 {
-    this->VipChunksToLoadMutex.lock();
-    return this->VipChunksToLoad;
+    AChunk* Out = this->FindChunk(InChunkKey);
+    check( Out )
+    return Out;
+}
+
+FORCEINLINE AChunk* JChunkGenerationSubsystem::FindChunkAsserted(const LChunkKey& InChunkKey) const
+{
+    AChunk* Out = this->FindChunk(InChunkKey);
+    jassert( Out )
+    return Out;
+}
+
+FORCEINLINE void JChunkGenerationSubsystem::SetRequestedChunks(TArray<LChunkKey>&& InChunks)
+{
+    check( Tasks::IsOnMasterThread() )
+    std::unique_lock Lock(this->RequestedChunksMutex);
+    this->RequestedChunks = std::move(InChunks);
+    this->RequestedRemainingChunks = this->RequestedChunks;
+
+    return;
 }
 
 } /* ~Namespace Jafg */

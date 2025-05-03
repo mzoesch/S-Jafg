@@ -25,14 +25,7 @@ public:
             void ApplyProceduralMesh();
 
     void RegenerateProceduralMesh();
-    FORCEINLINE void RegenerateProceduralMesh(const JVoxelSubsystem* VoxelSubsystem, const JMaterialSubsystem* MaterialSubsystem)
-    {
-        this->ClearProceduralMesh();
-        this->GenerateProceduralMesh(VoxelSubsystem, MaterialSubsystem);
-        this->ApplyProceduralMesh();
-
-        return;
-    }
+    FORCEINLINE void RegenerateProceduralMesh(const JVoxelSubsystem* VoxelSubsystem, const JMaterialSubsystem* MaterialSubsystem);
 
     FORCEINLINE auto GetOwner() const -> AChunk& { return *this->Owner; }
     FORCEINLINE auto GetNumTriangles() const -> i32 { return this->Indices.GetSize(); }
@@ -41,12 +34,21 @@ public:
 
 protected:
 
-    TArray<ChunkBoxVertex> Vertices = { };
-    TArray<u32>         Indices  = { };
+    TArray<ChunkBoxVertex> Vertices;
+    TArray<u32>            Indices;
 
 private:
 
     AChunk* Owner = nullptr;
 };
+
+FORCEINLINE void LChunkMesher::RegenerateProceduralMesh(const JVoxelSubsystem* VoxelSubsystem, const JMaterialSubsystem* MaterialSubsystem)
+{
+    this->ClearProceduralMesh();
+    this->GenerateProceduralMesh(VoxelSubsystem, MaterialSubsystem);
+    this->ApplyProceduralMesh();
+
+    return;
+}
 
 } /* ~Namespace Jafg */

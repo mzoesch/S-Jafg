@@ -1,8 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "MyWorld/Validation/ChunkValidationSubsystem.h"
-
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Framework/Pawn.h"
@@ -34,7 +32,7 @@ void Jafg::JChunkValidationSubsystem::FixedTick(const float EngineDeltaTime, con
     const LVector   Translation = this->GetWorld()->GetLocalPawn()->GetTranslation();
     const LChunkKey CurrentKey  = LChunkKey(Translation);
 
-    if (CurrentKey.Equals(this->LastChunkKey, LChunkKey::XYx))
+    if (CurrentKey == this->LastChunkKey)
     {
         return;
     }
@@ -42,25 +40,21 @@ void Jafg::JChunkValidationSubsystem::FixedTick(const float EngineDeltaTime, con
     LOG_TRACE(LogChunkValidation, "Local pawn moved to chunk: {}.", CurrentKey.ToString())
     this->LastChunkKey = CurrentKey;
 
-    TArray<LChunkKey2> NowVerticalChunksInQuestion;
-    Validation::GetAllChunksFromCenterAsBox(CurrentKey.XY(), this->ChunkGenerationSubsystem->GetRenderDistance(), NowVerticalChunksInQuestion);
+    const i32 RHeight = this->ChunkGenerationSubsystem->GetRenderHeight();
+    TArray<LChunkKey> TargetChunks = Validation::GetAllChunksFromCenterAsBox(
+        CurrentKey,
+        this->ChunkGenerationSubsystem->GetRenderDistance(),
+        RHeight,
+        CurrentKey.Z - (RHeight / 2)
+        );
 
-    TQueue<LChunkKey2>& OptimalQueue = this->ChunkGenerationSubsystem->GetOptimalVerticalChunkQueue();
-    OptimalQueue.Empty();
-    for (const LChunkKey2& Chunk : NowVerticalChunksInQuestion)
+    TArray<LChunkKey> Reversed; Reversed.Reserve(TargetChunks.GetSize());
+    for (i32 i = TargetChunks.GetSize() - 1; i >= 0; --i)
     {
-        OptimalQueue.Enqueue(Chunk);
+        Reversed.Emplace(TargetChunks[i]);
     }
 
-    std::unique_lock Lock(this->VerticalChunksInQuestionMutex);
-    this->VerticalChunksInQuestion.SwapBuffers(NowVerticalChunksInQuestion);
+    this->ChunkGenerationSubsystem->SetRequestedChunks(std::move(Reversed));
 
     return;
-}
-
-Jafg::TArray<Jafg::LChunkKey2> Jafg::JChunkValidationSubsystem::CopyVerticalChunksInQuestion() const
-{
-    std::shared_lock Lock(this->VerticalChunksInQuestionMutex);
-    TArray<LChunkKey2> Copy = this->VerticalChunksInQuestion;
-    return Copy;
 }

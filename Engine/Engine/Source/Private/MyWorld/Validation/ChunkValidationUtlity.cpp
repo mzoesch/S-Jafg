@@ -6,16 +6,18 @@
 namespace Jafg::Validation
 {
 
-void GetAllChunksFromCenterAsBox(const LChunkKey2& Center, const i32 Distance, TArray<LChunkKey2>& OutChunks)
+TArray<LIntVector2> GetAllChunksFromCenterAsBox(const LIntVector2& Center, const i32 Distance)
 {
-    const i32 PredictedOutChunkCount = (Distance * 2 + 1) * (Distance * 2 + 1);
-    OutChunks.Reserve(PredictedOutChunkCount);
+    TArray<LIntVector2> Out;
 
-    auto MoveCursorRight = [] (const LChunkKey2& CursorLocation) { return LChunkKey2(CursorLocation.X + 1, CursorLocation.Y); };
-    auto MoveCursorDown  = [] (const LChunkKey2& CursorLocation) { return LChunkKey2(CursorLocation.X, CursorLocation.Y - 1); };
-    auto MoveCursorLeft  = [] (const LChunkKey2& CursorLocation) { return LChunkKey2(CursorLocation.X - 1, CursorLocation.Y); };
-    auto MoveCursorUp    = [] (const LChunkKey2& CursorLocation) { return LChunkKey2(CursorLocation.X, CursorLocation.Y + 1); };
-    const std::vector<LChunkKey2(*)(const LChunkKey2&)> Moves =
+    const i32 PredictedOutChunkCount = (Distance * 2 + 1) * (Distance * 2 + 1);
+    Out.Reserve(PredictedOutChunkCount);
+
+    auto MoveCursorRight = [] (const LIntVector2& CursorLocation) { return LIntVector2(CursorLocation.X + 1, CursorLocation.Y); };
+    auto MoveCursorDown  = [] (const LIntVector2& CursorLocation) { return LIntVector2(CursorLocation.X, CursorLocation.Y - 1); };
+    auto MoveCursorLeft  = [] (const LIntVector2& CursorLocation) { return LIntVector2(CursorLocation.X - 1, CursorLocation.Y); };
+    auto MoveCursorUp    = [] (const LIntVector2& CursorLocation) { return LIntVector2(CursorLocation.X, CursorLocation.Y + 1); };
+    const std::vector<LIntVector2(*)(const LIntVector2&)> Moves =
     {
         MoveCursorRight, MoveCursorDown, MoveCursorLeft, MoveCursorUp
     };
@@ -23,9 +25,9 @@ void GetAllChunksFromCenterAsBox(const LChunkKey2& Center, const i32 Distance, T
     i32 Cursor = 1;
     i32 CurrentMoveIndex = 0;
     i32 TimesToMove = 1;
-    LChunkKey2 TargetPoint = Center;
+    LIntVector2 TargetPoint = Center;
 
-    OutChunks.Emplace(Center.X, Center.Y);
+    Out.Emplace(Center.X, Center.Y);
 
     while (true)
     {
@@ -41,7 +43,7 @@ void GetAllChunksFromCenterAsBox(const LChunkKey2& Center, const i32 Distance, T
                     goto FunctionEnd;
                 }
 
-                OutChunks.Emplace(TargetPoint.X, TargetPoint.Y);
+                Out.Emplace(TargetPoint.X, TargetPoint.Y);
 
                 continue;
             }
@@ -55,19 +57,40 @@ void GetAllChunksFromCenterAsBox(const LChunkKey2& Center, const i32 Distance, T
 
 FunctionEnd:
 
-    checkCode(
-        check( static_cast<i32>(OutChunks.GetSize()) == PredictedOutChunkCount )
+    checkCode
+    (
+        check( static_cast<i32>(Out.GetSize()) == PredictedOutChunkCount )
 
-        for (i32 i = 0; i < OutChunks.GetSize(); ++i)
+        for (i32 i = 0; i < Out.GetSize(); ++i)
         {
-            for (i32 j = i + 1; j < OutChunks.GetSize(); ++j)
+            for (i32 j = i + 1; j < Out.GetSize(); ++j)
             {
-                check( OutChunks[i] != OutChunks[j] )
+                check( Out[i] != Out[j] )
             }
         }
     )
 
-    return;
+    return Out;
+}
+
+TArray<LChunkKey> GetAllChunksFromCenterAsBox(const LChunkKey& Center, const i32 Distance, const i32 Height, const i32 HeightOffset)
+{
+    TArray<LChunkKey> Out;
+
+    /* Intermediate result */
+    const TArray<LIntVector2> Ir = GetAllChunksFromCenterAsBox(Center.XY(), Distance);
+
+    Out.Reserve(Ir.GetSize() * Height);
+
+    for (const LIntVector2& Chunk : Ir)
+    {
+        for (i32 Z = 0; Z < Height; ++Z)
+        {
+            Out.Emplace(Chunk.X, Chunk.Y, HeightOffset + Z);
+        }
+    }
+
+    return Out;
 }
 
 } /* ~Namespace Jafg::Validation */

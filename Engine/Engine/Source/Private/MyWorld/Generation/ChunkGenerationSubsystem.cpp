@@ -34,25 +34,51 @@ void Jafg::JChunkGenerationSubsystem::Initialize(LSubsystemCollection& Collectio
     this->RenderHeight   = &Preferences->ChunkRenderHeight;
 
     this->GetWorld()->OnStaticLineTrace.BindMember(this, &JChunkGenerationSubsystem::LineTraceByChannel);
-    this->GetWorld()->OnStaticDraw.BindMember(this, &JChunkGenerationSubsystem::LOnStaticDraw);
+    this->GetWorld()->OnStaticDraw.BindMember(this, &JChunkGenerationSubsystem::OnStaticDraw);
 
     return;
 }
 
-void Jafg::JChunkGenerationSubsystem::FixedTick(const float EngineDeltaTime, const float FixedDeltaTime)
+void Jafg::JChunkGenerationSubsystem::FixedTick(const f32 EngineDeltaTime, const f32 FixedDeltaTime)
 {
     STAT_CYCLE_FUNCTION()
 
     Super::FixedTick(EngineDeltaTime, FixedDeltaTime);
 
-    this->DequeueVipChunks();
-
     i32 GeneratedChunks = 0;
-    while (this->OptimalVerticalChunkQueue.IsEmpty() == false && GeneratedChunks < 5)
+
     {
-        if (this->DequeueNextOptimalVerticalChunk())
+        std::unique_lock Lock(this->RequestedPreSpawnedChunksMutex);
+        for (const LChunkKey& ChunkKey : this->RequestedPreSpawnedChunks)
         {
-            ++GeneratedChunks;
+            if (this->LoadedChunks->contains(ChunkKey) == false)
+            {
+                this->SafeLoadPersistentPreSpawnedChunk(ChunkKey);
+                ++GeneratedChunks;
+            }
+        }
+        this->RequestedPreSpawnedChunks.Empty();
+    }
+
+    {
+        std::unique_lock Lock(this->RequestedChunksMutex);
+        while (this->RequestedRemainingChunks.IsEmpty() == false && GeneratedChunks < 20)
+        {
+            const LChunkKey& Key = *this->RequestedRemainingChunks.GetLast();
+
+            if (AChunk* Chunk = this->FindChunk(Key))
+            {
+                Chunk->SetChunkPersistency(EChunkPersistency::Persistent);
+            }
+            else
+            {
+                this->SafeLoadPersistentPreSpawnedChunk(Key);
+                ++GeneratedChunks;
+            }
+
+            this->RequestedRemainingChunks.Pop();
+
+            continue;
         }
     }
 
@@ -68,7 +94,6 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
     check( Tasks::IsOnMasterThread() )
 
     this->LoadedChunksMutex.lock();
-    this->VipChunksToLoadMutex.lock();
     check( static_cast<bool>(this->LoadedChunks) )
 
     for (const std::pair<const LChunkKey&, AChunk*> Pair : this->LoadedChunks.value())
@@ -142,7 +167,7 @@ bool Jafg::JChunkGenerationSubsystem::LineTraceByChannel(
     return OutHits.IsEmpty() == false;
 }
 
-void Jafg::JChunkGenerationSubsystem::LOnStaticDraw(const LViewport& Viewport, const LEye& Eye, const std::span<LVector>& Corners) const
+void Jafg::JChunkGenerationSubsystem::OnStaticDraw(const LViewport& Viewport, const LEye& Eye, const std::span<LVector>& Corners) const
 {
     for (const std::pair<const LChunkKey&, AChunk*> Pair : this->LoadedChunks.value())
     {
@@ -161,7 +186,7 @@ void Jafg::JChunkGenerationSubsystem::LOnStaticDraw(const LViewport& Viewport, c
     return;
 }
 
-Jafg::AChunk* Jafg::JChunkGenerationSubsystem::SpawnChunk(const LChunkKey& InChunkKey)
+Jafg::AChunk* Jafg::JChunkGenerationSubsystem::SpawnWeakChunk(const LChunkKey& InChunkKey)
 {
     AChunk* Chunk = CheckedStaticCast<AChunk>(Private::LWorldMiscellaneousAccessor::SpawnActorWeak(this->GetWorld(), AChunk::StaticClass()));
     Chunk->SetSharedArgs(&this->SharedChunkArgs);
@@ -170,56 +195,14 @@ Jafg::AChunk* Jafg::JChunkGenerationSubsystem::SpawnChunk(const LChunkKey& InChu
     return Chunk;
 }
 
-void Jafg::JChunkGenerationSubsystem::DequeueVipChunks()
+void Jafg::JChunkGenerationSubsystem::SafeLoadPersistentPreSpawnedChunk(const LChunkKey& ChunkKey)
 {
-    this->VipChunksToLoadMutex.lock();
-    LChunkKey VipChunkKey;
-    while (this->VipChunksToLoad.Dequeue(VipChunkKey))
-    {
-        this->SafeLoadPersistentChunkPreSpawnedChunk(VipChunkKey);
-    }
-    this->VipChunksToLoadMutex.unlock();
+    STAT_CYCLE_FUNCTION()
 
-    return;
-}
+    AChunk* Chunk = this->SpawnWeakChunk(ChunkKey);
 
-bool Jafg::JChunkGenerationSubsystem::DequeueNextOptimalVerticalChunk()
-{
-    LChunkKey2 OptimalVerticalChunk;
-    if (this->OptimalVerticalChunkQueue.Dequeue(OptimalVerticalChunk) == false)
-    {
-        checkNoEntry()
-        return false;
-    }
-
-    bool Ret = false;
-    for (i32 Z = 0; Z <= this->GetRenderHeight(); ++Z)
-    {
-        AChunk* Chunk;
-        if (Chunk = this->FindLoadedChunkOrNull(LChunkKey(OptimalVerticalChunk, Z)); Chunk == nullptr)
-        {
-            this->SafeLoadPersistentChunkPreSpawnedChunk(LChunkKey(OptimalVerticalChunk, Z));
-            Ret = true;
-            continue;
-        }
-
-        if (Chunk->GetHuntedChunkState() != EChunkState::Active)
-        {
-            this->SafeLoadPersistentChunkPreSpawnedChunk(LChunkKey(OptimalVerticalChunk, Z));
-            Ret = true;
-            continue;
-        }
-
-        continue;
-    }
-
-    return Ret;
-}
-
-void Jafg::JChunkGenerationSubsystem::SafeLoadPersistentChunkPreSpawnedChunk(const LChunkKey& ChunkKey)
-{
-    std::unique_lock Lock(this->LoadedChunksMutex); // Move this one statement down?
-    AChunk* Chunk = this->SpawnChunk(ChunkKey);
+    std::unique_lock Lock(this->LoadedChunksMutex);
+    check( this->LoadedChunks->contains(ChunkKey) == false )
     this->LoadedChunks->emplace(ChunkKey, Chunk);
 
     return;

@@ -15,8 +15,8 @@ struct LSharedChunkArgs;
 namespace ChunkGenerator
 {
 
-ENGINE_API void ShapeChunk(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, voxel_t*& InOutChunkData);
-ENGINE_API void ReplaceSurface(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, AChunk* Target, voxel_t*& InOutChunkData);
+ENGINE_API void ShapeChunk(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, voxel_t* InOutChunkData);
+ENGINE_API void ReplaceSurface(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, AChunk* Target, voxel_t* InOutChunkData);
 
 } /* ~Namespace ChunkGenerator */
 

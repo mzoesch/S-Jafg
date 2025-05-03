@@ -95,18 +95,16 @@ public:
     FORCEINLINE auto GetChunkRendererComponent() const -> const LChunkRendererComponent* { return reinterpret_cast<LChunkRendererComponent*>(this->GetRendererComponent()); }
     // ~AActor implementation
 
-                auto SetChunkState(const EChunkState::Type NewChunkState) -> void;
-    FORCEINLINE auto GetChunkState() const -> EChunkState::Type { return this->ChunkState; }
-    FORCEINLINE auto SetHuntedChunkState(const EChunkState::Type NewHuntedChunkState) -> void;
-    FORCEINLINE auto GetHuntedChunkState() const -> EChunkState::Type { return this->HuntedChunkState; }
+    void SetChunkState(const EChunkState::Type NewChunkState);
+    FORCEINLINE EChunkState::Type GetChunkState() const { return this->ChunkState; }
 
     void OnAlloc(const LChunkKey& InChunkKey);
 
-                auto SetChunkPersistency(const EChunkPersistency::Type NewPersistency, const float TimeToLive = 10.0f) -> void;
-    FORCEINLINE auto GetChunkPersistency() const -> EChunkPersistency::Type { return this->ChunkPersistency; }
-    FORCEINLINE auto IsPersistent() const -> bool { return this->ChunkPersistency == EChunkPersistency::Persistent; }
-    FORCEINLINE auto IsTransient() const -> bool { return this->ChunkPersistency == EChunkPersistency::Transient;  }
-    FORCEINLINE auto ShouldBeFreed() const -> bool;
+                void SetChunkPersistency(const EChunkPersistency::Type NewPersistency, const f32 TimeToLive = 10.0f) noexcept;
+    FORCEINLINE auto GetChunkPersistency() const noexcept -> EChunkPersistency::Type { return this->ChunkPersistency; }
+    FORCEINLINE bool IsPersistent() const noexcept { return this->ChunkPersistency == EChunkPersistency::Persistent; }
+    FORCEINLINE bool IsTransient() const noexcept { return this->ChunkPersistency == EChunkPersistency::Transient;  }
+    FORCEINLINE bool ShouldBeFreed() const;
 
     FORCEINLINE auto GetChunkKey() const -> const LChunkKey& { return this->ChunkKey; }
 
@@ -136,16 +134,15 @@ private:
 
     bool IsStateChangeValid(const EChunkState::Type NewChunkState) const;
     EChunkState::Type ChunkState       = EChunkState::Invalid;
-    EChunkState::Type HuntedChunkState = EChunkState::Invalid;
 
     void OnSpawned();
     void Shape();
     void ReplaceSurface();
     void OnActive();
 
-    LChunkKey         ChunkKey   = { };
+    LChunkKey ChunkKey;
     LSharedChunkArgs* SharedArgs = nullptr;
-    LChunkMesher*     Mesher     = nullptr;
+    Smart::TUnique<LChunkMesher> Mesher;
 
 public:
 
@@ -174,7 +171,7 @@ public:
 
 private:
 
-    voxel_t* RawVoxelData = nullptr;
+    Smart::TUnique<voxel_t> RawVoxelData;
 
     //////////////////////////////////////////////////////////////////////////
     // Data Manipulation
@@ -225,22 +222,14 @@ private:
     AChunk* NDown  = nullptr;
 };
 
-void AChunk::SetHuntedChunkState(const EChunkState::Type NewHuntedChunkState)
-{
-    check( EChunkState::Freed < NewHuntedChunkState && NewHuntedChunkState < EChunkState::Special )
-    check( NewHuntedChunkState > this->ChunkState )
-    this->HuntedChunkState = NewHuntedChunkState;
-    return;
-}
-
-bool AChunk::ShouldBeFreed() const
+FORCEINLINE bool AChunk::ShouldBeFreed() const
 {
     return this->IsTransient()
         &&   this->RealTimeInSecondsWhenTransientChunkShouldBeKilled
            < this->GetWorld()->GetRealTimeSecondsSinceWorldLaunch();
 }
 
-void AChunk::SetSharedArgs(LSharedChunkArgs* NewSharedArgs)
+FORCEINLINE void AChunk::SetSharedArgs(LSharedChunkArgs* NewSharedArgs)
 {
     checkSlow( NewSharedArgs )
     check( this->IsSharedArgsValid() == false )
@@ -253,45 +242,45 @@ void AChunk::SetSharedArgs(LSharedChunkArgs* NewSharedArgs)
     return;
 }
 
-LVoxelKey AChunk::CreateRelativeVoxelKey(const LVector& InWorldLocation) const
+FORCEINLINE LVoxelKey AChunk::CreateRelativeVoxelKey(const LVector& InWorldLocation) const
 {
     return LVoxelKey::FromWorldLocationPreserveLocalSpace(InWorldLocation - this->GetTranslation());
 }
 
-AChunk::LVoxelIndex AChunk::GetRawVoxelIndex(const LVoxelKey InKey)
+FORCEINLINE AChunk::LVoxelIndex AChunk::GetRawVoxelIndex(const LVoxelKey InKey)
 {
     return InKey.X * MwStatics::ChunkSizeSquared + InKey.Y * MwStatics::ChunkSize + InKey.Z;
 }
 
-AChunk::LVoxelIndex AChunk::GetRawVoxelIndex(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ)
+FORCEINLINE AChunk::LVoxelIndex AChunk::GetRawVoxelIndex(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ)
 {
     return InX * MwStatics::ChunkSizeSquared + InY * MwStatics::ChunkSize + InZ;
 }
 
-AChunk::LVoxelIndex AChunk::GetRawVoxelIndex(const i32 InX, const i32 InY, const i32 InZ)
+FORCEINLINE AChunk::LVoxelIndex AChunk::GetRawVoxelIndex(const i32 InX, const i32 InY, const i32 InZ)
 {
     return InX * MwStatics::ChunkSizeSquared + InY * MwStatics::ChunkSize + InZ;
 }
 
-voxel_t AChunk::GetRawVoxelData(const LVoxelKey InKey) const
+FORCEINLINE voxel_t AChunk::GetRawVoxelData(const LVoxelKey InKey) const
 {
     checkSlow( this->HasRawVoxelData() )
     return this->RawVoxelData[AChunk::GetRawVoxelIndex(InKey)];
 }
 
-voxel_t AChunk::GetRawVoxelData(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ) const
+FORCEINLINE voxel_t AChunk::GetRawVoxelData(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ) const
 {
     checkSlow( this->HasRawVoxelData() )
     return this->RawVoxelData[AChunk::GetRawVoxelIndex(InX, InY, InZ)];
 }
 
-voxel_t AChunk::GetRawVoxelData(const i32 InX, const i32 InY, const i32 InZ) const
+FORCEINLINE voxel_t AChunk::GetRawVoxelData(const i32 InX, const i32 InY, const i32 InZ) const
 {
     checkSlow( this->HasRawVoxelData() )
     return this->RawVoxelData[AChunk::GetRawVoxelIndex(InX, InY, InZ)];
 }
 
-voxel_t AChunk::GetSafeRawVoxelData(const LVoxelKey InKey, const voxel_t InFallback /* = ECompileTimeVoxels::Air */) const
+FORCEINLINE voxel_t AChunk::GetSafeRawVoxelData(const LVoxelKey InKey, const voxel_t InFallback /* = ECompileTimeVoxels::Air */) const
 {
     checkSlow( this->HasRawVoxelData() )
     if (InKey.IsLocal())
@@ -301,7 +290,7 @@ voxel_t AChunk::GetSafeRawVoxelData(const LVoxelKey InKey, const voxel_t InFallb
     return InFallback;
 }
 
-voxel_t AChunk::GetSafeRawVoxelData(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ, const voxel_t InFallback /* = ECompileTimeVoxels::Air */) const
+FORCEINLINE voxel_t AChunk::GetSafeRawVoxelData(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ, const voxel_t InFallback /* = ECompileTimeVoxels::Air */) const
 {
     checkSlow( this->HasRawVoxelData() )
     if (LVoxelKey(InX, InY, InZ).IsLocal())
@@ -311,7 +300,7 @@ voxel_t AChunk::GetSafeRawVoxelData(const LVoxelKeyDomainTy InX, const LVoxelKey
     return InFallback;
 }
 
-voxel_t AChunk::GetSafeRawVoxelData(const i32 InX, const i32 InY, const i32 InZ, const voxel_t InFallback /* = ECompileTimeVoxels::Air */) const
+FORCEINLINE voxel_t AChunk::GetSafeRawVoxelData(const i32 InX, const i32 InY, const i32 InZ, const voxel_t InFallback /* = ECompileTimeVoxels::Air */) const
 {
     checkSlow( this->HasRawVoxelData() )
     if (LVoxelKey(InX, InY, InZ).IsLocal())
@@ -321,12 +310,12 @@ voxel_t AChunk::GetSafeRawVoxelData(const i32 InX, const i32 InY, const i32 InZ,
     return InFallback;
 }
 
-voxel_t AChunk::GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey) const
+FORCEINLINE voxel_t AChunk::GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey) const
 {
     return this->GetCheckedNeighboringChunk(&InKey)->GetRawVoxelData(InKey);
 }
 
-voxel_t AChunk::GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey, const voxel_t Fallback) const
+FORCEINLINE voxel_t AChunk::GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey, const voxel_t Fallback) const
 {
 #if DO_CHECKS
     const LVoxelKey In = InKey;
@@ -343,12 +332,12 @@ voxel_t AChunk::GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey, const voxel_t Fa
     return Fallback;
 }
 
-void AChunk::OverrideRawVoxelData(const LVoxelKey InKey, const voxel_t NewVoxel)
+FORCEINLINE void AChunk::OverrideRawVoxelData(const LVoxelKey InKey, const voxel_t NewVoxel)
 {
     this->RawVoxelData[AChunk::GetRawVoxelIndex(InKey)] = NewVoxel;
 }
 
-AChunk* AChunk::GetNeighboringChunk(LVoxelKey* InOutKey)
+FORCEINLINE AChunk* AChunk::GetNeighboringChunk(LVoxelKey* InOutKey)
 {
     switch (InOutKey->NormalizeKeyForNeighbor())
     {
@@ -363,7 +352,7 @@ AChunk* AChunk::GetNeighboringChunk(LVoxelKey* InOutKey)
     }
 }
 
-AChunk* AChunk::GetCheckedNeighboringChunk(LVoxelKey* InOutKey)
+FORCEINLINE AChunk* AChunk::GetCheckedNeighboringChunk(LVoxelKey* InOutKey)
 {
     if (AChunk* Target = this->GetNeighboringChunk(InOutKey); Target)
     {
@@ -373,7 +362,7 @@ AChunk* AChunk::GetCheckedNeighboringChunk(LVoxelKey* InOutKey)
     return nullptr;
 }
 
-AChunk* AChunk::GetPanickedNeighboringChunk(LVoxelKey* InOutKey)
+FORCEINLINE AChunk* AChunk::GetPanickedNeighboringChunk(LVoxelKey* InOutKey)
 {
     if (AChunk* Target = this->GetNeighboringChunk(InOutKey); Target)
     {
@@ -383,7 +372,7 @@ AChunk* AChunk::GetPanickedNeighboringChunk(LVoxelKey* InOutKey)
     return nullptr;
 }
 
-const AChunk* AChunk::GetNeighboringChunk(LVoxelKey* InOutKey) const
+FORCEINLINE const AChunk* AChunk::GetNeighboringChunk(LVoxelKey* InOutKey) const
 {
     switch (InOutKey->NormalizeKeyForNeighbor())
     {
@@ -398,7 +387,7 @@ const AChunk* AChunk::GetNeighboringChunk(LVoxelKey* InOutKey) const
     }
 }
 
-const AChunk* AChunk::GetCheckedNeighboringChunk(LVoxelKey* InOutKey) const
+FORCEINLINE const AChunk* AChunk::GetCheckedNeighboringChunk(LVoxelKey* InOutKey) const
 {
     if (const AChunk* Target = this->GetNeighboringChunk(InOutKey); Target)
     {
@@ -408,7 +397,7 @@ const AChunk* AChunk::GetCheckedNeighboringChunk(LVoxelKey* InOutKey) const
     return nullptr;
 }
 
-const AChunk* AChunk::GetPanickedNeighboringChunk(LVoxelKey* InOutKey) const
+FORCEINLINE const AChunk* AChunk::GetPanickedNeighboringChunk(LVoxelKey* InOutKey) const
 {
     if (const AChunk* Target = this->GetNeighboringChunk(InOutKey); Target)
     {

@@ -34,17 +34,15 @@ protected:
 
 private:
 
-    void TryToActivateVerticalChunk(const LChunkKey2& ChunkKey, std::set<LChunkKey>* Visited);
-    bool TryToBringChunkToState(AChunk* Target, const EChunkState::Type TargetState, std::set<LChunkKey>* Visited);
+    bool TryToBringChunkToState(const LChunkKey& Key, AChunk* Target, const bool bPersistent, const EChunkState::Type TargetState, std::set<LChunkKey>* Missing, std::set<LChunkKey>* Visited);
 
-    bool PrepareWorldForChunkTransit_Spawned(const LChunkKey& InChunkKey);
-    bool PrepareWorldForChunkTransit_Shaped(const LChunkKey& InChunkKey);
-    bool PrepareWorldForChunkTransit_SurfaceReplaced(const LChunkKey& InChunkKey, std::set<LChunkKey>* Visited);
+    bool PrepareWorldForChunkTransit_Spawned(const LChunkKey& InChunkKey, std::set<LChunkKey>* Missing, std::set<LChunkKey>* Visited);
+    bool PrepareWorldForChunkTransit_Shaped(const LChunkKey& InChunkKey, std::set<LChunkKey>* Missing, std::set<LChunkKey>* Visited) { return true; }
+    bool PrepareWorldForChunkTransit_SurfaceReplaced(const LChunkKey& InChunkKey, std::set<LChunkKey>* Missing, std::set<LChunkKey>* Visited);
+    bool PrepareWorldForChunkTransit_Active(const LChunkKey& InChunkKey, std::set<LChunkKey>* Missing, std::set<LChunkKey>* Visited) { return true; }
 
     JChunkValidationSubsystem* ChunkValidationSubsystem = nullptr;
     JChunkGenerationSubsystem* ChunkGenerationSubsystem = nullptr;
-
-    TArray<LChunkKey> VipChunksToLoad;
 
 public:
 

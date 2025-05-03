@@ -22,9 +22,31 @@ void Jafg::LChunkMesher::ApplyProceduralMesh()
 {
     checkSlow( this->Owner->IsRendererComponentValid() )
 
-    this->Owner->GetChunkRendererComponent()->GetShaderInstance()->LoadMeshToGraphicsMemory(
-        this->Vertices, this->Indices
-    );
+    if (Tasks::IsOnMasterThread())
+    {
+        this->Owner->GetChunkRendererComponent()->GetShaderInstance()->LoadMeshToGraphicsMemory(this->Vertices, this->Indices);
+    }
+    else
+    {
+        Tasks::Make(ENamedThreads::Master, ETaskTime::Whenever, [this]()
+        {
+            if (this->Owner->GetWorld()->GetWorldState() > EWorldState::Running)
+            {
+                return;
+            }
+
+            if (this->Owner->GetChunkState() != EChunkState::Active)
+            {
+                LOG_WARNING(LogChunkGeneration, "Chunk [{}] is not active.", this->Owner->GetChunkKey().ToString())
+                return;
+            }
+
+            this->Owner->GetChunkRendererComponent()->GetShaderInstance()->LoadMeshToGraphicsMemory(this->Vertices, this->Indices);
+
+            return;
+        });
+    }
+
 
     return;
 }
@@ -32,8 +54,11 @@ void Jafg::LChunkMesher::ApplyProceduralMesh()
 void Jafg::LChunkMesher::RegenerateProceduralMesh()
 {
     check( GEngine )
-    this->RegenerateProceduralMesh(
+    this->RegenerateProceduralMesh
+    (
         GEngine->GetSubsystem<JVoxelSubsystem>(),
         GEngine->GetSubsystem<JMaterialSubsystem>()
     );
+
+    return;
 }
