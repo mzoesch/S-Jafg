@@ -9,6 +9,7 @@
 #include "MyWorld/Meshing/ChunkMesher.h"
 #include "MyWorld/Chunk/ChunkPhysics.h"
 #include "Rhi/RhiVendorInclude.h"
+#include "Stats/Stats.h"
 
 bool Jafg::LChunkRendererComponent::Cull(const std::span<LVector>& Corners) const
 {
@@ -90,7 +91,7 @@ void Jafg::AChunk::SetChunkState(const EChunkState::Type NewChunkState)
 
     switch (this->ChunkState)
     {
-    case EChunkState::Spawned: { this->OnSpawned(); break; }
+    case EChunkState::Spawned: { this->Spawn(); break; }
     case EChunkState::Shaped: { this->Shape(); break; }
     case EChunkState::SurfaceReplaced: { this->ReplaceSurface(); break; }
     case EChunkState::Active: { this->OnActive(); break; }
@@ -173,8 +174,10 @@ bool Jafg::AChunk::IsStateChangeValid(const EChunkState::Type NewChunkState) con
     }
 }
 
-void Jafg::AChunk::OnSpawned()
+void Jafg::AChunk::Spawn()
 {
+    STAT_CYCLE_FUNCTION()
+
     check( this->ChunkState == EChunkState::Spawned )
 
     const JChunkGenerationSubsystem* Subsystem = this->SharedArgs->ChunkGenerationSubsystem;
@@ -191,6 +194,8 @@ void Jafg::AChunk::OnSpawned()
 
 void Jafg::AChunk::Shape()
 {
+    STAT_CYCLE_FUNCTION()
+
     check( this->ChunkState == EChunkState::Shaped )
 
     struct HelperMalloc
@@ -207,6 +212,8 @@ void Jafg::AChunk::Shape()
 
 void Jafg::AChunk::ReplaceSurface()
 {
+    STAT_CYCLE_FUNCTION()
+
     check( this->ChunkState == EChunkState::SurfaceReplaced )
     ChunkGenerator::ReplaceSurface(this->SharedArgs, this->ChunkKey, this, this->RawVoxelData);
     return;
@@ -214,6 +221,8 @@ void Jafg::AChunk::ReplaceSurface()
 
 void Jafg::AChunk::OnActive()
 {
+    STAT_CYCLE_FUNCTION()
+
     check( this->ChunkState == EChunkState::Active )
 
     check( this->Mesher == nullptr )

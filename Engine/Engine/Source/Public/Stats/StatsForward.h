@@ -21,6 +21,8 @@ namespace Jafg::Stats::Private
 {
 
 struct LSession;
+struct LThread;
+struct LBookmark;
 struct LSessionEvent;
 struct LStat;
 
@@ -42,6 +44,19 @@ struct LSession final
 {
     LString Name;
     FORCEINLINE bool IsValid() const { return this->Name.IsEmpty() == false; }
+};
+
+struct LThread final
+{
+    LString Name;
+    LThreadId ThreadId;
+};
+
+struct LBookmark final
+{
+    std::string_view Name;
+    i64 BeginTime;
+    LThreadId ThreadId;
 };
 
 struct LSessionEvent final

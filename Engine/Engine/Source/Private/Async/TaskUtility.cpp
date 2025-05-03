@@ -114,8 +114,11 @@ struct LEngineThread final
     FORCEINLINE bool operator==(const Jafg::ENamedThreads::Type InThreadName) const { return this->ThreadName == InThreadName; }
     FORCEINLINE bool operator!=(const Jafg::ENamedThreads::Type InThreadName) const { return this->ThreadName != InThreadName; }
 
+    FORCEINLINE Jafg::LString GetDisplayName() const;
+
     Jafg::LThreadId              Id;
     Jafg::ENamedThreads::Type    ThreadName;
+    Jafg::LString                HumanReadableName;
     Jafg::TMpscQueue<LTask>      TaskQueue;
     Jafg::TOptional<std::thread> Thread;
     Jafg::LRunnable*             Runnable = nullptr;
@@ -127,6 +130,21 @@ struct LEngineThread final
 std::shared_mutex EngineThreadsMutex;
 //# Map for all queses for all tasks.
 Jafg::TArray<LEngineThread> EngineThreads;
+
+FORCEINLINE Jafg::LString LEngineThread::GetDisplayName() const
+{
+    if (this->Runnable && this->Runnable->GetHumanReadableName().IsEmpty() == false)
+    {
+        return this->Runnable->GetHumanReadableName();
+    }
+
+    if (this->HumanReadableName.IsEmpty() == false)
+    {
+        return this->HumanReadableName;
+    }
+
+    return Jafg::LexToString(this->ThreadName);
+}
 
 } /* ~Namespace <Anonymous> */
 
@@ -141,9 +159,9 @@ Jafg::LString Jafg::LexToString(const ENamedThreads::Type Thread)
 {
     switch (Thread)
     {
-    case ENamedThreads::Master: { return "Master"; }
+    case ENamedThreads::Master:  { return "Master";  }
     case ENamedThreads::Failure: { return "Failure"; }
-    default: { return "Custom"; } // TODO Get at least the thread-id to make logs meaningful.
+    default: { return LString::SprintF("Thread_{}", static_cast<LThreadId>(Thread)); }
     }
 }
 
@@ -182,6 +200,16 @@ void Jafg::Tasks::RegisterThread(ENamedThreads::Type InThreadName)
 
     ::EngineThreads.Emplace(Me, InThreadName);
 
+#if WITH_STATS
+    if (Stats::Private::GTracer)
+    {
+        Stats::Private::GTracer->AddNamedThread({
+            LexToString(InThreadName),
+            Me
+        });
+    }
+#endif /* WITH_STATS */
+
     return;
 }
 
@@ -198,7 +226,7 @@ Jafg::LString Jafg::Tasks::GetCurrentThreadDisplayName()
 
     if (const LEngineThread* Thread = ::EngineThreads.FindRef(Me); Thread)
     {
-        return LexToString(Thread->ThreadName);
+        return Thread->GetDisplayName();
     }
 
     return "NotRegistered";
@@ -218,7 +246,7 @@ Jafg::LString Jafg::Tasks::GetCurrentThreadDisplayNameChecked()
 
     if (const LEngineThread* Thread = ::EngineThreads.FindRef(Me); Thread)
     {
-        return LexToString(Thread->ThreadName);
+        return Thread->GetDisplayName();
     }
 
     checkNoEntry()
@@ -239,7 +267,7 @@ Jafg::LString Jafg::Tasks::GetCurrentThreadDisplayNameAsserted()
 
     if (const LEngineThread* Thread = ::EngineThreads.FindRef(Me); Thread)
     {
-        return LexToString(Thread->ThreadName);
+        return Thread->GetDisplayName();
     }
 
     jassertNoEntry()
@@ -394,7 +422,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
 
     if (::bTearingDown)
     {
-        LOG_ERROR(LogTaskUtility, "Failed to launch thread {}.", LexToString(ThreadName))
+        LOG_ERROR(LogTaskUtility, "Failed to launch thread {}.", Runnable->GetHumanReadableName())
         if (bKillRunnableWhenFinished)
         {
             delete Runnable;
@@ -404,7 +432,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
 
     if (IsThreadRunning(ThreadName))
     {
-        LOG_ERROR(LogTaskSystem, "Thread {}[{}] already running.", LexToString(ThreadName), static_cast<i32>(ThreadName))
+        LOG_ERROR(LogTaskSystem, "Thread {}[{}] already running.", Runnable->GetHumanReadableName(), static_cast<i32>(ThreadName))
         if (bKillRunnableWhenFinished)
         {
             delete Runnable;
@@ -501,7 +529,18 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                 LEngineThread* Ref = ::EngineThreads.FindRef(ThreadName);
                 check( Ref )
                 Ref->Id = PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
+#if WITH_STATS
+                if (Stats::Private::GTracer)
+                {
+                    Stats::Private::GTracer->AddNamedThread({
+                        LexToString(Ref->ThreadName),
+                        Ref->Id,
+                    });
+                }
+#endif /* WITH_STATS */
             }
+
+            STAT_QUICK_CYCLE_START("Jafg::Tasks::Private::launchNamedThread::std::thread")
 
             const ETaskExit::Type LambdaErrorLevel = Runnable->Run();
             if (LambdaErrorLevel != ETaskExit::Success)
@@ -547,7 +586,9 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                 }
             }
 
+            STAT_CYCLE_START(Re, "Runnable::Exit")
             Runnable->Exit();
+            STAT_CYCLE_END(Re)
 
             if (::bTearingDown)
             {
@@ -557,6 +598,8 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
             Tasks::Make(ENamedThreads::Master, ETaskTime::Whenever,
                 [ThreadName](void) -> void
                 {
+                    STAT_CYCLE_FUNCTION()
+
                     std::unique_lock RemoveLock(::EngineThreadsMutex);
                     if (::bTearingDown)
                     {
@@ -665,6 +708,30 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
     )
 
     return;
+}
+
+bool Jafg::Tasks::Private::AddThreadsToCurrentTracerSession()
+{
+    if (Stats::Private::GTracer)
+    {
+        std::shared_lock Lock(::EngineThreadsMutex);
+        for (const LEngineThread& Thread : ::EngineThreads)
+        {
+            if (Thread.Id == 0)
+            {
+                continue;
+            }
+
+            Stats::Private::GTracer->AddNamedThread({
+                LexToString(Thread.ThreadName),
+                Thread.Id
+            });
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 #undef PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID

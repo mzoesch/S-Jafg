@@ -4,6 +4,7 @@
 #include "Engine/Engine.h"
 #include "Framework/Eye.h"
 #include "Rhi/RhiVendorInclude.h"
+#include "Stats/Stats.h"
 #include "System/MaterialSubsystem.h"
 #include "System/EnginePath.h"
 
@@ -95,6 +96,8 @@ Jafg::LChunkShaderInstance::~LChunkShaderInstance()
 
 void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TArray<ChunkBoxVertex>& Vertices, const TArray<u32>& Indices)
 {
+    STAT_CYCLE_FUNCTION()
+
     if (this->bLoaded == false)
     {
         glGenVertexArrays(1, &this->Vao);

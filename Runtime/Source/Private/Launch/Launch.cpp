@@ -151,14 +151,7 @@ FORCEINLINE
 #endif /* !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT) */
 void EngineExit()
 {
-#if WITH_STATS
-    if (Stats::Private::GTracer)
-    {
-        Stats::Private::GTracer->TryEndSession();
-        Stats::Private::GTracer->BeginSession("Exit");
-    }
-#endif /* WITH_STATS */
-
+    STAT_BOOKMARK("TearingDown")
     STAT_CYCLE_FUNCTION_START(ExitCycle)
 
     LOG_INFO(LogGuardedMain, "Engine is exiting ...")
@@ -282,10 +275,11 @@ EPlatformExit::Type GuardedMain()
     if (Application::IsAllowProfiling())
     {
         Stats::Private::GTracer = &::PrivateTracer;
-        Stats::Private::GTracer->BeginSession("GettingUp");
+        Stats::Private::GTracer->BeginSession("Program");
     }
 #endif /* WITH_STATS */
     STAT_CYCLE_FUNCTION_START(GuardedMainCycle)
+    STAT_BOOKMARK("GettingUp")
 
     LaunchProgress::PrepareBeginProgress();
     LaunchProgress::BeginProgress("Core Initialization", "Engine pre-life initialization", 0.0f);
@@ -340,13 +334,7 @@ EPlatformExit::Type GuardedMain()
     LaunchProgress::FinishAndGiveUpMemory();
 
     STAT_CYCLE_FUNCTION_END(GuardedMainCycle)
-#if WITH_STATS
-    if (Stats::Private::GTracer)
-    {
-        Stats::Private::GTracer->EndSession();
-        Stats::Private::GTracer->BeginSession("Loop");
-    }
-#endif /* WITH_STATS */
+    STAT_BOOKMARK("GuardedMainCycle")
 
 #if PLATFORM_USES_NON_GENERIC_LOOP
     PLATFORM_GUARDED_LOOP;

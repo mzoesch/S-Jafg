@@ -6,6 +6,7 @@
 #include "Engine/Engine.h"
 #include "System/VoxelSubsystem.h"
 #include "System/MaterialSubsystem.h"
+#include "Stats/Stats.h"
 
 Jafg::LChunkMesher::~LChunkMesher()
 {
@@ -20,6 +21,8 @@ void Jafg::LChunkMesher::ClearProceduralMesh()
 
 void Jafg::LChunkMesher::ApplyProceduralMesh()
 {
+    STAT_CYCLE_FUNCTION()
+
     checkSlow( this->Owner->IsRendererComponentValid() )
 
     if (Tasks::IsOnMasterThread())

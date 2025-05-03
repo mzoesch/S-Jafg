@@ -128,11 +128,10 @@ ENGINE_API auto LaunchNamedThread(ENamedThreads::Type ThreadName, LRunnable* Run
 ENGINE_API void JoinThread(const ENamedThreads::Type ThreadName);
 ENGINE_API void StopAndJoinRemainingThreads(const bool bJoinTasks = true);
 
-FORCEINLINE ENamedThreads::Type MakeNewCustomNamedThreadId()
-{
-    check( IsOnMasterThread() )
-    return static_cast<ENamedThreads::Type>(CustomThreadCounter++);
-}
+//# @return True if added.
+ENGINE_API bool AddThreadsToCurrentTracerSession();
+
+FORCEINLINE ENamedThreads::Type MakeNewCustomNamedThreadId();
 
 } /* ~Namespace Private */
 
@@ -166,6 +165,12 @@ FORCEINLINE ENamedThreads::Type LaunchNamedThread(ETaskExit::Type* OutExit)
     i32 JafgThreadId = Private::MakeNewCustomNamedThreadId();
     *OutExit = LaunchNamedThread<T>(static_cast<ENamedThreads::Type>(JafgThreadId));
     return static_cast<ENamedThreads::Type>(JafgThreadId);
+}
+
+FORCEINLINE ENamedThreads::Type Private::MakeNewCustomNamedThreadId()
+{
+    check( IsOnMasterThread() )
+    return static_cast<ENamedThreads::Type>(CustomThreadCounter++);
 }
 
 } /* ~Namespace Tasks */

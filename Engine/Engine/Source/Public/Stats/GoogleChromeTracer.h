@@ -21,6 +21,8 @@ struct LGoogleChromeTracer final
     ENGINE_API ~LGoogleChromeTracer();
 
     ENGINE_API void BeginSession(LString&& InName);
+    ENGINE_API void AddNamedThread(Private::LThread&& InThread);
+    ENGINE_API void AddBookmark(Private::LBookmark&& InBookmark);
     ENGINE_API void AddEvent(Private::LSessionEvent&& InEvent);
     ENGINE_API void TryEndSession();
     ENGINE_API void EndSession();

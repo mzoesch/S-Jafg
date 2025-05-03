@@ -135,7 +135,7 @@ private:
     bool IsStateChangeValid(const EChunkState::Type NewChunkState) const;
     EChunkState::Type ChunkState       = EChunkState::Invalid;
 
-    void OnSpawned();
+    void Spawn();
     void Shape();
     void ReplaceSurface();
     void OnActive();

@@ -32,7 +32,62 @@ void Jafg::Stats::Vendor::LGoogleChromeTracer::BeginSession(LString&& InName)
     std::filesystem::create_directories(P.parent_path());
 
     this->Stream.open(Path.ToPtr(), std::ios::out | std::ios::trunc);
-    this->Stream << R"({"otherData": {},"traceEvents":[)";
+    this->Stream << R"({"traceEvents":[)";
+
+    Lock.unlock();
+
+    const bool bOut = Tasks::Private::AddThreadsToCurrentTracerSession();
+    check( bOut )
+
+    return;
+}
+
+void Jafg::Stats::Vendor::LGoogleChromeTracer::AddNamedThread(Private::LThread&& InThread)
+{
+    std::unique_lock Lock(this->Mutex);
+
+    check( this->Session.IsValid() )
+
+    if (this->bFirstEvent == false)
+    {
+        this->Stream << ',';
+    }
+    else
+    {
+        this->bFirstEvent = false;
+    }
+
+    this->Stream << R"({"name":"thread_name","ph":"M","pid":1,"tid":)";
+    this->Stream << InThread.ThreadId;
+    this->Stream << R"(,"args":{"name":")";
+    this->Stream << InThread.Name.ToPtr();
+    this->Stream << R"("}})";
+
+    return;
+}
+
+void Jafg::Stats::Vendor::LGoogleChromeTracer::AddBookmark(Private::LBookmark&& InBookmark)
+{
+    std::unique_lock Lock(this->Mutex);
+
+    check( this->Session.IsValid() )
+
+    if (this->bFirstEvent == false)
+    {
+        this->Stream << ',';
+    }
+    else
+    {
+        this->bFirstEvent = false;
+    }
+
+    this->Stream << R"({"name":")";
+    this->Stream << InBookmark.Name;
+    this->Stream << R"(","ph":"i","cat":"bookmark","s":"t","pid":0,"tid":)";
+    this->Stream << InBookmark.ThreadId;
+    this->Stream << R"(,"ts":)";
+    this->Stream << InBookmark.BeginTime;
+    this->Stream << "}";
 
     return;
 }
@@ -56,7 +111,7 @@ void Jafg::Stats::Vendor::LGoogleChromeTracer::AddEvent(Private::LSessionEvent&&
     this->Stream << InEvent.EndTime - InEvent.BeginTime;
     this->Stream << R"(,"name":")";
     this->Stream << InEvent.Name;
-    this->Stream << R"(","ph":"X","pid":0,"tid":)";
+    this->Stream << R"(","ph":"X","pid":1,"tid":)";
     this->Stream << InEvent.ThreadId;
     this->Stream << ",\"ts\":";
     this->Stream << InEvent.BeginTime;

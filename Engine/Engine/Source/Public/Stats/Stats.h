@@ -25,6 +25,7 @@
 
 #if WITH_STATS
 
+#define PRIVATE_JAFG_STAT_TRACER ::Jafg::Stats::Private::GTracer
 #define PRIVATE_JAFG_STAT ::Jafg::Stats::Private::LStat
 #define PRIVATE_JAFG_STAT_UNIQUE_SYMBOL PRIVATE_JAFG_CORE_JOIN_OUTER_TWO(_Stat, __LINE__)
 
@@ -58,11 +59,21 @@
 //#
 #define STAT_CYCLE_FUNCTION()                                  \
     STAT_CYCLE_FUNCTION_START(PRIVATE_JAFG_STAT_UNIQUE_SYMBOL)
+
 //#
 //# Discard an already ongoing stat cycle.
 //#
-#define STAT_DISCARD(Name) \
-    Name.Discard();
+#define STAT_DISCARD(Symbol) \
+    Symbol.Discard();
+
+#define STAT_BOOKMARK(Name) \
+    if (PRIVATE_JAFG_STAT_TRACER) { \
+        PRIVATE_JAFG_STAT_TRACER->AddBookmark({ \
+            Name, \
+            static_cast<i64>(::Jafg::Application::GetDeltaSinceStaticStorageInitialization() * JAFG_S2MUS_D), \
+            ::Jafg::Tasks::GetCurrentThreadId() \
+        }); \
+    }
 
 #else /* WITH_STATS */
     #define STAT_CYCLE_START(Symbol, Name)

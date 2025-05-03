@@ -6,6 +6,7 @@
 #include "Framework/Pawn.h"
 #include "MyWorld/Validation/ChunkValidationUtility.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
+#include "Stats/Stats.h"
 
 void Jafg::JChunkValidationSubsystem::Initialize(LSubsystemCollection& Collection)
 {
@@ -20,6 +21,8 @@ void Jafg::JChunkValidationSubsystem::Initialize(LSubsystemCollection& Collectio
 
 void Jafg::JChunkValidationSubsystem::FixedTick(const float EngineDeltaTime, const f32 FixedDeltaTime)
 {
+    STAT_CYCLE_FUNCTION()
+
     Super::FixedTick(EngineDeltaTime, FixedDeltaTime);
 
     bool bVerifyChunks = true;

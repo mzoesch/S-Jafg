@@ -4,6 +4,7 @@
 #include "Core/Application.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "MyWorld/Validation/ChunkValidationSubsystem.h"
+#include "Stats/Stats.h"
 
 static constexpr f32 DeltaTime = 0.2f;
 
@@ -11,6 +12,8 @@ void Jafg::JChunkGeneratorSubsystem::OnInitialize(LSubsystemCollection& Collecti
 {
     Super::OnInitialize(Collection);
     this->SetTickInterval(::DeltaTime);
+
+    this->HumanReadableName = "JChunkGeneratorSubsystem";
 
 #if PLATFORM_SUPPORTS_SIMD
     FastNoise::SmartNode<FastNoise::Perlin> Root = FastNoise::New<FastNoise::Perlin>();
@@ -107,6 +110,8 @@ bool Jafg::JChunkGeneratorSubsystem::TryToBringChunkToState
         Target->SetChunkState(EChunkState::STATE);                                      \
     }
 
+    STAT_CYCLE_FUNCTION()
+
     check( Missing && Visited )
 
     /* We can only generate chunks between those states. The other are special. */
@@ -139,6 +144,8 @@ bool Jafg::JChunkGeneratorSubsystem::TryToBringChunkToState
 
 bool Jafg::JChunkGeneratorSubsystem::PrepareWorldForChunkTransit_Spawned(const LChunkKey& InChunkKey, std::set<LChunkKey>* Missing, std::set<LChunkKey>* Visited)
 {
+    STAT_CYCLE_FUNCTION()
+
     bool bRet = true;
 
     for (const LChunkKey& Neighbor : InChunkKey.GetNeighboringChunkKeys())
@@ -157,6 +164,8 @@ bool Jafg::JChunkGeneratorSubsystem::PrepareWorldForChunkTransit_Spawned(const L
 
 bool Jafg::JChunkGeneratorSubsystem::PrepareWorldForChunkTransit_SurfaceReplaced(const LChunkKey& InChunkKey, std::set<LChunkKey>* Missing, std::set<LChunkKey>* Visited)
 {
+    STAT_CYCLE_FUNCTION()
+
     bool bRet = true;
     for (const LChunkKey& NeighborKey : InChunkKey.GetNeighboringChunkKeys())
     {

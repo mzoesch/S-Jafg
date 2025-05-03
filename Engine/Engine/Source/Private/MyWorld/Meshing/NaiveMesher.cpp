@@ -7,9 +7,12 @@
 #include "MyWorld/Chunk/Chunk.h"
 #include "System/MaterialSubsystem.h"
 #include "System/VoxelSubsystem.h"
+#include "Stats/Stats.h"
 
 void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubsystem, const JMaterialSubsystem* MaterialSubsystem)
 {
+    STAT_CYCLE_FUNCTION()
+
     u32 CurrentVertex = 0;
     for (LVoxelKeyDomainTy X = 0; X < MwStatics::ChunkSize; ++X)
     {

@@ -3,19 +3,23 @@
 #include "CoreAfx.h"
 #include "Async/TickedRunnable.h"
 #include "Core/Application.h"
+#include "Stats/Stats.h"
 
 Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
 {
+    STAT_CYCLE_FUNCTION()
+
     double LastTickTime = Application::GetDeltaSinceStaticStorageInitialization();
 
     while (this->bShouldTick)
     {
-        const double Now = Application::GetDeltaSinceStaticStorageInitialization();
-        const double DeltaTime = Now - LastTickTime;
+        const f64 Now = Application::GetDeltaSinceStaticStorageInitialization();
+        const f64 DeltaTime = Now - LastTickTime;
 
         if (DeltaTime > this->TickInterval)
         {
-            this->FixedTick(static_cast<float>(DeltaTime));
+            STAT_QUICK_CYCLE_START("Jafg::Tasks::Private::LTickedRunnable::Run::FixedTick")
+            this->FixedTick(static_cast<f32>(DeltaTime));
             LastTickTime = Now;
         }
 #if !PLATFORM_WASM
@@ -38,6 +42,8 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
 
 void Jafg::LTickedRunnable::Stop(const ERunnableStopReason::Type InType)
 {
+    STAT_CYCLE_FUNCTION()
+
     LOG_TRACE(LogTasks, "Stopping ticked runnable.")
 
     if (this->bShouldTick == false)

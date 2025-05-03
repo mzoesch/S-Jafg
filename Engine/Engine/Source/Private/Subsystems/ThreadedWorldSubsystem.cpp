@@ -2,9 +2,12 @@
 
 #include "CoreAfx.h"
 #include "Subsystems/ThreadedWorldSubsystem.h"
+#include "Stats/Stats.h"
 
 void Jafg::JThreadedWorldSubsystem::Initialize(LSubsystemCollection& Collection)
 {
+    STAT_CYCLE_FUNCTION()
+
     Super::Initialize(Collection);
     this->SetPriorityTearDown(true);
     this->OnInitialize(Collection);
@@ -25,6 +28,8 @@ void Jafg::JThreadedWorldSubsystem::Initialize(LSubsystemCollection& Collection)
 
 void Jafg::JThreadedWorldSubsystem::TearDown()
 {
+    STAT_CYCLE_FUNCTION()
+
     Super::TearDown();
 
     if (this->ShouldTickRunnable())
