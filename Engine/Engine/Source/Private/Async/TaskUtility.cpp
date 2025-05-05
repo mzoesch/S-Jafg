@@ -113,13 +113,15 @@ struct LEngineThread final
     FORCEINLINE bool operator!=(const Jafg::LThreadId InId) const { return this->Id != InId; }
     FORCEINLINE bool operator==(const Jafg::ENamedThreads::Type InThreadName) const { return this->ThreadName == InThreadName; }
     FORCEINLINE bool operator!=(const Jafg::ENamedThreads::Type InThreadName) const { return this->ThreadName != InThreadName; }
+    FORCEINLINE bool operator==(const Jafg::LRunnable* InRunnable) const { return this->Runnable == InRunnable; }
+    FORCEINLINE bool operator!=(const Jafg::LRunnable* InRunnable) const { return this->Runnable != InRunnable; }
 
     FORCEINLINE Jafg::LString GetDisplayName() const;
 
     Jafg::LThreadId              Id;
     Jafg::ENamedThreads::Type    ThreadName;
     Jafg::LString                HumanReadableName;
-    Jafg::TMpscQueue<LTask>      TaskQueue;
+    Jafg::TMpmcQueue<LTask>      TaskQueue;
     Jafg::TOptional<std::thread> Thread;
     Jafg::LRunnable*             Runnable = nullptr;
     bool                         bKillRunnableWhenFinished = false;
@@ -146,7 +148,48 @@ FORCEINLINE Jafg::LString LEngineThread::GetDisplayName() const
     return Jafg::LexToString(this->ThreadName);
 }
 
+FORCEINLINE void RenameMe(const Jafg::LString& InDisplayName)
+{
+    jassert( InDisplayName.GetByteSize() < 16 && "Thread name may not exceed 16 bytes." )
+
+#if PLATFORM_WINDOWS
+    ::SetThreadDescription(::GetCurrentThread(), InDisplayName.ToPtr());
+    LOG_VERBOSE(LogTaskUtility, "Renamed thread to [{}].", InDisplayName)
+#elif PLATFORM_LINUX
+    pthread_setname_np(pthread_self(), InDisplayName.ToPtr());
+    LOG_VERBOSE(LogTaskUtility, "Renamed thread to [{}].", InDisplayName)
+#else
+    LOG_WARNING(LogTaskUtility, "Failed to rename thread to [{}].", InDisplayName)
+#endif /* PLATFORM_LINUX */
+
+    return;
+}
+
 } /* ~Namespace <Anonymous> */
+
+void Jafg::LRunnable::Join()
+{
+    /*
+     * So this is cheeky. But the this-pointer could be invalid if the thread was removed before the lock was acquired.
+     * Therefore, we just search for the this-pointer in our global list of threads without ever accessing the object
+     * directly.
+     */
+    std::shared_lock Lock(::EngineThreadsMutex);
+
+    LEngineThread* EngineThread = ::EngineThreads.FindRef(this);
+    if (EngineThread == nullptr)
+    {
+        LOG_WARNING(LogRunnable, "No such runnable.")
+        return;
+    }
+
+    const ENamedThreads::Type Name = EngineThread->ThreadName;
+    Lock.unlock();
+
+    Tasks::JoinThread(Name);
+
+    return;
+}
 
 namespace Jafg::Tasks::Private
 {
@@ -346,7 +389,7 @@ void Jafg::Tasks::Make(const ENamedThreads::Type InThreadName, const ETaskTime::
     return;
 }
 
-bool Jafg::Tasks::Private::IsThreadRunning(const ENamedThreads::Type InThreadName)
+bool Jafg::Tasks::IsThreadRunning(const ENamedThreads::Type InThreadName)
 {
     std::shared_lock Lock(::EngineThreadsMutex);
     if (::bTearingDown)
@@ -358,7 +401,7 @@ bool Jafg::Tasks::Private::IsThreadRunning(const ENamedThreads::Type InThreadNam
     return ::EngineThreads.Contains(InThreadName);
 }
 
-void Jafg::Tasks::Private::TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const i32 MaxTasks)
+void Jafg::Tasks::TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const i32 MaxTasks)
 {
     STAT_CYCLE_FUNCTION_START(Trt)
 
@@ -377,7 +420,7 @@ void Jafg::Tasks::Private::TryRunTasks(const ENamedThreads::Type Which, const ET
             LOG_ERROR(LogTaskSystem, "Thread {} not found.", LexToString(Which))
             break;
         }
-        TMpscQueue<LTask>& Queue = Thread->TaskQueue;
+        TMpmcQueue<LTask>& Queue = Thread->TaskQueue;
         LTask Task;
         if (Queue.DequeueByMoveWithPredicate(&Task, [Time](const LTask& InTask){ return InTask.Time & Time; }) == false)
         {
@@ -396,11 +439,11 @@ void Jafg::Tasks::Private::TryRunTasks(const ENamedThreads::Type Which, const ET
         continue;
     }
 
-    if constexpr (IS_COMPILED_LOG(LogTasks, Verbose))
+    if constexpr (IS_COMPILED_LOG(LogTasks, Trace))
     {
         if (RunTasks > 0)
         {
-            LOG_VERBOSE(LogTasks, "Run {} tasks on thread [{}] during [{}].", RunTasks, LexToString(Which), LexToString(Time))
+            LOG_TRACE(LogTasks, "Run {} tasks on thread [{}] during [{}].", RunTasks, LexToString(Which), LexToString(Time))
         }
     }
 
@@ -410,6 +453,57 @@ void Jafg::Tasks::Private::TryRunTasks(const ENamedThreads::Type Which, const ET
         STAT_DISCARD(Trt)
     }
 #endif /* WITH_STATS */
+
+    return;
+}
+
+void Jafg::Tasks::StopThread(const ENamedThreads::Type ThreadName)
+{
+    STAT_CYCLE_FUNCTION()
+
+    std::shared_lock Lock(::EngineThreadsMutex);
+    LEngineThread* Thread = ::EngineThreads.FindRef(ThreadName);
+    if (Thread)
+    {
+        if (Thread->Runnable)
+        {
+            Thread->Runnable->Stop(ERunnableStopReason::RequestedStop);
+        }
+        else
+        {
+            LOG_WARNING(LogTaskSystem, "Invalid runnable for thread [{}].", LexToString(ThreadName))
+        }
+    }
+    else
+    {
+        LOG_WARNING(LogTaskSystem, "No such thread [{}].", LexToString(ThreadName))
+    }
+
+    return;
+}
+
+void Jafg::Tasks::JoinThread(const ENamedThreads::Type ThreadName)
+{
+    STAT_CYCLE_FUNCTION()
+
+    std::shared_lock Lock(::EngineThreadsMutex);
+    LEngineThread* Thread = ::EngineThreads.FindRef(ThreadName);
+    if (Thread && Thread->Thread.IsSet())
+    {
+        if (Thread->Thread->joinable())
+        {
+            Lock.unlock();
+            Thread->Thread->join();
+        }
+        else
+        {
+            LOG_WARNING(LogTaskSystem, "Thread [{}] is not joinable.", LexToString(ThreadName))
+        }
+    }
+    else
+    {
+        LOG_WARNING(LogTaskSystem, "Thread [{}] is not joinable.", LexToString(ThreadName))
+    }
 
     return;
 }
@@ -509,7 +603,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
         return ErrorLevel;
     }
 
-    std::unique_lock Lock(EngineThreadsMutex);
+    std::unique_lock Lock(::EngineThreadsMutex);
     if (::bTearingDown)
     {
         LOG_ERROR(LogTaskSystem, "Failed to launch thread {}[{}].", Runnable->GetHumanReadableName(), LexToString(ThreadName))
@@ -529,11 +623,14 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                 LEngineThread* Ref = ::EngineThreads.FindRef(ThreadName);
                 check( Ref )
                 Ref->Id = PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
+
+                const LString DisplayName = Ref->GetDisplayName();
+                ::RenameMe(DisplayName);
 #if WITH_STATS
                 if (Stats::Private::GTracer)
                 {
                     Stats::Private::GTracer->AddNamedThread({
-                        LexToString(Ref->ThreadName),
+                        DisplayName,
                         Ref->Id,
                     });
                 }
@@ -620,32 +717,6 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
     ::EngineThreads.GetLast()->Thread = std::move(ThreadObj);
 
     return ErrorLevel;
-}
-
-void Jafg::Tasks::Private::JoinThread(const ENamedThreads::Type ThreadName)
-{
-    STAT_CYCLE_FUNCTION()
-
-    std::shared_lock Lock(::EngineThreadsMutex);
-    LEngineThread* Thread = ::EngineThreads.FindRef(ThreadName);
-    if (Thread->Thread.IsSet())
-    {
-        if (Thread->Thread->joinable())
-        {
-            Lock.unlock();
-            Thread->Thread->join();
-        }
-        else
-        {
-            LOG_WARNING(LogTaskSystem, "Thread {}[{}] is not joinable.", LexToString(ThreadName), static_cast<i32>(ThreadName))
-        }
-    }
-    else
-    {
-        LOG_WARNING(LogTaskSystem, "Thread {}[{}] is not joinable.", LexToString(ThreadName), static_cast<i32>(ThreadName))
-    }
-
-    return;
 }
 
 void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* = true */)

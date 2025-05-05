@@ -389,13 +389,17 @@ static_assert(sizeof(char8_t)  == 1,                   "char8_t is not 1 byte.")
     #error "No platform encoding is defined."
 #endif /* !PLATFORM_USES_UTF8 && !PLATFORM_USES_UTF16 && !PLATFORM_USES_UTF32 */
 
-namespace PlatformHal
+namespace Jafg::PlatformHal
 {
 
 /**
  * Very dangerous function. Use with care and never in critical code paths.
  * Currently not supported for all platforms.
  */
-void Sleep(const double InSeconds);
+LAL_API void SleepNoStats(const f64 InSeconds);
+/**
+ * May not be supported on all platforms. Use with caution.
+ */
+LAL_API void YieldThread();
 
 } /* ~Namespace PlatformHal */

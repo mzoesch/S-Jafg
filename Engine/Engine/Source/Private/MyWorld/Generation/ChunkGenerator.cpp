@@ -4,9 +4,12 @@
 #include "MyWorld/Generation/ChunkGeneratorSubsystem.h"
 #include "MyWorld/Chunk/Chunk.h"
 #include "System/VoxelSubsystem.h"
+#include "Stats/Stats.h"
 
 void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, voxel_t* InOutChunkData)
 {
+    STAT_CYCLE_FUNCTION()
+
     checkSlow( SharedArgs )
     checkSlow( InOutChunkData )
 
@@ -15,13 +18,14 @@ void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const 
 #if PLATFORM_SUPPORTS_SIMD
 
     f32 NoiseOutput[MwStatics::ChunkSizeCubed];
-    SharedArgs->ChunkGeneratorSubsystem->FnGenerator->GenUniformGrid3D(
+    SharedArgs->ChunkGeneratorSubsystem->GetFastNoiseGenerator()->GenUniformGrid3D(
         NoiseOutput,
         InKey.X * MwStatics::ChunkSize, InKey.Y * MwStatics::ChunkSize, InKey.Z * MwStatics::ChunkSize,
         MwStatics::ChunkSize, MwStatics::ChunkSize, MwStatics::ChunkSize,
         0.01f, 1337
     );
 
+    STAT_QUICK_CYCLE_START("Jafg::ChunkGenerator::ShapeChunk::GenerateVoxels")
     LChunkKeyDomain Index = INDEX_NONE;
     for (LChunkKeyDomain Z = 0; Z < MwStatics::ChunkSize; ++Z)
     {
@@ -55,6 +59,8 @@ void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const 
 
 void Jafg::ChunkGenerator::ReplaceSurface(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, AChunk* Target, voxel_t* InOutChunkData)
 {
+    STAT_CYCLE_FUNCTION()
+
     checkSlow( SharedArgs )
     checkSlow( Target )
     checkSlow( InOutChunkData )

@@ -88,7 +88,7 @@ void EngineTick()
             {
                 const Application::LHrcTimePoint SleepStart = Application::GetHighestNow();
                 const double SleepTime = (1.0 / UserPreferences->MaxFps) - ThisFrameTime;
-                PlatformHal::Sleep(Maths::Max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
+                PlatformHal::SleepNoStats(Maths::Max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
                 Application::Private::IdleDeltaTime = Application::GetTimeDiff(SleepStart, Application::GetHighestNow());
             }
         }
@@ -314,7 +314,7 @@ EPlatformExit::Type GuardedMain()
         return EPlatformExit::Fatal;
     }
 
-    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterCorePackageLoadDangerous, Tasks::Private::RunAllTasks);
+    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterCorePackageLoadDangerous, Tasks::RunAllTasks);
     if (::IsEngineExitRequested() || GEngine)
     {
         return EPlatformExit::Fatal;

@@ -75,7 +75,7 @@ template <typename InTraits, typename InAlloc>
 class _TStringBase;
 
 template <typename T, typename TSizeType = DefaultContainerSizeType>
-class TMpscQueue;
+class TMpmcQueue;
 template <typename T, EQueueKind::Type TKind = EQueueKind::Spsc, typename TSizeType = DefaultContainerSizeType>
 class TSimpleQueue;
 
@@ -114,6 +114,6 @@ typedef TStringBasic<char> LString;
 typedef TStringViewBasic<char>        LStringView;
 typedef TMutableStringViewBasic<char> LMutableStringView;
 
-template <typename T, EQueueKind::Type TKind = EQueueKind::Spsc> using TQueue = TSimpleQueue<T, TKind>;
+template <typename T, EQueueKind::Type TKind = EQueueKind::Spsc> using TQueue = TMpmcQueue<T, DefaultContainerSizeType>;
 
 } /* ~Namespace Jafg */

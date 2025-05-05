@@ -81,7 +81,7 @@ i32 main(const i32 argc, char *argv[])
         {
             while (::IsGdb() == false)
             {
-                PlatformHal::Sleep(1.0);
+                PlatformHal::SleepNoStats(1.0);
                 continue;
             }
         }

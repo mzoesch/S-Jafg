@@ -41,10 +41,10 @@ void LWinPlatformBreakDefines::OnProgramPanic(
     abort();
 }
 
-namespace PlatformHal
+namespace Jafg::PlatformHal
 {
 
-void Sleep(const double InSeconds)
+void SleepNoStats(const double InSeconds)
 {
     const DWORD Milli = static_cast<DWORD>(InSeconds * JAFG_S2MS_D);
 
@@ -59,6 +59,6 @@ void Sleep(const double InSeconds)
     return;
 }
 
-} /* ~Namespace PlatformHal */
+} /* ~Namespace Jafg::PlatformHal */
 
 #endif /* PLATFORM_WINDOWS */

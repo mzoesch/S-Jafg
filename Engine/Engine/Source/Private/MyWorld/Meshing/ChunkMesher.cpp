@@ -38,7 +38,7 @@ void Jafg::LChunkMesher::ApplyProceduralMesh()
                 return;
             }
 
-            if (this->Owner->GetChunkState() != EChunkState::Active)
+            if (this->Owner->GetCurrentChunkStateDangerous() != EChunkState::Active)
             {
                 LOG_WARNING(LogChunkGeneration, "Chunk [{}] is not active.", this->Owner->GetChunkKey().ToString())
                 return;

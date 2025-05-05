@@ -6,123 +6,134 @@
 #include "MyWorld/Validation/ChunkValidationSubsystem.h"
 #include "Stats/Stats.h"
 
-static constexpr f32 DeltaTime = 0.2f;
+//#
+//# Whether to use slow but verbose output for chunk generation while stating.
+//#
+#ifndef STAT_CHUNK_VERBOSE_OUT
+    #define STAT_CHUNK_VERBOSE_OUT      IN_DEBUG
+#endif /* STAT_CHUNK_VERBOSE_OUT */
 
-void Jafg::JChunkGeneratorSubsystem::OnInitialize(LSubsystemCollection& Collection)
+#if WITH_STATS
+    #if STAT_CHUNK_VERBOSE_OUT
+        #define STAT_QUICK_CYCLE_START_KEY(InChunkKey)                                   \
+            std::string_view _sv = JAFG_PRETTY_FUNCTION;                                 \
+            ::Jafg::LString _s = LString::SprintF("{}::{}", _sv, InChunkKey.ToString()); \
+            STAT_QUICK_CYCLE_START(std::string_view(_s.GetBegin(), _s.GetEnd()))
+    #else /* STAT_CHUNK_VERBOSE_OUT */
+        #define STAT_QUICK_CYCLE_START_KEY(InChunkKey)  STAT_CYCLE_FUNCTION()
+    #endif /* !STAT_CHUNK_VERBOSE_OUT */
+#else /* WITH_STATS */
+    #define STAT_QUICK_CYCLE_START_KEY(InChunkKey)
+#endif  /* !WITH_STATS */
+
+Jafg::LChunkGeneratorWorker::LChunkGeneratorWorker(const LString&& InHumanReadableName, JChunkGenerationSubsystem* InChunkGenerationSubsystem)
 {
-    Super::OnInitialize(Collection);
-    this->SetTickInterval(::DeltaTime);
+    this->HumanReadableName = std::move(InHumanReadableName);
+    this->ChunkGenerationSubsystem = InChunkGenerationSubsystem;
 
-    this->HumanReadableName = "JChunkGeneratorSubsystem";
-
-#if PLATFORM_SUPPORTS_SIMD
-    FastNoise::SmartNode<FastNoise::Perlin> Root = FastNoise::New<FastNoise::Perlin>();
-    this->FnGenerator = std::move(Root);
-    LOG_INFO(LogChunkGeneration, "Using SIMD: [{}].", static_cast<FastSIMD::Level_BitFlags>(this->FnGenerator->GetSIMDLevel()));
-#endif /* PLATFORM_SUPPORTS_SIMD */
-
-    this->ChunkValidationSubsystem = Collection.GetCheckedSubsystem<JChunkValidationSubsystem>();
-    this->ChunkGenerationSubsystem = Collection.GetCheckedSubsystem<JChunkGenerationSubsystem>();
+    check( this->ChunkGenerationSubsystem )
 
     return;
 }
 
-void Jafg::JChunkGeneratorSubsystem::FixedTick(const float RunnableDeltaTime)
+Jafg::ETaskExit::Type Jafg::LChunkGeneratorWorker::Run()
 {
-    Super::FixedTick(RunnableDeltaTime);
+    STAT_CYCLE_FUNCTION()
+
     checkSlow( Tasks::IsOnMasterThread() == false )
 
-    Application::LHrcTimePoint Start = Application::GetHighestNow();
+    constexpr i32 MaxChunkCount { 5 };
 
-    // Chunks that have been visited this tick.
-    std::set<LChunkKey> Visited;
-
-    // Chunks that are missing and are needed to be loaded by the master thread.
-    std::set<LChunkKey> Missing;
-
-    // The chunks that have been requested by the validation subsystem to be loaded AND activated.
-    TArray<LChunkKey> Requested = this->ChunkGenerationSubsystem->GetRequestedChunksSnapshot();
-
-    for (i32 i = Requested.GetSize() - 1; i >= 0; --i)
+    AChunk* Chunk = nullptr;
+    while (this->IsStopped() == false)
     {
-        if (this->ShouldTickRunnable() == false)
+        i32 Dequeued = 0;
+        while (Dequeued < MaxChunkCount && this->ChunkGenerationSubsystem->OutActiveChunks.Dequeue(&Chunk))
         {
-            LOG_VERBOSE(LogRunnable, "Interrupted.")
+            ++Dequeued;
+
+            check( Chunk )
+
+            if (this->IsStopped())
+            {
+                break;
+            }
+
+            const bool bRetState = this->TryToBringChunkToState(Chunk, true, EChunkState::Active);
+
+            this->ChunkGenerationSubsystem->MutateRequestedPreSpawnedChunks([this](TArray<LChunkKey>& RequestedPreSpawnedChunks)
+            {
+                for (const LChunkKey& ChunkKey : this->Missing)
+                {
+                    RequestedPreSpawnedChunks.Emplace(ChunkKey);
+                    continue;
+                }
+
+                return;
+            });
+            this->Missing.clear();
+
+            if (bRetState == false)
+            {
+                this->ChunkGenerationSubsystem->InFailedActiveChunks.Enqueue(Chunk);
+            }
+
+            continue;
+        }
+
+        if (this->IsStopped())
+        {
             break;
         }
 
-        const LChunkKey& ChunkKey = Requested[i];
-
-        if (AChunk* Chunk = this->ChunkGenerationSubsystem->FindChunk(ChunkKey))
+        if (Dequeued < MaxChunkCount)
         {
-            this->TryToBringChunkToState(ChunkKey, Chunk, true, EChunkState::Active, &Missing, &Visited);
+            PlatformHal::Sleep(this->YieldTime);
         }
 
-        if (Application::GetTimeDiff(Start, Application::GetHighestNow()) > ::DeltaTime * 2.0f)
-        {
-            LOG_VERBOSE(LogRunnable, "Chunk generation took too long. Stopping.")
-            break;
-        }
+        this->Visited.clear();
 
         continue;
     }
 
-    this->ChunkGenerationSubsystem->MutateRequestedPreSpawnedChunks([&Missing](TArray<LChunkKey>& RequestedPreSpawnedChunks)
-    {
-        for (const LChunkKey& ChunkKey : Missing)
-        {
-            RequestedPreSpawnedChunks.Emplace(ChunkKey);
-            continue;
-        }
-
-        return;
-    });
-
-    return;
+    return ETaskExit::Success;
 }
 
-bool Jafg::JChunkGeneratorSubsystem::TryToBringChunkToState
-(
-    const LChunkKey&        Key,
-    AChunk*                 Target,
-    const bool              bPersistent,
-    const EChunkState::Type TargetState,
-    std::set<LChunkKey>*    Missing,
-    std::set<LChunkKey>*    Visited
-)
+bool Jafg::LChunkGeneratorWorker::TryToBringChunkToState(AChunk* Target, const bool bPersistent, const EChunkState::Type TargetState)
 {
 #define GOTO_STATE(STATE)                                                               \
     if (TargetState < EChunkState::STATE)                                               \
     {                                                                                   \
-        check( Target->GetChunkState() == static_cast<u8>(EChunkState::STATE) - 1 )     \
+        /* check( Target->GetChunkState() == static_cast<u8>(EChunkState::STATE) - 1 )*/\
         return true;                                                                    \
     }                                                                                   \
-    if (Target->GetChunkState() < EChunkState::STATE)                                   \
+    if (Target->SetHuntedState(EChunkState::STATE))                                     \
     {                                                                                   \
         if                                                                              \
         (                                                                               \
             this->PRIVATE_JAFG_CORE_JOIN_OUTER_TWO(PrepareWorldForChunkTransit_, STATE) \
-            (Key, Missing, Visited) == false                                            \
+            (Key) == false                                                              \
         )                                                                               \
         {                                                                               \
+            Target->InvalidateHuntedState();                                            \
             return false;                                                               \
         }                                                                               \
-        Target->SetChunkState(EChunkState::STATE);                                      \
+        Target->SetState(EChunkState::STATE);                                           \
     }
 
-    STAT_CYCLE_FUNCTION()
-
-    check( Missing && Visited )
+    STAT_QUICK_CYCLE_START_KEY(Target->GetChunkKey())
 
     /* We can only generate chunks between those states. The other are special. */
     check( EChunkState::Freed < TargetState && TargetState < EChunkState::Special )
 
-    if (Visited->contains(Key) == false)
+    const LChunkKey& Key = Target->GetChunkKey();
+
+    if (this->Visited.contains(Key) == false)
     {
-        Visited->insert(Key);
+        this->Visited.insert(Key);
     }
 
-    if (Target->GetChunkState() >= TargetState)
+    if (Target->GetCurrentChunkStateDangerous() >= TargetState)
     {
         return true;
     }
@@ -137,14 +148,14 @@ bool Jafg::JChunkGeneratorSubsystem::TryToBringChunkToState
     GOTO_STATE(SurfaceReplaced)
     GOTO_STATE(Active)
 
-    return false;
+    return true;
 
 #undef GOTO_STATE
 }
 
-bool Jafg::JChunkGeneratorSubsystem::PrepareWorldForChunkTransit_Spawned(const LChunkKey& InChunkKey, std::set<LChunkKey>* Missing, std::set<LChunkKey>* Visited)
+bool Jafg::LChunkGeneratorWorker::PrepareWorldForChunkTransit_Spawned(const LChunkKey& InChunkKey)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_QUICK_CYCLE_START_KEY(InChunkKey)
 
     bool bRet = true;
 
@@ -152,7 +163,7 @@ bool Jafg::JChunkGeneratorSubsystem::PrepareWorldForChunkTransit_Spawned(const L
     {
         if (this->ChunkGenerationSubsystem->FindChunk(Neighbor) == nullptr)
         {
-            Missing->insert(Neighbor);
+            this->Missing.insert(Neighbor);
             bRet = false;
         }
 
@@ -162,9 +173,9 @@ bool Jafg::JChunkGeneratorSubsystem::PrepareWorldForChunkTransit_Spawned(const L
     return bRet;
 }
 
-bool Jafg::JChunkGeneratorSubsystem::PrepareWorldForChunkTransit_SurfaceReplaced(const LChunkKey& InChunkKey, std::set<LChunkKey>* Missing, std::set<LChunkKey>* Visited)
+bool Jafg::LChunkGeneratorWorker::PrepareWorldForChunkTransit_SurfaceReplaced(const LChunkKey& InChunkKey)
 {
-    STAT_CYCLE_FUNCTION()
+    STAT_QUICK_CYCLE_START_KEY(InChunkKey)
 
     bool bRet = true;
     for (const LChunkKey& NeighborKey : InChunkKey.GetNeighboringChunkKeys())
@@ -172,14 +183,14 @@ bool Jafg::JChunkGeneratorSubsystem::PrepareWorldForChunkTransit_SurfaceReplaced
         if (AChunk* Neighbor = this->ChunkGenerationSubsystem->FindChunk(NeighborKey); Neighbor)
         {
             checkSlow( Neighbor->GetChunkKey() == NeighborKey )
-            if (this->TryToBringChunkToState(NeighborKey, Neighbor, false, EChunkState::Shaped, Missing, Visited) == false)
+            if (this->TryToBringChunkToState(Neighbor, false, EChunkState::Shaped) == false)
             {
                 bRet = false;
             }
         }
         else
         {
-            Missing->insert(NeighborKey);
+            this->Missing.insert(NeighborKey);
             bRet = false;
         }
 
@@ -187,4 +198,63 @@ bool Jafg::JChunkGeneratorSubsystem::PrepareWorldForChunkTransit_SurfaceReplaced
     }
 
     return bRet;
+}
+
+Jafg::JChunkGeneratorSubsystem::JChunkGeneratorSubsystem(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+{
+    this->SetPriorityTearDown(true);
+    return;
+}
+
+void Jafg::JChunkGeneratorSubsystem::Initialize(LSubsystemCollection& Collection)
+{
+    Super::Initialize(Collection);
+
+#if PLATFORM_SUPPORTS_SIMD
+    FastNoise::SmartNode<FastNoise::Perlin> Root = FastNoise::New<FastNoise::Perlin>();
+    this->FnGenerator = std::move(Root);
+    LOG_INFO(LogChunkGeneration, "Using SIMD: [{}].", static_cast<FastSIMD::Level_BitFlags>(this->FnGenerator->GetSIMDLevel()));
+#endif /* PLATFORM_SUPPORTS_SIMD */
+
+    this->ChunkGenerationSubsystem = Collection.GetCheckedSubsystem<JChunkGenerationSubsystem>();
+
+    for (i32 i = 0; i < 10; ++i)
+    {
+        ETaskExit::Type Exit;
+        const ENamedThreads::Type WorkerName = Tasks::LaunchNamedThread<LChunkGeneratorWorker>(&Exit,
+            LString::SprintF("WkrCg_{}", i),
+            this->ChunkGenerationSubsystem
+        );
+
+        if (Exit != ETaskExit::Success)
+        {
+            LOG_ERROR(LogChunkGeneration, "Failed to launch chunk generator worker [{}].", i)
+            break;
+        }
+
+        this->Workers.Emplace(WorkerName);
+    }
+
+    return;
+}
+
+void Jafg::JChunkGeneratorSubsystem::TearDown()
+{
+    STAT_CYCLE_FUNCTION()
+
+    Super::TearDown();
+
+    for (const ENamedThreads::Type Worker : this->Workers)
+    {
+        Tasks::StopThread(Worker);
+    }
+
+    for (const ENamedThreads::Type Worker : this->Workers)
+    {
+        Tasks::JoinThread(Worker);
+    }
+
+    this->Workers.Empty();
+
+    return;
 }

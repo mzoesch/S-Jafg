@@ -50,7 +50,7 @@ void Jafg::AChunk::BeginLife()
 
     check( this->SharedArgs )
 
-    this->ChunkState = EChunkState::Freed;
+    this->State = EChunkState::Freed;
 
     checkSlow( this->RawVoxelData == nullptr )
     checkSlow( this->Mesher == nullptr )
@@ -74,22 +74,70 @@ void Jafg::AChunk::EndLife()
     return;
 }
 
-void Jafg::AChunk::SetChunkState(const EChunkState::Type NewChunkState)
+bool Jafg::AChunk::SetHuntedState(const EChunkState::Type NewHuntedState)
 {
+    check( EChunkState::IsGeneration(NewHuntedState) )
+
+    std::unique_lock Lock(this->ChunkStateMutex);
+
+    while (this->HuntedState != EChunkState::Invalid)
+    {
+        Lock.unlock();
+        WaitChunkState();
+        Lock.lock();
+    }
+    check( this->HuntedState == EChunkState::Invalid )
+
+    if (this->GetLockedChunkState() >= NewHuntedState)
+    {
+        return false;
+    }
+
+    this->HuntedState = NewHuntedState;
+
+    return true;
+}
+
+void Jafg::AChunk::InvalidateHuntedState()
+{
+    check( this->HuntedState != EChunkState::Invalid )
+    std::unique_lock Lock(this->ChunkStateMutex);
+    this->HuntedState = EChunkState::Invalid;
+    return;
+}
+
+void Jafg::AChunk::SetState(const EChunkState::Type NewChunkState)
+{
+    STAT_CYCLE_FUNCTION()
+
+    std::unique_lock Lock(this->ChunkStateMutex);
+
+    checkCode
+    (
+        if (EChunkState::IsGeneration(NewChunkState))
+        {
+            check( this->HuntedState != EChunkState::Invalid )
+        }
+    )
+
     if (this->IsStateChangeValid(NewChunkState) == false)
     {
         panicMsgf
         (
             "Encountered invalid state change from {} to {}",
-            LexToString(this->ChunkState),
+            LexToString(this->State),
             LexToString(NewChunkState)
         )
         return;
     }
 
-    this->ChunkState = NewChunkState;
+    check( this->HuntedState == EChunkState::Invalid ? true : NewChunkState == this->HuntedState )
+    check( this->HuntedState == EChunkState::Invalid ? true : (this->HuntedState - 1) == this->State )
 
-    switch (this->ChunkState)
+    this->State = NewChunkState;
+    this->HuntedState = EChunkState::Invalid;
+
+    switch (this->State)
     {
     case EChunkState::Spawned: { this->Spawn(); break; }
     case EChunkState::Shaped: { this->Shape(); break; }
@@ -101,20 +149,90 @@ void Jafg::AChunk::SetChunkState(const EChunkState::Type NewChunkState)
     return;
 }
 
+void Jafg::AChunk::WaitChunkState(
+    bool* bTimeoutRet /* = nullptr */,
+    const f64 InSeconds /* = 0.01 */,
+    const f64 Timeout /* = 2.0 */,
+    const EChunkStateTimeoutBehavior::Type InBehavior /* = EChunkStateTimeoutBehavior::Panic */
+    ) const
+{
+    GetOrWaitChunkState(bTimeoutRet, InSeconds, Timeout, InBehavior);
+}
+
+Jafg::EChunkState::Type Jafg::AChunk::GetOrWaitChunkState(
+    bool* bTimeoutRet /* = nullptr */,
+    const f64 InSeconds /* = 0.01 */,
+    const f64 Timeout /* = 2.0 */,
+    const EChunkStateTimeoutBehavior::Type InBehavior /* = EChunkStateTimeoutBehavior::Panic */
+    ) const
+{
+    STAT_CYCLE_FUNCTION()
+
+    f64 WaitTime = 0.0f;
+
+    while (this->HuntedState != EChunkState::Invalid)
+    {
+        /* This is not 100% accurate. But it is good enough for our needs. */
+        WaitTime += InSeconds;
+        PlatformHal::SleepNoStats(InSeconds);
+
+        if (WaitTime > Timeout)
+        {
+            break;
+        }
+    }
+
+    if (this->HuntedState == EChunkState::Invalid)
+    {
+        return this->State;
+    }
+
+    if (bTimeoutRet)
+    {
+        *bTimeoutRet = true;
+    }
+
+    if (InBehavior == EChunkStateTimeoutBehavior::Panic)
+    {
+        panic("Timout reached.")
+    }
+    else if (InBehavior == EChunkStateTimeoutBehavior::Ignore)
+    {
+        check( bTimeoutRet ) /* Soft check. */
+        return EChunkState::Invalid;
+    }
+
+    return EChunkState::Invalid;
+}
+
+Jafg::EChunkState::Type Jafg::AChunk::GetOrYieldChunkState() const
+{
+    STAT_CYCLE_FUNCTION()
+
+    while (this->HuntedState != EChunkState::Invalid)
+    {
+        PlatformHal::YieldThread();
+    }
+
+    return this->State;
+}
+
 void Jafg::AChunk::OnAlloc(const LChunkKey& InChunkKey)
 {
-    check( this->GetChunkState() == EChunkState::Freed )
+    check( this->GetCurrentChunkStateDangerous() == EChunkState::Freed )
 
     this->ChunkKey = InChunkKey;
     this->SetTranslation(this->ChunkKey.ToWorldSpace());
 
-    this->SetChunkState(EChunkState::PreSpawned);
+    this->SetState(EChunkState::PreSpawned);
 
     return;
 }
 
 void Jafg::AChunk::SetChunkPersistency(const EChunkPersistency::Type NewPersistency, const f32 TimeToLive /* = 10.0f */) noexcept
 {
+    std::unique_lock Lock(this->ChunkPersistencyMutex);
+
     this->ChunkPersistency = NewPersistency;
 
     if (this->ChunkPersistency == EChunkPersistency::Persistent)
@@ -148,23 +266,23 @@ bool Jafg::AChunk::IsStateChangeValid(const EChunkState::Type NewChunkState) con
     }
     case EChunkState::PreSpawned:
     {
-        return this->ChunkState == EChunkState::Freed;
+        return this->State == EChunkState::Freed;
     }
     case EChunkState::Spawned:
     {
-        return this->ChunkState == EChunkState::PreSpawned;
+        return this->State == EChunkState::PreSpawned;
     }
     case EChunkState::Shaped:
     {
-        return this->ChunkState == EChunkState::Spawned;
+        return this->State == EChunkState::Spawned;
     }
     case EChunkState::SurfaceReplaced:
     {
-        return this->ChunkState == EChunkState::Shaped;
+        return this->State == EChunkState::Shaped;
     }
     case EChunkState::Active:
     {
-        return this->ChunkState == EChunkState::SurfaceReplaced;
+        return this->State == EChunkState::SurfaceReplaced;
     }
     default:
     {
@@ -178,7 +296,7 @@ void Jafg::AChunk::Spawn()
 {
     STAT_CYCLE_FUNCTION()
 
-    check( this->ChunkState == EChunkState::Spawned )
+    check( this->State == EChunkState::Spawned )
 
     const JChunkGenerationSubsystem* Subsystem = this->SharedArgs->ChunkGenerationSubsystem;
 
@@ -196,7 +314,7 @@ void Jafg::AChunk::Shape()
 {
     STAT_CYCLE_FUNCTION()
 
-    check( this->ChunkState == EChunkState::Shaped )
+    check( this->State == EChunkState::Shaped )
 
     struct HelperMalloc
     {
@@ -214,7 +332,7 @@ void Jafg::AChunk::ReplaceSurface()
 {
     STAT_CYCLE_FUNCTION()
 
-    check( this->ChunkState == EChunkState::SurfaceReplaced )
+    check( this->State == EChunkState::SurfaceReplaced )
     ChunkGenerator::ReplaceSurface(this->SharedArgs, this->ChunkKey, this, this->RawVoxelData);
     return;
 }
@@ -223,7 +341,7 @@ void Jafg::AChunk::OnActive()
 {
     STAT_CYCLE_FUNCTION()
 
-    check( this->ChunkState == EChunkState::Active )
+    check( this->State == EChunkState::Active )
 
     check( this->Mesher == nullptr )
     check( this->IsRendererComponentValid() == false )

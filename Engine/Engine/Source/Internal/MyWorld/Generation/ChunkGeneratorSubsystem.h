@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Subsystems/ThreadedWorldSubsystem.h"
+#include "Subsystems/WorldSubsystem.h"
 #include "MyWorld/ChunkKey.h"
 #include "MyWorld/Chunk/ChunkStates.h"
 #if PLATFORM_SUPPORTS_SIMD
@@ -14,39 +14,66 @@ namespace Jafg
 {
 
 class AChunk;
+class LChunkGeneratorWorker;
 class JChunkGenerationSubsystem;
 class JChunkValidationSubsystem;
 
+class LChunkGeneratorWorker : public LRunnable
+{
+public:
+
+    explicit LChunkGeneratorWorker(const LString&& InHumanReadableName, JChunkGenerationSubsystem* InChunkGenerationSubsystem);
+
+    virtual ETaskExit::Type Run() override;
+
+private:
+
+    bool TryToBringChunkToState(AChunk* Target, const bool bPersistent, const EChunkState::Type TargetState);
+
+    bool PrepareWorldForChunkTransit_Spawned(const LChunkKey& InChunkKey);
+    bool PrepareWorldForChunkTransit_Shaped(const LChunkKey& InChunkKey) { return true; }
+    bool PrepareWorldForChunkTransit_SurfaceReplaced(const LChunkKey& InChunkKey);
+    bool PrepareWorldForChunkTransit_Active(const LChunkKey& InChunkKey) { return true; }
+
+    //# Chunks that have been visited this tick.
+    std::set<LChunkKey> Visited;
+
+    //# Chunks that are missing and are needed to be loaded by the master thread.
+    std::set<LChunkKey> Missing;
+
+    f32 YieldTime = 0.5f;
+    JChunkGenerationSubsystem* ChunkGenerationSubsystem = nullptr;
+};
+
 //#
-//# The chunk generator system. This system is responsible for generating the content of all chunks.
+//# The chunk generator sub system. This system is responsible for generating the content of all chunks.
 //#
 DECLARE_JAFG_CLASS()
-class JChunkGeneratorSubsystem final : public JThreadedWorldSubsystem
+class JChunkGeneratorSubsystem final : public JWorldSubsystem
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JChunkGeneratorSubsystem)
+    explicit JChunkGeneratorSubsystem(const LObjectInitializer& ObjectInitializer);
 
-    virtual void OnInitialize(LSubsystemCollection& Collection) override;
-    virtual void FixedTick(const float RunnableDeltaTime) override;
+    virtual void Initialize(LSubsystemCollection& Collection) override;
+    virtual void TearDown() override;
 
 private:
 
-    bool TryToBringChunkToState(const LChunkKey& Key, AChunk* Target, const bool bPersistent, const EChunkState::Type TargetState, std::set<LChunkKey>* Missing, std::set<LChunkKey>* Visited);
-
-    bool PrepareWorldForChunkTransit_Spawned(const LChunkKey& InChunkKey, std::set<LChunkKey>* Missing, std::set<LChunkKey>* Visited);
-    bool PrepareWorldForChunkTransit_Shaped(const LChunkKey& InChunkKey, std::set<LChunkKey>* Missing, std::set<LChunkKey>* Visited) { return true; }
-    bool PrepareWorldForChunkTransit_SurfaceReplaced(const LChunkKey& InChunkKey, std::set<LChunkKey>* Missing, std::set<LChunkKey>* Visited);
-    bool PrepareWorldForChunkTransit_Active(const LChunkKey& InChunkKey, std::set<LChunkKey>* Missing, std::set<LChunkKey>* Visited) { return true; }
-
-    JChunkValidationSubsystem* ChunkValidationSubsystem = nullptr;
     JChunkGenerationSubsystem* ChunkGenerationSubsystem = nullptr;
+
+    TArray<ENamedThreads::Type> Workers;
 
 public:
 
+    FORCEINLINE const FastNoise::SmartNode<>& GetFastNoiseGenerator() const noexcept { return this->FnGenerator; }
+
+private:
+
 #if PLATFORM_SUPPORTS_SIMD
+    //# READ ONLY after #Initialize was run. Do not modify this object ever.
     FastNoise::SmartNode<> FnGenerator;
 #endif /* PLATFORM_SUPPORTS_SIMD */
 };

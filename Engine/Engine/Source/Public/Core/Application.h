@@ -4,7 +4,21 @@
 
 #include "CoreAfx.h"
 
-namespace Jafg::Application
+namespace Jafg
+{
+
+namespace PlatformHal
+{
+
+/**
+ * Very dangerous function. Use with care and never in critical code paths.
+ * Currently not supported for all platforms.
+ */
+ENGINE_API void Sleep(const f64 InSeconds);
+
+} /* ~Namespace PlatformHal */
+
+namespace Application
 {
 
 typedef std::chrono::high_resolution_clock             Hrc;
@@ -120,7 +134,9 @@ ENGINE_API extern LHrcTimePoint LastStdOutFlushTime;
 
 } /* ~Namespace Private */
 
-} /* ~Namespace Jafg::Application */
+} /* ~Namespace Application */
+
+} /* ~Namespace Jafg */
 
 FORCEINLINE Jafg::Application::LHrcTimePoint Jafg::Application::GetHighestNow()
 {

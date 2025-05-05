@@ -11,10 +11,10 @@ void LLinuxPlatformBreakDefines::OnProgramPanic(const std::string& InMessage, co
     abort();
 }
 
-namespace PlatformHal
+namespace Jafg::PlatformHal
 {
 
-void Sleep(const double InSeconds)
+void SleepNoStats(const f64 InSeconds)
 {
     if (const i32 Milli = static_cast<i32>(InSeconds * JAFG_S2MUS_D); Milli > 0)
     {
@@ -28,6 +28,12 @@ void Sleep(const double InSeconds)
     return;
 }
 
-} /* ~Namespace PlatformHal */
+void YieldThread()
+{
+    sched_yield();
+    return;
+}
+
+} /* ~Namespace Jafg::PlatformHal */
 
 #endif /* PLATFORM_LINUX */

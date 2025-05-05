@@ -16,11 +16,11 @@ public:
 
     virtual auto Initialize() -> ETaskExit::Type override { return LRunnable::Initialize(); }
     virtual auto Run() -> ETaskExit::Type override final;
-    virtual auto Stop(const ERunnableStopReason::Type InType) -> void override final;
+    virtual void OnStop(const ERunnableStopReason::Type InType) override final;
     virtual auto Exit() -> void override { LRunnable::Exit(); }
 
-    FORCEINLINE auto GetTickInterval() const -> double { return this->TickInterval; }
-    FORCEINLINE auto SetTickInterval(const double Interval) -> void { this->TickInterval = Interval; }
+    FORCEINLINE f64  GetTickInterval() const { return this->TickInterval; }
+    FORCEINLINE void SetTickInterval(const f64 Interval) { this->TickInterval = Interval; }
 
 protected:
 
@@ -41,7 +41,7 @@ private:
     //#
     //# The tick interval in seconds. Zero means no interval -> tick always (not recommended).
     //#
-    double TickInterval = 0.1f;
+    f64 TickInterval { 0.1 };
 
     bool bShouldTick = true;
     ERunnableStopReason::Type StopReason = ERunnableStopReason::Custom;

@@ -255,7 +255,7 @@ void Jafg::LEngine::Tick(const float DeltaTime)
 {
     STAT_CYCLE_FUNCTION()
 
-    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, 5);
+    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, 5);
 
 #if WITH_LOCAL_LAYER
     this->LocalEgo.Tick(DeltaTime);
@@ -299,7 +299,7 @@ void Jafg::LEngine::Tick(const float DeltaTime)
     }
 #endif /* WITH_LOCAL_LAYER */
 
-    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, 5);
+    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, 5);
 
     return;
 }

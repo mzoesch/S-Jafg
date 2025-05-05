@@ -16,14 +16,14 @@ void LWasmPlatformBreakDefines::OnProgramPanic(const char* InMessage, const char
     abort();
 }
 
-namespace PlatformHal
+namespace Jafg::PlatformHal
 {
 
-void Sleep(const double InSeconds)
+void SleepNoStats(const double InSeconds)
 {
     panic( "Sleeping is not allowed in wasm." )
 }
 
-} /* ~Namespace PlatformHal */
+} /* ~Namespace Jafg::PlatformHal */
 
 #endif /* PLATFORM_WASM */

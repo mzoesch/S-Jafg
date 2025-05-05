@@ -36,7 +36,6 @@ public:
 
     //# Threadsafe but is heavy. Do not use in high proximity.
     FORCEINLINE TArray<LChunkKey> GetCurrentActiveChunkSnapshot() const;
-    FORCEINLINE TArray<LChunkKey> GetRequestedChunksSnapshot() const;
 
     //# Threadsafe.
     FORCEINLINE AChunk* FindChunk(const LChunkKey& ChunkKey) const;
@@ -44,7 +43,9 @@ public:
     FORCEINLINE AChunk* FindChunkAsserted(const LChunkKey& InChunkKey) const;
 
     FORCEINLINE i32 GetRenderDistance() const { return *this->RenderDistance; }
+    FORCEINLINE i32 GetRenderDistanceChecked() const { check( this->RenderDistance ) return *this->RenderDistance; }
     FORCEINLINE i32 GetRenderHeight() const { return *this->RenderHeight; }
+    FORCEINLINE i32 GetRenderHeightChecked() const { check( this->RenderHeight ) return *this->RenderHeight; }
 
     //# Not thread safe. Only use on master thread.
     FORCEINLINE void SetRequestedChunks(TArray<LChunkKey>&& InChunks);
@@ -52,6 +53,9 @@ public:
 
     template <typename Predicate>
     FORCEINLINE void MutateRequestedPreSpawnedChunks(Predicate&& InPredicate);
+
+    TQueue<AChunk*> OutActiveChunks;
+    TQueue<AChunk*> InFailedActiveChunks;
 
 private:
 
@@ -77,7 +81,7 @@ private:
     //
 
     AChunk* SpawnWeakChunk(const LChunkKey& InChunkKey);
-    void SafeLoadPersistentPreSpawnedChunk(const LChunkKey& ChunkKey);
+    AChunk* SafeLoadPersistentPreSpawnedChunk(const LChunkKey& ChunkKey);
 
     //#
     //# Transient or persistent chunks that are loaded in any state.
@@ -92,9 +96,6 @@ private:
     //# If points of interest do not move, these would be the remaining chunks that should be pre spawned and loaded.
     //#
     TArray<LChunkKey> RequestedChunks;
-    //# Same as #RequestedChunks, but these are the chunks that have not yet been processed and loaded into the world.
-    TArray<LChunkKey> RequestedRemainingChunks;
-    mutable std::shared_mutex RequestedChunksMutex;
 
     //# Requested chunks that should be pre spawned immediately.
     TArray<LChunkKey> RequestedPreSpawnedChunks;
@@ -126,19 +127,12 @@ FORCEINLINE TArray<LChunkKey> JChunkGenerationSubsystem::GetCurrentActiveChunkSn
     TArray<LChunkKey> Out;
     for (const auto& [Fst, Snd] : *this->LoadedChunks)
     {
-        if (Snd->GetChunkState() == EChunkState::Active)
+        if (Snd->GetCurrentChunkStateDangerous() == EChunkState::Active)
         {
             Out.Add(Fst);
         }
     }
     return Out;
-}
-
-FORCEINLINE TArray<LChunkKey> JChunkGenerationSubsystem::GetRequestedChunksSnapshot() const
-{
-    check( Tasks::IsOnMasterThread() == false && "No. This is bad design.")
-    std::shared_lock Lock(this->RequestedChunksMutex);
-    return this->RequestedChunks;
 }
 
 FORCEINLINE AChunk* JChunkGenerationSubsystem::FindChunk(const LChunkKey& ChunkKey) const
@@ -165,9 +159,8 @@ FORCEINLINE AChunk* JChunkGenerationSubsystem::FindChunkAsserted(const LChunkKey
 FORCEINLINE void JChunkGenerationSubsystem::SetRequestedChunks(TArray<LChunkKey>&& InChunks)
 {
     check( Tasks::IsOnMasterThread() )
-    std::unique_lock Lock(this->RequestedChunksMutex);
     this->RequestedChunks = std::move(InChunks);
-    this->RequestedRemainingChunks = this->RequestedChunks;
+    this->OutActiveChunks.Empty();
 
     return;
 }

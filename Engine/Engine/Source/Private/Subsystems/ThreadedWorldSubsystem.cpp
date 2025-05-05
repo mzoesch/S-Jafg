@@ -36,7 +36,7 @@ void Jafg::JThreadedWorldSubsystem::TearDown()
     {
         this->Stop(ERunnableStopReason::RequestedStop);
         SCOPED_TIME_TAKEN_MEASURER(LogTasks, Verbose, "Joining thread")
-        Tasks::Private::JoinThread(this->ThisSubsystemsThreadName);
+        Tasks::JoinThread(this->ThisSubsystemsThreadName);
     }
     else
     {

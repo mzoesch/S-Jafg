@@ -8,7 +8,7 @@ TEST_CASE(SpScQueueOperations, "Lal.Containers")
 {
     using namespace Jafg;
 
-    TMpscQueue<i32> Queue;
+    TMpmcQueue<i32> Queue;
     CHECK_TRUE(     "Queue with zero size.", Queue.IsEmpty()        )
     CHECK_NULL(     "Queue with zero size.", Queue.Peek()           )
     CHECK_FALSE(    "Queue with zero size.", Queue.Pop()            )

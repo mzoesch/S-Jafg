@@ -254,9 +254,9 @@ void Jafg::LWorld::TearDownContext()
     this->Collection.TearDownSubsystems();
 
     // Preserve order!
-    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, Tasks::Private::RunAllTasks);
-    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::Private::RunAllTasks);
-    Tasks::Private::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::Private::RunAllTasks);
+    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, Tasks::RunAllTasks);
+    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::RunAllTasks);
+    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::RunAllTasks);
 
     LOG_VERBOSE(LogWorld, "Killing {} actors of world [{}].", this->Actors.GetSize(), this->GetHumanReadableName())
     for (AActor* Actor : this->Actors)

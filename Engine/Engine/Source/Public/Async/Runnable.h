@@ -48,17 +48,26 @@ public:
     //#
     //# Call from any other thread to early stop this thread's execution.
     //#
-    virtual void Stop(const ERunnableStopReason::Type InType) { }
+    void Stop(const ERunnableStopReason::Type InType) { if (this->bStopped == false) { this->bStopped = true; this->OnStop(InType); } }
 
     //#
     //# Called in the context of the thread that wishes to exit.
     //#
     virtual void Exit() { }
 
+    //#
+    //# Joins the thread. Call from any other thread.
+    //#
+    virtual void Join();
+
+    FORCEINLINE bool IsStopped() const { return this->bStopped; }
     FORCEINLINE LString GetHumanReadableName() const { return this->HumanReadableName; }
 
 protected:
 
+    virtual void OnStop(const ERunnableStopReason::Type InType) { }
+
+    bool volatile bStopped = false;
     LString HumanReadableName = nullptr;
 };
 

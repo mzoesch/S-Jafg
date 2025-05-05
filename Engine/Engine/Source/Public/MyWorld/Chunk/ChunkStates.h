@@ -24,6 +24,9 @@ enum Type : u8
     SurfaceReplaced,
     Active,
 
+    GenerationMin = Spawned,
+    GenerationMax = Active,
+
     //#
     //# Special states below here.
     //# These entries have nothing to do with generation and are considered
@@ -50,11 +53,16 @@ enum Type : u8
     Kill,
 };
 
+inline bool IsGeneration(const EChunkState::Type& InState)
+{
+    return InState >= EChunkState::GenerationMin && InState <= EChunkState::GenerationMax;
+}
+
 } /* ~Namespace EChunkState */
 
-inline LString LexToString(const EChunkState::Type ChunkState)
+inline LString LexToString(const EChunkState::Type InState)
 {
-    switch (ChunkState)
+    switch (InState)
     {
     case EChunkState::Invalid:
     {

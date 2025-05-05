@@ -45,8 +45,6 @@ void Jafg::JChunkGenerationSubsystem::FixedTick(const f32 EngineDeltaTime, const
 
     Super::FixedTick(EngineDeltaTime, FixedDeltaTime);
 
-    i32 GeneratedChunks = 0;
-
     {
         std::unique_lock Lock(this->RequestedPreSpawnedChunksMutex);
         for (const LChunkKey& ChunkKey : this->RequestedPreSpawnedChunks)
@@ -54,29 +52,45 @@ void Jafg::JChunkGenerationSubsystem::FixedTick(const f32 EngineDeltaTime, const
             if (this->LoadedChunks->contains(ChunkKey) == false)
             {
                 this->SafeLoadPersistentPreSpawnedChunk(ChunkKey);
-                ++GeneratedChunks;
             }
         }
         this->RequestedPreSpawnedChunks.Empty();
     }
 
     {
-        std::unique_lock Lock(this->RequestedChunksMutex);
-        while (this->RequestedRemainingChunks.IsEmpty() == false && GeneratedChunks < 20)
+        AChunk* Chunk = nullptr;
+        while (this->InFailedActiveChunks.Dequeue(&Chunk))
         {
-            const LChunkKey& Key = *this->RequestedRemainingChunks.GetLast();
+            check( Chunk )
+            /* Just retry. */
+            this->OutActiveChunks.Enqueue(Chunk);
+        }
+    }
 
-            if (AChunk* Chunk = this->FindChunk(Key))
+    {
+        i32 GeneratedChunks = 0;
+        while (this->RequestedChunks.IsEmpty() == false && GeneratedChunks < 20)
+        {
+            const LChunkKey& Key = *this->RequestedChunks.GetLast();
+
+            AChunk* Chunk = this->FindChunk(Key);
+            if (Chunk)
             {
                 Chunk->SetChunkPersistency(EChunkPersistency::Persistent);
             }
             else
             {
-                this->SafeLoadPersistentPreSpawnedChunk(Key);
+                Chunk = this->SafeLoadPersistentPreSpawnedChunk(Key);
                 ++GeneratedChunks;
             }
+            check( Chunk )
 
-            this->RequestedRemainingChunks.Pop();
+            if (Chunk->GetCurrentChunkStateDangerous() != EChunkState::Active)
+            {
+                this->OutActiveChunks.Enqueue(Chunk);
+            }
+
+            this->RequestedChunks.Pop();
 
             continue;
         }
@@ -195,7 +209,7 @@ Jafg::AChunk* Jafg::JChunkGenerationSubsystem::SpawnWeakChunk(const LChunkKey& I
     return Chunk;
 }
 
-void Jafg::JChunkGenerationSubsystem::SafeLoadPersistentPreSpawnedChunk(const LChunkKey& ChunkKey)
+Jafg::AChunk* Jafg::JChunkGenerationSubsystem::SafeLoadPersistentPreSpawnedChunk(const LChunkKey& ChunkKey)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -205,5 +219,5 @@ void Jafg::JChunkGenerationSubsystem::SafeLoadPersistentPreSpawnedChunk(const LC
     check( this->LoadedChunks->contains(ChunkKey) == false )
     this->LoadedChunks->emplace(ChunkKey, Chunk);
 
-    return;
+    return Chunk;
 }

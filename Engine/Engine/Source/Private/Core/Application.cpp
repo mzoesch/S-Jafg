@@ -1,7 +1,14 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Core/Application.h"
+#include "Stats/Stats.h"
+
+void Jafg::PlatformHal::Sleep(const f64 InSeconds)
+{
+    STAT_CYCLE_FUNCTION()
+    PlatformHal::SleepNoStats(InSeconds);
+    return;
+}
 
 namespace Jafg::Application::Private
 {

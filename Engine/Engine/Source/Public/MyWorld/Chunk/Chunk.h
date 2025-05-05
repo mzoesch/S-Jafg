@@ -29,6 +29,20 @@ class LChunkShader;
 
 MAKE_MULTICAST_SIGNATURE(LChunkStateChangedDelegateSignature, EChunkState::Type /* NewChunkState */)
 
+namespace EChunkStateTimeoutBehavior
+{
+
+enum Type : u8
+{
+    //# Panic if timeout was reached.
+    Panic,
+
+    //# Ignore and give an invalid feedback.
+    Ignore,
+};
+
+} /* ~Namespace ChunkStateTimeoutBehavior */
+
 class ENGINE_API LChunkRendererComponent final : public LRendererComponent
 {
 public:
@@ -95,8 +109,36 @@ public:
     FORCEINLINE auto GetChunkRendererComponent() const -> const LChunkRendererComponent* { return reinterpret_cast<LChunkRendererComponent*>(this->GetRendererComponent()); }
     // ~AActor implementation
 
-    void SetChunkState(const EChunkState::Type NewChunkState);
-    FORCEINLINE EChunkState::Type GetChunkState() const { return this->ChunkState; }
+    //#
+    //# Set the hunted generation state.
+    //# @return True if the state was actually changed. False if e.g. another thread set the change.
+    //#
+    bool SetHuntedState(const EChunkState::Type NewHuntedState);
+    //# From owning thread only.
+    void InvalidateHuntedState();
+    void SetState(const EChunkState::Type NewChunkState);
+    //# Only on aggregating thread where the chunk is manipulated.
+    EChunkState::Type GetLockedChunkState() const;
+    //# Dangerous function. Use with care.
+    EChunkState::Type GetCurrentChunkStateDangerous() const { return this->State; }
+    //#
+    //# The behavior of this function will vary depending on the underlying platform and might resul in a yield.
+    //# @param bTimeoutRet If this returns true, the state could not be retrieved in the given time.
+    //#                    This bool pointer is required if EChunkStateTimeoutBehavior::Ignore is used.
+    //# @param InSeconds   The time to wait between each check.
+    //# @param Timeout     The time to wait before giving up.
+    //# @param InBehavior  The behavior if the timeout was reached.
+    //# @remark Never call on feedback threads (e.g., master, renderer, etc.) as this will block the thread and will
+    //#         result in a lag spike.
+    //#
+    void              WaitChunkState(bool* bTimeoutRet = nullptr, const f64 InSeconds = 0.01, const f64 Timeout = 2.0, const EChunkStateTimeoutBehavior::Type InBehavior = EChunkStateTimeoutBehavior::Panic) const;
+    //# @return Only meaningful if bTimeoutRet is false.
+    EChunkState::Type GetOrWaitChunkState(bool* bTimeoutRet = nullptr, const f64 InSeconds = 0.01, const f64 Timeout = 2.0, const EChunkStateTimeoutBehavior::Type InBehavior = EChunkStateTimeoutBehavior::Panic) const;
+    //#
+    //# Busy wait. Depending on CPU architecture, underlying platform and workload this will result in a single core
+    //# utilization of between 50% to 95%.
+    //#
+    EChunkState::Type GetOrYieldChunkState() const;
 
     void OnAlloc(const LChunkKey& InChunkKey);
 
@@ -129,11 +171,17 @@ private:
     //# The time is relative to the time when the world was launched where this AActor lives in.
     //# Only meaningful when the persistency of this chunk is transient.
     //#
-    float RealTimeInSecondsWhenTransientChunkShouldBeKilled = 0.0f;
+    f32 RealTimeInSecondsWhenTransientChunkShouldBeKilled = 0.0f;
     EChunkPersistency::Type ChunkPersistency = EChunkPersistency::Persistent;
+    std::mutex ChunkPersistencyMutex;
 
     bool IsStateChangeValid(const EChunkState::Type NewChunkState) const;
-    EChunkState::Type ChunkState       = EChunkState::Invalid;
+    //# The current state of a chunk.
+    EChunkState::Type State = EChunkState::Invalid;
+    //# Invalid means the #State this #HuntedState is not used and a request for state should fall back to #State.
+    EChunkState::Type HuntedState = EChunkState::Invalid;
+    // For the #State and the #HuntedState.
+    std::mutex ChunkStateMutex;
 
     void Spawn();
     void Shape();
@@ -221,6 +269,20 @@ private:
     AChunk* NUp    = nullptr;
     AChunk* NDown  = nullptr;
 };
+
+FORCEINLINE EChunkState::Type AChunk::GetLockedChunkState() const
+{
+    checkCode
+    (
+        if (const_cast<AChunk*>(this)->ChunkStateMutex.try_lock())
+        {
+            const_cast<AChunk*>(this)->ChunkStateMutex.unlock();
+            panic("Chunk was not locked. Function was not called inside aggregating thread.")
+        }
+    )
+
+    return this->State;
+}
 
 FORCEINLINE bool AChunk::ShouldBeFreed() const
 {

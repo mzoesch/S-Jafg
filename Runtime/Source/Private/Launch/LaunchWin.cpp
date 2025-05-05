@@ -47,7 +47,7 @@ i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance,
         {
             while (static_cast<bool>(::IsDebuggerPresent()) == false)
             {
-                PlatformHal::Sleep(1.0);
+                PlatformHal::SleepNoStats(1.0);
                 continue;
             }
         }

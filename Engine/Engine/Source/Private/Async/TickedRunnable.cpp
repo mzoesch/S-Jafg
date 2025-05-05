@@ -18,7 +18,6 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
 
         if (DeltaTime > this->TickInterval)
         {
-            STAT_QUICK_CYCLE_START("Jafg::Tasks::Private::LTickedRunnable::Run::FixedTick")
             this->FixedTick(static_cast<f32>(DeltaTime));
             LastTickTime = Now;
         }
@@ -29,7 +28,7 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
             if (TimeRemaining > 0.001)
             {
                 /* Spare cpu time for other tasks. */
-                PlatformHal::Sleep(TimeRemaining * 0.997);
+                PlatformHal::SleepNoStats(TimeRemaining * 0.997);
             }
         }
 #endif /* !PLATFORM_WASM */
@@ -40,7 +39,7 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
     return ETaskExit::Success;
 }
 
-void Jafg::LTickedRunnable::Stop(const ERunnableStopReason::Type InType)
+void Jafg::LTickedRunnable::OnStop(const ERunnableStopReason::Type InType)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -52,7 +51,7 @@ void Jafg::LTickedRunnable::Stop(const ERunnableStopReason::Type InType)
         return;
     }
 
-    LRunnable::Stop(InType);
+    LRunnable::OnStop(InType);
     this->bShouldTick = false;
     this->StopReason  = InType;
 
