@@ -132,23 +132,24 @@ bool Jafg::JChunkGenerationSubsystem::LineTraceByChannel(
 
     constexpr f32 Step { 0.5f };
 
-    LChunkKey Key{Start};
+    const f32 TraversableDistance = (End - Start).Magnitude();
+    const LVector NormalStep = (End - Start).GetUnsafeNormalized() * Step;
 
-    LVector Cursor   = Start;
-    f32 Distance = (End - Start).Magnitude();
-    const LVector Normal = (End - Start).GetUnsafeNormalized();
-    const LVector NormalStep = Normal * Step;
+    f32 CurDistance = 0.0f;
+    LVector Cursor { Start };
 
     LChunkKey Last;
+    LHitResult Dummy;
 
     std::shared_lock Lock(this->LoadedChunksMutex);
-    LHitResult Dummy;
-    while (Distance > 0)
+
+    while (CurDistance < TraversableDistance)
     {
-        const LChunkKey Current{Key};
+        const LChunkKey Current { Cursor };
+
         if (Current == Last)
         {
-            Distance -= Step;
+            CurDistance += Step;
             Cursor += NormalStep;
             continue;
         }
@@ -163,16 +164,17 @@ bool Jafg::JChunkGenerationSubsystem::LineTraceByChannel(
             if (Element->second->GetPhysicsComponent()->Sweep(Start, End, Dummy))
             {
                 OutHits.Add(Dummy);
-                Dummy.Reset();
 
                 if (Params.bSingleHit)
                 {
                     break;
                 }
+
+                Dummy.Reset();
             }
         }
 
-        Distance -= Step;
+        CurDistance += Step;
         Cursor += NormalStep;
 
         continue;

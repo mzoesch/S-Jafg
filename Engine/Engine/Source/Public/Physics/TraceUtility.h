@@ -69,7 +69,9 @@ ENUM_CLASS_FLAGS(ECollisionChannel::Type)
 
 struct LCollisionQueryParams final
 {
-    bool bSingleHit = false;
+    bool bSingleHit      { false };
+    bool bSortByDistance { false };
+    bool bSortDescending { false };
 };
 
 } /* ~Namespace Jafg */
