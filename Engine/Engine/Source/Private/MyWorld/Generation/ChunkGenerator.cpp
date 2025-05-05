@@ -13,9 +13,17 @@ void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const 
     checkSlow( SharedArgs )
     checkSlow( InOutChunkData )
 
+    constexpr i32 MapMaxHeight { 250 };
+
     const voxel_t StoneIdx = SharedArgs->VoxelSubsystem->GetVoxelIndex("Stone");
 
 #if PLATFORM_SUPPORTS_SIMD
+
+    if (InKey.Z < 0)
+    {
+        std::fill_n(InOutChunkData, MwStatics::VoxelCount - 1, StoneIdx);
+        return;
+    }
 
     f32 NoiseOutput[MwStatics::ChunkSizeCubed];
     SharedArgs->ChunkGeneratorSubsystem->GetFastNoiseGenerator()->GenUniformGrid3D(
@@ -29,17 +37,23 @@ void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const 
     LChunkKeyDomain Index = INDEX_NONE;
     for (LChunkKeyDomain Z = 0; Z < MwStatics::ChunkSize; ++Z)
     {
+        LChunkKeyDomain MapZ = (InKey.Z * MwStatics::ChunkSize) + Z;
+        const f32 HeightInPercent = static_cast<f32>(Maths::Clamp(MapZ, 0, MapMaxHeight)) / static_cast<f32>(MapMaxHeight);
+        const f32 Density = HeightInPercent * 2.0f - 1.0f;
+
         for (LChunkKeyDomain Y = 0; Y < MwStatics::ChunkSize; ++Y)
         {
             for (LChunkKeyDomain X = 0; X < MwStatics::ChunkSize; ++X)
             {
-                InOutChunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = NoiseOutput[++Index]
-                    < 0.0f ? ECompileTimeVoxels::Air : StoneIdx;
+                InOutChunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] =
+                    NoiseOutput[++Index]
+                    > Density
+                    ? StoneIdx
+                    : ECompileTimeVoxels::Air
+                    ;
             }
         }
     }
-
-
 #else /* PLATFORM_SUPPORTS_SIMD */
     for (LChunkKeyDomainTy X = 0; X < MwStatics::ChunkSize; ++X)
     {

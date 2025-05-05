@@ -46,8 +46,8 @@ public:
      * Peeks at the queue's tail item without removing it.
      * @return Pointer to the item, or nullptr if queue is empty.
      */
-    FORCEINLINE       T* Peek();
-    FORCEINLINE const T* Peek() const;
+    // FORCEINLINE       T* Peek();
+    // FORCEINLINE const T* Peek() const;
 
     FORCEINLINE void Empty();
     FORCEINLINE bool IsEmpty() const;
@@ -69,8 +69,8 @@ private:
 
     struct TNode final
     {
-        TNode* NextNode = nullptr;
-        T      Content;
+        TNode* volatile NextNode = nullptr;
+        T Content;
 
         FORCEINLINE TNode() = delete;
         FORCEINLINE TNode(const T& InContent) : Content(InContent) { }
@@ -80,8 +80,8 @@ private:
         FORCEINLINE ~TNode() = default;
     };
 
-    TNode*     Head = nullptr;
-    TNode*     Tail = nullptr;
+    std::atomic<TNode*> Head { nullptr };
+    std::atomic<TNode*> Tail { nullptr };
     std::mutex Mutex;
 };
 
@@ -90,16 +90,21 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::Dequeue(T* OutContent)
 {
     checkSlow( OutContent )
 
-    if (this->Tail == nullptr)
+    if (this->Tail.load() == nullptr)
     {
         return false;
     }
 
     std::unique_lock Lock(this->Mutex);
-    *OutContent = this->Tail->Content;
-    ensure(this->PopLockFree());
 
-    return true;
+    if (TNode* LocalTail = this->Tail.load(); LocalTail)
+    {
+        *OutContent = LocalTail->Content;
+        ensure( PopLockFree() );
+        return true;
+    }
+
+    return false;
 }
 
 template <typename T, typename TSizeType>
@@ -107,16 +112,21 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::DequeueByMove(T* OutContent)
 {
     checkSlow( OutContent )
 
-    if (this->Tail == nullptr)
+    if (this->Tail.load() == nullptr)
     {
         return false;
     }
 
     std::unique_lock Lock(this->Mutex);
-    *OutContent = std::move(this->Tail->Content);
-    ensure(this->PopLockFree());
 
-    return true;
+    if (TNode* LocalTail = this->Tail.load(); LocalTail)
+    {
+        *OutContent = std::move(LocalTail->Content);
+        ensure( PopLockFree() );
+        return true;
+    }
+
+    return false;
 }
 
 template <typename T, typename TSizeType>
@@ -125,7 +135,7 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::DequeueWithComparison(T* OutContent, 
 {
     checkSlow( OutContent )
 
-    if (this->Tail == nullptr)
+    if (this->Tail.load() == nullptr)
     {
         return false;
     }
@@ -133,7 +143,7 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::DequeueWithComparison(T* OutContent, 
     std::unique_lock Lock(this->Mutex);
 
     TNode* PrevCursor = nullptr;
-    TNode* Cursor     = this->Tail;
+    TNode* Cursor     = this->Tail.load();
     while (Cursor != nullptr)
     {
         if (Cursor->Content == InContent)
@@ -142,24 +152,32 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::DequeueWithComparison(T* OutContent, 
 
             if (PrevCursor)
             {
-                PrevCursor->NextNode = Cursor->NextNode;
-                if (PrevCursor->NextNode == nullptr)
+                if (Cursor->NextNode == nullptr)
                 {
                     check( this->Head == Cursor )
-                    this->Head = PrevCursor;
+                    this->Head.store(PrevCursor);
+                    PrevCursor->NextNode = nullptr;
+                }
+                else
+                {
+                    PrevCursor->NextNode = Cursor->NextNode;
                 }
             }
             else
             {
-                this->Tail = Cursor->NextNode;
-                if (this->Tail == nullptr)
+                if (Cursor->NextNode == nullptr)
                 {
-                    check( this->Head == Cursor )
-                    this->Head = nullptr;
+                    check( this->Head.load() == Cursor )
+                    this->Head.store(nullptr);
+                    this->Tail.store(nullptr);
+                }
+                else
+                {
+                    this->Tail.store(Cursor->NextNode);
                 }
             }
 
-            check( this->Tail == nullptr ? this->Head == nullptr : this->Head != nullptr )
+            check( this->Tail.load() == nullptr ? this->Head.load() == nullptr : this->Head.load() != nullptr )
 
             Lock.unlock();
             delete Cursor;
@@ -181,15 +199,15 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::DequeueWithPredicate(T* OutContent, c
 {
     checkSlow( OutContent )
 
-    if (this->Tail == nullptr)
-    {
-        return false;
-    }
+        if (this->Tail.load() == nullptr)
+        {
+            return false;
+        }
 
     std::unique_lock Lock(this->Mutex);
 
     TNode* PrevCursor = nullptr;
-    TNode* Cursor     = this->Tail;
+    TNode* Cursor     = this->Tail.load();
     while (Cursor != nullptr)
     {
         if (InPredicate(Cursor->Content))
@@ -198,24 +216,32 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::DequeueWithPredicate(T* OutContent, c
 
             if (PrevCursor)
             {
-                PrevCursor->NextNode = Cursor->NextNode;
-                if (PrevCursor->NextNode == nullptr)
+                if (Cursor->NextNode == nullptr)
                 {
                     check( this->Head == Cursor )
-                    this->Head = PrevCursor;
+                    this->Head.store(PrevCursor);
+                    PrevCursor->NextNode = nullptr;
+                }
+                else
+                {
+                    PrevCursor->NextNode = Cursor->NextNode;
                 }
             }
             else
             {
-                this->Tail = Cursor->NextNode;
-                if (this->Tail == nullptr)
+                if (Cursor->NextNode == nullptr)
                 {
-                    check( this->Head == Cursor )
-                    this->Head = nullptr;
+                    check( this->Head.load() == Cursor )
+                    this->Head.store(nullptr);
+                    this->Tail.store(nullptr);
+                }
+                else
+                {
+                    this->Tail.store(Cursor->NextNode);
                 }
             }
 
-            check( this->Tail == nullptr ? this->Head == nullptr : this->Head != nullptr )
+            check( this->Tail.load() == nullptr ? this->Head.load() == nullptr : this->Head.load() != nullptr )
 
             Lock.unlock();
             delete Cursor;
@@ -237,7 +263,7 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::DequeueByMoveWithComparison(T* OutCon
 {
     checkSlow( OutContent )
 
-    if (this->Tail == nullptr)
+    if (this->Tail.load() == nullptr)
     {
         return false;
     }
@@ -245,7 +271,7 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::DequeueByMoveWithComparison(T* OutCon
     std::unique_lock Lock(this->Mutex);
 
     TNode* PrevCursor = nullptr;
-    TNode* Cursor     = this->Tail;
+    TNode* Cursor     = this->Tail.load();
     while (Cursor != nullptr)
     {
         if (Cursor->Content == InContent)
@@ -254,24 +280,32 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::DequeueByMoveWithComparison(T* OutCon
 
             if (PrevCursor)
             {
-                PrevCursor->NextNode = Cursor->NextNode;
-                if (PrevCursor->NextNode == nullptr)
+                if (Cursor->NextNode == nullptr)
                 {
                     check( this->Head == Cursor )
-                    this->Head = PrevCursor;
+                    this->Head.store(PrevCursor);
+                    PrevCursor->NextNode = nullptr;
+                }
+                else
+                {
+                    PrevCursor->NextNode = Cursor->NextNode;
                 }
             }
             else
             {
-                this->Tail = Cursor->NextNode;
-                if (this->Tail == nullptr)
+                if (Cursor->NextNode == nullptr)
                 {
-                    check( this->Head == Cursor )
-                    this->Head = nullptr;
+                    check( this->Head.load() == Cursor )
+                    this->Head.store(nullptr);
+                    this->Tail.store(nullptr);
+                }
+                else
+                {
+                    this->Tail.store(Cursor->NextNode);
                 }
             }
 
-            check( this->Tail == nullptr ? this->Head == nullptr : this->Head != nullptr )
+            check( this->Tail.load() == nullptr ? this->Head.load() == nullptr : this->Head.load() != nullptr )
 
             Lock.unlock();
             delete Cursor;
@@ -293,15 +327,15 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::DequeueByMoveWithPredicate(T* OutCont
 {
     checkSlow( OutContent )
 
-    if (this->Tail == nullptr)
-    {
-        return false;
-    }
+        if (this->Tail.load() == nullptr)
+        {
+            return false;
+        }
 
     std::unique_lock Lock(this->Mutex);
 
     TNode* PrevCursor = nullptr;
-    TNode* Cursor     = this->Tail;
+    TNode* Cursor     = this->Tail.load();
     while (Cursor != nullptr)
     {
         if (InPredicate(Cursor->Content))
@@ -310,24 +344,32 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::DequeueByMoveWithPredicate(T* OutCont
 
             if (PrevCursor)
             {
-                PrevCursor->NextNode = Cursor->NextNode;
-                if (PrevCursor->NextNode == nullptr)
+                if (Cursor->NextNode == nullptr)
                 {
                     check( this->Head == Cursor )
-                    this->Head = PrevCursor;
+                    this->Head.store(PrevCursor);
+                    PrevCursor->NextNode = nullptr;
+                }
+                else
+                {
+                    PrevCursor->NextNode = Cursor->NextNode;
                 }
             }
             else
             {
-                this->Tail = Cursor->NextNode;
-                if (this->Tail == nullptr)
+                if (Cursor->NextNode == nullptr)
                 {
-                    check( this->Head == Cursor )
-                    this->Head = nullptr;
+                    check( this->Head.load() == Cursor )
+                    this->Head.store(nullptr);
+                    this->Tail.store(nullptr);
+                }
+                else
+                {
+                    this->Tail.store(Cursor->NextNode);
                 }
             }
 
-            check( this->Tail == nullptr ? this->Head == nullptr : this->Head != nullptr )
+            check( this->Tail.load() == nullptr ? this->Head.load() == nullptr : this->Head.load() != nullptr )
 
             Lock.unlock();
             delete Cursor;
@@ -346,7 +388,7 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::DequeueByMoveWithPredicate(T* OutCont
 template <typename T, typename TSizeType>
 FORCEINLINE bool TMpmcQueue<T, TSizeType>::Pop()
 {
-    if (this->Tail == nullptr)
+    if (this->Tail.load() == nullptr)
     {
         return false;
     }
@@ -355,19 +397,21 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::Pop()
     return this->PopLockFree();
 }
 
-template<typename T, typename TSizeType>
-FORCEINLINE T* TMpmcQueue<T, TSizeType>::Peek()
-{
-    std::shared_lock Lock(this->Mutex);
-    return this->Tail ? &this->Tail->Content : nullptr;
-}
-
-template<typename T, typename TSizeType>
-FORCEINLINE const T* TMpmcQueue<T, TSizeType>::Peek() const
-{
-    std::shared_lock Lock(this->Mutex);
-    return this->Tail ? &this->Tail->Content : nullptr;
-}
+// template<typename T, typename TSizeType>
+// FORCEINLINE T* TMpmcQueue<T, TSizeType>::Peek()
+// {
+//     std::shared_lock Lock(this->Mutex);
+//     TNode* LocalTail = this->Tail.load();
+//     return LocalTail ? &LocalTail->Content : nullptr;
+// }
+//
+// template<typename T, typename TSizeType>
+// FORCEINLINE const T* TMpmcQueue<T, TSizeType>::Peek() const
+// {
+//     std::shared_lock Lock(this->Mutex);
+//     TNode* LocalTail = this->Tail.load();
+//     return LocalTail ? &LocalTail->Content : nullptr;
+// }
 
 template <typename T, typename TSizeType>
 FORCEINLINE void TMpmcQueue<T, TSizeType>::Empty()
@@ -380,21 +424,21 @@ FORCEINLINE void TMpmcQueue<T, TSizeType>::Empty()
 template <typename T, typename TSizeType>
 FORCEINLINE bool TMpmcQueue<T, TSizeType>::IsEmpty() const
 {
-    return this->Tail == nullptr;
+    return this->Tail.load() == nullptr;
 }
 
 #if WITH_TESTS
 template <typename T, typename TSizeType>
 FORCEINLINE typename TMpmcQueue<T, TSizeType>::SizeType TMpmcQueue<T, TSizeType>::UnsafeSize() const
 {
-    if (this->Tail == nullptr)
+    if (this->Tail.load() == nullptr)
     {
         return 0;
     }
 
     SizeType Count = 0;
 
-    for (TNode* Node = this->Tail; Node != nullptr; Node = Node->NextNode)
+    for (TNode* Node = this->Tail.load(); Node != nullptr; Node = Node->NextNode)
     {
         ++Count;
     }
@@ -409,17 +453,17 @@ FORCEINLINE void TMpmcQueue<T, TSizeType>::EnqueueImpl(TNode* NewNode)
     checkSlow( NewNode )
 
     std::unique_lock Lock(this->Mutex);
-    if (this->Head)
+    if (TNode* OldHead = this->Head.load(); OldHead)
     {
-        TNode* OldHead = this->Head;
-        this->Head = NewNode;
+        this->Head.store(NewNode);
         OldHead->NextNode = NewNode;
     }
     else
     {
-        this->Head = NewNode;
-        this->Tail = NewNode;
-        check( this->Tail->NextNode == nullptr )
+        check( this->Tail.load() == nullptr )
+        this->Head.store(NewNode);
+        this->Tail.store(NewNode);
+        check( this->Tail.load()->NextNode == nullptr )
     }
 
     return;
@@ -428,19 +472,19 @@ FORCEINLINE void TMpmcQueue<T, TSizeType>::EnqueueImpl(TNode* NewNode)
 template<typename T, typename TSizeType>
 FORCEINLINE bool TMpmcQueue<T, TSizeType>::PopLockFree()
 {
-    if ( this->Tail == nullptr )
+    const TNode* Popped = this->Tail.load();
+
+    if (Popped == nullptr)
     {
-        check( this->Head == nullptr )
+        check( this->Head.load() == nullptr )
         return false;
     }
 
-    const TNode* Popped = this->Tail;
-
-    this->Tail = this->Tail->NextNode;
-    if (this->Tail == nullptr)
+    this->Tail.store(Popped->NextNode);
+    if (this->Tail.load() == nullptr)
     {
-        check( Popped == this->Head )
-        this->Head = nullptr;
+        check( Popped == this->Head.load() )
+        this->Head.store(nullptr);
     }
 
     delete Popped;

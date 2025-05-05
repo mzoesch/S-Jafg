@@ -44,9 +44,11 @@ Jafg::ETaskExit::Type Jafg::LChunkGeneratorWorker::Run()
 
     constexpr i32 MaxChunkCount { 5 };
 
-    AChunk* Chunk = nullptr;
+    AChunk* Chunk;
     while (this->IsStopped() == false)
     {
+        Chunk = nullptr;
+
         i32 Dequeued = 0;
         while (Dequeued < MaxChunkCount && this->ChunkGenerationSubsystem->OutActiveChunks.Dequeue(&Chunk))
         {
