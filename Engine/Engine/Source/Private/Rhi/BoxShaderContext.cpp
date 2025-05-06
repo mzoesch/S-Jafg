@@ -48,8 +48,18 @@ void Jafg::LBoxShaderContext::Draw(
 ) const
 {
     checkSlow( this->bIsMeaningful )
-    check( Size.X > 0.0f )
-    check( Size.Y > 0.0f )
+
+    checkCode
+    (
+        if (Size.X <= 0.0f || Size.Y <= 0.0f)
+        {
+            LOG_WARNING(LogTemporal, "Invalid: [{}x{}].", Size.X, Size.Y)
+            return;
+        }
+    )
+
+    // check( Size.X > 0.0f )
+    // check( Size.Y > 0.0f )
 
     if (static_cast<float>(Context.GetDimensions().X) < TopLeft.X + Size.X)
     {

@@ -2,6 +2,8 @@
 
 #include "Widgets/Button.h"
 
+#include "Widgets/TextBlock.h"
+
 Jafg::WButton::WButton(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
     this->SetVisibility(EWidgetVisibility::DerivedHitTestInvisible);
@@ -63,16 +65,35 @@ Jafg::LReply Jafg::WButton::OnKeyDown(LKeyEvent& InKeyEvent)
         {
             this->SetBrush(this->PressBrush);
         }
-        this->OnPrimaryPress();
+
+        if (this->OnPrimaryPressDelegate.IsBound())
+        {
+            this->OnPrimaryPressDelegate.Invoke(this, InKeyEvent);
+        }
+        else
+        {
+            this->OnPrimaryPress();
+        }
+
         return LReply::Handled();
     }
+
     if (InKeyEvent.GetKey() == EKeys::RightMouseButton)
     {
         if (this->bLetUiReactToEvents)
         {
             this->SetBrush(this->PressBrush);
         }
-        this->OnSecondaryPress();
+
+        if (this->OnSecondaryPressDelegate.IsBound())
+        {
+            this->OnSecondaryPressDelegate.Invoke(this, InKeyEvent);
+        }
+        else
+        {
+            this->OnSecondaryPress();
+        }
+
         return LReply::Handled();
     }
 
@@ -92,18 +113,122 @@ Jafg::LReply Jafg::WButton::OnKeyUp(LKeyEvent& InKeyEvent)
         {
             this->SetBrush(this->HoverBrush);
         }
-        this->OnPrimaryUnpress();
+
+        if (this->OnPrimaryReleaseDelegate.IsBound())
+        {
+            this->OnPrimaryReleaseDelegate.Invoke(this, InKeyEvent);
+        }
+        else
+        {
+            this->OnPrimaryRelease();
+        }
+
         return LReply::Handled();
     }
+
     if (InKeyEvent.GetKey() == EKeys::RightMouseButton)
     {
         if (this->bLetUiReactToEvents)
         {
             this->SetBrush(this->HoverBrush);
         }
-        this->OnSecondaryUnpress();
+
+        if (this->OnSecondaryReleaseDelegate.IsBound())
+        {
+            this->OnSecondaryReleaseDelegate.Invoke(this, InKeyEvent);
+        }
+        else
+        {
+            this->OnSecondaryRelease();
+        }
+
         return LReply::Handled();
     }
 
     return LReply::Unhandled();
+}
+
+void Jafg::WTextButton::Construct()
+{
+    if (this->ButtonText == nullptr)
+    {
+        NewNode(WTextBlock).SaveTo(this->ButtonText)
+            .Align(ETextHAlign::Center)
+            .Align(ETextVAlign::Center)
+            .Brush(LTextBlockBrush::Body());
+
+        this->AddChild(this->ButtonText);
+    }
+
+    check( this->GetChildren().GetSize() > 0 )
+
+    if (this->IntermediateContent.IsEmpty() == false)
+    {
+        this->ButtonText->SetContent(std::move(this->IntermediateContent));
+        check( this->IntermediateContent.IsEmpty() )
+    }
+
+    if (this->IntermediateTextBlockBrush.IsSet())
+    {
+        this->ButtonText->SetBrush(this->IntermediateTextBlockBrush.GetValue());
+        this->IntermediateTextBlockBrush.Reset();
+        check( this->IntermediateTextBlockBrush.IsSet() == false )
+    }
+
+    Super::Construct();
+
+    return;
+}
+
+void Jafg::WTextButton::Draw(LViewport& Context) const
+{
+    WButton::Draw(Context);
+}
+
+bool Jafg::WTextButton::SetContent(const LString& InContent)
+{
+    if (this->ButtonText)
+    {
+        this->ButtonText->SetContent(InContent);
+        return true;
+    }
+
+    this->IntermediateContent = InContent;
+    return false;
+}
+
+bool Jafg::WTextButton::SetContent(LString&& InContent)
+{
+    if (this->ButtonText)
+    {
+        this->ButtonText->SetContent(std::move(InContent));
+        return true;
+    }
+
+    this->IntermediateContent = std::move(InContent);
+    return false;
+}
+
+bool Jafg::WTextButton::SetTextBlockBrush(const LTextBlockBrush& InBrush)
+{
+    if (this->ButtonText)
+    {
+        this->ButtonText->SetBrush(InBrush);
+        return true;
+    }
+
+    this->IntermediateTextBlockBrush = InBrush;
+    return false;
+}
+
+bool Jafg::WTextButton::LoadIntermediateContent()
+{
+    if (this->IntermediateContent.IsEmpty() && this->ButtonText)
+    {
+        this->ButtonText->SetContent(std::move(this->IntermediateContent));
+        check( this->IntermediateContent.IsEmpty() )
+        return true;
+    }
+
+    return false;
 }

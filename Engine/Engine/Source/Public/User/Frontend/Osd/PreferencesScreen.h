@@ -14,7 +14,7 @@ class WPreferencesScreen;
 
 struct LPreferencesPanelData : public LWidgetNodeData
 {
-    const LPreference* Preference = nullptr;
+    LPreference* Preference = nullptr;
 };
 
 #if PLATFORM_WASM

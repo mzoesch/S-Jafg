@@ -34,21 +34,29 @@ public:
     FORCEINLINE const LName& GetName(void) const { return this->Name; }
     FORCEINLINE const LString& GetDisplayName(void) const { return this->DisplayName; }
 
-    FORCEINLINE virtual const TArray<Smart::TUnique<LPreference>>& GetChildPreferences(void) const
-    {
-        static const TArray<Smart::TUnique<LPreference>> _; return _;
-    }
+    FORCEINLINE virtual const TArray<Smart::TUnique<LPreference>>& GetChildPreferences() const;
+    FORCEINLINE virtual const TArray<Smart::TUnique<LPreference>>& LoadAndGetChildPreferences();
 
     FORCEINLINE virtual bool IsLeaf() const { return true; }
     FORCEINLINE bool IsBuildable() const { return this->OnBuild.IsBound(); }
     FORCEINLINE void SetBuildPreference(LBuildPreference&& InBuildPreference) { this->OnBuild = std::move(InBuildPreference); }
-    FORCEINLINE bool Build(WWidgetParentBase* Target) const { check( this->IsLeaf() ) return this->OnBuild.InvokeIfBound(this, Target); }
+    FORCEINLINE bool Build(WWidgetParentBase* Target) const { return this->OnBuild.InvokeIfBound(this, Target); }
 
 private:
 
-    LName   Name;
+    LName Name;
     LString DisplayName;
     LBuildPreference OnBuild;
 };
+
+FORCEINLINE const TArray<Smart::TUnique<LPreference>>& LPreference::GetChildPreferences() const
+{
+    static const TArray<Smart::TUnique<LPreference>> _; return _;
+}
+
+FORCEINLINE const TArray<Smart::TUnique<LPreference>>& LPreference::LoadAndGetChildPreferences()
+{
+    return this->GetChildPreferences();
+}
 
 } /* ~Namespace Jafg */

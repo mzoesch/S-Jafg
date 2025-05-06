@@ -87,7 +87,6 @@ i32 main(const i32 argc, char *argv[])
         }
         LOG_INFO(LogJafgInternal, "Debugger attached - continuing.");
         LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
-        PLATFORM_BREAK()
     }
 
     Application::Private::bDebuggerPresent = ::IsGdb();

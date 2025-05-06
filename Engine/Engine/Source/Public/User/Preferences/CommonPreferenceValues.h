@@ -67,11 +67,11 @@ public:
 
 protected:
 
-    double Initial = 0.0;
-    double Step    = 0.01;
-    TOptional<double> Default;
-    TOptional<double> Minimum;
-    TOptional<double> Maximum;
+    f64 Initial = 0.0;
+    f64 Step    = 0.01;
+    TOptional<f64> Default;
+    TOptional<f64> Minimum;
+    TOptional<f64> Maximum;
     LPreferenceScalarFormatFunction FnFormat;
     LPreferenceScalarValueGetter Getter;
     LPreferenceScalarValueSetter Setter;
@@ -87,31 +87,31 @@ class LPreferenceValue_Key : public LPreferenceValue
 
 } /* ~Namespace Jafg */
 
-Jafg::TOptional<float> Jafg::LPreferenceValue_Scalar::GetDefaultValueF() const
+Jafg::TOptional<f32> Jafg::LPreferenceValue_Scalar::GetDefaultValueF() const
 {
     if (this->Default.IsSet())
     {
-        return static_cast<float>(this->Default.GetValue());
+        return static_cast<f32>(this->Default.GetValue());
     }
 
     return { };
 }
 
-Jafg::TOptional<float> Jafg::LPreferenceValue_Scalar::GetMinimumF() const
+Jafg::TOptional<f32> Jafg::LPreferenceValue_Scalar::GetMinimumF() const
 {
     if (this->Minimum.IsSet())
     {
-        return static_cast<float>(this->Minimum.GetValue());
+        return static_cast<f32>(this->Minimum.GetValue());
     }
 
     return { };
 }
 
-Jafg::TOptional<float> Jafg::LPreferenceValue_Scalar::GetMaximumF() const
+Jafg::TOptional<f32> Jafg::LPreferenceValue_Scalar::GetMaximumF() const
 {
     if (this->Maximum.IsSet())
     {
-        return static_cast<float>(this->Maximum.GetValue());
+        return static_cast<f32>(this->Maximum.GetValue());
     }
 
     return { };

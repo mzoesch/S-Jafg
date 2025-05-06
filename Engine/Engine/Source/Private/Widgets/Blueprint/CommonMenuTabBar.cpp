@@ -9,8 +9,8 @@
 void Jafg::WCommonMenuTabBarButton::Construct()
 {
     this->SetNormalBrush({LColor::Transparent});
-    this->SetHoverBrush({{0, 0, 0, 64}});
-    this->SetPressBrush({{0, 0, 0, 128}});
+    this->SetHoverBrush({{0, 0, 0, 128}});
+    this->SetPressBrush({{0, 0, 0, 192}});
 
     Super::Construct();
 

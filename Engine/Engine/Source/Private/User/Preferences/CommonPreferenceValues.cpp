@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/Preferences/CommonPreferenceValues.h"
-
 #include "Widgets/HBox.h"
 #include "Widgets/WidgetParentBase.h"
 #include "Widgets/TextBlock.h"
@@ -42,11 +41,13 @@ void Jafg::LPreferenceValue_Scalar::BuildDefault(const LPreference* Self, WWidge
     WWidgetParentBase* Container;
     WTextBlock*        Text;
 
+    const u8 ColorSpace = static_cast<u8>(20 * ((Target->GetChildren().GetSize() / 2) % 2 == 0 ? 1 : 1.8));
+
     NewNode(WHBox).SaveTo(Container)
     .Anchor(EAnchor::HFill)
     .Padding({15.0f, 10.0f})
     .MinDesiredSize({0, 10})
-    .Tint({0, 0, 0, 64})
+    .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
         NewNode(WTextBlock)
             .Anchor(EAnchor::CenterLeft)

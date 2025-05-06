@@ -7,6 +7,10 @@
 #include "User/Preferences/PreferenceCollection.h"
 #include "User/Preferences/PreferenceValue.h"
 #include "User/Preferences/CommonPreferenceValues.h"
+#include "Widgets/Button.h"
+#include "Widgets/HBox.h"
+#include "Widgets/Spacer.h"
+#include "Widgets/TextBlock.h"
 
 void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collection)
 {
@@ -26,8 +30,8 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
         {
             Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::MakeUnique<LPreferenceValue_Scalar>(new LPreferenceValue_Scalar(MAKE_DYNAMIC_NAME("MasterVolume"), "Master Volume"));
             Preference->SetDefaultValue(UserPreferences->MasterVolume);
-            Preference->SetValueGetter([UserPreferences](void) -> double { return UserPreferences->MasterVolume; });
-            Preference->SetValueSetter([UserPreferences](const double Value) -> void { UserPreferences->MasterVolume = static_cast<float>(Value); });
+            Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->MasterVolume; });
+            Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->MasterVolume = static_cast<float>(Value); });
             if (UserPreferences->MasterVolume.IsMinValueValid()) { Preference->SetMinimum(UserPreferences->MasterVolume.GetMinValue()); }
             if (UserPreferences->MasterVolume.IsMaxValueValid()) { Preference->SetMaximum(UserPreferences->MasterVolume.GetMaxValue()); }
             Preference->SetDisplayFormat(LPreferenceValue_Scalar::Fmt_ZeroToOneAsPercent);
@@ -37,8 +41,8 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
         {
             Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::MakeUnique<LPreferenceValue_Scalar>(new LPreferenceValue_Scalar(MAKE_DYNAMIC_NAME("MusicVolume"), "Music Volume"));
             Preference->SetDefaultValue(UserPreferences->MusicVolume);
-            Preference->SetValueGetter([UserPreferences](void) -> double { return UserPreferences->MusicVolume; });
-            Preference->SetValueSetter([UserPreferences](const double Value) -> void { UserPreferences->MusicVolume = static_cast<float>(Value); });
+            Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->MusicVolume; });
+            Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->MusicVolume = static_cast<float>(Value); });
             if (UserPreferences->MusicVolume.IsMinValueValid()) { Preference->SetMinimum(UserPreferences->MusicVolume.GetMinValue()); }
             if (UserPreferences->MusicVolume.IsMaxValueValid()) { Preference->SetMaximum(UserPreferences->MusicVolume.GetMaxValue()); }
             Preference->SetDisplayFormat(LPreferenceValue_Scalar::Fmt_ZeroToOneAsPercent);
@@ -48,8 +52,8 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
         {
             Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::MakeUnique<LPreferenceValue_Scalar>(new LPreferenceValue_Scalar(MAKE_DYNAMIC_NAME("MiscVolume"), "Misc Volume"));
             Preference->SetDefaultValue(UserPreferences->MiscVolume);
-            Preference->SetValueGetter([UserPreferences](void) -> double { return UserPreferences->MiscVolume; });
-            Preference->SetValueSetter([UserPreferences](const double Value) -> void { UserPreferences->MiscVolume = static_cast<float>(Value); });
+            Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->MiscVolume; });
+            Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->MiscVolume = static_cast<float>(Value); });
             if (UserPreferences->MiscVolume.IsMinValueValid()) { Preference->SetMinimum(UserPreferences->MiscVolume.GetMinValue()); }
             if (UserPreferences->MiscVolume.IsMaxValueValid()) { Preference->SetMaximum(UserPreferences->MiscVolume.GetMaxValue()); }
             Preference->SetDisplayFormat(LPreferenceValue_Scalar::Fmt_ZeroToOneAsPercent);
@@ -59,8 +63,8 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
         {
             Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::MakeUnique<LPreferenceValue_Scalar>(new LPreferenceValue_Scalar(MAKE_DYNAMIC_NAME("VoiceVolume"), "Voice Volume"));
             Preference->SetDefaultValue(UserPreferences->VoiceVolume);
-            Preference->SetValueGetter([UserPreferences](void) -> double { return UserPreferences->VoiceVolume; });
-            Preference->SetValueSetter([UserPreferences](const double Value) -> void { UserPreferences->VoiceVolume = static_cast<float>(Value); });
+            Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->VoiceVolume; });
+            Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->VoiceVolume = static_cast<float>(Value); });
             if (UserPreferences->VoiceVolume.IsMinValueValid()) { Preference->SetMinimum(UserPreferences->VoiceVolume.GetMinValue()); }
             if (UserPreferences->VoiceVolume.IsMaxValueValid()) { Preference->SetMaximum(UserPreferences->VoiceVolume.GetMaxValue()); }
             Preference->SetDisplayFormat(LPreferenceValue_Scalar::Fmt_ZeroToOneAsPercent);
@@ -91,7 +95,44 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
     }
 
     {
-        Smart::TUnique<LPreferenceCollection> Screen = Smart::MakeUnique<LPreferenceCollection>(new LPreferenceCollection(Name_PrefDeveloper, "Developer"));
+        Smart::TUnique<LIntermediatePreferenceCollection> Screen = Smart::MakeUnique<LIntermediatePreferenceCollection>(new LIntermediatePreferenceCollection(Name_PrefDeveloper, "Developer"));
+        Screen->SetBuildPreference([](const LPreference* Self, WWidgetParentBase* Target) -> void
+        {
+            check( Self && Target )
+
+            WHBox* Container;
+
+            NewNode(WTest).SaveTo(Container)
+            // .Tint(LColor::Emerald)
+            .Anchor(EAnchor::HFill)
+            [
+                NewNode(WTextBlock)
+                    .Brush(LTextBlockBrush::SubHeader())
+                    .Content(Self->GetDisplayName())
+                +
+                NewNode(WSpacer)
+                    .Anchor(EAnchor::HFill)
+                    .MinDesiredSize(LVector2{5})
+                +
+                NewNode(WTextButton)
+                    .NormalBrush(LRegionBrush({.Tint = LColor{0x00u, 0xFFu, 0xFFu, 0x0Fu}}))
+                    .MinDesiredSize(LVector2{20})
+                    .Content("Refresh")
+                    .TextBlockBrush(LTextBlockBrush::Body())
+            ];
+
+            Target->AddChild(Container);
+
+            return;
+        });
+        Screen->SetOnLoadDelegate([](LPreferenceCollection* InCollection) -> void
+        {
+            check( InCollection )
+
+            LOG_WARNING(LogTemporal, "Loading ....")
+
+            return;
+        });
         Registry->AddTopLevelPreference(std::move(Screen));
     }
 

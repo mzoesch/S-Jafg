@@ -170,71 +170,80 @@ public:
     FORCEINLINE const LCliVariable* GetVariableAsserted(const LString& InVariableName) const { const LCliVariable* Out = this->GetVariable(InVariableName); jassert(Out); return Out; }
 
     template <typename T>
-    FORCEINLINE auto Get(const LCliObjectHandle& InHandle)
-    {
-        if constexpr (std::is_same_v<T, LCliType>)
-        {
-            return this->GetType(InHandle);
-        }
-        else if constexpr (std::is_same_v<T, LCliCommand>)
-        {
-            return this->GetCommand(InHandle);
-        }
-        else if constexpr (std::is_same_v<T, LCliVariable>)
-        {
-            return this->GetVariable(InHandle);
-        }
-        else
-        {
-            static_assert(false, "Unsupported type.");
-        }
-    }
-
+    FORCEINLINE auto Get(const LCliObjectHandle& InHandle);
     template <typename T>
-    FORCEINLINE auto Get(const LCliObjectHandle& InHandle) const -> decltype(this->Get<T>(InHandle))
-    {
-        return const_cast<LCommandLineInterface*>(this)->Get<T>(InHandle);
-    }
-
+    FORCEINLINE auto Get(const LCliObjectHandle& InHandle) const -> decltype(this->Get<T>(InHandle));
     template <typename T>
-    FORCEINLINE auto Get(const LString& InName)
-    {
-        if constexpr (std::is_same_v<T, LCliType>)
-        {
-            return this->GetType(InName);
-        }
-        else if constexpr (std::is_same_v<T, LCliCommand>)
-        {
-            return this->GetCommand(InName);
-        }
-        else if constexpr (std::is_same_v<T, LCliVariable>)
-        {
-            return this->GetVariable(InName);
-        }
-        else
-        {
-            static_assert(false, "Unsupported type.");
-        }
-    }
-
+    FORCEINLINE auto Get(const LString& InName);
     template <typename T>
-    FORCEINLINE auto Get(const LString& InName) const -> decltype(this->Get<T>(InName))
-    {
-        return const_cast<LCommandLineInterface*>(this)->Get<T>(InName);
-    }
+    FORCEINLINE auto Get(const LString& InName) const -> decltype(this->Get<T>(InName));
 
 private:
 
-    LCliObjectUuid         UuidCursor = 0;
+    LCliObjectUuid       UuidCursor = 0;
     TArray<LCliType>     Types;
     TArray<LCliCommand>  Commands;
     TArray<LCliVariable> Variables;
 };
 
 template<typename TField>
-void LCliObjectHandle::GetValue(TField* Destination) const
+FORCEINLINE void LCliObjectHandle::GetValue(TField* Destination) const
 {
     this->GetCommandLineInterface()->GetVariable(this->Uuid)->GetValue<TField>(Destination);
+}
+
+template <typename T>
+FORCEINLINE auto LCommandLineInterface::Get(const LCliObjectHandle& InHandle)
+{
+    if constexpr (std::is_same_v<T, LCliType>)
+    {
+        return this->GetType(InHandle);
+    }
+    else if constexpr (std::is_same_v<T, LCliCommand>)
+    {
+        return this->GetCommand(InHandle);
+    }
+    else if constexpr (std::is_same_v<T, LCliVariable>)
+    {
+        return this->GetVariable(InHandle);
+    }
+    else
+    {
+        static_assert(false, "Unsupported type.");
+    }
+}
+
+template <typename T>
+FORCEINLINE auto LCommandLineInterface::Get(const LCliObjectHandle& InHandle) const -> decltype(this->Get<T>(InHandle))
+{
+    return const_cast<LCommandLineInterface*>(this)->Get<T>(InHandle);
+}
+
+template <typename T>
+FORCEINLINE auto LCommandLineInterface::Get(const LString& InName)
+{
+    if constexpr (std::is_same_v<T, LCliType>)
+    {
+        return this->GetType(InName);
+    }
+    else if constexpr (std::is_same_v<T, LCliCommand>)
+    {
+        return this->GetCommand(InName);
+    }
+    else if constexpr (std::is_same_v<T, LCliVariable>)
+    {
+        return this->GetVariable(InName);
+    }
+    else
+    {
+        static_assert(false, "Unsupported type.");
+    }
+}
+
+template <typename T>
+FORCEINLINE auto LCommandLineInterface::Get(const LString& InName) const -> decltype(this->Get<T>(InName))
+{
+    return const_cast<LCommandLineInterface*>(this)->Get<T>(InName);
 }
 
 } /* ~Namespace Jafg */

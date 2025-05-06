@@ -722,5 +722,7 @@ FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode)
 #define MakeRootNode(TRoot)   (*this->ReplaceRoot(NewNodeNoFactory(TRoot))).GetFactory<TRoot>()
 #define FinishWidgetStyling() ;MakeDeferredWidgetNodeFinal(this->GetRoot());
 
+#define FinishWidget(Root)    ;MakeDeferredWidgetNodeFinal(Root)
+
 #define NewNodeNoFactory(TNode) (*ConstructDeferredWidgetNode<TNode>())
 #define NewNode(TNode)          (*ConstructDeferredWidgetNode<TNode>()).GetFactory<TNode>()

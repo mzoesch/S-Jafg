@@ -51,3 +51,26 @@ Jafg::LPreference* Jafg::LPreferenceCollection::GetPreferenceByIdentifier(const 
 {
     return this->GetPreferenceByIdentifier(GET_NAME(InIdentifier));
 }
+
+const Jafg::TArray<Jafg::Smart::TUnique<Jafg::LPreference>>& Jafg::LIntermediatePreferenceCollection::LoadAndGetChildPreferences()
+{
+    if (this->Refresh() == false)
+    {
+        LOG_WARNING(LogPreferences, "Failed to load preferences for collection [{}].", this->GetDisplayName())
+    }
+
+    return LPreferenceCollection::LoadAndGetChildPreferences();
+}
+
+bool Jafg::LIntermediatePreferenceCollection::Refresh()
+{
+    if (this->OnLoad.IsBound() == false)
+    {
+        return false;
+    }
+
+    this->Preferences.Reset(this->Preferences.GetSize());
+    this->OnLoad.Invoke(this);
+
+    return true;
+}

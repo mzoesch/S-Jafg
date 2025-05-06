@@ -33,9 +33,34 @@ public:
     FORCEINLINE auto GetPreferenceByIdentifierChecked(const LString& InIdentifier) const -> const LPreference*;
     FORCEINLINE auto GetChildPreferences(void) const -> const TArray<Smart::TUnique<LPreference>>&  override { return this->Preferences; }
 
-private:
+protected:
 
     TArray<Smart::TUnique<LPreference>> Preferences;
+};
+
+MAKE_DELEGATE_SIGNATURE(LOnDemandLoadPreferences, void, LPreferenceCollection*)
+
+//#
+//# A nestable collection of preferences that store intermediate preferences and will be loaded on demand only.
+//# The on demand loading should be quick enough to not block the main thread.
+//#
+class LIntermediatePreferenceCollection : public LPreferenceCollection
+{
+public:
+
+    using LPreferenceCollection::LPreferenceCollection;
+
+    ENGINE_API virtual const TArray<Smart::TUnique<LPreference>>& LoadAndGetChildPreferences() override;
+
+    FORCEINLINE bool IsOnLoadDelegateValid() const { return this->OnLoad.IsBound(); }
+    FORCEINLINE void SetOnLoadDelegate(LOnDemandLoadPreferences&& InDelegate) { this->OnLoad = std::move(InDelegate); }
+
+    //# @return True, if the refresh was successful.
+    ENGINE_API bool Refresh();
+
+private:
+
+    LOnDemandLoadPreferences OnLoad;
 };
 
 template<typename TPref>

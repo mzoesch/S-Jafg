@@ -78,3 +78,23 @@ Jafg::LVector2 Jafg::WHBox::GetAnchoredTopLeftFromMostOuterForChild(const LViewp
 
     return Out;
 }
+
+void Jafg::WTest::UpdateDesiredSize() const
+{
+    WHBox::UpdateDesiredSize();
+}
+
+Jafg::LVector2 Jafg::WTest::GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const
+{
+    return WHBox::GetRelativeTopLeftForChild(InDirectChild);
+}
+
+void Jafg::WTest::UpdateAnchoredSizeForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const
+{
+    WHBox::UpdateAnchoredSizeForChild(Context, InDirectChild);
+}
+
+Jafg::LVector2 Jafg::WTest::GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const
+{
+    return WHBox::GetAnchoredTopLeftFromMostOuterForChild(Context, InDirectChild);
+}

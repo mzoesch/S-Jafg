@@ -8,7 +8,7 @@
 namespace
 {
 
-void AddPreference(Jafg::WWidgetParentBase* Target, const Jafg::LPreference* P)
+void AddPreference(Jafg::WWidgetParentBase* Target, Jafg::LPreference* P)
 {
     using namespace Jafg;
 
@@ -22,19 +22,21 @@ void AddPreference(Jafg::WWidgetParentBase* Target, const Jafg::LPreference* P)
         return;
     }
 
-    WTextBlock* Text = nullptr;
-    NewNode(WTextBlock).SaveTo(Text)
-        .Brush(LTextBlockBrush::SubHeader())
-        .Content(P->GetDisplayName());
-        // .Padding({10.0f, 5.0f});
-    Target->AddChild(Text);
+    if (P->Build(Target) == false)
+    {
+        WTextBlock* Text = nullptr;
+        NewNode(WTextBlock).SaveTo(Text)
+            .Brush(LTextBlockBrush::SubHeader())
+            .Content(P->GetDisplayName());
+        Target->AddChild(Text);
+    }
 
     WSpacer* Spacer; NewNode(WSpacer).SaveTo(Spacer).SetHeight(10.0f);
     Target->AddChild(Spacer);
 
-    for (const Smart::TUnique<LPreference>& SubSection : P->GetChildPreferences())
+    for (const Smart::TUnique<LPreference>& SubSection : P->LoadAndGetChildPreferences())
     {
-        ::AddPreference(Target, SubSection);
+        ::AddPreference(Target, const_cast<LPreference*>(&SubSection.GetValue()));
         WSpacer* SubSectionSpacer; NewNode(WSpacer).SaveTo(SubSectionSpacer).SetHeight(5.0f);
         Target->AddChild(SubSectionSpacer);
     }
@@ -59,8 +61,8 @@ bool Jafg::WPreferencesPanel::AddData(LWidgetNodeData* InData)
         return false;
     }
 
-    const LPreferencesPanelData* Data = static_cast<LPreferencesPanelData*>(InData);
-    const LPreference* P = Data->Preference;
+    LPreferencesPanelData* Data = static_cast<LPreferencesPanelData*>(InData);
+    LPreference* P = Data->Preference;
     check( P )
 
     WVBox* Root; NewNode(WVBox).SaveTo(Root).Anchor(EAnchor::Fill).Padding(40.0f);
@@ -87,9 +89,9 @@ void Jafg::WPreferencesScreen::Construct()
     jassert( this->PanelClass )
 
     const JPreferenceRegistry* Registry = GetDefault<JPreferenceRegistry>();
-    for (const Smart::TUnique<LPreference>& TopPreference : Registry->GetPreferences() )
+    for (const Smart::TUnique<LPreference>& TopPreference : Registry->GetPreferences())
     {
-        const LPreference* LambdaPreference = TopPreference.GetValuePtr();
+        LPreference* LambdaPreference = const_cast<LPreference*>(TopPreference.GetValuePtr());
 
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = TopPreference->GetName().ToString();
@@ -105,6 +107,8 @@ void Jafg::WPreferencesScreen::Construct()
                 Data.Preference = LambdaPreference;
                 Panel->AddData(&Data);
             }
+
+            return;
         };
         this->RegisterTab(std::move(Descriptor));
     }

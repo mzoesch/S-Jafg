@@ -26,4 +26,21 @@ public:
     virtual auto GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const -> LVector2 override;
 };
 
+DECLARE_JAFG_WIDGET()
+class ENGINE_API WTest : public WHBox
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTOR(WTest)
+
+public:
+
+    virtual void UpdateDesiredSize() const override;
+    virtual auto GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const -> LVector2 override;
+    virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const override;
+    virtual auto GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const -> LVector2 override;
+};
+
 } /* ~Namespace Jafg */
