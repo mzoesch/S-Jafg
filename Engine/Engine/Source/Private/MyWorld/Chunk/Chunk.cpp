@@ -33,6 +33,7 @@ void Jafg::LChunkRendererComponent::Draw(const LViewport& Context, const LEye& E
     LMatrix Model; Model.InlineTranslate(this->Owner->GetTranslation());
     Shader.GetProgram().SetMatrixUniform("Model", Model);
 
+    check( this->Owner->IsMesherValid() )
     glDrawElements(GL_TRIANGLES, this->Owner->GetMesher()->GetNumTriangles(), GL_UNSIGNED_INT, nullptr);
 
     return;

@@ -35,4 +35,4 @@ public:
     virtual void Draw(const LViewport& Context, const LEye& Eye) = 0;
 };
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */

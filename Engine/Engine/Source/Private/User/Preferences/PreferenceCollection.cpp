@@ -64,13 +64,13 @@ const Jafg::TArray<Jafg::Smart::TUnique<Jafg::LPreference>>& Jafg::LIntermediate
 
 bool Jafg::LIntermediatePreferenceCollection::Refresh()
 {
-    if (this->OnLoad.IsBound() == false)
+    if (this->OnLoadDelegate.IsBound() == false)
     {
         return false;
     }
 
     this->Preferences.Reset(this->Preferences.GetSize());
-    this->OnLoad.Invoke(this);
+    this->OnLoadDelegate.Invoke(this);
 
     return true;
 }

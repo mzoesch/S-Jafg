@@ -152,7 +152,7 @@ void Jafg::WTextButton::Construct()
 {
     if (this->ButtonText == nullptr)
     {
-        NewNode(WTextBlock).SaveTo(this->ButtonText)
+        NewNode(WTextBlock).SaveTo(&this->ButtonText)
             .Align(ETextHAlign::Center)
             .Align(ETextVAlign::Center)
             .Brush(LTextBlockBrush::Body());

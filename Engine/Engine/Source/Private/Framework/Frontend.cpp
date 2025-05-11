@@ -5,7 +5,7 @@
 #include "Platform/Surface.h"
 #include "Subsystems/FrontendSubsystem.h"
 #include "Subsystems/SubsystemCollection.h"
-#include "Widgets/WidgetNode.h"
+#include "Widgets/Node.h"
 #include "Widgets/Viewport.h"
 #include "Core/LaunchProgress.h"
 #include "Engine/Engine.h"
@@ -17,7 +17,6 @@
 void Jafg::LFrontend::Initialize(LObjectContext* InOuter)
 {
     this->CachedOuter = InOuter;
-    GCurrentWidgetContextState = this->CachedOuter;
 
     this->Surfaces.Emplace(this->CreateNewSurface());
 
@@ -81,7 +80,6 @@ void Jafg::LFrontend::TearDown()
 {
     check( this->CachedOuter )
 
-    GCurrentWidgetContextState = nullptr;
     this->Collection.TearDownSubsystems();
 
     for (LSurface& Surface : this->Surfaces)
@@ -149,11 +147,11 @@ void Jafg::LFrontend::RemoveWidget(WUserWidget* Widget)
     return;
 }
 
-Jafg::WWidgetNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
+Jafg::WNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
 {
     if (this->IsFocusedSurfaceValid())
     {
-        if (WWidgetNode* Widget = this->GetFocusedSurface()->GetViewport().GetTopLevelWidgetByClass(WidgetClass); Widget)
+        if (WNode* Widget = this->GetFocusedSurface()->GetViewport().GetTopLevelWidgetByClass(WidgetClass); Widget)
         {
             return Widget;
         }
@@ -167,7 +165,7 @@ Jafg::WWidgetNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(const LObjectC
         }
 
         const LSurface& Surface = this->Surfaces[i];
-        if (WWidgetNode* Widget = Surface.GetViewport().GetTopLevelWidgetByClass(WidgetClass); Widget)
+        if (WNode* Widget = Surface.GetViewport().GetTopLevelWidgetByClass(WidgetClass); Widget)
         {
             return Widget;
         }
@@ -180,7 +178,7 @@ Jafg::WWidgetNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(const LObjectC
 
 bool Jafg::LFrontend::ChangeWidgetVisibility(const LViewport* Context, const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
-    WWidgetNode* Widget = this->GetTopLevelWidgetByClass(Context, WidgetClass);
+    WNode* Widget = this->GetTopLevelWidgetByClass(Context, WidgetClass);
     if (Widget == nullptr)
     {
         if (bAllowNotFound == false)
@@ -203,7 +201,7 @@ bool Jafg::LFrontend::ChangeWidgetVisibility(const LViewport* Context, const LOb
 
 bool Jafg::LFrontend::ChangeWidgetVisibility(const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
-    WWidgetNode* Widget = this->GetFirstTopLevelWidgetByClass(WidgetClass);
+    WNode* Widget = this->GetFirstTopLevelWidgetByClass(WidgetClass);
     if (Widget == nullptr)
     {
         if (bAllowNotFound == false)
@@ -224,13 +222,13 @@ bool Jafg::LFrontend::ChangeWidgetVisibility(const LObjectClass* WidgetClass, co
     return true;
 }
 
-bool Jafg::LFrontend::FocusWidget(LViewport* Context, const WWidgetNode* InNode)
+bool Jafg::LFrontend::FocusWidget(LViewport* Context, const WNode* InNode)
 {
     check( Context )
     return Context->FocusWidgetNode(InNode);
 }
 
-bool Jafg::LFrontend::FocusWidgetChecked(LViewport* Context, const WWidgetNode* InNode)
+bool Jafg::LFrontend::FocusWidgetChecked(LViewport* Context, const WNode* InNode)
 {
     check( Context )
     const bool bOut = this->FocusWidget(Context, InNode);
@@ -238,7 +236,7 @@ bool Jafg::LFrontend::FocusWidgetChecked(LViewport* Context, const WWidgetNode* 
     return bOut;
 }
 
-bool Jafg::LFrontend::FocusWidgetAsserted(LViewport* Context, const WWidgetNode* InNode)
+bool Jafg::LFrontend::FocusWidgetAsserted(LViewport* Context, const WNode* InNode)
 {
     check( Context )
     const bool bOut = this->FocusWidget(Context, InNode);

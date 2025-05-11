@@ -13,7 +13,7 @@ Jafg::LBlurShaderContext BlurShader;
 
 void Jafg::WBackgroundBlur::Construct()
 {
-    WWidgetNode::Construct();
+    WNode::Construct();
 
     if (BlurShader.IsMeaningful() == false)
     {
@@ -45,7 +45,7 @@ void Jafg::WBackgroundBlur::Draw(LViewport& Context) const
 Jafg::LReply Jafg::WBackgroundBlur::OnKeyDown(LKeyEvent& InKeyEvent)
 {
     LOG_WARNING(LogTemporal, "A")
-    return WWidgetNode::OnKeyDown(InKeyEvent);
+    return WNode::OnKeyDown(InKeyEvent);
 }
 
 void Jafg::WBackgroundBlur::OnFocusReceived()

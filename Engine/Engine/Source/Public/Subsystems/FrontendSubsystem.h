@@ -46,4 +46,4 @@ private:
     LFrontend* OwningFrontend = nullptr;
 };
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */

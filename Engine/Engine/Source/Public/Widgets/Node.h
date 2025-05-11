@@ -4,23 +4,23 @@
 
 #include "Engine/ObjectBase.h"
 #include "Widgets/Whitespace.h"
-#include "Widgets/InterfaceTypes.h"
 #include "User/Input/Replies.h"
 #include "User/Input/Events.h"
 #include "Platform/SurfaceForward.h"
-#include "WidgetNode.generated.h"
+#include "Widgets/InterfaceTypes.h"
+#include "Node.generated.h"
 
 namespace Jafg
 {
 
 class LLocalEgo;
-class WWidgetNode;
-class WWidgetParent;
+class WNode;
+class WParent;
 class WUserWidget;
 class LViewport;
 class LWidgetFactory;
 class LWidgetFactory;
-class WWidgetParentBase;
+class WParentBase;
 template <typename TNode>
 class TWidgetFactory;
 template <typename TNode>
@@ -34,7 +34,7 @@ namespace Private
 ENGINE_API void            AddWidgetFactory(LWidgetFactory* InFactory);
 ENGINE_API LWidgetFactory* FindOrNullWidgetFactory(const void* InNode);
 ENGINE_API LWidgetFactory& GetWidgetFactory(const void* InNode);
-ENGINE_API i32           PurgeWidgetFactories();
+ENGINE_API i32             PurgeWidgetFactories();
 
 //#
 //# Private struct that is the single factory friend.
@@ -54,29 +54,44 @@ struct LWidgetFactoryUtility final
     //# @return The factory for the given node.
     //#
     template <typename TNode>
-    NODISCARD static auto MakeWidgetFactory(const WWidgetNode* InNode) -> typename TNode::TWidgetFactory&;
+    NODISCARD static auto MakeWidgetFactory(const WNode* InNode) -> typename TNode::TWidgetFactory&;
 };
 
 } /* ~Namespace Private */
 
 //#
 //# How to anchor a child to its parent if the parent can have children.
+//# This enum can be used for simple and complex anchoring.
 //#
 namespace EAnchor
 {
 
 enum Type : u8
 {
+    //# Default behavior. Usually this is the VTop | HLeft.
     Default    = 0x0 << 0,
+
+    //# The top on the vertical axis.
     VTop       = 0x1 << 0,
+    //# The center on the vertical axis.
     VCenter    = 0x1 << 1,
+    //# The bottom on the vertical axis.
     VBottom    = 0x1 << 2,
+    //# The left on the horizontal axis.
     HLeft      = 0x1 << 3,
+    //# The center on the horizontal axis.
     HCenter    = 0x1 << 4,
+    //# The right on the horizontal axis.
     HRight     = 0x1 << 5,
 
+    //# The vertical axis is stretched to the maximum.
     VFill      = 0x1 << 6,
+    //# The horizontal axis is stretched to the maximum.
     HFill      = 0x1 << 7,
+
+    //#
+    //# Compounds.
+    //#
 
     TopLeft         = VTop    | HLeft,
     TopCenter       = VTop    | HCenter,
@@ -94,16 +109,20 @@ enum Type : u8
 } /* ~Namespace EAnchor */
 ENUM_CLASS_FLAGS(EAnchor::Type)
 
+//#
+//# The anchor for complex anchoring only.
+//# This struct may not be used when dealing with widgets that only support a simple layout flow.
+//#
 struct LAnchor final
 {
     union
     {
         struct
         {
-            float MinX;
-            float MinY;
-            float MaxX;
-            float MaxY;
+            f32 MinX;
+            f32 MinY;
+            f32 MaxX;
+            f32 MaxY;
         };
 
         //#
@@ -113,73 +132,75 @@ struct LAnchor final
         LVector4 Anchors;
     };
 
-    LAnchor() : Anchors(0.0f, 0.0f, 0.0f, 0.0f) { }
-    LAnchor(const float InUniformAnchors)
+    FORCEINLINE constexpr LAnchor() noexcept : Anchors(0.0f, 0.0f, 0.0f, 0.0f) { }
+    FORCEINLINE constexpr LAnchor(const f32 InUniformAnchors) noexcept
         : Anchors(InUniformAnchors, InUniformAnchors, InUniformAnchors, InUniformAnchors)
     {
         check( this->IsNormalized() )
     }
-    LAnchor(const float InHorizontalUniform, const float InVerticalUniform)
+    FORCEINLINE constexpr LAnchor(const f32 InHorizontalUniform, const f32 InVerticalUniform) noexcept
         : Anchors(InHorizontalUniform, InVerticalUniform, InHorizontalUniform, InVerticalUniform)
     {
         check( this->IsNormalized() )
     }
-    LAnchor(const float InMinX, const float InMinY, const float InMaxX, const float InMaxY)
+    FORCEINLINE constexpr LAnchor(const f32 InMinX, const f32 InMinY, const f32 InMaxX, const f32 InMaxY) noexcept
         : Anchors(InMinX, InMinY, InMaxX, InMaxY)
     {
         check( this->IsNormalized() )
     }
-    LAnchor(const EAnchor::Type InAnchors)
+    FORCEINLINE constexpr LAnchor(const EAnchor::Type InAnchors) noexcept
     {
         this->Anchors = LVector4::ZeroVector;
         this->ApplyConstraints(InAnchors);
         return;
     }
-    LAnchor(const LAnchor& InOther, const EAnchor::Type InConstraints)
+    FORCEINLINE constexpr LAnchor(const LAnchor& InOther, const EAnchor::Type InConstraints) noexcept
     {
         this->Anchors = InOther.Anchors;
         this->ApplyConstraints(InConstraints);
         return;
     }
-    LAnchor(const LVector4& InOther, const EAnchor::Type InConstraints)
+    FORCEINLINE constexpr LAnchor(const LVector4& InOther, const EAnchor::Type InConstraints) noexcept
     {
         this->Anchors = InOther;
         this->ApplyConstraints(InConstraints);
         return;
     }
-    LAnchor(const LVector4& InAnchors) : Anchors(InAnchors) { }
-    LAnchor(const LAnchor& InOther) noexcept : Anchors(InOther.Anchors) { }
-    LAnchor(LAnchor&& InOther) noexcept : Anchors(std::move(InOther.Anchors)) { }
-    LAnchor& operator=(const LAnchor& InOther)  noexcept { this->Anchors = InOther.Anchors; return *this; }
-    LAnchor& operator=(LAnchor&& InOther) noexcept { this->Anchors = std::move(InOther.Anchors); return *this; }
+    FORCEINLINE constexpr LAnchor(const LVector4& InAnchors) noexcept : Anchors(InAnchors) { }
+    FORCEINLINE constexpr LAnchor(const LAnchor& InOther) noexcept : Anchors(InOther.Anchors) { }
+    FORCEINLINE constexpr LAnchor(LAnchor&& InOther) noexcept : Anchors(std::move(InOther.Anchors)) { }
+    FORCEINLINE constexpr LAnchor& operator=(const LAnchor& InOther)  noexcept { this->Anchors = InOther.Anchors; return *this; }
+    FORCEINLINE constexpr LAnchor& operator=(LAnchor&& InOther) noexcept { this->Anchors = std::move(InOther.Anchors); return *this; }
 
-    ENGINE_API bool IsNormalized() const;
-    ENGINE_API void Normalize();
+    ENGINE_API bool IsNormalized() const noexcept;
+    ENGINE_API void Normalize() noexcept;
 
-    FORCEINLINE bool IsPushedHorizontal() const { return this->MinX > 0.0f; }
-    FORCEINLINE bool IsPushedVertical() const { return this->MinY > 0.0f; }
-    FORCEINLINE bool IsStretchedHorizontal() const { return this->MaxX > 0.0f; }
-    FORCEINLINE bool IsStretchedVertical() const { return this->MaxY > 0.0f; }
-    FORCEINLINE bool IsStretched() const { return this->IsStretchedHorizontal() || this->IsStretchedVertical(); }
+    FORCEINLINE constexpr bool IsPushedHorizontal() const noexcept { return this->MinX > 0.0f; }
+    FORCEINLINE constexpr bool IsPushedVertical() const noexcept { return this->MinY > 0.0f; }
+    FORCEINLINE constexpr bool IsStretchedHorizontal() const noexcept { return this->MaxX > 0.0f; }
+    FORCEINLINE constexpr bool IsStretchedVertical() const noexcept { return this->MaxY > 0.0f; }
 
-    void ApplyConstraints(const EAnchor::Type InConstraints)
+    FORCEINLINE constexpr bool IsPushed() const noexcept { return this->IsPushedHorizontal() || this->IsPushedVertical(); }
+    FORCEINLINE constexpr bool IsStretched() const noexcept { return this->IsStretchedHorizontal() || this->IsStretchedVertical(); }
+
+    constexpr void ApplyConstraints(const EAnchor::Type InConstraints) noexceptcheck
     {
-        if (InConstraints & EAnchor::VTop)    { this->Anchors += LAnchor::VTop.Anchors; }
+        if (InConstraints & EAnchor::VTop)    { this->Anchors += LAnchor::VTop.Anchors;    }
         if (InConstraints & EAnchor::VCenter) { this->Anchors += LAnchor::VCenter.Anchors; }
         if (InConstraints & EAnchor::VBottom) { this->Anchors += LAnchor::VBottom.Anchors; }
-        if (InConstraints & EAnchor::HLeft)   { this->Anchors += LAnchor::HLeft.Anchors; }
+        if (InConstraints & EAnchor::HLeft)   { this->Anchors += LAnchor::HLeft.Anchors;   }
         if (InConstraints & EAnchor::HCenter) { this->Anchors += LAnchor::HCenter.Anchors; }
-        if (InConstraints & EAnchor::HRight)  { this->Anchors += LAnchor::HRight.Anchors; }
-        if (InConstraints & EAnchor::VFill)   { this->Anchors += LAnchor::VFill.Anchors; }
-        if (InConstraints & EAnchor::HFill)   { this->Anchors += LAnchor::HFill.Anchors; }
+        if (InConstraints & EAnchor::HRight)  { this->Anchors += LAnchor::HRight.Anchors;  }
+        if (InConstraints & EAnchor::VFill)   { this->Anchors += LAnchor::VFill.Anchors;   }
+        if (InConstraints & EAnchor::HFill)   { this->Anchors += LAnchor::HFill.Anchors;   }
 
         check( this->IsNormalized() )
 
         return;
     }
 
-    bool operator==(const LAnchor& InOther) const { return this->Anchors == InOther.Anchors; }
-    bool operator!=(const LAnchor& InOther) const { return this->Anchors != InOther.Anchors; }
+    FORCEINLINE constexpr bool operator==(const LAnchor& InOther) const noexcept { return this->Anchors == InOther.Anchors; }
+    FORCEINLINE constexpr bool operator!=(const LAnchor& InOther) const noexcept { return this->Anchors != InOther.Anchors; }
 
     FORCEINLINE LString ToString() const
     {
@@ -239,30 +260,30 @@ enum Type : u8
     IntransitiveHitTestInvisible,
 };
 
-FORCEINLINE bool IsDrawn(const EWidgetVisibility::Type InVisibility)
+FORCEINLINE constexpr bool IsDrawn(const EWidgetVisibility::Type InVisibility) noexcept
 {
     return InVisibility != EWidgetVisibility::Hidden
         && InVisibility != EWidgetVisibility::Collapsed;
 }
 
-FORCEINLINE bool IsTicked(const EWidgetVisibility::Type InVisibility)
+FORCEINLINE constexpr bool IsTicked(const EWidgetVisibility::Type InVisibility) noexcept
 {
     return EWidgetVisibility::IsDrawn(InVisibility);
 }
 
-FORCEINLINE bool IsHitTestable(const EWidgetVisibility::Type InVisibility)
+FORCEINLINE constexpr bool IsHitTestable(const EWidgetVisibility::Type InVisibility) noexcept
 {
     return InVisibility == EWidgetVisibility::Visible
         || InVisibility == EWidgetVisibility::DerivedHitTestInvisible;
 }
 
-FORCEINLINE bool IsDerivedHitTestable(const EWidgetVisibility::Type InVisibility)
+FORCEINLINE constexpr bool IsDerivedHitTestable(const EWidgetVisibility::Type InVisibility) noexcept
 {
     return InVisibility == EWidgetVisibility::Visible
         || InVisibility == EWidgetVisibility::IntransitiveHitTestInvisible;
 }
 
-FORCEINLINE bool TransformsWidgetLayout(const EWidgetVisibility::Type InVisibility)
+FORCEINLINE constexpr bool TransformsWidgetLayout(const EWidgetVisibility::Type InVisibility) noexcept
 {
     return InVisibility != EWidgetVisibility::Collapsed;
 }
@@ -278,12 +299,12 @@ struct LWidgetSlot
     //#
     //# The parent of this slot and the owner of the memory.
     //#
-    WWidgetParentBase* Parent;
+    WParentBase* Parent;
 
     //#
     //# The content of this slot. We interpret all names in this and derived structs as of the view of the content.
     //#
-    WWidgetNode* Content;
+    WNode* Content;
 
     //#
     //# The padding of the parent widget aka the margin of the child widget.
@@ -299,24 +320,24 @@ class LWidgetFactory
 {
 public:
 
-    friend WWidgetNode;
+    friend WNode;
     friend Private::LWidgetFactoryUtility;
     template <typename TNode>
     friend class TWidgetFactory;
     template <typename TNode>
     friend class TWidgetFactoryParentBase;
 
-    FORCEINLINE WWidgetNode* GetNodeRaw() const { check( this->Node ) return this->Node; }
+    FORCEINLINE WNode* GetNodeRaw() const noexcept { check( this->Node ) return this->Node; }
 
-    FORCEINLINE bool HasAnySibling() const { return this->Siblings.IsEmpty() == false; }
-    FORCEINLINE auto GetSiblings() const -> const TArray<LWidgetFactory*>& { return this->Siblings; }
+    FORCEINLINE bool HasAnySibling() const noexcept { return this->Siblings.IsEmpty() == false; }
+    FORCEINLINE auto GetSiblings() const noexcept -> const TArray<LWidgetFactory*>& { return this->Siblings; }
 
 private:
 
-    FORCEINLINE auto GetMutableSiblingsDangerous() -> TArray<LWidgetFactory*>& { return this->Siblings; }
+    FORCEINLINE TArray<LWidgetFactory*>& GetMutableSiblingsDangerous() noexcept { return this->Siblings; }
 
-    WWidgetNode* Node = nullptr;
-    TArray<LWidgetFactory*> Siblings = { };
+    WNode* Node = nullptr;
+    TArray<LWidgetFactory*> Siblings;
 };
 
 //#
@@ -327,7 +348,7 @@ class TWidgetFactory : public LWidgetFactory
 {
 public:
 
-    friend WWidgetNode;
+    friend WNode;
     friend Private::LWidgetFactoryUtility;
 
     using Super         = LWidgetFactory;
@@ -337,13 +358,11 @@ public:
     //# The return type of the factory. Always valid.
     using TFactoryRetTy = typename TNodeTy::TWidgetFactory;
 
-#if DO_SLOW_CHECKS /* This just costs too much runtime performance. So just check the cast with slow checks. */
     FORCEINLINE TNodeTy* GetNode() const { return CheckedStaticCast<TNodeTy>(this->GetNodeRaw()); }
-#else /* DO_SLOW_CHECKS */
-    FORCEINLINE TNode* GetNode() const { return reinterpret_cast<TNode*>(this->GetNodeRaw()); }
-#endif /* !DO_SLOW_CHECKS */
 
-    FORCEINLINE TFactoryRetTy& Self() { return *static_cast<TFactoryRetTy*>(this); }
+    //# @return A pointer to self.
+    FORCEINLINE TFactoryRetTy& Self() noexcept { return *static_cast<TFactoryRetTy*>(this); }
+    //# @return A pointer to this.
     FORCEINLINE TNodeTy*       This() { return this->GetNode(); }
 
     FORCEINLINE TFactoryRetTy& Anchor(const LAnchor&      InAnchor) { this->This()->SetAnchor(InAnchor); return this->Self(); }
@@ -353,12 +372,19 @@ public:
 
     FORCEINLINE TFactoryRetTy& Visibility(const EWidgetVisibility::Type InVisibility) { this->This()->SetVisibility(InVisibility); return this->Self(); }
 
-    template <typename T> FORCEINLINE auto SaveTo(T*& Out) -> TFactoryRetTy&;
-    template <typename T> FORCEINLINE auto operator>>(T*& Out) -> TFactoryRetTy& { return this->SaveTo(std::forward<T*&>(Out)); }
+    template <typename T> FORCEINLINE auto SaveTo(T** Out) -> TFactoryRetTy&;
+    template <typename T> FORCEINLINE auto operator>>(T** Out) -> TFactoryRetTy& { return this->SaveTo(std::forward<T*&>(Out)); }
 
     FORCEINLINE TFactoryRetTy& AddSibling(LWidgetFactory* InSibling);
     FORCEINLINE TFactoryRetTy& operator+(LWidgetFactory& InSibling) { return this->AddSibling(&InSibling); }
 };
+
+//#
+//# The body of every factory deriving from TWidgetFactory<TNode>.
+//#
+#define GENERATED_FACTORY_BODY(TSuper)                   \
+    using Super         = TSuper<TNode>;                 \
+    using TFactoryRetTy = typename Super::TFactoryRetTy; \
 
 //#
 //# Constructs a new widget node in the given context
@@ -366,39 +392,22 @@ public:
 //# @see User/Frontend/DebugScreen.cpp (for usage example)
 //#
 template <typename TNode>
-FORCEINLINE auto ConstructWidgetNode(LObjectContext* InContext) -> TNode*;
-FORCEINLINE auto ConstructWidgetNode(LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass) -> WWidgetNode*;
+FORCEINLINE TNode* ConstructWidgetNode(LObjectContext* InContext);
+template <typename TNode>
+FORCEINLINE TNode* ConstructWidgetNode(LObjectContext* InContext, const TSubclassOf<TNode>& InClass);
+
 //#
 //# Constructs a new deferred widget node in the given context.
 //# @see NewNode(TNode) (Wsdsml)
 //# @see User/Frontend/DebugScreen.cpp (for usage example)
 //#
 template <typename TNode>
-FORCEINLINE auto ConstructDeferredWidgetNode(LObjectContext* InContext) -> TNode*;
-FORCEINLINE auto ConstructDeferredWidgetNode(LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass) -> WWidgetNode*;
-
-//#
-//# Before constructing empty context widget, update the global specific widget context.
-//# This behaves like a state machine.
-//#
-ENGINE_API extern LObjectContext* GCurrentWidgetContextState;
-
-//# Constructs a new widget node in the current context of the current program widget state context.
+FORCEINLINE TNode* ConstructDeferredWidgetNode(LObjectContext* InContext);
 template <typename TNode>
-FORCEINLINE auto ConstructWidgetNode() -> TNode*;
-template <typename TNode>
-FORCEINLINE auto ConstructWidgetNode(const TSubclassOf<TNode>& InClass) -> TNode*;
-FORCEINLINE auto ConstructWidgetNode(const TSubclassOf<WWidgetNode>& InClass) -> WWidgetNode*;
-//# Constructs a new deferred widget node in the current context of the current program widget state context.
-template <typename TNode>
-FORCEINLINE auto ConstructDeferredWidgetNode() -> TNode*;
-template <typename TNode>
-FORCEINLINE auto ConstructDeferredWidgetNode(const TSubclassOf<TNode>& InClass) -> TNode*;
-FORCEINLINE auto ConstructDeferredWidgetNode(const TSubclassOf<WWidgetNode>& InClass) -> WWidgetNode*;
-FORCEINLINE auto ConstructDeferredWidgetNodeImpl(const TSubclassOf<WWidgetNode>& InClass) -> WWidgetNode*;
+FORCEINLINE TNode* ConstructDeferredWidgetNode(LObjectContext* InContext, const TSubclassOf<TNode>& InClass);
 
 //# Call this method to finalize a widget that was deferred.
-FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode);
+FORCEINLINE void MakeDeferredWidgetNodeFinal(WNode* InNode);
 
 struct LWidgetNodeData
 {
@@ -407,20 +416,19 @@ struct LWidgetNodeData
 
 //#
 //# The base class for everything that can be interpreted as a visual element.
+//# Generally speaking, inheriting from this class directly is not recommended.
 //#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactory, EClassFlags::Abstract)
-class ENGINE_API WWidgetNode : public ::Jafg::JObjectBase
+class ENGINE_API WNode : public JObjectBase
 {
     GENERATED_CLASS_BODY()
 
     friend WUserWidget;
-    friend WWidgetParent;
-    friend WWidgetParentBase;
     friend LWidgetConstructor;
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WWidgetNode)
+    DEFAULT_OBJECT_CONSTRUCTOR(WNode)
 
 public:
 
@@ -451,7 +459,10 @@ public:
 
     virtual void Draw(LViewport& Context) const { check( this->ShouldNowDraw() ) }
 
+    //#
     //# Use this method to pass arbitrary typesafe data to the widget.
+    //# @return True, if the data was used successfully.
+    //#
     virtual bool AddData(LWidgetNodeData* InData) { return false; }
 
             bool         IsInBounds(const LViewport& Context, const LVector2& InLocation) const;
@@ -466,7 +477,7 @@ public:
     virtual LReply       OnKeyUp(LKeyEvent& InKeyEvent) { return LReply::Unhandled(); }
 
     bool IsFocusWidget() const;
-    bool IsFocusWidgetTransitive() const; /* Slow. */
+    bool IsFocusWidgetTransitive() const; /* Warning: Slow. */
     virtual bool IsFocusWidgetTransitive(const LViewport* InViewport) const;
 
     FORCEINLINE bool ShouldNowTick() const { return this->bAllowTick && EWidgetVisibility::IsTicked(this->Visibility); }
@@ -495,54 +506,65 @@ public:
     //# @param bDestroy If true, this child will be killed automatically by the butcher at his next sweep.
     //#
     virtual     void RemoveFromParent(const bool bDestroy = true);
-                auto GetParent() const -> WWidgetParentBase*;
-    FORCEINLINE auto GetParentChecked() const -> WWidgetParentBase* { WWidgetParentBase* Out = this->GetParent(); check( Out ); return Out; }
-    FORCEINLINE auto GetParentAsserted() const -> WWidgetParentBase* { WWidgetParentBase* Out = this->GetParent(); jassert( Out ); return Out; }
+                auto GetParent() const -> WParentBase*;
+    FORCEINLINE auto GetParentChecked() const -> WParentBase* { WParentBase* Out = this->GetParent(); check( Out ); return Out; }
+    FORCEINLINE auto GetParentAsserted() const -> WParentBase* { WParentBase* Out = this->GetParent(); jassert( Out ); return Out; }
 
     //#
     //# Searches for a node in this widget tree. Only searches nodes that are drawn.
     //# @return True, if the target node exists in this widget tree and is visible.
     //#
-    virtual bool FindNodeInVisiblePath(const WWidgetNode* InNode) const;
+    virtual bool FindNodeInVisiblePath(const WNode* InNode) const;
 
     //# @return The size of the current viewport in pixels.
-    LIntVector2  GetViewportSize() const;
-    virtual auto GetViewport() const -> LViewport*;
+    LIntVector2 GetViewportSize() const;
+    virtual LViewport* GetViewport() const;
     FORCEINLINE virtual LViewport* GetViewportChecked() const { LViewport* Out = this->GetViewport(); check( Out ) return Out; }
     FORCEINLINE virtual LViewport* GetViewportAsserted() const { LViewport* Out = this->GetViewport(); jassert( Out ) return Out; }
 
     //# Virtual update method for the desired size. Automatically called. Do not call manually.
-    virtual     void UpdateDesiredSize() const { }
-                void SetDesiredSize(const LVector2& InSize) const;
+    virtual void UpdateDesiredSize() const { }
+    //#
+    //# Update the #DesiredSize of a widget inside the overridden #UpdateDesiredSize method with this one.
+    //# Do not call this method from outside the #UpdateDesiredSize method.
+    //#
+    void SetDesiredSize(const LVector2& InSize) const;
+    //# Internal usage only. Do not use.
     FORCEINLINE void SetDesiredSizeRaw(const LVector2& InSize) const { this->DesiredSize = InSize; }
-    FORCEINLINE auto GetDesiredSize() const -> const LVector2& { return this->DesiredSize; }
-    FORCEINLINE auto GetDesiredSizeSmart() const -> const LVector2& { return this->TransformsWidgetLayout() ? this->DesiredSize : LVector2::ZeroVector; }
-    FORCEINLINE auto GetMinDesiredSize() const -> const LVector2& { return this->MinDesiredSize; }
-    FORCEINLINE auto SetMinDesiredSize(const LVector2& InSize) -> void { this->MinDesiredSize = InSize; }
-    //# @return The top left corner of the widget relative to its direct parent's top left corner.
-            LVector2 GetRelativeTopLeftFromOuter() const;
-    //# @return The top left corner of the direct child relative to this widget's top left corner.
-    virtual LVector2 GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const PURE_VIRTUAL(return { })
+    FORCEINLINE const LVector2& GetDesiredSize() const { return this->DesiredSize; }
+    FORCEINLINE const LVector2& GetDesiredSizeSmart() const { return this->TransformsWidgetLayout() ? this->DesiredSize : LVector2::ZeroVector; }
+    FORCEINLINE const LVector2& GetMinDesiredSize() const { return this->MinDesiredSize; }
+    //# The min desired size. A widget will always be at least this size.
+    FORCEINLINE void SetMinDesiredSize(const LVector2& InSize) { this->MinDesiredSize = InSize; return; }
 
     //# Virtual update method for the anchored size. Automatically called. Do not call manually.
-    virtual     void UpdateAnchoredSize(const LViewport& Context) const;
+    virtual void UpdateAnchoredSize(const LViewport& Context) const;
     //# Virtual update method for the anchored size of a child. Automatically called. Do not call manually.
-    virtual     void UpdateAnchoredSizeForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const PURE_VIRTUAL()
+    virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const PURE_VIRTUAL()
     FORCEINLINE void SetAnchoredSize(const LVector2& InSize) const { this->AnchoredSize = InSize; }
+    FORCEINLINE void SetAnchoredSize(LVector2&& InSize) const { this->AnchoredSize = std::move(InSize); }
     FORCEINLINE auto GetAnchoredSize() const -> LVector2 { return this->AnchoredSize; }
     //# @return The anchored top left corner of the widget relative to the given context's top left corner.
-            LVector2 GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const;
+    virtual LVector2 GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const;
     //# @return The anchored top left corner of the direct child relative to the given context's top left corner.
-    virtual LVector2 GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const PURE_VIRTUAL(return { })
+    virtual LVector2 GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const PURE_VIRTUAL(return { })
 
     FORCEINLINE bool IsSlotValid() const { return this->Slot != nullptr; }
-    FORCEINLINE auto GetSlot() const -> LWidgetSlot* { return this->Slot; }
-    FORCEINLINE auto GetSlotChecked() const -> LWidgetSlot* { LWidgetSlot* Out = this->GetSlot(); check( Out ); return Out; }
-    FORCEINLINE auto GetSlotAsserted() const -> LWidgetSlot* { LWidgetSlot* Out = this->GetSlot(); jassert( Out ); return Out; }
+    FORCEINLINE LWidgetSlot* GetSlot() const { return this->Slot; }
+    FORCEINLINE LWidgetSlot* GetSlotChecked() const { LWidgetSlot* Out = this->GetSlot(); check( Out ); return Out; }
+    FORCEINLINE LWidgetSlot* GetSlotAsserted() const { LWidgetSlot* Out = this->GetSlot(); jassert( Out ); return Out; }
+                TOptional<LMargin> GetMargin() const;
+    FORCEINLINE TOptional<LMargin> GetMarginChecked() const { TOptional<LMargin> Out = this->GetMargin(); check( Out.IsSet() ); return Out; }
+    FORCEINLINE TOptional<LMargin> GetMarginAsserted() const { TOptional<LMargin> Out = this->GetMargin(); jassert( Out.IsSet() ); return Out; }
+                bool SetMargin(const LMargin& InMargin);
+    FORCEINLINE bool SetMarginChecked(const LMargin& InMargin) { const bool Out = this->SetMargin(InMargin); check( Out ); return Out; }
+    FORCEINLINE bool SetMarginAsserted(const LMargin& InMargin) { const bool Out = this->SetMargin(InMargin); jassert( Out ); return Out; }
+
+    FORCEINLINE LWidgetSlot** GetMutableSlotDangerousDoNotUseForInternalStuffOnlyOrIfYouWantYourOwnParentClass() { return &this->Slot; }
 
     //#
     //# Prepare and use the factory for the given node. Only valid in the engine tick where the factory was requested
-    //# for. A new factory has to be requested for every new widget node and if the Wdsmml syntax is used for a given
+    //# for. A new factory has to be requested for every new widget node and if the Wsdsml syntax is used for a given
     //# node that is already living for an x amount of time.
     //#
     //# @tparam TNode The node to get the factory for.
@@ -562,8 +584,8 @@ public:
     FORCEINLINE void SetAnchor(const LAnchor&      InAnchor) { this->Anchor = InAnchor; }
     FORCEINLINE void SetAnchor(const EAnchor::Type InAnchor) { this->Anchor = InAnchor; }
 
-    auto GetEngine() const -> LEngine*;
-    auto GetLocalEgo() const -> LLocalEgo*;
+    LEngine*   GetEngine() const;
+    LLocalEgo* GetLocalEgo() const;
 
 private:
 
@@ -591,18 +613,18 @@ private:
     //#
     mutable LVector2 AnchoredSize = LVector2::Zero();
 
-    LAnchor Anchor = EAnchor::TopLeft;
+    LAnchor Anchor { EAnchor::TopLeft };
 };
 
 template <typename TInNode>
-typename TInNode::TWidgetFactory& Private::LWidgetFactoryUtility::MakeWidgetFactory(const WWidgetNode* InNode)
+typename TInNode::TWidgetFactory& Private::LWidgetFactoryUtility::MakeWidgetFactory(const WNode* InNode)
 {
     using TNode    = TInNode;
     using TFactory = typename TNode::TWidgetFactory;
     using TFacNode = typename TNode::TWidgetFactory::TNodeTy;
 
-    static_assert(std::is_base_of_v<WWidgetNode, TNode>, "The node must be a widget node.");
-    static_assert(std::is_base_of_v<WWidgetNode, TFacNode>, "The factory must be a widget factory.");
+    static_assert(std::is_base_of_v<WNode, TNode>, "The node must be a widget node.");
+    static_assert(std::is_base_of_v<WNode, TFacNode>, "The factory must be a widget factory.");
 
     check( DynamicCast<TNode>(InNode) )
 
@@ -612,7 +634,7 @@ typename TInNode::TWidgetFactory& Private::LWidgetFactoryUtility::MakeWidgetFact
     }
 
     TFactory* Factory = new TFactory();
-    Factory->Node = const_cast<WWidgetNode*>(InNode);
+    Factory->Node = const_cast<WNode*>(InNode);
 
     Private::AddWidgetFactory(Factory);
 
@@ -621,90 +643,52 @@ typename TInNode::TWidgetFactory& Private::LWidgetFactoryUtility::MakeWidgetFact
 
 template <typename TNode>
 template <typename T>
-typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::SaveTo(T*& Out)
+FORCEINLINE typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::SaveTo(T** Out)
 {
-    static_assert(std::is_base_of_v<WWidgetNode, T>);
+    check( Out )
+    static_assert(std::is_base_of_v<WNode, T>);
     static_assert(std::is_base_of_v<T, TNodeTy>);
-    Out = this->GetNode();
+    *Out = this->GetNode();
     return this->Self();
 }
 
 template <typename TNode>
-typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::AddSibling(LWidgetFactory* InSibling)
+FORCEINLINE typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::AddSibling(LWidgetFactory* InSibling)
 {
     check( this->Siblings.Contains(InSibling) == false )
     this->Siblings.Add(InSibling);
     return this->Self();
 }
 
-WWidgetNode* ConstructWidgetNode(LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass)
+template <typename TNode>
+FORCEINLINE TNode* ConstructWidgetNode(LObjectContext* InContext)
 {
-    WWidgetNode* Node = ConstructDeferredWidgetNode(InContext, InClass);
-    ::Jafg::MakeDeferredWidgetNodeFinal(Node);
-    return Node;
+    return ConstructWidgetNode<TNode>(InContext, TNode::StaticClass());
+}
+
+template<typename TNode>
+FORCEINLINE TNode* ConstructWidgetNode(LObjectContext* InContext, const TSubclassOf<TNode>& InClass)
+{
+    const TNode* Out = ConstructDeferredWidgetNode<TNode>(InContext, InClass);
+    MakeDeferredWidgetNodeFinal(Out);
+    return Out;
 }
 
 template <typename TNode>
-TNode* ConstructWidgetNode(LObjectContext* InContext)
+FORCEINLINE TNode* ConstructDeferredWidgetNode(LObjectContext* InContext)
 {
-    return CheckedStaticCast<TNode>(InContext, TNode::StaticClass());
+    return ConstructDeferredWidgetNode<TNode>(InContext, TNode::StaticClass());
 }
 
-template <typename TNode>
-TNode* ConstructDeferredWidgetNode(LObjectContext* InContext)
+template<typename TNode>
+FORCEINLINE TNode* ConstructDeferredWidgetNode(LObjectContext* InContext, const TSubclassOf<TNode>& InClass)
 {
-    return CheckedStaticCast<TNode>(ConstructDeferredWidgetNode(InContext, TNode::StaticClass()));
+    return CheckedStaticCast<TNode>(NewDeferredObject(InContext, InClass));
 }
 
-WWidgetNode* ConstructDeferredWidgetNode(LObjectContext* InContext, const TSubclassOf<WWidgetNode>& InClass)
+FORCEINLINE void MakeDeferredWidgetNodeFinal(WNode* InNode)
 {
-    return NewDeferredObject<WWidgetNode, false, true>(InContext, InClass);
-}
-
-template <typename TNode>
-TNode* ConstructWidgetNode()
-{
-    return ConstructWidgetNode(TNode::StaticClass());
-}
-
-template <typename TNode>
-TNode* ConstructWidgetNode(const TSubclassOf<TNode>& InClass)
-{
-    return CheckedStaticCast<TNode>(ConstructWidgetNode(InClass));
-}
-
-WWidgetNode* ConstructWidgetNode(const TSubclassOf<WWidgetNode>& InClass)
-{
-    checkSlow( GCurrentWidgetContextState )
-    return ConstructWidgetNode(GCurrentWidgetContextState, InClass);
-}
-
-template <typename TNode>
-TNode* ConstructDeferredWidgetNode()
-{
-    return CheckedStaticCast<TNode>(ConstructDeferredWidgetNode(TNode::StaticClass()));
-}
-
-template <typename TNode>
-TNode* ConstructDeferredWidgetNode(const TSubclassOf<TNode>& InClass)
-{
-    return CheckedStaticCast<TNode>(ConstructDeferredWidgetNodeImpl(InClass));
-}
-
-WWidgetNode* ConstructDeferredWidgetNode(const TSubclassOf<WWidgetNode>& InClass)
-{
-    return ConstructDeferredWidgetNodeImpl(InClass);
-}
-
-WWidgetNode* ConstructDeferredWidgetNodeImpl(const TSubclassOf<WWidgetNode>& InClass)
-{
-    checkSlow( GCurrentWidgetContextState )
-    return ConstructDeferredWidgetNode(GCurrentWidgetContextState, InClass);
-}
-
-FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode)
-{
-    checkSlow( InNode )
+    check( InNode )
     MakeDeferredObjectFinal(InNode);
     return;
 }
@@ -719,10 +703,17 @@ FORCEINLINE void MakeDeferredWidgetNodeFinal(WWidgetNode* InNode)
 // @see User/Frontend/Osd/DebugScreen.cpp
 ///////////////////////////////////////////////////////////////////////////////
 
-#define MakeRootNode(TRoot)   (*this->ReplaceRoot(NewNodeNoFactory(TRoot))).GetFactory<TRoot>()
-#define FinishWidgetStyling() ;MakeDeferredWidgetNodeFinal(this->GetRoot());
+//# Make a new root node. In #UserWidgets only.
+#define MakeRootNode(TRoot)                 (*this->ReplaceRoot(NewNodeNoFactory(TRoot))).GetFactory<TRoot>()
+//# End the new root node declaration started in #MakeRootNode.
+#define FinishWidgetStyling()               ;MakeDeferredWidgetNodeFinal(this->GetRoot());
 
-#define FinishWidget(Root)    ;MakeDeferredWidgetNodeFinal(Root)
+//# Make a new node. Can be used everywhere.
+#define NewNodeNoFactory(TNode)             (*ConstructDeferredWidgetNode<TNode>(this->GetOuter()))
+#define NewNodeNoFactoryCtx(Ctx, TNode)     (*ConstructDeferredWidgetNode<TNode>((Ctx)->GetOuter()))
 
-#define NewNodeNoFactory(TNode) (*ConstructDeferredWidgetNode<TNode>())
-#define NewNode(TNode)          (*ConstructDeferredWidgetNode<TNode>()).GetFactory<TNode>()
+//# Make a new node. Can be used everywhere.
+#define NewNode(TNode)                      (*ConstructDeferredWidgetNode<TNode>(this->GetOuter())).GetFactory<TNode>()
+#define NewNodeCtx(Ctx, TNode)              (*ConstructDeferredWidgetNode<TNode>((Ctx)->GetOuter())).GetFactory<TNode>()
+//# End the new node declaration started in #NewNodeNoFactory or #NewNode or #NewNodeCtx.
+#define FinishWidget(Root)                  ;MakeDeferredWidgetNodeFinal(Root)

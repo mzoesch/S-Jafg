@@ -63,4 +63,4 @@ private:
     bool bMeaningful;
 };
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */

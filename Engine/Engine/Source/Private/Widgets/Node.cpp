@@ -1,12 +1,12 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
-#include "Widgets/WidgetNode.h"
+#include "Widgets/Node.h"
 #include "Engine/Engine.h"
 #include "Widgets/Viewport.h"
-#include "Widgets/WidgetParent.h"
+#include "Widgets/Parent.h"
 
-#include "Widgets/WidgetRegion.h"
+#include "Widgets/Region.h"
 
 namespace
 {
@@ -77,16 +77,16 @@ ENGINE_API i32 PurgeWidgetFactories()
 namespace Jafg
 {
 
-ENGINE_API const LAnchor LAnchor::VTop           = { 0.0f, 0.0f, 0.0f, 0.0f };
-ENGINE_API const LAnchor LAnchor::VCenter        = { 0.0f, 0.5f, 0.0f, 0.0f };
-ENGINE_API const LAnchor LAnchor::VBottom        = { 0.0f, 1.0f, 0.0f, 0.0f };
-ENGINE_API const LAnchor LAnchor::HLeft          = { 0.0f, 0.0f, 0.0f, 0.0f };
-ENGINE_API const LAnchor LAnchor::HCenter        = { 0.5f, 0.0f, 0.0f, 0.0f };
-ENGINE_API const LAnchor LAnchor::HRight         = { 1.0f, 0.0f, 0.0f, 0.0f };
-ENGINE_API const LAnchor LAnchor::VFill          = { 0.0f, 0.0f, 0.0f, 1.0f };
-ENGINE_API const LAnchor LAnchor::HFill          = { 0.0f, 0.0f, 1.0f, 0.0f };
+ENGINE_API const LAnchor LAnchor::VTop    { 0.0f, 0.0f, 0.0f, 0.0f };
+ENGINE_API const LAnchor LAnchor::VCenter { 0.0f, 0.5f, 0.0f, 0.0f };
+ENGINE_API const LAnchor LAnchor::VBottom { 0.0f, 1.0f, 0.0f, 0.0f };
+ENGINE_API const LAnchor LAnchor::HLeft   { 0.0f, 0.0f, 0.0f, 0.0f };
+ENGINE_API const LAnchor LAnchor::HCenter { 0.5f, 0.0f, 0.0f, 0.0f };
+ENGINE_API const LAnchor LAnchor::HRight  { 1.0f, 0.0f, 0.0f, 0.0f };
+ENGINE_API const LAnchor LAnchor::VFill   { 0.0f, 0.0f, 0.0f, 1.0f };
+ENGINE_API const LAnchor LAnchor::HFill   { 0.0f, 0.0f, 1.0f, 0.0f };
 
-bool LAnchor::IsNormalized() const
+bool LAnchor::IsNormalized() const noexcept
 {
     return
            this->Anchors.X >= 0.0f && this->Anchors.Y >= 0.0f && this->Anchors.Z >= 0.0f && this->Anchors.W >= 0.0f
@@ -95,7 +95,7 @@ bool LAnchor::IsNormalized() const
         && this->MinY + this->MaxY <= 1.0f;
 }
 
-void LAnchor::Normalize()
+void LAnchor::Normalize() noexcept
 {
 #if DO_CHECKS
     LAnchor Old = *this;
@@ -141,7 +141,7 @@ struct LWidgetConstructor
 
 } /* ~Namespace Jafg */
 
-void Jafg::WWidgetNode::OnGarbage()
+void Jafg::WNode::OnGarbage()
 {
     Super::OnGarbage();
 
@@ -150,8 +150,13 @@ void Jafg::WWidgetNode::OnGarbage()
     return;
 }
 
-bool Jafg::WWidgetNode::IsInBounds(const LViewport& Context, const LVector2& InLocation) const
+bool Jafg::WNode::IsInBounds(const LViewport& Context, const LVector2& InLocation) const
 {
+    if (this->TransformsWidgetLayout() == false)
+    {
+        return false;
+    }
+
     const LVector2 TopLeftMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context);
     return
             TopLeftMostOuter.X <= InLocation.X
@@ -161,7 +166,7 @@ bool Jafg::WWidgetNode::IsInBounds(const LViewport& Context, const LVector2& InL
          ;
 }
 
-Jafg::LCursorReply Jafg::WWidgetNode::SweepMouse(LViewport& Context, const LVector2& InLocation)
+Jafg::LCursorReply Jafg::WNode::SweepMouse(LViewport& Context, const LVector2& InLocation)
 {
     if (this->IsHitTestable() == false)
     {
@@ -185,7 +190,7 @@ Jafg::LCursorReply Jafg::WWidgetNode::SweepMouse(LViewport& Context, const LVect
     return this->OnCursorMoved(InLocation);
 }
 
-Jafg::LReply Jafg::WWidgetNode::SweepFocusTest(LViewport& Context, const LVector2& InLocation)
+Jafg::LReply Jafg::WNode::SweepFocusTest(LViewport& Context, const LVector2& InLocation)
 {
     if (this->IsInBounds(Context, InLocation) == false || this->IsHitTestable() == false)
     {
@@ -195,7 +200,7 @@ Jafg::LReply Jafg::WWidgetNode::SweepFocusTest(LViewport& Context, const LVector
     return { this };
 }
 
-bool Jafg::WWidgetNode::IsFocusWidget() const
+bool Jafg::WNode::IsFocusWidget() const
 {
     if (const LViewport* Viewport = this->GetViewport(); ensure(Viewport))
     {
@@ -205,12 +210,12 @@ bool Jafg::WWidgetNode::IsFocusWidget() const
     return false;
 }
 
-bool Jafg::WWidgetNode::IsFocusWidgetTransitive() const
+bool Jafg::WNode::IsFocusWidgetTransitive() const
 {
     return this->IsFocusWidgetTransitive(this->GetViewport());
 }
 
-bool Jafg::WWidgetNode::IsFocusWidgetTransitive(const LViewport* InViewport) const
+bool Jafg::WNode::IsFocusWidgetTransitive(const LViewport* InViewport) const
 {
     if (InViewport)
     {
@@ -220,7 +225,7 @@ bool Jafg::WWidgetNode::IsFocusWidgetTransitive(const LViewport* InViewport) con
     return false;
 }
 
-void Jafg::WWidgetNode::SetVisibility(const EWidgetVisibility::Type InVisibility)
+void Jafg::WNode::SetVisibility(const EWidgetVisibility::Type InVisibility)
 {
     if (this->Visibility == InVisibility)
     {
@@ -234,7 +239,7 @@ void Jafg::WWidgetNode::SetVisibility(const EWidgetVisibility::Type InVisibility
     return;
 }
 
-void Jafg::WWidgetNode::RemoveFromParent(const bool bDestroy /* = true */)
+void Jafg::WNode::RemoveFromParent(const bool bDestroy /* = true */)
 {
     if (this->Slot)
     {
@@ -250,7 +255,7 @@ void Jafg::WWidgetNode::RemoveFromParent(const bool bDestroy /* = true */)
     return;
 }
 
-auto Jafg::WWidgetNode::GetParent() const -> WWidgetParentBase*
+Jafg::WParentBase* Jafg::WNode::GetParent() const
 {
     if (this->Slot)
     {
@@ -260,17 +265,17 @@ auto Jafg::WWidgetNode::GetParent() const -> WWidgetParentBase*
     return nullptr;
 }
 
-bool Jafg::WWidgetNode::FindNodeInVisiblePath(const WWidgetNode* InNode) const
+bool Jafg::WNode::FindNodeInVisiblePath(const WNode* InNode) const
 {
     return this == InNode && this->ShouldNowDraw();
 }
 
-Jafg::LIntVector2 Jafg::WWidgetNode::GetViewportSize() const
+Jafg::LIntVector2 Jafg::WNode::GetViewportSize() const
 {
     return this->GetViewportChecked()->GetDimensions();
 }
 
-Jafg::LViewport* Jafg::WWidgetNode::GetViewport() const
+Jafg::LViewport* Jafg::WNode::GetViewport() const
 {
     if (this->Slot)
     {
@@ -281,7 +286,7 @@ Jafg::LViewport* Jafg::WWidgetNode::GetViewport() const
     return nullptr;
 }
 
-void Jafg::WWidgetNode::SetDesiredSize(const LVector2& InSize) const
+void Jafg::WNode::SetDesiredSize(const LVector2& InSize) const
 {
     this->DesiredSize = InSize;
     this->DesiredSize.X = Maths::Max(this->DesiredSize.X, this->MinDesiredSize.X);
@@ -292,17 +297,7 @@ void Jafg::WWidgetNode::SetDesiredSize(const LVector2& InSize) const
     return;
 }
 
-Jafg::LVector2 Jafg::WWidgetNode::GetRelativeTopLeftFromOuter() const
-{
-    if (this->Slot)
-    {
-        return this->Slot->Parent->GetRelativeTopLeftForChild(this);
-    }
-
-    return LVector2::Zero();
-}
-
-void Jafg::WWidgetNode::UpdateAnchoredSize(const LViewport& Context) const
+void Jafg::WNode::UpdateAnchoredSize(const LViewport& Context) const
 {
     check( this->TransformsWidgetLayout() )
     check( this->Anchor.IsNormalized() )
@@ -314,34 +309,59 @@ void Jafg::WWidgetNode::UpdateAnchoredSize(const LViewport& Context) const
     }
 
     LVector2 Out;
-    Out.X = Maths::Max(this->Anchor.MaxX * static_cast<float>(Context.GetDimensions().X), this->DesiredSize.X);
-    Out.Y = Maths::Max(this->Anchor.MaxY * static_cast<float>(Context.GetDimensions().Y), this->DesiredSize.Y);
+    Out.X = Maths::Max(this->Anchor.MaxX * static_cast<f32>(Context.GetDimensions().X), this->DesiredSize.X);
+    Out.Y = Maths::Max(this->Anchor.MaxY * static_cast<f32>(Context.GetDimensions().Y), this->DesiredSize.Y);
     this->SetAnchoredSize(Out);
 
     return;
 }
 
-Jafg::LVector2 Jafg::WWidgetNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const
+Jafg::LVector2 Jafg::WNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const
 {
+    check( this->TransformsWidgetLayout() )
+    check( this->Anchor.IsNormalized() )
+
     if (this->Slot)
     {
         return this->Slot->Parent->GetAnchoredTopLeftFromMostOuterForChild(Context, this);
     }
 
     LVector2 Out;
-    Out.X = this->Anchor.MinX * (static_cast<float>(Context.GetDimensions().X) * this->DesiredSize.X);
-    Out.Y = this->Anchor.MinY * (static_cast<float>(Context.GetDimensions().Y) * this->DesiredSize.Y);
+    Out.X = this->Anchor.MinX * static_cast<f32>(Context.GetDimensions().X);
+    Out.Y = this->Anchor.MinY * static_cast<f32>(Context.GetDimensions().Y);
 
     return Out;
 }
 
-Jafg::LEngine* Jafg::WWidgetNode::GetEngine() const
+Jafg::TOptional<Jafg::LWhitespace> Jafg::WNode::GetMargin() const
+{
+    if (this->Slot && this->Slot->Margin)
+    {
+        return *this->Slot->Margin;
+    }
+
+    return { };
+}
+
+bool Jafg::WNode::SetMargin(const LMargin& InMargin)
+{
+    if (this->Slot && this->Slot->Margin)
+    {
+        *this->Slot->Margin = InMargin;
+        return true;
+    }
+
+    return false;
+}
+
+Jafg::LEngine* Jafg::WNode::GetEngine() const
 {
     check( GEngine )
     return GEngine;
 }
 
-Jafg::LLocalEgo* Jafg::WWidgetNode::GetLocalEgo() const
+Jafg::LLocalEgo* Jafg::WNode::GetLocalEgo() const
 {
+    check( GEngine )
     return GEngine->GetLocalEgo();
 }

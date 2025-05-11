@@ -10,7 +10,7 @@
 // Compiler options
 
 //#
-//# Whether the C++ compiler should check for pure virtual functions, and if they have been overriden by any derived
+//# Whether the C++ compiler should check for pure virtual functions, and if they have been overridden by any derived
 //# class. Usually disabled as the program may not run with this option enabled.
 //# Abstract classes must still be instantiable to satisfy the object registry that runs at every module startup.
 //# Usually, this program panics if it encounters a non-implemented pure virtual method.
@@ -50,7 +50,7 @@ class TSubclassOf;
 class LCarnifex;
 class JObjectBase;
 class AActor;
-class WWidgetNode;
+class WNode;
 class NextIsObjectBaseClass;
 struct LClassField;
 struct LObjectInitializer;
@@ -122,13 +122,13 @@ FORCEINLINE auto DynamicCast(const JObjectBase* InObject) -> const TObj*;
 //#         meaningless if DO_CHECKS is false. So you cannot check if this object is valid, e.g., if it is nullptr.
 //#
 template <typename TObj, typename U, bool bAllowForNullptr = false>
-FORCEINLINE auto CheckedStaticCast(U* InObject) -> TObj*;
+FORCEINLINE TObj* CheckedStaticCast(U* InObject);
 template <typename TObj, typename U, bool bAllowForNullptr = false>
-FORCEINLINE auto CheckedStaticCast(const U* InObject) -> const TObj*;
+FORCEINLINE const TObj* CheckedStaticCast(const U* InObject);
 
 //# @return The default package referrer.
 template <typename TObj>
-FORCEINLINE auto GetDefault() -> const TObj*;
+FORCEINLINE const TObj* GetDefault();
 //#
 //#  @return  The default package referrer that is mutable.
 //#  @remarks Mutating any members of the referrer will not affect already instantiated objects but only objects that are
@@ -137,7 +137,7 @@ FORCEINLINE auto GetDefault() -> const TObj*;
 //#           sparingly - or for "singleton" like objects.
 //#
 template <typename TObj>
-FORCEINLINE auto GetMutableDefault() -> TObj*;
+FORCEINLINE TObj* GetMutableDefault();
 
 ENGINE_API void PullConfigFromObject(LObjectClass* InClass);
 ENGINE_API void PushConfigFromObject(const LObjectClass* InClass);
@@ -343,7 +343,7 @@ template <typename TObj>
 FORCEINLINE TObj* NewObject()
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
-    static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
+    static_assert(std::is_base_of_v<WNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return NewObject<TObj>(GOmniVitaContext);
 }
 
@@ -351,7 +351,7 @@ template <typename TObj>
 FORCEINLINE TObj* NewObject(LObjectContext* InContext)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
-    static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
+    static_assert(std::is_base_of_v<WNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return Private::LObjectMiscellaneousAccessor::NewObject<TObj>(InContext);
 }
 
@@ -359,7 +359,7 @@ template <typename TObj>
 FORCEINLINE TObj* NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
-    static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
+    static_assert(std::is_base_of_v<WNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return reinterpret_cast<TObj*>(Private::LObjectMiscellaneousAccessor::NewObject(InContext, InStaticClass));
 }
 
@@ -382,7 +382,7 @@ template <typename TObj>
 FORCEINLINE TObj* NewDeferredObject()
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
-    static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
+    static_assert(std::is_base_of_v<WNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return NewDeferredObject<TObj>(GOmniVitaContext);
 }
 
@@ -390,7 +390,7 @@ template <typename TObj>
 FORCEINLINE TObj* NewDeferredObject(LObjectContext* InContext)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
-    static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
+    static_assert(std::is_base_of_v<WNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return Private::LObjectMiscellaneousAccessor::NewDeferredObject<TObj>(InContext);
 }
 
@@ -403,7 +403,7 @@ FORCEINLINE TObj* NewDeferredObject(LObjectContext* InContext, const LObjectClas
     }
     if constexpr (bAllowWidget == false)
     {
-        static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
+        static_assert(std::is_base_of_v<WNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     }
 
     return CheckedStaticCast<TObj>(NewDeferredObject(InContext, InStaticClass));
@@ -428,7 +428,7 @@ template <typename TObj>
 FORCEINLINE TObj* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
-    static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
+    static_assert(std::is_base_of_v<WNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return reinterpret_cast<TObj*>(LObjectMiscellaneousAccessor::NewObject(Context, TObj::StaticClass()));
 }
 
@@ -507,7 +507,7 @@ template <typename TObj>
 FORCEINLINE TObj* Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObjectContext* Context)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
-    static_assert(std::is_base_of_v<WWidgetNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
+    static_assert(std::is_base_of_v<WNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return reinterpret_cast<TObj*>(LObjectMiscellaneousAccessor::NewDeferredObject(Context, TObj::StaticClass()));
 }
 

@@ -72,45 +72,6 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(const LObjectClass* InClas
     return;
 }
 
-void Jafg::LSubsystemCollection::TearDownSubsystems()
-{
-    STAT_CYCLE_FUNCTION()
-
-    check( this->Outer )
-
-    LOG_VERBOSE(LogSubsystemCollection, "Tearing down {} subsystems for outer [{}].", this->SubsystemInstances.GetSize(), this->Outer->GetHumanReadableName())
-
-    for (i32 i = 0; i < this->SubsystemInstances.GetSize(); ++i)
-    {
-        JSubsystem*& Subsystem = this->SubsystemInstances[i];
-        checkSlow( Subsystem )
-
-        if (Subsystem->IsPriorityTearDown())
-        {
-            Subsystem->KillYourSelfNow();
-            Subsystem = nullptr;
-            checkSlow( this->SubsystemInstances[i] == nullptr )
-        }
-
-        continue;
-    }
-
-    for (JSubsystem* Subsystem : this->SubsystemInstances)
-    {
-        if (Subsystem)
-        {
-            Subsystem->KillYourSelfNow();
-        }
-
-        continue;
-    }
-
-    this->SubsystemInstances.Empty();
-    this->Outer = nullptr;
-
-    return;
-}
-
 void Jafg::LSubsystemCollection::InitializeDependency(const LObjectClass* InStaticClass)
 {
     JSubsystem* Subsystem = this->GetCheckedSubsystem(InStaticClass);
@@ -166,4 +127,60 @@ const Jafg::JSubsystem* Jafg::LSubsystemCollection::GetSubsystem(const LObjectCl
     }
 
     return nullptr;
+}
+
+void Jafg::LSubsystemCollection::TearDownPrioritySubsystems()
+{
+    STAT_CYCLE_FUNCTION()
+
+    check( this->Outer )
+
+    i32 SubsystemCount { 0 };
+
+    for (i32 i = 0; i < this->SubsystemInstances.GetSize(); ++i)
+    {
+        JSubsystem*& Subsystem = this->SubsystemInstances[i];
+        checkSlow( Subsystem )
+
+        if (Subsystem->IsPriorityTearDown())
+        {
+            Subsystem->KillYourSelfNow();
+            Subsystem = nullptr;
+            checkSlow( this->SubsystemInstances[i] == nullptr )
+            ++SubsystemCount;
+        }
+
+        continue;
+    }
+
+    if (SubsystemCount > 0)
+    {
+        LOG_VERBOSE(LogSubsystemCollection, "Tore down {} priority subsystems for outer [{}].", SubsystemCount, this->Outer->GetHumanReadableName())
+    }
+
+    return;
+}
+
+void Jafg::LSubsystemCollection::TearDownNonPrioritySubsystems()
+{
+    STAT_CYCLE_FUNCTION()
+
+    check( this->Outer )
+
+    LOG_VERBOSE(LogSubsystemCollection, "Tearing down {} subsystems for outer [{}].", this->SubsystemInstances.GetSize(), this->Outer->GetHumanReadableName())
+
+    for (JSubsystem* Subsystem : this->SubsystemInstances)
+    {
+        if (Subsystem)
+        {
+            Subsystem->KillYourSelfNow();
+        }
+
+        continue;
+    }
+
+    this->SubsystemInstances.Empty();
+    this->Outer = nullptr;
+
+    return;
 }

@@ -2,11 +2,11 @@
 
 #pragma once
 
-#include "Widgets/WidgetParent.h"
+#include "Widgets/Overlay.h"
 #include "Rhi/BoxShaderContext.h"
 #include "Misc/Optional.h"
 #include "Widgets/Image.h"
-#include "WidgetRegion.generated.h"
+#include "Region.generated.h"
 
 namespace Jafg
 {
@@ -18,12 +18,11 @@ struct LRegionBrush
 };
 
 template <typename TNode>
-class TWidgetFactoryWidgetRegion : public TWidgetFactoryParentBase<TNode>
+class TWidgetFactoryRegion : public TWidgetFactoryParentBase<TNode>
 {
 public:
 
-    using Super         = TWidgetFactoryParentBase<TNode>;
-    using TFactoryRetTy = typename Super::TFactoryRetTy;
+    GENERATED_FACTORY_BODY(TWidgetFactoryParentBase)
 
     FORCEINLINE TFactoryRetTy& Brush(const LRegionBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Tint(const LColor& InTint) { this->This()->SetTint(InTint); return this->Self(); }
@@ -32,17 +31,17 @@ public:
 };
 
 //#
-//# WWidgetRegion is a resizable Parent node. Every region has its layout bounds defined as (0, 0, width, height).
+//# WRegion is an overlay node that can be customized with a #LRegionBrush.
 //# A region might still draw outside these bounds.
 //#
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryWidgetRegion)
-class ENGINE_API WWidgetRegion : public WWidgetParent
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryRegion)
+class ENGINE_API WRegion : public WOverlay
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WWidgetRegion)
+    DEFAULT_OBJECT_CONSTRUCTOR(WRegion)
 
 public:
 

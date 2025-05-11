@@ -46,14 +46,14 @@ protected:
     virtual void Construct() override;
 
     FORCEINLINE bool IsTabBarPanelValid() const { return this->Panel != nullptr; }
-    FORCEINLINE auto GetTabBarPanel() -> WWidgetNode* { return this->Panel; }
-    FORCEINLINE auto GetTabBarPanel() const -> const WWidgetNode* { return this->Panel; }
-    FORCEINLINE auto GetTabBarPanelChecked() -> WWidgetNode* { check( this->Panel ); return this->Panel; }
-    FORCEINLINE auto GetTabBarPanelChecked() const -> const WWidgetNode* { check( this->Panel ); return this->Panel; }
+    FORCEINLINE auto GetTabBarPanel() -> WNode* { return this->Panel; }
+    FORCEINLINE auto GetTabBarPanel() const -> const WNode* { return this->Panel; }
+    FORCEINLINE auto GetTabBarPanelChecked() -> WNode* { check( this->Panel ); return this->Panel; }
+    FORCEINLINE auto GetTabBarPanelChecked() const -> const WNode* { check( this->Panel ); return this->Panel; }
 
 private:
 
-    WWidgetRegion* Panel = nullptr;
+    WRegion* Panel = nullptr;
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryCommonMenuTabBar)

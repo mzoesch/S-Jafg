@@ -545,11 +545,18 @@ void Jafg::LSurfaceGlfw3::CharCallback(const u32 Codepoint)
     #pragma warning( push )
     #pragma warning(disable: 4996)
 #endif /* WITH_MSVC */
+#if WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif /* WITH_CLANG */
     std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
     std::string utf8String = converter.to_bytes(Char);
 #if WITH_MSVC
     #pragma warning( pop )
 #endif /* WITH_MSVC */
+#if WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* WITH_CLANG */
 
     this->AddBufferedPlatformInput(utf8String.c_str());
 

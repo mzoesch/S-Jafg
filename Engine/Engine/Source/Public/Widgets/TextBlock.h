@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "WidgetNode.h"
+#include "Node.h"
 #include "Rhi/BoxShaderContext.h"
 #include "TextBlock.generated.h"
 
@@ -106,7 +106,7 @@ public:
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTextBlock)
-class ENGINE_API WTextBlock final : public WWidgetNode
+class ENGINE_API WTextBlock final : public WNode
 {
     GENERATED_CLASS_BODY()
 
@@ -143,8 +143,6 @@ public:
     FORCEINLINE void SetBrush(const LTextBlockBrush& InBrush) { this->Brush = InBrush; }
     FORCEINLINE auto GetBrush() const -> const LTextBlockBrush& { return this->Brush;    }
 
-    FORCEINLINE void SetMargin(const LMargin& InMargin) { *this->GetSlot()->Margin = InMargin; }
-    FORCEINLINE auto GetMargin() const -> const LMargin* { return this->GetSlot()->Margin; }
     FORCEINLINE void SetPadding(const LPadding& InPadding) { this->Padding = InPadding; }
     FORCEINLINE auto GetPadding() const -> const LPadding& { return this->Padding; }
 

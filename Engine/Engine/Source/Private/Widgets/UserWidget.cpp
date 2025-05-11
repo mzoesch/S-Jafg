@@ -3,7 +3,7 @@
 #include "CoreAfx.h"
 #include "Widgets/UserWidget.h"
 #include "Widgets/Viewport.h"
-#include "Widgets/WidgetParent.h"
+#include "Widgets/Parent.h"
 
 Jafg::WUserWidget::WUserWidget(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -65,7 +65,7 @@ void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy /* = true */)
     return;
 }
 
-void Jafg::WUserWidget::RemoveChild(WWidgetNode* InChild)
+void Jafg::WUserWidget::RemoveChild(WNode* InChild)
 {
     check( this->Root )
     check( this->GetChildren().GetSize() == 1 )
@@ -78,7 +78,7 @@ void Jafg::WUserWidget::RemoveChild(WWidgetNode* InChild)
     return;
 }
 
-Jafg::LWidgetSlot* Jafg::WUserWidget::AddChild(WWidgetNode* InChild)
+Jafg::LWidgetSlot* Jafg::WUserWidget::AddChild(WNode* InChild)
 {
     check( this->Root == nullptr && this->GetChildren().GetSize() == 0 )
     LWidgetSlot* Out = Super::AddChild(InChild);
@@ -87,7 +87,7 @@ Jafg::LWidgetSlot* Jafg::WUserWidget::AddChild(WWidgetNode* InChild)
     return Out;
 }
 
-Jafg::LWidgetSlot* Jafg::WUserWidget::AddChildAt(const i32 InIndex, WWidgetNode* InChild)
+Jafg::LWidgetSlot* Jafg::WUserWidget::AddChildAt(const i32 InIndex, WNode* InChild)
 {
     check( this->Root == nullptr && this->GetChildren().GetSize() == 0 )
     LWidgetSlot* Out = Super::AddChildAt(InIndex, InChild);
@@ -96,7 +96,7 @@ Jafg::LWidgetSlot* Jafg::WUserWidget::AddChildAt(const i32 InIndex, WWidgetNode*
     return Out;
 }
 
-Jafg::WWidgetParentBase* Jafg::WUserWidget::ReplaceRootImpl(WWidgetParentBase& InRoot)
+Jafg::WParentBase* Jafg::WUserWidget::ReplaceRootImpl(WParentBase& InRoot)
 {
     if (this->IsRootValid())
     {
@@ -109,5 +109,5 @@ Jafg::WWidgetParentBase* Jafg::WUserWidget::ReplaceRootImpl(WWidgetParentBase& I
     check( this->GetChildren().GetSize() == 1 )
 
     /* Typesafe this is. Look at function parameters. */
-    return static_cast<WWidgetParentBase*>(Out->Content);
+    return static_cast<WParentBase*>(Out->Content);
 }

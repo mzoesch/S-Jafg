@@ -728,6 +728,7 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
     ::EngineThreadsMutex.lock();
     check( ::bTearingDown == false )
     ::bTearingDown = true;
+    const i32 EngineThreadsSize { ::EngineThreads.GetSize() - /* Master */1};
     ::EngineThreadsMutex.unlock();
 
     if (bJoinTasks)
@@ -774,7 +775,11 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
     ::EngineThreads.Empty();
     ::EngineThreadsMutex.unlock();
 
-    LOG_INFO(LogTaskSystem, "Joined all threads after {} seconds.",
+    LOG_INFO
+    (
+        LogTaskSystem,
+        "Joined {} threads after {} seconds.",
+        EngineThreadsSize,
         Application::GetTimeDiff(TimeBeforeJoinedAllThreads, Application::GetHighestNow())
     )
 

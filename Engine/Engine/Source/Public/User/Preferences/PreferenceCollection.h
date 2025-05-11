@@ -52,15 +52,15 @@ public:
 
     ENGINE_API virtual const TArray<Smart::TUnique<LPreference>>& LoadAndGetChildPreferences() override;
 
-    FORCEINLINE bool IsOnLoadDelegateValid() const { return this->OnLoad.IsBound(); }
-    FORCEINLINE void SetOnLoadDelegate(LOnDemandLoadPreferences&& InDelegate) { this->OnLoad = std::move(InDelegate); }
+    FORCEINLINE bool IsOnLoadDelegateValid() const { return this->OnLoadDelegate.IsBound(); }
+    FORCEINLINE void OnLoad(LOnDemandLoadPreferences&& InDelegate) { this->OnLoadDelegate = std::move(InDelegate); }
 
     //# @return True, if the refresh was successful.
     ENGINE_API bool Refresh();
 
 private:
 
-    LOnDemandLoadPreferences OnLoad;
+    LOnDemandLoadPreferences OnLoadDelegate;
 };
 
 template<typename TPref>
@@ -71,7 +71,7 @@ FORCEINLINE void LPreferenceCollection::AddPreference(Smart::TUnique<TPref>&& In
     return;
 }
 
-FORCEINLINE auto LPreferenceCollection::GetPreferenceByIdentifier(const LName InIdentifier) const -> const LPreference*
+FORCEINLINE const LPreference* LPreferenceCollection::GetPreferenceByIdentifier(const LName InIdentifier) const
 {
     return const_cast<LPreferenceCollection*>(this)->GetPreferenceByIdentifier(InIdentifier);
 }
@@ -90,7 +90,7 @@ FORCEINLINE const LPreference* LPreferenceCollection::GetPreferenceByIdentifierC
     return Preference;
 }
 
-FORCEINLINE auto LPreferenceCollection::GetPreferenceByIdentifier(const LString& InIdentifier) const -> const LPreference*
+FORCEINLINE const LPreference* LPreferenceCollection::GetPreferenceByIdentifier(const LString& InIdentifier) const
 {
     return const_cast<LPreferenceCollection*>(this)->GetPreferenceByIdentifier(InIdentifier);
 }

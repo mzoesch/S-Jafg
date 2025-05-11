@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "Widgets/WidgetNode.h"
+#include "Widgets/Node.h"
 #include "Rhi/BoxShaderContext.h"
 #include "Widgets/Image.h"
-#include "WidgetBox.generated.h"
+#include "Box.generated.h"
 
 namespace Jafg
 {
@@ -17,7 +17,7 @@ struct LBoxBrush
 };
 
 template <typename TNode>
-class TWidgetFactoryWidgetBox : public TWidgetFactory<TNode>
+class TWidgetFactoryBox : public TWidgetFactory<TNode>
 {
 public:
 
@@ -36,14 +36,14 @@ public:
 //# the major difference for not allowing children.
 //# @see Widgets/WidgetRegion.h
 //#
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryWidgetBox)
-class ENGINE_API WWidgetBox : public WWidgetNode
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryBox)
+class ENGINE_API WBox : public WNode
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WWidgetBox)
+    DEFAULT_OBJECT_CONSTRUCTOR(WBox)
 
 public:
 

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Widgets/WidgetRegion.h"
+#include "Widgets/Region.h"
 #include "Widgets/TextBlock.h"
 #include "Button.generated.h"
 
@@ -17,12 +17,11 @@ struct LTextBlockBrush;
 MAKE_DELEGATE_SIGNATURE(LOnButtonKeyEvent, void, WButton* Self, LKeyEvent& InKeyEvent)
 
 template <typename TNode>
-class TWidgetFactoryButton : public TWidgetFactoryWidgetRegion<TNode>
+class TWidgetFactoryButton : public TWidgetFactoryRegion<TNode>
 {
 public:
 
-    using Super         = TWidgetFactoryWidgetRegion<TNode>;
-    using TFactoryRetTy = typename Super::TFactoryRetTy;
+    GENERATED_FACTORY_BODY(TWidgetFactoryRegion)
 
     FORCEINLINE TFactoryRetTy& OnPrimaryPress(LOnButtonKeyEvent&& InDelegate) { this->This()->OnPrimaryPressDelegate = std::move(InDelegate); return this->Self(); }
     FORCEINLINE TFactoryRetTy& OnPrimaryRelease(LOnButtonKeyEvent&& InDelegate) { this->This()->OnPrimaryReleaseDelegate = std::move(InDelegate); return this->Self(); }
@@ -51,7 +50,7 @@ public:
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryButton)
-class ENGINE_API WButton : public WWidgetRegion
+class ENGINE_API WButton : public WRegion
 {
     GENERATED_CLASS_BODY()
 
@@ -61,13 +60,11 @@ protected:
 
 public:
 
-    // WWidgetNode implementation
     virtual void Construct() override;
     virtual LCursorReply OnCursorEnter() override;
     virtual LCursorReply OnCursorLeave() override;
     virtual LReply OnKeyDown(LKeyEvent& InKeyEvent) override;
     virtual LReply OnKeyUp(LKeyEvent& InKeyEvent) override;
-    // ~WWidgetNode implementation
 
     LOnButtonKeyEvent OnPrimaryPressDelegate;
     LOnButtonKeyEvent OnPrimaryReleaseDelegate;
@@ -109,10 +106,8 @@ protected:
 
 public:
 
-    // WWidgetNode implementation
     virtual void Construct() override;
     virtual void Draw(LViewport& Context) const override;
-    // ~WWidgetNode implementation
 
     //#
     //# @return True if the content was set to the #ButtonText widget.

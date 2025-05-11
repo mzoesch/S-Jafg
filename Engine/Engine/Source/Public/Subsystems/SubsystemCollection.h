@@ -86,7 +86,14 @@ struct LSubsystemCollection final
     ENGINE_API void DeferredInitialize(LObjectContext* InOuter);
 
     ENGINE_API void InitializeSubsystems(const LObjectClass* InClass);
-    ENGINE_API void TearDownSubsystems();
+
+    //#
+    //# Tears down all subsystems in this collection.
+    //# The in predicate is called inbetween tearing down the priority and non-priority subsystems.
+    //#
+    template <typename Predicate>
+    FORCEINLINE void TearDownSubsystems(Predicate&& InPredicate);
+    FORCEINLINE void TearDownSubsystems();
 
     FORCEINLINE bool IsOuterValid() const { return this->Outer != nullptr; }
     FORCEINLINE auto GetOuter() const -> const LObjectContext* { return this->Outer; }
@@ -142,10 +149,30 @@ struct LSubsystemCollection final
 
 private:
 
-    LObjectContext*       Outer = nullptr;
-    const LObjectClass*   OuterClass = nullptr;
+    ENGINE_API void TearDownPrioritySubsystems();
+    ENGINE_API void TearDownNonPrioritySubsystems();
+
+    LObjectContext*     Outer = nullptr;
+    const LObjectClass* OuterClass = nullptr;
     TArray<JSubsystem*> SubsystemInstances;
 };
+
+template<typename Predicate>
+FORCEINLINE void LSubsystemCollection::TearDownSubsystems(Predicate&& InPredicate)
+{
+    this->TearDownPrioritySubsystems();
+    InPredicate();
+    this->TearDownNonPrioritySubsystems();
+
+    return;
+}
+
+FORCEINLINE void LSubsystemCollection::TearDownSubsystems()
+{
+    this->TearDownPrioritySubsystems();
+    this->TearDownNonPrioritySubsystems();
+    return;
+}
 
 template <typename Predicate>
 FORCEINLINE void LSubsystemCollection::ForEachSubsystem(Predicate&& InPredicate)

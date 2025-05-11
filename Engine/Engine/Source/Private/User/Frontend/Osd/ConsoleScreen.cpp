@@ -9,7 +9,7 @@
 #include "User/Input/UserInput.h"
 #include "Widgets/EditableTextBlock.h"
 #include "Widgets/Viewport.h"
-#include "Widgets/WidgetRegion.h"
+#include "Widgets/Region.h"
 
 void Jafg::WConsoleScreen::Construct()
 {
@@ -17,16 +17,16 @@ void Jafg::WConsoleScreen::Construct()
 
     this->SetShouldTick(true);
 
-    MakeRootNode(WWidgetRegion)
-    .Padding(5.0f)
-    .Anchor(EAnchor::VBottom | EAnchor::HFill)
+    MakeRootNode(WRegion)
+        .Padding(5.0f)
+        .Anchor(EAnchor::VBottom | EAnchor::HFill)
     [
-        NewNode(WEditableTextBlock).SaveTo(this->EditableTextBlock)
-        .TextColor(LColor::Red)
-        .TextScale(0.5f)
-        .SetPadding({ 5.0f, 4.5f })
-        .SetTint({0, 0, 0, 164 })
-        .OnCommit(LEditableTextBlockCommitDelegate::CreateFunction(this, &WConsoleScreen::OnTextCommit))
+        NewNode(WEditableTextBlock).SaveTo(&this->EditableTextBlock)
+            .TextColor(LColor::Red)
+            .TextScale(0.5f)
+            .SetPadding({ 5.0f, 4.5f })
+            .SetTint({0, 0, 0, 164 })
+            .OnCommit(LEditableTextBlockCommitDelegate::CreateFunction(this, &WConsoleScreen::OnTextCommit))
     ]
     FinishWidgetStyling()
 

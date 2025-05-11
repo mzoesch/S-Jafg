@@ -1,15 +1,15 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Widgets/WidgetSwitcher.h"
+#include "Widgets/Switcher.h"
 
-void Jafg::WWidgetSwitcher::SetActiveWidgetIndex(const i32 Index)
+void Jafg::WSwitcher::SetActiveWidgetIndex(const i32 Index)
 {
     if (this->ActiveIndex == Index)
     {
         return;
     }
 
-    if (WWidgetNode* CurrentNode = this->GetActiveNode(); CurrentNode)
+    if (WNode* CurrentNode = this->GetActiveNode(); CurrentNode)
     {
         if (LRecentVisibility* Recent = this->RecentVisibilities.FindRefByPredicate([CurrentNode](const LRecentVisibility& InRecent)
         {
@@ -35,10 +35,11 @@ void Jafg::WWidgetSwitcher::SetActiveWidgetIndex(const i32 Index)
     if (this->GetChildren().IsValidIndex(Index) == false)
     {
         LOG_WARNING(LogWidgets, "The index [{}] is out of bounds.", Index)
+        this->ActiveIndex = NoActiveWidgetIndex;
         return;
     }
 
-    if (WWidgetNode* NewNode = this->GetActiveNode(); NewNode)
+    if (WNode* NewNode = this->GetActiveNode(); NewNode)
     {
         if (LRecentVisibility* Recent = this->RecentVisibilities.FindRefByPredicate([NewNode](const LRecentVisibility& InRecent)
         {
@@ -60,7 +61,7 @@ void Jafg::WWidgetSwitcher::SetActiveWidgetIndex(const i32 Index)
     return;
 }
 
-void Jafg::WWidgetSwitcher::SetActiveWidget(WWidgetNode* Widget)
+void Jafg::WSwitcher::SetActiveWidget(WNode* Widget)
 {
     checkSlow( Widget )
 
@@ -73,7 +74,8 @@ void Jafg::WWidgetSwitcher::SetActiveWidget(WWidgetNode* Widget)
     }
     else
     {
-        LOG_WARNING(
+        LOG_WARNING
+        (
             LogWidgets,
             "The widget [{}] is not a child of this [{}] switcher.",
             Widget->GetFullName(), this->GetFullName()
@@ -83,7 +85,7 @@ void Jafg::WWidgetSwitcher::SetActiveWidget(WWidgetNode* Widget)
     return;
 }
 
-Jafg::LWidgetSlot* Jafg::WWidgetSwitcher::AddChild(WWidgetNode* InChild)
+Jafg::LWidgetSlot* Jafg::WSwitcher::AddChild(WNode* InChild)
 {
     LWidgetSlot* Ret = Super::AddChild(InChild);
 
@@ -94,7 +96,7 @@ Jafg::LWidgetSlot* Jafg::WWidgetSwitcher::AddChild(WWidgetNode* InChild)
     return Ret;
 }
 
-Jafg::LWidgetSlot* Jafg::WWidgetSwitcher::AddChildAt(const i32 InIndex, WWidgetNode* InChild)
+Jafg::LWidgetSlot* Jafg::WSwitcher::AddChildAt(const i32 InIndex, WNode* InChild)
 {
     LWidgetSlot* Ret = Super::AddChildAt(InIndex, InChild);
 
@@ -103,24 +105,4 @@ Jafg::LWidgetSlot* Jafg::WWidgetSwitcher::AddChildAt(const i32 InIndex, WWidgetN
     InChild->SetVisibility(EWidgetVisibility::Collapsed);
 
     return Ret;
-}
-
-void Jafg::WWidgetSwitcher::UpdateDesiredSize() const
-{
-    Super::UpdateDesiredSize();
-
-    LVector2 DesiredSize = LVector2::Zero();
-    for (const LWidgetSlot* ChildSlot : this->GetChildren())
-    {
-        DesiredSize.X = Maths::Max(DesiredSize.X, ChildSlot->Content->GetDesiredSize().X);
-        DesiredSize.Y = Maths::Max(DesiredSize.Y, ChildSlot->Content->GetDesiredSize().Y);
-
-        continue;
-    }
-
-    DesiredSize += this->GetPadding().GetDesiredSize();
-
-    this->SetDesiredSize(DesiredSize);
-
-    return;
 }

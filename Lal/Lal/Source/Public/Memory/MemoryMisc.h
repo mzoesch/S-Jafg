@@ -18,4 +18,4 @@ FORCEINLINE constexpr size_t OffsetOf(U T::*member)
 #endif /* WITH_GCC */
 }
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Widgets/WidgetBox.h"
+#include "Widgets/Box.h"
 #include "Rhi/FontShaderContext.h"
 #include "Widgets/EditableTextBlockForward.h"
 #include "EditableTextBlock.generated.h"
@@ -17,11 +17,11 @@ struct LEditableTextBrush : public LBoxBrush
 };
 
 template <typename TNode>
-class TWidgetFactoryEditableTextBlock : public TWidgetFactoryWidgetBox<TNode>
+class TWidgetFactoryEditableTextBlock : public TWidgetFactoryBox<TNode>
 {
 public:
 
-    using Super         = TWidgetFactoryWidgetBox<TNode>;
+    using Super         = TWidgetFactoryBox<TNode>;
     using TFactoryRetTy = typename Super::TFactoryRetTy;
 
     FORCEINLINE TFactoryRetTy& TextColor(const LColor& InColor)       { this->This()->SetTextColor(InColor);  return this->Self(); }
@@ -35,7 +35,7 @@ public:
 //# pasting, etc.
 //#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryEditableTextBlock)
-class ENGINE_API WEditableTextBlock : public WWidgetBox
+class ENGINE_API WEditableTextBlock : public WBox
 {
     GENERATED_CLASS_BODY()
 

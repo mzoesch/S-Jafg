@@ -395,7 +395,7 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                 }
                 else
                 {
-                    if remove_all_namespaces(&words[inner_idx].content).starts_with('W') == false && words[classname_idx].content != "WWidgetNode"
+                    if remove_all_namespaces(&words[inner_idx].content).starts_with('W') == false && words[classname_idx].content != "WNode"
                     {
                         panic!("[{}]: Excepted w-object super class after class declaration.", file);
                     }
@@ -463,7 +463,7 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                 }
                 else
                 {
-                    if remove_all_namespaces(&words[inner_idx].content).starts_with('W') == false && words[classname_idx].content != "WWidgetNode"
+                    if remove_all_namespaces(&words[inner_idx].content).starts_with('W') == false && words[classname_idx].content != "WNode"
                     {
                         panic!("[{}]: Excepted w-object super class after class declaration.", file);
                     }

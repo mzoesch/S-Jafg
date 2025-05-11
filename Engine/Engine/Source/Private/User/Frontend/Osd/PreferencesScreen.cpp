@@ -3,12 +3,12 @@
 #include "User/Frontend/Osd/PreferencesScreen.h"
 #include "User/Preferences/PreferenceRegistry.h"
 #include "Widgets/Spacer.h"
-#include "Widgets/VBox.h"
+#include "Widgets/VRegion.h"
 
 namespace
 {
 
-void AddPreference(Jafg::WWidgetParentBase* Target, Jafg::LPreference* P)
+void AddPreference(Jafg::WParentBase* Target, Jafg::LPreference* P)
 {
     using namespace Jafg;
 
@@ -25,20 +25,17 @@ void AddPreference(Jafg::WWidgetParentBase* Target, Jafg::LPreference* P)
     if (P->Build(Target) == false)
     {
         WTextBlock* Text = nullptr;
-        NewNode(WTextBlock).SaveTo(Text)
+        NewNodeCtx(Target, WTextBlock).SaveTo(&Text)
             .Brush(LTextBlockBrush::SubHeader())
             .Content(P->GetDisplayName());
         Target->AddChild(Text);
     }
 
-    WSpacer* Spacer; NewNode(WSpacer).SaveTo(Spacer).SetHeight(10.0f);
-    Target->AddChild(Spacer);
+    Target->AddChild(&NewNodeNoFactoryCtx(Target, WSpacer));
 
     for (const Smart::TUnique<LPreference>& SubSection : P->LoadAndGetChildPreferences())
     {
         ::AddPreference(Target, const_cast<LPreference*>(&SubSection.GetValue()));
-        WSpacer* SubSectionSpacer; NewNode(WSpacer).SaveTo(SubSectionSpacer).SetHeight(5.0f);
-        Target->AddChild(SubSectionSpacer);
     }
 
     return;
@@ -65,8 +62,14 @@ bool Jafg::WPreferencesPanel::AddData(LWidgetNodeData* InData)
     LPreference* P = Data->Preference;
     check( P )
 
-    WVBox* Root; NewNode(WVBox).SaveTo(Root).Anchor(EAnchor::Fill).Padding(40.0f);
+    WVRegion* Root;
+    NewNode(WVRegion).SaveTo(&Root)
+        .Anchor(EAnchor::Fill)
+        .Padding(40.0f)
+        .VSpace(5.0f);
+
     ::AddPreference(Root, P);
+
     this->AddChild(Root);
     MakeDeferredWidgetNodeFinal(Root);
 
@@ -98,7 +101,7 @@ void Jafg::WPreferencesScreen::Construct()
         Descriptor.DisplayName = TopPreference->GetDisplayName();
         Descriptor.Padding = LPadding(7.0f, 0.0f, 0.0f, 0.0f);
         Descriptor.PanelWidgetClass = this->PanelClass;
-        Descriptor.Callback = [LambdaPreference](WTabBar* TabBar, WWidgetNode* Button, WWidgetNode* Panel) -> void
+        Descriptor.Callback = [LambdaPreference](WTabBar* TabBar, WNode* Button, WNode* Panel) -> void
         {
             if (Panel)
             {

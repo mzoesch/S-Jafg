@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Widgets/WidgetNode.h"
+#include "Widgets/Node.h"
 #include "BackgroundBlur.generated.h"
 
 namespace Jafg
@@ -23,7 +23,7 @@ public:
 //# Adds blur for perspective projection only. Warning: Expensive.
 //#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryBackgroundBlur)
-class ENGINE_API WBackgroundBlur : public WWidgetNode
+class ENGINE_API WBackgroundBlur : public WNode
 {
     GENERATED_CLASS_BODY()
 

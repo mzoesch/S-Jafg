@@ -1,9 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/Blueprint/CommonMenuTabBar.h"
-#include "Widgets/WidgetRegion.h"
-#include "Widgets/VBox.h"
-#include "Widgets/WidgetSwitcher.h"
+#include "Widgets/Region.h"
+#include "Widgets/VRegion.h"
+#include "Widgets/Switcher.h"
 #include "Widgets/BackgroundBlur.h"
 
 void Jafg::WCommonMenuTabBarButton::Construct()
@@ -36,7 +36,7 @@ void Jafg::WCommonMenuTabBarPanel::Construct()
         Tint.A = WCommonMenuTabBar::GetAlphaTintBasedOfDepth(CommonTabBar->GetLeafDepth());
     }
 
-    NewNode(WWidgetRegion).SaveTo(this->Panel)
+    NewNode(WRegion).SaveTo(&this->Panel)
         .Anchor(EAnchor::Fill).Tint(Tint);
     this->AddChild(this->Panel);
     MakeDeferredWidgetNodeFinal(this->Panel);
@@ -53,7 +53,7 @@ void Jafg::WCommonMenuTabBar::Construct()
 
     if (this->bBlur)
     {
-        WBackgroundBlur* Blur = ConstructDeferredWidgetNode<WBackgroundBlur>();
+        WBackgroundBlur* Blur = ConstructDeferredWidgetNode<WBackgroundBlur>(this->GetOuter());
         Blur->SetAnchor(EAnchor::Fill);
         Blur->SetBlurStrength(0.4f);
         this->AddChild(Blur);
@@ -63,12 +63,12 @@ void Jafg::WCommonMenuTabBar::Construct()
 
     this->SetAnchor(EAnchor::Fill);
 
-    if (WVBox* VBox = DynamicCast<WVBox>(this->ButtonsContainer); VBox)
+    if (WVRegion* VRegion = DynamicCast<WVRegion>(this->ButtonsContainer); VRegion)
     {
-        VBox->SetMinDesiredSize({200, 0});
+        VRegion->SetMinDesiredSize({200, 0});
 
-        VBox->SetTint({0, 0, 0, WCommonMenuTabBar::GetAlphaTintBasedOfDepth(this->Depth)});
-        VBox->SetAnchor(EAnchor::VFill);
+        VRegion->SetTint({0, 0, 0, WCommonMenuTabBar::GetAlphaTintBasedOfDepth(this->Depth)});
+        VRegion->SetAnchor(EAnchor::VFill);
     }
 
     this->Switcher->SetAnchor(EAnchor::Fill);

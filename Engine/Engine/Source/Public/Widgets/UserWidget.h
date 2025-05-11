@@ -2,14 +2,14 @@
 
 #pragma once
 
-#include "Widgets/WidgetParent.h"
+#include "Widgets/Overlay.h"
 #include "UserWidget.generated.h"
 
 namespace Jafg
 {
 
 class LViewport;
-class WWidgetParent;
+class WParent;
 
 //#
 //# A user widget is a widget node that can be added to the local ego widget viewport.
@@ -17,7 +17,7 @@ class WWidgetParent;
 //# user interfaces.
 //#
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WUserWidget : public WWidgetParent
+class ENGINE_API WUserWidget : public WOverlay
 {
     GENERATED_CLASS_BODY()
 
@@ -33,10 +33,10 @@ public:
     virtual auto GetViewport() const -> LViewport* override;
     virtual void RemoveFromParent(const bool bDestroy = true) override;
 
-    virtual void RemoveChild(WWidgetNode* InChild) override;
+    virtual void RemoveChild(WNode* InChild) override;
     using Super::RemoveChild;
-    virtual auto AddChild(WWidgetNode* InChild) -> LWidgetSlot* override;
-    virtual auto AddChildAt(const i32 InIndex, WWidgetNode* InChild) -> LWidgetSlot* override;
+    virtual auto AddChild(WNode* InChild) -> LWidgetSlot* override;
+    virtual auto AddChildAt(const i32 InIndex, WNode* InChild) -> LWidgetSlot* override;
 
     //# Add this widget to the main viewport of the current active local ego.
     void AddToViewport(LViewport* InViewport);
@@ -45,13 +45,13 @@ public:
     template <typename TParent>
     auto ReplaceRoot(TParent& InRoot) -> TParent* { return CheckedStaticCast<TParent>(this->ReplaceRootImpl(InRoot)); }
     FORCEINLINE bool IsRootValid() const { return this->Root != nullptr; }
-    FORCEINLINE auto GetRoot() const -> WWidgetNode* { return this->Root->Content;  }
+    FORCEINLINE auto GetRoot() const -> WNode* { return this->Root->Content;  }
     template <typename TRootTy>
     FORCEINLINE auto GetRoot() const -> TRootTy* { return static_cast<TRootTy*>(this->Root->Content); }
 
 private:
 
-    WWidgetParentBase* ReplaceRootImpl(WWidgetParentBase& InRoot);
+    WParentBase* ReplaceRootImpl(WParentBase& InRoot);
 
     //# The absolute root of this widget. Attach everything to this widget. Weak pointer.
     LWidgetSlot* Root = nullptr;

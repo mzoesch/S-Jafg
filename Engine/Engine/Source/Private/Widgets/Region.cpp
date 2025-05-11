@@ -1,8 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Widgets/WidgetRegion.h"
+#include "Widgets/Region.h"
 
-void Jafg::WWidgetRegion::Draw(LViewport& Context) const
+void Jafg::WRegion::Draw(LViewport& Context) const
 {
     if (this->HasBrush() == false)
     {
@@ -36,7 +36,7 @@ void Jafg::WWidgetRegion::Draw(LViewport& Context) const
     return;
 }
 
-void Jafg::WWidgetRegion::SetTint(const LColor& InTint)
+void Jafg::WRegion::SetTint(const LColor& InTint)
 {
     if (this->HasBrush())
     {
@@ -48,7 +48,7 @@ void Jafg::WWidgetRegion::SetTint(const LColor& InTint)
     return;
 }
 
-void Jafg::WWidgetRegion::SetTexture(const LTexture2* InTexture)
+void Jafg::WRegion::SetTexture(const LTexture2* InTexture)
 {
     if (this->HasBrush())
     {
@@ -60,7 +60,7 @@ void Jafg::WWidgetRegion::SetTexture(const LTexture2* InTexture)
     return;
 }
 
-void Jafg::WWidgetRegion::SetImage(const LImage& InImage)
+void Jafg::WRegion::SetImage(const LImage& InImage)
 {
     if (this->HasBrush())
     {
@@ -72,7 +72,7 @@ void Jafg::WWidgetRegion::SetImage(const LImage& InImage)
     return;
 }
 
-void Jafg::WWidgetRegion::CreateNewShaderContext() const
+void Jafg::WRegion::CreateNewShaderContext() const
 {
     this->ShaderContext->Make();
 }

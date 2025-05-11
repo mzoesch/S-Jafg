@@ -8,7 +8,7 @@
 #include "User/Preferences/PreferenceValue.h"
 #include "User/Preferences/CommonPreferenceValues.h"
 #include "Widgets/Button.h"
-#include "Widgets/HBox.h"
+#include "Widgets/HRegion.h"
 #include "Widgets/Spacer.h"
 #include "Widgets/TextBlock.h"
 
@@ -96,27 +96,27 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 
     {
         Smart::TUnique<LIntermediatePreferenceCollection> Screen = Smart::MakeUnique<LIntermediatePreferenceCollection>(new LIntermediatePreferenceCollection(Name_PrefDeveloper, "Developer"));
-        Screen->SetBuildPreference([](const LPreference* Self, WWidgetParentBase* Target) -> void
+        Screen->OnBuild([](const LPreference* Self, WParentBase* Target) -> void
         {
             check( Self && Target )
 
-            WHBox* Container;
+            WHRegion* Container;
 
-            NewNode(WTest).SaveTo(Container)
-            // .Tint(LColor::Emerald)
-            .Anchor(EAnchor::HFill)
+            NewNodeCtx(Target, WTest).SaveTo(&Container)
+                .Tint(LColor{0x00u, 0x7Fu, 0x00u, 0x7Fu})
+                .Anchor(EAnchor::HFill)
             [
-                NewNode(WTextBlock)
+                NewNodeCtx(Target, WTextBlock)
                     .Brush(LTextBlockBrush::SubHeader())
                     .Content(Self->GetDisplayName())
                 +
-                NewNode(WSpacer)
+                NewNodeCtx(Target, WRegion)
                     .Anchor(EAnchor::HFill)
                     .MinDesiredSize(LVector2{5})
+                    .Tint({0x00u, 0xFFu, 0x00u, 0x7Fu})
                 +
-                NewNode(WTextButton)
+                NewNodeCtx(Target, WTextButton)
                     .NormalBrush(LRegionBrush({.Tint = LColor{0x00u, 0xFFu, 0xFFu, 0x0Fu}}))
-                    .MinDesiredSize(LVector2{20})
                     .Content("Refresh")
                     .TextBlockBrush(LTextBlockBrush::Body())
             ];
@@ -125,7 +125,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 
             return;
         });
-        Screen->SetOnLoadDelegate([](LPreferenceCollection* InCollection) -> void
+        Screen->OnLoad([](LPreferenceCollection* InCollection) -> void
         {
             check( InCollection )
 

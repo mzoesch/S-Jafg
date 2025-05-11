@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreAfx.h"
-#include "WidgetNode.h"
+#include "Node.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Rhi/FrameBuffer.h"
 #include "User/Input/Replies.h"
@@ -12,14 +12,14 @@ namespace Jafg
 {
 
 class LObjectClass;
-class WWidgetNode;
+class WNode;
 class WUserWidget;
 class LEye;
 class LWorld;
 
 struct LBackgroundContext final
 {
-    LEye*   Eye = nullptr;
+    LEye*   Eye   = nullptr;
     LWorld* World = nullptr;
 };
 
@@ -29,7 +29,7 @@ struct LBackgroundContext final
 //#
 class LViewport final
 {
-    friend WWidgetNode;
+    friend WNode;
 
 public:
 
@@ -56,25 +56,25 @@ public:
     FORCEINLINE auto GetPlatformDpi() const -> float { return this->PlatformDpi; }
     FORCEINLINE auto GetBaseDpi() const -> float { return this->BaseDpi; }
 
-                auto ChangeDimensions(const LIntVector2& InDimensions) -> void;
+    auto ChangeDimensions(const LIntVector2& InDimensions) -> void;
     FORCEINLINE auto GetDimensions() const -> LIntVector2 { return this->Dimensions; }
 
     FORCEINLINE auto GetFrameOrthoZLayerDepth() const -> float { this->FrameZLayerDepth += 0.0001f; return this->FrameZLayerDepth; }
 
-    ENGINE_API  WWidgetNode* GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const;
-    FORCEINLINE WWidgetNode* GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const;
+    ENGINE_API  WNode* GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const;
+    FORCEINLINE WNode* GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const;
     template <typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClass() const;
     template <typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClassChecked() const;
 
     template <typename TNode>
     FORCEINLINE auto GetFocusedWidget() const -> const TNode* { return DynamicCast<TNode>(this->FocusedWidget); }
-    FORCEINLINE auto GetFocusedWidget() const -> const WWidgetNode* { return this->FocusedWidget; }
+    FORCEINLINE auto GetFocusedWidget() const -> const WNode* { return this->FocusedWidget; }
     FORCEINLINE auto IsFocusedWidgetValid() const -> bool { return this->FocusedWidget != nullptr; }
-                bool FocusWidgetNode(const WWidgetNode* InNode);
-    FORCEINLINE auto GetHoveredWidgets() const -> const TArray<WWidgetNode*>& { return this->HoveredWidgets; }
+    bool FocusWidgetNode(const WNode* InNode);
+    FORCEINLINE auto GetHoveredWidgets() const -> const TArray<WNode*>& { return this->HoveredWidgets; }
 
     //# @return True if in the last frame, this node was not added.
-    bool AddHoveredWidgetForFrame(WWidgetNode* Node);
+    bool AddHoveredWidgetForFrame(WNode* Node);
 
     FORCEINLINE auto GetBackgroundContexts() const -> const TArray<LBackgroundContext>& { return this->BackgroundContexts; }
     FORCEINLINE auto GetMutableBackgroundContexts() -> TArray<LBackgroundContext>& { return this->BackgroundContexts; }
@@ -89,33 +89,33 @@ public:
 
 private:
 
-    void ChangeFocusUnsafe(const WWidgetNode* InNode);
+    void ChangeFocusUnsafe(const WNode* InNode);
 
     void RecalculateScaleFactor();
     void HandleReply(LSurface& Context, const LCursorReply& Reply);
     void HandleReply(LSurface& Context, const LReply& Reply);
 
     //# The factor with which the entire orthographic projection is scaled.
-    float ScaleFactor =  1.0f;
+    f32 ScaleFactor { 1.0f };
     //# The dpi fetched from the physical platform.
-    float PlatformDpi =  0.0f;
+    f32 PlatformDpi { 0.0f };
     //#
     //# The base dpi that the application was designed for.
     //# All scales are based and calculated from this value, and only for the drawing
     //# we use the platform dpi.
     //#
-    float BaseDpi     = 96.0f;
+    f32 BaseDpi { 96.0f };
 
     //# The dimensions of the viewport in px.
-    LIntVector2            Dimensions;
+    LIntVector2 Dimensions;
     //# Top level widgets that this viewport owns.
     TArray<WUserWidget*> TopLevelWidgets;
 
-    WWidgetNode* FocusedWidget = nullptr;
-    TArray<WWidgetNode*> HoveredWidgets;
-    TArray<WWidgetNode*> LastFrameHoveredWidgets;
+    WNode* FocusedWidget = nullptr;
+    TArray<WNode*> HoveredWidgets;
+    TArray<WNode*> LastFrameHoveredWidgets;
 
-    mutable float FrameZLayerDepth = 0.0f;
+    mutable f32 FrameZLayerDepth { 0.0f };
 
     TArray<LBackgroundContext> BackgroundContexts;
     LFrameBuffer BackgroundBuffer;
@@ -123,9 +123,9 @@ private:
     LSurface* CachedContext = nullptr;
 };
 
-FORCEINLINE WWidgetNode* LViewport::GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const
+FORCEINLINE WNode* LViewport::GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const
 {
-    WWidgetNode* Widget = this->GetTopLevelWidgetByClass(WidgetClass);
+    WNode* Widget = this->GetTopLevelWidgetByClass(WidgetClass);
     check( Widget )
     return Widget;
 }
@@ -133,14 +133,14 @@ FORCEINLINE WWidgetNode* LViewport::GetTopLevelWidgetByClassChecked(const LObjec
 template <typename TNode>
 FORCEINLINE TNode* LViewport::GetTopLevelWidgetByClass() const
 {
-    static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
+    static_assert(std::derived_from<TNode, WNode>, "TNode must derive from WNode.");
     return CheckedStaticCast<TNode, true>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
 }
 
 template <typename TNode>
 FORCEINLINE TNode* LViewport::GetTopLevelWidgetByClassChecked() const
 {
-    static_assert(std::derived_from<TNode, WWidgetNode>, "TNode must derive from WWidgetNode.");
+    static_assert(std::derived_from<TNode, WNode>, "TNode must derive from WNode.");
     return CheckedStaticCast<TNode>(this->GetTopLevelWidgetByClassChecked(TNode::StaticClass()));
 }
 

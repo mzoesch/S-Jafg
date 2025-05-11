@@ -2,14 +2,14 @@
 
 #pragma once
 
-#include "Widgets/WidgetNode.h"
+#include "Widgets/Node.h"
 #include "Spacer.generated.h"
 
 namespace Jafg
 {
 
 template <typename TNode>
-class TWidgetFactorySpace : public TWidgetFactory<TNode>
+class TWidgetFactorySpacer : public TWidgetFactory<TNode>
 {
 public:
 
@@ -22,8 +22,8 @@ public:
     FORCEINLINE TFactoryRetTy& SetWidth(const float InWidth)    { this->This()->SetWidth(InWidth);   return this->Self(); }
 };
 
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactorySpace)
-class ENGINE_API WSpacer final : public WWidgetNode
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactorySpacer)
+class ENGINE_API WSpacer final : public WNode
 {
     GENERATED_CLASS_BODY()
 

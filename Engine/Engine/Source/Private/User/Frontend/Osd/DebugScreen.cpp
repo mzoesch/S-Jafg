@@ -16,7 +16,7 @@
 #include "User/UserPreferences.h"
 #include "Widgets/Spacer.h"
 #include "Widgets/TextBlock.h"
-#include "Widgets/VBox.h"
+#include "Widgets/VRegion.h"
 #include "Debug/DebugTraceSphere.h"
 #include "Debug/DebugTraceCube.h"
 #include "Debug/DebugTraceLine.h"
@@ -37,74 +37,99 @@ void Jafg::WDebugScreen::Construct()
 
     const JMaterialSubsystem* MaterialSubsystem = this->GetEngine()->GetSubsystem<JMaterialSubsystem>();
 
-    MakeRootNode(WWidgetRegion).Anchor(EAnchor::Fill)
+    MakeRootNode(WRegion)
+        .Anchor(EAnchor::Fill)
     [
-        NewNode(WVBox).Anchor(EAnchor::TopLeft).Tint(LColor(255,0,0,32))
+        NewNode(WVRegion)
+            .Anchor(EAnchor::TopLeft)
+            .Tint(LColor(255,0,0,32))
         [
-            NewNode(WVBox).Tint(LColor(0,0,32,128))
+            NewNode(WVRegion)
+                .Tint(LColor(0,0,32,128))
             [
                 NewNode(WTextBlock)
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
                     .Content(LString::SprintF("JAFG v{}", BuildInfo::GetEngineVersion().ToString()))
-                + NewNode(WTextBlock).SaveTo(this->FpsSection)
+                +
+                NewNode(WTextBlock).SaveTo(&this->FpsSection)
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
-                + NewNode(WTextBlock).SaveTo(this->TimeStatsSection)
-                    .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
-            ]
-            + NewNode(WSpacer).SetHeight(20.0f)
-            + NewNode(WVBox).Tint(LColor(0,0,32,128))
-            [
-                NewNode(WTextBlock).SaveTo(this->LocalPawnLocationSection)
-                    .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
-                + NewNode(WTextBlock).SaveTo(this->LocalPawnFacingSection)
-                    .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
-                + NewNode(WTextBlock).SaveTo(this->LocalPawnChunkSection)
-                    .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
-                + NewNode(WTextBlock).SaveTo(this->LocalPawnVoxelSection)
+                +
+                NewNode(WTextBlock).SaveTo(&this->TimeStatsSection)
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
             ]
-            + NewNode(WSpacer).SetHeight(20.0f)
-            + NewNode(WVBox)
+            +
+            NewNode(WSpacer).SetHeight(20.0f)
+            +
+            NewNode(WVRegion)
+                .Tint(LColor(0,0,32,128))
             [
-                NewNode(WWidgetRegion)
+                NewNode(WTextBlock).SaveTo(&this->LocalPawnLocationSection)
+                    .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
+                +
+                NewNode(WTextBlock).SaveTo(&this->LocalPawnFacingSection)
+                    .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
+                +
+                NewNode(WTextBlock).SaveTo(&this->LocalPawnChunkSection)
+                    .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
+                +
+                NewNode(WTextBlock).SaveTo(&this->LocalPawnVoxelSection)
+                    .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
+            ]
+            +
+            NewNode(WSpacer).SetHeight(20.0f)
+            +
+            NewNode(WVRegion)
+            [
+                NewNode(WRegion)
                     .Padding(LPadding(70.0f))
                     .Texture(&MaterialSubsystem->GetBlendOpaqueAtlasTexture())
             ]
-            + NewNode(WVBox)
+            + NewNode(WVRegion)
             [
-                NewNode(WWidgetRegion)
+                NewNode(WRegion)
                     .Padding(LPadding(70.0f))
                     .Texture(&MaterialSubsystem->GetBlendersAtlasTexture())
             ]
         ]
-        + NewNode(WVBox).Anchor(EAnchor::TopRight).Tint(LColor(255,0,0,32))
+        +
+        NewNode(WVRegion)
+            .Anchor(EAnchor::TopRight)
+            .Tint(LColor(255,0,0,32))
         [
-            NewNode(WVBox).Anchor(EAnchor::TopRight).Tint(LColor(0,0,32,128))
+            NewNode(WVRegion)
+                .Anchor(EAnchor::TopRight)
+                .Tint(LColor(0,0,32,128))
             [
                 NewNode(WTextBlock)
                     .Anchor(EAnchor::TopRight)
                     .Content("Memory statistics")
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
-                + NewNode(WTextBlock)
+                +
+                NewNode(WTextBlock)
                     .Anchor(EAnchor::TopRight)
                     .Content("Central processing unit information")
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
-                + NewNode(WTextBlock)
+                +
+                NewNode(WTextBlock)
                     .Anchor(EAnchor::TopRight)
                     .Content("Graphics processing unit information")
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
-                + NewNode(WTextBlock)
+                +
+                NewNode(WTextBlock)
                     .Anchor(EAnchor::TopRight)
                     .Content("Display information")
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
             ]
             + NewNode(WSpacer)
                 .SetHeight(20.0f)
-            + NewNode(WVBox).Anchor(EAnchor::TopRight).Tint(LColor::Cyan)
+            + NewNode(WVRegion)
+                .Anchor(EAnchor::TopRight)
+                .Tint(LColor::Cyan)
             [
-                NewNode(WTextBlock).SaveTo(this->LocalPawnTargetVoxelSectionDestroy)
+                NewNode(WTextBlock).SaveTo(&this->LocalPawnTargetVoxelSectionDestroy)
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
-                + NewNode(WTextBlock).SaveTo(this->LocalPawnTargetVoxelSectionCreate)
+                +
+                NewNode(WTextBlock).SaveTo(&this->LocalPawnTargetVoxelSectionCreate)
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
             ]
         ]

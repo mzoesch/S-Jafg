@@ -45,16 +45,23 @@ protected:
 
     FORCEINLINE bool IsInitialized() const { return this->bIsInitialized; }
     FORCEINLINE bool IsPriorityTearDown() const { return this->bPriorityTearDown; }
+    //# Please see the #bPriorityTearDown documentation for more information. DO NOT JUST SET THIS TO TRUE.
     FORCEINLINE void SetPriorityTearDown(const bool bPriority) { this->bPriorityTearDown = bPriority; }
 
-    auto GetEngine() const -> LEngine*;
-    auto GetLocalEgo() const -> LLocalEgo*;
-    auto GetCommandLineInterface() const -> LCommandLineInterface*;
+    LEngine* GetEngine() const;
+    LLocalEgo* GetLocalEgo() const;
+    LCommandLineInterface* GetCommandLineInterface() const;
 
 private:
 
-    bool bPriorityTearDown = false;
-    bool bIsInitialized = false;
+    //#
+    //# This flag is generally only for subsystems that have very special rules and states attached to them.
+    //# In general this **ONLY** applies to subsystems that are threaded.
+    //# If you see yourself setting this flag on a NON-THREADED subsystem, please reconsider your design choice.
+    //#
+    bool bPriorityTearDown : 1 { false };
+
+    bool bIsInitialized : 1 { false };
 };
 
 } /* Namespace Jafg */

@@ -3,8 +3,8 @@
 #include "User/Frontend/Osd/PauseScreen.h"
 #include "Engine/Engine.h"
 #include "User/LocalEgo.h"
-#include "Widgets/WidgetRegion.h"
-#include "Widgets/WidgetSwitcher.h"
+#include "Widgets/Region.h"
+#include "Widgets/Switcher.h"
 #include "Widgets/Blueprint/CommonMenuTabBar.h"
 #include "Widgets/Viewport.h"
 #include "Platform/Surface.h"
@@ -14,9 +14,9 @@ void Jafg::WPauseScreen::Construct()
 {
     Super::Construct();
 
-    MakeRootNode(WWidgetRegion).Anchor(EAnchor::Fill)
+    MakeRootNode(WRegion).Anchor(EAnchor::Fill)
     [
-        NewNode(WCommonMenuTabBar).SaveTo(this->PauseTabBar)
+        NewNode(WCommonMenuTabBar).SaveTo(&this->PauseTabBar)
             .Anchor(EAnchor::Fill)
             .AlignHorizontal()
             .BlurBackground(true)

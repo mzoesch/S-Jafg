@@ -103,7 +103,7 @@ private:
     bool bWeakContext : 1 = false;
 };
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */
 
 //#
 //# Keep this include as every action with any actor will need a ton of function from this include.

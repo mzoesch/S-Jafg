@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "MyWorld/Chunk/Chunk.h"
 #include "MyWorld/Meshing/ChunkMesher.h"
 #include "Engine/Engine.h"
@@ -31,7 +30,7 @@ void Jafg::LChunkMesher::ApplyProceduralMesh()
     }
     else
     {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::Whenever, [this]()
+        Tasks::Make(ENamedThreads::Master, ETaskTime::Whenever, [this](void) -> void
         {
             if (this->Owner->GetWorld()->GetWorldState() > EWorldState::Running)
             {

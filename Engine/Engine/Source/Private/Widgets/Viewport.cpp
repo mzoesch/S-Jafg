@@ -48,7 +48,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
     if (bCursorLocationIsMeaningful)
     {
         LCursorReply MostRecentReply = LCursorReply::Unhandled();
-        for (WWidgetNode* Node : this->LastFrameHoveredWidgets)
+        for (WNode* Node : this->LastFrameHoveredWidgets)
         {
             if (this->HoveredWidgets.Contains(Node) == false)
             {
@@ -183,7 +183,7 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
     if (this->HoveredWidgets.IsEmpty() == false || this->LastFrameHoveredWidgets.IsEmpty() == false)
     {
         LCursorReply MostRecentReply = LCursorReply::Unhandled();
-        for (WWidgetNode* Node : this->HoveredWidgets)
+        for (WNode* Node : this->HoveredWidgets)
         {
             LCursorReply Reply = Node->OnCursorLeave();
             if (Reply.IsHandled())
@@ -327,7 +327,7 @@ void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
     return;
 }
 
-Jafg::WWidgetNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
+Jafg::WNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
 {
     for (WUserWidget* Widget : this->TopLevelWidgets)
     {
@@ -341,7 +341,7 @@ Jafg::WWidgetNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObjectClass*
 
     return nullptr;}
 
-bool Jafg::LViewport::FocusWidgetNode(const WWidgetNode* InNode)
+bool Jafg::LViewport::FocusWidgetNode(const WNode* InNode)
 {
     if (InNode == nullptr)
     {
@@ -365,14 +365,14 @@ bool Jafg::LViewport::FocusWidgetNode(const WWidgetNode* InNode)
     return false;
 }
 
-bool Jafg::LViewport::AddHoveredWidgetForFrame(WWidgetNode* Node)
+bool Jafg::LViewport::AddHoveredWidgetForFrame(WNode* Node)
 {
     check( this->HoveredWidgets.Contains(Node) == false )
     this->HoveredWidgets.Add(Node);
     return this->LastFrameHoveredWidgets.Contains(Node) == false;
 }
 
-void Jafg::LViewport::ChangeFocusUnsafe(const WWidgetNode* InNode)
+void Jafg::LViewport::ChangeFocusUnsafe(const WNode* InNode)
 {
     if (this->FocusedWidget)
     {
@@ -381,7 +381,7 @@ void Jafg::LViewport::ChangeFocusUnsafe(const WWidgetNode* InNode)
 
     if (InNode)
     {
-        this->FocusedWidget = const_cast<WWidgetNode*>(InNode);
+        this->FocusedWidget = const_cast<WNode*>(InNode);
         this->FocusedWidget->OnFocusReceived();
     }
     else

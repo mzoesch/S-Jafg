@@ -1,9 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
-#include "Widgets/WidgetBox.h"
+#include "Widgets/Box.h"
 
-void Jafg::WWidgetBox::Draw(LViewport& Context) const
+void Jafg::WBox::Draw(LViewport& Context) const
 {
     if (this->HasBrush() == false)
     {
@@ -37,7 +37,7 @@ void Jafg::WWidgetBox::Draw(LViewport& Context) const
     return;
 }
 
-void Jafg::WWidgetBox::UpdateDesiredSize() const
+void Jafg::WBox::UpdateDesiredSize() const
 {
     Super::UpdateDesiredSize();
     this->SetDesiredSize(this->Padding.GetDesiredSize());
@@ -45,7 +45,7 @@ void Jafg::WWidgetBox::UpdateDesiredSize() const
     return;
 }
 
-void Jafg::WWidgetBox::SetTint(const LColor& InTint)
+void Jafg::WBox::SetTint(const LColor& InTint)
 {
     if (this->HasBrush())
     {
@@ -58,7 +58,7 @@ void Jafg::WWidgetBox::SetTint(const LColor& InTint)
     return;
 }
 
-void Jafg::WWidgetBox::SetTexture(const LTexture2* InTexture)
+void Jafg::WBox::SetTexture(const LTexture2* InTexture)
 {
     if (this->HasBrush())
     {
@@ -70,7 +70,7 @@ void Jafg::WWidgetBox::SetTexture(const LTexture2* InTexture)
     return;
 }
 
-void Jafg::WWidgetBox::SetImage(const LImage& InImage)
+void Jafg::WBox::SetImage(const LImage& InImage)
 {
     if (this->HasBrush())
     {
@@ -82,7 +82,7 @@ void Jafg::WWidgetBox::SetImage(const LImage& InImage)
     return;
 }
 
-void Jafg::WWidgetBox::CreateNewShaderContext() const
+void Jafg::WBox::CreateNewShaderContext() const
 {
     this->ShaderContext->Make();
 }

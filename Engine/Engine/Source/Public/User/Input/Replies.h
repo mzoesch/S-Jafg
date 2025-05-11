@@ -65,14 +65,14 @@ public:
     //#                        are the same, nothing will happen.
     //#                        This is usually the most save way to handle focus changes and the recommended way.
     //#
-    LCursorReply(const EMouseCursor::Type InCursorType, WWidgetNode* InFocusedWidget, const bool bInLooseFocus = false)
+    LCursorReply(const EMouseCursor::Type InCursorType, WNode* InFocusedWidget, const bool bInLooseFocus = false)
         : TReplyBase<LCursorReply>(true), CursorType(InCursorType), FocusedWidget(InFocusedWidget), bLooseFocus(bInLooseFocus) { }
 
-    LCursorReply(WWidgetNode* InFocusedWidget, const bool bInLooseFocus = false)
+    LCursorReply(WNode* InFocusedWidget, const bool bInLooseFocus = false)
         : TReplyBase<LCursorReply>(true), FocusedWidget(InFocusedWidget), bLooseFocus(bInLooseFocus) { }
 
     FORCEINLINE auto IsFocusedWidgetValid() const -> bool { return this->FocusedWidget != nullptr; }
-    FORCEINLINE auto GetFocusedWidget() const -> WWidgetNode* { return this->FocusedWidget; }
+    FORCEINLINE auto GetFocusedWidget() const -> WNode* { return this->FocusedWidget; }
     FORCEINLINE auto ShouldLooseFocus() const -> bool { return this->bLooseFocus; }
     FORCEINLINE auto GetCursorType() const -> EMouseCursor::Type { return this->CursorType; }
 
@@ -83,7 +83,7 @@ private:
     //#
     //# The widget to focus. Null if this reply does not affect any focus.
     //#
-    WWidgetNode* FocusedWidget = nullptr;
+    WNode* FocusedWidget = nullptr;
 
     //#
     //# True if the current focused widget should lose focus. If #FocusedWidget is null, no widget will be focused.
@@ -119,11 +119,11 @@ public:
     //#                        are the same, nothing will happen.
     //#                        This is usually the most save way to handle focus changes and the recommended way.
     //#
-    LReply(WWidgetNode* InFocusedWidget, const bool bInLooseFocus = false)
+    LReply(WNode* InFocusedWidget, const bool bInLooseFocus = false)
         : TReplyBase<LReply>(true), FocusedWidget(InFocusedWidget), bLooseFocus(bInLooseFocus) { }
 
     FORCEINLINE auto IsFocusedWidgetValid() const -> bool { return this->FocusedWidget != nullptr; }
-    FORCEINLINE auto GetFocusedWidget() const -> WWidgetNode* { return this->FocusedWidget; }
+    FORCEINLINE auto GetFocusedWidget() const -> WNode* { return this->FocusedWidget; }
     FORCEINLINE auto ShouldLooseFocus() const -> bool { return this->bLooseFocus; }
 
 private:
@@ -131,7 +131,7 @@ private:
     //#
     //# The widget to focus. Null if this reply does not affect any focus.
     //#
-    WWidgetNode* FocusedWidget = nullptr;
+    WNode* FocusedWidget = nullptr;
 
     //#
     //# True if the current focused widget should lose focus. If #FocusedWidget is null, no widget will be focused.

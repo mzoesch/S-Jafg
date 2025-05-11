@@ -1,11 +1,11 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/Compound/TabBar.h"
-#include "Widgets/WidgetSwitcher.h"
-#include "Widgets/WidgetRegion.h"
+#include "Widgets/Switcher.h"
+#include "Widgets/Region.h"
 #include "Containers/MyStringUtility.h"
-#include "Widgets/HBox.h"
-#include "Widgets/VBox.h"
+#include "Widgets/HRegion.h"
+#include "Widgets/VRegion.h"
 
 Jafg::WTabBar::WTabBar(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -19,15 +19,15 @@ void Jafg::WTabBar::Construct()
 
     if (this->ButtonsContainerClass == nullptr)
     {
-        this->ButtonsContainerClass.Set<WVBox>();
+        this->ButtonsContainerClass.Set<WVRegion>();
     }
     if (this->SwitcherClass == nullptr)
     {
-        this->SwitcherClass.Set<WWidgetSwitcher>();
+        this->SwitcherClass.Set<WSwitcher>();
     }
     if (this->DefaultButtonClass == nullptr)
     {
-        this->DefaultButtonClass.Set<WWidgetRegion>();
+        this->DefaultButtonClass.Set<WRegion>();
     }
 
     checkSlow( this->ButtonsContainerClass )
@@ -37,10 +37,10 @@ void Jafg::WTabBar::Construct()
     checkSlow( this->DefaultButtonClass )
     checkSlow( this->DefaultButtonClass.IsValidType() )
 
-    WWidgetParentBase* Container = this;
+    WParentBase* Container = this;
     if (this->WrapperClass)
     {
-        Container = ConstructDeferredWidgetNode<WWidgetParentBase>(this->WrapperClass);
+        Container = ConstructDeferredWidgetNode<WParentBase>(this->GetOuter(), this->WrapperClass);
         this->AddChild(Container);
         MakeDeferredWidgetNodeFinal(Container);
     }
@@ -48,22 +48,22 @@ void Jafg::WTabBar::Construct()
     {
         if (this->bIsVertical.GetValue() == true)
         {
-            Container = ConstructDeferredWidgetNode<WVBox>();
+            Container = ConstructDeferredWidgetNode<WVRegion>(this->GetOuter());
             Container->SetAnchor(EAnchor::Fill);
             this->AddChild(Container);
             MakeDeferredWidgetNodeFinal(Container);
         }
         else
         {
-            Container = ConstructDeferredWidgetNode<WHBox>();
+            Container = ConstructDeferredWidgetNode<WHRegion>(this->GetOuter());
             this->AddChild(Container);
             Container->SetAnchor(EAnchor::Fill);
             MakeDeferredWidgetNodeFinal(Container);
         }
     }
 
-    this->ButtonsContainer = ConstructDeferredWidgetNode<WWidgetParentBase>(this->ButtonsContainerClass);
-    this->Switcher = ConstructDeferredWidgetNode<WWidgetSwitcher>(this->SwitcherClass);
+    this->ButtonsContainer = ConstructDeferredWidgetNode<WParentBase>(this->GetOuter(), this->ButtonsContainerClass);
+    this->Switcher = ConstructDeferredWidgetNode<WSwitcher>(this->GetOuter(), this->SwitcherClass);
     Container->AddChild(this->ButtonsContainer);
     Container->AddChild(this->Switcher);
     MakeDeferredWidgetNodeFinal(this->ButtonsContainer);
@@ -215,9 +215,9 @@ void Jafg::WTabBar::LoadTab(const LTabBarTabDescriptor& Descriptor, const i32 In
 {
     check( !(Descriptor.ButtonWidgetClass && Descriptor.OnButtonPressed) )
 
-    WWidgetNode* Button = Descriptor.ButtonWidgetClass.IsSet()
-        ? ConstructDeferredWidgetNode<WWidgetNode>(Descriptor.ButtonWidgetClass)
-        : ConstructDeferredWidgetNode<WWidgetNode>(this->DefaultButtonClass);
+    WNode* Button = Descriptor.ButtonWidgetClass.IsSet()
+        ? ConstructDeferredWidgetNode<WNode>(this->GetOuter(), Descriptor.ButtonWidgetClass)
+        : ConstructDeferredWidgetNode<WNode>(this->GetOuter(), this->DefaultButtonClass);
     this->ButtonsContainer->AddChildAt(InIndex, Button);
 
     this->TabsInOrder[InIndex].Button = Button;
@@ -234,7 +234,7 @@ void Jafg::WTabBar::LoadTab(const LTabBarTabDescriptor& Descriptor, const i32 In
     if (Descriptor.PanelWidgetClass)
     {
         Data.DerivedClass = WTabBarPanel::StaticClass()->GetName();
-        Panel = ConstructDeferredWidgetNode(Descriptor.PanelWidgetClass);
+        Panel = ConstructDeferredWidgetNode(this->GetOuter(), Descriptor.PanelWidgetClass);
         checkSlow( this->TabsInOrder[InIndex].Panel == nullptr )
         this->TabsInOrder[InIndex].Panel = Panel;
         this->Switcher->AddChild(Panel);

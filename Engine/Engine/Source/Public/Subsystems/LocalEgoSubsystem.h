@@ -36,8 +36,6 @@ public:
     //# Called when the current controller possesses a new pawn. Both pointers may be null.
     //#
     virtual void OnNewPawnPossessed(APawn* InOld, APawn* InNew) { }
-
-    LLocalEgo* GetLocalEgo() const;
 };
 
 } /* ~Namespace Jafg */

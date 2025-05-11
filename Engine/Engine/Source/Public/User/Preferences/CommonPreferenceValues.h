@@ -63,7 +63,7 @@ public:
     FORCEINLINE void SetValueSetter(LPreferenceScalarValueSetter&& InSetter) { this->Setter = std::move(InSetter); }
     FORCEINLINE bool IsValueSetterValid() const { return this->Setter.IsBound(); }
 
-    ENGINE_API static void BuildDefault(const LPreference* Self, WWidgetParentBase* Target);
+    ENGINE_API static void BuildDefault(const LPreference* Self, WParentBase* Target);
 
 protected:
 

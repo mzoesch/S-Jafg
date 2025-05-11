@@ -251,7 +251,14 @@ void Jafg::LWorld::TearDownContext()
     this->WorldState = EWorldState::TearingDown;
 
     LOG_VERBOSE(LogWorld, "Tearing down world subsystems for world [{}].", this->GetHumanReadableName())
-    this->Collection.TearDownSubsystems();
+    this->Collection.TearDownSubsystems([](void) -> void
+    {
+        Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, Tasks::RunAllTasks);
+        Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::RunAllTasks);
+        Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::RunAllTasks);
+
+        return;
+    });
 
     // Preserve order!
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, Tasks::RunAllTasks);

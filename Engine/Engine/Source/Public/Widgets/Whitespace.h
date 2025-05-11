@@ -13,24 +13,24 @@ struct ENGINE_API LWhitespace
     {
         struct
         {
-            float West;
-            float North;
-            float East;
-            float South;
+            f32 West;
+            f32 North;
+            f32 East;
+            f32 South;
         };
 
         struct
         {
-            float Left;
-            float Top;
-            float Right;
-            float Bottom;
+            f32 Left;
+            f32 Top;
+            f32 Right;
+            f32 Bottom;
         };
 
-        float Whitespaces[4];
+        f32 Whitespaces[4];
     };
 
-    FORCEINLINE LWhitespace()
+    FORCEINLINE constexpr LWhitespace() noexcept
         : West(0.0f)
         , North(0.0f)
         , East(0.0f)
@@ -38,15 +38,15 @@ struct ENGINE_API LWhitespace
     {
     }
 
-    FORCEINLINE LWhitespace(const i32 UniformWhitespace)
-        : West(static_cast<float>(UniformWhitespace))
-        , North(static_cast<float>(UniformWhitespace))
-        , East(static_cast<float>(UniformWhitespace))
-        , South(static_cast<float>(UniformWhitespace))
+    FORCEINLINE constexpr LWhitespace(const i32 UniformWhitespace) noexcept
+        : West(static_cast<f32>(UniformWhitespace))
+        , North(static_cast<f32>(UniformWhitespace))
+        , East(static_cast<f32>(UniformWhitespace))
+        , South(static_cast<f32>(UniformWhitespace))
     {
     }
 
-    FORCEINLINE LWhitespace(const float UniformWhitespace)
+    FORCEINLINE constexpr LWhitespace(const f32 UniformWhitespace) noexcept
         : West(UniformWhitespace)
         , North(UniformWhitespace)
         , East(UniformWhitespace)
@@ -54,23 +54,23 @@ struct ENGINE_API LWhitespace
     {
     }
 
-    FORCEINLINE LWhitespace(const double UniformWhitespace)
-        : West(static_cast<float>(UniformWhitespace))
-        , North(static_cast<float>(UniformWhitespace))
-        , East(static_cast<float>(UniformWhitespace))
-        , South(static_cast<float>(UniformWhitespace))
+    FORCEINLINE constexpr LWhitespace(const f64 UniformWhitespace) noexcept
+        : West(static_cast<f32>(UniformWhitespace))
+        , North(static_cast<f32>(UniformWhitespace))
+        , East(static_cast<f32>(UniformWhitespace))
+        , South(static_cast<f32>(UniformWhitespace))
     {
     }
 
-    FORCEINLINE LWhitespace(const i32 Horizontal, const i32 Vertical)
-        : West(static_cast<float>(Horizontal))
-        , North(static_cast<float>(Vertical))
-        , East(static_cast<float>(Horizontal))
-        , South(static_cast<float>(Vertical))
+    FORCEINLINE constexpr LWhitespace(const i32 Horizontal, const i32 Vertical) noexcept
+        : West(static_cast<f32>(Horizontal))
+        , North(static_cast<f32>(Vertical))
+        , East(static_cast<f32>(Horizontal))
+        , South(static_cast<f32>(Vertical))
     {
     }
 
-    FORCEINLINE LWhitespace(const float Horizontal, const float Vertical)
+    FORCEINLINE constexpr LWhitespace(const f32 Horizontal, const f32 Vertical) noexcept
         : West(Horizontal)
         , North(Vertical)
         , East(Horizontal)
@@ -78,23 +78,23 @@ struct ENGINE_API LWhitespace
     {
     }
 
-    FORCEINLINE LWhitespace(const double Horizontal, const double Vertical)
-        : West(static_cast<float>(Horizontal))
-        , North(static_cast<float>(Vertical))
-        , East(static_cast<float>(Horizontal))
-        , South(static_cast<float>(Vertical))
+    FORCEINLINE constexpr LWhitespace(const f64 Horizontal, const f64 Vertical) noexcept
+        : West(static_cast<f32>(Horizontal))
+        , North(static_cast<f32>(Vertical))
+        , East(static_cast<f32>(Horizontal))
+        , South(static_cast<f32>(Vertical))
     {
     }
 
-    FORCEINLINE LWhitespace(const i32 InWest, const i32 InNorth, const i32 InEast, const i32 InSouth)
-        : West(static_cast<float>(InWest))
-        , North(static_cast<float>(InNorth))
-        , East(static_cast<float>(InEast))
-        , South(static_cast<float>(InSouth))
+    FORCEINLINE constexpr LWhitespace(const i32 InWest, const i32 InNorth, const i32 InEast, const i32 InSouth) noexcept
+        : West(static_cast<f32>(InWest))
+        , North(static_cast<f32>(InNorth))
+        , East(static_cast<f32>(InEast))
+        , South(static_cast<f32>(InSouth))
     {
     }
 
-    FORCEINLINE LWhitespace(const float InWest, const float InNorth, const float InEast, const float InSouth)
+    FORCEINLINE constexpr LWhitespace(const f32 InWest, const f32 InNorth, const f32 InEast, const f32 InSouth) noexcept
         : West(InWest)
         , North(InNorth)
         , East(InEast)
@@ -102,74 +102,81 @@ struct ENGINE_API LWhitespace
     {
     }
 
-    FORCEINLINE LWhitespace(const double InWest, const double InNorth, const double InEast, const double InSouth)
-        : West(static_cast<float>(InWest))
-        , North(static_cast<float>(InNorth))
-        , East(static_cast<float>(InEast))
-        , South(static_cast<float>(InSouth))
+    FORCEINLINE constexpr LWhitespace(const f64 InWest, const f64 InNorth, const f64 InEast, const f64 InSouth) noexcept
+        : West(static_cast<f32>(InWest))
+        , North(static_cast<f32>(InNorth))
+        , East(static_cast<f32>(InEast))
+        , South(static_cast<f32>(InSouth))
     {
     }
 
-    FORCEINLINE LWhitespace operator*(const float Scalar) const
+    FORCEINLINE constexpr LWhitespace operator*(const f32 Scalar) const noexcept
     {
         return LWhitespace(West * Scalar, North * Scalar, East * Scalar, South * Scalar);
     }
 
-    FORCEINLINE LWhitespace operator*(const double Scalar) const
+    FORCEINLINE constexpr LWhitespace operator*(const f64 Scalar) const noexcept
     {
         return LWhitespace(
-            West * static_cast<float>(Scalar),
-            North * static_cast<float>(Scalar),
-            East * static_cast<float>(Scalar),
-            South * static_cast<float>(Scalar)
+            West * static_cast<f32>(Scalar),
+            North * static_cast<f32>(Scalar),
+            East * static_cast<f32>(Scalar),
+            South * static_cast<f32>(Scalar)
         );
     }
 
-    FORCEINLINE LWhitespace operator*(const LWhitespace& Other) const
+    FORCEINLINE constexpr LWhitespace operator*(const LWhitespace& Other) const noexcept
     {
         return LWhitespace(West * Other.West, North * Other.North, East * Other.East, South * Other.South);
     }
 
-    FORCEINLINE LWhitespace operator+(const LWhitespace& Other) const
+    FORCEINLINE constexpr LWhitespace operator+(const LWhitespace& Other) const noexcept
     {
         return LWhitespace(West + Other.West, North + Other.North, East + Other.East, South + Other.South);
     }
 
-    FORCEINLINE LWhitespace operator-(const LWhitespace& Other) const
+    FORCEINLINE constexpr LWhitespace operator-(const LWhitespace& Other) const noexcept
     {
         return LWhitespace(West - Other.West, North - Other.North, East - Other.East, South - Other.South);
     }
 
-    FORCEINLINE LWhitespace operator/(const float Scalar) const
+    FORCEINLINE constexpr LWhitespace operator/(const f32 Scalar) const noexcept
     {
-        const float InvScalar = 1.0f / Scalar;
+        const f32 InvScalar = 1.0f / Scalar;
         return LWhitespace(West * InvScalar, North * InvScalar, East * InvScalar, South * InvScalar);
     }
 
-    FORCEINLINE LWhitespace operator/(const double Scalar) const
+    FORCEINLINE constexpr LWhitespace operator/(const f64 Scalar) const noexcept
     {
-        const float InvScalar = 1.0f / static_cast<float>(Scalar);
-        return LWhitespace(West * InvScalar, North * InvScalar, East * InvScalar, South * InvScalar);
+        const f32 InvScalar = 1.0f / static_cast<f32>(Scalar);
+        return {this->West * InvScalar, this->North * InvScalar, this->East * InvScalar, this->South * InvScalar};
     }
 
-    FORCEINLINE bool operator==(const LWhitespace& Other) const
+    FORCEINLINE constexpr bool operator==(const LWhitespace& Other) const noexcept
     {
-        return     Maths::IsNearlyEqual(West, Other.West)
-                && Maths::IsNearlyEqual(North, Other.North)
-                && Maths::IsNearlyEqual(East, Other.East)
-                && Maths::IsNearlyEqual(South, Other.South);
+        return Maths::IsNearlyEqual(West, Other.West)
+            && Maths::IsNearlyEqual(North, Other.North)
+            && Maths::IsNearlyEqual(East, Other.East)
+            && Maths::IsNearlyEqual(South, Other.South);
     }
 
-    FORCEINLINE bool operator!=(const LWhitespace& Other) const
+    FORCEINLINE constexpr bool operator!=(const LWhitespace& Other) const noexcept
     {
         return !(*this == Other);
     }
 
-    FORCEINLINE LVector2 GetTopLeftOffset() const { return LVector2(Left, Top); }
-    FORCEINLINE LVector2 GetDesiredSize()   const { return LVector2(Left + Right, Top + Bottom); }
+    FORCEINLINE constexpr f32      GetLeftOffset() const noexcept { return this->Left; }
+    FORCEINLINE constexpr f32      GetTopOffset() const noexcept { return this->Top; }
+    FORCEINLINE constexpr LVector2 GetTopLeftOffset() const noexcept { return {this->Left, this->Top}; }
+    FORCEINLINE constexpr f32      GetRightOffset() const noexcept { return this->Right; }
+    FORCEINLINE constexpr f32      GetBottomOffset() const noexcept { return this->Bottom; }
+    FORCEINLINE constexpr LVector2 GetBottomRightOffset() const noexcept { return {this->Right, this->Bottom}; }
+    FORCEINLINE constexpr f32      GetDesiredSizeX() const noexcept { return this->Left + this->Right; }
+    FORCEINLINE constexpr f32      GetDesiredSizeY() const noexcept { return this->Top + this->Bottom; }
+    FORCEINLINE constexpr LVector2 GetDesiredSize() const noexcept { return {this->Left + this->Right, this->Top + this->Bottom}; }
 };
 
 typedef LWhitespace LPadding;
 typedef LWhitespace LMargin;
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */

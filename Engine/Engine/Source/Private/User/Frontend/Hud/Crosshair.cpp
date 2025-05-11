@@ -2,19 +2,19 @@
 
 #include "CoreAfx.h"
 #include "User/Frontend/Hud/Crosshair.h"
-#include "Widgets/WidgetRegion.h"
+#include "Widgets/Region.h"
 
 void Jafg::WCrosshair::Construct()
 {
     Super::Construct();
 
-    MakeRootNode(WWidgetRegion).Anchor(EAnchor::Fill)
+    MakeRootNode(WRegion).Anchor(EAnchor::Fill)
     [
-        NewNode(WWidgetRegion)
+        NewNode(WRegion)
             .Anchor(EAnchor::CenterCenter)
             .Padding({1.0f, 4.0f})
             .Tint(LColor::White)
-        + NewNode(WWidgetRegion)
+        + NewNode(WRegion)
             .Anchor(EAnchor::CenterCenter)
             .Padding({4.0f, 1.0f})
             .Tint(LColor::White)

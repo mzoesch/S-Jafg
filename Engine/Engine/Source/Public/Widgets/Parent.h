@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "Widgets/WidgetParentBase.h"
-#include "WidgetParent.generated.h"
+#include "Widgets/ParentBase.h"
+#include "Parent.generated.h"
 
 namespace Jafg
 {
@@ -13,13 +13,13 @@ namespace Jafg
 //# Generally speaking, inheriting from this class directly is not recommended.
 //#
 DECLARE_JAFG_WIDGET(EClassFlags::Abstract)
-class ENGINE_API WWidgetParent : public WWidgetParentBase
+class ENGINE_API WParent : public WParentBase
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WWidgetParent(const LObjectInitializer& ObjectInitializer);
+    explicit WParent(const LObjectInitializer& ObjectInitializer);
 
 public:
 
@@ -33,21 +33,14 @@ public:
     virtual LReply       SweepFocusTest(LViewport& Context, const LVector2& InLocation) override;
 
     virtual bool IsFocusWidgetTransitive(const LViewport* InViewport) const override;
-
-    virtual bool FindNodeInVisiblePath(const WWidgetNode* InNode) const override;
-
-    virtual void UpdateDesiredSize() const override;
-    virtual auto GetRelativeTopLeftForChild(const WWidgetNode* InDirectChild) const -> LVector2 override;
-    virtual void UpdateAnchoredSize(const LViewport& Context) const override;
-    virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const override;
-    virtual auto GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WWidgetNode* InDirectChild) const -> LVector2 override;
+    virtual bool FindNodeInVisiblePath(const WNode* InNode) const override;
 
     FORCEINLINE
-    virtual auto         GetChildren() const -> const TArray<LWidgetSlot*>& override { return this->Children; }
-    virtual void         RemoveChild(WWidgetNode* Child) override;
-    virtual void         RemoveChild(LWidgetSlot* Child) override;
-    virtual LWidgetSlot* AddChild(WWidgetNode* InChild) override;
-    virtual LWidgetSlot* AddChildAt(const i32 InIndex, WWidgetNode* InChild) override;
+    virtual auto GetChildren() const -> const TArray<LWidgetSlot*>& override { return this->Children; }
+    virtual void RemoveChild(WNode* Child) override;
+    virtual void RemoveChild(LWidgetSlot* Child) override;
+    virtual auto AddChild(WNode* InChild) -> LWidgetSlot* override;
+    virtual auto AddChildAt(const i32 InIndex, WNode* InChild) -> LWidgetSlot* override;
 
     FORCEINLINE virtual void SetPadding(const LPadding& InPadding) override { this->Padding = InPadding; }
     FORCEINLINE         auto GetPadding()    const -> const LPadding& { return this->Padding; }
@@ -59,7 +52,7 @@ private:
     TArray<LWidgetSlot*> Children;
 
     //# The padding area between the slot and the content it contains.
-    LPadding               Padding;
+    LPadding Padding;
 };
 
 } /* ~Namespace Jafg */

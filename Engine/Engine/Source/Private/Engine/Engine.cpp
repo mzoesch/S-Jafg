@@ -24,7 +24,7 @@ ENGINE_API bool bGEngineRequestingExit = false;
 ENGINE_API i32     GCustomExitStatusOverride = INDEX_NONE;
 ENGINE_API LString GCustomExitReason;
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */
 
 // ~Engine Globals
 ///////////////////////////////////////////////////////////////////////////////
@@ -311,13 +311,17 @@ void Jafg::LEngine::TearDown()
     LOG_VERBOSE(LogEngine, "Tearing down engine.")
 
     LOG_VERBOSE(LogEngine, "Deallocating {} registered contexts.", this->Contexts.GetSize())
-    for (LWorldContext& Context : this->Contexts)
+    for (const LWorldContext& Context : this->Contexts)
     {
         Context.ChildWorld->TearDownContext();
         check( Context.ChildWorld->GetWorldState() == EWorldState::WaitingForKill )
+        continue;
+    }
+    for (LWorldContext& Context : this->Contexts)
+    {
+        check( Context.ChildWorld->GetWorldState() == EWorldState::WaitingForKill )
         delete Context.ChildWorld;
         Context.ChildWorld = nullptr;
-        continue;
     }
     this->Contexts.Empty();
 

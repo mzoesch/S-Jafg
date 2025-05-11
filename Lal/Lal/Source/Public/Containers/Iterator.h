@@ -33,4 +33,4 @@ private:
     ValPtr Ptr = nullptr;
 };
 
-} /* ~Namespace Jafg. */
+} /* ~Namespace Jafg */

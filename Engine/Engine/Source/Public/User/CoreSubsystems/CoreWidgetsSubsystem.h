@@ -3,7 +3,11 @@
 #pragma once
 
 #include "Subsystems/FrontendSubsystem.h"
+
+#include "Widgets/UserWidget.h"
+
 #include "CoreWidgetsSubsystem.generated.h"
+
 
 namespace Jafg
 {
@@ -31,6 +35,21 @@ private:
     WCrosshair* Crosshair = nullptr;
     WConsoleScreen* ConsoleScreen = nullptr;
     WPauseScreen* PauseScreen = nullptr;
+};
+
+DECLARE_JAFG_WIDGET()
+class ENGINE_API WMyTest : public WUserWidget
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTOR(WMyTest)
+
+public:
+
+    virtual void Construct() override;
+
 };
 
 } /* ~Namespace Jafg */
