@@ -3,9 +3,11 @@
 #include "CoreAfx.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Async/TaskUtility.h"
+#include "Engine/Engine.h"
 #include "Memory/MemoryMisc.h"
 #include "Engine/ObjectBase.h"
 #include "Engine/ObjectClass.h"
+#include "Stats/Stats.h"
 #include "System/ConfigIo.h"
 #include "System/Finder.h"
 #include "System/Paths.h"
@@ -26,6 +28,50 @@ ENGINE_API LCarnifex*       GCarnifexReferrer = nullptr;
 void MakeDeferredObjectFinal(JObjectBase* InObject)
 {
     InObject->BeginLife();
+}
+
+bool IsValidFast(const LObjectContext* InContext, const JObjectBase* InPointer)
+{
+    STAT_CYCLE_FUNCTION()
+
+    check( InContext )
+
+    if (InPointer == nullptr)
+    {
+        return false;
+    }
+
+    if (InContext->IsHiredHere(InPointer) == false)
+    {
+        return false;
+    }
+
+    return InPointer->IsGarbage() == false;
+}
+
+bool IsValidSlow(const LObjectContext* InContextPointer, const JObjectBase* InPointer)
+{
+    STAT_CYCLE_FUNCTION()
+
+    if (InContextPointer == nullptr || InPointer == nullptr)
+    {
+        return false;
+    }
+
+    if (GEngine == nullptr)
+    {
+        LOG_WARNING(LogObjectInternal, "Engine is invalid.")
+        return false;
+    }
+
+
+
+    if (InContextPointer->IsHiredHere(InPointer) == false)
+    {
+        return false;
+    }
+
+    return InPointer->IsGarbage() == false;
 }
 
 void PullConfigFromObject(LObjectClass* InClass)
@@ -194,7 +240,7 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
 
 bool Jafg::Private::LObjectMiscellaneousAccessor::DynamicCast(const JObjectBase* InObject, const LObjectClass* InTargetClass)
 {
-    return InObject->GetVTable()->DerivesFrom(InTargetClass);
+    return InObject->GetVTableChecked()->DerivesFrom(InTargetClass);
 }
 
 void Jafg::Private::LObjectRegistry::LoadPendingPackages()

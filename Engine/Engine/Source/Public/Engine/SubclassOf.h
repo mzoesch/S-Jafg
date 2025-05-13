@@ -79,7 +79,7 @@ public:
     {
         static_assert(std::is_base_of_v<JObjectBase, U>);
         static_assert(std::is_base_of_v<TObj, U>);
-        this->Class = What->GetVTable();
+        this->Class = What->GetVTableSlow();
         check( this->IsValidType() )
         return;
     }
@@ -88,7 +88,7 @@ public:
     {
         static_assert(std::is_base_of_v<JObjectBase, U>);
         static_assert(std::is_base_of_v<TObj, U>);
-        this->Class = What->GetVTable();
+        this->Class = What->GetVTableSlow();
         check( this->IsValidType() )
         return *this;
     }
@@ -128,7 +128,7 @@ public:
         if (this->Class)
         {
             const JObjectBase* Default = this->Class->GetDefaultPackageReferrer();
-            check( Default && Default->GetVTable()->DerivesFrom(TObj::StaticClass()) )
+            check( Default && Default->GetVTableChecked()->DerivesFrom(TObj::StaticClass()) )
             return static_cast<const TObj*>(Default);
         }
 
@@ -150,7 +150,7 @@ public:
 
 private:
 
-    const LObjectClass* Class = nullptr;
+    const LObjectClass* Class { nullptr };
 };
 
 } /* ~Namespace Jafg */

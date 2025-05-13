@@ -74,26 +74,26 @@ ENGINE_API extern LObjectContext* GOmniVitaContext;
 
 //# Allocate a new object of type TObj. */
 template <typename TObj>
-FORCEINLINE auto NewObject() -> TObj*;
+FORCEINLINE TObj* NewObject();
 template <typename TObj>
-FORCEINLINE auto NewObject(LObjectContext* InContext) -> TObj*;
+FORCEINLINE TObj* NewObject(LObjectContext* InContext);
 template <typename TObj>
-FORCEINLINE auto NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> TObj*;
-FORCEINLINE auto NewObject(const LString& InClassName) -> JObjectBase*;
-FORCEINLINE auto NewObject(LObjectContext* InContext, const LString& InClassName) -> JObjectBase*;
-FORCEINLINE auto NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
+FORCEINLINE TObj* NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass);
+FORCEINLINE JObjectBase* NewObject(const LString& InClassName);
+FORCEINLINE JObjectBase* NewObject(LObjectContext* InContext, const LString& InClassName);
+FORCEINLINE JObjectBase* NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass);
 
 //# Allocate a new object of type TObj. The begin-life method will not be called.
 template <typename TObj>
-FORCEINLINE auto NewDeferredObject() -> TObj*;
+FORCEINLINE TObj* NewDeferredObject();
 template <typename TObj>
-FORCEINLINE auto NewDeferredObject(LObjectContext* InContext) -> TObj*;
+FORCEINLINE TObj* NewDeferredObject(LObjectContext* InContext);
 // Boolean parameters are for internal use only - __DO NOT__ change the default values.
 template <typename TObj, bool bAllowActor = /*FALSE REQUIRED*/false, bool bAllowWidget = /*FALSE REQUIRED*/false>
-FORCEINLINE auto NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> TObj*;
-FORCEINLINE auto NewDeferredObject(const LString& InClassName) -> JObjectBase*;
-FORCEINLINE auto NewDeferredObject(LObjectContext* InContext, const LString& InClassName) -> JObjectBase*;
-FORCEINLINE auto NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
+FORCEINLINE TObj* NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass);
+FORCEINLINE JObjectBase* NewDeferredObject(const LString& InClassName);
+FORCEINLINE JObjectBase* NewDeferredObject(LObjectContext* InContext, const LString& InClassName);
+FORCEINLINE JObjectBase* NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass);
 
 //#
 //# Call this method to finalize an object that was deferred.
@@ -107,9 +107,9 @@ ENGINE_API void MakeDeferredObjectFinal(JObjectBase* InObject);
 //#         as that function does not add any runtime overhead.
 //#
 template <typename TObj>
-FORCEINLINE auto DynamicCast(JObjectBase* InObject) -> TObj*;
+FORCEINLINE TObj* DynamicCast(JObjectBase* InObject);
 template <typename TObj>
-FORCEINLINE auto DynamicCast(const JObjectBase* InObject) -> const TObj*;
+FORCEINLINE const TObj* DynamicCast(const JObjectBase* InObject);
 
 //#
 //# Only checks if the object can be casted if DO_CHECKS is true. If the object fails to cast to the
@@ -125,6 +125,36 @@ template <typename TObj, typename U, bool bAllowForNullptr = false>
 FORCEINLINE TObj* CheckedStaticCast(U* InObject);
 template <typename TObj, typename U, bool bAllowForNullptr = false>
 FORCEINLINE const TObj* CheckedStaticCast(const U* InObject);
+
+//#
+//# This function checks whether the #InPointer is still valid. It assumes that the #InContext is valid.
+//#
+//# Valid means:
+//#   1. The #InPointer is not null.
+//#   2. The #InPointer is still allocated, based of the #InContext state.
+//#   3. The object at the #InPointer address is not marked as garbage.
+//#
+//# @remark This function may be used on any thread but of course after the function returned the pointer, it might get
+//#         immediately invalid.
+//#
+ENGINE_API bool IsValidFast(const LObjectContext* InContext, const JObjectBase* InPointer);
+
+//#
+//# A more dedicated function, than the #IsValidFast, to check if the #InPointer is still valid.
+//# This function is usually only usefully if the caller has a reference to an object that is not same
+//# context has its own.
+//#
+//# Valid means:
+//#   1. The #InContextPointer is not null.
+//#   2. The #InPointer is not null.
+//#   3. The #InContextPointer is still allocated, based of the current engine state.
+//#   3. The context at #InContextPointer employees the #InPointer currently.
+//#   4. The object at the #InPointer address is not marked as garbage.
+//#
+//# @remark This function may be used on any thread but of course after the function returned the pointer, it might get
+//#         immediately invalid.
+//#
+ENGINE_API bool IsValidSlow(const LObjectContext* InContextPointer, const JObjectBase* InPointer);
 
 //# @return The default package referrer.
 template <typename TObj>

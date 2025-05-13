@@ -131,17 +131,20 @@ bool Jafg::Private::LNameRegistry::RegisterName(const LString& InName)
 
 Jafg::LName Jafg::Private::LNameRegistry::RegisterAndGetName(const LString& InName)
 {
+    check( Tasks::IsOnMasterThread() )
+
+    const LString LowerName = InName.GetLowerCase();
+
+    if (const LName InRepo = this->GetName(LowerName, false); InRepo.IsSet())
+    {
+        return InRepo;
+    }
+
     if (this->RegisterName(InName))
     {
         return { static_cast<LUnderlyingName>(this->Names.GetSize()) };
     }
 
-    const LString LowerName = InName.GetLowerCase();
-
-    if (this->IsNameRegistered(InName, false))
-    {
-        return this->GetName(InName, false);
-    }
-
+    jassertNoEntry()
     return LName::NoName;
 }

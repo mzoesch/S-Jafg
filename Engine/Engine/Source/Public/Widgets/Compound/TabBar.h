@@ -35,18 +35,18 @@ struct LTabBarTabDescriptor final
     //#
     //# The panel widget to use. Required.
     //#
-    TSubclassOf<WTabBarPanel> PanelWidgetClass = nullptr;
+    TSubclassOf<WTabBarPanel> PanelWidgetClass;
 
     //#
     //# The button to use. Leave as nullptr to use the default button that comes with the tab bar.
     //# ButtonWidgetClass and OnButtonPressed are mutually exclusive.
     //#
-    TSubclassOf<WTabBarButton> ButtonWidgetClass = nullptr;
+    TSubclassOf<WTabBarButton> ButtonWidgetClass;
     //#
     //# Optional delegate that gets called when the button is pressed.
     //# ButtonWidgetClass and OnButtonPressed are mutually exclusive.
     //#
-    LOnTabBarButtonPressed OnButtonPressed = nullptr;
+    LOnTabBarButtonPressed OnButtonPressed;
 
     //#
     //# An optional value that may contain the identifier of the tab that this tab should be added after (in close
@@ -109,6 +109,9 @@ public:
     FORCEINLINE auto GetSwitcher() const -> const WSwitcher* { return this->Switcher; }
 
     void RegisterTab(LTabBarTabDescriptor&& InTabDescriptor);
+    void AppendVSpace(const f32 InVSpace);
+    void AppendHSpace(const f32 InHSpace);
+    void AppendStretch(const LAnchor& InStretch);
     bool UnregisterTab(const LString& Identifier);
     bool UnregisterTabChecked(const LString& Identifier);
 
@@ -136,28 +139,28 @@ protected:
     //#
     //# An optional class to set that wraps both the buttons section and the switcher.
     //#
-    TSubclassOf<WParentBase> WrapperClass = nullptr;
+    TSubclassOf<WParentBase> WrapperClass;
     //#
     //# The preference for alignment of buttons and switcher if the wrapper class is not set.
     //# If this is not set, then there will not occur any wrapping.
     //#
-    TOptional<bool> bIsVertical = false;
+    TOptional<bool> bIsVertical { false };
 
     //#
     //# The container where the buttons are stored.
     //#
-    WParentBase* ButtonsContainer = nullptr;
-    TSubclassOf<WParentBase> ButtonsContainerClass = nullptr;
-    TSubclassOf<WNode> DefaultButtonClass = nullptr;
+    WParentBase* ButtonsContainer { nullptr };
+    TSubclassOf<WParentBase> ButtonsContainerClass;
+    TSubclassOf<WNode> DefaultButtonClass;
 
     //#
     //# The switcher where the panels are stored.
     //#
-    WSwitcher* Switcher = nullptr;
-    TSubclassOf<WSwitcher> SwitcherClass = nullptr;
+    WSwitcher* Switcher { nullptr };
+    TSubclassOf<WSwitcher> SwitcherClass;
 
-    const void* CurrentlyFocusedTab = nullptr;
-    const LAddedTabBarTab* GetCurrentlyFocusedTab() const;
+    const void* CurrentlyFocusedTab { nullptr };
+                const LAddedTabBarTab* GetCurrentlyFocusedTab() const;
     FORCEINLINE const LAddedTabBarTab* GetCurrentlyFocusedTabChecked() const;
     FORCEINLINE const LAddedTabBarTab* GetCurrentlyFocusedTabPanicked() const;
 
@@ -168,8 +171,8 @@ protected:
         WNode* Panel = nullptr;
         i8 SwitcherIndex = INDEX_NONE;
     };
-    TArray<LAddedTabBarTab> TabsInOrder = { };
-    TArray<LTabBarTabDescriptor> DeferredTabs = { };
+    TArray<LAddedTabBarTab> TabsInOrder;
+    TArray<LTabBarTabDescriptor> DeferredTabs;
 };
 
 } /* ~Namespace Jafg */

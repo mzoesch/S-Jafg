@@ -41,10 +41,10 @@ public:
 
 protected:
 
-    WTabBar* Context = nullptr;
+    WTabBar* Context { nullptr };
     LString Identifier;
-    WTextBlock* ButtonText = nullptr;
-    LOnTabBarButtonPressed OnButtonPressed = nullptr;
+    WTextBlock* ButtonText { nullptr };
+    LOnTabBarButtonPressed OnButtonPressed;
 };
 
 } /* ~Namespace Jafg */

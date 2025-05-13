@@ -14,13 +14,14 @@ void Jafg::WCommonMenuTabBarButton::Construct()
 
     Super::Construct();
 
-    this->SetPadding({5, 20});
+    this->SetPadding({10, 20});
     this->SetMinDesiredSize(LVector2(10));
     this->SetAnchor(EAnchor::HFill);
 
     if (this->IsButtonTextWidgetValid())
     {
         this->GetButtonTextWidget()->SetAnchor(EAnchor::CenterLeft);
+        this->GetButtonTextWidget()->SetBrush(LTextBlockBrush::SubHeader());
     }
 
     return;

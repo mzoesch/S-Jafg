@@ -584,34 +584,44 @@ public:
     FORCEINLINE void SetAnchor(const LAnchor&      InAnchor) { this->Anchor = InAnchor; }
     FORCEINLINE void SetAnchor(const EAnchor::Type InAnchor) { this->Anchor = InAnchor; }
 
+    template <typename T> FORCEINLINE bool IsA() const;
+    template <typename T> FORCEINLINE bool IsA(const T** OutObject) const;
+                          FORCEINLINE bool IsA(const LObjectClass* InStaticClass) const { return this->GetVTableSlow()->DerivesFrom(InStaticClass); }
+    template <typename T> FORCEINLINE       T* As() { return DynamicCast<T>(this); }
+    template <typename T> FORCEINLINE const T* As() const { return DynamicCast<T>(this); }
+    template <typename T> FORCEINLINE       T* AsChecked() { T* Out = this->As<T>(); check( Out ) return Out; }
+    template <typename T> FORCEINLINE const T* AsChecked() const { const T* Out = this->As<T>(this); check( Out ) return Out; }
+    template <typename T> FORCEINLINE       T* AsAsserted() { T* Out = this->As<T>(); jassert( Out ) return Out; }
+    template <typename T> FORCEINLINE const T* AsAsserted() const { const T* Out = this->As<T>(); jassert( Out ) return Out; }
+
     LEngine*   GetEngine() const;
     LLocalEgo* GetLocalEgo() const;
 
 private:
 
-    bool bAllowTick = true;
-    EWidgetVisibility::Type Visibility = EWidgetVisibility::TransitiveHitTestInvisible;
+    bool bAllowTick { true };
+    EWidgetVisibility::Type Visibility { EWidgetVisibility::TransitiveHitTestInvisible };
 
     //#
     //# The slot that this widget is currently in. Might be null if the widget is a standalone.
     //# This class is not the owner of this slot. But the parent holding the child is.
     //#
-    LWidgetSlot* Slot = nullptr;
+    LWidgetSlot* Slot { nullptr };
 
     //#
     //# The desired size of this widget.
     //#
-    mutable LVector2 DesiredSize = LVector2::Zero();
+    mutable LVector2 DesiredSize;
 
     //#
     //# The minimum content area.
     //#
-    LVector2 MinDesiredSize = LVector2::Zero();
+    LVector2 MinDesiredSize;
 
     //#
     //# The anchored size of this widget.
     //#
-    mutable LVector2 AnchoredSize = LVector2::Zero();
+    mutable LVector2 AnchoredSize;
 
     LAnchor Anchor { EAnchor::TopLeft };
 };
@@ -691,6 +701,30 @@ FORCEINLINE void MakeDeferredWidgetNodeFinal(WNode* InNode)
     check( InNode )
     MakeDeferredObjectFinal(InNode);
     return;
+}
+
+template<typename T>
+FORCEINLINE bool WNode::IsA() const
+{
+    static_assert(std::is_base_of_v<WNode, T>, "T must derive from WNode");
+    return this->GetVTableSlow()->DerivesFrom(T::StaticClass());
+}
+
+template<typename T>
+FORCEINLINE bool WNode::IsA(const T** OutObject) const
+{
+    static_assert(std::is_base_of_v<WNode, T>, "T must derive from WNode");
+    if (this->IsA<T>())
+    {
+        if (OutObject)
+        {
+            *OutObject = CheckedStaticCast<T>(this);
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 } /* ~Namespace Jafg */

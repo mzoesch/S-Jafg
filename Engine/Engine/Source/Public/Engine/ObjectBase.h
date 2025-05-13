@@ -89,15 +89,19 @@ protected:
 
 public:
 
-    FORCEINLINE auto GetVTable()        const -> const LObjectClass*  { return this->VClass; }
-    FORCEINLINE auto GetMutableVTable() const ->       LObjectClass*  { return this->VClass; }
-    FORCEINLINE auto GetVTableSlow()        const -> const LObjectClass*  { return this->VClass ? this->VClass : Private::GObjectRegistry->GetPanickedPackageByContentDefault(this)->StaticClass; }
-    FORCEINLINE auto GetMutableVTableSlow() const ->       LObjectClass*  { return this->VClass ? this->VClass : Private::GObjectRegistry->GetPanickedPackageByContentDefault(this)->StaticClass; }
-    FORCEINLINE auto IsDefault()       const -> bool  { return this->VClass == nullptr; }
-    FORCEINLINE auto GetFullName()     const -> const LString& { return this->VClass->GetSpacedClassName(); }
-    FORCEINLINE auto GetName()         const ->       LName    { return this->VClass->GetName(); }
-    FORCEINLINE auto GetFullNameSlow() const -> const LString& { return this->GetVTableSlow()->GetSpacedClassName(); }
-    FORCEINLINE auto GetNameSlow()     const ->       LName    { return this->GetVTableSlow()->GetName(); }
+    FORCEINLINE const LObjectClass* GetVTable() const { return this->VClass; }
+    FORCEINLINE       LObjectClass* GetMutableVTable() { return this->VClass; }
+    FORCEINLINE const LObjectClass* GetVTableChecked() const { check( this->VClass ) return this->VClass; }
+    FORCEINLINE       LObjectClass* GetMutableVTableChecked() { check( this->VClass ) return this->VClass; }
+    FORCEINLINE const LObjectClass* GetVTableAsserted() const { jassert( this->VClass ) return this->VClass; }
+    FORCEINLINE       LObjectClass* GetMutableVTableAsserted() { jassert( this->VClass ) return this->VClass; }
+    FORCEINLINE const LObjectClass* GetVTableSlow() const { return this->VClass ? this->VClass : Private::GObjectRegistry->GetPanickedPackageByContentDefault(this)->StaticClass; }
+    FORCEINLINE       LObjectClass* GetMutableVTableSlow() const { return this->VClass ? this->VClass : Private::GObjectRegistry->GetPanickedPackageByContentDefault(this)->StaticClass; }
+    FORCEINLINE bool           IsDefault() const { return this->VClass == nullptr; }
+    FORCEINLINE const LString& GetFullName() const { check( this->VClass ) return this->VClass->GetSpacedClassName(); }
+    FORCEINLINE LName          GetName() const { check( this->VClass ) return this->VClass->GetName(); }
+    FORCEINLINE const LString& GetFullNameSlow() const { return this->GetVTableSlow()->GetSpacedClassName(); }
+    FORCEINLINE LName          GetNameSlow() const { return this->GetVTableSlow()->GetName(); }
 
     //#
     //# Gets the context that this object lives in and shares its lifetime with it.
@@ -161,8 +165,10 @@ private:
 
     void OnDefaultGarbage();
 
-    LObjectContext* Outer = nullptr;
-    bool bGarbage = false;
+    LObjectContext* Outer { nullptr };
+
+    bool bGarbage { false };
+
 #if DO_DOUBLE_CHECK_LIFETIMES
     bool bHasBegunLife = false;
 #endif /* DO_DOUBLE_CHECK_LIFETIMES */
@@ -175,6 +181,7 @@ private:
 
 #include "Engine/SubclassOf.h"
 #include "User/Preferences/PreferenceTypes.h"
+#include "Engine/ObjectStorage.h"
 
 namespace Jafg
 {

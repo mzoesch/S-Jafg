@@ -16,6 +16,14 @@
 
 using namespace Jafg;
 
+#if IN_SHIPPING
+    #define FORCE_LOG_FLUSH_INTERVAL        10.0
+    #define LOG_TIME_FOR_VERY_LONG_FRAMES   2.0
+#else /* IN_SHIPPING */
+    #define FORCE_LOG_FLUSH_INTERVAL        0.2
+    #define LOG_TIME_FOR_VERY_LONG_FRAMES   0.7
+#endif /* !IN_SHIPPING */
+
 namespace
 {
 
@@ -27,15 +35,30 @@ LCarnifex PrivateCarnifex;
 
 } /* ~Namespace <Anonymous> */
 
-#if IN_SHIPPING
-    #define FORCE_LOG_FLUSH_INTERVAL        10.0
-    #define LOG_TIME_FOR_VERY_LONG_FRAMES   2.0
-#else /* IN_SHIPPING */
-    #define FORCE_LOG_FLUSH_INTERVAL        0.2
-    #define LOG_TIME_FOR_VERY_LONG_FRAMES   0.7
-#endif /* !IN_SHIPPING */
+namespace Jafg
+{
 
-FORCEINLINE void FlushLogs()
+struct LPrivateLaunch
+{
+    static void CreateGOmniVitaContext()
+    {
+        check( GOmniVitaContext == nullptr )
+        GOmniVitaContext = new LObjectContext(LObjectContext::NoEngineRegistration);
+    }
+
+    static void DestroyGOmniVitaContext()
+    {
+        check( GOmniVitaContext )
+        GOmniVitaContext->TearDownContextNoEngineUnregistration();
+    }
+};
+
+} /* ~Namespace Jafg */
+
+#if !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT)
+FORCEINLINE
+#endif /* !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT) */
+void FlushLogs()
 {
     LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
     Application::Private::LastStdOutFlushTime = Application::GetHighestNow();
@@ -177,7 +200,7 @@ void EngineExit()
 
     if (GOmniVitaContext)
     {
-        GOmniVitaContext->TearDownContext();
+        LPrivateLaunch::DestroyGOmniVitaContext();
         delete GOmniVitaContext;
         GOmniVitaContext = nullptr;
     }
@@ -298,8 +321,8 @@ EPlatformExit::Type GuardedMain()
 
     STAT_CYCLE_START(GmObjects, "JafgObjectInitialization")
     Private::GCarnifexReferrer = &::PrivateCarnifex;
-    GOmniVitaContext = new LObjectContext();
-    GOmniVitaContext->DeferredInitialize(Private::GCarnifexReferrer);
+    LPrivateLaunch::CreateGOmniVitaContext();
+    check( GOmniVitaContext->IsValid() )
     GOmniVitaContext->SetHumanReadableName("OmniVitaContext");
     check( GOmniVitaContext->GetCarnifex() )
 
@@ -321,8 +344,12 @@ EPlatformExit::Type GuardedMain()
     }
     STAT_CYCLE_END(GmObjects)
 
+    STAT_CYCLE_START(GmEngineInit, "EngineInit")
     GEngine = new LEngine();
+    GEngine->RegisterObjectContext(GOmniVitaContext);
+    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::BeforeEngineInitButAfterAllocDangerous, Tasks::RunAllTasks);
     GEngine->Initialize();
+    STAT_CYCLE_END(GmEngineInit)
 
     if (GEngine == nullptr || ::IsEngineExitRequested())
     {

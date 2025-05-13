@@ -40,6 +40,7 @@ enum : u8 { NO_NAME = 0 };
 struct LName
 {
     friend Private::LNameRegistry;
+    friend std::formatter<LName>;
 
     FORCEINLINE LName() : UnderlyingName(NO_NAME) { }
     FORCEINLINE LName(const LName& Other) = default;
@@ -130,3 +131,16 @@ FORCEINLINE const LString& LNameRegistry::GetRealNameSafe(const LName InName) co
 } /* ~Namespace Private */
 
 } /* ~Namespace Jafg */
+
+template <>
+struct std::formatter<::Jafg::LName> : std::formatter<Jafg::LUnderlyingName>
+{
+    FORCEINLINE auto format
+    (
+        const ::Jafg::LName& InName,
+        ::std::format_context& InContext
+    ) const -> ::std::format_context::iterator
+    {
+        return ::std::formatter<Jafg::LUnderlyingName>::format(InName.UnderlyingName, InContext);
+    }
+};

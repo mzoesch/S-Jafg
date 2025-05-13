@@ -24,7 +24,8 @@ public:
     void AddTopLevelPreference(Smart::TUnique<TPref>&& InPreference);
     void AddTopLevelPreference(Smart::TUnique<LPreference>&& InPreference);
 
-    FORCEINLINE virtual auto GetPreferences(void) const -> const TArray<Smart::TUnique<LPreference>>& { return this->Preferences; }
+    FORCEINLINE virtual       TArray<Smart::TUnique<LPreference>>& GetMutablePreferences() { return this->Preferences; }
+    FORCEINLINE virtual const TArray<Smart::TUnique<LPreference>>& GetPreferences() const { return this->Preferences; }
 
 protected:
 

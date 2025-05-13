@@ -70,6 +70,10 @@ bool Jafg::WPreferencesPanel::AddData(LWidgetNodeData* InData)
 
     ::AddPreference(Root, P);
 
+    if (this->GetChildren().GetSize() > 1)
+    {
+        this->RemoveChild(*this->GetChildren().GetLast());
+    }
     this->AddChild(Root);
     MakeDeferredWidgetNodeFinal(Root);
 
@@ -109,6 +113,10 @@ void Jafg::WPreferencesScreen::Construct()
                 Data.DerivedClass = WPreferencesPanel::StaticClass()->GetName();
                 Data.Preference = LambdaPreference;
                 Panel->AddData(&Data);
+            }
+            else
+            {
+                LOG_WARNING(LogPreferences, "Panel is invalid.")
             }
 
             return;

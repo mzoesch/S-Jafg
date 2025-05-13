@@ -7,6 +7,7 @@
 namespace Jafg
 {
 
+struct LCliObjectHandle;
 class LCommandLineInterface;
 
 typedef u32 LCliObjectUuid;
@@ -60,7 +61,7 @@ protected:
 
 private:
 
-    LCliObjectUuid Uuid = NoUuid;
+    LCliObjectUuid Uuid { NoUuid };
     LString Identifier;
     LString Help;
 };

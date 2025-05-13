@@ -89,7 +89,7 @@ private:
     //# The context of the local ego. It is created when the local ego is instantiated
     //# and not destroyed until the local ego is killed.
     //#
-    LObjectContext       Context = GlobalCarnifex;
+    LObjectContext       Context { DeferredGlobalCarnifex };
     LSubsystemCollection Collection;
 
     LCliVariableHandle VariableHandle_UpdateFrustum;

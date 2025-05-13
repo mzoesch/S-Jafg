@@ -5,6 +5,7 @@
 #include "Widgets/Region.h"
 #include "Containers/MyStringUtility.h"
 #include "Widgets/HRegion.h"
+#include "Widgets/Spacer.h"
 #include "Widgets/VRegion.h"
 
 Jafg::WTabBar::WTabBar(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -131,6 +132,36 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, r
     return;
 }
 
+void Jafg::WTabBar::AppendVSpace(const f32 InVSpace)
+{
+    WSpacer* Spacer = ConstructDeferredWidgetNode<WSpacer>(this->GetOuter());
+    Spacer->SetHeight(InVSpace);
+    this->ButtonsContainer->AddChild(Spacer);
+    MakeDeferredWidgetNodeFinal(Spacer);
+
+    return;
+}
+
+void Jafg::WTabBar::AppendHSpace(const f32 InHSpace)
+{
+    WSpacer* Spacer = ConstructDeferredWidgetNode<WSpacer>(this->GetOuter());
+    Spacer->SetWidth(InHSpace);
+    this->ButtonsContainer->AddChild(Spacer);
+    MakeDeferredWidgetNodeFinal(Spacer);
+
+    return;
+}
+
+void Jafg::WTabBar::AppendStretch(const LAnchor& InStretch)
+{
+    WSpacer* Spacer = ConstructDeferredWidgetNode<WSpacer>(this->GetOuter());
+    Spacer->SetAnchor(InStretch);
+    this->ButtonsContainer->AddChild(Spacer);
+    MakeDeferredWidgetNodeFinal(Spacer);
+
+    return;
+}
+
 bool Jafg::WTabBar::UnregisterTab(const LString& Identifier)
 {
     return false;
@@ -213,12 +244,47 @@ void Jafg::WTabBar::OnOuterVisibilityChanged(const EWidgetVisibility::Type InOld
 
 void Jafg::WTabBar::LoadTab(const LTabBarTabDescriptor& Descriptor, const i32 InIndex)
 {
+    check( this->ButtonsContainer )
     check( !(Descriptor.ButtonWidgetClass && Descriptor.OnButtonPressed) )
 
     WNode* Button = Descriptor.ButtonWidgetClass.IsSet()
         ? ConstructDeferredWidgetNode<WNode>(this->GetOuter(), Descriptor.ButtonWidgetClass)
         : ConstructDeferredWidgetNode<WNode>(this->GetOuter(), this->DefaultButtonClass);
-    this->ButtonsContainer->AddChildAt(InIndex, Button);
+
+    i32 Iterator { 0 };
+    i32 Where { 0 };
+    for (const LWidgetSlot* Slot : this->ButtonsContainer->GetChildren())
+    {
+        if (Iterator == InIndex)
+        {
+            break;
+        }
+
+        check( Slot && Slot->Content )
+        if (Slot->Content->IsA<WSpacer>() == false)
+        {
+            ++Iterator;
+        }
+
+        ++Where;
+
+        continue;
+    }
+    check( Iterator == InIndex )
+    while (this->ButtonsContainer->GetChildren().IsValidIndex(Where))
+    {
+        const LWidgetSlot* Slot = this->ButtonsContainer->GetChildren()[Where];
+        check( Slot && Slot->Content )
+        if (Slot->Content->IsA<WSpacer>() == false)
+        {
+            break;
+        }
+
+        ++Where;
+
+        continue;
+    }
+    this->ButtonsContainer->AddChildAt(Where, Button);
 
     this->TabsInOrder[InIndex].Button = Button;
 

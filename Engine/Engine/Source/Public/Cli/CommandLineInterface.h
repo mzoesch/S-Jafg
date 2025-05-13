@@ -37,7 +37,7 @@ private:
 
     ENGINE_API LCommandLineInterface* GetCommandLineInterface() const;
 
-    LCliObjectUuid Uuid = LCliObject::NoUuid;
+    LCliObjectUuid Uuid { LCliObject::NoUuid };
 };
 
 namespace ECliType
@@ -75,6 +75,15 @@ public:
 
     ENGINE_API auto RegisterVariable(LCliVariable&& InVariable) -> LCliVariableHandle;
     ENGINE_API bool UnregisterVariable(LCliVariableHandle* InHandle);
+
+    FORCEINLINE TOptional<LCliObjectHandle>   GetHandle(const LCliObject& InObject) const;
+    FORCEINLINE TOptional<LCliTypeHandle>     GetHandle(const LCliType& InObject) const;
+    FORCEINLINE TOptional<LCliCommandHandle>  GetHandle(const LCliCommand& InObject) const;
+    FORCEINLINE TOptional<LCliVariableHandle> GetHandle(const LCliVariable& InObject) const;
+
+    FORCEINLINE const TArray<LCliType>&     GetTypes() const { return this->Types; }
+    FORCEINLINE const TArray<LCliCommand>&  GetCommands() const { return this->Commands; }
+    FORCEINLINE const TArray<LCliVariable>& GetVariables() const { return this->Variables; }
 
     //#
     //# All pointer that the following methods return are only valid for a very short time.
@@ -190,6 +199,34 @@ template<typename TField>
 FORCEINLINE void LCliObjectHandle::GetValue(TField* Destination) const
 {
     this->GetCommandLineInterface()->GetVariable(this->Uuid)->GetValue<TField>(Destination);
+}
+
+FORCEINLINE TOptional<LCliObjectHandle> LCommandLineInterface::GetHandle(const LCliObject& InObject) const
+{
+    return (InObject.Uuid == LCliObject::NoUuid)
+        ? TOptional<LCliObjectHandle>{ }
+        : TOptional<LCliObjectHandle>{ LCliObjectHandle{InObject.Uuid} };
+}
+
+FORCEINLINE TOptional<LCliTypeHandle> LCommandLineInterface::GetHandle(const LCliType& InObject) const
+{
+    return (InObject.Uuid == LCliObject::NoUuid)
+        ? TOptional<LCliTypeHandle>{ }
+        : TOptional<LCliTypeHandle>{ LCliTypeHandle{InObject.Uuid} };
+}
+
+FORCEINLINE TOptional<LCliCommandHandle> LCommandLineInterface::GetHandle(const LCliCommand& InObject) const
+{
+    return (InObject.Uuid == LCliObject::NoUuid)
+        ? TOptional<LCliCommandHandle>{ }
+        : TOptional<LCliCommandHandle>{ LCliCommandHandle{InObject.Uuid} };
+}
+
+FORCEINLINE TOptional<LCliVariableHandle> LCommandLineInterface::GetHandle(const LCliVariable& InObject) const
+{
+    return (InObject.Uuid == LCliObject::NoUuid)
+        ? TOptional<LCliVariableHandle>{ }
+        : TOptional<LCliVariableHandle>{ LCliVariableHandle{InObject.Uuid} };
 }
 
 template <typename T>

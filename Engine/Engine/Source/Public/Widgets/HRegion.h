@@ -45,21 +45,4 @@ private:
     f32 HSpace { 0.0f };
 };
 
-DECLARE_JAFG_WIDGET()
-class ENGINE_API WTest : public WHRegion
-{
-    GENERATED_CLASS_BODY()
-
-protected:
-
-    DEFAULT_OBJECT_CONSTRUCTOR(WTest)
-
-public:
-
-    virtual void UpdateDesiredSize() const override;
-
-    virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const override;
-    virtual auto GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const -> LVector2 override;
-};
-
 } /* ~Namespace Jafg */

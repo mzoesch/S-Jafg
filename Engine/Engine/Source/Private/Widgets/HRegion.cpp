@@ -106,18 +106,3 @@ Jafg::LVector2 Jafg::WHRegion::GetAnchoredTopLeftFromMostOuterForChild(const LVi
 
     return Out;
 }
-
-void Jafg::WTest::UpdateDesiredSize() const
-{
-    WHRegion::UpdateDesiredSize();
-}
-
-void Jafg::WTest::UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const
-{
-    WHRegion::UpdateAnchoredSizeForChild(Context, InDirectChild);
-}
-
-Jafg::LVector2 Jafg::WTest::GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const
-{
-    return WHRegion::GetAnchoredTopLeftFromMostOuterForChild(Context, InDirectChild);
-}

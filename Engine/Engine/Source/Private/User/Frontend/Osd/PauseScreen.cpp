@@ -9,6 +9,7 @@
 #include "Widgets/Viewport.h"
 #include "Platform/Surface.h"
 #include "User/Frontend/Osd/PreferencesScreen.h"
+#include "Widgets/Spacer.h"
 
 void Jafg::WPauseScreen::Construct()
 {
@@ -24,6 +25,10 @@ void Jafg::WPauseScreen::Construct()
     FinishWidgetStyling()
 
     {
+        this->PauseTabBar->AppendVSpace(35.0f);
+    }
+
+    {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "Resume";
         Descriptor.OnButtonPressed = [](WTabBar& Self, const LString& InIdentifier) -> bool
@@ -32,7 +37,24 @@ void Jafg::WPauseScreen::Construct()
             Self.GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->AddVirtualKeyDown(EKeys::Escape);
             return true;
         };
+        Descriptor.Callback = [](WTabBar* TabBar, WNode* Button, WTabBarPanel* Panel) -> void
+        {
+            check( Button )
+            if (WTabBarButton* Btn = DynamicCast<WTabBarButton>(Button))
+            {
+                WTextBlock* Text = Btn->GetButtonTextWidget();
+                if (Text)
+                {
+                    Text->SetBrush(LTextBlockBrush::Header());
+                }
+            }
+
+        };
         this->PauseTabBar->RegisterTab(std::move(Descriptor));
+    }
+
+    {
+        this->PauseTabBar->AppendVSpace(40.0f);
     }
 
     {
@@ -64,6 +86,10 @@ void Jafg::WPauseScreen::Construct()
     }
 
     {
+        this->PauseTabBar->AppendStretch(LAnchor::VFill);
+    }
+
+    {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "ExitToMenu";
         this->PauseTabBar->RegisterTab(std::move(Descriptor));
@@ -79,6 +105,10 @@ void Jafg::WPauseScreen::Construct()
             return true;
         };
         this->PauseTabBar->RegisterTab(std::move(Descriptor));
+    }
+
+    {
+        this->PauseTabBar->AppendVSpace(125.0f);
     }
 
     return;

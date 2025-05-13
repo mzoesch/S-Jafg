@@ -37,19 +37,4 @@ private:
     WPauseScreen* PauseScreen = nullptr;
 };
 
-DECLARE_JAFG_WIDGET()
-class ENGINE_API WMyTest : public WUserWidget
-{
-    GENERATED_CLASS_BODY()
-
-protected:
-
-    DEFAULT_OBJECT_CONSTRUCTOR(WMyTest)
-
-public:
-
-    virtual void Construct() override;
-
-};
-
 } /* ~Namespace Jafg */

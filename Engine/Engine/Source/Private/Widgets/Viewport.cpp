@@ -23,6 +23,33 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
         this->HoveredWidgets.Reset(this->HoveredWidgets.GetSize());
     }
 
+    if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
+    {
+        if ( const i32 Removed = this->LastFrameHoveredWidgets.RemoveByPredicate([](const TObjectStorage<WNode>& InNode)
+        {
+            return InNode.IsValidDeep() == false;
+        }); Removed > 0)
+        {
+            LOG_VERBOSE(LogWidgetFramework, "Found [{}] hovered widgets from last frame that are now invalid.", Removed)
+        }
+        if (this->FocusedWidget.IsNotNull() && this->FocusedWidget.IsValidDeep() == false)
+        {
+            LOG_VERBOSE(LogWidgetFramework, "Current focused widget is invalid.")
+            this->FocusedWidget.Reset();
+        }
+    }
+    else
+    {
+        this->LastFrameHoveredWidgets.RemoveByPredicate([](const TObjectStorage<WNode>& InNode)
+        {
+            return InNode.IsValidDeep() == false;
+        });
+        if (this->FocusedWidget.IsValidDeep() == false)
+        {
+            this->FocusedWidget.Reset();
+        }
+    }
+
     // Sweep cursor input over widgets.
     if (bCursorLocationIsMeaningful)
     {
@@ -331,7 +358,7 @@ Jafg::WNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObjectClass* Widge
 {
     for (WUserWidget* Widget : this->TopLevelWidgets)
     {
-        if (Widget->GetVTable()->DerivesFrom(WidgetClass))
+        if (Widget->GetVTableChecked()->DerivesFrom(WidgetClass))
         {
             return Widget;
         }

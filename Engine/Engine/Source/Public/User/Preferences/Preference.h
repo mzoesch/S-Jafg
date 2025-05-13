@@ -31,6 +31,11 @@ public:
     DEFAULT_MOVE(LPreference)
     virtual ~LPreference(void) = default;
 
+    FORCEINLINE bool operator==(const LPreference& InOther) const { return this->Name == InOther.Name; }
+    FORCEINLINE bool operator!=(const LPreference& InOther) const { return this->Name != InOther.Name; }
+    FORCEINLINE bool operator==(const LName InOther) const { return this->Name == InOther; }
+    FORCEINLINE bool operator!=(const LName InOther) const { return this->Name != InOther; }
+
     FORCEINLINE const LName& GetName(void) const { return this->Name; }
     FORCEINLINE const LString& GetDisplayName(void) const { return this->DisplayName; }
 

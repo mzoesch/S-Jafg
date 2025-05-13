@@ -1,8 +1,12 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/CoreSubsystems/CorePreferencesSubsystem.h"
+
+#include "Cli/CliFrontend.h"
 #include "Core/CoreNames.h"
+#include "Engine/Engine.h"
 #include "User/UserPreferences.h"
+#include "User/Frontend/Osd/PreferencesScreen.h"
 #include "User/Preferences/PreferenceRegistry.h"
 #include "User/Preferences/PreferenceCollection.h"
 #include "User/Preferences/PreferenceValue.h"
@@ -102,23 +106,53 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 
             WHRegion* Container;
 
-            NewNodeCtx(Target, WTest).SaveTo(&Container)
-                .Tint(LColor{0x00u, 0x7Fu, 0x00u, 0x7Fu})
+            NewNodeCtx(Target, WHRegion).SaveTo(&Container)
                 .Anchor(EAnchor::HFill)
             [
                 NewNodeCtx(Target, WTextBlock)
+                    .Anchor(EAnchor::VCenter | EAnchor::HFill)
                     .Brush(LTextBlockBrush::SubHeader())
                     .Content(Self->GetDisplayName())
                 +
-                NewNodeCtx(Target, WRegion)
-                    .Anchor(EAnchor::HFill)
-                    .MinDesiredSize(LVector2{5})
-                    .Tint({0x00u, 0xFFu, 0x00u, 0x7Fu})
-                +
                 NewNodeCtx(Target, WTextButton)
-                    .NormalBrush(LRegionBrush({.Tint = LColor{0x00u, 0xFFu, 0xFFu, 0x0Fu}}))
+                    .Anchor(EAnchor::VCenter)
                     .Content("Refresh")
                     .TextBlockBrush(LTextBlockBrush::Body())
+                    .OnPrimaryRelease([Target](WButton* Self, LKeyEvent& InKeyEvent) -> void
+                    {
+                        if (Target->IsGarbage())
+                        {
+                            return;
+                        }
+
+                        WPreferencesPanel* Panel = DynamicCast<WPreferencesPanel>(Target->GetParent());
+                        if (Panel == nullptr)
+                        {
+                            return;
+                        }
+
+                        JPreferenceRegistry* Registry = GetMutableDefault<JPreferenceRegistry>();
+                        if (Registry == nullptr)
+                        {
+                            return;
+                        }
+
+                        Smart::TUnique<LPreference>* P = Registry->GetMutablePreferences().FindRefByPredicate([](const Smart::TUnique<LPreference>& InPreference)
+                        {
+                            return InPreference->GetName() == Name_PrefDeveloper;
+                        });
+                        if (P == nullptr || P->IsValid() == false)
+                        {
+                            return;
+                        }
+
+                        LPreferencesPanelData Data;
+                        Data.DerivedClass = WPreferencesPanel::StaticClass()->GetName();
+                        Data.Preference   = P->GetValuePtr();
+                        Panel->AddData(&Data);
+
+                        return;
+                    })
             ];
 
             Target->AddChild(Container);
@@ -129,7 +163,40 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
         {
             check( InCollection )
 
-            LOG_WARNING(LogTemporal, "Loading ....")
+            if (GEngine == nullptr)
+            {
+                LOG_ERROR(LogPreferences, "Failed to load intermediate preference collection [{}] due to engine absence.", InCollection->GetName())
+                return;
+            }
+
+            LCommandLineInterface* Cli = GEngine->GetCommandLineInterface();
+            checkSlow( Cli )
+
+            {
+                Smart::TUnique<LPreferenceCollection> Collection = Smart::EmplaceUnique<LPreferenceCollection>(Name_PrefDeveloperTypes, "Cli Types");
+
+                for (const LCliType& Type : Cli->GetTypes())
+                {
+                    TOptional<LCliObjectHandle> Handle = Cli->GetHandle(Type);
+                    if (Handle.IsSet() == false)
+                    {
+                        LOG_WARNING(LogPreferences, "Encountered invalid type handle.")
+                        continue;
+                    }
+
+                    Smart::TUnique<LPreferenceValue_CliType> T = Smart::EmplaceUnique<LPreferenceValue_CliType>(
+                        MAKE_DYNAMIC_NAME(LString::SprintF("CliType_{}", Type.GetIdentifier())),
+                        LString::SprintF("Cli Type {}", Type.GetIdentifier()),
+                        Handle.GetValue()
+                        );
+
+                    Collection->AddPreference(std::move(T));
+
+                    continue;
+                }
+
+                InCollection->AddPreference(std::move(Collection));
+            }
 
             return;
         });

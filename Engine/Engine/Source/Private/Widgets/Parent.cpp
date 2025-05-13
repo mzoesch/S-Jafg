@@ -218,6 +218,20 @@ void Jafg::WParent::RemoveChild(LWidgetSlot* Child)
     this->RemoveChild(Child->Content);
 }
 
+void Jafg::WParent::RemoveChildren()
+{
+    check( Tasks::IsOnMasterThread() )
+
+    while (this->Children.IsEmpty() == false)
+    {
+        checkSlow( this->Children.GetLast() )
+        this->RemoveChild(*this->Children.GetLast());
+        continue;
+    }
+
+    return;
+}
+
 Jafg::LWidgetSlot* Jafg::WParent::AddChild(WNode* InChild)
 {
     check( InChild )

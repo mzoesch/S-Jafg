@@ -39,6 +39,7 @@ public:
     virtual auto GetChildren() const -> const TArray<LWidgetSlot*>& override { return this->Children; }
     virtual void RemoveChild(WNode* Child) override;
     virtual void RemoveChild(LWidgetSlot* Child) override;
+    virtual void RemoveChildren() override;
     virtual auto AddChild(WNode* InChild) -> LWidgetSlot* override;
     virtual auto AddChildAt(const i32 InIndex, WNode* InChild) -> LWidgetSlot* override;
 

@@ -71,7 +71,7 @@ public:
     FORCEINLINE auto GetFocusedWidget() const -> const WNode* { return this->FocusedWidget; }
     FORCEINLINE auto IsFocusedWidgetValid() const -> bool { return this->FocusedWidget != nullptr; }
     bool FocusWidgetNode(const WNode* InNode);
-    FORCEINLINE auto GetHoveredWidgets() const -> const TArray<WNode*>& { return this->HoveredWidgets; }
+    FORCEINLINE auto GetHoveredWidgets() const -> const TArray<TObjectStorage<WNode>>& { return this->HoveredWidgets; }
 
     //# @return True if in the last frame, this node was not added.
     bool AddHoveredWidgetForFrame(WNode* Node);
@@ -111,16 +111,16 @@ private:
     //# Top level widgets that this viewport owns.
     TArray<WUserWidget*> TopLevelWidgets;
 
-    WNode* FocusedWidget = nullptr;
-    TArray<WNode*> HoveredWidgets;
-    TArray<WNode*> LastFrameHoveredWidgets;
+    TObjectStorage<WNode> FocusedWidget;
+    TArray<TObjectStorage<WNode>> HoveredWidgets;
+    TArray<TObjectStorage<WNode>> LastFrameHoveredWidgets;
 
     mutable f32 FrameZLayerDepth { 0.0f };
 
     TArray<LBackgroundContext> BackgroundContexts;
     LFrameBuffer BackgroundBuffer;
 
-    LSurface* CachedContext = nullptr;
+    LSurface* CachedContext { nullptr };
 };
 
 FORCEINLINE WNode* LViewport::GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const

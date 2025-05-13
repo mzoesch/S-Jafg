@@ -11,6 +11,7 @@ namespace Jafg
 class LPreference;
 class WPreferencesPanel;
 class WPreferencesScreen;
+class JCorePreferencesSubsystem;
 
 struct LPreferencesPanelData : public LWidgetNodeData
 {
@@ -25,6 +26,8 @@ DECLARE_JAFG_WIDGET()
 class ENGINE_API WPreferencesPanel : public WCommonMenuTabBarPanel
 {
     GENERATED_CLASS_BODY()
+
+    friend JCorePreferencesSubsystem;
 
 protected:
 

@@ -252,7 +252,7 @@ private:
         FORCEINLINE bool IsValid() const override { return this->Object != nullptr; }
     };
 
-   LUniqueCallableTy Callable = nullptr;
+    LUniqueCallableTy Callable { nullptr };
 };
 
 } /* ~Namespace Jafg */

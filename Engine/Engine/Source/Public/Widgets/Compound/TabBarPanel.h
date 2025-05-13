@@ -33,7 +33,7 @@ public:
 
 private:
 
-    WTabBar* OwningTabBar = nullptr;
+    WTabBar* OwningTabBar { nullptr };
 };
 
 } /* ~Namespace Jafg */

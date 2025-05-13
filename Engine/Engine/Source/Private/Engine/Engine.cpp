@@ -342,6 +342,12 @@ void Jafg::LEngine::TearDown()
 
     this->CommandLineInterface.TearDown();
 
+    this->UnregisterObjectContext(GOmniVitaContext);
+    if (this->KnownObjectContexts.IsEmpty() == false)
+    {
+        LOG_WARNING(LogObjectInternal, "Some context [#{}] where not correctly teared down.", this->KnownObjectContexts.GetSize() )
+    }
+
     return;
 }
 
@@ -396,6 +402,30 @@ bool Jafg::LEngine::CanEverRender() const noexcept
 #else /* WITH_FRONTEND */
     return false;
 #endif /* !WITH_FRONTEND */
+}
+
+void Jafg::LEngine::RegisterObjectContext(const LObjectContext* InContext)
+{
+    if (this->KnownObjectContexts.Contains(InContext))
+    {
+        panic( "Context already registered." )
+        return;
+    }
+
+    this->KnownObjectContexts.Emplace(InContext);
+    return;
+}
+
+void Jafg::LEngine::UnregisterObjectContext(const LObjectContext* InContext)
+{
+    if (this->KnownObjectContexts.Contains(InContext) == false)
+    {
+        panic( "Context not registered." )
+        return;
+    }
+
+    this->KnownObjectContexts.RemoveOnceChecked(InContext);
+    return;
 }
 
 Jafg::LWorldContext& Jafg::LEngine::GetContextFromWorld(const LWorld* World)

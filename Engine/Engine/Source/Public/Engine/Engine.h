@@ -72,6 +72,9 @@ struct LWorldContext
 
 MAKE_MULTICAST_SIGNATURE(LOnWorldBeginLife, LWorld* /* InNewWorld */)
 
+//#
+//# The engine - only one will be valid ever. Access its singleton with #GEngine.
+//#
 class LEngine final
 {
     typedef std::chrono::steady_clock::time_point LSteadyStatisticsTimePoint;
@@ -129,6 +132,24 @@ private:
 public:
 
     ///////////////////////////////////////////////////////////////////////////////
+    // Object Context Related
+    ///////////////////////////////////////////////////////////////////////////////
+
+    ENGINE_API  void RegisterObjectContext(const LObjectContext* InContext);
+    ENGINE_API  void UnregisterObjectContext(const LObjectContext* InContext);
+    FORCEINLINE bool IsObjectContextKnown(const LObjectContext* InContext) const;
+
+private:
+
+    //#
+    //# Known context to the engine. These context are RO and should never be accessed through the engine directly.
+    //# We only store the pointers to them here for object life management behind the scenes.
+    //#
+    TArray<const LObjectContext*> KnownObjectContexts;
+
+public:
+
+    ///////////////////////////////////////////////////////////////////////////////
     // Context Related
     ///////////////////////////////////////////////////////////////////////////////
 
@@ -171,7 +192,7 @@ private:
     //# The registered levels that this engine can load.
     TArray<LLevel> RegisteredLevels;
 
-    LObjectContext ObjectContext { GlobalCarnifex };
+    LObjectContext ObjectContext { DeferredGlobalCarnifex };
     LSubsystemCollection Collection;
 
 public:
@@ -233,6 +254,11 @@ FORCEINLINE bool LEngine::RemoveShaderChecked(const u32 InShaderUuid, const bool
     const bool bOut = this->RemoveShader(InShaderUuid, bFree);
     check( bOut )
     return bOut;
+}
+
+FORCEINLINE bool LEngine::IsObjectContextKnown(const LObjectContext* InContext) const
+{
+    return this->KnownObjectContexts.Contains(InContext);
 }
 
 } /* ~Namespace Jafg */

@@ -69,6 +69,9 @@ enum Type : u8
     AfterCorePackageLoadDangerous = 0x01 << 3,
     AfterCorePackageLoad = AfterCorePackageLoadDangerous | Early,
 
+    BeforeEngineInitButAfterAllocDangerous = 0x01 << 4,
+    BeforeEngineInitButAfterAlloc = BeforeEngineInitButAfterAllocDangerous | Early,
+
     //# Run whenever possible on the thread (late or early).
     Whenever = Early | Late | NoTick,
 };

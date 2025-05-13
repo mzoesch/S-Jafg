@@ -63,7 +63,7 @@ template <typename T>
 bool JObject::IsA() const
 {
     static_assert(std::is_base_of_v<JObjectBase, T>, "T must derive from JObject");
-    return this->GetVTable()->DerivesFrom(T::StaticClass());
+    return this->GetVTableChecked()->DerivesFrom(T::StaticClass());
 }
 
 template <typename T>
@@ -81,7 +81,7 @@ bool JObject::IsA(const T*& OutObject) const
 
 bool JObject::IsA(const LObjectClass* InStaticClass) const
 {
-    return this->GetVTable()->DerivesFrom(InStaticClass);
+    return this->GetVTableChecked()->DerivesFrom(InStaticClass);
 }
 
 template <typename T>

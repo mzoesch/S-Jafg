@@ -102,7 +102,7 @@ Jafg::JSubsystem* Jafg::LSubsystemCollection::GetSubsystem(const LObjectClass* I
     for (JSubsystem* Subsystem : this->SubsystemInstances)
     {
         checkSlow( Subsystem )
-        if (Subsystem->GetVTable() == InStaticClass)
+        if (Subsystem->GetVTableChecked() == InStaticClass)
         {
             return Subsystem;
         }
@@ -118,7 +118,7 @@ const Jafg::JSubsystem* Jafg::LSubsystemCollection::GetSubsystem(const LObjectCl
     for (const JSubsystem* Subsystem : this->SubsystemInstances)
     {
         checkSlow( Subsystem )
-        if (Subsystem->GetVTable() == InStaticClass)
+        if (Subsystem->GetVTableChecked() == InStaticClass)
         {
             return Subsystem;
         }

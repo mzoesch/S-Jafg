@@ -34,6 +34,8 @@ Jafg::JObjectBase::~JObjectBase()
 
 void Jafg::JObjectBase::MarkAsGarbage()
 {
+    check( Tasks::IsOnMasterThread() )
+
     /*
      * Might be called multiple times when tearing down complex subsystems.
      * Therefore, we just guard this method.

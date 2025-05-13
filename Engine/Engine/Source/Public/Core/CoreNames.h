@@ -25,5 +25,8 @@ ENGINE_API extern LName Name_PrefControls;
 ENGINE_API extern LName Name_PrefKeybindings;
 ENGINE_API extern LName Name_PrefUserInterface;
 ENGINE_API extern LName Name_PrefDeveloper;
+ENGINE_API extern LName Name_PrefDeveloperTypes;
+ENGINE_API extern LName Name_PrefDeveloperVars;
+ENGINE_API extern LName Name_PrefDeveloperCmds;
 
 } /* ~Namespace Jafg */
