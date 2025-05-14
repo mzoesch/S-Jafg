@@ -8,7 +8,6 @@
 namespace Jafg
 {
 
-
 DECLARE_JAFG_CLASS()
 class ENGINE_API JCorePreferencesSubsystem : public JLocalEgoSubsystem
 {

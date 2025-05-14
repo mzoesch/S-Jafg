@@ -7,10 +7,8 @@
 #include "User/Frontend/Hud/Crosshair.h"
 #include "User/Frontend/Osd/ConsoleScreen.h"
 #include "User/Frontend/Osd/PauseScreen.h"
-#include "Widgets/Region.h"
-#include "Widgets/VRegion.h"
 
-    void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
+void Jafg::JCoreWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
 
@@ -21,8 +19,7 @@
 
     this->Crosshair = ConstructDeferredWidgetNode<WCrosshair>(this->GetOuter());
     this->Crosshair->AddToViewport(&this->GetFrontend()->GetFocusedSurfaceChecked()->GetViewport());
-    // this->Crosshair->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
-    this->Crosshair->SetVisibility(EWidgetVisibility::Collapsed);
+    this->Crosshair->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
     MakeDeferredWidgetNodeFinal(this->Crosshair);
 
     this->ConsoleScreen = ConstructDeferredWidgetNode<WConsoleScreen>(this->GetOuter());

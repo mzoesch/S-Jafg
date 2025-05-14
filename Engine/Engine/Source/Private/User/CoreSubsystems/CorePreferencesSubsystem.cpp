@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/CoreSubsystems/CorePreferencesSubsystem.h"
-
 #include "Cli/CliFrontend.h"
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
@@ -187,6 +186,58 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                     Smart::TUnique<LPreferenceValue_CliType> T = Smart::EmplaceUnique<LPreferenceValue_CliType>(
                         MAKE_DYNAMIC_NAME(LString::SprintF("CliType_{}", Type.GetIdentifier())),
                         LString::SprintF("Cli Type {}", Type.GetIdentifier()),
+                        Handle.GetValue()
+                        );
+
+                    Collection->AddPreference(std::move(T));
+
+                    continue;
+                }
+
+                InCollection->AddPreference(std::move(Collection));
+            }
+
+            {
+                Smart::TUnique<LPreferenceCollection> Collection = Smart::EmplaceUnique<LPreferenceCollection>(Name_PrefDeveloperCmds, "Cli Commands");
+
+                for (const LCliCommand& Type : Cli->GetCommands())
+                {
+                    TOptional<LCliObjectHandle> Handle = Cli->GetHandle(Type);
+                    if (Handle.IsSet() == false)
+                    {
+                        LOG_WARNING(LogPreferences, "Encountered invalid command handle.")
+                        continue;
+                    }
+
+                    Smart::TUnique<LPreferenceValue_CliCommand> T = Smart::EmplaceUnique<LPreferenceValue_CliCommand>(
+                        MAKE_DYNAMIC_NAME(LString::SprintF("CliCmd_{}", Type.GetIdentifier())),
+                        LString::SprintF("Cli Cmd {}", Type.GetIdentifier()),
+                        Handle.GetValue()
+                        );
+
+                    Collection->AddPreference(std::move(T));
+
+                    continue;
+                }
+
+                InCollection->AddPreference(std::move(Collection));
+            }
+
+            {
+                Smart::TUnique<LPreferenceCollection> Collection = Smart::EmplaceUnique<LPreferenceCollection>(Name_PrefDeveloperVars, "Cli Vars");
+
+                for (const LCliVariable& Type : Cli->GetVariables())
+                {
+                    TOptional<LCliObjectHandle> Handle = Cli->GetHandle(Type);
+                    if (Handle.IsSet() == false)
+                    {
+                        LOG_WARNING(LogPreferences, "Encountered invalid variable handle.")
+                        continue;
+                    }
+
+                    Smart::TUnique<LPreferenceValue_CliVariable> T = Smart::EmplaceUnique<LPreferenceValue_CliVariable>(
+                        MAKE_DYNAMIC_NAME(LString::SprintF("CliVar_{}", Type.GetIdentifier())),
+                        LString::SprintF("Cli Var {}", Type.GetIdentifier()),
                         Handle.GetValue()
                         );
 
