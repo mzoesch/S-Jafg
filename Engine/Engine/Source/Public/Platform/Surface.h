@@ -32,7 +32,11 @@ public:
     virtual ~LSurfaceBase() = default;
 
     template <class T = LSurfaceBase>
-    NODISCARD T* As() { return static_cast<T*>(this); }
+    NODISCARD FORCEINLINE T* As();
+    template <class T = LSurfaceBase>
+    NODISCARD FORCEINLINE const T* As() const;
+    NODISCARD FORCEINLINE LSurface* AsSurface();
+    NODISCARD FORCEINLINE const LSurface* AsSurface() const;
 
     //# Initialize should make the handle to a native surface screen valid or panic if not possible.
     virtual void Initialize();
@@ -204,6 +208,30 @@ void Jafg::LSurfaceBase::SetRepeatedKeyDown(const LRawInput& InRawInput)
     }
     this->PlatformRepeatedKey = InRawInput;
     return;
+}
+
+template<class T>
+NODISCARD FORCEINLINE T* Jafg::LSurfaceBase::As()
+{
+    static_assert(std::is_base_of_v<LSurfaceBase, T>, "T must be derived from LSurfaceBase");
+    return static_cast<T*>(this);
+}
+
+template<class T>
+NODISCARD FORCEINLINE const T* Jafg::LSurfaceBase::As() const
+{
+    static_assert(std::is_base_of_v<LSurfaceBase, T>, "T must be derived from LSurfaceBase");
+    return static_cast<const T*>(this);
+}
+
+NODISCARD FORCEINLINE Jafg::LSurface* Jafg::LSurfaceBase::AsSurface()
+{
+    return this->As<LSurface>();
+}
+
+NODISCARD FORCEINLINE const Jafg::LSurface* Jafg::LSurfaceBase::AsSurface() const
+{
+    return this->As<LSurface>();
 }
 
 template<typename Predicate>

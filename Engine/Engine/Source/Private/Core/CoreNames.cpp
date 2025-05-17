@@ -6,9 +6,9 @@
 namespace Jafg
 {
 
-ENGINE_API LName Name_UicInMyWorld = MAKE_STATIC_NAME("InMyWorld");
-ENGINE_API LName Name_UicInPause   = MAKE_STATIC_NAME("InPause");
-ENGINE_API LName Name_UicInConsole = MAKE_STATIC_NAME("InConsole");
+ENGINE_API LName Name_UicInMyWorld          = MAKE_STATIC_NAME("InMyWorld");
+ENGINE_API LName Name_UicInPause            = MAKE_STATIC_NAME("InPause");
+ENGINE_API LName Name_UicInConsole          = MAKE_STATIC_NAME("InConsole");
 
 ENGINE_API LName Name_PrefGameplay          = MAKE_STATIC_NAME("PreferenceGameplay");
 ENGINE_API LName Name_PrefAudio             = MAKE_STATIC_NAME("PreferenceAudio");
@@ -20,5 +20,8 @@ ENGINE_API LName Name_PrefDeveloper         = MAKE_STATIC_NAME("PreferenceDevelo
 ENGINE_API LName Name_PrefDeveloperTypes    = MAKE_STATIC_NAME("PreferenceDeveloperTypes");
 ENGINE_API LName Name_PrefDeveloperVars     = MAKE_STATIC_NAME("PreferenceDeveloperVars");
 ENGINE_API LName Name_PrefDeveloperCmds     = MAKE_STATIC_NAME("PreferenceDeveloperCmds");
+
+ENGINE_API LName Name_ShaderOrthographicBox = MAKE_STATIC_NAME("ShaderJafgOrthographicBox");
+ENGINE_API LName Name_ShaderChunk           = MAKE_STATIC_NAME("ShaderJafgChunk");
 
 } /* ~Namespace Jafg */

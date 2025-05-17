@@ -25,18 +25,22 @@ void Jafg::LSurfaceBase::Initialize()
 void Jafg::LSurfaceBase::Tick()
 {
     const bool bCheckInput = this->InputMode & EInputMode::UserInterface;
-    if (bCheckInput && this->IsMouseLocationMeaningful())
-    {
-        this->GetViewport().DispatchInputs(*static_cast<LSurface*>(this), this->GetMouseLocation());
-    }
-    else
-    {
-        if (bCheckInput)
-        {
-            this->GetViewport().DispatchInputs(*static_cast<LSurface*>(this), LVector2(-1.0f));
-        }
 
-        this->GetViewport().OnMouseLeftViewport(*static_cast<LSurface*>(this), bCheckInput == false);
+    if (bCheckInput)
+    {
+        if (this->IsMouseLocationMeaningful())
+        {
+            this->GetViewport().DispatchInputs(*this->AsSurface(), this->GetMouseLocation());
+        }
+        else
+        {
+            this->GetViewport().DispatchInputs(*this->AsSurface(), LVector2(-1.0f));
+        }
+    }
+
+    if (bCheckInput == false || this->IsMouseLocationMeaningful() == false)
+    {
+        this->GetViewport().OnMouseLeftViewport(*this->AsSurface(), bCheckInput == false);
     }
 
     this->SurfaceViewport.Tick();

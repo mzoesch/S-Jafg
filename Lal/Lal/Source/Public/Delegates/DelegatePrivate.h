@@ -246,8 +246,8 @@ struct TMulticastDelegate<RetTy(ParamsTy...)> final
     FORCEINLINE bool IsStillBound(const LDelegateHandle& InDelegateHandle) const;
     FORCEINLINE bool HasAny() const;
 
-    FORCEINLINE bool  Remove(LDelegateHandle& InDelegateHandle);
-    FORCEINLINE i32 UnbindAll();
+    FORCEINLINE bool Remove(LDelegateHandle* InDelegateHandle);
+    FORCEINLINE i32  UnbindAll();
 
 private:
 
@@ -324,16 +324,30 @@ LDelegateHandle TMulticastDelegate<RetTy(ParamsTy...)>::AddMember(ObjTy* InObj, 
 }
 
 template <typename RetTy, typename ... ParamsTy>
-bool TMulticastDelegate<RetTy(ParamsTy...)>::Remove(LDelegateHandle& InDelegateHandle)
+bool TMulticastDelegate<RetTy(ParamsTy...)>::IsStillBound(const LDelegateHandle& InDelegateHandle) const
 {
+    return this->DelegatesHandles.Contains(InDelegateHandle.Handle);
+}
+
+    template <typename RetTy, typename ... ParamsTy>
+    bool TMulticastDelegate<RetTy(ParamsTy...)>::HasAny() const
+{
+    return this->DelegatesHandles.IsEmpty() == false;
+}
+
+template <typename RetTy, typename ... ParamsTy>
+bool TMulticastDelegate<RetTy(ParamsTy...)>::Remove(LDelegateHandle* InDelegateHandle)
+{
+    check( InDelegateHandle )
+
     for (i32 Idx = 0; Idx < this->DelegatesHandles.GetSize(); ++Idx)
     {
-        if (this->DelegatesHandles[Idx] == InDelegateHandle.Handle)
+        if (this->DelegatesHandles[Idx] == InDelegateHandle->Handle)
         {
             this->Delegates.RemoveAt(Idx);
             this->DelegatesHandles.RemoveAt(Idx);
 
-            InDelegateHandle.Reset();
+            InDelegateHandle->Reset();
 
             checkSlow( this->Delegates.GetSize() == this->DelegatesHandles.GetSize() )
 
@@ -344,18 +358,6 @@ bool TMulticastDelegate<RetTy(ParamsTy...)>::Remove(LDelegateHandle& InDelegateH
     }
 
     return false;
-}
-
-template <typename RetTy, typename ... ParamsTy>
-bool TMulticastDelegate<RetTy(ParamsTy...)>::IsStillBound(const LDelegateHandle& InDelegateHandle) const
-{
-    return this->DelegatesHandles.Contains(InDelegateHandle.Handle);
-}
-
-template <typename RetTy, typename ... ParamsTy>
-bool TMulticastDelegate<RetTy(ParamsTy...)>::HasAny() const
-{
-    return this->DelegatesHandles.IsEmpty() == false;
 }
 
 template <typename RetTy, typename ... ParamsTy>

@@ -185,24 +185,20 @@
 
 /** Defaults the copy operations of a specific type T. */
 #define DEFAULT_COPY(Type)                                                                     \
-    Type(      Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
     Type(const Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
     Type& operator=(const Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
 
 /** Defaults the copy operations of a specific type T. */
 #if WITH_MSVC
     #define DEFAULT_COPY_NAMESPACED(TSpacedType, Type)                                                           \
-        TSpacedType(      TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
         TSpacedType(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
         TSpacedType& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
 #elif WITH_GCC
     #define DEFAULT_COPY_NAMESPACED(TSpacedType, Type)                                                    \
-        Type(      TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
         Type(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
         Type& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
 #elif WITH_CLANG
     #define DEFAULT_COPY_NAMESPACED(TSpacedType, Type)                                                           \
-        TSpacedType(      TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
         TSpacedType(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
         TSpacedType& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
 #else /* WITH_CLANG */
@@ -227,6 +223,59 @@
     #define DEFAULT_MOVE_NAMESPACED(TSpacedType, Type)                                                       \
         TSpacedType(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept  = default; \
         TSpacedType& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept  = default;
+#else /* WITH_CLANG */
+    #error "Missing implementation for this platform."
+#endif /* !WITH_CLANG */
+
+/** Defaults the copy and move constexpr operations of a specific type T. */
+#define DEFAULT_CONST_EXPR_REALLOC_OF_ANY_FORM(Ty) \
+    DEFAULT_CONST_EXPR_COPY(Ty)                    \
+    DEFAULT_CONST_EXPR_MOVE(Ty)
+
+#define DEFAULT_CONST_EXPR_REALLOC_OF_ANY_FORM_NAMESPACED(TSpacedTy, Ty) \
+    DEFAULT_CONST_EXPR_COPY_NAMESPACED(TSpacedTy, Ty)                    \
+    DEFAULT_CONST_EXPR_MOVE_NAMESPACED(TSpacedTy, Ty)
+
+/** Defaults the copy constexpr operations of a specific type T. */
+#define DEFAULT_CONST_EXPR_COPY(Type)                                                                    \
+    constexpr Type(const Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+    constexpr Type& operator=(const Type& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
+
+/** Defaults the copy constexpr operations of a specific type T. */
+#if WITH_MSVC
+    #define DEFAULT_CONST_EXPR_COPY_NAMESPACED(TSpacedType, Type)                                                          \
+        constexpr TSpacedType(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+        constexpr TSpacedType& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
+#elif WITH_GCC
+    #define DEFAULT_CONST_EXPR_COPY_NAMESPACED(TSpacedType, Type)                                                   \
+        constexpr Type(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+        constexpr Type& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
+#elif WITH_CLANG
+    #define DEFAULT_CONST_EXPR_COPY_NAMESPACED(TSpacedType, Type)                                                          \
+        constexpr TSpacedType(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+        constexpr TSpacedType& operator=(const TSpacedType& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
+#else /* WITH_CLANG */
+    #error "Missing implementation for this platform."
+#endif /* !WITH_CLANG */
+
+/** Defaults the move constexpr operations of a specific type T. */
+#define DEFAULT_CONST_EXPR_MOVE(Type)                                                               \
+    constexpr Type(Type&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+    constexpr Type& operator=(Type&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
+
+/** Defaults the move constexpr operations of a specific type T. */
+#if WITH_MSVC
+    #define DEFAULT_CONST_EXPR_MOVE_NAMESPACED(TSpacedType, Type)                                                      \
+        constexpr TSpacedType(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept  = default; \
+        constexpr TSpacedType& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept  = default;
+#elif WITH_GCC
+    #define DEFAULT_CONST_EXPR_MOVE_NAMESPACED(TSpacedType, Type)                                              \
+        constexpr Type(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept = default; \
+        constexpr Type& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept = default;
+#elif WITH_CLANG
+    #define DEFAULT_CONST_EXPR_MOVE_NAMESPACED(TSpacedType, Type)                                                      \
+        constexpr TSpacedType(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type))            noexcept  = default; \
+        constexpr TSpacedType& operator=(TSpacedType&& PRIVATE_JAFG_CORE_JOIN_INNER_TWO(_, Type)) noexcept  = default;
 #else /* WITH_CLANG */
     #error "Missing implementation for this platform."
 #endif /* !WITH_CLANG */

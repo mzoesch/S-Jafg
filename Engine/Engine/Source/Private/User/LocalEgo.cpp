@@ -108,7 +108,7 @@ void Jafg::LLocalEgo::TearDown()
 
     if (ensure(this->OnWorldBeginLifeHandle.IsValid()))
     {
-        GEngine->OnWorldBeginLife.Remove(this->OnWorldBeginLifeHandle);
+        GEngine->OnWorldBeginLife.Remove(&this->OnWorldBeginLifeHandle);
         this->OnWorldBeginLifeHandle.Reset();
     }
 

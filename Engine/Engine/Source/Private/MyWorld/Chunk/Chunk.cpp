@@ -18,9 +18,15 @@ bool Jafg::LChunkRendererComponent::Cull(const std::span<LVector>& Corners) cons
 
 void Jafg::LChunkRendererComponent::Draw(const LViewport& Context, const LEye& Eye)
 {
-    checkSlow( this->Owner->GetSharedArgs() )
+    if (this->Owner.IsMesherValid() == false)
+    {
+        LOG_WARNING(LogChunkMisc, "Invalid mesher. Skipping draw.")
+        return;
+    }
 
-    LChunkShader& Shader = this->Owner->GetSharedArgs()->ChunkShader;
+    checkSlow( this->Owner.GetSharedArgs() )
+
+    LChunkShader& Shader = this->Owner.GetSharedArgs()->ChunkShader;
 
     Shader.Use();
     glActiveTexture(GL_TEXTURE0);
@@ -30,11 +36,11 @@ void Jafg::LChunkRendererComponent::Draw(const LViewport& Context, const LEye& E
 
     glBindVertexArray(this->Instance.GetVertexArrayObject());
 
-    LMatrix Model; Model.InlineTranslate(this->Owner->GetTranslation());
+    LMatrix Model; Model.InlineTranslate(this->Owner.GetTranslation());
     Shader.GetProgram().SetMatrixUniform("Model", Model);
 
-    check( this->Owner->IsMesherValid() )
-    glDrawElements(GL_TRIANGLES, this->Owner->GetMesher()->GetNumTriangles(), GL_UNSIGNED_INT, nullptr);
+    check( this->Owner.IsMesherValid() )
+    glDrawElements(GL_TRIANGLES, this->Owner.GetMesher()->GetNumTriangles(), GL_UNSIGNED_INT, nullptr);
 
     return;
 }

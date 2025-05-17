@@ -29,4 +29,7 @@ ENGINE_API extern LName Name_PrefDeveloperTypes;
 ENGINE_API extern LName Name_PrefDeveloperVars;
 ENGINE_API extern LName Name_PrefDeveloperCmds;
 
+ENGINE_API extern LName Name_ShaderOrthographicBox;
+ENGINE_API extern LName Name_ShaderChunk;
+
 } /* ~Namespace Jafg */

@@ -64,7 +64,10 @@ bool IsValidSlow(const LObjectContext* InContextPointer, const JObjectBase* InPo
         return false;
     }
 
-
+    if (GEngine->IsObjectContextKnown(InContextPointer) == false)
+    {
+        return false;
+    }
 
     if (InContextPointer->IsHiredHere(InPointer) == false)
     {

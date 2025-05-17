@@ -31,9 +31,9 @@ void Jafg::WPauseScreen::Construct()
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "Resume";
-        Descriptor.OnButtonPressed = [](WTabBar& Self, const LString& InIdentifier) -> bool
+        Descriptor.OnButtonRelease = [](WTabBar& Self, const LString& InIdentifier) -> bool
         {
-            Self.OnTabBarButtonPressed(InIdentifier);
+            Self.OnTabBarButtonReleased(InIdentifier);
             Self.GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->AddVirtualKeyDown(EKeys::Escape);
             return true;
         };
@@ -98,9 +98,9 @@ void Jafg::WPauseScreen::Construct()
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.Identifier = "ExitToDesktop";
-        Descriptor.OnButtonPressed = [](WTabBar& Self, const LString& InIdentifier) -> bool
+        Descriptor.OnButtonRelease = [](WTabBar& Self, const LString& InIdentifier) -> bool
         {
-            Self.OnTabBarButtonPressed(InIdentifier);
+            Self.OnTabBarButtonReleased(InIdentifier);
             Self.GetEngine()->RequestEngineExit("Exited through pause menu.");
             return true;
         };

@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
+#include "Core/CoreNames.h"
 #include "Framework/Pawn.h"
 #include "MyWorld/Chunk/ChunkStates.h"
 #include "MyWorld/Generation/ChunkGeneratorSubsystem.h"
@@ -26,7 +27,7 @@ void Jafg::JChunkGenerationSubsystem::Initialize(LSubsystemCollection& Collectio
     this->SharedChunkArgs.VoxelSubsystem  = this->GetEngine()->GetCheckedSubsystem<JVoxelSubsystem>();
     this->SharedChunkArgs.MaterialSubsystem  = this->GetEngine()->GetCheckedSubsystem<JMaterialSubsystem>();
     this->SharedChunkArgs.TextureSubsystem  = this->GetEngine()->GetCheckedSubsystem<JTextureSubsystem>();
-    this->SharedChunkArgs.ChunkShaderHandle = this->SharedChunkArgs.ChunkShader.Make();
+    this->SharedChunkArgs.ChunkShader.MakeChecked(Name_ShaderChunk);
     this->SharedChunkArgs.GetNewMesher = [] (AChunk& Owner) -> LChunkMesher* { return new LNaiveMesher(Owner); };
 
     const JUserPreferences* Preferences = GetDefault<JUserPreferences>();
@@ -116,7 +117,7 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
     }
 
     this->LoadedChunks.reset();
-    GEngine->RemoveShader(this->SharedChunkArgs.ChunkShaderHandle, false);
+    GEngine->UnregisterShader(Name_ShaderChunk, false);
 
     return;
 }

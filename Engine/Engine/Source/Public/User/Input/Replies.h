@@ -11,15 +11,12 @@ class LReplyBase
 {
 public:
 
-    LReplyBase() : bHandled(false) { }
-    LReplyBase(const bool bInHandled) : bHandled(bInHandled) { }
-    LReplyBase(const LReplyBase&) = default;
-    LReplyBase(LReplyBase&&) = default;
-    LReplyBase& operator=(const LReplyBase&) = default;
-    LReplyBase& operator=(LReplyBase&&) = default;
-    virtual ~LReplyBase() = default;
+    FORCEINLINE constexpr LReplyBase() noexcept : bHandled(false) { }
+    FORCEINLINE constexpr LReplyBase(const bool bInHandled) noexcept : bHandled(bInHandled) { }
+    DEFAULT_CONST_EXPR_REALLOC_OF_ANY_FORM(LReplyBase)
+    FORCEINLINE constexpr virtual ~LReplyBase() noexcept = default;
 
-    FORCEINLINE bool IsHandled() const { return this->bHandled; }
+    FORCEINLINE constexpr bool IsHandled() const noexcept { return this->bHandled; }
 
 protected:
 
@@ -31,13 +28,14 @@ class TReplyBase : public LReplyBase
 {
 public:
 
-    TReplyBase() : LReplyBase() { }
-    TReplyBase(const bool bInHandled) : LReplyBase(bInHandled) { }
-    virtual ~TReplyBase() override = default;
+    FORCEINLINE constexpr TReplyBase() noexcept : LReplyBase() { }
+    FORCEINLINE constexpr TReplyBase(const bool bInHandled) noexcept : LReplyBase(bInHandled) { }
+    DEFAULT_CONST_EXPR_REALLOC_OF_ANY_FORM(TReplyBase)
+    FORCEINLINE virtual ~TReplyBase() noexcept override = default;
 
 protected:
 
-    TReplyTy& Self() { return static_cast<TReplyTy&>(*this); }
+    FORCEINLINE constexpr TReplyTy& Self() noexcept { return static_cast<TReplyTy&>(*this); }
 };
 
 //#
@@ -47,11 +45,11 @@ class LCursorReply final : public TReplyBase<LCursorReply>
 {
 public:
 
-    static LCursorReply Handled()   { return { EMouseCursor::Default }; }
-    static LCursorReply Unhandled() { return { }; }
+    FORCEINLINE static constexpr LCursorReply Handled()   noexcept { return { EMouseCursor::Default }; }
+    FORCEINLINE static constexpr LCursorReply Unhandled() noexcept { return { }; }
 
-    LCursorReply() : TReplyBase<LCursorReply>(false) { }
-    LCursorReply(const EMouseCursor::Type InCursorType)
+    constexpr LCursorReply() noexcept : TReplyBase<LCursorReply>(false) { }
+    constexpr LCursorReply(const EMouseCursor::Type InCursorType) noexcept
         : TReplyBase<LCursorReply>(true), CursorType(InCursorType) { }
 
     //#
@@ -65,30 +63,30 @@ public:
     //#                        are the same, nothing will happen.
     //#                        This is usually the most save way to handle focus changes and the recommended way.
     //#
-    LCursorReply(const EMouseCursor::Type InCursorType, WNode* InFocusedWidget, const bool bInLooseFocus = false)
+    constexpr LCursorReply(const EMouseCursor::Type InCursorType, WNode* InFocusedWidget, const bool bInLooseFocus = false) noexcept
         : TReplyBase<LCursorReply>(true), CursorType(InCursorType), FocusedWidget(InFocusedWidget), bLooseFocus(bInLooseFocus) { }
 
-    LCursorReply(WNode* InFocusedWidget, const bool bInLooseFocus = false)
+    constexpr LCursorReply(WNode* InFocusedWidget, const bool bInLooseFocus = false) noexcept
         : TReplyBase<LCursorReply>(true), FocusedWidget(InFocusedWidget), bLooseFocus(bInLooseFocus) { }
 
-    FORCEINLINE auto IsFocusedWidgetValid() const -> bool { return this->FocusedWidget != nullptr; }
-    FORCEINLINE auto GetFocusedWidget() const -> WNode* { return this->FocusedWidget; }
-    FORCEINLINE auto ShouldLooseFocus() const -> bool { return this->bLooseFocus; }
-    FORCEINLINE auto GetCursorType() const -> EMouseCursor::Type { return this->CursorType; }
+    FORCEINLINE constexpr bool IsFocusedWidgetValid() const noexcept { return this->FocusedWidget != nullptr; }
+    FORCEINLINE constexpr auto GetFocusedWidget() const noexcept -> WNode* { return this->FocusedWidget; }
+    FORCEINLINE constexpr bool ShouldLooseFocus() const noexcept { return this->bLooseFocus; }
+    FORCEINLINE constexpr auto GetCursorType() const noexcept -> EMouseCursor::Type { return this->CursorType; }
 
 private:
 
-    EMouseCursor::Type CursorType = EMouseCursor::Default;
+    EMouseCursor::Type CursorType { EMouseCursor::Default };
 
     //#
     //# The widget to focus. Null if this reply does not affect any focus.
     //#
-    WNode* FocusedWidget = nullptr;
+    WNode* FocusedWidget { nullptr };
 
     //#
     //# True if the current focused widget should lose focus. If #FocusedWidget is null, no widget will be focused.
     //#
-    bool bLooseFocus = false;
+    bool bLooseFocus { false };
 };
 
 //#
@@ -99,15 +97,15 @@ class LReply final : public TReplyBase<LReply>
 {
 public:
 
-    static LReply Handled()   { return { true  }; }
-    static LReply HandledWithFocusLost() { return { nullptr, true }; }
-    static LReply Unhandled() { return { false }; }
+    FORCEINLINE static constexpr LReply Handled() noexcept { return { true }; }
+    FORCEINLINE static constexpr LReply HandledWithFocusLost() noexcept { return { nullptr, true }; }
+    FORCEINLINE static constexpr LReply Unhandled() noexcept { return { false }; }
 
     //# Unhandled.
-    LReply() : TReplyBase<LReply>(false) { }
+    FORCEINLINE constexpr LReply() noexcept : TReplyBase<LReply>(false) { }
 
     //# Handled. Will not affect focused widgets.
-    LReply(const bool bInHandled) : TReplyBase<LReply>(bInHandled) { }
+    FORCEINLINE constexpr LReply(const bool bInHandled) noexcept : TReplyBase<LReply>(bInHandled) { }
 
     //#
     //# @param InFocusedWidget The widget to focus. Null if this reply does not affect any focus.
@@ -119,24 +117,30 @@ public:
     //#                        are the same, nothing will happen.
     //#                        This is usually the most save way to handle focus changes and the recommended way.
     //#
-    LReply(WNode* InFocusedWidget, const bool bInLooseFocus = false)
+    FORCEINLINE constexpr LReply(WNode* InFocusedWidget, const bool bInLooseFocus = false) noexcept
         : TReplyBase<LReply>(true), FocusedWidget(InFocusedWidget), bLooseFocus(bInLooseFocus) { }
 
-    FORCEINLINE auto IsFocusedWidgetValid() const -> bool { return this->FocusedWidget != nullptr; }
-    FORCEINLINE auto GetFocusedWidget() const -> WNode* { return this->FocusedWidget; }
-    FORCEINLINE auto ShouldLooseFocus() const -> bool { return this->bLooseFocus; }
+    DEFAULT_CONST_EXPR_REALLOC_OF_ANY_FORM(LReply)
+
+    FORCEINLINE virtual ~LReply() noexcept override = default;
+
+    FORCEINLINE constexpr operator bool() const noexcept { return this->IsHandled(); }
+
+    FORCEINLINE constexpr bool   IsFocusedWidgetValid() const { return this->FocusedWidget != nullptr; }
+    FORCEINLINE constexpr WNode* GetFocusedWidget() const { return this->FocusedWidget; }
+    FORCEINLINE constexpr bool   ShouldLooseFocus() const { return this->bLooseFocus; }
 
 private:
 
     //#
     //# The widget to focus. Null if this reply does not affect any focus.
     //#
-    WNode* FocusedWidget = nullptr;
+    WNode* FocusedWidget { nullptr };
 
     //#
     //# True if the current focused widget should lose focus. If #FocusedWidget is null, no widget will be focused.
     //#
-    bool bLooseFocus = false;
+    bool bLooseFocus { false };
 };
 
 } /* ~Namespace Jafg */

@@ -3,13 +3,19 @@
 #include "Rhi/EngineShader.h"
 #include "Engine/Engine.h"
 
-u32 Jafg::LEngineShader::Make()
+bool Jafg::LEngineShader::Make(const LName InName)
 {
+    check( GEngine )
     check( this->bMeaningful == false )
     this->bMeaningful = true;
 
-    GEngine->AddShader(this);
-    check( this->Uuid != 0 )
+    return GEngine->AddShader(InName, this);
+}
 
-    return this->Uuid;
+void Jafg::LEngineShader::OnFree()
+{
+    this->Program.Free();
+    this->bMeaningful = false;
+
+    return;
 }

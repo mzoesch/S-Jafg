@@ -14,7 +14,7 @@ class WTextButton;
 class WTextBlock;
 struct LTextBlockBrush;
 
-MAKE_DELEGATE_SIGNATURE(LOnButtonKeyEvent, void, WButton* Self, LKeyEvent& InKeyEvent)
+MAKE_DELEGATE_SIGNATURE(LOnButtonKeyEvent, void, WButton* Self, const LKeyEvent& InKeyEvent)
 
 template <typename TNode>
 class TWidgetFactoryButton : public TWidgetFactoryRegion<TNode>
@@ -63,8 +63,8 @@ public:
     virtual void Construct() override;
     virtual LCursorReply OnCursorEnter() override;
     virtual LCursorReply OnCursorLeave() override;
-    virtual LReply OnKeyDown(LKeyEvent& InKeyEvent) override;
-    virtual LReply OnKeyUp(LKeyEvent& InKeyEvent) override;
+    virtual LReply OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
+    virtual LReply OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
 
     LOnButtonKeyEvent OnPrimaryPressDelegate;
     LOnButtonKeyEvent OnPrimaryReleaseDelegate;
@@ -85,14 +85,14 @@ public:
     FORCEINLINE auto GetPressBrush() const -> const LRegionBrush& { return this->PressBrush; }
 
     FORCEINLINE void SetLetUiReactToEvents(const bool bInLetUiReactToEvents) { this->bLetUiReactToEvents = bInLetUiReactToEvents; }
-    FORCEINLINE auto GetLetUiReactToEvents() const -> bool { return this->bLetUiReactToEvents; }
+    FORCEINLINE bool GetLetUiReactToEvents() const { return this->bLetUiReactToEvents; }
 
 protected:
 
-    bool bLetUiReactToEvents = true;
-    LRegionBrush NormalBrush = { LColor::Black };
-    LRegionBrush HoverBrush  = { LColor::Gray };
-    LRegionBrush PressBrush  = { LColor::White };
+    bool bLetUiReactToEvents { true };
+    LRegionBrush NormalBrush { LColor::Black };
+    LRegionBrush HoverBrush  { LColor::Gray };
+    LRegionBrush PressBrush  { LColor::White };
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTextButton)
@@ -135,7 +135,7 @@ public:
 
 protected:
 
-    WTextBlock* ButtonText = nullptr;
+    WTextBlock* ButtonText { nullptr };
 
 private:
 

@@ -3,6 +3,7 @@
 #include "Rhi/RendererStateMachine.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "User/UserPreferences.h"
+#include "Widgets/Viewport.h"
 
 void Jafg::RendererStateMachine::PrepareForPerspectivePainting()
 {
@@ -42,5 +43,22 @@ void Jafg::RendererStateMachine::PrepareForOrthographicPainting()
     glFrontFace(GL_CW);
     glDisable(GL_DEPTH_TEST);
 
+    return;
+}
+
+void Jafg::RendererStateMachine::ClipOrthographic(const LViewport& InViewport, LVector2&& InLocation, const LVector2& InSize)
+{
+    InLocation.Y += InSize.Y;
+    InViewport.ConvertTLToBLOrigin(&InLocation);
+
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(InLocation.X, InLocation.Y, InSize.X, InSize.Y);
+
+    return;
+}
+
+void Jafg::RendererStateMachine::DisableClipOrthographic()
+{
+    glDisable(GL_SCISSOR_TEST);
     return;
 }

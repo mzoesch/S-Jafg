@@ -149,7 +149,7 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
         this->TintShaderContext.Draw(
             Context,
             this->GetAnchoredSize(),
-            this->GetAnchoredTopLeftFromMostOuter(Context),
+            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
             this->Brush.Tint
         );
     }
@@ -166,11 +166,11 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
 
     glCullFace(GL_FRONT);
 
-    const LIntVector2 WindowDimensions = this->GetViewportSize();
+    const LIntVector2 WindowDimensions = Context.GetDimensions();
     const float       ScaleFactor      = Context.GetScaleFactor();
     const float       YFromBottom      = static_cast<float>(WindowDimensions.Y);
     const LVector2    Offset           =
-        this->GetAnchoredTopLeftFromMostOuter(Context)
+        this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context)
         + ((this->GetAnchoredSize() - this->Padding.GetDesiredSize() - this->TextDesiredSize) * LVector2
         (
             this->Brush.IsLeftAligned() ? 0.0f : (this->Brush.IsHCenterAligned() ? 0.5f : 1.0f),

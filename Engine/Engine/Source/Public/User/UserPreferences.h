@@ -71,7 +71,7 @@ public:
     LPreferenceBool bVSyncEnabled { true };
     //# Number of maximum frames per second. Zero means no limit. This requires VSync to be disabled.
     CLASS_FIELD(Config)
-    LPreferencei32 MaxFps       { UnlimitedFps };
+    LPreferencei32 MaxFps         { UnlimitedFps };
 
     CLASS_FIELD(Config)
     TPreference<EPolygonMode::Type> PolygonMode { EPolygonMode::Fill };
@@ -84,6 +84,13 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     // Interface
     ///////////////////////////////////////////////////////////////////////////////
+
+    CLASS_FIELD(Config)
+    LPreferenceBool bInvertVerticalScrollWheel { true };
+    CLASS_FIELD(Config)
+    LPreferenceBool bInvertHorizontalScrollWheel { true };
+    CLASS_FIELD(Config)
+    LPreferenceFloat MouseWheelSpeed { 0.05f };
 
     CLASS_FIELD(Config)
     LPreferenceFloat HeaderFontSize    { 0.70f };

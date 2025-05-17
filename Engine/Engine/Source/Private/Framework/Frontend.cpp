@@ -222,26 +222,10 @@ bool Jafg::LFrontend::ChangeWidgetVisibility(const LObjectClass* WidgetClass, co
     return true;
 }
 
-bool Jafg::LFrontend::FocusWidget(LViewport* Context, const WNode* InNode)
+bool Jafg::LFrontend::FocusWidget(LViewport* Context, WNode* InNode)
 {
     check( Context )
     return Context->FocusWidgetNode(InNode);
-}
-
-bool Jafg::LFrontend::FocusWidgetChecked(LViewport* Context, const WNode* InNode)
-{
-    check( Context )
-    const bool bOut = this->FocusWidget(Context, InNode);
-    check( bOut )
-    return bOut;
-}
-
-bool Jafg::LFrontend::FocusWidgetAsserted(LViewport* Context, const WNode* InNode)
-{
-    check( Context )
-    const bool bOut = this->FocusWidget(Context, InNode);
-    jassert( bOut )
-    return bOut;
 }
 
 Jafg::LSurface Jafg::LFrontend::CreateNewSurface()

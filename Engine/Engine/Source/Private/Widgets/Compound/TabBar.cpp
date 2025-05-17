@@ -126,7 +126,7 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, r
     InTabDescriptor.DisplayName.Empty();
     InTabDescriptor.PanelWidgetClass.Set(nullptr);
     InTabDescriptor.ButtonWidgetClass.Set(nullptr);
-    InTabDescriptor.OnButtonPressed.Reset();
+    InTabDescriptor.OnButtonRelease.Reset();
     InTabDescriptor.AddAfter.Empty();
 
     return;
@@ -174,7 +174,7 @@ bool Jafg::WTabBar::UnregisterTabChecked(const LString& Identifier)
     return bOut;
 }
 
-void Jafg::WTabBar::OnTabBarButtonPressed(const LString& Identifier)
+void Jafg::WTabBar::OnTabBarButtonReleased(const LString& Identifier)
 {
     const void* PreviouslyFocusedTab = this->CurrentlyFocusedTab;
     if (const LAddedTabBarTab* FocusedTab = this->GetCurrentlyFocusedTab(); FocusedTab)
@@ -245,7 +245,7 @@ void Jafg::WTabBar::OnOuterVisibilityChanged(const EWidgetVisibility::Type InOld
 void Jafg::WTabBar::LoadTab(const LTabBarTabDescriptor& Descriptor, const i32 InIndex)
 {
     check( this->ButtonsContainer )
-    check( !(Descriptor.ButtonWidgetClass && Descriptor.OnButtonPressed) )
+    check( !(Descriptor.ButtonWidgetClass && Descriptor.OnButtonRelease) )
 
     WNode* Button = Descriptor.ButtonWidgetClass.IsSet()
         ? ConstructDeferredWidgetNode<WNode>(this->GetOuter(), Descriptor.ButtonWidgetClass)

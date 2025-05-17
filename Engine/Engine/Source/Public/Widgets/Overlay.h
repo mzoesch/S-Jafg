@@ -11,7 +11,7 @@ namespace Jafg
 //#
 //# An overlay is a parent node that has simple but efficient (in terms of CPU cycles) drawing capabilities.
 //# It has many children that can be individually anchored with the #EAnchor enum.
-//# Children are, as the name suggests, overlaid on top of each other and are independent of each of its siblings.
+//# Children are, as the name suggests, overlaid on top of each other and are independent of each of their siblings.
 //#
 DECLARE_JAFG_WIDGET()
 class ENGINE_API WOverlay : public WParent

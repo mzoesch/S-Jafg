@@ -46,24 +46,32 @@ struct LName
     FORCEINLINE LName(const LName& Other) = default;
     FORCEINLINE LName(LName&& Other) noexcept : UnderlyingName(Other.UnderlyingName) { Other.UnderlyingName = NO_NAME; }
     FORCEINLINE LName& operator=(const LName& Other) = default;
-    FORCEINLINE LName& operator=(LName&& Other) noexcept { UnderlyingName = Other.UnderlyingName; Other.UnderlyingName = NO_NAME; return *this; }
+    FORCEINLINE LName& operator=(LName&& Other) noexcept { this->UnderlyingName = Other.UnderlyingName; Other.UnderlyingName = NO_NAME; return *this; }
     FORCEINLINE ~LName() = default;
 
     FORCEINLINE static bool IsEqual(const LName& A, const LName& B) { return A.UnderlyingName == B.UnderlyingName; }
-    FORCEINLINE bool Equals(const LName& Other) const { return UnderlyingName == Other.UnderlyingName; }
-    FORCEINLINE bool operator==(const LName& Other) const { return UnderlyingName == Other.UnderlyingName; }
-    FORCEINLINE bool operator!=(const LName& Other) const { return UnderlyingName != Other.UnderlyingName; }
+    FORCEINLINE bool Equals(const LName& Other) const { return this->UnderlyingName == Other.UnderlyingName; }
+    FORCEINLINE bool operator==(const LName& Other) const { return this->UnderlyingName == Other.UnderlyingName; }
+    FORCEINLINE bool operator!=(const LName& Other) const { return this->UnderlyingName != Other.UnderlyingName; }
 
-    FORCEINLINE bool IsSet() const { return UnderlyingName != NO_NAME; }
+    FORCEINLINE bool IsSet() const { return this->UnderlyingName != NO_NAME; }
 
     ENGINE_API const LString& ToString() const;
 
     ENGINE_API static LName NoName;
     ENGINE_API static LString NoNameStringRepresentation;
 
+    ///////////////////////////////////////////////////////////////////////////////
+    // Hashing only. Do not use.
+    // This is meaningless as names are not deterministic.
+    FORCEINLINE std::strong_ordering operator<=>(const LName& Other) const { return this->UnderlyingName <=> Other.UnderlyingName; }
+    // ~Hashing only. Do not use.
+    ///////////////////////////////////////////////////////////////////////////////
+
 private:
 
     FORCEINLINE LName(const LUnderlyingName InUnderlyingName) : UnderlyingName(InUnderlyingName) { }
+
     LUnderlyingName UnderlyingName;
 };
 

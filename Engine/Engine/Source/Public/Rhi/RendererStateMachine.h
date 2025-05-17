@@ -4,10 +4,20 @@
 
 #include "CoreAfx.h"
 
-namespace Jafg::RendererStateMachine
+namespace Jafg
+{
+
+class LViewport;
+
+namespace RendererStateMachine
 {
 
 void PrepareForPerspectivePainting();
 void PrepareForOrthographicPainting();
 
-} /* ~Namespace Jafg::RendererStateMachine */
+void ClipOrthographic(const LViewport& InViewport, LVector2&& InLocation, const LVector2& InSize);
+void DisableClipOrthographic();
+
+} /* ~Namespace RendererStateMachine */
+
+} /* ~Namespace Jafg */

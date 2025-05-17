@@ -23,13 +23,13 @@ public:
     DEFAULT_REALLOC_OF_ANY_FORM(LImage)
     ~LImage() = default;
 
-    FORCEINLINE auto SetTexture(const LTexture2* InTexture) -> LImage& { this->TextureRef = InTexture; return *this; }
-    FORCEINLINE bool HasTexture() const { return this->TextureRef; }
-    FORCEINLINE auto GetTexture() const -> const LTexture2* { return this->TextureRef; }
+    FORCEINLINE constexpr auto SetTexture(const LTexture2* InTexture) noexcept -> LImage& { this->TextureRef = InTexture; return *this; }
+    FORCEINLINE constexpr bool HasTexture() const noexcept { return this->TextureRef; }
+    FORCEINLINE constexpr auto GetTexture() const noexcept -> const LTexture2* { return this->TextureRef; }
 
 private:
 
-    const LTexture2* TextureRef = nullptr;
+    const LTexture2* TextureRef { nullptr };
 };
 
 } /* ~Namespace Jafg */

@@ -11,18 +11,18 @@ namespace Jafg
 class LChunkShader;
 class LChunkShaderInstance;
 
-class LChunkShader final : public LEngineShader
+class LChunkShader : public LEngineShader
 {
 public:
 
     typedef LEngineShader Super;
 
-    virtual u32 Make() override;
-    virtual void   UpdateUniforms(const LViewport& Viewport, const LWorld& World, const LEye& Eye) override;
-    virtual void   OnFree() override;
+    virtual bool Make(const LName InName) override;
+    virtual void UpdateWorldUniforms(const LViewport& Context, const LWorld& World, const LEye& Eye) override;
+    virtual void OnFree() override;
 
-    FORCEINLINE auto GetBlendOpaqueTextureLocation() const noexcept -> u32 { return this->BlendOpaqueTex; }
-    FORCEINLINE auto GetBlendersTextureLocation()    const noexcept -> u32 { return this->BlendersTex; }
+    FORCEINLINE constexpr u32 GetBlendOpaqueTextureLocation() const noexcept { return this->BlendOpaqueTex; }
+    FORCEINLINE constexpr u32 GetBlendersTextureLocation()    const noexcept { return this->BlendersTex; }
 
 private:
 
@@ -52,7 +52,7 @@ private:
     u32 Vao = NULL;
     u32 Vbo = NULL;
     u32 Ebo = NULL;
-    bool   bLoaded = false;
+    bool bLoaded { false };
 };
 
 } /* ~Namespace Jafg */

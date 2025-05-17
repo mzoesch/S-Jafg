@@ -38,39 +38,116 @@ void Jafg::LShader::Use() const
     glUseProgram(this->Id);
 }
 
+#if WITH_DEBUG_ZERO_UNBOUND
+void Jafg::LShader::Unuse() const
+{
+    glUseProgram(0);
+}
+#endif /* WITH_DEBUG_ZERO_UNBOUND */
+
 void Jafg::LShader::SetBoolUniform(const LString& Name, const bool Value) const
 {
+    checkCode
+    (
+        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        {
+            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+        }
+    )
+
     glUniform1i(glGetUniformLocation(this->Id, Name.ToPtr()), static_cast<int>(Value));
+
+    return;
 }
 
 void Jafg::LShader::SetIntUniform(const LString& Name, const i32 Value) const
 {
+    checkCode
+    (
+        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        {
+            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+        }
+    )
+
     glUniform1i(glGetUniformLocation(this->Id, Name.ToPtr()), Value);
+
+    return;
 }
 
 void Jafg::LShader::SetUIntUniform(const LString& Name, const u32 Value) const
 {
+    checkCode
+    (
+        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        {
+            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+        }
+    )
+
     glUniform1ui(glGetUniformLocation(this->Id, Name.ToPtr()), Value);
+
+    return;
 }
 
 void Jafg::LShader::SetFloatUniform(const LString& Name, const f32 Value) const
 {
+    checkCode
+    (
+        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        {
+            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+        }
+    )
+
     glUniform1f(glGetUniformLocation(this->Id, Name.ToPtr()), Value);
+
+    return;
 }
 
 void Jafg::LShader::SetVec3Uniform(const LString& Name, const LVector3& Value) const
 {
+    checkCode
+    (
+        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        {
+            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+        }
+    )
+
     glUniform3f(glGetUniformLocation(this->Id, Name.ToPtr()), Value.X, Value.Y, Value.Z);
+
+    return;
 }
 
 void Jafg::LShader::SetVec4Uniform(const LString& Name, const LVector4& Value) const
 {
+    checkCode
+    (
+        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        {
+            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+        }
+    )
+
     glUniform4f(glGetUniformLocation(this->Id, Name.ToPtr()), Value.X, Value.Y, Value.Z, Value.W);
+
+    return;
 }
 
 void Jafg::LShader::SetMatrixUniform(const LString& Name, const LMatrixF& Value) const
 {
+    checkCode
+    (
+        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        {
+            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+        }
+    )
+
     glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.ToPtr()), 1, GL_FALSE, Value.GetData());
+
+    return;
 }
 
 void Jafg::LShader::SetColorUniform(const LString& Name, const LColor& Value) const
@@ -132,6 +209,8 @@ void Jafg::LShader::LoadShader(const LEnginePath& VertexPath, const LEnginePath&
         panicMsgf( "Error linking shader program.\n{}", InfoLog )
         return;
     }
+
+    glValidateProgram(this->Id);
 
     glDeleteShader(Vertex);
     glDeleteShader(Fragment);

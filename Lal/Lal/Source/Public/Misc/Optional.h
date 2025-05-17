@@ -41,6 +41,7 @@ struct TOptional final
     FORCEINLINE auto GetValue(const T& DefaultValue) const -> T& { return this->bMeaningful ? this->Value : DefaultValue; }
     FORCEINLINE auto GetValue(T&& DefaultValue) const -> T& { return this->bMeaningful ? this->Value : std::move(DefaultValue); }
     FORCEINLINE auto GetValuePtr() -> T* { return this->bMeaningful ? &this->Value : nullptr; }
+    FORCEINLINE auto GetValuePtr() const -> const T* { return this->bMeaningful ? &this->Value : nullptr; }
 
     FORCEINLINE auto operator *() -> T& { return this->GetValue(); }
     FORCEINLINE auto operator *() const -> const T& { return this->GetValue(); }

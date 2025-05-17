@@ -8,8 +8,6 @@
 #include "Rhi/RendererStateMachine.h"
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_access.hpp"
 
 void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursorLocation)
 {
@@ -19,13 +17,22 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
 
     if (bCursorLocationIsMeaningful)
     {
-        this->LastFrameHoveredWidgets.CopyFrom(this->HoveredWidgets);
+        this->CachedCursorLocation = InCursorLocation;
+    }
+    else
+    {
+        this->CachedCursorLocation.Reset();
+    }
+
+    this->LastFrameHoveredWidgets.CopyFrom(this->HoveredWidgets);
+    if (bCursorLocationIsMeaningful)
+    {
         this->HoveredWidgets.Reset(this->HoveredWidgets.GetSize());
     }
 
     if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
     {
-        if ( const i32 Removed = this->LastFrameHoveredWidgets.RemoveByPredicate([](const TObjectStorage<WNode>& InNode)
+        if (const i32 Removed = this->LastFrameHoveredWidgets.RemoveByPredicate([](const TObjectStorage<WNode>& InNode)
         {
             return InNode.IsValidDeep() == false;
         }); Removed > 0)
@@ -60,8 +67,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
                 continue;
             }
 
-            LCursorReply Reply = Widget->SweepMouse(*this, InCursorLocation);
-            if (Reply.IsHandled())
+            if (const LCursorReply Reply = Widget->SweepMouse(*this, InCursorLocation); Reply.IsHandled())
             {
                 this->HandleReply(Context, Reply);
                 break;
@@ -79,8 +85,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
         {
             if (this->HoveredWidgets.Contains(Node) == false)
             {
-                LCursorReply Reply = Node->OnCursorLeave();
-                if (Reply.IsHandled())
+                if (const LCursorReply Reply = Node->OnCursorLeave(); MostRecentReply.IsHandled() == false && Reply.IsHandled())
                 {
                     MostRecentReply = Reply;
                 }
@@ -105,8 +110,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
                 continue;
             }
 
-            LReply Reply = Widget->SweepFocusTest(*this, InCursorLocation);
-            if (Reply.IsHandled())
+            if (const LReply Reply = Widget->SweepFocusTest(*this, InCursorLocation); Reply.IsHandled())
             {
                 this->HandleReply(Context, Reply);
                 bIsHandled = true;
@@ -138,31 +142,56 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
 
         if (bIsDrawn == false)
         {
+            LOG_VERBOSE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetFullName())
             this->FocusedWidget->OnFocusLost();
             this->FocusedWidget = nullptr;
         }
     }
 
     // Check for key down events.
-    if (this->FocusedWidget)
+    for (LRawInput& Input : Context.GetCurrentlyPressedKeys())
     {
-        for (LRawInput& Input : Context.GetCurrentlyPressedKeys())
+        if (Context.IsNewKeyDown(Input) == false)
         {
-            if (Context.IsNewKeyDown(Input) == false)
-            {
-                continue;
-            }
-
-            LKeyEvent KeyEvent = LKeyEvent(Input);
-            LReply Reply = this->FocusedWidget->OnKeyDown(KeyEvent);
-            if (Reply.IsHandled())
-            {
-                this->HandleReply(Context, Reply);
-                break;
-            }
-
             continue;
         }
+
+        const WNode* FocusedWidgetMostOuter { nullptr };
+        if (this->FocusedWidget)
+        {
+            if (const LReply Reply = this->FocusedWidget->OnKeyDown(*this, Input); Reply.IsHandled())
+            {
+                this->HandleReply(Context, Reply);
+                continue;
+            }
+            FocusedWidgetMostOuter = this->FocusedWidget->GetMostOuterParent();
+        }
+
+        if (bCursorLocationIsMeaningful)
+        {
+            for (WUserWidget* Widget : this->TopLevelWidgets)
+            {
+                if (Widget == FocusedWidgetMostOuter || Widget->ShouldCheckForInputs() == false)
+                {
+                    continue;
+                }
+
+                if (Widget->IsInBounds(*this, InCursorLocation) == false)
+                {
+                    continue;
+                }
+
+                if (const LReply Reply = Widget->OnKeyDownNoFocus(*this, Input); Reply.IsHandled())
+                {
+                    this->HandleReply(Context, Reply);
+                    break;
+                }
+
+                continue;
+            }
+        }
+
+        continue;
     }
 
     // Check for platform repeat key down events.
@@ -170,8 +199,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
     {
         if (Context.HasRepeatedKey())
         {
-            LKeyEvent KeyEvent = LKeyEvent(Context.GetRepeatedKey(), true);
-            if (const LReply Reply = this->FocusedWidget->OnKeyDown(KeyEvent); Reply.IsHandled())
+            if (const LReply Reply = this->FocusedWidget->OnRepeatedKeyDown({Context.GetRepeatedKey(), true}); Reply.IsHandled())
             {
                 this->HandleReply(Context, Reply);
             }
@@ -179,25 +207,49 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
     }
 
     // Check for key up events.
-    if (this->FocusedWidget)
+    for (LRawInput& Input : Context.GetLastFramePressedKeys())
     {
-        for (LRawInput& Input : Context.GetLastFramePressedKeys())
+        if (Context.IsKeyUp(Input) == false)
         {
-            if (Context.IsKeyUp(Input) == false)
-            {
-                continue;
-            }
-
-            LKeyEvent KeyEvent = LKeyEvent(Input);
-            LReply Reply = this->FocusedWidget->OnKeyUp(KeyEvent);
-            if (Reply.IsHandled())
-            {
-                this->HandleReply(Context, Reply);
-                break;
-            }
-
             continue;
         }
+
+        const WNode* FocusedWidgetMostOuter { nullptr };
+        if (this->FocusedWidget)
+        {
+            if (const LReply Reply = this->FocusedWidget->OnKeyUp(*this, Input); Reply.IsHandled())
+            {
+                this->HandleReply(Context, Reply);
+                continue;
+            }
+            FocusedWidgetMostOuter = this->FocusedWidget->GetMostOuterParent();
+        }
+
+        if (bCursorLocationIsMeaningful)
+        {
+            for (WUserWidget* Widget : this->TopLevelWidgets)
+            {
+                if (Widget == FocusedWidgetMostOuter || Widget->ShouldCheckForInputs() == false)
+                {
+                    continue;
+                }
+
+                if (Widget->IsInBounds(*this, InCursorLocation) == false)
+                {
+                    continue;
+                }
+
+                if (const LReply Reply = Widget->OnKeyUpNoFocus(*this, Input); Reply.IsHandled())
+                {
+                    this->HandleReply(Context, Reply);
+                    break;
+                }
+
+                continue;
+            }
+        }
+
+        continue;
     }
 
     return;
@@ -229,6 +281,7 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
 
     if (bInvalidateAllInputs && this->FocusedWidget)
     {
+        LOG_VERBOSE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetFullName())
         this->FocusedWidget->OnFocusLost();
         this->FocusedWidget = nullptr;
     }
@@ -253,12 +306,15 @@ void Jafg::LViewport::Tick()
         continue;
     }
 
+    this->OnLateTick.Broadcast(*this);
+
     return;
 }
 
 void Jafg::LViewport::Draw()
 {
     this->FrameZLayerDepth = 0.0f;
+    this->TranslationState = LVector2::ZeroVector;
     this->RecalculateScaleFactor();
 
     this->BackgroundBuffer.MakeDrawTarget();
@@ -269,10 +325,10 @@ void Jafg::LViewport::Draw()
         check( Eye && World )
         Eye->UpdateViewMatrix();
 
-        for (LEngineShader* Shader : GEngine->GetShaders())
+        for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)
         {
-            checkSlow( Shader )
-            Shader->UpdateUniforms(*this, *World, *Eye);
+            checkSlow( Shader && Shader->IsMeaningful() )
+            Shader->UpdateWorldUniforms(*this, *World, *Eye);
             continue;
         }
 
@@ -283,6 +339,13 @@ void Jafg::LViewport::Draw()
 
     LFrameBuffer::ResetAndMakeDefaultDrawTarget();
     RendererStateMachine::PrepareForOrthographicPainting();
+    for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)
+    {
+        checkSlow( Shader && Shader->IsMeaningful() )
+        Shader->UpdateViewportUniforms(*this);
+        continue;
+    }
+
     this->BackgroundBuffer.PaintToViewport(*this);
 
     for (const WUserWidget* Widget : this->TopLevelWidgets)
@@ -299,6 +362,14 @@ void Jafg::LViewport::Draw()
 
         continue;
     }
+
+    checkCode
+    (
+        if (this->TranslationState.IsNearlyZero() == false)
+        {
+            LOG_WARNING(LogWidgetFramework, "Viewport translation state is not zero: [{}].", this->TranslationState.ToString())
+        }
+    )
 
     return;
 }
@@ -368,7 +439,7 @@ Jafg::WNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObjectClass* Widge
 
     return nullptr;}
 
-bool Jafg::LViewport::FocusWidgetNode(const WNode* InNode)
+bool Jafg::LViewport::FocusWidgetNode(WNode* InNode)
 {
     if (InNode == nullptr)
     {
@@ -395,25 +466,24 @@ bool Jafg::LViewport::FocusWidgetNode(const WNode* InNode)
 bool Jafg::LViewport::AddHoveredWidgetForFrame(WNode* Node)
 {
     check( this->HoveredWidgets.Contains(Node) == false )
-    this->HoveredWidgets.Add(Node);
+    this->HoveredWidgets.Emplace(Node);
     return this->LastFrameHoveredWidgets.Contains(Node) == false;
 }
 
-void Jafg::LViewport::ChangeFocusUnsafe(const WNode* InNode)
+void Jafg::LViewport::ChangeFocusUnsafe(WNode* InNode)
 {
     if (this->FocusedWidget)
     {
+        LOG_VERBOSE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetFullName())
         this->FocusedWidget->OnFocusLost();
     }
 
-    if (InNode)
+    this->FocusedWidget = InNode;
+
+    if (this->FocusedWidget)
     {
-        this->FocusedWidget = const_cast<WNode*>(InNode);
+        LOG_VERBOSE(LogWidgetFramework, "Gained focus on [{}].", this->FocusedWidget->GetFullName())
         this->FocusedWidget->OnFocusReceived();
-    }
-    else
-    {
-        this->FocusedWidget = nullptr;
     }
 
     return;

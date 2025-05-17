@@ -70,17 +70,17 @@ struct TVector3
     FORCEINLINE static Self UnitY()    { return Self::UnitVectorY;    }
     FORCEINLINE static Self UnitZ()    { return Self::UnitVectorZ;    }
 
-    FORCEINLINE          TVector3()                                      noexcept = default;
-    FORCEINLINE explicit TVector3(const T InFloatingPoint)               noexcept : X(InFloatingPoint), Y(InFloatingPoint), Z(InFloatingPoint) { }
-    FORCEINLINE explicit TVector3(const T InX, const T InY, const T InZ) noexcept : X(InX), Y(InY), Z(InZ) { }
-    FORCEINLINE explicit TVector3(const TVector2<T> InVec, const T InZ)  noexcept : X(InVec.X), Y(InVec.Y), Z(InZ) { }
-    FORCEINLINE explicit TVector3(const T InXYZ[3])                      noexcept : X(InXYZ[0]), Y(InXYZ[1]), Z(InXYZ[2]) { }
-    FORCEINLINE          TVector3(const TVector3<T>& InVec)               noexcept : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
-    FORCEINLINE          TVector3(TVector3<T>&& InVec)                    noexcept : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
+    FORCEINLINE constexpr          TVector3()                                      noexcept : X(0), Y(0), Z(0) { }
+    FORCEINLINE constexpr explicit TVector3(const T InFloatingPoint)               noexcept : X(InFloatingPoint), Y(InFloatingPoint), Z(InFloatingPoint) { }
+    FORCEINLINE constexpr explicit TVector3(const T InX, const T InY, const T InZ) noexcept : X(InX), Y(InY), Z(InZ) { }
+    FORCEINLINE constexpr explicit TVector3(const TVector2<T> InVec, const T InZ)  noexcept : X(InVec.X), Y(InVec.Y), Z(InZ) { }
+    FORCEINLINE constexpr explicit TVector3(const T InXYZ[3])                      noexcept : X(InXYZ[0]), Y(InXYZ[1]), Z(InXYZ[2]) { }
+    FORCEINLINE constexpr          TVector3(const TVector3<T>& InVec)              noexcept : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
+    FORCEINLINE constexpr          TVector3(TVector3<T>&& InVec)                   noexcept : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
 
-    FORCEINLINE auto GetData()       noexcept ->       T* { return &this->X; }
-    FORCEINLINE auto GetData() const noexcept -> const T* { return &this->X; }
-    FORCEINLINE auto constexpr GetDataByteSize() const noexcept -> LuBigSizeTy;
+    FORCEINLINE constexpr auto GetData()       noexcept ->       T* { return &this->X; }
+    FORCEINLINE constexpr auto GetData() const noexcept -> const T* { return &this->X; }
+    FORCEINLINE constexpr LuBigSizeTy GetDataByteSize() const noexcept;
 
     FORCEINLINE auto operator[](const i32 InIndex)       ->       T&;
     FORCEINLINE auto operator[](const i32 InIndex) const -> const T&;
@@ -168,7 +168,7 @@ struct TVector3
 };
 
 template <typename T>
-constexpr LuBigSizeTy TVector3<T>::GetDataByteSize() const noexcept
+FORCEINLINE constexpr LuBigSizeTy TVector3<T>::GetDataByteSize() const noexcept
 {
     static_assert(sizeof(TVector3<T>) == sizeof(T) * 3, "TVector3<T> is not tightly packed.");
     return sizeof(T) * 3;

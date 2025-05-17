@@ -22,6 +22,7 @@
 #include <fstream>
 #include <filesystem>
 #include <condition_variable>
+#include <ranges>
 #if PLATFORM_WINDOWS_WITH_GCC
     #include <cmath>
 #endif /* PLATFORM_WINDOWS_WITH_GCC */

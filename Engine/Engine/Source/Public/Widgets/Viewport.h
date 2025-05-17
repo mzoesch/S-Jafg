@@ -19,9 +19,11 @@ class LWorld;
 
 struct LBackgroundContext final
 {
-    LEye*   Eye   = nullptr;
-    LWorld* World = nullptr;
+    LEye*   Eye   { nullptr };
+    LWorld* World { nullptr };
 };
+
+MAKE_MULTICAST_SIGNATURE(LOnLateTick, const LViewport& InViewport)
 
 //#
 //# Represents a viewport that can contain widgets.
@@ -46,6 +48,19 @@ public:
     void Draw();
     void TearDown();
 
+    //#
+    //# !!!DO NOT USE!!! - Please read carefully.
+    //# This delegate is called after the viewport has ticked.
+    //# This tick event is for widgets that need to be updated but are not ticked.
+    //# Note that this delegate bypasses the superior power of the parent widget (that usually dictates which widgets
+    //# are allowed to tick.).
+    //# Therefore, you should ONLY use this delegate if your widget needs tick-based updates (this should usually ONLY
+    //# be the case for user interface updates - but NEVER for content updates of a widget). If the parent does not
+    //# allow tick inside the widget's #Tick, then you have to be satisfied with that.
+    //# This event is for very, very few widgets - do not abuse its abilities to justify bad object structure design.
+    //#
+    mutable LOnLateTick OnLateTick;
+
     ENGINE_API void AddWidget(WUserWidget* Widget);
     ENGINE_API void RemoveWidget(WUserWidget* Widget);
     ENGINE_API bool TryRemoveWidget(WUserWidget* Widget);
@@ -59,8 +74,6 @@ public:
     auto ChangeDimensions(const LIntVector2& InDimensions) -> void;
     FORCEINLINE auto GetDimensions() const -> LIntVector2 { return this->Dimensions; }
 
-    FORCEINLINE auto GetFrameOrthoZLayerDepth() const -> float { this->FrameZLayerDepth += 0.0001f; return this->FrameZLayerDepth; }
-
     ENGINE_API  WNode* GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const;
     FORCEINLINE WNode* GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const;
     template <typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClass() const;
@@ -70,11 +83,20 @@ public:
     FORCEINLINE auto GetFocusedWidget() const -> const TNode* { return DynamicCast<TNode>(this->FocusedWidget); }
     FORCEINLINE auto GetFocusedWidget() const -> const WNode* { return this->FocusedWidget; }
     FORCEINLINE auto IsFocusedWidgetValid() const -> bool { return this->FocusedWidget != nullptr; }
-    bool FocusWidgetNode(const WNode* InNode);
+    bool FocusWidgetNode(WNode* InNode);
     FORCEINLINE auto GetHoveredWidgets() const -> const TArray<TObjectStorage<WNode>>& { return this->HoveredWidgets; }
 
     //# @return True if in the last frame, this node was not added.
     bool AddHoveredWidgetForFrame(WNode* Node);
+
+    FORCEINLINE f32 GetFrameOrthoZLayerDepth() const { this->FrameZLayerDepth += 0.0001f; return this->FrameZLayerDepth; }
+    FORCEINLINE auto GetFrameTranslation() const -> const LVector2& { return this->TranslationState; }
+    //#
+    //# The translation that is recommended for children of a WNode. This translation should
+    //# be removed after said WNode is finished drawing.
+    //# This value is reset very frame.
+    //#
+    FORCEINLINE void ApplyFrameTranslation(const LVector2& InTranslation) const { this->TranslationState += InTranslation; }
 
     FORCEINLINE auto GetBackgroundContexts() const -> const TArray<LBackgroundContext>& { return this->BackgroundContexts; }
     FORCEINLINE auto GetMutableBackgroundContexts() -> TArray<LBackgroundContext>& { return this->BackgroundContexts; }
@@ -83,13 +105,30 @@ public:
     //#
     //# Get the most recent context that was used on this viewport. Might be null, so do not use without checking.
     //#
-    FORCEINLINE LSurface* GetCachedContext() { return this->CachedContext; }
-    FORCEINLINE LSurface* GetCachedContextChecked() { check( this->CachedContext ) return this->CachedContext; }
-    FORCEINLINE LSurface* GetCachedContextAsserted() { jassert( this->CachedContext ) return this->CachedContext; }
+    FORCEINLINE       LSurface* GetCachedContext()       { return this->CachedContext; }
+    FORCEINLINE const LSurface* GetCachedContext() const { return this->CachedContext; }
+    FORCEINLINE       LSurface* GetCachedContextChecked()       { check( this->CachedContext ) return this->CachedContext; }
+    FORCEINLINE const LSurface* GetCachedContextChecked() const { check( this->CachedContext ) return this->CachedContext; }
+    FORCEINLINE       LSurface* GetCachedContextAsserted()       { jassert( this->CachedContext ) return this->CachedContext; }
+    FORCEINLINE const LSurface* GetCachedContextAsserted() const { jassert( this->CachedContext ) return this->CachedContext; }
+
+    FORCEINLINE const TOptional<LVector2>& GetCachedCursorLocation() const { return this->CachedCursorLocation; }
+    FORCEINLINE const TOptional<LVector2>& GetCachedCursorLocationChecked() const { check( this->CachedCursorLocation.IsSet() ) return this->CachedCursorLocation; }
+    FORCEINLINE const TOptional<LVector2>& GetCachedCursorLocationAsserted() const { jassert( this->CachedCursorLocation.IsSet() ) return this->CachedCursorLocation; }
+
+    //#
+    //# Convert the argument from a top-left origin vector to a bottom-left origin vector.
+    //#
+    FORCEINLINE constexpr void ConvertTLToBLOrigin(LVector2* Vector) const noexcept;
+
+    //#
+    //# @return True if the point is inside the bounds of the viewport.
+    //#
+    FORCEINLINE static constexpr bool IsInBounds(const LVector2& InTopLeft, const LVector2& InSize, const LVector2& InPoint) noexcept;
 
 private:
 
-    void ChangeFocusUnsafe(const WNode* InNode);
+    void ChangeFocusUnsafe(WNode* InNode);
 
     void RecalculateScaleFactor();
     void HandleReply(LSurface& Context, const LCursorReply& Reply);
@@ -116,11 +155,13 @@ private:
     TArray<TObjectStorage<WNode>> LastFrameHoveredWidgets;
 
     mutable f32 FrameZLayerDepth { 0.0f };
+    mutable LVector2 TranslationState;
 
     TArray<LBackgroundContext> BackgroundContexts;
     LFrameBuffer BackgroundBuffer;
 
     LSurface* CachedContext { nullptr };
+    TOptional<LVector2> CachedCursorLocation;
 };
 
 FORCEINLINE WNode* LViewport::GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const
@@ -142,6 +183,22 @@ FORCEINLINE TNode* LViewport::GetTopLevelWidgetByClassChecked() const
 {
     static_assert(std::derived_from<TNode, WNode>, "TNode must derive from WNode.");
     return CheckedStaticCast<TNode>(this->GetTopLevelWidgetByClassChecked(TNode::StaticClass()));
+}
+
+FORCEINLINE constexpr bool LViewport::IsInBounds(const LVector2& InTopLeft, const LVector2& InSize, const LVector2& InPoint) noexcept
+{
+    return
+            InTopLeft.X <= InPoint.X
+         && InPoint.X   <= InTopLeft.X + InSize.X
+         && InTopLeft.Y <= InPoint.Y
+         && InPoint.Y   <= InTopLeft.Y + InSize.Y
+         ;
+}
+
+FORCEINLINE constexpr void LViewport::ConvertTLToBLOrigin(LVector2* Vector) const noexcept
+{
+    checkSlow( Vector )
+    Vector->Y = this->Dimensions.Y - Vector->Y;
 }
 
 } /* ~Namespace Jafg */

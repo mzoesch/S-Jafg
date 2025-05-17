@@ -54,6 +54,8 @@ struct TVector2 final
     FORCEINLINE constexpr          TVector2(const TVector2<T>& InVec) noexcept : X(InVec.X), Y(InVec.Y) { }
     FORCEINLINE constexpr          TVector2(TVector2<T>&& InVec)      noexcept : X(InVec.X), Y(InVec.Y) { }
 
+    FORCEINLINE constexpr TVector2 Copy() const noexcept { return { this->X, this->Y }; }
+
     FORCEINLINE constexpr       T* GetData()       noexcept { return &this->X; }
     FORCEINLINE constexpr const T* GetData() const noexcept { return &this->X; }
 

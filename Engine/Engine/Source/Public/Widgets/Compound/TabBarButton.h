@@ -12,7 +12,7 @@ class WTabBar;
 class WTextBlock;
 
 //# @return True if event was handled.
-typedef TFunction<bool(WTabBar& Self, const LString& InIdentifier)> LOnTabBarButtonPressed;
+typedef TFunction<bool(WTabBar& Self, const LString& InIdentifier)> LOnTabBarButtonRelease;
 
 //# @see Widgets/Compound/TabBar.h
 DECLARE_JAFG_WIDGET(EClassFlags::Abstract)
@@ -28,7 +28,7 @@ public:
 
     virtual bool AddData(LWidgetNodeData* InData) override;
 
-    virtual void OnPrimaryPress() override;
+    virtual void OnPrimaryRelease() override;
 
     //# @param bInFocus Whether the tab bar currently focuses the panel associated with this button.
     virtual void OnTabBarFocus(const bool bInFocus);
@@ -44,7 +44,7 @@ protected:
     WTabBar* Context { nullptr };
     LString Identifier;
     WTextBlock* ButtonText { nullptr };
-    LOnTabBarButtonPressed OnButtonPressed;
+    LOnTabBarButtonRelease OnButtonRelease;
 };
 
 } /* ~Namespace Jafg */

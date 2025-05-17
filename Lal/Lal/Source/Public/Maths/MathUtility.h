@@ -69,6 +69,11 @@ template <typename T> NODISCARD FORCEINLINE constexpr T Absolute(const T A) { re
 template <typename T> NODISCARD FORCEINLINE constexpr T Min(const T A, const T B) { return (B < A) ? B : A; }
 template <typename T> NODISCARD FORCEINLINE constexpr T Max(const T A, const T B) { return (B < A) ? A : B; }
 
+/** @return The sign of the value. -1 for negative, 1 for positive, 0 for zero. */
+template <typename T> NODISCARD FORCEINLINE constexpr T Sign(const T Value) { return (Value < static_cast<T>(0)) ? -static_cast<T>(1) : (Value > static_cast<T>(0)) ? static_cast<T>(1) : static_cast<T>(0); }
+/** @return The sign of the value. -1 for negative, 1 for positive or zero. */
+template <typename T> NODISCARD FORCEINLINE constexpr T SignNoZero(const T Value) { return (Value < static_cast<T>(0)) ? -static_cast<T>(1) : static_cast<T>(1); }
+
 template <typename T> NODISCARD FORCEINLINE constexpr T Squared(const T Value) { return Value * Value; }
 template <typename T> NODISCARD FORCEINLINE constexpr T Cubed(const T Value)   { return Value * Value * Value; }
 template <typename T> NODISCARD FORCEINLINE constexpr T Quartic(const T Value) { return Value * Value * Value * Value; }

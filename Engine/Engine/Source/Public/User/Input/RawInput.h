@@ -9,25 +9,23 @@ namespace Jafg
 
 struct LRawInput
 {
-    explicit LRawInput() = default;
-    FORCEINLINE explicit LRawInput(const LKey Key) : Key(Key), Value(1.0f) { }
-    FORCEINLINE explicit LRawInput(const LKey Key, const float Value) : Key(Key), Value(Value)
-    {
-    }
+    FORCEINLINE constexpr explicit LRawInput() noexcept : Key(EKeys::Unresolved), Value(0.0f) { }
+    FORCEINLINE constexpr explicit LRawInput(const LKey Key) noexcept : Key(Key), Value(1.0f) { }
+    FORCEINLINE constexpr explicit LRawInput(const LKey Key, const f32 Value) noexcept : Key(Key), Value(Value){ }
 
-    LKey  Key   = EKeys::Unresolved;
-    float Value = 0.0f;
+    LKey Key;
+    f32  Value;
 
-    FORCEINLINE bool operator <(const LRawInput& Other) const   { return this->Key < Other.Key;  }
-    FORCEINLINE bool operator <(const LKey& Other) const        { return this->Key < Other;      }
-    FORCEINLINE bool operator >(const LRawInput& Other) const   { return this->Key > Other.Key;  }
-    FORCEINLINE bool operator >(const LKey& Other) const        { return this->Key > Other;      }
-    FORCEINLINE bool operator==(const LRawInput& Other) const   { return this->Key == Other.Key; }
-    FORCEINLINE bool operator==(const LKey& Other) const        { return this->Key == Other;     }
-    FORCEINLINE bool operator!=(const LRawInput& Other) const   { return this->Key != Other.Key; }
-    FORCEINLINE bool operator!=(const LKey& Other) const        { return this->Key != Other;     }
+    FORCEINLINE constexpr bool operator <(const LRawInput& Other) const noexcept { return this->Key < Other.Key;  }
+    FORCEINLINE constexpr bool operator <(const LKey& Other) const noexcept      { return this->Key < Other;      }
+    FORCEINLINE constexpr bool operator >(const LRawInput& Other) const noexcept { return this->Key > Other.Key;  }
+    FORCEINLINE constexpr bool operator >(const LKey& Other) const noexcept      { return this->Key > Other;      }
+    FORCEINLINE constexpr bool operator==(const LRawInput& Other) const noexcept { return this->Key == Other.Key; }
+    FORCEINLINE constexpr bool operator==(const LKey& Other) const noexcept      { return this->Key == Other;     }
+    FORCEINLINE constexpr bool operator!=(const LRawInput& Other) const noexcept { return this->Key != Other.Key; }
+    FORCEINLINE constexpr bool operator!=(const LKey& Other) const noexcept      { return this->Key != Other;     }
 
-    FORCEINLINE void Reset()
+    FORCEINLINE void Reset() noexcept
     {
         this->Key   = EKeys::Unresolved;
         this->Value = 0.0f;

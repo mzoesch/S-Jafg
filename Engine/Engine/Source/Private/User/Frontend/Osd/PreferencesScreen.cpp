@@ -2,6 +2,7 @@
 
 #include "User/Frontend/Osd/PreferencesScreen.h"
 #include "User/Preferences/PreferenceRegistry.h"
+#include "Widgets/ScrollRegion.h"
 #include "Widgets/Spacer.h"
 #include "Widgets/VRegion.h"
 
@@ -62,13 +63,18 @@ bool Jafg::WPreferencesPanel::AddData(LWidgetNodeData* InData)
     LPreference* P = Data->Preference;
     check( P )
 
-    WVRegion* Root;
-    NewNode(WVRegion).SaveTo(&Root)
+    WParentBase* Root;
+    WParentBase* ChildContainer;
+    NewNode(WScrollRegion).SaveTo(&Root)
         .Anchor(EAnchor::Fill)
-        .Padding(40.0f)
-        .VSpace(5.0f);
+    [
+        NewNode(WVRegion).SaveTo(&ChildContainer)
+            .Anchor(EAnchor::Fill)
+            .Padding(40.0f)
+            .VSpace(5.0f)
+    ];
 
-    ::AddPreference(Root, P);
+    ::AddPreference(ChildContainer, P);
 
     if (this->GetChildren().GetSize() > 1)
     {

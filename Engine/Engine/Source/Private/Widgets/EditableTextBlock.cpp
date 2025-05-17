@@ -143,7 +143,7 @@ void Jafg::WEditableTextBlock::OnFocusLost()
     return;
 }
 
-Jafg::LReply Jafg::WEditableTextBlock::OnKeyDown(LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WEditableTextBlock::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     if (InKeyEvent.GetKey() == EKeys::BackSpace || InKeyEvent.GetKey() == EKeys::PlatformDelete)
     {
@@ -193,7 +193,7 @@ Jafg::LReply Jafg::WEditableTextBlock::OnKeyDown(LKeyEvent& InKeyEvent)
         return LReply::Handled();
     }
 
-    return Super::OnKeyDown(InKeyEvent);
+    return Super::OnKeyDown(InViewport, InKeyEvent);
 }
 
 void Jafg::WEditableTextBlock::OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType)

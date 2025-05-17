@@ -48,21 +48,21 @@ class ENGINE_API LChunkRendererComponent final : public LRendererComponent
 public:
 
     LChunkRendererComponent() = delete;
-    FORCEINLINE explicit LChunkRendererComponent(AChunk& Owner) : Owner(&Owner) { }
+    FORCEINLINE explicit LChunkRendererComponent(AChunk& Owner) : Owner(Owner) { }
     ~LChunkRendererComponent() override = default;
 
     virtual bool Cull(const std::span<LVector>& Corners) const override;
     virtual void Draw(const LViewport& Context, const LEye& Eye) override;
 
-    FORCEINLINE auto GetOwner()       noexcept ->       AChunk& { return *this->Owner; }
-    FORCEINLINE auto GetOwner() const noexcept -> const AChunk& { return *this->Owner; }
+    FORCEINLINE auto GetOwner()       noexcept ->       AChunk& { return this->Owner; }
+    FORCEINLINE auto GetOwner() const noexcept -> const AChunk& { return this->Owner; }
     FORCEINLINE auto GetShaderInstance()       noexcept ->       LChunkShaderInstance* { return &this->Instance; }
     FORCEINLINE auto GetShaderInstance() const noexcept -> const LChunkShaderInstance* { return &this->Instance; }
 
 private:
 
-    AChunk*              Owner    = nullptr;
-    LChunkShaderInstance Instance = { };
+    AChunk& Owner;
+    LChunkShaderInstance Instance;
 };
 
 //#
@@ -70,14 +70,13 @@ private:
 //#
 struct LSharedChunkArgs final
 {
-    JChunkGenerationSubsystem* ChunkGenerationSubsystem  = nullptr;
-    JChunkGeneratorSubsystem*  ChunkGeneratorSubsystem   = nullptr;
-    JVoxelSubsystem*           VoxelSubsystem            = nullptr;
-    JMaterialSubsystem*        MaterialSubsystem         = nullptr;
-    JTextureSubsystem*         TextureSubsystem          = nullptr;
+    JChunkGenerationSubsystem* ChunkGenerationSubsystem { nullptr };
+    JChunkGeneratorSubsystem*  ChunkGeneratorSubsystem  { nullptr };
+    JVoxelSubsystem*           VoxelSubsystem           { nullptr };
+    JMaterialSubsystem*        MaterialSubsystem        { nullptr };
+    JTextureSubsystem*         TextureSubsystem         { nullptr };
     LChunkShader               ChunkShader;
-    u32                        ChunkShaderHandle         = NULL;
-    TFunction<LChunkMesher*(AChunk& Owner)> GetNewMesher = nullptr;
+    TFunction<LChunkMesher*(AChunk& Owner)> GetNewMesher;
 };
 
 DECLARE_JAFG_CLASS()

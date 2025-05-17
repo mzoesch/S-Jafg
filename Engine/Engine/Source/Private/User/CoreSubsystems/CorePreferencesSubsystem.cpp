@@ -117,7 +117,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                     .Anchor(EAnchor::VCenter)
                     .Content("Refresh")
                     .TextBlockBrush(LTextBlockBrush::Body())
-                    .OnPrimaryRelease([Target](WButton* Self, LKeyEvent& InKeyEvent) -> void
+                    .OnPrimaryRelease([Target](WButton* Self, const LKeyEvent& InKeyEvent) -> void
                     {
                         if (Target->IsGarbage())
                         {

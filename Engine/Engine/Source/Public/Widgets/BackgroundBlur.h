@@ -36,15 +36,12 @@ public:
     virtual void Construct() override;
     virtual void Draw(LViewport& Context) const override;
 
-    virtual LReply OnKeyDown(LKeyEvent& InKeyEvent) override;
-    virtual void OnFocusReceived() override;
-
-    FORCEINLINE void SetBlurStrength(const float InStrength) { this->Strength = InStrength; }
-    FORCEINLINE auto GetBlurStrength(void) const -> float { return this->Strength; }
+    FORCEINLINE constexpr void SetBlurStrength(const f32 InStrength) noexcept { this->Strength = InStrength; }
+    FORCEINLINE constexpr f32  GetBlurStrength(void) const noexcept { return this->Strength; }
 
 private:
 
-    float Strength = 0.0f;
+    f32 Strength { 0.0f };
 };
 
 } /* ~Namespace Jafg */

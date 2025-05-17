@@ -30,7 +30,10 @@ public:
     virtual void Draw(LViewport& Context) const override;
 
     virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation) override;
-    virtual LReply       SweepFocusTest(LViewport& Context, const LVector2& InLocation) override;
+    virtual LReply       SweepFocusTest(const LViewport& Context, const LVector2& InLocation) override;
+
+    virtual LReply OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
+    virtual LReply OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
 
     virtual bool IsFocusWidgetTransitive(const LViewport* InViewport) const override;
     virtual bool FindNodeInVisiblePath(const WNode* InNode) const override;

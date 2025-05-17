@@ -26,6 +26,11 @@ public:
 
     void Use() const;
 
+#if WITH_DEBUG_ZERO_UNBOUND
+    //# Debugging only.
+    void Unuse() const;
+#endif /* WITH_DEBUG_ZERO_UNBOUND */
+
     template <typename T>
     void SetUniform(const LString& Name, const T Value) const UNSUPPORTED_TEMPLATED_SPECIALIZATION(T)
 
@@ -40,11 +45,11 @@ public:
 
     //# Emits an i32 from a LColor.
     void SetColorUniform(const LString& Name, const LColor& Value) const;
-    //# Emits an vec3 from LColor (without the alpha channel).
+    //# Emits a vec3 from LColor (without the alpha channel).
     void SetColorVec3Uniform(const LString& Name, const LColor& Value) const;
     void SetColorVec4Uniform(const LString& Name, const LColor& Value) const;
 
-    FORCEINLINE auto GetId() const -> u32 { return this->Id; }
+    FORCEINLINE u32 GetId() const { return this->Id; }
 
 private:
 

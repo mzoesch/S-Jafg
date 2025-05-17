@@ -3,6 +3,8 @@
 #include "CoreAfx.h"
 #include "Widgets/Parent.h"
 
+#include "Widgets/Viewport.h"
+
 Jafg::WParent::WParent(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
     this->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
@@ -102,8 +104,7 @@ Jafg::LCursorReply Jafg::WParent::SweepMouse(LViewport& Context, const LVector2&
     {
         if (ChildSlot->Content->ShouldCheckForInputs())
         {
-            const LCursorReply Reply = ChildSlot->Content->SweepMouse(Context, InLocation);
-            if (Reply.IsHandled())
+            if (const LCursorReply Reply = ChildSlot->Content->SweepMouse(Context, InLocation); Reply.IsHandled())
             {
                 return Reply;
             }
@@ -115,7 +116,7 @@ Jafg::LCursorReply Jafg::WParent::SweepMouse(LViewport& Context, const LVector2&
     return Super::SweepMouse(Context, InLocation);
 }
 
-Jafg::LReply Jafg::WParent::SweepFocusTest(LViewport& Context, const LVector2& InLocation)
+Jafg::LReply Jafg::WParent::SweepFocusTest(const LViewport& Context, const LVector2& InLocation)
 {
     if (this->CanChildrenBeHitTestable() == false)
     {
@@ -124,8 +125,7 @@ Jafg::LReply Jafg::WParent::SweepFocusTest(LViewport& Context, const LVector2& I
 
     for (const LWidgetSlot* ChildSlot : this->Children)
     {
-        const LReply Reply = ChildSlot->Content->SweepFocusTest(Context, InLocation);
-        if (Reply.IsHandled())
+        if (const LReply Reply = ChildSlot->Content->SweepFocusTest(Context, InLocation); Reply.IsHandled())
         {
             return Reply;
         }
@@ -136,16 +136,68 @@ Jafg::LReply Jafg::WParent::SweepFocusTest(LViewport& Context, const LVector2& I
     return Super::SweepFocusTest(Context, InLocation);
 }
 
-bool Jafg::WParent::IsFocusWidgetTransitive(const LViewport* InViewport) const
+Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
-    if (Super::IsFocusWidgetTransitive(InViewport))
+    for (const LWidgetSlot* ChildSlot : this->Children)
     {
-        return true;
+        check( ChildSlot->Content )
+        if (ChildSlot->Content->ShouldCheckForInputs() == false)
+        {
+            continue;
+        }
+
+        if (ChildSlot->Content->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked()) == false)
+        {
+            continue;
+        }
+
+        if (const LReply Reply = ChildSlot->Content->OnKeyDownNoFocus(InViewport, InKeyEvent); Reply.IsHandled())
+        {
+            return Reply;
+        }
+
+        continue;
     }
 
+    return Super::OnKeyDownNoFocus(InViewport, InKeyEvent);
+}
+
+Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+{
+    for (const LWidgetSlot* ChildSlot : this->Children)
+    {
+        check( ChildSlot->Content )
+        if (ChildSlot->Content->ShouldCheckForInputs() == false)
+        {
+            continue;
+        }
+
+        if (ChildSlot->Content->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked()) == false)
+        {
+            continue;
+        }
+
+        if (const LReply Reply = ChildSlot->Content->OnKeyUpNoFocus(InViewport, InKeyEvent); Reply.IsHandled())
+        {
+            return Reply;
+        }
+
+        continue;
+    }
+
+    return Super::OnKeyUpNoFocus(InViewport, InKeyEvent);
+}
+
+bool Jafg::WParent::IsFocusWidgetTransitive(const LViewport* InViewport) const
+{
     if (InViewport == nullptr)
     {
         return false;
+    }
+
+    if (Super::IsFocusWidgetTransitive(InViewport))
+    {
+        return true;
     }
 
     for (const LWidgetSlot* ChildSlot : this->Children)

@@ -112,22 +112,32 @@ public:
     FORCEINLINE auto GetLocalEgo() -> LLocalEgo* { check( this->IsLocalEgoValid() ) return &this->LocalEgo; }
     FORCEINLINE auto GetLocalEgo() const -> const LLocalEgo* { check( this->IsLocalEgoValid() ) return &this->LocalEgo; }
 
-    FORCEINLINE auto GetShader(const u32 InShaderUuid) noexcept -> LEngineShader*;
-    FORCEINLINE auto GetShaderChecked(const u32 InShaderUuid) noexceptcheck -> LEngineShader* { LEngineShader* Out = this->GetShader(InShaderUuid); check( Out ) return Out; }
-    FORCEINLINE auto GetShaderAsserted(const u32 InShaderUuid) -> LEngineShader* { LEngineShader* Out = this->GetShader(InShaderUuid); jassert( Out ) return Out; }
-    FORCEINLINE auto GetShaders() noexcept -> TArray<LEngineShader*>& { return this->Shaders; }
-    FORCEINLINE auto GetShaders() const noexcept -> const TArray<LEngineShader*>& { return this->Shaders; }
-    FORCEINLINE bool RemoveShader(const u32 InShaderUuid, const bool bFree = true) noexcept;
-    FORCEINLINE bool RemoveShaderChecked(const u32 InShaderUuid, const bool bFree = true) noexceptcheck;
+    FORCEINLINE bool IsShaderValid(const LName InName) const noexcept { return this->GetShader(InName) != nullptr; }
+    FORCEINLINE auto GetShader(const LName InName) noexcept -> LEngineShader*;
+    FORCEINLINE auto GetShader(const LName InName) const noexcept -> const LEngineShader* { return const_cast<LEngine*>(this)->GetShader(InName); }
+    FORCEINLINE auto GetShaderChecked(const LName InName) noexceptcheck -> LEngineShader* { LEngineShader* Out = this->GetShader(InName); check( Out ) return Out; }
+    FORCEINLINE auto GetShaderChecked(const LName InName) noexceptcheck const -> const LEngineShader* { return const_cast<LEngine*>(this)->GetShaderChecked(InName); }
+    FORCEINLINE auto GetShaderAsserted(const LName InName) -> LEngineShader* { LEngineShader* Out = this->GetShader(InName); jassert( Out ) return Out; }
+    FORCEINLINE auto GetShaderAsserted(const LName InName) const -> const LEngineShader* { return const_cast<LEngine*>(this)->GetShaderAsserted(InName); }
+    FORCEINLINE auto GetShaders() const noexcept -> const std::map<LName, LEngineShader*>& { return this->Shaders; }
+    FORCEINLINE bool UnregisterShader(const LName InName, const bool bFree = true) noexcept;
+    FORCEINLINE bool UnregisterShaderChecked(const LName InName, const bool bFree = true) noexceptcheck;
+
+    template <typename TShader> FORCEINLINE       TShader* GetShader(const LName InName) noexcept;
+    template <typename TShader> FORCEINLINE const TShader* GetShader(const LName InName) const noexcept;
+    template <typename TShader> FORCEINLINE       TShader* GetShaderChecked(const LName InName) noexcept;
+    template <typename TShader> FORCEINLINE const TShader* GetShaderChecked(const LName InName) const noexcept;
+    template <typename TShader> FORCEINLINE       TShader* GetShaderAsserted(const LName InName) noexcept;
+    template <typename TShader> FORCEINLINE const TShader* GetShaderAsserted(const LName InName) const noexcept;
 
 private:
 
-    FORCEINLINE u32 AddShader(LEngineShader* InShader);
-    FORCEINLINE u32 MakeShaderUuid() { return ++this->ShaderUuid; }
+    FORCEINLINE bool AddShader(const LName InName, LEngineShader* InShader);
+    FORCEINLINE bool AddShaderChecked(const LName InName, LEngineShader* InShader);
+    FORCEINLINE bool AddShaderAsserted(const LName InName, LEngineShader* InShader);
 
-    u32 ShaderUuid = NULL;
     LLocalEgo LocalEgo;
-    TArray<LEngineShader*> Shaders;
+    std::map<LName, LEngineShader*> Shaders;
 
 public:
 
@@ -142,7 +152,7 @@ public:
 private:
 
     //#
-    //# Known context to the engine. These context are RO and should never be accessed through the engine directly.
+    //# Known context to the engine. These contexts are read-only and should never be accessed through the engine directly.
     //# We only store the pointers to them here for object life management behind the scenes.
     //#
     TArray<const LObjectContext*> KnownObjectContexts;
@@ -201,7 +211,7 @@ public:
     // Misc
     ///////////////////////////////////////////////////////////////////////////////
 
-    FORCEINLINE       LCommandLineInterface* GetCommandLineInterface() noexcept { return &this->CommandLineInterface; }
+    FORCEINLINE LCommandLineInterface* GetCommandLineInterface() noexcept { return &this->CommandLineInterface; }
     FORCEINLINE const LCommandLineInterface* GetCommandLineInterface() const noexcept { return &this->CommandLineInterface; }
 
 private:
@@ -209,49 +219,103 @@ private:
     LCommandLineInterface CommandLineInterface;
 };
 
-FORCEINLINE LEngineShader* LEngine::GetShader(const u32 InShaderUuid) noexcept
+template<typename TShader>
+FORCEINLINE TShader* LEngine::GetShader(const LName InName) noexcept
 {
-    LEngineShader** Out = this->Shaders.FindRefByPredicate(
-        [InShaderUuid] (const LEngineShader* i)
-        {
-            return i->GetUuid() == InShaderUuid;
-        }
-    );
+    return static_cast<TShader*>(this->GetShader(InName));
+}
 
-    if (Out)
+template<typename TShader>
+FORCEINLINE const TShader* LEngine::GetShader(const LName InName) const noexcept
+{
+    return static_cast<const TShader*>(this->GetShader(InName));
+}
+
+template<typename TShader>
+FORCEINLINE TShader* LEngine::GetShaderChecked(const LName InName) noexcept
+{
+    return static_cast<TShader*>(this->GetShaderChecked(InName));
+}
+
+template<typename TShader>
+FORCEINLINE const TShader* LEngine::GetShaderChecked(const LName InName) const noexcept
+{
+    return static_cast<const TShader*>(this->GetShaderChecked(InName));
+}
+
+template<typename TShader>
+FORCEINLINE TShader* LEngine::GetShaderAsserted(const LName InName) noexcept
+{
+    return static_cast<TShader*>(this->GetShaderAsserted(InName));
+}
+
+template<typename TShader>
+FORCEINLINE const TShader* LEngine::GetShaderAsserted(const LName InName) const noexcept
+{
+    return static_cast<const TShader*>(this->GetShaderAsserted(InName));
+}
+
+FORCEINLINE LEngineShader* LEngine::GetShader(const LName InName) noexcept
+{
+    if (const auto& It = this->Shaders.find(InName); It != this->Shaders.end())
     {
-        return *Out;
+        return It->second;
     }
 
     return nullptr;
 }
 
-FORCEINLINE u32 LEngine::AddShader(LEngineShader* InShader)
+FORCEINLINE bool LEngine::AddShader(const LName InName, LEngineShader* InShader)
 {
     check( InShader )
-    check( InShader->GetUuid() == 0 )
-    this->Shaders.Emplace(std::move(InShader));
-    InShader->Uuid = this->MakeShaderUuid();
-    LOG_VERBOSE(LogEngine, "Added new engine shader [{}] with a total of {} shaders.", InShader->GetUuid(), this->Shaders.GetSize())
-    return InShader->GetUuid();
+
+    if (this->GetShader(InName))
+    {
+        return false;
+    }
+
+    this->Shaders.emplace(InName, InShader);
+
+    LOG_VERBOSE(LogEngine, "Added new engine shader [{}] to a total of {} shaders.", InName, this->Shaders.size())
+    return true;
 }
 
-FORCEINLINE bool LEngine::RemoveShader(const u32 InShaderUuid, const bool bFree /* = true */) noexcept
+FORCEINLINE bool LEngine::AddShaderChecked(const LName InName, LEngineShader* InShader)
 {
-    LOG_VERBOSE(LogEngine, "Removing engine shader [{}].", InShaderUuid)
+    const bool bOut = this->AddShader(InName, InShader);
+    check( bOut )
+    return bOut;
+}
+
+FORCEINLINE bool LEngine::AddShaderAsserted(const LName InName, LEngineShader* InShader)
+{
+    const bool bOut = this->AddShader(InName, InShader);
+    jassert( bOut )
+    return bOut;
+}
+
+FORCEINLINE bool LEngine::UnregisterShader(const LName InName, const bool bFree /* = true */) noexcept
+{
+    LOG_VERBOSE(LogEngine, "Removing engine shader [{}].", InName)
 
     if (bFree)
     {
-        const LEngineShader* Shader = this->GetShader(InShaderUuid);
-        delete Shader;
+        if (auto It = this->Shaders.find(InName); It != this->Shaders.end())
+        {
+            delete It->second;
+        }
+        else
+        {
+            LOG_ERROR(LogEngine, "Failed to find engine shader [{}] to free.", InName)
+        }
     }
 
-    return this->Shaders.RemoveOnceByPredicate([InShaderUuid](const LEngineShader* i) { return i->GetUuid() == InShaderUuid; });
+    return this->Shaders.erase(InName);
 }
 
-FORCEINLINE bool LEngine::RemoveShaderChecked(const u32 InShaderUuid, const bool bFree /* = true */) noexceptcheck
+FORCEINLINE bool LEngine::UnregisterShaderChecked(const LName InName, const bool bFree /* = true */) noexceptcheck
 {
-    const bool bOut = this->RemoveShader(InShaderUuid, bFree);
+    const bool bOut = this->UnregisterShader(InName, bFree);
     check( bOut )
     return bOut;
 }

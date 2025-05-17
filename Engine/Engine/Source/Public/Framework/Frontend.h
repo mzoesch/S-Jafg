@@ -83,20 +83,20 @@ public:
     UNUSED FORCEINLINE bool ChangeWidgetVisibility(const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
     UNUSED ENGINE_API  bool ChangeWidgetVisibility(const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound = false) const;
 
-    ENGINE_API  bool FocusWidget(LViewport* Context, const WNode* InNode);
-    ENGINE_API  bool FocusWidgetChecked(LViewport* Context, const WNode* InNode);
-    ENGINE_API  bool FocusWidgetAsserted(LViewport* Context, const WNode* InNode);
-    FORCEINLINE bool FocusWidget(LSurface* Context, const WNode* InNode) { return this->FocusWidget(&Context->GetViewport(), InNode); }
-    FORCEINLINE bool FocusWidgetChecked(LSurface* Context, const WNode* InNode) { return this->FocusWidgetChecked(&Context->GetViewport(), InNode); }
-    FORCEINLINE bool FocusWidgetAsserted(LSurface* Context, const WNode* InNode) { return this->FocusWidgetAsserted(&Context->GetViewport(), InNode); }
+    ENGINE_API  bool FocusWidget(LViewport* Context, WNode* InNode);
+    FORCEINLINE bool FocusWidgetChecked(LViewport* Context, WNode* InNode);
+    FORCEINLINE bool FocusWidgetAsserted(LViewport* Context, WNode* InNode);
+    FORCEINLINE bool FocusWidget(LSurface* Context, WNode* InNode) { check( Context ) return this->FocusWidget(&Context->GetViewport(), InNode); }
+    FORCEINLINE bool FocusWidgetChecked(LSurface* Context, WNode* InNode) { check( Context ) return this->FocusWidgetChecked(&Context->GetViewport(), InNode); }
+    FORCEINLINE bool FocusWidgetAsserted(LSurface* Context, WNode* InNode) { check( Context ) return this->FocusWidgetAsserted(&Context->GetViewport(), InNode); }
 
 private:
 
     LSurface CreateNewSurface();
 
-    TArray<LSurface>   Surfaces;
-    i32                FocusedSurface = 0;
-    LObjectContext*      CachedOuter = nullptr;
+    TArray<LSurface>     Surfaces;
+    i32                  FocusedSurface { 0 };
+    LObjectContext*      CachedOuter { nullptr };
     LSubsystemCollection Collection;
 };
 
@@ -136,7 +136,7 @@ FORCEINLINE bool LFrontend::ChangeWidgetVisibility(const LSurface* Context, cons
 }
 
 template <typename TNode>
-bool LFrontend::ChangeWidgetVisibility(const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+FORCEINLINE bool LFrontend::ChangeWidgetVisibility(const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
     static_assert(std::derived_from<TNode, WNode>, "TNode must derive from WNode.");
     return this->ChangeWidgetVisibility(TNode::StaticClass(), InVisibility, bAllowNotFound);
@@ -146,6 +146,20 @@ FORCEINLINE bool LFrontend::ChangeWidgetVisibility(const LSurface* Context, cons
 {
     check( Context )
     return this->ChangeWidgetVisibility(&Context->GetViewport(), WidgetClass, InVisibility, bAllowNotFound);
+}
+
+FORCEINLINE bool LFrontend::FocusWidgetChecked(LViewport* Context, WNode* InNode)
+{
+    const bool bOut = this->FocusWidget(Context, InNode);
+    check( bOut )
+    return bOut;
+}
+
+FORCEINLINE bool LFrontend::FocusWidgetAsserted(LViewport* Context, WNode* InNode)
+{
+    const bool bOut = this->FocusWidget(Context, InNode);
+    jassert( bOut )
+    return bOut;
 }
 
 } /* ~Namespace Jafg */

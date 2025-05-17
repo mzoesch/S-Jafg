@@ -180,8 +180,7 @@ Jafg::LCursorReply Jafg::WNode::SweepMouse(LViewport& Context, const LVector2& I
 
     if (Context.AddHoveredWidgetForFrame(this))
     {
-        LCursorReply Reply = this->OnCursorEnter();
-        if (Reply.IsHandled())
+        if (LCursorReply Reply = this->OnCursorEnter(); Reply.IsHandled())
         {
             return Reply;
         }
@@ -190,7 +189,7 @@ Jafg::LCursorReply Jafg::WNode::SweepMouse(LViewport& Context, const LVector2& I
     return this->OnCursorMoved(InLocation);
 }
 
-Jafg::LReply Jafg::WNode::SweepFocusTest(LViewport& Context, const LVector2& InLocation)
+Jafg::LReply Jafg::WNode::SweepFocusTest(const LViewport& Context, const LVector2& InLocation)
 {
     if (this->IsInBounds(Context, InLocation) == false || this->IsHitTestable() == false)
     {
@@ -200,11 +199,48 @@ Jafg::LReply Jafg::WNode::SweepFocusTest(LViewport& Context, const LVector2& InL
     return { this };
 }
 
+Jafg::LReply Jafg::WNode::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+{
+    if (this->Slot && this->Slot->Parent)
+    {
+        return this->Slot->Parent->OnKeyDown(InViewport, InKeyEvent);
+    }
+
+    return LReply::Unhandled();
+}
+
+Jafg::LReply Jafg::WNode::OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+{
+    if (this->Slot && this->Slot->Parent)
+    {
+        return this->Slot->Parent->OnKeyUp(InViewport, InKeyEvent);
+    }
+
+    return LReply::Unhandled();
+}
+
+Jafg::LReply Jafg::WNode::OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+{
+    check( this->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked() ) )
+    return LReply::Unhandled();
+}
+
+Jafg::LReply Jafg::WNode::OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+{
+    check( this->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked() ) )
+    return LReply::Unhandled();
+}
+
 bool Jafg::WNode::IsFocusWidget() const
 {
-    if (const LViewport* Viewport = this->GetViewport(); ensure(Viewport))
+    return this->IsFocusWidget(this->GetViewport());
+}
+
+bool Jafg::WNode::IsFocusWidget(const LViewport* InViewport) const
+{
+    if (InViewport)
     {
-        return Viewport->GetFocusedWidget() == this;
+        return InViewport->GetFocusedWidget() == this;
     }
 
     return false;
@@ -255,14 +291,26 @@ void Jafg::WNode::RemoveFromParent(const bool bDestroy /* = true */)
     return;
 }
 
-Jafg::WParentBase* Jafg::WNode::GetParent() const
+Jafg::WNode* Jafg::WNode::GetMostOuterParent()
 {
     if (this->Slot)
     {
-        return this->Slot->Parent;
+        check( this->Slot->Parent )
+        return this->Slot->Parent->GetMostOuterParent();
     }
 
-    return nullptr;
+    return this;
+}
+
+const Jafg::WNode* Jafg::WNode::GetMostOuterParent() const
+{
+    if (this->Slot)
+    {
+        check( this->Slot->Parent )
+        return this->Slot->Parent->GetMostOuterParent();
+    }
+
+    return this;
 }
 
 bool Jafg::WNode::FindNodeInVisiblePath(const WNode* InNode) const
@@ -333,14 +381,9 @@ Jafg::LVector2 Jafg::WNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Con
     return Out;
 }
 
-Jafg::TOptional<Jafg::LWhitespace> Jafg::WNode::GetMargin() const
+Jafg::LVector2 Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewport& Context) const
 {
-    if (this->Slot && this->Slot->Margin)
-    {
-        return *this->Slot->Margin;
-    }
-
-    return { };
+    return this->GetAnchoredTopLeftFromMostOuter(Context) + Context.GetFrameTranslation();
 }
 
 bool Jafg::WNode::SetMargin(const LMargin& InMargin)

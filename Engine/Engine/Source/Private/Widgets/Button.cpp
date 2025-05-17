@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/Button.h"
-
 #include "Widgets/TextBlock.h"
 
 Jafg::WButton::WButton(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -52,13 +51,8 @@ Jafg::LCursorReply Jafg::WButton::OnCursorLeave()
     return LCursorReply::Handled();
 }
 
-Jafg::LReply Jafg::WButton::OnKeyDown(LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WButton::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
-    if (LReply Reply = Super::OnKeyDown(InKeyEvent); Reply.IsHandled())
-    {
-        return Reply;
-    }
-
     if (InKeyEvent.GetKey() == EKeys::LeftMouseButton)
     {
         if (this->bLetUiReactToEvents)
@@ -97,16 +91,11 @@ Jafg::LReply Jafg::WButton::OnKeyDown(LKeyEvent& InKeyEvent)
         return LReply::Handled();
     }
 
-    return LReply::Unhandled();
+    return Super::OnKeyDown(InViewport, InKeyEvent);
 }
 
-Jafg::LReply Jafg::WButton::OnKeyUp(LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WButton::OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
-    if (LReply Reply = Super::OnKeyUp(InKeyEvent); Reply.IsHandled())
-    {
-        return Reply;
-    }
-
     if (InKeyEvent.GetKey() == EKeys::LeftMouseButton)
     {
         if (this->bLetUiReactToEvents)
@@ -145,7 +134,7 @@ Jafg::LReply Jafg::WButton::OnKeyUp(LKeyEvent& InKeyEvent)
         return LReply::Handled();
     }
 
-    return LReply::Unhandled();
+    return Super::OnKeyUp(InViewport, InKeyEvent);
 }
 
 void Jafg::WTextButton::Construct()

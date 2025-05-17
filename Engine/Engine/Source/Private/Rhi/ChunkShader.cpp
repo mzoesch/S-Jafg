@@ -8,9 +8,12 @@
 #include "System/MaterialSubsystem.h"
 #include "System/EnginePath.h"
 
-u32 Jafg::LChunkShader::Make()
+bool Jafg::LChunkShader::Make(const LName InName)
 {
-    const u32 Out = Super::Make();
+    if (const bool Out = Super::Make(InName); Out == false)
+    {
+        return false;
+    }
 
     const JMaterialSubsystem* Subsystem = GEngine->GetSubsystem<JMaterialSubsystem>();
 
@@ -50,17 +53,17 @@ u32 Jafg::LChunkShader::Make()
     this->Program.SetUIntUniform("AtlasBlendOpaqueDomainWCount", Subsystem->GetBlendOpaqueDomainWidth());
     this->Program.SetUIntUniform("AtlasBlendersDomainWCount", Subsystem->GetBlendersDomainWidth());
 
-    return Out;
+    return true;
 }
 
-void Jafg::LChunkShader::UpdateUniforms(const LViewport& Viewport, const LWorld& World, const LEye& Eye)
+void Jafg::LChunkShader::UpdateWorldUniforms(const LViewport& Context, const LWorld& World, const LEye& Eye)
 {
     this->Program.Use();
 
     const LMatrix Projection = Maths::MakePerspectiveProjectionMatrix
     (
         Maths::ToRadians(Eye.GetDegYFov()),
-        static_cast<float>(Viewport.GetDimensions().X) / static_cast<float>(Viewport.GetDimensions().Y),
+        static_cast<float>(Context.GetDimensions().X) / static_cast<float>(Context.GetDimensions().Y),
         Eye.GetNearFrustum(), Eye.GetFarFrustum()
     );
 
@@ -73,8 +76,6 @@ void Jafg::LChunkShader::UpdateUniforms(const LViewport& Viewport, const LWorld&
 void Jafg::LChunkShader::OnFree()
 {
     Super::OnFree();
-
-    this->Program.Free();
 
     glDeleteTextures(1, &this->BlendOpaqueTex);
     glDeleteTextures(1, &this->BlendersTex);

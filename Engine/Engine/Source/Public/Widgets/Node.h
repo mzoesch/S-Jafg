@@ -457,6 +457,11 @@ public:
     //#
     virtual void Destruct() { }
 
+    //#
+    //# The paint function for a widget. Only called if the widget is visible and paintable.
+    //# Do not update any values of any widgets when inside this method.
+    //# Automatically called by the owning viewport. Do not call manually.
+    //#
     virtual void Draw(LViewport& Context) const { check( this->ShouldNowDraw() ) }
 
     //#
@@ -465,19 +470,79 @@ public:
     //#
     virtual bool AddData(LWidgetNodeData* InData) { return false; }
 
-            bool         IsInBounds(const LViewport& Context, const LVector2& InLocation) const;
+    bool IsInBounds(const LViewport& Context, const LVector2& InLocation) const;
     virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation);
+
     virtual LCursorReply OnCursorEnter() { return LCursorReply::Unhandled(); }
     virtual LCursorReply OnCursorMoved(const LVector2& InLocation) { return LCursorReply::Unhandled(); }
     virtual LCursorReply OnCursorLeave() { return LCursorReply::Unhandled(); }
-    virtual LReply       SweepFocusTest(LViewport& Context, const LVector2& InLocation);
-    virtual void         OnFocusReceived() { }
-    virtual void         OnFocusLost() { }
-    virtual LReply       OnKeyDown(LKeyEvent& InKeyEvent) { return LReply::Unhandled(); }
-    virtual LReply       OnKeyUp(LKeyEvent& InKeyEvent) { return LReply::Unhandled(); }
 
+    virtual LReply SweepFocusTest(const LViewport& Context, const LVector2& InLocation);
+
+    //#
+    //# Called if this widget is being focused / unfocused. Extra care is given by the owing viewport for special
+    //# events, only receivable by a focused widget. This includes e.g., platform buffered input.
+    //# You may decide to bubble this event up or down.
+    //# Note that the #WParent node will not bubble this event in any direction as it is usually meant for the
+    //# most inner node only.
+    //#
+    virtual void OnFocusReceived() { }
+    virtual void OnFocusLost() { }
+
+    //#
+    //# These events are for the focused widget only. You may want to bubble these events down to children if you want.
+    //# If these events are unhandled by the currently focused derived class, they will be bubbled up to the most
+    //# outer parent.
+    //#
+    //# Therefore, you should first handle the reply if possible, and if not, you should call the super method.
+    //#
+    //# If a key event is unhandled here, other widgets will be able to receive it through the #OnKeyDownNoFocus and
+    //# #OnKeyUpNoFocus methods.
+    //#
+    //# @remark You are not eligible to handle repeated key events in this method.
+    //#
+    virtual LReply OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent);
+    virtual LReply OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent);
+
+    //#
+    //# @remark For the focused widget only.
+    //#
+    virtual LReply OnRepeatedKeyDown(const LKeyEvent& InKeyEvent) { return LReply::Unhandled(); }
+
+    //#
+    //# These events are meant to be bubbled from the parent down to the most outer children. If a child does handle
+    //# the event call, the reply should be returned; if not, the direct parent is eligible to handle it.
+    //#
+    //# Therefore, you should only handle the reply in the derived class if it was not handled in the
+    //# super method call expression.
+    //# Be aware: This is the exact opposite behavior to the #OnKeyDown and #OnKeyUp methods.
+    //#
+    //# @remark You are not eligible to handle repeated key events in this method.
+    //#
+    virtual LReply OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent);
+    virtual LReply OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent);
+
+    //#
+    //# @return Whether this is the focused widget.
+    //# @remark This method is fairly slow. Consider young the #IsFocusWidget with a viewport parameter if cached.
+    //#
     bool IsFocusWidget() const;
+    //#
+    //# @param InViewport The viewport to check for or null.
+    //# @return Whether this is the focused widget.
+    //#
+    bool IsFocusWidget(const LViewport* InViewport) const;
+
+    //#
+    //# @return Whether this is the focused widget or any of its children.
+    //# @remark This method is fairly slow. Consider young the #IsFocusWidgetTransitive with a viewport
+    //#         parameter if cached.
+    //#
     bool IsFocusWidgetTransitive() const; /* Warning: Slow. */
+    //#
+    //# @param InViewport The viewport to check for or null.
+    //# @return Whether this is the focused widget or any of its children.
+    //#
     virtual bool IsFocusWidgetTransitive(const LViewport* InViewport) const;
 
     FORCEINLINE bool ShouldNowTick() const { return this->bAllowTick && EWidgetVisibility::IsTicked(this->Visibility); }
@@ -505,20 +570,26 @@ public:
     //# Orphans this child from its parent widget.
     //# @param bDestroy If true, this child will be killed automatically by the butcher at his next sweep.
     //#
-    virtual     void RemoveFromParent(const bool bDestroy = true);
-                auto GetParent() const -> WParentBase*;
-    FORCEINLINE auto GetParentChecked() const -> WParentBase* { WParentBase* Out = this->GetParent(); check( Out ); return Out; }
-    FORCEINLINE auto GetParentAsserted() const -> WParentBase* { WParentBase* Out = this->GetParent(); jassert( Out ); return Out; }
+    virtual void RemoveFromParent(const bool bDestroy = true);
+    FORCEINLINE WParentBase* GetParent() { return this->Slot ? this->Slot->Parent : nullptr; }
+    FORCEINLINE WParentBase* GetParentChecked() { WParentBase* Out = this->GetParent(); check( Out ); return Out; }
+    FORCEINLINE WParentBase* GetParentAsserted() { WParentBase* Out = this->GetParent(); jassert( Out ); return Out; }
+    FORCEINLINE const WParentBase* GetParent() const { return this->Slot ? this->Slot->Parent : nullptr; }
+    FORCEINLINE const WParentBase* GetParentChecked() const { const WParentBase* Out = this->GetParent(); check( Out ); return Out; }
+    FORCEINLINE const WParentBase* GetParentAsserted() const { const WParentBase* Out = this->GetParent(); jassert( Out ); return Out; }
+    //# @return The most outer parent of this widget or the widget itself if no outer parent.
+          WNode* GetMostOuterParent();
+    const WNode* GetMostOuterParent() const;
 
     //#
     //# Searches for a node in this widget tree. Only searches nodes that are drawn.
-    //# @return True, if the target node exists in this widget tree and is visible.
+    //# @return True if the target node exists in this widget tree and is visible.
     //#
     virtual bool FindNodeInVisiblePath(const WNode* InNode) const;
 
     //# @return The size of the current viewport in pixels.
     LIntVector2 GetViewportSize() const;
-    virtual LViewport* GetViewport() const;
+                virtual LViewport* GetViewport() const;
     FORCEINLINE virtual LViewport* GetViewportChecked() const { LViewport* Out = this->GetViewport(); check( Out ) return Out; }
     FORCEINLINE virtual LViewport* GetViewportAsserted() const { LViewport* Out = this->GetViewport(); jassert( Out ) return Out; }
 
@@ -543,17 +614,22 @@ public:
     virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const PURE_VIRTUAL()
     FORCEINLINE void SetAnchoredSize(const LVector2& InSize) const { this->AnchoredSize = InSize; }
     FORCEINLINE void SetAnchoredSize(LVector2&& InSize) const { this->AnchoredSize = std::move(InSize); }
-    FORCEINLINE auto GetAnchoredSize() const -> LVector2 { return this->AnchoredSize; }
-    //# @return The anchored top left corner of the widget relative to the given context's top left corner.
+    FORCEINLINE auto GetAnchoredSize() const -> const LVector2& { return this->AnchoredSize; }
+    FORCEINLINE auto CopyAnchoredSize() const -> LVector2 { return this->AnchoredSize; }
+    //# @return The anchored top-left corner of the widget relative to the given context's top-left corner.
     virtual LVector2 GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const;
-    //# @return The anchored top left corner of the direct child relative to the given context's top left corner.
+    LVector2 GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewport& Context) const;
+    //# @return The anchored top-left corner of the direct child relative to the given context's top-left corner.
     virtual LVector2 GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const PURE_VIRTUAL(return { })
 
     FORCEINLINE bool IsSlotValid() const { return this->Slot != nullptr; }
-    FORCEINLINE LWidgetSlot* GetSlot() const { return this->Slot; }
-    FORCEINLINE LWidgetSlot* GetSlotChecked() const { LWidgetSlot* Out = this->GetSlot(); check( Out ); return Out; }
-    FORCEINLINE LWidgetSlot* GetSlotAsserted() const { LWidgetSlot* Out = this->GetSlot(); jassert( Out ); return Out; }
-                TOptional<LMargin> GetMargin() const;
+    FORCEINLINE LWidgetSlot* GetSlot() { return this->Slot; }
+    FORCEINLINE LWidgetSlot* GetSlotChecked() { LWidgetSlot* Out = this->GetSlot(); check( Out ); return Out; }
+    FORCEINLINE LWidgetSlot* GetSlotAsserted() { LWidgetSlot* Out = this->GetSlot(); jassert( Out ); return Out; }
+    FORCEINLINE const LWidgetSlot* GetSlot() const { return this->Slot; }
+    FORCEINLINE const LWidgetSlot* GetSlotChecked() const { const LWidgetSlot* Out = this->GetSlot(); check( Out ); return Out; }
+    FORCEINLINE const LWidgetSlot* GetSlotAsserted() const { const LWidgetSlot* Out = this->GetSlot(); jassert( Out ); return Out; }
+    FORCEINLINE TOptional<LMargin> GetMargin() const { if (this->Slot && this->Slot->Margin) { return *this->Slot->Margin; } return { }; }
     FORCEINLINE TOptional<LMargin> GetMarginChecked() const { TOptional<LMargin> Out = this->GetMargin(); check( Out.IsSet() ); return Out; }
     FORCEINLINE TOptional<LMargin> GetMarginAsserted() const { TOptional<LMargin> Out = this->GetMargin(); jassert( Out.IsSet() ); return Out; }
                 bool SetMargin(const LMargin& InMargin);
@@ -702,6 +778,18 @@ FORCEINLINE void MakeDeferredWidgetNodeFinal(WNode* InNode)
     MakeDeferredObjectFinal(InNode);
     return;
 }
+
+#if !DO_CHECKS
+FORCEINLINE LReply WNode::OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+{
+    return LReply::Unhandled();
+}
+
+FORCEINLINE LReply WNode::OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+{
+    return LReply::Unhandled();
+}
+#endif /* !DO_CHECKS */
 
 template<typename T>
 FORCEINLINE bool WNode::IsA() const

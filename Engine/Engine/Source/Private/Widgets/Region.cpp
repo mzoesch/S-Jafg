@@ -1,34 +1,40 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/Region.h"
+#include "Core/CoreNames.h"
+#include "Engine/Engine.h"
+#include "Rhi/OrthographicBoxShader.h"
+
+Jafg::WRegion::WRegion(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+    Tasks::Make(ENamedThreads::Master, ETaskTime::BeforeEngineInitButAfterAlloc, [](void) -> void
+    {
+        if (GEngine->IsShaderValid(Name_ShaderOrthographicBox) == false)
+        {
+            LOrthographicBoxShader* Shader = new LOrthographicBoxShader();
+            Shader->MakeChecked(Name_ShaderOrthographicBox);
+        }
+
+        return;
+    });
+
+    return;
+}
 
 void Jafg::WRegion::Draw(LViewport& Context) const
 {
     if (this->HasBrush() == false)
     {
-        if (this->ShaderContext)
-        {
-            this->ShaderContext.Reset();
-        }
-
         Super::Draw(Context);
-
         return;
     }
 
-    if (this->ShaderContext == false)
-    {
-        LOG_TRACE(LogWidgets, "Creating new shader context for WWidgetRegion.")
-        this->ShaderContext.MakeMeaningful();
-        this->CreateNewShaderContext();
-    }
-
-    this->ShaderContext->Draw(
+    GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
+    (
         Context,
         this->GetAnchoredSize(),
-        this->GetAnchoredTopLeftFromMostOuter(Context),
-        this->GetBrush().Tint,
-        this->GetBrush().Image.GetTexture()
+        this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+        this->GetBrush().Tint
     );
 
     Super::Draw(Context);
@@ -70,9 +76,4 @@ void Jafg::WRegion::SetImage(const LImage& InImage)
 
     this->SetBrush(LRegionBrush({.Image = InImage}));
     return;
-}
-
-void Jafg::WRegion::CreateNewShaderContext() const
-{
-    this->ShaderContext->Make();
 }

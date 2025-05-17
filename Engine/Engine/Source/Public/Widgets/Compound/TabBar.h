@@ -30,7 +30,7 @@ struct LTabBarTabDescriptor final
 
     LOnTabBarLoaded Callback;
 
-    LPadding Padding = LPadding(0.0f);
+    LPadding Padding { 0.0f };
 
     //#
     //# The panel widget to use. Required.
@@ -39,14 +39,14 @@ struct LTabBarTabDescriptor final
 
     //#
     //# The button to use. Leave as nullptr to use the default button that comes with the tab bar.
-    //# ButtonWidgetClass and OnButtonPressed are mutually exclusive.
+    //# ButtonWidgetClass and OnButtonReleased are mutually exclusive.
     //#
     TSubclassOf<WTabBarButton> ButtonWidgetClass;
     //#
-    //# Optional delegate that gets called when the button is pressed.
-    //# ButtonWidgetClass and OnButtonPressed are mutually exclusive.
+    //# Optional delegate that gets called when the button is released.
+    //# ButtonWidgetClass and OnButtonReleased are mutually exclusive.
     //#
-    LOnTabBarButtonPressed OnButtonPressed;
+    LOnTabBarButtonRelease OnButtonRelease;
 
     //#
     //# An optional value that may contain the identifier of the tab that this tab should be added after (in close
@@ -125,7 +125,7 @@ public:
     FORCEINLINE void SetSwitcherClass(const TSubclassOf<WSwitcher>& InSwitcherClass) { this->SwitcherClass = InSwitcherClass; }
     FORCEINLINE auto GetCurrentSwitcherClass() const -> const TSubclassOf<WSwitcher>& { return this->SwitcherClass; }
 
-    void OnTabBarButtonPressed(const LString& Identifier);
+    void OnTabBarButtonReleased(const LString& Identifier);
     void OnOuterVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility);
 
 private:

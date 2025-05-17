@@ -13,8 +13,8 @@ namespace Jafg
 
 struct LRegionBrush
 {
-    LColor Tint  = LColor::White;
-    LImage Image = LImage();
+    LColor Tint { LColor::White };
+    LImage Image;
 };
 
 template <typename TNode>
@@ -41,7 +41,7 @@ class ENGINE_API WRegion : public WOverlay
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WRegion)
+    explicit WRegion(const LObjectInitializer& ObjectInitializer);
 
 public:
 
@@ -56,10 +56,7 @@ public:
 
 private:
 
-    void CreateNewShaderContext() const;
-
     TOptional<LRegionBrush> Brush;
-    mutable TOptional<LBoxShaderContext> ShaderContext;
 };
 
 } /* ~Namespace Jafg */
