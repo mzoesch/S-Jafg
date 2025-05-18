@@ -132,9 +132,6 @@ public:
     virtual LReply OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
 
     virtual void UpdateDesiredSize() const override;
-    virtual void UpdateAnchoredSize(const LViewport& Context) const override;
-    virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const override;
-    virtual auto GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const -> LVector2 override;
 
     FORCEINLINE void SetScrollRegionSize(const LVector2& InSize) { this->ScrollRegionSize = InSize; }
     FORCEINLINE const LVector2& GetScrollRegionSize() const { return this->ScrollRegionSize; }
@@ -231,6 +228,8 @@ private:
 
     bool bUiTickV { false };
     bool bUiTickH { false };
+    f32 MbVOffset { 0.0f };
+    f32 MbHOffset { 0.0f };
 };
 
 FORCEINLINE void WScrollRegion::SetBrush(const LScrollRegionBrush& InBrush) noexcept

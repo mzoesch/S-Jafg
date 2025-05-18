@@ -156,7 +156,6 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
             continue;
         }
 
-        const WNode* FocusedWidgetMostOuter { nullptr };
         if (this->FocusedWidget)
         {
             if (const LReply Reply = this->FocusedWidget->OnKeyDown(*this, Input); Reply.IsHandled())
@@ -164,14 +163,13 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
                 this->HandleReply(Context, Reply);
                 continue;
             }
-            FocusedWidgetMostOuter = this->FocusedWidget->GetMostOuterParent();
         }
 
         if (bCursorLocationIsMeaningful)
         {
             for (WUserWidget* Widget : this->TopLevelWidgets)
             {
-                if (Widget == FocusedWidgetMostOuter || Widget->ShouldCheckForInputs() == false)
+                if (Widget == this->FocusedWidget || Widget->ShouldCheckForInputs() == false)
                 {
                     continue;
                 }
@@ -214,7 +212,6 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
             continue;
         }
 
-        const WNode* FocusedWidgetMostOuter { nullptr };
         if (this->FocusedWidget)
         {
             if (const LReply Reply = this->FocusedWidget->OnKeyUp(*this, Input); Reply.IsHandled())
@@ -222,14 +219,13 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
                 this->HandleReply(Context, Reply);
                 continue;
             }
-            FocusedWidgetMostOuter = this->FocusedWidget->GetMostOuterParent();
         }
 
         if (bCursorLocationIsMeaningful)
         {
             for (WUserWidget* Widget : this->TopLevelWidgets)
             {
-                if (Widget == FocusedWidgetMostOuter || Widget->ShouldCheckForInputs() == false)
+                if (Widget == this->FocusedWidget || Widget->ShouldCheckForInputs() == false)
                 {
                     continue;
                 }

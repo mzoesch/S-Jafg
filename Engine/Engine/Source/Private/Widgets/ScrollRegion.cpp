@@ -113,12 +113,16 @@ void Jafg::WScrollRegion::UserInterfaceTick(const LViewport& InViewport)
 
     if (this->bUiTickV)
     {
+        const f32 VForegroundScrollHeight = this->GetVForegroundScrollSize().Y;
         this->ScrollPosition.Y = Maths::Clamp
         (
             (
                 InViewport.GetCachedCursorLocationChecked()->Y
                 - (this->GetAnchoredTopLeftFromMostOuter(InViewport) + this->GetVBackgroundScrollPositionFromOuter()).Y
-            ) / this->GetVBackgroundScrollSize().Y,
+                - (Maths::IsNearlyZero(this->MbVOffset) ? (VForegroundScrollHeight * 0.5f) : 0.0f) + this->MbVOffset
+            )
+            /
+            (this->GetVBackgroundScrollSize().Y - VForegroundScrollHeight),
             0.0f,
             1.0f
         );
@@ -126,12 +130,16 @@ void Jafg::WScrollRegion::UserInterfaceTick(const LViewport& InViewport)
 
     if (this->bUiTickH)
     {
+        const f32 HForegroundScrollWidth = this->GetHForegroundScrollSize().X;
         this->ScrollPosition.X = Maths::Clamp
         (
             (
                 InViewport.GetCachedCursorLocationChecked()->X
                 - (this->GetAnchoredTopLeftFromMostOuter(InViewport) + this->GetHBackgroundScrollPositionFromOuter()).X
-            ) / this->GetHBackgroundScrollSize().X,
+                - (Maths::IsNearlyZero(this->MbHOffset) ? (HForegroundScrollWidth * 0.5f) : 0.0f) + this->MbHOffset
+            )
+            /
+            (this->GetHBackgroundScrollSize().X - HForegroundScrollWidth),
             0.0f,
             1.0f
         );
@@ -198,21 +206,6 @@ void Jafg::WScrollRegion::UpdateDesiredSize() const
     return;
 }
 
-void Jafg::WScrollRegion::UpdateAnchoredSize(const LViewport& Context) const
-{
-    Super::UpdateAnchoredSize(Context);
-}
-
-void Jafg::WScrollRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const
-{
-    Super::UpdateAnchoredSizeForChild(Context, InDirectChild);
-}
-
-Jafg::LVector2 Jafg::WScrollRegion::GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const
-{
-    return Super::GetAnchoredTopLeftFromMostOuterForChild(Context, InDirectChild);
-}
-
 void Jafg::WScrollRegion::ApplyScroll(const LKeyEvent& InKeyEvent)
 {
     const JUserPreferences* Prefs = GetDefault<JUserPreferences>();
@@ -220,8 +213,14 @@ void Jafg::WScrollRegion::ApplyScroll(const LKeyEvent& InKeyEvent)
     this->ScrollPosition.Y = Maths::Clamp
     (
         this->ScrollPosition.Y
-            + Maths::Sign(InKeyEvent.GetValue()) * Prefs->MouseWheelSpeed
-            * (Prefs->bInvertVerticalScrollWheel ? -1.0f : 1.0f),
+        + Maths::Sign(InKeyEvent.GetValue())
+        *
+        (
+            Prefs->MouseWheelScrollSpeed
+            /
+            Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.Y) - static_cast<f64>(this->GetAnchoredSize().Y), 0.0)
+        )
+        * (Prefs->bInvertVerticalScrollWheel ? -1.0f : 1.0f),
         0.0f,
         1.0f
     );
@@ -238,13 +237,30 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(const LViewport& InViewport)
         return false;
     }
 
+    const LVector2 CachedCursorLocation = *InViewport.GetCachedCursorLocationChecked();
+    const LVector2 TopLeftMostOuter = this->GetAnchoredTopLeftFromMostOuter(InViewport);
+
     if (LViewport::IsInBounds
     (
-        this->GetAnchoredTopLeftFromMostOuter(InViewport) + this->GetVInteractiveAreaScrollPositionFromOuter(),
+        TopLeftMostOuter + this->GetVInteractiveAreaScrollPositionFromOuter(),
         this->GetVInteractiveAreaScrollSize(),
-        *InViewport.GetCachedCursorLocationChecked()
+        CachedCursorLocation
     ))
     {
+        if
+        (
+            const LVector2 TopLeftForeground = TopLeftMostOuter + this->GetVForegroundScrollPositionFromOuter();
+            LViewport::IsInBounds
+            (
+                TopLeftForeground,
+                this->GetVForegroundScrollSize(),
+                CachedCursorLocation
+            )
+        )
+        {
+            this->MbVOffset = Maths::Invert(CachedCursorLocation.Y - TopLeftForeground.Y);
+        }
+
         this->bUiTickV = true;
         this->UserInterfaceTickDelegateHandle = InViewport.OnLateTick.AddMember(this, &WScrollRegion::UserInterfaceTick);
         return true;
@@ -252,11 +268,25 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(const LViewport& InViewport)
 
     if (LViewport::IsInBounds
     (
-        this->GetAnchoredTopLeftFromMostOuter(InViewport) + this->GetHInteractiveAreaScrollPositionFromOuter(),
+        TopLeftMostOuter + this->GetHInteractiveAreaScrollPositionFromOuter(),
         this->GetHInteractiveAreaScrollSize(),
-        *InViewport.GetCachedCursorLocationChecked()
+        CachedCursorLocation
     ))
     {
+        if
+        (
+            const LVector2 TopLeftForeground = TopLeftMostOuter + this->GetHForegroundScrollPositionFromOuter();
+            LViewport::IsInBounds
+            (
+                TopLeftForeground,
+                this->GetHForegroundScrollSize(),
+                CachedCursorLocation
+            )
+        )
+        {
+            this->MbHOffset = Maths::Invert(CachedCursorLocation.X - TopLeftForeground.X);
+        }
+
         this->bUiTickH = true;
         this->UserInterfaceTickDelegateHandle = InViewport.OnLateTick.AddMember(this, &WScrollRegion::UserInterfaceTick);
         return true;
@@ -271,6 +301,8 @@ bool Jafg::WScrollRegion::MBUpOnScrollbar(const LViewport& InViewport)
     {
         this->bUiTickV = false;
         this->bUiTickH = false;
+        this->MbVOffset = 0.0f;
+        this->MbHOffset = 0.0f;
         InViewport.OnLateTick.Remove(&this->UserInterfaceTickDelegateHandle);
         return true;
     }

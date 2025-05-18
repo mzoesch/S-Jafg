@@ -141,6 +141,12 @@ Jafg::LReply Jafg::WParent::OnKeyDownNoFocus(const LViewport& InViewport, const 
     for (const LWidgetSlot* ChildSlot : this->Children)
     {
         check( ChildSlot->Content )
+
+        if (ChildSlot->Content == InViewport.GetFocusedWidget())
+        {
+            continue;
+        }
+
         if (ChildSlot->Content->ShouldCheckForInputs() == false)
         {
             continue;
@@ -167,6 +173,12 @@ Jafg::LReply Jafg::WParent::OnKeyUpNoFocus(const LViewport& InViewport, const LK
     for (const LWidgetSlot* ChildSlot : this->Children)
     {
         check( ChildSlot->Content )
+
+        if (ChildSlot->Content == InViewport.GetFocusedWidget())
+        {
+            continue;
+        }
+
         if (ChildSlot->Content->ShouldCheckForInputs() == false)
         {
             continue;

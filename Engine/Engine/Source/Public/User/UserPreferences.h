@@ -90,7 +90,7 @@ public:
     CLASS_FIELD(Config)
     LPreferenceBool bInvertHorizontalScrollWheel { true };
     CLASS_FIELD(Config)
-    LPreferenceFloat MouseWheelSpeed { 0.05f };
+    LPreferenceFloat MouseWheelScrollSpeed { 35.0f };
 
     CLASS_FIELD(Config)
     LPreferenceFloat HeaderFontSize    { 0.70f };
