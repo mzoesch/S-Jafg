@@ -290,7 +290,7 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages(const LLoadedPluginHand
         }
 
         LRegistryPackage NewPackage;
-        NewPackage.StaticClass                         = new LObjectClass();
+        NewPackage.StaticClass                         = Smart::EmplaceUnique<LObjectClass>();
         NewPackage.StaticClass->SpacedClassName        = Package.SpacedClassName;
         NewPackage.StaticClass->ClassName              = MAKE_DYNAMIC_NAME(NewPackage.StaticClass->SpacedClassName);
         NewPackage.StaticClass->PluginHandle           = InHandle;
@@ -298,9 +298,9 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages(const LLoadedPluginHand
         check( NewPackage.StaticClass->SpacedClassName.IsEmpty() == false )
         check( NewPackage.StaticClass->DefaultPackageReferrer != nullptr )
 
-        this->RegisteredObjects.Add(std::forward<LRegistryPackage>(NewPackage));
+        this->RegisteredObjects.Emplace(std::move(NewPackage));
 
-        Package.Callback(NewPackage.StaticClass);
+        Package.Callback(this->RegisteredObjects.GetLast()->StaticClass);
 
         continue;
     }
@@ -318,7 +318,7 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages(const LLoadedPluginHand
             continue;
         }
 
-        const LRegistryPackage* ParentPackage = GetPanickedPackageByNameWeak(SuperName);
+        LRegistryPackage* ParentPackage = GetPanickedPackageByNameWeak(SuperName);
         if (ParentPackage->StaticClass->GetChildren().Contains(StaticClass))
         {
             panicMsgf
@@ -600,15 +600,15 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPack
 }
 
 void Jafg::Private::LObjectRegistry::GetRegisteredObjectsOfClass(
-    const LObjectClass*            InStaticClass,
-    TArray<const LObjectClass*>& OutArray
+    const LObjectClass*          InStaticClass,
+    TArray<const LObjectClass*>* OutArray
 ) const
 {
     for (const LRegistryPackage& Package : this->RegisteredObjects)
     {
         if (Package.StaticClass->DerivesFrom(InStaticClass))
         {
-            OutArray.Add(Package.StaticClass);
+            OutArray->Emplace(Package.StaticClass);
         }
 
         continue;
@@ -616,3 +616,37 @@ void Jafg::Private::LObjectRegistry::GetRegisteredObjectsOfClass(
 
     return;
 }
+
+i32 Jafg::Private::LObjectRegistry::RemovePackagesOf(const LLoadedPluginHandle InHandle)
+{
+    check( Tasks::IsOnMasterThread() )
+
+    i32 Removed { 0 };
+    for (i32 Idx = 0; Idx < this->RegisteredObjects.GetSize();)
+    {
+        LRegistryPackage& Package = this->RegisteredObjects[Idx];
+
+        if (Package.StaticClass->GetPluginHandle() != InHandle)
+        {
+            ++Idx;
+            continue;
+        }
+
+        Package.StaticClass->Parent->GetChildren().RemoveOnceChecked(Package.StaticClass);
+        for (LObjectClass* Child: Package.StaticClass->GetChildren())
+        {
+            check( Package.StaticClass == Child->Parent  )
+            Child->Parent = nullptr;
+
+            continue;
+        }
+
+        ++Removed;
+        this->RegisteredObjects.RemoveAt(Idx);
+
+        continue;
+    }
+
+    return Removed;
+}
+

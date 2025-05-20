@@ -77,15 +77,27 @@ class JSubsystem;
 struct LSubsystemCollection final
 {
     LSubsystemCollection() = default;
-    ENGINE_API explicit LSubsystemCollection(LObjectContext* InOuter) : Outer(InOuter) { }
+    LSubsystemCollection(const bool bAllowDeferredSubsystems)
+        : bAllowDeferredSubsystems(bAllowDeferredSubsystems) { }
+    ENGINE_API explicit LSubsystemCollection(LObjectContext* InOuter, const bool bAllowDeferredSubsystems = false)
+        : bAllowDeferredSubsystems(bAllowDeferredSubsystems), Outer(InOuter) { }
     PROHIBIT_REALLOC_OF_ANY_FORM(LSubsystemCollection)
     ENGINE_API ~LSubsystemCollection() = default;
 
     FORCEINLINE bool IsValid() const { return this->Outer != nullptr; }
 
-    ENGINE_API void DeferredInitialize(LObjectContext* InOuter);
+    ENGINE_API void DeferredInitialize(LObjectContext* InOuter, const bool bAllowDeferredSubsystems = false);
 
     ENGINE_API void InitializeSubsystems(const LObjectClass* InClass);
+
+    //#
+    //# Same as #InitializeSubsystems but only for deferred subsystems.
+    //# This might be automatically called if #bAllowDeferredSubsystems is set to true.
+    //# You may call this yourselves if you want a custom behavior.
+    //#
+    ENGINE_API void InitializeSubsystemsDeferredOnly();
+
+    void OnForeignPluginLoaded(const LObjectContext* InStaticClassContainer);
 
     //#
     //# Tears down all subsystems in this collection.
@@ -94,6 +106,8 @@ struct LSubsystemCollection final
     template <typename Predicate>
     FORCEINLINE void TearDownSubsystems(Predicate&& InPredicate);
     FORCEINLINE void TearDownSubsystems();
+
+    FORCEINLINE constexpr bool IsAllowingDeferredSubsystems() const noexcept { return this->bAllowDeferredSubsystems; }
 
     FORCEINLINE bool IsOuterValid() const { return this->Outer != nullptr; }
     FORCEINLINE auto GetOuter() const -> const LObjectContext* { return this->Outer; }
@@ -152,9 +166,17 @@ private:
     void TearDownPrioritySubsystems();
     void TearDownNonPrioritySubsystems();
 
+    //#
+    //# Whether to allow for deferred packages to be loaded after the main subsystems have been initialized.
+    //#
+    bool bAllowDeferredSubsystems { false };
+
     LObjectContext*     Outer { nullptr };
     const LObjectClass* OuterClass { nullptr };
     TArray<JSubsystem*> SubsystemInstances;
+    TArray<JSubsystem*> IntermediateInstances;
+
+    LDelegateHandle OnForeignPluginLoadedHandle { nullptr };
 };
 
 template<typename Predicate>

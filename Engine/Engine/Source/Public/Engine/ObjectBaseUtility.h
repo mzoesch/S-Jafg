@@ -288,7 +288,7 @@ struct LDeferredRegistryPackage final
 struct LRegistryPackage final
 {
     //# Pointer to the static class object of the target class.
-    LObjectClass* StaticClass;
+    Smart::TUnique<LObjectClass> StaticClass;
 
     FORCEINLINE const LString& GetSpacedClassName() const
     {
@@ -327,7 +327,7 @@ public:
     //#
     ENGINE_API void ValidateLoadedPackages();
 
-    ENGINE_API auto DoesPackageWithNameExist(const LString& SpacedClassName) const -> bool;
+    ENGINE_API bool DoesPackageWithNameExist(const LString& SpacedClassName) const;
     ENGINE_API auto GetPackageByName(const LString& SpacedClassName) -> LRegistryPackage*;
     ENGINE_API auto GetPackageByName(const LString& SpacedClassName) const -> const LRegistryPackage*;
     ENGINE_API auto GetPackageByNameWeak(const LString& Name) -> LRegistryPackage*;
@@ -347,7 +347,9 @@ public:
 
     FORCEINLINE auto GetRegisteredObjects() -> TArray<LRegistryPackage>& { return this->RegisteredObjects; }
     //# Gets all registered static class that inherit in any way from InStaticClass.
-    ENGINE_API auto GetRegisteredObjectsOfClass(const LObjectClass* InStaticClass, TArray<const LObjectClass*>& OutArray) const -> void;
+    ENGINE_API void GetRegisteredObjectsOfClass(const LObjectClass* InStaticClass, TArray<const LObjectClass*>* OutArray) const;
+
+    ENGINE_API i32 RemovePackagesOf(const LLoadedPluginHandle InHandle);
 
 private:
 

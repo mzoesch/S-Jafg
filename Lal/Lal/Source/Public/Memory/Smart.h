@@ -78,6 +78,11 @@ struct TUnique final
     FORCEINLINE auto operator!=(const T* Other) const -> bool { return this->Object != Other; }
     FORCEINLINE auto operator==(const T* Other) const -> bool { return this->Object == Other; }
 
+    template <typename TOther>
+    FORCEINLINE constexpr bool operator==(const TOther& Other) const noexcept { return this->Object == Other; }
+    template <typename TOther>
+    FORCEINLINE constexpr bool operator!=(const TOther& Other) const noexcept { return !(*this == Other); }
+
 private:
 
     /** @see #MakeUnique and #EmplaceUnique. */

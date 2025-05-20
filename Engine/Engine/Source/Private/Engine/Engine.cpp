@@ -257,7 +257,7 @@ void Jafg::LEngine::Initialize()
     }
 
     this->ObjectContext.SetHumanReadableName("Engine");
-    this->Collection.DeferredInitialize(&this->ObjectContext);
+    this->Collection.DeferredInitialize(&this->ObjectContext, true);
     this->Collection.InitializeSubsystems(JEngineSubsystem::StaticClass());
 
 #if WITH_LOCAL_LAYER
@@ -271,7 +271,7 @@ void Jafg::LEngine::Initialize()
     return;
 }
 
-void Jafg::LEngine::Tick(const float DeltaTime)
+void Jafg::LEngine::Tick(const f32 DeltaTime)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -742,6 +742,9 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(LLoadedPlugin* InP
     InPlugin->ObjectContext->TearDownContext();
     InPlugin->ObjectContext.Reset();
 
+    const i32 Removed { Private::GObjectRegistry->RemovePackagesOf(InPlugin->GetHandle()) };
+    LOG_VERBOSE(LogForeign, "Removed [{}] registered packages from [{}].", Removed, CachedIdent)
+
     const EPluginLoadReturnCode::Type Rc = InPlugin->CloseLibrary(InReason);
 
     if (Rc == EPluginLoadReturnCode::Success)
@@ -931,6 +934,8 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(const LFetchedPl
     this->ForeignContextCursor = Plugin.ObjectContext;
     Private::GObjectRegistry->LoadPendingPackages(Plugin.GetHandle());
     this->ForeignContextCursor = nullptr;
+
+    this->OnForeignPluginLoaded.Broadcast(Plugin.ObjectContext);
 
     LOG_INFO(LogForeign, "Successfully loaded plugin [{}] from [{}].", Plugin.GetIdentifier(), Plugin.GetPathToBin())
     this->LoadedPlugins.Emplace(std::move(Plugin));

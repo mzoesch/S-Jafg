@@ -53,7 +53,15 @@ FORCEINLINE auto GetCustomExitReason() -> LString { return GCustomExitReason; }
 // ~Engine Globals
 ///////////////////////////////////////////////////////////////////////////////
 
-MAKE_MULTICAST_SIGNATURE(LOnWorldBeginLife, LWorld* /* InNewWorld */)
+MAKE_MULTICAST_SIGNATURE(LOnWorldBeginLife, LWorld* InNewWorld)
+
+#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+    //#
+    //# This delegate gets called when a foreign plugin has been loaded.
+    //# @param InStaticClassContainer All static classes that are registered with the default public context of the new
+    //#                               plugin.
+    MAKE_MULTICAST_SIGNATURE(LOnForeignPluginLoaded, LObjectContext* InStaticClassContainer)
+#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 
 namespace Private
 {
@@ -93,11 +101,11 @@ class LEngine final
 public:
 
     ENGINE_API void Initialize();
-    ENGINE_API void Tick(const float DeltaTime);
+    ENGINE_API void Tick(const f32 DeltaTime);
     ENGINE_API void TearDown();
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Private Function Redirects
+    // Private Function Redirects.
     ///////////////////////////////////////////////////////////////////////////////
 
     //# Internal public method. Do not use.
@@ -111,7 +119,7 @@ public:
     ENGINE_API void RequestEngineExit(const i32 CustomExitStatus, const LString& Reason);
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Client Local Stuff
+    // Client Local Stuff.
     ///////////////////////////////////////////////////////////////////////////////
 
     ENGINE_API  bool CanEverRender() const noexcept;
@@ -150,7 +158,7 @@ private:
 public:
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Object Context Related
+    // Object Context Related.
     ///////////////////////////////////////////////////////////////////////////////
 
     ENGINE_API  void RegisterObjectContext(LObjectContext* InContext);
@@ -160,7 +168,8 @@ public:
 private:
 
     //#
-    //# Known context to the engine. These contexts are read-only and should never be accessed through the engine directly.
+    //# Known contexts to the engine. These contexts are read-only and should never be accessed through
+    //# the engine directly.
     //# We only store the pointers to them here for object life management behind the scenes.
     //#
     TArray<LObjectContext*> KnownObjectContexts;
@@ -168,7 +177,7 @@ private:
 public:
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Context Related
+    // Context Related.
     ///////////////////////////////////////////////////////////////////////////////
 
     ENGINE_API Private::LWorldContext& GetContextFromWorld(const LWorld* World);
@@ -239,6 +248,8 @@ public:
 
     LObjectContext* GetCurrentForeignContext() const;
 
+    LOnForeignPluginLoaded OnForeignPluginLoaded;
+
 private:
 
     void FetchPlugins(const LPath& InPath);
@@ -257,7 +268,7 @@ private:
 public:
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Misc
+    // Misc.
     ///////////////////////////////////////////////////////////////////////////////
 
     FORCEINLINE LCommandLineInterface* GetCommandLineInterface() noexcept { return &this->CommandLineInterface; }
