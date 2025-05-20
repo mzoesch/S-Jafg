@@ -149,11 +149,11 @@ struct LSubsystemCollection final
 
 private:
 
-    ENGINE_API void TearDownPrioritySubsystems();
-    ENGINE_API void TearDownNonPrioritySubsystems();
+    void TearDownPrioritySubsystems();
+    void TearDownNonPrioritySubsystems();
 
-    LObjectContext*     Outer = nullptr;
-    const LObjectClass* OuterClass = nullptr;
+    LObjectContext*     Outer { nullptr };
+    const LObjectClass* OuterClass { nullptr };
     TArray<JSubsystem*> SubsystemInstances;
 };
 

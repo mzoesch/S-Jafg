@@ -27,6 +27,7 @@ protected:
 public:
 
     virtual void Tick(const float DeltaTime) override;
+    virtual void EndLife() override;
 
     FORCEINLINE auto IsPossessed() const -> bool { return this->OwningController != nullptr; }
                 bool IsPossessedLocally() const;

@@ -27,8 +27,8 @@ protected:
 
 public:
 
-    voxel_t GetVoxelIndex(const LString& Name) const;
-    voxel_t GetVoxelIndex(const LString& Namespace, const LString& Name) const;
+    ENGINE_API voxel_t GetVoxelIndex(const LString& Name) const;
+    ENGINE_API voxel_t GetVoxelIndex(const LString& Namespace, const LString& Name) const;
     FORCEINLINE voxel_t GetCheckedVoxelIndex(const LString& Name) const;
     FORCEINLINE voxel_t GetCheckedVoxelIndex(const LString& Namespace, const LString& Name) const;
     FORCEINLINE voxel_t GetPanickedVoxelIndex(const LString& Name) const;
@@ -54,21 +54,21 @@ private:
     TArray<LVoxelMask> VoxelMasks;
 };
 
-voxel_t JVoxelSubsystem::GetCheckedVoxelIndex(const LString& Name) const
+FORCEINLINE voxel_t JVoxelSubsystem::GetCheckedVoxelIndex(const LString& Name) const
 {
     const voxel_t Out = this->GetVoxelIndex(Name);
     check( Out != ECompileTimeVoxels::Null )
     return Out;
 }
 
-voxel_t JVoxelSubsystem::GetCheckedVoxelIndex(const LString& Namespace, const LString& Name) const
+FORCEINLINE voxel_t JVoxelSubsystem::GetCheckedVoxelIndex(const LString& Namespace, const LString& Name) const
 {
     const voxel_t Out = this->GetVoxelIndex(Namespace, Name);
     check( Out != ECompileTimeVoxels::Null )
     return Out;
 }
 
-voxel_t JVoxelSubsystem::GetPanickedVoxelIndex(const LString& Name) const
+FORCEINLINE voxel_t JVoxelSubsystem::GetPanickedVoxelIndex(const LString& Name) const
 {
     const voxel_t Out = this->GetVoxelIndex(Name);
 
@@ -80,7 +80,7 @@ voxel_t JVoxelSubsystem::GetPanickedVoxelIndex(const LString& Name) const
     return Out;
 }
 
-voxel_t JVoxelSubsystem::GetPanickedVoxelIndex(const LString& Namespace, const LString& Name) const
+FORCEINLINE voxel_t JVoxelSubsystem::GetPanickedVoxelIndex(const LString& Namespace, const LString& Name) const
 {
     const voxel_t Out = this->GetVoxelIndex(Namespace, Name);
 

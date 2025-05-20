@@ -539,7 +539,7 @@ pub(crate) fn make_script(solution: &Solution)
                         {
                             wwi(b, 2, format!("add_library({} STATIC ${{{}_SRC_FILES}} ${{{}_C_SRC_FILES}} ${{{}_GEN_SRC_FILES}})", module.name, module.name, module.name, module.name));
                         }
-                        else if module.kind.is_shared()
+                        else if module.kind.is_shared_weak()
                         {
                             wwi(b, 2, format!("add_library({} SHARED ${{{}_SRC_FILES}} ${{{}_C_SRC_FILES}} ${{{}_GEN_SRC_FILES}})", module.name, module.name, module.name, module.name));
                         }
@@ -570,7 +570,7 @@ pub(crate) fn make_script(solution: &Solution)
                         {
                             wwi(b, 2, format!("add_library({} STATIC ${{{}_SRC_FILES}} ${{{}_C_SRC_FILES}} ${{{}_GEN_SRC_FILES}})", module.name, module.name, module.name, module.name));
                         }
-                        else if module.kind.is_shared()
+                        else if module.kind.is_shared_weak()
                         {
                             wwi(b, 2, format!("add_library({} SHARED ${{{}_SRC_FILES}} ${{{}_C_SRC_FILES}} ${{{}_GEN_SRC_FILES}})", module.name, module.name, module.name, module.name));
                         }
@@ -646,6 +646,7 @@ pub(crate) fn make_script(solution: &Solution)
                                 {
                                     ModuleKind::Shared => platform.get_shared_counterpart_prefix(),
                                     ModuleKind::Static => platform.get_static_bin_prefix(),
+                                    ModuleKind::Plugin => platform.get_shared_counterpart_prefix(),
                                     _ => panic!("Module kind not allowed for linking."),
                                 },
                                 d.name,
@@ -653,6 +654,7 @@ pub(crate) fn make_script(solution: &Solution)
                                 {
                                     ModuleKind::Shared => platform.get_shared_counterpart_suffix(),
                                     ModuleKind::Static => platform.get_static_bin_suffix(),
+                                    ModuleKind::Plugin => platform.get_shared_counterpart_suffix(),
                                     _ => panic!("Module kind not allowed for linking."),
                                 }
                             ));
@@ -692,7 +694,7 @@ pub(crate) fn make_script(solution: &Solution)
 
                     if platform.unity == false || module.preserve_unity == false
                     {
-                        if module.kind.is_shared()
+                        if module.kind.is_shared_weak()
                         {
                             wwi(b, 2, format!("target_compile_definitions({} PRIVATE {} {})",
                                 module.name,
@@ -718,7 +720,7 @@ pub(crate) fn make_script(solution: &Solution)
                                     {
                                         panic!("Dependency [{}] is not allowed for launch module [{}].", dependency, target_module.relative_dir);
                                     }
-                                    else if target_module.kind.is_shared()
+                                    else if target_module.kind.is_shared_weak()
                                     {
                                         wwi(b, 2, format!("target_compile_definitions({} PRIVATE {} {})",
                                             module.name,
@@ -836,7 +838,7 @@ pub(crate) fn make_script(solution: &Solution)
                                 {
                                     panic!("Launch module [{}] is not allowed to be non preserved in unity build.", module.name);
                                 }
-                                else if module.kind.is_shared()
+                                else if module.kind.is_shared_weak()
                                 {
                                     wwi(b, 2, format!("target_compile_definitions({} PRIVATE {} {})",
                                         runtime,

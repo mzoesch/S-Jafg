@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreAfx.h"
+#include "Foreign/PluginForward.h"
 
 namespace Jafg
 {
@@ -55,6 +56,8 @@ public:
     FORCEINLINE auto GetHumanReadableName() const -> const LString& { return this->HumanReadableName; }
 
     FORCEINLINE bool IsHiredHere(const JObjectBase* InObject) const { return InObject && this->Employees.Contains(InObject); }
+
+    void SeparateAndKillEmployees(const LLoadedPluginHandle InPluginHandle);
 
 private:
 

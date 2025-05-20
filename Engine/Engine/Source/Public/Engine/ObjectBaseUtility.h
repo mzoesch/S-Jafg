@@ -5,6 +5,7 @@
 #include "CoreAfx.h"
 #include "ObjectClass.h"
 #include "Engine/ObjectContext.h"
+#include "Foreign/PluginForward.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler options
@@ -221,18 +222,18 @@ ENGINE_API void CreateSingletonObjectRegistry(void);
 ENGINE_API void KillSingletonObjectRegistry(void);
 
 //# @return All objects that are waiting for registration.
-ENGINE_API auto GetRegisterObjectQueue() -> TArray<LRegistrationQueuePackage>&;
+ENGINE_API TArray<LRegistrationQueuePackage>& GetRegisterObjectQueue();
 
 //# Registers a new object type to the global (in this shared translation unit) registry.
 template <typename TObj>
-FORCEINLINE auto RegisterNewObjectType(
+FORCEINLINE void RegisterNewObjectType(
     //# Full namespaced name of the target class.
     LString SpacedClassName,
     //# Delegate that returns a clean default object of the target class.
     GetContentDefaultFunctor GetContentDefaultDelegate,
     //# Delegate that is called when the object has been registered.
     OnRegistrationDelegate Callback
-) -> void;
+);
 
 struct LRegistrationQueuePackage final
 {
@@ -310,10 +311,16 @@ public:
     ~LObjectRegistry() = default;
 
     //#
+    //# Kills all pending packages that might get loaded by a malformed plugin.
+    //#
+    ENGINE_API void KillPendingPackages();
+
+    //#
     //# Registers all pending packages that are waiting for registration.
     //# Loads them into memory and initializes the default package referrer for them.
     //#
-    ENGINE_API void LoadPendingPackages();
+    ENGINE_API void LoadPendingPackages(const LLoadedPluginHandle InHandle);
+
     //#
     //# Validates all loaded packages by checking for name conflicts and for the existence
     //# of a content default referrer.
@@ -542,8 +549,7 @@ FORCEINLINE TObj* Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObje
 }
 
 template <typename TObj>
-FORCEINLINE void Private::LRegistrationCallbackHelper::DoRegisterContentsForClass(LObjectClass* StaticClass,
-    const EClassFlags::Type Flags, LString&& Parent)
+FORCEINLINE void Private::LRegistrationCallbackHelper::DoRegisterContentsForClass(LObjectClass* StaticClass, const EClassFlags::Type Flags, LString&& Parent)
 {
     static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
 
@@ -556,7 +562,8 @@ FORCEINLINE void Private::LRegistrationCallbackHelper::DoRegisterContentsForClas
 
     check( TObj::StaticClass() )
 
-    GObjectRegistry->DeferredPackages.Emplace(
+    GObjectRegistry->DeferredPackages.Emplace
+    (
         std::move(Parent),
         const_cast<LObjectClass*>(TObj::StaticClass())
     );

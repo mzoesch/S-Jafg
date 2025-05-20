@@ -362,6 +362,7 @@ pub enum ModuleKind
     Shared,
     Static,
     Launch,
+    Plugin,
 }
 
 impl ModuleKind
@@ -373,6 +374,17 @@ impl ModuleKind
             ModuleKind::Shared => ModuleKind::Shared,
             ModuleKind::Static => ModuleKind::Static,
             ModuleKind::Launch => ModuleKind::Launch,
+            ModuleKind::Plugin => ModuleKind::Plugin,
+        }
+    }
+
+    pub fn is_shared_weak(&self) -> bool
+    {
+        match self
+        {
+            ModuleKind::Shared => true,
+            ModuleKind::Plugin => true,
+            _ => false,
         }
     }
 
@@ -403,6 +415,15 @@ impl ModuleKind
         }
     }
 
+    pub fn is_plugin(&self) -> bool
+    {
+        match self
+        {
+            ModuleKind::Plugin => true,
+            _ => false,
+        }
+    }
+
     pub fn from_str(kind: &str) -> Option<ModuleKind>
     {
         return match kind
@@ -416,6 +437,7 @@ impl ModuleKind
             "Launch" => Some(ModuleKind::Launch),
             "ConsoleApp" => Some(ModuleKind::Launch),
             "EXECUTABLE" => Some(ModuleKind::Launch),
+            "Plugin" => Some(ModuleKind::Plugin),
             _ => None,
         }
     }

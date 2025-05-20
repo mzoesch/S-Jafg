@@ -8,30 +8,34 @@
 
 void Jafg::APersonaController::BeginLife()
 {
-    AActor::BeginLife();
+    Super::BeginLife();
 }
 
 void Jafg::APersonaController::EndLife()
 {
-    AActor::EndLife();
+    Super::EndLife();
+
+    if (this->IsLocalEgoValid())
+    {
+        this->LocalEgo->Possess(nullptr);
+    }
 
     this->Possess(nullptr);
-    this->GetWorld()->GetEngine()->GetLocalEgo()->Possess(nullptr);
 
     return;
 }
 
 void Jafg::APersonaController::Possess(APawn* InNewPawn, const bool bKillOld /* = true */)
 {
-    APawn* OldPawn = this->PossessedPawn;
-    if (bKillOld) { OldPawn = nullptr; } /* Otherwise, we will get access violations. */
+    /* Otherwise, we will get access violations. */
+    APawn* OldPawn = bKillOld ? nullptr : this->PossessedPawn;
 
     if (this->PossessedPawn)
     {
         this->PossessedPawn->DeclareNewPossessor(nullptr);
         if (bKillOld)
         {
-            this->PossessedPawn->EndLife();
+            this->PossessedPawn->MarkAsGarbage();
         }
     }
 

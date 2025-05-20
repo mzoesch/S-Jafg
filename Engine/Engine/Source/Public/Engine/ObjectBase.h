@@ -22,29 +22,32 @@ class NextIsObjectBaseClass;
 struct LObjectInitializer final
 {
     LObjectInitializer() = delete;
-    FORCEINLINE explicit LObjectInitializer(::Jafg::LObjectContext* InOuter) : Outer(InOuter)
+
+    FORCEINLINE constexpr explicit LObjectInitializer(LObjectContext* InOuter) : Outer(InOuter)
     {
         checkSlow( this->Outer )
         return;
     }
-    FORCEINLINE LObjectInitializer(const LObjectInitializer&)            = default;
-    FORCEINLINE LObjectInitializer(LObjectInitializer&&)                 = default;
-    FORCEINLINE LObjectInitializer& operator=(const LObjectInitializer&) = default;
-    FORCEINLINE LObjectInitializer& operator=(LObjectInitializer&&)      = default;
+
+    PROHIBIT_REALLOC_OF_ANY_FORM(LObjectInitializer)
+
     ~LObjectInitializer() = default;
 
     //#
     //# Outer for a j class inside a module - this outer represents the lifetime of the package referrer
     //# inside a module and is not used as a (default) outer for clients of this class.
-    //# @remarks Although a client should generally not life if its package referrer died.
+    //# @remarks Although a client should generally not live if its package referrer died.
     //#
-    LObjectContext* Outer = nullptr;
+    LObjectContext* Outer { nullptr };
 };
 
-FORCEINLINE LObjectInitializer GetDefaultObjectInitializer()
-{
-    return LObjectInitializer(GOmniVitaContext);
-}
+//#
+//# The default object initializer for any child of a jobject.
+//# By default, the outer for the object of the plugin its origin is from is used.
+//# You may use your own object initializer by passing it to the constructor of the object you want to create.
+//# You may choose to use the #GOmniVitaContext for objects that cannot be dynamically loaded / unloaded.
+//#
+ENGINE_API LObjectInitializer GetDefaultObjectInitializer();
 
 MAKE_DELEGATE_SIGNATURE(LSetClassField, void, const LString& InValue)
 MAKE_DELEGATE_SIGNATURE(LGetClassField, LString)
@@ -52,8 +55,9 @@ MAKE_DELEGATE_SIGNATURE(LCustomMallocClassField, void, void* InMemory)
 
 struct LClassField
 {
-    FORCEINLINE LClassField(const LStringView InIdentifier, LSetClassField&& InSet, LGetClassField&& InGet, LCustomMallocClassField&& InMalloc)
-        : Identifier(InIdentifier), Set(std::move(InSet)), Get(std::move(InGet)), Malloc(std::move(InMalloc)) { }
+    FORCEINLINE LClassField(LStringView&& InIdentifier, LSetClassField&& InSet, LGetClassField&& InGet, LCustomMallocClassField&& InMalloc)
+        : Identifier(std::move(InIdentifier)), Set(std::move(InSet)), Get(std::move(InGet)), Malloc(std::move(InMalloc)) { }
+
     PROHIBIT_COPY(LClassField)
     DEFAULT_MOVE(LClassField)
 
@@ -78,14 +82,28 @@ class ENGINE_API JObjectBase
     friend LObjectContext;
 
     //# The jafg v table class of this object.
-    LObjectClass* VClass = nullptr;
+    LObjectClass* VClass { nullptr };
 
     GENERATED_CLASS_BODY()
 
 protected:
 
     explicit JObjectBase(const LObjectInitializer& ObjectInitializer);
-    virtual ~JObjectBase();
+
+    virtual ~JObjectBase()
+    {
+        /*
+         * If this check triggers, you might have done one of the following things that are forbidden:
+         *   - Manually deleted an object via ~delete or ~delete[].
+         *   - Used a smart pointer not from the jafg library, for example, a std::shared_ptr (Which are not
+         *     compatible).
+         *
+         * Create a new object with NewObject<T>. Delete them by either calling #MarkAsGarbage to get them discarded
+         * at the next engine butcher cycle or by calling #KillYourSelfNow to get them discarded immediately (comparable
+         * with a call to the delete operator).
+         */
+        check( this->bGarbage )
+    }
 
 public:
 

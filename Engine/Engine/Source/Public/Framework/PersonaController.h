@@ -39,9 +39,9 @@ public:
 
 private:
 
-    LLocalEgo* LocalEgo      = nullptr;
-    LEye*      EyeReference  = nullptr;
-    APawn*     PossessedPawn = nullptr;
+    LLocalEgo* LocalEgo      { nullptr };
+    LEye*      EyeReference  { nullptr };
+    APawn*     PossessedPawn { nullptr };
 };
 
 } /* ~Namespace Jafg */

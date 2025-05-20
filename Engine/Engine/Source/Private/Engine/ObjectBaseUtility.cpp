@@ -246,14 +246,38 @@ bool Jafg::Private::LObjectMiscellaneousAccessor::DynamicCast(const JObjectBase*
     return InObject->GetVTableChecked()->DerivesFrom(InTargetClass);
 }
 
-void Jafg::Private::LObjectRegistry::LoadPendingPackages()
+void Jafg::Private::LObjectRegistry::KillPendingPackages()
 {
     if (Private::GetRegisterObjectQueue().IsEmpty())
     {
         return;
     }
 
+    check( Tasks::IsOnMasterThread() )
+
+    LOG_VERBOSE(LogObjectPackager, "Killing [{}] pending packages.", this->RegisteredObjects.GetSize())
+    this->RegisteredObjects.Empty();
+
+    if (this->DeferredPackages.IsEmpty() == false)
+    {
+        LOG_ERROR(LogObjectPackager, "Found [{}] deferred packages after killing pending packages.", this->DeferredPackages.GetSize())
+        this->DeferredPackages.Empty();
+    }
+
+    return;
+}
+
+void Jafg::Private::LObjectRegistry::LoadPendingPackages(const LLoadedPluginHandle InHandle)
+{
+    if (Private::GetRegisterObjectQueue().IsEmpty())
+    {
+        return;
+    }
+
+    check( Tasks::IsOnMasterThread() )
+
     const i32 CurrentPackages = this->RegisteredObjects.GetSize();
+    const i32 CurrentQueue = Private::GetRegisterObjectQueue().GetSize();
 
     LOG_VERBOSE(LogObjectPackager, "Loading [{}] pending packages.", Private::GetRegisterObjectQueue().GetSize())
 
@@ -269,6 +293,7 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
         NewPackage.StaticClass                         = new LObjectClass();
         NewPackage.StaticClass->SpacedClassName        = Package.SpacedClassName;
         NewPackage.StaticClass->ClassName              = MAKE_DYNAMIC_NAME(NewPackage.StaticClass->SpacedClassName);
+        NewPackage.StaticClass->PluginHandle           = InHandle;
         NewPackage.StaticClass->DefaultPackageReferrer = Package.GetContentDefault();
         check( NewPackage.StaticClass->SpacedClassName.IsEmpty() == false )
         check( NewPackage.StaticClass->DefaultPackageReferrer != nullptr )
@@ -280,6 +305,7 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
         continue;
     }
 
+    check( Private::GetRegisterObjectQueue().GetSize() == CurrentQueue )
     Private::GetRegisterObjectQueue().Empty();
 
     for (auto& [SuperName, StaticClass] : this->DeferredPackages)
@@ -295,19 +321,19 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages()
         const LRegistryPackage* ParentPackage = GetPanickedPackageByNameWeak(SuperName);
         if (ParentPackage->StaticClass->GetChildren().Contains(StaticClass))
         {
-            panicMsgf(
+            panicMsgf
+            (
                 "Tried resolving deferred package [{}] that already has registered its child.",
                 StaticClass->GetSpacedClassName()
             )
             continue;
         }
 
-        ParentPackage->StaticClass->GetChildren().Add(StaticClass);
+        ParentPackage->StaticClass->GetChildren().Emplace(StaticClass);
         StaticClass->Parent = ParentPackage->StaticClass;
 
         continue;
     }
-
     this->DeferredPackages.Empty();
 
     for (i32 i = CurrentPackages; i < this->RegisteredObjects.GetSize(); ++i)

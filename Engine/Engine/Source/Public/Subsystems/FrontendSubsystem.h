@@ -31,7 +31,7 @@ protected:
     virtual void Initialize(LSubsystemCollection& Collection) override;
     // ~JSubsystem implementation
 
-    virtual void Tick(const float DeltaTime) { }
+    virtual void Tick() { }
 
     FORCEINLINE bool ShouldTick() const { return this->bShouldTick; }
     FORCEINLINE void SetShouldTick(const bool bShouldTick) { this->bShouldTick = bShouldTick; }

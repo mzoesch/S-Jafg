@@ -8,6 +8,10 @@
 #include "User/LocalEgo.h"
 #include "Engine/World.h"
 #include "Rhi/EngineShader.h"
+#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+    #include "Foreign/PluginForward.h"
+#include "Foreign/Plugin.h"
+#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 
 namespace Jafg
 {
@@ -49,9 +53,13 @@ FORCEINLINE auto GetCustomExitReason() -> LString { return GCustomExitReason; }
 // ~Engine Globals
 ///////////////////////////////////////////////////////////////////////////////
 
+MAKE_MULTICAST_SIGNATURE(LOnWorldBeginLife, LWorld* /* InNewWorld */)
+
+namespace Private
+{
+
 //#
 //# Private engine context wrapper around a world.
-//# This struct is internal to the engine and should not be used outside it.
 //#
 struct LWorldContext
 {
@@ -70,7 +78,7 @@ struct LWorldContext
     FORCEINLINE bool IsWaitingForTravel() const { return this->TravelUrl.IsEmpty() == false; }
 };
 
-MAKE_MULTICAST_SIGNATURE(LOnWorldBeginLife, LWorld* /* InNewWorld */)
+} /* ~Namespace Private */
 
 //#
 //# The engine - only one will be valid ever. Access its singleton with #GEngine.
@@ -145,8 +153,8 @@ public:
     // Object Context Related
     ///////////////////////////////////////////////////////////////////////////////
 
-    ENGINE_API  void RegisterObjectContext(const LObjectContext* InContext);
-    ENGINE_API  void UnregisterObjectContext(const LObjectContext* InContext);
+    ENGINE_API  void RegisterObjectContext(LObjectContext* InContext);
+    ENGINE_API  void UnregisterObjectContext(LObjectContext* InContext);
     FORCEINLINE bool IsObjectContextKnown(const LObjectContext* InContext) const;
 
 private:
@@ -155,7 +163,7 @@ private:
     //# Known context to the engine. These contexts are read-only and should never be accessed through the engine directly.
     //# We only store the pointers to them here for object life management behind the scenes.
     //#
-    TArray<const LObjectContext*> KnownObjectContexts;
+    TArray<LObjectContext*> KnownObjectContexts;
 
 public:
 
@@ -163,7 +171,11 @@ public:
     // Context Related
     ///////////////////////////////////////////////////////////////////////////////
 
-    ENGINE_API auto GetContextFromWorld(const LWorld* World) -> LWorldContext&;
+    ENGINE_API Private::LWorldContext& GetContextFromWorld(const LWorld* World);
+
+    ENGINE_API LWorldStorage SummonWorld(const LString& HumanReadableName);
+
+    ENGINE_API bool IsWorldValid(const LWorld* InWorld) const;
 
     //# Browse to a new Url at the next opportunity.
     ENGINE_API void Browse(const LWorld* World, const LString& Url);
@@ -179,18 +191,18 @@ public:
     //#
     LOnWorldBeginLife OnWorldBeginLife;
 
-    FORCEINLINE auto GetContexts() const noexcept -> const TArray<LWorldContext>& { return this->Contexts; }
+    FORCEINLINE auto GetContexts() const noexcept -> const TArray<Private::LWorldContext>& { return this->Contexts; }
     FORCEINLINE auto GetRegisteredLevels() const noexcept -> const TArray<LLevel>& { return this->RegisteredLevels; }
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JEngineSubsystem)
 
 private:
 
-    LWorldContext& CreateNewWorldContext(const LString& InHumanReadableName);
+    Private::LWorldContext& CreateNewWorldContext(const LString& InHumanReadableName);
 
-    void Browse(LWorldContext& Context, const LString& Url) const;
+    void Browse(Private::LWorldContext& Context, const LString& Url) const;
     bool IsContextUrlInternal(const LString& Url) const;
-    void TravelContext(LWorldContext& Context);
+    void TravelContext(Private::LWorldContext& Context);
     FORCEINLINE auto GetLevelByInternalUrl(const LString& Url) -> LLevel* { return this->RegisteredLevels.FindRef(Url); }
 
     //#
@@ -198,12 +210,49 @@ private:
     //# An index of a specific context is not guaranteed to stay the same. Always expect a short
     //# lifetime of the index.
     //#
-    TArray<LWorldContext> Contexts;
+    TArray<Private::LWorldContext> Contexts;
     //# The registered levels that this engine can load.
     TArray<LLevel> RegisteredLevels;
 
     LObjectContext ObjectContext { DeferredGlobalCarnifex };
     LSubsystemCollection Collection;
+
+#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+public:
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Foreign Related.
+    ///////////////////////////////////////////////////////////////////////////////
+
+    ENGINE_API void RefetchPlugins(const TArray<LString>& InAdditionalPaths);
+
+    //#
+    //# Tries to load the plugin with the provided name.
+    //#
+    ENGINE_API EPluginLoadReturnCode::Type LoadPlugin(const LString& InName);
+    ENGINE_API void LoadPluginNoFailure(const LString& InName);
+
+    ENGINE_API auto UnLoadPlugin(const LString& InName, const EPluginShutdownReason::Type InReason) -> EPluginLoadReturnCode::Type;
+    ENGINE_API void UnLoadPluginNoFailure(const LString& InName, const EPluginShutdownReason::Type InReason);
+    auto UnLoadPlugin(LLoadedPlugin* InPlugin, const EPluginShutdownReason::Type InReason) -> EPluginLoadReturnCode::Type;
+    void UnLoadPluginNoFailure(LLoadedPlugin* InPlugin, const EPluginShutdownReason::Type InReason);
+
+    LObjectContext* GetCurrentForeignContext() const;
+
+private:
+
+    void FetchPlugins(const LPath& InPath);
+    bool FetchPlugin(LPath&& InPath);
+    EPluginLoadReturnCode::Type LoadPluginImpl(const LFetchedPlugin& InFetchedPlugin);
+
+    TArray<LFetchedPlugin> FetchedPlugins;
+    TArray<LLoadedPlugin>  LoadedPlugins;
+
+    NODISCARD FORCEINLINE u32 GetNextPluginUuid() noexcept { return ++this->PluginUuidCounter; }
+    u32 PluginUuidCounter { LLoadedPluginHandle::EngineUuid };
+
+    LObjectContext* ForeignContextCursor { nullptr };
+#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 
 public:
 
@@ -324,5 +373,13 @@ FORCEINLINE bool LEngine::IsObjectContextKnown(const LObjectContext* InContext) 
 {
     return this->KnownObjectContexts.Contains(InContext);
 }
+
+#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+FORCEINLINE LObjectContext* LEngine::GetCurrentForeignContext() const
+{
+    check( this->ForeignContextCursor )
+    return this->ForeignContextCursor;
+}
+#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 
 } /* ~Namespace Jafg */

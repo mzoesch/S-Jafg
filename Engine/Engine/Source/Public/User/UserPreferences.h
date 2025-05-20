@@ -104,6 +104,22 @@ public:
     LPreferenceFloat SmallFontSize     { 0.20f };
     CLASS_FIELD(Config)
     LPreferenceFloat TinyFontSize      { 0.18f };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Foreign plugins
+    ///////////////////////////////////////////////////////////////////////////////
+
+    //#
+    //# Additional plugin search paths that are used to fetch plugin info metadata.
+    //#
+    CLASS_FIELD(Config)
+    TArray<LString> AdditionalPluginsSearchPaths;
+
+    //#
+    //# The plugins that are loaded when the engine loads.
+    //#
+    CLASS_FIELD(Config)
+    TArray<LString> EnabledEnginePlugins { "JafgPlugin" };
 };
 
 } /* ~Namespace Jafg */

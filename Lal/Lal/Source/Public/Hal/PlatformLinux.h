@@ -33,6 +33,7 @@ struct LLinuxPlatformTypes final : public LGenericPlatformTypes
 #pragma clang diagnostic error "-Wmacro-redefined"
 #pragma clang diagnostic error "-Wundefined-inline"
 #pragma clang diagnostic error "-Wmismatched-new-delete"
+#pragma clang diagnostic error "-Wswitch"
 #pragma clang diagnostic ignored "-Wundefined-var-template" // ??? Why
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 #pragma clang diagnostic ignored "-Wunused-function"

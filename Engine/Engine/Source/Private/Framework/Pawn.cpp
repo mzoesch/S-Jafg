@@ -41,6 +41,18 @@ void Jafg::APawn::Tick(const float DeltaTime)
     return;
 }
 
+void Jafg::APawn::EndLife()
+{
+    Super::EndLife();
+
+    if (this->IsPossessed())
+    {
+        this->OwningController->Possess(nullptr, false);
+    }
+
+    return;
+}
+
 bool Jafg::APawn::IsPossessedLocally() const
 {
     return this->OwningController && this->OwningController->IsLocalEgoValid();

@@ -126,11 +126,13 @@ FORCEINLINE void Deserialize(TArray<TField>* Destination, const LString& InValue
 {
     checkSlow( Destination )
 
-    const auto AddToDestination = [Destination](const LString& Lambda) -> void
+    TArray<TField> Intermediate;
+
+    const auto AddToIntermediate = [&Intermediate](const LString& Lambda) -> void
     {
         TField Temp;
         Deserialize<TField>(&Temp, Lambda);
-        Destination->Add(Temp);
+        Intermediate.Add(Temp);
 
         return;
     };
@@ -152,7 +154,7 @@ FORCEINLINE void Deserialize(TArray<TField>* Destination, const LString& InValue
                 continue;
             }
 
-            AddToDestination(Temp);
+            AddToIntermediate(Temp);
             Temp.Empty();
             continue;
         }
@@ -164,7 +166,13 @@ FORCEINLINE void Deserialize(TArray<TField>* Destination, const LString& InValue
 
     if (Temp.IsEmpty() == false)
     {
-        AddToDestination(Temp);
+        AddToIntermediate(Temp);
+        Temp.Empty();
+    }
+
+    if (Destination->IsDataUnequal(Intermediate))
+    {
+        *Destination = std::move(Intermediate);
     }
 
     return;

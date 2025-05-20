@@ -1,10 +1,10 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Engine/ObjectContext.h"
-
 #include "Engine/Engine.h"
 #include "Engine/ObjectBase.h"
 #include "Stats/Stats.h"
+#include "Engine/Carnifex.h"
 
 Jafg::LObjectContext::LObjectContext(EGlobalCarnifex)
 {
@@ -66,6 +66,54 @@ void Jafg::LObjectContext::Initialize(LCarnifex* InCarnifex, const bool bRegiste
     return;
 }
 
+void Jafg::LObjectContext::SeparateAndKillEmployees(const LLoadedPluginHandle InPluginHandle)
+{
+    check( InPluginHandle )
+
+    if (this->Employees.IsEmpty() == false)
+    {
+        STAT_CYCLE_FUNCTION()
+
+        i32 Removed { 0 };
+        bool bTouched { true };
+
+        while (bTouched)
+        {
+            bTouched = false;
+
+            for (i32 i = 0; i < this->Employees.GetSize(); ++i)
+            {
+                if (const LObjectClass* Class = this->Employees[i]->GetVTable(); Class)
+                {
+                    if (Class->GetPluginHandle() != InPluginHandle)
+                    {
+                        continue;
+                    }
+
+                    bTouched = true;
+                    ++Removed;
+                    this->Employees[i]->MarkAsGarbage();
+                    this->Employees.RemoveAt(i);
+                    break;
+                }
+
+                continue;
+            }
+
+            continue;
+        }
+
+        if (Removed > 0)
+        {
+            LOG_VERBOSE(LogCarnifex, "Removed {} employees from context [{}].", Removed, this->HumanReadableName)
+            check( this->Carnifex )
+            this->Carnifex->KillAllGarbageChildren();
+        }
+    }
+
+    return;
+}
+
 Jafg::LObjectContext::LObjectContext(const ENoEngineRegistration InValue)
 {
     this->Initialize(Private::GCarnifexReferrer, false);
@@ -117,6 +165,7 @@ void Jafg::LObjectContext::TearDownContextNoEngineUnregistration()
         this->Employees.Empty();
     }
 
+    this->Carnifex->KillAllGarbageChildren();
     this->Carnifex = nullptr;
 
     return;

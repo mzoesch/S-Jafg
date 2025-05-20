@@ -204,3 +204,5 @@ void LWorld::AddTemporalObject(T&& InTemporalObject)
 #endif /* AS_CLIENT */
 
 } /* ~Namespace Jafg */
+
+#include "WorldStorage.h"

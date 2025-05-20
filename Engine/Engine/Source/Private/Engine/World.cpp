@@ -66,7 +66,7 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 {
     STAT_CYCLE_FUNCTION()
 
-    this->RealTimeWhenWorldWasLaunched = static_cast<float>(Application::GetDeltaSinceStaticStorageInitialization());
+    this->RealTimeWhenWorldWasLaunched = static_cast<f32>(Application::GetDeltaSinceStaticStorageInitialization());
     check( this->RealTimeWhenWorldWasLaunched > 0.0f )
 
     this->WorldState = EWorldState::Initializing;
@@ -87,7 +87,7 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
     return;
 }
 
-void Jafg::LWorld::Tick(const float DeltaTime)
+void Jafg::LWorld::Tick(const f32 DeltaTime)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -268,7 +268,7 @@ void Jafg::LWorld::TearDownContext()
     LOG_VERBOSE(LogWorld, "Killing {} actors of world [{}].", this->Actors.GetSize(), this->GetHumanReadableName())
     for (AActor* Actor : this->Actors)
     {
-        Actor->KillYourSelfNow();
+        Actor->MarkAsGarbage();
     }
 
     this->Actors.Empty();

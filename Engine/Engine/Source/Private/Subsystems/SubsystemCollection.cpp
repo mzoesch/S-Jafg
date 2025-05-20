@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Subsystems/SubsystemCollection.h"
+#include "Engine/Carnifex.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Subsystems/Subsystem.h"
 #include "Stats/Stats.h"
@@ -83,7 +84,8 @@ void Jafg::LSubsystemCollection::InitializeDependency(const LObjectClass* InStat
 
     if (Subsystem->ShouldCreateSubsystem(this->Outer) == false)
     {
-        LOG_WARNING(
+        LOG_WARNING
+        (
             LogJafgInternal,
             "Wanted to initialize dependent subsystem {} but it does not want to be created.",
             Subsystem->GetFullName()
@@ -144,7 +146,7 @@ void Jafg::LSubsystemCollection::TearDownPrioritySubsystems()
 
         if (Subsystem->IsPriorityTearDown())
         {
-            Subsystem->KillYourSelfNow();
+            Subsystem->MarkAsGarbage();
             Subsystem = nullptr;
             checkSlow( this->SubsystemInstances[i] == nullptr )
             ++SubsystemCount;
@@ -157,6 +159,8 @@ void Jafg::LSubsystemCollection::TearDownPrioritySubsystems()
     {
         LOG_VERBOSE(LogSubsystemCollection, "Tore down {} priority subsystems for outer [{}].", SubsystemCount, this->Outer->GetHumanReadableName())
     }
+
+    this->Outer->GetCarnifex()->KillAllGarbageChildren();
 
     return;
 }
@@ -173,14 +177,16 @@ void Jafg::LSubsystemCollection::TearDownNonPrioritySubsystems()
     {
         if (Subsystem)
         {
-            Subsystem->KillYourSelfNow();
+            Subsystem->MarkAsGarbage();
         }
 
         continue;
     }
 
     this->SubsystemInstances.Empty();
+    this->Outer->GetCarnifex()->KillAllGarbageChildren();
     this->Outer = nullptr;
+    this->OuterClass = nullptr;
 
     return;
 }

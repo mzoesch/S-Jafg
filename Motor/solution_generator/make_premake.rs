@@ -179,6 +179,7 @@ impl ModuleKind
             ModuleKind::Shared => "SharedLib",
             ModuleKind::Static => "StaticLib",
             ModuleKind::Launch => "ConsoleApp",
+            ModuleKind::Plugin => "SharedLib",
         }
     }
 }
@@ -407,7 +408,7 @@ pub(crate) fn make_script(solution: &Solution)
                         wwi(b, 3, "}");
 
                         wwi(b, 2, "defines {");
-                        if module.kind.is_shared()
+                        if module.kind.is_shared_weak()
                         {
                             wwi(b, 3, format!("'{}_API=PLATFORM_CALLSPEC_OUT',", module.name.to_uppercase()));
                             wwi(b, 3, format!("'{}_EXTERN=PLATFORM_EXTERNSPEC_OUT',", module.name.to_uppercase()));
@@ -427,7 +428,7 @@ pub(crate) fn make_script(solution: &Solution)
                                     {
                                         panic!("Dependency [{}] is not allowed for launch module [{}].", dependency, target_module.relative_dir);
                                     }
-                                    else if target_module.kind.is_shared()
+                                    else if target_module.kind.is_shared_weak()
                                     {
                                         wwi(b, 3, format!("'{}_API=PLATFORM_CALLSPEC_IN',", target_module.name.to_uppercase()));
                                         wwi(b, 3, format!("'{}_EXTERN=PLATFORM_EXTERNSPEC_IN',", target_module.name.to_uppercase()));

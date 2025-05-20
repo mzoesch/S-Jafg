@@ -58,11 +58,23 @@ ENGINE_API LPath ResolvePathToAbsolutePath(const LEnginePath& InEnginePath, cons
 ENGINE_API LPath ResolvePathToAbsolutePath(const EEnginePaths::Type& InEnginePath, const JUserPreferences& InUserPreferences);
 
 ENGINE_API TArray<LString> FindFiles(
-    const LPath& InAbsolutePath,
+    const LPath& InPath,
     const bool bKeepExtension = false,
     const LStringView& InFileExtension = ".*"
 );
 ENGINE_API TArray<LString> FindFiles(
+    const EEnginePaths::Type InEnginePathTy,
+    const JUserPreferences& InUserPreferences,
+    const bool bKeepExtension = false,
+    const LStringView& InFileExtension = ".*"
+);
+
+ENGINE_API TArray<LString> FindFilesRecursively(
+const LPath& InPath,
+const bool bKeepExtension = false,
+const LStringView& InFileExtension = ".*"
+);
+ENGINE_API TArray<LString> FindFilesRecursively(
     const EEnginePaths::Type InEnginePathTy,
     const JUserPreferences& InUserPreferences,
     const bool bKeepExtension = false,

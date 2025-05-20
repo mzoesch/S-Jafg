@@ -19,19 +19,29 @@ namespace Jafg
 namespace Private
 {
 
-bool TPathBase_DoesExist(const char* InPath)
+bool TPathBase_DoesExist(const LPath& InPath)
 {
-    return Paths::DoesFileExist(LPath(InPath));
+    return Paths::DoesFileExist(InPath);
 }
 
-bool TPathBase_IsFile(const char* InPath)
+bool TPathBase_IsFile(const LPath& InPath)
 {
-    return Paths::DoesFileExist(LPath(InPath));
+    return Paths::DoesFileExist(InPath);
 }
 
-bool TPathBase_IsDir(const char* InPath)
+bool TPathBase_IsDir(const LPath& InPath)
 {
-    return Paths::DoesDirExist(LPath(InPath));
+    return Paths::DoesDirExist(InPath);
+}
+
+bool TPathBase_IsAbsolute(const LPath& InPath)
+{
+    return Paths::IsAbsolute(InPath);
+}
+
+bool TPathBase_IsRelative(const LPath& InPath)
+{
+    return Paths::IsRelative(InPath);
 }
 
 } /* ~Namespace Private */
@@ -105,6 +115,16 @@ bool Paths::DoesFileExist(const LPath& InFilePath)
 bool Paths::DoesDirExist(const LPath& InDirPath)
 {
     return DoesPathExist(InDirPath) && std::filesystem::is_directory(InDirPath.ToPtr());
+}
+
+bool Paths::IsAbsolute(const LPath& InPath)
+{
+    return std::filesystem::path(InPath.ToPtr()).is_absolute();
+}
+
+bool Paths::IsRelative(const LPath& InPath)
+{
+    return std::filesystem::path(InPath.ToPtr()).is_relative();
 }
 
 void Paths::CreateFileSlow(const LPath& InFilePath)

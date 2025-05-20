@@ -405,7 +405,7 @@ private: /* Restore default visibility. */
     #undef DEFAULT_OBJECT_CONSTRUCTOR
 #endif /* DEFAULT_OBJECT_CONSTRUCTOR */
 #define DEFAULT_OBJECT_CONSTRUCTOR(MyClassName)                                                              \
-    explicit MyClassName(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) { return; }
+    explicit MyClassName(const ::Jafg::LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) { return; }
 
 //#
 //# Mark a member of a j-class as something special.

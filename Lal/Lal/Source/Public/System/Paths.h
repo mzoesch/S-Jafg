@@ -65,6 +65,9 @@ LAL_API bool DoesDirExist(const LPath& InDirPath);
 inline  bool DoesDirExistChecked(const LPath& InDirPath);
 inline  bool DoesDirExistAsserted(const LPath& InDirPath);
 
+LAL_API bool IsAbsolute(const LPath& InPath);
+LAL_API bool IsRelative(const LPath& InPath);
+
 //#
 //# Creates a file if it does not exist.
 //# If something goes wrong, this program will panic.

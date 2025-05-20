@@ -7,15 +7,6 @@
 namespace Jafg
 {
 
-namespace Private
-{
-
-LAL_API bool TPathBase_DoesExist(const char* InPath);
-LAL_API bool TPathBase_IsFile(const char* InPath);
-LAL_API bool TPathBase_IsDir(const char* InPath);
-
-} /* ~Namespace Private */
-
 //#
 //# The base class for all paths.
 //#
@@ -26,6 +17,17 @@ template <typename InT>
 using TPathBasic = TPathBase<TStringTraits<InT>, TArray<InT>>;
 
 typedef TPathBasic<char> LPath;
+
+namespace Private
+{
+
+LAL_API bool TPathBase_DoesExist(const LPath& InPath);
+LAL_API bool TPathBase_IsFile(const LPath& InPath);
+LAL_API bool TPathBase_IsDir(const LPath& InPath);
+LAL_API bool TPathBase_IsAbsolute(const LPath& InPath);
+LAL_API bool TPathBase_IsRelative(const LPath& InPath);
+
+} /* ~Namespace Private */
 
 template <typename InTraits, typename InAlloc>
 class TPathBase : public TStringBase<TPathBase<InTraits, InAlloc>, InTraits, InAlloc>
@@ -121,6 +123,8 @@ public:
     FORCEINLINE bool DoesExist() const noexcept { return Private::TPathBase_DoesExist(static_cast<const char*>(this->ToPtr())); }
     FORCEINLINE bool IsFile() const noexcept { return Private::TPathBase_IsFile(static_cast<const char*>(this->ToPtr())); }
     FORCEINLINE bool IsDir() const noexcept { return Private::TPathBase_IsDir(static_cast<const char*>(this->ToPtr())); }
+    FORCEINLINE bool IsAbsolute() const noexcept { return Private::TPathBase_IsAbsolute(static_cast<const char*>(this->ToPtr())); }
+    FORCEINLINE bool IsRelative() const noexcept { return Private::TPathBase_IsRelative(static_cast<const char*>(this->ToPtr())); }
 
     FORCEINLINE Self GetBase() const noexcept;
 };

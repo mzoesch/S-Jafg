@@ -10,6 +10,8 @@ pub const PATH_INTERMEDIATES: &str = "Intermediate";
 pub const FILE_PCH_H: &str = "ModulePch.generated.h";
 pub const FILE_PCH_T: &str = "ModulePch.generated.cpp";
 
+pub const FILE_ROOT_PLUGIN_IDENT: &str = "root.plugin.jafg";
+
 pub fn get_engine_root_dir() -> String
 {
     let exe: std::path::PathBuf = std::env::current_exe().unwrap();

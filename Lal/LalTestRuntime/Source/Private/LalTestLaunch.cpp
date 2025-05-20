@@ -47,4 +47,10 @@ EPlatformExit::Type LalLaunchTestMain()
 #endif /* !WITH_TESTS */
 }
 
-#endif /* WITH_TESTS */
+#else /* WITH_TESTS */
+
+i32 main(i32 Argc, char* Argv[])
+{
+}
+
+#endif /* !WITH_TESTS */

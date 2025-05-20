@@ -9,7 +9,7 @@ namespace Jafg
 
 //#
 //# This struct is meant as a wrapper class for storing object pointers for a longer time.
-//# It is *not* meant for quick storing (e.g. inside a function) and is also not meant to be passed as an argument
+//# It is *not* meant for quick storing (e.g., inside a function) and is also not meant to be passed as an argument
 //# to a function.
 //#
 template <typename T>

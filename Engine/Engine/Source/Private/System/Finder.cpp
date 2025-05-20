@@ -160,7 +160,7 @@ LPath Finder::ResolvePathToAbsolutePath(const EEnginePaths::Type& InEnginePath, 
 }
 
 TArray<LString> Finder::FindFiles(
-    const LPath& InAbsolutePath,
+    const LPath& InPath,
     const bool bKeepExtension /* = false */,
     const LStringView& InFileExtension /* = ".*" */
 )
@@ -169,11 +169,11 @@ TArray<LString> Finder::FindFiles(
     LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())
     return { };
 #else /* WITH_VIRTUAL_FILESYSTEM */
-    Paths::DoesPathExistAsserted(InAbsolutePath);
+    Paths::DoesPathExistAsserted(InPath);
 
     TArray<LString> Out;
 
-    for (auto& p : Fs::directory_iterator(InAbsolutePath.ToPtr()))
+    for (auto& p : Fs::directory_iterator(InPath.ToPtr()))
     {
         if (p.is_directory())
         {
@@ -186,18 +186,18 @@ TArray<LString> Finder::FindFiles(
             {
 #if PLATFORM_WINDOWS && UNICODE
                 LStringLegacy Temp = LPlatformTypes::Ws2S(p.path().filename().c_str());
-                Out.Add(LSimpleString(Temp.c_str()));
+                Out.Emplace(LSimpleString(Temp.c_str()));
 #else /* PLATFORM_WINDOWS && UNICODE */
-                Out.Add(p.path().filename().c_str());
+                Out.Emplace(p.path().filename().c_str());
 #endif /* !(PLATFORM_WINDOWS && UNICODE) */
             }
             else
             {
 #if PLATFORM_WINDOWS && UNICODE
                 LSimpleString SimpleTemp = LPlatformTypes::Ws2S(p.path().stem()).c_str();
-                Out.Add(std::move(SimpleTemp));
+                Out.Emplace(std::move(SimpleTemp));
 #else /* PLATFORM_WINDOWS && UNICODE */
-                Out.Add(p.path().stem().c_str());
+                Out.Emplace(p.path().stem().c_str());
 #endif /* !(PLATFORM_WINDOWS && UNICODE) */
             }
         }
@@ -209,18 +209,18 @@ TArray<LString> Finder::FindFiles(
                 {
 #if PLATFORM_WINDOWS && UNICODE
                     LStringLegacy Temp = LPlatformTypes::Ws2S(p.path().filename().c_str());
-                    Out.Add(LSimpleString(Temp.c_str()));
+                    Out.Emplace(LSimpleString(Temp.c_str()));
 #else /* PLATFORM_WINDOWS && UNICODE */
-                    Out.Add(p.path().filename().c_str());
+                    Out.Emplace(p.path().filename().c_str());
 #endif /* !(PLATFORM_WINDOWS && UNICODE) */
                 }
                 else
                 {
 #if PLATFORM_WINDOWS && UNICODE
                     LSimpleString SimpleTemp = LPlatformTypes::Ws2S(p.path().stem()).c_str();
-                    Out.Add(std::move(SimpleTemp));
+                    Out.Emplace::move(SimpleTemp));
 #else /* PLATFORM_WINDOWS && UNICODE */
-                    Out.Add(p.path().stem().c_str());
+                    Out.Emplace(p.path().stem().c_str());
 #endif /* !(PLATFORM_WINDOWS && UNICODE) */
                 }
             }
@@ -249,6 +249,121 @@ TArray<LString> Finder::FindFiles(
     );
 #else /* WITH_VIRTUAL_FILESYSTEM */
     return Finder::FindFiles(
+        Finder::ResolvePathToAbsolutePath(LEnginePath(InEnginePathTy), InUserPreferences),
+        bKeepExtension,
+        InFileExtension
+    );
+#endif /* !WITH_VIRTUAL_FILESYSTEM */
+}
+
+TArray<LString> Finder::FindFilesRecursively(
+    const LPath& InPath,
+    const bool bKeepExtension,
+    const LStringView& InFileExtension
+)
+{
+    #if WITH_VIRTUAL_FILESYSTEM
+    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())
+    return { };
+#else /* WITH_VIRTUAL_FILESYSTEM */
+    Paths::DoesPathExistAsserted(InPath);
+
+    TArray<LString> Out;
+
+    for (const auto& p : Fs::recursive_directory_iterator(InPath.ToPtr(), Fs::directory_options::skip_permission_denied | Fs::directory_options::follow_directory_symlink))
+    {
+        if (p.is_directory())
+        {
+            continue;
+        }
+
+        if (InFileExtension == ".*")
+        {
+            if (bKeepExtension)
+            {
+#if PLATFORM_WINDOWS && UNICODE
+                LStringLegacy Temp = LPlatformTypes::Ws2S(p.path().filename().c_str());
+                Out.Emplace(LSimpleString(Temp.c_str()));
+#else /* PLATFORM_WINDOWS && UNICODE */
+                Out.Emplace(p.path().c_str());
+#endif /* !(PLATFORM_WINDOWS && UNICODE) */
+            }
+            else
+            {
+#if PLATFORM_WINDOWS && UNICODE
+                LSimpleString SimpleTemp = LPlatformTypes::Ws2S(p.path().stem()).c_str();
+                Out.Emplace(std::move(SimpleTemp));
+#else /* PLATFORM_WINDOWS && UNICODE */
+                if (p.path().has_parent_path())
+                {
+                    LString Str = p.path().parent_path().c_str();
+                    Str += p.path().stem().c_str();
+                    Out.Emplace(std::move(Str));
+                }
+                else
+                {
+                    Out.Emplace(p.path().stem().c_str());
+                }
+#endif /* !(PLATFORM_WINDOWS && UNICODE) */
+            }
+        }
+        else
+        {
+            if (InFileExtension == p.path().extension().c_str())
+            {
+                if (bKeepExtension)
+                {
+#if PLATFORM_WINDOWS && UNICODE
+                    LStringLegacy Temp = LPlatformTypes::Ws2S(p.path().filename().c_str());
+                    Out.Emplace(LSimpleString(Temp.c_str()));
+#else /* PLATFORM_WINDOWS && UNICODE */
+                    Out.Emplace(p.path().c_str());
+#endif /* !(PLATFORM_WINDOWS && UNICODE) */
+                }
+                else
+                {
+#if PLATFORM_WINDOWS && UNICODE
+                    LSimpleString SimpleTemp = LPlatformTypes::Ws2S(p.path().stem()).c_str();
+                    Out.Emplace::move(SimpleTemp));
+#else /* PLATFORM_WINDOWS && UNICODE */
+                    if (p.path().has_parent_path())
+                    {
+                        LString Str = p.path().parent_path().c_str();
+                        Str += p.path().stem().c_str();
+                        Out.Emplace(std::move(Str));
+                    }
+                    else
+                    {
+                        Out.Emplace(p.path().stem().c_str());
+                    }
+#endif /* !(PLATFORM_WINDOWS && UNICODE) */
+                }
+            }
+        }
+
+        continue;
+    }
+
+    return Out;
+#endif /* WITH_VIRTUAL_FILESYSTEM */
+}
+
+TArray<LString> Finder::FindFilesRecursively(
+    const EEnginePaths::Type InEnginePathTy,
+    const JUserPreferences& InUserPreferences,
+    const bool bKeepExtension,
+    const LStringView& InFileExtension
+)
+{
+#if WITH_VIRTUAL_FILESYSTEM
+    return GVirtualFileSystem->FindFilesRecursively(
+        InEnginePathTy,
+        InUserPreferences,
+        bKeepExtension,
+        InFileExtension
+    );
+#else /* WITH_VIRTUAL_FILESYSTEM */
+    return Finder::FindFilesRecursively(
         Finder::ResolvePathToAbsolutePath(LEnginePath(InEnginePathTy), InUserPreferences),
         bKeepExtension,
         InFileExtension

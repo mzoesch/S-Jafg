@@ -1,8 +1,23 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Engine/ObjectBase.h"
 #include "Engine/Carnifex.h"
+#include "Engine/Engine.h"
+
+Jafg::LObjectInitializer Jafg::GetDefaultObjectInitializer()
+{
+    if (GEngine)
+    {
+#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+        return LObjectInitializer{GEngine->GetCurrentForeignContext()};
+#else /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+        jassertNoEntry()
+        abort()
+#endif /* !PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+    }
+
+    return LObjectInitializer{GOmniVitaContext};
+}
 
 Jafg::JObjectBase::JObjectBase(const LObjectInitializer& ObjectInitializer)
 {
@@ -15,21 +30,6 @@ Jafg::JObjectBase::JObjectBase(const LObjectInitializer& ObjectInitializer)
     this->Outer->Employees.Add(this);
 
     return;
-}
-
-Jafg::JObjectBase::~JObjectBase()
-{
-    /*
-     * If this check triggers, you might have done one of the following things that are forbidden:
-     *   - Manually deleted an object via ~delete or ~delete[].
-     *   - Used a smart pointer not from the jafg library, for example, a std::shared_ptr (Which are not
-     *     compatible).
-     *
-     * Create a new object with NewObject<T>. Delete them by either calling #MarkAsGarbage to get them discarded
-     * at the next engine butcher cycle or by calling #KillYourSelfNow to get them discarded immediately (comparable
-     * with a call to the delete operator).
-     */
-    check( this->bGarbage )
 }
 
 void Jafg::JObjectBase::MarkAsGarbage()
@@ -84,7 +84,7 @@ void Jafg::JObjectBase::OnDefaultGarbage()
 
 void Jafg::JObjectBase::MarkAsGarbage(const bool bAddToCarnifex)
 {
-    checkSlow( this->bGarbage == false )
+    check( this->bGarbage == false )
     this->bGarbage = true;
 
     check( this->Outer )

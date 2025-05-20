@@ -59,7 +59,7 @@ void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy /* = true */)
 
     if (bDestroy)
     {
-        this->KillYourSelfNow(true);
+        this->MarkAsGarbage();
     }
 
     return;

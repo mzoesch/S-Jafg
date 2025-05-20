@@ -12,8 +12,8 @@
 #include "Stats/Stats.h"
 #if WITH_VIRTUAL_FILESYSTEM
     #include "System/VFilesystem.h"
-#endif /* WITH_VIRTUAL_FILESYSTEM */
 
+#endif /* WITH_VIRTUAL_FILESYSTEM */
 using namespace Jafg;
 
 #if IN_SHIPPING
@@ -104,13 +104,13 @@ void EngineTick()
         Application::Private::LostDeltaTime = 0.0;
         Application::Private::IdleDeltaTime = 0.0;
 
-        const double ThisFrameTime = Application::GetTimeDifferenceFromStaticStorageInitialization(Application::GetHighestNow()) - Application::GetCurrentFrameTime();
+        const f64 ThisFrameTime = Application::GetTimeDifferenceFromStaticStorageInitialization(Application::GetHighestNow()) - Application::GetCurrentFrameTime();
         if (UserPreferences->bVSyncEnabled == false && UserPreferences->MaxFps != JUserPreferences::UnlimitedFps)
         {
             if (ThisFrameTime < 1.0 / UserPreferences->MaxFps)
             {
                 const Application::LHrcTimePoint SleepStart = Application::GetHighestNow();
-                const double SleepTime = (1.0 / UserPreferences->MaxFps) - ThisFrameTime;
+                const f64 SleepTime = (1.0 / UserPreferences->MaxFps) - ThisFrameTime;
                 PlatformHal::SleepNoStats(Maths::Max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
                 Application::Private::IdleDeltaTime = Application::GetTimeDiff(SleepStart, Application::GetHighestNow());
             }
@@ -331,7 +331,7 @@ EPlatformExit::Type GuardedMain()
     {
         return EPlatformExit::Fatal;
     }
-    Private::GObjectRegistry->LoadPendingPackages();
+    Private::GObjectRegistry->LoadPendingPackages(LLoadedPluginHandle::GetEnginePluginHandle());
     if (::IsEngineExitRequested() || GEngine)
     {
         return EPlatformExit::Fatal;
@@ -356,9 +356,40 @@ EPlatformExit::Type GuardedMain()
         return ::GetMostSignificantExitReason();
     }
 
+#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+    STAT_CYCLE_START(GmEnabledEnginePluginsLoad, "EnabledEnginePluginsLoad")
+    const JUserPreferences* Prefs = GetDefault<JUserPreferences>();
+    GEngine->RefetchPlugins(Prefs->AdditionalPluginsSearchPaths);
+    for (const LString& Plugin : Prefs->EnabledEnginePlugins)
+    {
+        GEngine->LoadPluginNoFailure(Plugin);
+        continue;
+    }
+    STAT_CYCLE_END(GmEnabledEnginePluginsLoad)
+
+    if (GEngine == nullptr || ::IsEngineExitRequested())
+    {
+        return ::GetMostSignificantExitReason();
+    }
+#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+
+    STAT_CYCLE_START(GmEngineWorldLoad, "EngineWorldLoad")
+    LWorldStorage World = GEngine->SummonWorld("StartUpWorld");
+    GEngine->Browse(World, "LFrontEnd");
+    STAT_CYCLE_END(GmEngineWorldLoad)
+
+    if (GEngine == nullptr || ::IsEngineExitRequested())
+    {
+        return ::GetMostSignificantExitReason();
+    }
+
     LaunchProgress::BeginProgress("End of initialization", "Starting ticking ...", 1.0f);
     ::FlushLogs();
     LaunchProgress::FinishAndGiveUpMemory();
+
+    Application::Private::PreviousFrameTime = Application::GetTimeDifferenceFromStaticStorageInitialization(Application::GetHighestNow());
+    PlatformHal::YieldThread();
+    Application::Private::CurrentFrameTime  = Application::GetTimeDifferenceFromStaticStorageInitialization(Application::GetHighestNow());
 
     STAT_CYCLE_FUNCTION_END(GuardedMainCycle)
     STAT_BOOKMARK("GuardedMainCycle")

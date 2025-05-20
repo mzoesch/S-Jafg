@@ -6,6 +6,7 @@ use crate::build_tool::core::BuildTarget;
 use crate::build_tool::reflector::reflect_module;
 use crate::core::application::{Application, BuildConfig, Module, ModuleKind, Platform, Solution, Target};
 use crate::core::finder;
+use crate::core::paths::FILE_ROOT_PLUGIN_IDENT;
 
 struct BuildTargetUnprocessed
 {
@@ -164,6 +165,11 @@ pub fn launch(app: &Application, args: &Cli)
     build_target.target   = Option::from(build_target.config.unwrap().find_target_by_name_checked(parts[0]));
     build_target.module   = Option::from(build_target.target.unwrap().find_module_by_name_checked(&build_target_unprocessed.module));
 
+    if build_target.module.is_some() && build_target.kind.as_ref().unwrap().is_shared()
+    {
+        build_target.kind = Option::from(build_target.module.unwrap().kind.clone());
+    }
+
     let out: BuildTarget = BuildTarget
     {
         solution: build_target.solution.unwrap(),
@@ -209,7 +215,7 @@ fn launch_post_build(b: BuildTarget)
 {
     println!("Launching post-build for [{}] ...", b.module.name);
 
-    if (b.module.kind.is_shared() && b.platform.unity == false) || (b.module.kind.is_shared() && b.module.preserve_unity == false)
+    if (b.module.kind.is_shared_weak() && b.platform.unity == false) || (b.module.kind.is_shared_weak() && b.module.preserve_unity == false)
     {
         let shared_bin_dir: String = b.get_bin_dir();
         finder::check_dir(&shared_bin_dir);
@@ -220,16 +226,58 @@ fn launch_post_build(b: BuildTarget)
             finder::ensure_path(&launch_bin_dir);
 
             let src_runtime_lib: String = format!("{}/{}{}{}", shared_bin_dir, b.get_shared_bin_prefix(), b.module.name, b.get_shared_bin_suffix());
-            let dst_runtime_lib: String = format!("{}/{}{}{}", launch_bin_dir, b.get_shared_bin_prefix(), b.module.name, b.get_shared_bin_suffix());
+
+            let dst_runtime_lib: String;
+            if b.kind.is_shared()
+            {
+               dst_runtime_lib = format!("{}/{}{}{}", launch_bin_dir, b.get_shared_bin_prefix(), b.module.name, b.get_shared_bin_suffix());
+            }
+            else if b.kind.is_plugin()
+            {
+               dst_runtime_lib = format!("{}/{}/{}{}{}", launch_bin_dir, b.module.get_functional_rel_dir(), b.get_shared_bin_prefix(), b.module.name, b.get_shared_bin_suffix());
+            }
+            else
+            {
+                panic!("Kind is invalid.")
+            }
+
             finder::check_file(&src_runtime_lib);
 
             let src_runtime_pdb: String = format!("{}/{}{}{}", shared_bin_dir, b.get_symbols_bin_prefix(), b.module.name, b.get_symbols_bin_suffix()); // ok if not exists
-            let dst_runtime_pdb: String = format!("{}/{}{}{}", launch_bin_dir, b.get_symbols_bin_prefix(), b.module.name, b.get_symbols_bin_suffix());
+            let dst_runtime_pdb: String;
+            if b.kind.is_shared()
+            {
+                dst_runtime_pdb = format!("{}/{}{}{}", launch_bin_dir, b.get_symbols_bin_prefix(), b.module.name, b.get_symbols_bin_suffix());
+            }
+            else if b.kind.is_plugin()
+            {
+                dst_runtime_pdb = format!("{}/{}/{}{}{}", launch_bin_dir, b.module.get_functional_rel_dir(), b.get_symbols_bin_prefix(), b.module.name, b.get_symbols_bin_suffix());
+            }
+            else
+            {
+                panic!("Kind is invalid.")
+            }
 
             finder::copy_to_dir_if_different(&src_runtime_lib, &dst_runtime_lib, true);
             if finder::exists_file(&src_runtime_pdb)
             {
                 finder::copy_to_dir_if_different(&src_runtime_pdb, &dst_runtime_pdb, true);
+            }
+
+            if b.kind.is_plugin()
+            {
+                let dst_root_ident: String = format!("{}/{}/{}", launch_bin_dir, b.module.get_functional_rel_dir(), FILE_ROOT_PLUGIN_IDENT);
+                finder::ensure_file(&dst_root_ident);
+
+                let content = format!
+                (
+                    "{{\"Identifier\":\"{}\", \"FriendlyName\": \"{}\", \"Bin\": \"{}\"}}",
+                    b.module.name,
+                    b.module.friendly_name,
+                    format!("{}{}{}", b.get_shared_bin_prefix(), b.module.name, b.get_shared_bin_suffix())
+                );
+
+                finder::write_to_file_if_different(&dst_root_ident, true, &content);
             }
 
             continue

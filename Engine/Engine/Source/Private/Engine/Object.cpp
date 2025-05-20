@@ -21,7 +21,7 @@ Jafg::LWorld* Jafg::JObject::GetOrCalculateCastedOuter()
         return this->CastedOuter;
     }
 
-    for (const LWorldContext& Context : GEngine->GetContexts())
+    for (const Private::LWorldContext& Context : GEngine->GetContexts())
     {
         check( Context.ChildWorld )
         if (Context.ChildWorld == this->GetOuter())
@@ -38,7 +38,7 @@ void Jafg::JObject::BeginLife()
 {
     JObjectBase::BeginLife();
 
-    for (const LWorldContext& Context : GEngine->GetContexts())
+    for (const Private::LWorldContext& Context : GEngine->GetContexts())
     {
         check( Context.ChildWorld )
         if (Context.ChildWorld == this->GetOuter())

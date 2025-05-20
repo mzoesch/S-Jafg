@@ -67,7 +67,7 @@ void Jafg::LFrontend::Tick(LUserInput* UserInput)
     {
         if (Subsystem->ShouldTick())
         {
-            Subsystem->Tick(Application::GetDeltaTimeAsFloat());
+            Subsystem->Tick();
         }
 
         return;
