@@ -265,9 +265,6 @@ void Jafg::LEngine::Initialize()
     this->LocalEgo.Initialize();
 #endif /* WITH_LOCAL_LAYER */
 
-    this->RegisterLevel(LLevel("LFrontEnd"));
-    this->RegisterLevel(LLevel("LWorld"));
-
     return;
 }
 

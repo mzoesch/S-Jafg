@@ -8,6 +8,16 @@
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "Stats/Stats.h"
 
+bool Jafg::JChunkValidationSubsystem::ShouldCreateSubsystem(const LObjectContext* InOuter) const
+{
+    if (Super::ShouldCreateSubsystem(InOuter) == false)
+    {
+        return false;
+    }
+
+    return Super::IsOuterWorld(InOuter);
+}
+
 void Jafg::JChunkValidationSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Collection.InitializeDependency<JChunkGenerationSubsystem>();

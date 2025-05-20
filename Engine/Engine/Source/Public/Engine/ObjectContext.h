@@ -49,6 +49,8 @@ public:
 
     virtual void TearDownContext();
 
+    virtual bool IsWorld() const { return false; }
+
     FORCEINLINE bool IsCarnifexValid() const { return this->Carnifex != nullptr; }
     FORCEINLINE auto GetCarnifex() const -> LCarnifex* { return this->Carnifex; }
 

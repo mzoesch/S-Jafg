@@ -29,9 +29,9 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JSubsystem)
 
-    virtual void BeginLife() override final { Super::BeginLife();                   }
-    virtual void EndLife()   override final { Super::EndLife();                     }
-    virtual void OnGarbage() override final { Super::OnGarbage(); this->TearDown(); }
+    virtual void BeginLife() override final { Super::BeginLife(); }
+    virtual void EndLife()   override final { Super::EndLife();   }
+    virtual void OnGarbage() override final { Super::OnGarbage(); if (this->IsInitialized()) { this->TearDown(); } }
 
     //#
     //# Weather a subsystem should be created given its new context.

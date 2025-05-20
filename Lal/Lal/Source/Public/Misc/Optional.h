@@ -19,6 +19,8 @@ struct TOptional final
     FORCEINLINE TOptional(const T& InValue) : Value(InValue), bMeaningful(true) { }
     FORCEINLINE TOptional(T&& InValue) : Value(std::move(InValue)), bMeaningful(true) { }
 
+    FORCEINLINE ~TOptional() { this->Reset(); }
+
     template <typename  ... ArgsTy>
     FORCEINLINE T& Emplace(ArgsTy&& ... Args)
     {
@@ -34,7 +36,8 @@ struct TOptional final
     FORCEINLINE auto IsSet() const -> bool { return this->bMeaningful; }
     FORCEINLINE auto MakeMeaningful() -> void { this->bMeaningful = true; }
     FORCEINLINE void SetValue(const T& InValue) { this->Value = InValue; this->bMeaningful = true; }
-    FORCEINLINE void Reset() { this->bMeaningful = false; }
+
+    void Reset();
 
     FORCEINLINE auto GetValue() -> T& { check( this->bMeaningful ) return this->Value; }
     FORCEINLINE auto GetValue() const -> const T& { check( this->bMeaningful ) return this->Value; }
@@ -63,5 +66,17 @@ private:
     T    Value;
     bool bMeaningful;
 };
+
+template<typename T>
+void TOptional<T>::Reset()
+{
+    if (this->bMeaningful)
+    {
+        this->bMeaningful = false;
+        this->Value.~T();
+    }
+
+    return;
+}
 
 } /* ~Namespace Jafg */

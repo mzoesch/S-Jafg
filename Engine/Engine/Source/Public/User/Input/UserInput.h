@@ -27,7 +27,7 @@ public:
 
     void DispatchInputDelegates();
 
-    ENGINE_API auto GetLocalEgo() const -> LLocalEgo*;
+    ENGINE_API LLocalEgo* GetLocalEgo() const;
 
     ENGINE_API void RegisterContext(LUserInputContext&& Context, const bool bMakeActive = false);
 
@@ -52,13 +52,15 @@ public:
     ENGINE_API  auto RegisterAction(LInputAction&& InAction) -> LInputAction*;
     FORCEINLINE auto GetRegisteredActions() const -> const TArray<LInputAction*>& { return this->RegisteredActions; }
 
+    ENGINE_API  void ActivateContext(const LName InName);
     ENGINE_API  void ActivateContext(const LString& InName);
     ENGINE_API  void ActivateContext(LUserInputContext* InContext);
+    ENGINE_API  void DeactivateContext(const LName InName);
     ENGINE_API  void DeactivateContext(const LString& InName);
     ENGINE_API  void DeactivateContext(LUserInputContext* InContext);
-    ENGINE_API i32 DeactivateAllContexts();
-    FORCEINLINE auto GetActiveContexts() const -> const TArray<LUserInputContext*>& { return this->ActiveContexts; }
-    FORCEINLINE auto GetRegisteredContexts() const -> const TArray<LUserInputContext*>& { return this->RegisteredContexts; }
+    ENGINE_API  i32  DeactivateAllContexts();
+    FORCEINLINE const TArray<LUserInputContext*>& GetActiveContexts() const { return this->ActiveContexts; }
+    FORCEINLINE const TArray<LUserInputContext*>& GetRegisteredContexts() const { return this->RegisteredContexts; }
 
     //#
     //# This frame platform-localized input.

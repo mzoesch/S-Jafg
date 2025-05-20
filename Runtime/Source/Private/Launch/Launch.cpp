@@ -8,6 +8,7 @@
 #include "Engine/Carnifex.h"
 #include "Platform/PlatformMisc.h"
 #include "Async/TaskUtility.h"
+#include "Core/CoreNames.h"
 #include "User/UserPreferences.h"
 #include "Stats/Stats.h"
 #if WITH_VIRTUAL_FILESYSTEM
@@ -349,6 +350,14 @@ EPlatformExit::Type GuardedMain()
     GEngine->RegisterObjectContext(GOmniVitaContext);
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::BeforeEngineInitButAfterAllocDangerous, Tasks::RunAllTasks);
     GEngine->Initialize();
+
+    /*
+     * The core levels. Hardcoded into the engine generation for better communication with other plugins.
+     * To give them a common / default way for different engine states.
+     */
+    GEngine->RegisterLevel(LLevel{Name_LevelFrontend.ToString()});
+    GEngine->RegisterLevel(LLevel{Name_LevelMyWorld.ToString()});
+
     STAT_CYCLE_END(GmEngineInit)
 
     if (GEngine == nullptr || ::IsEngineExitRequested())
@@ -375,7 +384,7 @@ EPlatformExit::Type GuardedMain()
 
     STAT_CYCLE_START(GmEngineWorldLoad, "EngineWorldLoad")
     LWorldStorage World = GEngine->SummonWorld("StartUpWorld");
-    GEngine->Browse(World, "LFrontEnd");
+    GEngine->Browse(World, Name_LevelFrontend.ToString());
     STAT_CYCLE_END(GmEngineWorldLoad)
 
     if (GEngine == nullptr || ::IsEngineExitRequested())

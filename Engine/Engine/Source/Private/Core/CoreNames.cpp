@@ -6,6 +6,9 @@
 namespace Jafg
 {
 
+ENGINE_API LName Name_LevelMyWorld          = MAKE_STATIC_NAME("LevelMyWorld");
+ENGINE_API LName Name_LevelFrontend         = MAKE_STATIC_NAME("LevelFrontend");
+
 ENGINE_API LName Name_UicInMyWorld          = MAKE_STATIC_NAME("InMyWorld");
 ENGINE_API LName Name_UicInPause            = MAKE_STATIC_NAME("InPause");
 ENGINE_API LName Name_UicInConsole          = MAKE_STATIC_NAME("InConsole");

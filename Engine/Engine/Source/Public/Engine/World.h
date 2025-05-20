@@ -6,6 +6,7 @@
 #include "Physics/TraceUtility.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/WorldSubsystem.h"
+#include "Engine/Level.h"
 #if AS_CLIENT
     #include "Debug/TemporalWorldObject.h"
 #endif /* AS_CLIENT */
@@ -110,6 +111,8 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LWorld)
     LWorld(const LString& InHumanReadableName, const EWorldState::Type InWorldType);
 
+    virtual bool IsWorld() const override { return true; }
+
     ENGINE_API auto GetEngine() const -> LEngine*;
     ENGINE_API auto GetLocalEgo() const -> LLocalEgo*;
     ENGINE_API auto GetLocalController() const -> APersonaController*;
@@ -136,6 +139,12 @@ public:
     // LObjectContext implementation
     virtual void TearDownContext() override;
     // ~LObjectContext implementation
+
+    FORCEINLINE bool IsUnderlyingLevelValid() const { return this->UnderlyingLevel.IsSet(); }
+    FORCEINLINE const LLevel& GetUnderlyingLevel() const { return this->UnderlyingLevel.GetValue(); }
+    FORCEINLINE LStringView   GetUnderlyingLevelName() const { return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }
+    FORCEINLINE LStringView   GetUnderlyingLevelNameChecked() const { check( this->IsUnderlyingLevelValid() ) return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }
+    FORCEINLINE LStringView   GetUnderlyingLevelNameAsserted() const { jassert( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel->Identifier; }
 
     ENGINE_API void RegisterTickableObject(LTickableObject* Tickable);
     ENGINE_API void UnregisterTickableObject(LTickableObject* Tickable);
@@ -167,6 +176,8 @@ public:
 
 private:
 
+    TOptional<LLevel> UnderlyingLevel;
+
 #if AS_CLIENT
     TArray<LTemporalWorldObject*> TemporalObjects;
 #endif /* AS_CLIENT */
@@ -190,7 +201,7 @@ private:
     //# The real time (not stopped or dilated / clamped) when this world was launched.
     //# Real time is relative to the static storage initialization of the engine shared library.
     //#
-    f32 RealTimeWhenWorldWasLaunched = 0.0f;
+    f32 RealTimeWhenWorldWasLaunched { 0.0f };
 };
 
 #if AS_CLIENT

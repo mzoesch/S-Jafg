@@ -15,6 +15,16 @@
 #include "Rhi/ChunkShader.h"
 #include "Stats/Stats.h"
 
+bool Jafg::JChunkGenerationSubsystem::ShouldCreateSubsystem(const LObjectContext* InOuter) const
+{
+    if (Super::ShouldCreateSubsystem(InOuter) == false)
+    {
+        return false;
+    }
+
+    return Super::IsOuterWorld(InOuter);
+}
+
 void Jafg::JChunkGenerationSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);

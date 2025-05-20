@@ -71,6 +71,7 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 
     this->WorldState = EWorldState::Initializing;
 
+    this->UnderlyingLevel = Level;
     this->GetEngine()->OnWorldBeginLife.Broadcast(this);
 
     LOG_VERBOSE(LogWorld, "Initializing {} level actors.", this->Actors.GetSize())
@@ -278,6 +279,7 @@ void Jafg::LWorld::TearDownContext()
     LObjectContext::TearDownContext();
 
     this->WorldState = EWorldState::WaitingForKill;
+    this->UnderlyingLevel.Reset();
 
     return;
 }

@@ -208,6 +208,16 @@ Jafg::JChunkGeneratorSubsystem::JChunkGeneratorSubsystem(const LObjectInitialize
     return;
 }
 
+bool Jafg::JChunkGeneratorSubsystem::ShouldCreateSubsystem(const LObjectContext* InOuter) const
+{
+    if (Super::ShouldCreateSubsystem(InOuter) == false)
+    {
+        return false;
+    }
+
+    return Super::IsOuterWorld(InOuter);
+}
+
 void Jafg::JChunkGeneratorSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);

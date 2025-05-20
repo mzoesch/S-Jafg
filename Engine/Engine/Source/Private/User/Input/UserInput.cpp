@@ -108,7 +108,7 @@ Jafg::TArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
 
 Jafg::LUserInputContext* Jafg::LUserInput::GetContextByName(const LString& InName)
 {
-    return GetContextByName(GET_NAME(InName));
+    return this->GetContextByName(GET_NAME(InName));
 }
 
 Jafg::LUserInputContext* Jafg::LUserInput::GetCheckedContextByName(const LString& InName)
@@ -237,6 +237,12 @@ Jafg::LInputAction* Jafg::LUserInput::RegisterAction(LInputAction&& InAction)
     return Action;
 }
 
+void Jafg::LUserInput::ActivateContext(const LName InName)
+{
+    this->ActivateContext(this->GetPanickedContextByName(InName));
+    return;
+}
+
 void Jafg::LUserInput::ActivateContext(const LString& InName)
 {
     this->ActivateContext(this->GetPanickedContextByName(InName));
@@ -249,6 +255,11 @@ void Jafg::LUserInput::ActivateContext(LUserInputContext* InContext)
     this->ActiveContexts.Add(InContext);
     LOG_VERBOSE(LogUserInput, "Activating context [{}].", InContext->GetUniqueIdentifier().ToString())
     return;
+}
+
+void Jafg::LUserInput::DeactivateContext(const LName InName)
+{
+    this->DeactivateContext(this->GetPanickedContextByName(InName));
 }
 
 void Jafg::LUserInput::DeactivateContext(const LString& InName)

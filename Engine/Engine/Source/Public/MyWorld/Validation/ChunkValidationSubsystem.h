@@ -21,6 +21,7 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(JChunkValidationSubsystem)
 
     // JFixedTickableWorldSubsystem implementation
+    virtual bool ShouldCreateSubsystem(const LObjectContext* InOuter) const override;
     virtual void Initialize(LSubsystemCollection& Collection) override;
     virtual void FixedTick(const float EngineDeltaTime, const float FixedDeltaTime) override;
     // ~JFixedTickableWorldSubsystem implementation
