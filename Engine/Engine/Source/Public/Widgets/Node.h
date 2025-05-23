@@ -27,6 +27,7 @@ template <typename TNode>
 class TWidgetFactoryParentBase;
 struct LWidgetSlot;
 struct LWidgetConstructor;
+struct LWidgetNodeData;
 
 namespace Private
 {
@@ -377,6 +378,8 @@ public:
 
     FORCEINLINE TFactoryRetTy& AddSibling(LWidgetFactory* InSibling);
     FORCEINLINE TFactoryRetTy& operator+(LWidgetFactory& InSibling) { return this->AddSibling(&InSibling); }
+
+    FORCEINLINE TFactoryRetTy& Data(const LWidgetNodeData* InData) { this->This()->AddData(InData); return this->Self(); }
 };
 
 //#
@@ -468,7 +471,7 @@ public:
     //# Use this method to pass arbitrary typesafe data to the widget.
     //# @return True, if the data was used successfully.
     //#
-    virtual bool AddData(LWidgetNodeData* InData) { return false; }
+    virtual bool AddData(const LWidgetNodeData* InData) { return false; }
 
     bool IsInBounds(const LViewport& Context, const LVector2& InLocation) const;
     virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation);

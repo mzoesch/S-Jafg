@@ -25,7 +25,7 @@ void Jafg::WConsoleScreen::Construct()
             .TextColor(LColor::Red)
             .TextScale(0.5f)
             .SetPadding({ 5.0f, 4.5f })
-            .SetTint({0, 0, 0, 164 })
+            .Tint({0, 0, 0, 164 })
             .OnCommit(LEditableTextBlockCommitDelegate::CreateFunction(this, &WConsoleScreen::OnTextCommit))
     ]
     FinishWidgetStyling()

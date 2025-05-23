@@ -190,25 +190,32 @@ Jafg::LCommandLineInterface* Jafg::LLocalEgo::GetCommandLineInterface()
 
 void Jafg::LLocalEgo::OnWorldBeginLife(LWorld* InNewWorld)
 {
+    check( Tasks::IsOnMasterThread() )
     checkSlow( InNewWorld )
 
     if (this->PersonaController == nullptr)
     {
         APersonaController* Pc = SpawnDeferredActor<APersonaController>(InNewWorld);
         this->Possess(Pc);
+
+        if (LSurface* Surface = this->GetFrontend()->GetFocusedSurface(); Surface)
+        {
+            Surface->SetInputMode(InNewWorld->GetUnderlyingLevel().InputMode, InNewWorld->GetUnderlyingLevel().bShowMouseCursor);
+            Surface->GetViewport().SetBackgroundColor(InNewWorld->GetUnderlyingLevel().BackgroundColor);
+        }
+
+        if (InNewWorld->GetUnderlyingLevelName() == Name_LevelMyWorld.ToString().ToPtr())
+        {
+            this->GetUserInput()->ActivateContext(Name_UicInMyWorld);
+        }
     }
 
-    if (this->PersonaController->DoesPossess() == false)
-    {
-        APawn* Pawn = SpawnDeferredActor<APawn>(InNewWorld, ALackey::StaticClass());
-        this->PersonaController->Possess(Pawn);
-        Pawn->SetTranslation(LVector(MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 4.0f + MwStatics::ChunkSize / 2.0f));
-    }
-
-    if (InNewWorld->GetUnderlyingLevelName() == Name_LevelMyWorld.ToString().ToPtr())
-    {
-        this->GetUserInput()->ActivateContext(Name_UicInMyWorld);
-    }
+    // if (this->PersonaController->DoesPossess() == false)
+    // {
+    //     APawn* Pawn = SpawnDeferredActor<APawn>(InNewWorld, ALackey::StaticClass());
+    //     this->PersonaController->Possess(Pawn);
+    //     Pawn->SetTranslation(LVector(MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 4.0f + MwStatics::ChunkSize / 2.0f));
+    // }
 
     return;
 }

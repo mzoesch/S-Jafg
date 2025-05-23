@@ -4,7 +4,7 @@
 #include "Widgets/TextBlock.h"
 #include "Widgets/Compound/TabBar.h"
 
-bool Jafg::WTabBarButton::AddData(LWidgetNodeData* InData)
+bool Jafg::WTabBarButton::AddData(const LWidgetNodeData* InData)
 {
     Super::AddData(InData);
 
@@ -13,29 +13,29 @@ bool Jafg::WTabBarButton::AddData(LWidgetNodeData* InData)
         return false;
     }
 
-    LTabBarTabData* Data = static_cast<LTabBarTabData*>(InData);
-    if (Data->Descriptor->DisplayName.IsEmpty() == false)
+    const LTabBarTabData* Data = static_cast<const LTabBarTabData*>(InData);
+    if (Data->Descriptor->DisplayNameField.IsEmpty() == false)
     {
         this->GetFactory<WTabBarButton>()
         [
             NewNode(WTextBlock).SaveTo(&this->ButtonText)
                 .Brush(LTextBlockBrush::SubHeader())
-                .Content(Data->Descriptor->DisplayName)
+                .Content(Data->Descriptor->DisplayNameField)
                 .Anchor(EAnchor::CenterCenter)
-                .Padding(Data->Descriptor->Padding)
+                .Padding(Data->Descriptor->PaddingField)
         ];
     }
 
     this->Context = Data->Context;
-    this->Identifier = Data->Descriptor->Identifier;
+    this->Identifier = Data->Descriptor->IdentifierField;
 
-    if (Data->Descriptor->OnButtonRelease)
+    if (Data->Descriptor->OnButtonReleaseField)
     {
         // ??? Why can't we move directly into the member variable?
         // ??? this->OnButtonRelease.operator=(std::move(Data->Descriptor->OnButtonRelease));
-        LOnTabBarButtonRelease Del = std::move(Data->Descriptor->OnButtonRelease);
+        LOnTabBarButtonRelease Del = std::move(Data->Descriptor->OnButtonReleaseField);
         this->OnButtonRelease = std::move(Del);
-        checkSlow( Data->Descriptor->OnButtonRelease.IsBound() == false )
+        checkSlow( Data->Descriptor->OnButtonReleaseField.IsBound() == false )
     }
 
     return true;

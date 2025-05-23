@@ -9,7 +9,7 @@ Jafg::WTabBarPanel::WTabBarPanel(const LObjectInitializer& ObjectInitializer) : 
     return;
 }
 
-bool Jafg::WTabBarPanel::AddData(LWidgetNodeData* InData)
+bool Jafg::WTabBarPanel::AddData(const LWidgetNodeData* InData)
 {
     Super::AddData(InData);
 
@@ -18,7 +18,7 @@ bool Jafg::WTabBarPanel::AddData(LWidgetNodeData* InData)
         return false;
     }
 
-    const LTabBarTabData* Data = static_cast<LTabBarTabData*>(InData);
+    const LTabBarTabData* Data = static_cast<const LTabBarTabData*>(InData);
     this->OwningTabBar = Data->Context;
 
     return true;

@@ -3,27 +3,28 @@
 #pragma once
 
 #include "Widgets/UserWidget.h"
-#include "PauseScreen.generated.h"
+#include "User/Frontend/Osd/HostSession.h"
+#include "FrontendScreen.generated.h"
 
 namespace Jafg
 {
 
+class WHostSessionScreen;
 class WTabBar;
-class WPauseScreen;
+class WFrontendScreen;
 
-DECLARE_JAFG_WIDGET()
-class ENGINE_API WPauseScreen final : public WUserWidget
+DECLARE_JAFG_WIDGET(EClassFlags::Config)
+class ENGINE_API WFrontendScreen final : public WUserWidget
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WPauseScreen)
+    DEFAULT_OBJECT_CONSTRUCTOR(WFrontendScreen)
 
 public:
 
     virtual void Construct() override;
-    virtual void OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility) override;
 
     FORCEINLINE bool IsTabBarValid() const { return this->TabBar != nullptr; }
     FORCEINLINE WTabBar* GetTabBar() { return this->TabBar; }
@@ -32,6 +33,9 @@ public:
     FORCEINLINE const WTabBar* GetTabBar() const { return this->TabBar; }
     FORCEINLINE const WTabBar* GetTabBarChecked() const { check( this->TabBar ) return this->TabBar; }
     FORCEINLINE const WTabBar* GetTabBarAsserted() const { jassert( this->TabBar ) return this->TabBar; }
+
+    CLASS_FIELD(Config)
+    TSubclassOf<WHostSessionScreen> HostSessionScreenClass { LazyInit };
 
 private:
 

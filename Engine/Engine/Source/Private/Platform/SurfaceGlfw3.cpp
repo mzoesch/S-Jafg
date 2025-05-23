@@ -149,6 +149,8 @@ void Jafg::LSurfaceGlfw3::Initialize()
 
     {
         STAT_QUICK_CYCLE_START("Glfw3WindowCreation")
+
+        // Min 640 480
         this->Handle = glfwCreateWindow(1280, 720, "Jafg - mzoesch", nullptr, nullptr);
     }
     if (this->Handle == nullptr)
@@ -216,7 +218,7 @@ void Jafg::LSurfaceGlfw3::Initialize()
     glfwSetCharCallback(this->Handle, Private::LGlfw3Bridge::CharCallback);
     glfwSetKeyCallback(this->Handle, Private::LGlfw3Bridge::KeyCallback);
 
-    glClearColor(0.6f, 0.8f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     return;
 }

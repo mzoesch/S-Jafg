@@ -6,7 +6,6 @@
 #include "Widgets/UserWidget.h"
 #include "CoreWorldWidgetsSubsystem.generated.h"
 
-
 namespace Jafg
 {
 

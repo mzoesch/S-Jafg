@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreAfx.h"
+#include "User/Input/InputMode.h"
 
 namespace Jafg
 {
@@ -21,38 +22,35 @@ namespace Jafg
 struct LLevel final
 {
     LLevel() = default;
-    explicit LLevel(LString InIdentifier) : Identifier(std::move(InIdentifier))
+
+    explicit LLevel
+    (
+        const LString& InIdentifier,
+        const EInputMode::Type InInputMode = EInputMode::None,
+        const bool bShowMouseCursor = true,
+        const LLinearColor& BackgroundColor = LLinearColor::Gray
+    )
+        : Identifier(InIdentifier)
+        , InputMode(InInputMode)
+        , bShowMouseCursor(bShowMouseCursor)
+        , BackgroundColor(BackgroundColor)
     {
+        return;
     }
 
-    FORCEINLINE LLevel(const LLevel& Other)
-    {
-        this->Identifier = Other.Identifier;
-    }
+    DEFAULT_REALLOC_OF_ANY_FORM(LLevel)
 
-    FORCEINLINE LLevel(LLevel&& Other) noexcept
-    {
-        this->Identifier = std::move(Other.Identifier);
-    }
-
-    FORCEINLINE LLevel& operator=(const LLevel& Other) noexcept
-    {
-        this->Identifier = Other.Identifier;
-        return *this;
-    }
-
-    FORCEINLINE LLevel& operator=(LLevel&& Other) noexcept
-    {
-        this->Identifier = std::move(Other.Identifier);
-        return *this;
-    }
+    FORCEINLINE bool operator==(const LLevel&  Other) const noexcept { return this->Identifier == Other.Identifier; }
+    FORCEINLINE bool operator!=(const LLevel&  Other) const noexcept { return !(*this == Other); }
+    FORCEINLINE bool operator==(const LString& Other) const noexcept { return this->Identifier == Other; }
+    FORCEINLINE bool operator!=(const LString& Other) const noexcept { return !(*this == Other); }
 
     LString Identifier;
 
-    FORCEINLINE auto operator==(const LLevel& Other) const -> bool  { return Identifier == Other.Identifier; }
-    FORCEINLINE auto operator!=(const LLevel& Other) const -> bool  { return !(*this == Other);              }
-    FORCEINLINE auto operator==(const LString& Other) const -> bool { return Identifier == Other;            }
-    FORCEINLINE auto operator!=(const LString& Other) const -> bool { return !(*this == Other);              }
+    EInputMode::Type InputMode;
+    bool bShowMouseCursor;
+
+    LLinearColor BackgroundColor;
 };
 
 } /* Namespace Jafg */

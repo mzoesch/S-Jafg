@@ -1,28 +1,17 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "User/Frontend/Osd/PauseScreen.h"
-#include "Engine/Engine.h"
-#include "User/LocalEgo.h"
-#include "Widgets/Region.h"
-#include "Widgets/Switcher.h"
+#include "User/Frontend/Osd/FrontendScreen.h"
 #include "Widgets/Blueprint/CommonMenuTabBar.h"
-#include "Widgets/Viewport.h"
-#include "Platform/Surface.h"
+#include "User/Frontend/Osd/HostSession.h"
 #include "User/Frontend/Osd/PreferencesScreen.h"
-#include "Widgets/Spacer.h"
+#include "Engine/Engine.h"
 
-void Jafg::WPauseScreen::Construct()
+void Jafg::WFrontendScreen::Construct()
 {
     Super::Construct();
 
-    // TODO Remove WRegion
-    MakeRootNode(WRegion).Anchor(EAnchor::Fill)
-    [
-        NewNode(WCommonMenuTabBar).SaveTo(&this->TabBar)
-            .Anchor(EAnchor::Fill)
-            .AlignHorizontal()
-            .BlurBackground(true)
-    ]
+    MakeRootNode(WCommonMenuTabBar).SaveTo(&this->TabBar)
+        .AlignHorizontal()
     FinishWidgetStyling()
 
     {
@@ -31,13 +20,26 @@ void Jafg::WPauseScreen::Construct()
 
     {
         LTabBarTabDescriptor Descriptor;
-        Descriptor.IdentifierField = "Resume";
-        Descriptor.OnButtonReleaseField = [](WTabBar& Self, const LString& InIdentifier) -> bool
+        Descriptor.IdentifierField = "HostSession";
+        Descriptor.PanelWidgetClassField = this->HostSessionScreenClass;
+        Descriptor.CallbackField = [](WTabBar* TabBar, WNode* Button, WNode* Panel) -> void
         {
-            Self.OnTabBarButtonReleased(InIdentifier);
-            Self.GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->AddVirtualKeyDown(EKeys::Escape);
-            return true;
+            check( Button )
+            if (WTabBarButton* Btn = DynamicCast<WTabBarButton>(Button))
+            {
+                WTextBlock* Text = Btn->GetButtonTextWidget();
+                if (Text)
+                {
+                    Text->SetBrush(LTextBlockBrush::Header());
+                }
+            }
         };
+        this->TabBar->RegisterTab(std::move(Descriptor));
+    }
+
+    {
+        LTabBarTabDescriptor Descriptor;
+        Descriptor.IdentifierField = "JoinSession";
         Descriptor.CallbackField = [](WTabBar* TabBar, WNode* Button, WNode* Panel) -> void
         {
             check( Button )
@@ -59,13 +61,6 @@ void Jafg::WPauseScreen::Construct()
 
     {
         LTabBarTabDescriptor Descriptor;
-        Descriptor.IdentifierField = "Achievements";
-        Descriptor.PanelWidgetClassField.Set<WCommonMenuTabBarPanel>();
-        this->TabBar->RegisterTab(std::move(Descriptor));
-    }
-
-    {
-        LTabBarTabDescriptor Descriptor;
         Descriptor.IdentifierField = "Encyclopedia";
         Descriptor.PanelWidgetClassField.Set<WCommonMenuTabBarPanel>();
         this->TabBar->RegisterTab(std::move(Descriptor));
@@ -80,7 +75,7 @@ void Jafg::WPauseScreen::Construct()
 
     {
         LTabBarTabDescriptor Descriptor;
-        Descriptor.IdentifierField = "SessionOptions";
+        Descriptor.IdentifierField = "Credits";
         Descriptor.PanelWidgetClassField.Set<WCommonMenuTabBarPanel>();
         this->TabBar->RegisterTab(std::move(Descriptor));
     }
@@ -91,17 +86,11 @@ void Jafg::WPauseScreen::Construct()
 
     {
         LTabBarTabDescriptor Descriptor;
-        Descriptor.IdentifierField = "ExitToMenu";
-        this->TabBar->RegisterTab(std::move(Descriptor));
-    }
-
-    {
-        LTabBarTabDescriptor Descriptor;
         Descriptor.IdentifierField = "ExitToDesktop";
         Descriptor.OnButtonReleaseField = [](WTabBar& Self, const LString& InIdentifier) -> bool
         {
             Self.OnTabBarButtonReleased(InIdentifier);
-            Self.GetEngine()->RequestEngineExit("Exited through pause menu.");
+            Self.GetEngine()->RequestEngineExit("Exited through front-end menu.");
             return true;
         };
         this->TabBar->RegisterTab(std::move(Descriptor));
@@ -109,23 +98,6 @@ void Jafg::WPauseScreen::Construct()
 
     {
         this->TabBar->AppendVSpace(125.0f);
-    }
-
-    return;
-}
-
-void Jafg::WPauseScreen::OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility)
-{
-    Super::OnVisibilityChanged(InOldVisibility, InNewVisibility);
-
-    if (EWidgetVisibility::IsDrawn(InNewVisibility) == false)
-    {
-        return;
-    }
-
-    if (this->TabBar)
-    {
-        this->TabBar->ResetToDefault();
     }
 
     return;

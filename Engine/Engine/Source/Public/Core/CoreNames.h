@@ -11,9 +11,6 @@
 #if PREPROCESSOR_EXCLUDE_FF
 #endif /* PREPROCESSOR_EXCLUDE_FF */
 
-namespace Jafg
-{
-
 ENGINE_API extern LName Name_LevelMyWorld;
 ENGINE_API extern LName Name_LevelFrontend;
 
@@ -34,5 +31,3 @@ ENGINE_API extern LName Name_PrefDeveloperCmds;
 
 ENGINE_API extern LName Name_ShaderOrthographicBox;
 ENGINE_API extern LName Name_ShaderChunk;
-
-} /* ~Namespace Jafg */

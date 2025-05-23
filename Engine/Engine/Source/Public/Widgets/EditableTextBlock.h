@@ -47,7 +47,9 @@ public:
 
     virtual void Construct() override;
     virtual void Draw(LViewport& Context) const override;
-    virtual void Tick() override;
+
+    //# This only the user interface.
+    void UserInterfaceTick(const LViewport& InViewport);
 
     virtual void UpdateDesiredSize() const override;
 
@@ -81,17 +83,19 @@ private:
     void SafelyReduceCaretCursor();
     void SafelyIncreaseCaretCursor();
 
-    LColor Color = LColor::Black;
-    f32    Scale = 1.0f;
+    LColor Color { LColor::Black };
+    f32    Scale { 1.0f };
 
     LString Content;
     LFontShaderContext ShaderContext;
 
     LCaretBrush CaretBrush;
-    i32 CaretCursor  = 0;
-    f32 CaretBlinker = 0.0f;
-    f32 CaretBlinkerSpeed = 0.5f;
+    i32 CaretCursor  { 0 };
+    f32 CaretBlinker { 0.0f };
+    f32 CaretBlinkerSpeed { 0.5f };
     LBoxShaderContext CaretShaderContext;
+
+    LDelegateHandle UserInterfaceTickDelegateHandle { nullptr };
 };
 
 } /* ~Namespace Jafg */

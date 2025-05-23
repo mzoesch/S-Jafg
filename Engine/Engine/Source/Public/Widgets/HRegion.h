@@ -21,7 +21,7 @@ public:
 //#
 //# Horizontal region widget. Children are stacked next to each other. From left to right.
 //#
-DECLARE_JAFG_WIDGET()
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryHRegion)
 class ENGINE_API WHRegion : public WRegion
 {
     GENERATED_CLASS_BODY()

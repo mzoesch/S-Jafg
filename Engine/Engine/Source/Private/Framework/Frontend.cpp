@@ -19,12 +19,7 @@ void Jafg::LFrontend::Initialize(LObjectContext* InOuter)
     this->CachedOuter = InOuter;
 
     this->Surfaces.Emplace(this->CreateNewSurface());
-
-    for (LSurface& Surface : this->Surfaces)
-    {
-        // TODO Move to LLevel or something as an option.
-        Surface.SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
-    }
+    this->Surfaces.GetLast()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
 
     this->FocusedSurface = this->Surfaces.GetSize() - 1;
     check( this->IsFocusedSurfaceValid() )

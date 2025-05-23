@@ -3,9 +3,6 @@
 #include "CoreAfx.h"
 #include "Core/CoreNames.h"
 
-namespace Jafg
-{
-
 ENGINE_API LName Name_LevelMyWorld          = MAKE_STATIC_NAME("LevelMyWorld");
 ENGINE_API LName Name_LevelFrontend         = MAKE_STATIC_NAME("LevelFrontend");
 
@@ -26,5 +23,3 @@ ENGINE_API LName Name_PrefDeveloperCmds     = MAKE_STATIC_NAME("PreferenceDevelo
 
 ENGINE_API LName Name_ShaderOrthographicBox = MAKE_STATIC_NAME("ShaderJafgOrthographicBox");
 ENGINE_API LName Name_ShaderChunk           = MAKE_STATIC_NAME("ShaderJafgChunk");
-
-} /* ~Namespace Jafg */

@@ -21,10 +21,18 @@ class LEngine;
 class LWorld;
 class LCommandLineInterface;
 
+} /* ~Namespace Jafg */
+
+//#
+//# The engine singleton.
+//#
+ENGINE_API extern Jafg::LEngine* GEngine;
+
+namespace Jafg
+{
+
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
-
-ENGINE_API extern LEngine* GEngine;
 
 //#
 //# Whether the engine should exit at the next opportunity.

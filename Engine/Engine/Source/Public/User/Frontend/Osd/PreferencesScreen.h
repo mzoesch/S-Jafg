@@ -34,7 +34,7 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(WPreferencesPanel)
 
     virtual void Construct() override;
-    virtual bool AddData(LWidgetNodeData* InData) override;
+    virtual bool AddData(const LWidgetNodeData* InData) override;
 };
 
 DECLARE_JAFG_WIDGET(EClassFlags::Config)

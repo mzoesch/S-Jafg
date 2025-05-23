@@ -53,7 +53,7 @@ protected:
 
 private:
 
-    WRegion* Panel = nullptr;
+    WRegion* Panel { nullptr };
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryCommonMenuTabBar)
@@ -83,8 +83,8 @@ public:
 
 private:
 
-    bool bBlur = false;
-    i32 Depth = 0;
+    bool bBlur { false };
+    i32 Depth { 0 };
 };
 
 } /* ~Namespace Jafg */

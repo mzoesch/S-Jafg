@@ -34,8 +34,6 @@ void Jafg::JCoreWorldWidgetsSubsystem::Initialize(LSubsystemCollection& Collecti
     check( this->GetLocalEgo() )
     LFrontend* Frontend = this->GetLocalEgo()->GetFrontend();
 
-    this->GetLocalEgo()->GetFrontend();
-
     this->DebugScreen = ConstructDeferredWidgetNode<WDebugScreen>(this->GetOuter());
     this->DebugScreen->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
     this->DebugScreen->SetVisibility(EWidgetVisibility::Collapsed);
@@ -44,7 +42,6 @@ void Jafg::JCoreWorldWidgetsSubsystem::Initialize(LSubsystemCollection& Collecti
     this->Crosshair = ConstructDeferredWidgetNode<WCrosshair>(this->GetOuter());
     this->Crosshair->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
     this->Crosshair->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
-    // this->Crosshair->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->Crosshair);
 
     this->ConsoleScreen = ConstructDeferredWidgetNode<WConsoleScreen>(this->GetOuter());
@@ -117,6 +114,12 @@ void Jafg::JCoreWorldWidgetsSubsystem::TearDown()
     {
         this->ConsoleScreen->RemoveFromParent();
         this->ConsoleScreen = nullptr;
+    }
+
+    if (ensure(this->PauseScreen))
+    {
+        this->PauseScreen->RemoveFromParent();
+        this->PauseScreen = nullptr;
     }
 
     return;

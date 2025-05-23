@@ -25,15 +25,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
 
+ENGINE_API Jafg::LEngine* GEngine { nullptr };
+
 namespace Jafg
 {
 
-ENGINE_API LEngine* GEngine = nullptr;
+ENGINE_API bool bGShouldRequestExit { false };
+ENGINE_API bool bGEngineRequestingExit { false };
 
-ENGINE_API bool bGShouldRequestExit = false;
-ENGINE_API bool bGEngineRequestingExit = false;
-
-ENGINE_API i32     GCustomExitStatusOverride = INDEX_NONE;
+ENGINE_API i32     GCustomExitStatusOverride { INDEX_NONE };
 ENGINE_API LString GCustomExitReason;
 
 } /* ~Namespace Jafg */

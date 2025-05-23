@@ -4,10 +4,18 @@
 
 #include "CoreAfx.h"
 
+
 namespace Jafg
 {
 
 struct LName;
+
+} /* ~Namespace Jafg */
+
+using LName = Jafg::LName;
+
+namespace Jafg
+{
 
 namespace Private
 {

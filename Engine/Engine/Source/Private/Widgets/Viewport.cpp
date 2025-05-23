@@ -287,7 +287,17 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
 
 void Jafg::LViewport::OnClear()
 {
-    this->BackgroundBuffer.ResetAndMakeDrawTarget();
+    if (this->bChangedBackgroundColor)
+    {
+        this->bChangedBackgroundColor = false;
+        this->BackgroundBuffer.ResetAndMakeDrawTarget(this->BackgroundColor);
+    }
+    else
+    {
+        this->BackgroundBuffer.ResetAndMakeDrawTarget();
+    }
+
+    return;
 }
 
 void Jafg::LViewport::Tick()

@@ -22,7 +22,7 @@ protected:
 
 public:
 
-    virtual bool AddData(LWidgetNodeData* InData) override;
+    virtual bool AddData(const LWidgetNodeData* InData) override;
     virtual void UpdateDesiredSize() const override;
 
     FORCEINLINE bool IsOwningTabBarValid(void) const { return this->OwningTabBar != nullptr; }

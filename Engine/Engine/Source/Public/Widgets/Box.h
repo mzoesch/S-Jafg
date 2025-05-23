@@ -24,10 +24,10 @@ public:
     using Super         = TWidgetFactory<TNode>;
     using TFactoryRetTy = typename Super::TFactoryRetTy;
 
-    FORCEINLINE TFactoryRetTy& SetBrush(const LBoxBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& SetTint(const LColor& InTint) { this->This()->SetTint(InTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& SetTexture(const LTexture2* InTexture) { this->This()->SetTexture(InTexture); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& SetImage(const LImage& InImage) { this->This()->SetImage(InImage); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Brush(const LBoxBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Tint(const LColor& InTint) { this->This()->SetTint(InTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Texture(const LTexture2* InTexture) { this->This()->SetTexture(InTexture); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Image(const LImage& InImage) { this->This()->SetImage(InImage); return this->Self(); }
     FORCEINLINE TFactoryRetTy& SetPadding(const LPadding& InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
 };
 

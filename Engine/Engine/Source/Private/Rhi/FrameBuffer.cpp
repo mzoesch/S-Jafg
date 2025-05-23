@@ -136,6 +136,15 @@ void Jafg::LFrameBuffer::ResetAndMakeDrawTarget()
     return;
 }
 
+void Jafg::LFrameBuffer::ResetAndMakeDrawTarget(const LLinearColor& InColor)
+{
+    this->MakeDrawTarget();
+    glClearColor(InColor.R, InColor.G, InColor.B, InColor.A);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    return;
+}
+
 void Jafg::LFrameBuffer::MakeDefaultDrawTarget()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -145,6 +154,16 @@ void Jafg::LFrameBuffer::ResetAndMakeDefaultDrawTarget()
 {
     LFrameBuffer::MakeDefaultDrawTarget();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    return;
+}
+
+void Jafg::LFrameBuffer::ResetAndMakeDefaultDrawTarget(const LLinearColor& InColor)
+{
+    LFrameBuffer::MakeDefaultDrawTarget();
+    glClearColor(InColor.R, InColor.G, InColor.B, InColor.A);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
     return;
 }

@@ -13,10 +13,10 @@ namespace Jafg
 class WTabBarPanel;
 class WTabBar;
 class WSwitcher;
-class WTabBarPanel;
+class WNode;
 class WTabBarButton;
 
-MAKE_DELEGATE_SIGNATURE(LOnTabBarLoaded, void, WTabBar* TabBar, WNode* Button, WTabBarPanel* Panel)
+MAKE_DELEGATE_SIGNATURE(LOnTabBarLoaded, void, WTabBar* TabBar, WNode* Button, WNode* Panel)
 
 struct LTabBarTabDescriptor final
 {
@@ -25,34 +25,51 @@ struct LTabBarTabDescriptor final
     DEFAULT_MOVE(LTabBarTabDescriptor)
     ~LTabBarTabDescriptor() = default;
 
-    LString Identifier;
-    LString DisplayName;
+    LString IdentifierField;
+    LString DisplayNameField;
 
-    LOnTabBarLoaded Callback;
+    LOnTabBarLoaded CallbackField;
 
-    LPadding Padding { 0.0f };
+    LPadding PaddingField { 0.0f };
 
     //#
     //# The panel widget to use. Required.
     //#
-    TSubclassOf<WTabBarPanel> PanelWidgetClass;
+    TSubclassOf<WNode> PanelWidgetClassField;
 
     //#
     //# The button to use. Leave as nullptr to use the default button that comes with the tab bar.
     //# ButtonWidgetClass and OnButtonReleased are mutually exclusive.
     //#
-    TSubclassOf<WTabBarButton> ButtonWidgetClass;
+    TSubclassOf<WTabBarButton> ButtonWidgetClassField;
     //#
     //# Optional delegate that gets called when the button is released.
     //# ButtonWidgetClass and OnButtonReleased are mutually exclusive.
     //#
-    LOnTabBarButtonRelease OnButtonRelease;
+    LOnTabBarButtonRelease OnButtonReleaseField;
 
     //#
     //# An optional value that may contain the identifier of the tab that this tab should be added after (in close
     //# proximity to it).
     //#
-    LString AddAfter;
+    LString AddAfterField;
+
+    FORCEINLINE LTabBarTabDescriptor&& Identifier(const LString& InString) { this->IdentifierField = InString; return std::move(*this); }
+    FORCEINLINE LTabBarTabDescriptor&& Identifier(LString&& InString) { this->IdentifierField = std::move(InString); return std::move(*this); }
+    FORCEINLINE LTabBarTabDescriptor&& DisplayName(const LString& InString) { this->DisplayNameField = InString; return std::move(*this); }
+    FORCEINLINE LTabBarTabDescriptor&& DisplayName(LString&& InString) { this->DisplayNameField = std::move(InString); return std::move(*this); }
+    FORCEINLINE LTabBarTabDescriptor&& Callback(LOnTabBarLoaded&& InCallback) { this->CallbackField = std::move(InCallback); return std::move(*this); }
+    FORCEINLINE LTabBarTabDescriptor&& Padding(const LPadding& InPadding) { this->PaddingField = InPadding; return std::move(*this); }
+    FORCEINLINE LTabBarTabDescriptor&& PanelWidgetClass(const TSubclassOf<WNode>& InClass) { this->PanelWidgetClassField = InClass; return std::move(*this); }
+    FORCEINLINE LTabBarTabDescriptor&& ButtonWidgetClass(const TSubclassOf<WTabBarButton>& InClass) { this->ButtonWidgetClassField = InClass; return std::move(*this); }
+    FORCEINLINE LTabBarTabDescriptor&& OnButtonRelease(LOnTabBarButtonRelease&& InCallback) { this->OnButtonReleaseField = std::move(InCallback); return std::move(*this); }
+    FORCEINLINE LTabBarTabDescriptor&& AddAfter(const LString& InString) { this->AddAfterField = InString; return std::move(*this); }
+    FORCEINLINE LTabBarTabDescriptor&& AddAfter(LString&& InString) { this->AddAfterField = std::move(InString); return std::move(*this); }
+
+    FORCEINLINE LTabBarTabDescriptor&& Sibling(LTabBarTabDescriptor&& InSibling) { this->Siblings.Emplace(std::move(InSibling)); return std::move(*this); }
+    FORCEINLINE LTabBarTabDescriptor&& operator+(LTabBarTabDescriptor&& InSibling) { return this->Sibling(std::move(InSibling)); }
+
+    TArray<LTabBarTabDescriptor> Siblings;
 };
 
 struct LTabBarTabData : public LWidgetNodeData
@@ -71,6 +88,13 @@ public:
 
     FORCEINLINE TFactoryRetTy& AlignHorizontal() { this->This()->SetHorizontalPreference(); return this->Self(); }
     FORCEINLINE TFactoryRetTy& AlignVertical() { this->This()->SetVerticalPreference(); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& AddTab(LTabBarTabDescriptor&& InDescriptor) { this->This()->RegisterTab(std::move(InDescriptor)); return this->Self(); };
+    FORCEINLINE TFactoryRetTy& AllowNone() { this->This()->SetAllowNone(true); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& DisallowNone() { this->This()->SetAllowNone(false); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& DefaultIndex(const i32 InIndex) { this->This()->SetDefaultIndex(InIndex); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& operator[](LTabBarTabDescriptor&& InDescriptor) { return this->AddTab(std::move(InDescriptor)); }
 };
 
 //#
@@ -113,7 +137,7 @@ public:
     void AppendHSpace(const f32 InHSpace);
     void AppendStretch(const LAnchor& InStretch);
     bool UnregisterTab(const LString& Identifier);
-    bool UnregisterTabChecked(const LString& Identifier);
+    bool UnregisterTabChecked(const LString& Identifier) { const bool bOut = this->UnregisterTab(Identifier); check( bOut ); return bOut; }
 
     template <typename TNode>
     FORCEINLINE void SetButtonsContainerClass() { this->SetButtonsContainerClass(TNode::StaticClass()); }
@@ -125,12 +149,19 @@ public:
     FORCEINLINE void SetSwitcherClass(const TSubclassOf<WSwitcher>& InSwitcherClass) { this->SwitcherClass = InSwitcherClass; }
     FORCEINLINE auto GetCurrentSwitcherClass() const -> const TSubclassOf<WSwitcher>& { return this->SwitcherClass; }
 
+    FORCEINLINE i32  GetDefaultIndex() const { return this->DefaultIndex; }
+    FORCEINLINE void SetDefaultIndex(const i32 InIndex) { this->DefaultIndex = InIndex; }
+
+    FORCEINLINE bool IsAllowNone() const { return this->bAllowNone; }
+    FORCEINLINE void SetAllowNone(const bool InAllowNone) { this->bAllowNone = InAllowNone; }
+
+    void ResetToDefault();
+    void ActivateTab(const LString& Identifier);
     void OnTabBarButtonReleased(const LString& Identifier);
-    void OnOuterVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility);
 
 private:
 
-    void LoadTab(const LTabBarTabDescriptor& Descriptor, const i32 InIndex);
+    void LoadTab(LTabBarTabDescriptor&& InTabDescriptor, const i32 InIndex);
 
 protected:
 
@@ -167,12 +198,23 @@ protected:
     struct LAddedTabBarTab final
     {
         LString Identifier;
-        WNode* Button = nullptr;
-        WNode* Panel = nullptr;
-        i8 SwitcherIndex = INDEX_NONE;
+        WNode* Button { nullptr };
+        WNode* Panel { nullptr };
+        i8 SwitcherIndex { INDEX_NONE };
     };
     TArray<LAddedTabBarTab> TabsInOrder;
     TArray<LTabBarTabDescriptor> DeferredTabs;
+
+    //#
+    //# The default index to switch to when the tab bar is being made visible, or #ResetToDefault is called
+    //# INDEX_NONE for no tab to be present.
+    //#
+    i32 DefaultIndex { INDEX_NONE };
+
+    //#
+    //# Whether to allow none to be selected.
+    //#
+    bool bAllowNone { true };
 };
 
 } /* ~Namespace Jafg */

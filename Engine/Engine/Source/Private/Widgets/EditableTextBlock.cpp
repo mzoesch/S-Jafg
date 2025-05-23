@@ -19,7 +19,6 @@ Jafg::LString Jafg::LexToString(const ETextCommit::Type InType)
 
 Jafg::WEditableTextBlock::WEditableTextBlock(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-    this->SetShouldTick(false);
     this->SetVisibility(EWidgetVisibility::Visible);
     this->SetAnchor(EAnchor::Fill);
 
@@ -82,10 +81,8 @@ void Jafg::WEditableTextBlock::Draw(LViewport& Context) const
     return;
 }
 
-void Jafg::WEditableTextBlock::Tick()
+void Jafg::WEditableTextBlock::UserInterfaceTick(const LViewport& InViewport)
 {
-    Super::Tick();
-
     if (this->GetLocalEgo()->GetUserInput()->HasBufferedPlatformInput())
     {
         const LString::T* Input = this->GetLocalEgo()->GetUserInput()->GetBufferedPlatformInput().ToPtr();
@@ -131,15 +128,32 @@ Jafg::LCursorReply Jafg::WEditableTextBlock::OnCursorLeave()
 void Jafg::WEditableTextBlock::OnFocusReceived()
 {
     Super::OnFocusReceived();
-    this->SetShouldTick(true);
     this->CaretBlinker = 0.0f;
+
+    if (const LViewport* Viewport = this->GetViewport(); Viewport)
+    {
+        this->UserInterfaceTickDelegateHandle = Viewport->OnLateTick.AddMember(this, &WEditableTextBlock::UserInterfaceTick);
+    }
+
     return;
 }
 
 void Jafg::WEditableTextBlock::OnFocusLost()
 {
     Super::OnFocusLost();
-    this->SetShouldTick(false);
+
+    if (this->UserInterfaceTickDelegateHandle.IsValid())
+    {
+        if (const LViewport* Viewport = this->GetViewport(); Viewport)
+        {
+            Viewport->OnLateTick.Remove(&this->UserInterfaceTickDelegateHandle);
+        }
+        else
+        {
+            LOG_ERROR(LogWidgets, "Viewport is invalid. Cannot remove handle.")
+        }
+    }
+
     return;
 }
 

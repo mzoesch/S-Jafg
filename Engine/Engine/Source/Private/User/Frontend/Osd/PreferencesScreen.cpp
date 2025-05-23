@@ -51,7 +51,7 @@ void Jafg::WPreferencesPanel::Construct()
     return;
 }
 
-bool Jafg::WPreferencesPanel::AddData(LWidgetNodeData* InData)
+bool Jafg::WPreferencesPanel::AddData(const LWidgetNodeData* InData)
 {
     Super::AddData(InData);
     if (InData->DerivedClass != WPreferencesPanel::StaticClass()->GetName())
@@ -59,7 +59,7 @@ bool Jafg::WPreferencesPanel::AddData(LWidgetNodeData* InData)
         return false;
     }
 
-    LPreferencesPanelData* Data = static_cast<LPreferencesPanelData*>(InData);
+    const LPreferencesPanelData* Data = static_cast<const LPreferencesPanelData*>(InData);
     LPreference* P = Data->Preference;
     check( P )
 
@@ -107,11 +107,11 @@ void Jafg::WPreferencesScreen::Construct()
         LPreference* LambdaPreference = const_cast<LPreference*>(TopPreference.GetValuePtr());
 
         LTabBarTabDescriptor Descriptor;
-        Descriptor.Identifier = TopPreference->GetName().ToString();
-        Descriptor.DisplayName = TopPreference->GetDisplayName();
-        Descriptor.Padding = LPadding(7.0f, 0.0f, 0.0f, 0.0f);
-        Descriptor.PanelWidgetClass = this->PanelClass;
-        Descriptor.Callback = [LambdaPreference](WTabBar* TabBar, WNode* Button, WNode* Panel) -> void
+        Descriptor.IdentifierField = TopPreference->GetName().ToString();
+        Descriptor.DisplayNameField = TopPreference->GetDisplayName();
+        Descriptor.PaddingField = LPadding(7.0f, 0.0f, 0.0f, 0.0f);
+        Descriptor.PanelWidgetClassField = this->PanelClass;
+        Descriptor.CallbackField = [LambdaPreference](WTabBar* TabBar, WNode* Button, WNode* Panel) -> void
         {
             if (Panel)
             {
