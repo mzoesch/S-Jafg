@@ -280,14 +280,19 @@ void Jafg::LEngine::Tick(const f32 DeltaTime)
 
     for (Private::LWorldContext& Context : this->Contexts)
     {
-        checkSlow( Context.IsValid() )
+        bool bTraveled { false };
 
         if (Context.IsWaitingForTravel())
         {
-            this->TravelContext(Context);
+            if (this->TravelContext(Context))
+            {
+                bTraveled = true;
+            }
         }
 
-        else if (Context.ChildWorld->CanTick())
+        checkSlow( Context.IsValid() )
+
+        if (bTraveled == false && Context.ChildWorld->CanTick())
         {
             Context.ChildWorld->Tick(DeltaTime);
         }
@@ -577,16 +582,23 @@ bool Jafg::LEngine::IsContextUrlInternal(const LString& Url) const
         return false;
     }
 
-    /* We have to implement this in the future. If not internal, then connect to remote server. */
+    /* We have to implement this in the future. If not internal, then connect to a remote server. */
     return true;
 }
 
-void Jafg::LEngine::TravelContext(Private::LWorldContext& Context)
+bool Jafg::LEngine::TravelContext(Private::LWorldContext& Context)
 {
     check( Context.IsWaitingForTravel() )
 
+    LOG_INFO(LogEngine, "Traveling world to [{}].", Context.TravelUrl)
+
     LLevel* Level = this->GetLevelByInternalUrl(Context.TravelUrl);
-    jassert( Level )
+    if (Level == nullptr)
+    {
+        LOG_ERROR(LogEngine, "Failed to resolve URL for any world [{}].", Context.TravelUrl)
+        Context.TravelUrl.Empty();
+        return false;
+    }
 
     /* Get some args here in the future. */
     Context.TravelUrl.Empty();
@@ -607,7 +619,7 @@ void Jafg::LEngine::TravelContext(Private::LWorldContext& Context)
 
     Context.ChildWorld->InitializeWorld(*Level);
 
-    return;
+    return true;
 }
 
 #if PLATFORM_SUPPORTS_SHARED_LIBRARIES

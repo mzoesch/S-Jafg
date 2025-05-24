@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/LocalEgo.h"
-
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "Platform/Surface.h"
@@ -206,16 +205,16 @@ void Jafg::LLocalEgo::OnWorldBeginLife(LWorld* InNewWorld)
 
         if (InNewWorld->GetUnderlyingLevelName() == Name_LevelMyWorld.ToString().ToPtr())
         {
+            if (this->PersonaController->DoesPossess() == false)
+            {
+                APawn* Pawn = SpawnDeferredActor<APawn>(InNewWorld, ALackey::StaticClass());
+                this->PersonaController->Possess(Pawn);
+                Pawn->SetTranslation(LVector(MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 4.0f + MwStatics::ChunkSize / 2.0f));
+            }
+
             this->GetUserInput()->ActivateContext(Name_UicInMyWorld);
         }
     }
-
-    // if (this->PersonaController->DoesPossess() == false)
-    // {
-    //     APawn* Pawn = SpawnDeferredActor<APawn>(InNewWorld, ALackey::StaticClass());
-    //     this->PersonaController->Possess(Pawn);
-    //     Pawn->SetTranslation(LVector(MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 4.0f + MwStatics::ChunkSize / 2.0f));
-    // }
 
     return;
 }

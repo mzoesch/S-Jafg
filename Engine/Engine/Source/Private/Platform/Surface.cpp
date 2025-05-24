@@ -26,6 +26,8 @@ void Jafg::LSurfaceBase::Tick()
 {
     const bool bCheckInput = this->InputMode & EInputMode::UserInterface;
 
+    this->GetViewport().ClearInvalidWidgets();
+
     if (bCheckInput)
     {
         if (this->IsMouseLocationMeaningful())

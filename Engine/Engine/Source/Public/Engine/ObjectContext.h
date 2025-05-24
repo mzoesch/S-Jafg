@@ -39,6 +39,8 @@ public:
     LObjectContext(EGlobalCarnifex);
     LObjectContext(EDeferredGlobalCarnifex);
     LObjectContext& operator=(EGlobalCarnifex);
+    void DeferredInitialize(EGlobalCarnifex);
+    void DeferredInitialize(EDeferredGlobalCarnifex);
     void DeferredInitialize(LCarnifex* InCarnifex);
 
     PROHIBIT_REALLOC_OF_ANY_FORM(LObjectContext)
@@ -54,7 +56,7 @@ public:
     FORCEINLINE bool IsCarnifexValid() const { return this->Carnifex != nullptr; }
     FORCEINLINE auto GetCarnifex() const -> LCarnifex* { return this->Carnifex; }
 
-    FORCEINLINE auto SetHumanReadableName(const LString& InS) -> void { check( this->IsValid() ) this->HumanReadableName = InS; }
+    FORCEINLINE auto SetHumanReadableName(const LString& InS) -> void { this->HumanReadableName = InS; }
     FORCEINLINE auto GetHumanReadableName() const -> const LString& { return this->HumanReadableName; }
 
     FORCEINLINE bool IsHiredHere(const JObjectBase* InObject) const { return InObject && this->Employees.Contains(InObject); }

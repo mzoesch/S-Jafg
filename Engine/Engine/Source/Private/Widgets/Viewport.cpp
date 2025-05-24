@@ -9,6 +9,56 @@
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
 
+void Jafg::LViewport::ClearInvalidWidgets()
+{
+    if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
+    {
+        if (this->FocusedWidget.IsNotNull() && this->FocusedWidget.IsValidDeep() == false)
+        {
+            LOG_VERBOSE(LogWidgetFramework, "Current focused widget is invalid.")
+            this->FocusedWidget.Reset();
+        }
+    }
+    else
+    {
+        if (this->FocusedWidget.IsValidDeep() == false)
+        {
+            this->FocusedWidget.Reset();
+        }
+    }
+
+    auto ClearOnContainer {[](TArray<TObjectStorage<WNode>>& InContainer) -> void
+    {
+        if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
+        {
+            if (const i32 Removed = InContainer.RemoveByPredicate([](const TObjectStorage<WNode>& InNode)
+            {
+                return InNode.IsValidDeep() == false;
+            }); Removed > 0)
+            {
+                LOG_VERBOSE(LogWidgetFramework, "Found [{}] hovered widgets from last frame that are now invalid.", Removed)
+            }
+
+        }
+        else
+        {
+            InContainer.RemoveByPredicate([](const TObjectStorage<WNode>& InNode)
+            {
+                return InNode.IsValidDeep() == false;
+            });
+
+            return;
+        }
+
+        return;
+    }};
+
+    ClearOnContainer(this->LastFrameHoveredWidgets);
+    ClearOnContainer(this->HoveredWidgets);
+
+    return;
+}
+
 void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursorLocation)
 {
     this->CachedContext = &Context;
@@ -28,33 +78,6 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
     if (bCursorLocationIsMeaningful)
     {
         this->HoveredWidgets.Reset(this->HoveredWidgets.GetSize());
-    }
-
-    if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
-    {
-        if (const i32 Removed = this->LastFrameHoveredWidgets.RemoveByPredicate([](const TObjectStorage<WNode>& InNode)
-        {
-            return InNode.IsValidDeep() == false;
-        }); Removed > 0)
-        {
-            LOG_VERBOSE(LogWidgetFramework, "Found [{}] hovered widgets from last frame that are now invalid.", Removed)
-        }
-        if (this->FocusedWidget.IsNotNull() && this->FocusedWidget.IsValidDeep() == false)
-        {
-            LOG_VERBOSE(LogWidgetFramework, "Current focused widget is invalid.")
-            this->FocusedWidget.Reset();
-        }
-    }
-    else
-    {
-        this->LastFrameHoveredWidgets.RemoveByPredicate([](const TObjectStorage<WNode>& InNode)
-        {
-            return InNode.IsValidDeep() == false;
-        });
-        if (this->FocusedWidget.IsValidDeep() == false)
-        {
-            this->FocusedWidget.Reset();
-        }
     }
 
     // Sweep cursor input over widgets.

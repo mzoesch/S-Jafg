@@ -118,6 +118,7 @@ public:
     ENGINE_API auto GetLocalController() const -> APersonaController*;
     ENGINE_API auto GetCommandLineInterface() const -> LCommandLineInterface*;
     //# Only valid if the pawn is in this world.
+    FORCEINLINE bool IsLocalPawnValid() const { return this->GetLocalPawn() != nullptr; }
     ENGINE_API  auto GetLocalPawn() const -> APawn*;
     FORCEINLINE auto GetLocalPawnChecked() const -> APawn* { APawn* Out = this->GetLocalPawn(); check( Out ) return Out; }
     FORCEINLINE auto GetLocalPawnAsserted() const -> APawn* { APawn* Out = this->GetLocalPawn(); jassert( Out ) return Out; }

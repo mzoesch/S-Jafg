@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/Frontend/Osd/PauseScreen.h"
+#include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "User/LocalEgo.h"
 #include "Widgets/Region.h"
@@ -92,6 +93,19 @@ void Jafg::WPauseScreen::Construct()
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.IdentifierField = "ExitToMenu";
+        Descriptor.OnButtonReleaseField = [this](WTabBar& Self, const LString& InIdentifier) -> bool
+        {
+            Self.OnTabBarButtonReleased(InIdentifier);
+            if (this->GetOuter()->IsWorld())
+            {
+                this->GetEngine()->Browse(static_cast<LWorld*>(this->GetOuter()), Name_LevelFrontend.ToString());
+            }
+            else
+            {
+                LOG_ERROR(LogWidgets, "Cannot host, because outer is not a world.")
+            }
+            return true;
+        };
         this->TabBar->RegisterTab(std::move(Descriptor));
     }
 

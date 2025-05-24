@@ -219,7 +219,7 @@ private:
 
     void Browse(Private::LWorldContext& Context, const LString& Url) const;
     bool IsContextUrlInternal(const LString& Url) const;
-    void TravelContext(Private::LWorldContext& Context);
+    bool TravelContext(Private::LWorldContext& Context);
     FORCEINLINE auto GetLevelByInternalUrl(const LString& Url) -> LLevel* { return this->RegisteredLevels.FindRef(Url); }
 
     //#

@@ -1,6 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/Frontend/Osd/HostSession.h"
+#include "Core/CoreNames.h"
+#include "Engine/Engine.h"
+#include "Engine/World.h"
 #include "Widgets/Button.h"
 #include "Widgets/EditableTextBlock.h"
 #include "Widgets/Switcher.h"
@@ -263,6 +266,18 @@ void Jafg::WHostSessionScreen_New::OnLoad_General(WTabBar* TabBar, WNode* Button
             +
             NewNode(WTextButton)
                 .Content("Host")
+                .OnPrimaryRelease([this](WButton* Self, const LKeyEvent& InKeyEvent) -> void
+                {
+                    if (this->GetOuter()->IsWorld())
+                    {
+                        this->GetEngine()->Browse(static_cast<LWorld*>(this->GetOuter()), Name_LevelMyWorld.ToString());
+                    }
+                    else
+                    {
+                        LOG_ERROR(LogWidgets, "Cannot host, because outer is not a world.")
+                    }
+                    return;
+                })
         ]
     ];
 

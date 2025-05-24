@@ -41,6 +41,7 @@ public:
     ~LViewport() = default;
 
     void Initialize() { }
+    void ClearInvalidWidgets();
     void DispatchInputs(LSurface& Context, const LVector2& InCursorLocation);
     void OnMouseLeftViewport(LSurface& Context, const bool bInvalidateAllInputs);
     void OnClear();

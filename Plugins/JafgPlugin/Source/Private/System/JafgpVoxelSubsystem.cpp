@@ -6,16 +6,12 @@ void Jafgp::JJafgpVoxelSubsystem::Initialize(Jafg::LSubsystemCollection& Collect
 {
     Super::Initialize(Collection);
 
-    LOG_ERROR(LogTemporal, "Hello")
-
     return;
 }
 
 void Jafgp::JJafgpVoxelSubsystem::TearDown()
 {
     Super::TearDown();
-
-    LOG_ERROR(LogTemporal, "Hello")
 
     return;
 }

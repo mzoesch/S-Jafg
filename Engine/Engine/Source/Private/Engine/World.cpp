@@ -13,18 +13,13 @@
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Debug/DebugTraceLine.h"
-#include "Cli/CommandLineInterface.h"
 #include "Debug/DebugTraceSphere.h"
-#include <glm/fwd.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include "Stats/Stats.h"
 
-Jafg::LWorld::LWorld(const LString& InHumanReadableName, const EWorldState::Type InWorldType): WorldState(InWorldType)
+Jafg::LWorld::LWorld(const LString& InHumanReadableName, const EWorldState::Type InWorldType) : WorldState(InWorldType)
 {
-    LObjectContext::operator=(GlobalCarnifex);
     this->SetHumanReadableName(InHumanReadableName);
-    check( this->WorldState != EWorldState::None )
+    check( this->WorldState == EWorldState::Uninitialized )
 
     return;
 }
@@ -52,9 +47,7 @@ Jafg::LCommandLineInterface* Jafg::LWorld::GetCommandLineInterface() const
 
 Jafg::APawn* Jafg::LWorld::GetLocalPawn() const
 {
-    APawn* Out = this->GetLocalController()->GetPossessed();
-
-    if (Out && Out->GetOuter() == this)
+    if (APawn* Out = this->GetLocalController()->GetPossessed(); Out && Out->GetOuter() == this)
     {
         return Out;
     }
@@ -69,7 +62,10 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
     this->RealTimeWhenWorldWasLaunched = static_cast<f32>(Application::GetDeltaSinceStaticStorageInitialization());
     check( this->RealTimeWhenWorldWasLaunched > 0.0f )
 
+    check( this->WorldState == EWorldState::Uninitialized || this->WorldState == EWorldState::WaitingForKill )
     this->WorldState = EWorldState::Initializing;
+
+    this->DeferredInitialize(GlobalCarnifex);
 
     this->UnderlyingLevel = Level;
     this->GetEngine()->OnWorldBeginLife.Broadcast(this);

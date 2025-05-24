@@ -42,6 +42,14 @@ void Jafg::JChunkValidationSubsystem::FixedTick(const float EngineDeltaTime, con
         return;
     }
 
+    check( this->GetWorld() )
+
+    if (this->GetWorld()->IsLocalPawnValid() == false)
+    {
+        LOG_WARNING(LogChunkValidation, "Local pawn is invalid. Nothing to do.")
+        return;
+    }
+
     const LVector   Translation = this->GetWorld()->GetLocalPawn()->GetTranslation();
     const LChunkKey CurrentKey  = LChunkKey(Translation);
 

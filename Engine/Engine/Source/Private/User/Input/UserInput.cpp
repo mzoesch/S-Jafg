@@ -233,7 +233,7 @@ void Jafg::LUserInput::GetPanickedContextByName(const LName InName, LUserInputCo
 Jafg::LInputAction* Jafg::LUserInput::RegisterAction(LInputAction&& InAction)
 {
     LInputAction* Action = new LInputAction(std::move(InAction));
-    this->RegisteredActions.Add(Action);
+    this->RegisteredActions.Emplace(Action);
     return Action;
 }
 

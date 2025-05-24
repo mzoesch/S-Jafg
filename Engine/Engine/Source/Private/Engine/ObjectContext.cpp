@@ -16,11 +16,11 @@ Jafg::LObjectContext::LObjectContext(EDeferredGlobalCarnifex)
 {
     check( Tasks::IsOnMasterThread() )
     Tasks::Make
-        (
+    (
         ENamedThreads::Master,
         ETaskTime::BeforeEngineInitButAfterAlloc,
         LTaskDelegate::CreateMember(this, &LObjectContext::InitializeWithGlobal)
-        );
+    );
 
     return;
 }
@@ -29,6 +29,24 @@ Jafg::LObjectContext& Jafg::LObjectContext::operator=(EGlobalCarnifex)
 {
     this->Initialize(Private::GCarnifexReferrer);
     return *this;
+}
+
+void Jafg::LObjectContext::DeferredInitialize(EGlobalCarnifex)
+{
+    this->Initialize(Private::GCarnifexReferrer);
+    return;
+}
+
+void Jafg::LObjectContext::DeferredInitialize(EDeferredGlobalCarnifex)
+{
+    Tasks::Make
+    (
+        ENamedThreads::Master,
+        ETaskTime::BeforeEngineInitButAfterAlloc,
+        LTaskDelegate::CreateMember(this, &LObjectContext::InitializeWithGlobal)
+    );
+
+    return;
 }
 
 void Jafg::LObjectContext::DeferredInitialize(LCarnifex* InCarnifex)
