@@ -3,8 +3,9 @@
 #pragma once
 
 #include "User/Input/RawInput.h"
-#include "InputContext.h"
+#include "User/Input/InputContext.h"
 #include "User/Input/InputTypes.h"
+#include "User/Input/InputAction.h"
 
 namespace Jafg
 {
@@ -29,56 +30,84 @@ public:
 
     ENGINE_API LLocalEgo* GetLocalEgo() const;
 
-    ENGINE_API void RegisterContext(LUserInputContext&& Context, const bool bMakeActive = false);
+    //# @return The newly mapped action. This is not the same as the input argument. Nullptr if something went wrong.
+    ENGINE_API const LInputAction* RegisterAction(LInputAction&& InAction);
 
-    ENGINE_API TArray<LRawInput>  GetTriggeredKeys() const;
-    ENGINE_API TArray<LRawInput>& GetOngoingKeys() const;
-    ENGINE_API TArray<LRawInput>  GetCompletedKeys() const;
-
-    ENGINE_API auto GetContextByName(const LString& InName) -> LUserInputContext*;
-    ENGINE_API auto GetCheckedContextByName(const LString& InName) -> LUserInputContext*;
-    ENGINE_API auto GetPanickedContextByName(const LString& InName) -> LUserInputContext*;
-    ENGINE_API void GetContextByName(const LString& InName, LUserInputContext*& OutContext) const;
-    ENGINE_API void GetCheckedContextByName(const LString& InName, LUserInputContext*& OutContext) const;
-    ENGINE_API void GetPanickedContextByName(const LString& InName, LUserInputContext*& OutContext) const;
-    ENGINE_API auto GetContextByName(const LName InName) -> LUserInputContext*;
-    ENGINE_API auto GetCheckedContextByName(const LName InName) -> LUserInputContext*;
-    ENGINE_API auto GetPanickedContextByName(const LName InName) -> LUserInputContext*;
-    ENGINE_API void GetContextByName(const LName InName, LUserInputContext*& OutContext) const;
-    ENGINE_API void GetCheckedContextByName(const LName InName, LUserInputContext*& OutContext) const;
-    ENGINE_API void GetPanickedContextByName(const LName InName, LUserInputContext*& OutContext) const;
-
-    //# @return The newly mapped action. This is not the same as the input argument.
-    ENGINE_API  auto RegisterAction(LInputAction&& InAction) -> LInputAction*;
-    FORCEINLINE auto GetRegisteredActions() const -> const TArray<LInputAction*>& { return this->RegisteredActions; }
-
-    ENGINE_API  void ActivateContext(const LName InName);
-    ENGINE_API  void ActivateContext(const LString& InName);
-    ENGINE_API  void ActivateContext(LUserInputContext* InContext);
-    ENGINE_API  void DeactivateContext(const LName InName);
-    ENGINE_API  void DeactivateContext(const LString& InName);
-    ENGINE_API  void DeactivateContext(LUserInputContext* InContext);
-    ENGINE_API  i32  DeactivateAllContexts();
-    FORCEINLINE const TArray<LUserInputContext*>& GetActiveContexts() const { return this->ActiveContexts; }
-    FORCEINLINE const TArray<LUserInputContext*>& GetRegisteredContexts() const { return this->RegisteredContexts; }
+    //# @return The context that was added. Nullptr if something went wrong.
+    ENGINE_API LUserInputContext* RegisterContext(LUserInputContext&& Context, const bool bMakeActive = false);
 
     //#
-    //# This frame platform-localized input.
+    //# Activate a context. Nullptr is ok to pass.
+    //# @return True if the context was activated.
+    //#
+    ENGINE_API  bool ActivateContext(LUserInputContext* InContext);
+    FORCEINLINE bool ActivateContext(const LName& InName) { return this->ActivateContext(this->GetContextByName(InName)); }
+    FORCEINLINE bool ActivateContext(const LString& InName) { return this->ActivateContext(GET_NAME(InName)); }
+
+    //#
+    //# Deactivate a context. Nullptr is ok to pass.
+    //# @return True if the context was activated.
+    //#
+    ENGINE_API  bool DeactivateContext(LUserInputContext* InContext);
+    FORCEINLINE bool DeactivateContext(const LName& InName) { return this->DeactivateContext(this->GetContextByName(InName)); }
+    FORCEINLINE bool DeactivateContext(const LString& InName) { return this->DeactivateContext(GET_NAME(InName)); }
+
+    ENGINE_API  i32  DeactivateAllContexts(TArray<LUserInputContext*>* OutActiveContexts = nullptr);
+
+    ENGINE_API TArray<LRawInput>        GetTriggeredKeys() const;
+    ENGINE_API const TArray<LRawInput>& GetOngoingKeys() const;
+    ENGINE_API TArray<LRawInput>        GetCompletedKeys() const;
+
+    FORCEINLINE       LUserInputContext* GetContextByName(const LName& InName) { Smart::TUnique<LUserInputContext>* Out = this->RegisteredContexts.FindRef(InName); return Out ? Out->GetValuePtr() : nullptr; }
+    FORCEINLINE const LUserInputContext* GetContextByName(const LName& InName) const { const Smart::TUnique<LUserInputContext>* Out = this->RegisteredContexts.FindRef(InName); return Out ? Out->GetValuePtr() : nullptr; }
+    FORCEINLINE       LUserInputContext* GetContextByNameChecked(const LName& InName) { LUserInputContext* Out = this->GetContextByName(InName); check( Out ) return Out; }
+    FORCEINLINE const LUserInputContext* GetContextByNameChecked(const LName& InName) const { const LUserInputContext* Out = this->GetContextByName(InName); check( Out ) return Out; }
+    FORCEINLINE       LUserInputContext* GetContextByNameAsserted(const LName& InName) { LUserInputContext* Out = this->GetContextByName(InName); jassert( Out ) return Out; }
+    FORCEINLINE const LUserInputContext* GetContextByNameAsserted(const LName& InName) const { const LUserInputContext* Out = this->GetContextByName(InName); jassert( Out ) return Out; }
+
+    FORCEINLINE       LUserInputContext* GetContextByName(const LString& InName) { return this->GetContextByName(GET_NAME_CHECKED(InName)); }
+    FORCEINLINE const LUserInputContext* GetContextByName(const LString& InName) const { return this->GetContextByName(GET_NAME_CHECKED(InName)); }
+    FORCEINLINE       LUserInputContext* GetContextByNameChecked(const LString& InName) { LUserInputContext* Out = this->GetContextByName(InName); check( Out ) return Out; }
+    FORCEINLINE const LUserInputContext* GetContextByNameChecked(const LString& InName) const { const LUserInputContext* Out = this->GetContextByName(InName); check( Out ) return Out; }
+    FORCEINLINE       LUserInputContext* GetContextByNameAsserted(const LString& InName) { LUserInputContext* Out = this->GetContextByName(InName); jassert( Out ) return Out; }
+    FORCEINLINE const LUserInputContext* GetContextByNameAsserted(const LString& InName) const { const LUserInputContext* Out = this->GetContextByName(InName); jassert( Out ) return Out; }
+
+    FORCEINLINE       LInputAction* GetActionByName(const LName& InName) { Smart::TUnique<LInputAction>* Out = this->RegisteredActions.FindRef(InName); return Out ? Out->GetValuePtr() : nullptr; }
+    FORCEINLINE const LInputAction* GetActionByName(const LName& InName) const { const Smart::TUnique<LInputAction>* Out = this->RegisteredActions.FindRef(InName); return Out ? Out->GetValuePtr() : nullptr; }
+    FORCEINLINE       LInputAction* GetActionByNameChecked(const LName& InName) { LInputAction* Out = this->GetActionByName(InName); check( Out ) return Out; }
+    FORCEINLINE const LInputAction* GetActionByNameChecked(const LName& InName) const { const LInputAction* Out = this->GetActionByName(InName); check( Out ) return Out; }
+    FORCEINLINE       LInputAction* GetActionByNameAsserted(const LName& InName) { LInputAction* Out = this->GetActionByName(InName); jassert( Out ) return Out; }
+    FORCEINLINE const LInputAction* GetActionByNameAsserted(const LName& InName) const { const LInputAction* Out = this->GetActionByName(InName); jassert( Out ) return Out; }
+
+    FORCEINLINE       LInputAction* GetActionByName(const LString& InName) { return this->GetActionByName(GET_NAME_CHECKED(InName)); }
+    FORCEINLINE const LInputAction* GetActionByName(const LString& InName) const { return this->GetActionByName(GET_NAME_CHECKED(InName)); }
+    FORCEINLINE       LInputAction* GetActionByNameChecked(const LString& InName) { LInputAction* Out = this->GetActionByName(InName); check( Out ) return Out; }
+    FORCEINLINE const LInputAction* GetActionByNameChecked(const LString& InName) const { const LInputAction* Out = this->GetActionByName(InName); check( Out ) return Out; }
+    FORCEINLINE       LInputAction* GetActionByNameAsserted(const LString& InName) { LInputAction* Out = this->GetActionByName(InName); jassert( Out ) return Out; }
+    FORCEINLINE const LInputAction* GetActionByNameAsserted(const LString& InName) const { const LInputAction* Out = this->GetActionByName(InName); jassert( Out ) return Out; }
+
+    //#
+    //# This frame platform-localized input for focused surface.
     //#
     ENGINE_API bool HasBufferedPlatformInput() const;
-    ENGINE_API auto GetBufferedPlatformInput() const -> const LString&;
+    ENGINE_API const LString& GetBufferedPlatformInput() const;
+
+    FORCEINLINE const TArray<LUserInputContext*>& GetActiveContexts() const { return this->ActiveContexts; }
+
+    FORCEINLINE const TArray<Smart::TUnique<LInputAction>>& GetRegisteredActions() const { return this->RegisteredActions; }
+    FORCEINLINE const TArray<Smart::TUnique<LUserInputContext>>& GetRegisteredContexts() const { return this->RegisteredContexts; }
 
 private:
 
-    void DispatchInputDelegatesForAction(const LUserInputContext* InContext, const TArray<LRawInput>& InRawInputs, LInputMappedAction* InAction);
+    void DispatchInputDelegatesForKeyCategory(TArray<LRawInput>* InRawInputs, const EInputActionTrigger::Type InActionTriggerType);
 
-    TArray<LInputAction*> RegisteredActions;
+    TArray<Smart::TUnique<LInputAction>> RegisteredActions;
+    TArray<Smart::TUnique<LUserInputContext>> RegisteredContexts;
 
     //#
     //# The most important context is stored first.
     //#
     TArray<LUserInputContext*> ActiveContexts;
-    TArray<LUserInputContext*> RegisteredContexts;
 };
 
 } /* ~Namespace Jafg */

@@ -55,7 +55,7 @@ public:
     FORCEINLINE bool IsOnLoadDelegateValid() const { return this->OnLoadDelegate.IsBound(); }
     FORCEINLINE void OnLoad(LOnDemandLoadPreferences&& InDelegate) { this->OnLoadDelegate = std::move(InDelegate); }
 
-    //# @return True, if the refresh was successful.
+    //# @return True if the refresh was successful.
     ENGINE_API bool Refresh();
 
 private:

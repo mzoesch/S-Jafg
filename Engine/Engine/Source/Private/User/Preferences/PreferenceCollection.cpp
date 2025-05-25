@@ -69,6 +69,7 @@ bool Jafg::LIntermediatePreferenceCollection::Refresh()
         return false;
     }
 
+    LOG_VERBOSE(LogPreferences, "Loading intermediate preference collection [{}].", this->GetName())
     this->Preferences.Reset(this->Preferences.GetSize());
     this->OnLoadDelegate.Invoke(this);
 

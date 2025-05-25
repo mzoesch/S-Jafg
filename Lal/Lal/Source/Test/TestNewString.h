@@ -7,7 +7,7 @@
 #include "Containers/StringUtility.h"
 // #include "Containers/StringConversions.h"
 
-#pragma region Simple String
+#pragma region "Simple String"
 
 TEST_CASE(SimpleNewSimpleStringOperations, "Lal.Strings")
 {
@@ -622,9 +622,9 @@ TEST_CASE(NewSimpleStringLowerCase, "Lal.Strings")
     return;
 }
 
-#pragma endregion Simple String
+#pragma endregion "Simple String"
 
-#pragma region Uni-Eight String
+#pragma region "Uni-Eight String"
 
 TEST_CASE(SimpleNewEightStringOperations, "Lal.Strings")
 {
@@ -1455,4 +1455,4 @@ TEST_CASE(StringConversion, "Lal.Strings")
     return;
 }
 
-#pragma endregion Uni-Eight String
+#pragma endregion "Uni-Eight String"

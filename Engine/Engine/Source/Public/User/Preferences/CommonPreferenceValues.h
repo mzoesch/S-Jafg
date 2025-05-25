@@ -85,8 +85,30 @@ class LPreferenceValue_Color : public LPreferenceValue
 {
 };
 
-class LPreferenceValue_Key : public LPreferenceValue
+class LPreferenceValue_InputAction : public LPreferenceValue
 {
+public:
+
+    FORCEINLINE LPreferenceValue_InputAction(LName InName)
+        : LPreferenceValue(std::move(InName), LBuildPreference::CreateWeakFunction(LPreferenceValue_InputAction::BuildDefault)) { }
+    FORCEINLINE LPreferenceValue_InputAction(LName InName, LBuildPreference&& InBuildDelegate)
+        : LPreferenceValue(std::move(InName), std::move(InBuildDelegate)) { }
+
+    FORCEINLINE LPreferenceValue_InputAction(LName InName, const LString& InDisplayName)
+        : LPreferenceValue(std::move(InName), InDisplayName, LBuildPreference::CreateWeakFunction(LPreferenceValue_InputAction::BuildDefault)) { }
+    FORCEINLINE LPreferenceValue_InputAction(LName InName, const LString& InDisplayName, LBuildPreference&& InBuildDelegate)
+        : LPreferenceValue(std::move(InName), InDisplayName, std::move(InBuildDelegate)) { }
+
+    FORCEINLINE LPreferenceValue_InputAction(LName InName, LString&& InDisplayName)
+        : LPreferenceValue(std::move(InName), std::move(InDisplayName), LBuildPreference::CreateWeakFunction(LPreferenceValue_InputAction::BuildDefault)) { }
+    FORCEINLINE LPreferenceValue_InputAction(LName InName, LString&& InDisplayName, LBuildPreference&& InBuildDelegate)
+        : LPreferenceValue(std::move(InName), std::move(InDisplayName), std::move(InBuildDelegate)) { }
+
+    ENGINE_API virtual void StoreInitial() override;
+    ENGINE_API virtual void ResetToDefault() override;
+    ENGINE_API virtual void ResetToInitial() override;
+
+    ENGINE_API static void BuildDefault(const LPreference* Self, WParentBase* Target);
 };
 
 } /* ~Namespace Jafg */

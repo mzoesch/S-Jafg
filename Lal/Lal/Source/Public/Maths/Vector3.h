@@ -77,6 +77,7 @@ struct TVector3
     FORCEINLINE constexpr explicit TVector3(const T InXYZ[3])                      noexcept : X(InXYZ[0]), Y(InXYZ[1]), Z(InXYZ[2]) { }
     FORCEINLINE constexpr          TVector3(const TVector3<T>& InVec)              noexcept : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
     FORCEINLINE constexpr          TVector3(TVector3<T>&& InVec)                   noexcept : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
+    FORCEINLINE constexpr          TVector3(std::initializer_list<T> InList)       noexcept : X(InList.begin()[0]), Y(InList.begin()[1]), Z(InList.begin()[2]) { }
 
     FORCEINLINE constexpr auto GetData()       noexcept ->       T* { return &this->X; }
     FORCEINLINE constexpr auto GetData() const noexcept -> const T* { return &this->X; }

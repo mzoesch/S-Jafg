@@ -89,18 +89,3 @@ void Jafg::LSurfaceBase::SetInputMode(const EInputMode::Type InMode, const bool 
 
     return;
 }
-
-bool Jafg::LSurfaceBase::IsKeyDown(const LKey InKey) const
-{
-    return this->GetCurrentlyPressedKeys().Contains(InKey);
-}
-
-bool Jafg::LSurfaceBase::IsNewKeyDown(const LKey InKey) const
-{
-    return this->GetCurrentlyPressedKeys().Contains(InKey) && (this->GetLastFramePressedKeys().Contains(InKey) == false);
-}
-
-bool Jafg::LSurfaceBase::IsKeyUp(const LKey InKey) const
-{
-    return this->GetCurrentlyPressedKeys().Contains(InKey) == false && this->GetLastFramePressedKeys().Contains(InKey);
-}

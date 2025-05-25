@@ -216,7 +216,11 @@ public:
     FORCEINLINE  TArrayBase() noexcept = default;
     FORCEINLINE  TArrayBase(const Self& InOther) noexcept : Impl() { Self::Copy(*this, InOther); }
     FORCEINLINE  TArrayBase(Self&& InOther) noexcept : Impl() { Self::Move(*this, std::move(InOther)); }
-    FORCEINLINE  TArrayBase(std::initializer_list<T> InList) noexcept requires (Self::IsStrongAlloc());
+    FORCEINLINE  TArrayBase(std::initializer_list<T> InList) noexcept requires (Self::IsStrongAlloc() && (std::is_copy_assignable_v<T> || std::is_copy_constructible_v<T>));
+    template <typename InOtherElement>
+    FORCEINLINE  TArrayBase(std::initializer_list<InOtherElement> InList) noexcept requires (Self::IsStrongAlloc() && (std::is_same_v<T, InOtherElement> == false) && std::is_convertible_v<InOtherElement, T>);
+    template <typename ... InTArgs>
+    FORCEINLINE  TArrayBase(InTArgs&&... InArgs) noexcept requires (Self::IsStrongAlloc() && std::is_move_constructible_v<T>);
     FORCEINLINE ~TArrayBase() noexcept;
     template <typename TOtherAlloc>
     FORCEINLINE TArrayBase(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
@@ -957,18 +961,51 @@ FORCEINLINE void TMutableArrayViewAllocator<InT, InSizeType, InTraits>::Invalida
 }
 
 template<typename InAlloc>
-FORCEINLINE TArrayBase<InAlloc>::TArrayBase(std::initializer_list<T> InList) noexcept requires (Self::IsStrongAlloc()) : Impl()
+FORCEINLINE TArrayBase<InAlloc>::TArrayBase(std::initializer_list<T> InList) noexcept requires (Self::IsStrongAlloc() && (std::is_copy_assignable_v<T> || std::is_copy_constructible_v<T>)) : Impl()
 {
     this->Reserve(InList.size());
 
     T* Me = this->Impl.Data;
     for (const T& Element : InList)
     {
-        std::construct_at(Me, Element);
+        std::construct_at(Me, std::forward<T>(Element));
         ++Me;
     }
     this->Impl.Slack = Me;
 
+    checkSlow( this->Impl.Slack <= this->Impl.End )
+
+    return;
+}
+
+template<typename InAlloc>
+template<typename InOtherElement>
+FORCEINLINE TArrayBase<InAlloc>::TArrayBase(std::initializer_list<InOtherElement> InList) noexcept requires (Self::IsStrongAlloc() && (std::is_same_v<T, InOtherElement> == false) && std::is_convertible_v<InOtherElement, T>)
+{
+    this->Reserve(InList.size());
+
+    T* Me = this->Impl.Data;
+    for (const InOtherElement& Element : InList)
+    {
+        std::construct_at(Me, std::forward<T>(Element));
+        ++Me;
+    }
+    this->Impl.Slack = Me;
+
+    checkSlow( this->Impl.Slack <= this->Impl.End )
+
+    return;
+}
+
+template<typename InAlloc>
+template<typename ... InTArgs>
+FORCEINLINE TArrayBase<InAlloc>::TArrayBase(InTArgs&&... InArgs) noexcept requires (Self::IsStrongAlloc() && std::is_move_constructible_v<T>)
+{
+    this->Reserve(sizeof...(InTArgs));
+
+    T* Me = this->Impl.Data;
+    ([&](void) -> void { new(Me++) T (std::move(InArgs)); return; } (), ...);
+    this->Impl.Slack = Me;
     checkSlow( this->Impl.Slack <= this->Impl.End )
 
     return;

@@ -15,10 +15,20 @@ class LPreferenceValue : public LPreference
 {
 public:
 
-    LPreferenceValue(const LName InName, const LString& InDisplayName) : LPreference(InName, InDisplayName) { }
-    LPreferenceValue(const LName InName, LString&& InDisplayName) : LPreference(InName, std::move(InDisplayName)) { }
-    LPreferenceValue(const LName InName, const LString& InDisplayName, LBuildPreference&& InBuildDelegate) : LPreference(InName, InDisplayName, std::move(InBuildDelegate)) { }
-    LPreferenceValue(const LName InName, LString&& InDisplayName, LBuildPreference&& InBuildDelegate) : LPreference(InName, std::move(InDisplayName), std::move(InBuildDelegate)) { }
+    FORCEINLINE LPreferenceValue(LName InName) noexcept
+        : LPreference(std::move(InName)) { }
+    FORCEINLINE LPreferenceValue(LName InName, LBuildPreference&& InBuildDelegate) noexcept
+        : LPreference(std::move(InName), std::move(InBuildDelegate)) { }
+
+    FORCEINLINE LPreferenceValue(LName InName, const LString& InDisplayName) noexcept
+        : LPreference(std::move(InName), InDisplayName) { }
+    FORCEINLINE LPreferenceValue(LName InName, const LString& InDisplayName, LBuildPreference&& InBuildDelegate) noexcept
+        : LPreference(std::move(InName), InDisplayName, std::move(InBuildDelegate)) { }
+
+    FORCEINLINE LPreferenceValue(LName InName, LString&& InDisplayName) noexcept
+        : LPreference(std::move(InName), std::move(InDisplayName)) { }
+    FORCEINLINE LPreferenceValue(LName InName, LString&& InDisplayName, LBuildPreference&& InBuildDelegate) noexcept
+        : LPreference(std::move(InName), std::move(InDisplayName), std::move(InBuildDelegate)) { }
 
     //#
     //# Stores an initial value for the setting.

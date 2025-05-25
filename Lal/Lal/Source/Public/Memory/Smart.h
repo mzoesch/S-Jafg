@@ -57,7 +57,7 @@ struct TUnique final
     FORCEINLINE auto GetValuePtr() const -> const T* { return this->Object; }
     FORCEINLINE auto GetValuePtrChecked() -> T* { check( this->Object ) return this->Object; }
     FORCEINLINE auto GetValuePtrChecked() const -> const T* { check( this->Object ) return this->Object; }
-    FORCEINLINE      operator T*() { return this->Object; }
+    FORCEINLINE      operator       T*()       { return this->Object; }
     FORCEINLINE      operator const T*() const { return this->Object; }
 
     FORCEINLINE auto MoveOut() -> TUnique { return std::move(*this); }

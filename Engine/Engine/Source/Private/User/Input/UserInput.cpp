@@ -7,64 +7,125 @@
 #include "User/Input/InputAction.h"
 #include "User/Input/InputActionValue.h"
 
+Jafg::LString Jafg::LexToString(EInputActionCategory::Type InType)
+{
+    switch (InType)
+    {
+    case EInputActionCategory::None:    { return "None"; }
+    case EInputActionCategory::Boolean: { return "Boolean"; }
+    case EInputActionCategory::Axis1D:  { return "Axis1D"; }
+    case EInputActionCategory::Axis2D:  { return "Axis2D"; }
+    case EInputActionCategory::Axis3D:  { return "Axis3D"; }
+    }
+
+    return "Invalid";
+}
+
 bool Jafg::LUserInput::IsNewDown(const LKey Key) const
 {
-    const LSurface* Context = this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked();
-    check( Context )
-    return Context->GetCurrentlyPressedKeys().Contains(Key) && (Context->GetLastFramePressedKeys().Contains(Key) == false);
+    return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->IsNewKeyDown(Key);
 }
 
 void Jafg::LUserInput::DispatchInputDelegates()
 {
-    const TArray<LRawInput> TriggeredKeys = this->GetTriggeredKeys();
-    const TArray<LRawInput> OngoingKeys   = this->GetOngoingKeys();
-    const TArray<LRawInput> CompletedKeys = this->GetCompletedKeys();
+    TArray<LRawInput> TriggeredKeys = this->GetTriggeredKeys();
+    TArray<LRawInput> OngoingKeys   = this->GetOngoingKeys();
+    TArray<LRawInput> CompletedKeys = this->GetCompletedKeys();
 
-    for (LUserInputContext* Context : this->ActiveContexts)
-    {
-        for (LInputMappedAction& MappedAction : Context->GetMappedActions())
-        {
-            if (MappedAction.Trigger == EInputActionTrigger::Triggered)
-            {
-                this->DispatchInputDelegatesForAction(Context, TriggeredKeys, &MappedAction);
-            }
-
-            else if (MappedAction.Trigger == EInputActionTrigger::Ongoing)
-            {
-                this->DispatchInputDelegatesForAction(Context, OngoingKeys, &MappedAction);
-            }
-
-            else if (MappedAction.Trigger == EInputActionTrigger::Completed)
-            {
-                this->DispatchInputDelegatesForAction(Context, CompletedKeys, &MappedAction);
-            }
-
-            continue;
-        }
-
-        continue;
-    }
+    this->DispatchInputDelegatesForKeyCategory(&TriggeredKeys, EInputActionTrigger::Triggered);
+    this->DispatchInputDelegatesForKeyCategory(&OngoingKeys,   EInputActionTrigger::Ongoing);
+    this->DispatchInputDelegatesForKeyCategory(&CompletedKeys, EInputActionTrigger::Completed);
 
     return;
 }
 
 Jafg::LLocalEgo* Jafg::LUserInput::GetLocalEgo() const
 {
-    checkSlow( GEngine )
+    checkSlow( GEngine && GEngine->GetLocalEgo() && GEngine->GetLocalEgo()->GetUserInput() == this )
     return GEngine->GetLocalEgo();
 }
 
-void Jafg::LUserInput::RegisterContext(LUserInputContext&& Context, const bool bMakeActive /* = false */)
+const Jafg::LInputAction* Jafg::LUserInput::RegisterAction(LInputAction&& InAction)
 {
-    LUserInputContext* ContextPtr = new LUserInputContext(std::move(Context));
-    this->RegisteredContexts.Add(ContextPtr);
+    if (this->RegisteredActions.Contains(InAction.GetName()))
+    {
+        LOG_WARNING(LogUserInput, "Action [{}] was already registered.", InAction.GetName())
+        return nullptr;
+    }
+
+    this->RegisteredActions.Emplace(Smart::EmplaceUnique<LInputAction>(std::move(InAction)));
+
+    return *this->RegisteredActions.GetLast();
+}
+
+Jafg::LUserInputContext* Jafg::LUserInput::RegisterContext(LUserInputContext&& Context, const bool bMakeActive /* = false */)
+{
+    if (this->RegisteredContexts.Contains(Context))
+    {
+        LOG_WARNING(LogUserInput, "Context [{}] was already registered.", Context.GetName())
+        return nullptr;
+    }
+
+    this->RegisteredContexts.Emplace(Smart::EmplaceUnique<LUserInputContext>(std::move(Context)));
 
     if (bMakeActive)
     {
-        this->ActiveContexts.Add(ContextPtr);
+        this->ActiveContexts.Emplace(*this->RegisteredContexts.GetLast());
     }
 
-    return;
+    return *this->RegisteredContexts.GetLast();
+}
+
+bool Jafg::LUserInput::ActivateContext(LUserInputContext* InContext)
+{
+    if (InContext)
+    {
+        if (this->ActiveContexts.Contains(InContext))
+        {
+            LOG_VERBOSE(LogUserInput, "Context [{}] is already active. Cannot activate.", InContext->GetName())
+            return false;
+        }
+
+        LOG_VERBOSE(LogUserInput, "Activating context [{}].", InContext->GetName())
+        this->ActiveContexts.Emplace(InContext);
+        return true;
+    }
+
+    return false;
+}
+
+bool Jafg::LUserInput::DeactivateContext(LUserInputContext* InContext)
+{
+    if (InContext)
+    {
+        if (this->ActiveContexts.Contains(InContext) == false)
+        {
+            LOG_VERBOSE(LogUserInput, "Context [{}] is not active. Cannot deactivate.", InContext->GetName())
+            return false;
+        }
+
+        LOG_VERBOSE(LogUserInput, "Deactivating context [{}].", InContext->GetName())
+        const i32 Removed = this->ActiveContexts.Remove(InContext);
+        check( Removed == 1 )
+        return true;
+    }
+
+    return false;
+}
+
+
+i32 Jafg::LUserInput::DeactivateAllContexts(TArray<LUserInputContext*>* OutActiveContexts /* = nullptr */)
+{
+    const i32 Out = this->ActiveContexts.GetSize();
+
+    if (OutActiveContexts)
+    {
+        *OutActiveContexts = std::move(this->ActiveContexts);
+    }
+
+    LOG_VERBOSE(LogUserInput, "Deactivating all contexts [{}].", Out)
+    this->ActiveContexts.Empty();
+    return Out;
 }
 
 Jafg::TArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
@@ -84,7 +145,7 @@ Jafg::TArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
     return TriggeredKeys;
 }
 
-Jafg::TArray<Jafg::LRawInput>& Jafg::LUserInput::GetOngoingKeys() const
+const Jafg::TArray<Jafg::LRawInput>& Jafg::LUserInput::GetOngoingKeys() const
 {
     return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys();
 }
@@ -106,241 +167,91 @@ Jafg::TArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
     return CompletedKeys;
 }
 
-Jafg::LUserInputContext* Jafg::LUserInput::GetContextByName(const LString& InName)
-{
-    return this->GetContextByName(GET_NAME(InName));
-}
-
-Jafg::LUserInputContext* Jafg::LUserInput::GetCheckedContextByName(const LString& InName)
-{
-#if DO_CHECKS
-    LUserInputContext* Context = this->GetContextByName(InName);
-    check( Context )
-    return Context;
-#else /* DO_CHECKS */
-    return this->GetContextByName(InName);
-#endif /* !DO_CHECKS */
-}
-
-Jafg::LUserInputContext* Jafg::LUserInput::GetPanickedContextByName(const LString& InName)
-{
-    if (LUserInputContext* Context = this->GetContextByName(InName); Context)
-    {
-        return Context;
-    }
-
-    panicMsgf( "Could not find context with name [{}].", InName )
-    return nullptr;
-}
-
-void Jafg::LUserInput::GetContextByName(const LString& InName, LUserInputContext*& OutContext) const
-{
-    return this->GetContextByName(GET_NAME(InName), OutContext);
-}
-
-void Jafg::LUserInput::GetCheckedContextByName(const LString& InName, LUserInputContext*& OutContext) const
-{
-    this->GetContextByName(InName, OutContext);
-    check( OutContext )
-    return;
-}
-
-void Jafg::LUserInput::GetPanickedContextByName(const LString& InName, LUserInputContext*& OutContext) const
-{
-    this->GetContextByName(InName, OutContext);
-
-    if (OutContext == nullptr)
-    {
-        panicMsgf( "Could not find context with name [{}].", InName )
-    }
-
-    return;
-}
-
-Jafg::LUserInputContext* Jafg::LUserInput::GetContextByName(const LName InName)
-{
-    for (LUserInputContext* Context : this->RegisteredContexts)
-    {
-        if (Context->GetUniqueIdentifier() == InName)
-        {
-            return Context;
-        }
-
-        continue;
-    }
-
-    return nullptr;
-}
-
-Jafg::LUserInputContext* Jafg::LUserInput::GetCheckedContextByName(const LName InName)
-{
-#if DO_CHECKS
-    LUserInputContext* Context = this->GetContextByName(InName);
-    check( Context )
-    return Context;
-#else /* DO_CHECKS */
-    return this->GetContextByName(InName);
-#endif /* !DO_CHECKS */
-}
-
-Jafg::LUserInputContext* Jafg::LUserInput::GetPanickedContextByName(const LName InName)
-{
-    if (LUserInputContext* Context = this->GetContextByName(InName); Context)
-    {
-        return Context;
-    }
-
-    panicMsgf( "Could not find context with name [{}].", InName.ToString() )
-    return nullptr;
-}
-
-void Jafg::LUserInput::GetContextByName(const LName InName, LUserInputContext*& OutContext) const
-{
-    for (LUserInputContext* Context : this->RegisteredContexts)
-    {
-        if (Context->GetUniqueIdentifier() == InName)
-        {
-            OutContext = Context;
-            return;
-        }
-
-        continue;
-    }
-
-    OutContext = nullptr;
-    return;
-}
-
-void Jafg::LUserInput::GetCheckedContextByName(const LName InName, LUserInputContext*& OutContext) const
-{
-    this->GetContextByName(InName, OutContext);
-    check( OutContext )
-    return;
-}
-
-void Jafg::LUserInput::GetPanickedContextByName(const LName InName, LUserInputContext*& OutContext) const
-{
-    this->GetContextByName(InName, OutContext);
-
-    if (OutContext == nullptr)
-    {
-        panicMsgf( "Could not find context with name [{}].", InName.ToString() )
-    }
-
-    return;
-}
-
-Jafg::LInputAction* Jafg::LUserInput::RegisterAction(LInputAction&& InAction)
-{
-    LInputAction* Action = new LInputAction(std::move(InAction));
-    this->RegisteredActions.Emplace(Action);
-    return Action;
-}
-
-void Jafg::LUserInput::ActivateContext(const LName InName)
-{
-    this->ActivateContext(this->GetPanickedContextByName(InName));
-    return;
-}
-
-void Jafg::LUserInput::ActivateContext(const LString& InName)
-{
-    this->ActivateContext(this->GetPanickedContextByName(InName));
-    return;
-}
-
-void Jafg::LUserInput::ActivateContext(LUserInputContext* InContext)
-{
-    check( InContext )
-    this->ActiveContexts.Add(InContext);
-    LOG_VERBOSE(LogUserInput, "Activating context [{}].", InContext->GetUniqueIdentifier().ToString())
-    return;
-}
-
-void Jafg::LUserInput::DeactivateContext(const LName InName)
-{
-    this->DeactivateContext(this->GetPanickedContextByName(InName));
-}
-
-void Jafg::LUserInput::DeactivateContext(const LString& InName)
-{
-    this->DeactivateContext(this->GetPanickedContextByName(InName));
-}
-
-void Jafg::LUserInput::DeactivateContext(LUserInputContext* InContext)
-{
-    check( InContext )
-    this->ActiveContexts.RemoveOnceChecked(InContext);
-    LOG_VERBOSE(LogUserInput, "Deactivating context [{}].", InContext->GetUniqueIdentifier().ToString())
-    return;
-}
-
-i32 Jafg::LUserInput::DeactivateAllContexts()
-{
-    const i32 NumDeactivated = this->ActiveContexts.GetSize();
-    this->ActiveContexts.Reset(1);
-    LOG_VERBOSE(LogUserInput, "Deactivated all {} contexts.", NumDeactivated)
-    return NumDeactivated;
-}
-
 bool Jafg::LUserInput::HasBufferedPlatformInput() const
 {
+    check( this->GetLocalEgo()->GetUserInput() == this )
     return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->HasBufferedPlatformInput();
 }
 
 const Jafg::LString& Jafg::LUserInput::GetBufferedPlatformInput() const
 {
+    check( this->GetLocalEgo()->GetUserInput() == this )
     return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetBufferedPlatformInput();
 }
 
-void Jafg::LUserInput::DispatchInputDelegatesForAction(const LUserInputContext* InContext, const TArray<LRawInput>& InRawInputs, LInputMappedAction* InAction)
+void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(TArray<LRawInput>* InRawInputs, const EInputActionTrigger::Type InActionTriggerType)
 {
-    LInputActionValue Value = InAction->Action->Category;
+    check( InRawInputs )
 
-    for (const LRawInput& RawInput : InRawInputs)
+    for (LUserInputContext* Context : this->ActiveContexts)
     {
-        for (const LInputActionMappedKey& MappedKey : InAction->Action->MappedKeys)
+        for (const LInputMappedAction& MappedAction : Context->GetMappedActions())
         {
-            if (MappedKey.Context != InContext)
+            for (const LInputMappedAction::LTrigger& Trigger : MappedAction.Triggers)
             {
+                if (Trigger.Type != InActionTriggerType)
+                {
+                    continue;
+                }
+
+                LInputActionValue Value = MappedAction.Action->GetCategory();
+
+                for (i32 i = 0; i < InRawInputs->GetSize();)
+                {
+                    const LRawInput& RawInput = (*InRawInputs)[i];
+
+                    LInputActionValue::Axis3D Magnitude;
+
+                    if (Trigger.Key != RawInput.Key)
+                    {
+                        if (Trigger.Key != EKeys::MouseXY)
+                        {
+                            ++i;
+                            continue;
+                        }
+
+                        if (RawInput.Key == EKeys::MouseX)
+                        {
+                            Magnitude = {RawInput.Value, 0.0f, 0.0f};
+                        }
+                        else if (RawInput.Key == EKeys::MouseY)
+                        {
+                            Magnitude = {0.0f, RawInput.Value, 0.0f};
+                        }
+                        else
+                        {
+                            ++i;
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        Magnitude = {RawInput.Value, 0.0f, 0.0f};
+                    }
+
+                    for (const LInputActionMappedTriggerModifier* Modifier : Trigger.Modifiers)
+                    {
+                        Magnitude = Modifier->ApplyModifier(Magnitude);
+                    }
+                    Value += Magnitude;
+
+                    InRawInputs->RemoveAt(i);
+
+                    continue;
+                }
+
+                if (Value.IsNonZero())
+                {
+                    MappedAction.Callback(Value);
+                }
+
                 continue;
-            }
-
-            if (MappedKey.Key == RawInput.Key)
-            {
-                LVector Magnitude = LVector(RawInput.Value, 0.0f, 0.0f);
-
-                for (LInputActionMappedKeyModifier* Modifier : MappedKey.Modifiers)
-                {
-                    Magnitude = Modifier->ApplyModifier(Magnitude);
-                }
-
-                Value += Magnitude;
-
-                continue;
-            }
-
-            if (MappedKey.Key == EKeys::MouseXY)
-            {
-                if (RawInput.Key == EKeys::MouseX)
-                {
-                    Value += LVector(RawInput.Value, 0.0f, 0.0f);
-                }
-                else if (RawInput.Key == EKeys::MouseY)
-                {
-                    Value += LVector(0.0f, RawInput.Value, 0.0f);
-                }
             }
 
             continue;
         }
 
         continue;
-    }
-
-    if (Value.IsNonZero())
-    {
-        InAction->Callback(Value);
     }
 
     return;

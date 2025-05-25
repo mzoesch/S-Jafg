@@ -4,6 +4,7 @@
 #include "Engine/Engine.h"
 #include "Cli/CliStatics.h"
 #include "Cli/CommandLineInterface.h"
+#include "Core/CoreNames.h"
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "User/Input/UserInput.h"
@@ -167,8 +168,9 @@ void Jafg::WConsoleScreen::HideConsoleScreenWithSideEffects()
 {
     check( this->GetVisibility() == EWidgetVisibility::Collapsed )
     LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
-    UserInput->DeactivateAllContexts();
-    UserInput->ActivateContext("InMyWorld");
+    UserInput->DeactivateContext(Name_UicInConsole);
+    UserInput->ActivateContext(Name_UicInMyWorldFoot);
+    UserInput->ActivateContext(Name_UicInMyWorld);
     this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
 
     if (this->EditableTextBlock)
@@ -185,8 +187,9 @@ void Jafg::WConsoleScreen::ShowConsoleScreenWithSideEffects()
 {
     check( this->GetVisibility() == EWidgetVisibility::IntransitiveHitTestInvisible )
     LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
-    UserInput->DeactivateAllContexts();
-    UserInput->ActivateContext("InConsole");
+    UserInput->DeactivateContext(Name_UicInMyWorldFoot);
+    UserInput->DeactivateContext(Name_UicInMyWorld);
+    UserInput->ActivateContext(Name_UicInConsole);
     this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both, ShowMouseCursor);
 
     this->HistoryCursor = INDEX_NONE;

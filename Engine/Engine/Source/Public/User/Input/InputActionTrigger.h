@@ -32,7 +32,6 @@ enum Type : u8
 };
 
 } /* ~Namespace EUserInputActionTrigger */
-
 ENUM_CLASS_FLAGS(EInputActionTrigger::Type)
 
 } /* ~Namespace Jafg */

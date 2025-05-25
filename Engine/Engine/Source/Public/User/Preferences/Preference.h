@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Containers/MyStringUtility.h"
 #include "Core/Name.h"
 
 namespace Jafg
@@ -23,12 +24,24 @@ class LPreference
 
 public:
 
-    LPreference(const LName InName, const LString& InDisplayName) : Name(InName), DisplayName(InDisplayName) { }
-    LPreference(const LName InName, LString&& InDisplayName) : Name(InName), DisplayName(std::move(InDisplayName)) { }
-    LPreference(const LName InName, const LString& InDisplayName, LBuildPreference&& InBuildDelegate) : Name(InName), DisplayName(InDisplayName), OnBuildDelegate(std::move(InBuildDelegate)) { }
-    LPreference(const LName InName, LString&& InDisplayName, LBuildPreference&& InBuildDelegate) : Name(InName), DisplayName(std::move(InDisplayName)), OnBuildDelegate(std::move(InBuildDelegate)) { }
+    FORCEINLINE LPreference(const LName InName) noexcept
+        : Name(InName), DisplayName(Strings::AddSpacesToCamelCase(InName.ToString())) { }
+    FORCEINLINE LPreference(const LName InName, LBuildPreference&& InBuildDelegate) noexcept
+        : Name(InName), DisplayName(Strings::AddSpacesToCamelCase(InName.ToString())), OnBuildDelegate(std::move(InBuildDelegate)) { }
+
+    FORCEINLINE LPreference(LName InName, const LString& InDisplayName) noexcept
+        : Name(std::move(InName)), DisplayName(InDisplayName) { }
+    FORCEINLINE LPreference(LName InName, const LString& InDisplayName, LBuildPreference&& InBuildDelegate) noexcept
+        : Name(std::move(InName)), DisplayName(InDisplayName), OnBuildDelegate(std::move(InBuildDelegate)) { }
+
+    FORCEINLINE LPreference(LName InName, LString&& InDisplayName) noexcept
+        : Name(std::move(InName)), DisplayName(std::move(InDisplayName)) { }
+    FORCEINLINE LPreference(LName InName, LString&& InDisplayName, LBuildPreference&& InBuildDelegate) noexcept
+        : Name(std::move(InName)), DisplayName(std::move(InDisplayName)), OnBuildDelegate(std::move(InBuildDelegate)) { }
+
     PROHIBIT_COPY(LPreference)
     DEFAULT_MOVE(LPreference)
+
     virtual ~LPreference(void) = default;
 
     FORCEINLINE bool operator==(const LPreference& InOther) const { return this->Name == InOther.Name; }
@@ -45,7 +58,8 @@ public:
     FORCEINLINE virtual bool IsLeaf() const { return true; }
     FORCEINLINE bool IsBuildable() const { return this->OnBuildDelegate.IsBound(); }
     FORCEINLINE void OnBuild(LBuildPreference&& InBuildPreference) { this->OnBuildDelegate = std::move(InBuildPreference); }
-    FORCEINLINE bool Build(WParentBase* Target) const { return this->OnBuildDelegate.InvokeIfBound(this, Target); }
+
+    bool Build(WParentBase* Target) const;
 
 private:
 
@@ -64,4 +78,13 @@ FORCEINLINE const TArray<Smart::TUnique<LPreference>>& LPreference::LoadAndGetCh
     return this->GetChildPreferences();
 }
 
+FORCEINLINE bool LPreference::Build(WParentBase* Target) const
+{
+    if (this->IsBuildable())
+    {
+        LOG_VERBOSE(LogPreferences, "Building preference [{}].", this->Name)
+    }
+
+    return this->OnBuildDelegate.InvokeIfBound(this, Target);
+}
 } /* ~Namespace Jafg */

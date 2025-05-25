@@ -15,6 +15,7 @@ ENGINE_API extern LName Name_LevelMyWorld;
 ENGINE_API extern LName Name_LevelFrontend;
 
 ENGINE_API extern LName Name_UicInMyWorld;
+ENGINE_API extern LName Name_UicInMyWorldFoot;
 ENGINE_API extern LName Name_UicInPause;
 ENGINE_API extern LName Name_UicInConsole;
 
@@ -31,3 +32,16 @@ ENGINE_API extern LName Name_PrefDeveloperCmds;
 
 ENGINE_API extern LName Name_ShaderOrthographicBox;
 ENGINE_API extern LName Name_ShaderChunk;
+
+ENGINE_API extern LName Name_UsrInToggleDebugScreen;
+ENGINE_API extern LName Name_UsrInTogglePauseScreen;
+ENGINE_API extern LName Name_UsrInTrap;
+ENGINE_API extern LName Name_UsrInRhiPolyToWireframe;
+ENGINE_API extern LName Name_UsrInRhiPolyToFill;
+ENGINE_API extern LName Name_UsrInToggleConsoleScreen;
+ENGINE_API extern LName Name_UsrInMovePawn;
+ENGINE_API extern LName Name_UsrInRotatePawn;
+ENGINE_API extern LName Name_UsrInPawnVelocity;
+ENGINE_API extern LName Name_UsrInPrimary;
+ENGINE_API extern LName Name_UsrInSecondary;
+

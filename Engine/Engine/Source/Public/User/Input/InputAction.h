@@ -2,34 +2,12 @@
 
 #pragma once
 
-#include "CoreAfx.h"
-#include "User/Input/InputActionModifiers.h"
+#include "Core/Name.h"
 #include "User/Input/InputActionCategory.h"
+#include "Containers/MyStringUtility.h"
 
 namespace Jafg
 {
-
-//#
-//# Represents a specific physical key on the keyboard or mouse that is mapped to an action.
-//#
-struct ENGINE_API LInputActionMappedKey final
-{
-    LInputActionMappedKey() = default;
-    LInputActionMappedKey(LUserInputContext* InContext, const LKey InKey) : Context(InContext), Key(InKey) { }
-    PROHIBIT_REALLOC_OF_ANY_FORM(LInputActionMappedKey)
-    ~LInputActionMappedKey()
-    {
-        for (const LInputActionMappedKeyModifier* Modifier : this->Modifiers)
-        {
-            delete Modifier;
-        }
-        this->Modifiers.Empty();
-    }
-
-    LUserInputContext* Context = nullptr;
-    LKey Key = EKeys::AnyKey;
-    TArray<LInputActionMappedKeyModifier*> Modifiers;
-};
 
 //#
 //# A form of an action that can be triggered by the user.
@@ -40,12 +18,47 @@ struct ENGINE_API LInputActionMappedKey final
 struct ENGINE_API LInputAction final
 {
     LInputAction() = default;
-    explicit LInputAction(const EInputActionCategory::Type InCategory) : Category(InCategory) { }
+
+    LInputAction
+    (
+        const LName InName,
+        const EInputActionCategory::Type InCategory
+    ) :  Name(InName), DisplayName(Strings::AddSpacesToCamelCase(InName.ToString())), Category(InCategory) {  }
+
+    LInputAction
+    (
+        LName InName,
+        const LString& InDisplayName,
+        const EInputActionCategory::Type InCategory
+    ) : Name(std::move(InName)), DisplayName(InDisplayName), Category(InCategory) { }
+
+    LInputAction
+    (
+        const LString& InDisplayName,
+        const EInputActionCategory::Type InCategory
+    ) : Name(MAKE_DYNAMIC_NAME(InDisplayName)), DisplayName(InDisplayName), Category(InCategory) {  }
+
     DEFAULT_REALLOC_OF_ANY_FORM(LInputAction)
+
     ~LInputAction() = default;
 
-    EInputActionCategory::Type      Category = EInputActionCategory::None;
-    TArray<LInputActionMappedKey> MappedKeys;
+    FORCEINLINE bool operator==(const LInputAction& InOther) const { return this->Name == InOther.Name; }
+    FORCEINLINE bool operator!=(const LInputAction& InOther) const { return this->Name != InOther.Name; }
+    FORCEINLINE bool operator==(const LName& InOther) const { return this->Name == InOther; }
+    FORCEINLINE bool operator!=(const LName& InOther) const { return this->Name != InOther; }
+
+    FORCEINLINE const LName& GetName() const { return this->Name; }
+    FORCEINLINE const LString& GetDisplayName() const { return this->DisplayName; }
+    FORCEINLINE EInputActionCategory::Type GetCategory() const { return this->Category; }
+
+private:
+
+    LName Name;
+    LString DisplayName;
+    EInputActionCategory::Type Category { EInputActionCategory::None };
 };
+
+FORCEINLINE bool operator==(const LInputAction* InA, const LName& InB) { return InA && InA->GetName() == InB; }
+FORCEINLINE bool operator!=(const LInputAction* InA, const LName& InB) { return !(InA == InB); }
 
 } /* ~Namespace Jafg */

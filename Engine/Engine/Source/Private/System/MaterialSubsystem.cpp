@@ -47,7 +47,7 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
     JVoxelSubsystem* VoxelSubsystem = this->GetEngine()->GetCheckedSubsystem<JVoxelSubsystem>();
     JTextureSubsystem* TextureSubsystem = this->GetEngine()->GetCheckedSubsystem<JTextureSubsystem>();
 
-#pragma region Blending
+#pragma region "Blending"
     TArray<LDiskBlendTexture> BlendedTextureNames = TextureSubsystem->FindMeaningBlendTextureNames();
     {
         TArray<LTexture2> LoadedTextures;
@@ -95,9 +95,9 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
 
         this->BlendersAtlas.Make(LoadedTextures);
     }
-#pragma endregion Blending
+#pragma endregion "Blending"
 
-#pragma region Actual textures
+#pragma region "Actual textures"
     {
         TArray<LTexture2> LoadedTextures;
         TArray<LDiskVoxelTexture> TextureNames = TextureSubsystem->FindMeaningFullVoxelTextureNames();
@@ -157,7 +157,7 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
         VoxelSubsystem->SortAllVoxelMasksTextureGroups();
         this->BlendOpaqueAtlas.Make(LoadedTextures);
     }
-#pragma endregion Actual textures
+#pragma endregion "Actual textures"
 
     return;
 }

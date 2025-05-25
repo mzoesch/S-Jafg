@@ -129,6 +129,15 @@ void Jafg::LLocalEgo::TearDown()
 
 void Jafg::LLocalEgo::Possess(APersonaController* InNewController)
 {
+    if (InNewController)
+    {
+        this->GetUserInput()->ActivateContext(Name_UicInMyWorld);
+    }
+    else
+    {
+        this->GetUserInput()->DeactivateContext(Name_UicInMyWorld);
+    }
+
     APersonaController* Old = this->PersonaController;
     this->PersonaController = InNewController;
 
@@ -152,6 +161,15 @@ void Jafg::LLocalEgo::Possess(APersonaController* InNewController)
 
 void Jafg::LLocalEgo::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
 {
+    if (InNew)
+    {
+        this->UserInput.ActivateContext(Name_UicInMyWorldFoot);
+    }
+    else
+    {
+        this->UserInput.DeactivateContext(Name_UicInMyWorldFoot);
+    }
+
     if (LSurface* Surface = this->GetFrontend()->GetFocusedSurface(); Surface)
     {
         if (InOld)
@@ -194,6 +212,8 @@ void Jafg::LLocalEgo::OnWorldBeginLife(LWorld* InNewWorld)
 
     if (this->PersonaController == nullptr)
     {
+        this->UserInput.DeactivateAllContexts();
+
         APersonaController* Pc = SpawnDeferredActor<APersonaController>(InNewWorld);
         this->Possess(Pc);
 
@@ -211,8 +231,6 @@ void Jafg::LLocalEgo::OnWorldBeginLife(LWorld* InNewWorld)
                 this->PersonaController->Possess(Pawn);
                 Pawn->SetTranslation(LVector(MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 4.0f + MwStatics::ChunkSize / 2.0f));
             }
-
-            this->GetUserInput()->ActivateContext(Name_UicInMyWorld);
         }
     }
 

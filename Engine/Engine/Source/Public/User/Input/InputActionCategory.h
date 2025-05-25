@@ -12,15 +12,14 @@ namespace EInputActionCategory
 
 enum Type : u8
 {
-    None    = 0x0 << 0,
-    Boolean = 0x1 << 0,
-    Axis1D  = 0x1 << 1,
-    Axis2D  = 0x1 << 2,
-    Axis3D  = 0x1 << 3
+    None,
+    Boolean,
+    Axis1D,
+    Axis2D,
+    Axis3D,
 };
 
 } /* ~Namespace EInputActionCategory */
-
-ENUM_CLASS_FLAGS(EInputActionCategory::Type)
+ENGINE_API LString LexToString(const EInputActionCategory::Type InType);
 
 } /* ~Namespace Jafg */

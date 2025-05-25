@@ -90,13 +90,13 @@ public:
     FORCEINLINE auto GetVirtualInput()       ->       TArray<LRawInput>& { return this->VirtualInput; }
     FORCEINLINE auto GetVirtualInput() const -> const TArray<LRawInput>& { return this->VirtualInput; }
     //# @return Whether the key is currently down.
-    bool IsKeyDown(const LKey InKey) const;
+    FORCEINLINE bool IsKeyDown(const LKey InKey) const { return this->GetCurrentlyPressedKeys().Contains(InKey); }
     FORCEINLINE bool IsKeyDown(const LRawInput& InRawInput) const { return this->IsKeyDown(InRawInput.Key); }
     //# @return Whether the key was just downed this frame.
-    bool IsNewKeyDown(const LKey InKey) const;
+    FORCEINLINE bool IsNewKeyDown(const LKey InKey) const;
     FORCEINLINE bool IsNewKeyDown(const LRawInput& InRawInput) const { return this->IsNewKeyDown(InRawInput.Key); }
     //# @return Whether the key was just released this frame.
-    bool IsKeyUp(const LKey InKey) const;
+    FORCEINLINE bool IsKeyUp(const LKey InKey) const;
     FORCEINLINE bool IsKeyUp(const LRawInput& InRawInput) const { return this->IsKeyUp(InRawInput.Key); }
 
     FORCEINLINE bool HasBufferedPlatformInput() const { return this->PlatformInput.IsEmpty() == false; }
@@ -232,6 +232,16 @@ NODISCARD FORCEINLINE Jafg::LSurface* Jafg::LSurfaceBase::AsSurface()
 NODISCARD FORCEINLINE const Jafg::LSurface* Jafg::LSurfaceBase::AsSurface() const
 {
     return this->As<LSurface>();
+}
+
+FORCEINLINE bool Jafg::LSurfaceBase::IsNewKeyDown(const LKey InKey) const
+{
+    return this->GetCurrentlyPressedKeys().Contains(InKey) && (this->GetLastFramePressedKeys().Contains(InKey) == false);
+}
+
+FORCEINLINE bool Jafg::LSurfaceBase::IsKeyUp(const LKey InKey) const
+{
+    return this->GetCurrentlyPressedKeys().Contains(InKey) == false && this->GetLastFramePressedKeys().Contains(InKey);
 }
 
 template<typename Predicate>

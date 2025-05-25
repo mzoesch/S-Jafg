@@ -90,13 +90,19 @@ private:
 
 //#
 //# Dynamically register a name depending on context at runtime.
+//# If the name is already registered, it will return that. This is basically a weak form of #GET_NAME.
 //#
 #define MAKE_DYNAMIC_NAME(Name)     ::Jafg::Private::GNameRegistry->RegisterAndGetName(Name)
 
 //#
 //# Get a name by its string representation.
+//# If the name is not registered, it will return #LName::NoName.
 //#
 #define GET_NAME(Name)              ::Jafg::Private::GNameRegistry->GetName(Name)
+//#
+//# Get a name by its string representation.
+//# If #DO_CHECKS is true, the program will panic, otherwise #LName::NoName will be returned.
+//#
 #define GET_NAME_CHECKED(Name)      ::Jafg::Private::GNameRegistry->GetNameChecked(Name)
 
 namespace Private
@@ -149,7 +155,7 @@ FORCEINLINE const LString& LNameRegistry::GetRealNameSafe(const LName InName) co
 } /* ~Namespace Jafg */
 
 template <>
-struct std::formatter<::Jafg::LName> : std::formatter<Jafg::LUnderlyingName>
+struct std::formatter<::Jafg::LName> : std::formatter<Jafg::LString>
 {
     FORCEINLINE auto format
     (
@@ -157,6 +163,6 @@ struct std::formatter<::Jafg::LName> : std::formatter<Jafg::LUnderlyingName>
         ::std::format_context& InContext
     ) const -> ::std::format_context::iterator
     {
-        return ::std::formatter<Jafg::LUnderlyingName>::format(InName.UnderlyingName, InContext);
+        return ::std::formatter<Jafg::LString>::format(InName.ToString(), InContext);
     }
 };
