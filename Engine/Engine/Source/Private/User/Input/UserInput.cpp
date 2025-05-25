@@ -202,9 +202,9 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(TArray<LRawInput>* I
 
                     LInputActionValue::Axis3D Magnitude;
 
-                    if (Trigger.Key != RawInput.Key)
+                    if (Trigger.Keys.Contains(RawInput.Key) == false)
                     {
-                        if (Trigger.Key != EKeys::MouseXY)
+                        if (Trigger.Keys.Contains(EKeys::MouseXY) == false)
                         {
                             ++i;
                             continue;

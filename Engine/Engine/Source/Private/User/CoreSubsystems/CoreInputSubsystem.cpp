@@ -20,10 +20,10 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
     check( this->GetLocalEgo() )
     LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
 
-    LUserInputContext* ContextMyWorld     = UserInput->RegisterContext(LUserInputContext{Name_UicInMyWorld});
-    LUserInputContext* ContextMyWorldFoot = UserInput->RegisterContext(LUserInputContext{Name_UicInMyWorldFoot});
-    LUserInputContext* ContextInPause     = UserInput->RegisterContext(LUserInputContext{Name_UicInPause});
-    LUserInputContext* ContextInConsole   = UserInput->RegisterContext(LUserInputContext{Name_UicInConsole});
+    LUserInputContext* ContextMyWorld     = UserInput->RegisterContext(LUserInputContext{Name_UicInMyWorld, "In My World"});
+    LUserInputContext* ContextMyWorldFoot = UserInput->RegisterContext(LUserInputContext{Name_UicInMyWorldFoot, "In My World Foot"});
+    LUserInputContext* ContextInPause     = UserInput->RegisterContext(LUserInputContext{Name_UicInPause, "In Pause"});
+    LUserInputContext* ContextInConsole   = UserInput->RegisterContext(LUserInputContext{Name_UicInConsole, "In Console"});
     check( ContextMyWorld     )
     check( ContextMyWorldFoot )
     check( ContextInPause     )
@@ -35,6 +35,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         (
             UserInput,
             {Name_UsrInToggleDebugScreen, "Toggle Debug Screen", EInputActionCategory::Boolean},
+            "",
             EKeys::F3,
             EInputActionTrigger::Triggered,
             {
@@ -50,6 +51,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         ContextMyWorld->MapAction
         (
             Action,
+            "",
             EKeys::Escape,
             EInputActionTrigger::Triggered,
             {
@@ -67,6 +69,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         ContextInPause->MapAction
         (
             Action,
+            "",
             EKeys::Escape,
             EInputActionTrigger::Triggered,
             {
@@ -89,6 +92,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         (
             UserInput,
             {Name_UsrInTrap, "Trap", EInputActionCategory::Boolean},
+            "",
             EKeys::P,
             EInputActionTrigger::Triggered,
             {
@@ -106,6 +110,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         (
             UserInput,
             {Name_UsrInRhiPolyToWireframe, "Rhi Poly To Wireframe", EInputActionCategory::Boolean},
+            "",
             EKeys::F1,
             EInputActionTrigger::Triggered,
             {
@@ -123,6 +128,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         (
             UserInput,
             {Name_UsrInRhiPolyToFill, "Rhi Poly To Fill", EInputActionCategory::Boolean},
+            "",
             EKeys::F2,
             EInputActionTrigger::Triggered,
             {
@@ -140,6 +146,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         ContextMyWorld->MapAction
         (
             Action,
+            "",
             EKeys::T,
             EInputActionTrigger::Triggered,
             {
@@ -152,6 +159,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         ContextInConsole->MapAction
         (
             Action,
+            "",
             EKeys::Escape,
             EInputActionTrigger::Triggered,
             {
@@ -170,16 +178,18 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             UserInput,
             {Name_UsrInMovePawn, "Move Pawn", EInputActionCategory::Axis3D},
             {
-                LTrigger
+                LInputTrigger
                 {
+                    "Forward",
                     EKeys::W,
                     EInputActionTrigger::Ongoing,
                     {
                         MakeModifier<LInputActionMappedKeyDeltaTimeModifier>(),
                     },
                 },
-                LTrigger
+                LInputTrigger
                 {
+                    "Left",
                     EKeys::A,
                     EInputActionTrigger::Ongoing,
                     {
@@ -188,8 +198,9 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
                         MakeModifier<LInputActionMappedKeyDeltaTimeModifier>(),
                     },
                 },
-                LTrigger
+                LInputTrigger
                 {
+                    "Backwards",
                     EKeys::S,
                     EInputActionTrigger::Ongoing,
                     {
@@ -197,8 +208,9 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
                         MakeModifier<LInputActionMappedKeyDeltaTimeModifier>(),
                     },
                 },
-                LTrigger
+                LInputTrigger
                 {
+                    "Right",
                     EKeys::D,
                     EInputActionTrigger::Ongoing,
                     {
@@ -206,8 +218,9 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
                         MakeModifier<LInputActionMappedKeyDeltaTimeModifier>(),
                     },
                 },
-                LTrigger
+                LInputTrigger
                 {
+                    "Up",
                     EKeys::E,
                     EInputActionTrigger::Ongoing,
                     {
@@ -215,8 +228,9 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
                         MakeModifier<LInputActionMappedKeyDeltaTimeModifier>(),
                     },
                 },
-                LTrigger
+                LInputTrigger
                 {
+                    "Down",
                     EKeys::Q,
                     EInputActionTrigger::Ongoing,
                     {
@@ -237,6 +251,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         (
             UserInput,
             {Name_UsrInRotatePawn, "Rotate Pawn", EInputActionCategory::Axis2D},
+            "",
             EKeys::MouseXY,
             EInputActionTrigger::Ongoing,
             {
@@ -252,6 +267,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         (
             UserInput,
             {Name_UsrInPawnVelocity, "Pawn Velocity", EInputActionCategory::Axis1D},
+            "",
             EKeys::MouseWheelAxis,
             EInputActionTrigger::Ongoing,
             {
@@ -267,6 +283,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         (
             UserInput,
             {Name_UsrInPrimary, "Primary", EInputActionCategory::Boolean},
+            "",
             EKeys::LeftMouseButton,
             EInputActionTrigger::Triggered,
             {
@@ -282,6 +299,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         (
             UserInput,
             {Name_UsrInSecondary, "Secondary", EInputActionCategory::Boolean},
+            "",
             EKeys::RightMouseButton,
             EInputActionTrigger::Triggered,
             {

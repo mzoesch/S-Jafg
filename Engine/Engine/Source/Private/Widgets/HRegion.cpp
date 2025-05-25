@@ -15,6 +15,8 @@ void Jafg::WHRegion::UpdateDesiredSize() const
         continue;
     }
 
+    DesiredSize.X += this->HSpace * (this->GetChildren().GetSize() - 1);
+
     DesiredSize += this->GetPadding().GetDesiredSize();
 
     this->SetDesiredSize(DesiredSize);

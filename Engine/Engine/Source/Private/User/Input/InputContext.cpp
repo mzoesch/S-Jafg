@@ -70,13 +70,14 @@ Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction
 (
     LUserInput* InUserInput,
     LInputAction&& InAction,
-    const LKey InKey,
+    LString&& InName,
+    const LKey InDefaultKey,
     const EInputActionTrigger::Type InActionTrigger,
     TArray<Smart::TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
     LUserInputActionCallback&& InCallback
 )
 {
-    return this->MapAction(InUserInput->RegisterAction(std::move(InAction)), InKey, InActionTrigger, std::move(InModifiers), std::move(InCallback));
+    return this->MapAction(InUserInput->RegisterAction(std::move(InAction)), std::move(InName), InDefaultKey, InActionTrigger, std::move(InModifiers), std::move(InCallback));
 }
 
 

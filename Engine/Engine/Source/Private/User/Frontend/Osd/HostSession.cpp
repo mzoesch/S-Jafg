@@ -187,7 +187,7 @@ void Jafg::WHostSessionScreen_New::OnLoad_General(WTabBar* TabBar, WNode* Button
                     .Content("Save path")
                     .Brush(LTextBlockBrush::SubHeader())
                 +
-                NewNode(WSpacer).SetHeight(20.0f)
+                NewNode(WSpacer).Height(20.0f)
                 +
                 NewNode(WHRegion)
                     .Anchor(EAnchor::HFill)
@@ -197,7 +197,7 @@ void Jafg::WHostSessionScreen_New::OnLoad_General(WTabBar* TabBar, WNode* Button
                         .Brush(LTextBlockBrush::Body())
                 ]
                 +
-                NewNode(WSpacer).SetHeight(20.0f)
+                NewNode(WSpacer).Height(20.0f)
                 +
                 NewNode(WTextBlock)
                     .Anchor(EAnchor::HLeft)
@@ -212,7 +212,7 @@ void Jafg::WHostSessionScreen_New::OnLoad_General(WTabBar* TabBar, WNode* Button
                         .Brush(LTextBlockBrush::Body())
                 ]
                 +
-                NewNode(WSpacer).SetHeight(20.0f)
+                NewNode(WSpacer).Height(20.0f)
                 +
                 NewNode(WTextBlock)
                     .Anchor(EAnchor::HLeft)

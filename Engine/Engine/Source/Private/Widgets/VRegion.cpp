@@ -15,6 +15,8 @@ void Jafg::WVRegion::UpdateDesiredSize() const
         continue;
     }
 
+    DesiredSize.Y += this->VSpace * (this->GetChildren().GetSize() - 1);
+
     DesiredSize += this->GetPadding().GetDesiredSize();
 
     this->SetDesiredSize(DesiredSize);

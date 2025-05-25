@@ -58,7 +58,7 @@ void Jafg::WDebugScreen::Construct()
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
             ]
             +
-            NewNode(WSpacer).SetHeight(20.0f)
+            NewNode(WSpacer).Height(20.0f)
             +
             NewNode(WVRegion)
                 .Tint(LColor(0,0,32,128))
@@ -76,7 +76,7 @@ void Jafg::WDebugScreen::Construct()
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
             ]
             +
-            NewNode(WSpacer).SetHeight(20.0f)
+            NewNode(WSpacer).Height(20.0f)
             +
             NewNode(WVRegion)
             [
@@ -121,7 +121,7 @@ void Jafg::WDebugScreen::Construct()
                     .Brush(LTextBlockBrush::TEXT_BLOCK_FONT_SIZE().TintRet({0, 0, 0, 128}))
             ]
             + NewNode(WSpacer)
-                .SetHeight(20.0f)
+                .Height(20.0f)
             + NewNode(WVRegion)
                 .Anchor(EAnchor::TopRight)
                 .Tint(LColor::Cyan)
