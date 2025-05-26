@@ -21,8 +21,8 @@
     #include FT_FREETYPE_H
 #endif /* !JAFG_NO_FREETYPE */
 
-#include <stb_image.h>
-#include <stb_image_write.h>
+#include <Vendor/stb_image.h>
+#include <Vendor/stb_image_write.h>
 
 #if PLATFORM_USES_WEBGL_TWO
     #include <GLES3/gl3.h>
