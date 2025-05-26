@@ -45,6 +45,7 @@ void Jafg::WDebugScreen::Construct()
             .Tint(LColor(255,0,0,32))
         [
             NewNode(WVRegion)
+                .Type(ERegionBrush::Box)
                 .Tint(LColor(0,0,32,128))
             [
                 NewNode(WTextBlock)
@@ -61,6 +62,7 @@ void Jafg::WDebugScreen::Construct()
             NewNode(WSpacer).Height(20.0f)
             +
             NewNode(WVRegion)
+                .Type(ERegionBrush::Box)
                 .Tint(LColor(0,0,32,128))
             [
                 NewNode(WTextBlock).SaveTo(&this->LocalPawnLocationSection)
@@ -82,22 +84,26 @@ void Jafg::WDebugScreen::Construct()
             [
                 NewNode(WRegion)
                     .Padding(LPadding(70.0f))
+                    .Type(ERegionBrush::Box)
                     .Texture(&MaterialSubsystem->GetBlendOpaqueAtlasTexture())
             ]
             + NewNode(WVRegion)
             [
                 NewNode(WRegion)
                     .Padding(LPadding(70.0f))
+                    .Type(ERegionBrush::Box)
                     .Texture(&MaterialSubsystem->GetBlendersAtlasTexture())
             ]
         ]
         +
         NewNode(WVRegion)
             .Anchor(EAnchor::TopRight)
+            .Type(ERegionBrush::Box)
             .Tint(LColor(255,0,0,32))
         [
             NewNode(WVRegion)
                 .Anchor(EAnchor::TopRight)
+                .Type(ERegionBrush::Box)
                 .Tint(LColor(0,0,32,128))
             [
                 NewNode(WTextBlock)
@@ -124,6 +130,7 @@ void Jafg::WDebugScreen::Construct()
                 .Height(20.0f)
             + NewNode(WVRegion)
                 .Anchor(EAnchor::TopRight)
+                .Type(ERegionBrush::Box)
                 .Tint(LColor::Cyan)
             [
                 NewNode(WTextBlock).SaveTo(&this->LocalPawnTargetVoxelSectionDestroy)

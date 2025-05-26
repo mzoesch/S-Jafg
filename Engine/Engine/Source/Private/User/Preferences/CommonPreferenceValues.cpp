@@ -49,6 +49,7 @@ void Jafg::LPreferenceValue_Scalar::BuildDefault(const LPreference* Self, WParen
         .Anchor(EAnchor::HFill)
         .Padding({15.0f, 10.0f})
         .MinDesiredSize({0, 10})
+        .Type(ERegionBrush::Box)
         .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
         NewNodeCtx(Target, WTextBlock)
@@ -110,6 +111,7 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
         .Anchor(EAnchor::HFill)
         .Padding({15.0f, 10.0f})
         .MinDesiredSize({0, 10})
+        .Type(ERegionBrush::Box)
         .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
         NewNodeCtx(Target, WHRegion)

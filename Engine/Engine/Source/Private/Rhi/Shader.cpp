@@ -1,41 +1,81 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Rhi/Shader.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "System/EnginePath.h"
 #include "System/Finder.h"
-
-void Jafg::LShader::Free()
-{
-    glDeleteProgram(this->Id);
-#if WITH_DEBUG_ZERO_UNBOUND
-    this->Id = 0x0u;
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
-
-    return;
-}
 
 Jafg::LShader::LShader(const LEnginePath& Path)
 {
     this->Load(Path);
 }
 
+Jafg::LShader::LShader(const LEnginePath& Path, const TArray<LShaderCompileTimeConstant>& InConstants)
+{
+    this->Load(Path, InConstants);
+}
+
+Jafg::LShader::~LShader()
+{
+    if (this->bLoaded)
+    {
+        this->Free();
+    }
+
+    return;
+}
+
+void Jafg::LShader::Free()
+{
+    if (this->bLoaded)
+    {
+        glDeleteProgram(this->Id);
+    #if WITH_DEBUG_ZERO_UNBOUND
+        this->Id = 0x0u;
+    #endif /* WITH_DEBUG_ZERO_UNBOUND */
+        this->bLoaded = false;
+    }
+    else
+    {
+        LOG_ERROR(LogRhi, "Tried to free a shader that was not loaded.")
+    }
+
+    return;
+}
+
 void Jafg::LShader::Load(const LEnginePath& Path)
 {
+    const TArray<LShaderCompileTimeConstant> Dummy;
+    this->Load(Path, Dummy);
+
+    return;
+}
+
+void Jafg::LShader::Load(const LEnginePath& Path, const TArray<LShaderCompileTimeConstant>& InConstants)
+{
+    if (this->bLoaded)
+    {
+        LOG_ERROR(LogRhi, "Tried to load or overwrite a shader that was already loaded.")
+        this->Free();
+    }
+
     LEnginePath VertexPath = Path;
     VertexPath.AddExtension(".vert");
     LEnginePath FragmentPath = Path;
     FragmentPath.AddExtension(".frag");
 
-    this->LoadShader(VertexPath, FragmentPath);
+    this->LoadShader(VertexPath, FragmentPath, InConstants);
 
     return;
 }
 
 void Jafg::LShader::Use() const
 {
+    check( this->bLoaded )
+
     glUseProgram(this->Id);
+
+    return;
 }
 
 #if WITH_DEBUG_ZERO_UNBOUND
@@ -105,6 +145,21 @@ void Jafg::LShader::SetFloatUniform(const LString& Name, const f32 Value) const
     return;
 }
 
+void Jafg::LShader::SetVec2Uniform(const LString& Name, const LVector2& Value) const
+{
+    checkCode
+    (
+        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        {
+            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+        }
+    )
+
+    glUniform2f(glGetUniformLocation(this->Id, Name.ToPtr()), Value.X, Value.Y);
+
+    return;
+}
+
 void Jafg::LShader::SetVec3Uniform(const LString& Name, const LVector3& Value) const
 {
     checkCode
@@ -165,10 +220,52 @@ void Jafg::LShader::SetColorVec4Uniform(const LString& Name, const LColor& Value
     this->SetVec4Uniform(Name, Value.ToVector4());
 }
 
-void Jafg::LShader::LoadShader(const LEnginePath& VertexPath, const LEnginePath& FragmentPath)
+void Jafg::LShader::LoadShader(const LEnginePath& VertexPath, const LEnginePath& FragmentPath, const TArray<LShaderCompileTimeConstant>& InConstants)
 {
-    const LString UncompiledVertex   = Finder::ReadFile(VertexPath);
-    const LString UncompiledFragment = Finder::ReadFile(FragmentPath);
+    LString UncompiledVertex   = Finder::ReadFile(VertexPath);
+    LString UncompiledFragment = Finder::ReadFile(FragmentPath);
+
+    i32 AddConstantsIdxFragment = INDEX_NONE;
+    i32 AddConstantsIdxVertex   = INDEX_NONE;
+
+    const i32 HashVersionFragment = UncompiledFragment.FindFirst("#version");
+    const i32 HashVersionVertex   = UncompiledVertex.FindFirst("#version");
+    jassert( HashVersionFragment != INDEX_NONE )
+    jassert( HashVersionVertex   != INDEX_NONE )
+
+    for (i32 i = HashVersionFragment; i < UncompiledFragment.GetSize(); ++i)
+    {
+        if (UncompiledFragment[i] == '\n')
+        {
+            AddConstantsIdxFragment = i + 1;
+            break;
+        }
+
+        continue;
+    }
+    jassert( AddConstantsIdxFragment != INDEX_NONE )
+
+    for (i32 i = HashVersionVertex; i < UncompiledVertex.GetSize(); ++i)
+    {
+        if (UncompiledVertex[i] == '\n')
+        {
+            AddConstantsIdxVertex = i + 1;
+            break;
+        }
+
+        continue;
+    }
+    jassert( AddConstantsIdxVertex != INDEX_NONE )
+
+    LString ConstantsAsStr;
+    for (const auto& [Name, Value] : InConstants)
+    {
+        ConstantsAsStr += LString::SprintF("#define {} {}\n", Name, Value);
+    }
+
+    UncompiledFragment.AppendAt(AddConstantsIdxFragment, ConstantsAsStr);
+    UncompiledVertex.AppendAt(AddConstantsIdxVertex, ConstantsAsStr);
+
     const char* UncompiledVertexC   = UncompiledVertex.ToPtr();
     const char* UncompiledFragmentC = UncompiledFragment.ToPtr();
 
@@ -214,6 +311,8 @@ void Jafg::LShader::LoadShader(const LEnginePath& VertexPath, const LEnginePath&
 
     glDeleteShader(Vertex);
     glDeleteShader(Fragment);
+
+    this->bLoaded = true;
 
     return;
 }

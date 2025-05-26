@@ -93,6 +93,7 @@ public:
         DEFAULT_REALLOC_OF_ANY_FORM(LScrollRegionBrushImpl)
 
         FORCEINLINE void Copy(const LScrollRegionBrush& InBrush) noexcept;
+        FORCEINLINE void Move(LScrollRegionBrush&& InBrush) noexcept;
         FORCEINLINE LScrollRegionBrushImpl(const LScrollRegionBrush& InBrush) noexcept;
         FORCEINLINE LScrollRegionBrushImpl(LScrollRegionBrush&& InBrush) noexcept;
         FORCEINLINE LScrollRegionBrushImpl& operator=(const LScrollRegionBrush& InBrush) noexcept;
@@ -248,15 +249,18 @@ FORCEINLINE void WScrollRegion::SetScrollRegionBrushOnly(const LScrollRegionBrus
 
 FORCEINLINE LScrollRegionBrush WScrollRegion::GetBrush() const noexcept
 {
-    static_assert(sizeof(LRegionBrush) == 16, "LRegionBrush has changed. Please modify this function.");
+    static_assert(sizeof(LRegionBrush) == 48, "LRegionBrush has changed. Please modify this function.");
 
     LScrollRegionBrush Result;
 
-    if (this->Super::HasBrush())
-    {
-        Result.Tint = this->Super::GetBrush().Tint;
-        Result.Image = this->Super::GetBrush().Image;
-    }
+    Result.Type = this->Super::GetBrush().Type;
+    Result.Tint = this->Super::GetBrush().Tint;
+    Result.Color = this->Super::GetBrush().Color;
+    Result.BackgroundColor = this->Super::GetBrush().BackgroundColor;
+    Result.Image = this->Super::GetBrush().Image;
+    Result.Radii = this->Super::GetBrush().Radii;
+    Result.OutlineThickness = this->Super::GetBrush().OutlineThickness;
+    Result.OutlineTint = this->Super::GetBrush().OutlineTint;
 
     Result.bAlwaysShowVScrollbar = this->Brush.bAlwaysShowVScrollbar;
     Result.bAlwaysHideVScrollbar = this->Brush.bAlwaysHideVScrollbar;
@@ -304,6 +308,30 @@ FORCEINLINE void WScrollRegion::LScrollRegionBrushImpl::Copy(const LScrollRegion
     return;
 }
 
+FORCEINLINE void WScrollRegion::LScrollRegionBrushImpl::Move(LScrollRegionBrush&& InBrush) noexcept
+{
+    this->bAlwaysShowVScrollbar = std::move(InBrush.bAlwaysShowVScrollbar);
+    this->bAlwaysHideVScrollbar = std::move(InBrush.bAlwaysHideVScrollbar);
+
+    this->bAlwaysShowHScrollbar = std::move(InBrush.bAlwaysShowHScrollbar);
+    this->bAlwaysHideHScrollbar = std::move(InBrush.bAlwaysHideHScrollbar);
+
+    this->VBackgroundTint = std::move(InBrush.VBackgroundTint);
+    this->VTint = std::move(InBrush.VTint);
+    this->HBackgroundTint = std::move(InBrush.HBackgroundTint);
+    this->HTint = std::move(InBrush.HTint);
+
+    this->VScrollBarPadding = std::move(InBrush.VScrollBarPadding);
+    this->VScrollBarWidth = std::move(InBrush.VScrollBarWidth);
+    this->VScrollBarBackgroundWidth = std::move(InBrush.VScrollBarBackgroundWidth);
+
+    this->HScrollBarPadding = std::move(InBrush.HScrollBarPadding);
+    this->HScrollBarHeight = std::move(InBrush.HScrollBarHeight);
+    this->HScrollBarBackgroundHeight = std::move(InBrush.HScrollBarBackgroundHeight);
+
+    return;
+}
+
 FORCEINLINE WScrollRegion::LScrollRegionBrushImpl::LScrollRegionBrushImpl(const LScrollRegionBrush& InBrush) noexcept
 {
     this->Copy(InBrush);
@@ -311,7 +339,7 @@ FORCEINLINE WScrollRegion::LScrollRegionBrushImpl::LScrollRegionBrushImpl(const 
 
 FORCEINLINE WScrollRegion::LScrollRegionBrushImpl::LScrollRegionBrushImpl(LScrollRegionBrush&& InBrush) noexcept
 {
-    this->Copy(InBrush);
+    this->Move(std::move(InBrush));
 }
 
 FORCEINLINE WScrollRegion::LScrollRegionBrushImpl& WScrollRegion::LScrollRegionBrushImpl::operator=(const LScrollRegionBrush& InBrush) noexcept
@@ -322,7 +350,7 @@ FORCEINLINE WScrollRegion::LScrollRegionBrushImpl& WScrollRegion::LScrollRegionB
 
 FORCEINLINE WScrollRegion::LScrollRegionBrushImpl& WScrollRegion::LScrollRegionBrushImpl::operator=(LScrollRegionBrush&& InBrush) noexcept
 {
-    this->Copy(InBrush);
+    this->Move(std::move(InBrush));
     return *this;
 }
 

@@ -46,10 +46,6 @@ public:
     virtual LWidgetSlot* AddChild(WNode* InChild) PURE_VIRTUAL(return nullptr)
     virtual LWidgetSlot* AddChildAt(const i32 InIndex, WNode* InChild) PURE_VIRTUAL(return nullptr)
 
-    virtual void SetPadding(const LPadding& InPadding) PURE_VIRTUAL()
-    virtual auto GetPaddingPtr()       ->       LPadding* PURE_VIRTUAL(return nullptr)
-    virtual auto GetPaddingPtr() const -> const LPadding* PURE_VIRTUAL(return nullptr)
-
 private:
 
     //# Empty array for unreachable code paths - just to satisfy the compiler. Has no use-case.

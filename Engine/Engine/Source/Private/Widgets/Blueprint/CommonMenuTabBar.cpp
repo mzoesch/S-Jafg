@@ -8,9 +8,9 @@
 
 void Jafg::WCommonMenuTabBarButton::Construct()
 {
-    this->SetNormalBrush({LColor::Transparent});
-    this->SetHoverBrush({{0, 0, 0, 128}});
-    this->SetPressBrush({{0, 0, 0, 192}});
+    this->SetNormalBrush({ERegionBrush::None});
+    this->SetHoverBrush({ERegionBrush::Box, {0, 0, 0, 128}});
+    this->SetPressBrush({ERegionBrush::Box, {0, 0, 0, 192}});
 
     Super::Construct();
 
@@ -38,7 +38,9 @@ void Jafg::WCommonMenuTabBarPanel::Construct()
     }
 
     NewNode(WRegion).SaveTo(&this->Panel)
-        .Anchor(EAnchor::Fill).Tint(Tint);
+        .Anchor(EAnchor::Fill)
+        .Type(ERegionBrush::Box)
+        .Tint(Tint);
     this->AddChild(this->Panel);
     MakeDeferredWidgetNodeFinal(this->Panel);
 
@@ -68,8 +70,9 @@ void Jafg::WCommonMenuTabBar::Construct()
     {
         VRegion->SetMinDesiredSize({200, 0});
 
-        VRegion->SetTint({0, 0, 0, WCommonMenuTabBar::GetAlphaTintBasedOfDepth(this->Depth)});
         VRegion->SetAnchor(EAnchor::VFill);
+        VRegion->SetType(ERegionBrush::Box);
+        VRegion->SetTint({0, 0, 0, WCommonMenuTabBar::GetAlphaTintBasedOfDepth(this->Depth)});
     }
 
     this->Switcher->SetAnchor(EAnchor::Fill);

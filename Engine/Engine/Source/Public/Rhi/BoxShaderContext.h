@@ -43,7 +43,7 @@ public:
 
     FORCEINLINE auto IsMeaningful() const -> bool { return this->bIsMeaningful; }
 
-    void ReloadShader() const;
+    void ReloadShader(const bool bDeleteOld) const;
 
 private:
 

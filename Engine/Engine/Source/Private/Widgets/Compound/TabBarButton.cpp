@@ -60,12 +60,12 @@ void Jafg::WTabBarButton::OnTabBarFocus(const bool bInFocus)
     if (bInFocus)
     {
         this->SetLetUiReactToEvents(false);
-        this->SetBrush(this->HoverBrush);
+        this->SetBrush(this->Style.HoverBrush);
     }
     else
     {
         this->SetLetUiReactToEvents(true);
-        this->SetBrush(this->NormalBrush);
+        this->SetBrush(this->Style.NormalBrush);
     }
 
     return;

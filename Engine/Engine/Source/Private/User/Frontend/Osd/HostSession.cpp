@@ -80,6 +80,7 @@ Jafg::WHostSessionScreen_New::WHostSessionScreen_New(const LObjectInitializer& O
 
 void Jafg::WHostSessionScreen_New::Construct()
 {
+    this->SetType(ERegionBrush::Box);
     this->SetTint({40, 39, 49});
 
     NewNode(WCommonMenuTabBar).SaveTo(&this->InternalTabBar)
@@ -342,6 +343,7 @@ Jafg::WHostSessionScreen_Old::WHostSessionScreen_Old(const LObjectInitializer& O
 void Jafg::WHostSessionScreen_Old::Construct()
 {
     this->SetPadding(25);
+    this->SetType(ERegionBrush::Box);
     this->SetTint({40, 39, 49});
 
     WVRegion* Region;

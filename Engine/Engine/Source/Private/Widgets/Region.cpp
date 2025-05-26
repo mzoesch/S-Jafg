@@ -4,15 +4,34 @@
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "Rhi/OrthographicBoxShader.h"
+#include "Rhi/OrthographicRoundedBoxShader.h"
+#include "Rhi/OrthographicOutlineBoxShader.h"
+#include "Rhi/OrthographicRoundedOutlineBoxShader.h"
 
 Jafg::WRegion::WRegion(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
     Tasks::Make(ENamedThreads::Master, ETaskTime::BeforeEngineInitButAfterAlloc, [](void) -> void
     {
+        check( GEngine )
+
         if (GEngine->IsShaderValid(Name_ShaderOrthographicBox) == false)
         {
-            LOrthographicBoxShader* Shader = new LOrthographicBoxShader();
-            Shader->MakeChecked(Name_ShaderOrthographicBox);
+            (new LOrthographicBoxShader())->MakeChecked(Name_ShaderOrthographicBox);
+        }
+
+        if (GEngine->IsShaderValid(Name_ShaderOrthographicRoundedBox) == false)
+        {
+            (new LOrthographicRoundedBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedBox);
+        }
+
+        if (GEngine->IsShaderValid(Name_ShaderOrthographicOutlineBox) == false)
+        {
+            (new LOrthographicOutlineBoxShader())->MakeChecked(Name_ShaderOrthographicOutlineBox);
+        }
+
+        if (GEngine->IsShaderValid(Name_ShaderOrthographicRoundedOutlineBox) == false)
+        {
+            (new LOrthographicRoundedOutlineBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedOutlineBox);
         }
 
         return;
@@ -23,57 +42,63 @@ Jafg::WRegion::WRegion(const LObjectInitializer& ObjectInitializer) : Super(Obje
 
 void Jafg::WRegion::Draw(LViewport& Context) const
 {
-    if (this->HasBrush() == false)
+    if (this->Brush.Type == ERegionBrush::None)
     {
         Super::Draw(Context);
         return;
     }
 
-    GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
-    (
-        Context,
-        this->GetAnchoredSize(),
-        this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-        this->GetBrush().Tint
-    );
+    if (this->Brush.Type == ERegionBrush::Box)
+    {
+        GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
+        (
+            Context,
+            this->GetAnchoredSize(),
+            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+            this->GetBrush().Tint
+        );
+    }
+
+    else if (this->Brush.Type == ERegionBrush::RoundedBox)
+    {
+        GEngine->GetShaderChecked<LOrthographicRoundedBoxShader>(Name_ShaderOrthographicRoundedBox)->Draw
+        (
+            Context,
+            this->GetAnchoredSize(),
+            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+            this->GetBrush().Tint,
+            this->GetBrush().Radii
+        );
+    }
+
+    else if (this->Brush.Type == ERegionBrush::OutlineBox)
+    {
+        GEngine->GetShaderChecked<LOrthographicOutlineBoxShader>(Name_ShaderOrthographicOutlineBox)->Draw
+        (
+            Context,
+            this->GetAnchoredSize(),
+            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+            this->GetBrush().Tint,
+            this->GetBrush().OutlineThickness,
+            this->GetBrush().OutlineTint
+        );
+    }
+
+    else if (this->Brush.Type == ERegionBrush::RoundedOutlineBox)
+    {
+        GEngine->GetShaderChecked<LOrthographicRoundedOutlineBoxShader>(Name_ShaderOrthographicRoundedOutlineBox)->Draw
+        (
+            Context,
+            this->GetAnchoredSize(),
+            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+            this->GetBrush().Tint,
+            this->GetBrush().OutlineThickness,
+            this->GetBrush().OutlineTint,
+            this->GetBrush().Radii
+        );
+    }
 
     Super::Draw(Context);
 
-    return;
-}
-
-void Jafg::WRegion::SetTint(const LColor& InTint)
-{
-    if (this->HasBrush())
-    {
-        this->Brush.GetValue().Tint = InTint;
-        return;
-    }
-
-    this->SetBrush(LRegionBrush({.Tint = InTint}));
-    return;
-}
-
-void Jafg::WRegion::SetTexture(const LTexture2* InTexture)
-{
-    if (this->HasBrush())
-    {
-        this->Brush.GetValue().Image.SetTexture(InTexture);
-        return;
-    }
-
-    this->SetBrush(LRegionBrush({.Image = LImage().SetTexture(InTexture)}));
-    return;
-}
-
-void Jafg::WRegion::SetImage(const LImage& InImage)
-{
-    if (this->HasBrush())
-    {
-        this->Brush.GetValue().Image = InImage;
-        return;
-    }
-
-    this->SetBrush(LRegionBrush({.Image = InImage}));
     return;
 }

@@ -968,7 +968,7 @@ FORCEINLINE TArrayBase<InAlloc>::TArrayBase(std::initializer_list<T> InList) noe
     T* Me = this->Impl.Data;
     for (const T& Element : InList)
     {
-        std::construct_at(Me, std::forward<T>(Element));
+        std::construct_at(Me, Element);
         ++Me;
     }
     this->Impl.Slack = Me;
@@ -987,7 +987,7 @@ FORCEINLINE TArrayBase<InAlloc>::TArrayBase(std::initializer_list<InOtherElement
     T* Me = this->Impl.Data;
     for (const InOtherElement& Element : InList)
     {
-        std::construct_at(Me, std::forward<T>(Element));
+        std::construct_at(Me, Element);
         ++Me;
     }
     this->Impl.Slack = Me;

@@ -46,6 +46,7 @@ void Jafg::LPreferenceValue_CliType::BuildDefault(const LPreference* Self, WPare
     NewNodeCtx(Target, WHRegion).SaveTo(&Container)
         .Anchor(EAnchor::HFill)
         .Padding({15.0f, 10.0f})
+        .Type(ERegionBrush::Box)
         .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
         NewNodeCtx(Target, WTextBlock)
@@ -111,6 +112,7 @@ void Jafg::LPreferenceValue_CliCommand::BuildDefault(const LPreference* Self, WP
     NewNodeCtx(Target, WHRegion).SaveTo(&Container)
         .Anchor(EAnchor::HFill)
         .Padding({15.0f, 10.0f})
+        .Type(ERegionBrush::Box)
         .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
         NewNodeCtx(Target, WTextBlock)
@@ -170,6 +172,7 @@ void Jafg::LPreferenceValue_CliVariable::BuildDefault(const LPreference* Self, W
     NewNodeCtx(Target, WHRegion).SaveTo(&Container)
         .Anchor(EAnchor::HFill)
         .Padding({15.0f, 10.0f})
+        .Type(ERegionBrush::Box)
         .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
         NewNodeCtx(Target, WTextBlock)

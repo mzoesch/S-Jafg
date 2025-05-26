@@ -16,6 +16,14 @@ struct LTextBlockBrush;
 
 MAKE_DELEGATE_SIGNATURE(LOnButtonKeyEvent, void, WButton* Self, const LKeyEvent& InKeyEvent)
 
+struct LButtonStyle
+{
+    LRegionBrush NormalBrush   { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray, .OutlineTint = LColor::Black };
+    LRegionBrush HoverBrush    { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray, .OutlineTint = LColor::White  };
+    LRegionBrush PressBrush    { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray, .OutlineTint = LColor::White };
+    LRegionBrush DisabledBrush { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray, .OutlineTint = LColor::Black };
+};
+
 template <typename TNode>
 class TWidgetFactoryButton : public TWidgetFactoryRegion<TNode>
 {
@@ -40,8 +48,7 @@ class TWidgetFactoryTextButton : public TWidgetFactoryButton<TNode>
 {
 public:
 
-    using Super         = TWidgetFactoryButton<TNode>;
-    using TFactoryRetTy = typename Super::TFactoryRetTy;
+    GENERATED_FACTORY_BODY(TWidgetFactoryButton)
 
     FORCEINLINE TFactoryRetTy& Content(const LString& InContent) { this->This()->SetContent(InContent); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Content(LString&& InContent) { this->This()->SetContent(std::move(InContent)); return this->Self(); }
@@ -77,22 +84,27 @@ public:
     virtual void OnSecondaryPress()   { }
     virtual void OnSecondaryRelease() { }
 
-    FORCEINLINE void SetNormalBrush(const LRegionBrush& InBrush) { this->NormalBrush = InBrush; }
-    FORCEINLINE auto GetNormalBrush() const -> const LRegionBrush& { return this->NormalBrush; }
-    FORCEINLINE void SetHoverBrush(const LRegionBrush& InBrush) { this->HoverBrush = InBrush; }
-    FORCEINLINE auto GetHoverBrush() const -> const LRegionBrush& { return this->HoverBrush; }
-    FORCEINLINE void SetPressBrush(const LRegionBrush& InBrush) { this->PressBrush = InBrush; }
-    FORCEINLINE auto GetPressBrush() const -> const LRegionBrush& { return this->PressBrush; }
+    FORCEINLINE void SetNormalBrush(const LRegionBrush& InBrush) noexcept { this->Style.NormalBrush = InBrush; }
+    FORCEINLINE auto GetNormalBrush() const noexcept -> const LRegionBrush& { return this->Style.NormalBrush; }
+    FORCEINLINE void SetHoverBrush(const LRegionBrush& InBrush) noexcept { this->Style.HoverBrush = InBrush; }
+    FORCEINLINE auto GetHoverBrush() const noexcept -> const LRegionBrush& { return this->Style.HoverBrush; }
+    FORCEINLINE void SetPressBrush(const LRegionBrush& InBrush) noexcept { this->Style.PressBrush = InBrush; }
+    FORCEINLINE auto GetPressBrush() const noexcept -> const LRegionBrush& { return this->Style.PressBrush; }
+    FORCEINLINE void SetDisabledBrush(const LRegionBrush& InBrush) noexcept { this->Style.DisabledBrush = InBrush; }
+    FORCEINLINE auto GetDisabledBrush() const noexcept -> const LRegionBrush& { return this->Style.DisabledBrush; }
 
     FORCEINLINE void SetLetUiReactToEvents(const bool bInLetUiReactToEvents) { this->bLetUiReactToEvents = bInLetUiReactToEvents; }
     FORCEINLINE bool GetLetUiReactToEvents() const { return this->bLetUiReactToEvents; }
 
+    void SetEnabled(const bool bInEnabled);
+    FORCEINLINE bool IsEnabled() const noexcept { return this->bEnabled; }
+
 protected:
 
-    bool bLetUiReactToEvents { true };
-    LRegionBrush NormalBrush { LColor::Black };
-    LRegionBrush HoverBrush  { LColor::Gray };
-    LRegionBrush PressBrush  { LColor::White };
+    bool bLetUiReactToEvents : 1 { true };
+    bool bEnabled : 1 { true };
+
+    LButtonStyle Style;
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTextButton)
@@ -102,7 +114,7 @@ class ENGINE_API WTextButton : public WButton
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WTextButton)
+    explicit WTextButton(const ::Jafg::LObjectInitializer& ObjectInitializer);
 
 public:
 

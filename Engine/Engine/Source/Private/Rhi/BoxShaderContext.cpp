@@ -15,8 +15,8 @@ void Jafg::LBoxShaderContext::Make()
         return;
     }
 
+    this->ReloadShader(false);
     this->bIsMeaningful = true;
-    this->ReloadShader();
 
 #if WITH_DEBUG_ZERO_UNBOUND
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -74,7 +74,7 @@ void Jafg::LBoxShaderContext::Draw(
     {
         this->FreeStayMeaningful();
         this->LastFrameTexture = Texture;
-        this->ReloadShader();
+        this->ReloadShader(true);
     }
     else
     {
@@ -95,7 +95,7 @@ void Jafg::LBoxShaderContext::Draw(
 
     this->Shader.SetMatrixUniform("Projection", Projection);
     this->Shader.SetFloatUniform("OrthoZDepth", Context.GetFrameOrthoZLayerDepth());
-    this->Shader.SetIntUniform("BoxColor", *reinterpret_cast<const i32*>(&Color.Bits));
+    this->Shader.SetIntUniform("BoxTint", *reinterpret_cast<const i32*>(&Color.Bits));
 
     if (this->LastFrameTexture)
     {
@@ -144,20 +144,23 @@ void Jafg::LBoxShaderContext::Draw(
     return;
 }
 
-void Jafg::LBoxShaderContext::ReloadShader() const
+void Jafg::LBoxShaderContext::ReloadShader(const bool bDeleteOld) const
 {
-    checkSlow( this->bIsMeaningful )
+    check( this->bIsMeaningful && bDeleteOld || bDeleteOld == false )
 
-    glDeleteVertexArrays(1, &this->Vao);
-    glDeleteBuffers(1, &this->Vbo);
-    if (this->LastFrameTexture) { glDeleteBuffers(1, &this->Ebo); }
-#if WITH_DEBUG_ZERO_UNBOUND
-    this->Vao = 0;
-    this->Vbo = 0;
-    this->Ebo = 0;
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
+    if (bDeleteOld)
+    {
+        glDeleteVertexArrays(1, &this->Vao);
+        glDeleteBuffers(1, &this->Vbo);
+        if (this->LastFrameTexture) { glDeleteBuffers(1, &this->Ebo); }
+    #if WITH_DEBUG_ZERO_UNBOUND
+        this->Vao = 0;
+        this->Vbo = 0;
+        this->Ebo = 0;
+    #endif /* WITH_DEBUG_ZERO_UNBOUND */
 
-    this->Shader.Free();
+        this->Shader.Free();
+    }
 
     if (this->LastFrameTexture)
     {

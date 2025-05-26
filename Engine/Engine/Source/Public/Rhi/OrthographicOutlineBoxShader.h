@@ -7,7 +7,7 @@
 namespace Jafg
 {
 
-class LOrthographicBoxShader : public LEngineShader
+class LOrthographicOutlineBoxShader : public LEngineShader
 {
 public:
 
@@ -22,7 +22,9 @@ public:
         const LViewport& Context,
         const LVector2&  Size,
         const LVector2&  TopLeft,
-        const LColor&    Tint
+        const LColor&    Tint,
+        const f32        OutlineThickness,
+        const LColor&    OutlineTint
     ) const;
 
 private:

@@ -13,9 +13,9 @@ void Jafg::WButton::Construct()
 {
     Super::Construct();
 
-    if (this->bLetUiReactToEvents)
+    if (this->IsEnabled() && this->bLetUiReactToEvents)
     {
-        this->SetBrush(this->NormalBrush);
+        this->SetBrush(this->Style.NormalBrush);
     }
 
     return;
@@ -28,9 +28,9 @@ Jafg::LCursorReply Jafg::WButton::OnCursorEnter()
         return Reply;
     }
 
-    if (this->bLetUiReactToEvents)
+    if (this->IsEnabled() && this->bLetUiReactToEvents)
     {
-        this->SetBrush(this->HoverBrush);
+        this->SetBrush(this->Style.HoverBrush);
     }
 
     return LCursorReply::Handled();
@@ -43,9 +43,9 @@ Jafg::LCursorReply Jafg::WButton::OnCursorLeave()
         return Reply;
     }
 
-    if (this->bLetUiReactToEvents)
+    if (this->IsEnabled() && this->bLetUiReactToEvents)
     {
-        this->SetBrush(this->NormalBrush);
+        this->SetBrush(this->Style.NormalBrush);
     }
 
     return LCursorReply::Handled();
@@ -53,11 +53,16 @@ Jafg::LCursorReply Jafg::WButton::OnCursorLeave()
 
 Jafg::LReply Jafg::WButton::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
+    if (this->IsEnabled() == false)
+    {
+        return Super::OnKeyDown(InViewport, InKeyEvent);
+    }
+
     if (InKeyEvent.GetKey() == EKeys::LeftMouseButton)
     {
         if (this->bLetUiReactToEvents)
         {
-            this->SetBrush(this->PressBrush);
+            this->SetBrush(this->Style.PressBrush);
         }
 
         if (this->OnPrimaryPressDelegate.IsBound())
@@ -76,7 +81,7 @@ Jafg::LReply Jafg::WButton::OnKeyDown(const LViewport& InViewport, const LKeyEve
     {
         if (this->bLetUiReactToEvents)
         {
-            this->SetBrush(this->PressBrush);
+            this->SetBrush(this->Style.PressBrush);
         }
 
         if (this->OnSecondaryPressDelegate.IsBound())
@@ -96,11 +101,16 @@ Jafg::LReply Jafg::WButton::OnKeyDown(const LViewport& InViewport, const LKeyEve
 
 Jafg::LReply Jafg::WButton::OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
+    if (this->IsEnabled() == false)
+    {
+        return Super::OnKeyUp(InViewport, InKeyEvent);
+    }
+
     if (InKeyEvent.GetKey() == EKeys::LeftMouseButton)
     {
         if (this->bLetUiReactToEvents)
         {
-            this->SetBrush(this->HoverBrush);
+            this->SetBrush(this->Style.HoverBrush);
         }
 
         if (this->OnPrimaryReleaseDelegate.IsBound())
@@ -119,7 +129,7 @@ Jafg::LReply Jafg::WButton::OnKeyUp(const LViewport& InViewport, const LKeyEvent
     {
         if (this->bLetUiReactToEvents)
         {
-            this->SetBrush(this->HoverBrush);
+            this->SetBrush(this->Style.HoverBrush);
         }
 
         if (this->OnSecondaryReleaseDelegate.IsBound())
@@ -137,6 +147,28 @@ Jafg::LReply Jafg::WButton::OnKeyUp(const LViewport& InViewport, const LKeyEvent
     return Super::OnKeyUp(InViewport, InKeyEvent);
 }
 
+void Jafg::WButton::SetEnabled(const bool bInEnabled)
+{
+    this->bEnabled = bInEnabled;
+
+    if (this->bEnabled)
+    {
+        this->SetBrush(this->Style.NormalBrush);
+    }
+    else
+    {
+        this->SetBrush(this->Style.DisabledBrush);
+    }
+
+    return;
+}
+
+Jafg::WTextButton::WTextButton(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+    this->SetPadding({15, 8});
+    return;
+}
+
 void Jafg::WTextButton::Construct()
 {
     if (this->ButtonText == nullptr)
@@ -144,7 +176,7 @@ void Jafg::WTextButton::Construct()
         NewNode(WTextBlock).SaveTo(&this->ButtonText)
             .Align(ETextHAlign::Center)
             .Align(ETextVAlign::Center)
-            .Brush(LTextBlockBrush::Body());
+            .Brush(LTextBlockBrush::SubHeader());
 
         this->AddChild(this->ButtonText);
     }
@@ -171,7 +203,7 @@ void Jafg::WTextButton::Construct()
 
 void Jafg::WTextButton::Draw(LViewport& Context) const
 {
-    WButton::Draw(Context);
+    Super::Draw(Context);
 }
 
 bool Jafg::WTextButton::SetContent(const LString& InContent)

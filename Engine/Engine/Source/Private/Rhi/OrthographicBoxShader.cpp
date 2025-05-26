@@ -60,7 +60,7 @@ void Jafg::LOrthographicBoxShader::OnFree()
     return;
 }
 
-void Jafg::LOrthographicBoxShader::Draw(const LViewport& Context, const LVector2& Size, const LVector2& TopLeft, const LColor& Color) const
+void Jafg::LOrthographicBoxShader::Draw(const LViewport& Context, const LVector2& Size, const LVector2& TopLeft, const LColor& Tint) const
 {
     check( this->IsMeaningful() )
 
@@ -70,21 +70,12 @@ void Jafg::LOrthographicBoxShader::Draw(const LViewport& Context, const LVector2
         return;
     }
 
-    if (static_cast<f32>(Context.GetDimensions().X) < TopLeft.X + Size.X)
-    {
-        // LOG_ERROR(LogRhi, "X-Axis constraint failed: [{} < {} + {}].", Context.GetDimensions().X, TopLeft.X, Size.X)
-    }
-    if (static_cast<f32>(Context.GetDimensions().Y) < TopLeft.Y + Size.Y)
-    {
-        // LOG_ERROR(LogRhi, "Y-Axis constraint failed: [{} < {} + {}].", Context.GetDimensions().Y, TopLeft.Y, Size.Y)
-    }
-
     this->Program.Use();
     this->Program.SetFloatUniform("OrthoZDepth", Context.GetFrameOrthoZLayerDepth());
-    this->Program.SetColorUniform("BoxColor", Color);
+    this->Program.SetColorUniform("BoxTint", Tint);
 
     const f32 Scale = Context.GetScaleFactor();
-    f32 Vertices[] =
+    f32 Vertices[]
     {
         TopLeft.X * Scale,            TopLeft.Y * Scale,            /* Top    Left  */
         (TopLeft.X + Size.X) * Scale, TopLeft.Y * Scale,            /* Top    Right */

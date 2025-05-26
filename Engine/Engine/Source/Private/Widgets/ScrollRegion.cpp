@@ -4,6 +4,9 @@
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "Rhi/OrthographicBoxShader.h"
+#include "Rhi/OrthographicRoundedBoxShader.h"
+#include "Rhi/OrthographicOutlineBoxShader.h"
+#include "Rhi/OrthographicRoundedOutlineBoxShader.h"
 #include "Rhi/RendererStateMachine.h"
 #include "User/UserPreferences.h"
 
@@ -33,17 +36,57 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
     const f32 ScrollOffsetXPercent = ScrollOffsetX / static_cast<f64>(this->DesiredSizeOfChildren.X);
     const f32 VisibleX = Maths::Clamp(this->GetAnchoredSize().X / this->DesiredSizeOfChildren.X, 0.0f, 1.0f);
 
-    /* Ourselves. */
-    if (this->HasBrush())
+    /* BEGIN Ourselves. */
+    if (this->Super::GetBrush().Type == ERegionBrush::Box)
     {
         GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
         (
             Context,
             this->GetAnchoredSize(),
-            this->GetAnchoredTopLeftFromMostOuter(Context),
-            this->GetBrush().Tint
+            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+            this->Super::GetBrush().Tint
         );
     }
+
+    else if (this->Super::GetBrush().Type == ERegionBrush::RoundedBox)
+    {
+        GEngine->GetShaderChecked<LOrthographicRoundedBoxShader>(Name_ShaderOrthographicRoundedBox)->Draw
+        (
+            Context,
+            this->GetAnchoredSize(),
+            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+            this->Super::GetBrush().Tint,
+            this->Super::GetBrush().Radii
+        );
+    }
+
+    else if (this->Super::GetBrush().Type == ERegionBrush::OutlineBox)
+    {
+        GEngine->GetShaderChecked<LOrthographicOutlineBoxShader>(Name_ShaderOrthographicOutlineBox)->Draw
+        (
+            Context,
+            this->GetAnchoredSize(),
+            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+            this->Super::GetBrush().Tint,
+            this->Super::GetBrush().OutlineThickness,
+            this->Super::GetBrush().OutlineTint
+        );
+    }
+
+    else if (this->Super::GetBrush().Type == ERegionBrush::RoundedOutlineBox)
+    {
+        GEngine->GetShaderChecked<LOrthographicRoundedOutlineBoxShader>(Name_ShaderOrthographicRoundedOutlineBox)->Draw
+        (
+            Context,
+            this->GetAnchoredSize(),
+            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+            this->Super::GetBrush().Tint,
+            this->Super::GetBrush().OutlineThickness,
+            this->Super::GetBrush().OutlineTint,
+            this->Super::GetBrush().Radii
+        );
+    }
+    /* END Ourselves. */
 
     Context.ApplyFrameTranslation({-ScrollOffsetX, -ScrollOffsetY});
     RendererStateMachine::ClipOrthographic(Context, MostOuterTopLeftContentArea.Copy(), MaxContentAreaSize);

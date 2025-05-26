@@ -2,61 +2,98 @@
 
 #pragma once
 
-#include "CoreAfx.h"
 #include "System/SystemForward.h"
 
 namespace Jafg
 {
 
-class ENGINE_API LShader
+//#
+//# A compile time constant that can be dynamically set before compiling a shader program.
+//#
+struct LShaderCompileTimeConstant
+{
+    //#
+    //# The name of the constant.
+    //#
+    LString Name;
+
+    //#
+    //# An optional value for the constant. Leave empty for just defining the name to the program.
+    //#
+    LString Value;
+};
+
+//#
+//# A shader with a direct handle to the shader on the graphical processing unit.
+//#
+class LShader final
 {
 public:
 
-    LShader() = default;
+    ENGINE_API LShader() = default;
+    ENGINE_API explicit LShader(const LEnginePath& Path);
+    ENGINE_API explicit LShader(const LEnginePath& Path, const TArray<LShaderCompileTimeConstant>& InConstants);
 
-    void Free();
+    PROHIBIT_COPY(LShader)
+    FORCEINLINE LShader(LShader&& InShader) noexcept { *this = std::move(InShader); }
+    FORCEINLINE LShader& operator=(LShader&& InShader) noexcept;
 
-    explicit LShader(const LEnginePath& Path);
+    ENGINE_API~LShader();
 
-    //#
-    //# When using this method, you have to make sure to delete the previous shader from the graphic processing unit.
-    //# Memory leaks will occur if you don't.
-    //#
-    void Load(const LEnginePath& Path);
-
-    void Use() const;
+    ENGINE_API void Free();
+    ENGINE_API void Load(const LEnginePath& Path);
+    ENGINE_API void Load(const LEnginePath& Path, const TArray<LShaderCompileTimeConstant>& InConstants);
+    ENGINE_API void Use() const;
 
 #if WITH_DEBUG_ZERO_UNBOUND
     //# Debugging only.
-    void Unuse() const;
+    ENGINE_API void Unuse() const;
 #endif /* WITH_DEBUG_ZERO_UNBOUND */
 
     template <typename T>
-    void SetUniform(const LString& Name, const T Value) const UNSUPPORTED_TEMPLATED_SPECIALIZATION(T)
+    inline     void SetUniform(const LString& Name, const T Value) const UNSUPPORTED_TEMPLATED_SPECIALIZATION(T)
 
-    void SetBoolUniform(const LString& Name, const bool Value) const;
-    void SetIntUniform(const LString& Name, const i32 Value) const;
-    void SetUIntUniform(const LString& Name, const u32 Value) const;
-    void SetFloatUniform(const LString& Name, const f32 Value) const;
+    ENGINE_API void SetBoolUniform(const LString& Name, const bool Value) const;
+    ENGINE_API void SetIntUniform(const LString& Name, const i32 Value) const;
+    ENGINE_API void SetUIntUniform(const LString& Name, const u32 Value) const;
+    ENGINE_API void SetFloatUniform(const LString& Name, const f32 Value) const;
 
-    void SetVec3Uniform(const LString& Name, const LVector3& Value) const;
-    void SetVec4Uniform(const LString& Name, const LVector4& Value) const;
-    void SetMatrixUniform(const LString& Name, const LMatrixF& Value) const;
+    ENGINE_API void SetVec2Uniform(const LString& Name, const LVector2& Value) const;
+    ENGINE_API void SetVec3Uniform(const LString& Name, const LVector3& Value) const;
+    ENGINE_API void SetVec4Uniform(const LString& Name, const LVector4& Value) const;
+    ENGINE_API void SetMatrixUniform(const LString& Name, const LMatrixF& Value) const;
 
     //# Emits an i32 from a LColor.
-    void SetColorUniform(const LString& Name, const LColor& Value) const;
+    ENGINE_API void SetColorUniform(const LString& Name, const LColor& Value) const;
     //# Emits a vec3 from LColor (without the alpha channel).
-    void SetColorVec3Uniform(const LString& Name, const LColor& Value) const;
-    void SetColorVec4Uniform(const LString& Name, const LColor& Value) const;
+    ENGINE_API void SetColorVec3Uniform(const LString& Name, const LColor& Value) const;
+    ENGINE_API void SetColorVec4Uniform(const LString& Name, const LColor& Value) const;
 
-    FORCEINLINE u32 GetId() const { return this->Id; }
+    FORCEINLINE u32 GetId() const noexcept { return this->Id; }
 
 private:
 
-    void LoadShader(const LEnginePath& VertexPath, const LEnginePath& FragmentPath);
+    void LoadShader(const LEnginePath& VertexPath, const LEnginePath& FragmentPath, const TArray<LShaderCompileTimeConstant>& InConstants);
 
+    bool bLoaded { false };
     u32 Id = NULL;
 };
+
+
+FORCEINLINE LShader& LShader::operator=(LShader&& InShader) noexcept
+{
+    if (this->bLoaded)
+    {
+        LOG_ERROR(LogRhi, "Tried to load or overwrite a shader that was already loaded.")
+        this->Free();
+    }
+
+    this->bLoaded = InShader.bLoaded;
+    this->Id = InShader.Id;
+    InShader.bLoaded = false;
+
+    return *this;
+}
 
 template <>
 FORCEINLINE void LShader::SetUniform(const LString& Name, const bool Value) const { this->SetBoolUniform(Name, Value); }
@@ -66,8 +103,16 @@ template <>
 FORCEINLINE void LShader::SetUniform(const LString& Name, const u32 Value) const { this->SetUIntUniform(Name, Value); }
 template <>
 FORCEINLINE void LShader::SetUniform(const LString& Name, const f32 Value) const { this->SetFloatUniform(Name, Value); }
+
+template <>
+FORCEINLINE void LShader::SetUniform(const LString& Name, const LVector2& Value) const { this->SetVec2Uniform(Name, Value); }
+template <>
+FORCEINLINE void LShader::SetUniform(const LString& Name, const LVector3& Value) const { this->SetVec3Uniform(Name, Value); }
+template <>
+FORCEINLINE void LShader::SetUniform(const LString& Name, const LVector4& Value) const { this->SetVec4Uniform(Name, Value); }
 template <>
 FORCEINLINE void LShader::SetUniform(const LString& Name, const LMatrixF& Value) const { this->SetMatrixUniform(Name, Value); }
+
 template <>
 FORCEINLINE void LShader::SetUniform(const LString& Name, const LColor& Value) const { this->SetColorUniform(Name, Value); }
 
