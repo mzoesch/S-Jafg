@@ -33,6 +33,11 @@ LPath Finder::GetUserPreferencesFile()
     return Finder::GetSavedDir().AppendPath("MyPreferences.cfg");
 }
 
+LPath Finder::GetSavesDir()
+{
+    return Finder::GetSavedDir().AppendPath("Saves");
+}
+
 LString Finder::ReadFile(const LEnginePath& InEnginePath)
 {
 #if WITH_VIRTUAL_FILESYSTEM
@@ -262,7 +267,7 @@ TArray<LString> Finder::FindFilesRecursively(
     const LStringView& InFileExtension
 )
 {
-    #if WITH_VIRTUAL_FILESYSTEM
+#if WITH_VIRTUAL_FILESYSTEM
     LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())
     return { };
 #else /* WITH_VIRTUAL_FILESYSTEM */
@@ -270,7 +275,14 @@ TArray<LString> Finder::FindFilesRecursively(
 
     TArray<LString> Out;
 
-    for (const auto& p : Fs::recursive_directory_iterator(InPath.ToPtr(), Fs::directory_options::skip_permission_denied | Fs::directory_options::follow_directory_symlink))
+    for
+    (
+        const auto& p : Fs::recursive_directory_iterator
+            (
+            InPath.ToPtr(),
+            Fs::directory_options::skip_permission_denied | Fs::directory_options::follow_directory_symlink
+            )
+    )
     {
         if (p.is_directory())
         {
@@ -368,6 +380,42 @@ TArray<LString> Finder::FindFilesRecursively(
         bKeepExtension,
         InFileExtension
     );
+#endif /* !WITH_VIRTUAL_FILESYSTEM */
+}
+
+TArray<LString> Finder::FindFilesRecursivelyByName(const LPath& InPath, const LStringView& InFileName)
+{
+#if WITH_VIRTUAL_FILESYSTEM
+    LOG_WARNING(LogSystem, "Access to the filesystem is denied on this platform. Tried to access: {}.", InAbsolutePath.GetPath())
+    return { };
+#else /* WITH_VIRTUAL_FILESYSTEM */
+    Paths::DoesPathExistAsserted(InPath);
+
+    TArray<LString> Out;
+
+    for
+    (
+        const auto& p : Fs::recursive_directory_iterator
+            (
+            InPath.ToPtr(),
+            Fs::directory_options::skip_permission_denied | Fs::directory_options::follow_directory_symlink
+            )
+    )
+    {
+        if (p.is_directory())
+        {
+            continue;
+        }
+
+        if (InFileName == p.path().filename().c_str())
+        {
+            Out.Emplace(p.path().c_str());
+        }
+
+        continue;
+    }
+
+    return Out;
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
 }
 

@@ -4,16 +4,22 @@
 
 #include "Widgets/UserWidget.h"
 #include "Widgets/Region.h"
+#include "Storage/FetchedSave.h"
+#include "Widgets/Button.h"
 #include "HostSession.generated.h"
 
 namespace Jafg
 {
 
+class WButton;
+class WScrollRegion;
 class WTabBar;
+class WVRegion;
 class WSwitcher;
 class WCommonMenuTabBar;
 class WHostSessionScreen_New;
 class WHostSessionScreen_Old;
+class WHostSessionScreen_Old_Save;
 
 //#
 //# The main class screen for hosting a session.
@@ -48,7 +54,7 @@ class ENGINE_API WHostSessionScreen_New : public WRegion
 
 protected:
 
-    explicit WHostSessionScreen_New(const ::Jafg::LObjectInitializer& ObjectInitializer);
+    explicit WHostSessionScreen_New(const LObjectInitializer& ObjectInitializer);
 
 public:
 
@@ -87,13 +93,41 @@ private:
 };
 
 DECLARE_JAFG_WIDGET()
+class ENGINE_API WHostSessionScreen_Old_Save : public WButton
+{
+    GENERATED_CLASS_BODY()
+
+    friend WHostSessionScreen_Old;
+
+protected:
+
+    explicit WHostSessionScreen_Old_Save(const LObjectInitializer& ObjectInitializer);
+
+public:
+
+    void Reload();
+
+    FORCEINLINE bool IsSaveValid() const noexcept { return this->Save.IsValid(); }
+    FORCEINLINE const LFetchedSave& GetSave() const noexcept { return this->Save; }
+
+    FORCEINLINE bool IsOwnerValid() const noexcept { return this->Owner != nullptr; }
+    FORCEINLINE WHostSessionScreen_Old* GetOwner() noexcept { return this->Owner; }
+    FORCEINLINE const WHostSessionScreen_Old* GetOwner() const noexcept { return this->Owner; }
+
+protected:
+
+    LFetchedSave Save;
+    WHostSessionScreen_Old* Owner;
+};
+
+DECLARE_JAFG_WIDGET(EClassFlags::Config)
 class ENGINE_API WHostSessionScreen_Old : public WRegion
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WHostSessionScreen_Old(const ::Jafg::LObjectInitializer& ObjectInitializer);
+    explicit WHostSessionScreen_Old(const LObjectInitializer& ObjectInitializer);
 
 public:
 
@@ -109,9 +143,24 @@ public:
     FORCEINLINE const WHostSessionScreen* GetOwnerChecked() const noexcept { check( this->Owner ) return this->Owner; }
     FORCEINLINE const WHostSessionScreen* GetOwnerAsserted() const noexcept { jassert( this->Owner ) return this->Owner; }
 
+    void RefetchSaves();
+
+    CLASS_FIELD(Config)
+    TSubclassOf<WHostSessionScreen_Old_Save> SaveNodeClass { LazyInit };
+
 private:
 
+    void RefetchSavesImpl();
+
+    i32 SelectedSaveIndex { INDEX_NONE };
+    TArray<LFetchedSave> FetchedSaves;
     WHostSessionScreen* Owner;
+    WScrollRegion* SavesRegionContainer { nullptr };
+    WVRegion* SavesRegion { nullptr };
+
+    WButton* DeleteButton { nullptr };
+    WButton* EditButton { nullptr };
+    WButton* HostButton { nullptr };
 };
 
 } /* ~Namespace Jafg */

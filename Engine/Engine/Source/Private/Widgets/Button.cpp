@@ -154,10 +154,12 @@ void Jafg::WButton::SetEnabled(const bool bInEnabled)
     if (this->bEnabled)
     {
         this->SetBrush(this->Style.NormalBrush);
+        this->SetVisibility(EWidgetVisibility::DerivedHitTestInvisible);
     }
     else
     {
         this->SetBrush(this->Style.DisabledBrush);
+        this->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
     }
 
     return;

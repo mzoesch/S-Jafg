@@ -11,11 +11,11 @@ Jafg::WTabBarPanel::WTabBarPanel(const LObjectInitializer& ObjectInitializer) : 
 
 bool Jafg::WTabBarPanel::AddData(const LWidgetNodeData* InData)
 {
-    Super::AddData(InData);
+    const bool bSuper = Super::AddData(InData);
 
     if (InData->DerivedClass != WTabBarPanel::StaticClass()->GetName())
     {
-        return false;
+        return bSuper;
     }
 
     const LTabBarTabData* Data = static_cast<const LTabBarTabData*>(InData);

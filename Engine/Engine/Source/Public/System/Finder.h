@@ -22,6 +22,7 @@ namespace Finder
 ENGINE_API LPath GetEngineRootDir();
 ENGINE_API LPath GetSavedDir();
 ENGINE_API LPath GetUserPreferencesFile();
+ENGINE_API LPath GetSavesDir();
 
 //#
 //# Reads a file content.
@@ -57,28 +58,38 @@ ENGINE_API LPath ResolvePathToRelativeEnginePath(const LEnginePath& InEnginePath
 ENGINE_API LPath ResolvePathToAbsolutePath(const LEnginePath& InEnginePath, const JUserPreferences& InUserPreferences);
 ENGINE_API LPath ResolvePathToAbsolutePath(const EEnginePaths::Type& InEnginePath, const JUserPreferences& InUserPreferences);
 
-ENGINE_API TArray<LString> FindFiles(
+ENGINE_API TArray<LString> FindFiles
+(
     const LPath& InPath,
     const bool bKeepExtension = false,
     const LStringView& InFileExtension = ".*"
 );
-ENGINE_API TArray<LString> FindFiles(
+ENGINE_API TArray<LString> FindFiles
+(
     const EEnginePaths::Type InEnginePathTy,
     const JUserPreferences& InUserPreferences,
     const bool bKeepExtension = false,
     const LStringView& InFileExtension = ".*"
 );
 
-ENGINE_API TArray<LString> FindFilesRecursively(
-const LPath& InPath,
-const bool bKeepExtension = false,
-const LStringView& InFileExtension = ".*"
+ENGINE_API TArray<LString> FindFilesRecursively
+(
+    const LPath& InPath,
+    const bool bKeepExtension = false,
+    const LStringView& InFileExtension = ".*"
 );
-ENGINE_API TArray<LString> FindFilesRecursively(
+ENGINE_API TArray<LString> FindFilesRecursively
+(
     const EEnginePaths::Type InEnginePathTy,
     const JUserPreferences& InUserPreferences,
     const bool bKeepExtension = false,
     const LStringView& InFileExtension = ".*"
+);
+
+ENGINE_API TArray<LString> FindFilesRecursivelyByName
+(
+    const LPath& InPath,
+    const LStringView& InFileName
 );
 
 } /* ~Namespace Finder */

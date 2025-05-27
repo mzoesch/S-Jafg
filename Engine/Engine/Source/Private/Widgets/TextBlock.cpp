@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Widgets/TextBlock.h"
 #include "Rhi/Shader.h"
 #include "Rhi/RhiVendorInclude.h"
@@ -8,7 +7,11 @@
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/gtc/type_ptr.inl>
+
+#include "Core/CoreNames.h"
+#include "Engine/Engine.h"
 #include "Forward/EngineForward.h"
+#include "Rhi/OrthographicBoxShader.h"
 #include "User/UserPreferences.h"
 #include "Widgets/Viewport.h"
 #include "System/EnginePath.h"
@@ -139,26 +142,15 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
 {
     Super::Draw(Context);
 
-    if (this->Brush.Tint != LColor::Transparent)
+    if (this->Brush.Tint.A > 0)
     {
-        if (this->TintShaderContext.IsMeaningful() == false)
-        {
-            this->TintShaderContext.Make();
-        }
-
-        this->TintShaderContext.Draw(
+        GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
+        (
             Context,
             this->GetAnchoredSize(),
             this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
             this->Brush.Tint
         );
-    }
-    else
-    {
-        if (this->TintShaderContext.IsMeaningful())
-        {
-            this->TintShaderContext.Free();
-        }
     }
 
     check( this->IsSlotValid() )

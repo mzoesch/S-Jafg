@@ -18,10 +18,10 @@ MAKE_DELEGATE_SIGNATURE(LOnButtonKeyEvent, void, WButton* Self, const LKeyEvent&
 
 struct LButtonStyle
 {
-    LRegionBrush NormalBrush   { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray, .OutlineTint = LColor::Black };
-    LRegionBrush HoverBrush    { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray, .OutlineTint = LColor::White  };
-    LRegionBrush PressBrush    { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray, .OutlineTint = LColor::White };
-    LRegionBrush DisabledBrush { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray, .OutlineTint = LColor::Black };
+    LRegionBrush NormalBrush   { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray,          .OutlineTint = LColor::Black };
+    LRegionBrush HoverBrush    { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray,          .OutlineTint = LColor::White };
+    LRegionBrush PressBrush    { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray,          .OutlineTint = LColor::White };
+    LRegionBrush DisabledBrush { .Type = ERegionBrush::OutlineBox, .Tint = LColor::NotSoDarkGray, .OutlineTint = LColor::Black };
 };
 
 template <typename TNode>
@@ -52,6 +52,9 @@ public:
 
     FORCEINLINE TFactoryRetTy& Content(const LString& InContent) { this->This()->SetContent(InContent); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Content(LString&& InContent) { this->This()->SetContent(std::move(InContent)); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& Enabled() { this->This()->SetEnabled(true); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Disabled() { this->This()->SetEnabled(false); return this->Self(); }
 
     FORCEINLINE TFactoryRetTy& TextBlockBrush(const LTextBlockBrush& InBrush) { this->This()->SetTextBlockBrush(InBrush); return this->Self(); }
 };

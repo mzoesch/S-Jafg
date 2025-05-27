@@ -281,7 +281,7 @@ void Jafg::WDebugScreen::Tick()
                 World->AddTemporalObject(LDebugTraceSphere(
                     LTemporalWorldObject::DrawOnce,
                     CKey.ToWorldSpace() + HitChunk->CreateRelativeVoxelKey(WorldHit_Create).ToWorldSpace() + LVector(0.5f), 0.6f,
-                    LDebugTraceSphereVisualParams(16, 16, LColor::Emerald)
+                    LDebugTraceSphereVisualParams(16, 16, LColor::Green)
                 ));
                 World->AddTemporalObject(LDebugTraceCube(
                     LTemporalWorldObject::DrawOnce, WorldSpaceCenter_Create, LVector::One(),

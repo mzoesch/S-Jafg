@@ -573,7 +573,7 @@ public:
     //# Orphans this child from its parent widget.
     //# @param bDestroy If true, this child will be killed automatically by the butcher at his next sweep.
     //#
-    virtual void RemoveFromParent(const bool bDestroy = true);
+    virtual void RemoveFromParent(const bool bDestroy = true); // TODO WARNING Will currently always destroy the child.
     FORCEINLINE WParentBase* GetParent() { return this->Slot ? this->Slot->Parent : nullptr; }
     FORCEINLINE WParentBase* GetParentChecked() { WParentBase* Out = this->GetParent(); check( Out ); return Out; }
     FORCEINLINE WParentBase* GetParentAsserted() { WParentBase* Out = this->GetParent(); jassert( Out ); return Out; }

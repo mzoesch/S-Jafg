@@ -120,6 +120,17 @@ public:
     //#
     CLASS_FIELD(Config)
     TArray<LString> EnabledEnginePlugins { "JafgPlugin" };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Storage
+    ///////////////////////////////////////////////////////////////////////////////
+
+    //#
+    //# Additional saves search paths that are used to fetch saves info metadata.
+    //# The default ist ENGINE_ROOT/Saved/Saves.
+    //#
+    CLASS_FIELD(Config)
+    TArray<LString> AdditionalSavesSearchPaths;
 };
 
 } /* ~Namespace Jafg */

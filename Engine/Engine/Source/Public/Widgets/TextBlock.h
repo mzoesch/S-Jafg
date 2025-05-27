@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Node.h"
+#include "Widgets/Node.h"
 #include "Rhi/BoxShaderContext.h"
 #include "TextBlock.generated.h"
 
@@ -164,9 +164,8 @@ private:
 
     mutable LVector2 TextDesiredSize = LVector2::Zero();
 
-    u32  Vao               = 0x0u;
-    u32  Vbo               = 0x0u;
-    mutable LBoxShaderContext TintShaderContext = { };
+    u32 Vao { 0x0u };
+    u32 Vbo { 0x0u };
 };
 
 } /* ~Namespace Jafg */

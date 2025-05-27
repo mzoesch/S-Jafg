@@ -4,6 +4,10 @@
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "Storage/SaveFunctions.h"
+#include "System/Finder.h"
+#include "System/Paths.h"
+#include "User/UserPreferences.h"
 #include "Widgets/Button.h"
 #include "Widgets/EditableTextBlock.h"
 #include "Widgets/Switcher.h"
@@ -47,7 +51,7 @@ void Jafg::WHostSessionScreen::Construct()
     ]
     FinishWidgetStyling()
 
-    this->Switcher->SetActiveWidget(this->NewScreen);
+    this->Switcher->SetActiveWidget(this->OldScreen);
 
     return;
 }
@@ -334,7 +338,53 @@ void Jafg::WHostSessionScreen_New::OnLoad_Advanced(WTabBar* TabBar, WNode* Butto
     return;
 }
 
-Jafg::WHostSessionScreen_Old::WHostSessionScreen_Old(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+Jafg::WHostSessionScreen_Old_Save::WHostSessionScreen_Old_Save(const Jafg::LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+    this->SetAnchor(EAnchor::HFill);
+    return;
+}
+
+void Jafg::WHostSessionScreen_Old_Save::Reload()
+{
+    if (this->IsSaveValid() == false)
+    {
+        LOG_WARNING(LogWidgets, "Could not reload save widget because the stored save is invalid.")
+        return;
+    }
+
+    this->RemoveChildren();
+
+    WHRegion* Region;
+    NewNode(WHRegion).SaveTo(&Region)
+        .Anchor(EAnchor::Fill)
+        .Padding({10})
+    [
+        NewNode(WRegion)
+            .MinDesiredSize({50})
+            .Type(ERegionBrush::Box)
+            .Tint(LColor::DimGray)
+        +
+        NewNode(WVRegion)
+            .Anchor(EAnchor::Fill)
+        [
+            NewNode(WTextBlock)
+                .Content(this->Save.DisplayName)
+                .Brush(LTextBlockBrush::SubHeader())
+            +
+            NewNode(WTextBlock)
+                .Content(this->Save.Path)
+                .Brush(LTextBlockBrush::Body())
+                // .Color(LColor::Dark)
+        ]
+    ]
+    FinishWidget(Region);
+
+    this->AddChild(Region);
+
+    return;
+}
+
+Jafg::WHostSessionScreen_Old::WHostSessionScreen_Old(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
     this->SetAnchor(EAnchor::Fill);
     return;
@@ -356,25 +406,37 @@ void Jafg::WHostSessionScreen_Old::Construct()
             .Content("Host Session")
             .Brush(LTextBlockBrush::Header())
         +
-        NewNode(WScrollRegion)
+        NewNode(WScrollRegion).SaveTo(&this->SavesRegionContainer)
             .Anchor(EAnchor::Fill)
+            .Type(ERegionBrush::OutlineBox)
             .Tint({64, 63, 75})
+            .OutlineTint(LColor::Black)
+            .Padding({2})
+        [
+            NewNode(WVRegion).SaveTo(&this->SavesRegion)
+                .Anchor(EAnchor::Fill)
+                .VSpace(5)
+                .Padding({30, 10})
+        ]
         +
         NewNode(WHRegion)
             .Anchor(EAnchor::HFill)
-            .HSpace(15)
+            .HSpace(10)
         [
-            NewNode(WTextButton)
+            NewNode(WTextButton).SaveTo(&this->DeleteButton)
                 .Content("Delete Selected")
+                .Disabled()
             +
-            NewNode(WTextButton)
+            NewNode(WTextButton).SaveTo(&this->EditButton)
                 .Content("Edit Selected")
+                .Disabled()
             +
             NewNode(WSpacer)
                 .Anchor(EAnchor::HFill)
             +
-            NewNode(WTextButton)
+            NewNode(WTextButton).SaveTo(&this->HostButton)
                 .Content("Host From Selected")
+                .Disabled()
             +
             NewNode(WTextButton)
                 .Content("Host From New")
@@ -389,6 +451,8 @@ void Jafg::WHostSessionScreen_Old::Construct()
     this->AddChild(Region);
 
     Super::Construct();
+
+    this->RefetchSaves();
 
     return;
 }
@@ -406,4 +470,112 @@ bool Jafg::WHostSessionScreen_Old::AddData(const LWidgetNodeData* InData)
     check( this->Owner )
 
     return true;
+}
+
+void Jafg::WHostSessionScreen_Old::RefetchSaves()
+{
+    check( this->SavesRegion )
+    this->SavesRegion->RemoveChildren();
+    this->SelectedSaveIndex = -1;
+
+    if (this->DeleteButton)
+    {
+        this->DeleteButton->SetEnabled(false);
+    }
+    if (this->EditButton)
+    {
+        this->EditButton->SetEnabled(false);
+    }
+    if (this->HostButton)
+    {
+        this->HostButton->SetEnabled(false);
+    }
+
+    this->RefetchSavesImpl();
+
+    if (this->FetchedSaves.IsEmpty())
+    {
+        WTextBlock* Text;
+        NewNode(WTextBlock).SaveTo(&Text)
+            .Anchor(EAnchor::Fill)
+            .Brush(LTextBlockBrush::SubHeader())
+            .HAlign(ETextHAlign::Center)
+            .VAlign(ETextVAlign::Center)
+            .Content("No sessions found. Select \"Host From New\" to create a new sessions.")
+        FinishWidget(Text);
+
+        this->SavesRegion->AddChild(Text);
+
+        return;
+    }
+
+    for (const LFetchedSave& Save : this->FetchedSaves)
+    {
+        WHostSessionScreen_Old_Save* SaveWidget;
+            NewNode(WHostSessionScreen_Old_Save).SaveTo(&SaveWidget)
+        FinishWidget(SaveWidget);
+        SaveWidget->Save = Save;
+        SaveWidget->Owner = this;
+        SaveWidget->Reload();
+
+        this->SavesRegion->AddChild(SaveWidget);
+
+        continue;
+    }
+
+    return;
+}
+
+void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
+{
+    this->FetchedSaves.Reset(this->FetchedSaves.GetSize());
+
+    TArray<LString> SavesPaths { Finder::GetSavesDir() };
+    SavesPaths.Append(GetDefault<JUserPreferences>()->AdditionalSavesSearchPaths);
+
+    TArray<LString> Candidats;
+
+    for (LString& SavePath: SavesPaths)
+    {
+        if (const LPath AsPath = std::move(SavePath); Paths::DoesDirExist(AsPath))
+        {
+            for (TArray<LString> New = Finder::FindFilesRecursivelyByName(AsPath, "sqlite3.db"); LString& X : New)
+            {
+                if (Candidats.Contains(X))
+                {
+                    LOG_WARNING(LogStorage, "Found duplicate [{}].", X)
+                    continue;
+                }
+
+                Candidats.Emplace(std::move(X));
+                continue;
+            }
+        }
+
+        continue;
+    }
+
+    for (LString& Candidat : Candidats)
+    {
+        LPath AsPath = std::move(Candidat);
+
+        TOptional<LString> DisplayName = Saves::GetDisplayName(AsPath);
+
+        if (DisplayName.IsSet() == false)
+        {
+            LOG_ERROR(LogStorage, "Found corrupt save at [{}].", AsPath)
+            continue;
+        }
+
+        this->FetchedSaves.Emplace(std::move(AsPath), std::move(*DisplayName));
+
+        continue;
+    }
+
+    for (const LFetchedSave& Fetched: this->FetchedSaves)
+    {
+        LOG_WARNING(LogTemporal, "{} => {}", Fetched.DisplayName, Fetched.Path)
+    }
+
+    return;
 }
