@@ -238,7 +238,7 @@ void Jafg::WDebugScreen::Tick()
             {
                 if (const AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
                 {
-                    const LVoxelKey Key = HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal * 0.5f);
+                    const LVoxelKey Key = HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal.GetValue() * 0.5f);
                     this->LocalPawnTargetVoxelSectionCreate->SetContent(LString::SprintF("TvC: {} {} {}", Key.X, Key.Y, Key.Z));
                     break;
                 }
@@ -265,7 +265,7 @@ void Jafg::WDebugScreen::Tick()
                 LDebugTraceSphereVisualParams(16, 16, LColor::Green)
             ));
 
-            if (Hit.SurfaceNormal)
+            if (Hit.SurfaceNormal.IsSet())
             {
                 const LVector   WorldHit_Create = Hit.GlobalWorldLocation + Hit.SurfaceNormal.GetValue() * 0.5f;
                 const LVoxelKey VKey_Create = LVoxelKey::FromWorldSpace(WorldHit_Create);

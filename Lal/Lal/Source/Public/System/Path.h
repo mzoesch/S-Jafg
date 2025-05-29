@@ -127,6 +127,7 @@ public:
     FORCEINLINE bool IsRelative() const noexcept { return Private::TPathBase_IsRelative(static_cast<const char*>(this->ToPtr())); }
 
     FORCEINLINE Self GetBase() const noexcept;
+    FORCEINLINE Self GetParent() const noexcept;
 };
 
 template<typename InTraits, typename InAlloc>
@@ -208,6 +209,17 @@ FORCEINLINE typename TPathBase<InTraits, InAlloc>::Self TPathBase<InTraits, InAl
     }
 
     return this->GetSelf();
+}
+
+template<typename InTraits, typename InAlloc>
+FORCEINLINE typename TPathBase<InTraits, InAlloc>::Self TPathBase<InTraits, InAlloc>::GetParent() const noexcept
+{
+    if (SizeType Last = this->FindLast('/'); Last != INDEX_NONE)
+    {
+        return this->LeftChop(Last + 1);
+    }
+
+    return { };
 }
 
 } /* ~Namespace Jafg */

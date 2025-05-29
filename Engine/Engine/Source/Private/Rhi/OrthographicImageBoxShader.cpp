@@ -1,18 +1,18 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Rhi/OrthographicRoundedOutlineBoxShader.h"
+#include "Rhi/OrthographicImageBoxShader.h"
 #include "System/EnginePath.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
 
-bool Jafg::LOrthographicRoundedOutlineBoxShader::Make(const LName InName)
+bool Jafg::LOrthographicImageBoxShader::Make(const LName InName)
 {
     if (const bool bOut = Super::Make(InName); bOut == false)
     {
         return false;
     }
 
-    LOG_VERBOSE(LogRhi, "Creating OrthographicRoundedOutlineBoxShader at [{}].", InName)
+    LOG_VERBOSE(LogRhi, "Creating OrthographicImageBoxShader at [{}].", InName)
 
     this->Program = LShader(LEnginePath(EEnginePaths::Shaders, "VisualBox"),
     {
@@ -20,14 +20,8 @@ bool Jafg::LOrthographicRoundedOutlineBoxShader::Make(const LName InName)
             "WITH_UV", "1"
         },
         {
-            "WITH_BOX_SIZE", "1"
-        },
-        {
-            "WITH_OUTLINE", "1"
-        },
-        {
-            "WITH_RADII", "1"
-        },
+            "WITH_TEXTURE", "1"
+        }
     });
 
     this->Program.Use();
@@ -43,10 +37,12 @@ bool Jafg::LOrthographicRoundedOutlineBoxShader::Make(const LName InName)
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), reinterpret_cast<void*>(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
+    glUniform1i(glGetUniformLocation(this->Program.GetId(), "TexSampler"), 0);
+
     return true;
 }
 
-void Jafg::LOrthographicRoundedOutlineBoxShader::UpdateViewportUniforms(const LViewport& Context)
+void Jafg::LOrthographicImageBoxShader::UpdateViewportUniforms(const LViewport& Context)
 {
     Super::UpdateViewportUniforms(Context);
 
@@ -62,7 +58,7 @@ void Jafg::LOrthographicRoundedOutlineBoxShader::UpdateViewportUniforms(const LV
     return;
 }
 
-void Jafg::LOrthographicRoundedOutlineBoxShader::OnFree()
+void Jafg::LOrthographicImageBoxShader::OnFree()
 {
     glDeleteVertexArrays(1, &this->Vao);
     glDeleteBuffers(1, &this->Vbo);
@@ -77,18 +73,17 @@ void Jafg::LOrthographicRoundedOutlineBoxShader::OnFree()
     return;
 }
 
-void Jafg::LOrthographicRoundedOutlineBoxShader::Draw
+void Jafg::LOrthographicImageBoxShader::Draw
 (
     const LViewport& Context,
     const LVector2&  Size,
     const LVector2&  TopLeft,
     const LColor&    Tint,
-    const f32        OutlineThickness,
-    const LColor&    OutlineTint,
-    const LVector4&  Radii
+    const LImage&    Image
 ) const
 {
     check( this->IsMeaningful() )
+    check( Image.IsHandleValid() )
 
     if (Size.X <= 0.0f || Size.Y <= 0.0f)
     {
@@ -98,11 +93,7 @@ void Jafg::LOrthographicRoundedOutlineBoxShader::Draw
 
     this->Program.Use();
     this->Program.SetFloatUniform("OrthoZDepth", Context.GetFrameOrthoZLayerDepth());
-    this->Program.SetVec2Uniform("BoxSize", Size);
     this->Program.SetColorUniform("BoxTint", Tint);
-    this->Program.SetVec4Uniform("Radii", Radii);
-    this->Program.SetColorUniform("OutlineTint", OutlineTint);
-    this->Program.SetFloatUniform("OutlineThickness", OutlineThickness);
 
     const f32 Scale = Context.GetScaleFactor();
     f32 Vertices[]
@@ -124,7 +115,18 @@ void Jafg::LOrthographicRoundedOutlineBoxShader::Draw
 
     glBindVertexArray(this->Vao);
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), static_cast<void*>(nullptr));
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), reinterpret_cast<void*>(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glUniform1i(glGetUniformLocation(this->Program.GetId(), "TexSampler"), 0);
+
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_DYNAMIC_DRAW);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, Image.GetTextureHandle().GetHandle());
+
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
 #if WITH_DEBUG_ZERO_UNBOUND

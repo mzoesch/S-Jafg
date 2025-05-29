@@ -19,6 +19,50 @@ struct TOptional final
     FORCEINLINE TOptional(const T& InValue) : Value(InValue), bMeaningful(true) { }
     FORCEINLINE TOptional(T&& InValue) : Value(std::move(InValue)), bMeaningful(true) { }
 
+    FORCEINLINE TOptional(const TOptional<T>& Other) noexcept : bMeaningful(Other.bMeaningful)
+    {
+        if (this->bMeaningful)
+        {
+            this->Value = Other.Value;
+        }
+
+        return;
+    }
+
+    FORCEINLINE TOptional(TOptional<T>&& Other) noexcept : bMeaningful(Other.bMeaningful)
+    {
+        if (this->bMeaningful)
+        {
+            this->Value = std::move(Other.Value);
+            Other.bMeaningful = false;
+        }
+
+        return;
+    }
+
+    FORCEINLINE TOptional& operator=(const TOptional<T>& Other) noexcept
+    {
+        this->bMeaningful = Other.bMeaningful;
+        if (this->bMeaningful)
+        {
+            this->Value = Other.Value;
+        }
+
+        return *this;
+    }
+
+    FORCEINLINE TOptional& operator=(TOptional<T>&& Other) noexcept
+    {
+        this->bMeaningful = Other.bMeaningful;
+        if (this->bMeaningful)
+        {
+            this->Value = std::move(Other.Value);
+            Other.bMeaningful = false;
+        }
+
+        return *this;
+    }
+
     FORCEINLINE ~TOptional() { this->Reset(); }
 
     template <typename  ... ArgsTy>
@@ -51,7 +95,6 @@ struct TOptional final
     FORCEINLINE auto operator->() -> T* { return this->GetValuePtr(); }
     FORCEINLINE auto operator->() const -> const T* { return this->GetValuePtr(); }
     FORCEINLINE auto operator !() const -> bool { return !this->bMeaningful; }
-    FORCEINLINE      operator bool() const { return this->bMeaningful; }
 
     FORCEINLINE auto operator!=(const TOptional& Other) const -> bool { return !(*this == Other); }
     FORCEINLINE auto operator==(const TOptional& Other) const -> bool

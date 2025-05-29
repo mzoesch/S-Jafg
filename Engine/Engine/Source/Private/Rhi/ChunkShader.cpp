@@ -29,7 +29,7 @@ bool Jafg::LChunkShader::Make(const LName InName)
         GL_TEXTURE_2D, 0, GL_RGB /* out */,
         static_cast<GLsizei>(Subsystem->GetBlendOpaqueAtlasTexture().GetWidth()),
         static_cast<GLsizei>(Subsystem->GetBlendOpaqueAtlasTexture().GetHeight()),
-        0, GL_RGBA /* in */, GL_UNSIGNED_BYTE, Subsystem->GetBlendOpaqueAtlasTexture().GetFirstMipMap().Bulk.GetBulk()
+        0, GL_RGBA /* in */, GL_UNSIGNED_BYTE, Subsystem->GetBlendOpaqueAtlasTexture().GetFirstMipMap().GetBulk().GetRawBulk()
     );
     glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -42,7 +42,7 @@ bool Jafg::LChunkShader::Make(const LName InName)
         GL_TEXTURE_2D, 0, GL_RGBA /* out */,
         static_cast<GLsizei>(Subsystem->GetBlendersAtlasTexture().GetWidth()),
         static_cast<GLsizei>(Subsystem->GetBlendersAtlasTexture().GetHeight()),
-        0, GL_RGBA /* in */, GL_UNSIGNED_BYTE, Subsystem->GetBlendersAtlasTexture().GetFirstMipMap().Bulk.GetBulk()
+        0, GL_RGBA /* in */, GL_UNSIGNED_BYTE, Subsystem->GetBlendersAtlasTexture().GetFirstMipMap().GetBulk().GetRawBulk()
 
     );
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -52,6 +52,8 @@ bool Jafg::LChunkShader::Make(const LName InName)
 
     this->Program.SetUIntUniform("AtlasBlendOpaqueDomainWCount", Subsystem->GetBlendOpaqueDomainWidth());
     this->Program.SetUIntUniform("AtlasBlendersDomainWCount", Subsystem->GetBlendersDomainWidth());
+
+    glActiveTexture(GL_TEXTURE0);
 
     return true;
 }

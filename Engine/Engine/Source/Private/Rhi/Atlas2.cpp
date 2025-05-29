@@ -10,7 +10,7 @@ void Jafg::LAtlas2::Make(const TArray<LTexture2>& InTextures, const bool bFreeOl
     {
         this->Data.Free();
     }
-    checkSlow( this->Data.GetFirstMipMap().Bulk.IsAllocated() == false )
+    checkSlow( this->Data.GetFirstMipMap().GetBulk().IsAllocated() == false )
 
     if (static_cast<LuPtrSize>(InTextures.GetSize()) >= static_cast<LuPtrSize>(std::numeric_limits<u8>::max()))
     {
@@ -22,7 +22,7 @@ void Jafg::LAtlas2::Make(const TArray<LTexture2>& InTextures, const bool bFreeOl
     i32 MaxTextureSize = INDEX_NONE;
     for (const LTexture2& Texture : InTextures)
     {
-        MaxTextureSize = Maths::Max(MaxTextureSize, static_cast<i32>(Texture.GetFirstMipMap().Size.X));
+        MaxTextureSize = Maths::Max(MaxTextureSize, static_cast<i32>(Texture.GetFirstMipMap().GetWidth()));
     }
     if (MaxTextureSize > TextureSizeLimit)
     {

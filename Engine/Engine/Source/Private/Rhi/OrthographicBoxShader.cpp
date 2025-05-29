@@ -60,7 +60,13 @@ void Jafg::LOrthographicBoxShader::OnFree()
     return;
 }
 
-void Jafg::LOrthographicBoxShader::Draw(const LViewport& Context, const LVector2& Size, const LVector2& TopLeft, const LColor& Tint) const
+void Jafg::LOrthographicBoxShader::Draw
+(
+    const LViewport& Context,
+    const LVector2&  Size,
+    const LVector2&  TopLeft,
+    const LColor&    Tint
+) const
 {
     check( this->IsMeaningful() )
 
@@ -99,3 +105,4 @@ void Jafg::LOrthographicBoxShader::Draw(const LViewport& Context, const LVector2
 
     return;
 }
+

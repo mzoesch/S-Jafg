@@ -71,6 +71,8 @@ public:
 
     FORCEINLINE u32 GetId() const noexcept { return this->Id; }
 
+    FORCEINLINE operator u32() const noexcept { check( this->bLoaded ) return this->Id; }
+
 private:
 
     void LoadShader(const LEnginePath& VertexPath, const LEnginePath& FragmentPath, const TArray<LShaderCompileTimeConstant>& InConstants);

@@ -4,6 +4,7 @@
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "Rhi/OrthographicBoxShader.h"
+#include "Rhi/OrthographicImageBoxShader.h"
 #include "Rhi/OrthographicRoundedBoxShader.h"
 #include "Rhi/OrthographicOutlineBoxShader.h"
 #include "Rhi/OrthographicRoundedOutlineBoxShader.h"
@@ -17,6 +18,11 @@ Jafg::WRegion::WRegion(const LObjectInitializer& ObjectInitializer) : Super(Obje
         if (GEngine->IsShaderValid(Name_ShaderOrthographicBox) == false)
         {
             (new LOrthographicBoxShader())->MakeChecked(Name_ShaderOrthographicBox);
+        }
+
+        if (GEngine->IsShaderValid(Name_ShaderOrthographicImageBox) == false)
+        {
+            (new LOrthographicImageBoxShader())->MakeChecked(Name_ShaderOrthographicImageBox);
         }
 
         if (GEngine->IsShaderValid(Name_ShaderOrthographicRoundedBox) == false)
@@ -50,13 +56,27 @@ void Jafg::WRegion::Draw(LViewport& Context) const
 
     if (this->Brush.Type == ERegionBrush::Box)
     {
-        GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
-        (
-            Context,
-            this->GetAnchoredSize(),
-            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-            this->GetBrush().Tint
-        );
+        if (this->Brush.Image.IsTextureValid())
+        {
+            GEngine->GetShaderChecked<LOrthographicImageBoxShader>(Name_ShaderOrthographicImageBox)->Draw
+            (
+                Context,
+                this->GetAnchoredSize(),
+                this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                this->GetBrush().Tint,
+                this->GetBrush().Image
+            );
+        }
+        else
+        {
+            GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
+            (
+                Context,
+                this->GetAnchoredSize(),
+                this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                this->GetBrush().Tint
+            );
+        }
     }
 
     else if (this->Brush.Type == ERegionBrush::RoundedBox)

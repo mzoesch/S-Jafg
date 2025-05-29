@@ -24,8 +24,8 @@ public:
 
     FORCEINLINE auto GetNum() const -> i32 { return this->Num; }
     FORCEINLINE auto GetByteSize() const -> LuPtrSize { return this->Num * sizeof(LBulkDomainTy); }
-    FORCEINLINE auto GetBulk()       ->       LBulkDomainTy* { return this->Bulk; }
-    FORCEINLINE auto GetBulk() const -> const LBulkDomainTy* { return this->Bulk; }
+    FORCEINLINE auto GetRawBulk()       ->       LBulkDomainTy* { return this->Bulk; }
+    FORCEINLINE auto GetRawBulk() const -> const LBulkDomainTy* { return this->Bulk; }
 
     inline void AllocateBulk(const i32 InNumberOfDomains, const bool bZeroed = false);
     inline void Serialize(const LBulkDomainTy* InBulk, const i32 InNumberOfDomains, const i32 InOffset = 0);
@@ -34,8 +34,8 @@ public:
 private:
 
     //# The number of domains.
-    i32          Num  = 0;
-    LBulkDomainTy* Bulk = nullptr;
+    i32            Num  { 0 };
+    LBulkDomainTy* Bulk { nullptr };
 };
 
 template <typename InDomainTy>
@@ -54,6 +54,11 @@ LBulkData<InDomainTy>& LBulkData<InDomainTy>::operator=(LBulkData&& InOther) noe
 {
     if (this != &InOther)
     {
+        if (this->IsAllocated())
+        {
+            this->FreeBulk();
+        }
+
         this->Num = InOther.Num;
         this->Bulk = InOther.Bulk;
         InOther.Num = 0;
@@ -122,12 +127,9 @@ void LBulkData<InDomainTy>::FreeBulk()
 {
     check( this->Bulk )
 
-    if (this->Bulk)
-    {
-        delete[] this->Bulk;
-        this->Bulk = nullptr;
-        this->Num = 0;
-    }
+    delete[] this->Bulk;
+    this->Bulk = nullptr;
+    this->Num = 0;
 
     check( this->Num == 0 )
 

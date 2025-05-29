@@ -68,22 +68,22 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
                 continue;
             }
 
-            if (Texture.GetFirstMipMap().Size.X != Texture.GetFirstMipMap().Size.Y)
+            if (Texture.GetFirstMipMap().GetWidth() != Texture.GetFirstMipMap().GetHeight())
             {
                 panicMsgf
                 (
                     "Texture is not square: {}. Size: {}x{}.",
-                    DiskTexture.Name, Texture.GetFirstMipMap().Size.X, Texture.GetFirstMipMap().Size.Y
+                    DiskTexture.Name, Texture.GetFirstMipMap().GetWidth(), Texture.GetFirstMipMap().GetHeight()
                 )
                 continue;
             }
 
-            if (Maths::IsPowerOfTwo(Texture.GetFirstMipMap().Size.X) == false)
+            if (Maths::IsPowerOfTwo(Texture.GetFirstMipMap().GetWidth()) == false)
             {
                 panicMsgf
                 (
                     "Texture is not power of two: {}. Size: {}x{}.",
-                    DiskTexture.Name, Texture.GetFirstMipMap().Size.X, Texture.GetFirstMipMap().Size.Y
+                    DiskTexture.Name, Texture.GetFirstMipMap().GetWidth(), Texture.GetFirstMipMap().GetHeight()
                 )
                 continue;
             }
@@ -129,22 +129,22 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
                 continue;
             }
 
-            if (Texture.GetFirstMipMap().Size.X != Texture.GetFirstMipMap().Size.Y)
+            if (Texture.GetFirstMipMap().GetWidth() != Texture.GetFirstMipMap().GetHeight())
             {
                 panicMsgf
                 (
                     "Texture is not square: {}. Size: {}x{}.",
-                    DiskTexture.Name, Texture.GetFirstMipMap().Size.X, Texture.GetFirstMipMap().Size.Y
+                    DiskTexture.Name, Texture.GetFirstMipMap().GetWidth(), Texture.GetFirstMipMap().GetHeight()
                 )
                 continue;
             }
 
-            if (Maths::IsPowerOfTwo(Texture.GetFirstMipMap().Size.X) == false)
+            if (Maths::IsPowerOfTwo(Texture.GetFirstMipMap().GetWidth()) == false)
             {
                 panicMsgf
                 (
                     "Texture is not power of two: {}. Size: {}x{}.",
-                    DiskTexture.Name, Texture.GetFirstMipMap().Size.X, Texture.GetFirstMipMap().Size.Y
+                    DiskTexture.Name, Texture.GetFirstMipMap().GetWidth(), Texture.GetFirstMipMap().GetHeight()
                 )
                 continue;
             }

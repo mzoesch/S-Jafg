@@ -22,11 +22,15 @@ ENGINE_API LName Name_PrefDeveloperTypes    = MAKE_STATIC_NAME("PreferenceDevelo
 ENGINE_API LName Name_PrefDeveloperVars     = MAKE_STATIC_NAME("PreferenceDeveloperVars");
 ENGINE_API LName Name_PrefDeveloperCmds     = MAKE_STATIC_NAME("PreferenceDeveloperCmds");
 
-ENGINE_API LName Name_ShaderOrthographicBox               = MAKE_STATIC_NAME("ShaderJafgOrthographicBox");
-ENGINE_API LName Name_ShaderOrthographicRoundedBox        = MAKE_STATIC_NAME("ShaderJafgOrthographicRoundedBox");
-ENGINE_API LName Name_ShaderOrthographicOutlineBox        = MAKE_STATIC_NAME("ShaderJafgOrthographicOutlineBox");
-ENGINE_API LName Name_ShaderOrthographicRoundedOutlineBox = MAKE_STATIC_NAME("ShaderJafgOrthographicRoundedOutlineBox");
-ENGINE_API LName Name_ShaderChunk                         = MAKE_STATIC_NAME("ShaderJafgChunk");
+ENGINE_API LName Name_ShaderOrthographicBox                    = MAKE_STATIC_NAME("ShaderJafgOrthographicBox");
+ENGINE_API LName Name_ShaderOrthographicImageBox               = MAKE_STATIC_NAME("ShaderJafgOrthographicImageBox");
+ENGINE_API LName Name_ShaderOrthographicRoundedBox             = MAKE_STATIC_NAME("ShaderJafgOrthographicRoundedBox");
+ENGINE_API LName Name_ShaderOrthographicRoundedImageBox        = MAKE_STATIC_NAME("ShaderJafgOrthographicRoundedImageBox");
+ENGINE_API LName Name_ShaderOrthographicOutlineBox             = MAKE_STATIC_NAME("ShaderJafgOrthographicOutlineBox");
+ENGINE_API LName Name_ShaderOrthographicOutlineImageBox        = MAKE_STATIC_NAME("ShaderJafgOrthographicOutlineImageBox");
+ENGINE_API LName Name_ShaderOrthographicRoundedOutlineBox      = MAKE_STATIC_NAME("ShaderJafgOrthographicRoundedOutlineBox");
+ENGINE_API LName Name_ShaderOrthographicRoundedOutlineImageBox = MAKE_STATIC_NAME("ShaderJafgOrthographicRoundedOutlineImageBox");
+ENGINE_API LName Name_ShaderChunk                              = MAKE_STATIC_NAME("ShaderJafgChunk");
 
 ENGINE_API LName Name_UsrInToggleDebugScreen   = MAKE_STATIC_NAME("ToggleDebugScreen");
 ENGINE_API LName Name_UsrInTogglePauseScreen   = MAKE_STATIC_NAME("TogglePauseScreen");

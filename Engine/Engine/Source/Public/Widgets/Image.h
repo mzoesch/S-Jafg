@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreAfx.h"
 #include "Rhi/Texture2.h"
 
 namespace Jafg
@@ -19,13 +18,16 @@ class LImage final
 {
 public:
 
-    LImage() = default;
+    inline LImage() = default;
     DEFAULT_REALLOC_OF_ANY_FORM(LImage)
-    ~LImage() = default;
+    inline ~LImage() = default;
 
-    FORCEINLINE constexpr auto SetTexture(const LTexture2* InTexture) noexcept -> LImage& { this->TextureRef = InTexture; return *this; }
-    FORCEINLINE constexpr bool HasTexture() const noexcept { return this->TextureRef; }
-    FORCEINLINE constexpr auto GetTexture() const noexcept -> const LTexture2* { return this->TextureRef; }
+    FORCEINLINE bool    IsTextureValid() const noexcept { return this->TextureRef != nullptr; }
+    FORCEINLINE LImage& SetTexture(const LTexture2* InTexture) noexcept { this->TextureRef = InTexture; return *this; }
+    FORCEINLINE const LTexture2* GetTexture() const noexcept { check( this->TextureRef ) return this->TextureRef; }
+
+    FORCEINLINE bool  IsHandleValid() const noexcept { return this->TextureRef && this->TextureRef->IsUploaded(); }
+    FORCEINLINE const LTexture2Handle& GetTextureHandle() const noexcept { check( this->TextureRef ) return this->TextureRef->GetHandle(); }
 
 private:
 

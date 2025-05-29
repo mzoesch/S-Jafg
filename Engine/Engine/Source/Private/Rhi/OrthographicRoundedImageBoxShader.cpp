@@ -1,18 +1,18 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Rhi/OrthographicRoundedOutlineBoxShader.h"
+#include "Rhi/OrthographicRoundedImageBoxShader.h"
 #include "System/EnginePath.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
 
-bool Jafg::LOrthographicRoundedOutlineBoxShader::Make(const LName InName)
+bool Jafg::LOrthographicRoundedImageBoxShader::Make(const LName InName)
 {
     if (const bool bOut = Super::Make(InName); bOut == false)
     {
         return false;
     }
 
-    LOG_VERBOSE(LogRhi, "Creating OrthographicRoundedOutlineBoxShader at [{}].", InName)
+    LOG_VERBOSE(LogRhi, "Creating LOrthographicRoundedBoxShader at [{}].", InName)
 
     this->Program = LShader(LEnginePath(EEnginePaths::Shaders, "VisualBox"),
     {
@@ -21,9 +21,6 @@ bool Jafg::LOrthographicRoundedOutlineBoxShader::Make(const LName InName)
         },
         {
             "WITH_BOX_SIZE", "1"
-        },
-        {
-            "WITH_OUTLINE", "1"
         },
         {
             "WITH_RADII", "1"
@@ -40,13 +37,13 @@ bool Jafg::LOrthographicRoundedOutlineBoxShader::Make(const LName InName)
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), reinterpret_cast<void*>(2 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     return true;
 }
 
-void Jafg::LOrthographicRoundedOutlineBoxShader::UpdateViewportUniforms(const LViewport& Context)
+void Jafg::LOrthographicRoundedImageBoxShader::UpdateViewportUniforms(const LViewport& Context)
 {
     Super::UpdateViewportUniforms(Context);
 
@@ -62,7 +59,7 @@ void Jafg::LOrthographicRoundedOutlineBoxShader::UpdateViewportUniforms(const LV
     return;
 }
 
-void Jafg::LOrthographicRoundedOutlineBoxShader::OnFree()
+void Jafg::LOrthographicRoundedImageBoxShader::OnFree()
 {
     glDeleteVertexArrays(1, &this->Vao);
     glDeleteBuffers(1, &this->Vbo);
@@ -77,14 +74,12 @@ void Jafg::LOrthographicRoundedOutlineBoxShader::OnFree()
     return;
 }
 
-void Jafg::LOrthographicRoundedOutlineBoxShader::Draw
+void Jafg::LOrthographicRoundedImageBoxShader::Draw
 (
     const LViewport& Context,
     const LVector2&  Size,
     const LVector2&  TopLeft,
     const LColor&    Tint,
-    const f32        OutlineThickness,
-    const LColor&    OutlineTint,
     const LVector4&  Radii
 ) const
 {
@@ -101,8 +96,6 @@ void Jafg::LOrthographicRoundedOutlineBoxShader::Draw
     this->Program.SetVec2Uniform("BoxSize", Size);
     this->Program.SetColorUniform("BoxTint", Tint);
     this->Program.SetVec4Uniform("Radii", Radii);
-    this->Program.SetColorUniform("OutlineTint", OutlineTint);
-    this->Program.SetFloatUniform("OutlineThickness", OutlineThickness);
 
     const f32 Scale = Context.GetScaleFactor();
     f32 Vertices[]

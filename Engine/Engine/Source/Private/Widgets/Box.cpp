@@ -7,7 +7,7 @@ void Jafg::WBox::Draw(LViewport& Context) const
 {
     if (this->HasBrush() == false)
     {
-        if (this->ShaderContext)
+        if (this->ShaderContext.IsSet())
         {
             this->ShaderContext.Reset();
         }
@@ -28,8 +28,8 @@ void Jafg::WBox::Draw(LViewport& Context) const
         Context,
         this->GetAnchoredSize(),
         this->GetAnchoredTopLeftFromMostOuter(Context),
-        this->Brush.GetValue().Tint,
-        this->Brush.GetValue().Image.GetTexture()
+        this->Brush.GetValue().Tint
+        // this->Brush.GetValue().Image.GetTexture()
     );
 
     Super::Draw(Context);

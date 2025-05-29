@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
-#include "Rhi/TextureResource2.h"
+#include "Rhi/TextureMipMap2.h"
 
 Jafg::LTextureMipMap2::LTextureMipMap2(LTextureMipMap2&& InOther) noexcept
 {
@@ -10,8 +9,8 @@ Jafg::LTextureMipMap2::LTextureMipMap2(LTextureMipMap2&& InOther) noexcept
     this->Format = InOther.Format;
 
     InOther.Size   = LSize::Zero();
-    InOther.Format = ERawImageFormat::Unspecified;
     check( InOther.Bulk.IsAllocated() == false )
+    InOther.Format = ERawImageFormat::Unspecified;
 
     return;
 }
@@ -25,8 +24,8 @@ Jafg::LTextureMipMap2& Jafg::LTextureMipMap2::operator=(LTextureMipMap2&& InOthe
         this->Format = InOther.Format;
 
         InOther.Size   = LSize::Zero();
-        InOther.Format = ERawImageFormat::Unspecified;
         check( InOther.Bulk.IsAllocated() == false )
+        InOther.Format = ERawImageFormat::Unspecified;
     }
 
     return *this;

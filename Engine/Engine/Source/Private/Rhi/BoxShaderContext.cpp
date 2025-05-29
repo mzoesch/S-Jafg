@@ -202,10 +202,10 @@ void Jafg::LBoxShaderContext::ReloadShader(const bool bDeleteOld) const
 
         glTexImage2D(
             GL_TEXTURE_2D, 0, GL_RGBA /* out */,
-            static_cast<GLsizei>(this->LastFrameTexture->GetFirstMipMap().Size.X),
-            static_cast<GLsizei>(this->LastFrameTexture->GetFirstMipMap().Size.Y),
+            static_cast<GLsizei>(this->LastFrameTexture->GetFirstMipMap().GetWidth()),
+            static_cast<GLsizei>(this->LastFrameTexture->GetFirstMipMap().GetHeight()),
             // TODO: Maybe split atlas textures into separate textures? (Opaque, Translucent, etc.)
-            0, GL_RGBA /* in */, GL_UNSIGNED_BYTE, this->LastFrameTexture->GetFirstMipMap().Bulk.GetBulk());
+            0, GL_RGBA /* in */, GL_UNSIGNED_BYTE, this->LastFrameTexture->GetFirstMipMap().GetBulk().GetRawBulk());
     }
     else
     {

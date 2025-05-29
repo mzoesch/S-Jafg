@@ -59,6 +59,37 @@ LString Paths::ReadFile(const LPath& InFilePath)
     return FileContent.GetValue();
 }
 
+TArray<u8> Paths::ReadFileAsBinary(const LPath& InFilePath)
+{
+    std::ifstream File
+    (
+        InFilePath.ToPtr(),
+        std::ios::binary | std::ios::ate
+    );
+
+    if (File.fail())
+    {
+        panicMsgf("Failed to open file at [{}].", InFilePath)
+        return { };
+    }
+
+
+    TArray<u8> Buffer; Buffer.AddUninitialized(File.tellg());
+
+    File.seekg(0, std::ios::beg);
+
+    if (File.read(reinterpret_cast<char*>(Buffer.GetData()), Buffer.GetSize()).fail())
+    {
+        File.close();
+        panicMsgf("Failed to read file at [{}].", InFilePath)
+        return { };
+    }
+
+    File.close();
+
+    return Buffer;
+}
+
 TOptional<LString> Paths::TryReadFile(const LPath& InFilePath, LString* OutHumanReadableError /* = nullptr */)
 {
     const std::ifstream File(InFilePath.ToPtr(), std::ios::in | std::ios::binary);

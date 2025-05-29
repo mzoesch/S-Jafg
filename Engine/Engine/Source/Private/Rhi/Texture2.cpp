@@ -1,13 +1,13 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Rhi/Texture2.h"
+#include "System/Paths.h"
 #include "System/EnginePath.h"
 #include "Rhi/RhiVendorInclude.h"
 
 bool Jafg::LTexture2::CreateEmpty(const u32 InWidth, const u32 InHeight, const ERawImageFormat::Type InFormat)
 {
-    check( this->MipMap.Bulk.IsAllocated() == false )
+    check( this->MipMap.GetBulk().IsAllocated() == false )
 
     this->MipMap.Size.X = InWidth;
     this->MipMap.Size.Y = InHeight;
@@ -17,9 +17,52 @@ bool Jafg::LTexture2::CreateEmpty(const u32 InWidth, const u32 InHeight, const E
     return true;
 }
 
+bool Jafg::LTexture2::LoadFromDisk(const LPath& Path)
+{
+    LOG_TRACE(LogSystem, "Loading texture2 [{}].", Path)
+
+    check( this->MipMap.GetBulk().IsAllocated() == false )
+
+    i32 Width      = 0;
+    i32 Height     = 0;
+    i32 NrChannels = 0;
+
+    if (Paths::DoesFileExist(Path) == false)
+    {
+        return false;
+    }
+
+    TArray<u8> Bin = Paths::ReadFileAsBinary(Path);
+
+    ::stbi_set_flip_vertically_on_load(false);
+    u8* Data = ::stbi_load_from_memory(Bin.GetData(), static_cast<int>(Bin.GetSize()), &Width, &Height, &NrChannels, 4);
+
+    if (stbi_failure_reason())
+    {
+        LOG_ERROR(LogSystem, "Failed to load texture [{}] from disk. Reason: [{}].", Path, stbi_failure_reason())
+        check( Data == nullptr )
+        return false;
+    }
+
+    jassert( Data )
+    jassert( NrChannels == 4 )
+    jassert( Width > 0 && Height > 0 )
+
+    this->MipMap.Size.X = Width;
+    this->MipMap.Size.Y = Height;
+    this->MipMap.Format = ERawImageFormat::BGRA8;
+    this->MipMap.LoadFromBuffer(Data, 0);
+
+    ::stbi_image_free(Data);
+
+    return true;
+}
+
 bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const JUserPreferences& UserPreferences)
 {
-    check( this->MipMap.Bulk.IsAllocated() == false )
+    LOG_TRACE(LogSystem, "Loading texture2 [{}].", Path.GetRelativeUnresolvedPath())
+
+    check( this->MipMap.GetBulk().IsAllocated() == false )
 
     i32 Width      = 0;
     i32 Height     = 0;
@@ -31,7 +74,7 @@ bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const JUserPreferenc
     Finder::ReadFileAsBinary(Path, &Bulk, &BulkSize);
 
     ::stbi_set_flip_vertically_on_load(false);
-    u8* Data =::stbi_load_from_memory(Bulk, static_cast<int>(BulkSize), &Width, &Height, &NrChannels, 4);
+    u8* Data = ::stbi_load_from_memory(Bulk, static_cast<int>(BulkSize), &Width, &Height, &NrChannels, 4);
 
     jassert( Data )
     jassert( NrChannels == 4 )
@@ -50,33 +93,41 @@ bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const JUserPreferenc
     return true;
 }
 
+void Jafg::LTexture2::Free()
+{
+    this->Handle.Shred();
+    this->MipMap.FreeBulk();
+
+    return;
+}
+
 void Jafg::LTexture2::CopyTexture(const LTexture2& InTexture, const LPoint& InPoint /* = LPoint::Zero()*/, const bool bKeepCurrentTexture /*= false*/)
 {
     if (bKeepCurrentTexture == false)
     {
         this->Free();
-        this->CreateEmpty(InTexture.MipMap.Size.X, InTexture.MipMap.Size.Y, InTexture.MipMap.Format);
+        this->CreateEmpty(InTexture.MipMap.GetWidth(), InTexture.MipMap.GetHeight(), InTexture.MipMap.GetFormat());
     }
 
-    check( this->MipMap.Format == InTexture.MipMap.Format && this->MipMap.Format != ERawImageFormat::Unspecified )
-    check( this->MipMap.Bulk.IsAllocated() )
-    check( this->MipMap.Size.X >= InTexture.MipMap.Size.X )
-    check( this->MipMap.Size.Y >= InTexture.MipMap.Size.Y )
-    check( InPoint.X + InTexture.MipMap.Size.X <= this->MipMap.Size.X )
-    check( InPoint.Y + InTexture.MipMap.Size.Y <= this->MipMap.Size.Y )
+    check( this->MipMap.GetFormat() == InTexture.MipMap.GetFormat() && this->MipMap.GetFormat() != ERawImageFormat::Unspecified )
+    check( this->MipMap.GetBulk().IsAllocated() )
+    check( this->MipMap.GetWidth() >= InTexture.MipMap.GetWidth() )
+    check( this->MipMap.GetHeight() >= InTexture.MipMap.GetHeight() )
+    check( InPoint.X + InTexture.MipMap.GetWidth() <= this->MipMap.GetWidth() )
+    check( InPoint.Y + InTexture.MipMap.GetHeight() <= this->MipMap.GetHeight() )
 
     u32 CurrentHeightCursor = InPoint.Y;
     while (CurrentHeightCursor - InPoint.Y < InTexture.GetHeight())
     {
-        u8* CurrentTextureDestination = this->MipMap.Bulk.GetBulk();
+        u8* CurrentTextureDestination = this->MipMap.Bulk.GetRawBulk();
         CurrentTextureDestination += static_cast<LuPtrSize>((CurrentHeightCursor * this->GetWidth() + InPoint.X) * this->GetBytesPerPixel());
-        checkSlow( CurrentTextureDestination >= this->MipMap.Bulk.GetBulk() )
-        checkSlow( CurrentTextureDestination < this->MipMap.Bulk.GetBulk() + this->MipMap.Bulk.GetByteSize() )
+        checkSlow( CurrentTextureDestination >= this->MipMap.GetBulk().GetRawBulk() )
+        checkSlow( CurrentTextureDestination < this->MipMap.GetBulk().GetRawBulk() + this->MipMap.GetBulk().GetByteSize() )
 
-        const u8* OtherTextureSource = InTexture.MipMap.Bulk.GetBulk();
+        const u8* OtherTextureSource = InTexture.MipMap.GetBulk().GetRawBulk();
         OtherTextureSource += static_cast<LuPtrSize>((CurrentHeightCursor - InPoint.Y) * InTexture.GetWidth() * InTexture.GetBytesPerPixel());
-        checkSlow( OtherTextureSource >= InTexture.MipMap.Bulk.GetBulk() )
-        checkSlow( OtherTextureSource < InTexture.MipMap.Bulk.GetBulk() + InTexture.MipMap.Bulk.GetByteSize() )
+        checkSlow( OtherTextureSource >= InTexture.MipMap.GetBulk().GetRawBulk() )
+        checkSlow( OtherTextureSource < InTexture.MipMap.GetBulk().GetRawBulk() + InTexture.MipMap.GetBulk().GetByteSize() )
 
         ::memcpy(CurrentTextureDestination, OtherTextureSource, InTexture.GetWidth() * static_cast<LuPtrSize>(InTexture.GetBytesPerPixel()));
 

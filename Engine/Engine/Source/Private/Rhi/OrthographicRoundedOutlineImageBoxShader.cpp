@@ -1,18 +1,18 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Rhi/OrthographicRoundedOutlineBoxShader.h"
+#include "Rhi/OrthographicRoundedOutlineImageBoxShader.h"
 #include "System/EnginePath.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
 
-bool Jafg::LOrthographicRoundedOutlineBoxShader::Make(const LName InName)
+bool Jafg::LOrthographicRoundedOutlineImageBoxShader::Make(const LName InName)
 {
     if (const bool bOut = Super::Make(InName); bOut == false)
     {
         return false;
     }
 
-    LOG_VERBOSE(LogRhi, "Creating OrthographicRoundedOutlineBoxShader at [{}].", InName)
+    LOG_VERBOSE(LogRhi, "Creating LOrthographicRoundedOutlineBoxShader at [{}].", InName)
 
     this->Program = LShader(LEnginePath(EEnginePaths::Shaders, "VisualBox"),
     {
@@ -40,13 +40,13 @@ bool Jafg::LOrthographicRoundedOutlineBoxShader::Make(const LName InName)
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), reinterpret_cast<void*>(2 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     return true;
 }
 
-void Jafg::LOrthographicRoundedOutlineBoxShader::UpdateViewportUniforms(const LViewport& Context)
+void Jafg::LOrthographicRoundedOutlineImageBoxShader::UpdateViewportUniforms(const LViewport& Context)
 {
     Super::UpdateViewportUniforms(Context);
 
@@ -62,7 +62,7 @@ void Jafg::LOrthographicRoundedOutlineBoxShader::UpdateViewportUniforms(const LV
     return;
 }
 
-void Jafg::LOrthographicRoundedOutlineBoxShader::OnFree()
+void Jafg::LOrthographicRoundedOutlineImageBoxShader::OnFree()
 {
     glDeleteVertexArrays(1, &this->Vao);
     glDeleteBuffers(1, &this->Vbo);
@@ -77,7 +77,7 @@ void Jafg::LOrthographicRoundedOutlineBoxShader::OnFree()
     return;
 }
 
-void Jafg::LOrthographicRoundedOutlineBoxShader::Draw
+void Jafg::LOrthographicRoundedOutlineImageBoxShader::Draw
 (
     const LViewport& Context,
     const LVector2&  Size,

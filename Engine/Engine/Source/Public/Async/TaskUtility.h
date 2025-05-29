@@ -27,6 +27,7 @@ namespace ENamedThreads
 enum Type : i32
 {
     Master          = 0x0,
+    Renderer        = Master, // Currently the same thread, but in the future this will change.
 
     ReservedMax     = 0x1FF,
 
@@ -98,6 +99,7 @@ ENGINE_API  auto GetCurrentThreadId() -> LThreadId;
 
 ENGINE_API  bool IsOnThread(const ENamedThreads::Type InThreadName);
 FORCEINLINE bool IsOnMasterThread() { return IsOnThread(ENamedThreads::Master); }
+FORCEINLINE bool IsOnRendererThread() { return IsOnThread(ENamedThreads::Renderer); }
 
 //#
 //# Make a new task that is being executed on the specified thread in the future.

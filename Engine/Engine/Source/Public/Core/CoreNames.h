@@ -31,9 +31,13 @@ ENGINE_API extern LName Name_PrefDeveloperVars;
 ENGINE_API extern LName Name_PrefDeveloperCmds;
 
 ENGINE_API extern LName Name_ShaderOrthographicBox;
+ENGINE_API extern LName Name_ShaderOrthographicImageBox;
 ENGINE_API extern LName Name_ShaderOrthographicRoundedBox;
+ENGINE_API extern LName Name_ShaderOrthographicRoundedImageBox;
 ENGINE_API extern LName Name_ShaderOrthographicOutlineBox;
+ENGINE_API extern LName Name_ShaderOrthographicOutlineImageBox;
 ENGINE_API extern LName Name_ShaderOrthographicRoundedOutlineBox;
+ENGINE_API extern LName Name_ShaderOrthographicRoundedOutlineImageBox;
 ENGINE_API extern LName Name_ShaderChunk;
 
 ENGINE_API extern LName Name_UsrInToggleDebugScreen;

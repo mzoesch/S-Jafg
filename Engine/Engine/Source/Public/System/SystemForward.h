@@ -12,6 +12,7 @@ namespace EEnginePaths
 
 enum Type : u8
 {
+    //# Custom path
     None = 0,
 
     //# Custom path relative to a module.
@@ -40,6 +41,7 @@ inline LString LexToString(const EEnginePaths::Type InType)
     switch (InType)
     {
     case EEnginePaths::CustomModule: { return ""; }
+    case EEnginePaths::CustomEngine: { return ""; }
     case EEnginePaths::Voxels:       { return "Content/Textures/Voxels"; }
     case EEnginePaths::Blends:       { return "Content/Textures/Blends"; }
 #if PLATFORM_WASM

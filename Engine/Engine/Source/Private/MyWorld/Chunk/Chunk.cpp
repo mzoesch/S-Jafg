@@ -35,12 +35,16 @@ void Jafg::LChunkRendererComponent::Draw(const LViewport& Context, const LEye& E
     glBindTexture(GL_TEXTURE_2D, Shader.GetBlendersTextureLocation());
 
     glBindVertexArray(this->Instance.GetVertexArrayObject());
+    glBindBuffer(GL_ARRAY_BUFFER, this->Instance.GetVertexBufferObject());
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->Instance.GetElementBufferObject());
 
     LMatrix Model; Model.InlineTranslate(this->Owner.GetTranslation());
     Shader.GetProgram().SetMatrixUniform("Model", Model);
 
     check( this->Owner.IsMesherValid() )
     glDrawElements(GL_TRIANGLES, this->Owner.GetMesher()->GetNumTriangles(), GL_UNSIGNED_INT, nullptr);
+
+    glActiveTexture(GL_TEXTURE0);
 
     return;
 }

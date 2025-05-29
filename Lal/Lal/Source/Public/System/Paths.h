@@ -34,7 +34,9 @@ namespace Paths
 //# @note This function will panic if the file does not exist or access to the filesystem is denied. If you need to
 //#       access embedded files, use the appropriate function from the Finder namespace in the engine module.
 //#
-LAL_API LString ReadFile(const LPath& InFilePath);
+LAL_API LString    ReadFile(const LPath& InFilePath);
+LAL_API TArray<u8> ReadFileAsBinary(const LPath& InFilePath);
+
 //# Same as #ReadFile but will not panic, instead write the error message to the provided string if available.
 LAL_API TOptional<LString> TryReadFile(const LPath& InFilePath, LString* OutHumanReadableError = nullptr);
 

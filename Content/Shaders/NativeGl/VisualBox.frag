@@ -1,14 +1,5 @@
 #version 330 core
 
-#define GET_COLOR_FROM_INT(color)                    \
-    vec4                                             \
-    (                                                \
-        float((color >> 16) & 0xFF) / 255.0, /* R */ \
-        float((color >>  8) & 0xFF) / 255.0, /* G */ \
-        float((color >>  0) & 0xFF) / 255.0, /* B */ \
-        float((color >> 24) & 0xFF) / 255.0  /* A */ \
-    )
-
 #if WITH_UV
    in vec2 InFragUv; 
 #endif /* WITH_UV */
@@ -18,6 +9,10 @@ out vec4 FragColor;
 // 32-bit unsigned integer representing the color of the box
 // The color is stored in the format 0xBBGGRRAA
 uniform int BoxTint;
+
+#if WITH_TEXTURE
+    uniform sampler2D TexSampler;
+#endif /* WITH_TEXTURE */
 
 #if WITH_BOX_SIZE
     // Screen space location (x,y); then width and height (z,w).
@@ -35,6 +30,26 @@ uniform int BoxTint;
     // The radius of the corners (TL, TR, BR, BL). In px.
     uniform vec4 Radii;
 #endif /* WITH_RADII */
+
+#if WITH_TEXTURE
+    #define GET_COLOR_FROM_INT(color)                    \
+        texture(TexSampler, InFragUv) * vec4             \
+        (                                                \
+            float((color >> 16) & 0xFF) / 255.0, /* R */ \
+            float((color >>  8) & 0xFF) / 255.0, /* G */ \
+            float((color >>  0) & 0xFF) / 255.0, /* B */ \
+            float((color >> 24) & 0xFF) / 255.0  /* A */ \
+        )
+#else /* WITH_TEXTURE */
+    #define GET_COLOR_FROM_INT(color)                    \
+        vec4                                             \
+        (                                                \
+            float((color >> 16) & 0xFF) / 255.0, /* R */ \
+            float((color >>  8) & 0xFF) / 255.0, /* G */ \
+            float((color >>  0) & 0xFF) / 255.0, /* B */ \
+            float((color >> 24) & 0xFF) / 255.0  /* A */ \
+        )
+#endif /* !WITH_TEXTURE */
 
 void main()
 {

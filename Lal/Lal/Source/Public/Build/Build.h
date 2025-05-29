@@ -159,7 +159,7 @@
  */
 #define DO_ENSURES                      DO_CHECKS
 
-#define WITH_DEBUG_ZERO_UNBOUND         !IN_SHIPPING
+#define WITH_DEBUG_ZERO_UNBOUND         IN_DEBUG
 
 #ifndef WITH_STATS
     #define WITH_STATS                  !IN_SHIPPING

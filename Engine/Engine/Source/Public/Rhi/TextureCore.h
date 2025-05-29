@@ -16,8 +16,8 @@ enum Type : u8
     BGRA8,
 };
 
-i32 GetChannelsPerPixel(const ERawImageFormat::Type InFormat);
-i32 GetBytesPerPixel(const ERawImageFormat::Type InFormat);
+ENGINE_API i32 GetChannelsPerPixel(const ERawImageFormat::Type InFormat);
+ENGINE_API i32 GetBytesPerPixel(const ERawImageFormat::Type InFormat);
 
 } /* ~Namespace ERawImageFormat */
 

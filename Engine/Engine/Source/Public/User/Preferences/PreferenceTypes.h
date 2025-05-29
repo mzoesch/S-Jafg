@@ -124,9 +124,9 @@ struct TPreference<T, TEnableIfTy<std::is_floating_point_v<T>>>
 
     FORCEINLINE T    GetDefaultValue() const { return this->DefaultValue; }
     FORCEINLINE T    GetCurrentValue() const { return this->Value; }
-    FORCEINLINE bool IsMinMaxValueValid() const { return this->MinValue && this->MaxValue; }
-    FORCEINLINE bool IsMinValueValid() const { return this->MinValue; }
-    FORCEINLINE bool IsMaxValueValid() const { return this->MaxValue; }
+    FORCEINLINE bool IsMinMaxValueValid() const { return this->MinValue.IsSet() && this->MaxValue.IsSet(); }
+    FORCEINLINE bool IsMinValueValid() const { return this->MinValue.IsSet(); }
+    FORCEINLINE bool IsMaxValueValid() const { return this->MaxValue.IsSet(); }
     FORCEINLINE T    GetMinValue() const { return this->MinValue.GetValue(); }
     FORCEINLINE T    GetMaxValue() const { return this->MaxValue.GetValue(); }
 
@@ -153,11 +153,11 @@ struct TPreference<T, TEnableIfTy<std::is_floating_point_v<T>>>
 template <typename T>
 void TPreference<T, TEnableIfTy<std::is_floating_point_v<T>>>::SetSafeValue(const T InValue)
 {
-    if (this->MinValue && InValue < this->MinValue.GetValue())
+    if (this->MinValue.IsSet() && InValue < this->MinValue.GetValue())
     {
         this->Value = this->MinValue.GetValue();
     }
-    else if (MaxValue && InValue > this->MaxValue.GetValue())
+    else if (MaxValue.IsSet() && InValue > this->MaxValue.GetValue())
     {
         this->Value = this->MaxValue.GetValue();
     }

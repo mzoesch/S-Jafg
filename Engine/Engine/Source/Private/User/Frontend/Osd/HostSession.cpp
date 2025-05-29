@@ -7,6 +7,7 @@
 #include "Storage/SaveFunctions.h"
 #include "System/Finder.h"
 #include "System/Paths.h"
+#include "System/EnginePath.h"
 #include "User/UserPreferences.h"
 #include "Widgets/Button.h"
 #include "Widgets/EditableTextBlock.h"
@@ -354,15 +355,17 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
 
     this->RemoveChildren();
 
+    WRegion* Thumbnail;
+
     WHRegion* Region;
     NewNode(WHRegion).SaveTo(&Region)
         .Anchor(EAnchor::Fill)
         .Padding({10})
     [
-        NewNode(WRegion)
-            .MinDesiredSize({50})
+        NewNode(WRegion).SaveTo(&Thumbnail)
+            .MinDesiredSize({64})
             .Type(ERegionBrush::Box)
-            .Tint(LColor::DimGray)
+            .Tint(LColor::White)
         +
         NewNode(WVRegion)
             .Anchor(EAnchor::Fill)
@@ -378,6 +381,12 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
         ]
     ]
     FinishWidget(Region);
+
+    if (this->Save.PreviewTexture.IsValid())
+    {
+        this->Save.PreviewTexture.Upload();
+    }
+    Thumbnail->SetTexture(&this->Save.PreviewTexture);
 
     this->AddChild(Region);
 
@@ -509,12 +518,12 @@ void Jafg::WHostSessionScreen_Old::RefetchSaves()
         return;
     }
 
-    for (const LFetchedSave& Save : this->FetchedSaves)
+    for (LFetchedSave& Save : this->FetchedSaves)
     {
         WHostSessionScreen_Old_Save* SaveWidget;
             NewNode(WHostSessionScreen_Old_Save).SaveTo(&SaveWidget)
         FinishWidget(SaveWidget);
-        SaveWidget->Save = Save;
+        SaveWidget->Save = std::move(Save);
         SaveWidget->Owner = this;
         SaveWidget->Reload();
 
@@ -522,6 +531,8 @@ void Jafg::WHostSessionScreen_Old::RefetchSaves()
 
         continue;
     }
+
+    this->FetchedSaves.Empty();
 
     return;
 }
@@ -558,23 +569,27 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
     for (LString& Candidat : Candidats)
     {
         LPath AsPath = std::move(Candidat);
+        AsPath.PopSubPath();
 
-        TOptional<LString> DisplayName = Saves::GetDisplayName(AsPath);
-
+        TOptional<LString> DisplayName = Saves::GetDisplayName(AsPath / "sqlite3.db");
         if (DisplayName.IsSet() == false)
         {
             LOG_ERROR(LogStorage, "Found corrupt save at [{}].", AsPath)
             continue;
         }
 
-        this->FetchedSaves.Emplace(std::move(AsPath), std::move(*DisplayName));
+        LTexture2 Preview;
+        Preview.LoadFromDisk("/home/mzoesch/EDev/S-Jafg/Content/Textures/Voxels/Grass_Flora.png");
+        //Preview.LoadFromDisk(AsPath / "Thumbnail.png");
+
+        this->FetchedSaves.Emplace(std::move(AsPath), false, std::move(*DisplayName), std::move(Preview));
 
         continue;
     }
 
     for (const LFetchedSave& Fetched: this->FetchedSaves)
     {
-        LOG_WARNING(LogTemporal, "{} => {}", Fetched.DisplayName, Fetched.Path)
+        LOG_WARNING(LogTemporal, "[{}] {} => {}", Fetched.IsPreviewTextureValid(), Fetched.DisplayName, Fetched.Path)
     }
 
     return;
