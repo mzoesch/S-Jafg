@@ -141,7 +141,7 @@ public:
     virtual void TearDownContext() override;
     // ~LObjectContext implementation
 
-    FORCEINLINE bool IsUnderlyingLevelValid() const { return this->UnderlyingLevel.IsSet(); }
+    FORCEINLINE bool IsUnderlyingLevelValid() const { return this->UnderlyingLevel.IsValid(); }
     FORCEINLINE const LLevel& GetUnderlyingLevel() const { return this->UnderlyingLevel.GetValue(); }
     FORCEINLINE LStringView   GetUnderlyingLevelName() const { return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }
     FORCEINLINE LStringView   GetUnderlyingLevelNameChecked() const { check( this->IsUnderlyingLevelValid() ) return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }

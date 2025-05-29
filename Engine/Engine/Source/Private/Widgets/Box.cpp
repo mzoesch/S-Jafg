@@ -7,7 +7,7 @@ void Jafg::WBox::Draw(LViewport& Context) const
 {
     if (this->HasBrush() == false)
     {
-        if (this->ShaderContext.IsSet())
+        if (this->ShaderContext.IsValid())
         {
             this->ShaderContext.Reset();
         }
@@ -17,10 +17,10 @@ void Jafg::WBox::Draw(LViewport& Context) const
         return;
     }
 
-    if (this->ShaderContext == false)
+    if (this->ShaderContext.IsValid() == false)
     {
         LOG_TRACE(LogWidgets, "Creating new shader context for WWidgetBox.")
-        this->ShaderContext.MakeMeaningful();
+        this->ShaderContext = LBoxShaderContext();
         this->CreateNewShaderContext();
     }
 

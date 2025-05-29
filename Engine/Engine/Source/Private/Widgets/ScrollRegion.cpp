@@ -149,7 +149,7 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
 
 void Jafg::WScrollRegion::UserInterfaceTick(const LViewport& InViewport)
 {
-    if (InViewport.GetCachedCursorLocation().IsSet() == false)
+    if (InViewport.GetCachedCursorLocation().IsValid() == false)
     {
         return;
     }
@@ -275,7 +275,7 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(const LViewport& InViewport)
 {
     check( this->UserInterfaceTickDelegateHandle.IsValid() == false )
 
-    if (InViewport.GetCachedCursorLocation().IsSet() == false)
+    if (InViewport.GetCachedCursorLocation().IsValid() == false)
     {
         return false;
     }

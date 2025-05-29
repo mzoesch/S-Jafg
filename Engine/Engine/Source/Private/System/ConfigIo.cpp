@@ -236,7 +236,7 @@ bool Serialize(Jafg::LString* ContentF, const Jafg::LStringView& InSection, cons
 
     checkSlow( ContentF )
 
-    if (const TOptional<LStringView> DeserializedValue = ::Deserialize(*ContentF, InSection, InKey); DeserializedValue.IsSet())
+    if (const TOptional<LStringView> DeserializedValue = ::Deserialize(*ContentF, InSection, InKey); DeserializedValue.IsValid())
     {
         const LStringView& Value = *DeserializedValue;
         if (Value.Equals(InValue.GetBegin(), InValue.GetEnd()) == false)
@@ -370,7 +370,7 @@ Jafg::TOptional<Jafg::LString> Jafg::ConfigIo::Deserialize(const LPath& InPath, 
     const LString ContentF = Paths::ReadFile(InPath);
     TOptional<LStringView> Out = ::Deserialize(ContentF, InSection, InKey);
 
-    if (Out.IsSet())
+    if (Out.IsValid())
     {
         LOG_VERBOSE(LogConfigIo, "Pulled field [{}::{}] with [{}].", InSection, InKey, *Out);
         return  Out->GetSize() == 0 ? LString("NULL") : LString(*Out);

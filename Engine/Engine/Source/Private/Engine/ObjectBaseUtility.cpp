@@ -97,7 +97,7 @@ void PullConfigFromObject(LObjectClass* InClass)
     {
         checkSlow( Field.Identifier.IsEmpty() == false )
 
-        if (TOptional<LString> StringValue = ConfigIo::Deserialize(CfgPath, InClass->GetSpacedClassName(), Field.Identifier); StringValue.IsSet())
+        if (TOptional<LString> StringValue = ConfigIo::Deserialize(CfgPath, InClass->GetSpacedClassName(), Field.Identifier); StringValue.IsValid())
         {
             Field.Set(std::move(*StringValue));
         }

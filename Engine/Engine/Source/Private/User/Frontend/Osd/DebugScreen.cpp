@@ -265,7 +265,7 @@ void Jafg::WDebugScreen::Tick()
                 LDebugTraceSphereVisualParams(16, 16, LColor::Green)
             ));
 
-            if (Hit.SurfaceNormal.IsSet())
+            if (Hit.SurfaceNormal.IsValid())
             {
                 const LVector   WorldHit_Create = Hit.GlobalWorldLocation + Hit.SurfaceNormal.GetValue() * 0.5f;
                 const LVoxelKey VKey_Create = LVoxelKey::FromWorldSpace(WorldHit_Create);

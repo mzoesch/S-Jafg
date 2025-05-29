@@ -96,7 +96,7 @@ struct LEngineThread final
     )
         // The #Id is deferred to when the thread is running autarcik. This ctor is called on the aggregating thread so
         // we have to wait for the platform to assign an id to the thread.
-        : Id(0), ThreadName(InThreadName), Thread(nullptr),
+        : Id(0), ThreadName(InThreadName), Thread(DefaultInit),
           Runnable(InRunnable), bKillRunnableWhenFinished(bInKillRunnableWhenFinished)
     {
     }
@@ -488,7 +488,7 @@ void Jafg::Tasks::JoinThread(const ENamedThreads::Type ThreadName)
 
     std::shared_lock Lock(::EngineThreadsMutex);
     LEngineThread* Thread = ::EngineThreads.FindRef(ThreadName);
-    if (Thread && Thread->Thread.IsSet())
+    if (Thread && Thread->Thread.IsValid())
     {
         if (Thread->Thread->joinable())
         {
@@ -741,7 +741,7 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
     {
         if (Thread.Runnable)
         {
-            check( Thread.Thread.IsSet())
+            check( Thread.Thread.IsValid())
             Thread.Runnable->Stop(ERunnableStopReason::EngineTermination);
             const Application::LHrcTimePoint TimeBeforeJoin = Application::GetHighestNow();
             if (Thread.Thread->joinable())
@@ -757,9 +757,9 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
 
         checkCode
         (
-            if (Thread.Thread.IsSet())
+            if (Thread.Thread.IsValid())
             {
-                check( Thread.Thread.GetValuePtr()->joinable() == false )
+                check( Thread.Thread.GetValue().joinable() == false )
             }
         )
 

@@ -52,7 +52,7 @@ public:
     virtual void UpdateDesiredSize() const override;
 
     FORCEINLINE void SetBrush(const LBoxBrush& InBrush) { this->Brush = InBrush; }
-    FORCEINLINE bool HasBrush() const { return this->Brush.IsSet(); }
+    FORCEINLINE bool HasBrush() const { return this->Brush.IsValid(); }
     FORCEINLINE auto GetBrush() const -> const LBoxBrush& { return this->Brush.GetValue(); }
     FORCEINLINE auto GetPadding() const -> const LPadding& { return this->Padding; }
                 void SetTint(const LColor& InTint);

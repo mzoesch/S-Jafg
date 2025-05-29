@@ -68,15 +68,15 @@ struct TArrayAllocator
 template <typename InSizeType>
 struct TArrayViewAllocatorTraits : public TArrayAllocatorTraits<InSizeType>
 {
-    typedef InSizeType SizeType;
+    typedef typename TArrayAllocatorTraits<InSizeType>::SizeType SizeType;
 };
 
 template <typename InT, typename InSizeType, typename InTraits>
 struct TArrayViewAllocator
 {
-    typedef InT        T;
-    typedef InSizeType SizeType;
-    typedef InTraits   Traits;
+    typedef InT                       T;
+    typedef InTraits                  Traits;
+    typedef typename Traits::SizeType SizeType;
 
     using Self = TArrayViewAllocator<T, SizeType, Traits>;
 
@@ -141,6 +141,10 @@ struct TMutableArrayViewAllocator
 
     FORCEINLINE Self& operator=(const Self& Other) noexcept;
     FORCEINLINE Self& operator=(Self&& Other) noexcept;
+    template <typename TOtherAlloc>
+    FORCEINLINE Self& operator=(const TOtherAlloc& Other) noexcept requires (std::is_same_v<TOtherAlloc, T> == false);
+    template <typename TOtherAlloc>
+    FORCEINLINE Self& operator=(const TOtherAlloc&& Other) noexcept requires (std::is_same_v<TOtherAlloc, T> == false) = delete;
 
     FORCEINLINE void Invalidate() noexcept;
 
@@ -947,6 +951,18 @@ FORCEINLINE typename TMutableArrayViewAllocator<InT, InSizeType, InTraits>::Self
     Other.Slack = nullptr;
 
     checkSlow( this->Data <= this->Slack )
+
+    return *this;
+}
+
+template<typename InT, typename InSizeType, typename InTraits>
+template<typename TOtherAlloc>
+FORCEINLINE typename TMutableArrayViewAllocator<InT, InSizeType, InTraits>::Self& TMutableArrayViewAllocator<InT, InSizeType, InTraits>::operator=(const TOtherAlloc& Other) noexcept requires (std::is_same_v<TOtherAlloc, InT> == false)
+{
+    JAFG_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Other) )
+
+    this->Data = Other.Data;
+    this->Slack = Other.Slack;
 
     return *this;
 }

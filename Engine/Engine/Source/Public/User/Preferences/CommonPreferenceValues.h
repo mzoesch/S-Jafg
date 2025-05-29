@@ -35,7 +35,7 @@ public:
     FORCEINLINE auto GetInitialF() const -> f32 { return static_cast<f32>(this->Initial); }
     FORCEINLINE auto GetInitial() const -> f64 { return this->Initial; }
 
-    FORCEINLINE bool IsDefaultValueValid() const { return this->Default.IsSet(); }
+    FORCEINLINE bool IsDefaultValueValid() const { return this->Default.IsValid(); }
     FORCEINLINE void SetDefaultValue(const f32  InValue) { this->SetDefaultValue(static_cast<f64>(InValue)); }
     FORCEINLINE void SetDefaultValue(const f64 InValue) { this->Default = InValue; }
     FORCEINLINE auto GetDefaultValueF() const -> TOptional<f32>;
@@ -43,12 +43,12 @@ public:
     FORCEINLINE void SetMinimum(const f32  InValue) { this->SetMinimum(static_cast<f64>(InValue)); }
 
     FORCEINLINE void SetMinimum(const f64 InValue) { this->Minimum = InValue; }
-    FORCEINLINE bool IsMinimumValid() const { return this->Minimum.IsSet(); }
+    FORCEINLINE bool IsMinimumValid() const { return this->Minimum.IsValid(); }
     FORCEINLINE auto GetMinimumF() const -> TOptional<f32>;
     FORCEINLINE auto GetMinimum() const -> TOptional<f64> { return this->Minimum; }
     FORCEINLINE void SetMaximum(const f32  InValue) { this->SetMaximum(static_cast<f64>(InValue)); }
     FORCEINLINE void SetMaximum(const f64 InValue) { this->Maximum = InValue; }
-    FORCEINLINE bool IsMaximumValid() const { return this->Maximum.IsSet(); }
+    FORCEINLINE bool IsMaximumValid() const { return this->Maximum.IsValid(); }
     FORCEINLINE auto GetMaximumF() const -> TOptional<f32>;
     FORCEINLINE auto GetMaximum() const -> TOptional<f64> { return this->Maximum; }
 
@@ -115,7 +115,7 @@ public:
 
 Jafg::TOptional<f32> Jafg::LPreferenceValue_Scalar::GetDefaultValueF() const
 {
-    if (this->Default.IsSet())
+    if (this->Default.IsValid())
     {
         return static_cast<f32>(this->Default.GetValue());
     }
@@ -125,7 +125,7 @@ Jafg::TOptional<f32> Jafg::LPreferenceValue_Scalar::GetDefaultValueF() const
 
 Jafg::TOptional<f32> Jafg::LPreferenceValue_Scalar::GetMinimumF() const
 {
-    if (this->Minimum.IsSet())
+    if (this->Minimum.IsValid())
     {
         return static_cast<f32>(this->Minimum.GetValue());
     }
@@ -135,7 +135,7 @@ Jafg::TOptional<f32> Jafg::LPreferenceValue_Scalar::GetMinimumF() const
 
 Jafg::TOptional<f32> Jafg::LPreferenceValue_Scalar::GetMaximumF() const
 {
-    if (this->Maximum.IsSet())
+    if (this->Maximum.IsValid())
     {
         return static_cast<f32>(this->Maximum.GetValue());
     }

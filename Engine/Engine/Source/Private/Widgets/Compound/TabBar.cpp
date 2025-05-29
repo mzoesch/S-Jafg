@@ -45,7 +45,7 @@ void Jafg::WTabBar::Construct()
         this->AddChild(Container);
         MakeDeferredWidgetNodeFinal(Container);
     }
-    else if (this->bIsVertical.IsSet())
+    else if (this->bIsVertical.IsValid())
     {
         if (this->bIsVertical.GetValue() == true)
         {

@@ -41,7 +41,7 @@ public:
     //#
     ENGINE_API void Shred();
 
-    FORCEINLINE bool IsValid() const noexcept { return this->Handle.IsSet(); }
+    FORCEINLINE bool IsValid() const noexcept { return this->Handle.IsValid(); }
     FORCEINLINE u32  GetHandle() const noexcept { return this->Handle.GetValue(); }
 
     FORCEINLINE operator bool() const noexcept { return this->IsValid(); }

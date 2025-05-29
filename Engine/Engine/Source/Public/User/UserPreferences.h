@@ -55,13 +55,13 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
-    LPreferenceFloat MasterVolume { 1.0f, true };
+    LPreferencef32 MasterVolume { 1.0f, true };
     CLASS_FIELD(Config)
-    LPreferenceFloat MusicVolume  { 1.0f, true };
+    LPreferencef32 MusicVolume  { 1.0f, true };
     CLASS_FIELD(Config)
-    LPreferenceFloat MiscVolume   { 1.0f, true };
+    LPreferencef32 MiscVolume   { 1.0f, true };
     CLASS_FIELD(Config)
-    LPreferenceFloat VoiceVolume  { 1.0f, true };
+    LPreferencef32 VoiceVolume  { 1.0f, true };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Rendering pipeline
@@ -90,20 +90,20 @@ public:
     CLASS_FIELD(Config)
     LPreferenceBool bInvertHorizontalScrollWheel { true };
     CLASS_FIELD(Config)
-    LPreferenceFloat MouseWheelScrollSpeed { 35.0f };
+    LPreferencef32 MouseWheelScrollSpeed { 35.0f };
 
     CLASS_FIELD(Config)
-    LPreferenceFloat HeaderFontSize    { 0.70f };
+    LPreferencef32 HeaderFontSize    { 0.70f };
     CLASS_FIELD(Config)
-    LPreferenceFloat SubHeaderFontSize { 0.40f };
+    LPreferencef32 SubHeaderFontSize { 0.40f };
     CLASS_FIELD(Config)
-    LPreferenceFloat BodyFontSize      { 0.30f };
+    LPreferencef32 BodyFontSize      { 0.30f };
     CLASS_FIELD(Config)
-    LPreferenceFloat CompactFontSize   { 0.25f };
+    LPreferencef32 CompactFontSize   { 0.25f };
     CLASS_FIELD(Config)
-    LPreferenceFloat SmallFontSize     { 0.20f };
+    LPreferencef32 SmallFontSize     { 0.20f };
     CLASS_FIELD(Config)
-    LPreferenceFloat TinyFontSize      { 0.18f };
+    LPreferencef32 TinyFontSize      { 0.18f };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Foreign plugins

@@ -16,3 +16,4 @@
 #include "TestSmart.h"
 #include "TestJafgArray.h"
 #include "TestJafgString.h"
+#include "TestOptional.h"

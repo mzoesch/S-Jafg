@@ -572,7 +572,7 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
         AsPath.PopSubPath();
 
         TOptional<LString> DisplayName = Saves::GetDisplayName(AsPath / "sqlite3.db");
-        if (DisplayName.IsSet() == false)
+        if (DisplayName.IsValid() == false)
         {
             LOG_ERROR(LogStorage, "Found corrupt save at [{}].", AsPath)
             continue;

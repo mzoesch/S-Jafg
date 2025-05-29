@@ -83,7 +83,6 @@ void Jafg::LOrthographicImageBoxShader::Draw
 ) const
 {
     check( this->IsMeaningful() )
-    check( Image.IsHandleValid() )
 
     if (Size.X <= 0.0f || Size.Y <= 0.0f)
     {
@@ -125,7 +124,7 @@ void Jafg::LOrthographicImageBoxShader::Draw
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_DYNAMIC_DRAW);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, Image.GetTextureHandle().GetHandle());
+    glBindTexture(GL_TEXTURE_2D, Image.GetTextureHandle());
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 

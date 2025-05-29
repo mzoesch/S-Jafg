@@ -633,8 +633,8 @@ public:
     FORCEINLINE const LWidgetSlot* GetSlotChecked() const { const LWidgetSlot* Out = this->GetSlot(); check( Out ); return Out; }
     FORCEINLINE const LWidgetSlot* GetSlotAsserted() const { const LWidgetSlot* Out = this->GetSlot(); jassert( Out ); return Out; }
     FORCEINLINE TOptional<LMargin> GetMargin() const { if (this->Slot && this->Slot->Margin) { return *this->Slot->Margin; } return { }; }
-    FORCEINLINE TOptional<LMargin> GetMarginChecked() const { TOptional<LMargin> Out = this->GetMargin(); check( Out.IsSet() ); return Out; }
-    FORCEINLINE TOptional<LMargin> GetMarginAsserted() const { TOptional<LMargin> Out = this->GetMargin(); jassert( Out.IsSet() ); return Out; }
+    FORCEINLINE TOptional<LMargin> GetMarginChecked() const { TOptional<LMargin> Out = this->GetMargin(); check( Out.IsValid() ); return Out; }
+    FORCEINLINE TOptional<LMargin> GetMarginAsserted() const { TOptional<LMargin> Out = this->GetMargin(); jassert( Out.IsValid() ); return Out; }
                 bool SetMargin(const LMargin& InMargin);
     FORCEINLINE bool SetMarginChecked(const LMargin& InMargin) { const bool Out = this->SetMargin(InMargin); check( Out ); return Out; }
     FORCEINLINE bool SetMarginAsserted(const LMargin& InMargin) { const bool Out = this->SetMargin(InMargin); jassert( Out ); return Out; }

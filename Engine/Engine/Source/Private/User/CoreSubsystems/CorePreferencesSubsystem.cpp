@@ -266,7 +266,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                 for (const LCliType& Type : Cli->GetTypes())
                 {
                     TOptional<LCliObjectHandle> Handle = Cli->GetHandle(Type);
-                    if (Handle.IsSet() == false)
+                    if (Handle.IsValid() == false)
                     {
                         LOG_WARNING(LogPreferences, "Encountered invalid type handle.")
                         continue;
@@ -293,7 +293,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                 for (const LCliCommand& Type : Cli->GetCommands())
                 {
                     TOptional<LCliObjectHandle> Handle = Cli->GetHandle(Type);
-                    if (Handle.IsSet() == false)
+                    if (Handle.IsValid() == false)
                     {
                         LOG_WARNING(LogPreferences, "Encountered invalid command handle.")
                         continue;
@@ -320,7 +320,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                 for (const LCliVariable& Type : Cli->GetVariables())
                 {
                     TOptional<LCliObjectHandle> Handle = Cli->GetHandle(Type);
-                    if (Handle.IsSet() == false)
+                    if (Handle.IsValid() == false)
                     {
                         LOG_WARNING(LogPreferences, "Encountered invalid variable handle.")
                         continue;

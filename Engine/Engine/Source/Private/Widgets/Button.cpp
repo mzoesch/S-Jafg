@@ -191,11 +191,11 @@ void Jafg::WTextButton::Construct()
         check( this->IntermediateContent.IsEmpty() )
     }
 
-    if (this->IntermediateTextBlockBrush.IsSet())
+    if (this->IntermediateTextBlockBrush.IsValid())
     {
         this->ButtonText->SetBrush(this->IntermediateTextBlockBrush.GetValue());
         this->IntermediateTextBlockBrush.Reset();
-        check( this->IntermediateTextBlockBrush.IsSet() == false )
+        check( this->IntermediateTextBlockBrush.IsValid() == false )
     }
 
     Super::Construct();

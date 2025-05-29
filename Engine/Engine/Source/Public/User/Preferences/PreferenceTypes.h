@@ -23,8 +23,8 @@ template <> struct TIsPreferenceTypeAllowed<u64>     : std::true_type { };
 template <> struct TIsPreferenceTypeAllowed<bool>    : std::true_type { };
 template <> struct TIsPreferenceTypeAllowed<LString> : std::true_type { };
 
-typedef TPreference<f32>     LPreferenceFloat;
-typedef TPreference<f64>     LPreferenceDouble;
+typedef TPreference<f32>     LPreferencef32;
+typedef TPreference<f64>     LPreferencef64;
 typedef TPreference<i8>      LPreferencei8;
 typedef TPreference<i16>     LPreferencei16;
 typedef TPreference<i32>     LPreferencei32;
@@ -124,9 +124,9 @@ struct TPreference<T, TEnableIfTy<std::is_floating_point_v<T>>>
 
     FORCEINLINE T    GetDefaultValue() const { return this->DefaultValue; }
     FORCEINLINE T    GetCurrentValue() const { return this->Value; }
-    FORCEINLINE bool IsMinMaxValueValid() const { return this->MinValue.IsSet() && this->MaxValue.IsSet(); }
-    FORCEINLINE bool IsMinValueValid() const { return this->MinValue.IsSet(); }
-    FORCEINLINE bool IsMaxValueValid() const { return this->MaxValue.IsSet(); }
+    FORCEINLINE bool IsMinMaxValueValid() const { return this->MinValue.IsValid() && this->MaxValue.IsValid(); }
+    FORCEINLINE bool IsMinValueValid() const { return this->MinValue.IsValid(); }
+    FORCEINLINE bool IsMaxValueValid() const { return this->MaxValue.IsValid(); }
     FORCEINLINE T    GetMinValue() const { return this->MinValue.GetValue(); }
     FORCEINLINE T    GetMaxValue() const { return this->MaxValue.GetValue(); }
 
@@ -153,11 +153,11 @@ struct TPreference<T, TEnableIfTy<std::is_floating_point_v<T>>>
 template <typename T>
 void TPreference<T, TEnableIfTy<std::is_floating_point_v<T>>>::SetSafeValue(const T InValue)
 {
-    if (this->MinValue.IsSet() && InValue < this->MinValue.GetValue())
+    if (this->MinValue.IsValid() && InValue < this->MinValue.GetValue())
     {
         this->Value = this->MinValue.GetValue();
     }
-    else if (MaxValue.IsSet() && InValue > this->MaxValue.GetValue())
+    else if (MaxValue.IsValid() && InValue > this->MaxValue.GetValue())
     {
         this->Value = this->MaxValue.GetValue();
     }
@@ -165,6 +165,8 @@ void TPreference<T, TEnableIfTy<std::is_floating_point_v<T>>>::SetSafeValue(cons
     {
         this->Value = InValue;
     }
+
+    return;
 }
 
 template <>

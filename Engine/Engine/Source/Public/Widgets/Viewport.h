@@ -114,8 +114,8 @@ public:
     FORCEINLINE const LSurface* GetCachedContextAsserted() const { jassert( this->CachedContext ) return this->CachedContext; }
 
     FORCEINLINE const TOptional<LVector2>& GetCachedCursorLocation() const { return this->CachedCursorLocation; }
-    FORCEINLINE const TOptional<LVector2>& GetCachedCursorLocationChecked() const { check( this->CachedCursorLocation.IsSet() ) return this->CachedCursorLocation; }
-    FORCEINLINE const TOptional<LVector2>& GetCachedCursorLocationAsserted() const { jassert( this->CachedCursorLocation.IsSet() ) return this->CachedCursorLocation; }
+    FORCEINLINE const TOptional<LVector2>& GetCachedCursorLocationChecked() const { check( this->CachedCursorLocation.IsValid() ) return this->CachedCursorLocation; }
+    FORCEINLINE const TOptional<LVector2>& GetCachedCursorLocationAsserted() const { jassert( this->CachedCursorLocation.IsValid() ) return this->CachedCursorLocation; }
 
     //#
     //# Convert the argument from a top-left origin vector to a bottom-left origin vector.

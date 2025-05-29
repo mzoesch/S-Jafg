@@ -13,17 +13,17 @@ Jafg::LTexture2Handle::LTexture2Handle(const LTexture2& InTexture)
 void Jafg::LTexture2Handle::Upload(const LTexture2& InTexture)
 {
     check( InTexture.GetWidth() > 0 && InTexture.GetHeight() > 0 )
-    check( this->Handle.IsSet() == false )
+    check( this->Handle.IsValid() == false )
 
     check( InTexture.GetFormat() == ERawImageFormat::BGRA8 )
 
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    this->Handle.MakeMeaningful();
+    this->Handle = 0;
 
     glActiveTexture(GL_TEXTURE0);
-    glGenTextures(1, this->Handle.GetValuePtr());
+    glGenTextures(1, &this->Handle.GetValue());
     glBindTexture(GL_TEXTURE_2D, *this->Handle);
 
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -44,6 +44,14 @@ void Jafg::LTexture2Handle::Upload(const LTexture2& InTexture)
 
     // glGenerateMipmap(GL_TEXTURE_2D);
 
+    LOG_VERBOSE
+    (
+        LogRhi, "Uploaded texture2 with a size of [{}x{}] to [{}].",
+        InTexture.GetWidth(),
+        InTexture.GetHeight(),
+        this->Handle.GetValue()
+    )
+
     return;
 }
 
@@ -55,7 +63,7 @@ void Jafg::LTexture2Handle::Shred()
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, *this->Handle);
-        glDeleteTextures(1, this->Handle.GetValuePtr());
+        glDeleteTextures(1, &this->Handle.GetValue());
         this->Handle.Reset();
     }
 

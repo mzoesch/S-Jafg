@@ -6,10 +6,11 @@
 
 enum : i8 { INDEX_NONE = -1 };
 
-enum ELazyInit  : i8 { LazyInit  };
-enum EForceInit : i8 { ForceInit };
-enum EZeroInit  : i8 { ZeroInit  };
-enum ESkipInit  : i8 { SkipInit  }; // Dangerous.
+enum ELazyInit    : i8 { LazyInit    };
+enum EForceInit   : i8 { ForceInit   };
+enum EZeroInit    : i8 { ZeroInit    };
+enum ESkipInit    : i8 { SkipInit    }; // Dangerous.
+enum EDefaultInit : i8 { DefaultInit };
 
 namespace EPlatformExit
 {
