@@ -3,12 +3,16 @@
 #include "Widgets/ScrollRegion.h"
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
-#include "Rhi/OrthographicBoxShader.h"
-#include "Rhi/OrthographicRoundedBoxShader.h"
-#include "Rhi/OrthographicOutlineBoxShader.h"
-#include "Rhi/OrthographicRoundedOutlineBoxShader.h"
 #include "Rhi/RendererStateMachine.h"
 #include "User/UserPreferences.h"
+#include "Rhi/OrthographicBoxShader.h"
+#include "Rhi/OrthographicImageBoxShader.h"
+#include "Rhi/OrthographicRoundedBoxShader.h"
+#include "Rhi/OrthographicRoundedImageBoxShader.h"
+#include "Rhi/OrthographicOutlineBoxShader.h"
+#include "Rhi/OrthographicOutlineImageBoxShader.h"
+#include "Rhi/OrthographicRoundedOutlineBoxShader.h"
+#include "Rhi/OrthographicRoundedOutlineImageBoxShader.h"
 
 Jafg::WScrollRegion::WScrollRegion(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
@@ -37,54 +41,119 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
     const f32 VisibleX = Maths::Clamp(this->GetAnchoredSize().X / this->DesiredSizeOfChildren.X, 0.0f, 1.0f);
 
     /* BEGIN Ourselves. */
-    if (this->Super::GetBrush().Type == ERegionBrush::Box)
+    if (this->Super::GetBrush().Type != ERegionBrush::None)
     {
-        GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
-        (
-            Context,
-            this->GetAnchoredSize(),
-            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-            this->Super::GetBrush().Tint
-        );
-    }
+        if (this->Super::GetBrush().Type == ERegionBrush::Box)
+        {
+            if (this->Super::GetBrush().Image.IsTextureValid())
+            {
+                GEngine->GetShaderChecked<LOrthographicImageBoxShader>(Name_ShaderOrthographicImageBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint,
+                    this->GetBrush().Image
+                );
+            }
+            else
+            {
+                GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint
+                );
+            }
+        }
 
-    else if (this->Super::GetBrush().Type == ERegionBrush::RoundedBox)
-    {
-        GEngine->GetShaderChecked<LOrthographicRoundedBoxShader>(Name_ShaderOrthographicRoundedBox)->Draw
-        (
-            Context,
-            this->GetAnchoredSize(),
-            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-            this->Super::GetBrush().Tint,
-            this->Super::GetBrush().Radii
-        );
-    }
+        else if (this->Super::GetBrush().Type == ERegionBrush::RoundedBox)
+        {
+            if (this->Super::GetBrush().Image.IsTextureValid())
+            {
+                GEngine->GetShaderChecked<LOrthographicRoundedImageBoxShader>(Name_ShaderOrthographicRoundedImageBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint,
+                    this->GetBrush().Radii,
+                    this->GetBrush().Image
+                );
+            }
+            else
+            {
+                GEngine->GetShaderChecked<LOrthographicRoundedBoxShader>(Name_ShaderOrthographicRoundedBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint,
+                    this->GetBrush().Radii
+                );
+            }
+        }
 
-    else if (this->Super::GetBrush().Type == ERegionBrush::OutlineBox)
-    {
-        GEngine->GetShaderChecked<LOrthographicOutlineBoxShader>(Name_ShaderOrthographicOutlineBox)->Draw
-        (
-            Context,
-            this->GetAnchoredSize(),
-            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-            this->Super::GetBrush().Tint,
-            this->Super::GetBrush().OutlineThickness,
-            this->Super::GetBrush().OutlineTint
-        );
-    }
+        else if (this->Super::GetBrush().Type == ERegionBrush::OutlineBox)
+        {
+            if (this->Super::GetBrush().Image.IsTextureValid())
+            {
+                GEngine->GetShaderChecked<LOrthographicOutlineImageBoxShader>(Name_ShaderOrthographicOutlineImageBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint,
+                    this->GetBrush().OutlineThickness,
+                    this->GetBrush().OutlineTint,
+                    this->GetBrush().Image
+                );
+            }
+            else
+            {
+                GEngine->GetShaderChecked<LOrthographicOutlineBoxShader>(Name_ShaderOrthographicOutlineBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint,
+                    this->GetBrush().OutlineThickness,
+                    this->GetBrush().OutlineTint
+                );
+            }
+        }
 
-    else if (this->Super::GetBrush().Type == ERegionBrush::RoundedOutlineBox)
-    {
-        GEngine->GetShaderChecked<LOrthographicRoundedOutlineBoxShader>(Name_ShaderOrthographicRoundedOutlineBox)->Draw
-        (
-            Context,
-            this->GetAnchoredSize(),
-            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-            this->Super::GetBrush().Tint,
-            this->Super::GetBrush().OutlineThickness,
-            this->Super::GetBrush().OutlineTint,
-            this->Super::GetBrush().Radii
-        );
+        else if (this->Super::GetBrush().Type == ERegionBrush::RoundedOutlineBox)
+        {
+            if (this->Super::GetBrush().Image.IsTextureValid())
+            {
+                GEngine->GetShaderChecked<LOrthographicRoundedOutlineImageBoxShader>(Name_ShaderOrthographicRoundedOutlineImageBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint,
+                    this->GetBrush().OutlineThickness,
+                    this->GetBrush().OutlineTint,
+                    this->GetBrush().Radii,
+                    this->GetBrush().Image
+                );
+            }
+            else
+            {
+                GEngine->GetShaderChecked<LOrthographicRoundedOutlineBoxShader>(Name_ShaderOrthographicRoundedOutlineBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint,
+                    this->GetBrush().OutlineThickness,
+                    this->GetBrush().OutlineTint,
+                    this->GetBrush().Radii
+                );
+            }
+        }
     }
     /* END Ourselves. */
 
@@ -145,6 +214,82 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
     }
 
     return;
+}
+
+Jafg::LCursorReply Jafg::WScrollRegion::SweepMouse(LViewport& Context, const LVector2& InLocation)
+{
+    if (this->CanChildrenBeHitTestable() == false)
+    {
+        return WParentBase::SweepMouse(Context, InLocation);
+    }
+
+    if (this->IsInBounds(Context, InLocation))
+    {
+        check( this->ScrollPosition.Y >= 0.0f && this->ScrollPosition.Y <= 1.0f )
+
+        {
+            const f64 MaxScrollY = Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.Y) - static_cast<f64>(this->GetAnchoredSize().Y), 0.0);
+            const f32 ScrollOffsetY = this->ScrollPosition.Y * MaxScrollY;
+
+            const f64 MaxScrollX = Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.X) - static_cast<f64>(this->GetAnchoredSize().X), 0.0);
+            const f32 ScrollOffsetX = this->ScrollPosition.X * MaxScrollX;
+
+            LViewportSweepTranslation Translation{Context, {-ScrollOffsetX, -ScrollOffsetY}};
+
+            for (const LWidgetSlot* ChildSlot : this->GetChildren())
+            {
+                if (ChildSlot->Content->ShouldCheckForInputs())
+                {
+                    if (const LCursorReply Reply = ChildSlot->Content->SweepMouse(Context, InLocation); Reply.IsHandled())
+                    {
+                        return Reply;
+                    }
+                }
+
+                continue;
+            }
+        }
+    }
+
+    return WParentBase::SweepMouse(Context, InLocation);
+}
+
+Jafg::LReply Jafg::WScrollRegion::SweepFocusTest(const LViewport& Context, const LVector2& InLocation)
+{
+    if (this->CanChildrenBeHitTestable() == false)
+    {
+        return WParentBase::SweepFocusTest(Context, InLocation);
+    }
+
+    if (this->IsInBounds(Context, InLocation))
+    {
+        check( this->ScrollPosition.Y >= 0.0f && this->ScrollPosition.Y <= 1.0f )
+
+        {
+            const f64 MaxScrollY = Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.Y) - static_cast<f64>(this->GetAnchoredSize().Y), 0.0);
+            const f32 ScrollOffsetY = this->ScrollPosition.Y * MaxScrollY;
+
+            const f64 MaxScrollX = Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.X) - static_cast<f64>(this->GetAnchoredSize().X), 0.0);
+            const f32 ScrollOffsetX = this->ScrollPosition.X * MaxScrollX;
+
+            LViewportSweepTranslation Translation{Context, {-ScrollOffsetX, -ScrollOffsetY}};
+
+            for (const LWidgetSlot* ChildSlot : this->GetChildren())
+            {
+                if (ChildSlot->Content->ShouldCheckForInputs())
+                {
+                    if (const LReply Reply = ChildSlot->Content->SweepFocusTest(Context, InLocation); Reply.IsHandled())
+                    {
+                        return Reply;
+                    }
+                }
+
+                continue;
+            }
+        }
+    }
+
+    return WParentBase::SweepFocusTest(Context, InLocation);
 }
 
 void Jafg::WScrollRegion::UserInterfaceTick(const LViewport& InViewport)
@@ -225,9 +370,43 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyUp(const LViewport& InViewport, const LKe
 
 Jafg::LReply Jafg::WScrollRegion::OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
-    if (const LReply Reply = Super::OnKeyDownNoFocus(InViewport, InKeyEvent); Reply.IsHandled())
+    check( this->ScrollPosition.Y >= 0.0f && this->ScrollPosition.Y <= 1.0f )
+
     {
-        return Reply;
+        const f64 MaxScrollY = Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.Y) - static_cast<f64>(this->GetAnchoredSize().Y), 0.0);
+        const f32 ScrollOffsetY = this->ScrollPosition.Y * MaxScrollY;
+
+        const f64 MaxScrollX = Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.X) - static_cast<f64>(this->GetAnchoredSize().X), 0.0);
+        const f32 ScrollOffsetX = this->ScrollPosition.X * MaxScrollX;
+
+        LViewportSweepTranslation Translation{InViewport, {-ScrollOffsetX, -ScrollOffsetY}};
+
+        for (const LWidgetSlot* ChildSlot : this->GetChildren())
+        {
+            check( ChildSlot->Content )
+
+            if (ChildSlot->Content == InViewport.GetFocusedWidget())
+            {
+                continue;
+            }
+
+            if (ChildSlot->Content->ShouldCheckForInputs() == false)
+            {
+                continue;
+            }
+
+            if (ChildSlot->Content->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked()) == false)
+            {
+                continue;
+            }
+
+            if (const LReply Reply = ChildSlot->Content->OnKeyDownNoFocus(InViewport, InKeyEvent); Reply.IsHandled())
+            {
+                return Reply;
+            }
+
+            continue;
+        }
     }
 
     if (InKeyEvent.GetKey() == EKeys::MouseWheelAxis)
@@ -236,7 +415,51 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyDownNoFocus(const LViewport& InViewport, 
         return LReply::Handled();
     }
 
-    return LReply::Unhandled();
+    return WParentBase::OnKeyDownNoFocus(InViewport, InKeyEvent);
+}
+
+Jafg::LReply Jafg::WScrollRegion::OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+{
+    check( this->ScrollPosition.Y >= 0.0f && this->ScrollPosition.Y <= 1.0f )
+
+    {
+        const f64 MaxScrollY = Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.Y) - static_cast<f64>(this->GetAnchoredSize().Y), 0.0);
+        const f32 ScrollOffsetY = this->ScrollPosition.Y * MaxScrollY;
+
+        const f64 MaxScrollX = Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.X) - static_cast<f64>(this->GetAnchoredSize().X), 0.0);
+        const f32 ScrollOffsetX = this->ScrollPosition.X * MaxScrollX;
+
+        LViewportSweepTranslation Translation{InViewport, {-ScrollOffsetX, -ScrollOffsetY}};
+
+        for (const LWidgetSlot* ChildSlot : this->GetChildren())
+        {
+            check( ChildSlot->Content )
+
+            if (ChildSlot->Content == InViewport.GetFocusedWidget())
+            {
+                continue;
+            }
+
+            if (ChildSlot->Content->ShouldCheckForInputs() == false)
+            {
+                continue;
+            }
+
+            if (ChildSlot->Content->IsInBounds(InViewport, *InViewport.GetCachedCursorLocationChecked()) == false)
+            {
+                continue;
+            }
+
+            if (const LReply Reply = ChildSlot->Content->OnKeyUpNoFocus(InViewport, InKeyEvent); Reply.IsHandled())
+            {
+                return Reply;
+            }
+
+            continue;
+        }
+    }
+
+    return WParentBase::OnKeyUpNoFocus(InViewport, InKeyEvent);
 }
 
 void Jafg::WScrollRegion::UpdateDesiredSize() const

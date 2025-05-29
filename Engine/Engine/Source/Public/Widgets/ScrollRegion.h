@@ -125,12 +125,17 @@ public:
 
     virtual void Draw(LViewport& Context) const override;
 
+    virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation) override;
+
+    virtual LReply SweepFocusTest(const LViewport& Context, const LVector2& InLocation) override;
+
     //# This only the user interface.
     void UserInterfaceTick(const LViewport& InViewport);
 
     virtual LReply OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
     virtual LReply OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
     virtual LReply OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
+    virtual LReply OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
 
     virtual void UpdateDesiredSize() const override;
 

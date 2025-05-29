@@ -1,11 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Widgets/Node.h"
 #include "Engine/Engine.h"
 #include "Widgets/Viewport.h"
 #include "Widgets/Parent.h"
-
 #include "Widgets/Region.h"
 
 namespace
@@ -157,7 +155,7 @@ bool Jafg::WNode::IsInBounds(const LViewport& Context, const LVector2& InLocatio
         return false;
     }
 
-    const LVector2 TopLeftMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context);
+    const LVector2 TopLeftMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context) + Context.GetSweepTranslation();
     return
             TopLeftMostOuter.X <= InLocation.X
          && InLocation.X       <= TopLeftMostOuter.X + this->GetAnchoredSize().X

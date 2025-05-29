@@ -25,6 +25,17 @@ struct LBackgroundContext final
 
 MAKE_MULTICAST_SIGNATURE(LOnLateTick, const LViewport& InViewport)
 
+//# @see #LViewport::ApplySweepTranslation.
+struct LViewportSweepTranslation final
+{
+    LViewportSweepTranslation() = delete;
+    explicit LViewportSweepTranslation(const LViewport& InViewport, const LVector2& InOffset) noexcept;
+    ~LViewportSweepTranslation() noexcept;
+
+    const LViewport& Viewport;
+    LVector2 Offset;
+};
+
 //#
 //# Represents a viewport that can contain widgets.
 //# A viewport has in most cases a handle to some sort of platform-specific window instance.
@@ -91,17 +102,27 @@ public:
     bool AddHoveredWidgetForFrame(WNode* Node);
 
     FORCEINLINE f32 GetFrameOrthoZLayerDepth() const { this->FrameZLayerDepth += 0.0001f; return this->FrameZLayerDepth; }
-    FORCEINLINE auto GetFrameTranslation() const -> const LVector2& { return this->TranslationState; }
-    //#
-    //# The translation that is recommended for children of a WNode. This translation should
-    //# be removed after said WNode is finished drawing.
-    //# This value is reset very frame.
-    //#
-    FORCEINLINE void ApplyFrameTranslation(const LVector2& InTranslation) const { this->TranslationState += InTranslation; }
 
-    FORCEINLINE auto GetBackgroundContexts() const -> const TArray<LBackgroundContext>& { return this->BackgroundContexts; }
-    FORCEINLINE auto GetMutableBackgroundContexts() -> TArray<LBackgroundContext>& { return this->BackgroundContexts; }
-    FORCEINLINE auto GetBackgroundBuffer() const -> const LFrameBuffer& { return this->BackgroundBuffer; }
+    //#
+    //# The translation that is recommended for children of a #WNode to use while drawing.
+    //# This translation should be removed after said #WNode is finished drawing.
+    //# This value is reset every frame.
+    //#
+    FORCEINLINE void ApplyFrameTranslation(const LVector2& InTranslation) const { this->FrameTranslation += InTranslation; }
+    FORCEINLINE auto GetFrameTranslation() const -> const LVector2& { return this->FrameTranslation; }
+
+    //#
+    //# The translation that is recommended for children of a #WParentBase to use while sweeping.
+    //# This translation should be removed if a parent widget finished its sweep logic.
+    //# This value is reset every frame.
+    //# @remark Use the #LViewportSweepTranslation for easy RAII style translation logic.
+    //#
+    FORCEINLINE void ApplySweepTranslation(const LVector2& InTranslation) const noexcept { this->SweepTranslation += InTranslation; }
+    FORCEINLINE auto GetSweepTranslation() const -> const LVector2& { return this->SweepTranslation; }
+
+    FORCEINLINE auto GetBackgroundContexts() const noexcept -> const TArray<LBackgroundContext>& { return this->BackgroundContexts; }
+    FORCEINLINE auto GetMutableBackgroundContexts() noexcept -> TArray<LBackgroundContext>& { return this->BackgroundContexts; }
+    FORCEINLINE auto GetBackgroundBuffer() const noexcept -> const LFrameBuffer& { return this->BackgroundBuffer; }
 
     //#
     //# Get the most recent context that was used on this viewport. Might be null, so do not use without checking.
@@ -159,7 +180,8 @@ private:
     TArray<TObjectStorage<WNode>> LastFrameHoveredWidgets;
 
     mutable f32 FrameZLayerDepth { 0.0f };
-    mutable LVector2 TranslationState;
+    mutable LVector2 FrameTranslation;
+    mutable LVector2 SweepTranslation;
 
     TArray<LBackgroundContext> BackgroundContexts;
     LFrameBuffer BackgroundBuffer;
@@ -170,6 +192,19 @@ private:
     bool bChangedBackgroundColor { false };
     LLinearColor BackgroundColor;
 };
+
+FORCEINLINE LViewportSweepTranslation::LViewportSweepTranslation(const LViewport& InViewport, const LVector2& InOffset) noexcept
+    : Viewport(InViewport), Offset(InOffset)
+{
+    this->Viewport.ApplySweepTranslation(this->Offset);
+    return;
+}
+
+FORCEINLINE LViewportSweepTranslation::~LViewportSweepTranslation() noexcept
+{
+    this->Viewport.ApplySweepTranslation(-this->Offset);
+    return;
+}
 
 FORCEINLINE WNode* LViewport::GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const
 {

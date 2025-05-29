@@ -62,6 +62,7 @@ void Jafg::LViewport::ClearInvalidWidgets()
 void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursorLocation)
 {
     this->CachedContext = &Context;
+    this->SweepTranslation = LVector2::ZeroVector;
 
     const bool bCursorLocationIsMeaningful = InCursorLocation.X >= 0.0f && InCursorLocation.Y >= 0.0f;
 
@@ -343,7 +344,7 @@ void Jafg::LViewport::Tick()
 void Jafg::LViewport::Draw()
 {
     this->FrameZLayerDepth = 0.0f;
-    this->TranslationState = LVector2::ZeroVector;
+    this->FrameTranslation = LVector2::ZeroVector;
     this->RecalculateScaleFactor();
 
     this->BackgroundBuffer.MakeDrawTarget();
@@ -394,9 +395,9 @@ void Jafg::LViewport::Draw()
 
     checkCode
     (
-        if (this->TranslationState.IsNearlyZero() == false)
+        if (this->FrameTranslation.IsNearlyZero() == false)
         {
-            LOG_WARNING(LogWidgetFramework, "Viewport translation state is not zero: [{}].", this->TranslationState.ToString())
+            LOG_WARNING(LogWidgetFramework, "Viewport translation state is not zero: [{}].", this->FrameTranslation.ToString())
         }
     )
 
