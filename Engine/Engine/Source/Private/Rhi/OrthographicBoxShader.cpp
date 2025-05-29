@@ -26,6 +26,8 @@ bool Jafg::LOrthographicBoxShader::Make(const LName InName)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(f32), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
 
+    glBindVertexArray(0);
+
     return true;
 }
 
@@ -50,11 +52,6 @@ void Jafg::LOrthographicBoxShader::OnFree()
     glDeleteVertexArrays(1, &this->Vao);
     glDeleteBuffers(1, &this->Vbo);
 
-#if WITH_DEBUG_ZERO_UNBOUND
-    this->Vao = 0;
-    this->Vbo = 0;
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
-
     Super::OnFree();
 
     return;
@@ -68,7 +65,7 @@ void Jafg::LOrthographicBoxShader::Draw
     const LColor&    Tint
 ) const
 {
-    check( this->IsMeaningful() )
+    check( this->IsValid() )
 
     if (Size.X <= 0.0f || Size.Y <= 0.0f)
     {
@@ -94,14 +91,11 @@ void Jafg::LOrthographicBoxShader::Draw
     for (f32& Vertex : Vertices) { Vertex = Maths::Floor(Vertex); }
 
     glBindVertexArray(this->Vao);
+
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_DYNAMIC_DRAW);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
 
-#if WITH_DEBUG_ZERO_UNBOUND
-    this->Program.Unuse();
-    glBindVertexArray(0);
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
     return;
 }

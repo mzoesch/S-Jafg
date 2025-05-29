@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Rhi/EngineShader.h"
+#include "Image.h"
 
 namespace Jafg
 {
@@ -23,7 +24,8 @@ public:
         const LVector2&  Size,
         const LVector2&  TopLeft,
         const LColor&    Tint,
-        const LVector4&  Radii
+        const LVector4&  Radii,
+        const LImage&    Image
     ) const;
 
 private:

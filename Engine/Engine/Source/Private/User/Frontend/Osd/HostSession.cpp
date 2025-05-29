@@ -366,6 +366,7 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
             .MinDesiredSize({64})
             .Type(ERegionBrush::Box)
             .Tint(LColor::White)
+            .Texture(this->Save.PreviewTexture.IsValid() ? &this->Save.PreviewTexture : nullptr)
         +
         NewNode(WVRegion)
             .Anchor(EAnchor::Fill)
@@ -381,12 +382,6 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
         ]
     ]
     FinishWidget(Region);
-
-    if (this->Save.PreviewTexture.IsValid())
-    {
-        this->Save.PreviewTexture.Upload();
-    }
-    Thumbnail->SetTexture(&this->Save.PreviewTexture);
 
     this->AddChild(Region);
 
@@ -579,8 +574,8 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
         }
 
         LTexture2 Preview;
-        Preview.LoadFromDisk("/home/mzoesch/EDev/S-Jafg/Content/Textures/Voxels/Grass_Flora.png");
-        //Preview.LoadFromDisk(AsPath / "Thumbnail.png");
+        // Preview.LoadFromDisk("/home/mzoesch/EDev/S-Jafg/Content/Textures/Voxels/Grass_Flora.png");
+        Preview.LoadFromDisk(AsPath / "Thumbnail.png");
 
         this->FetchedSaves.Emplace(std::move(AsPath), false, std::move(*DisplayName), std::move(Preview));
 

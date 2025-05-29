@@ -160,6 +160,8 @@ private:
     FORCEINLINE bool AddShaderChecked(const LName InName, LEngineShader* InShader);
     FORCEINLINE bool AddShaderAsserted(const LName InName, LEngineShader* InShader);
 
+    FORCEINLINE bool RemoveShader(const LEngineShader* InShader) noexcept;
+
     LLocalEgo LocalEgo;
     std::map<LName, LEngineShader*> Shaders;
 
@@ -333,6 +335,33 @@ FORCEINLINE LEngineShader* LEngine::GetShader(const LName InName) noexcept
     return nullptr;
 }
 
+FORCEINLINE bool LEngine::UnregisterShader(const LName InName, const bool bFree /* = true */) noexcept
+{
+    LOG_VERBOSE(LogEngine, "Removing engine shader [{}].", InName)
+
+    if (bFree)
+    {
+        if (const auto& It = this->Shaders.find(InName); It != this->Shaders.end())
+        {
+            const LEngineShader* Shader = It->second;
+            this->Shaders.erase(It);
+            delete Shader;
+            return true;
+        }
+
+        LOG_ERROR(LogEngine, "Failed to find engine shader [{}] to free.", InName)
+    }
+
+    return this->Shaders.erase(InName) > 0;
+}
+
+FORCEINLINE bool LEngine::UnregisterShaderChecked(const LName InName, const bool bFree /* = true */) noexceptcheck
+{
+    const bool bOut = this->UnregisterShader(InName, bFree);
+    check( bOut )
+    return bOut;
+}
+
 FORCEINLINE bool LEngine::AddShader(const LName InName, LEngineShader* InShader)
 {
     check( InShader )
@@ -362,30 +391,27 @@ FORCEINLINE bool LEngine::AddShaderAsserted(const LName InName, LEngineShader* I
     return bOut;
 }
 
-FORCEINLINE bool LEngine::UnregisterShader(const LName InName, const bool bFree /* = true */) noexcept
+bool LEngine::RemoveShader(const LEngineShader* InShader) noexcept
 {
-    LOG_VERBOSE(LogEngine, "Removing engine shader [{}].", InName)
-
-    if (bFree)
+    LName Name;
+    for (const auto& It : this->Shaders)
     {
-        if (auto It = this->Shaders.find(InName); It != this->Shaders.end())
+        if (It.second == InShader)
         {
-            delete It->second;
+            Name = It.first;
+            break;
         }
-        else
-        {
-            LOG_ERROR(LogEngine, "Failed to find engine shader [{}] to free.", InName)
-        }
+
+        continue;
     }
 
-    return this->Shaders.erase(InName);
-}
+    if (Name.IsSet())
+    {
+        return this->Shaders.erase(Name) > 0;
+    }
 
-FORCEINLINE bool LEngine::UnregisterShaderChecked(const LName InName, const bool bFree /* = true */) noexceptcheck
-{
-    const bool bOut = this->UnregisterShader(InName, bFree);
-    check( bOut )
-    return bOut;
+    LOG_ERROR(LogEngine, "Failed to remove shader.")
+    return false;
 }
 
 FORCEINLINE bool LEngine::IsObjectContextKnown(const LObjectContext* InContext) const

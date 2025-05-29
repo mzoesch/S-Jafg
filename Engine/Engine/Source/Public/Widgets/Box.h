@@ -4,7 +4,7 @@
 
 #include "Widgets/Node.h"
 #include "Rhi/BoxShaderContext.h"
-#include "Widgets/Image.h"
+#include "../Rhi/Image.h"
 #include "Box.generated.h"
 
 namespace Jafg

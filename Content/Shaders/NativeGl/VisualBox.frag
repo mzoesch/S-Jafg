@@ -31,24 +31,19 @@ uniform int BoxTint;
     uniform vec4 Radii;
 #endif /* WITH_RADII */
 
+#define GET_COLOR_FROM_INT_NO_TEXTURE(color)         \
+    vec4                                             \
+    (                                                \
+        float((color >> 16) & 0xFF) / 255.0, /* R */ \
+        float((color >>  8) & 0xFF) / 255.0, /* G */ \
+        float((color >>  0) & 0xFF) / 255.0, /* B */ \
+        float((color >> 24) & 0xFF) / 255.0  /* A */ \
+    )
+
 #if WITH_TEXTURE
-    #define GET_COLOR_FROM_INT(color)                    \
-        texture(TexSampler, InFragUv) * vec4             \
-        (                                                \
-            float((color >> 16) & 0xFF) / 255.0, /* R */ \
-            float((color >>  8) & 0xFF) / 255.0, /* G */ \
-            float((color >>  0) & 0xFF) / 255.0, /* B */ \
-            float((color >> 24) & 0xFF) / 255.0  /* A */ \
-        )
+    #define GET_COLOR_FROM_INT(color) texture(TexSampler, InFragUv) * GET_COLOR_FROM_INT_NO_TEXTURE(color)
 #else /* WITH_TEXTURE */
-    #define GET_COLOR_FROM_INT(color)                    \
-        vec4                                             \
-        (                                                \
-            float((color >> 16) & 0xFF) / 255.0, /* R */ \
-            float((color >>  8) & 0xFF) / 255.0, /* G */ \
-            float((color >>  0) & 0xFF) / 255.0, /* B */ \
-            float((color >> 24) & 0xFF) / 255.0  /* A */ \
-        )
+    #define GET_COLOR_FROM_INT(color) GET_COLOR_FROM_INT_NO_TEXTURE(color)
 #endif /* !WITH_TEXTURE */
 
 void main()
@@ -145,7 +140,7 @@ void main()
 
         if (bOutline) 
         {
-            FragColor = GET_COLOR_FROM_INT(OutlineTint);
+            FragColor = GET_COLOR_FROM_INT_NO_TEXTURE(OutlineTint);
         } 
         else
         {
@@ -162,7 +157,7 @@ void main()
             || DistBottom < OutlineThickness 
         ) 
         {
-            FragColor = GET_COLOR_FROM_INT(OutlineTint);
+            FragColor = GET_COLOR_FROM_INT_NO_TEXTURE(OutlineTint);
         }
         else
         {

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Rhi/EngineShader.h"
-#include "Widgets/Image.h"
+#include "Rhi/Image.h"
 
 namespace Jafg
 {

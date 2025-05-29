@@ -356,7 +356,7 @@ void Jafg::LViewport::Draw()
 
         for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)
         {
-            checkSlow( Shader && Shader->IsMeaningful() )
+            checkSlow( Shader && Shader->IsValid() )
             Shader->UpdateWorldUniforms(*this, *World, *Eye);
             continue;
         }
@@ -370,7 +370,7 @@ void Jafg::LViewport::Draw()
     RendererStateMachine::PrepareForOrthographicPainting();
     for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)
     {
-        checkSlow( Shader && Shader->IsMeaningful() )
+        checkSlow( Shader && Shader->IsValid() )
         Shader->UpdateViewportUniforms(*this);
         continue;
     }

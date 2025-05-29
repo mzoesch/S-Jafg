@@ -19,20 +19,19 @@ bool Jafg::LTexture2::CreateEmpty(const u32 InWidth, const u32 InHeight, const E
 
 bool Jafg::LTexture2::LoadFromDisk(const LPath& Path)
 {
-    LOG_TRACE(LogSystem, "Loading texture2 [{}].", Path)
-
-    check( this->MipMap.GetBulk().IsAllocated() == false )
-
-    i32 Width      = 0;
-    i32 Height     = 0;
-    i32 NrChannels = 0;
-
     if (Paths::DoesFileExist(Path) == false)
     {
         return false;
     }
 
+    LOG_TRACE(LogSystem, "Loading texture2 [{}].", Path)
+    check( this->MipMap.GetBulk().IsAllocated() == false )
+
     TArray<u8> Bin = Paths::ReadFileAsBinary(Path);
+
+    i32 Width      = 0;
+    i32 Height     = 0;
+    i32 NrChannels = 0;
 
     ::stbi_set_flip_vertically_on_load(false);
     u8* Data = ::stbi_load_from_memory(Bin.GetData(), static_cast<int>(Bin.GetSize()), &Width, &Height, &NrChannels, 4);

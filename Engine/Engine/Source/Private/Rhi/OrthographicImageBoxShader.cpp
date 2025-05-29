@@ -37,7 +37,7 @@ bool Jafg::LOrthographicImageBoxShader::Make(const LName InName)
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), reinterpret_cast<void*>(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    glUniform1i(glGetUniformLocation(this->Program.GetId(), "TexSampler"), 0);
+    glBindVertexArray(0);
 
     return true;
 }
@@ -63,11 +63,6 @@ void Jafg::LOrthographicImageBoxShader::OnFree()
     glDeleteVertexArrays(1, &this->Vao);
     glDeleteBuffers(1, &this->Vbo);
 
-#if WITH_DEBUG_ZERO_UNBOUND
-    this->Vao = 0;
-    this->Vbo = 0;
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
-
     Super::OnFree();
 
     return;
@@ -82,7 +77,7 @@ void Jafg::LOrthographicImageBoxShader::Draw
     const LImage&    Image
 ) const
 {
-    check( this->IsMeaningful() )
+    check( this->IsValid() )
 
     if (Size.X <= 0.0f || Size.Y <= 0.0f)
     {
@@ -113,25 +108,13 @@ void Jafg::LOrthographicImageBoxShader::Draw
     Vertices[20] = Maths::Floor(Vertices[20]); Vertices[21] = Maths::Floor(Vertices[21]);
 
     glBindVertexArray(this->Vao);
+
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
-
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), static_cast<void*>(nullptr));
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), reinterpret_cast<void*>(2 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glUniform1i(glGetUniformLocation(this->Program.GetId(), "TexSampler"), 0);
-
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_DYNAMIC_DRAW);
 
-    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, Image.GetTextureHandle());
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
-
-#if WITH_DEBUG_ZERO_UNBOUND
-    this->Program.Unuse();
-    glBindVertexArray(0);
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
 
     return;
 }

@@ -43,6 +43,8 @@ bool Jafg::LOrthographicRoundedOutlineBoxShader::Make(const LName InName)
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), reinterpret_cast<void*>(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
+    glBindVertexArray(0);
+
     return true;
 }
 
@@ -67,11 +69,6 @@ void Jafg::LOrthographicRoundedOutlineBoxShader::OnFree()
     glDeleteVertexArrays(1, &this->Vao);
     glDeleteBuffers(1, &this->Vbo);
 
-#if WITH_DEBUG_ZERO_UNBOUND
-    this->Vao = 0;
-    this->Vbo = 0;
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
-
     Super::OnFree();
 
     return;
@@ -88,7 +85,7 @@ void Jafg::LOrthographicRoundedOutlineBoxShader::Draw
     const LVector4&  Radii
 ) const
 {
-    check( this->IsMeaningful() )
+    check( this->IsValid() )
 
     if (Size.X <= 0.0f || Size.Y <= 0.0f)
     {
@@ -126,11 +123,6 @@ void Jafg::LOrthographicRoundedOutlineBoxShader::Draw
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_DYNAMIC_DRAW);
     glDrawArrays(GL_TRIANGLES, 0, 6);
-
-#if WITH_DEBUG_ZERO_UNBOUND
-    this->Program.Unuse();
-    glBindVertexArray(0);
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
 
     return;
 }

@@ -26,15 +26,15 @@ public:
     LEngineShader() = default;
     virtual ~LEngineShader() { this->Free(); }
 
-    FORCEINLINE void Free() { if (this->bMeaningful) { this->bMeaningful = false; this->OnFree(); } }
+    FORCEINLINE void Free() { if (this->bValid) { this->bValid = false; this->OnFree(); } }
 
-    FORCEINLINE bool IsMeaningful() const noexcept { return this->bMeaningful; }
+    FORCEINLINE bool IsValid() const noexcept { return this->bValid; }
 
     virtual     bool Make(const LName InName);
     FORCEINLINE bool MakeChecked(const LName InName);
     FORCEINLINE bool MakeAsserted(const LName InName);
 
-    FORCEINLINE void Use() const { check( this->IsMeaningful() ) this->Program.Use(); }
+    FORCEINLINE void Use() const { check( this->IsValid() ) this->Program.Use(); }
 
     virtual void UpdateWorldUniforms(const LViewport& Context, const LWorld& World, const LEye& Eye) { }
     virtual void UpdateViewportUniforms(const LViewport& Context) { }
@@ -51,7 +51,7 @@ protected:
 
 private:
 
-    bool bMeaningful { false };
+    bool bValid { false };
 };
 
 FORCEINLINE bool LEngineShader::MakeChecked(const LName InName)

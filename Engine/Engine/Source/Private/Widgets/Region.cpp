@@ -6,8 +6,11 @@
 #include "Rhi/OrthographicBoxShader.h"
 #include "Rhi/OrthographicImageBoxShader.h"
 #include "Rhi/OrthographicRoundedBoxShader.h"
+#include "Rhi/OrthographicRoundedImageBoxShader.h"
 #include "Rhi/OrthographicOutlineBoxShader.h"
+#include "Rhi/OrthographicOutlineImageBoxShader.h"
 #include "Rhi/OrthographicRoundedOutlineBoxShader.h"
+#include "Rhi/OrthographicRoundedOutlineImageBoxShader.h"
 
 Jafg::WRegion::WRegion(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -30,14 +33,30 @@ Jafg::WRegion::WRegion(const LObjectInitializer& ObjectInitializer) : Super(Obje
             (new LOrthographicRoundedBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedBox);
         }
 
+        if (GEngine->IsShaderValid(Name_ShaderOrthographicRoundedImageBox) == false)
+        {
+            (new LOrthographicRoundedImageBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedImageBox);
+        }
+
         if (GEngine->IsShaderValid(Name_ShaderOrthographicOutlineBox) == false)
         {
             (new LOrthographicOutlineBoxShader())->MakeChecked(Name_ShaderOrthographicOutlineBox);
         }
 
+        if (GEngine->IsShaderValid(Name_ShaderOrthographicOutlineImageBox) == false)
+        {
+            (new LOrthographicOutlineImageBoxShader())->MakeChecked(Name_ShaderOrthographicOutlineImageBox);
+        }
+
+
         if (GEngine->IsShaderValid(Name_ShaderOrthographicRoundedOutlineBox) == false)
         {
             (new LOrthographicRoundedOutlineBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedOutlineBox);
+        }
+
+        if (GEngine->IsShaderValid(Name_ShaderOrthographicRoundedOutlineImageBox) == false)
+        {
+            (new LOrthographicRoundedOutlineImageBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedOutlineImageBox);
         }
 
         return;
@@ -81,41 +100,89 @@ void Jafg::WRegion::Draw(LViewport& Context) const
 
     else if (this->Brush.Type == ERegionBrush::RoundedBox)
     {
-        GEngine->GetShaderChecked<LOrthographicRoundedBoxShader>(Name_ShaderOrthographicRoundedBox)->Draw
-        (
-            Context,
-            this->GetAnchoredSize(),
-            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-            this->GetBrush().Tint,
-            this->GetBrush().Radii
-        );
+        if (this->Brush.Image.IsTextureValid())
+        {
+            GEngine->GetShaderChecked<LOrthographicRoundedImageBoxShader>(Name_ShaderOrthographicRoundedImageBox)->Draw
+            (
+                Context,
+                this->GetAnchoredSize(),
+                this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                this->GetBrush().Tint,
+                this->GetBrush().Radii,
+                this->GetBrush().Image
+            );
+        }
+        else
+        {
+            GEngine->GetShaderChecked<LOrthographicRoundedBoxShader>(Name_ShaderOrthographicRoundedBox)->Draw
+            (
+                Context,
+                this->GetAnchoredSize(),
+                this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                this->GetBrush().Tint,
+                this->GetBrush().Radii
+            );
+        }
     }
 
     else if (this->Brush.Type == ERegionBrush::OutlineBox)
     {
-        GEngine->GetShaderChecked<LOrthographicOutlineBoxShader>(Name_ShaderOrthographicOutlineBox)->Draw
-        (
-            Context,
-            this->GetAnchoredSize(),
-            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-            this->GetBrush().Tint,
-            this->GetBrush().OutlineThickness,
-            this->GetBrush().OutlineTint
-        );
+        if (this->Brush.Image.IsTextureValid())
+        {
+            GEngine->GetShaderChecked<LOrthographicOutlineImageBoxShader>(Name_ShaderOrthographicOutlineImageBox)->Draw
+            (
+                Context,
+                this->GetAnchoredSize(),
+                this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                this->GetBrush().Tint,
+                this->GetBrush().OutlineThickness,
+                this->GetBrush().OutlineTint,
+                this->GetBrush().Image
+            );
+        }
+        else
+        {
+            GEngine->GetShaderChecked<LOrthographicOutlineBoxShader>(Name_ShaderOrthographicOutlineBox)->Draw
+            (
+                Context,
+                this->GetAnchoredSize(),
+                this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                this->GetBrush().Tint,
+                this->GetBrush().OutlineThickness,
+                this->GetBrush().OutlineTint
+            );
+        }
     }
 
     else if (this->Brush.Type == ERegionBrush::RoundedOutlineBox)
     {
-        GEngine->GetShaderChecked<LOrthographicRoundedOutlineBoxShader>(Name_ShaderOrthographicRoundedOutlineBox)->Draw
-        (
-            Context,
-            this->GetAnchoredSize(),
-            this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-            this->GetBrush().Tint,
-            this->GetBrush().OutlineThickness,
-            this->GetBrush().OutlineTint,
-            this->GetBrush().Radii
-        );
+        if (this->Brush.Image.IsTextureValid())
+        {
+            GEngine->GetShaderChecked<LOrthographicRoundedOutlineImageBoxShader>(Name_ShaderOrthographicRoundedOutlineImageBox)->Draw
+            (
+                Context,
+                this->GetAnchoredSize(),
+                this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                this->GetBrush().Tint,
+                this->GetBrush().OutlineThickness,
+                this->GetBrush().OutlineTint,
+                this->GetBrush().Radii,
+                this->GetBrush().Image
+            );
+        }
+        else
+        {
+            GEngine->GetShaderChecked<LOrthographicRoundedOutlineBoxShader>(Name_ShaderOrthographicRoundedOutlineBox)->Draw
+            (
+                Context,
+                this->GetAnchoredSize(),
+                this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                this->GetBrush().Tint,
+                this->GetBrush().OutlineThickness,
+                this->GetBrush().OutlineTint,
+                this->GetBrush().Radii
+            );
+        }
     }
 
     Super::Draw(Context);
