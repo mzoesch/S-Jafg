@@ -4,6 +4,7 @@
 
 #include "Rhi/EngineShader.h"
 #include "Rhi/Image.h"
+#include "Widgets/RegionForward.h"
 
 namespace Jafg
 {
@@ -20,13 +21,18 @@ public:
 
     ENGINE_API void Draw
     (
-        const LViewport& Context,
-        const LVector2&  Size,
-        const LVector2&  TopLeft,
-        const LColor&    Tint,
-        const f32        OutlineThickness,
-        const LColor&    OutlineTint,
-        const LImage&    Image
+        const LViewport&           Context,
+        const LVector2&            Size,
+        const LVector2&            TopLeft,
+        const LColor&              Tint,
+        const f32                  OutlineThickness,
+        const LColor&              OutlineTint,
+        const LImage&              Image,
+        const LColor&              ImageTint,
+        const f32                  ImageScale,
+        const EImageBehavior::Type ImageBehavior,
+        const EImageOobm::Type     ImageOobm,
+        const f32                  ImagePadding
     ) const;
 
 private:

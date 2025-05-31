@@ -25,6 +25,8 @@ struct LFetchedSave
     //#
     LString DisplayName;
 
+    LString Description;
+
     //#
     //# If a preview texture is available, it will be set here.
     //#

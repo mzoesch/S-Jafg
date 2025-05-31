@@ -338,6 +338,15 @@ void Jafg::WNode::SetDesiredSize(const LVector2& InSize) const
     this->DesiredSize.X = Maths::Max(this->DesiredSize.X, this->MinDesiredSize.X);
     this->DesiredSize.Y = Maths::Max(this->DesiredSize.Y, this->MinDesiredSize.Y);
 
+    if (this->MaxDesiredSize.X > 0.0f)
+    {
+        this->DesiredSize.X = Maths::Min(this->DesiredSize.X, this->MaxDesiredSize.X);
+    }
+    if (this->MaxDesiredSize.Y > 0.0f)
+    {
+        this->DesiredSize.Y = Maths::Min(this->DesiredSize.Y, this->MaxDesiredSize.Y);
+    }
+
     check( this->DesiredSize.X >= 0.0f && this->DesiredSize.Y >= 0.0f )
 
     return;
@@ -358,6 +367,44 @@ void Jafg::WNode::UpdateAnchoredSize(const LViewport& Context) const
     Out.X = Maths::Max(this->Anchor.MaxX * static_cast<f32>(Context.GetDimensions().X), this->DesiredSize.X);
     Out.Y = Maths::Max(this->Anchor.MaxY * static_cast<f32>(Context.GetDimensions().Y), this->DesiredSize.Y);
     this->SetAnchoredSize(Out);
+
+    return;
+}
+
+void Jafg::WNode::SetAnchoredSize(const LVector2& InSize) const
+{
+    this->LostAnchoredSize = LVector2::ZeroVector;
+    this->AnchoredSize = InSize;
+
+    if (this->MaxDesiredSize.X > 0.0f)
+    {
+        this->LostAnchoredSize.X = Maths::Max(this->AnchoredSize.X - this->MaxDesiredSize.X, 0.0f);
+        this->AnchoredSize.X = Maths::Min(this->AnchoredSize.X, this->MaxDesiredSize.X);
+    }
+    if (this->MaxDesiredSize.Y > 0.0f)
+    {
+        this->LostAnchoredSize.Y = Maths::Max(this->AnchoredSize.Y - this->MaxDesiredSize.Y, 0.0f);
+        this->AnchoredSize.Y = Maths::Min(this->AnchoredSize.Y, this->MaxDesiredSize.Y);
+    }
+
+    return;
+}
+
+void Jafg::WNode::SetAnchoredSize(LVector2&& InSize) const
+{
+    this->LostAnchoredSize = LVector2::ZeroVector;
+    this->AnchoredSize = std::move(InSize);
+
+    if (this->MaxDesiredSize.X > 0.0f)
+    {
+        this->LostAnchoredSize.X = Maths::Max(this->AnchoredSize.X - this->MaxDesiredSize.X, 0.0f);
+        this->AnchoredSize.X = Maths::Min(this->AnchoredSize.X, this->MaxDesiredSize.X);
+    }
+    if (this->MaxDesiredSize.Y > 0.0f)
+    {
+        this->LostAnchoredSize.Y = Maths::Max(this->AnchoredSize.Y - this->MaxDesiredSize.Y, 0.0f);
+        this->AnchoredSize.Y = Maths::Min(this->AnchoredSize.Y, this->MaxDesiredSize.Y);
+    }
 
     return;
 }

@@ -291,6 +291,7 @@ void Jafg::LShader::LoadShader(const LEnginePath& VertexPath, const LEnginePath&
     if (!Success)
     {
         glGetShaderInfoLog(Fragment, 512, nullptr, InfoLog);
+
         panicMsgf( "Error compiling fragment shader.\n{}", InfoLog )
         return;
     }

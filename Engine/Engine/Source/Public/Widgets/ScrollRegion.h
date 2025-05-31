@@ -281,15 +281,18 @@ FORCEINLINE void WScrollRegion::SetScrollRegionBrushOnly(const LScrollRegionBrus
 
 FORCEINLINE LScrollRegionBrush WScrollRegion::GetBrush() const noexcept
 {
-    static_assert(sizeof(LRegionBrush) == 48, "LRegionBrush has changed. Please modify this function.");
+    static_assert(sizeof(LRegionBrush) == 64, "LRegionBrush has changed. Please modify this function.");
 
     LScrollRegionBrush Result;
 
     Result.Type = this->Super::GetBrush().Type;
     Result.Tint = this->Super::GetBrush().Tint;
-    Result.Color = this->Super::GetBrush().Color;
-    Result.BackgroundColor = this->Super::GetBrush().BackgroundColor;
     Result.Image = this->Super::GetBrush().Image;
+    Result.ImageTint = this->Super::GetBrush().ImageTint;
+    Result.ImageScale = this->Super::GetBrush().ImageScale;
+    Result.ImageBehavior = this->Super::GetBrush().ImageBehavior;
+    Result.ImageOobm = this->Super::GetBrush().ImageOobm;
+    Result.ImagePadding = this->Super::GetBrush().ImagePadding;
     Result.Radii = this->Super::GetBrush().Radii;
     Result.OutlineThickness = this->Super::GetBrush().OutlineThickness;
     Result.OutlineTint = this->Super::GetBrush().OutlineTint;

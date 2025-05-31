@@ -62,10 +62,9 @@ public:
 
     FORCEINLINE void SetType(const ERegionBrush::Type InType) { this->Brush.Type = InType; }
     FORCEINLINE void SetTint(const LColor& InTin) { this->Brush.Tint = InTin; }
-    FORCEINLINE void SetColor(const LColor& InColor) { this->Brush.Color = InColor; }
-    FORCEINLINE void SetBackgroundColor(const LColor& InBackgroundColor) { this->Brush.BackgroundColor = InBackgroundColor; }
     FORCEINLINE void SetTexture(const LTexture2* InTexture) { this->Brush.Image.SetTexture(InTexture); }
     FORCEINLINE void SetImage(const LImage& InImage) { this->Brush.Image = InImage; }
+    FORCEINLINE void SetImageTint(const LColor& InColor) { this->Brush.ImageTint = InColor; }
     FORCEINLINE void SetOutlineThickness(const f32 InOutlineThickness) { this->Brush.OutlineThickness = InOutlineThickness; }
     FORCEINLINE void SetOutlineRadii(const LVector4& InOutlineRadii) { this->Brush.Radii = InOutlineRadii; }
     FORCEINLINE void SetOutlineTint(const LColor& InOutlineTint) { this->Brush.OutlineTint = InOutlineTint; }

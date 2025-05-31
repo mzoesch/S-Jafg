@@ -91,7 +91,8 @@ Jafg::LVector2 Jafg::WOverlay::GetAnchoredTopLeftFromMostOuterForChild(const LVi
             this->GetAnchoredSize().X
             - this->GetPadding().GetDesiredSizeX()
             - InDirectChild->GetAnchoredSize().X
-        ),
+        )
+        + InDirectChild->GetLostAnchoredSize().X * 0.5f,
         this->GetPadding().GetTopOffset()
         + InDirectChild->GetAnchor().MinY *
         (
@@ -99,6 +100,7 @@ Jafg::LVector2 Jafg::WOverlay::GetAnchoredTopLeftFromMostOuterForChild(const LVi
             - this->GetPadding().GetDesiredSizeY()
             - InDirectChild->GetAnchoredSize().Y
         )
+        + InDirectChild->GetLostAnchoredSize().Y * 0.5f,
     };
 
     Out += this->GetAnchoredTopLeftFromMostOuter(Context);

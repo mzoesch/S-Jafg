@@ -26,7 +26,12 @@ void Jafg::WBox::Draw(LViewport& Context) const
                     this->GetAnchoredSize(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
                     this->GetBrush().Tint,
-                    this->GetBrush().Image
+                    this->GetBrush().Image,
+                    this->GetBrush().ImageTint,
+                    this->GetBrush().ImageScale,
+                    this->GetBrush().ImageBehavior,
+                    this->GetBrush().ImageOobm,
+                    this->GetBrush().ImagePadding
                 );
             }
             else
@@ -52,7 +57,12 @@ void Jafg::WBox::Draw(LViewport& Context) const
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
                     this->GetBrush().Tint,
                     this->GetBrush().Radii,
-                    this->GetBrush().Image
+                    this->GetBrush().Image,
+                    this->GetBrush().ImageTint,
+                    this->GetBrush().ImageScale,
+                    this->GetBrush().ImageBehavior,
+                    this->GetBrush().ImageOobm,
+                    this->GetBrush().ImagePadding
                 );
             }
             else
@@ -80,7 +90,12 @@ void Jafg::WBox::Draw(LViewport& Context) const
                     this->GetBrush().Tint,
                     this->GetBrush().OutlineThickness,
                     this->GetBrush().OutlineTint,
-                    this->GetBrush().Image
+                    this->GetBrush().Image,
+                    this->GetBrush().ImageTint,
+                    this->GetBrush().ImageScale,
+                    this->GetBrush().ImageBehavior,
+                    this->GetBrush().ImageOobm,
+                    this->GetBrush().ImagePadding
                 );
             }
             else
@@ -110,7 +125,12 @@ void Jafg::WBox::Draw(LViewport& Context) const
                     this->GetBrush().OutlineThickness,
                     this->GetBrush().OutlineTint,
                     this->GetBrush().Radii,
-                    this->GetBrush().Image
+                    this->GetBrush().Image,
+                    this->GetBrush().ImageTint,
+                    this->GetBrush().ImageScale,
+                    this->GetBrush().ImageBehavior,
+                    this->GetBrush().ImageOobm,
+                    this->GetBrush().ImagePadding
                 );
             }
             else

@@ -52,8 +52,13 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
                     Context,
                     this->GetAnchoredSize(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-                    this->GetBrush().Tint,
-                    this->GetBrush().Image
+                    this->Super::GetBrush().Tint,
+                    this->Super::GetBrush().Image,
+                    this->Super::GetBrush().ImageTint,
+                    this->Super::GetBrush().ImageScale,
+                    this->Super::GetBrush().ImageBehavior,
+                    this->Super::GetBrush().ImageOobm,
+                    this->Super::GetBrush().ImagePadding
                 );
             }
             else
@@ -63,7 +68,7 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
                     Context,
                     this->GetAnchoredSize(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-                    this->GetBrush().Tint
+                    this->Super::GetBrush().Tint
                 );
             }
         }
@@ -77,9 +82,14 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
                     Context,
                     this->GetAnchoredSize(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-                    this->GetBrush().Tint,
-                    this->GetBrush().Radii,
-                    this->GetBrush().Image
+                    this->Super::GetBrush().Tint,
+                    this->Super::GetBrush().Radii,
+                    this->Super::GetBrush().Image,
+                    this->Super::GetBrush().ImageTint,
+                    this->Super::GetBrush().ImageScale,
+                    this->Super::GetBrush().ImageBehavior,
+                    this->Super::GetBrush().ImageOobm,
+                    this->Super::GetBrush().ImagePadding
                 );
             }
             else
@@ -89,8 +99,8 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
                     Context,
                     this->GetAnchoredSize(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-                    this->GetBrush().Tint,
-                    this->GetBrush().Radii
+                    this->Super::GetBrush().Tint,
+                    this->Super::GetBrush().Radii
                 );
             }
         }
@@ -104,10 +114,15 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
                     Context,
                     this->GetAnchoredSize(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-                    this->GetBrush().Tint,
-                    this->GetBrush().OutlineThickness,
-                    this->GetBrush().OutlineTint,
-                    this->GetBrush().Image
+                    this->Super::GetBrush().Tint,
+                    this->Super::GetBrush().OutlineThickness,
+                    this->Super::GetBrush().OutlineTint,
+                    this->Super::GetBrush().Image,
+                    this->Super::GetBrush().ImageTint,
+                    this->Super::GetBrush().ImageScale,
+                    this->Super::GetBrush().ImageBehavior,
+                    this->Super::GetBrush().ImageOobm,
+                    this->Super::GetBrush().ImagePadding
                 );
             }
             else
@@ -117,9 +132,9 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
                     Context,
                     this->GetAnchoredSize(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-                    this->GetBrush().Tint,
-                    this->GetBrush().OutlineThickness,
-                    this->GetBrush().OutlineTint
+                    this->Super::GetBrush().Tint,
+                    this->Super::GetBrush().OutlineThickness,
+                    this->Super::GetBrush().OutlineTint
                 );
             }
         }
@@ -133,11 +148,16 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
                     Context,
                     this->GetAnchoredSize(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-                    this->GetBrush().Tint,
-                    this->GetBrush().OutlineThickness,
-                    this->GetBrush().OutlineTint,
-                    this->GetBrush().Radii,
-                    this->GetBrush().Image
+                    this->Super::GetBrush().Tint,
+                    this->Super::GetBrush().OutlineThickness,
+                    this->Super::GetBrush().OutlineTint,
+                    this->Super::GetBrush().Radii,
+                    this->Super::GetBrush().Image,
+                    this->Super::GetBrush().ImageTint,
+                    this->Super::GetBrush().ImageScale,
+                    this->Super::GetBrush().ImageBehavior,
+                    this->Super::GetBrush().ImageOobm,
+                    this->Super::GetBrush().ImagePadding
                 );
             }
             else
@@ -147,10 +167,10 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
                     Context,
                     this->GetAnchoredSize(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-                    this->GetBrush().Tint,
-                    this->GetBrush().OutlineThickness,
-                    this->GetBrush().OutlineTint,
-                    this->GetBrush().Radii
+                    this->Super::GetBrush().Tint,
+                    this->Super::GetBrush().OutlineThickness,
+                    this->Super::GetBrush().OutlineTint,
+                    this->Super::GetBrush().Radii
                 );
             }
         }

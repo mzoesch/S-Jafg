@@ -11,7 +11,24 @@ out vec4 FragColor;
 uniform int BoxTint;
 
 #if WITH_TEXTURE
+    // Texture sampler for the box texture. 
     uniform sampler2D TexSampler;
+    // The tint of the texture.
+    uniform int ImageTint;
+    // Texture size in px.
+    uniform vec2 TexSize;
+    // How much to scale the texture. 1 means no scaling.
+    uniform float TexScale;
+    // Whether to preserve the aspect ratio of the texture.
+    uniform bool bImageAspect;
+    // How the image should behave when its UVs are outside of their bounds.
+    uniform int ImageOobm;
+    // Padding in px.
+    uniform float TexPadding; 
+    
+    #define IMAGE_OOBM_WRAP         0
+    #define IMAGE_OOBM_CLAMP        1
+    #define IMAGE_OOBM_DISCARD      2
 #endif /* WITH_TEXTURE */
 
 #if WITH_BOX_SIZE
@@ -41,14 +58,14 @@ uniform int BoxTint;
     )
 
 #if WITH_TEXTURE
-    #define GET_COLOR_FROM_INT(color) texture(TexSampler, InFragUv) * GET_COLOR_FROM_INT_NO_TEXTURE(color)
+    #define GET_COLOR_FROM_INT(color) ImageChannels * GET_COLOR_FROM_INT_NO_TEXTURE(color)
 #else /* WITH_TEXTURE */
     #define GET_COLOR_FROM_INT(color) GET_COLOR_FROM_INT_NO_TEXTURE(color)
 #endif /* !WITH_TEXTURE */
 
 void main()
 {
-#if WITH_OUTLINE || WITH_RADII
+#if WITH_OUTLINE || WITH_RADII || WITH_TEXTURE
 
     float DistLeft   = (InFragUv.x - 0.0) * BoxSize.x;
     float DistTop    = (InFragUv.y - 0.0) * BoxSize.y;
@@ -56,6 +73,60 @@ void main()
     float DistBottom = (1.0 - InFragUv.y) * BoxSize.y;
 
 #endif /* WITH_OUTLINE || WITH_RADII */
+
+#if WITH_TEXTURE
+
+    vec2 ImageUv = InFragUv;
+
+    vec4 ImageChannels;
+    if (bImageAspect)
+    {
+        vec2 AvailableSize = BoxSize - TexPadding * 2.0;
+        float TexAspect = TexSize.x / TexSize.y;
+
+        vec2 FittedSize;
+        if ((AvailableSize.x / AvailableSize.y) > TexAspect) 
+        {
+            FittedSize.y = AvailableSize.y;
+            FittedSize.x = AvailableSize.y * TexAspect;
+        }
+        else 
+        {
+            FittedSize.x = AvailableSize.x;
+            FittedSize.y = AvailableSize.x / TexAspect;
+        }
+
+        FittedSize *= TexScale;
+
+        vec2 Offset = (BoxSize - FittedSize) * 0.5;
+        ImageUv = ((ImageUv * BoxSize) - Offset) / FittedSize;
+
+        if (ImageUv.x < 0.0 || ImageUv.x > 1.0 || ImageUv.y < 0.0 || ImageUv.y > 1.0)
+        {
+            if (ImageOobm == IMAGE_OOBM_WRAP)
+            {
+                ImageChannels = texture(TexSampler, fract(ImageUv)) * GET_COLOR_FROM_INT_NO_TEXTURE(ImageTint);
+            }
+            else if (ImageOobm == IMAGE_OOBM_CLAMP)
+            {
+                ImageChannels = texture(TexSampler, clamp(ImageUv, 0.0, 1.0)) * GET_COLOR_FROM_INT_NO_TEXTURE(ImageTint);
+            }
+            else if (ImageOobm == IMAGE_OOBM_DISCARD)
+            {
+                ImageChannels = vec4(1.0);
+            }
+        }
+        else
+        {
+            ImageChannels = texture(TexSampler, ImageUv) * GET_COLOR_FROM_INT_NO_TEXTURE(ImageTint);
+        }
+    }
+    else
+    {
+        ImageChannels = texture(TexSampler, ImageUv) * GET_COLOR_FROM_INT_NO_TEXTURE(ImageTint);
+    }
+
+#endif /* WITH_TEXTURE */
 
 #if WITH_OUTLINE
  
@@ -144,6 +215,22 @@ void main()
         } 
         else
         {
+        #if WITH_TEXTURE
+
+            if 
+            (
+                   DistLeft   < TexPadding
+                || DistTop    < TexPadding
+                || DistRight  < TexPadding
+                || DistBottom < TexPadding
+            )
+            {
+                FragColor = GET_COLOR_FROM_INT_NO_TEXTURE(BoxTint);
+            }
+            else
+
+        #endif /* WITH_TEXTURE */
+
             FragColor = GET_COLOR_FROM_INT(BoxTint);
         }
 
@@ -159,6 +246,20 @@ void main()
         {
             FragColor = GET_COLOR_FROM_INT_NO_TEXTURE(OutlineTint);
         }
+        #if WITH_TEXTURE
+
+            else if 
+            (
+                   DistLeft   < TexPadding
+                || DistTop    < TexPadding
+                || DistRight  < TexPadding
+                || DistBottom < TexPadding
+            )
+            {
+                FragColor = GET_COLOR_FROM_INT_NO_TEXTURE(BoxTint);
+            }
+
+        #endif /* WITH_TEXTURE */
         else
         {
             FragColor = GET_COLOR_FROM_INT(BoxTint);
@@ -211,6 +312,22 @@ void main()
         }
 
     #endif /* !WITH_RADII */
+
+    #if WITH_TEXTURE
+
+        if 
+        (
+               DistLeft   < TexPadding
+            || DistTop    < TexPadding
+            || DistRight  < TexPadding
+            || DistBottom < TexPadding
+        )
+        {
+            FragColor = GET_COLOR_FROM_INT_NO_TEXTURE(BoxTint);
+        }
+        else
+
+    #endif /* WITH_TEXTURE */
 
     FragColor = GET_COLOR_FROM_INT(BoxTint);
 

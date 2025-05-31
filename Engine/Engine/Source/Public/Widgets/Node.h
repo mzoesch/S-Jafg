@@ -19,7 +19,6 @@ class WParent;
 class WUserWidget;
 class LViewport;
 class LWidgetFactory;
-class LWidgetFactory;
 class WParentBase;
 template <typename TNode>
 class TWidgetFactory;
@@ -370,6 +369,7 @@ public:
     FORCEINLINE TFactoryRetTy& Anchor(const EAnchor::Type InAnchor) { this->This()->SetAnchor(InAnchor); return this->Self(); }
 
     FORCEINLINE TFactoryRetTy& MinDesiredSize(const LVector2& InSize) { this->This()->SetMinDesiredSize(InSize); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& MaxDesiredSize(const LVector2& InSize) { this->This()->SetMaxDesiredSize(InSize); return this->Self(); }
 
     FORCEINLINE TFactoryRetTy& Visibility(const EWidgetVisibility::Type InVisibility) { this->This()->SetVisibility(InVisibility); return this->Self(); }
 
@@ -605,21 +605,27 @@ public:
     //#
     void SetDesiredSize(const LVector2& InSize) const;
     //# Internal usage only. Do not use.
-    FORCEINLINE void SetDesiredSizeRaw(const LVector2& InSize) const { this->DesiredSize = InSize; }
+    FORCEINLINE void SetDesiredSizeRaw(const LVector2& InSize) const { this->DesiredSize = InSize; return; }
     FORCEINLINE const LVector2& GetDesiredSize() const { return this->DesiredSize; }
     FORCEINLINE const LVector2& GetDesiredSizeSmart() const { return this->TransformsWidgetLayout() ? this->DesiredSize : LVector2::ZeroVector; }
-    FORCEINLINE const LVector2& GetMinDesiredSize() const { return this->MinDesiredSize; }
     //# The min desired size. A widget will always be at least this size.
     FORCEINLINE void SetMinDesiredSize(const LVector2& InSize) { this->MinDesiredSize = InSize; return; }
+    FORCEINLINE const LVector2& GetMinDesiredSize() const { return this->MinDesiredSize; }
+    //# The max desired size. A widget will have at maximum this size. Zero mean unbound. This includes max size of anchored nodes.
+    FORCEINLINE void SetMaxDesiredSize(const LVector2& InSize) { this->MaxDesiredSize = InSize; return; }
+    FORCEINLINE const LVector2& GetMaxDesiredSize() const { return this->MaxDesiredSize; }
 
     //# Virtual update method for the anchored size. Automatically called. Do not call manually.
     virtual void UpdateAnchoredSize(const LViewport& Context) const;
     //# Virtual update method for the anchored size of a child. Automatically called. Do not call manually.
     virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const PURE_VIRTUAL()
-    FORCEINLINE void SetAnchoredSize(const LVector2& InSize) const { this->AnchoredSize = InSize; }
-    FORCEINLINE void SetAnchoredSize(LVector2&& InSize) const { this->AnchoredSize = std::move(InSize); }
-    FORCEINLINE auto GetAnchoredSize() const -> const LVector2& { return this->AnchoredSize; }
-    FORCEINLINE auto CopyAnchoredSize() const -> LVector2 { return this->AnchoredSize; }
+    void SetAnchoredSize(const LVector2& InSize) const;
+    void SetAnchoredSize(LVector2&& InSize) const;
+    FORCEINLINE const LVector2& GetAnchoredSize() const { return this->AnchoredSize; }
+    FORCEINLINE LVector2 CopyAnchoredSize() const { return this->AnchoredSize; }
+    //# The anchored size that was lost during #MaxDesiredSize clamp.
+    FORCEINLINE const LVector2& GetLostAnchoredSize() const { return this->LostAnchoredSize; }
+    FORCEINLINE LVector2 CopyLostAnchoredSize() const { return this->LostAnchoredSize; }
     //# @return The anchored top-left corner of the widget relative to the given context's top-left corner.
     virtual LVector2 GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const;
     LVector2 GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewport& Context) const;
@@ -699,9 +705,19 @@ private:
     LVector2 MinDesiredSize;
 
     //#
+    //# The maximal content area. Zero means unbound. This includes max size of anchored nodes.
+    //#
+    LVector2 MaxDesiredSize;
+
+    //#
     //# The anchored size of this widget.
     //#
     mutable LVector2 AnchoredSize;
+
+    //#
+    //# The anchored size that was lost during #MaxDesiredSize clamp.
+    //#
+    mutable LVector2 LostAnchoredSize;
 
     LAnchor Anchor { EAnchor::TopLeft };
 };

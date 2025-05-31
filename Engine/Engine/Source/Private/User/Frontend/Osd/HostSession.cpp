@@ -576,10 +576,13 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
         .Padding(10)
     [
         NewNode(WRegion).SaveTo(&Thumbnail)
-            .MinDesiredSize(64)
+            .MinDesiredSize({100,100})
             .Type(ERegionBrush::OutlineBox)
             .Tint(LColor::White)
             .OutlineTint(LColor::Black)
+            .ImageBehavior(EImageBehavior::Aspect)
+            .ImageOobm(EImageOobm::Discard)
+            .ImagePadding(2)
             .Texture
             (
                   this->Save.PreviewTexture.IsValid()
@@ -598,9 +601,16 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
                 .Brush(LTextBlockBrush::SubHeader())
             +
             NewNode(WTextBlock)
+                .Content(this->Save.Description)
+                .Brush(LTextBlockBrush::Body())
+            +
+            NewNode(WSpacer)
+                .Anchor(EAnchor::VFill)
+            +
+            NewNode(WTextBlock)
                 .Content(this->Save.Path)
                 .Brush(LTextBlockBrush::Body())
-                // .Color(LColor::Dark)
+                .Color(LColor::DarkerGray)
         ]
     ]
     FinishWidget(Region);
@@ -641,6 +651,7 @@ void Jafg::WHostSessionScreen_Old::Construct()
     WVRegion* Region;
     NewNode(WVRegion).SaveTo(&Region)
         .Anchor(EAnchor::Fill)
+        .MaxDesiredSize({1000, 0})
         .VSpace(10)
     [
         NewNode(WTextBlock)
@@ -921,7 +932,7 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
         LTexture2 Preview;
         Preview.LoadFromDisk(AsPath / "Thumbnail.png");
 
-        this->FetchedSaves.Emplace(std::move(AsPath), false, std::move(*DisplayName), std::move(Preview));
+        this->FetchedSaves.Emplace(std::move(AsPath), false, std::move(*DisplayName), "A description.", std::move(Preview));
 
         continue;
     }

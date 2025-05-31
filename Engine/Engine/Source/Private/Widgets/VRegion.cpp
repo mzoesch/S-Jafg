@@ -99,9 +99,11 @@ Jafg::LVector2 Jafg::WVRegion::GetAnchoredTopLeftFromMostOuterForChild(const LVi
             this->GetAnchoredSize().X
             - this->GetPadding().GetDesiredSizeX()
             - InDirectChild->GetAnchoredSize().X
-        ),
+        )
+        + InDirectChild->GetLostAnchoredSize().X * 0.5f,
         this->GetPadding().GetTopOffset()
         + Offset
+        + InDirectChild->GetLostAnchoredSize().Y * 0.5f
     };
 
     Out += this->GetAnchoredTopLeftFromMostOuter(Context);

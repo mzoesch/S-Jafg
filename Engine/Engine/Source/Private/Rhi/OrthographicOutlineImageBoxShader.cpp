@@ -4,6 +4,7 @@
 #include "System/EnginePath.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
+#include "Widgets/RegionForward.h"
 
 bool Jafg::LOrthographicOutlineImageBoxShader::Make(const LName InName)
 {
@@ -76,13 +77,18 @@ void Jafg::LOrthographicOutlineImageBoxShader::OnFree()
 
 void Jafg::LOrthographicOutlineImageBoxShader::Draw
 (
-    const LViewport& Context,
-    const LVector2&  Size,
-    const LVector2&  TopLeft,
-    const LColor&    Tint,
-    const f32        OutlineThickness,
-    const LColor&    OutlineTint,
-    const LImage&    Image
+    const LViewport&           Context,
+    const LVector2&            Size,
+    const LVector2&            TopLeft,
+    const LColor&              Tint,
+    const f32                  OutlineThickness,
+    const LColor&              OutlineTint,
+    const LImage&              Image,
+    const LColor&              ImageTint,
+    const f32                  ImageScale,
+    const EImageBehavior::Type ImageBehavior,
+    const EImageOobm::Type     ImageOobm,
+    const f32                  ImagePadding
 ) const
 {
     check( this->IsValid() )
@@ -93,12 +99,20 @@ void Jafg::LOrthographicOutlineImageBoxShader::Draw
         return;
     }
 
+    const LSize ImageSize = Image.GetTexture()->GetSize();
+
     this->Program.Use();
     this->Program.SetFloatUniform("OrthoZDepth", Context.GetFrameOrthoZLayerDepth());
     this->Program.SetVec2Uniform("BoxSize", Size);
     this->Program.SetColorUniform("BoxTint", Tint);
     this->Program.SetColorUniform("OutlineTint", OutlineTint);
     this->Program.SetFloatUniform("OutlineThickness", OutlineThickness);
+    this->Program.SetVec2Uniform("TexSize", {static_cast<f32>(ImageSize.X), static_cast<f32>(ImageSize.Y)});
+    this->Program.SetFloatUniform("TexScale", ImageScale);
+    this->Program.SetColorUniform("ImageTint", ImageTint);
+    this->Program.SetBoolUniform("bImageAspect", ImageBehavior == EImageBehavior::Aspect);
+    this->Program.SetIntUniform("ImageOobm", ImageOobm);
+    this->Program.SetFloatUniform("TexPadding", ImagePadding);
 
     const f32 Scale = Context.GetScaleFactor();
     f32 Vertices[]

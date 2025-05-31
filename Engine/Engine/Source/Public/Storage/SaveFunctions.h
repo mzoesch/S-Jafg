@@ -3,6 +3,7 @@
 #pragma once
 
 #include "System/Path.h"
+#include "Widgets/RegionForward.h"
 
 namespace Jafg::Saves
 {
@@ -10,6 +11,8 @@ namespace Jafg::Saves
 struct LMinimalMetaData
 {
     LString DisplayName;
+    LString Description;
+    LRegionBrush Brush;
 };
 
 //#
