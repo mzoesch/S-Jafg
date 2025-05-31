@@ -18,6 +18,10 @@
 #include "Widgets/HRegion.h"
 #include "Widgets/Spacer.h"
 #include "Widgets/Blueprint/CommonMenuTabBar.h"
+#include "System/TextureSubsystem.h"
+
+#define BACKGROUND_COLOR_HOST {40, 39, 49}
+#define DEFAULT_SESSION_NAME "My Session"
 
 namespace
 {
@@ -26,6 +30,181 @@ struct LHostSessionScreenData final : public Jafg::LWidgetNodeData
 {
     Jafg::WHostSessionScreen* Screen { nullptr };
 };
+
+namespace EBuildReason
+{
+
+enum Type
+{
+    Default,
+    Edit,
+};
+
+} /* ~Namespace EBuildReason */
+
+Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildGeneral
+(
+    const Jafg::JObjectBase* Context,
+    Jafg::LString&& Header,
+    const EBuildReason::Type Reason,
+    Jafg::WEditableTextBlock** SessionName = nullptr,
+    Jafg::WTextBlock** SessionPath = nullptr
+)
+{
+    using namespace Jafg;
+
+    return &NewNodeCtx(Context, WVRegion)
+        .Anchor(EAnchor::Fill)
+        .VSpace(5)
+    [
+        NewNodeCtx(Context, WTextBlock)
+            .Anchor(EAnchor::HCenter)
+            .Content(std::move(Header))
+            .Brush(LTextBlockBrush::Header())
+        +
+        NewNodeCtx(Context, WTextBlock)
+            .Anchor(EAnchor::HLeft)
+            .Content("Name")
+            .Brush(LTextBlockBrush::Header())
+        +
+        NewNodeCtx(Context, WEditableTextBlock).SaveTo(SessionName)
+            .Anchor(EAnchor::HFill)
+            .Type(ERegionBrush::OutlineBox)
+            .OutlineThickness(1)
+            .OutlineTint(LColor::DarkGray)
+            .TextScale(LTextBlockBrush::SubHeader().Scale)
+            .PlaceholderText(DEFAULT_SESSION_NAME)
+        +
+        NewNodeCtx(Context, WTextBlock).SaveTo(SessionPath)
+            .Anchor(EAnchor::HLeft)
+            .Content("")
+            .Brush(LTextBlockBrush::SubHeader())
+            .Color(LColor::Gray)
+        +
+        NewNodeCtx(Context, WSpacer).Height(20.0f)
+        +
+        NewNodeCtx(Context, WHRegion)
+            .Anchor(EAnchor::HFill)
+        [
+            NewNodeCtx(Context, WTextBlock)
+                .Content("Templates")
+                .Brush(LTextBlockBrush::Body())
+        ]
+        +
+        NewNodeCtx(Context, WSpacer).Height(20.0f)
+        +
+        NewNodeCtx(Context, WTextBlock)
+            .Anchor(EAnchor::HLeft)
+            .Content("Player")
+            .Brush(LTextBlockBrush::SubHeader())
+        +
+        NewNodeCtx(Context, WHRegion)
+            .Anchor(EAnchor::HFill)
+        [
+            NewNodeCtx(Context, WTextBlock)
+                .Content("Perma Death")
+                .Brush(LTextBlockBrush::Body())
+        ]
+        +
+        NewNodeCtx(Context, WSpacer).Height(20.0f)
+        +
+        NewNodeCtx(Context, WTextBlock)
+            .Anchor(EAnchor::HLeft)
+            .Content("Enemy")
+            .Brush(LTextBlockBrush::SubHeader())
+        +
+        NewNodeCtx(Context, WHRegion)
+            .Anchor(EAnchor::HFill)
+        [
+            NewNodeCtx(Context, WTextBlock)
+                .Content("No enemies")
+                .Brush(LTextBlockBrush::Body())
+        ]
+        +
+        NewNodeCtx(Context, WHRegion)
+            .Anchor(EAnchor::HFill)
+        [
+            NewNodeCtx(Context, WTextBlock)
+                .Content("Max Temperament")
+                .Brush(LTextBlockBrush::Body())
+            +
+            NewNodeCtx(Context, WTextBlock)
+                .Content("Passive")
+                .Brush(LTextBlockBrush::Body())
+            +
+            NewNodeCtx(Context, WTextBlock)
+                .Content("Docile")
+                .Brush(LTextBlockBrush::Body())
+            +
+            NewNodeCtx(Context, WTextBlock)
+                .Content("Default")
+                .Brush(LTextBlockBrush::Body())
+        ]
+    ]
+    ;
+}
+
+Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildMultiplayer
+(
+    const Jafg::JObjectBase* Context,
+    Jafg::LString&&          Header,
+    const EBuildReason::Type Reason,
+    Jafg::WTextBlock**       OutHeader = nullptr
+)
+{
+    using namespace Jafg;
+
+    return &NewNodeCtx(Context, WVRegion)
+        .Anchor(EAnchor::Fill)
+        .VSpace(5)
+    [
+        NewNodeCtx(Context, WTextBlock).SaveTo(OutHeader)
+            .Anchor(EAnchor::HCenter)
+            .Content(std::move(Header))
+            .Brush(LTextBlockBrush::Header())
+        +
+        NewNodeCtx(Context, WHRegion)
+            .Anchor(EAnchor::HFill)
+        [
+            NewNodeCtx(Context, WTextBlock)
+                .Content("Multiplayer")
+                .Brush(LTextBlockBrush::Body())
+        ]
+        +
+        NewNodeCtx(Context, WHRegion)
+            .Anchor(EAnchor::HFill)
+        [
+            NewNodeCtx(Context, WTextBlock)
+                .Content("Open To Lan")
+                .Brush(LTextBlockBrush::Body())
+        ]
+        +
+        NewNodeCtx(Context, WHRegion)
+            .Anchor(EAnchor::HFill)
+        [
+            NewNodeCtx(Context, WTextBlock)
+                .Content("Sync with Steam")
+                .Brush(LTextBlockBrush::Body())
+        ]
+        +
+        NewNodeCtx(Context, WHRegion)
+            .Anchor(EAnchor::HFill)
+        [
+            NewNodeCtx(Context, WTextBlock)
+                .Content("Friends Only")
+                .Brush(LTextBlockBrush::Body())
+        ]
+        +
+        NewNodeCtx(Context, WHRegion)
+            .Anchor(EAnchor::HFill)
+        [
+            NewNodeCtx(Context, WTextBlock)
+                .Content("Invite Only")
+                .Brush(LTextBlockBrush::Body())
+        ]
+    ]
+    ;
+}
 
 } /* ~Namespace <Anonymous> */
 
@@ -41,6 +220,10 @@ void Jafg::WHostSessionScreen::Construct()
     DataNew.DerivedClass = WHostSessionScreen_New::StaticClass()->GetName();
     DataNew.Screen = this;
 
+    LHostSessionScreenData DataOldHost;
+    DataOldHost.DerivedClass = WHostSessionScreen_Old_Host::StaticClass()->GetName();
+    DataOldHost.Screen = this;
+
     MakeRootNode(WSwitcher).SaveTo(&this->Switcher)
         .Anchor(EAnchor::Fill)
     [
@@ -49,10 +232,37 @@ void Jafg::WHostSessionScreen::Construct()
         +
         NewNode(WHostSessionScreen_New).SaveTo(&this->NewScreen)
             .Data(&DataNew)
+        +
+        NewNode(WHostSessionScreen_Old_Host).SaveTo(&this->OldScreenHost)
+            .Data(&DataOldHost)
     ]
     FinishWidgetStyling()
 
     this->Switcher->SetActiveWidget(this->OldScreen);
+
+    return;
+}
+
+void Jafg::WHostSessionScreen::OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility)
+{
+    Super::OnVisibilityChanged(InOldVisibility, InNewVisibility);
+
+    if (EWidgetVisibility::IsDrawn(InNewVisibility))
+    {
+        if (this->OldScreen && this->OldScreenHost && (this->OldScreenHost->IsCachedSaveValid() == false))
+        {
+            this->OldScreen->HighlightNoSave(true);
+        }
+
+        if (this->Switcher)
+        {
+            if (this->Switcher->GetActiveNode() == this->OldScreenHost)
+            {
+                this->OldScreenHost->Reset();
+                this->Switcher->SetActiveWidget(this->OldScreen);
+            }
+        }
+    }
 
     return;
 }
@@ -77,6 +287,16 @@ void Jafg::WHostSessionScreen::ShowNewScreen()
     return;
 }
 
+void Jafg::WHostSessionScreen::ShowOldScreenHost()
+{
+    check( this->Switcher )
+    check( this->OldScreenHost )
+
+    this->Switcher->SetActiveWidget(this->OldScreenHost);
+
+    return;
+}
+
 Jafg::WHostSessionScreen_New::WHostSessionScreen_New(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
     this->SetAnchor(EAnchor::Fill);
@@ -86,7 +306,7 @@ Jafg::WHostSessionScreen_New::WHostSessionScreen_New(const LObjectInitializer& O
 void Jafg::WHostSessionScreen_New::Construct()
 {
     this->SetType(ERegionBrush::Box);
-    this->SetTint({40, 39, 49});
+    this->SetTint(BACKGROUND_COLOR_HOST);
 
     NewNode(WCommonMenuTabBar).SaveTo(&this->InternalTabBar)
         .DisallowNone()
@@ -153,143 +373,111 @@ void Jafg::WHostSessionScreen_New::OnVisibilityChanged(const EWidgetVisibility::
     return;
 }
 
+Jafg::TWidgetFactoryHRegion<Jafg::WHRegion>* Jafg::WHostSessionScreen_New::AddMenuButtons()
+{
+    return &NewNode(WHRegion)
+        .Anchor(EAnchor::HFill)
+        .HSpace(15)
+    [
+        NewNode(WTextButton)
+            .Content("Back")
+            .OnPrimaryRelease([this](WButton* Self, const LKeyEvent& InKeyEvent) -> void
+            {
+                this->Owner->ShowOldScreen();
+                return;
+            })
+        +
+        NewNode(WSpacer)
+            .Anchor(EAnchor::HFill)
+        +
+        NewNode(WTextButton)
+            .Content("Host")
+            .OnPrimaryRelease([this](WButton* Self, const LKeyEvent& InKeyEvent) -> void
+            {
+                LOG_VERBOSE(LogWidgets, "Trying to host from new save.")
+
+                if (this->GetOuter()->IsWorld() == false)
+                {
+                    LOG_ERROR(LogWidgets, "Cannot host, because outer is not a world.")
+                    return;
+                }
+
+                LString Name { DEFAULT_SESSION_NAME };
+                if (this->SessionName && this->SessionName->GetContent().IsEmpty() == false)
+                {
+                    Name = this->SessionName->GetContent();
+                }
+
+                const Saves::LMinimalMetaData Meta
+                {
+                    Name
+                };
+
+                LString Error;
+                const LPath Path = Finder::GetSavesDir() / Name.ToPtr();
+                if (Saves::CreateNewSave(Path, Meta, &Error) == false)
+                {
+                    LOG_ERROR(LogWidgets, "Failed to create new save entry. Reason: [{}].", Error)
+                    return;
+                }
+
+                this->GetEngine()->Browse
+                (
+                    static_cast<LWorld*>(this->GetOuter()),
+                    LString::SprintF("{}?{}", Name_LevelMyWorld.ToString(), Path)
+                );
+
+                return;
+            })
+    ]
+    ;
+}
+
 void Jafg::WHostSessionScreen_New::OnLoad_General(WTabBar* TabBar, WNode* Button, WNode* Panel)
 {
     WVRegion* Region = DynamicCast<WVRegion>(Panel);
     jassert( Region )
 
+    check( Region->GetChildren().IsEmpty() )
+
     Region->SetAnchor(EAnchor::Fill);
     Region->SetPadding({25.0f});
+
+    WTextBlock* SessionPath;
 
     Region->GetFactory<WVRegion>()
     [
         NewNode(WScrollRegion)
             .Anchor(EAnchor::Fill)
         [
-            NewNode(WVRegion)
-                .Anchor(EAnchor::Fill)
-                .VSpace(5)
-            [
-                NewNode(WTextBlock)
-                    .Anchor(EAnchor::HCenter)
-                    .Content("Host Session")
-                    .Brush(LTextBlockBrush::Header())
-                +
-                NewNode(WTextBlock)
-                    .Anchor(EAnchor::HLeft)
-                    .Content("Name")
-                    .Brush(LTextBlockBrush::Header())
-                +
-                NewNode(WEditableTextBlock)
-                    .Anchor(EAnchor::HFill)
-                    .MinDesiredSize({45,0})
-                    .TextScale(0.5f)
-                    .SetPadding({ 5.0f, 4.5f })
-                    .Tint({0, 0, 0, 164 })
-                    .TextColor(LColor::White)
-                +
-                NewNode(WTextBlock)
-                    .Anchor(EAnchor::HLeft)
-                    .Content("Save path")
-                    .Brush(LTextBlockBrush::SubHeader())
-                +
-                NewNode(WSpacer).Height(20.0f)
-                +
-                NewNode(WHRegion)
-                    .Anchor(EAnchor::HFill)
-                [
-                    NewNode(WTextBlock)
-                        .Content("Templates")
-                        .Brush(LTextBlockBrush::Body())
-                ]
-                +
-                NewNode(WSpacer).Height(20.0f)
-                +
-                NewNode(WTextBlock)
-                    .Anchor(EAnchor::HLeft)
-                    .Content("Player")
-                    .Brush(LTextBlockBrush::SubHeader())
-                +
-                NewNode(WHRegion)
-                    .Anchor(EAnchor::HFill)
-                [
-                    NewNode(WTextBlock)
-                        .Content("Perma Death")
-                        .Brush(LTextBlockBrush::Body())
-                ]
-                +
-                NewNode(WSpacer).Height(20.0f)
-                +
-                NewNode(WTextBlock)
-                    .Anchor(EAnchor::HLeft)
-                    .Content("Enemy")
-                    .Brush(LTextBlockBrush::SubHeader())
-                +
-                NewNode(WHRegion)
-                    .Anchor(EAnchor::HFill)
-                [
-                    NewNode(WTextBlock)
-                        .Content("No enemies")
-                        .Brush(LTextBlockBrush::Body())
-                ]
-                +
-                NewNode(WHRegion)
-                    .Anchor(EAnchor::HFill)
-                [
-                    NewNode(WTextBlock)
-                        .Content("Max Temperament")
-                        .Brush(LTextBlockBrush::Body())
-                    +
-                    NewNode(WTextBlock)
-                        .Content("Passive")
-                        .Brush(LTextBlockBrush::Body())
-                    +
-                    NewNode(WTextBlock)
-                        .Content("Docile")
-                        .Brush(LTextBlockBrush::Body())
-                    +
-                    NewNode(WTextBlock)
-                        .Content("Default")
-                        .Brush(LTextBlockBrush::Body())
-                ]
-            ]
+            _BuildGeneral(this, "Host New Session", EBuildReason::Default, &this->SessionName, &SessionPath)
         ]
         +
-        NewNode(WHRegion)
-        .Anchor(EAnchor::HFill)
-        .HSpace(15)
-         [
-            NewNode(WTextButton)
-                .Content("Back")
-                .OnPrimaryRelease([this](WButton* Self, const LKeyEvent& InKeyEvent) -> void
-                {
-                    this->Owner->ShowOldScreen();
-                    return;
-                })
-            +
-            NewNode(WSpacer)
-                .Anchor(EAnchor::HFill)
-            +
-            NewNode(WTextButton)
-                .Content("Host")
-                .OnPrimaryRelease([this](WButton* Self, const LKeyEvent& InKeyEvent) -> void
-                {
-                    if (this->GetOuter()->IsWorld())
-                    {
-                        this->GetEngine()->Browse(static_cast<LWorld*>(this->GetOuter()), Name_LevelMyWorld.ToString());
-                    }
-                    else
-                    {
-                        LOG_ERROR(LogWidgets, "Cannot host, because outer is not a world.")
-                    }
-                    return;
-                })
-        ]
-    ];
+        this->AddMenuButtons()
+    ]
+    ;
 
-    for (LWidgetSlot* Child: Region->GetChildren())
+    Region->MakeChildrenFinal();
+
+    if (this->SessionName)
     {
-        MakeDeferredWidgetNodeFinal(Child->Content);
+        SessionPath->SetContent(LString::SprintF("Path: {}/{}", Finder::GetSavesDir(), DEFAULT_SESSION_NAME));
+        this->SessionName->OnContentChanged.BindStrong([this, SessionPath](const LString& NewContent) -> void
+        {
+            if (IsValidFast(this->GetOuter(), SessionPath))
+            {
+                if (NewContent.IsEmpty())
+                {
+                    SessionPath->SetContent(LString::SprintF("Path: {}/{}", Finder::GetSavesDir(), DEFAULT_SESSION_NAME));
+                }
+                else
+                {
+                    SessionPath->SetContent(LString::SprintF("Path: {}/{}", Finder::GetSavesDir(), NewContent));
+                }
+            }
+
+            return;
+        });
     }
 
     return;
@@ -300,8 +488,24 @@ void Jafg::WHostSessionScreen_New::OnLoad_Multiplayer(WTabBar* TabBar, WNode* Bu
     WVRegion* Region = DynamicCast<WVRegion>(Panel);
     jassert( Region )
 
+    check( Region->GetChildren().IsEmpty() )
+
     Region->SetAnchor(EAnchor::Fill);
-    Region->SetTint({40, 39, 49});
+    Region->SetPadding(25.0f);
+
+    Region->GetFactory<WVRegion>()
+    [
+        NewNode(WScrollRegion)
+            .Anchor(EAnchor::Fill)
+        [
+            _BuildMultiplayer(this, "Host New Session", EBuildReason::Default)
+        ]
+        +
+        this->AddMenuButtons()
+    ]
+    ;
+
+    Region->MakeChildrenFinal();
 
     return;
 }
@@ -312,7 +516,7 @@ void Jafg::WHostSessionScreen_New::OnLoad_WorldGeneration(WTabBar* TabBar, WNode
     jassert( Region )
 
     Region->SetAnchor(EAnchor::Fill);
-    Region->SetTint({40, 39, 49});
+    Region->SetTint(BACKGROUND_COLOR_HOST);
 
     return;
 }
@@ -323,7 +527,7 @@ void Jafg::WHostSessionScreen_New::OnLoad_Policies(WTabBar* TabBar, WNode* Butto
     jassert( Region )
 
     Region->SetAnchor(EAnchor::Fill);
-    Region->SetTint({40, 39, 49});
+    Region->SetTint(BACKGROUND_COLOR_HOST);
 
     return;
 }
@@ -334,7 +538,7 @@ void Jafg::WHostSessionScreen_New::OnLoad_Advanced(WTabBar* TabBar, WNode* Butto
     jassert( Region )
 
     Region->SetAnchor(EAnchor::Fill);
-    Region->SetTint({40, 39, 49});
+    Region->SetTint(BACKGROUND_COLOR_HOST);
 
     return;
 }
@@ -347,6 +551,8 @@ Jafg::WHostSessionScreen_Old_Save::WHostSessionScreen_Old_Save(const Jafg::LObje
 
 void Jafg::WHostSessionScreen_Old_Save::Reload()
 {
+    this->OptionalHolder.reset();
+
     if (this->IsSaveValid() == false)
     {
         LOG_WARNING(LogWidgets, "Could not reload save widget because the stored save is invalid.")
@@ -355,18 +561,34 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
 
     this->RemoveChildren();
 
-    WRegion* Thumbnail;
+    if (this->Save.PreviewTexture.IsValid() == false)
+    {
+        this->OptionalHolder = GetDefault<JTextureSubsystem>()->GetTexture
+        ({
+            EEnginePaths::Interface, "NoImage.png"
+        });
+    }
 
+    WRegion* Thumbnail;
     WHRegion* Region;
     NewNode(WHRegion).SaveTo(&Region)
         .Anchor(EAnchor::Fill)
-        .Padding({10})
+        .Padding(10)
     [
         NewNode(WRegion).SaveTo(&Thumbnail)
-            .MinDesiredSize({64})
-            .Type(ERegionBrush::Box)
+            .MinDesiredSize(64)
+            .Type(ERegionBrush::OutlineBox)
             .Tint(LColor::White)
-            .Texture(this->Save.PreviewTexture.IsValid() ? &this->Save.PreviewTexture : nullptr)
+            .OutlineTint(LColor::Black)
+            .Texture
+            (
+                  this->Save.PreviewTexture.IsValid()
+                ? &this->Save.PreviewTexture
+                : GetDefault<JTextureSubsystem>()->GetTexture
+                    ({
+                        EEnginePaths::Interface, "NoImage.png"
+                    }).get()
+            )
         +
         NewNode(WVRegion)
             .Anchor(EAnchor::Fill)
@@ -388,6 +610,22 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
     return;
 }
 
+void Jafg::WHostSessionScreen_Old_Save::OnPrimaryRelease()
+{
+    Super::OnPrimaryRelease();
+
+    if (this->Owner)
+    {
+        this->Owner->HighlightSave(*this);
+    }
+    else
+    {
+        LOG_ERROR(LogWidgets, "Owner is invalid.")
+    }
+
+    return;
+}
+
 Jafg::WHostSessionScreen_Old::WHostSessionScreen_Old(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
     this->SetAnchor(EAnchor::Fill);
@@ -398,7 +636,7 @@ void Jafg::WHostSessionScreen_Old::Construct()
 {
     this->SetPadding(25);
     this->SetType(ERegionBrush::Box);
-    this->SetTint({40, 39, 49});
+    this->SetTint(BACKGROUND_COLOR_HOST);
 
     WVRegion* Region;
     NewNode(WVRegion).SaveTo(&Region)
@@ -441,6 +679,28 @@ void Jafg::WHostSessionScreen_Old::Construct()
             NewNode(WTextButton).SaveTo(&this->HostButton)
                 .Content("Host From Selected")
                 .Disabled()
+                .OnPrimaryRelease([this](WButton* Self, const LKeyEvent& InKeyEvent) -> void
+                {
+                    check( this->Owner )
+                    check( this->SelectedSaveIndex != INDEX_NONE )
+                    this->Owner->ShowOldScreenHost();
+
+                    if
+                    (
+                        const WHostSessionScreen_Old_Save* Save = DynamicCast<WHostSessionScreen_Old_Save>(this->SavesRegion->GetChildren()[this->SelectedSaveIndex]->Content);
+                        Save
+                    )
+                    {
+                        this->Owner->GetOldScreenHost()->SetSave(Save->GetSave());
+                        this->Owner->GetOldScreenHost()->UpdateToCachedSave();
+                    }
+                    else
+                    {
+                        LOG_ERROR(LogWidgets, "Failed to cast child to save widget.")
+                    }
+
+                    return;
+                })
             +
             NewNode(WTextButton)
                 .Content("Host From New")
@@ -480,20 +740,7 @@ void Jafg::WHostSessionScreen_Old::RefetchSaves()
 {
     check( this->SavesRegion )
     this->SavesRegion->RemoveChildren();
-    this->SelectedSaveIndex = -1;
-
-    if (this->DeleteButton)
-    {
-        this->DeleteButton->SetEnabled(false);
-    }
-    if (this->EditButton)
-    {
-        this->EditButton->SetEnabled(false);
-    }
-    if (this->HostButton)
-    {
-        this->HostButton->SetEnabled(false);
-    }
+    this->HighlightNoSave(true);
 
     this->RefetchSavesImpl();
 
@@ -532,6 +779,104 @@ void Jafg::WHostSessionScreen_Old::RefetchSaves()
     return;
 }
 
+void Jafg::WHostSessionScreen_Old::HighlightSave(WHostSessionScreen_Old_Save& Who)
+{
+    check( this->SavesRegion )
+
+    if (this->SelectedSaveIndex != INDEX_NONE)
+    {
+        if
+        (
+            WHostSessionScreen_Old_Save* Save = DynamicCast<WHostSessionScreen_Old_Save>(this->SavesRegion->GetChildren()[this->SelectedSaveIndex]->Content);
+            Save
+        )
+        {
+            Save->SetBrush(Save->GetNormalBrush());
+            Save->SetLetUiReactToEvents(true);
+        }
+        else
+        {
+            LOG_ERROR(LogWidgets, "Failed to cast child to save widget.")
+        }
+    }
+
+    const WHostSessionScreen_Old_Save* WhoPtr = &Who;
+    if (const i32 Idx = this->SavesRegion->GetChildren().FindByPredicate([WhoPtr](const LWidgetSlot* Slot) -> bool
+    {
+        return Slot->Content == WhoPtr;
+    }); Idx != INDEX_NONE)
+    {
+        this->SelectedSaveIndex = Idx;
+        if (this->DeleteButton)
+        {
+            this->DeleteButton->SetEnabled(true);
+        }
+        if (this->EditButton)
+        {
+            this->EditButton->SetEnabled(true);
+        }
+        if (this->HostButton)
+        {
+            this->HostButton->SetEnabled(true);
+        }
+
+        Who.SetBrush(Who.GetPressBrush());
+        Who.SetLetUiReactToEvents(false);
+    }
+    else
+    {
+        this->SelectedSaveIndex = INDEX_NONE;
+        LOG_ERROR(LogWidgets, "Failed to find fetched save [{}].", Who.GetSave().Path)
+    }
+
+    return;
+}
+
+void Jafg::WHostSessionScreen_Old::HighlightNoSave(const bool bScrollUp /* = false */)
+{
+    if (this->SelectedSaveIndex != INDEX_NONE)
+    {
+        if
+        (
+            WHostSessionScreen_Old_Save* Save = DynamicCast<WHostSessionScreen_Old_Save>(this->SavesRegion->GetChildren()[this->SelectedSaveIndex]->Content);
+            Save
+        )
+        {
+            Save->SetBrush(Save->GetNormalBrush());
+            Save->SetLetUiReactToEvents(true);
+        }
+        else
+        {
+            LOG_ERROR(LogWidgets, "Failed to cast child to save widget.")
+        }
+    }
+
+    this->SelectedSaveIndex = INDEX_NONE;
+
+    if (this->DeleteButton)
+    {
+        this->DeleteButton->SetEnabled(false);
+    }
+    if (this->EditButton)
+    {
+        this->EditButton->SetEnabled(false);
+    }
+    if (this->HostButton)
+    {
+        this->HostButton->SetEnabled(false);
+    }
+
+    if (bScrollUp)
+    {
+        if (this->SavesRegionContainer)
+        {
+            this->SavesRegionContainer->ApplyVScroll(WScrollRegion::MaxScrollUp);
+        }
+    }
+
+    return;
+}
+
 void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
 {
     this->FetchedSaves.Reset(this->FetchedSaves.GetSize());
@@ -566,7 +911,7 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
         LPath AsPath = std::move(Candidat);
         AsPath.PopSubPath();
 
-        TOptional<LString> DisplayName = Saves::GetDisplayName(AsPath / "sqlite3.db");
+        TOptional<LString> DisplayName = Saves::GetDisplayName(AsPath);
         if (DisplayName.IsValid() == false)
         {
             LOG_ERROR(LogStorage, "Found corrupt save at [{}].", AsPath)
@@ -574,7 +919,6 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
         }
 
         LTexture2 Preview;
-        // Preview.LoadFromDisk("/home/mzoesch/EDev/S-Jafg/Content/Textures/Voxels/Grass_Flora.png");
         Preview.LoadFromDisk(AsPath / "Thumbnail.png");
 
         this->FetchedSaves.Emplace(std::move(AsPath), false, std::move(*DisplayName), std::move(Preview));
@@ -589,3 +933,114 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
 
     return;
 }
+
+Jafg::WHostSessionScreen_Old_Host::WHostSessionScreen_Old_Host(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+    this->SetAnchor(EAnchor::Fill);
+    return;
+}
+
+void Jafg::WHostSessionScreen_Old_Host::Construct()
+{
+    this->SetPadding(25.0f);
+    this->SetType(ERegionBrush::Box);
+    this->SetTint(BACKGROUND_COLOR_HOST);
+
+    WVRegion* Region;
+    NewNode(WVRegion).SaveTo(&Region)
+        .Anchor(EAnchor::Fill)
+        .VSpace(10)
+    [
+        NewNode(WScrollRegion)
+            .Anchor(EAnchor::Fill)
+        [
+            _BuildMultiplayer(this, "", EBuildReason::Edit, &this->Header)
+        ]
+        +
+        this->AddMenuButtons()
+    ]
+    ;
+
+    this->AddChild(Region);
+
+    Super::Construct();
+
+    if (this->IsCachedSaveValid())
+    {
+        this->UpdateToCachedSave();
+    }
+
+    return;
+}
+
+bool Jafg::WHostSessionScreen_Old_Host::AddData(const LWidgetNodeData* InData)
+{
+    const bool bSuper = Super::AddData(InData);
+    if (InData->DerivedClass != WHostSessionScreen_Old_Host::StaticClass()->GetName())
+    {
+        return bSuper;
+    }
+
+    const LHostSessionScreenData* Data = static_cast<const LHostSessionScreenData*>(InData);
+    this->Owner = Data->Screen;
+    check( this->Owner )
+
+    return true;
+}
+
+void Jafg::WHostSessionScreen_Old_Host::UpdateToCachedSave()
+{
+    check( this->IsCachedSaveValid() )
+
+    check( this->Header )
+    this->Header->SetContent(LString::SprintF("Hosting \"{}\"", this->Save->DisplayName));
+
+    return;
+}
+
+Jafg::TWidgetFactoryHRegion<Jafg::WHRegion>* Jafg::WHostSessionScreen_Old_Host::AddMenuButtons()
+{
+    return &NewNode(WHRegion)
+        .Anchor(EAnchor::HFill)
+        .HSpace(15)
+    [
+        NewNode(WTextButton)
+            .Content("Back")
+            .OnPrimaryRelease([this](WButton* Self, const LKeyEvent& InKeyEvent) -> void
+            {
+                this->Reset();
+                this->Owner->ShowOldScreen();
+                return;
+            })
+        +
+        NewNode(WSpacer)
+            .Anchor(EAnchor::HFill)
+        +
+        NewNode(WTextButton)
+            .Content("Host")
+            .OnPrimaryRelease([this](WButton* Self, const LKeyEvent& InKeyEvent) -> void
+            {
+                if (this->IsCachedSaveValid() == false)
+                {
+                    LOG_ERROR(LogWidgets, "Cannot host, because cached save is not valid.")
+                    return;
+                }
+
+                if (this->GetOuter()->IsWorld())
+                {
+                    LOG_VERBOSE(LogWidgets, "Forwarding host request for [{}].", this->Save->Path)
+                    this->GetEngine()->Browse(static_cast<LWorld*>(this->GetOuter()), Name_LevelMyWorld.ToString());
+                }
+                else
+                {
+                    LOG_ERROR(LogWidgets, "Cannot host, because outer is not a world.")
+                }
+
+                return;
+            })
+    ]
+    ;
+}
+
+#undef BACKGROUND_COLOR_HOST
+#undef DEFAULT_SESSION_NAME

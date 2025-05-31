@@ -24,6 +24,9 @@ enum Type : u8
     //# Content/Textures/Voxels
     Voxels,
 
+    //# Content/Textures/Interface
+    Interface,
+
     //# Content/Textures/Blends
     Blends,
 
@@ -43,6 +46,7 @@ inline LString LexToString(const EEnginePaths::Type InType)
     case EEnginePaths::CustomModule: { return ""; }
     case EEnginePaths::CustomEngine: { return ""; }
     case EEnginePaths::Voxels:       { return "Content/Textures/Voxels"; }
+    case EEnginePaths::Interface:    { return "Content/Textures/Interface"; }
     case EEnginePaths::Blends:       { return "Content/Textures/Blends"; }
 #if PLATFORM_WASM
     case EEnginePaths::Shaders:      { return "Content/Shaders/Gles3"; }

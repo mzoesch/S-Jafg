@@ -20,6 +20,7 @@ public:
 
     FORCEINLINE TFactoryRetTy& AddChild(LWidgetFactory* InChild);
     FORCEINLINE TFactoryRetTy& operator[](LWidgetFactory& InChild) { return this->AddChild(&InChild); }
+    FORCEINLINE TFactoryRetTy& operator[](LWidgetFactory* InChild) { return this->AddChild(InChild); }
 };
 
 //#

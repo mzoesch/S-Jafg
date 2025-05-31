@@ -82,6 +82,29 @@ protected:
 
 public:
 
+    enum : i32
+    {
+        //#
+        //# The maximal position the scroll region can be up.
+        //#
+        MaxScrollUp     = 0,
+
+        //#
+        //# The maximal position the scroll region can be down.
+        //#
+        MaxScrollDown   = 1,
+
+        //#
+        //# The maximal position the scroll region can be left.
+        //#
+        MaxScrollLeft   = 0,
+
+        //#
+        //# The maximal position the scroll region can be right.
+        //#
+        MaxScrollRight  = 1,
+    };
+
     struct LScrollRegionBrushImpl final
     {
         friend WScrollRegion;
@@ -143,6 +166,10 @@ public:
     FORCEINLINE const LVector2& GetScrollRegionSize() const { return this->ScrollRegionSize; }
 
     void ApplyScroll(const LKeyEvent& InKeyEvent);
+
+    FORCEINLINE void ApplyScroll(const LVector2D& InScroll) { this->ScrollPosition = InScroll; };
+    FORCEINLINE void ApplyVScroll(const f64 InScroll) { this->ScrollPosition.Y = Maths::Clamp(InScroll, MaxScrollUp, MaxScrollDown); }
+    FORCEINLINE void ApplyHScroll(const f64 InScroll) { this->ScrollPosition.X = Maths::Clamp(InScroll, MaxScrollLeft, MaxScrollRight); }
 
     using Super::SetBrush;
     FORCEINLINE void SetBrush(const LScrollRegionBrush& InBrush) noexcept;

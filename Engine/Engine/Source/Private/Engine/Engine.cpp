@@ -541,12 +541,7 @@ bool Jafg::LEngine::RegisterLevel(LLevel&& InLevel)
 
 bool Jafg::LEngine::IsLevelRegistered(const LString& Identifier) const
 {
-    return this->RegisteredLevels.ContainsByPredicate(
-        [&Identifier] (const LLevel& i)
-        {
-            return i.Identifier == Identifier;
-        }
-    );
+    return this->RegisteredLevels.Contains(Identifier);
 }
 
 Jafg::Private::LWorldContext& Jafg::LEngine::CreateNewWorldContext(const LString& InHumanReadableName)
@@ -564,10 +559,22 @@ void Jafg::LEngine::Browse(Private::LWorldContext& Context, const LString& Url) 
         return;
     }
 
-    if (this->IsLevelRegistered(Url) == false)
+    LString Level;
+    if (const i32 Barrier = Url.FindFirst("?"); Barrier == INDEX_NONE)
     {
-        panicMsgf( "Local Url [{}] is not registered.", Url )
-        return;
+        if (this->IsLevelRegistered(Url) == false)
+        {
+            panicMsgf( "Local Url [{}] is not registered.", Url )
+            return;
+        }
+    }
+    else
+    {
+        if (this->IsLevelRegistered(Url.LeftChop(Barrier)) == false)
+        {
+            panicMsgf( "Local Url [{}] is not registered.", Url )
+            return;
+        }
     }
 
     Context.TravelUrl = Url;
@@ -600,9 +607,6 @@ bool Jafg::LEngine::TravelContext(Private::LWorldContext& Context)
         return false;
     }
 
-    /* Get some args here in the future. */
-    Context.TravelUrl.Empty();
-
     check( Context.ChildWorld )
 
     if (Context.ChildWorld->GetWorldState() == EWorldState::Running)
@@ -617,9 +621,23 @@ bool Jafg::LEngine::TravelContext(Private::LWorldContext& Context)
         && "Travel is only allowed in these world states."
     )
 
-    Context.ChildWorld->InitializeWorld(*Level);
+    Context.ChildWorld->InitializeWorld(*Level, std::move(Context.TravelUrl));
+
+    check( Context.TravelUrl.IsEmpty() )
 
     return true;
+}
+
+Jafg::LLevel* Jafg::LEngine::GetLevelByInternalUrl(const LString& Url)
+{
+    if (const i32 Barrier = Url.FindFirst("?"); Barrier == INDEX_NONE)
+    {
+        return this->RegisteredLevels.FindRef(Url);
+    }
+    else
+    {
+        return this->RegisteredLevels.FindRef(Url.LeftChop(Barrier));
+    }
 }
 
 #if PLATFORM_SUPPORTS_SHARED_LIBRARIES

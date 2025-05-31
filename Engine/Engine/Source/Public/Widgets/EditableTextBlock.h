@@ -10,24 +10,24 @@
 namespace Jafg
 {
 
-struct LEditableTextBrush : public LBoxBrush
-{
-    LColor Color = LColor::Black;
-    float  Scale = 1.0f;
-};
-
 template <typename TNode>
 class TWidgetFactoryEditableTextBlock : public TWidgetFactoryBox<TNode>
 {
 public:
 
-    using Super         = TWidgetFactoryBox<TNode>;
-    using TFactoryRetTy = typename Super::TFactoryRetTy;
+    GENERATED_FACTORY_BODY(TWidgetFactoryBox)
 
-    FORCEINLINE TFactoryRetTy& TextColor(const LColor& InColor)       { this->This()->SetTextColor(InColor);  return this->Self(); }
-    FORCEINLINE TFactoryRetTy& TextScale(const float InScale)         { this->This()->SetTextScale(InScale);  return this->Self(); }
-    FORCEINLINE TFactoryRetTy& CaretBrush(const LCaretBrush& InBrush) { this->This()->SetCaretBrush(InBrush); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OnCommit(LEditableTextBlockCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnTextCommitted.BindFunction(std::move(InCallback)); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& TextTint(const LColor& InColor)         { this->This()->SetTextTint(InColor);  return this->Self(); }
+    FORCEINLINE TFactoryRetTy& TextScale(const float InScale)          { this->This()->SetTextScale(InScale);  return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PlaceholderText(const LString& InText)  { this->This()->SetPlaceholderText(InText); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PlaceholderText(     LString&& InText)  { this->This()->SetPlaceholderText(std::move(InText)); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PlaceholderColor(const LColor& InColor) { this->This()->SetPlaceholderColor(InColor); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& CaretColor(const LColor& InColor)       { this->This()->SetCaretColor(InColor); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& CaretSize(const LVector2& InSize)       { this->This()->SetCaretSize(InSize); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& CaretHOffset(const f32 InOffset)        { this->This()->SetCaretHOffset(InOffset); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& CaretBrush(const LCaretBrush& InBrush)  { this->This()->SetCaretBrush(InBrush); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OnCommit(LEditableTextBlockCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnContentCommitted.BindFunction(std::move(InCallback)); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OnChanged(LEditableTextBlockChangedDelegate::LFunctionSigTy&& InCallback) { this->This()->OnContentChanged.BindFunction(std::move(InCallback)); return this->Self(); }
 };
 
 //#
@@ -48,7 +48,7 @@ public:
     virtual void Construct() override;
     virtual void Draw(LViewport& Context) const override;
 
-    //# This only the user interface.
+    //# This only ticks the user interface.
     void UserInterfaceTick(const LViewport& InViewport);
 
     virtual void UpdateDesiredSize() const override;
@@ -61,17 +61,27 @@ public:
 
     void OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType);
 
-    FORCEINLINE void SetTextColor(const LColor& InColor) { this->Color = InColor; }
-    FORCEINLINE void SetTextScale(const float InScale)   { this->Scale = InScale; }
-    FORCEINLINE auto GetCaretBrush()       ->       LCaretBrush& { return this->CaretBrush; }
-    FORCEINLINE auto GetCaretBrush() const -> const LCaretBrush& { return this->CaretBrush; }
+    FORCEINLINE LCaretBrush& GetMutableCaretBrush() { return this->CaretBrush; }
+    FORCEINLINE const LCaretBrush& GetCaretBrush() const { return this->CaretBrush; }
     FORCEINLINE void SetCaretBrush(const LCaretBrush& InBrush) { this->CaretBrush = InBrush; }
 
-    LEditableTextBlockCommitDelegate OnTextCommitted;
-    void SetText(const LString& InText);
-    void SetText(     LString&& InText);
-    void ClearText();
-    FORCEINLINE auto GetText() const -> const LString& { return this->Content; }
+    FORCEINLINE void SetTextTint(const LColor& InColor) { this->TextTint = InColor; }
+    FORCEINLINE void SetTextScale(const f32 InScale)   { this->TextScale = InScale; }
+    FORCEINLINE void SetPlaceholderColor(const LColor& InColor) { this->PlaceholderColor = InColor; }
+    FORCEINLINE void SetPlaceholderText(const LString& InText) { this->Placeholder = InText; }
+    FORCEINLINE void SetPlaceholderText(     LString&& InText) { this->Placeholder = std::move(InText); }
+    FORCEINLINE void SetCaretColor(const LColor& InColor) { this->CaretBrush.Color = InColor; }
+    FORCEINLINE void SetCaretSize(const LVector2& InSize) { this->CaretBrush.Size = InSize; }
+    FORCEINLINE void SetCaretHOffset(const f32 InOffset) { this->CaretBrush.HOffset = InOffset; }
+
+    LEditableTextBlockCommitDelegate  OnContentCommitted;
+    LEditableTextBlockChangedDelegate OnContentChanged;
+    void SetContent(const LString& InContent);
+    void SetContent(     LString&& InContent);
+    void ClearContent();
+    FORCEINLINE const LString& GetContent() const { return this->Content; }
+
+    FORCEINLINE const LString& GetPlaceholder() const { return this->Placeholder; }
 
     //# @return The actual caret that was set.
     i32 SetCaretCursor(const i32 InCaretCursor);
@@ -83,17 +93,26 @@ private:
     void SafelyReduceCaretCursor();
     void SafelyIncreaseCaretCursor();
 
-    LColor Color { LColor::Black };
-    f32    Scale { 1.0f };
+    LColor TextTint { LColor::Black };
+    f32    TextScale { 1.0f };
+    LColor PlaceholderColor { LColor::Gray };
 
+    //#
+    //# The actual text content currently present in the editable text block.
+    //#
     LString Content;
+
+    //#
+    //# The placeholder text is a text that is displayed when not content is available.
+    //#
+    LString Placeholder;
+
     LFontShaderContext ShaderContext;
 
     LCaretBrush CaretBrush;
     i32 CaretCursor  { 0 };
     f32 CaretBlinker { 0.0f };
     f32 CaretBlinkerSpeed { 0.5f };
-    LBoxShaderContext CaretShaderContext;
 
     LDelegateHandle UserInterfaceTickDelegateHandle { nullptr };
 };

@@ -1,36 +1,133 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Widgets/Box.h"
+#include "Core/CoreNames.h"
+#include "Engine/Engine.h"
+#include "Rhi/OrthographicBoxShader.h"
+#include "Rhi/OrthographicImageBoxShader.h"
+#include "Rhi/OrthographicRoundedBoxShader.h"
+#include "Rhi/OrthographicRoundedImageBoxShader.h"
+#include "Rhi/OrthographicOutlineBoxShader.h"
+#include "Rhi/OrthographicOutlineImageBoxShader.h"
+#include "Rhi/OrthographicRoundedOutlineBoxShader.h"
+#include "Rhi/OrthographicRoundedOutlineImageBoxShader.h"
 
 void Jafg::WBox::Draw(LViewport& Context) const
 {
-    if (this->HasBrush() == false)
+    if (this->Brush.Type != ERegionBrush::None)
     {
-        if (this->ShaderContext.IsValid())
+        if (this->Brush.Type == ERegionBrush::Box)
         {
-            this->ShaderContext.Reset();
+            if (this->Brush.Image.IsTextureValid())
+            {
+                GEngine->GetShaderChecked<LOrthographicImageBoxShader>(Name_ShaderOrthographicImageBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint,
+                    this->GetBrush().Image
+                );
+            }
+            else
+            {
+                GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint
+                );
+            }
         }
 
-        Super::Draw(Context);
+        else if (this->Brush.Type == ERegionBrush::RoundedBox)
+        {
+            if (this->Brush.Image.IsTextureValid())
+            {
+                GEngine->GetShaderChecked<LOrthographicRoundedImageBoxShader>(Name_ShaderOrthographicRoundedImageBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint,
+                    this->GetBrush().Radii,
+                    this->GetBrush().Image
+                );
+            }
+            else
+            {
+                GEngine->GetShaderChecked<LOrthographicRoundedBoxShader>(Name_ShaderOrthographicRoundedBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint,
+                    this->GetBrush().Radii
+                );
+            }
+        }
 
-        return;
+        else if (this->Brush.Type == ERegionBrush::OutlineBox)
+        {
+            if (this->Brush.Image.IsTextureValid())
+            {
+                GEngine->GetShaderChecked<LOrthographicOutlineImageBoxShader>(Name_ShaderOrthographicOutlineImageBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint,
+                    this->GetBrush().OutlineThickness,
+                    this->GetBrush().OutlineTint,
+                    this->GetBrush().Image
+                );
+            }
+            else
+            {
+                GEngine->GetShaderChecked<LOrthographicOutlineBoxShader>(Name_ShaderOrthographicOutlineBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint,
+                    this->GetBrush().OutlineThickness,
+                    this->GetBrush().OutlineTint
+                );
+            }
+        }
+
+        else if (this->Brush.Type == ERegionBrush::RoundedOutlineBox)
+        {
+            if (this->Brush.Image.IsTextureValid())
+            {
+                GEngine->GetShaderChecked<LOrthographicRoundedOutlineImageBoxShader>(Name_ShaderOrthographicRoundedOutlineImageBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint,
+                    this->GetBrush().OutlineThickness,
+                    this->GetBrush().OutlineTint,
+                    this->GetBrush().Radii,
+                    this->GetBrush().Image
+                );
+            }
+            else
+            {
+                GEngine->GetShaderChecked<LOrthographicRoundedOutlineBoxShader>(Name_ShaderOrthographicRoundedOutlineBox)->Draw
+                (
+                    Context,
+                    this->GetAnchoredSize(),
+                    this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
+                    this->GetBrush().Tint,
+                    this->GetBrush().OutlineThickness,
+                    this->GetBrush().OutlineTint,
+                    this->GetBrush().Radii
+                );
+            }
+        }
     }
-
-    if (this->ShaderContext.IsValid() == false)
-    {
-        LOG_TRACE(LogWidgets, "Creating new shader context for WWidgetBox.")
-        this->ShaderContext = LBoxShaderContext();
-        this->CreateNewShaderContext();
-    }
-
-    this->ShaderContext->Draw(
-        Context,
-        this->GetAnchoredSize(),
-        this->GetAnchoredTopLeftFromMostOuter(Context),
-        this->Brush.GetValue().Tint
-        // this->Brush.GetValue().Image.GetTexture()
-    );
 
     Super::Draw(Context);
 
@@ -40,49 +137,7 @@ void Jafg::WBox::Draw(LViewport& Context) const
 void Jafg::WBox::UpdateDesiredSize() const
 {
     Super::UpdateDesiredSize();
-    this->SetDesiredSize(this->Padding.GetDesiredSize());
+    this->SetDesiredSize(this->Brush.Padding.GetDesiredSize());
 
     return;
-}
-
-void Jafg::WBox::SetTint(const LColor& InTint)
-{
-    if (this->HasBrush())
-    {
-        this->Brush.GetValue().Tint = InTint;
-        return;
-    }
-
-    this->SetBrush(LBoxBrush({.Tint = InTint}));
-
-    return;
-}
-
-void Jafg::WBox::SetTexture(const LTexture2* InTexture)
-{
-    if (this->HasBrush())
-    {
-        this->Brush.GetValue().Image.SetTexture(InTexture);
-        return;
-    }
-
-    this->SetBrush(LBoxBrush({.Image = LImage().SetTexture(InTexture)}));
-    return;
-}
-
-void Jafg::WBox::SetImage(const LImage& InImage)
-{
-    if (this->HasBrush())
-    {
-        this->Brush.GetValue().Image = InImage;
-        return;
-    }
-
-    this->SetBrush(LBoxBrush({.Image = InImage}));
-    return;
-}
-
-void Jafg::WBox::CreateNewShaderContext() const
-{
-    this->ShaderContext->Make();
 }

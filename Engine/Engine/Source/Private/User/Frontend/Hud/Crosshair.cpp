@@ -12,10 +12,12 @@ void Jafg::WCrosshair::Construct()
     [
         NewNode(WRegion)
             .Anchor(EAnchor::CenterCenter)
+            .Type(ERegionBrush::Box)
             .Padding({1.0f, 4.0f})
             .Tint(LColor::White)
         + NewNode(WRegion)
             .Anchor(EAnchor::CenterCenter)
+            .Type(ERegionBrush::Box)
             .Padding({4.0f, 1.0f})
             .Tint(LColor::White)
     ]

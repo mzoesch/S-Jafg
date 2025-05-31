@@ -11,7 +11,7 @@
 #include "MyWorld/VoxelKey.h"
 #include "MyWorld/Chunk/Chunk.h"
 #include "System/MaterialSubsystem.h"
-#include "System/TextureSubsystem.h"
+#include "System/VoxelTextureSubsystem.h"
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
 #include "Widgets/Spacer.h"

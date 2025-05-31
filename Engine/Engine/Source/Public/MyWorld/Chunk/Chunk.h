@@ -19,7 +19,7 @@ namespace Jafg
 class JMaterialSubsystem;
 class JVoxelSubsystem;
 class LChunkMesher;
-class JTextureSubsystem;
+class JVoxelTextureSubsystem;
 class LFastChunkMesher;
 class AChunk;
 class JChunkGenerationSubsystem;
@@ -74,7 +74,7 @@ struct LSharedChunkArgs final
     JChunkGeneratorSubsystem*  ChunkGeneratorSubsystem  { nullptr };
     JVoxelSubsystem*           VoxelSubsystem           { nullptr };
     JMaterialSubsystem*        MaterialSubsystem        { nullptr };
-    JTextureSubsystem*         TextureSubsystem         { nullptr };
+    JVoxelTextureSubsystem*         TextureSubsystem         { nullptr };
     LChunkShader               ChunkShader;
     TFunction<LChunkMesher*(AChunk& Owner)> GetNewMesher;
 };

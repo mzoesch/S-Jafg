@@ -46,6 +46,8 @@ public:
     virtual auto AddChild(WNode* InChild) -> LWidgetSlot* override;
     virtual auto AddChildAt(const i32 InIndex, WNode* InChild) -> LWidgetSlot* override;
 
+    void MakeChildrenFinal();
+
     FORCEINLINE void SetPadding(const LPadding& InPadding)    { this->Padding = InPadding; }
     FORCEINLINE auto GetPadding()    const -> const LPadding& { return this->Padding; }
     FORCEINLINE auto GetPaddingPtr() const -> const LPadding* { return &this->Padding; }

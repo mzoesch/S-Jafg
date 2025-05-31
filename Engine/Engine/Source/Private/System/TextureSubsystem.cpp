@@ -1,193 +1,40 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "System/TextureSubsystem.h"
-#include "System/EnginePath.h"
-#include "System/VoxelSubsystem.h"
+#include "Engine/Engine.h"
+#include "Rhi/Texture2.h"
 #include "User/UserPreferences.h"
 
-Jafg::LString Jafg::LDiskVoxelTexture::GetVoxelName() const
+void Jafg::JTextureSubsystem::PurgeTextures()
 {
-    LString Out;
-
-    for (const char& Rune : this->Name)
-    {
-        if (Rune == LDiskVoxelTexture::TexSectionDividerChar)
-        {
-            break;
-        }
-
-        Out.Add(Rune);
-
-        continue;
-    }
-
-    check( Out.IsEmpty() == false )
-
-    return Out;
-}
-
-Jafg::ENormalLookup::Type Jafg::LDiskVoxelTexture::GetNormalLookUpBasedOfFileName() const
-{
-    if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) > 2)
-    {
-        panicMsgf( "Encountered invalid texture name '{}'.", this->Name )
-        return ENormalLookup::None;
-    }
-
-    if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 0)
-    {
-        return ENormalLookup::Omnia;
-    }
-
-    if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 1)
-    {
-        LString Copy = this->Name;
-        Copy.InlineSubIdx(Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1, Copy.GetRuneCount());
-
-        if (ENormalLookup::IsValid(Copy))
-        {
-            return ENormalLookup::FromString(Copy);
-        }
-
-        return ENormalLookup::Omnia;
-    }
-
-    check( this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 2 )
-
-    LString Copy = this->Name;
-    const i32 FirstOccurrence = Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1;
-    Copy.InlineSub(FirstOccurrence, Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar) - FirstOccurrence);
-
-    if (ENormalLookup::IsValid(Copy))
-    {
-        return ENormalLookup::FromString(Copy);
-    }
-
-    Copy = this->Name;
-    const i32 SecondOccurrence = Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar);
-    Copy.InlineSub(SecondOccurrence, Copy.GetRuneCount() - SecondOccurrence - 1);
-
-    if (ENormalLookup::IsValid(Copy))
-    {
-        return ENormalLookup::FromString(Copy);
-    }
-
-    panicMsgf( "Encountered invalid texture name '{}'.", this->Name )
-
-    return ENormalLookup::None;
-}
-
-Jafg::LTextureIndex Jafg::LDiskVoxelTexture::GetBlendLookUpBasedOfFileName(const TArray<LDiskBlendTexture>& InCurrentUsedBlends) const
-{
-    if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) > 2)
-    {
-        panicMsgf( "Encountered invalid texture name '{}'.", this->Name )
-        return ENormalLookup::None;
-    }
-
-    if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 0)
-    {
-        const DefaultContainerSizeType Idx = InCurrentUsedBlends.FindByPredicate([] (const LDiskBlendTexture& InElement) -> bool
-        {
-            return InElement.Name == "None";
-        });
-        check( Idx != INDEX_NONE )
-        return static_cast<LTextureIndex>(Idx);
-    }
-
-    if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 1)
-    {
-        LString Copy = this->Name;
-        Copy.InlineSubIdx(Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1, Copy.GetRuneCount());
-
-        const DefaultContainerSizeType MaybeIdx = InCurrentUsedBlends.FindByPredicate([Copy] (const LDiskBlendTexture& InElement) -> bool
-        {
-            return InElement.Name == Copy;
-        });
-        if (MaybeIdx != INDEX_NONE)
-        {
-            return static_cast<LTextureIndex>(MaybeIdx);
-        }
-        const DefaultContainerSizeType NoneIdx = InCurrentUsedBlends.FindByPredicate([] (const LDiskBlendTexture& InElement) -> bool
-        {
-            return InElement.Name == "None";
-        });
-        check( NoneIdx != INDEX_NONE )
-        return static_cast<LTextureIndex>(MaybeIdx);
-    }
-
-    check( this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 2 )
-
-    LString Copy = this->Name;
-    const i32 FirstOccurrence = Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1;
-    Copy.InlineSub(FirstOccurrence, Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar) - FirstOccurrence);
-
-    if (const DefaultContainerSizeType MaybeIdx = InCurrentUsedBlends.FindByPredicate([Copy] (const LDiskBlendTexture& InElement) -> bool
-    {
-        return InElement.Name == Copy;
-    }); MaybeIdx != INDEX_NONE)
-    {
-        return static_cast<LTextureIndex>(MaybeIdx);
-    }
-
-    Copy = this->Name;
-    const i32 SecondOccurrence = Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar);
-    Copy.InlineSub(SecondOccurrence + 1, Copy.GetRuneCount() - SecondOccurrence - 1);
-
-    if (const DefaultContainerSizeType MaybeIdx = InCurrentUsedBlends.FindByPredicate([Copy] (const LDiskBlendTexture& InElement) -> bool
-    {
-        return InElement.Name == Copy;
-    }); MaybeIdx != INDEX_NONE)
-    {
-        return static_cast<LTextureIndex>(MaybeIdx);
-    }
-
-    panicMsgf( "Encountered invalid texture name '{}'.", this->Name )
-
-    const DefaultContainerSizeType NoneIdx = InCurrentUsedBlends.FindByPredicate([] (const LDiskBlendTexture& InElement) -> bool
-    {
-        return InElement.Name == "None";
-    });
-    check( NoneIdx != INDEX_NONE )
-    return static_cast<LTextureIndex>(NoneIdx);
-}
-
-void Jafg::JTextureSubsystem::Initialize(LSubsystemCollection& Collection)
-{
-    Collection.InitializeDependency<JVoxelSubsystem>();
-    Super::Initialize(Collection);
-
     return;
 }
 
-void Jafg::JTextureSubsystem::TearDown()
+std::shared_ptr<Jafg::LTexture2> Jafg::JTextureSubsystem::GetTexture(const LPath& InPath) const
 {
-    Super::TearDown();
-}
+    check( InPath.IsEmpty() == false )
 
-Jafg::TArray<Jafg::LDiskVoxelTexture> Jafg::JTextureSubsystem::FindMeaningFullVoxelTextureNames() const
-{
-    TArray<LString> Names = Finder::FindFiles(EEnginePaths::Voxels, *GetDefault<JUserPreferences>(), false, ".png");
-
-    TArray<LDiskVoxelTexture> Out;
-    for (LString& Name : Names)
+    std::string Path = InPath.ToPtr();
+    if (const auto& It = this->Textures.find(Path); It != this->Textures.end())
     {
-        Out.Emplace(std::move(Name));
+        return It->second;
     }
 
-    return Out;
-}
-
-Jafg::TArray<Jafg::LDiskBlendTexture> Jafg::JTextureSubsystem::FindMeaningBlendTextureNames() const
-{
-    TArray<LString> Names = Finder::FindFiles(EEnginePaths::Blends, *GetDefault<JUserPreferences>(), false, ".png");
-
-    TArray<LDiskBlendTexture> Out;
-    for (LString& Name : Names)
+    LTexture2 Tex;
+    if (Tex.LoadFromDisk(InPath) == false)
     {
-        Out.Emplace(std::move(Name));
+        LOG_ERROR(LogTextureSubsystem, "Cannot create shared pointer for texture [{}].", InPath)
+        return { };
     }
 
-    return Out;
+    std::shared_ptr<LTexture2> TexPtr { std::make_shared<LTexture2>(std::move(Tex)) };
+
+    this->Textures[std::move(Path)] = TexPtr;
+
+    return TexPtr;
+}
+
+std::shared_ptr<Jafg::LTexture2> Jafg::JTextureSubsystem::GetTexture(const LEnginePath& InPath) const
+{
+    return this->GetTexture(InPath.ResolveAbsolutePath(*GetDefault<JUserPreferences>()));
 }

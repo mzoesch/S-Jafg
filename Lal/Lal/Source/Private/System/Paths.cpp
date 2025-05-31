@@ -158,12 +158,21 @@ bool Paths::IsRelative(const LPath& InPath)
     return std::filesystem::path(InPath.ToPtr()).is_relative();
 }
 
-void Paths::CreateFileSlow(const LPath& InFilePath)
+void Paths::CreateFileSlow(const LPath& InFilePath, const bool bMakeParents /* = false */)
 {
     if (DoesFileExist(InFilePath))
     {
         LOG_WARNING(LogPlatform, "Trying to create the file [{}] but it already exists.", InFilePath )
         return;
+    }
+
+    if (bMakeParents)
+    {
+        if (const LPath& Parent = InFilePath.GetParent(); DoesDirExist(Parent) == false)
+        {
+            LOG_TRACE(LogPlatform, "Creating directory [{}].", Parent)
+            std::filesystem::create_directories(Parent.ToPtr());
+        }
     }
 
     LOG_TRACE(LogPlatform, "Creating file [{}].", InFilePath )

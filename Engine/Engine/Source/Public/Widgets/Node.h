@@ -378,6 +378,7 @@ public:
 
     FORCEINLINE TFactoryRetTy& AddSibling(LWidgetFactory* InSibling);
     FORCEINLINE TFactoryRetTy& operator+(LWidgetFactory& InSibling) { return this->AddSibling(&InSibling); }
+    FORCEINLINE TFactoryRetTy& operator+(LWidgetFactory* InSibling) { return this->AddSibling(InSibling); }
 
     FORCEINLINE TFactoryRetTy& Data(const LWidgetNodeData* InData) { this->This()->AddData(InData); return this->Self(); }
 };
@@ -443,14 +444,14 @@ public:
 
     //#
     //# Called when this widget is constructed. This does not mean being drawn to a canvas. A widget might be
-    //# constructed but never dawned on a canvas in their entire lifespan. This method replaces the #BeginLife super
+    //# constructed but never drawn on a canvas in their entire lifespan. This method replaces the #BeginLife super
     //# method.
     //#
     virtual void Construct() { }
 
     //#
     //# Called when this widget is being ticked.
-    //# See EWidgetVisibility for more information about when to tick a widget.
+    //# See #EWidgetVisibility for more information about when to tick a widget.
     //#
     virtual void Tick() { }
 
@@ -469,7 +470,7 @@ public:
 
     //#
     //# Use this method to pass arbitrary typesafe data to the widget.
-    //# @return True, if the data was used successfully.
+    //# @return True, if the data was used successfully handled.
     //#
     virtual bool AddData(const LWidgetNodeData* InData) { return false; }
 
@@ -734,10 +735,13 @@ template <typename TNode>
 template <typename T>
 FORCEINLINE typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::SaveTo(T** Out)
 {
-    check( Out )
     static_assert(std::is_base_of_v<WNode, T>);
     static_assert(std::is_base_of_v<T, TNodeTy>);
-    *Out = this->GetNode();
+    if (Out)
+    {
+        *Out = this->GetNode();
+    }
+
     return this->Self();
 }
 

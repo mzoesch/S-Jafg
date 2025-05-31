@@ -317,3 +317,13 @@ Jafg::LWidgetSlot* Jafg::WParent::AddChildAt(const i32 InIndex, WNode* InChild)
 
     return NewChildSlot;
 }
+
+void Jafg::WParent::MakeChildrenFinal()
+{
+    for (const LWidgetSlot* ChildSlot : this->Children)
+    {
+        MakeDeferredWidgetNodeFinal(ChildSlot->Content);
+    }
+
+    return;
+}

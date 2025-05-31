@@ -88,6 +88,35 @@ enum Type : u8
 } /* ~Namespace EWorldTimeBehavior */
 
 //#
+//# The parameters for a world.
+//# Parameters are split by a '?'. A special character can be escaped with '\'.
+//# A parameter may have the following formats:
+//#   <Key>
+//#   <Key>=
+//#   <Key>=<Value>
+//#
+//# E.g.: MyCoolLevel?MyFirstParam?MySecondParam=?MyThirdParam=HeyThereIsAValue?Another\=Key\?StillTheFourthKey=ThisIsTheValue\?\=StillTheSameValue
+//#
+struct LWorldParameters final
+{
+    friend LWorld;
+
+    struct LWorldParam final
+    {
+        LString Key;
+        LString Value;
+    };
+
+    TArray<LWorldParam> Params;
+
+    ENGINE_API LString ToString() const;
+
+private:
+
+    void Reset() noexcept;
+};
+
+//#
 //# Represents a world at its core.
 //# Once every frame a world will be ticked. It may register itself to the RHI to be used when
 //# rendering on any kind of surface. Multiple worlds may draw to the same surface, and a world
@@ -111,21 +140,29 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LWorld)
     LWorld(const LString& InHumanReadableName, const EWorldState::Type InWorldType);
 
-    virtual bool IsWorld() const override { return true; }
+    // LObjectContext implementation
+    virtual bool IsWorld() const noexcept override { return true; }
+    // ~LObjectContext implementation
 
-    ENGINE_API auto GetEngine() const -> LEngine*;
-    ENGINE_API auto GetLocalEgo() const -> LLocalEgo*;
-    ENGINE_API auto GetLocalController() const -> APersonaController*;
-    ENGINE_API auto GetCommandLineInterface() const -> LCommandLineInterface*;
+    ENGINE_API LEngine* GetEngine() const;
+    ENGINE_API LLocalEgo* GetLocalEgo() const;
+    ENGINE_API APersonaController* GetLocalController() const;
+    ENGINE_API LCommandLineInterface* GetCommandLineInterface() const;
+
     //# Only valid if the pawn is in this world.
     FORCEINLINE bool IsLocalPawnValid() const { return this->GetLocalPawn() != nullptr; }
-    ENGINE_API  auto GetLocalPawn() const -> APawn*;
-    FORCEINLINE auto GetLocalPawnChecked() const -> APawn* { APawn* Out = this->GetLocalPawn(); check( Out ) return Out; }
-    FORCEINLINE auto GetLocalPawnAsserted() const -> APawn* { APawn* Out = this->GetLocalPawn(); jassert( Out ) return Out; }
+    ENGINE_API  APawn* GetLocalPawn() const;
+    FORCEINLINE APawn* GetLocalPawnChecked() const { APawn* Out = this->GetLocalPawn(); check( Out ) return Out; }
+    FORCEINLINE APawn* GetLocalPawnAsserted() const { APawn* Out = this->GetLocalPawn(); jassert( Out ) return Out; }
 
-    FORCEINLINE auto GetWorldState() const -> EWorldState::Type { return this->WorldState; }
+    //# The URL that was used to launch this world. This might not be valid.
+    FORCEINLINE const LString& GetBrowsedUrl() const noexcept { return this->Url; }
+    //# The URL but parsed into a structured way. This might not be valid.
+    FORCEINLINE const LWorldParameters& GetParameters() const noexcept { return this->Parameters; }
 
-    void InitializeWorld(const LLevel& Level);
+    FORCEINLINE EWorldState::Type GetWorldState() const noexcept { return this->WorldState; }
+
+    void InitializeWorld(const LLevel& Level, LString&& InLaunchedUrl);
 
     FORCEINLINE bool CanTick() const { return this->GetWorldState() == EWorldState::Running; }
     void Tick(const float DeltaTime);
@@ -158,7 +195,8 @@ public:
     //# Trace this world for physical hits.
     //# @return True if a blocking hit was found.
     //#
-    bool LineTraceByChannel(
+    bool LineTraceByChannel
+    (
         TArray<LHitResult>& OutHits,
         const LVector& Begin,
         const LVector& End,
@@ -176,6 +214,10 @@ public:
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JWorldSubsystem)
 
 private:
+
+    LString Url;
+    LWorldParameters Parameters;
+    void UpdateUrlParams();
 
     TOptional<LLevel> UnderlyingLevel;
 

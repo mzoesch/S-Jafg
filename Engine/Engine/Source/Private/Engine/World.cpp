@@ -16,6 +16,26 @@
 #include "Debug/DebugTraceSphere.h"
 #include "Stats/Stats.h"
 
+Jafg::LString Jafg::LWorldParameters::ToString() const
+{
+    LString Out { '{' };
+
+    for (const LWorldParam& Param : this->Params)
+    {
+        Out.Append(LString::SprintF("{}={}", Param.Key, Param.Value));
+        continue;
+    }
+
+    Out += '}';
+    return Out;
+}
+
+void Jafg::LWorldParameters::Reset() noexcept
+{
+    this->Params.Empty();
+    return;
+}
+
 Jafg::LWorld::LWorld(const LString& InHumanReadableName, const EWorldState::Type InWorldType) : WorldState(InWorldType)
 {
     this->SetHumanReadableName(InHumanReadableName);
@@ -55,7 +75,7 @@ Jafg::APawn* Jafg::LWorld::GetLocalPawn() const
     return nullptr;
 }
 
-void Jafg::LWorld::InitializeWorld(const LLevel& Level)
+void Jafg::LWorld::InitializeWorld(const LLevel& Level, LString&& InLaunchedUrl)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -64,6 +84,22 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level)
 
     check( this->WorldState == EWorldState::Uninitialized || this->WorldState == EWorldState::WaitingForKill )
     this->WorldState = EWorldState::Initializing;
+
+    /* Remove level name from url. */
+    if (const i32 Idx = InLaunchedUrl.FindFirst('?'); Idx != INDEX_NONE)
+    {
+        if (InLaunchedUrl.IsValidIndex(Idx + 1))
+        {
+            InLaunchedUrl.InlineRightChop(Idx + 1);
+        }
+        else
+        {
+            InLaunchedUrl.Empty();
+        }
+    }
+    this->Url = std::move(InLaunchedUrl);
+    this->UpdateUrlParams();
+    LOG_VERBOSE(LogWorld, "Initializing new world with [{}].", this->Parameters.ToString())
 
     this->DeferredInitialize(GlobalCarnifex);
 
@@ -353,4 +389,82 @@ bool Jafg::LWorld::LineTraceByChannel(
     }
 
     return OutHits.IsEmpty() == false;
+}
+
+void Jafg::LWorld::UpdateUrlParams()
+{
+    this->Parameters.Reset();
+
+    TArray<LString> Params;
+
+    LString Current;
+    char Last { 0 };
+    for (const char& C: this->Url)
+    {
+        if (C == '?' && Last != '\\')
+        {
+            Params.Emplace(std::move(Current));
+        }
+
+        Current += C;
+        Last = C;
+        continue;
+    }
+
+    if (Current.IsEmpty() == false)
+    {
+        Params.Emplace(std::move(Current));
+    }
+
+    for (const LString& P : Params)
+    {
+        bool bAddToKey { true };
+        LString K;
+        LString V;
+        Last = 0;
+        for (const char& C : P)
+        {
+            if (C == '\\')
+            {
+                if (bAddToKey)
+                {
+                    K += C;
+                }
+                else
+                {
+                    V += C;
+                }
+
+                Last = C;
+                continue;
+            }
+
+            if (C == '=' && Last != '\\')
+            {
+                check( bAddToKey )
+                bAddToKey = false;
+                Last = C;
+                continue;
+            }
+
+            if (bAddToKey)
+            {
+                K += C;
+            }
+            else
+            {
+                V += C;
+            }
+
+            continue;
+        }
+
+        check( K.IsEmpty() == false )
+
+        this->Parameters.Params.Emplace(std::move(K), std::move(V));
+
+        continue;
+    }
+
+    return;
 }

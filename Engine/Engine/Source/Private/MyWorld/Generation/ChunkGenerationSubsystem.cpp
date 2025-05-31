@@ -8,7 +8,7 @@
 #include "MyWorld/Meshing/NaiveMesher.h"
 #include "System/VoxelSubsystem.h"
 #include "System/MaterialSubsystem.h"
-#include "System/TextureSubsystem.h"
+#include "System/VoxelTextureSubsystem.h"
 #include "User/UserPreferences.h"
 #include "Engine/Engine.h"
 #include "Physics/PhysicCompontent.h"
@@ -36,7 +36,7 @@ void Jafg::JChunkGenerationSubsystem::Initialize(LSubsystemCollection& Collectio
     this->SharedChunkArgs.ChunkGeneratorSubsystem  = Collection.GetCheckedSubsystem<JChunkGeneratorSubsystem>();
     this->SharedChunkArgs.VoxelSubsystem  = this->GetEngine()->GetCheckedSubsystem<JVoxelSubsystem>();
     this->SharedChunkArgs.MaterialSubsystem  = this->GetEngine()->GetCheckedSubsystem<JMaterialSubsystem>();
-    this->SharedChunkArgs.TextureSubsystem  = this->GetEngine()->GetCheckedSubsystem<JTextureSubsystem>();
+    this->SharedChunkArgs.TextureSubsystem  = this->GetEngine()->GetCheckedSubsystem<JVoxelTextureSubsystem>();
     this->SharedChunkArgs.ChunkShader.MakeChecked(Name_ShaderChunk);
     this->SharedChunkArgs.GetNewMesher = [] (AChunk& Owner) -> LChunkMesher* { return new LNaiveMesher(Owner); };
 

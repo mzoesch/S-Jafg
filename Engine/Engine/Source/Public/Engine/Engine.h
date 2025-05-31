@@ -196,7 +196,13 @@ public:
 
     ENGINE_API bool IsWorldValid(const LWorld* InWorld) const;
 
-    //# Browse to a new Url at the next opportunity.
+    //#
+    //# Browse the provided world to a new url at the next opportunity.
+    //# The url format is defined as follows:
+    //#  Internal (browse the world to a url that is internal to the engine; no networking):
+    //#    <LevelName>
+    //#    <LevelName>?<option>?... (@see #LWorldParameters for how to format options.)
+    //#
     ENGINE_API void Browse(const LWorld* World, const LString& Url);
 
     //# @return True if registered successfully.
@@ -222,7 +228,7 @@ private:
     void Browse(Private::LWorldContext& Context, const LString& Url) const;
     bool IsContextUrlInternal(const LString& Url) const;
     bool TravelContext(Private::LWorldContext& Context);
-    FORCEINLINE auto GetLevelByInternalUrl(const LString& Url) -> LLevel* { return this->RegisteredLevels.FindRef(Url); }
+    LLevel* GetLevelByInternalUrl(const LString& Url);
 
     //#
     //# All current engine contexts.
@@ -410,7 +416,6 @@ bool LEngine::RemoveShader(const LEngineShader* InShader) noexcept
         return this->Shaders.erase(Name) > 0;
     }
 
-    LOG_ERROR(LogEngine, "Failed to remove shader.")
     return false;
 }
 

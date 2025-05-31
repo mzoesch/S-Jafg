@@ -5,6 +5,9 @@
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "Widgets/Viewport.h"
+#include "Engine/Engine.h"
+#include "Core/CoreNames.h"
+#include "Rhi/OrthographicBoxShader.h"
 
 Jafg::LString Jafg::LexToString(const ETextCommit::Type InType)
 {
@@ -21,6 +24,10 @@ Jafg::WEditableTextBlock::WEditableTextBlock(const LObjectInitializer& ObjectIni
 {
     this->SetVisibility(EWidgetVisibility::Visible);
     this->SetAnchor(EAnchor::Fill);
+    this->SetPadding({10.0, 8.0});
+    this->SetType(ERegionBrush::Box);
+    this->SetTint(LColor::Black);
+    this->SetTextTint(LColor::White);
 
     return;
 }
@@ -30,7 +37,6 @@ void Jafg::WEditableTextBlock::Construct()
     Super::Construct();
 
     this->ShaderContext.Make();
-    this->CaretShaderContext.Make();
 
     return;
 }
@@ -41,22 +47,40 @@ void Jafg::WEditableTextBlock::Draw(LViewport& Context) const
 
     LVector2 AnchoredTopLeftFromMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context);
 
-    if (this->Content.IsEmpty() == false && (this->GetDesiredSize().X > 0.0f && this->GetDesiredSize().Y > 0.0f))
+    if (this->Content.IsEmpty())
+    {
+        LFontShaderContextDrawArgs Args;
+        Args.Content     = &this->Placeholder;
+        Args.Offset      = AnchoredTopLeftFromMostOuter;
+        Args.Padding     = this->GetBrush().Padding;
+        Args.DesiredSize = this->GetDesiredSize();
+        Args.Color       = this->PlaceholderColor;
+        Args.Scale       = this->TextScale;
+        this->ShaderContext.Draw(Context, Args);
+    }
+    else
     {
         LFontShaderContextDrawArgs Args;
         Args.Content     = &this->Content;
         Args.Offset      = AnchoredTopLeftFromMostOuter;
-        Args.Padding     = this->GetPadding();
+        Args.Padding     = this->GetBrush().Padding;
         Args.DesiredSize = this->GetDesiredSize();
-        Args.Color       = this->Color;
-        Args.Scale       = this->Scale;
+        Args.Color       = this->TextTint;
+        Args.Scale       = this->TextScale;
         this->ShaderContext.Draw(Context, Args);
     }
 
     if (this->CaretBlinker < this->CaretBlinkerSpeed && this->IsFocusWidget())
     {
-        LVector2 CaretSize    = LVector2(2.0f, this->GetDesiredSize().Y) * this->CaretBrush.Size;
-        LVector2 CaretTopLeft = AnchoredTopLeftFromMostOuter + LVector2(0.0f, (this->GetDesiredSize().Y - CaretSize.Y) * 0.5f);
+        const LVector2 CaretSize { LVector2{2.0f, this->GetDesiredSize().Y} * this->CaretBrush.Size };
+
+        LVector2 CaretTopLeft
+        {
+              AnchoredTopLeftFromMostOuter
+            + LVector2{0.0f, (this->GetDesiredSize().Y - CaretSize.Y) * 0.5f }
+            + LVector2{this->GetBrush().Padding.Left, 0.0f}
+        }
+        ;
 
         LString CaretContent;
         if (this->Content.GetRuneCount() != this->CaretCursor)
@@ -68,9 +92,10 @@ void Jafg::WEditableTextBlock::Draw(LViewport& Context) const
             CaretContent = this->Content;
         }
 
-        CaretTopLeft.X += LFontShaderContext::GetDesiredWidth(CaretContent, this->Scale) + this->CaretBrush.HOffset;
+        CaretTopLeft.X += LFontShaderContext::GetDesiredWidth(CaretContent, this->TextScale) + this->CaretBrush.HOffset;
 
-        this->CaretShaderContext.Draw(
+        GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
+        (
             Context,
             CaretSize,
             CaretTopLeft,
@@ -95,6 +120,7 @@ void Jafg::WEditableTextBlock::UserInterfaceTick(const LViewport& InViewport)
         }
 
         this->CaretBlinker = 0.0f;
+        this->OnContentChanged.InvokeIfBound(this->Content);
     }
     else
     {
@@ -111,7 +137,16 @@ void Jafg::WEditableTextBlock::UserInterfaceTick(const LViewport& InViewport)
 void Jafg::WEditableTextBlock::UpdateDesiredSize() const
 {
     Super::UpdateDesiredSize();
-    this->SetDesiredSize(LFontShaderContext::GetDesiredSize(this->Content, this->Scale) + this->GetDesiredSize());
+
+    if (this->Content.IsEmpty())
+    {
+        this->SetDesiredSize(LFontShaderContext::GetDesiredSize(this->Placeholder, this->TextScale) + this->GetDesiredSize());
+    }
+    else
+    {
+        this->SetDesiredSize(LFontShaderContext::GetDesiredSize(this->Content, this->TextScale) + this->GetDesiredSize());
+    }
+
     return;
 }
 
@@ -169,6 +204,7 @@ Jafg::LReply Jafg::WEditableTextBlock::OnKeyDown(const LViewport& InViewport, co
                 this->SafelyReduceCaretCursor();
             }
             this->CaretBlinker = 0.0f;
+            this->OnContentChanged.InvokeIfBound(this->Content);
         }
         return LReply::Handled();
     }
@@ -212,12 +248,12 @@ Jafg::LReply Jafg::WEditableTextBlock::OnKeyDown(const LViewport& InViewport, co
 
 void Jafg::WEditableTextBlock::OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType)
 {
-    this->OnTextCommitted.InvokeIfBound(InText, InCommitType);
+    this->OnContentCommitted.InvokeIfBound(InText, InCommitType);
 }
 
-void Jafg::WEditableTextBlock::SetText(const LString& InText)
+void Jafg::WEditableTextBlock::SetContent(const LString& InContent)
 {
-    this->Content = InText;
+    this->Content = InContent;
     this->CaretCursor = Maths::Min(this->CaretCursor, this->Content.GetRuneCount());
 
     if (this->Content.GetByteSize() == 0)
@@ -228,22 +264,28 @@ void Jafg::WEditableTextBlock::SetText(const LString& InText)
 
     this->SetCaretCursorToEnd();
 
+    this->OnContentChanged.InvokeIfBound(this->Content);
+
     return;
 }
 
-void Jafg::WEditableTextBlock::SetText(LString&& InText)
+void Jafg::WEditableTextBlock::SetContent(LString&& InContent)
 {
-    this->Content = std::move(InText);
+    this->Content = std::move(InContent);
     this->CaretCursor = Maths::Min(this->CaretCursor, this->Content.GetRuneCount());
     this->SetCaretCursorToEnd();
 
+    this->OnContentChanged.InvokeIfBound(this->Content);
+
     return;
 }
 
-void Jafg::WEditableTextBlock::ClearText()
+void Jafg::WEditableTextBlock::ClearContent()
 {
     this->Content.Empty();
     this->CaretCursor = 0;
+
+    this->OnContentChanged.InvokeIfBound(this->Content);
 
     return;
 }

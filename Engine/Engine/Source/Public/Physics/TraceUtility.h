@@ -12,37 +12,30 @@ class AActor;
 
 struct LHitResult final
 {
-    LHitResult() { this->Initialize(); }
-
     FORCEINLINE bool IsValid() const { return this->Actor != nullptr; }
 
-    void Initialize();
     void Reset();
 
     template <typename TActor>
-    FORCEINLINE auto GetActor() -> TActor* { return DynamicCast<TActor>(this->Actor); }
+    FORCEINLINE TActor* GetActor() { return DynamicCast<TActor>(this->Actor); }
     template <typename TActor>
-    FORCEINLINE auto GetActor() const -> const TActor* { return DynamicCast<TActor>(this->Actor); }
+    FORCEINLINE const TActor* GetActor() const { return DynamicCast<TActor>(this->Actor); }
 
     //#
     //# Hit actor.
     //#
-    AActor* Actor = nullptr;
+    AActor* Actor { nullptr };
 
     //#
     //# Hit location in world space.
     //#
-    LVector GlobalWorldLocation = LVector::ZeroVector;
+    LVector GlobalWorldLocation;
 
     //#
     //# Optional hit surface normal.
     //#
     TOptional<LVector> SurfaceNormal;
 };
-
-inline void LHitResult::Initialize()
-{
-}
 
 inline void LHitResult::Reset()
 {
@@ -58,10 +51,10 @@ namespace ECollisionChannel
 
 enum Type : u8
 {
-    Invalid,
-    Static,
-    Dynamic,
-    Pawn,
+    Invalid  = 0x0 << 0,
+    Static   = 0x1 << 1,
+    Dynamic  = 0x1 << 2,
+    Pawn     = 0x1 << 3,
 };
 
 } /* ~Namespace ECollisionChannel */

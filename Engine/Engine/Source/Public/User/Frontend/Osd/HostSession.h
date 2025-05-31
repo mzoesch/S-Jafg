@@ -6,6 +6,7 @@
 #include "Widgets/Region.h"
 #include "Storage/FetchedSave.h"
 #include "Widgets/Button.h"
+#include "Widgets/HRegion.h"
 #include "HostSession.generated.h"
 
 namespace Jafg
@@ -16,10 +17,12 @@ class WScrollRegion;
 class WTabBar;
 class WVRegion;
 class WSwitcher;
+class WEditableTextBlock;
 class WCommonMenuTabBar;
 class WHostSessionScreen_New;
 class WHostSessionScreen_Old;
 class WHostSessionScreen_Old_Save;
+class WHostSessionScreen_Old_Host;
 
 //#
 //# The main class screen for hosting a session.
@@ -37,13 +40,21 @@ public:
 
     ENGINE_API virtual void Construct() override;
 
+    virtual void OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility) override;
+
     ENGINE_API void ShowOldScreen();
     ENGINE_API void ShowNewScreen();
+    ENGINE_API void ShowOldScreenHost();
+
+    FORCEINLINE WHostSessionScreen_Old* GetOldScreen() noexcept { return this->OldScreen; }
+    FORCEINLINE WHostSessionScreen_Old_Host* GetOldScreenHost() noexcept { return this->OldScreenHost; }
+    FORCEINLINE WHostSessionScreen_New* GetNewScreen() noexcept { return this->NewScreen; }
 
 private:
 
     WSwitcher* Switcher { nullptr };
     WHostSessionScreen_Old* OldScreen { nullptr };
+    WHostSessionScreen_Old_Host* OldScreenHost { nullptr };
     WHostSessionScreen_New* NewScreen { nullptr };
 };
 
@@ -82,14 +93,17 @@ public:
 
 private:
 
+    TWidgetFactoryHRegion<WHRegion>* AddMenuButtons();
+
     void OnLoad_General(WTabBar* TabBar, WNode* Button, WNode* Panel);
     void OnLoad_Multiplayer(WTabBar* TabBar, WNode* Button, WNode* Panel);
     void OnLoad_WorldGeneration(WTabBar* TabBar, WNode* Button, WNode* Panel);
     void OnLoad_Policies(WTabBar* TabBar, WNode* Button, WNode* Panel);
     void OnLoad_Advanced(WTabBar* TabBar, WNode* Button, WNode* Panel);
 
-    WCommonMenuTabBar * InternalTabBar { nullptr };
+    WCommonMenuTabBar*  InternalTabBar { nullptr };
     WHostSessionScreen* Owner;
+    WEditableTextBlock* SessionName { nullptr };
 };
 
 DECLARE_JAFG_WIDGET()
@@ -107,6 +121,8 @@ public:
 
     void Reload();
 
+    virtual void OnPrimaryRelease() override;
+
     FORCEINLINE bool IsSaveValid() const noexcept { return this->Save.IsValid(); }
     FORCEINLINE const LFetchedSave& GetSave() const noexcept { return this->Save; }
 
@@ -117,7 +133,8 @@ public:
 protected:
 
     LFetchedSave Save;
-    WHostSessionScreen_Old* Owner;
+    WHostSessionScreen_Old* Owner { nullptr };
+    std::shared_ptr<LTexture2> OptionalHolder;
 };
 
 DECLARE_JAFG_WIDGET(EClassFlags::Config)
@@ -148,19 +165,53 @@ public:
     CLASS_FIELD(Config)
     TSubclassOf<WHostSessionScreen_Old_Save> SaveNodeClass { LazyInit };
 
+    void HighlightSave(WHostSessionScreen_Old_Save& Who);
+    void HighlightNoSave(const bool bScrollUp = false);
+
 private:
 
     void RefetchSavesImpl();
 
     i32 SelectedSaveIndex { INDEX_NONE };
     TArray<LFetchedSave> FetchedSaves;
-    WHostSessionScreen* Owner;
+    WHostSessionScreen* Owner { nullptr };
     WScrollRegion* SavesRegionContainer { nullptr };
     WVRegion* SavesRegion { nullptr };
 
     WButton* DeleteButton { nullptr };
     WButton* EditButton { nullptr };
     WButton* HostButton { nullptr };
+};
+
+DECLARE_JAFG_WIDGET()
+class ENGINE_API WHostSessionScreen_Old_Host : public WRegion
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    explicit WHostSessionScreen_Old_Host(const LObjectInitializer& ObjectInitializer);
+
+public:
+
+    virtual void Construct() override;
+
+    virtual bool AddData(const LWidgetNodeData* InData) override;
+
+    void UpdateToCachedSave();
+
+    FORCEINLINE bool IsCachedSaveValid() const noexcept { return this->Save && this->Save->IsValid(); }
+    FORCEINLINE void Reset() noexcept { this->Save = nullptr; }
+    FORCEINLINE void SetSave(const LFetchedSave& Save) noexcept { this->Save = &Save; }
+
+private:
+
+    TWidgetFactoryHRegion<WHRegion>* AddMenuButtons();
+
+    WTextBlock* Header { nullptr };
+
+    WHostSessionScreen* Owner { nullptr };
+    const LFetchedSave* Save { nullptr };
 };
 
 } /* ~Namespace Jafg */

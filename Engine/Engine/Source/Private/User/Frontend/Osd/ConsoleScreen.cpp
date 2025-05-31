@@ -23,10 +23,10 @@ void Jafg::WConsoleScreen::Construct()
         .Anchor(EAnchor::VBottom | EAnchor::HFill)
     [
         NewNode(WEditableTextBlock).SaveTo(&this->EditableTextBlock)
-            .TextColor(LColor::Red)
+            .TextTint(LColor::Red)
             .TextScale(0.5f)
-            .SetPadding({ 5.0f, 4.5f })
-            .Tint({0, 0, 0, 164 })
+            .Padding({5.0f, 4.5f})
+            .Tint({0, 0, 0, 164})
             .OnCommit(LEditableTextBlockCommitDelegate::CreateFunction(this, &WConsoleScreen::OnTextCommit))
     ]
     FinishWidgetStyling()
@@ -138,7 +138,7 @@ void Jafg::WConsoleScreen::GoHistoryBack()
         return;
     }
 
-    this->GetImplChecked()->SetText(*this->GetCurrentHistoryItemChecked());
+    this->GetImplChecked()->SetContent(*this->GetCurrentHistoryItemChecked());
 
     return;
 }
@@ -153,13 +153,13 @@ void Jafg::WConsoleScreen::GoHistoryForward()
     {
         if (this->HistoryCursor != LastHistoryCursor)
         {
-            this->GetImpl()->SetText("");
+            this->GetImpl()->SetContent("");
         }
 
         return;
     }
 
-    this->GetImplChecked()->SetText(*this->GetCurrentHistoryItemChecked());
+    this->GetImplChecked()->SetContent(*this->GetCurrentHistoryItemChecked());
 
     return;
 }
@@ -175,7 +175,7 @@ void Jafg::WConsoleScreen::HideConsoleScreenWithSideEffects()
 
     if (this->EditableTextBlock)
     {
-        this->EditableTextBlock->ClearText();
+        this->EditableTextBlock->ClearContent();
     }
 
     this->HistoryCursor = INDEX_NONE;

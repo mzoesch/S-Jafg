@@ -74,7 +74,7 @@ LAL_API bool IsRelative(const LPath& InPath);
 //# Creates a file if it does not exist.
 //# If something goes wrong, this program will panic.
 //#
-LAL_API void CreateFileSlow(const LPath& InFilePath);
+LAL_API void CreateFileSlow(const LPath& InFilePath, const bool bMakeParents = false);
 //# Override a file with the provided content. If the file does not exist, it will be created.
 LAL_API void OverrideFile(const LPath& InFileName, const LStringView& InContent, const bool bUseNativeLineEndings = false);
 

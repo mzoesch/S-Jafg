@@ -3,7 +3,7 @@
 #include "Engine/Engine.h"
 #include "System/MaterialSubsystem.h"
 #include "System/Finder.h"
-#include "System/TextureSubsystem.h"
+#include "System/VoxelTextureSubsystem.h"
 #include "System/VoxelSubsystem.h"
 #include "System/EnginePath.h"
 #include "User/UserPreferences.h"
@@ -11,7 +11,7 @@
 void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Collection.InitializeDependency<JVoxelSubsystem>();
-    Collection.InitializeDependency<JTextureSubsystem>();
+    Collection.InitializeDependency<JVoxelTextureSubsystem>();
     Super::Initialize(Collection);
 
     this->LoadAllTextures();
@@ -45,7 +45,7 @@ void Jafg::JMaterialSubsystem::ClearAllTextures()
 void Jafg::JMaterialSubsystem::LoadAllTextures()
 {
     JVoxelSubsystem* VoxelSubsystem = this->GetEngine()->GetCheckedSubsystem<JVoxelSubsystem>();
-    JTextureSubsystem* TextureSubsystem = this->GetEngine()->GetCheckedSubsystem<JTextureSubsystem>();
+    JVoxelTextureSubsystem* TextureSubsystem = this->GetEngine()->GetCheckedSubsystem<JVoxelTextureSubsystem>();
 
 #pragma region "Blending"
     TArray<LDiskBlendTexture> BlendedTextureNames = TextureSubsystem->FindMeaningBlendTextureNames();
