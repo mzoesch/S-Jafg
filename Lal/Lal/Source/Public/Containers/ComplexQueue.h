@@ -42,19 +42,10 @@ public:
 
     FORCEINLINE bool Pop();
 
-    /**
-     * Peeks at the queue's tail item without removing it.
-     * @return Pointer to the item, or nullptr if queue is empty.
-     */
-    // FORCEINLINE       T* Peek();
-    // FORCEINLINE const T* Peek() const;
-
     FORCEINLINE void Empty();
     FORCEINLINE bool IsEmpty() const;
 
-#if WITH_TESTS
-    FORCEINLINE SizeType UnsafeSize() const;
-#endif /* WITH_TESTS */
+    FORCEINLINE SizeType GetSizeSlow();
 
 #if WITH_TESTS
 public:
@@ -69,7 +60,7 @@ private:
 
     struct TNode final
     {
-        TNode* volatile NextNode = nullptr;
+        TNode* volatile NextNode { nullptr };
         T Content;
 
         FORCEINLINE TNode() = delete;
@@ -427,25 +418,25 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::IsEmpty() const
     return this->Tail.load() == nullptr;
 }
 
-#if WITH_TESTS
-template <typename T, typename TSizeType>
-FORCEINLINE typename TMpmcQueue<T, TSizeType>::SizeType TMpmcQueue<T, TSizeType>::UnsafeSize() const
+template<typename T, typename TSizeType>
+FORCEINLINE typename TMpmcQueue<T, TSizeType>::SizeType TMpmcQueue<T, TSizeType>::GetSizeSlow()
 {
     if (this->Tail.load() == nullptr)
     {
         return 0;
     }
 
-    SizeType Count = 0;
+    SizeType Size;
+
+    std::unique_lock Lock(this->Mutex);
 
     for (TNode* Node = this->Tail.load(); Node != nullptr; Node = Node->NextNode)
     {
-        ++Count;
+        ++Size;
     }
 
-    return Count;
+    return Size;
 }
-#endif /* WITH_TESTS */
 
 template <typename T, typename TSizeType>
 FORCEINLINE void TMpmcQueue<T, TSizeType>::EnqueueImpl(TNode* NewNode)

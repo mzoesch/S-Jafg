@@ -13,7 +13,8 @@ public:
 
     typedef LEngineShader Super;
 
-    virtual bool Make(const LName InName) override;
+    virtual TArray<LShaderCompileTimeConstant> GetDefaultConstants() override;
+    virtual bool Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants = {}) override;
     virtual void UpdateViewportUniforms(const LViewport& Context) override;
     virtual void OnFree() override;
 

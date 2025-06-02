@@ -3,6 +3,7 @@
 #pragma once
 
 #include "System/SystemForward.h"
+#include "System/EnginePath.h"
 
 namespace Jafg
 {
@@ -21,6 +22,24 @@ struct LShaderCompileTimeConstant
     //# An optional value for the constant. Leave empty for just defining the name to the program.
     //#
     LString Value;
+
+    FORCEINLINE bool operator==(const LShaderCompileTimeConstant& Rhs) const noexcept
+    {
+        return this->Name == Rhs.Name;
+    }
+    FORCEINLINE bool operator!=(const LShaderCompileTimeConstant& Rhs) const noexcept
+    {
+        return !(*this == Rhs);
+    }
+
+    FORCEINLINE bool operator==(const LString& Rhs) const noexcept
+    {
+        return this->Name == Rhs;
+    }
+    FORCEINLINE bool operator!=(const LString& Rhs) const noexcept
+    {
+        return !(*this == Rhs);
+    }
 };
 
 //#
@@ -43,6 +62,8 @@ public:
     ENGINE_API void Free();
     ENGINE_API void Load(const LEnginePath& Path);
     ENGINE_API void Load(const LEnginePath& Path, const TArray<LShaderCompileTimeConstant>& InConstants);
+    ENGINE_API void Load(const TArray<LShaderCompileTimeConstant>& InConstants);
+    ENGINE_API void Recompile(const TArray<LShaderCompileTimeConstant>& InConstants);
     ENGINE_API void Use() const;
 
 #if WITH_DEBUG_ZERO_UNBOUND
@@ -69,8 +90,9 @@ public:
     ENGINE_API void SetColorVec3Uniform(const LString& Name, const LColor& Value) const;
     ENGINE_API void SetColorVec4Uniform(const LString& Name, const LColor& Value) const;
 
-    FORCEINLINE u32 GetId() const noexcept { return this->Id; }
+    FORCEINLINE const LEnginePath& GetCachedPath() const noexcept { return this->CachedPath; }
 
+    FORCEINLINE u32 GetId() const noexcept { check( this->bLoaded ) return this->Id; }
     FORCEINLINE operator u32() const noexcept { check( this->bLoaded ) return this->Id; }
 
 private:
@@ -78,6 +100,7 @@ private:
     void LoadShader(const LEnginePath& VertexPath, const LEnginePath& FragmentPath, const TArray<LShaderCompileTimeConstant>& InConstants);
 
     bool bLoaded { false };
+    LEnginePath CachedPath;
     u32 Id = NULL;
 };
 
@@ -91,6 +114,7 @@ FORCEINLINE LShader& LShader::operator=(LShader&& InShader) noexcept
     }
 
     this->bLoaded = InShader.bLoaded;
+    this->CachedPath = std::move(InShader.CachedPath);
     this->Id = InShader.Id;
     InShader.bLoaded = false;
 

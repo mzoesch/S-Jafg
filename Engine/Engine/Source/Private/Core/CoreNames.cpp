@@ -37,6 +37,7 @@ ENGINE_API LName Name_UsrInTogglePauseScreen   = MAKE_STATIC_NAME("TogglePauseSc
 ENGINE_API LName Name_UsrInTrap                = MAKE_STATIC_NAME("Trap");
 ENGINE_API LName Name_UsrInRhiPolyToWireframe  = MAKE_STATIC_NAME("RhiPolyToWireframe");
 ENGINE_API LName Name_UsrInRhiPolyToFill       = MAKE_STATIC_NAME("RhiPolyToFill");
+ENGINE_API LName Name_UsrInRhiShowNormals      = MAKE_STATIC_NAME("RhiShowNormals");
 ENGINE_API LName Name_UsrInToggleConsoleScreen = MAKE_STATIC_NAME("ToggleConsoleScreen");
 ENGINE_API LName Name_UsrInMovePawn            = MAKE_STATIC_NAME("MovePawn");
 ENGINE_API LName Name_UsrInRotatePawn          = MAKE_STATIC_NAME("RotatePawn");

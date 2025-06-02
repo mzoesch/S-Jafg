@@ -6,7 +6,12 @@
 #include "System/VoxelSubsystem.h"
 #include "Stats/Stats.h"
 
-void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, voxel_t* InOutChunkData)
+namespace
+{
+
+using namespace Jafg;
+
+void ShapeChunk_Default(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, voxel_t* InOutChunkData)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -16,8 +21,6 @@ void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const 
     constexpr i32 MapMaxHeight { 250 };
 
     const voxel_t StoneIdx = SharedArgs->VoxelSubsystem->GetVoxelIndex("Stone");
-
-#if PLATFORM_SUPPORTS_SIMD
 
     if (InKey.Z < 0)
     {
@@ -33,7 +36,7 @@ void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const 
         0.01f, 1337
     );
 
-    STAT_QUICK_CYCLE_START("Jafg::ChunkGenerator::ShapeChunk::GenerateVoxels")
+    STAT_QUICK_CYCLE_START("ChunkGenerator::ShapeChunk::GenerateVoxels")
     LChunkKeyDomain Index = INDEX_NONE;
     for (LChunkKeyDomain Z = 0; Z < MwStatics::ChunkSize; ++Z)
     {
@@ -54,24 +57,54 @@ void Jafg::ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const 
             }
         }
     }
-#else /* PLATFORM_SUPPORTS_SIMD */
-    for (LChunkKeyDomainTy X = 0; X < MwStatics::ChunkSize; ++X)
-    {
-        for (LChunkKeyDomainTy Y = 0; Y < MwStatics::ChunkSize; ++Y)
-        {
-            for (LChunkKeyDomainTy Z = 0; Z < MwStatics::ChunkSize; ++Z)
-            {
-                const i32 MapZ = InKey.Z * MwStatics::ChunkSize + Z;
-                InOutChunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = MapZ < 12 ? StoneIdx : ECompileTimeVoxels::Air;
-            }
-        }
-    }
-#endif /* !PLATFORM_SUPPORTS_SIMD */
 
     return;
 }
 
-void Jafg::ChunkGenerator::ReplaceSurface(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, AChunk* Target, voxel_t* InOutChunkData)
+void ShapeChunk_SuperFlat(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, voxel_t* InOutChunkData)
+{
+    STAT_CYCLE_FUNCTION()
+
+    checkSlow( SharedArgs )
+    checkSlow( InOutChunkData )
+
+    constexpr i32 MapHeight { 140 };
+
+    const voxel_t StoneIdx = SharedArgs->VoxelSubsystem->GetVoxelIndex("Stone");
+
+    for (LChunkKeyDomain Z = 0; Z < MwStatics::ChunkSize; ++Z)
+    {
+        LChunkKeyDomain MapZ = (InKey.Z * MwStatics::ChunkSize) + Z;
+
+        for (LChunkKeyDomain Y = 0; Y < MwStatics::ChunkSize; ++Y)
+        {
+            for (LChunkKeyDomain X = 0; X < MwStatics::ChunkSize; ++X)
+            {
+                InOutChunkData[AChunk::GetRawVoxelIndex(X, Y, Z)] = MapZ < MapHeight ? StoneIdx : ECompileTimeVoxels::Air;
+            }
+        }
+    }
+
+    return;
+}
+
+} /* ~Namespace <Anonymous> */
+
+void ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, voxel_t* InOutChunkData)
+{
+    if (SharedArgs->bSuperFlat)
+    {
+        ShapeChunk_SuperFlat(SharedArgs, InKey, InOutChunkData);
+    }
+    else
+    {
+        ShapeChunk_Default(SharedArgs, InKey, InOutChunkData);
+    }
+
+    return;
+}
+
+void ChunkGenerator::ReplaceSurface(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, AChunk* Target, voxel_t* InOutChunkData)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -79,63 +112,63 @@ void Jafg::ChunkGenerator::ReplaceSurface(const LSharedChunkArgs* SharedArgs, co
     checkSlow( Target )
     checkSlow( InOutChunkData )
 
-    constexpr i32 DirtHeight { 3 };
-
-    const voxel_t GrassIdx = SharedArgs->VoxelSubsystem->GetVoxelIndex("Grass");
-    const voxel_t DirtIdx  = SharedArgs->VoxelSubsystem->GetVoxelIndex("Dirt");
-
-    for (LChunkKeyDomain X = 0; X < MwStatics::ChunkSize; ++X)
-    {
-        for (LChunkKeyDomain Y = 0; Y < MwStatics::ChunkSize; ++Y)
-        {
-            u8 CurrentDirtDepth = 0;
-
-            for (LChunkKeyDomain Z = MwStatics::ChunkSize - 1 + DirtHeight; Z >= MwStatics::ChunkSize; --Z)
-            {
-                if (Target->GetRawVoxelDataByNonZeroOrigin(LVoxelKey(X, Y, Z)) == ECompileTimeVoxels::Air)
-                {
-                    CurrentDirtDepth = 0;
-                    continue;
-                }
-
-                ++CurrentDirtDepth;
-
-                continue;
-            }
-
-            for (LChunkKeyDomain Z = MwStatics::ChunkSize - 1; Z >= 0; --Z)
-            {
-                voxel_t& Voxel = InOutChunkData[AChunk::GetRawVoxelIndex(X, Y, Z)];
-                if (Voxel == ECompileTimeVoxels::Air)
-                {
-                    CurrentDirtDepth = 0;
-                    continue;
-                }
-
-                const voxel_t VoxelAbove = Target->GetRawVoxelDataByNonZeroOrigin(LVoxelKey(X, Y, Z + 1));
-                if (VoxelAbove == ECompileTimeVoxels::Air)
-                {
-                    Voxel = GrassIdx;
-                    CurrentDirtDepth = 1;
-                    continue;
-                }
-
-                if (CurrentDirtDepth > DirtHeight - 1)
-                {
-                    continue;
-                }
-
-                Voxel = DirtIdx;
-                ++CurrentDirtDepth;
-
-                continue;
-            }
-
-            continue;
-        }
-
-        continue;
-    }
+    // constexpr i32 DirtHeight { 3 };
+    //
+    // const voxel_t GrassIdx = SharedArgs->VoxelSubsystem->GetVoxelIndex("Grass");
+    // const voxel_t DirtIdx  = SharedArgs->VoxelSubsystem->GetVoxelIndex("Dirt");
+    //
+    // for (LChunkKeyDomain X = 0; X < MwStatics::ChunkSize; ++X)
+    // {
+    //     for (LChunkKeyDomain Y = 0; Y < MwStatics::ChunkSize; ++Y)
+    //     {
+    //         u8 CurrentDirtDepth = 0;
+    //
+    //         for (LChunkKeyDomain Z = MwStatics::ChunkSize - 1 + DirtHeight; Z >= MwStatics::ChunkSize; --Z)
+    //         {
+    //             if (Target->GetRawVoxelDataByNonZeroOrigin(LVoxelKey(X, Y, Z)) == ECompileTimeVoxels::Air)
+    //             {
+    //                 CurrentDirtDepth = 0;
+    //                 continue;
+    //             }
+    //
+    //             ++CurrentDirtDepth;
+    //
+    //             continue;
+    //         }
+    //
+    //         for (LChunkKeyDomain Z = MwStatics::ChunkSize - 1; Z >= 0; --Z)
+    //         {
+    //             voxel_t& Voxel = InOutChunkData[AChunk::GetRawVoxelIndex(X, Y, Z)];
+    //             if (Voxel == ECompileTimeVoxels::Air)
+    //             {
+    //                 CurrentDirtDepth = 0;
+    //                 continue;
+    //             }
+    //
+    //             const voxel_t VoxelAbove = Target->GetRawVoxelDataByNonZeroOrigin(LVoxelKey(X, Y, Z + 1));
+    //             if (VoxelAbove == ECompileTimeVoxels::Air)
+    //             {
+    //                 Voxel = GrassIdx;
+    //                 CurrentDirtDepth = 1;
+    //                 continue;
+    //             }
+    //
+    //             if (CurrentDirtDepth > DirtHeight - 1)
+    //             {
+    //                 continue;
+    //             }
+    //
+    //             Voxel = DirtIdx;
+    //             ++CurrentDirtDepth;
+    //
+    //             continue;
+    //         }
+    //
+    //         continue;
+    //     }
+    //
+    //     continue;
+    // }
 
     return;
 }

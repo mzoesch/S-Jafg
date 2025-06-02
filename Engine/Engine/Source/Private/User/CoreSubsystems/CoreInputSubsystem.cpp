@@ -12,6 +12,7 @@
 #include "User/Frontend/Osd/PauseScreen.h"
 #include "User/Input/UserInput.h"
 #include "User/Input/InputAction.h"
+#include "Engine/Engine.h"
 
 void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 {
@@ -136,6 +137,40 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             [](LInputActionValue& InValue) -> void
             {
                 GetMutableDefault<JUserPreferences>()->PolygonMode = EPolygonMode::Fill;
+            }
+        );
+    }
+
+    // Action: RhiShowNormals
+    {
+        ContextMyWorld->MapAction
+        (
+            UserInput,
+            {Name_UsrInRhiShowNormals, "Rhi Show Normals", EInputActionCategory::Boolean},
+            "",
+            EKeys::F4,
+            EInputActionTrigger::Triggered,
+            {
+            },
+            [](LInputActionValue& InValue) -> void
+            {
+                LEngineShader* Shader = GEngine->GetShader(Name_ShaderChunk);
+                if (Shader == nullptr)
+                {
+                    LOG_ERROR(LogUserInput, "Failed to find shader.")
+                    return;
+                }
+
+                if (Shader->GetCachedConstants().Contains("DISPLAY_NORMALS"))
+                {
+                    Shader->Recompile({{"DISPLAY_NORMALS"}}, {});
+                }
+                else
+                {
+                    Shader->Recompile({}, {{"DISPLAY_NORMALS", "1"}});
+                }
+
+                return;
             }
         );
     }

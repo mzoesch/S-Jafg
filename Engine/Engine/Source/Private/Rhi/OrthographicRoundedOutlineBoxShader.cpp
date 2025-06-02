@@ -5,17 +5,12 @@
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
 
-bool Jafg::LOrthographicRoundedOutlineBoxShader::Make(const LName InName)
+Jafg::TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicRoundedOutlineBoxShader::GetDefaultConstants()
 {
-    if (const bool bOut = Super::Make(InName); bOut == false)
-    {
-        return false;
-    }
+    TArray<LShaderCompileTimeConstant> SuperConstants = Super::GetDefaultConstants();
 
-    LOG_VERBOSE(LogRhi, "Creating OrthographicRoundedOutlineBoxShader at [{}].", InName)
-
-    this->Program = LShader(LEnginePath(EEnginePaths::Shaders, "VisualBox"),
-    {
+    SuperConstants.Append
+    ({
         {
             "WITH_UV", "1"
         },
@@ -29,6 +24,19 @@ bool Jafg::LOrthographicRoundedOutlineBoxShader::Make(const LName InName)
             "WITH_RADII", "1"
         },
     });
+
+    return SuperConstants;}
+
+bool Jafg::LOrthographicRoundedOutlineBoxShader::Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants /* = {} */)
+{
+    if (const bool bOut = Super::Make(InName, std::move(InConstants)); bOut == false)
+    {
+        return false;
+    }
+
+    LOG_VERBOSE(LogRhi, "Creating OrthographicRoundedOutlineBoxShader at [{}].", InName)
+
+    this->Program = LShader(LEnginePath(EEnginePaths::Shaders, "VisualBox"), this->Constants);
 
     this->Program.Use();
 

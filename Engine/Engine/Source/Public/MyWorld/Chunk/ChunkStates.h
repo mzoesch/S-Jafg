@@ -16,15 +16,13 @@ enum Type : u8
     //# Marks an invalid state. A chunk must never have this state.
     //#
     Invalid,
-    Freed,
 
-    PreSpawned,
     Spawned,
     Shaped,
     SurfaceReplaced,
     Active,
 
-    GenerationMin = Spawned,
+    GenerationMin = Shaped,
     GenerationMax = Active,
 
     //#
@@ -53,7 +51,7 @@ enum Type : u8
     Kill,
 };
 
-inline bool IsGeneration(const EChunkState::Type& InState)
+FORCEINLINE bool IsGeneration(const EChunkState::Type& InState)
 {
     return InState >= EChunkState::GenerationMin && InState <= EChunkState::GenerationMax;
 }
@@ -67,10 +65,6 @@ inline LString LexToString(const EChunkState::Type InState)
     case EChunkState::Invalid:
     {
         return "Invalid";
-    }
-    case EChunkState::PreSpawned:
-    {
-        return "PreSpawned";
     }
     case EChunkState::Spawned:
     {

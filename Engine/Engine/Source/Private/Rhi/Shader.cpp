@@ -59,12 +59,30 @@ void Jafg::LShader::Load(const LEnginePath& Path, const TArray<LShaderCompileTim
         this->Free();
     }
 
-    LEnginePath VertexPath = Path;
+    this->CachedPath = Path;
+    this->Load(InConstants);
+
+    return;
+}
+
+void Jafg::LShader::Load(const TArray<LShaderCompileTimeConstant>& InConstants)
+{
+    LEnginePath VertexPath = this->CachedPath;
     VertexPath.AddExtension(".vert");
-    LEnginePath FragmentPath = Path;
+    LEnginePath FragmentPath = this->CachedPath;
     FragmentPath.AddExtension(".frag");
 
     this->LoadShader(VertexPath, FragmentPath, InConstants);
+
+    return;
+}
+
+void Jafg::LShader::Recompile(const TArray<LShaderCompileTimeConstant>& InConstants)
+{
+    LOG_VERBOSE(LogRhi, "Recompiling shader [{}].", this->CachedPath.GetRelativeUnresolvedPath())
+
+    this->Free();
+    this->Load(InConstants);
 
     return;
 }

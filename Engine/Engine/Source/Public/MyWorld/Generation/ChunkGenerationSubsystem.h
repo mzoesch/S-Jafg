@@ -43,46 +43,38 @@ public:
     FORCEINLINE AChunk* FindChunkChecked(const LChunkKey& InChunkKey) const;
     FORCEINLINE AChunk* FindChunkAsserted(const LChunkKey& InChunkKey) const;
 
-    FORCEINLINE i32 GetRenderDistance() const { return *this->RenderDistance; }
-    FORCEINLINE i32 GetRenderDistanceChecked() const { check( this->RenderDistance ) return *this->RenderDistance; }
-    FORCEINLINE i32 GetRenderHeight() const { return *this->RenderHeight; }
-    FORCEINLINE i32 GetRenderHeightChecked() const { check( this->RenderHeight ) return *this->RenderHeight; }
-
     //# Not thread safe. Only use on master thread.
     FORCEINLINE void SetRequestedChunks(TArray<LChunkKey>&& InChunks);
-    FORCEINLINE auto GetRequestedChunks() const -> const TArray<LChunkKey>& { check( Tasks::IsOnMasterThread() ) return this->RequestedChunks; }
-
-    template <typename Predicate>
-    FORCEINLINE void MutateRequestedPreSpawnedChunks(Predicate&& InPredicate);
+    FORCEINLINE const TArray<LChunkKey>& GetRequestedChunks() const { check( Tasks::IsOnMasterThread() ) return this->Requested; }
 
     TQueue<AChunk*> OutActiveChunks;
-    TQueue<AChunk*> InFailedActiveChunks;
 
 private:
 
-    //
+    ///////////////////////////////////////////////////////////////////////////////
     // BEGIN
     // World optimization stuff not part of the chunk generation subsystem and logic.
     // Just helper functions for really heavy optimizations.
-    //
-    bool LineTraceByChannel(
+    ///////////////////////////////////////////////////////////////////////////////
+    bool LineTraceByChannel
+    (
         TArray<LHitResult>& OutHits,
         const LVector& Start,
         const LVector& End,
         const LCollisionQueryParams& Params
     ) const;
 
-    void OnStaticDraw(
+    void OnStaticDraw
+    (
         const LViewport& Viewport,
         const LEye& Eye,
         const std::span<LVector>& Corners
     ) const;
-    //
+    ///////////////////////////////////////////////////////////////////////////////
     // END World optimization stuff
-    //
+    ///////////////////////////////////////////////////////////////////////////////
 
     AChunk* SpawnWeakChunk(const LChunkKey& InChunkKey);
-    AChunk* SafeLoadPersistentPreSpawnedChunk(const LChunkKey& ChunkKey);
 
     //#
     //# Transient or persistent chunks that are loaded in any state.
@@ -95,44 +87,28 @@ private:
     //#
     //# Based on the current validation subsystem.
     //# If points of interest do not move, these would be the remaining chunks that should be pre spawned and loaded.
+    //# From least important to most.
     //#
-    TArray<LChunkKey> RequestedChunks;
-
-    //# Requested chunks that should be pre spawned immediately.
-    TArray<LChunkKey> RequestedPreSpawnedChunks;
-    mutable std::shared_mutex RequestedPreSpawnedChunksMutex;
+    TArray<LChunkKey> Requested;
 
     LSharedChunkArgs SharedChunkArgs;
-
-    //# Cached args common attributes.
-    const i32* RenderDistance = nullptr;
-    const i32* RenderHeight   = nullptr;
 };
-
-template<typename Predicate>
-FORCEINLINE void JChunkGenerationSubsystem::MutateRequestedPreSpawnedChunks(Predicate&& InPredicate)
-{
-    check( Tasks::IsOnMasterThread() == false && "No. This is bad design.")
-
-    std::unique_lock Lock(this->RequestedPreSpawnedChunksMutex);
-    InPredicate(this->RequestedPreSpawnedChunks);
-
-    return;
-}
 
 FORCEINLINE TArray<LChunkKey> JChunkGenerationSubsystem::GetCurrentActiveChunkSnapshot() const
 {
     check( Tasks::IsOnMasterThread() == false && "No. This is bad design.")
 
     std::shared_lock Lock(this->LoadedChunksMutex);
+
     TArray<LChunkKey> Out;
     for (const auto& [Fst, Snd] : *this->LoadedChunks)
     {
-        if (Snd->GetCurrentChunkStateDangerous() == EChunkState::Active)
+        if (Snd->GetCurrentStateDangerous() == EChunkState::Active)
         {
             Out.Add(Fst);
         }
     }
+
     return Out;
 }
 
@@ -160,8 +136,7 @@ FORCEINLINE AChunk* JChunkGenerationSubsystem::FindChunkAsserted(const LChunkKey
 FORCEINLINE void JChunkGenerationSubsystem::SetRequestedChunks(TArray<LChunkKey>&& InChunks)
 {
     check( Tasks::IsOnMasterThread() )
-    this->RequestedChunks = std::move(InChunks);
-    this->OutActiveChunks.Empty();
+    this->Requested = std::move(InChunks);
 
     return;
 }

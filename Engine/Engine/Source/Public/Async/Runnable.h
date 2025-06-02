@@ -67,8 +67,8 @@ protected:
 
     virtual void OnStop(const ERunnableStopReason::Type InType) { }
 
-    bool volatile bStopped = false;
-    LString HumanReadableName = nullptr;
+    std::atomic_bool bStopped { false };
+    LString HumanReadableName { nullptr };
 };
 
 } /* ~Namespace Jafg */

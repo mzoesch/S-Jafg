@@ -15,9 +15,10 @@ class LViewport;
 
 //#
 //# The engine shader class is meant for shaders that are commonly used by the engine or clients of it.
-//# It should be used as a hup to store shaders so that others can easily access and use them.
+//# The engine stores them as a hup so that others can easily access and use them without
+//# allocating their own instances.
 //#
-class ENGINE_API LEngineShader
+class LEngineShader
 {
     friend LEngine;
 
@@ -26,21 +27,27 @@ public:
     LEngineShader() = default;
     virtual ~LEngineShader() { this->Free(); }
 
+    FORCEINLINE bool IsValid() const noexcept { return this->bValid; }
     FORCEINLINE void Free() { if (this->bValid) { this->bValid = false; this->OnFree(); } }
 
-    FORCEINLINE bool IsValid() const noexcept { return this->bValid; }
+    virtual TArray<LShaderCompileTimeConstant> GetDefaultConstants() { return { }; }
 
-    virtual     bool Make(const LName InName);
-    FORCEINLINE bool MakeChecked(const LName InName);
-    FORCEINLINE bool MakeAsserted(const LName InName);
+    ENGINE_API  virtual bool Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants = {});
+    FORCEINLINE bool MakeChecked(const LName InName, TArray<LShaderCompileTimeConstant>&&  InConstants = {});
+    FORCEINLINE bool MakeAsserted(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants = {});
+
+    ENGINE_API void Recompile(const TArray<LShaderCompileTimeConstant>& InRemove, const TArray<LShaderCompileTimeConstant>& InAdd);
+    virtual    void OnRecompile() { }
 
     FORCEINLINE void Use() const { check( this->IsValid() ) this->Program.Use(); }
 
     virtual void UpdateWorldUniforms(const LViewport& Context, const LWorld& World, const LEye& Eye) { }
     virtual void UpdateViewportUniforms(const LViewport& Context) { }
 
-    FORCEINLINE auto GetProgram()       noexcept ->       LShader& { return this->Program; }
-    FORCEINLINE auto GetProgram() const noexcept -> const LShader& { return this->Program; }
+    FORCEINLINE LShader& GetProgram() noexcept { return this->Program; }
+    FORCEINLINE const LShader& GetProgram() const noexcept { return this->Program; }
+
+    FORCEINLINE const TArray<LShaderCompileTimeConstant>& GetCachedConstants() const noexcept { return this->Constants; }
 
 protected:
 
@@ -48,22 +55,23 @@ protected:
     virtual void OnFree();
 
     LShader Program;
+    TArray<LShaderCompileTimeConstant> Constants;
 
 private:
 
     bool bValid { false };
 };
 
-FORCEINLINE bool LEngineShader::MakeChecked(const LName InName)
+FORCEINLINE bool LEngineShader::MakeChecked(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants /* = {} */)
 {
-    const bool bOut = this->Make(InName);
+    const bool bOut = this->Make(InName, std::move(InConstants));
     check( bOut );
     return bOut;
 }
 
-FORCEINLINE bool LEngineShader::MakeAsserted(const LName InName)
+FORCEINLINE bool LEngineShader::MakeAsserted(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants /* = {} */)
 {
-    const bool bOut = this->Make(InName);
+    const bool bOut = this->Make(InName, std::move(InConstants));
     jassert( bOut );
     return bOut;
 }

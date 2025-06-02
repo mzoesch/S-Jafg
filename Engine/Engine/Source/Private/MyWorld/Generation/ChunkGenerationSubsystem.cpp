@@ -30,19 +30,22 @@ void Jafg::JChunkGenerationSubsystem::Initialize(LSubsystemCollection& Collectio
     Super::Initialize(Collection);
     this->SetTickInterval(0.0f);
 
-    this->LoadedChunks = std::unordered_map<LChunkKey, AChunk*>(0x7FF);
+    const JUserPreferences* Prefs { GetDefault<JUserPreferences>() };
+
+    this->LoadedChunks = std::unordered_map<LChunkKey, AChunk*>
+    (
+        static_cast<i64>(static_cast<f32>((Prefs->ChunkRenderDistance * Prefs->ChunkRenderDistance) * Prefs->ChunkRenderHeight) * 1.2f)
+    );
 
     this->SharedChunkArgs.ChunkGenerationSubsystem = this;
-    this->SharedChunkArgs.ChunkGeneratorSubsystem  = Collection.GetCheckedSubsystem<JChunkGeneratorSubsystem>();
-    this->SharedChunkArgs.VoxelSubsystem  = this->GetEngine()->GetCheckedSubsystem<JVoxelSubsystem>();
-    this->SharedChunkArgs.MaterialSubsystem  = this->GetEngine()->GetCheckedSubsystem<JMaterialSubsystem>();
-    this->SharedChunkArgs.TextureSubsystem  = this->GetEngine()->GetCheckedSubsystem<JVoxelTextureSubsystem>();
+    this->SharedChunkArgs.ChunkGeneratorSubsystem = Collection.GetCheckedSubsystem<JChunkGeneratorSubsystem>();
+    this->SharedChunkArgs.VoxelSubsystem = this->GetEngine()->GetCheckedSubsystem<JVoxelSubsystem>();
+    this->SharedChunkArgs.MaterialSubsystem = this->GetEngine()->GetCheckedSubsystem<JMaterialSubsystem>();
+    this->SharedChunkArgs.VoxelTextureSubsystem = this->GetEngine()->GetCheckedSubsystem<JVoxelTextureSubsystem>();
     this->SharedChunkArgs.ChunkShader.MakeChecked(Name_ShaderChunk);
     this->SharedChunkArgs.GetNewMesher = [] (AChunk& Owner) -> LChunkMesher* { return new LNaiveMesher(Owner); };
 
-    const JUserPreferences* Preferences = GetDefault<JUserPreferences>();
-    this->RenderDistance = &Preferences->ChunkRenderDistance;
-    this->RenderHeight   = &Preferences->ChunkRenderHeight;
+    this->SharedChunkArgs.bSuperFlat = true;
 
     this->GetWorld()->OnStaticLineTrace.BindMember(this, &JChunkGenerationSubsystem::LineTraceByChannel);
     this->GetWorld()->OnStaticDraw.BindMember(this, &JChunkGenerationSubsystem::OnStaticDraw);
@@ -54,54 +57,38 @@ void Jafg::JChunkGenerationSubsystem::FixedTick(const f32 EngineDeltaTime, const
 {
     STAT_CYCLE_FUNCTION()
 
+    check( Tasks::IsOnMasterThread() )
+
     Super::FixedTick(EngineDeltaTime, FixedDeltaTime);
 
-    {
-        std::unique_lock Lock(this->RequestedPreSpawnedChunksMutex);
-        for (const LChunkKey& ChunkKey : this->RequestedPreSpawnedChunks)
-        {
-            if (this->LoadedChunks->contains(ChunkKey) == false)
-            {
-                this->SafeLoadPersistentPreSpawnedChunk(ChunkKey);
-            }
-        }
-        this->RequestedPreSpawnedChunks.Empty();
-    }
+    constexpr i32 OutBuffer { 30 };
 
-    {
-        AChunk* Chunk = nullptr;
-        while (this->InFailedActiveChunks.Dequeue(&Chunk))
-        {
-            check( Chunk )
-            /* Just retry. */
-            this->OutActiveChunks.Enqueue(Chunk);
-        }
-    }
+    const i32 Size { this->OutActiveChunks.GetSizeSlow() };
 
+    if (const i32 New { OutBuffer - Size }; New > 0)
     {
-        i32 GeneratedChunks = 0;
-        while (this->RequestedChunks.IsEmpty() == false && GeneratedChunks < 20)
+        i32 GeneratedChunks { 0 };
+        while (this->Requested.IsEmpty() == false && GeneratedChunks < 20)
         {
-            const LChunkKey& Key = *this->RequestedChunks.GetLast();
+            const LChunkKey& Key = *this->Requested.GetLast();
 
-            AChunk* Chunk = this->FindChunk(Key);
-            if (Chunk)
+            AChunk* Chunk { this->FindChunk(Key) };
+            if (Chunk == nullptr)
             {
-                Chunk->SetChunkPersistency(EChunkPersistency::Persistent);
-            }
-            else
-            {
-                Chunk = this->SafeLoadPersistentPreSpawnedChunk(Key);
-                ++GeneratedChunks;
+                Chunk = this->SpawnWeakChunk(Key);
             }
             check( Chunk )
 
-            if (Chunk->GetCurrentChunkStateDangerous() != EChunkState::Active)
+            if (Chunk->HuntedState == EChunkState::Invalid)
             {
-                this->OutActiveChunks.Enqueue(Chunk);
+                if (Chunk->State != EChunkState::Active)
+                {
+                    this->OutActiveChunks.Enqueue(Chunk);
+                    ++GeneratedChunks;
+                }
             }
 
-            this->RequestedChunks.Pop();
+            this->Requested.Pop();
 
             continue;
         }
@@ -196,6 +183,8 @@ bool Jafg::JChunkGenerationSubsystem::LineTraceByChannel(
 
 void Jafg::JChunkGenerationSubsystem::OnStaticDraw(const LViewport& Viewport, const LEye& Eye, const std::span<LVector>& Corners) const
 {
+    std::shared_lock Lock(this->LoadedChunksMutex);
+
     for (const std::pair<const LChunkKey&, AChunk*> Pair : this->LoadedChunks.value())
     {
         check( Pair.second->IsGarbage() == false )
@@ -215,22 +204,16 @@ void Jafg::JChunkGenerationSubsystem::OnStaticDraw(const LViewport& Viewport, co
 
 Jafg::AChunk* Jafg::JChunkGenerationSubsystem::SpawnWeakChunk(const LChunkKey& InChunkKey)
 {
-    AChunk* Chunk = CheckedStaticCast<AChunk>(Private::LWorldMiscellaneousAccessor::SpawnActorWeak(this->GetWorld(), AChunk::StaticClass()));
-    Chunk->SetSharedArgs(&this->SharedChunkArgs);
-    MakeDeferredActorFinal(Chunk);
-    Chunk->OnAlloc(InChunkKey);
-    return Chunk;
-}
-
-Jafg::AChunk* Jafg::JChunkGenerationSubsystem::SafeLoadPersistentPreSpawnedChunk(const LChunkKey& ChunkKey)
-{
     STAT_CYCLE_FUNCTION()
 
-    AChunk* Chunk = this->SpawnWeakChunk(ChunkKey);
+    AChunk* Chunk = CheckedStaticCast<AChunk>(Private::LWorldMiscellaneousAccessor::SpawnActorWeak(this->GetWorld(), AChunk::StaticClass()));
+    Chunk->ChunkKey = InChunkKey;
+    Chunk->SetSharedArgs(&this->SharedChunkArgs);
+    MakeDeferredActorFinal(Chunk);
 
     std::unique_lock Lock(this->LoadedChunksMutex);
-    check( this->LoadedChunks->contains(ChunkKey) == false )
-    this->LoadedChunks->emplace(ChunkKey, Chunk);
+    check( this->LoadedChunks->contains(InChunkKey) == false )
+    this->LoadedChunks->emplace(InChunkKey, Chunk);
 
     return Chunk;
 }

@@ -45,6 +45,7 @@ ENGINE_API extern LName Name_UsrInTogglePauseScreen;
 ENGINE_API extern LName Name_UsrInTrap;
 ENGINE_API extern LName Name_UsrInRhiPolyToWireframe;
 ENGINE_API extern LName Name_UsrInRhiPolyToFill;
+ENGINE_API extern LName Name_UsrInRhiShowNormals;
 ENGINE_API extern LName Name_UsrInToggleConsoleScreen;
 ENGINE_API extern LName Name_UsrInMovePawn;
 ENGINE_API extern LName Name_UsrInRotatePawn;

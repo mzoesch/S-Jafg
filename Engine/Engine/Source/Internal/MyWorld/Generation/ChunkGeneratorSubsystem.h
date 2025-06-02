@@ -28,21 +28,10 @@ public:
 
 private:
 
-    bool TryToBringChunkToState(AChunk* Target, const bool bPersistent, const EChunkState::Type TargetState);
+    void MakeChunkActive(AChunk* Target);
 
-    bool PrepareWorldForChunkTransit_Spawned(const LChunkKey& InChunkKey);
-    bool PrepareWorldForChunkTransit_Shaped(const LChunkKey& InChunkKey) { return true; }
-    bool PrepareWorldForChunkTransit_SurfaceReplaced(const LChunkKey& InChunkKey);
-    bool PrepareWorldForChunkTransit_Active(const LChunkKey& InChunkKey) { return true; }
-
-    //# Chunks that have been visited this tick.
-    std::set<LChunkKey> Visited;
-
-    //# Chunks that are missing and are needed to be loaded by the master thread.
-    std::set<LChunkKey> Missing;
-
-    f32 YieldTime = 0.5f;
-    JChunkGenerationSubsystem* ChunkGenerationSubsystem = nullptr;
+    f32 YieldTime { 0.5f };
+    JChunkGenerationSubsystem* ChunkGenerationSubsystem { nullptr };
 };
 
 //#

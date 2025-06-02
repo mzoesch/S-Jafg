@@ -154,6 +154,8 @@ public:
     template <typename TShader> FORCEINLINE       TShader* GetShaderAsserted(const LName InName) noexcept;
     template <typename TShader> FORCEINLINE const TShader* GetShaderAsserted(const LName InName) const noexcept;
 
+    FORCEINLINE void RecompileShader(const LName InName, const TArray<LShaderCompileTimeConstant>& InRemove, const TArray<LShaderCompileTimeConstant>& InAdd);
+
 private:
 
     FORCEINLINE bool AddShader(const LName InName, LEngineShader* InShader);
@@ -298,37 +300,49 @@ private:
 template<typename TShader>
 FORCEINLINE TShader* LEngine::GetShader(const LName InName) noexcept
 {
+    static_assert(std::is_base_of_v<LEngineShader, TShader>, "TShader must be derived from LEngineShader");
     return static_cast<TShader*>(this->GetShader(InName));
 }
 
 template<typename TShader>
 FORCEINLINE const TShader* LEngine::GetShader(const LName InName) const noexcept
 {
+    static_assert(std::is_base_of_v<LEngineShader, TShader>, "TShader must be derived from LEngineShader");
     return static_cast<const TShader*>(this->GetShader(InName));
 }
 
 template<typename TShader>
 FORCEINLINE TShader* LEngine::GetShaderChecked(const LName InName) noexcept
 {
+    static_assert(std::is_base_of_v<LEngineShader, TShader>, "TShader must be derived from LEngineShader");
     return static_cast<TShader*>(this->GetShaderChecked(InName));
 }
 
 template<typename TShader>
 FORCEINLINE const TShader* LEngine::GetShaderChecked(const LName InName) const noexcept
 {
+    static_assert(std::is_base_of_v<LEngineShader, TShader>, "TShader must be derived from LEngineShader");
     return static_cast<const TShader*>(this->GetShaderChecked(InName));
 }
 
 template<typename TShader>
 FORCEINLINE TShader* LEngine::GetShaderAsserted(const LName InName) noexcept
 {
+    static_assert(std::is_base_of_v<LEngineShader, TShader>, "TShader must be derived from LEngineShader");
     return static_cast<TShader*>(this->GetShaderAsserted(InName));
 }
 
 template<typename TShader>
 FORCEINLINE const TShader* LEngine::GetShaderAsserted(const LName InName) const noexcept
 {
+    static_assert(std::is_base_of_v<LEngineShader, TShader>, "TShader must be derived from LEngineShader");
     return static_cast<const TShader*>(this->GetShaderAsserted(InName));
+}
+
+FORCEINLINE void LEngine::RecompileShader(const LName InName, const TArray<LShaderCompileTimeConstant>& InRemove, const TArray<LShaderCompileTimeConstant>& InAdd)
+{
+    this->GetShaderAsserted(InName)->Recompile(InRemove, InAdd);
+    return;
 }
 
 FORCEINLINE LEngineShader* LEngine::GetShader(const LName InName) noexcept

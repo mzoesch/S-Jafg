@@ -32,5 +32,7 @@ void main()
 
     FragColor = (NonBlendedColor + BlendedColor) * ResultingLight;
 
-    // FragColor = vec4(((InFragNormal + 1.0f) * 0.5f), 1.0f);
+#if DISPLAY_NORMALS
+    FragColor = vec4(((InFragNormal + 1.0f) * 0.5f), 1.0f);
+#endif /* DISPLAY_NORMALS */
 }

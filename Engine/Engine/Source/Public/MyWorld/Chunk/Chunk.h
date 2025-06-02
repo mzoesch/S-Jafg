@@ -7,7 +7,6 @@
 #include "MyWorld/MyWorldStatics.h"
 #include "Components/RenderComponent.h"
 #include "MyWorld/ChunkKey.h"
-#include "ChunkPersistency.h"
 #include "MyWorld/CommonTypes.h"
 #include "MyWorld/VoxelKey.h"
 #include "Rhi/ChunkShader.h"
@@ -24,7 +23,6 @@ class LFastChunkMesher;
 class AChunk;
 class JChunkGenerationSubsystem;
 class JChunkGeneratorSubsystem;
-class LChunkMesher;
 class LChunkShader;
 
 MAKE_MULTICAST_SIGNATURE(LChunkStateChangedDelegateSignature, EChunkState::Type /* NewChunkState */)
@@ -74,9 +72,11 @@ struct LSharedChunkArgs final
     JChunkGeneratorSubsystem*  ChunkGeneratorSubsystem  { nullptr };
     JVoxelSubsystem*           VoxelSubsystem           { nullptr };
     JMaterialSubsystem*        MaterialSubsystem        { nullptr };
-    JVoxelTextureSubsystem*         TextureSubsystem         { nullptr };
+    JVoxelTextureSubsystem*    VoxelTextureSubsystem    { nullptr };
     LChunkShader               ChunkShader;
     TFunction<LChunkMesher*(AChunk& Owner)> GetNewMesher;
+
+    bool bSuperFlat { false };
 };
 
 DECLARE_JAFG_CLASS()
@@ -84,12 +84,15 @@ class ENGINE_API AChunk final : public AActor
 {
     GENERATED_CLASS_BODY()
 
+    friend JChunkGenerationSubsystem;
+
 public:
 
     //# The index in the raw voxel data array.
     typedef i32 LVoxelIndex;
 
-    static_assert(
+    static_assert
+    (
         MwStatics::ChunkSize < std::numeric_limits<LVoxelKeyDomainTy>::max() - 1,
         "Encountered to large chunk size for indexing the raw voxels domains "
         "- this will result in undefined overflow behavior."
@@ -108,87 +111,55 @@ public:
     FORCEINLINE auto GetChunkRendererComponent() const -> const LChunkRendererComponent* { return reinterpret_cast<LChunkRendererComponent*>(this->GetRendererComponent()); }
     // ~AActor implementation
 
-    //#
-    //# Set the hunted generation state.
-    //# @return True if the state was actually changed. False if e.g. another thread set the change.
-    //#
-    bool SetHuntedState(const EChunkState::Type NewHuntedState);
-    //# From owning thread only.
-    void InvalidateHuntedState();
-    void SetState(const EChunkState::Type NewChunkState);
+    void SetState(const EChunkState::Type NewChunkState, const bool bKeepHunt = false);
     //# Only on aggregating thread where the chunk is manipulated.
     EChunkState::Type GetLockedChunkState() const;
     //# Dangerous function. Use with care.
-    EChunkState::Type GetCurrentChunkStateDangerous() const { return this->State; }
-    //#
-    //# The behavior of this function will vary depending on the underlying platform and might resul in a yield.
-    //# @param bTimeoutRet If this returns true, the state could not be retrieved in the given time.
-    //#                    This bool pointer is required if EChunkStateTimeoutBehavior::Ignore is used.
-    //# @param InSeconds   The time to wait between each check.
-    //# @param Timeout     The time to wait before giving up.
-    //# @param InBehavior  The behavior if the timeout was reached.
-    //# @remark Never call on feedback threads (e.g., master, renderer, etc.) as this will block the thread and will
-    //#         result in a lag spike.
-    //#
-    void              WaitChunkState(bool* bTimeoutRet = nullptr, const f64 InSeconds = 0.01, const f64 Timeout = 2.0, const EChunkStateTimeoutBehavior::Type InBehavior = EChunkStateTimeoutBehavior::Panic) const;
-    //# @return Only meaningful if bTimeoutRet is false.
-    EChunkState::Type GetOrWaitChunkState(bool* bTimeoutRet = nullptr, const f64 InSeconds = 0.01, const f64 Timeout = 2.0, const EChunkStateTimeoutBehavior::Type InBehavior = EChunkStateTimeoutBehavior::Panic) const;
-    //#
-    //# Busy wait. Depending on CPU architecture, underlying platform and workload this will result in a single core
-    //# utilization of between 50% to 95%.
-    //#
-    EChunkState::Type GetOrYieldChunkState() const;
+    EChunkState::Type GetCurrentStateDangerous() const { return this->State; }
+    EChunkState::Type GetCurrentHuntedStateDangerous() const { return this->HuntedState; }
+    void FinishHunt(const EChunkState::Type InState) noexcept;;
 
-    void OnAlloc(const LChunkKey& InChunkKey);
+    FORCEINLINE const LChunkKey& GetChunkKey() const noexcept { return this->ChunkKey; }
 
-                void SetChunkPersistency(const EChunkPersistency::Type NewPersistency, const f32 TimeToLive = 10.0f) noexcept;
-    FORCEINLINE auto GetChunkPersistency() const noexcept -> EChunkPersistency::Type { return this->ChunkPersistency; }
-    FORCEINLINE bool IsPersistent() const noexcept { return this->ChunkPersistency == EChunkPersistency::Persistent; }
-    FORCEINLINE bool IsTransient() const noexcept { return this->ChunkPersistency == EChunkPersistency::Transient;  }
-    FORCEINLINE bool ShouldBeFreed() const;
-
-    FORCEINLINE auto GetChunkKey() const -> const LChunkKey& { return this->ChunkKey; }
-
-    FORCEINLINE bool IsSharedArgsValid() const noexcept { return this->SharedArgs != nullptr; }
-    FORCEINLINE auto GetSharedArgs() noexcept -> LSharedChunkArgs* { return this->SharedArgs; }
-    FORCEINLINE auto GetSharedArgs() const noexcept -> const LSharedChunkArgs* { return this->SharedArgs; }
+    FORCEINLINE bool IsSharedArgsValid() const noexcept { return this->SharedArgs; }
+    FORCEINLINE const LSharedChunkArgs* GetSharedArgs() const noexcept { return this->SharedArgs; }
     FORCEINLINE void SetSharedArgs(LSharedChunkArgs* NewSharedArgs);
 
-    FORCEINLINE auto IsMesherValid() const -> bool { return this->Mesher != nullptr; }
-    FORCEINLINE auto GetMesher() -> LChunkMesher* { return this->Mesher; }
-    FORCEINLINE auto GetMesher() const -> const LChunkMesher* { return this->Mesher; }
+    FORCEINLINE bool IsMesherValid() const noexcept { return this->Mesher != nullptr; }
+    FORCEINLINE LChunkMesher* GetMesher() noexcept { return this->Mesher; }
+    FORCEINLINE const LChunkMesher* GetMesher() const noexcept { return this->Mesher; }
 
     //#
     //# Create a relative voxel key from the world location of this chunk.
     //#
-    FORCEINLINE auto CreateRelativeVoxelKey(const LVector& InWorldLocation) const -> LVoxelKey;
+    FORCEINLINE LVoxelKey CreateRelativeVoxelKey(const LVector& InWorldLocation) const;
 
 private:
 
-    //#
-    //# The real time (not stopped or dilated / clamped) when this chunk should be killed by the generation subsystem.
-    //# The time is relative to the time when the world was launched where this AActor lives in.
-    //# Only meaningful when the persistency of this chunk is transient.
-    //#
-    f32 RealTimeInSecondsWhenTransientChunkShouldBeKilled = 0.0f;
-    EChunkPersistency::Type ChunkPersistency = EChunkPersistency::Persistent;
-    std::mutex ChunkPersistencyMutex;
-
     bool IsStateChangeValid(const EChunkState::Type NewChunkState) const;
+    //#
     //# The current state of a chunk.
-    EChunkState::Type State = EChunkState::Invalid;
-    //# Invalid means the #State this #HuntedState is not used and a request for state should fall back to #State.
-    EChunkState::Type HuntedState = EChunkState::Invalid;
-    // For the #State and the #HuntedState.
+    //# @remark This variable is only meaningful if the #HuntedState is set to #EChunkState::Invalid.
+    //#
+    std::atomic<EChunkState::Type> State { EChunkState::Invalid };
+    //#
+    //# The hunted state of this chunk. This is the state that is currently being processed in any way. E.g. through
+    //# other worker threads or networked requests.
+    //# Invalid means that the current chunk is not hunting any other state.
+    //#
+    std::atomic<EChunkState::Type> HuntedState { EChunkState::Invalid };
+    // For the #State and the #HuntedState variables.
     std::mutex ChunkStateMutex;
 
     void Spawn();
     void Shape();
     void ReplaceSurface();
-    void OnActive();
+    void Activate();
+
+    void RegenerateNeighboringMeshes() const;
 
     LChunkKey ChunkKey;
-    LSharedChunkArgs* SharedArgs = nullptr;
+    LSharedChunkArgs* SharedArgs { nullptr };
     Smart::TUnique<LChunkMesher> Mesher;
 
 public:
@@ -238,35 +209,35 @@ public:
     // Neighbors
     //////////////////////////////////////////////////////////////////////////
 
-    FORCEINLINE auto HasNNorth() const -> bool { return this->NNorth != nullptr; }
-    FORCEINLINE auto GetNNorth() const -> AChunk* { return this->NNorth; }
-    FORCEINLINE auto HasNEast() const -> bool { return this->NEast != nullptr; }
-    FORCEINLINE auto GetNEast() const -> AChunk* { return this->NEast; }
-    FORCEINLINE auto HasNSouth() const -> bool { return this->NSouth != nullptr; }
-    FORCEINLINE auto GetNSouth() const -> AChunk* { return this->NSouth; }
-    FORCEINLINE auto HasNWest() const -> bool { return this->NWest != nullptr; }
-    FORCEINLINE auto GetNWest() const -> AChunk* { return this->NWest; }
-    FORCEINLINE auto HasNUp() const -> bool { return this->NUp != nullptr; }
-    FORCEINLINE auto GetNUp() const -> AChunk* { return this->NUp; }
-    FORCEINLINE auto HasNDown() const -> bool { return this->NDown != nullptr; }
-    FORCEINLINE auto GetNDown() const -> AChunk* { return this->NDown; }
+    FORCEINLINE bool    IsNNorthValid() const noexcept { return this->NNorth != nullptr; }
+    FORCEINLINE AChunk* GetNNorth() const noexcept { return this->NNorth; }
+    FORCEINLINE bool    IsNEastValid() const noexcept { return this->NEast != nullptr; }
+    FORCEINLINE AChunk* GetNEast() const noexcept { return this->NEast; }
+    FORCEINLINE bool    IsNSouthValid() const noexcept { return this->NSouth != nullptr; }
+    FORCEINLINE AChunk* GetNSouth() const noexcept { return this->NSouth; }
+    FORCEINLINE bool    IsNWestValid() const noexcept { return this->NWest != nullptr; }
+    FORCEINLINE AChunk* GetNWest() const noexcept { return this->NWest; }
+    FORCEINLINE bool    IsNUpValid() const noexcept { return this->NUp != nullptr; }
+    FORCEINLINE AChunk* GetNUp() const noexcept { return this->NUp; }
+    FORCEINLINE bool    IsNDownValid() const noexcept { return this->NDown != nullptr; }
+    FORCEINLINE AChunk* GetNDown() const noexcept { return this->NDown; }
 
     //# Has to be local or a direct neighbor.
-    FORCEINLINE auto GetNeighboringChunk(LVoxelKey* InOutKey) -> AChunk*;
-    FORCEINLINE auto GetCheckedNeighboringChunk(LVoxelKey* InOutKey) -> AChunk*;
-    FORCEINLINE auto GetPanickedNeighboringChunk(LVoxelKey* InOutKey) -> AChunk*;
-    FORCEINLINE auto GetNeighboringChunk(LVoxelKey* InOutKey) const -> const AChunk*;
-    FORCEINLINE auto GetCheckedNeighboringChunk(LVoxelKey* InOutKey) const -> const AChunk*;
-    FORCEINLINE auto GetPanickedNeighboringChunk(LVoxelKey* InOutKey) const -> const AChunk*;
+    FORCEINLINE AChunk* GetNeighboringChunk(LVoxelKey* InOutKey);
+    FORCEINLINE AChunk* GetNeighboringChunkChecked(LVoxelKey* InOutKey);
+    FORCEINLINE AChunk* GetNeighboringChunkAsserted(LVoxelKey* InOutKey);
+    FORCEINLINE const AChunk* GetNeighboringChunk(LVoxelKey* InOutKey) const;
+    FORCEINLINE const AChunk* GetNeighboringChunkChecked(LVoxelKey* InOutKey) const;
+    FORCEINLINE const AChunk* GetNeighboringChunkAsserted(LVoxelKey* InOutKey) const;
 
 private:
 
-    AChunk* NNorth = nullptr;
-    AChunk* NEast  = nullptr;
-    AChunk* NSouth = nullptr;
-    AChunk* NWest  = nullptr;
-    AChunk* NUp    = nullptr;
-    AChunk* NDown  = nullptr;
+    AChunk* NNorth { nullptr };
+    AChunk* NEast  { nullptr };
+    AChunk* NSouth { nullptr };
+    AChunk* NWest  { nullptr };
+    AChunk* NUp    { nullptr };
+    AChunk* NDown  { nullptr };
 };
 
 FORCEINLINE EChunkState::Type AChunk::GetLockedChunkState() const
@@ -283,11 +254,15 @@ FORCEINLINE EChunkState::Type AChunk::GetLockedChunkState() const
     return this->State;
 }
 
-FORCEINLINE bool AChunk::ShouldBeFreed() const
+FORCEINLINE void AChunk::FinishHunt(const EChunkState::Type InState) noexcept
 {
-    return this->IsTransient()
-        &&   this->RealTimeInSecondsWhenTransientChunkShouldBeKilled
-           < this->GetWorld()->GetRealTimeSecondsSinceWorldLaunch();
+    check( this->ChunkStateMutex.try_lock() == false )
+
+    check( this->HuntedState == InState )
+    this->HuntedState = EChunkState::Invalid;
+    this->State       = InState;
+
+    return;
 }
 
 FORCEINLINE void AChunk::SetSharedArgs(LSharedChunkArgs* NewSharedArgs)
@@ -326,7 +301,8 @@ FORCEINLINE AChunk::LVoxelIndex AChunk::GetRawVoxelIndex(const i32 InX, const i3
 FORCEINLINE voxel_t AChunk::GetRawVoxelData(const LVoxelKey InKey) const
 {
     checkSlow( this->HasRawVoxelData() )
-    return this->RawVoxelData[AChunk::GetRawVoxelIndex(InKey)];
+    AChunk::LVoxelIndex Idx = AChunk::GetRawVoxelIndex(InKey);
+    return this->RawVoxelData[Idx];
 }
 
 FORCEINLINE voxel_t AChunk::GetRawVoxelData(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ) const
@@ -343,8 +319,7 @@ FORCEINLINE voxel_t AChunk::GetRawVoxelData(const i32 InX, const i32 InY, const 
 
 FORCEINLINE voxel_t AChunk::GetSafeRawVoxelData(const LVoxelKey InKey, const voxel_t InFallback /* = ECompileTimeVoxels::Air */) const
 {
-    checkSlow( this->HasRawVoxelData() )
-    if (InKey.IsLocal())
+    if (this->HasRawVoxelData() && InKey.IsLocal())
     {
         return this->GetRawVoxelData(InKey);
     }
@@ -353,8 +328,7 @@ FORCEINLINE voxel_t AChunk::GetSafeRawVoxelData(const LVoxelKey InKey, const vox
 
 FORCEINLINE voxel_t AChunk::GetSafeRawVoxelData(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ, const voxel_t InFallback /* = ECompileTimeVoxels::Air */) const
 {
-    checkSlow( this->HasRawVoxelData() )
-    if (LVoxelKey(InX, InY, InZ).IsLocal())
+    if (this->HasRawVoxelData() && LVoxelKey{InX, InY, InZ}.IsLocal())
     {
         return this->GetRawVoxelData(InX, InY, InZ);
     }
@@ -363,8 +337,7 @@ FORCEINLINE voxel_t AChunk::GetSafeRawVoxelData(const LVoxelKeyDomainTy InX, con
 
 FORCEINLINE voxel_t AChunk::GetSafeRawVoxelData(const i32 InX, const i32 InY, const i32 InZ, const voxel_t InFallback /* = ECompileTimeVoxels::Air */) const
 {
-    checkSlow( this->HasRawVoxelData() )
-    if (LVoxelKey(InX, InY, InZ).IsLocal())
+    if (this->HasRawVoxelData() && LVoxelKey{InX, InY, InZ}.IsLocal())
     {
         return this->GetRawVoxelData(InX, InY, InZ);
     }
@@ -373,7 +346,7 @@ FORCEINLINE voxel_t AChunk::GetSafeRawVoxelData(const i32 InX, const i32 InY, co
 
 FORCEINLINE voxel_t AChunk::GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey) const
 {
-    return this->GetCheckedNeighboringChunk(&InKey)->GetRawVoxelData(InKey);
+    return this->GetNeighboringChunkChecked(&InKey)->GetRawVoxelData(InKey);
 }
 
 FORCEINLINE voxel_t AChunk::GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey, const voxel_t Fallback) const
@@ -387,7 +360,7 @@ FORCEINLINE voxel_t AChunk::GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey, cons
         if (Target == this) { check( InKey == In ) }
         else { check( InKey != In && InKey.IsLocal() ) }
 #endif /* DO_CHECKS */
-        return Target->GetRawVoxelData(InKey);
+        return Target->GetSafeRawVoxelData(InKey, Fallback);
     }
 
     return Fallback;
@@ -413,24 +386,18 @@ FORCEINLINE AChunk* AChunk::GetNeighboringChunk(LVoxelKey* InOutKey)
     }
 }
 
-FORCEINLINE AChunk* AChunk::GetCheckedNeighboringChunk(LVoxelKey* InOutKey)
+FORCEINLINE AChunk* AChunk::GetNeighboringChunkChecked(LVoxelKey* InOutKey)
 {
-    if (AChunk* Target = this->GetNeighboringChunk(InOutKey); Target)
-    {
-        return Target;
-    }
-    checkNoEntry()
-    return nullptr;
+    AChunk* Target = this->GetNeighboringChunk(InOutKey);
+    check( Target )
+    return Target;
 }
 
-FORCEINLINE AChunk* AChunk::GetPanickedNeighboringChunk(LVoxelKey* InOutKey)
+FORCEINLINE AChunk* AChunk::GetNeighboringChunkAsserted(LVoxelKey* InOutKey)
 {
-    if (AChunk* Target = this->GetNeighboringChunk(InOutKey); Target)
-    {
-        return Target;
-    }
-    panic( "Failed to find target chunk by local voxel key." )
-    return nullptr;
+    AChunk* Target = this->GetNeighboringChunk(InOutKey);
+    jassert( Target )
+    return Target;
 }
 
 FORCEINLINE const AChunk* AChunk::GetNeighboringChunk(LVoxelKey* InOutKey) const
@@ -448,24 +415,18 @@ FORCEINLINE const AChunk* AChunk::GetNeighboringChunk(LVoxelKey* InOutKey) const
     }
 }
 
-FORCEINLINE const AChunk* AChunk::GetCheckedNeighboringChunk(LVoxelKey* InOutKey) const
+FORCEINLINE const AChunk* AChunk::GetNeighboringChunkChecked(LVoxelKey* InOutKey) const
 {
-    if (const AChunk* Target = this->GetNeighboringChunk(InOutKey); Target)
-    {
-        return Target;
-    }
-    checkNoEntry()
-    return nullptr;
+    const AChunk* Target = this->GetNeighboringChunk(InOutKey);
+    check( Target )
+    return Target;
 }
 
-FORCEINLINE const AChunk* AChunk::GetPanickedNeighboringChunk(LVoxelKey* InOutKey) const
+FORCEINLINE const AChunk* AChunk::GetNeighboringChunkAsserted(LVoxelKey* InOutKey) const
 {
-    if (const AChunk* Target = this->GetNeighboringChunk(InOutKey); Target)
-    {
-        return Target;
-    }
-    panic( "Failed to find target chunk by local voxel key." )
-    return nullptr;
+    const AChunk* Target = this->GetNeighboringChunk(InOutKey);
+    jassert( Target )
+    return Target;
 }
 
 } /* ~Namespace Jafg */

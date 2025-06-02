@@ -17,7 +17,8 @@ public:
 
     typedef LEngineShader Super;
 
-    virtual bool Make(const LName InName) override;
+    virtual bool Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants) override;
+    virtual void OnRecompile() override;
     virtual void UpdateWorldUniforms(const LViewport& Context, const LWorld& World, const LEye& Eye) override;
     virtual void OnFree() override;
 

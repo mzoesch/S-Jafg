@@ -50,9 +50,10 @@ public:
     FORCEINLINE void Reserve(const SizeType Size) noexcept { this->Impl.Reserve(Size); }
 
     FORCEINLINE Self& operator=(const Self& Other) noexcept = default;
-    FORCEINLINE Self& operator=(Self&& Other) noexcept { this->Impl = std::move(Other.Impl); return *this; }
-    FORCEINLINE Self& operator=(const Alloc& Other) noexcept { this->Impl = Other; return *this; }
-    FORCEINLINE Self& operator=(Alloc&& Other) noexcept { this->Impl = std::move(Other); return *this; }
+
+    FORCEINLINE Self& operator=(Self&& Other) noexcept;
+    FORCEINLINE Self& operator=(const Alloc& Other) noexcept;
+    FORCEINLINE Self& operator=(Alloc&& Other) noexcept;
 
     FORCEINLINE bool operator==(const Self& Other) const noexcept { return this->Impl == Other.Impl;      }
     FORCEINLINE bool operator!=(const Self& Other) const noexcept { return this->Impl != Other.Impl;      }
@@ -72,7 +73,7 @@ public:
 
 private:
 
-    EEnginePaths::Type PathTy = EEnginePaths::None;
+    EEnginePaths::Type PathTy { EEnginePaths::None };
     Alloc Impl;
 };
 
@@ -102,6 +103,31 @@ LEnginePathBase<InTPathTy>::LEnginePathBase(Alloc&& Other) noexcept
     }
 
     return;
+}
+
+template<typename InTPathTy>
+typename LEnginePathBase<InTPathTy>::Self& LEnginePathBase<InTPathTy>::operator=(Self&& Other) noexcept
+{
+    this->PathTy = Other.PathTy;
+    this->Impl = std::move(Other.Impl);
+
+    Other.PathTy = EEnginePaths::None;
+
+    return *this;
+}
+
+template<typename InTPathTy>
+typename LEnginePathBase<InTPathTy>::Self& LEnginePathBase<InTPathTy>::operator=(const Alloc& Other) noexcept
+{
+    this->Impl = Other;
+    return *this;
+}
+
+template<typename InTPathTy>
+typename LEnginePathBase<InTPathTy>::Self& LEnginePathBase<InTPathTy>::operator=(Alloc&& Other) noexcept
+{
+    this->Impl = std::move(Other);
+    return *this;
 }
 
 template <typename InTPathTy>

@@ -76,7 +76,7 @@ protected:
     FORCEINLINE void SetEverTickConstructorOnlyFlag() { this->bCanEverTick = true; }
     FORCEINLINE void CancelEverTickConstructorOnlyFlag() { this->bCanEverTick = false; }
 
-    FORCEINLINE void DisableStrongActorContext() { this->bWeakContext = false; return; }
+    FORCEINLINE void DisableStrongActorContext() { this->bWeakContext = true; return; }
 
 private:
 

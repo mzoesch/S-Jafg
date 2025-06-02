@@ -23,13 +23,12 @@ protected:
     // JFixedTickableWorldSubsystem implementation
     virtual bool ShouldCreateSubsystem(const LObjectContext* InOuter) const override;
     virtual void Initialize(LSubsystemCollection& Collection) override;
-    virtual void FixedTick(const float EngineDeltaTime, const float FixedDeltaTime) override;
+    virtual void FixedTick(const f32 EngineDeltaTime, const f32 FixedDeltaTime) override;
     // ~JFixedTickableWorldSubsystem implementation
 
 private:
 
-    LChunkKey LastChunkKey = { std::numeric_limits<LChunkKeyDomain>::max() };
-    JChunkGenerationSubsystem* ChunkGenerationSubsystem = nullptr;
+    LChunkKey LastChunkKey { std::numeric_limits<LChunkKeyDomain>::max() };
 };
 
 } /* ~Namespace Jafg */

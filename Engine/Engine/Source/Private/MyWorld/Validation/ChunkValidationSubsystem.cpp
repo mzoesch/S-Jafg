@@ -7,6 +7,7 @@
 #include "MyWorld/Validation/ChunkValidationUtility.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
 #include "Stats/Stats.h"
+#include "User/UserPreferences.h"
 
 bool Jafg::JChunkValidationSubsystem::ShouldCreateSubsystem(const LObjectContext* InOuter) const
 {
@@ -24,12 +25,10 @@ void Jafg::JChunkValidationSubsystem::Initialize(LSubsystemCollection& Collectio
     Super::Initialize(Collection);
     this->SetTickInterval(0.5f);
 
-    this->ChunkGenerationSubsystem = Collection.GetCheckedSubsystem<JChunkGenerationSubsystem>();
-
     return;
 }
 
-void Jafg::JChunkValidationSubsystem::FixedTick(const float EngineDeltaTime, const f32 FixedDeltaTime)
+void Jafg::JChunkValidationSubsystem::FixedTick(const f32 EngineDeltaTime, const f32 FixedDeltaTime)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -58,15 +57,16 @@ void Jafg::JChunkValidationSubsystem::FixedTick(const float EngineDeltaTime, con
         return;
     }
 
-    LOG_TRACE(LogChunkValidation, "Local pawn moved to chunk: {}.", CurrentKey.ToString())
+    LOG_TRACE(LogChunkValidation, "Local pawn moved to chunk [{}].", CurrentKey.ToString())
     this->LastChunkKey = CurrentKey;
 
-    const i32 RHeight = this->ChunkGenerationSubsystem->GetRenderHeight();
+    const JUserPreferences* Prefs = GetDefault<JUserPreferences>();
+
     TArray<LChunkKey> TargetChunks = Validation::GetAllChunksFromCenterAsBox(
         CurrentKey,
-        this->ChunkGenerationSubsystem->GetRenderDistance(),
-        RHeight,
-        CurrentKey.Z - (RHeight / 2)
+        Prefs->ChunkRenderDistance,
+        Prefs->ChunkRenderHeight,
+        CurrentKey.Z - (Prefs->ChunkRenderHeight / 2)
         );
 
     TArray<LChunkKey> Reversed; Reversed.Reserve(TargetChunks.GetSize());
@@ -75,7 +75,7 @@ void Jafg::JChunkValidationSubsystem::FixedTick(const float EngineDeltaTime, con
         Reversed.Emplace(TargetChunks[i]);
     }
 
-    this->ChunkGenerationSubsystem->SetRequestedChunks(std::move(Reversed));
+    this->GetWorld()->GetCheckedSubsystem<JChunkGenerationSubsystem>()->SetRequestedChunks(std::move(Reversed));
 
     return;
 }

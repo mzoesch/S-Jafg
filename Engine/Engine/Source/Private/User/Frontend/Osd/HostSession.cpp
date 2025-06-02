@@ -932,7 +932,7 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
         LTexture2 Preview;
         Preview.LoadFromDisk(AsPath / "Thumbnail.png");
 
-        this->FetchedSaves.Emplace(std::move(AsPath), false, std::move(*DisplayName), "A description.", std::move(Preview));
+        this->FetchedSaves.Emplace(std::move(AsPath), false, std::move(*DisplayName), "A description of this save.", std::move(Preview));
 
         continue;
     }

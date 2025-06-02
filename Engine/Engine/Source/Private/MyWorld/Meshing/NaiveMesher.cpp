@@ -21,16 +21,22 @@ void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubs
             for (LVoxelKeyDomainTy Z = 0; Z < MwStatics::ChunkSize; ++Z)
             {
                 const LVoxelKey VoxelKey     = { X, Y, Z };
-                const voxel_t   CurrentVoxel = this->GetOwner().GetRawVoxelData(VoxelKey);
+                voxel_t   CurrentVoxel = this->GetOwner().GetRawVoxelData(VoxelKey);
 
                 if (CurrentVoxel == ECompileTimeVoxels::Null || CurrentVoxel == ECompileTimeVoxels::Air)
                 {
                     continue;
                 }
 
+                if (CurrentVoxel > 10)
+                {
+                    LOG_ERROR(LogTemporal, "Greater then 10;")
+                    CurrentVoxel = this->GetOwner().GetRawVoxelData(VoxelKey);
+                }
+
                 const LVoxelMask& Mask = VoxelSubsystem->GetVoxelMask(CurrentVoxel);
 
-                const voxel_t NorthVoxel = this->GetOwner().GetRawVoxelDataByNonZeroOrigin(VoxelKey.GetNorthKey(), ECompileTimeVoxels::Air);
+                const voxel_t NorthVoxel = this->GetOwner().GetRawVoxelDataByNonZeroOrigin(VoxelKey.GetNorthKey(), ECompileTimeVoxels::Null);
                 if (NorthVoxel == ECompileTimeVoxels::Air)
                 {
                     LTextureIndex Idx = Mask.FindTextureIndex(ENormalLookup::North);
@@ -54,7 +60,7 @@ void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubs
                     CurrentVertex += 4;
                 }
 
-                const voxel_t SouthVoxel = this->GetOwner().GetRawVoxelDataByNonZeroOrigin(VoxelKey.GetSouthKey(), ECompileTimeVoxels::Air);
+                const voxel_t SouthVoxel = this->GetOwner().GetRawVoxelDataByNonZeroOrigin(VoxelKey.GetSouthKey(), ECompileTimeVoxels::Null);
                 if (SouthVoxel == ECompileTimeVoxels::Air)
                 {
                     LTextureIndex Idx = Mask.FindTextureIndex(ENormalLookup::South);
@@ -78,7 +84,7 @@ void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubs
                     CurrentVertex += 4;
                 }
 
-                const voxel_t WestVoxel = this->GetOwner().GetRawVoxelDataByNonZeroOrigin(VoxelKey.GetWestKey(), ECompileTimeVoxels::Air);
+                const voxel_t WestVoxel = this->GetOwner().GetRawVoxelDataByNonZeroOrigin(VoxelKey.GetWestKey(), ECompileTimeVoxels::Null);
                 if (WestVoxel == ECompileTimeVoxels::Air)
                 {
                     LTextureIndex Idx = Mask.FindTextureIndex(ENormalLookup::West);
@@ -102,7 +108,7 @@ void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubs
                     CurrentVertex += 4;
                 }
 
-                const voxel_t EastVoxel = this->GetOwner().GetRawVoxelDataByNonZeroOrigin(VoxelKey.GetEastKey(), ECompileTimeVoxels::Air);
+                const voxel_t EastVoxel = this->GetOwner().GetRawVoxelDataByNonZeroOrigin(VoxelKey.GetEastKey(), ECompileTimeVoxels::Null);
                 if (EastVoxel == ECompileTimeVoxels::Air)
                 {
                     LTextureIndex Idx = Mask.FindTextureIndex(ENormalLookup::East);
@@ -126,7 +132,7 @@ void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubs
                     CurrentVertex += 4;
                 }
 
-                const voxel_t UpVoxel = this->GetOwner().GetRawVoxelDataByNonZeroOrigin(VoxelKey.GetUpKey(), ECompileTimeVoxels::Air);
+                const voxel_t UpVoxel = this->GetOwner().GetRawVoxelDataByNonZeroOrigin(VoxelKey.GetUpKey(), ECompileTimeVoxels::Null);
                 if (UpVoxel == ECompileTimeVoxels::Air)
                 {
                     LTextureIndex Idx = Mask.FindTextureIndex(ENormalLookup::Up);
@@ -150,7 +156,7 @@ void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubs
                     CurrentVertex += 4;
                 }
 
-                const voxel_t DownVoxel = this->GetOwner().GetRawVoxelDataByNonZeroOrigin(VoxelKey.GetDownKey(), ECompileTimeVoxels::Air);
+                const voxel_t DownVoxel = this->GetOwner().GetRawVoxelDataByNonZeroOrigin(VoxelKey.GetDownKey(), ECompileTimeVoxels::Null);
                 if (DownVoxel == ECompileTimeVoxels::Air)
                 {
                     LTextureIndex Idx = Mask.FindTextureIndex(ENormalLookup::Down);

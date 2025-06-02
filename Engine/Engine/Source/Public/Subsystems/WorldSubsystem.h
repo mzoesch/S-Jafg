@@ -22,8 +22,8 @@ public:
     ENGINE_API static bool IsOuterFrontend(const LObjectContext* InOuter) noexcept;
     ENGINE_API static bool IsOuterWorld(const LObjectContext* InOuter) noexcept;
 
-    FORCEINLINE LWorld* GetWorld()       { return reinterpret_cast<LWorld*>(this->GetOuter()); }
-    FORCEINLINE const LWorld* GetWorld() const { return reinterpret_cast<LWorld*>(this->GetOuter()); }
+    FORCEINLINE LWorld* GetWorld() { check( this->GetOuter()->IsWorld() )  return reinterpret_cast<LWorld*>(this->GetOuter()); }
+    FORCEINLINE const LWorld* GetWorld() const { check( this->GetOuter()->IsWorld() ) return reinterpret_cast<LWorld*>(this->GetOuter()); }
 };
 
 } /* ~Namespace Jafg */

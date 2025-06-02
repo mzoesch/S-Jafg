@@ -6,6 +6,8 @@
 #include "MyWorld/Chunk/Chunk.h"
 #include "User/Input/InputActionValue.h"
 #include "Framework/PersonaController.h"
+#include "Engine/Engine.h"
+#include "System/VoxelSubsystem.h"
 
 Jafg::APawn::APawn(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -20,7 +22,8 @@ void Jafg::APawn::Tick(const float DeltaTime)
     this->CurrentGenericTraceResults.Empty();
     const LVector TraceStart = this->GetTranslation();
     const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
-    this->GetWorld()->LineTraceByChannel(
+    this->GetWorld()->LineTraceByChannel
+    (
         this->CurrentGenericTraceResults, TraceStart, TraceEnd,
         ECollisionChannel::Static, LCollisionQueryParams({.bSingleHit = true})
     );
@@ -29,7 +32,8 @@ void Jafg::APawn::Tick(const float DeltaTime)
     if (this->CurrentGenericTraceResults.IsValidIndex(0) && this->CurrentGenericTraceResults[0].Actor->IsA<AChunk>())
     {
         const LVoxelKey VKey = LVoxelKey::FromWorldSpace(this->CurrentGenericTraceResults[0].GlobalWorldLocation);
-        this->GetWorld()->AddTemporalObject(LDebugTraceCube(
+        this->GetWorld()->AddTemporalObject(LDebugTraceCube
+        (
             LTemporalWorldObject::DrawOnce,
             CheckedStaticCast<AChunk>(this->CurrentGenericTraceResults[0].Actor)
                 ->GetChunkKey().ToWorldSpace() + LVector(VKey.X, VKey.Y, VKey.Z) + LVector(-0.001f),
@@ -150,8 +154,9 @@ void Jafg::APawn::OnOngoingSecondaryInput(LInputActionValue& InValue)
     {
         if (AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
         {
+            const JVoxelSubsystem* Vs = GEngine->GetCheckedSubsystem<JVoxelSubsystem>();
             const LVoxelKey Key = HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal.GetValue() * 0.5f);
-            HitChunk->ModifySingleVoxelByNonZeroOrigin(Key, ECompileTimeVoxels::Num);
+            HitChunk->ModifySingleVoxelByNonZeroOrigin(Key, Vs->GetCheckedVoxelIndex("Stone"));
             break;
         }
 

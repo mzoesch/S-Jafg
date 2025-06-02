@@ -10,6 +10,8 @@
 #include "MyWorld/Chunk/ChunkPhysics.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "Stats/Stats.h"
+#include "System/VoxelSubsystem.h"
+#include "System/MaterialSubsystem.h"
 
 bool Jafg::LChunkRendererComponent::Cull(const std::span<LVector>& Corners) const
 {
@@ -18,15 +20,12 @@ bool Jafg::LChunkRendererComponent::Cull(const std::span<LVector>& Corners) cons
 
 void Jafg::LChunkRendererComponent::Draw(const LViewport& Context, const LEye& Eye)
 {
-    if (this->Owner.IsMesherValid() == false)
-    {
-        LOG_WARNING(LogChunkMisc, "Invalid mesher. Skipping draw.")
-        return;
-    }
+    check( Tasks::IsOnRendererThread() )
 
-    checkSlow( this->Owner.GetSharedArgs() )
+    check( this->Owner.IsMesherValid() )
+    checkSlow( this->Owner.GetSharedArgs() && this->Owner.GetSharedArgs()->ChunkShader.IsValid() )
 
-    LChunkShader& Shader = this->Owner.GetSharedArgs()->ChunkShader;
+    const LChunkShader& Shader = this->Owner.GetSharedArgs()->ChunkShader;
 
     Shader.Use();
     glActiveTexture(GL_TEXTURE0);
@@ -61,16 +60,17 @@ void Jafg::AChunk::BeginLife()
 
     check( this->SharedArgs )
 
-    this->State = EChunkState::Freed;
-
     checkSlow( this->RawVoxelData == nullptr )
-    checkSlow( this->Mesher == nullptr )
-    checkSlow( this->NNorth == nullptr )
-    checkSlow( this->NEast  == nullptr )
-    checkSlow( this->NSouth == nullptr )
-    checkSlow( this->NWest  == nullptr )
-    checkSlow( this->NUp    == nullptr )
-    checkSlow( this->NDown  == nullptr )
+    checkSlow( this->NNorth       == nullptr )
+    checkSlow( this->NEast        == nullptr )
+    checkSlow( this->NSouth       == nullptr )
+    checkSlow( this->NWest        == nullptr )
+    checkSlow( this->NUp          == nullptr )
+    checkSlow( this->NDown        == nullptr )
+
+    this->SetTranslation(this->ChunkKey.ToWorldSpace());
+
+    this->SetState(EChunkState::Spawned);
 
     return;
 }
@@ -79,185 +79,59 @@ void Jafg::AChunk::EndLife()
 {
     Super::EndLife();
 
+    this->SharedArgs = nullptr;
     this->Mesher.Reset();
     this->RawVoxelData.Reset();
 
     return;
 }
 
-bool Jafg::AChunk::SetHuntedState(const EChunkState::Type NewHuntedState)
-{
-    check( EChunkState::IsGeneration(NewHuntedState) )
-
-    std::unique_lock Lock(this->ChunkStateMutex);
-
-    while (this->HuntedState != EChunkState::Invalid)
-    {
-        Lock.unlock();
-        WaitChunkState();
-        Lock.lock();
-    }
-    check( this->HuntedState == EChunkState::Invalid )
-
-    if (this->GetLockedChunkState() >= NewHuntedState)
-    {
-        return false;
-    }
-
-    this->HuntedState = NewHuntedState;
-
-    return true;
-}
-
-void Jafg::AChunk::InvalidateHuntedState()
-{
-    check( this->HuntedState != EChunkState::Invalid )
-    std::unique_lock Lock(this->ChunkStateMutex);
-    this->HuntedState = EChunkState::Invalid;
-    return;
-}
-
-void Jafg::AChunk::SetState(const EChunkState::Type NewChunkState)
+void Jafg::AChunk::SetState(const EChunkState::Type NewChunkState, const bool bKeepHunt /* = false */)
 {
     STAT_CYCLE_FUNCTION()
 
-    std::unique_lock Lock(this->ChunkStateMutex);
+    this->ChunkStateMutex.lock();
+
+    if (this->State >= NewChunkState)
+    {
+        this->ChunkStateMutex.unlock();
+        return;
+    }
+
+    check( this->HuntedState == EChunkState::Invalid )
 
     checkCode
     (
-        if (EChunkState::IsGeneration(NewChunkState))
+        if (this->IsStateChangeValid(NewChunkState) == false)
         {
-            check( this->HuntedState != EChunkState::Invalid )
+            panicMsgf
+            (
+                "Encountered invalid state change from {} to {}",
+                LexToString(this->State),
+                LexToString(NewChunkState)
+            )
+            this->ChunkStateMutex.unlock();
+            return;
         }
     )
 
-    if (this->IsStateChangeValid(NewChunkState) == false)
+    this->HuntedState = NewChunkState;
+
+    switch (NewChunkState)
     {
-        panicMsgf
-        (
-            "Encountered invalid state change from {} to {}",
-            LexToString(this->State),
-            LexToString(NewChunkState)
-        )
-        return;
-    }
-
-    check( this->HuntedState == EChunkState::Invalid ? true : NewChunkState == this->HuntedState )
-    check( this->HuntedState == EChunkState::Invalid ? true : (this->HuntedState - 1) == this->State )
-
-    this->State = NewChunkState;
-    this->HuntedState = EChunkState::Invalid;
-
-    switch (this->State)
-    {
-    case EChunkState::Spawned: { this->Spawn(); break; }
-    case EChunkState::Shaped: { this->Shape(); break; }
+    case EChunkState::Spawned:         { this->Spawn(); break; }
+    case EChunkState::Shaped:          { this->Shape(); break; }
     case EChunkState::SurfaceReplaced: { this->ReplaceSurface(); break; }
-    case EChunkState::Active: { this->OnActive(); break; }
+    case EChunkState::Active:          { this->Activate(); break; }
     default: { break; }
     }
 
-    return;
-}
-
-void Jafg::AChunk::WaitChunkState(
-    bool* bTimeoutRet /* = nullptr */,
-    const f64 InSeconds /* = 0.01 */,
-    const f64 Timeout /* = 2.0 */,
-    const EChunkStateTimeoutBehavior::Type InBehavior /* = EChunkStateTimeoutBehavior::Panic */
-    ) const
-{
-    GetOrWaitChunkState(bTimeoutRet, InSeconds, Timeout, InBehavior);
-}
-
-Jafg::EChunkState::Type Jafg::AChunk::GetOrWaitChunkState(
-    bool* bTimeoutRet /* = nullptr */,
-    const f64 InSeconds /* = 0.01 */,
-    const f64 Timeout /* = 2.0 */,
-    const EChunkStateTimeoutBehavior::Type InBehavior /* = EChunkStateTimeoutBehavior::Panic */
-    ) const
-{
-    STAT_CYCLE_FUNCTION()
-
-    f64 WaitTime = 0.0f;
-
-    while (this->HuntedState != EChunkState::Invalid)
+    if (bKeepHunt == false)
     {
-        /* This is not 100% accurate. But it is good enough for our needs. */
-        WaitTime += InSeconds;
-        PlatformHal::SleepNoStats(InSeconds);
+        this->State       = NewChunkState;
+        this->HuntedState = EChunkState::Invalid;
 
-        if (WaitTime > Timeout)
-        {
-            break;
-        }
-    }
-
-    if (this->HuntedState == EChunkState::Invalid)
-    {
-        return this->State;
-    }
-
-    if (bTimeoutRet)
-    {
-        *bTimeoutRet = true;
-    }
-
-    if (InBehavior == EChunkStateTimeoutBehavior::Panic)
-    {
-        panic("Timout reached.")
-    }
-    else if (InBehavior == EChunkStateTimeoutBehavior::Ignore)
-    {
-        check( bTimeoutRet ) /* Soft check. */
-        return EChunkState::Invalid;
-    }
-
-    return EChunkState::Invalid;
-}
-
-Jafg::EChunkState::Type Jafg::AChunk::GetOrYieldChunkState() const
-{
-    STAT_CYCLE_FUNCTION()
-
-    while (this->HuntedState != EChunkState::Invalid)
-    {
-        PlatformHal::YieldThread();
-    }
-
-    return this->State;
-}
-
-void Jafg::AChunk::OnAlloc(const LChunkKey& InChunkKey)
-{
-    check( this->GetCurrentChunkStateDangerous() == EChunkState::Freed )
-
-    this->ChunkKey = InChunkKey;
-    this->SetTranslation(this->ChunkKey.ToWorldSpace());
-
-    this->SetState(EChunkState::PreSpawned);
-
-    return;
-}
-
-void Jafg::AChunk::SetChunkPersistency(const EChunkPersistency::Type NewPersistency, const f32 TimeToLive /* = 10.0f */) noexcept
-{
-    std::unique_lock Lock(this->ChunkPersistencyMutex);
-
-    this->ChunkPersistency = NewPersistency;
-
-    if (this->ChunkPersistency == EChunkPersistency::Persistent)
-    {
-        return;
-    }
-
-    if
-    (
-        const f32 EndOfLive = this->GetWorld()->GetRealTimeSecondsSinceWorldLaunch() + TimeToLive;
-        EndOfLive > this->RealTimeInSecondsWhenTransientChunkShouldBeKilled
-    )
-    {
-        this->RealTimeInSecondsWhenTransientChunkShouldBeKilled = EndOfLive;
+        this->ChunkStateMutex.unlock();
     }
 
     return;
@@ -271,17 +145,9 @@ bool Jafg::AChunk::IsStateChangeValid(const EChunkState::Type NewChunkState) con
     {
         return false;
     }
-    case EChunkState::Freed:
-    {
-        return true;
-    }
-    case EChunkState::PreSpawned:
-    {
-        return this->State == EChunkState::Freed;
-    }
     case EChunkState::Spawned:
     {
-        return this->State == EChunkState::PreSpawned;
+        return this->State == EChunkState::Invalid;
     }
     case EChunkState::Shaped:
     {
@@ -293,7 +159,7 @@ bool Jafg::AChunk::IsStateChangeValid(const EChunkState::Type NewChunkState) con
     }
     case EChunkState::Active:
     {
-        return this->State == EChunkState::SurfaceReplaced;
+        return this->State >= EChunkState::Spawned && this->State <= EChunkState::SurfaceReplaced;
     }
     default:
     {
@@ -307,16 +173,49 @@ void Jafg::AChunk::Spawn()
 {
     STAT_CYCLE_FUNCTION()
 
-    check( this->State == EChunkState::Spawned )
+    check( Tasks::IsOnMasterThread() )
+
+    check( this->HuntedState == EChunkState::Spawned )
 
     const JChunkGenerationSubsystem* Subsystem = this->SharedArgs->ChunkGenerationSubsystem;
 
-    this->NNorth = Subsystem->FindChunkChecked(this->ChunkKey.GetNorthKey());
-    this->NEast  = Subsystem->FindChunkChecked(this->ChunkKey.GetEastKey());
-    this->NSouth = Subsystem->FindChunkChecked(this->ChunkKey.GetSouthKey());
-    this->NWest  = Subsystem->FindChunkChecked(this->ChunkKey.GetWestKey());
-    this->NUp    = Subsystem->FindChunkChecked(this->ChunkKey.GetUpKey());
-    this->NDown  = Subsystem->FindChunkChecked(this->ChunkKey.GetDownKey());
+    this->NNorth = Subsystem->FindChunk(this->ChunkKey.GetNorthKey());
+    this->NEast  = Subsystem->FindChunk(this->ChunkKey.GetEastKey());
+    this->NSouth = Subsystem->FindChunk(this->ChunkKey.GetSouthKey());
+    this->NWest  = Subsystem->FindChunk(this->ChunkKey.GetWestKey());
+    this->NUp    = Subsystem->FindChunk(this->ChunkKey.GetUpKey());
+    this->NDown  = Subsystem->FindChunk(this->ChunkKey.GetDownKey());
+
+    if (this->NNorth)
+    {
+        check( this->NNorth->NSouth == nullptr )
+        this->NNorth->NSouth = this;
+    }
+    if (this->NEast)
+    {
+        check( this->NEast->NWest == nullptr )
+        this->NEast->NWest = this;
+    }
+    if (this->NSouth)
+    {
+        check( this->NSouth->NNorth == nullptr )
+        this->NSouth->NNorth = this;
+    }
+    if (this->NWest)
+    {
+        check( this->NWest->NEast == nullptr )
+        this->NWest->NEast = this;
+    }
+    if (this->NUp)
+    {
+        check( this->NUp->NDown == nullptr )
+        this->NUp->NDown = this;
+    }
+    if (this->NDown)
+    {
+        check( this->NDown->NUp == nullptr )
+        this->NDown->NUp = this;
+    }
 
     return;
 }
@@ -325,14 +224,16 @@ void Jafg::AChunk::Shape()
 {
     STAT_CYCLE_FUNCTION()
 
-    check( this->State == EChunkState::Shaped )
+    check( Tasks::IsOnMasterThread() == false )
+
+    check( this->HuntedState == EChunkState::Shaped )
 
     struct HelperMalloc
     {
         u32 Data[MwStatics::ChunkSizeCubed];
     };
     check( this->RawVoxelData == nullptr )
-    this->RawVoxelData = Smart::MakeUnique(reinterpret_cast<u32*>(new HelperMalloc));
+    this->RawVoxelData = Smart::MakeUnique(reinterpret_cast<u32*>(new HelperMalloc{}));
 
     ChunkGenerator::ShapeChunk(this->SharedArgs, this->ChunkKey, this->RawVoxelData.GetValuePtrChecked());
 
@@ -343,34 +244,93 @@ void Jafg::AChunk::ReplaceSurface()
 {
     STAT_CYCLE_FUNCTION()
 
-    check( this->State == EChunkState::SurfaceReplaced )
+    check( Tasks::IsOnMasterThread() == false )
+
+    check( this->HuntedState == EChunkState::SurfaceReplaced )
     ChunkGenerator::ReplaceSurface(this->SharedArgs, this->ChunkKey, this, this->RawVoxelData);
     return;
 }
 
-void Jafg::AChunk::OnActive()
+void Jafg::AChunk::Activate()
 {
     STAT_CYCLE_FUNCTION()
 
-    check( this->State == EChunkState::Active )
+    check( Tasks::IsOnMasterThread() == false )
+
+    check( this->HuntedState == EChunkState::Active )
 
     check( this->Mesher == nullptr )
     check( this->IsRendererComponentValid() == false )
-
-    this->SetRendererComponent(new LChunkRendererComponent(*this));
-    checkSlow( this->IsRendererComponentValid() )
     this->SetPhysicsComponent(new LChunkPhysicsComponent(this));
 
     this->Mesher = Smart::MakeUnique(this->SharedArgs->GetNewMesher(*this));
     checkSlow( this->Mesher )
 
-    this->Mesher->RegenerateProceduralMesh();
+    {
+        std::unique_lock Lock(this->Mesher->GetMutex());
+
+        this->Mesher->ClearProceduralMesh();
+        this->Mesher->GenerateProceduralMesh(GEngine->GetCheckedSubsystem<JVoxelSubsystem>(), GEngine->GetCheckedSubsystem<JMaterialSubsystem>());
+
+        this->SetRendererComponent(new LChunkRendererComponent(*this));
+        checkSlow( this->IsRendererComponentValid() )
+
+        this->Mesher->ApplyProceduralMesh();
+    }
+
+    this->RegenerateNeighboringMeshes();
+
+    return;
+}
+
+void Jafg::AChunk::RegenerateNeighboringMeshes() const
+{
+    const JVoxelSubsystem* Vs { GEngine->GetCheckedSubsystem<JVoxelSubsystem>() };
+    const JMaterialSubsystem* Ms { GEngine->GetCheckedSubsystem<JMaterialSubsystem>() };
+
+    if (this->NNorth && this->NNorth->GetCurrentStateDangerous() == EChunkState::Active)
+    {
+        check( this->NNorth->Mesher.IsValid() )
+        this->NNorth->Mesher->RegenerateProceduralMesh(Vs, Ms);
+    }
+
+    if (this->NEast && this->NEast->GetCurrentStateDangerous() == EChunkState::Active)
+    {
+        check( this->NEast->Mesher.IsValid() )
+        this->NEast->Mesher->RegenerateProceduralMesh(Vs, Ms);
+    }
+
+    if (this->NSouth && this->NSouth->GetCurrentStateDangerous() == EChunkState::Active)
+    {
+        check( this->NSouth->Mesher.IsValid() )
+        this->NSouth->Mesher->RegenerateProceduralMesh(Vs, Ms);
+    }
+
+    if (this->NWest && this->NWest->GetCurrentStateDangerous() == EChunkState::Active)
+    {
+        check( this->NWest->Mesher.IsValid() )
+        this->NWest->Mesher->RegenerateProceduralMesh(Vs, Ms);
+    }
+
+    if (this->NUp && this->NUp->GetCurrentStateDangerous() == EChunkState::Active)
+    {
+        check( this->NUp->Mesher.IsValid() )
+        this->NUp->Mesher->RegenerateProceduralMesh(Vs, Ms);
+    }
+
+    if (this->NDown && this->NDown->GetCurrentStateDangerous() == EChunkState::Active)
+    {
+        check( this->NDown->Mesher.IsValid() )
+        this->NDown->Mesher->RegenerateProceduralMesh(Vs, Ms);
+    }
 
     return;
 }
 
 void Jafg::AChunk::ModifySingleLocalVoxel(const LVoxelKey InKey, const voxel_t NewVoxel)
 {
+    check( Tasks::IsOnMasterThread() )
+
     check( this->HasRawVoxelData() )
     check( InKey.IsLocal() )
 

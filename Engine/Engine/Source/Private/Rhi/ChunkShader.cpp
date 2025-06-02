@@ -8,9 +8,9 @@
 #include "System/MaterialSubsystem.h"
 #include "System/EnginePath.h"
 
-bool Jafg::LChunkShader::Make(const LName InName)
+bool Jafg::LChunkShader::Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants)
 {
-    if (const bool Out = Super::Make(InName); Out == false)
+    if (const bool Out = Super::Make(InName, std::move(InConstants)); Out == false)
     {
         return false;
     }
@@ -47,15 +47,28 @@ bool Jafg::LChunkShader::Make(const LName InName)
     );
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    glUniform1i(glGetUniformLocation(this->Program.GetId(), "BlendOpaqueTexSampler"), 0);
-    glUniform1i(glGetUniformLocation(this->Program.GetId(), "BlendersTexSampler"),    1);
-
     this->Program.SetUIntUniform("AtlasBlendOpaqueDomainWCount", Subsystem->GetBlendOpaqueDomainWidth());
     this->Program.SetUIntUniform("AtlasBlendersDomainWCount", Subsystem->GetBlendersDomainWidth());
+    this->Program.SetIntUniform("BlendOpaqueTexSampler", 0);
+    this->Program.SetIntUniform("BlendersTexSampler", 1);
 
     glActiveTexture(GL_TEXTURE0);
 
     return true;
+}
+
+void Jafg::LChunkShader::OnRecompile()
+{
+    Super::OnRecompile();
+    const JMaterialSubsystem* Subsystem = GEngine->GetSubsystem<JMaterialSubsystem>();
+
+    this->Program.Use();
+    this->Program.SetUIntUniform("AtlasBlendOpaqueDomainWCount", Subsystem->GetBlendOpaqueDomainWidth());
+    this->Program.SetUIntUniform("AtlasBlendersDomainWCount", Subsystem->GetBlendersDomainWidth());
+    this->Program.SetIntUniform("BlendOpaqueTexSampler", 0);
+    this->Program.SetIntUniform("BlendersTexSampler", 1);
+
+    return;
 }
 
 void Jafg::LChunkShader::UpdateWorldUniforms(const LViewport& Context, const LWorld& World, const LEye& Eye)
@@ -127,7 +140,7 @@ void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TArray<ChunkBoxV
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
     glBufferData(
         GL_ARRAY_BUFFER,
-        Vertices.GetSize() * static_cast<GLsizeiptr>(sizeof(::Jafg::ChunkBoxVertex)),
+        Vertices.GetSize() * static_cast<GLsizeiptr>(sizeof(ChunkBoxVertex)),
         Vertices.GetData(),
         GL_STATIC_DRAW
     );

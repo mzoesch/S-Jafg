@@ -10,7 +10,7 @@
 //# Whether to use slow but verbose output for chunk generation while stating.
 //#
 #ifndef STAT_CHUNK_VERBOSE_OUT
-    #define STAT_CHUNK_VERBOSE_OUT      IN_DEBUG
+    #define STAT_CHUNK_VERBOSE_OUT          IN_DEBUG
 #endif /* STAT_CHUNK_VERBOSE_OUT */
 
 #if WITH_STATS
@@ -42,58 +42,21 @@ Jafg::ETaskExit::Type Jafg::LChunkGeneratorWorker::Run()
 
     checkSlow( Tasks::IsOnMasterThread() == false )
 
-    constexpr i32 MaxChunkCount { 5 };
-
-    AChunk* Chunk;
     while (this->IsStopped() == false)
     {
-        Chunk = nullptr;
+        AChunk* Chunk { nullptr };
 
-        i32 Dequeued = 0;
-        while (Dequeued < MaxChunkCount && this->ChunkGenerationSubsystem->OutActiveChunks.Dequeue(&Chunk))
+        while (this->IsStopped() == false && this->ChunkGenerationSubsystem->OutActiveChunks.Dequeue(&Chunk))
         {
-            ++Dequeued;
-
             check( Chunk )
-
-            if (this->IsStopped())
-            {
-                break;
-            }
-
-            const bool bRetState = this->TryToBringChunkToState(Chunk, true, EChunkState::Active);
-
-            this->ChunkGenerationSubsystem->MutateRequestedPreSpawnedChunks([this](TArray<LChunkKey>& RequestedPreSpawnedChunks)
-            {
-                for (const LChunkKey& ChunkKey : this->Missing)
-                {
-                    RequestedPreSpawnedChunks.Emplace(ChunkKey);
-                    continue;
-                }
-
-                return;
-            });
-            this->Missing.clear();
-
-            if (bRetState == false)
-            {
-                this->ChunkGenerationSubsystem->InFailedActiveChunks.Enqueue(Chunk);
-            }
-
+            this->MakeChunkActive(Chunk);
             continue;
         }
 
-        if (this->IsStopped())
-        {
-            break;
-        }
-
-        if (Dequeued < MaxChunkCount)
+        if (this->IsStopped() == false)
         {
             PlatformHal::Sleep(this->YieldTime);
         }
-
-        this->Visited.clear();
 
         continue;
     }
@@ -101,105 +64,28 @@ Jafg::ETaskExit::Type Jafg::LChunkGeneratorWorker::Run()
     return ETaskExit::Success;
 }
 
-bool Jafg::LChunkGeneratorWorker::TryToBringChunkToState(AChunk* Target, const bool bPersistent, const EChunkState::Type TargetState)
+void Jafg::LChunkGeneratorWorker::MakeChunkActive(AChunk* Target)
 {
-#define GOTO_STATE(STATE)                                                               \
-    if (TargetState < EChunkState::STATE)                                               \
-    {                                                                                   \
-        /* check( Target->GetChunkState() == static_cast<u8>(EChunkState::STATE) - 1 )*/\
-        return true;                                                                    \
-    }                                                                                   \
-    if (Target->SetHuntedState(EChunkState::STATE))                                     \
-    {                                                                                   \
-        if                                                                              \
-        (                                                                               \
-            this->PRIVATE_JAFG_CORE_JOIN_OUTER_TWO(PrepareWorldForChunkTransit_, STATE) \
-            (Key) == false                                                              \
-        )                                                                               \
-        {                                                                               \
-            Target->InvalidateHuntedState();                                            \
-            return false;                                                               \
-        }                                                                               \
-        Target->SetState(EChunkState::STATE);                                           \
-    }
-
     STAT_QUICK_CYCLE_START_KEY(Target->GetChunkKey())
 
-    /* We can only generate chunks between those states. The other are special. */
-    check( EChunkState::Freed < TargetState && TargetState < EChunkState::Special )
-
-    const LChunkKey& Key = Target->GetChunkKey();
-
-    if (this->Visited.contains(Key) == false)
+    if (Target->GetCurrentStateDangerous() < EChunkState::Shaped)
     {
-        this->Visited.insert(Key);
+        Target->SetState(EChunkState::Shaped);
     }
 
-    if (Target->GetCurrentChunkStateDangerous() >= TargetState)
+    if (Target->GetCurrentStateDangerous() < EChunkState::SurfaceReplaced)
     {
-        return true;
+        Target->SetState(EChunkState::SurfaceReplaced);
     }
 
-    if (bPersistent)
+    if (Target->GetCurrentStateDangerous() < EChunkState::Active)
     {
-        Target->SetChunkPersistency(EChunkPersistency::Persistent);
+        Target->SetState(EChunkState::Active, true);
     }
 
-    GOTO_STATE(Spawned)
-    GOTO_STATE(Shaped)
-    GOTO_STATE(SurfaceReplaced)
-    GOTO_STATE(Active)
-
-    return true;
+    return;
 
 #undef GOTO_STATE
-}
-
-bool Jafg::LChunkGeneratorWorker::PrepareWorldForChunkTransit_Spawned(const LChunkKey& InChunkKey)
-{
-    STAT_QUICK_CYCLE_START_KEY(InChunkKey)
-
-    bool bRet = true;
-
-    for (const LChunkKey& Neighbor : InChunkKey.GetNeighboringChunkKeys())
-    {
-        if (this->ChunkGenerationSubsystem->FindChunk(Neighbor) == nullptr)
-        {
-            this->Missing.insert(Neighbor);
-            bRet = false;
-        }
-
-        continue;
-    }
-
-    return bRet;
-}
-
-bool Jafg::LChunkGeneratorWorker::PrepareWorldForChunkTransit_SurfaceReplaced(const LChunkKey& InChunkKey)
-{
-    STAT_QUICK_CYCLE_START_KEY(InChunkKey)
-
-    bool bRet = true;
-    for (const LChunkKey& NeighborKey : InChunkKey.GetNeighboringChunkKeys())
-    {
-        if (AChunk* Neighbor = this->ChunkGenerationSubsystem->FindChunk(NeighborKey); Neighbor)
-        {
-            checkSlow( Neighbor->GetChunkKey() == NeighborKey )
-            if (this->TryToBringChunkToState(Neighbor, false, EChunkState::Shaped) == false)
-            {
-                bRet = false;
-            }
-        }
-        else
-        {
-            this->Missing.insert(NeighborKey);
-            bRet = false;
-        }
-
-        continue;
-    }
-
-    return bRet;
 }
 
 Jafg::JChunkGeneratorSubsystem::JChunkGeneratorSubsystem(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
@@ -233,7 +119,9 @@ void Jafg::JChunkGeneratorSubsystem::Initialize(LSubsystemCollection& Collection
     for (i32 i = 0; i < 10; ++i)
     {
         ETaskExit::Type Exit;
-        const ENamedThreads::Type WorkerName = Tasks::LaunchNamedThread<LChunkGeneratorWorker>(&Exit,
+        const ENamedThreads::Type WorkerName = Tasks::LaunchNamedThread<LChunkGeneratorWorker>
+        (
+            &Exit,
             LString::SprintF("WkrCg_{}", i),
             this->ChunkGenerationSubsystem
         );

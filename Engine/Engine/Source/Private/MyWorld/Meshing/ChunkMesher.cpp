@@ -3,64 +3,59 @@
 #include "MyWorld/Chunk/Chunk.h"
 #include "MyWorld/Meshing/ChunkMesher.h"
 #include "Engine/Engine.h"
-#include "System/VoxelSubsystem.h"
-#include "System/MaterialSubsystem.h"
 #include "Stats/Stats.h"
-
-Jafg::LChunkMesher::~LChunkMesher()
-{
-    this->ClearProceduralMesh();
-}
 
 void Jafg::LChunkMesher::ClearProceduralMesh()
 {
+    check( this->Mutex.try_lock() == false )
+
     this->Vertices.Empty();
     this->Indices.Empty();
+
+    return;
 }
 
 void Jafg::LChunkMesher::ApplyProceduralMesh()
 {
+    check( this->Mutex.try_lock() == false )
+
     STAT_CYCLE_FUNCTION()
 
-    checkSlow( this->Owner->IsRendererComponentValid() )
-
-    if (Tasks::IsOnMasterThread())
+    if (Tasks::IsOnRendererThread())
     {
+        check( this->Owner->IsRendererComponentValid() )
         this->Owner->GetChunkRendererComponent()->GetShaderInstance()->LoadMeshToGraphicsMemory(this->Vertices, this->Indices);
+        this->NumTriangles = this->Indices.GetSize();
     }
     else
     {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::Whenever, [this](void) -> void
+        Tasks::Make(ENamedThreads::Renderer, ETaskTime::Whenever, [this](void) -> void
         {
             if (this->Owner->GetWorld()->GetWorldState() > EWorldState::Running)
             {
                 return;
             }
 
-            if (this->Owner->GetCurrentChunkStateDangerous() != EChunkState::Active)
+            check
+            (
+                   this->Owner->GetCurrentStateDangerous()       == EChunkState::Active
+                || this->Owner->GetCurrentHuntedStateDangerous() == EChunkState::Active
+            )
+
+            check( this->Owner->IsRendererComponentValid() )
+            this->Owner->GetChunkRendererComponent()->GetShaderInstance()->LoadMeshToGraphicsMemory(this->Vertices, this->Indices);
+            this->NumTriangles = this->Indices.GetSize();
+
+            if (this->Owner->GetCurrentHuntedStateDangerous() == EChunkState::Active)
             {
-                LOG_WARNING(LogChunkGeneration, "Chunk [{}] is not active.", this->Owner->GetChunkKey().ToString())
-                return;
+                this->Owner->FinishHunt(EChunkState::Active);
             }
 
-            this->Owner->GetChunkRendererComponent()->GetShaderInstance()->LoadMeshToGraphicsMemory(this->Vertices, this->Indices);
+            check( this->Owner->GetCurrentHuntedStateDangerous() == EChunkState::Invalid )
 
             return;
         });
     }
-
-
-    return;
-}
-
-void Jafg::LChunkMesher::RegenerateProceduralMesh()
-{
-    check( GEngine )
-    this->RegenerateProceduralMesh
-    (
-        GEngine->GetSubsystem<JVoxelSubsystem>(),
-        GEngine->GetSubsystem<JMaterialSubsystem>()
-    );
 
     return;
 }

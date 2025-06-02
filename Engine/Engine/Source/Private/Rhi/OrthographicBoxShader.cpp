@@ -5,16 +5,21 @@
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
 
-bool Jafg::LOrthographicBoxShader::Make(const LName InName)
+Jafg::TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicBoxShader::GetDefaultConstants()
 {
-    if (const bool bOut = Super::Make(InName); bOut == false)
+    return Super::GetDefaultConstants();
+}
+
+bool Jafg::LOrthographicBoxShader::Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants /* = {} */)
+{
+    if (const bool bOut = Super::Make(InName, std::move(InConstants)); bOut == false)
     {
         return false;
     }
 
     LOG_VERBOSE(LogRhi, "Creating OrthographicBoxShader at [{}].", InName)
 
-    this->Program = LShader(LEnginePath(EEnginePaths::Shaders, "VisualBox"));
+    this->Program = LShader(LEnginePath(EEnginePaths::Shaders, "VisualBox"), this->Constants);
     this->Program.Use();
 
     glGenVertexArrays(1, &this->Vao);
