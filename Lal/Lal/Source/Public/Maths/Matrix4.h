@@ -60,10 +60,20 @@ struct TMatrix4 final
         }
     {
     }
+    FORCEINLINE TMatrix4(const TPlane<T>& InX, const TPlane<T>& InY, const TPlane<T>& InZ, const TPlane<T>& InW)
+        : Matrix
+        {
+                { InX.X, InX.Y, InX.Z, InX.W },
+                { InY.X, InY.Y, InY.Z, InY.W },
+                { InZ.X, InZ.Y, InZ.Z, InZ.W },
+                { InW.X, InW.Y, InW.Z, InW.W }
+        }
+    {
+    }
     FORCEINLINE TMatrix4(const Self&  InMatrix) noexcept { Self::FastCopy( InMatrix, this); return; }
     FORCEINLINE TMatrix4(      Self&& InMatrix) noexcept { Self::FastMove(&InMatrix, this); return; }
 
-    FORCEINLINE constexpr       T* GetData()       noexcept { return static_cast<T*>(this); }
+    FORCEINLINE constexpr       T* GetData()       noexcept { return reinterpret_cast<T*>(this); }
     FORCEINLINE constexpr const T* GetData() const noexcept { return reinterpret_cast<const T*>(this); }
 
     FORCEINLINE constexpr ColumnTy GetRow(const EMatrixAxis Axis) const noexcept { return { this->Matrix[Axis][0], this->Matrix[Axis][1], this->Matrix[Axis][2], this->Matrix[Axis][3] }; }

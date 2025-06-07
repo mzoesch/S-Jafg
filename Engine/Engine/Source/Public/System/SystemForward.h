@@ -21,6 +21,9 @@ enum Type : u8
     //# Custom path relative to the engine.
     CustomEngine,
 
+    //# Content/Textures
+    Textures,
+
     //# Content/Textures/Voxels
     Voxels,
 
@@ -45,6 +48,7 @@ inline LString LexToString(const EEnginePaths::Type InType)
     {
     case EEnginePaths::CustomModule: { return ""; }
     case EEnginePaths::CustomEngine: { return ""; }
+    case EEnginePaths::Textures:     { return "Content/Textures"; }
     case EEnginePaths::Voxels:       { return "Content/Textures/Voxels"; }
     case EEnginePaths::Interface:    { return "Content/Textures/Interface"; }
     case EEnginePaths::Blends:       { return "Content/Textures/Blends"; }

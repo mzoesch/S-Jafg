@@ -52,6 +52,7 @@ public:
     ENGINE_API LShader() = default;
     ENGINE_API explicit LShader(const LEnginePath& Path);
     ENGINE_API explicit LShader(const LEnginePath& Path, const TArray<LShaderCompileTimeConstant>& InConstants);
+    ENGINE_API explicit LShader(LString&& UncompiledVertex, LString&& UncompiledFragment, const TArray<LShaderCompileTimeConstant>& InConstants);
 
     PROHIBIT_COPY(LShader)
     FORCEINLINE LShader(LShader&& InShader) noexcept { *this = std::move(InShader); }
@@ -63,6 +64,7 @@ public:
     ENGINE_API void Load(const LEnginePath& Path);
     ENGINE_API void Load(const LEnginePath& Path, const TArray<LShaderCompileTimeConstant>& InConstants);
     ENGINE_API void Load(const TArray<LShaderCompileTimeConstant>& InConstants);
+    ENGINE_API void Load(LString&& UncompiledVertex, LString&& UncompiledFragment, const TArray<LShaderCompileTimeConstant>& InConstants = {});
     ENGINE_API void Recompile(const TArray<LShaderCompileTimeConstant>& InConstants);
     ENGINE_API void Use() const;
 
@@ -97,7 +99,7 @@ public:
 
 private:
 
-    void LoadShader(const LEnginePath& VertexPath, const LEnginePath& FragmentPath, const TArray<LShaderCompileTimeConstant>& InConstants);
+    void LoadImpl(LString&& UncompiledVertex, LString&& UncompiledFragment, const TArray<LShaderCompileTimeConstant>& InConstants);
 
     bool bLoaded { false };
     LEnginePath CachedPath;

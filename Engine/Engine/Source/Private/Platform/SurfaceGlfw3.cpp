@@ -21,7 +21,7 @@
 namespace
 {
 
-bool bInitializedGlfw = false;
+bool bInitializedGlfw { false };
 
 void OpenGlErrorCallback(int error_code, const char* description);
 
@@ -102,7 +102,6 @@ Jafg::LSurfaceGlfw3& Jafg::LSurfaceGlfw3::operator=(LSurfaceGlfw3&& Other) noexc
 {
     Super::operator=(std::move(Other));
 
-
     this->Cursor = Other.Cursor;
     this->Handle = Other.Handle;
     this->bVSync = Other.bVSync;
@@ -162,7 +161,7 @@ void Jafg::LSurfaceGlfw3::Initialize()
     glfwMakeContextCurrent(this->Handle);
     glfwSetWindowUserPointer(this->Handle, reinterpret_cast<void*>(this));
 
-    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) // NOLINT(clang-diagnostic-cast-function-type-strict)
+    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
     {
         panic( "Failed to initialize glad." )
         return;
@@ -342,7 +341,7 @@ void Jafg::LSurfaceGlfw3::SetInputMode(const EInputMode::Type InMode, const bool
         this->bFirstMouseCallback = true;
     }
 
-    glfwMakeContextCurrent( this->Handle );
+    glfwMakeContextCurrent(this->Handle);
     glfwSetInputMode(this->Handle, GLFW_CURSOR, this->bShowCursor ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
 
     return;

@@ -7,6 +7,7 @@
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Engine/Level.h"
+#include "Framework/Skybox.h"
 #if AS_CLIENT
     #include "Debug/TemporalWorldObject.h"
 #endif /* AS_CLIENT */
@@ -184,10 +185,12 @@ public:
     FORCEINLINE LStringView   GetUnderlyingLevelNameChecked() const { check( this->IsUnderlyingLevelValid() ) return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }
     FORCEINLINE LStringView   GetUnderlyingLevelNameAsserted() const { jassert( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel->Identifier; }
 
-    ENGINE_API void RegisterTickableObject(LTickableObject* Tickable);
-    ENGINE_API void UnregisterTickableObject(LTickableObject* Tickable);
+    ENGINE_API  void RegisterTickableObject(LTickableObject* Tickable);
+    ENGINE_API  void UnregisterTickableObject(LTickableObject* Tickable);
     FORCEINLINE auto GetTickableObjects() const -> const TArray<LTickableObject*>& { return this->TickableObjects; }
     FORCEINLINE auto GetActors() const -> const TArray<AActor*>& { return this->Actors; }
+    FORCEINLINE bool IsSkyboxValid() const noexcept { return this->Skybox.IsValid(); }
+    FORCEINLINE auto GetSkybox() const noexcept -> const LSkybox& { return this->Skybox.GetValue(); }
 
     ENGINE_API f32 GetRealTimeSecondsSinceWorldLaunch() const;
 
@@ -229,6 +232,9 @@ private:
     TArray<LTickableObject*> DeletedTickableObjects;
 
     TArray<AActor*> Actors;
+    bool bDrawSkyboxFirst { false };
+    TOptional<LSkybox> Skybox;
+
     mutable LEyeToMatricesMap EyeToMatrices;
     EWorldState::Type WorldState;
 

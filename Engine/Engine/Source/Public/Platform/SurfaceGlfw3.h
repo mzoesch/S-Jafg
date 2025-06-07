@@ -59,6 +59,10 @@ public:
     ENGINE_API  virtual void SetVSync(const bool bEnabled) override;
     FORCEINLINE virtual bool IsVSync() const override { return this->bVSync; }
 
+    FORCEINLINE bool IsFirstMouseCallback() const noexcept { return this->bFirstMouseCallback; }
+    FORCEINLINE f64  GetLastMouseX() const noexcept { return this->LastMouseX; }
+    FORCEINLINE f64  GetLastMouseY() const noexcept { return this->LastMouseY; }
+
     FORCEINLINE GLFWcursor* GetNativeCursorHandleDangerous() const { return this->Cursor; }
     FORCEINLINE GLFWwindow* GetNativeHandleDangerous() const { return this->Handle; }
 

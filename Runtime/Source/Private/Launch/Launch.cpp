@@ -355,8 +355,25 @@ EPlatformExit::Type GuardedMain()
      * The core levels. Hardcoded into the engine generation for better communication with other plugins.
      * To give them a common / default way for different engine states.
      */
-    GEngine->RegisterLevel(LLevel{Name_LevelFrontend.ToString(), EInputMode::UserInterface, true});
-    GEngine->RegisterLevel(LLevel{Name_LevelMyWorld.ToString(), EInputMode::InputSubSystem, false, {0.6f, 0.8f, 1.0f}});
+    GEngine->RegisterLevel
+    (
+        LLevel
+        {
+            Name_LevelFrontend.ToString(), EInputMode::UserInterface, true
+        }
+    );
+    GEngine->RegisterLevel
+    (
+        LLevel
+        {
+            Name_LevelMyWorld.ToString(), EInputMode::InputSubSystem, false,
+            LLinearColor::Black,
+            true, false, TArray<LEnginePath>
+            {
+                LEnginePath{ EEnginePaths::Textures, "Misc/SbNight.png" },
+            }
+        }
+    );
 
     STAT_CYCLE_END(GmEngineInit)
 

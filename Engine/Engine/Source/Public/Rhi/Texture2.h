@@ -11,6 +11,14 @@ namespace Jafg
 
 class JUserPreferences;
 
+namespace Texture2
+{
+
+ENGINE_API Smart::TUnique<u8> RotateCW (const u8* InData, const u32 InWidth, const u32 InHeight, const u32 InChannels);
+ENGINE_API Smart::TUnique<u8> RotateCCW(const u8* InData, const u32 InWidth, const u32 InHeight, const u32 InChannels);
+
+} /* ~Namespace ~Image */
+
 //#
 //# Represents a generic two-dimensional texture that can be uploaded to a graphics card.
 //#

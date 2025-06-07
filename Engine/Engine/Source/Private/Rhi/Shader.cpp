@@ -15,6 +15,11 @@ Jafg::LShader::LShader(const LEnginePath& Path, const TArray<LShaderCompileTimeC
     this->Load(Path, InConstants);
 }
 
+Jafg::LShader::LShader(LString&& UncompiledVertex, LString&& UncompiledFragment, const TArray<LShaderCompileTimeConstant>& InConstants)
+{
+    this->Load(std::move(UncompiledVertex), std::move(UncompiledFragment), InConstants);
+}
+
 Jafg::LShader::~LShader()
 {
     if (this->bLoaded)
@@ -72,7 +77,18 @@ void Jafg::LShader::Load(const TArray<LShaderCompileTimeConstant>& InConstants)
     LEnginePath FragmentPath = this->CachedPath;
     FragmentPath.AddExtension(".frag");
 
-    this->LoadShader(VertexPath, FragmentPath, InConstants);
+    LString UncompiledVertex   { Finder::ReadFile(VertexPath) };
+    LString UncompiledFragment { Finder::ReadFile(FragmentPath) };
+
+    this->LoadImpl(std::move(UncompiledVertex), std::move(UncompiledFragment), InConstants);
+
+    return;
+}
+
+void Jafg::LShader::Load(LString&& UncompiledVertex, LString&& UncompiledFragment, const TArray<LShaderCompileTimeConstant>& InConstants /* = {} */)
+{
+    this->CachedPath = LEnginePath{EEnginePaths::None};
+    this->LoadImpl(std::move(UncompiledVertex), std::move(UncompiledFragment), InConstants);
 
     return;
 }
@@ -238,11 +254,8 @@ void Jafg::LShader::SetColorVec4Uniform(const LString& Name, const LColor& Value
     this->SetVec4Uniform(Name, Value.ToVector4());
 }
 
-void Jafg::LShader::LoadShader(const LEnginePath& VertexPath, const LEnginePath& FragmentPath, const TArray<LShaderCompileTimeConstant>& InConstants)
+void Jafg::LShader::LoadImpl(LString&& UncompiledVertex, LString&& UncompiledFragment, const TArray<LShaderCompileTimeConstant>& InConstants)
 {
-    LString UncompiledVertex   = Finder::ReadFile(VertexPath);
-    LString UncompiledFragment = Finder::ReadFile(FragmentPath);
-
     i32 AddConstantsIdxFragment = INDEX_NONE;
     i32 AddConstantsIdxVertex   = INDEX_NONE;
 

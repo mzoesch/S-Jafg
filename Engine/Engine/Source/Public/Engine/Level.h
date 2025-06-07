@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "System/EnginePath.h"
 #include "User/Input/InputMode.h"
 
 namespace Jafg
@@ -27,13 +27,19 @@ struct LLevel final
     (
         const LString& InIdentifier,
         const EInputMode::Type InInputMode = EInputMode::None,
-        const bool bShowMouseCursor = true,
-        const LLinearColor& BackgroundColor = LLinearColor::Gray
+        const bool bInShowMouseCursor = true,
+        const LLinearColor& BackgroundColor = LLinearColor::Black,
+        const bool bInCreateSkybox = false,
+        const bool bInDrawSkyboxFirst = true,
+        const TArray<LEnginePath>& InDefaultSkybox = { }
     )
         : Identifier(InIdentifier)
         , InputMode(InInputMode)
-        , bShowMouseCursor(bShowMouseCursor)
+        , bShowMouseCursor(bInShowMouseCursor)
         , BackgroundColor(BackgroundColor)
+        , bCreateSkybox(bInCreateSkybox)
+        , bDrawSkyboxFirst(bInDrawSkyboxFirst)
+        , DefaultSkybox(InDefaultSkybox)
     {
         return;
     }
@@ -51,6 +57,9 @@ struct LLevel final
     bool bShowMouseCursor;
 
     LLinearColor BackgroundColor;
+    bool bCreateSkybox;
+    bool bDrawSkyboxFirst;
+    TArray<LEnginePath> DefaultSkybox;
 };
 
 } /* Namespace Jafg */

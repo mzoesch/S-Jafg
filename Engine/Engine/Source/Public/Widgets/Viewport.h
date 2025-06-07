@@ -78,13 +78,21 @@ public:
     ENGINE_API bool TryRemoveWidget(WUserWidget* Widget);
 
     //# The scale factor is based on the physical platform dpi in relation to the base dpi.
-    FORCEINLINE auto GetScaleFactor() const -> float { return this->ScaleFactor; }
-    FORCEINLINE auto SetPlatformDpi(const float InDpi) -> void { this->PlatformDpi = InDpi; }
-    FORCEINLINE auto GetPlatformDpi() const -> float { return this->PlatformDpi; }
-    FORCEINLINE auto GetBaseDpi() const -> float { return this->BaseDpi; }
+    FORCEINLINE f32  GetScaleFactor() const { return this->ScaleFactor; }
+    FORCEINLINE void SetPlatformDpi(const f32 InDpi) { this->PlatformDpi = InDpi; }
+    FORCEINLINE f32  GetPlatformDpi() const { return this->PlatformDpi; }
+    FORCEINLINE f32  GetBaseDpi() const { return this->BaseDpi; }
 
-    auto ChangeDimensions(const LIntVector2& InDimensions) -> void;
-    FORCEINLINE auto GetDimensions() const -> LIntVector2 { return this->Dimensions; }
+    ENGINE_API void ChangeDimensions(const LIntVector2& InDimensions);
+    FORCEINLINE LIntVector2 GetDimensions() const { return this->Dimensions; }
+    FORCEINLINE i32         GetWidth() const noexcept { return this->Dimensions.X; }
+    FORCEINLINE i32         GetHeight() const noexcept { return this->Dimensions.Y; }
+    FORCEINLINE LVector2    GetDimensionsF() const { return {static_cast<f32>(this->Dimensions.X), static_cast<f32>(this->Dimensions.Y)}; }
+    FORCEINLINE f32         GetWidthF() const noexcept { return static_cast<f32>(this->Dimensions.X); }
+    FORCEINLINE f32         GetHeightF() const noexcept { return static_cast<f32>(this->Dimensions.Y); }
+    FORCEINLINE LVector2D   GetDimensionsD() const noexcept { return {static_cast<f64>(this->Dimensions.X), static_cast<f64>(this->Dimensions.Y)}; }
+    FORCEINLINE f64         GetWidthD() const noexcept { return static_cast<f64>(this->Dimensions.X); }
+    FORCEINLINE f64         GetHeightD() const noexcept { return static_cast<f64>(this->Dimensions.Y); }
 
     ENGINE_API  WNode* GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const;
     FORCEINLINE WNode* GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const;

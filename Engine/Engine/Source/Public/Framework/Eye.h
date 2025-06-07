@@ -20,7 +20,7 @@ public:
     FORCEINLINE bool IsOwnerValid() const noexcept { return this->Owner != nullptr; }
     ENGINE_API  void SetOwner(APawn* InOwner) noexcept;
 
-    FORCEINLINE auto GetOwner() const noexcept -> APawn* { return this->Owner; }
+    FORCEINLINE APawn* GetOwner() const noexcept { return this->Owner; }
 
     void UpdateViewMatrix();
     FORCEINLINE const LMatrix& GetViewMatrix() const noexcept { return this->CachedViewMatrix; }
@@ -28,8 +28,8 @@ public:
     FORCEINLINE const LVector& GetRelativeRight() const noexcept { return this->RelativeRight; }
     FORCEINLINE const LVector& GetRelativeUp() const noexcept { return this->RelativeUp; }
 
-    FORCEINLINE auto GetDegYFov() const noexcept -> float { return this->DegYFov; }
-    FORCEINLINE void SetDegYFov(const float InDegYFov) { this->DegYFov = InDegYFov; }
+    FORCEINLINE f32  GetDegYFov() const noexcept { return this->DegYFov; }
+    FORCEINLINE void SetDegYFov(const f32 InDegYFov) { this->DegYFov = InDegYFov; }
 
     FORCEINLINE f32  GetNearFrustum() const noexcept { return this->NearFrustum; }
     FORCEINLINE void SetNearFrustum(const f32 InNearFrustum) { this->NearFrustum = InNearFrustum; }
@@ -38,18 +38,18 @@ public:
 
 private:
 
-    APawn*  Owner = nullptr;
-    LMatrix CachedViewMatrix = LMatrix::Identity;
+    APawn*  Owner { nullptr };
+    LMatrix CachedViewMatrix;
 
     void UpdateRelativeVectors() const;
-    mutable LVector RelativeFront = LVector::ForwardVector;
-    mutable LVector RelativeRight = LVector::RightVector;
-    mutable LVector RelativeUp    = LVector::UpVector;
+    mutable LVector RelativeFront { LVector::ForwardVector };
+    mutable LVector RelativeRight { LVector::RightVector };
+    mutable LVector RelativeUp    { LVector::UpVector };
 
-    f32 DegYFov = 70.0f;
+    f32 DegYFov { 90.0f };
 
-    f32 NearFrustum = 0.1f;
-    f32 FarFrustum  = 1.0f;
+    f32 NearFrustum { 0.1f };
+    f32 FarFrustum  { 1.0f };
 };
 
 } /* ~Namespace Jafg */

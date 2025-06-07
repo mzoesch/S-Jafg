@@ -25,11 +25,11 @@ const vec3 Normals[] = vec3[]
 
 void main()
 {
-    vec4 Pos = Projection * View * Model * vec4(InLocation, 1.0);
-    Pos.x = -Pos.x;
-    gl_Position = Pos;
-
     InFragTexCoord = InVertTexCoord;
     InFragNormal = Normals[InNormal];
     InFragBlendTexCoord = InVertBlendTexCoord;
+
+    vec4 Pos = Projection * View * Model * vec4(InLocation, 1.0);
+    Pos.x = -Pos.x;
+    gl_Position = Pos;
 }

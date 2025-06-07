@@ -5,6 +5,72 @@
 #include "System/EnginePath.h"
 #include "Rhi/RhiVendorInclude.h"
 
+Jafg::Smart::TUnique<u8> Jafg::Texture2::RotateCW(const u8* InData, const u32 InWidth, const u32 InHeight, const u32 InChannels)
+{
+    check( InData )
+
+    const u32 NewW { InHeight };
+    const u32 NewH { InWidth  };
+
+    Smart::TUnique<u8> Buffer { Smart::MakeUnique(static_cast<u8*>(operator new(InWidth * InHeight * InChannels))) };
+
+    for (u32 Y { 0 }; Y < InHeight; ++Y)
+    {
+        for (u32 X { 0 }; X < InWidth; ++X)
+        {
+            for (u32 C { 0 }; C < InChannels; ++C)
+            {
+                const u32 srcIndex { (Y * InWidth + X) * InChannels + C };
+                const u32 dstX { InHeight - 1 - Y };
+                const u32 dstY { X };
+                const u32 dstIndex { (dstY * NewW + dstX) * InChannels + C };
+                Buffer[dstIndex] = InData[srcIndex];
+
+                continue;
+            }
+
+            continue;
+        }
+
+        continue;
+    }
+
+    return Buffer;
+}
+
+Jafg::Smart::TUnique<u8> Jafg::Texture2::RotateCCW(const u8* InData, const u32 InWidth, const u32 InHeight, const u32 InChannels)
+{
+    check( InData )
+
+    const u32 NewW { InHeight };
+    const u32 NewH { InWidth  };
+
+    Smart::TUnique<u8> Buffer { Smart::MakeUnique(static_cast<u8*>(operator new(InWidth * InHeight * InChannels))) };
+
+    for (u32 Y { 0 }; Y < InHeight; ++Y)
+    {
+        for (u32 X { 0 }; X < InWidth; ++X)
+        {
+            for (u32 C { 0 }; C < InChannels; ++C)
+            {
+                const u32 srcIndex { (Y * InWidth + X) * InChannels + C };
+                const u32 dstX { Y };
+                const u32 dstY { InWidth - 1 - X };
+                const u32 dstIndex { (dstY * NewW + dstX) * InChannels + C };
+                Buffer[dstIndex] = InData[srcIndex];
+
+                continue;
+            }
+
+            continue;
+        }
+
+        continue;
+    }
+
+    return Buffer;
+}
+
 bool Jafg::LTexture2::CreateEmpty(const u32 InWidth, const u32 InHeight, const ERawImageFormat::Type InFormat)
 {
     check( this->MipMap.GetBulk().IsAllocated() == false )

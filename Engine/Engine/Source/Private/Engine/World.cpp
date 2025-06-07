@@ -104,6 +104,18 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level, LString&& InLaunchedUrl)
     this->DeferredInitialize(GlobalCarnifex);
 
     this->UnderlyingLevel = Level;
+
+    if (this->UnderlyingLevel.IsValid())
+    {
+        this->bDrawSkyboxFirst = this->UnderlyingLevel->bDrawSkyboxFirst;
+
+        if (this->UnderlyingLevel->bCreateSkybox)
+        {
+            this->Skybox = LSkybox{this->UnderlyingLevel->DefaultSkybox};
+            this->Skybox->Upload();
+        }
+    }
+
     this->GetEngine()->OnWorldBeginLife.Broadcast(this);
 
     LOG_VERBOSE(LogWorld, "Initializing {} level actors.", this->Actors.GetSize())
@@ -180,14 +192,17 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
         LVector4 WorldLocation = InversePV * NdcCorners[i];
         Corners[i] = WorldLocation.XYZ() / WorldLocation.W; /* Perspective divide */
     }
-
     // std::vector<std::pair<int, int>> frustumEdges = {
     //     {0, 1}, {1, 3}, {3, 2}, {2, 0}, // Near Plane Edges
     //     {4, 5}, {5, 7}, {7, 6}, {6, 4}, // Far Plane Edges
     //     {0, 4}, {1, 5}, {2, 6}, {3, 7}  // Connecting Near and Far Planes
     // };
-
     const std::span CornersSpan{Corners};
+
+    if (this->Skybox.IsValid() && this->bDrawSkyboxFirst)
+    {
+        this->Skybox->Draw(Viewport, Eye);
+    }
 
     this->OnStaticDraw.InvokeIfBound(Viewport, Eye, CornersSpan);
 
@@ -246,6 +261,11 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
     for (LTemporalWorldObject* const& TemporalObject : this->TemporalObjects)
     {
         TemporalObject->Draw(*this, Viewport, Eye);
+    }
+
+    if (this->Skybox.IsValid() && this->bDrawSkyboxFirst == false)
+    {
+        this->Skybox->Draw(Viewport, Eye);
     }
 
     return;
