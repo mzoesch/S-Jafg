@@ -3,7 +3,7 @@
 use walkdir::WalkDir;
 use crate::core::finder;
 use crate::core::paths;
-use crate::core::cfg::Config;
+// use crate::core::cfg::Config;
 use crate::build_tool::core::{BuildTarget, JPacketUnit, JPacket};
 use crate::build_tool::tokenizer;
 use crate::build_tool::tokenizer::{Token, TokenType, SUPER_CLASS};
@@ -395,79 +395,79 @@ fn add_pragma(bt: &BuildTarget, file: &str, tokens: &Vec<Token>, i: usize, t: &T
             name: t.content.to_string(),
             line: t.line,
             args: vec![bt.module.name.to_string()],
-            callback: Box::new(|_h_file_id, h_builder, t_builder, self_packet|
+            callback: Box::new(|_h_file_id, _h_builder, _t_builder, _self_packet|
             {
-                finder::ensure_file("Config/Program.cfg");
-                let cfg: Config;
-                let cfg_str: String = finder::read_file("Config/Program.cfg");
-                if cfg_str.len() > 0
-                {
-                    let cfg_res: Result<Config, serde_json::Error> = serde_json::from_str(&cfg_str);
-                    if cfg_res.is_err()
-                    {
-                        println!("Failed to load config.");
-                        cfg_res.unwrap();
-                        return;
-                    }
-                    cfg = cfg_res.unwrap();
-                }
-                else
-                {
-                    cfg = Config::default();
-                }
-
-                let module_api: String = format!("{}_API", self_packet.args[0].to_uppercase());
-
-                h_builder.push_str(r##"
-#if !WITH_VIRTUAL_FILESYSTEM && !PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION
-    #error "Virtual filesystem is not enabled. Please enable it in the project settings."
-#endif /* !WITH_VIRTUAL_FILESYSTEM && !PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION */
-"##);
-                t_builder.push_str("#if WITH_VIRTUAL_FILESYSTEM\n\n");
-                t_builder.push_str("#include \"System/VFilesystem.h\"\n\n");
-
-                let files: Vec<String> = finder::get_files_recursive("Content/");
-                for f in files.iter()
-                {
-                    let f_name: String = finder::get_file_name(f);
-                    if cfg.VFilesystemIgnores.contains(&f_name)
-                    {
-                        continue;
-                    }
-                    let bin: Vec<u8> = std::fs::read(f).unwrap();
-                    let mut bin_str: String = String::new();
-                    for i in 0..bin.len()
-                    {
-                        bin_str.push_str(&format!("0x{:02X}", bin[i]));
-                        if i < bin.len() - 1
-                        {
-                            bin_str.push_str(",");
-                        }
-                    }
-
-                    let cxx_symbol: String = f.replace('\\', "/").replace(':', "_").replace("/", "__").replace(".", "_");
-                    h_builder.push_str(&format!("{} extern const ::Jafg::Private::LVirtualFile PrivateJafgExternFile_{};\n", module_api, cxx_symbol));
-                    t_builder.push_str(&format!(r##"
-namespace
-{{
-const u8 PrivateJafgExternFileData_{}[] = {{ {} }};
-}} /* ~Namespace <Anonymous> */
-{} const ::Jafg::Private::LVirtualFile PrivateJafgExternFile_{} =
-{{
-    /* File Name */ ::Jafg::LPath("{}"),
-    /* File Data */ PrivateJafgExternFileData_{},
-    /* File Size */ sizeof(PrivateJafgExternFileData_{})
-}};
-"##,
-                        cxx_symbol, bin_str,
-                        module_api, cxx_symbol,
-                        f, cxx_symbol, cxx_symbol,
-                    ));
-
-                    continue
-                }
-
-                t_builder.push_str("#endif /* WITH_VIRTUAL_FILESYSTEM */\n");
+//                 finder::ensure_file("Config/Program.cfg");
+//                 let cfg: Config;
+//                 let cfg_str: String = finder::read_file("Config/Program.cfg");
+//                 if cfg_str.len() > 0
+//                 {
+//                     let cfg_res: Result<Config, serde_json::Error> = serde_json::from_str(&cfg_str);
+//                     if cfg_res.is_err()
+//                     {
+//                         println!("Failed to load config.");
+//                         cfg_res.unwrap();
+//                         return;
+//                     }
+//                     cfg = cfg_res.unwrap();
+//                 }
+//                 else
+//                 {
+//                     cfg = Config::default();
+//                 }
+//
+//                 let module_api: String = format!("{}_API", self_packet.args[0].to_uppercase());
+//
+//                 h_builder.push_str(r##"
+// #if !WITH_VIRTUAL_FILESYSTEM && !PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION
+//     #error "Virtual filesystem is not enabled. Please enable it in the project settings."
+// #endif /* !WITH_VIRTUAL_FILESYSTEM && !PRIVATE_JAFG_INCLUDED_FROM_GENERATED_TRANSLATION */
+// "##);
+//                 t_builder.push_str("#if WITH_VIRTUAL_FILESYSTEM\n\n");
+//                 t_builder.push_str("#include \"System/VFilesystem.h\"\n\n");
+//
+//                 let files: Vec<String> = finder::get_files_recursive("Content/");
+//                 for f in files.iter()
+//                 {
+//                     let f_name: String = finder::get_file_name(f);
+//                     if cfg.VFilesystemIgnores.contains(&f_name)
+//                     {
+//                         continue;
+//                     }
+//                     let bin: Vec<u8> = std::fs::read(f).unwrap();
+//                     let mut bin_str: String = String::new();
+//                     for i in 0..bin.len()
+//                     {
+//                         bin_str.push_str(&format!("0x{:02X}", bin[i]));
+//                         if i < bin.len() - 1
+//                         {
+//                             bin_str.push_str(",");
+//                         }
+//                     }
+//
+//                     let cxx_symbol: String = f.replace('\\', "/").replace(':', "_").replace("/", "__").replace(".", "_");
+//                     h_builder.push_str(&format!("{} extern const ::Jafg::Private::LVirtualFile PrivateJafgExternFile_{};\n", module_api, cxx_symbol));
+//                     t_builder.push_str(&format!(r##"
+// namespace
+// {{
+// const u8 PrivateJafgExternFileData_{}[] = {{ {} }};
+// }} /* ~Namespace <Anonymous> */
+// {} const ::Jafg::Private::LVirtualFile PrivateJafgExternFile_{} =
+// {{
+//     /* File Name */ ::Jafg::LPath("{}"),
+//     /* File Data */ PrivateJafgExternFileData_{},
+//     /* File Size */ sizeof(PrivateJafgExternFileData_{})
+// }};
+// "##,
+//                         cxx_symbol, bin_str,
+//                         module_api, cxx_symbol,
+//                         f, cxx_symbol, cxx_symbol,
+//                     ));
+//
+//                     continue
+//                 }
+//
+//                 t_builder.push_str("#endif /* WITH_VIRTUAL_FILESYSTEM */\n");
 
                 return;
             }),
