@@ -9,12 +9,9 @@ uniform mat4 View;
 
 void main()
 {
-    // vec3 InLocation2 = vec3(InLocation.x, InLocation.z, InLocation.y);
+    InFragTexCoord = InLocation;
 
-    vec3 InLocation2 = InLocation;
-
-    InFragTexCoord = InLocation2;
-    vec4 pos = Projection * View * vec4(InLocation2, 1.0);
+    vec4 pos = Projection * View * vec4(InLocation, 1.0);
     pos.x = -pos.x;
     gl_Position = pos.xyww;
 }

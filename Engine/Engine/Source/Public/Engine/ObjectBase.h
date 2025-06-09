@@ -174,14 +174,17 @@ public:
 
 protected:
 
-    //# Delegate called when this object was marked as garbage.
-    virtual void OnGarbage() { }
+    //# Delegate called when this object was marked as garbage. Never called on the default object.
+    virtual void OnGarbage() { check( this->IsDefault() == false ) }
+
+    //# Delegate called when this object was marked as garbage. Only called on the default object.
+    virtual void OnGarbageDefault() { check( this->IsDefault() ) }
 
 private:
 
     void MarkAsGarbage(const bool bAddToCarnifex);
 
-    void OnDefaultGarbage();
+    void OnDefaultGarbageInternal();
 
     LObjectContext* Outer { nullptr };
 

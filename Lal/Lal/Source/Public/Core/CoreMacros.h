@@ -280,6 +280,13 @@
     #error "Missing implementation for this platform."
 #endif /* !WITH_CLANG */
 
+/** For static classes. */
+#define UTILITY_CLASS(Type) UTILITY_STRUCT(Type)
+#define UTILITY_STRUCT(Type)           \
+    Type() = delete;                   \
+    PROHIBIT_REALLOC_OF_ANY_FORM(Type) \
+    ~Type() = delete;
+
 /** Bitwise flagging operations for an enum class. */
 #define ENUM_CLASS_FLAGS(Enum)                                                                \
     FORCEINLINE           Enum& operator|=(Enum& Lhs, Enum Rhs)                               \

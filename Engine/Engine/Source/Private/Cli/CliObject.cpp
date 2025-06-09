@@ -6,7 +6,13 @@
 void Jafg::LCliObject::ExpandToUuid()
 {
     check( this->Uuid == LCliObject::NoUuid )
-    LCliObject* Obj = GEngine->GetCommandLineInterface()->GetObjectAsserted(this->Identifier);
+    const LCliObject* Obj { GEngine->GetCommandLineInterface()->GetObject(this->Identifier) };
+
+    if (Obj == nullptr)
+    {
+        panicMsgf("Failed to expand object to Uuid from identifier [{}].", this->Identifier)
+        return;
+    }
 
     this->Uuid = Obj->Uuid;
     this->Identifier.Empty();

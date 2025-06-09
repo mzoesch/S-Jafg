@@ -350,6 +350,7 @@ EPlatformExit::Type GuardedMain()
     GEngine->RegisterObjectContext(GOmniVitaContext);
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::BeforeEngineInitButAfterAllocDangerous, Tasks::RunAllTasks);
     GEngine->Initialize();
+    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterEngineInitDangerous, Tasks::RunAllTasks);
 
     /*
      * The core levels. Hardcoded into the engine generation for better communication with other plugins.
@@ -368,10 +369,17 @@ EPlatformExit::Type GuardedMain()
         {
             Name_LevelMyWorld.ToString(), EInputMode::InputSubSystem, false,
             LLinearColor::Black,
-            true, false, TArray<LEnginePath>
+            true, false, TArray<LLevelSkyboxMap>
             {
-                LEnginePath{ EEnginePaths::Textures, "Misc/SbNight.png" },
-            }
+                LLevelSkyboxMap
+                {
+                    "Night",
+                    TArray<LEnginePath>
+                    {
+                        LEnginePath{ EEnginePaths::Textures, "Misc/SbNight.png" },
+                    },
+                },
+            },
         }
     );
 

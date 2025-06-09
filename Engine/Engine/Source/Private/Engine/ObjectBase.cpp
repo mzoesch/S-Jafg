@@ -71,9 +71,13 @@ void Jafg::JObjectBase::KillYourSelfNow(const bool bMayBeGarbage /* = false */)
     return;
 }
 
-void Jafg::JObjectBase::OnDefaultGarbage()
+void Jafg::JObjectBase::OnDefaultGarbageInternal()
 {
     check( this->IsDefault() )
+    check( this->IsGarbage() )
+
+    this->OnGarbageDefault();
+
     if (this->GetVTableSlow()->IsConfig())
     {
         PushConfigFromObject(this);
@@ -89,12 +93,7 @@ void Jafg::JObjectBase::MarkAsGarbage(const bool bAddToCarnifex)
 
     check( this->Outer )
 
-#if IN_SHIPPING
-    this->Outer->Employees.RemoveOnce(this);
-#else /* IN_SHIPPING */
-    const bool bWasRemoved = this->Outer->Employees.RemoveOnce(this);
-    check( bWasRemoved )
-#endif /* !IN_SHIPPING */
+    this->Outer->Employees.RemoveOnceChecked(this);
 
     if (bAddToCarnifex)
     {

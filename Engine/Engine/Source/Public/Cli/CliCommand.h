@@ -4,6 +4,7 @@
 
 #include "Cli/CliObject.h"
 #include "Cli/CliType.h"
+#include "Serialization/SerializationCore.h"
 
 namespace Jafg
 {
@@ -81,6 +82,12 @@ enum Type : u8
 } /* ~Namespace ECommandReturnCode */
 ENGINE_API LString LexToString(const ECommandReturnCode::Type& InType);
 
+template <typename T>
+struct LCommandArgsTypeRet final
+{
+    typedef T Type;
+};
+
 //#
 //# The arguments that the command receives.
 //#
@@ -100,6 +107,9 @@ struct LCommandArgs
 
     FORCEINLINE const LCommandArgs& operator[](const i32 Index) const { return this->SubArgs[Index]; }
 
+    template <typename TField>
+    FORCEINLINE typename LCommandArgsTypeRet<TField>::Type GetAs() const;
+
     LString Name;
     TArray<LCommandArgs> SubArgs;
 };
@@ -114,13 +124,13 @@ struct LCommandParams
     DEFAULT_MOVE(LCommandParams)
     FORCEINLINE ~LCommandParams() = default;
 
-    FORCEINLINE LCommandParams&& SetExec(LOnCommandInvokation&& InExec)
+    FORCEINLINE LCommandParams&& Exec(LOnCommandInvokation&& InExec)
     {
         this->OnExec = std::move(InExec);
         return std::move(*this);
     }
 
-    FORCEINLINE LCommandParams&& AddToken(LCliType&& InToken)
+    FORCEINLINE LCommandParams&& Token(LCliType&& InToken)
     {
         this->Signature.Emplace(std::move(InToken));
         return std::move(*this);
@@ -134,7 +144,7 @@ struct LCommandParams
     }
 
     LOnCommandInvokation OnExec;
-    TArray<LCliType>   Signature;
+    TArray<LCliType>     Signature;
 };
 
 //#
@@ -217,5 +227,14 @@ private:
 
     TArray<LCommandParams> Overloads;
 };
+
+template<typename TField>
+FORCEINLINE typename LCommandArgsTypeRet<TField>::Type LCommandArgs::GetAs() const
+{
+    typedef typename LCommandArgsTypeRet<TField>::Type TRet;
+    TRet Field;
+    Deserialize<TRet>(&Field, this->GetCatRepresentation());
+    return Field;
+}
 
 } /* ~Namespace Jafg */

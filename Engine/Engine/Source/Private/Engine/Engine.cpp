@@ -3,6 +3,8 @@
 #include "Engine/Engine.h"
 #include "Engine/CoreGlobals.h"
 #include "Async/TaskUtility.h"
+#include "Cli/CliExtended.h"
+#include "Cli/CliPrimitives.h"
 #include "Engine/World.h"
 #include "User/LocalEgo.h"
 #include "Subsystems/EngineSubsystem.h"
@@ -55,68 +57,12 @@ void Jafg::LEngine::Initialize()
 {
     STAT_CYCLE_FUNCTION()
 
-    // Register primitives
+    AddPrimitivesToCli(this->GetCommandLineInterface());
+    AddExtendedPrimitivesToCli(this->GetCommandLineInterface());
+
+    /* Engine stuff. */
     {
-        STAT_QUICK_CYCLE_START("AddCliPrimitives")
-
-        ensure(this->CommandLineInterface.RegisterType({"Integer", "A 32 bit signed Integer.", "0",
-        LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
-        {
-            checkSlow( *Cursor < Args.GetArgCount() )
-            const LString& String = Args[*Cursor].Name;
-            if (String.IsEmpty())
-            {
-                return false;
-            }
-            i32 Value;
-            auto [ptr, ec] = std::from_chars(
-                String.GetBegin(),
-                String.GetEnd(),
-                Value
-            );
-            ++*Cursor;
-            return ec == std::errc{} && ptr == String.GetEnd();
-        })}).IsValid());
-
-        ensure(this->CommandLineInterface.RegisterType({"Byte", "A 8 bit unsigned integer.", "0",
-        LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
-        {
-            checkSlow( *Cursor < Args.GetArgCount() )
-            const LString& String = Args[*Cursor].Name;
-            if (String.IsEmpty())
-            {
-                return false;
-            }
-            i32 Value;
-            auto [ptr, ec] = std::from_chars(
-                String.GetBegin(),
-                String.GetEnd(),
-                Value
-            );
-            ++*Cursor;
-            return ec == std::errc{} && ptr == String.GetEnd() && (Value >= 0 && Value <= 255);
-        })}).IsValid());
-
-        ensure(this->CommandLineInterface.RegisterType({"Float", "A 32 bit floating point number.", "0.0",
-        LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
-        {
-            checkSlow( *Cursor < Args.GetArgCount() )
-            const LString& String = Args[*Cursor].Name;
-            if (String.IsEmpty())
-            {
-                return false;
-            }
-            f32 Value;
-            auto [ptr, ec] = std::from_chars(
-                String.GetBegin(),
-                String.GetEnd(),
-                Value
-            );
-            ++*Cursor;
-            return ec == std::errc{} && ptr == String.GetEnd();
-        })}).IsValid());
-
-        ensure(this->CommandLineInterface.RegisterType({"String", "A string.", "",
+        ensure(this->CommandLineInterface.RegisterType({"World", "A world registered to the engine.", "",
         LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
         {
             checkSlow( *Cursor < Args.GetArgCount() )
@@ -124,86 +70,26 @@ void Jafg::LEngine::Initialize()
             {
                 return false;
             }
-            ++*Cursor;
-            return true;
-        })}).IsValid());
-
-        ensure(this->CommandLineInterface.RegisterType({"Bool", "A boolean.", "false",
-        LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
-        {
-            checkSlow( *Cursor < Args.GetArgCount() )
-            if (Args[*Cursor].Name.IsEmpty())
+            if (GEngine == nullptr)
             {
                 return false;
             }
-
-            if
-            (
-                   Args[*Cursor].Name.Equals("true")  == false
-                && Args[*Cursor].Name.Equals("false") == false
-                && Args[*Cursor].Name.Equals("1")     == false
-                && Args[*Cursor].Name.Equals("0")     == false
-            )
+            const bool bValid { GEngine->GetContexts().FindByPredicate([Args, Cursor](const Private::LWorldContext& InContext) -> bool
             {
-                return false;
-            }
-
-            ++*Cursor;
-            return true;
-        }),
-        LOnValueSetDelegate::CreateStrong([](const LCommandArgs& InValue, LString* OutValue) -> bool
-        {
-            check( InValue.IsValid() && InValue.Name.IsEmpty() == false )
-
-            if (InValue.Name.Equals("true") || InValue.Name.Equals("1"))
+                return InContext.ChildWorld->GetHumanReadableName() == Args[*Cursor].Name;
+            }) != INDEX_NONE };
+            if (bValid)
             {
-                if (*OutValue != "true")
-                {
-                    *OutValue = "true";
-                    return true;
-                }
+                ++*Cursor;
             }
-            else if (InValue.Name.Equals("false") || InValue.Name.Equals("0"))
-            {
-                if (*OutValue != "false")
-                {
-                    *OutValue = "false";
-                    return true;
-                }
-            }
-
-            return false;
-        })}).IsValid());
-
-        ensure(this->CommandLineInterface.RegisterType({"Any", "Any value.", "",
-        LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
-        {
-            checkSlow( *Cursor < Args.GetArgCount() )
-            if (Args[*Cursor].Name.IsEmpty())
-            {
-                return false;
-            }
-            ++*Cursor;
-            return true;
-        })}).IsValid());
-
-        ensure(this->CommandLineInterface.RegisterType({"Var", "A variable.", "NULL",
-        LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
-        {
-            checkSlow( *Cursor < Args.GetArgCount() )
-            if (Args[*Cursor].Name.IsEmpty())
-            {
-                return false;
-            }
-            ++*Cursor;
-            return true;
+            return bValid;
         })}).IsValid());
 
         ensure(this->CommandLineInterface.RegisterCommand({"Set", "Set any variable.",
         LCommandParams()
-        .AddToken(LCliType::Type("Var", "The variable to set."))
-        .AddToken(LCliType::Type("Any", "The value to set."))
-        .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        .Token(LCliType::Type("Var", "The variable to set."))
+        .Token(LCliType::Type("Any", "The value to set."))
+        .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {
             check( InArgs.GetArgCount() == 2 )
             if (LCliVariable* Var = GEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)
@@ -237,8 +123,8 @@ void Jafg::LEngine::Initialize()
 
         ensure(this->CommandLineInterface.RegisterCommand({"Get", "Get any variable.",
         LCommandParams()
-        .AddToken(LCliType::Type("Var", "The variable to get."))
-        .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        .Token(LCliType::Type("Var", "The variable to get."))
+        .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {
             check( InArgs.GetArgCount() == 1 )
             if (const LCliVariable* Var = GEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)

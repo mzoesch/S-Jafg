@@ -236,7 +236,7 @@ void Jafg::WDebugScreen::Tick()
             this->LocalPawnTargetVoxelSectionCreate->EmptyContent();
             for (const LHitResult& Hit : Controller->GetPossessed()->GetCurrentGenericTraceResults())
             {
-                if (const AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
+                if (const AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk && Hit.SurfaceNormal.IsValid())
                 {
                     const LVoxelKey Key = HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal.GetValue() * 0.5f);
                     this->LocalPawnTargetVoxelSectionCreate->SetContent(LString::SprintF("TvC: {} {} {}", Key.X, Key.Y, Key.Z));

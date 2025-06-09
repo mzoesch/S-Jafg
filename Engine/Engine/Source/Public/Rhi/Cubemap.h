@@ -52,8 +52,6 @@ struct LCubemap final
     FORCEINLINE constexpr u32 GetHandle() const noexcept { return this->Handle.GetValue(); }
     FORCEINLINE constexpr operator  u32() const noexcept { return this->GetHandle(); }
 
-    ENGINE_API void Draw() const;
-
 private:
 
     void LoadImpl();

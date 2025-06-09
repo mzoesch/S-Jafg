@@ -24,7 +24,7 @@ protected:
     // ~JWorldSubsystem implementation
 
     // LTickableObject implementation
-    virtual void Tick(const float DeltaTime) override { }
+    virtual void Tick(const f32 DeltaTime) override { }
     // ~LTickableObject implementation
 };
 

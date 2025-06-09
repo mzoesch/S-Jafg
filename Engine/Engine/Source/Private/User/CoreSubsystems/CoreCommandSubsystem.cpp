@@ -19,7 +19,7 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
 
         this->CommandHandle_Quit = CommandLineInterface->RegisterCommand({"Quit", "Quit to desktop.",
         LCommandParams()
-        .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+        .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
         {
             LOG_VERBOSE(LogCoreCommands, "Received quit request.")
             GEngine->RequestEngineExit("Invoked by CLI command.");
@@ -32,8 +32,8 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
     {
         this->CommandHandle_Say = CommandLineInterface->RegisterCommand({"Say", "Say something.",
         LCommandParams()
-        .AddToken(LCliType::Type("String"))
-        .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+        .Token(LCliType::Type("String"))
+        .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
         {
             LOG_WARNING(LogTemporal, "{}", InArgs.GetCatRepresentation())
             OutResponse->Rc = ECommandReturnCode::SuccessNoResponse;
@@ -46,7 +46,7 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
         LCliCommand Command("a");
         Command.AddOverload(
             LCommandParams()
-            .SetExec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+            .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
             {
                 LOG_WARNING(LogTemporal, "Creating new surface...")
                 OutResponse->Rc = ECommandReturnCode::SuccessNoResponse;

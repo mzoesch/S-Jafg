@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Engine/ObjectBaseUtility.h"
 #include "Cli/CliType.h"
 #include "Cli/CliCommand.h"
 #include "Cli/CliVariable.h"
@@ -39,6 +40,12 @@ private:
 
     LCliObjectUuid Uuid { LCliObject::NoUuid };
 };
+
+template <>
+FORCEINLINE void OnDefaultOnlyMallocMember<LCliObjectHandle>(LCliCommandHandle* MemberField)
+{
+    MemberField->Reset();
+}
 
 namespace ECliType
 {
@@ -86,7 +93,7 @@ public:
     FORCEINLINE const TArray<LCliVariable>& GetVariables() const { return this->Variables; }
 
     //#
-    //# All pointer that the following methods return are only valid for a very short time.
+    //# All pointers that the following methods return are only valid for a very short time.
     //# Never store them. Always store the handle to the object.
     //#
 
@@ -189,7 +196,7 @@ public:
 
 private:
 
-    LCliObjectUuid       UuidCursor = 0;
+    LCliObjectUuid       UuidCursor { 0 };
     TArray<LCliType>     Types;
     TArray<LCliCommand>  Commands;
     TArray<LCliVariable> Variables;

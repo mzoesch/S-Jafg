@@ -94,23 +94,6 @@ void Jafg::LCubemap::Load(const TArray<LEnginePath>& InPaths)
     return;
 }
 
-void Jafg::LCubemap::Draw() const
-{
-    glDepthMask(GL_FALSE);
-    glDepthFunc(GL_LEQUAL);
-    glDisable(GL_CULL_FACE);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, *this);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-
-    glDepthMask(GL_TRUE);
-    glDepthFunc(GL_LESS);
-    glEnable(GL_CULL_FACE);
-
-    return;
-}
-
 void Jafg::LCubemap::LoadImpl()
 {
     check( this->Paths.GetSize() == ECubemap::Size )

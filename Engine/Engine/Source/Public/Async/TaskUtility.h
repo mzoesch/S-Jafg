@@ -73,6 +73,9 @@ enum Type : u8
     BeforeEngineInitButAfterAllocDangerous = 0x01 << 4,
     BeforeEngineInitButAfterAlloc = BeforeEngineInitButAfterAllocDangerous | Early,
 
+    AfterEngineInitDangerous = 0x01 << 5,
+    AfterEngineInit = AfterEngineInitDangerous | Early,
+
     //# Run whenever possible on the thread (late or early).
     Whenever = Early | Late | NoTick,
 };

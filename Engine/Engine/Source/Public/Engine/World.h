@@ -8,6 +8,8 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "Engine/Level.h"
 #include "Framework/Skybox.h"
+#include "Cli/CliType.h"
+#include "Cli/CliCommand.h"
 #if AS_CLIENT
     #include "Debug/TemporalWorldObject.h"
 #endif /* AS_CLIENT */
@@ -26,6 +28,7 @@ class APersonaController;
 class APawn;
 class LEye;
 class LCommandLineInterface;
+class LWorld;
 struct LLevel;
 struct LSubsystemCollection;
 
@@ -117,6 +120,23 @@ private:
     void Reset() noexcept;
 };
 
+template<> FORCEINLINE LCliType LCliType::Type<LWorld>  () { return LCliType::Type("World");   }
+
+template<>
+struct LCommandArgsTypeRet<LWorld> final
+{
+    typedef LWorld* Type;
+};
+template<>
+FORCEINLINE LCommandArgsTypeRet<LWorld>::Type LCommandArgs::GetAs<LWorld>() const;
+template<>
+struct LCommandArgsTypeRet<const LWorld> final
+{
+    typedef const LWorld* Type;
+};
+template<>
+FORCEINLINE LCommandArgsTypeRet<const LWorld>::Type LCommandArgs::GetAs<const LWorld>() const;
+
 //#
 //# Represents a world at its core.
 //# Once every frame a world will be ticked. It may register itself to the RHI to be used when
@@ -166,13 +186,13 @@ public:
     void InitializeWorld(const LLevel& Level, LString&& InLaunchedUrl);
 
     FORCEINLINE bool CanTick() const { return this->GetWorldState() == EWorldState::Running; }
-    void Tick(const float DeltaTime);
+    void Tick(const f32 DeltaTime);
 
     void Draw(const LViewport& Viewport, const LEye& Eye) const;
     LOnStaticDraw OnStaticDraw;
 
 #if AS_CLIENT
-    void LateTick(const float DeltaTime);
+    void LateTick(const f32 DeltaTime);
 #endif /* AS_CLIENT */
 
     // LObjectContext implementation
@@ -216,6 +236,10 @@ public:
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JWorldSubsystem)
 
+    ENGINE_API  static LWorld* GetWorldFromHumanReadableName(const LString& InHumanReadableName);
+    FORCEINLINE static LWorld* GetWorldFromHumanReadableNameChecked(const LString& InHumanReadableName);
+    FORCEINLINE static LWorld* GetWorldFromHumanReadableNameAsserted(const LString& InHumanReadableName);
+
 private:
 
     LString Url;
@@ -253,16 +277,42 @@ private:
     f32 RealTimeWhenWorldWasLaunched { 0.0f };
 };
 
+template <>
+FORCEINLINE LCommandArgsTypeRet<LWorld>::Type LCommandArgs::GetAs<LWorld>() const
+{
+    return LWorld::GetWorldFromHumanReadableNameAsserted(this->Name);
+}
+
+template <>
+FORCEINLINE LCommandArgsTypeRet<const LWorld>::Type LCommandArgs::GetAs<const LWorld>() const
+{
+    return LWorld::GetWorldFromHumanReadableNameAsserted(this->Name);
+}
+
 #if AS_CLIENT
 template <typename T>
-void LWorld::AddTemporalObject(T&& InTemporalObject)
+FORCEINLINE void LWorld::AddTemporalObject(T&& InTemporalObject)
 {
-    T* TemporalObject = new T(std::forward<T>(InTemporalObject));
+    T* TemporalObject { new T(std::forward<T>(InTemporalObject)) };
     this->TemporalObjects.Add(TemporalObject);
     return;
 }
 #endif /* AS_CLIENT */
 
+FORCEINLINE LWorld* LWorld::GetWorldFromHumanReadableNameChecked(const LString& InHumanReadableName)
+{
+    LWorld* Out { LWorld::GetWorldFromHumanReadableName(InHumanReadableName) };
+    check( Out )
+    return Out;
+}
+
+FORCEINLINE LWorld* LWorld::GetWorldFromHumanReadableNameAsserted(const LString& InHumanReadableName)
+{
+    LWorld* Out { LWorld::GetWorldFromHumanReadableName(InHumanReadableName) };
+    jassert( Out )
+    return Out;
+}
+
 } /* ~Namespace Jafg */
 
-#include "WorldStorage.h"
+#include "Engine/WorldStorage.h"

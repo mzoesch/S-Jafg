@@ -8,6 +8,12 @@
 namespace Jafg
 {
 
+struct LLevelSkyboxMap final
+{
+    LString Identifier;
+    TArray<LEnginePath> Textures;
+    f32 DefaultLoad { 1.0f };
+};
 
 //#
 //# Represents a level in the engine.
@@ -16,7 +22,7 @@ namespace Jafg
 //# You can create your own levels by registering them with the engine.
 //#
 //# The core levels that are part of the engine's core are:
-//#   - LFrontEnd (Client only. This is the front-end of the client window)
+//#   - LFrontEnd (Client only. This is the front-end of the client window.)
 //#   - LWorld (The world.)
 //#
 struct LLevel final
@@ -31,7 +37,7 @@ struct LLevel final
         const LLinearColor& BackgroundColor = LLinearColor::Black,
         const bool bInCreateSkybox = false,
         const bool bInDrawSkyboxFirst = true,
-        const TArray<LEnginePath>& InDefaultSkybox = { }
+        const TArray<LLevelSkyboxMap>& InSkybox = { }
     )
         : Identifier(InIdentifier)
         , InputMode(InInputMode)
@@ -39,7 +45,7 @@ struct LLevel final
         , BackgroundColor(BackgroundColor)
         , bCreateSkybox(bInCreateSkybox)
         , bDrawSkyboxFirst(bInDrawSkyboxFirst)
-        , DefaultSkybox(InDefaultSkybox)
+        , Skybox(InSkybox)
     {
         return;
     }
@@ -59,7 +65,7 @@ struct LLevel final
     LLinearColor BackgroundColor;
     bool bCreateSkybox;
     bool bDrawSkyboxFirst;
-    TArray<LEnginePath> DefaultSkybox;
+    TArray<LLevelSkyboxMap> Skybox;
 };
 
 } /* Namespace Jafg */

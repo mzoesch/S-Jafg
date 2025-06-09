@@ -56,9 +56,20 @@ constexpr f32 Vertices[]
 
 } /* ~Namespace Jafg */
 
-Jafg::LSkybox::LSkybox(const TArray<LEnginePath>& InDefaultSkybox)
+Jafg::LSkybox::LSkybox(const LString& DefaultName, const TArray<LEnginePath>& InDefaultSkybox)
 {
-    this->DefaultCube.Cache(InDefaultSkybox);
+    this->Maps.Emplace(DefaultName, LCubemap{InDefaultSkybox});
+    return;
+}
+
+Jafg::LSkybox::LSkybox(const TArray<LLevelSkyboxMap>& InDefaultSkybox)
+{
+    for (const auto& [Identifier, Textures, DefaultLoad] : InDefaultSkybox)
+    {
+        this->Maps.Emplace(Identifier, LCubemap{Textures}, DefaultLoad);
+        continue;
+    }
+
     return;
 }
 
@@ -104,10 +115,13 @@ void Jafg::LSkybox::Upload()
 
     glBindVertexArray(0);
 
-    this->DefaultCube.Reload();
+    for (LLoadedCubemap& LoadedMap : this->Maps)
+    {
+        LoadedMap.Map.Reload();
+    }
 
     this->Shader.Use();
-    this->Shader.SetIntUniform("SkyboxSampler", 0);
+    this->Shader.SetIntUniform("SkyboxSampler0", 0);
 
     return;
 }
@@ -139,7 +153,26 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
 
     this->Shader.SetMatrixUniform("View", View);
 
-    this->DefaultCube.Draw();
+    glDepthMask(GL_FALSE);
+    glDepthFunc(GL_LEQUAL);
+    glDisable(GL_CULL_FACE);
+
+    check( this->Maps.GetSize() <= 1 && "Currently only at most one map is supported." )
+    for (i32 Idx { 0 }; Idx < this->Maps.GetSize(); ++Idx)
+    {
+        const LLoadedCubemap& Map = this->Maps[Idx];
+        glActiveTexture(GL_TEXTURE0 + Idx);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, Map.Map);
+        this->Shader.SetFloatUniform("CubeLoad0", Map.Load);
+
+        continue;
+    }
+
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE);
 
     return;
 }

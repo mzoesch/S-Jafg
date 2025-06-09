@@ -111,7 +111,7 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level, LString&& InLaunchedUrl)
 
         if (this->UnderlyingLevel->bCreateSkybox)
         {
-            this->Skybox = LSkybox{this->UnderlyingLevel->DefaultSkybox};
+            this->Skybox = LSkybox{this->UnderlyingLevel->Skybox};
             this->Skybox->Upload();
         }
     }
@@ -487,4 +487,22 @@ void Jafg::LWorld::UpdateUrlParams()
     }
 
     return;
+}
+
+Jafg::LWorld* Jafg::LWorld::GetWorldFromHumanReadableName(const LString& InHumanReadableName)
+{
+    if (GEngine)
+    {
+        const Private::LWorldContext* Context
+        {
+            GEngine->GetContexts().FindRefByPredicate([InHumanReadableName](const Private::LWorldContext& InContext) -> bool
+            {
+                return InContext.ChildWorld->GetHumanReadableName() == InHumanReadableName;
+            })
+        };
+
+        return Context ? Context->ChildWorld : nullptr;
+    }
+
+    return nullptr;
 }

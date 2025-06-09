@@ -165,6 +165,7 @@ void Jafg::LObjectContext::TearDownContextNoEngineUnregistration()
 
             if (Employee->GetVTable())
             {
+                check( Employee->GetOuter() == this )
                 Employee->MarkAsGarbage();
                 continue;
             }
@@ -174,7 +175,7 @@ void Jafg::LObjectContext::TearDownContextNoEngineUnregistration()
              */
             check( Employee->bGarbage == false )
             Employee->bGarbage = true;
-            Employee->OnDefaultGarbage();
+            Employee->OnDefaultGarbageInternal();
             delete Employee;
 
             continue;

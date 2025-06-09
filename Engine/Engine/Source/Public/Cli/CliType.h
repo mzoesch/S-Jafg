@@ -16,6 +16,13 @@ typedef TFunction<bool(const LCommandArgs& Args, i32* Cursor)> LOnParseTypeDeleg
 //# @return True if the #OutValue was set changed.
 typedef TFunction<bool(const LCommandArgs& InValue, LString* OutValue)> LOnValueSetDelegate;
 
+template <typename T>
+struct LCliTypeFactory final
+{
+    UTILITY_STRUCT(LCliTypeFactory)
+    static constexpr bool bExists { false };
+};
+
 //#
 //# A variable type inside the cli of the engine. May be used for type checking within commands and variables.
 //#
@@ -51,6 +58,10 @@ public:
     //#
     FORCEINLINE static LCliType Type(const LString& InIdentifier) { return LCliType(InIdentifier); }
     FORCEINLINE static LCliType Type(const LString& InIdentifier, const LString& InHelp) { return LCliType(InIdentifier, InHelp); }
+    template <typename T>
+    FORCEINLINE static LCliType Type() UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return LCliType::Type(""))
+    template <typename T, typename ... TArgs> requires LCliTypeFactory<T>::bExists
+    FORCEINLINE static LCliType Type(TArgs&& ... Args);
 
     //#
     //# Set a variable typesafe through the engine with this method.
@@ -71,5 +82,11 @@ private:
     LOnParseTypeDelegate OnParseTypeDelegate;
     LOnValueSetDelegate OnValueSetDelegate;
 };
+
+template<typename T, typename ... TArgs> requires LCliTypeFactory<T>::bExists
+FORCEINLINE LCliType LCliType::Type(TArgs&&... Args)
+{
+    return LCliTypeFactory<T>::Dispatch(std::forward<TArgs>(Args)...);
+}
 
 } /* ~Namespace Jafg */

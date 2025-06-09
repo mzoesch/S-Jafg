@@ -3,8 +3,8 @@
 #pragma once
 
 #include "Subsystems/LocalEgoSubsystem.h"
-#include "CoreCommandSubsystem.generated.h"
 #include "Cli/CommandLineInterface.h"
+#include "CoreCommandSubsystem.generated.h"
 
 namespace Jafg
 {
