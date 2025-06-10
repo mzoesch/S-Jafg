@@ -24,6 +24,46 @@ void Jafg::LSurfaceBase::Initialize()
 
 void Jafg::LSurfaceBase::Tick()
 {
+#if PLATFORM_LINUX
+    if (this->IsPlatformSupportsRepeatedKey() == false)
+    {
+        this->bThisFrameRepeatedKeyDown = false;
+        if (this->IsCurrenRepeatedKeyInQuestionValid())
+        {
+            if (this->IsKeyDown(this->GetCurrenRepeatedKeyInQuestion()))
+            {
+                if
+                (
+                    Application::GetTimeDiffFromNow(this->LastPressTimePoint) >= this->RepeatedDelay
+                )
+                {
+                    if (this->RepeatedBufferTime >= this->RepeatedRate)
+                    {
+                        this->RepeatedBufferTime -= this->RepeatedRate;
+                        this->bThisFrameRepeatedKeyDown = true;
+                        if (LRawInput* RealKey { this->GetCurrentlyPressedKeys().FindRef(this->GetCurrenRepeatedKeyInQuestion()) })
+                        {
+                            RealKey->bRepeated = true;
+                        }
+                        else
+                        {
+                            LOG_ERROR(LogSurface, "Key [{}] is not in the currently pressed keys.", this->GetCurrenRepeatedKeyInQuestion())
+                        }
+                        this->EmulateRepeatedContentForBufferedInput();
+                    }
+
+                    this->RepeatedBufferTime += Application::GetDeltaTimeAsFloat();
+                }
+            }
+            else
+            {
+                this->LastNewKey = EKeys::Unresolved;
+                this->RepeatedBufferTime = this->RepeatedRate;
+            }
+        }
+    }
+#endif /* PLATFORM_LINUX */
+
     const bool bCheckInput = this->InputMode & EInputMode::UserInterface;
 
     this->GetViewport().ClearInvalidWidgets();
@@ -61,8 +101,6 @@ void Jafg::LSurfaceBase::BeginNewFrame()
 
     this->DownKeys.SwapBuffers(this->LastFrameDownKeys);
     this->DownKeys.Reset(this->DownKeys.GetSize());
-
-    this->PlatformRepeatedKey.Reset();
 
     return;
 }

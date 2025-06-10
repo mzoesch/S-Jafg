@@ -10,6 +10,7 @@
 #if PREPROCESSOR_EXCLUDE_FF
 #endif /* PREPROCESSOR_EXCLUDE_FF */
 
+#include "Core/Application.h"
 #include "Platform/SurfaceForward.h"
 #include "User/Input/RawInput.h"
 #include "User/Input/InputMode.h"
@@ -72,11 +73,8 @@ public:
     NODISCARD virtual bool IsVSync() const               = 0;
 
     FORCEINLINE void AddKeyDown(const LKey InKey);
-    FORCEINLINE void AddKeyDown(const LKey InKey, const float InValue);
+    FORCEINLINE void AddKeyDown(const LKey InKey, const f32 InValue);
     FORCEINLINE void AddKeyDown(const LRawInput& InRawInput);
-    FORCEINLINE void SetRepeatedKeyDown(const LKey InKey);
-    FORCEINLINE void SetRepeatedKeyDown(const LKey InKey, const float InValue);
-    FORCEINLINE void SetRepeatedKeyDown(const LRawInput& InRawInput);
     FORCEINLINE void AddVirtualKeyDown(const LKey InKey) { this->VirtualInput.Emplace(InKey); }
     FORCEINLINE void AddVirtualKeyDown(const LKey InKey, const float InValue) { this->VirtualInput.Emplace(InKey, InValue); }
     FORCEINLINE void AddVirtualKeyDown(const LRawInput& InRawInput) { this->VirtualInput.Emplace(InRawInput); }
@@ -84,9 +82,6 @@ public:
     FORCEINLINE auto GetCurrentlyPressedKeys() const -> const TArray<LRawInput>& { return this->DownKeys;          }
     FORCEINLINE auto GetLastFramePressedKeys()       ->       TArray<LRawInput>& { return this->LastFrameDownKeys; }
     FORCEINLINE auto GetLastFramePressedKeys() const -> const TArray<LRawInput>& { return this->LastFrameDownKeys; }
-    FORCEINLINE bool HasRepeatedKey() const { return this->PlatformRepeatedKey.Key != EKeys::Unresolved; }
-    FORCEINLINE auto GetRepeatedKey()       ->       LRawInput& { return this->PlatformRepeatedKey; }
-    FORCEINLINE auto GetRepeatedKey() const -> const LRawInput& { return this->PlatformRepeatedKey; }
     FORCEINLINE auto GetVirtualInput()       ->       TArray<LRawInput>& { return this->VirtualInput; }
     FORCEINLINE auto GetVirtualInput() const -> const TArray<LRawInput>& { return this->VirtualInput; }
     //# @return Whether the key is currently down.
@@ -100,20 +95,40 @@ public:
     FORCEINLINE bool IsKeyUp(const LRawInput& InRawInput) const { return this->IsKeyUp(InRawInput.Key); }
 
     FORCEINLINE bool HasBufferedPlatformInput() const { return this->PlatformInput.IsEmpty() == false; }
-    FORCEINLINE auto GetBufferedPlatformInput() const -> const LString& { return this->PlatformInput; }
+    FORCEINLINE const TArray<LString>& GetBufferedPlatformInput() const { return this->PlatformInput; }
+    FORCEINLINE LString GetBufferedPlatformInputAsStr() const;
 
     template <typename Predicate>
     FORCEINLINE void ForEachNewKeyDown(Predicate InPredicate);
 
 protected:
 
-    FORCEINLINE void AddBufferedPlatformInput(const char*    InInput) { this->PlatformInput += InInput; }
-    FORCEINLINE void AddBufferedPlatformInput(const LString& InInput) { this->PlatformInput += InInput; }
+    FORCEINLINE void AddBufferedPlatformInput(const char* InInput) { this->PlatformInput.Emplace(InInput); }
+    FORCEINLINE void AddBufferedPlatformInput(const LString& InInput) { this->PlatformInput.Emplace(InInput); }
+    FORCEINLINE void AddBufferedPlatformInput(LString&& InInput) { this->PlatformInput.Emplace(std::move(InInput)); }
 
-    EInputMode::Type InputMode = EInputMode::UserInterface;
-    bool bShowCursor = true;
-    bool bMouseLocationIsMeaningful = false;
-    LVector2 MouseLocation = LVector2::ZeroVector;
+#if PLATFORM_LINUX
+    FORCEINLINE void SetPlatformSupportsRepeatedKey(const bool bInSupportsRepeatedKey) noexcept { this->bPlatformSupportsRepeatedKeyDown = bInSupportsRepeatedKey; }
+    FORCEINLINE bool IsPlatformSupportsRepeatedKey() const noexcept { return this->bPlatformSupportsRepeatedKeyDown; }
+    FORCEINLINE void SetRepeatedDelay(const f32 InDelay) noexcept { this->RepeatedDelay = InDelay; }
+    FORCEINLINE f32  GetRepeatedDelay() const noexcept { return this->RepeatedDelay; }
+    FORCEINLINE void SetRepeatedRate(const f32 InRate) noexcept { this->RepeatedRate = InRate; this->RepeatedBufferTime = InRate; }
+    FORCEINLINE f32  GetRepeatedRate() const noexcept { return this->RepeatedRate; }
+    FORCEINLINE void SetLastPressTimePoint(const Application::LHrcTimePoint& InTimePoint) noexcept { this->LastPressTimePoint = InTimePoint; this->RepeatedBufferTime = this->RepeatedRate; }
+    FORCEINLINE void SetLastPressTimePoint(Application::LHrcTimePoint&& InTimePoint) noexcept { this->LastPressTimePoint = std::move(InTimePoint); }
+
+    FORCEINLINE bool IsThisKeyRepeatedThisFrame(const LKey InKey) const noexcept { return this->bThisFrameRepeatedKeyDown && this->LastNewKey == InKey; }
+    FORCEINLINE bool IsCurrenRepeatedKeyInQuestionValid() const noexcept { return this->LastNewKey != EKeys::Unresolved; }
+    FORCEINLINE LKey GetCurrenRepeatedKeyInQuestion() const noexcept { return this->LastNewKey; }
+    FORCEINLINE void SetCurrentRepeatedKeyInQuestion(const LKey InKey) noexcept { check( this->IsPlatformSupportsRepeatedKey() == false) this->LastNewKey = InKey; }
+    virtual     void EmulateRepeatedContentForBufferedInput() = 0;
+    virtual     void EmulateContentForBufferedInput(const LKey InKey) = 0;
+#endif /* PLATFORM_LINUX */
+
+    EInputMode::Type InputMode { EInputMode::UserInterface };
+    bool bShowCursor { true };
+    bool bMouseLocationIsMeaningful { false };
+    LVector2 MouseLocation;
 
 private:
 
@@ -121,7 +136,7 @@ private:
     //# The viewport that is used to draw on this surface meaning the viewport that includes the whole surface screen.
     //#
     LViewport SurfaceViewport;
-    bool bSurfaceViewportValid = false;
+    bool bSurfaceViewportValid { false };
 
     //# The keys that are currently down for this surface this frame.
     TArray<LRawInput> DownKeys;
@@ -139,13 +154,27 @@ private:
     //# This frame platform-localized input. Buffer is cleared every frame.
     //# So if you need this for later reference, you have to copy it.
     //#
-    LString PlatformInput;
+    TArray<LString> PlatformInput;
 
+#if PLATFORM_LINUX
     //#
-    //# The key that was down for this surface and repeated based on the user settings of the platform.
-    //# @remark Only use for user input.
+    //# If this is false, the underlying platform does not support repeated key down events.
+    //# This depends on the current desktop environment session. Primary X11 and Wayland.
+    //# This is not an issue on Windows or macOS.
+    //# If this is not supported, the engine will not send repeated key down events - except emulated Utf-8 input
+    //# ones which may be inaccurate and not represent the actual user preferences of the underlying linux session.
     //#
-    LRawInput PlatformRepeatedKey;
+    //# Not that this is not a good solution - but works for basic stuff. If the main loop lags, some input may be
+    //# lost that would usually be repeated (when using the underlying operating system directly).
+    //#
+    bool bPlatformSupportsRepeatedKeyDown { true };
+    Application::LHrcTimePoint LastPressTimePoint;
+    f32 RepeatedBufferTime {  1.0f / 25.0f };
+    f32 RepeatedDelay { 0.6f };
+    f32 RepeatedRate  { 1.0f / 25.0f };
+    bool bThisFrameRepeatedKeyDown { false };
+    LKey LastNewKey { EKeys::Unresolved };
+#endif /* PLATFORM_LINUX */
 };
 
 } /* ~Namespace Jafg */
@@ -168,45 +197,6 @@ void Jafg::LSurfaceBase::AddKeyDown(const LRawInput& InRawInput)
 {
     check( this->DownKeys.FindRef(InRawInput.Key) == nullptr )
     this->DownKeys.Emplace(InRawInput);
-    return;
-}
-
-void Jafg::LSurfaceBase::SetRepeatedKeyDown(const LKey InKey)
-{
-    if constexpr (IS_COMPILED_LOG(LogSurface, Warning))
-    {
-        if (this->PlatformRepeatedKey.Key != EKeys::Unresolved || this->PlatformRepeatedKey.Value != 0.0f)
-        {
-            LOG_WARNING(LogSurface, "Invalid behavior: {} != {}", this->PlatformRepeatedKey.ToString(), LexToString(InKey))
-        }
-    }
-    this->PlatformRepeatedKey = LRawInput(InKey);
-    return;
-}
-
-void Jafg::LSurfaceBase::SetRepeatedKeyDown(const LKey InKey, const float InValue)
-{
-    if constexpr (IS_COMPILED_LOG(LogSurface, Warning))
-    {
-        if (this->PlatformRepeatedKey.Key != EKeys::Unresolved || this->PlatformRepeatedKey.Value != 0.0f)
-        {
-            LOG_WARNING(LogSurface, "Invalid behavior: {} != {}", this->PlatformRepeatedKey.ToString(), LexToString(InKey))
-        }
-    }
-    this->PlatformRepeatedKey = LRawInput(InKey, InValue);
-    return;
-}
-
-void Jafg::LSurfaceBase::SetRepeatedKeyDown(const LRawInput& InRawInput)
-{
-    if constexpr (IS_COMPILED_LOG(LogSurface, Warning))
-    {
-        if (this->PlatformRepeatedKey.Key != EKeys::Unresolved || this->PlatformRepeatedKey.Value != 0.0f)
-        {
-            LOG_WARNING(LogSurface, "Invalid behavior: {} != {}", this->PlatformRepeatedKey.ToString(), InRawInput.ToString())
-        }
-    }
-    this->PlatformRepeatedKey = InRawInput;
     return;
 }
 
@@ -244,8 +234,20 @@ FORCEINLINE bool Jafg::LSurfaceBase::IsKeyUp(const LKey InKey) const
     return this->GetCurrentlyPressedKeys().Contains(InKey) == false && this->GetLastFramePressedKeys().Contains(InKey);
 }
 
+FORCEINLINE Jafg::LString Jafg::LSurfaceBase::GetBufferedPlatformInputAsStr() const
+{
+    LString Out;
+
+    for (const LString& Input : this->PlatformInput)
+    {
+        Out.Append(Input);
+    }
+
+    return Out;
+}
+
 template<typename Predicate>
-void Jafg::LSurfaceBase::ForEachNewKeyDown(Predicate InPredicate)
+FORCEINLINE void Jafg::LSurfaceBase::ForEachNewKeyDown(Predicate InPredicate)
 {
     for (const LRawInput& Input : this->DownKeys)
     {

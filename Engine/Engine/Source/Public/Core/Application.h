@@ -69,6 +69,7 @@ FORCEINLINE bool IsAllowProfiling() { return Private::bAllowProfiling; }
 FORCEINLINE auto GetHighestNow() -> LHrcTimePoint;
 FORCEINLINE f64  GetTimeDifferenceFromStaticStorageInitialization(const LHrcTimePoint& Point);
 FORCEINLINE f64  GetTimeDiff(const LHrcTimePoint& A, const LHrcTimePoint& B);
+FORCEINLINE f64  GetTimeDiffFromNow(const LHrcTimePoint& Point);
 FORCEINLINE f64  GetDeltaSinceStaticStorageInitialization();
 
 FORCEINLINE f64  GetDeltaTime();
@@ -151,6 +152,11 @@ FORCEINLINE f64 Jafg::Application::GetTimeDifferenceFromStaticStorageInitializat
 FORCEINLINE f64 Jafg::Application::GetTimeDiff(const LHrcTimePoint& A, const LHrcTimePoint& B)
 {
     return std::chrono::duration<f64>(B - A).count();
+}
+
+FORCEINLINE f64 Jafg::Application::GetTimeDiffFromNow(const LHrcTimePoint& Point)
+{
+    return Application::GetTimeDiff(Point, Application::GetHighestNow());
 }
 
 FORCEINLINE f64 Jafg::Application::GetDeltaSinceStaticStorageInitialization()

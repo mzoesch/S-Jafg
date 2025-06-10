@@ -90,7 +90,8 @@ public:
     //# This frame platform-localized input for focused surface.
     //#
     ENGINE_API bool HasBufferedPlatformInput() const;
-    ENGINE_API const LString& GetBufferedPlatformInput() const;
+    ENGINE_API const TArray<LString>& GetBufferedPlatformInput() const;
+    ENGINE_API LString GetBufferedPlatformInputAsStr() const;
 
     FORCEINLINE const TArray<LUserInputContext*>& GetActiveContexts() const { return this->ActiveContexts; }
 

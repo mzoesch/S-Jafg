@@ -503,15 +503,10 @@ public:
     //# If a key event is unhandled here, other widgets will be able to receive it through the #OnKeyDownNoFocus and
     //# #OnKeyUpNoFocus methods.
     //#
-    //# @remark You are not eligible to handle repeated key events in this method.
+    //# @remark This key event includes repeated key events. Make sure to filter them accordingly.
     //#
     virtual LReply OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent);
     virtual LReply OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent);
-
-    //#
-    //# @remark For the focused widget only.
-    //#
-    virtual LReply OnRepeatedKeyDown(const LKeyEvent& InKeyEvent) { return LReply::Unhandled(); }
 
     //#
     //# These events are meant to be bubbled from the parent down to the most outer children. If a child does handle
@@ -521,7 +516,7 @@ public:
     //# super method call expression.
     //# Be aware: This is the exact opposite behavior to the #OnKeyDown and #OnKeyUp methods.
     //#
-    //# @remark You are not eligible to handle repeated key events in this method.
+    //# @remark This key event includes repeated key events. Make sure to filter them accordingly.
     //#
     virtual LReply OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent);
     virtual LReply OnKeyUpNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent);

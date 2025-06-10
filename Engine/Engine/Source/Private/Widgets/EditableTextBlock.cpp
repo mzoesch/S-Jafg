@@ -110,10 +110,10 @@ void Jafg::WEditableTextBlock::UserInterfaceTick(const LViewport& InViewport)
 {
     if (this->GetLocalEgo()->GetUserInput()->HasBufferedPlatformInput())
     {
-        const LString::T* Input = this->GetLocalEgo()->GetUserInput()->GetBufferedPlatformInput().ToPtr();
-        this->Content.AppendAt(this->CaretCursor, Input);
+        const LString BufferedInput { this->GetLocalEgo()->GetUserInput()->GetBufferedPlatformInputAsStr() };
+        this->Content.AppendAt(this->CaretCursor, BufferedInput);
 
-        const LString::SizeType Length = LString::Traits::GetStringLength<LString::SizeType>(Input);
+        const LString::SizeType Length = LString::Traits::GetStringLength<LString::SizeType>(BufferedInput.ToPtr());
         for (LString::SizeType I = 0; I < Length; ++I)
         {
             this->SafelyIncreaseCaretCursor();

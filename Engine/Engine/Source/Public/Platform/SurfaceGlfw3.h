@@ -51,9 +51,9 @@ public:
     ENGINE_API virtual void SetInputMode(const EInputMode::Type InMode, const bool bInShowCursor) override;
     ENGINE_API virtual void SetMouseCursor(const EMouseCursor::Type InCursor) override;
 
-               virtual i32 GetWidth() const override { return this->GetDimensions().X; }
-               virtual i32 GetHeight() const override { return this->GetDimensions().Y; }
-    ENGINE_API virtual auto  GetDimensions() const -> TIntVector2<i32> override;
+               virtual i32  GetWidth() const override { return this->GetDimensions().X; }
+               virtual i32  GetHeight() const override { return this->GetDimensions().Y; }
+    ENGINE_API virtual auto GetDimensions() const -> TIntVector2<i32> override;
 
     ENGINE_API  virtual bool CanVSync() const override;
     ENGINE_API  virtual void SetVSync(const bool bEnabled) override;
@@ -69,20 +69,33 @@ public:
 private:
 
     void FramebufferSizeCallback(const i32 Width, const i32 Height);
-    void MouseCallback(const double XPos, const double YPos);
-    void ScrollCallback(const double XOffset, const double YOffset);
+    void MouseCallback(const f64 XPos, const f64 YPos);
+    void ScrollCallback(const f64 XOffset, const f64 YOffset);
     void MouseEnterCallback(const i32 Entered);
     void CharCallback(const u32 Codepoint);
     void KeyCallback(const i32 Key, const i32 Scancode, const i32 Action, const i32 Mods);
 
-    GLFWcursor* Cursor = nullptr;
-    GLFWwindow* Handle = nullptr;
+#if PLATFORM_LINUX
+    virtual void EmulateRepeatedContentForBufferedInput() override;
+    virtual void EmulateContentForBufferedInput(const LKey InKey) override;
+    virtual void EmulateContentForBufferedInputGlfw3(const i32 InKey);
+#endif /* PLATFORM_LINUX */
 
-    bool bVSync = false;
+    GLFWcursor* Cursor { nullptr };
+    GLFWwindow* Handle { nullptr };
 
-    bool   bFirstMouseCallback = true;
-    double LastMouseX = 0.0;
-    double LastMouseY = 0.0;
+    bool bVSync { false };
+
+    bool bFirstMouseCallback { true };
+    f64 LastMouseX { 0.0 };
+    f64 LastMouseY { 0.0 };
+
+#if PLATFORM_LINUX
+    //#
+    //# This is not in the EKeys::Type format but in the Glfw3 format.
+    //#
+    i32 Glfw3LastNewKey { INDEX_NONE };
+#endif /* PLATFORM_LINUX */
 };
 
 } /* ~Namespace Jafg */

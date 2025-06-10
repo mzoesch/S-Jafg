@@ -173,10 +173,16 @@ bool Jafg::LUserInput::HasBufferedPlatformInput() const
     return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->HasBufferedPlatformInput();
 }
 
-const Jafg::LString& Jafg::LUserInput::GetBufferedPlatformInput() const
+const Jafg::TArray<Jafg::LString>& Jafg::LUserInput::GetBufferedPlatformInput() const
 {
     check( this->GetLocalEgo()->GetUserInput() == this )
     return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetBufferedPlatformInput();
+}
+
+Jafg::LString Jafg::LUserInput::GetBufferedPlatformInputAsStr() const
+{
+    check( this->GetLocalEgo()->GetUserInput() == this )
+    return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetBufferedPlatformInputAsStr();
 }
 
 void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(TArray<LRawInput>* InRawInputs, const EInputActionTrigger::Type InActionTriggerType)

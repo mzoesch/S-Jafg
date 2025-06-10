@@ -143,7 +143,27 @@ void Jafg::LSurfaceGlfw3::Initialize()
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+
+        const int Platform { glfwGetPlatform() };
+        if (Platform == GLFW_PLATFORM_WAYLAND)
+        {
+            LOG_VERBOSE(LogSurface, "Using Wayland platform.")
+        }
+        if (Platform == GLFW_PLATFORM_X11)
+        {
+            LOG_VERBOSE(LogSurface, "Using X11 platform.")
+        }
+        if (Platform == GLFW_PLATFORM_WIN32)
+        {
+            LOG_VERBOSE(LogSurface, "Using Win32 platform.")
+        }
+
         bInitializedGlfw = true;
+    }
+
+    if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+    {
+        this->SetPlatformSupportsRepeatedKey(false);
     }
 
     {
@@ -214,8 +234,15 @@ void Jafg::LSurfaceGlfw3::Initialize()
     glfwSetCursorPosCallback(this->Handle, Private::LGlfw3Bridge::MouseCallback);
     glfwSetScrollCallback(this->Handle, Private::LGlfw3Bridge::ScrollCallback);
     glfwSetCursorEnterCallback(this->Handle, Private::LGlfw3Bridge::MouseEnterCallback);
+
+    /*
+     * Move this into the if statement later, when we have a native way, to read input reliable.
+     */
     glfwSetCharCallback(this->Handle, Private::LGlfw3Bridge::CharCallback);
-    glfwSetKeyCallback(this->Handle, Private::LGlfw3Bridge::KeyCallback);
+    if (this->IsPlatformSupportsRepeatedKey())
+    {
+        glfwSetKeyCallback(this->Handle, Private::LGlfw3Bridge::KeyCallback);
+    }
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -291,6 +318,17 @@ void Jafg::LSurfaceGlfw3::PollInputs()
         if (glfwGetKey(this->Handle, TranslatedKey) == GLFW_PRESS)
         {
             this->AddKeyDown(KeyCursor);
+
+#if PLATFORM_LINUX
+            if (this->IsPlatformSupportsRepeatedKey() == false && this->IsNewKeyDown(KeyCursor))
+            {
+                Application::LHrcTimePoint Now { Application::GetHighestNow() };
+                this->SetLastPressTimePoint(Now);
+                this->SetCurrentRepeatedKeyInQuestion(KeyCursor);
+                this->Glfw3LastNewKey = TranslatedKey;
+                // this->EmulateContentForBufferedInputGlfw3(TranslatedKey);
+            }
+#endif /* PLATFORM_LINUX */
         }
 
         ++KeyCursor;
@@ -568,14 +606,50 @@ void Jafg::LSurfaceGlfw3::KeyCallback(const i32 Key, const i32 Scancode, const i
 {
     if (Action == GLFW_REPEAT)
     {
-        const LKey TranslatedKey = Glfw3::TranslateKeyFromGlfw(Key);
-        if (TranslatedKey != EKeys::Unresolved)
+        const LKey JafgKey { Glfw3::TranslateKeyFromGlfw(Key) };
+
+        if (JafgKey != EKeys::Unresolved)
         {
-            this->SetRepeatedKeyDown(TranslatedKey);
+            LRawInput* RealKey = this->GetCurrentlyPressedKeys().FindRef(JafgKey);
+            if (RealKey == nullptr)
+            {
+                this->AddKeyDown(JafgKey);
+                RealKey = this->GetCurrentlyPressedKeys().FindRef(JafgKey);
+            }
+
+            check( RealKey )
+            RealKey->bRepeated = true;
         }
     }
 
     return;
 }
+
+
+#if PLATFORM_LINUX
+void Jafg::LSurfaceGlfw3::EmulateRepeatedContentForBufferedInput()
+{
+    this->EmulateContentForBufferedInputGlfw3(this->Glfw3LastNewKey);
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::EmulateContentForBufferedInput(const LKey InKey)
+{
+    this->EmulateContentForBufferedInputGlfw3(Glfw3::TranslateKeyToGlfw(InKey));
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::EmulateContentForBufferedInputGlfw3(const i32 InKey)
+{
+    if (InKey == GLFW_DONT_CARE)
+    {
+        return;
+    }
+
+    // Somehow native access wayland? Glfw3 does not have an Api for this.
+
+    return;
+}
+#endif /* PLATFORM_LINUX */
 
 #endif /* PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */

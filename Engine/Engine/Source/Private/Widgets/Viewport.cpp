@@ -173,9 +173,9 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
     }
 
     // Check for key down events.
-    for (LRawInput& Input : Context.GetCurrentlyPressedKeys())
+    for (const LRawInput& Input : Context.GetCurrentlyPressedKeys())
     {
-        if (Context.IsNewKeyDown(Input) == false)
+        if (Input.bRepeated == false && Context.IsNewKeyDown(Input) == false)
         {
             continue;
         }
@@ -216,20 +216,8 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
         continue;
     }
 
-    // Check for platform repeat key down events.
-    if (this->FocusedWidget)
-    {
-        if (Context.HasRepeatedKey())
-        {
-            if (const LReply Reply = this->FocusedWidget->OnRepeatedKeyDown({Context.GetRepeatedKey(), true}); Reply.IsHandled())
-            {
-                this->HandleReply(Context, Reply);
-            }
-        }
-    }
-
     // Check for key up events.
-    for (LRawInput& Input : Context.GetLastFramePressedKeys())
+    for (const LRawInput& Input : Context.GetLastFramePressedKeys())
     {
         if (Context.IsKeyUp(Input) == false)
         {
