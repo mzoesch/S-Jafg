@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Subsystems/TickableWorldSubsystem.h"
+#include "Cli/CliHandles.h"
 #include "Cli/CommandLineInterface.h"
 #include "TimeWorldSubsystem.generated.h"
 

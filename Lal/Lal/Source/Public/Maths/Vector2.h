@@ -22,6 +22,8 @@ struct TVector2 final
         T XY[2];
     };
 
+    typedef T LReal;
+
     /** Global 2d zero vector constant (0, 0). */
     LAL_API static const TVector2<T> ZeroVector;
 
@@ -53,6 +55,9 @@ struct TVector2 final
     FORCEINLINE constexpr explicit TVector2(const T InXY[2])          noexcept : X(InXY[0]), Y(InXY[1]) { }
     FORCEINLINE constexpr          TVector2(const TVector2<T>& InVec) noexcept : X(InVec.X), Y(InVec.Y) { }
     FORCEINLINE constexpr          TVector2(TVector2<T>&& InVec)      noexcept : X(InVec.X), Y(InVec.Y) { }
+
+    template <typename U> requires (std::is_same_v<typename U::LReal, T> == false)
+    FORCEINLINE explicit operator U() const noexcept;
 
     FORCEINLINE constexpr TVector2 Copy() const noexcept { return { this->X, this->Y }; }
 
@@ -103,6 +108,17 @@ struct TVector2 final
         return LString::SprintF("{} {}", this->X, this->Y);
     }
 };
+
+template<typename T>
+template<typename U> requires (std::is_same_v<typename U::LReal, T> == false)
+FORCEINLINE TVector2<T>::operator U() const noexcept
+{
+    return U
+    {
+        static_cast<typename U::LReal>(this->X),
+        static_cast<typename U::LReal>(this->Y)
+    };
+}
 
 template <typename T>
 T& TVector2<T>::operator[](const i32 InIndex) noexcept

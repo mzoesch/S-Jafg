@@ -11,6 +11,63 @@
 #include "Widgets/EditableTextBlock.h"
 #include "Widgets/Viewport.h"
 #include "Widgets/Region.h"
+#include "Widgets/ScrollRegion.h"
+#include "Widgets/TextBlock.h"
+#include "Widgets/VRegion.h"
+
+void Jafg::WConsoleScreen::BeginLifeDefault()
+{
+    Super::BeginLifeDefault();
+
+    if (this->MaxHistorySize < 5)
+    {
+        LOG_ERROR(LogWidgets, "MaxHistorySize is set to [{}] which is less than the minimum of 5. Setting it to 5.", this->MaxHistorySize)
+        this->MaxHistorySize = 5;
+    }
+
+    if (this->ConsoleWidth < 200)
+    {
+        LOG_ERROR(LogWidgets, "ConsoleWidth is set to [{}] which is less than the minimum of 200. Setting it to 200.", this->ConsoleWidth)
+        this->ConsoleWidth = 200;
+    }
+
+    if (this->MaxPreviewLines < 2)
+    {
+        LOG_ERROR(LogWidgets, "MaxPreviewLines is set to [{}] which is less than the minimum of 2. Setting it to 2.", this->MaxPreviewLines)
+        this->MaxPreviewLines = 2;
+    }
+
+    if (this->PreviewMessageLifetime < 0.5)
+    {
+        LOG_ERROR(LogWidgets, "PreviewMessageLifetime is set to [{}] which is less than the minimum of 0.5. Setting it to 0.5.", this->PreviewMessageLifetime)
+        this->PreviewMessageLifetime = 0.5;
+    }
+
+    if (GEngine)
+    {
+        this->CommandHandle_Clear = GEngine->GetCommandLineInterface()->RegisterCommand(
+        {
+            "Clear", "Clears the console messages.",
+            LCommandParams{}
+            .Exec(LOnCommandInvokation::CreateMemberDelegate(this, &WConsoleScreen::ClearMessagesDefault))
+        });
+    }
+    else
+    {
+        Tasks::Make(ENamedThreads::Master, ETaskTime::AfterEngineInit, [this](void) -> void
+        {
+            this->CommandHandle_Clear = GEngine->GetCommandLineInterface()->RegisterCommand(
+            {
+                "Clear", "Clears the console messages.",
+                LCommandParams{}
+                .Exec(LOnCommandInvokation::CreateMemberDelegate(this, &WConsoleScreen::ClearMessagesDefault))
+            });
+            return;
+        });
+    }
+
+    return;
+}
 
 void Jafg::WConsoleScreen::Construct()
 {
@@ -20,14 +77,50 @@ void Jafg::WConsoleScreen::Construct()
 
     MakeRootNode(WRegion)
         .Padding(5.0f)
-        .Anchor(EAnchor::VBottom | EAnchor::HFill)
+        .Anchor(EAnchor::Fill)
     [
         NewNode(WEditableTextBlock).SaveTo(&this->EditableTextBlock)
+            .Anchor(EAnchor::VBottom | EAnchor::HFill)
             .TextTint(LColor::Red)
             .TextScale(0.5f)
             .Padding({5.0f, 4.5f})
             .Tint({0, 0, 0, 164})
             .OnCommit(LEditableTextBlockCommitDelegate::CreateFunction(this, &WConsoleScreen::OnTextCommit))
+        +
+        NewNode(WRegion)
+            .Anchor(EAnchor::Fill)
+            .Padding({0.0f, 0.0f, 0.0f, 50.0f})
+        [
+            NewNode(WScrollRegion).SaveTo(&this->ConsoleHistoryContainer)
+                .Anchor(EAnchor::VFill)
+                .MinDesiredSize({static_cast<f32>(this->GetConsoleWidth()), 0.0f})
+            [
+                NewNode(WVRegion).SaveTo(&this->ConsoleHistory)
+                    .Anchor(EAnchor::VBottom | EAnchor::HFill)
+                    .Tint({0, 0, 0, 164})
+            ]
+        ]
+        +
+        NewNode(WOverlay)
+            .Anchor(EAnchor::Fill)
+            .Padding({0.0f, 0.0f, 0.0f, 50.0f})
+        [
+            NewNode(WVRegion).SaveTo(&this->ConsolePreview)
+                .Anchor(EAnchor::VBottom)
+                .MinDesiredSize({static_cast<f32>(this->GetConsoleWidth()), 0.0f})
+                .Type(ERegionBrush::Box)
+                .Tint({0, 0, 0, 164})
+        ]
+        +
+        NewNode(WOverlay)
+        .Anchor(EAnchor::Fill)
+        .Padding({0.0f, 0.0f, 0.0f, 50.0f})
+        [
+            NewNode(WVRegion).SaveTo(&this->Intellisense)
+                .Anchor(EAnchor::VBottom)
+                .Type(ERegionBrush::Box)
+                .Tint({0, 0, 0, 192})
+        ]
     ]
     FinishWidgetStyling()
 
@@ -38,17 +131,39 @@ void Jafg::WConsoleScreen::Tick()
 {
     Super::Tick();
 
-    this->GetViewportChecked()->GetCachedContextChecked()->ForEachNewKeyDown([this](const LRawInput& InKey)
+    check( this->EditableTextBlock )
+    if (this->EditableTextBlock->IsWidgetVisible())
     {
-        if (InKey.Key == EKeys::Up)
+        this->GetViewportChecked()->GetCachedContextChecked()->ForEachNewKeyDown([this](const LRawInput& InKey)
         {
-            this->GoHistoryBack();
-        }
-        else if (InKey.Key == EKeys::Down)
-        {
-            this->GoHistoryForward();
-        }
-    });
+            if (InKey.Key == EKeys::Up)
+            {
+                this->GoHistoryBack();
+            }
+            else if (InKey.Key == EKeys::Down)
+            {
+                this->GoHistoryForward();
+            }
+        });
+    }
+
+    check( this->ConsolePreview )
+    if (this->ConsolePreview->IsWidgetVisible())
+    {
+        this->ShredOutdatedPreviewMessages();
+    }
+
+    return;
+}
+
+void Jafg::WConsoleScreen::OnGarbageDefault()
+{
+    Super::OnGarbageDefault();
+
+    if (GEngine)
+    {
+        GEngine->GetCommandLineInterface()->UnregisterCommand(&this->CommandHandle_Clear);
+    }
 
     return;
 }
@@ -58,11 +173,74 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
     if (InState == EConsoleScreenState::Show)
     {
         this->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+
+        checkSlow( this->ConsolePreview )
+        checkSlow( this->EditableTextBlock )
+        checkSlow( this->ConsoleHistoryContainer )
+
+        this->ConsolePreview->SetVisibility(EWidgetVisibility::Collapsed);
+        this->EditableTextBlock->SetVisibility(EWidgetVisibility::Visible);
+        this->ConsoleHistoryContainer->SetVisibility(EWidgetVisibility::Visible);
+        this->Intellisense->SetVisibility(EWidgetVisibility::Collapsed);
+
+        this->EditableTextBlock->ClearContent();
+        this->GetViewport()->FocusWidgetNode(this->EditableTextBlock);
+
+        this->ConsoleHistoryContainer->ApplyVScroll(WScrollRegion::MaxScrollDown);
+
+        this->HistoryCursor = INDEX_NONE;
+
+        LUserInput* UserInput { this->GetLocalEgo()->GetUserInput() };
+        UserInput->DeactivateContext(Name_UicInMyWorldFoot);
+        UserInput->DeactivateContext(Name_UicInMyWorld);
+        UserInput->ActivateContext(Name_UicInConsole);
+        this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both, ShowMouseCursor);
     }
+
+    else if (InState == EConsoleScreenState::Preview)
+    {
+        this->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+
+        checkSlow( this->ConsolePreview )
+        checkSlow( this->EditableTextBlock )
+        checkSlow( this->ConsoleHistoryContainer )
+
+        this->ConsolePreview->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
+        this->EditableTextBlock->SetVisibility(EWidgetVisibility::Collapsed);
+        this->ConsoleHistoryContainer->SetVisibility(EWidgetVisibility::Collapsed);
+        this->Intellisense->SetVisibility(EWidgetVisibility::Collapsed);
+
+        LUserInput* UserInput { this->GetLocalEgo()->GetUserInput() };
+        UserInput->DeactivateContext(Name_UicInConsole);
+        UserInput->ActivateContext(Name_UicInMyWorldFoot);
+        UserInput->ActivateContext(Name_UicInMyWorld);
+        this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+    }
+
+    else if (InState == EConsoleScreenState::TryPreview)
+    {
+        this->ShredOutdatedPreviewMessages();
+        if (this->ConsolePreview->GetChildren().IsEmpty())
+        {
+            this->SetConsoleFrontendState(EConsoleScreenState::Hide);
+        }
+        else
+        {
+            this->SetConsoleFrontendState(EConsoleScreenState::Preview);
+        }
+    }
+
     else if (InState == EConsoleScreenState::Hide)
     {
         this->SetVisibility(EWidgetVisibility::Collapsed);
+
+        LUserInput* UserInput { this->GetLocalEgo()->GetUserInput() };
+        UserInput->DeactivateContext(Name_UicInConsole);
+        UserInput->ActivateContext(Name_UicInMyWorldFoot);
+        UserInput->ActivateContext(Name_UicInMyWorld);
+        this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
     }
+
     else
     {
         checkNoEntry()
@@ -80,25 +258,6 @@ void Jafg::WConsoleScreen::OnVisibilityChanged(const EWidgetVisibility::Type InO
         InNewVisibility == EWidgetVisibility::IntransitiveHitTestInvisible || InNewVisibility == EWidgetVisibility::Collapsed
         && "This widget only allows IntransitiveHitTestInvisible and Collapsed visibility."
     )
-
-    if (EWidgetVisibility::IsDrawn(InNewVisibility))
-    {
-        checkSlow( this->EditableTextBlock )
-        this->GetViewport()->FocusWidgetNode(this->EditableTextBlock);
-    }
-
-    if (InNewVisibility == EWidgetVisibility::IntransitiveHitTestInvisible)
-    {
-        this->ShowConsoleScreenWithSideEffects();
-    }
-    else if (InNewVisibility == EWidgetVisibility::Collapsed)
-    {
-        this->HideConsoleScreenWithSideEffects();
-    }
-    else
-    {
-        checkNoEntry()
-    }
 
     return;
 }
@@ -164,35 +323,58 @@ void Jafg::WConsoleScreen::GoHistoryForward()
     return;
 }
 
-void Jafg::WConsoleScreen::HideConsoleScreenWithSideEffects()
+void Jafg::WConsoleScreen::AddNewMessage(const LString& InText, const bool bSwitchToPreview /* = true */)
 {
-    check( this->GetVisibility() == EWidgetVisibility::Collapsed )
-    LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
-    UserInput->DeactivateContext(Name_UicInConsole);
-    UserInput->ActivateContext(Name_UicInMyWorldFoot);
-    UserInput->ActivateContext(Name_UicInMyWorld);
-    this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+    LOG_VERBOSE(LogWidgets, "New console message: [{}].", InText)
 
-    if (this->EditableTextBlock)
+    WTextBlock* Message;
+    NewNode(WTextBlock).SaveTo(&Message)
+        .Content(InText)
+        .Brush(LTextBlockBrush::Body())
+    FinishWidget(Message);
+
+    checkSlow( this->ConsolePreview )
+    checkSlow( this->EditableTextBlock )
+    checkSlow( this->ConsoleHistory )
+    checkSlow( this->ConsoleHistoryContainer )
+
+    /* Allow drawing. */
+    if (this->ConsoleHistory->GetChildren().IsEmpty())
     {
-        this->EditableTextBlock->ClearContent();
+        this->ConsoleHistory->SetType(ERegionBrush::Box);
     }
 
-    this->HistoryCursor = INDEX_NONE;
+    this->ConsoleHistory->AddChild(Message);
+
+    if (bSwitchToPreview)
+    {
+        this->SetConsoleFrontendState(EConsoleScreenState::Preview);
+
+        WTextBlock* PreviewMessage;
+        NewNode(WTextBlock).SaveTo(&PreviewMessage)
+            .Content(InText)
+            .Brush(LTextBlockBrush::Body())
+        FinishWidget(PreviewMessage);
+        this->ConsolePreview->AddChild(PreviewMessage);
+        if (this->ConsolePreview->GetChildren().GetSize() > GetMaxPreviewLines())
+        {
+            this->ConsolePreview->RemoveChildAt(0);
+        }
+        this->PreviewMessages.Emplace(Application::GetHighestNow(), static_cast<const WNode*>(PreviewMessage));
+    }
 
     return;
 }
 
-void Jafg::WConsoleScreen::ShowConsoleScreenWithSideEffects()
+void Jafg::WConsoleScreen::ClearMessages()
 {
-    check( this->GetVisibility() == EWidgetVisibility::IntransitiveHitTestInvisible )
-    LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
-    UserInput->DeactivateContext(Name_UicInMyWorldFoot);
-    UserInput->DeactivateContext(Name_UicInMyWorld);
-    UserInput->ActivateContext(Name_UicInConsole);
-    this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both, ShowMouseCursor);
+    check( this->ConsolePreview )
+    check( this->ConsoleHistory )
 
-    this->HistoryCursor = INDEX_NONE;
+    this->ConsolePreview->RemoveChildren();
+    this->ConsoleHistory->RemoveChildren();
+
+    this->SetConsoleFrontendState(EConsoleScreenState::Hide);
 
     return;
 }
@@ -204,18 +386,10 @@ void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit
         return;
     }
 
-    struct LOnTextCommitScope
-    {
-        LOnTextCommitScope(WConsoleScreen* InMe) : Me(InMe) { }
-        ~LOnTextCommitScope()
-        {
-            Me->SetConsoleFrontendState(EConsoleScreenState::Hide);
-        }
-        WConsoleScreen* Me = nullptr;
-    } OnTextCommitScope(this);
 
     if (InText.IsEmpty())
     {
+        this->SetConsoleFrontendState(EConsoleScreenState::Hide);
         return;
     }
 
@@ -263,7 +437,190 @@ void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit
         return;
     }
 
-    LOG_WARNING(LogTemporal, "{}", InText)
+    this->AddNewMessage(InText);
 
     return;
 }
+
+void Jafg::WConsoleScreen::ShredOutdatedPreviewMessages()
+{
+    for (i32 Idx { 0 }; Idx < this->PreviewMessages.GetSize();)
+    {
+        if
+        (
+            LPreviewMessage* Msg { &this->PreviewMessages[Idx] };
+            Application::GetTimeDiffFromNow(Msg->AddedTime) > this->GetPreviewMessageLifetime()
+        )
+        {
+            if
+            (
+                LWidgetSlot* const* Ref { this->ConsolePreview->GetChildren().FindRefByPredicate([Msg](const LWidgetSlot* Slot) -> bool
+                {
+                    return Slot->Content == Msg->Node;
+                })};
+                Ref
+            )
+            {
+                this->ConsolePreview->RemoveChild(*Ref);
+            }
+
+            this->PreviewMessages.RemoveAt(Idx);
+            continue;
+        }
+
+        ++Idx;
+        continue;
+    }
+
+    if (this->ConsolePreview->GetChildren().IsEmpty())
+    {
+        this->SetConsoleFrontendState(EConsoleScreenState::Hide);
+    }
+
+    return;
+}
+
+void Jafg::WConsoleScreen::ClearMessagesDefault(const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+{
+    check( this->IsDefault() )
+
+    if (GEngine == nullptr)
+    {
+        OutResponse->Rc = ECommandReturnCode::Failure;
+        OutResponse->StdErr = "Cannot clear console messages, GEngine is invalid.";
+        return;
+    }
+
+    if
+    (
+        WConsoleScreen* Instance
+        {
+            GEngine->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetViewport().GetTopLevelWidgetByClass<WConsoleScreen>()
+        };
+        Instance
+    )
+    {
+        Instance->ClearMessages();
+        OutResponse->Rc = ECommandReturnCode::SuccessNoResponse;
+    }
+    else
+    {
+        OutResponse->Rc = ECommandReturnCode::Failure;
+        OutResponse->StdErr = "Cannot clear console messages, no console screen found.";
+    }
+
+    return;
+}
+
+#if !IN_SHIPPING
+void Jafg::WConsoleScreen::MockSomeMessages()
+{
+    this->AddNewMessage("A");
+    this->AddNewMessage("B");
+    this->AddNewMessage("C");
+    this->AddNewMessage("D");
+    this->AddNewMessage("E");
+    this->AddNewMessage("F");
+    this->AddNewMessage("G");
+    this->AddNewMessage("H");
+    this->AddNewMessage("I");
+    this->AddNewMessage("J");
+    this->AddNewMessage("K");
+    this->AddNewMessage("L");
+    this->AddNewMessage("M");
+    this->AddNewMessage("N");
+    this->AddNewMessage("O");
+    this->AddNewMessage("P");
+    this->AddNewMessage("Q");
+    this->AddNewMessage("R");
+    this->AddNewMessage("S");
+    this->AddNewMessage("T");
+    this->AddNewMessage("U");
+    this->AddNewMessage("V");
+    this->AddNewMessage("W");
+    this->AddNewMessage("X");
+    this->AddNewMessage("Y");
+    this->AddNewMessage("Z");
+    this->AddNewMessage("a");
+    this->AddNewMessage("b");
+    this->AddNewMessage("c");
+    this->AddNewMessage("d");
+    this->AddNewMessage("e");
+    this->AddNewMessage("f");
+    this->AddNewMessage("g");
+    this->AddNewMessage("h");
+    this->AddNewMessage("i");
+    this->AddNewMessage("j");
+    this->AddNewMessage("k");
+    this->AddNewMessage("l");
+    this->AddNewMessage("m");
+    this->AddNewMessage("n");
+    this->AddNewMessage("o");
+    this->AddNewMessage("p");
+    this->AddNewMessage("q");
+    this->AddNewMessage("r");
+    this->AddNewMessage("s");
+    this->AddNewMessage("t");
+    this->AddNewMessage("u");
+    this->AddNewMessage("v");
+    this->AddNewMessage("w");
+    this->AddNewMessage("x");
+    this->AddNewMessage("y");
+    this->AddNewMessage("z");
+
+    this->AddNewMessage("123456789A");
+    this->AddNewMessage("123456789B");
+    this->AddNewMessage("123456789C");
+    this->AddNewMessage("123456789D");
+    this->AddNewMessage("123456789E");
+    this->AddNewMessage("123456789F");
+    this->AddNewMessage("123456789G");
+    this->AddNewMessage("123456789H");
+    this->AddNewMessage("123456789I");
+    this->AddNewMessage("123456789J");
+    this->AddNewMessage("123456789K");
+    this->AddNewMessage("123456789L");
+    this->AddNewMessage("123456789M");
+    this->AddNewMessage("123456789N");
+    this->AddNewMessage("123456789O");
+    this->AddNewMessage("123456789P");
+    this->AddNewMessage("123456789Q");
+    this->AddNewMessage("123456789R");
+    this->AddNewMessage("123456789S");
+    this->AddNewMessage("123456789T");
+    this->AddNewMessage("123456789U");
+    this->AddNewMessage("123456789V");
+    this->AddNewMessage("123456789W");
+    this->AddNewMessage("123456789X");
+    this->AddNewMessage("123456789Y");
+    this->AddNewMessage("123456789Z");
+    this->AddNewMessage("123456789a");
+    this->AddNewMessage("123456789b");
+    this->AddNewMessage("123456789c");
+    this->AddNewMessage("123456789d");
+    this->AddNewMessage("123456789e");
+    this->AddNewMessage("123456789f");
+    this->AddNewMessage("123456789g");
+    this->AddNewMessage("123456789h");
+    this->AddNewMessage("123456789i");
+    this->AddNewMessage("123456789j");
+    this->AddNewMessage("123456789k");
+    this->AddNewMessage("123456789l");
+    this->AddNewMessage("123456789m");
+    this->AddNewMessage("123456789n");
+    this->AddNewMessage("123456789o");
+    this->AddNewMessage("123456789p");
+    this->AddNewMessage("123456789q");
+    this->AddNewMessage("123456789r");
+    this->AddNewMessage("123456789s");
+    this->AddNewMessage("123456789t");
+    this->AddNewMessage("123456789u");
+    this->AddNewMessage("123456789v");
+    this->AddNewMessage("123456789w");
+    this->AddNewMessage("123456789x");
+    this->AddNewMessage("123456789y");
+    this->AddNewMessage("123456789z");
+
+    return;
+}
+#endif /* !IN_SHIPPING */

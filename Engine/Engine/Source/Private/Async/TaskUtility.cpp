@@ -775,7 +775,7 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
     ::EngineThreads.Empty();
     ::EngineThreadsMutex.unlock();
 
-    LOG_INFO
+    LOG_VERBOSE
     (
         LogTaskSystem,
         "Joined {} threads after {} seconds.",

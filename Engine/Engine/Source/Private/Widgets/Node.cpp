@@ -155,7 +155,7 @@ bool Jafg::WNode::IsInBounds(const LViewport& Context, const LVector2& InLocatio
         return false;
     }
 
-    const LVector2 TopLeftMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context) + Context.GetSweepTranslation();
+    const LVector2 TopLeftMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context) + static_cast<LVector2>(Context.GetSweepTranslation());
     return
             TopLeftMostOuter.X <= InLocation.X
          && InLocation.X       <= TopLeftMostOuter.X + this->GetAnchoredSize().X
@@ -428,7 +428,7 @@ Jafg::LVector2 Jafg::WNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Con
 
 Jafg::LVector2 Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewport& Context) const
 {
-    return this->GetAnchoredTopLeftFromMostOuter(Context) + Context.GetFrameTranslation();
+    return this->GetAnchoredTopLeftFromMostOuter(Context) + static_cast<LVector2>(Context.GetFrameTranslation());
 }
 
 bool Jafg::WNode::SetMargin(const LMargin& InMargin)

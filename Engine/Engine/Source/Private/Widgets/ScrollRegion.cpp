@@ -24,21 +24,21 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
 {
     check( this->ScrollPosition.Y >= 0.0f && this->ScrollPosition.Y <= 1.0f )
 
-    const LOrthographicBoxShader* Shader = GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox);
-    const LVector2 AnchoredTopLeftFromMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context);
+    const LOrthographicBoxShader* Shader { GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox) };
+    const LVector2 AnchoredTopLeftFromMostOuter { this->GetAnchoredTopLeftFromMostOuter(Context) };
 
-    const LVector2 MostOuterTopLeftContentArea = AnchoredTopLeftFromMostOuter + this->GetPadding().GetTopLeftOffset();
-    const LVector2 MaxContentAreaSize = this->GetAnchoredSize() - this->GetPadding().GetDesiredSize();
+    const LVector2 MostOuterTopLeftContentArea { AnchoredTopLeftFromMostOuter + this->GetPadding().GetTopLeftOffset() };
+    const LVector2 MaxContentAreaSize { this->GetAnchoredSize() - this->GetPadding().GetDesiredSize() };
 
-    const f64 MaxScrollY = Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.Y) - static_cast<f64>(this->GetAnchoredSize().Y), 0.0);
-    const f32 ScrollOffsetY = this->ScrollPosition.Y * MaxScrollY;
-    const f32 ScrollOffsetYPercent = ScrollOffsetY / static_cast<f64>(this->DesiredSizeOfChildren.Y);
-    const f32 VisibleY = Maths::Clamp(this->GetAnchoredSize().Y / this->DesiredSizeOfChildren.Y, 0.0f, 1.0f);
+    const f64 MaxScrollY { Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.Y) - static_cast<f64>(this->GetAnchoredSize().Y), 0.0) };
+    const f64 ScrollOffsetY { this->ScrollPosition.Y * MaxScrollY };
+    const f64 ScrollOffsetYPercent { ScrollOffsetY / static_cast<f64>(this->DesiredSizeOfChildren.Y) };
+    const f64 VisibleY { Maths::Clamp(this->GetAnchoredSize().Y / this->DesiredSizeOfChildren.Y, 0.0, 1.0) };
 
-    const f64 MaxScrollX = Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.X) - static_cast<f64>(this->GetAnchoredSize().X), 0.0);
-    const f32 ScrollOffsetX = this->ScrollPosition.X * MaxScrollX;
-    const f32 ScrollOffsetXPercent = ScrollOffsetX / static_cast<f64>(this->DesiredSizeOfChildren.X);
-    const f32 VisibleX = Maths::Clamp(this->GetAnchoredSize().X / this->DesiredSizeOfChildren.X, 0.0f, 1.0f);
+    const f64 MaxScrollX { Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.X) - static_cast<f64>(this->GetAnchoredSize().X), 0.0) };
+    const f64 ScrollOffsetX { this->ScrollPosition.X * MaxScrollX };
+    const f64 ScrollOffsetXPercent { ScrollOffsetX / static_cast<f64>(this->DesiredSizeOfChildren.X) };
+    const f64 VisibleX { Maths::Clamp(this->GetAnchoredSize().X / this->DesiredSizeOfChildren.X, 0.0, 1.0) };
 
     /* BEGIN Ourselves. */
     if (this->Super::GetBrush().Type != ERegionBrush::None)
@@ -177,13 +177,40 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
     }
     /* END Ourselves. */
 
-    Context.ApplyFrameTranslation({-ScrollOffsetX, -ScrollOffsetY});
-    RendererStateMachine::ClipOrthographic(Context, MostOuterTopLeftContentArea.Copy(), MaxContentAreaSize);
-    WOverlay::Draw(Context);
-    RendererStateMachine::DisableClipOrthographic();
-    Context.ApplyFrameTranslation({ScrollOffsetX, ScrollOffsetY});
+    WNode::Draw(Context);
 
-    if (this->DrawVScrollbar(VisibleY))
+    RendererStateMachine::ClipOrthographic(Context, MostOuterTopLeftContentArea.Copy(), MaxContentAreaSize);
+    for (const LWidgetSlot* ChildSlot : this->GetChildren())
+    {
+        if (ChildSlot->Content->ShouldNowDraw())
+        {
+            checkSlow( ChildSlot->Content )
+
+            LVector2D Translation{ -ScrollOffsetX, -ScrollOffsetY };
+            if (ChildSlot->Content->GetAnchor().IsPushedHorizontal())
+            {
+                if (const f32 Diff {ChildSlot->Content->GetAnchoredSize().X - this->GetAnchoredSize().X}; Diff > 0.0f)
+                {
+                    Translation.X += Diff;
+                }
+            }
+            if (ChildSlot->Content->GetAnchor().IsPushedVertical())
+            {
+                if (const f32 Diff {ChildSlot->Content->GetAnchoredSize().Y - this->GetAnchoredSize().Y}; Diff > 0.0f)
+                {
+                    Translation.Y += Diff;
+                }
+            }
+
+            Context.ApplyFrameTranslation(Translation);
+            ChildSlot->Content->Draw(Context);
+            Context.ApplyFrameTranslation(-Translation);
+        }
+        continue;
+    }
+    RendererStateMachine::DisableClipOrthographic();
+
+    if (this->GetAnchoredSize().Y > 0 && this->DrawVScrollbar(VisibleY))
     {
         if (this->Brush.VScrollBarBackgroundWidth > 0.0f)
         {
@@ -208,7 +235,7 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
         }
     }
 
-    if (this->DrawHScrollbar(VisibleX))
+    if (this->GetAnchoredSize().X > 0 && this->DrawHScrollbar(VisibleX))
     {
         if (this->Brush.HScrollBarBackgroundHeight > 0.0f)
         {
@@ -393,11 +420,11 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyDownNoFocus(const LViewport& InViewport, 
     check( this->ScrollPosition.Y >= 0.0f && this->ScrollPosition.Y <= 1.0f )
 
     {
-        const f64 MaxScrollY = Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.Y) - static_cast<f64>(this->GetAnchoredSize().Y), 0.0);
-        const f32 ScrollOffsetY = this->ScrollPosition.Y * MaxScrollY;
+        const f64 MaxScrollY { Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.Y) - static_cast<f64>(this->GetAnchoredSize().Y), 0.0) };
+        const f64 ScrollOffsetY { this->ScrollPosition.Y * MaxScrollY };
 
-        const f64 MaxScrollX = Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.X) - static_cast<f64>(this->GetAnchoredSize().X), 0.0);
-        const f32 ScrollOffsetX = this->ScrollPosition.X * MaxScrollX;
+        const f64 MaxScrollX { Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.X) - static_cast<f64>(this->GetAnchoredSize().X), 0.0) };
+        const f64 ScrollOffsetX { this->ScrollPosition.X * MaxScrollX };
 
         LViewportSweepTranslation Translation{InViewport, {-ScrollOffsetX, -ScrollOffsetY}};
 

@@ -124,7 +124,12 @@ void PushConfigFromObject(const LObjectClass* InClass)
     TArray<ConfigIo::Entry> Entries;
     for (LClassField& Field : InClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())
     {
-        Entries.Emplace(InClass->GetSpacedClassName(), Field.Identifier, Field.Get());
+        if (Field.Get.IsBound())
+        {
+            Entries.Emplace(InClass->GetSpacedClassName(), Field.Identifier, Field.Get());
+        }
+
+        continue;
     }
 
     ConfigIo::SerializeBulk(CfgPath, Entries);
@@ -344,6 +349,8 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages(const LLoadedPluginHand
         {
             PullConfigFromObject(StaticClass);
         }
+
+        StaticClass->DefaultPackageReferrer->BeginLifeDefault();
 
         LOG_TRACE
         (

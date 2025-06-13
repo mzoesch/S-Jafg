@@ -29,11 +29,11 @@ MAKE_MULTICAST_SIGNATURE(LOnLateTick, const LViewport& InViewport)
 struct LViewportSweepTranslation final
 {
     LViewportSweepTranslation() = delete;
-    explicit LViewportSweepTranslation(const LViewport& InViewport, const LVector2& InOffset) noexcept;
+    explicit LViewportSweepTranslation(const LViewport& InViewport, const LVector2D& InOffset) noexcept;
     ~LViewportSweepTranslation() noexcept;
 
     const LViewport& Viewport;
-    LVector2 Offset;
+    LVector2D Offset;
 };
 
 //#
@@ -116,8 +116,8 @@ public:
     //# This translation should be removed after said #WNode is finished drawing.
     //# This value is reset every frame.
     //#
-    FORCEINLINE void ApplyFrameTranslation(const LVector2& InTranslation) const { this->FrameTranslation += InTranslation; }
-    FORCEINLINE auto GetFrameTranslation() const -> const LVector2& { return this->FrameTranslation; }
+    FORCEINLINE void ApplyFrameTranslation(const LVector2D& InTranslation) const { this->FrameTranslation += InTranslation; }
+    FORCEINLINE auto GetFrameTranslation() const -> const LVector2D& { return this->FrameTranslation; }
 
     //#
     //# The translation that is recommended for children of a #WParentBase to use while sweeping.
@@ -125,8 +125,8 @@ public:
     //# This value is reset every frame.
     //# @remark Use the #LViewportSweepTranslation for easy RAII style translation logic.
     //#
-    FORCEINLINE void ApplySweepTranslation(const LVector2& InTranslation) const noexcept { this->SweepTranslation += InTranslation; }
-    FORCEINLINE auto GetSweepTranslation() const -> const LVector2& { return this->SweepTranslation; }
+    FORCEINLINE void ApplySweepTranslation(const LVector2D& InTranslation) const noexcept { this->SweepTranslation += InTranslation; }
+    FORCEINLINE auto GetSweepTranslation() const -> const LVector2D& { return this->SweepTranslation; }
 
     FORCEINLINE auto GetBackgroundContexts() const noexcept -> const TArray<LBackgroundContext>& { return this->BackgroundContexts; }
     FORCEINLINE auto GetMutableBackgroundContexts() noexcept -> TArray<LBackgroundContext>& { return this->BackgroundContexts; }
@@ -188,8 +188,8 @@ private:
     TArray<TObjectStorage<WNode>> LastFrameHoveredWidgets;
 
     mutable f32 FrameZLayerDepth { 0.0f };
-    mutable LVector2 FrameTranslation;
-    mutable LVector2 SweepTranslation;
+    mutable LVector2D FrameTranslation;
+    mutable LVector2D SweepTranslation;
 
     TArray<LBackgroundContext> BackgroundContexts;
     LFrameBuffer BackgroundBuffer;
@@ -201,7 +201,7 @@ private:
     LLinearColor BackgroundColor;
 };
 
-FORCEINLINE LViewportSweepTranslation::LViewportSweepTranslation(const LViewport& InViewport, const LVector2& InOffset) noexcept
+FORCEINLINE LViewportSweepTranslation::LViewportSweepTranslation(const LViewport& InViewport, const LVector2D& InOffset) noexcept
     : Viewport(InViewport), Offset(InOffset)
 {
     this->Viewport.ApplySweepTranslation(this->Offset);
@@ -225,7 +225,7 @@ template <typename TNode>
 FORCEINLINE TNode* LViewport::GetTopLevelWidgetByClass() const
 {
     static_assert(std::derived_from<TNode, WNode>, "TNode must derive from WNode.");
-    return CheckedStaticCast<TNode, true>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
+    return CheckedStaticCast<TNode, WNode, true>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
 }
 
 template <typename TNode>

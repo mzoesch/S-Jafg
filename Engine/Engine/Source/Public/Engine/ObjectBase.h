@@ -129,6 +129,17 @@ public:
     FORCEINLINE bool IsOuterValid() const { return this->Outer != nullptr; }
 
     //#
+    //# Delegate that is called when the default object of this class is finished loading.
+    //# If you need to set variables, use the object constructor to initialize them, but if you need to have access
+    //# to the finished loaded default object, use this delegate. E.g., validate config attributes (as they are not
+    //# loaded when the constructor is called).
+    //#
+    virtual void BeginLifeDefault()
+    {
+        check( this->IsDefault() )
+    }
+
+    //#
     //# The first thing that is being called after this object is being created.
     //# Use it as a deferred constructor that needs runtime information not available at module static storage
     //# initialization time.
@@ -175,10 +186,10 @@ public:
 protected:
 
     //# Delegate called when this object was marked as garbage. Never called on the default object.
-    virtual void OnGarbage() { check( this->IsDefault() == false ) }
+    virtual void OnGarbage() { check( this->IsGarbage() && this->IsDefault() == false ) }
 
     //# Delegate called when this object was marked as garbage. Only called on the default object.
-    virtual void OnGarbageDefault() { check( this->IsDefault() ) }
+    virtual void OnGarbageDefault() { check( this->IsGarbage() && this->IsDefault() ) }
 
 private:
 

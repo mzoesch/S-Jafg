@@ -282,6 +282,12 @@ void Jafg::WParent::RemoveChild(LWidgetSlot* Child)
     this->RemoveChild(Child->Content);
 }
 
+void Jafg::WParent::RemoveChildAt(const i32 InIndex)
+{
+    this->RemoveChild(this->GetChildren()[InIndex]);
+    return;
+}
+
 void Jafg::WParent::RemoveChildren()
 {
     check( Tasks::IsOnMasterThread() )

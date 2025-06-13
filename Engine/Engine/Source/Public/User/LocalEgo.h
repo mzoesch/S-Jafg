@@ -7,6 +7,7 @@
 #include "Framework/Frontend.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/LocalEgoSubsystem.h"
+#include "Cli/CliHandles.h"
 #include "Cli/CommandLineInterface.h"
 
 namespace Jafg

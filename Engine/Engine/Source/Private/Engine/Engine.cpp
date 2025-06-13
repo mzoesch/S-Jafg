@@ -86,7 +86,7 @@ void Jafg::LEngine::Initialize()
         })}).IsValid());
 
         ensure(this->CommandLineInterface.RegisterCommand({"Set", "Set any variable.",
-        LCommandParams()
+        LCommandParams{}
         .Token(LCliType::Type("Var", "The variable to set."))
         .Token(LCliType::Type("Any", "The value to set."))
         .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
@@ -122,7 +122,7 @@ void Jafg::LEngine::Initialize()
         }))}).IsValid());
 
         ensure(this->CommandLineInterface.RegisterCommand({"Get", "Get any variable.",
-        LCommandParams()
+        LCommandParams{}
         .Token(LCliType::Type("Var", "The variable to get."))
         .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {

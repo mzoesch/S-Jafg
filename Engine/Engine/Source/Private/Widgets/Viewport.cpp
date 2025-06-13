@@ -62,7 +62,7 @@ void Jafg::LViewport::ClearInvalidWidgets()
 void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursorLocation)
 {
     this->CachedContext = &Context;
-    this->SweepTranslation = LVector2::ZeroVector;
+    this->SweepTranslation = LVector2D::ZeroVector;
 
     const bool bCursorLocationIsMeaningful = InCursorLocation.X >= 0.0f && InCursorLocation.Y >= 0.0f;
 
@@ -332,7 +332,7 @@ void Jafg::LViewport::Tick()
 void Jafg::LViewport::Draw()
 {
     this->FrameZLayerDepth = 0.0f;
-    this->FrameTranslation = LVector2::ZeroVector;
+    this->FrameTranslation = LVector2D::ZeroVector;
     this->RecalculateScaleFactor();
 
     this->BackgroundBuffer.MakeDrawTarget();
