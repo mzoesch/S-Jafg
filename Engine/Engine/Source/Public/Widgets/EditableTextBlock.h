@@ -26,6 +26,7 @@ public:
     FORCEINLINE TFactoryRetTy& CaretSize(const LVector2& InSize)       { this->This()->SetCaretSize(InSize); return this->Self(); }
     FORCEINLINE TFactoryRetTy& CaretHOffset(const f32 InOffset)        { this->This()->SetCaretHOffset(InOffset); return this->Self(); }
     FORCEINLINE TFactoryRetTy& CaretBrush(const LCaretBrush& InBrush)  { this->This()->SetCaretBrush(InBrush); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OnAllowCommit(LEditableTextBlockAllowCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnAllowContentCommit.BindFunction(std::move(InCallback)); return this->Self(); }
     FORCEINLINE TFactoryRetTy& OnCommit(LEditableTextBlockCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnContentCommitted.BindFunction(std::move(InCallback)); return this->Self(); }
     FORCEINLINE TFactoryRetTy& OnChanged(LEditableTextBlockChangedDelegate::LFunctionSigTy&& InCallback) { this->This()->OnContentChanged.BindFunction(std::move(InCallback)); return this->Self(); }
 };
@@ -74,6 +75,7 @@ public:
     FORCEINLINE void SetCaretSize(const LVector2& InSize) { this->CaretBrush.Size = InSize; }
     FORCEINLINE void SetCaretHOffset(const f32 InOffset) { this->CaretBrush.HOffset = InOffset; }
 
+    LEditableTextBlockAllowCommitDelegate OnAllowContentCommit;
     LEditableTextBlockCommitDelegate  OnContentCommitted;
     LEditableTextBlockChangedDelegate OnContentChanged;
     void SetContent(const LString& InContent);

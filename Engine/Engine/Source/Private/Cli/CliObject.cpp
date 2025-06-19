@@ -3,6 +3,16 @@
 #include "Cli/CliObject.h"
 #include "Engine/Engine.h"
 
+Jafg::LCliObject* Jafg::LCliObject::GetRegisteredObjectByUuid() const
+{
+    if (this->Uuid == LCliObject::NoUuid)
+    {
+        return nullptr;
+    }
+
+    return GEngine->GetCommandLineInterface()->GetObjectAsserted(this->Uuid);
+}
+
 void Jafg::LCliObject::ExpandToUuid()
 {
     check( this->Uuid == LCliObject::NoUuid )

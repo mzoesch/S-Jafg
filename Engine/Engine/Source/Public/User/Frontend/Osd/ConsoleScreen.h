@@ -12,6 +12,10 @@
 namespace Jafg
 {
 
+class WTextBlock;
+class WOverlay;
+class WRegion;
+class WHRegion;
 class WVRegion;
 class WScrollRegion;
 class WEditableTextBlock;
@@ -44,8 +48,10 @@ public:
     virtual void Construct() override;
     virtual void Tick() override;
     virtual void OnGarbageDefault() override;
+    virtual LReply OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
 
-    void SetConsoleFrontendState(const EConsoleScreenState::Type InState);
+    void OnEscape();
+    ENGINE_API void SetConsoleFrontendState(const EConsoleScreenState::Type InState);
     virtual void OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility) override;
 
     ENGINE_API void AddToHistory(const LString& InText);
@@ -54,6 +60,14 @@ public:
 
     ENGINE_API void AddNewMessage(const LString& InText, const bool bSwitchToPreview = true);
     ENGINE_API void ClearMessages();
+
+    ENGINE_API void AddIntellisense(const LString& InText);
+    ENGINE_API void AddIntellisense(LString&& InText);
+    ENGINE_API void ClearIntellisense();
+    ENGINE_API void TryHideIntellisense();
+    ENGINE_API void AddIntellisensePrediction(const LString& InText);
+    ENGINE_API void AddIntellisensePrediction(LString&& InText);
+    ENGINE_API void ClearIntellisensePredictions();
 
     //# Use with care... changing things here might destroy user experience.
     FORCEINLINE auto GetImpl() -> WEditableTextBlock* { return this->EditableTextBlock; }
@@ -68,6 +82,9 @@ public:
     FORCEINLINE u32  GetConsoleWidth() const { return GetDefault<WConsoleScreen>()->ConsoleWidth; }
     FORCEINLINE u32  GetMaxPreviewLines() const { return GetDefault<WConsoleScreen>()->MaxPreviewLines; }
     FORCEINLINE f64  GetPreviewMessageLifetime() const { return GetDefault<WConsoleScreen>()->PreviewMessageLifetime; }
+    FORCEINLINE u32  GetMaxIntellisensePredictions() const { return GetDefault<WConsoleScreen>()->MaxIntellisensePredictions; }
+    FORCEINLINE const LColor& GetIntellisenseTint() const { return GetDefault<WConsoleScreen>()->IntellisenseTint; }
+    FORCEINLINE const LColor& GetIntellisenseHighlightTint() const { return GetDefault<WConsoleScreen>()->IntellisenseHighlightTint; }
 
     //# The current cursor of the history. Has nothing to do with the actual history array.
     FORCEINLINE i32  GetHistoryCursor() const { return this->HistoryCursor; }
@@ -81,9 +98,21 @@ public:
 
 private:
 
+    bool OnAllowCommit();
     void OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType);
+    void OnTextChanged(const LString& NewContent);
     void ShredOutdatedPreviewMessages();
     void ClearMessagesDefault(const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse);
+
+    bool IsCurrentSelectedIntellisensePredictionValid() const;
+    void PrepareIntellisense(const LString& NewContent);
+    void UpdateIntellisense(const LCliCommand* InTargetCommand = nullptr);
+    void ResetIntellisense();
+    void UpdateIntellisensePredictionsColors();
+    bool TryGoIntellisensePredictionUp();
+    bool TryGoIntellisensePredictionDown();
+    void ApplyCurrentIntellisensePrediction();
+    auto GetCurrentHighlightedIntellisenseCommand() -> LCliCommand*;
 
     WEditableTextBlock* EditableTextBlock { nullptr };
 
@@ -101,6 +130,15 @@ private:
 
     CLASS_FIELD(Config, DefaultOnly)
     f32 PreviewMessageLifetime { 5.0f };
+
+    CLASS_FIELD(Config, DefaultOnly)
+    u32 MaxIntellisensePredictions { 10 };
+
+    CLASS_FIELD(Config, DefaultOnly)
+    LColor IntellisenseTint { LColor::LightSlateGray };
+
+    CLASS_FIELD(Config, DefaultOnly)
+    LColor IntellisenseHighlightTint { LColor::DarkSlateGray };
 
     //#
     //# The cursor of the history from back to front.
@@ -121,9 +159,15 @@ private:
     WScrollRegion* ConsoleHistoryContainer { nullptr };
 
     //#
-    //# The intellisense region that is used if a command is being typed.
+    //# The intellisense regions that are used if a command is being typed.
     //#
-    WVRegion* Intellisense { nullptr };
+    WVRegion*   IntellisenseContainer { nullptr };
+    WVRegion*   Intellisense { nullptr };
+    WRegion*    IntellisenseHelpContainer { nullptr };
+    WTextBlock* IntellisenseHelp { nullptr };
+    WTextBlock* IntellisenseText { nullptr };
+    WVRegion*   IntellisensePredictions { nullptr };
+    LString     CurrentIntellisensePrediction;
 
     struct LPreviewMessage final
     {

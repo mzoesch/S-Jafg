@@ -239,6 +239,14 @@ Jafg::LReply Jafg::WEditableTextBlock::OnKeyDown(const LViewport& InViewport, co
 
     if (InKeyEvent.GetKey() == EKeys::Enter || InKeyEvent.GetKey() == EKeys::NumPadEnter)
     {
+        if (this->OnAllowContentCommit.IsBound())
+        {
+            if (this->OnAllowContentCommit.Invoke() == false)
+            {
+                return LReply::Unhandled();
+            }
+        }
+
         this->OnTextCommit(this->Content, ETextCommit::OnEnter);
         return LReply::Handled();
     }

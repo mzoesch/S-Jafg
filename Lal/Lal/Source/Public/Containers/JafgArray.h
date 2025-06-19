@@ -613,7 +613,11 @@ FORCEINLINE typename TArrayAllocator<InT, InSizeType, InTraits>::Self& TArrayAll
 template<typename InT, typename InSizeType, typename InTraits>
 FORCEINLINE typename TArrayAllocator<InT, InSizeType, InTraits>::Self& TArrayAllocator<InT, InSizeType, InTraits>::operator=(Self&& Other) noexcept
 {
-    JAFG_CHECK_ARRAY( this != &Other )
+    if (this == &Other)
+    {
+        return *this;
+    }
+
     this->Orphan();
 
     this->Data  = Other.Data;

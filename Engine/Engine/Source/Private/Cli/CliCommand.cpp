@@ -99,7 +99,7 @@ bool Jafg::LCommandParams::IsInvocable(const LCommandArgs& Args) const
         return true;
     }
 
-    i32 ArgCursor = 0;
+    i32 ArgCursor { 0 };
     for (const LCliType& Param : this->Signature)
     {
         if (ArgCursor >= Args.GetArgCount())
@@ -121,4 +121,80 @@ bool Jafg::LCommandParams::IsInvocable(const LCommandArgs& Args) const
     }
 
     return this->Signature.GetSize() > 0;
+}
+
+Jafg::TArray<Jafg::LString> Jafg::LCommandParams::GetCommonSuggestions(const LCommandArgs& Args, const i32 MaxSuggestions, const bool bParseNotBeginTypedArg) const
+{
+    if (MaxSuggestions <= 0)
+    {
+        LOG_ERROR(LogCli, "MaxSuggestions must be greater than 0. Received: [{}].", MaxSuggestions)
+        return { };
+    }
+
+    TArray<LString> Out;
+
+    i32 ArgCursor { 0 };
+    for (const LCliType& Param : this->Signature)
+    {
+        if (ArgCursor >= Args.GetArgCount())
+        {
+            if (bParseNotBeginTypedArg)
+            {
+                Out.Append(Param.Suggest(Args, ArgCursor, MaxSuggestions - Out.GetSize()));
+            }
+            break;
+        }
+
+        if (Param.CanParse(Args, &ArgCursor))
+        {
+            continue;
+        }
+
+        Out.Append(Param.Suggest(Args, ArgCursor, MaxSuggestions - Out.GetSize()));
+        break;
+    }
+
+    return Out;
+}
+
+Jafg::LString Jafg::LCommandParams::GetCatRepresentation() const
+{
+    if (this->Signature.IsEmpty())
+    {
+        return "<no parameters>";
+    }
+
+    LString Out;
+    for (const LCliType& Param : this->Signature)
+    {
+        if (const LCliType* RegisteredType { Param.GetRegisteredType() }; RegisteredType)
+        {
+            if (RegisteredType->GetIdentifier().IsEmpty())
+            {
+                LOG_WARNING(LogTemporal, "Found invalid type in command signature.")
+                continue;
+            }
+            if (Out.IsEmpty() == false)
+            {
+                Out.Append(", ");
+            }
+            Out.Append(RegisteredType->GetIdentifier());
+            continue;
+        }
+
+        if (Param.GetIdentifier().IsEmpty())
+        {
+            LOG_WARNING(LogTemporal, "Found invalid type in command signature.")
+            continue;
+        }
+        if (Out.IsEmpty() == false)
+        {
+            Out.Append(", ");
+        }
+        Out.Append(Param.GetIdentifier());
+
+        continue;
+    }
+
+    return Out;
 }

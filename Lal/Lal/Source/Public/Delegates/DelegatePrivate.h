@@ -59,34 +59,34 @@ struct TDelegate<RetTy(ParamsTy...)> final
         return false;
     }
 
-    template <typename CallableTy>
+    template <typename CallableTy> requires std::is_invocable_r_v<RetTy, CallableTy, ParamsTy...>
     FORCEINLINE TDelegate(CallableTy&& InCallable)
     {
         this->Delegate.BindStrong(std::forward<CallableTy>(InCallable));
     }
-    template <typename CallableTy>
+    template <typename CallableTy> requires std::is_invocable_r_v<RetTy, CallableTy, ParamsTy...>
     FORCEINLINE void BindStrong(CallableTy&& InCallable)
     {
         this->Delegate.BindStrong(std::forward<CallableTy>(InCallable));
     }
 
-    template <typename CallableTy>
+    template <typename CallableTy> requires std::is_invocable_r_v<RetTy, CallableTy, ParamsTy...>
     FORCEINLINE TDelegate(CallableTy* InCallable)
     {
         this->Delegate.BindWeak(InCallable);
     }
-    template <typename CallableTy>
+    template <typename CallableTy> requires std::is_invocable_r_v<RetTy, CallableTy, ParamsTy...>
     FORCEINLINE void BindWeak(CallableTy* InCallable)
     {
         this->Delegate.BindWeak(InCallable);
     }
 
-    template <typename ObjTy, typename CallableTy>
+    template <typename ObjTy, typename CallableTy> requires std::is_invocable_r_v<RetTy, CallableTy, ObjTy*, ParamsTy...>
     FORCEINLINE TDelegate(ObjTy* InObject, CallableTy InMember)
     {
         this->Delegate.BindMember(InObject, InMember);
     }
-    template <typename ObjTy, typename CallableTy>
+    template <typename ObjTy, typename CallableTy> requires std::is_invocable_r_v<RetTy, CallableTy, ObjTy*, ParamsTy...>
     FORCEINLINE void BindMember(ObjTy* InObject, CallableTy InMember)
     {
         this->Delegate.BindMember(InObject, InMember);

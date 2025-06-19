@@ -549,7 +549,7 @@ public:
     FORCEINLINE void SetShouldTick(const bool bInShouldTick) { this->bAllowTick = bInShouldTick; }
     FORCEINLINE bool ShouldNowDraw() const { return EWidgetVisibility::IsDrawn(this->Visibility); }
     FORCEINLINE auto GetVisibility() const -> EWidgetVisibility::Type { return this->Visibility; }
-    FORCEINLINE bool IsWidgetVisible() const { return this->ShouldNowDraw(); }
+    FORCEINLINE bool IsPainted() const { return this->ShouldNowDraw(); }
     FORCEINLINE bool IsHitTestable() const { return EWidgetVisibility::IsHitTestable(this->Visibility); }
     FORCEINLINE bool CanChildrenBeHitTestable() const { return EWidgetVisibility::IsDerivedHitTestable(this->Visibility); }
     FORCEINLINE bool ShouldCheckForInputs() const { return this->IsHitTestable() || this->CanChildrenBeHitTestable(); }
@@ -674,6 +674,8 @@ public:
     template <typename T> FORCEINLINE const T* AsChecked() const { const T* Out = this->As<T>(this); check( Out ) return Out; }
     template <typename T> FORCEINLINE       T* AsAsserted() { T* Out = this->As<T>(); jassert( Out ) return Out; }
     template <typename T> FORCEINLINE const T* AsAsserted() const { const T* Out = this->As<T>(); jassert( Out ) return Out; }
+    template <typename T> FORCEINLINE       T* AsStatic() { return CheckedStaticCast<T>(this); }
+    template <typename T> FORCEINLINE const T* AsStatic() const { return CheckedStaticCast<T>(this); }
 
     LEngine*   GetEngine() const;
     LLocalEgo* GetLocalEgo() const;

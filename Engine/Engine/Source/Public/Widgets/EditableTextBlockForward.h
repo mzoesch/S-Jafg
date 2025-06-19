@@ -13,6 +13,7 @@ struct LCaretBrush;
 struct LEditableTextBrush;
 namespace ETextCommit { enum Type : u8; }
 
+MAKE_DELEGATE_SIGNATURE(LEditableTextBlockAllowCommitDelegate, bool)
 MAKE_DELEGATE_SIGNATURE(LEditableTextBlockCommitDelegate, void, const LString&, const ETextCommit::Type)
 MAKE_DELEGATE_SIGNATURE(LEditableTextBlockChangedDelegate, void, const LString& NewContent)
 

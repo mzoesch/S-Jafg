@@ -29,5 +29,38 @@ bool Jafg::LCliType::CanParse(const LCommandArgs& Args, i32* Cursor) const
         return this->OnParseTypeDelegate.Invoke(Args, Cursor);
     }
 
-    return GEngine->GetCommandLineInterface()->GetTypeAsserted(this->GetUuid())->OnParseTypeDelegate.Invoke(Args, Cursor);
+    const LCliType* CliType { GEngine->GetCommandLineInterface()->GetTypeAsserted(this->GetUuid()) };
+
+    if (this == CliType)
+    {
+        LOG_ERROR(LogCli, "Infinite recursive call detected for args [{}] on type [{}].", Args.GetCatRepresentation(), this->GetIdentifier())
+        return false;
+    }
+
+    return CliType->OnParseTypeDelegate.Invoke(Args, Cursor);
+}
+
+Jafg::TArray<Jafg::LString> Jafg::LCliType::Suggest(const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) const
+{
+    if (this->OnSuggestDelegate.IsBound())
+    {
+        return this->OnSuggestDelegate.Invoke(Args, Cursor, MaxSuggestions);
+    }
+
+    const LCliType* CliType { GEngine->GetCommandLineInterface()->GetType(this->GetUuid()) };
+
+    if (CliType == nullptr)
+    {
+        return { };
+    }
+
+    if (this == CliType)
+    {
+        /*
+         * Infinite recursion is okay, as not all types may have a suggestion delegate. This is completly okay.
+         */
+        return { };
+    }
+
+    return CliType->OnSuggestDelegate.Invoke(Args, Cursor, MaxSuggestions);
 }

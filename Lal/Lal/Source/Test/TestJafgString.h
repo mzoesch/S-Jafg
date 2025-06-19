@@ -1790,3 +1790,48 @@ TEST_CASE(StringView, "Lal.Strings")
 
     return;
 }
+
+#include "Algo/Sort.h"
+
+TEST_CASE(StringSort, "Lal.Strings")
+{
+    using namespace Jafg;
+
+    TArray<LString> MyArray
+    {
+        "B",
+        "A",
+        "X",
+        "Z",
+        "Aa",
+        "Ba",
+        "Za",
+        "Ab",
+        "a",
+        "b",
+        "c",
+        "z",
+    };
+
+    Algo::SortQuick(&MyArray);
+
+    const TArray<LString> MyArrayExpected
+    {
+        "A",
+        "Aa",
+        "Ab",
+        "a",
+        "B",
+        "Ba",
+        "b",
+        "c",
+        "X",
+        "Z",
+        "Za",
+        "z"
+    };
+
+    CHECK_TRUE("Lexiographic sorted string.", MyArray.IsDataEqual(MyArrayExpected))
+
+    return;
+}

@@ -30,7 +30,7 @@ Jafg::LString Jafg::CliStatics::SafelyRemoveCommandPrefix(const LString& InText)
 {
     LString Out;
 
-    if (InText.StartsWith("/"))
+    if (InText.StartsWith('/'))
     {
         Out = InText.RightChop(1);
     }
@@ -44,12 +44,12 @@ Jafg::LString Jafg::CliStatics::SafelyRemoveCommandPrefix(const LString& InText)
 
 void Jafg::CliStatics::SafelyRemoveCommandPrefixInline(LString& InText)
 {
-    if (InText.StartsWith("/"))
+    if (InText.StartsWith('/'))
     {
         InText.InlineRightChop(1);
     }
 
-    check( InText.StartsWith("/") == false )
+    check( InText.StartsWith('/') == false )
 
     return;
 }
@@ -58,13 +58,13 @@ Jafg::LString Jafg::CliStatics::SafelyAddCommandPrefix(const LString& InText)
 {
     LString Out;
 
-    if (InText.StartsWith("/"))
+    if (InText.StartsWith('/'))
     {
         Out = InText;
     }
     else
     {
-        Out = "/";
+        Out = '/';
         Out += InText;
     }
 
@@ -73,19 +73,19 @@ Jafg::LString Jafg::CliStatics::SafelyAddCommandPrefix(const LString& InText)
 
 void Jafg::CliStatics::SafelyAddCommandPrefixInline(LString& InText)
 {
-    if (InText.StartsWith("/") == false)
+    if (InText.StartsWith('/') == false)
     {
-        InText.AppendAt(0, "/");
+        InText.AddAt(0, '/');
     }
 
-    check( InText.StartsWith("/") )
+    check( InText.StartsWith('/') )
 
     return;
 }
 
 Jafg::LString Jafg::CliStatics::GetCommandFromText(const LString& InText)
 {
-    const i32 Space = InText.FindFirst(" ");
+    const i32 Space = InText.FindFirst(' ');
 
     if (Space == INDEX_NONE)
     {
@@ -101,16 +101,16 @@ Jafg::LString Jafg::CliStatics::GetCommandFromText(const LString& InText)
 
 Jafg::LString Jafg::CliStatics::GetArgsFromText(const LString& InText)
 {
-    const i32 Space = InText.FindFirst(" ");
+    const i32 Space = InText.FindFirst(' ');
 
     if (Space == INDEX_NONE)
     {
-        return "";
+        return { };
     }
 
     if (InText.GetSize()-1 <= Space + 1)
     {
-        return "";
+        return { };
     }
 
     return InText.RightChop(Space + 1);

@@ -201,7 +201,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             },
             [this](LInputActionValue& InValue) -> void
             {
-                this->GetLocalEgo()->GetFrontend()->GetFirstTopLevelWidgetByClassChecked<WConsoleScreen>()->SetConsoleFrontendState(EConsoleScreenState::TryPreview);
+                this->GetLocalEgo()->GetFrontend()->GetFirstTopLevelWidgetByClassChecked<WConsoleScreen>()->OnEscape();
             }
         );
     }

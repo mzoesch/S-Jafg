@@ -12,7 +12,7 @@ void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
     check( Cli )
 
     ensure(Cli->RegisterType({"Integer", "A 64 bit signed integer.", "0",
-    LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         const LString& String = Args[*Cursor].Name;
@@ -35,10 +35,16 @@ void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
 
         ++*Cursor;
         return ec == std::errc{} && ptr == String.GetEnd();
-    })}).IsValid());
+    },
+    nullptr,
+    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    {
+        return { };
+    },
+    }).IsValid());
 
     ensure(Cli->RegisterType({"UInteger", "A 64 bit unsigned integer.", "0",
-    LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         const LString& String = Args[*Cursor].Name;
@@ -61,10 +67,16 @@ void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
 
         ++*Cursor;
         return ec == std::errc{} && ptr == String.GetEnd();
-    })}).IsValid());
+    },
+    nullptr,
+    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    {
+        return { };
+    },
+    }).IsValid());
 
     ensure(Cli->RegisterType({"Byte", "A 8 bit unsigned integer.", "0",
-    LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         const LString& String = Args[*Cursor].Name;
@@ -87,10 +99,26 @@ void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
 
         ++*Cursor;
         return ec == std::errc{} && ptr == String.GetEnd() && (Value >= 0 && Value <= 255);
-    })}).IsValid());
+    },
+    nullptr,
+    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    {
+        if (MaxSuggestions >= 2)
+        {
+            return { "255", "0" };
+        }
+
+        if (MaxSuggestions == 1)
+        {
+            return { "255" };
+        }
+
+        return { };
+    },
+    }).IsValid());
 
     ensure(Cli->RegisterType({"Float", "A 32 bit floating point number.", "0.0",
-    LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         const LString& String = Args[*Cursor].Name;
@@ -113,10 +141,16 @@ void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
 
         ++*Cursor;
         return ec == std::errc{} && ptr == String.GetEnd();
-    })}).IsValid());
+    },
+    nullptr,
+    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    {
+        return { };
+    },
+    }).IsValid());
 
     ensure(Cli->RegisterType({"String", "A string.", "",
-    LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         if (Args[*Cursor].Name.IsEmpty())
@@ -126,10 +160,16 @@ void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
 
         ++*Cursor;
         return true;
-    })}).IsValid());
+    },
+    nullptr,
+    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    {
+        return { };
+    },
+    }).IsValid());
 
     ensure(Cli->RegisterType({"Bool", "A boolean.", "false",
-    LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         if (Args[*Cursor].Name.IsEmpty())
@@ -150,8 +190,8 @@ void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
 
         ++*Cursor;
         return true;
-    }),
-    LOnValueSetDelegate::CreateStrong([](const LCommandArgs& InValue, LString* OutValue) -> bool
+    },
+    [](const LCommandArgs& InValue, LString* OutValue) -> bool
     {
         check( InValue.IsValid() && InValue.Name.IsEmpty() == false )
 
@@ -173,7 +213,22 @@ void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
         }
 
         return false;
-    })}).IsValid());
+    },
+    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    {
+        if (MaxSuggestions >= 2)
+        {
+            return { "true", "false" };
+        }
+
+        if (MaxSuggestions == 1)
+        {
+            return { "true" };
+        }
+
+        return { };
+    },
+    }).IsValid());
 
     return;
 }
@@ -185,7 +240,7 @@ void Jafg::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
     check( Cli )
 
     ensure(Cli->RegisterType({"Any", "Any value.", "",
-    LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+    LOnParseTypeDelegate::CreateStrongDelegate([](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         if (Args[*Cursor].Name.IsEmpty())
@@ -198,7 +253,7 @@ void Jafg::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
     })}).IsValid());
 
     ensure(Cli->RegisterType({"Var", "A variable.", "NULL",
-    LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+    LOnParseTypeDelegate::CreateStrongDelegate([](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         if (Args[*Cursor].Name.IsEmpty())
@@ -228,4 +283,40 @@ bool Jafg::Private::CliQueryImpl(const LCommandArgs& Args, i32* Cursor, const TA
     }
 
     return false;
+}
+
+Jafg::TArray<Jafg::LString> Jafg::Private::CliQuerySuggestImpl(const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions, const TArray<LString>& Values)
+{
+    const LCommandArgs* Target { nullptr };
+
+    if (Args.SubArgs.IsValidIndex(Cursor))
+    {
+        Target = &Args[Cursor];
+    }
+
+    TArray<LString> Out;
+
+    for (const LString& Value : Values)
+    {
+        if (Out.GetSize() >= MaxSuggestions)
+        {
+            break;
+        }
+
+        if (Target)
+        {
+            if (Value.StartsWith(Target->Name))
+            {
+                Out.Emplace(Value);
+            }
+        }
+        else
+        {
+            Out.Emplace(Value);
+        }
+
+        continue;
+    }
+
+    return Out;
 }

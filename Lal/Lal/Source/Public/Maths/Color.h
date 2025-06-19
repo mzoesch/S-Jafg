@@ -432,6 +432,28 @@ struct LColor final
     FORCEINLINE static constexpr LColor FromLinearColor(const LLinearColor& InColor) noexcept;
     FORCEINLINE constexpr LLinearColor ToLinearColor() const noexcept;
 
+    FORCEINLINE constexpr LColor Copy() const noexcept { return *this; }
+    FORCEINLINE constexpr LColor& ChannelR(const u8 InChannel) noexcept
+    {
+        this->R = InChannel;
+        return *this;
+    }
+    FORCEINLINE constexpr LColor& ChannelG(const u8 InChannel) noexcept
+    {
+        this->G = InChannel;
+        return *this;
+    }
+    FORCEINLINE constexpr LColor& ChannelB(const u8 InChannel) noexcept
+    {
+        this->B = InChannel;
+        return *this;
+    }
+    FORCEINLINE constexpr LColor& ChannelA(const u8 InChannel) noexcept
+    {
+        this->A = InChannel;
+        return *this;
+    }
+
     FORCEINLINE constexpr bool operator==(const LColor& Other) const noexcept { return this->Bits == Other.Bits; }
     FORCEINLINE constexpr bool operator!=(const LColor& Other) const noexcept { return this->Bits != Other.Bits; }
 
@@ -452,6 +474,39 @@ struct LColor final
         this->A -= static_cast<u8>(Maths::Max(static_cast<i32>(this->A) - static_cast<i32>(Other.A), 0x00));
 
         return;
+    }
+
+    FORCEINLINE constexpr LColor& operator|=(const i32 InColor) noexcept
+    {
+        this->Bits |= static_cast<u32>(InColor);
+        return *this;
+    }
+
+    FORCEINLINE constexpr LColor& operator&=(const i32 InColor) noexcept
+    {
+        this->Bits &= static_cast<u32>(InColor);
+        return *this;
+    }
+
+    FORCEINLINE constexpr LColor& operator^=(const i32 InColor) noexcept
+    {
+        this->Bits ^= static_cast<u32>(InColor);
+        return *this;
+    }
+
+    FORCEINLINE constexpr LColor operator|(const i32 InColor) const noexcept
+    {
+        return LColor(this->Bits | static_cast<u32>(InColor));
+    }
+
+    FORCEINLINE constexpr LColor operator&(const i32 InColor) const noexcept
+    {
+        return LColor(this->Bits & static_cast<u32>(InColor));
+    }
+
+    FORCEINLINE constexpr LColor operator^(const i32 InColor) const noexcept
+    {
+        return LColor(this->Bits ^ static_cast<u32>(InColor));
     }
 
     FORCEINLINE LString ToString() const

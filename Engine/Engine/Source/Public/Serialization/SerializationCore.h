@@ -121,6 +121,59 @@ FORCEINLINE void Deserialize<LString>(LString* Destination, const LString& InVal
     *Destination = InValue;
 }
 
+template <>
+FORCEINLINE void Deserialize<LColor>(LColor* Destination, const LString& InValue)
+{
+    checkSlow( Destination )
+
+    jassert( InValue.StartsWith("0x") )
+    jassert( InValue.GetRuneCount() == 10 )
+
+    *Destination = LColor::Transparent;
+
+    auto GetValue
+    {
+        [](const LString& LambdaValue, const i32 LambdaIndex) -> u8
+        {
+            jassert
+            (
+                   (LambdaValue[LambdaIndex] >= '0' && LambdaValue[LambdaIndex] <= '9')
+                || (LambdaValue[LambdaIndex] >= 'A' && LambdaValue[LambdaIndex] <= 'F')
+            )
+
+            return
+                (LambdaValue[LambdaIndex] >= '0' && LambdaValue[LambdaIndex] <= '9')
+                    ? (LambdaValue[LambdaIndex] - '0')
+                    : (LambdaValue[LambdaIndex] >= 'A' && LambdaValue[LambdaIndex] <= 'F')
+                        ? (LambdaValue[LambdaIndex] - 'A' + 10)
+                        : 0;
+        }
+    };
+
+    /*
+     * This can be written simpler, but then we need two versions...
+     * One for little endian and one for big endian platforms.
+     */
+
+    Destination->R = GetValue(InValue, 2);
+    Destination->R <<= 4;
+    Destination->R |= GetValue(InValue, 3);
+
+    Destination->G = GetValue(InValue, 4);
+    Destination->G <<= 4;
+    Destination->G |= GetValue(InValue, 5);
+
+    Destination->B = GetValue(InValue, 6);
+    Destination->B <<= 4;
+    Destination->B |= GetValue(InValue, 7);
+
+    Destination->A = GetValue(InValue, 8);
+    Destination->A <<= 4;
+    Destination->A |= GetValue(InValue, 9);
+
+    return;
+}
+
 template <typename TField>
 FORCEINLINE void Deserialize(TArray<TField>* Destination, const LString& InValue)
 {
@@ -202,6 +255,12 @@ FORCEINLINE LString Serialize(const TArray<TField>& InValue)
     Result += "]";
 
     return Result;
+}
+
+template <>
+FORCEINLINE LString Serialize<LColor>(const LColor& InValue)
+{
+    return LString::SprintF("0x{:02X}{:02X}{:02X}{:02X}", InValue.R, InValue.G, InValue.B, InValue.A);
 }
 
 } /* ~Namespace Jafg */

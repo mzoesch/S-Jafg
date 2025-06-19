@@ -4,6 +4,7 @@
 #include "Engine/Engine.h"
 #include "Cli/CliStatics.h"
 #include "Async/TaskUtility.h"
+#include "Algo/Sort.h"
 
 Jafg::LCommandLineInterface* Jafg::LCliObjectHandle::GetCommandLineInterface() const
 {
@@ -27,14 +28,14 @@ void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandE
     if (CommandStr.IsEmpty())
     {
         OutResponse->Rc = ECommandReturnCode::Failure;
-        OutResponse->StdOut = "Failed to extract command from input";
+        OutResponse->StdErr = "Failed to extract command from input";
         return;
     }
 
     if (Str::IsValidAscii(CommandStr.ToPtr()) == false)
     {
         OutResponse->Rc = ECommandReturnCode::Failure;
-        OutResponse->StdOut = "Command contains invalid characters";
+        OutResponse->StdErr = "Command contains invalid characters";
         return;
     }
 
@@ -42,14 +43,14 @@ void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandE
     if (Cmd == nullptr)
     {
         OutResponse->Rc = ECommandReturnCode::Unknown;
-        OutResponse->StdOut = LString::SprintF("No such command [{}]", CommandStr);
+        OutResponse->StdErr = LString::SprintF("No such command [{}]", CommandStr);
         return;
     }
 
     if (Cmd->GetOverloadCount() == 0)
     {
         OutResponse->Rc = ECommandReturnCode::Failure;
-        OutResponse->StdOut = LString::SprintF("Command [{}] has no overloads and is therefore not invokable", CommandStr);
+        OutResponse->StdErr = LString::SprintF("Command [{}] has no overloads and is therefore not invokable", CommandStr);
         return;
     }
 
@@ -68,9 +69,58 @@ void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandE
     }
 
     OutResponse->Rc = ECommandReturnCode::SyntaxError;
-    OutResponse->StdOut = "Target is not invocable with given arguments. No overload is matching";
+    OutResponse->StdErr = "Target is not invocable with given arguments. No overload is matching";
 
     return;
+}
+
+Jafg::TArray<Jafg::LString> Jafg::LCommandLineInterface::GetCommonSuggestions(const LString& InCommandLine, const i32 MaxSuggestions) const
+{
+    check( MaxSuggestions > 0 )
+
+    const LString CommandStr = CliStatics::GetCommandFromText(InCommandLine);
+    if (CommandStr.IsEmpty())
+    {
+        LOG_ERROR(LogCli, "Failed to extract command from input");
+        return { };
+    }
+
+    if (Str::IsValidAscii(CommandStr.ToPtr()) == false)
+    {
+        LOG_ERROR(LogCli, "Command contains invalid characters" );
+        return { };
+    }
+
+    const LCliCommand* Cmd = this->GetCommand(CommandStr);
+    if (Cmd == nullptr)
+    {
+        LOG_ERROR(LogCli, "No such command [{}]", CommandStr);
+        return { };
+    }
+
+    if (Cmd->GetOverloadCount() == 0)
+    {
+        LOG_ERROR(LogCli, "Command [{}] has no overloads and is therefore not invokable", CommandStr);
+        return { };
+    }
+
+    TArray<LString> Out;
+
+    LString ChoppedArgs { CliStatics::GetArgsFromText(InCommandLine) };
+    const LCommandArgs Args { CliStatics::TokenizeCommand(std::move(ChoppedArgs)) };
+    for (const LCommandParams& Overloads : Cmd->GetOverloads())
+    {
+        if (Out.GetSize() >= MaxSuggestions)
+        {
+            break;
+        }
+
+        Out.Append(Overloads.GetCommonSuggestions(Args, MaxSuggestions - Out.GetSize(), InCommandLine.EndsWith(' ')));
+
+        continue;
+    }
+
+    return Out;
 }
 
 Jafg::LCliTypeHandle Jafg::LCommandLineInterface::RegisterType(LCliType&& InType)
@@ -140,6 +190,9 @@ Jafg::LCliCommandHandle Jafg::LCommandLineInterface::RegisterCommand(LCliCommand
 
     InCommand.Uuid = ++this->UuidCursor;
     this->Commands.Emplace(std::move(InCommand));
+
+    Algo::SortQuick(&this->Commands);
+
     return { this->UuidCursor };
 }
 

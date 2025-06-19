@@ -63,17 +63,19 @@ void Jafg::LEngine::Initialize()
     /* Engine stuff. */
     {
         ensure(this->CommandLineInterface.RegisterType({"World", "A world registered to the engine.", "",
-        LOnParseTypeDelegate::CreateStrong([](const LCommandArgs& Args, i32* Cursor) -> bool
+        [](const LCommandArgs& Args, i32* Cursor) -> bool
         {
             checkSlow( *Cursor < Args.GetArgCount() )
             if (Args[*Cursor].Name.IsEmpty())
             {
                 return false;
             }
+
             if (GEngine == nullptr)
             {
                 return false;
             }
+
             const bool bValid { GEngine->GetContexts().FindByPredicate([Args, Cursor](const Private::LWorldContext& InContext) -> bool
             {
                 return InContext.ChildWorld->GetHumanReadableName() == Args[*Cursor].Name;
@@ -82,8 +84,52 @@ void Jafg::LEngine::Initialize()
             {
                 ++*Cursor;
             }
+
             return bValid;
-        })}).IsValid());
+        },
+        nullptr,
+        [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+        {
+            const LCommandArgs* Target { nullptr };
+
+            if (Args.SubArgs.IsValidIndex(Cursor))
+            {
+                Target = &Args[Cursor];
+            }
+
+            if (GEngine == nullptr)
+            {
+                return { };
+            }
+
+            TArray<LString> Out;
+
+            for (const Private::LWorldContext& Context : GEngine->GetContexts())
+            {
+                if (Out.GetSize() >= MaxSuggestions)
+                {
+                    break;
+                }
+
+                check( Context.ChildWorld )
+
+                if (Target)
+                {
+                    if (Context.ChildWorld->GetHumanReadableName().StartsWith(Target->Name))
+                    {
+                        Out.Emplace(Context.ChildWorld->GetHumanReadableName());
+                    }
+                }
+                else
+                {
+                    Out.Emplace(Context.ChildWorld->GetHumanReadableName());
+                }
+
+                continue;
+            }
+
+            return Out;
+        }}).IsValid());
 
         ensure(this->CommandLineInterface.RegisterCommand({"Set", "Set any variable.",
         LCommandParams{}

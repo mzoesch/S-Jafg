@@ -200,6 +200,12 @@ public:
     FORCEINLINE bool Equals(const T InRune) const noexcept { return *this == InRune; }
     FORCEINLINE bool Equals(const T* InString, const T* InEnd) const noexcept;
 
+    FORCEINLINE std::strong_ordering operator<=>(const Self& InOther) const noexcept;
+    FORCEINLINE std::strong_ordering operator<=>(const T* InString) const noexcept;
+    template <typename TOtherString>
+    FORCEINLINE std::strong_ordering operator<=>(const TOtherString& InOther) const noexcept requires (Self::template IsValidOtherString<TOtherString>());
+    FORCEINLINE std::strong_ordering SpaceShip(const T* InString, const T* InSlack) const noexcept;
+
     FORCEINLINE Self& operator+=(const Self& InOther) noexcept requires (Self::IsDynamic()) { this->Append(InOther); return this->GetSelf(); }
     FORCEINLINE Self& operator+=(const T InRune) noexcept requires (Self::IsDynamic()) { this->Add(InRune); return this->GetSelf(); }
     FORCEINLINE Self& operator+=(const T* InString) noexcept requires (Self::IsDynamic()) { this->Append(InString); return this->GetSelf(); }
@@ -456,6 +462,8 @@ public:
     FORCEINLINE Self& operator=(TOtherString&& InString) noexcept requires (Self::IsWeakAlloc() && TOtherString::IsWeakAlloc() && Self::template IsValidOtherString<TOtherString>());
     template <typename TOtherString>
     FORCEINLINE Self& operator=(TOtherString&& InString) noexcept requires (Self::IsStrongAlloc() && TOtherString::IsStrongAlloc() && Self::template IsValidOtherString<TOtherString>());
+
+    using Super::operator<=>;
 };
 
 template<typename InT>
@@ -1046,6 +1054,79 @@ FORCEINLINE bool TStringBase<Derived, InTraits, InAlloc>::Equals(const T* InStri
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE std::strong_ordering TStringBase<Derived, InTraits, InAlloc>::operator<=>(const Self& InOther) const noexcept
+{
+    return this->SpaceShip(InOther.GetBegin(), InOther.GetSlack());
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE std::strong_ordering TStringBase<Derived, InTraits, InAlloc>::operator<=>(const T* InString) const noexcept
+{
+    return this->SpaceShip(InString, InString + Traits::template GetStringLength<SizeType>(InString));
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+template<typename TOtherString>
+FORCEINLINE std::strong_ordering TStringBase<Derived, InTraits, InAlloc>::operator<=>(const TOtherString& InOther) const noexcept requires (Self::template IsValidOtherString<TOtherString>())
+{
+    return this->SpaceShip(InOther.GetBegin(), InOther.GetSlack());
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
+FORCEINLINE std::strong_ordering TStringBase<Derived, InTraits, InAlloc>::SpaceShip(const T* InString, const T* InSlack) const noexcept
+{
+    auto Size1 { this->Impl.GetUnderlyingDataStructure().Slack - this->Impl.GetUnderlyingDataStructure().Data };
+    auto Size2 { InSlack - InString };
+    auto minSize { Maths::Min(Size1, Size2) };
+
+    struct LMyComp final
+    {
+        FORCEINLINE std::strong_ordering operator()(T Lhs, T Rhs) const noexcept
+        {
+            T LhsLow { TStringTraits<T>::ToLower(Lhs) };
+            T RhsLow { TStringTraits<T>::ToLower(Rhs) };
+
+            if (LhsLow < RhsLow)
+            {
+                return std::strong_ordering::less;
+            }
+            if (LhsLow > RhsLow)
+            {
+                return std::strong_ordering::greater;
+            }
+
+            if (Lhs < Rhs)
+            {
+                return std::strong_ordering::less;
+            }
+            if (Lhs > Rhs)
+            {
+                return std::strong_ordering::greater;
+            }
+
+            return std::strong_ordering::equal;
+        }
+    };
+
+    auto result
+    {
+        std::lexicographical_compare_three_way
+        (
+            this->Impl.GetUnderlyingDataStructure().Data, this->Impl.GetUnderlyingDataStructure().Data + minSize,
+            InString, InString + minSize,
+            LMyComp{}
+        )
+    };
+
+    if (result != 0)
+    {
+        return result;
+    }
+
+    return Size1 <=> Size2;
+}
+
+template<typename Derived, typename InTraits, typename InAlloc>
 FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::operator/(const T InRune) const noexcept requires (Self::IsStrongAlloc())
 
 {
@@ -1193,8 +1274,11 @@ FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::AddAt(const SizeType I
 template<typename Derived, typename InTraits, typename InAlloc>
 FORCEINLINE void TStringBase<Derived, InTraits, InAlloc>::Append(const Self& InOther) noexcept requires (Self::IsDynamic())
 {
-    this->Impl.Pop(); /* Terminator */
-    this->Impl.Append(InOther.Impl);
+    if (InOther.IsEmpty() == false)
+    {
+        this->Impl.Pop(); /* Terminator */
+        this->Impl.Append(InOther.Impl);
+    }
 
     PRIVATE_JAFG_CHECK_STRING_STATE()
     return;

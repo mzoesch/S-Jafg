@@ -54,7 +54,14 @@ public:
 
     FORCEINLINE bool IsUuidValid() const { return this->Uuid != NoUuid; }
 
+    FORCEINLINE std::strong_ordering operator<=>(const LCliObject& InOther) const
+    {
+        return std::compare_three_way()(this->Identifier, InOther.Identifier);
+    }
+
 protected:
+
+    ENGINE_API LCliObject* GetRegisteredObjectByUuid() const;
 
     ENGINE_API  void ExpandToUuid();
     FORCEINLINE auto GetUuid() const -> LCliObjectUuid { return this->Uuid; }

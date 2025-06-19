@@ -426,7 +426,7 @@ FORCEINLINE typename TMpmcQueue<T, TSizeType>::SizeType TMpmcQueue<T, TSizeType>
         return 0;
     }
 
-    SizeType Size;
+    SizeType Size { 0 };
 
     std::unique_lock Lock(this->Mutex);
 

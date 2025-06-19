@@ -187,17 +187,18 @@ template <typename TMemberField>
 FORCEINLINE void ExplicitCommonZeroOnDefaultOnlyMallocMember(TMemberField* MemberField);
 
 //# Primitive types.
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<f32>(f32* MemberField)   { *MemberField = static_cast<f32>(0.0f); }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<f64>(f64* MemberField)   { *MemberField = static_cast<f64>(0.0); }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<i8>(i8* MemberField)     { *MemberField = static_cast<i8>(0); }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<i16>(i16* MemberField)   { *MemberField = static_cast<i16>(0); }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<i32>(i32* MemberField)   { *MemberField = static_cast<i32>(0); }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<i64>(i64* MemberField)   { *MemberField = static_cast<i64>(0); }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<u8>(u8* MemberField)     { *MemberField = static_cast<u8>(0); }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<u16>(u16* MemberField)   { *MemberField = static_cast<u16>(0); }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<u32>(u32* MemberField)   { *MemberField = static_cast<u32>(0); }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<u64>(u64* MemberField)   { *MemberField = static_cast<u64>(0); }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<bool>(bool* MemberField) { *MemberField = false; }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<f32>(f32* MemberField)       { *MemberField = static_cast<f32>(0.0f); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<f64>(f64* MemberField)       { *MemberField = static_cast<f64>(0.0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<i8>(i8* MemberField)         { *MemberField = static_cast<i8>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<i16>(i16* MemberField)       { *MemberField = static_cast<i16>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<i32>(i32* MemberField)       { *MemberField = static_cast<i32>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<i64>(i64* MemberField)       { *MemberField = static_cast<i64>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<u8>(u8* MemberField)         { *MemberField = static_cast<u8>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<u16>(u16* MemberField)       { *MemberField = static_cast<u16>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<u32>(u32* MemberField)       { *MemberField = static_cast<u32>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<u64>(u64* MemberField)       { *MemberField = static_cast<u64>(0); }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<bool>(bool* MemberField)     { *MemberField = false; }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<LColor>(LColor* MemberField) { *MemberField = LColor::Black; }
 
 template <typename TMemberField>
 FORCEINLINE void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField);

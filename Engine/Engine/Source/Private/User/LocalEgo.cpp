@@ -78,7 +78,7 @@ void Jafg::LLocalEgo::Tick(const float DeltaTime)
 
     if (const i32 PurgedFactories = Private::PurgeWidgetFactories(); PurgedFactories > 0)
     {
-        LOG_VERBOSE(LogWidgetFramework, "Purged {} widget factories.", PurgedFactories)
+        LOG_TRACE(LogWidgetFramework, "Purged {} widget factories.", PurgedFactories)
     }
 
     this->Frontend.Tick(&this->UserInput);
