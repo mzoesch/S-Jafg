@@ -10,6 +10,7 @@ namespace Jafg
 
 class LCommandLineInterface;
 struct LCliQuery;
+struct LCliVariable;
 template <>
 struct LCliTypeFactory<LCliQuery>;
 
@@ -24,6 +25,16 @@ struct LCliQuery
 {
     typedef TArray<LString> Input;
 };
+
+//#
+//# Any variable registered to the CLI. Note that this will not work with intermediate variables.
+//# For them use LCliType::Type("Any") instead.
+//#
+template<> FORCEINLINE LCliType LCliType::Type<LCliVariable>() { return LCliType::Type("Var"); }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Implementations
 
 template <>
 struct LCliTypeFactory<LCliQuery>
@@ -44,6 +55,7 @@ ENGINE_API bool CliQueryImpl(const LCommandArgs& Args, i32* Cursor, const TArray
 ENGINE_API auto CliQuerySuggestImpl(const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions, const TArray<LString>& Values) -> TArray<LString>;
 
 } /* ~Namespace Private */
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Definitions

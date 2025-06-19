@@ -82,7 +82,7 @@ void Jafg::WConsoleScreen::Construct()
     [
         NewNode(WEditableTextBlock).SaveTo(&this->EditableTextBlock)
             .Anchor(EAnchor::VBottom | EAnchor::HFill)
-            .TextTint(LColor::Red)
+            .TextTint(LColor::White)
             .TextScale(0.5f)
             .Padding({5.0f, 4.5f})
             .Tint({0, 0, 0, 164})

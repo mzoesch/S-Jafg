@@ -142,6 +142,9 @@ Jafg::LCliTypeHandle Jafg::LCommandLineInterface::RegisterType(LCliType&& InType
 
     InType.Uuid = ++this->UuidCursor;
     this->Types.Emplace(std::move(InType));
+
+    Algo::SortQuick(&this->Types);
+
     return { this->UuidCursor };
 }
 
@@ -240,6 +243,9 @@ Jafg::LCliVariableHandle Jafg::LCommandLineInterface::RegisterVariable(LCliVaria
 
     InVariable.Uuid = ++this->UuidCursor;
     this->Variables.Emplace(std::move(InVariable));
+
+    Algo::SortQuick(&this->Variables);
+
     return { this->UuidCursor };
 }
 

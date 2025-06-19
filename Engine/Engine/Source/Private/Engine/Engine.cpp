@@ -133,9 +133,50 @@ void Jafg::LEngine::Initialize()
 
         ensure(this->CommandLineInterface.RegisterCommand({"Set", "Set any variable.",
         LCommandParams{}
-        .Token(LCliType::Type("Var", "The variable to set."))
-        .Token(LCliType::Type("Any", "The value to set."))
-        .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        .Token(LCliType::Type<LCliVariable>())
+        .Token(LCliType
+        {
+            "VarType", "The value to set.",
+            nullptr,
+            [](const LCommandArgs& Args, i32* Cursor) -> bool
+            {
+                checkSlow( *Cursor < Args.GetArgCount() )
+                if (Args[*Cursor].Name.IsEmpty())
+                {
+                    return false;
+                }
+
+                ++*Cursor;
+                return true;
+            },
+            nullptr,
+            [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+            {
+                if (Args.SubArgs.IsValidIndex(Cursor - 1) == false)
+                {
+                    LOG_WARNING(LogCli, "Encountered invalid command args [{}].", Args.GetCatRepresentation())
+                    return { };
+                }
+
+                if (GEngine == nullptr)
+                {
+                    return { };
+                }
+
+                if
+                (
+                    const LCliVariable* TargetVar { GEngine->CommandLineInterface.GetVariable(Args[Cursor - 1].Name) };
+                    TargetVar
+                )
+                {
+                    check( TargetVar->GetType() )
+                    return TargetVar->GetType()->Suggest(Args, Cursor, MaxSuggestions);
+                }
+
+                return { };
+            }
+        })
+        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {
             check( InArgs.GetArgCount() == 2 )
             if (LCliVariable* Var = GEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)
@@ -165,12 +206,12 @@ void Jafg::LEngine::Initialize()
             }
 
             return;
-        }))}).IsValid());
+        })}).IsValid());
 
         ensure(this->CommandLineInterface.RegisterCommand({"Get", "Get any variable.",
         LCommandParams{}
         .Token(LCliType::Type("Var", "The variable to get."))
-        .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {
             check( InArgs.GetArgCount() == 1 )
             if (const LCliVariable* Var = GEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)
@@ -185,7 +226,7 @@ void Jafg::LEngine::Initialize()
             }
 
             return;
-        }))}).IsValid());
+        })}).IsValid());
     }
 
     this->ObjectContext.SetHumanReadableName("Engine");

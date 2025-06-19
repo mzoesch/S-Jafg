@@ -3,6 +3,7 @@
 #include "Cli/CliPrimitives.h"
 #include "Cli/CliExtended.h"
 #include "Cli/CommandLineInterface.h"
+#include "Engine/Engine.h"
 #include "Stats/Stats.h"
 
 void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
@@ -240,7 +241,7 @@ void Jafg::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
     check( Cli )
 
     ensure(Cli->RegisterType({"Any", "Any value.", "",
-    LOnParseTypeDelegate::CreateStrongDelegate([](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         if (Args[*Cursor].Name.IsEmpty())
@@ -250,10 +251,16 @@ void Jafg::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
 
         ++*Cursor;
         return true;
-    })}).IsValid());
+    },
+    nullptr,
+    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    {
+        return { };
+    },
+    }).IsValid());
 
     ensure(Cli->RegisterType({"Var", "A variable.", "NULL",
-    LOnParseTypeDelegate::CreateStrongDelegate([](const LCommandArgs& Args, i32* Cursor) -> bool
+    [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
         if (Args[*Cursor].Name.IsEmpty())
@@ -261,9 +268,62 @@ void Jafg::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
             return false;
         }
 
-        ++*Cursor;
-        return true;
-    })}).IsValid());
+        if (GEngine == nullptr)
+        {
+            return false;
+        }
+
+        const LCliVariable* Var { GEngine->GetCommandLineInterface()->GetVariable(Args[*Cursor].Name) };
+
+        if (Var)
+        {
+            ++*Cursor;
+        }
+
+        return Var != nullptr;
+    },
+    nullptr,
+    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    {
+        const LCommandArgs* Target { nullptr };
+
+        if (Args.SubArgs.IsValidIndex(Cursor))
+        {
+            Target = &Args[Cursor];
+        }
+
+        if (GEngine == nullptr)
+        {
+            return { };
+        }
+
+        TArray<LString> Out;
+
+        for (const LCliVariable& Var : GEngine->GetCommandLineInterface()->GetVariables())
+        {
+            if (Out.GetSize() >= MaxSuggestions)
+            {
+                break;
+            }
+
+            if (Target)
+            {
+                if (Var.GetIdentifier().StartsWith(Target->Name))
+                {
+                    Out.Emplace(Var.GetIdentifier());
+                }
+            }
+            else
+            {
+                Out.Emplace(Var.GetIdentifier());
+            }
+
+            continue;
+        }
+
+        return Out;
+    },
+    }).IsValid());
 
     return;
 }
