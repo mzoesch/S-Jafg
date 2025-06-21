@@ -21,9 +21,20 @@ struct LCliTypeFactory<LCliQuery>;
 //#     "QueryOne", "QueryTwo", "QueryThree"
 //# });
 //#
-struct LCliQuery
+struct LCliQuery final
 {
     typedef TArray<LString> Input;
+};
+
+//#
+//# A string value that only allows exactly one value.
+//# This is useful for overloading when #LCliQuery is not enough as different queries require different
+//# command signatures.
+//# Use like this:
+//# LCliType::Type<LCliString>("MyString");
+//#
+struct LCliString final
+{
 };
 
 //#
@@ -37,7 +48,7 @@ template<> FORCEINLINE LCliType LCliType::Type<LCliVariable>() { return LCliType
 // Implementations
 
 template <>
-struct LCliTypeFactory<LCliQuery>
+struct LCliTypeFactory<LCliQuery> final
 {
     UTILITY_STRUCT(LCliTypeFactory)
 
@@ -46,13 +57,25 @@ struct LCliTypeFactory<LCliQuery>
     FORCEINLINE static LCliType Dispatch(LString&& InName, LString&& InHelp, const TArray<LString>& InArgs);
 };
 
-ENGINE_API void AddExtendedPrimitivesToCli(LCommandLineInterface* Cli);
+template <>
+struct LCliTypeFactory<LCliString> final
+{
+    UTILITY_STRUCT(LCliTypeFactory)
+
+    static constexpr bool bExists { true };
+
+    FORCEINLINE static LCliType Dispatch(const LString& InValue);
+};
 
 namespace Private
 {
 
+ENGINE_API void AddExtendedPrimitivesToCli(LCommandLineInterface* Cli);
+
 ENGINE_API bool CliQueryImpl(const LCommandArgs& Args, i32* Cursor, const TArray<LString>& Values);
 ENGINE_API auto CliQuerySuggestImpl(const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions, const TArray<LString>& Values) -> TArray<LString>;
+ENGINE_API bool CliStringImpl(const LCommandArgs& Args, i32* Cursor, const LString& Value);
+ENGINE_API auto CliStringSuggestImpl(const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions, const LString& Value) -> TArray<LString>;
 
 } /* ~Namespace Private */
 
@@ -75,6 +98,25 @@ FORCEINLINE LCliType LCliTypeFactory<LCliQuery>::Dispatch(LString&& InName, LStr
         [Values = InArgs](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
         {
             return Private::CliQuerySuggestImpl(Args, Cursor, MaxSuggestions, Values);
+        },
+    };
+}
+
+FORCEINLINE LCliType LCliTypeFactory<LCliString>::Dispatch(const LString& InValue)
+{
+    return LCliType
+    {
+        InValue,
+        {},
+        {},
+        [Value = InValue](const LCommandArgs& Args, i32* Cursor) -> bool
+        {
+            return Private::CliStringImpl(Args, Cursor, Value);
+        },
+        nullptr,
+        [Value = InValue](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+        {
+            return Private::CliStringSuggestImpl(Args, Cursor, MaxSuggestions, Value);
         },
     };
 }

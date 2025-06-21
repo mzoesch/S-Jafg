@@ -22,9 +22,9 @@ void Jafg::LLocalEgo::Initialize()
     this->bValid = true;
 
     LCommandLineInterface* Cli = GEngine->GetCommandLineInterface();
-    this->VariableHandle_UpdateFrustum = Cli->RegisterVariable({"uf", LCliType::Type("Bool"), "true"});
-    this->VariableHandle_VisualizeFrustum = Cli->RegisterVariable({"vf", LCliType::Type("Bool"), "false"});
-    this->VariableHandle_FrustumNearPlane = Cli->RegisterVariable({"fnp", LCliType::Type("Float"), "0.1f",
+    this->VariableHandle_UpdateFrustum = Cli->RegisterVariable({"UpdateFrustum", LCliType::Type("Bool"), "true"});
+    this->VariableHandle_VisualizeFrustum = Cli->RegisterVariable({"VisualizeFrustum", LCliType::Type("Bool"), "false"});
+    this->VariableHandle_FrustumNearPlane = Cli->RegisterVariable({"NearFrustumPlane", LCliType::Type("Float"), "0.1f",
     LOnVariableChangedDelegate::CreateStrong([](const LString& InValue) -> void
     {
         if
@@ -41,7 +41,7 @@ void Jafg::LLocalEgo::Initialize()
         }
         return;
     })});
-    this->VariableHandle_FrustumFarPlane = Cli->RegisterVariable({"ffp", LCliType::Type("Float"), "2000.0f",
+    this->VariableHandle_FrustumFarPlane = Cli->RegisterVariable({"FarFrustumPlane", LCliType::Type("Float"), "2000.0f",
     LOnVariableChangedDelegate::CreateStrong([](const LString& InValue) -> void
     {
         if
@@ -58,7 +58,7 @@ void Jafg::LLocalEgo::Initialize()
         }
         return;
     })});
-    this->VariableHandle_VerifyChunks = Cli->RegisterVariable({"vc", LCliType::Type("Bool"), "true"});
+    this->VariableHandle_VerifyChunks = Cli->RegisterVariable({"VerifyChunks", LCliType::Type("Bool"), "true"});
 
     this->Context.SetHumanReadableName("LocalEgo");
 

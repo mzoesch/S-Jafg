@@ -10,12 +10,10 @@ Jafg::LTexture2Handle::LTexture2Handle(const LTexture2& InTexture)
     return;
 }
 
-void Jafg::LTexture2Handle::Upload(const LTexture2& InTexture)
+void Jafg::LTexture2Handle::Upload(const LTexture2& InTexture, const bool bForceAlpha)
 {
     check( InTexture.GetWidth() > 0 && InTexture.GetHeight() > 0 )
     check( this->Handle.IsValid() == false )
-
-    check( InTexture.GetFormat() == ERawImageFormat::BGRA8 )
 
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -34,13 +32,30 @@ void Jafg::LTexture2Handle::Upload(const LTexture2& InTexture)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    glTexImage2D
-    (
-        GL_TEXTURE_2D, 0, GL_RGBA /* out */,
-        static_cast<GLsizei>(InTexture.GetFirstMipMap().GetWidth()),
-        static_cast<GLsizei>(InTexture.GetFirstMipMap().GetHeight()),
-        0, GL_RGBA /* in */, GL_UNSIGNED_BYTE, InTexture.GetFirstMipMap().GetBulk().GetRawBulk()
-    );
+    if (InTexture.GetFormat() == ERawImageFormat::BGRA8)
+    {
+        glTexImage2D
+        (
+            GL_TEXTURE_2D, 0, GL_RGBA /* out */,
+            static_cast<GLsizei>(InTexture.GetFirstMipMap().GetWidth()),
+            static_cast<GLsizei>(InTexture.GetFirstMipMap().GetHeight()),
+            0, GL_RGBA /* in */, GL_UNSIGNED_BYTE, InTexture.GetFirstMipMap().GetBulk().GetRawBulk()
+        );
+    }
+    else if (InTexture.GetFormat() == ERawImageFormat::BGR8)
+    {
+        glTexImage2D
+        (
+            GL_TEXTURE_2D, 0, (bForceAlpha ? GL_RGBA : GL_RGB) /* out */,
+            static_cast<GLsizei>(InTexture.GetFirstMipMap().GetWidth()),
+            static_cast<GLsizei>(InTexture.GetFirstMipMap().GetHeight()),
+            0, GL_RGB /* in */, GL_UNSIGNED_BYTE, InTexture.GetFirstMipMap().GetBulk().GetRawBulk()
+        );
+    }
+    else
+    {
+        panicMsgf("Unsupported image format [{}].", LexToString(InTexture.GetFormat()))
+    }
 
     // glGenerateMipmap(GL_TEXTURE_2D);
 

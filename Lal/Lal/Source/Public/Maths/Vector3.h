@@ -77,7 +77,8 @@ struct TVector3
     FORCEINLINE constexpr explicit TVector3(const T InXYZ[3])                      noexcept : X(InXYZ[0]), Y(InXYZ[1]), Z(InXYZ[2]) { }
     FORCEINLINE constexpr          TVector3(const TVector3<T>& InVec)              noexcept : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
     FORCEINLINE constexpr          TVector3(TVector3<T>&& InVec)                   noexcept : X(InVec.X), Y(InVec.Y), Z(InVec.Z) { }
-    FORCEINLINE constexpr          TVector3(std::initializer_list<T> InList)       noexcept : X(InList.begin()[0]), Y(InList.begin()[1]), Z(InList.begin()[2]) { }
+
+    constexpr          TVector3(std::initializer_list<T> InList)       noexcept;
 
     FORCEINLINE constexpr auto GetData()       noexcept ->       T* { return &this->X; }
     FORCEINLINE constexpr auto GetData() const noexcept -> const T* { return &this->X; }
@@ -167,6 +168,29 @@ struct TVector3
         return LString::SprintF("{:.9f} {:.9f} {:.9f}", this->X, this->Y, this->Z);
     }
 };
+
+template<typename T>
+FORCEINLINE constexpr TVector3<T>::TVector3(std::initializer_list<T> InList) noexcept
+{
+    if (InList.size() == 3)
+    {
+        this->X = InList.begin()[0];
+        this->Y = InList.begin()[1];
+        this->Z = InList.begin()[2];
+    }
+    else if (InList.size() == 1)
+    {
+        this->X = InList.begin()[0];
+        this->Y = InList.begin()[0];
+        this->Z = InList.begin()[0];
+    }
+    else
+    {
+        panicMsgf("Invalid std::initializer_list<T> size for TVector3<T> constructor. Expected 1 or 3, got [{}].", InList.size())
+    }
+
+    return;
+}
 
 template <typename T>
 FORCEINLINE constexpr LuBigSizeTy TVector3<T>::GetDataByteSize() const noexcept

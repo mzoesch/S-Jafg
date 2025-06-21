@@ -10,7 +10,7 @@ void Jafg::JTextureSubsystem::PurgeTextures()
     return;
 }
 
-std::shared_ptr<Jafg::LTexture2> Jafg::JTextureSubsystem::GetTexture(const LPath& InPath) const
+std::shared_ptr<Jafg::LTexture2> Jafg::JTextureSubsystem::GetTexture(const LPath& InPath, const ERawImageFormat::Type InFormat) const
 {
     check( InPath.IsEmpty() == false )
 
@@ -21,7 +21,7 @@ std::shared_ptr<Jafg::LTexture2> Jafg::JTextureSubsystem::GetTexture(const LPath
     }
 
     LTexture2 Tex;
-    if (Tex.LoadFromDisk(InPath) == false)
+    if (Tex.LoadFromDisk(InPath, InFormat) == false)
     {
         LOG_ERROR(LogTextureSubsystem, "Cannot create shared pointer for texture [{}].", InPath)
         return { };
@@ -31,10 +31,11 @@ std::shared_ptr<Jafg::LTexture2> Jafg::JTextureSubsystem::GetTexture(const LPath
 
     this->Textures[std::move(Path)] = TexPtr;
 
+    check( TexPtr->GetFormat() == InFormat )
     return TexPtr;
 }
 
-std::shared_ptr<Jafg::LTexture2> Jafg::JTextureSubsystem::GetTexture(const LEnginePath& InPath) const
+std::shared_ptr<Jafg::LTexture2> Jafg::JTextureSubsystem::GetTexture(const LEnginePath& InPath, const ERawImageFormat::Type InFormat) const
 {
-    return this->GetTexture(InPath.ResolveAbsolutePath(*GetDefault<JUserPreferences>()));
+    return this->GetTexture(InPath.ResolveAbsolutePath(*GetDefault<JUserPreferences>()), InFormat);
 }

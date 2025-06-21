@@ -34,7 +34,7 @@ public:
     //#
     //# Uploads the texture to the graphics processing unit.
     //#
-    ENGINE_API void Upload(const LTexture2& InTexture);
+    ENGINE_API void Upload(const LTexture2& InTexture, const bool bForceAlpha = false);
 
     //#
     //# Shreds the texture from the graphics processing unit.

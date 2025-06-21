@@ -35,7 +35,7 @@ void Jafg::JChunkValidationSubsystem::FixedTick(const f32 EngineDeltaTime, const
     Super::FixedTick(EngineDeltaTime, FixedDeltaTime);
 
     bool bVerifyChunks = true;
-    this->GetEngine()->GetCommandLineInterface()->GetVariableChecked("vc")->GetValue<bool>(&bVerifyChunks);
+    this->GetEngine()->GetCommandLineInterface()->GetVariableChecked("VerifyChunks")->GetValue<bool>(&bVerifyChunks);
     if (bVerifyChunks == false)
     {
         return;

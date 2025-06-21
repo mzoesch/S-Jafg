@@ -70,22 +70,20 @@ void Jafg::LChunkGeneratorWorker::MakeChunkActive(AChunk* Target)
 
     if (Target->GetCurrentStateDangerous() < EChunkState::Shaped)
     {
-        Target->SetState(EChunkState::Shaped);
+        Target->SetState(EChunkState::Shaped, false, 0.5f, this->GetStoppedPointer(), nullptr);
     }
 
     if (Target->GetCurrentStateDangerous() < EChunkState::SurfaceReplaced)
     {
-        Target->SetState(EChunkState::SurfaceReplaced);
+        Target->SetState(EChunkState::SurfaceReplaced, false, 0.5f, this->GetStoppedPointer(), nullptr);
     }
 
     if (Target->GetCurrentStateDangerous() < EChunkState::Active)
     {
-        Target->SetState(EChunkState::Active, true);
+        Target->SetState(EChunkState::Active, true, 0.5f, this->GetStoppedPointer(), nullptr);
     }
 
     return;
-
-#undef GOTO_STATE
 }
 
 Jafg::JChunkGeneratorSubsystem::JChunkGeneratorSubsystem(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)

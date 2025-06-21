@@ -6,7 +6,7 @@
 #include "Engine/Engine.h"
 #include "Stats/Stats.h"
 
-void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
+void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -34,8 +34,13 @@ void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
             )
         };
 
-        ++*Cursor;
-        return ec == std::errc{} && ptr == String.GetEnd();
+        if (ec == std::errc{} && ptr == String.GetEnd())
+        {
+            ++*Cursor;
+            return true;
+        }
+
+        return false;
     },
     nullptr,
     [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
@@ -66,8 +71,13 @@ void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
             )
         };
 
-        ++*Cursor;
-        return ec == std::errc{} && ptr == String.GetEnd();
+        if (ec == std::errc{} && ptr == String.GetEnd())
+        {
+            ++*Cursor;
+            return true;
+        }
+
+        return false;
     },
     nullptr,
     [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
@@ -98,8 +108,13 @@ void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
             )
         };
 
-        ++*Cursor;
-        return ec == std::errc{} && ptr == String.GetEnd() && (Value >= 0 && Value <= 255);
+        if (ec == std::errc{} && ptr == String.GetEnd() && (Value >= 0 && Value <= 255))
+        {
+            ++*Cursor;
+            return true;
+        }
+
+        return false;
     },
     nullptr,
     [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
@@ -140,8 +155,13 @@ void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
             )
         };
 
-        ++*Cursor;
-        return ec == std::errc{} && ptr == String.GetEnd();
+        if (ec == std::errc{} && ptr == String.GetEnd())
+        {
+            ++*Cursor;
+            return true;
+        }
+
+        return false;
     },
     nullptr,
     [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
@@ -234,7 +254,7 @@ void Jafg::AddPrimitivesToCli(LCommandLineInterface* Cli)
     return;
 }
 
-void Jafg::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
+void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -379,4 +399,41 @@ Jafg::TArray<Jafg::LString> Jafg::Private::CliQuerySuggestImpl(const LCommandArg
     }
 
     return Out;
+}
+
+bool Jafg::Private::CliStringImpl(const LCommandArgs& Args, i32* Cursor, const LString& Value)
+{
+    checkSlow( *Cursor < Args.GetArgCount() )
+    if (Args[*Cursor].Name.IsEmpty())
+    {
+        return false;
+    }
+
+    if (Args[*Cursor].Name == Value)
+    {
+        ++*Cursor;
+        return true;
+    }
+
+    return false;
+}
+
+Jafg::TArray<Jafg::LString> Jafg::Private::CliStringSuggestImpl(const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions, const LString& Value)
+{
+    if (MaxSuggestions > 0)
+    {
+        if (Args.SubArgs.IsValidIndex(Cursor))
+        {
+            if (Value.StartsWith(Args[Cursor].Name))
+            {
+                return { Value };
+            }
+        }
+        else
+        {
+            return { Value };
+        }
+    }
+
+    return { };
 }

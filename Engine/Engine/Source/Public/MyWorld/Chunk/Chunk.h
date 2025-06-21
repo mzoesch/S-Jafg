@@ -111,9 +111,18 @@ public:
     FORCEINLINE auto GetChunkRendererComponent() const -> const LChunkRendererComponent* { return reinterpret_cast<LChunkRendererComponent*>(this->GetRendererComponent()); }
     // ~AActor implementation
 
-    void SetState(const EChunkState::Type NewChunkState, const bool bKeepHunt = false);
+    //#
+    //# Set the state of this chunk.
+    //# @param NewChunkState The new state to set.
+    //# @param bKeepHunt     If true, the chunk will be locked for other state changes and the function returns so
+    //#                      that chunk state logic can be laid of (e.g., to another thread).
+    //# @param WaitTime      The time to wait for checking the atomic boolean if bAbort is set.
+    //# @param bAbort        If set, the chunk state change will be aborted if the atomic boolean is set to true.
+    //# @param bOutChanged   If set, the function will return true if the state was changed, false otherwise.
+    //#
+    void SetState(const EChunkState::Type NewChunkState, const bool bKeepHunt = false, const f32 WaitTime = 0.5f, const std::atomic_bool* bAbort = nullptr, bool* bOutChanged = nullptr);
     //# Only on aggregating thread where the chunk is manipulated.
-    EChunkState::Type GetLockedChunkState() const;
+    EChunkState::Type GetLockedState() const;
     //# Dangerous function. Use with care.
     EChunkState::Type GetCurrentStateDangerous() const { return this->State; }
     EChunkState::Type GetCurrentHuntedStateDangerous() const { return this->HuntedState; }
@@ -149,7 +158,7 @@ private:
     //#
     std::atomic<EChunkState::Type> HuntedState { EChunkState::Invalid };
     // For the #State and the #HuntedState variables.
-    std::mutex ChunkStateMutex;
+    std::timed_mutex ChunkStateMutex;
 
     void Spawn();
     void Shape();
@@ -240,7 +249,7 @@ private:
     AChunk* NDown  { nullptr };
 };
 
-FORCEINLINE EChunkState::Type AChunk::GetLockedChunkState() const
+FORCEINLINE EChunkState::Type AChunk::GetLockedState() const
 {
     checkCode
     (

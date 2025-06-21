@@ -86,11 +86,61 @@ void Jafg::AChunk::EndLife()
     return;
 }
 
-void Jafg::AChunk::SetState(const EChunkState::Type NewChunkState, const bool bKeepHunt /* = false */)
+void Jafg::AChunk::SetState
+(
+    const EChunkState::Type NewChunkState,
+    const bool bKeepHunt, /* = false */
+    const f32 WaitTime, /* = 0.5f */
+    const std::atomic_bool* bAbort, /* = nullptr */
+    bool* bOutChanged /* = nullptr */
+)
 {
     STAT_CYCLE_FUNCTION()
 
-    this->ChunkStateMutex.lock();
+    if (bAbort)
+    {
+        bool bLocked { false };
+        while (bAbort->load() == false)
+        {
+            if (this->ChunkStateMutex.try_lock_for(std::chrono::nanoseconds(static_cast<i64>(WaitTime * JAFG_S2NS_F))))
+            {
+                if (bOutChanged)
+                {
+                    *bOutChanged = true;
+                }
+
+                bLocked = true;
+                break;
+            }
+
+            continue;
+        }
+
+        if (bLocked == false)
+        {
+            check( bAbort->load() )
+
+            if (bOutChanged)
+            {
+                *bOutChanged = false;
+            }
+            else
+            {
+                LOG_VERBOSE
+                (
+                    LogChunkMisc,
+                    "Failed to update chunk state [{}] to [{}] of chunk [{}].",
+                    LexToString(this->GetCurrentStateDangerous()), LexToString(NewChunkState), this->GetChunkKey().ToString()
+                )
+            }
+
+            return;
+        }
+    }
+    else
+    {
+        this->ChunkStateMutex.lock();
+    }
 
     if (this->State >= NewChunkState)
     {

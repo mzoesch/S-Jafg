@@ -57,8 +57,8 @@ void Jafg::LEngine::Initialize()
 {
     STAT_CYCLE_FUNCTION()
 
-    AddPrimitivesToCli(this->GetCommandLineInterface());
-    AddExtendedPrimitivesToCli(this->GetCommandLineInterface());
+    Private::AddPrimitivesToCli(this->GetCommandLineInterface());
+    Private::AddExtendedPrimitivesToCli(this->GetCommandLineInterface());
 
     /* Engine stuff. */
     {

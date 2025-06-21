@@ -210,6 +210,7 @@ public:
     FORCEINLINE auto GetTickableObjects() const -> const TArray<LTickableObject*>& { return this->TickableObjects; }
     FORCEINLINE auto GetActors() const -> const TArray<AActor*>& { return this->Actors; }
     FORCEINLINE bool IsSkyboxValid() const noexcept { return this->Skybox.IsValid(); }
+    FORCEINLINE auto GetSkybox() noexcept -> LSkybox& { return this->Skybox.GetValue(); }
     FORCEINLINE auto GetSkybox() const noexcept -> const LSkybox& { return this->Skybox.GetValue(); }
 
     ENGINE_API f32 GetRealTimeSecondsSinceWorldLaunch() const;

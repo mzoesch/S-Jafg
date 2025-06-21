@@ -566,7 +566,7 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
         this->OptionalHolder = GetDefault<JTextureSubsystem>()->GetTexture
         ({
             EEnginePaths::Interface, "NoImage.png"
-        });
+        }, ERawImageFormat::BGR8);
     }
 
     WRegion* Thumbnail;
@@ -590,7 +590,7 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
                 : GetDefault<JTextureSubsystem>()->GetTexture
                     ({
                         EEnginePaths::Interface, "NoImage.png"
-                    }).get()
+                    }, ERawImageFormat::BGR8).get()
             )
         +
         NewNode(WVRegion)
@@ -930,7 +930,7 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
         }
 
         LTexture2 Preview;
-        Preview.LoadFromDisk(AsPath / "Thumbnail.png");
+        Preview.LoadFromDisk(AsPath / "Thumbnail.png", ERawImageFormat::BGR8);
 
         this->FetchedSaves.Emplace(std::move(AsPath), false, std::move(*DisplayName), "A description of this save.", std::move(Preview));
 

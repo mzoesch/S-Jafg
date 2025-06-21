@@ -125,15 +125,14 @@ void Jafg::WTextBlock::Construct()
 
     glGenBuffers(1, &this->Vbo);
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(f32) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
 
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), nullptr);
     glEnableVertexAttribArray(0);
 
-#if WITH_DEBUG_ZERO_UNBOUND
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
+
+    glDisable(GL_BLEND);
 
     return;
 }
@@ -174,7 +173,6 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
     ::GetFontShaderProgram().SetMatrixUniform("Projection", Maths::MakeOrthographicProjectionMatrix(WindowDimensions));
     ::GetFontShaderProgram().SetFloatUniform("OrthoZDepth", Context.GetFrameOrthoZLayerDepth());
     glBindVertexArray(this->Vao);
-    glActiveTexture(GL_TEXTURE0);
 
     float X = Offset.X + this->Padding.Left;
     for (const u8 Rune : this->Content)

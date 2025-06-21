@@ -85,6 +85,8 @@ ENGINE_API LString LexToString(const ECommandReturnCode::Type& InType);
 template <typename T>
 struct LCommandArgsTypeRet final
 {
+    UTILITY_STRUCT(LCommandArgsTypeRet)
+
     typedef T Type;
 };
 
@@ -107,8 +109,23 @@ struct LCommandArgs
 
     FORCEINLINE const LCommandArgs& operator[](const i32 Index) const { return this->SubArgs[Index]; }
 
+    //#
+    //# Get the argument of the command to the given LCommandArgsTypeRet<TField>::Type C++ type.
+    //# This method is typesafe.
+    //#
     template <typename TField>
     FORCEINLINE typename LCommandArgsTypeRet<TField>::Type GetAs() const;
+
+    //#
+    //# Same as the above #GetAs method but allows for more advanced context checking by allowing any number
+    //# of arguments. Some types might resolve to differently depending on which context they are used.
+    //#
+    template <typename TField, typename ... TArgs> requires
+    (
+           sizeof ... (TArgs) > 0
+        && std::is_invocable_r_v<typename LCommandArgsTypeRet<TField>::Type, typename LCommandArgsTypeRet<TField>::Dispatcher, const LCommandArgs&, TArgs...>
+    )
+    FORCEINLINE typename LCommandArgsTypeRet<TField>::Type GetAs(TArgs&&... Args) const;
 
     LString Name;
     TArray<LCommandArgs> SubArgs;
@@ -239,6 +256,16 @@ FORCEINLINE typename LCommandArgsTypeRet<TField>::Type LCommandArgs::GetAs() con
     TRet Field;
     Deserialize<TRet>(&Field, this->GetCatRepresentation());
     return Field;
+}
+
+template<typename TField, typename ... TArgs> requires
+(
+       sizeof...(TArgs) > 0
+    && std::is_invocable_r_v<typename LCommandArgsTypeRet<TField>::Type, typename LCommandArgsTypeRet<TField>::Dispatcher, const LCommandArgs&, TArgs...>
+)
+FORCEINLINE typename LCommandArgsTypeRet<TField>::Type LCommandArgs::GetAs(TArgs&&... Args) const
+{
+    return LCommandArgsTypeRet<TField>::Dispatch(*this, std::forward<TArgs>(Args)...);
 }
 
 } /* ~Namespace Jafg */

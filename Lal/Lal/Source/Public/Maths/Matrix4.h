@@ -111,6 +111,8 @@ struct TMatrix4 final
     /** Translate this matrix inline by the given translation vector. */
     FORCEINLINE void InlineTranslate(const TVector3<T>& InTranslation);
 
+    FORCEINLINE void InlineScale(const TVector3<T>& InScale) noexcept;
+
     FORCEINLINE Self GetInverse() const;
 
     LString ToString() const;
@@ -541,6 +543,20 @@ FORCEINLINE void TMatrix4<T>::InlineTranslate(const TVector3<T>& InTranslation)
     this->Matrix[3][0] += InTranslation.X;
     this->Matrix[3][1] += InTranslation.Y;
     this->Matrix[3][2] += InTranslation.Z;
+
+    return;
+}
+
+template<typename T>
+FORCEINLINE void TMatrix4<T>::InlineScale(const TVector3<T>& InScale) noexcept
+{
+    TMatrix4<T> ScaleMatrix { ZeroInit };
+    ScaleMatrix.Matrix[0][0] = InScale.X;
+    ScaleMatrix.Matrix[1][1] = InScale.Y;
+    ScaleMatrix.Matrix[2][2] = InScale.Z;
+    ScaleMatrix.Matrix[3][3] = 1.0f;
+
+    *this *= ScaleMatrix;
 
     return;
 }

@@ -83,7 +83,7 @@ bool Jafg::LTexture2::CreateEmpty(const u32 InWidth, const u32 InHeight, const E
     return true;
 }
 
-bool Jafg::LTexture2::LoadFromDisk(const LPath& Path)
+bool Jafg::LTexture2::LoadFromDisk(const LPath& Path, const ERawImageFormat::Type InFormat)
 {
     if (Paths::DoesFileExist(Path) == false)
     {
@@ -100,7 +100,7 @@ bool Jafg::LTexture2::LoadFromDisk(const LPath& Path)
     i32 NrChannels = 0;
 
     ::stbi_set_flip_vertically_on_load(false);
-    u8* Data = ::stbi_load_from_memory(Bin.GetData(), static_cast<int>(Bin.GetSize()), &Width, &Height, &NrChannels, 4);
+    u8* Data = ::stbi_load_from_memory(Bin.GetData(), static_cast<int>(Bin.GetSize()), &Width, &Height, &NrChannels, ERawImageFormat::GetChannelsPerPixel(InFormat));
 
     if (stbi_failure_reason())
     {
@@ -109,13 +109,24 @@ bool Jafg::LTexture2::LoadFromDisk(const LPath& Path)
         return false;
     }
 
+    if (NrChannels != ERawImageFormat::GetChannelsPerPixel(InFormat))
+    {
+        LOG_VERBOSE
+        (
+            LogRhi,
+            "Texture2 [{}] was loaded from disk with [{}] channels to memory with [{}] channels.",
+            Path,
+            NrChannels,
+            ERawImageFormat::GetChannelsPerPixel(InFormat)
+        )
+    }
+
     jassert( Data )
-    jassert( NrChannels == 4 )
     jassert( Width > 0 && Height > 0 )
 
     this->MipMap.Size.X = Width;
     this->MipMap.Size.Y = Height;
-    this->MipMap.Format = ERawImageFormat::BGRA8;
+    this->MipMap.Format = InFormat;
     this->MipMap.LoadFromBuffer(Data, 0);
 
     ::stbi_image_free(Data);
@@ -123,7 +134,7 @@ bool Jafg::LTexture2::LoadFromDisk(const LPath& Path)
     return true;
 }
 
-bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const JUserPreferences& UserPreferences)
+bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const ERawImageFormat::Type InFormat)
 {
     LOG_TRACE(LogSystem, "Loading texture2 [{}].", Path.GetRelativeUnresolvedPath())
 
@@ -139,17 +150,34 @@ bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const JUserPreferenc
     Finder::ReadFileAsBinary(Path, &Bulk, &BulkSize);
 
     ::stbi_set_flip_vertically_on_load(false);
-    u8* Data = ::stbi_load_from_memory(Bulk, static_cast<int>(BulkSize), &Width, &Height, &NrChannels, 4);
+    u8* Data = ::stbi_load_from_memory(Bulk, static_cast<int>(BulkSize), &Width, &Height, &NrChannels, ERawImageFormat::GetChannelsPerPixel(InFormat));
+
+    if (stbi_failure_reason())
+    {
+        LOG_ERROR(LogRhi, "Failed to load texture [{}] from disk. Reason: [{}].", Path.GetRelativeUnresolvedPath(), stbi_failure_reason())
+        check( Data == nullptr )
+        return false;
+    }
+
+    if (NrChannels != ERawImageFormat::GetChannelsPerPixel(InFormat))
+    {
+        LOG_VERBOSE
+        (
+            LogRhi,
+            "Texture2 [{}] was loaded from disk with [{}] channels to memory with [{}] channels.",
+            Path.GetRelativeUnresolvedPath(),
+            NrChannels,
+            ERawImageFormat::GetChannelsPerPixel(InFormat)
+        )
+    }
 
     jassert( Data )
-    jassert( NrChannels == 4 )
     jassert( Width > 0 && Height > 0 )
-    jassert( Width == 16 ) // Currently only supporting 16x16 textures. But in the future we ofc will support more.
-    jassert( Height == 16 )
 
     this->MipMap.Size.X = Width;
     this->MipMap.Size.Y = Height;
-    this->MipMap.Format = ERawImageFormat::BGRA8;
+    this->MipMap.Format = InFormat;
+
     this->MipMap.LoadFromBuffer(Data, 0);
 
     ::stbi_image_free(Data);

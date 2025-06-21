@@ -32,8 +32,8 @@ public:
     inline ~LTexture2() { this->Free(); }
 
     ENGINE_API bool CreateEmpty(const u32 InWidth, const u32 InHeight, const ERawImageFormat::Type InFormat);
-    ENGINE_API bool LoadFromDisk(const LPath& Path);
-    ENGINE_API bool LoadFromDisk(const LEnginePath& Path, const JUserPreferences& UserPreferences);
+    ENGINE_API bool LoadFromDisk(const LPath& Path, const ERawImageFormat::Type InFormat);
+    ENGINE_API bool LoadFromDisk(const LEnginePath& Path, const ERawImageFormat::Type InFormat);
     ENGINE_API void Free();
 
     //#

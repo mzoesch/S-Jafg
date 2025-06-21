@@ -16,6 +16,11 @@ template<> FORCEINLINE LCliType LCliType::Type<f32>     () { return LCliType::Ty
 template<> FORCEINLINE LCliType LCliType::Type<LString> () { return LCliType::Type("String");   }
 template<> FORCEINLINE LCliType LCliType::Type<bool>    () { return LCliType::Type("Bool");     }
 
+namespace Private
+{
+
 ENGINE_API void AddPrimitivesToCli(LCommandLineInterface* Cli);
+
+} /* ~Namespace Private */
 
 } /* ~Namespace Jafg */

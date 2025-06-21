@@ -10,19 +10,16 @@ Jafg::LCliObject* Jafg::LCliObject::GetRegisteredObjectByUuid() const
         return nullptr;
     }
 
+    check( GEngine )
     return GEngine->GetCommandLineInterface()->GetObjectAsserted(this->Uuid);
 }
 
 void Jafg::LCliObject::ExpandToUuid()
 {
     check( this->Uuid == LCliObject::NoUuid )
-    const LCliObject* Obj { GEngine->GetCommandLineInterface()->GetObject(this->Identifier) };
+    check( GEngine )
 
-    if (Obj == nullptr)
-    {
-        panicMsgf("Failed to expand object to Uuid from identifier [{}].", this->Identifier)
-        return;
-    }
+    const LCliObject* Obj { GEngine->GetCommandLineInterface()->GetObjectAsserted(this->Identifier) };
 
     this->Uuid = Obj->Uuid;
     this->Identifier.Empty();

@@ -60,7 +60,8 @@ public:
     //#
     virtual void Join();
 
-    FORCEINLINE bool IsStopped() const { return this->bStopped; }
+    FORCEINLINE bool IsStopped() const noexcept { return this->bStopped; }
+    FORCEINLINE const std::atomic_bool* GetStoppedPointer() const noexcept { return &this->bStopped; }
     FORCEINLINE LString GetHumanReadableName() const { return this->HumanReadableName; }
 
 protected:

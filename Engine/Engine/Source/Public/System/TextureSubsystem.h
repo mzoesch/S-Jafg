@@ -6,6 +6,7 @@
 #include "Subsystems/EngineSubsystem.h"
 #include "System/Path.h"
 #include "TextureSubsystem.generated.h"
+#include "Rhi/TextureCore.h"
 
 namespace Jafg
 {
@@ -29,8 +30,8 @@ public:
 
     void PurgeTextures();
 
-    std::shared_ptr<LTexture2> GetTexture(const LPath& InPath) const;
-    std::shared_ptr<LTexture2> GetTexture(const LEnginePath& InPath) const;
+    std::shared_ptr<LTexture2> GetTexture(const LPath& InPath, const ERawImageFormat::Type InFormat) const;
+    std::shared_ptr<LTexture2> GetTexture(const LEnginePath& InPath, const ERawImageFormat::Type InFormat) const;
 
     FORCEINLINE i32  GetLoadedTextureCount() const { return this->Textures.size(); }
     FORCEINLINE auto GetTextures() const -> const std::map<std::string, std::shared_ptr<LTexture2>>& { return this->Textures; }

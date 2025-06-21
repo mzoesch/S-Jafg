@@ -29,6 +29,7 @@ void Jafg::RendererStateMachine::PrepareForPerspectivePainting()
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
     glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
 
     return;
 }
@@ -42,6 +43,8 @@ void Jafg::RendererStateMachine::PrepareForOrthographicPainting()
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
     glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     return;
 }

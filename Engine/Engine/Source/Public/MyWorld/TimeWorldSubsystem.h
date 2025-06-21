@@ -3,12 +3,17 @@
 #pragma once
 
 #include "Subsystems/TickableWorldSubsystem.h"
+#include "Cli/CliPrimitives.h"
+#include "Cli/CliExtended.h"
 #include "Cli/CliHandles.h"
 #include "Cli/CommandLineInterface.h"
 #include "TimeWorldSubsystem.generated.h"
 
 namespace Jafg
 {
+
+class JTimeWorldSubsystem;
+struct LCliDayTime;
 
 //#
 //# The daytime of a MyWorld.
@@ -18,14 +23,14 @@ namespace Jafg
 //# Generally speaking, the time of the day is as followed defined (for worlds that use the default time system - this
 //# logic will not uphold for all worlds):
 //# - Starts at     00:00:00:000    with a value of:              0.
-//# - Ends   at     23:59:59:999    with a value of:    8,64e+7 - 1.
+//# - Ends   at     23:59:59:999    with a value of:    8.64e+7 - 1.
 //# Therefore some common values are:
 //# - 00:00:00:000  =>  0
 //# - 06:00:00:000  =>  2,16e+7
 //# - 12:00:00:000  =>  4,32e+7
 //# - 18:00:00:000  =>  6,48e+7
-//# - 23:59:59:999  =>  8,64e+7 - 1
-//#k
+//# - 23:59:59:999  =>  8.64e+7 - 1
+//#
 typedef u64 LDayTime;
 
 //#
@@ -75,6 +80,14 @@ struct LCommandArgsTypeRet<EDayTimeAddBehavior::Type> final
 };
 template <>
 FORCEINLINE LCommandArgsTypeRet<EDayTimeAddBehavior::Type>::Type LCommandArgs::GetAs<EDayTimeAddBehavior::Type>() const;
+template <>
+FORCEINLINE LCliType LCliType::Type<EDayTimeAddBehavior::Type>()
+{
+    return LCliType::Type<LCliQuery>("<Mutates>", LString{}, LCliQuery::Input
+    {
+        "Clamp", "Add", "Next"
+    });
+}
 
 //#
 //# Named day times for worlds that follow a daylight cycle.
@@ -95,6 +108,22 @@ enum Type
 };
 
 } /* ~Namespace ENamedDayTime */
+ENamedDayTime::Type StringToLex(const LString& InString);
+
+struct LCliDayTime final
+{
+    UTILITY_STRUCT(LCliDayTime)
+};
+template <>
+struct LCommandArgsTypeRet<LCliDayTime> final
+{
+    UTILITY_STRUCT(LCommandArgsTypeRet)
+    typedef LDayTime Type;
+
+    ENGINE_API static Type Dispatch(const LCommandArgs& Self, const JTimeWorldSubsystem* InSubsystem);
+    typedef decltype(&Dispatch) Dispatcher;
+};
+template <> FORCEINLINE LCliType LCliType::Type<LCliDayTime>() { return LCliType::Type("DayTime"); }
 
 //#
 //# Controls various time related stuff for worlds.
@@ -118,6 +147,8 @@ protected:
     virtual void TearDown() override;
     // ~JTickableWorldSubsystem implementation
 
+public:
+
     //# The minimal time in this world.
     FORCEINLINE LDayTime GetMinDayTime() const noexcept { return this->MinDayTime; }
     FORCEINLINE void SetMinDayTime(const LDayTime InMinTime) noexcept { this->MinDayTime = InMinTime; }
@@ -129,24 +160,43 @@ protected:
     ENGINE_API void SetDayTime(const LDayTime InDayTime, const EDayTimeAddBehavior::Type InAddType = EDayTimeAddBehavior::Clamp);
     ENGINE_API void SetDayCycle(const LDayCycle InDayCycle);
 
+    ENGINE_API LDayTime GetDayTimeFromNamedTimes(const ENamedDayTime::Type InNamedDayTime) const;
+
     FORCEINLINE LDayTime  GetDayTime() const noexcept { return this->Daytime; }
     FORCEINLINE LDayCycle GetDayCycle() const noexcept { return this->DayCycle; }
 
     FORCEINLINE LDayTime GetDayTimeSinceStart() const noexcept;
     FORCEINLINE u64      GetDayTimeSinceStartInSeconds() const noexcept;
+    FORCEINLINE f64      GetPastDayTimeInPercentage() const noexcept;
+    FORCEINLINE f64      GetPastDayTimeInPercentage_CurrentDayOnly() const noexcept;
+
+    //#
+    //# Get the time as it would be on Earth (meaning from 00:00 to 23:59).
+    //# The output will be the same PERCENTAGE of the earth-day compared to the world-day.
+    //# If the world-day is only 12 milliseconds long then this would return at the time of 00:00:00:006
+    //# 12:00:00:000 o'clock.
+    //#
+    ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth() const;
 
 private:
 
-    void DefaultOnly_RegisterCommands();
-    void DefaultOnly_UnregisterCommands();
+    void DefaultOnly_RegisterCliObjects();
+    void DefaultOnly_UnregisterCliObjects();
 
     CLASS_FIELD(DefaultOnly)
     LCliCommandHandle CommandHandle_Time;
 
-    LDayTime Daytime { 0 };
-    LDayTime MinDayTime { 0 };
-    LDayTime MaxDayTime { static_cast<LDayTime>(24.0 * JAFG_H2MS_D) };
+    CLASS_FIELD(DefaultOnly)
+    LCliTypeHandle TypeHandle_DayTime;
 
+    //# The actual daytime.
+    LDayTime Daytime { 0 };
+
+    //# Inclusive daytime.
+    LDayTime MinDayTime { 0 };
+    //# Exclusive daytime.
+    LDayTime MaxDayTime { static_cast<LDayTime>(24.0 * JAFG_H2MS_D) };
+    //# How many daylight cycles have passed.
     LDayCycle DayCycle { 0 };
 };
 
@@ -178,6 +228,16 @@ FORCEINLINE LDayTime JTimeWorldSubsystem::GetDayTimeSinceStart() const noexcept
 FORCEINLINE u64 JTimeWorldSubsystem::GetDayTimeSinceStartInSeconds() const noexcept
 {
     return static_cast<u64>(static_cast<f64>(this->GetDayTimeSinceStart()) * JAFG_MS2S_D);
+}
+
+FORCEINLINE f64 JTimeWorldSubsystem::GetPastDayTimeInPercentage() const noexcept
+{
+    return static_cast<f64>(this->GetDayTimeSinceStart()) / static_cast<f64>(this->MaxDayTime - this->MinDayTime);
+}
+
+FORCEINLINE f64 JTimeWorldSubsystem::GetPastDayTimeInPercentage_CurrentDayOnly() const noexcept
+{
+    return static_cast<f64>(this->Daytime) / static_cast<f64>(this->MaxDayTime - this->MinDayTime);
 }
 
 } /* ~Namespace Jafg */

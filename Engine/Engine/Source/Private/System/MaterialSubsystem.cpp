@@ -58,7 +58,7 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
             Path.AddExtension(".png");
 
             LTexture2 Texture;
-            if (Texture.LoadFromDisk(Path, *GetDefault<JUserPreferences>()) == false)
+            if (Texture.LoadFromDisk(Path, ERawImageFormat::BGRA8) == false)
             {
                 panicMsgf
                 (
@@ -119,7 +119,7 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
             Path.AddExtension(".png");
 
             LTexture2 Texture;
-            if (Texture.LoadFromDisk(Path, *GetDefault<JUserPreferences>()) == false)
+            if (Texture.LoadFromDisk(Path, ERawImageFormat::BGRA8) == false)
             {
                 panicMsgf
                 (
