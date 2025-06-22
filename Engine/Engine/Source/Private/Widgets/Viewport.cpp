@@ -8,6 +8,7 @@
 #include "Rhi/RendererStateMachine.h"
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
+#include "Rhi/RhiVendorInclude.h"
 
 void Jafg::LViewport::ClearInvalidWidgets()
 {
@@ -299,14 +300,20 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
 
 void Jafg::LViewport::OnClear()
 {
-    if (this->bChangedBackgroundColor)
+    if
+    (
+           this->BackgroundContexts.IsEmpty() == false
+        && this->BackgroundContexts[0].World->IsSkyboxValid()
+    )
     {
-        this->bChangedBackgroundColor = false;
-        this->IntermediateBuffer.MakeDrawTargetAndReset(this->BackgroundColor);
+        this->IntermediateBuffer.MakeDrawTargetAndReset
+        (
+            this->BackgroundContexts[0].World->GetSkybox().GetBackgroundColor().ToLinearColor()
+        );
     }
     else
     {
-        this->IntermediateBuffer.MakeDrawTargetAndReset();
+        this->IntermediateBuffer.MakeDrawTargetAndReset(this->BackgroundColor);
     }
 
     return;

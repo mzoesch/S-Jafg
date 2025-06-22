@@ -80,9 +80,6 @@ void Jafg::WDebugScreen::Construct()
             NewNode(WTextBlock).SaveTo(&this->MyWorldTimeSection)
                 .Brush(Brush)
             +
-            NewNode(WTextBlock).SaveTo(&this->MyWorldTimeExtrasSection)
-                .Brush(Brush)
-            +
 
             NewNode(WSpacer).Height(SpacerHeight)
 
@@ -174,19 +171,19 @@ void Jafg::WDebugScreen::Tick()
             LString YawAsText { "N/A" };
             if (Rotator.Yaw >= -45.f && Rotator.Yaw <= 45.f)
             {
-                YawAsText = "North (Towards positive X)";
+                YawAsText = "+X (North)";
             }
             else if (Rotator.Yaw > 45.f && Rotator.Yaw < 135.f)
             {
-                YawAsText = "East (Towards positive Y)";
+                YawAsText = "+Y (East)";
             }
             else if (Rotator.Yaw >= 135.f || Rotator.Yaw <= -135.f)
             {
-                YawAsText = "South (Towards negative X)";
+                YawAsText = "-X (South)";
             }
             else if (Rotator.Yaw > -135.f && Rotator.Yaw < -45.f)
             {
-                YawAsText = "West (Towards negative Y)";
+                YawAsText = "-Y (West)";
             }
             this->LocalPawnFacingSection->SetContent(LString::SprintF
             (
@@ -432,15 +429,12 @@ void Jafg::WDebugScreen::SlowTick()
         {
             this->MyWorldTimeSection->SetContent(LString::SprintF
             (
-                "T1: [{} {}]",
-                TimeSubsystem->GetInterpolatedTimeAsItWouldBeOnEarth(),
-                TimeSubsystem->GetDayCycleAsItWouldBeOnEarth()
-            ));
-            this->MyWorldTimeExtrasSection->SetContent(LString::SprintF
-            (
-                "T2: {} [{:02}% {}-{}]",
+                "T: {} [{} {}] {} [{:.3f}% {}-{}]",
+                TimeSubsystem->IsDay() ? 'D' : 'N',
+                TimeSubsystem->GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::HHMM),
+                TimeSubsystem->GetDayCycleAsItWouldBeOnEarth(JTimeWorldSubsystem::DDMMYYYY),
                 TimeSubsystem->GetDayTime(),
-                TimeSubsystem->GetPastDayTimeInPercentage(),
+                TimeSubsystem->GetDayTimeInPercentage(),
                 TimeSubsystem->GetMinDayTime(),
                 TimeSubsystem->GetMaxDayTime()
             ));
@@ -448,7 +442,6 @@ void Jafg::WDebugScreen::SlowTick()
         else
         {
             this->MyWorldTimeSection->SetContent("MyWorld Time: [ERR: No time subsystem]");
-            this->MyWorldTimeSection->SetContent("MyWorld TimeExtras: [ERR: No time subsystem]");
         }
     }
 

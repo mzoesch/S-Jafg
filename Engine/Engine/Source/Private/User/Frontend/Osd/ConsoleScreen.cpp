@@ -181,7 +181,11 @@ void Jafg::WConsoleScreen::OnGarbageDefault()
 Jafg::LReply Jafg::WConsoleScreen::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     check( this->EditableTextBlock )
-    check( this->EditableTextBlock->IsVisible() )
+
+    if (this->EditableTextBlock->IsPainted() == false)
+    {
+        return LReply::HandledWithFocusLost();
+    }
 
     if (this->IntellisenseContainer->IsPainted() && this->IntellisensePredictions->IsPainted())
     {

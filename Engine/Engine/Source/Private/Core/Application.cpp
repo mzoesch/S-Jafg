@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Core/Application.h"
+#include "Core/Uuid.h"
 #include "Stats/Stats.h"
 
 void Jafg::PlatformHal::Sleep(const f64 InSeconds)
@@ -9,6 +10,13 @@ void Jafg::PlatformHal::Sleep(const f64 InSeconds)
     PlatformHal::SleepNoStats(InSeconds);
     return;
 }
+
+namespace Jafg::Private
+{
+
+ENGINE_API LUnderlyingUuidType CurrentUuidValue { 0 };
+
+} /* ~Namespace Jafg::Private */
 
 namespace Jafg::Application::Private
 {

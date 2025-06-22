@@ -158,7 +158,7 @@ public:
     FORCEINLINE static constexpr bool IsInBounds(const LVector2& InTopLeft, const LVector2& InSize, const LVector2& InPoint) noexcept;
 
     FORCEINLINE const LLinearColor& GetBackgroundColor() { return this->BackgroundColor; }
-    FORCEINLINE void SetBackgroundColor(const LLinearColor& InColor) { this->bChangedBackgroundColor = true; this->BackgroundColor = InColor; }
+    FORCEINLINE void SetBackgroundColor(const LLinearColor& InColor) { this->BackgroundColor = InColor; }
 
 private:
 
@@ -198,7 +198,6 @@ private:
     LSurface* CachedContext { nullptr };
     TOptional<LVector2> CachedCursorLocation;
 
-    bool bChangedBackgroundColor { false };
     LLinearColor BackgroundColor;
 };
 

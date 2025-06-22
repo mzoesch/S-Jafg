@@ -43,7 +43,6 @@ private:
     WTextBlock* LocalPawnTargetVoxelSectionCreate { nullptr };
 
     WTextBlock* MyWorldTimeSection { nullptr };
-    WTextBlock* MyWorldTimeExtrasSection { nullptr };
 
     //# The time when we should invalidate the cache in seconds.
     f32 ResetTime { 0.1f };

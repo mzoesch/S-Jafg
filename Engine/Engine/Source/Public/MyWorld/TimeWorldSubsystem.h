@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Subsystems/TickableWorldSubsystem.h"
+#include "Core/Uuid.h"
 #include "Cli/CliPrimitives.h"
 #include "Cli/CliExtended.h"
 #include "Cli/CliHandles.h"
@@ -14,6 +15,7 @@ namespace Jafg
 
 class JTimeWorldSubsystem;
 struct LCliDayTime;
+struct LAstron;
 
 //#
 //# The daytime of a MyWorld.
@@ -31,7 +33,7 @@ struct LCliDayTime;
 //# - 18:00:00:000  =>  6,48e+7
 //# - 23:59:59:999  =>  8.64e+7 - 1
 //#
-typedef u64 LDayTime;
+typedef u64 LDaytime;
 
 //#
 //# The cycle of a day in MyWorld.
@@ -118,7 +120,7 @@ template <>
 struct LCommandArgsTypeRet<LCliDayTime> final
 {
     UTILITY_STRUCT(LCommandArgsTypeRet)
-    typedef LDayTime Type;
+    typedef LDaytime Type;
 
     ENGINE_API static Type Dispatch(const LCommandArgs& Self, const JTimeWorldSubsystem* InSubsystem);
     typedef decltype(&Dispatch) Dispatcher;
@@ -130,8 +132,15 @@ template <> FORCEINLINE LCliType LCliType::Type<LCliDayTime>() { return LCliType
 //# Note that this does not include anything with delta time or engine time - this ONLY is responsible
 //# for "time" from a simulation standpoint.
 //#
+//# The default daytime is considered from 04:50 o'clock to 21:53 o'clock, the other "half" is considered as night.
+//# The day is therefore 17:03 hours (1'023 minutes) long, the night is 06:57 hours (417 minutes) long.
+//# The default day acceleration is:     25.575.
+//# The default night acceleration is:   20.85.
+//# Therefore the day is 40 minutes long (in the real world) and the night is 20 minutes long; combining to a total
+//# of 50 (real world) minutes.
+//#
 DECLARE_JAFG_CLASS()
-class JTimeWorldSubsystem : public JTickableWorldSubsystem
+class JTimeWorldSubsystem final : public JTickableWorldSubsystem
 {
     GENERATED_CLASS_BODY()
 
@@ -149,26 +158,52 @@ protected:
 
 public:
 
+    enum E_DDMMYYYY { DDMMYYYY };
+
+    enum E_HHMMSS { HHMMSS };
+    enum E_HHMM { HHMM };
+    enum E_MMSS { MMSS };
+    enum E_HH { HH };
+    enum E_MM { MM };
+    enum E_SS { SS };
+
     //# The minimal time in this world.
-    FORCEINLINE LDayTime GetMinDayTime() const noexcept { return this->MinDayTime; }
-    FORCEINLINE void SetMinDayTime(const LDayTime InMinTime) noexcept { this->MinDayTime = InMinTime; }
+    FORCEINLINE LDaytime GetMinDayTime() const noexcept { return this->MinDaytime; }
+    FORCEINLINE void SetMinDayTime(const LDaytime InMinTime) noexcept { this->MinDaytime = InMinTime; }
     //# The maximal time in this world.
-    FORCEINLINE LDayTime GetMaxDayTime() const noexcept { return this->MaxDayTime; }
-    FORCEINLINE void SetMaxDayTime(const LDayTime InMaxTime) noexcept { this->MaxDayTime = InMaxTime; }
+    FORCEINLINE LDaytime GetMaxDayTime() const noexcept { return this->MaxDaytime; }
+    FORCEINLINE void SetMaxDayTime(const LDaytime InMaxTime) noexcept { this->MaxDaytime = InMaxTime; }
 
     ENGINE_API void SetDayTime(const ENamedDayTime::Type InNamedDayTime, const EDayTimeAddBehavior::Type InAddType = EDayTimeAddBehavior::Clamp);
-    ENGINE_API void SetDayTime(const LDayTime InDayTime, const EDayTimeAddBehavior::Type InAddType = EDayTimeAddBehavior::Clamp);
+    ENGINE_API void SetDayTime(const LDaytime InDayTime, const EDayTimeAddBehavior::Type InAddType = EDayTimeAddBehavior::Clamp);
     ENGINE_API void SetDayCycle(const LDayCycle InDayCycle);
 
-    ENGINE_API LDayTime GetDayTimeFromNamedTimes(const ENamedDayTime::Type InNamedDayTime) const;
+    ENGINE_API LDaytime GetDayTimeFromNamedTimes(const ENamedDayTime::Type InNamedDayTime) const;
 
-    FORCEINLINE LDayTime  GetDayTime() const noexcept { return this->Daytime; }
+    FORCEINLINE LDaytime  GetDayTime() const noexcept { return this->Daytime; }
     FORCEINLINE LDayCycle GetDayCycle() const noexcept { return this->DayCycle; }
 
-    FORCEINLINE LDayTime GetDayTimeSinceStart() const noexcept;
+    FORCEINLINE void SetDayAcceleration(const f64 InDayAcceleration) noexcept { this->DayAcceleration = InDayAcceleration; }
+    FORCEINLINE f64  GetDayAcceleration() const noexcept { return this->DayAcceleration; }
+    FORCEINLINE void SetNightAcceleration(const f64 InNightAcceleration) noexcept { this->NightAcceleration = InNightAcceleration; }
+    FORCEINLINE f64  GetNightAcceleration() const noexcept { return this->NightAcceleration; }
+
+    FORCEINLINE bool  IsSunAstronIdentifierValid() const noexcept { return this->SunAstronIdentifier.IsValid(); }
+    FORCEINLINE const LUuid&   GetSunAstronIdentifier() const noexcept { return this->SunAstronIdentifier; }
+    ENGINE_API  const LAstron* GetSunAstron() const;
+    FORCEINLINE const LAstron* GetSunAstronChecked() const { const LAstron* Out { this->GetSunAstron() }; check( Out ) return Out; }
+    FORCEINLINE const LAstron* GetSunAstronAsserted() const { const LAstron* Out { this->GetSunAstron() }; jassert( Out ) return Out; }
+    ENGINE_API        LAstron* GetMutableSunAstron();
+    FORCEINLINE       LAstron* GetMutableSunAstronChecked() { LAstron* Out { this->GetMutableSunAstron() }; check( Out ) return Out; }
+    FORCEINLINE       LAstron* GetMutableSunAstronAsserted() { LAstron* Out { this->GetMutableSunAstron() }; jassert( Out ) return Out; }
+
+    FORCEINLINE LDaytime GetDayTimeSinceStart() const noexcept;
     FORCEINLINE u64      GetDayTimeSinceStartInSeconds() const noexcept;
-    FORCEINLINE f64      GetPastDayTimeInPercentage() const noexcept;
-    FORCEINLINE f64      GetPastDayTimeInPercentage_CurrentDayOnly() const noexcept;
+    FORCEINLINE f64      GetDayTimeInPercentage() const noexcept;
+    FORCEINLINE f64      GetDayTimeInPercentage_CurrentDayOnly() const noexcept;
+
+    FORCEINLINE bool IsDay() const noexcept;
+    FORCEINLINE bool IsNight() const noexcept;
 
     //#
     //# Get the time as it would be on Earth (meaning from 00:00 to 23:59).
@@ -176,17 +211,24 @@ public:
     //# If the world-day is only 12 milliseconds long then this would return at the time of 00:00:00:006
     //# 12:00:00:000 o'clock.
     //#
-    ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth() const;
+    ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth(E_HHMMSS) const;
+    ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth(E_HHMM) const;
+    ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth(E_MMSS) const;
+    ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth(E_HH) const;
+    ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth(E_MM) const;
+    ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth(E_SS) const;
 
     //#
     //# The day of the month with the year, as it would be on Earth.
     //#
-    ENGINE_API LString GetDayCycleAsItWouldBeOnEarth() const;
+    ENGINE_API LString GetDayCycleAsItWouldBeOnEarth(E_DDMMYYYY) const;
 
 private:
 
     void DefaultOnly_RegisterCliObjects();
     void DefaultOnly_UnregisterCliObjects();
+
+    void OnTimeUpdated();
 
     CLASS_FIELD(DefaultOnly)
     LCliCommandHandle CommandHandle_Time;
@@ -195,14 +237,24 @@ private:
     LCliTypeHandle TypeHandle_DayTime;
 
     //# The actual daytime.
-    LDayTime Daytime { 0 };
+    LDaytime Daytime { 0 };
 
     //# Inclusive daytime.
-    LDayTime MinDayTime { 0 };
+    LDaytime MinDaytime { 0 };
     //# Exclusive daytime.
-    LDayTime MaxDayTime { static_cast<LDayTime>(24.0 * JAFG_H2MS_D) };
+    LDaytime MaxDaytime { static_cast<LDaytime>(24.0 * JAFG_H2MS_D) };
     //# How many daylight cycles have passed.
     LDayCycle DayCycle { 0 };
+
+    //# Default is: 04:50 o'clock
+    LDaytime StartOfTheDay { (4 * static_cast<LDaytime>(JAFG_H2M) + 50) * static_cast<LDaytime>(JAFG_M2MS) };
+    //# Default is: 21:53 o'clock
+    LDaytime EndOfTheDay { (21 * static_cast<LDaytime>(JAFG_H2M) + 53) * static_cast<LDaytime>(JAFG_M2MS) };
+
+    f64 DayAcceleration { 25.575 };
+    f64 NightAcceleration { 20.85 };
+
+    LUuid SunAstronIdentifier;
 };
 
 template <>
@@ -225,9 +277,9 @@ FORCEINLINE LCommandArgsTypeRet<EDayTimeAddBehavior::Type>::Type LCommandArgs::G
     return EDayTimeAddBehavior::Clamp;
 }
 
-FORCEINLINE LDayTime JTimeWorldSubsystem::GetDayTimeSinceStart() const noexcept
+FORCEINLINE LDaytime JTimeWorldSubsystem::GetDayTimeSinceStart() const noexcept
 {
-    return (this->DayCycle * this->MaxDayTime) + this->Daytime;
+    return (this->DayCycle * this->MaxDaytime) + this->Daytime;
 }
 
 FORCEINLINE u64 JTimeWorldSubsystem::GetDayTimeSinceStartInSeconds() const noexcept
@@ -235,14 +287,24 @@ FORCEINLINE u64 JTimeWorldSubsystem::GetDayTimeSinceStartInSeconds() const noexc
     return static_cast<u64>(static_cast<f64>(this->GetDayTimeSinceStart()) * JAFG_MS2S_D);
 }
 
-FORCEINLINE f64 JTimeWorldSubsystem::GetPastDayTimeInPercentage() const noexcept
+FORCEINLINE f64 JTimeWorldSubsystem::GetDayTimeInPercentage() const noexcept
 {
-    return static_cast<f64>(this->GetDayTimeSinceStart()) / static_cast<f64>(this->MaxDayTime - this->MinDayTime);
+    return static_cast<f64>(this->GetDayTimeSinceStart()) / static_cast<f64>(this->MaxDaytime - this->MinDaytime);
 }
 
-FORCEINLINE f64 JTimeWorldSubsystem::GetPastDayTimeInPercentage_CurrentDayOnly() const noexcept
+FORCEINLINE f64 JTimeWorldSubsystem::GetDayTimeInPercentage_CurrentDayOnly() const noexcept
 {
-    return static_cast<f64>(this->Daytime) / static_cast<f64>(this->MaxDayTime - this->MinDayTime);
+    return static_cast<f64>(this->Daytime) / static_cast<f64>(this->MaxDaytime - this->MinDaytime);
+}
+
+FORCEINLINE bool JTimeWorldSubsystem::IsDay() const noexcept
+{
+    return this->Daytime >= this->StartOfTheDay && this->Daytime < this->EndOfTheDay;
+}
+
+FORCEINLINE bool JTimeWorldSubsystem::IsNight() const noexcept
+{
+    return this->IsDay() == false;
 }
 
 } /* ~Namespace Jafg */

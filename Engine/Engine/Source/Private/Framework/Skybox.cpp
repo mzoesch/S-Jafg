@@ -190,13 +190,14 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
     glDepthFunc(GL_LEQUAL);
     glDisable(GL_CULL_FACE);
 
-    check( this->Maps.GetSize() <= 1 && "Currently only at most one map is supported." )
     for (i32 Idx { 0 }; Idx < this->Maps.GetSize(); ++Idx)
     {
-        const LLoadedCubemap& Map = this->Maps[Idx];
+        const LLoadedCubemap& Map { this->Maps[Idx] };
+
         glActiveTexture(GL_TEXTURE0 + Idx);
         glBindTexture(GL_TEXTURE_CUBE_MAP, Map.Map);
-        this->Shader.SetFloatUniform("CubeLoad0", Map.Load);
+
+        this->Shader.SetFloatUniform(LString::SprintF("SkyboxSampler{}", Idx), Map.Load);
 
         continue;
     }
@@ -206,6 +207,8 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
+
+    glActiveTexture(GL_TEXTURE0);
 
     this->BillboardShader.Use();
     this->BillboardShader.SetMatrixUniform("View", View);
@@ -217,13 +220,11 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
     ));
 
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE);
 
     glBindVertexArray(this->BillboardVao.GetValue());
     glBindBuffer(GL_ARRAY_BUFFER, this->BillboardVbo.GetValue());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->BillboardEbo.GetValue());
-
-    glActiveTexture(GL_TEXTURE0);
 
     for (const LAstron& Astron : this->Astra)
     {
@@ -257,7 +258,7 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
 
         this->BillboardShader.SetMatrixUniform("Model", Model);
 
-        glBindTexture(GL_TEXTURE_2D, Astra[0].Texture.GetHandle());
+        glBindTexture(GL_TEXTURE_2D, Astron.Texture.GetHandle());
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 

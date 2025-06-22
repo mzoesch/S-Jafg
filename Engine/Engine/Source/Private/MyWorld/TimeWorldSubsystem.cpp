@@ -5,6 +5,7 @@
 #include "Cli/CliExtended.h"
 #include "Engine/Engine.h"
 #include "User/UserPreferences.h"
+#include "Framework/Skybox.h"
 
 namespace
 {
@@ -173,14 +174,18 @@ void Jafg::JTimeWorldSubsystem::Initialize(LSubsystemCollection& Collection)
         LSkybox& Skybox { World->GetSkybox() };
 
         LAstron Sun;
+        Sun.Identifier.GenerateNew();
         Sun.Texture.LoadFromDisk({EEnginePaths::Textures, "Misc/Sun.png"}, ERawImageFormat::BGRA8);
         Sun.Texture.Upload();
         Sun.Direction = LVector{20.0f, 0.0f, 30.0f};
         Sun.Direction.Normalize();
         Sun.Scale = LVector{500.0f};
+        this->SunAstronIdentifier = Sun.Identifier;
 
         Skybox.GetMutableAstra().Emplace(std::move(Sun));
     }
+
+    this->SetDayTime(ENamedDayTime::Sunrise, EDayTimeAddBehavior::Clamp);
 
     return;
 }
@@ -188,6 +193,17 @@ void Jafg::JTimeWorldSubsystem::Initialize(LSubsystemCollection& Collection)
 void Jafg::JTimeWorldSubsystem::Tick(const f32 DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    if (this->IsDay())
+    {
+        this->Daytime += this->DayAcceleration * static_cast<LDaytime>(DeltaTime * JAFG_S2MS_D);
+    }
+    else
+    {
+        this->Daytime += this->NightAcceleration * static_cast<LDaytime>(DeltaTime * JAFG_S2MS_D);
+    }
+
+    this->OnTimeUpdated();
 
     return;
 }
@@ -205,8 +221,10 @@ void Jafg::JTimeWorldSubsystem::SetDayTime(const ENamedDayTime::Type InNamedDayT
     return;
 }
 
-void Jafg::JTimeWorldSubsystem::SetDayTime(const LDayTime InDayTime, const EDayTimeAddBehavior::Type InAddType)
+void Jafg::JTimeWorldSubsystem::SetDayTime(const LDaytime InDayTime, const EDayTimeAddBehavior::Type InAddType)
 {
+    const LDaytime PreviousDayTime { this->Daytime };
+
     switch (InAddType)
     {
     case EDayTimeAddBehavior::Clamp:
@@ -217,17 +235,17 @@ void Jafg::JTimeWorldSubsystem::SetDayTime(const LDayTime InDayTime, const EDayT
     case EDayTimeAddBehavior::Add:
     {
         this->Daytime += InDayTime;
-        while (this->Daytime >= this->MaxDayTime)
+        while (this->Daytime >= this->MaxDaytime)
         {
             ++this->DayCycle;
-            this->Daytime -= this->MaxDayTime;
+            this->Daytime -= this->MaxDaytime;
             continue;
         }
         break;
     }
     case EDayTimeAddBehavior::Next:
     {
-        jassert( this->Daytime >= this->MinDayTime && this->Daytime < this->MaxDayTime )
+        jassert( this->Daytime >= this->MinDaytime && this->Daytime < this->MaxDaytime )
         if (InDayTime < this->Daytime)
         {
             this->DayCycle += 1;
@@ -246,16 +264,22 @@ void Jafg::JTimeWorldSubsystem::SetDayTime(const LDayTime InDayTime, const EDayT
     }
     }
 
+    if (PreviousDayTime != this->Daytime)
+    {
+        this->OnTimeUpdated();
+    }
+
     return;
 }
 
 void Jafg::JTimeWorldSubsystem::SetDayCycle(const LDayCycle InDayCycle)
 {
     this->DayCycle = InDayCycle;
+    this->OnTimeUpdated();
     return;
 }
 
-Jafg::LDayTime Jafg::JTimeWorldSubsystem::GetDayTimeFromNamedTimes(const ENamedDayTime::Type InNamedDayTime) const
+Jafg::LDaytime Jafg::JTimeWorldSubsystem::GetDayTimeFromNamedTimes(const ENamedDayTime::Type InNamedDayTime) const
 {
     /*
      * Hardcoded for now...
@@ -295,11 +319,37 @@ Jafg::LDayTime Jafg::JTimeWorldSubsystem::GetDayTimeFromNamedTimes(const ENamedD
     }
 }
 
-Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth() const
+const Jafg::LAstron* Jafg::JTimeWorldSubsystem::GetSunAstron() const
+{
+    if (const LWorld* World { this->GetWorld() }; World && World->IsSkyboxValid())
+    {
+        return World->GetSkybox().GetAstra().FindRefByPredicate([this](const LAstron& Astron)
+        {
+            return Astron.Identifier == this->SunAstronIdentifier;
+        });
+    }
+
+    return nullptr;
+}
+
+Jafg::LAstron* Jafg::JTimeWorldSubsystem::GetMutableSunAstron()
+{
+    if (LWorld* World { this->GetWorld() }; World && World->IsSkyboxValid())
+    {
+        return World->GetSkybox().GetMutableAstra().FindRefByPredicate([this](const LAstron& Astron)
+        {
+            return Astron.Identifier == this->SunAstronIdentifier;
+        });
+    }
+
+    return nullptr;
+}
+
+Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_HHMMSS) const
 {
     const u64 EarthMs
     {
-        static_cast<u64>(Maths::Round(this->GetPastDayTimeInPercentage_CurrentDayOnly() * (24.0 * JAFG_H2MS_D)))
+        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * JAFG_H2MS_D)))
     };
 
     const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * JAFG_MS2H_D)) };
@@ -309,7 +359,73 @@ Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth()
     return LString::SprintF("{:02}:{:02}:{:02}", Hours, Minutes, Seconds);
 }
 
-Jafg::LString Jafg::JTimeWorldSubsystem::GetDayCycleAsItWouldBeOnEarth() const
+Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_HHMM) const
+{
+    const u64 EarthMs
+    {
+        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * JAFG_H2MS_D)))
+    };
+
+    const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * JAFG_MS2H_D)) };
+    const u64 Minutes { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D)) * JAFG_MS2M_D)) };
+
+    return LString::SprintF("{:02}:{:02}", Hours, Minutes);
+}
+
+Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_MMSS) const
+{
+    const u64 EarthMs
+    {
+        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * JAFG_H2MS_D)))
+    };
+
+    const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * JAFG_MS2H_D)) };
+    const u64 Minutes { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D)) * JAFG_MS2M_D)) };
+    const u64 Seconds { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D) - (Minutes * JAFG_M2MS_D)) * JAFG_MS2S_D)) };
+
+    return LString::SprintF("{:02}:{:02}", Minutes, Seconds);
+}
+
+Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_HH) const
+{
+    const u64 EarthMs
+    {
+        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * JAFG_H2MS_D)))
+    };
+
+    const u64 Hours { static_cast<u64>(Maths::Round(EarthMs * JAFG_MS2H_D)) };
+
+    return LString::SprintF("{:02}", Hours);
+}
+
+Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_MM) const
+{
+    const u64 EarthMs
+    {
+        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * JAFG_H2MS_D)))
+    };
+
+    const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * JAFG_MS2H_D)) };
+    const u64 Minutes { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D)) * JAFG_MS2M_D)) };
+
+    return LString::SprintF("{:02}", Minutes);
+}
+
+Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_SS) const
+{
+    const u64 EarthMs
+    {
+        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * JAFG_H2MS_D)))
+    };
+
+    const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * JAFG_MS2H_D)) };
+    const u64 Minutes { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D)) * JAFG_MS2M_D)) };
+    const u64 Seconds { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D) - (Minutes * JAFG_M2MS_D)) * JAFG_MS2S_D)) };
+
+    return LString::SprintF("{:02}", Seconds);
+}
+
+Jafg::LString Jafg::JTimeWorldSubsystem::GetDayCycleAsItWouldBeOnEarth(JTimeWorldSubsystem::E_DDMMYYYY) const
 {
     u64 DaysRemaining { this->DayCycle };
 
@@ -374,6 +490,7 @@ void Jafg::JTimeWorldSubsystem::DefaultOnly_RegisterCliObjects()
 
     /* Type: DayTime */
     {
+        check( this->TypeHandle_DayTime.IsValid() == false )
         this->TypeHandle_DayTime = GEngine->GetCommandLineInterface()->RegisterType({"DayTime", "The time of the day.",
             nullptr,
             [](const LCommandArgs& Args, i32* Cursor) -> bool
@@ -508,11 +625,12 @@ void Jafg::JTimeWorldSubsystem::DefaultOnly_RegisterCliObjects()
                 }
 
                 OutResponse->Rc = ECommandReturnCode::Success;
-                OutResponse->StdOut = LString::SprintF("It is {}.", Subsystem->GetInterpolatedTimeAsItWouldBeOnEarth());
+                OutResponse->StdOut = LString::SprintF("It is {}.", Subsystem->GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::HHMMSS));
 
                 return;
             })
         });
+
         check( this->CommandHandle_Time.IsValid() )
     }
 
@@ -539,6 +657,82 @@ void Jafg::JTimeWorldSubsystem::DefaultOnly_UnregisterCliObjects()
     if (ensure(this->CommandHandle_Time.IsValid()))
     {
         GEngine->GetCommandLineInterface()->UnregisterCommand(&this->CommandHandle_Time);
+    }
+
+    return;
+}
+
+void Jafg::JTimeWorldSubsystem::OnTimeUpdated()
+{
+    if (!(this->GetWorld() && this->GetWorld()->IsSkyboxValid()))
+    {
+        return;
+    }
+
+    LSkybox& Skybox { this->GetWorld()->GetSkybox() };
+    const bool bNight { this->IsNight() };
+
+    if (bNight)
+    {
+        Skybox.SetBackgroundColor(LColor::Black);
+    }
+    else
+    {
+        Skybox.SetBackgroundColor(LColor::Blue);
+    }
+
+    if
+    (
+        LAstron* Sun { Skybox.GetMutableAstra().FindRefByPredicate([this](const LAstron& Astron)
+        {
+            return Astron.Identifier == this->SunAstronIdentifier;
+        })};
+        Sun
+    )
+    {
+        if (bNight)
+        {
+            Sun->Load = 0.0f;
+        }
+        else
+        {
+            Sun->Load = 1.0f;
+
+            const f64 DayTimePercentage
+            {
+                  static_cast<f64>(this->Daytime - this->StartOfTheDay)
+                /
+                  static_cast<f64>(this->EndOfTheDay - this->StartOfTheDay)
+            };
+
+            const f64 Angle { DayTimePercentage * JAFG_PI_D };
+
+            Sun->Direction = LVector
+            {
+                static_cast<f32>(Maths::Cos(Angle)),
+                0.0f,
+                static_cast<f32>(Maths::Sin(Angle))
+            }.GetNormalized();
+        }
+    }
+
+    if
+    (
+        LLoadedCubemap* NightSky { Skybox.GetMutableMaps().FindRefByPredicate([](const LLoadedCubemap& Cubemap) -> bool
+        {
+            return Cubemap.Identifier == "Night";
+        })};
+        NightSky
+    )
+    {
+        if (bNight)
+        {
+            NightSky->Load = 1.0f;
+        }
+        else
+        {
+            NightSky->Load = 0.0f;
+        }
     }
 
     return;

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Core/Uuid.h"
 #include "Engine/Level.h"
 #include "Rhi/Cubemap.h"
 #include "Rhi/Shader.h"
@@ -26,6 +27,8 @@ struct LLoadedCubemap final
 
 struct LAstron final
 {
+    LUuid Identifier;
+
     //#
     //# The texture to use for this astron.
     //#
@@ -69,6 +72,9 @@ public:
     ENGINE_API void Draw(const LViewport& InViewport, const LEye& InEye) const;
     ENGINE_API void Free();
 
+    FORCEINLINE const LColor& GetBackgroundColor() const { return this->BackgroundColor; }
+    FORCEINLINE void SetBackgroundColor(const LColor& InColor) { this->BackgroundColor = InColor; }
+
     FORCEINLINE TArray<LLoadedCubemap>& GetMutableMaps() { return this->Maps; }
     FORCEINLINE const TArray<LLoadedCubemap>& GetMaps() const { return this->Maps; }
 
@@ -77,6 +83,7 @@ public:
 
 private:
 
+    LColor BackgroundColor { LColor::Black };
     TArray<LLoadedCubemap> Maps;
     TArray<LAstron> Astra;
     TOptional<u32> Vao;
