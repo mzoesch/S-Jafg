@@ -81,7 +81,6 @@ void Jafg::LBoxShaderContext::Draw(
         this->Shader.Use();
         if (this->LastFrameTexture)
         {
-            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, this->Tex);
         }
         glBindVertexArray(this->Vao);
@@ -191,7 +190,6 @@ void Jafg::LBoxShaderContext::ReloadShader(const bool bDeleteOld) const
         glEnableVertexAttribArray(1);
 
         glGenTextures(1, &this->Tex);
-        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, this->Tex);
 #if !PLATFORM_WASM
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);

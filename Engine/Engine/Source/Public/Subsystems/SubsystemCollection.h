@@ -277,25 +277,25 @@ FORCEINLINE const JSubsystem* LSubsystemCollection::GetCheckedSubsystem(const LO
 template <typename TSubsystem, bool bAllowForNullptr>
 FORCEINLINE TSubsystem* LSubsystemCollection::GetSubsystem()
 {
-    return CheckedStaticCast<TSubsystem, std::remove_pointer_t<decltype(this->GetSubsystem(TSubsystem::StaticClass()))>, bAllowForNullptr>(this->GetSubsystem(TSubsystem::StaticClass()));
+    return CheckedStaticCast<TSubsystem, JSubsystem, bAllowForNullptr>(this->GetSubsystem(TSubsystem::StaticClass()));
 }
 
 template <typename TSubsystem, bool bAllowForNullptr>
 FORCEINLINE const TSubsystem* LSubsystemCollection::GetSubsystem() const
 {
-    return CheckedStaticCast<TSubsystem, std::remove_pointer_t<decltype(this->GetSubsystem(TSubsystem::StaticClass()))>, bAllowForNullptr>(this->GetSubsystem(TSubsystem::StaticClass()));
+    return CheckedStaticCast<TSubsystem, JSubsystem, bAllowForNullptr>(this->GetSubsystem(TSubsystem::StaticClass()));
 }
 
 template <typename TSubsystem, bool bAllowForNullptr>
 FORCEINLINE TSubsystem* LSubsystemCollection::GetSubsystem(const LObjectClass* InStaticClass)
 {
-    return CheckedStaticCast<TSubsystem, std::remove_pointer_t<decltype(this->GetSubsystem(InStaticClass))>, bAllowForNullptr>(this->GetSubsystem(InStaticClass));
+    return CheckedStaticCast<TSubsystem, JSubsystem, bAllowForNullptr>(this->GetSubsystem(InStaticClass));
 }
 
 template <typename TSubsystem, bool bAllowForNullptr>
 FORCEINLINE const TSubsystem* LSubsystemCollection::GetSubsystem(const LObjectClass* InStaticClass) const
 {
-    return CheckedStaticCast<TSubsystem, std::remove_pointer_t<decltype(this->GetSubsystem(InStaticClass))>, bAllowForNullptr>(this->GetSubsystem(InStaticClass));
+    return CheckedStaticCast<TSubsystem, JSubsystem, bAllowForNullptr>(this->GetSubsystem(InStaticClass));
 }
 
 template <typename TSubsystem>

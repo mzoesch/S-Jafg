@@ -380,9 +380,9 @@ void Jafg::JCoreInputSubsystem::OnDebugScreenToggle(LInputActionValue& InValue) 
 {
     WDebugScreen* Screen = this->GetLocalEgo()->GetFrontend()->GetFirstTopLevelWidgetByClassChecked<WDebugScreen>();
 
-    Screen->SetVisibility(Screen->GetVisibility() == EWidgetVisibility::Visible
+    Screen->SetVisibility(Screen->GetVisibility() == EWidgetVisibility::TransitiveHitTestInvisible
         ? EWidgetVisibility::Collapsed
-        : EWidgetVisibility::Visible
+        : EWidgetVisibility::TransitiveHitTestInvisible
     );
 
     return;

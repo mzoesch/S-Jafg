@@ -184,7 +184,6 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
     View.Matrix[3][1] = 0.0f; /* Y Translation. */
     View.Matrix[3][2] = 0.0f; /* Z Translation. */
     View.Matrix[3][3] = 1.0f; /* Preserve unit. */
-
     this->Shader.SetMatrixUniform("View", View);
 
     glDepthMask(GL_FALSE);
@@ -224,6 +223,8 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
     glBindBuffer(GL_ARRAY_BUFFER, this->BillboardVbo.GetValue());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->BillboardEbo.GetValue());
 
+    glActiveTexture(GL_TEXTURE0);
+
     for (const LAstron& Astron : this->Astra)
     {
         if (Maths::IsNearlyZero(Astron.Load))
@@ -236,7 +237,6 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
 
         LMatrix Model { Matrix::Identity };
         Model.InlineTranslate(Astron.Direction * Astron.Magnitude);
-        // Model.InlineTranslate(Astron.Direction * 10);
 
         Model.Matrix[0][0] = View.Matrix[0][0];
         Model.Matrix[0][1] = View.Matrix[1][0];
@@ -257,7 +257,6 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
 
         this->BillboardShader.SetMatrixUniform("Model", Model);
 
-        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, Astra[0].Texture.GetHandle());
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);

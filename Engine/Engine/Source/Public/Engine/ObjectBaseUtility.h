@@ -33,15 +33,19 @@
 // ~Compiler options
 ///////////////////////////////////////////////////////////////////////////////
 
-#if DO_PURE_VIRTUAL_COMPILER_CHECKS
-    #define PURE_VIRTUAL(...) = 0;
-#else /* DO_PURE_VIRTUAL_COMPILER_CHECKS */
-    //# Define a RetTy for non-void members if needed.
-    #define PURE_VIRTUAL(...) { panic( "Pure virtual function was encountered." ) __VA_ARGS__; }
-#endif /* !DO_PURE_VIRTUAL_COMPILER_CHECKS */
+#ifndef PURE_VIRTUAL
+    #if DO_PURE_VIRTUAL_COMPILER_CHECKS
+        #define PURE_VIRTUAL(...)           = 0;
+    #else /* DO_PURE_VIRTUAL_COMPILER_CHECKS */
+        //# Define a RetTy for non-void members if needed.
+        #define PURE_VIRTUAL(...)           { panic( "Pure virtual function was encountered." ) __VA_ARGS__; }
+    #endif /* !DO_PURE_VIRTUAL_COMPILER_CHECKS */
+#endif /* !PURE_VIRTUAL */
 
-//# A member that was derived but is not callable.
-#define NON_CALLABLE_MEMBER(...) { panic( "Non-callable member function was encountered." ) __VA_ARGS__; }
+#ifndef NON_CALLABLE_MEMBER
+    //# A member that was derived but is not callable.
+    #define NON_CALLABLE_MEMBER(...)        { panic( "Non-callable member function was encountered." ) __VA_ARGS__; }
+#endif /* !NON_CALLABLE_MEMBER */
 
 namespace Jafg
 {
@@ -74,23 +78,33 @@ typedef void (*OnRegistrationDelegate)(LObjectClass* StaticClass);
 ENGINE_API extern LObjectContext* GOmniVitaContext;
 
 //# Allocate a new object of type TObj. */
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* NewObject();
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* NewObject(LObjectContext* InContext);
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass);
 FORCEINLINE JObjectBase* NewObject(const LString& InClassName);
 FORCEINLINE JObjectBase* NewObject(LObjectContext* InContext, const LString& InClassName);
 FORCEINLINE JObjectBase* NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass);
 
 //# Allocate a new object of type TObj. The begin-life method will not be called.
-template <typename TObj>
+template <typename TObj> requires
+(
+        std::is_base_of_v<JObjectBase, TObj>
+    && (std::is_base_of_v<AActor, TObj> == false) /* If this fails, you should use #SpawnActor<T>. */
+    && (std::is_base_of_v<WNode, TObj> == false) /* If this fails, you should use #ConstructWidget<T>. */
+)
 FORCEINLINE TObj* NewDeferredObject();
-template <typename TObj>
+template <typename TObj> requires
+(
+        std::is_base_of_v<JObjectBase, TObj>
+    && (std::is_base_of_v<AActor, TObj> == false) /* If this fails, you should use #SpawnActor<T>. */
+    && (std::is_base_of_v<WNode, TObj> == false) /* If this fails, you should use #ConstructWidget<T>. */
+)
 FORCEINLINE TObj* NewDeferredObject(LObjectContext* InContext);
 // Boolean parameters are for internal use only - __DO NOT__ change the default values.
-template <typename TObj, bool bAllowActor = /*FALSE REQUIRED*/false, bool bAllowWidget = /*FALSE REQUIRED*/false>
+template <typename TObj, bool bAllowActor = /*FALSE REQUIRED*/false, bool bAllowWidget = /*FALSE REQUIRED*/false> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass);
 FORCEINLINE JObjectBase* NewDeferredObject(const LString& InClassName);
 FORCEINLINE JObjectBase* NewDeferredObject(LObjectContext* InContext, const LString& InClassName);
@@ -107,9 +121,9 @@ ENGINE_API void MakeDeferredObjectFinal(JObjectBase* InObject);
 //#         If it is known at compile time with certainty that the object is of the target type, use CheckedStaticCast
 //#         as that function does not add any runtime overhead.
 //#
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* DynamicCast(JObjectBase* InObject);
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE const TObj* DynamicCast(const JObjectBase* InObject);
 
 //#
@@ -122,9 +136,9 @@ FORCEINLINE const TObj* DynamicCast(const JObjectBase* InObject);
 //# @return The casted object. Will never return nullptr (if bAllowForNullptr is false). But the return value might be
 //#         meaningless if DO_CHECKS is false. So you cannot check if this object is valid, e.g., if it is nullptr.
 //#
-template <typename TObj, typename U, bool bAllowForNullptr = false>
+template <typename TObj, typename U, bool bAllowForNullptr = false> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* CheckedStaticCast(U* InObject);
-template <typename TObj, typename U, bool bAllowForNullptr = false>
+template <typename TObj, typename U, bool bAllowForNullptr = false> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE const TObj* CheckedStaticCast(const U* InObject);
 
 //#
@@ -135,8 +149,8 @@ FORCEINLINE const TObj* CheckedStaticCast(const U* InObject);
 //#   2. The #InPointer is still allocated, based of the #InContext state.
 //#   3. The object at the #InPointer address is not marked as garbage.
 //#
-//# @remark This function may be used on any thread but of course after the function returned the pointer, it might get
-//#         immediately invalid.
+//# @remark This function may be used on any thread, but of course, after the function returned the pointer, it
+//#         might get immediately invalid.
 //#
 ENGINE_API bool IsValidFast(const LObjectContext* InContext, const JObjectBase* InPointer);
 
@@ -152,28 +166,30 @@ ENGINE_API bool IsValidFast(const LObjectContext* InContext, const JObjectBase* 
 //#   3. The context at #InContextPointer employees the #InPointer currently.
 //#   4. The object at the #InPointer address is not marked as garbage.
 //#
-//# @remark This function may be used on any thread but of course after the function returned the pointer, it might get
-//#         immediately invalid.
+//# @remark This function may be used on any thread, but of course, after the function returned the pointer, it
+//#         might get immediately invalid.
 //#
 ENGINE_API bool IsValidSlow(const LObjectContext* InContextPointer, const JObjectBase* InPointer);
 
 //# @return The default package referrer.
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE const TObj* GetDefault();
 //#
-//#  @return  The default package referrer that is mutable.
-//#  @remarks Mutating any members of the referrer will not affect already instantiated objects but only objects that are
-//#           created after the referrer has been mutated.
-//#           Generally it is bad habit to mutate the default package referrer, and therefore this method should be used
-//#           sparingly - or for "singleton" like objects.
+//# @return  The default package referrer that is mutable.
+//# @remarks Mutating any members of the referrer will not affect already instantiated objects but only objects that
+//#          are created after the referrer has been mutated.
+//#          Generally it is a bad habit to mutate the default package referrer, and therefore this method should be
+//#          used sparingly - or for "singleton" like objects.
 //#
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* GetMutableDefault();
 
 ENGINE_API void PullConfigFromObject(LObjectClass* InClass);
 ENGINE_API void PushConfigFromObject(const LObjectClass* InClass);
-template <typename TObj> FORCEINLINE void PushConfigFromObject() { PushConfigFromObject(TObj::StaticClass()); }
-template <typename TObj> FORCEINLINE void PushConfigFromObject(const TObj* InObject) { PushConfigFromObject(InObject->GetVTableSlow()); }
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
+FORCEINLINE void PushConfigFromObject() { PushConfigFromObject(TObj::StaticClass()); }
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
+FORCEINLINE void PushConfigFromObject(const TObj* InObject) { PushConfigFromObject(InObject->GetVTableSlow()); }
 
 //#
 //# Make your own custom default malloc member function for members that were marked as DefaultOnly.
@@ -206,11 +222,14 @@ FORCEINLINE void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField);
 template <typename InDerived, typename InTraits, typename InAlloc>
 FORCEINLINE void OnDefaultOnlyMallocMember(TStringBase<InDerived, InTraits, InAlloc>* MemberField);
 
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE void OnDefaultOnlyMallocMember(TSubclassOf<TObj>* MemberField) { *MemberField = nullptr; }
 
 namespace Private
 {
+
+template <typename TObj, typename U, bool bAllowForNullptr = false> requires std::is_base_of_v<JObjectBase, TObj>
+FORCEINLINE TObj* CheckedStaticCastImpl(U* InObject);
 
 //#
 //# Global application wide singleton object registry.
@@ -226,8 +245,9 @@ ENGINE_API void KillSingletonObjectRegistry(void);
 ENGINE_API TArray<LRegistrationQueuePackage>& GetRegisterObjectQueue();
 
 //# Registers a new object type to the global (in this shared translation unit) registry.
-template <typename TObj>
-FORCEINLINE void RegisterNewObjectType(
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
+FORCEINLINE void RegisterNewObjectType
+(
     //# Full namespaced name of the target class.
     LString SpacedClassName,
     //# Delegate that returns a clean default object of the target class.
@@ -256,18 +276,28 @@ struct LObjectMiscellaneousAccessor final
     PROHIBIT_REALLOC_OF_ANY_FORM(LObjectMiscellaneousAccessor)
     ~LObjectMiscellaneousAccessor() = delete;
 
-    template <typename TObj>
-    FORCEINLINE static auto NewObject(LObjectContext* Context) -> TObj*;
-    FORCEINLINE static auto NewObject(LObjectContext* Context, const LString& ClassName) -> JObjectBase*;
+    template <typename TObj> requires
+    (
+            std::is_base_of_v<JObjectBase, TObj>
+        && (std::is_base_of_v<AActor, TObj> == false) /* If this fails, you should use #SpawnActor<T>. */
+        && (std::is_base_of_v<WNode, TObj> == false) /* If this fails, you should use #ConstructWidget<T>. */
+    )
+    FORCEINLINE static TObj* NewObject(LObjectContext* Context);
+    FORCEINLINE static JObjectBase* NewObject(LObjectContext* Context, const LString& ClassName);
 
-    template <typename TObj>
-    FORCEINLINE static auto NewDeferredObject(LObjectContext* Context) -> TObj*;
-    FORCEINLINE static auto NewDeferredObject(LObjectContext* Context, const LString& ClassName) -> JObjectBase*;
+    template <typename TObj> requires
+    (
+           std::is_base_of_v<JObjectBase, TObj>
+        && (std::is_base_of_v<AActor, TObj> == false) /* If this fails, you should use #SpawnActor<T>. */
+        && (std::is_base_of_v<WNode, TObj> == false) /* If this fails, you should use #ConstructWidget<T>. */
+    )
+    FORCEINLINE static TObj* NewDeferredObject(LObjectContext* Context);
+    FORCEINLINE static JObjectBase* NewDeferredObject(LObjectContext* Context, const LString& ClassName);
 
-    ENGINE_API static auto NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
-    ENGINE_API static auto NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass) -> JObjectBase*;
+    ENGINE_API static JObjectBase* NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass);
+    ENGINE_API static JObjectBase* NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass);
 
-    ENGINE_API static auto DynamicCast(const JObjectBase* InObject, const LObjectClass* InTargetClass) -> bool;
+    ENGINE_API static bool DynamicCast(const JObjectBase* InObject, const LObjectClass* InTargetClass);
 };
 
 //#
@@ -328,25 +358,25 @@ public:
     //#
     ENGINE_API void ValidateLoadedPackages();
 
-    ENGINE_API bool DoesPackageWithNameExist(const LString& SpacedClassName) const;
-    ENGINE_API auto GetPackageByName(const LString& SpacedClassName) -> LRegistryPackage*;
-    ENGINE_API auto GetPackageByName(const LString& SpacedClassName) const -> const LRegistryPackage*;
-    ENGINE_API auto GetPackageByNameWeak(const LString& Name) -> LRegistryPackage*;
-    ENGINE_API auto GetPackageByNameWeak(const LString& Name) const -> const LRegistryPackage*;
-    ENGINE_API auto GetPanickedPackageByName(const LString& SpacedClassName) -> LRegistryPackage*;
-    ENGINE_API auto GetPanickedPackageByName(const LString& SpacedClassName) const -> const LRegistryPackage*;
-    ENGINE_API auto GetPanickedPackageByNameWeak(const LString& Name) -> LRegistryPackage*;
-    ENGINE_API auto GetPanickedPackageByNameWeak(const LString& Name) const -> const LRegistryPackage*;
+    ENGINE_API bool  DoesPackageWithNameExist(const LString& SpacedClassName) const;
+    ENGINE_API       LRegistryPackage* GetPackageByName(const LString& SpacedClassName);
+    ENGINE_API const LRegistryPackage* GetPackageByName(const LString& SpacedClassName) const;
+    ENGINE_API       LRegistryPackage* GetPackageByNameWeak(const LString& Name);
+    ENGINE_API const LRegistryPackage* GetPackageByNameWeak(const LString& Name) const;
+    ENGINE_API       LRegistryPackage* GetPanickedPackageByName(const LString& SpacedClassName);
+    ENGINE_API const LRegistryPackage* GetPanickedPackageByName(const LString& SpacedClassName) const;
+    ENGINE_API       LRegistryPackage* GetPanickedPackageByNameWeak(const LString& Name);
+    ENGINE_API const LRegistryPackage* GetPanickedPackageByNameWeak(const LString& Name) const;
 
-    ENGINE_API auto GetPackageByStaticClass(const void* StaticClass) -> LRegistryPackage*;
-    ENGINE_API auto GetPanickedPackageByStaticClass(const void* StaticClass) -> LRegistryPackage*;
-    ENGINE_API auto GetPackageByStaticClass(const void* StaticClass) const -> const LRegistryPackage*;
-    ENGINE_API auto GetPanickedPackageByStaticClass(const void* StaticClass) const -> const LRegistryPackage*;
+    ENGINE_API       LRegistryPackage* GetPackageByStaticClass(const void* StaticClass);
+    ENGINE_API       LRegistryPackage* GetPanickedPackageByStaticClass(const void* StaticClass);
+    ENGINE_API const LRegistryPackage* GetPackageByStaticClass(const void* StaticClass) const;
+    ENGINE_API const LRegistryPackage* GetPanickedPackageByStaticClass(const void* StaticClass) const;
 
-    ENGINE_API auto GetPackageByContentDefault(const void* ContentDefaultReferrer) -> LRegistryPackage*;
-    ENGINE_API auto GetPanickedPackageByContentDefault(const void* ContentDefaultReferrer) -> LRegistryPackage*;
+    ENGINE_API LRegistryPackage* GetPackageByContentDefault(const void* ContentDefaultReferrer);
+    ENGINE_API LRegistryPackage* GetPanickedPackageByContentDefault(const void* ContentDefaultReferrer);
 
-    FORCEINLINE auto GetRegisteredObjects() -> TArray<LRegistryPackage>& { return this->RegisteredObjects; }
+    FORCEINLINE TArray<LRegistryPackage>& GetRegisteredObjects() { return this->RegisteredObjects; }
     //# Gets all registered static class that inherit in any way from InStaticClass.
     ENGINE_API void GetRegisteredObjectsOfClass(const LObjectClass* InStaticClass, TArray<const LObjectClass*>* OutArray) const;
 
@@ -373,13 +403,13 @@ struct LRegistrationCallbackHelper final
     //# @param  Flags       The flags that describe class-specific behavior.
     //# @param  Parent      The namespaced name of the parent class.
     //#
-    template <typename TObj = JObjectBase>
+    template <typename TObj = JObjectBase> requires std::is_base_of_v<JObjectBase, TObj>
     static void DoRegisterContentsForClass(LObjectClass* StaticClass, const EClassFlags::Type Flags, LString&& Parent);
 };
 
 } /* ~Namespace Private */
 
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* NewObject()
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
@@ -387,7 +417,7 @@ FORCEINLINE TObj* NewObject()
     return NewObject<TObj>(GOmniVitaContext);
 }
 
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* NewObject(LObjectContext* InContext)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
@@ -395,7 +425,7 @@ FORCEINLINE TObj* NewObject(LObjectContext* InContext)
     return Private::LObjectMiscellaneousAccessor::NewObject<TObj>(InContext);
 }
 
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* NewObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
     static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
@@ -418,23 +448,29 @@ FORCEINLINE JObjectBase* NewObject(LObjectContext* InContext, const LObjectClass
     return Private::LObjectMiscellaneousAccessor::NewObject(InContext, InStaticClass);
 }
 
-template <typename TObj>
+template <typename TObj> requires
+(
+        std::is_base_of_v<JObjectBase, TObj>
+    && (std::is_base_of_v<AActor, TObj> == false) /* If this fails, you should use #SpawnActor<T>. */
+    && (std::is_base_of_v<WNode, TObj> == false) /* If this fails, you should use #ConstructWidget<T>. */
+)
 FORCEINLINE TObj* NewDeferredObject()
 {
-    static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
-    static_assert(std::is_base_of_v<WNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return NewDeferredObject<TObj>(GOmniVitaContext);
 }
 
-template <typename TObj>
+template <typename TObj> requires
+(
+        std::is_base_of_v<JObjectBase, TObj>
+    && (std::is_base_of_v<AActor, TObj> == false) /* If this fails, you should use #SpawnActor<T>. */
+    && (std::is_base_of_v<WNode, TObj> == false) /* If this fails, you should use #ConstructWidget<T>. */
+)
 FORCEINLINE TObj* NewDeferredObject(LObjectContext* InContext)
 {
-    static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
-    static_assert(std::is_base_of_v<WNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
     return Private::LObjectMiscellaneousAccessor::NewDeferredObject<TObj>(InContext);
 }
 
-template <typename TObj, bool bAllowActor /* = false */, bool bAllowWidget /* = false */>
+template <typename TObj, bool bAllowActor /* = false */, bool bAllowWidget /* = false */> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* NewDeferredObject(LObjectContext* InContext, const LObjectClass* InStaticClass)
 {
     if constexpr (bAllowActor == false)
@@ -464,12 +500,15 @@ FORCEINLINE JObjectBase* NewDeferredObject(LObjectContext* InContext, const LObj
     return Private::LObjectMiscellaneousAccessor::NewDeferredObject(InContext, InStaticClass);
 }
 
-template <typename TObj>
+template <typename TObj> requires
+(
+        std::is_base_of_v<JObjectBase, TObj>
+    && (std::is_base_of_v<AActor, TObj> == false) /* If this fails, you should use #SpawnActor<T>. */
+    && (std::is_base_of_v<WNode, TObj> == false) /* If this fails, you should use #ConstructWidget<T>. */
+)
 FORCEINLINE TObj* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context)
 {
-    static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
-    static_assert(std::is_base_of_v<WNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
-    return reinterpret_cast<TObj*>(LObjectMiscellaneousAccessor::NewObject(Context, TObj::StaticClass()));
+    return static_cast<TObj*>(LObjectMiscellaneousAccessor::NewObject(Context, TObj::StaticClass()));
 }
 
 FORCEINLINE JObjectBase* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context, const LString& ClassName)
@@ -477,7 +516,7 @@ FORCEINLINE JObjectBase* Private::LObjectMiscellaneousAccessor::NewObject(LObjec
     return LObjectMiscellaneousAccessor::NewObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass);
 }
 
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* DynamicCast(JObjectBase* InObject)
 {
     if (InObject && Private::LObjectMiscellaneousAccessor::DynamicCast(InObject, TObj::StaticClass()))
@@ -488,74 +527,50 @@ FORCEINLINE TObj* DynamicCast(JObjectBase* InObject)
     return nullptr;
 }
 
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE const TObj* DynamicCast(const JObjectBase* InObject)
 {
     return DynamicCast<TObj>(const_cast<JObjectBase*>(InObject));
 }
 
-template <typename TObj, typename U, bool bAllowForNullptr /* = false */>
+template <typename TObj, typename U, bool bAllowForNullptr /* = false */> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* CheckedStaticCast(U* InObject)
 {
-    static_assert(std::is_base_of_v<JObjectBase, U>);
-
-#if DO_CHECKS
-    if constexpr (bAllowForNullptr)
-    {
-        if (InObject == nullptr)
-        {
-            return nullptr;
-        }
-    }
-    else
-    {
-        jassert( InObject )
-    }
-
-    if (TObj* Out = DynamicCast<TObj>(InObject); Out)
-    {
-        return Out;
-    }
-
-    panicMsgf( "Failed to cast object to [{}].", TObj::StaticClass()->GetSpacedClassName() )
-
-    return nullptr;
-#else /* DO_CHECKS */
-    return static_cast<TObj*>(InObject);
-#endif /* !DO_CHECKS */
+    return Private::CheckedStaticCastImpl<TObj, U, bAllowForNullptr>(InObject);
 }
 
-template <typename TObj, typename U, bool bAllowForNullptr /* = false */>
+template <typename TObj, typename U, bool bAllowForNullptr /* = false */> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE const TObj* CheckedStaticCast(const U* InObject)
 {
-    return CheckedStaticCast<TObj, U, bAllowForNullptr>(const_cast<U*>(InObject));
+    return Private::CheckedStaticCastImpl<TObj, U, bAllowForNullptr>(const_cast<U*>(InObject));
 }
 
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE const TObj* GetDefault()
 {
-    return reinterpret_cast<const TObj*>(TObj::StaticClass()->GetDefaultPackageReferrer());
+    return static_cast<const TObj*>(TObj::StaticClass()->GetDefaultPackageReferrer());
 }
 
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* GetMutableDefault()
 {
-    return reinterpret_cast<TObj*>(TObj::StaticClass()->GetMutableDefaultPackageReferrer());
+    return static_cast<TObj*>(TObj::StaticClass()->GetMutableDefaultPackageReferrer());
 }
 
-template <typename TObj>
+template <typename TObj> requires
+(
+       std::is_base_of_v<JObjectBase, TObj>
+    && (std::is_base_of_v<AActor, TObj> == false) /* If this fails, you should use #SpawnActor<T>. */
+    && (std::is_base_of_v<WNode, TObj> == false) /* If this fails, you should use #ConstructWidget<T>. */
+)
 FORCEINLINE TObj* Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObjectContext* Context)
 {
-    static_assert(std::is_base_of_v<AActor, TObj> == false, "AActor now allowed. Use SpawnActor<T> instead.");
-    static_assert(std::is_base_of_v<WNode, TObj> == false, "AActor now allowed. Use ConstructWidget<T> instead.");
-    return reinterpret_cast<TObj*>(LObjectMiscellaneousAccessor::NewDeferredObject(Context, TObj::StaticClass()));
+    return static_cast<TObj*>(LObjectMiscellaneousAccessor::NewDeferredObject(Context, TObj::StaticClass()));
 }
 
-template <typename TObj>
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE void Private::LRegistrationCallbackHelper::DoRegisterContentsForClass(LObjectClass* StaticClass, const EClassFlags::Type Flags, LString&& Parent)
 {
-    static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
-
     jassert( StaticClass )
     jassert( StaticClass->DefaultPackageReferrer )
 
@@ -603,16 +618,45 @@ FORCEINLINE void OnDefaultOnlyMallocMember(TStringBase<InDerived, InTraits, InAl
     ExplicitCommonZeroOnDefaultOnlyMallocMember(MemberField);
 }
 
-template <typename TObj>
-FORCEINLINE void Private::RegisterNewObjectType(
+template <typename TObj, typename U, bool bAllowForNullptr /* = false */> requires std::is_base_of_v<JObjectBase, TObj>
+FORCEINLINE TObj* Private::CheckedStaticCastImpl(U* InObject)
+{
+#if DO_CHECKS
+    if constexpr (bAllowForNullptr)
+    {
+        if (InObject == nullptr)
+        {
+            return nullptr;
+        }
+    }
+    else
+    {
+        jassert( InObject )
+    }
+
+    if (TObj* Out { DynamicCast<TObj>(InObject) }; Out)
+    {
+        return Out;
+    }
+
+    panicMsgf( "Failed to cast object to [{}].", TObj::StaticClass()->GetSpacedClassName() )
+
+    return nullptr;
+#else /* DO_CHECKS */
+    return static_cast<TObj*>(InObject);
+#endif /* !DO_CHECKS */
+}
+
+template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
+FORCEINLINE void Private::RegisterNewObjectType
+(
     LString SpacedClassName,
     GetContentDefaultFunctor GetContentDefaultDelegate,
     OnRegistrationDelegate Callback
 )
 {
-    static_assert(std::is_base_of_v<JObjectBase, TObj>, "TObj must be a derived class of JObjectBase.");
-
-    Private::GetRegisterObjectQueue().Emplace(
+    Private::GetRegisterObjectQueue().Emplace
+    (
         std::forward<LString>(SpacedClassName),
         GetContentDefaultDelegate,
         Callback

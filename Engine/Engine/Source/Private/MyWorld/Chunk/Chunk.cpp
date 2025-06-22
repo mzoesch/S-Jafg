@@ -28,8 +28,9 @@ void Jafg::LChunkRendererComponent::Draw(const LViewport& Context, const LEye& E
     const LChunkShader& Shader = this->Owner.GetSharedArgs()->ChunkShader;
 
     Shader.Use();
-    glActiveTexture(GL_TEXTURE0);
+
     glBindTexture(GL_TEXTURE_2D, Shader.GetBlendOpaqueTextureLocation());
+
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, Shader.GetBlendersTextureLocation());
 

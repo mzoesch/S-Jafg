@@ -5,9 +5,7 @@
 #include "Engine/Engine.h"
 #include "User/LocalEgo.h"
 #include "Widgets/Region.h"
-#include "Widgets/Switcher.h"
 #include "Widgets/Blueprint/CommonMenuTabBar.h"
-#include "Widgets/Viewport.h"
 #include "Platform/Surface.h"
 #include "User/Frontend/Osd/PreferencesScreen.h"
 #include "Widgets/Spacer.h"
@@ -16,14 +14,10 @@ void Jafg::WPauseScreen::Construct()
 {
     Super::Construct();
 
-    // TODO Remove WRegion
-    MakeRootNode(WRegion).Anchor(EAnchor::Fill)
-    [
-        NewNode(WCommonMenuTabBar).SaveTo(&this->TabBar)
-            .Anchor(EAnchor::Fill)
-            .AlignHorizontal()
-            .BlurBackground(true)
-    ]
+    MakeRootNode(WCommonMenuTabBar).SaveTo(&this->TabBar)
+        .Anchor(EAnchor::Fill)
+        .AlignHorizontal()
+        .BlurBackground(true)
     FinishWidgetStyling()
 
     {

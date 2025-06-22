@@ -200,7 +200,6 @@ void Jafg::LFontShaderContext::Draw(const LViewport& Context, LGenericShaderCont
     ::GetFontShaderProgram().SetMatrixUniform("Projection", Maths::MakeOrthographicProjectionMatrix(WindowDimensions));
     ::GetFontShaderProgram().SetFloatUniform("OrthoZDepth", Context.GetFrameOrthoZLayerDepth());
     glBindVertexArray(this->Vao);
-    glActiveTexture(GL_TEXTURE0);
 
     float X = Args.Offset.X + Args.Padding.Left;
 

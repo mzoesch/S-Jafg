@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreAfx.h"
+#include "TextureCore.h"
 
 namespace Jafg
 {
@@ -35,6 +36,7 @@ public:
     //# Uploads the texture to the graphics processing unit.
     //#
     ENGINE_API void Upload(const LTexture2& InTexture, const bool bForceAlpha = false);
+    ENGINE_API void Upload(const LIntVector2& InDimensions, const ERawImageFormat::Type InFormat);
 
     //#
     //# Shreds the texture from the graphics processing unit.

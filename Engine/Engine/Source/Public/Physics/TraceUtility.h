@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreAfx.h"
 #include "Engine/ObjectBaseUtility.h"
 
 namespace Jafg

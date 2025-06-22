@@ -130,7 +130,8 @@ public:
 
     FORCEINLINE auto GetBackgroundContexts() const noexcept -> const TArray<LBackgroundContext>& { return this->BackgroundContexts; }
     FORCEINLINE auto GetMutableBackgroundContexts() noexcept -> TArray<LBackgroundContext>& { return this->BackgroundContexts; }
-    FORCEINLINE auto GetBackgroundBuffer() const noexcept -> const LFrameBuffer& { return this->BackgroundBuffer; }
+    FORCEINLINE bool IsIntermediateBufferValid() const noexcept { return this->IntermediateBuffer.IsValid(); }
+    FORCEINLINE auto GetIntermediateBuffer() const noexcept -> const LFrameBuffer& { return this->IntermediateBuffer; }
 
     //#
     //# Get the most recent context that was used on this viewport. Might be null, so do not use without checking.
@@ -192,7 +193,7 @@ private:
     mutable LVector2D SweepTranslation;
 
     TArray<LBackgroundContext> BackgroundContexts;
-    LFrameBuffer BackgroundBuffer;
+    LFrameBuffer IntermediateBuffer;
 
     LSurface* CachedContext { nullptr };
     TOptional<LVector2> CachedCursorLocation;

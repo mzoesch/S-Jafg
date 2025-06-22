@@ -8,8 +8,6 @@
 #include "User/Frontend/Hud/Crosshair.h"
 #include "User/Frontend/Osd/ConsoleScreen.h"
 #include "User/Frontend/Osd/PauseScreen.h"
-#include "Widgets/ScrollRegion.h"
-#include "Widgets/VRegion.h"
 
 bool Jafg::JCoreWorldWidgetsSubsystem::ShouldCreateSubsystem(const LObjectContext* InOuter) const
 {
@@ -53,43 +51,6 @@ void Jafg::JCoreWorldWidgetsSubsystem::Initialize(LSubsystemCollection& Collecti
     this->PauseScreen->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
     this->PauseScreen->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->PauseScreen);
-
-    // WUserWidget* Test = ConstructDeferredWidgetNode<WUserWidget>(this->GetOuter());
-    // Test->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
-    // WScrollRegion* R;
-    // NewNodeCtx(Test, WScrollRegion).SaveTo(&R)
-    //     .Anchor(EAnchor::HRight | EAnchor::VFill)
-    //     .MinDesiredSize({600,0})
-    //     .Tint({255,0,0,32})
-    //     .Padding({25})
-    // [
-    //     NewNodeCtx(Test, WVRegion)
-    //         .Anchor(EAnchor::Fill)
-    //         .Tint({0,255,0,64})
-    //     [
-    //         NewNodeCtx(Test, WRegion)
-    //            .MinDesiredSize({1600,400})
-    //            .Tint({255,0,255,64})
-    //         +
-    //         NewNodeCtx(Test, WRegion)
-    //             .MinDesiredSize({2000,400})
-    //             .Tint({0,0,255,128})
-    //         +
-    //         NewNodeCtx(Test, WRegion)
-    //             .MinDesiredSize({1800,400})
-    //             .Tint({255,0,255,64})
-    //         +
-    //         NewNodeCtx(Test, WRegion)
-    //             .MinDesiredSize({400})
-    //             .Tint({0,0,255,64})
-    //         +
-    //         NewNodeCtx(Test, WRegion)
-    //             .MinDesiredSize({400})
-    //             .Tint({255,0,255,64})
-    //     ]
-    // ];
-    // Test->AddChild(R);
-    // MakeDeferredObjectFinal(Test);
 
     return;
 }

@@ -31,21 +31,24 @@ public:
 
 private:
 
-    WTextBlock* FpsSection = nullptr;
-    WTextBlock* TimeStatsSection = nullptr;
+    WTextBlock* FpsSection { nullptr };
+    WTextBlock* TimeStatsSection { nullptr };
 
-    WTextBlock* LocalPawnLocationSection = nullptr;
-    WTextBlock* LocalPawnFacingSection = nullptr;
-    WTextBlock* LocalPawnChunkSection = nullptr;
-    WTextBlock* LocalPawnVoxelSection = nullptr;
+    WTextBlock* LocalPawnLocationSection { nullptr };
+    WTextBlock* LocalPawnFacingSection { nullptr };
+    WTextBlock* LocalPawnChunkSection { nullptr };
+    WTextBlock* LocalPawnVoxelSection { nullptr };
 
-    WTextBlock* LocalPawnTargetVoxelSectionDestroy = nullptr;
-    WTextBlock* LocalPawnTargetVoxelSectionCreate = nullptr;
+    WTextBlock* LocalPawnTargetVoxelSectionDestroy { nullptr };
+    WTextBlock* LocalPawnTargetVoxelSectionCreate { nullptr };
+
+    WTextBlock* MyWorldTimeSection { nullptr };
+    WTextBlock* MyWorldTimeExtrasSection { nullptr };
 
     //# The time when we should invalidate the cache in seconds.
-    double ResetTime = 0.1;
+    f32 ResetTime { 0.1f };
     //# The current time in seconds when the cache will be invalidated.
-    double InvalidateCacheTime = 0.0;
+    f32 InvalidateCacheTime { 0.0f };
 
     LTexture2 TestTexture;
 };

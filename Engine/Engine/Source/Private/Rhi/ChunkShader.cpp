@@ -21,7 +21,6 @@ bool Jafg::LChunkShader::Make(const LName InName, TArray<LShaderCompileTimeConst
     this->Program.Use();
 
     glGenTextures(1, &this->BlendOpaqueTex);
-    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, this->BlendOpaqueTex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -33,8 +32,8 @@ bool Jafg::LChunkShader::Make(const LName InName, TArray<LShaderCompileTimeConst
     );
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    glGenTextures(1, &this->BlendersTex);
     glActiveTexture(GL_TEXTURE1);
+    glGenTextures(1, &this->BlendersTex);
     glBindTexture(GL_TEXTURE_2D, this->BlendersTex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

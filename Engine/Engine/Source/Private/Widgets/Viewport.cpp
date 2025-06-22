@@ -302,11 +302,11 @@ void Jafg::LViewport::OnClear()
     if (this->bChangedBackgroundColor)
     {
         this->bChangedBackgroundColor = false;
-        this->BackgroundBuffer.ResetAndMakeDrawTarget(this->BackgroundColor);
+        this->IntermediateBuffer.MakeDrawTargetAndReset(this->BackgroundColor);
     }
     else
     {
-        this->BackgroundBuffer.ResetAndMakeDrawTarget();
+        this->IntermediateBuffer.MakeDrawTargetAndReset();
     }
 
     return;
@@ -335,7 +335,7 @@ void Jafg::LViewport::Draw()
     this->FrameTranslation = LVector2D::ZeroVector;
     this->RecalculateScaleFactor();
 
-    this->BackgroundBuffer.MakeDrawTarget();
+    this->IntermediateBuffer.MakeDrawTarget();
 
     RendererStateMachine::PrepareForPerspectivePainting();
     for (const auto& [Eye, World] : this->BackgroundContexts)
@@ -355,7 +355,6 @@ void Jafg::LViewport::Draw()
         continue;
     }
 
-    LFrameBuffer::ResetAndMakeDefaultDrawTarget();
     RendererStateMachine::PrepareForOrthographicPainting();
     for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)
     {
@@ -363,8 +362,6 @@ void Jafg::LViewport::Draw()
         Shader->UpdateViewportUniforms(*this);
         continue;
     }
-
-    this->BackgroundBuffer.PaintToViewport(*this);
 
     for (const WUserWidget* Widget : this->TopLevelWidgets)
     {
@@ -388,6 +385,9 @@ void Jafg::LViewport::Draw()
             LOG_WARNING(LogWidgetFramework, "Viewport translation state is not zero: [{}].", this->FrameTranslation.ToString())
         }
     )
+
+    LFrameBuffer::MakeDefaultDrawTarget();
+    this->IntermediateBuffer.PaintToViewport(*this);
 
     return;
 }
@@ -426,18 +426,23 @@ void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
 
     this->Dimensions = InDimensions;
 
-    if (this->BackgroundBuffer.IsMeaningful())
+    if (this->IntermediateBuffer.IsValid())
     {
-        this->BackgroundBuffer = { };
+        this->IntermediateBuffer = { };
     }
 
     if (GEngine)
     {
-        this->BackgroundBuffer.Build(this->GetDimensions());
+        this->IntermediateBuffer.Build(this->GetDimensions());
     }
     else
     {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::AfterCorePackageLoad, [this] { this->BackgroundBuffer.Build(this->GetDimensions()); });
+        Tasks::Make(ENamedThreads::Master, ETaskTime::AfterCorePackageLoad, [this](void) -> void
+        {
+            this->IntermediateBuffer.Build(this->GetDimensions());
+
+            return;
+        });
     }
 
     return;

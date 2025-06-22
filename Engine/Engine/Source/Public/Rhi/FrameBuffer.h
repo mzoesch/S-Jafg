@@ -19,17 +19,22 @@ public:
     LFrameBuffer() = default;
     ~LFrameBuffer();
 
-    FORCEINLINE bool IsMeaningful() const { return this->bIsMeaningful; }
+    FORCEINLINE LFrameBuffer(const LFrameBuffer&) noexcept = delete;
+    FORCEINLINE LFrameBuffer(LFrameBuffer&& Other) noexcept;
+    FORCEINLINE LFrameBuffer& operator=(const LFrameBuffer&) noexcept = delete;
+    FORCEINLINE LFrameBuffer& operator=(LFrameBuffer&& Other) noexcept;
+
+    FORCEINLINE bool IsValid() const { return this->bValid; }
 
     void Build(const LIntVector2& InSize);
 
     void MakeDrawTarget();
-    void ResetAndMakeDrawTarget();
-    void ResetAndMakeDrawTarget(const LLinearColor& InColor);
+    void MakeDrawTargetAndReset();
+    void MakeDrawTargetAndReset(const LLinearColor& InColor);
 
     static void MakeDefaultDrawTarget();
-    static void ResetAndMakeDefaultDrawTarget();
-    static void ResetAndMakeDefaultDrawTarget(const LLinearColor& InColor);
+    static void MakeDefaultDrawTargetAndReset();
+    static void MakeDefaultDrawTargetAndReset(const LLinearColor& InColor);
 
     ENGINE_API void ReadToActive() const;
     ENGINE_API void ReadTo(const u32 InHandle) const;
@@ -41,10 +46,28 @@ private:
 
     void Orphan();
 
-    bool bIsMeaningful = false;
-    u32 Handle = 0;
-    u32 Depth = 0;
-    u32 Color = 0;
+    bool bValid { false };
+    u32 Handle { 0 };
+    u32 Depth { 0 };
+    u32 Color { 0 };
 };
+
+FORCEINLINE LFrameBuffer::LFrameBuffer(LFrameBuffer&& Other) noexcept
+    : bValid(Other.bValid), Handle(Other.Handle), Depth(Other.Depth), Color(Other.Color)
+{
+    Other.bValid = false;
+    return;
+}
+
+FORCEINLINE LFrameBuffer& LFrameBuffer::operator=(LFrameBuffer&& Other) noexcept
+{
+    this->bValid = Other.bValid;
+    this->Handle = Other.Handle;
+    this->Depth = Other.Depth;
+    this->Color = Other.Color;
+
+    Other.bValid = false;
+    return *this;
+}
 
 } /* ~Namespace Jafg */

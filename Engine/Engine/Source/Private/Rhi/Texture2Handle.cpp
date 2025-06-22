@@ -18,9 +18,8 @@ void Jafg::LTexture2Handle::Upload(const LTexture2& InTexture, const bool bForce
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    this->Handle = 0;
+    this->Handle.Emplace(0);
 
-    glActiveTexture(GL_TEXTURE0);
     glGenTextures(1, &this->Handle.GetValue());
     glBindTexture(GL_TEXTURE_2D, *this->Handle);
 
@@ -70,13 +69,49 @@ void Jafg::LTexture2Handle::Upload(const LTexture2& InTexture, const bool bForce
     return;
 }
 
+void Jafg::LTexture2Handle::Upload(const LIntVector2& InDimensions, const ERawImageFormat::Type InFormat)
+{
+    check( InDimensions.X > 0 && InDimensions.Y > 0 )
+    check( this->Handle.IsValid() == false )
+
+    this->Handle.Emplace(0);
+
+    glGenTextures(1, &this->Handle.GetValue());
+    glBindTexture(GL_TEXTURE_2D, *this->Handle);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    if (InFormat == ERawImageFormat::BGRA8)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, InDimensions.X, InDimensions.Y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    }
+    else if (InFormat == ERawImageFormat::BGR8)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, InDimensions.X, InDimensions.Y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    }
+    else
+    {
+        panicMsgf("Unsupported image format [{}].", LexToString(InFormat))
+    }
+
+    LOG_VERBOSE
+    (
+        LogRhi, "Uploaded texture2 with a size of [{}x{}] to [{}].",
+        InDimensions.X,
+        InDimensions.Y,
+        this->Handle.GetValue()
+    )
+
+    return;
+}
+
 void Jafg::LTexture2Handle::Shred()
 {
     if (this->IsValid())
     {
         LOG_VERBOSE(LogTextureSubsystem, "Shredding texture [{}].", *this->Handle)
 
-        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, *this->Handle);
         glDeleteTextures(1, &this->Handle.GetValue());
         this->Handle.Reset();

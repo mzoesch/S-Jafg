@@ -178,6 +178,11 @@ public:
     //#
     ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth() const;
 
+    //#
+    //# The day of the month with the year, as it would be on Earth.
+    //#
+    ENGINE_API LString GetDayCycleAsItWouldBeOnEarth() const;
+
 private:
 
     void DefaultOnly_RegisterCliObjects();

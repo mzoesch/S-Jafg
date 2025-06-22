@@ -50,18 +50,18 @@ void Jafg::LBlurShaderContext::Draw(const LViewport& Context, LGenericShaderCont
     this->Shader.Use();
     glBindVertexArray(this->Vao);
 
-    const float Scale = Context.GetScaleFactor();
+    const f32 Scale { Context.GetScaleFactor() };
     const LIntVector2 WindowDimensions = Context.GetDimensions();
     const LMatrix Projection = Maths::MakeOrthographicProjectionMatrix(
-        LVector2(static_cast<float>(WindowDimensions.X), static_cast<float>(WindowDimensions.Y))
+        LVector2{static_cast<f32>(WindowDimensions.X), static_cast<f32>(WindowDimensions.Y)}
     );
 
     this->Shader.SetMatrixUniform("Projection", Projection);
     this->Shader.SetFloatUniform("OrthoZDepth", Context.GetFrameOrthoZLayerDepth());
     this->Shader.SetFloatUniform("BlurStrength", Args.Strength);
 
-    float Vertices[] =
-        {
+    f32 Vertices[]
+    {
         TopLeft.X * Scale,            TopLeft.Y * Scale,            /* Top    Left  */
         (TopLeft.X + Size.X) * Scale, TopLeft.Y * Scale,            /* Top    Right */
         TopLeft.X * Scale,            (TopLeft.Y + Size.Y) * Scale, /* Bottom Left  */
@@ -70,17 +70,17 @@ void Jafg::LBlurShaderContext::Draw(const LViewport& Context, LGenericShaderCont
         (TopLeft.X + Size.X) * Scale, (TopLeft.Y + Size.Y) * Scale, /* Bottom Right */
         TopLeft.X * Scale,            (TopLeft.Y + Size.Y) * Scale  /* Bottom Left  */
     };
-    for (float& Vertex : Vertices) { Vertex = Maths::Floor(Vertex); }
+    for (f32& Vertex : Vertices) { Vertex = Maths::Floor(Vertex); }
 
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_DYNAMIC_DRAW);
 
+    check( Context.IsIntermediateBufferValid() )
+    Context.GetIntermediateBuffer().ReadToActive();
+
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-#if WITH_DEBUG_ZERO_UNBOUND
     glBindVertexArray(0);
-    glUseProgram(0);
-#endif /* ~WITH_DEBUG_ZERO_UNBOUND */
 
     return;
 }

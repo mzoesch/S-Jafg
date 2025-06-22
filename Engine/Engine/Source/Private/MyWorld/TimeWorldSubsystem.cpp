@@ -14,6 +14,52 @@ const Jafg::TArray<Jafg::LString> NamedDayTimeValues
     "Sunrise", "Morning", "Noon", "Dusk", "Night", "Midnight",
 };
 
+FORCEINLINE constexpr bool IsLeapYear(const u64 InYear)
+{
+    if (InYear % 4 != 0)
+    {
+        return false;
+    }
+
+    if (InYear % 100 != 0)
+    {
+        return true;
+    }
+
+    if (InYear % 400 != 0)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+FORCEINLINE u64 DaysInMonth(const u64 InYear, const u64 InMonth)
+{
+    static constexpr u64 Days[]
+    {
+        31u,
+        28u,
+        31u,
+        30u,
+        31u,
+        30u,
+        31u,
+        31u,
+        30u,
+        31u,
+        30u,
+        31u
+    };
+
+    if (InMonth == 2 && ::IsLeapYear(InYear))
+    {
+        return 29u;
+    }
+
+    return Days[InMonth - 1];
+}
+
 } /* ~Namespace <Anonymous> */
 
 Jafg::ENamedDayTime::Type Jafg::StringToLex(const LString& InString)
@@ -261,6 +307,62 @@ Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth()
     const u64 Seconds { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D) - (Minutes * JAFG_M2MS_D)) * JAFG_MS2S_D)) };
 
     return LString::SprintF("{:02}:{:02}:{:02}", Hours, Minutes, Seconds);
+}
+
+Jafg::LString Jafg::JTimeWorldSubsystem::GetDayCycleAsItWouldBeOnEarth() const
+{
+    u64 DaysRemaining { this->DayCycle };
+
+    /* Lol, there is no year zero, wtf. Why in the actual fuck would you wanna count from one. */
+    u64 Year { 1 };
+    while (true)
+    {
+        if
+        (
+            const u64 DaysInYear { ::IsLeapYear(Year) ? 366u : 365u };
+            DaysRemaining >= DaysInYear
+        )
+        {
+            DaysRemaining -= DaysInYear;
+            ++Year;
+
+            continue;
+        }
+
+        break;
+    }
+
+    i32 Month { 1 }; /* Start at one... */
+    while (true)
+    {
+        if
+        (
+            const u64 DaysInCurrentMonth { ::DaysInMonth(Year, Month) };
+            DaysRemaining >= DaysInCurrentMonth
+        )
+        {
+            DaysRemaining -= DaysInCurrentMonth;
+            ++Month;
+
+            continue;
+        }
+
+        break;
+    }
+
+    /*
+     * Plus one because days are not zero-based. Fucking idiots why did they think 500 years ago
+     * that one-based stuff is a good idea?
+     */
+    const i32 Day { static_cast<i32>(DaysRemaining + 1) };
+
+    return LString::SprintF
+    (
+        "{:02}-{:02}-{:04}",
+        Day,
+        Month,
+        Year
+    );
 }
 
 void Jafg::JTimeWorldSubsystem::DefaultOnly_RegisterCliObjects()

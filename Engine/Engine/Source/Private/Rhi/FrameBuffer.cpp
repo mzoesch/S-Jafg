@@ -9,16 +9,16 @@
 namespace
 {
 
-u32 Vao = 0;
-u32 Vbo = 0;
-u32 Ebo = 0;
-Jafg::LShader BufferShader = { };
+u32 Vao { 0 };
+u32 Vbo { 0 };
+u32 Ebo { 0 };
+Jafg::LShader BufferShader;
 
-void ConditionallyLoadShader()
+void LoadConditionally()
 {
     using namespace Jafg;
 
-    static bool bLoaded = false;
+    static bool bLoaded { false };
     if (bLoaded)
     {
         return;
@@ -37,28 +37,24 @@ void ConditionallyLoadShader()
     glGenBuffers(1, &Ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Ebo);
 
-    // Locations
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), static_cast<void*>(nullptr));
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
-    // Texs
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), reinterpret_cast<void*>(2 * sizeof(f32)));
     glEnableVertexAttribArray(1);
 
-    constexpr float Vertices[] =
+    constexpr f32 Vertices[]
     {
-        // Locations      // Texs
         -1.0f,  1.0f,     0.0f, 1.0f, /* Top    Left  */
          1.0f,  1.0f,     1.0f, 1.0f, /* Top    Right */
         -1.0f, -1.0f,     0.0f, 0.0f, /* Bottom Left  */
          1.0f, -1.0f,     1.0f, 0.0f, /* Bottom Right */
     };
-    const u32 Indices[] = { 0, 1, 2, /*  ||  */ 1, 3, 2 };
+    constexpr u32 Indices[] { 0, 1, 2, /*  ||  */ 1, 3, 2 };
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
 
     glBindVertexArray(0);
-    glUseProgram(0);
 
     bLoaded = true;
 
@@ -69,7 +65,7 @@ void ConditionallyLoadShader()
 
 Jafg::LFrameBuffer::~LFrameBuffer()
 {
-    if (this->IsMeaningful())
+    if (this->IsValid())
     {
         this->Orphan();
     }
@@ -79,15 +75,15 @@ Jafg::LFrameBuffer::~LFrameBuffer()
 
 void Jafg::LFrameBuffer::Build(const LIntVector2& InSize)
 {
-    if (this->IsMeaningful())
+    if (this->IsValid())
     {
         LOG_WARNING(LogRhi, "Old framebuffer [{}] is implicitly orphaned.", this->Handle)
         this->Orphan();
     }
 
-    glBindVertexArray(0);
+    GLint CurFb { 0 };
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &CurFb);
 
-    glActiveTexture(GL_TEXTURE0);
     glGenTextures(1, &this->Color);
     glBindTexture(GL_TEXTURE_2D, this->Color);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, static_cast<GLsizei>(InSize.X), static_cast<GLsizei>(InSize.Y), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
@@ -110,25 +106,25 @@ void Jafg::LFrameBuffer::Build(const LIntVector2& InSize)
         LOG_FATAL(LogRhi, "Framebuffer [{}] is not complete.", this->Handle)
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, CurFb);
 
-    this->bIsMeaningful = true;
+    this->bValid = true;
     LOG_VERBOSE(LogRhi, "Built framebuffer [{}].", this->Handle)
 
-    ConditionallyLoadShader();
+    LoadConditionally();
 
     return;
 }
 
 void Jafg::LFrameBuffer::MakeDrawTarget()
 {
-    checkSlow( this->IsMeaningful() )
+    checkSlow( this->IsValid() )
     glBindFramebuffer(GL_FRAMEBUFFER, this->Handle);
 
     return;
 }
 
-void Jafg::LFrameBuffer::ResetAndMakeDrawTarget()
+void Jafg::LFrameBuffer::MakeDrawTargetAndReset()
 {
     this->MakeDrawTarget();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -136,7 +132,7 @@ void Jafg::LFrameBuffer::ResetAndMakeDrawTarget()
     return;
 }
 
-void Jafg::LFrameBuffer::ResetAndMakeDrawTarget(const LLinearColor& InColor)
+void Jafg::LFrameBuffer::MakeDrawTargetAndReset(const LLinearColor& InColor)
 {
     this->MakeDrawTarget();
     glClearColor(InColor.R, InColor.G, InColor.B, InColor.A);
@@ -150,7 +146,7 @@ void Jafg::LFrameBuffer::MakeDefaultDrawTarget()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Jafg::LFrameBuffer::ResetAndMakeDefaultDrawTarget()
+void Jafg::LFrameBuffer::MakeDefaultDrawTargetAndReset()
 {
     LFrameBuffer::MakeDefaultDrawTarget();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -158,19 +154,18 @@ void Jafg::LFrameBuffer::ResetAndMakeDefaultDrawTarget()
     return;
 }
 
-void Jafg::LFrameBuffer::ResetAndMakeDefaultDrawTarget(const LLinearColor& InColor)
+void Jafg::LFrameBuffer::MakeDefaultDrawTargetAndReset(const LLinearColor& InColor)
 {
     LFrameBuffer::MakeDefaultDrawTarget();
     glClearColor(InColor.R, InColor.G, InColor.B, InColor.A);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
     return;
 }
 
 void Jafg::LFrameBuffer::ReadToActive() const
 {
-    checkSlow( this->IsMeaningful() )
+    checkSlow( this->IsValid() )
     glBindTexture(GL_TEXTURE_2D, this->Color);
 
     return;
@@ -187,32 +182,39 @@ void Jafg::LFrameBuffer::ReadTo(const u32 InHandle) const
 
 void Jafg::LFrameBuffer::PaintToViewport(const LViewport& InContext) const
 {
-    // Just don't fuck with specific custom viewport preferences.
-    const bool CurrentDepthTest = glIsEnabled(GL_DEPTH_TEST);
-    const bool CurrentBlend = glIsEnabled(GL_BLEND);
+    /* Just don't fuck with specific custom viewport preferences. */
+    const bool CurrentDepthTest { static_cast<bool>(glIsEnabled(GL_DEPTH_TEST)) };
+    const bool CurrentBlend { static_cast<bool>(glIsEnabled(GL_BLEND)) };
 
     BufferShader.Use();
     BufferShader.SetFloatUniform("OrthoZDepth", InContext.GetFrameOrthoZLayerDepth());
+
     glBindVertexArray(Vao);
-    this->ReadTo(GL_TEXTURE0);
+
+    this->ReadToActive();
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-    if (UNLIKELY(CurrentDepthTest)) { glEnable(GL_DEPTH_TEST); }
-    if (LIKELY(CurrentBlend)) { glEnable(GL_BLEND); }
 
-#if WITH_DEBUG_ZERO_UNBOUND
-    glUseProgram(0);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+    if (CurrentDepthTest)
+    {
+        glEnable(GL_DEPTH_TEST);
+    }
+    if (CurrentBlend)
+    {
+        glEnable(GL_BLEND);
+    }
+
     glBindVertexArray(0);
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
 
     return;
 }
 
 void Jafg::LFrameBuffer::Orphan()
 {
-    if (this->bIsMeaningful == false)
+    if (this->bValid == false)
     {
         LOG_WARNING(LogRhi, "Triggered orphaning of the non-meaningful frame buffer [{}].", this->Handle)
         return;
@@ -220,16 +222,11 @@ void Jafg::LFrameBuffer::Orphan()
 
     LOG_VERBOSE(LogRhi, "Orphaning frame buffer [{}].", this->Handle)
 
-    // glDeleteFramebuffers(1, &this->Handle);
-    // glDeleteTextures(1, &this->Color);
-    // glDeleteRenderbuffers(1, &this->Depth);
+    glDeleteFramebuffers(1, &this->Handle);
+    glDeleteTextures(1, &this->Color);
+    glDeleteRenderbuffers(1, &this->Depth);
 
-#if WITH_DEBUG_ZERO_UNBOUND
-    this->Handle = 0;
-    this->Color = 0;
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
-
-    this->bIsMeaningful = false;
+    this->bValid = false;
 
     return;
 }
