@@ -1,100 +1,108 @@
 // Copyright mzoesch. All rights reserved.
 
-#![allow(dead_code)]
+mod module_kind;
+mod finder;
+mod paths;
+mod reflector;
+mod tokenizer;
 
-mod core;
-mod solution_generator;
-mod build_tool;
-
-use clap::{ArgAction, Parser};
-use crate::core::application::Application;
-use crate::core::paths;
-use crate::core::finder;
+use clap::Parser;
+use module_kind::ModuleKind;
 
 /// Main CLI structure for the motor of Jafg.
-#[derive(Parser, Debug)]
+#[derive(clap::Parser, Debug)]
 #[command(author, version, about)]
 struct Cli
 {
-    /// Solution generator for C++ projects. Usage: [GEN=SOLUTION_NAME | GenerateAll]
-    #[arg(short = 'S', long = "SolutionGenerator", action = ArgAction::Append, num_args = 1..=2)]
-    solution_generator: Vec<String>,
+    /// Whether to emit verbose output.
+    #[arg(long = "Verbose", default_value_t = false)]
+    verbose: bool,
 
-    /// Build tool working before and after module compilation.
-    /// Usage: [pre-build | post-build; SLN=<str>; MODULE=<str>; KIND=<str>; PLATFORM=<str>; ARCH=<str>; TARGET=<str>]
-    #[arg(short = 'B', long = "BuildTool", action = ArgAction::Append, num_args = 1..)]
-    build_tool: Vec<String>,
+    /// Whether to invoke pre-build tasks. This or #post_build must be set.
+    #[arg(long = "PreBuild", default_value_t = false)]
+    pre_build: bool,
+    /// Whether to invoke post-build tasks. This or #pre_build must be set.
+    #[arg(long = "PostBuild", default_value_t = false)]
+    post_build: bool,
 
-    /// Does nothing. For debugging purposes.
-    #[arg(long = "DoNothing")]
-    do_nothing: bool,
+    /// The module to build for.
+    #[arg(long = "Module")]
+    module: String,
+
+    /// The platform to build for.
+    #[arg(long = "Platform")]
+    platform: String,
+
+    /// The architecture to build for.
+    #[arg(long = "Architecture")]
+    architecture: String,
+
+    /// The target to build for.
+    #[arg(long = "Target")]
+    target: String,
+
+    /// The configuration to build for.
+    #[arg(long = "Configuration")]
+    config: String,
+
+    /// The kind of the module to build.
+    #[arg(long = "Kind")]
+    kind: ModuleKind,
 }
 
 fn main()
 {
     let cwd: std::path::PathBuf = std::env::current_dir().unwrap();
     let new_cwd: String = paths::get_engine_root_dir();
-    println!("Changing working directory from [{}] to [{}]", cwd.to_str().unwrap(), new_cwd);
     std::env::set_current_dir(&new_cwd).unwrap();
 
     let args: Cli = Cli::parse();
-    let mut app: Application = Default::default();
 
-    load_workspace(&mut app);
-    route_to_subprogram(&app, args);
+    if !args.pre_build && !args.post_build
+    {
+        eprintln!("Error: Either --PreBuild or --PostBuild must be set.");
+        std::process::exit(1);
+    }
 
-    print!("Popping working directory from [{}] to [{}]", new_cwd, cwd.to_str().unwrap());
+    if args.pre_build
+    {
+        launch_pre_build(&args);
+    }
+
+    if args.post_build
+    {
+        launch_post_build(&args);
+    }
+
     std::env::set_current_dir(cwd).unwrap();
     std::process::exit(0);
 }
 
-fn load_workspace(app: &mut Application)
+fn launch_pre_build(args: &Cli)
 {
-    if app.solutions.len() > 0
+    if args.verbose
     {
-        panic!("Workspace already loaded.");
+        println!("Launching pre-build for [{}] ...", args.module);
     }
 
-    finder::ensure_file(paths::PATH_MOD_CACHE);
-    let cache: String = finder::read_file(paths::PATH_MOD_CACHE);
-    if cache.len() == 0
-    {
-        println!("No cache found. Skipping load.");
-        return;
-    }
+    /*
+     * Construct paths so we do not have to deal with missing dirs when crating random files in
+     * them - some platforms forbid to create files in dirs that don't exist.
+     * Also better for the target IDE performance.
+     */
+    finder::ensure_path(&paths::construct_relative_gh_path(args));
+    finder::ensure_path(&paths::construct_relative_gt_path(args));
 
-    let cached_app: Result<Application, serde_json::Error> = serde_json::from_str(&cache);
-    if cached_app.is_err()
-    {
-        println!("Failed to load cache.");
-        cached_app.unwrap();
-        return;
-    }
-
-    *app = cached_app.unwrap();
+    reflector::reflect_module(args);
 
     return;
 }
 
-fn route_to_subprogram(app: &Application, args: Cli)
+fn launch_post_build(args: &Cli)
 {
-    if args.solution_generator.len() == 0 && args.build_tool.len() == 0
+    if args.verbose
     {
-        if args.do_nothing == false
-        {
-            panic!("No subprogram selected.");
-        }
-        return;
-    }
-
-    if args.solution_generator.len() > 0
-    {
-        solution_generator::launch::launch(app, &args);
-    }
-
-    if args.build_tool.len() > 0
-    {
-        build_tool::launch::launch(app, &args);
+        println!("Launching post-build for [{}] ...", args.module);
     }
 
     return;

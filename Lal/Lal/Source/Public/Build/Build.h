@@ -47,23 +47,23 @@
     #define WITH_FRONTEND           1
     #define WITH_LOCAL_LAYER        1
 #endif /* AS_CLIENT */
-#ifndef AS_SERVER
-    #define AS_SERVER               0
-#endif /* !AS_SERVER */
+#ifndef AS_DAEMON
+    #define AS_DAEMON               0
+#endif /* !AS_DAEMON */
 
-#if !(AS_CLIENT || AS_SERVER)
+#if !(AS_CLIENT || AS_DAEMON)
     #error "No build platform specified."
-#endif /* !(AS_CLIENT || AS_SERVER) */
+#endif /* !(AS_CLIENT || AS_DAEMON) */
 #if AS_CLIENT
-    #if AS_SERVER
+    #if AS_DAEMON
         #error "Multiple build platforms specified."
-    #endif /* AS_SERVER */
+    #endif /* AS_DAEMON */
 #endif /* AS_CLIENT */
-#if AS_SERVER
+#if AS_DAEMON
     #if AS_CLIENT
         #error "Multiple build platforms specified."
     #endif /* AS_CLIENT */
-#endif /* AS_SERVER */
+#endif /* AS_DAEMON */
 #ifndef WITH_FRONTEND
     #error "WITH_FRONTEND not defined."
 #endif /* !WITH_FRONTEND */

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <codecvt>
+#include <string>
 
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler dependent features for almost all compilers and platforms.
