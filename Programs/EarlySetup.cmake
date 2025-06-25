@@ -6,9 +6,32 @@ message(STATUS "ENGINE_ROOT: ${JAFG_ENGINE_ROOT}")
 message(STATUS "CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
 message(STATUS "CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}")
 
-#
+###############################################################################
+# Ensure the compiler.
+###############################################################################
+
+if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_LINUX)
+    string(REGEX MATCH ".*clang\\+\\+.*" REGREX_MATCHED ${CMAKE_CXX_COMPILER})
+    if(NOT REGREX_MATCHED)
+        message(FATAL_ERROR "C [${CMAKE_C_COMPILER}] and C++ [${CMAKE_CXX_COMPILER}] compiler are not from the Clang toolchain.")
+    endif()
+elseif(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WINDOWS)
+    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        message(FATAL_ERROR "C [${CMAKE_C_COMPILER}] and C++ [${CMAKE_CXX_COMPILER}] compiler are not from the MSVC toolchain.")
+    endif()
+elseif(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WASM)
+    string(REGEX MATCH ".*em\\+\\+.*" REGREX_MATCHED ${CMAKE_CXX_COMPILER})
+    if(NOT REGREX_MATCHED)
+        message(FATAL_ERROR "C and CXX compiler [EM] is required for this platform [${JAFG_TARGET_PLATFORM}].")
+    endif()
+else()
+    message(FATAL_ERROR "Missing implementation here for JAFG_TARGET_PLATFORM [${JAFG_TARGET_PLATFORM}].")
+endif()
+
+###############################################################################
 # The motor of Jafg.
-#
+###############################################################################
+
 set(JAFG_MOTOR_TARGET_CONFIG "release" CACHE STRING "Target config for motor")
 set_property(CACHE JAFG_MOTOR_TARGET_CONFIG PROPERTY STRINGS debug release)
 set(JAFG_MOTOR_DIR "${JAFG_ENGINE_ROOT}/Motor")
@@ -22,6 +45,10 @@ if(NOT DEFINED JAFG_MOTOR_EXECUTABLE)
 endif()
 message(STATUS "JAFG_MOTOR_EXECUTABLE: ${JAFG_MOTOR_EXECUTABLE}")
 set(JAFG_MOTOR_TOML "${JAFG_MOTOR_DIR}/Cargo.toml")
+
+###############################################################################
+# Misc.
+###############################################################################
 
 include(Programs/ThrowOnInSourceBuild.cmake)
 include(Programs/ThrowOnMultiConfiguration.cmake)

@@ -12,9 +12,7 @@
             "hidden": true,
             "cacheVariables": {
                 "JAFG_TARGET_PLATFORM": "Linux",
-                "JAFG_TARGET_ARCHITECTURE": "x86_64",
-                "CMAKE_C_COMPILER": "clang",
-                "CMAKE_CXX_COMPILER": "clang++"
+                "JAFG_TARGET_ARCHITECTURE": "x86_64"
             }
         },
         {
