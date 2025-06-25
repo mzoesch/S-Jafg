@@ -18,9 +18,6 @@ __pycache__/
 # Compiled source files
 /Intermediates/
 
-# Vslf files
-/Vslf/
-
 # Long term storage
 /Saved/
 
@@ -29,6 +26,10 @@ __pycache__/
 
 # Vsc CMake files
 /out/
+
+# Manual build files
+/build/
+/build*/
 
 # Osx - fuck you
 .DS_Store
