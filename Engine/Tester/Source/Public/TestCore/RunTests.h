@@ -4,8 +4,6 @@
 
 #include "CoreAfx.h"
 
-PRAGMA_FOR_JAFG_BUILD_TOOL("IncludeAllModuleTests")
-
 namespace Jafg::Tester
 {
 

@@ -119,7 +119,7 @@ public:
     //# The plugins that are loaded when the engine loads.
     //#
     CLASS_FIELD(Config)
-    TArray<LString> EnabledEnginePlugins { "JafgPlugin" };
+    TArray<LString> EnabledEnginePlugins { };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Storage

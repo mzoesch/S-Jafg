@@ -1,20 +1,14 @@
 # Visual Studio 2015 and 2022 / JetBrains Rider user specific files
-.vs/
-.idea/
+/.vs/
+/.idea/
 
 # Scripting
-.vscode/
+/.vscode/
 
-# Python
-venv/
-.venv/
-__pycache__/
+# Python virtual environments
+/.venv/
+/venv/
 
 # Compiled intermediate files
-target/*
-Cargo.lock
-
-# Compiled source files
-motor.exe
-motor.pdb
-motor
+/target/*
+/Cargo.lock

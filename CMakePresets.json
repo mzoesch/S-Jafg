@@ -1,0 +1,195 @@
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "generator": "Ninja"
+        },
+        {
+            "name": "Linux",
+            "inherits": "base",
+            "hidden": true,
+            "cacheVariables": {
+                "JAFG_TARGET_PLATFORM": "Linux",
+                "JAFG_TARGET_ARCHITECTURE": "x86_64",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++"
+            }
+        },
+        {
+            "name": "Windows",
+            "inherits": "base",
+            "hidden": true,
+            "cacheVariables": {
+                "JAFG_TARGET_PLATFORM": "Windows",
+                "JAFG_TARGET_ARCHITECTURE": "x86_64"
+            }
+        },
+        {
+            "name": "Wasm",
+            "inherits": "base",
+            "hidden": true,
+            "cacheVariables": {
+                "JAFG_TARGET_PLATFORM": "Wasm",
+                "JAFG_TARGET_ARCHITECTURE": "x86"
+            }
+        },
+        {
+            "name": "Debug",
+            "inherits": "base",
+            "hidden": true,
+            "cacheVariables": {
+                "JAFG_TARGET_CONFIG": "Debug"
+            }
+        },
+        {
+            "name": "Development",
+            "inherits": "base",
+            "hidden": true,
+            "cacheVariables": {
+                "JAFG_TARGET_CONFIG": "Development"
+            }
+        },
+        {
+            "name": "Shipping",
+            "inherits": "base",
+            "hidden": true,
+            "cacheVariables": {
+                "JAFG_TARGET_CONFIG": "Shipping"
+            }
+        },
+        {
+            "name": "Client",
+            "inherits": "base",
+            "hidden": true,
+            "cacheVariables": {
+                "JAFG_TARGET_TYPE": "Client"
+            }
+        },
+        {
+            "name": "Daemon",
+            "inherits": "base",
+            "hidden": true,
+            "cacheVariables": {
+                "JAFG_TARGET_TYPE": "Daemon"
+            }
+        },
+        {
+            "name": "TestUnit",
+            "inherits": "base",
+            "hidden": true,
+            "cacheVariables": {
+                "JAFG_TARGET_TYPE": "TestUnit"
+            }
+        },
+        {
+            "name": "Linux | Client-Debug",
+            "inherits": ["Linux", "Client", "Debug"]
+        },
+        {
+            "name": "Linux | Client-Development",
+            "inherits": ["Linux", "Client", "Development"]
+        },
+        {
+            "name": "Linux | Client-Shipping",
+            "inherits": ["Linux", "Client", "Shipping"]
+        },
+        {
+            "name": "Linux | Daemon-Debug",
+            "inherits": ["Linux", "Daemon", "Debug"]
+        },
+        {
+            "name": "Linux | Daemon-Development",
+            "inherits": ["Linux", "Daemon", "Development"]
+        },
+        {
+            "name": "Linux | Daemon-Shipping",
+            "inherits": ["Linux", "Daemon", "Shipping"]
+        },
+        {
+            "name": "Linux | TestUnit-Debug",
+            "inherits": ["Linux", "TestUnit", "Debug"]
+        },
+        {
+            "name": "Linux | TestUnit-Development",
+            "inherits": ["Linux", "TestUnit", "Development"]
+        },
+        {
+            "name": "Linux | TestUnit-Shipping",
+            "inherits": ["Linux", "TestUnit", "Shipping"]
+        },
+        {
+            "name": "Windows | Client-Debug",
+            "inherits": ["Windows", "Client", "Debug"]
+        },
+        {
+            "name": "Windows | Client-Development",
+            "inherits": ["Windows", "Client", "Development"]
+        },
+        {
+            "name": "Windows | Client-Shipping",
+            "inherits": ["Windows", "Client", "Shipping"]
+        },
+        {
+            "name": "Windows | Daemon-Debug",
+            "inherits": ["Windows", "Daemon", "Debug"]
+        },
+        {
+            "name": "Windows | Daemon-Development",
+            "inherits": ["Windows", "Daemon", "Development"]
+        },
+        {
+            "name": "Windows | Daemon-Shipping",
+            "inherits": ["Windows", "Daemon", "Shipping"]
+        },
+        {
+            "name": "Windows | TestUnit-Debug",
+            "inherits": ["Windows", "TestUnit", "Debug"]
+        },
+        {
+            "name": "Windows | TestUnit-Development",
+            "inherits": ["Windows", "TestUnit", "Development"]
+        },
+        {
+            "name": "Windows | TestUnit-Shipping",
+            "inherits": ["Windows", "TestUnit", "Shipping"]
+        },
+        {
+            "name": "Wasm | Client-Debug",
+            "inherits": ["Wasm", "Client", "Debug"]
+        },
+        {
+            "name": "Wasm | Client-Development",
+            "inherits": ["Wasm", "Client", "Development"]
+        },
+        {
+            "name": "Wasm | Client-Shipping",
+            "inherits": ["Wasm", "Client", "Shipping"]
+        },
+        {
+            "name": "Wasm | Daemon-Debug",
+            "inherits": ["Wasm", "Daemon", "Debug"]
+        },
+        {
+            "name": "Wasm | Daemon-Development",
+            "inherits": ["Wasm", "Daemon", "Development"]
+        },
+        {
+            "name": "Wasm | Daemon-Shipping",
+            "inherits": ["Wasm", "Daemon", "Shipping"]
+        },
+        {
+            "name": "Wasm | TestUnit-Debug",
+            "inherits": ["Wasm", "TestUnit", "Debug"]
+        },
+        {
+            "name": "Wasm | TestUnit-Development",
+            "inherits": ["Wasm", "TestUnit", "Development"]
+        },
+        {
+            "name": "Wasm | TestUnit-Shipping",
+            "inherits": ["Wasm", "TestUnit", "Shipping"]
+        }
+    ]
+}

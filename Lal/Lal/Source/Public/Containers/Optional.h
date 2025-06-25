@@ -58,7 +58,10 @@ public:
 
 private:
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     typedef std::aligned_storage_t<sizeof(T), alignof(T)> LStorage;
+#pragma GCC diagnostic pop
 
           T* GetStoragePtr()       noexcept { return reinterpret_cast<      T*>(&this->Storage); }
     const T* GetStoragePtr() const noexcept { return reinterpret_cast<const T*>(&this->Storage); }
