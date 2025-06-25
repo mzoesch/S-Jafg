@@ -2,11 +2,11 @@
 	path = Engine/Vendor/Json
 	url = https://github.com/nlohmann/json.git
 	branch = master
-[submodule "Engine/Vendor/CommonMath"]
-	path = Engine/Vendor/CommonMath
-	url = https://github.com/g-truc/glm.git
-	branch = master
 [submodule "Engine/Vendor/Stb"]
 	path = Engine/Vendor/Stb
 	url = https://github.com/nothings/stb.git
+	branch = master
+[submodule "Engine/Vendor/CommonMath"]
+	path = Engine/Vendor/CommonMath
+	url = https://github.com/g-truc/glm.git
 	branch = master
