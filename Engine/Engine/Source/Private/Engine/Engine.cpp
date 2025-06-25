@@ -18,7 +18,7 @@
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-W#warnings"
     #endif /* WITH_CLANG */
-    #include "Vendor/nlohmann_json.h"
+    #include "nlohmann/json.hpp"
     #if WITH_CLANG
         #pragma clang diagnostic pop
     #endif /* WITH_CLANG */

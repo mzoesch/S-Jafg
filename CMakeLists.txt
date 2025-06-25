@@ -3,7 +3,7 @@
 # Update to 4.0 when CLion supports it.
 cmake_minimum_required(VERSION      3.30)
 
-# C++23 is required core Jafg systems will not compile with any other standard.
+# C++23 is required; core Jafg systems will not compile with any other standard.
 set(CMAKE_CXX_STANDARD              23)
 set(CMAKE_CXX_STANDARD_REQUIRED     ON)
 set(CMAKE_CXX_EXTENSIONS            OFF)
@@ -41,12 +41,24 @@ project(
 
 include(Programs/EarlySetup.cmake)
 
+#
 # These are the search paths for Jafg to check for modules to be loaded.
+# You may add your own paths to this list.
+#
 set(JAFG_SEARCH_PATHS
     "Engine"
     "Lal"
     "Plugins"
     "Runtime"
+    )
+
+#
+# Exclude paths are used to ignore certain directories in the search paths for Jafg modules.
+# You may add your onw to this list.
+#
+set(JAFG_EXCLUDE_PATHS
+    "Engine/Vendor"
+    "Plugins/Vendor"
     )
 
 # A static module that is linked into the program at compile time.
@@ -93,7 +105,7 @@ include(Programs/LateSetup.cmake)
 
 #
 # This fetches all modules that are either part of Jafg or foreign.
-# To write your onw module and load it at runtime into the Jafg engine, create a new directory in the
+# To write your own module and load it at runtime into the Jafg engine, create a new directory in the
 # "Plugins" directory or any subdirectory of it. In said directory, create a CMakeLists.txt file that
 # contains the module's CMake configuration.
 # @see Example can be found at "Plugins/JafgPlugin/CMakeLists.txt".
