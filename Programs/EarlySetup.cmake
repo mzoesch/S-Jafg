@@ -29,6 +29,43 @@ else()
 endif()
 
 ###############################################################################
+# Fetch submodules.
+###############################################################################
+
+function(UpdateSubmodules)
+    if(NOT EXISTS "${JAFG_ENGINE_ROOT}/.git")
+        return()
+    endif()
+    if(NOT EXISTS "${JAFG_ENGINE_ROOT}/.gitmodules")
+        return()
+    endif()
+
+    execute_process(
+        COMMAND             git submodule update --init --recursive
+        WORKING_DIRECTORY   ${JAFG_ENGINE_ROOT}
+        OUTPUT_VARIABLE     stdout
+        ERROR_VARIABLE      stderr
+        RESULT_VARIABLE     result
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+
+    if(stdout AND NOT stdout STREQUAL "")
+        message(STATUS "Git submodule fetcher stdout:\n${stdout}")
+    endif()
+    if(stderr AND NOT stderr STREQUAL "")
+        message(STATUS "Git submodule fetcher error stderr:\n${stderr}")
+    endif()
+
+    if(result)
+        message(FATAL_ERROR "Git submodule fetcher quit with exit code [${result}].")
+    else()
+        message(STATUS "Git submodule fetcher quit with exit code [${result}].")
+    endif()
+endfunction()
+
+UpdateSubmodules()
+
+###############################################################################
 # The motor of Jafg.
 ###############################################################################
 
@@ -56,10 +93,25 @@ include(Programs/ThrowOnMultiConfiguration.cmake)
 # CMake extensions.
 include(CMakeDependentOption)
 include(CheckCXXCompilerFlag)
+include(FetchContent)
 
 if(NOT EXISTS "${JAFG_ENGINE_ROOT}/jafg.jafgworkspace")
     message(FATAL_ERROR "Jafg engine root directory was not found. Falsely evaluated to: [${JAFG_ENGINE_ROOT}].")
 endif()
+
+function(DisableAllWarningsForTarget target_name)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        target_compile_options(${target_name} PRIVATE
+                -w              # Suppress all warnings
+                )
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        target_compile_options(${target_name} PRIVATE
+                /W              # Suppress all warnings
+                )
+    else()
+        message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
+    endif()
+endfunction()
 
 #
 # The performance cost is neglectable for the insane amount of benefits it brings.
