@@ -53,7 +53,7 @@ function(UpdateSubmodules)
         message(STATUS "Git submodule fetcher stdout:\n${stdout}")
     endif()
     if(stderr AND NOT stderr STREQUAL "")
-        message(STATUS "Git submodule fetcher error stderr:\n${stderr}")
+        message(STATUS "Git submodule fetcher stderr:\n${stderr}")
     endif()
 
     if(result)
