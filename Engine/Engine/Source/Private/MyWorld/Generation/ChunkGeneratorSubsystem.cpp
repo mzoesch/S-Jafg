@@ -16,7 +16,7 @@
 #if WITH_STATS
     #if STAT_CHUNK_VERBOSE_OUT
         #define STAT_QUICK_CYCLE_START_KEY(InChunkKey)                                   \
-            std::string_view _sv = JAFG_PRETTY_FUNCTION;                                 \
+            std::string_view _sv = LAL_PRETTY_FUNCTION;                                 \
             ::Jafg::LString _s = LString::SprintF("{}::{}", _sv, InChunkKey.ToString()); \
             STAT_QUICK_CYCLE_START(std::string_view(_s.GetBegin(), _s.GetEnd()))
     #else /* STAT_CHUNK_VERBOSE_OUT */
@@ -55,7 +55,7 @@ Jafg::ETaskExit::Type Jafg::LChunkGeneratorWorker::Run()
 
         if (this->IsStopped() == false)
         {
-            PlatformHal::Sleep(this->YieldTime);
+            Hal::Sleep(this->YieldTime);
         }
 
         continue;
@@ -106,7 +106,7 @@ void Jafg::JChunkGeneratorSubsystem::Initialize(LSubsystemCollection& Collection
 {
     Super::Initialize(Collection);
 
-#if PLATFORM_SUPPORTS_SIMD
+#if LAL_PLATFORM_SUPPORTS_SIMD
     FastNoise::SmartNode<FastNoise::Perlin> Root = FastNoise::New<FastNoise::Perlin>();
     this->FnGenerator = std::move(Root);
     LOG_INFO(LogChunkGeneration, "Using SIMD: [{}].", static_cast<FastSIMD::Level_BitFlags>(this->FnGenerator->GetSIMDLevel()));

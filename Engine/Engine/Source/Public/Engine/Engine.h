@@ -8,7 +8,7 @@
 #include "User/LocalEgo.h"
 #include "Engine/World.h"
 #include "Rhi/EngineShader.h"
-#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
     #include "Foreign/PluginForward.h"
 #include "Foreign/Plugin.h"
 #endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
@@ -63,7 +63,7 @@ FORCEINLINE auto GetCustomExitReason() -> LString { return GCustomExitReason; }
 
 MAKE_MULTICAST_SIGNATURE(LOnWorldBeginLife, LWorld* InNewWorld)
 
-#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
     //#
     //# This delegate gets called when a foreign plugin has been loaded.
     //# @param InStaticClassContainer All static classes that are registered with the default public context of the new
@@ -244,7 +244,7 @@ private:
     LObjectContext ObjectContext { DeferredGlobalCarnifex };
     LSubsystemCollection Collection;
 
-#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
 public:
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -438,7 +438,7 @@ FORCEINLINE bool LEngine::IsObjectContextKnown(const LObjectContext* InContext) 
     return this->KnownObjectContexts.Contains(InContext);
 }
 
-#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
 FORCEINLINE LObjectContext* LEngine::GetCurrentForeignContext() const
 {
     check( this->ForeignContextCursor )

@@ -4,10 +4,10 @@
 #include "Core/Uuid.h"
 #include "Stats/Stats.h"
 
-void Jafg::PlatformHal::Sleep(const f64 InSeconds)
+void Jafg::Hal::Sleep(const f64 InSeconds)
 {
     STAT_CYCLE_FUNCTION()
-    PlatformHal::SleepNoStats(InSeconds);
+    Lal::Hal::SleepNoStats(InSeconds);
     return;
 }
 

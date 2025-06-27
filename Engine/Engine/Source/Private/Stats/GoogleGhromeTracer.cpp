@@ -1,5 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
+#include "Stats/StatsForward.h"
+
 #if WITH_STATS && JAFG_STATS_USE_GOOGLE_CHROME_TRACER
 
 #include "Stats/GoogleChromeTracer.h"

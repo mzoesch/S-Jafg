@@ -5,7 +5,7 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "MyWorld/ChunkKey.h"
 #include "MyWorld/Chunk/ChunkStates.h"
-#if PLATFORM_SUPPORTS_SIMD
+#if LAL_PLATFORM_SUPPORTS_SIMD
     #include "FastNoise/FastNoise.h"
 #endif /* PLATFORM_SUPPORTS_SIMD */
 #include "ChunkGeneratorSubsystem.generated.h"
@@ -62,7 +62,7 @@ public:
 
 private:
 
-#if PLATFORM_SUPPORTS_SIMD
+#if LAL_PLATFORM_SUPPORTS_SIMD
     //# READ ONLY after #Initialize was run. Do not modify this object ever.
     FastNoise::SmartNode<> FnGenerator;
 #endif /* PLATFORM_SUPPORTS_SIMD */

@@ -21,8 +21,8 @@ Jafg::LPath Jafg::PlatformMisc::GetEngineRootDirImpl()
 
 Jafg::LPath Jafg::PlatformMisc::GetRealEngineRootDirImpl()
 {
-    char Buffer[PLATFORM_MAX_PATH] = { 0 };
-    const u64 Ret = readlink("/proc/self/exe", Buffer, PLATFORM_MAX_PATH);
+    char Buffer[LAL_PLATFORM_MAX_PATH] = { 0 };
+    const u64 Ret = readlink("/proc/self/exe", Buffer, LAL_PLATFORM_MAX_PATH);
     if (Ret == -1)
     {
         panic("Failed to read the symbolic link.");

@@ -3,62 +3,14 @@
 #if PLATFORM_LINUX
 
 #include "Core/Application.h"
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <ctype.h>
 
 using namespace Jafg;
 
 extern EPlatformExit::Type GuardedMain();
 
-namespace
-{
-
-bool IsGdb()
-{
-    char Buffer[4096];
-
-    const i32 Fd = ::open("/proc/self/status", O_RDONLY);
-    if (Fd == -1)
-    {
-        return false;
-    }
-
-    const ssize_t num_read = ::read(Fd, Buffer, sizeof(Buffer) - 1);
-    ::close(Fd);
-
-    if (num_read <= 0)
-    {
-        return false;
-    }
-
-    Buffer[num_read] = '\0';
-    constexpr char PidTracerString[] = "TracerPid:";
-    const char* PidTracer = ::strstr(Buffer, PidTracerString);
-    if (!PidTracer)
-    {
-        return false;
-    }
-
-    for (const char* characterPtr = PidTracer + sizeof(PidTracerString) - 1; characterPtr <= Buffer + num_read; ++characterPtr)
-    {
-        if (::isspace(*characterPtr))
-        {
-            continue;
-        }
-
-        return ::isdigit(*characterPtr) != 0 && *characterPtr != '0';
-    }
-
-    return false;
-}
-
-} /* ~Namespace <Anonymous> */
-
 i32 main(const i32 argc, char *argv[])
 {
-    i32 ErrorLevel = 0;
+    i32 ErrorLevel { 0 };
 
     LString CmdLine;
     for (i32 i = 1; i < argc; ++i)
@@ -77,19 +29,19 @@ i32 main(const i32 argc, char *argv[])
     if (Application::Private::CommandLine.FindFirst("WaitForDebugger") != INDEX_NONE)
     {
         LOG_INFO(LogJafgInternal, "Waiting for debugger ...");
-        LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
+        LAL_UNSAFE_FLUSH_OUT_STREAMS()
         {
-            while (::IsGdb() == false)
+            while (Lal::Hal::IsTracerPidValidVerySlow() == false)
             {
-                PlatformHal::SleepNoStats(1.0);
+                Lal::Hal::SleepNoStats(1.0);
                 continue;
             }
         }
         LOG_INFO(LogJafgInternal, "Debugger attached - continuing.");
-        LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
+        LAL_UNSAFE_FLUSH_OUT_STREAMS()
     }
 
-    Application::Private::bDebuggerPresent = ::IsGdb();
+    Application::Private::bDebuggerPresent = ::Lal::Hal::IsTracerPidValidVerySlow();
     Application::Private::UpdateApplicationCommandLineVariables();
 
     if (Application::IsDebuggerPresent() && !Application::IsAlwaysReportCrash())
@@ -108,7 +60,7 @@ i32 main(const i32 argc, char *argv[])
         {
             try
             {
-                LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
+                LAL_UNSAFE_FLUSH_OUT_STREAMS()
                 throw;
             }
             catch (const std::exception& E)
@@ -134,7 +86,7 @@ i32 main(const i32 argc, char *argv[])
     {
         LOG_INFO(LogPlatform, "Pausing before exit.")
         LOG_INFO(LogPlatform, "Press any key to continue...")
-        LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
+        LAL_UNSAFE_FLUSH_OUT_STREAMS()
         std::cin.get();
     }
 

@@ -127,14 +127,14 @@ template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE const TObj* DynamicCast(const JObjectBase* InObject);
 
 //#
-//# Only checks if the object can be casted if DO_CHECKS is true. If the object fails to cast to the
-//# targeted type, the application will panic. If DO_CHECKS is false, it will assume that the object is
+//# Only checks if the object can be casted if LAL_DO_CHECKS is true. If the object fails to cast to the
+//# targeted type, the application will panic. If LAL_DO_CHECKS is false, it will assume that the object is
 //# of the target type and will do an unsafe cast.
 //# Only use this method if you are sure that the object is of the targeted type.
 //#
 //# @tparam bAllowForNullptr Whether to allow for nullptr to be returned if the input object is nullptr.
 //# @return The casted object. Will never return nullptr (if bAllowForNullptr is false). But the return value might be
-//#         meaningless if DO_CHECKS is false. So you cannot check if this object is valid, e.g., if it is nullptr.
+//#         meaningless if LAL_DO_CHECKS is false. So you cannot check if this object is valid, e.g., if it is nullptr.
 //#
 template <typename TObj, typename U, bool bAllowForNullptr = false> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* CheckedStaticCast(U* InObject);
@@ -621,7 +621,7 @@ FORCEINLINE void OnDefaultOnlyMallocMember(TStringBase<InDerived, InTraits, InAl
 template <typename TObj, typename U, bool bAllowForNullptr /* = false */> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE TObj* Private::CheckedStaticCastImpl(U* InObject)
 {
-#if DO_CHECKS
+#if LAL_DO_CHECKS
     if constexpr (bAllowForNullptr)
     {
         if (InObject == nullptr)
@@ -642,9 +642,9 @@ FORCEINLINE TObj* Private::CheckedStaticCastImpl(U* InObject)
     panicMsgf( "Failed to cast object to [{}].", TObj::StaticClass()->GetSpacedClassName() )
 
     return nullptr;
-#else /* DO_CHECKS */
+#else /* LAL_DO_CHECKS */
     return static_cast<TObj*>(InObject);
-#endif /* !DO_CHECKS */
+#endif /* !LAL_DO_CHECKS */
 }
 
 template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>

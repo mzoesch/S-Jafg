@@ -4,9 +4,22 @@
 
 #include "CoreAfx.h"
 
-#if !WITH_STATS
-    #error "This file should only be included if the application compiles with stats."
-#endif /* WITH_STATS */
+//#
+//# If not defined, always do stats except in shipping builds.
+//#
+#ifndef WITH_STATS
+    #define WITH_STATS                                                  (!IN_SHIPPING)
+#endif /* !WITH_STATS */
+
+//#
+//# Default to google chrome tracer export style.
+//# https://www.chromium.org/developers/how-tos/trace-event-profiling-tool/
+//#
+#ifndef JAFG_STATS_USE_GOOGLE_CHROME_TRACER
+    #define JAFG_STATS_USE_GOOGLE_CHROME_TRACER                          1
+#endif /* !JAFG_STATS_USE_GOOGLE_CHROME_TRACER */
+
+#if WITH_STATS
 
 #include "Async/TaskUtility.h"
 
@@ -68,3 +81,5 @@ struct LSessionEvent final
 };
 
 } /* ~Namespace Jafg::Stats::Private */
+
+#endif /* WITH_STATS */

@@ -29,18 +29,24 @@ Only when making changes to the reflection system you will additionally need `>=
 ## Generate solution and build
 
 ### For all native target platforms
-This project uses a CMake build system. You may either use the predefined presets or run it manually by defining the following: 
-   - `JAFG_TARGET_PLATFORM`: The target platform you want to build for [`Linux`, `Windows`, `Wasm`].
-   - `JAFG_TARGET_TYPE`: The target type you want to build for [`Client`, `Daemon`, `TestUnit`].
-   - `JAFG_TARGET_CONFIG`: The target configuration you want to build for [`Debug`, `Development`, `Shipping`].
+To build, run:
+```bash
+cmake -B <BuildDirectory> -S . --preset "<JAFG_TARGET_PLATFORM> | <JAFG_TARGET_TYPE>-<JAFG_TARGET_CONFIG>"
+```
+with:
+   - `JAFG_TARGET_PLATFORM`: The target platform you want to build for [`Linux`, `Windows`, `Wasm`]
+   - `JAFG_TARGET_TYPE`: The target type you want to build for [`Client`, `Daemon`, `TestUnit`]
+   - `JAFG_TARGET_CONFIG`: The target configuration you want to build for [`Debug`, `Development`, `Shipping`]
+
+and then compile it with `cmake --build <BuildDirectory>`.
 
 ### For WebAssembly (Wasm)
-1. Emscripten must be invoked before generating the CMake files. This is done by calling `emcmake` with the `cmake` command. E.g., to generate the `Wasm` CMake files for the `Client` in the `Development` configuration, you would run:
+1. Emscripten must be invoked before generating the CMake files. This is done by calling `emcmake` with the `cmake` command:
    ```bash
-   emcmake cmake -B . -S <BuildDirectory> --preset "Wasm | Client-Development"
+   emcmake cmake -B . -S <BuildDirectory> --preset "<JAFG_TARGET_PLATFORM> | <JAFG_TARGET_TYPE>-<JAFG_TARGET_CONFIG>"
    ```
    After running this command, you may open your project with any IDE that supports CMake. If you firstly open the project (before running the `emcmake` command) then the IDE will get confused with the code and will fail to compile it (as well as Intellisense will not work properly).
-2. Compile it normally (as any CMake project would be compiled). 
+2. Compile it with `ninja`. 
 3. To serve, go to `~/Programs/ServerWasm` and run `npm install http-server`.
 4. Launch the resulting Node server with `node Launch.js`.
 5. In your favorite browser go to `http://localhost:8080/`.

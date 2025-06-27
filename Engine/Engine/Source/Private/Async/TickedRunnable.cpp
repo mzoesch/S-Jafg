@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Async/TickedRunnable.h"
 #include "Core/Application.h"
 #include "Stats/Stats.h"
@@ -9,12 +8,12 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
 {
     STAT_CYCLE_FUNCTION()
 
-    double LastTickTime = Application::GetDeltaSinceStaticStorageInitialization();
+    f64 LastTickTime { Application::GetDeltaSinceStaticStorageInitialization() };
 
     while (this->bShouldTick)
     {
-        const f64 Now = Application::GetDeltaSinceStaticStorageInitialization();
-        const f64 DeltaTime = Now - LastTickTime;
+        const f64 Now { Application::GetDeltaSinceStaticStorageInitialization() };
+        const f64 DeltaTime { Now - LastTickTime };
 
         if (DeltaTime > this->TickInterval)
         {
@@ -24,11 +23,10 @@ Jafg::ETaskExit::Type Jafg::LTickedRunnable::Run()
 #if !PLATFORM_WASM
         else
         {
-            const double TimeRemaining = this->TickInterval - DeltaTime;
-            if (TimeRemaining > 0.001)
+            if (const f64 TimeRemaining { this->TickInterval - DeltaTime }; TimeRemaining > 0.001)
             {
                 /* Spare cpu time for other tasks. */
-                PlatformHal::SleepNoStats(TimeRemaining * 0.997);
+                Lal::Hal::SleepNoStats(TimeRemaining * 0.997);
             }
         }
 #endif /* !PLATFORM_WASM */

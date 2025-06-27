@@ -18,10 +18,7 @@ void Jafg::LBoxShaderContext::Make()
     this->ReloadShader(false);
     this->bIsMeaningful = true;
 
-#if WITH_DEBUG_ZERO_UNBOUND
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
 
     return;
 }
@@ -135,10 +132,7 @@ void Jafg::LBoxShaderContext::Draw(
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
-#if WITH_DEBUG_ZERO_UNBOUND
-    glUseProgram(0);
     glBindVertexArray(0);
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
 
     return;
 }
@@ -152,11 +146,9 @@ void Jafg::LBoxShaderContext::ReloadShader(const bool bDeleteOld) const
         glDeleteVertexArrays(1, &this->Vao);
         glDeleteBuffers(1, &this->Vbo);
         if (this->LastFrameTexture) { glDeleteBuffers(1, &this->Ebo); }
-    #if WITH_DEBUG_ZERO_UNBOUND
         this->Vao = 0;
         this->Vbo = 0;
         this->Ebo = 0;
-    #endif /* WITH_DEBUG_ZERO_UNBOUND */
 
         this->Shader.Free();
     }
@@ -221,18 +213,14 @@ void Jafg::LBoxShaderContext::FreeStayMeaningful() const
     glDeleteVertexArrays(1, &this->Vao);
     glDeleteBuffers(1, &this->Vbo);
     if (this->LastFrameTexture) { glDeleteBuffers(1, &this->Ebo); }
-#if WITH_DEBUG_ZERO_UNBOUND
     this->Vao = 0;
     this->Vbo = 0;
     this->Ebo = 0;
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
 
     if (this->LastFrameTexture)
     {
         glDeleteTextures(1, &this->Tex);
-#if WITH_DEBUG_ZERO_UNBOUND
         this->Tex = 0;
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
     }
 
     this->Shader.Free();

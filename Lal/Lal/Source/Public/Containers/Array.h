@@ -777,13 +777,13 @@ bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnce(const T&
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceChecked(const T& InElement) noexcept
 {
-#if DO_CHECKS
+#if LAL_DO_CHECKS
     const bool bRemoved = this->RemoveOnce(InElement);
     check( bRemoved )
     return bRemoved;
-#else /* DO_CHECKS */
+#else /* LAL_DO_CHECKS */
     return this->RemoveOnce(InElement);
-#endif /* !DO_CHECKS */
+#endif /* !LAL_DO_CHECKS */
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
@@ -804,13 +804,13 @@ template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type Al
 template <typename InOtherElement>
 bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceChecked(const InOtherElement& InElement) noexcept
 {
-#if DO_CHECKS
+#if LAL_DO_CHECKS
     const bool bRemoved = this->RemoveOnce(InElement);
     check( bRemoved )
     return bRemoved;
-#else /* DO_CHECKS */
+#else /* LAL_DO_CHECKS */
     return this->RemoveOnce(InElement);
-#endif /* !DO_CHECKS */
+#endif /* !LAL_DO_CHECKS */
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
@@ -831,13 +831,13 @@ template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type Al
 template <typename Predicate>
 bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveOnceByPredicateChecked(const Predicate& InPredicate) noexcept
 {
-#if DO_CHECKS
+#if LAL_DO_CHECKS
     const bool bRemoved = this->RemoveOnceByPredicate(InPredicate);
     check( bRemoved )
     return bRemoved;
-#else /* DO_CHECKS */
+#else /* LAL_DO_CHECKS */
     return this->RemoveByPredicate(InPredicate);
-#endif /* !DO_CHECKS */
+#endif /* !LAL_DO_CHECKS */
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>

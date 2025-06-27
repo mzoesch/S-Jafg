@@ -799,7 +799,7 @@ FORCEINLINE void MakeDeferredWidgetNodeFinal(WNode* InNode)
     return;
 }
 
-#if !DO_CHECKS
+#if !LAL_DO_CHECKS
 FORCEINLINE LReply WNode::OnKeyDownNoFocus(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     return LReply::Unhandled();
@@ -809,7 +809,7 @@ FORCEINLINE LReply WNode::OnKeyUpNoFocus(const LViewport& InViewport, const LKey
 {
     return LReply::Unhandled();
 }
-#endif /* !DO_CHECKS */
+#endif /* !LAL_DO_CHECKS */
 
 template<typename T>
 FORCEINLINE bool WNode::IsA() const

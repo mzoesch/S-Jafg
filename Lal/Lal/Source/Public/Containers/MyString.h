@@ -344,7 +344,7 @@ using LEightString  = LStringBase<char   ,  LEightStringTraits>;
 // using L16String     = LStringBase<char16_t, L16StringTraits   >; // the stuff for some weird shit later. So just
 // using L32String     = LStringBase<char32_t, L32StringTraits   >; // leave it here and implement this in some time...
 
-#if PLATFORM_USES_UTF8            // The std string. Do we actually want to make this conditionally?? I mean a program
+#if LAL_PLATFORM_USES_UTF8        // The std string. Do we actually want to make this conditionally?? I mean a program
     using LString = LEightString; // that uses another string encoding than utf-8 is probably written in the eighties
 #else /* PLATFORM_USES_UTF8 */    // and sucks. And then we should use wides for Windows? But who wants that???
     static_assert(false, "Missing platform encoding.");
@@ -1103,14 +1103,13 @@ LStringBase<InCharacterTy, InTraitsTy>::operator+=(const char* InString)
 {
     checkSlow( InString )
 
-#if PLATFORM_USES_UTF8
+#if LAL_PLATFORM_USES_UTF8
     return this->operator+=(reinterpret_cast<const CharacterTy*>(InString));
 #else
     unimplemented()
     return *this;
 #endif /* PLATFORM_USES_UTF8 */
 }
-
 
 template <class InCharacterTy, class InTraitsTy>
 bool LStringBase<InCharacterTy, InTraitsTy>::operator==(const InCharacterTy* InString) const

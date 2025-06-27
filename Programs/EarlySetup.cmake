@@ -89,6 +89,7 @@ set(JAFG_MOTOR_TOML "${JAFG_MOTOR_DIR}/Cargo.toml")
 
 include(Programs/ThrowOnInSourceBuild.cmake)
 include(Programs/ThrowOnMultiConfiguration.cmake)
+include(Programs/ModuleFlags.cmake)
 
 # CMake extensions.
 include(CMakeDependentOption)

@@ -29,12 +29,12 @@
 #if PLATFORM_WINDOWS_WITH_GCC
     #define PLATFORM_WINDOWS_WITH_MSVC      0
     #define WITH_GCC                        1
-    #define WITH_MSVC                       0
+    #define LAL_WITH_MSVC                       0
 #endif /* PLATFORM_WINDOWS_WITH_GCC */
 #if PLATFORM_WINDOWS_WITH_MSVC
     #define PLATFORM_WINDOWS_WITH_GCC       0
     #define WITH_GCC                        0
-    #define WITH_MSVC                       1
+    #define LAL_WITH_MSVC                       1
 #endif /* PLATFORM_WINDOWS_WITH_MSVC */
 
 #ifndef __cplusplus
@@ -53,11 +53,11 @@
     #endif /* __cplusplus != 199711L */
 #endif /* __cplusplus */
 
-#if WITH_MSVC 
+#if LAL_WITH_MSVC 
     #ifndef _MSVC_LANG
         #error "_MSVC_LANG is not defined."
     #endif /* !_MSVC_LANG */
-#endif /* WITH_MSVC */
+#endif /* LAL_WITH_MSVC */
 
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler config
@@ -344,32 +344,32 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
 #ifdef PLATFORM_MAX_PATH
     #error "PLATFORM_MAX_PATH is already defined."
 #endif /* PLATFORM_MAX_PATH */
-#define PLATFORM_MAX_PATH                       MAX_PATH
+#define LAL_PLATFORM_MAX_PATH                       MAX_PATH
 
 #ifdef PLATFORM_SUPPORTS_SHARED_LIBRARIES
     #error "PLATFORM_SUPPORTS_SHARED_LIBRARIES is already defined."
 #endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
-#define PLATFORM_SUPPORTS_SHARED_LIBRARIES      1
+#define LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES      1
 
 #ifdef PLATFORM_SUPPORTS_STD_FLUSH
     #error "PLATFORM_SUPPORTS_STD_FLUSH is already defined."
 #endif /* PLATFORM_SUPPORTS_STD_FLUSH */
-#define PLATFORM_SUPPORTS_STD_FLUSH             1
+#define LAL_PLATFORM_SUPPORTS_STD_FLUSH             1
 
 #ifdef PLATFORM_SUPPORTS_ANSI_ESCAPES
     #error "PLATFORM_SUPPORTS_ANSI_ESCAPES is already defined."
 #endif /* PLATFORM_SUPPORTS_ANSI_ESCAPES */
-#define PLATFORM_SUPPORTS_ANSI_ESCAPES          1
+#define LAL_PLATFORM_SUPPORTS_ANSI_ESCAPES          1
 
 #ifdef PLATFORM_SUPPORTS_SIMD
     #error "PLATFORM_SUPPORTS_SIMD is already defined."
 #endif /* PLATFORM_SUPPORTS_SIMD */
-#define PLATFORM_SUPPORTS_SIMD                  1
+#define LAL_PLATFORM_SUPPORTS_SIMD                  1
 
 #ifdef PLATFORM_SUPPORTS_MEMORY_SHRINK
     #error "PLATFORM_SUPPORTS_MEMORY_SHRINK is already defined."
 #endif /* PLATFORM_SUPPORTS_MEMORY_SHRINK */
-#define PLATFORM_SUPPORTS_MEMORY_SHRINK         1
+#define LAL_PLATFORM_SUPPORTS_MEMORY_SHRINK         1
 
 #if PLATFORM_WINDOWS_WITH_MSVC
     #include <intrin.h>
@@ -378,7 +378,7 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
 #elif PLATFORM_WINDOWS_WITH_GCC
     #define PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH() \
         __asm__ __volatile__ ("nop")
-#endif /* WITH_MSVC */
+#endif /* LAL_WITH_MSVC */
 
 /**
  * Platform break. Should just break the debugger if attached and pause the program. It must allow for continuing.
@@ -470,30 +470,30 @@ struct LWinPlatformTypes final : public LGenericPlatformTypes
 #define PLATFORM_CALLSPEC_OUT           __declspec ( dllexport )
 #define PLATFORM_CALLSPEC_IN            __declspec ( dllimport )
 #define PLATFORM_EXTERNSPEC_OUT
-#define PLATFORM_EXTERNSPEC_IN          extern
+#define LAL_PLATFORM_EXTERNSPEC_IN          extern
 
 /**
  * https://learn.microsoft.com/en-us/cpp/mfc/windows-sockets-byte-ordering?view=msvc-170
  */
-#define PLATFORM_USES_LITTLE_ENDIAN                 1
+#define LAL_PLATFORM_USES_LITTLE_ENDIAN                 1
 
-#define PLATFORM_USES_GLFW3_ABSTRACTION_LAYER       1
+#define JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER       1
 
 #define PLATFORM_WCHAR_SIZE                         2
 
-#if WITH_MSVC
+#if LAL_WITH_MSVC
     #define PLATFORM_USES_64_BIT                    1
 #elif WITH_GCC
     #define PLATFORM_USES_32_BIT                    1
-#endif /* WITH_MSVC */
+#endif /* LAL_WITH_MSVC */
 
-#if (defined(WITH_MSVC) && WITH_MSVC != 0) && !(_MSVC_LANG >= 201703L)
+#if (defined(LAL_WITH_MSVC) && LAL_WITH_MSVC != 0) && !(_MSVC_LANG >= 201703L)
     #if !defined(PLATFORM_USES_UTF8) || PLATFORM_USES_UTF8 == 0
         #error "PLATFORM_USES_UTF8 is not defined or set to 0. Missing /utf-8 compiler flag."
     #endif /* !PLATFORM_USES_UTF8 */
-#else /* (defined(WITH_MSVC) && WITH_MSVC != 0) && !(_MSVC_LANG >= 201703L) */
-    #define PLATFORM_USES_UTF8          1
-#endif /* !defined(WITH_MSVC) || WITH_MSVC == 0 || _MSVC_LANG >= 201703L */
+#else /* (defined(LAL_WITH_MSVC) && LAL_WITH_MSVC != 0) && !(_MSVC_LANG >= 201703L) */
+    #define LAL_PLATFORM_USES_UTF8          1
+#endif /* !defined(LAL_WITH_MSVC) || LAL_WITH_MSVC == 0 || _MSVC_LANG >= 201703L */
 
 struct LWinPlatformBreakDefines final
 {

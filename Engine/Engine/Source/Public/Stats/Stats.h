@@ -9,7 +9,11 @@
 #if PREPROCESSOR_EXCLUDE_FF
 #endif /* PREPROCESSOR_EXCLUDE_FF */
 
-#include "CoreAfx.h"
+#include "Stats/StatsForward.h"
+
+#if !WITH_STATS
+    #error "This file should only be included if the application compiles with stats."
+#endif /* WITH_STATS */
 
 #if WITH_STATS
 
@@ -49,7 +53,7 @@
 //# The display name will be automatically generated from the function name.
 //#
 #define STAT_CYCLE_FUNCTION_START(Symbol)          \
-    STAT_CYCLE_START(Symbol, JAFG_PRETTY_FUNCTION)
+    STAT_CYCLE_START(Symbol, LAL_PRETTY_FUNCTION)
 //# Counterpart for #STAT_CYCLE_FUNCTION_START to end the stat.
 #define STAT_CYCLE_FUNCTION_END(Symbol) \
     STAT_CYCLE_END(Symbol)

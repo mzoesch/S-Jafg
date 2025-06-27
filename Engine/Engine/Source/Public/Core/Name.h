@@ -101,7 +101,7 @@ private:
 #define GET_NAME(Name)              ::Jafg::Private::GNameRegistry->GetName(Name)
 //#
 //# Get a name by its string representation.
-//# If #DO_CHECKS is true, the program will panic, otherwise #LName::NoName will be returned.
+//# If #LAL_DO_CHECKS is true, the program will panic, otherwise #LName::NoName will be returned.
 //#
 #define GET_NAME_CHECKED(Name)      ::Jafg::Private::GNameRegistry->GetNameChecked(Name)
 

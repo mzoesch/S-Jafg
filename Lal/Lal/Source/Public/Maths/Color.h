@@ -13,7 +13,7 @@ struct LColor;
  */
 struct LLinearColor final
 {
-#if PLATFORM_USES_LITTLE_ENDIAN
+#if LAL_PLATFORM_USES_LITTLE_ENDIAN
     union
     {
         struct
@@ -26,7 +26,7 @@ struct LLinearColor final
 
         f32 Channels[4];
     };
-#else /* PLATFORM_USES_LITTLE_ENDIAN */
+#else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
     union
     {
         struct
@@ -39,23 +39,23 @@ struct LLinearColor final
 
         f32  Channels[4];
     };
-#endif /* !PLATFORM_USES_LITTLE_ENDIAN */
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
 
     FORCEINLINE constexpr LLinearColor() noexcept
-#if PLATFORM_USES_LITTLE_ENDIAN
+#if LAL_PLATFORM_USES_LITTLE_ENDIAN
         : B(0.0f), G(0.0f), R(0.0f), A(0.0f)
-#else /* PLATFORM_USES_LITTLE_ENDIAN */
+#else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
         : A(0.0f), R(0.0f), G(0.0f), B(0.0f)
-#endif /* !PLATFORM_USES_LITTLE_ENDIAN */
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
     {
     }
 
     FORCEINLINE constexpr LLinearColor(const f32 InR, const f32 InG, const f32 InB, const f32 InA = 1.0f) noexcept
-#if PLATFORM_USES_LITTLE_ENDIAN
+#if LAL_PLATFORM_USES_LITTLE_ENDIAN
         : B(InB), G(InG), R(InR), A(InA)
-#else /* PLATFORM_USES_LITTLE_ENDIAN */
+#else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
         : A(InA), R(InR), G(InG), B(InB)
-#endif /* !PLATFORM_USES_LITTLE_ENDIAN */
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
     {
         check( InR >= 0.0f && InR <= 1.0f )
         check( InG >= 0.0f && InG <= 1.0f )
@@ -83,17 +83,17 @@ struct LLinearColor final
 
     FORCEINLINE constexpr void operator=(const LLinearColor& InColor) noexcept
     {
-#if PLATFORM_USES_LITTLE_ENDIAN
+#if LAL_PLATFORM_USES_LITTLE_ENDIAN
         this->B = InColor.B;
         this->G = InColor.G;
         this->R = InColor.R;
         this->A = InColor.A;
-#else /* PLATFORM_USES_LITTLE_ENDIAN */
+#else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
         this->A = InColor.A;
         this->R = InColor.R;
         this->G = InColor.G;
         this->B = InColor.B;
-#endif /* !PLATFORM_USES_LITTLE_ENDIAN */
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
     }
 
     FORCEINLINE constexpr LVector ToVector3() const noexcept
@@ -300,7 +300,7 @@ struct LLinearColor final
  */
 struct LColor final
 {
-#if PLATFORM_USES_LITTLE_ENDIAN
+#if LAL_PLATFORM_USES_LITTLE_ENDIAN
     union
     {
         struct
@@ -315,7 +315,7 @@ struct LColor final
 
         u8 Channels[4];
     };
-#else /* PLATFORM_USES_LITTLE_ENDIAN */
+#else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
     union
     {
         struct
@@ -330,59 +330,59 @@ struct LColor final
 
         u8  Channels[4];
     };
-#endif /* !PLATFORM_USES_LITTLE_ENDIAN */
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
 
     FORCEINLINE constexpr LColor() noexcept
-#if PLATFORM_USES_LITTLE_ENDIAN
+#if LAL_PLATFORM_USES_LITTLE_ENDIAN
         : B(0), G(0), R(0), A(0)
-#else /* PLATFORM_USES_LITTLE_ENDIAN */
+#else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
         : A(0), R(0), G(0), B(0)
-#endif /* !PLATFORM_USES_LITTLE_ENDIAN */
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
     {
     }
 
     FORCEINLINE constexpr LColor(const u8 InR, const u8 InG, const u8 InB, const u8 InA = 0xFF) noexcept
-#if PLATFORM_USES_LITTLE_ENDIAN
+#if LAL_PLATFORM_USES_LITTLE_ENDIAN
         : B(InB), G(InG), R(InR), A(InA)
-#else /* PLATFORM_USES_LITTLE_ENDIAN */
+#else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
         : A(InA), R(InR), G(InG), B(InB)
-#endif /* !PLATFORM_USES_LITTLE_ENDIAN */
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
     {
     }
 
     FORCEINLINE constexpr LColor(const u8 InColor) noexcept
-#if PLATFORM_USES_LITTLE_ENDIAN
+#if LAL_PLATFORM_USES_LITTLE_ENDIAN
         : B(InColor), G(InColor), R(InColor), A(0xFF)
-#else /* PLATFORM_USES_LITTLE_ENDIAN */
+#else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
         : A(InA), R(InR), G(InG), B(InB)
-#endif /* !PLATFORM_USES_LITTLE_ENDIAN */
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
     {
     }
 
     FORCEINLINE constexpr LColor(const u32 InColor) noexcept
-#if PLATFORM_USES_LITTLE_ENDIAN
+#if LAL_PLATFORM_USES_LITTLE_ENDIAN
         : B(static_cast<u8>(InColor)), G(static_cast<u8>(InColor)), R(static_cast<u8>(InColor)), A(0xFF)
-#else /* PLATFORM_USES_LITTLE_ENDIAN */
+#else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
         : A(InA), R(InR), G(InG), B(InB)
-#endif /* !PLATFORM_USES_LITTLE_ENDIAN */
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
     {
     }
 
     FORCEINLINE constexpr explicit LColor(const f32 InColor) noexcept
-#if PLATFORM_USES_LITTLE_ENDIAN
+#if LAL_PLATFORM_USES_LITTLE_ENDIAN
         : B(static_cast<u8>(InColor * 255.0f)), G(static_cast<u8>(InColor * 255.0f)), R(static_cast<u8>(InColor * 255.0f)), A(0xFF)
-#else /* PLATFORM_USES_LITTLE_ENDIAN */
+#else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
         : A(0xFF), R(static_cast<u8>(InColor * 255.0f)), G(static_cast<u8>(InColor * 255.0f)), B(static_cast<u8>(InColor * 255.0f))
-#endif /* !PLATFORM_USES_LITTLE_ENDIAN */
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
     {
     }
 
     FORCEINLINE constexpr explicit LColor(const f64 InColor) noexcept
-#if PLATFORM_USES_LITTLE_ENDIAN
+#if LAL_PLATFORM_USES_LITTLE_ENDIAN
         : B(static_cast<u8>(InColor * 255.0)), G(static_cast<u8>(InColor * 255.0)), R(static_cast<u8>(InColor * 255.0)), A(0xFF)
-#else /* PLATFORM_USES_LITTLE_ENDIAN */
+#else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
         : A(0xFF), R(static_cast<u8>(InColor * 255.0)), G(static_cast<u8>(InColor * 255.0)), B(static_cast<u8>(InColor * 255.0))
-#endif /* !PLATFORM_USES_LITTLE_ENDIAN */
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
     {
     }
 

@@ -28,15 +28,15 @@ enum Type : i32
 #if PLATFORM_WINDOWS_WITH_MSVC
     typedef ::std::intptr_t         LPtrSize;
     typedef ::std::uintptr_t        LuPtrSize;
-#elif WITH_GCC
+#elif LAL_WITH_GCC
     typedef intptr_t                LPtrSize;
     typedef uintptr_t               LuPtrSize;
-#elif WITH_CLANG
+#elif LAL_WITH_CLANG
     typedef intptr_t                LPtrSize;
     typedef uintptr_t               LuPtrSize;
-#else /* WITH_CLANG */
+#else /* LAL_WITH_CLANG */
     #error "Missing implementation for this platform."
-#endif /* WITH_CLANG */
+#endif /* LAL_WITH_CLANG */
 enum : i8 { POINTER_BYTE_SIZE = sizeof(LPtrSize) };
 #if PLATFORM_USES_32_BIT
     static_assert(sizeof(LPtrSize) == 4, "LPtrSize is not 4 bytes.");
@@ -61,7 +61,7 @@ typedef i32 LSizeTy;
 #define JTXT8(x)        LITERAL_UTF8(x)
 #define JTXTu(x)        LITERAL_UTF16(x)
 #define JTXTU(x)        LITERAL_UTF32(x)
-#if PLATFORM_USES_UTF8
+#if LAL_PLATFORM_USES_UTF8
     #define JTXT(x) JTXT8(x)
 #elif PLATFORM_USES_UTF16
     #define JTXT(x) JTXTu(x)
@@ -74,16 +74,16 @@ typedef i32 LSizeTy;
 //# We define this because some methods / functions may be noexcept.
 //# But may contain development checks that are not present in release builds.
 // TODO Move this to platform specific code, maybe? Some platforms may behave differently when encountering exceptions. Looking at you Wasm :()
-#if DO_SLOW_CHECKS
+#if LAL_DO_SLOW_CHECKS
     #define noexceptslow        // May throw.
-#else /* DO_SLOW_CHECKS */
+#else /* LAL_DO_SLOW_CHECKS */
     #define noexceptslow        noexcept // Slow check will not compile so just mark as noexcept.
-#endif /* !DO_SLOW_CHECKS */
-#if DO_CHECKS
+#endif /* !LAL_DO_SLOW_CHECKS */
+#if LAL_DO_CHECKS
     #define noexceptcheck       // May throw.
-#else /* DO_CHECKS */
+#else /* LAL_DO_CHECKS */
     #define noexceptcheck       noexcept // Check will not compile so just mark as noexcept.
-#endif  /* !DO_CHECKS */
+#endif  /* !LAL_DO_CHECKS */
 
 #ifndef FALSE
     #define FALSE       0

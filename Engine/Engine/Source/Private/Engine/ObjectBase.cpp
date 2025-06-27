@@ -8,7 +8,7 @@ Jafg::LObjectInitializer Jafg::GetDefaultObjectInitializer()
 {
     if (GEngine)
     {
-#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
         return LObjectInitializer{GEngine->GetCurrentForeignContext()};
 #else /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
         jassertNoEntry()
@@ -52,12 +52,12 @@ void Jafg::JObjectBase::MarkAsGarbage()
 
 void Jafg::JObjectBase::KillYourSelfNow(const bool bMayBeGarbage /* = false */)
 {
-#if DO_CHECKS
+#if LAL_DO_CHECKS
     if (bMayBeGarbage == false)
     {
         check( this->bGarbage == false )
     }
-#endif /* DO_CHECKS */
+#endif /* LAL_DO_CHECKS */
 
     if (this->bGarbage == false)
     {

@@ -145,7 +145,7 @@ FORCEINLINE TOptional<T>& TOptional<T>::operator=(T&& InValue) noexcept
 template<typename T>
 FORCEINLINE TOptional<T>& TOptional<T>::operator=(const TOptional& InOther) noexcept
 {
-    if (UNLIKELY(this != &InOther))
+    if (LAL_UNLIKELY(this != &InOther))
     {
         if (this->IsValid())
         {
@@ -171,7 +171,7 @@ FORCEINLINE TOptional<T>& TOptional<T>::operator=(const TOptional& InOther) noex
 template<typename T>
 FORCEINLINE TOptional<T>& TOptional<T>::operator=(TOptional&& InOther) noexcept
 {
-    if (UNLIKELY(this != &InOther))
+    if (LAL_UNLIKELY(this != &InOther))
     {
         if (this->IsValid())
         {

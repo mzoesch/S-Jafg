@@ -262,10 +262,10 @@ FORCEINLINE void Jafg::LSurfaceBase::ForEachNewKeyDown(Predicate InPredicate)
     return;
 }
 
-#if PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
+#if JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
     #include "Platform/SurfaceGlfw3.h"
 #elif PLATFORM_USES_JAVA_SCRIPT_FRONTEND
     #include "Platform/SurfaceWasm.h"
-#else /* PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
+#else /* PLATFORM_USES_JAVA_SCRIPT_FRONTEND */
     #error "Could not resolve PLATFORM."
 #endif /* !PLATFORM_USES_JAVA_SCRIPT_FRONTEND */

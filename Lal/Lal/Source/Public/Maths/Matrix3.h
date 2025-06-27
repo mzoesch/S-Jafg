@@ -432,16 +432,16 @@ template <typename T>
 FORCEINLINE constexpr T TMatrix3<T>::GetOneOverDeterminantChecked() const noexcept
 {
     const T Determinant = this->GetDeterminant();
-#if DO_CHECKS
+#if LAL_DO_CHECKS
     if (Maths::IsNearlyZero(Determinant))
     {
         panic( "Matrix determinant is zero." )
         return static_cast<T>(0.0);
     }
     return static_cast<T>(1.0) / Determinant;
-#else /* DO_CHECKS */
+#else /* LAL_DO_CHECKS */
     return Maths::IsNearlyZero(Determinant) ? static_cast<T>(0.0) : static_cast<T>(1.0) / Determinant;
-#endif /* !DO_CHECKS */
+#endif /* !LAL_DO_CHECKS */
 }
 
 template <typename T>
@@ -508,12 +508,12 @@ FORCEINLINE void TMatrix3<T>::FastCopy(const Self& InMatrix, Self* OutMatrix) no
 {
     static_assert(sizeof(Self) == 9 * sizeof(T), "TMatrix3<T> is not 9 * sizeof(T) bytes large.");
 
-#if WITH_GCC
+#if LAL_WITH_GCC
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
 #endif /* WITH_GCC */
     ::memcpy(OutMatrix, &InMatrix, sizeof(Self));
-#if WITH_GCC
+#if LAL_WITH_GCC
     #pragma GCC diagnostic pop
 #endif /* WITH_GCC */
 

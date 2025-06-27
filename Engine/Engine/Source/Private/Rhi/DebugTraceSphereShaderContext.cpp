@@ -69,10 +69,7 @@ void Jafg::LDebugTraceSphereShaderContext::Make()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
 
-#if WITH_DEBUG_ZERO_UNBOUND
     glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
 
     return;
 }
@@ -110,10 +107,7 @@ void Jafg::LDebugTraceSphereShaderContext::Draw(const LViewport& Context, LGener
     glDrawArrays(GL_LINES, 0, SphereVertices.GetSize());
     glLineWidth(1); /* Reset */
 
-#if WITH_DEBUG_ZERO_UNBOUND
     glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
 
     return;
 }

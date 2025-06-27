@@ -15,7 +15,7 @@
 #endif /* !__EMSCRIPTEN_PTHREADS__ */
 
 //# For now. But we should make this an option in cmake.
-#define PLATFORM_USES_WEBGL_TWO 1
+#define JAFG_PLATFORM_USES_WEBGL_TWO 1
 
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler dependent features
@@ -33,7 +33,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef WITH_GCC
-    #define WITH_GCC            1
+    #define LAL_WITH_GCC            1
 #endif /* !WITH_GCC */
 
 #pragma GCC diagnostic error "-Wpragmas"
@@ -75,28 +75,28 @@ struct LWasmPlatformTypes final : public LGenericPlatformTypes
 #ifdef PLATFORM_MAX_PATH
     #error "PLATFORM_MAX_PATH is already defined."
 #endif /* PLATFORM_MAX_PATH */
-#define PLATFORM_MAX_PATH                   _MAX_PATH
+#define LAL_PLATFORM_MAX_PATH                   _MAX_PATH
 
 #define WITH_VIRTUAL_FILESYSTEM             1
-#define PLATFORM_USES_JAVA_SCRIPT_FRONTEND  1
+#define JAFG_PLATFORM_USES_JAVA_SCRIPT_FRONTEND  1
 #define PLATFORM_WCHAR_SIZE                 4
-#define PLATFORM_USES_UTF8                  1
-#define PLATFORM_USES_INLINE_MATH_DEFINES   1
+#define LAL_PLATFORM_USES_UTF8                  1
+#define LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS   1
 
 #define JAFG_NO_GLAD                        1 /* Let the compiler handle that - so emscripten. */
 #define JAFG_NO_GLFW3                       1
 #define JAFG_NO_FREETYPE                    0
 
-#define PLATFORM_USES_NON_GENERIC_LOOP      1
+#define LAL_PLATFORM_USES_NON_GENERIC_LOOP      1
 #define PLATFORM_GUARDED_LOOP                              \
     ::emscripten_set_main_loop(::WasmGuardedLoop, 0, true)
-#define PLATFORM_USES_NON_GENERIC_EXIT      1
+#define LAL_PLATFORM_USES_NON_GENERIC_EXIT      1
 
 /**
  * Intrinsic stuff is not really supported in wasm - and for the things that are supported, are,
  * for me, just too much a pain in the ass to implement it.
  */
-#define PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH()
+#define LAL_PLATFORM_NO_DISCARD_CTRL_PATH()
 
 /**
  * Platform break. Should just break the debugger if attached and pause the program. It must allow for continuing.
@@ -105,7 +105,7 @@ struct LWasmPlatformTypes final : public LGenericPlatformTypes
 #ifdef PLATFORM_BREAK
     #error "PLATFORM_BREAK is already defined."
 #endif /* PLATFORM_BREAK */
-#define PLATFORM_BREAK() \
+#define LAL_PLATFORM_BREAK() \
     { emscripten_debugger(); }
 
 /**
@@ -148,9 +148,9 @@ struct LWasmPlatformTypes final : public LGenericPlatformTypes
 #define PLATFORM_CALLSPEC_OUT
 #define PLATFORM_CALLSPEC_IN
 #define PLATFORM_EXTERNSPEC_OUT
-#define PLATFORM_EXTERNSPEC_IN
+#define LAL_PLATFORM_EXTERNSPEC_IN
 
-#define PLATFORM_USES_LITTLE_ENDIAN     1
+#define LAL_PLATFORM_USES_LITTLE_ENDIAN     1
 #define PLATFORM_USES_32_BIT            1
 
 struct LWasmPlatformBreakDefines final

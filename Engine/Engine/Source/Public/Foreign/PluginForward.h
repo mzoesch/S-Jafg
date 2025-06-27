@@ -7,7 +7,7 @@ namespace Jafg
 
 struct LLoadedPlugin;
 
-#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
 namespace EPluginShutdownReason
 {
 

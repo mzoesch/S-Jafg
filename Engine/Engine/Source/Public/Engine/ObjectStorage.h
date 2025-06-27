@@ -92,9 +92,9 @@ struct TObjectStorage final
 
 private:
 
-#if DO_CHECKS
+#if LAL_DO_CHECKS
     FORCEINLINE constexpr bool IsValidState() const;
-#endif /* DO_CHECKS */
+#endif /* LAL_DO_CHECKS */
 
     LObjectContext* Context;
     T* Pointer;
@@ -483,7 +483,7 @@ FORCEINLINE const T& TObjectStorage<T>::operator*() const noexcept
     return *this->Pointer;
 }
 
-#if DO_CHECKS
+#if LAL_DO_CHECKS
 template<typename T>
 FORCEINLINE constexpr bool TObjectStorage<T>::IsValidState() const
 {
@@ -498,6 +498,6 @@ FORCEINLINE constexpr bool TObjectStorage<T>::IsValidState() const
 
     return true;
 }
-#endif /* DO_CHECKS */
+#endif /* LAL_DO_CHECKS */
 
 } /* ~Namespace Jafg */

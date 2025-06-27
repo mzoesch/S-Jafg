@@ -18,14 +18,14 @@ namespace Jafg::Private
 
 ENGINE_API void AddWidgetFactory(LWidgetFactory* InFactory)
 {
-#if DO_CHECKS
+#if LAL_DO_CHECKS
     check( InFactory->GetNodeRaw() )
     const std::map<void*, Jafg::LWidgetFactory*>::iterator It = GWidgetFactories.find(InFactory->GetNodeRaw());
     if (It != GWidgetFactories.end())
     {
         panic( "The widget factory is already registered." )
     }
-#endif /* DO_CHECKS */
+#endif /* LAL_DO_CHECKS */
 
     GWidgetFactories[InFactory->GetNodeRaw()] = InFactory;
 
@@ -95,9 +95,9 @@ bool LAnchor::IsNormalized() const noexcept
 
 void LAnchor::Normalize() noexcept
 {
-#if DO_CHECKS
+#if LAL_DO_CHECKS
     LAnchor Old = *this;
-#endif /* DO_CHECKS */
+#endif /* LAL_DO_CHECKS */
 
     this->Anchors.X = Maths::Clamp(this->Anchors.X, 0.0f, 1.0f);
     this->Anchors.Y = Maths::Clamp(this->Anchors.Y, 0.0f, 1.0f);
@@ -107,12 +107,12 @@ void LAnchor::Normalize() noexcept
     this->MaxX = Maths::Min(this->MaxX, 1.0f - this->MinX);
     this->MaxY = Maths::Min(this->MaxY, 1.0f - this->MinY);
 
-#if DO_CHECKS
+#if LAL_DO_CHECKS
     if (Old != *this)
     {
         LOG_WARNING(LogWidgetFramework, "Anchor was not normalized correctly: {} -> {}.", Old.ToString(), this->ToString())
     }
-#endif /* DO_CHECKS */
+#endif /* LAL_DO_CHECKS */
 
     return;
 }

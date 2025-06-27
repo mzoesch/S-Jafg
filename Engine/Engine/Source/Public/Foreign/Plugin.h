@@ -4,7 +4,7 @@
 
 #include "CoreAfx.h"
 
-#if !PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if !LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
     #error "Plugins are not supported on this platform."
 #endif /* !PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 

@@ -6,7 +6,7 @@
 #include "Containers/ComplexQueue.h"
 #include "Core/Application.h"
 #include "Stats/Stats.h"
-#if WITH_GCC || PLATFORM_LINUX
+#if LAL_WITH_GCC || PLATFORM_LINUX
     #include <thread>
 #endif /* WITH_GCC */
 #if PLATFORM_WASM
@@ -17,7 +17,7 @@
 namespace
 {
 
-#if WITH_MSVC
+#if LAL_WITH_MSVC
     static_assert(std::is_same_v<::Jafg::LThreadId, _Thrd_id_t>, "Compiler specific thread id is not the same.");
     #if 0 // !_HAS_CXX23 Even better just use the xthreads.h implementation.
         /* Just use msvc std implementation. */
@@ -30,7 +30,7 @@ namespace
         );
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() _Thrd_id()
     #endif /* _HAS_CXX23 */
-#elif WITH_GCC || WITH_CLANG
+#elif LAL_WITH_GCC || LAL_WITH_CLANG
     #if PLATFORM_WASM
         static_assert(::std::is_same_v<::Jafg::LThreadId, ::std::__libcpp_thread_id>, "Compiler specific thread id is not the same.");
         #define PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID() pthread_self()
@@ -415,7 +415,7 @@ void Jafg::Tasks::TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::
 
         std::shared_lock Lock(::EngineThreadsMutex); // TODO Can we make this faster?
         LEngineThread* Thread = ::EngineThreads.FindRef(Which);
-        if (UNLIKELY(ensure(Thread == nullptr)))
+        if (LAL_UNLIKELY(ensure(Thread == nullptr)))
         {
             LOG_ERROR(LogTaskSystem, "Thread {} not found.", LexToString(Which))
             break;
@@ -769,7 +769,7 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
     if (::EngineThreadsMutex.try_lock() == false)
     {
         LOG_ERROR(LogTaskSystem, "Failed to lock engine threads mutex. But in this state there should not be any other threads running.")
-        LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
+        LAL_UNSAFE_FLUSH_OUT_STREAMS()
         ::EngineThreadsMutex.lock(); // Hang this. Probably a deadlock. Let it idle forever. Highly unlikely.
     }
     ::EngineThreads.Empty();

@@ -208,10 +208,7 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
         X += (Ch.Advance.X >> 6) * this->Brush.Scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
     }
 
-#if WITH_DEBUG_ZERO_UNBOUND
     glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
 
     // Reset to default state machine.
     glCullFace(GL_BACK);

@@ -12,9 +12,9 @@
 
 #include <SetupApi.h>
 /* For GCC/Clang, link with the setup api using '-lsetupapi' at compile time. */
-#if WITH_MSVC
+#if LAL_WITH_MSVC
     #pragma comment( lib, "setupapi.lib" )
-#endif /* WITH_MSVC */
+#endif /* LAL_WITH_MSVC */
 
 namespace
 {
@@ -256,7 +256,7 @@ Jafg::LString Jafg::PlatformMisc::GetRealEngineRootDirImpl()
     TCHAR Buffer[PLATFORM_MAX_PATH] = { 0 };
     GetModuleFileName(nullptr, Buffer, PLATFORM_MAX_PATH);
 
-#if WITH_MSVC
+#if LAL_WITH_MSVC
     const std::wstring WFromBuffer = Buffer;
 #elif WITH_GCC
     #ifdef UNICODE

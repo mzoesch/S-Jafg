@@ -5,9 +5,9 @@
 #include "CoreAfx.h"
 #include "Platform/Surface.h"
 
-#if !PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
+#if !JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
     #error "Tried to include glfw3 specific code on a platform that does not support glfw3."
-#endif /* !PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
+#endif /* !JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
 
 struct GLFWwindow;
 struct GLFWcursor;

@@ -2,7 +2,7 @@
 
 #pragma once
 
-namespace Jafg
+namespace Lal
 {
 
 namespace ELogVerbosity
@@ -10,6 +10,8 @@ namespace ELogVerbosity
 
 enum Type : u8
 {
+    Unknown     = 0,
+
     Trace       = 1,
     Verbose     = 2,
     Info        = 3,
@@ -25,8 +27,6 @@ enum Type : u8
 
 } /* ~Namespace ELogVerbosity */
 
-typedef ELogVerbosity::Type ELogVerbosityType;
+LAL_API Jafg::LString LexToString(const ELogVerbosity::Type Verbosity);
 
-LAL_API LString LexToString(const ELogVerbosityType Verbosity);
-
-} /* ~Namespace Jafg */
+} /* ~Namespace Lal */

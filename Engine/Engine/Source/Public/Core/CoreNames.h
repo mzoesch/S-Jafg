@@ -42,7 +42,6 @@ ENGINE_API extern LName Name_ShaderChunk;
 
 ENGINE_API extern LName Name_UsrInToggleDebugScreen;
 ENGINE_API extern LName Name_UsrInTogglePauseScreen;
-ENGINE_API extern LName Name_UsrInTrap;
 ENGINE_API extern LName Name_UsrInRhiPolyToWireframe;
 ENGINE_API extern LName Name_UsrInRhiPolyToFill;
 ENGINE_API extern LName Name_UsrInRhiShowNormals;

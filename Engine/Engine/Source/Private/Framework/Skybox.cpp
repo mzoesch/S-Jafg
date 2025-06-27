@@ -117,7 +117,6 @@ void Jafg::LSkybox::Upload()
 
     this->Shader.Use();
     this->Shader.SetIntUniform("SkyboxSampler0", 0);
-    this->Shader.Unuse();
 
     this->BillboardVao.Emplace(0);
     glGenVertexArrays(1, &this->BillboardVao.GetValue());
@@ -155,7 +154,6 @@ void Jafg::LSkybox::Upload()
 
     this->BillboardShader.Use();
     this->BillboardShader.SetIntUniform("Sampler", 0);
-    this->Shader.Unuse();
 
     return;
 }

@@ -2,13 +2,12 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Stats/StatsForward.h"
 
 #if !(WITH_STATS && JAFG_STATS_USE_GOOGLE_CHROME_TRACER)
     #error "This file should only be included if the application compiles with stats and the Google Chrome Tracer is enabled."
 #endif /* !(WITH_STATS && JAFG_STATS_USE_GOOGLE_CHROME_TRACER) */
 
-#include "Stats/StatsForward.h"
 #include "System/Finder.h"
 
 namespace Jafg::Stats::Vendor

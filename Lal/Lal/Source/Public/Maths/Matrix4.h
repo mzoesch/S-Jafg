@@ -637,12 +637,12 @@ FORCEINLINE void TMatrix4<T>::FastCopy(const Self& InMatrix, Self* OutMatrix)
 {
     static_assert(sizeof(Self) == 16 * sizeof(T), "TMatrix4<T> is not 16 * sizeof(T) bytes large.");
 
-#if WITH_GCC
+#if LAL_WITH_GCC
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
 #endif /* WITH_GCC */
     ::memcpy(OutMatrix, &InMatrix, sizeof(Self));
-#if WITH_GCC
+#if LAL_WITH_GCC
     #pragma GCC diagnostic pop
 #endif /* WITH_GCC */
 

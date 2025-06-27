@@ -13,15 +13,15 @@
 #include "Stats/Stats.h"
 #include "Platform/PlatformMisc.h"
 #include "System/Paths.h"
-#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
-    #if WITH_CLANG
+#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+    #if LAL_WITH_CLANG
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-W#warnings"
-    #endif /* WITH_CLANG */
+    #endif /* LAL_WITH_CLANG */
     #include "nlohmann/json.hpp"
-    #if WITH_CLANG
+    #if LAL_WITH_CLANG
         #pragma clang diagnostic pop
-    #endif /* WITH_CLANG */
+    #endif /* LAL_WITH_CLANG */
 #endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -336,7 +336,7 @@ void Jafg::LEngine::TearDown()
 
     Private::GCarnifexReferrer->KillAllGarbageChildren();
 
-#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
     if (this->LoadedPlugins.IsEmpty() == false)
     {
         LOG_VERBOSE(LogForeign, "There are [{}] loaded plugins. Unloading them now.", this->LoadedPlugins.GetSize())
@@ -613,7 +613,7 @@ Jafg::LLevel* Jafg::LEngine::GetLevelByInternalUrl(const LString& Url)
     }
 }
 
-#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
 void Jafg::LEngine::RefetchPlugins(const TArray<LString>& InAdditionalPaths)
 {
     check( Tasks::IsOnMasterThread() )

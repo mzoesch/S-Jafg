@@ -11,19 +11,24 @@
 #include "Core/CoreNames.h"
 #include "User/UserPreferences.h"
 #include "Stats/Stats.h"
-#if WITH_VIRTUAL_FILESYSTEM
-    #include "System/VFilesystem.h"
 
-#endif /* WITH_VIRTUAL_FILESYSTEM */
 using namespace Jafg;
 
-#if IN_SHIPPING
-    #define FORCE_LOG_FLUSH_INTERVAL        10.0
-    #define LOG_TIME_FOR_VERY_LONG_FRAMES   2.0
-#else /* IN_SHIPPING */
-    #define FORCE_LOG_FLUSH_INTERVAL        0.2
-    #define LOG_TIME_FOR_VERY_LONG_FRAMES   0.7
-#endif /* !IN_SHIPPING */
+#ifndef JAFG_FORCE_LOG_FLUSH_INTERVAL
+    #if IN_SHIPPING
+        #define JAFG_FORCE_LOG_FLUSH_INTERVAL                           10.0
+    #else /* IN_SHIPPING */
+        #define JAFG_FORCE_LOG_FLUSH_INTERVAL                           0.2
+    #endif /* !IN_SHIPPING */
+#endif /* JAFG_FORCE_LOG_FLUSH_INTERVAL */
+
+#ifndef JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES
+    #if IN_SHIPPING
+        #define JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES                      2.0
+    #else /* IN_SHIPPING */
+        #define JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES                      0.7
+    #endif /* !IN_SHIPPING */
+#endif /* JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES */
 
 namespace
 {
@@ -56,19 +61,19 @@ struct LPrivateLaunch
 
 } /* ~Namespace Jafg */
 
-#if !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT)
+#if !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT)
 FORCEINLINE
-#endif /* !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT) */
+#endif /* !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT) */
 void FlushLogs()
 {
-    LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()
+    LAL_UNSAFE_FLUSH_OUT_STREAMS()
     Application::Private::LastStdOutFlushTime = Application::GetHighestNow();
     return;
 }
 
-#if !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT)
+#if !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT)
 FORCEINLINE
-#endif /* !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT) */
+#endif /* !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT) */
 EPlatformExit::Type GetMostSignificantExitReason()
 {
     //
@@ -82,16 +87,16 @@ EPlatformExit::Type GetMostSignificantExitReason()
         : EPlatformExit::Success;
 }
 
-#if !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT)
+#if !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT)
 FORCEINLINE
-#endif /* !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT) */
+#endif /* !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT) */
 void EngineTick()
 {
     STAT_CYCLE_FUNCTION()
 
     checkSlow( Tasks::IsOnMasterThread() )
 
-    if (Application::GetTimeDiff(Application::Private::LastStdOutFlushTime, Application::GetHighestNow()) > FORCE_LOG_FLUSH_INTERVAL)
+    if (Application::GetTimeDiff(Application::Private::LastStdOutFlushTime, Application::GetHighestNow()) > JAFG_FORCE_LOG_FLUSH_INTERVAL)
     {
         ::FlushLogs();
     }
@@ -112,7 +117,7 @@ void EngineTick()
             {
                 const Application::LHrcTimePoint SleepStart = Application::GetHighestNow();
                 const f64 SleepTime = (1.0 / UserPreferences->MaxFps) - ThisFrameTime;
-                PlatformHal::SleepNoStats(Maths::Max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
+                Lal::Hal::SleepNoStats(Maths::Max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
                 Application::Private::IdleDeltaTime = Application::GetTimeDiff(SleepStart, Application::GetHighestNow());
             }
         }
@@ -138,7 +143,7 @@ void EngineTick()
         {
             if constexpr (IS_COMPILED_LOG(LogGuardedMain, Warning))
             {
-                if (Application::GetDeltaTime() > LOG_TIME_FOR_VERY_LONG_FRAMES)
+                if (Application::GetDeltaTime() > JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES)
                 {
                     LOG_WARNING(LogGuardedMain, "Very long frame detected: {} seconds.", Application::GetDeltaTime())
                 }
@@ -170,9 +175,9 @@ void EngineTick()
     return;
 }
 
-#if !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT)
+#if !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT)
 FORCEINLINE
-#endif /* !(PLATFORM_USES_NON_GENERIC_LOOP || PLATFORM_USES_NON_GENERIC_EXIT) */
+#endif /* !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT) */
 void EngineExit()
 {
     STAT_BOOKMARK("TearingDown")
@@ -214,14 +219,6 @@ void EngineExit()
         Private::KillSingletonObjectRegistry();
     }
 
-#if WITH_VIRTUAL_FILESYSTEM
-    if (GVirtualFileSystem)
-    {
-        delete GVirtualFileSystem;
-        check( GVirtualFileSystem == nullptr )
-    }
-#endif /* WITH_VIRTUAL_FILESYSTEM */
-
     if (Private::GNameRegistry)
     {
         delete Private::GNameRegistry;
@@ -252,6 +249,7 @@ void EngineExit()
     }
 
     STAT_CYCLE_FUNCTION_END(ExitCycle)
+
 #if WITH_STATS
     if (Stats::Private::GTracer)
     {
@@ -265,7 +263,7 @@ void EngineExit()
 
 EPlatformExit::Type GuardedMain()
 {
-#if !PLATFORM_USES_NON_GENERIC_EXIT
+#if !LAL_PLATFORM_USES_NON_GENERIC_EXIT
     struct GuardedMainScope
     {
         ~GuardedMainScope()
@@ -273,7 +271,7 @@ EPlatformExit::Type GuardedMain()
             EngineExit();
         }
     } GuardedMainScope;
-#endif /* !PLATFORM_USES_NON_GENERIC_EXIT */
+#endif /* !LAL_PLATFORM_USES_NON_GENERIC_EXIT */
 
     LOG_INFO
     (
@@ -283,15 +281,6 @@ EPlatformExit::Type GuardedMain()
     )
 
     Tasks::RegisterThread(ENamedThreads::Master);
-
-#if WITH_VIRTUAL_FILESYSTEM
-    new LVirtualFileSystem();
-    if (GVirtualFileSystem == nullptr)
-    {
-        return EPlatformExit::Fatal;
-    }
-    LOG_INFO(LogSystem, "Found {} embedded files.", GVirtualFileSystem->GetTotalEmbeddedFileCount())
-#endif /* WITH_VIRTUAL_FILESYSTEM */
 
     PlatformMisc::InvalidateCachedValues();
 
@@ -352,10 +341,10 @@ EPlatformExit::Type GuardedMain()
     GEngine->Initialize();
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterEngineInitDangerous, Tasks::RunAllTasks);
 
-    /*
-     * The core levels. Hardcoded into the engine generation for better communication with other plugins.
-     * To give them a common / default way for different engine states.
-     */
+    //
+    // The core levels. Hardcoded into the engine generation for better communication with other plugins.
+    // To give them a common / default way for different engine states.
+    //
     GEngine->RegisterLevel
     (
         LLevel
@@ -390,7 +379,7 @@ EPlatformExit::Type GuardedMain()
         return ::GetMostSignificantExitReason();
     }
 
-#if PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
     STAT_CYCLE_START(GmEnabledEnginePluginsLoad, "EnabledEnginePluginsLoad")
     const JUserPreferences* Prefs = GetDefault<JUserPreferences>();
     GEngine->RefetchPlugins(Prefs->AdditionalPluginsSearchPaths);
@@ -422,20 +411,20 @@ EPlatformExit::Type GuardedMain()
     LaunchProgress::FinishAndGiveUpMemory();
 
     Application::Private::PreviousFrameTime = Application::GetTimeDifferenceFromStaticStorageInitialization(Application::GetHighestNow());
-    PlatformHal::YieldThread();
+    Lal::Hal::YieldThread();
     Application::Private::CurrentFrameTime  = Application::GetTimeDifferenceFromStaticStorageInitialization(Application::GetHighestNow());
 
     STAT_CYCLE_FUNCTION_END(GuardedMainCycle)
     STAT_BOOKMARK("GuardedMainCycle")
 
-#if PLATFORM_USES_NON_GENERIC_LOOP
-    PLATFORM_GUARDED_LOOP;
-#else /* PLATFORM_USES_NON_GENERIC_LOOP */
+#if LAL_PLATFORM_USES_NON_GENERIC_LOOP
+    LAL_PLATFORM_GUARDED_LOOP;
+#else /* LAL_PLATFORM_USES_NON_GENERIC_LOOP */
     while (::IsTearingDown() == false)
     {
         ::EngineTick();
     }
-#endif /* !PLATFORM_USES_NON_GENERIC_LOOP */
+#endif /* !LAL_PLATFORM_USES_NON_GENERIC_LOOP */
 
     return ::GetMostSignificantExitReason();
 }

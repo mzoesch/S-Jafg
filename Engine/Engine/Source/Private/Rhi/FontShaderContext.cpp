@@ -166,10 +166,7 @@ void Jafg::LFontShaderContext::Make()
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
 
-#if WITH_DEBUG_ZERO_UNBOUND
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
 
     return;
 }
@@ -238,10 +235,7 @@ void Jafg::LFontShaderContext::Draw(const LViewport& Context, LGenericShaderCont
 
     glFrontFace(GL_CW);
 
-#if WITH_DEBUG_ZERO_UNBOUND
     glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
 
     return;
 }

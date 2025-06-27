@@ -11,7 +11,7 @@ class LViewport;
 class LSurfaceBase;
 class LSurfaceProxy;
 
-#if PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
+#if JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
     class LSurfaceGlfw3;
     typedef LSurfaceGlfw3 LSurface;
 #elif PLATFORM_USES_JAVA_SCRIPT_FRONTEND

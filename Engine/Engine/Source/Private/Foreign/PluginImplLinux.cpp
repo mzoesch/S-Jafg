@@ -2,7 +2,7 @@
 
 #include "CoreAfx.h"
 
-#if PLATFORM_SUPPORTS_SHARED_LIBRARIES && PLATFORM_LINUX
+#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES && PLATFORM_LINUX
 
 #include "Foreign/Plugin.h"
 #include "Foreign/PluginLifetime.h"

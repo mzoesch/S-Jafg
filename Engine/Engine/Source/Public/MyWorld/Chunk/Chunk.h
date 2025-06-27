@@ -360,15 +360,15 @@ FORCEINLINE voxel_t AChunk::GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey) cons
 
 FORCEINLINE voxel_t AChunk::GetRawVoxelDataByNonZeroOrigin(LVoxelKey InKey, const voxel_t Fallback) const
 {
-#if DO_CHECKS
+#if LAL_DO_CHECKS
     const LVoxelKey In = InKey;
-#endif /* DO_CHECKS */
+#endif /* LAL_DO_CHECKS */
     if (const AChunk* Target = this->GetNeighboringChunk(&InKey); Target)
     {
-#if DO_CHECKS
+#if LAL_DO_CHECKS
         if (Target == this) { check( InKey == In ) }
         else { check( InKey != In && InKey.IsLocal() ) }
-#endif /* DO_CHECKS */
+#endif /* LAL_DO_CHECKS */
         return Target->GetSafeRawVoxelData(InKey, Fallback);
     }
 

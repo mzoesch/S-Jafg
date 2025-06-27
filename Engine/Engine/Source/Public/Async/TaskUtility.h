@@ -11,7 +11,7 @@ namespace Jafg
 
 #if PLATFORM_WINDOWS_WITH_MSVC
     typedef u32 LThreadId;
-#elif PLATFORM_WINDOWS_WITH_GCC || WITH_CLANG
+#elif PLATFORM_WINDOWS_WITH_GCC || LAL_WITH_CLANG
     typedef __gthread_t LThreadId;
 #elif PLATFORM_WASM
     typedef unsigned long LThreadId;

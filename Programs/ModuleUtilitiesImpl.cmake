@@ -8,6 +8,17 @@ macro(_jafg_add_module
     set(_scoped_module_name "${module_name}")
 endmacro()
 
+macro(_add_flag_if_specified
+    flag
+    cpp_name
+    )
+    if(NOT ${flag} STREQUAL "Unspecified")
+        target_compile_definitions(${module_name} PRIVATE
+            ${cpp_name}=${flag}
+            )
+    endif()
+endmacro()
+
 function(_jafg_add_module_impl
     module_name
     module_type
@@ -95,10 +106,10 @@ function(_jafg_add_module_impl
             message(FATAL_ERROR "Missing implementation for type [${module_type}].")
         endif()
         target_compile_definitions(${module_name} PRIVATE
-            ${module_name_upper}_API=PLATFORM_CALLSPEC_OUT
+            ${module_name_upper}_API=LAL_PLATFORM_CALLSPEC_OUT
             )
         target_compile_definitions(${module_name} INTERFACE
-            ${module_name_upper}_API=PLATFORM_CALLSPEC_IN
+            ${module_name_upper}_API=LAL_PLATFORM_CALLSPEC_IN
             )
     else()
         message(FATAL_ERROR "Invalid module type [${module_type}].")
@@ -236,22 +247,53 @@ function(_jafg_add_module_impl
         endif()
     elseif(JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_SHIPPING)
         if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-            target_compile_options(${module_name} PRIVATE
-                -g0             # No debug symbols
-                -O3             # Aggressive optimizations
-                )
+            if(LAL_DO_DEBUG_SYMBOLS_IN_SHIPPING)
+                target_compile_options(${module_name} PRIVATE
+                    -g              # No debug symbols
+                    -O3             # Aggressive optimizations
+                    )
+            else()
+                target_compile_options(${module_name} PRIVATE
+                    -g0             # Debug symbols
+                    -O3             # Aggressive optimizations
+                    )
+            endif()
         elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-            target_compile_options(${module_name} PRIVATE
-                /Od             # No debug symbols
-                /Ox             # Aggressive optimizations
-                /GL             # Whole program optimization
-                )
+            if(LAL_DO_DEBUG_SYMBOLS_IN_SHIPPING)
+                target_compile_options(${module_name} PRIVATE
+                    /Zi             # PDB debug symbols
+                    /Ox             # Aggressive optimizations
+                    /GL             # Whole program optimization
+                    )
+            else()
+                target_compile_options(${module_name} PRIVATE
+                    /Od             # No debug symbols
+                    /Ox             # Aggressive optimizations
+                    /GL             # Whole program optimization
+                    )
+            endif()
         else()
             message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
         endif()
     else()
         message(FATAL_ERROR "Missing implementation for JAFG_TARGET_CONFIG [${JAFG_TARGET_CONFIG}].")
     endif()
+
+    set(b_LAL_FLAG_DO_COMPILER_DIAGNOSTIC_SETUP $<IF:$<BOOL:LAL_FLAG_DO_COMPILER_DIAGNOSTIC_SETUP>,1,0>)
+
+    target_compile_definitions(${module_name} PRIVATE
+        LAL_DO_COMPILER_DIAGNOSTIC_SETUP=${b_LAL_FLAG_DO_COMPILER_DIAGNOSTIC_SETUP}
+        )
+
+    _add_flag_if_specified(${LAL_FLAG_DEFAULT_LOG_VERBOSITY}            "LAL_DEFAULT_LOG_VERBOSITY")
+    _add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_TRACE}                 "LAL_LOG_ENABLE_TRACE")
+    _add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_VERBOSE}               "LAL_LOG_ENABLE_VERBOSE")
+    _add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_INFO}                  "LAL_LOG_ENABLE_INFO")
+    _add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_WARNING}               "LAL_LOG_ENABLE_WARNING")
+    _add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_ERROR}                 "LAL_LOG_ENABLE_ERROR")
+    _add_flag_if_specified(${LAL_FLAG_LOG_DO_SCOPED_TIME_TASK_MEASURER} "LAL_LOG_DO_SCOPED_TIME_TASK_MEASURER")
+    _add_flag_if_specified(${JAFG_FLAG_FORCE_LOG_FLUSH_INTERVAL}        "JAFG_FORCE_LOG_FLUSH_INTERVAL")
+    _add_flag_if_specified(${JAFG_FLAG_LOG_TIME_FOR_VERY_LONG_FRAMES}   "JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES")
     # ~Compiler flags
     ###############################################################################
 

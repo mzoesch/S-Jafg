@@ -3,7 +3,7 @@
 #include "User/Input/InputContext.h"
 #include "User/Input/InputAction.h"
 #include "User/Input/UserInput.h"
-#if DO_CHECKS
+#if LAL_DO_CHECKS
     #include "Engine/Engine.h"
 #endif /* WITH_CHECKS */
 

@@ -20,10 +20,7 @@ void Jafg::LBlurShaderContext::Make()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
 
-#if WITH_DEBUG_ZERO_UNBOUND
     glBindVertexArray(0);
-    glUseProgram(0);
-#endif /* ~WITH_DEBUG_ZERO_UNBOUND */
 
     return;
 }
@@ -92,11 +89,9 @@ void Jafg::LBlurShaderContext::OnFree()
     glDeleteVertexArrays(1, &this->Vao);
     glDeleteBuffers(1, &this->Vbo);
 
-#if WITH_DEBUG_ZERO_UNBOUND
     this->Vao = 0;
     this->Vbo = 0;
     this->Shader.Free();
-#endif /* ~WITH_DEBUG_ZERO_UNBOUND */
 
     return;
 }

@@ -2,6 +2,18 @@
 
 #pragma once
 
+/*-----------------------------------------------------------------------------
+    Jafg build tool.
+-----------------------------------------------------------------------------*/
+
+/** Pragmas for the Jafg Build Tool. */
+#define PRAGMA_FOR_JAFG_BUILD_TOOL(Pragma)
+
+
+/*-----------------------------------------------------------------------------
+    Generated macro bodies.
+-----------------------------------------------------------------------------*/
+
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION */

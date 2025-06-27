@@ -35,9 +35,7 @@ void Jafg::LShader::Free()
     if (this->bLoaded)
     {
         glDeleteProgram(this->Id);
-    #if WITH_DEBUG_ZERO_UNBOUND
         this->Id = 0x0u;
-    #endif /* WITH_DEBUG_ZERO_UNBOUND */
         this->bLoaded = false;
     }
     else
@@ -111,13 +109,6 @@ void Jafg::LShader::Use() const
 
     return;
 }
-
-#if WITH_DEBUG_ZERO_UNBOUND
-void Jafg::LShader::Unuse() const
-{
-    glUseProgram(0);
-}
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
 
 void Jafg::LShader::SetBoolUniform(const LString& Name, const bool Value) const
 {

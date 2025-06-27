@@ -87,24 +87,6 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         );
     }
 
-    // Action: Trap
-    {
-        ContextMyWorld->MapAction
-        (
-            UserInput,
-            {Name_UsrInTrap, "Trap", EInputActionCategory::Boolean},
-            "",
-            EKeys::P,
-            EInputActionTrigger::Triggered,
-            {
-            },
-            [](LInputActionValue& InValue) -> void
-            {
-                CONDITIONALLY_BREAK()
-            }
-        );
-    }
-
     // Action: RhiPolyToWireframe
     {
         ContextMyWorld->MapAction

@@ -15,11 +15,11 @@ void TESTER_API RunTests(EPlatformExit::Type* ExitCode);
 
 struct TESTER_API LTestFramework
 {
-#if WITH_CLANG
+#if LAL_WITH_CLANG
     typedef std::chrono::time_point<std::chrono::system_clock> TimePoint;
-#else /* WITH_CLANG */
+#else /* LAL_WITH_CLANG */
     typedef std::chrono::time_point<std::chrono::steady_clock> TimePoint;
-#endif /* !WITH_CLANG */
+#endif /* !LAL_WITH_CLANG */
 
     LTestFramework();
     LTestFramework(const LTestFramework& _) = delete;

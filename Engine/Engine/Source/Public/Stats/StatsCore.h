@@ -2,13 +2,12 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Stats/StatsForward.h"
 
 #if !WITH_STATS
     #error "This file should only be included if the application compiles with stats."
 #endif /* WITH_STATS */
 
-#include "Stats/StatsForward.h"
 #include "Core/Application.h"
 #include "Async/TaskUtility.h"
 

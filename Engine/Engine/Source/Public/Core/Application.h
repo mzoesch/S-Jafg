@@ -7,7 +7,7 @@
 namespace Jafg
 {
 
-namespace PlatformHal
+namespace Hal
 {
 
 /**

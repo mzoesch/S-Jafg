@@ -21,7 +21,6 @@
     Core includes.
 ----------------------------------------------------------------------------*/
 
-#include "Hal/GenericPlatformTypes.h"
 #include "Hal/Platform.h"
 #include "Core/CoreMacros.h"
 #include "Core/CoreDefines.h"
@@ -99,7 +98,7 @@
 #include "Maths/Transform.h"
 #include "Maths/Matrix3.h"
 
-#if PLATFORM_USES_INLINE_MATH_DEFINES
+#if LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS
     #define PRIVATE_JAFG_MAKE_INLINE
     #include "Lal/Lal/Source/Private/Math/MathDefines.cpp"
 #endif /* PLATFORM_USES_INLINE_MATH_DEFINES */

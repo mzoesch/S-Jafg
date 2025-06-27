@@ -2,126 +2,30 @@
 
 #pragma once
 
+/*-----------------------------------------------------------------------------
+    Validate compiler and forward declare Lal linux logic.
+-----------------------------------------------------------------------------*/
+
 #if !PLATFORM_LINUX
     #error "Wanted to override generic platform types with linux specific types, but platform is not linux."
 #endif /* !PLATFORM_LINUX */
 
-#if __cplusplus < 202002L
-    #error "Program requires at least C++20."
+#if __cplusplus < 202302L
+    #error "Program requires at least C++23."
 #endif /* __cplusplus < 202002L */
 
-struct  LGenericPlatformTypes;
-struct  LLinuxPlatformBreakDefines;
-struct  LLinuxPlatformTypes;
-typedef LLinuxPlatformTypes LPlatformTypes;
-
-struct LLinuxPlatformTypes final : public LGenericPlatformTypes
+namespace Lal
 {
-};
 
-#ifndef WITH_CLANG
-    #define WITH_CLANG                          1
-#endif /* !WITH_CLANG */
+struct LPrimitivePlatformTypesGeneric;
 
-#pragma clang diagnostic error "-Wpragmas"
-#pragma clang diagnostic error "-Wunknown-pragmas"
-#pragma clang diagnostic error "-Wbuiltin-macro-redefined"
-#pragma clang diagnostic error "-Wunknown-warning-option"
-#pragma clang diagnostic error "-Winconsistent-missing-override"
-#pragma clang diagnostic error "-Wunused-lambda-capture"
-#pragma clang diagnostic error "-Wreturn-type"
-#pragma clang diagnostic error "-Wmacro-redefined"
-#pragma clang diagnostic error "-Wundefined-inline"
-#pragma clang diagnostic error "-Wmismatched-new-delete"
-#pragma clang diagnostic error "-Wswitch"
-#pragma clang diagnostic ignored "-Wundefined-var-template" // ??? Why
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wcomment"
-#pragma clang diagnostic ignored "-Wcomments"
-#pragma clang diagnostic ignored "-Wmissing-field-initializers"
-#pragma clang diagnostic ignored "-Wlogical-op-parentheses"
+//# The platform break implementation details for break behavior on linux.
+struct LOnPlatformBreakLinux;
 
-#ifdef NOINLINE
-    #error "NOINLINE is already defined."
-#endif /* NOINLINE */
-#define NOINLINE                                __attribute__ ((noinline))
+//# Make it public.
+typedef LOnPlatformBreakLinux                                           LOnPlatformBreak;
 
-#ifdef FORCEINLINE
-    #error "FORCEINLINE is already defined."
-#endif /* FORCEINLINE */
-#if IN_DEBUG
-    /*
-     * Inlining is disabled in debug builds as following the debugger through inlined code is a pain
-     * in the ass.
-     */
-    #define FORCEINLINE                         inline
-#else /* IN_DEBUG */
-    #define FORCEINLINE                         __attribute__ ((always_inline))
-#endif /* !IN_DEBUG */
-
-#ifdef PLATFORM_MAX_PATH
-    #error "PLATFORM_MAX_PATH is already defined."
-#endif /* PLATFORM_MAX_PATH */
-#define PLATFORM_MAX_PATH                       300 // https://man7.org/linux/man-pages/man3/realpath.3.html???
-
-#ifdef PLATFORM_SUPPORTS_SHARED_LIBRARIES
-    #error "PLATFORM_SUPPORTS_SHARED_LIBRARIES is already defined."
-#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
-#define PLATFORM_SUPPORTS_SHARED_LIBRARIES      1
-
-#ifdef PLATFORM_SUPPORTS_STD_FLUSH
-    #error "PLATFORM_SUPPORTS_STD_FLUSH is already defined."
-#endif /* PLATFORM_SUPPORTS_STD_FLUSH */
-#define PLATFORM_SUPPORTS_STD_FLUSH             1
-
-#ifdef PLATFORM_SUPPORTS_ANSI_ESCAPES
-    #error "PLATFORM_SUPPORTS_ANSI_ESCAPES is already defined."
-#endif /* PLATFORM_SUPPORTS_ANSI_ESCAPES */
-#define PLATFORM_SUPPORTS_ANSI_ESCAPES          1
-
-#ifdef PLATFORM_SUPPORTS_SIMD
-    #error "PLATFORM_SUPPORTS_SIMD is already defined."
-#endif /* PLATFORM_SUPPORTS_SIMD */
-#define PLATFORM_SUPPORTS_SIMD                  1
-
-#ifdef PLATFORM_SUPPORTS_MEMORY_SHRINK
-    #error "PLATFORM_SUPPORTS_MEMORY_SHRINK is already defined."
-#endif /* PLATFORM_SUPPORTS_MEMORY_SHRINK */
-#define PLATFORM_SUPPORTS_MEMORY_SHRINK         1
-
-#ifdef PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH
-    #error "PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH is already defined."
-#endif /* PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH */
-#define PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH() \
-    __asm__ __volatile__ ("nop")
-
-#ifdef PLATFORM_BREAK
-    #error "PLATFORM_BREAK is already defined."
-#endif /* PLATFORM_BREAK */
-// When using gdb?:
-//      __asm__ __volatile__ ("int3");
-// How tf would we just break the debugger? Now the process is just trapped. We do not want that.
-#define PLATFORM_BREAK()                                      \
-    {{                                                        \
-        {                                                     \
-            LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()        \
-        }                                                     \
-        [](void) -> void                                      \
-        {                                                     \
-            PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH(); \
-            __builtin_trap();                                 \
-            PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH(); \
-        }();                                                  \
-    }}
-
-#ifdef PLATFORM_ERROR_BREAK
-#error "PLATFORM_ERROR_BREAK is already definded."
-#endif /* PLATFORM_ERROR_BREAK */
-#define PLATFORM_ERROR_BREAK(InMessage)                           \
-    PLATFORM_ERROR_BREAK_WITH_BODY(InMessage, __FILE__, __LINE__)
+} /* ~Namespace Lal */
 
 extern "C"
 {
@@ -133,79 +37,186 @@ extern void __assert_fail
     unsigned int __line,
     const char *__function
 )
-noexcept (true) __attribute__ ((__noreturn__)); // __attribute__ ((__cold));
+noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
 
 } /* extern "C" */
 
-#ifdef PLATFORM_ERROR_BREAK_WITH_BODY
-    #error "PLATFORM_ERROR_BREAK_WITH_BODY is already definded."
-#endif /* PLATFORM_ERROR_BREAK_WITH_BODY */
-#define PLATFORM_ERROR_BREAK_WITH_BODY(InMessage, InFile, InLine)                       \
-    {{                                                                                  \
-        {                                                                               \
-            LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()                                  \
-        }                                                                               \
-        {                                                                               \
-            {                                                                           \
-                __assert_fail(InMessage.c_str(), InFile.c_str(), InLine, __FUNCTION__); \
-            }                                                                           \
-        }                                                                               \
-    }}
+#ifndef LAL_WITH_CLANG
+    #define LAL_WITH_CLANG                                              1
+#endif /* !LAL_WITH_CLANG */
 
-#ifdef PLATFORM_PANIC_BREAK
-    #error "PLATFORM_PANIC_BREAK is already definded."
-#endif /* PLATFORM_PANIC_BREAK */
-#define PLATFORM_PANIC_BREAK(InMessage)                           \
-    PLATFORM_PANIC_BREAK_WITH_BODY(InMessage, __FILE__, __LINE__)
+#if !LAL_WITH_CLANG
+    #error "Linux only supports clang as a valid compiler for the moment."
+#endif /* !LAL_WITH_CLANG */
 
-#ifdef PLATFORM_PANIC_BREAK_WITH_BODY
-    #error "PLATFORM_PANIC_BREAK_WITH_BODY is already definded."
-#endif /* PLATFORM_PANIC_BREAK_WITH_BODY */
-#define PLATFORM_PANIC_BREAK_WITH_BODY(InMessage, InFile, InLine)          \
-    LLinuxPlatformBreakDefines::OnProgramPanic(InMessage, InFile, InLine);
+#if !(__clang__)
+    #error "We think we are on a clang compiler, but the compiler does not think so. And she / he (it would be disrespectful) must know right?"
+#endif /* !(__clang__) */
 
-#define PLATFORM_CALLSPEC_OUT           __attribute__ ((visibility ("default")))
-#define PLATFORM_CALLSPEC_IN            __attribute__ ((visibility ("default")))
-#define PLATFORM_EXTERNSPEC_OUT
-#define PLATFORM_EXTERNSPEC_IN          extern
+#if !(__linux__)
+    #error "This is not linux; lol."
+#endif /* !(__linux__) */
 
-/*
- * Default to little endian.
- * But we should assert this 100% at runtime with something like htons() or nthohl().
- */
-#ifdef PLATFORM_USES_LITTLE_ENDIAN
-    #error "PLATFORM_USES_LITTLE_ENDIAN is already defined."
-#endif /* PLATFORM_USES_LITTLE_ENDIAN */
-#define PLATFORM_USES_LITTLE_ENDIAN                 1
 
-#ifdef PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
-    #error "PLATFORM_USES_GLFW3_ABSTRACTION_LAYER is already defined."
-#endif /* PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
-#define PLATFORM_USES_GLFW3_ABSTRACTION_LAYER       1
+/*-----------------------------------------------------------------------------
+    Change compiler behavior.
+-----------------------------------------------------------------------------*/
 
-#ifdef PLATFORM_WCHAR_SIZE
-    #error "PLATFORM_WCHAR_SIZE is already defined."
-#endif /* PLATFORM_WCHAR_SIZE */
-#define PLATFORM_WCHAR_SIZE                         4
+#if LAL_DO_COMPILER_DIAGNOSTIC_SETUP
+    #pragma clang diagnostic error "-Wpragmas"
+    #pragma clang diagnostic error "-Wunknown-pragmas"
+    #pragma clang diagnostic error "-Wbuiltin-macro-redefined"
+    #pragma clang diagnostic error "-Wunknown-warning-option"
+    #pragma clang diagnostic error "-Winconsistent-missing-override"
+    #pragma clang diagnostic error "-Wunused-lambda-capture"
+    #pragma clang diagnostic error "-Wreturn-type"
+    #pragma clang diagnostic error "-Wmacro-redefined"
+    #pragma clang diagnostic error "-Wundefined-inline"
+    #pragma clang diagnostic error "-Wmismatched-new-delete"
+    #pragma clang diagnostic error "-Wswitch"
+    #pragma clang diagnostic error "-Wparentheses"
+    #pragma clang diagnostic error "-Wdangling-else"
+    #pragma clang diagnostic error "-Wextra-tokens"
+    #pragma clang diagnostic error "-Winvalid-noreturn"
+    #pragma clang diagnostic ignored "-Wundefined-var-template" /* ??? Why */
+    #pragma clang diagnostic ignored "-Wunused-but-set-variable"
+    #pragma clang diagnostic ignored "-Wunused-function"
+    #pragma clang diagnostic ignored "-Wunused-parameter"
+    #pragma clang diagnostic ignored "-Wunused-variable"
+    #pragma clang diagnostic ignored "-Wcomment"
+    #pragma clang diagnostic ignored "-Wcomments"
+    #pragma clang diagnostic ignored "-Wmissing-field-initializers"
+    #pragma clang diagnostic ignored "-Wlogical-op-parentheses"
+#endif /* !LAL_DO_COMPILER_DIAGNOSTIC_SETUP */
 
-#ifdef PLATFORM_USES_32_BIT
-    #error "PLATFORM_USES_32_BIT is already defined."
-#endif /* PLATFORM_USES_32_BIT */
-#ifdef PLATFORM_USES_64_BIT
-    #error "PLATFORM_USES_64_BIT is already defined."
-#endif /* PLATFORM_USES_64_BIT */
-#define PLATFORM_USES_64_BIT                        1
 
-#ifdef PLATFORM_USES_UTF8
-    #error "PLATFORM_USES_UTF8 is already defined."
-#endif /* PLATFORM_USES_UTF8 */
-#define PLATFORM_USES_UTF8                          1
+/*-----------------------------------------------------------------------------
+    Define platform specific macros.
+-----------------------------------------------------------------------------*/
 
-struct LLinuxPlatformBreakDefines final
+#if AS_CLIENT
+    #ifndef JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
+        #define JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER              1
+    #endif /* JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
+#endif /* AS_CLIENT */
+
+#ifndef LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS
+    #define LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS        1
+#endif /* !LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS */
+
+#ifndef LAL_PLATFORM_USES_64_BIT
+    #define LAL_PLATFORM_USES_64_BIT                                    1
+#endif /* !LAL_PLATFORM_USES_64_BIT */
+
+#ifndef LAL_PLATFORM_USES_LITTLE_ENDIAN
+    #define LAL_PLATFORM_USES_LITTLE_ENDIAN                             1
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
+
+#ifndef LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+    #define LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES                      1
+#endif /* !LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+
+#ifndef LAL_PLATFORM_SUPPORTS_STD_FLUSH
+    #define LAL_PLATFORM_SUPPORTS_STD_FLUSH                             1
+#endif /* !LAL_PLATFORM_SUPPORTS_STD_FLUSH */
+
+#ifndef LAL_PLATFORM_SUPPORTS_ANSI_ESCAPES
+    #define LAL_PLATFORM_SUPPORTS_ANSI_ESCAPES                          1
+#endif /* !LAL_PLATFORM_SUPPORTS_ANSI_ESCAPES */
+
+#ifndef LAL_PLATFORM_SUPPORTS_SIMD
+    #define LAL_PLATFORM_SUPPORTS_SIMD                                  1
+#endif /* !LAL_PLATFORM_SUPPORTS_SIMD */
+
+#ifndef LAL_PLATFORM_SUPPORTS_MEMORY_SHRINK
+    #define LAL_PLATFORM_SUPPORTS_MEMORY_SHRINK                         1
+#endif /* !LAL_PLATFORM_SUPPORTS_MEMORY_SHRINK */
+
+#ifndef LAL_PLATFORM_USES_UTF8
+    #define LAL_PLATFORM_USES_UTF8                                      1
+#endif /* !LAL_PLATFORM_USES_UTF8 */
+
+#ifndef LAL_PLATFORM_WCHAR_SIZE
+    #define LAL_PLATFORM_WCHAR_SIZE                                     4
+#endif /* !LAL_PLATFORM_WCHAR_SIZE */
+
+#ifndef LAL_PLATFORM_CALLSPEC_IN
+    #define LAL_PLATFORM_CALLSPEC_IN                                    __attribute__ ((visibility ("default")))
+#endif /* !LAL_PLATFORM_CALLSPEC_IN */
+
+#ifndef LAL_PLATFORM_CALLSPEC_OUT
+    #define LAL_PLATFORM_CALLSPEC_OUT                                   __attribute__ ((visibility ("default")))
+#endif /* !LAL_PLATFORM_CALLSPEC_OUT */
+
+#ifndef LAL_PLATFORM_EXTERNSPEC_IN
+    #define LAL_PLATFORM_EXTERNSPEC_IN                                  extern
+#endif /* !LAL_PLATFORM_EXTERNSPEC_IN */
+
+#ifndef LAL_PLATFORM_EXTERNSPEC_OUT
+    #define LAL_PLATFORM_EXTERNSPEC_OUT
+#endif /* !LAL_PLATFORM_EXTERNSPEC_OUT */
+
+//# https://man7.org/linux/man-pages/man3/realpath.3.html ???
+#ifndef LAL_PLATFORM_MAX_PATH
+    #define LAL_PLATFORM_MAX_PATH                                       300
+#endif /* LAL_PLATFORM_MAX_PATH */
+
+#ifndef LAL_PLATFORM_NO_DISCARD_CTRL_PATH
+    #define LAL_PLATFORM_NO_DISCARD_CTRL_PATH                           (__asm__ __volatile__ ("nop"))
+#endif /* !LAL_PLATFORM_NO_DISCARD_CTRL_PATH */
+
+#ifndef LAL_PLATFORM_BREAK
+    #if __has_builtin(__builtin_debugtrap)
+        #define LAL_PLATFORM_BREAK() \
+            (__builtin_debugtrap());
+    #else /* __has_builtin(__builtin_debugtrap) */
+        #define LAL_PLATFORM_BREAK() \
+            (raise(SIGTRAP));
+    #endif /* !__has_builtin(__builtin_debugtrap) */
+#endif  /* !LAL_PLATFORM_BREAK */
+
+#ifndef LAL_PLATFORM_TRAP
+    #if __has_builtin(__builtin_trap)
+        #define LAL_PLATFORM_TRAP() \
+            {                       \
+                (__builtin_trap()); \
+            }
+    #else /* __has_builtin(__builtin_trap) */
+        #error "Encountered unimplemented code path."
+    #endif /* !__has_builtin(__builtin_trap) */
+#endif /* !LAL_PLATFORM_TRAP */
+
+#ifndef NOINLINE
+    #define NOINLINE                                                    __attribute__ ((noinline))
+#endif /* !NOINLINE */
+
+#ifndef FORCEINLINE
+    #if IN_DEBUG
+        //#
+        //# Inlining is disabled in debug builds as following the debugger through inlined code is a pain
+        //# in the ass.
+        //#
+        #define FORCEINLINE                                             inline
+    #else /* IN_DEBUG */
+        #define FORCEINLINE                                             __attribute__ ((always_inline))
+    #endif /* !IN_DEBUG */
+#endif /* !FORCEINLINE */
+
+namespace Lal
 {
-    NORETURN NOINLINE
-    static void OnProgramPanic(const std::string& InMessage, const std::string& InFile, const LLinuxPlatformTypes::i32 InLine);
+
+struct LOnPlatformBreakLinux final
+{
+    [[noreturn]] NOINLINE
+    static void OnProgramPanicImpl();
+
+    [[noreturn]] NOINLINE
+    static void OnProgramPanic
+    (
+        const LPrimitivePlatformTypesGeneric::LChar* InMessage,
+        const LPrimitivePlatformTypesGeneric::LChar* InFile,
+        const LPrimitivePlatformTypesGeneric::u64    InLine
+    );
 };
 
-#include <cmath>
-#include <cstring>
+} /* ~Namespace Lal */

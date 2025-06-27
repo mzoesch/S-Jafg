@@ -61,7 +61,7 @@ const char* ConsumeType(const char* Begin, const char* End) noexcept
 
 } /* ~Namespace <Anonymous> */
 
-namespace Jafg::Private
+namespace Lal
 {
 
 std::string_view PrettyFunctionName(const char* InFunctionName) noexcept
@@ -101,44 +101,51 @@ std::string_view PrettyFunctionName(const char* InFunctionName) noexcept
     return { Begin, static_cast<std::string_view::size_type>(std::find(Begin, End, '(') - Begin) };
 }
 
-LAL_API LString LalLogPrivateColor_Trace   = LOG_COLOR_TRACE;
-LAL_API LString LalLogPrivateColor_Verbose = LOG_COLOR_VERBOSE;
-LAL_API LString LalLogPrivateColor_Info    = LOG_COLOR_INFO;
-LAL_API LString LalLogPrivateColor_Warning = LOG_COLOR_WARNING;
-LAL_API LString LalLogPrivateColor_Error   = LOG_COLOR_ERROR;
-LAL_API LString LalLogPrivateColor_Fatal   = LOG_COLOR_FATAL;
-LAL_API LString LalLogPrivateColor_End     = LOG_COLOR_END;
-
-LStringLegacy GetColorForVerbosity(const ELogVerbosityType Verbosity)
-{
-    if (Verbosity == ELogVerbosity::Trace)   { return LalLogPrivateColor_Trace.ToPtr(); }
-    if (Verbosity == ELogVerbosity::Verbose) { return LalLogPrivateColor_Verbose.ToPtr(); }
-    if (Verbosity == ELogVerbosity::Info)    { return LalLogPrivateColor_Info.ToPtr(); }
-    if (Verbosity == ELogVerbosity::Warning) { return LalLogPrivateColor_Warning.ToPtr(); }
-    if (Verbosity == ELogVerbosity::Error)   { return LalLogPrivateColor_Error.ToPtr(); }
-    if (Verbosity == ELogVerbosity::Fatal)   { return LalLogPrivateColor_Fatal.ToPtr(); }
-
-    return "";
-}
-
-} /* ~Namespace Jafg::Private */
-
-namespace Jafg
-{
-
-LString LexToString(const ELogVerbosityType Verbosity)
+Jafg::LString LexToString(const ELogVerbosity::Type Verbosity)
 {
     switch (Verbosity)
     {
-    case ELogVerbosity::Trace: { return "Trace"; }
-    case ELogVerbosity::Verbose: { return "Verbose"; }
-    case ELogVerbosity::Info: { return "Info"; }
-    case ELogVerbosity::Warning: { return "Warning"; }
-    case ELogVerbosity::Error: { return "Error"; }
-    case ELogVerbosity::Fatal: { return "Fatal"; }
-    case ELogVerbosity::KillLog: { return "KillLog"; }
+    case ELogVerbosity::Trace:      { return "Trace"; }
+    case ELogVerbosity::Verbose:    { return "Verbose"; }
+    case ELogVerbosity::Info:       { return "Info"; }
+    case ELogVerbosity::Warning:    { return "Warning"; }
+    case ELogVerbosity::Error:      { return "Error"; }
+    case ELogVerbosity::Fatal:      { return "Fatal"; }
+    case ELogVerbosity::KillLog:    { return "KillLog"; }
     default: { checkNoEntry() return "Unknown"; }
     }
 }
 
-} /* ~Namespace Jafg */
+LAL_API Jafg::LString LalColor_Trace   { LAL_LOG_COLOR_TRACE };
+LAL_API Jafg::LString LalColor_Verbose { LAL_LOG_COLOR_VERBOSE };
+LAL_API Jafg::LString LalColor_Info    { LAL_LOG_COLOR_INFO };
+LAL_API Jafg::LString LalColor_Warning { LAL_LOG_COLOR_WARNING };
+LAL_API Jafg::LString LalColor_Error   { LAL_LOG_COLOR_ERROR };
+LAL_API Jafg::LString LalColor_Fatal   { LAL_LOG_COLOR_FATAL };
+LAL_API Jafg::LString LalColor_End     { LAL_LOG_COLOR_END };
+
+Jafg::LString GetColorForVerbosity(const ELogVerbosity::Type InVerbosity)
+{
+    if (InVerbosity == ELogVerbosity::Trace)   { return LalColor_Trace; }
+    if (InVerbosity == ELogVerbosity::Verbose) { return LalColor_Verbose; }
+    if (InVerbosity == ELogVerbosity::Info)    { return LalColor_Info; }
+    if (InVerbosity == ELogVerbosity::Warning) { return LalColor_Warning; }
+    if (InVerbosity == ELogVerbosity::Error)   { return LalColor_Error; }
+    if (InVerbosity == ELogVerbosity::Fatal)   { return LalColor_Fatal; }
+
+    return { };
+}
+
+std::string_view GetColorForVerbosityView(const ELogVerbosity::Type InVerbosity)
+{
+    if (InVerbosity == ELogVerbosity::Trace)   { return LAL_LOG_COLOR_TRACE; }
+    if (InVerbosity == ELogVerbosity::Verbose) { return LAL_LOG_COLOR_VERBOSE; }
+    if (InVerbosity == ELogVerbosity::Info)    { return LAL_LOG_COLOR_INFO; }
+    if (InVerbosity == ELogVerbosity::Warning) { return LAL_LOG_COLOR_WARNING; }
+    if (InVerbosity == ELogVerbosity::Error)   { return LAL_LOG_COLOR_ERROR; }
+    if (InVerbosity == ELogVerbosity::Fatal)   { return LAL_LOG_COLOR_FATAL; }
+
+    return { };
+}
+
+} /* ~Namespace Lal */

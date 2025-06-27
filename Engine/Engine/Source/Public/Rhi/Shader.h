@@ -68,11 +68,6 @@ public:
     ENGINE_API void Recompile(const TArray<LShaderCompileTimeConstant>& InConstants);
     ENGINE_API void Use() const;
 
-#if WITH_DEBUG_ZERO_UNBOUND
-    //# Debugging only.
-    ENGINE_API void Unuse() const;
-#endif /* WITH_DEBUG_ZERO_UNBOUND */
-
     template <typename T>
     inline     void SetUniform(const LString& Name, const T Value) const UNSUPPORTED_TEMPLATED_SPECIALIZATION(T)
 

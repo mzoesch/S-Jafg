@@ -267,28 +267,28 @@ NODISCARD FORCEINLINE bool IsNearlyZero(const double Value, const double Toleran
 
 NODISCARD FORCEINLINE float Fmod(const float Numerator, const float Denominator)
 {
-#if DO_CHECKS
+#if LAL_DO_CHECKS
     const float AbsDenominator = Maths::Absolute(Denominator);
     if (AbsDenominator <= JAFG_FLOAT_SMALL_NUMBER)
     {
         checkNoEntry()
         return 0.0f;
     }
-#endif /* DO_CHECKS */
+#endif /* LAL_DO_CHECKS */
 
     return ::fmodf(Numerator, Denominator);
 }
 
 NODISCARD FORCEINLINE double Fmod(const double Numerator, const double Denominator)
 {
-#if DO_CHECKS
+#if LAL_DO_CHECKS
     const double AbsDenominator = Maths::Absolute(Denominator);
     if (AbsDenominator <= JAFG_DOUBLE_SMALL_NUMBER)
     {
         checkNoEntry()
         return 0.0;
     }
-#endif /* DO_CHECKS */
+#endif /* LAL_DO_CHECKS */
 
     return ::fmod(Numerator, Denominator);
 }

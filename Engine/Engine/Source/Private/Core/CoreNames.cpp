@@ -34,7 +34,6 @@ ENGINE_API LName Name_ShaderChunk                              = MAKE_STATIC_NAM
 
 ENGINE_API LName Name_UsrInToggleDebugScreen   = MAKE_STATIC_NAME("ToggleDebugScreen");
 ENGINE_API LName Name_UsrInTogglePauseScreen   = MAKE_STATIC_NAME("TogglePauseScreen");
-ENGINE_API LName Name_UsrInTrap                = MAKE_STATIC_NAME("Trap");
 ENGINE_API LName Name_UsrInRhiPolyToWireframe  = MAKE_STATIC_NAME("RhiPolyToWireframe");
 ENGINE_API LName Name_UsrInRhiPolyToFill       = MAKE_STATIC_NAME("RhiPolyToFill");
 ENGINE_API LName Name_UsrInRhiShowNormals      = MAKE_STATIC_NAME("RhiShowNormals");

@@ -189,21 +189,21 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
     JObjectBase* Reinterpreted = reinterpret_cast<JObjectBase*>(Out);
     check( Reinterpreted == Out )
 
-#if WITH_GCC
+#if LAL_WITH_GCC
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
 #endif /* WITH_GCC */
-#if WITH_CLANG
+#if LAL_WITH_CLANG
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* WITH_CLANG */
+#endif /* LAL_WITH_CLANG */
     ::memcpy(Out, InStaticClass->GetDefaultPackageReferrer(), InStaticClass->GetTotalByteSize());  // NOLINT(bugprone-undefined-memory-manipulation, clang-diagnostic-dynamic-class-memaccess)
-#if WITH_GCC
+#if LAL_WITH_GCC
     #pragma GCC diagnostic pop
 #endif /* WITH_GCC */
-#if WITH_CLANG
+#if LAL_WITH_CLANG
     #pragma clang diagnostic pop
-#endif /* WITH_CLANG */
+#endif /* LAL_WITH_CLANG */
 
     checkCode
     (
@@ -223,12 +223,12 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
     Reinterpreted->VClass = const_cast<LObjectClass*>(InStaticClass);
     Reinterpreted->Outer  = InContext;
 
-#if WITH_GCC
+#if LAL_WITH_GCC
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
 #endif /* WITH_GCC */
     ::memset(&Reinterpreted->ClassFields, 0, sizeof(Reinterpreted->ClassFields));  // NOLINT(bugprone-undefined-memory-manipulation)
-#if WITH_GCC
+#if LAL_WITH_GCC
     #pragma GCC diagnostic pop
 #endif /* WITH_GCC */
     check( Reinterpreted->ClassFields.GetSize() == 0 && Reinterpreted->ClassFields.IsData() == false )
