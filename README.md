@@ -15,7 +15,7 @@ You will need to have a `C/C++ toolchain` installed for your host platform for t
 - For Windows: [Visual Studio 2022](https://visualstudio.microsoft.com/en-Us/vs/features/cplusplus/) with at least:
   - "Desktop development with C++"
 - For Linux: 
-  - [Clang](https://clang.llvm.org/) and only clang.
+  - [Clang](https://clang.llvm.org/) and no GCC support for now.
   - [Wayland](https://wayland.freedesktop.org/) backend (X11 is not supported) with [wayland development software kit](https://wiki.archlinux.org/title/Wayland).
 - For the Web:
   - [GCC](https://gcc.gnu.org/) and [Emscripten](https://emscripten.org/) for your host platform.
@@ -31,7 +31,7 @@ Only when making changes to the reflection system you will additionally need `>=
 ### For all native target platforms
 To build, run:
 ```bash
-cmake -B <BuildDirectory> -S . --preset "<JAFG_TARGET_PLATFORM> | <JAFG_TARGET_TYPE>-<JAFG_TARGET_CONFIG>"
+cmake --preset "<JAFG_TARGET_PLATFORM> | <JAFG_TARGET_TYPE>-<JAFG_TARGET_CONFIG>" -B <BuildDirectory> -S .
 ```
 with:
    - `JAFG_TARGET_PLATFORM`: The target platform you want to build for [`Linux`, `Windows`, `Wasm`]
@@ -43,7 +43,7 @@ and then compile it with `cmake --build <BuildDirectory>`.
 ### For WebAssembly (Wasm)
 1. Emscripten must be invoked before generating the CMake files. This is done by calling `emcmake` with the `cmake` command:
    ```bash
-   emcmake cmake -B . -S <BuildDirectory> --preset "<JAFG_TARGET_PLATFORM> | <JAFG_TARGET_TYPE>-<JAFG_TARGET_CONFIG>"
+   emcmake cmake --preset "<JAFG_TARGET_PLATFORM> | <JAFG_TARGET_TYPE>-<JAFG_TARGET_CONFIG>" -B <BuildDirectory> -S .
    ```
    After running this command, you may open your project with any IDE that supports CMake. If you firstly open the project (before running the `emcmake` command) then the IDE will get confused with the code and will fail to compile it (as well as Intellisense will not work properly).
 2. Compile it with `ninja`. 
