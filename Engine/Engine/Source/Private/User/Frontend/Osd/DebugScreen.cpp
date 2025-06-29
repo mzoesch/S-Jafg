@@ -49,7 +49,14 @@ void Jafg::WDebugScreen::Construct()
 
             NewNode(WTextBlock)
                 .Brush(Brush)
-                .Content(LString::SprintF("JAFG v{}", BuildInfo::GetEngineVersion().ToString()))
+                .Content(LString::SprintF(
+                    "JAFG v{} at [{} {}] on [{} - {}] @mzoesch",
+                    BuildInfo::GetEngineVersionStr(),
+                    BuildInfo::GetBuildDate(),
+                    BuildInfo::GetBuildTime(),
+                    BuildInfo::GetVcsBranch(),
+                    BuildInfo::GetVcsRevision()
+                    ))
             +
             NewNode(WTextBlock).SaveTo(&this->FpsSection)
                 .Brush(Brush)

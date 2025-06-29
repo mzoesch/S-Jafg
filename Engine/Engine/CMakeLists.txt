@@ -8,6 +8,43 @@ if(_guard)
     jafg_add_dependency("Engine/EngineForward" "private")
 
     ###############################################################################
+    # Engine only compile time definitions
+    if(NOT DEFINED PROJECT_VERSION)
+        message(FATAL_ERROR "PROJECT_VERSION is not defined.")
+    endif()
+
+    execute_process(
+        COMMAND             git rev-parse --abbrev-ref HEAD
+        WORKING_DIRECTORY   ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE     VCS_BRANCH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+    if(NOT VCS_BRANCH)
+        set(VCS_BRANCH "UnknownVcsBranch")
+    endif()
+
+    execute_process(
+            COMMAND             git rev-parse --short HEAD
+            WORKING_DIRECTORY   ${JAFG_ENGINE_ROOT}
+            OUTPUT_VARIABLE     VCS_REVISION
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+    if(NOT VCS_REVISION)
+        set(VCS_REVISION "UnknownVcsRevision")
+    endif()
+
+    target_compile_definitions(${_scoped_module_name} PRIVATE
+        PRIVATE_ENGINE_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+        PRIVATE_ENGINE_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+        PRIVATE_ENGINE_VERSION_PATCH=${PROJECT_VERSION_PATCH}
+        PRIVATE_ENGINE_VERSION="${PROJECT_VERSION}"
+        PRIVATE_ENGINE_VCS_BRANCH="${VCS_BRANCH}"
+        PRIVATE_ENGINE_VCS_REVISION="${VCS_REVISION}"
+        )
+
+    message(STATUS "Using engine version: ${PROJECT_VERSION} (${VCS_BRANCH} - ${VCS_REVISION}).")
+
+    ###############################################################################
     # FastNoise2
     FetchContent_Declare(
         FetchContent_FastNoise2
@@ -62,6 +99,8 @@ if(_guard)
     endif()
     target_include_directories(${_scoped_module_name} PRIVATE "${stb_dir}")
 
+    ###############################################################################
+    # Tracked vendors
     target_include_directories(${_scoped_module_name} PRIVATE
         "${JAFG_ENGINE_ROOT}/Engine/Vendor/Include"
         )

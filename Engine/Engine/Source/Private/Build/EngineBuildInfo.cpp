@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Build/EngineBuildInfo.h"
 
 const Jafg::LString& Jafg::BuildInfo::GetBuildTime()
@@ -15,15 +14,29 @@ const Jafg::LString& Jafg::BuildInfo::GetBuildDate()
     return BuildDate;
 }
 
+const Jafg::LString& Jafg::BuildInfo::GetVcsBranch()
+{
+    static  LString Revision { PRIVATE_ENGINE_VCS_BRANCH };
+    return Revision;}
+
+const Jafg::LString& Jafg::BuildInfo::GetVcsRevision()
+{
+    static  LString Revision { PRIVATE_ENGINE_VCS_REVISION };
+    return Revision;
+}
+
+Jafg::LString Jafg::BuildInfo::GetEngineVersionStr()
+{
+    static LString Version { PRIVATE_ENGINE_VERSION };
+    return Version;
+}
+
 Jafg::BuildInfo::LEngineVersion Jafg::BuildInfo::GetEngineVersion()
 {
     return
     {
-        /*
-         * We ofc will make this be feed in by our build system soon.
-         */
-        .Major = 0,
-        .Minor = 0,
-        .Patch = 1
+        .Major = PRIVATE_ENGINE_VERSION_MAJOR,
+        .Minor = PRIVATE_ENGINE_VERSION_MINOR,
+        .Patch = PRIVATE_ENGINE_VERSION_PATCH
     };
 }

@@ -70,8 +70,8 @@ private:
           T* GetStoragePtr()       noexcept { return reinterpret_cast<      T*>(&this->Storage); }
     const T* GetStoragePtr() const noexcept { return reinterpret_cast<const T*>(&this->Storage); }
 
-    bool bValid;
     LStorage Storage;
+    bool bValid;
 };
 
 template<typename T>

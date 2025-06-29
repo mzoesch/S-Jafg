@@ -253,10 +253,8 @@
     }
 
 #define PRIVATE_LAL_GORGEOUS_BREAK_IMPL() \
-    {                                     \
         LAL_UNSAFE_FLUSH_OUT_STREAMS()    \
-        LAL_PLATFORM_BREAK()              \
-    }
+        LAL_PLATFORM_BREAK()
 
 #define PRIVATE_LAL_GORGEOUS_TRAP_IMPL() \
     PRIVATE_LAL_GORGEOUS_TRAP_IMPL_MSG   \
