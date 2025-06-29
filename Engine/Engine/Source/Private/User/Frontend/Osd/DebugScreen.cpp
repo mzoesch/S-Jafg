@@ -348,10 +348,10 @@ void Jafg::WDebugScreen::Tick()
             {
                 if
                 (
-                       Key.X == CKey.X + 0 && Key.Y == CKey.Y + 0
-                    || Key.X == CKey.X + 1 && Key.Y == CKey.Y + 0
-                    || Key.X == CKey.X + 0 && Key.Y == CKey.Y + 1
-                    || Key.X == CKey.X + 1 && Key.Y == CKey.Y + 1
+                       (Key.X == CKey.X + 0 && Key.Y == CKey.Y + 0)
+                    || (Key.X == CKey.X + 1 && Key.Y == CKey.Y + 0)
+                    || (Key.X == CKey.X + 0 && Key.Y == CKey.Y + 1)
+                    || (Key.X == CKey.X + 1 && Key.Y == CKey.Y + 1)
                 )
                 {
                     continue;

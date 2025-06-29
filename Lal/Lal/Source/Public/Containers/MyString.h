@@ -358,11 +358,11 @@ using LStringView = std::basic_string_view<char>;
 ----------------------------------------------------------------------------*/
 
 #if PLATFORM_WASM
-template <typename TString, typename ... ArgTy>
-TString Format(const char* Format, const ArgTy& ... Args);
+template <typename TString, typename... ArgTy>
+TString Format(const char* Format, const ArgTy&... Args);
 
-template <typename ... ArgTy>
-LStringLegacy FormatLegacy(const char* Format, const ArgTy& ... Args);
+template <typename... ArgTy>
+LStringLegacy FormatLegacy(const char* Format, const ArgTy&... Args);
 #endif /* PLATFORM_WASM */
 
 /**
@@ -579,8 +579,8 @@ public:
     FORCEINLINE Iterator<      CharacterTy> end()         noexcept;
     FORCEINLINE Iterator<const CharacterTy> end()   const noexcept;
 
-    template <typename ... ArgTy>
-    static LStringBase SprintF(const char* InFormat, const ArgTy& ... InArgs);
+    template <typename... ArgTy>
+    static LStringBase SprintF(const char* InFormat, const ArgTy&... InArgs);
 
 private:
 
@@ -1974,7 +1974,7 @@ Iterator<const InCharacterTy> LStringBase<InCharacterTy, InTraitsTy>::end() cons
 }
 
 template <typename InCharacterTy, class InTraitsTy>
-template <typename ... ArgTy>
+template <typename... ArgTy>
 LStringBase<InCharacterTy, InTraitsTy> LStringBase<InCharacterTy, InTraitsTy>::SprintF(const char* InFormat, const ArgTy&... InArgs)
 {
 // #if PLATFORM_WASM

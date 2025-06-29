@@ -238,5 +238,5 @@ Jafg::LSurface Jafg::LFrontend::CreateNewSurface()
         Out.Initialize();
     }
 
-    return std::move(Out);
+    return Out;
 }

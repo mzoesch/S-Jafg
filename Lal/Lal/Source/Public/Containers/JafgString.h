@@ -351,8 +351,8 @@ public:
 
     FORCEINLINE SizeType GetLineNumber(const SizeType InRuneIndex) const;
 
-    template <typename ... TArgs>
-    static Self SprintF(const T* InFormat, const TArgs& ... InArgs) noexcept  requires (Self::IsStrongAlloc());
+    template <typename... TArgs>
+    static Self SprintF(const T* InFormat, const TArgs&... InArgs) noexcept  requires (Self::IsStrongAlloc());
 
     FORCEINLINE       T* GetBegin()           noexcept requires (Self::IsContentMutable()) { return this->Impl.GetData(); }
     FORCEINLINE const T* GetBegin()     const noexcept { return this->Impl.GetData(); }
@@ -2539,7 +2539,7 @@ FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBa
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>
-template<typename ... TArgs>
+template<typename... TArgs>
 typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTraits, InAlloc>::SprintF(const T* InFormat, const TArgs&... InArgs) noexcept requires (Self::IsStrongAlloc())
 {
     /**

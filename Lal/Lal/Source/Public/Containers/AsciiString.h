@@ -145,8 +145,8 @@ public:
     FORCEINLINE auto end()         noexcept -> Iterator<LRune>       ;
     FORCEINLINE auto end()   const noexcept -> Iterator<const LRune> ;
 
-    template <typename ... ArgyTy>
-    static auto SprintF(const char* Format, const ArgyTy& ... Args) -> LAsciiString;
+    template <typename... ArgyTy>
+    static auto SprintF(const char* Format, const ArgyTy&... Args) -> LAsciiString;
 
 private:
 
@@ -974,8 +974,8 @@ FORCEINLINE void Jafg::LAsciiString::PanicValidState() const
     return;
 }
 
-template <typename ... ArgTy>
-Jafg::LAsciiString Jafg::LAsciiString::SprintF(const char* Format, const ArgTy& ... Args)
+template <typename... ArgTy>
+Jafg::LAsciiString Jafg::LAsciiString::SprintF(const char* Format, const ArgTy&... Args)
 {
 #if PLATFORM_WASM
     return ::Jafg::Format(Format, Args...);

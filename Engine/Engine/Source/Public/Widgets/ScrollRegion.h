@@ -167,7 +167,7 @@ public:
 
     void ApplyScroll(const LKeyEvent& InKeyEvent);
 
-    FORCEINLINE void ApplyScroll(const LVector2D& InScroll) { this->ScrollPosition = InScroll; };
+    FORCEINLINE void ApplyScroll(const LVector2D& InScroll) { this->ScrollPosition = InScroll; }
     FORCEINLINE void ApplyVScroll(const f64 InScroll) { this->ScrollPosition.Y = Maths::Clamp(InScroll, MaxScrollUp, MaxScrollDown); }
     FORCEINLINE void ApplyHScroll(const f64 InScroll) { this->ScrollPosition.X = Maths::Clamp(InScroll, MaxScrollLeft, MaxScrollRight); }
 

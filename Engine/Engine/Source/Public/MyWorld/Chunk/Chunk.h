@@ -74,7 +74,7 @@ struct LSharedChunkArgs final
     JMaterialSubsystem*        MaterialSubsystem        { nullptr };
     JVoxelTextureSubsystem*    VoxelTextureSubsystem    { nullptr };
     LChunkShader               ChunkShader;
-    TFunction<LChunkMesher*(AChunk& Owner)> GetNewMesher;
+    TFunction<Smart::TUnique<LChunkMesher>(AChunk& Owner)> GetNewMesher;
 
     bool bSuperFlat { false };
 };
@@ -126,7 +126,7 @@ public:
     //# Dangerous function. Use with care.
     EChunkState::Type GetCurrentStateDangerous() const { return this->State; }
     EChunkState::Type GetCurrentHuntedStateDangerous() const { return this->HuntedState; }
-    void FinishHunt(const EChunkState::Type InState) noexcept;;
+    void FinishHunt(const EChunkState::Type InState) noexcept;
 
     FORCEINLINE const LChunkKey& GetChunkKey() const noexcept { return this->ChunkKey; }
 
@@ -198,7 +198,7 @@ public:
 
 private:
 
-    Smart::TUnique<voxel_t> RawVoxelData;
+    Smart::TUnique<voxel_t[]> RawVoxelData;
 
     //////////////////////////////////////////////////////////////////////////
     // Data Manipulation

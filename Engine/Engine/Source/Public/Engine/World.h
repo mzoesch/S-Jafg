@@ -275,7 +275,7 @@ private:
     //# The real time (not stopped or dilated / clamped) when this world was launched.
     //# Real time is relative to the static storage initialization of the engine shared library.
     //#
-    f32 RealTimeWhenWorldWasLaunched { 0.0f };
+    f32 RealTimeWhenWorldWasLaunched { -1.0f };
 };
 
 template <>

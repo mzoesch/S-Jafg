@@ -65,26 +65,26 @@ FORCEINLINE void FlushOutStreams()
 }
 
 //# This function may be used with ANSI escapes.
-template <ELogVerbosity::Type InVerbosity, ELogVerbosity::Type InCategoryVerbosity, typename ... TArgs>
-FORCEINLINE void LogMessage(std::format_string<TArgs...> InFormat, TArgs&& ... InArgs)
+template <ELogVerbosity::Type InVerbosity, ELogVerbosity::Type InCategoryVerbosity, typename... TArgs>
+FORCEINLINE void LogMessage(std::format_string<TArgs...> InFormat, TArgs&&... InArgs)
 {
 #if PLATFORM_WASM
     if constexpr (ActualVerbosity == ELogVerbosity::Warning)
     {
-        ::emscripten_log(EM_LOG_CONSOLE | EM_LOG_WARN, std::format(InFormat, InArgs ...));
+        ::emscripten_log(EM_LOG_CONSOLE | EM_LOG_WARN, std::format(InFormat, InArgs...));
     }
     else if constexpr (ActualVerbosity == ELogVerbosity::Error || ActualVerbosity == ELogVerbosity::Fatal)
     {
-        ::emscripten_log(EM_LOG_CONSOLE | EM_LOG_ERROR, std::format(InFormat, InArgs ...));
+        ::emscripten_log(EM_LOG_CONSOLE | EM_LOG_ERROR, std::format(InFormat, InArgs...));
     }
     else
     {
-        ::emscripten_log(EM_LOG_CONSOLE, std::format(InFormat, InArgs ...));
+        ::emscripten_log(EM_LOG_CONSOLE, std::format(InFormat, InArgs...));
     }
 #else /* PLATFORM_WASM */
     if constexpr ((InVerbosity < InCategoryVerbosity) == false)
     {
-        std::cout << std::format(InFormat, std::forward<TArgs>(InArgs) ...) << '\n';
+        std::cout << std::format(InFormat, std::forward<TArgs>(InArgs)...) << '\n';
     }
 #endif /* !PLATFORM_WASM */
 

@@ -1,8 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Engine/EngineCompileTimeConstants.h"
 
-#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES && PLATFORM_LINUX
+#if JAFG_WITH_FOREIGN_SUPPORT && PLATFORM_LINUX
 
 #include "Foreign/Plugin.h"
 #include "Foreign/PluginLifetime.h"
@@ -10,6 +10,20 @@
 
 namespace Jafg
 {
+
+LLoadedPlugin::~LLoadedPlugin()
+{
+    if (this->IsLoaded())
+    {
+        //#
+        //# If this ever triggers - we are fucked. The plugin probably has handles all over the place.
+        //#
+        LOG_WARNING(LogForeign, "Plugin [{}] was not closed before destruction.", this->GetIdentifier())
+        this->CloseLibrary(EPluginShutdownReason::Unspecified);
+    }
+
+    return;
+}
 
 EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
 {
@@ -102,4 +116,4 @@ EPluginLoadReturnCode::Type LLoadedPlugin::CloseLibrary(const EPluginShutdownRea
 
 } /* ~Namespace Jafg */
 
-#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES && PLATFORM_LINUX */
+#endif /* JAFG_WITH_FOREIGN_SUPPORT && PLATFORM_LINUX */

@@ -5,14 +5,14 @@
 #include "System/EnginePath.h"
 #include "Rhi/RhiVendorInclude.h"
 
-Jafg::Smart::TUnique<u8> Jafg::Texture2::RotateCW(const u8* InData, const u32 InWidth, const u32 InHeight, const u32 InChannels)
+Smart::TUnique<u8[]> Jafg::Texture2::RotateCW(const u8* InData, const u32 InWidth, const u32 InHeight, const u32 InChannels)
 {
     check( InData )
 
     const u32 NewW { InHeight };
     const u32 NewH { InWidth  };
 
-    Smart::TUnique<u8> Buffer { Smart::MakeUnique(static_cast<u8*>(operator new(InWidth * InHeight * InChannels))) };
+    Smart::TUnique<u8[]> Buffer { new u8[InWidth * InHeight * InChannels] };
 
     for (u32 Y { 0 }; Y < InHeight; ++Y)
     {
@@ -38,14 +38,14 @@ Jafg::Smart::TUnique<u8> Jafg::Texture2::RotateCW(const u8* InData, const u32 In
     return Buffer;
 }
 
-Jafg::Smart::TUnique<u8> Jafg::Texture2::RotateCCW(const u8* InData, const u32 InWidth, const u32 InHeight, const u32 InChannels)
+Smart::TUnique<u8[]> Jafg::Texture2::RotateCCW(const u8* InData, const u32 InWidth, const u32 InHeight, const u32 InChannels)
 {
     check( InData )
 
     const u32 NewW { InHeight };
     const u32 NewH { InWidth  };
 
-    Smart::TUnique<u8> Buffer { Smart::MakeUnique(static_cast<u8*>(operator new(InWidth * InHeight * InChannels))) };
+    Smart::TUnique<u8[]> Buffer { new u8[InWidth * InHeight * InChannels] };
 
     for (u32 Y { 0 }; Y < InHeight; ++Y)
     {

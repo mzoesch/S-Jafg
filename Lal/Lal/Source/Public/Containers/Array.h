@@ -177,7 +177,7 @@ public:
      * Adds a new element to the array and constructs it in place while potentially
      * reallocating the whole array to fit.
      */
-    template <typename ... Args>
+    template <typename... Args>
     FORCEINLINE auto Emplace(Args&&... InArgs) noexcept -> Self&;
 
     template <typename Predicate>
@@ -260,7 +260,7 @@ public:
     FORCEINLINE auto MoveFrom  (      Self&& InOther) noexcept -> Self& { return this->operator=(std::move(InOther)); }
 
     /**
-     * Do not use std operators as ...
+     * Do not use std operators as...
      *    - they are ambiguous in terms of meaning (compare by size, value or reference?).
      *    - we might accidentally do comparisons inside templated paths of arrays that are very expensive in terms of
      *      runtime performance.
@@ -862,7 +862,7 @@ SizeType TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAllByPred
 }
 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
-template <typename ... Args>
+template <typename... Args>
 TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>&
 TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Emplace(Args&&... InArgs) noexcept
 {

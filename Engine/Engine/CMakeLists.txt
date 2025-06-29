@@ -4,6 +4,7 @@ include_guard(_guard)
 if(_guard)
     jafg_add_module(JAFG_MODULE_TYPE_SHARED)
     jafg_add_dependency("Lal/Lal" "public")
+    jafg_add_dependency("Engine/Core" "private")
     jafg_add_dependency("Engine/EngineForward" "private")
 
     ###############################################################################

@@ -55,7 +55,7 @@ public:
     ENGINE_API static LString Fmt_Raw(const f64 Value);
     ENGINE_API static LString Fmt_ZeroToOneAsPercent(const f64 Value);
     FORCEINLINE void SetDisplayFormat(LPreferenceScalarFormatFunction&& InFnFormat) { this->FnFormat = std::move(InFnFormat); }
-    FORCEINLINE bool IsDisplayFormatValid() const { return this->FnFormat.IsBound(); }
+    FORCEINLINE bool IsDisplayFormatValid() const { return this->FnFormat.IsValid(); }
     FORCEINLINE auto GetFormattedText() const -> LString { return this->FnFormat(this->GetValue()); }
 
     FORCEINLINE auto GetValueF() const -> f32 { return static_cast<f32>(this->Getter()); }
@@ -63,9 +63,9 @@ public:
     FORCEINLINE void SetValue(const f32  InValue) { this->SetValue(static_cast<f64>(InValue)); }
     FORCEINLINE void SetValue(const f64 InValue) { this->Setter(InValue); }
     FORCEINLINE void SetValueGetter(LPreferenceScalarValueGetter&& InGetter) { this->Getter = std::move(InGetter); }
-    FORCEINLINE bool IsValueGetterValid() const { return this->Getter.IsBound(); }
+    FORCEINLINE bool IsValueGetterValid() const { return this->Getter.IsValid(); }
     FORCEINLINE void SetValueSetter(LPreferenceScalarValueSetter&& InSetter) { this->Setter = std::move(InSetter); }
-    FORCEINLINE bool IsValueSetterValid() const { return this->Setter.IsBound(); }
+    FORCEINLINE bool IsValueSetterValid() const { return this->Setter.IsValid(); }
 
     ENGINE_API static void BuildDefault(const LPreference* Self, WParentBase* Target);
 

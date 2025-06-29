@@ -104,7 +104,7 @@ void Jafg::WPreferencesScreen::Construct()
     const JPreferenceRegistry* Registry = GetDefault<JPreferenceRegistry>();
     for (const Smart::TUnique<LPreference>& TopPreference : Registry->GetPreferences())
     {
-        LPreference* LambdaPreference = const_cast<LPreference*>(TopPreference.GetValuePtr());
+        LPreference* LambdaPreference = const_cast<LPreference*>(TopPreference.GetPointerChecked());
 
         LTabBarTabDescriptor Descriptor;
         Descriptor.IdentifierField = TopPreference->GetName().ToString();

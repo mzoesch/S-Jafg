@@ -205,13 +205,23 @@ function(_jafg_add_module_impl
     # Compiler flags
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         target_compile_options(${module_name} PRIVATE
-            -fno-rtti           # No RTTI
+            -fno-rtti                   # No RTTI.
+            # This is the default for clang, so just ignore it for now.
+            # -stdlib=libstdc++         # Use libstdc++ instead of LLVM's libc++.
+            -fno-exceptions             # No exceptions.
+            -fno-common                 # Forces global variables to be defined in exactly one object file.
+            -fvisibility=hidden         # Hides all symbols by default.
+            -Wall -Wextra -Wpedantic    # Enable many warnings.
+            # -Weverything <-- To much for now.
+            )
+        target_link_options(${module_name} PRIVATE
+            -rdynamic
             )
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         target_compile_options(${module_name} PRIVATE
-            /Zc:__cplusplus     # Why the fuck microsoft?
-            /GR-                # No RTTI
-            /MP                 # Multiple processors
+            /Zc:__cplusplus             # Why the fuck microsoft?
+            /GR-                        # No RTTI.
+            /MP                         # Multiple processors.
             )
     else()
         message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
@@ -220,13 +230,13 @@ function(_jafg_add_module_impl
     if(JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_DEBUG)
         if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
             target_compile_options(${module_name} PRIVATE
-                -g              # Debug symbols
-                -O0             # Prevent optimizations
+                -g              # Debug symbols.
+                -O0             # Prevent optimizations.
                 )
         elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
             target_compile_options(${module_name} PRIVATE
-                /Zi             # PDB debug symbols
-                /Od             # Prevent optimizations
+                /Zi             # PDB debug symbols.
+                /Od             # Prevent optimizations.
                 )
         else()
             message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
@@ -234,13 +244,13 @@ function(_jafg_add_module_impl
     elseif(JAFG_TARGET_CONFIG STREQUAL JAFG_CONFIG_DEVELOPMENT)
         if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
             target_compile_options(${module_name} PRIVATE
-                -g              # Debug symbols
-                -O2             # Tsundere optimizations
+                -g              # Debug symbols.
+                -O2             # Tsundere optimizations.
                 )
         elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
             target_compile_options(${module_name} PRIVATE
-                /Zi             # PDB debug symbols
-                /O2             # Pessimistic optimizations
+                /Zi             # PDB debug symbols.
+                /O2             # Pessimistic optimizations.
                 )
         else()
             message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
@@ -249,27 +259,27 @@ function(_jafg_add_module_impl
         if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
             if(LAL_DO_DEBUG_SYMBOLS_IN_SHIPPING)
                 target_compile_options(${module_name} PRIVATE
-                    -g              # No debug symbols
-                    -O3             # Aggressive optimizations
+                    -g              # No debug symbols.
+                    -O3             # Aggressive optimizations (Prioritize speed and fuck security).
                     )
             else()
                 target_compile_options(${module_name} PRIVATE
-                    -g0             # Debug symbols
-                    -O3             # Aggressive optimizations
+                    -g0             # Debug symbols.
+                    -O3             # Aggressive optimizations.
                     )
             endif()
         elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
             if(LAL_DO_DEBUG_SYMBOLS_IN_SHIPPING)
                 target_compile_options(${module_name} PRIVATE
-                    /Zi             # PDB debug symbols
-                    /Ox             # Aggressive optimizations
-                    /GL             # Whole program optimization
+                    /Zi             # PDB debug symbols.
+                    /Ox             # Aggressive optimizations.
+                    /GL             # Whole program optimization.
                     )
             else()
                 target_compile_options(${module_name} PRIVATE
-                    /Od             # No debug symbols
-                    /Ox             # Aggressive optimizations
-                    /GL             # Whole program optimization
+                    /Od             # No debug symbols.
+                    /Ox             # Aggressive optimizations.
+                    /GL             # Whole program optimization.
                     )
             endif()
         else()
@@ -285,7 +295,8 @@ function(_jafg_add_module_impl
         LAL_DO_COMPILER_DIAGNOSTIC_SETUP=${b_LAL_FLAG_DO_COMPILER_DIAGNOSTIC_SETUP}
         )
 
-    _add_flag_if_specified(${LAL_FLAG_DEFAULT_LOG_VERBOSITY}            "LAL_DEFAULT_LOG_VERBOSITY")
+    _add_flag_if_specified(${LAL_FLAG_DO_ENABLE_SHIPPING_WARNINGS}      "LAL_DO_ENABLE_SHIPPING_WARNINGS")
+    _add_flag_if_specified(${LAL_FLAG_LOG_DEFAULT_VERBOSITY}            "LAL_LOG_DEFAULT_VERBOSITY")
     _add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_TRACE}                 "LAL_LOG_ENABLE_TRACE")
     _add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_VERBOSE}               "LAL_LOG_ENABLE_VERBOSE")
     _add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_INFO}                  "LAL_LOG_ENABLE_INFO")

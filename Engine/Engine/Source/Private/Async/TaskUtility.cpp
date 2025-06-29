@@ -63,7 +63,7 @@ struct LTask final
     FORCEINLINE explicit LTask(const Jafg::ETaskTime::Type InTime, Jafg::LTaskDelegate&& InDelegate)
         : Time(InTime), Delegate(std::move(InDelegate))
     {
-        checkSlow( InDelegate.IsBound() == false )
+        checkSlow( InDelegate.IsValid() == false )
     }
 
     Jafg::ETaskTime::Type Time;
@@ -166,6 +166,21 @@ FORCEINLINE void RenameMe(const Jafg::LString& InDisplayName)
 }
 
 } /* ~Namespace <Anonymous> */
+
+//
+// Moved out of a header file into this translation file, so that this translation unit can be the unique
+// owner of the v-table pointer from the #LRunnable class.
+//
+Jafg::LRunnable::LRunnable()
+{
+    return;
+}
+
+Jafg::LRunnable::LRunnable(const LString& InHumanReadableName)
+    : HumanReadableName(InHumanReadableName)
+{
+    return;
+}
 
 void Jafg::LRunnable::Join()
 {
@@ -367,7 +382,7 @@ bool Jafg::Tasks::IsOnThread(const ENamedThreads::Type InThreadName)
 
 void Jafg::Tasks::Make(const ENamedThreads::Type InThreadName, const ETaskTime::Type InPreferredTime, LTaskDelegate&& InDelegate)
 {
-    check( InDelegate.IsBound() )
+    check( InDelegate.IsValid() )
 
     std::shared_lock Lock(::EngineThreadsMutex);
     if (::bTearingDown)
@@ -401,7 +416,7 @@ bool Jafg::Tasks::IsThreadRunning(const ENamedThreads::Type InThreadName)
     return ::EngineThreads.Contains(InThreadName);
 }
 
-void Jafg::Tasks::TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const i32 MaxTasks)
+i32 Jafg::Tasks::TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const i32 MaxTasks)
 {
     STAT_CYCLE_FUNCTION_START(Trt)
 
@@ -414,12 +429,14 @@ void Jafg::Tasks::TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::
         }
 
         std::shared_lock Lock(::EngineThreadsMutex); // TODO Can we make this faster?
-        LEngineThread* Thread = ::EngineThreads.FindRef(Which);
-        if (LAL_UNLIKELY(ensure(Thread == nullptr)))
+        LEngineThread* Thread { ::EngineThreads.FindRef(Which) };
+        ensure(Thread != nullptr);
+        if (LAL_UNLIKELY(Thread == nullptr))
         {
             LOG_ERROR(LogTaskSystem, "Thread {} not found.", LexToString(Which))
             break;
         }
+
         TMpmcQueue<LTask>& Queue = Thread->TaskQueue;
         LTask Task;
         if (Queue.DequeueByMoveWithPredicate(&Task, [Time](const LTask& InTask){ return InTask.Time & Time; }) == false)
@@ -454,7 +471,7 @@ void Jafg::Tasks::TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::
     }
 #endif /* WITH_STATS */
 
-    return;
+    return RunTasks;
 }
 
 void Jafg::Tasks::StopThread(const ENamedThreads::Type ThreadName)
@@ -637,7 +654,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
 #endif /* WITH_STATS */
             }
 
-            STAT_QUICK_CYCLE_START("Jafg::Tasks::Private::launchNamedThread::std::thread")
+            STAT_QUICK_CYCLE_START("Jafg::Tasks::Private::LaunchNamedThread::std::thread")
 
             const ETaskExit::Type LambdaErrorLevel = Runnable->Run();
             if (LambdaErrorLevel != ETaskExit::Success)

@@ -58,8 +58,8 @@ public:
     ENGINE_API const TArray<LRawInput>& GetOngoingKeys() const;
     ENGINE_API TArray<LRawInput>        GetCompletedKeys() const;
 
-    FORCEINLINE       LUserInputContext* GetContextByName(const LName& InName) { Smart::TUnique<LUserInputContext>* Out = this->RegisteredContexts.FindRef(InName); return Out ? Out->GetValuePtr() : nullptr; }
-    FORCEINLINE const LUserInputContext* GetContextByName(const LName& InName) const { const Smart::TUnique<LUserInputContext>* Out = this->RegisteredContexts.FindRef(InName); return Out ? Out->GetValuePtr() : nullptr; }
+    FORCEINLINE       LUserInputContext* GetContextByName(const LName& InName) { Smart::TUnique<LUserInputContext>* Out = this->RegisteredContexts.FindRef(InName); return Out ? Out->GetPointer() : nullptr; }
+    FORCEINLINE const LUserInputContext* GetContextByName(const LName& InName) const { const Smart::TUnique<LUserInputContext>* Out = this->RegisteredContexts.FindRef(InName); return Out ? Out->GetPointer() : nullptr; }
     FORCEINLINE       LUserInputContext* GetContextByNameChecked(const LName& InName) { LUserInputContext* Out = this->GetContextByName(InName); check( Out ) return Out; }
     FORCEINLINE const LUserInputContext* GetContextByNameChecked(const LName& InName) const { const LUserInputContext* Out = this->GetContextByName(InName); check( Out ) return Out; }
     FORCEINLINE       LUserInputContext* GetContextByNameAsserted(const LName& InName) { LUserInputContext* Out = this->GetContextByName(InName); jassert( Out ) return Out; }
@@ -72,8 +72,8 @@ public:
     FORCEINLINE       LUserInputContext* GetContextByNameAsserted(const LString& InName) { LUserInputContext* Out = this->GetContextByName(InName); jassert( Out ) return Out; }
     FORCEINLINE const LUserInputContext* GetContextByNameAsserted(const LString& InName) const { const LUserInputContext* Out = this->GetContextByName(InName); jassert( Out ) return Out; }
 
-    FORCEINLINE       LInputAction* GetActionByName(const LName& InName) { Smart::TUnique<LInputAction>* Out = this->RegisteredActions.FindRef(InName); return Out ? Out->GetValuePtr() : nullptr; }
-    FORCEINLINE const LInputAction* GetActionByName(const LName& InName) const { const Smart::TUnique<LInputAction>* Out = this->RegisteredActions.FindRef(InName); return Out ? Out->GetValuePtr() : nullptr; }
+    FORCEINLINE       LInputAction* GetActionByName(const LName& InName) { Smart::TUnique<LInputAction>* Out = this->RegisteredActions.FindRef(InName); return Out ? Out->GetPointer() : nullptr; }
+    FORCEINLINE const LInputAction* GetActionByName(const LName& InName) const { const Smart::TUnique<LInputAction>* Out = this->RegisteredActions.FindRef(InName); return Out ? Out->GetPointer() : nullptr; }
     FORCEINLINE       LInputAction* GetActionByNameChecked(const LName& InName) { LInputAction* Out = this->GetActionByName(InName); check( Out ) return Out; }
     FORCEINLINE const LInputAction* GetActionByNameChecked(const LName& InName) const { const LInputAction* Out = this->GetActionByName(InName); check( Out ) return Out; }
     FORCEINLINE       LInputAction* GetActionByNameAsserted(const LName& InName) { LInputAction* Out = this->GetActionByName(InName); jassert( Out ) return Out; }

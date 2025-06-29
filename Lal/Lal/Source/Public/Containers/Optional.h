@@ -31,8 +31,8 @@ public:
     FORCEINLINE TOptional& operator=(const TOptional& InOther) noexcept;
     FORCEINLINE TOptional& operator=(TOptional&& InOther) noexcept;
 
-    template <typename ... InTArgs>
-    FORCEINLINE void Emplace(InTArgs&& ... InArgs) noexcept;
+    template <typename... InTArgs>
+    FORCEINLINE void Emplace(InTArgs&&... InArgs) noexcept;
 
     FORCEINLINE bool IsValid() const noexcept;
     FORCEINLINE explicit operator bool() const noexcept;
@@ -58,10 +58,14 @@ public:
 
 private:
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif /* LAL_WITH_CLANG */
     typedef std::aligned_storage_t<sizeof(T), alignof(T)> LStorage;
-#pragma GCC diagnostic pop
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* LAL_WITH_CLANG */
 
           T* GetStoragePtr()       noexcept { return reinterpret_cast<      T*>(&this->Storage); }
     const T* GetStoragePtr() const noexcept { return reinterpret_cast<const T*>(&this->Storage); }
@@ -195,7 +199,7 @@ FORCEINLINE TOptional<T>& TOptional<T>::operator=(TOptional&& InOther) noexcept
 }
 
 template<typename T>
-template<typename ... InTArgs>
+template<typename... InTArgs>
 FORCEINLINE void TOptional<T>::Emplace(InTArgs&&... InArgs) noexcept
 {
     if (this->IsValid())

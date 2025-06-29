@@ -19,7 +19,7 @@ ENGINE_API extern LTracer* GTracer;
 struct LStat final
 {
     FORCEINLINE LStat(const std::string_view& InName) noexcept;
-    FORCEINLINE ~LStat() { if (this->bStopped == false) { this->Stop(); } };
+    FORCEINLINE ~LStat() { if (this->bStopped == false) { this->Stop(); } }
 
     FORCEINLINE void Stop();
     FORCEINLINE void Discard() { this->bStopped = true; return; }

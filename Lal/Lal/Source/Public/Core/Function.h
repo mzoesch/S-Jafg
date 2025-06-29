@@ -8,251 +8,313 @@ namespace Jafg
 template <typename T>
 class TFunction;
 
-/**
- * A function object that can store any callable type.
- * Weak / strong references to lambdas, function pointers, and member functions are supported.
- */
-template <typename RetTy, typename ... ParamsTy>
-class TFunction<RetTy(ParamsTy...)>
+//#
+//# A function object that can store any callable type.
+//# Weak / strong references to lambdas, function pointers, and member functions are supported.
+//#
+template <typename TRet, typename... TParams>
+class TFunction<TRet(TParams...)>
 {
     template <typename T>
     friend class TFunction;
 
 public:
 
-    FORCEINLINE static constexpr i32 NumParams() { return sizeof ... (ParamsTy); }
-
-    using LRetTy    = RetTy;
-    using LParamsTy = std::tuple<ParamsTy...>;
-
-    typedef TFunction<RetTy(ParamsTy...)> Self;
+    FORCEINLINE static constexpr u64 NumParams() noexcept { return sizeof... (TParams); }
 
 private:
 
     struct LCallableBase;
-    template <typename CallableTy>                 struct LStrongCallable;
-    template <typename CallableTy>                 struct LWeakCallable;
-    template <typename ObjTy, typename CallableTy> struct LMemberCallable;
+
+    template <typename TFunctor> requires (std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    struct LCallableStrong;
+
+    template <typename TFunctor> requires (std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    struct LCallableWeak;
+
+    template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
+    struct LCallableMember;
+
+    friend LCallableBase;
+
+    //#
+    //# This function returns a copy of the base-callable type.
+    //# If nullptr is returned, then the underlying callable type is not copyable.
+    //#
+    typedef void(*LCopyImplDelegate)(const LCallableBase* Base, TFunction* OutFunction);
 
 public:
 
-    using LUniqueCallableTy = Smart::TUnique<LCallableBase>;
+    typedef Smart::TUnique<LCallableBase> LImpl;
 
-    FORCEINLINE TFunction() = default;
-    FORCEINLINE TFunction(LNullptrTy) : Callable(nullptr) { }
-    FORCEINLINE TFunction& operator=(LNullptrTy) { this->Reset(); return *this; }
-    PROHIBIT_COPY(TFunction)
-    FORCEINLINE TFunction(TFunction&& Other) noexcept
+    FORCEINLINE constexpr TFunction() noexcept = default;
+    FORCEINLINE constexpr TFunction(LNullptrTy) noexcept : Impl(nullptr) { }
+    FORCEINLINE constexpr TFunction& operator=(LNullptrTy) noexcept { this->Impl.operator=(nullptr); return *this; }
+    FORCEINLINE constexpr TFunction(TFunction&& Other) noexcept;
+    FORCEINLINE constexpr TFunction& operator=(TFunction&& Other) noexcept;
+    FORCEINLINE TFunction(const TFunction& Other) { this->CopyImpl(Other); }
+    FORCEINLINE TFunction& operator=(const TFunction& Other) { this->CopyImpl(Other); return *this; }
+    FORCEINLINE constexpr ~TFunction() noexcept = default;
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Templated constructors for different callable types - might not be resolved by compiler.
+    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    FORCEINLINE constexpr TFunction(TFunctor&& Functor) noexcept
     {
-        this->Reset();
-        this->Callable = std::move(Other.Callable);
-        Other.Callable = nullptr; /* Do not reset as it would orphan the memory. */
-        return;
+        this->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableStrong<TFunctor>>(this, std::forward<TFunctor>(Functor));
     }
-    FORCEINLINE TFunction& operator=(TFunction&& Other) noexcept
+    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    FORCEINLINE constexpr TFunction(TFunctor* Functor) noexcept
     {
-        this->Reset();
-        this->Callable = std::move(Other.Callable);
-        Other.Callable = nullptr; /* Do not reset as it would orphan the memory. */
-        return *this;
+        this->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableWeak<TFunctor>>(this, Functor);
     }
-    FORCEINLINE ~TFunction() { this->Reset(); return; }
-
-    template <typename CallableTy, typename = typename TEnableIf<std::is_invocable_v<CallableTy, ParamsTy...>>::Ty>
-    FORCEINLINE TFunction(CallableTy&& InCallable)
+    template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
+    FORCEINLINE constexpr TFunction(TObj* Object, TMemberFunctor MemberFunctor) noexcept
     {
-        this->Reset();
-
-        if constexpr (std::is_same_v<std::decay_t<CallableTy>, TFunction>)
-        {
-            this->Callable = Smart::MakeUnique(const_cast<typename CallableTy::LUniqueCallableTy::StoredInnerTy>(
-                InCallable.Callable.GetValuePtr()
-            ));
-            ::Jafg::Smart::Private::LMySmartHelper::RemoveNoOrphan(
-                const_cast<typename CallableTy::LUniqueCallableTy&>(InCallable.Callable)
-            ); /* Do not reset as it would orphan the memory. */
-        }
-        else if constexpr (std::is_invocable_v<CallableTy, ParamsTy...>)
-        {
-            this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LStrongCallable<CallableTy>>(std::forward<CallableTy>(InCallable));
-        }
-        else
-        {
-            UNREACHABLE_CONTROL_PATH_STATIC( std::is_same_v<std::decay_t<CallableTy> PRIVATE_JAFG_CORE_COMMA TFunction> )
-        }
-
-        return;
-    }
-    template <typename CallableTy>
-    FORCEINLINE void BindStrong(CallableTy&& InCallable)
-    {
-        this->Reset();
-        if constexpr (std::is_same_v<std::decay_t<CallableTy>, TFunction>)
-        {
-            this->Callable = Smart::MakeUnique(const_cast<typename CallableTy::LUniqueCallableTy::StoredInnerTy>(
-                InCallable.Callable.GetValuePtr()
-            ));
-            ::Jafg::Smart::Private::LMySmartHelper::RemoveNoOrphan(
-                const_cast<typename CallableTy::LUniqueCallableTy&>(InCallable.Callable)
-            ); /* Do not reset as it would orphan the memory. */
-        }
-        else if constexpr (std::is_invocable_v<CallableTy, ParamsTy...>)
-        {
-            this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LStrongCallable<CallableTy>>(std::forward<CallableTy>(InCallable));
-        }
-        else
-        {
-            UNREACHABLE_CONTROL_PATH_STATIC( std::is_same_v<std::decay_t<CallableTy> PRIVATE_JAFG_CORE_COMMA TFunction> )
-        }
-
-        return;
-    }
-    template <typename CallableTy>
-    FORCEINLINE static Self CreateStrong(CallableTy&& InCallable)
-    {
-        Self Result;
-        Result.BindStrong(std::forward<CallableTy>(InCallable));
-        return Result;
+        this->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableMember<TObj, TMemberFunctor>>(this, Object, MemberFunctor);
     }
 
-    template <typename CallableTy, typename = typename TEnableIf<std::is_invocable_v<CallableTy, ParamsTy...>>::Ty>
-    FORCEINLINE TFunction(CallableTy* InCallable)
+    ///////////////////////////////////////////////////////////////////////////////
+    // Explicit bind functions for different callable types.
+    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    FORCEINLINE void BindStrong(TFunctor&& Functor)
     {
-        this->Reset();
-        this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LWeakCallable<CallableTy>>(InCallable);
+        this->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableStrong<TFunctor>>(this, std::forward<TFunctor>(Functor));
     }
-    template <typename CallableTy, typename = typename TEnableIf<std::is_invocable_v<CallableTy, ParamsTy...>>::Ty>
-    FORCEINLINE void BindWeak(CallableTy* InCallable)
+    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    FORCEINLINE void BindWeak(TFunctor* Functor)
     {
-        this->Reset();
-        this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LWeakCallable<CallableTy>>(InCallable);
+        this->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableWeak<TFunctor>>(this, Functor);
     }
-    template <typename CallableTy, typename = typename TEnableIf<std::is_invocable_v<CallableTy, ParamsTy...>>::Ty>
-    FORCEINLINE static Self CreateWeak(CallableTy* InCallable)
+    template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
+    FORCEINLINE void BindMember(TObj* Object, TMemberFunctor MemberFunctor)
     {
-        Self Result;
-        Result.BindWeak(InCallable);
-        return Result;
+        this->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableMember<TObj, TMemberFunctor>>(this, Object, MemberFunctor);
     }
 
-    template <typename ObjTy, typename CallableTy>
-    FORCEINLINE TFunction(ObjTy* InObject, CallableTy InMember)
+    ///////////////////////////////////////////////////////////////////////////////
+    // Implicit static bind functions for different callable types.
+    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    FORCEINLINE static TFunction Create(TFunctor&& Functor)
     {
-        this->Reset();
-        this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LMemberCallable<ObjTy, CallableTy>>(InObject, InMember);
+        return { std::forward<TFunctor>(Functor) };
     }
-    template <typename ObjTy, typename CallableTy>
-    FORCEINLINE void BindMember(ObjTy* InObject, CallableTy InMember)
+    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    FORCEINLINE static TFunction Create(TFunctor* Functor)
     {
-        this->Reset();
-        this->Callable = Smart::EmplaceUniqueOfType<LCallableBase, LMemberCallable<ObjTy, CallableTy>>(InObject, InMember);
+        return { std::forward<TFunctor>(Functor) };;
     }
-    template <typename ObjTy, typename CallableTy>
-    FORCEINLINE static Self CreateMember(ObjTy* InObject, CallableTy InMember)
+    template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
+    FORCEINLINE static TFunction Create(TObj* Object, TMemberFunctor MemberFunctor)
     {
-        Self Result;
-        Result.BindMember(InObject, InMember);
-        return Result;
+        return { Object, MemberFunctor };
     }
 
-    FORCEINLINE RetTy Invoke(ParamsTy... InParams) const { return this->operator()(std::forward<ParamsTy>(InParams)...); }
-    FORCEINLINE RetTy operator()(ParamsTy... InParams) const
+    ///////////////////////////////////////////////////////////////////////////////
+    // Explicit static bind functions for different callable types.
+    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    FORCEINLINE static TFunction CreateStrong(TFunctor&& Functor)
     {
-        if (this->Callable == nullptr)
-        {
-            panic( "TFunction is not valid" )
-            abort();
-        }
-
-        return this->Callable->Invoke(std::forward<ParamsTy>(InParams)...);
+        TFunction Function; Function.BindStrong(std::forward<TFunctor>(Functor));
+        return Function;
+    }
+    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    FORCEINLINE static TFunction CreateWeak(TFunctor* Functor)
+    {
+        TFunction Function; Function.BindWeak(Functor);
+        return Function;
+    }
+    template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
+    FORCEINLINE static TFunction CreateMember(TObj* Object, TMemberFunctor MemberFunctor)
+    {
+        TFunction Function; Function.BindMember(Object, MemberFunctor);
+        return Function;
     }
 
-    FORCEINLINE bool operator==(const LNullptrTy) const { return this->IsBound() == false; }
-    FORCEINLINE bool operator!=(const LNullptrTy) const { return this->IsBound();          }
+    FORCEINLINE TRet Invoke(TParams... Params) const noexcept(std::is_nothrow_invocable_r_v<TRet, decltype(this->Impl), TParams...>)
+    {
+        check( this->IsValid() )
+        return this->Impl->Invoke(std::forward<TParams>(Params)...);
+    }
+    FORCEINLINE TRet operator()(TParams... Params) const noexcept(std::is_nothrow_invocable_r_v<TRet, decltype(this->Impl), TParams...>)
+    {
+        check( this->IsValid() )
+        return this->Impl->Invoke(std::forward<TParams>(Params)...);
+    }
 
-    FORCEINLINE void Reset() { this->Callable.Reset(); }
+    FORCEINLINE constexpr bool operator==(LNullptrTy) const noexcept { return this->IsValid() == false; }
 
-    /** Whether the callable is set. */
-    FORCEINLINE bool IsBound() const { return this->Callable != nullptr; }
-
-    /** Whether the callable is set and valid. */
-    FORCEINLINE bool IsValid() const { return this->IsBound() && this->Callable->IsValid(); }
-    FORCEINLINE void CheckValidCall() const { check( this->IsValid() ) return; }
-    FORCEINLINE explicit operator bool() const { return this->IsBound(); }
+    FORCEINLINE constexpr void Reset() noexcept { this->Impl.Reset(); this->CopyImplDelegate = nullptr; }
+    FORCEINLINE constexpr bool IsValid() const noexcept { return this->Impl.IsValid(); }
+    FORCEINLINE constexpr bool IsCopyable() const noexcept { return this->IsValid() && this->CopyImplDelegate != nullptr; }
 
 private:
 
+    FORCEINLINE void CopyImpl(const TFunction& Other) noexcept;
+
     struct LCallableBase
     {
-        virtual ~LCallableBase() = default;
-        virtual auto Invoke(ParamsTy... InParams) const -> RetTy = 0;
-        virtual bool IsValid() const { return false; }
+        FORCEINLINE virtual ~LCallableBase() = default;
+        FORCEINLINE virtual TRet Invoke(TParams... Params) const = 0;
     };
 
-    template <typename CallableTy>
-    struct LStrongCallable final : public LCallableBase
+    template <typename TFunctor> requires (std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    struct LCallableStrong final : public LCallableBase
     {
-        CallableTy InnerCallable;
+        TFunctor Inner;
 
-        FORCEINLINE LStrongCallable(CallableTy&& InCallable) : InnerCallable(std::move(InCallable)) { }
-
-        FORCEINLINE RetTy Invoke(ParamsTy... InParams) const override
+        FORCEINLINE constexpr LCallableStrong(TFunction* Function, TFunctor&& Functor) noexcept
+            : Inner(std::forward<TFunctor>(Functor))
         {
-            static_assert(
-                std::is_invocable_v<CallableTy, ParamsTy...>,
-                "Callable is not invocable with parameters. Was an invalid function signature provided?"
-            );
-            static_assert(
-                std::is_same_v<std::invoke_result_t<CallableTy, ParamsTy...>, RetTy>,
-                "Callable must return the correct type."
-            );
-            return this->InnerCallable(std::forward<ParamsTy>(InParams)...);
-        }
-        FORCEINLINE bool IsValid() const override { return true; }
-    };
+            check( Function )
 
-    template <typename CallableTy>
-    struct LWeakCallable final : public LCallableBase
-    {
-        CallableTy* InnerCallable = nullptr;
-
-        FORCEINLINE LWeakCallable(CallableTy* InCallable) : InnerCallable(InCallable) { }
-
-        FORCEINLINE RetTy Invoke(ParamsTy... InParams) const override
-        {
-            if (this->InnerCallable)
+            if constexpr (std::is_copy_constructible_v<TFunctor>)
             {
-                return (*this->InnerCallable)(std::forward<ParamsTy>(InParams)...);
+                Function->CopyImplDelegate = LCallableStrong<TFunctor>::Copy;
+            }
+            else
+            {
+                Function->CopyImplDelegate = nullptr;
             }
 
-            panic( "Attempt to invoke null callable" )
-            abort();
+            return;
         }
-        FORCEINLINE bool IsValid() const override { return this->InnerCallable != nullptr; }
-    };
 
-    template <typename ObjTy, typename CallableTy>
-    struct LMemberCallable final : public LCallableBase
-    {
-        ObjTy*     Object = nullptr;
-        CallableTy Member = nullptr;
-
-        FORCEINLINE LMemberCallable(ObjTy* InObject, CallableTy InMember) : Object(InObject), Member(InMember) { }
-
-        FORCEINLINE RetTy Invoke(ParamsTy... InParams) const override
+        FORCEINLINE static constexpr void Copy(const LCallableBase* Base, TFunction* OutFunction) noexcept requires (std::is_copy_constructible_v<TFunctor>)
         {
-            if (this->Object && this->Member)
-            {
-                return (this->Object->*Member)(std::forward<ParamsTy>(InParams)...);
-            }
+            check( Base && OutFunction )
+            const LCallableStrong* Strong { static_cast<const LCallableStrong*>(Base) };
 
-            panic( "Invalid member function call" )
-            abort();
+            OutFunction->Impl = LImpl { new LCallableStrong<TFunctor>(OutFunction, Strong->Inner) };
+            check( OutFunction->IsValid() )
+            check( OutFunction->IsCopyable() )
+
+            return;
         }
-        FORCEINLINE bool IsValid() const override { return this->Object != nullptr; }
+
+        FORCEINLINE virtual TRet Invoke(TParams... Params) const noexcept(std::is_nothrow_invocable_r_v<TRet, TFunctor, TParams...>) override
+        {
+            return this->Inner(std::forward<TParams>(Params)...);
+        }
+
+        private:
+
+        FORCEINLINE constexpr LCallableStrong(TFunction* Function, const TFunctor& Functor) noexcept requires (std::is_copy_constructible_v<TFunctor>)
+            : Inner(Functor)
+        {
+            check( Function )
+            Function->CopyImplDelegate = LCallableStrong<TFunctor>::Copy;
+
+            return;
+        }
     };
 
-    LUniqueCallableTy Callable { nullptr };
+    template <typename TFunctor> requires (std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    struct LCallableWeak final : public LCallableBase
+    {
+        TFunctor* Inner { nullptr };
+
+        FORCEINLINE constexpr LCallableWeak(TFunction* Function, TFunctor* Functor) noexcept
+            : Inner(Functor)
+        {
+            check( this->Inner )
+
+            check( Function )
+            Function->CopyImplDelegate = LCallableWeak<TFunctor>::Copy;
+
+            return;
+        }
+
+        FORCEINLINE static constexpr void Copy(const LCallableBase* Base, TFunction* OutFunction) noexcept
+        {
+            check( Base && OutFunction )
+            const LCallableWeak* Weak { static_cast<const LCallableWeak*>(Base) };
+
+            OutFunction->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableWeak<TFunctor>>(OutFunction, Weak->Inner);
+            check( OutFunction->IsValid() )
+            check( OutFunction->IsCopyable() )
+
+            return;
+        }
+
+        FORCEINLINE TRet Invoke(TParams... Params) const noexcept(std::is_nothrow_invocable_r_v<TRet, TFunctor, TParams...>) override
+        {
+            check( this->Inner )
+            return (*this->Inner)(std::forward<TParams>(Params)...);
+        }
+    };
+
+    template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
+    struct LCallableMember final : public LCallableBase
+    {
+        TObj* Object { nullptr };
+        TMemberFunctor MemberFunctor { nullptr };
+
+        FORCEINLINE constexpr LCallableMember(TFunction* Function, TObj* InObject, TMemberFunctor InMemberFunctor) noexcept
+            : Object(InObject), MemberFunctor(InMemberFunctor)
+        {
+            check( this->Object && this->MemberFunctor )
+
+            check( Function )
+            Function->CopyImplDelegate = LCallableMember<TObj, TMemberFunctor>::Copy;
+
+            return;
+        }
+
+        FORCEINLINE static constexpr void Copy(const LCallableBase* Base, TFunction* OutFunction) noexcept
+        {
+            check( Base && OutFunction )
+            const LCallableMember* Member { static_cast<const LCallableMember*>(Base) };
+
+            OutFunction->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableMember<TObj, TMemberFunctor>>(OutFunction, Member->Object, Member->MemberFunctor);
+            check( OutFunction->IsValid() )
+            check( OutFunction->IsCopyable() )
+
+            return;
+        }
+
+        FORCEINLINE TRet Invoke(TParams... Params) const noexcept(std::is_nothrow_invocable_r_v<TRet, TObj, TMemberFunctor, TParams...>) override
+        {
+            check( this->Object && this->MemberFunctor )
+            return (this->Object->*this->MemberFunctor)(std::forward<TParams>(Params)...);
+        }
+    };
+
+    LImpl Impl;
+    LCopyImplDelegate CopyImplDelegate { nullptr };
 };
+
+template <typename TRet, typename... TParams>
+FORCEINLINE constexpr TFunction<TRet(TParams...)>::TFunction(TFunction&& Other) noexcept
+    : Impl(std::move(Other.Impl)), CopyImplDelegate(std::move(Other.CopyImplDelegate))
+{
+    check( Other.Impl.IsValid() == false )
+}
+
+template <typename TRet, typename... TParams>
+FORCEINLINE constexpr TFunction<TRet(TParams...)>& TFunction<TRet(TParams...)>::operator=(TFunction&& Other) noexcept
+{
+    this->Impl = std::move(Other.Impl);
+    this->CopyImplDelegate = Other.CopyImplDelegate;
+
+    check( Other.Impl.IsValid() == false )
+
+    return *this;
+}
+
+template <typename TRet, typename... TParams>
+FORCEINLINE void TFunction<TRet(TParams...)>::CopyImpl(const TFunction& Other) noexcept
+{
+    if (Other.IsValid() == false)
+    {
+        this->Reset();
+        return;
+    }
+
+    jassert( Other.IsCopyable() )
+    Other.CopyImplDelegate(Other.Impl.GetPointer(), this);
+
+    return;
+}
 
 } /* ~Namespace Jafg */

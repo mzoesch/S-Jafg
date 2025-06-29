@@ -13,7 +13,7 @@
 #include "Stats/Stats.h"
 #include "Platform/PlatformMisc.h"
 #include "System/Paths.h"
-#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if JAFG_WITH_FOREIGN_SUPPORT
     #if LAL_WITH_CLANG
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-W#warnings"
@@ -22,7 +22,7 @@
     #if LAL_WITH_CLANG
         #pragma clang diagnostic pop
     #endif /* LAL_WITH_CLANG */
-#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
@@ -62,7 +62,7 @@ void Jafg::LEngine::Initialize()
 
     /* Engine stuff. */
     {
-        ensure(this->CommandLineInterface.RegisterType({"World", "A world registered to the engine.", "",
+        const bool bValid_TypeWorld { this->CommandLineInterface.RegisterType({"World", "A world registered to the engine.", "",
         [](const LCommandArgs& Args, i32* Cursor) -> bool
         {
             checkSlow( *Cursor < Args.GetArgCount() )
@@ -129,9 +129,10 @@ void Jafg::LEngine::Initialize()
             }
 
             return Out;
-        }}).IsValid());
+        }}).IsValid()};
+        ensureDiscard(bValid_TypeWorld);
 
-        ensure(this->CommandLineInterface.RegisterCommand({"Set", "Set any variable.",
+        const bool bValid_CommandSet { this->CommandLineInterface.RegisterCommand({"Set", "Set any variable.",
         LCommandParams{}
         .Token(LCliType::Type<LCliVariable>())
         .Token(LCliType
@@ -206,9 +207,10 @@ void Jafg::LEngine::Initialize()
             }
 
             return;
-        })}).IsValid());
+        })}).IsValid()};
+        ensureDiscard(bValid_CommandSet);
 
-        ensure(this->CommandLineInterface.RegisterCommand({"Get", "Get any variable.",
+        const bool bValid_CommandGet { this->CommandLineInterface.RegisterCommand({"Get", "Get any variable.",
         LCommandParams{}
         .Token(LCliType::Type("Var", "The variable to get."))
         .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
@@ -226,7 +228,78 @@ void Jafg::LEngine::Initialize()
             }
 
             return;
-        })}).IsValid());
+        })}).IsValid()};
+        ensureDiscard(bValid_CommandGet);
+
+        const bool bValid_CommandBreak { this->GetCommandLineInterface()->RegisterCommand({"_Break", "Breaks jafg.",
+        LCommandParams{}
+        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        {
+            OutResponse->Rc = ECommandReturnCode::Success;
+            OutResponse->StdOut = "Successfully broken Jafg";
+
+            LAL_GORGEOUS_BREAK_MSG("Broken through CLI command [_Break].")
+
+            return;
+        })}).IsValid()};
+        ensureDiscard(bValid_CommandBreak);
+
+        const bool bValid_CommandTrap { this->GetCommandLineInterface()->RegisterCommand({"_Trap", "Traps jafg.",
+        LCommandParams{}
+        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        {
+            OutResponse->Rc = ECommandReturnCode::Success;
+            OutResponse->StdOut = "Successfully trapped Jafg";
+
+            LAL_GORGEOUS_TRAP_MSG("Trapped through CLI command [_Trap].")
+
+            return;
+        })}).IsValid()};
+        ensureDiscard(bValid_CommandTrap);
+
+        const bool bValid_CommandTrapThread { this->GetCommandLineInterface()->RegisterCommand({"_TrapThread", "Traps jafg but not the master thread.",
+        LCommandParams{}
+        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        {
+            OutResponse->Rc = ECommandReturnCode::Success;
+            OutResponse->StdOut = "Send request to trap another thread";
+
+            Tasks::Make(ENamedThreads::WorkerThread, ETaskTime::Whenever, [](void) -> void
+            {
+                LAL_GORGEOUS_TRAP_MSG("Trapped through CLI command [_Trap].")
+                return;
+            });
+
+            return;
+        })}).IsValid()};
+        ensureDiscard(bValid_CommandTrapThread);
+
+        const bool bValid_CommandThrowAccessViolation { this->GetCommandLineInterface()->RegisterCommand({"_ThrowAccessViolation", "Causes a C access violation.",
+        LCommandParams{}
+        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        {
+            OutResponse->Rc = ECommandReturnCode::Success;
+            OutResponse->StdOut = "Successfully caused a C access violation";
+
+            i64* P { nullptr };
+            *P = 0xFF;
+
+            return;
+        })}).IsValid()};
+        ensureDiscard(bValid_CommandThrowAccessViolation);
+
+        const bool bValid_CommandThrowStdAccessViolation { this->GetCommandLineInterface()->RegisterCommand({"_ThrowStdAccessViolation", "Causes an access violation in the Stl.",
+        LCommandParams{}
+        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        {
+            OutResponse->Rc = ECommandReturnCode::Success;
+            OutResponse->StdOut = "Successfully caused a Stl access violation";
+
+            std::vector<u8>{}[1024] = 0xFF;
+
+            return;
+        })}).IsValid()};
+        ensureDiscard(bValid_CommandThrowStdAccessViolation);
     }
 
     this->ObjectContext.SetHumanReadableName("Engine");
@@ -336,7 +409,7 @@ void Jafg::LEngine::TearDown()
 
     Private::GCarnifexReferrer->KillAllGarbageChildren();
 
-#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if JAFG_WITH_FOREIGN_SUPPORT
     if (this->LoadedPlugins.IsEmpty() == false)
     {
         LOG_VERBOSE(LogForeign, "There are [{}] loaded plugins. Unloading them now.", this->LoadedPlugins.GetSize())
@@ -358,7 +431,7 @@ void Jafg::LEngine::TearDown()
 
         check( this->LoadedPlugins.IsEmpty() )
     }
-#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
     this->UnregisterObjectContext(GOmniVitaContext);
     if (this->KnownObjectContexts.IsEmpty() == false)
@@ -613,7 +686,7 @@ Jafg::LLevel* Jafg::LEngine::GetLevelByInternalUrl(const LString& Url)
     }
 }
 
-#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if JAFG_WITH_FOREIGN_SUPPORT
 void Jafg::LEngine::RefetchPlugins(const TArray<LString>& InAdditionalPaths)
 {
     check( Tasks::IsOnMasterThread() )
@@ -942,4 +1015,4 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(const LFetchedPl
 
     return EPluginLoadReturnCode::Success;
 }
-#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#endif /* JAFG_WITH_FOREIGN_SUPPORT */

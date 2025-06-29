@@ -56,17 +56,17 @@ FORCEINLINE Type operator~(const Type& Lhs)
     return static_cast<Type>(~static_cast<LClassFlags>(Lhs));
 }
 
-template <typename  ... FlagsTy>
-constexpr EClassFlags::Type CombineFlags(FlagsTy ... Flags)
+template <typename ... FlagsTy>
+constexpr EClassFlags::Type CombineFlags(FlagsTy... Flags)
 {
     static_assert(
-        (std::is_same_v<FlagsTy, EClassFlags::Type> && ...),
+        (std::is_same_v<FlagsTy, EClassFlags::Type> &&...),
         "All arguments must be of type EClassFlags::Type."
     );
 
-    if constexpr (sizeof ... (Flags) > 0)
+    if constexpr (sizeof... (Flags) > 0)
     {
-        return EClassFlags::None | (static_cast<EClassFlags::Type>(Flags) | ...);
+        return EClassFlags::None | (static_cast<EClassFlags::Type>(Flags) |...);
     }
 
     return EClassFlags::None;

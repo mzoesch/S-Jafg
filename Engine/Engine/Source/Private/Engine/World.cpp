@@ -328,10 +328,36 @@ void Jafg::LWorld::TearDownContext()
     this->TickableObjects.Empty();
     this->DeletedTickableObjects.Empty();
 
+    this->OnStaticDraw.Unbind();
+    this->OnStaticLineTrace.Unbind();
+
+    this->Url.Empty();
+    this->Parameters.Reset();
+
+    this->UnderlyingLevel.Reset();
+
+    ensureDiscard( this->TemporalObjects.IsEmpty() );
+    this->TemporalObjects.Empty();
+
+    ensureDiscard( this->TickableObjects.IsEmpty() );
+    this->TickableObjects.Empty();
+    ensureDiscard( this->DeletedTickableObjects.IsEmpty() );
+    this->DeletedTickableObjects.Empty();
+
+    this->bDrawSkyboxFirst = false;
+    this->Skybox.Reset();
+
+    this->EyeToMatrices.clear();
+
+    this->Collection.Reset();
+
+    check( this->TickableObjectsPutMutex == false )
+
+    this->RealTimeWhenWorldWasLaunched = -1.0f;
+
     LObjectContext::TearDownContext();
 
     this->WorldState = EWorldState::WaitingForKill;
-    this->UnderlyingLevel.Reset();
 
     return;
 }

@@ -89,7 +89,7 @@ void Finder::FreeReadFileBinaryBuffer(const u8** InBuffer)
 {
     check( InBuffer && *InBuffer != nullptr )
 #if !WITH_VIRTUAL_FILESYSTEM
-    delete *InBuffer;
+    delete[] *InBuffer;
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
     *InBuffer = nullptr;
     return;
@@ -133,7 +133,7 @@ void Finder::CheckFile(const LEnginePath& InEnginePath)
 LPath Finder::ResolvePathToRelativeModulePath(const LEnginePath& InEnginePath)
 {
     check( InEnginePath.GetPathTy() != EEnginePaths::CustomEngine )
-    LPath Out(std::move(LexToString(InEnginePath.GetPathTy())));
+    LPath Out { LexToString(InEnginePath.GetPathTy()) };
     return Out /= InEnginePath.GetRelativeUnresolvedPath();
 }
 

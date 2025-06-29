@@ -41,28 +41,28 @@
 //# This macro is a wrapper around the #LAL_PLATFORM_BREAK; that supports a more user-friendly behavior when it comes
 //# to debugging or encountering a debug break point without a debugger that is watching us from the distance.
 //#
-#ifndef LAL_PLATFORM_GORGEOUS_BREAK
-    #define LAL_PLATFORM_GORGEOUS_BREAK()                               PRIVATE_LAL_PLATFORM_TRAP_OR_BREAK()
-#endif /* LAL_PLATFORM_GORGEOUS_BREAK */
+#ifndef LAL_GORGEOUS_BREAK
+    #define LAL_GORGEOUS_BREAK()                               PRIVATE_LAL_TRAP_OR_BREAK()
+#endif /* LAL_GORGEOUS_BREAK */
 //#
-//# Same as #LAL_PLATFORM_GORGEOUS_BREAK but with a message. The message only gets logged if this macro call
+//# Same as #LAL_GORGEOUS_BREAK but with a message. The message only gets logged if this macro call
 //# results in a trap.
 //#
-#ifndef LAL_PLATFORM_GORGEOUS_BREAK_MSG
-    #define LAL_PLATFORM_GORGEOUS_BREAK_MSG(Msg)                        PRIVATE_LAL_PLATFORM_TRAP_OR_BREAK_MSG(Msg)
-#endif /* LAL_PLATFORM_GORGEOUS_BREAK_MSG */
+#ifndef LAL_GORGEOUS_BREAK_MSG
+    #define LAL_GORGEOUS_BREAK_MSG(Msg)                        PRIVATE_LAL_TRAP_OR_BREAK_MSG(Msg)
+#endif /* LAL_GORGEOUS_BREAK_MSG */
 
 //#
-//# This macro is a wrapper around the #LAL_PLATFORM_GORGEOUS_TRAP; that supports a more user-friendly behavior when
+//# This macro is a wrapper around the #LAL_GORGEOUS_TRAP; that supports a more user-friendly behavior when
 //# it comes to users for Jafg. It provides a memory-dump and a stack trace to the user in case of a trap.
 //#
-#ifndef LAL_PLATFORM_GORGEOUS_TRAP
-    #define LAL_PLATFORM_GORGEOUS_TRAP()                                PRIVATE_LAL_PLATFORM_GORGEOUS_TRAP_IMPL()
-#endif /* LAL_PLATFORM_GORGEOUS_TRAP */
-//# Same as #LAL_PLATFORM_GORGEOUS_TRAP but with a custom message. Uhh fancy, right?
-#ifndef LAL_PLATFORM_GORGEOUS_TRAP_MSG
-    #define LAL_PLATFORM_GORGEOUS_TRAP_MSG(Msg)                         PRIVATE_LAL_PLATFORM_GORGEOUS_TRAP_IMPL_MSG(Msg)
-#endif /* LAL_PLATFORM_GORGEOUS_TRAP_MSG */
+#ifndef LAL_GORGEOUS_TRAP
+    #define LAL_GORGEOUS_TRAP()                                PRIVATE_LAL_GORGEOUS_TRAP_IMPL()
+#endif /* LAL_GORGEOUS_TRAP */
+//# Same as #LAL_GORGEOUS_TRAP but with a custom message. Uhh fancy, right?
+#ifndef LAL_GORGEOUS_TRAP_MSG
+    #define LAL_GORGEOUS_TRAP_MSG(Msg)                         PRIVATE_LAL_GORGEOUS_TRAP_IMPL_MSG(Msg)
+#endif /* LAL_GORGEOUS_TRAP_MSG */
 
 //#
 //# Default check implementation if LAL_DO_CHECKS is true.
@@ -117,8 +117,13 @@
 //#
 #if LAL_DO_ENSURES
 
-    /** !!!Implement this asap. Currently just forwarded.!!! */
-    #define ensure(Expr)                    Expr
+    #define ensure(Expr)                        PRIVATE_LAL_ENSURE_IMPL(Expr)
+
+    //#
+    //# Same as #ensure, but this will cast the result to void, so that the compiler
+    //# does not do a tsundere about fucking unused results.
+    //#
+    #define ensureDiscard(Expr)                 ((void) PRIVATE_LAL_ENSURE_IMPL(Expr))
 
 #endif /* LAL_DO_ENSURES */
 
@@ -135,17 +140,13 @@
 #define jassertNoEntry()                        PRIVATE_LAL_ASSERT_STRONG_IMPL_ON_FAIL( LAL_NO_ENTRY_ASSERT_TEXT )
 
 //#
-//# Same as jassertNoEntry but more user-friendly with a message.
+//# Same as jassertNoEntry but more user-friendly with a message. Eww, is this that GoLang?
 //#
-#define panic(Msg)                              LAL_PLATFORM_GORGEOUS_TRAP_MSG( "Program panicked. " Msg )
-#define panicMsgf(Format, ...)                  LAL_PLATFORM_GORGEOUS_TRAP_MSG( ::Jafg::LString::SprintF\
-                                                ( \
-                                                    "Program panicked. " Format "",\
-                                                    ##__VA_ARGS__                                     \
+#define panic(Msg)                              LAL_GORGEOUS_TRAP_MSG( "Program panicked. " Msg )
+#define panicMsgf(Format, ...)                  LAL_GORGEOUS_TRAP_MSG( ::Jafg::LString::SprintF \
+                                                (                                                        \
+                                                    "Program panicked. " Format "", ##__VA_ARGS__        \
                                                 ).ToPtr() )
-
-
-
 
 
 /*----------------------------------------------------------------------------
@@ -189,7 +190,8 @@
 //#
 #if !LAL_DO_ENSURES
 
-    #define ensure(Expr)                        Expr
+    #define ensure(Expr)                        (LAL_LIKELY(Expr))
+    #define ensureDiscard(Expr)                 ((void)(Expr))
 
 #endif /* !LAL_DO_ENSURES */
 
@@ -211,97 +213,149 @@
         LAL_PLATFORM_BREAK();                   \
     }
 
-#define PRIVATE_LAL_PLATFORM_TRAP_OR_BREAK()            \
-    {                                                   \
-        if (::Lal::Hal::IsTracerPidValidVerySlow())     \
-        {                                               \
-            PRIVATE_LAL_PLATFORM_GORGEOUS_BREAK_IMPL(); \
-        }                                               \
-        else                                            \
-        {                                               \
-            LAL_PLATFORM_GORGEOUS_TRAP()                \
-        }                                               \
+//#
+//# This halts the program always - but with the most friendly developer experience.
+//# If there is a debugger watching us, we will break into it, else we trap Jafg.
+//#
+#define PRIVATE_LAL_TRAP_OR_BREAK()                 \
+    {                                               \
+        if (::Lal::Hal::IsTracerPidValidVerySlow()) \
+        {                                           \
+            PRIVATE_LAL_GORGEOUS_BREAK_IMPL();      \
+        }                                           \
+        else                                        \
+        {                                           \
+            LAL_UNSAFE_FLUSH_OUT_STREAMS()          \
+            ::Lal::LOnPlatformBreak::OnProgramPanic \
+            (                                       \
+                LAL_NO_ENTRY_ASSERT_TEXT,           \
+                __FILE__,                           \
+                __LINE__                            \
+            );                                      \
+        }                                           \
     }
 
-#define PRIVATE_LAL_PLATFORM_TRAP_OR_BREAK_MSG(Msg)          \
+//#
+//# This halts the program always - but with the most friendly developer experience.
+//# If there is a debugger watching us, we will break into it, else we trap Jafg.
+//#
+#define PRIVATE_LAL_TRAP_OR_BREAK_MSG(Msg)                   \
     {                                                        \
         if (::Lal::Hal::IsTracerPidValidVerySlow())          \
         {                                                    \
             /* Discard the Msg if a debugger is watching. */ \
-            PRIVATE_LAL_PLATFORM_GORGEOUS_BREAK_IMPL();      \
+            PRIVATE_LAL_GORGEOUS_BREAK_IMPL();               \
         }                                                    \
         else                                                 \
         {                                                    \
-            LAL_PLATFORM_GORGEOUS_TRAP_MSG(Msg)              \
+            LAL_GORGEOUS_TRAP_MSG(Msg)                       \
         }                                                    \
     }
 
-#define PRIVATE_LAL_PLATFORM_GORGEOUS_BREAK_IMPL() \
-    {                                              \
-        LAL_UNSAFE_FLUSH_OUT_STREAMS()             \
-        LAL_PLATFORM_BREAK()                       \
+#define PRIVATE_LAL_GORGEOUS_BREAK_IMPL() \
+    {                                     \
+        LAL_UNSAFE_FLUSH_OUT_STREAMS()    \
+        LAL_PLATFORM_BREAK()              \
     }
 
-#define PRIVATE_LAL_PLATFORM_GORGEOUS_TRAP_IMPL() \
-    PRIVATE_LAL_PLATFORM_GORGEOUS_TRAP_IMPL_MSG   \
-    (                                             \
-        LAL_NO_ENTRY_ASSERT_TEXT                  \
+#define PRIVATE_LAL_GORGEOUS_TRAP_IMPL() \
+    PRIVATE_LAL_GORGEOUS_TRAP_IMPL_MSG   \
+    (                                    \
+        LAL_NO_ENTRY_ASSERT_TEXT         \
     )
 
-#define PRIVATE_LAL_PLATFORM_GORGEOUS_TRAP_IMPL_MSG(Msg)  \
-    LAL_UNSAFE_FLUSH_OUT_STREAMS()                        \
-    PRIVATE_LAL_TRY_BREAK_NO_FACADE()                     \
-    ::Lal::LOnPlatformBreak::OnProgramPanic               \
-    (                                                     \
-        Msg,                                              \
-        __FILE__,                                         \
-        __LINE__                                          \
+#define PRIVATE_LAL_GORGEOUS_TRAP_IMPL_MSG(Msg) \
+    LAL_UNSAFE_FLUSH_OUT_STREAMS()              \
+    PRIVATE_LAL_TRY_BREAK_NO_FACADE()           \
+    ::Lal::LOnPlatformBreak::OnProgramPanic     \
+    (                                           \
+        Msg,                                    \
+        __FILE__,                               \
+        __LINE__                                \
     );
 
 //# Get an expression as a string.
-#define PRIVATE_LAL_ASSERT_LOG_EXPR_GET_MSG(Expr)     \
+#define PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_GET_MSG(Expr) \
         "Program panicked. Reason: [" #Expr "]."
 
 //# Combines an expression with a message.
-#define PRIVATE_LAL_ASSERT_LOG_EXPR_MSG_GET_MSG(Expr, Msg)     \
-        "Program panicked. Reason: [" #Expr "]" Msg
+#define PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_MSG_GET_MSG(Expr, Msg) \
+    "Program panicked. Reason: [" #Expr "]" Msg
 
-//# Combines an expression with a message.
-#define PRIVATE_LAL_ASSERT_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ...)     \
-    ::Jafg::LString::SprintF\
-    ( \
-        "Program panicked. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__                                     \
+//# Combines an expression with a formatted message.
+#define PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ...) \
+    ::Jafg::LString::SprintF                                               \
+    (                                                                      \
+        "Program panicked. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__ \
     )
 
 //# Get an expression as a string with ANSI format if the platform supports it.
-#if LAL_PLATFORM_SUPPORTS_ANSI_ESCAPES
-    #define PRIVATE_LAL_ASSERT_LOG_EXPR_GET_MSG_ANSI(Expr)     \
-            LOG_COLOR_FATAL \
-            "Program panicked. Reason: [" #Expr "]."\
-            LOG_COLOR_END
-    #define PRIVATE_LAL_ASSERT_LOG_EXPR_MSG_GET_MSG_ANSI(Expr, Msg)     \
-            LOG_COLOR_FATAL \
-            "Program panicked. Reason: [" #Expr "]. " Msg ""\
-            LOG_COLOR_END
-    #define PRIVATE_LAL_ASSERT_LOG_EXPR_MSGF_GET_MSG_ANSI(Expr, Format, ...)     \
-        ::Jafg::LString::SprintF\
-        ( \
-            LOG_COLOR_FATAL \
-            "Program panicked. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__                                     \
-            LOG_COLOR_END \
-        )
-#else /* LAL_PLATFORM_SUPPORTS_ANSI_ESCAPES */
-    #define PRIVATE_LAL_ASSERT_LOG_EXPR_GET_MSG_ANSI(Expr) PRIVATE_LAL_ASSERT_LOG_EXPR_GET_MSG(Expr)
-    #define PRIVATE_LAL_ASSERT_LOG_EXPR_MSG_GET_MSG_ANSI(Expr, Msg) PRIVATE_LAL_ASSERT_LOG_EXPR_MSG_GET_MSG(Expr, Msg)
-    #deinfe PRIVATE_LAL_ASSERT_LOG_EXPR_MSGF_GET_MSG_ANSI(Expr, Format, ...) \
-        PRIVATE_LAL_ASSERT_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ##__VA_ARGS__)
-#endif /* !LAL_PLATFORM_SUPPORTS_ANSI_ESCAPES */
+#define PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_GET_MSG_ANSI(Expr) \
+    LAL_LOG_COLOR_FATAL                                       \
+    "Program panicked. Reason: [" #Expr "]."                  \
+    LAL_LOG_COLOR_END
+#define PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_MSG_GET_MSG_ANSI(Expr, Msg) \
+    LAL_LOG_COLOR_FATAL                                                \
+    "Program panicked. Reason: [" #Expr "]. " Msg ""                   \
+    LAL_LOG_COLOR_END
+#define PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_MSGF_GET_MSG_ANSI(Expr, Format, ...) \
+    ::Jafg::LString::SprintF                                                    \
+    (                                                                           \
+        LAL_LOG_COLOR_FATAL                                                     \
+        "Program panicked. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__      \
+        LAL_LOG_COLOR_END                                                       \
+    )
+
+//# Get an expression as a string.
+#define PRIVATE_LAL_ASSERT_WEAK__LOG_EXPR_GET_MSG(Expr) \
+    "Program run into an error. Reason: [" #Expr "]."
+
+//# Combines an expression with a message.
+#define PRIVATE_LAL_ASSERT_WEAK_LOG_EXPR_MSG_GET_MSG(Expr, Msg) \
+    "Program run into an error. Reason: [" #Expr "]" Msg
+
+//# Combines an expression with a formatted message.
+#define PRIVATE_LAL_ASSERT_WEAK_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ...)            \
+    ::Jafg::LString::SprintF                                                        \
+    (                                                                               \
+        "Program run into an error. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__ \
+    )
+
+//# Get an expression as a string with ANSI format if the platform supports it.
+#define PRIVATE_LAL_ASSERT_WEAK_LOG_EXPR_GET_MSG_ANSI(Expr) \
+    LAL_LOG_COLOR_ERROR                                     \
+    "Program run into an error. Reason: [" #Expr "]."       \
+    LAL_LOG_COLOR_END
+#define PRIVATE_LAL_ASSERT_WEAK_LOG_EXPR_MSG_GET_MSG_ANSI(Expr, Msg) \
+    LAL_LOG_COLOR_ERROR                                              \
+    "Program run into an error. Reason: [" #Expr "]. " Msg ""        \
+    LAL_LOG_COLOR_END
+#define PRIVATE_LAL_ASSERT_WEAK_LOG_EXPR_MSGF_GET_MSG_ANSI(Expr, Format, ...)       \
+    ::Jafg::LString::SprintF                                                        \
+    (                                                                               \
+        LAL_LOG_COLOR_ERROR                                                         \
+        "Program run into an error. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__ \
+        LAL_LOG_COLOR_END                                                           \
+    )
 
 //# Log an expression that failed to assert.
-#define PRIVATE_LAL_ASSERT_LOG_EXPR(Expr)     \
-    ::Lal::LogMessage                         \
-    (                                         \
-        PRIVATE_LAL_ASSERT_LOG_EXPR_GET_MSG_ANSI(Expr) \
+#define PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR(Expr)              \
+    ::Lal::LogMessage<                                        \
+        ::Lal::ELogVerbosity::Fatal,                          \
+        ::Lal::ELogVerbosity::Fatal                           \
+    >                                                         \
+    (                                                         \
+        PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_GET_MSG_ANSI(Expr) \
+    );
+
+//# Log an expression that failed to assert but is not critical.
+#define PRIVATE_LAL_ASSERT_WEAK_LOG_EXPR(Expr)              \
+    ::Lal::LogMessage<                                      \
+        ::Lal::ELogVerbosity::Error,                        \
+        ::Lal::ELogVerbosity::Error                         \
+    >                                                       \
+    (                                                       \
+        PRIVATE_LAL_ASSERT_WEAK_LOG_EXPR_GET_MSG_ANSI(Expr) \
     );
 
 //# Assert with a OnFail delegate.
@@ -319,9 +373,14 @@
         PRIVATE_LAL_ASSERT_WEAK_IMPL_ON_FAIL(Expr) \
     )
 
-#define PRIVATE_LAL_ASSERT_WEAK_IMPL_ON_FAIL(Expr) \
-    /*PRIVATE_LAL_ASSERT_LOG_EXPR(Expr) */             \
-    LAL_PLATFORM_GORGEOUS_BREAK()
+#define PRIVATE_LAL_ASSERT_WEAK_IMPL_ON_FAIL(Expr)  \
+    PRIVATE_LAL_ASSERT_WEAK_LOG_EXPR(Expr)          \
+    {                                               \
+        if (::Lal::Hal::IsTracerPidValidVerySlow()) \
+        {                                           \
+            PRIVATE_LAL_GORGEOUS_BREAK_IMPL();      \
+        }                                           \
+    }
 
 //# Disallows continuing.
 #define PRIVATE_LAL_ASSERT_STRONG_IMPL(Expr)         \
@@ -332,30 +391,36 @@
     )
 
 #define PRIVATE_LAL_ASSERT_STRONG_IMPL_ON_FAIL(Expr) \
-    /*PRIVATE_LAL_ASSERT_LOG_EXPR(Expr) */               \
-    LAL_PLATFORM_GORGEOUS_TRAP_MSG(PRIVATE_LAL_ASSERT_LOG_EXPR_GET_MSG(Expr)) \
+    LAL_GORGEOUS_TRAP_MSG(PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_GET_MSG(Expr))
 
 //# Disallows continuing.
 #define PRIVATE_LAL_ASSERT_STRONG_MSG_IMPL(Expr, Msg)         \
-    PRIVATE_LAL_ASSERT_IMPL                          \
-    (                                                \
-        Expr,                                        \
+    PRIVATE_LAL_ASSERT_IMPL                                   \
+    (                                                         \
+        Expr,                                                 \
         PRIVATE_LAL_ASSERT_STRONG_MSG_IMPL_ON_FAIL(Expr, Msg) \
     )
 
-#define PRIVATE_LAL_ASSERT_STRONG_MSG_IMPL_ON_FAIL(Expr, Msg) \
-    LAL_PLATFORM_GORGEOUS_TRAP_MSG(PRIVATE_LAL_ASSERT_LOG_EXPR_MSG_GET_MSG(Expr, Msg)) \
+#define PRIVATE_LAL_ASSERT_STRONG_MSG_IMPL_ON_FAIL(Expr, Msg)                        \
+    LAL_GORGEOUS_TRAP_MSG(PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_MSG_GET_MSG(Expr, Msg)) \
 
 //# Disallows continuing.
-#define PRIVATE_LAL_ASSERT_STRONG_MSGF_IMPL(Expr, Format, ...)         \
-    PRIVATE_LAL_ASSERT_IMPL                          \
-    (                                                \
-        Expr,                                        \
+#define PRIVATE_LAL_ASSERT_STRONG_MSGF_IMPL(Expr, Format, ...)                   \
+    PRIVATE_LAL_ASSERT_IMPL                                                      \
+    (                                                                            \
+        Expr,                                                                    \
         PRIVATE_LAL_ASSERT_STRONG_MSGF_IMPL_ON_FAIL(Expr, Format, ##__VA_ARGS__) \
     )
 
-#define PRIVATE_LAL_ASSERT_STRONG_MSGF_IMPL_ON_FAIL(Expr, Format, ...) \
-    LAL_PLATFORM_GORGEOUS_TRAP_MSG(PRIVATE_LAL_ASSERT_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ##__VA_ARGS__).ToPtr()) \
+#define PRIVATE_LAL_ASSERT_STRONG_MSGF_IMPL_ON_FAIL(Expr, Format, ...)                                          \
+    LAL_GORGEOUS_TRAP_MSG(PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ##__VA_ARGS__).ToPtr()) \
+
+#define PRIVATE_LAL_ENSURE_IMPL(Expr)              \
+    (LAL_LIKELY(Expr) || [](void) -> bool          \
+    {                                              \
+        PRIVATE_LAL_ASSERT_WEAK_IMPL_ON_FAIL(Expr) \
+        return false;                              \
+    }())
 
 
 /*-----------------------------------------------------------------------------

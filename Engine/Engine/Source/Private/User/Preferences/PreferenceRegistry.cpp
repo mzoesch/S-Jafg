@@ -4,7 +4,7 @@
 
 void Jafg::JPreferenceRegistry::AddTopLevelPreference(Smart::TUnique<LPreference>&& InPreference)
 {
-    jassert( InPreference.GetValuePtr() )
+    jassert( InPreference.IsValid() )
 
     if (this->Preferences.ContainsByPredicate([&InPreference](const Smart::TUnique<LPreference>& Preference)
     {
@@ -16,6 +16,7 @@ void Jafg::JPreferenceRegistry::AddTopLevelPreference(Smart::TUnique<LPreference
     }
 
     this->Preferences.Add(std::move(InPreference));
+    checkSlow( InPreference.IsValid() == false )
 
     return;
 }

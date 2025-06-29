@@ -223,7 +223,7 @@ public:
     FORCEINLINE  TArrayBase(std::initializer_list<T> InList) noexcept requires (Self::IsStrongAlloc() && (std::is_copy_assignable_v<T> || std::is_copy_constructible_v<T>));
     template <typename InOtherElement>
     FORCEINLINE  TArrayBase(std::initializer_list<InOtherElement> InList) noexcept requires (Self::IsStrongAlloc() && (std::is_same_v<T, InOtherElement> == false) && std::is_convertible_v<InOtherElement, T>);
-    template <typename ... InTArgs>
+    template <typename... InTArgs>
     FORCEINLINE  TArrayBase(InTArgs&&... InArgs) noexcept requires (Self::IsStrongAlloc() && std::is_move_constructible_v<T>);
     FORCEINLINE ~TArrayBase() noexcept;
     template <typename TOtherAlloc>
@@ -343,7 +343,7 @@ public:
     FORCEINLINE void SwapIndices(const SizeType InIndexA, const SizeType InIndexB) noexcept requires (Self::IsContentMutable());
 
     //#
-    //# Do not use std operators as ...
+    //# Do not use std operators as...
     //#    - they are ambiguous in terms of meaning (compare by size, value or reference?).
     //#    - we might accidentally do comparisons inside templated paths of arrays that are very expensive in terms of
     //#      runtime performance.
@@ -391,9 +391,9 @@ public:
     //# reallocating the whole array to fit.
     //# @return The index of the newly added element.
     //#
-    template <typename ... InTArgs>
+    template <typename... InTArgs>
     FORCEINLINE SizeType Emplace(InTArgs&&... InArgs) noexcept requires (Self::IsDynamic());
-    template <typename ... InTArgs>
+    template <typename... InTArgs>
     FORCEINLINE void EmplaceAt(const SizeType InIndex, InTArgs&&... InArgs) noexcept requires (Self::IsDynamic());
 
     //#
@@ -1018,13 +1018,13 @@ FORCEINLINE TArrayBase<InAlloc>::TArrayBase(std::initializer_list<InOtherElement
 }
 
 template<typename InAlloc>
-template<typename ... InTArgs>
+template<typename... InTArgs>
 FORCEINLINE TArrayBase<InAlloc>::TArrayBase(InTArgs&&... InArgs) noexcept requires (Self::IsStrongAlloc() && std::is_move_constructible_v<T>)
 {
     this->Reserve(sizeof...(InTArgs));
 
     T* Me = this->Impl.Data;
-    ([&](void) -> void { new(Me++) T (std::move(InArgs)); return; } (), ...);
+    ([&](void) -> void { new(Me++) T (std::move(InArgs)); return; } (),...);
     this->Impl.Slack = Me;
     checkSlow( this->Impl.Slack <= this->Impl.End )
 
@@ -1563,7 +1563,7 @@ void TArrayBase<InAlloc>::AddUninitialized(const SizeType InCount) noexcept requ
 }
 
 template<typename InAlloc>
-template<typename ... InTArgs>
+template<typename... InTArgs>
 FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Emplace(InTArgs&&... InArgs) noexcept requires (Self::IsDynamic())
 {
     if (this->IsCapped())
@@ -1577,7 +1577,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Emplace(
 }
 
 template<typename InAlloc>
-template<typename ... InTArgs>
+template<typename... InTArgs>
 FORCEINLINE void TArrayBase<InAlloc>::EmplaceAt(const SizeType InIndex, InTArgs&&... InArgs) noexcept requires (Self::IsDynamic())
 {
     if (this->GetSize() == InIndex)

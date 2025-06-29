@@ -279,14 +279,10 @@ void Jafg::AChunk::Shape()
 
     check( this->HuntedState == EChunkState::Shaped )
 
-    struct HelperMalloc
-    {
-        u32 Data[MwStatics::ChunkSizeCubed];
-    };
-    check( this->RawVoxelData == nullptr )
-    this->RawVoxelData = Smart::MakeUnique(reinterpret_cast<u32*>(new HelperMalloc{}));
+    check( this->RawVoxelData.IsValid() == false )
+    this->RawVoxelData = Smart::TUnique<voxel_t[]>{ new voxel_t[MwStatics::ChunkSizeCubed] };
 
-    ChunkGenerator::ShapeChunk(this->SharedArgs, this->ChunkKey, this->RawVoxelData.GetValuePtrChecked());
+    ChunkGenerator::ShapeChunk(this->SharedArgs, this->ChunkKey, this->RawVoxelData.GetPointerChecked());
 
     return;
 }
@@ -314,7 +310,7 @@ void Jafg::AChunk::Activate()
     check( this->IsRendererComponentValid() == false )
     this->SetPhysicsComponent(new LChunkPhysicsComponent(this));
 
-    this->Mesher = Smart::MakeUnique(this->SharedArgs->GetNewMesher(*this));
+    this->Mesher = this->SharedArgs->GetNewMesher(*this);
     checkSlow( this->Mesher )
 
     {

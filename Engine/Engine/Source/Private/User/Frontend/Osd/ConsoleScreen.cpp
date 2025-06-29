@@ -447,7 +447,7 @@ void Jafg::WConsoleScreen::AddNewMessage(const LString& InText, const bool bSwit
             .Brush(LTextBlockBrush::Body())
         FinishWidget(PreviewMessage);
         this->ConsolePreview->AddChild(PreviewMessage);
-        if (this->ConsolePreview->GetChildren().GetSize() > GetMaxPreviewLines())
+        if (this->ConsolePreview->GetChildren().GetSize() > static_cast<i32>(GetMaxPreviewLines()))
         {
             this->ConsolePreview->RemoveChildAt(0);
         }
@@ -750,7 +750,7 @@ void Jafg::WConsoleScreen::PrepareIntellisense(const LString& NewContent)
         i32 AddedCommands { 0 };
         for (const LCliCommand& Command : Cli->GetCommands())
         {
-            if (AddedCommands >= this->GetMaxIntellisensePredictions())
+            if (AddedCommands >= static_cast<i32>(this->GetMaxIntellisensePredictions()))
             {
                 break;
             }
@@ -784,7 +784,7 @@ void Jafg::WConsoleScreen::PrepareIntellisense(const LString& NewContent)
 
         for (const LCliCommand& CliCommand : Cli->GetCommands())
         {
-            if (Predictions.GetSize() >= this->GetMaxIntellisensePredictions())
+            if (Predictions.GetSize() >= static_cast<i32>(this->GetMaxIntellisensePredictions()))
             {
                 break;
             }

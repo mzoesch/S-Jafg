@@ -86,6 +86,8 @@ struct LSubsystemCollection final
 
     FORCEINLINE bool IsValid() const { return this->Outer != nullptr; }
 
+    ENGINE_API void Reset();
+
     ENGINE_API void DeferredInitialize(LObjectContext* InOuter, const bool bAllowDeferredSubsystems = false);
 
     ENGINE_API void InitializeSubsystems(const LObjectClass* InClass);

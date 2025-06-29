@@ -95,6 +95,7 @@ include(Programs/ModuleFlags.cmake)
 include(CMakeDependentOption)
 include(CheckCXXCompilerFlag)
 include(FetchContent)
+include(Programs/Json.cmake)
 
 if(NOT EXISTS "${JAFG_ENGINE_ROOT}/jafg.jafgworkspace")
     message(FATAL_ERROR "Jafg engine root directory was not found. Falsely evaluated to: [${JAFG_ENGINE_ROOT}].")
@@ -114,15 +115,53 @@ function(DisableAllWarningsForTarget target_name)
     endif()
 endfunction()
 
+###############################################################################
+# Global flags. Eww
+###############################################################################
+
 #
 # The performance cost is neglectable for the insane amount of benefits it brings.
 # So just enable globally (eww global settings; god redeem us for our global preferences).
 #
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Utils
-include(Programs/Json.cmake)
+if(LAL_DO_SANITIZED_BUILD)
+    message(STATUS "Enabling sanitizers for the current build.")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        add_compile_options(
+            -fsanitize=address                  # address:   Detects use-after-free, heap buffer overflows, etc.
+            -fsanitize=undefined                # undefined: Detects undefined behavior, like null deref, signed int overflow, etc.
+            -fsanitize=leak                     # leak:      Detects memory leaks.
+            -fno-omit-frame-pointer             # Keeps frame pointers for better stack traces.
+            -fstack-protector-strong            # Adds stack canaries to detect buffer overflows.
+            -ftrivial-auto-var-init=pattern     # Fill uninitialized local variables with a pattern.
+            )
+        add_link_options(
+            -fsanitize=address      # @see add_compile_options above.
+            -fsanitize=undefined
+            -fsanitize=leak
+            )
+    else()
+        message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
+    endif()
+endif()
 
+if(LAL_DO_HARDEN_BUILD)
+    message(STATUS "Enabling hardening flags for the current build.")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        add_link_options(
+            -Wl,-z,relro,-z,now,-z,noexecstack  # relro:       Enable RELRO (Read-Only Relocations) and NX (No eXecute) stack.
+                                                # now:         Make the RELRO section read-only immediately after loading.
+                                                # noexecstack: Mark the stack as non-executable.
+            )
+    else()
+        message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")
+    endif()
+endif()
+
+###############################################################################
+# Motor.
+###############################################################################
 if(NOT DEFINED JAFG_MOTOR_EXECUTABLE)
     message(FATAL_ERROR "Invalid execution of this script detected.")
 endif()

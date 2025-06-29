@@ -45,11 +45,11 @@ FORCEINLINE Type operator~(const Type& Lhs)
     return static_cast<Type>(~static_cast<LRotatorAxis>(Lhs));
 }
 
-template <typename ... FlagsTy>
-constexpr ERotatorAxis::Type CombineFlags(FlagsTy ... Flags)
+template <typename... FlagsTy>
+constexpr ERotatorAxis::Type CombineFlags(FlagsTy... Flags)
 {
     static_assert(
-        (std::is_same_v<FlagsTy, ERotatorAxis::Type> && ...),
+        (std::is_same_v<FlagsTy, ERotatorAxis::Type> &&...),
         "All arguments must be of type EClassFlags::Type."
     );
 

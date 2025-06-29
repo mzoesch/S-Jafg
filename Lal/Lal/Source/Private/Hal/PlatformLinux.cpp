@@ -2,25 +2,168 @@
 
 #if PLATFORM_LINUX
 
+#include "System/Paths.h"
+#include "AbsoluteMinimalCore.h"
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <cstring>
+#include <sys/types.h>
+#include <execinfo.h>
+#include <csignal>
+#include <cstdlib>
+#include <signal.h>
+#include <dirent.h>
 
-void Lal::LOnPlatformBreakLinux::OnProgramPanicImpl()
+void Lal::LOnPlatformBreakLinux::ExitQuietly()
 {
-    abort();
+    ::_Exit(EXIT_FAILURE);
+}
+
+void Lal::LOnPlatformBreakLinux::OnProgramPanicImpl
+(
+    const LPrimitivePlatformTypesGeneric::LChar* InMessage
+)
+{
+    //
+    // This does not work properly. We have to stop all threads except the current thread that is running.
+    // Then make a memory dump of the process and print the stack trace.
+    // Currently, the pthread will still continue which can cause confusion when looking at the memory dump, especially
+    // when this panic was not triggered by the master thread.
+    //
+
+    const pid_t Pid { ::getpid() };
+    const pid_t Tid { ::gettid() };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // pthread kill
+    Jafg::LString TaskPath { "/proc/self/task" };
+    if (DIR* Dir { ::opendir(TaskPath.ToPtr()) }; Dir)
+    {
+        struct dirent* Entry;
+
+        while ((Entry = ::readdir(Dir)))
+        {
+            if (Entry->d_type != DT_DIR)
+            {
+                continue;
+            }
+
+            if (const pid_t ThreadTid { atoi(Entry->d_name) }; ThreadTid > 0 && ThreadTid != Tid)
+            {
+                ::syscall(SYS_tgkill, Pid, ThreadTid, signal);
+            }
+
+            continue;
+        }
+
+        ::closedir(Dir);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Dump
+    void* AddrList[LAL_PLATFORM_MAX_FRAMES];
+    const i32 AddrLen { ::backtrace(AddrList, LAL_PLATFORM_MAX_FRAMES) };
+
+    //
+    // Just try to dump it. It will obviously not work if the process is being debugged.
+    // But we let gcore handle this case.
+    //
+    std::stringstream Stream;
+    Stream << "gdb -p " << Pid
+           << " -batch -ex \"gcore " << Jafg::Paths::GetMemoryDumpFilePath().ToPtr()
+           << "\" -ex \"detach\" -ex \"quit\""
+           ;
+    std::filesystem::create_directories(Jafg::Paths::GetMemoryDumpFilePath().GetParent().ToPtr());
+    LOG_VERBOSE(LogJafgInternal, "Executing memory dump command: [{}].", Stream.str());
+    if (const i32 Rc { ::system(Stream.str().c_str()) }; Rc != 0)
+    {
+        LOG_ERROR(LogPlatform, "Failed to create memory dump for our process [PID: {}]. Return code from [gcore] is [{}].", Pid, Rc);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Error message yea - we like this.
+    std::ostringstream TraceStream;
+    if (AddrLen == 0)
+    {
+        TraceStream << "Empty or corrupt.\n";
+    }
+    else
+    {
+        char* *const Symbols { ::backtrace_symbols(AddrList, AddrLen) };
+        for (i32 i { 0 }; i < AddrLen; ++i)
+        {
+            TraceStream << Symbols[i] << '\n';
+        }
+        ::free(Symbols);
+    }
+
+    LOG_ERROR(LogJafgInternal, "Fatal Error: [{}].", InMessage)
+    LOG_ERROR(LogJafgInternal, "Stacktrace:\n{}", TraceStream.str());
+
+#if WITH_LOCAL_LAYER
+    if (JafgCore::bGSuppressCrashDialog == false && Lal::Hal::IsTracerPidValidVerySlow() == false)
+    {
+        Lal::FlushOutStreams();
+        const Jafg::LString Zenity
+        {
+            Jafg::LString::SprintF
+            (
+                "zenity --error --title=\"Jafg Panic; We are fucked.\" --text=\"{}\n\nStacktrace:\n{}\"",
+                InMessage,
+                TraceStream.str()
+            )
+        };
+        ::system(Zenity.ToPtr());
+    }
+    else
+    {
+        LOG_VERBOSE(LogJafgInternal, "Suppressed jafg crash dialog window.")
+    }
+#endif /* WITH_LOCAL_LAYER */
+
+    /* Try writing the dump first, as this is also likely to fail - and then we would not have any dump. */
+    const Jafg::LString TraceContent
+    {
+        Jafg::LString::SprintF
+        (
+            "{}\n\nStacktrace:\n{}",
+            InMessage,
+            TraceStream.str()
+        )
+    };
+    Jafg::Paths::OverrideFile("Saved/Dumps/stack.trace", TraceContent);
+
+    // Flush, because some streams may be buffered and missing while aborting.
+    Lal::FlushOutStreams();
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // The final absolute end.
+    if (Hal::IsTracerPidValidVerySlow())
+    {
+        //# The last resort if the program is being debugged. This is the end.
+        LAL_PLATFORM_BREAK()
+    }
+
+    LOnPlatformBreakLinux::ExitQuietly();
 }
 
 void Lal::LOnPlatformBreakLinux::OnProgramPanic
 (
-    const LPrimitivePlatformTypesGeneric::LChar* InMessage,
+    const LPrimitivePlatformTypesGeneric::LChar* InBaseMessage,
     const LPrimitivePlatformTypesGeneric::LChar* InFile,
     const LPrimitivePlatformTypesGeneric::u64    InLine
 )
 {
-    OnProgramPanicImpl();
+    std::ostringstream Stream;
+    Stream << "Fuck. Jafg has panicked and lost the war of being a good boy." << "\n\n"
+           << InBaseMessage << "\n\n"
+           << "~File: " << InFile << "\n"
+           << "~Line: " << InLine << "\n\n"
+           ;
+
+    LOnPlatformBreakLinux::OnProgramPanicImpl(Stream.str().c_str());
 }
 
 namespace Lal::Hal

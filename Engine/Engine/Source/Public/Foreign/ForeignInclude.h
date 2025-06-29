@@ -4,7 +4,7 @@
 
 #include "CoreAfx.h"
 
-#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if JAFG_WITH_FOREIGN_SUPPORT
 
 #include "Foreign/PluginLifetime.h"
 
@@ -41,9 +41,9 @@
     #error "Unsupported platform."
 #endif /* PLATFORM_LINUX */
 
-#else /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#else /* JAFG_WITH_FOREIGN_SUPPORT */
 
 #define DEFINE_PLUGIN(Api, InPluginLifetime, InPluginName) \
     Static insert to engine... not implemented
 
-#endif /* !PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#endif /* !JAFG_WITH_FOREIGN_SUPPORT */

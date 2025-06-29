@@ -1,5 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
+
+#include "Engine/EngineCompileTimeConstants.h"
 #include "Engine/Engine.h"
 #include "Core/Application.h"
 #include "Core/LaunchProgress.h"
@@ -9,8 +11,10 @@
 #include "Platform/PlatformMisc.h"
 #include "Async/TaskUtility.h"
 #include "Core/CoreNames.h"
+#include "Engine/Engine/Source/Internal/Engine/EngineRunnable.h"
 #include "User/UserPreferences.h"
 #include "Stats/Stats.h"
+#include "System/Paths.h"
 
 using namespace Jafg;
 
@@ -284,6 +288,11 @@ EPlatformExit::Type GuardedMain()
 
     PlatformMisc::InvalidateCachedValues();
 
+#if PLATFORM_DESKTOP
+    std::filesystem::current_path(Finder::GetEngineRootDir().ToPtr());
+    Paths::CreateDirectories(Finder::GetEngineRootDir());
+#endif /* PLATFORM_DESKTOP */
+
 #if WITH_STATS
     if (Application::IsAllowProfiling())
     {
@@ -296,6 +305,15 @@ EPlatformExit::Type GuardedMain()
 
     LaunchProgress::PrepareBeginProgress();
     LaunchProgress::BeginProgress("Core Initialization", "Engine pre-life initialization", 0.0f);
+
+    if
+    (
+        const ETaskExit::Type Rc { Tasks::LaunchNamedThread<LEngineRunnable>(ENamedThreads::WorkerThread, "WorkerThread") };
+        Rc != ETaskExit::Success
+    )
+    {
+        LOG_FATAL(LogGuardedMain, "Failed to create worker thread: [{}].", Rc);
+    }
 
     STAT_CYCLE_START(GmNames, "StaticNameRegistration")
     check( Private::GNameRegistry == nullptr )
@@ -379,7 +397,7 @@ EPlatformExit::Type GuardedMain()
         return ::GetMostSignificantExitReason();
     }
 
-#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if JAFG_WITH_FOREIGN_SUPPORT
     STAT_CYCLE_START(GmEnabledEnginePluginsLoad, "EnabledEnginePluginsLoad")
     const JUserPreferences* Prefs = GetDefault<JUserPreferences>();
     GEngine->RefetchPlugins(Prefs->AdditionalPluginsSearchPaths);
@@ -394,7 +412,7 @@ EPlatformExit::Type GuardedMain()
     {
         return ::GetMostSignificantExitReason();
     }
-#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
     STAT_CYCLE_START(GmEngineWorldLoad, "EngineWorldLoad")
     LWorldStorage World = GEngine->SummonWorld("StartUpWorld");

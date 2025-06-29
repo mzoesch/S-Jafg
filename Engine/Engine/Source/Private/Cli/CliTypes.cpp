@@ -12,7 +12,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
 
     check( Cli )
 
-    ensure(Cli->RegisterType({"Integer", "A 64 bit signed integer.", "0",
+    const bool bValid_TypeInteger { Cli->RegisterType({"Integer", "A 64 bit signed integer.", "0",
     [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
@@ -47,9 +47,10 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
     {
         return { };
     },
-    }).IsValid());
+    }).IsValid()};
+    ensureDiscard(bValid_TypeInteger);
 
-    ensure(Cli->RegisterType({"UInteger", "A 64 bit unsigned integer.", "0",
+    const bool bValid_TypeUInteger { Cli->RegisterType({"UInteger", "A 64 bit unsigned integer.", "0",
     [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
@@ -84,9 +85,10 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
     {
         return { };
     },
-    }).IsValid());
+    }).IsValid()};
+    ensureDiscard(bValid_TypeUInteger);
 
-    ensure(Cli->RegisterType({"Byte", "A 8 bit unsigned integer.", "0",
+    const bool bValid_TypeByte { Cli->RegisterType({"Byte", "A 8 bit unsigned integer.", "0",
     [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
@@ -131,9 +133,10 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
 
         return { };
     },
-    }).IsValid());
+    }).IsValid()};
+    ensureDiscard(bValid_TypeByte);
 
-    ensure(Cli->RegisterType({"Float", "A 32 bit floating point number.", "0.0",
+    const bool bValid_TypeFloat { Cli->RegisterType({"Float", "A 32 bit floating point number.", "0.0",
     [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
@@ -168,9 +171,10 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
     {
         return { };
     },
-    }).IsValid());
+    }).IsValid()};
+    ensureDiscard(bValid_TypeFloat);
 
-    ensure(Cli->RegisterType({"String", "A string.", "",
+    const bool bValid_TypeString { Cli->RegisterType({"String", "A string.", "",
     [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
@@ -187,9 +191,10 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
     {
         return { };
     },
-    }).IsValid());
+    }).IsValid()};
+    ensureDiscard(bValid_TypeString);
 
-    ensure(Cli->RegisterType({"Bool", "A boolean.", "false",
+    const bool bValid_TypeBool { Cli->RegisterType({"Bool", "A boolean.", "false",
     [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
@@ -249,7 +254,8 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
 
         return { };
     },
-    }).IsValid());
+    }).IsValid()};
+    ensureDiscard(bValid_TypeBool);
 
     return;
 }
@@ -260,7 +266,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
 
     check( Cli )
 
-    ensure(Cli->RegisterType({"Any", "Any value.", "",
+    const bool bValid_TypeAny { Cli->RegisterType({"Any", "Any value.", "",
     [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
@@ -277,9 +283,10 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
     {
         return { };
     },
-    }).IsValid());
+    }).IsValid()};
+    ensureDiscard(bValid_TypeAny);
 
-    ensure(Cli->RegisterType({"Var", "A variable.", "NULL",
+    const bool bValid_TypeVar { Cli->RegisterType({"Var", "A variable.", "NULL",
     [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
@@ -343,7 +350,8 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
 
         return Out;
     },
-    }).IsValid());
+    }).IsValid()};
+    ensureDiscard(bValid_TypeVar);
 
     return;
 }

@@ -138,7 +138,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 
                         LPreferencesPanelData Data;
                         Data.DerivedClass = WPreferencesPanel::StaticClass()->GetName();
-                        Data.Preference   = P->GetValuePtr();
+                        Data.Preference   = P->GetPointer();
                         Panel->AddData(&Data);
 
                         return;
@@ -236,7 +236,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 
                         LPreferencesPanelData Data;
                         Data.DerivedClass = WPreferencesPanel::StaticClass()->GetName();
-                        Data.Preference   = P->GetValuePtr();
+                        Data.Preference   = P->GetPointer();
                         Panel->AddData(&Data);
 
                         return;

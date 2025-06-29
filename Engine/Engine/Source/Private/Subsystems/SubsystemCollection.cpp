@@ -7,6 +7,24 @@
 #include "Stats/Stats.h"
 #include "Engine/Engine.h"
 
+void Jafg::LSubsystemCollection::Reset()
+{
+    this->bAllowDeferredSubsystems = false;
+
+    this->Outer = nullptr;
+    this->OuterClass = nullptr;
+    this->SubsystemInstances.Empty();
+    this->IntermediateInstances.Empty();
+
+    if (GEngine && this->OnForeignPluginLoadedHandle.IsValid())
+    {
+        ensure( GEngine->OnForeignPluginLoaded.Remove(&this->OnForeignPluginLoadedHandle) );
+        check( this->OnForeignPluginLoadedHandle.IsValid() == false )
+    }
+
+    return;
+}
+
 void Jafg::LSubsystemCollection::DeferredInitialize(LObjectContext* InOuter, const bool bAllowDeferredSubsystems /* = false */)
 {
     check( InOuter )
@@ -149,6 +167,8 @@ void Jafg::LSubsystemCollection::InitializeSubsystemsDeferredOnly()
 void Jafg::LSubsystemCollection::OnForeignPluginLoaded(const LObjectContext* InStaticClassContainer)
 {
     check( InStaticClassContainer )
+
+    LOG_VERBOSE(LogSubsystemCollection, "Foreign plugin loaded, initializing dependent subsystems for [{}].", InStaticClassContainer->GetHumanReadableName())
 
     if (this->bAllowDeferredSubsystems)
     {

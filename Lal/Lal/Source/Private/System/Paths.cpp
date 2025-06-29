@@ -46,6 +46,11 @@ bool TPathBase_IsRelative(const LPath& InPath)
 
 } /* ~Namespace Private */
 
+LPath Paths::GetMemoryDumpFilePath()
+{
+    return "Saved/Dumps/proc.dmp";
+}
+
 LString Paths::ReadFile(const LPath& InFilePath)
 {
     LString Error;
@@ -185,6 +190,11 @@ void Paths::CreateFileSlow(const LPath& InFilePath, const bool bMakeParents /* =
     }
 
     return;
+}
+
+void Paths::CreateDirectories(const LPath& InDirPath)
+{
+    std::filesystem::create_directories(InDirPath.ToPtr());
 }
 
 void Paths::OverrideFile(const LPath& InFileName, const LStringView& InContent, const bool bUseNativeLineEndings /* = false */)

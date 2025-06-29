@@ -50,8 +50,16 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
 #endif /* !LAL_WITH_CLANG */
 
 #if !(__clang__)
-    #error "We think we are on a clang compiler, but the compiler does not think so. And she / he (it would be disrespectful) must know right?"
+    #error "We think we are on a clang compiler, but the compiler does not think so. And she / he ("it" would be disrespectful) must know right?"
 #endif /* !(__clang__) */
+
+#if !defined(__GLIBCXX__)
+    #error "Wrong std library. We need libstdc++."
+#endif /* !__GLIBCXX__ */
+
+#if defined(_LIBCPP_VERSION)
+    #error "Wrong std library. No LLVM por favor."
+#endif /* _LIBCPP_VERSION */
 
 #if !(__linux__)
     #error "This is not linux; lol."
@@ -63,36 +71,78 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
 -----------------------------------------------------------------------------*/
 
 #if LAL_DO_COMPILER_DIAGNOSTIC_SETUP
-    #pragma clang diagnostic error "-Wpragmas"
-    #pragma clang diagnostic error "-Wunknown-pragmas"
+    //
+    // Customize clang warnings.
+    // @see https://clang.llvm.org/docs/DiagnosticsReference.html
+    //
+
+    /*-----------------------------------------------------------------------------
+        Raise.
+    -----------------------------------------------------------------------------*/
     #pragma clang diagnostic error "-Wbuiltin-macro-redefined"
-    #pragma clang diagnostic error "-Wunknown-warning-option"
-    #pragma clang diagnostic error "-Winconsistent-missing-override"
-    #pragma clang diagnostic error "-Wunused-lambda-capture"
-    #pragma clang diagnostic error "-Wreturn-type"
-    #pragma clang diagnostic error "-Wmacro-redefined"
-    #pragma clang diagnostic error "-Wundefined-inline"
-    #pragma clang diagnostic error "-Wmismatched-new-delete"
-    #pragma clang diagnostic error "-Wswitch"
-    #pragma clang diagnostic error "-Wparentheses"
     #pragma clang diagnostic error "-Wdangling-else"
+    #pragma clang diagnostic error "-Wextra-semi"
     #pragma clang diagnostic error "-Wextra-tokens"
+    #pragma clang diagnostic error "-Winconsistent-missing-override"
     #pragma clang diagnostic error "-Winvalid-noreturn"
-    #pragma clang diagnostic ignored "-Wundefined-var-template" /* ??? Why */
-    #pragma clang diagnostic ignored "-Wunused-but-set-variable"
-    #pragma clang diagnostic ignored "-Wunused-function"
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-    #pragma clang diagnostic ignored "-Wunused-variable"
+    #pragma clang diagnostic error "-Wlogical-op-parentheses"
+    #pragma clang diagnostic error "-Wmacro-redefined"
+    #pragma clang diagnostic error "-Wmismatched-new-delete"
+    #pragma clang diagnostic error "-Wmismatched-tags"
+    #pragma clang diagnostic error "-Wnull-pointer-subtraction"
+    #pragma clang diagnostic error "-Wparentheses"
+    #pragma clang diagnostic error "-Wpessimizing-move"
+    #pragma clang diagnostic error "-Wpragmas"
+    #pragma clang diagnostic error "-Wreturn-type"
+    #pragma clang diagnostic error "-Wsign-compare"
+    #pragma clang diagnostic error "-Wswitch"
+    #pragma clang diagnostic error "-Wundefined-inline"
+    #pragma clang diagnostic error "-Wunknown-pragmas"
+    #pragma clang diagnostic error "-Wunknown-warning-option"
+    #pragma clang diagnostic error "-Wunused-lambda-capture"
+
+    /*-----------------------------------------------------------------------------
+        Ignore.
+    -----------------------------------------------------------------------------*/
     #pragma clang diagnostic ignored "-Wcomment"
     #pragma clang diagnostic ignored "-Wcomments"
+    #pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
+    #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+    #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
     #pragma clang diagnostic ignored "-Wmissing-field-initializers"
-    #pragma clang diagnostic ignored "-Wlogical-op-parentheses"
-#endif /* !LAL_DO_COMPILER_DIAGNOSTIC_SETUP */
+    #pragma clang diagnostic ignored "-Wnested-anon-types"
+    #pragma clang diagnostic ignored "-Wunused-parameter"
+
+    /*-----------------------------------------------------------------------------
+        Shipping only.
+    -----------------------------------------------------------------------------*/
+    #if LAL_DO_ENABLE_SHIPPING_WARNINGS
+        #pragma clang diagnostic warning "-Wundefined-var-template"
+        #pragma clang diagnostic warning "-Wunused-but-set-variable"
+        #pragma clang diagnostic warning "-Wunused-private-field"
+        #pragma clang diagnostic warning "-Wunused-function"
+        #pragma clang diagnostic warning "-Wunused-variable"
+    #else /* LAL_DO_ENABLE_SHIPPING_WARNINGS */
+        #pragma clang diagnostic ignored "-Wundefined-var-template"
+        #pragma clang diagnostic ignored "-Wunused-but-set-variable"
+        #pragma clang diagnostic ignored "-Wunused-private-field"
+        #pragma clang diagnostic ignored "-Wunused-function"
+        #pragma clang diagnostic ignored "-Wunused-variable"
+    #endif /* !LAL_DO_ENABLE_SHIPPING_WARNINGS */
+#endif /* LAL_DO_COMPILER_DIAGNOSTIC_SETUP */
 
 
 /*-----------------------------------------------------------------------------
     Define platform specific macros.
 -----------------------------------------------------------------------------*/
+
+#ifndef LAL_UNLIKELY
+    #define LAL_UNLIKELY(Expr)                                          (__builtin_expect(!!(Expr), 0))
+#endif /* !LAL_UNLIKELY */
+
+#ifndef LAL_LIKELY
+    #define LAL_LIKELY(Expr)                                            (__builtin_expect(!!(Expr), 1))
+#endif /* !LAL_LIKELY */
 
 #if AS_CLIENT
     #ifndef JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
@@ -167,22 +217,17 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
 
 #ifndef LAL_PLATFORM_BREAK
     #if __has_builtin(__builtin_debugtrap)
-        #define LAL_PLATFORM_BREAK() \
-            (__builtin_debugtrap());
+        #define LAL_PLATFORM_BREAK()                                    (__builtin_debugtrap());
     #else /* __has_builtin(__builtin_debugtrap) */
-        #define LAL_PLATFORM_BREAK() \
-            (raise(SIGTRAP));
+        #define LAL_PLATFORM_BREAK()                                    (raise(SIGTRAP));
     #endif /* !__has_builtin(__builtin_debugtrap) */
 #endif  /* !LAL_PLATFORM_BREAK */
 
 #ifndef LAL_PLATFORM_TRAP
     #if __has_builtin(__builtin_trap)
-        #define LAL_PLATFORM_TRAP() \
-            {                       \
-                (__builtin_trap()); \
-            }
+        #define LAL_PLATFORM_TRAP()                                     (__builtin_trap());
     #else /* __has_builtin(__builtin_trap) */
-        #error "Encountered unimplemented code path."
+        #error "Encountered unimplemented code path." /* ? How. */
     #endif /* !__has_builtin(__builtin_trap) */
 #endif /* !LAL_PLATFORM_TRAP */
 
@@ -208,12 +253,18 @@ namespace Lal
 struct LOnPlatformBreakLinux final
 {
     [[noreturn]] NOINLINE
-    static void OnProgramPanicImpl();
+    static void ExitQuietly();
+
+    [[noreturn]] NOINLINE
+    static void OnProgramPanicImpl
+    (
+        const LPrimitivePlatformTypesGeneric::LChar* InMessage
+    );
 
     [[noreturn]] NOINLINE
     static void OnProgramPanic
     (
-        const LPrimitivePlatformTypesGeneric::LChar* InMessage,
+        const LPrimitivePlatformTypesGeneric::LChar* InBaseMessage,
         const LPrimitivePlatformTypesGeneric::LChar* InFile,
         const LPrimitivePlatformTypesGeneric::u64    InLine
     );

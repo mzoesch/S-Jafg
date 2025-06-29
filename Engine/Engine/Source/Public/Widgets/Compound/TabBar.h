@@ -89,7 +89,7 @@ public:
     FORCEINLINE TFactoryRetTy& AlignHorizontal() { this->This()->SetHorizontalPreference(); return this->Self(); }
     FORCEINLINE TFactoryRetTy& AlignVertical() { this->This()->SetVerticalPreference(); return this->Self(); }
 
-    FORCEINLINE TFactoryRetTy& AddTab(LTabBarTabDescriptor&& InDescriptor) { this->This()->RegisterTab(std::move(InDescriptor)); return this->Self(); };
+    FORCEINLINE TFactoryRetTy& AddTab(LTabBarTabDescriptor&& InDescriptor) { this->This()->RegisterTab(std::move(InDescriptor)); return this->Self(); }
     FORCEINLINE TFactoryRetTy& AllowNone() { this->This()->SetAllowNone(true); return this->Self(); }
     FORCEINLINE TFactoryRetTy& DisallowNone() { this->This()->SetAllowNone(false); return this->Self(); }
     FORCEINLINE TFactoryRetTy& DefaultIndex(const i32 InIndex) { this->This()->SetDefaultIndex(InIndex); return this->Self(); }

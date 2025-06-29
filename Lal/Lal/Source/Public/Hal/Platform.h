@@ -3,7 +3,7 @@
 #pragma once
 
 #include <string>
-
+#include <bit>
 
 /*-----------------------------------------------------------------------------
     Common types for almost all compilers and platforms.
@@ -73,7 +73,7 @@ struct LPrimitivePlatformTypesGeneric
 #if !(PLATFORM_LINUX || PLATFORM_WASM || PLATFORM_WINDOWS)
     #error "No platforms specified."
 #endif /* !(PLATFORM_LINUX || PLATFORM_WASM || PLATFORM_WINDOWS) */
-#if IN_DEBUG
+#if PLATFORM_LINUX
     #if PLATFORM_WASM || PLATFORM_WINDOWS
         #error "Multiple platforms specified."
     #endif /* PLATFORM_WASM || PLATFORM_WINDOWS */
@@ -81,12 +81,12 @@ struct LPrimitivePlatformTypesGeneric
 #if PLATFORM_WASM
     #if PLATFORM_LINUX || PLATFORM_WINDOWS
         #error "Multiple platforms specified."
-    #endif /* PLATFORM_WINDOWS */
+    #endif /* PLATFORM_LINUX || PLATFORM_WINDOWS */
 #endif /* PLATFORM_WASM */
 #if PLATFORM_WINDOWS
     #if PLATFORM_LINUX || PLATFORM_WASM
         #error "Multiple platforms specified."
-    #endif /* PLATFORM_WASM */
+    #endif /* PLATFORM_LINUX || PLATFORM_WASM */
 #endif /* PLATFORM_WINDOWS */
 
 
@@ -191,8 +191,8 @@ struct LPrimitivePlatformTypesGeneric
     #endif /* (JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER || JAFG_PLATFORM_USES_JAVA_SCRIPT_FRONTEND) */
 #endif /* !AS_CLIENT */
 
-//# Whether compiler supports extern template specifications.
-#ifndef LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS /* Part of Jafg and not Lal. Therefore, this is in the Jafg namespace. */
+//# Whether the used compiler supports extern template specifications.
+#ifndef LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS
     #define LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS        0
 #endif /* !LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS */
 
@@ -243,7 +243,7 @@ struct LPrimitivePlatformTypesGeneric
 //# This will not allow for dynamic linking at runtime, and therefore all plugins must be present at compile time.
 //# Generated translation units for _all_ modules may be deferred and then compiled and linked directly into
 //# the main executable.
-//# Exact behavior over one module in monolithic unity builds has to be discuses and defined in the build
+//# Exact behavior over one module in monolithic unity builds has to be discussed and defined in the build
 //# script for said module.
 //#
 #ifndef LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
@@ -405,6 +405,16 @@ struct LPrimitivePlatformTypesGeneric
 #ifndef LAL_PLATFORM_MAX_PATH
     #error "Platform is missing LAL_PLATFORM_MAX_PATH definition."
 #endif /* !LAL_PLATFORM_MAX_PATH */
+
+//# The exit type for the platform.
+#ifndef LAL_PLATFORM_EXIT_TYPE
+    #define LAL_PLATFORM_EXIT_TYPE                                      Lal::LPlatformTypes::i32
+#endif /* LAL_PLATFORM_EXIT_TYPE */
+
+//# The maximal number of frames that can be stored when tracing.
+#ifndef LAL_PLATFORM_MAX_FRAMES
+    #define LAL_PLATFORM_MAX_FRAMES                                     128
+#endif /* LAL_PLATFORM_MAX_FRAMES */
 
 //# This tells the compiler to never discard the resulting control path.
 #ifndef LAL_PLATFORM_NO_DISCARD_CTRL_PATH
@@ -575,12 +585,14 @@ template <typename T>
 concept IsOnProgramPanicValid = requires
     (
         T t,
+        LPlatformTypes::LChar* InBaseMessage,
         LPlatformTypes::LChar* InMessage,
         LPlatformTypes::LChar* InFile,
         LPlatformTypes::u64    InLine
     )
 {
-    { t.OnProgramPanicImpl() } -> std::same_as<void>;
+    { t.ExitQuietly() } -> std::same_as<void>;
+    { t.OnProgramPanicImpl(InBaseMessage) } -> std::same_as<void>;
     { t.OnProgramPanic(InMessage, InFile, InLine) } -> std::same_as<void>;
 };
 
@@ -621,6 +633,8 @@ typedef Lal::LPlatformTypes::LNullptrTy                                 LNullptr
 
 namespace Lal::Hal
 {
+
+static constexpr LAL_PLATFORM_EXIT_TYPE LalPanicExitCode { 0b100000000 };
 
 //#
 //# Very dangerous function. Use with care and never in critical code paths.

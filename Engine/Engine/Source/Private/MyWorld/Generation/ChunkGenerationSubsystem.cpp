@@ -43,7 +43,10 @@ void Jafg::JChunkGenerationSubsystem::Initialize(LSubsystemCollection& Collectio
     this->SharedChunkArgs.MaterialSubsystem = this->GetEngine()->GetCheckedSubsystem<JMaterialSubsystem>();
     this->SharedChunkArgs.VoxelTextureSubsystem = this->GetEngine()->GetCheckedSubsystem<JVoxelTextureSubsystem>();
     this->SharedChunkArgs.ChunkShader.MakeChecked(Name_ShaderChunk);
-    this->SharedChunkArgs.GetNewMesher = [] (AChunk& Owner) -> LChunkMesher* { return new LNaiveMesher(Owner); };
+    this->SharedChunkArgs.GetNewMesher = [](AChunk& Owner) -> Smart::TUnique<LChunkMesher>
+    {
+        return Smart::EmplaceUniqueOfType<LChunkMesher, LNaiveMesher>(Owner);
+    };
 
     this->SharedChunkArgs.bSuperFlat = true;
 

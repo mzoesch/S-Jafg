@@ -1,8 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Engine/EngineCompileTimeConstants.h"
 
-#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if JAFG_WITH_FOREIGN_SUPPORT
 
 #include "Foreign/Plugin.h"
 
@@ -30,4 +30,4 @@ LString LexToString(const EPluginLoadReturnCode::Type InValue)
 
 } /* ~Namespace Jafg */
 
-#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#endif /* JAFG_WITH_FOREIGN_SUPPORT */

@@ -4,7 +4,7 @@
 
 void Jafg::LPreferenceCollection::AddPreference(Smart::TUnique<LPreference>&& InPreference)
 {
-    jassert( InPreference.GetValuePtr() )
+    jassert( InPreference.IsValid() )
 
     if (this->Preferences.ContainsByPredicate([&InPreference](const Smart::TUnique<LPreference>& Preference)
     {
@@ -16,6 +16,7 @@ void Jafg::LPreferenceCollection::AddPreference(Smart::TUnique<LPreference>&& In
     }
 
     this->Preferences.Add(std::move(InPreference));
+    checkSlow( InPreference.IsValid() == false )
 
     return;
 }
@@ -33,7 +34,7 @@ Jafg::LPreference* Jafg::LPreferenceCollection::GetPreferenceByIdentifier(const 
         {
             if ( /* Very cheeky. Not a fan of this code. */
                 LPreference* Out =
-                    static_cast<LPreferenceCollection*>(Preference.GetValuePtr())->GetPreferenceByIdentifier(InIdentifier);
+                    static_cast<LPreferenceCollection*>(Preference.GetPointerChecked())->GetPreferenceByIdentifier(InIdentifier);
                 Out
             )
             {
@@ -52,7 +53,7 @@ Jafg::LPreference* Jafg::LPreferenceCollection::GetPreferenceByIdentifier(const 
     return this->GetPreferenceByIdentifier(GET_NAME(InIdentifier));
 }
 
-const Jafg::TArray<Jafg::Smart::TUnique<Jafg::LPreference>>& Jafg::LIntermediatePreferenceCollection::LoadAndGetChildPreferences()
+const Jafg::TArray<Smart::TUnique<Jafg::LPreference>>& Jafg::LIntermediatePreferenceCollection::LoadAndGetChildPreferences()
 {
     if (this->Refresh() == false)
     {

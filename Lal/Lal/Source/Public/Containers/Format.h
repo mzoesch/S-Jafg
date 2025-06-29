@@ -7,11 +7,11 @@
 namespace Jafg
 {
 
-template <typename TString, typename ... ArgTy>
+template <typename TString, typename... ArgTy>
 NODISCARD TString Format(const char* Format, const ArgTy&... Args);
 
-template <typename ... ArgTy>
-NODISCARD LStringLegacy FormatLegacy(const char* Format, const ArgTy& ... Args);
+template <typename... ArgTy>
+NODISCARD LStringLegacy FormatLegacy(const char* Format, const ArgTy&... Args);
 
 template <typename ArgTy>
 inline auto FormatArgLegacy(const ArgTy Arg);
@@ -43,31 +43,31 @@ template <> NODISCARD inline auto FormatArgLegacy(const u64 Arg) { return Arg; }
 template <> NODISCARD inline auto FormatArgLegacy(const long int Arg) { return Arg; }
 template <> NODISCARD inline auto FormatArgLegacy(const unsigned long int Arg) { return Arg; }
 
-template <typename TString, typename ... ArgTy>
+template <typename TString, typename... ArgTy>
 NODISCARD TString Format(const char* Format, const ArgTy&... Args)
 {
     TString Out = Jafg::FormatLegacy(Format, Args...).c_str();
     return Out;
 }
 
-template <typename ... ArgTy>
-NODISCARD LStringLegacy FormatLegacy(const char* Format, const ArgTy& ... Args)
+template <typename... ArgTy>
+NODISCARD LStringLegacy FormatLegacy(const char* Format, const ArgTy&... Args)
 {
-    if constexpr (sizeof ... (Args) == 0)
+    if constexpr (sizeof... (Args) == 0)
     {
         return Format;
     }
 
-    if constexpr (sizeof ... (Args) == 1)
+    if constexpr (sizeof... (Args) == 1)
     {
-        auto FArg = Jafg::FormatArgLegacy(Args ...);
+        auto FArg = Jafg::FormatArgLegacy(Args...);
         return std::vformat(Format, std::make_format_args(FArg));
     }
 
-    auto Tuple = std::make_tuple(Jafg::FormatArgLegacy(Args) ...);
-    return std::apply( [Format] (const auto& ... LambdaUnpacked)
+    auto Tuple = std::make_tuple(Jafg::FormatArgLegacy(Args)...);
+    return std::apply( [Format] (const auto&... LambdaUnpacked)
         {
-            return std::vformat(Format, std::make_format_args(LambdaUnpacked ...));
+            return std::vformat(Format, std::make_format_args(LambdaUnpacked...));
         },
         Tuple
     );

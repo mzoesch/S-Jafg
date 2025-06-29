@@ -44,7 +44,7 @@ public:
     virtual void RemoveChild(WNode* InChild) PURE_VIRTUAL()
     virtual void RemoveChild(LWidgetSlot* InSlot) PURE_VIRTUAL()
     virtual void RemoveChildAt(const i32 InIndex) PURE_VIRTUAL()
-    virtual void RemoveChildren() PURE_VIRTUAL();
+    virtual void RemoveChildren() PURE_VIRTUAL()
     virtual LWidgetSlot* AddChild(WNode* InChild) PURE_VIRTUAL(return nullptr)
     virtual LWidgetSlot* AddChildAt(const i32 InIndex, WNode* InChild) PURE_VIRTUAL(return nullptr)
 

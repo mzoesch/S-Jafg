@@ -19,9 +19,7 @@ public:
 
     FORCEINLINE virtual bool IsLeaf() const override { return false; }
 
-    template <typename TPref>
-    FORCEINLINE void AddPreference(Smart::TUnique<TPref>&& InPreference);
-    ENGINE_API  void AddPreference(Smart::TUnique<LPreference>&& InPreference);
+    ENGINE_API void AddPreference(Smart::TUnique<LPreference>&& InPreference);
 
     ENGINE_API  auto GetPreferenceByIdentifier(const LName InIdentifier) -> LPreference*;
     FORCEINLINE auto GetPreferenceByIdentifier(const LName InIdentifier) const -> const LPreference*;
@@ -62,14 +60,6 @@ private:
 
     LOnDemandLoadPreferences OnLoadDelegate;
 };
-
-template<typename TPref>
-FORCEINLINE void LPreferenceCollection::AddPreference(Smart::TUnique<TPref>&& InPreference)
-{
-    this->AddPreference(Smart::UpcastUnique<LPreference>(std::forward<Smart::TUnique<TPref>>(InPreference)));
-    check( InPreference.IsValid() == false )
-    return;
-}
 
 FORCEINLINE const LPreference* LPreferenceCollection::GetPreferenceByIdentifier(const LName InIdentifier) const
 {

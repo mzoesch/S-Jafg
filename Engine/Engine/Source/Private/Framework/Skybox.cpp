@@ -279,8 +279,6 @@ void Jafg::LSkybox::Free()
 
         glDeleteBuffers(1, &this->Vbo.GetValue());
         this->Vbo.Reset();
-
-        this->Shader.Free();
     }
 
     return;

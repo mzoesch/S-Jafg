@@ -2,16 +2,17 @@
 
 #pragma once
 
+#include "Engine/EngineCompileTimeConstants.h"
 #include "Level.h"
 #include "Subsystems/EngineSubsystem.h"
 #include "Cli/CommandLineInterface.h"
 #include "User/LocalEgo.h"
 #include "Engine/World.h"
 #include "Rhi/EngineShader.h"
-#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if JAFG_WITH_FOREIGN_SUPPORT
     #include "Foreign/PluginForward.h"
-#include "Foreign/Plugin.h"
-#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+    #include "Foreign/Plugin.h"
+#endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
 namespace Jafg
 {
@@ -63,13 +64,13 @@ FORCEINLINE auto GetCustomExitReason() -> LString { return GCustomExitReason; }
 
 MAKE_MULTICAST_SIGNATURE(LOnWorldBeginLife, LWorld* InNewWorld)
 
-#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if JAFG_WITH_FOREIGN_SUPPORT
     //#
     //# This delegate gets called when a foreign plugin has been loaded.
     //# @param InStaticClassContainer All static classes that are registered with the default public context of the new
     //#                               plugin.
     MAKE_MULTICAST_SIGNATURE(LOnForeignPluginLoaded, LObjectContext* InStaticClassContainer)
-#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
 namespace Private
 {
@@ -244,7 +245,7 @@ private:
     LObjectContext ObjectContext { DeferredGlobalCarnifex };
     LSubsystemCollection Collection;
 
-#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if JAFG_WITH_FOREIGN_SUPPORT
 public:
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -281,7 +282,7 @@ private:
     u32 PluginUuidCounter { LLoadedPluginHandle::EngineUuid };
 
     LObjectContext* ForeignContextCursor { nullptr };
-#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
 public:
 
@@ -438,12 +439,12 @@ FORCEINLINE bool LEngine::IsObjectContextKnown(const LObjectContext* InContext) 
     return this->KnownObjectContexts.Contains(InContext);
 }
 
-#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if JAFG_WITH_FOREIGN_SUPPORT
 FORCEINLINE LObjectContext* LEngine::GetCurrentForeignContext() const
 {
     check( this->ForeignContextCursor )
     return this->ForeignContextCursor;
 }
-#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
 } /* ~Namespace Jafg */

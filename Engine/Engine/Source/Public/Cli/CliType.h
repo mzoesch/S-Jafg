@@ -85,8 +85,8 @@ public:
     FORCEINLINE static LCliType Type(const LString& InIdentifier, const LString& InHelp) { return LCliType(InIdentifier, InHelp); }
     template <typename T>
     FORCEINLINE static LCliType Type() UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return LCliType::Type(""))
-    template <typename T, typename ... TArgs> requires LCliTypeFactory<T>::bExists
-    FORCEINLINE static LCliType Type(TArgs&& ... Args);
+    template <typename T, typename... TArgs> requires LCliTypeFactory<T>::bExists
+    FORCEINLINE static LCliType Type(TArgs&&... Args);
 
     FORCEINLINE LCliType* GetRegisteredType() const { return static_cast<LCliType*>(this->GetRegisteredObjectByUuid()); }
 
@@ -132,7 +132,7 @@ FORCEINLINE LCliType& LCliType::operator=(LCliType&& InOther) noexcept
     return *this;
 }
 
-template <typename T, typename ... TArgs> requires LCliTypeFactory<T>::bExists
+template <typename T, typename... TArgs> requires LCliTypeFactory<T>::bExists
 FORCEINLINE LCliType LCliType::Type(TArgs&&... Args)
 {
     return LCliTypeFactory<T>::Dispatch(std::forward<TArgs>(Args)...);

@@ -8,6 +8,12 @@
     #error "Plugins are not supported on this platform."
 #endif /* !PLATFORM_SUPPORTS_SHARED_LIBRARIES */
 
+#include "Engine/EngineCompileTimeConstants.h"
+
+#if !JAFG_WITH_FOREIGN_SUPPORT
+    #error "Plugins are not supported in this build configuration."
+#endif /* !JAFG_WITH_FOREIGN_SUPPORT */
+
 #include "System/Path.h"
 #include "Foreign/PluginForward.h"
 
@@ -15,8 +21,8 @@ namespace Jafg
 {
 
 class LEngine;
-class LObjectContext;
 class LPluginLifetime;
+class LObjectContext;
 
 namespace EPluginLoadReturnCode
 {
@@ -120,19 +126,7 @@ struct LLoadedPlugin final
         return *this;
     }
 
-    FORCEINLINE ~LLoadedPlugin()
-    {
-        if (this->IsLoaded())
-        {
-            //#
-            //# If this ever triggers - we are fucked. The plugin probably has handles all over the place.
-            //#
-            LOG_WARNING(LogForeign, "Plugin [{}] was not closed before destruction.", this->GetIdentifier())
-            this->CloseLibrary(EPluginShutdownReason::Unspecified);
-        }
-
-        return;
-    }
+    ENGINE_API ~LLoadedPlugin();
 
     FORCEINLINE bool operator==(const LLoadedPlugin& Other) const { return this->BinPath == Other.BinPath; }
 

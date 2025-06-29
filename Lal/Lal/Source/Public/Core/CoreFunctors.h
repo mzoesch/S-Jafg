@@ -18,10 +18,10 @@ FORCEINLINE void Swap(T& A, T& B)
 /**
  * @return The arg count of a function.
  */
-template <typename F, typename ... ArgTy>
-constexpr LSizeTy ArgTyCount(F(*f)(ArgTy ...))
+template <typename F, typename... ArgTy>
+constexpr LSizeTy ArgTyCount(F(*f)(ArgTy...))
 {
-    return sizeof ... (ArgTy);
+    return sizeof... (ArgTy);
 }
 
 FORCEINLINE bool Xor(const bool A, const bool B)

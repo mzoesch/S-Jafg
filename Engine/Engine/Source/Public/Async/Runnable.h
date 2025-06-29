@@ -24,12 +24,15 @@ enum Type : u8
 //# Generates a unique thread for itself and runs the #Run method on it. For long-running tasks only.
 //# For short running tasks, use #Tasks::Make.
 //#
-class ENGINE_API LRunnable
+class LRunnable
 {
 public:
 
-    LRunnable() = default;
+    ENGINE_API LRunnable();
+    ENGINE_API LRunnable(const LString& InHumanReadableName);
+
     PROHIBIT_REALLOC_OF_ANY_FORM(LRunnable)
+
     virtual ~LRunnable() = default;
 
     //#

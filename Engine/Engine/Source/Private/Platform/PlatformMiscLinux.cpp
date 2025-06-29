@@ -4,8 +4,7 @@
 
 #include "Platform/PlatformMisc.h"
 #include "System/Path.h"
-#include <unistd.h>
-#include <wayland-client.h>
+#include "System/Paths.h"
 
 namespace
 {
@@ -14,19 +13,32 @@ namespace
 
 Jafg::LPath Jafg::PlatformMisc::GetEngineRootDirImpl()
 {
-    LPath RealRootDir = PlatformMisc::GetRealEngineRootDir();
-    RealRootDir.PopSubPaths(4);
+    LPath RealRootDir { PlatformMisc::GetRealEngineRootDir() };
+
+    while (RealRootDir.IsEmpty() == false)
+    {
+        if (Paths::DoesFileExist(RealRootDir / "jafg.jafgworkspace"))
+        {
+            break;
+        }
+
+        RealRootDir.PopSubPath();
+
+        continue;
+    }
+
+    jassert( RealRootDir.IsEmpty() == false && "Failed to find engine root directory." )
+
     return RealRootDir;
 }
 
 Jafg::LPath Jafg::PlatformMisc::GetRealEngineRootDirImpl()
 {
     char Buffer[LAL_PLATFORM_MAX_PATH] = { 0 };
-    const u64 Ret = readlink("/proc/self/exe", Buffer, LAL_PLATFORM_MAX_PATH);
+    const i64 Ret = readlink("/proc/self/exe", Buffer, LAL_PLATFORM_MAX_PATH);
     if (Ret == -1)
     {
         panic("Failed to read the symbolic link.");
-        return "";
     }
 
     Buffer[Ret - 1] = '\0';

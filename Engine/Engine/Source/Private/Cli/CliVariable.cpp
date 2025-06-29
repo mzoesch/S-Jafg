@@ -18,7 +18,7 @@ bool Jafg::LCliVariable::SetValue(const LString& InValue)
 
     const LCliType* EngineType = GEngine->GetCommandLineInterface()->GetTypeAsserted(this->Type);
     const bool bOut = EngineType->SetVariable(InValue, &this->Value);
-    if (bOut && this->OnVariableChangedDelegate)
+    if (bOut && this->OnVariableChangedDelegate.IsValid())
     {
         this->OnVariableChangedDelegate(this->Value);
     }

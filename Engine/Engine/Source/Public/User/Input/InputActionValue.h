@@ -62,7 +62,7 @@ struct LInputActionValue final
     ~LInputActionValue() = default;
 
     FORCEINLINE bool  IsNonZero() const { return this->Value.SquaredMagnitude() > Maths::Squared(LInputActionValue::ThresholdForInputActionValueTrigger); }
-    FORCEINLINE LReal GetMagnitude() const { return this->Value.Magnitude(); };
+    FORCEINLINE LReal GetMagnitude() const { return this->Value.Magnitude(); }
     FORCEINLINE LReal GetSquaredMagnitude() const { return this->Value.SquaredMagnitude(); }
 
     FORCEINLINE Axis0D GetBooleanValue() const { return this->IsNonZero(); }

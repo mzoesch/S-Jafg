@@ -120,9 +120,9 @@ struct LCommandArgs
     //# Same as the above #GetAs method but allows for more advanced context checking by allowing any number
     //# of arguments. Some types might resolve to differently depending on which context they are used.
     //#
-    template <typename TField, typename ... TArgs> requires
+    template <typename TField, typename... TArgs> requires
     (
-           sizeof ... (TArgs) > 0
+           sizeof... (TArgs) > 0
         && std::is_invocable_r_v<typename LCommandArgsTypeRet<TField>::Type, typename LCommandArgsTypeRet<TField>::Dispatcher, const LCommandArgs&, TArgs...>
     )
     FORCEINLINE typename LCommandArgsTypeRet<TField>::Type GetAs(TArgs&&... Args) const;
@@ -258,7 +258,7 @@ FORCEINLINE typename LCommandArgsTypeRet<TField>::Type LCommandArgs::GetAs() con
     return Field;
 }
 
-template<typename TField, typename ... TArgs> requires
+template<typename TField, typename... TArgs> requires
 (
        sizeof...(TArgs) > 0
     && std::is_invocable_r_v<typename LCommandArgsTypeRet<TField>::Type, typename LCommandArgsTypeRet<TField>::Dispatcher, const LCommandArgs&, TArgs...>

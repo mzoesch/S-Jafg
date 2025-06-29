@@ -26,7 +26,7 @@
                 Category.GetCompileTimeVerbosity()                                                        \
             >                                                                                             \
             (Category, PRIVATE_LAL_LOG_TRACE_STR_CUR_CLASS_FUNC, Name);
-    #define SCOPED_TIME_TAKEN_MEASURER_MsgF(Category, Verbosity, Format, ...)                             \
+    #define SCOPED_TIME_TAKEN_MEASURER_MsgF(Category, Verbosity, Format,...)                             \
         const ::Lal::LPrivateLogTimeTaken  PRIVATE_JAFG_CORE_JOIN_INNER_TWO(___TimeTaken, __COUNTER__) = \
             ::Lal::LPrivateLogTimeTaken<                                                                 \
                 ::Lal::ELogVerbosity:: Verbosity,                                                        \
@@ -37,7 +37,7 @@
             ));
 #else /* DO_LOG_SCOPED_TIME_TASK_MEASURER */
     #define SCOPED_TIME_TAKEN_MEASURER(Category, Verbosity, Name)
-    #define SCOPED_TIME_TAKEN_MEASURER_MsgF(Category, Verbosity, Format, ...)
+    #define SCOPED_TIME_TAKEN_MEASURER_MsgF(Category, Verbosity, Format,...)
 #endif /* !DO_LOG_SCOPED_TIME_TASK_MEASURER */
 
 namespace Lal

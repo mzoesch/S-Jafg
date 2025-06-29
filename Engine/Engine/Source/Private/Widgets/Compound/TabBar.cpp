@@ -270,7 +270,7 @@ void Jafg::WTabBar::OnTabBarButtonReleased(const LString& Identifier)
 void Jafg::WTabBar::LoadTab(LTabBarTabDescriptor&& InTabDescriptor, const i32 InIndex)
 {
     check( this->ButtonsContainer )
-    check( !(InTabDescriptor.ButtonWidgetClassField && InTabDescriptor.OnButtonReleaseField) )
+    check( !(InTabDescriptor.ButtonWidgetClassField && InTabDescriptor.OnButtonReleaseField.IsValid()) )
 
     WNode* Button = InTabDescriptor.ButtonWidgetClassField.IsSet()
         ? ConstructDeferredWidgetNode<WNode>(this->GetOuter(), InTabDescriptor.ButtonWidgetClassField)

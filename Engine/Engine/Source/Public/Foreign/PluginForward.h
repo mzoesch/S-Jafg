@@ -2,12 +2,14 @@
 
 #pragma once
 
+#include "Engine/EngineCompileTimeConstants.h"
+
 namespace Jafg
 {
 
 struct LLoadedPlugin;
 
-#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if JAFG_WITH_FOREIGN_SUPPORT
 namespace EPluginShutdownReason
 {
 
@@ -34,7 +36,7 @@ enum Type
 };
 
 } /* ~Namespace EPluginShutdownReason */
-#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
 //
 // The following code this part of the standard engine.
@@ -68,7 +70,7 @@ struct LLoadedPluginHandle final
 
 private:
 
-    FORCEINLINE constexpr LLoadedPluginHandle(const u32 InHandle) noexcept : Handle(InHandle) { };
+    FORCEINLINE constexpr LLoadedPluginHandle(const u32 InHandle) noexcept : Handle(InHandle) { }
 
     u32 Handle { 0 };
 };

@@ -29,13 +29,9 @@ bool Jafg::WTabBarButton::AddData(const LWidgetNodeData* InData)
     this->Context = Data->Context;
     this->Identifier = Data->Descriptor->IdentifierField;
 
-    if (Data->Descriptor->OnButtonReleaseField)
+    if (Data->Descriptor->OnButtonReleaseField.IsValid())
     {
-        // ??? Why can't we move directly into the member variable?
-        // ??? this->OnButtonRelease.operator=(std::move(Data->Descriptor->OnButtonRelease));
-        LOnTabBarButtonRelease Del = std::move(Data->Descriptor->OnButtonReleaseField);
-        this->OnButtonRelease = std::move(Del);
-        checkSlow( Data->Descriptor->OnButtonReleaseField.IsBound() == false )
+        this->OnButtonRelease = Data->Descriptor->OnButtonReleaseField;
     }
 
     return true;
@@ -45,7 +41,7 @@ void Jafg::WTabBarButton::OnPrimaryRelease()
 {
     Super::OnPrimaryRelease();
 
-    if (this->OnButtonRelease && this->OnButtonRelease(*this->Context, this->Identifier))
+    if (this->OnButtonRelease.IsValid() && this->OnButtonRelease(*this->Context, this->Identifier))
     {
         return;
     }

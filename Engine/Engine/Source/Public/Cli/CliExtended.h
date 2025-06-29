@@ -9,8 +9,8 @@ namespace Jafg
 {
 
 class LCommandLineInterface;
+class LCliVariable;
 struct LCliQuery;
-struct LCliVariable;
 template <>
 struct LCliTypeFactory<LCliQuery>;
 

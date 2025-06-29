@@ -134,7 +134,7 @@
  * @param Format       Format string literal in the style of std::format.
  */
 #define LOG_FATAL(Category, Format, ...) \
-    LAL_PLATFORM_GORGEOUS_TRAP_MSG(::Jafg::LString::SprintF(\
+    LAL_GORGEOUS_TRAP_MSG(::Jafg::LString::SprintF(\
         "[{}] - {}: " Format "", Category.GetCategory(), std::string_view{__FUNCTION__}, #__VA_ARGS__).ToPtr())
 
 

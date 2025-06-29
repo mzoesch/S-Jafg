@@ -25,54 +25,58 @@ struct LInputActionMappedKeySwizzleYZModifier;
 //# Apply current application wide delta time to the input value.
 struct LInputActionMappedKeyDeltaTimeModifier;
 
-template <typename TModifier>
-FORCEINLINE Smart::TUnique<LInputActionMappedTriggerModifier> MakeModifier()
-{
-    static_assert(std::is_abstract_v<TModifier> == false, "Cannot instantiate an abstract modifier.");
-    static_assert(std::is_base_of_v<LInputActionMappedTriggerModifier, TModifier>, "Modifier must derive from LInputActionMappedKeyModifier.");
-    return Smart::EmplaceUniqueOfType<LInputActionMappedTriggerModifier, TModifier>();
-}
+//#
+//# Factory function to create a modifier of type TModifier.
+//#
+template <typename TModifier> requires (std::is_abstract_v<TModifier> == false && std::is_base_of_v<LInputActionMappedTriggerModifier, TModifier>)
+FORCEINLINE Smart::TUnique<LInputActionMappedTriggerModifier> MakeModifier() noexcept;
 
 struct LInputActionMappedTriggerModifier
 {
     virtual ~LInputActionMappedTriggerModifier() = default;
-    virtual LVector ApplyModifier(const LVector& InValue) const = 0;
+    virtual LVector ApplyModifier(const LVector& InValue) const noexcept = 0;
 };
 
 struct LInputActionMappedKeyNegateModifier final : public LInputActionMappedTriggerModifier
 {
     ~LInputActionMappedKeyNegateModifier() override = default;
-    virtual LVector ApplyModifier(const LVector& InValue) const override { return -InValue; }
+    virtual LVector ApplyModifier(const LVector& InValue) const noexcept override { return -InValue; }
 };
 
 struct LInputActionMappedKeySwizzleModifier final : public LInputActionMappedTriggerModifier
 {
     ~LInputActionMappedKeySwizzleModifier() override = default;
-    virtual LVector ApplyModifier(const LVector& InValue) const override { return InValue.YXZ(); }
+    virtual LVector ApplyModifier(const LVector& InValue) const noexcept override { return InValue.YXZ(); }
 };
 
 struct LInputActionMappedKeySwizzleXYModifier final : public LInputActionMappedTriggerModifier
 {
     ~LInputActionMappedKeySwizzleXYModifier() override = default;
-    virtual LVector ApplyModifier(const LVector& InValue) const override { return InValue.YXZ(); }
+    virtual LVector ApplyModifier(const LVector& InValue) const noexcept override { return InValue.YXZ(); }
 };
 
 struct LInputActionMappedKeySwizzleXZModifier final : public LInputActionMappedTriggerModifier
 {
     ~LInputActionMappedKeySwizzleXZModifier() override = default;
-    virtual LVector ApplyModifier(const LVector& InValue) const override { return InValue.ZYX(); }
+    virtual LVector ApplyModifier(const LVector& InValue) const noexcept override { return InValue.ZYX(); }
 };
 
 struct LInputActionMappedKeySwizzleYZModifier final : public LInputActionMappedTriggerModifier
 {
     ~LInputActionMappedKeySwizzleYZModifier() override = default;
-    virtual LVector ApplyModifier(const LVector& InValue) const override { return InValue.XZY(); }
+    virtual LVector ApplyModifier(const LVector& InValue) const noexcept override { return InValue.XZY(); }
 };
 
 struct LInputActionMappedKeyDeltaTimeModifier final : public LInputActionMappedTriggerModifier
 {
     ~LInputActionMappedKeyDeltaTimeModifier() override = default;
-    virtual LVector ApplyModifier(const LVector& InValue) const override { return InValue * Application::GetDeltaTimeAsFloat(); }
+    virtual LVector ApplyModifier(const LVector& InValue) const noexcept override { return InValue * Application::GetDeltaTimeAsFloat(); }
 };
+
+template <typename TModifier> requires (std::is_abstract_v<TModifier> == false && std::is_base_of_v<LInputActionMappedTriggerModifier, TModifier>)
+FORCEINLINE Smart::TUnique<LInputActionMappedTriggerModifier> MakeModifier() noexcept
+{
+    return Smart::EmplaceUniqueOfType<LInputActionMappedTriggerModifier, TModifier>();
+}
 
 } /* ~Namespace Jafg */

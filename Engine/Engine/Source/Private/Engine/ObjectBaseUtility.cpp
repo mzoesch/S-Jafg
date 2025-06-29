@@ -226,11 +226,19 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
 #if LAL_WITH_GCC
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
-#endif /* WITH_GCC */
+#endif /* LAL_WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
+#endif /* LAL_WITH_CLANG */
     ::memset(&Reinterpreted->ClassFields, 0, sizeof(Reinterpreted->ClassFields));  // NOLINT(bugprone-undefined-memory-manipulation)
 #if LAL_WITH_GCC
     #pragma GCC diagnostic pop
-#endif /* WITH_GCC */
+#endif /* LAL_WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* LAL_WITH_CLANG */
+
     check( Reinterpreted->ClassFields.GetSize() == 0 && Reinterpreted->ClassFields.IsData() == false )
 
     for (const LClassField& Field : InStaticClass->GetDefaultPackageReferrer()->GetClassFields())

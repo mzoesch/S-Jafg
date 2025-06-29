@@ -8,12 +8,12 @@ Jafg::LObjectInitializer Jafg::GetDefaultObjectInitializer()
 {
     if (GEngine)
     {
-#if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+#if JAFG_WITH_FOREIGN_SUPPORT
         return LObjectInitializer{GEngine->GetCurrentForeignContext()};
-#else /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#else /* JAFG_WITH_FOREIGN_SUPPORT */
         jassertNoEntry()
         abort()
-#endif /* !PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+#endif /* !JAFG_WITH_FOREIGN_SUPPORT */
     }
 
     return LObjectInitializer{GOmniVitaContext};

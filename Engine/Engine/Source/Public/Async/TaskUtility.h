@@ -29,6 +29,12 @@ enum Type : i32
     Master          = 0x0,
     Renderer        = Master, // Currently the same thread, but in the future this will change.
 
+    //#
+    //# A thread for medium-sized tasks that are too heavy for the master thread, but not heavy enough to be
+    //# executed on a thread specifically designed for the said task.
+    //#
+    WorkerThread    = 0x3,
+
     ReservedMax     = 0x1FF,
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -112,7 +118,7 @@ FORCEINLINE bool IsOnRendererThread() { return IsOnThread(ENamedThreads::Rendere
 ENGINE_API void Make(const ENamedThreads::Type InThreadName, const ETaskTime::Type InPreferredTime, LTaskDelegate&& InDelegate);
 
 //# Launch a named thread. This thread is globally accessible by its ENamedThreads::Type.
-template <typename T, typename ... Args>
+template <typename T, typename... Args>
 ETaskExit::Type LaunchNamedThread(ENamedThreads::Type Thread, Args&&... InArgs);
 //#
 //# Launch a named thread where its ENamedThreads::Type is resolved at function call time.
@@ -120,13 +126,14 @@ ETaskExit::Type LaunchNamedThread(ENamedThreads::Type Thread, Args&&... InArgs);
 //# @remark This function should generally be preferred over #LaunchNamedThread(ENameThreads::Type) as it avoids
 //#         identifier clashing.
 //#
-template <typename T, typename ... Args>
+template <typename T, typename... Args>
 ENamedThreads::Type LaunchNamedThread(ETaskExit::Type* OutExit, Args&&... InArgs);
 
 ENGINE_API bool IsThreadRunning(const ENamedThreads::Type InThreadName);
 
 enum ERunAllTasks : i32 { RunAllTasks = 0, };
-ENGINE_API void TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const i32 MaxTasks);
+//# @return The number of tasks that were run.
+ENGINE_API i32 TryRunTasks(const ENamedThreads::Type Which, const ETaskTime::Type Time, const i32 MaxTasks);
 
 ENGINE_API void StopThread(const ENamedThreads::Type ThreadName);
 ENGINE_API void JoinThread(const ENamedThreads::Type ThreadName);
@@ -160,14 +167,14 @@ FORCEINLINE ENamedThreads::Type GetCurrentThreadNameAsserted()
     return Thread;
 }
 
-template <typename T, typename ... Args>
+template <typename T, typename... Args>
 FORCEINLINE ETaskExit::Type LaunchNamedThread(ENamedThreads::Type Thread, Args&&... InArgs)
 {
     static_assert(std::is_base_of_v<LRunnable, T>, "T must be derived from LRunnable.");
     return Private::LaunchNamedThread(Thread, new T(std::forward<Args>(InArgs)...));
 }
 
-template <typename T, typename ... Args>
+template <typename T, typename... Args>
 FORCEINLINE ENamedThreads::Type LaunchNamedThread(ETaskExit::Type* OutExit, Args&&... InArgs)
 {
     static_assert(std::is_base_of_v<LRunnable, T>, "T must be derived from LRunnable.");
