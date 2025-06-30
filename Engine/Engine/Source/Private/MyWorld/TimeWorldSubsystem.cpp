@@ -177,8 +177,7 @@ void Jafg::JTimeWorldSubsystem::Initialize(LSubsystemCollection& Collection)
         Sun.Identifier.GenerateNew();
         Sun.Texture.LoadFromDisk({EEnginePaths::Textures, "Misc/Sun.png"}, ERawImageFormat::BGRA8);
         Sun.Texture.Upload();
-        Sun.Direction = LVector{20.0f, 0.0f, 30.0f};
-        Sun.Direction.Normalize();
+
         Sun.Scale = LVector{500.0f};
         this->SunAstronIdentifier = Sun.Identifier;
 
@@ -678,7 +677,7 @@ void Jafg::JTimeWorldSubsystem::OnTimeUpdated()
     }
     else
     {
-        Skybox.SetBackgroundColor(LColor::Blue);
+        Skybox.SetBackgroundColor({69, 177, 242});
     }
 
     if

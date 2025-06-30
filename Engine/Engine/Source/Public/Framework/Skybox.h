@@ -43,7 +43,10 @@ struct LAstron final
     //#
     //# The magnitude of the directional vector for this astron.
     //#
-    f32 Magnitude { 2000.0f };
+    //# As far as it gets, because of the far plane of the default eye. If you
+    //# use a different eye the max value might differ.
+    //#
+    f32 Magnitude { 1950.0f };
 
     //#
     //# The scaling vector for the astron.

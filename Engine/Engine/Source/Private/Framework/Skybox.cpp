@@ -169,10 +169,10 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
     (
         Maths::ToRadians(InEye.GetDegYFov()),
         InViewport.GetWidthF() / InViewport.GetHeightF(),
-        /*
-         * Do not use the near and fare z planes defined in the user preferences, as we are looking at a unit
-         * cube with a translation of zero.
-         */
+        //
+        // Do not use the near and fare z planes defined in the user preferences, as we are looking at a unit
+        // cube with a translation of zero.
+        //
         0.1f, 10.0f
     ) };
     this->Shader.SetMatrixUniform("Projection", Projection);
@@ -213,7 +213,7 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
     this->BillboardShader.SetMatrixUniform("Projection", Maths::MakePerspectiveProjectionMatrix
     (
         Maths::ToRadians(InEye.GetDegYFov()),
-        static_cast<float>(InViewport.GetDimensions().X) / static_cast<float>(InViewport.GetDimensions().Y),
+        static_cast<f32>(InViewport.GetDimensions().X) / static_cast<f32>(InViewport.GetDimensions().Y),
         InEye.GetNearFrustum(), InEye.GetFarFrustum()
     ));
 
@@ -234,26 +234,27 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
         check( Astron.Direction.IsNormalized() )
         check( Astron.Scale.IsNearlyZero() == false )
 
-        LMatrix Model { Matrix::Identity };
-        Model.InlineTranslate(Astron.Direction * Astron.Magnitude);
-
-        Model.Matrix[0][0] = View.Matrix[0][0];
-        Model.Matrix[0][1] = View.Matrix[1][0];
-        Model.Matrix[0][2] = View.Matrix[2][0];
-        Model.Matrix[0][3] = 0.0f;
-
-        Model.Matrix[1][0] = View.Matrix[0][1];
-        Model.Matrix[1][1] = View.Matrix[1][1];
-        Model.Matrix[1][2] = View.Matrix[2][1];
-        Model.Matrix[1][3] = 0.0f;
-
-        Model.Matrix[2][0] = View.Matrix[0][2];
-        Model.Matrix[2][1] = View.Matrix[1][2];
-        Model.Matrix[2][2] = View.Matrix[2][2];
-        Model.Matrix[2][3] = 0.0f;
-
+        const LVector Position { (Astron.Direction * Astron.Magnitude) };
+        const LVector Forward { (-Position).GetUnsafeNormalized() };
+        const LVector Right { LVector::UpVector.Cross(Forward).GetUnsafeNormalized() };
+        const LVector Up { Forward.Cross(Right) };
+        LMatrix Rotation;
+        Rotation.Matrix[0][0] = Right.X;
+        Rotation.Matrix[0][1] = Right.Y;
+        Rotation.Matrix[0][2] = Right.Z;
+        Rotation.Matrix[0][3] = 0.0f;
+        Rotation.Matrix[1][0] = Up.X;
+        Rotation.Matrix[1][1] = Up.Y;
+        Rotation.Matrix[1][2] = Up.Z;
+        Rotation.Matrix[1][3] = 0.0f;
+        Rotation.Matrix[2][0] = -Forward.X; /* Negativ because OpenGl does OpenGl things... */
+        Rotation.Matrix[2][1] = -Forward.Y;
+        Rotation.Matrix[2][2] = -Forward.Z;
+        Rotation.Matrix[2][3] = 0.0f;
+        LMatrix Translation;
+        Translation.InlineTranslate(Position);
+        LMatrix Model = Translation * Rotation;
         Model.InlineScale(Astron.Scale);
-
         this->BillboardShader.SetMatrixUniform("Model", Model);
 
         glBindTexture(GL_TEXTURE_2D, Astron.Texture.GetHandle());

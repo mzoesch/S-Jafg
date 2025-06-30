@@ -25,10 +25,10 @@ struct LEngineVersion final
 NOINLINE ENGINE_API const LString& GetBuildTime();
 
 //# @return Build date of the engine.
-NOINLINE ENGINE_API const LString& GetBuildDate() ;
+NOINLINE ENGINE_API const LString& GetBuildDate();
 
-NOINLINE ENGINE_API const LString& GetVcsBranch() ;
-NOINLINE ENGINE_API const LString& GetVcsRevision() ;
+NOINLINE ENGINE_API const LString& GetVcsBranch();
+NOINLINE ENGINE_API const LString& GetVcsRevision();
 
 //# @return The engine version when the engine library was build.
 NOINLINE ENGINE_API LString        GetEngineVersionStr();

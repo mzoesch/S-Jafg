@@ -7,6 +7,7 @@
 #include "Widgets/Region.h"
 #include "Widgets/Blueprint/CommonMenuTabBar.h"
 #include "Platform/Surface.h"
+#include "User/Frontend/Hud/Crosshair.h"
 #include "User/Frontend/Osd/PreferencesScreen.h"
 #include "Widgets/Spacer.h"
 
@@ -126,14 +127,32 @@ void Jafg::WPauseScreen::OnVisibilityChanged(const EWidgetVisibility::Type InOld
 {
     Super::OnVisibilityChanged(InOldVisibility, InNewVisibility);
 
-    if (EWidgetVisibility::IsDrawn(InNewVisibility) == false)
+    LViewport* Viewport { this->GetViewport() };
+    if (ensure(Viewport != nullptr) == false)
     {
         return;
     }
 
-    if (this->TabBar)
+    WCrosshair* Crosshair { Viewport->GetTopLevelWidgetByClass<WCrosshair>() };
+
+    if (EWidgetVisibility::IsDrawn(InNewVisibility))
     {
-        this->TabBar->ResetToDefault();
+        if (this->TabBar)
+        {
+            this->TabBar->ResetToDefault();
+        }
+
+        if (Crosshair)
+        {
+            Crosshair->SetVisibility(EWidgetVisibility::Collapsed);
+        }
+    }
+    else
+    {
+        if (Crosshair)
+        {
+            Crosshair->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+        }
     }
 
     return;

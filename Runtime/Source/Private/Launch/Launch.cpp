@@ -11,7 +11,6 @@
 #include "Platform/PlatformMisc.h"
 #include "Async/TaskUtility.h"
 #include "Core/CoreNames.h"
-#include "Engine/Engine/Source/Internal/Engine/EngineRunnable.h"
 #include "User/UserPreferences.h"
 #include "Stats/Stats.h"
 #include "System/Paths.h"
@@ -306,14 +305,8 @@ EPlatformExit::Type GuardedMain()
     LaunchProgress::PrepareBeginProgress();
     LaunchProgress::BeginProgress("Core Initialization", "Engine pre-life initialization", 0.0f);
 
-    if
-    (
-        const ETaskExit::Type Rc { Tasks::LaunchNamedThread<LEngineRunnable>(ENamedThreads::WorkerThread, "WorkerThread") };
-        Rc != ETaskExit::Success
-    )
-    {
-        LOG_FATAL(LogGuardedMain, "Failed to create worker thread: [{}].", Rc);
-    }
+    check( GEngine == nullptr )
+    GEngine->PreInitialize();
 
     STAT_CYCLE_START(GmNames, "StaticNameRegistration")
     check( Private::GNameRegistry == nullptr )

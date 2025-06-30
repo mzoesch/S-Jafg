@@ -4,24 +4,25 @@
 
 const Jafg::LString& Jafg::BuildInfo::GetBuildTime()
 {
-    static LString BuildTime = __TIME__;
+    static LString BuildTime { __TIME__ };
     return BuildTime;
 }
 
 const Jafg::LString& Jafg::BuildInfo::GetBuildDate()
 {
-    static LString BuildDate = __DATE__;
+    static LString BuildDate { __DATE__ };
     return BuildDate;
 }
 
 const Jafg::LString& Jafg::BuildInfo::GetVcsBranch()
 {
-    static  LString Revision { PRIVATE_ENGINE_VCS_BRANCH };
-    return Revision;}
+    static LString Branch { PRIVATE_ENGINE_VCS_BRANCH };
+    return Branch;
+}
 
 const Jafg::LString& Jafg::BuildInfo::GetVcsRevision()
 {
-    static  LString Revision { PRIVATE_ENGINE_VCS_REVISION };
+    static LString Revision { PRIVATE_ENGINE_VCS_REVISION };
     return Revision;
 }
 

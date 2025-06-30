@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "User/Frontend/Hud/Crosshair.h"
 #include "Widgets/Region.h"
 

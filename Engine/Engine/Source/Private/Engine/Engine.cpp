@@ -13,6 +13,7 @@
 #include "Stats/Stats.h"
 #include "Platform/PlatformMisc.h"
 #include "System/Paths.h"
+#include "Engine/EngineRunnable.h"
 #if JAFG_WITH_FOREIGN_SUPPORT
     #if LAL_WITH_CLANG
         #pragma clang diagnostic push
@@ -51,6 +52,22 @@ bool Jafg::LWorldStorage::IsValid() const noexcept
     }
 
     return GEngine->IsWorldValid(this->World);
+}
+
+void Jafg::LEngine::PreInitialize()
+{
+    STAT_CYCLE_FUNCTION()
+
+    if
+    (
+        const ETaskExit::Type Rc { Tasks::LaunchNamedThread<LEngineRunnable>(ENamedThreads::WorkerThread, "WorkerThread") };
+        Rc != ETaskExit::Success
+    )
+    {
+        LOG_FATAL(LogGuardedMain, "Failed to create worker thread: [{}].", Rc);
+    }
+
+    return;
 }
 
 void Jafg::LEngine::Initialize()

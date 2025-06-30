@@ -11,8 +11,11 @@ class LEngineRunnable final : public LRunnable
 {
 public:
 
-    ENGINE_API LEngineRunnable();
-    ENGINE_API LEngineRunnable(const LString& InHumanReadableName);
+    LEngineRunnable() = default;
+    LEngineRunnable(const LString& InHumanReadableName)
+        : LRunnable(InHumanReadableName)
+    {
+    }
 
     virtual ETaskExit::Type Run() override;
 };
