@@ -54,7 +54,7 @@ set(JAFG_SEARCH_PATHS
 
 #
 # Exclude paths are used to ignore certain directories in the search paths for Jafg modules.
-# You may add your onw to this list.
+# You may add your own to this list.
 #
 set(JAFG_EXCLUDE_PATHS
     "Engine/Vendor"
@@ -66,14 +66,30 @@ set(JAFG_MODULE_TYPE_STATIC     "static")
 # This module is a "normal" shared library that is loaded before the program starts. It is required to be available
 # at runtime. This module has to be linked against at compile time.
 set(JAFG_MODULE_TYPE_SHARED     "shared")
-# This module must define an entry point to link against it. It is bad design to link against this module type.
+# This module must define an entry point to link against. It is bad design to link against this module type.
 set(JAFG_MODULE_TYPE_LAUNCH     "launch")
-# This module is a plugin that is loaded at runtime. It is not required by the language to be available at runtime.
+# This module is a plugin that is loaded dynamically at runtime based of user preferences or transitive
+# plugin dependencies. It is not required by the language to be available at runtime.
 set(JAFG_MODULE_TYPE_PLUGIN     "plugin")
 
 #
-# Use this macro to add your module to the Jafg solution.
-# After that use the normal CMake commands to customize the just added module.
+# Use this macro to add your own modules to the Jafg solution.
+# After that use the normal CMake commands to customize the just added modules.
+# The module name can be accessed via "_scoped_module_name". It is the name of the directory the CMakeLists.txt is in,
+# e.g. this means that:
+#    Runtime            => Runtime
+#    Engine/Core        => Engine
+#    Engine/Engine      => Engine
+#    Plugins/MyPlugin   => MyPlugin
+#
+# You CMakeLists.txt file may be loaded multiple times by the Jafg build tool, therefore it is necessary to guard
+# it, e.g.:
+#     include_guard(_guard)                             # If this CMakeLists.txt was located in the "Plugins/MyPlugin"
+#     if(_guard)                                        # directory, then this just added a new plugin for Jafg with
+#         jafg_add_module(JAFG_MODULE_TYPE_PLUGIN)      # the name "MyPlugin" and identifier "Plugins/MyPlugin".
+#         < Custom CMake commands here if necessary >   # This module can now be dynamically loaded at runtime.
+#     endif()
+#
 # @see Examples can be found at "Engine/Engine/CMakeLists.txt" or at "Plugins/JafgPlugin/CMakeLists.txt".
 #
 macro(jafg_add_module
@@ -88,7 +104,7 @@ endmacro()
 # @see Examples can be found at "Engine/EngineForward/CMakeLists.txt" or at "Plugins/JafgPlugin/CMakeLists.txt".
 #
 macro(jafg_add_dependency
-    # The relative path of the module to add as a dependency to the engine.
+    # The relative path of the module to add as a dependency to the engine. E.g.: "Engine/Engine".
     dep_path
     #
     # The visibility of the dependency. This is either "public" or "private".
