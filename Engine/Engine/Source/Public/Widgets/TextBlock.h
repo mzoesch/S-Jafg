@@ -54,15 +54,15 @@ FORCEINLINE bool IsBottom(const Type InAlign) { return InAlign == Bottom; }
 
 struct LTextBlockBrush
 {
-    LColor            Tint  = LColor::Transparent;
-    LColor            Color = LColor::White;
-    float             Scale = 1.0f;
-    ETextHAlign::Type HAlign = ETextHAlign::Left;
-    ETextVAlign::Type VAlign = ETextVAlign::Top;
+    LColor            Tint  { LColor::Transparent };
+    LColor            Color { LColor::White };
+    f32               Scale { 1.0f };
+    ETextHAlign::Type HAlign { ETextHAlign::Left };
+    ETextVAlign::Type VAlign { ETextVAlign::Top };
 
     FORCEINLINE LTextBlockBrush& TintRet(const LColor& InTint) { this->Tint = InTint; return *this; }
     FORCEINLINE LTextBlockBrush& ColorRet(const LColor& InColor) { this->Color = InColor; return *this; }
-    FORCEINLINE LTextBlockBrush& ScaleRet(const float InScale) { this->Scale = InScale; return *this; }
+    FORCEINLINE LTextBlockBrush& ScaleRet(const f32 InScale) { this->Scale = InScale; return *this; }
 
     FORCEINLINE bool IsLeftAligned()    const { return ETextHAlign::IsLeft(this->HAlign);   }
     FORCEINLINE bool IsCenterAligned()  const { return ETextHAlign::IsCenter(this->HAlign); }
@@ -94,7 +94,7 @@ public:
 
     FORCEINLINE TFactoryRetTy& Color(const LColor&  InColor) { this->This()->SetColor(InColor); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Tint(const LColor&  InTint) { this->This()->SetTint(InTint); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Scale(const float InScale) { this->This()->SetScale(InScale); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Scale(const f32 InScale) { this->This()->SetScale(InScale); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Brush(const LTextBlockBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Align(const ETextHAlign::Type InAlign) { this->This()->SetHAlign(InAlign); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Align(const ETextVAlign::Type InAlign) { this->This()->SetVAlign(InAlign); return this->Self(); }
@@ -124,27 +124,28 @@ public:
     FORCEINLINE void EmptyContent() { this->Content.Empty(); }
     FORCEINLINE void SetContent(const LString& InContent) { this->Content = InContent; }
     FORCEINLINE void SetContent(LString&& InContent) { this->Content = std::move(InContent); }
-    FORCEINLINE auto GetContent() const -> const LString& { return this->Content; }
+    FORCEINLINE const LString& GetContent() const { return this->Content; }
 
-    FORCEINLINE void SetColor(const LColor& InColor) { this->Brush.Color = InColor; }
-    FORCEINLINE auto GetColor() const -> const LColor& { return this->Brush.Color; }
-    FORCEINLINE void SetTint(const LColor& InTint) { this->Brush.Tint = InTint; }
-    FORCEINLINE auto GetTint() const -> const LColor& { return this->Brush.Tint; }
-    FORCEINLINE void SetScale(const float InScale) { this->Brush.Scale = InScale; }
-    FORCEINLINE auto GetScale() const -> float { return this->Brush.Scale; }
-    FORCEINLINE void SetAlign(const ETextHAlign::Type InAlign) { this->Brush.HAlign = InAlign; }
-    FORCEINLINE void SetAlign(const ETextVAlign::Type InAlign) { this->Brush.VAlign = InAlign; }
-    FORCEINLINE auto GetAlign() const -> ETextHAlign::Type { return this->Brush.HAlign; }
-    FORCEINLINE void SetHAlign(const ETextHAlign::Type InAlign) { this->Brush.HAlign = InAlign; }
-    FORCEINLINE auto GetHAlign() const -> ETextHAlign::Type { return this->Brush.HAlign; }
-    FORCEINLINE void SetVAlign(const ETextVAlign::Type InAlign) { this->Brush.VAlign = InAlign; }
-    FORCEINLINE auto GetVAlign() const -> ETextVAlign::Type { return this->Brush.VAlign; }
+    FORCEINLINE void SetColor(const LColor& InColor) noexcept { this->Brush.Color = InColor; }
+    FORCEINLINE void SetTint(const LColor& InTint) noexcept { this->Brush.Tint = InTint; }
+    FORCEINLINE void SetScale(const f32 InScale) noexcept { this->Brush.Scale = InScale; }
+    FORCEINLINE void SetAlign(const ETextHAlign::Type InAlign) noexcept { this->Brush.HAlign = InAlign; }
+    FORCEINLINE void SetAlign(const ETextVAlign::Type InAlign) noexcept { this->Brush.VAlign = InAlign; }
+    FORCEINLINE void SetHAlign(const ETextHAlign::Type InAlign) noexcept { this->Brush.HAlign = InAlign; }
+    FORCEINLINE void SetVAlign(const ETextVAlign::Type InAlign) noexcept { this->Brush.VAlign = InAlign; }
 
-    FORCEINLINE void SetBrush(const LTextBlockBrush& InBrush) { this->Brush = InBrush; }
-    FORCEINLINE auto GetBrush() const -> const LTextBlockBrush& { return this->Brush;    }
+    FORCEINLINE const LColor& GetColor() const noexcept { return this->Brush.Color; }
+    FORCEINLINE const LColor& GetTint() const noexcept { return this->Brush.Tint; }
+    FORCEINLINE f32           GetScale() const noexcept { return this->Brush.Scale; }
+    FORCEINLINE ETextHAlign::Type GetAlign() const noexcept { return this->Brush.HAlign; }
+    FORCEINLINE ETextHAlign::Type GetHAlign() const noexcept { return this->Brush.HAlign; }
+    FORCEINLINE ETextVAlign::Type GetVAlign() const noexcept { return this->Brush.VAlign; }
 
-    FORCEINLINE void SetPadding(const LPadding& InPadding) { this->Padding = InPadding; }
-    FORCEINLINE auto GetPadding() const -> const LPadding& { return this->Padding; }
+    FORCEINLINE void SetBrush(const LTextBlockBrush& InBrush) noexcept { this->Brush = InBrush; }
+    FORCEINLINE const LTextBlockBrush& GetBrush() const noexcept { return this->Brush;    }
+
+    FORCEINLINE void SetPadding(const LPadding& InPadding) noexcept { this->Padding = InPadding; }
+    FORCEINLINE const LPadding& GetPadding() const noexcept { return this->Padding; }
 
     FORCEINLINE LVector2 GetDesiredSizeOfRawText() const { return this->TextDesiredSize; }
 

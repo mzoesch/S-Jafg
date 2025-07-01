@@ -50,6 +50,7 @@ protected:
 
     LEngine* GetEngine() const;
     LLocalEgo* GetLocalEgo() const;
+    LLocalEgo* GetLocalEgoChecked() const { LLocalEgo* Out { this->GetLocalEgo() }; check( Out ) return Out; }
     LCommandLineInterface* GetCommandLineInterface() const;
 
 private:

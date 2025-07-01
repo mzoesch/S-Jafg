@@ -73,7 +73,8 @@ public:
     //#
     mutable LOnLateTick OnLateTick;
 
-    ENGINE_API void AddWidget(WUserWidget* Widget);
+    void AddWidget(WUserWidget* Widget);
+    void AddWidgetAt(const i32 Index, WUserWidget* Widget);
     ENGINE_API void RemoveWidget(WUserWidget* Widget);
     ENGINE_API bool TryRemoveWidget(WUserWidget* Widget);
 

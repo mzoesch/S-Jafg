@@ -376,7 +376,7 @@
     {                                               \
         if (::Lal::Hal::IsTracerPidValidVerySlow()) \
         {                                           \
-            PRIVATE_LAL_GORGEOUS_BREAK_IMPL();      \
+            PRIVATE_LAL_GORGEOUS_BREAK_IMPL()       \
         }                                           \
     }
 

@@ -18,6 +18,7 @@ ENGINE_API extern LName Name_UicInMyWorld;
 ENGINE_API extern LName Name_UicInMyWorldFoot;
 ENGINE_API extern LName Name_UicInPause;
 ENGINE_API extern LName Name_UicInConsole;
+ENGINE_API extern LName Name_UicInDebugMenu;
 
 ENGINE_API extern LName Name_PrefGameplay;
 ENGINE_API extern LName Name_PrefAudio;
@@ -41,6 +42,7 @@ ENGINE_API extern LName Name_ShaderOrthographicRoundedOutlineImageBox;
 ENGINE_API extern LName Name_ShaderChunk;
 
 ENGINE_API extern LName Name_UsrInToggleDebugScreen;
+ENGINE_API extern LName Name_UsrInToggleDebugMenu;
 ENGINE_API extern LName Name_UsrInTogglePauseScreen;
 ENGINE_API extern LName Name_UsrInRhiPolyToWireframe;
 ENGINE_API extern LName Name_UsrInRhiPolyToFill;

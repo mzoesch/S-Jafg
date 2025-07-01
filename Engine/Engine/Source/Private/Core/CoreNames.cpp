@@ -10,6 +10,7 @@ ENGINE_API LName Name_UicInMyWorld          = MAKE_STATIC_NAME("InMyWorld");
 ENGINE_API LName Name_UicInMyWorldFoot      = MAKE_STATIC_NAME("InMyWorldFoot");
 ENGINE_API LName Name_UicInPause            = MAKE_STATIC_NAME("InPause");
 ENGINE_API LName Name_UicInConsole          = MAKE_STATIC_NAME("InConsole");
+ENGINE_API LName Name_UicInDebugMenu        = MAKE_STATIC_NAME("InDebugMenu");
 
 ENGINE_API LName Name_PrefGameplay          = MAKE_STATIC_NAME("PreferenceGameplay");
 ENGINE_API LName Name_PrefAudio             = MAKE_STATIC_NAME("PreferenceAudio");
@@ -33,6 +34,7 @@ ENGINE_API LName Name_ShaderOrthographicRoundedOutlineImageBox = MAKE_STATIC_NAM
 ENGINE_API LName Name_ShaderChunk                              = MAKE_STATIC_NAME("ShaderJafgChunk");
 
 ENGINE_API LName Name_UsrInToggleDebugScreen   = MAKE_STATIC_NAME("ToggleDebugScreen");
+ENGINE_API LName Name_UsrInToggleDebugMenu     = MAKE_STATIC_NAME("ToggleDebugMenu");
 ENGINE_API LName Name_UsrInTogglePauseScreen   = MAKE_STATIC_NAME("TogglePauseScreen");
 ENGINE_API LName Name_UsrInRhiPolyToWireframe  = MAKE_STATIC_NAME("RhiPolyToWireframe");
 ENGINE_API LName Name_UsrInRhiPolyToFill       = MAKE_STATIC_NAME("RhiPolyToFill");

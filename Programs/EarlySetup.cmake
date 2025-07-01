@@ -129,9 +129,11 @@ if(LAL_DO_SANITIZED_BUILD)
     message(STATUS "Enabling sanitizers for the current build.")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         add_compile_options(
-            -fsanitize=address                  # address:   Detects use-after-free, heap buffer overflows, etc.
-            -fsanitize=undefined                # undefined: Detects undefined behavior, like null deref, signed int overflow, etc.
-            -fsanitize=leak                     # leak:      Detects memory leaks.
+            -fsanitize=address                  # address:                 Detects use-after-free, heap buffer overflows, etc.
+            -fsanitize=undefined                # undefined:               Detects undefined behavior, like null deref, signed int overflow, etc.
+            -fsanitize=leak                     # leak:                    Detects memory leaks.
+            -fsanitize=signed-integer-overflow  # signed-integer-overflow: Detects signed integer overflows.
+            -fsanitize=integer                  # integer:                 Detects integer overflows, division by zero, etc.
             -fno-omit-frame-pointer             # Keeps frame pointers for better stack traces.
             -fstack-protector-strong            # Adds stack canaries to detect buffer overflows.
             -ftrivial-auto-var-init=pattern     # Fill uninitialized local variables with a pattern.
@@ -140,6 +142,8 @@ if(LAL_DO_SANITIZED_BUILD)
             -fsanitize=address      # @see add_compile_options above.
             -fsanitize=undefined
             -fsanitize=leak
+            -fsanitize=signed-integer-overflow
+            -fsanitize=integer
             )
     else()
         message(FATAL_ERROR "Missing implementation for CMAKE_CXX_COMPILER_ID [${CMAKE_CXX_COMPILER_ID}].")

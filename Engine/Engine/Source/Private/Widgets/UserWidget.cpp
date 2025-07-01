@@ -41,9 +41,19 @@ Jafg::LViewport* Jafg::WUserWidget::GetViewport() const
 
 void Jafg::WUserWidget::AddToViewport(LViewport* InViewport)
 {
-    check( this->AttachedViewport == nullptr ) // Handle this case?
+    check( this->AttachedViewport == nullptr )
     this->AttachedViewport = InViewport;
     this->AttachedViewport->AddWidget(this);
+
+    return;
+}
+
+void Jafg::WUserWidget::AddToViewportAt(const i32 InIndex, LViewport* InViewport)
+{
+    check( this->AttachedViewport == nullptr )
+
+    this->AttachedViewport = InViewport;
+    this->AttachedViewport->AddWidgetAt(InIndex, this);
 
     return;
 }

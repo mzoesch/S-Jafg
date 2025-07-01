@@ -1023,8 +1023,15 @@ FORCEINLINE TArrayBase<InAlloc>::TArrayBase(InTArgs&&... InArgs) noexcept requir
 {
     this->Reserve(sizeof...(InTArgs));
 
-    T* Me = this->Impl.Data;
-    ([&](void) -> void { new(Me++) T (std::move(InArgs)); return; } (),...);
+    T* Me { this->Impl.Data };
+    (
+        [&]<typename TArg>(TArg&& Arg)
+        {
+            new(Me++) T(std::forward<TArg>(Arg));
+        }(std::forward<InTArgs>(InArgs)),
+        ...
+    );
+
     this->Impl.Slack = Me;
     checkSlow( this->Impl.Slack <= this->Impl.End )
 

@@ -415,6 +415,20 @@ void Jafg::LViewport::AddWidget(WUserWidget* Widget)
 {
     check( Widget )
     this->TopLevelWidgets.Add(Widget);
+
+    check( Widget->GetViewport() == this )
+
+    return;
+}
+
+void Jafg::LViewport::AddWidgetAt(const i32 Index, WUserWidget* Widget)
+{
+    check( Widget )
+    this->TopLevelWidgets.AddAt(Index, Widget);
+
+    check( Widget->GetViewport() == this )
+
+    return;
 }
 
 void Jafg::LViewport::RemoveWidget(WUserWidget* Widget)

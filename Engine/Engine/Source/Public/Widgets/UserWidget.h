@@ -40,6 +40,7 @@ public:
 
     //# Add this widget to the main viewport of the current active local ego.
     void AddToViewport(LViewport* InViewport);
+    void AddToViewportAt(const i32 InIndex, LViewport* InViewport);
 
     //# @return The new root.
     template <typename TParent>

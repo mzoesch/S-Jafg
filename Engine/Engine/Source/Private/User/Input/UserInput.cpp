@@ -128,6 +128,46 @@ i32 Jafg::LUserInput::DeactivateAllContexts(TArray<LUserInputContext*>* OutActiv
     return Out;
 }
 
+void Jafg::LUserInput::PushContexts(const bool bEmpty /* = true */)
+{
+    if (bEmpty)
+    {
+        this->ContextStack.Emplace(std::move(this->ActiveContexts));
+        check( this->ActiveContexts.IsEmpty() )
+    }
+    else
+    {
+        TArray<LUserInputContext*> Ctx; Ctx = this->ActiveContexts;
+        this->ContextStack.Add(std::move(Ctx));
+        check( this->ContextStack.GetLast()->GetSize() == this->ActiveContexts.GetSize() )
+    }
+
+    LOG_VERBOSE(LogUserInput, "Pushed [{}] active contexts onto the stack.", this->ContextStack.GetLast()->GetSize())
+
+    return;
+}
+
+bool Jafg::LUserInput::PopContexts()
+{
+    bool bRet;
+
+    if (this->ContextStack.IsEmpty())
+    {
+        bRet = false;
+    }
+    else
+    {
+        bRet = true;
+
+        this->ActiveContexts = std::move(*this->ContextStack.GetLast());
+        this->ContextStack.Pop();
+    }
+
+    LOG_VERBOSE(LogUserInput, "Popped [{}] active contexts from the stack.", this->ActiveContexts.GetSize())
+
+    return bRet;
+}
+
 Jafg::TArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
 {
     TArray<LRawInput> TriggeredKeys;

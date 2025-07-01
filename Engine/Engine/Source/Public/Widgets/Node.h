@@ -772,10 +772,10 @@ FORCEINLINE TNode* ConstructWidgetNode(LObjectContext* InContext)
     return ConstructWidgetNode<TNode>(InContext, TNode::StaticClass());
 }
 
-template<typename TNode>
+template <typename TNode>
 FORCEINLINE TNode* ConstructWidgetNode(LObjectContext* InContext, const TSubclassOf<TNode>& InClass)
 {
-    const TNode* Out = ConstructDeferredWidgetNode<TNode>(InContext, InClass);
+    TNode* Out { ConstructDeferredWidgetNode<TNode>(InContext, InClass) };
     MakeDeferredWidgetNodeFinal(Out);
     return Out;
 }

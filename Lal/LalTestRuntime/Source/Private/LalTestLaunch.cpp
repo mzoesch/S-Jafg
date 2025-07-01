@@ -2,6 +2,10 @@
 
 #include "CoreAfx.h"
 
+#if !WITH_TESTS
+static_assert(false, "The entry of LalTestRuntime must be used in an environment where tests are enabled.");
+#endif /* !WITH_TESTS */
+
 #if WITH_TESTS
 
 #include "TesterInclude.h"
@@ -47,10 +51,4 @@ EPlatformExit::Type LalLaunchTestMain()
 #endif /* !WITH_TESTS */
 }
 
-#else /* WITH_TESTS */
-
-i32 main(i32 Argc, char* Argv[])
-{
-}
-
-#endif /* !WITH_TESTS */
+#endif /* WITH_TESTS */

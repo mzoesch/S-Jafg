@@ -27,7 +27,7 @@ Jafg::WEditableTextBlock::WEditableTextBlock(const LObjectInitializer& ObjectIni
     this->SetPadding({10.0, 8.0});
     this->SetType(ERegionBrush::Box);
     this->SetTint(LColor::Black);
-    this->SetTextTint(LColor::White);
+    this->SetTextColor(LColor::White);
 
     return;
 }
@@ -65,7 +65,7 @@ void Jafg::WEditableTextBlock::Draw(LViewport& Context) const
         Args.Offset      = AnchoredTopLeftFromMostOuter;
         Args.Padding     = this->GetBrush().Padding;
         Args.DesiredSize = this->GetDesiredSize();
-        Args.Color       = this->TextTint;
+        Args.Color       = this->TextColor;
         Args.Scale       = this->TextScale;
         this->ShaderContext.Draw(Context, Args);
     }

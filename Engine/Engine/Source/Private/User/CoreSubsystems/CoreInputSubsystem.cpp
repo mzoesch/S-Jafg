@@ -13,6 +13,7 @@
 #include "User/Input/UserInput.h"
 #include "User/Input/InputAction.h"
 #include "Engine/Engine.h"
+#include "User/Frontend/Osd/DebugMenu.h"
 
 void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 {
@@ -25,10 +26,12 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
     LUserInputContext* ContextMyWorldFoot = UserInput->RegisterContext(LUserInputContext{Name_UicInMyWorldFoot, "In My World Foot"});
     LUserInputContext* ContextInPause     = UserInput->RegisterContext(LUserInputContext{Name_UicInPause, "In Pause"});
     LUserInputContext* ContextInConsole   = UserInput->RegisterContext(LUserInputContext{Name_UicInConsole, "In Console"});
+    LUserInputContext* ContextDebugMenu   = UserInput->RegisterContext(LUserInputContext{Name_UicInDebugMenu, "In Debug Menu"});
     check( ContextMyWorld     )
     check( ContextMyWorldFoot )
     check( ContextInPause     )
     check( ContextInConsole   )
+    check( ContextDebugMenu   )
 
     // Action: ToggleDebugScreen
     {
@@ -43,6 +46,72 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             },
             this,
             &JCoreInputSubsystem::OnDebugScreenToggle
+        );
+    }
+
+    // Action: ToggleDebugMenu
+    {
+        const LInputAction* Action { UserInput->RegisterAction({Name_UsrInToggleDebugMenu, "Toggle Debug Menu", EInputActionCategory::Boolean}) };
+        ContextMyWorld->MapAction
+        (
+            Action,
+            "",
+            EKeys::F8,
+            EInputActionTrigger::Triggered,
+            {
+            },
+            [this, UserInput](LInputActionValue& InValue) -> void
+            {
+                if (UserInput->GetReferenceContexts().ContainsByPredicate([](const LUserInputContext* InContext) -> bool
+                {
+                    return InContext->GetName() == Name_UicInDebugMenu;
+                }) || UserInput->GetActiveContexts().ContainsByPredicate([](const LUserInputContext* InContext) -> bool
+                {
+                    return InContext->GetName() == Name_UicInDebugMenu;
+                }))
+                {
+                    LOG_VERBOSE(LogUserInput, "Aborting request for debug menu activation, already active or in reference.")
+                    return;
+                }
+
+                UserInput->PushContexts();
+                UserInput->ActivateContext(Name_UicInDebugMenu);
+
+                if
+                (
+                    WDebugMenu* Screen { this->GetLocalEgo()->GetFrontend()->GetFirstTopLevelWidgetByClass<WDebugMenu>() };
+                    ensure(Screen)
+                )
+                {
+                    Screen->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
+                }
+
+                return;
+            }
+        );
+        ContextDebugMenu->MapAction
+        (
+            Action,
+            "",
+            EKeys::F8,
+            EInputActionTrigger::Triggered,
+            {
+            },
+            [this, UserInput](LInputActionValue& InValue) -> void
+            {
+                ensureDiscard(UserInput->PopContexts());
+
+                if
+                (
+                    WDebugMenu* Screen { this->GetLocalEgo()->GetFrontend()->GetFirstTopLevelWidgetByClass<WDebugMenu>() };
+                    ensure(Screen)
+                )
+                {
+                    Screen->SetVisibility(EWidgetVisibility::Collapsed);
+                }
+
+                return;
+            }
         );
     }
 
@@ -360,12 +429,15 @@ void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
 
 void Jafg::JCoreInputSubsystem::OnDebugScreenToggle(LInputActionValue& InValue) const
 {
-    WDebugScreen* Screen = this->GetLocalEgo()->GetFrontend()->GetFirstTopLevelWidgetByClassChecked<WDebugScreen>();
+    WDebugScreen* Screen { this->GetLocalEgo()->GetFrontend()->GetFirstTopLevelWidgetByClass<WDebugScreen>() };
 
-    Screen->SetVisibility(Screen->GetVisibility() == EWidgetVisibility::TransitiveHitTestInvisible
-        ? EWidgetVisibility::Collapsed
-        : EWidgetVisibility::TransitiveHitTestInvisible
-    );
+    if (Screen)
+    {
+        Screen->SetVisibility(Screen->GetVisibility() == EWidgetVisibility::Collapsed
+            ? EWidgetVisibility::TransitiveHitTestInvisible
+            : EWidgetVisibility::Collapsed
+        );
+    }
 
     return;
 }

@@ -19,6 +19,8 @@ class LUserInput final
 {
 public:
 
+    typedef TArray<TArray<LUserInputContext*>> LContextStack;
+
     LUserInput() = default;
     PROHIBIT_REALLOC_OF_ANY_FORM(LUserInput)
     ~LUserInput() = default;
@@ -43,6 +45,9 @@ public:
     ENGINE_API  bool ActivateContext(LUserInputContext* InContext);
     FORCEINLINE bool ActivateContext(const LName& InName) { return this->ActivateContext(this->GetContextByName(InName)); }
     FORCEINLINE bool ActivateContext(const LString& InName) { return this->ActivateContext(GET_NAME(InName)); }
+    FORCEINLINE bool ActivateContexts(const TArray<LUserInputContext*>& InContexts);
+    FORCEINLINE bool ActivateContexts(const TArray<LName>& InNames);
+    FORCEINLINE bool ActivateContexts(const TArray<LString>& InNames);
 
     //#
     //# Deactivate a context. Nullptr is ok to pass.
@@ -51,8 +56,24 @@ public:
     ENGINE_API  bool DeactivateContext(LUserInputContext* InContext);
     FORCEINLINE bool DeactivateContext(const LName& InName) { return this->DeactivateContext(this->GetContextByName(InName)); }
     FORCEINLINE bool DeactivateContext(const LString& InName) { return this->DeactivateContext(GET_NAME(InName)); }
+    FORCEINLINE bool DeactivateContexts(const TArray<LUserInputContext*>& InContexts);
+    FORCEINLINE bool DeactivateContexts(const TArray<LName>& InNames);
+    FORCEINLINE bool DeactivateContexts(const TArray<LString>& InNames);
 
     ENGINE_API  i32  DeactivateAllContexts(TArray<LUserInputContext*>* OutActiveContexts = nullptr);
+
+    //#
+    //# Push all current active contexts as a snapshot to a stack.
+    //# @param bReset If true, the current active contexts array will be emptied. This will result no active contexts
+    //#               after this call.
+    //#
+    ENGINE_API void PushContexts(const bool bEmpty = true);
+    //#
+    //# Removes a snapshot, pushed with #PushContexts, from the stack and applies it to the current active contexts.
+    //# The active contexts will be removed.
+    //# @return True if a previous applied context snapshot was applied.
+    //#
+    ENGINE_API bool PopContexts();
 
     ENGINE_API TArray<LRawInput>        GetTriggeredKeys() const;
     ENGINE_API const TArray<LRawInput>& GetOngoingKeys() const;
@@ -93,10 +114,13 @@ public:
     ENGINE_API const TArray<LString>& GetBufferedPlatformInput() const;
     ENGINE_API LString GetBufferedPlatformInputAsStr() const;
 
-    FORCEINLINE const TArray<LUserInputContext*>& GetActiveContexts() const { return this->ActiveContexts; }
+    FORCEINLINE const TArray<LUserInputContext*>& GetActiveContexts() const noexcept { return this->ActiveContexts; }
+    FORCEINLINE const LContextStack& GetContextStack() const noexcept { return this->ContextStack; }
+    FORCEINLINE void SetReferenceContexts(const TArray<LUserInputContext*>& InContexts) { this->ReferenceContexts = InContexts; }
+    FORCEINLINE const TArray<LUserInputContext*>& GetReferenceContexts() const noexcept { return this->ReferenceContexts; }
 
-    FORCEINLINE const TArray<Smart::TUnique<LInputAction>>& GetRegisteredActions() const { return this->RegisteredActions; }
-    FORCEINLINE const TArray<Smart::TUnique<LUserInputContext>>& GetRegisteredContexts() const { return this->RegisteredContexts; }
+    FORCEINLINE const TArray<Smart::TUnique<LInputAction>>& GetRegisteredActions() const noexcept { return this->RegisteredActions; }
+    FORCEINLINE const TArray<Smart::TUnique<LUserInputContext>>& GetRegisteredContexts() const noexcept { return this->RegisteredContexts; }
 
 private:
 
@@ -109,6 +133,108 @@ private:
     //# The most important context is stored first.
     //#
     TArray<LUserInputContext*> ActiveContexts;
+    LContextStack ContextStack;
+    TArray<LUserInputContext*> ReferenceContexts;
 };
 
+FORCEINLINE bool LUserInput::ActivateContexts(const TArray<LUserInputContext*>& InContexts)
+{
+    bool bOut { false };
+
+    InContexts.ForEach([this, &bOut](LUserInputContext* InContext) -> void
+    {
+        if (this->ActivateContext(InContext))
+        {
+            bOut = true;
+        }
+
+        return;
+    });
+
+    return bOut;
+}
+
+FORCEINLINE bool LUserInput::ActivateContexts(const TArray<LName>& InNames)
+{
+    bool bOut { false };
+
+    InNames.ForEach([this, &bOut](const LName& InName) -> void
+    {
+        if (this->ActivateContext(InName))
+        {
+            bOut = true;
+        }
+
+        return;
+    });
+
+    return bOut;
+}
+FORCEINLINE bool LUserInput::ActivateContexts(const TArray<LString>& InNames)
+{
+    bool bOut { false };
+
+    InNames.ForEach([this, &bOut](const LString& InName) -> void
+    {
+        if (this->ActivateContext(InName))
+        {
+            bOut = true;
+        }
+
+        return;
+    });
+
+    return bOut;
+}
+
+FORCEINLINE bool LUserInput::DeactivateContexts(const TArray<LUserInputContext*>& InContexts)
+{
+    bool bOut { false };
+
+    InContexts.ForEach([this, &bOut](LUserInputContext* InContext) -> void
+    {
+        if (this->DeactivateContext(InContext))
+        {
+            bOut = true;
+        }
+
+        return;
+    });
+
+    return bOut;
+}
+
+FORCEINLINE bool LUserInput:: DeactivateContexts(const TArray<LName>& InNames)
+{
+    bool bOut { false };
+
+    InNames.ForEach([this, &bOut](const LName& InName) -> void
+    {
+        if (this->DeactivateContext(InName))
+        {
+            bOut = true;
+        }
+
+        return;
+    });
+
+    return bOut;
+}
+
+FORCEINLINE bool LUserInput:: DeactivateContexts(const TArray<LString>& InNames)
+{
+    bool bOut { false };
+
+    InNames.ForEach([this, &bOut](const LString& InName) -> void
+    {
+        if (this->DeactivateContext(InName))
+        {
+            bOut = true;
+        }
+
+        return;
+    });
+
+    return bOut;
+}
 } /* ~Namespace Jafg */

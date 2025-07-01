@@ -8,7 +8,7 @@ macro(_jafg_add_module
     set(_scoped_module_name "${module_name}")
 endmacro()
 
-macro(_add_flag_if_specified
+macro(_jafg_add_flag_if_specified
     flag
     cpp_name
     )
@@ -65,9 +65,7 @@ function(_jafg_add_module_impl
     string(TOUPPER "${module_name}" module_name_upper)
 
     set(module_int_dir "${JAFG_ENGINE_ROOT}/Intermediates/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}")
-    if(NOT EXISTS "${module_int_dir}")
-        PrebuildModuleWithMotor(${module_rel_dir})
-    endif()
+    PrebuildModuleWithMotor(${module_rel_dir})
     if(NOT EXISTS "${module_int_dir}")
         message(FATAL_ERROR "Module intermediate directory [${module_int_dir}] is not valid. Motor failed silently.")
     endif()
@@ -144,11 +142,6 @@ function(_jafg_add_module_impl
     if(EXISTS "${pch_file}")
         target_precompile_headers(${module_name} PRIVATE
             "${pch_file}"
-            )
-
-        add_custom_target(${module_name}_ResetPch
-            COMMAND ${CMAKE_COMMAND} -E rm -f
-            "${CMAKE_BINARY_DIR}/${module_rel_dir}/CMakeFiles/${module_name}.dir/cmake_pch.hxx.gch"
             )
     endif()
 
@@ -295,20 +288,20 @@ function(_jafg_add_module_impl
         LAL_DO_COMPILER_DIAGNOSTIC_SETUP=${b_LAL_FLAG_DO_COMPILER_DIAGNOSTIC_SETUP}
         )
 
-    _add_flag_if_specified(${LAL_FLAG_DO_ENABLE_SHIPPING_WARNINGS}      "LAL_DO_ENABLE_SHIPPING_WARNINGS")
-    _add_flag_if_specified(${LAL_FLAG_LOG_DEFAULT_VERBOSITY}            "LAL_LOG_DEFAULT_VERBOSITY")
-    _add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_TRACE}                 "LAL_LOG_ENABLE_TRACE")
-    _add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_VERBOSE}               "LAL_LOG_ENABLE_VERBOSE")
-    _add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_INFO}                  "LAL_LOG_ENABLE_INFO")
-    _add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_WARNING}               "LAL_LOG_ENABLE_WARNING")
-    _add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_ERROR}                 "LAL_LOG_ENABLE_ERROR")
-    _add_flag_if_specified(${LAL_FLAG_LOG_DO_SCOPED_TIME_TASK_MEASURER} "LAL_LOG_DO_SCOPED_TIME_TASK_MEASURER")
-    _add_flag_if_specified(${JAFG_FLAG_FORCE_LOG_FLUSH_INTERVAL}        "JAFG_FORCE_LOG_FLUSH_INTERVAL")
-    _add_flag_if_specified(${JAFG_FLAG_LOG_TIME_FOR_VERY_LONG_FRAMES}   "JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES")
+    _jafg_add_flag_if_specified(${LAL_FLAG_DO_ENABLE_SHIPPING_WARNINGS}      "LAL_DO_ENABLE_SHIPPING_WARNINGS")
+    _jafg_add_flag_if_specified(${LAL_FLAG_LOG_DEFAULT_VERBOSITY}            "LAL_LOG_DEFAULT_VERBOSITY")
+    _jafg_add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_TRACE}                 "LAL_LOG_ENABLE_TRACE")
+    _jafg_add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_VERBOSE}               "LAL_LOG_ENABLE_VERBOSE")
+    _jafg_add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_INFO}                  "LAL_LOG_ENABLE_INFO")
+    _jafg_add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_WARNING}               "LAL_LOG_ENABLE_WARNING")
+    _jafg_add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_ERROR}                 "LAL_LOG_ENABLE_ERROR")
+    _jafg_add_flag_if_specified(${LAL_FLAG_LOG_DO_SCOPED_TIME_TASK_MEASURER} "LAL_LOG_DO_SCOPED_TIME_TASK_MEASURER")
+    _jafg_add_flag_if_specified(${JAFG_FLAG_FORCE_LOG_FLUSH_INTERVAL}        "JAFG_FORCE_LOG_FLUSH_INTERVAL")
+    _jafg_add_flag_if_specified(${JAFG_FLAG_LOG_TIME_FOR_VERY_LONG_FRAMES}   "JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES")
     # ~Compiler flags
     ###############################################################################
 
-    add_custom_target(${module_name}_PRE_BUILD
+    add_custom_target(zzz_${module_name}_PRE_BUILD
         COMMAND ${JAFG_MOTOR_EXECUTABLE}
             --PreBuild
             --Module ${module_rel_dir}
@@ -318,7 +311,7 @@ function(_jafg_add_module_impl
             --Configuration ${JAFG_TARGET_CONFIG}
             --Kind ${motor_module_type}
         )
-    add_dependencies(${module_name} ${module_name}_PRE_BUILD)
+    add_dependencies(${module_name} zzz_${module_name}_PRE_BUILD)
     add_custom_command(TARGET ${module_name} POST_BUILD
         COMMAND ${JAFG_MOTOR_EXECUTABLE}
             --PostBuild

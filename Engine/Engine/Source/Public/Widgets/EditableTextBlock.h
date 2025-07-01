@@ -17,8 +17,8 @@ public:
 
     GENERATED_FACTORY_BODY(TWidgetFactoryBox)
 
-    FORCEINLINE TFactoryRetTy& TextTint(const LColor& InColor)         { this->This()->SetTextTint(InColor);  return this->Self(); }
-    FORCEINLINE TFactoryRetTy& TextScale(const float InScale)          { this->This()->SetTextScale(InScale);  return this->Self(); }
+    FORCEINLINE TFactoryRetTy& TextColor(const LColor& InColor)        { this->This()->SetTextColor(InColor); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& TextScale(const float InScale)          { this->This()->SetTextScale(InScale); return this->Self(); }
     FORCEINLINE TFactoryRetTy& PlaceholderText(const LString& InText)  { this->This()->SetPlaceholderText(InText); return this->Self(); }
     FORCEINLINE TFactoryRetTy& PlaceholderText(     LString&& InText)  { this->This()->SetPlaceholderText(std::move(InText)); return this->Self(); }
     FORCEINLINE TFactoryRetTy& PlaceholderColor(const LColor& InColor) { this->This()->SetPlaceholderColor(InColor); return this->Self(); }
@@ -66,7 +66,7 @@ public:
     FORCEINLINE const LCaretBrush& GetCaretBrush() const { return this->CaretBrush; }
     FORCEINLINE void SetCaretBrush(const LCaretBrush& InBrush) { this->CaretBrush = InBrush; }
 
-    FORCEINLINE void SetTextTint(const LColor& InColor) { this->TextTint = InColor; }
+    FORCEINLINE void SetTextColor(const LColor& InColor) { this->TextColor = InColor; }
     FORCEINLINE void SetTextScale(const f32 InScale)   { this->TextScale = InScale; }
     FORCEINLINE void SetPlaceholderColor(const LColor& InColor) { this->PlaceholderColor = InColor; }
     FORCEINLINE void SetPlaceholderText(const LString& InText) { this->Placeholder = InText; }
@@ -95,7 +95,7 @@ private:
     void SafelyReduceCaretCursor();
     void SafelyIncreaseCaretCursor();
 
-    LColor TextTint { LColor::Black };
+    LColor TextColor { LColor::Black };
     f32    TextScale { 1.0f };
     LColor PlaceholderColor { LColor::Gray };
 

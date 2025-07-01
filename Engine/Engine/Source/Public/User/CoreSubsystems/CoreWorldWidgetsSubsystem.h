@@ -10,6 +10,7 @@ namespace Jafg
 {
 
 class WDebugScreen;
+class WDebugMenu;
 class WCrosshair;
 class WConsoleScreen;
 class WPauseScreen;
@@ -37,6 +38,9 @@ public:
     FORCEINLINE WDebugScreen* GetDebugScreen() { return this->DebugScreen; }
     FORCEINLINE const WDebugScreen* GetDebugScreen() const { return this->DebugScreen; }
 
+    FORCEINLINE WDebugMenu* GetDebugMenu() { return this->DebugMenu; }
+    FORCEINLINE const WDebugMenu* GetDebugMenu() const { return this->DebugMenu; }
+
     FORCEINLINE const WCrosshair* GetCrosshair() const { return this->Crosshair; }
     FORCEINLINE WCrosshair* GetCrosshair() { return this->Crosshair; }
 
@@ -49,6 +53,7 @@ public:
 private:
 
     WDebugScreen* DebugScreen { nullptr };
+    WDebugMenu* DebugMenu { nullptr };
     WCrosshair* Crosshair { nullptr };
     WConsoleScreen* ConsoleScreen { nullptr };
     WPauseScreen* PauseScreen { nullptr };

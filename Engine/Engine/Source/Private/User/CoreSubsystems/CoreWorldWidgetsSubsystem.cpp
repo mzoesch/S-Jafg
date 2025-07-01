@@ -5,6 +5,7 @@
 #include "User/LocalEgo.h"
 #include "Widgets/UserWidget.h"
 #include "User/Frontend/Osd/DebugScreen.h"
+#include "User/Frontend/Osd/DebugMenu.h"
 #include "User/Frontend/Hud/Crosshair.h"
 #include "User/Frontend/Osd/ConsoleScreen.h"
 #include "User/Frontend/Osd/PauseScreen.h"
@@ -36,6 +37,11 @@ void Jafg::JCoreWorldWidgetsSubsystem::Initialize(LSubsystemCollection& Collecti
     this->DebugScreen->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
     this->DebugScreen->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->DebugScreen);
+
+    this->DebugMenu = ConstructDeferredWidgetNode<WDebugMenu>(this->GetOuter());
+    this->DebugMenu->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
+    this->DebugMenu->SetVisibility(EWidgetVisibility::Collapsed);
+    MakeDeferredWidgetNodeFinal(this->DebugMenu);
 
     this->Crosshair = ConstructDeferredWidgetNode<WCrosshair>(this->GetOuter());
     this->Crosshair->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
