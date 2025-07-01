@@ -1,13 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Widgets/TextBlock.h"
+#include "Widgets/TextBox.h"
 #include "Rhi/Shader.h"
 #include "Rhi/RhiVendorInclude.h"
-#include <glm/fwd.hpp>
-#include <glm/glm.hpp>
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/gtc/type_ptr.inl>
-
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "Forward/EngineForward.h"
@@ -16,8 +11,21 @@
 #include "Widgets/Viewport.h"
 #include "System/EnginePath.h"
 
+#include <glm/fwd.hpp>
+#include <glm/glm.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/gtc/type_ptr.inl>
+
 namespace
 {
+
+FORCEINLINE Jafg::LTextBoxBrush GetDefaultTextBoxBrush()
+{
+    Jafg::LTextBoxBrush Brush;
+    Brush.Tint = Jafg::LColor::Transparent;
+    Brush.Padding = {4.5f};
+    return Brush;
+}
 
 Jafg::LShader FontShaderProgram;
 Jafg::LShader& GetFontShaderProgram() { return ::FontShaderProgram; }
@@ -58,55 +66,37 @@ std::map<u8, Character> Characters;
 
 } /* ~Namespace <Anonymous> */
 
-Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Header()
+Jafg::LTextBoxBrush Jafg::LTextBoxBrush::Header()
 {
-    return LTextBlockBrush
-    {
-        .Scale = GetDefault<JUserPreferences>()->HeaderFontSize
-    };
+    return ::GetDefaultTextBoxBrush().TextScaleRet(GetDefault<JUserPreferences>()->HeaderFontSize);
 }
 
-Jafg::LTextBlockBrush Jafg::LTextBlockBrush::SubHeader()
+Jafg::LTextBoxBrush Jafg::LTextBoxBrush::SubHeader()
 {
-    return LTextBlockBrush
-    {
-        .Scale = GetDefault<JUserPreferences>()->SubHeaderFontSize
-    };
+    return ::GetDefaultTextBoxBrush().TextScaleRet(GetDefault<JUserPreferences>()->SubHeaderFontSize);
 }
 
-Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Body()
+Jafg::LTextBoxBrush Jafg::LTextBoxBrush::Body()
 {
-    return LTextBlockBrush
-    {
-        .Scale = GetDefault<JUserPreferences>()->BodyFontSize
-    };
+    return ::GetDefaultTextBoxBrush().TextScaleRet(GetDefault<JUserPreferences>()->BodyFontSize);
 }
 
-Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Compact()
+Jafg::LTextBoxBrush Jafg::LTextBoxBrush::Compact()
 {
-    return LTextBlockBrush
-    {
-        .Scale = GetDefault<JUserPreferences>()->CompactFontSize
-    };
+    return ::GetDefaultTextBoxBrush().TextScaleRet(GetDefault<JUserPreferences>()->CompactFontSize);
 }
 
-Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Small()
+Jafg::LTextBoxBrush Jafg::LTextBoxBrush::Small()
 {
-    return LTextBlockBrush
-    {
-        .Scale = GetDefault<JUserPreferences>()->SmallFontSize
-    };
+    return ::GetDefaultTextBoxBrush().TextScaleRet(GetDefault<JUserPreferences>()->SmallFontSize);
 }
 
-Jafg::LTextBlockBrush Jafg::LTextBlockBrush::Tiny()
+Jafg::LTextBoxBrush Jafg::LTextBoxBrush::Tiny()
 {
-    return LTextBlockBrush
-    {
-        .Scale = GetDefault<JUserPreferences>()->TinyFontSize
-    };
+    return ::GetDefaultTextBoxBrush().TextScaleRet(GetDefault<JUserPreferences>()->TinyFontSize);
 }
 
-void Jafg::WTextBlock::Construct()
+void Jafg::WTextBox::Construct()
 {
     Super::Construct();
 
@@ -137,18 +127,18 @@ void Jafg::WTextBlock::Construct()
     return;
 }
 
-void Jafg::WTextBlock::Draw(LViewport& Context) const
+void Jafg::WTextBox::Draw(LViewport& Context) const
 {
     Super::Draw(Context);
 
-    if (this->Brush.Tint.A > 0)
+    if (this->GetTint().A > 0)
     {
         GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
         (
             Context,
             this->GetAnchoredSize(),
             this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
-            this->Brush.Tint
+            this->GetTint()
         );
     }
 
@@ -162,28 +152,28 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
     const float       YFromBottom      = static_cast<float>(WindowDimensions.Y);
     const LVector2    Offset           =
         this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context)
-        + ((this->GetAnchoredSize() - this->Padding.GetDesiredSize() - this->TextDesiredSize) * LVector2
+        + ((this->GetAnchoredSize() - this->GetPadding().GetDesiredSize() - this->TextDesiredSize) * LVector2
         (
-            this->Brush.IsLeftAligned() ? 0.0f : (this->Brush.IsHCenterAligned() ? 0.5f : 1.0f),
-            this->Brush.IsTopAligned()  ? 0.0f : (this->Brush.IsVCenterAligned() ? 0.5f : 1.0f)
+            this->IsLeftAligned() ? 0.0f : (this->IsHCenterAligned() ? 0.5f : 1.0f),
+            this->IsTopAligned()  ? 0.0f : (this->IsVCenterAligned() ? 0.5f : 1.0f)
         ));
 
     ::GetFontShaderProgram().Use();
-    ::GetFontShaderProgram().SetColorVec3Uniform("Color", this->Brush.Color);
+    ::GetFontShaderProgram().SetColorVec3Uniform("Color", this->GetTextColor());
     ::GetFontShaderProgram().SetMatrixUniform("Projection", Maths::MakeOrthographicProjectionMatrix(WindowDimensions));
     ::GetFontShaderProgram().SetFloatUniform("OrthoZDepth", Context.GetFrameOrthoZLayerDepth());
     glBindVertexArray(this->Vao);
 
-    float X = Offset.X + this->Padding.Left;
+    float X = Offset.X + this->GetPadding().Left;
     for (const u8 Rune : this->Content)
     {
         const Character& Ch = Characters[Rune];
 
-        const float PosX = X + static_cast<float>(Ch.Bearing.x) * this->Brush.Scale * ScaleFactor;
-        const float PosY = (YFromBottom - Offset.Y - (static_cast<float>(Ch.Size.y - Ch.Bearing.y) * this->Brush.Scale) - this->TextDesiredSize.Y - this->Padding.Top) * ScaleFactor;
+        const float PosX = X + static_cast<float>(Ch.Bearing.x) * this->TextScale * ScaleFactor;
+        const float PosY = (YFromBottom - Offset.Y - (static_cast<float>(Ch.Size.y - Ch.Bearing.y) * this->TextScale) - this->TextDesiredSize.Y - this->GetPadding().Top) * ScaleFactor;
 
-        const float CharW = static_cast<float>(Ch.Size.x) * this->Brush.Scale * ScaleFactor;
-        const float CharH = static_cast<float>(Ch.Size.y) * this->Brush.Scale * ScaleFactor;
+        const float CharW = static_cast<float>(Ch.Size.x) * this->TextScale * ScaleFactor;
+        const float CharH = static_cast<float>(Ch.Size.y) * this->TextScale * ScaleFactor;
 
         // update VBO for each character
         const float Vertices[6][4] = {
@@ -205,7 +195,7 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
         // render quad
         glDrawArrays(GL_TRIANGLES, 0, 6);
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-        X += (Ch.Advance.X >> 6) * this->Brush.Scale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+        X += (Ch.Advance.X >> 6) * this->TextScale; // bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
     }
 
     glBindVertexArray(0);
@@ -216,11 +206,11 @@ void Jafg::WTextBlock::Draw(LViewport& Context) const
     return;
 }
 
-void Jafg::WTextBlock::UpdateDesiredSize() const
+void Jafg::WTextBox::UpdateDesiredSize() const
 {
     if (this->Content.IsEmpty())
     {
-        this->SetDesiredSize(this->Padding.GetDesiredSize());
+        this->SetDesiredSize(this->GetPadding().GetDesiredSize());
         return;
     }
 
@@ -228,18 +218,18 @@ void Jafg::WTextBlock::UpdateDesiredSize() const
     for (const u8 Rune : this->Content)
     {
         const Character& Ch = Characters.at(static_cast<i8>(Rune));
-        DesiredSize.X += static_cast<float>(Ch.Advance.X) * this->Brush.Scale / 64.0f;
-        DesiredSize.Y = Maths::Max(DesiredSize.Y, static_cast<float>(Ch.Size.y) * this->Brush.Scale);
+        DesiredSize.X += static_cast<float>(Ch.Advance.X) * this->TextScale / 64.0f;
+        DesiredSize.Y = Maths::Max(DesiredSize.Y, static_cast<float>(Ch.Size.y) * this->TextScale);
     }
     this->TextDesiredSize = DesiredSize;
 
-    DesiredSize += this->Padding.GetDesiredSize();
+    DesiredSize += this->GetPadding().GetDesiredSize();
     this->SetDesiredSize(DesiredSize);
 
     return;
 }
 
-void Jafg::WTextBlock::FirstTimeLoadCharacters()
+void Jafg::WTextBox::FirstTimeLoadCharacters()
 {
     LOG_VERBOSE(LogFontSubsystem, "Loading characters for the first time.")
 

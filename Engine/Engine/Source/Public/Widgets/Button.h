@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Widgets/Region.h"
-#include "Widgets/TextBlock.h"
+#include "Widgets/TextBox.h"
 #include "Button.generated.h"
 
 namespace Jafg
@@ -11,8 +11,8 @@ namespace Jafg
 
 class WButton;
 class WTextButton;
-class WTextBlock;
-struct LTextBlockBrush;
+class WTextBox;
+struct LTextBoxBrush;
 
 MAKE_DELEGATE_SIGNATURE(LOnButtonKeyEvent, void, WButton* Self, const LKeyEvent& InKeyEvent)
 
@@ -56,7 +56,7 @@ public:
     FORCEINLINE TFactoryRetTy& Enabled() { this->This()->SetEnabled(true); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Disabled() { this->This()->SetEnabled(false); return this->Self(); }
 
-    FORCEINLINE TFactoryRetTy& TextBlockBrush(const LTextBlockBrush& InBrush) { this->This()->SetTextBlockBrush(InBrush); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& TextBlockBrush(const LTextBoxBrush& InBrush) { this->This()->SetTextBoxBrush(InBrush); return this->Self(); }
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryButton)
@@ -131,8 +131,8 @@ public:
     bool SetContent(LString&& InContent);
 
     //# Same logic as with #SetContent.
-    bool SetTextBlockBrush(const LTextBlockBrush& InBrush);
-    bool ResetTextBlockBrush() { this->IntermediateTextBlockBrush.Reset(); return true; }
+    bool SetTextBoxBrush(const LTextBoxBrush& InBrush);
+    bool ResetTextBoxBrush() { this->IntermediateTextBoxBrush.Reset(); return true; }
 
     //#
     //# @return True if the content (if available) was set to the #ButtonText widget.
@@ -141,21 +141,21 @@ public:
     bool LoadIntermediateContent();
 
     FORCEINLINE bool IsButtonTextValid() const { return this->ButtonText != nullptr; }
-    FORCEINLINE auto GetButtonText() -> WTextBlock* { return this->ButtonText; }
-    FORCEINLINE auto GetButtonText() const -> const WTextBlock* { return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextChecked() -> WTextBlock* { check( this->ButtonText ); return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextChecked() const -> const WTextBlock* { check( this->ButtonText ); return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextAsserted() -> WTextBlock* { jassert( this->ButtonText ); return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextAsserted() const -> const WTextBlock* { jassert( this->ButtonText ); return this->ButtonText; }
+    FORCEINLINE auto GetButtonText() -> WTextBox* { return this->ButtonText; }
+    FORCEINLINE auto GetButtonText() const -> const WTextBox* { return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextChecked() -> WTextBox* { check( this->ButtonText ); return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextChecked() const -> const WTextBox* { check( this->ButtonText ); return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextAsserted() -> WTextBox* { jassert( this->ButtonText ); return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextAsserted() const -> const WTextBox* { jassert( this->ButtonText ); return this->ButtonText; }
 
 protected:
 
-    WTextBlock* ButtonText { nullptr };
+    WTextBox* ButtonText { nullptr };
 
 private:
 
     LString IntermediateContent;
-    TOptional<LTextBlockBrush> IntermediateTextBlockBrush;
+    TOptional<LTextBoxBrush> IntermediateTextBoxBrush;
 };
 
 } /* ~Namespace Jafg */

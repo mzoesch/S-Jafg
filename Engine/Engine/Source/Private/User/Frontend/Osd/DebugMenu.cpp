@@ -1,12 +1,11 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "User/Frontend/Osd/DebugMenu.h"
-
 #include "Platform/SurfaceGlfw3.h"
 #include "Widgets/EditorView.h"
 #include "Widgets/Region.h"
 #include "Widgets/VRegion.h"
-#include "Widgets/TextBlock.h"
+#include "Widgets/TextBox.h"
 #include "Widgets/Viewport.h"
 #include "Widgets/Blueprint/Input_Vector3.h"
 
@@ -14,7 +13,7 @@ void Jafg::WDebugMenu::Construct()
 {
     Super::Construct();
 
-    LTextBlockBrush Brush { LTextBlockBrush::Body() };
+    LTextBoxBrush Brush { LTextBoxBrush::Body() };
     Brush.Tint = { 0, 0, 0, 128 };
 
     MakeRootNode(WRegion)

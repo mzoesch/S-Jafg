@@ -27,10 +27,10 @@ void Jafg::WFrontendScreen::Construct()
             check( Button )
             if (WTabBarButton* Btn = DynamicCast<WTabBarButton>(Button))
             {
-                WTextBlock* Text = Btn->GetButtonTextWidget();
+                WTextBox* Text = Btn->GetButtonTextWidget();
                 if (Text)
                 {
-                    Text->SetBrush(LTextBlockBrush::Header());
+                    Text->SetBrush(LTextBoxBrush::Header());
                 }
             }
         };
@@ -45,10 +45,10 @@ void Jafg::WFrontendScreen::Construct()
             check( Button )
             if (WTabBarButton* Btn = DynamicCast<WTabBarButton>(Button))
             {
-                WTextBlock* Text = Btn->GetButtonTextWidget();
+                WTextBox* Text = Btn->GetButtonTextWidget();
                 if (Text)
                 {
-                    Text->SetBrush(LTextBlockBrush::Header());
+                    Text->SetBrush(LTextBoxBrush::Header());
                 }
             }
         };

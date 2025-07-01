@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Widgets/Compound/TabBar.h"
-#include "Widgets/TextBlock.h"
+#include "Widgets/TextBox.h"
 #include "CommonMenuTabBar.generated.h"
 
 namespace Jafg

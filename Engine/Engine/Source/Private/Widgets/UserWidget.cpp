@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
 #include "Widgets/UserWidget.h"
 #include "Widgets/Viewport.h"
 #include "Widgets/Parent.h"
@@ -17,6 +16,12 @@ void Jafg::WUserWidget::OnGarbage()
 {
     Super::OnGarbage();
     this->Root = nullptr;
+
+    if (this->AttachedViewport)
+    {
+        this->AttachedViewport->RemoveWidget(this);
+        this->AttachedViewport = nullptr;
+    }
 
     return;
 }
@@ -65,6 +70,7 @@ void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy /* = true */)
     if (this->AttachedViewport)
     {
         this->AttachedViewport->RemoveWidget(this);
+        this->AttachedViewport = nullptr;
     }
 
     if (bDestroy)
@@ -106,7 +112,7 @@ Jafg::LWidgetSlot* Jafg::WUserWidget::AddChildAt(const i32 InIndex, WNode* InChi
     return Out;
 }
 
-Jafg::WParentBase* Jafg::WUserWidget::ReplaceRootImpl(WParentBase& InRoot)
+Jafg::WParentBase* Jafg::WUserWidget::ReplaceRootImpl(WParentBase* InRoot)
 {
     if (this->IsRootValid())
     {
@@ -114,7 +120,7 @@ Jafg::WParentBase* Jafg::WUserWidget::ReplaceRootImpl(WParentBase& InRoot)
         check( this->Root == nullptr )
     }
 
-    const LWidgetSlot* Out = this->AddChild(&InRoot);
+    const LWidgetSlot* Out = this->AddChild(InRoot);
     check( this->Root != nullptr )
     check( this->GetChildren().GetSize() == 1 )
 

@@ -123,7 +123,7 @@ void Jafg::LObjectContext::SeparateAndKillEmployees(const LLoadedPluginHandle In
 
         if (Removed > 0)
         {
-            LOG_VERBOSE(LogCarnifex, "Removed {} employees from context [{}].", Removed, this->HumanReadableName)
+            LOG_VERBOSE(LogCarnifex, "Removed {} employees from context [{}] that were loaded by a foreign plugin.", Removed, this->HumanReadableName)
             check( this->Carnifex )
             this->Carnifex->KillAllGarbageChildren();
         }
@@ -155,33 +155,39 @@ void Jafg::LObjectContext::TearDownContextNoEngineUnregistration()
         LOG_TRACE
         (
             LogCarnifex,
-            "Context [{}] found {} garbage employees. Begin to kill them.",
+            "Context [{}] found {} left over garbage employees. Begin to kill them.",
             this->HumanReadableName, this->Employees.GetSize()
         )
 
-        for (JObjectBase* const& Employee : this->Employees)
+        while (this->Employees.IsEmpty() == false)
         {
+            JObjectBase* Employee { *this->Employees.Peek() };
+
             checkSlow( Employee )
 
             if (Employee->GetVTable())
             {
                 check( Employee->GetOuter() == this )
                 Employee->MarkAsGarbage();
+
+                check( this->Employees.Contains( Employee ) == false )
+
                 continue;
             }
 
-            /*
-             * The default content referrer.
-             */
+            /* The default content referrer. */
             check( Employee->bGarbage == false )
             Employee->bGarbage = true;
             Employee->OnDefaultGarbageInternal();
+
+            this->Employees.RemoveOnceChecked(Employee);
+
             delete Employee;
 
             continue;
         }
 
-        this->Employees.Empty();
+        check( this->Employees.IsEmpty() )
     }
 
     this->Carnifex->KillAllGarbageChildren();

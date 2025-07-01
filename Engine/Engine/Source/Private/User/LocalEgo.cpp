@@ -105,6 +105,8 @@ void Jafg::LLocalEgo::TearDown()
         return;
     }
 
+    check( GEngine )
+
     this->Collection.TearDownSubsystems();
 
     if (ensure(this->OnWorldBeginLifeHandle.IsValid()))

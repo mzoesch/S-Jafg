@@ -60,34 +60,3 @@ void Jafg::JCoreWorldWidgetsSubsystem::Initialize(LSubsystemCollection& Collecti
 
     return;
 }
-
-void Jafg::JCoreWorldWidgetsSubsystem::TearDown()
-{
-    Super::TearDown();
-
-    if (ensure(this->DebugScreen))
-    {
-        this->DebugScreen->RemoveFromParent();
-        this->DebugScreen = nullptr;
-    }
-
-    if (ensure(this->Crosshair))
-    {
-        this->Crosshair->RemoveFromParent();
-        this->Crosshair = nullptr;
-    }
-
-    if (ensure(this->ConsoleScreen))
-    {
-        this->ConsoleScreen->RemoveFromParent();
-        this->ConsoleScreen = nullptr;
-    }
-
-    if (ensure(this->PauseScreen))
-    {
-        this->PauseScreen->RemoveFromParent();
-        this->PauseScreen = nullptr;
-    }
-
-    return;
-}

@@ -8,7 +8,7 @@
 namespace Jafg
 {
 
-class WTextBlock;
+class WTextBox;
 
 DECLARE_JAFG_WIDGET()
 class WDebugMenu final : public WUserWidget

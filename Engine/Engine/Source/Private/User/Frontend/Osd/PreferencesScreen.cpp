@@ -25,14 +25,14 @@ void AddPreference(Jafg::WParentBase* Target, Jafg::LPreference* P)
 
     if (P->Build(Target) == false)
     {
-        WTextBlock* Text = nullptr;
-        NewNodeCtx(Target, WTextBlock).SaveTo(&Text)
-            .Brush(LTextBlockBrush::SubHeader())
+        WTextBox* Text = nullptr;
+        NewNodeCtx(Target, WTextBox).SaveTo(&Text)
+            .Brush(LTextBoxBrush::SubHeader())
             .Content(P->GetDisplayName());
         Target->AddChild(Text);
     }
 
-    Target->AddChild(&NewNodeNoFactoryCtx(Target, WSpacer));
+    Target->AddChild(NewNodeNoFactoryCtx(Target, WSpacer));
 
     for (const Smart::TUnique<LPreference>& SubSection : P->LoadAndGetChildPreferences())
     {

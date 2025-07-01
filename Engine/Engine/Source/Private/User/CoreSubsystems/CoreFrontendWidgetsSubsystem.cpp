@@ -34,16 +34,3 @@ void Jafg::JCoreFrontendWidgetsSubsystem::Initialize(LSubsystemCollection& Colle
 
     return;
 }
-
-void Jafg::JCoreFrontendWidgetsSubsystem::TearDown()
-{
-    Super::TearDown();
-
-    if (ensure(this->FrontendScreen))
-    {
-        this->FrontendScreen->RemoveFromParent();
-        this->FrontendScreen = nullptr;
-    }
-
-    return;
-}

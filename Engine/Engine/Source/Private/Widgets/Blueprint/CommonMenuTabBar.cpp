@@ -21,7 +21,7 @@ void Jafg::WCommonMenuTabBarButton::Construct()
     if (this->IsButtonTextWidgetValid())
     {
         this->GetButtonTextWidget()->SetAnchor(EAnchor::CenterLeft);
-        this->GetButtonTextWidget()->SetBrush(LTextBlockBrush::SubHeader());
+        this->GetButtonTextWidget()->SetBrush(LTextBoxBrush::SubHeader());
     }
 
     return;

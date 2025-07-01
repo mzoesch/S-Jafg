@@ -44,20 +44,20 @@ public:
 
     //# @return The new root.
     template <typename TParent>
-    auto ReplaceRoot(TParent& InRoot) -> TParent* { return CheckedStaticCast<TParent>(this->ReplaceRootImpl(InRoot)); }
+    TParent* ReplaceRoot(TParent* InRoot) { return CheckedStaticCast<TParent>(this->ReplaceRootImpl(InRoot)); }
     FORCEINLINE bool IsRootValid() const { return this->Root != nullptr; }
-    FORCEINLINE auto GetRoot() const -> WNode* { return this->Root->Content;  }
-    template <typename TRootTy>
-    FORCEINLINE auto GetRoot() const -> TRootTy* { return static_cast<TRootTy*>(this->Root->Content); }
+    FORCEINLINE WNode* GetRoot() const { return this->Root->Content;  }
+    template <typename TNode>
+    FORCEINLINE TNode* GetRoot() const { return CheckedStaticCast<TNode>(this->Root->Content); }
 
 private:
 
-    WParentBase* ReplaceRootImpl(WParentBase& InRoot);
+    WParentBase* ReplaceRootImpl(WParentBase* InRoot);
 
     //# The absolute root of this widget. Attach everything to this widget. Weak pointer.
-    LWidgetSlot* Root = nullptr;
+    LWidgetSlot* Root { nullptr };
     //# Where this widget resides in. Can be null if attached to another widget. So do not use without checking.
-    LViewport* AttachedViewport = nullptr;
+    LViewport* AttachedViewport { nullptr };
 };
 
 } /* ~Namespace Jafg */

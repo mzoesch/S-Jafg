@@ -8,12 +8,12 @@
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
 #include "User/Input/UserInput.h"
-#include "Widgets/EditableTextBlock.h"
+#include "Widgets/EditableTextBox.h"
 #include "Widgets/Viewport.h"
 #include "Widgets/Region.h"
 #include "Widgets/ScrollRegion.h"
 #include "Widgets/Spacer.h"
-#include "Widgets/TextBlock.h"
+#include "Widgets/TextBox.h"
 #include "Widgets/VRegion.h"
 
 void Jafg::WConsoleScreen::BeginLifeDefault()
@@ -80,15 +80,15 @@ void Jafg::WConsoleScreen::Construct()
         .Padding(5.0f)
         .Anchor(EAnchor::Fill)
     [
-        NewNode(WEditableTextBlock).SaveTo(&this->EditableTextBlock)
+        NewNode(WEditableTextBox).SaveTo(&this->EditableTextBlock)
             .Anchor(EAnchor::VBottom | EAnchor::HFill)
             .TextColor(LColor::White)
             .TextScale(0.5f)
             .Padding({5.0f, 4.5f})
             .Tint({0, 0, 0, 164})
-            .OnAllowCommit(LEditableTextBlockAllowCommitDelegate::CreateFunction(this, &WConsoleScreen::OnAllowCommit))
-            .OnCommit(LEditableTextBlockCommitDelegate::CreateFunction(this, &WConsoleScreen::OnTextCommit))
-            .OnChanged(LEditableTextBlockChangedDelegate::CreateFunction(this, &WConsoleScreen::OnTextChanged))
+            .OnAllowCommit(LEditableTextBoxAllowCommitDelegate::CreateFunction(this, &WConsoleScreen::OnAllowCommit))
+            .OnCommit(LEditableTextBoxCommitDelegate::CreateFunction(this, &WConsoleScreen::OnTextCommit))
+            .OnChanged(LEditableTextBoxChangedDelegate::CreateFunction(this, &WConsoleScreen::OnTextChanged))
         +
         NewNode(WRegion)
             .Anchor(EAnchor::Fill)
@@ -132,9 +132,9 @@ void Jafg::WConsoleScreen::Construct()
                 .Tint(this->GetIntellisenseTint())
                 .OutlineTint(LColor::Black)
             [
-                NewNode(WTextBlock).SaveTo(&this->IntellisenseHelp)
+                NewNode(WTextBox).SaveTo(&this->IntellisenseHelp)
                     .Padding(3.0f)
-                    .Brush(LTextBlockBrush::Body())
+                    .Brush(LTextBoxBrush::Body())
             ]
             +
             NewNode(WVRegion).SaveTo(&this->Intellisense)
@@ -143,8 +143,8 @@ void Jafg::WConsoleScreen::Construct()
                 .Tint(this->GetIntellisenseTint())
                 .OutlineTint(LColor::Black)
             [
-                NewNode(WTextBlock).SaveTo(&this->IntellisenseText)
-                    .Brush(LTextBlockBrush::Body())
+                NewNode(WTextBox).SaveTo(&this->IntellisenseText)
+                    .Brush(LTextBoxBrush::Body())
             ]
         ]
     ]
@@ -418,10 +418,10 @@ void Jafg::WConsoleScreen::AddNewMessage(const LString& InText, const bool bSwit
         return;
     }
 
-    WTextBlock* Message;
-    NewNode(WTextBlock).SaveTo(&Message)
+    WTextBox* Message;
+    NewNode(WTextBox).SaveTo(&Message)
         .Content(InText)
-        .Brush(LTextBlockBrush::Body())
+        .Brush(LTextBoxBrush::Body())
     FinishWidget(Message);
 
     checkSlow( this->ConsolePreview )
@@ -441,10 +441,10 @@ void Jafg::WConsoleScreen::AddNewMessage(const LString& InText, const bool bSwit
     {
         this->SetConsoleFrontendState(EConsoleScreenState::Preview);
 
-        WTextBlock* PreviewMessage;
-        NewNode(WTextBlock).SaveTo(&PreviewMessage)
+        WTextBox* PreviewMessage;
+        NewNode(WTextBox).SaveTo(&PreviewMessage)
             .Content(InText)
-            .Brush(LTextBlockBrush::Body())
+            .Brush(LTextBoxBrush::Body())
         FinishWidget(PreviewMessage);
         this->ConsolePreview->AddChild(PreviewMessage);
         if (this->ConsolePreview->GetChildren().GetSize() > static_cast<i32>(GetMaxPreviewLines()))
@@ -472,10 +472,10 @@ void Jafg::WConsoleScreen::ClearMessages()
 
 void Jafg::WConsoleScreen::AddIntellisense(const LString& InText)
 {
-    WTextBlock* PreviewMessage;
-    NewNode(WTextBlock).SaveTo(&PreviewMessage)
+    WTextBox* PreviewMessage;
+    NewNode(WTextBox).SaveTo(&PreviewMessage)
         .Content(InText)
-        .Brush(LTextBlockBrush::Body())
+        .Brush(LTextBoxBrush::Body())
     FinishWidget(PreviewMessage);
 
     this->Intellisense->AddChildAt(0, PreviewMessage);
@@ -485,10 +485,10 @@ void Jafg::WConsoleScreen::AddIntellisense(const LString& InText)
 
 void Jafg::WConsoleScreen::AddIntellisense(LString&& InText)
 {
-    WTextBlock* PreviewMessage;
-    NewNode(WTextBlock).SaveTo(&PreviewMessage)
+    WTextBox* PreviewMessage;
+    NewNode(WTextBox).SaveTo(&PreviewMessage)
         .Content(std::move(InText))
-        .Brush(LTextBlockBrush::Body())
+        .Brush(LTextBoxBrush::Body())
     FinishWidget(PreviewMessage);
 
     this->Intellisense->AddChildAt(0, PreviewMessage);
@@ -512,11 +512,11 @@ void Jafg::WConsoleScreen::TryHideIntellisense()
 
 void Jafg::WConsoleScreen::AddIntellisensePrediction(const LString& InText)
 {
-    WTextBlock* PreviewMessage;
-    NewNode(WTextBlock).SaveTo(&PreviewMessage)
+    WTextBox* PreviewMessage;
+    NewNode(WTextBox).SaveTo(&PreviewMessage)
         .Anchor(EAnchor::HFill)
         .Content(InText)
-        .Brush(LTextBlockBrush::Body())
+        .Brush(LTextBoxBrush::Body())
     FinishWidget(PreviewMessage);
 
     this->IntellisensePredictions->AddChildAt(0, PreviewMessage);
@@ -526,11 +526,11 @@ void Jafg::WConsoleScreen::AddIntellisensePrediction(const LString& InText)
 
 void Jafg::WConsoleScreen::AddIntellisensePrediction(LString&& InText)
 {
-    WTextBlock* PreviewMessage;
-    NewNode(WTextBlock).SaveTo(&PreviewMessage)
+    WTextBox* PreviewMessage;
+    NewNode(WTextBox).SaveTo(&PreviewMessage)
         .Anchor(EAnchor::HFill)
         .Content(std::move(InText))
-        .Brush(LTextBlockBrush::Body())
+        .Brush(LTextBoxBrush::Body())
     FinishWidget(PreviewMessage);
 
     this->IntellisensePredictions->AddChildAt(0, PreviewMessage);
@@ -724,7 +724,7 @@ bool Jafg::WConsoleScreen::IsCurrentSelectedIntellisensePredictionValid() const
     {
         if
         (
-            const WTextBlock* TextBlock { Child->Content->AsStatic<WTextBlock>() };
+            const WTextBox* TextBlock { Child->Content->AsStatic<WTextBox>() };
             TextBlock->GetContent() == this->CurrentIntellisensePrediction
         )
         {
@@ -863,7 +863,7 @@ void Jafg::WConsoleScreen::UpdateIntellisense(const LCliCommand* InTargetCommand
 
         if (this->IsCurrentSelectedIntellisensePredictionValid() == false)
         {
-            const WTextBlock* ChildText { (*this->IntellisensePredictions->GetChildren().GetLast())->Content->AsStatic<WTextBlock>() };
+            const WTextBox* ChildText { (*this->IntellisensePredictions->GetChildren().GetLast())->Content->AsStatic<WTextBox>() };
             this->CurrentIntellisensePrediction = ChildText->GetContent();
             check( this->IsCurrentSelectedIntellisensePredictionValid() )
         }
@@ -939,7 +939,7 @@ void Jafg::WConsoleScreen::UpdateIntellisensePredictionsColors()
     {
         if
         (
-            WTextBlock* TextBlock { Child->Content->AsStatic<WTextBlock>() };
+            WTextBox* TextBlock { Child->Content->AsStatic<WTextBox>() };
             TextBlock->GetContent() == this->CurrentIntellisensePrediction
         )
         {
@@ -961,7 +961,7 @@ bool Jafg::WConsoleScreen::TryGoIntellisensePredictionUp()
     LString* CurPrediction { &this->CurrentIntellisensePrediction };
     const i32 CurIdx { this->IntellisensePredictions->GetChildren().FindByPredicate([CurPrediction](const LWidgetSlot* InWidgetSlot) -> bool
     {
-        return InWidgetSlot->Content->AsStatic<WTextBlock>()->GetContent() == *CurPrediction;
+        return InWidgetSlot->Content->AsStatic<WTextBox>()->GetContent() == *CurPrediction;
     })};
 
     if (CurIdx != INDEX_NONE)
@@ -970,7 +970,7 @@ bool Jafg::WConsoleScreen::TryGoIntellisensePredictionUp()
         {
             this->CurrentIntellisensePrediction =
                 this->IntellisensePredictions->GetChildren()[CurIdx - 1]
-                    ->Content->AsStatic<WTextBlock>()->GetContent();
+                    ->Content->AsStatic<WTextBox>()->GetContent();
 
             this->PrepareIntellisense(this->EditableTextBlock->GetContent());
 
@@ -986,7 +986,7 @@ bool Jafg::WConsoleScreen::TryGoIntellisensePredictionDown()
     LString* CurPrediction { &this->CurrentIntellisensePrediction };
     const i32 CurIdx { this->IntellisensePredictions->GetChildren().FindByPredicate([CurPrediction](const LWidgetSlot* InWidgetSlot) -> bool
     {
-        return InWidgetSlot->Content->AsStatic<WTextBlock>()->GetContent() == *CurPrediction;
+        return InWidgetSlot->Content->AsStatic<WTextBox>()->GetContent() == *CurPrediction;
     })};
 
     if (CurIdx != INDEX_NONE)
@@ -995,7 +995,7 @@ bool Jafg::WConsoleScreen::TryGoIntellisensePredictionDown()
         {
             this->CurrentIntellisensePrediction =
                 this->IntellisensePredictions->GetChildren()[CurIdx + 1]
-                    ->Content->AsStatic<WTextBlock>()->GetContent();
+                    ->Content->AsStatic<WTextBox>()->GetContent();
 
             this->PrepareIntellisense(this->EditableTextBlock->GetContent());
 
@@ -1033,7 +1033,7 @@ Jafg::LCliCommand* Jafg::WConsoleScreen::GetCurrentHighlightedIntellisenseComman
     LString* CurPrediction { &this->CurrentIntellisensePrediction };
     const i32 CurIdx { this->IntellisensePredictions->GetChildren().FindByPredicate([CurPrediction](const LWidgetSlot* InWidgetSlot) -> bool
     {
-        return InWidgetSlot->Content->AsStatic<WTextBlock>()->GetContent() == *CurPrediction;
+        return InWidgetSlot->Content->AsStatic<WTextBox>()->GetContent() == *CurPrediction;
     })};
 
     if (CurIdx == INDEX_NONE)

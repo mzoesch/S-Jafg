@@ -851,8 +851,8 @@ FORCEINLINE bool WNode::IsA(const T** OutObject) const
 #define FinishWidgetStyling()               ;MakeDeferredWidgetNodeFinal(this->GetRoot());
 
 //# Make a new node. Can be used everywhere.
-#define NewNodeNoFactory(TNode)             (*ConstructDeferredWidgetNode<TNode>(this->GetOuter()))
-#define NewNodeNoFactoryCtx(Ctx, TNode)     (*ConstructDeferredWidgetNode<TNode>((Ctx)->GetOuter()))
+#define NewNodeNoFactory(TNode)             (ConstructDeferredWidgetNode<TNode>(this->GetOuter()))
+#define NewNodeNoFactoryCtx(Ctx, TNode)     (ConstructDeferredWidgetNode<TNode>((Ctx)->GetOuter()))
 
 //# Make a new node. Can be used everywhere.
 #define NewNode(TNode)                      (*ConstructDeferredWidgetNode<TNode>(this->GetOuter())).GetFactory<TNode>()

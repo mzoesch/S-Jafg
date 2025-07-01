@@ -3,13 +3,14 @@
 #pragma once
 
 #include "Widgets/UserWidget.h"
-#include "DebugScreen.generated.h"
 #include "Rhi/Texture2.h"
+#include "Cli/CliHandles.h"
+#include "DebugScreen.generated.h"
 
 namespace Jafg
 {
 
-class WTextBlock;
+class WTextBox;
 
 DECLARE_JAFG_WIDGET()
 class ENGINE_API WDebugScreen final : public WUserWidget
@@ -22,25 +23,30 @@ protected:
 
 public:
 
+    virtual void BeginLifeDefault() override;
     virtual void Construct() override;
     virtual void Tick() override;
+    virtual void OnGarbageDefault() override;
 
     void SlowTick();
 
 private:
 
-    WTextBlock* FpsSection { nullptr };
-    WTextBlock* TimeStatsSection { nullptr };
+    void RegisterCliObjects();
+    void UnregisterCliObjects();
 
-    WTextBlock* LocalPawnLocationSection { nullptr };
-    WTextBlock* LocalPawnFacingSection { nullptr };
-    WTextBlock* LocalPawnChunkSection { nullptr };
-    WTextBlock* LocalPawnVoxelSection { nullptr };
+    WTextBox* FpsSection { nullptr };
+    WTextBox* TimeStatsSection { nullptr };
 
-    WTextBlock* LocalPawnTargetVoxelSectionDestroy { nullptr };
-    WTextBlock* LocalPawnTargetVoxelSectionCreate { nullptr };
+    WTextBox* LocalPawnLocationSection { nullptr };
+    WTextBox* LocalPawnFacingSection { nullptr };
+    WTextBox* LocalPawnChunkSection { nullptr };
+    WTextBox* LocalPawnVoxelSection { nullptr };
 
-    WTextBlock* MyWorldTimeSection { nullptr };
+    WTextBox* LocalPawnTargetVoxelSectionDestroy { nullptr };
+    WTextBox* LocalPawnTargetVoxelSectionCreate { nullptr };
+
+    WTextBox* MyWorldTimeSection { nullptr };
 
     //# The time when we should invalidate the cache in seconds.
     f32 ResetTime { 0.1f };
@@ -48,6 +54,9 @@ private:
     f32 InvalidateCacheTime { 0.0f };
 
     LTexture2 TestTexture;
+
+    CLASS_FIELD(DefaultOnly)
+    LCliVariableHandle VariableHandle_ShowChunkBordersInDebugScreen;
 };
 
 } /* ~Namespace Jafg */

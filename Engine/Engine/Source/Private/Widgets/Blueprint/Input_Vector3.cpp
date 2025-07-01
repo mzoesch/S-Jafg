@@ -2,25 +2,25 @@
 
 #include "Widgets/Blueprint/Input_Vector3.h"
 
-#include "Widgets/EditableTextBlock.h"
-#include "Widgets/TextBlock.h"
+#include "Widgets/EditableTextBox.h"
+#include "Widgets/TextBox.h"
 
 void Jafg::WInput_Vector3::Construct()
 {
     Super::Construct();
 
-    LTextBlockBrush Brush { LTextBlockBrush::Body() };
+    LTextBoxBrush Brush { LTextBoxBrush::Body() };
 
-    WTextBlock* Display { ConstructWidgetNode<WTextBlock>(this->GetOuter()) };
+    WTextBox* Display { ConstructWidgetNode<WTextBox>(this->GetOuter()) };
 
     Display->SetBrush(Brush);
     Display->SetContent(this->DisplayName);
 
     this->AddChild(Display);
 
-    WEditableTextBlock* X { ConstructWidgetNode<WEditableTextBlock>(this->GetOuter()) };
-    X->SetTextColor(Brush.Color);
-    X->SetTextScale(Brush.Scale);
+    WEditableTextBox* X { ConstructWidgetNode<WEditableTextBox>(this->GetOuter()) };
+    X->SetTextColor(Brush.TextColor);
+    X->SetTextScale(Brush.TextScale);
     X->SetMinDesiredSize(10);
     this->AddChild(X);
 

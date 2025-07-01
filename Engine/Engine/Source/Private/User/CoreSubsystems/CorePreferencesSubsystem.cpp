@@ -13,7 +13,7 @@
 #include "Widgets/Button.h"
 #include "Widgets/HRegion.h"
 #include "Widgets/Spacer.h"
-#include "Widgets/TextBlock.h"
+#include "Widgets/TextBox.h"
 #include "User/Input/InputAction.h"
 
 void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collection)
@@ -99,15 +99,15 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
             NewNodeCtx(Target, WHRegion).SaveTo(&Container)
                 .Anchor(EAnchor::HFill)
             [
-                NewNodeCtx(Target, WTextBlock)
+                NewNodeCtx(Target, WTextBox)
                     .Anchor(EAnchor::VCenter | EAnchor::HFill)
-                    .Brush(LTextBlockBrush::SubHeader())
+                    .Brush(LTextBoxBrush::SubHeader())
                     .Content(Self->GetDisplayName())
                 +
                 NewNodeCtx(Target, WTextButton)
                     .Anchor(EAnchor::VCenter)
                     .Content("Refresh")
-                    .TextBlockBrush(LTextBlockBrush::Body())
+                    .TextBlockBrush(LTextBoxBrush::Body())
                     .OnPrimaryRelease([Target](WButton* Self, const LKeyEvent& InKeyEvent) -> void
                     {
                         if (Target->IsGarbage())
@@ -197,15 +197,15 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
             NewNodeCtx(Target, WHRegion).SaveTo(&Container)
                 .Anchor(EAnchor::HFill)
             [
-                NewNodeCtx(Target, WTextBlock)
+                NewNodeCtx(Target, WTextBox)
                     .Anchor(EAnchor::VCenter | EAnchor::HFill)
-                    .Brush(LTextBlockBrush::SubHeader())
+                    .Brush(LTextBoxBrush::SubHeader())
                     .Content(Self->GetDisplayName())
                 +
                 NewNodeCtx(Target, WTextButton)
                     .Anchor(EAnchor::VCenter)
                     .Content("Refresh")
-                    .TextBlockBrush(LTextBlockBrush::Body())
+                    .TextBlockBrush(LTextBoxBrush::Body())
                     .OnPrimaryRelease([Target](WButton* Self, const LKeyEvent& InKeyEvent) -> void
                     {
                         if (Target->IsGarbage())

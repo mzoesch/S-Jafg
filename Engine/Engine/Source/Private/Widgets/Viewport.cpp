@@ -8,54 +8,42 @@
 #include "Rhi/RendererStateMachine.h"
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
-#include "Rhi/RhiVendorInclude.h"
 
 void Jafg::LViewport::ClearInvalidWidgets()
 {
-    if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
-    {
-        if (this->FocusedWidget.IsNotNull() && this->FocusedWidget.IsValidDeep() == false)
-        {
-            LOG_VERBOSE(LogWidgetFramework, "Current focused widget is invalid.")
-            this->FocusedWidget.Reset();
-        }
-    }
-    else
-    {
-        if (this->FocusedWidget.IsValidDeep() == false)
-        {
-            this->FocusedWidget.Reset();
-        }
-    }
-
-    auto ClearOnContainer {[](TArray<TObjectStorage<WNode>>& InContainer) -> void
+    if (this->FocusedWidget.IsValidDeep() == false)
     {
         if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
         {
-            if (const i32 Removed = InContainer.RemoveByPredicate([](const TObjectStorage<WNode>& InNode)
+            if (this->FocusedWidget.IsNotNull())
             {
-                return InNode.IsValidDeep() == false;
-            }); Removed > 0)
+                LOG_VERBOSE(LogWidgetFramework, "Current focused widget is invalid.")
+            }
+        }
+
+        this->FocusedWidget.Reset();
+    }
+
+    auto ClearOnContainer {[](TArray<TObjectStorage<WNode>>* InContainer) -> void
+    {
+        const i32 Removed { InContainer->RemoveByPredicate([](const TObjectStorage<WNode>& InNode)
+        {
+            return InNode.IsValidDeep() == false;
+        })};
+
+        if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
+        {
+            if (Removed > 0)
             {
                 LOG_VERBOSE(LogWidgetFramework, "Found [{}] hovered widgets from last frame that are now invalid.", Removed)
             }
-
-        }
-        else
-        {
-            InContainer.RemoveByPredicate([](const TObjectStorage<WNode>& InNode)
-            {
-                return InNode.IsValidDeep() == false;
-            });
-
-            return;
         }
 
         return;
     }};
 
-    ClearOnContainer(this->LastFrameHoveredWidgets);
-    ClearOnContainer(this->HoveredWidgets);
+    ClearOnContainer(&this->LastFrameHoveredWidgets);
+    ClearOnContainer(&this->HoveredWidgets);
 
     return;
 }
@@ -338,6 +326,8 @@ void Jafg::LViewport::Tick()
 
 void Jafg::LViewport::Draw()
 {
+    this->ClearInvalidWidgets();
+
     this->FrameZLayerDepth = 0.0f;
     this->FrameTranslation = LVector2D::ZeroVector;
     this->RecalculateScaleFactor();

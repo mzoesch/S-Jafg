@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Widgets/EditableTextBlock.h"
+#include "Widgets/EditableTextBox.h"
 #include "Core/Application.h"
 #include "Platform/Surface.h"
 #include "User/LocalEgo.h"
@@ -20,7 +20,7 @@ Jafg::LString Jafg::LexToString(const ETextCommit::Type InType)
     }
 }
 
-Jafg::WEditableTextBlock::WEditableTextBlock(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WEditableTextBox::WEditableTextBox(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
     this->SetVisibility(EWidgetVisibility::Visible);
     this->SetAnchor(EAnchor::Fill);
@@ -32,7 +32,7 @@ Jafg::WEditableTextBlock::WEditableTextBlock(const LObjectInitializer& ObjectIni
     return;
 }
 
-void Jafg::WEditableTextBlock::Construct()
+void Jafg::WEditableTextBox::Construct()
 {
     Super::Construct();
 
@@ -41,7 +41,7 @@ void Jafg::WEditableTextBlock::Construct()
     return;
 }
 
-void Jafg::WEditableTextBlock::Draw(LViewport& Context) const
+void Jafg::WEditableTextBox::Draw(LViewport& Context) const
 {
     Super::Draw(Context);
 
@@ -99,14 +99,14 @@ void Jafg::WEditableTextBlock::Draw(LViewport& Context) const
             Context,
             CaretSize,
             CaretTopLeft,
-            this->CaretBrush.Color
+            this->CaretBrush.Tint
         );
     }
 
     return;
 }
 
-void Jafg::WEditableTextBlock::UserInterfaceTick(const LViewport& InViewport)
+void Jafg::WEditableTextBox::UserInterfaceTick(const LViewport& InViewport)
 {
     if (this->GetLocalEgo()->GetUserInput()->HasBufferedPlatformInput())
     {
@@ -134,7 +134,7 @@ void Jafg::WEditableTextBlock::UserInterfaceTick(const LViewport& InViewport)
     return;
 }
 
-void Jafg::WEditableTextBlock::UpdateDesiredSize() const
+void Jafg::WEditableTextBox::UpdateDesiredSize() const
 {
     Super::UpdateDesiredSize();
 
@@ -150,30 +150,30 @@ void Jafg::WEditableTextBlock::UpdateDesiredSize() const
     return;
 }
 
-Jafg::LCursorReply Jafg::WEditableTextBlock::OnCursorEnter()
+Jafg::LCursorReply Jafg::WEditableTextBox::OnCursorEnter()
 {
     return { EMouseCursor::Beam };
 }
 
-Jafg::LCursorReply Jafg::WEditableTextBlock::OnCursorLeave()
+Jafg::LCursorReply Jafg::WEditableTextBox::OnCursorLeave()
 {
     return { EMouseCursor::Default };
 }
 
-void Jafg::WEditableTextBlock::OnFocusReceived()
+void Jafg::WEditableTextBox::OnFocusReceived()
 {
     Super::OnFocusReceived();
     this->CaretBlinker = 0.0f;
 
     if (const LViewport* Viewport = this->GetViewport(); Viewport)
     {
-        this->UserInterfaceTickDelegateHandle = Viewport->OnLateTick.AddMember(this, &WEditableTextBlock::UserInterfaceTick);
+        this->UserInterfaceTickDelegateHandle = Viewport->OnLateTick.AddMember(this, &WEditableTextBox::UserInterfaceTick);
     }
 
     return;
 }
 
-void Jafg::WEditableTextBlock::OnFocusLost()
+void Jafg::WEditableTextBox::OnFocusLost()
 {
     Super::OnFocusLost();
 
@@ -192,7 +192,7 @@ void Jafg::WEditableTextBlock::OnFocusLost()
     return;
 }
 
-Jafg::LReply Jafg::WEditableTextBlock::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     if (InKeyEvent.GetKey() == EKeys::BackSpace || InKeyEvent.GetKey() == EKeys::PlatformDelete)
     {
@@ -254,12 +254,12 @@ Jafg::LReply Jafg::WEditableTextBlock::OnKeyDown(const LViewport& InViewport, co
     return Super::OnKeyDown(InViewport, InKeyEvent);
 }
 
-void Jafg::WEditableTextBlock::OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType)
+void Jafg::WEditableTextBox::OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType)
 {
     this->OnContentCommitted.InvokeIfBound(InText, InCommitType);
 }
 
-void Jafg::WEditableTextBlock::SetContent(const LString& InContent)
+void Jafg::WEditableTextBox::SetContent(const LString& InContent)
 {
     this->Content = InContent;
     this->CaretCursor = Maths::Min(this->CaretCursor, this->Content.GetRuneCount());
@@ -277,7 +277,7 @@ void Jafg::WEditableTextBlock::SetContent(const LString& InContent)
     return;
 }
 
-void Jafg::WEditableTextBlock::SetContent(LString&& InContent)
+void Jafg::WEditableTextBox::SetContent(LString&& InContent)
 {
     this->Content = std::move(InContent);
     this->CaretCursor = Maths::Min(this->CaretCursor, this->Content.GetRuneCount());
@@ -288,7 +288,7 @@ void Jafg::WEditableTextBlock::SetContent(LString&& InContent)
     return;
 }
 
-void Jafg::WEditableTextBlock::ClearContent()
+void Jafg::WEditableTextBox::ClearContent()
 {
     this->Content.Empty();
     this->CaretCursor = 0;
@@ -298,30 +298,30 @@ void Jafg::WEditableTextBlock::ClearContent()
     return;
 }
 
-i32 Jafg::WEditableTextBlock::SetCaretCursor(const i32 InCaretCursor)
+i32 Jafg::WEditableTextBox::SetCaretCursor(const i32 InCaretCursor)
 {
     this->CaretCursor = Maths::Clamp(InCaretCursor, 0, this->Content.GetRuneCount());
     return this->CaretCursor;
 }
 
-i32 Jafg::WEditableTextBlock::SetCaretCursorToBegin()
+i32 Jafg::WEditableTextBox::SetCaretCursorToBegin()
 {
     this->CaretCursor = 0;
     return this->CaretCursor;
 }
 
-i32 Jafg::WEditableTextBlock::SetCaretCursorToEnd()
+i32 Jafg::WEditableTextBox::SetCaretCursorToEnd()
 {
     this->CaretCursor = this->Content.GetRuneCount();
     return this->CaretCursor;
 }
 
-void Jafg::WEditableTextBlock::SafelyReduceCaretCursor()
+void Jafg::WEditableTextBox::SafelyReduceCaretCursor()
 {
     this->CaretCursor = Maths::Max(this->CaretCursor - 1, 0);
 }
 
-void Jafg::WEditableTextBlock::SafelyIncreaseCaretCursor()
+void Jafg::WEditableTextBox::SafelyIncreaseCaretCursor()
 {
     this->CaretCursor = Maths::Min(this->CaretCursor + 1, this->Content.GetRuneCount());
 }

@@ -17,7 +17,7 @@ class WScrollRegion;
 class WTabBar;
 class WVRegion;
 class WSwitcher;
-class WEditableTextBlock;
+class WEditableTextBox;
 class WCommonMenuTabBar;
 class WHostSessionScreen_New;
 class WHostSessionScreen_Old;
@@ -103,7 +103,7 @@ private:
 
     WCommonMenuTabBar*  InternalTabBar { nullptr };
     WHostSessionScreen* Owner;
-    WEditableTextBlock* SessionName { nullptr };
+    WEditableTextBox* SessionName { nullptr };
 };
 
 DECLARE_JAFG_WIDGET()
@@ -208,7 +208,7 @@ private:
 
     TWidgetFactoryHRegion<WHRegion>* AddMenuButtons();
 
-    WTextBlock* Header { nullptr };
+    WTextBox* Header { nullptr };
 
     WHostSessionScreen* Owner { nullptr };
     const LFetchedSave* Save { nullptr };

@@ -2,20 +2,19 @@
 
 #pragma once
 
-#include "CoreAfx.h"
-#include "Widgets/Box.h"
+#include "Widgets/TextBoxForward.h"
 
 namespace Jafg
 {
 
-class WEditableTextBlock;
+class WEditableTextBox;
 struct LCaretBrush;
-struct LEditableTextBrush;
+struct LEditableTextBoxBrush;
 namespace ETextCommit { enum Type : u8; }
 
-MAKE_DELEGATE_SIGNATURE(LEditableTextBlockAllowCommitDelegate, bool)
-MAKE_DELEGATE_SIGNATURE(LEditableTextBlockCommitDelegate, void, const LString&, const ETextCommit::Type)
-MAKE_DELEGATE_SIGNATURE(LEditableTextBlockChangedDelegate, void, const LString& NewContent)
+MAKE_DELEGATE_SIGNATURE(LEditableTextBoxAllowCommitDelegate, bool)
+MAKE_DELEGATE_SIGNATURE(LEditableTextBoxCommitDelegate, void, const LString& InText, const ETextCommit::Type InType)
+MAKE_DELEGATE_SIGNATURE(LEditableTextBoxChangedDelegate, void, const LString& InNewContent)
 
 //#
 //# A caret is a blinking line, block, or bitmap in the client area of a window. The caret typically indicates
@@ -23,8 +22,8 @@ MAKE_DELEGATE_SIGNATURE(LEditableTextBlockChangedDelegate, void, const LString& 
 //#
 struct LCaretBrush final
 {
-    //# The caret color.
-    LColor Color { LColor::White };
+    //# The caret tint.
+    LColor Tint { LColor::White };
 
     //# The size in percent from the default. Default is (2px x DesiredSize.Y).
     LVector2 Size { 1.0f, 0.85f };
@@ -57,11 +56,11 @@ enum Type : u8
 } /* ~Namespace ETextCommit */
 ENGINE_API LString LexToString(const ETextCommit::Type InType);
 
-struct LEditableTextBrush : public LBoxBrush
+struct LEditableTextBoxBrush : public LTextBoxBrush
 {
-    LColor TextColor { LColor::Black };
-    f32    TextScale { 1.0f };
     LColor PlaceholderColor { LColor::Gray };
+
+    FORCEINLINE constexpr LEditableTextBoxBrush& PlaceholderColorRet(const LColor& InColor) noexcept { this->PlaceholderColor = InColor; return *this; }
 };
 
 } /* ~Namespace Jafg */

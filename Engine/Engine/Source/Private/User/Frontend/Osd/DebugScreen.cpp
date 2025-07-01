@@ -13,7 +13,7 @@
 #include "User/LocalEgo.h"
 #include "User/UserPreferences.h"
 #include "Widgets/Spacer.h"
-#include "Widgets/TextBlock.h"
+#include "Widgets/TextBox.h"
 #include "Widgets/VRegion.h"
 #include "Debug/DebugTraceSphere.h"
 #include "Debug/DebugTraceCube.h"
@@ -29,6 +29,22 @@ Jafg::WDebugScreen::WDebugScreen(const LObjectInitializer& ObjectInitializer) : 
     return;
 }
 
+void Jafg::WDebugScreen::BeginLifeDefault()
+{
+    Super::BeginLifeDefault();
+
+    if (GEngine == nullptr)
+    {
+        Tasks::Make(ENamedThreads::Master, ETaskTime::AfterEngineInit, {this, &WDebugScreen::RegisterCliObjects});
+    }
+    else
+    {
+        this->RegisterCliObjects();
+    }
+
+    return;
+}
+
 void Jafg::WDebugScreen::Construct()
 {
     Super::Construct();
@@ -37,7 +53,7 @@ void Jafg::WDebugScreen::Construct()
 
     constexpr f32 SpacerHeight { 20.0f };
 
-    LTextBlockBrush Brush { LTextBlockBrush::Body() };
+    LTextBoxBrush Brush { LTextBoxBrush::Body() };
     Brush.Tint = { 0, 0, 0, 128 };
 
     MakeRootNode(WRegion)
@@ -47,7 +63,7 @@ void Jafg::WDebugScreen::Construct()
             .Anchor(EAnchor::TopLeft)
         [
 
-            NewNode(WTextBlock)
+            NewNode(WTextBox)
                 .Brush(Brush)
                 .Content(LString::SprintF(
                     "JAFG v{} at [{} {}] on [{} - {}] @mzoesch",
@@ -58,33 +74,33 @@ void Jafg::WDebugScreen::Construct()
                     BuildInfo::GetVcsRevision()
                     ))
             +
-            NewNode(WTextBlock).SaveTo(&this->FpsSection)
+            NewNode(WTextBox).SaveTo(&this->FpsSection)
                 .Brush(Brush)
             +
-            NewNode(WTextBlock).SaveTo(&this->TimeStatsSection)
-                .Brush(Brush)
-            +
-
-            NewNode(WSpacer).Height(SpacerHeight)
-
-            +
-            NewNode(WTextBlock).SaveTo(&this->LocalPawnLocationSection)
-                .Brush(Brush)
-            +
-            NewNode(WTextBlock).SaveTo(&this->LocalPawnFacingSection)
-                .Brush(Brush)
-            +
-            NewNode(WTextBlock).SaveTo(&this->LocalPawnChunkSection)
-                .Brush(Brush)
-            +
-            NewNode(WTextBlock).SaveTo(&this->LocalPawnVoxelSection)
+            NewNode(WTextBox).SaveTo(&this->TimeStatsSection)
                 .Brush(Brush)
             +
 
             NewNode(WSpacer).Height(SpacerHeight)
 
             +
-            NewNode(WTextBlock).SaveTo(&this->MyWorldTimeSection)
+            NewNode(WTextBox).SaveTo(&this->LocalPawnLocationSection)
+                .Brush(Brush)
+            +
+            NewNode(WTextBox).SaveTo(&this->LocalPawnFacingSection)
+                .Brush(Brush)
+            +
+            NewNode(WTextBox).SaveTo(&this->LocalPawnChunkSection)
+                .Brush(Brush)
+            +
+            NewNode(WTextBox).SaveTo(&this->LocalPawnVoxelSection)
+                .Brush(Brush)
+            +
+
+            NewNode(WSpacer).Height(SpacerHeight)
+
+            +
+            NewNode(WTextBox).SaveTo(&this->MyWorldTimeSection)
                 .Brush(Brush)
             +
 
@@ -107,22 +123,22 @@ void Jafg::WDebugScreen::Construct()
             .Anchor(EAnchor::TopRight)
         [
 
-            NewNode(WTextBlock)
+            NewNode(WTextBox)
                 .Anchor(EAnchor::TopRight)
                 .Content("Memory statistics")
                 .Brush(Brush)
             +
-            NewNode(WTextBlock)
+            NewNode(WTextBox)
                 .Anchor(EAnchor::TopRight)
                 .Content("Central processing unit information")
                 .Brush(Brush)
             +
-            NewNode(WTextBlock)
+            NewNode(WTextBox)
                 .Anchor(EAnchor::TopRight)
                 .Content("Graphics processing unit information")
                 .Brush(Brush)
             +
-            NewNode(WTextBlock)
+            NewNode(WTextBox)
                 .Anchor(EAnchor::TopRight)
                 .Content("Display information")
                 .Brush(Brush)
@@ -131,11 +147,11 @@ void Jafg::WDebugScreen::Construct()
             NewNode(WSpacer).Height(SpacerHeight)
 
             +
-            NewNode(WTextBlock).SaveTo(&this->LocalPawnTargetVoxelSectionDestroy)
+            NewNode(WTextBox).SaveTo(&this->LocalPawnTargetVoxelSectionDestroy)
                 .Anchor(EAnchor::TopRight)
                 .Brush(Brush)
             +
-            NewNode(WTextBlock).SaveTo(&this->LocalPawnTargetVoxelSectionCreate)
+            NewNode(WTextBox).SaveTo(&this->LocalPawnTargetVoxelSectionCreate)
                 .Anchor(EAnchor::TopRight)
                 .Brush(Brush)
 
@@ -149,6 +165,8 @@ void Jafg::WDebugScreen::Construct()
 void Jafg::WDebugScreen::Tick()
 {
     Super::Tick();
+
+    check( GEngine )
 
     check( this->LocalPawnLocationSection )
     check( this->LocalPawnFacingSection )
@@ -309,6 +327,11 @@ void Jafg::WDebugScreen::Tick()
         }
 
         /* Chunk debug lines. */
+        if
+        (
+            const LCliVariable* Var { GEngine->GetCommandLineInterface()->GetVariable("ShowChunkBordersInDebugScreen") };
+            Var && Var->GetValue<bool>()
+        )
         {
             LWorld* World { Controller->GetPossessed()->GetWorld() };
 
@@ -396,6 +419,18 @@ void Jafg::WDebugScreen::Tick()
     return;
 }
 
+void Jafg::WDebugScreen::OnGarbageDefault()
+{
+    Super::OnGarbageDefault();
+
+    if (GEngine)
+    {
+        this->UnregisterCliObjects();
+    }
+
+    return;
+}
+
 void Jafg::WDebugScreen::SlowTick()
 {
     check( this->FpsSection )
@@ -450,6 +485,30 @@ void Jafg::WDebugScreen::SlowTick()
         {
             this->MyWorldTimeSection->SetContent("MyWorld Time: [ERR: No time subsystem]");
         }
+    }
+
+    return;
+}
+
+void Jafg::WDebugScreen::RegisterCliObjects()
+{
+    check( GEngine )
+    check( this->IsDefault() )
+
+    this->VariableHandle_ShowChunkBordersInDebugScreen =
+        GEngine->GetCommandLineInterface()->RegisterVariable({"ShowChunkBordersInDebugScreen", LCliType::Type<bool>()});
+
+    return;
+}
+
+void Jafg::WDebugScreen::UnregisterCliObjects()
+{
+    check( GEngine )
+    check( this->IsDefault() )
+
+    if (ensure(this->VariableHandle_ShowChunkBordersInDebugScreen.IsValid()))
+    {
+        GEngine->GetCommandLineInterface()->UnregisterCommand(&this->VariableHandle_ShowChunkBordersInDebugScreen);
     }
 
     return;

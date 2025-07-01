@@ -10,7 +10,7 @@
 #include "System/EnginePath.h"
 #include "User/UserPreferences.h"
 #include "Widgets/Button.h"
-#include "Widgets/EditableTextBlock.h"
+#include "Widgets/EditableTextBox.h"
 #include "Widgets/Switcher.h"
 #include "Widgets/Region.h"
 #include "Widgets/ScrollRegion.h"
@@ -47,8 +47,8 @@ Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildGeneral
     const Jafg::JObjectBase* Context,
     Jafg::LString&& Header,
     const EBuildReason::Type Reason,
-    Jafg::WEditableTextBlock** SessionName = nullptr,
-    Jafg::WTextBlock** SessionPath = nullptr
+    Jafg::WEditableTextBox** SessionName = nullptr,
+    Jafg::WTextBox** SessionPath = nullptr
 )
 {
     using namespace Jafg;
@@ -57,88 +57,88 @@ Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildGeneral
         .Anchor(EAnchor::Fill)
         .VSpace(5)
     [
-        NewNodeCtx(Context, WTextBlock)
+        NewNodeCtx(Context, WTextBox)
             .Anchor(EAnchor::HCenter)
             .Content(std::move(Header))
-            .Brush(LTextBlockBrush::Header())
+            .Brush(LTextBoxBrush::Header())
         +
-        NewNodeCtx(Context, WTextBlock)
+        NewNodeCtx(Context, WTextBox)
             .Anchor(EAnchor::HLeft)
             .Content("Name")
-            .Brush(LTextBlockBrush::Header())
+            .Brush(LTextBoxBrush::Header())
         +
-        NewNodeCtx(Context, WEditableTextBlock).SaveTo(SessionName)
+        NewNodeCtx(Context, WEditableTextBox).SaveTo(SessionName)
             .Anchor(EAnchor::HFill)
             .Type(ERegionBrush::OutlineBox)
             .OutlineThickness(1)
             .OutlineTint(LColor::DarkGray)
-            .TextScale(LTextBlockBrush::SubHeader().Scale)
+            .TextScale(LTextBoxBrush::SubHeader().TextScale)
             .PlaceholderText(DEFAULT_SESSION_NAME)
         +
-        NewNodeCtx(Context, WTextBlock).SaveTo(SessionPath)
+        NewNodeCtx(Context, WTextBox).SaveTo(SessionPath)
             .Anchor(EAnchor::HLeft)
             .Content("")
-            .Brush(LTextBlockBrush::SubHeader())
-            .Color(LColor::Gray)
+            .Brush(LTextBoxBrush::SubHeader())
+            .TextColor(LColor::Gray)
         +
         NewNodeCtx(Context, WSpacer).Height(20.0f)
         +
         NewNodeCtx(Context, WHRegion)
             .Anchor(EAnchor::HFill)
         [
-            NewNodeCtx(Context, WTextBlock)
+            NewNodeCtx(Context, WTextBox)
                 .Content("Templates")
-                .Brush(LTextBlockBrush::Body())
+                .Brush(LTextBoxBrush::Body())
         ]
         +
         NewNodeCtx(Context, WSpacer).Height(20.0f)
         +
-        NewNodeCtx(Context, WTextBlock)
+        NewNodeCtx(Context, WTextBox)
             .Anchor(EAnchor::HLeft)
             .Content("Player")
-            .Brush(LTextBlockBrush::SubHeader())
+            .Brush(LTextBoxBrush::SubHeader())
         +
         NewNodeCtx(Context, WHRegion)
             .Anchor(EAnchor::HFill)
         [
-            NewNodeCtx(Context, WTextBlock)
+            NewNodeCtx(Context, WTextBox)
                 .Content("Perma Death")
-                .Brush(LTextBlockBrush::Body())
+                .Brush(LTextBoxBrush::Body())
         ]
         +
         NewNodeCtx(Context, WSpacer).Height(20.0f)
         +
-        NewNodeCtx(Context, WTextBlock)
+        NewNodeCtx(Context, WTextBox)
             .Anchor(EAnchor::HLeft)
             .Content("Enemy")
-            .Brush(LTextBlockBrush::SubHeader())
+            .Brush(LTextBoxBrush::SubHeader())
         +
         NewNodeCtx(Context, WHRegion)
             .Anchor(EAnchor::HFill)
         [
-            NewNodeCtx(Context, WTextBlock)
+            NewNodeCtx(Context, WTextBox)
                 .Content("No enemies")
-                .Brush(LTextBlockBrush::Body())
+                .Brush(LTextBoxBrush::Body())
         ]
         +
         NewNodeCtx(Context, WHRegion)
             .Anchor(EAnchor::HFill)
         [
-            NewNodeCtx(Context, WTextBlock)
+            NewNodeCtx(Context, WTextBox)
                 .Content("Max Temperament")
-                .Brush(LTextBlockBrush::Body())
+                .Brush(LTextBoxBrush::Body())
             +
-            NewNodeCtx(Context, WTextBlock)
+            NewNodeCtx(Context, WTextBox)
                 .Content("Passive")
-                .Brush(LTextBlockBrush::Body())
+                .Brush(LTextBoxBrush::Body())
             +
-            NewNodeCtx(Context, WTextBlock)
+            NewNodeCtx(Context, WTextBox)
                 .Content("Docile")
-                .Brush(LTextBlockBrush::Body())
+                .Brush(LTextBoxBrush::Body())
             +
-            NewNodeCtx(Context, WTextBlock)
+            NewNodeCtx(Context, WTextBox)
                 .Content("Default")
-                .Brush(LTextBlockBrush::Body())
+                .Brush(LTextBoxBrush::Body())
         ]
     ]
     ;
@@ -149,7 +149,7 @@ Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildMultiplayer
     const Jafg::JObjectBase* Context,
     Jafg::LString&&          Header,
     const EBuildReason::Type Reason,
-    Jafg::WTextBlock**       OutHeader = nullptr
+    Jafg::WTextBox**       OutHeader = nullptr
 )
 {
     using namespace Jafg;
@@ -158,49 +158,49 @@ Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildMultiplayer
         .Anchor(EAnchor::Fill)
         .VSpace(5)
     [
-        NewNodeCtx(Context, WTextBlock).SaveTo(OutHeader)
+        NewNodeCtx(Context, WTextBox).SaveTo(OutHeader)
             .Anchor(EAnchor::HCenter)
             .Content(std::move(Header))
-            .Brush(LTextBlockBrush::Header())
+            .Brush(LTextBoxBrush::Header())
         +
         NewNodeCtx(Context, WHRegion)
             .Anchor(EAnchor::HFill)
         [
-            NewNodeCtx(Context, WTextBlock)
+            NewNodeCtx(Context, WTextBox)
                 .Content("Multiplayer")
-                .Brush(LTextBlockBrush::Body())
+                .Brush(LTextBoxBrush::Body())
         ]
         +
         NewNodeCtx(Context, WHRegion)
             .Anchor(EAnchor::HFill)
         [
-            NewNodeCtx(Context, WTextBlock)
+            NewNodeCtx(Context, WTextBox)
                 .Content("Open To Lan")
-                .Brush(LTextBlockBrush::Body())
+                .Brush(LTextBoxBrush::Body())
         ]
         +
         NewNodeCtx(Context, WHRegion)
             .Anchor(EAnchor::HFill)
         [
-            NewNodeCtx(Context, WTextBlock)
+            NewNodeCtx(Context, WTextBox)
                 .Content("Sync with Steam")
-                .Brush(LTextBlockBrush::Body())
+                .Brush(LTextBoxBrush::Body())
         ]
         +
         NewNodeCtx(Context, WHRegion)
             .Anchor(EAnchor::HFill)
         [
-            NewNodeCtx(Context, WTextBlock)
+            NewNodeCtx(Context, WTextBox)
                 .Content("Friends Only")
-                .Brush(LTextBlockBrush::Body())
+                .Brush(LTextBoxBrush::Body())
         ]
         +
         NewNodeCtx(Context, WHRegion)
             .Anchor(EAnchor::HFill)
         [
-            NewNodeCtx(Context, WTextBlock)
+            NewNodeCtx(Context, WTextBox)
                 .Content("Invite Only")
-                .Brush(LTextBlockBrush::Body())
+                .Brush(LTextBoxBrush::Body())
         ]
     ]
     ;
@@ -443,7 +443,7 @@ void Jafg::WHostSessionScreen_New::OnLoad_General(WTabBar* TabBar, WNode* Button
     Region->SetAnchor(EAnchor::Fill);
     Region->SetPadding({25.0f});
 
-    WTextBlock* SessionPath;
+    WTextBox* SessionPath;
 
     Region->GetFactory<WVRegion>()
     [
@@ -596,21 +596,21 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
         NewNode(WVRegion)
             .Anchor(EAnchor::Fill)
         [
-            NewNode(WTextBlock)
+            NewNode(WTextBox)
                 .Content(this->Save.DisplayName)
-                .Brush(LTextBlockBrush::SubHeader())
+                .Brush(LTextBoxBrush::SubHeader())
             +
-            NewNode(WTextBlock)
+            NewNode(WTextBox)
                 .Content(this->Save.Description)
-                .Brush(LTextBlockBrush::Body())
+                .Brush(LTextBoxBrush::Body())
             +
             NewNode(WSpacer)
                 .Anchor(EAnchor::VFill)
             +
-            NewNode(WTextBlock)
+            NewNode(WTextBox)
                 .Content(this->Save.Path)
-                .Brush(LTextBlockBrush::Body())
-                .Color(LColor::DarkerGray)
+                .Brush(LTextBoxBrush::Body())
+                .TextColor(LColor::DarkerGray)
         ]
     ]
     FinishWidget(Region);
@@ -654,10 +654,10 @@ void Jafg::WHostSessionScreen_Old::Construct()
         .MaxDesiredSize({1000, 0})
         .VSpace(10)
     [
-        NewNode(WTextBlock)
+        NewNode(WTextBox)
             .Anchor(EAnchor::CenterCenter)
             .Content("Host Session")
-            .Brush(LTextBlockBrush::Header())
+            .Brush(LTextBoxBrush::Header())
         +
         NewNode(WScrollRegion).SaveTo(&this->SavesRegionContainer)
             .Anchor(EAnchor::Fill)
@@ -757,12 +757,12 @@ void Jafg::WHostSessionScreen_Old::RefetchSaves()
 
     if (this->FetchedSaves.IsEmpty())
     {
-        WTextBlock* Text;
-        NewNode(WTextBlock).SaveTo(&Text)
+        WTextBox* Text;
+        NewNode(WTextBox).SaveTo(&Text)
             .Anchor(EAnchor::Fill)
-            .Brush(LTextBlockBrush::SubHeader())
-            .HAlign(ETextHAlign::Center)
-            .VAlign(ETextVAlign::Center)
+            .Brush(LTextBoxBrush::SubHeader())
+            .TextHAlign(ETextHAlign::Center)
+            .TextVAlign(ETextVAlign::Center)
             .Content("No sessions found. Select \"Host From New\" to create a new sessions.")
         FinishWidget(Text);
 

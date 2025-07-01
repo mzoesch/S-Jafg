@@ -3,7 +3,7 @@
 #include "User/Preferences/CommonPreferenceValues.h"
 #include "Widgets/HRegion.h"
 #include "Widgets/ParentBase.h"
-#include "Widgets/TextBlock.h"
+#include "Widgets/TextBox.h"
 #include "Widgets/Region.h"
 #include "Engine/Engine.h"
 #include "Widgets/Spacer.h"
@@ -52,15 +52,15 @@ void Jafg::LPreferenceValue_Scalar::BuildDefault(const LPreference* Self, WParen
         .Type(ERegionBrush::Box)
         .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
-        NewNodeCtx(Target, WTextBlock)
+        NewNodeCtx(Target, WTextBox)
             .Anchor(EAnchor::VCenter)
-            .Brush(LTextBlockBrush::Body())
+            .Brush(LTextBoxBrush::Body())
             .Content(This->GetDisplayName())
         +
-        NewNodeCtx(Target, WTextBlock)
+        NewNodeCtx(Target, WTextBox)
             .Anchor(EAnchor::VCenter | EAnchor::HFill)
-            .Brush(LTextBlockBrush::Body())
-            .Align(ETextAlign::Right)
+            .Brush(LTextBoxBrush::Body())
+            .TextAlign(ETextAlign::Right)
             .Content(This->GetFormattedText())
     ];
 
@@ -117,15 +117,15 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
         NewNodeCtx(Target, WHRegion)
             .Anchor(EAnchor::Fill)
         [
-            NewNodeCtx(Target, WTextBlock)
-                .Brush(LTextBlockBrush::Body())
+            NewNodeCtx(Target, WTextBox)
+                .Brush(LTextBoxBrush::Body())
                 .Content(Action->GetDisplayName())
             +
-            NewNodeCtx(Target, WTextBlock)
+            NewNodeCtx(Target, WTextBox)
                 .Anchor(EAnchor::HFill)
-                .Brush(LTextBlockBrush::Body())
+                .Brush(LTextBoxBrush::Body())
                 .Content(LexToString(Action->GetCategory()))
-                .Align(ETextAlign::Right)
+                .TextAlign(ETextAlign::Right)
         ]
     ]
     ;
@@ -149,8 +149,8 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
             for (const LKey& Key: InKeys)
             {
                 WNode* KeyNode;
-                NewNodeCtx(InTarget, WTextBlock).SaveTo(&KeyNode)
-                    .Brush(LTextBlockBrush::Body())
+                NewNodeCtx(InTarget, WTextBox).SaveTo(&KeyNode)
+                    .Brush(LTextBoxBrush::Body())
                     .Content(LexToString(Key))
                 ;
 
@@ -169,8 +169,8 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
                 .Anchor(EAnchor::Fill)
                 .Padding({20.0f, 0.0f, 0.0f, 0.0f})
             [
-                NewNodeCtx(Target, WTextBlock)
-                    .Brush(LTextBlockBrush::Body())
+                NewNodeCtx(Target, WTextBox)
+                    .Brush(LTextBoxBrush::Body())
                     .Content(Context->GetDisplayName())
                 +
                 NewNodeCtx(Target, WSpacer)
@@ -193,8 +193,8 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
             .Anchor(EAnchor::Fill)
             .Padding({20.0f, 0.0f, 0.0f, 0.0f})
         [
-            NewNodeCtx(Target, WTextBlock)
-                .Brush(LTextBlockBrush::Body())
+            NewNodeCtx(Target, WTextBox)
+                .Brush(LTextBoxBrush::Body())
                 .Content(Context->GetDisplayName())
         ]
         ;
@@ -206,8 +206,8 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
                 .Anchor(EAnchor::Fill)
                 .Padding({40.0f, 0.0f, 0.0f, 0.0f})
             [
-                NewNodeCtx(Target, WTextBlock)
-                    .Brush(LTextBlockBrush::Body())
+                NewNodeCtx(Target, WTextBox)
+                    .Brush(LTextBoxBrush::Body())
                     .Content(Trigger.Name)
                 +
                 NewNodeCtx(Target, WSpacer)

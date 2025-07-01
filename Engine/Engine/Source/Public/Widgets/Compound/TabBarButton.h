@@ -9,7 +9,7 @@ namespace Jafg
 {
 
 class WTabBar;
-class WTextBlock;
+class WTextBox;
 
 //# @return True if event was handled.
 typedef TFunction<bool(WTabBar& Self, const LString& InIdentifier)> LOnTabBarButtonRelease;
@@ -34,16 +34,16 @@ public:
     virtual void OnTabBarFocus(const bool bInFocus);
 
     FORCEINLINE bool IsButtonTextWidgetValid() const { return this->ButtonText != nullptr; }
-    FORCEINLINE auto GetButtonTextWidget() -> WTextBlock* { return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextWidget() const -> const WTextBlock* { return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextWidgetChecked() -> WTextBlock* { check( this->ButtonText ); return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextWidgetChecked() const -> const WTextBlock* { check( this->ButtonText ); return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextWidget() -> WTextBox* { return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextWidget() const -> const WTextBox* { return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextWidgetChecked() -> WTextBox* { check( this->ButtonText ); return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextWidgetChecked() const -> const WTextBox* { check( this->ButtonText ); return this->ButtonText; }
 
 protected:
 
     WTabBar* Context { nullptr };
     LString Identifier;
-    WTextBlock* ButtonText { nullptr };
+    WTextBox* ButtonText { nullptr };
     LOnTabBarButtonRelease OnButtonRelease;
 };
 

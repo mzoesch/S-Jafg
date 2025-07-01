@@ -13,15 +13,15 @@ Jafg::WParent::WParent(const LObjectInitializer& ObjectInitializer): Super(Objec
 
 void Jafg::WParent::OnGarbage()
 {
-    for (const LWidgetSlot* ChildSlot : this->Children)
-    {
-        checkSlow( ChildSlot->Content )
-        *ChildSlot->Content->GetMutableSlotDangerousDoNotUseForInternalStuffOnlyOrIfYouWantYourOwnParentClass() = nullptr;
-        ChildSlot->Content->MarkAsGarbage();
-        delete ChildSlot;
-    }
-
-    this->Children.Empty();
+    // for (const LWidgetSlot* ChildSlot : this->Children)
+    // {
+    //     checkSlow( ChildSlot->Content )
+    //     *ChildSlot->Content->GetMutableSlotDangerousDoNotUseForInternalStuffOnlyOrIfYouWantYourOwnParentClass() = nullptr;
+    //     ChildSlot->Content->MarkAsGarbage();
+    //     delete ChildSlot;
+    // }
+    //
+    // this->Children.Empty();
 
     Super::OnGarbage();
 

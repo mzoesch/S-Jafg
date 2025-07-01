@@ -2,9 +2,7 @@
 
 #pragma once
 
-#include "CoreAfx.h"
 #include "Rhi/Image.h"
-#include "Widgets/Whitespace.h"
 
 namespace Jafg
 {
@@ -15,33 +13,33 @@ namespace Jafg
 namespace ERegionBrush
 {
 
-    enum Type
-    {
-        //#
-        //# Do not draw.
-        //#
-        None,
+enum Type
+{
+    //#
+    //# Do not draw.
+    //#
+    None,
 
-        //#
-        //# Draw as a normal box.
-        //#
-        Box,
+    //#
+    //# Draw as a normal box.
+    //#
+    Box,
 
-        //#
-        //# Draw as a rounded box.
-        //#
-        RoundedBox,
+    //#
+    //# Draw as a rounded box.
+    //#
+    RoundedBox,
 
-        //#
-        //# Draw as a box with an outline.
-        //#
-        OutlineBox,
+    //#
+    //# Draw as a box with an outline.
+    //#
+    OutlineBox,
 
-        //#
-        //# Draw as a box with a rounded outline.
-        //#
-        RoundedOutlineBox,
-    };
+    //#
+    //# Draw as a box with a rounded outline.
+    //#
+    RoundedOutlineBox,
+};
 
 } /* ~Namespace ERegionBrush */
 
@@ -149,6 +147,5 @@ struct LRegionBrush
     //#
     LColor OutlineTint { LColor::White };
 };
-
 
 } /* ~Namespace Jafg */

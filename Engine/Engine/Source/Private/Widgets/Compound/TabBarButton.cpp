@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/Compound/TabBarButton.h"
-#include "Widgets/TextBlock.h"
+#include "Widgets/TextBox.h"
 #include "Widgets/Compound/TabBar.h"
 
 bool Jafg::WTabBarButton::AddData(const LWidgetNodeData* InData)
@@ -18,8 +18,8 @@ bool Jafg::WTabBarButton::AddData(const LWidgetNodeData* InData)
     {
         this->GetFactory<WTabBarButton>()
         [
-            NewNode(WTextBlock).SaveTo(&this->ButtonText)
-                .Brush(LTextBlockBrush::SubHeader())
+            NewNode(WTextBox).SaveTo(&this->ButtonText)
+                .Brush(LTextBoxBrush::SubHeader())
                 .Content(Data->Descriptor->DisplayNameField)
                 .Anchor(EAnchor::CenterCenter)
                 .Padding(Data->Descriptor->PaddingField)

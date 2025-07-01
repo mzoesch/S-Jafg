@@ -4,7 +4,7 @@
 #include "Engine/Engine.h"
 #include "Widgets/HRegion.h"
 #include "Widgets/ParentBase.h"
-#include "Widgets/TextBlock.h"
+#include "Widgets/TextBox.h"
 
 void Jafg::LPreferenceValue_CliType::StoreInitial()
 {
@@ -49,21 +49,21 @@ void Jafg::LPreferenceValue_CliType::BuildDefault(const LPreference* Self, WPare
         .Type(ERegionBrush::Box)
         .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
-        NewNodeCtx(Target, WTextBlock)
+        NewNodeCtx(Target, WTextBox)
             .Anchor(EAnchor::VCenter)
-            .Brush(LTextBlockBrush::Body())
+            .Brush(LTextBoxBrush::Body())
             .MinDesiredSize({100.0f, 0.0f})
             .Content(Type->GetIdentifier())
         +
-        NewNodeCtx(Target, WTextBlock)
+        NewNodeCtx(Target, WTextBox)
             .Anchor(EAnchor::VCenter | EAnchor::HFill)
-            .Brush(LTextBlockBrush::Body())
+            .Brush(LTextBoxBrush::Body())
             .Content(Type->GetHelp())
         +
-        NewNodeCtx(Target, WTextBlock)
+        NewNodeCtx(Target, WTextBox)
             .Anchor(EAnchor::VCenter)
-            .Brush(LTextBlockBrush::Body())
-            .Align(ETextAlign::Right)
+            .Brush(LTextBoxBrush::Body())
+            .TextAlign(ETextAlign::Right)
             .Content(Type->GetDefault())
     ];
 
@@ -115,15 +115,15 @@ void Jafg::LPreferenceValue_CliCommand::BuildDefault(const LPreference* Self, WP
         .Type(ERegionBrush::Box)
         .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
-        NewNodeCtx(Target, WTextBlock)
+        NewNodeCtx(Target, WTextBox)
             .Anchor(EAnchor::VCenter)
-            .Brush(LTextBlockBrush::Body())
+            .Brush(LTextBoxBrush::Body())
             .MinDesiredSize({100.0f, 0.0f})
             .Content(Command->GetIdentifier())
         +
-        NewNodeCtx(Target, WTextBlock)
+        NewNodeCtx(Target, WTextBox)
             .Anchor(EAnchor::VCenter | EAnchor::HFill)
-            .Brush(LTextBlockBrush::Body())
+            .Brush(LTextBoxBrush::Body())
             .Content(Command->GetHelp())
     ];
 
@@ -175,21 +175,21 @@ void Jafg::LPreferenceValue_CliVariable::BuildDefault(const LPreference* Self, W
         .Type(ERegionBrush::Box)
         .Tint({ColorSpace, ColorSpace, ColorSpace, 192})
     [
-        NewNodeCtx(Target, WTextBlock)
+        NewNodeCtx(Target, WTextBox)
             .Anchor(EAnchor::VCenter)
-            .Brush(LTextBlockBrush::Body())
+            .Brush(LTextBoxBrush::Body())
             .MinDesiredSize({100.0f, 0.0f})
             .Content(Variable->GetIdentifier())
         +
-        NewNodeCtx(Target, WTextBlock)
+        NewNodeCtx(Target, WTextBox)
             .Anchor(EAnchor::VCenter | EAnchor::HFill)
-            .Brush(LTextBlockBrush::Body())
+            .Brush(LTextBoxBrush::Body())
             .Content(Variable->GetHelp())
         +
-        NewNodeCtx(Target, WTextBlock)
+        NewNodeCtx(Target, WTextBox)
             .Anchor(EAnchor::VCenter)
-            .Brush(LTextBlockBrush::Body())
-            .Align(ETextAlign::Right)
+            .Brush(LTextBoxBrush::Body())
+            .TextAlign(ETextAlign::Right)
             .Content(Variable->GetValue())
     ];
 

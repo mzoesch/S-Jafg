@@ -4,14 +4,14 @@
 
 #include "Widgets/Box.h"
 #include "Rhi/FontShaderContext.h"
-#include "Widgets/EditableTextBlockForward.h"
-#include "EditableTextBlock.generated.h"
+#include "Widgets/EditableTextBoxForward.h"
+#include "EditableTextBox.generated.h"
 
 namespace Jafg
 {
 
 template <typename TNode>
-class TWidgetFactoryEditableTextBlock : public TWidgetFactoryBox<TNode>
+class TWidgetFactoryEditableTextBox : public TWidgetFactoryBox<TNode>
 {
 public:
 
@@ -26,23 +26,23 @@ public:
     FORCEINLINE TFactoryRetTy& CaretSize(const LVector2& InSize)       { this->This()->SetCaretSize(InSize); return this->Self(); }
     FORCEINLINE TFactoryRetTy& CaretHOffset(const f32 InOffset)        { this->This()->SetCaretHOffset(InOffset); return this->Self(); }
     FORCEINLINE TFactoryRetTy& CaretBrush(const LCaretBrush& InBrush)  { this->This()->SetCaretBrush(InBrush); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OnAllowCommit(LEditableTextBlockAllowCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnAllowContentCommit.BindFunction(std::move(InCallback)); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OnCommit(LEditableTextBlockCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnContentCommitted.BindFunction(std::move(InCallback)); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OnChanged(LEditableTextBlockChangedDelegate::LFunctionSigTy&& InCallback) { this->This()->OnContentChanged.BindFunction(std::move(InCallback)); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OnAllowCommit(LEditableTextBoxAllowCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnAllowContentCommit.BindFunction(std::move(InCallback)); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OnCommit(LEditableTextBoxCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnContentCommitted.BindFunction(std::move(InCallback)); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OnChanged(LEditableTextBoxChangedDelegate::LFunctionSigTy&& InCallback) { this->This()->OnContentChanged.BindFunction(std::move(InCallback)); return this->Self(); }
 };
 
 //#
 //# A simple text block that is editable by the user with all that comes with it, e.g., caret, text selection, copy,
 //# pasting, etc.
 //#
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryEditableTextBlock)
-class ENGINE_API WEditableTextBlock : public WBox
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryEditableTextBox)
+class ENGINE_API WEditableTextBox : public WBox
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WEditableTextBlock(const LObjectInitializer& ObjectInitializer);
+    explicit WEditableTextBox(const LObjectInitializer& ObjectInitializer);
 
 public:
 
@@ -71,13 +71,13 @@ public:
     FORCEINLINE void SetPlaceholderColor(const LColor& InColor) { this->PlaceholderColor = InColor; }
     FORCEINLINE void SetPlaceholderText(const LString& InText) { this->Placeholder = InText; }
     FORCEINLINE void SetPlaceholderText(     LString&& InText) { this->Placeholder = std::move(InText); }
-    FORCEINLINE void SetCaretColor(const LColor& InColor) { this->CaretBrush.Color = InColor; }
+    FORCEINLINE void SetCaretColor(const LColor& InColor) { this->CaretBrush.Tint = InColor; }
     FORCEINLINE void SetCaretSize(const LVector2& InSize) { this->CaretBrush.Size = InSize; }
     FORCEINLINE void SetCaretHOffset(const f32 InOffset) { this->CaretBrush.HOffset = InOffset; }
 
-    LEditableTextBlockAllowCommitDelegate OnAllowContentCommit;
-    LEditableTextBlockCommitDelegate  OnContentCommitted;
-    LEditableTextBlockChangedDelegate OnContentChanged;
+    LEditableTextBoxAllowCommitDelegate OnAllowContentCommit;
+    LEditableTextBoxCommitDelegate  OnContentCommitted;
+    LEditableTextBoxChangedDelegate OnContentChanged;
     void SetContent(const LString& InContent);
     void SetContent(     LString&& InContent);
     void ClearContent();

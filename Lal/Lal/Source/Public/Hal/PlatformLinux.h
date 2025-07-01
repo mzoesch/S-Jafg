@@ -93,6 +93,7 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     #pragma clang diagnostic error "-Wparentheses"
     #pragma clang diagnostic error "-Wpessimizing-move"
     #pragma clang diagnostic error "-Wpragmas"
+    #pragma clang diagnostic error "-Wreturn-stack-address"
     #pragma clang diagnostic error "-Wreturn-type"
     #pragma clang diagnostic error "-Wsign-compare"
     #pragma clang diagnostic error "-Wswitch"
@@ -212,7 +213,7 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
 #endif /* LAL_PLATFORM_MAX_PATH */
 
 #ifndef LAL_PLATFORM_NO_DISCARD_CTRL_PATH
-    #define LAL_PLATFORM_NO_DISCARD_CTRL_PATH                           (__asm__ __volatile__ ("nop"))
+    #define LAL_PLATFORM_NO_DISCARD_CTRL_PATH                           { __asm__ __volatile__ ("nop"); }
 #endif /* !LAL_PLATFORM_NO_DISCARD_CTRL_PATH */
 
 #ifndef LAL_PLATFORM_BREAK

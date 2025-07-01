@@ -59,6 +59,13 @@ public:
 
     template <typename TField>
     FORCEINLINE void GetValue(TField* Destination) const { Deserialize<TField>(Destination, this->Value); }
+    template <typename TField> requires (std::is_default_constructible_v<TField>)
+    FORCEINLINE TField GetValue() const
+    {
+        TField OutValue;
+        this->GetValue(&OutValue);
+        return OutValue;
+    }
 
 private:
 

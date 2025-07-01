@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/Button.h"
-#include "Widgets/TextBlock.h"
+#include "Widgets/TextBox.h"
 
 Jafg::WButton::WButton(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -175,10 +175,10 @@ void Jafg::WTextButton::Construct()
 {
     if (this->ButtonText == nullptr)
     {
-        NewNode(WTextBlock).SaveTo(&this->ButtonText)
-            .Align(ETextHAlign::Center)
-            .Align(ETextVAlign::Center)
-            .Brush(LTextBlockBrush::SubHeader());
+        NewNode(WTextBox).SaveTo(&this->ButtonText)
+            .TextAlign(ETextHAlign::Center)
+            .TextAlign(ETextVAlign::Center)
+            .Brush(LTextBoxBrush::SubHeader());
 
         this->AddChild(this->ButtonText);
     }
@@ -191,11 +191,11 @@ void Jafg::WTextButton::Construct()
         check( this->IntermediateContent.IsEmpty() )
     }
 
-    if (this->IntermediateTextBlockBrush.IsValid())
+    if (this->IntermediateTextBoxBrush.IsValid())
     {
-        this->ButtonText->SetBrush(this->IntermediateTextBlockBrush.GetValue());
-        this->IntermediateTextBlockBrush.Reset();
-        check( this->IntermediateTextBlockBrush.IsValid() == false )
+        this->ButtonText->SetBrush(this->IntermediateTextBoxBrush.GetValue());
+        this->IntermediateTextBoxBrush.Reset();
+        check( this->IntermediateTextBoxBrush.IsValid() == false )
     }
 
     Super::Construct();
@@ -232,7 +232,7 @@ bool Jafg::WTextButton::SetContent(LString&& InContent)
     return false;
 }
 
-bool Jafg::WTextButton::SetTextBlockBrush(const LTextBlockBrush& InBrush)
+bool Jafg::WTextButton::SetTextBoxBrush(const LTextBoxBrush& InBrush)
 {
     if (this->ButtonText)
     {
@@ -240,7 +240,7 @@ bool Jafg::WTextButton::SetTextBlockBrush(const LTextBlockBrush& InBrush)
         return true;
     }
 
-    this->IntermediateTextBlockBrush = InBrush;
+    this->IntermediateTextBoxBrush = InBrush;
     return false;
 }
 

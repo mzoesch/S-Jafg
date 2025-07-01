@@ -21,7 +21,6 @@ protected:
 
     virtual bool ShouldCreateSubsystem(const LObjectContext* InOuter) const override;
     virtual void Initialize(LSubsystemCollection& Collection) override;
-    virtual void TearDown() override;
 
 private:
 
