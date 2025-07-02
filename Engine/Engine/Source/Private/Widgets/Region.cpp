@@ -18,49 +18,31 @@ Jafg::WRegion::WRegion(const LObjectInitializer& ObjectInitializer) : Super(Obje
     {
         check( GEngine )
 
-        if (GEngine->IsShaderValid(Name_ShaderOrthographicBox) == false)
-        {
-            (new LOrthographicBoxShader())->MakeChecked(Name_ShaderOrthographicBox);
-        }
 
-        if (GEngine->IsShaderValid(Name_ShaderOrthographicImageBox) == false)
-        {
-            (new LOrthographicImageBoxShader())->MakeChecked(Name_ShaderOrthographicImageBox);
-        }
-
-        if (GEngine->IsShaderValid(Name_ShaderOrthographicRoundedBox) == false)
-        {
-            (new LOrthographicRoundedBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedBox);
-        }
-
-        if (GEngine->IsShaderValid(Name_ShaderOrthographicRoundedImageBox) == false)
-        {
-            (new LOrthographicRoundedImageBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedImageBox);
-        }
-
-        if (GEngine->IsShaderValid(Name_ShaderOrthographicOutlineBox) == false)
-        {
-            (new LOrthographicOutlineBoxShader())->MakeChecked(Name_ShaderOrthographicOutlineBox);
-        }
-
-        if (GEngine->IsShaderValid(Name_ShaderOrthographicOutlineImageBox) == false)
-        {
-            (new LOrthographicOutlineImageBoxShader())->MakeChecked(Name_ShaderOrthographicOutlineImageBox);
-        }
-
-
-        if (GEngine->IsShaderValid(Name_ShaderOrthographicRoundedOutlineBox) == false)
-        {
-            (new LOrthographicRoundedOutlineBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedOutlineBox);
-        }
-
-        if (GEngine->IsShaderValid(Name_ShaderOrthographicRoundedOutlineImageBox) == false)
-        {
-            (new LOrthographicRoundedOutlineImageBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedOutlineImageBox);
-        }
 
         return;
     });
+
+    return;
+}
+
+void Jafg::WRegion::BeginLifeDefault()
+{
+    Super::BeginLifeDefault();
+
+    if (GEngine)
+    {
+        this->RegisterShaders();
+    }
+    else
+    {
+        Tasks::Make(ENamedThreads::Master, ETaskTime::BeforeEngineInitButAfterAlloc, [this](void) -> void
+        {
+            this->RegisterShaders();
+
+            return;
+        });
+    }
 
     return;
 }
@@ -203,6 +185,53 @@ void Jafg::WRegion::Draw(LViewport& Context) const
     }
 
     Super::Draw(Context);
+
+    return;
+}
+
+void Jafg::WRegion::RegisterShaders()
+{
+    check( GEngine )
+
+    if (GEngine->IsShaderValid(Name_ShaderOrthographicBox) == false)
+    {
+        (new LOrthographicBoxShader())->MakeChecked(Name_ShaderOrthographicBox);
+    }
+
+    if (GEngine->IsShaderValid(Name_ShaderOrthographicImageBox) == false)
+    {
+        (new LOrthographicImageBoxShader())->MakeChecked(Name_ShaderOrthographicImageBox);
+    }
+
+    if (GEngine->IsShaderValid(Name_ShaderOrthographicRoundedBox) == false)
+    {
+        (new LOrthographicRoundedBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedBox);
+    }
+
+    if (GEngine->IsShaderValid(Name_ShaderOrthographicRoundedImageBox) == false)
+    {
+        (new LOrthographicRoundedImageBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedImageBox);
+    }
+
+    if (GEngine->IsShaderValid(Name_ShaderOrthographicOutlineBox) == false)
+    {
+        (new LOrthographicOutlineBoxShader())->MakeChecked(Name_ShaderOrthographicOutlineBox);
+    }
+
+    if (GEngine->IsShaderValid(Name_ShaderOrthographicOutlineImageBox) == false)
+    {
+        (new LOrthographicOutlineImageBoxShader())->MakeChecked(Name_ShaderOrthographicOutlineImageBox);
+    }
+
+    if (GEngine->IsShaderValid(Name_ShaderOrthographicRoundedOutlineBox) == false)
+    {
+        (new LOrthographicRoundedOutlineBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedOutlineBox);
+    }
+
+    if (GEngine->IsShaderValid(Name_ShaderOrthographicRoundedOutlineImageBox) == false)
+    {
+        (new LOrthographicRoundedOutlineImageBoxShader())->MakeChecked(Name_ShaderOrthographicRoundedOutlineImageBox);
+    }
 
     return;
 }

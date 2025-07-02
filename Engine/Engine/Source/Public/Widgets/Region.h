@@ -47,6 +47,7 @@ protected:
 
 public:
 
+    virtual void BeginLifeDefault() override;
     virtual void Draw(LViewport& Context) const override;
 
     void SetBrush(const LRegionBrush& InBrush) { this->Brush = InBrush; }
@@ -68,6 +69,8 @@ public:
     FORCEINLINE void SetOutlineTint(const LColor& InOutlineTint) { this->Brush.OutlineTint = InOutlineTint; }
 
 private:
+
+    void RegisterShaders();
 
     LRegionBrush Brush;
 };

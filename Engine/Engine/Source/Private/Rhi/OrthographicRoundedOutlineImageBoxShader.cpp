@@ -34,7 +34,7 @@ Jafg::TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicRoundedOutline
 
 bool Jafg::LOrthographicRoundedOutlineImageBoxShader::Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants /* = {} */)
 {
-    if (const bool bOut = Super::Make(InName, std::move(InConstants)); bOut == false)
+    if (const bool bOut { Super::Make(InName, std::move(InConstants)) }; bOut == false)
     {
         return false;
     }

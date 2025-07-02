@@ -31,6 +31,7 @@ ENGINE_API LName Name_ShaderOrthographicOutlineBox             = MAKE_STATIC_NAM
 ENGINE_API LName Name_ShaderOrthographicOutlineImageBox        = MAKE_STATIC_NAME("ShaderJafgOrthographicOutlineImageBox");
 ENGINE_API LName Name_ShaderOrthographicRoundedOutlineBox      = MAKE_STATIC_NAME("ShaderJafgOrthographicRoundedOutlineBox");
 ENGINE_API LName Name_ShaderOrthographicRoundedOutlineImageBox = MAKE_STATIC_NAME("ShaderJafgOrthographicRoundedOutlineImageBox");
+ENGINE_API LName Name_ShaderOrthographicText                   = MAKE_STATIC_NAME("ShaderJafgOrthographicText");
 ENGINE_API LName Name_ShaderChunk                              = MAKE_STATIC_NAME("ShaderJafgChunk");
 
 ENGINE_API LName Name_UsrInToggleDebugScreen   = MAKE_STATIC_NAME("ToggleDebugScreen");

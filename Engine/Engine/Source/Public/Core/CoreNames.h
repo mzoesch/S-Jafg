@@ -39,6 +39,7 @@ ENGINE_API extern LName Name_ShaderOrthographicOutlineBox;
 ENGINE_API extern LName Name_ShaderOrthographicOutlineImageBox;
 ENGINE_API extern LName Name_ShaderOrthographicRoundedOutlineBox;
 ENGINE_API extern LName Name_ShaderOrthographicRoundedOutlineImageBox;
+ENGINE_API extern LName Name_ShaderOrthographicText;
 ENGINE_API extern LName Name_ShaderChunk;
 
 ENGINE_API extern LName Name_UsrInToggleDebugScreen;

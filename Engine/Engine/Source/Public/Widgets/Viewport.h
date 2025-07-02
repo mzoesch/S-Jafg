@@ -78,6 +78,8 @@ public:
     ENGINE_API void RemoveWidget(WUserWidget* Widget);
     ENGINE_API bool TryRemoveWidget(WUserWidget* Widget);
 
+    FORCEINLINE const LMatrix& GetCachedOrthographicProjectionMatrix() const noexcept { return this->CachedOrthographicProjectionMatrix; }
+
     //# The scale factor is based on the physical platform dpi in relation to the base dpi.
     FORCEINLINE f32  GetScaleFactor() const { return this->ScaleFactor; }
     FORCEINLINE void SetPlatformDpi(const f32 InDpi) { this->PlatformDpi = InDpi; }
@@ -168,6 +170,8 @@ private:
     void RecalculateScaleFactor();
     void HandleReply(LSurface& Context, const LCursorReply& Reply);
     void HandleReply(LSurface& Context, const LReply& Reply);
+
+    LMatrix CachedOrthographicProjectionMatrix;
 
     //# The factor with which the entire orthographic projection is scaled.
     f32 ScaleFactor { 1.0f };

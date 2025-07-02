@@ -334,6 +334,11 @@ void Jafg::LViewport::Draw()
 
     this->IntermediateBuffer.MakeDrawTarget();
 
+    this->CachedOrthographicProjectionMatrix = Maths::MakeOrthographicProjectionMatrix
+    (
+        LVector2(static_cast<f32>(this->Dimensions.X), static_cast<f32>(this->Dimensions.Y))
+    );
+
     RendererStateMachine::PrepareForPerspectivePainting();
     for (const auto& [Eye, World] : this->BackgroundContexts)
     {

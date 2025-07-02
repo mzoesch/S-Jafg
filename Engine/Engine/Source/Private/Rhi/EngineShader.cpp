@@ -11,7 +11,7 @@ bool Jafg::LEngineShader::Make(const LName InName, TArray<LShaderCompileTimeCons
     InConstants.Append(this->GetDefaultConstants());
     checkCode
     (
-        for (const LShaderCompileTimeConstant& Constant: InConstants)
+        for (const LShaderCompileTimeConstant& Constant : InConstants)
         {
             i32 Count { 0 };
             InConstants.ForEach([&Count, &Constant](const LShaderCompileTimeConstant& InConstant) -> void

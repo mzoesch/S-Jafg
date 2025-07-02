@@ -40,7 +40,7 @@ protected:
 
 public:
 
-    virtual void Construct() override;
+    virtual void BeginLifeDefault() override;
     virtual void Draw(LViewport& Context) const override;
 
     virtual void UpdateDesiredSize() const override;
@@ -81,11 +81,7 @@ public:
 
 private:
 
-    //#
-    //# Called only once when the first instance of a WTextBlock is being constructed to load
-    //# all glyphs from the font file.
-    //#
-    void FirstTimeLoadCharacters();
+    void RegisterShaders();
 
     LColor TextColor { LColor::Black };
     f32 TextScale { 1.0f };
@@ -95,9 +91,6 @@ private:
     LString Content;
 
     mutable LVector2 TextDesiredSize;
-
-    u32 Vao { 0x0u };
-    u32 Vbo { 0x0u };
 };
 
 FORCEINLINE void WTextBox::SetBrush(const LTextBoxBrush& InBrush) noexcept

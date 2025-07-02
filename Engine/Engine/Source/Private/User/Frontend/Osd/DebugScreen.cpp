@@ -54,6 +54,7 @@ void Jafg::WDebugScreen::Construct()
     constexpr f32 SpacerHeight { 20.0f };
 
     LTextBoxBrush Brush { LTextBoxBrush::Body() };
+    Brush.Type = ERegionBrush::Box;
     Brush.Tint = { 0, 0, 0, 128 };
 
     MakeRootNode(WRegion)
