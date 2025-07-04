@@ -30,6 +30,9 @@ struct LCaretBrush final
 
     //# The horizontal offset.
     f32 HOffset { 0.0f };
+
+    //# The blinker speed of the caret in seconds.
+    f32 CaretBlinkerSpeed { 0.5f };
 };
 
 namespace ETextCommit

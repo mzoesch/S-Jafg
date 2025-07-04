@@ -94,27 +94,55 @@ void Jafg::WTextBox::Draw(LViewport& Context) const
 
 void Jafg::WTextBox::UpdateDesiredSize() const
 {
-    if (this->Content.IsEmpty())
-    {
-        this->SetDesiredSize(this->GetPadding().GetDesiredSize());
-        return;
-    }
+    this->UpdateDesiredSizeForString(this->Content);
+}
 
+void Jafg::WTextBox::UpdateDesiredSizeForString(const LString& InString) const
+{
     const LOrthographicTextShader* Shader { GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText) };
 
     LVector2 DesiredSize;
-    for (const u8 Rune : this->Content)
+    for (const u8 Rune : InString)
     {
         const Character& Ch { Shader->GetCharacters().at(static_cast<i8>(Rune)) };
         DesiredSize.X += static_cast<f32>(Ch.Advance.X) * this->TextScale / 64.0f;
         DesiredSize.Y = Maths::Max(DesiredSize.Y, static_cast<f32>(Ch.Size.y) * this->TextScale);
     }
+
+    if (this->bRespectContentHeight == false)
+    {
+        DesiredSize.Y = Shader->GetApproximateHeight(this->TextScale);
+    }
+
     this->TextDesiredSize = DesiredSize;
 
     DesiredSize += this->GetPadding().GetDesiredSize();
     this->SetDesiredSize(DesiredSize);
 
     return;
+}
+
+f32 Jafg::WTextBox::GetDesiredWidth(const LString& InString) const
+{
+    if (InString.IsEmpty())
+    {
+        return 0.0f;
+    }
+
+    const LOrthographicTextShader* Shader { GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText) };
+
+    f32 Out { 0.0f };
+    for (const LString::T Rune : InString)
+    {
+        if (auto It { Shader->GetCharacters().find(static_cast<i8>(Rune)) }; It != Shader->GetCharacters().end())
+        {
+            Out += static_cast<f32>(It->second.Advance.X) * this->TextScale / 64.0f;
+        }
+
+        continue;
+    }
+
+    return Out;
 }
 
 void Jafg::WTextBox::RegisterShaders()

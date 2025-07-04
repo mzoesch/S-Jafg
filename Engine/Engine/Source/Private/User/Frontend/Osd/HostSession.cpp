@@ -73,7 +73,7 @@ Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildGeneral
             .OutlineThickness(1)
             .OutlineTint(LColor::DarkGray)
             .TextScale(LTextBoxBrush::SubHeader().TextScale)
-            .PlaceholderText(DEFAULT_SESSION_NAME)
+            .PlaceholderContent(DEFAULT_SESSION_NAME)
         +
         NewNodeCtx(Context, WTextBox).SaveTo(SessionPath)
             .Anchor(EAnchor::HLeft)

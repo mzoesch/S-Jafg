@@ -68,6 +68,12 @@ public:
         const LString& Content
     ) const;
 
+    //#
+    //# The approximate height of the font when looking at the highest character.
+    //#
+    NODISCARD
+    FORCEINLINE f32 GetApproximateHeight(const f32 InScale) const { check( this->ApproxHeight > 0.0f ) return this->ApproxHeight * InScale; }
+
     FORCEINLINE void SetFontPath(const LEnginePath& InFontPath) noexcept { this->FontPath = InFontPath; }
     FORCEINLINE const LEnginePath& GetFontPath() const noexcept { return this->FontPath; }
 
@@ -75,9 +81,10 @@ public:
     
 private:
 
-
     LEnginePath FontPath { LEnginePath{EEnginePaths::Fonts, "Core.otf"} };
     LCharacterMap Characters;
+
+    f32 ApproxHeight { -1.0f };
 
     u32 Vao { 0x0u };
     u32 Vbo { 0x0u };

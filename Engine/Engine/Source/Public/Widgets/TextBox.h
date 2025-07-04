@@ -25,12 +25,13 @@ public:
     FORCEINLINE TFactoryRetTy& TextAlign(const ETextVAlign::Type InAlign) { this->This()->SetTextVAlign(InAlign); return this->Self(); }
     FORCEINLINE TFactoryRetTy& TextHAlign(const ETextHAlign::Type InAlign) { this->This()->SetTextHAlign(InAlign); return this->Self(); }
     FORCEINLINE TFactoryRetTy& TextVAlign(const ETextVAlign::Type InAlign) { this->This()->SetTextVAlign(InAlign); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& RespectContentHeight(const bool bInRespect) { this->This()->SetRespectContentHeight(bInRespect); return this->Self(); }
 
     FORCEINLINE TFactoryRetTy& Brush(const LTextBoxBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTextBox)
-class ENGINE_API WTextBox final : public WBox
+class ENGINE_API WTextBox : public WBox
 {
     GENERATED_CLASS_BODY()
 
@@ -44,10 +45,15 @@ public:
     virtual void Draw(LViewport& Context) const override;
 
     virtual void UpdateDesiredSize() const override;
+    void UpdateDesiredSizeForString(const LString& InString) const;
+    f32 GetDesiredWidth(const LString& InString) const;
 
-    FORCEINLINE void EmptyContent() noexcept { this->Content.Empty(); }
-    FORCEINLINE void SetContent(const LString& InContent) noexcept { this->Content = InContent; }
-    FORCEINLINE void SetContent(LString&& InContent) noexcept { this->Content = std::move(InContent); }
+    //# Called if the text box content changes.
+    LTextBoxChangedDelegate OnChanged;
+
+    FORCEINLINE void EmptyContent() noexcept { this->Content.Empty(); this->OnChanged.InvokeIfBound(this->Content); }
+    FORCEINLINE void SetContent(const LString& InContent) noexcept { this->Content = InContent; this->OnChanged.InvokeIfBound(this->Content); }
+    FORCEINLINE void SetContent(LString&& InContent) noexcept { this->Content = std::move(InContent); this->OnChanged.InvokeIfBound(this->Content); }
     FORCEINLINE const LString& GetContent() const noexcept { return this->Content; }
 
     FORCEINLINE constexpr void SetTextColor(const LColor& InColor) noexcept { this->TextColor = InColor; }
@@ -56,12 +62,14 @@ public:
     FORCEINLINE constexpr void SetTextAlign(const ETextVAlign::Type InAlign) noexcept { this->TextVAlign = InAlign; }
     FORCEINLINE constexpr void SetTextHAlign(const ETextHAlign::Type InAlign) noexcept { this->TextHAlign = InAlign; }
     FORCEINLINE constexpr void SetTextVAlign(const ETextVAlign::Type InAlign) noexcept { this->TextVAlign = InAlign; }
+    FORCEINLINE constexpr void SetRespectContentHeight(const bool bInRespect) noexcept { this->bRespectContentHeight = bInRespect; }
 
     FORCEINLINE constexpr const LColor& GetTextColor() const noexcept { return this->TextColor; }
     FORCEINLINE constexpr f32           GetTextScale() const noexcept { return this->TextScale; }
     FORCEINLINE constexpr ETextHAlign::Type GetTextAlign() const noexcept { return this->TextHAlign; }
     FORCEINLINE constexpr ETextHAlign::Type GetTextHAlign() const noexcept { return this->TextHAlign; }
     FORCEINLINE constexpr ETextVAlign::Type GetTextVAlign() const noexcept { return this->TextVAlign; }
+    FORCEINLINE constexpr bool IsRespectingContentHeight() const noexcept { return this->bRespectContentHeight; }
 
     FORCEINLINE void SetBrush(const LTextBoxBrush& InBrush) noexcept;
     FORCEINLINE void SetBrush(LTextBoxBrush&& InBrush) noexcept;
@@ -77,7 +85,12 @@ public:
     FORCEINLINE constexpr bool IsVCenterAligned() const noexcept { return ETextVAlign::IsCenter(this->TextVAlign); }
     FORCEINLINE constexpr bool IsBottomAligned() const noexcept { return ETextVAlign::IsBottom(this->TextVAlign); }
 
-    FORCEINLINE LVector2 GetDesiredSizeOfRawText() const noexcept { return this->TextDesiredSize; }
+    FORCEINLINE const LVector2& GetDesiredSizeOfRawText() const noexcept { return this->TextDesiredSize; }
+
+protected:
+
+    // Do not forget to call the #OnChanged delegate.
+    FORCEINLINE LString& GetMutableContent() noexcept { return this->Content; }
 
 private:
 
@@ -87,6 +100,13 @@ private:
     f32 TextScale { 1.0f };
     ETextHAlign::Type TextHAlign { ETextHAlign::Left };
     ETextVAlign::Type TextVAlign { ETextVAlign::Top };
+
+    //#
+    //# Whether to respect the content height when calculating the desired size.
+    //# Meaning, if we always calculate for the highest character that might occour in the content, even if it
+    //# doesn't.
+    //#
+    bool bRespectContentHeight { false };
 
     LString Content;
 

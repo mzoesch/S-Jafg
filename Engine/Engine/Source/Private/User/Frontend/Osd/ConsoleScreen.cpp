@@ -267,7 +267,7 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
         }
         this->IntellisenseContainer->SetVisibility(EWidgetVisibility::Collapsed);
 
-        this->EditableTextBlock->ClearContent();
+        this->EditableTextBlock->EmptyContent();
         this->GetViewport()->FocusWidgetNode(this->EditableTextBlock);
 
         this->ConsoleHistoryContainer->ApplyVScroll(WScrollRegion::MaxScrollDown);
@@ -1022,6 +1022,8 @@ void Jafg::WConsoleScreen::ApplyCurrentIntellisensePrediction()
 
         this->EditableTextBlock->SetContent(std::move(Temp));
     }
+
+    this->EditableTextBlock->SetCaretCursorToEnd();
 
     this->PrepareIntellisense(this->EditableTextBlock->GetContent());
 

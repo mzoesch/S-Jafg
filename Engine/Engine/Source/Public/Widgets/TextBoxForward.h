@@ -16,6 +16,8 @@ namespace ETextVAlign { enum Type : u8; }
 //# Vertical text alignment is not often used, so we just use the horizontal alignment.
 namespace ETextAlign = ETextHAlign;
 
+MAKE_DELEGATE_SIGNATURE(LTextBoxChangedDelegate, void, const LString& InNewContent)
+
 namespace ETextHAlign
 {
 
@@ -55,11 +57,13 @@ struct LTextBoxBrush : public LBoxBrush
     f32    TextScale { 1.0f };
     ETextHAlign::Type TextHAlign { ETextHAlign::Left };
     ETextVAlign::Type TextVAlign { ETextVAlign::Top };
+    bool bRespectContentHeight { false };
 
     FORCEINLINE constexpr LTextBoxBrush& TextColorRet(const LColor& InColor) noexcept { this->TextColor = InColor; return *this; }
     FORCEINLINE constexpr LTextBoxBrush& TextScaleRet(const f32 InScale) noexcept { this->TextScale = InScale; return *this; }
     FORCEINLINE constexpr LTextBoxBrush& TextHAlignRet(const ETextHAlign::Type InAlign) noexcept { this->TextHAlign = InAlign; return *this; }
     FORCEINLINE constexpr LTextBoxBrush& TextVAlignRet(const ETextVAlign::Type InAlign) noexcept { this->TextVAlign = InAlign; return *this; }
+    FORCEINLINE constexpr LTextBoxBrush& RespectContentHeightRet(const bool bInRespect) noexcept { this->bRespectContentHeight = bInRespect; return *this; }
 
     FORCEINLINE constexpr bool IsLeftAligned()    const noexcept { return ETextHAlign::IsLeft(this->TextHAlign);   }
     FORCEINLINE constexpr bool IsCenterAligned()  const noexcept { return ETextHAlign::IsCenter(this->TextHAlign); }

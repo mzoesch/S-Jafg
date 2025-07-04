@@ -98,6 +98,10 @@ bool Jafg::LOrthographicTextShader::Make(const LName InName, TArray<LShaderCompi
 
     glDisable(GL_BLEND);
 
+    const Character& MaxChar { Characters.at(static_cast<i8>('H')) };
+    /* Using 1.0 as it is the identity element of the binary operation 'multiply'. */
+    this->ApproxHeight = static_cast<f32>(MaxChar.Size.y) * 1.0f;
+
     return true;
 }
 
