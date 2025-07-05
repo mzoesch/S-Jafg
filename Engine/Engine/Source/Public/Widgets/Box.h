@@ -17,7 +17,6 @@ public:
 
     GENERATED_FACTORY_BODY(TWidgetFactory)
 
-    FORCEINLINE TFactoryRetTy& Brush(const LBoxBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Type(const ERegionBrush::Type InType) { this->This()->SetType(InType); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Tint(const LColor& InTint) { this->This()->SetTint(InTint); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Texture(const LTexture2* InTexture) { this->This()->SetTexture(InTexture); return this->Self(); }
@@ -31,6 +30,9 @@ public:
     FORCEINLINE TFactoryRetTy& OutlineThickness(const f32 InOutlineThickness) { this->This()->SetOutlineThickness(InOutlineThickness); return this->Self(); }
     FORCEINLINE TFactoryRetTy& OutlineTint(const LColor& InOutlineTint) { this->This()->SetOutlineTint(InOutlineTint); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Padding(const LPadding& InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& Brush(const LBoxBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Brush(LBoxBrush&& InBrush) { this->This()->SetBrush(std::move(InBrush)); return this->Self(); }
 };
 
 //#

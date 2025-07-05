@@ -35,7 +35,7 @@ void Jafg::JCoreWorldWidgetsSubsystem::Initialize(LSubsystemCollection& Collecti
 
     this->DebugScreen = ConstructDeferredWidgetNode<WDebugScreen>(this->GetOuter());
     this->DebugScreen->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
-    this->DebugScreen->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
+    this->DebugScreen->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->DebugScreen);
 
     this->DebugMenu = ConstructDeferredWidgetNode<WDebugMenu>(this->GetOuter());

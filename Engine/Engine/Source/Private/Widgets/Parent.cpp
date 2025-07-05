@@ -104,7 +104,7 @@ Jafg::LCursorReply Jafg::WParent::SweepMouse(LViewport& Context, const LVector2&
     {
         if (ChildSlot->Content->ShouldCheckForInputs())
         {
-            if (const LCursorReply Reply = ChildSlot->Content->SweepMouse(Context, InLocation); Reply.IsHandled())
+            if (const LCursorReply Reply { ChildSlot->Content->SweepMouse(Context, InLocation) }; Reply.IsHandled())
             {
                 return Reply;
             }
@@ -304,6 +304,11 @@ void Jafg::WParent::RemoveChildren()
 
 Jafg::LWidgetSlot* Jafg::WParent::AddChild(WNode* InChild)
 {
+    check( this->GetChildren().FindByPredicate([InChild](const LWidgetSlot* InSlot) -> bool
+    {
+        return InSlot->Content == InChild;
+    }) == INDEX_NONE )
+
     check( InChild )
     LWidgetSlot* NewChildSlot = new LWidgetSlot(this, InChild);
     this->Children.Add(NewChildSlot);

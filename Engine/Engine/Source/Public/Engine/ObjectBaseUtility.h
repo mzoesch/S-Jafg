@@ -146,27 +146,27 @@ FORCEINLINE const TObj* CheckedStaticCast(const U* InObject);
 //#
 //# Valid means:
 //#   1. The #InPointer is not null.
-//#   2. The #InPointer is still allocated, based of the #InContext state.
+//#   2. The #InPointer is still allocated, based on the #InContext state.
 //#   3. The object at the #InPointer address is not marked as garbage.
 //#
-//# @remark This function may be used on any thread, but of course, after the function returned the pointer, it
+//# @remark This function may be used on any thread, but of course, after this function returned the boolean, it
 //#         might get immediately invalid.
 //#
 ENGINE_API bool IsValidFast(const LObjectContext* InContext, const JObjectBase* InPointer);
 
 //#
 //# A more dedicated function, than the #IsValidFast, to check if the #InPointer is still valid.
-//# This function is usually only usefully if the caller has a reference to an object that is not same
-//# context has its own.
+//# This function is usually only useful if the caller has a reference to an object that is not in the same
+//# context as its own outer - or even outside the Jafg object system (aka. an L class or free function).
 //#
 //# Valid means:
 //#   1. The #InContextPointer is not null.
 //#   2. The #InPointer is not null.
-//#   3. The #InContextPointer is still allocated, based of the current engine state.
-//#   3. The context at #InContextPointer employees the #InPointer currently.
-//#   4. The object at the #InPointer address is not marked as garbage.
+//#   3. The #InContextPointer is still allocated, based on the current engine state.
+//#   4. The context at #InContextPointer employees the #InPointer currently.
+//#   5. The object at the #InPointer address is not marked as garbage.
 //#
-//# @remark This function may be used on any thread, but of course, after the function returned the pointer, it
+//# @remark This function may be used on any thread, but of course, after this function returned the boolean, it
 //#         might get immediately invalid.
 //#
 ENGINE_API bool IsValidSlow(const LObjectContext* InContextPointer, const JObjectBase* InPointer);

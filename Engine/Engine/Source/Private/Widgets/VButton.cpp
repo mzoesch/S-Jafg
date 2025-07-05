@@ -1,14 +1,14 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Widgets/Button.h"
+#include "Widgets/VButton.h"
 
-Jafg::WButton::WButton(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WVButton::WVButton(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-    this->SetVisibility(EWidgetVisibility::DerivedHitTestInvisible);
+    this->SetVisibility(EWidgetVisibility::Visible);
     return;
 }
 
-void Jafg::WButton::Construct()
+void Jafg::WVButton::Construct()
 {
     Super::Construct();
 
@@ -20,7 +20,7 @@ void Jafg::WButton::Construct()
     return;
 }
 
-Jafg::LCursorReply Jafg::WButton::OnCursorEnter()
+Jafg::LCursorReply Jafg::WVButton::OnCursorEnter()
 {
     if (LCursorReply Reply { Super::OnCursorEnter() }; Reply.IsHandled())
     {
@@ -35,7 +35,7 @@ Jafg::LCursorReply Jafg::WButton::OnCursorEnter()
     return LCursorReply::Handled();
 }
 
-Jafg::LCursorReply Jafg::WButton::OnCursorLeave()
+Jafg::LCursorReply Jafg::WVButton::OnCursorLeave()
 {
     if (LCursorReply Reply { Super::OnCursorLeave() }; Reply.IsHandled())
     {
@@ -50,7 +50,7 @@ Jafg::LCursorReply Jafg::WButton::OnCursorLeave()
     return LCursorReply::Handled();
 }
 
-Jafg::LReply Jafg::WButton::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WVButton::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     if (this->IsEnabled() == false)
     {
@@ -98,7 +98,7 @@ Jafg::LReply Jafg::WButton::OnKeyDown(const LViewport& InViewport, const LKeyEve
     return Super::OnKeyDown(InViewport, InKeyEvent);
 }
 
-Jafg::LReply Jafg::WButton::OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WVButton::OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     if (this->IsEnabled() == false)
     {
@@ -146,7 +146,7 @@ Jafg::LReply Jafg::WButton::OnKeyUp(const LViewport& InViewport, const LKeyEvent
     return Super::OnKeyUp(InViewport, InKeyEvent);
 }
 
-void Jafg::WButton::SetEnabled(const bool bInEnabled)
+void Jafg::WVButton::SetEnabled(const bool bInEnabled)
 {
     this->bEnabled = bInEnabled;
 
@@ -162,95 +162,4 @@ void Jafg::WButton::SetEnabled(const bool bInEnabled)
     }
 
     return;
-}
-
-Jafg::WTextButton::WTextButton(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
-{
-    this->SetPadding({15, 8});
-    return;
-}
-
-void Jafg::WTextButton::Construct()
-{
-    if (this->ButtonText == nullptr)
-    {
-        NewNode(WTextBox).SaveTo(&this->ButtonText)
-            .TextAlign(ETextHAlign::Center)
-            .TextAlign(ETextVAlign::Center)
-            .Brush(LTextBoxBrush::SubHeader());
-
-        this->AddChild(this->ButtonText);
-    }
-
-    check( this->GetChildren().GetSize() > 0 )
-
-    if (this->IntermediateContent.IsEmpty() == false)
-    {
-        this->ButtonText->SetContent(std::move(this->IntermediateContent));
-        check( this->IntermediateContent.IsEmpty() )
-    }
-
-    if (this->IntermediateTextBoxBrush.IsValid())
-    {
-        this->ButtonText->SetBrush(this->IntermediateTextBoxBrush.GetValue());
-        this->IntermediateTextBoxBrush.Reset();
-        check( this->IntermediateTextBoxBrush.IsValid() == false )
-    }
-
-    Super::Construct();
-
-    return;
-}
-
-void Jafg::WTextButton::Draw(LViewport& Context) const
-{
-    Super::Draw(Context);
-}
-
-bool Jafg::WTextButton::SetContent(const LString& InContent)
-{
-    if (this->ButtonText)
-    {
-        this->ButtonText->SetContent(InContent);
-        return true;
-    }
-
-    this->IntermediateContent = InContent;
-    return false;
-}
-
-bool Jafg::WTextButton::SetContent(LString&& InContent)
-{
-    if (this->ButtonText)
-    {
-        this->ButtonText->SetContent(std::move(InContent));
-        return true;
-    }
-
-    this->IntermediateContent = std::move(InContent);
-    return false;
-}
-
-bool Jafg::WTextButton::SetTextBoxBrush(const LTextBoxBrush& InBrush)
-{
-    if (this->ButtonText)
-    {
-        this->ButtonText->SetBrush(InBrush);
-        return true;
-    }
-
-    this->IntermediateTextBoxBrush = InBrush;
-    return false;
-}
-
-bool Jafg::WTextButton::LoadIntermediateContent()
-{
-    if (this->IntermediateContent.IsEmpty() && this->ButtonText)
-    {
-        this->ButtonText->SetContent(std::move(this->IntermediateContent));
-        check( this->IntermediateContent.IsEmpty() )
-        return true;
-    }
-
-    return false;
 }

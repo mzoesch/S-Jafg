@@ -122,21 +122,36 @@ void Jafg::WEditableTextBox::UpdateDesiredSize() const
 
 void Jafg::WEditableTextBox::UserInterfaceTick(const LViewport& InViewport)
 {
+    bool bHandled { false };
+
     if (this->GetLocalEgo()->GetUserInput()->HasBufferedPlatformInput())
     {
         const LString BufferedInput { this->GetLocalEgo()->GetUserInput()->GetBufferedPlatformInputAsStr() };
 
-        this->GetMutableContent().AppendAt(this->CaretCursor, BufferedInput);
+        LString NewContent { this->GetContent() };
+        NewContent.AppendAt(this->CaretCursor, BufferedInput);
 
-        const LString::SizeType Length = LString::Traits::GetStringLength<LString::SizeType>(BufferedInput.ToPtr());
-        for (LString::SizeType I = 0; I < Length; ++I)
+        if (this->ContentPredicate.IsBound() && this->ContentPredicate.Invoke(NewContent) == false)
         {
-            this->SafelyIncreaseCaretCursor();
+            LOG_VERBOSE(LogWidgets, "Content predicate failed for [{}]. Discarding content change request.", NewContent)
         }
+        else
+        {
+            bHandled = true;
 
-        ensureDiscard(this->OnChanged.InvokeIfBound(this->GetContent()));
+            this->GetMutableContent() = std::move(NewContent);
+
+            const LString::SizeType Length { LString::Traits::GetStringLength<LString::SizeType>(BufferedInput.ToPtr()) };
+            for (LString::SizeType Idx { 0 }; Idx < Length; ++Idx)
+            {
+                this->SafelyIncreaseCaretCursor();
+            }
+
+            ensureDiscard(this->OnChanged.InvokeIfBound(this->GetContent()));
+        }
     }
-    else
+
+    if (bHandled == false)
     {
         this->CaretBlinker += Application::GetDeltaTimeAsFloat();
         if (this->CaretBlinker > this->CaretBrush.CaretBlinkerSpeed * 2.0f)
@@ -163,9 +178,22 @@ void Jafg::WEditableTextBox::OnFocusReceived()
     Super::OnFocusReceived();
     this->CaretBlinker = 0.0f;
 
-    if (const LViewport* Viewport { this->GetViewport() }; Viewport)
+    if (const LViewport* Context { this->GetViewport() }; Context)
     {
-        this->UserInterfaceTickDelegateHandle = Viewport->OnLateTick.AddMember(this, &WEditableTextBox::UserInterfaceTick);
+        this->UserInterfaceTickDelegateHandle = Context->OnLateTick.AddMember(this, &WEditableTextBox::UserInterfaceTick);
+
+        if (Context->GetCachedContext()->IsMouseLocationMeaningful())
+        {
+            this->MoveCaretToMouseCursor(*Context);
+        }
+        else
+        {
+            this->SetCaretCursorToEnd();
+        }
+    }
+    else
+    {
+        this->SetCaretCursorToEnd();
     }
 
     return;
@@ -255,6 +283,16 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(const LViewport& InViewport, cons
         return LReply::Handled();
     }
 
+    if (InKeyEvent.GetKey() == EKeys::LeftMouseButton)
+    {
+        if (const LSurface* Surface { InViewport.GetCachedContext() }; Surface->IsMouseLocationMeaningful())
+        {
+            this->MoveCaretToMouseCursor(InViewport);
+        }
+
+        return LReply::Handled();
+    }
+
     return Super::OnKeyDown(InViewport, InKeyEvent);
 }
 
@@ -281,11 +319,57 @@ i32 Jafg::WEditableTextBox::SetCaretCursorToEnd()
     return this->CaretCursor;
 }
 
+bool Jafg::WEditableTextBox::IsContentFloatingPoint(const LString& InContent) noexcept
+{
+    for (const LString::T& Rune : InContent)
+    {
+        if (Rune != '.' && (Rune < '0' || Rune > '9'))
+        {
+            return false;
+        }
+
+        continue;
+    }
+
+    return true;
+}
+
 void Jafg::WEditableTextBox::OnSuperContentChanged(const LString& InNewContent)
 {
     this->CaretBlinker = 0.0f;
     this->CaretCursor = Maths::Min(this->CaretCursor, this->GetContent().GetRuneCount());
     this->OnContentChanged.InvokeIfBound(InNewContent);
+
+    return;
+}
+
+void Jafg::WEditableTextBox::MoveCaretToMouseCursor(const LViewport& Context)
+{
+    check( Context.GetCachedContext()->IsMouseLocationMeaningful() )
+
+    /*
+     * This is a workaround and bugprone. We are using the widget location data from the last frame.
+     * Meaning that things could have changed in the meantime... It is maybe safer to update the caret in the
+     * draw method of this widget instead? But who gives a shit right now? The user would need to click / tap keys
+     * in the same frame. I do not think that my users will have the brainpower to actually operate computers fast
+     * and right.
+     */
+    const f32 BaseTopLeft
+    {
+        this->GetAnchoredTopLeftFromMostOuter(Context).X // + this->CaretBrush.HOffset
+    };
+
+    const f32 RelativeTopLeft { Context.GetCachedContext()->GetMouseLocation().X - BaseTopLeft };
+
+    if (RelativeTopLeft < 0.0f)
+    {
+        this->SetCaretCursorToEnd();
+    }
+    else
+    {
+        const i32 Rune { this->GoToWidth(this->GetContent(), RelativeTopLeft) };
+        this->SetCaretCursor(Rune);
+    }
 
     return;
 }

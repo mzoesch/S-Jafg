@@ -26,6 +26,9 @@ public:
     FORCEINLINE TFactoryRetTy& CaretBlinkerSpeed(const f32 InSpeed) noexcept { this->This()->SetCaretBlinkerSpeed(InSpeed); return this->Self(); }
     FORCEINLINE TFactoryRetTy& CaretBrush(const LCaretBrush& InBrush) noexcept { this->This()->SetCaretBrush(InBrush); return this->Self(); }
 
+    FORCEINLINE TFactoryRetTy& Brush(const LEditableTextBoxBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Brush(LEditableTextBoxBrush&& InBrush) { this->This()->SetBrush(std::move(InBrush)); return this->Self(); }
+
     FORCEINLINE TFactoryRetTy& OnAllowCommit(LEditableTextBoxAllowCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnAllowContentCommit.BindFunction(std::move(InCallback)); return this->Self(); }
     FORCEINLINE TFactoryRetTy& OnCommit(LEditableTextBoxCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnContentCommitted.BindFunction(std::move(InCallback)); return this->Self(); }
     FORCEINLINE TFactoryRetTy& OnChanged(LEditableTextBoxChangedDelegate::LFunctionSigTy&& InCallback) { this->This()->OnContentChanged.BindFunction(std::move(InCallback)); return this->Self(); }
@@ -62,9 +65,17 @@ public:
 
     void OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType);
 
+    //# @see #LEditableTextBoxAllowCommitDelegate
     LEditableTextBoxAllowCommitDelegate OnAllowContentCommit;
+
+    //# @see #LEditableTextBoxCommitDelegate
     LEditableTextBoxCommitDelegate  OnContentCommitted;
+
+    //# @see #LEditableTextBoxChangedDelegate
     LEditableTextBoxChangedDelegate OnContentChanged;
+
+    //# @see #LEditableTextBoxPredicateDelegate
+    LEditableTextBoxPredicateDelegate ContentPredicate;
 
     FORCEINLINE void SetPlaceholderContent(const LString& InText) noexcept { this->PlaceholderContent = InText; }
     FORCEINLINE void SetPlaceholderContent(LString&& InText) noexcept { this->PlaceholderContent = std::move(InText); }
@@ -75,6 +86,9 @@ public:
     FORCEINLINE constexpr void SetCaretSize(const LVector2& InSize) noexcept { this->CaretBrush.Size = InSize; }
     FORCEINLINE constexpr void SetCaretHOffset(const f32 InOffset) noexcept { this->CaretBrush.HOffset = InOffset; }
     FORCEINLINE constexpr void SetCaretBlinkerSpeed(const f32 InSpeed) noexcept { this->CaretBrush.CaretBlinkerSpeed = InSpeed; }
+
+    FORCEINLINE constexpr void SetBrush(const LEditableTextBoxBrush& InBrush) noexcept;
+    FORCEINLINE constexpr void SetBrush(LEditableTextBoxBrush&& InBrush) noexcept;
 
     FORCEINLINE constexpr void SetCaretBrush(const LCaretBrush& InBrush) noexcept { this->CaretBrush = InBrush; }
     FORCEINLINE constexpr LCaretBrush& GetMutableCaretBrush() noexcept { return this->CaretBrush; }
@@ -90,10 +104,14 @@ public:
     i32 SetCaretCursorToBegin();
     i32 SetCaretCursorToEnd();
 
+    //# Checks whether the content can be interpreted as a floating point number or the content is not empty.
+    static bool IsContentFloatingPoint(const LString& InContent) noexcept;
+
 private:
 
     void OnSuperContentChanged(const LString& InNewContent);
 
+    void MoveCaretToMouseCursor(const LViewport& Context);
     void SafelyReduceCaretCursor();
     void SafelyIncreaseCaretCursor();
 
@@ -109,5 +127,23 @@ private:
 
     LDelegateHandle UserInterfaceTickDelegateHandle { nullptr };
 };
+
+FORCEINLINE constexpr void WEditableTextBox::SetBrush(const LEditableTextBoxBrush& InBrush) noexcept
+{
+    this->PlaceholderColor = InBrush.PlaceholderColor;
+
+    Super::SetBrush(InBrush);
+
+    return;
+}
+
+FORCEINLINE constexpr void WEditableTextBox::SetBrush(LEditableTextBoxBrush&& InBrush) noexcept
+{
+    this->PlaceholderColor = std::move(InBrush.PlaceholderColor);
+
+    Super::SetBrush(std::move(InBrush));
+
+    return;
+}
 
 } /* ~Namespace Jafg */

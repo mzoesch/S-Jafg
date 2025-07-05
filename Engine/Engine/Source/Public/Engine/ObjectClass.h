@@ -21,7 +21,7 @@ struct LRegistrationCallbackHelper;
 } /* ~Namespace Private */
 
 //#
-//# LObjectClass aka StaticClass.
+//# LObjectClass aka a static class.
 //#
 //# Wrapper around the jafg object referrer class that provides some extra information.
 //#

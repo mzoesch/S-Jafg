@@ -1,28 +1,56 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Widgets/Blueprint/Input_Vector3.h"
-
 #include "Widgets/EditableTextBox.h"
 #include "Widgets/TextBox.h"
+
+Jafg::WInput_Vector3::WInput_Vector3(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+    this->SetPadding(5.0f);
+    this->SetOmniOutlineThickness(1.0f);
+    this->SetOmniTint(LColor::Transparent);
+
+    return;
+}
 
 void Jafg::WInput_Vector3::Construct()
 {
     Super::Construct();
 
-    LTextBoxBrush Brush { LTextBoxBrush::Body() };
+    LEditableTextBoxBrush Brush { LTextBoxBrush::Compact() };
+    Brush.Type = ERegionBrush::RoundedOutlineBox;
+    Brush.Tint = LColor::Black;
+    Brush.OutlineThickness = 1.0f;
+    Brush.OutlineTint = LColor::Gray;
 
     WTextBox* Display { ConstructWidgetNode<WTextBox>(this->GetOuter()) };
-
     Display->SetBrush(Brush);
+    Display->SetType(ERegionBrush::None);
     Display->SetContent(this->DisplayName);
+    Display->SetMinDesiredSize({128, 0});
 
     this->AddChild(Display);
 
     WEditableTextBox* X { ConstructWidgetNode<WEditableTextBox>(this->GetOuter()) };
-    X->SetTextColor(Brush.TextColor);
-    X->SetTextScale(Brush.TextScale);
-    X->SetMinDesiredSize(10);
+    X->SetBrush(Brush);
+    X->SetContent("1.0");
+    X->SetMinDesiredSize({48, 0});
+    X->ContentPredicate.BindWeak(WEditableTextBox::IsContentFloatingPoint);
     this->AddChild(X);
+
+    WEditableTextBox* Y { ConstructWidgetNode<WEditableTextBox>(this->GetOuter()) };
+    Y->SetBrush(Brush);
+    Y->SetContent("1.0");
+    Y->SetMinDesiredSize({48, 0});
+    Y->ContentPredicate.BindWeak(WEditableTextBox::IsContentFloatingPoint);
+    this->AddChild(Y);
+
+    WEditableTextBox* Z { ConstructWidgetNode<WEditableTextBox>(this->GetOuter()) };
+    Z->SetBrush(Brush);
+    Z->SetContent("1.0");
+    Z->SetMinDesiredSize({48, 0});
+    Z->ContentPredicate.BindWeak(WEditableTextBox::IsContentFloatingPoint);
+    this->AddChild(Z);
 
     return;
 }

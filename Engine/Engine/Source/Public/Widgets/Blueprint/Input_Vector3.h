@@ -2,14 +2,14 @@
 
 #pragma once
 
-#include "Widgets/HRegion.h"
+#include "Widgets/HButton.h"
 #include "Input_Vector3.generated.h"
 
 namespace Jafg
 {
 
 template <typename TNode>
-class TWidgetFactoryInput_Vector3 : public TWidgetFactoryHRegion<TNode>
+class TWidgetFactoryInput_Vector3 : public TWidgetFactoryHButton<TNode>
 {
 public:
 
@@ -21,13 +21,13 @@ public:
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryInput_Vector3)
-class ENGINE_API WInput_Vector3 : public WHRegion
+class ENGINE_API WInput_Vector3 : public WHButton
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(WInput_Vector3)
+    explicit WInput_Vector3(const LObjectInitializer& ObjectInitializer);
 
 public:
 

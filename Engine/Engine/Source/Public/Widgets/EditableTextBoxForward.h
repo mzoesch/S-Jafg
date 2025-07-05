@@ -12,9 +12,34 @@ struct LCaretBrush;
 struct LEditableTextBoxBrush;
 namespace ETextCommit { enum Type : u8; }
 
+//#
+//# Delegate, which is invoked when the user tries to commit the content of the editable text box.
+//# @return True, if the user is allowed to commit the content, false otherwise.
+//# @note   This is useful if the content cannot be applied due to some validation, and handling the content validation
+//#         directly with the #LEditableTextBoxPredicateDelegate is not desired or viable.
+//#
 MAKE_DELEGATE_SIGNATURE(LEditableTextBoxAllowCommitDelegate, bool)
+
+//#
+//# Delegate, which is invoked when the user commits the content of the editable text box.
+//#
 MAKE_DELEGATE_SIGNATURE(LEditableTextBoxCommitDelegate, void, const LString& InText, const ETextCommit::Type InType)
+
+//#
+//# Delegate, which is invoked when the contents of the editable text box changed in any way.
+//#
 MAKE_DELEGATE_SIGNATURE(LEditableTextBoxChangedDelegate, void, const LString& InNewContent)
+
+//#
+//# A delegate that is invoked, if bounded, when the user tries to change the content of the editable text box.
+//# @return True, if the content change is allowed, false otherwise. E.g.: you might only want to allow the user to
+//#         type in numbers, or you want to validate the content before allowing it. If false is returned, the
+//#         the content will not be changed.
+//# @note   After this delegate is invoked and the new content was accepted, the #LEditableTextBoxChangedDelegate
+//#         will still be invoked. Change events should be handled there. This should only be used for validation.
+//#         If this validation fails, the #LEditableTextBoxChangedDelegate will not be invoked.
+//#
+MAKE_DELEGATE_SIGNATURE(LEditableTextBoxPredicateDelegate, bool, const LString& InNewSuggestedContent)
 
 //#
 //# A caret is a blinking line, block, or bitmap in the client area of a window. The caret typically indicates

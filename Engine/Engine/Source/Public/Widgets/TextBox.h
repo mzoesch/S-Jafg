@@ -28,6 +28,7 @@ public:
     FORCEINLINE TFactoryRetTy& RespectContentHeight(const bool bInRespect) { this->This()->SetRespectContentHeight(bInRespect); return this->Self(); }
 
     FORCEINLINE TFactoryRetTy& Brush(const LTextBoxBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Brush(LTextBoxBrush&& InBrush) { this->This()->SetBrush(std::move(InBrush)); return this->Self(); }
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTextBox)
@@ -47,6 +48,7 @@ public:
     virtual void UpdateDesiredSize() const override;
     void UpdateDesiredSizeForString(const LString& InString) const;
     f32 GetDesiredWidth(const LString& InString) const;
+    i32 GoToWidth(const LString& InString, const f32 InWidth) const;
 
     //# Called if the text box content changes.
     LTextBoxChangedDelegate OnChanged;
@@ -71,10 +73,10 @@ public:
     FORCEINLINE constexpr ETextVAlign::Type GetTextVAlign() const noexcept { return this->TextVAlign; }
     FORCEINLINE constexpr bool IsRespectingContentHeight() const noexcept { return this->bRespectContentHeight; }
 
-    FORCEINLINE void SetBrush(const LTextBoxBrush& InBrush) noexcept;
-    FORCEINLINE void SetBrush(LTextBoxBrush&& InBrush) noexcept;
+    FORCEINLINE constexpr void SetBrush(const LTextBoxBrush& InBrush) noexcept;
+    FORCEINLINE constexpr void SetBrush(LTextBoxBrush&& InBrush) noexcept;
     //# WARNING: This returns a new brush and not a reference.
-    FORCEINLINE LTextBoxBrush GetBrush() const noexcept;
+    FORCEINLINE constexpr LTextBoxBrush GetBrush() const noexcept;
 
     FORCEINLINE constexpr bool IsLeftAligned() const noexcept { return ETextHAlign::IsLeft(this->TextHAlign);   }
     FORCEINLINE constexpr bool IsCenterAligned() const noexcept { return ETextHAlign::IsCenter(this->TextHAlign); }
@@ -113,7 +115,7 @@ private:
     mutable LVector2 TextDesiredSize;
 };
 
-FORCEINLINE void WTextBox::SetBrush(const LTextBoxBrush& InBrush) noexcept
+FORCEINLINE constexpr void WTextBox::SetBrush(const LTextBoxBrush& InBrush) noexcept
 {
     this->TextColor = InBrush.TextColor;
     this->TextScale = InBrush.TextScale;
@@ -125,7 +127,7 @@ FORCEINLINE void WTextBox::SetBrush(const LTextBoxBrush& InBrush) noexcept
     return;
 }
 
-FORCEINLINE void WTextBox::SetBrush(LTextBoxBrush&& InBrush) noexcept
+FORCEINLINE constexpr void WTextBox::SetBrush(LTextBoxBrush&& InBrush) noexcept
 {
     this->TextColor = std::move(InBrush.TextColor);
     this->TextScale = std::move(InBrush.TextScale);
@@ -137,7 +139,7 @@ FORCEINLINE void WTextBox::SetBrush(LTextBoxBrush&& InBrush) noexcept
     return;
 }
 
-FORCEINLINE LTextBoxBrush WTextBox::GetBrush() const noexcept
+FORCEINLINE constexpr LTextBoxBrush WTextBox::GetBrush() const noexcept
 {
     static_assert(sizeof(LTextBoxBrush) == 88, "This method needs to be updated because LTextBoxBrush has changed.");
 

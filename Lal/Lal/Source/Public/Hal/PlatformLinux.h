@@ -79,6 +79,7 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     /*-----------------------------------------------------------------------------
         Raise.
     -----------------------------------------------------------------------------*/
+    #pragma clang diagnostic error "-Wbraced-scalar-init"
     #pragma clang diagnostic error "-Wbuiltin-macro-redefined"
     #pragma clang diagnostic error "-Wdangling-else"
     #pragma clang diagnostic error "-Wextra-semi"

@@ -4,44 +4,11 @@
 
 #include "Widgets/Region.h"
 #include "Widgets/TextBox.h"
+#include "Widgets/ButtonForward.h"
 #include "Button.generated.h"
 
 namespace Jafg
 {
-
-class WButton;
-class WTextButton;
-class WTextBox;
-struct LTextBoxBrush;
-
-MAKE_DELEGATE_SIGNATURE(LOnButtonKeyEvent, void, WButton* Self, const LKeyEvent& InKeyEvent)
-
-struct LButtonStyle
-{
-    LRegionBrush NormalBrush   { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray,          .OutlineTint = LColor::Black };
-    LRegionBrush HoverBrush    { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray,          .OutlineTint = LColor::White };
-    LRegionBrush PressBrush    { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray,          .OutlineTint = LColor::White };
-    LRegionBrush DisabledBrush { .Type = ERegionBrush::OutlineBox, .Tint = LColor::NotSoDarkGray, .OutlineTint = LColor::Black };
-};
-
-template <typename TNode>
-class TWidgetFactoryButton : public TWidgetFactoryRegion<TNode>
-{
-public:
-
-    GENERATED_FACTORY_BODY(TWidgetFactoryRegion)
-
-    FORCEINLINE TFactoryRetTy& OnPrimaryPress(LOnButtonKeyEvent&& InDelegate) { this->This()->OnPrimaryPressDelegate = std::move(InDelegate); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OnPrimaryRelease(LOnButtonKeyEvent&& InDelegate) { this->This()->OnPrimaryReleaseDelegate = std::move(InDelegate); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OnSecondaryPress(LOnButtonKeyEvent&& InDelegate) { this->This()->OnSecondaryPressDelegate = std::move(InDelegate); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OnSecondaryRelease(LOnButtonKeyEvent&& InDelegate) { this->This()->OnSecondaryReleaseDelegate = std::move(InDelegate); return this->Self(); }
-
-    FORCEINLINE TFactoryRetTy& NormalBrush(const LRegionBrush& InBrush) { this->This()->SetNormalBrush(InBrush); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& HoverBrush(const LRegionBrush& InBrush) { this->This()->SetHoverBrush(InBrush); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& PressBrush(const LRegionBrush& InBrush) { this->This()->SetPressBrush(InBrush); return this->Self(); }
-
-    FORCEINLINE TFactoryRetTy& UiResponsive(const bool bTrue) { this->This()->SetLetUiReactToEvents(bTrue); return this->Self(); }
-};
 
 template <typename TNode>
 class TWidgetFactoryTextButton : public TWidgetFactoryButton<TNode>
@@ -60,7 +27,7 @@ public:
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryButton)
-class ENGINE_API WButton : public WRegion
+class ENGINE_API WButton : public WRegion, public LButtonBase
 {
     GENERATED_CLASS_BODY()
 
@@ -81,33 +48,7 @@ public:
     LOnButtonKeyEvent OnSecondaryPressDelegate;
     LOnButtonKeyEvent OnSecondaryReleaseDelegate;
 
-    //# These virtual methods are called when the associated delegate is not bound.
-    virtual void OnPrimaryPress()     { }
-    virtual void OnPrimaryRelease()   { }
-    virtual void OnSecondaryPress()   { }
-    virtual void OnSecondaryRelease() { }
-
-    FORCEINLINE void SetNormalBrush(const LRegionBrush& InBrush) noexcept { this->Style.NormalBrush = InBrush; }
-    FORCEINLINE auto GetNormalBrush() const noexcept -> const LRegionBrush& { return this->Style.NormalBrush; }
-    FORCEINLINE void SetHoverBrush(const LRegionBrush& InBrush) noexcept { this->Style.HoverBrush = InBrush; }
-    FORCEINLINE auto GetHoverBrush() const noexcept -> const LRegionBrush& { return this->Style.HoverBrush; }
-    FORCEINLINE void SetPressBrush(const LRegionBrush& InBrush) noexcept { this->Style.PressBrush = InBrush; }
-    FORCEINLINE auto GetPressBrush() const noexcept -> const LRegionBrush& { return this->Style.PressBrush; }
-    FORCEINLINE void SetDisabledBrush(const LRegionBrush& InBrush) noexcept { this->Style.DisabledBrush = InBrush; }
-    FORCEINLINE auto GetDisabledBrush() const noexcept -> const LRegionBrush& { return this->Style.DisabledBrush; }
-
-    FORCEINLINE void SetLetUiReactToEvents(const bool bInLetUiReactToEvents) { this->bLetUiReactToEvents = bInLetUiReactToEvents; }
-    FORCEINLINE bool GetLetUiReactToEvents() const { return this->bLetUiReactToEvents; }
-
-    void SetEnabled(const bool bInEnabled);
-    FORCEINLINE bool IsEnabled() const noexcept { return this->bEnabled; }
-
-protected:
-
-    bool bLetUiReactToEvents : 1 { true };
-    bool bEnabled : 1 { true };
-
-    LButtonStyle Style;
+    void SetEnabled(const bool bInEnabled) override;
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTextButton)
@@ -140,13 +81,13 @@ public:
     //#
     bool LoadIntermediateContent();
 
-    FORCEINLINE bool IsButtonTextValid() const { return this->ButtonText != nullptr; }
-    FORCEINLINE auto GetButtonText() -> WTextBox* { return this->ButtonText; }
-    FORCEINLINE auto GetButtonText() const -> const WTextBox* { return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextChecked() -> WTextBox* { check( this->ButtonText ); return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextChecked() const -> const WTextBox* { check( this->ButtonText ); return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextAsserted() -> WTextBox* { jassert( this->ButtonText ); return this->ButtonText; }
-    FORCEINLINE auto GetButtonTextAsserted() const -> const WTextBox* { jassert( this->ButtonText ); return this->ButtonText; }
+    FORCEINLINE bool IsButtonTextValid() const noexcept { return this->ButtonText != nullptr; }
+    FORCEINLINE auto GetButtonText() noexcept -> WTextBox* { return this->ButtonText; }
+    FORCEINLINE auto GetButtonText() const noexcept -> const WTextBox* { return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextChecked() noexcept -> WTextBox* { check( this->ButtonText ); return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextChecked() const noexcept -> const WTextBox* { check( this->ButtonText ); return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextAsserted() noexcept -> WTextBox* { jassert( this->ButtonText ); return this->ButtonText; }
+    FORCEINLINE auto GetButtonTextAsserted() const noexcept -> const WTextBox* { jassert( this->ButtonText ); return this->ButtonText; }
 
 protected:
 

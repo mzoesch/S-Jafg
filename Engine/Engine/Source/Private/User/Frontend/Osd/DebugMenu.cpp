@@ -20,9 +20,12 @@ void Jafg::WDebugMenu::Construct()
         .Anchor(EAnchor::Fill)
     [
         NewNode(WVRegion)
-            .Anchor(EAnchor::BottomRight)
+            .Anchor(EAnchor::TopRight)
+            .Type(ERegionBrush::Box)
+            .Tint(LColor::DarkerGray)
         [
             NewNode(WInput_Vector3)
+                .HSpace(1.0f)
                 .DisplayName("Sun Direction")
         ]
     ]

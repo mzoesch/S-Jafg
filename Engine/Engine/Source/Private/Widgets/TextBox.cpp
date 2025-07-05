@@ -145,6 +145,55 @@ f32 Jafg::WTextBox::GetDesiredWidth(const LString& InString) const
     return Out;
 }
 
+i32 Jafg::WTextBox::GoToWidth(const LString& InString, const f32 InWidth) const
+{
+    if (InString.IsEmpty())
+    {
+        return 0;
+    }
+
+    const LOrthographicTextShader* Shader { GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText) };
+
+    f32 Width { 0.0f };
+    i32 Index { 0 };
+    for (const LString::T Rune : InString)
+    {
+        ++Index;
+
+        if (auto It { Shader->GetCharacters().find(static_cast<i8>(Rune)) }; It != Shader->GetCharacters().end())
+        {
+            // TODO: Improve this algorithm to better reflect the actual width of one single character instead of the advance.
+
+            const f32 OldWidth { Width };
+            Width += static_cast<f32>(It->second.Advance.X) * this->TextScale / 64.0f;
+
+            if (Width >= InWidth)
+            {
+                const f32 A
+                {
+                    Maths::Absolute
+                    (
+                        OldWidth - InWidth
+                        /* Super sketchy solution. This calculation should just not be based of the advance of the character. */
+                        + (15.0f * this->TextScale)
+                    )
+                };
+
+                if (Maths::IsNearlyEqual(A, Maths::Min(A, Maths::Absolute(Width - InWidth))))
+                {
+                    return --Index;
+                }
+
+                return Index;
+            }
+        }
+
+        continue;
+    }
+
+    return Index;
+}
+
 void Jafg::WTextBox::RegisterShaders()
 {
     check( GEngine )

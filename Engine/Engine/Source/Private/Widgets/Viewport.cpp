@@ -53,7 +53,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
     this->CachedContext = &Context;
     this->SweepTranslation = LVector2D::ZeroVector;
 
-    const bool bCursorLocationIsMeaningful = InCursorLocation.X >= 0.0f && InCursorLocation.Y >= 0.0f;
+    const bool bCursorLocationIsMeaningful { InCursorLocation.X >= 0.0f && InCursorLocation.Y >= 0.0f };
 
     if (bCursorLocationIsMeaningful)
     {
@@ -70,7 +70,9 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
         this->HoveredWidgets.Reset(this->HoveredWidgets.GetSize());
     }
 
-    // Sweep cursor input over widgets.
+    LCursorReply SweepReply;
+
+    /* Sweep cursor input over widgets. */
     if (bCursorLocationIsMeaningful)
     {
         for (WUserWidget* Widget : this->TopLevelWidgets)
@@ -80,9 +82,9 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
                 continue;
             }
 
-            if (const LCursorReply Reply = Widget->SweepMouse(*this, InCursorLocation); Reply.IsHandled())
+            if (LCursorReply Reply { Widget->SweepMouse(*this, InCursorLocation) }; Reply.IsHandled())
             {
-                this->HandleReply(Context, Reply);
+                SweepReply = std::move(Reply);
                 break;
             }
 
@@ -90,7 +92,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
         }
     }
 
-    // Check for cursor leave events.
+    /* Check for cursor leave events. */
     if (bCursorLocationIsMeaningful)
     {
         LCursorReply MostRecentReply = LCursorReply::Unhandled();
@@ -98,7 +100,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
         {
             if (this->HoveredWidgets.Contains(Node) == false)
             {
-                if (const LCursorReply Reply = Node->OnCursorLeave(); MostRecentReply.IsHandled() == false && Reply.IsHandled())
+                if (const LCursorReply Reply { Node->OnCursorLeave() }; MostRecentReply.IsHandled() == false && Reply.IsHandled())
                 {
                     MostRecentReply = Reply;
                 }
@@ -112,10 +114,20 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
         }
     }
 
-    // Check for left-mouse-button down events to focus on another widget.
+    /*
+     * Handle the sweep reply after the cursor leave events, so that in the case of mutual changes to (e.g., the
+     * cursor) are still reflected in the importance. Obviously, the sweep reply is more important than some random
+     * fuck widget that was hovered last frame.
+     */
+    if (SweepReply.IsHandled())
+    {
+        this->HandleReply(Context, SweepReply);
+    }
+
+    /* Check for left-mouse-button down events to focus on another widget. */
     if (bCursorLocationIsMeaningful && Context.IsNewKeyDown(EKeys::LeftMouseButton))
     {
-        bool bIsHandled = false;
+        bool bIsHandled { false };
         for (WUserWidget* Widget : this->TopLevelWidgets)
         {
             if (Widget->ShouldCheckForInputs() == false)
@@ -123,7 +135,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
                 continue;
             }
 
-            if (const LReply Reply = Widget->SweepFocusTest(*this, InCursorLocation); Reply.IsHandled())
+            if (const LReply Reply { Widget->SweepFocusTest(*this, InCursorLocation) }; Reply.IsHandled())
             {
                 this->HandleReply(Context, Reply);
                 bIsHandled = true;
@@ -138,10 +150,10 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
         }
     }
 
-    // Check if the focused widget is valid to be focused.
+    /* Check if the focused widget is valid to be focused. */
     if (this->FocusedWidget)
     {
-        bool bIsDrawn = false;
+        bool bIsDrawn { false };
         for (const WUserWidget* Widget : this->TopLevelWidgets)
         {
             if (Widget->FindNodeInVisiblePath(this->FocusedWidget))
@@ -161,7 +173,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
         }
     }
 
-    // Check for key down events.
+    /* Check for key down events. */
     for (const LRawInput& Input : Context.GetCurrentlyPressedKeys())
     {
         if (Input.bRepeated == false && Context.IsNewKeyDown(Input) == false)
@@ -171,7 +183,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
 
         if (this->FocusedWidget)
         {
-            if (const LReply Reply = this->FocusedWidget->OnKeyDown(*this, Input); Reply.IsHandled())
+            if (const LReply Reply { this->FocusedWidget->OnKeyDown(*this, Input) }; Reply.IsHandled())
             {
                 this->HandleReply(Context, Reply);
                 continue;
@@ -192,7 +204,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
                     continue;
                 }
 
-                if (const LReply Reply = Widget->OnKeyDownNoFocus(*this, Input); Reply.IsHandled())
+                if (const LReply Reply { Widget->OnKeyDownNoFocus(*this, Input) }; Reply.IsHandled())
                 {
                     this->HandleReply(Context, Reply);
                     break;
@@ -205,7 +217,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
         continue;
     }
 
-    // Check for key up events.
+    /* Check for key up events. */
     for (const LRawInput& Input : Context.GetLastFramePressedKeys())
     {
         if (Context.IsKeyUp(Input) == false)
@@ -215,7 +227,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
 
         if (this->FocusedWidget)
         {
-            if (const LReply Reply = this->FocusedWidget->OnKeyUp(*this, Input); Reply.IsHandled())
+            if (const LReply Reply { this->FocusedWidget->OnKeyUp(*this, Input) }; Reply.IsHandled())
             {
                 this->HandleReply(Context, Reply);
                 continue;
@@ -236,7 +248,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
                     continue;
                 }
 
-                if (const LReply Reply = Widget->OnKeyUpNoFocus(*this, Input); Reply.IsHandled())
+                if (const LReply Reply { Widget->OnKeyUpNoFocus(*this, Input) }; Reply.IsHandled())
                 {
                     this->HandleReply(Context, Reply);
                     break;
@@ -258,18 +270,20 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
 
     if (this->HoveredWidgets.IsEmpty() == false || this->LastFrameHoveredWidgets.IsEmpty() == false)
     {
-        LCursorReply MostRecentReply = LCursorReply::Unhandled();
+        LCursorReply MostRecentReply;
         for (WNode* Node : this->HoveredWidgets)
         {
-            LCursorReply Reply = Node->OnCursorLeave();
-            if (Reply.IsHandled())
+            if (LCursorReply Reply { Node->OnCursorLeave() }; Reply.IsHandled())
             {
-                MostRecentReply = Reply;
+                MostRecentReply = std::move(Reply);
             }
         }
         if (MostRecentReply.IsHandled())
         {
-            Context.SetMouseCursor(MostRecentReply.GetCursorType());
+            if (MostRecentReply.GetCursorType() != EMouseCursor::None)
+            {
+                Context.SetMouseCursor(MostRecentReply.GetCursorType());
+            }
         }
 
         this->HoveredWidgets.Empty();

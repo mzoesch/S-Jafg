@@ -45,7 +45,7 @@ class LCursorReply final : public TReplyBase<LCursorReply>
 {
 public:
 
-    FORCEINLINE static constexpr LCursorReply Handled()   noexcept { return { EMouseCursor::Default }; }
+    FORCEINLINE static constexpr LCursorReply Handled()   noexcept { return { EMouseCursor::None }; }
     FORCEINLINE static constexpr LCursorReply Unhandled() noexcept { return { }; }
 
     constexpr LCursorReply() noexcept : TReplyBase<LCursorReply>(false) { }
@@ -76,7 +76,7 @@ public:
 
 private:
 
-    EMouseCursor::Type CursorType { EMouseCursor::Default };
+    EMouseCursor::Type CursorType { EMouseCursor::None };
 
     //#
     //# The widget to focus. Null if this reply does not affect any focus.

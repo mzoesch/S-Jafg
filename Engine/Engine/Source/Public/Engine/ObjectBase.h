@@ -92,16 +92,16 @@ protected:
 
     virtual ~JObjectBase()
     {
-        /*
-         * If this check triggers, you might have done one of the following things that are forbidden:
-         *   - Manually deleted an object via ~delete or ~delete[].
-         *   - Used a smart pointer not from the jafg library, for example, a std::shared_ptr (Which are not
-         *     compatible).
-         *
-         * Create a new object with NewObject<T>. Delete them by either calling #MarkAsGarbage to get them discarded
-         * at the next engine butcher cycle or by calling #KillYourSelfNow to get them discarded immediately (comparable
-         * with a call to the delete operator).
-         */
+        //
+        // If this check triggers, you might have done one of the following things that are forbidden:
+        //   - Manually deleted an object via ~delete or ~delete[].
+        //   - Used a smart pointer not from the jafg library, for example, a std::shared_ptr (Which are not
+        //     compatible).
+        //
+        // Create a new object with NewObject<T>. Delete them by either calling #MarkAsGarbage to get them discarded
+        // at the next engine butcher cycle or by calling #KillYourSelfNow to get them discarded immediately (comparable
+        // with a call to the delete operator).
+        //
         check( this->bGarbage )
     }
 

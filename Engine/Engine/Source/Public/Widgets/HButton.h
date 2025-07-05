@@ -1,0 +1,39 @@
+// Copyright mzoesch. All rights reserved.
+
+#pragma once
+
+#include "Widgets/HRegion.h"
+#include "Widgets/ButtonForward.h"
+#include "HButton.generated.h"
+
+namespace Jafg
+{
+
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryHButton)
+class ENGINE_API WHButton : public WHRegion, public LButtonBase
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    explicit WHButton(const LObjectInitializer& ObjectInitializer);
+
+public:
+
+    virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation) override;
+
+    virtual void Construct() override;
+    virtual LCursorReply OnCursorEnter() override;
+    virtual LCursorReply OnCursorLeave() override;
+    virtual LReply OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
+    virtual LReply OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
+
+    LOnHButtonKeyEvent OnPrimaryPressDelegate;
+    LOnHButtonKeyEvent OnPrimaryReleaseDelegate;
+    LOnHButtonKeyEvent OnSecondaryPressDelegate;
+    LOnHButtonKeyEvent OnSecondaryReleaseDelegate;
+
+    void SetEnabled(const bool bInEnabled) override;
+};
+
+} /* ~Namespace Jafg */

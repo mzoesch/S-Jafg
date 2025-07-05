@@ -3,20 +3,11 @@
 #pragma once
 
 #include "Widgets/Region.h"
+#include "Widgets/HRegionFactory.h"
 #include "HRegion.generated.h"
 
 namespace Jafg
 {
-
-template <typename TNode>
-class TWidgetFactoryHRegion : public TWidgetFactoryRegion<TNode>
-{
-public:
-
-    GENERATED_FACTORY_BODY(TWidgetFactoryRegion)
-
-    FORCEINLINE TFactoryRetTy& HSpace(const f32 InHSpace) { this->This()->SetHSpace(InHSpace); return this->Self(); }
-};
 
 //#
 //# Horizontal region widget. Children are stacked next to each other. From left to right.

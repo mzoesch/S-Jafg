@@ -178,7 +178,7 @@ Jafg::LCursorReply Jafg::WNode::SweepMouse(LViewport& Context, const LVector2& I
 
     if (Context.AddHoveredWidgetForFrame(this))
     {
-        if (LCursorReply Reply = this->OnCursorEnter(); Reply.IsHandled())
+        if (LCursorReply Reply { this->OnCursorEnter() }; Reply.IsHandled())
         {
             return Reply;
         }

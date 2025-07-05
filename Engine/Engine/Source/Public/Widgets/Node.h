@@ -336,7 +336,7 @@ private:
 
     FORCEINLINE TArray<LWidgetFactory*>& GetMutableSiblingsDangerous() noexcept { return this->Siblings; }
 
-    WNode* Node = nullptr;
+    WNode* Node { nullptr };
     TArray<LWidgetFactory*> Siblings;
 };
 
@@ -606,7 +606,7 @@ public:
     //# The min desired size. A widget will always be at least this size.
     FORCEINLINE void SetMinDesiredSize(const LVector2& InSize) { this->MinDesiredSize = InSize; return; }
     FORCEINLINE const LVector2& GetMinDesiredSize() const { return this->MinDesiredSize; }
-    //# The max desired size. A widget will have at maximum this size. Zero mean unbound. This includes max size of anchored nodes.
+    //# The max desired size. A widget will have at maximum this size. Zero means unbound. This includes max size of anchored nodes.
     FORCEINLINE void SetMaxDesiredSize(const LVector2& InSize) { this->MaxDesiredSize = InSize; return; }
     FORCEINLINE const LVector2& GetMaxDesiredSize() const { return this->MaxDesiredSize; }
 
