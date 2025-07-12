@@ -11,6 +11,7 @@ namespace Jafg
 class JObjectBase;
 class LEngine;
 class LCarnifex;
+class LWorld;
 struct LPrivateLaunch;
 
 namespace Private
@@ -52,6 +53,8 @@ public:
     virtual void TearDownContext();
 
     virtual bool IsWorld() const { return false; }
+    FORCEINLINE const LWorld* AsWorld() const noexcept;
+    FORCEINLINE LWorld* AsWorld() noexcept;
 
     FORCEINLINE bool IsCarnifexValid() const { return this->Carnifex != nullptr; }
     FORCEINLINE auto GetCarnifex() const -> LCarnifex* { return this->Carnifex; }

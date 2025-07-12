@@ -161,13 +161,13 @@ private:
     //#
     //# The intellisense regions that are used if a command is being typed.
     //#
-    WVRegion*   IntellisenseContainer { nullptr };
-    WVRegion*   Intellisense { nullptr };
-    WRegion*    IntellisenseHelpContainer { nullptr };
+    WVRegion* IntellisenseContainer { nullptr };
+    WVRegion* Intellisense { nullptr };
+    WRegion*  IntellisenseHelpContainer { nullptr };
     WTextBox* IntellisenseHelp { nullptr };
     WTextBox* IntellisenseText { nullptr };
-    WVRegion*   IntellisensePredictions { nullptr };
-    LString     CurrentIntellisensePrediction;
+    WVRegion* IntellisensePredictions { nullptr };
+    LString   CurrentIntellisensePrediction;
 
     struct LPreviewMessage final
     {

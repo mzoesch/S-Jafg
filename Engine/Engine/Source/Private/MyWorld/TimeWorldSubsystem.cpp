@@ -566,7 +566,7 @@ void Jafg::JTimeWorldSubsystem::DefaultOnly_RegisterCliObjects()
     {
         check( this->CommandHandle_Time.IsValid() == false )
         this->CommandHandle_Time = GEngine->GetCommandLineInterface()->RegisterCommand({"Time", "Changes day and night related time variables.",
-            LCommandParams()
+            LCommandParams{}
             .Token(LCliType::Type<EDayTimeAddBehavior::Type>())
             .Token(LCliType::Type<LWorld>())
             .Token(LCliType::Type<LCliDayTime>())

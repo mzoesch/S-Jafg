@@ -25,7 +25,7 @@ if(NOT DEFINED JAFG_TARGET_TYPE)
 endif()
 # The configuration to compile for [Debug, Development, Shipping].
 if(NOT DEFINED JAFG_TARGET_CONFIG)
-    message(FATAL_ERROR "JAFG_TARGET_CONFIG is not defined. Please define it with -JAFG_TARGET_CONFIG=<configuration>.")
+    message(FATAL_ERROR "JAFG_TARGET_CONFIG is not defined. Please define it with -DJAFG_TARGET_CONFIG=<configuration>.")
 endif()
 include(Programs/ValidateTargetInput.cmake)
 
@@ -77,10 +77,10 @@ set(JAFG_MODULE_TYPE_PLUGIN     "plugin")
 # After that use the normal CMake commands to customize the just added modules.
 # The module name can be accessed via "_scoped_module_name". It is the name of the directory the CMakeLists.txt is in,
 # e.g. this means that:
-#    Runtime            => Runtime
-#    Engine/Core        => Engine
-#    Engine/Engine      => Engine
-#    Plugins/MyPlugin   => MyPlugin
+#    Runtime                    => Runtime
+#    Engine/Core                => Core
+#    Engine/Engine              => Engine
+#    Plugins/mzoesch/MyPlugin   => MyPlugin
 #
 # You CMakeLists.txt file may be loaded multiple times by the Jafg build tool, therefore it is necessary to guard
 # it, e.g.:

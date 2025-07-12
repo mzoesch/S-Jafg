@@ -176,6 +176,12 @@ public:
     FORCEINLINE APawn* GetLocalPawnChecked() const { APawn* Out = this->GetLocalPawn(); check( Out ) return Out; }
     FORCEINLINE APawn* GetLocalPawnAsserted() const { APawn* Out = this->GetLocalPawn(); jassert( Out ) return Out; }
 
+    //#
+    //# The real URL that was used to launch this world. This might not be valid.
+    //# @note This URL is not sanitized, so for the most cases you should use the sanitized URL by
+    //#       calling #GetBrowsedUrl.
+    //#
+    FORCEINLINE const LString& GetUnsanitizedUrl() const noexcept { return this->UnsanitizedUrl; }
     //# The URL that was used to launch this world. This might not be valid.
     FORCEINLINE const LString& GetBrowsedUrl() const noexcept { return this->Url; }
     //# The URL but parsed into a structured way. This might not be valid.
@@ -243,6 +249,7 @@ public:
 
 private:
 
+    LString UnsanitizedUrl;
     LString Url;
     LWorldParameters Parameters;
     void UpdateUrlParams();
@@ -312,6 +319,18 @@ FORCEINLINE LWorld* LWorld::GetWorldFromHumanReadableNameAsserted(const LString&
     LWorld* Out { LWorld::GetWorldFromHumanReadableName(InHumanReadableName) };
     jassert( Out )
     return Out;
+}
+
+FORCEINLINE LWorld* LObjectContext::AsWorld() noexcept
+{
+    check( this->IsWorld() )
+    return static_cast<LWorld*>(this);
+}
+
+FORCEINLINE const LWorld* LObjectContext::AsWorld() const noexcept
+{
+    check( this->IsWorld() )
+    return static_cast<const LWorld*>(this);
 }
 
 } /* ~Namespace Jafg */

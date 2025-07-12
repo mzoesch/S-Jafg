@@ -193,7 +193,6 @@ Jafg::LReply Jafg::WConsoleScreen::OnKeyDown(const LViewport& InViewport, const 
         {
             if (this->TryGoIntellisensePredictionUp())
             {
-                this->UpdateIntellisensePredictionsColors();
                 return LReply::Handled();
             }
         }
@@ -201,7 +200,6 @@ Jafg::LReply Jafg::WConsoleScreen::OnKeyDown(const LViewport& InViewport, const 
         {
             if (this->TryGoIntellisensePredictionDown())
             {
-                this->UpdateIntellisensePredictionsColors();
                 return LReply::Handled();
             }
         }
@@ -382,7 +380,11 @@ void Jafg::WConsoleScreen::GoHistoryBack()
         return;
     }
 
-    this->GetImplChecked()->SetContent(*this->GetCurrentHistoryItemChecked());
+    if (const LString Item { *this->GetCurrentHistoryItemChecked() }; this->GetImplChecked()->GetContent() != Item)
+    {
+        this->GetImplChecked()->SetContent(Item);
+        this->GetImplChecked()->SetCaretCursorToEnd();
+    }
 
     return;
 }
@@ -517,6 +519,7 @@ void Jafg::WConsoleScreen::AddIntellisensePrediction(const LString& InText)
         .Anchor(EAnchor::HFill)
         .Content(InText)
         .Brush(LTextBoxBrush::Body())
+        .Tint(this->GetIntellisenseHighlightTint())
     FinishWidget(PreviewMessage);
 
     this->IntellisensePredictions->AddChildAt(0, PreviewMessage);
@@ -531,6 +534,7 @@ void Jafg::WConsoleScreen::AddIntellisensePrediction(LString&& InText)
         .Anchor(EAnchor::HFill)
         .Content(std::move(InText))
         .Brush(LTextBoxBrush::Body())
+        .Tint(this->GetIntellisenseHighlightTint())
     FinishWidget(PreviewMessage);
 
     this->IntellisensePredictions->AddChildAt(0, PreviewMessage);
@@ -943,11 +947,11 @@ void Jafg::WConsoleScreen::UpdateIntellisensePredictionsColors()
             TextBlock->GetContent() == this->CurrentIntellisensePrediction
         )
         {
-            TextBlock->SetTint(this->GetIntellisenseHighlightTint());
+            TextBlock->SetType(ERegionBrush::Box);
         }
         else
         {
-            TextBlock->SetTint(this->GetIntellisenseTint());
+            TextBlock->SetType(ERegionBrush::None);
         }
 
         continue;

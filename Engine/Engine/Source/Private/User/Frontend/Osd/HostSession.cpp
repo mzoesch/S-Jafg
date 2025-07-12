@@ -424,7 +424,7 @@ Jafg::TWidgetFactoryHRegion<Jafg::WHRegion>* Jafg::WHostSessionScreen_New::AddMe
                 this->GetEngine()->Browse
                 (
                     static_cast<LWorld*>(this->GetOuter()),
-                    LString::SprintF("{}?{}", Name_LevelMyWorld.ToString(), Path)
+                    LString::SprintF("{}?Save={}", Name_LevelMyWorld.ToString(), Path)
                 );
 
                 return;
@@ -694,16 +694,19 @@ void Jafg::WHostSessionScreen_Old::Construct()
                 {
                     check( this->Owner )
                     check( this->SelectedSaveIndex != INDEX_NONE )
-                    this->Owner->ShowOldScreenHost();
 
                     if
                     (
-                        const WHostSessionScreen_Old_Save* Save = DynamicCast<WHostSessionScreen_Old_Save>(this->SavesRegion->GetChildren()[this->SelectedSaveIndex]->Content);
+                        const WHostSessionScreen_Old_Save* Save
+                        {
+                            DynamicCast<WHostSessionScreen_Old_Save>(this->SavesRegion->GetChildren()[this->SelectedSaveIndex]->Content)
+                        };
                         Save
                     )
                     {
                         this->Owner->GetOldScreenHost()->SetSave(Save->GetSave());
                         this->Owner->GetOldScreenHost()->UpdateToCachedSave();
+                        this->Owner->ShowOldScreenHost();
                     }
                     else
                     {
@@ -747,11 +750,15 @@ bool Jafg::WHostSessionScreen_Old::AddData(const LWidgetNodeData* InData)
     return true;
 }
 
-void Jafg::WHostSessionScreen_Old::RefetchSaves()
+void Jafg::WHostSessionScreen_Old::RefetchSaves(const bool bResetHighlight /* = true */)
 {
     check( this->SavesRegion )
     this->SavesRegion->RemoveChildren();
-    this->HighlightNoSave(true);
+
+    if (bResetHighlight)
+    {
+        this->HighlightNoSave(true);
+    }
 
     this->RefetchSavesImpl();
 
@@ -1004,7 +1011,7 @@ void Jafg::WHostSessionScreen_Old_Host::UpdateToCachedSave()
     check( this->IsCachedSaveValid() )
 
     check( this->Header )
-    this->Header->SetContent(LString::SprintF("Hosting \"{}\"", this->Save->DisplayName));
+    this->Header->SetContent(LString::SprintF("Hosting \"{}\"", this->Save.DisplayName));
 
     return;
 }
@@ -1037,15 +1044,18 @@ Jafg::TWidgetFactoryHRegion<Jafg::WHRegion>* Jafg::WHostSessionScreen_Old_Host::
                     return;
                 }
 
-                if (this->GetOuter()->IsWorld())
-                {
-                    LOG_VERBOSE(LogWidgets, "Forwarding host request for [{}].", this->Save->Path)
-                    this->GetEngine()->Browse(static_cast<LWorld*>(this->GetOuter()), Name_LevelMyWorld.ToString());
-                }
-                else
+                if (this->GetOuter()->IsWorld() == false)
                 {
                     LOG_ERROR(LogWidgets, "Cannot host, because outer is not a world.")
+                    return;
                 }
+
+                LOG_VERBOSE(LogWidgets, "Forwarding host request for [{}].", this->Save.Path)
+                this->GetEngine()->Browse
+                (
+                    this->GetOuter()->AsWorld(),
+                    LString::SprintF("{}?Save={}", Name_LevelMyWorld.ToString(), this->Save.Path)
+                );
 
                 return;
             })

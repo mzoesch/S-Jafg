@@ -252,12 +252,12 @@ function(_jafg_add_module_impl
         if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
             if(LAL_DO_DEBUG_SYMBOLS_IN_SHIPPING)
                 target_compile_options(${module_name} PRIVATE
-                    -g              # No debug symbols.
+                    -g              # Debug symbols.
                     -O3             # Aggressive optimizations (Prioritize speed and fuck security).
                     )
             else()
                 target_compile_options(${module_name} PRIVATE
-                    -g0             # Debug symbols.
+                    -g0             # No debug symbols.
                     -O3             # Aggressive optimizations.
                     )
             endif()

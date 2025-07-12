@@ -261,6 +261,25 @@ void Jafg::LEngine::Initialize()
         })}).IsValid()};
         ensureDiscard(bValid_CommandBreak);
 
+        const bool bValid_CommandPrintWorldParams { this->GetCommandLineInterface()->RegisterCommand(
+        {
+            "PrintWorldParams", "Prints the world parameters to the standard output.",
+            LCommandParams{}
+            .Token(LCliType::Type<LWorld>())
+            .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+            {
+                check( InArgs.GetArgCount() == 1 )
+
+                LWorld* World { InArgs[0].GetAs<LWorld>() };
+
+                OutResponse->StdOut = LString::SprintF("{} params are {}", World->GetHumanReadableName(), World->GetParameters().ToString());
+                OutResponse->Rc = ECommandReturnCode::Success;
+
+                return;
+            })
+        }).IsValid()};
+        ensureDiscard(bValid_CommandPrintWorldParams);
+
         const bool bValid_CommandTrap { this->GetCommandLineInterface()->RegisterCommand({"_Trap", "Traps jafg.",
         LCommandParams{}
         .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
@@ -616,14 +635,19 @@ Jafg::Private::LWorldContext& Jafg::LEngine::CreateNewWorldContext(const LString
 
 void Jafg::LEngine::Browse(Private::LWorldContext& Context, const LString& Url) const
 {
+    check( Context.ChildWorld )
+
+    check( Context.TravelUrl.IsEmpty() )
+
+    LOG_VERBOSE(LogEngine, "Browsing world [{}] to [{}].", Context.ChildWorld->GetHumanReadableName(), Url)
+
     if (this->IsContextUrlInternal(Url) == false)
     {
         unimplemented()
         return;
     }
 
-    LString Level;
-    if (const i32 Barrier = Url.FindFirst("?"); Barrier == INDEX_NONE)
+    if (const i32 Barrier { Url.FindFirst('?') }; Barrier == INDEX_NONE)
     {
         if (this->IsLevelRegistered(Url) == false)
         {
@@ -658,19 +682,18 @@ bool Jafg::LEngine::IsContextUrlInternal(const LString& Url) const
 
 bool Jafg::LEngine::TravelContext(Private::LWorldContext& Context)
 {
+    check( Context.ChildWorld )
     check( Context.IsWaitingForTravel() )
 
-    LOG_INFO(LogEngine, "Traveling world to [{}].", Context.TravelUrl)
+    LOG_INFO(LogEngine, "Traveling [{}] to [{}].", Context.ChildWorld->GetHumanReadableName(), Context.TravelUrl)
 
-    LLevel* Level = this->GetLevelByInternalUrl(Context.TravelUrl);
+    LLevel* Level { this->GetLevelByInternalUrl(Context.TravelUrl) };
     if (Level == nullptr)
     {
         LOG_ERROR(LogEngine, "Failed to resolve URL for any world [{}].", Context.TravelUrl)
         Context.TravelUrl.Empty();
         return false;
     }
-
-    check( Context.ChildWorld )
 
     if (Context.ChildWorld->GetWorldState() == EWorldState::Running)
     {

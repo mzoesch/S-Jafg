@@ -160,7 +160,7 @@ public:
     FORCEINLINE const WHostSessionScreen* GetOwnerChecked() const noexcept { check( this->Owner ) return this->Owner; }
     FORCEINLINE const WHostSessionScreen* GetOwnerAsserted() const noexcept { jassert( this->Owner ) return this->Owner; }
 
-    void RefetchSaves();
+    void RefetchSaves(const bool bResetHighlight = true);
 
     CLASS_FIELD(Config)
     TSubclassOf<WHostSessionScreen_Old_Save> SaveNodeClass { LazyInit };
@@ -200,9 +200,10 @@ public:
 
     void UpdateToCachedSave();
 
-    FORCEINLINE bool IsCachedSaveValid() const noexcept { return this->Save && this->Save->IsValid(); }
-    FORCEINLINE void Reset() noexcept { this->Save = nullptr; }
-    FORCEINLINE void SetSave(const LFetchedSave& Save) noexcept { this->Save = &Save; }
+    FORCEINLINE bool IsCachedSaveValid() const noexcept { return this->Save.IsValid(); }
+    FORCEINLINE void Reset() noexcept { this->Save = LFetchedSave{}; }
+    FORCEINLINE void SetSave(LFetchedSave&& Save) noexcept { this->Save = std::move(Save); }
+    FORCEINLINE void SetSave(const LFetchedSave& Save) noexcept { this->Save.ValueCopy(Save); }
 
 private:
 
@@ -211,7 +212,7 @@ private:
     WTextBox* Header { nullptr };
 
     WHostSessionScreen* Owner { nullptr };
-    const LFetchedSave* Save { nullptr };
+    LFetchedSave Save;
 };
 
 } /* ~Namespace Jafg */

@@ -18,15 +18,25 @@
 
 Jafg::LString Jafg::LWorldParameters::ToString() const
 {
-    LString Out { '{' };
+    LString Out { '[' };
 
+    bool bFirst { true };
     for (const LWorldParam& Param : this->Params)
     {
+        if (bFirst)
+        {
+            bFirst = false;
+        }
+        else
+        {
+            Out.Append(", ");
+        }
+
         Out.Append(LString::SprintF("{}={}", Param.Key, Param.Value));
         continue;
     }
 
-    Out += '}';
+    Out += ']';
     return Out;
 }
 
@@ -85,8 +95,10 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level, LString&& InLaunchedUrl)
     check( this->WorldState == EWorldState::Uninitialized || this->WorldState == EWorldState::WaitingForKill )
     this->WorldState = EWorldState::Initializing;
 
+    this->UnsanitizedUrl = InLaunchedUrl;
+
     /* Remove level name from url. */
-    if (const i32 Idx = InLaunchedUrl.FindFirst('?'); Idx != INDEX_NONE)
+    if (const i32 Idx { InLaunchedUrl.FindFirst('?') }; Idx != INDEX_NONE)
     {
         if (InLaunchedUrl.IsValidIndex(Idx + 1))
         {
@@ -96,6 +108,10 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level, LString&& InLaunchedUrl)
         {
             InLaunchedUrl.Empty();
         }
+    }
+    else
+    {
+        InLaunchedUrl.Empty();
     }
     this->Url = std::move(InLaunchedUrl);
     this->UpdateUrlParams();
@@ -331,6 +347,7 @@ void Jafg::LWorld::TearDownContext()
     this->OnStaticDraw.Unbind();
     this->OnStaticLineTrace.Unbind();
 
+    this->UnsanitizedUrl.Empty();
     this->Url.Empty();
     this->Parameters.Reset();
 
@@ -445,7 +462,7 @@ void Jafg::LWorld::UpdateUrlParams()
 
     LString Current;
     char Last { 0 };
-    for (const char& C: this->Url)
+    for (const char& C : this->Url)
     {
         if (C == '?' && Last != '\\')
         {
@@ -468,6 +485,8 @@ void Jafg::LWorld::UpdateUrlParams()
         LString K;
         LString V;
         Last = 0;
+
+        /* This is not quite right here. '\' can give wrong resuls. */
         for (const char& C : P)
         {
             if (C == '\\')
