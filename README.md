@@ -1,8 +1,7 @@
 # S-Jafg
-Voxel-based engine / game. Currently, in very early development. <br />
-As of now, it runs natively on Windows and Linux (Wayland) and is emulated in on the [browser](https://api.zoeschinger.com/static/Jafg/Runtime.html).
+OpenGL-based engine. Currently, in very early alpha.
 
-When developing @see [Fundamental Project Structure](Documentation/ProjectStructure.md)
+As of now, it runs natively on Windows and Linux; and is emulated in / on the [browser](https://api.zoeschinger.com/static/Jafg/Runtime.html).
 
 
 # Getting up and running

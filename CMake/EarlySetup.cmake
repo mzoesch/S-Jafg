@@ -87,15 +87,15 @@ set(JAFG_MOTOR_TOML "${JAFG_MOTOR_DIR}/Cargo.toml")
 # Misc.
 ###############################################################################
 
-include(Programs/ThrowOnInSourceBuild.cmake)
-include(Programs/ThrowOnMultiConfiguration.cmake)
-include(Programs/ModuleFlags.cmake)
+include(CMake/ThrowOnInSourceBuild.cmake)
+include(CMake/ThrowOnMultiConfiguration.cmake)
+include(CMake/ModuleFlags.cmake)
 
 # CMake extensions.
 include(CMakeDependentOption)
 include(CheckCXXCompilerFlag)
 include(FetchContent)
-include(Programs/Json.cmake)
+include(CMake/Json.cmake)
 
 if(NOT EXISTS "${JAFG_ENGINE_ROOT}/jafg.jafgworkspace")
     message(FATAL_ERROR "Jafg engine root directory was not found. Falsely evaluated to: [${JAFG_ENGINE_ROOT}].")
@@ -172,7 +172,7 @@ endif()
 
 if(NOT EXISTS "${JAFG_MOTOR_EXECUTABLE}")
     message(STATUS "Motor at [${JAFG_MOTOR_EXECUTABLE}] is not valid.")
-    include(Programs/RecompileMotor.cmake)
+    include(CMake/RecompileMotor.cmake)
     RecompileMotor()
 else()
     message(STATUS "Motor at [${JAFG_MOTOR_EXECUTABLE}] is valid. Skipping recompilation.")

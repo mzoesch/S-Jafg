@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD              23)
 set(CMAKE_CXX_STANDARD_REQUIRED     ON)
 set(CMAKE_CXX_EXTENSIONS            OFF)
 
-include(Programs/WhatTheFuckIsThat.cmake)
+include(CMake/WhatTheFuckIsThat.cmake)
 
 #
 # The root directory of the Jafg engine. Always valid. Use this to reference files in the Jafg engine.
@@ -27,9 +27,9 @@ endif()
 if(NOT DEFINED JAFG_TARGET_CONFIG)
     message(FATAL_ERROR "JAFG_TARGET_CONFIG is not defined. Please define it with -DJAFG_TARGET_CONFIG=<configuration>.")
 endif()
-include(Programs/ValidateTargetInput.cmake)
+include(CMake/ValidateTargetInput.cmake)
 
-include(Programs/ValidateCompiler.cmake)
+include(CMake/ValidateCompiler.cmake)
 
 project(
     Jafg
@@ -39,7 +39,7 @@ project(
     HOMEPAGE_URL    "https://github.com/mzoesch/S-Jafg"
     )
 
-include(Programs/EarlySetup.cmake)
+include(CMake/EarlySetup.cmake)
 
 #
 # These are the search paths for Jafg to check for modules to be loaded.
@@ -117,7 +117,7 @@ macro(jafg_add_dependency
     _jafg_add_dependency(${dep_path} ${visibility})
 endmacro()
 
-include(Programs/LateSetup.cmake)
+include(CMake/LateSetup.cmake)
 
 #
 # This fetches all modules that are either part of Jafg or foreign.
@@ -126,4 +126,4 @@ include(Programs/LateSetup.cmake)
 # contains the module's CMake configuration.
 # @see Example can be found at "Plugins/JafgPlugin/CMakeLists.txt".
 #
-include(Programs/ModuleFetcher.cmake)
+include(CMake/ModuleFetcher.cmake)
