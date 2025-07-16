@@ -31,10 +31,10 @@ function(_jafg_add_module_impl
     endif()
 
     if(
-        NOT ${module_type} STREQUAL JAFG_MODULE_TYPE_STATIC AND
-        NOT ${module_type} STREQUAL JAFG_MODULE_TYPE_SHARED AND
-        NOT ${module_type} STREQUAL JAFG_MODULE_TYPE_LAUNCH AND
-        NOT ${module_type} STREQUAL JAFG_MODULE_TYPE_PLUGIN
+        (NOT ${module_type} STREQUAL JAFG_MODULE_TYPE_STATIC) AND
+        (NOT ${module_type} STREQUAL JAFG_MODULE_TYPE_SHARED) AND
+        (NOT ${module_type} STREQUAL JAFG_MODULE_TYPE_LAUNCH) AND
+        (NOT ${module_type} STREQUAL JAFG_MODULE_TYPE_PLUGIN)
         )
         message(FATAL_ERROR "Invalid module type [${module_type}].")
     endif()

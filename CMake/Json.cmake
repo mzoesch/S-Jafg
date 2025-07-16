@@ -1,3 +1,5 @@
+# Copyright mzoesch. All rights reserved.
+
 function(JsonfyList InList OutString)
     set(out "")
     foreach(item IN LISTS ${InList})

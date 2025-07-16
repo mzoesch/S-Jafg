@@ -1,3 +1,5 @@
+# Copyright mzoesch. All rights reserved.
+
 ###############################################################################
 # Validate the compiler and its flags.
 ###############################################################################
@@ -40,4 +42,3 @@ elseif(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_WASM)
 else()
     message(FATAL_ERROR "Missing implementation here for JAFG_TARGET_PLATFORM [${JAFG_TARGET_PLATFORM}].")
 endif()
-

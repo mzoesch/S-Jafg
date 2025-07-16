@@ -32,7 +32,7 @@
 //#
 //# If this is true, then the build is in shipping mode.
 //# Shipping modes is the fastest version of Jafg but with the least security. If offers slim to none
-//# security checks as it assumes that the underlying code is corrected and tested.
+//# security checks as it assumes that the underlying code is correct and tested.
 //# This build has by default no debug symbols and is therefore not debuggable. You may enable debug symbols
 //# by defining LAL_DO_DEBUG_SYMBOLS_IN_SHIPPING in your CMake configuration. Generally, you should only debug errors
 //# in shipping builds if these errors are not reproducible in debug or development builds.

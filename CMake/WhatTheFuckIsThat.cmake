@@ -1,3 +1,5 @@
+# Copyright mzoesch. All rights reserved.
+
 #
 # I have no fucking idea what this does, but my friend the AI told me to do it. Lol.
 # And it fixes the clang compiler on Linux.
