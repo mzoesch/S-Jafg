@@ -282,20 +282,20 @@ function(_jafg_add_module_impl
         message(FATAL_ERROR "Missing implementation for JAFG_TARGET_CONFIG [${JAFG_TARGET_CONFIG}].")
     endif()
 
-    set(b_LAL_FLAG_DO_COMPILER_DIAGNOSTIC_SETUP $<IF:$<BOOL:LAL_FLAG_DO_COMPILER_DIAGNOSTIC_SETUP>,1,0>)
+    set(b_LAL_DO_COMPILER_DIAGNOSTIC_SETUP $<IF:$<BOOL:LAL_DO_COMPILER_DIAGNOSTIC_SETUP>,1,0>)
 
     target_compile_definitions(${module_name} PRIVATE
-        LAL_DO_COMPILER_DIAGNOSTIC_SETUP=${b_LAL_FLAG_DO_COMPILER_DIAGNOSTIC_SETUP}
+        LAL_DO_COMPILER_DIAGNOSTIC_SETUP=${b_LAL_DO_COMPILER_DIAGNOSTIC_SETUP}
         )
 
-    _jafg_add_flag_if_specified(${LAL_FLAG_DO_ENABLE_SHIPPING_WARNINGS}      "LAL_DO_ENABLE_SHIPPING_WARNINGS")
-    _jafg_add_flag_if_specified(${LAL_FLAG_LOG_DEFAULT_VERBOSITY}            "LAL_LOG_DEFAULT_VERBOSITY")
-    _jafg_add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_TRACE}                 "LAL_LOG_ENABLE_TRACE")
-    _jafg_add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_VERBOSE}               "LAL_LOG_ENABLE_VERBOSE")
-    _jafg_add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_INFO}                  "LAL_LOG_ENABLE_INFO")
-    _jafg_add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_WARNING}               "LAL_LOG_ENABLE_WARNING")
-    _jafg_add_flag_if_specified(${LAL_FLAG_LOG_ENABLE_ERROR}                 "LAL_LOG_ENABLE_ERROR")
-    _jafg_add_flag_if_specified(${LAL_FLAG_LOG_DO_SCOPED_TIME_TASK_MEASURER} "LAL_LOG_DO_SCOPED_TIME_TASK_MEASURER")
+    _jafg_add_flag_if_specified(${LAL_DO_ENABLE_SHIPPING_WARNINGS}           "LAL_DO_ENABLE_SHIPPING_WARNINGS")
+    _jafg_add_flag_if_specified(${LAL_LOG_DEFAULT_VERBOSITY}                 "LAL_LOG_DEFAULT_VERBOSITY")
+    _jafg_add_flag_if_specified(${LAL_LOG_ENABLE_TRACE}                      "LAL_LOG_ENABLE_TRACE")
+    _jafg_add_flag_if_specified(${LAL_LOG_ENABLE_VERBOSE}                    "LAL_LOG_ENABLE_VERBOSE")
+    _jafg_add_flag_if_specified(${LAL_LOG_ENABLE_INFO}                       "LAL_LOG_ENABLE_INFO")
+    _jafg_add_flag_if_specified(${LAL_LOG_ENABLE_WARNING}                    "LAL_LOG_ENABLE_WARNING")
+    _jafg_add_flag_if_specified(${LAL_LOG_ENABLE_ERROR}                      "LAL_LOG_ENABLE_ERROR")
+    _jafg_add_flag_if_specified(${LAL_LOG_DO_SCOPED_TIME_TASK_MEASURER}      "LAL_LOG_DO_SCOPED_TIME_TASK_MEASURER")
     _jafg_add_flag_if_specified(${JAFG_FLAG_FORCE_LOG_FLUSH_INTERVAL}        "JAFG_FORCE_LOG_FLUSH_INTERVAL")
     _jafg_add_flag_if_specified(${JAFG_FLAG_LOG_TIME_FOR_VERY_LONG_FRAMES}   "JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES")
     # ~Compiler flags

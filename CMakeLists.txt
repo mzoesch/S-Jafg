@@ -10,11 +10,18 @@ set(CMAKE_CXX_EXTENSIONS            OFF)
 
 include(CMake/WhatTheFuckIsThat.cmake)
 
+
 #
 # The root directory of the Jafg engine. Always valid. Use this to reference files in the Jafg engine.
 #
 set(JAFG_ENGINE_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
+
+###############################################################################
+# Jafg Target Configuration.
+###############################################################################
+# Try to configure the targets of Jafg automatically based of the host system and / or other variables.
+include(CMake/ConfigurationPrediction.cmake)
 # The target platform to compile for [Linux, Wasm, Windows].
 if(NOT DEFINED JAFG_TARGET_PLATFORM)
     message(FATAL_ERROR "JAFG_TARGET_PLATFORM is not defined. Please define it with -DJAFG_TARGET_PLATFORM=<platform>.")
@@ -28,8 +35,8 @@ if(NOT DEFINED JAFG_TARGET_CONFIG)
     message(FATAL_ERROR "JAFG_TARGET_CONFIG is not defined. Please define it with -DJAFG_TARGET_CONFIG=<configuration>.")
 endif()
 include(CMake/ValidateTargetInput.cmake)
-
 include(CMake/ValidateCompiler.cmake)
+
 
 project(
     Jafg
@@ -39,27 +46,37 @@ project(
     HOMEPAGE_URL    "https://github.com/mzoesch/S-Jafg"
     )
 
+
 include(CMake/EarlySetup.cmake)
+
+
+###############################################################################
+# Jafg Module Public Variables.
+###############################################################################
 
 #
 # These are the search paths for Jafg to check for modules to be loaded.
 # You may add your own paths to this list.
 #
-set(JAFG_SEARCH_PATHS
-    "Engine"
-    "Lal"
-    "Plugins"
-    "Runtime"
-    )
+if(NOT DEFINED JAFG_SEARCH_PATHS)
+    set(JAFG_SEARCH_PATHS
+        "Engine"
+        "Lal"
+        "Plugins"
+        "Runtime"
+        )
+endif()
 
 #
 # Exclude paths are used to ignore certain directories in the search paths for Jafg modules.
 # You may add your own to this list.
 #
-set(JAFG_EXCLUDE_PATHS
-    "Engine/Vendor"
-    "Plugins/Vendor"
-    )
+if(NOT DEFINED JAFG_EXCLUDE_PATHS)
+    set(JAFG_EXCLUDE_PATHS
+        "Engine/Vendor"
+        "Plugins/Vendor"
+        )
+endif()
 
 # A static module that is linked into the program at compile time.
 set(JAFG_MODULE_TYPE_STATIC     "static")
@@ -71,6 +88,11 @@ set(JAFG_MODULE_TYPE_LAUNCH     "launch")
 # This module is a plugin that is loaded dynamically at runtime based of user preferences or transitive
 # plugin dependencies. It is not required by the language to be available at runtime.
 set(JAFG_MODULE_TYPE_PLUGIN     "plugin")
+
+
+###############################################################################
+# Jafg Foreign Public Logic.
+###############################################################################
 
 #
 # Use this macro to add your own modules to the Jafg solution.
