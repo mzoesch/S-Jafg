@@ -3,7 +3,7 @@
 #include "Storage/SaveFunctions.h"
 #include "Containers/MyString.h"
 #include "System/Paths.h"
-#include "Vendor/sqlite3.h"
+#include "sqlite3.h"
 
 #define STORAGE_NAME "sqlite3.db"
 

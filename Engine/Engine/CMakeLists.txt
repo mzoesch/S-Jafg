@@ -76,6 +76,16 @@ if(_guard)
     target_link_libraries(${_scoped_module_name} PRIVATE glfw)
 
     ###############################################################################
+    # Sqlite3
+    FetchContent_Declare(
+        FetchContent_Sqlite3
+        GIT_REPOSITORY      https://github.com/mzoesch/S-Jafg-Sqlite3-Amalgamation.git
+        GIT_TAG             trunk
+        )
+    FetchContent_MakeAvailable(FetchContent_Sqlite3)
+    target_link_libraries(${_scoped_module_name} PRIVATE jafg_sqlite3_amalgamation)
+
+    ###############################################################################
     # Glm
     set(glm_dir "${JAFG_ENGINE_ROOT}/Engine/Vendor/CommonMath")
     if(NOT EXISTS "${glm_dir}")
