@@ -289,7 +289,7 @@ EPlatformExit::Type GuardedMain()
 
 #if PLATFORM_DESKTOP
     std::filesystem::current_path(Finder::GetEngineRootDir().ToPtr());
-    Paths::CreateDirectories(Finder::GetEngineRootDir());
+    Paths::CreateDirectories(Finder::GetSavedDir());
 #endif /* PLATFORM_DESKTOP */
 
 #if WITH_STATS

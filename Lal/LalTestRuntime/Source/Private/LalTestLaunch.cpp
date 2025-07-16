@@ -3,7 +3,11 @@
 #include "CoreAfx.h"
 
 #if !WITH_TESTS
-static_assert(false, "The entry of LalTestRuntime must be used in an environment where tests are enabled.");
+static_assert(false,
+    "The entry of LalTestRuntime must be used in an environment where tests are enabled. "
+    "Did you mean to compile the main application? Then try to only compile the Runtime "
+    "by adding \"--target Runtime\" to your CMake build command."
+    );
 #endif /* !WITH_TESTS */
 
 #if WITH_TESTS

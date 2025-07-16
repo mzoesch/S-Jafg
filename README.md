@@ -37,7 +37,7 @@ with:
 - `JAFG_TARGET_TYPE`: The target type you want to build for [`Client`, `Daemon`, `TestUnit`]
 - `JAFG_TARGET_CONFIG`: The target configuration you want to build for [`Debug`, `Development`, `Shipping`]
 
-and then compile it with `cmake --build <BuildDirectory>`.
+and then compile it with `cmake --build <BuildDirectory> --target Runtime`.
 
 ### For WebAssembly (Wasm)
 1. Emscripten must be invoked before generating the CMake files. This is done by calling `emcmake` with the `cmake` command:
