@@ -46,6 +46,7 @@ if(_guard)
 
     ###############################################################################
     # FastNoise2
+    message(STATUS "Fetching FastNoise2...")
     FetchContent_Declare(
         FetchContent_FastNoise2
         GIT_REPOSITORY      https://github.com/Auburn/FastNoise2.git
@@ -57,6 +58,7 @@ if(_guard)
 
     ###############################################################################
     # Freetype
+    message(STATUS "Fetching Freetype...")
     FetchContent_Declare(
         FetchContent_Freetype
         GIT_REPOSITORY      https://gitlab.freedesktop.org/freetype/freetype.git
@@ -67,6 +69,7 @@ if(_guard)
 
     ###############################################################################
     # Glfw3
+    message(STATUS "Fetching Glfw3...")
     FetchContent_Declare(
         FetchContent_Glfw3
         GIT_REPOSITORY      https://github.com/glfw/glfw.git
@@ -77,6 +80,7 @@ if(_guard)
 
     ###############################################################################
     # Sqlite3
+    message(STATUS "Fetching Sqlite3...")
     FetchContent_Declare(
         FetchContent_Sqlite3
         GIT_REPOSITORY      https://github.com/mzoesch/S-Jafg-Sqlite3-Amalgamation.git
@@ -87,6 +91,7 @@ if(_guard)
 
     ###############################################################################
     # Glm
+    message(STATUS "Including GLM...")
     set(glm_dir "${JAFG_ENGINE_ROOT}/Engine/Vendor/CommonMath")
     if(NOT EXISTS "${glm_dir}")
         message(FATAL_ERROR "Expected submodule at [${glm_dir}].")
@@ -95,6 +100,7 @@ if(_guard)
 
     ###############################################################################
     # Nlohmann JSON
+    message(STATUS "Including Nlohmann JSON...")
     set(nlohmann_json_dir "${JAFG_ENGINE_ROOT}/Engine/Vendor/Json")
     if(NOT EXISTS "${nlohmann_json_dir}")
         message(FATAL_ERROR "Expected submodule at [${nlohmann_json_dir}].")
@@ -103,6 +109,7 @@ if(_guard)
 
     ###############################################################################
     # Stb
+    message(STATUS "Including Stb...")
     set(stb_dir "${JAFG_ENGINE_ROOT}/Engine/Vendor/Stb")
     if(NOT EXISTS "${stb_dir}")
         message(FATAL_ERROR "Expected submodule at [${stb_dir}].")
@@ -111,6 +118,7 @@ if(_guard)
 
     ###############################################################################
     # Tracked vendors
+    message(STATUS "Including tracked vendors...")
     target_include_directories(${_scoped_module_name} PRIVATE
         "${JAFG_ENGINE_ROOT}/Engine/Vendor/Include"
         )
