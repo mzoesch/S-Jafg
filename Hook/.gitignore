@@ -1,0 +1,13 @@
+# Visual Studio 2015 and 2022 / JetBrains Rider user specific files
+/.vs/
+/.idea/
+
+# Scripting
+/.vscode/
+
+# Python virtual environments
+/.venv/
+/venv/
+
+# Dangerous stuff
+/.env
