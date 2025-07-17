@@ -69,13 +69,25 @@ UpdateSubmodules()
 # The motor of Jafg.
 ###############################################################################
 
+if(NOT DEFINED JAFG_MOTOR_PRE_BUILD_BINARY_URL_ENDPOINT)
+    set(JAFG_MOTOR_PRE_BUILD_BINARY_URL_ENDPOINT "https://api.zoeschinger.com/hooks/jafg")
+endif()
+if(NOT DEFINED JAFG_MOTOR_LINUX_PRE_BUILD_BINARY_URL_ROUTE)
+    set(JAFG_MOTOR_LINUX_PRE_BUILD_BINARY_URL_ROUTE "/static/Motor/target/x86_64-unknown-linux-gnu/release/motor")
+endif()
+if(NOT DEFINED JAFG_MOTOR_WINDOWS_PRE_BUILD_BINARY_URL_ROUTE)
+    set(JAFG_MOTOR_WINDOWS_PRE_BUILD_BINARY_URL_ROUTE "/static/Motor/target/x86_64-pc-windows-gnu/release/motor.exe")
+endif()
+
 set(JAFG_MOTOR_TARGET_CONFIG "release" CACHE STRING "Target config for motor")
 set_property(CACHE JAFG_MOTOR_TARGET_CONFIG PROPERTY STRINGS debug release)
 set(JAFG_MOTOR_DIR "${JAFG_ENGINE_ROOT}/Motor")
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
     set(JAFG_MOTOR_EXECUTABLE "${JAFG_MOTOR_DIR}/target/${JAFG_MOTOR_TARGET_CONFIG}/motor")
+    set(JAFG_MOTOR_PRE_BUILD_BINARY_URL_ROUTE "${JAFG_MOTOR_LINUX_PRE_BUILD_BINARY_URL_ROUTE}")
 elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
     set(JAFG_MOTOR_EXECUTABLE "${JAFG_MOTOR_DIR}/target/${JAFG_MOTOR_TARGET_CONFIG}/motor.exe")
+    set(JAFG_MOTOR_PRE_BUILD_BINARY_URL_ROUTE "${JAFG_MOTOR_WINDOWS_PRE_BUILD_BINARY_URL_ROUTE}")
 endif()
 if(NOT DEFINED JAFG_MOTOR_EXECUTABLE)
     message(FATAL_ERROR "JAFG_MOTOR_EXECUTABLE is not defined. Please define it with -DJAFG_MOTOR_EXECUTABLE=<path to motor executable>.")
@@ -207,7 +219,18 @@ function(PrebuildModuleWithMotor module_path)
         endif()
 
         if(result)
-            message(FATAL_ERROR "[${module_path}]: Motor quit with exit code [${result}].")
+            string(CONCAT _invoked_command
+                "${JAFG_MOTOR_EXECUTABLE} "
+                "--Verbose "
+                "--PreBuild "
+                "--Module ${module_path} "
+                "--Platform ${JAFG_TARGET_PLATFORM} "
+                "--Architecture ${JAFG_TARGET_ARCHITECTURE} "
+                "--Target ${JAFG_TARGET_TYPE} "
+                "--Configuration ${JAFG_TARGET_CONFIG} "
+                "--Kind unknown"
+                )
+            message(FATAL_ERROR "[${module_path}]: Motor invoked command [${_invoked_command}] failed with exit code [${result}].")
         else()
             message(STATUS "[${module_path}]: Motor quit with exit code [${result}].")
         endif()
