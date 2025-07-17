@@ -1,5 +1,8 @@
 # High Level Project Structure 
 
+### .github
+GitHub related files such as workflows, ...
+
 ### Binaries (generated)
 Contains the exported binaries of the Jafg engine and plugins.
 
@@ -17,6 +20,9 @@ Contains this.
 
 ### Engine
 A collection of shared libraries that contains the core functionality of Jafg. It defines important interfaces that allow plugins to hook themselves into it and communicate with others.
+
+### Hook
+The Rest Api Motor Hook endpoint that is used to update the Motor binaries and other meta-data automatically.
 
 ### Intermediates (generated)
 Generated header and translation unit files that are used by the engine and plugins to compile their objects which inherit from `Jafg::JObjectBase` or other custom Jafg data structures used for reflection.
