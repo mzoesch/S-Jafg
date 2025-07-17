@@ -44,7 +44,7 @@ Only when making changes to the reflection system you will additionally need `>=
 ### For WebAssembly (Wasm)
 1. Emscripten must be invoked before generating the CMake files. This is done by calling `emcmake` with the `cmake` command:
    ```bash
-   mkdir build && emcmake cmake -B build --preset "<PLATFORM> | <TYPE>-<CONFIG>" 
+   mkdir build && emcmake cmake -B build --preset "Wasm | <TYPE>-<CONFIG>" 
    ```
    After running this command, you may open your project with any IDE that supports CMake. If you firstly open the project (before running the `emcmake` command) then the IDE will get confused with the code and will fail to compile it (as well as Intellisense will not work properly).
 2. Compile it with `ninja`.
