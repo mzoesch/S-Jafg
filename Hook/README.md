@@ -46,8 +46,9 @@ The docker container will take roughly 3.4 GB of disk space.
       client_max_body_size 64M;
       listen 80;
       server_name <your_domain_or_ip>;
- 
-      location /hooks/jafg/ # Trailing slash is important.
+   
+      # Trailing slash is important.
+      location /hooks/jafg/
       {
          proxy_http_version       1.1;
 
