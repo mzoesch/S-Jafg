@@ -3,7 +3,9 @@
 This tool is a hook post-push system for git. It runs after a push to the git master repository was done.
 It is meant to update binaries or other meta-data automatically.
 
-The docker container will take roughly 3.4 GB of disk space.
+The docker image will take roughly 3.2 GB of disk space, and the docker containers will take roughly 200 MB of disk space each.
+The docker caching will take roughly 3.4 GB of additional disk space. Totaling with one container to roughly 6.8 GB of disk space.
+
 
 # Getting up and running
 
@@ -14,11 +16,11 @@ The docker container will take roughly 3.4 GB of disk space.
    VCS_LOCAL_REMOTE_CLONE=<path_to_your_local_clone>
    VCS_REMOTE_URL=<your_remote_url>
    ```
-2. Create the just defined `VOLUME_CACHE` directory on your host machine, e.g.:
+2. Create a directory on your host machine for caching between containers, e.g.:
    ```bash
-   mkdir -p /path/to/your/cache
+   mkdir -p /path/to/cache
    ```
-   This is needed because the Docker mount will not create the directory automatically. Please visit the [official docker docs](https://docs.docker.com/engine/storage/bind-mounts) for more information. Note that you technically do not need to use a `VOLUME_CACHE` bind to the host machine, but it is recommended to keep the cache persistent across container restarts (as starting the service (and therefore recompiling the motor) might take an extraordinary amount of time depending on the server specs).
+   This is needed because the Docker mount will not create the directory automatically. Please visit the [official docker docs](https://docs.docker.com/engine/storage/bind-mounts) for more information. Note that you technically do not need to use a `VOLUME_CACHE` bind to the host machine (you may also bind to the local docker image), but it is recommended to keep the cache persistent across container restarts (as starting the service (and therefore recompiling the motor) might take an extraordinary amount of time depending on the server specs).
 3. Run the following command to build the Docker image:
    ```bash
    docker build -t jafg-hook .
@@ -82,6 +84,7 @@ The docker container will take roughly 3.4 GB of disk space.
    systemctl restart nginx
    ```
 
+
 # Reload the server
 If you change the code, you can reload the server by running:
 ```bash
@@ -91,4 +94,11 @@ docker stop jafg-hook && docker rm jafg-hook && <...>
 When using nginx and change configs, you must also reload the nginx configuration:
 ```bash
 systemctl reload nginx
+```
+
+
+# Follow the logs
+To follow the logs of the running container, you can use:
+```bash
+docker logs -f jafg-hook
 ```
