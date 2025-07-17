@@ -7,27 +7,53 @@ import hashlib
 from fastapi import Header
 from fastapi import FastAPI
 from fastapi import Request
+from fastapi import APIRouter
 from fastapi import HTTPException
+from fastapi import BackgroundTasks
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from UpdateStaticMotorBins import update_static_motor
+from Env import secret_x_hub_signature
+from Env import vcs_local_remote_clone
 
 
-app = FastAPI()
+router = APIRouter()
 
 
-# Secret transmitted by the GitHub webhook imported from the local environment
-secret_x_hub_signature = os.getenv('SECRET_X_HUB_SIGNATURE')
-if secret_x_hub_signature is None:
-    raise ValueError('Environment variable SECRET_X_HUB_SIGNATURE is not set')
-secret_x_hub_signature = secret_x_hub_signature.encode('utf-8')
+@router.get('/static/Motor/target/x86_64-unknown-linux-gnu/release/motor')
+def get_motor_linux():
+    real_path = f'{vcs_local_remote_clone}/Motor/target/x86_64-unknown-linux-gnu/release/motor'
+
+    if os.path.exists(real_path):
+        return FileResponse(
+            real_path,
+            media_type='application/octet-stream',
+            filename='motor',
+            headers={"Content-Disposition": "attachment; filename=motor"}
+            )
+    else:
+        raise HTTPException(status_code=404)
 
 
-@app.get('/')
-def read_root():
-    return {'Hello': 'World'}
+@router.get('/static/Motor/target/x86_64-pc-windows-gnu/release/motor.exe')
+def get_motor_win():
+    real_path = f'{vcs_local_remote_clone}/Motor/target/x86_64-pc-windows-gnu/release/motor.exe'
+
+    if os.path.exists(real_path):
+        return FileResponse(
+            real_path,
+            media_type='application/octet-stream',
+            filename='motor.exe',
+            headers={"Content-Disposition": "attachment; filename=motor.exe"}
+            )
+    else:
+        raise HTTPException(status_code=404)
 
 
-@app.post('/projects/s-jafg/post-push')
+@router.post('/post-push')
 async def handle_post_req_sjafg_post_push(
     request: Request,
+    background_tasks: BackgroundTasks,
     x_hub_signature_256: str = Header(None)
     ):
 
@@ -42,13 +68,20 @@ async def handle_post_req_sjafg_post_push(
 
     json_payload = await request.json()
 
-    with open('_xvar.txt', 'w') as f:
-        f.write(x_hub_signature_256)
+    if json_payload.get('action') != 'push':
+        raise HTTPException(status_code=400, detail='Invalid action')
 
-    with open('_var.txt', 'w') as f:
-        f.write(json.dumps(json_payload))
+    background_tasks.add_task(update_static_motor)
 
     return \
-    {
-        'status': 'Webhook received and verified'
-    }
+        {
+            'status': 'Webhook received and verified'
+        }
+
+
+app = FastAPI()
+app.include_router(router)
+
+
+# Preload the static motor binaries
+update_static_motor()
