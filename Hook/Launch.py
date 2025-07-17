@@ -58,24 +58,22 @@ async def handle_post_req_sjafg_post_push(
     ):
 
     if x_hub_signature_256 is None:
-        raise HTTPException(status_code=400, detail='Missing X-Hub-Signature-256 header')
+        # Wrong return code but makes it more secure by just lying about that this endpoint does not exist; lol -(*_*)-
+        # If you want to hire me as a security consultant, please contact me - see how secure this RestApi service is!!!
+        raise HTTPException(status_code=404)
 
     body = await request.body()
+
     computed_signature = 'sha256=' + hmac.new(secret_x_hub_signature, body, hashlib.sha256).hexdigest()
 
     if not hmac.compare_digest(computed_signature, x_hub_signature_256):
-        raise HTTPException(status_code=403, detail='Forbidden')
-
-    json_payload = await request.json()
-
-    if json_payload.get('action') != 'push':
-        raise HTTPException(status_code=400, detail='Invalid action')
+        raise HTTPException(status_code=404)
 
     background_tasks.add_task(update_static_motor)
 
     return \
         {
-            'status': 'Webhook received and verified'
+            'status': 'Webhook received, verified and motor binaries will be available shortly.'
         }
 
 
