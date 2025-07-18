@@ -36,11 +36,12 @@ if(NOT DEFINED JAFG_TARGET_CONFIG)
 endif()
 include(CMake/ValidateTargetInput.cmake)
 include(CMake/ValidateCompiler.cmake)
+include(CMake/RetrieveVersionNumber.cmake)
 
 
 project(
     Jafg
-    VERSION         0.0.1
+    VERSION         "${_private_jafg_version}"
     LANGUAGES       C CXX
     DESCRIPTION     ""
     HOMEPAGE_URL    "https://github.com/mzoesch/S-Jafg"
