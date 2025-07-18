@@ -45,6 +45,8 @@ public:
 
     FORCEINLINE virtual bool IsValid() override { return this->Handle != nullptr; }
 
+    virtual void BeginNewFrame() override;
+
     virtual void PollInputs() override;
     virtual void PollEvents() override;
 
@@ -69,6 +71,7 @@ public:
 private:
 
     void FramebufferSizeCallback(const i32 Width, const i32 Height);
+    void FramebufferSizeCallbackImpl(const i32 Width, const i32 Height);
     void MouseCallback(const f64 XPos, const f64 YPos);
     void ScrollCallback(const f64 XOffset, const f64 YOffset);
     void MouseEnterCallback(const i32 Entered);
@@ -89,6 +92,11 @@ private:
     bool bFirstMouseCallback { true };
     f64 LastMouseX { 0.0 };
     f64 LastMouseY { 0.0 };
+
+    bool bPendingResize { false };
+    i32 PendingWidth { 0 };
+    i32 PendingHeight { 0 };
+    f32 PendingTimeForResizeApply { 0.0f };
 
 #if PLATFORM_LINUX
     //#

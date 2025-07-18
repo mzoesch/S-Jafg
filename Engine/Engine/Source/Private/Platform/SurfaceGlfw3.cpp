@@ -299,6 +299,34 @@ void Jafg::LSurfaceGlfw3::TearDown()
     return;
 }
 
+void Jafg::LSurfaceGlfw3::BeginNewFrame()
+{
+    Super::BeginNewFrame();
+
+    if (this->bPendingResize)
+    {
+        this->PendingTimeForResizeApply -= Application::GetDeltaTimeAsFloat();
+
+        if (this->PendingTimeForResizeApply <= 0.0f)
+        {
+            LOG_VERBOSE(LogSurface,
+                "Applying pending resize to surface [{}x{}].",
+                this->PendingWidth,
+                this->PendingHeight
+                )
+
+            this->FramebufferSizeCallbackImpl(this->PendingWidth, this->PendingHeight);
+
+            this->bPendingResize = false;
+            this->PendingTimeForResizeApply = 0.0f;
+            this->PendingWidth = 0;
+            this->PendingHeight = 0;
+        }
+    }
+
+    return;
+}
+
 void Jafg::LSurfaceGlfw3::PollInputs()
 {
     checkSlow( this->Handle )
@@ -493,6 +521,21 @@ void Jafg::LSurfaceGlfw3::SetVSync(const bool bEnabled)
 }
 
 void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const i32 Width, const i32 Height)
+{
+    this->PendingWidth = Width;
+    this->PendingHeight = Height;
+    this->bPendingResize = true;
+
+    /*
+     * Two-second delay when making changes to the viewport. We might want to change this later depending
+     * on some platform parameters.
+     */
+    this->PendingTimeForResizeApply = 1.5f;
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::FramebufferSizeCallbackImpl(const i32 Width, const i32 Height)
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
