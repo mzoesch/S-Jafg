@@ -18,13 +18,6 @@ struct Cli
     #[arg(long = "Verbose", default_value_t = false)]
     verbose: bool,
 
-    /// Whether to invoke pre-build tasks. This or #post_build must be set.
-    #[arg(long = "PreBuild", default_value_t = false)]
-    pre_build: bool,
-    /// Whether to invoke post-build tasks. This or #pre_build must be set.
-    #[arg(long = "PostBuild", default_value_t = false)]
-    post_build: bool,
-
     /// The module to build for.
     #[arg(long = "Module")]
     module: String,
@@ -58,28 +51,6 @@ fn main()
 
     let args: Cli = Cli::parse();
 
-    if !args.pre_build && !args.post_build
-    {
-        eprintln!("Error: Either --PreBuild or --PostBuild must be set.");
-        std::process::exit(1);
-    }
-
-    if args.pre_build
-    {
-        launch_pre_build(&args);
-    }
-
-    if args.post_build
-    {
-        launch_post_build(&args);
-    }
-
-    std::env::set_current_dir(cwd).unwrap();
-    std::process::exit(0);
-}
-
-fn launch_pre_build(args: &Cli)
-{
     if args.verbose
     {
         println!("Launching pre-build for [{}] ...", args.module);
@@ -90,20 +61,11 @@ fn launch_pre_build(args: &Cli)
      * them - some platforms forbid to create files in dirs that don't exist.
      * Also better for the target IDE performance.
      */
-    finder::ensure_path(&paths::construct_relative_gh_path(args));
-    finder::ensure_path(&paths::construct_relative_gt_path(args));
+    finder::ensure_path(&paths::construct_relative_gh_path(&args));
+    finder::ensure_path(&paths::construct_relative_gt_path(&args));
 
-    reflector::reflect_module(args);
+    reflector::reflect_module(&args);
 
-    return;
-}
-
-fn launch_post_build(args: &Cli)
-{
-    if args.verbose
-    {
-        println!("Launching post-build for [{}] ...", args.module);
-    }
-
-    return;
+    std::env::set_current_dir(cwd).unwrap();
+    std::process::exit(0);
 }

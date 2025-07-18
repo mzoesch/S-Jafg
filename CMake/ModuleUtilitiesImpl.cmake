@@ -303,7 +303,6 @@ function(_jafg_add_module_impl
 
     add_custom_target(zzz_${module_name}_PRE_BUILD
         COMMAND ${JAFG_MOTOR_EXECUTABLE}
-            --PreBuild
             --Module ${module_rel_dir}
             --Platform ${JAFG_TARGET_PLATFORM}
             --Architecture ${JAFG_TARGET_ARCHITECTURE}
@@ -312,16 +311,6 @@ function(_jafg_add_module_impl
             --Kind ${motor_module_type}
         )
     add_dependencies(${module_name} zzz_${module_name}_PRE_BUILD)
-    add_custom_command(TARGET ${module_name} POST_BUILD
-        COMMAND ${JAFG_MOTOR_EXECUTABLE}
-            --PostBuild
-            --Module ${module_rel_dir}
-            --Platform ${JAFG_TARGET_PLATFORM}
-            --Architecture ${JAFG_TARGET_ARCHITECTURE}
-            --Target ${JAFG_TARGET_TYPE}
-            --Configuration ${JAFG_TARGET_CONFIG}
-            --Kind ${motor_module_type}
-        )
 endfunction()
 
 macro(_jafg_add_dependency

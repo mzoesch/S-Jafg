@@ -198,7 +198,6 @@ function(PrebuildModuleWithMotor module_path)
     execute_process(
         COMMAND             ${JAFG_MOTOR_EXECUTABLE}
                                 --Verbose
-                                --PreBuild
                                 --Module ${module_path}
                                 --Platform ${JAFG_TARGET_PLATFORM}
                                 --Architecture ${JAFG_TARGET_ARCHITECTURE}
@@ -222,7 +221,6 @@ function(PrebuildModuleWithMotor module_path)
             string(CONCAT _invoked_command
                 "${JAFG_MOTOR_EXECUTABLE} "
                 "--Verbose "
-                "--PreBuild "
                 "--Module ${module_path} "
                 "--Platform ${JAFG_TARGET_PLATFORM} "
                 "--Architecture ${JAFG_TARGET_ARCHITECTURE} "

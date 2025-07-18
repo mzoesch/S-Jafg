@@ -114,6 +114,7 @@ pub(crate) fn reflect_module(args: &Cli)
     return;
 }
 
+#[allow(dead_code)]
 fn remove_all_namespaces(token: &str) -> String
 {
     let i: Option<usize> = token.rfind("::");
@@ -127,6 +128,7 @@ fn remove_all_namespaces(token: &str) -> String
     }
 }
 
+#[allow(dead_code)]
 fn get_all_namespaces(token: &str) -> String
 {
     let i: Option<usize> = token.rfind("::");
@@ -154,6 +156,7 @@ fn remove_suffixed_scoped_operator_because_gcc_does_gcc_unjustifiable_shenanigan
     return spaced_identifier.to_string();
 }
 
+#[allow(dead_code)]
 fn find_next_token(tokens: &Vec<Token>, skip: usize, ty: &TokenType) -> Option<usize>
 {
     for i in skip..tokens.len()
@@ -167,6 +170,7 @@ fn find_next_token(tokens: &Vec<Token>, skip: usize, ty: &TokenType) -> Option<u
     return None;
 }
 
+#[allow(dead_code)]
 fn find_next_token_checked<'a>(tokens: &'a Vec<Token>, skip: usize, ty: &TokenType) -> &'a Token
 {
     return match find_next_token(tokens, skip, &ty)
@@ -200,6 +204,7 @@ fn find_prev_token_checked<'a>(tokens: &'a Vec<Token>, skip: usize, ty: &TokenTy
     }
 }
 
+#[allow(dead_code)]
 fn find_prev_token_by_list(tokens: &Vec<Token>, skip: usize, ty: &Vec<TokenType>) -> Option<usize>
 {
     for i in (0..skip).rev()
@@ -213,6 +218,7 @@ fn find_prev_token_by_list(tokens: &Vec<Token>, skip: usize, ty: &Vec<TokenType>
     return None;
 }
 
+#[allow(dead_code)]
 fn find_prev_token_by_list_checked<'a>(tokens: &'a Vec<Token>, skip: usize, ty: &Vec<TokenType>) -> &'a Token
 {
     return match find_prev_token_by_list(tokens, skip, ty)
@@ -222,6 +228,7 @@ fn find_prev_token_by_list_checked<'a>(tokens: &'a Vec<Token>, skip: usize, ty: 
     }
 }
 
+#[allow(dead_code)]
 fn get_generated_file_stub(file: &str) -> Option<String>
 {
     return match std::path::Path::new(file).file_name()
@@ -239,6 +246,7 @@ fn get_generated_file_stub(file: &str) -> Option<String>
     }
 }
 
+#[allow(dead_code)]
 fn get_generated_file_stub_checked(file: &str) -> String
 {
     return match get_generated_file_stub(file)

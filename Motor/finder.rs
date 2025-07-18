@@ -4,6 +4,7 @@ use std::io::Read;
 use walkdir::WalkDir;
 
 /// Ensures that a file exists at the given path. If not found, the file is created.
+#[allow(dead_code)]
 pub fn ensure_file(path: &str)
 {
     ensure_path(std::path::Path::new(path).parent().unwrap().to_str().unwrap());
@@ -39,6 +40,7 @@ pub fn check_dir(path: &str)
     panic!("[{}]: No such directory.", path);
 }
 
+#[allow(dead_code)]
 pub fn ensure_path(path: &str)
 {
     if !std::path::Path::new(path).exists()
@@ -56,6 +58,7 @@ pub fn get_file_name(path: &str) -> String
     return std::path::Path::new(path).file_name().unwrap().to_str().unwrap().to_string();
 }
 
+#[allow(dead_code)]
 pub fn read_file(path: &str) -> String
 {
     ensure_file(path);
@@ -73,11 +76,13 @@ pub fn exists_file(path: &str) -> bool
     return std::path::Path::new(path).exists();
 }
 
+#[allow(dead_code)]
 pub fn exists_dir(path: &str) -> bool
 {
     return std::path::Path::new(path).exists();
 }
 
+#[allow(dead_code)]
 pub fn delete_file(path: &str) -> bool
 {
     if std::path::Path::new(path).exists()
@@ -89,6 +94,7 @@ pub fn delete_file(path: &str) -> bool
     return false;
 }
 
+#[allow(dead_code)]
 pub fn write_to_file_if_different(path: &str, emit: bool, content: &str) -> bool
 {
     ensure_path(std::path::Path::new(path).parent().unwrap().to_str().unwrap());
