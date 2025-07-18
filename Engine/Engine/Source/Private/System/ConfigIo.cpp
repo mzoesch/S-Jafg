@@ -7,24 +7,24 @@
 namespace
 {
 
-void GoToNextLine(const Jafg::LString& InContentF, LSizeTy* Cursor);
+void GoToNextLine(const Jafg::LString& InContentF, LSize* Cursor);
 //#
 //# Given the current cursor position, find the first non whitespace / tab character in this line
 //# or the next meaningful line (if this line is not meaningful). That is also not a comment
 //# character or only contains whitespace / tab characters.
 //#
-void GoToThisLineStart(const Jafg::LString& InContentF, LSizeTy* Cursor);
-auto FindSection(const Jafg::LString& InContentF, const Jafg::LStringView& InSection) -> Jafg::TOptional<LSizeTy>;
+void GoToThisLineStart(const Jafg::LString& InContentF, LSize* Cursor);
+auto FindSection(const Jafg::LString& InContentF, const Jafg::LStringView& InSection) -> Jafg::TOptional<LSize>;
 //#
 //# Find the specified key in the specified section (where the cursor is currently positioned). Searches
 //# until the key is found or the end of the section is reached.
 //#
-auto FindKey(const Jafg::LString& InContentF, const LSizeTy& InCursor, const Jafg::LStringView& InKey) -> Jafg::TOptional<LSizeTy>;
-auto FindKeyValue(const Jafg::LString& InContentF, const LSizeTy& InCursor, const Jafg::LStringView& InKey) -> Jafg::TOptional<Jafg::LStringView>;
+auto FindKey(const Jafg::LString& InContentF, const LSize& InCursor, const Jafg::LStringView& InKey) -> Jafg::TOptional<LSize>;
+auto FindKeyValue(const Jafg::LString& InContentF, const LSize& InCursor, const Jafg::LStringView& InKey) -> Jafg::TOptional<Jafg::LStringView>;
 bool Serialize(Jafg::LString* ContentF, const Jafg::LStringView& InSection, const Jafg::LStringView& InKey, const Jafg::LStringView& InValue);
 auto Deserialize(const Jafg::LString& InContentF, const Jafg::LStringView& InSection, const Jafg::LStringView& InKey) -> Jafg::TOptional<Jafg::LStringView>;
 
-void GoToNextLine(const Jafg::LString& InContentF, LSizeTy* Cursor)
+void GoToNextLine(const Jafg::LString& InContentF, LSize* Cursor)
 {
     checkSlow( Cursor )
 
@@ -43,7 +43,7 @@ void GoToNextLine(const Jafg::LString& InContentF, LSizeTy* Cursor)
     return;
 }
 
-void GoToThisLineStart(const Jafg::LString& InContentF, LSizeTy* Cursor)
+void GoToThisLineStart(const Jafg::LString& InContentF, LSize* Cursor)
 {
     checkSlow( Cursor )
 
@@ -73,7 +73,7 @@ void GoToThisLineStart(const Jafg::LString& InContentF, LSizeTy* Cursor)
     return;
 }
 
-void GoToNextLineStart(const Jafg::LString& InContentF, LSizeTy* Cursor)
+void GoToNextLineStart(const Jafg::LString& InContentF, LSize* Cursor)
 {
     ::GoToNextLine(InContentF, Cursor);
     ::GoToThisLineStart(InContentF, Cursor);
@@ -81,11 +81,11 @@ void GoToNextLineStart(const Jafg::LString& InContentF, LSizeTy* Cursor)
     return;
 }
 
-Jafg::TOptional<LSizeTy> FindSection(const Jafg::LString& InContentF, const Jafg::LStringView& InSection)
+Jafg::TOptional<LSize> FindSection(const Jafg::LString& InContentF, const Jafg::LStringView& InSection)
 {
     using namespace Jafg;
 
-    LSizeTy Cursor = 0;
+    LSize Cursor = 0;
     while (InContentF.IsValidIndex(Cursor))
     {
         ::GoToThisLineStart(InContentF, &Cursor);
@@ -98,7 +98,7 @@ Jafg::TOptional<LSizeTy> FindSection(const Jafg::LString& InContentF, const Jafg
         if (InContentF[Cursor] == '[')
         {
             ++Cursor;
-            LSizeTy Start = Cursor;
+            LSize Start = Cursor;
 
             while (InContentF.IsValidIndex(Cursor) && InContentF[Cursor] != ']')
             {
@@ -142,7 +142,7 @@ Jafg::TOptional<LSizeTy> FindSection(const Jafg::LString& InContentF, const Jafg
     return { };
 }
 
-Jafg::TOptional<LSizeTy> FindKey(const Jafg::LString& InContentF, const LSizeTy& InCursor, const Jafg::LStringView& InKey)
+Jafg::TOptional<LSize> FindKey(const Jafg::LString& InContentF, const LSize& InCursor, const Jafg::LStringView& InKey)
 {
     checkCode
     (
@@ -153,7 +153,7 @@ Jafg::TOptional<LSizeTy> FindKey(const Jafg::LString& InContentF, const LSizeTy&
     )
 
     using namespace Jafg;
-    LSizeTy Cursor = InCursor;
+    LSize Cursor = InCursor;
 
     ::GoToNextLineStart(InContentF, &Cursor);
     while (true)
@@ -174,7 +174,7 @@ Jafg::TOptional<LSizeTy> FindKey(const Jafg::LString& InContentF, const LSizeTy&
             continue;
         }
 
-        const LSizeTy OutCandidate = Cursor;
+        const LSize OutCandidate = Cursor;
 
         Cursor += InKey.GetSize();
         if (InContentF.IsValidIndex(Cursor) == false)
@@ -198,15 +198,15 @@ Jafg::TOptional<LSizeTy> FindKey(const Jafg::LString& InContentF, const LSizeTy&
     }
 }
 
-Jafg::TOptional<Jafg::LStringView> FindKeyValue(const Jafg::LString& InContentF, const LSizeTy& InCursor, const Jafg::LStringView& InKey)
+Jafg::TOptional<Jafg::LStringView> FindKeyValue(const Jafg::LString& InContentF, const LSize& InCursor, const Jafg::LStringView& InKey)
 {
-    Jafg::TOptional<LSizeTy> Key = FindKey(InContentF, InCursor, InKey);
+    Jafg::TOptional<LSize> Key = FindKey(InContentF, InCursor, InKey);
     if (!Key)
     {
         return { };
     }
 
-    LSizeTy Cursor = *Key;
+    LSize Cursor = *Key;
     Cursor += InKey.GetSize();
     check( InContentF.IsValidIndex(Cursor) && InContentF[Cursor] == '=' )
     Cursor += /* = */1;
@@ -248,13 +248,13 @@ bool Serialize(Jafg::LString* ContentF, const Jafg::LStringView& InSection, cons
         return false;
     }
 
-    TOptional<LSizeTy> SectionMaybe = ::FindSection(*ContentF, InSection);
+    TOptional<LSize> SectionMaybe = ::FindSection(*ContentF, InSection);
     if (!SectionMaybe)
     {
         ContentF->Append(LString::SprintF("[{}]\n", InSection));
         SectionMaybe = ::FindSection(*ContentF, InSection);
     }
-    LSizeTy Section = *SectionMaybe;
+    LSize Section = *SectionMaybe;
 
     ::GoToNextLine(*ContentF, &Section);
     ContentF->AppendAt(Section, LString::SprintF("{}={}\n", InKey, InValue));
@@ -264,14 +264,14 @@ bool Serialize(Jafg::LString* ContentF, const Jafg::LStringView& InSection, cons
 
 Jafg::TOptional<Jafg::LStringView> Deserialize(const Jafg::LString& InContentF, const Jafg::LStringView& InSection, const Jafg::LStringView& InKey)
 {
-    Jafg::TOptional<LSizeTy> Section = ::FindSection(InContentF, InSection);
+    Jafg::TOptional<LSize> Section = ::FindSection(InContentF, InSection);
     if (!Section)
     {
         return { };
     }
-    LSizeTy Cursor = *Section;
+    LSize Cursor = *Section;
     ::GoToThisLineStart(InContentF, &Cursor);
-    Jafg::TOptional<LSizeTy> KeyCursor = ::FindKey(InContentF, Cursor, InKey);
+    Jafg::TOptional<LSize> KeyCursor = ::FindKey(InContentF, Cursor, InKey);
     if (!KeyCursor)
     {
         return { };

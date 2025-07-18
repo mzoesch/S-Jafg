@@ -25,37 +25,7 @@ enum Type : i32
 
 } /* ~Namespace EPlatformExit */
 
-#if PLATFORM_WINDOWS_WITH_MSVC
-    typedef ::std::intptr_t         LPtrSize;
-    typedef ::std::uintptr_t        LuPtrSize;
-#elif LAL_WITH_GCC
-    typedef intptr_t                LPtrSize;
-    typedef uintptr_t               LuPtrSize;
-#elif LAL_WITH_CLANG
-    typedef intptr_t                LPtrSize;
-    typedef uintptr_t               LuPtrSize;
-#else /* LAL_WITH_CLANG */
-    #error "Missing implementation for this platform."
-#endif /* LAL_WITH_CLANG */
-enum : i8 { POINTER_BYTE_SIZE = sizeof(LPtrSize) };
-#if PLATFORM_USES_32_BIT
-    static_assert(sizeof(LPtrSize) == 4, "LPtrSize is not 4 bytes.");
-    static_assert(sizeof(LuPtrSize) == 4, "LuPtrSize is not 4 bytes.");
-    static_assert(sizeof(LPtrSize) == sizeof(void*), "LPtrSize is not the same size as a pointer.");
-    static_assert(sizeof(LuPtrSize) == sizeof(void*), "LuPtrSize is not the same size as a pointer.");
-    static_assert(POINTER_BYTE_SIZE == 4, "POINTER_BYTE_SIZE is not 4 bytes.");
-#endif /* PLATFORM_USES_32_BIT */
-#if PLATFORM_USES_64_BIT
-    static_assert(sizeof(LPtrSize) == 8, "LPtrSize is not 8 bytes.");
-    static_assert(sizeof(LuPtrSize) == 8, "LuPtrSize is not 8 bytes.");
-    static_assert(sizeof(LPtrSize) == sizeof(void*), "LPtrSize is not the same size as a pointer.");
-    static_assert(sizeof(LuPtrSize) == sizeof(void*), "LuPtrSize is not the same size as a pointer.");
-    static_assert(POINTER_BYTE_SIZE == 8, "POINTER_BYTE_SIZE is not 8 bytes.");
-#endif /* PLATFORM_USES_64_BIT */
-
-typedef i64 LBigSizeTy;
-typedef u64 LuBigSizeTy;
-typedef i32 LSizeTy;
+enum : i8 { POINTER_BYTE_SIZE = sizeof(LSize) };
 
 #define JTXTW(x)        LITERAL_WIDE(x)
 #define JTXT8(x)        LITERAL_UTF8(x)

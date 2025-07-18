@@ -192,9 +192,9 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(LAsciiString& Other) noexcept
 {
     this->Data = Other.Data;
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -203,9 +203,9 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const LAsciiString& Other) noexcept
 {
     this->Data = Other.Data;
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -214,10 +214,10 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(LAsciiString&& Other) noexcept
 {
     this->Data = std::forward<TdhArray<LRune>>(Other.Data);
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
     Other.EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -226,10 +226,10 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const LAsciiString&& Other) noexcep
 {
     this->Data = Other.Data;
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
     Other.PanicValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -255,9 +255,9 @@ FORCEINLINE Jafg::LAsciiString::LAsciiString(const LRune* Other) noexcept
         continue;
     }
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -336,9 +336,9 @@ FORCEINLINE Jafg::LAsciiString& Jafg::LAsciiString::operator=(const LAsciiString
 {
     this->Data = Other.Data;
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return *this;
 }
@@ -347,19 +347,19 @@ FORCEINLINE Jafg::LAsciiString& Jafg::LAsciiString::operator=(LAsciiString&& Oth
 {
     this->Data = std::forward<TdhArray<LRune>>(Other.Data);
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
     Other.EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return *this;
 }
 
 FORCEINLINE void Jafg::LAsciiString::Append(const LRune* Other)
 {
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     if (this->Data.IsData())
     {
@@ -379,18 +379,18 @@ FORCEINLINE void Jafg::LAsciiString::Append(const LRune* Other)
         continue;
     }
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
 
 FORCEINLINE void Jafg::LAsciiString::Append(const LAsciiString& Other)
 {
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     if (this->Data.IsData())
     {
@@ -400,9 +400,9 @@ FORCEINLINE void Jafg::LAsciiString::Append(const LAsciiString& Other)
 
     this->Data.Append(Other.Data);
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -430,9 +430,9 @@ void Jafg::LAsciiString::Add(const LRune* Other)
     this->Data.Add(*Other);
     this->Data.Add(LAsciiString::StringTerminatorRune);
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -455,9 +455,9 @@ FORCEINLINE void Jafg::LAsciiString::Pop()
         }
     }
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -486,9 +486,9 @@ FORCEINLINE void Jafg::LAsciiString::Empty()
 {
     this->Data.Empty();
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -526,9 +526,9 @@ FORCEINLINE Jafg::LAsciiString& Jafg::LAsciiString::operator+=(const LAsciiStrin
 
     this->Data.Append(Other.Data);
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return *this;
 }
@@ -778,9 +778,9 @@ FORCEINLINE void Jafg::LAsciiString::InlineCut(const i32 InIndex)
     this->Data.Resize(InIndex);
     this->Data.Add(LAsciiString::StringTerminatorRune);
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }

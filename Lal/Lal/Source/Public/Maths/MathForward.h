@@ -121,11 +121,6 @@ typedef LMatrix4F        LMatrix4;
 typedef LMatrixF         LMatrix;
 
 typedef LTransformF      LTransform;
-typedef Lu8Vector2       LSize8;
-typedef Lu16Vector2      LSize16;
-typedef Lu32Vector2      LSize32;
-typedef Lu64Vector2      LSize64;
-typedef LSize32          LSize;
 typedef Li32Vector2      LPoint;
 
 } /* ~Namespace Jafg */

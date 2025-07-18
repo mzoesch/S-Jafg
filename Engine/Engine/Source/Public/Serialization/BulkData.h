@@ -23,7 +23,7 @@ public:
     FORCEINLINE bool IsAllocated() const { return this->Bulk != nullptr; }
 
     FORCEINLINE auto GetNum() const -> i32 { return this->Num; }
-    FORCEINLINE auto GetByteSize() const -> LuPtrSize { return this->Num * sizeof(LBulkDomainTy); }
+    FORCEINLINE auto GetByteSize() const -> LSize { return this->Num * sizeof(LBulkDomainTy); }
     FORCEINLINE auto GetRawBulk()       ->       LBulkDomainTy* { return this->Bulk; }
     FORCEINLINE auto GetRawBulk() const -> const LBulkDomainTy* { return this->Bulk; }
 

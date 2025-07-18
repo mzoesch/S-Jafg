@@ -613,9 +613,9 @@ LStringBase<InCharacterTy, InTraitsTy>::LStringBase(const CharacterTy InRune)
     this->Data.Add(InRune);
     this->Data.Add(TraitsTy::Terminator);
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -639,9 +639,9 @@ LStringBase<InCharacterTy, InTraitsTy>::LStringBase(const CharacterTy* InString)
     }
     this->Data.Add(TraitsTy::Terminator);
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -660,9 +660,9 @@ LStringBase<InCharacterTy, InTraitsTy>::LStringBase(const CharacterTy* InString,
     }
     this->Data.Add(TraitsTy::Terminator);
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -672,9 +672,9 @@ LStringBase<InCharacterTy, InTraitsTy>::LStringBase(const LStringBase& InOther)
 {
     this->Data = InOther.Data;
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -684,10 +684,10 @@ LStringBase<InCharacterTy, InTraitsTy>::LStringBase(LStringBase&& InOther) noexc
 {
     this->Data = std::forward<TArray<CharacterTy>>(InOther.Data);
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
     InOther.EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -720,10 +720,10 @@ LStringBase<InCharacterTy, InTraitsTy>& LStringBase<InCharacterTy, InTraitsTy>::
 {
     this->Data = std::forward<TArray<CharacterTy>>(InOther.Data);
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
     InOther.EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return *this;
 }
@@ -779,9 +779,9 @@ void LStringBase<InCharacterTy, InTraitsTy>::Append(const CharacterTy* InString,
     }
     this->Data.Add(TraitsTy::Terminator);
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -801,9 +801,9 @@ void LStringBase<InCharacterTy, InTraitsTy>::Append(const LStringBase& InOther)
 
     this->Data.Append(InOther.Data);
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -826,9 +826,9 @@ void LStringBase<InCharacterTy, InTraitsTy>::AppendAt(const SizeType InRuneIndex
     this->Data.Reserve(this->Data.GetSize() + Length);
     this->Data.AppendAt(Cursor, InString, Length);
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -850,9 +850,9 @@ void LStringBase<InCharacterTy, InTraitsTy>::RemoveAt(const SizeType InRuneIndex
     checkSlow( this->Data.IsValidIndex(Cursor) )
     this->Data.RemoveAt(Cursor, TraitsTy::GetRuneSize(this->Data.GetData() + Cursor));
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -880,9 +880,9 @@ void LStringBase<InCharacterTy, InTraitsTy>::Pop()
         }
     }
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -914,9 +914,9 @@ void LStringBase<InCharacterTy, InTraitsTy>::Empty()
 {
     this->Data.Empty();
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -1317,9 +1317,9 @@ LStringBase<InCharacterTy, InTraitsTy>::Contains(const char* InString) const
 template <typename InCharacterTy, class InTraitsTy>
 bool LStringBase<InCharacterTy, InTraitsTy>::Contains(const CharacterTy* InString) const
 {
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->PanicValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     if (*InString == TraitsTy::Terminator)
     {
@@ -1524,9 +1524,9 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
 template <class InCharacterTy, class InTraitsTy>
 typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacterTy, InTraitsTy>::FindFirst(const InCharacterTy* InRune) const
 {
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->PanicValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     SizeType Out    = 0;
     SizeType Cursor = 0;
@@ -1573,9 +1573,9 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
 template <class InCharacterTy, class InTraitsTy>
 typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacterTy, InTraitsTy>::FindSecond(const InCharacterTy* InRune) const
 {
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->PanicValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     bool bFound = false;
     SizeType Out    = 0;
@@ -1621,9 +1621,9 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
 template <class InCharacterTy, class InTraitsTy>
 typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacterTy, InTraitsTy>::FindLast(const InCharacterTy* InRune) const
 {
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->PanicValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     if (this->Data.IsEmpty())
     {
@@ -1662,9 +1662,9 @@ LStringBase<InCharacterTy, InTraitsTy>::FindFirstSub(const char* InString) const
 template <typename InCharacterTy, class InTraitsTy>
 typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacterTy, InTraitsTy>::FindFirstSub(const CharacterTy* InString) const
 {
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->PanicValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     if (*InString == TraitsTy::Terminator)
     {
@@ -1723,9 +1723,9 @@ void LStringBase<InCharacterTy, InTraitsTy>::InlineCut(const SizeType InRuneInde
     this->Data.Resize(Cursor + /* Terminator */1, true);
     this->Data[Cursor] = TraitsTy::Terminator;
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -1746,9 +1746,9 @@ LStringBase<InCharacterTy, InTraitsTy> LStringBase<InCharacterTy, InTraitsTy>::C
     Sub.Data.CopyFrom(this->Data, Cursor + 1);
     Sub.Data[Cursor] = TraitsTy::Terminator;
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     Sub.EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return Sub;
 }
@@ -1776,9 +1776,9 @@ void LStringBase<InCharacterTy, InTraitsTy>::InlineSub(const SizeType InRuneStar
     check( Sub.GetCharacterCount() == 0 )
     check( Sub.Data.GetCapacity()  == 0 )
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return;
 }
@@ -1816,9 +1816,9 @@ LStringBase<InCharacterTy, InTraitsTy> LStringBase<InCharacterTy, InTraitsTy>::S
     Sub.Data.CopyFrom(this->Data, Cursor, EndCursor + 1);
     Sub.Data[EndCursor] = TraitsTy::Terminator;
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     Sub.EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     return Sub;
 }
@@ -1880,9 +1880,9 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
 template <class InCharacterTy, class InTraitsTy>
 typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacterTy, InTraitsTy>::Count(const InCharacterTy* InRune) const
 {
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->PanicValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     SizeType Out    = 0;
     SizeType Cursor = 0;
@@ -1905,9 +1905,9 @@ typename LStringBase<InCharacterTy, InTraitsTy>::SizeType LStringBase<InCharacte
 template <typename InCharacterTy, class InTraitsTy>
 void LStringBase<InCharacterTy, InTraitsTy>::ToLower()
 {
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
     SizeType Cursor = 0;
     while (Cursor < this->GetSize())

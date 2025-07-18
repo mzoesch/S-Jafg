@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "Hal/Platform.h"
-
 namespace Jafg
 {
 

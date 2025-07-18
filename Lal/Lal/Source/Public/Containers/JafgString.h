@@ -2,13 +2,13 @@
 
 #pragma once
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     #define PRIVATE_JAFG_CHECK_STRING_STATE()   this->EnsureValidState();
     #define JAFG_CHECK_STRING(Expr)             jassert(Expr)
-#else /* CHECK_STRING_VALIDITY */
+#else /* LAL_CHECK_STRING_VALIDITY */
     #define PRIVATE_JAFG_CHECK_STRING_STATE()
     #define JAFG_CHECK_STRING(Expr)
-#endif /* !CHECK_STRING_VALIDITY */
+#endif /* !LAL_CHECK_STRING_VALIDITY */
 
 template <typename TOtherStringCandidate>
 concept Jafg_HasTAndTraits = requires(TOtherStringCandidate OtherString)
@@ -373,10 +373,10 @@ public:
     FORCEINLINE constexpr       Alloc& GetUnderlyingDataStructure()       noexcept { return this->Impl; }
     FORCEINLINE constexpr const Alloc& GetUnderlyingDataStructure() const noexcept { return this->Impl; }
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     //# THIS IS FOR INTERNAL USE ONLY. DO NOT CALL MANUALLY.
     void EnsureValidState() const; // Private function. DO NOT CALL MANUALLY.
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
 protected:
 
@@ -2122,9 +2122,9 @@ FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<D
     Out.Impl.CopyFrom(this->Impl, InRuneIndex + 1);
     Out.Impl[InRuneIndex] = Traits::Terminator;
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     Out.EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
     return Out;
 }
 
@@ -2136,9 +2136,9 @@ FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<D
     Out.Impl.GetUnderlyingDataStructure().Slack = this->GetBegin() + InRuneIndex;
     Out.Impl.GetUnderlyingDataStructure().End   = this->GetBegin() + InRuneIndex;
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     Out.EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
     return Out;
 }
 
@@ -2160,9 +2160,9 @@ FORCEINLINE TOtherString TStringBase<Derived, InTraits, InAlloc>::Cut(const Size
         Out.GetUnderlyingDataStructure().GetUnderlyingDataStructure().End   = this->GetBegin() + InRuneIndex;
     }
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     Out.EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
     return Out;
 }
 
@@ -2194,9 +2194,9 @@ FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<D
         Out.Impl.Add(Traits::Terminator);
     }
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     Out.EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
     return Out;
 }
 
@@ -2214,9 +2214,9 @@ FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<D
         Out.Impl.GetUnderlyingDataStructure().End   = this->GetBegin() + InRuneStartIndex + InRuneCount;
     }
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     Out.EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
     return Out;
 }
 
@@ -2250,9 +2250,9 @@ FORCEINLINE TOtherString TStringBase<Derived, InTraits, InAlloc>::Sub(const Size
         }
     }
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
     Out.EnsureValidState();
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
     return Out;
 }
 
@@ -2554,7 +2554,7 @@ typename TStringBase<Derived, InTraits, InAlloc>::Self TStringBase<Derived, InTr
     return Out;
 }
 
-#if CHECK_STRING_VALIDITY
+#if LAL_CHECK_STRING_VALIDITY
 template<typename Derived, typename InTraits, typename InAlloc>
 void TStringBase<Derived, InTraits, InAlloc>::EnsureValidState() const
 {
@@ -2624,7 +2624,7 @@ FORCEINLINE typename _TStringBase<InTraits, InAlloc>::Self& _TStringBase<InTrait
     return this->Super::operator=(std::move(InString));
 }
 
-#endif /* CHECK_STRING_VALIDITY */
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
 } /* ~Namespace Jafg */
 

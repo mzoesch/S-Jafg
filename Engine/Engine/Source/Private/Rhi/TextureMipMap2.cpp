@@ -8,7 +8,7 @@ Jafg::LTextureMipMap2::LTextureMipMap2(LTextureMipMap2&& InOther) noexcept
     this->Bulk   = std::move(InOther.Bulk);
     this->Format = InOther.Format;
 
-    InOther.Size   = LSize::Zero();
+    InOther.Size   = Lu32Vector2::Zero();
     check( InOther.Bulk.IsAllocated() == false )
     InOther.Format = ERawImageFormat::Unspecified;
 
@@ -23,7 +23,7 @@ Jafg::LTextureMipMap2& Jafg::LTextureMipMap2::operator=(LTextureMipMap2&& InOthe
         this->Bulk   = std::move(InOther.Bulk);
         this->Format = InOther.Format;
 
-        InOther.Size   = LSize::Zero();
+        InOther.Size   = Lu32Vector2::Zero();
         check( InOther.Bulk.IsAllocated() == false )
         InOther.Format = ERawImageFormat::Unspecified;
     }

@@ -7,14 +7,6 @@
 ----------------------------------------------------------------------------*/
 
 #include "Build/Build.h"
-#include "Containers/ContainerBuild.h"
-
-
-/*----------------------------------------------------------------------------
-    Low level forwards.
-----------------------------------------------------------------------------*/
-
-#include "Containers/ContainerForward.h"
 
 
 /*----------------------------------------------------------------------------
@@ -31,6 +23,8 @@
     Core Forwards.
 ----------------------------------------------------------------------------*/
 
+#include "Containers/ContainerBuild.h"
+#include "Containers/ContainerForward.h"
 #include "Maths/MathDefines.h"
 #include "Maths/MathForward.h"
 

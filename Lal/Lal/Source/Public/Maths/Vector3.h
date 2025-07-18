@@ -80,9 +80,9 @@ struct TVector3
 
     constexpr          TVector3(std::initializer_list<T> InList)       noexcept;
 
-    FORCEINLINE constexpr auto GetData()       noexcept ->       T* { return &this->X; }
-    FORCEINLINE constexpr auto GetData() const noexcept -> const T* { return &this->X; }
-    FORCEINLINE constexpr LuBigSizeTy GetDataByteSize() const noexcept;
+    FORCEINLINE constexpr auto  GetData()       noexcept ->       T* { return &this->X; }
+    FORCEINLINE constexpr auto  GetData() const noexcept -> const T* { return &this->X; }
+    FORCEINLINE constexpr LSize GetDataByteSize() const noexcept;
 
     FORCEINLINE auto operator[](const i32 InIndex)       ->       T&;
     FORCEINLINE auto operator[](const i32 InIndex) const -> const T&;
@@ -193,7 +193,7 @@ FORCEINLINE constexpr TVector3<T>::TVector3(std::initializer_list<T> InList) noe
 }
 
 template <typename T>
-FORCEINLINE constexpr LuBigSizeTy TVector3<T>::GetDataByteSize() const noexcept
+FORCEINLINE constexpr LSize TVector3<T>::GetDataByteSize() const noexcept
 {
     static_assert(sizeof(TVector3<T>) == sizeof(T) * 3, "TVector3<T> is not tightly packed.");
     return sizeof(T) * 3;

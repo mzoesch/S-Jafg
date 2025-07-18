@@ -15,11 +15,11 @@ FORCEINLINE void Swap(T& A, T& B)
     return;
 }
 
-/**
- * @return The arg count of a function.
- */
+//#
+//# @return The arg count of a function.
+//#
 template <typename F, typename... ArgTy>
-constexpr LSizeTy ArgTyCount(F(*f)(ArgTy...))
+constexpr LSize ArgTyCount(F(*f)(ArgTy...))
 {
     return sizeof... (ArgTy);
 }

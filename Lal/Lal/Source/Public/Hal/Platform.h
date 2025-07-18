@@ -35,6 +35,9 @@ struct LPrimitivePlatformTypesGeneric
     typedef float                       f32;
     typedef double                      f64;
 
+    //# The size type for the platform pointer.
+    typedef u32                         LSize;
+
     //# An ASCII character. 8-bit fixed-width representation of 7-bit characters.
     typedef char                        LAsciiChar;
 
@@ -545,6 +548,8 @@ concept IsPrimitivePlatformTypesValid = requires
     typename T::f32;
     typename T::f64;
 
+    typename T::LSize;
+
     typename T::LAsciiChar;
     typename T::LChar;
     typename T::LWideChar;
@@ -565,6 +570,11 @@ static_assert(sizeof(LPlatformTypes::i8)                == 1);
 static_assert(sizeof(LPlatformTypes::i16)               == 2);
 static_assert(sizeof(LPlatformTypes::i32)               == 4);
 static_assert(sizeof(LPlatformTypes::i64)               == 8);
+
+static_assert(sizeof(LPlatformTypes::f32)               == 4);
+static_assert(sizeof(LPlatformTypes::f64)               == 8);
+
+static_assert(sizeof(LPlatformTypes::LSize)             == sizeof(void*));
 
 static_assert(sizeof(wchar_t)     == LAL_PLATFORM_WCHAR_SIZE );
 static_assert(sizeof(char)                              == 1 );
@@ -617,6 +627,8 @@ typedef Lal::LPlatformTypes::i64                                        i64;
 
 typedef Lal::LPlatformTypes::f32                                        f32;
 typedef Lal::LPlatformTypes::f64                                        f64;
+
+typedef Lal::LPlatformTypes::LSize                                      LSize;
 
 typedef Lal::LPlatformTypes::LAsciiChar                                 LAsciiChar;
 typedef Lal::LPlatformTypes::LWideChar                                  LWideChar;

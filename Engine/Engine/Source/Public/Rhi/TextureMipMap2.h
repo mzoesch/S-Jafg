@@ -29,9 +29,9 @@ struct LTextureMipMap2 final
     ENGINE_API void AllocateBulk();
     ENGINE_API void LoadFromBuffer(const u8* Buffer, const i32 Offset);
 
-    FORCEINLINE i32   GetWidth() const noexcept { return this->Size.X; }
-    FORCEINLINE i32   GetHeight() const noexcept { return this->Size.Y; }
-    FORCEINLINE LSize GetSize() const noexcept { return this->Size; }
+    FORCEINLINE i32  GetWidth() const noexcept { return this->Size.X; }
+    FORCEINLINE i32  GetHeight() const noexcept { return this->Size.Y; }
+    FORCEINLINE auto GetSize() const noexcept -> Lu32Vector2 { return this->Size; }
 
     FORCEINLINE const LByteBulkData& GetBulk() const noexcept { return this->Bulk; }
 
@@ -41,7 +41,7 @@ struct LTextureMipMap2 final
 
 private:
 
-    LSize                 Size;
+    Lu32Vector2           Size;
     LByteBulkData         Bulk;
     ERawImageFormat::Type Format;
 };

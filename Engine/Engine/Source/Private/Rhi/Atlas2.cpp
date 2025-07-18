@@ -12,7 +12,7 @@ void Jafg::LAtlas2::Make(const TArray<LTexture2>& InTextures, const bool bFreeOl
     }
     checkSlow( this->Data.GetFirstMipMap().GetBulk().IsAllocated() == false )
 
-    if (static_cast<LuPtrSize>(InTextures.GetSize()) >= static_cast<LuPtrSize>(std::numeric_limits<u8>::max()))
+    if (static_cast<LSize>(InTextures.GetSize()) >= static_cast<LSize>(std::numeric_limits<u8>::max()))
     {
         panic( "Exceed texture count limit. Shaders need updating." )
     }

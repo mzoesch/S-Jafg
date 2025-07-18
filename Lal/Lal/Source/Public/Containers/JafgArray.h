@@ -2,11 +2,11 @@
 
 #pragma once
 
-#if CHECK_CONTAINER_BOUNDS
+#if LAL_CHECK_CONTAINER_BOUNDS
     #define JAFG_CHECK_ARRAY(Expr)      jassert(Expr)
-#else /* CHECK_CONTAINER_BOUNDS */
+#else /* LAL_CHECK_CONTAINER_BOUNDS */
     #define JAFG_CHECK_ARRAY(Expr)
-#endif /* !CHECK_CONTAINER_BOUNDS */
+#endif /* !LAL_CHECK_CONTAINER_BOUNDS */
 
 namespace Jafg
 {
@@ -159,6 +159,8 @@ struct TMutableArrayViewAllocator
     };
 };
 
+//#
+//# !!! @Deprecated Use LalArray.h instead. !!!
 //#
 //# An array container that may use any form of stack or heap allocated memory.
 //#

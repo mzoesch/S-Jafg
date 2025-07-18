@@ -213,16 +213,16 @@ void Jafg::LTexture2::CopyTexture(const LTexture2& InTexture, const LPoint& InPo
     while (CurrentHeightCursor - InPoint.Y < InTexture.GetHeight())
     {
         u8* CurrentTextureDestination = this->MipMap.Bulk.GetRawBulk();
-        CurrentTextureDestination += static_cast<LuPtrSize>((CurrentHeightCursor * this->GetWidth() + InPoint.X) * this->GetBytesPerPixel());
+        CurrentTextureDestination += static_cast<LSize>((CurrentHeightCursor * this->GetWidth() + InPoint.X) * this->GetBytesPerPixel());
         checkSlow( CurrentTextureDestination >= this->MipMap.GetBulk().GetRawBulk() )
         checkSlow( CurrentTextureDestination < this->MipMap.GetBulk().GetRawBulk() + this->MipMap.GetBulk().GetByteSize() )
 
         const u8* OtherTextureSource = InTexture.MipMap.GetBulk().GetRawBulk();
-        OtherTextureSource += static_cast<LuPtrSize>((CurrentHeightCursor - InPoint.Y) * InTexture.GetWidth() * InTexture.GetBytesPerPixel());
+        OtherTextureSource += static_cast<LSize>((CurrentHeightCursor - InPoint.Y) * InTexture.GetWidth() * InTexture.GetBytesPerPixel());
         checkSlow( OtherTextureSource >= InTexture.MipMap.GetBulk().GetRawBulk() )
         checkSlow( OtherTextureSource < InTexture.MipMap.GetBulk().GetRawBulk() + InTexture.MipMap.GetBulk().GetByteSize() )
 
-        ::memcpy(CurrentTextureDestination, OtherTextureSource, InTexture.GetWidth() * static_cast<LuPtrSize>(InTexture.GetBytesPerPixel()));
+        ::memcpy(CurrentTextureDestination, OtherTextureSource, InTexture.GetWidth() * static_cast<LSize>(InTexture.GetBytesPerPixel()));
 
         ++CurrentHeightCursor;
 

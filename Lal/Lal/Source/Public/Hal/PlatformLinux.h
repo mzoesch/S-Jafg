@@ -19,6 +19,15 @@ namespace Lal
 
 struct LPrimitivePlatformTypesGeneric;
 
+//# The platform types specification for linux.
+struct LPrimitivePlatformTypesLinux final : public LPrimitivePlatformTypesGeneric
+{
+    typedef size_t LSize;
+};
+
+//# Make it public.
+#define LAL_PLATFORM_TYPES_STRUCT                                       ::Lal::LPrimitivePlatformTypesLinux
+
 //# The platform break implementation details for break behavior on linux.
 struct LOnPlatformBreakLinux;
 

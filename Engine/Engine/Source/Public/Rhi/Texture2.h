@@ -50,13 +50,13 @@ public:
 
     FORCEINLINE bool IsValid() const noexcept { return this->MipMap.IsValid(); }
 
-    FORCEINLINE u32   GetWidth() const noexcept{ return this->MipMap.GetWidth(); }
-    FORCEINLINE u32   GetHeight() const noexcept { return this->MipMap.GetHeight(); }
-    FORCEINLINE LSize GetSize() const noexcept { return this->MipMap.GetSize(); }
-    FORCEINLINE auto  GetFormat() const noexcept -> ERawImageFormat::Type { return this->MipMap.GetFormat(); }
-    FORCEINLINE i32   GetChannelsPerPixel() const noexcept { return this->MipMap.GetChannelsPerPixel(); }
-    FORCEINLINE i32   GetBytesPerPixel() const noexcept { return this->MipMap.GetBytesPerPixel(); }
-    FORCEINLINE auto  GetFirstMipMap() const noexcept -> const LTextureMipMap2& { return this->MipMap; }
+    FORCEINLINE u32  GetWidth() const noexcept{ return this->MipMap.GetWidth(); }
+    FORCEINLINE u32  GetHeight() const noexcept { return this->MipMap.GetHeight(); }
+    FORCEINLINE auto GetSize() const noexcept -> Lu32Vector2 { return this->MipMap.GetSize(); }
+    FORCEINLINE auto GetFormat() const noexcept -> ERawImageFormat::Type { return this->MipMap.GetFormat(); }
+    FORCEINLINE i32  GetChannelsPerPixel() const noexcept { return this->MipMap.GetChannelsPerPixel(); }
+    FORCEINLINE i32  GetBytesPerPixel() const noexcept { return this->MipMap.GetBytesPerPixel(); }
+    FORCEINLINE auto GetFirstMipMap() const noexcept -> const LTextureMipMap2& { return this->MipMap; }
 
     FORCEINLINE void Upload() const { this->Handle.Upload(*this); }
     FORCEINLINE bool IsUploaded() const noexcept { return this->Handle.IsValid(); }

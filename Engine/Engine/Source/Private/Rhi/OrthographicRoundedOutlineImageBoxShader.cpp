@@ -112,7 +112,7 @@ void Jafg::LOrthographicRoundedOutlineImageBoxShader::Draw
         return;
     }
 
-    const LSize ImageSize = Image.GetTexture()->GetSize();
+    const Lu32Vector2 ImageSize = Image.GetTexture()->GetSize();
 
     this->Program.Use();
     this->Program.SetFloatUniform("OrthoZDepth", Context.GetFrameOrthoZLayerDepth());

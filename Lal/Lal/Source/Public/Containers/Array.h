@@ -47,7 +47,7 @@ template <typename T> using TssArray                = TStaticStackArray<T>;
 template <typename T> using TdsArray                = TDynamicStackArray<T>;
 
 /**
- * * !!! @Deprecated Use JafgArray.h instead. !!!
+ * !!! @Deprecated Use JafgArray.h instead. !!!
  *
  * An array container with a fixed or dynamic size policy allocated on the stack or heap.
  * Fixed size arrays have zero runtime overhead and are equivalent to c arrays.
@@ -55,7 +55,7 @@ template <typename T> using TdsArray                = TDynamicStackArray<T>;
  * This array may not handle complex types that require move semantics as it was designed to be a fast and simple
  * container for extreme fast-paced memory read and write operations.
  *
- * Allows for OOB checks if CHECK_CONTAINER_BOUNDS is defined. If checks are enabled, the array will panic if
+ * Allows for OOB checks if LAL_CHECK_CONTAINER_BOUNDS is defined. If checks are enabled, the array will panic if
  * something fishy is going on.
  *
  * @tparam T                Element type.
@@ -243,7 +243,7 @@ public:
     FORCEINLINE auto IsValidIndex(const SizeType InIndex) const noexcept -> bool;
 
     /**
-     * Get an element reference for T by index. Panics if CHECK_CONTAINER_BOUNDS is true (usually only true in
+     * Get an element reference for T by index. Panics if LAL_CHECK_CONTAINER_BOUNDS is true (usually only true in
      * development build configurations), and the inbound index is invalid. Otherwise, the behavior is undefined.
      */
     FORCEINLINE auto operator[](const SizeType InIndex)       noexcept ->       T&;
@@ -406,9 +406,9 @@ TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::~TArrayOld() noexcept
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetSlack() noexcept
 {
-#if CHECK_CONTAINER_BOUNDS
+#if LAL_CHECK_CONTAINER_BOUNDS
     check( this->IsData() )
-#endif /* CHECK_CONTAINER_BOUNDS */
+#endif /* LAL_CHECK_CONTAINER_BOUNDS */
 
     return this->GetData() + this->Size;
 }
@@ -416,9 +416,9 @@ T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetSlack() noexcept
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetSlack() const noexcept
 {
-#if CHECK_CONTAINER_BOUNDS
+#if LAL_CHECK_CONTAINER_BOUNDS
     check( this->IsData() )
-#endif /* CHECK_CONTAINER_BOUNDS */
+#endif /* LAL_CHECK_CONTAINER_BOUNDS */
 
     return this->GetData() + this->Size;
 }
@@ -438,9 +438,9 @@ const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetUnsafeSlack(
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetFirst() noexcept
 {
-#if CHECK_CONTAINER_BOUNDS
+#if LAL_CHECK_CONTAINER_BOUNDS
     check( this->IsData() )
-#endif /* CHECK_CONTAINER_BOUNDS */
+#endif /* LAL_CHECK_CONTAINER_BOUNDS */
 
     return this->GetData();
 }
@@ -448,9 +448,9 @@ T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetFirst() noexcept
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetFirst() const noexcept
 {
-#if CHECK_CONTAINER_BOUNDS
+#if LAL_CHECK_CONTAINER_BOUNDS
     check( this->IsData() )
-#endif /* CHECK_CONTAINER_BOUNDS */
+#endif /* LAL_CHECK_CONTAINER_BOUNDS */
 
     return this->GetData();
 }
@@ -458,9 +458,9 @@ const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetFirst() cons
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetLast() noexcept
 {
-#if CHECK_CONTAINER_BOUNDS
+#if LAL_CHECK_CONTAINER_BOUNDS
     check( this->IsData() )
-#endif /* CHECK_CONTAINER_BOUNDS */
+#endif /* LAL_CHECK_CONTAINER_BOUNDS */
 
     return this->GetData() + this->Size - 1;
 }
@@ -468,9 +468,9 @@ T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetLast() noexcept
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 const T* TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::GetLast() const noexcept
 {
-#if CHECK_CONTAINER_BOUNDS
+#if LAL_CHECK_CONTAINER_BOUNDS
     check( this->IsData() )
-#endif /* CHECK_CONTAINER_BOUNDS */
+#endif /* LAL_CHECK_CONTAINER_BOUNDS */
 
     return this->GetData() + this->Size - 1;
 }
@@ -522,9 +522,9 @@ void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::AddAt(const SizeTyp
         return;
     }
 
-#if CHECK_CONTAINER_BOUNDS
+#if LAL_CHECK_CONTAINER_BOUNDS
     check( this->IsValidIndex(InIndex) )
-#endif  /* CHECK_CONTAINER_BOUNDS */
+#endif  /* LAL_CHECK_CONTAINER_BOUNDS */
 
     if (this->IsCapped())
     {
@@ -542,9 +542,9 @@ void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::AddAt(const SizeTyp
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::AddAt(const SizeType InIndex, T&& InElement) noexcept
 {
-#if CHECK_CONTAINER_BOUNDS
+#if LAL_CHECK_CONTAINER_BOUNDS
     check( this->IsValidIndex(InIndex) )
-#endif  /* CHECK_CONTAINER_BOUNDS */
+#endif  /* LAL_CHECK_CONTAINER_BOUNDS */
 
     if (this->Size ==  InIndex)
     {
@@ -731,9 +731,9 @@ SizeType TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::AddUninitialize
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAt(const SizeType InIndex) noexcept
 {
-#if CHECK_CONTAINER_BOUNDS
+#if LAL_CHECK_CONTAINER_BOUNDS
     check( this->IsValidIndex(InIndex) )
-#endif /* CHECK_CONTAINER_BOUNDS */
+#endif /* LAL_CHECK_CONTAINER_BOUNDS */
 
     this->DestroyAt(InIndex);
 
@@ -759,9 +759,9 @@ template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type Al
 void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAt(const SizeType InIndex, const SizeType InCount) noexcept
 {
     check( InCount > 0 )
-#if CHECK_CONTAINER_BOUNDS
+#if LAL_CHECK_CONTAINER_BOUNDS
     check( this->IsValidIndex(InIndex + InCount) )
-#endif /* CHECK_CONTAINER_BOUNDS */
+#endif /* LAL_CHECK_CONTAINER_BOUNDS */
 
     for (SizeType Index = InIndex; Index < InIndex + InCount; ++Index)
     {
@@ -1163,9 +1163,9 @@ void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Empty() noexcept
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Resize(const i32 InSize, const bool bInAllowShrinking) noexcept
 {
-#if CHECK_CONTAINER_BOUNDS
+#if LAL_CHECK_CONTAINER_BOUNDS
     check( InSize >= 0 && InSize <= this->Size )
-#endif /* CHECK_CONTAINER_BOUNDS */
+#endif /* LAL_CHECK_CONTAINER_BOUNDS */
 
     this->Size = InSize;
 
@@ -1195,12 +1195,12 @@ bool TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::IsValidIndex(const 
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 T& TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::operator[](const SizeType InIndex) noexcept
 {
-#if CHECK_CONTAINER_BOUNDS
+#if LAL_CHECK_CONTAINER_BOUNDS
     if (this->IsValidIndex(InIndex) == false)
     {
         panic( "Index out of bounds." )
     }
-#endif /* CHECK_CONTAINER_BOUNDS */
+#endif /* LAL_CHECK_CONTAINER_BOUNDS */
 
     return this->Data[InIndex];
 }
@@ -1208,12 +1208,12 @@ T& TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::operator[](const Size
 template <typename T, ResizePolicy::Type ResizePolicy, AllocationPolicy::Type AllocationPolicy, typename SizeType>
 const T& TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::operator[](const SizeType InIndex) const noexcept
 {
-#if CHECK_CONTAINER_BOUNDS
+#if LAL_CHECK_CONTAINER_BOUNDS
     if (this->IsValidIndex(InIndex) == false)
     {
         panic( "Index out of bounds." )
     }
-#endif /* CHECK_CONTAINER_BOUNDS */
+#endif /* LAL_CHECK_CONTAINER_BOUNDS */
 
     return this->Data[InIndex];
 }

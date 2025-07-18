@@ -2,6 +2,7 @@
 
 include(CMake/ModuleFlagsForward.cmake)
 
+
 ###############################################################################
 # Important misc CMake shit.
 ###############################################################################
@@ -23,6 +24,7 @@ option(
     OFF
     )
 
+
 ###############################################################################
 # Important misc flags.
 ###############################################################################
@@ -38,6 +40,7 @@ unspecified_option(
     warnings that are not enabled by default in development builds. This is useful for shipping builds to ensure
     correct and safe code."
     )
+
 
 ###############################################################################
 # Log flags.
@@ -95,9 +98,9 @@ unspecified_option(
     "Whether to enable scoped time task measurers. @see Logging/LogUtility.h"
     )
 
-if(NOT DEFINED CACHE{JAFG_FLAG_FORCE_LOG_FLUSH_INTERVAL})
+if(NOT DEFINED CACHE{JAFG_FORCE_LOG_FLUSH_INTERVAL})
     set(
-        JAFG_FLAG_FORCE_LOG_FLUSH_INTERVAL
+        JAFG_FORCE_LOG_FLUSH_INTERVAL
         "Unspecified"
         CACHE STRING
         "The interval in seconds to force a log flush. This is useful for debugging purposes, but can cause performance
@@ -105,9 +108,9 @@ if(NOT DEFINED CACHE{JAFG_FLAG_FORCE_LOG_FLUSH_INTERVAL})
         )
 endif()
 
-if(NOT DEFINED CACHE{JAFG_FLAG_LOG_TIME_FOR_VERY_LONG_FRAMES})
+if(NOT DEFINED CACHE{JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES})
     set(
-        JAFG_FLAG_LOG_TIME_FOR_VERY_LONG_FRAMES
+        JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES
         "Unspecified"
         CACHE STRING
         "The time in seconds for which a frame is considered very long. If a frame takes longer than this, it will be
@@ -115,17 +118,41 @@ if(NOT DEFINED CACHE{JAFG_FLAG_LOG_TIME_FOR_VERY_LONG_FRAMES})
         )
 endif()
 
+
+###############################################################################
+# Container flags.
+###############################################################################
+
+unspecified_option(
+    LAL_CHECK_CONTAINER_BOUNDS
+    "Whether to check container bounds. @see Containers/ContainerBuild.h"
+    )
+
+unspecified_option(
+    LAL_CHECK_STRING_VALIDITY
+    "Whether to validate string integrity. @see Containers/ContainerBuild.h"
+    )
+
+unspecified_flag(
+    LAL_CHECK_ARRAY
+    "The implementation of the lal array check. @see Containers/LalArray.h"
+    )
+
+
 ###############################################################################
 # To out-pipe.
 ###############################################################################
 
+message(STATUS "Flags for: Important misc CMake shit.")
 message(STATUS "LAL_DO_DEBUG_SYMBOLS_IN_SHIPPING: ${LAL_DO_DEBUG_SYMBOLS_IN_SHIPPING}")
 message(STATUS "LAL_DO_SANITIZED_BUILD: ${LAL_DO_SANITIZED_BUILD}")
 message(STATUS "LAL_DO_HARDEN_BUILD: ${LAL_DO_HARDEN_BUILD}")
 
+message(STATUS "Flags for: Important misc flags.")
 message(STATUS "LAL_DO_COMPILER_DIAGNOSTIC_SETUP: ${LAL_DO_COMPILER_DIAGNOSTIC_SETUP}")
 message(STATUS "LAL_DO_ENABLE_SHIPPING_WARNINGS: ${LAL_DO_ENABLE_SHIPPING_WARNINGS}")
 
+message(STATUS "Flags for: Log flags.")
 message(STATUS "LAL_LOG_DEFAULT_VERBOSITY: ${LAL_LOG_DEFAULT_VERBOSITY}")
 message(STATUS "LAL_LOG_ENABLE_TRACE: ${LAL_LOG_ENABLE_TRACE}")
 message(STATUS "LAL_LOG_ENABLE_VERBOSE: ${LAL_LOG_ENABLE_VERBOSE}")
@@ -133,4 +160,10 @@ message(STATUS "LAL_LOG_ENABLE_INFO: ${LAL_LOG_ENABLE_INFO}")
 message(STATUS "LAL_LOG_ENABLE_WARNING: ${LAL_LOG_ENABLE_WARNING}")
 message(STATUS "LAL_LOG_ENABLE_ERROR: ${LAL_LOG_ENABLE_ERROR}")
 message(STATUS "LAL_LOG_DO_SCOPED_TIME_TASK_MEASURER: ${LAL_LOG_DO_SCOPED_TIME_TASK_MEASURER}")
-message(STATUS "JAFG_FLAG_FORCE_LOG_FLUSH_INTERVAL: ${JAFG_FLAG_FORCE_LOG_FLUSH_INTERVAL}")
+message(STATUS "JAFG_FORCE_LOG_FLUSH_INTERVAL: ${JAFG_FORCE_LOG_FLUSH_INTERVAL}")
+message(STATUS "JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES: ${JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES}")
+
+message(STATUS "Flags for: Container flags.")
+message(STATUS "LAL_CHECK_CONTAINER_BOUNDS: ${LAL_CHECK_CONTAINER_BOUNDS}")
+message(STATUS "LAL_CHECK_STRING_VALIDITY: ${LAL_CHECK_STRING_VALIDITY}")
+message(STATUS "LAL_CHECK_ARRAY: ${LAL_CHECK_ARRAY}")
