@@ -527,7 +527,7 @@ void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const i32 Width, const i32 Hei
     this->bPendingResize = true;
 
     /*
-     * Two-second delay when making changes to the viewport. We might want to change this later depending
+     * One-point-five-second delay when making changes to the viewport. We might want to change this later depending
      * on some platform parameters.
      */
     this->PendingTimeForResizeApply = 1.5f;
