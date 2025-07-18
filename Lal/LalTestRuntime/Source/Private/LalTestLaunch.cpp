@@ -3,56 +3,40 @@
 #include "CoreAfx.h"
 
 #if !WITH_TESTS
-static_assert(false,
-    "The entry of LalTestRuntime must be used in an environment where tests are enabled. "
-    "Did you mean to compile the main application? Then try to only compile the Runtime "
-    "by adding \"--target Runtime\" to your CMake build command."
-    );
+    static_assert(false,
+        "The entry of LalTestRuntime must be used in an environment where tests are enabled. "
+        "Did you mean to compile the main application? Then try to only compile the Runtime "
+        "by adding \"--target Runtime\" to your CMake build command."
+        );
 #endif /* !WITH_TESTS */
 
-#if WITH_TESTS
+#include "TestCore/TestRunner.h"
 
-#include "TesterInclude.h"
-
-EPlatformExit::Type LalLaunchTestMain(void);
-
-EPlatformExit::Type LalTestAnsiMain(i32 Argc, char* Argv[])
-{
-    return LalLaunchTestMain();
-}
-
-EPlatformExit::Type LalTestWideMain(wchar_t* CmdLine)
-{
-    return LalLaunchTestMain();
-}
-
-EPlatformExit::Type LalLaunchTestMain()
-{
-    EPlatformExit::Type ExitCode = EPlatformExit::Success;
-    ::Jafg::Tester::RunTests(&ExitCode);
-
-    std::cout.flush();
-
-    return ExitCode;
-}
+//#
+//# What to actually test.
+//#
+//# @see Launch/Launch.cpp
+//#
+#include "Lal/Lal/Source/Test/TestLal.h"
 
 #if PLATFORM_WINDOWS
     i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ char* pCmdLine, _In_ i32 nCmdShow)
 #else /* PLATFORM_WASM */
-    i32 main(i32 Argc, char* Argv[])
+    i32 main(i32 ArgC, const char* ArgV[])
 #endif /* !PLATFORM_WASM */
 {
-#if WITH_TESTS
-    #if PLATFORM_WINDOWS && UNICODE
-        return LalTestWideMain(::GetCommandLineW());
-    #elif PLATFORM_WINDOWS
-        return LalLaunchTestMain();
-    #else /* PLATFORM_WINDOWS */
-        return LalTestAnsiMain(Argc, Argv);
-    #endif /* !PLATFORM_WINDOWS */
-#else /* WITH_TESTS */
-    return EPlatformExit::Success;
-#endif /* !WITH_TESTS */
-}
+    if (std::filesystem::is_regular_file("jafg.jafgworkspace") == false)
+    {
+        std::filesystem::current_path(std::filesystem::canonical(std::filesystem::path{"../../../../.."}));
+    }
 
-#endif /* WITH_TESTS */
+    if (std::filesystem::is_regular_file("jafg.jafgworkspace"))
+    {
+        return Jafg::Tester::LTestFramework{}.RunRegisteredTests();
+    }
+
+    LOG_FATAL(LogTesting,
+        "Failed to find the Jafg engine root directory form [{}].",
+        std::filesystem::canonical(std::filesystem::current_path()).string()
+        )
+}

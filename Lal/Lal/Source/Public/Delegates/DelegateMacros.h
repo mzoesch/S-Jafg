@@ -52,7 +52,7 @@
  */
 #define DECLARE_INLINE_DELEGATE(DelNameSig, DelName, RetTy, ...) \
     MAKE_DELEGATE_SIGNATURE(DelNameSig, RetTy, ##__VA_ARGS__)    \
-    DECLARE_INLINE_DELEGATE_BY_SIG(DelNameSig, DelName);
+    DECLARE_INLINE_DELEGATE_BY_SIG(DelNameSig, DelName)
 
 /**
  * Declares a multicast delegate by its signature. The return value is always void.

@@ -135,7 +135,7 @@
  */
 #define LOG_FATAL(Category, Format, ...) \
     LAL_GORGEOUS_TRAP_MSG(::Jafg::LString::SprintF(\
-        "[{}] - {}: " Format "", Category.GetCategory(), std::string_view{__FUNCTION__}, #__VA_ARGS__).ToPtr())
+        "[{}] - {}: " Format "", Category.GetCategory(), std::string_view{__FUNCTION__}, ##__VA_ARGS__).ToPtr())
 
 
 /*----------------------------------------------------------------------------

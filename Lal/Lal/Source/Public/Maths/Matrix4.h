@@ -637,14 +637,14 @@ FORCEINLINE void TMatrix4<T>::FastCopy(const Self& InMatrix, Self* OutMatrix)
 {
     static_assert(sizeof(Self) == 16 * sizeof(T), "TMatrix4<T> is not 16 * sizeof(T) bytes large.");
 
-#if LAL_WITH_GCC
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
+#endif /* LAL_WITH_CLANG */
     ::memcpy(OutMatrix, &InMatrix, sizeof(Self));
-#if LAL_WITH_GCC
-    #pragma GCC diagnostic pop
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* LAL_WITH_CLANG */
 
     return;
 }

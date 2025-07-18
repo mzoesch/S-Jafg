@@ -298,107 +298,107 @@ TEST_CASE(SemanticsArray, "Lal.Containers")
     };
 
     TArray<S> Arr1;
-    QUICK_CHECK_EQUALS(Ctor,                0)
-    QUICK_CHECK_EQUALS(Dtor,                0)
-    QUICK_CHECK_EQUALS(Copy,                0)
-    QUICK_CHECK_EQUALS(Move,                0)
+    QUICK_CHECK_EQUALS(Ctor,                0ll)
+    QUICK_CHECK_EQUALS(Dtor,                0ll)
+    QUICK_CHECK_EQUALS(Copy,                0ll)
+    QUICK_CHECK_EQUALS(Move,                0ll)
 
     Arr1.AddDefault();
-    QUICK_CHECK_EQUALS(Arr1.GetSize(),      1)
-    QUICK_CHECK_EQUALS(Ctor,                1)
-    QUICK_CHECK_EQUALS(Dtor,                0)
-    QUICK_CHECK_EQUALS(Copy,                0)
-    QUICK_CHECK_EQUALS(Move,                0)
+    QUICK_CHECK_EQUALS(Arr1.GetSize(),        1)
+    QUICK_CHECK_EQUALS(Ctor,                1ll)
+    QUICK_CHECK_EQUALS(Dtor,                0ll)
+    QUICK_CHECK_EQUALS(Copy,                0ll)
+    QUICK_CHECK_EQUALS(Move,                0ll)
 
     Arr1.AddZeroed();
     QUICK_CHECK_EQUALS(Arr1.GetSize(),      2)
-    QUICK_CHECK_EQUALS(Ctor,                1)
-    QUICK_CHECK_EQUALS(Dtor,                0)
-    QUICK_CHECK_EQUALS(Copy,                0)
-    QUICK_CHECK_EQUALS(Move,                0)
+    QUICK_CHECK_EQUALS(Ctor,                1ll)
+    QUICK_CHECK_EQUALS(Dtor,                0ll)
+    QUICK_CHECK_EQUALS(Copy,                0ll)
+    QUICK_CHECK_EQUALS(Move,                0ll)
 
     Arr1.AddUninitialized();
     QUICK_CHECK_EQUALS(Arr1.GetSize(),      3)
-    QUICK_CHECK_EQUALS(Ctor,                1)
-    QUICK_CHECK_EQUALS(Dtor,                0)
-    QUICK_CHECK_EQUALS(Copy,                0)
-    QUICK_CHECK_EQUALS(Move,                0)
+    QUICK_CHECK_EQUALS(Ctor,                1ll)
+    QUICK_CHECK_EQUALS(Dtor,                0ll)
+    QUICK_CHECK_EQUALS(Copy,                0ll)
+    QUICK_CHECK_EQUALS(Move,                0ll)
 
     Arr1.Empty();
     QUICK_CHECK_EQUALS(Arr1.GetSize(),      0)
-    QUICK_CHECK_EQUALS(Ctor,                1)
-    QUICK_CHECK_EQUALS(Dtor,                3)
-    QUICK_CHECK_EQUALS(Copy,                0)
-    QUICK_CHECK_EQUALS(Move,                0)
+    QUICK_CHECK_EQUALS(Ctor,                1ll)
+    QUICK_CHECK_EQUALS(Dtor,                3ll)
+    QUICK_CHECK_EQUALS(Copy,                0ll)
+    QUICK_CHECK_EQUALS(Move,                0ll)
 
     Arr1.AddDefault(10);
     QUICK_CHECK_EQUALS(Arr1.GetSize(),     10)
-    QUICK_CHECK_EQUALS(Ctor,               11)
-    QUICK_CHECK_EQUALS(Dtor,                3)
-    QUICK_CHECK_EQUALS(Copy,                0)
-    QUICK_CHECK_EQUALS(Move,                0)
+    QUICK_CHECK_EQUALS(Ctor,               11ll)
+    QUICK_CHECK_EQUALS(Dtor,                3ll)
+    QUICK_CHECK_EQUALS(Copy,                0ll)
+    QUICK_CHECK_EQUALS(Move,                0ll)
 
     Arr1.Reset(0);
     QUICK_CHECK_EQUALS(Arr1.GetSize(),      0)
-    QUICK_CHECK_EQUALS(Ctor,               11)
-    QUICK_CHECK_EQUALS(Dtor,               13)
-    QUICK_CHECK_EQUALS(Copy,                0)
-    QUICK_CHECK_EQUALS(Move,                0)
+    QUICK_CHECK_EQUALS(Ctor,               11ll)
+    QUICK_CHECK_EQUALS(Dtor,               13ll)
+    QUICK_CHECK_EQUALS(Copy,                0ll)
+    QUICK_CHECK_EQUALS(Move,                0ll)
 
     TArray<S> Arr2 = { S(), S(), S(), S(), S() };
     QUICK_CHECK_EQUALS(Arr2.GetSize(),      5)
-    QUICK_CHECK_EQUALS(Ctor,               16)
-    QUICK_CHECK_EQUALS(Dtor,               18)
-    QUICK_CHECK_EQUALS(Copy,                5)
-    QUICK_CHECK_EQUALS(Move,                0)
+    QUICK_CHECK_EQUALS(Ctor,               16ll)
+    QUICK_CHECK_EQUALS(Dtor,               18ll)
+    QUICK_CHECK_EQUALS(Copy,                5ll)
+    QUICK_CHECK_EQUALS(Move,                0ll)
 
     Arr2.AppendAt(3, Arr1.GetData(), 5);
     QUICK_CHECK_EQUALS(Arr2.GetSize(),     10)
-    QUICK_CHECK_EQUALS(Ctor,               16)
-    QUICK_CHECK_EQUALS(Dtor,               18)
-    QUICK_CHECK_EQUALS(Copy,               10)
-    QUICK_CHECK_EQUALS(Move,                0)
+    QUICK_CHECK_EQUALS(Ctor,               16ll)
+    QUICK_CHECK_EQUALS(Dtor,               18ll)
+    QUICK_CHECK_EQUALS(Copy,               10ll)
+    QUICK_CHECK_EQUALS(Move,                0ll)
 
     Arr2.AppendAt(2, std::move(Arr1));
     QUICK_CHECK_EQUALS(Arr2.GetSize(),     10)
-    QUICK_CHECK_EQUALS(Ctor,               16)
-    QUICK_CHECK_EQUALS(Dtor,               18)
-    QUICK_CHECK_EQUALS(Copy,               10)
-    QUICK_CHECK_EQUALS(Move,                0)
+    QUICK_CHECK_EQUALS(Ctor,               16ll)
+    QUICK_CHECK_EQUALS(Dtor,               18ll)
+    QUICK_CHECK_EQUALS(Copy,               10ll)
+    QUICK_CHECK_EQUALS(Move,                0ll)
 
     Arr1.EmplaceAt(0);
     Arr1.Emplace();
     Arr1.EmplaceAt(2);
     Arr1.AddDefault();
     QUICK_CHECK_EQUALS(Arr1.GetSize(),      4)
-    QUICK_CHECK_EQUALS(Ctor,               20)
-    QUICK_CHECK_EQUALS(Dtor,               18)
-    QUICK_CHECK_EQUALS(Copy,               10)
-    QUICK_CHECK_EQUALS(Move,                0)
+    QUICK_CHECK_EQUALS(Ctor,               20ll)
+    QUICK_CHECK_EQUALS(Dtor,               18ll)
+    QUICK_CHECK_EQUALS(Copy,               10ll)
+    QUICK_CHECK_EQUALS(Move,                0ll)
 
     Arr2.AppendAt(4, std::move(Arr1));
     QUICK_CHECK_EQUALS(Arr1.GetSize(),      0)
     QUICK_CHECK_EQUALS(Arr2.GetSize(),     14)
-    QUICK_CHECK_EQUALS(Ctor,               20)
-    QUICK_CHECK_EQUALS(Dtor,               18)
-    QUICK_CHECK_EQUALS(Copy,               10)
-    QUICK_CHECK_EQUALS(Move,                0)
+    QUICK_CHECK_EQUALS(Ctor,               20ll)
+    QUICK_CHECK_EQUALS(Dtor,               18ll)
+    QUICK_CHECK_EQUALS(Copy,               10ll)
+    QUICK_CHECK_EQUALS(Move,                0ll)
 
     Arr1.Empty();
     QUICK_CHECK_EQUALS(Arr1.GetSize(),      0)
     QUICK_CHECK_EQUALS(Arr2.GetSize(),     14)
-    QUICK_CHECK_EQUALS(Ctor,               20)
-    QUICK_CHECK_EQUALS(Dtor,               18)
-    QUICK_CHECK_EQUALS(Copy,               10)
-    QUICK_CHECK_EQUALS(Move,                0)
+    QUICK_CHECK_EQUALS(Ctor,               20ll)
+    QUICK_CHECK_EQUALS(Dtor,               18ll)
+    QUICK_CHECK_EQUALS(Copy,               10ll)
+    QUICK_CHECK_EQUALS(Move,                0ll)
 
     Arr1 = Arr2;
     QUICK_CHECK_EQUALS(Arr1.GetSize(),     14)
     QUICK_CHECK_EQUALS(Arr2.GetSize(),     14)
-    QUICK_CHECK_EQUALS(Ctor,               20)
-    QUICK_CHECK_EQUALS(Dtor,               18)
-    QUICK_CHECK_EQUALS(Copy,               24)
-    QUICK_CHECK_EQUALS(Move,                0)
+    QUICK_CHECK_EQUALS(Ctor,               20ll)
+    QUICK_CHECK_EQUALS(Dtor,               18ll)
+    QUICK_CHECK_EQUALS(Copy,               24ll)
+    QUICK_CHECK_EQUALS(Move,                0ll)
 
     return;
 }

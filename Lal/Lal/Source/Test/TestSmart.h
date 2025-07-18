@@ -27,7 +27,8 @@ TEST_CASE(SmartUniqueOperations, "Lal.Smart")
 
     i32 Counter = 0;
     {
-        Smart::TUnique<LMySmartCounter> UniqueA = Smart::MakeUnique(new LMySmartCounter(&Counter));
+
+        Smart::TUnique<LMySmartCounter> UniqueA = Smart::EmplaceUnique<LMySmartCounter>(&Counter);
         CHECK_EQUALS( "Scoped smart.", Counter, 1 )
     }
     CHECK_EQUALS( "Scoped smart.", Counter, 2 )
@@ -42,7 +43,7 @@ TEST_CASE(SmartUniqueOperations, "Lal.Smart")
     }
     CHECK_EQUALS( "Scoped smart.", Counter, 6 )
     {
-        Smart::TUnique<LMySmartCounter> UniqueA = Smart::MakeUnique(new LMySmartCounter(&Counter));
+        Smart::TUnique<LMySmartCounter> UniqueA = Smart::EmplaceUnique<LMySmartCounter>(&Counter);
         Smart::TUnique<LMySmartCounter> UniqueB = std::move(UniqueA);
         CHECK_EQUALS( "Scoped smart.", Counter, 7 )
     }
@@ -51,7 +52,7 @@ TEST_CASE(SmartUniqueOperations, "Lal.Smart")
         Smart::TUnique<LMySmartCounter> UniqueA = Smart::EmplaceUnique<LMySmartCounter>(&Counter);
         Smart::TUnique<LMySmartCounter> UniqueB = std::move(UniqueA);
 
-        CHECK_NULL(   "Scoped smart.", UniqueA.GetValuePtr() )
+        CHECK_NULL(   "Scoped smart.", UniqueA.GetPointer() )
         CHECK_EQUALS( "Scoped smart.", UniqueB.GetValue().Counter, &Counter )
         UniqueB.Reset();
         CHECK_EQUALS( "Scoped smart.", Counter, 10 )
@@ -60,8 +61,8 @@ TEST_CASE(SmartUniqueOperations, "Lal.Smart")
     {
         Smart::TUnique<LMySmartCounter> UniqueA = Smart::EmplaceUnique<LMySmartCounter>(&Counter);
         CHECK_EQUALS( "Scoped smart.", Counter, 11 )
-        Smart::TUnique<LMySmartCounter> UniqueB = UniqueA.MoveOut();
-        CHECK_NULL(   "Scoped smart.", UniqueA.GetValuePtr() )
+        Smart::TUnique<LMySmartCounter> UniqueB = std::move(UniqueA);
+        CHECK_NULL(   "Scoped smart.", UniqueA.GetPointer() )
         CHECK_EQUALS( "Scoped smart.", UniqueB.GetValue().Counter, &Counter )
         CHECK_EQUALS( "Scoped smart.", Counter, 11 )
     }

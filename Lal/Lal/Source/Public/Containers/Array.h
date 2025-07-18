@@ -331,16 +331,16 @@ TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::TArrayOld(const Self& In
     {
         this->Data = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
         check( this->Data )
-#if WITH_GCC
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
-    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
+    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* LAL_WITH_CLANG */
         ::memset(this->Data, 0, this->Capacity * sizeof(T));
         ::memcpy(this->Data, InOther.Data, this->Size * sizeof(T));
-#if WITH_GCC
-    #pragma GCC diagnostic pop
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* LAL_WITH_CLANG */
     }
     else
     {
@@ -372,7 +372,15 @@ TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::TArrayOld(std::initializ
     this->Reserve(static_cast<SizeType>(InList.size()));
     this->Size = static_cast<SizeType>(InList.size());
 
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
+    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* LAL_WITH_CLANG */
     ::memcpy(this->Data, InList.begin(), this->Size * sizeof(T));
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* LAL_WITH_CLANG */
 
     return;
 }
@@ -549,15 +557,15 @@ void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::AddAt(const SizeTyp
         this->ZeroedGrow();
     }
 
-#if WITH_GCC
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
-    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
+    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* LAL_WITH_CLANG */
     ::memmove(this->Data + InIndex + 1, this->Data + InIndex, (this->Size - InIndex) * sizeof(T));
-#if WITH_GCC
-    #pragma GCC diagnostic pop
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* LAL_WITH_CLANG */
 
     *(this->Data + InIndex) = std::move(InElement);
     ++this->Size;
@@ -624,7 +632,16 @@ TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::Append(const Self& InOth
 {
     this->Reserve(this->GetSize() + InOther.Size);
 
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
+    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* LAL_WITH_CLANG */
     ::memcpy(this->Data + this->Size, InOther.Data, InOther.Size * sizeof(T));
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* LAL_WITH_CLANG */
+
     this->Size += InOther.Size;
 
     return *this;
@@ -722,15 +739,15 @@ void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::RemoveAt(const Size
 
     if (InIndex < this->Size - 1)
     {
-#if WITH_GCC
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
-    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
+    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* LAL_WITH_CLANG */
         ::memmove(this->Data + InIndex, this->Data + InIndex + 1, (this->Size - InIndex - 1) * sizeof(T));
-#if WITH_GCC
-    #pragma GCC diagnostic pop
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* LAL_WITH_CLANG */
     }
 
     --this->Size;
@@ -1181,7 +1198,7 @@ T& TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::operator[](const Size
 #if CHECK_CONTAINER_BOUNDS
     if (this->IsValidIndex(InIndex) == false)
     {
-        panic(false && "Index out of bounds.")
+        panic( "Index out of bounds." )
     }
 #endif /* CHECK_CONTAINER_BOUNDS */
 
@@ -1194,7 +1211,7 @@ const T& TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::operator[](cons
 #if CHECK_CONTAINER_BOUNDS
     if (this->IsValidIndex(InIndex) == false)
     {
-        panic(false && "Index out of bounds.")
+        panic( "Index out of bounds." )
     }
 #endif /* CHECK_CONTAINER_BOUNDS */
 
@@ -1409,7 +1426,7 @@ void TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::SwapIndices(const S
         return;
     }
 
-    alignas(alignof(LMaxAlign))
+    alignas(alignof(double))
     u8 Temp[sizeof(T)];
 
     ::memcpy(Temp,             this->Data + InA, sizeof(T));
@@ -1455,15 +1472,15 @@ TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow() noexcept
         this->Data = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
         checkSlow( sizeof(*this->Data) == sizeof(T) )
 
-#if WITH_GCC
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
-    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
+    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* LAL_WITH_CLANG */
         ::memset(this->Data, 0, this->Capacity * sizeof(*this->Data));
-#if WITH_GCC
-    #pragma GCC diagnostic pop
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* LAL_WITH_CLANG */
 
         return;
     }
@@ -1474,20 +1491,20 @@ TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow() noexcept
 #if !IN_SHIPPING /* This will anyway never happen. Trust me, bro. */
     if (NewData == nullptr)
     {
-        panic( false && "Failed to reallocate memory for TArrayOld." )
+        panic( "Failed to reallocate memory for TArrayOld." )
         return;
     }
 #endif /* !IN_SHIPPING */
 
-#if WITH_GCC
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
-    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
+    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* LAL_WITH_CLANG */
     ::memset(NewData + this->Capacity, 0, (NewCapacity - this->Capacity) * sizeof(T));
-#if WITH_GCC
-    #pragma GCC diagnostic pop
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* LAL_WITH_CLANG */
 
     this->Data      = NewData;
     this->Capacity  = NewCapacity;
@@ -1532,15 +1549,15 @@ TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow(const SizeTyp
         this->Data = static_cast<T*>(::malloc(this->Capacity * sizeof(T)));
         checkSlow( sizeof(*this->Data) == sizeof(T) )
 
-#if WITH_GCC
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
-    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
+    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* LAL_WITH_CLANG */
         ::memset(this->Data, 0, this->Capacity * sizeof(*this->Data));
-#if WITH_GCC
-    #pragma GCC diagnostic pop
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* LAL_WITH_CLANG */
 
         return;
     }
@@ -1549,20 +1566,20 @@ TArrayOld<T, ResizePolicy, AllocationPolicy, SizeType>::ZeroedGrow(const SizeTyp
 #if !IN_SHIPPING /* This will anyway never happen. Trust me, bro. */
     if (NewData == nullptr)
     {
-        panic( false && "Failed to reallocate memory for TArrayOld." )
+        panic( "Failed to reallocate memory for TArrayOld." )
         return;
     }
 #endif /* !IN_SHIPPING */
 
-#if WITH_GCC
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wnontrivial-memcall"
-    #pragma GCC diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
+    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
+#endif /* LAL_WITH_CLANG */
     ::memset(NewData + this->Capacity, 0, (InTotalCapacity - this->Capacity) * sizeof(T));
-#if WITH_GCC
-    #pragma GCC diagnostic pop
-#endif /* WITH_GCC */
+#if LAL_WITH_CLANG
+    #pragma clang diagnostic pop
+#endif /* LAL_WITH_CLANG */
 
     this->Data      = NewData;
     this->Capacity  = InTotalCapacity;

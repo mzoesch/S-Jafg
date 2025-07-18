@@ -53,12 +53,12 @@ TEST_CASE(NativeLiteralStringEcondings, "Lal.Native")
 {
     const char* Utf8Test1 = "Utf-8 native literal ☺.";
     const char* Uft8Test2 = "これわテストです。";
-#if PLATFORM_USES_UTF8
+#if LAL_PLATFORM_USES_UTF8
     CHECK_TRUE("Native UTF-8 encoding test", ::Jafg::Testing::NativeLiterals::IsUtf8(Utf8Test1))
     CHECK_TRUE("Native UTF-8 encoding test", ::Jafg::Testing::NativeLiterals::IsUtf8(Uft8Test2))
-#else /* PLATFORM_USES_UTF8 */
+#else /* LAL_PLATFORM_USES_UTF8 */
     CHECK_TRUE("Test not implemented", false)
-#endif /* !PLATFORM_USES_UTF8 */
+#endif /* !LAL_PLATFORM_USES_UTF8 */
 
     return;
 }

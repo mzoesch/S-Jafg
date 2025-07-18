@@ -85,11 +85,7 @@ TEST_CASE(SimplePathStringOperations, "Lal.Path")
     QUICK_CHECK_EQUALS( MyPath.GetBase(),                 "" )
     QUICK_CHECK_EQUALS( MyPath.GetBase(),               '\0' )
 
-#if PLATFORM_WINDOWS
-    MyPath = "LalTestRuntime.exe";
-#else /* PLATFORM_WINDOWS */
-    MyPath = "LalTestRuntime";
-#endif /* !PLATFORM_WINDOWS */
+    MyPath = "jafg.jafgworkspace";
     QUICK_CHECK_TRUE(  MyPath.DoesExist() )
     QUICK_CHECK_FALSE( MyPath.IsDir()     )
     QUICK_CHECK_TRUE(  MyPath.IsFile()    )

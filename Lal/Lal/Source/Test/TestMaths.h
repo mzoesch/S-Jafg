@@ -42,7 +42,7 @@ TEST_CASE(MiscUtilOperations, "Lal.Maths")
     CHECK_EQUALS( "MiscUtilOperations", Maths::Max(JAFG_FLOAT_SUPREMUM, JAFG_FLOAT_INFIMUM),                 JAFG_FLOAT_SUPREMUM )
     CHECK_EQUALS( "MiscUtilOperations", Maths::Max(1.0, 2.0),                                          2.0 )
     CHECK_EQUALS( "MiscUtilOperations", Maths::Max(2.0, 1.0),                                          2.0 )
-    CHECK_EQUALS( "MiscUtilOperations", Maths::Max(JAFG_DOUBLE_TRUE_MINIMUM, 1.0),                       1 )
+    CHECK_EQUALS( "MiscUtilOperations", Maths::Max(JAFG_DOUBLE_TRUE_MINIMUM, 1.0),                     1.0 )
     CHECK_EQUALS( "MiscUtilOperations", Maths::Max(JAFG_DOUBLE_TRUE_MINIMUM, -1.0),                     JAFG_DOUBLE_TRUE_MINIMUM )
     CHECK_EQUALS( "MiscUtilOperations", Maths::Max(JAFG_DOUBLE_TRUE_MINIMUM, JAFG_DOUBLE_TRUE_MINIMUM), JAFG_DOUBLE_TRUE_MINIMUM )
     CHECK_EQUALS( "MiscUtilOperations", Maths::Max(JAFG_DOUBLE_TRUE_MINIMUM, JAFG_DOUBLE_INFIMUM),           JAFG_DOUBLE_INFIMUM )
@@ -166,28 +166,28 @@ TEST_CASE(TrigonometryOperations, "Lal.Maths")
     CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(JAFG_TWO_PI_F),                      0.0f )
     CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(2.0f * JAFG_TWO_PI_F),               0.0f )
     CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(-JAFG_TWO_PI_F),            JAFG_TWO_PI_F ) // FLT ERROR - Watch out.
-    CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(-2.0f * JAFG_TWO_PI_F),     JAFG_TWO_PI_F ) // FLT ERROR - We should probably do some
-    CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(JAFG_PI_F),                     JAFG_PI_F ) //             precision checks when calculating
-    CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(2.0f * JAFG_PI_F),                   0.0f ) //             the clamp values with low precision
-    CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(-JAFG_PI_F),                    JAFG_PI_F ) //             values - e.g. floats.
-    CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(-2.0f * JAFG_PI_F),         JAFG_TWO_PI_F ) // FLT ERROR
-    CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(JAFG_HALF_PI_F),           JAFG_HALF_PI_F )
+    CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(-2.0f * JAFG_TWO_PI_F),     JAFG_TWO_PI_F, JAFG_FLOAT_NOT_SO_SMALL_NUMBER )
+    CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(JAFG_PI_F),                     JAFG_PI_F ) // FLT ERROR - We should probably do some
+    CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(2.0f * JAFG_PI_F),                   0.0f ) //             precision checks when calculating
+    CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(-JAFG_PI_F),                    JAFG_PI_F ) //             the clamp values with low precision
+    CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(-2.0f * JAFG_PI_F),         JAFG_TWO_PI_F ) //             values - e.g. floats.
+    CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(JAFG_HALF_PI_F),           JAFG_HALF_PI_F ) // FLT ERROR
     CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(-JAFG_HALF_PI_F),        1.5f * JAFG_PI_F )
     CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(1.5f * JAFG_PI_F),       1.5f * JAFG_PI_F )
-    CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(-1.5f * JAFG_PI_F),        JAFG_HALF_PI_F )
+    CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(-1.5f * JAFG_PI_F),        JAFG_HALF_PI_F, JAFG_FLOAT_NOT_SO_SMALL_NUMBER )
     CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(0.0f),                           0.0f )
     CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(JAFG_TWO_PI_F),                  0.0f )
     CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(2.0f * JAFG_TWO_PI_F),           0.0f )
     CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(-JAFG_TWO_PI_F),                 0.0f )
-    CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(-2.0f * JAFG_TWO_PI_F),          0.0f )
+    CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(-2.0f * JAFG_TWO_PI_F),          0.0f, JAFG_FLOAT_NOT_SO_SMALL_NUMBER )
     CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(JAFG_PI_F),                 JAFG_PI_F )
     CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(2.0f * JAFG_PI_F),               0.0f )
     CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(-JAFG_PI_F),                JAFG_PI_F )
     CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(-2.0f * JAFG_PI_F),              0.0f )
     CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(JAFG_HALF_PI_F),       JAFG_HALF_PI_F )
-    CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(-JAFG_HALF_PI_F),     -JAFG_HALF_PI_F )
-    CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(1.5f * JAFG_PI_F),    -JAFG_HALF_PI_F )
-    CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(-1.5f * JAFG_PI_F),    JAFG_HALF_PI_F )
+    CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(-JAFG_HALF_PI_F),     -JAFG_HALF_PI_F, JAFG_FLOAT_NOT_SO_SMALL_NUMBER )
+    CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(1.5f * JAFG_PI_F),    -JAFG_HALF_PI_F, JAFG_FLOAT_NOT_SO_SMALL_NUMBER )
+    CHECK_EQUALS( "TrigonometryOperations", Maths::NormalizeRadians(-1.5f * JAFG_PI_F),    JAFG_HALF_PI_F, JAFG_FLOAT_NOT_SO_SMALL_NUMBER )
     CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(0.0),                                 0.0 )
     CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(JAFG_TWO_PI_D),                       0.0 )
     CHECK_EQUALS( "TrigonometryOperations", Maths::ClampRadians(2.0 * JAFG_TWO_PI_D),                 0.0 )
@@ -217,9 +217,9 @@ TEST_CASE(TrigonometryOperations, "Lal.Maths")
 
     CHECK_EQUALS( "TrigonometryOperations", Maths::Sin(0.0f),                              0.0f )
     CHECK_EQUALS( "TrigonometryOperations", Maths::Sin(JAFG_HALF_PI_F),                    1.0f )
-    CHECK_EQUALS( "TrigonometryOperations", Maths::Sin(JAFG_PI_F),                         0.0f )
+    CHECK_EQUALS( "TrigonometryOperations", Maths::Sin(JAFG_PI_F),                         0.0f, JAFG_FLOAT_NOT_SO_SMALL_NUMBER )
     CHECK_EQUALS( "TrigonometryOperations", Maths::Sin(1.5f * JAFG_PI_F),                 -1.0f )
-    CHECK_EQUALS( "TrigonometryOperations", Maths::Sin(JAFG_TWO_PI_F),                     0.0f )
+    CHECK_EQUALS( "TrigonometryOperations", Maths::Sin(JAFG_TWO_PI_F),                     0.0f, JAFG_FLOAT_NOT_SO_SMALL_NUMBER )
     CHECK_EQUALS( "TrigonometryOperations", Maths::Sin(0.0),                                0.0 )
     CHECK_EQUALS( "TrigonometryOperations", Maths::Sin(JAFG_HALF_PI_D),                     1.0 )
     CHECK_EQUALS( "TrigonometryOperations", Maths::Sin(JAFG_PI_D),                          0.0 )

@@ -19,6 +19,20 @@ pub fn ensure_file(path: &str)
 }
 
 #[allow(dead_code)]
+pub fn ensure_file_no_emit(path: &str) -> bool
+{
+    ensure_path(std::path::Path::new(path).parent().unwrap().to_str().unwrap());
+
+    if !std::path::Path::new(path).exists()
+    {
+        std::fs::File::create(path).unwrap();
+        return true;
+    }
+
+    return false;
+}
+
+#[allow(dead_code)]
 pub fn check_file(path: &str)
 {
     if std::path::Path::new(path).exists()
@@ -112,25 +126,35 @@ pub fn write_to_file_if_different(path: &str, emit: bool, content: &str) -> bool
         return false;
     }
 
-    ensure_file(path);
+    let is_created_file: bool = ensure_file_no_emit(path);
 
     let cur_content: String = read_file(path);
     if cur_content.len() != content.len()
     {
-        if emit
+        if is_created_file
+        {
+            println!("[{}]: File does not exist. Creating it and writing new content.", path);
+        }
+        else if emit
         {
             println!("[{}]: New content length differs from current content. Writing new content.", path);
         }
+
         std::fs::write(path, content).unwrap();
         return true;
     }
 
     if cur_content != content
     {
-        if emit
+        if is_created_file
+        {
+            println!("[{}]: File does not exist. Creating it and writing new content.", path);
+        }
+        else if emit
         {
             println!("[{}]: New content differs from current content. Writing new content.", path);
         }
+
         std::fs::write(path, content).unwrap();
         return true;
     }

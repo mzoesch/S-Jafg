@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-
+#include "CoreAfx.h"
 #include "Engine/EngineCompileTimeConstants.h"
 #include "Engine/Engine.h"
 #include "Core/Application.h"
@@ -14,6 +14,9 @@
 #include "User/UserPreferences.h"
 #include "Stats/Stats.h"
 #include "System/Paths.h"
+#if WITH_TESTS
+    #include "TestCore/TestRunner.h"
+#endif /* WITH_TESTS */
 
 using namespace Jafg;
 
@@ -264,8 +267,25 @@ void EngineExit()
     return;
 }
 
+#if WITH_TESTS
+    //#
+    //# We include the static library tests from LAL directly here, so that the linker will not flag them as
+    //# unused and remove them during the linking phase to this runtime executable.
+    //# We can do this because LAL does not use the default automatic simple unit test registration process.
+    //#
+    //# @see Motor/Launch.rs:80
+    //#
+    #include "Lal/Lal/Source/Test/TestLal.h"
+#endif /* WITH_TESTS */
+
+//#
+//# A function that is "guarded" by platform-specific code implementing error handlers and user interface
+//# crash reporters.
+//#
 EPlatformExit::Type GuardedMain()
 {
+#if !WITH_TESTS
+
 #if !LAL_PLATFORM_USES_NON_GENERIC_EXIT
     struct GuardedMainScope
     {
@@ -285,12 +305,18 @@ EPlatformExit::Type GuardedMain()
 
     Tasks::RegisterThread(ENamedThreads::Master);
 
+#endif /* !WITH_TESTS */
+
     PlatformMisc::InvalidateCachedValues();
 
 #if PLATFORM_DESKTOP
     std::filesystem::current_path(Finder::GetEngineRootDir().ToPtr());
     Paths::CreateDirectories(Finder::GetSavedDir());
 #endif /* PLATFORM_DESKTOP */
+
+#if WITH_TESTS
+    return Tester::LTestFramework{}.RunRegisteredTests();
+#else /* WITH_TESTS  */
 
 #if WITH_STATS
     if (Application::IsAllowProfiling())
@@ -438,4 +464,5 @@ EPlatformExit::Type GuardedMain()
 #endif /* !LAL_PLATFORM_USES_NON_GENERIC_LOOP */
 
     return ::GetMostSignificantExitReason();
+#endif /* !WITH_TESTS */
 }

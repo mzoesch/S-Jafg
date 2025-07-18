@@ -134,7 +134,7 @@ TEST_CASE(HandleMulticastDelegateOperations, "Lal.Delegates")
     CHECK_TRUE(   "Delegate removal.",                                 MyInt == 2 )
     CHECK_FALSE(  "Delegate removal.",                           Handle.IsValid() )
 #if WITH_TESTS
-    CHECK_EQUALS( "Delegate removal.",                      Handle.GetHandle(), 0 )
+    CHECK_EQUALS( "Delegate removal.",                     Handle.GetHandle(), 0u )
 #endif /* WITH_TESTS */
 
     /* Enforcing dynamic array to grow. */
@@ -150,17 +150,17 @@ TEST_CASE(HandleMulticastDelegateOperations, "Lal.Delegates")
     LDelegateHandle H10 = MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
     LDelegateHandle H11 = MyMulticastDel.AddStrong( [&MyInt] (const i32 A) -> void { MyInt += A; return; });
 #if WITH_TESTS
-    CHECK_NOT_EQUALS( "Delegate buffer grow.", H01.GetHandle(), 0 )
-    CHECK_NOT_EQUALS( "Delegate buffer grow.", H02.GetHandle(), 0 )
-    CHECK_NOT_EQUALS( "Delegate buffer grow.", H03.GetHandle(), 0 )
-    CHECK_NOT_EQUALS( "Delegate buffer grow.", H04.GetHandle(), 0 )
-    CHECK_NOT_EQUALS( "Delegate buffer grow.", H05.GetHandle(), 0 )
-    CHECK_NOT_EQUALS( "Delegate buffer grow.", H06.GetHandle(), 0 )
-    CHECK_NOT_EQUALS( "Delegate buffer grow.", H07.GetHandle(), 0 )
-    CHECK_NOT_EQUALS( "Delegate buffer grow.", H08.GetHandle(), 0 )
-    CHECK_NOT_EQUALS( "Delegate buffer grow.", H09.GetHandle(), 0 )
-    CHECK_NOT_EQUALS( "Delegate buffer grow.", H10.GetHandle(), 0 )
-    CHECK_NOT_EQUALS( "Delegate buffer grow.", H11.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H01.GetHandle(), 0u )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H02.GetHandle(), 0u )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H03.GetHandle(), 0u )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H04.GetHandle(), 0u )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H05.GetHandle(), 0u )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H06.GetHandle(), 0u )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H07.GetHandle(), 0u )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H08.GetHandle(), 0u )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H09.GetHandle(), 0u )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H10.GetHandle(), 0u )
+    CHECK_NOT_EQUALS( "Delegate buffer grow.", H11.GetHandle(), 0u )
 #endif /* WITH_TESTS */
 
     MyMulticastDel.Broadcast(1);
@@ -183,9 +183,9 @@ TEST_CASE(HandleMulticastDelegateOperations, "Lal.Delegates")
     CHECK_TRUE(  "Delegate removal.",                   MyMulticastDel.Remove(&H02) )
     CHECK_TRUE(  "Delegate removal.",                   MyMulticastDel.Remove(&H03) )
 #if WITH_TESTS
-    CHECK_EQUALS( "Delegate removal.",                           H01.GetHandle(), 0 )
-    CHECK_EQUALS( "Delegate removal.",                           H02.GetHandle(), 0 )
-    CHECK_EQUALS( "Delegate removal.",                           H03.GetHandle(), 0 )
+    CHECK_EQUALS( "Delegate removal.",                          H01.GetHandle(), 0u )
+    CHECK_EQUALS( "Delegate removal.",                          H02.GetHandle(), 0u )
+    CHECK_EQUALS( "Delegate removal.",                          H03.GetHandle(), 0u )
 #endif /* WITH_TESTS */
     CHECK_FALSE( "Delegate removal.",              MyMulticastDel.IsStillBound(H01) )
     CHECK_FALSE( "Delegate removal.",              MyMulticastDel.IsStillBound(H02) )
@@ -202,12 +202,12 @@ TEST_CASE(HandleMulticastDelegateOperations, "Lal.Delegates")
     CHECK_TRUE(  "Delegate removal.",                   MyMulticastDel.Remove(&H08) )
     CHECK_TRUE(  "Delegate removal.",                   MyMulticastDel.Remove(&H09) )
 #if WITH_TESTS
-    CHECK_NOT_EQUALS( "Delegate removal.",                       H04.GetHandle(), 0 )
-    CHECK_NOT_EQUALS( "Delegate removal.",                       H05.GetHandle(), 0 )
-    CHECK_NOT_EQUALS( "Delegate removal.",                       H06.GetHandle(), 0 )
-    CHECK_EQUALS(     "Delegate removal.",                       H07.GetHandle(), 0 )
-    CHECK_EQUALS(     "Delegate removal.",                       H08.GetHandle(), 0 )
-    CHECK_EQUALS(     "Delegate removal.",                       H09.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate removal.",                      H04.GetHandle(), 0u )
+    CHECK_NOT_EQUALS( "Delegate removal.",                      H05.GetHandle(), 0u )
+    CHECK_NOT_EQUALS( "Delegate removal.",                      H06.GetHandle(), 0u )
+    CHECK_EQUALS(     "Delegate removal.",                      H07.GetHandle(), 0u )
+    CHECK_EQUALS(     "Delegate removal.",                      H08.GetHandle(), 0u )
+    CHECK_EQUALS(     "Delegate removal.",                      H09.GetHandle(), 0u )
 #endif /* WITH_TESTS */
     CHECK_TRUE(  "Delegate removal.",              MyMulticastDel.IsStillBound(H04) )
     CHECK_TRUE(  "Delegate removal.",              MyMulticastDel.IsStillBound(H05) )
@@ -336,9 +336,9 @@ TEST_CASE(NamedMulticastDelegateOperations, "Lal.Delegates")
     LDelegateHandle H2 = MyNamedTripleMulticastDel.AddMember(&MyDelegateObject, &MyDelegateClass::MyNamedMemberNonConstVoidRetTriple);
     LDelegateHandle H3 = MyNamedTripleMulticastDel.AddMember(&MyDelegateObject, &MyDelegateClass::MyNamedMemberNonConstVoidRetTriple);
 #if WITH_TESTS
-    CHECK_NOT_EQUALS( "Delegate binding.",             H1.GetHandle(), 0 )
-    CHECK_NOT_EQUALS( "Delegate binding.",             H2.GetHandle(), 0 )
-    CHECK_NOT_EQUALS( "Delegate binding.",             H3.GetHandle(), 0 )
+    CHECK_NOT_EQUALS( "Delegate binding.",            H1.GetHandle(), 0u )
+    CHECK_NOT_EQUALS( "Delegate binding.",            H2.GetHandle(), 0u )
+    CHECK_NOT_EQUALS( "Delegate binding.",            H3.GetHandle(), 0u )
 #endif /* WITH_TESTS */
     CHECK_TRUE(     "Delegate binding.",                    H1.IsValid() )
     CHECK_TRUE(     "Delegate binding.",                    H2.IsValid() )

@@ -21,7 +21,7 @@ namespace Private
 
 bool TPathBase_DoesExist(const LPath& InPath)
 {
-    return Paths::DoesFileExist(InPath);
+    return Paths::DoesPathExist(InPath);
 }
 
 bool TPathBase_IsFile(const LPath& InPath)
@@ -145,12 +145,12 @@ bool Paths::DoesPathExist(const LPath& InPath)
 
 bool Paths::DoesFileExist(const LPath& InFilePath)
 {
-    return DoesPathExist(InFilePath) && std::filesystem::is_regular_file(InFilePath.ToPtr());
+    return std::filesystem::is_regular_file(InFilePath.ToPtr());
 }
 
 bool Paths::DoesDirExist(const LPath& InDirPath)
 {
-    return DoesPathExist(InDirPath) && std::filesystem::is_directory(InDirPath.ToPtr());
+    return std::filesystem::is_directory(InDirPath.ToPtr());
 }
 
 bool Paths::IsAbsolute(const LPath& InPath)

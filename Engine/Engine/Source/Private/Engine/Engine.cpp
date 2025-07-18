@@ -64,7 +64,7 @@ void Jafg::LEngine::PreInitialize()
         Rc != ETaskExit::Success
     )
     {
-        LOG_FATAL(LogGuardedMain, "Failed to create worker thread: [{}].", Rc);
+        LOG_FATAL(LogGuardedMain, "Failed to create worker thread: [{}].", static_cast<i32>(Rc));
     }
 
     return;

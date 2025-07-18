@@ -75,15 +75,15 @@ void SignumPosixAction_JafgHandler_NotSoFatal(const i32 InSignal, siginfo_t* InI
 
 } /* ~Namespace <Anonymous> */
 
-i32 main(const i32 argc, char *argv[])
+i32 main(const i32 ArgC, const char* ArgV[])
 {
     i32 ErrorLevel { 0 };
 
     LString CmdLine;
-    for (i32 i = 1; i < argc; ++i)
+    for (i32 i = 1; i < ArgC; ++i)
     {
-        CmdLine += argv[i];
-        if (i < argc - 1)
+        CmdLine += ArgV[i];
+        if (i < ArgC - 1)
         {
             CmdLine += ' ';
         }
