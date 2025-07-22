@@ -59,6 +59,7 @@ struct LSimpleTestCase
     }
 
     void   IncreaseTestCount() noexcept { ++this->TestsRun; return; }
+    void   IncreaseTestCountBy(const size_t InCount) noexcept { this->TestsRun += InCount; return; }
     size_t GetNumberOfTestsRun() const noexcept { return this->TestsRun; }
 
     void AddError(const std::string_view& What, const size_t LineNumber = -1)
@@ -413,7 +414,7 @@ struct LSimpleTestCase
             return;
         }
 
-        this->AddError(What, "true", LineNumber);
+        this->AddError(What, LineNumber);
 
         return;
     }
@@ -427,7 +428,7 @@ struct LSimpleTestCase
             return;
         }
 
-        this->AddError(What, "false", LineNumber);
+        this->AddError(What, LineNumber);
 
         return;
     }

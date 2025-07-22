@@ -54,6 +54,7 @@ DECLARE_INLINE_LOG_CATEGORY( LogGuardedMain,                  LAL_LOG_DEFAULT_VE
 DECLARE_INLINE_LOG_CATEGORY( LogHyperlane,                    LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogJafgInternal,                 LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogLackey,                       LAL_LOG_DEFAULT_VERBOSITY                             )
+DECLARE_INLINE_LOG_CATEGORY( LogLowLevel,                     LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogMaterialSubsystem,            LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogNames,                        LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogNetwork,                      LAL_LOG_DEFAULT_VERBOSITY                             )

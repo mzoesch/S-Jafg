@@ -9,6 +9,9 @@ from Lal.Lal.Source.Debug.Containers.JafgString import (
     JafgTStringBaseStrong_Printer,
     JafgTStringBaseWeak_Printer,
     )
+from Lal.Lal.Source.Debug.Containers.LalArray import (
+    LalTArrayBase_Printer
+    )
 
 
 def lal_pretty_lookup(val: any) -> any:
@@ -26,6 +29,9 @@ def lal_pretty_lookup(val: any) -> any:
     pattern_path_base = re.compile(
         r'Jafg::TPathBase<\s*Jafg::TStringTraits<[^>]+>,\s*Jafg::TArrayBase<\s*(Jafg::TArrayAllocator<[^>]+>)\s*>\s*>'
         )
+    pattern_lal_array = re.compile(
+        r'Lal::TArrayBase<\s*[^>]+\s*>'
+        )
 
     if pattern_array.match(type_str):
         return JafgTArray_Printer(val)
@@ -35,6 +41,8 @@ def lal_pretty_lookup(val: any) -> any:
         return JafgTStringBaseWeak_Printer(val)
     if pattern_path_base.match(type_str):
         return JafgTStringBaseStrong_Printer(val)
+    if pattern_lal_array.match(type_str):
+        return LalTArrayBase_Printer(val)
 
     return None
 

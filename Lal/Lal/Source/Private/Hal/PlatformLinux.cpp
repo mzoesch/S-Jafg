@@ -105,13 +105,43 @@ void Lal::LOnPlatformBreakLinux::OnProgramPanicImpl
 #if WITH_LOCAL_LAYER
     if (JafgCore::bGSuppressCrashDialog == false && Lal::Hal::IsTracerPidValidVerySlow() == false)
     {
+        std::string ZenityMessage;
+        ZenityMessage.reserve(strlen(InMessage));
+        for (const char* Ptr { InMessage }; *Ptr; ++Ptr)
+        {
+            if (*Ptr == '<')
+            {
+                ZenityMessage += "&lt;";
+            }
+            else if (*Ptr == '>')
+            {
+                ZenityMessage += "&gt;";
+            }
+            else if (*Ptr == '"')
+            {
+                ZenityMessage += "&quot;";
+            }
+            else if (*Ptr == '\'')
+            {
+                ZenityMessage += "&apos;";
+            }
+            else if (*Ptr == '&')
+            {
+                ZenityMessage += "&amp;";
+            }
+            else
+            {
+                ZenityMessage += *Ptr;
+            }
+        }
+
         Lal::FlushOutStreams();
         const Jafg::LString Zenity
         {
             Jafg::LString::SprintF
             (
                 "zenity --error --title=\"Jafg Panic; We are fucked.\" --text=\"{}\n\nStacktrace:\n{}\"",
-                InMessage,
+                ZenityMessage,
                 TraceStream.str()
             )
         };
