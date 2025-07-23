@@ -93,6 +93,11 @@ concept TArrayBaseAllocatorConceptBase = requires (T Allocator)
     //# Therefore it has to correctly implement a function #IsCurrentDataOnHeap if special handling is required.
     //#
     { Allocator._ResetToDefaultState() } -> std::same_as<void>;
+
+    //#
+    //# Whether this array owns the memory it uses for its data.
+    //#
+    { Allocator.IsOwningMemoryAllocator() } -> std::convertible_to<bool>;
 };
 
 //#
@@ -293,16 +298,21 @@ struct TArrayBaseDefaultAllocatorBase
 
     typedef typename TTraits::SizeType SizeType;
 
-    TArrayBaseDefaultAllocatorBase() = default;
+    FORCEINLINE explicit constexpr TArrayBaseDefaultAllocatorBase() = default;
+
+    NODISCARD
+    FORCEINLINE consteval static bool IsOwningMemoryAllocator() noexcept { return true; }
 };
 
 template <typename TIn, TArrayBaseAllocatorTraitsConceptBase TTraits>
 struct TArrayBaseMutableDefaultAllocatorBase : public TArrayBaseDefaultAllocatorBase<TIn, TTraits>
 {
-    typedef TTraits Traits;
-    typedef TIn     T;
+    typedef TArrayBaseDefaultAllocatorBase<TIn, TTraits> _Super;
 
-    typedef typename TTraits::SizeType SizeType;
+    typedef typename _Super::Traits Traits;
+    typedef typename _Super::T      T;
+
+    typedef typename _Super::SizeType SizeType;
 
     typedef T* Pointer;
     typedef T& Reference;
@@ -312,7 +322,7 @@ struct TArrayBaseMutableDefaultAllocatorBase : public TArrayBaseDefaultAllocator
     NODISCARD
     FORCEINLINE consteval static bool IsContentMutable() noexcept { return true; }
 
-    FORCEINLINE constexpr TArrayBaseMutableDefaultAllocatorBase() noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultAllocatorBase() noexcept
         : Data{nullptr}, Slack{nullptr}, End{nullptr}
     {
         return;
@@ -339,10 +349,12 @@ struct TArrayBaseMutableDefaultAllocatorBase : public TArrayBaseDefaultAllocator
 template <typename TIn, TArrayBaseAllocatorTraitsConceptBase TTraits>
 struct TArrayBaseConstDefaultAllocatorBase : public TArrayBaseDefaultAllocatorBase<TIn, TTraits>
 {
-    typedef TTraits Traits;
-    typedef TIn     T;
+    typedef TArrayBaseDefaultAllocatorBase<TIn, TTraits> _Super;
 
-    typedef typename TTraits::SizeType SizeType;
+    typedef typename _Super::Traits Traits;
+    typedef typename _Super::T      T;
+
+    typedef typename _Super::SizeType SizeType;
 
     typedef const T* Pointer;
     typedef const T& Reference;
@@ -352,7 +364,7 @@ struct TArrayBaseConstDefaultAllocatorBase : public TArrayBaseDefaultAllocatorBa
     NODISCARD
     FORCEINLINE consteval static bool IsContentMutable() noexcept { return false; }
 
-    FORCEINLINE constexpr TArrayBaseConstDefaultAllocatorBase() noexcept
+    FORCEINLINE explicit constexpr TArrayBaseConstDefaultAllocatorBase() noexcept
         : Data{nullptr}, Slack{nullptr}, End{nullptr}
     {
         return;
@@ -976,43 +988,465 @@ private:
 };
 
 template <typename TIn, TArrayBaseAllocatorTraitsConceptBase TTraits>
-struct TArrayBaseMutableDefaultAllocatorWeakImpl : public TArrayBaseMutableDefaultAllocatorBase<TIn, TTraits>
+struct TArrayBaseMutableDefaultAllocatorWeakImpl : public TArrayBaseDefaultAllocatorBase<TIn, TTraits>
 {
-    typedef TArrayBaseMutableDefaultAllocatorBase<TIn, TTraits> _Super;
-
-    typedef typename _Super::SizeType  SizeType;
-    typedef typename _Super::T         T;
-    typedef typename _Super::Pointer   Pointer;
-    typedef typename _Super::Reference Reference;
+    typedef TArrayBaseDefaultAllocatorBase<TIn, TTraits> _Super;
 
     typedef typename _Super::Traits Traits;
+    typedef typename _Super::T      T;
+
+    typedef typename _Super::SizeType SizeType;
+
+    typedef T* Pointer;
+    typedef T& Reference;
+
+    NODISCARD
+    FORCEINLINE consteval static bool IsOwningMemoryAllocator() noexcept { return false; }
+
+    NODISCARD
+    FORCEINLINE consteval static bool IsContentConst() noexcept { return false; }
+    NODISCARD
+    FORCEINLINE consteval static bool IsContentMutable() noexcept { return true; }
 
     NODISCARD
     FORCEINLINE consteval static bool IsWeak() noexcept { return true; }
     NODISCARD
     FORCEINLINE consteval static bool IsStrong() noexcept { return false; }
 
-    FORCEINLINE void Empty();
+    NODISCARD
+    FORCEINLINE constexpr bool IsCurrentDataOnHeap() const noexcept { static_assert(false); }
+
+    FORCEINLINE constexpr void _ResetToDefaultState() noexcept
+    {
+        this->Data = nullptr;
+        this->Slack = nullptr;
+
+        return;
+    }
+
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultAllocatorWeakImpl() noexcept
+        : Data{nullptr}, Slack{nullptr}
+    {
+        return;
+    }
+
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultAllocatorWeakImpl(const TArrayBaseMutableDefaultAllocatorWeakImpl& Other) noexcept
+    {
+        this->Data = Other.Data;
+        this->Slack = Other.Slack;
+
+        return;
+    }
+    FORCEINLINE constexpr TArrayBaseMutableDefaultAllocatorWeakImpl& operator=(const TArrayBaseMutableDefaultAllocatorWeakImpl& Other) noexcept
+    {
+        /* It is okay if this == &other. */
+
+        this->Data = Other.Data;
+        this->Slack = Other.Slack;
+
+        return *this;
+    }
+
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultAllocatorWeakImpl(TArrayBaseMutableDefaultAllocatorWeakImpl&& Other) noexcept
+    {
+        this->Data = Other.Data;
+        this->Slack = Other.Slack;
+
+        Other._ResetToDefaultState();
+
+        return;
+    }
+    FORCEINLINE constexpr TArrayBaseMutableDefaultAllocatorWeakImpl& operator=(TArrayBaseMutableDefaultAllocatorWeakImpl&& Other) noexcept
+    {
+        /* It is okay if this == &other. */
+
+        this->Data = Other.Data;
+        this->Slack = Other.Slack;
+
+        Other._ResetToDefaultState();
+
+        return *this;
+    }
+
+    template <TArrayBaseAllocatorConceptBase UAllocator>
+        requires
+        (
+            requires
+            {
+                requires std::same_as<T, typename UAllocator::T>;
+            }
+            &&
+            requires (UAllocator Allocator)
+            {
+                { Allocator.Data };
+                { Allocator.Slack };
+            }
+        )
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultAllocatorWeakImpl(const UAllocator& Allocator) noexcept
+    {
+        this->Data = Allocator.Data;
+        this->Slack = Allocator.Slack;
+
+        return;
+    }
+    template <TArrayBaseAllocatorConceptBase UAllocator>
+        requires
+        (
+            requires
+            {
+                requires std::same_as<T, typename UAllocator::T>;
+            }
+            &&
+            requires (UAllocator Allocator)
+            {
+                { Allocator.Data };
+                { Allocator.Slack };
+            }
+        )
+    FORCEINLINE constexpr TArrayBaseMutableDefaultAllocatorWeakImpl& operator=(const UAllocator& Allocator) noexcept
+    {
+        /* It is okay if this == &other. */
+
+        this->Data = Allocator.Data;
+        this->Slack = Allocator.Slack;
+
+        return *this;
+    }
+
+    template <TArrayBaseAllocatorConceptBase UAllocator>
+        requires
+        (
+            requires
+            {
+                requires std::same_as<T, typename UAllocator::T>;
+            }
+            &&
+            (UAllocator::IsOwningMemoryAllocator() == false)
+            &&
+            requires (UAllocator Allocator)
+            {
+                { Allocator.Data };
+                { Allocator.Slack };
+            }
+        )
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultAllocatorWeakImpl(UAllocator&& Allocator) noexcept
+    {
+        this->Data = Allocator.Data;
+        this->Slack = Allocator.Slack;
+
+        Allocator._ResetToDefaultState();
+
+        return;
+    }
+    template <TArrayBaseAllocatorConceptBase UAllocator>
+    requires
+    (
+        requires
+        {
+            requires std::same_as<T, typename UAllocator::T>;
+        }
+        &&
+        (UAllocator::IsOwningMemoryAllocator() == false)
+        &&
+        requires (UAllocator Allocator)
+        {
+            { Allocator.Data };
+            { Allocator.Slack };
+        }
+    )
+    FORCEINLINE constexpr TArrayBaseMutableDefaultAllocatorWeakImpl& operator=(UAllocator&& Allocator) noexcept
+    {
+        /* It is okay if this == &other. */
+
+        this->Data = Allocator.Data;
+        this->Slack = Allocator.Slack;
+
+        Allocator._ResetToDefaultState();
+
+        return *this;
+    }
+
+    template <TArrayBaseAllocatorConceptBase UAllocator>
+        requires
+        (
+            requires
+            {
+                requires std::same_as<T, typename UAllocator::T>;
+            }
+            &&
+            UAllocator::IsOwningMemoryAllocator()
+            &&
+            requires (UAllocator Allocator)
+            {
+                { Allocator.Data };
+                { Allocator.Slack };
+            }
+        )
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultAllocatorWeakImpl(UAllocator&& Allocator) noexcept = delete;
+    template <TArrayBaseAllocatorConceptBase UAllocator>
+        requires
+        (
+            requires
+            {
+                requires std::same_as<T, typename UAllocator::T>;
+            }
+            &&
+            UAllocator::IsOwningMemoryAllocator()
+            &&
+            requires (UAllocator Allocator)
+            {
+                { Allocator.Data };
+                { Allocator.Slack };
+            }
+        )
+    FORCEINLINE constexpr TArrayBaseMutableDefaultAllocatorWeakImpl& operator=(UAllocator&& Allocator) noexcept = delete;
+
+    FORCEINLINE constexpr void Empty() noexcept
+    {
+        this->_ResetToDefaultState();
+
+        return;
+    }
+
+    Pointer Data;
+    union
+    {
+        Pointer Slack;
+        Pointer End;
+    };
 };
 
 template <typename TIn, TArrayBaseAllocatorTraitsConceptBase TTraits>
-struct TArrayBaseConstDefaultAllocatorWeakImpl : public TArrayBaseConstDefaultAllocatorBase<TIn, TTraits>
+struct TArrayBaseConstDefaultAllocatorWeakImpl : public TArrayBaseDefaultAllocatorBase<TIn, TTraits>
 {
-    typedef TArrayBaseConstDefaultAllocatorBase<TIn, TTraits> _Super;
-
-    typedef typename _Super::SizeType  SizeType;
-    typedef typename _Super::T         T;
-    typedef typename _Super::Pointer   Pointer;
-    typedef typename _Super::Reference Reference;
+    typedef TArrayBaseDefaultAllocatorBase<TIn, TTraits> _Super;
 
     typedef typename _Super::Traits Traits;
+    typedef typename _Super::T      T;
+
+    typedef typename _Super::SizeType SizeType;
+
+    typedef const T* Pointer;
+    typedef const T& Reference;
+
+    NODISCARD
+    FORCEINLINE consteval static bool IsOwningMemoryAllocator() noexcept { return false; }
+
+    NODISCARD
+    FORCEINLINE consteval static bool IsContentConst() noexcept { return true; }
+    NODISCARD
+    FORCEINLINE consteval static bool IsContentMutable() noexcept { return false; }
 
     NODISCARD
     FORCEINLINE consteval static bool IsWeak() noexcept { return true; }
     NODISCARD
     FORCEINLINE consteval static bool IsStrong() noexcept { return false; }
 
-    FORCEINLINE void Empty();
+    NODISCARD
+    FORCEINLINE constexpr bool IsCurrentDataOnHeap() const noexcept { static_assert(false); }
+
+    FORCEINLINE constexpr void _ResetToDefaultState() noexcept
+    {
+        this->Data = nullptr;
+        this->Slack = nullptr;
+
+        return;
+    }
+
+    FORCEINLINE explicit constexpr TArrayBaseConstDefaultAllocatorWeakImpl() noexcept
+        : Data{nullptr}, Slack{nullptr}
+    {
+        return;
+    }
+
+    FORCEINLINE explicit constexpr TArrayBaseConstDefaultAllocatorWeakImpl(const TArrayBaseConstDefaultAllocatorWeakImpl& Other) noexcept
+    {
+        this->Data = Other.Data;
+        this->Slack = Other.Slack;
+
+        return;
+    }
+    FORCEINLINE constexpr TArrayBaseConstDefaultAllocatorWeakImpl& operator=(const TArrayBaseConstDefaultAllocatorWeakImpl& Other) noexcept
+    {
+        /* It is okay if this == &other. */
+
+        this->Data = Other.Data;
+        this->Slack = Other.Slack;
+
+        return *this;
+    }
+
+    FORCEINLINE explicit constexpr TArrayBaseConstDefaultAllocatorWeakImpl(TArrayBaseConstDefaultAllocatorWeakImpl&& Other) noexcept
+    {
+        this->Data = Other.Data;
+        this->Slack = Other.Slack;
+
+        Other._ResetToDefaultState();
+
+        return;
+    }
+    FORCEINLINE constexpr TArrayBaseConstDefaultAllocatorWeakImpl& operator=(TArrayBaseConstDefaultAllocatorWeakImpl&& Other) noexcept
+    {
+        /* It is okay if this == &other. */
+
+        this->Data = Other.Data;
+        this->Slack = Other.Slack;
+
+        Other._ResetToDefaultState();
+
+        return *this;
+    }
+
+    template <TArrayBaseAllocatorConceptBase UAllocator>
+        requires
+        (
+            requires
+            {
+                requires std::same_as<T, typename UAllocator::T>;
+            }
+            &&
+            requires (UAllocator Allocator)
+            {
+                { Allocator.Data };
+                { Allocator.Slack };
+            }
+            &&
+            std::is_lvalue_reference_v<decltype((std::declval<UAllocator const&>()))>
+        )
+    FORCEINLINE explicit constexpr TArrayBaseConstDefaultAllocatorWeakImpl(const UAllocator& Allocator) noexcept
+    {
+        this->Data = Allocator.Data;
+        this->Slack = Allocator.Slack;
+
+        return;
+    }
+    template <TArrayBaseAllocatorConceptBase UAllocator>
+        requires
+        (
+            requires
+            {
+                requires std::same_as<T, typename UAllocator::T>;
+            }
+            &&
+            requires (UAllocator Allocator)
+            {
+                { Allocator.Data };
+                { Allocator.Slack };
+            }
+            &&
+            std::is_lvalue_reference_v<decltype((std::declval<UAllocator const&>()))>
+        )
+    FORCEINLINE constexpr TArrayBaseConstDefaultAllocatorWeakImpl& operator=(const UAllocator& Allocator) noexcept
+    {
+        /* It is okay if this == &other. */
+
+        this->Data = Allocator.Data;
+        this->Slack = Allocator.Slack;
+
+        return *this;
+    }
+
+    template <TArrayBaseAllocatorConceptBase UAllocator>
+        requires
+        (
+            requires
+            {
+                requires std::same_as<T, typename UAllocator::T>;
+            }
+            &&
+            (UAllocator::IsOwningMemoryAllocator() == false)
+            &&
+            requires (UAllocator Allocator)
+            {
+                { Allocator.Data };
+                { Allocator.Slack };
+            }
+        )
+    FORCEINLINE explicit constexpr TArrayBaseConstDefaultAllocatorWeakImpl(UAllocator&& Allocator) noexcept
+    {
+        this->Data = Allocator.Data;
+        this->Slack = Allocator.Slack;
+
+        Allocator._ResetToDefaultState();
+
+        return;
+    }
+    template <TArrayBaseAllocatorConceptBase UAllocator>
+        requires
+        (
+            requires
+            {
+                requires std::same_as<T, typename UAllocator::T>;
+            }
+            &&
+            (UAllocator::IsOwningMemoryAllocator() == false)
+            &&
+            requires (UAllocator Allocator)
+            {
+                { Allocator.Data };
+                { Allocator.Slack };
+            }
+        )
+    FORCEINLINE constexpr TArrayBaseConstDefaultAllocatorWeakImpl& operator=(UAllocator&& Allocator) noexcept
+    {
+        /* It is okay if this == &other. */
+
+        this->Data = Allocator.Data;
+        this->Slack = Allocator.Slack;
+
+        Allocator._ResetToDefaultState();
+
+        return *this;
+    }
+
+    template <TArrayBaseAllocatorConceptBase UAllocator>
+        requires
+        (
+            requires
+            {
+                requires std::same_as<T, typename UAllocator::T>;
+            }
+            &&
+            UAllocator::IsOwningMemoryAllocator()
+            &&
+            requires (UAllocator Allocator)
+            {
+                { Allocator.Data };
+                { Allocator.Slack };
+            }
+        )
+    FORCEINLINE explicit constexpr TArrayBaseConstDefaultAllocatorWeakImpl(UAllocator&& Allocator) noexcept = delete;
+    template <TArrayBaseAllocatorConceptBase UAllocator>
+        requires
+        (
+            requires
+            {
+                requires std::same_as<T, typename UAllocator::T>;
+            }
+            &&
+            UAllocator::IsOwningMemoryAllocator()
+            &&
+            requires (UAllocator Allocator)
+            {
+                { Allocator.Data };
+                { Allocator.Slack };
+            }
+        )
+    FORCEINLINE constexpr TArrayBaseConstDefaultAllocatorWeakImpl& operator=(UAllocator&& Allocator) noexcept = delete;
+
+    FORCEINLINE constexpr void Empty() noexcept
+    {
+        this->_ResetToDefaultState();
+
+        return;
+    }
+
+    Pointer Data;
+    union
+    {
+        Pointer Slack;
+        Pointer End;
+    };
 };
 
 template <typename TIn, TArrayBaseCappedAllocatorTraitsConceptWeak TTraits>
@@ -1051,7 +1485,7 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
 
     using TArrayBaseMutableDefaultCappedAllocatorWeakBaseImpl<TIn, TTraits>::TArrayBaseMutableDefaultCappedAllocatorWeakBaseImpl;
 
-    FORCEINLINE constexpr TArrayBaseMutableDefaultFixedAllocatorWeakImpl(const TArrayBaseMutableDefaultFixedAllocatorWeakImpl& Other) noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultFixedAllocatorWeakImpl(const TArrayBaseMutableDefaultFixedAllocatorWeakImpl& Other) noexcept
     {
         const SizeType Used { static_cast<SizeType>(Other.Slack - Other.Data) };
 
@@ -1111,7 +1545,7 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
         return *this;
     }
 
-    FORCEINLINE constexpr TArrayBaseMutableDefaultFixedAllocatorWeakImpl(TArrayBaseMutableDefaultFixedAllocatorWeakImpl&& Other) noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultFixedAllocatorWeakImpl(TArrayBaseMutableDefaultFixedAllocatorWeakImpl&& Other) noexcept
     {
         this->Data = Other.Data;
         this->Slack = Other.Slack;
@@ -1151,8 +1585,10 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
                 { Allocator.Data };
                 { Allocator.Slack };
             }
+            &&
+            std::is_lvalue_reference_v<decltype((std::declval<UAllocator const&>()))>
         )
-    FORCEINLINE constexpr TArrayBaseMutableDefaultFixedAllocatorWeakImpl(const UAllocator& Allocator) noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultFixedAllocatorWeakImpl(const UAllocator& Allocator) noexcept
     {
         const SizeType Used { static_cast<SizeType>(Allocator.Slack - Allocator.Data) };
 
@@ -1190,6 +1626,8 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
                 { Allocator.Data };
                 { Allocator.Slack };
             }
+            &&
+            std::is_lvalue_reference_v<decltype((std::declval<UAllocator const&>()))>
         )
     FORCEINLINE constexpr TArrayBaseMutableDefaultFixedAllocatorWeakImpl& operator=(const UAllocator& Allocator) noexcept
     {
@@ -1242,7 +1680,7 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
                 { Allocator.Slack };
             }
         )
-    FORCEINLINE constexpr TArrayBaseMutableDefaultFixedAllocatorWeakImpl(UAllocator&& Allocator) noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultFixedAllocatorWeakImpl(UAllocator&& Allocator) noexcept
     {
         const SizeType Used { static_cast<SizeType>(Allocator.Slack - Allocator.Data) };
 
@@ -1383,7 +1821,7 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
     }
 
     template <typename U>
-    FORCEINLINE constexpr TArrayBaseMutableDefaultFixedAllocatorWeakImpl(const std::initializer_list<U> List) noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultFixedAllocatorWeakImpl(const std::initializer_list<U> List) noexcept
         requires (std::constructible_from<T, const U&>)
     {
         if (LAL_LIKELY(List.size() > 0))
@@ -1567,7 +2005,7 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
         return;
     }
 
-    FORCEINLINE constexpr  TArrayBaseMutableDefaultStackAllocatorWeakImpl() noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultStackAllocatorWeakImpl() noexcept
         : _Data{}
     {
         this->_ResetToDefaultState();
@@ -1575,7 +2013,7 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
         return;
     }
 
-    FORCEINLINE constexpr TArrayBaseMutableDefaultStackAllocatorWeakImpl(const TArrayBaseMutableDefaultStackAllocatorWeakImpl& Other) noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultStackAllocatorWeakImpl(const TArrayBaseMutableDefaultStackAllocatorWeakImpl& Other) noexcept
         : TArrayBaseMutableDefaultStackAllocatorWeakImpl{}
     {
         Pointer Cursor { Other.Data };
@@ -1605,7 +2043,7 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
         return *this;
     }
 
-    FORCEINLINE constexpr TArrayBaseMutableDefaultStackAllocatorWeakImpl(TArrayBaseMutableDefaultStackAllocatorWeakImpl&& Other) noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultStackAllocatorWeakImpl(TArrayBaseMutableDefaultStackAllocatorWeakImpl&& Other) noexcept
         : TArrayBaseMutableDefaultStackAllocatorWeakImpl{}
     {
         const SizeType Used { static_cast<SizeType>(Other.Slack - Other.Data) };
@@ -1679,7 +2117,7 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
                 { Allocator.Slack };
             }
         )
-    FORCEINLINE constexpr TArrayBaseMutableDefaultStackAllocatorWeakImpl(const UAllocator& Allocator) noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultStackAllocatorWeakImpl(const UAllocator& Allocator) noexcept
         : TArrayBaseMutableDefaultStackAllocatorWeakImpl{}
     {
         LAL_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Allocator) )
@@ -1763,7 +2201,7 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
                 { Allocator.Slack };
             }
         )
-    FORCEINLINE constexpr TArrayBaseMutableDefaultStackAllocatorWeakImpl(UAllocator&& Allocator) noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultStackAllocatorWeakImpl(UAllocator&& Allocator) noexcept
         : TArrayBaseMutableDefaultStackAllocatorWeakImpl{}
     {
         LAL_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Allocator) )
@@ -1813,7 +2251,7 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
     }
 
     template <typename U>
-    FORCEINLINE TArrayBaseMutableDefaultStackAllocatorWeakImpl(const std::initializer_list<U> List) noexcept
+    FORCEINLINE explicit TArrayBaseMutableDefaultStackAllocatorWeakImpl(const std::initializer_list<U> List) noexcept
         requires (std::constructible_from<T, const U&>)
         : TArrayBaseMutableDefaultStackAllocatorWeakImpl{}
     {
@@ -1925,7 +2363,7 @@ struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl : public TArray
         return;
     }
 
-    FORCEINLINE constexpr TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl() noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl() noexcept
         : _Data{}
     {
         this->_ResetToDefaultState();
@@ -1933,7 +2371,7 @@ struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl : public TArray
         return;
     }
 
-    FORCEINLINE constexpr TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl(const TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl& Other) noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl(const TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl& Other) noexcept
     {
         const SizeType Used { static_cast<SizeType>(Other.Slack - Other.Data) };
 
@@ -1989,7 +2427,7 @@ struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl : public TArray
         return *this;
     }
 
-    FORCEINLINE constexpr TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl(TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl&& Other) noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl(TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl&& Other) noexcept
     {
         if (Other.IsCurrentDataOnHeap())
         {
@@ -2060,7 +2498,7 @@ struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl : public TArray
                 { Allocator.Slack };
             }
         )
-    FORCEINLINE constexpr TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl(const UAllocator& Allocator) noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl(const UAllocator& Allocator) noexcept
     {
         const SizeType Used { static_cast<SizeType>(Allocator.Slack - Allocator.Data) };
 
@@ -2160,7 +2598,7 @@ struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl : public TArray
             { Allocator.Slack };
         }
     )
-    FORCEINLINE constexpr TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl(UAllocator&& Allocator) noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl(UAllocator&& Allocator) noexcept
     {
         const SizeType Used { static_cast<SizeType>(Allocator.Slack - Allocator.Data) };
 
@@ -2248,7 +2686,7 @@ struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl : public TArray
     }
 
     template <typename U>
-    FORCEINLINE constexpr TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl(const std::initializer_list<U> List) noexcept
+    FORCEINLINE explicit constexpr TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl(const std::initializer_list<U> List) noexcept
         requires (std::constructible_from<T, const U&>)
     {
         if (List.size() > TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl::SizeCapacity)
@@ -2690,75 +3128,46 @@ public:
     FORCEINLINE constexpr TArrayBase() noexcept = default;
 
     FORCEINLINE constexpr TArrayBase(const TArrayBase& Other) noexcept
-        requires (std::constructible_from<Allocator, const Allocator&>)
-        : Impl{Other.Impl}
-    {
-        return;
-    }
+        requires (std::constructible_from<Allocator, const Allocator&>);
     FORCEINLINE constexpr TArrayBase& operator=(const TArrayBase& Other) noexcept
-        requires (std::assignable_from<Allocator&, const Allocator&>)
-    {
-        this->Impl = Other.Impl;
-        return *this;
-    }
+        requires (std::assignable_from<Allocator&, const Allocator&>);
 
     FORCEINLINE constexpr TArrayBase(TArrayBase&& Other) noexcept
-        requires (std::constructible_from<Allocator, Allocator&&>)
-        : Impl{std::move(Other.Impl)}
-    {
-        return;
-    }
+        requires (std::constructible_from<Allocator, Allocator&&>);
     FORCEINLINE constexpr TArrayBase& operator=(TArrayBase&& Other) noexcept
-        requires (std::assignable_from<Allocator&, Allocator&&>)
-    {
-        this->Impl = std::move(Other.Impl);
-        return *this;
-    }
+        requires (std::assignable_from<Allocator&, Allocator&&>);
 
     template <typename UAllocator>
-    FORCEINLINE constexpr TArrayBase(const TArrayBase<UAllocator>& Other) noexcept
-        requires (std::constructible_from<Allocator, const UAllocator&>)
-        : Impl{Other.Impl}
-    {
-        return;
-    }
+    FORCEINLINE explicit constexpr TArrayBase(const TArrayBase<UAllocator>& Other) noexcept
+        requires (std::constructible_from<Allocator, const UAllocator&>);
     template <typename UAllocator>
     FORCEINLINE constexpr TArrayBase& operator=(const TArrayBase<UAllocator>& Other) noexcept
-        requires (std::assignable_from<Allocator&, const UAllocator&>)
-    {
-        this->Impl = Other.Impl;
-        return *this;
-    }
+        requires (std::assignable_from<Allocator&, const UAllocator&>);
 
     template <typename UAllocator>
-    FORCEINLINE constexpr TArrayBase(TArrayBase<UAllocator>&& Other) noexcept
-        requires (std::constructible_from<Allocator, UAllocator&&>)
-        : Impl{std::move(Other.Impl)}
-    {
-        return;
-    }
+    FORCEINLINE explicit constexpr TArrayBase(TArrayBase<UAllocator>&& Other) noexcept
+        requires (std::constructible_from<Allocator, UAllocator&&>);
     template <typename UAllocator>
     FORCEINLINE constexpr TArrayBase& operator=(TArrayBase<UAllocator>&& Other) noexcept
-        requires (std::assignable_from<Allocator&, UAllocator&&>)
-    {
-        this->Impl = std::move(Other.Impl);
-        return *this;
-    }
+        requires (std::assignable_from<Allocator&, UAllocator&&>);
+
+    //#
+    //# Delete r value move conversion constructors and assignment operators that would otherwise implicitly convert
+    //# to l value references of the allocator type.
+    //#
+    template <typename UAllocator>
+    FORCEINLINE explicit constexpr TArrayBase(TArrayBase<UAllocator>&& Other) noexcept
+        requires (std::constructible_from<Allocator, UAllocator&&> == false) = delete;
+    template <typename UAllocator>
+    FORCEINLINE constexpr TArrayBase& operator=(TArrayBase<UAllocator>&& Other) noexcept
+       requires (std::assignable_from<Allocator&, UAllocator&&> == false) = delete;
 
     template <typename U>
     FORCEINLINE constexpr TArrayBase(const std::initializer_list<U> List) noexcept
-        requires (std::constructible_from<Allocator, std::initializer_list<U>>)
-        : Impl{List}
-    {
-        return;
-    }
+        requires (std::constructible_from<Allocator, std::initializer_list<U>>);
     template <typename U>
     FORCEINLINE constexpr TArrayBase& operator=(const std::initializer_list<U> List) noexcept
-        requires (std::assignable_from<Allocator&, std::initializer_list<U>>)
-    {
-        this->Impl = List;
-        return *this;
-    }
+        requires (std::assignable_from<Allocator&, std::initializer_list<U>>);
 
     FORCEINLINE constexpr ~TArrayBase() noexcept(std::is_nothrow_destructible_v<Allocator>) = default;
 
@@ -2783,15 +3192,14 @@ public:
     NODISCARD FORCEINLINE constexpr bool IsValidIndex(const SizeType Index) const noexcept requires ( std::is_signed_v<SizeType>) { return Index >= 0 && Index < this->GetSize(); }
     NODISCARD FORCEINLINE constexpr bool IsValidIndex(const SizeType Index) const noexcept requires (!std::is_signed_v<SizeType>) { return Index < this->GetSize(); }
 
-    constexpr Reference operator[](const SizeType Index) noexcept requires (TArrayBase::IsContentMutable());
-
-    constexpr const T& operator[](const SizeType Index) const noexcept requires (TArrayBase::IsContentConst());
+    FORCEINLINE constexpr Reference operator[](const SizeType Index) noexcept requires (TArrayBase::IsContentMutable());
+    FORCEINLINE constexpr const T& operator[](const SizeType Index) const noexcept requires (TArrayBase::IsContentConst());
 
     //#
     //# Growths the array so that it can hold at least the given number of elements.
     //# This operation cannot cause a shrink under the hood.
     //#
-    constexpr void Reserve(const SizeType Count) noexcept requires (TArrayBase::IsStronglyAllocated());
+    FORCEINLINE constexpr void Reserve(const SizeType Count) noexcept requires (TArrayBase::IsStronglyAllocated());
 
     //#
     //# Resizes the array so that it can hold at least the given number of elements.
@@ -2800,19 +3208,23 @@ public:
     //#
     //# @return The number of elements reserved by this array.
     //#
-    constexpr SizeType Resize(const SizeType Count) noexcept requires (TArrayBase::IsStronglyAllocated());
+    FORCEINLINE constexpr SizeType Resize(const SizeType Count) noexcept requires (TArrayBase::IsStronglyAllocated());
 
     //#
     //# Shrinks the array to current number of elements it currently holds.
     //#
-    constexpr void ShrinkToFit() noexcept requires (TArrayBase::IsStronglyAllocated());
+    FORCEINLINE constexpr void ShrinkToFit() noexcept requires (TArrayBase::IsStronglyAllocated());
 
     //#
     //# Completely empties the array, sets its size to zero, and if possible, orphans the underlying memory.
     //#
-    constexpr void Empty() noexcept;
+    FORCEINLINE constexpr void Empty() noexcept;
 
-    void SwapBuffers(TArrayBase& Other) noexcept requires (requires (Allocator _Allocator) { _Allocator.SwapBuffers(); });
+    //#
+    //# Swaps the underlying buffers of this array with the other array. If the buffers are stack allocated, then this
+    //# operation may cause a cross-copy of the data.
+    //#
+    FORCEINLINE void SwapBuffers(TArrayBase& Other) noexcept requires (requires (Allocator _Allocator) { _Allocator.SwapBuffers(); });
 
     //#
     //# Do not use std operators as...
@@ -2858,6 +3270,11 @@ public:
 
         return;
     }
+
+    NODISCARD
+    FORCEINLINE const Allocator& GetAllocator() const noexcept { return this->Impl; }
+    NODISCARD
+    FORCEINLINE Allocator& GetMutableAllocator() const noexcept { return this->Impl; }
 
 private:
 
@@ -2945,41 +3362,125 @@ private:
 };
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-FORCEINLINE void TArrayBase<TAllocator>::SwapBuffers(TArrayBase& Other) noexcept requires (requires (Allocator _Allocator) { _Allocator.SwapBuffers(); })
+FORCEINLINE constexpr TArrayBase<TAllocator>::TArrayBase(const TArrayBase& Other) noexcept
+    requires (std::constructible_from<TAllocator, const TAllocator&>)
+    : Impl{Other.Impl}
 {
-    this->Impl.SwapBuffers(Other.Impl);
     return;
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-FORCEINLINE constexpr typename TArrayBase<TAllocator>::Reference TArrayBase<TAllocator>::operator[](const SizeType Index) noexcept requires (TArrayBase::IsContentMutable())
+FORCEINLINE constexpr TArrayBase<TAllocator>& TArrayBase<TAllocator>::operator=(const TArrayBase& Other) noexcept
+    requires (std::assignable_from<TAllocator&, const TAllocator&>)
+{
+    this->Impl = Other.Impl;
+    return *this;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+FORCEINLINE constexpr TArrayBase<TAllocator>::TArrayBase(TArrayBase&& Other) noexcept
+    requires (std::constructible_from<TAllocator, TAllocator&&>)
+    : Impl{std::move(Other.Impl)}
+{
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+FORCEINLINE constexpr TArrayBase<TAllocator>& TArrayBase<TAllocator>::operator=(TArrayBase&& Other) noexcept
+    requires (std::assignable_from<TAllocator&, TAllocator&&>)
+{
+    this->Impl = std::move(Other.Impl);
+    return *this;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename UAllocator>
+FORCEINLINE constexpr TArrayBase<TAllocator>::TArrayBase(const TArrayBase<UAllocator>& Other) noexcept
+    requires (std::constructible_from<TAllocator, const UAllocator&>)
+    : Impl{Other.Impl}
+{
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename UAllocator>
+FORCEINLINE constexpr TArrayBase<TAllocator>& TArrayBase<TAllocator>::operator=(const TArrayBase<UAllocator>& Other) noexcept
+    requires (std::assignable_from<TAllocator&, const UAllocator&>)
+{
+    this->Impl = Other.Impl;
+    return *this;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename UAllocator>
+FORCEINLINE constexpr TArrayBase<TAllocator>::TArrayBase(TArrayBase<UAllocator>&& Other) noexcept
+    requires (std::constructible_from<TAllocator, UAllocator&&>)
+    : Impl{std::move(Other.Impl)}
+{
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename UAllocator>
+FORCEINLINE constexpr TArrayBase<TAllocator>& TArrayBase<TAllocator>::operator=(TArrayBase<UAllocator>&& Other) noexcept
+    requires (std::assignable_from<TAllocator&, UAllocator&&>)
+{
+    this->Impl = std::move(Other.Impl);
+    return *this;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U>
+FORCEINLINE constexpr TArrayBase<TAllocator>::TArrayBase(const std::initializer_list<U> List) noexcept
+    requires (std::constructible_from<TAllocator, std::initializer_list<U>>)
+    : Impl{List}
+{
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U>
+FORCEINLINE constexpr TArrayBase<TAllocator>& TArrayBase<TAllocator>::operator=(const std::initializer_list<U> List) noexcept
+    requires (std::assignable_from<TAllocator&, std::initializer_list<U>>)
+{
+    this->Impl = List;
+    return *this;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+FORCEINLINE constexpr typename TArrayBase<TAllocator>::Reference TArrayBase<TAllocator>::operator[](const SizeType Index) noexcept
+    requires (TArrayBase::IsContentMutable())
 {
     LAL_CHECK_ARRAY( this->IsValidIndex(Index) )
     return this->Impl.Data[Index];
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-FORCEINLINE constexpr const typename TArrayBase<TAllocator>::T& TArrayBase<TAllocator>::operator[](const SizeType Index) const noexcept requires (TArrayBase::IsContentConst())
+FORCEINLINE constexpr const typename TArrayBase<TAllocator>::T& TArrayBase<TAllocator>::operator[](const SizeType Index) const noexcept
+    requires (TArrayBase::IsContentConst())
 {
     LAL_CHECK_ARRAY( this->IsValidIndex(Index) )
     return this->Impl.Data[Index];
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-FORCEINLINE constexpr void TArrayBase<TAllocator>::Reserve(const SizeType Count) noexcept requires (TArrayBase::IsStronglyAllocated())
+FORCEINLINE constexpr void TArrayBase<TAllocator>::Reserve(const SizeType Count) noexcept
+    requires (TArrayBase::IsStronglyAllocated())
 {
     this->GrowToImpl(Count);
     return;
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-FORCEINLINE constexpr typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Resize(const SizeType Count) noexcept requires (TArrayBase::IsStronglyAllocated())
+FORCEINLINE constexpr typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Resize(const SizeType Count) noexcept
+    requires (TArrayBase::IsStronglyAllocated())
 {
     return this->ResizeImpl(Count);
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-FORCEINLINE constexpr void TArrayBase<TAllocator>::ShrinkToFit() noexcept requires (TArrayBase::IsStronglyAllocated())
+FORCEINLINE constexpr void TArrayBase<TAllocator>::ShrinkToFit() noexcept
+    requires (TArrayBase::IsStronglyAllocated())
 {
     this->ShrinkToFitImpl();
     return;
@@ -2989,6 +3490,14 @@ template <TArrayBaseAllocatorConceptBase TAllocator>
 FORCEINLINE constexpr void TArrayBase<TAllocator>::Empty() noexcept
 {
     this->EmptyImpl();
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+FORCEINLINE void TArrayBase<TAllocator>::SwapBuffers(TArrayBase& Other) noexcept
+    requires (requires (Allocator _Allocator) { _Allocator.SwapBuffers(); })
+{
+    this->Impl.SwapBuffers(Other.Impl);
     return;
 }
 
