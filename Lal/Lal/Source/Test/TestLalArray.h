@@ -618,15 +618,293 @@ TEST_CASE(AllocatorPunning, "Lal.Containers")
 {
     TArray<LSize> Array { 1, 2, 3, 4, 5 };
     TArrayView<LSize> View;
+    TMutableArrayView<LSize> MutableView;
 
-    TArray<LSize>::Allocator Allocator { Array.GetAllocator() };
-    TArrayView<LSize>::Allocator ViewAllocator;
-
-    ViewAllocator = Allocator;
-
-    // View = Array;
-
+    QUICK_CHECK_EQUALS(Array.GetSize(), 5lu)
+    QUICK_CHECK_EQUALS(View.GetSize(), 0lu)
+    QUICK_CHECK_EQUALS(MutableView.GetSize(), 0lu)
     View = Array;
+    QUICK_CHECK_EQUALS(Array.GetSize(), 5lu)
+    QUICK_CHECK_EQUALS(View.GetSize(), 5lu)
+    QUICK_CHECK_EQUALS(MutableView.GetSize(), 0lu)
+    for (LSize Idx { 0 }; Idx < View.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx], View[Idx])
+        continue;
+    }
+
+    MutableView = Array;
+    QUICK_CHECK_EQUALS(Array.GetSize(), 5lu)
+    QUICK_CHECK_EQUALS(View.GetSize(), 5lu)
+    QUICK_CHECK_EQUALS(MutableView.GetSize(), 5lu)
+
+    for (LSize Idx { 0 }; Idx < MutableView.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx], MutableView[Idx])
+        continue;
+    }
+
+    for (LSize Idx { 0 }; Idx < MutableView.GetSize(); ++Idx)
+    {
+        MutableView[Idx] *= 2;
+        continue;
+    }
+
+    for (LSize Idx { 0 }; Idx < MutableView.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx], MutableView[Idx])
+        continue;
+    }
+
+    return;
+}
+
+TEST_CASE(ArrayIterators, "Lal.Containers")
+{
+    TArray<LSize> Array { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    TArrayView<LSize> View { Array };
+    TMutableArrayView<LSize> MutableView { Array };
+
+    QUICK_CHECK_EQUALS(Array.GetSize(), View.GetSize())
+    QUICK_CHECK_EQUALS(Array.GetSize(), MutableView.GetSize())
+
+    LSize Cursor { 0 };
+    for (LSize& Element : Array)
+    {
+        QUICK_CHECK_EQUALS(Element, ++Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, Array.GetSize())
+
+    Cursor = 0;
+    for (const LSize& Element : View)
+    {
+        QUICK_CHECK_EQUALS(Element, ++Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, View.GetSize())
+
+    Cursor = 0;
+    for (LSize& Element : MutableView)
+    {
+        QUICK_CHECK_EQUALS(Element, ++Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, MutableView.GetSize())
+
+    Cursor = 0;
+    for (const LSize& Element : Array)
+    {
+        QUICK_CHECK_EQUALS(Element, ++Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, Array.GetSize())
+
+    Cursor = 0;
+    for (const LSize& Element : View)
+    {
+        QUICK_CHECK_EQUALS(Element, ++Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, View.GetSize())
+
+    Cursor = 0;
+    for (const LSize& Element : MutableView)
+    {
+        QUICK_CHECK_EQUALS(Element, ++Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, MutableView.GetSize())
+
+    Cursor = 0;
+    for (LSize& Element : Array.Iter())
+    {
+        QUICK_CHECK_EQUALS(Element, ++Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, Array.GetSize())
+
+    Cursor = 0;
+    for (const LSize& Element : View.Iter())
+    {
+        QUICK_CHECK_EQUALS(Element, ++Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, View.GetSize())
+
+    Cursor = 0;
+    for (LSize& Element : MutableView.Iter())
+    {
+        QUICK_CHECK_EQUALS(Element, ++Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, MutableView.GetSize())
+
+    for (const LSize& Element : Array.Iter().Reverse())
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor--)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = View.GetSize();
+    for (const LSize& Element : View.Iter().Reverse())
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor--)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = MutableView.GetSize();
+    for (const LSize& Element : MutableView.Iter().Reverse())
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor--)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    for (const LSize& Element : Array.Iter().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        Cursor += 2;
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 10ul)
+
+    Cursor = 0;
+    for (const LSize& Element : View.Iter().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        Cursor += 2;
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 10ul)
+
+    Cursor = 0;
+    for (const LSize& Element : MutableView.Iter().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        Cursor += 2;
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 10ul)
+
+    Cursor = 10;
+    for (const LSize& Element : Array.Iter().Reverse().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : View.Iter().Reverse().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : MutableView.Iter().Reverse().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : Array.Iter().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }).Reverse())
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : View.Iter().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }).Reverse())
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : MutableView.Iter().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }).Reverse())
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : Array.Iter().ReversedFilter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : View.Iter().ReversedFilter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : MutableView.Iter().ReversedFilter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
 
     return;
 }

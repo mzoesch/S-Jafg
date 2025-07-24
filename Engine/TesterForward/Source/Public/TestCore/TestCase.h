@@ -98,12 +98,12 @@ struct LSimpleTestCase
         return;
     }
 
-    void AddError(const std::string_view& What, const std::string_view& ExpectedValue, const std::string_view& RealValue, const size_t LineNumber = -1)
+    void AddError(const std::string_view& What, const std::string_view& RealValue, const std::string_view& ExpectedValue, const size_t LineNumber = -1)
     {
         this->Errors.emplace_back(std::format(
-            "FAULT {}. Expected: {{ {} }}. Got: {{ {} }}. [Inside file {} at line {}.]",
+            "FAULT {}. Got: {{ {} }}. Expected: {{ {} }}. [Inside file {} at line {}.]",
             What,
-            ExpectedValue, RealValue,
+            RealValue, ExpectedValue,
             this->GetFilename(), LineNumber
             ));
 
@@ -111,12 +111,12 @@ struct LSimpleTestCase
     }
 
     template <typename T, typename U>
-    void AddError(const std::string_view& What, const T& ExpectedValue, const U& RealValue, const size_t LineNumber = -1)
+    void AddError(const std::string_view& What, const T& RealValue, const U& ExpectedValue, const size_t LineNumber = -1)
     {
         this->Errors.emplace_back(std::format(
-            "FAULT {}. Expected: {{ {} }}. Got: {{ {} }}. [Inside file {} at line {}.]",
+            "FAULT {}. Got: {{ {} }}. Expected: {{ {} }}. [Inside file {} at line {}.]",
             What,
-            ExpectedValue, RealValue,
+            RealValue, ExpectedValue,
             this->GetFilename(), LineNumber
             ));
 

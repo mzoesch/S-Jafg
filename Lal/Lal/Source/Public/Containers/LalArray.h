@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreAfx.h"
+#include "Containers/LalIterator.h"
 
 #ifndef LAL_CHECK_ARRAY
     #if LAL_CHECK_CONTAINER_BOUNDS
@@ -30,6 +31,16 @@ concept TArrayBaseAllocatorTraitsConceptBase = requires
     //#
     typename T::SizeType;
     requires std::integral<typename T::SizeType>;
+
+    //#
+    //# The iterator type that the allocator is going to use.
+    //# The iterator must be instantiable with const T. But may also be constructed with T
+    //# or any other type U if applicable.
+    //#
+    //# We here just check if there is even an iterator that can be constructed with const LSzie.
+    //# It is not the responsibility for traits to provide concrete data types.
+    //#
+    typename T::template Iterator<const LSize>;
 };
 
 //#
@@ -79,10 +90,24 @@ concept TArrayBaseAllocatorConceptBase = requires (T Allocator)
     typename T::Traits;
     requires TArrayBaseAllocatorTraitsConceptBase<typename T::Traits>;
 
+    //# @see #TArrayBaseAllocatorTraitsConceptBase.
     typename T::SizeType;
     requires std::integral<typename T::SizeType>;
 
+    //#
+    //# The iterator type that the allocator is going to use.
+    //#
+    typename T::Iterator;
+    typename T::ConstIterator;
+
+    //#
+    //# A fully qualified pointer type.
+    //#
     typename T::Pointer;
+
+    //#
+    //# A fully qualified reference type.
+    //#
     typename T::Reference;
 
     //#
@@ -202,16 +227,19 @@ concept TArrayBaseMutableCapacityAllocatorConceptStrong = TArrayBaseMutableAlloc
 // Implementations.
 ///////////////////////////////////////////////////////////////////////////////
 
-template <std::integral TSizeType>
+template <std::integral TSizeType, template <typename> typename TIterator>
 struct TArrayBaseAllocatorDefaultTraitsWeak
 {
     typedef TSizeType SizeType;
+
+    template <typename T>
+    using Iterator = TIterator<T>;
 };
 
-template <std::integral TSizeType>
-struct TArrayBaseAllocatorDefaultTraitsStrong : public TArrayBaseAllocatorDefaultTraitsWeak<TSizeType>
+template <std::integral TSizeType, template <typename> typename TIterator>
+struct TArrayBaseAllocatorDefaultTraitsStrong : public TArrayBaseAllocatorDefaultTraitsWeak<TSizeType, TIterator>
 {
-    typedef TArrayBaseAllocatorDefaultTraitsWeak<TSizeType> _Super;
+    typedef TArrayBaseAllocatorDefaultTraitsWeak<TSizeType, TIterator> _Super;
 
     typedef typename _Super::SizeType SizeType;
 
@@ -229,20 +257,20 @@ struct TArrayBaseAllocatorDefaultTraitsStrong : public TArrayBaseAllocatorDefaul
     }
 };
 
-template <std::integral TSizeType, TSizeType TSizeCapacity>
-struct TArrayBaseCappedAllocatorDefaultTraitsWeakImpl : public TArrayBaseAllocatorDefaultTraitsWeak<TSizeType>
+template <std::integral TSizeType, template <typename> typename TIterator, TSizeType TSizeCapacity>
+struct TArrayBaseCappedAllocatorDefaultTraitsWeakImpl : public TArrayBaseAllocatorDefaultTraitsWeak<TSizeType, TIterator>
 {
-    typedef TArrayBaseAllocatorDefaultTraitsWeak<TSizeType> _Super;
+    typedef TArrayBaseAllocatorDefaultTraitsWeak<TSizeType, TIterator> _Super;
 
     typedef typename _Super::SizeType SizeType;
 
     static constexpr SizeType SizeCapacity { static_cast<SizeType>(TSizeCapacity) };
 };
 
-template <std::integral TSizeType, TSizeType TSizeCapacity>
-struct TArrayBaseCappedAllocatorDefaultTraitStrongImpl : public TArrayBaseAllocatorDefaultTraitsStrong<TSizeType>
+template <std::integral TSizeType, template <typename> typename TIterator, TSizeType TSizeCapacity>
+struct TArrayBaseCappedAllocatorDefaultTraitStrongImpl : public TArrayBaseAllocatorDefaultTraitsStrong<TSizeType, TIterator>
 {
-    typedef TArrayBaseAllocatorDefaultTraitsStrong<TSizeType> _Super;
+    typedef TArrayBaseAllocatorDefaultTraitsStrong<TSizeType, TIterator> _Super;
 
     typedef typename _Super::SizeType SizeType;
 
@@ -296,7 +324,7 @@ struct TArrayBaseDefaultAllocatorBase
     typedef TTraits Traits;
     typedef TIn     T;
 
-    typedef typename TTraits::SizeType SizeType;
+    typedef typename Traits::SizeType SizeType;
 
     FORCEINLINE explicit constexpr TArrayBaseDefaultAllocatorBase() = default;
 
@@ -313,6 +341,9 @@ struct TArrayBaseMutableDefaultAllocatorBase : public TArrayBaseDefaultAllocator
     typedef typename _Super::T      T;
 
     typedef typename _Super::SizeType SizeType;
+
+    typedef typename Traits::template Iterator<T>       Iterator;
+    typedef typename Traits::template Iterator<const T> ConstIterator;
 
     typedef T* Pointer;
     typedef T& Reference;
@@ -355,6 +386,9 @@ struct TArrayBaseConstDefaultAllocatorBase : public TArrayBaseDefaultAllocatorBa
     typedef typename _Super::T      T;
 
     typedef typename _Super::SizeType SizeType;
+
+    typedef typename Traits::template Iterator<const T> Iterator;
+    typedef typename Traits::template Iterator<const T> ConstIterator;
 
     typedef const T* Pointer;
     typedef const T& Reference;
@@ -617,15 +651,9 @@ struct TArrayBaseMutableDefaultAllocatorStrongImpl : public TArrayBaseMutableDef
                 this->Slack = this->Data + Used;
                 this->End = this->Slack;
 
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+                #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
                 std::memcpy(this->Data, Allocator.Data, Used * sizeof(T));
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+                #include "Definitions/PopDiagnostics.h"
             }
 
             Allocator._ResetToDefaultState();
@@ -684,15 +712,9 @@ struct TArrayBaseMutableDefaultAllocatorStrongImpl : public TArrayBaseMutableDef
                 this->Destruct();
                 this->ResizeEmtpy(Used);
 
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+                #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
                 std::memcpy(this->Data, Allocator.Data, Used * sizeof(T));
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+                #include "Definitions/PopDiagnostics.h"
 
                 this->Slack = this->Data + Used;
                 LAL_CHECK_ARRAY( this->Slack <= this->End )
@@ -922,11 +944,7 @@ private:
 
     FORCEINLINE static Pointer AlignedAlloc(const SizeType Count) noexcept
     {
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+        #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
 #if LAL_CHECK_CONTAINER_BOUNDS
         Pointer Out { static_cast<Pointer>(std::aligned_alloc(alignof(T), Count * sizeof(T))) };
         jassert( Out )
@@ -934,19 +952,14 @@ private:
 #else /* LAL_CHECK_CONTAINER_BOUNDS */
         return static_cast<Pointer>(std::aligned_alloc(alignof(T), Count * sizeof(T)));
 #endif /* !LAL_CHECK_CONTAINER_BOUNDS */
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+        #include "Definitions/PopDiagnostics.h"
     }
 
     FORCEINLINE void AlignedRealloc(const SizeType Count) noexcept
     {
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
         LAL_CHECK_ARRAY( Count > 0 && Count > static_cast<SizeType>(this->Slack - this->Data) )
+
+        #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
 
         Pointer NewData { static_cast<Pointer>(std::aligned_alloc(alignof(T), Count * sizeof(T))) };
         LAL_CHECK_ARRAY( NewData )
@@ -956,12 +969,11 @@ private:
 
         std::free(this->Data);
 
+        #include "Definitions/PopDiagnostics.h"
+
         this->Data = NewData;
         this->Slack = this->Data + Used;
         this->End = this->Data + Count;
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
 
         return;
     }
@@ -996,6 +1008,9 @@ struct TArrayBaseMutableDefaultAllocatorWeakImpl : public TArrayBaseDefaultAlloc
     typedef typename _Super::T      T;
 
     typedef typename _Super::SizeType SizeType;
+
+    typedef typename Traits::template Iterator<T>       Iterator;
+    typedef typename Traits::template Iterator<const T> ConstIterator;
 
     typedef T* Pointer;
     typedef T& Reference;
@@ -1076,6 +1091,8 @@ struct TArrayBaseMutableDefaultAllocatorWeakImpl : public TArrayBaseDefaultAlloc
                 requires std::same_as<T, typename UAllocator::T>;
             }
             &&
+            std::is_same_v<typename UAllocator::Pointer, const typename UAllocator::T*> == false
+            &&
             requires (UAllocator Allocator)
             {
                 { Allocator.Data };
@@ -1096,6 +1113,8 @@ struct TArrayBaseMutableDefaultAllocatorWeakImpl : public TArrayBaseDefaultAlloc
             {
                 requires std::same_as<T, typename UAllocator::T>;
             }
+            &&
+            std::is_same_v<typename UAllocator::Pointer, const typename UAllocator::T*> == false
             &&
             requires (UAllocator Allocator)
             {
@@ -1225,6 +1244,9 @@ struct TArrayBaseConstDefaultAllocatorWeakImpl : public TArrayBaseDefaultAllocat
     typedef typename _Super::T      T;
 
     typedef typename _Super::SizeType SizeType;
+
+    typedef typename Traits::template Iterator<const T> Iterator;
+    typedef typename Traits::template Iterator<const T> ConstIterator;
 
     typedef const T* Pointer;
     typedef const T& Reference;
@@ -1714,15 +1736,9 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
             {
                 this->AllocateNoCheck();
 
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+                #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
                 std::memcpy(this->Data, Allocator.Data, Used * sizeof(T));
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+                #include "Definitions/PopDiagnostics.h"
 
                 this->Slack = this->Data + Used;
                 LAL_CHECK_ARRAY( this->Slack <= this->End )
@@ -1779,15 +1795,9 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
                 this->Destruct();
             }
 
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+            #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
             std::memcpy(this->Data, Allocator.Data, Used * sizeof(T));
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+            #include "Definitions/PopDiagnostics.h"
 
             this->Slack = this->Data + Used;
             LAL_CHECK_ARRAY( this->Slack <= this->End )
@@ -1944,15 +1954,9 @@ private:
 
     FORCEINLINE void AllocateNoCheck() noexcept
     {
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+        #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
         this->Data = static_cast<Pointer>(std::aligned_alloc(alignof(T), _Super::SizeCapacity * sizeof(T)));
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+        #include "Definitions/PopDiagnostics.h"
 
         this->Slack = this->Data;
         this->End = this->Data + _Super::SizeCapacity;
@@ -2050,15 +2054,9 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
 
         if (Used > 0)
         {
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+            #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
             std::memcpy(this->Data, Other.Data, Used * sizeof(T));
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+            #include "Definitions/PopDiagnostics.h"
 
             this->Slack = this->Data + Used;
             LAL_CHECK_ARRAY( this->Slack <= this->End )
@@ -2081,15 +2079,9 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
 
         if (Used > 0)
         {
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+            #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
             std::memcpy(this->Data, Other.Data, Used * sizeof(T));
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+            #include "Definitions/PopDiagnostics.h"
 
             this->Slack = this->Data + Used;
             LAL_CHECK_ARRAY( this->Slack <= this->End )
@@ -2218,15 +2210,9 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
 
         if (Used > 0)
         {
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+            #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
             std::memcpy(this->Data, Allocator.Data, Used * sizeof(T));
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+            #include "Definitions/PopDiagnostics.h"
 
             if constexpr (requires(UAllocator Allocator) { Allocator.Orphan(); })
             {
@@ -2627,15 +2613,9 @@ struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl : public TArray
                     this->Slack = this->Data + Used;
                     this->End = this->Slack;
 
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+                    #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
                     std::memcpy(this->Data, Allocator.Data, Used * sizeof(T));
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+                    #include "Definitions/PopDiagnostics.h"
                 }
 
                 Allocator._ResetToDefaultState();
@@ -2645,15 +2625,9 @@ struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl : public TArray
                 this->_ResetToDefaultState();
                 this->Slack = this->Data + Used;
 
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+                #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
                 std::memcpy(this->Data, Allocator.Data, Used * sizeof(T));
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+                #include "Definitions/PopDiagnostics.h"
 
                 if (Private::IsCurrentDataOnHeapDefaultAllocatorImpl<UAllocator>(Allocator))
                 {
@@ -2791,15 +2765,9 @@ struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl : public TArray
             this->Slack = this->Data + Used;
             this->End = this->Data + NewCapacity;
 
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+            #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
             std::memcpy(this->Data, this->_Data, Used * sizeof(T));
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+            #include "Definitions/PopDiagnostics.h"
         }
 
         LAL_CHECK_ARRAY( this->Data )
@@ -2923,15 +2891,9 @@ private:
             this->Slack = this->Data + Used;
             this->End = this->Data + Count;
 
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+            #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
             std::memcpy(this->Data, this->_Data, Used * sizeof(T));
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+            #include "Definitions/PopDiagnostics.h"
         }
 
         return;
@@ -2960,15 +2922,10 @@ private:
             else
             {
                 const SizeType Used { static_cast<SizeType>(this->Slack - this->Data) };
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+
+                #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
                 std::memcpy(this->_Data, this->Data, Used * sizeof(T));
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+                #include "Definitions/PopDiagnostics.h"
 
                 std::free(this->Data);
 
@@ -3003,11 +2960,7 @@ private:
 
     FORCEINLINE static Pointer AlignedAlloc(const SizeType Count) noexcept
     {
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
+        #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
 #if LAL_CHECK_CONTAINER_BOUNDS
         Pointer Out { static_cast<Pointer>(std::aligned_alloc(alignof(T), Count * sizeof(T))) };
         jassert( Out )
@@ -3015,27 +2968,24 @@ private:
 #else /* LAL_CHECK_CONTAINER_BOUNDS */
         return static_cast<Pointer>(std::aligned_alloc(alignof(T), Count * sizeof(T)));
 #endif /* !LAL_CHECK_CONTAINER_BOUNDS */
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+        #include "Definitions/PopDiagnostics.h"
     }
 
     FORCEINLINE void AlignedRealloc(const SizeType Count) noexcept
     {
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wnontrivial-memcall"
-    #pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
-#endif /* LAL_WITH_CLANG */
         LAL_CHECK_ARRAY( Count > 0 && Count > static_cast<SizeType>(this->End - this->Data) )
-
         LAL_CHECK_ARRAY( Count > TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl::SizeCapacity )
 
+        #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
         Pointer NewData { static_cast<Pointer>(std::aligned_alloc(alignof(T), Count * sizeof(T))) };
+        #include "Definitions/PopDiagnostics.h"
         LAL_CHECK_ARRAY( NewData )
 
         const SizeType Used { static_cast<SizeType>(this->Slack - this->Data) };
+
+        #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
         std::memcpy(NewData, this->Data, Used * sizeof(T));
+        #include "Definitions/PopDiagnostics.h"
 
         LAL_CHECK_ARRAY( this->IsCurrentDataOnHeap() )
         std::free(this->Data);
@@ -3043,9 +2993,8 @@ private:
         this->Data = NewData;
         this->Slack = this->Data + Used;
         this->End = this->Data + Count;
-#if LAL_WITH_CLANG
-    #pragma clang diagnostic pop
-#endif /* LAL_WITH_CLANG */
+
+        return;
     }
 
     FORCEINLINE void OrphanImpl() noexcept
@@ -3090,12 +3039,14 @@ class TArrayBase
 {
 public:
 
-    typedef TAllocator                    Allocator;
-    typedef typename Allocator::Traits    Traits;
-    typedef typename Allocator::T         T;
-    typedef typename Allocator::SizeType  SizeType;
-    typedef typename Allocator::Pointer   Pointer;
-    typedef typename Allocator::Reference Reference;
+    typedef TAllocator                        Allocator;
+    typedef typename Allocator::Traits        Traits;
+    typedef typename Allocator::T             T;
+    typedef typename Allocator::SizeType      SizeType;
+    typedef typename Allocator::Iterator      Iterator;
+    typedef typename Allocator::ConstIterator ConstIterator;
+    typedef typename Allocator::Pointer       Pointer;
+    typedef typename Allocator::Reference     Reference;
 
     template <typename TMemberField>
     friend void OnDefaultOnlyMallocMember(TMemberField* MemberField);
@@ -3194,6 +3145,16 @@ public:
 
     FORCEINLINE constexpr Reference operator[](const SizeType Index) noexcept requires (TArrayBase::IsContentMutable());
     FORCEINLINE constexpr const T& operator[](const SizeType Index) const noexcept requires (TArrayBase::IsContentConst());
+
+    FORCEINLINE constexpr Iterator begin() noexcept requires (TArrayBase::IsContentMutable()) { return Iterator{ this->Impl.Data  }; }
+    FORCEINLINE constexpr Iterator end() noexcept requires (TArrayBase::IsContentMutable()) { return Iterator{ this->Impl.Slack }; }
+    FORCEINLINE constexpr ConstIterator begin() const noexcept { return ConstIterator{ this->Impl.Data  }; }
+    FORCEINLINE constexpr ConstIterator end()const noexcept { return ConstIterator{ this->Impl.Slack }; }
+    FORCEINLINE constexpr ConstIterator cbegin() const noexcept { return ConstIterator{ this->Impl.Data  }; }
+    FORCEINLINE constexpr ConstIterator cend() const noexcept { return ConstIterator{ this->Impl.Slack }; }
+
+    FORCEINLINE constexpr auto Iter() noexcept requires (requires { typename Iterator::Factory; });
+    FORCEINLINE constexpr auto CIter() const noexcept requires (requires { typename ConstIterator::Factory; });
 
     //#
     //# Growths the array so that it can hold at least the given number of elements.
@@ -3464,6 +3425,18 @@ FORCEINLINE constexpr const typename TArrayBase<TAllocator>::T& TArrayBase<TAllo
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
+FORCEINLINE constexpr auto TArrayBase<TAllocator>::Iter() noexcept requires (requires { typename Iterator::Factory; })
+{
+    return typename Iterator::Factory{ this->Impl.Data, this->Impl.Slack };
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+FORCEINLINE constexpr auto TArrayBase<TAllocator>::CIter() const noexcept requires (requires { typename ConstIterator::Factory; })
+{
+    return typename ConstIterator::Factory{ this->Impl.Data, this->Impl.Slack };
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
 FORCEINLINE constexpr void TArrayBase<TAllocator>::Reserve(const SizeType Count) noexcept
     requires (TArrayBase::IsStronglyAllocated())
 {
@@ -3501,14 +3474,14 @@ FORCEINLINE void TArrayBase<TAllocator>::SwapBuffers(TArrayBase& Other) noexcept
     return;
 }
 
-typedef TArrayBaseAllocatorDefaultTraitsStrong<LSize> LArrayBaseAllocatorDefaultTraitsStrong;
-typedef TArrayBaseAllocatorDefaultTraitsWeak<LSize> LArrayBaseAllocatorDefaultTraitsWeak;
+typedef TArrayBaseAllocatorDefaultTraitsStrong<LSize, Lal::TDefaultIterator> LArrayBaseAllocatorDefaultTraitsStrong;
+typedef TArrayBaseAllocatorDefaultTraitsWeak<LSize, Lal::TDefaultIterator> LArrayBaseAllocatorDefaultTraitsWeak;
 template <LSize TSizeCapacity>
 using TArrayBaseCappedAllocatorDefaultTraitsWeak
-    = TArrayBaseCappedAllocatorDefaultTraitsWeakImpl<LSize, TSizeCapacity>;
+    = TArrayBaseCappedAllocatorDefaultTraitsWeakImpl<LSize, Lal::TDefaultIterator, TSizeCapacity>;
 template <LSize TSizeCapacity>
 using TArrayBaseCappedAllocatorDefaultTraitsStrong
-    = TArrayBaseCappedAllocatorDefaultTraitStrongImpl<LSize, TSizeCapacity>;
+    = TArrayBaseCappedAllocatorDefaultTraitStrongImpl<LSize, Lal::TDefaultIterator, TSizeCapacity>;
 static_assert(TArrayBaseAllocatorTraitsConceptStrong<LArrayBaseAllocatorDefaultTraitsStrong>);
 static_assert(TArrayBaseAllocatorTraitsConceptWeak<LArrayBaseAllocatorDefaultTraitsWeak>);
 static_assert(TArrayBaseCappedAllocatorTraitsConceptWeak<TArrayBaseCappedAllocatorDefaultTraitsWeak<64>>);
@@ -3523,13 +3496,13 @@ using TArrayBaseConstDefaultAllocatorWeak
 template <typename T>
 using TArrayBaseMutableDefaultAllocatorWeak
     = TArrayBaseMutableDefaultAllocatorWeakImpl<T, LArrayBaseAllocatorDefaultTraitsWeak>;
-template <typename T, TArrayBaseAllocatorDefaultTraitsWeak<LSize>::SizeType TSizeCapacity>
+template <typename T, TArrayBaseAllocatorDefaultTraitsWeak<LSize, Lal::TDefaultIterator>::SizeType TSizeCapacity>
 using TArrayBaseMutableDefaultFixedAllocatorWeak
     = TArrayBaseMutableDefaultFixedAllocatorWeakImpl<T, TArrayBaseCappedAllocatorDefaultTraitsWeak<TSizeCapacity>>;
-template <typename T, TArrayBaseAllocatorDefaultTraitsWeak<LSize>::SizeType TSizeCapacity>
+template <typename T, TArrayBaseAllocatorDefaultTraitsWeak<LSize, Lal::TDefaultIterator>::SizeType TSizeCapacity>
 using TArrayBaseMutableDefaultStackAllocatorWeak
     = TArrayBaseMutableDefaultStackAllocatorWeakImpl<T, TArrayBaseCappedAllocatorDefaultTraitsWeak<TSizeCapacity>>;
-template <typename T, TArrayBaseAllocatorDefaultTraitsWeak<LSize>::SizeType TStackSizeCapacity>
+template <typename T, TArrayBaseAllocatorDefaultTraitsWeak<LSize, Lal::TDefaultIterator>::SizeType TStackSizeCapacity>
 using TArrayBaseMutableDefaultStackOptimizedAllocatorStrong
     = TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl<T, TArrayBaseCappedAllocatorDefaultTraitsStrong<TStackSizeCapacity>>;
 
@@ -3603,5 +3576,5 @@ using TStackArray = Lal::TArrayBase<Lal::TArrayBaseMutableDefaultStackAllocatorW
 //# @tparam T                  The type of the elements in this array.
 //# @tparam TStackSizeCapacity The size of the stack buffer in number of elements.
 //#
-template <typename T, Lal::TArrayBaseAllocatorDefaultTraitsWeak<LSize>::SizeType TStackSizeCapacity>
+template <typename T, Lal::TArrayBaseAllocatorDefaultTraitsWeak<LSize, Lal::TDefaultIterator>::SizeType TStackSizeCapacity>
 using TStackOptimizedArray = Lal::TArrayBase<Lal::TArrayBaseMutableDefaultStackOptimizedAllocatorStrong<T, TStackSizeCapacity>>;
