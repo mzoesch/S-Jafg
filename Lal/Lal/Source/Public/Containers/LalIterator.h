@@ -9,11 +9,13 @@ namespace Lal
 //# Use these traits to qualify your iterators with the Lal iterator factories.
 //#
 template <typename T>
-concept TIteratorConcept = requires
+concept TIteratorConcept = requires(T t)
 {
     typename T::T;
     typename T::Pointer;
     typename T::Reference;
+
+    { t.Cursor };
 
     //# The other requirements just follow the ISO of C++.
 };
@@ -46,9 +48,10 @@ struct TDefaultReversedFilteredIterator;
 template <typename TIn>
 struct TDefaultIterator
 {
-    typedef TIn T;
-    typedef T*  Pointer;
-    typedef T&  Reference;
+    typedef TIn            T;
+    typedef std::ptrdiff_t Difference;
+    typedef T*             Pointer;
+    typedef T&             Reference;
 
     typedef TDefaultIterator<T> _TDefaultIterator;
     typedef TDefaultReversedIterator<T> _TDefaultReversedIterator;
@@ -64,8 +67,30 @@ struct TDefaultIterator
         , _TDefaultReversedFilteredIterator
         > Factory;
 
+    ///////////////////////////////////////////////////////////////////////////////
+    // C++ ISO
+    using value_type = T;
+    using difference_type = Difference;
+    using pointer = Pointer;
+    using reference = Reference;
+    using iterator_category = std::random_access_iterator_tag;
+    // ~C++ ISO
+    ///////////////////////////////////////////////////////////////////////////////
+
     FORCEINLINE constexpr TDefaultIterator() noexcept : Cursor{nullptr} { }
+    FORCEINLINE constexpr TDefaultIterator(const TDefaultIterator&) noexcept = default;
+    FORCEINLINE constexpr TDefaultIterator(TDefaultIterator&&) noexcept = default;
+    FORCEINLINE constexpr TDefaultIterator& operator=(const TDefaultIterator&) noexcept = default;
+    FORCEINLINE constexpr TDefaultIterator& operator=(TDefaultIterator&&) noexcept = default;
+
     FORCEINLINE constexpr explicit TDefaultIterator(const Pointer InCursor) noexcept : Cursor{InCursor} { }
+
+    FORCEINLINE constexpr TDefaultIterator(const TDefaultIterator<std::remove_const_t<T>>& Other) noexcept
+        requires std::is_const_v<T>
+        : Cursor{Other.Cursor}
+    {
+        return;
+    }
 
     FORCEINLINE constexpr Reference operator*() const noexcept { return *this->Cursor; }
     FORCEINLINE constexpr Pointer operator->() const noexcept { return this->Cursor; }
@@ -73,6 +98,36 @@ struct TDefaultIterator
     FORCEINLINE constexpr TDefaultIterator operator++(i32) noexcept { TDefaultIterator Out { *this }; ++*this; return Out; }
     FORCEINLINE constexpr TDefaultIterator& operator--() noexcept { --this->Cursor; return *this; }
     FORCEINLINE constexpr TDefaultIterator operator--(i32) noexcept { TDefaultIterator Out { *this }; --*this; return Out; }
+
+    FORCEINLINE constexpr Difference operator-(const TDefaultIterator& Other) const noexcept
+    {
+        checkSlow( this->Cursor != nullptr && "Underflow" )
+        return this->Cursor - Other.Cursor;
+    }
+
+    template <std::integral SizeType>
+    FORCEINLINE constexpr TDefaultIterator& operator+=(const SizeType N) noexcept { this->Cursor += N; return *this; }
+    template <std::integral SizeType>
+    FORCEINLINE constexpr TDefaultIterator& operator-=(const SizeType N) noexcept { this->Cursor -= N; return *this; }
+    template <std::integral SizeType>
+    NODISCARD
+    FORCEINLINE constexpr TDefaultIterator operator+(const SizeType N) const noexcept { TDefaultIterator Out { *this }; Out += N; return Out; }
+    template <std::integral SizeType>
+    NODISCARD
+    FORCEINLINE constexpr TDefaultIterator operator-(const SizeType N) const noexcept { TDefaultIterator Out { *this }; Out -= N; return Out; }
+
+    FORCEINLINE constexpr TDefaultIterator& operator+=(const Difference N) noexcept { this->Cursor += N; return *this; }
+    FORCEINLINE constexpr TDefaultIterator& operator-=(const Difference N) noexcept { this->Cursor -= N; return *this; }
+    NODISCARD
+    FORCEINLINE constexpr TDefaultIterator operator+(const Difference N) const noexcept { TDefaultIterator Out { *this }; Out += N; return Out; }
+    NODISCARD
+    FORCEINLINE constexpr TDefaultIterator operator-(const Difference N) const noexcept { TDefaultIterator Out { *this }; Out -= N; return Out; }
+
+    NODISCARD
+    FORCEINLINE constexpr Reference operator[](const Difference N) const noexcept
+    {
+        return *(this->Cursor + N);
+    }
 
     friend
     FORCEINLINE constexpr bool operator==(const TDefaultIterator& Lhs, const TDefaultIterator& Rhs) noexcept
@@ -88,15 +143,56 @@ struct TDefaultIterator
     Pointer Cursor;
 };
 
+template <typename T>
+NODISCARD
+FORCEINLINE constexpr TDefaultIterator<T> operator+(const TDefaultIterator<T>& It, const typename TDefaultIterator<T>::Difference N) noexcept
+{
+    TDefaultIterator<T> Out { It };
+    Out += N;
+    return Out;
+}
+
+template <typename T>
+NODISCARD
+FORCEINLINE constexpr TDefaultIterator<T> operator+(const typename TDefaultIterator<T>::Difference N, const TDefaultIterator<T>& It) noexcept
+{
+    TDefaultIterator<T> Out { It };
+    Out += N;
+    return Out;
+}
+
 template <typename TIn>
 struct TDefaultReversedIterator
 {
-    typedef TIn T;
-    typedef T*  Pointer;
-    typedef T&  Reference;
+    typedef TIn            T;
+    typedef std::ptrdiff_t Difference;
+    typedef T*             Pointer;
+    typedef T&             Reference;
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // C++ ISO
+    using value_type = T;
+    using difference_type = Difference;
+    using pointer = Pointer;
+    using reference = Reference;
+    using iterator_category = std::random_access_iterator_tag;
+    // ~C++ ISO
+    ///////////////////////////////////////////////////////////////////////////////
 
     FORCEINLINE constexpr TDefaultReversedIterator() noexcept : Cursor{nullptr} { }
+    FORCEINLINE constexpr TDefaultReversedIterator(const TDefaultReversedIterator&) noexcept = default;
+    FORCEINLINE constexpr TDefaultReversedIterator(TDefaultReversedIterator&&) noexcept = default;
+    FORCEINLINE constexpr TDefaultReversedIterator& operator=(const TDefaultReversedIterator&) noexcept = default;
+    FORCEINLINE constexpr TDefaultReversedIterator& operator=(TDefaultReversedIterator&&) noexcept = default;
+
     FORCEINLINE constexpr explicit TDefaultReversedIterator(const Pointer InCursor) noexcept : Cursor{InCursor} { }
+
+    FORCEINLINE constexpr TDefaultReversedIterator(const TDefaultReversedIterator<std::remove_const_t<T>>& Other) noexcept
+        requires std::is_const_v<T>
+        : Cursor{Other.Cursor}
+    {
+        return;
+    }
 
     FORCEINLINE constexpr Reference operator*() const noexcept { Pointer Out { this->Cursor }; return *--Out; }
     FORCEINLINE constexpr Pointer operator->() const noexcept { Pointer Out { this->Cursor }; return --Out; }
@@ -104,6 +200,15 @@ struct TDefaultReversedIterator
     FORCEINLINE constexpr TDefaultReversedIterator operator++(i32) noexcept { TDefaultReversedIterator Out { *this }; ++*this; return Out; }
     FORCEINLINE constexpr TDefaultReversedIterator& operator--() noexcept { ++this->Cursor; return *this; }
     FORCEINLINE constexpr TDefaultReversedIterator operator--(i32) noexcept { TDefaultReversedIterator Out { *this }; --*this; return Out; }
+
+    template <std::integral SizeType>
+    FORCEINLINE constexpr TDefaultReversedIterator& operator+=(const SizeType N) noexcept { this->Cursor -= N; return *this; }
+    template <std::integral SizeType>
+    FORCEINLINE constexpr TDefaultReversedIterator& operator-=(const SizeType N) noexcept { this->Cursor += N; return *this; }
+    template <std::integral SizeType>
+    FORCEINLINE constexpr TDefaultReversedIterator operator+(const SizeType N) const noexcept { TDefaultIterator Out { *this }; Out += N; return Out; }
+    template <std::integral SizeType>
+    FORCEINLINE constexpr TDefaultReversedIterator operator-(const SizeType N) const noexcept { TDefaultIterator Out { *this }; Out -= N; return Out; }
 
     friend
     FORCEINLINE constexpr bool operator==(const TDefaultReversedIterator& Lhs, const TDefaultReversedIterator& Rhs) noexcept
@@ -133,12 +238,27 @@ struct TDefaultReversedIterator
 template <typename TPredicate, typename TIn>
 struct TDefaultFilteredIterator
 {
-    typedef TPredicate Predicate;
-    typedef TIn        T;
-    typedef T*         Pointer;
-    typedef T&         Reference;
+    typedef TPredicate     Predicate;
+    typedef TIn            T;
+    typedef std::ptrdiff_t Difference;
+    typedef T*             Pointer;
+    typedef T&             Reference;
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // C++ ISO
+    using value_type = T;
+    using difference_type = Difference;
+    using pointer = Pointer;
+    using reference = Reference;
+    using iterator_category = std::random_access_iterator_tag;
+    // ~C++ ISO
+    ///////////////////////////////////////////////////////////////////////////////
 
     FORCEINLINE constexpr TDefaultFilteredIterator() noexcept = delete;
+    FORCEINLINE constexpr TDefaultFilteredIterator(const TDefaultFilteredIterator&) noexcept = default;
+    FORCEINLINE constexpr TDefaultFilteredIterator(TDefaultFilteredIterator&&) noexcept = default;
+    FORCEINLINE constexpr TDefaultFilteredIterator& operator=(const TDefaultFilteredIterator&) noexcept = default;
+    FORCEINLINE constexpr TDefaultFilteredIterator& operator=(TDefaultFilteredIterator&&) noexcept = default;
 
     //#
     //# What does bInManualUse do?
@@ -153,6 +273,13 @@ struct TDefaultFilteredIterator
     //#
     FORCEINLINE constexpr explicit TDefaultFilteredIterator(const Predicate& InFilter, const Pointer InCursor, const Pointer InSlack, const bool bInManualUse = false) noexcept
         : Cursor(InCursor), Slack(InSlack), Filter(InFilter), bFirstDereference(bInManualUse == false) { }
+
+    FORCEINLINE constexpr TDefaultFilteredIterator(const TDefaultFilteredIterator<TPredicate, std::remove_const_t<T>>& Other) noexcept
+        requires std::is_const_v<T>
+        : Cursor{Other.Cursor}, Slack{Other.Slack}, Filter{Other.Filter}, bFirstDereference{Other.bFirstDereference}
+    {
+        return;
+    }
 
     FORCEINLINE constexpr Reference operator*() const noexcept
     {
@@ -179,7 +306,7 @@ struct TDefaultFilteredIterator
 
         return *this->Cursor;
     }
-    FORCEINLINE constexpr Pointer operator->() const noexcept { return this->Cursor; }
+    FORCEINLINE constexpr Pointer operator->() const noexcept { return &this->operator*(); }
     FORCEINLINE constexpr TDefaultFilteredIterator& operator++() noexcept
     {
         checkSlow( this->bFirstDereference == false )
@@ -202,6 +329,36 @@ struct TDefaultFilteredIterator
     FORCEINLINE constexpr TDefaultFilteredIterator operator++(i32) noexcept { TDefaultFilteredIterator Out { *this }; ++*this; return Out; }
     FORCEINLINE constexpr TDefaultFilteredIterator& operator--() noexcept = delete;
     FORCEINLINE constexpr TDefaultFilteredIterator operator--(i32) noexcept = delete;
+
+    template <std::integral SizeType>
+    FORCEINLINE constexpr TDefaultFilteredIterator& operator+=(SizeType N) noexcept
+    {
+        checkSlow( this->bFirstDereference == false )
+
+        ++this->Cursor;
+        while (this->Cursor != this->Slack)
+        {
+            if (this->Filter(*this->Cursor))
+            {
+                if (--N == 0)
+                {
+                    break;
+                }
+            }
+
+            ++this->Cursor;
+
+            continue;
+        }
+
+        return *this;
+    }
+    template <std::integral SizeType>
+    FORCEINLINE constexpr TDefaultFilteredIterator& operator-=(const SizeType N) noexcept = delete;
+    template <std::integral SizeType>
+    FORCEINLINE constexpr TDefaultFilteredIterator operator+(const SizeType N) const noexcept { TDefaultIterator Out { *this }; Out += N; return Out; }
+    template <std::integral SizeType>
+    FORCEINLINE constexpr TDefaultFilteredIterator operator-(const SizeType N) const noexcept = delete;
 
     friend
     FORCEINLINE constexpr bool operator==(const TDefaultFilteredIterator& Lhs, const TDefaultFilteredIterator& Rhs) noexcept
@@ -234,12 +391,27 @@ struct TDefaultFilteredIterator
 template <typename TPredicate, typename TIn>
 struct TDefaultReversedFilteredIterator
 {
-    typedef TPredicate Predicate;
-    typedef TIn        T;
-    typedef T*         Pointer;
-    typedef T&         Reference;
+    typedef TPredicate     Predicate;
+    typedef TIn            T;
+    typedef std::ptrdiff_t Difference;
+    typedef T*             Pointer;
+    typedef T&             Reference;
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // C++ ISO
+    using value_type = T;
+    using difference_type = Difference;
+    using pointer = Pointer;
+    using reference = Reference;
+    using iterator_category = std::random_access_iterator_tag;
+    // ~C++ ISO
+    ///////////////////////////////////////////////////////////////////////////////
 
     FORCEINLINE constexpr TDefaultReversedFilteredIterator() noexcept = delete;
+    FORCEINLINE constexpr TDefaultReversedFilteredIterator(const TDefaultReversedFilteredIterator&) noexcept = default;
+    FORCEINLINE constexpr TDefaultReversedFilteredIterator(TDefaultReversedFilteredIterator&&) noexcept = default;
+    FORCEINLINE constexpr TDefaultReversedFilteredIterator& operator=(const TDefaultReversedFilteredIterator&) noexcept = default;
+    FORCEINLINE constexpr TDefaultReversedFilteredIterator& operator=(TDefaultReversedFilteredIterator&&) noexcept = default;
 
     //#
     //# What does bInManualUse do?
@@ -255,10 +427,44 @@ struct TDefaultReversedFilteredIterator
     FORCEINLINE constexpr explicit TDefaultReversedFilteredIterator(const Predicate& InFilter, const Pointer InCursor, const Pointer InBegin, const bool bInManualUse = false) noexcept
         : Cursor(InCursor), Begin(InBegin), Filter(InFilter), bFirstDereference(bInManualUse == false) { }
 
-    FORCEINLINE constexpr Reference operator*() const noexcept { Pointer Out { this->Cursor }; return *--Out; }
-    FORCEINLINE constexpr Pointer operator->() const noexcept { Pointer Out { this->Cursor }; return --Out; }
+    FORCEINLINE constexpr TDefaultReversedFilteredIterator(const TDefaultReversedIterator<std::remove_const_t<T>>& Other) noexcept
+        requires std::is_const_v<T>
+        : Cursor{Other.Cursor}, Begin{Other.Cursor}, Filter{Other.Filter}, bFirstDereference{Other.bFirstDereference}
+    {
+        return;
+    }
+
+    FORCEINLINE constexpr Reference operator*() const noexcept
+    {
+        if (this->bFirstDereference)
+        {
+            this->bFirstDereference = false;
+
+            if (Pointer OuterElement { this->Cursor }; this->Filter(*--OuterElement) == false)
+            {
+                --this->Cursor;
+                while (this->Cursor != this->Begin)
+                {
+                    if (Pointer InnerElement { this->Cursor }; this->Filter(*--InnerElement))
+                    {
+                        break;
+                    }
+
+                    --this->Cursor;
+
+                    continue;
+                }
+            }
+        }
+
+        Pointer Out { this->Cursor };
+        return *--Out;
+    }
+    FORCEINLINE constexpr Pointer operator->() const noexcept { return &this->operator*(); }
     FORCEINLINE constexpr TDefaultReversedFilteredIterator& operator++() noexcept
     {
+        checkSlow( this->bFirstDereference == false )
+
         --this->Cursor;
         while (this->Cursor != this->Begin)
         {
@@ -277,6 +483,36 @@ struct TDefaultReversedFilteredIterator
     FORCEINLINE constexpr TDefaultReversedFilteredIterator operator++(i32) noexcept { TDefaultReversedFilteredIterator Out { *this }; ++*this; return Out; }
     FORCEINLINE constexpr TDefaultReversedFilteredIterator& operator--() noexcept = delete;
     FORCEINLINE constexpr TDefaultReversedFilteredIterator operator--(i32) noexcept = delete;
+
+    template <std::integral SizeType>
+    FORCEINLINE constexpr TDefaultReversedFilteredIterator& operator+=(SizeType N) noexcept
+    {
+        checkSlow( this->bFirstDereference == false )
+
+        --this->Cursor;
+        while (this->Cursor != this->Begin)
+        {
+            if (Pointer Element { this->Cursor }; this->Filter(*--Element))
+            {
+                if (--N == 0)
+                {
+                    break;
+                }
+            }
+
+            --this->Cursor;
+
+            continue;
+        }
+
+        return *this;
+    }
+    template <std::integral SizeType>
+    FORCEINLINE constexpr TDefaultReversedFilteredIterator& operator-=(const SizeType N) noexcept = delete;
+    template <std::integral SizeType>
+    FORCEINLINE constexpr TDefaultReversedFilteredIterator operator+(const SizeType N) const noexcept { TDefaultIterator Out { *this }; Out += N; return Out; }
+    template <std::integral SizeType>
+    FORCEINLINE constexpr TDefaultReversedFilteredIterator operator-(const SizeType N) const noexcept = delete;
 
     friend
     FORCEINLINE constexpr bool operator==(const TDefaultReversedFilteredIterator& Lhs, const TDefaultReversedFilteredIterator& Rhs) noexcept
@@ -310,6 +546,15 @@ static_assert(TIteratorConcept<TDefaultIterator<LSize>>);
 static_assert(TIteratorConcept<TDefaultReversedIterator<LSize>>);
 static_assert(TIteratorConcept<TDefaultFilteredIterator<decltype([](const LSize& Element) -> bool { return true; }), LSize>>);
 static_assert(TIteratorConcept<TDefaultReversedFilteredIterator<decltype([](const LSize& Element) -> bool { return true; }), LSize>>);
+
+///////////////////////////////////////////////////////////////////////////////
+// C++ ISO
+static_assert(std::input_iterator<TDefaultIterator<LSize>>);
+static_assert(std::forward_iterator<TDefaultIterator<LSize>>);
+static_assert(std::bidirectional_iterator<TDefaultIterator<LSize>>);
+static_assert(std::random_access_iterator<TDefaultIterator<LSize>>);
+// ~C++ ISO
+///////////////////////////////////////////////////////////////////////////////
 
 template <typename TIterator, typename TReversedIterator, template <typename> typename TFilteredIterator, template <typename> typename TReversedFilteredIterator>
 struct TDefaultIteratorFactory

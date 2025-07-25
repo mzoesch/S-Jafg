@@ -87,12 +87,12 @@ TEST_CASE(EmptyArrayOperations, "Lal.Containers")
     QUICK_CHECK_EQUALS(StackArray.GetDataPointer(), StackArray.GetSlackPointer())
     QUICK_CHECK_EQUALS(StackOptimizedArray.GetDataPointer(), StackOptimizedArray.GetSlackPointer())
 
-    QUICK_CHECK_EQUALS(Array.GetEndPointer(), Array.GetDataPointer() + Array.GetCapacity())
-    QUICK_CHECK_EQUALS(ArrayView.GetEndPointer(), ArrayView.GetDataPointer() + ArrayView.GetCapacity())
-    QUICK_CHECK_EQUALS(MutableArrayView.GetEndPointer(), MutableArrayView.GetDataPointer() + MutableArrayView.GetCapacity())
-    QUICK_CHECK_EQUALS(FixedArray.GetEndPointer(), FixedArray.GetDataPointer() + FixedArray.GetCapacity())
-    QUICK_CHECK_EQUALS(StackArray.GetEndPointer(), StackArray.GetDataPointer() + StackArray.GetCapacity())
-    QUICK_CHECK_EQUALS(StackOptimizedArray.GetEndPointer(), StackOptimizedArray.GetDataPointer() + StackOptimizedArray.GetCapacity())
+    QUICK_CHECK_EQUALS(Array.GetCapacityPointer(), Array.GetDataPointer() + Array.GetCapacity())
+    QUICK_CHECK_EQUALS(ArrayView.GetCapacityPointer(), ArrayView.GetDataPointer() + ArrayView.GetCapacity())
+    QUICK_CHECK_EQUALS(MutableArrayView.GetCapacityPointer(), MutableArrayView.GetDataPointer() + MutableArrayView.GetCapacity())
+    QUICK_CHECK_EQUALS(FixedArray.GetCapacityPointer(), FixedArray.GetDataPointer() + FixedArray.GetCapacity())
+    QUICK_CHECK_EQUALS(StackArray.GetCapacityPointer(), StackArray.GetDataPointer() + StackArray.GetCapacity())
+    QUICK_CHECK_EQUALS(StackOptimizedArray.GetCapacityPointer(), StackOptimizedArray.GetDataPointer() + StackOptimizedArray.GetCapacity())
 
     return;
 }
@@ -905,6 +905,484 @@ TEST_CASE(ArrayIterators, "Lal.Containers")
         continue;
     }
     QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 0;
+    for (const LSize& Element : Array.CIter())
+    {
+        QUICK_CHECK_EQUALS(Element, ++Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, Array.GetSize())
+
+    Cursor = 0;
+    for (const LSize& Element : View.CIter())
+    {
+        QUICK_CHECK_EQUALS(Element, ++Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, View.GetSize())
+
+    Cursor = 0;
+    for (const LSize& Element : MutableView.CIter())
+    {
+        QUICK_CHECK_EQUALS(Element, ++Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, MutableView.GetSize())
+
+    for (const LSize& Element : Array.CIter().Reverse())
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor--)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = View.GetSize();
+    for (const LSize& Element : View.CIter().Reverse())
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor--)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = MutableView.GetSize();
+    for (const LSize& Element : MutableView.CIter().Reverse())
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor--)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    for (const LSize& Element : Array.CIter().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        Cursor += 2;
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 10ul)
+
+    Cursor = 0;
+    for (const LSize& Element : View.CIter().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        Cursor += 2;
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 10ul)
+
+    Cursor = 0;
+    for (const LSize& Element : MutableView.CIter().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        Cursor += 2;
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 10ul)
+
+    Cursor = 10;
+    for (const LSize& Element : Array.CIter().Reverse().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : View.CIter().Reverse().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : MutableView.CIter().Reverse().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : Array.CIter().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }).Reverse())
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : View.CIter().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }).Reverse())
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : MutableView.CIter().Filter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }).Reverse())
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : Array.CIter().ReversedFilter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : View.CIter().ReversedFilter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    Cursor = 10;
+    for (const LSize& Element : MutableView.CIter().ReversedFilter([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    {
+        QUICK_CHECK_EQUALS(Element, Cursor)
+        Cursor -= 2;
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Cursor, 0ul)
+
+    return;
+}
+
+TEST_CASE(ArraySwaps, "Lal.Containers")
+{
+    TArray<LSize> Array1 { 1, 2, 3, 4, 5 };
+    TArray<LSize> Array2 { 6, 7, 8, 9, 10 };
+
+    QUICK_CHECK_EQUALS(Array1.GetSize(), 5lu)
+    QUICK_CHECK_EQUALS(Array2.GetSize(), 5lu)
+
+    Array1.SwapIndices(0, 4);
+    QUICK_CHECK_EQUALS(Array1[0], 5ul)
+    QUICK_CHECK_EQUALS(Array1[1], 2ul)
+    QUICK_CHECK_EQUALS(Array1[2], 3ul)
+    QUICK_CHECK_EQUALS(Array1[3], 4ul)
+    QUICK_CHECK_EQUALS(Array1[4], 1ul)
+
+    Array1.SwapIndices(Array1.begin(), --Array1.end());
+    QUICK_CHECK_EQUALS(Array1[0], 1ul)
+    QUICK_CHECK_EQUALS(Array1[1], 2ul)
+    QUICK_CHECK_EQUALS(Array1[2], 3ul)
+    QUICK_CHECK_EQUALS(Array1[3], 4ul)
+    QUICK_CHECK_EQUALS(Array1[4], 5ul)
+
+    TArray<LSize>::Iterator It { Array1.begin() };
+    std::advance(It, 2);
+    QUICK_CHECK_EQUALS(Array1[It], 3ul)
+
+    TArray<LSize>::ConstIterator CIt { Array1.cbegin() };
+    std::advance(CIt, 2);
+    QUICK_CHECK_EQUALS(Array1[CIt], 3ul)
+
+    return;
+}
+
+TEST_CASE(ArrayComparisons, "Lal.Containers")
+{
+    const TArray<LSize> Array1 { 1, 2, 3, 4, 5 };
+    const TArray<LSize> Array2 { 1, 2, 3, 4, 5 };
+    const TArray<LSize> Array3 { 6, 7, 8, 9, 10, 11 };
+
+    QUICK_CHECK_EQUALS(Array1 <=> Array2, std::strong_ordering::equal)
+    QUICK_CHECK_EQUALS(Array1 <=> Array3, std::strong_ordering::less)
+    QUICK_CHECK_EQUALS(Array2 <=> Array3, std::strong_ordering::less)
+    QUICK_CHECK_EQUALS(Array3 <=> Array1, std::strong_ordering::greater)
+    QUICK_CHECK_EQUALS(Array3 <=> Array2, std::strong_ordering::greater)
+
+    QUICK_CHECK_FALSE(Array1 < Array2)
+    QUICK_CHECK_TRUE(Array1 < Array3)
+    QUICK_CHECK_FALSE(Array3 < Array1)
+    QUICK_CHECK_TRUE(Array2 < Array3)
+    QUICK_CHECK_FALSE(Array3 < Array2)
+    QUICK_CHECK_FALSE(Array1 > Array2)
+    QUICK_CHECK_FALSE(Array1 > Array3)
+    QUICK_CHECK_TRUE(Array3 > Array1)
+    QUICK_CHECK_FALSE(Array2 > Array3)
+    QUICK_CHECK_TRUE(Array3 > Array2)
+    QUICK_CHECK_TRUE(Array1 <= Array2)
+    QUICK_CHECK_TRUE(Array1 <= Array3)
+    QUICK_CHECK_FALSE(Array3 <= Array1)
+    QUICK_CHECK_TRUE(Array2 <= Array3)
+    QUICK_CHECK_FALSE(Array3 <= Array2)
+    QUICK_CHECK_TRUE(Array1 >= Array2)
+    QUICK_CHECK_FALSE(Array1 >= Array3)
+    QUICK_CHECK_TRUE(Array3 >= Array1)
+    QUICK_CHECK_FALSE(Array2 >= Array3)
+    QUICK_CHECK_TRUE(Array3 >= Array2)
+
+    QUICK_CHECK_TRUE(Array1.EqualInSizeTo(Array2))
+    QUICK_CHECK_FALSE(Array1.EqualInSizeTo(Array3))
+    QUICK_CHECK_TRUE(Array2.EqualInSizeTo(Array1))
+    QUICK_CHECK_FALSE(Array2.EqualInSizeTo(Array3))
+    QUICK_CHECK_FALSE(Array3.EqualInSizeTo(Array1))
+    QUICK_CHECK_FALSE(Array3.EqualInSizeTo(Array2))
+
+    QUICK_CHECK_TRUE(Array1.IsDataEqual(Array2))
+    QUICK_CHECK_TRUE(Array2.IsDataEqual(Array1))
+    QUICK_CHECK_FALSE(Array1.IsDataEqual(Array3))
+    QUICK_CHECK_FALSE(Array2.IsDataEqual(Array3))
+
+    QUICK_CHECK_FALSE(Array1.IsSameArray(Array2))
+    QUICK_CHECK_FALSE(Array2.IsSameArray(Array1))
+    QUICK_CHECK_FALSE(Array1.IsSameArray(Array3))
+    QUICK_CHECK_FALSE(Array2.IsSameArray(Array3))
+
+    return;
+}
+
+TEST_CASE(AddArray, "Lal.Containers")
+{
+    TArray<LSize> Array;
+
+    QUICK_CHECK_EQUALS(Array.GetSize(), 0lu)
+
+    Array.Add(1);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 1lu)
+    QUICK_CHECK_EQUALS(Array[0], 1lu)
+
+    Array.Add(2);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 2lu)
+    QUICK_CHECK_EQUALS(Array[0], 1lu)
+
+    Array.Empty();
+    QUICK_CHECK_EQUALS(Array.GetSize(), 0lu)
+    QUICK_CHECK_EQUALS(Array.GetCapacity(), 0lu)
+    QUICK_CHECK_EQUALS(Array.GetDataPointer(), nullptr);
+
+    TArray<LSize>::Iterator It { Array.AddAt(0, 1) };
+    QUICK_CHECK_EQUALS(Array.GetSize(), 1lu)
+    QUICK_CHECK_EQUALS(Array[0], 1lu)
+    QUICK_CHECK_EQUALS(It, Array.begin());
+    QUICK_CHECK_EQUALS(*It, 1lu)
+
+    It = Array.AddAt(0, 2);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 2lu)
+    QUICK_CHECK_EQUALS(Array[0], 2lu)
+    QUICK_CHECK_EQUALS(Array[1], 1lu)
+    QUICK_CHECK_EQUALS(It, Array.begin());
+    QUICK_CHECK_EQUALS(*It, 2lu)
+
+    It = Array.AddAt(2, 3);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 3lu)
+    QUICK_CHECK_EQUALS(Array[0], 2lu)
+    QUICK_CHECK_EQUALS(Array[1], 1lu)
+    QUICK_CHECK_EQUALS(Array[2], 3lu)
+
+    It = Array.AddAt(1, 4);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 4lu)
+    QUICK_CHECK_EQUALS(Array[0], 2lu)
+    QUICK_CHECK_EQUALS(Array[1], 4lu)
+    QUICK_CHECK_EQUALS(Array[2], 1lu)
+    QUICK_CHECK_EQUALS(Array[3], 3lu)
+
+    Array.Empty();
+    QUICK_CHECK_EQUALS(Array.GetSize(), 0lu)
+
+    Array.Emplace(1);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 1lu)
+    QUICK_CHECK_EQUALS(Array[0], 1lu)
+
+    Array.Emplace(2);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 2lu)
+    QUICK_CHECK_EQUALS(Array[0], 1lu)
+
+    Array.Empty();
+    QUICK_CHECK_EQUALS(Array.GetSize(), 0lu)
+    QUICK_CHECK_EQUALS(Array.GetCapacity(), 0lu)
+    QUICK_CHECK_EQUALS(Array.GetDataPointer(), nullptr);
+
+    It = Array.EmplaceAt(0, 1);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 1lu)
+    QUICK_CHECK_EQUALS(Array[0], 1lu)
+    QUICK_CHECK_EQUALS(It, Array.begin());
+    QUICK_CHECK_EQUALS(*It, 1lu)
+
+    It = Array.EmplaceAt(0, 2);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 2lu)
+    QUICK_CHECK_EQUALS(Array[0], 2lu)
+    QUICK_CHECK_EQUALS(Array[1], 1lu)
+    QUICK_CHECK_EQUALS(It, Array.begin());
+    QUICK_CHECK_EQUALS(*It, 2lu)
+
+    It = Array.EmplaceAt(2, 3);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 3lu)
+    QUICK_CHECK_EQUALS(Array[0], 2lu)
+    QUICK_CHECK_EQUALS(Array[1], 1lu)
+    QUICK_CHECK_EQUALS(Array[2], 3lu)
+
+    It = Array.EmplaceAt(1, 4);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 4lu)
+    QUICK_CHECK_EQUALS(Array[0], 2lu)
+    QUICK_CHECK_EQUALS(Array[1], 4lu)
+    QUICK_CHECK_EQUALS(Array[2], 1lu)
+    QUICK_CHECK_EQUALS(Array[3], 3lu)
+
+    Array = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+    TArray<LSize> OtherArray { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+    QUICK_CHECK_EQUALS(Array.GetSize(), 20lu)
+    QUICK_CHECK_EQUALS(OtherArray.GetSize(), 20lu)
+
+    Array = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+    Array.Append(Array);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 40lu)
+    for (LSize Idx { 0 }; Idx < Array.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx], (Idx % 20) + 1)
+        continue;
+    }
+    Array.Append({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, });
+    QUICK_CHECK_EQUALS(Array.GetSize(), 50lu)
+    for (LSize Idx { 0 }; Idx < Array.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx], (Idx % 20) + 1)
+        continue;
+    }
+    Array.Append(OtherArray.begin() + 10, OtherArray.end());
+    QUICK_CHECK_EQUALS(Array.GetSize(), 60lu)
+    for (LSize Idx { 0 }; Idx < Array.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx], (Idx % 20) + 1)
+        continue;
+    }
+    Array.Append(OtherArray.begin(), OtherArray.end() - 10);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 70lu)
+    for (LSize Idx { 0 }; Idx < Array.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx], (Idx % 20) + 1)
+        continue;
+    }
+    Array.Append(OtherArray.begin() + 10, OtherArray.end());
+    QUICK_CHECK_EQUALS(Array.GetSize(), 80lu)
+    for (LSize Idx { 0 }; Idx < Array.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx], (Idx % 20) + 1)
+        continue;
+    }
+    Array.Append(OtherArray.begin(), OtherArray.end());
+    QUICK_CHECK_EQUALS(Array.GetSize(), 100lu)
+    for (LSize Idx { 0 }; Idx < Array.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx], (Idx % 20) + 1)
+        continue;
+    }
+    Array.Append(OtherArray);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 120lu)
+
+    QUICK_CHECK_EQUALS(OtherArray.GetSize(), 20lu)
+    Array.Append(std::move(OtherArray));
+    QUICK_CHECK_EQUALS(Array.GetSize(), 140lu)
+    QUICK_CHECK_EQUALS(OtherArray.GetSize(), 0lu)
+    for (LSize Idx { 0 }; Idx < Array.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx], (Idx % 20) + 1)
+        continue;
+    }
+
+    OtherArray = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+    QUICK_CHECK_EQUALS(OtherArray.GetSize(), 20lu)
+
+    Array.AppendAt(0, OtherArray);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 160lu)
+    for (LSize Idx { 0 }; Idx < OtherArray.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx], OtherArray[Idx])
+        continue;
+    }
+
+    Array.AppendAt(20, OtherArray);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 180lu)
+    for (LSize Idx { 0 }; Idx < OtherArray.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx + 20], OtherArray[Idx])
+        continue;
+    }
+
+    Array.AppendAt(Array.begin() + 20, OtherArray);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 200lu)
+    for (LSize Idx { 0 }; Idx < OtherArray.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx + 20], OtherArray[Idx])
+        continue;
+    }
+
+    Array.AppendAt(20, OtherArray);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 220lu)
+    for (LSize Idx { 0 }; Idx < OtherArray.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx + 20], OtherArray[Idx])
+        continue;
+    }
+
+    Array.AppendAt(Array.GetSize(), OtherArray);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 240lu)
+    for (LSize Idx { 0 }; Idx < OtherArray.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx + 20], OtherArray[Idx])
+        continue;
+    }
+
+    Array.AppendAt(Array.end(), OtherArray);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 260lu)
+    for (LSize Idx { 0 }; Idx < OtherArray.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx + 20], OtherArray[Idx])
+        continue;
+    }
 
     return;
 }
