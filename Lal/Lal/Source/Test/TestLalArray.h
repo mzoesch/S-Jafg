@@ -1472,8 +1472,28 @@ TEST_CASE(RemoveArray, "Lal.Containers")
     Array = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
     TArrayView<LSize> View { Array };
     QUICK_CHECK_EQUALS(View.GetSize(), 30lu)
-
     View.Pop();
+    QUICK_CHECK_EQUALS(View.GetSize(), 29lu)
+    QUICK_CHECK_EQUALS(Array.GetSize(), 30lu)
+
+    return;
+}
+
+TEST_CASE(RemoveArray, "Lal.Containers")
+{
+    TArray<LSize> Array { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    QUICK_CHECK_EQUALS(Array.GetSize(), 30lu)
+
+    QUICK_CHECK_EQUALS(Array.Find(1ul), Array.begin())
+    QUICK_CHECK_EQUALS(Array.FindIndex(1ul), 0lu)
+    QUICK_CHECK_EQUALS(Array.Find(20ul), Array.begin() + 19);
+    QUICK_CHECK_EQUALS(Array.FindIndex(20ul), 19lu)
+    QUICK_CHECK_TRUE(Array.Contains(5ul))
+
+    QUICK_CHECK_EQUALS(Array.FindLast(1ul), Array.begin() + 20);
+    QUICK_CHECK_EQUALS(Array.FindLastIndex(1ul), 20lu)
+    QUICK_CHECK_EQUALS(Array.FindLast(20ul), Array.begin() + 19);
+    QUICK_CHECK_EQUALS(Array.FindLastIndex(20ul), 19lu)
 
     return;
 }

@@ -3901,12 +3901,27 @@ private:
 };
 
 //#
-//# An array container that may use any form of stack or heap allocated memory.
+//# An array container that may use any form of (un-)owned stack or heap allocated memory.
 //#
-//# This container checks OOB accesses during debug and development builds but will not check in release builds.
+//# This container checks OOB accesses and all inputs for correctness during debug and development builds
+//# but will not check these in release builds.
 //#
-//# This array may not handle complex types that require move semantics as it was designed to be a fast and simple
-//# container for extreme fast-paced memory read and write operations.
+//# This array may not handle complex types that require move semantics as it was designed to be
+//# a fast and simple container for extreme fast-paced memory read and write operations.
+//#
+//# What copy and move assignment semantics are called?
+//# - Copy ctors / assignments from any variable: Always.
+//# - Copy ctors / assignments from any other array: Always.
+//# - Move assignments from any statement: Always
+//# - Move ctors from another x- and pr-valued statement: Always.
+//# - Move ctors from another x- and pr-valued array: Sometimes, depending on the allocator and their state.
+//# - Move ctors during buffer reallocation: Never.
+//# - Move ctors during reallocation inside the parent array: Mostly never.
+//#
+//# Of course, this only applies to the default allocators that Lal provides. You may define your own allocators
+//# that follow rules differently.
+//#
+//# @note dtors will always be correctly called.
 //#
 template <TArrayBaseAllocatorConceptBase TAllocator>
 class TArrayBase
@@ -4270,6 +4285,135 @@ public:
     template <std::predicate<T> TPredicate>
     FORCEINLINE bool RemoveOnceByPredicateAsserted(const TPredicate& Predicate) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
 
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    Iterator Find(const U& What) noexcept;
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    ConstIterator Find(const U& What) const noexcept;
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE Iterator FindChecked(const U& What) noexcept { const Iterator It { this->Find(What) }; check( It != this->end() ) return It; }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE ConstIterator FindChecked(const U& What) const noexcept { const ConstIterator It { this->Find(What) }; check( It != this->cend() ) return It; }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE Iterator FindAsserted(const U& What) noexcept { const Iterator It { this->Find(What) }; jassert( It != this->end() ) return It; }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE ConstIterator FindAsserted(const U& What) const noexcept { const ConstIterator It { this->Find(What) }; jassert( It != this->cend() ) return It; }
+
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType FindIndex(const U& What) noexcept;
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType FindIndex(const U& What) const noexcept;
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType FindIndexChecked(const U& What) noexcept { const SizeType Index { this->FindIndex(What) }; check( Index != INDEX_NONE ) return Index; }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType FindIndexChecked(const U& What) const noexcept { const SizeType Index { this->FindIndex(What) }; check( Index != INDEX_NONE ) return Index; }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType FindIndexAsserted(const U& What) noexcept { const SizeType Index { this->FindIndex(What) }; jassert( Index != INDEX_NONE ) return Index; }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType FindIndexAsserted(const U& What) const noexcept { const SizeType Index { this->FindIndex(What) }; jassert( Index != INDEX_NONE ) return Index; }
+
+    template <std::predicate<T> TPredicate>
+    Iterator FindByPredicate(const TPredicate& Predicate) noexcept;
+    template <std::predicate<T> TPredicate>
+    ConstIterator FindByPredicate(const TPredicate& Predicate) const noexcept;
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE Iterator FindByPredicateChecked(const TPredicate& Predicate) noexcept { const Iterator It { this->FindByPredicate(Predicate) }; check( It != this->end() ) return It; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE ConstIterator FindByPredicateChecked(const TPredicate& Predicate) const noexcept { const ConstIterator It { this->FindByPredicate(Predicate) }; check( It != this->cend() ) return It; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE Iterator FindByPredicateAsserted(const TPredicate& Predicate) noexcept { const Iterator It { this->FindByPredicate(Predicate) }; jassert( It != this->end() ) return It; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE ConstIterator FindByPredicateAsserted(const TPredicate& Predicate) const noexcept { const ConstIterator It { this->FindByPredicate(Predicate) }; jassert( It != this->cend() ) return It; }
+
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE SizeType FindIndexByPredicate(const TPredicate& Predicate) noexcept;
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE SizeType FindIndexByPredicate(const TPredicate& Predicate) const noexcept;
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE SizeType FindIndexByPredicateChecked(const TPredicate& Predicate) noexcept { const SizeType Index { this->FindIndexByPredicate(Predicate) }; check( Index != this->end() ) return Index; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE SizeType FindIndexByPredicateChecked(const TPredicate& Predicate) const noexcept { const SizeType Index { this->FindIndexByPredicate(Predicate) }; check( Index != this->cend() ) return Index; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE SizeType FindIndexByPredicateAsserted(const TPredicate& Predicate) noexcept { const SizeType Index { this->FindIndexByPredicate(Predicate) }; jassert( Index != this->end() ) return Index; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE SizeType FindIndexByPredicateAsserted(const TPredicate& Predicate) const noexcept { const SizeType Index { this->FindIndexByPredicate(Predicate) }; jassert( Index != this->cend() ) return Index; }
+
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    Iterator FindLast(const U& What) noexcept;
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    ConstIterator FindLast(const U& What) const noexcept;
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE Iterator FindLastChecked(const U& What) noexcept { const Iterator It { this->FindLast(What) }; check( It != this->end() ) return It; }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE ConstIterator FindLastChecked(const U& What) const noexcept { const ConstIterator It { this->FindLast(What) }; check( It != this->cend() ) return It; }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE Iterator FindLastAsserted(const U& What) noexcept { const Iterator It { this->FindLast(What) }; jassert( It != this->end() ) return It; }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE ConstIterator FindLastAsserted(const U& What) const noexcept { const ConstIterator It { this->FindLast(What) }; jassert( It != this->cend() ) return It; }
+
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType FindLastIndex(const U& What) noexcept;
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType FindLastIndex(const U& What) const noexcept;
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType FindLastIndexChecked(const U& What) noexcept { const SizeType Index { this->FindLastIndex(What) }; check( Index != INDEX_NONE ) return Index; }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType FindLastIndexChecked(const U& What) const noexcept { const SizeType Index { this->FindLastIndex(What) }; check( Index != INDEX_NONE ) return Index; }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType FindLastIndexAsserted(const U& What) noexcept { const SizeType Index { this->FindLastIndex(What) }; jassert( Index != INDEX_NONE ) return Index; }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType FindLastIndexAsserted(const U& What) const noexcept { const SizeType Index { this->FindLastIndex(What) }; jassert( Index != INDEX_NONE ) return Index; }
+
+    template <std::predicate<T> TPredicate>
+    Iterator FindLastByPredicate(const TPredicate& Predicate) noexcept;
+    template <std::predicate<T> TPredicate>
+    ConstIterator FindLastByPredicate(const TPredicate& Predicate) const noexcept;
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE Iterator FindLastByPredicateChecked(const TPredicate& Predicate) noexcept { const Iterator It { this->FindLastByPredicate(Predicate) }; check( It != this->end() ) return It; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE ConstIterator FindLastByPredicateChecked(const TPredicate& Predicate) const noexcept { const ConstIterator It { this->FindLastByPredicate(Predicate) }; check( It != this->cend() ) return It; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE Iterator FindLastByPredicateAsserted(const TPredicate& Predicate) noexcept { const Iterator It { this->FindLastByPredicate(Predicate) }; jassert( It != this->end() ) return It; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE ConstIterator FindLastByPredicateAsserted(const TPredicate& Predicate) const noexcept { const ConstIterator It { this->FindLastByPredicate(Predicate) }; jassert( It != this->cend() ) return It; }
+
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE SizeType FindLastIndexByPredicate(const TPredicate& Predicate) noexcept;
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE SizeType FindLastIndexByPredicate(const TPredicate& Predicate) const noexcept;
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE SizeType FindLastIndexByPredicateChecked(const TPredicate& Predicate) noexcept { const SizeType Index { this->FindLastIndexByPredicate(Predicate) }; check( Index != this->end() ) return Index; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE SizeType FindLastIndexByPredicateChecked(const TPredicate& Predicate) const noexcept { const SizeType Index { this->FindLastIndexByPredicate(Predicate) }; check( Index != this->cend() ) return Index; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE SizeType FindLastIndexByPredicateAsserted(const TPredicate& Predicate) noexcept { const SizeType Index { this->FindLastIndexByPredicate(Predicate) }; jassert( Index != this->end() ) return Index; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE SizeType FindLastIndexByPredicateAsserted(const TPredicate& Predicate) const noexcept { const SizeType Index { this->FindLastIndexByPredicate(Predicate) }; jassert( Index != this->cend() ) return Index; }
+
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE bool Contains(const U& What) const noexcept { return this->Find(What) != this->cend(); }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE bool ContainsChecked(const U& What) const noexcept { const ConstIterator It { this->FindChecked(What) }; return It != this->cend(); }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE bool ContainsAsserted(const U& What) const noexcept { const ConstIterator It { this->FindAsserted(What) }; return It != this->cend(); }
+
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE bool ContainsByPredicate(const TPredicate& Predicate) const noexcept { return this->FindByPredicate(Predicate) != this->cend(); }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE bool ContainsByPredicateChecked(const TPredicate& Predicate) const noexcept { const ConstIterator It { this->FindByPredicateChecked(Predicate) }; return It != this->cend(); }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE bool ContainsByPredicateAsserted(const TPredicate& Predicate) const noexcept { const ConstIterator It { this->FindByPredicateAsserted(Predicate) }; return It != this->cend(); }
+
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE void ForEach(const TPredicate& Predicate) noexcept requires(TArrayBase::IsContentMutable());
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE void ForEach(const TPredicate& Predicate) const noexcept;
+
+    //# @return The number of elements replaced.
+    template <typename U, typename V> requires(std::equality_comparable_with<T, U> && std::assignable_from<T, V>)
+    FORCEINLINE SizeType Replace(const U& What, const V& Replacement) noexcept requires(TArrayBase::IsContentMutable());
+    template <std::predicate<T> TPredicate, typename V> requires(std::assignable_from<T, V>)
+    FORCEINLINE SizeType ReplaceByPredicate(const TPredicate& Predicate, const V& Replacement) noexcept requires(TArrayBase::IsContentMutable());
+
     ///////////////////////////////////////////////////////////////////////////////
     // Stack Operations
 
@@ -4385,17 +4529,18 @@ private:
         this->Impl.DestroyAt(It.Cursor);
         return;
     }
+    FORCEINLINE constexpr void DestroyAt(const Iterator It) noexcept
+        requires(!requires(Allocator _Allocator) { _Allocator.DestroyAt(It.Cursor); } && TArrayBase::IsContentMutable() && TArrayBase::IsStronglyAllocated());
+
     FORCEINLINE constexpr void DestroyAt(const SizeType Index) noexcept
         requires(requires(Allocator _Allocator) { _Allocator.DestroyAt(Index); })
     {
         this->Impl.DestroyAt(Index);
         return;
     }
-
-    FORCEINLINE constexpr void DestroyAt(const Iterator It) noexcept
-        requires(!requires(Allocator _Allocator) { _Allocator.DestroyAt(It.Cursor); } && TArrayBase::IsContentMutable() && TArrayBase::IsStronglyAllocated());
     FORCEINLINE constexpr void DestroyAt(const SizeType Index) noexcept
         requires(!requires(Allocator _Allocator) { _Allocator.DestroyAt(Index); } && TArrayBase::IsContentMutable() && TArrayBase::IsStronglyAllocated());
+
     FORCEINLINE constexpr void Destruct() noexcept requires(TArrayBase::IsContentMutable() && TArrayBase::IsStronglyAllocated());
 
     Allocator Impl;
@@ -5077,7 +5222,9 @@ template <TArrayBaseAllocatorConceptBase UAllocator>
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(SizeType Index, TArrayBase<UAllocator>&& Other) noexcept
     requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename UAllocator::T>)
 {
-    if (Other.GetSize() == 0)
+    const SizeType OtherSize { Other.GetSize() };
+
+    if (OtherSize == 0)
     {
         return this->end();
     }
@@ -5085,31 +5232,40 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(SizeT
     if (Index == this->GetSize())
     {
         this->Append(std::move(Other));
-        return this->end() - Other.GetSize();
+        return this->end() - OtherSize;
     }
 
     LAL_CHECK_ARRAY( this->IsValidIndex(Index) )
 
-    this->Reserve(this->GetSize() + Other.GetSize());
+    this->Reserve(this->GetSize() + OtherSize);
 
     #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
-    ::memmove(this->Impl.Data + Index + Other.GetSize(), this->Impl.Data + Index, (this->GetSize() - Index) * sizeof(T));
+    ::memmove(this->Impl.Data + Index + OtherSize, this->Impl.Data + Index, (this->GetSize() - Index) * sizeof(T));
     #include "Definitions/PopDiagnostics.h"
 
-    this->Impl.Slack += Other.GetSize();
+    this->Impl.Slack += OtherSize;
 
-    for (typename UAllocator::T& Element : Other)
+    if constexpr (std::is_same_v<T, typename UAllocator::T>)
     {
-        std::construct_at(this->Impl.Data + Index++, std::move(Element));
+        #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
+        std::memcpy(this->Impl.Data + Index, Other.Impl.Data, OtherSize * sizeof(T));
+        #include "Definitions/PopDiagnostics.h"
+
+        Other.GetMutableAllocator().Slack = Other.GetMutableAllocator().Data;
     }
+    else
+    {
+        for (typename UAllocator::T& Element : Other)
+        {
+            std::construct_at(this->Impl.Data + Index++, std::move(Element));
+        }
+    }
+
+    Other.Empty();
 
     LAL_CHECK_ARRAY( this->Impl.Slack <= this->Impl.End )
 
-    Iterator Out { this->Impl.Data + Index - Other.GetSize() };
-
-    Other.GetMutableAllocator().Slack = Other.GetMutableAllocator().Data;
-    Other.Empty();
-
+    Iterator Out { this->Impl.Data + Index - OtherSize };
     return Out;
 }
 
@@ -5391,7 +5547,309 @@ bool TArrayBase<TAllocator>::RemoveOnceByPredicateAsserted(const TPredicate& Pre
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-bool TArrayBase<TAllocator>::Pop() noexcept
+template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::Find(const U& What) noexcept
+{
+    for (T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
+    {
+        if (*Bulk == What)
+        {
+            return Iterator{ Bulk };
+        }
+
+        continue;
+    }
+
+    return this->end();
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+typename TArrayBase<TAllocator>::ConstIterator TArrayBase<TAllocator>::Find(const U& What) const noexcept
+{
+    for (const T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
+    {
+        if (*Bulk == What)
+        {
+            return ConstIterator{ Bulk };
+        }
+
+        continue;
+    }
+
+    return this->cend();
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindIndex(const U& What) noexcept
+{
+    if (Iterator It { this->Find(What) }; It != this->end())
+    {
+        return It.Cursor - this->GetDataPointer();
+    }
+
+    return INDEX_NONE;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindIndex(const U& What) const noexcept
+{
+    if (ConstIterator It { this->Find(What) }; It != this->cend())
+    {
+        return It.Cursor - this->GetDataPointer();
+    }
+
+    return INDEX_NONE;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::FindByPredicate(const TPredicate& Predicate) noexcept
+{
+    for (T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
+    {
+        if (Predicate(*Bulk))
+        {
+            return Iterator{ Bulk };
+        }
+
+        continue;
+    }
+
+    return this->end();
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+typename TArrayBase<TAllocator>::ConstIterator TArrayBase<TAllocator>::FindByPredicate(const TPredicate& Predicate) const noexcept
+{
+    for (const T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
+    {
+        if (Predicate(*Bulk))
+        {
+            return ConstIterator{ Bulk };
+        }
+
+        continue;
+    }
+
+    return this->cend();
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindIndexByPredicate(const TPredicate& Predicate) noexcept
+{
+    if (Iterator It { this->FindByPredicate(Predicate) }; It != this->end())
+    {
+        return It.Cursor - this->GetDataPointer();
+    }
+
+    return INDEX_NONE;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindIndexByPredicate(const TPredicate& Predicate) const noexcept
+{
+    if (ConstIterator It { this->FindByPredicate(Predicate) }; It != this->cend())
+    {
+        return It.Cursor - this->GetDataPointer();
+    }
+
+    return INDEX_NONE;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::FindLast(const U& What) noexcept
+{
+    for (T* RESTRICT Bulk { this->GetSlackPointer() - 1 }; Bulk >= this->GetDataPointer(); --Bulk)
+    {
+        if (*Bulk == What)
+        {
+            return Iterator{ Bulk };
+        }
+
+        continue;
+    }
+
+    return this->end();
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+typename TArrayBase<TAllocator>::ConstIterator TArrayBase<TAllocator>::FindLast(const U& What) const noexcept
+{
+    for (const T* RESTRICT Bulk { this->GetSlackPointer() - 1 }; Bulk >= this->GetDataPointer(); --Bulk)
+    {
+        if (*Bulk == What)
+        {
+            return ConstIterator{ Bulk };
+        }
+
+        continue;
+    }
+
+    return this->cend();
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindLastIndex(const U& What) noexcept
+{
+    if (Iterator It { this->FindLast(What) }; It != this->end())
+    {
+        return It.Cursor - this->GetDataPointer();
+    }
+
+    return INDEX_NONE;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindLastIndex(const U& What) const noexcept
+{
+    if (ConstIterator It { this->FindLast(What) }; It != this->cend())
+    {
+        return It.Cursor - this->GetDataPointer();
+    }
+
+    return INDEX_NONE;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::FindLastByPredicate(const TPredicate& Predicate) noexcept
+{
+    for (T* RESTRICT Bulk { this->GetSlackPointer() - 1 }; Bulk >= this->GetDataPointer(); --Bulk)
+    {
+        if (Predicate(*Bulk))
+        {
+            return Iterator{ Bulk };
+        }
+
+        continue;
+    }
+
+    return this->end();
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+typename TArrayBase<TAllocator>::ConstIterator TArrayBase<TAllocator>::FindLastByPredicate(const TPredicate& Predicate) const noexcept
+{
+    for (const T* RESTRICT Bulk { this->GetSlackPointer() - 1 }; Bulk >= this->GetDataPointer(); --Bulk)
+    {
+        if (Predicate(*Bulk))
+        {
+            return ConstIterator{ Bulk };
+        }
+
+        continue;
+    }
+
+    return this->cend();
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindLastIndexByPredicate(const TPredicate& Predicate) noexcept
+{
+    if (Iterator It { this->FindLastByPredicate(Predicate) }; It != this->end())
+    {
+        return It.Cursor - this->GetDataPointer();
+    }
+
+    return INDEX_NONE;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindLastIndexByPredicate(const TPredicate& Predicate) const noexcept
+{
+    if (ConstIterator It { this->FindLastByPredicate(Predicate) }; It != this->cend())
+    {
+        return It.Cursor - this->GetDataPointer();
+    }
+
+    return INDEX_NONE;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+FORCEINLINE void TArrayBase<TAllocator>::ForEach(const TPredicate& Predicate) noexcept requires (TArrayBase::IsContentMutable())
+{
+    for (T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
+    {
+        Predicate(*Bulk);
+
+        continue;
+    }
+
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+FORCEINLINE void TArrayBase<TAllocator>::ForEach(const TPredicate& Predicate) const noexcept
+{
+    for (const T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
+    {
+        Predicate(*Bulk);
+
+        continue;
+    }
+
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U, typename V> requires (std::equality_comparable_with<typename TAllocator::T, U> && std::assignable_from<typename TAllocator::T, V>)
+FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Replace(const U& What, const V& Replacement) noexcept
+    requires (TArrayBase::IsContentMutable())
+{
+    SizeType Replaced { 0 };
+
+    this->ForEach([&Replaced, &What, &Replacement](T& Element)
+    {
+        if (Element == What)
+        {
+            Element = Replacement;
+            ++Replaced;
+        }
+
+        return;
+    });
+
+    return Replaced;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate, typename V> requires (std::assignable_from<typename TAllocator::T, V>)
+FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::ReplaceByPredicate(const TPredicate& Predicate, const V& Replacement) noexcept
+    requires (TArrayBase::IsContentMutable())
+{
+    SizeType Replaced { 0 };
+
+    this->ForEach([&Replaced, &Predicate, &Replacement](T& Element)
+    {
+        if (Predicate(Element))
+        {
+            Element = Replacement;
+            ++Replaced;
+        }
+
+        return;
+    });
+
+    return Replaced;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+FORCEINLINE bool TArrayBase<TAllocator>::Pop() noexcept
 {
     if (this->GetSize() > 0)
     {
@@ -5407,7 +5865,7 @@ bool TArrayBase<TAllocator>::Pop() noexcept
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-void TArrayBase<TAllocator>::Pop(SizeType Count) noexcept
+FORCEINLINE void TArrayBase<TAllocator>::Pop(SizeType Count) noexcept
 {
     while (this->GetSize() > 0 && Count > 0)
     {
