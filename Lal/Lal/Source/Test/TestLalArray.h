@@ -1386,3 +1386,94 @@ TEST_CASE(AddArray, "Lal.Containers")
 
     return;
 }
+
+TEST_CASE(RemoveArray, "Lal.Containers")
+{
+    TArray<LSize> Array { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
+    QUICK_CHECK_EQUALS(Array.GetSize(), 30lu)
+
+    QUICK_CHECK_EQUALS(Array.Remove(1ul), 2ul)
+    QUICK_CHECK_EQUALS(Array.GetSize(), 28lu)
+    QUICK_CHECK_EQUALS(Array.Remove(1ul), 0ul)
+    QUICK_CHECK_EQUALS(Array.GetSize(), 28lu)
+
+    Array.RemoveAt(0);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 27lu)
+    QUICK_CHECK_EQUALS(Array[0], 3ul)
+    Array.RemoveAt(26);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 26lu)
+    QUICK_CHECK_EQUALS(Array[25], 9ul)
+
+    QUICK_CHECK_TRUE(Array.RemoveOnce(3ul))
+    QUICK_CHECK_EQUALS(Array.GetSize(), 25lu)
+    QUICK_CHECK_EQUALS(Array[0], 4ul)
+
+    QUICK_CHECK_FALSE(Array.RemoveOnce(1ul))
+    QUICK_CHECK_EQUALS(Array.GetSize(), 25lu)
+
+    QUICK_CHECK_EQUALS(Array.RemoveByPredicate([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }), 13ul)
+    QUICK_CHECK_EQUALS(Array.GetSize(), 12lu)
+    QUICK_CHECK_EQUALS(Array.RemoveByPredicate([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }), 0ul)
+    QUICK_CHECK_EQUALS(Array.GetSize(), 12lu)
+    QUICK_CHECK_EQUALS(Array.RemoveByPredicate([](const LSize& Element)
+    {
+        return Element % 2 == 1;
+    }), 12ul)
+    QUICK_CHECK_EQUALS(Array.GetSize(), 0lu)
+
+    Array = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    QUICK_CHECK_EQUALS(Array.GetSize(), 30lu)
+
+    QUICK_CHECK_TRUE(Array.RemoveOnceByPredicate([](const LSize& Element)
+    {
+        return Element % 2 == 0;
+    }))
+    QUICK_CHECK_EQUALS(Array.GetSize(), 29lu)
+
+    Array.RemoveAt(Array.begin(), Array.end());
+    QUICK_CHECK_EQUALS(Array.GetSize(), 0lu)
+
+    QUICK_CHECK_NULL(Array.Peek())
+    Array = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    QUICK_CHECK_EQUALS(Array.GetSize(), 30lu)
+
+    Array.RemoveAt(Array.begin(), Array.end() - 10);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 10lu)
+    for (LSize Idx { 0 }; Idx < Array.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx], Idx + 1)
+        continue;
+    }
+
+    Array.RemoveAt(Array.begin(), Array.begin() + 5);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 5lu)
+    for (LSize Idx { 0 }; Idx < Array.GetSize(); ++Idx)
+    {
+        QUICK_CHECK_EQUALS(Array[Idx], Idx + 5 + 1)
+        continue;
+    }
+
+    QUICK_CHECK_EQUALS(*Array.Peek(), 10ul)
+    QUICK_CHECK_EQUALS(Array.GetSize(), 5lu)
+    QUICK_CHECK_TRUE(Array.Pop())
+    QUICK_CHECK_EQUALS(*Array.Peek(), 9ul)
+    QUICK_CHECK_EQUALS(Array.GetSize(), 4lu)
+    QUICK_CHECK_TRUE(Array.Pop())
+    QUICK_CHECK_EQUALS(*Array.Peek(), 8ul)
+    QUICK_CHECK_EQUALS(Array.GetSize(), 3lu)
+
+    Array = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    TArrayView<LSize> View { Array };
+    QUICK_CHECK_EQUALS(View.GetSize(), 30lu)
+
+    View.Pop();
+
+    return;
+}

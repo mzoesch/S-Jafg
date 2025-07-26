@@ -65,9 +65,9 @@ struct TDefaultIterator
 
     typedef TDefaultIterator<T> _TDefaultIterator;
     typedef TDefaultReversedIterator<T> _TDefaultReversedIterator;
-    template <typename TPredicate>
+    template <std::predicate<T> TPredicate>
     using _TDefaultFilteredIterator = TDefaultFilteredIterator<TPredicate, TIn>;
-    template <typename TPredicate>
+    template <std::predicate<T> TPredicate>
     using _TDefaultReversedFilteredIterator = TDefaultReversedFilteredIterator<TPredicate, TIn>;
 
     typedef TDefaultIteratorFactory<
@@ -576,9 +576,9 @@ struct TDefaultIteratorFactory
 
     typedef TIterator Iterator;
     typedef TReversedIterator ReversedIterator;
-    template <typename TPredicate>
+    template <std::predicate<typename TIterator::T> TPredicate>
     using FilteredIterator = TFilteredIterator<TPredicate>;
-    template <typename TPredicate>
+    template <std::predicate<typename TIterator::T> TPredicate>
     using ReversedFilteredIterator = TReversedFilteredIterator<TPredicate>;
 
     static_assert(std::is_same_v<typename TIterator::T, typename TReversedIterator::T>);
@@ -625,48 +625,48 @@ struct TDefaultIteratorFactory
     //#
     //# Applies a filter to the iterator, which will only return elements that match if the predicate is satisfied.
     //#
-    template <std::predicate<T> Predicate>
+    template <std::predicate<T> T>
     FORCEINLINE constexpr TDefaultFilteredIteratorFactory<
-          Predicate
+          T
         , Iterator
         , ReversedIterator
         , FilteredIterator
         , ReversedFilteredIterator
-        > Filter(const Predicate& InPredicate) noexcept
+        > Filter(const T& Predicate) noexcept
     {
         return TDefaultFilteredIteratorFactory<
-              Predicate
+              T
             , Iterator
             , ReversedIterator
             , FilteredIterator
             , ReversedFilteredIterator
             >
         {
-            InPredicate, this->Data, this->Slack
+            Predicate, this->Data, this->Slack
         };
     }
 
     //#
     //# Reverses and applies a filter to the iterator, which will only return elements that match if the predicate is satisfied.
     //#
-    template <std::predicate<T> Predicate>
+    template <std::predicate<T> T>
     FORCEINLINE constexpr TDefaultReversedFilteredIteratorFactory<
-          Predicate
+          T
         , Iterator
         , ReversedIterator
         , FilteredIterator
         , ReversedFilteredIterator
-        > ReversedFilter(const Predicate& InPredicate) noexcept
+        > ReversedFilter(const T& Predicate) noexcept
     {
         return TDefaultReversedFilteredIteratorFactory<
-              Predicate
+              T
             , Iterator
             , ReversedIterator
             , FilteredIterator
             , ReversedFilteredIterator
             >
         {
-            InPredicate, this->Data, this->Slack
+            Predicate, this->Data, this->Slack
         };
     }
 
@@ -684,9 +684,9 @@ struct TDefaultReversedIteratorFactory
 
     typedef TIterator Iterator;
     typedef TReversedIterator ReversedIterator;
-    template <typename TPredicate>
+    template <std::predicate<typename TIterator::T> TPredicate>
     using FilteredIterator = TFilteredIterator<TPredicate>;
-    template <typename TPredicate>
+    template <std::predicate<typename TIterator::T> TPredicate>
     using ReversedFilteredIterator = TReversedFilteredIterator<TPredicate>;
 
     static_assert(std::is_same_v<typename TIterator::T, typename TReversedIterator::T>);
@@ -718,24 +718,24 @@ struct TDefaultReversedIteratorFactory
     //#
     //# Applies a filter to the iterator, which will only return elements that match if the predicate is satisfied.
     //#
-    template <std::predicate<T> Predicate>
+    template <std::predicate<T> TPredicate>
     FORCEINLINE constexpr TDefaultReversedFilteredIteratorFactory<
-          Predicate
+          TPredicate
         , Iterator
         , ReversedIterator
         , FilteredIterator
         , ReversedFilteredIterator
-        > Filter(const Predicate& InPredicate) noexcept
+        > Filter(const TPredicate& Predicate) noexcept
     {
         return TDefaultReversedFilteredIteratorFactory<
-              Predicate
+              TPredicate
             , Iterator
             , ReversedIterator
             , FilteredIterator
             , ReversedFilteredIterator
             >
         {
-            InPredicate, this->Data, this->Slack
+            Predicate, this->Data, this->Slack
         };
     }
 
@@ -2071,6 +2071,15 @@ struct TArrayBaseMutableDefaultAllocatorWeakImpl : public TArrayBaseDefaultAlloc
         )
     FORCEINLINE constexpr TArrayBaseMutableDefaultAllocatorWeakImpl& operator=(UAllocator&& Allocator) noexcept = delete;
 
+    FORCEINLINE constexpr void DestroyAt(const Pointer Ptr) noexcept
+    {
+        return;
+    }
+    FORCEINLINE constexpr void DestroyAt(const SizeType Index) noexcept
+    {
+        return;
+    }
+
     FORCEINLINE constexpr void Empty() noexcept
     {
         this->_ResetToDefaultState();
@@ -2311,6 +2320,15 @@ struct TArrayBaseConstDefaultAllocatorWeakImpl : public TArrayBaseDefaultAllocat
             }
         )
     FORCEINLINE constexpr TArrayBaseConstDefaultAllocatorWeakImpl& operator=(UAllocator&& Allocator) noexcept = delete;
+
+    FORCEINLINE constexpr void DestroyAt(const Pointer Ptr) noexcept
+    {
+        return;
+    }
+    FORCEINLINE constexpr void DestroyAt(const SizeType Index) noexcept
+    {
+        return;
+    }
 
     FORCEINLINE constexpr void Empty() noexcept
     {
@@ -3938,6 +3956,10 @@ public:
     FORCEINLINE consteval static bool IsAllowedToPushItems() noexcept requires(requires { Allocator::IsAllowedToPushItems; }) { return Allocator::IsAllowedToPushItems(); }
     NODISCARD
     FORCEINLINE consteval static bool IsAllowedToPushItems() noexcept requires(!requires { Allocator::IsAllowedToPushItems; }) { return true; }
+    NODISCARD
+    FORCEINLINE consteval static bool IsAllowedToPopItemsInBetween() noexcept requires(requires { Allocator::IsAllowedToPopItemsInBetween; }) { return Allocator::IsAllowedToPopItemsInBetween(); }
+    NODISCARD
+    FORCEINLINE consteval static bool IsAllowedToPopItemsInBetween() noexcept requires(!requires { Allocator::IsAllowedToPopItemsInBetween; }) { return IsAllowedToPushItems(); }
 
     FORCEINLINE constexpr TArrayBase() noexcept = default;
 
@@ -4029,6 +4051,22 @@ public:
 
     FORCEINLINE constexpr auto Iter() noexcept requires(requires { typename Iterator::Factory; });
     FORCEINLINE constexpr auto CIter() const noexcept requires(requires { typename ConstIterator::Factory; });
+
+    //# @return First element or nullptr.
+    NODISCARD FORCEINLINE constexpr Pointer GetFirst()         noexcept requires(TArrayBase::IsContentMutable()) { return this->GetSize() > 0 ? this->GetDataPointer() : nullptr; }
+    NODISCARD FORCEINLINE constexpr Pointer GetFirstChecked()  noexcept requires(TArrayBase::IsContentMutable()) { check( this->GetSize() > 0 ); return this->GetDataPointer(); }
+    NODISCARD FORCEINLINE constexpr Pointer GetFirstAsserted() noexcept requires(TArrayBase::IsContentMutable()) { jassert( this->GetSize() > 0 ); return this->GetDataPointer(); }
+    NODISCARD FORCEINLINE constexpr ConstPointer GetFirst()         const noexcept { return this->GetSize() > 0 ? this->GetDataPointer() : nullptr; }
+    NODISCARD FORCEINLINE constexpr ConstPointer GetFirstChecked()  const noexcept { check( this->GetSize() > 0 ) return this->GetDataPointer(); }
+    NODISCARD FORCEINLINE constexpr ConstPointer GetFirstAsserted() const noexcept { jassert( this->GetSize() > 0 ) return this->GetDataPointer(); }
+
+    //# @return Last element or nullptr.
+    NODISCARD FORCEINLINE constexpr Pointer GetLast()         noexcept requires(TArrayBase::IsContentMutable()) { return this->GetSize() > 0 ? this->GetSlackPointer() - 1 : nullptr; }
+    NODISCARD FORCEINLINE constexpr Pointer GetLastChecked()  noexcept requires(TArrayBase::IsContentMutable()) { check( this->GetSize() > 0 ); return this->GetSlackPointer() - 1; }
+    NODISCARD FORCEINLINE constexpr Pointer GetLastAsserted() noexcept requires(TArrayBase::IsContentMutable()) { jassert( this->GetSize() > 0 ); return this->GetSlackPointer() - 1; }
+    NODISCARD FORCEINLINE constexpr ConstPointer GetLast()         const noexcept { return this->GetSize() > 0 ? this->GetSlackPointer() - 1 : nullptr; }
+    NODISCARD FORCEINLINE constexpr ConstPointer GetLastChecked()  const noexcept { check( this->GetSize() > 0 ) return this->GetSlackPointer() - 1; }
+    NODISCARD FORCEINLINE constexpr ConstPointer GetLastAsserted() const noexcept { jassert( this->GetSize() > 0 ) return this->GetSlackPointer() - 1; }
 
     //#
     //# Growths the array so that it can hold at least the given number of elements.
@@ -4190,6 +4228,70 @@ public:
     template <TIteratorConcept TIterator>
     FORCEINLINE Iterator AppendAt(const SizeType Index, const TIterator Begin, const SizeType Count) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename TIterator::Reference>);
 
+    template <TIteratorConcept TIterator>
+    FORCEINLINE void RemoveAt(const TIterator It) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
+    //# Inclusive Begin and exclusive End.
+    template <TIteratorConcept TIterator>
+    FORCEINLINE void RemoveAt(const TIterator Begin, const TIterator End) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
+    FORCEINLINE void RemoveAt(const SizeType Index) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
+    //# Inclusive Begin and exclusive End.
+    FORCEINLINE void RemoveAt(const SizeType Begin, const SizeType End) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
+
+    //# @return The number of elements removed.
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType Remove(const U& What) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
+    template <typename U>
+    FORCEINLINE SizeType RemoveAtLeastOnceChecked(const U& What) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween() && std::equality_comparable_with<T, U>) { const SizeType Count { this->Remove(What) }; check( Count > 0 ) return Count; }
+    template <typename U> requires(TArrayBase::IsAllowedToPopItemsInBetween() && std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType RemoveAtLeastOnceAsserted(const U& What) noexcept { const SizeType Count { this->Remove(What) }; jassert( Count > 0 ) return Count; }
+
+    template <std::predicate<T> TPredicate>
+    SizeType RemoveByPredicate(const TPredicate& Predicate) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE SizeType RemoveByPredicateAtLeastOnceChecked(const TPredicate& Predicate) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE SizeType RemoveByPredicateAtLeastOnceAsserted(const TPredicate& Predicate) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
+
+    //#
+    //# Removes the first occurrence of the specified element from the array.
+    //# @return True if the element was found and removed, false otherwise.
+    //#
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    bool RemoveOnce(const U& What) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE bool RemoveOnceChecked(const U& What) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween()) { const bool bRemoved { this->RemoveOnce(What) }; check( bRemoved ) return bRemoved; }
+    template <typename U> requires(std::equality_comparable_with<T, U>)
+    FORCEINLINE bool RemoveOnceAsserted(const U& What) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween()) { const bool bRemoved { this->RemoveOnce(What) }; jassert( bRemoved ) return bRemoved; }
+
+    template <std::predicate<T> TPredicate>
+    bool RemoveOnceByPredicate(const TPredicate& Predicate) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE bool RemoveOnceByPredicateChecked(const TPredicate& Predicate) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE bool RemoveOnceByPredicateAsserted(const TPredicate& Predicate) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Stack Operations
+
+    //# Peeks at the last element in the array. Returns nullptr if the array is empty.
+    NODISCARD FORCEINLINE constexpr Pointer Peek()         noexcept requires(TArrayBase::IsContentMutable()) { return this->GetLast(); }
+    NODISCARD FORCEINLINE constexpr Pointer PeekChecked()  noexcept requires(TArrayBase::IsContentMutable()) { return this->GetLastChecked(); }
+    NODISCARD FORCEINLINE constexpr Pointer PeekAsserted() noexcept requires(TArrayBase::IsContentMutable()) { return this->GetLastAsserted(); }
+    NODISCARD FORCEINLINE constexpr ConstPointer Peek()         const noexcept { return this->GetLast(); }
+    NODISCARD FORCEINLINE constexpr ConstPointer PeekChecked()  const noexcept { return this->GetLastChecked(); }
+    NODISCARD FORCEINLINE constexpr ConstPointer PeekAsserted() const noexcept { return this->GetLastAsserted(); }
+
+    //#
+    //# Removes the last element from the array.
+    //# @return True if an element was popped, false if the array was empty.
+    //#
+    FORCEINLINE bool Pop() noexcept;
+    //# Pops #Count elements from the end of the array.
+    FORCEINLINE void Pop(SizeType Count) noexcept;
+
+    // ~Stack Operations
+    ///////////////////////////////////////////////////////////////////////////////
+
     NODISCARD
     FORCEINLINE const Allocator& GetAllocator() const noexcept { return this->Impl; }
     NODISCARD
@@ -4277,7 +4379,24 @@ private:
         return;
     }
 
-    FORCEINLINE constexpr void Destruct() noexcept;
+    FORCEINLINE constexpr void DestroyAt(const Iterator It) noexcept
+        requires(requires(Allocator _Allocator) { _Allocator.DestroyAt(It.Cursor); })
+    {
+        this->Impl.DestroyAt(It.Cursor);
+        return;
+    }
+    FORCEINLINE constexpr void DestroyAt(const SizeType Index) noexcept
+        requires(requires(Allocator _Allocator) { _Allocator.DestroyAt(Index); })
+    {
+        this->Impl.DestroyAt(Index);
+        return;
+    }
+
+    FORCEINLINE constexpr void DestroyAt(const Iterator It) noexcept
+        requires(!requires(Allocator _Allocator) { _Allocator.DestroyAt(It.Cursor); } && TArrayBase::IsContentMutable() && TArrayBase::IsStronglyAllocated());
+    FORCEINLINE constexpr void DestroyAt(const SizeType Index) noexcept
+        requires(!requires(Allocator _Allocator) { _Allocator.DestroyAt(Index); } && TArrayBase::IsContentMutable() && TArrayBase::IsStronglyAllocated());
+    FORCEINLINE constexpr void Destruct() noexcept requires(TArrayBase::IsContentMutable() && TArrayBase::IsStronglyAllocated());
 
     Allocator Impl;
 };
@@ -4724,7 +4843,6 @@ constexpr typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AddA
     return Iterator{ this->Impl.Data + Index };
 }
 
-
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <typename ... TArgs>
 void TArrayBase<TAllocator>::Emplace(TArgs&&... Args) noexcept
@@ -5073,7 +5191,263 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(const
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
+template <TIteratorConcept TIterator>
+void TArrayBase<TAllocator>::RemoveAt(const TIterator It) noexcept
+    requires(TArrayBase::IsAllowedToPopItemsInBetween())
+{
+    this->RemoveAt(It.Cursor - this->Impl.Data);
+
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <TIteratorConcept TIterator>
+void TArrayBase<TAllocator>::RemoveAt(const TIterator Begin, const TIterator End) noexcept
+    requires(TArrayBase::IsAllowedToPopItemsInBetween())
+{
+    this->RemoveAt(Begin.Cursor - this->Impl.Data, End.Cursor - this->Impl.Data);
+
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+void TArrayBase<TAllocator>::RemoveAt(const SizeType Index) noexcept
+    requires(TArrayBase::IsAllowedToPopItemsInBetween())
+{
+    LAL_CHECK_ARRAY( this->IsValidIndex(Index) )
+
+    this->DestroyAt(Index);
+
+    if (Index < this->GetSize() - 1)
+    {
+        #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
+        ::memmove(this->Impl.Data + Index, this->Impl.Data + Index + 1, (this->GetSize() - Index - 1) * sizeof(T));
+        #include "Definitions/PopDiagnostics.h"
+    }
+
+    --this->Impl.Slack;
+
+    checkSlow( this->Impl.Slack <= this->Impl.End )
+
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+void TArrayBase<TAllocator>::RemoveAt(const SizeType Begin, const SizeType End) noexcept
+    requires(TArrayBase::IsAllowedToPopItemsInBetween())
+{
+    LAL_CHECK_ARRAY( this->IsValidIndex(Begin) && Begin <= End && (this->IsValidIndex(End - 1) || Begin == End ) )
+
+    if (Begin == End)
+    {
+        return;
+    }
+
+    for (SizeType Index { Begin }; Index < End; ++Index)
+    {
+        this->DestroyAt(Index);
+    }
+
+    if (End <= this->GetSize())
+    {
+        #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
+        ::memmove(this->Impl.Data + Begin, this->Impl.Data + End, (this->GetSize() - (End - 1)) * sizeof(T));
+        #include "Definitions/PopDiagnostics.h"
+    }
+
+    this->Impl.Slack -= End - Begin;
+
+    checkSlow( this->Impl.Slack <= this->Impl.End )
+
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U> requires(std::equality_comparable_with<typename TAllocator::T, U>)
+typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Remove(const U& What) noexcept
+    requires(TArrayBase::IsAllowedToPopItemsInBetween())
+{
+    SizeType Removed { 0 };
+
+    for (T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer();)
+    {
+        if (*Bulk == What)
+        {
+            this->RemoveAt(Bulk - this->GetDataPointer());
+            ++Removed;
+        }
+        else
+        {
+            ++Bulk;
+        }
+
+        continue;
+    }
+
+    return Removed;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::RemoveByPredicate(const TPredicate& Predicate) noexcept
+    requires(TArrayBase::IsAllowedToPopItemsInBetween())
+{
+    SizeType Removed { 0 };
+
+    for (T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer();)
+    {
+        if (Predicate(*Bulk))
+        {
+            this->RemoveAt(Bulk - this->GetDataPointer());
+            ++Removed;
+        }
+        else
+        {
+            ++Bulk;
+        }
+
+        continue;
+    }
+
+    return Removed;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::RemoveByPredicateAtLeastOnceChecked(const TPredicate& Predicate) noexcept
+    requires (TArrayBase::IsAllowedToPopItemsInBetween())
+{
+    const SizeType Count { this->RemoveByPredicate<TPredicate>(Predicate) };
+    check( Count > 0 )
+    return Count;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::RemoveByPredicateAtLeastOnceAsserted(const TPredicate& Predicate) noexcept
+    requires (TArrayBase::IsAllowedToPopItemsInBetween())
+{
+    const SizeType Count { this->RemoveByPredicate<TPredicate>(Predicate) };
+    jassert( Count > 0 )
+    return Count;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U> requires(std::equality_comparable_with<typename TAllocator::T, U>)
+bool TArrayBase<TAllocator>::RemoveOnce(const U& What) noexcept
+    requires(TArrayBase::IsAllowedToPopItemsInBetween())
+{
+    for (T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
+    {
+        if (*Bulk == What)
+        {
+            this->RemoveAt(Bulk - this->GetDataPointer());
+            return true;
+        }
+
+        continue;
+    }
+
+    return false;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+bool TArrayBase<TAllocator>::RemoveOnceByPredicate(const TPredicate& Predicate) noexcept
+    requires(TArrayBase::IsAllowedToPopItemsInBetween())
+{
+    for (T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
+    {
+        if (Predicate(*Bulk))
+        {
+            this->RemoveAt(Bulk - this->GetDataPointer());
+            return true;
+        }
+
+        continue;
+    }
+
+    return false;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+bool TArrayBase<TAllocator>::RemoveOnceByPredicateChecked(const TPredicate& Predicate) noexcept
+    requires(TArrayBase::IsAllowedToPopItemsInBetween())
+{
+    const bool bRemoved { this->RemoveOnceByPredicate<TPredicate>(Predicate) };
+    check( bRemoved )
+    return bRemoved;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+bool TArrayBase<TAllocator>::RemoveOnceByPredicateAsserted(const TPredicate& Predicate) noexcept
+    requires(TArrayBase::IsAllowedToPopItemsInBetween())
+{
+    const bool bRemoved { this->RemoveOnceByPredicate<TPredicate>(Predicate) };
+    jassert( bRemoved )
+    return bRemoved;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+bool TArrayBase<TAllocator>::Pop() noexcept
+{
+    if (this->GetSize() > 0)
+    {
+        this->DestroyAt(this->GetSize() - 1);
+        --this->Impl.Slack;
+
+        LAL_CHECK_ARRAY( this->Impl.Slack >= this->Impl.Data && this->Impl.Slack <= this->Impl.End )
+
+        return true;
+    }
+
+    return false;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+void TArrayBase<TAllocator>::Pop(SizeType Count) noexcept
+{
+    while (this->GetSize() > 0 && Count > 0)
+    {
+        this->DestroyAt(this->Impl.Slack - 1);
+        --this->Impl.Slack;
+        --Count;
+
+        continue;
+    }
+
+    LAL_CHECK_ARRAY( this->Impl.Slack >= this->Impl.Data && this->Impl.Slack <= this->Impl.End )
+
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+FORCEINLINE constexpr void TArrayBase<TAllocator>::DestroyAt(const Iterator It) noexcept
+    requires(!requires(Allocator _Allocator) { _Allocator.DestroyAt(It.Cursor); } && TArrayBase::IsContentMutable() && TArrayBase::IsStronglyAllocated())
+{
+    LAL_CHECK_ARRAY( this->IsValidIterator(It) )
+
+    It.Cursor->~T();
+
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+FORCEINLINE constexpr void TArrayBase<TAllocator>::DestroyAt(const SizeType Index) noexcept
+    requires(!requires(Allocator _Allocator) { _Allocator.DestroyAt(Index); } && TArrayBase::IsContentMutable() && TArrayBase::IsStronglyAllocated())
+{
+    LAL_CHECK_ARRAY( this->IsValidIndex(Index) )
+
+    (this->GetDataPointer() + Index)->~T();
+
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
 FORCEINLINE constexpr void TArrayBase<TAllocator>::Destruct() noexcept
+    requires(TArrayBase::IsContentMutable() && TArrayBase::IsStronglyAllocated())
 {
     for (T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
     {
