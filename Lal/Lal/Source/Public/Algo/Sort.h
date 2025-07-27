@@ -30,14 +30,12 @@ namespace Private
 template <typename T>
 T* SortQuick_Pivot(T* Begin, T* Slack)
 {
-    if (static_cast<const void*>(Begin + (Slack - Begin) / 2) == static_cast<const void*>(Slack - 1))
+    if (static_cast<const void*>(Begin + (Slack - Begin) / 2) != static_cast<const void*>(Slack - 1))
     {
-        return Slack - 1;
+        std::swap(*(Begin + (Slack - Begin) / 2), *(Slack - 1));
     }
 
-    std::swap(*(Begin + (Slack - Begin) / 2), *(Slack - 1));
     T* Pivot { Slack - 1 };
-
     T* Left { Begin };
 
     for (T* Right { Left }; Right < Pivot; ++Right)
