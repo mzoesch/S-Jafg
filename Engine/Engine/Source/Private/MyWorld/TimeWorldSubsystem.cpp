@@ -10,7 +10,7 @@
 namespace
 {
 
-const Jafg::TArray<Jafg::LString> NamedDayTimeValues
+const TArray<Jafg::LString> NamedDayTimeValues
 {
     "Sunrise", "Morning", "Noon", "Dusk", "Night", "Midnight",
 };
@@ -518,7 +518,7 @@ void Jafg::JTimeWorldSubsystem::DefaultOnly_RegisterCliObjects()
                 return LCliType::Type<u64>().CanParse(Args, Cursor);
             },
             nullptr,
-            [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+            [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
             {
                 const LCommandArgs* Target { nullptr };
 

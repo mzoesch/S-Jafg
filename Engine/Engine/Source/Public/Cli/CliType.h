@@ -20,7 +20,7 @@ MAKE_DELEGATE_SIGNATURE(LOnParseTypeDelegate, bool, const LCommandArgs& Args, i3
 MAKE_DELEGATE_SIGNATURE(LOnValueSetDelegate, bool, const LCommandArgs& InValue, LString* OutValue)
 
 //# @return A list of suggestions for the given arguments. The first index is the most common suggestion.
-MAKE_DELEGATE_SIGNATURE(LOnSuggestTypeDelegate, TArray<LString>, const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions)
+MAKE_DELEGATE_SIGNATURE(LOnSuggestTypeDelegate, TArray<LString>, const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions)
 
 //#
 //# Utility struct for a type T that may accept an arbitrary number of arguments which fit for said type T.
@@ -96,7 +96,7 @@ public:
     ENGINE_API bool SetVariable(const LCommandArgs& InValue, LString* OutValue) const;
 
     ENGINE_API bool CanParse(const LCommandArgs& Args, i32* Cursor) const;
-    ENGINE_API TArray<LString> Suggest(const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) const;
+    ENGINE_API TArray<LString> Suggest(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) const;
 
     FORCEINLINE auto GetDefault() const -> const LString& { return this->Default; }
     FORCEINLINE bool IsTypeDelegateValid() const { return this->OnParseTypeDelegate.IsBound(); }

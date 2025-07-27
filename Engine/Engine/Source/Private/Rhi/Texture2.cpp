@@ -100,7 +100,7 @@ bool Jafg::LTexture2::LoadFromDisk(const LPath& Path, const ERawImageFormat::Typ
     i32 NrChannels = 0;
 
     ::stbi_set_flip_vertically_on_load(false);
-    u8* Data = ::stbi_load_from_memory(Bin.GetData(), static_cast<int>(Bin.GetSize()), &Width, &Height, &NrChannels, ERawImageFormat::GetChannelsPerPixel(InFormat));
+    u8* Data = ::stbi_load_from_memory(Bin.GetDataPointer(), static_cast<int>(Bin.GetSize()), &Width, &Height, &NrChannels, ERawImageFormat::GetChannelsPerPixel(InFormat));
 
     if (stbi_failure_reason())
     {

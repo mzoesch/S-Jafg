@@ -62,15 +62,15 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(const LObjectClass* InClas
         continue;
     }
 
-    for (i32 i = 0; i < this->SubsystemInstances.GetSize();)
+    for (TArray<JSubsystem*>::SizeType Idx { 0 }; Idx < this->SubsystemInstances.GetSize();)
     {
-        JSubsystem* Subsystem = this->SubsystemInstances[i];
+        JSubsystem* Subsystem = this->SubsystemInstances[Idx];
 
         checkSlow( Subsystem )
 
         if (Subsystem->IsInitialized())
         {
-            ++i;
+            ++Idx;
             continue;
         }
 
@@ -78,12 +78,12 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(const LObjectClass* InClas
         {
             LOG_TRACE(LogSubsystemCollection, "Initializing subsystem {}.", Subsystem->GetFullName())
             Subsystem->Initialize(*this);
-            ++i;
+            ++Idx;
             continue;
         }
 
         Subsystem->MarkAsGarbage();
-        this->SubsystemInstances.RemoveAt(i);
+        this->SubsystemInstances.RemoveAt(Idx);
 
         continue;
     }
@@ -135,13 +135,13 @@ void Jafg::LSubsystemCollection::InitializeSubsystemsDeferredOnly()
         continue;
     }
 
-    for (i32 i = 0; i < this->IntermediateInstances.GetSize();)
+    for (TArray<JSubsystem*>::SizeType Idx { 0 }; Idx < this->IntermediateInstances.GetSize();)
     {
-        JSubsystem* Subsystem = this->IntermediateInstances[i];
+        JSubsystem* Subsystem = this->IntermediateInstances[Idx];
 
         if (Subsystem->IsInitialized())
         {
-            ++i;
+            ++Idx;
             continue;
         }
 
@@ -149,12 +149,12 @@ void Jafg::LSubsystemCollection::InitializeSubsystemsDeferredOnly()
         {
             LOG_TRACE(LogSubsystemCollection, "Initializing subsystem {}.", Subsystem->GetFullName())
             Subsystem->Initialize(*this);
-            ++i;
+            ++Idx;
             continue;
         }
 
         Subsystem->MarkAsGarbage();
-        this->IntermediateInstances.RemoveAt(i);
+        this->IntermediateInstances.RemoveAt(Idx);
 
         continue;
     }
@@ -262,16 +262,16 @@ void Jafg::LSubsystemCollection::TearDownPrioritySubsystems()
 
     i32 SubsystemCount { 0 };
 
-    for (i32 i = 0; i < this->SubsystemInstances.GetSize(); ++i)
+    for (TArray<JSubsystem*>::SizeType Idx { 0 }; Idx < this->SubsystemInstances.GetSize(); ++Idx)
     {
-        JSubsystem*& Subsystem = this->SubsystemInstances[i];
+        JSubsystem*& Subsystem = this->SubsystemInstances[Idx];
         checkSlow( Subsystem )
 
         if (Subsystem->IsPriorityTearDown())
         {
             Subsystem->MarkAsGarbage();
             Subsystem = nullptr;
-            checkSlow( this->SubsystemInstances[i] == nullptr )
+            checkSlow( this->SubsystemInstances[Idx] == nullptr )
             ++SubsystemCount;
         }
 

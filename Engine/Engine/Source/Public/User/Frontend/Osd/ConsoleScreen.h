@@ -117,7 +117,7 @@ private:
     WEditableTextBox* EditableTextBlock { nullptr };
 
     CLASS_FIELD(Config, DefaultOnly)
-    i32 MaxHistorySize { 50 };
+    u32 MaxHistorySize { 50 };
 
     CLASS_FIELD(Config, DefaultOnly)
     TArray<LString> History;

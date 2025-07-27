@@ -170,7 +170,7 @@ struct TMutableArrayViewAllocator
 //# container for extreme fast-paced memory read and write operations.
 //#
 template <typename InAlloc>
-class TArrayBase
+class TArrayBaseOldv2
 {
 public:
 
@@ -178,7 +178,7 @@ public:
     using T        = typename Alloc::T;
     using SizeType = typename Alloc::SizeType;
     using Traits   = typename Alloc::Traits;
-    using Self     = TArrayBase<Alloc>;
+    using Self     = TArrayBaseOldv2<Alloc>;
 
     static_assert(std::is_integral_v<SizeType>, "SizeType must be an integral type.");
     static_assert(std::is_signed_v<SizeType>,   "SizeType must be a signed integral type.");
@@ -186,10 +186,10 @@ public:
     template <typename TMemberField>
     friend void OnDefaultOnlyMallocMember(TMemberField* MemberField);
     template <typename TMemberField>
-    friend void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField);
+    friend void OnDefaultOnlyMallocMember(TArrayBaseOldv2<TMemberField>* MemberField);
 
     template <typename TOtherAlloc>
-    friend class TArrayBase;
+    friend class TArrayBaseOldv2;
 
     //# Whether this array is dynamic. Meaning elements can be added and removed at runtime.
     FORCEINLINE consteval static bool IsDynamic() noexcept requires ( requires { Alloc::IsDynamic; }) { return Alloc::IsDynamic(); }
@@ -219,27 +219,27 @@ public:
     static_assert(Self::IsDynamic()      ? Self::IsContentConst() == false : true, "Dynamic allocators must not be content.");
     static_assert(Self::IsContentConst() ? Self::IsDynamic()      == false : true, "Const content allocators must not be dynamic.");
 
-    FORCEINLINE  TArrayBase() noexcept = default;
-    FORCEINLINE  TArrayBase(const Self& InOther) noexcept : Impl() { Self::Copy(*this, InOther); }
-    FORCEINLINE  TArrayBase(Self&& InOther) noexcept : Impl() { Self::Move(*this, std::move(InOther)); }
-    FORCEINLINE  TArrayBase(std::initializer_list<T> InList) noexcept requires (Self::IsStrongAlloc() && (std::is_copy_assignable_v<T> || std::is_copy_constructible_v<T>));
+    FORCEINLINE  TArrayBaseOldv2() noexcept = default;
+    FORCEINLINE  TArrayBaseOldv2(const Self& InOther) noexcept : Impl() { Self::Copy(*this, InOther); }
+    FORCEINLINE  TArrayBaseOldv2(Self&& InOther) noexcept : Impl() { Self::Move(*this, std::move(InOther)); }
+    FORCEINLINE  TArrayBaseOldv2(std::initializer_list<T> InList) noexcept requires (Self::IsStrongAlloc() && (std::is_copy_assignable_v<T> || std::is_copy_constructible_v<T>));
     template <typename InOtherElement>
-    FORCEINLINE  TArrayBase(std::initializer_list<InOtherElement> InList) noexcept requires (Self::IsStrongAlloc() && (std::is_same_v<T, InOtherElement> == false) && std::is_convertible_v<InOtherElement, T>);
+    FORCEINLINE  TArrayBaseOldv2(std::initializer_list<InOtherElement> InList) noexcept requires (Self::IsStrongAlloc() && (std::is_same_v<T, InOtherElement> == false) && std::is_convertible_v<InOtherElement, T>);
     template <typename... InTArgs>
-    FORCEINLINE  TArrayBase(InTArgs&&... InArgs) noexcept requires (Self::IsStrongAlloc() && std::is_move_constructible_v<T>);
-    FORCEINLINE ~TArrayBase() noexcept;
+    FORCEINLINE  TArrayBaseOldv2(InTArgs&&... InArgs) noexcept requires (Self::IsStrongAlloc() && std::is_move_constructible_v<T>);
+    FORCEINLINE ~TArrayBaseOldv2() noexcept;
     template <typename TOtherAlloc>
-    FORCEINLINE TArrayBase(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
+    FORCEINLINE TArrayBaseOldv2(const TArrayBaseOldv2<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
     template <typename TOtherAlloc>
-    FORCEINLINE TArrayBase(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsStrongAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
+    FORCEINLINE TArrayBaseOldv2(const TArrayBaseOldv2<TOtherAlloc>& Other) noexcept requires (Self::IsStrongAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
 
     FORCEINLINE Self& operator=(const Self& InOther) noexcept { Self::Copy(*this, InOther); return *this; }
     FORCEINLINE Self& operator=(Self&& InOther) noexcept { Self::Move(*this, std::move(InOther)); return *this; }
     FORCEINLINE Self& operator=(std::initializer_list<T> InList) noexcept requires (Self::IsStrongAlloc());
     template <typename TOtherAlloc>
-    FORCEINLINE Self& operator=(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
+    FORCEINLINE Self& operator=(const TArrayBaseOldv2<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
     template <typename TOtherAlloc>
-    FORCEINLINE Self& operator=(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsStrongAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
+    FORCEINLINE Self& operator=(const TArrayBaseOldv2<TOtherAlloc>& Other) noexcept requires (Self::IsStrongAlloc() && std::is_same_v<TOtherAlloc, Alloc> == false);
 
     //#
     //# Invalidate the array. This will not deallocate the memory but set the pointers to null.
@@ -983,7 +983,7 @@ FORCEINLINE void TMutableArrayViewAllocator<InT, InSizeType, InTraits>::Invalida
 }
 
 template<typename InAlloc>
-FORCEINLINE TArrayBase<InAlloc>::TArrayBase(std::initializer_list<T> InList) noexcept requires (Self::IsStrongAlloc() && (std::is_copy_assignable_v<T> || std::is_copy_constructible_v<T>)) : Impl()
+FORCEINLINE TArrayBaseOldv2<InAlloc>::TArrayBaseOldv2(std::initializer_list<T> InList) noexcept requires (Self::IsStrongAlloc() && (std::is_copy_assignable_v<T> || std::is_copy_constructible_v<T>)) : Impl()
 {
     this->Reserve(InList.size());
 
@@ -1002,7 +1002,7 @@ FORCEINLINE TArrayBase<InAlloc>::TArrayBase(std::initializer_list<T> InList) noe
 
 template<typename InAlloc>
 template<typename InOtherElement>
-FORCEINLINE TArrayBase<InAlloc>::TArrayBase(std::initializer_list<InOtherElement> InList) noexcept requires (Self::IsStrongAlloc() && (std::is_same_v<T, InOtherElement> == false) && std::is_convertible_v<InOtherElement, T>)
+FORCEINLINE TArrayBaseOldv2<InAlloc>::TArrayBaseOldv2(std::initializer_list<InOtherElement> InList) noexcept requires (Self::IsStrongAlloc() && (std::is_same_v<T, InOtherElement> == false) && std::is_convertible_v<InOtherElement, T>)
 {
     this->Reserve(InList.size());
 
@@ -1021,7 +1021,7 @@ FORCEINLINE TArrayBase<InAlloc>::TArrayBase(std::initializer_list<InOtherElement
 
 template<typename InAlloc>
 template<typename... InTArgs>
-FORCEINLINE TArrayBase<InAlloc>::TArrayBase(InTArgs&&... InArgs) noexcept requires (Self::IsStrongAlloc() && std::is_move_constructible_v<T>)
+FORCEINLINE TArrayBaseOldv2<InAlloc>::TArrayBaseOldv2(InTArgs&&... InArgs) noexcept requires (Self::IsStrongAlloc() && std::is_move_constructible_v<T>)
 {
     this->Reserve(sizeof...(InTArgs));
 
@@ -1041,7 +1041,7 @@ FORCEINLINE TArrayBase<InAlloc>::TArrayBase(InTArgs&&... InArgs) noexcept requir
 }
 
 template<typename InAlloc>
-FORCEINLINE TArrayBase<InAlloc>::~TArrayBase() noexcept
+FORCEINLINE TArrayBaseOldv2<InAlloc>::~TArrayBaseOldv2() noexcept
 {
     if constexpr (Self::IsStrongAlloc())
     {
@@ -1053,7 +1053,7 @@ FORCEINLINE TArrayBase<InAlloc>::~TArrayBase() noexcept
 
 template<typename InAlloc>
 template<typename TOtherAlloc>
-FORCEINLINE TArrayBase<InAlloc>::TArrayBase(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, InAlloc> == false)
+FORCEINLINE TArrayBaseOldv2<InAlloc>::TArrayBaseOldv2(const TArrayBaseOldv2<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, InAlloc> == false)
 {
     JAFG_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Other) )
 
@@ -1066,7 +1066,7 @@ FORCEINLINE TArrayBase<InAlloc>::TArrayBase(const TArrayBase<TOtherAlloc>& Other
 
 template<typename InAlloc>
 template<typename TOtherAlloc>
-FORCEINLINE TArrayBase<InAlloc>::TArrayBase(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsStrongAlloc() && std::is_same_v<TOtherAlloc, InAlloc> == false) : Impl()
+FORCEINLINE TArrayBaseOldv2<InAlloc>::TArrayBaseOldv2(const TArrayBaseOldv2<TOtherAlloc>& Other) noexcept requires (Self::IsStrongAlloc() && std::is_same_v<TOtherAlloc, InAlloc> == false) : Impl()
 {
     JAFG_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Other) )
 
@@ -1086,7 +1086,7 @@ FORCEINLINE TArrayBase<InAlloc>::TArrayBase(const TArrayBase<TOtherAlloc>& Other
 }
 
 template<typename InAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::Self& TArrayBase<InAlloc>::operator=(std::initializer_list<T> InList) noexcept requires (Self::IsStrongAlloc())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::Self& TArrayBaseOldv2<InAlloc>::operator=(std::initializer_list<T> InList) noexcept requires (Self::IsStrongAlloc())
 {
     this->Reset(InList.size());
 
@@ -1106,7 +1106,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::Self& TArrayBase<InAlloc>::operator=(s
 
 template<typename InAlloc>
 template<typename TOtherAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::Self& TArrayBase<InAlloc>::operator=(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, InAlloc> == false)
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::Self& TArrayBaseOldv2<InAlloc>::operator=(const TArrayBaseOldv2<TOtherAlloc>& Other) noexcept requires (Self::IsWeakAlloc() && std::is_same_v<TOtherAlloc, InAlloc> == false)
 {
     JAFG_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Other) )
 
@@ -1119,7 +1119,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::Self& TArrayBase<InAlloc>::operator=(c
 
 template<typename InAlloc>
 template<typename TOtherAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::Self& TArrayBase<InAlloc>::operator=(const TArrayBase<TOtherAlloc>& Other) noexcept requires (Self::IsStrongAlloc() && std::is_same_v<TOtherAlloc, InAlloc> == false)
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::Self& TArrayBaseOldv2<InAlloc>::operator=(const TArrayBaseOldv2<TOtherAlloc>& Other) noexcept requires (Self::IsStrongAlloc() && std::is_same_v<TOtherAlloc, InAlloc> == false)
 {
     JAFG_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Other) )
 
@@ -1139,28 +1139,28 @@ FORCEINLINE typename TArrayBase<InAlloc>::Self& TArrayBase<InAlloc>::operator=(c
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::Invalidate() requires (Self::IsWeakAlloc())
+void TArrayBaseOldv2<InAlloc>::Invalidate() requires (Self::IsWeakAlloc())
 {
     this->Impl.Invalidate();
     return;
 }
 
 template<typename InAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::MoveDataPointerUp(T* NewDataPointer) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::MoveDataPointerUp(T* NewDataPointer) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable())
 {
     this->Impl.Data = Maths::Clamp(NewDataPointer, this->Impl.Data, this->Impl.Slack);
     return this->Impl.Data;
 }
 
 template<typename InAlloc>
-FORCEINLINE const typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::MoveDataPointerUp(const T* NewDataPointer) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst())
+FORCEINLINE const typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::MoveDataPointerUp(const T* NewDataPointer) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst())
 {
     this->Impl.Data = Maths::Clamp(NewDataPointer, this->Impl.Data, this->Impl.Slack);
     return this->Impl.Data;
 }
 
 template<typename InAlloc>
-FORCEINLINE bool TArrayBase<InAlloc>::MoveDataPointerUp() noexcept requires (Self::IsWeakAlloc())
+FORCEINLINE bool TArrayBaseOldv2<InAlloc>::MoveDataPointerUp() noexcept requires (Self::IsWeakAlloc())
 {
     if (this->Impl.Data == this->Impl.Slack)
     {
@@ -1172,7 +1172,7 @@ FORCEINLINE bool TArrayBase<InAlloc>::MoveDataPointerUp() noexcept requires (Sel
 }
 
 template<typename InAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::MoveDataPointerUp(const SizeType InOffset) noexcept requires(Self::IsWeakAlloc())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::MoveDataPointerUp(const SizeType InOffset) noexcept requires(Self::IsWeakAlloc())
 {
     if (this->Impl.Data == this->Impl.Slack)
     {
@@ -1186,21 +1186,21 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::MoveData
 }
 
 template<typename InAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::MoveSlackPointerDown(T* NewSlackPointer) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::MoveSlackPointerDown(T* NewSlackPointer) noexcept requires (Self::IsWeakAlloc() && Self::IsContentMutable())
 {
     this->Impl.Slack = Maths::Clamp(NewSlackPointer, this->Impl.Data, this->Impl.Slack);
     return this->Impl.Data;
 }
 
 template<typename InAlloc>
-FORCEINLINE const typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::MoveSlackPointerDown(const T* NewSlackPointer) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst())
+FORCEINLINE const typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::MoveSlackPointerDown(const T* NewSlackPointer) noexcept requires (Self::IsWeakAlloc() && Self::IsContentConst())
 {
     this->Impl.Slack = Maths::Clamp(NewSlackPointer, this->Impl.Data, this->Impl.Slack);
     return this->Impl.Data;
 }
 
 template<typename InAlloc>
-FORCEINLINE bool TArrayBase<InAlloc>::MoveSlackPointerDown() noexcept requires (Self::IsWeakAlloc())
+FORCEINLINE bool TArrayBaseOldv2<InAlloc>::MoveSlackPointerDown() noexcept requires (Self::IsWeakAlloc())
 {
     if (this->Impl.Slack == this->Impl.Data)
     {
@@ -1212,7 +1212,7 @@ FORCEINLINE bool TArrayBase<InAlloc>::MoveSlackPointerDown() noexcept requires (
 }
 
 template<typename InAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::MoveSlackPointerDown(const SizeType InOffset) noexcept requires (Self::IsWeakAlloc())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::MoveSlackPointerDown(const SizeType InOffset) noexcept requires (Self::IsWeakAlloc())
 {
     if (this->Impl.Slack == this->Impl.Data)
     {
@@ -1226,7 +1226,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::MoveSlac
 }
 
 template<typename InAlloc>
-typename TArrayBase<InAlloc>::Self& TArrayBase<InAlloc>::CopyFrom(const Self& InOther, const SizeType InCount) noexcept requires (Self::IsStrongAlloc())
+typename TArrayBaseOldv2<InAlloc>::Self& TArrayBaseOldv2<InAlloc>::CopyFrom(const Self& InOther, const SizeType InCount) noexcept requires (Self::IsStrongAlloc())
 {
     this->Reset(InCount);
 
@@ -1245,7 +1245,7 @@ typename TArrayBase<InAlloc>::Self& TArrayBase<InAlloc>::CopyFrom(const Self& In
 }
 
 template<typename InAlloc>
-typename TArrayBase<InAlloc>::Self& TArrayBase<InAlloc>::CopyFrom(const Self& InOther, const SizeType InOffset, const SizeType InCount) noexcept requires (Self::IsStrongAlloc())
+typename TArrayBaseOldv2<InAlloc>::Self& TArrayBaseOldv2<InAlloc>::CopyFrom(const Self& InOther, const SizeType InOffset, const SizeType InCount) noexcept requires (Self::IsStrongAlloc())
 {
     this->Reset(InCount);
 
@@ -1264,21 +1264,21 @@ typename TArrayBase<InAlloc>::Self& TArrayBase<InAlloc>::CopyFrom(const Self& In
 }
 
 template<typename InAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::T& TArrayBase<InAlloc>::operator[](const SizeType InIndex) noexcept requires (Self::IsContentMutable())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::T& TArrayBaseOldv2<InAlloc>::operator[](const SizeType InIndex) noexcept requires (Self::IsContentMutable())
 {
     JAFG_CHECK_ARRAY( this->IsValidIndex(InIndex) )
     return this->Impl.Data[InIndex];
 }
 
 template<typename InAlloc>
-FORCEINLINE const typename TArrayBase<InAlloc>::T& TArrayBase<InAlloc>::operator[](const SizeType InIndex) const noexcept
+FORCEINLINE const typename TArrayBaseOldv2<InAlloc>::T& TArrayBaseOldv2<InAlloc>::operator[](const SizeType InIndex) const noexcept
 {
     JAFG_CHECK_ARRAY( this->IsValidIndex(InIndex) )
     return this->Impl.Data[InIndex];
 }
 
 template<typename InAlloc>
-FORCEINLINE void TArrayBase<InAlloc>::Reset(const SizeType InAmount) noexcept requires (Self::IsDynamic())
+FORCEINLINE void TArrayBaseOldv2<InAlloc>::Reset(const SizeType InAmount) noexcept requires (Self::IsDynamic())
 {
     this->Reserve(InAmount);
 
@@ -1295,7 +1295,7 @@ FORCEINLINE void TArrayBase<InAlloc>::Reset(const SizeType InAmount) noexcept re
 }
 
 template<typename InAlloc>
-FORCEINLINE void TArrayBase<InAlloc>::Resize(const SizeType InSize, const bool bInShrinkToFit) noexcept requires (Self::IsDynamic())
+FORCEINLINE void TArrayBaseOldv2<InAlloc>::Resize(const SizeType InSize, const bool bInShrinkToFit) noexcept requires (Self::IsDynamic())
 {
     JAFG_CHECK_ARRAY( InSize >= 0 && InSize <= this->GetSize() )
 
@@ -1315,7 +1315,7 @@ FORCEINLINE void TArrayBase<InAlloc>::Resize(const SizeType InSize, const bool b
 }
 
 template<typename InAlloc>
-FORCEINLINE void TArrayBase<InAlloc>::SwapBuffers(Self& InOther) noexcept
+FORCEINLINE void TArrayBaseOldv2<InAlloc>::SwapBuffers(Self& InOther) noexcept
 {
     JAFG_CHECK_ARRAY( this != &InOther )
 
@@ -1335,7 +1335,7 @@ FORCEINLINE void TArrayBase<InAlloc>::SwapBuffers(Self& InOther) noexcept
 }
 
 template<typename InAlloc>
-FORCEINLINE void TArrayBase<InAlloc>::SwapIndices(const SizeType InIndexA, const SizeType InIndexB) noexcept requires (Self::IsContentMutable())
+FORCEINLINE void TArrayBaseOldv2<InAlloc>::SwapIndices(const SizeType InIndexA, const SizeType InIndexB) noexcept requires (Self::IsContentMutable())
 {
     JAFG_CHECK_ARRAY( this->IsValidIndex(InIndexA) && this->IsValidIndex(InIndexB) )
 
@@ -1363,7 +1363,7 @@ FORCEINLINE void TArrayBase<InAlloc>::SwapIndices(const SizeType InIndexA, const
 }
 
 template<typename InAlloc>
-FORCEINLINE bool TArrayBase<InAlloc>::IsDataEqual(const Self& InOther) const noexcept
+FORCEINLINE bool TArrayBaseOldv2<InAlloc>::IsDataEqual(const Self& InOther) const noexcept
 {
     if (this->GetSize() != InOther.GetSize())
     {
@@ -1384,7 +1384,7 @@ FORCEINLINE bool TArrayBase<InAlloc>::IsDataEqual(const Self& InOther) const noe
 }
 
 template<typename InAlloc>
-typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Add(const T& InElement) noexcept requires (Self::IsDynamic())
+typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::Add(const T& InElement) noexcept requires (Self::IsDynamic())
 {
     if (this->IsCapped())
     {
@@ -1399,7 +1399,7 @@ typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Add(const T& InEleme
 }
 
 template<typename InAlloc>
-typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Add(T&& InElement) noexcept requires (Self::IsDynamic())
+typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::Add(T&& InElement) noexcept requires (Self::IsDynamic())
 {
     if (this->IsCapped())
     {
@@ -1414,7 +1414,7 @@ typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Add(T&& InElement) n
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::AddAt(const SizeType InIndex, const T& InElement) noexcept requires (Self::IsDynamic())
+void TArrayBaseOldv2<InAlloc>::AddAt(const SizeType InIndex, const T& InElement) noexcept requires (Self::IsDynamic())
 {
     if (this->GetSize() == InIndex)
     {
@@ -1442,7 +1442,7 @@ void TArrayBase<InAlloc>::AddAt(const SizeType InIndex, const T& InElement) noex
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::AddAt(const SizeType InIndex, T&& InElement) noexcept requires (Self::IsDynamic())
+void TArrayBaseOldv2<InAlloc>::AddAt(const SizeType InIndex, T&& InElement) noexcept requires (Self::IsDynamic())
 {
     if (this->GetSize() == InIndex)
     {
@@ -1470,7 +1470,7 @@ void TArrayBase<InAlloc>::AddAt(const SizeType InIndex, T&& InElement) noexcept 
 }
 
 template<typename InAlloc>
-typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::AddDefault() noexcept requires (Self::IsDynamic())
+typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::AddDefault() noexcept requires (Self::IsDynamic())
 {
     if (this->IsCapped())
     {
@@ -1485,7 +1485,7 @@ typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::AddDefault() noexcep
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::AddDefault(SizeType InCount) noexcept requires (Self::IsDynamic())
+void TArrayBaseOldv2<InAlloc>::AddDefault(SizeType InCount) noexcept requires (Self::IsDynamic())
 {
     this->Reserve(InCount);
 
@@ -1501,7 +1501,7 @@ void TArrayBase<InAlloc>::AddDefault(SizeType InCount) noexcept requires (Self::
 }
 
 template<typename InAlloc>
-typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::AddZeroed() noexcept requires (Self::IsDynamic())
+typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::AddZeroed() noexcept requires (Self::IsDynamic())
 {
     if (this->IsCapped())
     {
@@ -1524,7 +1524,7 @@ typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::AddZeroed() noexcept
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::AddZeroed(const SizeType InCount) noexcept requires (Self::IsDynamic())
+void TArrayBaseOldv2<InAlloc>::AddZeroed(const SizeType InCount) noexcept requires (Self::IsDynamic())
 {
     this->Reserve(InCount);
 
@@ -1546,7 +1546,7 @@ void TArrayBase<InAlloc>::AddZeroed(const SizeType InCount) noexcept requires (S
 }
 
 template<typename InAlloc>
-typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::AddUninitialized() noexcept requires (Self::IsDynamic())
+typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::AddUninitialized() noexcept requires (Self::IsDynamic())
 {
     if (this->IsCapped())
     {
@@ -1561,7 +1561,7 @@ typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::AddUninitialized() n
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::AddUninitialized(const SizeType InCount) noexcept requires (Self::IsDynamic())
+void TArrayBaseOldv2<InAlloc>::AddUninitialized(const SizeType InCount) noexcept requires (Self::IsDynamic())
 {
     this->Reserve(InCount);
     this->Impl.Slack += InCount;
@@ -1573,7 +1573,7 @@ void TArrayBase<InAlloc>::AddUninitialized(const SizeType InCount) noexcept requ
 
 template<typename InAlloc>
 template<typename... InTArgs>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Emplace(InTArgs&&... InArgs) noexcept requires (Self::IsDynamic())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::Emplace(InTArgs&&... InArgs) noexcept requires (Self::IsDynamic())
 {
     if (this->IsCapped())
     {
@@ -1587,7 +1587,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Emplace(
 
 template<typename InAlloc>
 template<typename... InTArgs>
-FORCEINLINE void TArrayBase<InAlloc>::EmplaceAt(const SizeType InIndex, InTArgs&&... InArgs) noexcept requires (Self::IsDynamic())
+FORCEINLINE void TArrayBaseOldv2<InAlloc>::EmplaceAt(const SizeType InIndex, InTArgs&&... InArgs) noexcept requires (Self::IsDynamic())
 {
     if (this->GetSize() == InIndex)
     {
@@ -1615,7 +1615,7 @@ FORCEINLINE void TArrayBase<InAlloc>::EmplaceAt(const SizeType InIndex, InTArgs&
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::Append(const Self& InOther) noexcept requires (Self::IsDynamic())
+void TArrayBaseOldv2<InAlloc>::Append(const Self& InOther) noexcept requires (Self::IsDynamic())
 {
     this->Reserve(this->GetSize() + InOther.GetSize());
 
@@ -1633,7 +1633,7 @@ void TArrayBase<InAlloc>::Append(const Self& InOther) noexcept requires (Self::I
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::Append(Self&& InOther) noexcept requires (Self::IsDynamic())
+void TArrayBaseOldv2<InAlloc>::Append(Self&& InOther) noexcept requires (Self::IsDynamic())
 {
     if (InOther.GetSize() > 0)
     {
@@ -1661,7 +1661,7 @@ void TArrayBase<InAlloc>::Append(Self&& InOther) noexcept requires (Self::IsDyna
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::Append(const T* InElements, const SizeType InCount) noexcept requires (Self::IsDynamic())
+void TArrayBaseOldv2<InAlloc>::Append(const T* InElements, const SizeType InCount) noexcept requires (Self::IsDynamic())
 {
     this->Reserve(this->GetSize() + InCount);
 
@@ -1679,7 +1679,7 @@ void TArrayBase<InAlloc>::Append(const T* InElements, const SizeType InCount) no
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::Append(const T* InElements, const T* InEnd) noexcept requires (Self::IsDynamic())
+void TArrayBaseOldv2<InAlloc>::Append(const T* InElements, const T* InEnd) noexcept requires (Self::IsDynamic())
 {
     check( InElements <= InEnd )
 
@@ -1699,7 +1699,7 @@ void TArrayBase<InAlloc>::Append(const T* InElements, const T* InEnd) noexcept r
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::Append(std::initializer_list<T> InElements) noexcept requires (Self::IsDynamic())
+void TArrayBaseOldv2<InAlloc>::Append(std::initializer_list<T> InElements) noexcept requires (Self::IsDynamic())
 {
     this->Reserve(this->GetSize() + InElements.size());
 
@@ -1717,7 +1717,7 @@ void TArrayBase<InAlloc>::Append(std::initializer_list<T> InElements) noexcept r
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::AppendAt(const SizeType InIndex, const Self& InOther) noexcept requires (Self::IsDynamic())
+void TArrayBaseOldv2<InAlloc>::AppendAt(const SizeType InIndex, const Self& InOther) noexcept requires (Self::IsDynamic())
 {
     if (InOther.IsEmpty())
     {
@@ -1750,7 +1750,7 @@ void TArrayBase<InAlloc>::AppendAt(const SizeType InIndex, const Self& InOther) 
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::AppendAt(const SizeType InIndex, Self&& InOther) noexcept requires (Self::IsDynamic())
+void TArrayBaseOldv2<InAlloc>::AppendAt(const SizeType InIndex, Self&& InOther) noexcept requires (Self::IsDynamic())
 {
     if (InOther.IsEmpty())
     {
@@ -1781,7 +1781,7 @@ void TArrayBase<InAlloc>::AppendAt(const SizeType InIndex, Self&& InOther) noexc
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::AppendAt(SizeType InIndex, const T* InElements, const SizeType InCount) noexcept requires (Self::IsDynamic())
+void TArrayBaseOldv2<InAlloc>::AppendAt(SizeType InIndex, const T* InElements, const SizeType InCount) noexcept requires (Self::IsDynamic())
 {
     if (InCount == 0)
     {
@@ -1813,7 +1813,7 @@ void TArrayBase<InAlloc>::AppendAt(SizeType InIndex, const T* InElements, const 
 }
 
 template<typename InAlloc>
-void TArrayBase<InAlloc>::AppendAt(const SizeType InIndex, std::initializer_list<T> InElements) noexcept requires (Self::IsDynamic())
+void TArrayBaseOldv2<InAlloc>::AppendAt(const SizeType InIndex, std::initializer_list<T> InElements) noexcept requires (Self::IsDynamic())
 {
     this->Reserve(this->GetSize() + InElements.size());
 
@@ -1841,7 +1841,7 @@ void TArrayBase<InAlloc>::AppendAt(const SizeType InIndex, std::initializer_list
 }
 
 template<typename InAlloc>
-FORCEINLINE void TArrayBase<InAlloc>::RemoveAt(const SizeType InIndex) noexcept requires (Self::IsDynamic())
+FORCEINLINE void TArrayBaseOldv2<InAlloc>::RemoveAt(const SizeType InIndex) noexcept requires (Self::IsDynamic())
 {
     JAFG_CHECK_ARRAY( this->IsValidIndex(InIndex) )
 
@@ -1868,7 +1868,7 @@ FORCEINLINE void TArrayBase<InAlloc>::RemoveAt(const SizeType InIndex) noexcept 
 }
 
 template<typename InAlloc>
-FORCEINLINE void TArrayBase<InAlloc>::RemoveAt(const SizeType InIndex, const SizeType InCount) noexcept requires (Self::IsDynamic())
+FORCEINLINE void TArrayBaseOldv2<InAlloc>::RemoveAt(const SizeType InIndex, const SizeType InCount) noexcept requires (Self::IsDynamic())
 {
     JAFG_CHECK_ARRAY( InCount > 0 && InIndex >= 0 && this->IsValidIndex(InIndex + InCount) )
 
@@ -1898,7 +1898,7 @@ FORCEINLINE void TArrayBase<InAlloc>::RemoveAt(const SizeType InIndex, const Siz
 }
 
 template<typename InAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Remove(const T& InElement) noexcept requires (Self::IsDynamic())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::Remove(const T& InElement) noexcept requires (Self::IsDynamic())
 {
     SizeType Removed = 0;
 
@@ -1921,7 +1921,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Remove(c
 }
 
 template<typename InAlloc>
-FORCEINLINE bool TArrayBase<InAlloc>::RemoveOnce(const T& InElement) noexcept requires (Self::IsDynamic())
+FORCEINLINE bool TArrayBaseOldv2<InAlloc>::RemoveOnce(const T& InElement) noexcept requires (Self::IsDynamic())
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -1939,7 +1939,7 @@ FORCEINLINE bool TArrayBase<InAlloc>::RemoveOnce(const T& InElement) noexcept re
 
 template<typename InAlloc>
 template<typename InOtherElement>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Remove(const InOtherElement& InElement) noexcept requires (Self::IsDynamic())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::Remove(const InOtherElement& InElement) noexcept requires (Self::IsDynamic())
 {
     SizeType Removed = 0;
 
@@ -1963,7 +1963,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Remove(c
 
 template<typename InAlloc>
 template<typename InOtherElement>
-FORCEINLINE bool TArrayBase<InAlloc>::RemoveOnce(const InOtherElement& InElement) noexcept requires (Self::IsDynamic())
+FORCEINLINE bool TArrayBaseOldv2<InAlloc>::RemoveOnce(const InOtherElement& InElement) noexcept requires (Self::IsDynamic())
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -1981,7 +1981,7 @@ FORCEINLINE bool TArrayBase<InAlloc>::RemoveOnce(const InOtherElement& InElement
 
 template<typename InAlloc>
 template<typename Predicate>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::RemoveByPredicate(const Predicate& InPredicate) noexcept requires (Self::IsDynamic())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::RemoveByPredicate(const Predicate& InPredicate) noexcept requires (Self::IsDynamic())
 {
     SizeType Removed = 0;
 
@@ -2005,7 +2005,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::RemoveBy
 
 template<typename InAlloc>
 template<typename Predicate>
-FORCEINLINE bool TArrayBase<InAlloc>::RemoveOnceByPredicate(const Predicate& InPredicate) noexcept requires (Self::IsDynamic())
+FORCEINLINE bool TArrayBaseOldv2<InAlloc>::RemoveOnceByPredicate(const Predicate& InPredicate) noexcept requires (Self::IsDynamic())
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2022,7 +2022,7 @@ FORCEINLINE bool TArrayBase<InAlloc>::RemoveOnceByPredicate(const Predicate& InP
 }
 
 template<typename InAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Find(const T& InElement, T** OutElement) noexcept requires (Self::IsContentMutable())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::Find(const T& InElement, T** OutElement) noexcept requires (Self::IsContentMutable())
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2043,7 +2043,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Find(con
 }
 
 template<typename InAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Find(const T& InElement, const T* const* OutElement) const noexcept
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::Find(const T& InElement, const T* const* OutElement) const noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2064,7 +2064,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Find(con
 }
 
 template<typename InAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Find(const T& InElement) const noexcept
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::Find(const T& InElement) const noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2081,29 +2081,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Find(con
 
 template<typename InAlloc>
 template<typename InOtherElement>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Find(const InOtherElement& InElement, T** OutElement) noexcept requires (Self::IsContentMutable())
-{
-    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
-    {
-        if (this->Impl.Data[Index] == InElement)
-        {
-            if (OutElement)
-            {
-                *OutElement = this->Impl.Data[Index];
-            }
-
-            return Index;
-        }
-
-        continue;
-    }
-
-    return INDEX_NONE;
-}
-
-template<typename InAlloc>
-template<typename InOtherElement>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Find(const InOtherElement& InElement, const T* const* OutElement) const noexcept
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::Find(const InOtherElement& InElement, T** OutElement) noexcept requires (Self::IsContentMutable())
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2125,7 +2103,29 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Find(con
 
 template<typename InAlloc>
 template<typename InOtherElement>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Find(const InOtherElement& InElement) const noexcept
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::Find(const InOtherElement& InElement, const T* const* OutElement) const noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            if (OutElement)
+            {
+                *OutElement = this->Impl.Data[Index];
+            }
+
+            return Index;
+        }
+
+        continue;
+    }
+
+    return INDEX_NONE;
+}
+
+template<typename InAlloc>
+template<typename InOtherElement>
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::Find(const InOtherElement& InElement) const noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2142,7 +2142,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Find(con
 
 template<typename InAlloc>
 template<typename Predicate>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::FindByPredicate(const Predicate& InPredicate, T** OutElement) noexcept requires (Self::IsContentMutable())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::FindByPredicate(const Predicate& InPredicate, T** OutElement) noexcept requires (Self::IsContentMutable())
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2164,7 +2164,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::FindByPr
 
 template<typename InAlloc>
 template<typename Predicate>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::FindByPredicate(const Predicate& InPredicate, const T* const* OutElement) const noexcept
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::FindByPredicate(const Predicate& InPredicate, const T* const* OutElement) const noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2186,7 +2186,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::FindByPr
 
 template<typename InAlloc>
 template<typename Predicate>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::FindByPredicate(const Predicate& InPredicate) const noexcept
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::FindByPredicate(const Predicate& InPredicate) const noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2202,7 +2202,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::FindByPr
 }
 
 template<typename InAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(const T& InElement, SizeType* OutIndex) noexcept requires (Self::IsContentMutable())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::FindRef(const T& InElement, SizeType* OutIndex) noexcept requires (Self::IsContentMutable())
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2223,7 +2223,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(const 
 }
 
 template<typename InAlloc>
-FORCEINLINE const typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(const T& InElement, SizeType* OutIndex) const noexcept
+FORCEINLINE const typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::FindRef(const T& InElement, SizeType* OutIndex) const noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2244,7 +2244,7 @@ FORCEINLINE const typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(
 }
 
 template<typename InAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(const T& InElement) noexcept requires (Self::IsContentMutable())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::FindRef(const T& InElement) noexcept requires (Self::IsContentMutable())
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2260,7 +2260,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(const 
 }
 
 template<typename InAlloc>
-FORCEINLINE const typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(const T& InElement) const noexcept
+FORCEINLINE const typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::FindRef(const T& InElement) const noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2277,29 +2277,7 @@ FORCEINLINE const typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(
 
 template<typename InAlloc>
 template<typename InOtherElement>
-FORCEINLINE typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(const InOtherElement& InElement, SizeType* OutIndex) noexcept requires (Self::IsContentMutable())
-{
-    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
-    {
-        if (this->Impl.Data[Index] == InElement)
-        {
-            if (OutIndex)
-            {
-                *OutIndex = Index;
-            }
-
-            return this->Impl.Data + Index;
-        }
-
-        continue;
-    }
-
-    return nullptr;
-}
-
-template<typename InAlloc>
-template<typename InOtherElement>
-FORCEINLINE const typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(const InOtherElement& InElement, SizeType* OutIndex) const noexcept
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::FindRef(const InOtherElement& InElement, SizeType* OutIndex) noexcept requires (Self::IsContentMutable())
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2321,7 +2299,29 @@ FORCEINLINE const typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(
 
 template<typename InAlloc>
 template<typename InOtherElement>
-FORCEINLINE typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(const InOtherElement& InElement) noexcept requires (Self::IsContentMutable())
+FORCEINLINE const typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::FindRef(const InOtherElement& InElement, SizeType* OutIndex) const noexcept
+{
+    for (SizeType Index = 0; Index < this->GetSize(); ++Index)
+    {
+        if (this->Impl.Data[Index] == InElement)
+        {
+            if (OutIndex)
+            {
+                *OutIndex = Index;
+            }
+
+            return this->Impl.Data + Index;
+        }
+
+        continue;
+    }
+
+    return nullptr;
+}
+
+template<typename InAlloc>
+template<typename InOtherElement>
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::FindRef(const InOtherElement& InElement) noexcept requires (Self::IsContentMutable())
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2338,7 +2338,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(const 
 
 template<typename InAlloc>
 template<typename InOtherElement>
-FORCEINLINE const typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(const InOtherElement& InElement) const noexcept
+FORCEINLINE const typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::FindRef(const InOtherElement& InElement) const noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2355,7 +2355,7 @@ FORCEINLINE const typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRef(
 
 template<typename InAlloc>
 template<typename Predicate>
-FORCEINLINE typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRefByPredicate(const Predicate& InPredicate, SizeType* OutIndex) noexcept requires (Self::IsContentMutable())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::FindRefByPredicate(const Predicate& InPredicate, SizeType* OutIndex) noexcept requires (Self::IsContentMutable())
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2377,7 +2377,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRefByPredi
 
 template<typename InAlloc>
 template<typename Predicate>
-FORCEINLINE const typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRefByPredicate(const Predicate& InPredicate, SizeType* OutIndex) const noexcept
+FORCEINLINE const typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::FindRefByPredicate(const Predicate& InPredicate, SizeType* OutIndex) const noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2399,7 +2399,7 @@ FORCEINLINE const typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRefB
 
 template<typename InAlloc>
 template<typename Predicate>
-FORCEINLINE typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRefByPredicate(const Predicate& InPredicate) noexcept requires (Self::IsContentMutable())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::FindRefByPredicate(const Predicate& InPredicate) noexcept requires (Self::IsContentMutable())
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2416,7 +2416,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRefByPredi
 
 template<typename InAlloc>
 template<typename Predicate>
-FORCEINLINE const typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRefByPredicate(const Predicate& InPredicate) const noexcept
+FORCEINLINE const typename TArrayBaseOldv2<InAlloc>::T* TArrayBaseOldv2<InAlloc>::FindRefByPredicate(const Predicate& InPredicate) const noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2432,7 +2432,7 @@ FORCEINLINE const typename TArrayBase<InAlloc>::T* TArrayBase<InAlloc>::FindRefB
 }
 
 template<typename InAlloc>
-FORCEINLINE bool TArrayBase<InAlloc>::Contains(const T& InElement) const noexcept
+FORCEINLINE bool TArrayBaseOldv2<InAlloc>::Contains(const T& InElement) const noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2449,7 +2449,7 @@ FORCEINLINE bool TArrayBase<InAlloc>::Contains(const T& InElement) const noexcep
 
 template<typename InAlloc>
 template<typename InOtherElement>
-FORCEINLINE bool TArrayBase<InAlloc>::Contains(const InOtherElement& InElement) const noexcept
+FORCEINLINE bool TArrayBaseOldv2<InAlloc>::Contains(const InOtherElement& InElement) const noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2466,7 +2466,7 @@ FORCEINLINE bool TArrayBase<InAlloc>::Contains(const InOtherElement& InElement) 
 
 template<typename InAlloc>
 template<typename Predicate>
-FORCEINLINE bool TArrayBase<InAlloc>::ContainsByPredicate(const Predicate& InPredicate) const noexcept
+FORCEINLINE bool TArrayBaseOldv2<InAlloc>::ContainsByPredicate(const Predicate& InPredicate) const noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2483,7 +2483,7 @@ FORCEINLINE bool TArrayBase<InAlloc>::ContainsByPredicate(const Predicate& InPre
 
 template<typename InAlloc>
 template<typename Predicate>
-FORCEINLINE void TArrayBase<InAlloc>::ForEach(const Predicate& InPredicate) noexcept requires (Self::IsContentMutable())
+FORCEINLINE void TArrayBaseOldv2<InAlloc>::ForEach(const Predicate& InPredicate) noexcept requires (Self::IsContentMutable())
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2495,7 +2495,7 @@ FORCEINLINE void TArrayBase<InAlloc>::ForEach(const Predicate& InPredicate) noex
 
 template<typename InAlloc>
 template<typename Predicate>
-FORCEINLINE void TArrayBase<InAlloc>::ForEach(const Predicate& InPredicate) const noexcept
+FORCEINLINE void TArrayBaseOldv2<InAlloc>::ForEach(const Predicate& InPredicate) const noexcept
 {
     for (SizeType Index = 0; Index < this->GetSize(); ++Index)
     {
@@ -2506,7 +2506,7 @@ FORCEINLINE void TArrayBase<InAlloc>::ForEach(const Predicate& InPredicate) cons
 }
 
 template<typename InAlloc>
-FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Replace(const T& InElement, const T& InReplacement) noexcept requires (Self::IsContentMutable())
+FORCEINLINE typename TArrayBaseOldv2<InAlloc>::SizeType TArrayBaseOldv2<InAlloc>::Replace(const T& InElement, const T& InReplacement) noexcept requires (Self::IsContentMutable())
 {
     SizeType Replaced = 0;
     this->ForEach([&Replaced, &InElement, &InReplacement](T& InValue)
@@ -2524,7 +2524,7 @@ FORCEINLINE typename TArrayBase<InAlloc>::SizeType TArrayBase<InAlloc>::Replace(
 }
 
 template<typename InAlloc>
-FORCEINLINE bool TArrayBase<InAlloc>::Pop() noexcept requires (Self::IsDynamic())
+FORCEINLINE bool TArrayBaseOldv2<InAlloc>::Pop() noexcept requires (Self::IsDynamic())
 {
     if (this->GetSize() > 0)
     {
@@ -2537,7 +2537,7 @@ FORCEINLINE bool TArrayBase<InAlloc>::Pop() noexcept requires (Self::IsDynamic()
 }
 
 template<typename InAlloc>
-FORCEINLINE void TArrayBase<InAlloc>::Pop(SizeType InCount) noexcept requires (Self::IsDynamic())
+FORCEINLINE void TArrayBaseOldv2<InAlloc>::Pop(SizeType InCount) noexcept requires (Self::IsDynamic())
 {
     while (this->GetSize() > 0 && InCount > 0)
     {
@@ -2552,7 +2552,7 @@ FORCEINLINE void TArrayBase<InAlloc>::Pop(SizeType InCount) noexcept requires (S
 }
 
 template<typename InAlloc>
-FORCEINLINE void TArrayBase<InAlloc>::DestroyAt(const SizeType InIndex) noexcept requires (Self::IsDynamic())
+FORCEINLINE void TArrayBaseOldv2<InAlloc>::DestroyAt(const SizeType InIndex) noexcept requires (Self::IsDynamic())
 {
     JAFG_CHECK_ARRAY( this->IsValidIndex(InIndex) )
     this->Impl.Data[InIndex].~T();
@@ -2560,7 +2560,7 @@ FORCEINLINE void TArrayBase<InAlloc>::DestroyAt(const SizeType InIndex) noexcept
 }
 
 template<typename InAlloc>
-FORCEINLINE void TArrayBase<InAlloc>::DestroyAt(T* InAddress) noexcept requires (Self::IsDynamic())
+FORCEINLINE void TArrayBaseOldv2<InAlloc>::DestroyAt(T* InAddress) noexcept requires (Self::IsDynamic())
 {
     JAFG_CHECK_ARRAY( InAddress >= this->Impl.Data && InAddress < this->Impl.Slack )
     InAddress->~T();

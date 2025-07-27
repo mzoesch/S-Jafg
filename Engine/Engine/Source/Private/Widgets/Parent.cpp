@@ -307,7 +307,7 @@ Jafg::LWidgetSlot* Jafg::WParent::AddChild(WNode* InChild)
     check( this->GetChildren().FindByPredicate([InChild](const LWidgetSlot* InSlot) -> bool
     {
         return InSlot->Content == InChild;
-    }) == INDEX_NONE )
+    }) == this->GetChildren().end() )
 
     check( InChild )
     LWidgetSlot* NewChildSlot = new LWidgetSlot(this, InChild);

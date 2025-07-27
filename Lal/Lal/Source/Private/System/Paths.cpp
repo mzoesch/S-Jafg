@@ -83,7 +83,7 @@ TArray<u8> Paths::ReadFileAsBinary(const LPath& InFilePath)
 
     File.seekg(0, std::ios::beg);
 
-    if (File.read(reinterpret_cast<char*>(Buffer.GetData()), Buffer.GetSize()).fail())
+    if (File.read(reinterpret_cast<char*>(Buffer.GetDataPointer()), Buffer.GetSize()).fail())
     {
         File.close();
         panicMsgf("Failed to read file at [{}].", InFilePath)

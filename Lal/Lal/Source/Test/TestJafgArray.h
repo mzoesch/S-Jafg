@@ -8,7 +8,7 @@ TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
 {
     using namespace Jafg;
 
-    TArray<i32> Arr1;
+    TArrayOldv2<i32> Arr1;
     CHECK_EQUALS( "Array with zero size.", Arr1.GetSize(),              0 )
     CHECK_EQUALS( "Array with zero size.", Arr1.GetCapacity(),          0 )
     CHECK_EQUALS( "Array with zero size.", Arr1.GetData(),        nullptr )
@@ -72,7 +72,7 @@ TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
     CHECK_EQUALS( "Array with std::initializer_list.", Arr1[3],           103 )
     CHECK_EQUALS( "Array with std::initializer_list.", Arr1[4],           104 )
 
-    TArray<i32> Arr2 = { 200, 201, 202, 203, 204 };
+    TArrayOldv2<i32> Arr2 = { 200, 201, 202, 203, 204 };
     CHECK_EQUALS( "Array with std::initializer_list.", Arr2.GetSize(),   5 )
     CHECK_EQUALS( "Array with std::initializer_list.", Arr2[0],        200 )
     CHECK_EQUALS( "Array with std::initializer_list.", Arr2[1],        201 )
@@ -297,7 +297,7 @@ TEST_CASE(SemanticsArray, "Lal.Containers")
         FORCEINLINE  S& operator=(S&&) noexcept { ++Move; return *this; }
     };
 
-    TArray<S> Arr1;
+    TArrayOldv2<S> Arr1;
     QUICK_CHECK_EQUALS(Ctor,                0ll)
     QUICK_CHECK_EQUALS(Dtor,                0ll)
     QUICK_CHECK_EQUALS(Copy,                0ll)
@@ -345,7 +345,7 @@ TEST_CASE(SemanticsArray, "Lal.Containers")
     QUICK_CHECK_EQUALS(Copy,                0ll)
     QUICK_CHECK_EQUALS(Move,                0ll)
 
-    TArray<S> Arr2 = { S(), S(), S(), S(), S() };
+    TArrayOldv2<S> Arr2 = { S(), S(), S(), S(), S() };
     QUICK_CHECK_EQUALS(Arr2.GetSize(),      5)
     QUICK_CHECK_EQUALS(Ctor,               16ll)
     QUICK_CHECK_EQUALS(Dtor,               18ll)
@@ -407,7 +407,7 @@ TEST_CASE(CapacityArray, "Lal.Containers")
 {
     using namespace Jafg;
 
-    TArray<i32> Arr;
+    TArrayOldv2<i32> Arr;
     CHECK_EQUALS( "Array with zero size.", Arr.GetSize(),              0 )
     CHECK_EQUALS( "Array with zero size.", Arr.GetCapacity(),          0 )
     CHECK_EQUALS( "Array with zero size.", Arr.GetData(),        nullptr )
@@ -462,9 +462,9 @@ TEST_CASE(ViewArray, "Lal.Containers")
 {
     using namespace Jafg;
 
-    TArray<i32> Arr;
+    TArrayOldv2<i32> Arr;
     QUICK_CHECK_EQUALS(Arr.GetSize(),           0 )
-    TArrayView<i32> ArrView = Arr;
+    TArrayViewOldv2<i32> ArrView = Arr;
     QUICK_CHECK_EQUALS(ArrView.GetSize(),       0 )
     Arr.Append({10, 5, 3, 2, 1});
     QUICK_CHECK_EQUALS(Arr.GetSize(),           5 )
@@ -490,7 +490,7 @@ TEST_CASE(ViewArray, "Lal.Containers")
     QUICK_CHECK_EQUALS(Arr[3],                 2 )
     QUICK_CHECK_EQUALS(Arr[4],               500 )
 
-    TArrayView<i32> ArrView2 = ArrView;
+    TArrayViewOldv2<i32> ArrView2 = ArrView;
     QUICK_CHECK_EQUALS(ArrView2.GetSize(),      5 )
     QUICK_CHECK_EQUALS(ArrView2[0],           100 )
     QUICK_CHECK_EQUALS(ArrView2[1],             5 )
@@ -677,9 +677,9 @@ TEST_CASE(MutableViewArray, "Lal.Containers")
 {
     using namespace Jafg;
 
-    TArray<i32> Arr;
+    TArrayOldv2<i32> Arr;
     QUICK_CHECK_EQUALS(Arr.GetSize(),           0 )
-    TMutableArrayView<i32> ArrView = Arr;
+    TMutableArrayViewOldv2<i32> ArrView = Arr;
     QUICK_CHECK_EQUALS(ArrView.GetSize(),       0 )
     Arr.Append({10, 5, 3, 2, 1});
     QUICK_CHECK_EQUALS(Arr.GetSize(),           5 )
@@ -705,7 +705,7 @@ TEST_CASE(MutableViewArray, "Lal.Containers")
     QUICK_CHECK_EQUALS(Arr[3],                 2 )
     QUICK_CHECK_EQUALS(Arr[4],               500 )
 
-    TMutableArrayView<i32> ArrView2 = ArrView;
+    TMutableArrayViewOldv2<i32> ArrView2 = ArrView;
     QUICK_CHECK_EQUALS(ArrView2.GetSize(),      5 )
     QUICK_CHECK_EQUALS(ArrView2[0],           100 )
     QUICK_CHECK_EQUALS(ArrView2[1],             5 )

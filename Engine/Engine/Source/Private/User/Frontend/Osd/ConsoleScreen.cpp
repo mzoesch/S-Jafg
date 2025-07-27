@@ -373,7 +373,7 @@ void Jafg::WConsoleScreen::GoHistoryBack()
 
     const TArray<LString>& DefaultHistory = GetDefault<WConsoleScreen>()->History;
 
-    this->HistoryCursor = Maths::Clamp(this->HistoryCursor + 1, static_cast<i32>(INDEX_NONE), DefaultHistory.GetSize() - 1);
+    this->HistoryCursor = Maths::Clamp(this->HistoryCursor + 1, static_cast<i32>(INDEX_NONE), static_cast<i32>(DefaultHistory.GetSize()) - 1);
 
     if (this->HistoryCursor == INDEX_NONE || this->HistoryCursor == LastHistoryCursor)
     {
@@ -393,7 +393,7 @@ void Jafg::WConsoleScreen::GoHistoryForward()
 {
     const i32 LastHistoryCursor = this->HistoryCursor;
 
-    this->HistoryCursor = Maths::Clamp(this->HistoryCursor - 1, static_cast<i32>(INDEX_NONE), GetDefault<WConsoleScreen>()->History.GetSize() - 1);
+    this->HistoryCursor = Maths::Clamp(this->HistoryCursor - 1, static_cast<i32>(INDEX_NONE), static_cast<i32>(GetDefault<WConsoleScreen>()->History.GetSize()) - 1);
 
     if (this->HistoryCursor == INDEX_NONE || this->HistoryCursor == LastHistoryCursor)
     {
@@ -449,7 +449,7 @@ void Jafg::WConsoleScreen::AddNewMessage(const LString& InText, const bool bSwit
             .Brush(LTextBoxBrush::Body())
         FinishWidget(PreviewMessage);
         this->ConsolePreview->AddChild(PreviewMessage);
-        if (this->ConsolePreview->GetChildren().GetSize() > static_cast<i32>(GetMaxPreviewLines()))
+        if (this->ConsolePreview->GetChildren().GetSize() > GetMaxPreviewLines())
         {
             this->ConsolePreview->RemoveChildAt(0);
         }
@@ -654,7 +654,7 @@ void Jafg::WConsoleScreen::OnTextChanged(const LString& NewContent)
 
 void Jafg::WConsoleScreen::ShredOutdatedPreviewMessages()
 {
-    for (i32 Idx { 0 }; Idx < this->PreviewMessages.GetSize();)
+    for (TArray<LPreviewMessage>::SizeType Idx { 0 }; Idx < this->PreviewMessages.GetSize();)
     {
         if
         (
@@ -788,7 +788,7 @@ void Jafg::WConsoleScreen::PrepareIntellisense(const LString& NewContent)
 
         for (const LCliCommand& CliCommand : Cli->GetCommands())
         {
-            if (Predictions.GetSize() >= static_cast<i32>(this->GetMaxIntellisensePredictions()))
+            if (Predictions.GetSize() >= this->GetMaxIntellisensePredictions())
             {
                 break;
             }
@@ -963,12 +963,12 @@ void Jafg::WConsoleScreen::UpdateIntellisensePredictionsColors()
 bool Jafg::WConsoleScreen::TryGoIntellisensePredictionUp()
 {
     LString* CurPrediction { &this->CurrentIntellisensePrediction };
-    const i32 CurIdx { this->IntellisensePredictions->GetChildren().FindByPredicate([CurPrediction](const LWidgetSlot* InWidgetSlot) -> bool
+    const TArray<LWidgetSlot*>::SizeType CurIdx { this->IntellisensePredictions->GetChildren().FindIndexByPredicate([CurPrediction](const LWidgetSlot* InWidgetSlot) -> bool
     {
         return InWidgetSlot->Content->AsStatic<WTextBox>()->GetContent() == *CurPrediction;
     })};
 
-    if (CurIdx != INDEX_NONE)
+    if (CurIdx != this->IntellisensePredictions->GetChildren().end_idx())
     {
         if (CurIdx > 0)
         {
@@ -988,12 +988,12 @@ bool Jafg::WConsoleScreen::TryGoIntellisensePredictionUp()
 bool Jafg::WConsoleScreen::TryGoIntellisensePredictionDown()
 {
     LString* CurPrediction { &this->CurrentIntellisensePrediction };
-    const i32 CurIdx { this->IntellisensePredictions->GetChildren().FindByPredicate([CurPrediction](const LWidgetSlot* InWidgetSlot) -> bool
+    const TArray<LWidgetSlot*>::SizeType CurIdx { this->IntellisensePredictions->GetChildren().FindIndexByPredicate([CurPrediction](const LWidgetSlot* InWidgetSlot) -> bool
     {
         return InWidgetSlot->Content->AsStatic<WTextBox>()->GetContent() == *CurPrediction;
     })};
 
-    if (CurIdx != INDEX_NONE)
+    if (CurIdx != this->IntellisensePredictions->GetChildren().end_idx())
     {
         if (CurIdx < this->IntellisensePredictions->GetChildren().GetSize() - 1)
         {
@@ -1037,12 +1037,12 @@ void Jafg::WConsoleScreen::ApplyCurrentIntellisensePrediction()
 Jafg::LCliCommand* Jafg::WConsoleScreen::GetCurrentHighlightedIntellisenseCommand()
 {
     LString* CurPrediction { &this->CurrentIntellisensePrediction };
-    const i32 CurIdx { this->IntellisensePredictions->GetChildren().FindByPredicate([CurPrediction](const LWidgetSlot* InWidgetSlot) -> bool
+    const TArray<LWidgetSlot*>::SizeType CurIdx { this->IntellisensePredictions->GetChildren().FindIndexByPredicate([CurPrediction](const LWidgetSlot* InWidgetSlot) -> bool
     {
         return InWidgetSlot->Content->AsStatic<WTextBox>()->GetContent() == *CurPrediction;
     })};
 
-    if (CurIdx == INDEX_NONE)
+    if (CurIdx == this->IntellisensePredictions->GetChildren().end_idx())
     {
         return nullptr;
     }

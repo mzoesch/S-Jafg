@@ -168,7 +168,7 @@ bool Jafg::LUserInput::PopContexts()
     return bRet;
 }
 
-Jafg::TArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
+TArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
 {
     TArray<LRawInput> TriggeredKeys;
 
@@ -185,12 +185,12 @@ Jafg::TArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
     return TriggeredKeys;
 }
 
-const Jafg::TArray<Jafg::LRawInput>& Jafg::LUserInput::GetOngoingKeys() const
+const TArray<Jafg::LRawInput>& Jafg::LUserInput::GetOngoingKeys() const
 {
     return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys();
 }
 
-Jafg::TArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
+TArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
 {
     TArray<LRawInput> CompletedKeys;
 
@@ -213,7 +213,7 @@ bool Jafg::LUserInput::HasBufferedPlatformInput() const
     return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->HasBufferedPlatformInput();
 }
 
-const Jafg::TArray<Jafg::LString>& Jafg::LUserInput::GetBufferedPlatformInput() const
+const TArray<Jafg::LString>& Jafg::LUserInput::GetBufferedPlatformInput() const
 {
     check( this->GetLocalEgo()->GetUserInput() == this )
     return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetBufferedPlatformInput();
@@ -242,9 +242,9 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(TArray<LRawInput>* I
 
                 LInputActionValue Value = MappedAction.Action->GetCategory();
 
-                for (i32 i = 0; i < InRawInputs->GetSize();)
+                for (TArray<LRawInput>::SizeType Idx { 0 }; Idx < InRawInputs->GetSize();)
                 {
-                    const LRawInput& RawInput = (*InRawInputs)[i];
+                    const LRawInput& RawInput = (*InRawInputs)[Idx];
 
                     LInputActionValue::Axis3D Magnitude;
 
@@ -252,7 +252,7 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(TArray<LRawInput>* I
                     {
                         if (Trigger.Keys.Contains(EKeys::MouseXY) == false)
                         {
-                            ++i;
+                            ++Idx;
                             continue;
                         }
 
@@ -266,7 +266,7 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(TArray<LRawInput>* I
                         }
                         else
                         {
-                            ++i;
+                            ++Idx;
                             continue;
                         }
                     }
@@ -281,7 +281,7 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(TArray<LRawInput>* I
                     }
                     Value += Magnitude;
 
-                    InRawInputs->RemoveAt(i);
+                    InRawInputs->RemoveAt(Idx);
 
                     continue;
                 }

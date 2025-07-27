@@ -61,9 +61,9 @@ FunctionEnd:
     (
         check( static_cast<i32>(Out.GetSize()) == PredictedOutChunkCount )
 
-        for (i32 i = 0; i < Out.GetSize(); ++i)
+        for (TArray<LIntVector2>::SizeType i { 0 }; i < Out.GetSize(); ++i)
         {
-            for (i32 j = i + 1; j < Out.GetSize(); ++j)
+            for (TArray<LIntVector2>::SizeType j { i + 1 }; j < Out.GetSize(); ++j)
             {
                 check( Out[i] != Out[j] )
             }

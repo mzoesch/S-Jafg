@@ -98,7 +98,7 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, r
         return;
     }
 
-    i32 Index;
+    TArray<LAddedTabBarTab>::SizeType Index;
     if (InTabDescriptor.AddAfterField.IsEmpty())
     {
         this->TabsInOrder.Add(LAddedTabBarTab({.Identifier = InTabDescriptor.IdentifierField}));
@@ -107,11 +107,11 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, r
     else
     {
         const LString* const AddAfterPtr = &InTabDescriptor.AddAfterField;
-        Index = this->TabsInOrder.FindByPredicate([AddAfterPtr](const LAddedTabBarTab& Tab)
+        Index = this->TabsInOrder.FindIndexByPredicate([AddAfterPtr](const LAddedTabBarTab& Tab)
         {
             return Tab.Identifier == *AddAfterPtr;
         });
-        check( Index != INDEX_NONE )
+        check( Index != this->TabsInOrder.end_idx() )
         ++Index;
         LAddedTabBarTab AddedTab;
         AddedTab.Identifier = InTabDescriptor.IdentifierField;
@@ -191,8 +191,8 @@ void Jafg::WTabBar::ResetToDefault()
 
 void Jafg::WTabBar::ActivateTab(const LString& Identifier)
 {
-    i32 Idx;
-    for (Idx = 0; Idx < this->TabsInOrder.GetSize(); ++Idx)
+    TArray<LAddedTabBarTab>::SizeType Idx { 0 };
+    for (; Idx < this->TabsInOrder.GetSize(); ++Idx)
     {
         if (this->TabsInOrder[Idx].Identifier == Identifier)
         {
@@ -349,10 +349,10 @@ const Jafg::WTabBar::LAddedTabBarTab* Jafg::WTabBar::GetCurrentlyFocusedTab() co
 {
     if (this->CurrentlyFocusedTab)
     {
-        if (const i32 Idx= this->TabsInOrder.FindByPredicate([this](const LAddedTabBarTab& Tab)
+        if (const TArray<LAddedTabBarTab>::SizeType Idx { this->TabsInOrder.FindIndexByPredicate([this](const LAddedTabBarTab& Tab)
         {
             return Tab.Button == this->CurrentlyFocusedTab;
-        }); Idx != INDEX_NONE)
+        })}; Idx != this->TabsInOrder.end_idx())
         {
             return &this->TabsInOrder[Idx];
         }

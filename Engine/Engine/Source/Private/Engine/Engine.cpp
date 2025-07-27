@@ -93,10 +93,10 @@ void Jafg::LEngine::Initialize()
                 return false;
             }
 
-            const bool bValid { GEngine->GetContexts().FindByPredicate([Args, Cursor](const Private::LWorldContext& InContext) -> bool
+            const bool bValid { GEngine->GetContexts().FindIndexByPredicate([Args, Cursor](const Private::LWorldContext& InContext) -> bool
             {
                 return InContext.ChildWorld->GetHumanReadableName() == Args[*Cursor].Name;
-            }) != INDEX_NONE };
+            }) != GEngine->GetContexts().end_idx() };
             if (bValid)
             {
                 ++*Cursor;
@@ -105,7 +105,7 @@ void Jafg::LEngine::Initialize()
             return bValid;
         },
         nullptr,
-        [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+        [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
         {
             const LCommandArgs* Target { nullptr };
 
@@ -168,7 +168,7 @@ void Jafg::LEngine::Initialize()
                 return true;
             },
             nullptr,
-            [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+            [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
             {
                 if (Args.SubArgs.IsValidIndex(Cursor - 1) == false)
                 {
@@ -450,12 +450,12 @@ void Jafg::LEngine::TearDown()
     {
         LOG_VERBOSE(LogForeign, "There are [{}] loaded plugins. Unloading them now.", this->LoadedPlugins.GetSize())
 
-        for (i32 i = 0; i < this->LoadedPlugins.GetSize(); ++i)
+        for (TArray<LLoadedPlugin>::SizeType Idx { 0 }; Idx < this->LoadedPlugins.GetSize(); ++Idx)
         {
-            const LString CachedIdentifier = this->LoadedPlugins[i].GetIdentifier();
+            const LString CachedIdentifier = this->LoadedPlugins[Idx].GetIdentifier();
             if
             (
-                const EPluginLoadReturnCode::Type Rc = this->UnLoadPlugin(&this->LoadedPlugins[i], EPluginShutdownReason::EngineTearDown);
+                const EPluginLoadReturnCode::Type Rc = this->UnLoadPlugin(&this->LoadedPlugins[Idx], EPluginShutdownReason::EngineTearDown);
                 Rc != EPluginLoadReturnCode::Success
             )
             {
@@ -581,7 +581,7 @@ Jafg::LWorldStorage Jafg::LEngine::SummonWorld(const LString& HumanReadableName)
 
 bool Jafg::LEngine::IsWorldValid(const LWorld* InWorld) const
 {
-    return this->Contexts.FindByPredicate([InWorld](const Private::LWorldContext& Context) -> bool
+    return this->Contexts.ContainsByPredicate([InWorld](const Private::LWorldContext& Context) -> bool
     {
         if (Context.ChildWorld == InWorld)
         {

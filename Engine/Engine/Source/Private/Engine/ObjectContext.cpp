@@ -99,9 +99,9 @@ void Jafg::LObjectContext::SeparateAndKillEmployees(const LLoadedPluginHandle In
         {
             bTouched = false;
 
-            for (i32 i = 0; i < this->Employees.GetSize(); ++i)
+            for (TArray<JObjectBase*>::SizeType Idx { 0 }; Idx < this->Employees.GetSize(); ++Idx)
             {
-                if (const LObjectClass* Class = this->Employees[i]->GetVTable(); Class)
+                if (const LObjectClass* Class = this->Employees[Idx]->GetVTable(); Class)
                 {
                     if (Class->GetPluginHandle() != InPluginHandle)
                     {
@@ -110,8 +110,8 @@ void Jafg::LObjectContext::SeparateAndKillEmployees(const LLoadedPluginHandle In
 
                     bTouched = true;
                     ++Removed;
-                    this->Employees[i]->MarkAsGarbage();
-                    this->Employees.RemoveAt(i);
+                    this->Employees[Idx]->MarkAsGarbage();
+                    this->Employees.RemoveAt(Idx);
                     break;
                 }
 

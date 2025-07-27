@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "CoreAfx.h"
-
 #ifndef LAL_CHECK_ARRAY
     #if LAL_CHECK_CONTAINER_BOUNDS
         #define LAL_CHECK_ARRAY(Expr)                                   jassert( Expr )
@@ -1579,7 +1577,7 @@ struct TArrayBaseMutableDefaultAllocatorStrongImpl : public TArrayBaseMutableDef
 
     template <typename U>
     FORCEINLINE constexpr TArrayBaseMutableDefaultAllocatorStrongImpl(const std::initializer_list<U> List) noexcept
-        requires(std::constructible_from<T, const U&>)
+        requires(std::is_constructible_v<T, const U&>)
     {
         if (LAL_LIKELY(List.size() > 0))
         {
@@ -1606,7 +1604,7 @@ struct TArrayBaseMutableDefaultAllocatorStrongImpl : public TArrayBaseMutableDef
 
     template <typename U>
     FORCEINLINE constexpr TArrayBaseMutableDefaultAllocatorStrongImpl& operator=(const std::initializer_list<U> List) noexcept
-        requires(std::constructible_from<T, const U&>)
+        requires(std::is_constructible_v<T, const U&>)
     {
         LAL_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&List) )
 
@@ -1632,7 +1630,7 @@ struct TArrayBaseMutableDefaultAllocatorStrongImpl : public TArrayBaseMutableDef
         return *this;
     }
 
-    FORCEINLINE ~TArrayBaseMutableDefaultAllocatorStrongImpl() noexcept(std::is_nothrow_destructible_v<T>)
+    FORCEINLINE ~TArrayBaseMutableDefaultAllocatorStrongImpl() noexcept
     {
         this->OrphanImpl();
         return;
@@ -1725,13 +1723,32 @@ struct TArrayBaseMutableDefaultAllocatorStrongImpl : public TArrayBaseMutableDef
     //#
     //# Destructs all elements and orphans the current allocator.
     //#
-    FORCEINLINE void Orphan() noexcept(std::is_nothrow_destructible_v<T>)
+    FORCEINLINE void Orphan() noexcept
     {
         this->OrphanImpl();
 
         this->Data = nullptr;
         this->Slack = nullptr;
         this->End = nullptr;
+
+        return;
+    }
+
+    FORCEINLINE void SwapBuffers(TArrayBaseMutableDefaultAllocatorStrongImpl* Other) noexcept
+    {
+        LAL_CHECK_ARRAY( this != Other )
+
+        Pointer TempData  { this->Data };
+        Pointer TempSlack { this->Slack };
+        Pointer TempEnd   { this->End };
+
+        this->Data  = Other->Data;
+        this->Slack = Other->Slack;
+        this->End   = Other->End;
+
+        Other->Data  = TempData;
+        Other->Slack = TempSlack;
+        Other->End   = TempEnd;
 
         return;
     }
@@ -2585,7 +2602,7 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
             /* Assume that the using developer is not a JavaScript coder... */
             if (LAL_UNLIKELY(Used > _Super::SizeCapacity))
             {
-                LOG_FATAL(LogLowLevel,
+                PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel,
                     "Array overflow: Tried to allocate more elements than the array can hold; Capacity [{}], Allocated [{}].",
                     _Super::SizeCapacity, Used
                     )
@@ -2654,7 +2671,7 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
         {
             if (Used > _Super::SizeCapacity)
             {
-                LOG_FATAL(LogLowLevel,
+                PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel,
                     "Array overflow: Tried to allocate more elements than the array can hold; Capacity [{}], Allocated [{}].",
                     _Super::SizeCapacity, Used
                     )
@@ -2706,7 +2723,7 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
 
     template <typename U>
     FORCEINLINE explicit constexpr TArrayBaseMutableDefaultFixedAllocatorWeakImpl(const std::initializer_list<U> List) noexcept
-        requires(std::constructible_from<T, const U&>)
+        requires(std::is_constructible_v<T, const U&>)
     {
         if (LAL_LIKELY(List.size() > 0))
         {
@@ -2717,9 +2734,10 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
                 /* Assume that the using developer is not a vibe coder... */
                 if (LAL_UNLIKELY(this->Slack >= this->End))
                 {
-                    LOG_FATAL(LogLowLevel,
+                    const SizeType ListSize { static_cast<SizeType>(List.size()) };
+                    PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel,
                         "Array overflow: Tried to add more elements than the array can hold; Capacity [{}], std::initializer_list [{}].",
-                        _Super::SizeCapacity, List.size()
+                        _Super::SizeCapacity, ListSize
                         )
                 }
 
@@ -2738,7 +2756,7 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
 
     template <typename U>
     FORCEINLINE constexpr TArrayBaseMutableDefaultFixedAllocatorWeakImpl& operator=(const std::initializer_list<U> List) noexcept
-        requires(std::constructible_from<T, const U&>)
+        requires(std::is_constructible_v<T, const U&>)
     {
         LAL_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&List) )
 
@@ -2758,9 +2776,10 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
                 /* Assume that the using developer is not a vibe coder... */
                 if (LAL_UNLIKELY(this->Slack >= this->End))
                 {
-                    LOG_FATAL(LogLowLevel,
+                    const SizeType ListSize { static_cast<SizeType>(List.size()) };
+                    PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel,
                         "Array overflow: Tried to add more elements than the array can hold; Capacity [{}], std::initializer_list [{}].",
-                        _Super::SizeCapacity, List.size()
+                        _Super::SizeCapacity, ListSize
                         )
 
                     break;
@@ -2779,7 +2798,7 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
         return *this;
     }
 
-    FORCEINLINE ~TArrayBaseMutableDefaultFixedAllocatorWeakImpl() noexcept(std::is_nothrow_destructible_v<T>)
+    FORCEINLINE ~TArrayBaseMutableDefaultFixedAllocatorWeakImpl() noexcept
     {
         this->OrphanImpl();
         return;
@@ -2799,7 +2818,7 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
         }
         else
         {
-            LOG_FATAL(LogLowLevel, "Array overflow: Tried to grow a fixed array that is already allocated; Capacity [{}].", _Super::SizeCapacity)
+            PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel, "Array overflow: Tried to grow a fixed array that is already allocated; Capacity [{}].", _Super::SizeCapacity)
         }
 
         return;
@@ -2808,7 +2827,7 @@ struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl : public TArrayBaseMutable
     //#
     //# Destructs all elements and orphans the current allocator.
     //#
-    FORCEINLINE void Orphan() noexcept(std::is_nothrow_destructible_v<T>)
+    FORCEINLINE void Orphan() noexcept
     {
         this->OrphanImpl();
         this->_ResetToDefaultState();
@@ -2992,7 +3011,7 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
 
         if (Used > _Super::SizeCapacity)
         {
-            LOG_FATAL(LogLowLevel,
+            PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel,
                 "Array overflow: Stack allocated array has reached its capacity; Capacity [{}], Allocated [{}].",
                 _Super::SizeCapacity, Used
                 )
@@ -3034,7 +3053,7 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
 
         if (Used > _Super::SizeCapacity)
         {
-            LOG_FATAL(LogLowLevel,
+            PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel,
                 "Array overflow: Stack allocated array has reached its capacity; Capacity [{}], Allocated [{}].",
                 _Super::SizeCapacity, Used
                 )
@@ -3076,7 +3095,7 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
 
         if (Used > _Super::SizeCapacity)
         {
-            LOG_FATAL(LogLowLevel,
+            PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel,
                 "Array overflow: Stack allocated array has reached its capacity; Capacity [{}], Allocated [{}].",
                 _Super::SizeCapacity, Used
                 )
@@ -3112,7 +3131,7 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
 
     template <typename U>
     FORCEINLINE explicit TArrayBaseMutableDefaultStackAllocatorWeakImpl(const std::initializer_list<U> List) noexcept
-        requires(std::constructible_from<T, const U&>)
+        requires(std::is_constructible_v<T, const U&>)
         : TArrayBaseMutableDefaultStackAllocatorWeakImpl{}
     {
         LAL_CHECK_ARRAY( this->Data != nullptr )
@@ -3122,9 +3141,10 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
             /* Assume that the using developer has a brain... */
             if (LAL_UNLIKELY(this->Slack >= this->End))
             {
-                LOG_FATAL(LogLowLevel,
+                const SizeType ListSize { static_cast<SizeType>(List.size()) };
+                PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel,
                     "Array overflow: Tried to add more elements than the array can hold: Capacity [{}], std::initializer_list [{}].",
-                    _Super::SizeCapacity, List.size()
+                    _Super::SizeCapacity, ListSize
                     )
 
                 break;
@@ -3140,7 +3160,7 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
 
     template <typename U>
     FORCEINLINE TArrayBaseMutableDefaultStackAllocatorWeakImpl& operator=(const std::initializer_list<U> List) noexcept
-        requires(std::constructible_from<T, const U&>)
+        requires(std::is_constructible_v<T, const U&>)
     {
         LAL_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&List) )
 
@@ -3151,9 +3171,10 @@ struct TArrayBaseMutableDefaultStackAllocatorWeakImpl : public TArrayBaseMutable
             /* Assume that the using developer has a brain... */
             if (LAL_UNLIKELY(this->Slack >= this->End))
             {
-                LOG_FATAL(LogLowLevel,
+                const SizeType ListSize { static_cast<SizeType>(List.size()) };
+                PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel,
                     "Array overflow: Tried to add more elements than the array can hold: Capacity [{}], std::initializer_list [{}].",
-                    _Super::SizeCapacity, List.size()
+                    _Super::SizeCapacity, ListSize
                     )
 
                 break;
@@ -3535,7 +3556,7 @@ struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl : public TArray
 
     template <typename U>
     FORCEINLINE explicit constexpr TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl(const std::initializer_list<U> List) noexcept
-        requires(std::constructible_from<T, const U&>)
+        requires(std::is_constructible_v<T, const U&>)
     {
         if (List.size() > TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl::SizeCapacity)
         {
@@ -3567,7 +3588,7 @@ struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl : public TArray
 
     template <typename U>
     FORCEINLINE constexpr TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl& operator=(const std::initializer_list<U> List) noexcept
-        requires(std::constructible_from<T, const U&>)
+        requires(std::is_constructible_v<T, const U&>)
     {
         LAL_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&List) )
 
@@ -3609,7 +3630,7 @@ struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl : public TArray
         return *this;
     }
 
-    FORCEINLINE ~TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl() noexcept(std::is_nothrow_destructible_v<T>)
+    FORCEINLINE ~TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl() noexcept
     {
         if (this->IsCurrentDataOnHeap())
         {
@@ -3723,7 +3744,7 @@ struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl : public TArray
     //#
     //# Destructs all elements and orphans the current allocated memory if it is on the heap.
     //#
-    FORCEINLINE void Orphan() noexcept(std::is_nothrow_destructible_v<T>)
+    FORCEINLINE void Orphan() noexcept
     {
         if (this->IsCurrentDataOnHeap())
         {
@@ -3979,50 +4000,56 @@ public:
     FORCEINLINE constexpr TArrayBase() noexcept = default;
 
     FORCEINLINE constexpr TArrayBase(const TArrayBase& Other) noexcept
-        requires(std::constructible_from<Allocator, const Allocator&>);
+        requires(std::is_constructible_v<Allocator, const Allocator&>);
     FORCEINLINE constexpr TArrayBase& operator=(const TArrayBase& Other) noexcept
         requires(std::assignable_from<Allocator&, const Allocator&>);
 
     FORCEINLINE constexpr TArrayBase(TArrayBase&& Other) noexcept
-        requires(std::constructible_from<Allocator, Allocator&&>);
+        requires(std::is_constructible_v<Allocator, Allocator&&>);
     FORCEINLINE constexpr TArrayBase& operator=(TArrayBase&& Other) noexcept
         requires(std::assignable_from<Allocator&, Allocator&&>);
 
     template <TArrayBaseAllocatorConceptBase UAllocator>
     FORCEINLINE explicit constexpr TArrayBase(const TArrayBase<UAllocator>& Other) noexcept
-        requires(std::constructible_from<Allocator, const UAllocator&>);
+        requires(std::is_constructible_v<Allocator, const UAllocator&>);
     template <TArrayBaseAllocatorConceptBase UAllocator>
     FORCEINLINE constexpr TArrayBase& operator=(const TArrayBase<UAllocator>& Other) noexcept
         requires(std::assignable_from<Allocator&, const UAllocator&>);
 
     template <TArrayBaseAllocatorConceptBase UAllocator>
     FORCEINLINE explicit constexpr TArrayBase(TArrayBase<UAllocator>&& Other) noexcept
-        requires(std::constructible_from<Allocator, UAllocator&&>);
+        requires(std::is_constructible_v<Allocator, UAllocator&&>);
     template <TArrayBaseAllocatorConceptBase UAllocator>
     FORCEINLINE constexpr TArrayBase& operator=(TArrayBase<UAllocator>&& Other) noexcept
         requires(std::assignable_from<Allocator&, UAllocator&&>);
 
     //#
-    //# Delete r value move conversion constructors and assignment operators that would otherwise implicitly convert
-    //# to l value references of the allocator type.
+    //# Delete any r-value move conversion constructors and assignment operators that would otherwise implicitly
+    //# convert to l-value references of the allocator type, which may cause double implicit conversions of the
+    //# underlying allocator type. Notably, moves stack pointers to the heap or double owned heap pointers from
+    //# extraordinary weak allocators.
     //#
     template <TArrayBaseAllocatorConceptBase UAllocator>
     FORCEINLINE explicit constexpr TArrayBase(TArrayBase<UAllocator>&& Other) noexcept
-        requires(std::constructible_from<Allocator, UAllocator&&> == false) = delete;
+        requires(std::is_constructible_v<Allocator, UAllocator&&> == false) = delete;
     template <TArrayBaseAllocatorConceptBase UAllocator>
     FORCEINLINE constexpr TArrayBase& operator=(TArrayBase<UAllocator>&& Other) noexcept
        requires(std::assignable_from<Allocator&, UAllocator&&> == false) = delete;
 
+    //# Non templated ctor for recursive implicit bracket initialization.
+    FORCEINLINE constexpr TArrayBase(const std::initializer_list<T> List) noexcept
+        requires(std::is_constructible_v<Allocator, std::initializer_list<T>>);
     template <typename U>
     FORCEINLINE constexpr TArrayBase(const std::initializer_list<U> List) noexcept
-        requires(std::constructible_from<Allocator, std::initializer_list<U>>);
+        requires(std::is_constructible_v<Allocator, std::initializer_list<U>>);
     template <typename U>
     FORCEINLINE constexpr TArrayBase& operator=(const std::initializer_list<U> List) noexcept
         requires(std::assignable_from<Allocator&, std::initializer_list<U>>);
 
-    FORCEINLINE constexpr ~TArrayBase() noexcept(std::is_nothrow_destructible_v<Allocator>) = default;
+    FORCEINLINE constexpr ~TArrayBase() noexcept = default;
 
     NODISCARD FORCEINLINE constexpr SizeType GetSize() const noexcept { return this->Impl.Slack - this->Impl.Data; }
+    NODISCARD FORCEINLINE constexpr bool     IsEmpty() const noexcept { return this->Impl.Data == this->Impl.Slack; }
     NODISCARD FORCEINLINE constexpr SizeType GetSizeInBytes() const noexcept { return this->GetSize() * static_cast<SizeType>(sizeof(T)); }
     NODISCARD FORCEINLINE constexpr SizeType GetCapacity() const noexcept { return this->Impl.End - this->Impl.Data; }
     NODISCARD FORCEINLINE constexpr SizeType GetAllocatedByteSize() const noexcept { return this->GetCapacity() * static_cast<SizeType>(sizeof(T)); }
@@ -4063,6 +4090,8 @@ public:
     FORCEINLINE constexpr ConstIterator end()const noexcept { return ConstIterator{ this->Impl.Slack }; }
     FORCEINLINE constexpr ConstIterator cbegin() const noexcept { return ConstIterator{ this->Impl.Data  }; }
     FORCEINLINE constexpr ConstIterator cend() const noexcept { return ConstIterator{ this->Impl.Slack }; }
+
+    FORCEINLINE constexpr SizeType end_idx() const noexcept requires(TArrayBase::IsContentMutable()) { return this->GetSize(); }
 
     FORCEINLINE constexpr auto Iter() noexcept requires(requires { typename Iterator::Factory; });
     FORCEINLINE constexpr auto CIter() const noexcept requires(requires { typename ConstIterator::Factory; });
@@ -4118,7 +4147,7 @@ public:
     //# Swaps the underlying buffers of this array with the other array. If the buffers are stack allocated, then this
     //# operation may cause a cross-copy of the data.
     //#
-    FORCEINLINE void SwapBuffers(TArrayBase& Other) noexcept requires(requires(Allocator _Allocator) { _Allocator.SwapBuffers(); });
+    FORCEINLINE void SwapBuffers(TArrayBase* Other) noexcept requires(requires(Allocator _AllocatorA, Allocator _AllocatorB) { _AllocatorA.SwapBuffers(&_AllocatorB); });
 
     //#
     //# Swap two indices in the array.
@@ -4190,7 +4219,7 @@ public:
     //# array to fit.
     //#
     template <typename... TArgs>
-    void Emplace(TArgs&&... Args) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, TArgs...>);
+    void Emplace(TArgs&&... Args) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, TArgs...>);
 
     //#
     //# Adds a new element to the array and constructs it in place while potentially reallocating the whole
@@ -4198,23 +4227,23 @@ public:
     //# @return The iterator of the newly added element.
     //#
     template <typename... TArgs>
-    FORCEINLINE Iterator EmplaceAt(const ConstIterator It, TArgs&&... Args) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, TArgs...>);
+    FORCEINLINE Iterator EmplaceAt(const ConstIterator It, TArgs&&... Args) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, TArgs...>);
     template <typename... TArgs>
-    Iterator EmplaceAt(const SizeType Index, TArgs&&... Args) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, TArgs...>);
+    Iterator EmplaceAt(const SizeType Index, TArgs&&... Args) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, TArgs...>);
 
     //#
     //# Appends new elements to the array while potentially reallocating the whole array to fit.
     //#
     template <TArrayBaseAllocatorConceptBase UAllocator>
-    void Append(const TArrayBase<UAllocator>& Other) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename UAllocator::T>);
+    void Append(const TArrayBase<UAllocator>& Other) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename UAllocator::T>);
     template <TArrayBaseAllocatorConceptBase UAllocator>
-    void Append(TArrayBase<UAllocator>&& Other) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename UAllocator::T>);
+    void Append(TArrayBase<UAllocator>&& Other) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename UAllocator::T>);
     template <typename U>
-    void Append(const std::initializer_list<U> List) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, const U&>);
+    void Append(const std::initializer_list<U> List) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, const U&>);
     template <TIteratorConcept TIterator>
-    void Append(TIterator Begin, const TIterator End) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename TIterator::Reference>);
+    void Append(TIterator Begin, const TIterator End) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename TIterator::Reference>);
     template <TIteratorConcept TIterator>
-    FORCEINLINE void Append(const TIterator Begin, const SizeType Count) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename TIterator::Reference>);
+    FORCEINLINE void Append(const TIterator Begin, const SizeType Count) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename TIterator::Reference>);
 
     //#
     //# Inserts new elements to the array at the specified location, while potentially reallocating the whole
@@ -4223,25 +4252,25 @@ public:
     //#         to the slack.
     //#
     template <TArrayBaseAllocatorConceptBase UAllocator>
-    Iterator AppendAt(const ConstIterator It, const TArrayBase<UAllocator>& Other) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename UAllocator::T>);
+    Iterator AppendAt(const ConstIterator It, const TArrayBase<UAllocator>& Other) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename UAllocator::T>);
     template <TArrayBaseAllocatorConceptBase UAllocator>
-    Iterator AppendAt(const ConstIterator It, TArrayBase<UAllocator>&& Other) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename UAllocator::T>);
+    Iterator AppendAt(const ConstIterator It, TArrayBase<UAllocator>&& Other) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename UAllocator::T>);
     template <typename U>
-    Iterator AppendAt(const ConstIterator It, const std::initializer_list<U> List) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, const U&>);
+    Iterator AppendAt(const ConstIterator It, const std::initializer_list<U> List) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, const U&>);
     template <TIteratorConcept TIterator>
-    Iterator AppendAt(const ConstIterator It, const TIterator Begin, const TIterator End) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename TIterator::Reference>);
+    Iterator AppendAt(const ConstIterator It, const TIterator Begin, const TIterator End) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename TIterator::Reference>);
     template <TIteratorConcept TIterator>
-    FORCEINLINE Iterator AppendAt(const ConstIterator It, const TIterator Begin, const SizeType Count) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename TIterator::Reference>);
+    FORCEINLINE Iterator AppendAt(const ConstIterator It, const TIterator Begin, const SizeType Count) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename TIterator::Reference>);
     template <TArrayBaseAllocatorConceptBase UAllocator>
-    Iterator AppendAt(SizeType Index, const TArrayBase<UAllocator>& Other) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename UAllocator::T>);
+    Iterator AppendAt(SizeType Index, const TArrayBase<UAllocator>& Other) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename UAllocator::T>);
     template <TArrayBaseAllocatorConceptBase UAllocator>
-    Iterator AppendAt(SizeType Index, TArrayBase<UAllocator>&& Other) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename UAllocator::T>);
+    Iterator AppendAt(SizeType Index, TArrayBase<UAllocator>&& Other) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename UAllocator::T>);
     template <typename U>
-    Iterator AppendAt(SizeType Index, const std::initializer_list<U> List) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, const U&>);
+    Iterator AppendAt(SizeType Index, const std::initializer_list<U> List) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, const U&>);
     template <TIteratorConcept TIterator>
-    Iterator AppendAt(SizeType Index, TIterator Begin, const TIterator End) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename TIterator::Reference>);
+    Iterator AppendAt(SizeType Index, TIterator Begin, const TIterator End) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename TIterator::Reference>);
     template <TIteratorConcept TIterator>
-    FORCEINLINE Iterator AppendAt(const SizeType Index, const TIterator Begin, const SizeType Count) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename TIterator::Reference>);
+    FORCEINLINE Iterator AppendAt(const SizeType Index, const TIterator Begin, const SizeType Count) noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename TIterator::Reference>);
 
     template <TIteratorConcept TIterator>
     FORCEINLINE void RemoveAt(const TIterator It) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
@@ -4253,11 +4282,11 @@ public:
     FORCEINLINE void RemoveAt(const SizeType Begin, const SizeType End) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
 
     //# @return The number of elements removed.
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE SizeType Remove(const U& What) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
     template <typename U>
-    FORCEINLINE SizeType RemoveAtLeastOnceChecked(const U& What) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween() && std::equality_comparable_with<T, U>) { const SizeType Count { this->Remove(What) }; check( Count > 0 ) return Count; }
-    template <typename U> requires(TArrayBase::IsAllowedToPopItemsInBetween() && std::equality_comparable_with<T, U>)
+    FORCEINLINE SizeType RemoveAtLeastOnceChecked(const U& What) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween() && Lal::TEqualityComparableLeft<T, U>) { const SizeType Count { this->Remove(What) }; check( Count > 0 ) return Count; }
+    template <typename U> requires(TArrayBase::IsAllowedToPopItemsInBetween() && Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE SizeType RemoveAtLeastOnceAsserted(const U& What) noexcept { const SizeType Count { this->Remove(What) }; jassert( Count > 0 ) return Count; }
 
     template <std::predicate<T> TPredicate>
@@ -4271,11 +4300,11 @@ public:
     //# Removes the first occurrence of the specified element from the array.
     //# @return True if the element was found and removed, false otherwise.
     //#
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     bool RemoveOnce(const U& What) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE bool RemoveOnceChecked(const U& What) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween()) { const bool bRemoved { this->RemoveOnce(What) }; check( bRemoved ) return bRemoved; }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE bool RemoveOnceAsserted(const U& What) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween()) { const bool bRemoved { this->RemoveOnce(What) }; jassert( bRemoved ) return bRemoved; }
 
     template <std::predicate<T> TPredicate>
@@ -4285,31 +4314,44 @@ public:
     template <std::predicate<T> TPredicate>
     FORCEINLINE bool RemoveOnceByPredicateAsserted(const TPredicate& Predicate) noexcept requires(TArrayBase::IsAllowedToPopItemsInBetween());
 
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     Iterator Find(const U& What) noexcept;
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     ConstIterator Find(const U& What) const noexcept;
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE Iterator FindChecked(const U& What) noexcept { const Iterator It { this->Find(What) }; check( It != this->end() ) return It; }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE ConstIterator FindChecked(const U& What) const noexcept { const ConstIterator It { this->Find(What) }; check( It != this->cend() ) return It; }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE Iterator FindAsserted(const U& What) noexcept { const Iterator It { this->Find(What) }; jassert( It != this->end() ) return It; }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE ConstIterator FindAsserted(const U& What) const noexcept { const ConstIterator It { this->Find(What) }; jassert( It != this->cend() ) return It; }
 
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE SizeType FindIndex(const U& What) noexcept;
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE SizeType FindIndex(const U& What) const noexcept;
-    template <typename U> requires(std::equality_comparable_with<T, U>)
-    FORCEINLINE SizeType FindIndexChecked(const U& What) noexcept { const SizeType Index { this->FindIndex(What) }; check( Index != INDEX_NONE ) return Index; }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
-    FORCEINLINE SizeType FindIndexChecked(const U& What) const noexcept { const SizeType Index { this->FindIndex(What) }; check( Index != INDEX_NONE ) return Index; }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
-    FORCEINLINE SizeType FindIndexAsserted(const U& What) noexcept { const SizeType Index { this->FindIndex(What) }; jassert( Index != INDEX_NONE ) return Index; }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
-    FORCEINLINE SizeType FindIndexAsserted(const U& What) const noexcept { const SizeType Index { this->FindIndex(What) }; jassert( Index != INDEX_NONE ) return Index; }
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE SizeType FindIndexChecked(const U& What) noexcept { const SizeType Index { this->FindIndex(What) }; check( Index != this->GetSize() ) return Index; }
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE SizeType FindIndexChecked(const U& What) const noexcept { const SizeType Index { this->FindIndex(What) }; check( Index != this->GetSize() ) return Index; }
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE SizeType FindIndexAsserted(const U& What) noexcept { const SizeType Index { this->FindIndex(What) }; jassert( Index != this->GetSize() ) return Index; }
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE SizeType FindIndexAsserted(const U& What) const noexcept { const SizeType Index { this->FindIndex(What) }; jassert( Index != this->GetSize() ) return Index; }
+
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE Pointer FindRef(const U& What) noexcept;
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE ConstPointer FindRef(const U& What) const noexcept;
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE Pointer FindRefChecked(const U& What) noexcept { const Pointer Ptr { this->FindRef(What) }; check( Ptr ) return Ptr; }
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE ConstPointer FindRefChecked(const U& What) const noexcept { const ConstPointer Ptr { this->FindRef(What) }; check( Ptr ) return Ptr; }
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE Pointer FindRefAsserted(const U& What) noexcept { const Pointer Ptr { this->FindRef(What) }; jassert( Ptr ) return Ptr; }
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE ConstPointer FindRefAsserted(const U& What) const noexcept { const ConstPointer Ptr { this->FindRef(What) }; jassert( Ptr ) return Ptr; }
 
     template <std::predicate<T> TPredicate>
     Iterator FindByPredicate(const TPredicate& Predicate) noexcept;
@@ -4337,36 +4379,62 @@ public:
     template <std::predicate<T> TPredicate>
     FORCEINLINE SizeType FindIndexByPredicateAsserted(const TPredicate& Predicate) const noexcept { const SizeType Index { this->FindIndexByPredicate(Predicate) }; jassert( Index != this->cend() ) return Index; }
 
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE Pointer FindRefByPredicate(const TPredicate& Predicate) noexcept;
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE ConstPointer FindRefByPredicate(const TPredicate& Predicate) const noexcept;
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE Pointer FindRefByPredicateChecked(const TPredicate& Predicate) noexcept { const Pointer Ptr { this->FindRefByPredicate(Predicate) }; check( Ptr) return Ptr; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE ConstPointer FindRefByPredicateChecked(const TPredicate& Predicate) const noexcept { const ConstPointer Ptr { this->FindRefByPredicate(Predicate) }; check( Ptr ) return Ptr; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE Pointer FindRefByPredicateAsserted(const TPredicate& Predicate) noexcept { const Pointer Ptr { this->FindRefByPredicate(Predicate) }; jassert( Ptr ) return Ptr; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE ConstPointer FindRefByPredicateAsserted(const TPredicate& Predicate) const noexcept { const ConstPointer Ptr { this->FindRefByPredicate(Predicate) }; jassert( Ptr ) return Ptr; }
+
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     Iterator FindLast(const U& What) noexcept;
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     ConstIterator FindLast(const U& What) const noexcept;
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE Iterator FindLastChecked(const U& What) noexcept { const Iterator It { this->FindLast(What) }; check( It != this->end() ) return It; }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE ConstIterator FindLastChecked(const U& What) const noexcept { const ConstIterator It { this->FindLast(What) }; check( It != this->cend() ) return It; }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE Iterator FindLastAsserted(const U& What) noexcept { const Iterator It { this->FindLast(What) }; jassert( It != this->end() ) return It; }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE ConstIterator FindLastAsserted(const U& What) const noexcept { const ConstIterator It { this->FindLast(What) }; jassert( It != this->cend() ) return It; }
 
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE SizeType FindLastIndex(const U& What) noexcept;
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE SizeType FindLastIndex(const U& What) const noexcept;
-    template <typename U> requires(std::equality_comparable_with<T, U>)
-    FORCEINLINE SizeType FindLastIndexChecked(const U& What) noexcept { const SizeType Index { this->FindLastIndex(What) }; check( Index != INDEX_NONE ) return Index; }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
-    FORCEINLINE SizeType FindLastIndexChecked(const U& What) const noexcept { const SizeType Index { this->FindLastIndex(What) }; check( Index != INDEX_NONE ) return Index; }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
-    FORCEINLINE SizeType FindLastIndexAsserted(const U& What) noexcept { const SizeType Index { this->FindLastIndex(What) }; jassert( Index != INDEX_NONE ) return Index; }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
-    FORCEINLINE SizeType FindLastIndexAsserted(const U& What) const noexcept { const SizeType Index { this->FindLastIndex(What) }; jassert( Index != INDEX_NONE ) return Index; }
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE SizeType FindLastIndexChecked(const U& What) noexcept { const SizeType Index { this->FindLastIndex(What) }; check( Index != this->GetSize() ) return Index; }
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE SizeType FindLastIndexChecked(const U& What) const noexcept { const SizeType Index { this->FindLastIndex(What) }; check( Index != this->GetSize() ) return Index; }
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE SizeType FindLastIndexAsserted(const U& What) noexcept { const SizeType Index { this->FindLastIndex(What) }; jassert( Index != this->GetSize() ) return Index; }
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE SizeType FindLastIndexAsserted(const U& What) const noexcept { const SizeType Index { this->FindLastIndex(What) }; jassert( Index != this->GetSize() ) return Index; }
+
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE Pointer FindLastRef(const U& What) noexcept;
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE ConstPointer FindLastRef(const U& What) const noexcept;
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE Pointer FindLastRefChecked(const U& What) noexcept { const Pointer Ptr { this->FindLastRef(What) }; check( Ptr ) return Ptr; }
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE ConstPointer FindLastRefChecked(const U& What) const noexcept { const ConstPointer Ptr { this->FindLastRef(What) }; check( Ptr ) return Ptr; }
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE Pointer FindLastRefAsserted(const U& What) noexcept { const Pointer Ptr { this->FindLastRef(What) }; jassert( Ptr ) return Ptr; }
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
+    FORCEINLINE ConstPointer FindLastRefAsserted(const U& What) const noexcept { const ConstPointer Ptr { this->FindLastRef(What) }; jassert( Ptr ) return Ptr; }
 
     template <std::predicate<T> TPredicate>
-    Iterator FindLastByPredicate(const TPredicate& Predicate) noexcept;
+    FORCEINLINE Iterator FindLastByPredicate(const TPredicate& Predicate) noexcept;
     template <std::predicate<T> TPredicate>
-    ConstIterator FindLastByPredicate(const TPredicate& Predicate) const noexcept;
+    FORCEINLINE ConstIterator FindLastByPredicate(const TPredicate& Predicate) const noexcept;
     template <std::predicate<T> TPredicate>
     FORCEINLINE Iterator FindLastByPredicateChecked(const TPredicate& Predicate) noexcept { const Iterator It { this->FindLastByPredicate(Predicate) }; check( It != this->end() ) return It; }
     template <std::predicate<T> TPredicate>
@@ -4389,11 +4457,24 @@ public:
     template <std::predicate<T> TPredicate>
     FORCEINLINE SizeType FindLastIndexByPredicateAsserted(const TPredicate& Predicate) const noexcept { const SizeType Index { this->FindLastIndexByPredicate(Predicate) }; jassert( Index != this->cend() ) return Index; }
 
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE Pointer FindLastRefByPredicate(const TPredicate& Predicate) noexcept;
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE ConstPointer FindLastRefByPredicate(const TPredicate& Predicate) const noexcept;
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE Pointer FindLastRefByPredicateChecked(const TPredicate& Predicate) noexcept { const Pointer Ptr { this->FindLastRefByPredicate(Predicate) }; check( Ptr ) return Ptr; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE ConstPointer FindLastRefByPredicateChecked(const TPredicate& Predicate) const noexcept { const ConstPointer Ptr { this->FindLastRefByPredicate(Predicate) }; check( Ptr ) return Ptr; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE Pointer FindLastRefByPredicateAsserted(const TPredicate& Predicate) noexcept { const Pointer Ptr { this->FindLastRefByPredicate(Predicate) }; jassert( Ptr ) return Ptr; }
+    template <std::predicate<T> TPredicate>
+    FORCEINLINE ConstPointer FindLastRefByPredicateAsserted(const TPredicate& Predicate) const noexcept { const ConstPointer Ptr { this->FindLastRefByPredicate(Predicate) }; jassert( Ptr ) return Ptr; }
+
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE bool Contains(const U& What) const noexcept { return this->Find(What) != this->cend(); }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE bool ContainsChecked(const U& What) const noexcept { const ConstIterator It { this->FindChecked(What) }; return It != this->cend(); }
-    template <typename U> requires(std::equality_comparable_with<T, U>)
+    template <typename U> requires(Lal::TEqualityComparableLeft<T, U>)
     FORCEINLINE bool ContainsAsserted(const U& What) const noexcept { const ConstIterator It { this->FindAsserted(What) }; return It != this->cend(); }
 
     template <std::predicate<T> TPredicate>
@@ -4403,13 +4484,13 @@ public:
     template <std::predicate<T> TPredicate>
     FORCEINLINE bool ContainsByPredicateAsserted(const TPredicate& Predicate) const noexcept { const ConstIterator It { this->FindByPredicateAsserted(Predicate) }; return It != this->cend(); }
 
-    template <std::predicate<T> TPredicate>
+    template <typename TPredicate> requires (std::invocable<TPredicate, T> && std::is_void_v<std::invoke_result_t<TPredicate, T>>)
     FORCEINLINE void ForEach(const TPredicate& Predicate) noexcept requires(TArrayBase::IsContentMutable());
-    template <std::predicate<T> TPredicate>
+    template <typename TPredicate> requires (std::invocable<TPredicate, T> && std::is_void_v<std::invoke_result_t<TPredicate, T>>)
     FORCEINLINE void ForEach(const TPredicate& Predicate) const noexcept;
 
     //# @return The number of elements replaced.
-    template <typename U, typename V> requires(std::equality_comparable_with<T, U> && std::assignable_from<T, V>)
+    template <typename U, typename V> requires(Lal::TEqualityComparableLeft<T, U> && std::assignable_from<T, V>)
     FORCEINLINE SizeType Replace(const U& What, const V& Replacement) noexcept requires(TArrayBase::IsContentMutable());
     template <std::predicate<T> TPredicate, typename V> requires(std::assignable_from<T, V>)
     FORCEINLINE SizeType ReplaceByPredicate(const TPredicate& Predicate, const V& Replacement) noexcept requires(TArrayBase::IsContentMutable());
@@ -4424,6 +4505,11 @@ public:
     NODISCARD FORCEINLINE constexpr ConstPointer Peek()         const noexcept { return this->GetLast(); }
     NODISCARD FORCEINLINE constexpr ConstPointer PeekChecked()  const noexcept { return this->GetLastChecked(); }
     NODISCARD FORCEINLINE constexpr ConstPointer PeekAsserted() const noexcept { return this->GetLastAsserted(); }
+
+    template <typename... TArgs>
+    FORCEINLINE TArrayBase& Push(TArgs&&... Args) & noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, TArgs...>);
+    template <typename... TArgs>
+    FORCEINLINE TArrayBase&& Push(TArgs&&... Args) && noexcept requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, TArgs...>);
 
     //#
     //# Removes the last element from the array.
@@ -4456,7 +4542,7 @@ private:
     FORCEINLINE constexpr void GrowImpl() noexcept
         requires(!TArrayBase::IsStronglyAllocated() && !requires(Allocator _Allocator) { _Allocator.Grow(); })
     {
-        LOG_FATAL(LogLowLevel, "Called on weakly allocated array.")
+        PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel, "Called on weakly allocated array.")
     }
 
     FORCEINLINE constexpr void GrowToImpl(const SizeType Count) noexcept requires(TArrayBase::IsStronglyAllocated())
@@ -4466,7 +4552,7 @@ private:
     }
     FORCEINLINE constexpr void GrowToImpl(const SizeType Count) noexcept requires(!TArrayBase::IsStronglyAllocated())
     {
-        LOG_FATAL(LogLowLevel, "Called on weakly allocated array.")
+        PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel, "Called on weakly allocated array.")
     }
 
     FORCEINLINE constexpr SizeType ResizeImpl(const SizeType Count) noexcept requires(TArrayBase::IsStronglyAllocated())
@@ -4475,7 +4561,7 @@ private:
     }
     FORCEINLINE constexpr SizeType ResizeImpl(const SizeType Count) noexcept requires(!TArrayBase::IsStronglyAllocated())
     {
-        LOG_FATAL(LogLowLevel, "Called on weakly allocated array.")
+        PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel, "Called on weakly allocated array.")
     }
 
     FORCEINLINE constexpr void ShrinkToFitImpl() noexcept requires(TArrayBase::IsStronglyAllocated())
@@ -4485,7 +4571,7 @@ private:
     }
     FORCEINLINE constexpr void ShrinkToFitImpl() noexcept requires(!TArrayBase::IsStronglyAllocated())
     {
-        LOG_FATAL(LogLowLevel, "Called on weakly allocated array.")
+        PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel, "Called on weakly allocated array.")
     }
 
     FORCEINLINE constexpr void ShrinkToImpl(const SizeType Count) noexcept requires(TArrayBase::IsStronglyAllocated())
@@ -4495,7 +4581,7 @@ private:
     }
     FORCEINLINE constexpr void ShrinkToImpl(const SizeType Count) noexcept requires(!TArrayBase::IsStronglyAllocated())
     {
-        LOG_FATAL(LogLowLevel, "Called on weakly allocated array.")
+        PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel, "Called on weakly allocated array.")
     }
 
     FORCEINLINE constexpr void OrphanImpl() noexcept
@@ -4507,7 +4593,7 @@ private:
     FORCEINLINE constexpr void OrphanImpl() noexcept
         requires(!TArrayBase::IsStronglyAllocated() && !requires(Allocator _Allocator) { _Allocator.Orphan(); })
     {
-        LOG_FATAL(LogLowLevel, "Called on non orphanable array.")
+        PRIVATE_LAL_LOG_FATAL_CORE(LogLowLevel, "Called on non orphanable array.")
     }
 
     FORCEINLINE constexpr void EmptyImpl() noexcept
@@ -4548,7 +4634,7 @@ private:
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
 FORCEINLINE constexpr TArrayBase<TAllocator>::TArrayBase(const TArrayBase& Other) noexcept
-    requires(std::constructible_from<TAllocator, const TAllocator&>)
+    requires(std::is_constructible_v<TAllocator, const TAllocator&>)
     : Impl{Other.Impl}
 {
     return;
@@ -4564,7 +4650,7 @@ FORCEINLINE constexpr TArrayBase<TAllocator>& TArrayBase<TAllocator>::operator=(
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
 FORCEINLINE constexpr TArrayBase<TAllocator>::TArrayBase(TArrayBase&& Other) noexcept
-    requires(std::constructible_from<TAllocator, TAllocator&&>)
+    requires(std::is_constructible_v<TAllocator, TAllocator&&>)
     : Impl{std::move(Other.Impl)}
 {
     return;
@@ -4581,7 +4667,7 @@ FORCEINLINE constexpr TArrayBase<TAllocator>& TArrayBase<TAllocator>::operator=(
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <TArrayBaseAllocatorConceptBase UAllocator>
 FORCEINLINE constexpr TArrayBase<TAllocator>::TArrayBase(const TArrayBase<UAllocator>& Other) noexcept
-    requires(std::constructible_from<TAllocator, const UAllocator&>)
+    requires(std::is_constructible_v<TAllocator, const UAllocator&>)
     : Impl{Other.Impl}
 {
     return;
@@ -4599,7 +4685,7 @@ FORCEINLINE constexpr TArrayBase<TAllocator>& TArrayBase<TAllocator>::operator=(
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <TArrayBaseAllocatorConceptBase UAllocator>
 FORCEINLINE constexpr TArrayBase<TAllocator>::TArrayBase(TArrayBase<UAllocator>&& Other) noexcept
-    requires(std::constructible_from<TAllocator, UAllocator&&>)
+    requires(std::is_constructible_v<TAllocator, UAllocator&&>)
     : Impl{std::move(Other.Impl)}
 {
     return;
@@ -4615,9 +4701,17 @@ FORCEINLINE constexpr TArrayBase<TAllocator>& TArrayBase<TAllocator>::operator=(
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
+FORCEINLINE constexpr TArrayBase<TAllocator>::TArrayBase(const std::initializer_list<T> List) noexcept
+    requires (std::is_constructible_v<TAllocator, std::initializer_list<typename TAllocator::T>>)
+    : Impl{List}
+{
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
 template <typename U>
 FORCEINLINE constexpr TArrayBase<TAllocator>::TArrayBase(const std::initializer_list<U> List) noexcept
-    requires(std::constructible_from<TAllocator, std::initializer_list<U>>)
+    requires(std::is_constructible_v<TAllocator, std::initializer_list<U>>)
     : Impl{List}
 {
     return;
@@ -4729,10 +4823,12 @@ FORCEINLINE constexpr void TArrayBase<TAllocator>::Empty() noexcept
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-FORCEINLINE void TArrayBase<TAllocator>::SwapBuffers(TArrayBase& Other) noexcept
-    requires(requires(Allocator _Allocator) { _Allocator.SwapBuffers(); })
+FORCEINLINE void TArrayBase<TAllocator>::SwapBuffers(TArrayBase* Other) noexcept
+    requires(requires(Allocator _AllocatorA, Allocator _AllocatorB) { _AllocatorA.SwapBuffers(&_AllocatorB); })
 {
-    this->Impl.SwapBuffers(Other.Impl);
+    check( Other )
+
+    this->Impl.SwapBuffers(&Other->Impl);
     return;
 }
 
@@ -4989,9 +5085,9 @@ constexpr typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AddA
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename ... TArgs>
+template <typename... TArgs>
 void TArrayBase<TAllocator>::Emplace(TArgs&&... Args) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<typename TAllocator::T, TArgs...>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<typename TAllocator::T, TArgs...>)
 {
     if (this->HasReachedCapacity())
     {
@@ -5005,17 +5101,17 @@ void TArrayBase<TAllocator>::Emplace(TArgs&&... Args) noexcept
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename ... TArgs>
+template <typename... TArgs>
 FORCEINLINE typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::EmplaceAt(const ConstIterator It, TArgs&&... Args) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<typename TAllocator::T, TArgs...>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<typename TAllocator::T, TArgs...>)
 {
     return this->EmplaceAt(It.Cursor - this->Impl.Data, std::forward<TArgs>(Args)...);
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename ... TArgs>
+template <typename... TArgs>
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::EmplaceAt(const SizeType Index, TArgs&&... Args) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<typename TAllocator::T, TArgs...>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<typename TAllocator::T, TArgs...>)
 {
     if (Index == this->GetSize())
     {
@@ -5039,7 +5135,7 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::EmplaceAt(cons
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <TArrayBaseAllocatorConceptBase UAllocator>
 void TArrayBase<TAllocator>::Append(const TArrayBase<UAllocator>& Other) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename UAllocator::T>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename UAllocator::T>)
 {
     this->Reserve(this->GetSize() + Other.GetSize());
 
@@ -5058,7 +5154,7 @@ void TArrayBase<TAllocator>::Append(const TArrayBase<UAllocator>& Other) noexcep
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <TArrayBaseAllocatorConceptBase UAllocator>
 void TArrayBase<TAllocator>::Append(TArrayBase<UAllocator>&& Other) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename UAllocator::T>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename UAllocator::T>)
 {
     LAL_CHECK_ARRAY( static_cast<const void*>(this) != static_cast<const void*>(&Other) )
 
@@ -5098,7 +5194,7 @@ void TArrayBase<TAllocator>::Append(TArrayBase<UAllocator>&& Other) noexcept
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <typename U>
 void TArrayBase<TAllocator>::Append(const std::initializer_list<U> List) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, const U&>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, const U&>)
 {
     this->Reserve(this->GetSize() + List.size());
 
@@ -5115,7 +5211,7 @@ void TArrayBase<TAllocator>::Append(const std::initializer_list<U> List) noexcep
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <TIteratorConcept TIterator>
 void TArrayBase<TAllocator>::Append(TIterator Begin, const TIterator End) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename TIterator::Reference>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename TIterator::Reference>)
 {
     LAL_CHECK_ARRAY( Begin.Cursor <= End.Cursor )
     LAL_CHECK_ARRAY( (this->IsIteratorInCapacityRange(Begin) || this->IsIteratorInCapacityRange(End)) == false )
@@ -5135,7 +5231,7 @@ void TArrayBase<TAllocator>::Append(TIterator Begin, const TIterator End) noexce
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <TIteratorConcept TIterator>
 FORCEINLINE void TArrayBase<TAllocator>::Append(const TIterator Begin, const SizeType Count) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename TIterator::Reference>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename TIterator::Reference>)
 {
     this->Append(Begin, Begin + Count);
     return;
@@ -5144,7 +5240,7 @@ FORCEINLINE void TArrayBase<TAllocator>::Append(const TIterator Begin, const Siz
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <TArrayBaseAllocatorConceptBase UAllocator>
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(const ConstIterator It, const TArrayBase<UAllocator>& Other) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename UAllocator::T>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename UAllocator::T>)
 {
     return this->AppendAt(It.Cursor - this->Impl.Data, Other);
 }
@@ -5152,7 +5248,7 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(const
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <TArrayBaseAllocatorConceptBase UAllocator>
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(const ConstIterator It, TArrayBase<UAllocator>&& Other) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename UAllocator::T>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename UAllocator::T>)
 {
     return this->AppendAt(It.Cursor - this->Impl.Data, std::move(Other));
 }
@@ -5160,7 +5256,7 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(const
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <typename U>
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(const ConstIterator It, const std::initializer_list<U> List) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, const U&>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, const U&>)
 {
     return this->AppendAt(It.Cursor - this->Impl.Data, List);
 }
@@ -5168,7 +5264,7 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(const
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <TIteratorConcept TIterator>
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(const ConstIterator It, const TIterator Begin, const TIterator End) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename TIterator::Reference>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename TIterator::Reference>)
 {
     return this->AppendAt(It.Cursor - this->Impl.Data, Begin, End);
 }
@@ -5176,7 +5272,7 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(const
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <TIteratorConcept TIterator>
 FORCEINLINE typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(const ConstIterator It, const TIterator Begin, const SizeType Count) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename TIterator::Reference>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename TIterator::Reference>)
 {
     return this->AppendAt(It, Begin, Begin + Count);
 }
@@ -5184,7 +5280,7 @@ FORCEINLINE typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::Ap
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <TArrayBaseAllocatorConceptBase UAllocator>
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(SizeType Index, const TArrayBase<UAllocator>& Other) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename UAllocator::T>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename UAllocator::T>)
 {
     if (Other.GetSize() == 0)
     {
@@ -5220,7 +5316,7 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(SizeT
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <TArrayBaseAllocatorConceptBase UAllocator>
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(SizeType Index, TArrayBase<UAllocator>&& Other) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename UAllocator::T>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename UAllocator::T>)
 {
     const SizeType OtherSize { Other.GetSize() };
 
@@ -5272,7 +5368,7 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(SizeT
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <typename U>
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(SizeType Index, const std::initializer_list<U> List) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, const U&>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, const U&>)
 {
     if (Index == this->GetSize())
     {
@@ -5303,7 +5399,7 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(SizeT
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <TIteratorConcept TIterator>
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(SizeType Index, TIterator Begin, const TIterator End) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename TIterator::Reference>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename TIterator::Reference>)
 {
     const SizeType Count { End - Begin };
 
@@ -5341,7 +5437,7 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(SizeT
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <TIteratorConcept TIterator>
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::AppendAt(const SizeType Index, const TIterator Begin, const SizeType Count) noexcept
-    requires(TArrayBase::IsAllowedToPushItems() && std::constructible_from<T, typename TIterator::Reference>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<T, typename TIterator::Reference>)
 {
     return this->AppendAt(Index, Begin, Begin + Count);
 }
@@ -5419,7 +5515,7 @@ void TArrayBase<TAllocator>::RemoveAt(const SizeType Begin, const SizeType End) 
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires(std::equality_comparable_with<typename TAllocator::T, U>)
+template <typename U> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Remove(const U& What) noexcept
     requires(TArrayBase::IsAllowedToPopItemsInBetween())
 {
@@ -5489,7 +5585,7 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Re
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires(std::equality_comparable_with<typename TAllocator::T, U>)
+template <typename U> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 bool TArrayBase<TAllocator>::RemoveOnce(const U& What) noexcept
     requires(TArrayBase::IsAllowedToPopItemsInBetween())
 {
@@ -5547,7 +5643,7 @@ bool TArrayBase<TAllocator>::RemoveOnceByPredicateAsserted(const TPredicate& Pre
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::Find(const U& What) noexcept
 {
     for (T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
@@ -5564,7 +5660,7 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::Find(const U& 
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 typename TArrayBase<TAllocator>::ConstIterator TArrayBase<TAllocator>::Find(const U& What) const noexcept
 {
     for (const T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
@@ -5581,7 +5677,7 @@ typename TArrayBase<TAllocator>::ConstIterator TArrayBase<TAllocator>::Find(cons
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindIndex(const U& What) noexcept
 {
     if (Iterator It { this->Find(What) }; It != this->end())
@@ -5589,11 +5685,11 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Fi
         return It.Cursor - this->GetDataPointer();
     }
 
-    return INDEX_NONE;
+    return this->GetSize();
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindIndex(const U& What) const noexcept
 {
     if (ConstIterator It { this->Find(What) }; It != this->cend())
@@ -5601,7 +5697,31 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Fi
         return It.Cursor - this->GetDataPointer();
     }
 
-    return INDEX_NONE;
+    return this->GetSize();
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+FORCEINLINE typename TArrayBase<TAllocator>::Pointer TArrayBase<TAllocator>::FindRef(const U& What) noexcept
+{
+    if (Iterator It { this->Find(What) }; It != this->end())
+    {
+        return It.Cursor;
+    }
+
+    return nullptr;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+FORCEINLINE typename TArrayBase<TAllocator>::ConstPointer TArrayBase<TAllocator>::FindRef(const U& What) const noexcept
+{
+    if (ConstIterator It { this->Find(What) }; It != this->cend())
+    {
+        return It.Cursor;
+    }
+
+    return nullptr;
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
@@ -5647,7 +5767,7 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Fi
         return It.Cursor - this->GetDataPointer();
     }
 
-    return INDEX_NONE;
+    return this->GetSize();
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
@@ -5659,11 +5779,35 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Fi
         return It.Cursor - this->GetDataPointer();
     }
 
-    return INDEX_NONE;
+    return this->GetSize();
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+template <std::predicate<typename TAllocator::T> TPredicate>
+FORCEINLINE typename TArrayBase<TAllocator>::Pointer TArrayBase<TAllocator>::FindRefByPredicate(const TPredicate& Predicate) noexcept
+{
+    if (Iterator It { this->FindByPredicate(Predicate) }; It != this->end())
+    {
+        return It.Cursor;
+    }
+
+    return nullptr;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+FORCEINLINE typename TArrayBase<TAllocator>::ConstPointer TArrayBase<TAllocator>::FindRefByPredicate(const TPredicate& Predicate) const noexcept
+{
+    if (ConstIterator It { this->FindByPredicate(Predicate) }; It != this->cend())
+    {
+        return It.Cursor;
+    }
+
+    return nullptr;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::FindLast(const U& What) noexcept
 {
     for (T* RESTRICT Bulk { this->GetSlackPointer() - 1 }; Bulk >= this->GetDataPointer(); --Bulk)
@@ -5680,7 +5824,7 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::FindLast(const
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 typename TArrayBase<TAllocator>::ConstIterator TArrayBase<TAllocator>::FindLast(const U& What) const noexcept
 {
     for (const T* RESTRICT Bulk { this->GetSlackPointer() - 1 }; Bulk >= this->GetDataPointer(); --Bulk)
@@ -5697,7 +5841,7 @@ typename TArrayBase<TAllocator>::ConstIterator TArrayBase<TAllocator>::FindLast(
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindLastIndex(const U& What) noexcept
 {
     if (Iterator It { this->FindLast(What) }; It != this->end())
@@ -5705,11 +5849,11 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Fi
         return It.Cursor - this->GetDataPointer();
     }
 
-    return INDEX_NONE;
+    return this->GetSize();
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (std::equality_comparable_with<typename TAllocator::T, U>)
+template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindLastIndex(const U& What) const noexcept
 {
     if (ConstIterator It { this->FindLast(What) }; It != this->cend())
@@ -5717,7 +5861,31 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Fi
         return It.Cursor - this->GetDataPointer();
     }
 
-    return INDEX_NONE;
+    return this->GetSize();
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+FORCEINLINE typename TArrayBase<TAllocator>::Pointer TArrayBase<TAllocator>::FindLastRef(const U& What) noexcept
+{
+    if (Iterator It { this->FindLast(What) }; It != this->end())
+    {
+        return It.Cursor;
+    }
+
+    return nullptr;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+FORCEINLINE typename TArrayBase<TAllocator>::ConstPointer TArrayBase<TAllocator>::FindLastRef(const U& What) const noexcept
+{
+    if (ConstIterator It { this->FindLast(What) }; It != this->cend())
+    {
+        return It.Cursor;
+    }
+
+    return nullptr;
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
@@ -5763,7 +5931,7 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Fi
         return It.Cursor - this->GetDataPointer();
     }
 
-    return INDEX_NONE;
+    return this->GetSize();
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
@@ -5775,11 +5943,35 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Fi
         return It.Cursor - this->GetDataPointer();
     }
 
-    return INDEX_NONE;
+    return this->GetSize();
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <std::predicate<typename TAllocator::T> TPredicate>
+FORCEINLINE typename TArrayBase<TAllocator>::Pointer TArrayBase<TAllocator>::FindLastRefByPredicate(const TPredicate& Predicate) noexcept
+{
+    if (Iterator It { this->FindLastByPredicate(Predicate) }; It != this->end())
+    {
+        return It.Cursor;
+    }
+
+    return nullptr;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <std::predicate<typename TAllocator::T> TPredicate>
+FORCEINLINE typename TArrayBase<TAllocator>::ConstPointer TArrayBase<TAllocator>::FindLastRefByPredicate(const TPredicate& Predicate) const noexcept
+{
+    if (ConstIterator It { this->FindLastByPredicate(Predicate) }; It != this->cend())
+    {
+        return It.Cursor;
+    }
+
+    return nullptr;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename TPredicate> requires (std::invocable<TPredicate, typename TAllocator::T> && std::is_void_v<std::invoke_result_t<TPredicate, typename TAllocator::T>>)
 FORCEINLINE void TArrayBase<TAllocator>::ForEach(const TPredicate& Predicate) noexcept requires (TArrayBase::IsContentMutable())
 {
     for (T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
@@ -5793,7 +5985,7 @@ FORCEINLINE void TArrayBase<TAllocator>::ForEach(const TPredicate& Predicate) no
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <std::predicate<typename TAllocator::T> TPredicate>
+template <typename TPredicate> requires (std::invocable<TPredicate, typename TAllocator::T> && std::is_void_v<std::invoke_result_t<TPredicate, typename TAllocator::T>>)
 FORCEINLINE void TArrayBase<TAllocator>::ForEach(const TPredicate& Predicate) const noexcept
 {
     for (const T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
@@ -5807,7 +5999,7 @@ FORCEINLINE void TArrayBase<TAllocator>::ForEach(const TPredicate& Predicate) co
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U, typename V> requires (std::equality_comparable_with<typename TAllocator::T, U> && std::assignable_from<typename TAllocator::T, V>)
+template <typename U, typename V> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U> && std::assignable_from<typename TAllocator::T, V>)
 FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Replace(const U& What, const V& Replacement) noexcept
     requires (TArrayBase::IsContentMutable())
 {
@@ -5846,6 +6038,24 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Re
     });
 
     return Replaced;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename ... TArgs>
+FORCEINLINE TArrayBase<TAllocator>& TArrayBase<TAllocator>::Push(TArgs&&... Args) & noexcept
+    requires (TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<typename TAllocator::T, TArgs...>)
+{
+    this->Emplace(std::forward<TArgs>(Args)...);
+    return *this;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename ... TArgs>
+FORCEINLINE TArrayBase<TAllocator>&& TArrayBase<TAllocator>::Push(TArgs&&... Args) && noexcept
+    requires (TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<typename TAllocator::T, TArgs...>)
+{
+    this->Emplace(std::forward<TArgs>(Args)...);
+    return std::move(*this);
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>

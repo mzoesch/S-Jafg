@@ -26,7 +26,7 @@ void Jafg::LViewport::ClearInvalidWidgets()
 
     auto ClearOnContainer {[](TArray<TObjectStorage<WNode>>* InContainer) -> void
     {
-        const i32 Removed { InContainer->RemoveByPredicate([](const TObjectStorage<WNode>& InNode)
+        const TArray<TObjectStorage<WNode>>::SizeType Removed { InContainer->RemoveByPredicate([](const TObjectStorage<WNode>& InNode)
         {
             return InNode.IsValidDeep() == false;
         })};
@@ -64,7 +64,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
         this->CachedCursorLocation.Reset();
     }
 
-    this->LastFrameHoveredWidgets.CopyFrom(this->HoveredWidgets);
+    this->LastFrameHoveredWidgets = this->HoveredWidgets;
     if (bCursorLocationIsMeaningful)
     {
         this->HoveredWidgets.Reset(this->HoveredWidgets.GetSize());

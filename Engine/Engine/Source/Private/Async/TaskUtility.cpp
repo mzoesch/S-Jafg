@@ -82,8 +82,8 @@ struct LEngineThread final
         Jafg::LRunnable*                InRunnable,
         const bool                      bInKillRunnableWhenFinished
     )
-        // The #Id is deferred to when the thread is running autarcik. This ctor is called on the aggregating thread so
-        // we have to wait for the platform to assign an id to the thread.
+        // The #Id is deferred to when the thread is running autarcik. This ctor is called on the aggregating thread,
+        // so we have to wait for the platform to assign an id to the thread.
         : Id(0), ThreadName(InThreadName), Thread(std::move(InNativeThread)),
           Runnable(InRunnable), bKillRunnableWhenFinished(bInKillRunnableWhenFinished)
     {
@@ -94,8 +94,8 @@ struct LEngineThread final
         Jafg::LRunnable*                InRunnable,
         const bool                      bInKillRunnableWhenFinished
     )
-        // The #Id is deferred to when the thread is running autarcik. This ctor is called on the aggregating thread so
-        // we have to wait for the platform to assign an id to the thread.
+        // The #Id is deferred to when the thread is running autarcik. This ctor is called on the aggregating thread,
+        // so we have to wait for the platform to assign an id to the thread.
         : Id(0), ThreadName(InThreadName), Thread(DefaultInit),
           Runnable(InRunnable), bKillRunnableWhenFinished(bInKillRunnableWhenFinished)
     {
@@ -131,7 +131,7 @@ struct LEngineThread final
 //# Not when adding or running (removing) tasks from the linked list on an already existing thread.
 std::shared_mutex EngineThreadsMutex;
 //# Map for all queses for all tasks.
-Jafg::TArray<LEngineThread> EngineThreads;
+TArray<LEngineThread> EngineThreads;
 
 FORCEINLINE Jafg::LString LEngineThread::GetDisplayName() const
 {
@@ -191,8 +191,8 @@ void Jafg::LRunnable::Join()
      */
     std::shared_lock Lock(::EngineThreadsMutex);
 
-    LEngineThread* EngineThread = ::EngineThreads.FindRef(this);
-    if (EngineThread == nullptr)
+    TArray<LEngineThread>::Iterator EngineThread = ::EngineThreads.Find(this);
+    if (EngineThread == ::EngineThreads.end())
     {
         LOG_WARNING(LogRunnable, "No such runnable.")
         return;
@@ -745,7 +745,7 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
     ::EngineThreadsMutex.lock();
     check( ::bTearingDown == false )
     ::bTearingDown = true;
-    const i32 EngineThreadsSize { ::EngineThreads.GetSize() - /* Master */1};
+    const TArray<LEngineThread>::SizeType EngineThreadsSize { ::EngineThreads.GetSize() - /* Master */1};
     ::EngineThreadsMutex.unlock();
 
     if (bJoinTasks)

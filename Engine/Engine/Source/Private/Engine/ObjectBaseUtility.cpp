@@ -158,9 +158,9 @@ void Jafg::Private::KillSingletonObjectRegistry()
     return;
 }
 
-Jafg::TArray<Jafg::Private::LRegistrationQueuePackage>& Jafg::Private::GetRegisterObjectQueue()
+TArray<Jafg::Private::LRegistrationQueuePackage>& Jafg::Private::GetRegisterObjectQueue()
 {
-    static Jafg::TArray<Jafg::Private::LRegistrationQueuePackage> RegistrationQueue = { };
+    static TArray<Jafg::Private::LRegistrationQueuePackage> RegistrationQueue = { };
     return RegistrationQueue;
 }
 
@@ -239,7 +239,7 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
     #pragma clang diagnostic pop
 #endif /* LAL_WITH_CLANG */
 
-    check( Reinterpreted->ClassFields.GetSize() == 0 && Reinterpreted->ClassFields.IsData() == false )
+    check( Reinterpreted->ClassFields.GetSize() == 0 && Reinterpreted->ClassFields.IsDataValid() == false )
 
     for (const LClassField& Field : InStaticClass->GetDefaultPackageReferrer()->GetClassFields())
     {
@@ -289,8 +289,8 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages(const LLoadedPluginHand
 
     check( Tasks::IsOnMasterThread() )
 
-    const i32 CurrentPackages = this->RegisteredObjects.GetSize();
-    const i32 CurrentQueue = Private::GetRegisterObjectQueue().GetSize();
+    const TArray<LRegistryPackage>::SizeType CurrentPackages { this->RegisteredObjects.GetSize() };
+    const TArray<LRegistrationQueuePackage>::SizeType CurrentQueue { Private::GetRegisterObjectQueue().GetSize() };
 
     LOG_VERBOSE(LogObjectPackager, "Loading [{}] pending packages.", Private::GetRegisterObjectQueue().GetSize())
 
@@ -349,9 +349,9 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages(const LLoadedPluginHand
     }
     this->DeferredPackages.Empty();
 
-    for (i32 i = CurrentPackages; i < this->RegisteredObjects.GetSize(); ++i)
+    for (TArray<LRegistryPackage>::SizeType Idx { CurrentPackages }; Idx < this->RegisteredObjects.GetSize(); ++Idx)
     {
-        auto& [StaticClass] = this->RegisteredObjects[i];
+        auto& [StaticClass] = this->RegisteredObjects[Idx];
 
         if (StaticClass->IsConfig())
         {
@@ -637,7 +637,7 @@ i32 Jafg::Private::LObjectRegistry::RemovePackagesOf(const LLoadedPluginHandle I
     check( Tasks::IsOnMasterThread() )
 
     i32 Removed { 0 };
-    for (i32 Idx = 0; Idx < this->RegisteredObjects.GetSize();)
+    for (TArray<LRegistryPackage>::SizeType Idx { 0 }; Idx < this->RegisteredObjects.GetSize();)
     {
         LRegistryPackage& Package = this->RegisteredObjects[Idx];
 

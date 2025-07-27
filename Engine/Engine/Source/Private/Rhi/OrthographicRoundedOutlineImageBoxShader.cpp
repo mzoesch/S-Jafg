@@ -6,12 +6,12 @@
 #include "Widgets/Viewport.h"
 #include "Widgets/RegionForward.h"
 
-Jafg::TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicRoundedOutlineImageBoxShader::GetDefaultConstants()
+TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicRoundedOutlineImageBoxShader::GetDefaultConstants()
 {
     TArray<LShaderCompileTimeConstant> SuperConstants = Super::GetDefaultConstants();
 
     SuperConstants.Append
-    ({
+    (TArray<LShaderCompileTimeConstant>{
         {
             "WITH_UV", "1"
         },

@@ -99,7 +99,7 @@ void Jafg::LSurfaceBase::BeginNewFrame()
 {
     this->PlatformInput.Empty();
 
-    this->DownKeys.SwapBuffers(this->LastFrameDownKeys);
+    this->DownKeys.SwapBuffers(&this->LastFrameDownKeys);
     this->DownKeys.Reset(this->DownKeys.GetSize());
 
     return;

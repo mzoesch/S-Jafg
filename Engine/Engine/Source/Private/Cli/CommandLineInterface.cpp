@@ -74,10 +74,8 @@ void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandE
     return;
 }
 
-Jafg::TArray<Jafg::LString> Jafg::LCommandLineInterface::GetCommonSuggestions(const LString& InCommandLine, const i32 MaxSuggestions) const
+TArray<Jafg::LString> Jafg::LCommandLineInterface::GetCommonSuggestions(const LString& InCommandLine, const u32 MaxSuggestions) const
 {
-    check( MaxSuggestions > 0 )
-
     const LString CommandStr = CliStatics::GetCommandFromText(InCommandLine);
     if (CommandStr.IsEmpty())
     {
@@ -159,10 +157,10 @@ bool Jafg::LCommandLineInterface::UnregisterType(LCliTypeHandle* InHandle)
         return false;
     }
 
-    if (const i32 Idx = this->Types.FindByPredicate([InHandle](const LCliType& Type)
+    if (const TArray<LCliVariable>::SizeType Idx { this->Types.FindIndexByPredicate([InHandle](const LCliType& Type)
     {
         return Type.Uuid == InHandle->Uuid;
-    }); Idx != INDEX_NONE)
+    })}; Idx != this->Types.end_idx())
     {
         LOG_VERBOSE(LogCli, "Unregistering type [{}].", this->Types[Idx].GetIdentifier())
         this->Types.RemoveAt(Idx);
@@ -209,10 +207,10 @@ bool Jafg::LCommandLineInterface::UnregisterCommand(LCliCommandHandle* InHandle)
         return false;
     }
 
-    if (const i32 Idx = this->Commands.FindByPredicate([InHandle](const LCliCommand& Command)
+    if (const TArray<LCliVariable>::SizeType Idx { this->Commands.FindIndexByPredicate([InHandle](const LCliCommand& Command)
     {
         return Command.Uuid == InHandle->Uuid;
-    }); Idx != INDEX_NONE)
+    })}; Idx != this->Commands.end_idx())
     {
         LOG_VERBOSE(LogCli, "Unregistering command [{}].", this->Commands[Idx].GetIdentifier())
         this->Commands.RemoveAt(Idx);
@@ -259,10 +257,10 @@ bool Jafg::LCommandLineInterface::UnregisterVariable(LCliVariableHandle* InHandl
         return false;
     }
 
-    if (const i32 Idx = this->Variables.FindByPredicate([InHandle](const LCliVariable& Variable)
+    if (const TArray<LCliVariable>::SizeType Idx { this->Variables.FindIndexByPredicate([InHandle](const LCliVariable& Variable)
     {
         return Variable.Uuid == InHandle->Uuid;
-    }); Idx != INDEX_NONE)
+    })}; Idx != this->Variables.end_idx())
     {
         LOG_VERBOSE(LogCli, "Unregistering variable [{}].", this->Variables[Idx].GetIdentifier())
         this->Variables.RemoveAt(Idx);

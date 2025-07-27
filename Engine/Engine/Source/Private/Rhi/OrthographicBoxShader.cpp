@@ -5,7 +5,7 @@
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
 
-Jafg::TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicBoxShader::GetDefaultConstants()
+TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicBoxShader::GetDefaultConstants()
 {
     return Super::GetDefaultConstants();
 }

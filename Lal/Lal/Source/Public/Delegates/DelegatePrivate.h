@@ -340,7 +340,7 @@ bool TMulticastDelegate<RetTy(ParamsTy...)>::Remove(LDelegateHandle* InDelegateH
 {
     check( InDelegateHandle )
 
-    for (i32 Idx = 0; Idx < this->DelegatesHandles.GetSize(); ++Idx)
+    for (TArray<u32>::SizeType Idx = 0; Idx < this->DelegatesHandles.GetSize(); ++Idx)
     {
         if (this->DelegatesHandles[Idx] == InDelegateHandle->Handle)
         {

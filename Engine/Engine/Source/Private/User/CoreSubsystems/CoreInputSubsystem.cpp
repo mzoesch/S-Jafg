@@ -263,69 +263,62 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
         (
             UserInput,
             {Name_UsrInMovePawn, "Move Pawn", EInputActionCategory::Axis3D},
-            {
-                LInputTrigger
+            TArray<LInputTrigger>{}
+                .Push(LInputTrigger
                 {
                     "Forward",
                     EKeys::W,
                     EInputActionTrigger::Ongoing,
-                    {
-                        MakeModifier<LInputActionMappedKeyDeltaTimeModifier>(),
-                    },
-                },
-                LInputTrigger
+                    LInputActionMappedTriggerModifiers{}
+                        .Push(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
+                })
+                .Push(LInputTrigger
                 {
                     "Left",
                     EKeys::A,
                     EInputActionTrigger::Ongoing,
-                    {
-                        MakeModifier<LInputActionMappedKeySwizzleModifier>(),
-                        MakeModifier<LInputActionMappedKeyNegateModifier>(),
-                        MakeModifier<LInputActionMappedKeyDeltaTimeModifier>(),
-                    },
-                },
-                LInputTrigger
+                    LInputActionMappedTriggerModifiers{}
+                        .Push(MakeModifier<LInputActionMappedKeySwizzleModifier>())
+                        .Push(MakeModifier<LInputActionMappedKeyNegateModifier>())
+                        .Push(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
+                })
+                .Push(LInputTrigger
                 {
                     "Backwards",
                     EKeys::S,
                     EInputActionTrigger::Ongoing,
-                    {
-                        MakeModifier<LInputActionMappedKeyNegateModifier>(),
-                        MakeModifier<LInputActionMappedKeyDeltaTimeModifier>(),
-                    },
-                },
-                LInputTrigger
+                    LInputActionMappedTriggerModifiers{}
+                        .Push(MakeModifier<LInputActionMappedKeyNegateModifier>())
+                        .Push(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
+                })
+                .Push(LInputTrigger
                 {
                     "Right",
                     EKeys::D,
                     EInputActionTrigger::Ongoing,
-                    {
-                        MakeModifier<LInputActionMappedKeySwizzleModifier>(),
-                        MakeModifier<LInputActionMappedKeyDeltaTimeModifier>(),
-                    },
-                },
-                LInputTrigger
+                    LInputActionMappedTriggerModifiers{}
+                        .Push(MakeModifier<LInputActionMappedKeySwizzleModifier>())
+                        .Push(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
+                })
+                .Push(LInputTrigger
                 {
                     "Up",
                     EKeys::E,
                     EInputActionTrigger::Ongoing,
-                    {
-                        MakeModifier<LInputActionMappedKeySwizzleXZModifier>(),
-                        MakeModifier<LInputActionMappedKeyDeltaTimeModifier>(),
-                    },
-                },
-                LInputTrigger
+                    LInputActionMappedTriggerModifiers{}
+                        .Push(MakeModifier<LInputActionMappedKeySwizzleXZModifier>())
+                        .Push(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
+                })
+                .Push(LInputTrigger
                 {
                     "Down",
                     EKeys::Q,
                     EInputActionTrigger::Ongoing,
-                    {
-                        MakeModifier<LInputActionMappedKeySwizzleXZModifier>(),
-                        MakeModifier<LInputActionMappedKeyNegateModifier>(),
-                        MakeModifier<LInputActionMappedKeyDeltaTimeModifier>(),
-                    },
-                },
-            },
+                    LInputActionMappedTriggerModifiers{}
+                        .Push(MakeModifier<LInputActionMappedKeySwizzleXZModifier>())
+                        .Push(MakeModifier<LInputActionMappedKeyNegateModifier>())
+                        .Push(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
+                }),
             {
             }
         );

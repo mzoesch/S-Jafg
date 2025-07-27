@@ -216,8 +216,8 @@ template <> FORCEINLINE void OnDefaultOnlyMallocMember<u64>(u64* MemberField)   
 template <> FORCEINLINE void OnDefaultOnlyMallocMember<bool>(bool* MemberField)     { *MemberField = false; }
 template <> FORCEINLINE void OnDefaultOnlyMallocMember<LColor>(LColor* MemberField) { *MemberField = LColor::Black; }
 
-template <typename TMemberField>
-FORCEINLINE void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField);
+template <Lal::TArrayBaseAllocatorConceptBase Alloc>
+FORCEINLINE void OnDefaultOnlyMallocMember(Lal::TArrayBase<Alloc>* MemberField);
 
 template <typename InDerived, typename InTraits, typename InAlloc>
 FORCEINLINE void OnDefaultOnlyMallocMember(TStringBase<InDerived, InTraits, InAlloc>* MemberField);
@@ -602,12 +602,10 @@ FORCEINLINE void ExplicitCommonZeroOnDefaultOnlyMallocMember(TMemberField* Membe
     return;
 }
 
-template <typename TMemberField>
-FORCEINLINE void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField)
+template <Lal::TArrayBaseAllocatorConceptBase Alloc>
+FORCEINLINE void OnDefaultOnlyMallocMember(Lal::TArrayBase<Alloc>* MemberField)
 {
-    MemberField->Impl.Data  = nullptr;
-    MemberField->Impl.Slack = nullptr;
-    MemberField->Impl.End   = nullptr;
+    MemberField->GetMutableAllocator()._ResetToDefaultState();
 
     return;
 }

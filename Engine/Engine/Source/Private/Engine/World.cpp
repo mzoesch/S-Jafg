@@ -296,7 +296,7 @@ void Jafg::LWorld::LateTick(const float DeltaTime)
     {
         TemporalObject->ReduceLifeTime(DeltaTime);
     }
-    this->TemporalObjects.RemoveByPredicate( [] (LTemporalWorldObject*& TemporalObject)
+    this->TemporalObjects.RemoveByPredicate([](const LTemporalWorldObject* const& TemporalObject) -> bool
     {
         if (TemporalObject->IsAlive())
         {
@@ -304,7 +304,6 @@ void Jafg::LWorld::LateTick(const float DeltaTime)
         }
 
         delete TemporalObject;
-        TemporalObject = nullptr;
         return true;
     });
 

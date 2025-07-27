@@ -160,7 +160,7 @@ struct LCommandParams
         this->OnExec.Invoke(Args, OutResponse);
     }
 
-    ENGINE_API TArray<LString> GetCommonSuggestions(const LCommandArgs& Args, const i32 MaxSuggestions, const bool bParseNotBeginTypedArg) const;
+    ENGINE_API TArray<LString> GetCommonSuggestions(const LCommandArgs& Args, const u32 MaxSuggestions, const bool bParseNotBeginTypedArg) const;
 
     ENGINE_API LString GetCatRepresentation() const;
 

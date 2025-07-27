@@ -10,6 +10,7 @@ namespace Jafg
 
 //# Base struct for input action modifiers. Inherit from this to add your own modifiers.
 struct LInputActionMappedTriggerModifier;
+typedef TArray<Smart::TUnique<LInputActionMappedTriggerModifier>> LInputActionMappedTriggerModifiers;
 
 //# Negate all axes of the input value. */
 struct LInputActionMappedKeyNegateModifier;

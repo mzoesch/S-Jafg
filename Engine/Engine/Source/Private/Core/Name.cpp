@@ -83,16 +83,14 @@ Jafg::LName Jafg::Private::LNameRegistry::GetName(const LString& InName, const b
     if (bConvertToLower)
     {
         const LString LowerName = InName.GetLowerCase();
-        i32 Index = 0;
-        if (const LString* Ref = this->Names.FindRef(LowerName, &Index); Ref)
+        if (const TArray<LString>::SizeType Index { this->Names.FindIndex(LowerName) }; Index != this->Names.GetSize())
         {
             return { static_cast<LUnderlyingName>(Index + 1) };
         }
     }
     else
     {
-        i32 Index = 0;
-        if (const LString* Ref = this->Names.FindRef(InName, &Index); Ref)
+        if (const TArray<LString>::SizeType Index { this->Names.FindIndex(InName) }; Index != this->Names.GetSize())
         {
             return { static_cast<LUnderlyingName>(Index + 1) };
         }

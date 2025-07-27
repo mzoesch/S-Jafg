@@ -65,10 +65,10 @@ void Jafg::WSwitcher::SetActiveWidget(WNode* Widget)
 {
     checkSlow( Widget )
 
-    if (const i32 Idx = this->GetChildren().FindByPredicate([Widget](const LWidgetSlot* Slot)
+    if (const TArray<LWidgetSlot*>::SizeType Idx { this->GetChildren().FindIndexByPredicate([Widget](const LWidgetSlot* Slot)
     {
         return Slot->Content == Widget;
-    }); Idx != INDEX_NONE)
+    })}; Idx != this->GetChildren().end_idx())
     {
         this->SetActiveWidgetIndex(Idx);
     }

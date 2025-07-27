@@ -153,7 +153,9 @@ public:
         //#
         //# Only the default class referrer may contain fields.
         //#
-        check( this->ClassFields.IsData() == false )
+        check( this->ClassFields.IsDataValid() == false )
+
+        return;
     }
 #if DO_DOUBLE_CHECK_LIFETIMES
     FORCEINLINE bool HasBegunLife() const { return this->bHasBegunLife; }

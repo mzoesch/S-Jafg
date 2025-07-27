@@ -53,7 +53,7 @@ Jafg::LPreference* Jafg::LPreferenceCollection::GetPreferenceByIdentifier(const 
     return this->GetPreferenceByIdentifier(GET_NAME(InIdentifier));
 }
 
-const Jafg::TArray<Smart::TUnique<Jafg::LPreference>>& Jafg::LIntermediatePreferenceCollection::LoadAndGetChildPreferences()
+const TArray<Smart::TUnique<Jafg::LPreference>>& Jafg::LIntermediatePreferenceCollection::LoadAndGetChildPreferences()
 {
     if (this->Refresh() == false)
     {

@@ -1791,7 +1791,7 @@ template<typename Derived, typename InTraits, typename InAlloc>
 FORCEINLINE typename TStringBase<Derived, InTraits, InAlloc>::SizeType TStringBase<Derived, InTraits, InAlloc>::FindFirst(const Self& InSubString, const SizeType InSubLength) const noexcept
 {
     check( InSubString.GetRuneCount() >= InSubLength )
-    return Self::FindFirst(this->GetBegin(), this->GetEnd(), InSubString.GetBegin(), InSubLength.GetEnd() + InSubLength);
+    return Self::FindFirst(this->GetBegin(), this->GetEnd(), InSubString.GetBegin(), InSubString.GetEnd() + InSubLength);
 }
 
 template<typename Derived, typename InTraits, typename InAlloc>

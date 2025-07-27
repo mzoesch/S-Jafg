@@ -819,10 +819,10 @@ void Jafg::WHostSessionScreen_Old::HighlightSave(WHostSessionScreen_Old_Save& Wh
     }
 
     const WHostSessionScreen_Old_Save* WhoPtr = &Who;
-    if (const i32 Idx = this->SavesRegion->GetChildren().FindByPredicate([WhoPtr](const LWidgetSlot* Slot) -> bool
+    if (const TArray<LWidgetSlot*>::SizeType Idx { this->SavesRegion->GetChildren().FindIndexByPredicate([WhoPtr](const LWidgetSlot* Slot) -> bool
     {
         return Slot->Content == WhoPtr;
-    }); Idx != INDEX_NONE)
+    })}; Idx != this->SavesRegion->GetChildren().end_idx())
     {
         this->SelectedSaveIndex = Idx;
         if (this->DeleteButton)

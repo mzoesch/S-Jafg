@@ -24,11 +24,11 @@ void Jafg::JVoxelSubsystem::TearDown()
 
 Jafg::voxel_t Jafg::JVoxelSubsystem::GetVoxelIndex(const LString& Name) const
 {
-    for (voxel_t_it i = 0; i < this->VoxelMasks.GetSize(); ++i)
+    for (TArray<LVoxelMask>::SizeType Idx { 0 }; Idx < this->VoxelMasks.GetSize(); ++Idx)
     {
-        if (this->VoxelMasks[i].GetName() == Name)
+        if (this->VoxelMasks[Idx].GetName() == Name)
         {
-            return static_cast<voxel_t>(i);
+            return static_cast<voxel_t>(Idx);
         }
 
         continue;
@@ -39,11 +39,11 @@ Jafg::voxel_t Jafg::JVoxelSubsystem::GetVoxelIndex(const LString& Name) const
 
 Jafg::voxel_t Jafg::JVoxelSubsystem::GetVoxelIndex(const LString& Namespace, const LString& Name) const
 {
-    for (voxel_t_it i = 0; i < this->VoxelMasks.GetSize(); ++i)
+    for (TArray<LVoxelMask>::SizeType Idx { 0 }; Idx < this->VoxelMasks.GetSize(); ++Idx)
     {
-        if (this->VoxelMasks[i].GetNamespace() == Namespace && this->VoxelMasks[i].GetName() == Name)
+        if (this->VoxelMasks[Idx].GetNamespace() == Namespace && this->VoxelMasks[Idx].GetName() == Name)
         {
-            return static_cast<voxel_t>(i);
+            return static_cast<voxel_t>(Idx);
         }
 
         continue;
@@ -56,20 +56,20 @@ void Jafg::JVoxelSubsystem::SortAllVoxelMasksTextureGroups()
 {
     for (LVoxelMask& Mask : this->VoxelMasks)
     {
-        for (i32 i = 0; i < Mask.TextureGroups.GetSize(); ++i)
+        for (TArray<LVoxelMask::LTextureGroup>::SizeType Idx { 0 }; Idx < Mask.TextureGroups.GetSize(); ++Idx)
         {
-            if (Mask.TextureGroups[i].Normal != ENormalLookup::Omnia)
+            if (Mask.TextureGroups[Idx].Normal != ENormalLookup::Omnia)
             {
                 continue;
             }
 
-            if (i == Mask.TextureGroups.GetSize() - 1)
+            if (Idx == Mask.TextureGroups.GetSize() - 1)
             {
                 /* Already at the end. Nothing to do. */
                 continue;
             }
 
-            Mask.TextureGroups.SwapIndices(i, Mask.TextureGroups.GetSize() - 1);
+            Mask.TextureGroups.SwapIndices(Idx, Mask.TextureGroups.GetSize() - 1);
 
             continue;
         }

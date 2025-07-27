@@ -16,6 +16,7 @@
 #include "Hal/Platform.h"
 #include "Core/CoreMacros.h"
 #include "Core/CoreDefines.h"
+#include "Core/CoreConcepts.h"
 #include "Core/CoreFunctors.h"
 
 
@@ -63,6 +64,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Containers
 #include "Containers/ContainerMacros.h"
+#include "Containers/LalArray.h"
 #include "Containers/Iterator.h"
 #include "Containers/JafgArray.h"
 #include "Containers/JafgString.h"

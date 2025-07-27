@@ -381,7 +381,7 @@ class LStringBase
     template <typename TMemberField>
     friend void OnDefaultOnlyMallocMember(TMemberField* MemberField);
     template <typename TMemberField>
-    friend void OnDefaultOnlyMallocMember(TArray<TMemberField>* MemberField);
+    friend void OnDefaultOnlyMallocMember(TArrayOldv2<TMemberField>* MemberField);
 
 public:
 
@@ -472,7 +472,7 @@ public:
     /** Convert to a char pointer. The output encoding is not defined. */
     FORCEINLINE const char* ToCUnsafe() const;
     FORCEINLINE const CharacterTy* ToPtr() const;
-    FORCEINLINE const TArray<CharacterTy>& GetUnderlyingDataStructure() const { return this->Data; }
+    FORCEINLINE const TArrayOldv2<CharacterTy>& GetUnderlyingDataStructure() const { return this->Data; }
 
     /** @return The rune that is the #InRuneIndex rune in this string. */
     FORCEINLINE const CharacterTy* GetRuneAt(const SizeType InRuneIndex);
@@ -587,7 +587,7 @@ private:
     FORCEINLINE void EnsureValidState();
     FORCEINLINE void PanicValidState() const;
 
-    TArray<CharacterTy> Data;
+    TArrayOldv2<CharacterTy> Data;
 };
 
 template <class InCharacterTy, class InTraitsTy>
@@ -682,7 +682,7 @@ LStringBase<InCharacterTy, InTraitsTy>::LStringBase(const LStringBase& InOther)
 template <class InCharacterTy, class InTraitsTy>
 LStringBase<InCharacterTy, InTraitsTy>::LStringBase(LStringBase&& InOther) noexcept
 {
-    this->Data = std::forward<TArray<CharacterTy>>(InOther.Data);
+    this->Data = std::forward<TArrayOldv2<CharacterTy>>(InOther.Data);
 
 #if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();
@@ -718,7 +718,7 @@ LStringBase<InCharacterTy, InTraitsTy>& LStringBase<InCharacterTy, InTraitsTy>::
 template <class InCharacterTy, class InTraitsTy>
 LStringBase<InCharacterTy, InTraitsTy>& LStringBase<InCharacterTy, InTraitsTy>::operator=(LStringBase&& InOther) noexcept
 {
-    this->Data = std::forward<TArray<CharacterTy>>(InOther.Data);
+    this->Data = std::forward<TArrayOldv2<CharacterTy>>(InOther.Data);
 
 #if LAL_CHECK_STRING_VALIDITY
     this->EnsureValidState();

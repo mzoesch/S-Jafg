@@ -5,12 +5,12 @@
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
 
-Jafg::TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicRoundedBoxShader::GetDefaultConstants()
+TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicRoundedBoxShader::GetDefaultConstants()
 {
     TArray<LShaderCompileTimeConstant> SuperConstants = Super::GetDefaultConstants();
 
     SuperConstants.Append
-    ({
+    (TArray<LShaderCompileTimeConstant>{
         {
             "WITH_UV", "1"
         },

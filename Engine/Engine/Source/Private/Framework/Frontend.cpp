@@ -152,14 +152,14 @@ Jafg::WNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(const LObjectClass* 
         }
     }
 
-    for (i32 i = 0; i < this->Surfaces.GetSize(); ++i)
+    for (TArray<LSurface>::SizeType Idx { 0 }; Idx < this->Surfaces.GetSize(); ++Idx)
     {
-        if (this->FocusedSurface == i)
+        if (this->FocusedSurface != INDEX_NONE && static_cast<TArray<LSurface>::SizeType>(this->FocusedSurface) == Idx)
         {
             continue;
         }
 
-        const LSurface& Surface = this->Surfaces[i];
+        const LSurface& Surface = this->Surfaces[Idx];
         if (WNode* Widget = Surface.GetViewport().GetTopLevelWidgetByClass(WidgetClass); Widget)
         {
             return Widget;

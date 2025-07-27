@@ -15,13 +15,13 @@ void SortQuick(T* Begin, T* Slack);
 
 } /* ~Namespace Private */
 
-template <typename TAlloc> requires (TArrayBase<TAlloc>::IsContentMutable())
-FORCEINLINE void SortQuick(TArrayBase<TAlloc>* Container);
+template <typename TAlloc> requires (Lal::TArrayBase<TAlloc>::IsContentMutable())
+FORCEINLINE void SortQuick(Lal::TArrayBase<TAlloc>* Container);
 
-template <typename TAlloc> requires (TArrayBase<TAlloc>::IsContentMutable())
-FORCEINLINE void SortQuick(TArrayBase<TAlloc>* Container)
+template <typename TAlloc> requires (Lal::TArrayBase<TAlloc>::IsContentMutable())
+FORCEINLINE void SortQuick(Lal::TArrayBase<TAlloc>* Container)
 {
-    Private::SortQuick(Container->GetData(), Container->GetSlack());
+    Private::SortQuick(Container->GetDataPointer(), Container->GetSlackPointer());
 }
 
 namespace Private
@@ -30,6 +30,11 @@ namespace Private
 template <typename T>
 T* SortQuick_Pivot(T* Begin, T* Slack)
 {
+    if (static_cast<const void*>(Begin + (Slack - Begin) / 2) == static_cast<const void*>(Slack - 1))
+    {
+        return Slack - 1;
+    }
+
     std::swap(*(Begin + (Slack - Begin) / 2), *(Slack - 1));
     T* Pivot { Slack - 1 };
 
@@ -39,14 +44,21 @@ T* SortQuick_Pivot(T* Begin, T* Slack)
     {
         if (*Right < *Pivot)
         {
-            std::swap(*Left, *Right);
+            if (Left != Right)
+            {
+                std::swap(*Left, *Right);
+            }
+
             ++Left;
         }
 
         continue;
     }
 
-    std::swap(*Left, *Pivot);
+    if (Left != Pivot)
+    {
+        std::swap(*Left, *Pivot);
+    }
 
     return Left;
 }

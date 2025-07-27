@@ -41,7 +41,7 @@ enum Type : u8
 template <typename InSizeType>
 struct TArrayAllocatorTraits;
 //#
-//# An allocator for TArrayBase.
+//# An allocator for TArrayBaseOldv2.
 //# @see JafgArray.h for more information about what traits to implement.
 //#
 template <typename InT, typename InSizeType, typename InTraits>
@@ -55,7 +55,7 @@ struct TArrayViewAllocatorTraits;
 template <typename InSizeType>
 struct TMutableArrayViewAllocatorTraits;
 //#
-//# A view on a TArrayBase.
+//# A view on a TArrayBaseOldv2.
 //#
 template <typename InT, typename InSizeType, typename InTraits>
 struct TArrayViewAllocator;
@@ -63,7 +63,7 @@ template <typename InT, typename InSizeType, typename InTraits>
 struct TMutableArrayViewAllocator;
 
 template <typename InAlloc>
-class TArrayBase;
+class TArrayBaseOldv2;
 
 template <typename InT>
 struct TStringTraits;
@@ -85,20 +85,20 @@ class TSimpleQueue;
 //#
 //# The default array for jafg. This array is dynamic and allocates memory on the heap.
 //#
-template <typename T> using TArray = TArrayBase<TArrayAllocator<T, DefaultContainerSizeType, TArrayAllocatorTraits<DefaultContainerSizeType>>>;
+template <typename T> using TArrayOldv2 = TArrayBaseOldv2<TArrayAllocator<T, DefaultContainerSizeType, TArrayAllocatorTraits<DefaultContainerSizeType>>>;
 
 //#
 //# The default array view for jafg. This array view is a view on any TArrayBase.
 //#
-template <typename T> using TArrayView = TArrayBase<TArrayViewAllocator<T, DefaultContainerSizeType, TArrayViewAllocatorTraits<DefaultContainerSizeType>>>;
-template <typename T> using TMutableArrayView = TArrayBase<TMutableArrayViewAllocator<T, DefaultContainerSizeType, TArrayViewAllocatorTraits<DefaultContainerSizeType>>>;
+template <typename T> using TArrayViewOldv2 = TArrayBaseOldv2<TArrayViewAllocator<T, DefaultContainerSizeType, TArrayViewAllocatorTraits<DefaultContainerSizeType>>>;
+template <typename T> using TMutableArrayViewOldv2 = TArrayBaseOldv2<TMutableArrayViewAllocator<T, DefaultContainerSizeType, TArrayViewAllocatorTraits<DefaultContainerSizeType>>>;
 
 template <typename InT>
-using TStringBasic = _TStringBase<TStringTraits<InT>, TArray<InT>>;
+using TStringBasic = _TStringBase<TStringTraits<InT>, TArrayOldv2<InT>>;
 template <typename InT>
-using TStringViewBasic = _TStringBase<TStringTraits<InT>, TArrayView<InT>>;
+using TStringViewBasic = _TStringBase<TStringTraits<InT>, TArrayViewOldv2<InT>>;
 template <typename InT>
-using TMutableStringViewBasic = _TStringBase<TStringTraits<InT>, TMutableArrayView<InT>>;
+using TMutableStringViewBasic = _TStringBase<TStringTraits<InT>, TMutableArrayViewOldv2<InT>>;
 
 //#
 //# The default string for jafg.

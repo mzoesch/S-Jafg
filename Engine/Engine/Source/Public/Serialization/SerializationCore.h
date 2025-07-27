@@ -241,7 +241,7 @@ FORCEINLINE LString Serialize(const TArray<TField>& InValue)
 {
     LString Result = "[";
 
-    for (i32 Index = 0; Index < InValue.GetSize(); ++Index)
+    for (typename TArray<TField>::SizeType Index { 0 }; Index < InValue.GetSize(); ++Index)
     {
         Result += Serialize(InValue[Index]);
         if (Index < InValue.GetSize() - 1)

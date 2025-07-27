@@ -43,7 +43,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         return false;
     },
     nullptr,
-    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         return { };
     },
@@ -81,7 +81,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         return false;
     },
     nullptr,
-    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         return { };
     },
@@ -119,7 +119,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         return false;
     },
     nullptr,
-    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         if (MaxSuggestions >= 2)
         {
@@ -167,7 +167,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         return false;
     },
     nullptr,
-    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         return { };
     },
@@ -187,7 +187,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         return true;
     },
     nullptr,
-    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         return { };
     },
@@ -240,7 +240,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
 
         return false;
     },
-    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         if (MaxSuggestions >= 2)
         {
@@ -279,7 +279,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
         return true;
     },
     nullptr,
-    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         return { };
     },
@@ -310,7 +310,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
         return Var != nullptr;
     },
     nullptr,
-    [](const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) -> TArray<LString>
+    [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
     {
         const LCommandArgs* Target { nullptr };
 
@@ -328,7 +328,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
 
         for (const LCliVariable& Var : GEngine->GetCommandLineInterface()->GetVariables())
         {
-            if (Out.GetSize() >= MaxSuggestions)
+            if (Out.GetSize() >= static_cast<TArray<LString>::SizeType>(MaxSuggestions))
             {
                 break;
             }
@@ -373,7 +373,7 @@ bool Jafg::Private::CliQueryImpl(const LCommandArgs& Args, i32* Cursor, const TA
     return false;
 }
 
-Jafg::TArray<Jafg::LString> Jafg::Private::CliQuerySuggestImpl(const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions, const TArray<LString>& Values)
+TArray<Jafg::LString> Jafg::Private::CliQuerySuggestImpl(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions, const TArray<LString>& Values)
 {
     const LCommandArgs* Target { nullptr };
 
@@ -426,7 +426,7 @@ bool Jafg::Private::CliStringImpl(const LCommandArgs& Args, i32* Cursor, const L
     return false;
 }
 
-Jafg::TArray<Jafg::LString> Jafg::Private::CliStringSuggestImpl(const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions, const LString& Value)
+TArray<Jafg::LString> Jafg::Private::CliStringSuggestImpl(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions, const LString& Value)
 {
     if (MaxSuggestions > 0)
     {

@@ -40,7 +40,7 @@ bool Jafg::LCliType::CanParse(const LCommandArgs& Args, i32* Cursor) const
     return CliType->OnParseTypeDelegate.Invoke(Args, Cursor);
 }
 
-Jafg::TArray<Jafg::LString> Jafg::LCliType::Suggest(const LCommandArgs& Args, const i32 Cursor, const i32 MaxSuggestions) const
+TArray<Jafg::LString> Jafg::LCliType::Suggest(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) const
 {
     if (this->OnSuggestDelegate.IsBound())
     {

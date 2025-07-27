@@ -133,7 +133,7 @@ Jafg::LCommandArgs Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine)
             {
                 if (Cur.IsEmpty() == false)
                 {
-                    Out.SubArgs.Emplace(LCommandArgs(std::move(Cur)));
+                    Out.SubArgs.Emplace(std::move(Cur));
                 }
                 check( Cur.IsEmpty() )
                 LastChar = CurChar;
@@ -153,7 +153,7 @@ Jafg::LCommandArgs Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine)
         {
             if (Cur.IsEmpty() == false)
             {
-                Out.SubArgs.Emplace(LCommandArgs(std::move(Cur)));
+                Out.SubArgs.Emplace(std::move(Cur));
             }
             check( Cur.IsEmpty() )
             bInString = true;
@@ -165,7 +165,7 @@ Jafg::LCommandArgs Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine)
         {
             if (Cur.IsEmpty() == false)
             {
-                Out.SubArgs.Emplace(LCommandArgs(std::move(Cur)));
+                Out.SubArgs.Emplace(std::move(Cur));
             }
             check( Cur.IsEmpty() )
             LastChar = CurChar;
@@ -179,12 +179,12 @@ Jafg::LCommandArgs Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine)
 
     if (Cur.IsEmpty() == false)
     {
-        Out.SubArgs.Emplace(LCommandArgs(std::move(Cur)));
+        Out.SubArgs.Emplace(std::move(Cur));
     }
 
     if (bInString)
     {
-        return LCommandArgs();
+        return LCommandArgs{};
     }
 
     check( ::IsValidArgs(Out) )

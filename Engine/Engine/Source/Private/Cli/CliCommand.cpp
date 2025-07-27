@@ -123,7 +123,7 @@ bool Jafg::LCommandParams::IsInvocable(const LCommandArgs& Args) const
     return this->Signature.GetSize() > 0;
 }
 
-Jafg::TArray<Jafg::LString> Jafg::LCommandParams::GetCommonSuggestions(const LCommandArgs& Args, const i32 MaxSuggestions, const bool bParseNotBeginTypedArg) const
+TArray<Jafg::LString> Jafg::LCommandParams::GetCommonSuggestions(const LCommandArgs& Args, const u32 MaxSuggestions, const bool bParseNotBeginTypedArg) const
 {
     if (MaxSuggestions <= 0)
     {

@@ -188,7 +188,7 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
     glDepthFunc(GL_LEQUAL);
     glDisable(GL_CULL_FACE);
 
-    for (i32 Idx { 0 }; Idx < this->Maps.GetSize(); ++Idx)
+    for (TArray<LLoadedCubemap>::SizeType Idx { 0 }; Idx < this->Maps.GetSize(); ++Idx)
     {
         const LLoadedCubemap& Map { this->Maps[Idx] };
 

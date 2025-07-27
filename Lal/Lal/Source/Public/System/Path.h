@@ -14,7 +14,7 @@ template <typename InTraits, typename InAlloc>
 class TPathBase;
 
 template <typename InT>
-using TPathBasic = TPathBase<TStringTraits<InT>, TArray<InT>>;
+using TPathBasic = TPathBase<TStringTraits<InT>, TArrayOldv2<InT>>;
 
 typedef TPathBasic<char> LPath;
 
