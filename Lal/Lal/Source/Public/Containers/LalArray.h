@@ -4484,9 +4484,9 @@ public:
     template <std::predicate<T> TPredicate>
     FORCEINLINE bool ContainsByPredicateAsserted(const TPredicate& Predicate) const noexcept { const ConstIterator It { this->FindByPredicateAsserted(Predicate) }; return It != this->cend(); }
 
-    template <typename TPredicate> requires (std::invocable<TPredicate, T> && std::is_void_v<std::invoke_result_t<TPredicate, T>>)
+    template <typename TPredicate> requires(std::invocable<TPredicate, T> && std::is_void_v<std::invoke_result_t<TPredicate, T>>)
     FORCEINLINE void ForEach(const TPredicate& Predicate) noexcept requires(TArrayBase::IsContentMutable());
-    template <typename TPredicate> requires (std::invocable<TPredicate, T> && std::is_void_v<std::invoke_result_t<TPredicate, T>>)
+    template <typename TPredicate> requires(std::invocable<TPredicate, T> && std::is_void_v<std::invoke_result_t<TPredicate, T>>)
     FORCEINLINE void ForEach(const TPredicate& Predicate) const noexcept;
 
     //# @return The number of elements replaced.
@@ -4702,7 +4702,7 @@ FORCEINLINE constexpr TArrayBase<TAllocator>& TArrayBase<TAllocator>::operator=(
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
 FORCEINLINE constexpr TArrayBase<TAllocator>::TArrayBase(const std::initializer_list<T> List) noexcept
-    requires (std::is_constructible_v<TAllocator, std::initializer_list<typename TAllocator::T>>)
+    requires(std::is_constructible_v<TAllocator, std::initializer_list<typename TAllocator::T>>)
     : Impl{List}
 {
     return;
@@ -5567,7 +5567,7 @@ typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::RemoveByPredic
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <std::predicate<typename TAllocator::T> TPredicate>
 FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::RemoveByPredicateAtLeastOnceChecked(const TPredicate& Predicate) noexcept
-    requires (TArrayBase::IsAllowedToPopItemsInBetween())
+    requires(TArrayBase::IsAllowedToPopItemsInBetween())
 {
     const SizeType Count { this->RemoveByPredicate<TPredicate>(Predicate) };
     check( Count > 0 )
@@ -5577,7 +5577,7 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Re
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <std::predicate<typename TAllocator::T> TPredicate>
 FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::RemoveByPredicateAtLeastOnceAsserted(const TPredicate& Predicate) noexcept
-    requires (TArrayBase::IsAllowedToPopItemsInBetween())
+    requires(TArrayBase::IsAllowedToPopItemsInBetween())
 {
     const SizeType Count { this->RemoveByPredicate<TPredicate>(Predicate) };
     jassert( Count > 0 )
@@ -5643,7 +5643,7 @@ bool TArrayBase<TAllocator>::RemoveOnceByPredicateAsserted(const TPredicate& Pre
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+template <typename U> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::Find(const U& What) noexcept
 {
     for (T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
@@ -5660,7 +5660,7 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::Find(const U& 
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+template <typename U> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 typename TArrayBase<TAllocator>::ConstIterator TArrayBase<TAllocator>::Find(const U& What) const noexcept
 {
     for (const T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
@@ -5677,7 +5677,7 @@ typename TArrayBase<TAllocator>::ConstIterator TArrayBase<TAllocator>::Find(cons
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+template <typename U> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindIndex(const U& What) noexcept
 {
     if (Iterator It { this->Find(What) }; It != this->end())
@@ -5689,7 +5689,7 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Fi
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+template <typename U> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindIndex(const U& What) const noexcept
 {
     if (ConstIterator It { this->Find(What) }; It != this->cend())
@@ -5701,7 +5701,7 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Fi
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+template <typename U> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 FORCEINLINE typename TArrayBase<TAllocator>::Pointer TArrayBase<TAllocator>::FindRef(const U& What) noexcept
 {
     if (Iterator It { this->Find(What) }; It != this->end())
@@ -5713,7 +5713,7 @@ FORCEINLINE typename TArrayBase<TAllocator>::Pointer TArrayBase<TAllocator>::Fin
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+template <typename U> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 FORCEINLINE typename TArrayBase<TAllocator>::ConstPointer TArrayBase<TAllocator>::FindRef(const U& What) const noexcept
 {
     if (ConstIterator It { this->Find(What) }; It != this->cend())
@@ -5807,7 +5807,7 @@ FORCEINLINE typename TArrayBase<TAllocator>::ConstPointer TArrayBase<TAllocator>
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+template <typename U> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::FindLast(const U& What) noexcept
 {
     for (T* RESTRICT Bulk { this->GetSlackPointer() - 1 }; Bulk >= this->GetDataPointer(); --Bulk)
@@ -5824,7 +5824,7 @@ typename TArrayBase<TAllocator>::Iterator TArrayBase<TAllocator>::FindLast(const
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+template <typename U> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 typename TArrayBase<TAllocator>::ConstIterator TArrayBase<TAllocator>::FindLast(const U& What) const noexcept
 {
     for (const T* RESTRICT Bulk { this->GetSlackPointer() - 1 }; Bulk >= this->GetDataPointer(); --Bulk)
@@ -5841,7 +5841,7 @@ typename TArrayBase<TAllocator>::ConstIterator TArrayBase<TAllocator>::FindLast(
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+template <typename U> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindLastIndex(const U& What) noexcept
 {
     if (Iterator It { this->FindLast(What) }; It != this->end())
@@ -5853,7 +5853,7 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Fi
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+template <typename U> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::FindLastIndex(const U& What) const noexcept
 {
     if (ConstIterator It { this->FindLast(What) }; It != this->cend())
@@ -5865,7 +5865,7 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Fi
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+template <typename U> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 FORCEINLINE typename TArrayBase<TAllocator>::Pointer TArrayBase<TAllocator>::FindLastRef(const U& What) noexcept
 {
     if (Iterator It { this->FindLast(What) }; It != this->end())
@@ -5877,7 +5877,7 @@ FORCEINLINE typename TArrayBase<TAllocator>::Pointer TArrayBase<TAllocator>::Fin
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
+template <typename U> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U>)
 FORCEINLINE typename TArrayBase<TAllocator>::ConstPointer TArrayBase<TAllocator>::FindLastRef(const U& What) const noexcept
 {
     if (ConstIterator It { this->FindLast(What) }; It != this->cend())
@@ -5971,8 +5971,8 @@ FORCEINLINE typename TArrayBase<TAllocator>::ConstPointer TArrayBase<TAllocator>
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename TPredicate> requires (std::invocable<TPredicate, typename TAllocator::T> && std::is_void_v<std::invoke_result_t<TPredicate, typename TAllocator::T>>)
-FORCEINLINE void TArrayBase<TAllocator>::ForEach(const TPredicate& Predicate) noexcept requires (TArrayBase::IsContentMutable())
+template <typename TPredicate> requires(std::invocable<TPredicate, typename TAllocator::T> && std::is_void_v<std::invoke_result_t<TPredicate, typename TAllocator::T>>)
+FORCEINLINE void TArrayBase<TAllocator>::ForEach(const TPredicate& Predicate) noexcept requires(TArrayBase::IsContentMutable())
 {
     for (T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
     {
@@ -5985,7 +5985,7 @@ FORCEINLINE void TArrayBase<TAllocator>::ForEach(const TPredicate& Predicate) no
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename TPredicate> requires (std::invocable<TPredicate, typename TAllocator::T> && std::is_void_v<std::invoke_result_t<TPredicate, typename TAllocator::T>>)
+template <typename TPredicate> requires(std::invocable<TPredicate, typename TAllocator::T> && std::is_void_v<std::invoke_result_t<TPredicate, typename TAllocator::T>>)
 FORCEINLINE void TArrayBase<TAllocator>::ForEach(const TPredicate& Predicate) const noexcept
 {
     for (const T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
@@ -5999,9 +5999,9 @@ FORCEINLINE void TArrayBase<TAllocator>::ForEach(const TPredicate& Predicate) co
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <typename U, typename V> requires (Lal::TEqualityComparableLeft<typename TAllocator::T, U> && std::assignable_from<typename TAllocator::T, V>)
+template <typename U, typename V> requires(Lal::TEqualityComparableLeft<typename TAllocator::T, U> && std::assignable_from<typename TAllocator::T, V>)
 FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Replace(const U& What, const V& Replacement) noexcept
-    requires (TArrayBase::IsContentMutable())
+    requires(TArrayBase::IsContentMutable())
 {
     SizeType Replaced { 0 };
 
@@ -6020,9 +6020,9 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Re
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
-template <std::predicate<typename TAllocator::T> TPredicate, typename V> requires (std::assignable_from<typename TAllocator::T, V>)
+template <std::predicate<typename TAllocator::T> TPredicate, typename V> requires(std::assignable_from<typename TAllocator::T, V>)
 FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::ReplaceByPredicate(const TPredicate& Predicate, const V& Replacement) noexcept
-    requires (TArrayBase::IsContentMutable())
+    requires(TArrayBase::IsContentMutable())
 {
     SizeType Replaced { 0 };
 
@@ -6043,7 +6043,7 @@ FORCEINLINE typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::Re
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <typename ... TArgs>
 FORCEINLINE TArrayBase<TAllocator>& TArrayBase<TAllocator>::Push(TArgs&&... Args) & noexcept
-    requires (TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<typename TAllocator::T, TArgs...>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<typename TAllocator::T, TArgs...>)
 {
     this->Emplace(std::forward<TArgs>(Args)...);
     return *this;
@@ -6052,7 +6052,7 @@ FORCEINLINE TArrayBase<TAllocator>& TArrayBase<TAllocator>::Push(TArgs&&... Args
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <typename ... TArgs>
 FORCEINLINE TArrayBase<TAllocator>&& TArrayBase<TAllocator>::Push(TArgs&&... Args) && noexcept
-    requires (TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<typename TAllocator::T, TArgs...>)
+    requires(TArrayBase::IsAllowedToPushItems() && std::is_constructible_v<typename TAllocator::T, TArgs...>)
 {
     this->Emplace(std::forward<TArgs>(Args)...);
     return std::move(*this);
