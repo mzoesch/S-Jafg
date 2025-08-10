@@ -65,14 +65,14 @@ namespace Jafg::Maths
     Declarations.
 ----------------------------------------------------------------------------*/
 
-template <typename T> NODISCARD FORCEINLINE constexpr T Absolute(const T A) { return ( A < static_cast<T>(0) ) ? -A : A; }
-template <typename T> NODISCARD FORCEINLINE constexpr T Min(const T A, const T B) { return (B < A) ? B : A; }
-template <typename T> NODISCARD FORCEINLINE constexpr T Max(const T A, const T B) { return (B < A) ? A : B; }
+template <typename T> NODISCARD FORCEINLINE constexpr T Absolute(const T A) { if (A < static_cast<T>(0)) { return -A; } return A; }
+template <typename T> NODISCARD FORCEINLINE constexpr T Min(const T A, const T B) { if (B < A) { return B; } return A; }
+template <typename T> NODISCARD FORCEINLINE constexpr T Max(const T A, const T B) { if (A < B) { return B; } return A; }
 
 /** @return The sign of the value. -1 for negative, 1 for positive, 0 for zero. */
-template <typename T> NODISCARD FORCEINLINE constexpr T Sign(const T Value) { return (Value < static_cast<T>(0.0)) ? -static_cast<T>(1) : (Value > static_cast<T>(0.0)) ? static_cast<T>(1.0) : static_cast<T>(0.0); }
+template <typename T> NODISCARD FORCEINLINE constexpr T Sign(const T Value) { if (Value < static_cast<T>(0.0)) { return -static_cast<T>(1); } if (Value > static_cast<T>(0.0)) { return static_cast<T>(1.0); } return static_cast<T>(0.0); }
 /** @return The sign of the value. -1 for negative, 1 for positive or zero. */
-template <typename T> NODISCARD FORCEINLINE constexpr T SignNoZero(const T Value) { return (Value < static_cast<T>(0.0)) ? -static_cast<T>(1.0) : static_cast<T>(1.0); }
+template <typename T> NODISCARD FORCEINLINE constexpr T SignNoZero(const T Value) { if (Value < static_cast<T>(0.0)) { return -static_cast<T>(1.0); } return static_cast<T>(1.0); }
 
 template <typename T> NODISCARD FORCEINLINE constexpr T Invert(const T Value) { return Value * static_cast<T>(-1.0); }
 

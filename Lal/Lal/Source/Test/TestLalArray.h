@@ -2,10 +2,6 @@
 
 #pragma once
 
-#include "TestInclude.h"
-
-#include "Containers/LalArray.h"
-
 namespace Testing::Lal::Array
 {
 

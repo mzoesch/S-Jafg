@@ -17,3 +17,4 @@
 #include "TestJafgArray.h"
 #include "TestJafgString.h"
 #include "TestOptional.h"
+#include "TestLalArray.h"

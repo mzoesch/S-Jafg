@@ -13,7 +13,7 @@ public:
 
     FORCEINLINE constexpr LReplyBase() noexcept : bHandled(false) { }
     FORCEINLINE constexpr LReplyBase(const bool bInHandled) noexcept : bHandled(bInHandled) { }
-    DEFAULT_CONST_EXPR_REALLOC_OF_ANY_FORM(LReplyBase)
+    DEFAULT_CONSTEXPR_REALLOC_OF_ANY_FORM(LReplyBase)
     FORCEINLINE constexpr virtual ~LReplyBase() noexcept = default;
 
     FORCEINLINE constexpr bool IsHandled() const noexcept { return this->bHandled; }
@@ -30,7 +30,7 @@ public:
 
     FORCEINLINE constexpr TReplyBase() noexcept : LReplyBase() { }
     FORCEINLINE constexpr TReplyBase(const bool bInHandled) noexcept : LReplyBase(bInHandled) { }
-    DEFAULT_CONST_EXPR_REALLOC_OF_ANY_FORM(TReplyBase)
+    DEFAULT_CONSTEXPR_REALLOC_OF_ANY_FORM(TReplyBase)
     FORCEINLINE virtual ~TReplyBase() noexcept override = default;
 
 protected:
@@ -120,7 +120,7 @@ public:
     FORCEINLINE constexpr LReply(WNode* InFocusedWidget, const bool bInLooseFocus = false) noexcept
         : TReplyBase<LReply>(true), FocusedWidget(InFocusedWidget), bLooseFocus(bInLooseFocus) { }
 
-    DEFAULT_CONST_EXPR_REALLOC_OF_ANY_FORM(LReply)
+    DEFAULT_CONSTEXPR_REALLOC_OF_ANY_FORM(LReply)
 
     FORCEINLINE virtual ~LReply() noexcept override = default;
 

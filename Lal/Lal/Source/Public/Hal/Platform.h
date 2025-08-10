@@ -41,6 +41,9 @@ struct LPrimitivePlatformTypesGeneric
     //# An ASCII character. 8-bit fixed-width representation of 7-bit characters.
     typedef char                        LAsciiChar;
 
+    //# Char used by jafg.
+    typedef char                        LJafgChar;
+
     //# Native char.
     typedef char                        LChar;
 
@@ -551,6 +554,7 @@ concept IsPrimitivePlatformTypesValid = requires
     typename T::LSize;
 
     typename T::LAsciiChar;
+    typename T::LJafgChar;
     typename T::LChar;
     typename T::LWideChar;
 
@@ -631,6 +635,8 @@ typedef Lal::LPlatformTypes::f64                                        f64;
 typedef Lal::LPlatformTypes::LSize                                      LSize;
 
 typedef Lal::LPlatformTypes::LAsciiChar                                 LAsciiChar;
+typedef Lal::LPlatformTypes::LJafgChar                                  LJafgChar;
+typedef Lal::LPlatformTypes::LChar                                      LChar;
 typedef Lal::LPlatformTypes::LWideChar                                  LWideChar;
 typedef Lal::LPlatformTypes::LStringLegacy                              LStringLegacy;
 

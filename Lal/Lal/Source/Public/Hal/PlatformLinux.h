@@ -112,6 +112,7 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     #pragma clang diagnostic error "-Wundefined-inline"
     #pragma clang diagnostic error "-Wunknown-pragmas"
     #pragma clang diagnostic error "-Wunknown-warning-option"
+    #pragma clang diagnostic error "-Wunused-comparison"
     #pragma clang diagnostic error "-Wunused-lambda-capture"
 
     /*-----------------------------------------------------------------------------

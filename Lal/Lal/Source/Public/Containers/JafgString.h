@@ -2591,6 +2591,7 @@ void TStringBase<Derived, InTraits, InAlloc>::EnsureValidState() const
 
     return;
 }
+#endif /* LAL_CHECK_STRING_VALIDITY */
 
 template<typename InTraits, typename InAlloc>
 template<typename TOtherString>
@@ -2623,8 +2624,6 @@ FORCEINLINE typename _TStringBase<InTraits, InAlloc>::Self& _TStringBase<InTrait
 {
     return this->Super::operator=(std::move(InString));
 }
-
-#endif /* LAL_CHECK_STRING_VALIDITY */
 
 } /* ~Namespace Jafg */
 

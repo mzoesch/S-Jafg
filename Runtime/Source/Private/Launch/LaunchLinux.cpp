@@ -150,7 +150,7 @@ i32 main(const i32 ArgC, const char* ArgV[])
     ::sigaction(SIGHUP,  &Action_Error, nullptr); /* Hangup signal of terminal or helicopter parent. */ // We do not really care.
     ::sigaction(SIGILL,  &Action_Fatal, nullptr); /* Illegal instruction. */
     ::sigaction(SIGINT,  &Action_Error, nullptr); /* Interactive attention signal. */ // -> Non-fatal because the user is at fault then (because he cannot use his keyboard), not us.
-    ::sigaction(SIGSEGV, &Action_Fatal, nullptr); /* Invalid memory reference <- The usual suspect */
+    ::sigaction(SIGSEGV, &Action_Fatal, nullptr); /* Invalid memory reference */ // <- The usual suspect
     ::sigaction(SIGTERM, &Action_Error, nullptr); /* Termination signal. */ // The default behavior for SIGTERM is to terminate the process, but we want to handle it gracefully.
 
     ///////////////////////////////////////////////////////////////////////////////
