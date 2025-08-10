@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include <gtest/internal/gtest-string.h>
-
 #include "CoreAfx.h"
 
 #ifndef PRIVATE_LAL_ENSURE_STRING_INVARIANT

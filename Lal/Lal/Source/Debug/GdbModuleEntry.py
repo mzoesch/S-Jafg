@@ -12,7 +12,9 @@ from Lal.Lal.Source.Debug.Containers.JafgString import (
 from Lal.Lal.Source.Debug.Containers.LalArray import (
     LalTArrayBase_Printer
     )
-
+from Lal.Lal.Source.Debug.Containers.LalString import (
+    LalTStringBase_Printer
+    )
 
 def lal_pretty_lookup(val: any) -> any:
     type_str: str = str(val.type.strip_typedefs())
@@ -32,7 +34,16 @@ def lal_pretty_lookup(val: any) -> any:
     pattern_lal_array = re.compile(
         r'Lal::TArrayBase<\s*[^>]+\s*>'
         )
+    pattern_lal_string = re.compile(
+        r'Lal::TStringBase<\s*[^>]+\s*>'
+        )
 
+    if pattern_lal_array.match(type_str):
+        return LalTArrayBase_Printer(val)
+    if pattern_lal_string.match(type_str):
+        return LalTStringBase_Printer(val)
+
+    # Legacy
     if pattern_array.match(type_str):
         return JafgTArray_Printer(val)
     if pattern_strong_string.match(type_str):
@@ -41,8 +52,7 @@ def lal_pretty_lookup(val: any) -> any:
         return JafgTStringBaseWeak_Printer(val)
     if pattern_path_base.match(type_str):
         return JafgTStringBaseStrong_Printer(val)
-    if pattern_lal_array.match(type_str):
-        return LalTArrayBase_Printer(val)
+    # ~Legacy
 
     return None
 

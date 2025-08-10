@@ -666,6 +666,7 @@ TEST_CASE(StringFormat, "Lal.Containers")
 
 TEST_CASE(StringSubstitute, "Lal.Containers")
 {
+    std::string StdString { "Hello, World! This is a long string." };
     LString String { "Hello, World! This is a long string." };
     QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string.")
 
