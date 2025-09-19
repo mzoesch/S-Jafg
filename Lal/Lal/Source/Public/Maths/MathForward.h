@@ -2,9 +2,6 @@
 
 #pragma once
 
-namespace Jafg
-{
-
 namespace Matrix
 {
 
@@ -55,12 +52,12 @@ template <typename T> struct TTransform;
     Concrete Type Forwards.
 ----------------------------------------------------------------------------*/
 
-using LVector2F         = TVector2<float>;
-using LVector2D         = TVector2<double>;
-using LVector3F         = TVector3<float>;
-using LVector3D         = TVector3<double>;
-using LVector4F         = TVector4<float>;
-using LVector4D         = TVector4<double>;
+using LVector2F         = TVector2<f32>;
+using LVector2D         = TVector2<f64>;
+using LVector3F         = TVector3<f32>;
+using LVector3D         = TVector3<f64>;
+using LVector4F         = TVector4<f32>;
+using LVector4D         = TVector4<f64>;
 
 using Li8Vector         = TIntVector<i8>;
 using Li16Vector        = TIntVector<i16>;
@@ -76,19 +73,19 @@ using Lu16Vector2       = TIntVector2<u16>;
 using Lu32Vector2       = TIntVector2<u32>;
 using Lu64Vector2       = TIntVector2<u64>;
 
-using LRotatorF         = TRotator<float>;
-using LRotatorD         = TRotator<double>;
+using LRotatorF         = TRotator<f32>;
+using LRotatorD         = TRotator<f64>;
 
-using LPlaneF           = TPlane<float>;
-using LPlaneD           = TPlane<double>;
+using LPlaneF           = TPlane<f32>;
+using LPlaneD           = TPlane<f64>;
 
-using LMatrix3F         = TMatrix3<float>;
-using LMatrix3D         = TMatrix3<double>;
-using LMatrix4F         = TMatrix4<float>;
-using LMatrix4D         = TMatrix4<double>;
+using LMatrix3F         = TMatrix3<f32>;
+using LMatrix3D         = TMatrix3<f64>;
+using LMatrix4F         = TMatrix4<f32>;
+using LMatrix4D         = TMatrix4<f64>;
 
-using LTransformF       = TTransform<float>;
-using LTransformD       = TTransform<double>;
+using LTransformF       = TTransform<f32>;
+using LTransformD       = TTransform<f64>;
 
 
 /*----------------------------------------------------------------------------
@@ -122,5 +119,3 @@ typedef LMatrixF         LMatrix;
 
 typedef LTransformF      LTransform;
 typedef Li32Vector2      LPoint;
-
-} /* ~Namespace Jafg */

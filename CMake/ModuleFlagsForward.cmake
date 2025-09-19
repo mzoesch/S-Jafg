@@ -20,6 +20,8 @@ macro(unspecified_option
         CACHE ${flag_name} PROPERTY STRINGS
         "Unspecified" "1" "0"
         )
+
+    message(STATUS "${flag_name}: ${${flag_name}}")
 endmacro()
 
 #

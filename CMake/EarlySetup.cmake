@@ -178,6 +178,7 @@ endif()
 ###############################################################################
 # Motor.
 ###############################################################################
+
 if(NOT DEFINED JAFG_MOTOR_EXECUTABLE)
     message(FATAL_ERROR "Invalid execution of this script detected.")
 endif()

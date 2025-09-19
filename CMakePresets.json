@@ -6,6 +6,8 @@
             "hidden": true,
             "generator": "Ninja"
         },
+
+
         {
             "name": "Linux",
             "inherits": "base",
@@ -82,112 +84,155 @@
             }
         },
         {
-            "name": "Linux | Client-Debug",
-            "inherits": ["Linux", "Client", "Debug"]
+            "name": "Sanitized",
+            "hidden": true,
+            "cacheVariables": {
+                "LAL_DO_SANITIZED_BUILD": "ON"
+            }
+        },
+
+
+        {
+            "name": "Linux | Client-Shipping",
+            "inherits": ["Linux", "Client", "Shipping"]
         },
         {
             "name": "Linux | Client-Development",
             "inherits": ["Linux", "Client", "Development"]
         },
         {
-            "name": "Linux | Client-Shipping",
-            "inherits": ["Linux", "Client", "Shipping"]
+            "name": "Linux | Client-Debug",
+            "inherits": ["Linux", "Client", "Debug"]
         },
         {
-            "name": "Linux | Daemon-Debug",
-            "inherits": ["Linux", "Daemon", "Debug"]
+            "name": "Linux | Client-Sanitized",
+            "inherits": ["Linux", "Client", "Debug", "Sanitized"]
+        },
+
+        {
+            "name": "Linux | Daemon-Shipping",
+            "inherits": ["Linux", "Daemon", "Shipping"]
         },
         {
             "name": "Linux | Daemon-Development",
             "inherits": ["Linux", "Daemon", "Development"]
         },
         {
-            "name": "Linux | Daemon-Shipping",
-            "inherits": ["Linux", "Daemon", "Shipping"]
+            "name": "Linux | Daemon-Debug",
+            "inherits": ["Linux", "Daemon", "Debug"]
         },
         {
-            "name": "Linux | TestUnit-Debug",
-            "inherits": ["Linux", "TestUnit", "Debug"]
+            "name": "Linux | Daemon-Sanitized",
+            "inherits": ["Linux", "Daemon", "Debug", "Sanitized"]
+        },
+
+        {
+            "name": "Linux | TestUnit-Shipping",
+            "inherits": ["Linux", "TestUnit", "Shipping"]
         },
         {
             "name": "Linux | TestUnit-Development",
             "inherits": ["Linux", "TestUnit", "Development"]
         },
         {
-            "name": "Linux | TestUnit-Shipping",
-            "inherits": ["Linux", "TestUnit", "Shipping"]
+            "name": "Linux | TestUnit-Debug",
+            "inherits": ["Linux", "TestUnit", "Debug"]
         },
         {
-            "name": "Windows | Client-Debug",
-            "inherits": ["Windows", "Client", "Debug"]
+            "name": "Linux | TestUnit-Sanitized",
+            "inherits": ["Linux", "TestUnit", "Debug", "Sanitized"]
+        },
+
+
+        {
+            "name": "Windows | Client-Shipping",
+            "inherits": ["Windows", "Client", "Shipping"]
         },
         {
             "name": "Windows | Client-Development",
             "inherits": ["Windows", "Client", "Development"]
         },
         {
-            "name": "Windows | Client-Shipping",
-            "inherits": ["Windows", "Client", "Shipping"]
+            "name": "Windows | Client-Debug",
+            "inherits": ["Windows", "Client", "Debug"]
         },
         {
-            "name": "Windows | Daemon-Debug",
-            "inherits": ["Windows", "Daemon", "Debug"]
+            "name": "Windows | Client-Sanitized",
+            "inherits": ["Windows", "Client", "Debug", "Sanitized"]
+        },
+
+        {
+            "name": "Windows | Daemon-Shipping",
+            "inherits": ["Windows", "Daemon", "Shipping"]
         },
         {
             "name": "Windows | Daemon-Development",
             "inherits": ["Windows", "Daemon", "Development"]
         },
         {
-            "name": "Windows | Daemon-Shipping",
-            "inherits": ["Windows", "Daemon", "Shipping"]
+            "name": "Windows | Daemon-Debug",
+            "inherits": ["Windows", "Daemon", "Debug"]
         },
         {
-            "name": "Windows | TestUnit-Debug",
-            "inherits": ["Windows", "TestUnit", "Debug"]
+            "name": "Windows | Daemon-Sanitized",
+            "inherits": ["Windows", "Daemon", "Debug", "Sanitized"]
+        },
+
+        {
+            "name": "Windows | TestUnit-Shipping",
+            "inherits": ["Windows", "TestUnit", "Shipping"]
         },
         {
             "name": "Windows | TestUnit-Development",
             "inherits": ["Windows", "TestUnit", "Development"]
         },
         {
-            "name": "Windows | TestUnit-Shipping",
-            "inherits": ["Windows", "TestUnit", "Shipping"]
+            "name": "Windows | TestUnit-Debug",
+            "inherits": ["Windows", "TestUnit", "Debug"]
         },
         {
-            "name": "Wasm | Client-Debug",
-            "inherits": ["Wasm", "Client", "Debug"]
+            "name": "Windows | TestUnit-Sanitized",
+            "inherits": ["Windows", "TestUnit", "Debug", "Sanitized"]
+        },
+
+
+        {
+            "name": "Wasm | Client-Shipping",
+            "inherits": ["Wasm", "Client", "Shipping"]
         },
         {
             "name": "Wasm | Client-Development",
             "inherits": ["Wasm", "Client", "Development"]
         },
         {
-            "name": "Wasm | Client-Shipping",
-            "inherits": ["Wasm", "Client", "Shipping"]
+            "name": "Wasm | Client-Debug",
+            "inherits": ["Wasm", "Client", "Debug"]
         },
+
         {
-            "name": "Wasm | Daemon-Debug",
-            "inherits": ["Wasm", "Daemon", "Debug"]
+            "name": "Wasm | Daemon-Shipping",
+            "inherits": ["Wasm", "Daemon", "Shipping"]
         },
         {
             "name": "Wasm | Daemon-Development",
             "inherits": ["Wasm", "Daemon", "Development"]
         },
         {
-            "name": "Wasm | Daemon-Shipping",
-            "inherits": ["Wasm", "Daemon", "Shipping"]
+            "name": "Wasm | Daemon-Debug",
+            "inherits": ["Wasm", "Daemon", "Debug"]
         },
+
         {
-            "name": "Wasm | TestUnit-Debug",
-            "inherits": ["Wasm", "TestUnit", "Debug"]
+            "name": "Wasm | TestUnit-Shipping",
+            "inherits": ["Wasm", "TestUnit", "Shipping"]
         },
         {
             "name": "Wasm | TestUnit-Development",
             "inherits": ["Wasm", "TestUnit", "Development"]
         },
         {
-            "name": "Wasm | TestUnit-Shipping",
-            "inherits": ["Wasm", "TestUnit", "Shipping"]
+            "name": "Wasm | TestUnit-Debug",
+            "inherits": ["Wasm", "TestUnit", "Debug"]
         }
     ]
 }

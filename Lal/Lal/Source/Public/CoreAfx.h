@@ -16,6 +16,7 @@
 #include "Hal/Platform.h"
 #include "Core/CoreMacros.h"
 #include "Core/CoreDefines.h"
+#include "Core/Traits.h"
 #include "Core/CoreConcepts.h"
 #include "Core/CoreFunctors.h"
 
@@ -25,7 +26,17 @@
 ----------------------------------------------------------------------------*/
 
 #include "Containers/ContainerBuild.h"
-#include "Containers/ContainerForward.h"
+#include "Containers/ContainerLegacyForward.h"
+#include "Containers/ContainerConcepts.h"
+#include "Containers/ContainerEarlyForward.h"
+#include "Containers/LalIteratorTraits.h"
+#include "Containers/LalIterator.h"
+#include "Containers/LalArrayAllocators.h"
+#include "Containers/ContainerArrayForward.h"
+#include "Containers/LalArray.h"
+#include "Containers/LalStringEncoding.h"
+#include "Containers/LalStringForward.h"
+#include "Containers/LalString.h"
 #include "Maths/MathDefines.h"
 #include "Maths/MathForward.h"
 
@@ -58,21 +69,23 @@
 #include "Memory/Smart.h"
 
 ///////////////////////////////////////////////////////////////////////////////
-// Maths Core
+// Maths core
 #include "Maths/MathUtility.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Containers
 #include "Containers/ContainerMacros.h"
-#include "Containers/LalArray.h"
-#include "Containers/Iterator.h"
-#include "Containers/JafgArray.h"
-#include "Containers/JafgString.h"
+#include "Containers/LalArrayAllocatorsImpl.h"
+#include "Containers/LalArrayImpl.h"
+#include "Containers/LalStringEncodingImpl.h"
+#include "Containers/LalStringImpl.h"
 #include "Containers/ComplexQueue.h"
 #include "Containers/SimpleQueue.h"
 #include "Containers/Format.h"
 #include "Containers/StringUtility.h"
 #include "Containers/Optional.h"
+#include "System/LalPath.h"
+#include "System/LalFinder.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Functors
@@ -93,6 +106,11 @@
 #include "Maths/Matrix4.h"
 #include "Maths/Transform.h"
 #include "Maths/Matrix3.h"
+
+///////////////////////////////////////////////////////////////////////////////
+// Backward implementations
+#include "Containers/LalIteratorImpl.h"
+#include "System/LalPathImpl.h"
 
 #if !LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS
     #define PRIVATE_JAFG_MAKE_INLINE

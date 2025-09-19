@@ -2,6 +2,10 @@
 
 #pragma once
 
+#if !LAL_WITH_LEGACY_ITERATOR
+    #error "This file is only for legacy iterator support. Define LAL_WITH_LEGACY_ITERATOR to use it."
+#endif /* "!LAL_WITH_LEGACY_ITERATOR */
+
 namespace Jafg
 {
 

@@ -2,7 +2,7 @@
 
 #pragma once
 
-namespace Jafg
+namespace Lal
 {
 
 struct LLinearColor;
@@ -164,11 +164,11 @@ struct LLinearColor final
     LAL_API static const LLinearColor DarkBlue;
     LAL_API static const LLinearColor DarkCyan;
     LAL_API static const LLinearColor DarkerGray;
-    LAL_API static const LLinearColor DarkerGrey;
+    // LAL_API static const LLinearColor DarkerGrey;
     LAL_API static const LLinearColor DarkGoldenRod;
     LAL_API static const LLinearColor DarkGray;
     LAL_API static const LLinearColor DarkGreen;
-    LAL_API static const LLinearColor DarkGrey;
+    // LAL_API static const LLinearColor DarkGrey;
     LAL_API static const LLinearColor DarkKhaki;
     LAL_API static const LLinearColor DarkMagenta;
     LAL_API static const LLinearColor DarkOliveGreen;
@@ -179,13 +179,13 @@ struct LLinearColor final
     LAL_API static const LLinearColor DarkSeaGreen;
     LAL_API static const LLinearColor DarkSlateBlue;
     LAL_API static const LLinearColor DarkSlateGray;
-    LAL_API static const LLinearColor DarkSlateGrey;
+    // LAL_API static const LLinearColor DarkSlateGrey;
     LAL_API static const LLinearColor DarkTurquoise;
     LAL_API static const LLinearColor DarkViolet;
     LAL_API static const LLinearColor DeepPink;
     LAL_API static const LLinearColor DeepSkyBlue;
     LAL_API static const LLinearColor DimGray;
-    LAL_API static const LLinearColor DimGrey;
+    // LAL_API static const LLinearColor DimGrey;
     LAL_API static const LLinearColor DodgerBlue;
     LAL_API static const LLinearColor FireBrick;
     LAL_API static const LLinearColor FloralWhite;
@@ -198,7 +198,7 @@ struct LLinearColor final
     LAL_API static const LLinearColor Gray;
     LAL_API static const LLinearColor Green;
     LAL_API static const LLinearColor GreenYellow;
-    LAL_API static const LLinearColor Grey;
+    // LAL_API static const LLinearColor Grey;
     LAL_API static const LLinearColor Honeydew;
     LAL_API static const LLinearColor HotPink;
     LAL_API static const LLinearColor Indianred;
@@ -215,13 +215,13 @@ struct LLinearColor final
     LAL_API static const LLinearColor LightGoldenrodYellow;
     LAL_API static const LLinearColor LightGray;
     LAL_API static const LLinearColor LightGreen;
-    LAL_API static const LLinearColor LightGrey;
+    // LAL_API static const LLinearColor LightGrey;
     LAL_API static const LLinearColor LightPink;
     LAL_API static const LLinearColor LightSalmon;
     LAL_API static const LLinearColor LightSeagreen;
     LAL_API static const LLinearColor LightSkyBlue;
     LAL_API static const LLinearColor LightSlateGray;
-    LAL_API static const LLinearColor LightSlateGrey;
+    // LAL_API static const LLinearColor LightSlateGrey;
     LAL_API static const LLinearColor LightSteelBlue;
     LAL_API static const LLinearColor LightYellow;
     LAL_API static const LLinearColor Lime;
@@ -245,7 +245,7 @@ struct LLinearColor final
     LAL_API static const LLinearColor NavajoWhite;
     LAL_API static const LLinearColor Navy;
     LAL_API static const LLinearColor NotSoDarkGray;
-    LAL_API static const LLinearColor NotSoDarkGrey;
+    // LAL_API static const LLinearColor NotSoDarkGrey;
     LAL_API static const LLinearColor Oldlace;
     LAL_API static const LLinearColor Olive;
     LAL_API static const LLinearColor Olivedrab;
@@ -277,7 +277,7 @@ struct LLinearColor final
     LAL_API static const LLinearColor SkyBlue;
     LAL_API static const LLinearColor SlateBlue;
     LAL_API static const LLinearColor SlateGray;
-    LAL_API static const LLinearColor SlateGrey;
+    // LAL_API static const LLinearColor SlateGrey;
     LAL_API static const LLinearColor Snow;
     LAL_API static const LLinearColor SpringGreen;
     LAL_API static const LLinearColor SteelBlue;
@@ -520,9 +520,9 @@ struct LColor final
     //#
 
     LAL_API static const LColor DarkerGray;
-    LAL_API static const LColor DarkerGrey;
+    // LAL_API static const LColor DarkerGrey;
     LAL_API static const LColor NotSoDarkGray;
-    LAL_API static const LColor NotSoDarkGrey;
+    // LAL_API static const LColor NotSoDarkGrey;
 
     //#
     //# The following colors follow the CSS standard.
@@ -582,7 +582,7 @@ struct LColor final
     LAL_API static const LColor DarkGoldenRod;
     LAL_API static const LColor DarkGray;
     LAL_API static const LColor DarkGreen;
-    LAL_API static const LColor DarkGrey;
+    // LAL_API static const LColor DarkGrey;
     LAL_API static const LColor DarkKhaki;
     LAL_API static const LColor DarkMagenta;
     LAL_API static const LColor DarkOliveGreen;
@@ -593,13 +593,13 @@ struct LColor final
     LAL_API static const LColor DarkSeaGreen;
     LAL_API static const LColor DarkSlateBlue;
     LAL_API static const LColor DarkSlateGray;
-    LAL_API static const LColor DarkSlateGrey;
+    // LAL_API static const LColor DarkSlateGrey;
     LAL_API static const LColor DarkTurquoise;
     LAL_API static const LColor DarkViolet;
     LAL_API static const LColor DeepPink;
     LAL_API static const LColor DeepSkyBlue;
     LAL_API static const LColor DimGray;
-    LAL_API static const LColor DimGrey;
+    // LAL_API static const LColor DimGrey;
     LAL_API static const LColor DodgerBlue;
     LAL_API static const LColor FireBrick;
     LAL_API static const LColor FloralWhite;
@@ -612,7 +612,7 @@ struct LColor final
     // LAL_API static const LColor Gray;
     // LAL_API static const LColor Green;
     LAL_API static const LColor GreenYellow;
-    LAL_API static const LColor Grey;
+    // LAL_API static const LColor Grey;
     LAL_API static const LColor Honeydew;
     LAL_API static const LColor HotPink;
     LAL_API static const LColor Indianred;
@@ -629,13 +629,13 @@ struct LColor final
     LAL_API static const LColor LightGoldenrodYellow;
     LAL_API static const LColor LightGray;
     LAL_API static const LColor LightGreen;
-    LAL_API static const LColor LightGrey;
+    // LAL_API static const LColor LightGrey;
     LAL_API static const LColor LightPink;
     LAL_API static const LColor LightSalmon;
     LAL_API static const LColor LightSeagreen;
     LAL_API static const LColor LightSkyBlue;
     LAL_API static const LColor LightSlateGray;
-    LAL_API static const LColor LightSlateGrey;
+    // LAL_API static const LColor LightSlateGrey;
     LAL_API static const LColor LightSteelBlue;
     LAL_API static const LColor LightYellow;
     // LAL_API static const LColor Lime;
@@ -689,7 +689,7 @@ struct LColor final
     LAL_API static const LColor SkyBlue;
     LAL_API static const LColor SlateBlue;
     LAL_API static const LColor SlateGray;
-    LAL_API static const LColor SlateGrey;
+    // LAL_API static const LColor SlateGrey;
     LAL_API static const LColor Snow;
     LAL_API static const LColor SpringGreen;
     LAL_API static const LColor SteelBlue;
@@ -762,4 +762,4 @@ FORCEINLINE constexpr LLinearColor LColor::ToLinearColor() const noexcept
     };
 }
 
-} /* ~Namespace Jafg */
+} /* ~Namespace Lal */

@@ -101,7 +101,7 @@ std::string_view PrettyFunctionName(const char* InFunctionName) noexcept
     return { Begin, static_cast<std::string_view::size_type>(std::find(Begin, End, '(') - Begin) };
 }
 
-Jafg::LString LexToString(const ELogVerbosity::Type Verbosity)
+LString LexToString(const ELogVerbosity::Type Verbosity)
 {
     switch (Verbosity)
     {
@@ -116,15 +116,15 @@ Jafg::LString LexToString(const ELogVerbosity::Type Verbosity)
     }
 }
 
-LAL_API Jafg::LString LalColor_Trace   { LAL_LOG_COLOR_TRACE };
-LAL_API Jafg::LString LalColor_Verbose { LAL_LOG_COLOR_VERBOSE };
-LAL_API Jafg::LString LalColor_Info    { LAL_LOG_COLOR_INFO };
-LAL_API Jafg::LString LalColor_Warning { LAL_LOG_COLOR_WARNING };
-LAL_API Jafg::LString LalColor_Error   { LAL_LOG_COLOR_ERROR };
-LAL_API Jafg::LString LalColor_Fatal   { LAL_LOG_COLOR_FATAL };
-LAL_API Jafg::LString LalColor_End     { LAL_LOG_COLOR_END };
+LAL_API LString LalColor_Trace   { LAL_LOG_COLOR_TRACE };
+LAL_API LString LalColor_Verbose { LAL_LOG_COLOR_VERBOSE };
+LAL_API LString LalColor_Info    { LAL_LOG_COLOR_INFO };
+LAL_API LString LalColor_Warning { LAL_LOG_COLOR_WARNING };
+LAL_API LString LalColor_Error   { LAL_LOG_COLOR_ERROR };
+LAL_API LString LalColor_Fatal   { LAL_LOG_COLOR_FATAL };
+LAL_API LString LalColor_End     { LAL_LOG_COLOR_END };
 
-Jafg::LString GetColorForVerbosity(const ELogVerbosity::Type InVerbosity)
+LString GetColorForVerbosity(const ELogVerbosity::Type InVerbosity)
 {
     if (InVerbosity == ELogVerbosity::Trace)   { return LalColor_Trace; }
     if (InVerbosity == ELogVerbosity::Verbose) { return LalColor_Verbose; }
@@ -136,7 +136,7 @@ Jafg::LString GetColorForVerbosity(const ELogVerbosity::Type InVerbosity)
     return { };
 }
 
-std::string_view GetColorForVerbosityView(const ELogVerbosity::Type InVerbosity)
+LStringView GetColorForVerbosityView(const ELogVerbosity::Type InVerbosity)
 {
     if (InVerbosity == ELogVerbosity::Trace)   { return LAL_LOG_COLOR_TRACE; }
     if (InVerbosity == ELogVerbosity::Verbose) { return LAL_LOG_COLOR_VERBOSE; }

@@ -4,6 +4,8 @@
 
 #include "TestInclude.h"
 
+#if TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS
+
 TEST_CASE(SimpleNewSimpleStringOperations, "Lal.Strings")
 {
     using namespace Jafg;
@@ -1835,3 +1837,5 @@ TEST_CASE(StringSort, "Lal.Strings")
 
     return;
 }
+
+#endif /* TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS */

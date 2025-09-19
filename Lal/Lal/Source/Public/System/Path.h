@@ -4,6 +4,10 @@
 
 #include "CoreAfx.h"
 
+#if !LAL_WITH_LEGACY_FINDER
+    #error "The legacy path implementation is not available when LAL_WITH_LEGACY_FINDER is disabled."
+#endif /* !LAL_WITH_LEGACY_FINDER */
+
 namespace Jafg
 {
 

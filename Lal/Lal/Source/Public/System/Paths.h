@@ -3,6 +3,11 @@
 #pragma once
 
 #include "CoreAfx.h"
+
+#if !LAL_WITH_LEGACY_FINDER
+    #error "The legacy path implementation is not available when LAL_WITH_LEGACY_FINDER is disabled."
+#endif /* !LAL_WITH_LEGACY_FINDER */
+
 #include "System/Path.h"
 
 #if WITH_VIRTUAL_FILESYSTEM

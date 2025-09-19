@@ -2,6 +2,12 @@
 
 import gdb
 import re
+from Lal.Lal.Source.Debug.Containers.LalString import (
+    LalTStringBase_Printer
+    )
+from Lal.Lal.Source.Debug.Containers.LalPath import (
+    LalTPathBase_Printer
+    )
 from Lal.Lal.Source.Debug.Containers.JafgArray import (
     JafgTArray_Printer
     )
@@ -12,13 +18,22 @@ from Lal.Lal.Source.Debug.Containers.JafgString import (
 from Lal.Lal.Source.Debug.Containers.LalArray import (
     LalTArrayBase_Printer
     )
-from Lal.Lal.Source.Debug.Containers.LalString import (
-    LalTStringBase_Printer
-    )
+
 
 def lal_pretty_lookup(val: any) -> any:
     type_str: str = str(val.type.strip_typedefs())
 
+    pattern_lal_array = re.compile(
+        r'Lal::TArrayBase<\s*[^>]+\s*>'
+        )
+    pattern_lal_string = re.compile(
+        r'Lal::TStringBase<\s*[^>]+\s*>'
+        )
+    pattern_lal_path = re.compile(
+        r'Lal::TPathBase<\s*[^>]+\s*>'
+    )
+
+    # Legacy
     pattern_array = re.compile(
         r'Jafg::TArrayBase<\s*[^>]+\s*>'
         )
@@ -31,17 +46,14 @@ def lal_pretty_lookup(val: any) -> any:
     pattern_path_base = re.compile(
         r'Jafg::TPathBase<\s*Jafg::TStringTraits<[^>]+>,\s*Jafg::TArrayBase<\s*(Jafg::TArrayAllocator<[^>]+>)\s*>\s*>'
         )
-    pattern_lal_array = re.compile(
-        r'Lal::TArrayBase<\s*[^>]+\s*>'
-        )
-    pattern_lal_string = re.compile(
-        r'Lal::TStringBase<\s*[^>]+\s*>'
-        )
+    # ~Legacy
 
     if pattern_lal_array.match(type_str):
         return LalTArrayBase_Printer(val)
     if pattern_lal_string.match(type_str):
         return LalTStringBase_Printer(val)
+    if pattern_lal_path.match(type_str):
+        return LalTPathBase_Printer(val)
 
     # Legacy
     if pattern_array.match(type_str):

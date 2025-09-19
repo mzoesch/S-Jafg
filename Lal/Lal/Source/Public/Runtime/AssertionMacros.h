@@ -143,9 +143,9 @@
 //# Same as jassertNoEntry but more user-friendly with a message. Eww, is this that GoLang?
 //#
 #define panic(Msg)                              LAL_GORGEOUS_TRAP_MSG( "Program panicked. " Msg )
-#define panicMsgf(Format, ...)                  LAL_GORGEOUS_TRAP_MSG( ::Jafg::LString::SprintF \
-                                                (                                                        \
-                                                    "Program panicked. " Format "", ##__VA_ARGS__        \
+#define panicMsgf(Format, ...)                  LAL_GORGEOUS_TRAP_MSG( ::LString::SprintF         \
+                                                (                                                 \
+                                                    "Program panicked. " Format "", ##__VA_ARGS__ \
                                                 ).ToPtr() )
 
 

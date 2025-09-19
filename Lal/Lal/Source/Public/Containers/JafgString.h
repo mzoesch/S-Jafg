@@ -2,6 +2,40 @@
 
 #pragma once
 
+#include "CoreAfx.h"
+#include "Containers/JafgArray.h"
+
+namespace Jafg
+{
+
+template <typename InT>
+struct TStringTraits;
+template <typename Derived, typename InTraits, typename InAlloc>
+class TStringBase;
+template <typename InTraits, typename InAlloc>
+class _TStringBase;
+
+template <typename InT>
+using TStringBasic = _TStringBase<TStringTraits<InT>, TArrayOldv2<InT>>;
+template <typename InT>
+using TStringViewBasic = _TStringBase<TStringTraits<InT>, TArrayViewOldv2<InT>>;
+template <typename InT>
+using TMutableStringViewBasic = _TStringBase<TStringTraits<InT>, TMutableArrayViewOldv2<InT>>;
+
+//#
+//# The default string for jafg.
+//# This string is utf8-encoded and dynamic.
+//#
+typedef TStringBasic<char> LString;
+//#
+//# The default string view for jafg.
+//# This string view expects an utf8-encoded string.
+//#
+typedef TStringViewBasic<char>        LStringView;
+typedef TMutableStringViewBasic<char> LMutableStringView;
+
+} /* ~Namespace Jafg */
+
 #if LAL_CHECK_STRING_VALIDITY
     #define PRIVATE_JAFG_CHECK_STRING_STATE()   this->EnsureValidState();
     #define JAFG_CHECK_STRING(Expr)             jassert(Expr)
@@ -47,6 +81,8 @@ struct TStringTraits
     FORCEINLINE static T ToLower(const T InRune);
 };
 
+//#
+//# !!! @Deprecated Use LalString.h instead. !!!
 //#
 //# The base class for all strings.
 //#

@@ -2,7 +2,7 @@
 
 #pragma once
 
-namespace Jafg
+namespace Lal
 {
 
 typedef u8 LRotatorAxis;
@@ -58,7 +58,9 @@ constexpr ERotatorAxis::Type CombineFlags(FlagsTy... Flags)
 
 } /* ~Namespace ERotatorAxis */
 
-/** Jafg implementation of a rotational vector. */
+} /* ~Namespace Lal */
+
+//# Jafg implementation of a rotational vector.
 template <typename T>
 struct TRotator final
 {
@@ -104,12 +106,12 @@ struct TRotator final
     FORCEINLINE TRotator<T>& operator/=(const T InScale);
     FORCEINLINE TRotator<T>  operator -() const { return TRotator<T>(-Pitch, -Yaw, -Roll); }
 
-    FORCEINLINE bool Equals(const TRotator<T>& InRotator, T Tolerance = JAFG_NOT_SO_SMALL_NUMBER) const;
+    FORCEINLINE bool Equals(const TRotator<T>& InRotator, T Tolerance = LAL_NOT_SO_SMALL_NUMBER) const;
     FORCEINLINE bool operator==(const TRotator<T>& InRotator) const;
     FORCEINLINE bool operator!=(const TRotator<T>& InRotator) const { return !(*this == InRotator); }
 
     FORCEINLINE bool IsZero() const;
-    FORCEINLINE bool IsNearlyZero(T Tolerance = JAFG_NOT_SO_SMALL_NUMBER) const;
+    FORCEINLINE bool IsNearlyZero(T Tolerance = LAL_NOT_SO_SMALL_NUMBER) const;
 
     /** Clamps an angle to the range of [0, 360[. */
     FORCEINLINE static auto ClampAxis(T Angle) -> T;
@@ -118,7 +120,7 @@ struct TRotator final
     FORCEINLINE        auto NormalizeRotation() -> void;
 
     /** Constrains one or multiple axes to a defined constraint in the range of ]0, 180]. */
-    FORCEINLINE auto ConstrainAxis(const LRotatorAxis AxisFlags, const T Constraint) -> void;
+    FORCEINLINE auto ConstrainAxis(const Lal::LRotatorAxis AxisFlags, const T Constraint) -> void;
 
     TVector<T> ToVector() const;
 
@@ -285,10 +287,10 @@ template <typename T>
 T TRotator<T>::NormalizeAxis(T Angle)
 {
     Angle = ClampAxis(Angle);
-    if (Angle > static_cast<T>(JAFG_DEG_HALF_CIRCLE_D))
+    if (Angle > static_cast<T>(LAL_DEG_HALF_CIRCLE_D))
     {
         /* Shift to ]-180, 180]. */
-        Angle -= static_cast<T>(JAFG_DEG_FULL_CIRCLE_D);
+        Angle -= static_cast<T>(LAL_DEG_FULL_CIRCLE_D);
     }
     return Angle;
 }
@@ -304,22 +306,22 @@ void TRotator<T>::NormalizeRotation()
 }
 
 template <typename T>
-void TRotator<T>::ConstrainAxis(const LRotatorAxis AxisFlags, const T Constraint)
+void TRotator<T>::ConstrainAxis(const Lal::LRotatorAxis AxisFlags, const T Constraint)
 {
-    check( AxisFlags != ERotatorAxis::None )
+    check( AxisFlags != Lal::ERotatorAxis::None )
     check( Constraint > 0.0f && Constraint <= 180.0f )
 
-    if (AxisFlags & ERotatorAxis::Pitch)
+    if (AxisFlags & Lal::ERotatorAxis::Pitch)
     {
         this->Pitch = Maths::Clamp(this->Pitch, -Constraint, Constraint);
     }
 
-    if (AxisFlags & ERotatorAxis::Yaw)
+    if (AxisFlags & Lal::ERotatorAxis::Yaw)
     {
         this->Yaw = Maths::Clamp(this->Yaw, -Constraint, Constraint);
     }
 
-    if (AxisFlags & ERotatorAxis::Roll)
+    if (AxisFlags & Lal::ERotatorAxis::Roll)
     {
         this->Roll = Maths::Clamp(this->Roll, -Constraint, Constraint);
     }
@@ -331,8 +333,8 @@ template <typename T>
 TVector<T> TRotator<T>::ToVector() const
 {
     /* Clamp to the range of ]-360, 360[. */
-    const T PitchNoWinding = Maths::Fmod(this->Pitch, static_cast<T>(JAFG_DEG_FULL_CIRCLE_D));
-    const T YawNoWinding   = Maths::Fmod(this->Yaw,   static_cast<T>(JAFG_DEG_FULL_CIRCLE_D));
+    const T PitchNoWinding = Maths::Fmod(this->Pitch, static_cast<T>(LAL_DEG_FULL_CIRCLE_D));
+    const T YawNoWinding   = Maths::Fmod(this->Yaw,   static_cast<T>(LAL_DEG_FULL_CIRCLE_D));
 
     T CP, SP, CY, SY;
     Maths::SinCos(&SP, &CP, Maths::ToRadians(PitchNoWinding));
@@ -340,5 +342,3 @@ TVector<T> TRotator<T>::ToVector() const
 
     return TVector<T>(CP * CY, CP * SY, SP);
 }
-
-} /* ~Namespace Jafg */

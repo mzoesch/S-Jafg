@@ -102,7 +102,7 @@ public:
     template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     FORCEINLINE static TFunction Create(TFunctor* Functor)
     {
-        return { std::forward<TFunctor>(Functor) };;
+        return { std::forward<TFunctor>(Functor) };
     }
     template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
     FORCEINLINE static TFunction Create(TObj* Object, TMemberFunctor MemberFunctor)

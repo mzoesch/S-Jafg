@@ -2,9 +2,6 @@
 
 #pragma once
 
-namespace Jafg
-{
-
 /** Jafg implementation of an integral Vector. */
 template <typename T>
 struct TIntVector final
@@ -308,5 +305,3 @@ TIntVector<T> TIntVector<T>::GetInvert() const
 {
     return TIntVector<T>(-this->X, -this->Y, -this->Z);
 }
-
-} /* ~Namespace Jafg */

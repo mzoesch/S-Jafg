@@ -3,6 +3,9 @@
 #pragma once
 
 #include "TestInclude.h"
+
+#if TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS
+
 #include "Containers/MyString.h"
 #include "Containers/StringUtility.h"
 // #include "Containers/StringConversions.h"
@@ -1456,3 +1459,5 @@ TEST_CASE(StringConversion, "Lal.Strings")
 }
 
 #pragma endregion "Uni-Eight String"
+
+#endif /* TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS */

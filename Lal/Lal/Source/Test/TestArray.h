@@ -3,6 +3,9 @@
 #pragma once
 
 #include "TestInclude.h"
+
+#if TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS
+
 #include "Containers/Array.h"
 
 TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
@@ -367,3 +370,5 @@ TEST_CASE(MultiRemoveAtIndexArray, "Lal.Containers")
 
     return;
 }
+
+#endif /* TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS */

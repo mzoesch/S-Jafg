@@ -2,10 +2,9 @@
 
 #pragma once
 
-namespace Jafg
-{
-
-/** Jafg implementation of a vector2. */
+//#
+//# Lal implementation of a vector2.
+//#
 template<typename T>
 struct TVector2 final
 {
@@ -89,12 +88,12 @@ struct TVector2 final
     FORCEINLINE TVector2<T>& operator/=(const TVector2<T>& InVec   );
     FORCEINLINE TVector2<T>  operator -() const { return TVector2<T>(-this->X, -this->Y); }
 
-    FORCEINLINE bool Equals(const TVector2<T>& InVec, const T InTolerance = JAFG_SMALL_NUMBER) const;
+    FORCEINLINE bool Equals(const TVector2<T>& InVec, const T InTolerance = LAL_SMALL_NUMBER) const;
     FORCEINLINE bool operator==(const TVector2<T>& InVec) const;
     FORCEINLINE bool operator!=(const TVector2<T>& InVec) const;
 
     FORCEINLINE bool IsZero() const;
-    FORCEINLINE bool IsNearlyZero(const T InTolerance = JAFG_NOT_SO_SMALL_NUMBER) const;
+    FORCEINLINE bool IsNearlyZero(const T InTolerance = LAL_NOT_SO_SMALL_NUMBER) const;
 
     FORCEINLINE auto Magnitude() const -> T;
     FORCEINLINE auto SquaredMagnitude() const -> T;
@@ -326,5 +325,3 @@ TVector2<T> TVector2<T>::GetInvert() const
 {
     return TVector2<T>(-this->X, -this->Y);
 }
-
-} /* ~Namespace Jafg */

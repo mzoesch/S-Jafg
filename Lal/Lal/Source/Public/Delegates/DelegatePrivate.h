@@ -209,6 +209,8 @@ private:
     u32 Handle;
 };
 
+static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<LDelegateHandle>);
+
 /**
  * A delegate that can store multiple functions and broadcast to all of them.
  */
@@ -251,8 +253,8 @@ struct TMulticastDelegate<RetTy(ParamsTy...)> final
 
 private:
 
-    static constexpr u32 InvalidHandle = 0;
-    u32           HandleCount = 0;
+    static constexpr u32 InvalidHandle { 0 };
+    u32         HandleCount { 0 };
     TArray<u32> DelegatesHandles;
     TArray<TFunction<RetTy(ParamsTy...)>> Delegates;
 };
@@ -381,3 +383,11 @@ i32 TMulticastDelegate<RetTy(ParamsTy...)>::UnbindAll()
 }
 
 } /* ~Namespace Jafg */
+
+template <typename RetTy, typename... ParamsTy>
+struct Lal::TArrayBaseAllowTrivialMemoryBufferMove<Jafg::TMulticastDelegate<RetTy(ParamsTy...)>> : Lal::TrueType { };
+
+template <typename RetTy, typename... ParamsTy>
+struct Lal::TArrayBaseAllowTrivialMemoryBufferMove<Jafg::TFunction<RetTy(ParamsTy...)>> : Lal::TrueType { };
+
+static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<Jafg::TMulticastDelegate<int()>>);

@@ -3,6 +3,9 @@
 #pragma once
 
 #include "TestInclude.h"
+
+#if TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS
+
 #include "System/Path.h"
 
 TEST_CASE(SimplePathStringOperations, "Lal.Path")
@@ -92,3 +95,5 @@ TEST_CASE(SimplePathStringOperations, "Lal.Path")
 
     return;
 }
+
+#endif /* TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS */

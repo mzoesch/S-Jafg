@@ -1119,11 +1119,11 @@ TEST_CASE(ArraySwaps, "Lal.Containers")
 
     TArray<LSize>::Iterator It { Array1.begin() };
     std::advance(It, 2);
-    QUICK_CHECK_EQUALS(Array1[It], 3ul)
+    QUICK_CHECK_EQUALS(*It, 3ul)
 
     TArray<LSize>::ConstIterator CIt { Array1.cbegin() };
     std::advance(CIt, 2);
-    QUICK_CHECK_EQUALS(Array1[CIt], 3ul)
+    QUICK_CHECK_EQUALS(*CIt, 3ul)
 
     return;
 }
@@ -1134,39 +1134,39 @@ TEST_CASE(ArrayComparisons, "Lal.Containers")
     const TArray<LSize> Array2 { 1, 2, 3, 4, 5 };
     const TArray<LSize> Array3 { 6, 7, 8, 9, 10, 11 };
 
-    QUICK_CHECK_EQUALS(Array1 <=> Array2, std::strong_ordering::equal)
-    QUICK_CHECK_EQUALS(Array1 <=> Array3, std::strong_ordering::less)
-    QUICK_CHECK_EQUALS(Array2 <=> Array3, std::strong_ordering::less)
-    QUICK_CHECK_EQUALS(Array3 <=> Array1, std::strong_ordering::greater)
-    QUICK_CHECK_EQUALS(Array3 <=> Array2, std::strong_ordering::greater)
+    QUICK_CHECK_EQUALS(Array1.GetSize() <=> Array2.GetSize(), std::strong_ordering::equal)
+    QUICK_CHECK_EQUALS(Array1.GetSize() <=> Array3.GetSize(), std::strong_ordering::less)
+    QUICK_CHECK_EQUALS(Array2.GetSize() <=> Array3.GetSize(), std::strong_ordering::less)
+    QUICK_CHECK_EQUALS(Array3.GetSize() <=> Array1.GetSize(), std::strong_ordering::greater)
+    QUICK_CHECK_EQUALS(Array3.GetSize() <=> Array2.GetSize(), std::strong_ordering::greater)
 
-    QUICK_CHECK_FALSE(Array1 < Array2)
-    QUICK_CHECK_TRUE(Array1 < Array3)
-    QUICK_CHECK_FALSE(Array3 < Array1)
-    QUICK_CHECK_TRUE(Array2 < Array3)
-    QUICK_CHECK_FALSE(Array3 < Array2)
-    QUICK_CHECK_FALSE(Array1 > Array2)
-    QUICK_CHECK_FALSE(Array1 > Array3)
-    QUICK_CHECK_TRUE(Array3 > Array1)
-    QUICK_CHECK_FALSE(Array2 > Array3)
-    QUICK_CHECK_TRUE(Array3 > Array2)
-    QUICK_CHECK_TRUE(Array1 <= Array2)
-    QUICK_CHECK_TRUE(Array1 <= Array3)
-    QUICK_CHECK_FALSE(Array3 <= Array1)
-    QUICK_CHECK_TRUE(Array2 <= Array3)
-    QUICK_CHECK_FALSE(Array3 <= Array2)
-    QUICK_CHECK_TRUE(Array1 >= Array2)
-    QUICK_CHECK_FALSE(Array1 >= Array3)
-    QUICK_CHECK_TRUE(Array3 >= Array1)
-    QUICK_CHECK_FALSE(Array2 >= Array3)
-    QUICK_CHECK_TRUE(Array3 >= Array2)
+    QUICK_CHECK_FALSE(Array1.GetSize() < Array2.GetSize())
+    QUICK_CHECK_TRUE(Array1.GetSize() < Array3.GetSize())
+    QUICK_CHECK_FALSE(Array3.GetSize() < Array1.GetSize())
+    QUICK_CHECK_TRUE(Array2.GetSize() < Array3.GetSize())
+    QUICK_CHECK_FALSE(Array3.GetSize() < Array2.GetSize())
+    QUICK_CHECK_FALSE(Array1.GetSize() > Array2.GetSize())
+    QUICK_CHECK_FALSE(Array1.GetSize() > Array3.GetSize())
+    QUICK_CHECK_TRUE(Array3.GetSize() > Array1.GetSize())
+    QUICK_CHECK_FALSE(Array2.GetSize() > Array3.GetSize())
+    QUICK_CHECK_TRUE(Array3.GetSize() > Array2.GetSize())
+    QUICK_CHECK_TRUE(Array1.GetSize() <= Array2.GetSize())
+    QUICK_CHECK_TRUE(Array1.GetSize() <= Array3.GetSize())
+    QUICK_CHECK_FALSE(Array3.GetSize() <= Array1.GetSize())
+    QUICK_CHECK_TRUE(Array2.GetSize() <= Array3.GetSize())
+    QUICK_CHECK_FALSE(Array3.GetSize() <= Array2.GetSize())
+    QUICK_CHECK_TRUE(Array1.GetSize() >= Array2.GetSize())
+    QUICK_CHECK_FALSE(Array1.GetSize() >= Array3.GetSize())
+    QUICK_CHECK_TRUE(Array3.GetSize() >= Array1.GetSize())
+    QUICK_CHECK_FALSE(Array2.GetSize() >= Array3.GetSize())
+    QUICK_CHECK_TRUE(Array3.GetSize() >= Array2.GetSize())
 
-    QUICK_CHECK_TRUE(Array1.EqualInSizeTo(Array2))
-    QUICK_CHECK_FALSE(Array1.EqualInSizeTo(Array3))
-    QUICK_CHECK_TRUE(Array2.EqualInSizeTo(Array1))
-    QUICK_CHECK_FALSE(Array2.EqualInSizeTo(Array3))
-    QUICK_CHECK_FALSE(Array3.EqualInSizeTo(Array1))
-    QUICK_CHECK_FALSE(Array3.EqualInSizeTo(Array2))
+    QUICK_CHECK_TRUE(Array1.CompareSize(Array2) == std::strong_ordering::equal)
+    QUICK_CHECK_FALSE(Array1.CompareSize(Array3) == std::strong_ordering::equal)
+    QUICK_CHECK_TRUE(Array2.CompareSize(Array1) == std::strong_ordering::equal)
+    QUICK_CHECK_FALSE(Array2.CompareSize(Array3) == std::strong_ordering::equal)
+    QUICK_CHECK_FALSE(Array3.CompareSize(Array1) == std::strong_ordering::equal)
+    QUICK_CHECK_FALSE(Array3.CompareSize(Array2) == std::strong_ordering::equal)
 
     QUICK_CHECK_TRUE(Array1.IsDataEqual(Array2))
     QUICK_CHECK_TRUE(Array2.IsDataEqual(Array1))
@@ -1377,6 +1377,1081 @@ TEST_CASE(AddArray, "Lal.Containers")
     for (LSize Idx { 0 }; Idx < OtherArray.GetSize(); ++Idx)
     {
         QUICK_CHECK_EQUALS(Array[Idx + 20], OtherArray[Idx])
+        continue;
+    }
+
+    return;
+}
+
+namespace Testing::Lal::Array
+{
+
+struct X
+{
+    X() { this->Initialize(); }
+    X(X&& x)
+    {
+        check( X::IsInitialized(&x) )
+        this->Initialize();
+
+        return;
+    }
+
+    X& operator=(X&& x)
+    {
+        check( X::IsInitialized(&x) )
+        this->Initialize();
+
+        return *this;
+    }
+
+    X(const X& x)
+    {
+        check( X::IsInitialized(&x) )
+        this->Initialize();
+
+        return;
+    }
+
+    X& operator=(const X& x)
+    {
+        check( X::IsInitialized(&x) )
+        this->Initialize();
+
+        return *this;
+    }
+
+    ~X()
+    {
+        this->Deinitialize();
+        return;
+    }
+
+private:
+
+    void Initialize()
+    {
+        this->Data = std::numeric_limits<u64>::max() / 2;
+        check( X::IsInitialized(this) )
+
+        return;
+    }
+
+    static bool IsInitialized(const X* x)
+    {
+        return x->Data == std::numeric_limits<u64>::max() / 2;
+    }
+
+    void Deinitialize()
+    {
+        this->Data = std::numeric_limits<u64>::max();
+        check( X::IsInitialized(this) == false )
+
+        return;
+    }
+
+    u64 Data;
+};
+
+} /* ~Namespace Testing::Lal::Array */
+
+TEST_CASE(AppendAtUbArray, "Lal.Containers")
+{
+    using namespace Testing::Lal::Array;
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{},
+            X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{} };
+
+        TArray<X>::Iterator It = Array.AppendAt(0ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 30)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{},
+            X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{} };
+
+        TArray<X>::Iterator It = Array.AppendAt(1ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 29)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{},
+            X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{} };
+
+        TArray<X>::Iterator It = Array.AppendAt(2ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 28)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{},
+            X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{} };
+
+        TArray<X>::Iterator It = Array.AppendAt(3ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 27)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{},
+            X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{} };
+
+        TArray<X>::Iterator It = Array.AppendAt(4ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 26)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{},
+            X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{}, X{} };
+
+        TArray<X>::Iterator It = Array.AppendAt(5ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 25)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, };
+        TArray<X>::Iterator It = Array.AppendAt(0ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 15)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, };
+        TArray<X>::Iterator It = Array.AppendAt(1ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 14)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, };
+        TArray<X>::Iterator It = Array.AppendAt(2ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 13)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, };
+        TArray<X>::Iterator It = Array.AppendAt(3ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 12)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, };
+        TArray<X>::Iterator It = Array.AppendAt(4ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 11)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, };
+        TArray<X>::Iterator It = Array.AppendAt(5ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 10)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, };
+        TArray<X>::Iterator It = Array.AppendAt(6ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 9)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, };
+        TArray<X>::Iterator It = Array.AppendAt(7ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 8)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, };
+        TArray<X>::Iterator It = Array.AppendAt(8ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 7)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, };
+        TArray<X>::Iterator It = Array.AppendAt(9ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 6)
+    }
+
+    {
+        TArray<X> Array;
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+        Array.Push(X{});
+
+        TArray<X> Other { X{}, X{}, X{}, X{}, X{}, };
+        TArray<X>::Iterator It = Array.AppendAt(10ul, Other);
+        int x { 0 };
+        while (It != Array.end())
+        {
+            ++x;
+            ++It;
+            continue;
+        }
+
+        QUICK_CHECK_EQUALS(x, 5)
+    }
+
+    return;
+}
+
+TEST_CASE(StackString, "Lal.Containers")
+{
+    TArray<LString> Array;
+    for (int x = 0; x < 50; ++x)
+    {
+        Array.Add(LString{});
+    }
+    QUICK_CHECK_EQUALS(Array.GetSize(), 50ul)
+    for (LString& Str : Array)
+    {
+        QUICK_CHECK_TRUE(Str.IsEmpty())
+        Str = "Test";
+        QUICK_CHECK_EQUALS(Str, "Test")
+
+        continue;
+    }
+
+    for (int x = 0; x < 50; ++x)
+    {
+        Array.Add(LString{});
+    }
+    QUICK_CHECK_EQUALS(Array.GetSize(), 100ul)
+    TArray<LString>::SizeType Idx { 0 };
+    for (const LString& Str : Array)
+    {
+        if (Idx < 50)
+        {
+            QUICK_CHECK_EQUALS(Str, "Test")
+        }
+        else
+        {
+            QUICK_CHECK_TRUE(Str.IsEmpty())
+        }
+
+        ++Idx;
+
+        continue;
+    }
+
+    while (Idx > 50)
+    {
+        --Idx;
+        Array.RemoveAt(Idx);
+        continue;
+    }
+    QUICK_CHECK_EQUALS(Array.GetSize(), 50ul)
+    for (const LString& Str : Array)
+    {
+        QUICK_CHECK_EQUALS(Str, "Test")
+        continue;
+    }
+
+    Array.ShrinkToFit();
+    QUICK_CHECK_EQUALS(Array.GetSize(), 50ul)
+    for (const LString& Str : Array)
+    {
+        QUICK_CHECK_EQUALS(Str, "Test")
+        continue;
+    }
+
+    TArray<LString> Array2;
+    Array2.Append(Array);
+    Array2.AppendAt(25ul, Array);
+    QUICK_CHECK_EQUALS(Array2.GetSize(), 100ul)
+    for (const LString& Str : Array2)
+    {
+        QUICK_CHECK_EQUALS(Str, "Test")
+        continue;
+    }
+
+    Array.AppendAt(30ul, Array2);
+    QUICK_CHECK_EQUALS(Array.GetSize(), 150ul)
+    for (const LString& Str : Array)
+    {
+        QUICK_CHECK_EQUALS(Str, "Test")
+        continue;
+    }
+
+    for (const LString& Str : Array2)
+    {
+        QUICK_CHECK_EQUALS(Str, "Test")
+        continue;
+    }
+
+    Array2.AppendAt(50ul, Array.move_begin(), Array.move_end());
+    for (const LString& Str : Array2)
+    {
+        QUICK_CHECK_EQUALS(Str, "Test")
+        continue;
+    }
+
+    for (const LString& Str : Array)
+    {
+        QUICK_CHECK_TRUE(Str.IsEmpty())
+        continue;
+    }
+
+    return;
+}
+
+namespace Testing::Lal::Array
+{
+
+struct S
+{
+    static inline LSize Counter { 0 };
+    static inline LSize Lifetimes { 0 };
+
+    S() { ++Counter; ++Lifetimes; }
+    S(S&&) { ++Counter; ++Lifetimes; }
+    S& operator=(S&&) { ++Counter; return *this; }
+    S(const S&) { ++Counter; ++Lifetimes; }
+    S& operator=(const S&) { ++Counter; return *this; }
+    ~S() { ++Counter; --Lifetimes; }
+};
+
+static_assert(::Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<S> == false);
+
+} /* ~Namespace Testing::Lal::Array */
+
+TEST_CASE(AddAtComplexArray, "Lal.Containers")
+{
+    using namespace Testing::Lal::Array;
+
+    {
+        TArray<S> Array;
+        Array.Reserve(20);
+
+        QUICK_CHECK_EQUALS(S::Counter, 0lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 0lu)
+        Array.AddAt(0, S{});
+        QUICK_CHECK_EQUALS(S::Counter, 3lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 1lu)
+
+        Array.AddAt(0, S{});
+        QUICK_CHECK_EQUALS(S::Counter, 7lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 2lu)
+
+        Array.AddAt(0, S{});
+        QUICK_CHECK_EQUALS(S::Counter, 12lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 3lu)
+
+        Array.AddAt(0, S{});
+        QUICK_CHECK_EQUALS(S::Counter, 18lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 4lu)
+
+        Array.AddAt(1, S{});
+        QUICK_CHECK_EQUALS(S::Counter, 24lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 5lu)
+
+        Array.AddAt(5, S{});
+        QUICK_CHECK_EQUALS(S::Counter, 27lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 6lu)
+
+        Array.AddAt(5, S{});
+        QUICK_CHECK_EQUALS(S::Counter, 31lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 7lu)
+    }
+
+    QUICK_CHECK_EQUALS(S::Counter, 38ul)
+    QUICK_CHECK_EQUALS(S::Lifetimes, 0ul)
+
+    S::Counter = 0;
+    S::Lifetimes = 0;
+
+    {
+        TArray<S> Array;
+        Array.Reserve(50);
+        Array.Push(S{}).Push(S{}).Push(S{}).Push(S{}).Push(S{});
+        QUICK_CHECK_EQUALS(Array.GetSize(), 5ul)
+        QUICK_CHECK_EQUALS(S::Counter, 15lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 5lu)
+
+        const TArray<S> Other { S{}, S{}, S{}, S{}, S{} };
+        QUICK_CHECK_EQUALS(Other.GetSize(), 5ul)
+        QUICK_CHECK_EQUALS(S::Counter, 30lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 10lu)
+
+        Array.AppendAt(0ul, Other);
+        QUICK_CHECK_EQUALS(Array.GetSize(), 10lu)
+        QUICK_CHECK_EQUALS(S::Counter, 40lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 15lu)
+
+        Array.AppendAt(1ul, Other);
+        QUICK_CHECK_EQUALS(Array.GetSize(), 15lu)
+        QUICK_CHECK_EQUALS(S::Counter, 54ul)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 20lu)
+
+        Array.AppendAt(15ul, Other);
+        QUICK_CHECK_EQUALS(Array.GetSize(), 20lu)
+        QUICK_CHECK_EQUALS(S::Counter, 59ul)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 25lu)
+    }
+
+    QUICK_CHECK_EQUALS(S::Counter, 84ul)
+    QUICK_CHECK_EQUALS(S::Lifetimes, 0ul)
+
+    S::Counter = 0;
+    S::Lifetimes = 0;
+
+    {
+        TArray<S> Array;
+        Array.Reserve(50);
+        Array.Push(S{}).Push(S{}).Push(S{}).Push(S{}).Push(S{});
+        QUICK_CHECK_EQUALS(Array.GetSize(), 5ul)
+        QUICK_CHECK_EQUALS(S::Counter, 15lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 5lu)
+
+        TArray<S> Other { S{}, S{}, S{}, S{}, S{} };
+        QUICK_CHECK_EQUALS(Other.GetSize(), 5ul)
+        QUICK_CHECK_EQUALS(S::Counter, 30lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 10lu)
+
+        Array.AppendAt(0ul, std::move(Other));
+        QUICK_CHECK_EQUALS(Array.GetSize(), 10lu)
+        QUICK_CHECK_EQUALS(S::Counter, 45lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 10lu)
+
+        QUICK_CHECK_EQUALS(Other.GetSize(), 0ul)
+        Other = { S{}, S{}, S{}, S{}, S{} };
+        QUICK_CHECK_EQUALS(Other.GetSize(), 5ul)
+        QUICK_CHECK_EQUALS(S::Counter, 60lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 15lu)
+
+        Array.AppendAt(1ul, std::move(Other));
+        QUICK_CHECK_EQUALS(Array.GetSize(), 15lu)
+        QUICK_CHECK_EQUALS(S::Counter, 79ul)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 15lu)
+
+        QUICK_CHECK_EQUALS(Other.GetSize(), 0ul)
+        Other = { S{}, S{}, S{}, S{}, S{} };
+        QUICK_CHECK_EQUALS(Other.GetSize(), 5ul)
+        QUICK_CHECK_EQUALS(S::Counter, 94lu)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 20lu)
+
+        Array.AppendAt(15ul, std::move(Other));
+        QUICK_CHECK_EQUALS(Array.GetSize(), 20lu)
+        QUICK_CHECK_EQUALS(S::Counter, 104ul)
+        QUICK_CHECK_EQUALS(S::Lifetimes, 20lu)
+
+        QUICK_CHECK_EQUALS(Other.GetSize(), 0ul)
+    }
+
+    QUICK_CHECK_EQUALS(S::Counter, 124ul)
+    QUICK_CHECK_EQUALS(S::Lifetimes, 0ul)
+
+    return;
+}
+
+namespace Testing::Lal::Array
+{
+
+//# Trivial S.
+struct T
+{
+    static inline LSize Counter { 0 };
+    static inline LSize Lifetimes { 0 };
+
+    T() { ++Counter; ++Lifetimes; }
+    T(T&&) { ++Counter; ++Lifetimes; }
+    T& operator=(T&&) { ++Counter; return *this; }
+    T(const T&) { ++Counter; ++Lifetimes; }
+    T& operator=(const T&) { ++Counter; return *this; }
+    ~T() { ++Counter; --Lifetimes; }
+};
+
+
+} /* ~Namespace Testing::Lal::Array */
+
+template <>
+struct ::Lal::TArrayBaseAllowTrivialMemoryBufferMove<Testing::Lal::Array::T> : ::Lal::TrueType { };
+
+namespace Testing::Lal::Array
+{
+
+static_assert(::Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<T>);
+
+} /* ~Namespace Testing::Lal::Array */
+
+
+TEST_CASE(AddAtTrivialArray, "Lal.Containers")
+{
+    using namespace Testing::Lal::Array;
+
+    {
+        TArray<T> Array;
+        Array.Reserve(20);
+
+        QUICK_CHECK_EQUALS(T::Counter, 0lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 0lu)
+        Array.AddAt(0, T{});
+        QUICK_CHECK_EQUALS(T::Counter, 3lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 1lu)
+
+        Array.AddAt(0, T{});
+        QUICK_CHECK_EQUALS(T::Counter, 6lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 2lu)
+
+        Array.AddAt(0, T{});
+        QUICK_CHECK_EQUALS(T::Counter, 9lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 3lu)
+
+        Array.AddAt(0, T{});
+        QUICK_CHECK_EQUALS(T::Counter, 12lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 4lu)
+
+        Array.AddAt(1, T{});
+        QUICK_CHECK_EQUALS(T::Counter, 15lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 5lu)
+
+        Array.AddAt(5, T{});
+        QUICK_CHECK_EQUALS(T::Counter, 18lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 6lu)
+
+        Array.AddAt(5, T{});
+        QUICK_CHECK_EQUALS(T::Counter, 21lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 7lu)
+    }
+
+    QUICK_CHECK_EQUALS(T::Counter, 28ul)
+    QUICK_CHECK_EQUALS(T::Lifetimes, 0ul)
+
+    T::Counter = 0;
+    T::Lifetimes = 0;
+
+    {
+        TArray<T> Array;
+        Array.Reserve(50);
+        Array.Push(T{}).Push(T{}).Push(T{}).Push(T{}).Push(T{});
+        QUICK_CHECK_EQUALS(Array.GetSize(), 5ul)
+        QUICK_CHECK_EQUALS(T::Counter, 15lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 5lu)
+
+        const TArray<T> Other { T{}, T{}, T{}, T{}, T{} };
+        QUICK_CHECK_EQUALS(Other.GetSize(), 5ul)
+        QUICK_CHECK_EQUALS(T::Counter, 30lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 10lu)
+
+        Array.AppendAt(0ul, Other);
+        QUICK_CHECK_EQUALS(Array.GetSize(), 10lu)
+        QUICK_CHECK_EQUALS(T::Counter, 35lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 15lu)
+
+        Array.AppendAt(1ul, Other);
+        QUICK_CHECK_EQUALS(Array.GetSize(), 15lu)
+        QUICK_CHECK_EQUALS(T::Counter, 40ul)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 20lu)
+
+        Array.AppendAt(15ul, Other);
+        QUICK_CHECK_EQUALS(Array.GetSize(), 20lu)
+        QUICK_CHECK_EQUALS(T::Counter, 45ul)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 25lu)
+    }
+
+    QUICK_CHECK_EQUALS(T::Counter, 70ul)
+    QUICK_CHECK_EQUALS(T::Lifetimes, 0ul)
+
+    T::Counter = 0;
+    T::Lifetimes = 0;
+
+    {
+        TArray<T> Array;
+        Array.Reserve(50);
+        Array.Push(T{}).Push(T{}).Push(T{}).Push(T{}).Push(T{});
+        QUICK_CHECK_EQUALS(Array.GetSize(), 5ul)
+        QUICK_CHECK_EQUALS(T::Counter, 15lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 5lu)
+
+        TArray<T> Other { T{}, T{}, T{}, T{}, T{} };
+        QUICK_CHECK_EQUALS(Other.GetSize(), 5ul)
+        QUICK_CHECK_EQUALS(T::Counter, 30lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 10lu)
+
+        Array.AppendAt(0ul, std::move(Other));
+        QUICK_CHECK_EQUALS(Array.GetSize(), 10lu)
+        QUICK_CHECK_EQUALS(T::Counter, 30lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 10lu)
+
+        QUICK_CHECK_EQUALS(Other.GetSize(), 0ul)
+        Other = { T{}, T{}, T{}, T{}, T{} };
+        QUICK_CHECK_EQUALS(Other.GetSize(), 5ul)
+        QUICK_CHECK_EQUALS(T::Counter, 45lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 15lu)
+
+        Array.AppendAt(1ul, std::move(Other));
+        QUICK_CHECK_EQUALS(Array.GetSize(), 15lu)
+        QUICK_CHECK_EQUALS(T::Counter, 45ul)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 15lu)
+
+        QUICK_CHECK_EQUALS(Other.GetSize(), 0ul)
+        Other = { T{}, T{}, T{}, T{}, T{} };
+        QUICK_CHECK_EQUALS(Other.GetSize(), 5ul)
+        QUICK_CHECK_EQUALS(T::Counter, 60lu)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 20lu)
+
+        Array.AppendAt(15ul, std::move(Other));
+        QUICK_CHECK_EQUALS(Array.GetSize(), 20lu)
+        QUICK_CHECK_EQUALS(T::Counter, 60ul)
+        QUICK_CHECK_EQUALS(T::Lifetimes, 20lu)
+
+        QUICK_CHECK_EQUALS(Other.GetSize(), 0ul)
+    }
+
+    // QUICK_CHECK_EQUALS(T::Counter, 80ul)
+    QUICK_CHECK_EQUALS(T::Lifetimes, 0ul)
+
+    return;
+}
+
+TEST_CASE(AddAtStringArray, "Lal.Containers")
+{
+    TArray<LString> Array;
+
+    constexpr LSize Count { 5000 };
+
+    for (LSize Idx { 0 }; Idx < Count; ++Idx)
+    {
+        Array.Push(LString{});
+    }
+
+    for (const LString& S : Array)
+    {
+        QUICK_CHECK_EQUALS(S, "")
+    }
+
+    Array.Empty();
+
+    for (LSize Idx { 0 }; Idx < Count; ++Idx)
+    {
+        Array.Push(LString::SprintF("{}", Idx));
+    }
+
+    for (LSize Idx { 0 }; Idx < Count; ++Idx)
+    {
+        const LString& S { Array[Idx] };
+        QUICK_CHECK_EQUALS(S, LString::SprintF("{}", Idx))
+
+        continue;
+    }
+
+    Array.Empty();
+
+    for (LSize Idx { 0 }; Idx < Count; ++Idx)
+    {
+        if (Idx % 2 == 0)
+        {
+            Array.Push(LString::SprintF("{}", Idx));
+        }
+        else
+        {
+            Array.Push(LString::SprintF("{} This is a very long string, that needs to be heap allocated.", Idx));
+        }
+    }
+
+    for (LSize Idx { 0 }; Idx < Count; ++Idx)
+    {
+        const LString& S { Array[Idx] };
+
+        if (Idx % 2 == 0)
+        {
+            QUICK_CHECK_EQUALS(S, LString::SprintF("{}", Idx))
+        }
+        else
+        {
+            QUICK_CHECK_EQUALS(S, LString::SprintF("{} This is a very long string, that needs to be heap allocated.", Idx))
+        }
+
+        continue;
+    }
+
+    Array.Empty();
+    TArray<LString> Other;
+
+    for (LSize Idx { 0 }; Idx < Count; ++Idx)
+    {
+        if (Idx % 2 == 0)
+        {
+            Array.Push(LString::SprintF("{}", Idx));
+            Other.Push(LString::SprintF("{}", Idx));
+        }
+        else
+        {
+            Array.Push(LString::SprintF("{} This is a very long string, that needs to be heap allocated.", Idx));
+            Other.Push(LString::SprintF("{} This is a very long string, that needs to be heap allocated.", Idx));
+        }
+    }
+
+    Array.AppendAt(0ul, Other);
+    Array.AppendAt(Array.GetSize(), Other);
+
+    for (LSize Idx { 0 }; Idx < Array.GetSize(); ++Idx)
+    {
+        const LString& S { Array[Idx] };
+
+        if (Idx % 2 == 0)
+        {
+            QUICK_CHECK_EQUALS(S, LString::SprintF("{}", Idx % Count))
+        }
+        else
+        {
+            QUICK_CHECK_EQUALS(S, LString::SprintF("{} This is a very long string, that needs to be heap allocated.", Idx % Count))
+        }
+
+        continue;
+    }
+
+    Other.Empty();
+    for (LSize Idx { 0 }; Idx < Count; ++Idx)
+    {
+        if (Idx % 2 == 0)
+        {
+            Other.Push(LString::SprintF("Other: {}", Idx));
+        }
+        else
+        {
+            Other.Push(LString::SprintF("Other: {} This is a very long string, that needs to be heap allocated.", Idx));
+        }
+    }
+
+    Array.AppendAt(Count / 2, Other);
+
+    for (LSize Idx { 0 }; Idx < Array.GetSize(); ++Idx)
+    {
+        const LString& S { Array[Idx] };
+
+        if (Idx < Count / 2)
+        {
+            if (Idx % 2 == 0)
+            {
+                QUICK_CHECK_EQUALS(S, LString::SprintF("{}", Idx % Count))
+            }
+            else
+            {
+                QUICK_CHECK_EQUALS(S, LString::SprintF("{} This is a very long string, that needs to be heap allocated.", Idx % Count))
+            }
+        }
+
+        else if (Idx < Count + Count / 2)
+        {
+            if ((Idx - Count / 2) % 2 == 0)
+            {
+                QUICK_CHECK_EQUALS(S, LString::SprintF("Other: {}", (Idx - Count / 2) % Count))
+            }
+            else
+            {
+                QUICK_CHECK_EQUALS(S, LString::SprintF("Other: {} This is a very long string, that needs to be heap allocated.", (Idx - Count / 2) % Count))
+            }
+        }
+
+        else
+        {
+            if (Idx % 2 == 0)
+            {
+                QUICK_CHECK_EQUALS(S, LString::SprintF("{}", Idx % Count))
+            }
+            else
+            {
+                QUICK_CHECK_EQUALS(S, LString::SprintF("{} This is a very long string, that needs to be heap allocated.", Idx % Count))
+            }
+        }
+
         continue;
     }
 

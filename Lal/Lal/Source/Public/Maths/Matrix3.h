@@ -2,9 +2,6 @@
 
 #pragma once
 
-namespace Jafg
-{
-
 /** Jafg implementation of a three-dimensional matrix with TMatrix3[C][R] notation. */
 template <typename T>
 struct TMatrix3 final
@@ -81,7 +78,7 @@ struct TMatrix3 final
     FORCEINLINE constexpr Self& operator*=(const T Scalar) noexcept;
     FORCEINLINE constexpr Self& operator/=(const T Scalar) noexcept;
 
-    FORCEINLINE constexpr bool Equals(const Self& InMatrix, const T InTolerance = static_cast<T>(JAFG_DOUBLE_SMALL_NUMBER)) const noexcept;
+    FORCEINLINE constexpr bool Equals(const Self& InMatrix, const T InTolerance = static_cast<T>(LAL_DOUBLE_SMALL_NUMBER)) const noexcept;
     FORCEINLINE           bool operator==(const Self& InMatrix) const noexcept;
     FORCEINLINE           bool operator!=(const Self& InMatrix) const noexcept;
 
@@ -530,5 +527,3 @@ FORCEINLINE void TMatrix3<T>::FastMove(Self* InMatrix, Self* OutMatrix) noexcept
 
     return;
 }
-
-} /* ~Namespace Jafg */

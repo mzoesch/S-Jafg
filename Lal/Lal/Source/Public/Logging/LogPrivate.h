@@ -7,16 +7,16 @@ namespace Lal
 
 LAL_API std::string_view PrettyFunctionName(const char* InFunctionName) noexcept;
 
-LAL_API extern Jafg::LString LogColor_Trace;
-LAL_API extern Jafg::LString LogColor_Verbose;
-LAL_API extern Jafg::LString LogColor_Info;
-LAL_API extern Jafg::LString LogColor_Warning;
-LAL_API extern Jafg::LString LogColor_Error;
-LAL_API extern Jafg::LString LogColor_Fatal;
-LAL_API extern Jafg::LString LogColor_End;
+LAL_API extern LString LogColor_Trace;
+LAL_API extern LString LogColor_Verbose;
+LAL_API extern LString LogColor_Info;
+LAL_API extern LString LogColor_Warning;
+LAL_API extern LString LogColor_Error;
+LAL_API extern LString LogColor_Fatal;
+LAL_API extern LString LogColor_End;
 
-LAL_API Jafg::LString    GetColorForVerbosity(const ELogVerbosity::Type InVerbosity);
-LAL_API std::string_view GetColorForVerbosityView(const ELogVerbosity::Type InVerbosity);
+LAL_API LString     GetColorForVerbosity(const ELogVerbosity::Type InVerbosity);
+LAL_API LStringView GetColorForVerbosityView(const ELogVerbosity::Type InVerbosity);
 
 //# Instantly flushes log output. Caller will have to wait.
 FORCEINLINE void FlushOutStreams();

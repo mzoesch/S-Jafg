@@ -2,9 +2,6 @@
 
 #pragma once
 
-namespace Jafg
-{
-
 /** Jafg implementation of an integral Vector2. */
 template <typename T>
 struct TIntVector2 final
@@ -67,5 +64,3 @@ const T& TIntVector2<T>::operator[](const i32 InIndex) const
     check( InIndex > INDEX_NONE && InIndex < 2 )
     return this->XY[InIndex];
 }
-
-} /* ~Namespace Jafg */

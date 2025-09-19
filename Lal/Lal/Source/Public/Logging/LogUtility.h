@@ -19,21 +19,21 @@
 //# @param Name      The base name identifying the task that is being measured.
 //#
 #if LAL_LOG_DO_SCOPED_TIME_TASK_MEASURER
-    #define SCOPED_TIME_TAKEN_MEASURER(Category, Verbosity, Name)                                         \
+    #define SCOPED_TIME_TAKEN_MEASURER(Category, Verbosity, Name)                                        \
         const ::Lal::LPrivateLogTimeTaken  PRIVATE_JAFG_CORE_JOIN_INNER_TWO(___TimeTaken, __COUNTER__) = \
             ::Lal::LPrivateLogTimeTaken<                                                                 \
                 ::Lal::ELogVerbosity:: Verbosity,                                                        \
-                Category.GetCompileTimeVerbosity()                                                        \
-            >                                                                                             \
+                Category.GetCompileTimeVerbosity()                                                       \
+            >                                                                                            \
             (Category, PRIVATE_LAL_LOG_TRACE_STR_CUR_CLASS_FUNC, Name);
     #define SCOPED_TIME_TAKEN_MEASURER_MsgF(Category, Verbosity, Format,...)                             \
         const ::Lal::LPrivateLogTimeTaken  PRIVATE_JAFG_CORE_JOIN_INNER_TWO(___TimeTaken, __COUNTER__) = \
             ::Lal::LPrivateLogTimeTaken<                                                                 \
                 ::Lal::ELogVerbosity:: Verbosity,                                                        \
-                Category.GetCompileTimeVerbosity()                                                        \
-            >                                                                                             \
+                Category.GetCompileTimeVerbosity()                                                       \
+            >                                                                                            \
             (Category, PRIVATE_LAL_LOG_TRACE_STR_CUR_CLASS_FUNC, std::format(                            \
-                "" Format "", ##__VA_ARGS__                                                               \
+                "" Format "", ##__VA_ARGS__                                                              \
             ));
 #else /* DO_LOG_SCOPED_TIME_TASK_MEASURER */
     #define SCOPED_TIME_TAKEN_MEASURER(Category, Verbosity, Name)

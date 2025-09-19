@@ -19,8 +19,6 @@
 //#
 #include "Lal/Lal/Source/Test/TestLal.h"
 
-#include "Lal/Lal/Source/Test/TestLalString.h"
-
 #if PLATFORM_WINDOWS
     i32 WINAPI WinMain(_In_ HINSTANCE hInInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ char* pCmdLine, _In_ i32 nCmdShow)
 #else /* PLATFORM_WASM */

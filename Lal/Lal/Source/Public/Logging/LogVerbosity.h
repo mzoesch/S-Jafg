@@ -27,6 +27,6 @@ enum Type : u8
 
 } /* ~Namespace ELogVerbosity */
 
-LAL_API Jafg::LString LexToString(const ELogVerbosity::Type Verbosity);
+LAL_API LString LexToString(const ELogVerbosity::Type Verbosity);
 
 } /* ~Namespace Lal */

@@ -1,5 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
+#include "CoreAfx.h"
+
+#if LAL_WITH_LEGACY_FINDER
+
 #if !WITH_VIRTUAL_FILESYSTEM
 
 #include "System/Paths.h"
@@ -322,3 +326,5 @@ bool Paths::AreFilesIdentical(const LPath& InFirst, const LPath& InSecond)
 #endif /* PLATFORM_WINDOWS */
 
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
+
+#endif /* LAL_WITH_LEGACY_FINDER */

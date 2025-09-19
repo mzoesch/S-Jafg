@@ -2,9 +2,6 @@
 
 #pragma once
 
-namespace Jafg
-{
-
 /** Jafg implementation of a three dimensional vector. */
 template <typename T>
 struct TVector3
@@ -125,12 +122,12 @@ struct TVector3
 
     FORCEINLINE T operator |(const TVector3<T>& InVec) const { return this->Dot(InVec); }
 
-    FORCEINLINE bool Equals(const TVector3<T>& InVec, const T InTolerance = JAFG_SMALL_NUMBER) const;
+    FORCEINLINE bool Equals(const TVector3<T>& InVec, const T InTolerance = LAL_SMALL_NUMBER) const;
     FORCEINLINE bool operator==(const TVector3<T>& InVec) const;
     FORCEINLINE bool operator!=(const TVector3<T>& InVec) const;
 
     FORCEINLINE bool IsZero() const;
-    FORCEINLINE bool IsNearlyZero(const T InTolerance = JAFG_NOT_SO_SMALL_NUMBER) const;
+    FORCEINLINE bool IsNearlyZero(const T InTolerance = LAL_NOT_SO_SMALL_NUMBER) const;
 
     FORCEINLINE auto Magnitude() const -> T;
     FORCEINLINE auto SquaredMagnitude() const -> T;
@@ -138,9 +135,9 @@ struct TVector3
     FORCEINLINE auto SquaredMagnitude2D() const -> T;
 
     FORCEINLINE auto IsNormalized() const -> bool;
-    FORCEINLINE auto Normalize(const T InTolerance = JAFG_SMALL_NUMBER) -> void;
-    FORCEINLINE auto NormalizeRet(const T InTolerance = JAFG_SMALL_NUMBER) -> TVector3<T>&;
-    FORCEINLINE auto GetNormalized(const T InTolerance = JAFG_SMALL_NUMBER, const TVector3<T>& ResultIfZero = Zero()) const -> TVector3<T>;
+    FORCEINLINE auto Normalize(const T InTolerance = LAL_SMALL_NUMBER) -> void;
+    FORCEINLINE auto NormalizeRet(const T InTolerance = LAL_SMALL_NUMBER) -> TVector3<T>&;
+    FORCEINLINE auto GetNormalized(const T InTolerance = LAL_SMALL_NUMBER, const TVector3<T>& ResultIfZero = Zero()) const -> TVector3<T>;
     FORCEINLINE auto GetUnsafeNormalized() const -> TVector3<T>;
 
     FORCEINLINE auto Invert() -> void;
@@ -440,7 +437,7 @@ T TVector3<T>::SquaredMagnitude2D() const
 template <typename T>
 bool TVector3<T>::IsNormalized() const
 {
-    return Maths::Absolute(1.0f - this->SquaredMagnitude()) < static_cast<T>(JAFG_THRESHOLD_NORM_VEC_D);
+    return Maths::Absolute(1.0f - this->SquaredMagnitude()) < static_cast<T>(LAL_THRESHOLD_NORM_VEC_D);
 }
 
 template <typename T>
@@ -623,5 +620,3 @@ EVectorAxis::Type TVector3<T>::GetMostInferiorAxis() const
 
     return EVectorAxis::Type::Z;
 }
-
-} /* ~Namespace Jafg */

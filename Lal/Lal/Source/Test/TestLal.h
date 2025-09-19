@@ -18,3 +18,5 @@
 #include "TestJafgString.h"
 #include "TestOptional.h"
 #include "TestLalArray.h"
+#include "TestLalString.h"
+#include "TestLalPath.h"

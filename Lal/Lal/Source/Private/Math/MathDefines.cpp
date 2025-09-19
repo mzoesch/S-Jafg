@@ -21,9 +21,6 @@
     Globals.
 ----------------------------------------------------------------------------*/
 
-namespace Jafg
-{
-
 TRANSLATION_API LString LexToString(const EVectorAxis::Type InAxis)
 {
     switch (InAxis)
@@ -195,8 +192,6 @@ template<> SPECIALIZATION_API const LMatrix4F LMatrix4F::Identity               
 template<> SPECIALIZATION_API const LMatrix4D LMatrix4D::Identity                      { LPlaneD::UnitPlaneX, LPlaneD::UnitPlaneY, LPlaneD::UnitPlaneZ, LPlaneD::UnitPlaneW };
 template<> SPECIALIZATION_API const LMatrix4F LMatrix4F::Zero                          { LPlaneF::ZeroPlane, LPlaneF::ZeroPlane, LPlaneF::ZeroPlane, LPlaneF::ZeroPlane };
 template<> SPECIALIZATION_API const LMatrix4D LMatrix4D::Zero                          { LPlaneD::ZeroPlane, LPlaneD::ZeroPlane, LPlaneD::ZeroPlane, LPlaneD::ZeroPlane };
-
-} /* ~Namespace Jafg */
 
 #undef TRANSLATION_API
 #undef SPECIALIZATION_API

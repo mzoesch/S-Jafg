@@ -2,9 +2,6 @@
 
 #pragma once
 
-namespace Jafg
-{
-
 /** Jafg implementation of a four dimensional matrix with TMatrix[C][R] notation. */
 template <typename T>
 struct TMatrix4 final
@@ -104,7 +101,7 @@ struct TMatrix4 final
     FORCEINLINE constexpr Self&    operator*=(const T Scalar) noexcept;
     FORCEINLINE constexpr Self&    operator/=(const T Scalar) noexcept;
 
-    FORCEINLINE constexpr bool Equals(const Self& InMatrix, const T InTolerance = static_cast<T>(JAFG_DOUBLE_SMALL_NUMBER)) const noexcept;
+    FORCEINLINE constexpr bool Equals(const Self& InMatrix, const T InTolerance = static_cast<T>(LAL_DOUBLE_SMALL_NUMBER)) const noexcept;
     FORCEINLINE           bool operator==(const Self& InMatrix) const noexcept;
     FORCEINLINE           bool operator!=(const Self& InMatrix) const noexcept;
 
@@ -665,5 +662,3 @@ FORCEINLINE void TMatrix4<T>::SetColumn(const EMatrixAxis Axis, const ColumnTy& 
 {
     ::memcpy(this->Matrix[Axis], &Vector, sizeof(ColumnTy));
 }
-
-} /* ~Namespace Jafg */

@@ -225,6 +225,10 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     #define LAL_PLATFORM_MAX_PATH                                       300
 #endif /* LAL_PLATFORM_MAX_PATH */
 
+#ifndef LAL_PLATFORM_USES_STD_FINDER
+    #define LAL_PLATFORM_USES_STD_FINDER                                1
+#endif /* LAL_PLATFORM_USES_STD_FINDER */
+
 #ifndef LAL_PLATFORM_NO_DISCARD_CTRL_PATH
     #define LAL_PLATFORM_NO_DISCARD_CTRL_PATH                           { __asm__ __volatile__ ("nop"); }
 #endif /* !LAL_PLATFORM_NO_DISCARD_CTRL_PATH */

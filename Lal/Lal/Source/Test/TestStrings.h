@@ -3,6 +3,9 @@
 #pragma once
 
 #include "TestInclude.h"
+
+#if TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS
+
 #include "Containers/AsciiString.h"
 
 TEST_CASE(SimpleAsciiStringOperations, "Lal.Strings")
@@ -353,3 +356,5 @@ TEST_CASE(AsciiStringStartsWith, "Lal.Strings")
 
     return;
 }
+
+#endif /* TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS */

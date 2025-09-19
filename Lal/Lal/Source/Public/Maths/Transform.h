@@ -2,9 +2,6 @@
 
 #pragma once
 
-namespace Jafg
-{
-
 /** Jafg implementation of a transform. */
 template <typename T>
 struct TTransform final
@@ -15,5 +12,3 @@ struct TTransform final
     TRotator<T> Rotator;
     TVector<T>  Scale;
 };
-
-} /* ~Namespace Jafg */

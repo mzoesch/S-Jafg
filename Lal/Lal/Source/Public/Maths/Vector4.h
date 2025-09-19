@@ -2,9 +2,6 @@
 
 #pragma once
 
-namespace Jafg
-{
-
 /** Jafg implementation of a vector4. */
 template <typename T>
 struct TVector4 final
@@ -133,12 +130,12 @@ struct TVector4 final
     FORCEINLINE TVector4<T>& operator/=(const TVector4<T>& InVector);
     FORCEINLINE TVector4<T>  operator -() const;
 
-    FORCEINLINE bool Equals(const TVector4<T>& InVector, const T InTolerance = JAFG_SMALL_NUMBER) const;
+    FORCEINLINE bool Equals(const TVector4<T>& InVector, const T InTolerance = LAL_SMALL_NUMBER) const;
     FORCEINLINE bool operator==(const TVector4<T>& InVector) const;
     FORCEINLINE bool operator!=(const TVector4<T>& InVector) const;
 
     FORCEINLINE auto IsZero3() const -> bool;
-    FORCEINLINE auto IsNearlyZero3(const T InTolerance = JAFG_SMALL_NUMBER) const -> bool;
+    FORCEINLINE auto IsNearlyZero3(const T InTolerance = LAL_SMALL_NUMBER) const -> bool;
 
     FORCEINLINE auto Magnitude() const -> T;
     FORCEINLINE auto SquaredMagnitude() const -> T;
@@ -146,9 +143,9 @@ struct TVector4 final
     FORCEINLINE auto SquaredMagnitude3() const -> T;
 
     FORCEINLINE auto IsNormalized() const -> bool;
-    FORCEINLINE auto Normalize(const T InTolerance = JAFG_SMALL_NUMBER) -> void;
-    FORCEINLINE auto NormalizeRet(const T InTolerance = JAFG_SMALL_NUMBER) -> TVector4<T>&;
-    FORCEINLINE auto GetNormalized(const T InTolerance = JAFG_SMALL_NUMBER, const TVector4<T>& ResultIfZero = Identity()) const -> TVector4<T>;
+    FORCEINLINE auto Normalize(const T InTolerance = LAL_SMALL_NUMBER) -> void;
+    FORCEINLINE auto NormalizeRet(const T InTolerance = LAL_SMALL_NUMBER) -> TVector4<T>&;
+    FORCEINLINE auto GetNormalized(const T InTolerance = LAL_SMALL_NUMBER, const TVector4<T>& ResultIfZero = Identity()) const -> TVector4<T>;
     FORCEINLINE auto GetUnsafeNormalized() const -> TVector4<T>;
 
     FORCEINLINE auto Invert() -> void;
@@ -405,7 +402,7 @@ template <typename T>
 bool TVector4<T>::IsNormalized() const
 {
     return
-           (Maths::Absolute(1.0f - this->SquaredMagnitude()) < static_cast<T>(JAFG_THRESHOLD_NORM_VEC_D))
+           (Maths::Absolute(1.0f - this->SquaredMagnitude()) < static_cast<T>(LAL_THRESHOLD_NORM_VEC_D))
         && (this->W != 1.0f);
 }
 
@@ -503,5 +500,3 @@ TVector4<T> TVector4<T>::GetInvert4() const
 {
     return TVector4<T>(-this->X, -this->Y, -this->Z, -this->W);
 }
-
-} /* ~Namespace Jafg */

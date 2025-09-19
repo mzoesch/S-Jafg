@@ -2,7 +2,6 @@
 
 #if PLATFORM_LINUX
 
-#include "System/Paths.h"
 #include "AbsoluteMinimalCore.h"
 #include <unistd.h>
 #include <sys/stat.h>
@@ -38,7 +37,7 @@ void Lal::LOnPlatformBreakLinux::OnProgramPanicImpl
 
     ///////////////////////////////////////////////////////////////////////////////
     // pthread kill
-    Jafg::LString TaskPath { "/proc/self/task" };
+    LString TaskPath { "/proc/self/task" };
     if (DIR* Dir { ::opendir(TaskPath.ToPtr()) }; Dir)
     {
         struct dirent* Entry;
@@ -66,16 +65,18 @@ void Lal::LOnPlatformBreakLinux::OnProgramPanicImpl
     void* AddrList[LAL_PLATFORM_MAX_FRAMES];
     const i32 AddrLen { ::backtrace(AddrList, LAL_PLATFORM_MAX_FRAMES) };
 
+    const LPath DumpF { Finder::GetMostRecentMemDumpFile() };
+
     //
     // Just try to dump it. It will obviously not work if the process is being debugged.
     // But we let gcore handle this case.
     //
     std::stringstream Stream;
     Stream << "gdb -p " << Pid
-           << " -batch -ex \"gcore " << Jafg::Paths::GetMemoryDumpFilePath().ToPtr()
+           << " -batch -ex \"gcore " << DumpF.ToPtr()
            << "\" -ex \"detach\" -ex \"quit\""
            ;
-    std::filesystem::create_directories(Jafg::Paths::GetMemoryDumpFilePath().GetParent().ToPtr());
+    std::filesystem::create_directories(DumpF.GetParent().ToPtr());
     LOG_VERBOSE(LogJafgInternal, "Executing memory dump command: [{}].", Stream.str());
     if (const i32 Rc { ::system(Stream.str().c_str()) }; Rc != 0)
     {
@@ -136,9 +137,9 @@ void Lal::LOnPlatformBreakLinux::OnProgramPanicImpl
         }
 
         Lal::FlushOutStreams();
-        const Jafg::LString Zenity
+        const LString Zenity
         {
-            Jafg::LString::SprintF
+            LString::SprintF
             (
                 "zenity --error --title=\"Jafg Panic; We are fucked.\" --text=\"{}\n\nStacktrace:\n{}\"",
                 ZenityMessage,
@@ -154,16 +155,16 @@ void Lal::LOnPlatformBreakLinux::OnProgramPanicImpl
 #endif /* WITH_LOCAL_LAYER */
 
     /* Try writing the dump first, as this is also likely to fail - and then we would not have any dump. */
-    const Jafg::LString TraceContent
+    const LString TraceContent
     {
-        Jafg::LString::SprintF
+        LString::SprintF
         (
             "{}\n\nStacktrace:\n{}",
             InMessage,
             TraceStream.str()
         )
     };
-    Jafg::Paths::OverrideFile("Saved/Dumps/stack.trace", TraceContent);
+    Finder::OverrideFile("Saved/Dumps/stack.trace", TraceContent);
 
     // Flush, because some streams may be buffered and missing while aborting.
     Lal::FlushOutStreams();
@@ -201,7 +202,7 @@ namespace Lal::Hal
 
 void SleepNoStats(const f64 InSeconds)
 {
-    if (const i32 Milli { static_cast<i32>(InSeconds * JAFG_S2MUS_D) }; Milli > 0)
+    if (const i32 Milli { static_cast<i32>(InSeconds * LAL_S2MUS_D) }; Milli > 0)
     {
         usleep(Milli);
     }

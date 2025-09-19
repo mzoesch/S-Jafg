@@ -38,3 +38,11 @@
     PRIVATE_JAFG_CONTAINER_JOIN_INNER_TWO(Api, _API)    \
     Class; /* Eh? Wtf? This is wrong and won't work. Do not fix this warning: */
            /*         Macro argument should be enclosed in parentheses.       */
+
+#ifndef LAL_CHECK_ARRAY
+    #if LAL_CHECK_CONTAINER_BOUNDS
+        #define LAL_CHECK_ARRAY(Expr)                                   jassert( Expr )
+    #else /* LAL_CHECK_CONTAINER_BOUNDS */
+        #define LAL_CHECK_ARRAY(Expr)
+    #endif /* !LAL_CHECK_CONTAINER_BOUNDS */
+#endif /* !LAL_CHECK_ARRAY */

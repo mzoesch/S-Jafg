@@ -2,7 +2,7 @@
 
 #pragma once
 
-namespace Jafg::Maths
+namespace Maths
 {
 
 /*----------------------------------------------------------------------------
@@ -90,8 +90,8 @@ template <typename T> NODISCARD FORCEINLINE constexpr T Factorial(const T Value)
 template <typename T>
 NODISCARD FORCEINLINE constexpr T      Clamp(const T Value, const T MinValue, const T MaxValue);
 MIX_FLOATING_POINT_ARGS_THREE_PARAMS(Clamp)
-NODISCARD FORCEINLINE constexpr float  Clamp(const float Value, const float MinValue, const float MaxValue);
-NODISCARD FORCEINLINE constexpr double Clamp(const double Value, const double MinValue, const double MaxValue);
+NODISCARD FORCEINLINE constexpr f32  Clamp(const f32 Value, const f32 MinValue, const f32 MaxValue);
+NODISCARD FORCEINLINE constexpr f64 Clamp(const f64 Value, const f64 MinValue, const f64 MaxValue);
 /** Inclusively clamp the value of type U between its minimum and maximum values and cast the result to TRet. */
 template <typename TRet, typename U>
 NODISCARD FORCEINLINE constexpr TRet ClampRet(const U Value, const U MinValue, const U MaxValue);
@@ -100,20 +100,20 @@ MIX_FLOATING_POINT_ARGS_THREE_PARAMS(ClampRet)
 template <typename T> NODISCARD FORCEINLINE constexpr T Floor(const T Value);
 template <typename T> NODISCARD FORCEINLINE constexpr T Ceil(const T Value);
 
-NODISCARD FORCEINLINE bool IsNearlyEqual(const float A, const float B, const float Tolerance = JAFG_FLOAT_SMALL_NUMBER);
-NODISCARD FORCEINLINE bool IsNearlyEqual(const double A, const double B, const double Tolerance = JAFG_DOUBLE_SMALL_NUMBER);
-NODISCARD FORCEINLINE bool IsNearlyZero(const float Value, const float Tolerance = JAFG_FLOAT_SMALL_NUMBER);
-NODISCARD FORCEINLINE bool IsNearlyZero(const double Value, const double Tolerance = JAFG_DOUBLE_SMALL_NUMBER);
+NODISCARD FORCEINLINE bool IsNearlyEqual(const f32 A, const f32 B, const f32 Tolerance = LAL_FLOAT_SMALL_NUMBER);
+NODISCARD FORCEINLINE bool IsNearlyEqual(const f64 A, const f64 B, const f64 Tolerance = LAL_DOUBLE_SMALL_NUMBER);
+NODISCARD FORCEINLINE bool IsNearlyZero(const f32 Value, const f32 Tolerance = LAL_FLOAT_SMALL_NUMBER);
+NODISCARD FORCEINLINE bool IsNearlyZero(const f64 Value, const f64 Tolerance = LAL_DOUBLE_SMALL_NUMBER);
 
 /** https://en.cppreference.com/w/c/numeric/math/fmod */
-NODISCARD FORCEINLINE float  Fmod(const float Numerator, const float Denominator);
-NODISCARD FORCEINLINE double Fmod(const double Numerator, const double Denominator);
+NODISCARD FORCEINLINE f32  Fmod(const f32 Numerator, const f32 Denominator);
+NODISCARD FORCEINLINE f64 Fmod(const f64 Numerator, const f64 Denominator);
 MIX_FLOATING_POINT_ARGS_TWO_PARAMS(Fmod)
 /** https://en.cppreference.com/w/cpp/numeric/math/modf */
-NODISCARD FORCEINLINE float  ModF(const float Numerator);
-          FORCEINLINE float  ModF(const float Numerator, float* OutIntegralPart);
-NODISCARD FORCEINLINE double ModF(const double Numerator);
-          FORCEINLINE double ModF(const double Numerator, double* OutIntegralPart);
+NODISCARD FORCEINLINE f32  ModF(const f32 Numerator);
+          FORCEINLINE f32  ModF(const f32 Numerator, f32* OutIntegralPart);
+NODISCARD FORCEINLINE f64 ModF(const f64 Numerator);
+          FORCEINLINE f64 ModF(const f64 Numerator, f64* OutIntegralPart);
 
 template <typename T> NODISCARD FORCEINLINE constexpr bool IsPowerOfTwo(const T Value);
 template <typename T> NODISCARD FORCEINLINE constexpr T    Sqrt(const T Value);
@@ -149,11 +149,11 @@ template <typename T>
 FORCEINLINE constexpr void SinCos(T*  SinScalar, T*  CosScalar, const T InValue);
 
 /** Round with common sense: 0.3 => 0.0; 0.7 => 1.0; 0.5 => 1.0; -0.5 => -1.0. */
-NODISCARD FORCEINLINE float  Round(const float  Value) { return ::roundf(Value); }
-NODISCARD FORCEINLINE double Round(const double Value) { return ::round(Value); }
+NODISCARD FORCEINLINE f32  Round(const f32  Value) { return ::roundf(Value); }
+NODISCARD FORCEINLINE f64 Round(const f64 Value) { return ::round(Value); }
 /** Also useful: 0.3 => 0.0; 0.7 => 0.0; 0.5 => 0.0; -0.5 => 0.0. */
-NODISCARD FORCEINLINE float  RoundToZero(const float Value);
-NODISCARD FORCEINLINE double RoundToZero(const double Value);
+NODISCARD FORCEINLINE f32  RoundToZero(const f32 Value);
+NODISCARD FORCEINLINE f64 RoundToZero(const f64 Value);
 
 /**
  * An affine transformation to get the transformation for objects viewed as of Eye.
@@ -206,7 +206,7 @@ NODISCARD FORCEINLINE constexpr TMatrix<T> MakePerspectiveProjectionMatrix(const
  */
 template <typename T>
 NODISCARD FORCEINLINE constexpr TMatrix<T> MakeOrthographicProjectionMatrix(const TVector2<T>& RightBottom, const TVector2<T>& LeftTop = TVector2<T>::Zero());
-template <typename T, typename U = float>
+template <typename T, typename U = f32>
 NODISCARD FORCEINLINE constexpr TMatrix<U> MakeOrthographicProjectionMatrix(const TIntVector2<T>& RightBottom, const TIntVector2<T>& LeftTop = TIntVector2<T>::Zero());
 
 
@@ -215,31 +215,31 @@ NODISCARD FORCEINLINE constexpr TMatrix<U> MakeOrthographicProjectionMatrix(cons
 ----------------------------------------------------------------------------*/
 
 #if PLATFORM_WINDOWS_WITH_MSVC // Missing constexpr!
-    template <> FORCEINLINE float  Absolute(const float A)  { return ::fabsf(A); }
-    template <> FORCEINLINE double Absolute(const double A) { return ::fabs(A); }
+    template <> FORCEINLINE f32  Absolute(const f32 A)  { return ::fabsf(A); }
+    template <> FORCEINLINE f64 Absolute(const f64 A) { return ::fabs(A); }
 #elif PLATFORM_WINDOWS_WITH_GCC
-    template <> FORCEINLINE float  Absolute(const float A)  { return ::abs(A); }
-    template <> FORCEINLINE double Absolute(const double A) { return ::abs(A); }
+    template <> FORCEINLINE f32  Absolute(const f32 A)  { return ::abs(A); }
+    template <> FORCEINLINE f64 Absolute(const f64 A) { return ::abs(A); }
 #endif /* PLATFORM_WINDOWS_WITH_GCC */
 
-template <> NODISCARD FORCEINLINE constexpr float  Min(const float A,  const float B)  { return (B < A) ? B : A; }
-template <> NODISCARD FORCEINLINE constexpr double Min(const double A, const double B) { return (B < A) ? B : A; }
-template <> NODISCARD FORCEINLINE constexpr float  Max(const float A,  const float B)  { return (B < A) ? A : B; }
-template <> NODISCARD FORCEINLINE constexpr double Max(const double A, const double B) { return (B < A) ? A : B; }
+template <> NODISCARD FORCEINLINE constexpr f32  Min(const f32 A,  const f32 B)  { return (B < A) ? B : A; }
+template <> NODISCARD FORCEINLINE constexpr f64 Min(const f64 A, const f64 B) { return (B < A) ? B : A; }
+template <> NODISCARD FORCEINLINE constexpr f32  Max(const f32 A,  const f32 B)  { return (B < A) ? A : B; }
+template <> NODISCARD FORCEINLINE constexpr f64 Max(const f64 A, const f64 B) { return (B < A) ? A : B; }
 
-template <> NODISCARD FORCEINLINE constexpr float  Squared(const float Value)  { return Value * Value; }
-template <> NODISCARD FORCEINLINE constexpr double Squared(const double Value) { return Value * Value; }
-template <> NODISCARD FORCEINLINE constexpr float  Cubed(const float Value)    { return Value * Value * Value; }
-template <> NODISCARD FORCEINLINE constexpr double Cubed(const double Value)   { return Value * Value * Value; }
-template <> NODISCARD FORCEINLINE constexpr float  Quartic(const float Value)  { return Value * Value * Value * Value; }
-template <> NODISCARD FORCEINLINE constexpr double Quartic(const double Value) { return Value * Value * Value * Value; }
-template <> NODISCARD FORCEINLINE constexpr float  Quintic(const float Value)  { return Value * Value * Value * Value * Value; }
-template <> NODISCARD FORCEINLINE constexpr double Quintic(const double Value) { return Value * Value * Value * Value * Value; }
-template <> NODISCARD FORCEINLINE constexpr float  Sextic(const float Value)   { return Value * Value * Value * Value * Value * Value; }
-template <> NODISCARD FORCEINLINE constexpr double Sextic(const double Value)  { return Value * Value * Value * Value * Value * Value; }
+template <> NODISCARD FORCEINLINE constexpr f32  Squared(const f32 Value)  { return Value * Value; }
+template <> NODISCARD FORCEINLINE constexpr f64 Squared(const f64 Value) { return Value * Value; }
+template <> NODISCARD FORCEINLINE constexpr f32  Cubed(const f32 Value)    { return Value * Value * Value; }
+template <> NODISCARD FORCEINLINE constexpr f64 Cubed(const f64 Value)   { return Value * Value * Value; }
+template <> NODISCARD FORCEINLINE constexpr f32  Quartic(const f32 Value)  { return Value * Value * Value * Value; }
+template <> NODISCARD FORCEINLINE constexpr f64 Quartic(const f64 Value) { return Value * Value * Value * Value; }
+template <> NODISCARD FORCEINLINE constexpr f32  Quintic(const f32 Value)  { return Value * Value * Value * Value * Value; }
+template <> NODISCARD FORCEINLINE constexpr f64 Quintic(const f64 Value) { return Value * Value * Value * Value * Value; }
+template <> NODISCARD FORCEINLINE constexpr f32  Sextic(const f32 Value)   { return Value * Value * Value * Value * Value * Value; }
+template <> NODISCARD FORCEINLINE constexpr f64 Sextic(const f64 Value)  { return Value * Value * Value * Value * Value * Value; }
 template <typename T> FORCEINLINE constexpr T      Pow(const T Base, const T Exponent) { return std::pow(Base, Exponent); }
-template <> NODISCARD FORCEINLINE           float  Pow(const float Base, const float Exponent) { return ::powf(Base, Exponent); }
-template <> NODISCARD FORCEINLINE           double Pow(const double Base, const double Exponent) { return ::pow(Base, Exponent); }
+template <> NODISCARD FORCEINLINE           f32  Pow(const f32 Base, const f32 Exponent) { return ::powf(Base, Exponent); }
+template <> NODISCARD FORCEINLINE           f64 Pow(const f64 Base, const f64 Exponent) { return ::pow(Base, Exponent); }
 template <typename T> NODISCARD FORCEINLINE constexpr T Factorial(const T Value)
 {
     return (Value == static_cast<T>(0))
@@ -249,27 +249,27 @@ template <typename T> NODISCARD FORCEINLINE constexpr T Factorial(const T Value)
 
 template <typename T>
 NODISCARD FORCEINLINE constexpr T      Clamp(const T Value, const T MinValue, const T MaxValue) { return Maths::Max(Maths::Min(Value, MaxValue), MinValue); }
-NODISCARD FORCEINLINE constexpr float  Clamp(const float Value, const float MinValue, const float MaxValue) { return Clamp<float>(Value, MinValue, MaxValue); }
-NODISCARD FORCEINLINE constexpr double Clamp(const double Value, const double MinValue, const double MaxValue) { return Clamp<double>(Value, MinValue, MaxValue); }
+NODISCARD FORCEINLINE constexpr f32  Clamp(const f32 Value, const f32 MinValue, const f32 MaxValue) { return Clamp<f32>(Value, MinValue, MaxValue); }
+NODISCARD FORCEINLINE constexpr f64 Clamp(const f64 Value, const f64 MinValue, const f64 MaxValue) { return Clamp<f64>(Value, MinValue, MaxValue); }
 template <typename TRet, typename U> NODISCARD FORCEINLINE constexpr TRet ClampRet(const U Value, const U MinValue, const U MaxValue) { return static_cast<TRet>(Clamp(Value, MinValue, MaxValue)); }
 
 template <typename T> NODISCARD   constexpr T      Floor(const T Value) UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
-template <> NODISCARD FORCEINLINE           float  Floor(const float Value)  { return ::floorf(Value); }
-template <> NODISCARD FORCEINLINE           double Floor(const double Value) { return ::floor(Value);  }
+template <> NODISCARD FORCEINLINE           f32  Floor(const f32 Value)  { return ::floorf(Value); }
+template <> NODISCARD FORCEINLINE           f64 Floor(const f64 Value) { return ::floor(Value);  }
 template <typename T> NODISCARD   constexpr T      Ceil(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
-template <> NODISCARD FORCEINLINE           float  Ceil(const float Value)   { return ::ceilf(Value);  }
-template <> NODISCARD FORCEINLINE           double Ceil(const double Value)  { return ::ceil(Value);   }
+template <> NODISCARD FORCEINLINE           f32  Ceil(const f32 Value)   { return ::ceilf(Value);  }
+template <> NODISCARD FORCEINLINE           f64 Ceil(const f64 Value)  { return ::ceil(Value);   }
 
-NODISCARD FORCEINLINE bool IsNearlyEqual(const float A, const float B, const float Tolerance /* = JAFG_FLOAT_SMALL_NUMBER */) { return Maths::Absolute(A - B) < Tolerance; }
-NODISCARD FORCEINLINE bool IsNearlyEqual(const double A, const double B, const double Tolerance /* = JAFG_DOUBLE_SMALL_NUMBER */) { return Maths::Absolute(A - B) < Tolerance; }
-NODISCARD FORCEINLINE bool IsNearlyZero(const float Value, const float Tolerance /* = JAFG_FLOAT_SMALL_NUMBER */) { return Maths::Absolute(Value) < Tolerance; }
-NODISCARD FORCEINLINE bool IsNearlyZero(const double Value, const double Tolerance /* = JAFG_DOUBLE_SMALL_NUMBER */) { return Maths::Absolute(Value) < Tolerance; }
+NODISCARD FORCEINLINE bool IsNearlyEqual(const f32 A, const f32 B, const f32 Tolerance /* = LAL_FLOAT_SMALL_NUMBER */) { return Maths::Absolute(A - B) < Tolerance; }
+NODISCARD FORCEINLINE bool IsNearlyEqual(const f64 A, const f64 B, const f64 Tolerance /* = LAL_DOUBLE_SMALL_NUMBER */) { return Maths::Absolute(A - B) < Tolerance; }
+NODISCARD FORCEINLINE bool IsNearlyZero(const f32 Value, const f32 Tolerance /* = LAL_FLOAT_SMALL_NUMBER */) { return Maths::Absolute(Value) < Tolerance; }
+NODISCARD FORCEINLINE bool IsNearlyZero(const f64 Value, const f64 Tolerance /* = LAL_DOUBLE_SMALL_NUMBER */) { return Maths::Absolute(Value) < Tolerance; }
 
-NODISCARD FORCEINLINE float Fmod(const float Numerator, const float Denominator)
+NODISCARD FORCEINLINE f32 Fmod(const f32 Numerator, const f32 Denominator)
 {
 #if LAL_DO_CHECKS
-    const float AbsDenominator = Maths::Absolute(Denominator);
-    if (AbsDenominator <= JAFG_FLOAT_SMALL_NUMBER)
+    const f32 AbsDenominator = Maths::Absolute(Denominator);
+    if (AbsDenominator <= LAL_FLOAT_SMALL_NUMBER)
     {
         checkNoEntry()
         return 0.0f;
@@ -279,11 +279,11 @@ NODISCARD FORCEINLINE float Fmod(const float Numerator, const float Denominator)
     return ::fmodf(Numerator, Denominator);
 }
 
-NODISCARD FORCEINLINE double Fmod(const double Numerator, const double Denominator)
+NODISCARD FORCEINLINE f64 Fmod(const f64 Numerator, const f64 Denominator)
 {
 #if LAL_DO_CHECKS
-    const double AbsDenominator = Maths::Absolute(Denominator);
-    if (AbsDenominator <= JAFG_DOUBLE_SMALL_NUMBER)
+    const f64 AbsDenominator = Maths::Absolute(Denominator);
+    if (AbsDenominator <= LAL_DOUBLE_SMALL_NUMBER)
     {
         checkNoEntry()
         return 0.0;
@@ -293,10 +293,10 @@ NODISCARD FORCEINLINE double Fmod(const double Numerator, const double Denominat
     return ::fmod(Numerator, Denominator);
 }
 
-NODISCARD FORCEINLINE float  ModF(const float Numerator) { float Dummy = 0.0; return ::modff(Numerator, &Dummy); }
-          FORCEINLINE float  ModF(const float Numerator, float* OutIntegralPart) { return ::modff(Numerator, OutIntegralPart); }
-NODISCARD FORCEINLINE double ModF(const double Numerator) { double Dummy = 0.0; return ::modf(Numerator, &Dummy); }
-          FORCEINLINE double ModF(const double Numerator, double* OutIntegralPart) { return ::modf(Numerator, OutIntegralPart); }
+NODISCARD FORCEINLINE f32  ModF(const f32 Numerator) { f32 Dummy = 0.0; return ::modff(Numerator, &Dummy); }
+          FORCEINLINE f32  ModF(const f32 Numerator, f32* OutIntegralPart) { return ::modff(Numerator, OutIntegralPart); }
+NODISCARD FORCEINLINE f64 ModF(const f64 Numerator) { f64 Dummy = 0.0; return ::modf(Numerator, &Dummy); }
+          FORCEINLINE f64 ModF(const f64 Numerator, f64* OutIntegralPart) { return ::modf(Numerator, OutIntegralPart); }
 
 template <typename T>
 NODISCARD FORCEINLINE constexpr bool IsPowerOfTwo(const T Value)
@@ -338,7 +338,7 @@ template <typename T>
 NODISCARD FORCEINLINE constexpr T ClampRadians(const T Radians)
 {
     static_assert(std::is_floating_point_v<T>, "Radians must be a floating point type.");
-    return Radians - (static_cast<T>(JAFG_TWO_PI_D) * static_cast<T>(std::floor(Radians / JAFG_TWO_PI_D)));
+    return Radians - (static_cast<T>(LAL_TWO_PI_D) * static_cast<T>(std::floor(Radians / LAL_TWO_PI_D)));
 }
 
 template <typename T>
@@ -346,7 +346,7 @@ NODISCARD FORCEINLINE constexpr T NormalizeRadians(T Radians)
 {
     static_assert(std::is_floating_point_v<T>, "Radians must be a floating point type.");
     Radians = Maths::ClampRadians(Radians);
-    if (Radians > static_cast<T>(JAFG_PI_D)) { Radians -= static_cast<T>(JAFG_TWO_PI_D); }
+    if (Radians > static_cast<T>(LAL_PI_D)) { Radians -= static_cast<T>(LAL_TWO_PI_D); }
     return Radians;
 }
 
@@ -354,7 +354,7 @@ template <typename T>
 NODISCARD FORCEINLINE constexpr T ClampDegrees(const T Degrees)
 {
     static_assert(std::is_floating_point_v<T>, "Degrees must be a floating point type.");
-    return Degrees - (static_cast<T>(JAFG_DEG_FULL_CIRCLE_D) * static_cast<T>(Maths::Floor(Degrees / JAFG_DEG_FULL_CIRCLE_D)));
+    return Degrees - (static_cast<T>(LAL_DEG_FULL_CIRCLE_D) * static_cast<T>(Maths::Floor(Degrees / LAL_DEG_FULL_CIRCLE_D)));
 }
 
 template <typename T>
@@ -362,34 +362,34 @@ NODISCARD FORCEINLINE constexpr T NormalizeDegrees(T Degrees)
 {
     static_assert(std::is_floating_point_v<T>, "Degrees must be a floating point type.");
     Degrees = Maths::ClampDegrees(Degrees);
-    if (Degrees > static_cast<T>(JAFG_DEG_HALF_CIRCLE_D)) { Degrees -= static_cast<T>(JAFG_DEG_FULL_CIRCLE_D); }
+    if (Degrees > static_cast<T>(LAL_DEG_HALF_CIRCLE_D)) { Degrees -= static_cast<T>(LAL_DEG_FULL_CIRCLE_D); }
     return Degrees;
 }
 
-template <> NODISCARD FORCEINLINE float  Sin(const float Value)     { return ::sinf(Value);   }
-template <> NODISCARD FORCEINLINE double Sin(const double Value)    { return ::sin(Value);    }
-template <> NODISCARD FORCEINLINE float  Asin(const float Value)    { return ::asinf(Value);  }
-template <> NODISCARD FORCEINLINE double Asin(const double Value)   { return ::asin(Value);   }
-template <> NODISCARD FORCEINLINE float  Sinh(const float Value)    { return ::sinhf(Value);  }
-template <> NODISCARD FORCEINLINE double Sinh(const double Value)   { return ::sinh(Value);   }
-template <> NODISCARD FORCEINLINE float  ASinh(const float Value)   { return ::asinhf(Value); }
-template <> NODISCARD FORCEINLINE double ASinh(const double Value)  { return ::asinh(Value);  }
-template <> NODISCARD FORCEINLINE float  Cos(const float Value)     { return ::cosf(Value);   }
-template <> NODISCARD FORCEINLINE double Cos(const double Value)    { return ::cos(Value);    }
-template <> NODISCARD FORCEINLINE float  Acos(const float Value)    { return ::acosf(Value);  }
-template <> NODISCARD FORCEINLINE double Acos(const double Value)   { return ::acos(Value);   }
-template <> NODISCARD FORCEINLINE float  Cosh(const float Value)    { return ::coshf(Value);  }
-template <> NODISCARD FORCEINLINE double Cosh(const double Value)   { return ::cosh(Value);   }
-template <> NODISCARD FORCEINLINE float  ACosh(const float Value)   { return ::acoshf(Value); }
-template <> NODISCARD FORCEINLINE double ACosh(const double Value)  { return ::acosh(Value);  }
-template <> NODISCARD FORCEINLINE float  Tan(const float Value)     { return ::tanf(Value);   }
-template <> NODISCARD FORCEINLINE double Tan(const double Value)    { return ::tan(Value);    }
-template <> NODISCARD FORCEINLINE float  Atan(const float Value)    { return ::atanf(Value);  }
-template <> NODISCARD FORCEINLINE double Atan(const double Value)   { return ::atan(Value);   }
-template <> NODISCARD FORCEINLINE float  Tanh(const float Value)    { return ::tanhf(Value);  }
-template <> NODISCARD FORCEINLINE double Tanh(const double Value)   { return ::tanh(Value);   }
-template <> NODISCARD FORCEINLINE float  ATanh(const float Value)   { return ::atanhf(Value); }
-template <> NODISCARD FORCEINLINE double ATanh(const double Value)  { return ::atanh(Value);  }
+template <> NODISCARD FORCEINLINE f32  Sin(const f32 Value)     { return ::sinf(Value);   }
+template <> NODISCARD FORCEINLINE f64 Sin(const f64 Value)    { return ::sin(Value);    }
+template <> NODISCARD FORCEINLINE f32  Asin(const f32 Value)    { return ::asinf(Value);  }
+template <> NODISCARD FORCEINLINE f64 Asin(const f64 Value)   { return ::asin(Value);   }
+template <> NODISCARD FORCEINLINE f32  Sinh(const f32 Value)    { return ::sinhf(Value);  }
+template <> NODISCARD FORCEINLINE f64 Sinh(const f64 Value)   { return ::sinh(Value);   }
+template <> NODISCARD FORCEINLINE f32  ASinh(const f32 Value)   { return ::asinhf(Value); }
+template <> NODISCARD FORCEINLINE f64 ASinh(const f64 Value)  { return ::asinh(Value);  }
+template <> NODISCARD FORCEINLINE f32  Cos(const f32 Value)     { return ::cosf(Value);   }
+template <> NODISCARD FORCEINLINE f64 Cos(const f64 Value)    { return ::cos(Value);    }
+template <> NODISCARD FORCEINLINE f32  Acos(const f32 Value)    { return ::acosf(Value);  }
+template <> NODISCARD FORCEINLINE f64 Acos(const f64 Value)   { return ::acos(Value);   }
+template <> NODISCARD FORCEINLINE f32  Cosh(const f32 Value)    { return ::coshf(Value);  }
+template <> NODISCARD FORCEINLINE f64 Cosh(const f64 Value)   { return ::cosh(Value);   }
+template <> NODISCARD FORCEINLINE f32  ACosh(const f32 Value)   { return ::acoshf(Value); }
+template <> NODISCARD FORCEINLINE f64 ACosh(const f64 Value)  { return ::acosh(Value);  }
+template <> NODISCARD FORCEINLINE f32  Tan(const f32 Value)     { return ::tanf(Value);   }
+template <> NODISCARD FORCEINLINE f64 Tan(const f64 Value)    { return ::tan(Value);    }
+template <> NODISCARD FORCEINLINE f32  Atan(const f32 Value)    { return ::atanf(Value);  }
+template <> NODISCARD FORCEINLINE f64 Atan(const f64 Value)   { return ::atan(Value);   }
+template <> NODISCARD FORCEINLINE f32  Tanh(const f32 Value)    { return ::tanhf(Value);  }
+template <> NODISCARD FORCEINLINE f64 Tanh(const f64 Value)   { return ::tanh(Value);   }
+template <> NODISCARD FORCEINLINE f32  ATanh(const f32 Value)   { return ::atanhf(Value); }
+template <> NODISCARD FORCEINLINE f64 ATanh(const f64 Value)  { return ::atanh(Value);  }
 template <typename T> NODISCARD FORCEINLINE T Sin(const T Value)   UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
 template <typename T> NODISCARD FORCEINLINE T Asin(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
 template <typename T> NODISCARD FORCEINLINE T Sinh(const T Value)  UNSUPPORTED_TEMPLATED_SPECIALIZATION(T, return T { })
@@ -420,10 +420,10 @@ FORCEINLINE constexpr void SinCos(T* SinScalar, T* CosScalar, const T InValue)
     return;
 }
 
-NODISCARD FORCEINLINE float RoundToZero(const float Value)
+NODISCARD FORCEINLINE f32 RoundToZero(const f32 Value)
 {
-    float IntegralPart = 0.0f;
-    const float FractionalPart = Maths::ModF(Value, &IntegralPart);
+    f32 IntegralPart = 0.0f;
+    const f32 FractionalPart = Maths::ModF(Value, &IntegralPart);
 
     if (FractionalPart < 0.0f)
     {
@@ -433,10 +433,10 @@ NODISCARD FORCEINLINE float RoundToZero(const float Value)
     return FractionalPart > 0.5f ? IntegralPart + 1.0f : IntegralPart;
 }
 
-NODISCARD FORCEINLINE double RoundToZero(const double Value)
+NODISCARD FORCEINLINE f64 RoundToZero(const f64 Value)
 {
-    double IntegralPart = 0.0f;
-    const double FractionalPart = Maths::ModF(Value, &IntegralPart);
+    f64 IntegralPart = 0.0f;
+    const f64 FractionalPart = Maths::ModF(Value, &IntegralPart);
 
     if (FractionalPart < 0.0f)
     {
@@ -535,4 +535,4 @@ NODISCARD FORCEINLINE constexpr TMatrix<U> MakeOrthographicProjectionMatrix(cons
     );
 }
 
-} /* Namespace Jafg::Maths */
+} /* Namespace Maths */

@@ -2,9 +2,6 @@
 
 #pragma once
 
-namespace Jafg
-{
-
 /** Jafg implementation of a plane. */
 template <typename T>
 struct TPlane final : public TVector<T>
@@ -73,5 +70,3 @@ TPlane<T>::TPlane(TVector<T> A, TVector<T> B, TVector<T> C) : TVector<T>(((B - A
 {
     W = A | (TVector<T>)(*this);
 }
-
-} /* ~Namespace Jafg */

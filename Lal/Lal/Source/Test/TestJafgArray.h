@@ -4,6 +4,8 @@
 
 #include "TestInclude.h"
 
+#if TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS
+
 TEST_CASE(SimpleIntegerArrayOperations, "Lal.Containers")
 {
     using namespace Jafg;
@@ -886,3 +888,5 @@ TEST_CASE(MutableViewArray, "Lal.Containers")
 
     return;
 }
+
+#endif /* TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS */

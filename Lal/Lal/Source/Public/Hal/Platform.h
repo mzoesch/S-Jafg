@@ -144,6 +144,11 @@ struct LPrimitivePlatformTypesGeneric
     #error "No compiler spcified."
 #endif /* LAL_WITH_GCC || LAL_WITH_MSVC || LAL_WITH_CLANG */
 
+//# Whether the platform uses the Posix Api.
+#ifndef LAL_PLATFORM_USES_POSIX
+    #define LAL_PLATFORM_USES_POSIX                                     (!PLATFORM_WINDOWS)
+#endif /* !LAL_PLATFORM_USES_POSIX */
+
 //# Branch prediction hint: Is this boolean expression likely to be true?
 #ifndef LAL_UNLIKELY
     #define LAL_UNLIKELY(Expr)                                          (!!(Expr))
@@ -411,6 +416,11 @@ struct LPrimitivePlatformTypesGeneric
 #ifndef LAL_PLATFORM_MAX_PATH
     #error "Platform is missing LAL_PLATFORM_MAX_PATH definition."
 #endif /* !LAL_PLATFORM_MAX_PATH */
+
+//# The finder implementation strategy.
+#ifndef LAL_PLATFORM_USES_STD_FINDER
+    #error "Platform is missing LAL_PLATFORM_USES_STD_FINDER definition."
+#endif /* LAL_PLATFORM_USES_STD_FINDER */
 
 //# The exit type for the platform.
 #ifndef LAL_PLATFORM_EXIT_TYPE
