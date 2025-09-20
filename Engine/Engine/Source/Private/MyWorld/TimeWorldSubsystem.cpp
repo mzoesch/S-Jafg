@@ -10,7 +10,7 @@
 namespace
 {
 
-const TArray<Jafg::LString> NamedDayTimeValues
+const TArray<LString> NamedDayTimeValues
 {
     "Sunrise", "Morning", "Noon", "Dusk", "Night", "Midnight",
 };
@@ -113,13 +113,13 @@ Jafg::LCommandArgsTypeRet<Jafg::LCliDayTime>::Type Jafg::LCommandArgsTypeRet<Jaf
     {
         std::from_chars
         (
-            Self.Name.GetBegin(),
-            Self.Name.GetEnd(),
+            Self.Name.begin_ptr(),
+            Self.Name.end_ptr(),
             Value
         )
     };
 
-    if (ec == std::errc{} && ptr == Self.Name.GetEnd())
+    if (ec == std::errc{} && ptr == Self.Name.end_ptr())
     {
         return Value;
     }
@@ -195,11 +195,11 @@ void Jafg::JTimeWorldSubsystem::Tick(const f32 DeltaTime)
 
     if (this->IsDay())
     {
-        this->Daytime += this->DayAcceleration * static_cast<LDaytime>(DeltaTime * JAFG_S2MS_D);
+        this->Daytime += this->DayAcceleration * static_cast<LDaytime>(DeltaTime * LAL_S2MS_D);
     }
     else
     {
-        this->Daytime += this->NightAcceleration * static_cast<LDaytime>(DeltaTime * JAFG_S2MS_D);
+        this->Daytime += this->NightAcceleration * static_cast<LDaytime>(DeltaTime * LAL_S2MS_D);
     }
 
     this->OnTimeUpdated();
@@ -288,23 +288,23 @@ Jafg::LDaytime Jafg::JTimeWorldSubsystem::GetDayTimeFromNamedTimes(const ENamedD
     {
     case ENamedDayTime::Sunrise:
     {
-        return 6 * JAFG_H2MS_D; /* 6:00 */
+        return 6 * LAL_H2MS_D; /* 6:00 */
     }
     case ENamedDayTime::Morning:
     {
-        return 9 * JAFG_H2MS_D; /* 9:00 */
+        return 9 * LAL_H2MS_D; /* 9:00 */
     }
     case ENamedDayTime::Noon:
     {
-        return 12 * JAFG_H2MS_D; /* 12:00 */
+        return 12 * LAL_H2MS_D; /* 12:00 */
     }
     case ENamedDayTime::Dusk:
     {
-        return 18 * JAFG_H2MS_D; /* 18:00 */
+        return 18 * LAL_H2MS_D; /* 18:00 */
     }
     case ENamedDayTime::Night:
     {
-        return 21 * JAFG_H2MS_D; /* 21:00 */
+        return 21 * LAL_H2MS_D; /* 21:00 */
     }
     case ENamedDayTime::Midnight:
     {
@@ -344,87 +344,87 @@ Jafg::LAstron* Jafg::JTimeWorldSubsystem::GetMutableSunAstron()
     return nullptr;
 }
 
-Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_HHMMSS) const
+LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_HHMMSS) const
 {
     const u64 EarthMs
     {
-        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * JAFG_H2MS_D)))
+        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * LAL_H2MS_D)))
     };
 
-    const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * JAFG_MS2H_D)) };
-    const u64 Minutes { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D)) * JAFG_MS2M_D)) };
-    const u64 Seconds { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D) - (Minutes * JAFG_M2MS_D)) * JAFG_MS2S_D)) };
+    const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * LAL_MS2H_D)) };
+    const u64 Minutes { static_cast<u64>(Maths::Round((EarthMs - (Hours * LAL_H2MS_D)) * LAL_MS2M_D)) };
+    const u64 Seconds { static_cast<u64>(Maths::Round((EarthMs - (Hours * LAL_H2MS_D) - (Minutes * LAL_M2MS_D)) * LAL_MS2S_D)) };
 
     return LString::SprintF("{:02}:{:02}:{:02}", Hours, Minutes, Seconds);
 }
 
-Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_HHMM) const
+LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_HHMM) const
 {
     const u64 EarthMs
     {
-        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * JAFG_H2MS_D)))
+        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * LAL_H2MS_D)))
     };
 
-    const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * JAFG_MS2H_D)) };
-    const u64 Minutes { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D)) * JAFG_MS2M_D)) };
+    const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * LAL_MS2H_D)) };
+    const u64 Minutes { static_cast<u64>(Maths::Round((EarthMs - (Hours * LAL_H2MS_D)) * LAL_MS2M_D)) };
 
     return LString::SprintF("{:02}:{:02}", Hours, Minutes);
 }
 
-Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_MMSS) const
+LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_MMSS) const
 {
     const u64 EarthMs
     {
-        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * JAFG_H2MS_D)))
+        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * LAL_H2MS_D)))
     };
 
-    const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * JAFG_MS2H_D)) };
-    const u64 Minutes { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D)) * JAFG_MS2M_D)) };
-    const u64 Seconds { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D) - (Minutes * JAFG_M2MS_D)) * JAFG_MS2S_D)) };
+    const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * LAL_MS2H_D)) };
+    const u64 Minutes { static_cast<u64>(Maths::Round((EarthMs - (Hours * LAL_H2MS_D)) * LAL_MS2M_D)) };
+    const u64 Seconds { static_cast<u64>(Maths::Round((EarthMs - (Hours * LAL_H2MS_D) - (Minutes * LAL_M2MS_D)) * LAL_MS2S_D)) };
 
     return LString::SprintF("{:02}:{:02}", Minutes, Seconds);
 }
 
-Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_HH) const
+LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_HH) const
 {
     const u64 EarthMs
     {
-        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * JAFG_H2MS_D)))
+        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * LAL_H2MS_D)))
     };
 
-    const u64 Hours { static_cast<u64>(Maths::Round(EarthMs * JAFG_MS2H_D)) };
+    const u64 Hours { static_cast<u64>(Maths::Round(EarthMs * LAL_MS2H_D)) };
 
     return LString::SprintF("{:02}", Hours);
 }
 
-Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_MM) const
+LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_MM) const
 {
     const u64 EarthMs
     {
-        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * JAFG_H2MS_D)))
+        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * LAL_H2MS_D)))
     };
 
-    const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * JAFG_MS2H_D)) };
-    const u64 Minutes { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D)) * JAFG_MS2M_D)) };
+    const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * LAL_MS2H_D)) };
+    const u64 Minutes { static_cast<u64>(Maths::Round((EarthMs - (Hours * LAL_H2MS_D)) * LAL_MS2M_D)) };
 
     return LString::SprintF("{:02}", Minutes);
 }
 
-Jafg::LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_SS) const
+LString Jafg::JTimeWorldSubsystem::GetInterpolatedTimeAsItWouldBeOnEarth(JTimeWorldSubsystem::E_SS) const
 {
     const u64 EarthMs
     {
-        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * JAFG_H2MS_D)))
+        static_cast<u64>(Maths::Round(this->GetDayTimeInPercentage_CurrentDayOnly() * (24.0 * LAL_H2MS_D)))
     };
 
-    const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * JAFG_MS2H_D)) };
-    const u64 Minutes { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D)) * JAFG_MS2M_D)) };
-    const u64 Seconds { static_cast<u64>(Maths::Round((EarthMs - (Hours * JAFG_H2MS_D) - (Minutes * JAFG_M2MS_D)) * JAFG_MS2S_D)) };
+    const u64 Hours   { static_cast<u64>(Maths::Round(EarthMs * LAL_MS2H_D)) };
+    const u64 Minutes { static_cast<u64>(Maths::Round((EarthMs - (Hours * LAL_H2MS_D)) * LAL_MS2M_D)) };
+    const u64 Seconds { static_cast<u64>(Maths::Round((EarthMs - (Hours * LAL_H2MS_D) - (Minutes * LAL_M2MS_D)) * LAL_MS2S_D)) };
 
     return LString::SprintF("{:02}", Seconds);
 }
 
-Jafg::LString Jafg::JTimeWorldSubsystem::GetDayCycleAsItWouldBeOnEarth(JTimeWorldSubsystem::E_DDMMYYYY) const
+LString Jafg::JTimeWorldSubsystem::GetDayCycleAsItWouldBeOnEarth(JTimeWorldSubsystem::E_DDMMYYYY) const
 {
     u64 DaysRemaining { this->DayCycle };
 
@@ -673,7 +673,7 @@ void Jafg::JTimeWorldSubsystem::OnTimeUpdated()
 
     if (bNight)
     {
-        Skybox.SetBackgroundColor(LColor::Black);
+        Skybox.SetBackgroundColor(Lal::LColor::Black);
     }
     else
     {
@@ -704,7 +704,7 @@ void Jafg::JTimeWorldSubsystem::OnTimeUpdated()
                   static_cast<f64>(this->EndOfTheDay - this->StartOfTheDay)
             };
 
-            const f64 Angle { DayTimePercentage * JAFG_PI_D };
+            const f64 Angle { DayTimePercentage * LAL_PI_D };
 
             Sun->Direction = LVector
             {

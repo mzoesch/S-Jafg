@@ -3,7 +3,6 @@
 #include "Rhi/Shader.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "System/EnginePath.h"
-#include "System/Finder.h"
 
 Jafg::LShader::LShader(const LEnginePath& Path)
 {
@@ -71,12 +70,12 @@ void Jafg::LShader::Load(const LEnginePath& Path, const TArray<LShaderCompileTim
 void Jafg::LShader::Load(const TArray<LShaderCompileTimeConstant>& InConstants)
 {
     LEnginePath VertexPath = this->CachedPath;
-    VertexPath.AddExtension(".vert");
+    VertexPath.Append(".vert");
     LEnginePath FragmentPath = this->CachedPath;
-    FragmentPath.AddExtension(".frag");
+    FragmentPath.Append(".frag");
 
-    LString UncompiledVertex   { Finder::ReadFile(VertexPath) };
-    LString UncompiledFragment { Finder::ReadFile(FragmentPath) };
+    LString UncompiledVertex   { Finder::ReadFile(VertexPath.ResolvePath()) };
+    LString UncompiledFragment { Finder::ReadFile(FragmentPath.ResolvePath()) };
 
     this->LoadImpl(std::move(UncompiledVertex), std::move(UncompiledFragment), InConstants);
 
@@ -93,7 +92,7 @@ void Jafg::LShader::Load(LString&& UncompiledVertex, LString&& UncompiledFragmen
 
 void Jafg::LShader::Recompile(const TArray<LShaderCompileTimeConstant>& InConstants)
 {
-    LOG_VERBOSE(LogRhi, "Recompiling shader [{}].", this->CachedPath.GetRelativeUnresolvedPath())
+    LOG_VERBOSE(LogRhi, "Recompiling shader [{}].", this->CachedPath)
 
     this->Free();
     this->Load(InConstants);
@@ -230,17 +229,17 @@ void Jafg::LShader::SetMatrixUniform(const LString& Name, const LMatrixF& Value)
     return;
 }
 
-void Jafg::LShader::SetColorUniform(const LString& Name, const LColor& Value) const
+void Jafg::LShader::SetColorUniform(const LString& Name, const Lal::LColor& Value) const
 {
     this->SetIntUniform(Name, *reinterpret_cast<const i32*>(&Value.Bits));
 }
 
-void Jafg::LShader::SetColorVec3Uniform(const LString& Name, const LColor& Value) const
+void Jafg::LShader::SetColorVec3Uniform(const LString& Name, const Lal::LColor& Value) const
 {
     this->SetVec3Uniform(Name, Value.ToVector3());
 }
 
-void Jafg::LShader::SetColorVec4Uniform(const LString& Name, const LColor& Value) const
+void Jafg::LShader::SetColorVec4Uniform(const LString& Name, const Lal::LColor& Value) const
 {
     this->SetVec4Uniform(Name, Value.ToVector4());
 }
@@ -250,12 +249,12 @@ void Jafg::LShader::LoadImpl(LString&& UncompiledVertex, LString&& UncompiledFra
     i32 AddConstantsIdxFragment = INDEX_NONE;
     i32 AddConstantsIdxVertex   = INDEX_NONE;
 
-    const i32 HashVersionFragment = UncompiledFragment.FindFirst("#version");
-    const i32 HashVersionVertex   = UncompiledVertex.FindFirst("#version");
+    const i64 HashVersionFragment = UncompiledFragment.FindFirstIndex("#version");
+    const i64 HashVersionVertex   = UncompiledVertex.FindFirstIndex("#version");
     jassert( HashVersionFragment != INDEX_NONE )
     jassert( HashVersionVertex   != INDEX_NONE )
 
-    for (i32 i = HashVersionFragment; i < UncompiledFragment.GetSize(); ++i)
+    for (u32 i = static_cast<u32>(HashVersionFragment); i < UncompiledFragment.GetRuneCount(); ++i)
     {
         if (UncompiledFragment[i] == '\n')
         {
@@ -267,7 +266,7 @@ void Jafg::LShader::LoadImpl(LString&& UncompiledVertex, LString&& UncompiledFra
     }
     jassert( AddConstantsIdxFragment != INDEX_NONE )
 
-    for (i32 i = HashVersionVertex; i < UncompiledVertex.GetSize(); ++i)
+    for (u32 i = static_cast<u32>(HashVersionVertex); i < UncompiledVertex.GetRuneCount(); ++i)
     {
         if (UncompiledVertex[i] == '\n')
         {

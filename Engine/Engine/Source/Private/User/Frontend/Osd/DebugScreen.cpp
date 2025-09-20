@@ -286,7 +286,7 @@ void Jafg::WDebugScreen::Tick()
             World->AddTemporalObject(LDebugTraceSphere
             {
                 LTemporalWorldObject::DrawOnce, Hit.GlobalWorldLocation, 0.1f,
-                LDebugTraceSphereVisualParams{16, 16, LColor::Green}
+                LDebugTraceSphereVisualParams{16, 16, Lal::LColor::Green}
             });
 
             if (Hit.SurfaceNormal.IsValid())
@@ -305,23 +305,23 @@ void Jafg::WDebugScreen::Tick()
                 World->AddTemporalObject(LDebugTraceLine
                 {
                     LTemporalWorldObject::DrawOnce, Hit.GlobalWorldLocation, Hit.GlobalWorldLocation + Hit.SurfaceNormal.GetValue(),
-                    LDebugTraceLineVisualParams{LColor::Magenta}
+                    LDebugTraceLineVisualParams{Lal::LColor::Magenta}
                 });
                 World->AddTemporalObject(LDebugTraceSphere
                 {
                     LTemporalWorldObject::DrawOnce, WorldHit_Create, 0.1f,
-                    LDebugTraceSphereVisualParams{16, 16, LColor::Magenta}
+                    LDebugTraceSphereVisualParams{16, 16, Lal::LColor::Magenta}
                 });
                 World->AddTemporalObject(LDebugTraceSphere
                 {
                     LTemporalWorldObject::DrawOnce,
                     CKey.ToWorldSpace() + HitChunk->CreateRelativeVoxelKey(WorldHit_Create).ToWorldSpace() + LVector(0.5f), 0.6f,
-                    LDebugTraceSphereVisualParams{16, 16, LColor::Green}
+                    LDebugTraceSphereVisualParams{16, 16, Lal::LColor::Green}
                 });
                 World->AddTemporalObject(LDebugTraceCube
                 {
                     LTemporalWorldObject::DrawOnce, WorldSpaceCenter_Create, LVector::OneVector,
-                    LDebugTraceCubeVisualParams{LColor::Blue}
+                    LDebugTraceCubeVisualParams{Lal::LColor::Blue}
                 });
             }
             break;
@@ -343,7 +343,7 @@ void Jafg::WDebugScreen::Tick()
             World->AddTemporalObject(LDebugTraceCube
             {
                 LTemporalWorldObject::DrawOnce, LVector::ZeroVector + ChunkCenter, LVector::OneVector * MwStatics::ChunkSize,
-                LDebugTraceCubeVisualParams{LColor::Yellow}
+                LDebugTraceCubeVisualParams{Lal::LColor::Yellow}
             });
 
             for (i32 izDelta { 2 }; izDelta < MwStatics::ChunkSize; izDelta += 2)
@@ -358,7 +358,7 @@ void Jafg::WDebugScreen::Tick()
                 {
                     LTemporalWorldObject::DrawOnce,
                     P1, P2, P3, P4,
-                    LDebugTracePlaneVisualParams{LColor::Yellow}
+                    LDebugTracePlaneVisualParams{Lal::LColor::Yellow}
                 });
             }
 
@@ -367,7 +367,7 @@ void Jafg::WDebugScreen::Tick()
                 World->AddTemporalObject(LDebugTraceCube
                 {
                     LTemporalWorldObject::DrawOnce, LVector::ZeroVector + Key.ToWorldSpace(), LVector::OneVector * MwStatics::ChunkSize,
-                    LDebugTraceCubeVisualParams{LColor::Red}
+                    LDebugTraceCubeVisualParams{Lal::LColor::Red}
                 });
             }
 
@@ -393,7 +393,7 @@ void Jafg::WDebugScreen::Tick()
                     LTemporalWorldObject::DrawOnce,
                     Key.ToWorldSpace() + LVector::DownVector * MwStatics::ChunkSize * 10,
                     Key.ToWorldSpace() + LVector::UpVector * MwStatics::ChunkSize * 10,
-                    LDebugTraceLineVisualParams{LColor::Blue}
+                    LDebugTraceLineVisualParams{Lal::LColor::Blue}
                 });
 
                 continue;

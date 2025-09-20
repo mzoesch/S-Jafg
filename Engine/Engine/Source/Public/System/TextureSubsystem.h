@@ -4,9 +4,8 @@
 
 #include "EnginePath.h"
 #include "Subsystems/EngineSubsystem.h"
-#include "System/Path.h"
-#include "TextureSubsystem.generated.h"
 #include "Rhi/TextureCore.h"
+#include "TextureSubsystem.generated.h"
 
 namespace Jafg
 {

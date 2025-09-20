@@ -155,7 +155,7 @@ FORCEINLINE const LString& LNameRegistry::GetRealNameSafe(const LName InName) co
 } /* ~Namespace Jafg */
 
 template <>
-struct std::formatter<::Jafg::LName> : std::formatter<Jafg::LString>
+struct std::formatter<::Jafg::LName> : std::formatter<LString>
 {
     FORCEINLINE auto format
     (
@@ -163,6 +163,6 @@ struct std::formatter<::Jafg::LName> : std::formatter<Jafg::LString>
         ::std::format_context& InContext
     ) const -> ::std::format_context::iterator
     {
-        return ::std::formatter<Jafg::LString>::format(InName.ToString(), InContext);
+        return ::std::formatter<LString>::format(InName.ToString(), InContext);
     }
 };

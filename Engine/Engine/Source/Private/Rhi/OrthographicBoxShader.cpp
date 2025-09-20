@@ -64,10 +64,10 @@ void Jafg::LOrthographicBoxShader::OnFree()
 
 void Jafg::LOrthographicBoxShader::Draw
 (
-    const LViewport& Context,
-    const LVector2&  Size,
-    const LVector2&  TopLeft,
-    const LColor&    Tint
+    const LViewport&   Context,
+    const LVector2&    Size,
+    const LVector2&    TopLeft,
+    const Lal::LColor& Tint
 ) const
 {
     check( this->IsValid() )

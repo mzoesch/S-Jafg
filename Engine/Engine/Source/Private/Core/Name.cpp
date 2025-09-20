@@ -82,7 +82,7 @@ Jafg::LName Jafg::Private::LNameRegistry::GetName(const LString& InName, const b
 {
     if (bConvertToLower)
     {
-        const LString LowerName = InName.GetLowerCase();
+        const LString LowerName = InName.GetLower();
         if (const TArray<LString>::SizeType Index { this->Names.FindIndex(LowerName) }; Index != this->Names.GetSize())
         {
             return { static_cast<LUnderlyingName>(Index + 1) };
@@ -103,7 +103,7 @@ bool Jafg::Private::LNameRegistry::IsNameRegistered(const LString& InName, const
 {
     if (bConvertToLower)
     {
-        const LString LowerName = InName.GetLowerCase();
+        const LString LowerName = InName.GetLower();
         return this->Names.Contains(LowerName);
     }
 
@@ -114,7 +114,7 @@ bool Jafg::Private::LNameRegistry::RegisterName(const LString& InName)
 {
     check( Tasks::IsOnMasterThread() )
 
-    LString LowerName = InName.GetLowerCase();
+    LString LowerName = InName.GetLower();
 
     if (this->IsNameRegistered(LowerName, false))
     {
@@ -131,7 +131,7 @@ Jafg::LName Jafg::Private::LNameRegistry::RegisterAndGetName(const LString& InNa
 {
     check( Tasks::IsOnMasterThread() )
 
-    const LString LowerName = InName.GetLowerCase();
+    const LString LowerName = InName.GetLower();
 
     if (const LName InRepo = this->GetName(LowerName, false); InRepo.IsSet())
     {

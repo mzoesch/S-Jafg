@@ -333,14 +333,14 @@ private: /* Restore default visibility. */
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config */
-#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config(MyClassMember)              \
-    void PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(_, SetField, _, MyClassMember)(const ::Jafg::LString& _InValue) \
-    {                                                                                                      \
-        ::Jafg::Deserialize(&this->MyClassMember, _InValue);                                               \
-    }                                                                                                      \
-    ::Jafg::LString PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(_, GetField, _, MyClassMember)() const               \
-    {                                                                                                      \
-        return ::Jafg::Serialize(this->MyClassMember);                                                     \
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config(MyClassMember)        \
+    void PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(_, SetField, _, MyClassMember)(const ::LString& _InValue) \
+    {                                                                                                \
+        ::Jafg::Deserialize(&this->MyClassMember, _InValue);                                         \
+    }                                                                                                \
+    ::LString PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(_, GetField, _, MyClassMember)() const               \
+    {                                                                                                \
+        return ::Jafg::Serialize(this->MyClassMember);                                               \
     }
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly

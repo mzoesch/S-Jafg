@@ -19,7 +19,7 @@ public:
     FORCEINLINE TFactoryRetTy& Content(const LString&  InContent) { this->This()->SetContent(InContent); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Content(LString&& InContent) { this->This()->SetContent(std::move(InContent)); return this->Self(); }
 
-    FORCEINLINE TFactoryRetTy& TextColor(const LColor&  InColor) { this->This()->SetTextColor(InColor); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& TextColor(const Lal::LColor&  InColor) { this->This()->SetTextColor(InColor); return this->Self(); }
     FORCEINLINE TFactoryRetTy& TextScale(const f32 InScale) { this->This()->SetTextScale(InScale); return this->Self(); }
     FORCEINLINE TFactoryRetTy& TextAlign(const ETextHAlign::Type InAlign) { this->This()->SetTextHAlign(InAlign); return this->Self(); }
     FORCEINLINE TFactoryRetTy& TextAlign(const ETextVAlign::Type InAlign) { this->This()->SetTextVAlign(InAlign); return this->Self(); }
@@ -58,7 +58,7 @@ public:
     FORCEINLINE void SetContent(LString&& InContent) noexcept { this->Content = std::move(InContent); this->OnChanged.InvokeIfBound(this->Content); }
     FORCEINLINE const LString& GetContent() const noexcept { return this->Content; }
 
-    FORCEINLINE constexpr void SetTextColor(const LColor& InColor) noexcept { this->TextColor = InColor; }
+    FORCEINLINE constexpr void SetTextColor(const Lal::LColor& InColor) noexcept { this->TextColor = InColor; }
     FORCEINLINE constexpr void SetTextScale(const f32 InScale) noexcept { this->TextScale = InScale; }
     FORCEINLINE constexpr void SetTextAlign(const ETextHAlign::Type InAlign) noexcept { this->TextHAlign = InAlign; }
     FORCEINLINE constexpr void SetTextAlign(const ETextVAlign::Type InAlign) noexcept { this->TextVAlign = InAlign; }
@@ -66,8 +66,8 @@ public:
     FORCEINLINE constexpr void SetTextVAlign(const ETextVAlign::Type InAlign) noexcept { this->TextVAlign = InAlign; }
     FORCEINLINE constexpr void SetRespectContentHeight(const bool bInRespect) noexcept { this->bRespectContentHeight = bInRespect; }
 
-    FORCEINLINE constexpr const LColor& GetTextColor() const noexcept { return this->TextColor; }
-    FORCEINLINE constexpr f32           GetTextScale() const noexcept { return this->TextScale; }
+    FORCEINLINE constexpr const Lal::LColor& GetTextColor() const noexcept { return this->TextColor; }
+    FORCEINLINE constexpr f32               GetTextScale() const noexcept { return this->TextScale; }
     FORCEINLINE constexpr ETextHAlign::Type GetTextAlign() const noexcept { return this->TextHAlign; }
     FORCEINLINE constexpr ETextHAlign::Type GetTextHAlign() const noexcept { return this->TextHAlign; }
     FORCEINLINE constexpr ETextVAlign::Type GetTextVAlign() const noexcept { return this->TextVAlign; }
@@ -98,7 +98,7 @@ private:
 
     void RegisterShaders();
 
-    LColor TextColor { LColor::Black };
+    Lal::LColor TextColor { Lal::LColor::Black };
     f32 TextScale { 1.0f };
     ETextHAlign::Type TextHAlign { ETextHAlign::Left };
     ETextVAlign::Type TextVAlign { ETextVAlign::Top };

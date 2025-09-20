@@ -56,7 +56,7 @@ public:
 
     FORCEINLINE std::strong_ordering operator<=>(const LCliObject& InOther) const
     {
-        return std::compare_three_way()(this->Identifier, InOther.Identifier);
+        return this->Identifier <=> InOther.Identifier;
     }
 
 protected:
@@ -64,7 +64,7 @@ protected:
     ENGINE_API LCliObject* GetRegisteredObjectByUuid() const;
 
     ENGINE_API  void ExpandToUuid();
-    FORCEINLINE auto GetUuid() const -> LCliObjectUuid { return this->Uuid; }
+    FORCEINLINE constexpr auto GetUuid() const -> LCliObjectUuid { return this->Uuid; }
 
 private:
 

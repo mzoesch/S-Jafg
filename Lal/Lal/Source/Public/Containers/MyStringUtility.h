@@ -14,7 +14,7 @@ template <typename TString>
 TString AddSpacesToCamelCase(const TString& InString)
 {
     TString Out;
-    Out.Reserve(InString.GetByteSize());
+    Out.Reserve(InString.GetSizeInBytes());
 
     bool bFirst = true;
     for (const char& Char : InString)
@@ -23,11 +23,11 @@ TString AddSpacesToCamelCase(const TString& InString)
         {
             if (bFirst == false)
             {
-                Out.Add(' ');
+                Out.Append(' ');
             }
         }
 
-        Out.Add(Char);
+        Out.Append(Char);
 
         bFirst = false;
         continue;

@@ -48,7 +48,7 @@ MAKE_DELEGATE_SIGNATURE(LEditableTextBoxPredicateDelegate, bool, const LString& 
 struct LCaretBrush final
 {
     //# The caret tint.
-    LColor Tint { LColor::White };
+    Lal::LColor Tint { Lal::LColor::White };
 
     //# The size in percent from the default. Default is (2px x DesiredSize.Y).
     LVector2 Size { 1.0f, 0.85f };
@@ -86,9 +86,9 @@ ENGINE_API LString LexToString(const ETextCommit::Type InType);
 
 struct LEditableTextBoxBrush : public LTextBoxBrush
 {
-    LColor PlaceholderColor { LColor::Gray };
+    Lal::LColor PlaceholderColor { Lal::LColor::Gray };
 
-    FORCEINLINE constexpr LEditableTextBoxBrush& PlaceholderColorRet(const LColor& InColor) noexcept { this->PlaceholderColor = InColor; return *this; }
+    FORCEINLINE constexpr LEditableTextBoxBrush& PlaceholderColorRet(const Lal::LColor& InColor) noexcept { this->PlaceholderColor = InColor; return *this; }
 };
 
 } /* ~Namespace Jafg */

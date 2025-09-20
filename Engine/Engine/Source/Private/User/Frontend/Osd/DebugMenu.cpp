@@ -22,7 +22,7 @@ void Jafg::WDebugMenu::Construct()
         NewNode(WVRegion)
             .Anchor(EAnchor::TopRight)
             .Type(ERegionBrush::Box)
-            .Tint(LColor::DarkerGray)
+            .Tint(Lal::LColor::DarkerGray)
         [
             NewNode(WInput_Vector3)
                 .HSpace(1.0f)

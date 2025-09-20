@@ -19,8 +19,8 @@ public:
     FORCEINLINE TFactoryRetTy& PlaceholderContent(const LString& InText) noexcept { this->This()->SetPlaceholderContent(InText); return this->Self(); }
     FORCEINLINE TFactoryRetTy& PlaceholderContent(LString&& InText) noexcept { this->This()->SetPlaceholderContent(std::move(InText)); return this->Self(); }
 
-    FORCEINLINE TFactoryRetTy& PlaceholderColor(const LColor& InColor) noexcept { this->This()->SetPlaceholderColor(InColor); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& CaretColor(const LColor& InColor) noexcept { this->This()->SetCaretColor(InColor); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PlaceholderColor(const Lal::LColor& InColor) noexcept { this->This()->SetPlaceholderColor(InColor); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& CaretColor(const Lal::LColor& InColor) noexcept { this->This()->SetCaretColor(InColor); return this->Self(); }
     FORCEINLINE TFactoryRetTy& CaretSize(const LVector2& InSize) noexcept { this->This()->SetCaretSize(InSize); return this->Self(); }
     FORCEINLINE TFactoryRetTy& CaretHOffset(const f32 InOffset) noexcept { this->This()->SetCaretHOffset(InOffset); return this->Self(); }
     FORCEINLINE TFactoryRetTy& CaretBlinkerSpeed(const f32 InSpeed) noexcept { this->This()->SetCaretBlinkerSpeed(InSpeed); return this->Self(); }
@@ -81,8 +81,8 @@ public:
     FORCEINLINE void SetPlaceholderContent(LString&& InText) noexcept { this->PlaceholderContent = std::move(InText); }
     FORCEINLINE const LString& GetPlaceHolderContent() const noexcept { return this->PlaceholderContent; }
 
-    FORCEINLINE constexpr void SetPlaceholderColor(const LColor& InColor) noexcept { this->PlaceholderColor = InColor; }
-    FORCEINLINE constexpr void SetCaretColor(const LColor& InColor) noexcept { this->CaretBrush.Tint = InColor; }
+    FORCEINLINE constexpr void SetPlaceholderColor(const Lal::LColor& InColor) noexcept { this->PlaceholderColor = InColor; }
+    FORCEINLINE constexpr void SetCaretColor(const Lal::LColor& InColor) noexcept { this->CaretBrush.Tint = InColor; }
     FORCEINLINE constexpr void SetCaretSize(const LVector2& InSize) noexcept { this->CaretBrush.Size = InSize; }
     FORCEINLINE constexpr void SetCaretHOffset(const f32 InOffset) noexcept { this->CaretBrush.HOffset = InOffset; }
     FORCEINLINE constexpr void SetCaretBlinkerSpeed(const f32 InSpeed) noexcept { this->CaretBrush.CaretBlinkerSpeed = InSpeed; }
@@ -93,8 +93,8 @@ public:
     FORCEINLINE constexpr void SetCaretBrush(const LCaretBrush& InBrush) noexcept { this->CaretBrush = InBrush; }
     FORCEINLINE constexpr LCaretBrush& GetMutableCaretBrush() noexcept { return this->CaretBrush; }
     FORCEINLINE constexpr const LCaretBrush& GetCaretBrush() const noexcept { return this->CaretBrush; }
-    FORCEINLINE constexpr const LColor& GetPlaceholderColor() const noexcept { return this->PlaceholderColor; }
-    FORCEINLINE constexpr const LColor& GetCaretColor() const noexcept { return this->CaretBrush.Tint; }
+    FORCEINLINE constexpr const Lal::LColor& GetPlaceholderColor() const noexcept { return this->PlaceholderColor; }
+    FORCEINLINE constexpr const Lal::LColor& GetCaretColor() const noexcept { return this->CaretBrush.Tint; }
     FORCEINLINE constexpr const LVector2& GetCaretSize() const noexcept { return this->CaretBrush.Size; }
     FORCEINLINE constexpr f32 GetCaretHOffset() const noexcept { return this->CaretBrush.HOffset; }
     FORCEINLINE constexpr f32 GetCaretBlinkerSpeed() const noexcept { return this->CaretBrush.CaretBlinkerSpeed; }
@@ -119,7 +119,7 @@ private:
     //# The placeholder text is a text that is displayed when no content is available.
     //#
     LString PlaceholderContent;
-    LColor PlaceholderColor { LColor::Gray };
+    Lal::LColor PlaceholderColor { Lal::LColor::Gray };
 
     LCaretBrush CaretBrush;
     i32 CaretCursor { 0 };

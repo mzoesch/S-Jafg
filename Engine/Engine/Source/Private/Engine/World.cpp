@@ -16,7 +16,7 @@
 #include "Debug/DebugTraceSphere.h"
 #include "Stats/Stats.h"
 
-Jafg::LString Jafg::LWorldParameters::ToString() const
+LString Jafg::LWorldParameters::ToString() const
 {
     LString Out { '[' };
 
@@ -98,11 +98,11 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level, LString&& InLaunchedUrl)
     this->UnsanitizedUrl = InLaunchedUrl;
 
     /* Remove level name from url. */
-    if (const i32 Idx { InLaunchedUrl.FindFirst('?') }; Idx != INDEX_NONE)
+    if (const auto It { InLaunchedUrl.FindFirst('?') }; It != InLaunchedUrl.end())
     {
-        if (InLaunchedUrl.IsValidIndex(Idx + 1))
+        if (InLaunchedUrl.IsValidIterator(It + 1))
         {
-            InLaunchedUrl.InlineRightChop(Idx + 1);
+            InLaunchedUrl.InlineRightChop(InLaunchedUrl.ToIndex(It + 1));
         }
         else
         {
@@ -419,7 +419,7 @@ bool Jafg::LWorld::LineTraceByChannel(
 {
     STAT_CYCLE_FUNCTION()
 
-    check( (Begin - End).Magnitude() > JAFG_NOT_SO_SMALL_NUMBER && "Why trace small distances." )
+    check( (Begin - End).Magnitude() > LAL_NOT_SO_SMALL_NUMBER && "Why trace small distances." )
 
     if (Channel == ECollisionChannel::Static)
     {

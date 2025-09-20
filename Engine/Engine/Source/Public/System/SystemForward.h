@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "System/Path.h"
+#include "CoreAfx.h"
 
 namespace Jafg
 {
@@ -14,12 +14,6 @@ enum Type : u8
 {
     //# Custom path
     None = 0,
-
-    //# Custom path relative to a module.
-    CustomModule,
-
-    //# Custom path relative to the engine.
-    CustomEngine,
 
     //# Content/Textures
     Textures,
@@ -42,12 +36,10 @@ enum Type : u8
 
 } /* ~Namespace EEnginePaths */
 
-inline LString LexToString(const EEnginePaths::Type InType)
+inline LPath LexToString(const EEnginePaths::Type InType)
 {
     switch (InType)
     {
-    case EEnginePaths::CustomModule: { return ""; }
-    case EEnginePaths::CustomEngine: { return ""; }
     case EEnginePaths::Textures:     { return "Content/Textures"; }
     case EEnginePaths::Voxels:       { return "Content/Textures/Voxels"; }
     case EEnginePaths::Interface:    { return "Content/Textures/Interface"; }
@@ -62,7 +54,10 @@ inline LString LexToString(const EEnginePaths::Type InType)
     }
 }
 
-template <typename InTPathTy> class LEnginePathBase;
-using LEnginePath = LEnginePathBase<LPath>;
+template <template <typename, typename> typename TEncoding, Lal::TStringBaseAllocatorConcept TAllocator>
+    requires(Lal::TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+class TEnginePathBase;
+
+typedef TEnginePathBase<Lal::TStringBaseDefaultUtf8Traits, TStackOptimizedArray<LJafgChar, 8>> LEnginePath;
 
 } /* ~Namespace Jafg */

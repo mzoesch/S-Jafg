@@ -154,6 +154,13 @@ FORCEINLINE constexpr auto TArrayBase<TAllocator>::MIter() noexcept
 }
 
 template <TArrayBaseAllocatorConceptBase TAllocator>
+FORCEINLINE constexpr typename TArrayBase<TAllocator>::SizeType TArrayBase<TAllocator>::ToIndex(ITERATOR It) const noexcept
+{
+    check( this->IsValidIterator(It) )
+    return static_cast<SizeType>(std::to_address(It) - this->GetDataPointer());
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
 FORCEINLINE constexpr typename TArrayBase<TAllocator>::Pointer TArrayBase<TAllocator>::GetFirstChecked() noexcept requires(TArrayBase::IsContentMutable())
 {
     check( this->GetSize() > 0 )
@@ -2105,6 +2112,23 @@ FORCEINLINE void TArrayBase<TAllocator>::ForEach(const TPredicate& Predicate) no
 template <TArrayBaseAllocatorConceptBase TAllocator>
 template <std::predicate<typename TAllocator::T> TPredicate>
 FORCEINLINE void TArrayBase<TAllocator>::ForEach(const TPredicate& Predicate) const noexcept
+    requires(!TArrayBase::IsContentMutable())
+{
+    for (const T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
+    {
+        Predicate(*Bulk);
+
+        continue;
+    }
+
+    return;
+}
+
+template <TArrayBaseAllocatorConceptBase TAllocator>
+template <typename TPredicate>
+    requires(std::invocable<TPredicate, typename TArrayBase<TAllocator>::T> && std::is_void_v<std::invoke_result_t<TPredicate, typename TArrayBase<TAllocator>::T>>)
+FORCEINLINE void TArrayBase<TAllocator>::ForEach(const TPredicate& Predicate) const noexcept
+    requires(TArrayBase::IsContentMutable())
 {
     for (const T* RESTRICT Bulk { this->GetDataPointer() }; Bulk != this->GetSlackPointer(); ++Bulk)
     {

@@ -10,11 +10,11 @@ namespace Jafg
 
 struct LDebugTraceLineShaderContextDrawArgs final : public LGenericPerspectiveShaderContextDrawArgs
 {
-    LVector Start = { };
-    LVector End = { };
-    LColor  Color = { };
+    LVector Start;
+    LVector End;
+    Lal::LColor Color;
     /* Depending on the hardware, the max value may vary (but usually it's not more than 10). */
-    u8 Thickness = 1;
+    u8 Thickness { 1u };
 };
 
 class LDebugTraceLineShaderContext final : public LGenericShaderContext

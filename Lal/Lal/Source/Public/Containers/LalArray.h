@@ -167,6 +167,8 @@ public:
     FORCEINLINE constexpr auto CIter() const noexcept requires(requires { typename ConstIterator::Factory; });
     FORCEINLINE constexpr auto MIter() noexcept requires(TArrayBase::IsContentMutable() && requires { typename MoveIterator::Factory; });
 
+    FORCEINLINE constexpr SizeType ToIndex(ITERATOR It) const noexcept;
+
     //# @return First element or nullptr.
     NODISCARD FORCEINLINE constexpr Pointer GetFirst()         noexcept requires(TArrayBase::IsContentMutable()) { return this->GetSize() > 0 ? this->GetDataPointer() : nullptr; }
     NODISCARD FORCEINLINE constexpr Pointer GetFirstChecked()  noexcept requires(TArrayBase::IsContentMutable());
@@ -572,7 +574,9 @@ public:
     template <typename TPredicate> requires(std::invocable<TPredicate, T> && std::is_void_v<std::invoke_result_t<TPredicate, T>>)
     FORCEINLINE void ForEach(const TPredicate& Predicate) noexcept requires(TArrayBase::IsContentMutable());
     template <std::predicate<T> TPredicate>
-    FORCEINLINE void ForEach(const TPredicate& Predicate) const noexcept;
+    FORCEINLINE void ForEach(const TPredicate& Predicate) const noexcept requires(!TArrayBase::IsContentMutable());
+    template <typename TPredicate> requires(std::invocable<TPredicate, T> && std::is_void_v<std::invoke_result_t<TPredicate, T>>)
+    FORCEINLINE void ForEach(const TPredicate& Predicate) const noexcept requires(TArrayBase::IsContentMutable());
 
     ///////////////////////////////////////////////////////////////////////////////
     // Stack Operations

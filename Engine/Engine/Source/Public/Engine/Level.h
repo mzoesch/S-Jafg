@@ -34,7 +34,7 @@ struct LLevel final
         const LString& InIdentifier,
         const EInputMode::Type InInputMode = EInputMode::None,
         const bool bInShowMouseCursor = true,
-        const LLinearColor& BackgroundColor = LLinearColor::Black,
+        const Lal::LLinearColor& BackgroundColor = Lal::LLinearColor::Black,
         const bool bInCreateSkybox = false,
         const bool bInDrawSkyboxFirst = true,
         const TArray<LLevelSkyboxMap>& InSkybox = { }
@@ -62,7 +62,7 @@ struct LLevel final
     EInputMode::Type InputMode;
     bool bShowMouseCursor;
 
-    LLinearColor BackgroundColor;
+    Lal::LLinearColor BackgroundColor;
     bool bCreateSkybox;
     bool bDrawSkyboxFirst;
     TArray<LLevelSkyboxMap> Skybox;

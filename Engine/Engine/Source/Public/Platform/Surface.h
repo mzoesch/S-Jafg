@@ -234,7 +234,7 @@ FORCEINLINE bool Jafg::LSurfaceBase::IsKeyUp(const LKey InKey) const
     return this->GetCurrentlyPressedKeys().Contains(InKey) == false && this->GetLastFramePressedKeys().Contains(InKey);
 }
 
-FORCEINLINE Jafg::LString Jafg::LSurfaceBase::GetBufferedPlatformInputAsStr() const
+FORCEINLINE LString Jafg::LSurfaceBase::GetBufferedPlatformInputAsStr() const
 {
     LString Out;
 

@@ -316,7 +316,7 @@ bool Jafg::WNode::FindNodeInVisiblePath(const WNode* InNode) const
     return this == InNode && this->ShouldNowDraw();
 }
 
-Jafg::LIntVector2 Jafg::WNode::GetViewportSize() const
+LIntVector2 Jafg::WNode::GetViewportSize() const
 {
     return this->GetViewportChecked()->GetDimensions();
 }
@@ -409,7 +409,7 @@ void Jafg::WNode::SetAnchoredSize(LVector2&& InSize) const
     return;
 }
 
-Jafg::LVector2 Jafg::WNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const
+LVector2 Jafg::WNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const
 {
     check( this->TransformsWidgetLayout() )
     check( this->Anchor.IsNormalized() )
@@ -426,7 +426,7 @@ Jafg::LVector2 Jafg::WNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Con
     return Out;
 }
 
-Jafg::LVector2 Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewport& Context) const
+LVector2 Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewport& Context) const
 {
     return this->GetAnchoredTopLeftFromMostOuter(Context) + static_cast<LVector2>(Context.GetFrameTranslation());
 }

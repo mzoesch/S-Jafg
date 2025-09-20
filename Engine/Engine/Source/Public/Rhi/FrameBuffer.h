@@ -30,11 +30,11 @@ public:
 
     void MakeDrawTarget();
     void MakeDrawTargetAndReset();
-    void MakeDrawTargetAndReset(const LLinearColor& InColor);
+    void MakeDrawTargetAndReset(const Lal::LLinearColor& InColor);
 
     static void MakeDefaultDrawTarget();
     static void MakeDefaultDrawTargetAndReset();
-    static void MakeDefaultDrawTargetAndReset(const LLinearColor& InColor);
+    static void MakeDefaultDrawTargetAndReset(const Lal::LLinearColor& InColor);
 
     ENGINE_API void ReadToActive() const;
     ENGINE_API void ReadTo(const u32 InHandle) const;

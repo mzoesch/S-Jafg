@@ -13,7 +13,6 @@
 #include "Core/CoreNames.h"
 #include "User/UserPreferences.h"
 #include "Stats/Stats.h"
-#include "System/Paths.h"
 #if WITH_TESTS
     #include "TestCore/TestRunner.h"
 #endif /* WITH_TESTS */
@@ -310,8 +309,8 @@ EPlatformExit::Type GuardedMain()
     PlatformMisc::InvalidateCachedValues();
 
 #if PLATFORM_DESKTOP
-    std::filesystem::current_path(Finder::GetEngineRootDir().ToPtr());
-    Paths::CreateDirectories(Finder::GetSavedDir());
+    std::filesystem::current_path(PlatformMisc::GetEngineRootDir().ToPtr());
+    Finder::CreateDirectories(Finder::GetSavesDir());
 #endif /* PLATFORM_DESKTOP */
 
 #if WITH_TESTS
@@ -394,7 +393,7 @@ EPlatformExit::Type GuardedMain()
         LLevel
         {
             Name_LevelMyWorld.ToString(), EInputMode::InputSubSystem, false,
-            LLinearColor::Black,
+            Lal::LLinearColor::Black,
             true, false, TArray<LLevelSkyboxMap>
             {
                 LLevelSkyboxMap

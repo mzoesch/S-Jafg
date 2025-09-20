@@ -12,7 +12,7 @@ bool Jafg::LChunkPhysicsComponent::IsInTheoreticalMaxBounds(const LVector& Point
         && this->Owner->GetTranslation().Z <= Point.Z && Point.Z <= this->Owner->GetTranslation().Z + MwStatics::ChunkSize;
 }
 
-Jafg::TOptional<Jafg::LVector> Jafg::LChunkPhysicsComponent::GetNormalAtLocation(const LVector& InLocation, const LVector& InTraceNormal) const
+Jafg::TOptional<LVector> Jafg::LChunkPhysicsComponent::GetNormalAtLocation(const LVector& InLocation, const LVector& InTraceNormal) const
 {
     LVector P1, P2, P3; // Clockwise
 

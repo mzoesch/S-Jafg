@@ -82,7 +82,7 @@ void Jafg::WConsoleScreen::Construct()
     [
         NewNode(WEditableTextBox).SaveTo(&this->EditableTextBlock)
             .Anchor(EAnchor::VBottom | EAnchor::HFill)
-            .TextColor(LColor::White)
+            .TextColor(Lal::LColor::White)
             .TextScale(0.5f)
             .Padding({5.0f, 4.5f})
             .Tint({0, 0, 0, 164})
@@ -124,13 +124,13 @@ void Jafg::WConsoleScreen::Construct()
                 .Padding(3.0f)
                 .Type(ERegionBrush::OutlineBox)
                 .Tint(this->GetIntellisenseTint())
-                .OutlineTint(LColor::Black)
+                .OutlineTint(Lal::LColor::Black)
             +
             NewNode(WRegion).SaveTo(&this->IntellisenseHelpContainer)
                 .Padding(3.0f)
                 .Type(ERegionBrush::OutlineBox)
                 .Tint(this->GetIntellisenseTint())
-                .OutlineTint(LColor::Black)
+                .OutlineTint(Lal::LColor::Black)
             [
                 NewNode(WTextBox).SaveTo(&this->IntellisenseHelp)
                     .Padding(3.0f)
@@ -141,7 +141,7 @@ void Jafg::WConsoleScreen::Construct()
                 .Padding(3.0f)
                 .Type(ERegionBrush::OutlineBox)
                 .Tint(this->GetIntellisenseTint())
-                .OutlineTint(LColor::Black)
+                .OutlineTint(Lal::LColor::Black)
             [
                 NewNode(WTextBox).SaveTo(&this->IntellisenseText)
                     .Brush(LTextBoxBrush::Body())
@@ -1014,7 +1014,7 @@ void Jafg::WConsoleScreen::ApplyCurrentIntellisensePrediction()
 {
     check( this->IsCurrentSelectedIntellisensePredictionValid() )
 
-    if (const i32 Space { this->EditableTextBlock->GetContent().FindLast(' ') }; Space == INDEX_NONE)
+    if (const i64 Space { this->EditableTextBlock->GetContent().FindLastIndex(' ') }; Space == INDEX_NONE)
     {
         this->EditableTextBlock->SetContent(LString::SprintF("/{}", this->CurrentIntellisensePrediction));
     }

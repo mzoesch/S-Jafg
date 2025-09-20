@@ -82,10 +82,10 @@ public:
     ENGINE_API void SetMatrixUniform(const LString& Name, const LMatrixF& Value) const;
 
     //# Emits an i32 from a LColor.
-    ENGINE_API void SetColorUniform(const LString& Name, const LColor& Value) const;
+    ENGINE_API void SetColorUniform(const LString& Name, const Lal::LColor& Value) const;
     //# Emits a vec3 from LColor (without the alpha channel).
-    ENGINE_API void SetColorVec3Uniform(const LString& Name, const LColor& Value) const;
-    ENGINE_API void SetColorVec4Uniform(const LString& Name, const LColor& Value) const;
+    ENGINE_API void SetColorVec3Uniform(const LString& Name, const Lal::LColor& Value) const;
+    ENGINE_API void SetColorVec4Uniform(const LString& Name, const Lal::LColor& Value) const;
 
     FORCEINLINE const LEnginePath& GetCachedPath() const noexcept { return this->CachedPath; }
 
@@ -137,6 +137,6 @@ template <>
 FORCEINLINE void LShader::SetUniform(const LString& Name, const LMatrixF& Value) const { this->SetMatrixUniform(Name, Value); }
 
 template <>
-FORCEINLINE void LShader::SetUniform(const LString& Name, const LColor& Value) const { this->SetColorUniform(Name, Value); }
+FORCEINLINE void LShader::SetUniform(const LString& Name, const Lal::LColor& Value) const { this->SetColorUniform(Name, Value); }
 
 } /* ~Namespace Jafg */

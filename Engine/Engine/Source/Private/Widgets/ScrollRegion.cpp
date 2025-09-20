@@ -653,7 +653,7 @@ bool Jafg::WScrollRegion::DrawHScrollbar(const f32 InVisibleX) const
     return Maths::IsNearlyEqual(InVisibleX, 1.0f) == false;
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetVInteractiveAreaScrollSize() const
+LVector2 Jafg::WScrollRegion::GetVInteractiveAreaScrollSize() const
 {
     return
     {
@@ -662,7 +662,7 @@ Jafg::LVector2 Jafg::WScrollRegion::GetVInteractiveAreaScrollSize() const
     };
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetVInteractiveAreaScrollPositionFromOuter() const
+LVector2 Jafg::WScrollRegion::GetVInteractiveAreaScrollPositionFromOuter() const
 {
     return
     {
@@ -671,7 +671,7 @@ Jafg::LVector2 Jafg::WScrollRegion::GetVInteractiveAreaScrollPositionFromOuter()
     };
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetHInteractiveAreaScrollSize() const
+LVector2 Jafg::WScrollRegion::GetHInteractiveAreaScrollSize() const
 {
     return
     {
@@ -680,7 +680,7 @@ Jafg::LVector2 Jafg::WScrollRegion::GetHInteractiveAreaScrollSize() const
     };
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetHInteractiveAreaScrollPositionFromOuter() const
+LVector2 Jafg::WScrollRegion::GetHInteractiveAreaScrollPositionFromOuter() const
 {
     return
     {
@@ -689,7 +689,7 @@ Jafg::LVector2 Jafg::WScrollRegion::GetHInteractiveAreaScrollPositionFromOuter()
     };
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetVBackgroundScrollSize() const
+LVector2 Jafg::WScrollRegion::GetVBackgroundScrollSize() const
 {
     return
     {
@@ -698,7 +698,7 @@ Jafg::LVector2 Jafg::WScrollRegion::GetVBackgroundScrollSize() const
     };
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetVBackgroundScrollPositionFromOuter() const
+LVector2 Jafg::WScrollRegion::GetVBackgroundScrollPositionFromOuter() const
 {
     return
     {
@@ -707,12 +707,12 @@ Jafg::LVector2 Jafg::WScrollRegion::GetVBackgroundScrollPositionFromOuter() cons
     };
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetVForegroundScrollSize() const
+LVector2 Jafg::WScrollRegion::GetVForegroundScrollSize() const
 {
     return this->GetVForegroundScrollSize(Maths::Clamp(this->GetAnchoredSize().Y / this->DesiredSizeOfChildren.Y, 0.0f, 1.0f));
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetVForegroundScrollSize(const f32 InVisibleY) const
+LVector2 Jafg::WScrollRegion::GetVForegroundScrollSize(const f32 InVisibleY) const
 {
     return
     {
@@ -721,7 +721,7 @@ Jafg::LVector2 Jafg::WScrollRegion::GetVForegroundScrollSize(const f32 InVisible
     };
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetVForegroundScrollPositionFromOuter() const
+LVector2 Jafg::WScrollRegion::GetVForegroundScrollPositionFromOuter() const
 {
     const f64 MaxScroll = Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.Y) - static_cast<f64>(this->GetAnchoredSize().Y), 0.0);
     const f32 ScrollOffsetY = this->ScrollPosition.Y * MaxScroll;
@@ -730,7 +730,7 @@ Jafg::LVector2 Jafg::WScrollRegion::GetVForegroundScrollPositionFromOuter() cons
     return this->GetVForegroundScrollPositionFromOuter(ScrollOffsetYPercent);
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetVForegroundScrollPositionFromOuter(const f32 InScrollOffsetYPercent) const
+LVector2 Jafg::WScrollRegion::GetVForegroundScrollPositionFromOuter(const f32 InScrollOffsetYPercent) const
 {
     check( InScrollOffsetYPercent >= 0.0f && InScrollOffsetYPercent <= 1.0f )
     return
@@ -741,7 +741,7 @@ Jafg::LVector2 Jafg::WScrollRegion::GetVForegroundScrollPositionFromOuter(const 
     };
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetHBackgroundScrollSize() const
+LVector2 Jafg::WScrollRegion::GetHBackgroundScrollSize() const
 {
     return
     {
@@ -750,7 +750,7 @@ Jafg::LVector2 Jafg::WScrollRegion::GetHBackgroundScrollSize() const
     };
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetHBackgroundScrollPositionFromOuter() const
+LVector2 Jafg::WScrollRegion::GetHBackgroundScrollPositionFromOuter() const
 {
     return
     {
@@ -759,12 +759,12 @@ Jafg::LVector2 Jafg::WScrollRegion::GetHBackgroundScrollPositionFromOuter() cons
     };
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetHForegroundScrollSize() const
+LVector2 Jafg::WScrollRegion::GetHForegroundScrollSize() const
 {
     return this->GetHForegroundScrollSize(Maths::Clamp(this->GetAnchoredSize().X / this->DesiredSizeOfChildren.X, 0.0f, 1.0f));
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetHForegroundScrollSize(const f32 InVisibleX) const
+LVector2 Jafg::WScrollRegion::GetHForegroundScrollSize(const f32 InVisibleX) const
 {
     return
     {
@@ -773,7 +773,7 @@ Jafg::LVector2 Jafg::WScrollRegion::GetHForegroundScrollSize(const f32 InVisible
     };
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetHForegroundScrollPositionFromOuter() const
+LVector2 Jafg::WScrollRegion::GetHForegroundScrollPositionFromOuter() const
 {
     const f64 MaxScroll = Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.X) - static_cast<f64>(this->GetAnchoredSize().X), 0.0);
     const f32 ScrollOffsetX = this->ScrollPosition.X * MaxScroll;
@@ -782,7 +782,7 @@ Jafg::LVector2 Jafg::WScrollRegion::GetHForegroundScrollPositionFromOuter() cons
     return this->GetHForegroundScrollPositionFromOuter(ScrollOffsetXPercent);
 }
 
-Jafg::LVector2 Jafg::WScrollRegion::GetHForegroundScrollPositionFromOuter(const f32 InScrollOffsetXPercent) const
+LVector2 Jafg::WScrollRegion::GetHForegroundScrollPositionFromOuter(const f32 InScrollOffsetXPercent) const
 {
     check( InScrollOffsetXPercent >= 0.0f && InScrollOffsetXPercent <= 1.0f )
     return

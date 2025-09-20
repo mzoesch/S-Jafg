@@ -19,7 +19,7 @@ struct LInputActionValue final
     //# The threshold for an input action to be considered triggered.
     //# TODO: We should make this configurable by the user.
     //#
-    LReal ThresholdForInputActionValueTrigger = static_cast<LReal>(JAFG_DOUBLE_SMALL_NUMBER);
+    LReal ThresholdForInputActionValueTrigger = static_cast<LReal>(LAL_DOUBLE_SMALL_NUMBER);
 
     using Axis0D = bool;
     using Axis1D = LReal;

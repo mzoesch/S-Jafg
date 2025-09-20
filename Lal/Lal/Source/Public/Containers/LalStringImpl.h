@@ -49,12 +49,12 @@ FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>& TStringBase<TEncoding,
 
 template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
     requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
-template <TStringBaseAllocatorConcept UAllocator>
-    requires(TStringBaseEncodingConcept<TEncoding<typename UAllocator::T, typename UAllocator::SizeType>>)
-FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(const TStringBase<TEncoding, UAllocator>& Other) noexcept
+template <TStringBaseConcept TDerived>
+    requires(std::is_same_v<typename TDerived::Encoding, typename TStringBase<TEncoding, TAllocator>::Encoding>)
+FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(const TDerived& Other) noexcept
     requires
-           (std::is_constructible_v<TAllocator, const UAllocator&>
-        && !(std::is_same_v<TStringBase, typename TStringBase<TEncoding, UAllocator>::_WeakRepr> || std::is_same_v<TStringBase, typename TStringBase<TEncoding, UAllocator>::_WeakMutableRepr>)
+           (std::is_constructible_v<TAllocator, const typename TDerived::Allocator&>
+        && !(std::is_same_v<TStringBase, typename TDerived::_WeakRepr> || std::is_same_v<TStringBase, typename TDerived::_WeakMutableRepr>)
         )
     : Impl{Other.Impl}
 {
@@ -66,12 +66,12 @@ FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(const TStr
 
 template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
     requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
-template <TStringBaseAllocatorConcept UAllocator>
-    requires(TStringBaseEncodingConcept<TEncoding<typename UAllocator::T, typename UAllocator::SizeType>>)
-FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(const TStringBase<TEncoding, UAllocator>& Other) noexcept
+template <TStringBaseConcept TDerived>
+    requires(std::is_same_v<typename TDerived::Encoding, typename TStringBase<TEncoding, TAllocator>::Encoding>)
+FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(const TDerived& Other) noexcept
     requires(
-           std::is_constructible_v<Allocator, const UAllocator&>
-        && (std::is_same_v<TStringBase, typename TStringBase<TEncoding, UAllocator>::_WeakRepr> || std::is_same_v<TStringBase, typename TStringBase<TEncoding, UAllocator>::_WeakMutableRepr>)
+           std::is_constructible_v<Allocator, const typename TDerived::Allocator&>
+        && (std::is_same_v<TStringBase, typename TDerived::_WeakRepr> || std::is_same_v<TStringBase, typename TDerived::_WeakMutableRepr>)
         )
     : Impl{Other.Impl}
 {
@@ -83,10 +83,10 @@ FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(const TStr
 
 template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
     requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
-template <TStringBaseAllocatorConcept UAllocator>
-    requires(TStringBaseEncodingConcept<TEncoding<typename UAllocator::T, typename UAllocator::SizeType>>)
-FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>& TStringBase<TEncoding, TAllocator>::operator=(const TStringBase<TEncoding, UAllocator>& Other) noexcept
-    requires(Lal::AssignableFromWeak<TAllocator&, const UAllocator&>)
+template <TStringBaseConcept TDerived>
+    requires(std::is_same_v<typename TDerived::Encoding, typename TStringBase<TEncoding, TAllocator>::Encoding>)
+FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>& TStringBase<TEncoding, TAllocator>::operator=(const TDerived& Other) noexcept
+    requires(Lal::AssignableFromWeak<TAllocator&, const typename TDerived::Allocator&>)
 {
     this->Impl = Other.Impl;
     this->CreateInvariantWeak();
@@ -97,10 +97,10 @@ FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>& TStringBase<TEncoding,
 
 template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
     requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
-template <TStringBaseAllocatorConcept UAllocator>
-    requires(TStringBaseEncodingConcept<TEncoding<typename UAllocator::T,typename UAllocator::SizeType>>)
-FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(TStringBase<TEncoding, UAllocator>&& Other) noexcept
-    requires(std::is_constructible_v<TAllocator, UAllocator&&>)
+template <TStringBaseConcept TDerived>
+    requires(std::is_same_v<typename TDerived::Encoding, typename TStringBase<TEncoding, TAllocator>::Encoding>)
+FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(TDerived&& Other) noexcept
+    requires(std::is_constructible_v<TAllocator, typename TDerived::Allocator&&>)
     : Impl{std::move(Other.Impl)}
 {
     this->CreateInvariant();
@@ -111,10 +111,10 @@ FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(TStringBas
 
 template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
     requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
-template <TStringBaseAllocatorConcept UAllocator>
-    requires(TStringBaseEncodingConcept<TEncoding<typename UAllocator::T, typename UAllocator::SizeType>>)
-FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>& TStringBase<TEncoding, TAllocator>::operator=(TStringBase<TEncoding, UAllocator>&& Other) noexcept
-    requires(Lal::AssignableFromWeak<TAllocator&, UAllocator&&>)
+template <TStringBaseConcept TDerived>
+    requires(std::is_same_v<typename TDerived::Encoding, typename TStringBase<TEncoding, TAllocator>::Encoding>)
+FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>& TStringBase<TEncoding, TAllocator>::operator=(TDerived&& Other) noexcept
+    requires(Lal::AssignableFromWeak<TAllocator&, typename TDerived::Allocator&&>)
 {
     this->Impl = std::move(Other.Impl);
     this->CreateInvariant();
@@ -267,6 +267,15 @@ TStringBase<TEncoding, TAllocator>::GetRuneCount() const noexcept
 }
 
 template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
+    requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+FORCEINLINE typename TStringBase<TEncoding, TAllocator>::SizeType
+TStringBase<TEncoding, TAllocator>::GetCharacterLengthAt(ITERATOR It) const noexcept
+{
+    check( this->IsValidIterator(It) )
+    return Encoding::GetCharacterSize(std::to_address(It));
+}
+
+template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
     requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T,typename TAllocator::SizeType>>)
 FORCEINLINE constexpr typename TStringBase<TEncoding, TAllocator>::Reference
 TStringBase<TEncoding, TAllocator>::operator[](const SizeType Index) noexcept
@@ -317,6 +326,27 @@ TStringBase<TEncoding, TAllocator>::end_idx() const noexcept
     }
 
     return ImplIndex - 1;
+}
+
+template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
+    requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+FORCEINLINE constexpr typename TStringBase<TEncoding, TAllocator>::SizeType
+TStringBase<TEncoding, TAllocator>::ToIndex(ITERATOR It) const noexcept
+{
+    check( this->IsValidIterator(It) )
+    return this->Impl.ToIndex(It);
+}
+
+template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
+    requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+FORCEINLINE constexpr i64 TStringBase<TEncoding, TAllocator>::ToWeakIndex(ITERATOR It) const noexcept
+{
+    if (this->IsValidIterator(It))
+    {
+        return static_cast<i64>(this->Impl.ToIndex(It));
+    }
+
+    return INDEX_NONE;
 }
 
 template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
@@ -1098,7 +1128,7 @@ void TStringBase<TEncoding, TAllocator>::Substitute(UIterator Begin, VIterator E
     const i64 Delta { static_cast<i64>(ReplacementEnd - ReplacementBegin) - static_cast<i64>(End - Begin) };
     if (Delta == 0)
     {
-        std::memcpy(std::to_address(Begin), std::to_address(ReplacementBegin), ReplacementEnd - ReplacementBegin);
+        std::memcpy(static_cast<void*>(std::to_address(Begin)), std::to_address(ReplacementBegin), ReplacementEnd - ReplacementBegin);
         PRIVATE_LAL_ENSURE_STRING_INVARIANT()
         return;
     }
@@ -1805,7 +1835,7 @@ FORCEINLINE TStringBase<TEncoding, UAllocator> TStringBase<TEncoding, TAllocator
 
 template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
     requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
-typename TStringBase<TEncoding, TAllocator>::SizeType TStringBase<TEncoding, TAllocator>::GetLineNumber(const ConstIterator It) const noexcept
+typename TStringBase<TEncoding, TAllocator>::SizeType TStringBase<TEncoding, TAllocator>::GetLineNumber(ITERATOR It) const noexcept
 {
     SizeType Out;
 

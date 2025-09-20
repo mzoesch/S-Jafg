@@ -44,7 +44,7 @@ void Jafg::LDebugTraceLine::Draw(const LWorld& InContext, const LViewport& InVie
 void Jafg::LDebugTraceLine::DrawLine(
     const LViewport& InViewport, const LEye& InEye,
     const LVector& InStart, const LVector& InEnd,
-    const LColor& InColor, const u8 Thickness
+    const Lal::LColor& InColor, const u8 Thickness
 )
 {
     if (::GetLineShaderContext()->IsMeaningful() == false)
@@ -66,7 +66,7 @@ void Jafg::LDebugTraceLine::DrawLine(
     return;
 }
 
-void Jafg::LDebugTraceLine::DrawLineCachedValues(const LVector& InStart, const LVector& InEnd, const LColor& InColor, const u8 Thickness)
+void Jafg::LDebugTraceLine::DrawLineCachedValues(const LVector& InStart, const LVector& InEnd, const Lal::LColor& InColor, const u8 Thickness)
 {
     check( ::GetLineShaderContext()->IsMeaningful() )
 

@@ -37,11 +37,11 @@ void Jafg::LBoxShaderContext::Free()
 }
 
 void Jafg::LBoxShaderContext::Draw(
-    const LViewport& Context,
-    const LVector2&  Size,
-    const LVector2&  TopLeft,
-    const LColor&    Color,
-    const LTexture2* Texture /* = nullptr */
+    const LViewport&   Context,
+    const LVector2&    Size,
+    const LVector2&    TopLeft,
+    const Lal::LColor& Color,
+    const LTexture2*   Texture /* = nullptr */
 ) const
 {
     checkSlow( this->bIsMeaningful )

@@ -9,11 +9,11 @@ namespace Jafg
 
 struct LDebugTraceSphereVisualParams final
 {
-    i32    Segments;
-    i32    Rings;
-    LColor Color;
+    i32 Segments;
+    i32 Rings;
+    Lal::LColor Color;
     /* Depending on the hardware, the max value may vary (but usually it's not more than 10). */
-    u8     Thickness = 1;
+    u8 Thickness { 1u };
 };
 
 class LDebugTraceSphere final : public LTemporalWorldObject
@@ -26,21 +26,21 @@ public:
         const float InTimeToLive,
         const LVector& InCenter,
         const float InRadius = 0.5f,
-        const LDebugTraceSphereVisualParams& InVisualParams = { 10, 10, LColor::Red }
+        const LDebugTraceSphereVisualParams& InVisualParams = { 10, 10, Lal::LColor::Red }
     )
         : LTemporalWorldObject(InTimeToLive), Center(InCenter), Radius(InRadius), VisualParams(InVisualParams)
     {
-        check( this->Radius > JAFG_NOT_SO_SMALL_NUMBER && "Why trace small spheres." )
+        check( this->Radius > LAL_NOT_SO_SMALL_NUMBER && "Why trace small spheres." )
     }
     LDebugTraceSphere(
         const OneDrawCall InTimeToLive,
         const LVector& InCenter,
         const float InRadius = 0.5f,
-        const LDebugTraceSphereVisualParams& InVisualParams = { 10, 10, LColor::Red }
+        const LDebugTraceSphereVisualParams& InVisualParams = { 10, 10, Lal::LColor::Red }
     )
         : LTemporalWorldObject(InTimeToLive), Center(InCenter), Radius(InRadius), VisualParams(InVisualParams)
     {
-        check( this->Radius > JAFG_NOT_SO_SMALL_NUMBER && "Why trace small spheres." )
+        check( this->Radius > LAL_NOT_SO_SMALL_NUMBER && "Why trace small spheres." )
     }
     PROHIBIT_COPY(LDebugTraceSphere)
     DEFAULT_MOVE(LDebugTraceSphere)
@@ -55,7 +55,7 @@ public:
 private:
 
     LVector Center;
-    float Radius;
+    f32 Radius;
     LDebugTraceSphereVisualParams VisualParams;
 };
 

@@ -37,5 +37,5 @@ std::shared_ptr<Jafg::LTexture2> Jafg::JTextureSubsystem::GetTexture(const LPath
 
 std::shared_ptr<Jafg::LTexture2> Jafg::JTextureSubsystem::GetTexture(const LEnginePath& InPath, const ERawImageFormat::Type InFormat) const
 {
-    return this->GetTexture(InPath.ResolveAbsolutePath(*GetDefault<JUserPreferences>()), InFormat);
+    return this->GetTexture(InPath.ResolvePath(), InFormat);
 }

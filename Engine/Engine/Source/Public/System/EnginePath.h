@@ -3,7 +3,6 @@
 #pragma once
 
 #include "SystemForward.h"
-#include "Finder.h"
 
 namespace Jafg
 {
@@ -15,138 +14,91 @@ class JUserPreferences;
 //# resolving the absolute path. This allows the user to add their own plugin content folders that have a higher
 //# priority than the engine content folder. Absolute paths will then be redirected to the plugin content folder.
 //#
-template <typename InTPathTy>
-class LEnginePathBase final
+template <template <typename, typename> typename TEncoding, Lal::TStringBaseAllocatorConcept TAllocator>
+    requires(Lal::TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+class TEnginePathBase : public Lal::TPathBase<TEncoding, TAllocator>
 {
 public:
 
-     using Self = LEnginePathBase<InTPathTy>;
+    typedef Lal::TPathBase<TEncoding, TAllocator> Super;
 
-     using Alloc     = InTPathTy;
-     using T         = typename Alloc::T;
-     using SizeType  = typename Alloc::SizeType;
+    typedef typename Super::Encoding       Encoding;
+    typedef typename Super::Allocator      Allocator;
+    typedef typename Super::T              T;
+    typedef typename Super::SizeType       SizeType;
+    typedef typename Super::Iterator       Iterator;
+    typedef typename Super::ConstIterator  ConstIterator;
+    typedef typename Super::Pointer        Pointer;
+    typedef typename Super::ConstPointer   ConstPointer;
+    typedef typename Super::Reference      Reference;
+    typedef typename Super::ConstReference ConstReference;
 
-    FORCEINLINE  LEnginePathBase() noexcept = default;
-    FORCEINLINE  LEnginePathBase(LNullptrTy) noexcept { }
-    FORCEINLINE  LEnginePathBase(const Self& Other) noexcept { this->PathTy = Other.PathTy; this->Impl = Other.Impl; }
-    FORCEINLINE  LEnginePathBase(Self&& Other) noexcept { this->PathTy = Other.PathTy; this->Impl = std::move(Other.Impl); }
-    FORCEINLINE  LEnginePathBase(const Alloc& Other) noexcept;
-    FORCEINLINE  LEnginePathBase(Alloc&& Other) noexcept;
-    FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy, const Alloc& Other) noexcept : PathTy(InPathTy), Impl(Other) { }
-    FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy, Alloc&& Other) noexcept : PathTy(InPathTy), Impl(std::move(Other)) { }
-    FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy) noexcept : PathTy(InPathTy) { }
-    FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy, LNullptrTy) noexcept : PathTy(InPathTy) { }
-    FORCEINLINE  LEnginePathBase(const EEnginePaths::Type InPathTy, const T* InPath) noexcept : PathTy(InPathTy), Impl(InPath) { }
-    FORCEINLINE ~LEnginePathBase() noexcept = default;
+    using Super::TPathBase;
 
-    FORCEINLINE constexpr void SetPathTy(const EEnginePaths::Type InPathTy) noexcept { this->PathTy = InPathTy; }
-    FORCEINLINE constexpr auto GetPathTy() const noexcept -> EEnginePaths::Type { return this->PathTy; }
+    static_assert(Super::IsOwningString());
 
-    FORCEINLINE auto GetSize() const noexcept -> SizeType { return this->Impl.GetSize(); }
-    FORCEINLINE bool IsEmpty() const noexcept { return this->Impl.IsEmpty(); }
-    FORCEINLINE void Reset(const SizeType InReserve) noexcept { this->Impl.Reset(InReserve); }
-    FORCEINLINE void Empty() noexcept { this->Impl.Empty(); }
+    template <Lal::TStringBaseAllocatorConcept UAllocator>
+    FORCEINLINE TEnginePathBase(const EEnginePaths::Type Type, const Lal::TPathBase<TEncoding, UAllocator>& Other) noexcept
+        : Super(LexToString(Type) / Other) { }
+    FORCEINLINE TEnginePathBase(const EEnginePaths::Type Type, const Pointer String) noexcept
+        : Super(LexToString(Type) / String) { }
+    FORCEINLINE TEnginePathBase(const EEnginePaths::Type Type, const ConstPointer String) noexcept
+        requires(std::is_same_v<Pointer, ConstPointer> == false)
+        : Super(LexToString(Type) / String) { }
+    FORCEINLINE TEnginePathBase(const EEnginePaths::Type Type) noexcept
+        : Super(LexToString(Type)) { }
 
-    FORCEINLINE void Reserve(const SizeType Size) noexcept { this->Impl.Reserve(Size); }
-
-    FORCEINLINE Self& operator=(const Self& Other) noexcept = default;
-
-    FORCEINLINE Self& operator=(Self&& Other) noexcept;
-    FORCEINLINE Self& operator=(const Alloc& Other) noexcept;
-    FORCEINLINE Self& operator=(Alloc&& Other) noexcept;
-
-    FORCEINLINE bool operator==(const Self& Other) const noexcept { return this->Impl == Other.Impl;      }
-    FORCEINLINE bool operator!=(const Self& Other) const noexcept { return this->Impl != Other.Impl;      }
-    FORCEINLINE bool operator <(const Self& Other) const noexcept { return this->Impl  < Other.Impl;      }
-    FORCEINLINE bool operator >(const Self& Other) const noexcept { return this->Impl  > Other.Impl;      }
-    FORCEINLINE bool operator<=(const Self& Other) const noexcept { return this->Impl <= Other.Impl;      }
-    FORCEINLINE bool operator>=(const Self& Other) const noexcept { return this->Impl >= Other.Impl;      }
-    FORCEINLINE bool Equals(const Self& Other)     const noexcept { return this->Impl.Equals(Other.Impl); }
-
-    FORCEINLINE const Alloc& GetRelativeUnresolvedPath() const noexcept { return this->Impl; }
-
-    FORCEINLINE Alloc ResolveRelativePath() const;
-    FORCEINLINE Alloc ResolveRelativeEnginePath(const JUserPreferences& InUserPreferences) const;
-    FORCEINLINE Alloc ResolveAbsolutePath(const JUserPreferences& InUserPreferences) const;
-
-    FORCEINLINE void AddExtension(const Alloc& InExtension) { this->Impl.AddExtension(InExtension); }
-
-private:
-
-    EEnginePaths::Type PathTy { EEnginePaths::None };
-    Alloc Impl;
+    FORCEINLINE void  ResolvePathInline() noexcept;
+    FORCEINLINE void  ResolvePathToAbsoluteInline() noexcept;
+    FORCEINLINE LPath ResolvePath() const noexcept;
+    FORCEINLINE LPath ResolvePathToAbsolute() const noexcept;
 };
 
-template <typename InTPathTy>
-LEnginePathBase<InTPathTy>::LEnginePathBase(const Alloc& Other) noexcept
+template <template <typename, typename> class TEncoding, Lal::TStringBaseAllocatorConcept TAllocator> requires (Lal::
+    TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+FORCEINLINE void TEnginePathBase<TEncoding, TAllocator>::ResolvePathInline() noexcept
 {
-    this->Impl = Other;
-
-    if (this->Impl.StartsWith(Finder::GetEngineRootDir()))
-    {
-        this->PathTy = EEnginePaths::CustomEngine;
-        this->Impl.InlineRightChop(Finder::GetEngineRootDir().GetRuneCount()+1);
-    }
-
+    this->Assign(this->ResolvePath());
     return;
 }
 
-template <typename InTPathTy>
-LEnginePathBase<InTPathTy>::LEnginePathBase(Alloc&& Other) noexcept
+template <template <typename, typename> class TEncoding, Lal::TStringBaseAllocatorConcept TAllocator> requires (Lal::
+    TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+FORCEINLINE void TEnginePathBase<TEncoding, TAllocator>::ResolvePathToAbsoluteInline() noexcept
 {
-    this->Impl = std::move(Other);
-
-    if (this->Impl.StartsWith(Finder::GetEngineRootDir()))
-    {
-        this->PathTy = EEnginePaths::CustomEngine;
-        this->Impl.InlineRightChop(Finder::GetEngineRootDir().GetRuneCount()+1);
-    }
-
+    this->Assign(this->ResolvePathToAbsolute());
     return;
 }
 
-template<typename InTPathTy>
-typename LEnginePathBase<InTPathTy>::Self& LEnginePathBase<InTPathTy>::operator=(Self&& Other) noexcept
+template <template <typename, typename> class TEncoding, Lal::TStringBaseAllocatorConcept TAllocator> requires (Lal::
+    TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+FORCEINLINE LPath TEnginePathBase<TEncoding, TAllocator>::ResolvePath() const noexcept
 {
-    this->PathTy = Other.PathTy;
-    this->Impl = std::move(Other.Impl);
-
-    Other.PathTy = EEnginePaths::None;
-
-    return *this;
+    //#
+    //# Currently there is no user preference to override the engine content folder and add priorities.
+    //# But this logic will be added here.
+    //#
+    return LPath{this->begin(), this->end()};
 }
 
-template<typename InTPathTy>
-typename LEnginePathBase<InTPathTy>::Self& LEnginePathBase<InTPathTy>::operator=(const Alloc& Other) noexcept
+template <template <typename, typename> class TEncoding, Lal::TStringBaseAllocatorConcept TAllocator> requires (Lal::
+    TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+FORCEINLINE LPath TEnginePathBase<TEncoding, TAllocator>::ResolvePathToAbsolute() const noexcept
 {
-    this->Impl = Other;
-    return *this;
-}
-
-template<typename InTPathTy>
-typename LEnginePathBase<InTPathTy>::Self& LEnginePathBase<InTPathTy>::operator=(Alloc&& Other) noexcept
-{
-    this->Impl = std::move(Other);
-    return *this;
-}
-
-template <typename InTPathTy>
-FORCEINLINE typename LEnginePathBase<InTPathTy>::Alloc LEnginePathBase<InTPathTy>::ResolveRelativePath() const
-{
-    return Finder::ResolvePathToRelativeModulePath(*this);
-}
-
-template <typename InTPathTy>
-FORCEINLINE typename LEnginePathBase<InTPathTy>::Alloc LEnginePathBase<InTPathTy>::ResolveRelativeEnginePath(const JUserPreferences& InUserPreferences) const
-{
-    return Finder::ResolvePathToRelativeEnginePath(*this, InUserPreferences);
-}
-
-template <typename InTPathTy>
-typename LEnginePathBase<InTPathTy>::Alloc
-FORCEINLINE LEnginePathBase<InTPathTy>::ResolveAbsolutePath(const JUserPreferences& InUserPreferences) const
-{
-    return Finder::ResolvePathToAbsolutePath(*this, InUserPreferences);
+    return this->GetAbsolute();
 }
 
 } /* ~Namespace Jafg */
+
+template <>
+struct std::formatter<Jafg::LEnginePath> : std::formatter<std::string_view>
+{
+    FORCEINLINE auto format
+    (
+        const Jafg::LEnginePath& Path,
+        std::format_context& InContext
+    ) const -> std::format_context::iterator
+    {
+        return std::formatter<std::string_view>::format(std::string_view{Path.begin_ptr(), Path.end_ptr()}, InContext);
+    }
+};

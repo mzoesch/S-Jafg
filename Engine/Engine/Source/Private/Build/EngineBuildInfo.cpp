@@ -2,31 +2,31 @@
 
 #include "Build/EngineBuildInfo.h"
 
-const Jafg::LString& Jafg::BuildInfo::GetBuildTime()
+const LString& Jafg::BuildInfo::GetBuildTime()
 {
     static LString BuildTime { __TIME__ };
     return BuildTime;
 }
 
-const Jafg::LString& Jafg::BuildInfo::GetBuildDate()
+const LString& Jafg::BuildInfo::GetBuildDate()
 {
     static LString BuildDate { __DATE__ };
     return BuildDate;
 }
 
-const Jafg::LString& Jafg::BuildInfo::GetVcsBranch()
+const LString& Jafg::BuildInfo::GetVcsBranch()
 {
     static LString Branch { PRIVATE_ENGINE_VCS_BRANCH };
     return Branch;
 }
 
-const Jafg::LString& Jafg::BuildInfo::GetVcsRevision()
+const LString& Jafg::BuildInfo::GetVcsRevision()
 {
     static LString Revision { PRIVATE_ENGINE_VCS_REVISION };
     return Revision;
 }
 
-Jafg::LString Jafg::BuildInfo::GetEngineVersionStr()
+const LString& Jafg::BuildInfo::GetEngineVersionStr()
 {
     static LString Version { PRIVATE_ENGINE_VERSION };
     return Version;

@@ -71,7 +71,7 @@ struct LTask final
 };
 struct LEngineThread final
 {
-    FORCEINLINE explicit LEngineThread(const Jafg::LThreadId InId, const Jafg::ENamedThreads::Type InThreadName)
+    FORCEINLINE LEngineThread(const Jafg::LThreadId InId, const Jafg::ENamedThreads::Type InThreadName)
         : Id(InId), ThreadName(InThreadName)
     {
     }
@@ -101,6 +101,9 @@ struct LEngineThread final
     {
     }
 
+    PROHIBIT_COPY(LEngineThread)
+    DEFAULT_MOVE(LEngineThread)
+
     FORCEINLINE ~LEngineThread()
     {
         if (this->bKillRunnableWhenFinished)
@@ -116,11 +119,11 @@ struct LEngineThread final
     FORCEINLINE bool operator==(const Jafg::LRunnable* InRunnable) const { return this->Runnable == InRunnable; }
     FORCEINLINE bool operator!=(const Jafg::LRunnable* InRunnable) const { return this->Runnable != InRunnable; }
 
-    FORCEINLINE Jafg::LString GetDisplayName() const;
+    FORCEINLINE LString GetDisplayName() const;
 
     Jafg::LThreadId              Id;
     Jafg::ENamedThreads::Type    ThreadName;
-    Jafg::LString                HumanReadableName;
+    LString                      HumanReadableName;
     Jafg::TMpmcQueue<LTask>      TaskQueue;
     Jafg::TOptional<std::thread> Thread;
     Jafg::LRunnable*             Runnable = nullptr;
@@ -132,8 +135,9 @@ struct LEngineThread final
 std::shared_mutex EngineThreadsMutex;
 //# Map for all queses for all tasks.
 TArray<LEngineThread> EngineThreads;
+static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<LEngineThread> == false);
 
-FORCEINLINE Jafg::LString LEngineThread::GetDisplayName() const
+FORCEINLINE LString LEngineThread::GetDisplayName() const
 {
     if (this->Runnable && this->Runnable->GetHumanReadableName().IsEmpty() == false)
     {
@@ -148,9 +152,9 @@ FORCEINLINE Jafg::LString LEngineThread::GetDisplayName() const
     return Jafg::LexToString(this->ThreadName);
 }
 
-FORCEINLINE void RenameMe(const Jafg::LString& InDisplayName)
+FORCEINLINE void RenameMe(const LString& InDisplayName)
 {
-    jassert( InDisplayName.GetByteSize() < 16 && "Thread name may not exceed 16 bytes." )
+    jassert( InDisplayName.GetAllocator().GetSizeInBytes() < 16 && "Thread name may not exceed 16 bytes." )
 
 #if PLATFORM_WINDOWS
     ::SetThreadDescription(::GetCurrentThread(), InDisplayName.ToPtr());
@@ -213,7 +217,7 @@ ENGINE_API i32 CustomThreadCounter = ENamedThreads::Custom + 1;
 
 } /* ~Namespace Jafg::Tasks::Private */
 
-Jafg::LString Jafg::LexToString(const ENamedThreads::Type Thread)
+LString Jafg::LexToString(const ENamedThreads::Type Thread)
 {
     switch (Thread)
     {
@@ -223,7 +227,7 @@ Jafg::LString Jafg::LexToString(const ENamedThreads::Type Thread)
     }
 }
 
-Jafg::LString Jafg::LexToString(const ETaskTime::Type Time)
+LString Jafg::LexToString(const ETaskTime::Type Time)
 {
     if (Time & ETaskTime::Fail)                          { return "Fail"; }
     if (Time & ETaskTime::NoTickDangerous)               { return "NoTick"; }
@@ -271,7 +275,7 @@ void Jafg::Tasks::RegisterThread(ENamedThreads::Type InThreadName)
     return;
 }
 
-Jafg::LString Jafg::Tasks::GetCurrentThreadDisplayName()
+LString Jafg::Tasks::GetCurrentThreadDisplayName()
 {
     const LThreadId Me = PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
 
@@ -290,7 +294,7 @@ Jafg::LString Jafg::Tasks::GetCurrentThreadDisplayName()
     return "NotRegistered";
 }
 
-Jafg::LString Jafg::Tasks::GetCurrentThreadDisplayNameChecked()
+LString Jafg::Tasks::GetCurrentThreadDisplayNameChecked()
 {
     const LThreadId Me = PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
 
@@ -311,7 +315,7 @@ Jafg::LString Jafg::Tasks::GetCurrentThreadDisplayNameChecked()
     return "NotRegistered";
 }
 
-Jafg::LString Jafg::Tasks::GetCurrentThreadDisplayNameAsserted()
+LString Jafg::Tasks::GetCurrentThreadDisplayNameAsserted()
 {
     const LThreadId Me = PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
 

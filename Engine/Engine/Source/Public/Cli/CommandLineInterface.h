@@ -167,7 +167,7 @@ private:
 template<typename TField>
 FORCEINLINE void LCliObjectHandle::GetValue(TField* Destination) const
 {
-    this->GetCommandLineInterface()->GetVariable(this->Uuid)->GetValue<TField>(Destination);
+    this->GetCommandLineInterface()->GetVariableChecked(*this)->GetValue<TField>(Destination);
 }
 
 FORCEINLINE TOptional<LCliObjectHandle> LCommandLineInterface::GetHandle(const LCliObject& InObject) const

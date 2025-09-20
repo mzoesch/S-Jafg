@@ -94,7 +94,7 @@ i32 main(const i32 ArgC, const char* ArgV[])
     /* Push arguments to the core library. */
     Application::Private::CommandLine = std::move(CmdLine);
 
-    if (Application::Private::CommandLine.FindFirst("WaitForDebugger") != INDEX_NONE)
+    if (Application::Private::CommandLine.FindFirst("WaitForDebugger") != Application::Private::CommandLine.end())
     {
         LOG_INFO(LogJafgInternal, "Waiting for debugger ...");
         LAL_UNSAFE_FLUSH_OUT_STREAMS()
@@ -108,7 +108,7 @@ i32 main(const i32 ArgC, const char* ArgV[])
         LOG_INFO(LogJafgInternal, "Debugger attached - continuing.");
         LAL_UNSAFE_FLUSH_OUT_STREAMS()
 
-        if (Application::Private::CommandLine.FindFirst("IgnoreInstantDebuggerBreak") == INDEX_NONE)
+        if (Application::Private::CommandLine.FindFirst("IgnoreInstantDebuggerBreak") == Application::Private::CommandLine.end())
         {
             LAL_PLATFORM_BREAK()
         }

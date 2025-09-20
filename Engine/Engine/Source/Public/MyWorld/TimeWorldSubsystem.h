@@ -242,14 +242,14 @@ private:
     //# Inclusive daytime.
     LDaytime MinDaytime { 0 };
     //# Exclusive daytime.
-    LDaytime MaxDaytime { static_cast<LDaytime>(24.0 * JAFG_H2MS_D) };
+    LDaytime MaxDaytime { static_cast<LDaytime>(24.0 * LAL_H2MS_D) };
     //# How many daylight cycles have passed.
     LDayCycle DayCycle { 0 };
 
     //# Default is: 04:50 o'clock
-    LDaytime StartOfTheDay { (4 * static_cast<LDaytime>(JAFG_H2M) + 50) * static_cast<LDaytime>(JAFG_M2MS) };
+    LDaytime StartOfTheDay { (4 * static_cast<LDaytime>(LAL_H2M) + 50) * static_cast<LDaytime>(LAL_M2MS) };
     //# Default is: 21:53 o'clock
-    LDaytime EndOfTheDay { (21 * static_cast<LDaytime>(JAFG_H2M) + 53) * static_cast<LDaytime>(JAFG_M2MS) };
+    LDaytime EndOfTheDay { (21 * static_cast<LDaytime>(LAL_H2M) + 53) * static_cast<LDaytime>(LAL_M2MS) };
 
     f64 DayAcceleration { 25.575 };
     f64 NightAcceleration { 20.85 };
@@ -284,7 +284,7 @@ FORCEINLINE LDaytime JTimeWorldSubsystem::GetDayTimeSinceStart() const noexcept
 
 FORCEINLINE u64 JTimeWorldSubsystem::GetDayTimeSinceStartInSeconds() const noexcept
 {
-    return static_cast<u64>(static_cast<f64>(this->GetDayTimeSinceStart()) * JAFG_MS2S_D);
+    return static_cast<u64>(static_cast<f64>(this->GetDayTimeSinceStart()) * LAL_MS2S_D);
 }
 
 FORCEINLINE f64 JTimeWorldSubsystem::GetDayTimeInPercentage() const noexcept

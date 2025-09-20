@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "System/Path.h"
 #include "Rhi/Texture2.h"
 
 namespace Jafg

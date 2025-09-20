@@ -11,7 +11,7 @@ Jafg::LCliObject* Jafg::LCliObject::GetRegisteredObjectByUuid() const
     }
 
     check( GEngine )
-    return GEngine->GetCommandLineInterface()->GetObjectAsserted(this->Uuid);
+    return GEngine->GetCommandLineInterface()->GetObjectAsserted(*this);
 }
 
 void Jafg::LCliObject::ExpandToUuid()

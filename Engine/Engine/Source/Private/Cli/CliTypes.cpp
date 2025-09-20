@@ -28,13 +28,13 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         {
             std::from_chars
             (
-                String.GetBegin(),
-                String.GetEnd(),
+                String.begin_ptr(),
+                String.end_ptr(),
                 Value
             )
         };
 
-        if (ec == std::errc{} && ptr == String.GetEnd())
+        if (ec == std::errc{} && ptr == String.end_ptr())
         {
             ++*Cursor;
             return true;
@@ -66,13 +66,13 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         {
             std::from_chars
             (
-                String.GetBegin(),
-                String.GetEnd(),
+                String.begin_ptr(),
+                String.end_ptr(),
                 Value
             )
         };
 
-        if (ec == std::errc{} && ptr == String.GetEnd())
+        if (ec == std::errc{} && ptr == String.end_ptr())
         {
             ++*Cursor;
             return true;
@@ -104,13 +104,13 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         {
             std::from_chars
             (
-                String.GetBegin(),
-                String.GetEnd(),
+                String.begin_ptr(),
+                String.end_ptr(),
                 Value
             )
         };
 
-        if (ec == std::errc{} && ptr == String.GetEnd() && (Value >= 0 && Value <= 255))
+        if (ec == std::errc{} && ptr == String.end_ptr() && (Value >= 0 && Value <= 255))
         {
             ++*Cursor;
             return true;
@@ -152,13 +152,13 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         {
             std::from_chars
             (
-                String.GetBegin(),
-                String.GetEnd(),
+                String.begin_ptr(),
+                String.end_ptr(),
                 Value
             )
         };
 
-        if (ec == std::errc{} && ptr == String.GetEnd())
+        if (ec == std::errc{} && ptr == String.end_ptr())
         {
             ++*Cursor;
             return true;
@@ -373,7 +373,7 @@ bool Jafg::Private::CliQueryImpl(const LCommandArgs& Args, i32* Cursor, const TA
     return false;
 }
 
-TArray<Jafg::LString> Jafg::Private::CliQuerySuggestImpl(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions, const TArray<LString>& Values)
+TArray<LString> Jafg::Private::CliQuerySuggestImpl(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions, const TArray<LString>& Values)
 {
     const LCommandArgs* Target { nullptr };
 
@@ -426,7 +426,7 @@ bool Jafg::Private::CliStringImpl(const LCommandArgs& Args, i32* Cursor, const L
     return false;
 }
 
-TArray<Jafg::LString> Jafg::Private::CliStringSuggestImpl(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions, const LString& Value)
+TArray<LString> Jafg::Private::CliStringSuggestImpl(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions, const LString& Value)
 {
     if (MaxSuggestions > 0)
     {

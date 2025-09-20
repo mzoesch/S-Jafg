@@ -23,7 +23,7 @@ i32 Jafg::ERawImageFormat::GetBytesPerPixel(const ERawImageFormat::Type InFormat
     }
 }
 
-Jafg::LString Jafg::LexToString(const ERawImageFormat::Type InFormat)
+LString Jafg::LexToString(const ERawImageFormat::Type InFormat)
 {
     switch (InFormat)
     {

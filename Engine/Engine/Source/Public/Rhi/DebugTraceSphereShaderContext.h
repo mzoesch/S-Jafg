@@ -10,13 +10,13 @@ namespace Jafg
 
 struct LDebugTraceSphereShaderContextDrawArgs final : public LGenericPerspectiveShaderContextDrawArgs
 {
-    LVector Center = { };
-    float Radius = 0.0f;
-    i32 Slices = 20;
-    i32 Stacks = 20;
-    LColor Color = { };
+    LVector Center;
+    f32 Radius { 0.0f };
+    i32 Slices { 20 };
+    i32 Stacks { 20 };
+    Lal::LColor Color;
     /* Depending on the hardware, the max value may vary (but usually it's not more than 10). */
-    u8 Thickness = 1;
+    u8 Thickness { 1u };
 };
 
 class LDebugTraceSphereShaderContext final : public LGenericShaderContext
@@ -30,8 +30,8 @@ public:
 private:
 
     LShader Program = { };
-    u32  Vao = 0;
-    u32  Vbo = 0;
+    u32 Vao { 0u };
+    u32 Vbo { 0u };
 };
 
 } /* ~Namespace Jafg */

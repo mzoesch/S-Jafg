@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Rhi/Texture2.h"
-#include "System/Paths.h"
 #include "System/EnginePath.h"
 #include "Rhi/RhiVendorInclude.h"
 
@@ -85,7 +84,7 @@ bool Jafg::LTexture2::CreateEmpty(const u32 InWidth, const u32 InHeight, const E
 
 bool Jafg::LTexture2::LoadFromDisk(const LPath& Path, const ERawImageFormat::Type InFormat)
 {
-    if (Paths::DoesFileExist(Path) == false)
+    if (Finder::DoesFileExist(Path) == false)
     {
         return false;
     }
@@ -93,7 +92,7 @@ bool Jafg::LTexture2::LoadFromDisk(const LPath& Path, const ERawImageFormat::Typ
     LOG_TRACE(LogSystem, "Loading texture2 [{}].", Path)
     check( this->MipMap.GetBulk().IsAllocated() == false )
 
-    TArray<u8> Bin = Paths::ReadFileAsBinary(Path);
+    TArray<u8> Bin = Finder::ReadFileAsBinary(Path);
 
     i32 Width      = 0;
     i32 Height     = 0;
@@ -136,7 +135,7 @@ bool Jafg::LTexture2::LoadFromDisk(const LPath& Path, const ERawImageFormat::Typ
 
 bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const ERawImageFormat::Type InFormat)
 {
-    LOG_TRACE(LogSystem, "Loading texture2 [{}].", Path.GetRelativeUnresolvedPath())
+    LOG_TRACE(LogSystem, "Loading texture2 [{}].", Path)
 
     check( this->MipMap.GetBulk().IsAllocated() == false )
 
@@ -144,17 +143,14 @@ bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const ERawImageForma
     i32 Height     = 0;
     i32 NrChannels = 0;
 
-    Finder::DoesFileExistsAsserted(Path);
-    const u8* Bulk     = nullptr;
-    u64       BulkSize = 0;
-    Finder::ReadFileAsBinary(Path, &Bulk, &BulkSize);
+    TArray Bulk { Finder::ReadFileAsBinary(Path.ResolvePath()) };
 
     ::stbi_set_flip_vertically_on_load(false);
-    u8* Data = ::stbi_load_from_memory(Bulk, static_cast<int>(BulkSize), &Width, &Height, &NrChannels, ERawImageFormat::GetChannelsPerPixel(InFormat));
+    u8* Data = ::stbi_load_from_memory(Bulk.begin_ptr(), static_cast<int>(Bulk.GetSize()), &Width, &Height, &NrChannels, ERawImageFormat::GetChannelsPerPixel(InFormat));
 
     if (stbi_failure_reason())
     {
-        LOG_ERROR(LogRhi, "Failed to load texture [{}] from disk. Reason: [{}].", Path.GetRelativeUnresolvedPath(), stbi_failure_reason())
+        LOG_ERROR(LogRhi, "Failed to load texture [{}] from disk. Reason: [{}].", Path, stbi_failure_reason())
         check( Data == nullptr )
         return false;
     }
@@ -165,7 +161,7 @@ bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const ERawImageForma
         (
             LogRhi,
             "Texture2 [{}] was loaded from disk with [{}] channels to memory with [{}] channels.",
-            Path.GetRelativeUnresolvedPath(),
+            Path,
             NrChannels,
             ERawImageFormat::GetChannelsPerPixel(InFormat)
         )
@@ -181,7 +177,6 @@ bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const ERawImageForma
     this->MipMap.LoadFromBuffer(Data, 0);
 
     ::stbi_image_free(Data);
-    Finder::FreeReadFileBinaryBuffer(&Bulk);
 
     return true;
 }

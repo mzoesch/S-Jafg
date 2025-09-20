@@ -73,7 +73,7 @@ void Jafg::WVRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const 
     return;
 }
 
-Jafg::LVector2 Jafg::WVRegion::GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const
+LVector2 Jafg::WVRegion::GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const
 {
     check( InDirectChild )
 

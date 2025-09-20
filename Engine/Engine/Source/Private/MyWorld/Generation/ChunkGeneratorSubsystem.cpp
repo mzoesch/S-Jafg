@@ -15,10 +15,10 @@
 
 #if WITH_STATS
     #if STAT_CHUNK_VERBOSE_OUT
-        #define STAT_QUICK_CYCLE_START_KEY(InChunkKey)                                   \
-            std::string_view _sv = LAL_PRETTY_FUNCTION;                                 \
-            ::Jafg::LString _s = LString::SprintF("{}::{}", _sv, InChunkKey.ToString()); \
-            STAT_QUICK_CYCLE_START(std::string_view(_s.GetBegin(), _s.GetEnd()))
+        #define STAT_QUICK_CYCLE_START_KEY(InChunkKey)                               \
+            std::string_view _sv = LAL_PRETTY_FUNCTION;                              \
+            ::LString _s = ::LString::SprintF("{}::{}", _sv, InChunkKey.ToString()); \
+            STAT_QUICK_CYCLE_START(std::string_view(_s.begin(), _s.end()))
     #else /* STAT_CHUNK_VERBOSE_OUT */
         #define STAT_QUICK_CYCLE_START_KEY(InChunkKey)  STAT_CYCLE_FUNCTION()
     #endif /* !STAT_CHUNK_VERBOSE_OUT */

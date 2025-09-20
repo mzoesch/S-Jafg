@@ -132,7 +132,7 @@ void Jafg::LFrameBuffer::MakeDrawTargetAndReset()
     return;
 }
 
-void Jafg::LFrameBuffer::MakeDrawTargetAndReset(const LLinearColor& InColor)
+void Jafg::LFrameBuffer::MakeDrawTargetAndReset(const Lal::LLinearColor& InColor)
 {
     this->MakeDrawTarget();
     glClearColor(InColor.R, InColor.G, InColor.B, InColor.A);
@@ -154,7 +154,7 @@ void Jafg::LFrameBuffer::MakeDefaultDrawTargetAndReset()
     return;
 }
 
-void Jafg::LFrameBuffer::MakeDefaultDrawTargetAndReset(const LLinearColor& InColor)
+void Jafg::LFrameBuffer::MakeDefaultDrawTargetAndReset(const Lal::LLinearColor& InColor)
 {
     LFrameBuffer::MakeDefaultDrawTarget();
     glClearColor(InColor.R, InColor.G, InColor.B, InColor.A);

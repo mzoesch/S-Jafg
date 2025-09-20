@@ -31,7 +31,7 @@ void Jafg::WCommonMenuTabBarPanel::Construct()
 {
     Super::Construct();
 
-    LColor Tint = LColor::Black;
+    Lal::LColor Tint = Lal::LColor::Black;
     if (const WCommonMenuTabBar* CommonTabBar = DynamicCast<WCommonMenuTabBar>(this->GetOwningTabBar()))
     {
         Tint.A = WCommonMenuTabBar::GetAlphaTintBasedOfDepth(CommonTabBar->GetLeafDepth());

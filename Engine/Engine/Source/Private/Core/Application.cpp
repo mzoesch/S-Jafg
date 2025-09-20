@@ -72,7 +72,7 @@ void Private::UpdateApplicationCommandLineVariables()
 
 bool HasCmdLineParameter(const LString& Parameter)
 {
-    const i32 Index = Private::CommandLine.FindFirst(Parameter.ToPtr());
+    const i32 Index = Private::CommandLine.ToWeakIndex(Private::CommandLine.FindFirst(Parameter.ToPtr()));
     if (Index == INDEX_NONE)
     {
         return false;

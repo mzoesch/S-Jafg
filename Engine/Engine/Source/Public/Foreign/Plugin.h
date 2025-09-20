@@ -14,7 +14,6 @@
     #error "Plugins are not supported in this build configuration."
 #endif /* !JAFG_WITH_FOREIGN_SUPPORT */
 
-#include "System/Path.h"
 #include "Foreign/PluginForward.h"
 
 namespace Jafg

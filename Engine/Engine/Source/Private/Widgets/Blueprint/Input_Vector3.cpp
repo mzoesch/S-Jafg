@@ -8,7 +8,7 @@ Jafg::WInput_Vector3::WInput_Vector3(const LObjectInitializer& ObjectInitializer
 {
     this->SetPadding(5.0f);
     this->SetOmniOutlineThickness(1.0f);
-    this->SetOmniTint(LColor::Transparent);
+    this->SetOmniTint(Lal::LColor::Transparent);
 
     return;
 }
@@ -19,9 +19,9 @@ void Jafg::WInput_Vector3::Construct()
 
     LEditableTextBoxBrush Brush { LTextBoxBrush::Compact() };
     Brush.Type = ERegionBrush::RoundedOutlineBox;
-    Brush.Tint = LColor::Black;
+    Brush.Tint = Lal::LColor::Black;
     Brush.OutlineThickness = 1.0f;
-    Brush.OutlineTint = LColor::Gray;
+    Brush.OutlineTint = Lal::LColor::Gray;
 
     WTextBox* Display { ConstructWidgetNode<WTextBox>(this->GetOuter()) };
     Display->SetBrush(Brush);

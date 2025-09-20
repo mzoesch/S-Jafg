@@ -2,7 +2,7 @@
 
 #include "Cli/CliCommand.h"
 
-Jafg::LString Jafg::LexToString(const ECommandReturnCode::Type& InType)
+LString Jafg::LexToString(const ECommandReturnCode::Type& InType)
 {
     switch (InType)
     {
@@ -66,7 +66,7 @@ Jafg::LString Jafg::LexToString(const ECommandReturnCode::Type& InType)
     }
 }
 
-Jafg::LString Jafg::LCommandArgs::GetCatRepresentation() const
+LString Jafg::LCommandArgs::GetCatRepresentation() const
 {
     LString Cat;
     this->GetCatRepresentation(&Cat);
@@ -123,7 +123,7 @@ bool Jafg::LCommandParams::IsInvocable(const LCommandArgs& Args) const
     return this->Signature.GetSize() > 0;
 }
 
-TArray<Jafg::LString> Jafg::LCommandParams::GetCommonSuggestions(const LCommandArgs& Args, const u32 MaxSuggestions, const bool bParseNotBeginTypedArg) const
+TArray<LString> Jafg::LCommandParams::GetCommonSuggestions(const LCommandArgs& Args, const u32 MaxSuggestions, const bool bParseNotBeginTypedArg) const
 {
     if (MaxSuggestions <= 0)
     {
@@ -157,7 +157,7 @@ TArray<Jafg::LString> Jafg::LCommandParams::GetCommonSuggestions(const LCommandA
     return Out;
 }
 
-Jafg::LString Jafg::LCommandParams::GetCatRepresentation() const
+LString Jafg::LCommandParams::GetCatRepresentation() const
 {
     if (this->Signature.IsEmpty())
     {

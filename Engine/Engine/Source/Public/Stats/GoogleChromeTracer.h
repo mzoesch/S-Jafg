@@ -8,8 +8,6 @@
     #error "This file should only be included if the application compiles with stats and the Google Chrome Tracer is enabled."
 #endif /* !(WITH_STATS && JAFG_STATS_USE_GOOGLE_CHROME_TRACER) */
 
-#include "System/Finder.h"
-
 namespace Jafg::Stats::Vendor
 {
 

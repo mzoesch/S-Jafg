@@ -12,7 +12,7 @@ class LDebugTracePlane;
 
 struct LDebugTraceLineVisualParams final
 {
-    LColor Color;
+    Lal::LColor Color;
     /* Depending on the hardware, the max value may vary (but usually it's not more than 10). */
     u8 Thickness = 1;
 };
@@ -33,7 +33,7 @@ public:
     )
         : LTemporalWorldObject(InTimeToLive), Start(InStart), End(InEnd), VisualParams(InVisualParams)
     {
-        check( (this->Start - this->End).Magnitude() > JAFG_NOT_SO_SMALL_NUMBER && "Why trace small distances." )
+        check( (this->Start - this->End).Magnitude() > LAL_NOT_SO_SMALL_NUMBER && "Why trace small distances." )
     }
     LDebugTraceLine(
         const OneDrawCall InTimeToLive,
@@ -43,7 +43,7 @@ public:
     )
         : LTemporalWorldObject(InTimeToLive), Start(InStart), End(InEnd), VisualParams(InVisualParams)
     {
-        check( (this->Start - this->End).Magnitude() > JAFG_NOT_SO_SMALL_NUMBER && "Why trace small distances." )
+        check( (this->Start - this->End).Magnitude() > LAL_NOT_SO_SMALL_NUMBER && "Why trace small distances." )
     }
     PROHIBIT_COPY(LDebugTraceLine)
     DEFAULT_MOVE(LDebugTraceLine)
@@ -60,9 +60,9 @@ private:
     static void DrawLine(
         const LViewport& InViewport, const LEye& InEye,
         const LVector& InStart, const LVector& InEnd,
-        const LColor& InColor, const u8 Thickness
+        const Lal::LColor& InColor, const u8 Thickness
     );
-    static void DrawLineCachedValues(const LVector& InStart, const LVector& InEnd, const LColor& InColor, const u8 Thickness);
+    static void DrawLineCachedValues(const LVector& InStart, const LVector& InEnd, const Lal::LColor& InColor, const u8 Thickness);
 
     LVector Start;
     LVector End;

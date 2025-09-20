@@ -74,7 +74,7 @@ void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandE
     return;
 }
 
-TArray<Jafg::LString> Jafg::LCommandLineInterface::GetCommonSuggestions(const LString& InCommandLine, const u32 MaxSuggestions) const
+TArray<LString> Jafg::LCommandLineInterface::GetCommonSuggestions(const LString& InCommandLine, const u32 MaxSuggestions) const
 {
     const LString CommandStr = CliStatics::GetCommandFromText(InCommandLine);
     if (CommandStr.IsEmpty())
@@ -143,7 +143,7 @@ Jafg::LCliTypeHandle Jafg::LCommandLineInterface::RegisterType(LCliType&& InType
 
     Algo::SortQuick(&this->Types);
 
-    return { this->UuidCursor };
+    return LCliCommandHandle{ this->UuidCursor };
 }
 
 bool Jafg::LCommandLineInterface::UnregisterType(LCliTypeHandle* InHandle)
@@ -194,7 +194,7 @@ Jafg::LCliCommandHandle Jafg::LCommandLineInterface::RegisterCommand(LCliCommand
 
     Algo::SortQuick(&this->Commands);
 
-    return { this->UuidCursor };
+    return LCliCommandHandle{ this->UuidCursor };
 }
 
 bool Jafg::LCommandLineInterface::UnregisterCommand(LCliCommandHandle* InHandle)
@@ -244,7 +244,7 @@ Jafg::LCliVariableHandle Jafg::LCommandLineInterface::RegisterVariable(LCliVaria
 
     Algo::SortQuick(&this->Variables);
 
-    return { this->UuidCursor };
+    return LCliCommandHandle{ this->UuidCursor };
 }
 
 bool Jafg::LCommandLineInterface::UnregisterVariable(LCliVariableHandle* InHandle)
@@ -274,17 +274,17 @@ bool Jafg::LCommandLineInterface::UnregisterVariable(LCliVariableHandle* InHandl
 
 Jafg::LCliObject* Jafg::LCommandLineInterface::GetObject(const LCliObject& InHandle)
 {
-    if (LCliType* Type = this->GetType(InHandle.Uuid); Type)
+    if (LCliType* Type = this->GetType(LCliTypeHandle{InHandle.GetUuid()}); Type)
     {
         return Type;
     }
 
-    if (LCliCommand* Command = this->GetCommand(InHandle.Uuid); Command)
+    if (LCliCommand* Command = this->GetCommand(LCliTypeHandle{InHandle.GetUuid()}); Command)
     {
         return Command;
     }
 
-    return this->GetVariable(InHandle.Uuid);
+    return this->GetVariable(LCliTypeHandle{InHandle.GetUuid()});
 }
 
 Jafg::LCliObject* Jafg::LCommandLineInterface::GetObject(const LCliObjectHandle& InHandle)

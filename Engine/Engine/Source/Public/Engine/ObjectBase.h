@@ -221,7 +221,7 @@ namespace Jafg
 {
 
 template <typename TObj>
-FORCEINLINE void Deserialize(Jafg::TSubclassOf<TObj>* Destination, const Jafg::LString& InValue)
+FORCEINLINE void Deserialize(Jafg::TSubclassOf<TObj>* Destination, const LString& InValue)
 {
     checkSlow( Destination )
     const LObjectClass* X = Private::GObjectRegistry->GetPanickedPackageByName(InValue.ToPtr())->StaticClass;

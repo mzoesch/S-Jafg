@@ -5,8 +5,6 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Storage/SaveFunctions.h"
-#include "System/Finder.h"
-#include "System/Paths.h"
 #include "System/EnginePath.h"
 #include "User/UserPreferences.h"
 #include "Widgets/Button.h"
@@ -45,7 +43,7 @@ enum Type
 Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildGeneral
 (
     const Jafg::JObjectBase* Context,
-    Jafg::LString&& Header,
+    LString&& Header,
     const EBuildReason::Type Reason,
     Jafg::WEditableTextBox** SessionName = nullptr,
     Jafg::WTextBox** SessionPath = nullptr
@@ -71,7 +69,7 @@ Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildGeneral
             .Anchor(EAnchor::HFill)
             .Type(ERegionBrush::OutlineBox)
             .OutlineThickness(1)
-            .OutlineTint(LColor::DarkGray)
+            .OutlineTint(Lal::LColor::DarkGray)
             .TextScale(LTextBoxBrush::SubHeader().TextScale)
             .PlaceholderContent(DEFAULT_SESSION_NAME)
         +
@@ -79,7 +77,7 @@ Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildGeneral
             .Anchor(EAnchor::HLeft)
             .Content("")
             .Brush(LTextBoxBrush::SubHeader())
-            .TextColor(LColor::Gray)
+            .TextColor(Lal::LColor::Gray)
         +
         NewNodeCtx(Context, WSpacer).Height(20.0f)
         +
@@ -147,9 +145,9 @@ Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildGeneral
 Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildMultiplayer
 (
     const Jafg::JObjectBase* Context,
-    Jafg::LString&&          Header,
+    LString&&                Header,
     const EBuildReason::Type Reason,
-    Jafg::WTextBox**       OutHeader = nullptr
+    Jafg::WTextBox**         OutHeader = nullptr
 )
 {
     using namespace Jafg;
@@ -578,8 +576,8 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
         NewNode(WRegion).SaveTo(&Thumbnail)
             .MinDesiredSize({100,100})
             .Type(ERegionBrush::OutlineBox)
-            .Tint(LColor::White)
-            .OutlineTint(LColor::Black)
+            .Tint(Lal::LColor::White)
+            .OutlineTint(Lal::LColor::Black)
             .ImageBehavior(EImageBehavior::Aspect)
             .ImageOobm(EImageOobm::Discard)
             .ImagePadding(2)
@@ -608,9 +606,9 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
                 .Anchor(EAnchor::VFill)
             +
             NewNode(WTextBox)
-                .Content(this->Save.Path)
+                .Content(this->Save.Path.ToString())
                 .Brush(LTextBoxBrush::Body())
-                .TextColor(LColor::DarkerGray)
+                .TextColor(Lal::LColor::DarkerGray)
         ]
     ]
     FinishWidget(Region);
@@ -663,7 +661,7 @@ void Jafg::WHostSessionScreen_Old::Construct()
             .Anchor(EAnchor::Fill)
             .Type(ERegionBrush::OutlineBox)
             .Tint({64, 63, 75})
-            .OutlineTint(LColor::Black)
+            .OutlineTint(Lal::LColor::Black)
             .Padding({2})
         [
             NewNode(WVRegion).SaveTo(&this->SavesRegion)
@@ -904,9 +902,9 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
 
     TArray<LString> Candidats;
 
-    for (LString& SavePath: SavesPaths)
+    for (const LString& SavePath: SavesPaths)
     {
-        if (const LPath AsPath = std::move(SavePath); Paths::DoesDirExist(AsPath))
+        if (const LPathView AsPath {SavePath.begin(), SavePath.end()}; Finder::DoesDirectoryExist(AsPath))
         {
             for (TArray<LString> New = Finder::FindFilesRecursivelyByName(AsPath, "sqlite3.db"); LString& X : New)
             {
@@ -926,8 +924,8 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
 
     for (LString& Candidat : Candidats)
     {
-        LPath AsPath = std::move(Candidat);
-        AsPath.PopSubPath();
+        LPath AsPath { std::move(Candidat) };
+        AsPath.ToParent();
 
         TOptional<LString> DisplayName = Saves::GetDisplayName(AsPath);
         if (DisplayName.IsValid() == false)

@@ -8,7 +8,7 @@ namespace Lal
 //# @see Containers/ContainerForward.h
 template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
     requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
-class TStringBase
+class TStringBase : public Private::LStringBase
 {
 public:
 
@@ -68,36 +68,29 @@ public:
     FORCEINLINE constexpr TStringBase& operator=(TStringBase&& Other) noexcept
         requires(Lal::AssignableFrom<Allocator&, Allocator&&>);
 
-    template <TStringBaseAllocatorConcept UAllocator>
-        requires(TStringBaseEncodingConcept<TEncoding<typename UAllocator::T, typename UAllocator::SizeType>>)
-    FORCEINLINE explicit constexpr TStringBase(const TStringBase<TEncoding, UAllocator>& Other) noexcept
-        requires(std::is_constructible_v<Allocator, const UAllocator&> && !(std::is_same_v<TStringBase, typename TStringBase<TEncoding, UAllocator>::_WeakRepr> || std::is_same_v<TStringBase, typename TStringBase<TEncoding, UAllocator>::_WeakMutableRepr>));
-    template <TStringBaseAllocatorConcept UAllocator>
-        requires(TStringBaseEncodingConcept<TEncoding<typename UAllocator::T, typename UAllocator::SizeType>>)
-    FORCEINLINE constexpr TStringBase(const TStringBase<TEncoding, UAllocator>& Other) noexcept
-        requires(std::is_constructible_v<Allocator, const UAllocator&> && (std::is_same_v<TStringBase, typename TStringBase<TEncoding, UAllocator>::_WeakRepr> || std::is_same_v<TStringBase, typename TStringBase<TEncoding, UAllocator>::_WeakMutableRepr>));
-    template <TStringBaseAllocatorConcept UAllocator>
-        requires(TStringBaseEncodingConcept<TEncoding<typename UAllocator::T, typename UAllocator::SizeType>>)
-    FORCEINLINE constexpr TStringBase& operator=(const TStringBase<TEncoding, UAllocator>& Other) noexcept
-        requires(Lal::AssignableFromWeak<Allocator&, const UAllocator&>);
+    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding>)
+    FORCEINLINE explicit constexpr TStringBase(const TDerived& Other) noexcept
+        requires(std::is_constructible_v<Allocator, const typename TDerived::Allocator&> && !(std::is_same_v<TStringBase, typename TDerived::_WeakRepr> || std::is_same_v<TStringBase, typename TDerived::_WeakMutableRepr>));
+    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding>)
+    FORCEINLINE constexpr TStringBase(const TDerived& Other) noexcept
+        requires(std::is_constructible_v<Allocator, const typename TDerived::Allocator&> && (std::is_same_v<TStringBase, typename TDerived::_WeakRepr> || std::is_same_v<TStringBase, typename TDerived::_WeakMutableRepr>));
+    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding>)
+    FORCEINLINE constexpr TStringBase& operator=(const TDerived& Other) noexcept
+        requires(Lal::AssignableFromWeak<Allocator&, const typename TDerived::Allocator&>);
 
-    template <TStringBaseAllocatorConcept UAllocator>
-        requires(TStringBaseEncodingConcept<TEncoding<typename UAllocator::T, typename UAllocator::SizeType>>)
-    FORCEINLINE explicit constexpr TStringBase(TStringBase<TEncoding, UAllocator>&& Other) noexcept
-        requires(std::is_constructible_v<Allocator, UAllocator&&>);
-    template <TStringBaseAllocatorConcept UAllocator>
-        requires(TStringBaseEncodingConcept<TEncoding<typename UAllocator::T, typename UAllocator::SizeType>>)
-    FORCEINLINE constexpr TStringBase& operator=(TStringBase<TEncoding, UAllocator>&& Other) noexcept
-        requires(Lal::AssignableFromWeak<Allocator&, UAllocator&&>);
+    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding>)
+    FORCEINLINE explicit constexpr TStringBase(TDerived&& Other) noexcept
+        requires(std::is_constructible_v<Allocator, typename TDerived::Allocator&&>);
+    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding>)
+    FORCEINLINE constexpr TStringBase& operator=(TDerived&& Other) noexcept
+        requires(Lal::AssignableFromWeak<Allocator&, typename TDerived::Allocator&&>);
 
-    template <TStringBaseAllocatorConcept UAllocator>
-        requires(TStringBaseEncodingConcept<TEncoding<typename UAllocator::T, typename UAllocator::SizeType>>)
-    FORCEINLINE explicit constexpr TStringBase(TStringBase<TEncoding, UAllocator>&& Other) noexcept
-        requires(std::is_constructible_v<Allocator, UAllocator&&> == false) = delete;
-    template <TStringBaseAllocatorConcept UAllocator>
-        requires(TStringBaseEncodingConcept<TEncoding<typename UAllocator::T, typename UAllocator::SizeType>>)
-    FORCEINLINE TStringBase& operator=(TStringBase<TEncoding, UAllocator>&& Other) noexcept
-        requires(Lal::AssignableFromWeak<Allocator&, UAllocator&&> == false) = delete;
+    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding>)
+    FORCEINLINE explicit constexpr TStringBase(TDerived&& Other) noexcept
+        requires(std::is_constructible_v<Allocator, typename TDerived::Allocator&&> == false) = delete;
+    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding>)
+    FORCEINLINE TStringBase& operator=(TDerived&& Other) noexcept
+        requires(Lal::AssignableFromWeak<Allocator&, typename TDerived::Allocator&&> == false) = delete;
 
     template <TIteratorConcept UIterator, TIteratorConcept VIterator> requires(TIteratorPairConcept<UIterator, VIterator>)
     FORCEINLINE constexpr TStringBase(UIterator Begin, VIterator End) noexcept
@@ -135,18 +128,22 @@ public:
     }
 
     FORCEINLINE constexpr TStringBase(T Rune) noexcept
-        requires(!TStringBase::IsStringView() && std::is_default_constructible_v<Allocator>)
+        requires(!TStringBase::IsStringView() && std::is_default_constructible_v<Allocator> && TIsChar_v<T>)
         : Impl{}
     {
         this->Assign(Rune);
         return;
     }
+    FORCEINLINE constexpr TStringBase(std::integral auto Rune) noexcept
+        requires(!TStringBase::IsStringView() && std::is_default_constructible_v<Allocator>) = delete;
     FORCEINLINE constexpr TStringBase& operator=(T Rune) noexcept
-        requires(!TStringBase::IsStringView())
+        requires(!TStringBase::IsStringView() && TIsChar_v<T>)
     {
         this->Assign(Rune);
         return *this;
     }
+    FORCEINLINE constexpr TStringBase& operator=(std::integral auto Rune) noexcept
+        requires(!TStringBase::IsStringView()) = delete;
 
     FORCEINLINE constexpr ~TStringBase() noexcept = default;
 
@@ -158,11 +155,20 @@ public:
     NODISCARD
     FORCEINLINE SizeType GetRuneCount() const noexcept requires(!TStringBase::IsStringView());
     NODISCARD
+    FORCEINLINE SizeType GetSizeInBytes() const noexcept { return this->Impl.GetSizeInBytes(); }
+    NODISCARD
     FORCEINLINE SizeType GetCharacterCount() const noexcept { return Encoding::GetCharacterCount(this->begin_ptr(), this->end_ptr()); }
     NODISCARD
     FORCEINLINE SizeType GetAllocatedByteSize() const noexcept { return this->Impl.GetAllocatedByteSize(); }
     NODISCARD
     FORCEINLINE bool IsEmpty() const noexcept { return this->GetRuneCount() == 0; }
+
+    NODISCARD
+    FORCEINLINE SizeType GetCharacterLengthAt(const SizeType Index) const noexcept { return this->GetCharacterLengthAt(this->begin() + Index); }
+    NODISCARD
+    FORCEINLINE SizeType GetCharacterLengthAt(ITERATOR It) const noexcept;
+    NODISCARD
+    FORCEINLINE static SizeType s_GetCharacterLengthAt(ITERATOR It) noexcept { return Encoding::GetCharacterSize(std::to_address(It)); }
 
     template <TIteratorConcept TIterator>
     NODISCARD FORCEINLINE constexpr bool IsValidIterator(const TIterator& It) const noexcept { return std::to_address(It) >= this->begin_ptr() && std::to_address(It) < this->end_ptr(); }
@@ -197,6 +203,9 @@ public:
 
     FORCEINLINE constexpr auto Iter() noexcept { return this->Impl.Iter(); }
     FORCEINLINE constexpr auto CIter() const noexcept { return this->Impl.CIter(); }
+
+    FORCEINLINE constexpr SizeType ToIndex(ITERATOR It) const noexcept;
+    FORCEINLINE constexpr i64 ToWeakIndex(ITERATOR It) const noexcept;
 
     FORCEINLINE constexpr void Reserve(const SizeType Count) noexcept requires(TAllocator::IsStronglyAllocated()) { this->Impl.Reserve(Count + /*Terminator*/1); }
     FORCEINLINE constexpr void ReserveAdditionally(const SizeType Count) noexcept requires(TAllocator::IsStronglyAllocated()) { this->Impl.ReserveAdditionally(Count); }
@@ -271,7 +280,7 @@ public:
 
     template <TStringBaseAllocatorConcept UAllocator>
     NODISCARD
-    constexpr std::strong_ordering operator<=>(const TStringBase<TEncoding, UAllocator>& Other) noexcept { return this->SpaceShip(Other.begin(), Other.end()); }
+    constexpr std::strong_ordering operator<=>(const TStringBase<TEncoding, UAllocator>& Other) const noexcept { return this->SpaceShip(Other.begin(), Other.end()); }
     NODISCARD
     FORCEINLINE constexpr std::strong_ordering operator<=>(ConstPointer String) const noexcept { return this->SpaceShip(ConstIterator{String}, ConstIterator{String + Encoding::GetStringLength(String)}); }
     NODISCARD
@@ -335,6 +344,11 @@ public:
     FORCEINLINE auto operator+(this auto&& Self, const TStringBase<TEncoding, UAllocator>& Other) noexcept -> decltype(auto) requires(TStringBase::IsOwningString()) { return Self.AppendToNew(Other.begin(), Other.end()); }
     FORCEINLINE auto operator+(this auto&& Self, ConstPointer String) noexcept -> decltype(auto) requires(TStringBase::IsOwningString()) { return Self.AppendToNew(String); }
     FORCEINLINE auto operator+(this auto&& Self, T Rune) noexcept -> decltype(auto) requires(TStringBase::IsOwningString()) { return Self.AppendToNew(Rune); }
+
+    template <TStringBaseAllocatorConcept UAllocator>
+    FORCEINLINE auto operator+=(this auto&& Self, const TStringBase<TEncoding, UAllocator>& Other) noexcept -> decltype(auto) requires(Allocator::IsAllowedToPushItems()) { Self.Append(Other); return std::forward<decltype(Self)>(Self); }
+    FORCEINLINE auto operator+=(this auto&& Self, ConstPointer String) noexcept -> decltype(auto) requires(Allocator::IsAllowedToPushItems()) { Self.Append(String); return std::forward<decltype(Self)>(Self); }
+    FORCEINLINE auto operator+=(this auto&& Self, T Rune) noexcept -> decltype(auto) requires(Allocator::IsAllowedToPushItems()) { Self.Append(Rune); return std::forward<decltype(Self)>(Self); }
 
     //#
     //# Appends a POSIX path to this string following basic rules. This guarantees that there is a '/' between the
@@ -547,6 +561,15 @@ public:
     FORCEINLINE ConstIterator FindFirst(UIterator Begin, VIterator End) const noexcept { return TStringBase::FindFirst(this->begin(), this->end(), Begin, End); }
     FORCEINLINE ConstIterator FindFirst(T Rune) const noexcept { return TStringBase::FindFirst(this->begin(), this->end(), Rune); }
 
+    template <TStringBaseAllocatorConcept UAllocator>
+    FORCEINLINE i64 FindFirstIndex(const TStringBase<TEncoding, UAllocator>& Other) const noexcept { if (auto It { this->FindFirst(Other, Other) }; It == this->end()) { return INDEX_NONE; } else { return static_cast<i64>(this->ToIndex(It)); } }
+    FORCEINLINE i64 FindFirstIndex(ConstPointer String) const noexcept { if (auto It { this->FindFirst(String) }; It == this->end()) { return INDEX_NONE; } else { return static_cast<i64>(this->ToIndex(It)); } }
+    template <TIteratorConcept UIterator>
+    FORCEINLINE i64 FindFirstIndex(UIterator String, const SizeType Length) const noexcept { if (auto It { this->FindFirst(String, Length) }; It == this->end()) { return INDEX_NONE; } else { return static_cast<i64>(this->ToIndex(It)); } }
+    template <TIteratorConcept UIterator, TIteratorConcept VIterator> requires(TIteratorPairConcept<UIterator, VIterator>)
+    FORCEINLINE i64 FindFirstIndex(UIterator Begin, VIterator End) const noexcept { if (auto It { this->FindFirst(Begin, End) }; It == this->end()) { return INDEX_NONE; } else { return static_cast<i64>(this->ToIndex(It)); } }
+    FORCEINLINE i64 FindFirstIndex(T Rune) const noexcept { if (auto It { this->FindFirst(Rune) }; It == this->end()) { return INDEX_NONE; } else { return static_cast<i64>(this->ToIndex(It)); } }
+
     FORCEINLINE static ConstIterator FindFirst(ConstPointer Begin, const SizeType Length, ConstPointer Other) noexcept { return TStringBase::FindFirst(Begin, Length, Other, Encoding::GetStringLength(Other)); }
     template <TIteratorConcept UIterator, TIteratorConcept VIterator> requires(TIteratorPairConcept<UIterator, VIterator>)
     FORCEINLINE static ConstIterator FindFirst(ConstPointer Begin, const SizeType Length, UIterator OtherBegin, VIterator OtherEnd) noexcept { return TStringBase::FindFirst(Begin, Begin + Length, OtherBegin, OtherEnd); }
@@ -625,6 +648,14 @@ public:
     template <TIteratorConcept UIterator, TIteratorConcept VIterator> requires(TIteratorPairConcept<UIterator, VIterator>)
     FORCEINLINE ConstIterator FindLast(UIterator Begin, VIterator End) const noexcept { return TStringBase::FindLast(this->begin(), this->end(), Begin, End); }
     FORCEINLINE ConstIterator FindLast(T Rune) const noexcept { return TStringBase::FindLast(this->begin(), this->end(), Rune); }
+
+    template <TStringBaseAllocatorConcept UAllocator>
+    FORCEINLINE i64 FindLastIndex(const TStringBase<TEncoding, UAllocator>& Other) const noexcept { if (auto It { this->FindLast(Other) }; It == this->end()) { return INDEX_NONE; } else { return static_cast<i64>(this->ToIndex(It)); } }
+    FORCEINLINE i64 FindLastIndex(ConstPointer String) const noexcept { if (auto It { this->FindLast(String) }; It == this->end()) { return INDEX_NONE; } else { return static_cast<i64>(this->ToIndex(It)); } }
+    FORCEINLINE i64 FindLastIndex(TIteratorConcept auto String, const SizeType Length) const noexcept { if (auto It { this->FindLast(String, Length) }; It == this->end()) { return INDEX_NONE; } else { return static_cast<i64>(this->ToIndex(It)); } }
+    template <TIteratorConcept UIterator, TIteratorConcept VIterator> requires(TIteratorPairConcept<UIterator, VIterator>)
+    FORCEINLINE i64 FindLastIndex(UIterator Begin, VIterator End) const noexcept { if (auto It { this->FindLast(Begin, End) }; It == this->end()) { return INDEX_NONE; } else { return static_cast<i64>(this->ToIndex(It)); } }
+    FORCEINLINE i64 FindLastIndex(T Rune) const noexcept { if (auto It { this->FindLast(Rune) }; It == this->end()) { return INDEX_NONE; } else { return static_cast<i64>(this->ToIndex(It)); } }
 
     FORCEINLINE static ConstIterator FindLast(ITERATOR Begin, const SizeType Length, ConstPointer Other) noexcept { return TStringBase::FindLast(Begin, Length, Other, Encoding::GetStringLength(Other)); }
     FORCEINLINE static ConstIterator FindLast(ITERATOR Begin, const SizeType Length, ITERATOR OtherBegin, const SizeType OtherLength) noexcept requires(ITERATOR_CROSS(Begin, OtherBegin)) { return TStringBase::FindLast(Begin, Length, OtherBegin, OtherBegin + OtherLength); }
@@ -805,7 +836,7 @@ public:
     FORCEINLINE TStringBase<TEncoding, UAllocator> GetUpper() const noexcept;
 
     FORCEINLINE SizeType GetLineNumber(const SizeType Index) const noexcept { return this->GetLineNumber(this->Impl.GetDataPointer() + Index); }
-    FORCEINLINE SizeType GetLineNumber(const ConstIterator It) const noexcept;
+    FORCEINLINE SizeType GetLineNumber(ITERATOR It) const noexcept;
 
     template <typename TPredicate> requires(std::invocable<TPredicate, T> && std::is_void_v<std::invoke_result_t<TPredicate, T>>)
     void ForEach(const TPredicate& Predicate) noexcept requires(TAllocator::IsContentMutable());

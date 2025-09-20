@@ -9,7 +9,7 @@ namespace Jafg
 
 struct LDebugTraceCubeVisualParams final
 {
-    LColor Color;
+    Lal::LColor Color;
     /* Depending on the hardware, the max value may vary (but usually it's not more than 10). */
     u8 Thickness = 1;
 };

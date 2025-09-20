@@ -26,7 +26,7 @@ bool IsValidArgs(const Jafg::LCommandArgs& InArgs)
 
 } /* ~Namespace <Anonymous> */
 
-Jafg::LString Jafg::CliStatics::SafelyRemoveCommandPrefix(const LString& InText)
+LString Jafg::CliStatics::SafelyRemoveCommandPrefix(const LString& InText)
 {
     LString Out;
 
@@ -54,7 +54,7 @@ void Jafg::CliStatics::SafelyRemoveCommandPrefixInline(LString& InText)
     return;
 }
 
-Jafg::LString Jafg::CliStatics::SafelyAddCommandPrefix(const LString& InText)
+LString Jafg::CliStatics::SafelyAddCommandPrefix(const LString& InText)
 {
     LString Out;
 
@@ -75,7 +75,7 @@ void Jafg::CliStatics::SafelyAddCommandPrefixInline(LString& InText)
 {
     if (InText.StartsWith('/') == false)
     {
-        InText.AddAt(0, '/');
+        InText.AppendAt(0, '/');
     }
 
     check( InText.StartsWith('/') )
@@ -83,9 +83,9 @@ void Jafg::CliStatics::SafelyAddCommandPrefixInline(LString& InText)
     return;
 }
 
-Jafg::LString Jafg::CliStatics::GetCommandFromText(const LString& InText)
+LString Jafg::CliStatics::GetCommandFromText(const LString& InText)
 {
-    const i32 Space = InText.FindFirst(' ');
+    const i64 Space = InText.ToIndex(InText.FindFirst(' '));
 
     if (Space == INDEX_NONE)
     {
@@ -99,16 +99,16 @@ Jafg::LString Jafg::CliStatics::GetCommandFromText(const LString& InText)
     return Temp;
 }
 
-Jafg::LString Jafg::CliStatics::GetArgsFromText(const LString& InText)
+LString Jafg::CliStatics::GetArgsFromText(const LString& InText)
 {
-    const i32 Space = InText.FindFirst(' ');
+    const i64 Space = InText.ToIndex(InText.FindFirst(' '));
 
     if (Space == INDEX_NONE)
     {
         return { };
     }
 
-    if (InText.GetSize()-1 <= Space + 1)
+    if (InText.GetRuneCount() - 1 <= static_cast<u64>(Space + 1))
     {
         return { };
     }
@@ -120,11 +120,11 @@ Jafg::LCommandArgs Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine)
 {
     LCommandArgs Out;
 
-    LString Cur; Cur.Reserve(InCommandLine.GetSize());
-    i32 Cursor = INDEX_NONE;
+    LString Cur; Cur.Reserve(InCommandLine.GetRuneCount());
+    i64 Cursor = INDEX_NONE;
     bool bInString = false;
     char LastChar = 0;
-    while (++Cursor < InCommandLine.GetRuneCount())
+    while (static_cast<u64>(++Cursor) < InCommandLine.GetRuneCount())
     {
         const char CurChar = InCommandLine[Cursor];
         if (bInString)

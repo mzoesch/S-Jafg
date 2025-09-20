@@ -75,8 +75,8 @@ public:
     ENGINE_API void Draw(const LViewport& InViewport, const LEye& InEye) const;
     ENGINE_API void Free();
 
-    FORCEINLINE const LColor& GetBackgroundColor() const { return this->BackgroundColor; }
-    FORCEINLINE void SetBackgroundColor(const LColor& InColor) { this->BackgroundColor = InColor; }
+    FORCEINLINE const Lal::LColor& GetBackgroundColor() const { return this->BackgroundColor; }
+    FORCEINLINE void SetBackgroundColor(const Lal::LColor& InColor) { this->BackgroundColor = InColor; }
 
     FORCEINLINE TArray<LLoadedCubemap>& GetMutableMaps() { return this->Maps; }
     FORCEINLINE const TArray<LLoadedCubemap>& GetMaps() const { return this->Maps; }
@@ -86,7 +86,7 @@ public:
 
 private:
 
-    LColor BackgroundColor { LColor::Black };
+    Lal::LColor BackgroundColor { Lal::LColor::Black };
     TArray<LLoadedCubemap> Maps;
     TArray<LAstron> Astra;
     TOptional<u32> Vao;

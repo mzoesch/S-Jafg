@@ -9,8 +9,6 @@
 #include "Engine/ObjectClass.h"
 #include "Stats/Stats.h"
 #include "System/ConfigIo.h"
-#include "System/Finder.h"
-#include "System/Paths.h"
 
 namespace Jafg
 {
@@ -88,7 +86,7 @@ void PullConfigFromObject(LObjectClass* InClass)
     }
 
     const LPath CfgPath = Finder::GetUserPreferencesFile();
-    if (Paths::DoesFileExist(CfgPath) == false)
+    if (Finder::DoesFileExist(CfgPath) == false)
     {
         return;
     }
@@ -119,14 +117,14 @@ void PushConfigFromObject(const LObjectClass* InClass)
     }
 
     const LPath CfgPath = Finder::GetUserPreferencesFile();
-    Paths::EnsureFile(CfgPath);
+    Finder::EnsureFile(CfgPath);
 
     TArray<ConfigIo::Entry> Entries;
     for (LClassField& Field : InClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())
     {
         if (Field.Get.IsBound())
         {
-            Entries.Emplace(InClass->GetSpacedClassName(), Field.Identifier, Field.Get());
+            Entries.Emplace(InClass->GetSpacedClassName(), LString{Field.Identifier}, Field.Get());
         }
 
         continue;

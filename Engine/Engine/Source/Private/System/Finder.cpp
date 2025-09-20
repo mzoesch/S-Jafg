@@ -1,6 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "CoreAfx.h"
+
+#if LAL_WITH_LEGACY_FINDER
+
 #include "System/Finder.h"
 #include "Platform/PlatformMisc.h"
 #include "System/EnginePath.h"
@@ -420,3 +423,5 @@ TArray<LString> Finder::FindFilesRecursivelyByName(const LPath& InPath, const LS
 }
 
 } /* ~Namespace Jafg */
+
+#endif /* LAL_WITH_LEGACY_FINDER */

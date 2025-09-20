@@ -12,7 +12,6 @@
 #include "Engine/Carnifex.h"
 #include "Stats/Stats.h"
 #include "Platform/PlatformMisc.h"
-#include "System/Paths.h"
 #include "Engine/EngineRunnable.h"
 #if JAFG_WITH_FOREIGN_SUPPORT
     #if LAL_WITH_CLANG
@@ -647,7 +646,7 @@ void Jafg::LEngine::Browse(Private::LWorldContext& Context, const LString& Url) 
         return;
     }
 
-    if (const i32 Barrier { Url.FindFirst('?') }; Barrier == INDEX_NONE)
+    if (const i64 Barrier { Url.FindFirstIndex('?') }; Barrier == INDEX_NONE)
     {
         if (this->IsLevelRegistered(Url) == false)
         {
@@ -716,7 +715,7 @@ bool Jafg::LEngine::TravelContext(Private::LWorldContext& Context)
 
 Jafg::LLevel* Jafg::LEngine::GetLevelByInternalUrl(const LString& Url)
 {
-    if (const i32 Barrier = Url.FindFirst("?"); Barrier == INDEX_NONE)
+    if (const i64 Barrier = Url.FindFirstIndex("?"); Barrier == INDEX_NONE)
     {
         return this->RegisteredLevels.FindRef(Url);
     }
@@ -735,7 +734,7 @@ void Jafg::LEngine::RefetchPlugins(const TArray<LString>& InAdditionalPaths)
 
     for (const LString& AdditionalPath : InAdditionalPaths)
     {
-        this->FetchPlugins({AdditionalPath.GetBegin()});
+        this->FetchPlugins(LPath{AdditionalPath});
     }
 
     return;
@@ -833,7 +832,7 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(LLoadedPlugin* InP
     check( InPlugin )
 
     const LString CachedIdent = InPlugin->GetIdentifier();
-    const LString CachedPath  = InPlugin->GetAbsolutePath();
+    const LPath   CachedPath  = InPlugin->GetAbsolutePath();
 
     InPlugin->PrePareLibraryClose(InReason);
 
@@ -855,8 +854,10 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(LLoadedPlugin* InP
     InPlugin->ObjectContext->TearDownContext();
     InPlugin->ObjectContext.Reset();
 
-    const i32 Removed { Private::GObjectRegistry->RemovePackagesOf(InPlugin->GetHandle()) };
-    LOG_VERBOSE(LogForeign, "Removed [{}] registered packages from [{}].", Removed, CachedIdent)
+    {
+        const i32 Removed { Private::GObjectRegistry->RemovePackagesOf(InPlugin->GetHandle()) };
+        LOG_VERBOSE(LogForeign, "Removed [{}] registered packages from [{}].", Removed, CachedIdent)
+    }
 
     const EPluginLoadReturnCode::Type Rc = InPlugin->CloseLibrary(InReason);
 
@@ -865,7 +866,7 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(LLoadedPlugin* InP
         LOG_INFO(LogForeign, "Successfully unloaded plugin [{}] from [{}].", CachedIdent, CachedPath )
     }
 
-    if (const i32 Removed = this->LoadedPlugins.RemoveByPredicate([&CachedPath](const LLoadedPlugin& LoadedPlugin) -> bool
+    if (const u64 Removed = this->LoadedPlugins.RemoveByPredicate([&CachedPath](const LLoadedPlugin& LoadedPlugin) -> bool
     {
         return LoadedPlugin.GetAbsolutePath() == CachedPath.ToPtr();
     }); Removed != 1)
@@ -910,7 +911,7 @@ void Jafg::LEngine::FetchPlugins(const LPath& InPath)
             continue;
         }
 
-        if (this->FetchPlugin({File.GetBegin()}))
+        if (this->FetchPlugin(LPath{File.begin(), File.end()}))
         {
             ++Fetched;
         }
@@ -928,11 +929,11 @@ void Jafg::LEngine::FetchPlugins(const LPath& InPath)
 
 bool Jafg::LEngine::FetchPlugin(LPath&& InPath)
 {
-    checkCode( Paths::CheckFile(InPath) )
+    checkCode( Finder::CheckFile(InPath) )
 
     using json = nlohmann::json;
 
-    const json PluginJson = json::parse(Paths::ReadFile(InPath).ToPtr());
+    const json PluginJson = json::parse(Finder::ReadFile(InPath).ToPtr());
 
     if (PluginJson.contains("Identifier") == false)
     {
@@ -998,7 +999,7 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(const LFetchedPl
 
     if (InFetchedPlugin.Bin.IsAbsolute())
     {
-        if (Paths::DoesFileExist(InFetchedPlugin.Bin) == false)
+        if (Finder::DoesFileExist(InFetchedPlugin.Bin) == false)
         {
             return EPluginLoadReturnCode::NoBin;
         }
@@ -1008,10 +1009,10 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(const LFetchedPl
     else
     {
         PathToBin = InFetchedPlugin.AbsolutePath;
-        PathToBin.PopSubPath();
+        PathToBin.ToParent();
         PathToBin /= InFetchedPlugin.Bin;
 
-        if (Paths::DoesFileExist(PathToBin) == false)
+        if (Finder::DoesFileExist(PathToBin) == false)
         {
             return EPluginLoadReturnCode::NoBin;
         }

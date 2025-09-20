@@ -83,8 +83,8 @@ public:
     FORCEINLINE u32  GetMaxPreviewLines() const { return GetDefault<WConsoleScreen>()->MaxPreviewLines; }
     FORCEINLINE f64  GetPreviewMessageLifetime() const { return GetDefault<WConsoleScreen>()->PreviewMessageLifetime; }
     FORCEINLINE u32  GetMaxIntellisensePredictions() const { return GetDefault<WConsoleScreen>()->MaxIntellisensePredictions; }
-    FORCEINLINE const LColor& GetIntellisenseTint() const { return GetDefault<WConsoleScreen>()->IntellisenseTint; }
-    FORCEINLINE const LColor& GetIntellisenseHighlightTint() const { return GetDefault<WConsoleScreen>()->IntellisenseHighlightTint; }
+    FORCEINLINE const Lal::LColor& GetIntellisenseTint() const { return GetDefault<WConsoleScreen>()->IntellisenseTint; }
+    FORCEINLINE const Lal::LColor& GetIntellisenseHighlightTint() const { return GetDefault<WConsoleScreen>()->IntellisenseHighlightTint; }
 
     //# The current cursor of the history. Has nothing to do with the actual history array.
     FORCEINLINE i32  GetHistoryCursor() const { return this->HistoryCursor; }
@@ -135,10 +135,10 @@ private:
     u32 MaxIntellisensePredictions { 10 };
 
     CLASS_FIELD(Config, DefaultOnly)
-    LColor IntellisenseTint { LColor::LightSlateGray };
+    Lal::LColor IntellisenseTint { Lal::LColor::LightSlateGray };
 
     CLASS_FIELD(Config, DefaultOnly)
-    LColor IntellisenseHighlightTint { LColor::DarkSlateGray };
+    Lal::LColor IntellisenseHighlightTint { Lal::LColor::DarkSlateGray };
 
     //#
     //# The cursor of the history from back to front.

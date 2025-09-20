@@ -3,7 +3,7 @@
 #include "CoreAfx.h"
 #include "User/Input/InputTypes.h"
 
-Jafg::LString Jafg::EKeys::ToString(const LKey Key)
+LString Jafg::EKeys::ToString(const LKey Key)
 {
     switch (Key)
     {

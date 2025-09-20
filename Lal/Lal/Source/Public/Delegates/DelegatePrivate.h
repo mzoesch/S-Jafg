@@ -391,3 +391,4 @@ template <typename RetTy, typename... ParamsTy>
 struct Lal::TArrayBaseAllowTrivialMemoryBufferMove<Jafg::TFunction<RetTy(ParamsTy...)>> : Lal::TrueType { };
 
 static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<Jafg::TMulticastDelegate<int()>>);
+static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<Jafg::TFunction<int()>>);

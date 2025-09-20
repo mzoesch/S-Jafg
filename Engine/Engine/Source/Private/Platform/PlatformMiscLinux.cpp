@@ -3,26 +3,24 @@
 #if PLATFORM_LINUX
 
 #include "Platform/PlatformMisc.h"
-#include "System/Path.h"
-#include "System/Paths.h"
 
 namespace
 {
 
 } /* ~Namespace <Anonymous> */
 
-Jafg::LPath Jafg::PlatformMisc::GetEngineRootDirImpl()
+LPath Jafg::PlatformMisc::GetEngineRootDirImpl()
 {
     LPath RealRootDir { PlatformMisc::GetRealEngineRootDir() };
 
     while (RealRootDir.IsEmpty() == false)
     {
-        if (Paths::DoesFileExist(RealRootDir / "jafg.jafgworkspace"))
+        if (Finder::DoesFileExist(RealRootDir / "jafg.jafgworkspace"))
         {
             break;
         }
 
-        RealRootDir.PopSubPath();
+        RealRootDir.ToParent();
 
         continue;
     }
@@ -32,21 +30,22 @@ Jafg::LPath Jafg::PlatformMisc::GetEngineRootDirImpl()
     return RealRootDir;
 }
 
-Jafg::LPath Jafg::PlatformMisc::GetRealEngineRootDirImpl()
+LPath Jafg::PlatformMisc::GetRealEngineRootDirImpl()
 {
     char Buffer[LAL_PLATFORM_MAX_PATH] = { 0 };
     const i64 Ret = readlink("/proc/self/exe", Buffer, LAL_PLATFORM_MAX_PATH);
     if (Ret == -1)
     {
-        panic("Failed to read the symbolic link.");
+        panic("Failed to read the symbolic link.")
     }
 
     Buffer[Ret - 1] = '\0';
 
     const std::string FromBuffer = Buffer;
     const std::string::size_type Position = FromBuffer.find_last_of('/');
-    LPath Path = LPath(FromBuffer.substr(0, Position).c_str());
-    Path.Normalize();
+    LPath Path = LPath{FromBuffer.substr(0, Position).c_str()};
+    Path.ToPosix();
+    check( Path.IsPosix() )
 
     return Path;
 }

@@ -122,14 +122,14 @@ FORCEINLINE void Deserialize<LString>(LString* Destination, const LString& InVal
 }
 
 template <>
-FORCEINLINE void Deserialize<LColor>(LColor* Destination, const LString& InValue)
+FORCEINLINE void Deserialize<Lal::LColor>(Lal::LColor* Destination, const LString& InValue)
 {
     checkSlow( Destination )
 
     jassert( InValue.StartsWith("0x") )
     jassert( InValue.GetRuneCount() == 10 )
 
-    *Destination = LColor::Transparent;
+    *Destination = Lal::LColor::Transparent;
 
     auto GetValue
     {
@@ -258,7 +258,7 @@ FORCEINLINE LString Serialize(const TArray<TField>& InValue)
 }
 
 template <>
-FORCEINLINE LString Serialize<LColor>(const LColor& InValue)
+FORCEINLINE LString Serialize<Lal::LColor>(const Lal::LColor& InValue)
 {
     return LString::SprintF("0x{:02X}{:02X}{:02X}{:02X}", InValue.R, InValue.G, InValue.B, InValue.A);
 }

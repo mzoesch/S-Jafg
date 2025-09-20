@@ -20,13 +20,13 @@ public:
 
     ENGINE_API void Draw
     (
-        const LViewport& Context,
-        const LVector2&  Size,
-        const LVector2&  TopLeft,
-        const LColor&    Tint,
-        const f32        OutlineThickness,
-        const LColor&    OutlineTint,
-        const LVector4&  Radii
+        const LViewport&   Context,
+        const LVector2&    Size,
+        const LVector2&    TopLeft,
+        const Lal::LColor& Tint,
+        const f32          OutlineThickness,
+        const Lal::LColor& OutlineTint,
+        const LVector4&    Radii
     ) const;
 
 private:

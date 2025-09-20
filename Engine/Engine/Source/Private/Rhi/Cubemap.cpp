@@ -24,7 +24,7 @@ void Jafg::LCubemap::Free()
 
     if (this->Paths.GetSize() > 0)
     {
-        LOG_VERBOSE(LogTextureSubsystem, "Shredding cubemap [{}].", this->Paths[0].GetRelativeUnresolvedPath())
+        LOG_VERBOSE(LogTextureSubsystem, "Shredding cubemap [{}].", this->Paths[0])
     }
     else
     {
@@ -99,7 +99,7 @@ void Jafg::LCubemap::LoadImpl()
     check( this->Paths.GetSize() == ECubemap::Size )
     check( this->IsValid() == false )
 
-    LOG_VERBOSE(LogRhi, "Uploading cubemap [{}].", this->Paths[0].GetRelativeUnresolvedPath())
+    LOG_VERBOSE(LogRhi, "Uploading cubemap [{}].", this->Paths[0])
 
     const JUserPreferences* Prefs = GetDefault<JUserPreferences>();
 
@@ -121,7 +121,7 @@ void Jafg::LCubemap::LoadImpl()
     /* Back */
     {
         ::stbi_set_flip_vertically_on_load(false);
-        u8* Data { stbi_load(this->Paths[ECubemap::Back].ResolveAbsolutePath(*Prefs).ToPtr(), &W, &H, &C, 0) };
+        u8* Data { stbi_load(this->Paths[ECubemap::Back].ResolvePath().ToPtr(), &W, &H, &C, 0) };
         jassert( Data )
         if (C == 4)
         {
@@ -139,7 +139,7 @@ void Jafg::LCubemap::LoadImpl()
     /* Front */
     {
         ::stbi_set_flip_vertically_on_load(false);
-        u8* Data { stbi_load(this->Paths[ECubemap::Front].ResolveAbsolutePath(*Prefs).ToPtr(), &W, &H, &C, 0) };
+        u8* Data { stbi_load(this->Paths[ECubemap::Front].ResolvePath().ToPtr(), &W, &H, &C, 0) };
         jassert( Data )
         if (C == 4)
         {
@@ -157,7 +157,7 @@ void Jafg::LCubemap::LoadImpl()
     /* Top */
     {
         ::stbi_set_flip_vertically_on_load(false);
-        u8* Data { stbi_load(this->Paths[ECubemap::Top].ResolveAbsolutePath(*Prefs).ToPtr(), &W, &H, &C, 0) };
+        u8* Data { stbi_load(this->Paths[ECubemap::Top].ResolvePath().ToPtr(), &W, &H, &C, 0) };
         jassert( Data )
         const Smart::TUnique Rotated { Texture2::RotateCW(Data, W, H, C) };
         if (C == 4)
@@ -176,7 +176,7 @@ void Jafg::LCubemap::LoadImpl()
     /* Bottom */
     {
         ::stbi_set_flip_vertically_on_load(false);
-        u8* Data { stbi_load(this->Paths[ECubemap::Bottom].ResolveAbsolutePath(*Prefs).ToPtr(), &W, &H, &C, 0) };
+        u8* Data { stbi_load(this->Paths[ECubemap::Bottom].ResolvePath().ToPtr(), &W, &H, &C, 0) };
         jassert( Data )
         const Smart::TUnique Rotated { Texture2::RotateCCW(Data, W, H, C) };
         if (C == 4)
@@ -195,7 +195,7 @@ void Jafg::LCubemap::LoadImpl()
     /* Right */
     {
         ::stbi_set_flip_vertically_on_load(false);
-        u8* Data { stbi_load(this->Paths[ECubemap::Right].ResolveAbsolutePath(*Prefs).ToPtr(), &W, &H, &C, 0) };
+        u8* Data { stbi_load(this->Paths[ECubemap::Right].ResolvePath().ToPtr(), &W, &H, &C, 0) };
         jassert( Data )
         if (C == 4)
         {
@@ -213,7 +213,7 @@ void Jafg::LCubemap::LoadImpl()
     /* Left */
     {
         ::stbi_set_flip_vertically_on_load(false);
-        u8* Data { stbi_load(this->Paths[ECubemap::Left].ResolveAbsolutePath(*Prefs).ToPtr(), &W, &H, &C, 0) };
+        u8* Data { stbi_load(this->Paths[ECubemap::Left].ResolvePath().ToPtr(), &W, &H, &C, 0) };
         jassert( Data )
         if (C == 4)
         {

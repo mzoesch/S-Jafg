@@ -482,7 +482,7 @@ void Jafg::LSurfaceGlfw3::SetMouseCursor(const EMouseCursor::Type InCursor)
     return;
 }
 
-Jafg::TIntVector2<int> Jafg::LSurfaceGlfw3::GetDimensions() const
+LIntVector2 Jafg::LSurfaceGlfw3::GetDimensions() const
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
@@ -494,7 +494,7 @@ Jafg::TIntVector2<int> Jafg::LSurfaceGlfw3::GetDimensions() const
      */
     i32 Width, Height;
     glfwGetWindowSize(this->Handle, &Width, &Height);
-    return LIntVector2(Width, Height);
+    return LIntVector2{Width, Height};
 }
 
 bool Jafg::LSurfaceGlfw3::CanVSync() const

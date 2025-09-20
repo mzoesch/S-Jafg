@@ -29,7 +29,7 @@ bool Jafg::LCliType::CanParse(const LCommandArgs& Args, i32* Cursor) const
         return this->OnParseTypeDelegate.Invoke(Args, Cursor);
     }
 
-    const LCliType* CliType { GEngine->GetCommandLineInterface()->GetTypeAsserted(this->GetUuid()) };
+    const LCliType* CliType { GEngine->GetCommandLineInterface()->GetTypeAsserted(*this) };
 
     if (this == CliType)
     {
@@ -40,14 +40,14 @@ bool Jafg::LCliType::CanParse(const LCommandArgs& Args, i32* Cursor) const
     return CliType->OnParseTypeDelegate.Invoke(Args, Cursor);
 }
 
-TArray<Jafg::LString> Jafg::LCliType::Suggest(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) const
+TArray<LString> Jafg::LCliType::Suggest(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) const
 {
     if (this->OnSuggestDelegate.IsBound())
     {
         return this->OnSuggestDelegate.Invoke(Args, Cursor, MaxSuggestions);
     }
 
-    const LCliType* CliType { GEngine->GetCommandLineInterface()->GetType(this->GetUuid()) };
+    const LCliType* CliType { GEngine->GetCommandLineInterface()->GetType(*this) };
 
     if (CliType == nullptr)
     {

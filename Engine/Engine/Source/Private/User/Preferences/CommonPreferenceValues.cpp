@@ -21,12 +21,12 @@ void Jafg::LPreferenceValue_Scalar::ResetToInitial()
 {
 }
 
-Jafg::LString Jafg::LPreferenceValue_Scalar::Fmt_Raw(const double Value)
+LString Jafg::LPreferenceValue_Scalar::Fmt_Raw(const double Value)
 {
     return LString::SprintF("{}", Value);
 }
 
-Jafg::LString Jafg::LPreferenceValue_Scalar::Fmt_ZeroToOneAsPercent(const double Value)
+LString Jafg::LPreferenceValue_Scalar::Fmt_ZeroToOneAsPercent(const double Value)
 {
     if (Value < 0.0 || Value > 1.0)
     {
@@ -34,7 +34,7 @@ Jafg::LString Jafg::LPreferenceValue_Scalar::Fmt_ZeroToOneAsPercent(const double
         return "ERROR";
     }
 
-    return LString::SprintF("{}%", static_cast<i32>(Maths::Round(JAFG_TO_PERCENT * Value)));
+    return LString::SprintF("{}%", static_cast<i32>(Maths::Round(LAL_TO_PERCENT * Value)));
 }
 
 void Jafg::LPreferenceValue_Scalar::BuildDefault(const LPreference* Self, WParentBase* Target)

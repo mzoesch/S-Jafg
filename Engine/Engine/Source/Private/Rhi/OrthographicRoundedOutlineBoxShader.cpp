@@ -84,13 +84,13 @@ void Jafg::LOrthographicRoundedOutlineBoxShader::OnFree()
 
 void Jafg::LOrthographicRoundedOutlineBoxShader::Draw
 (
-    const LViewport& Context,
-    const LVector2&  Size,
-    const LVector2&  TopLeft,
-    const LColor&    Tint,
-    const f32        OutlineThickness,
-    const LColor&    OutlineTint,
-    const LVector4&  Radii
+    const LViewport&   Context,
+    const LVector2&    Size,
+    const LVector2&    TopLeft,
+    const Lal::LColor& Tint,
+    const f32          OutlineThickness,
+    const Lal::LColor& OutlineTint,
+    const LVector4&    Radii
 ) const
 {
     check( this->IsValid() )

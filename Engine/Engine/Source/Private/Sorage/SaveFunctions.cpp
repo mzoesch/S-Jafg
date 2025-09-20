@@ -1,30 +1,28 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Storage/SaveFunctions.h"
-#include "Containers/MyString.h"
-#include "System/Paths.h"
 #include "sqlite3.h"
 
 #define STORAGE_NAME "sqlite3.db"
 
-#define EMIT_ERROR_SQL(InDescription)                                                            \
-    if (OutError)                                                                                \
-    {                                                                                            \
-        *OutError = Jafg::LString::SprintF("SQL {}: [{}].", InDescription, sqlite3_errmsg(Con)); \
-    }                                                                                            \
-    else                                                                                         \
-    {                                                                                            \
-        LOG_ERROR(LogStorage, "SQL {}: [{}].", InDescription, sqlite3_errmsg(Con));              \
+#define EMIT_ERROR_SQL(InDescription)                                                        \
+    if (OutError)                                                                            \
+    {                                                                                        \
+        *OutError = ::LString::SprintF("SQL {}: [{}].", InDescription, sqlite3_errmsg(Con)); \
+    }                                                                                        \
+    else                                                                                     \
+    {                                                                                        \
+        LOG_ERROR(LogStorage, "SQL {}: [{}].", InDescription, sqlite3_errmsg(Con));          \
     }
 
-#define EMIT_ERROR(Format, ...)                                    \
-    if (OutError)                                                  \
-    {                                                              \
-        *OutError = Jafg::LString::SprintF(Format, ##__VA_ARGS__); \
-    }                                                              \
-    else                                                           \
-    {                                                              \
-        LOG_ERROR(LogStorage, Format, ##__VA_ARGS__)               \
+#define EMIT_ERROR(Format, ...)                                \
+    if (OutError)                                              \
+    {                                                          \
+        *OutError = ::LString::SprintF(Format, ##__VA_ARGS__); \
+    }                                                          \
+    else                                                       \
+    {                                                          \
+        LOG_ERROR(LogStorage, Format, ##__VA_ARGS__)           \
     }
 
 namespace
@@ -37,13 +35,13 @@ struct LSql3Con final
     {
     }
 
-    LSql3Con(const Jafg::LPath& InPath, Jafg::LString* OutError /* = nullptr */)
+    LSql3Con(const LPath& InPath, LString* OutError /* = nullptr */)
     {
         if (const int Rc = sqlite3_open((InPath / STORAGE_NAME).ToPtr(), &this->Db); Rc)
         {
             if (OutError)
             {
-                *OutError = Jafg::LString::SprintF("Failed to open database. Reason: [{}].", sqlite3_errmsg(Db));
+                *OutError = LString::SprintF("Failed to open database. Reason: [{}].", sqlite3_errmsg(Db));
             }
             else
             {
@@ -139,13 +137,13 @@ private:
 
 bool Jafg::Saves::CreateNewSave(const LPath& InPath, const LMinimalMetaData& Meta, LString* OutError /* = nullptr */)
 {
-    if (Paths::DoesDirExist(InPath))
+    if (Finder::DoesDirectoryExist(InPath))
     {
         EMIT_ERROR("Directory already exists: [{}]", InPath)
         return false;
     }
 
-    Paths::CreateFileSlow(InPath / STORAGE_NAME, true);
+    Finder::CreateFile(InPath / STORAGE_NAME, true);
 
     LSql3Con Con(InPath, OutError);
     if (Con.IsValid() == false)
@@ -184,7 +182,7 @@ bool Jafg::Saves::CreateNewSave(const LPath& InPath, const LMinimalMetaData& Met
     return true;
 }
 
-Jafg::TOptional<Jafg::LString> Jafg::Saves::GetDisplayName(const LPath& InPath, LString* OutError /* = nullptr */)
+Jafg::TOptional<LString> Jafg::Saves::GetDisplayName(const LPath& InPath, LString* OutError /* = nullptr */)
 {
     LSql3Con Con(InPath, OutError);
     if (Con.IsValid() == false)

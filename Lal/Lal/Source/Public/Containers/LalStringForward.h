@@ -8,13 +8,21 @@
 namespace Lal
 {
 
+namespace Private
+{
+
+class LStringBase { };
+
+} /* ~Namespace Private */
+
 /*----------------------------------------------------------------------------
     Concepts.
 ----------------------------------------------------------------------------*/
 
 template <typename T>
-concept TStringBaseConcept = requires
+concept TStringBaseConcept = std::is_base_of_v<Private::LStringBase, T> && requires
 {
+    typename T::Encoding;
     typename T::Allocator;
     typename T::T;
     typename T::SizeType;

@@ -55,7 +55,7 @@ public:
 
                virtual i32  GetWidth() const override { return this->GetDimensions().X; }
                virtual i32  GetHeight() const override { return this->GetDimensions().Y; }
-    ENGINE_API virtual auto GetDimensions() const -> TIntVector2<i32> override;
+    ENGINE_API virtual auto GetDimensions() const -> LIntVector2 override;
 
     ENGINE_API  virtual bool CanVSync() const override;
     ENGINE_API  virtual void SetVSync(const bool bEnabled) override;

@@ -53,13 +53,13 @@ FORCEINLINE constexpr bool IsBottom(const Type InAlign) noexcept { return InAlig
 
 struct LTextBoxBrush : public LBoxBrush
 {
-    LColor TextColor { LColor::White };
-    f32    TextScale { 1.0f };
+    Lal::LColor TextColor { Lal::LColor::White };
+    f32 TextScale { 1.0f };
     ETextHAlign::Type TextHAlign { ETextHAlign::Left };
     ETextVAlign::Type TextVAlign { ETextVAlign::Top };
     bool bRespectContentHeight { false };
 
-    FORCEINLINE constexpr LTextBoxBrush& TextColorRet(const LColor& InColor) noexcept { this->TextColor = InColor; return *this; }
+    FORCEINLINE constexpr LTextBoxBrush& TextColorRet(const Lal::LColor& InColor) noexcept { this->TextColor = InColor; return *this; }
     FORCEINLINE constexpr LTextBoxBrush& TextScaleRet(const f32 InScale) noexcept { this->TextScale = InScale; return *this; }
     FORCEINLINE constexpr LTextBoxBrush& TextHAlignRet(const ETextHAlign::Type InAlign) noexcept { this->TextHAlign = InAlign; return *this; }
     FORCEINLINE constexpr LTextBoxBrush& TextVAlignRet(const ETextVAlign::Type InAlign) noexcept { this->TextVAlign = InAlign; return *this; }

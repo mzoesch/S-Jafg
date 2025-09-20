@@ -20,10 +20,10 @@ struct LScrollRegionBrush : public LRegionBrush
     //# Requires that #bAlwaysShowHScrollbar is false.
     bool bAlwaysHideHScrollbar { false };
 
-    LColor VBackgroundTint { LColor::Black };
-    LColor VTint { LColor::White };
-    LColor HBackgroundTint { LColor::Black };
-    LColor HTint { LColor::White };
+    Lal::LColor VBackgroundTint { Lal::LColor::Black };
+    Lal::LColor VTint { Lal::LColor::White };
+    Lal::LColor HBackgroundTint { Lal::LColor::Black };
+    Lal::LColor HTint { Lal::LColor::White };
 
     //#
     //# The padding from the top right of the vertical scroll bar.
@@ -132,10 +132,10 @@ public:
         bool bAlwaysShowHScrollbar { false };
         bool bAlwaysHideHScrollbar { false };
 
-        LColor VBackgroundTint { LColor::Black };
-        LColor VTint { LColor::White };
-        LColor HBackgroundTint { LColor::Black };
-        LColor HTint { LColor::White };
+        Lal::LColor VBackgroundTint { Lal::LColor::Black };
+        Lal::LColor VTint { Lal::LColor::White };
+        Lal::LColor HBackgroundTint { Lal::LColor::Black };
+        Lal::LColor HTint { Lal::LColor::White };
 
         LVector2 VScrollBarPadding { 0.0f };
         f32 VScrollBarWidth { 5.0f };
@@ -188,14 +188,14 @@ public:
     FORCEINLINE constexpr void SetAlwaysShowHScrollbar(const bool InValue) noexcept { this->Brush.bAlwaysShowHScrollbar = InValue; }
     FORCEINLINE constexpr void SetAlwaysHideHScrollbar(const bool InValue) noexcept { this->Brush.bAlwaysHideHScrollbar = InValue; }
 
-    FORCEINLINE constexpr LColor GetVBackgroundTint() const noexcept { return this->Brush.VBackgroundTint; }
-    FORCEINLINE constexpr LColor GetVTint() const noexcept { return this->Brush.VTint; }
-    FORCEINLINE constexpr LColor GetHBackgroundTint() const noexcept { return this->Brush.HBackgroundTint; }
-    FORCEINLINE constexpr LColor GetHTint() const noexcept { return this->Brush.HTint; }
-    FORCEINLINE constexpr void SetVBackgroundTint(const LColor& InValue) noexcept { this->Brush.VBackgroundTint = InValue; }
-    FORCEINLINE constexpr void SetVTint(const LColor& InValue) noexcept { this->Brush.VTint = InValue; }
-    FORCEINLINE constexpr void SetHBackgroundTint(const LColor& InValue) noexcept { this->Brush.HBackgroundTint = InValue; }
-    FORCEINLINE constexpr void SetHTint(const LColor& InValue) noexcept { this->Brush.HTint = InValue; }
+    FORCEINLINE constexpr Lal::LColor GetVBackgroundTint() const noexcept { return this->Brush.VBackgroundTint; }
+    FORCEINLINE constexpr Lal::LColor GetVTint() const noexcept { return this->Brush.VTint; }
+    FORCEINLINE constexpr Lal::LColor GetHBackgroundTint() const noexcept { return this->Brush.HBackgroundTint; }
+    FORCEINLINE constexpr Lal::LColor GetHTint() const noexcept { return this->Brush.HTint; }
+    FORCEINLINE constexpr void SetVBackgroundTint(const Lal::LColor& InValue) noexcept { this->Brush.VBackgroundTint = InValue; }
+    FORCEINLINE constexpr void SetVTint(const Lal::LColor& InValue) noexcept { this->Brush.VTint = InValue; }
+    FORCEINLINE constexpr void SetHBackgroundTint(const Lal::LColor& InValue) noexcept { this->Brush.HBackgroundTint = InValue; }
+    FORCEINLINE constexpr void SetHTint(const Lal::LColor& InValue) noexcept { this->Brush.HTint = InValue; }
 
     FORCEINLINE constexpr LVector2 GetVScrollBarPadding() const noexcept { return this->Brush.VScrollBarPadding; }
     FORCEINLINE constexpr f32 GetVScrollBarWidth() const noexcept { return this->Brush.VScrollBarWidth; }

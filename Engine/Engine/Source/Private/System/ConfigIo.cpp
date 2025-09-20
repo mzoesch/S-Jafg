@@ -1,30 +1,29 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "System/ConfigIo.h"
-#include "System/Paths.h"
 #include "Async/TaskUtility.h"
 
 namespace
 {
 
-void GoToNextLine(const Jafg::LString& InContentF, LSize* Cursor);
+void GoToNextLine(const LString& InContentF, LSize* Cursor);
 //#
 //# Given the current cursor position, find the first non whitespace / tab character in this line
 //# or the next meaningful line (if this line is not meaningful). That is also not a comment
 //# character or only contains whitespace / tab characters.
 //#
-void GoToThisLineStart(const Jafg::LString& InContentF, LSize* Cursor);
-auto FindSection(const Jafg::LString& InContentF, const Jafg::LStringView& InSection) -> Jafg::TOptional<LSize>;
+void GoToThisLineStart(const LString& InContentF, LSize* Cursor);
+auto FindSection(const LString& InContentF, const LStringView& InSection) -> Jafg::TOptional<LSize>;
 //#
 //# Find the specified key in the specified section (where the cursor is currently positioned). Searches
 //# until the key is found or the end of the section is reached.
 //#
-auto FindKey(const Jafg::LString& InContentF, const LSize& InCursor, const Jafg::LStringView& InKey) -> Jafg::TOptional<LSize>;
-auto FindKeyValue(const Jafg::LString& InContentF, const LSize& InCursor, const Jafg::LStringView& InKey) -> Jafg::TOptional<Jafg::LStringView>;
-bool Serialize(Jafg::LString* ContentF, const Jafg::LStringView& InSection, const Jafg::LStringView& InKey, const Jafg::LStringView& InValue);
-auto Deserialize(const Jafg::LString& InContentF, const Jafg::LStringView& InSection, const Jafg::LStringView& InKey) -> Jafg::TOptional<Jafg::LStringView>;
+auto FindKey(const LString& InContentF, const LSize& InCursor, const LStringView& InKey) -> Jafg::TOptional<LSize>;
+auto FindKeyValue(LString& InContentF, const LSize& InCursor, const LStringView& InKey) -> Jafg::TOptional<LMutableStringView>;
+bool Serialize(LString* ContentF, const LStringView& InSection, const LStringView& InKey, const LStringView& InValue);
+auto Deserialize(LString& InContentF, const LStringView& InSection, const LStringView& InKey) -> Jafg::TOptional<LMutableStringView>;
 
-void GoToNextLine(const Jafg::LString& InContentF, LSize* Cursor)
+void GoToNextLine(const LString& InContentF, LSize* Cursor)
 {
     checkSlow( Cursor )
 
@@ -43,7 +42,7 @@ void GoToNextLine(const Jafg::LString& InContentF, LSize* Cursor)
     return;
 }
 
-void GoToThisLineStart(const Jafg::LString& InContentF, LSize* Cursor)
+void GoToThisLineStart(const LString& InContentF, LSize* Cursor)
 {
     checkSlow( Cursor )
 
@@ -73,7 +72,7 @@ void GoToThisLineStart(const Jafg::LString& InContentF, LSize* Cursor)
     return;
 }
 
-void GoToNextLineStart(const Jafg::LString& InContentF, LSize* Cursor)
+void GoToNextLineStart(const LString& InContentF, LSize* Cursor)
 {
     ::GoToNextLine(InContentF, Cursor);
     ::GoToThisLineStart(InContentF, Cursor);
@@ -81,11 +80,11 @@ void GoToNextLineStart(const Jafg::LString& InContentF, LSize* Cursor)
     return;
 }
 
-Jafg::TOptional<LSize> FindSection(const Jafg::LString& InContentF, const Jafg::LStringView& InSection)
+Jafg::TOptional<LSize> FindSection(const LString& InContentF, const LStringView& InSection)
 {
     using namespace Jafg;
 
-    LSize Cursor = 0;
+    LSize Cursor { 0 };
     while (InContentF.IsValidIndex(Cursor))
     {
         ::GoToThisLineStart(InContentF, &Cursor);
@@ -129,8 +128,7 @@ Jafg::TOptional<LSize> FindSection(const Jafg::LString& InContentF, const Jafg::
             }
 
             check( InContentF[Cursor] == ']' )
-            const LStringView Section = InContentF.Sub<LStringView>(Start, Cursor - Start);
-            if (Section == InSection)
+            if (LStringView{InContentF.begin() + Start, InContentF.begin() + Cursor} == InSection)
             {
                 return Start - 1;
             }
@@ -142,7 +140,7 @@ Jafg::TOptional<LSize> FindSection(const Jafg::LString& InContentF, const Jafg::
     return { };
 }
 
-Jafg::TOptional<LSize> FindKey(const Jafg::LString& InContentF, const LSize& InCursor, const Jafg::LStringView& InKey)
+Jafg::TOptional<LSize> FindKey(const LString& InContentF, const LSize& InCursor, const LStringView& InKey)
 {
     checkCode
     (
@@ -168,7 +166,7 @@ Jafg::TOptional<LSize> FindKey(const Jafg::LString& InContentF, const LSize& InC
             return { };
         }
 
-        if (LString::StartsWith(InContentF.GetBegin() + Cursor, InContentF.GetEnd(), InKey.GetBegin(), InKey.GetEnd()) == false)
+        if (LString::StartsWith(InContentF.begin() + Cursor, InContentF.end(), InKey.begin(), InKey.end()) == false)
         {
             ::GoToNextLineStart(InContentF, &Cursor);
             continue;
@@ -176,7 +174,7 @@ Jafg::TOptional<LSize> FindKey(const Jafg::LString& InContentF, const LSize& InC
 
         const LSize OutCandidate = Cursor;
 
-        Cursor += InKey.GetSize();
+        Cursor += InKey.GetRuneCount();
         if (InContentF.IsValidIndex(Cursor) == false)
         {
             return { };
@@ -198,7 +196,7 @@ Jafg::TOptional<LSize> FindKey(const Jafg::LString& InContentF, const LSize& InC
     }
 }
 
-Jafg::TOptional<Jafg::LStringView> FindKeyValue(const Jafg::LString& InContentF, const LSize& InCursor, const Jafg::LStringView& InKey)
+Jafg::TOptional<LMutableStringView> FindKeyValue(LString& InContentF, const LSize& InCursor, const LStringView& InKey)
 {
     Jafg::TOptional<LSize> Key = FindKey(InContentF, InCursor, InKey);
     if (!Key)
@@ -207,11 +205,11 @@ Jafg::TOptional<Jafg::LStringView> FindKeyValue(const Jafg::LString& InContentF,
     }
 
     LSize Cursor = *Key;
-    Cursor += InKey.GetSize();
+    Cursor += InKey.GetRuneCount();
     check( InContentF.IsValidIndex(Cursor) && InContentF[Cursor] == '=' )
     Cursor += /* = */1;
 
-    const Jafg::LString::T* Begin = InContentF.GetBegin() + Cursor;
+    const auto Begin = InContentF.begin() + Cursor;
     while (InContentF.IsValidIndex(Cursor))
     {
         if (InContentF[Cursor] == ';' || InContentF[Cursor] == '\n' || InContentF[Cursor] == '\r')
@@ -224,24 +222,23 @@ Jafg::TOptional<Jafg::LStringView> FindKeyValue(const Jafg::LString& InContentF,
         continue;
     }
 
-    const Jafg::LString::T* End = InContentF.GetBegin() + Cursor;
+    const auto End = InContentF.begin() + Cursor;
 
-    return Jafg::LStringView(Begin, End);
+    return LMutableStringView{Begin, End};
 }
 
-
-bool Serialize(Jafg::LString* ContentF, const Jafg::LStringView& InSection, const Jafg::LStringView& InKey, const Jafg::LStringView& InValue)
+bool Serialize(LString* ContentF, const LStringView& InSection, const LStringView& InKey, const LStringView& InValue)
 {
     using namespace Jafg;
 
     checkSlow( ContentF )
 
-    if (const TOptional<LStringView> DeserializedValue = ::Deserialize(*ContentF, InSection, InKey); DeserializedValue.IsValid())
+    if (TOptional<LMutableStringView> DeserializedValue = ::Deserialize(*ContentF, InSection, InKey); DeserializedValue.IsValid())
     {
-        const LStringView& Value = *DeserializedValue;
-        if (Value.Equals(InValue.GetBegin(), InValue.GetEnd()) == false)
+        LMutableStringView& Value = *DeserializedValue;
+        if (Value.Equals(InValue.begin(), InValue.end()) == false)
         {
-            ContentF->Substitute(const_cast<LString::T*>(Value.GetBegin()), const_cast<LString::T*>(Value.GetEnd()), InValue.GetBegin(), InValue.GetEnd());
+            ContentF->Substitute(Value.begin(), Value.end(), InValue.begin(), InValue.end());
             return true;
         }
 
@@ -262,7 +259,7 @@ bool Serialize(Jafg::LString* ContentF, const Jafg::LStringView& InSection, cons
     return true;
 }
 
-Jafg::TOptional<Jafg::LStringView> Deserialize(const Jafg::LString& InContentF, const Jafg::LStringView& InSection, const Jafg::LStringView& InKey)
+Jafg::TOptional<LMutableStringView> Deserialize(LString& InContentF, const LStringView& InSection, const LStringView& InKey)
 {
     Jafg::TOptional<LSize> Section = ::FindSection(InContentF, InSection);
     if (!Section)
@@ -279,7 +276,7 @@ Jafg::TOptional<Jafg::LStringView> Deserialize(const Jafg::LString& InContentF, 
 
     Cursor = *KeyCursor;
 
-    Cursor += InKey.GetSize();
+    Cursor += InKey.GetRuneCount();
     check( InContentF.IsValidIndex(Cursor) && InContentF[Cursor] == '=' )
     Cursor += /* = */1;
 
@@ -288,7 +285,7 @@ Jafg::TOptional<Jafg::LStringView> Deserialize(const Jafg::LString& InContentF, 
         return { };
     }
 
-    const Jafg::LString::T* Begin = InContentF.GetBegin() + Cursor;
+    const auto Begin = InContentF.begin() + Cursor;
     while (InContentF.IsValidIndex(Cursor))
     {
         if (InContentF[Cursor] == ';' || InContentF[Cursor] == '\n' || InContentF[Cursor] == '\r')
@@ -301,9 +298,9 @@ Jafg::TOptional<Jafg::LStringView> Deserialize(const Jafg::LString& InContentF, 
         continue;
     }
 
-    const Jafg::LString::T* End = InContentF.GetBegin() + Cursor;
+    const auto End = InContentF.begin() + Cursor;
 
-    return Jafg::LStringView(Begin, End);
+    return LMutableStringView{Begin, End};
 }
 
 } /* ~Namespace <Anonymous> */
@@ -311,9 +308,9 @@ Jafg::TOptional<Jafg::LStringView> Deserialize(const Jafg::LString& InContentF, 
 bool Jafg::ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey, const LStringView& InValue, const bool bDoBackup /* = true */)
 {
     checkSlow( Tasks::IsOnMasterThread() )
-    check( Paths::DoesFileExist(InPath) )
+    check( Finder::DoesFileExist(InPath) )
 
-    LString ContentF = Paths::ReadFile(InPath);
+    LString ContentF = Finder::ReadFile(InPath);
 
     const bool bUpdated = ::Serialize(&ContentF, InSection, InKey, InValue);
 
@@ -321,10 +318,10 @@ bool Jafg::ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection
     {
         if (bDoBackup)
         {
-            Paths::MakeFileBackup(InPath);
+            Finder::MakeFileBackup(InPath);
         }
 
-        Paths::OverrideFile(InPath, ContentF);
+        Finder::OverrideFile(InPath, ContentF);
 
         LOG_VERBOSE(LogConfigIo, "Pushed field [{}::{}] with [{}].", InSection, InKey, InValue);
     }
@@ -335,7 +332,7 @@ bool Jafg::ConfigIo::Serialize(const LPath& InPath, const LStringView& InSection
 bool Jafg::ConfigIo::SerializeBulk(const LPath& InPath, const TArray<Entry>& InEntries, const bool bDoBackup /* = true */)
 {
     checkSlow( Tasks::IsOnMasterThread() )
-    check( Paths::DoesFileExist(InPath) )
+    check( Finder::DoesFileExist(InPath) )
 
     LString ContentF = Finder::ReadFile(InPath);
 
@@ -353,27 +350,27 @@ bool Jafg::ConfigIo::SerializeBulk(const LPath& InPath, const TArray<Entry>& InE
     {
         if (bDoBackup)
         {
-            Paths::MakeFileBackup(InPath);
+            Finder::MakeFileBackup(InPath);
         }
 
-        Paths::OverrideFile(InPath, ContentF);
+        Finder::OverrideFile(InPath, ContentF);
     }
 
     return bUpdated;
 }
 
-Jafg::TOptional<Jafg::LString> Jafg::ConfigIo::Deserialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey)
+Jafg::TOptional<LString> Jafg::ConfigIo::Deserialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey)
 {
     checkSlow( Tasks::IsOnMasterThread() )
-    check( Paths::DoesFileExist(InPath) )
+    check( Finder::DoesFileExist(InPath) )
 
-    const LString ContentF = Paths::ReadFile(InPath);
-    TOptional<LStringView> Out = ::Deserialize(ContentF, InSection, InKey);
+    LString ContentF = Finder::ReadFile(InPath);
+    TOptional<LMutableStringView> Out = ::Deserialize(ContentF, InSection, InKey);
 
     if (Out.IsValid())
     {
         LOG_VERBOSE(LogConfigIo, "Pulled field [{}::{}] with [{}].", InSection, InKey, *Out);
-        return  Out->GetSize() == 0 ? LString("NULL") : LString(*Out);
+        return  Out->GetRuneCount() == 0 ? LString{"NULL"} : LString{*Out};
     }
 
     return { };

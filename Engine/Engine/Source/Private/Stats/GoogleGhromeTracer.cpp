@@ -6,7 +6,6 @@
 
 #include "Stats/GoogleChromeTracer.h"
 #include "Stats/StatsCore.h"
-#include "System/Finder.h"
 #include "System/EnginePath.h"
 #include <bits/fs_path.h>
 
@@ -154,14 +153,14 @@ void Jafg::Stats::Vendor::LGoogleChromeTracer::EndSession()
     return;
 }
 
-Jafg::LString Jafg::Stats::Vendor::LGoogleChromeTracer::GetPath() const
+LString Jafg::Stats::Vendor::LGoogleChromeTracer::GetPath() const
 {
     check( this->Session.IsValid() )
 
     LPath Path = Finder::GetSavedDir();
     Path /= "GoogleChrome";
     Path /= this->Session.Name.ToPtr();
-    Path.AddExtension(".json");
+    Path.Append(".json");
 
     return { Path.ToPtr() };
 }

@@ -45,14 +45,14 @@
     Symbol.Stop();
 
 //# Provide a display name for the stat cycle. When this stat is going out of scope, it will be ended automatically.
-#define STAT_QUICK_CYCLE_START(Name)                        \
+#define STAT_QUICK_CYCLE_START(Name) \
     STAT_CYCLE_START(PRIVATE_JAFG_STAT_UNIQUE_SYMBOL, Name)
 
 //#
 //# Stat cycles with a unique symbol to end it manually before going out of scope.
 //# The display name will be automatically generated from the function name.
 //#
-#define STAT_CYCLE_FUNCTION_START(Symbol)          \
+#define STAT_CYCLE_FUNCTION_START(Symbol) \
     STAT_CYCLE_START(Symbol, LAL_PRETTY_FUNCTION)
 //# Counterpart for #STAT_CYCLE_FUNCTION_START to end the stat.
 #define STAT_CYCLE_FUNCTION_END(Symbol) \
@@ -61,7 +61,7 @@
 //#
 //# Quick stat cycles within a function. The stat will be ended automatically when going out of scope.
 //#
-#define STAT_CYCLE_FUNCTION()                                  \
+#define STAT_CYCLE_FUNCTION() \
     STAT_CYCLE_FUNCTION_START(PRIVATE_JAFG_STAT_UNIQUE_SYMBOL)
 
 //#
@@ -70,13 +70,13 @@
 #define STAT_DISCARD(Symbol) \
     Symbol.Discard();
 
-#define STAT_BOOKMARK(Name) \
-    if (PRIVATE_JAFG_STAT_TRACER) { \
-        PRIVATE_JAFG_STAT_TRACER->AddBookmark({ \
-            Name, \
-            static_cast<i64>(::Jafg::Application::GetDeltaSinceStaticStorageInitialization() * JAFG_S2MUS_D), \
-            ::Jafg::Tasks::GetCurrentThreadId() \
-        }); \
+#define STAT_BOOKMARK(Name)                                                                                  \
+    if (PRIVATE_JAFG_STAT_TRACER) {                                                                          \
+        PRIVATE_JAFG_STAT_TRACER->AddBookmark({                                                              \
+            Name,                                                                                            \
+            static_cast<i64>(::Jafg::Application::GetDeltaSinceStaticStorageInitialization() * LAL_S2MUS_D), \
+            ::Jafg::Tasks::GetCurrentThreadId()                                                              \
+        });                                                                                                  \
     }
 
 #else /* WITH_STATS */

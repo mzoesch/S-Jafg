@@ -15,16 +15,16 @@ namespace
  *     y = r * sin(phi) * sin(theta)              theta is the azimuthal angle (0 <= theta < 2PI).
  *     z = r * cos(phi)
  */
-void MakeSphereVertices(const float InRadius, const i32 InSlices, const i32 InStacks, TArray<Jafg::LVector>& OutLocations)
+void MakeSphereVertices(const float InRadius, const i32 InSlices, const i32 InStacks, TArray<LVector>& OutLocations)
 {
     using namespace Jafg;
 
     for (i32 i = 0; i <= InStacks; ++i)
     {
-        const float Phi = static_cast<float>(i) * JAFG_PI / static_cast<float>(InStacks);
+        const float Phi = static_cast<float>(i) * LAL_PI / static_cast<float>(InStacks);
         for (i32 j = 0; j <= InSlices; ++j)
         {
-            const float Theta = static_cast<float>(j) * 2.0f * JAFG_PI / static_cast<float>(InSlices);
+            const float Theta = static_cast<float>(j) * 2.0f * LAL_PI / static_cast<float>(InSlices);
 
             // Longitude
             OutLocations.Emplace(
@@ -37,9 +37,9 @@ void MakeSphereVertices(const float InRadius, const i32 InSlices, const i32 InSt
             if (i > 0)
             {
                 OutLocations.Emplace(
-                    InRadius * Maths::Sin(Phi - JAFG_PI / static_cast<float>(InStacks)) * Maths::Cos(Theta),
-                    InRadius * Maths::Sin(Phi - JAFG_PI / static_cast<float>(InStacks)) * Maths::Sin(Theta),
-                    InRadius * Maths::Cos(Phi - JAFG_PI / static_cast<float>(InStacks))
+                    InRadius * Maths::Sin(Phi - LAL_PI / static_cast<float>(InStacks)) * Maths::Cos(Theta),
+                    InRadius * Maths::Sin(Phi - LAL_PI / static_cast<float>(InStacks)) * Maths::Sin(Theta),
+                    InRadius * Maths::Cos(Phi - LAL_PI / static_cast<float>(InStacks))
                 );
             }
 

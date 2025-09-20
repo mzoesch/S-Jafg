@@ -23,7 +23,7 @@ struct LCliObjectHandle final
     friend LCommandLineInterface;
 
     FORCEINLINE LCliObjectHandle() = default;
-    FORCEINLINE LCliObjectHandle(const LCliObjectUuid InUuid) : Uuid(InUuid) { }
+    FORCEINLINE explicit LCliObjectHandle(const LCliObjectUuid InUuid) : Uuid(InUuid) { }
     FORCEINLINE LCliObjectHandle(const LCliObjectHandle& InHandle) : Uuid(InHandle.Uuid) { }
     FORCEINLINE LCliObjectHandle(LCliObjectHandle&& InHandle) noexcept : Uuid(InHandle.Uuid) { InHandle.Uuid = LCliObject::NoUuid; }
     FORCEINLINE LCliObjectHandle& operator=(const LCliObjectHandle& InHandle) { this->Uuid = InHandle.Uuid; return *this; }

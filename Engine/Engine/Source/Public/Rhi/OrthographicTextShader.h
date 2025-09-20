@@ -19,7 +19,7 @@ struct Character final
     u32     TextureId = 0;             // ID handle of the glyph texture
     glm::ivec2 Size      = glm::ivec2();  // Size of glyph
     glm::ivec2 Bearing   = glm::ivec2();  // Offset from baseline to left/top of glyph
-    Jafg::LIntVector2 Advance  = Jafg::LIntVector2(); // Offset to advance to next glyph
+    LIntVector2 Advance  = LIntVector2(); // Offset to advance to next glyph
 
     Character() = default;
     Character(const Character& InOther)
@@ -32,7 +32,7 @@ struct Character final
         return;
     }
 
-    Character(const u32 InTextureId, const glm::ivec2& InSize, const glm::ivec2& InBearing, const Jafg::LIntVector2& InAdvance)
+    Character(const u32 InTextureId, const glm::ivec2& InSize, const glm::ivec2& InBearing, const LIntVector2& InAdvance)
     {
         this->TextureId = InTextureId;
         this->Size      = InSize;
@@ -63,7 +63,7 @@ public:
         const LVector2& TextDesiredSize,
         const ETextHAlign::Type TextHAlign,
         const ETextVAlign::Type TextVAlign,
-        const LColor& TextColor,
+        const Lal::LColor& TextColor,
         const f32 TextScale,
         const LString& Content
     ) const;

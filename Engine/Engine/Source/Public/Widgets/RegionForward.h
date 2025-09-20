@@ -100,7 +100,7 @@ struct LRegionBrush
     //#
     //# The tint of the draw area from this region.
     //#
-    LColor Tint { LColor::White };
+    Lal::LColor Tint { Lal::LColor::White };
 
     //#
     //# An optional image to use as a background.
@@ -110,7 +110,7 @@ struct LRegionBrush
     //#
     //# The tint of the image.
     //#
-    LColor ImageTint { LColor::White };
+    Lal::LColor ImageTint { Lal::LColor::White };
 
     //#
     //# The scale of the image.
@@ -145,7 +145,7 @@ struct LRegionBrush
     //#
     //# The outline color to use.
     //#
-    LColor OutlineTint { LColor::White };
+   Lal::LColor OutlineTint { Lal::LColor::White };
 };
 
 } /* ~Namespace Jafg */

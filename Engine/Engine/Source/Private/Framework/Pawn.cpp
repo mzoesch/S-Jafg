@@ -38,7 +38,7 @@ void Jafg::APawn::Tick(const float DeltaTime)
             CheckedStaticCast<AChunk>(this->CurrentGenericTraceResults[0].Actor)
                 ->GetChunkKey().ToWorldSpace() + LVector(VKey.X, VKey.Y, VKey.Z) + LVector(-0.001f),
             LVector::One() + LVector(0.002f),
-            LDebugTraceCubeVisualParams(LColor(0.1f), 5)
+            LDebugTraceCubeVisualParams{Lal::LColor{0.1f}, 5}
         ));
     }
 
@@ -101,7 +101,7 @@ void Jafg::APawn::OnOngoingRotationInput(LInputActionValue& InValue)
         0.0f
     ));
 
-    this->GetMutableRotator().ConstrainAxis(ERotatorAxis::Pitch, 89.9f);
+    this->GetMutableRotator().ConstrainAxis(Lal::ERotatorAxis::Pitch, 89.9f);
     this->GetMutableRotator().NormalizeRotation();
     check( this->GetRotator().Pitch >= -89.9f && this->GetRotator().Pitch <= 89.9f )
     check( this->GetRotator().Yaw >= -180.0f && this->GetRotator().Yaw <= 180.0f )

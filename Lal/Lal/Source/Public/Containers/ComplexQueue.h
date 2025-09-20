@@ -21,6 +21,8 @@ public:
 
     FORCEINLINE TMpmcQueue() = default;
     PROHIBIT_COPY(TMpmcQueue)
+    FORCEINLINE TMpmcQueue(TMpmcQueue&& Other) noexcept { this->FromRRef(std::move(Other)); }
+    FORCEINLINE TMpmcQueue& operator=(TMpmcQueue&& Other) noexcept;
     FORCEINLINE ~TMpmcQueue() { this->Empty(); }
 
     FORCEINLINE void Enqueue(const T& InContent) { this->EnqueueImpl(new TNode(InContent)); }
@@ -58,6 +60,8 @@ private:
     FORCEINLINE void EnqueueImpl(TNode* NewNode);
     FORCEINLINE bool PopLockFree();
 
+    FORCEINLINE void FromRRef(TMpmcQueue&& Other) noexcept;
+
     struct TNode final
     {
         TNode* volatile NextNode { nullptr };
@@ -75,6 +79,17 @@ private:
     std::atomic<TNode*> Tail { nullptr };
     std::mutex Mutex;
 };
+
+template <typename T, typename TSizeType>
+FORCEINLINE TMpmcQueue<T, TSizeType>& TMpmcQueue<T, TSizeType>::operator=(TMpmcQueue&& Other) noexcept
+{
+    if (this != &Other)
+    {
+        this->FromRRef(std::move(Other));
+    }
+
+    return *this;
+}
 
 template <typename T, typename TSizeType>
 FORCEINLINE bool TMpmcQueue<T, TSizeType>::Dequeue(T* OutContent)
@@ -483,4 +498,25 @@ FORCEINLINE bool TMpmcQueue<T, TSizeType>::PopLockFree()
     return true;
 }
 
+template <typename T, typename TSizeType>
+FORCEINLINE void TMpmcQueue<T, TSizeType>::FromRRef(TMpmcQueue&& Other) noexcept
+{
+    std::unique_lock Lock(this->Mutex);
+    while (this->PopLockFree()) { }
+
+    std::unique_lock LockOther(Other.Mutex);
+
+    this->Head.store(Other.Head.load());
+    this->Tail.store(Other.Tail.load());
+
+    Other.Head.store(nullptr);
+    Other.Tail.store(nullptr);
+
+    return;
+}
 } /* ~Namespace Jafg */
+
+template<typename T, typename TSizeType>
+struct Lal::TArrayBaseAllowTrivialMemoryBufferMove<Jafg::TMpmcQueue<T, TSizeType>> : Lal::TrueType { };
+
+static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<Jafg::TMpmcQueue<i64, LSize>>);

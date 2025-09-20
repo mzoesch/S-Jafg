@@ -282,7 +282,7 @@
 
 //# Combines an expression with a formatted message.
 #define PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ...) \
-    ::Jafg::LString::SprintF                                               \
+    ::LString::SprintF                                                     \
     (                                                                      \
         "Program panicked. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__ \
     )
@@ -297,7 +297,7 @@
     "Program panicked. Reason: [" #Expr "]. " Msg ""                   \
     LAL_LOG_COLOR_END
 #define PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_MSGF_GET_MSG_ANSI(Expr, Format, ...) \
-    ::Jafg::LString::SprintF                                                    \
+    ::LString::SprintF                                                          \
     (                                                                           \
         LAL_LOG_COLOR_FATAL                                                     \
         "Program panicked. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__      \
@@ -314,7 +314,7 @@
 
 //# Combines an expression with a formatted message.
 #define PRIVATE_LAL_ASSERT_WEAK_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ...)            \
-    ::Jafg::LString::SprintF                                                        \
+    ::LString::SprintF                                                              \
     (                                                                               \
         "Program run into an error. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__ \
     )
@@ -329,7 +329,7 @@
     "Program run into an error. Reason: [" #Expr "]. " Msg ""        \
     LAL_LOG_COLOR_END
 #define PRIVATE_LAL_ASSERT_WEAK_LOG_EXPR_MSGF_GET_MSG_ANSI(Expr, Format, ...)       \
-    ::Jafg::LString::SprintF                                                        \
+    ::LString::SprintF                                                              \
     (                                                                               \
         LAL_LOG_COLOR_ERROR                                                         \
         "Program run into an error. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__ \

@@ -30,7 +30,7 @@ public:
     typedef TPathBase<TPathBaseDefaultUtf8Traits, TArrayView<LJafgChar>> _WeakPathRepr;
     typedef TPathBase<TPathBaseDefaultUtf8Traits, TMutableArrayView<LJafgChar>> _WeakMutablePathRepr;
 
-    using TStringBase<TEncoding, TAllocator>::TStringBase;
+    using Super::TStringBase;
 
     template <TStringBaseAllocatorConcept UAllocator>
         requires(TStringBaseEncodingConcept<TEncoding<typename UAllocator::T, typename UAllocator::SizeType>>)
@@ -50,17 +50,14 @@ public:
     template <TStringBaseConcept TOther = TPathBase> requires(TOther::IsOwningString() && TValidOtherStringConcept<TPathBase, TOther>)
     FORCEINLINE TOther AppendPathToNew(const T Rune) const noexcept { return this->template AppendPathToNew<TOther>(&Rune, &Rune + 1); }
 
-    template <TStringBaseAllocatorConcept UAllocator>
-    FORCEINLINE TPathBase operator/(const TPathBase<TEncoding, UAllocator>& Other) & noexcept requires(typename Allocator::IsAllowedToPushItems()) { return this->template AppendPathToNew<TPathBase>(Other.begin(), Other.end()); }
-    FORCEINLINE TPathBase operator/(const ConstPointer String) & noexcept requires(Allocator::IsAllowedToPushItems()) { return this->template AppendPathToNew<TPathBase>(String); }
-    FORCEINLINE TPathBase operator/(const T Rune) & noexcept requires(Allocator::IsAllowedToPushItems()) { return this->template AppendPathToNew<TPathBase>(Rune); }
-    template <TStringBaseAllocatorConcept UAllocator>
-    FORCEINLINE TPathBase&& operator/(const TStringBase<TEncoding, UAllocator>& Other) && noexcept requires(Allocator::IsAllowedToPushItems()) { this->AppendPath(Other.begin(), Other.end()); return std::move(*this); }
+    FORCEINLINE TPathBase operator/(const auto& Other) const & noexcept requires(typename Allocator::IsAllowedToPushItems()) { return this->template AppendPathToNew<TPathBase>(Other.begin(), Other.end()); }
+    FORCEINLINE TPathBase operator/(const ConstPointer String) const & noexcept requires(Allocator::IsAllowedToPushItems()) { return this->template AppendPathToNew<TPathBase>(String); }
+    FORCEINLINE TPathBase operator/(const T Rune) const & noexcept requires(Allocator::IsAllowedToPushItems()) { return this->template AppendPathToNew<TPathBase>(Rune); }
+    FORCEINLINE TPathBase&& operator/(const auto& Other) && noexcept requires(Allocator::IsAllowedToPushItems()) { this->AppendPath(Other.begin(), Other.end()); return std::move(*this); }
     FORCEINLINE TPathBase&& operator/(const ConstPointer String) && noexcept requires(Allocator::IsAllowedToPushItems()) { this->AppendPath(String); return std::move(*this); }
     FORCEINLINE TPathBase&& operator/(const T Rune) && noexcept requires(Allocator::IsAllowedToPushItems()) { this->AppendPath(Rune); return std::move(*this); }
 
-    template <TStringBaseAllocatorConcept UAllocator>
-    FORCEINLINE TPathBase& operator/=(const TStringBase<TEncoding, UAllocator>& Other) noexcept requires(Allocator::IsAllowedToPushItems()) { this->AppendPath(Other); return *this; }
+    FORCEINLINE TPathBase& operator/=(const auto& Other) noexcept requires(Allocator::IsAllowedToPushItems()) { this->AppendPath(Other.begin(), Other.end()); return *this; }
     FORCEINLINE TPathBase& operator/=(const ConstPointer String) noexcept requires(Allocator::IsAllowedToPushItems()) { this->AppendPath(String); return *this; }
     FORCEINLINE TPathBase& operator/=(const T Rune) noexcept requires(Allocator::IsAllowedToPushItems()) { this->AppendPath(Rune); return *this; }
 
@@ -114,30 +111,39 @@ public:
     TPathBase& ReplaceFilename(const TPathBase& InExtension) noexcept requires(Super::IsContentMutable() && Allocator::IsAllowedToPushItems());
 
     //# The parent directory of the path, which is the directory that contains the file or directory represented by this path.
-    ConstIterator FindParentEnd() const noexcept;
-    bool IsParentValid() const noexcept;
+    NODISCARD ConstIterator FindParentEnd() const noexcept;
+    NODISCARD bool IsParentValid() const noexcept;
     template <TStringBaseConcept TOther = TPathBase> requires(TOther::IsOwningString() && TValidOtherStringConcept<TPathBase, TOther>)
-    TOther GetParent() const noexcept;
+    NODISCARD TOther GetParent() const noexcept;
+    void ToParent() noexcept requires(TPathBase::IsOwningString());
 
     //# Combination of the root name (if available on the underlying platform) and its directory.
-    bool IsRootValid() const noexcept;
+    NODISCARD bool IsRootValid() const noexcept;
     template <TStringBaseConcept TOther = TPathBase> requires(TOther::IsOwningString() && TValidOtherStringConcept<TPathBase, TOther>)
-    TOther GetRoot() const noexcept;
+    NODISCARD TOther GetRoot() const noexcept;
 
     //# On Posix platforms this is always false, else this checks the driver letter of the underlying path.
-    bool IsRootNameValid() const noexcept;
+    NODISCARD bool IsRootNameValid() const noexcept;
     template <TStringBaseConcept TOther = TPathBase> requires(TOther::IsOwningString() && TValidOtherStringConcept<TPathBase, TOther>)
-    TOther GetRootName() const noexcept;
+    NODISCARD TOther GetRootName() const noexcept;
 
     //# On Posix platforms this checks for a leading slash, else this checks for a backslash after the driver letter.
-    bool IsRootDirectoryValid() const noexcept;
+    NODISCARD bool IsRootDirectoryValid() const noexcept;
     template <TStringBaseConcept TOther = TPathBase> requires(TOther::IsOwningString() && TValidOtherStringConcept<TPathBase, TOther>)
-    TOther GetRootDirectory() const noexcept;
+    NODISCARD TOther GetRootDirectory() const noexcept;
 
     //# Whether the filename (without the extension) results to a non-empty string.
-    bool IsStemValid() const noexcept;
+    NODISCARD bool IsStemValid() const noexcept;
     template <TStringBaseConcept TOther = TPathBase> requires(TOther::IsOwningString() && TValidOtherStringConcept<TPathBase, TOther>)
-    TOther GetStem() const noexcept;
+    NODISCARD TOther GetStem() const noexcept;
+
+    template <TStringBaseConcept TOther = LString> requires(std::same_as<typename TOther::Encoding, Encoding>)
+    NODISCARD
+    FORCEINLINE TOther ToString() noexcept { return TOther{ this->begin(), this->end() }; }
+
+    template <TStringBaseConcept TOther = LString> requires(std::same_as<typename TOther::Encoding, Encoding>)
+    NODISCARD
+    FORCEINLINE TOther ToString() const noexcept { return TOther{ this->begin(), this->end() }; }
 
 private:
 
@@ -154,7 +160,7 @@ constexpr TPathBase<TEncoding, TAllocator>::TPathBase(const TPathBase<TEncoding,
             std::is_constructible_v<typename Super::Allocator, const UAllocator&>
         && (std::is_same_v<TPathBase, _WeakPathRepr> || std::is_same_v<TPathBase, _WeakMutablePathRepr>)
     )
-    : Super{static_cast<const TStringBase<TEncoding, UAllocator>&>(Other)}
+    : Super{static_cast<const Lal::TStringBase<TEncoding, UAllocator>&>(Other)}
 {
     PRIVATE_LAL_ENSURE_STRING_INVARIANT()
     return;

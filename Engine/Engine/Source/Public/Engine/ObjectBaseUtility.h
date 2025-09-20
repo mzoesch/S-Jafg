@@ -214,13 +214,13 @@ template <> FORCEINLINE void OnDefaultOnlyMallocMember<u16>(u16* MemberField)   
 template <> FORCEINLINE void OnDefaultOnlyMallocMember<u32>(u32* MemberField)       { *MemberField = static_cast<u32>(0); }
 template <> FORCEINLINE void OnDefaultOnlyMallocMember<u64>(u64* MemberField)       { *MemberField = static_cast<u64>(0); }
 template <> FORCEINLINE void OnDefaultOnlyMallocMember<bool>(bool* MemberField)     { *MemberField = false; }
-template <> FORCEINLINE void OnDefaultOnlyMallocMember<LColor>(LColor* MemberField) { *MemberField = LColor::Black; }
+template <> FORCEINLINE void OnDefaultOnlyMallocMember<Lal::LColor>(Lal::LColor* MemberField) { *MemberField = Lal::LColor::Black; }
 
 template <Lal::TArrayBaseAllocatorConceptBase Alloc>
 FORCEINLINE void OnDefaultOnlyMallocMember(Lal::TArrayBase<Alloc>* MemberField);
 
-template <typename InDerived, typename InTraits, typename InAlloc>
-FORCEINLINE void OnDefaultOnlyMallocMember(TStringBase<InDerived, InTraits, InAlloc>* MemberField);
+template <template <typename, typename> typename TEncoding, typename TAllocator>
+FORCEINLINE void OnDefaultOnlyMallocMember(Lal::TStringBase<TEncoding, TAllocator>* MemberField);
 
 template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE void OnDefaultOnlyMallocMember(TSubclassOf<TObj>* MemberField) { *MemberField = nullptr; }
@@ -610,10 +610,12 @@ FORCEINLINE void OnDefaultOnlyMallocMember(Lal::TArrayBase<Alloc>* MemberField)
     return;
 }
 
-template <typename InDerived, typename InTraits, typename InAlloc>
-FORCEINLINE void OnDefaultOnlyMallocMember(TStringBase<InDerived, InTraits, InAlloc>* MemberField)
+template <template <typename, typename> typename TEncoding, typename TAllocator>
+FORCEINLINE void OnDefaultOnlyMallocMember(Lal::TStringBase<TEncoding, TAllocator>* MemberField)
 {
-    ExplicitCommonZeroOnDefaultOnlyMallocMember(MemberField);
+    MemberField->GetMutableAllocator().GetMutableAllocator()._ResetToDefaultState();
+
+    return;
 }
 
 template <typename TObj, typename U, bool bAllowForNullptr /* = false */> requires std::is_base_of_v<JObjectBase, TObj>

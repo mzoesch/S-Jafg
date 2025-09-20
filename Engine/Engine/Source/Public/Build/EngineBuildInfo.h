@@ -31,7 +31,7 @@ NOINLINE ENGINE_API const LString& GetVcsBranch();
 NOINLINE ENGINE_API const LString& GetVcsRevision();
 
 //# @return The engine version when the engine library was build.
-NOINLINE ENGINE_API LString        GetEngineVersionStr();
+NOINLINE ENGINE_API const LString& GetEngineVersionStr();
 NOINLINE ENGINE_API LEngineVersion GetEngineVersion();
 
 } /* ~Namespace Jafg::BuildInfo */

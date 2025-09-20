@@ -350,6 +350,21 @@ FORCEINLINE TOther TPathBase<TEncoding, TAllocator>::GetParent() const noexcept
     return { };
 }
 
+template <template <typename, typename> class TEncoding, TStringBaseAllocatorConcept TAllocator> requires (
+    TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+void TPathBase<TEncoding, TAllocator>::ToParent() noexcept requires (TPathBase::IsOwningString())
+{
+    if (const auto It { this->FindParentEnd() }; It != this->end())
+    {
+        this->InlineLeftCut(It);
+        return;
+    }
+
+    this->Empty();
+
+    return;
+}
+
 template <template <typename, typename> class TEncoding, TStringBaseAllocatorConcept TAllocator>
     requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
 FORCEINLINE bool TPathBase<TEncoding, TAllocator>::IsRootValid() const noexcept

@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Platform/PlatformMisc.h"
-#include "System/Paths.h"
 
 namespace Jafg
 {
@@ -20,7 +19,7 @@ LPath PlatformMisc::GetEngineRootDir()
         GPlatformMisc->EngineRootDir = PlatformMisc::GetEngineRootDirImpl();
     }
     check( GPlatformMisc->EngineRootDir.IsEmpty() == false )
-    check( Paths::DoesFileExist(GPlatformMisc->EngineRootDir / "jafg.jafgworkspace") )
+    check( Finder::DoesFileExist(GPlatformMisc->EngineRootDir / "jafg.jafgworkspace") )
     return GPlatformMisc->EngineRootDir;
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
 }

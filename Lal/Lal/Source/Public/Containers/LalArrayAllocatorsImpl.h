@@ -622,8 +622,8 @@ FORCEINLINE constexpr TArrayBaseMutableDefaultAllocatorWeakImpl<TIn, TTraits>::T
 {
     static_assert(std::is_base_of_v<std::contiguous_iterator_tag, typename TIteratorTraits<UIterator>::iterator_category>);
 
-    this->Data = Begin.Cursor;
-    this->Slack = End.Cursor;
+    this->Data = std::to_address(Begin);
+    this->Slack = std::to_address(End);
 
     LAL_CHECK_ARRAY( this->Data <= this->Slack )
 
@@ -683,8 +683,8 @@ TArrayBaseConstDefaultAllocatorWeakImpl(const UIterator Begin, const VIterator E
 {
     static_assert(std::is_base_of_v<std::contiguous_iterator_tag, typename TIteratorTraits<UIterator>::iterator_category>);
 
-    this->Data = Begin.Cursor;
-    this->Slack = End.Cursor;
+    this->Data = std::to_address(Begin);
+    this->Slack = std::to_address(End);
 
     LAL_CHECK_ARRAY( this->Data <= this->Slack )
 

@@ -24,10 +24,8 @@ bool Jafg::LOrthographicTextShader::Make(const LName InName, TArray<LShaderCompi
     }
 
     FT_Face Face;
-    const u8* FontData = nullptr;
-    u64 FontDataSize = 0;
-    Finder::ReadFileAsBinary(LEnginePath(EEnginePaths::Fonts, "Core.otf"), &FontData, &FontDataSize);
-    if (::FT_New_Memory_Face(Library, reinterpret_cast<const FT_Byte*>(FontData), static_cast<FT_Long>(FontDataSize), 0, &Face))
+    TArray FontData = Finder::ReadFileAsBinary(LEnginePath{EEnginePaths::Fonts, "Core.otf"}.ResolvePath());
+    if (::FT_New_Memory_Face(Library, reinterpret_cast<const FT_Byte*>(FontData.begin_ptr()), static_cast<FT_Long>(FontData.GetSize()), 0, &Face))
     {
         LOG_ERROR(LogRhi, "Failed to load font face.")
         return false;
@@ -78,8 +76,6 @@ bool Jafg::LOrthographicTextShader::Make(const LName InName, TArray<LShaderCompi
     glBindTexture(GL_TEXTURE_2D, 1);
     FT_Done_Face(Face);
     FT_Done_FreeType(Library);
-
-    Finder::FreeReadFileBinaryBuffer(&FontData);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -134,7 +130,7 @@ void Jafg::LOrthographicTextShader::Draw
     const LVector2& TextDesiredSize,
     const ETextHAlign::Type TextHAlign,
     const ETextVAlign::Type TextVAlign,
-    const LColor& TextColor,
+    const Lal::LColor& TextColor,
     const f32 TextScale,
     const LString& Content
 ) const

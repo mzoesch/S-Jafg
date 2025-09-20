@@ -23,10 +23,10 @@ MAKE_DELEGATE_SIGNATURE(LOnHButtonKeyEvent, void, WHButton* Self, const LKeyEven
 
 struct LButtonStyle
 {
-    LRegionBrush NormalBrush   { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray,          .OutlineTint = LColor::Black };
-    LRegionBrush HoverBrush    { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray,          .OutlineTint = LColor::White };
-    LRegionBrush PressBrush    { .Type = ERegionBrush::OutlineBox, .Tint = LColor::Gray,          .OutlineTint = LColor::White };
-    LRegionBrush DisabledBrush { .Type = ERegionBrush::OutlineBox, .Tint = LColor::NotSoDarkGray, .OutlineTint = LColor::Black };
+    LRegionBrush NormalBrush   { .Type = ERegionBrush::OutlineBox, .Tint = Lal::LColor::Gray,          .OutlineTint = Lal::LColor::Black };
+    LRegionBrush HoverBrush    { .Type = ERegionBrush::OutlineBox, .Tint = Lal::LColor::Gray,          .OutlineTint = Lal::LColor::White };
+    LRegionBrush PressBrush    { .Type = ERegionBrush::OutlineBox, .Tint = Lal::LColor::Gray,          .OutlineTint = Lal::LColor::White };
+    LRegionBrush DisabledBrush { .Type = ERegionBrush::OutlineBox, .Tint = Lal::LColor::NotSoDarkGray, .OutlineTint = Lal::LColor::Black };
 };
 
 class LButtonBase
@@ -69,11 +69,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalTint(const LColor& InTint) noexcept { this->Style.NormalBrush.Tint = InTint; }
-    FORCEINLINE void SetHoverTint(const LColor& InTint) noexcept { this->Style.HoverBrush.Tint = InTint; }
-    FORCEINLINE void SetPressTint(const LColor& InTint) noexcept { this->Style.PressBrush.Tint = InTint; }
-    FORCEINLINE void SetDisabledTint(const LColor& InTint) noexcept { this->Style.DisabledBrush.Tint = InTint; }
-    FORCEINLINE void SetOmniTint(const LColor& InTint) noexcept
+    FORCEINLINE void SetNormalTint(const Lal::LColor& InTint) noexcept { this->Style.NormalBrush.Tint = InTint; }
+    FORCEINLINE void SetHoverTint(const Lal::LColor& InTint) noexcept { this->Style.HoverBrush.Tint = InTint; }
+    FORCEINLINE void SetPressTint(const Lal::LColor& InTint) noexcept { this->Style.PressBrush.Tint = InTint; }
+    FORCEINLINE void SetDisabledTint(const Lal::LColor& InTint) noexcept { this->Style.DisabledBrush.Tint = InTint; }
+    FORCEINLINE void SetOmniTint(const Lal::LColor& InTint) noexcept
     {
         this->Style.NormalBrush.Tint   = InTint;
         this->Style.HoverBrush.Tint    = InTint;
@@ -97,11 +97,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalImageTint(const LColor& InImageTint) noexcept { this->Style.NormalBrush.Tint = InImageTint; }
-    FORCEINLINE void SetHoverImageTint(const LColor& InImageTint) noexcept { this->Style.HoverBrush.Tint = InImageTint; }
-    FORCEINLINE void SetPressImageTint(const LColor& InImageTint) noexcept { this->Style.PressBrush.Tint = InImageTint; }
-    FORCEINLINE void SetDisabledImageTint(const LColor& InImageTint) noexcept { this->Style.DisabledBrush.Tint = InImageTint; }
-    FORCEINLINE void SetOmniImageTint(const LColor& InImageTint) noexcept
+    FORCEINLINE void SetNormalImageTint(const Lal::LColor& InImageTint) noexcept { this->Style.NormalBrush.Tint = InImageTint; }
+    FORCEINLINE void SetHoverImageTint(const Lal::LColor& InImageTint) noexcept { this->Style.HoverBrush.Tint = InImageTint; }
+    FORCEINLINE void SetPressImageTint(const Lal::LColor& InImageTint) noexcept { this->Style.PressBrush.Tint = InImageTint; }
+    FORCEINLINE void SetDisabledImageTint(const Lal::LColor& InImageTint) noexcept { this->Style.DisabledBrush.Tint = InImageTint; }
+    FORCEINLINE void SetOmniImageTint(const Lal::LColor& InImageTint) noexcept
     {
         this->Style.NormalBrush.ImageTint   = InImageTint;
         this->Style.HoverBrush.ImageTint    = InImageTint;
@@ -195,11 +195,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalOutlineTint(const LColor& InOutlineTint) noexcept { this->Style.NormalBrush.OutlineTint = InOutlineTint; }
-    FORCEINLINE void SetHoverOutlineTint(const LColor& InOutlineTint) noexcept { this->Style.HoverBrush.OutlineTint = InOutlineTint; }
-    FORCEINLINE void SetPressOutlineTint(const LColor& InOutlineTint) noexcept { this->Style.PressBrush.OutlineTint = InOutlineTint; }
-    FORCEINLINE void SetDisabledOutlineTint(const LColor& InOutlineTint) noexcept { this->Style.DisabledBrush.OutlineTint = InOutlineTint; }
-    FORCEINLINE void SetOmniOutlineTint(const LColor& InOutlineTint) noexcept
+    FORCEINLINE void SetNormalOutlineTint(const Lal::LColor& InOutlineTint) noexcept { this->Style.NormalBrush.OutlineTint = InOutlineTint; }
+    FORCEINLINE void SetHoverOutlineTint(const Lal::LColor& InOutlineTint) noexcept { this->Style.HoverBrush.OutlineTint = InOutlineTint; }
+    FORCEINLINE void SetPressOutlineTint(const Lal::LColor& InOutlineTint) noexcept { this->Style.PressBrush.OutlineTint = InOutlineTint; }
+    FORCEINLINE void SetDisabledOutlineTint(const Lal::LColor& InOutlineTint) noexcept { this->Style.DisabledBrush.OutlineTint = InOutlineTint; }
+    FORCEINLINE void SetOmniOutlineTint(const Lal::LColor& InOutlineTint) noexcept
     {
         this->Style.NormalBrush.OutlineTint   = InOutlineTint;
         this->Style.HoverBrush.OutlineTint    = InOutlineTint;

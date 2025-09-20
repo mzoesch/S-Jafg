@@ -103,7 +103,7 @@ void Jafg::AChunk::SetState
         bool bLocked { false };
         while (bAbort->load() == false)
         {
-            if (this->ChunkStateMutex.try_lock_for(std::chrono::nanoseconds(static_cast<i64>(WaitTime * JAFG_S2NS_F))))
+            if (this->ChunkStateMutex.try_lock_for(std::chrono::nanoseconds(static_cast<i64>(WaitTime * LAL_S2NS_F))))
             {
                 if (bOutChanged)
                 {

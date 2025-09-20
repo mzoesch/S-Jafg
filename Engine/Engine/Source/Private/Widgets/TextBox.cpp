@@ -13,7 +13,7 @@ namespace
 FORCEINLINE Jafg::LTextBoxBrush GetDefaultTextBoxBrush() noexcept
 {
     Jafg::LTextBoxBrush Brush;
-    Brush.Tint = Jafg::LColor::Transparent;
+    Brush.Tint = Lal::LColor::Transparent;
     Brush.Padding = {4.5f};
     return Brush;
 }

@@ -2,7 +2,6 @@
 
 #include "Engine/Engine.h"
 #include "System/MaterialSubsystem.h"
-#include "System/Finder.h"
 #include "System/VoxelTextureSubsystem.h"
 #include "System/VoxelSubsystem.h"
 #include "System/EnginePath.h"
@@ -55,7 +54,7 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
         for (const LDiskBlendTexture& DiskTexture : BlendedTextureNames)
         {
             LEnginePath Path = LEnginePath(EEnginePaths::Blends, DiskTexture.Name.ToPtr());
-            Path.AddExtension(".png");
+            Path.Append(".png");
 
             LTexture2 Texture;
             if (Texture.LoadFromDisk(Path, ERawImageFormat::BGRA8) == false)
@@ -63,7 +62,7 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
                 panicMsgf
                 (
                     "Failed to load texture: {}. Faulty path: {}.",
-                    DiskTexture.Name, Path.GetRelativeUnresolvedPath()
+                    DiskTexture.Name, Path
                 )
                 continue;
             }
@@ -116,7 +115,7 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
             );
 
             LEnginePath Path = LEnginePath(EEnginePaths::Voxels, DiskTexture.Name.ToPtr());
-            Path.AddExtension(".png");
+            Path.Append(".png");
 
             LTexture2 Texture;
             if (Texture.LoadFromDisk(Path, ERawImageFormat::BGRA8) == false)
@@ -124,7 +123,7 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
                 panicMsgf
                 (
                     "Failed to load texture: {}. Faulty path: {}.",
-                    DiskTexture.Name, Path.GetRelativeUnresolvedPath()
+                    DiskTexture.Name, Path
                 )
                 continue;
             }

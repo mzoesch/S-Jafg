@@ -56,8 +56,8 @@ FORCEINLINE void LStat::Stop()
     GTracer->AddEvent(
     {
         this->Name,
-        static_cast<i64>(Application::GetTimeDifferenceFromStaticStorageInitialization(this->BeginTime) * JAFG_S2MUS_D),
-        static_cast<i64>(Application::GetDeltaSinceStaticStorageInitialization() * JAFG_S2MUS_D),
+        static_cast<i64>(Application::GetTimeDifferenceFromStaticStorageInitialization(this->BeginTime) * LAL_S2MUS_D),
+        static_cast<i64>(Application::GetDeltaSinceStaticStorageInitialization() * LAL_S2MUS_D),
         Tasks::GetCurrentThreadId()
     });
 
