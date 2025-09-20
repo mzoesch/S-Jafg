@@ -37,6 +37,7 @@ endif()
 include(CMake/ValidateTargetInput.cmake)
 include(CMake/ValidateCompiler.cmake)
 include(CMake/RetrieveVersionNumber.cmake)
+include(CMake/RetrieveMinCPlusPlus.cmake)
 
 
 project(

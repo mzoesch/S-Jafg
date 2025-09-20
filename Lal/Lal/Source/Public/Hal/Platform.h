@@ -100,6 +100,10 @@ struct LPrimitivePlatformTypesGeneric
     Let platform override platform based macros and types.
 -----------------------------------------------------------------------------*/
 
+#ifndef PRIVATE_LAL_CPLUSPLUS
+    #error "PRIVATE_LAL_CPLUSPLUS is not defined."
+#endif /* PRIVATE_LAL_CPLUSPLUS */
+
 #if PLATFORM_LINUX
     #include "Hal/PlatformLinux.h"
 #elif PLATFORM_WASM
