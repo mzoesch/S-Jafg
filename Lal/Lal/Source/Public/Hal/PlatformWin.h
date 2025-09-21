@@ -2,53 +2,57 @@
 
 #pragma once
 
+/*-----------------------------------------------------------------------------
+    Validate compiler and forward declare Lal Windows logic.
+-----------------------------------------------------------------------------*/
+
 #if !PLATFORM_WINDOWS
-    #error "Wanted to override generic platform types with windows specific types, but platform is not windows."
+    #error "Wanted to override generic platform types with Windows specific types, but platform is not Windows."
 #endif /* !PLATFORM_WINDOWS */
 
-#ifdef PLATFORM_WINDOWS_WITH_GCC
-    #ifdef PLATFORM_WINDOWS_WITH_MSVC
-        #error "Both PLATFORM_WINDOWS_WITH_GCC and PLATFORM_WINDOWS_WITH_MSVC are defined."
-    #endif /* PLATFORM_WINDOWS_WITH_MSVC */
+#ifdef LAL_PLATFORM_WINDOWS_WITH_GCC
+    #ifdef LAL_PLATFORM_WINDOWS_WITH_MSVC
+        #error "Both LAL_PLATFORM_WINDOWS_WITH_GCC and LAL_PLATFORM_WINDOWS_WITH_MSVC are defined."
+    #endif /* LAL_PLATFORM_WINDOWS_WITH_MSVC */
     #ifdef _MSC_VER
         #if !WITH_IDEA_INTELLISENSE /* We might still wanna use msvc intellisense because it's cool. */
             #error "Compiling with gcc but _MSC_VER is defined."
         #endif /* !WITH_IDEA_INTELLISENSE */
     #endif /* _MSC_VER */
     #warning "Compiling windows target with the GCC toolchain. This is allowed but not recommended."
-#endif /* PLATFORM_WINDOWS_WITH_GCC */
-#ifdef PLATFORM_WINDOWS_WITH_MSVC
-    #ifdef PLATFORM_WINDOWS_WITH_GCC
-        #error "Both PLATFORM_WINDOWS_WITH_GCC and PLATFORM_WINDOWS_WITH_MSVC are defined."
-    #endif /* PLATFORM_WINDOWS_WITH_GCC */
+#endif /* LAL_PLATFORM_WINDOWS_WITH_GCC */
+#ifdef LAL_PLATFORM_WINDOWS_WITH_MSVC
+    #ifdef LAL_PLATFORM_WINDOWS_WITH_GCC
+        #error "Both LAL_PLATFORM_WINDOWS_WITH_GCC and LAL_PLATFORM_WINDOWS_WITH_MSVC are defined."
+    #endif /* LAL_PLATFORM_WINDOWS_WITH_GCC */
     #if _MSC_VER < 1930
         #error "Program requires at least verion \"Visual Studio 2022 RTW 17.0\" of the MSVC compiler."
     #endif /* _MSC_VER < 1930 */
-#endif /* PLATFORM_WINDOWS_WITH_MSVC */
+#endif /* LAL_PLATFORM_WINDOWS_WITH_MSVC */
 
-#if PLATFORM_WINDOWS_WITH_GCC
-    #define PLATFORM_WINDOWS_WITH_MSVC      0
-    #define WITH_GCC                        1
-    #define LAL_WITH_MSVC                       0
-#endif /* PLATFORM_WINDOWS_WITH_GCC */
-#if PLATFORM_WINDOWS_WITH_MSVC
-    #define PLATFORM_WINDOWS_WITH_GCC       0
-    #define WITH_GCC                        0
-    #define LAL_WITH_MSVC                       1
-#endif /* PLATFORM_WINDOWS_WITH_MSVC */
+#if LAL_PLATFORM_WINDOWS_WITH_GCC
+    #define LAL_PLATFORM_WINDOWS_WITH_MSVC                              0
+    #define LAL_WITH_GCC                                                1
+    #define LAL_WITH_MSVC                                               0
+#endif /* LAL_PLATFORM_WINDOWS_WITH_GCC */
+#if LAL_PLATFORM_WINDOWS_WITH_MSVC
+    #define LAL_PLATFORM_WINDOWS_WITH_GCC                               0
+    #define LAL_WITH_GCC                                                0
+    #define LAL_WITH_MSVC                                               1
+#endif /* LAL_PLATFORM_WINDOWS_WITH_MSVC */
 
 #ifndef __cplusplus
     #error "No cpp standard specified."
 #else /* !__cplusplus */
     #if __cplusplus == 199711L
-        #if PLATFORM_WINDOWS_WITH_MSVC
+        #if LAL_PLATFORM_WINDOWS_WITH_MSVC
             #error "Mvsc command line build flag was not set. Missing \"/Zc:__cplusplus\" to handle cpp verion ctrl correctly."
-        #else /* PLATFORM_WINDOWS_WITH_MSVC */
-            #error "Program requires at least C++20."
-        #endif /* !PLATFORM_WINDOWS_WITH_MSVC */
+        #else /* LAL_PLATFORM_WINDOWS_WITH_MSVC */
+            #error "Program requires at least C++23."
+        #endif /* !LAL_PLATFORM_WINDOWS_WITH_MSVC */
     #else /* __cplusplus == 199711L */
-        #if __cplusplus < 202002L
-            #error "Program requires at least C++20."
+        #if __cplusplus < PRIVATE_LAL_CPLUSPLUS
+            #error "Program requires at least Config/.__cplusplus."
         #endif /* __cplusplus < 202002L */
     #endif /* __cplusplus != 199711L */
 #endif /* __cplusplus */
@@ -59,167 +63,192 @@
     #endif /* !_MSVC_LANG */
 #endif /* LAL_WITH_MSVC */
 
+#if !(LAL_WITH_GCC != LAL_WITH_MSVC)
+    #error "No compiler specified or both."
+#endif /* LAL_WITH_GCC != LAL_WITH_MSVC */
+
+namespace Lal
+{
+
+struct LPrimitivePlatformTypesGeneric;
+
+//# The platform types specification for Windows.
+struct LPrimitivePlatformTypesWindows;
+
+//# Make it public.
+#ifndef LAL_PLATFORM_TYPES_STRUCT
+    #define LAL_PLATFORM_TYPES_STRUCT                                   ::Lal::LPrimitivePlatformTypesWindows
+#endif /* !LAL_PLATFORM_TYPES_STRUCT */
+
+//# The platform break implementation details for break behavior on Windows.
+struct LOnPlatformBreakWindows;
+
+//# Make it public.
+typedef LOnPlatformBreakWindows                                         LOnPlatformBreak;
+
+} /* ~Namespace Lal */
+
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler config
 
-/**
- * Do not warn about misuses of pragmas, such as incorrect parameters, invalid syntax, or conflicts between pragmas.
- * See also -Wunknown-pragmas.
- *
- * https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wpragmas
- */
-#if PLATFORM_WINDOWS_WITH_GCC
+//#
+//# Do not warn about misuses of pragmas, such as incorrect parameters, invalid syntax, or conflicts between pragmas.
+//# See also -Wunknown-pragmas.
+//#
+//# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wpragmas
+//#
+#if LAL_PLATFORM_WINDOWS_WITH_GCC
     #pragma GCC diagnostic error "-Wpragmas"
-#endif /* PLATFORM_WINDOWS_WITH_GCC */
+#endif /* LAL_PLATFORM_WINDOWS_WITH_GCC */
 
-/**
- * Warn when a #pragma directive is encountered that is not understood by GCC.
- * If this command-line option is used, warnings are even issued for unknown pragmas in system header files.
- * This is not the case if the warnings are only enabled by the -Wall command-line option.
- *
- * https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunknown-pragmas
- */
-#if PLATFORM_WINDOWS_WITH_GCC
+//#
+//# Warn when a #pragma directive is encountered that is not understood by GCC.
+//# If this command-line option is used, warnings are even issued for unknown pragmas in system header files.
+//# This is not the case if the warnings are only enabled by the -Wall command-line option.
+//#
+//# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunknown-pragmas
+//#
+#if LAL_PLATFORM_WINDOWS_WITH_GCC
     #pragma GCC diagnostic error "-Wunknown-pragmas"
-#endif /* PLATFORM_WINDOWS_WITH_GCC */
+#endif /* LAL_PLATFORM_WINDOWS_WITH_GCC */
 
-#if PLATFORM_WINDOWS_WITH_MSVC
-    /**
-     * Warning C4002 (compiler warning level 1)   ==>   Raise to error:
-     * too many arguments for function-like macro invocation 'identifier'
-     *
-     * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4002?view=msvc-170
-     */
+#if LAL_PLATFORM_WINDOWS_WITH_MSVC
+    //#
+    //# Warning C4002 (compiler warning level 1)   ==>   Raise to error:
+    //# too many arguments for function-like macro invocation 'identifier'
+    //#
+    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4002?view=msvc-170
+    //#
     #pragma warning(error: 4002)
 
-    /**
-     * Warning C4003 (compiler warning level 1)   ===>   Raise to error:
-     * not enough arguments for function-like macro invocation 'identifier'
-     *
-     * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4003?view=msvc-170
-     */
+    //#
+    //# Warning C4003 (compiler warning level 1)   ===>   Raise to error:
+    //# not enough arguments for function-like macro invocation 'identifier'
+    //#
+    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4003?view=msvc-170
+    //#
     #pragma warning(error: 4003)
 
-    /**
-     * Warning C4005 (compiler warning level 1)   ===>   Raise to error:
-     * 'identifier' : macro redefinition
-     *
-     * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4005?view=msvc-170
-     */
+    //#
+    //# Warning C4005 (compiler warning level 1)   ===>   Raise to error:
+    //# 'identifier' : macro redefinition
+    //#
+    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4005?view=msvc-170
+    //#
     #pragma warning(error: 4005)
 
-    /**
-     * Warning C4172 (compiler warning level 1)   ===>   Raise to error:
-     * returning address of local variable or temporary: function.
-     *
-     * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4172?view=msvc-170
-     */
+    //#
+    //# Warning C4172 (compiler warning level 1)   ===>   Raise to error:
+    //# returning address of local variable or temporary: function.
+    //#
+    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4172?view=msvc-170
+    //#
     #pragma warning(error : 4172)
 
-    /**
-     * Warning C4251 (compiler warning level 2):
-     * 'type' : class 'type1' needs to have dll-interface to be used by clients of class 'type2'.
-     *
-     * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4251?view=msvc-170
-     */
+    //#
+    //# Warning C4251 (compiler warning level 2):
+    //# 'type' : class 'type1' needs to have dll-interface to be used by clients of class 'type2'.
+    //#
+    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4251?view=msvc-170
+    //#
     #pragma warning(disable : 4251)
 
-    /**
-     * Warning C4275 (compiler warning level 1)   ===>   Raise to error:
-     * 'modifier': used more than once
-     *
-     * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4141?view=msvc-170
-     */
+    //#
+    //# Warning C4275 (compiler warning level 1)   ===>   Raise to error:
+    //# 'modifier': used more than once
+    //#
+    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4141?view=msvc-170
+    //#
     #pragma warning(error : 4141)
 
-    /**
-     * Warning C4553 (compiler warning level 1)   ===>   Raise to error:
-     * 'operator' : operator has no effect; did you intend 'operator'?
-     *
-     * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4553?view=msvc-170
-     */
+    //#
+    //# Warning C4553 (compiler warning level 1)   ===>   Raise to error:
+    //# 'operator' : operator has no effect; did you intend 'operator'?
+    //#
+    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4553?view=msvc-170
+    //#
     #pragma warning(error : 4553)
 
-    /**
-     * Warning C4700 (compiler warning level 1)   ===>   Raise to error:
-     * uninitialized local variable 'name' used
-     *
-     * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-and-level-4-c4700?view=msvc-170
-     */
+    //#
+    //# Warning C4700 (compiler warning level 1)   ===>   Raise to error:
+    //# uninitialized local variable 'name' used
+    //#
+    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-and-level-4-c4700?view=msvc-170
+    //#
     #pragma warning(error : 4700)
 
-    /**
-     * Warning C4717 (compiler warning level 1)   ===>   Raise to error:
-     * 'function' : recursive on all control paths, function will cause runtime stack overflow
-     *
-     * https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4717?view=msvc-170
-     */
+    //#
+    //# Warning C4717 (compiler warning level 1)   ===>   Raise to error:
+    //# 'function' : recursive on all control paths, function will cause runtime stack overflow
+    //#
+    //# https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4717?view=msvc-170
+    //#
     #pragma warning(error : 4717)
 #endif /* PLATFORM_WINDOWS_WITH_MSVC */
 
-#if PLATFORM_WINDOWS_WITH_GCC
-    // #pragma GCC diagnostic ignored "-Wno-gnu-anonymous-struct" // <--- Currently not using pedantic.
+#if LAL_PLATFORM_WINDOWS_WITH_GCC
+    // #pragma GCC diagnostic ignored "-Wno-gnu-anonymous-struct" /* <--- Currently not using pedantic. Because that's just to pedantic. */
 
     #pragma GCC diagnostic error "-Wbuiltin-macro-redefined"
 
-    /**
-     * C++20 std change: A simple-template-id is no longer valid as the declarator-id of a constructor or destructor.
-     * http://eel.is/c++draft/diff.cpp17.class#2
-     */
+    //#
+    //# C++20 std change: A simple-template-id is no longer valid as the declarator-id of a constructor or destructor.
+    //# http://eel.is/c++draft/diff.cpp17.class#2
+    //#
     #pragma GCC diagnostic error "-Wtemplate-id-cdtor"
 
-    /**
-     * Warn whenever a local variable is assigned to, but otherwise unused (aside from its declaration).
-     * This warning is enabled by -Wall.
-     * To suppress this warning use the unused attribute (see Specifying Attributes of Variables).
-     * This warning is also enabled by -Wunused, which is enabled by -Wall.
-     *
-     * https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-but-set-variable
-     */
+    //#
+    //# Warn whenever a local variable is assigned to, but otherwise unused (aside from its declaration).
+    //# This warning is enabled by -Wall.
+    //# To suppress this warning use the unused attribute (see Specifying Attributes of Variables).
+    //# This warning is also enabled by -Wunused, which is enabled by -Wall.
+    //#
+    //# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-but-set-variable
+    //#
     #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 
-    /**
-     * Warn whenever a static function is declared but not defined or a non-inline static function is unused.
-     * This warning is enabled by -Wall.
-     *
-     * https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-function
-     */
+    //#
+    //# Warn whenever a static function is declared but not defined or a non-inline static function is unused.
+    //# This warning is enabled by -Wall.
+    //#
+    //# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-function
+    //#
     #pragma GCC diagnostic ignored "-Wunused-function"
 
-    /**
-     * Warn whenever a function parameter is unused aside from its declaration.
-     * This option is not enabled by -Wunused unless -Wextra is also specified.
-     *
-     * https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter
-     */
+    //#
+    //# Warn whenever a function parameter is unused aside from its declaration.
+    //# This option is not enabled by -Wunused unless -Wextra is also specified.
+    //#
+    //# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter
+    //#
     #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-    /**
-     * Warn whenever a local or static variable is unused aside from its declaration. This option implies
-     * -Wunused-const-variable=1 for C, but not for C++. This warning is enabled by -Wall.
-     *
-     * https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-variable
-     */
+    //#
+    //# Warn whenever a local or static variable is unused aside from its declaration. This option implies
+    //# -Wunused-const-variable=1 for C, but not for C++. This warning is enabled by -Wall.
+    //#
+    //# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-variable
+    //#
     #pragma GCC diagnostic ignored "-Wunused-variable"
 
-    /**
-     * Warn whenever a comment-start sequence '/ *' appears in a '/ *' comment, or whenever a backslash-newline
-     * appears in a '//' comment. This warning is enabled by -Wall.
-     * https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wcomment
-     */
+    //#
+    //# Warn whenever a comment-start sequence '/ *' appears in a '/ *' comment, or whenever a backslash-newline
+    //# appears in a '//' comment. This warning is enabled by -Wall.
+    //# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wcomment
+    //#
     #pragma GCC diagnostic ignored "-Wcomment"
     #pragma GCC diagnostic ignored "-Wcomments"
 
-    /**
-     * Warn if a structure’s initializer has some fields missing. In C this option does not warn about designated
-     * initializers. In C++ this option does not warn about the empty { } initializer.
-     * This warning is included in -Wextra. To get other -Wextra warnings without this one, use -Wextra
-     * -Wno-missing-field-initializers.
-     *
-     * https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wmissing-field-initializers
-     */
+    //#
+    //# Warn if a structure’s initializer has some fields missing. In C this option does not warn about designated
+    //# initializers. In C++ this option does not warn about the empty { } initializer.
+    //# This warning is included in -Wextra. To get other -Wextra warnings without this one, use -Wextra
+    //# -Wno-missing-field-initializers.
+    //#
+    //# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wmissing-field-initializers
+    //#
     #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-#endif /* PLATFORM_WINDOWS_WITH_GCC */
+#endif /* LAL_PLATFORM_WINDOWS_WITH_GCC */
 
 // ~Compiler config
 ///////////////////////////////////////////////////////////////////////////////
@@ -227,29 +256,127 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Compiler dependent features
 
+
+#if AS_CLIENT
+    #ifndef JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER
+        #define JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER              1
+    #endif /* JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
+#endif /* AS_CLIENT */
+
+#ifndef LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS
+    #define LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS        1
+#endif /* !LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS */
+
+#ifndef LAL_PLATFORM_USES_64_BIT
+    #define LAL_PLATFORM_USES_64_BIT                                    1
+#endif /* !LAL_PLATFORM_USES_64_BIT */
+
+//# https://learn.microsoft.com/en-us/cpp/mfc/windows-sockets-byte-ordering?view=msvc-170
+#ifndef LAL_PLATFORM_USES_LITTLE_ENDIAN
+    #define LAL_PLATFORM_USES_LITTLE_ENDIAN                             1
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
+
+#ifndef LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
+    #define LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES                      1
+#endif /* !LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES */
+
+#ifndef LAL_PLATFORM_SUPPORTS_STD_FLUSH
+    #define LAL_PLATFORM_SUPPORTS_STD_FLUSH                             1
+#endif /* !LAL_PLATFORM_SUPPORTS_STD_FLUSH */
+
+#ifndef LAL_PLATFORM_SUPPORTS_ANSI_ESCAPES
+    #define LAL_PLATFORM_SUPPORTS_ANSI_ESCAPES                          1
+#endif /* !LAL_PLATFORM_SUPPORTS_ANSI_ESCAPES */
+
+#ifndef LAL_PLATFORM_SUPPORTS_SIMD
+    #define LAL_PLATFORM_SUPPORTS_SIMD                                  1
+#endif /* !LAL_PLATFORM_SUPPORTS_SIMD */
+
+#ifndef LAL_PLATFORM_SUPPORTS_MEMORY_SHRINK
+    #define LAL_PLATFORM_SUPPORTS_MEMORY_SHRINK                         1
+#endif /* !LAL_PLATFORM_SUPPORTS_MEMORY_SHRINK */
+
+#if (defined(LAL_WITH_MSVC) && LAL_WITH_MSVC != 0) && !(_MSVC_LANG >= 201703L)
+    #if !defined(PLATFORM_USES_UTF8) || PLATFORM_USES_UTF8 == 0
+        #error "PLATFORM_USES_UTF8 is not defined or set to 0. Missing /utf-8 compiler flag."
+    #endif /* !PLATFORM_USES_UTF8 */
+#else /* (defined(LAL_WITH_MSVC) && LAL_WITH_MSVC != 0) && !(_MSVC_LANG >= 201703L) */
+    #ifndef LAL_PLATFORM_USES_UTF8
+        #define LAL_PLATFORM_USES_UTF8                                  1
+    #endif /* !LAL_PLATFORM_USES_UTF8 */
+#endif /* !defined(LAL_WITH_MSVC) || LAL_WITH_MSVC == 0 || _MSVC_LANG >= 201703L */
+
+#ifndef LAL_PLATFORM_WCHAR_SIZE
+    #define LAL_PLATFORM_WCHAR_SIZE                                     2
+#endif /* !LAL_PLATFORM_WCHAR_SIZE */
+
+#ifndef LAL_PLATFORM_CALLSPEC_IN
+    #define LAL_PLATFORM_CALLSPEC_IN                                    __declspec ( dllimport )
+#endif /* !LAL_PLATFORM_CALLSPEC_IN */
+
+#ifndef LAL_PLATFORM_CALLSPEC_OUT
+    #define LAL_PLATFORM_CALLSPEC_OUT                                   __declspec ( dllexport )
+#endif /* !LAL_PLATFORM_CALLSPEC_OUT */
+
+#ifndef LAL_PLATFORM_EXTERNSPEC_IN
+    #define LAL_PLATFORM_EXTERNSPEC_IN                                  extern
+#endif /* !LAL_PLATFORM_EXTERNSPEC_IN */
+
+#ifndef LAL_PLATFORM_EXTERNSPEC_OUT
+    #define LAL_PLATFORM_EXTERNSPEC_OUT
+#endif /* !LAL_PLATFORM_EXTERNSPEC_OUT */
+
+#ifndef LAL_PLATFORM_MAX_PATH
+    #define LAL_PLATFORM_MAX_PATH                                       MAX_PATH
+#endif /* LAL_PLATFORM_MAX_PATH */
+
+#ifndef LAL_PLATFORM_USES_STD_FINDER
+    #define LAL_PLATFORM_USES_STD_FINDER                                1
+#endif /* LAL_PLATFORM_USES_STD_FINDER */
+
+#ifndef LAL_PLATFORM_NO_DISCARD_CTRL_PATH
+    #if LAL_WITH_MSVC
+        #include <intrin.h>
+        #define LAL_PLATFORM_NO_DISCARD_CTRL_PATH                       { __nop(); }
+    #elif LAL_WITH_GCC
+        #define LAL_PLATFORM_NO_DISCARD_CTRL_PATH                       { __asm__ __volatile__ ("nop"); }
+    #endif /* LAL_WITH_GCC */
+#endif /* !LAL_PLATFORM_NO_DISCARD_CTRL_PATH */
+
+#ifndef LAL_PLATFORM_BREAK
+    #define LAL_PLATFORM_BREAK()                                        __debugbreak();
+#endif  /* !LAL_PLATFORM_BREAK */
+
+//# Do we want to use __ud2 or __fastfail. This has to be evaluated.
+#ifndef LAL_PLATFORM_TRAP
+    #define LAL_PLATFORM_TRAP()                                         (__ud2());
+#endif /* !LAL_PLATFORM_TRAP */
+
 #ifndef NOINLINE
-    #define NOINLINE            __declspec(noinline)
+    #define NOINLINE                                                    __declspec ( noinline )
 #endif /* !NOINLINE */
 
-#ifdef FORCEINLINE
-    #undef FORCEINLINE
-#endif /* FORCEINLINE */
-#if IN_DEBUG
-    /*
-     * Inlining is disabled in debug builds as following the debugger through inlined code is a pain
-     * in the ass.
-     */
-    #define FORCEINLINE inline /* Inlining will most likely be ignored in debug builds by the current compiler. */
-#else /* IN_DEBUG */
-    #if PLATFORM_WINDOWS_WITH_MSVC
-        #define FORCEINLINE _forceinline
-    #elif PLATFORM_WINDOWS_WITH_GCC
-        #define FORCEINLINE __attribute__((always_inline))
-    #endif /* PLATFORM_WINDOWS_WITH_GCC */
-#endif /* !IN_DEBUG */
+#ifndef FORCEINLINE
+    #if IN_DEBUG
+        //#
+        //# Inlining is disabled in debug builds as following the debugger through inlined code is a pain
+        //# in the ass.
+        //#
+        #define FORCEINLINE                                             inline
+    #else /* IN_DEBUG */
+        #if LAL_WITH_MSVC
+            #define FORCEINLINE                                         _forceinline
+        #else LAL_WITH_GCC
+            #define FORCEINLINE                                         __attribute__ ((always_inline))
+        #endif /* LAL_WITH_GCC */
+    #endif /* !IN_DEBUG */
+#endif /* !FORCEINLINE */
 
 // ~Compiler dependent features
 ///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+//# Windows Platform
 
 /* Why the duck does this even exists. This destroys so many normal functions - wtf?? */
 #ifdef NOMINMAX
@@ -267,14 +394,14 @@
 /**
  * https://learn.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=msvc-170
  */
-#if PLATFORM_WINDOWS_WITH_GCC
+#if LAL_PLATFORM_WINDOWS_WITH_GCC
     #ifdef WINVER
         #undef WINVER
     #endif /* WINVER */
     #ifdef _WIN32_WINNT
         #undef _WIN32_WINNT /* @see _mingw.h <--- Wants to compile with Windows Vista??? Bro. Shame. */
     #endif /* _WIN32_WINNT */
-#endif /* PLATFORM_WINDOWS_WITH_GCC */
+#endif /* LAL_PLATFORM_WINDOWS_WITH_GCC */
 #if !PLATFORM_WINDOWS_WITH_MSVC
     /*
      * Defines it ourselves - we do not need backwards compatibility for systems prior to Windows 10.
@@ -291,212 +418,75 @@
     #undef TEXT
 #endif /* TEXT */
 
-#if PLATFORM_WINDOWS_WITH_GCC
+//# Windows Platform
+///////////////////////////////////////////////////////////////////////////////
+
+#if LAL_WITH_GCC
     #include <locale>
-#endif /* PLATFORM_WINDOWS_WITH_GCC */
+#endif /* LAL_WITH_GCC */
 
-/*
- * We forward declare this shit, as this file should only be included implicitly by including Platform.h
- */
-struct LGenericPlatformTypes;
+#include <codecvt>
 
-struct  LWinPlatformTypes;
-struct  LWinPlatformBreakDefines;
-typedef LWinPlatformTypes LPlatformTypes;
-
-struct LWinPlatformTypes final : public LGenericPlatformTypes
+namespace Lal
 {
+
+struct LPrimitivePlatformTypesWindows final : public LPrimitivePlatformTypesGeneric
+{
+    typedef size_t LSize;
+
     static LStringLegacy Ws2S(const LWideString& Ws)
     {
-#if PLATFORM_WINDOWS_WITH_MSVC
+#if LAL_WITH_MSVC
         __pragma( warning(push) )
         __pragma( warning(disable: 4996) )
-#endif /* PLATFORM_WINDOWS_WITH_MSVC */
+#endif /* LAL_WITH_MSVC */
         typedef std::codecvt_utf8<wchar_t> TypeX;
         std::wstring_convert<TypeX, wchar_t> Converter;
         return Converter.to_bytes(Ws);
-#if PLATFORM_WINDOWS_WITH_MSVC
+#if LAL_WITH_MSVC
         __pragma( warning(pop) )
-#endif /* PLATFORM_WINDOWS_WITH_MSVC */
+#endif /* LAL_WITH_MSVC */
     }
 
-    static const char* Ws2CStr(const LWideString& Ws, LStringLegacy& OutContainer)
+    static const char* Ws2CStr(const LWideString& Ws, LStringLegacy* OutContainer)
     {
-        OutContainer = Ws2S(Ws);
-        return OutContainer.c_str();
+        *OutContainer = LPrimitivePlatformTypesWindows::Ws2S(Ws);
+        return OutContainer->c_str();
     }
 
     static std::wstring CStr2Ws(const char* Cs)
     {
-#if PLATFORM_WINDOWS_WITH_MSVC
+#if LAL_WITH_MSVC
         __pragma( warning(push) )
         __pragma( warning(disable: 4996) )
-#endif /* PLATFORM_WINDOWS_WITH_MSVC */
+#endif /* LAL_WITH_MSVC */
         typedef std::codecvt_utf8<wchar_t> TypeX;
         std::wstring_convert<TypeX, wchar_t> Converter;
         return Converter.from_bytes(Cs);
-#if PLATFORM_WINDOWS_WITH_MSVC
+#if LAL_WITH_MSVC
         __pragma( warning(pop) )
-#endif /* PLATFORM_WINDOWS_WITH_MSVC */
+#endif /* LAL_WITH_MSVC */
     }
 };
 
-#ifdef PLATFORM_MAX_PATH
-    #error "PLATFORM_MAX_PATH is already defined."
-#endif /* PLATFORM_MAX_PATH */
-#define LAL_PLATFORM_MAX_PATH                       MAX_PATH
-
-#ifdef PLATFORM_SUPPORTS_SHARED_LIBRARIES
-    #error "PLATFORM_SUPPORTS_SHARED_LIBRARIES is already defined."
-#endif /* PLATFORM_SUPPORTS_SHARED_LIBRARIES */
-#define LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES      1
-
-#ifdef PLATFORM_SUPPORTS_STD_FLUSH
-    #error "PLATFORM_SUPPORTS_STD_FLUSH is already defined."
-#endif /* PLATFORM_SUPPORTS_STD_FLUSH */
-#define LAL_PLATFORM_SUPPORTS_STD_FLUSH             1
-
-#ifdef PLATFORM_SUPPORTS_ANSI_ESCAPES
-    #error "PLATFORM_SUPPORTS_ANSI_ESCAPES is already defined."
-#endif /* PLATFORM_SUPPORTS_ANSI_ESCAPES */
-#define LAL_PLATFORM_SUPPORTS_ANSI_ESCAPES          1
-
-#ifdef PLATFORM_SUPPORTS_SIMD
-    #error "PLATFORM_SUPPORTS_SIMD is already defined."
-#endif /* PLATFORM_SUPPORTS_SIMD */
-#define LAL_PLATFORM_SUPPORTS_SIMD                  1
-
-#ifdef PLATFORM_SUPPORTS_MEMORY_SHRINK
-    #error "PLATFORM_SUPPORTS_MEMORY_SHRINK is already defined."
-#endif /* PLATFORM_SUPPORTS_MEMORY_SHRINK */
-#define LAL_PLATFORM_SUPPORTS_MEMORY_SHRINK         1
-
-#if PLATFORM_WINDOWS_WITH_MSVC
-    #include <intrin.h>
-    #define PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH() \
-        __nop()
-#elif PLATFORM_WINDOWS_WITH_GCC
-    #define PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH() \
-        __asm__ __volatile__ ("nop")
-#endif /* LAL_WITH_MSVC */
-
-/**
- * Platform break. Should just break the debugger if attached and pause the program. It must allow for continuing.
- * If no debugger is attached, the behavior is undefined.
- */
-#ifdef PLATFORM_BREAK
-    #error "PLATFORM_BREAK is already defined."
-#endif /* PLATFORM_BREAK */
-#if PLATFORM_WINDOWS_WITH_MSVC
-    #define PLATFORM_BREAK()                                      \
-        {{                                                        \
-            {                                                     \
-                LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()        \
-            }                                                     \
-            (                                                     \
-                PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH(), \
-                __debugbreak(),                                   \
-                PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH()  \
-            )                                                     \
-            ;                                                     \
-        }}
-#elif PLATFORM_WINDOWS_WITH_GCC
-    #define PLATFORM_BREAK()                                      \
-        {{                                                        \
-            {                                                     \
-                LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()        \
-            }                                                     \
-            [] (void) -> void                                     \
-            {                                                     \
-                PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH(); \
-                __debugbreak();                                   \
-                PLATFORM_DO_NOT_DISCARD_RESULTING_CONTROL_PATH(); \
-            }();                                                  \
-        }}
-#endif /* PLATFORM_WINDOWS_WITH_GCC */
-
-/**
- * Platform error break. This signals the user via a platform-specific pop-up window that an error occurred and the
- * program panicked. Resuming the program will not be possible except when an attached debugger is present.
- */
-#ifdef PLATFORM_ERROR_BREAK
-    #error "PLATFORM_ERROR_BREAK is already definded."
-#endif /* PLATFORM_ERROR_BREAK */
-#define PLATFORM_ERROR_BREAK(InMessage)                           \
-    PLATFORM_ERROR_BREAK_WITH_BODY(InMessage, __FILE__, __LINE__)
-
-#ifdef PLATFORM_ERROR_BREAK_WITH_BODY
-    #error "PLATFORM_ERROR_BREAK_WITH_BODY is already definded."
-#endif /* PLATFORM_ERROR_BREAK_WITH_BODY */
-#define PLATFORM_ERROR_BREAK_WITH_BODY(InMessage, InFile, InLine)                                     \
-    {{                                                                                                \
-        {                                                                                             \
-            LOG_PRIVATE_UNSAFE_FLUSH_EVERYTHING_FAST()                                                \
-        }                                                                                             \
-        const std::string  ___InMessage     = InMessage;                                              \
-        const std::string  ___InFile        = InFile;                                                 \
-        const std::wstring ___InMessageWide = std::wstring(___InMessage.begin(), ___InMessage.end()); \
-        const std::wstring ___InFileWide    = std::wstring(___InFile.begin(),    ___InFile.end()   ); \
-        const u32       ___InLine        = InLine;                                                 \
-        {                                                                                             \
-            (void)                                                                                    \
-            (                                                                                         \
-            (                                                                                         \
-                _wassert(___InMessageWide.c_str(), ___InFileWide.c_str(), ___InLine), 0               \
-            )                                                                                         \
-            )                                                                                         \
-            ;                                                                                         \
-        }                                                                                             \
-    }}
-
-/**
- * Platform panic break. This signals the user via a platform-specific pop-up window that a fatal error occurred
- * and the program panicked. Resuming the program will not be possible.
- * This will only be called in shipping builds. This macro will be replaced in development build with
- * PLATFORM_ERROR_BREAK.
- */
-#ifdef PLATFORM_PANIC_BREAK
-    #error "PLATFORM_PANIC_BREAK is already definded."
-#endif /* PLATFORM_PANIC_BREAK */
-#define PLATFORM_PANIC_BREAK(InMessage)                           \
-    PLATFORM_PANIC_BREAK_WITH_BODY(InMessage, __FILE__, __LINE__)
-
-#ifdef PLATFORM_PANIC_BREAK_WITH_BODY
-    #error "PLATFORM_PANIC_BREAK_WITH_BODY is already definded."
-#endif /* PLATFORM_PANIC_BREAK_WITH_BODY */
-#define PLATFORM_PANIC_BREAK_WITH_BODY(InMessage, InFile, InLine)        \
-    LWinPlatformBreakDefines::OnProgramPanic(InMessage, InFile, InLine);
-
-#define PLATFORM_CALLSPEC_OUT           __declspec ( dllexport )
-#define PLATFORM_CALLSPEC_IN            __declspec ( dllimport )
-#define PLATFORM_EXTERNSPEC_OUT
-#define LAL_PLATFORM_EXTERNSPEC_IN          extern
-
-/**
- * https://learn.microsoft.com/en-us/cpp/mfc/windows-sockets-byte-ordering?view=msvc-170
- */
-#define LAL_PLATFORM_USES_LITTLE_ENDIAN                 1
-
-#define JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER       1
-
-#define PLATFORM_WCHAR_SIZE                         2
-
-#if LAL_WITH_MSVC
-    #define PLATFORM_USES_64_BIT                    1
-#elif WITH_GCC
-    #define PLATFORM_USES_32_BIT                    1
-#endif /* LAL_WITH_MSVC */
-
-#if (defined(LAL_WITH_MSVC) && LAL_WITH_MSVC != 0) && !(_MSVC_LANG >= 201703L)
-    #if !defined(PLATFORM_USES_UTF8) || PLATFORM_USES_UTF8 == 0
-        #error "PLATFORM_USES_UTF8 is not defined or set to 0. Missing /utf-8 compiler flag."
-    #endif /* !PLATFORM_USES_UTF8 */
-#else /* (defined(LAL_WITH_MSVC) && LAL_WITH_MSVC != 0) && !(_MSVC_LANG >= 201703L) */
-    #define LAL_PLATFORM_USES_UTF8          1
-#endif /* !defined(LAL_WITH_MSVC) || LAL_WITH_MSVC == 0 || _MSVC_LANG >= 201703L */
-
-struct LWinPlatformBreakDefines final
+struct LOnPlatformBreakWindows final
 {
-    NORETURN NOINLINE
-    static void OnProgramPanic(const std::string& InMessage, const std::string& InFile, const LWinPlatformTypes::i32 InLine);
+    [[noreturn]] NOINLINE
+    static void ExitQuietly();
+
+    [[noreturn]] NOINLINE
+    static void OnProgramPanicImpl
+    (
+        const LPrimitivePlatformTypesGeneric::LChar* InMessage
+    );
+
+    [[noreturn]] NOINLINE
+    static void OnProgramPanic
+    (
+        const LPrimitivePlatformTypesGeneric::LChar* InBaseMessage,
+        const LPrimitivePlatformTypesGeneric::LChar* InFile,
+        const LPrimitivePlatformTypesGeneric::u64    InLine
+    );
 };
+
+} /* ~Namespace Lal */

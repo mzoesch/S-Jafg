@@ -3,15 +3,15 @@
 #pragma once
 
 /*-----------------------------------------------------------------------------
-    Validate compiler and forward declare Lal linux logic.
+    Validate compiler and forward declare Lal Linux logic.
 -----------------------------------------------------------------------------*/
 
 #if !PLATFORM_LINUX
-    #error "Wanted to override generic platform types with linux specific types, but platform is not linux."
+    #error "Wanted to override generic platform types with Linux specific types, but platform is not Linux."
 #endif /* !PLATFORM_LINUX */
 
-#if __cplusplus < 202302L
-    #error "Program requires at least C++23."
+#if __cplusplus < PRIVATE_LAL_CPLUSPLUS
+    #error "Program requires at least Config/.__cplusplus."
 #endif /* __cplusplus < 202002L */
 
 namespace Lal
@@ -19,16 +19,18 @@ namespace Lal
 
 struct LPrimitivePlatformTypesGeneric;
 
-//# The platform types specification for linux.
+//# The platform types specification for Linux.
 struct LPrimitivePlatformTypesLinux final : public LPrimitivePlatformTypesGeneric
 {
     typedef size_t LSize;
 };
 
 //# Make it public.
-#define LAL_PLATFORM_TYPES_STRUCT                                       ::Lal::LPrimitivePlatformTypesLinux
+#ifndef LAL_PLATFORM_TYPES_STRUCT
+    #define LAL_PLATFORM_TYPES_STRUCT                                   ::Lal::LPrimitivePlatformTypesLinux
+#endif /* !LAL_PLATFORM_TYPES_STRUCT */
 
-//# The platform break implementation details for break behavior on linux.
+//# The platform break implementation details for break behavior on Linux.
 struct LOnPlatformBreakLinux;
 
 //# Make it public.
