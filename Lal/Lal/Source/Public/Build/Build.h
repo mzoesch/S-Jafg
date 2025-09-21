@@ -120,6 +120,10 @@
     #endif /* !__INTELLISENSE__ */
 #endif /* !WITH_IDEA_INTELLISENSE */
 
+#ifndef LAL_WITH_SANITIZERS
+    #define LAL_WITH_SANITIZERS                 0
+#endif /* !LAL_WITH_SANITIZERS */
+
 
 /*-----------------------------------------------------------------------------
     Low level assertion macro forwards.

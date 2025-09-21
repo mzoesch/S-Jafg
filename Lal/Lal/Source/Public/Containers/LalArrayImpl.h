@@ -1032,20 +1032,30 @@ void TArrayBase<TAllocator>::RemoveAt(const SizeType Index) noexcept
 {
     LAL_CHECK_ARRAY( this->IsValidIndex(Index) )
 
-    this->DestroyAt(Index);
-
     if (Index < this->GetSize() - 1)
     {
         if constexpr (TArrayBaseAllowTrivialMemoryBufferMove_v<T>)
         {
+            this->DestroyAt(Index);
+
             #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
             std::memmove(this->Impl.Data + Index, this->Impl.Data + Index + 1, (this->GetSize() - Index - 1) * sizeof(T));
             #include "Definitions/PopDiagnostics.h"
         }
         else
         {
-            unimplemented()
+            for (SizeType Idx = { Index }; Idx < this->GetSize() - 1; ++Idx)
+            {
+                this->Impl.Data[Idx] = std::move(this->Impl.Data[Idx + 1]);
+                continue;
+            }
+
+            this->DestroyAt(this->GetSize() - 1);
         }
+    }
+    else
+    {
+        this->DestroyAt(Index);
     }
 
     --this->Impl.Slack;
@@ -1066,22 +1076,39 @@ void TArrayBase<TAllocator>::RemoveAt(const SizeType Begin, const SizeType End) 
         return;
     }
 
-    for (SizeType Index { Begin }; Index < End; ++Index)
-    {
-        this->DestroyAt(Index);
-    }
-
     if (End <= this->GetSize())
     {
         if constexpr (TArrayBaseAllowTrivialMemoryBufferMove_v<T>)
         {
+            for (SizeType Index { Begin }; Index < End; ++Index)
+            {
+                this->DestroyAt(Index);
+            }
+
             #include "Definitions/PushDynamicNonTrivialMemoryAccess.h"
             std::memmove(this->Impl.Data + Begin, this->Impl.Data + End, (this->GetSize() - (End - 1) - 1) * sizeof(T));
             #include "Definitions/PopDiagnostics.h"
         }
         else
         {
-            unimplemented()
+            const SizeType Tail { this->GetSize() - End };
+            for (SizeType Idx { 0 }; Idx < Tail; ++Idx)
+            {
+                check( End + Idx < this->GetSize() )
+                this->Impl.Data[Begin + Idx] = std::move(this->Impl.Data[End + Idx]);
+            }
+
+            for (SizeType Idx { this->GetSize() - (End - Begin) }; Idx < this->GetSize(); ++Idx)
+            {
+                this->DestroyAt(Idx);
+            }
+        }
+    }
+    else
+    {
+        for (SizeType Index { Begin }; Index < End; ++Index)
+        {
+            this->DestroyAt(Index);
         }
     }
 

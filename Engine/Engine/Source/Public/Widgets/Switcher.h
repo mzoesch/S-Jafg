@@ -33,7 +33,7 @@ public:
     FORCEINLINE WNode* GetActiveWidgetChecked() const { const bool bOut = this->GetActiveWidget(); check( bOut ) return this->GetActiveWidget(); }
     FORCEINLINE WNode* GetActiveWidgetAsserted() const { const bool bOut = this->GetActiveWidget(); jassert( bOut ) return this->GetActiveWidget(); }
 
-    FORCEINLINE bool IsIndexValid() const { return this->GetChildren().IsValidIndex(this->ActiveIndex); }
+    FORCEINLINE bool IsIndexValid() const { return this->GetChildren().IsValidIndex(static_cast<TArray<LWidgetSlot*>::SizeType>(this->ActiveIndex)); }
     FORCEINLINE auto GetActiveNode() -> WNode* { return this->IsIndexValid() ? this->GetChildren()[this->ActiveIndex]->Content : nullptr; }
     FORCEINLINE auto GetActiveNode() const -> const WNode* { return this->IsIndexValid() ? this->GetChildren()[this->ActiveIndex]->Content : nullptr; }
     FORCEINLINE auto GetActiveNodeChecked() -> WNode* { check( this->IsIndexValid() ) return this->GetChildren()[this->ActiveIndex]->Content; }

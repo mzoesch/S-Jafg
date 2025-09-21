@@ -140,6 +140,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 if(LAL_DO_SANITIZED_BUILD)
     message(STATUS "Enabling sanitizers for the current build.")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        add_compile_definitions(
+            LAL_WITH_SANITIZERS=1
+            )
         add_compile_options(
             -fsanitize=address                  # address:                 Detects use-after-free, heap buffer overflows, etc.
             -fsanitize=undefined                # undefined:               Detects undefined behavior, like null deref, signed int overflow, etc.

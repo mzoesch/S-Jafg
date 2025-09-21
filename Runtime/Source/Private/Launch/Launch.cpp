@@ -81,11 +81,7 @@ FORCEINLINE
 #endif /* !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT) */
 EPlatformExit::Type GetMostSignificantExitReason()
 {
-    //
-    // Even if the engine is null, this will not cause a crash as this member method must always behave in a static
-    // way if itself is not defined.
-    //
-    GEngine->ReflectForwardedExitRequest();
+    LEngine::ReflectForwardedExitRequest();
 
     return ::HasCustomExitStatus()
         ? static_cast<EPlatformExit::Type>(::GetCustomExitStatus())
@@ -106,7 +102,7 @@ void EngineTick()
         ::FlushLogs();
     }
 
-    GEngine->BeginExitIfRequested();
+    LEngine::BeginExitIfRequested();
 
     {
         STAT_QUICK_CYCLE_START("UpdateTime")
@@ -202,11 +198,7 @@ void EngineExit()
     //
     else
     {
-        //
-        // Even if the engine is null, this will not cause a crash as this member method must always behave in a static
-        // way if itself is not defined.
-        //
-        GEngine->ReflectForwardedExitRequest();
+        LEngine::ReflectForwardedExitRequest();
     }
 
     if (GOmniVitaContext)
@@ -331,7 +323,7 @@ EPlatformExit::Type GuardedMain()
     LaunchProgress::BeginProgress("Core Initialization", "Engine pre-life initialization", 0.0f);
 
     check( GEngine == nullptr )
-    GEngine->PreInitialize();
+    LEngine::PreInitialize();
 
     STAT_CYCLE_START(GmNames, "StaticNameRegistration")
     check( Private::GNameRegistry == nullptr )

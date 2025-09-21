@@ -477,15 +477,11 @@ void Jafg::LEngine::TearDown()
     return;
 }
 
-/* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
-// ReSharper disable once CppMemberFunctionMayBeStatic
 void Jafg::LEngine::BeginExitIfRequested()
 {
     ::Jafg::Private::BeginExitIfRequested();
 }
 
-/* It does not really make sense to make this static, as if there is no global engine object we cannot exit. */
-// ReSharper disable once CppMemberFunctionMayBeStatic
 void Jafg::LEngine::ReflectForwardedExitRequest()
 {
     ::Jafg::Private::ReflectForwardEngineExitRequest();

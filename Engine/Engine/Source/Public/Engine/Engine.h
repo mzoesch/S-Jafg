@@ -109,7 +109,7 @@ class LEngine final
 
 public:
 
-    ENGINE_API void PreInitialize();
+    ENGINE_API static void PreInitialize();
     ENGINE_API void Initialize();
     ENGINE_API void Tick(const f32 DeltaTime);
     ENGINE_API void TearDown();
@@ -119,9 +119,9 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
 
     //# Internal public method. Do not use.
-    ENGINE_API void BeginExitIfRequested();
+    ENGINE_API static void BeginExitIfRequested();
     //# Internal public method. Do not use.
-    ENGINE_API void ReflectForwardedExitRequest();
+    ENGINE_API static void ReflectForwardedExitRequest();
 
     ENGINE_API void RequestEngineExit();
     ENGINE_API void RequestEngineExit(const LString& Reason);

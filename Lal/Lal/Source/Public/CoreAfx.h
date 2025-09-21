@@ -14,6 +14,7 @@
 ----------------------------------------------------------------------------*/
 
 #include "Hal/Platform.h"
+#include "Runtime/Asan.h"
 #include "Core/CoreMacros.h"
 #include "Core/CoreDefines.h"
 #include "Core/Traits.h"

@@ -166,7 +166,7 @@ bool Jafg::WTabBar::UnregisterTab(const LString& Identifier)
 
 void Jafg::WTabBar::ResetToDefault()
 {
-    if (this->TabsInOrder.IsValidIndex(this->DefaultIndex))
+    if (this->TabsInOrder.IsValidIndex(static_cast<TArray<LAddedTabBarTab>::SizeType>(this->DefaultIndex)))
     {
         this->ActivateTab(this->TabsInOrder[this->DefaultIndex].Identifier);
     }
