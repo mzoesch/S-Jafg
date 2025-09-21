@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 
 #if !WITH_TESTS
     #error "Test header file included, but tests are not active."

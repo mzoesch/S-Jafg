@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "Rhi/RendererInformation.h"
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/InterfaceTypes.h"

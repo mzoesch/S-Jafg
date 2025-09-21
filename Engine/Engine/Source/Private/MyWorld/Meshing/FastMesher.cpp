@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "MyWorld/Meshing/FastMesher.h"
 #include "MyWorld/Chunk/Chunk.h"
 

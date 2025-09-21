@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "System/SystemForward.h"
 
 #if !LAL_WITH_LEGACY_FINDER

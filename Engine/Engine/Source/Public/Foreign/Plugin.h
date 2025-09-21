@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 
 #if !LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES
     #error "Plugins are not supported on this platform."

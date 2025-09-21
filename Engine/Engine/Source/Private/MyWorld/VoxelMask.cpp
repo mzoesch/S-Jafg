@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "MyWorld/VoxelMask.h"
 
 Jafg::LVoxelMask Jafg::LVoxelMask::Null = Jafg::LVoxelMask("JafgInternal", "Null");

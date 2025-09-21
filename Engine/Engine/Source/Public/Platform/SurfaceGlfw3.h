@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "Platform/Surface.h"
 
 #if !JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER

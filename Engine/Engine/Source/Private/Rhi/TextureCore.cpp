@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "Rhi/TextureCore.h"
 
 i32 Jafg::ERawImageFormat::GetChannelsPerPixel(const ERawImageFormat::Type InFormat)

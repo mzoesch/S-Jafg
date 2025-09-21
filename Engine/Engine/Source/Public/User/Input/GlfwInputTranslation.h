@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "InputTypes.h"
 #if !JAFG_NO_GLFW3 // Glfw3 may still be linked by the current build tool.
                    // So we do not necessarily need to include it.

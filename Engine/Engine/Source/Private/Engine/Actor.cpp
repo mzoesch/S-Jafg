@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "Engine/Actor.h"
 #include "Components/RenderComponent.h"
 #include "Components/NoPhysicsCompontent.h"

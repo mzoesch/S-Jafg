@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "User/Input/InputTypes.h"
 
 LString Jafg::EKeys::ToString(const LKey Key)

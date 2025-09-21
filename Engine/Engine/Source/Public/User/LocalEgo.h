@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "User/Input/UserInput.h"
 #include "Framework/Frontend.h"
 #include "Subsystems/SubsystemCollection.h"

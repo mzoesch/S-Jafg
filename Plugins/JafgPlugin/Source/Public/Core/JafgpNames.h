@@ -2,5 +2,5 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "Core/Name.h"

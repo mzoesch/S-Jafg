@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "Engine/ObjectBaseTypes.h"
 #include "Engine/ObjectContext.h"
 #include "Engine/ObjectClass.h"

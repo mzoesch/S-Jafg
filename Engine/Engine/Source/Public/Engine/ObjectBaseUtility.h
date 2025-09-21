@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "ObjectClass.h"
 #include "Engine/ObjectContext.h"
 #include "Foreign/PluginForward.h"

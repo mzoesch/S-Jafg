@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "Subsystems/FixedTickableWorldSubsystem.h"
 
 void Jafg::JFixedTickableWorldSubsystem::Tick(const float DeltaTime)

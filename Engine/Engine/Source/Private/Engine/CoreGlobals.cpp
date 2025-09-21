@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "Engine/CoreGlobals.h"
 #include "Engine/Engine.h"
 #include "Forward/EngineForward.h"

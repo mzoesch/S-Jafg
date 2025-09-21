@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "Rhi/GenericShaderContext.h"
 
 void Jafg::LGenericShaderContext::Make()

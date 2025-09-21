@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "Subsystems/ThreadedWorldSubsystem.h"
 #include "Stats/Stats.h"
 

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "MyWorld/ChunkKey.h"
 
 namespace Jafg::Validation

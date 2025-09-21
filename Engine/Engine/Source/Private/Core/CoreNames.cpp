@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "Core/CoreNames.h"
 
 ENGINE_API LName Name_LevelMyWorld          = MAKE_STATIC_NAME("LevelMyWorld");

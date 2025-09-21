@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "MyWorld/Validation/ChunkValidationUtility.h"
 
 namespace Jafg::Validation

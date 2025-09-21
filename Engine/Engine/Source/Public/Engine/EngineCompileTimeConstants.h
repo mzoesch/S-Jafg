@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 
 #ifndef JAFG_WITH_FOREIGN_SUPPORT
     #if LAL_PLATFORM_SUPPORTS_SHARED_LIBRARIES

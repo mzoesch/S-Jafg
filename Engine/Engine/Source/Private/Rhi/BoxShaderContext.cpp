@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "Rhi/BoxShaderContext.h"
 #include "Widgets/Viewport.h"
 #include "Rhi/RhiVendorInclude.h"

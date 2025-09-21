@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "System/VoxelTextureSubsystem.h"
 #include "System/EnginePath.h"
 #include "System/VoxelSubsystem.h"

@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 
 bool Jafg::Str::IsValidAscii(const char* InString, const i32 InRuneLengthToCheck)
 {

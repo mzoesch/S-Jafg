@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "MyWorld/MyWorldStatics.h"
 #include "MyWorld/Meshing/NaiveMesher.h"
 #include "MyWorld/CommonTypes.h"

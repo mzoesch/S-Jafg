@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 
 #if !LAL_WITH_LEGACY_FINDER
     #error "The legacy path implementation is not available when LAL_WITH_LEGACY_FINDER is disabled."

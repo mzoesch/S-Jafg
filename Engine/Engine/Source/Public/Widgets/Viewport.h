@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "Node.h"
 #include "Engine/ObjectBaseUtility.h"
 #include "Rhi/FrameBuffer.h"

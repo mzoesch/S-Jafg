@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "CoreAfx.h"
+#include "Lal.afx"
 #include "System/VoxelSubsystem.h"
 
 void Jafg::JVoxelSubsystem::Initialize(LSubsystemCollection& Collection)

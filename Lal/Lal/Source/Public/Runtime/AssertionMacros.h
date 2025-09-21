@@ -34,7 +34,7 @@
 #endif /* PREPROCESSOR_EXCLUDE_FF */
 
 #ifndef PRIVATE_LAL_BUILD_H_INCLUDED
-    #error "This file must not be included directly. Include CoreAfx.h instead."
+    #error "This file must not be included directly. Include Lal.afx instead."
 #endif /* !PRIVATE_LAL_BUILD_H_INCLUDED */
 
 //#
