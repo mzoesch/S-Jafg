@@ -45,8 +45,6 @@ concept AssignableFrom
     =  AssignableFromWeak<TLhs, TRhs>
     && std::is_lvalue_reference_v<TRhs>;
 
-
-
 template <typename T> struct TIsChar : FalseType { };
 template <typename T> struct TIsChar<const T> : TIsChar<T> { };
 template <> struct TIsChar<char> : TrueType { };
@@ -55,6 +53,6 @@ template <> struct TIsChar<char8_t> : TrueType { };
 template <> struct TIsChar<char16_t> : TrueType { };
 template <> struct TIsChar<char32_t> : TrueType { };
 template <typename T>
-inline constexpr bool TIsChar_v = TIsChar<T>::Value;
+inline constexpr bool TIsChar_v = TIsChar<T>::value;
 
 } /* ~Namespace Lal */

@@ -99,16 +99,18 @@ using TMutableStringViewUtf8 = TMutableStringView<TStringBaseDefaultUtf8Traits, 
 } /* ~Namespace Lal */
 
 //#
-//# The default string for Lal with UTF-8 encoding.
 //# This string is a good all-rounder. It is optimized for small strings but uses different allocation strategies
 //# when the string gets larger.
+//# Not trivial to use this string with the Jafg reflection system.
 //#
-typedef Lal::TOptimizedStringUtf8<LJafgChar, 8> LString;
+typedef Lal::TOptimizedStringUtf8<LJafgChar, 8> LOptimizedString;
 
 //#
-//# This string is optimized for large strings.
+//# The default string for Lal with UTF-8 encoding.
 //#
-typedef Lal::THeapStringUtf8<LJafgChar> LBigString;
+//# Std string as the usage of this string is trivial when working with the Jafg reflection.
+//#
+typedef Lal::THeapStringUtf8<LJafgChar> LString;
 
 //#
 //# This string is optimized for small strings. This string uses stack allocation and is meant if the string's max

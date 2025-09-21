@@ -641,6 +641,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
         [ThreadName, Runnable] (void) -> void
         {
             {
+                std::shared_lock RefLock(::EngineThreadsMutex);
                 LEngineThread* Ref = ::EngineThreads.FindRef(ThreadName);
                 check( Ref )
                 Ref->Id = PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
@@ -660,6 +661,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
 
             STAT_QUICK_CYCLE_START("Jafg::Tasks::Private::LaunchNamedThread::std::thread")
 
+            check( Runnable )
             const ETaskExit::Type LambdaErrorLevel = Runnable->Run();
             if (LambdaErrorLevel != ETaskExit::Success)
             {

@@ -91,6 +91,7 @@ private:
     //#
     TArray<LChunkKey> Requested;
 
+    CLASS_FIELD()
     LSharedChunkArgs SharedChunkArgs;
 };
 

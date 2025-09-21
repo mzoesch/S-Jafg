@@ -92,15 +92,15 @@ struct TIterator_IsContiguous<TIterator>
 };
 
 template <typename TIterator>
-inline constexpr bool TIterator_IsReadWrite_v = TIterator_IsReadWrite<TIterator>::Value;
+inline constexpr bool TIterator_IsReadWrite_v = TIterator_IsReadWrite<TIterator>::value;
 template <typename TIterator>
-inline constexpr bool TIterator_CanTraverseMultipleTimes_v = TIterator_CanTraverseMultipleTimes<TIterator>::Value;
+inline constexpr bool TIterator_CanTraverseMultipleTimes_v = TIterator_CanTraverseMultipleTimes<TIterator>::value;
 template <typename TIterator>
-inline constexpr bool TIterator_CanTraverseBackward_v = TIterator_CanTraverseBackward<TIterator>::Value;
+inline constexpr bool TIterator_CanTraverseBackward_v = TIterator_CanTraverseBackward<TIterator>::value;
 template <typename TIterator>
-inline constexpr bool TIterator_IsPointerLike_v = TIterator_IsPointerLike<TIterator>::Value;
+inline constexpr bool TIterator_IsPointerLike_v = TIterator_IsPointerLike<TIterator>::value;
 template <typename TIterator>
-inline constexpr bool TIterator_IsContiguous_v = TIterator_IsContiguous<TIterator>::Value;
+inline constexpr bool TIterator_IsContiguous_v = TIterator_IsContiguous<TIterator>::value;
 
 static_assert(TIteratorConcept<i64*>);
 static_assert(TIterator_IsReadWrite_v<i64*>);

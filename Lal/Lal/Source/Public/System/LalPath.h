@@ -226,8 +226,8 @@ using TMutablePathViewUtf8 = TMutablePathView<TPathBaseDefaultUtf8Traits, T>;
 
 } /* ~Namespace Lal */
 
-typedef Lal::TOptimizedPathUtf8<LJafgChar, 8> LPath;
-typedef Lal::THeapPathUtf8<LJafgChar> LBigPath;
+typedef Lal::TOptimizedPathUtf8<LJafgChar, 8> LOptimizedPath;
+typedef Lal::THeapPathUtf8<LJafgChar> LPath;
 template <LSize TCapacity>
 using LSmallPath = Lal::TSmallPathUtf8<LJafgChar, TCapacity>;
 
@@ -235,11 +235,11 @@ typedef Lal::TPathViewUtf8<LJafgChar> LPathView;
 typedef Lal::TMutablePathViewUtf8<LJafgChar> LMutablePathView;
 
 template <>
-struct std::formatter<LPath> : std::formatter<std::string_view>
+struct std::formatter<LOptimizedPath> : std::formatter<std::string_view>
 {
     FORCEINLINE auto format
     (
-        const LPath& Path,
+        const LOptimizedPath& Path,
         std::format_context& InContext
     ) const -> std::format_context::iterator
     {
@@ -248,11 +248,11 @@ struct std::formatter<LPath> : std::formatter<std::string_view>
 };
 
 template <>
-struct std::formatter<LBigPath> : std::formatter<std::string_view>
+struct std::formatter<LPath> : std::formatter<std::string_view>
 {
     FORCEINLINE auto format
     (
-        const LBigPath& Path,
+        const LPath& Path,
         std::format_context& InContext
     ) const -> std::format_context::iterator
     {

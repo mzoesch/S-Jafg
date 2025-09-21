@@ -53,12 +53,12 @@ struct TArrayBaseAllocatorDefaultTraitsWeak;
 //# Whether to allow trivial memory buffer moves even on non-trivial move types.
 //#
 template <typename T>
-struct TArrayBaseAllowTrivialMemoryBufferMove : BoolConstant<std::is_trivially_move_constructible_v<T>>
+struct TArrayBaseAllowTrivialMemoryBufferMove : std::is_trivially_move_constructible<T>
 {
 };
 
 template <typename T>
-inline constexpr bool TArrayBaseAllowTrivialMemoryBufferMove_v = TArrayBaseAllowTrivialMemoryBufferMove<T>::Value;
+inline constexpr bool TArrayBaseAllowTrivialMemoryBufferMove_v = TArrayBaseAllowTrivialMemoryBufferMove<T>::value;
 
 template <std::integral TSizeType, template <typename, bool> typename TIterator>
 struct TArrayBaseAllocatorDefaultTraitsStrong : public TArrayBaseAllocatorDefaultTraitsWeak<TSizeType, TIterator>

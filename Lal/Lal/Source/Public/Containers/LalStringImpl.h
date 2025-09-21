@@ -2137,17 +2137,17 @@ void TStringBase<TEncoding, TAllocator>::EnsureInvariant() const
 //#
 //# Guaranteed to be the same size as std::string.
 //#
-static_assert(sizeof(std::string) == sizeof(LString));
+static_assert(sizeof(std::string) == sizeof(LOptimizedString));
 
 static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<int>);
 static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<LString> == false);
 
 template <>
-struct std::formatter<LString> : std::formatter<std::string_view>
+struct std::formatter<LOptimizedString> : std::formatter<std::string_view>
 {
     FORCEINLINE auto format
     (
-        const LString& String,
+        const LOptimizedString& String,
         std::format_context& InContext
     ) const -> std::format_context::iterator
     {
@@ -2156,11 +2156,11 @@ struct std::formatter<LString> : std::formatter<std::string_view>
 };
 
 template <>
-struct std::formatter<LBigString> : std::formatter<std::string_view>
+struct std::formatter<LString> : std::formatter<std::string_view>
 {
     FORCEINLINE auto format
     (
-        const LBigString& String,
+        const LString& String,
         std::format_context& InContext
     ) const -> std::format_context::iterator
     {

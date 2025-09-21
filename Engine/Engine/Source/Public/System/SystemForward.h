@@ -58,6 +58,6 @@ template <template <typename, typename> typename TEncoding, Lal::TStringBaseAllo
     requires(Lal::TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
 class TEnginePathBase;
 
-typedef TEnginePathBase<Lal::TStringBaseDefaultUtf8Traits, TStackOptimizedArray<LJafgChar, 8>> LEnginePath;
+typedef TEnginePathBase<Lal::TStringBaseDefaultUtf8Traits, TArray<LJafgChar>> LEnginePath;
 
 } /* ~Namespace Jafg */

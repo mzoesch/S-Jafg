@@ -9,7 +9,7 @@ template <typename TIn, bool bMove>
 FORCEINLINE constexpr typename TDefaultIterator<TIn, bMove>::difference_type
 TDefaultIterator<TIn, bMove>::operator-(const TDefaultIterator& Other) const noexcept
 {
-    check( this->Cursor != nullptr && "Underflow" )
+    check( this->Cursor >= Other.Cursor && "Underflow" )
     return this->Cursor - Other.Cursor;
 }
 
@@ -18,7 +18,7 @@ FORCEINLINE constexpr typename TDefaultIterator<TIn, bMove>::difference_type
 TDefaultIterator<TIn, bMove>::operator-(const TDefaultIterator<std::remove_const_t<value_type>, bMove>& Other) const noexcept
     requires(std::is_const_v<value_type>)
 {
-    check( this->Cursor != nullptr && "Underflow" )
+    check( this->Cursor >= Other.Cursor && "Underflow" )
     return this->Cursor - Other.Cursor;
 }
 
@@ -27,7 +27,7 @@ FORCEINLINE constexpr typename TDefaultIterator<TIn, bMove>::difference_type
 TDefaultIterator<TIn, bMove>::operator-(const TDefaultIterator<const value_type, bMove>& Other) const noexcept
     requires(!std::is_const_v<value_type>)
 {
-    check( this->Cursor != nullptr && "Underflow" )
+    check( this->Cursor >= Other.Cursor && "Underflow" )
     return this->Cursor - Other.Cursor;
 }
 
@@ -35,7 +35,7 @@ template <typename TIn, bool bMove>
 FORCEINLINE constexpr typename TDefaultReversedIterator<TIn, bMove>::difference_type
 TDefaultReversedIterator<TIn, bMove>::operator-(const TDefaultReversedIterator& Other) const noexcept
 {
-    check( Other.base() != nullptr && "Underflow" )
+    check( Other.base() >= this->base() && "Underflow" )
     return Other.base() - this->base();
 }
 
@@ -44,7 +44,7 @@ FORCEINLINE constexpr typename TDefaultReversedIterator<TIn, bMove>::difference_
 TDefaultReversedIterator<TIn, bMove>::operator-(const TDefaultReversedIterator<std::remove_const_t<value_type>, bMove>& Other) const noexcept
     requires(std::is_const_v<value_type>)
 {
-    check( Other.base() != nullptr && "Underflow" )
+    check( Other.base() >= this->base() && "Underflow" )
     return Other.base() - this->base();
 }
 
@@ -53,7 +53,7 @@ FORCEINLINE constexpr typename TDefaultReversedIterator<TIn, bMove>::difference_
 TDefaultReversedIterator<TIn, bMove>::operator-(const TDefaultReversedIterator<const value_type, bMove>& Other) const noexcept
     requires(!std::is_const_v<value_type>)
 {
-    check( Other.base() != nullptr && "Underflow" )
+    check( Other.base() >= this->base() && "Underflow" )
     return Other.base() - this->base();
 }
 

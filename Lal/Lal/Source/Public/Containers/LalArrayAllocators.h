@@ -8,10 +8,16 @@ namespace Lal
 namespace Private
 {
 
+template <typename T>
+concept HasIsCurrentDataOnHeap = requires(T t)
+{
+    { t.IsCurrentDataOnHeap() } -> std::convertible_to<bool>;
+};
+
 //#
 //# The default implementation to check if an allocator has its current data on the heap.
 //#
-template <TArrayBaseAllocatorTraitsConceptBase TAllocator>
+template <TArrayBaseAllocatorConceptBase TAllocator>
     requires
     (
         requires(TAllocator Allocator)
@@ -28,12 +34,12 @@ FORCEINLINE constexpr bool IsCurrentDataOnHeapDefaultAllocatorImpl(const TAlloca
 //# The default implementation to check if an allocator has its current data on the heap but does not
 //# itself specify any #IsCurrentDataOnHeap function.
 //#
-template <TArrayBaseAllocatorTraitsConceptBase TAllocator>
+template <TArrayBaseAllocatorConceptBase TAllocator>
     requires
     (
+        !HasIsCurrentDataOnHeap<TAllocator> &&
         requires(TAllocator Allocator)
         {
-            { !Allocator.IsCurrentDataOnHeap() } -> std::convertible_to<bool>;
 
             { Allocator.Data };
             requires std::is_pointer_v<decltype(Allocator.Data)>;

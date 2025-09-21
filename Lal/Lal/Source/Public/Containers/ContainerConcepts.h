@@ -25,7 +25,7 @@ concept TArrayBaseAllocatorTraitsConceptBase = requires
     //# The iterator must be instantiable with const T. But may also be constructed with T
     //# or any other type U if applicable.
     //#
-    //# We here just check if there is even an iterator that can be constructed with const LSzie.
+    //# We here just check if there is even an iterator that can be constructed with const LSize.
     //# It is not the responsibility for traits to provide concrete data types.
     //#
     typename T::template Iterator<const LSize>;
