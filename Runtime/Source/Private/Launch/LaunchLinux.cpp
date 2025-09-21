@@ -79,43 +79,18 @@ i32 main(const i32 ArgC, const char* ArgV[])
 {
     i32 ErrorLevel { 0 };
 
-    LString CmdLine;
-    for (i32 i = 1; i < ArgC; ++i)
+    TArray<LString> Arguments;
+    for (i32 i { 1 }; i < ArgC; ++i)
     {
-        CmdLine += ArgV[i];
-        if (i < ArgC - 1)
-        {
-            CmdLine += ' ';
-        }
-
+        Arguments.Emplace(ArgV[i]);
         continue;
     }
+    Application::Private::RawCommandLine = std::move(Arguments);
 
-    /* Push arguments to the core library. */
-    Application::Private::CommandLine = std::move(CmdLine);
-
-    if (Application::Private::CommandLine.FindFirst("WaitForDebugger") != Application::Private::CommandLine.end())
+    if (Application::GetRawCmdLine().Contains("-WaitForDebugger"))
     {
-        LOG_INFO(LogJafgInternal, "Waiting for debugger ...");
-        LAL_UNSAFE_FLUSH_OUT_STREAMS()
-
-        while (Lal::Hal::IsTracerPidValidVerySlow() == false)
-        {
-            Lal::Hal::SleepNoStats(1.0);
-            continue;
-        }
-
-        LOG_INFO(LogJafgInternal, "Debugger attached - continuing.");
-        LAL_UNSAFE_FLUSH_OUT_STREAMS()
-
-        if (Application::Private::CommandLine.FindFirst("IgnoreInstantDebuggerBreak") == Application::Private::CommandLine.end())
-        {
-            LAL_PLATFORM_BREAK()
-        }
+        Application::Private::WaitForDebuggerGracefully(true);
     }
-
-    Application::Private::bDebuggerPresent = ::Lal::Hal::IsTracerPidValidVerySlow();
-    Application::Private::UpdateApplicationCommandLineVariables();
 
     //
     // We use '-fno-exceptions' therefore we cannot use C++ exceptions and have to deal

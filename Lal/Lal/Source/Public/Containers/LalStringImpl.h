@@ -1389,10 +1389,10 @@ TStringBase<TEncoding, TAllocator>::FindLast(ITERATOR Begin, ITERATOR End, ITERA
 
     const SizeType OtherLength { static_cast<SizeType>(OtherEnd - OtherBegin) };
 
-    decltype(End) Cursor { End - 1 };
-    while (Cursor >= Begin)
+    decltype(End) Cursor { End };
+    while (Cursor != Begin)
     {
-        check( *Cursor != Encoding::Terminator )
+        check( *(Cursor - 1) != Encoding::Terminator )
 
         if (static_cast<SizeType>(End - Cursor) < OtherLength)
         {
@@ -1417,14 +1417,37 @@ TStringBase<TEncoding, TAllocator>::FindLast(ITERATOR Begin, ITERATOR End, ITERA
         if (InnerCursor == OtherEnd)
         {
             check( Cursor < End )
-            return Cursor;
+            return ConstIterator{ std::to_address(Cursor) };
         }
 
         --Cursor;
         continue;
     }
 
-    return End;
+    if (Cursor == Begin && (static_cast<SizeType>(End - Cursor) == OtherLength))
+    {
+        decltype(OtherBegin) InnerCursor { OtherBegin };
+        while (InnerCursor != OtherEnd)
+        {
+            check( *InnerCursor != Encoding::Terminator )
+
+            if (*(Cursor + (InnerCursor - OtherBegin)) != *InnerCursor)
+            {
+                break;
+            }
+
+            ++InnerCursor;
+            continue;
+        }
+
+        if (InnerCursor == OtherEnd)
+        {
+            check( Cursor < End )
+            return ConstIterator{ std::to_address(Cursor) };
+        }
+    }
+
+    return ConstIterator{ std::to_address(End) };
 }
 
 template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
@@ -1435,22 +1458,22 @@ TStringBase<TEncoding, TAllocator>::FindLast(ITERATOR Begin, ITERATOR End, T Run
 {
     check( Begin <= End )
 
-    decltype(End) Cursor { End - 1 };
-    while (Cursor >= Begin)
+    decltype(End) Cursor { End };
+    while (Cursor != Begin)
     {
-        check( *Cursor != Encoding::Terminator )
+        check( *(Cursor - 1) != Encoding::Terminator )
 
-        if (*Cursor == Rune)
+        if (*(Cursor - 1) == Rune)
         {
-            check( Cursor < End )
-            return Cursor;
+            check( Cursor <= End )
+            return ConstIterator{ std::to_address(Cursor) - 1 };
         }
 
         --Cursor;
         continue;
     }
 
-    return End;
+    return ConstIterator{ std::to_address(End) };
 }
 
 template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
@@ -1466,10 +1489,10 @@ TStringBase<TEncoding, TAllocator>::FindNthLast(ITERATOR Begin, ITERATOR End, IT
 
     const SizeType OtherLength { static_cast<SizeType>(OtherEnd - OtherBegin) };
 
-    decltype(End) Cursor { End - 1 };
-    while (Cursor >= Begin)
+    decltype(End) Cursor { End };
+    while (Cursor != Begin)
     {
-        check( *Cursor != Encoding::Terminator )
+        check( *(Cursor - 1) != Encoding::Terminator )
 
         if (static_cast<SizeType>(End - Cursor) < OtherLength)
         {
@@ -1496,7 +1519,7 @@ TStringBase<TEncoding, TAllocator>::FindNthLast(ITERATOR Begin, ITERATOR End, IT
             if (--N == 0)
             {
                 check( Cursor < End )
-                return Cursor;
+                return ConstIterator{ std::to_address(Cursor) };
             }
         }
 
@@ -1504,7 +1527,7 @@ TStringBase<TEncoding, TAllocator>::FindNthLast(ITERATOR Begin, ITERATOR End, IT
         continue;
     }
 
-    return End;
+    return ConstIterator{ std::to_address(End) };
 }
 
 template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
@@ -1515,17 +1538,17 @@ TStringBase<TEncoding, TAllocator>::FindNthLast(ITERATOR Begin, ITERATOR End, T 
 {
     check( Begin <= End )
 
-    decltype(End) Cursor { End - 1 };
-    while (Cursor >= Begin)
+    decltype(End) Cursor { End };
+    while (Cursor != Begin)
     {
-        check( *Cursor != Encoding::Terminator )
+        check( *(Cursor - 1) != Encoding::Terminator )
 
-        if (*Cursor == Rune)
+        if (*(Cursor - 1) == Rune)
         {
             if (--N == 0)
             {
                 check( Cursor < End )
-                return Cursor;
+                return ConstIterator{ std::to_address(Cursor) - 1 };
             }
         }
 
@@ -1533,7 +1556,7 @@ TStringBase<TEncoding, TAllocator>::FindNthLast(ITERATOR Begin, ITERATOR End, T 
         continue;
     }
 
-    return End;
+    return ConstIterator{ std::to_address(End) };
 }
 
 template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>

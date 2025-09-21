@@ -7,25 +7,25 @@
 TEST_CASE(EmptyStringOperations, "Lal.Containers")
 {
     LString String;
-    LBigString BigString;
+    LOptimizedString OptimizedString;
     LSmallString<25> SmallString;
     LStringView StringView;
     LMutableStringView MutableStringView;
 
     QUICK_CHECK_EQUALS(String.GetRuneCount(), 0ul)
-    QUICK_CHECK_EQUALS(BigString.GetRuneCount(), 0ul)
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 0ul)
     QUICK_CHECK_EQUALS(SmallString.GetRuneCount(), 0ul)
     QUICK_CHECK_EQUALS(StringView.GetRuneCount(), 0ul)
     QUICK_CHECK_EQUALS(MutableStringView.GetRuneCount(), 0ul)
 
     QUICK_CHECK_EQUALS(String.GetCharacterCount(), 0ul)
-    QUICK_CHECK_EQUALS(BigString.GetCharacterCount(), 0ul)
+    QUICK_CHECK_EQUALS(OptimizedString.GetCharacterCount(), 0ul)
     QUICK_CHECK_EQUALS(SmallString.GetCharacterCount(), 0ul)
     QUICK_CHECK_EQUALS(StringView.GetCharacterCount(), 0ul)
     QUICK_CHECK_EQUALS(MutableStringView.GetCharacterCount(), 0ul)
 
-    QUICK_CHECK_EQUALS(String.GetAllocatedByteSize(), 8ul)
-    QUICK_CHECK_EQUALS(BigString.GetAllocatedByteSize(), 0ul)
+    QUICK_CHECK_EQUALS(String.GetAllocatedByteSize(), 0ul)
+    QUICK_CHECK_EQUALS(OptimizedString.GetAllocatedByteSize(), 8ul)
     QUICK_CHECK_EQUALS(SmallString.GetAllocatedByteSize(), 25ul)
     QUICK_CHECK_EQUALS(StringView.GetAllocatedByteSize(), 0ul)
     QUICK_CHECK_EQUALS(MutableStringView.GetAllocatedByteSize(), 0ul)
@@ -33,526 +33,526 @@ TEST_CASE(EmptyStringOperations, "Lal.Containers")
     return;
 }
 
-TEST_CASE(StringAssingOperations, "Lal.Containers")
+TEST_CASE(OptimizedStringAssingOperations, "Lal.Containers")
 {
+    LOptimizedString OptimizedString1 { "Hello, World!" };
     LString String1 { "Hello, World!" };
-    LBigString BigString1 { "Hello, World!" };
+    QUICK_CHECK_EQUALS(OptimizedString1.GetRuneCount(), 13ul)
     QUICK_CHECK_EQUALS(String1.GetRuneCount(), 13ul)
-    QUICK_CHECK_EQUALS(BigString1.GetRuneCount(), 13ul)
+    QUICK_CHECK_EQUALS(OptimizedString1, "Hello, World!")
     QUICK_CHECK_EQUALS(String1, "Hello, World!")
-    QUICK_CHECK_EQUALS(BigString1, "Hello, World!")
+    QUICK_CHECK_NOT_EQUALS(OptimizedString1, "Hello, World.")
     QUICK_CHECK_NOT_EQUALS(String1, "Hello, World.")
-    QUICK_CHECK_NOT_EQUALS(BigString1, "Hello, World.")
+    QUICK_CHECK_NOT_EQUALS(OptimizedString1, "Hello, World! ")
     QUICK_CHECK_NOT_EQUALS(String1, "Hello, World! ")
-    QUICK_CHECK_NOT_EQUALS(BigString1, "Hello, World! ")
 
+    LOptimizedString OptimizedString2;
     LString String2;
-    LBigString BigString2;
+    OptimizedString2.Assign(OptimizedString1);
     String2.Assign(String1);
-    BigString2.Assign(BigString1);
+    QUICK_CHECK_EQUALS(OptimizedString2.GetRuneCount(), 13ul)
     QUICK_CHECK_EQUALS(String2.GetRuneCount(), 13ul)
-    QUICK_CHECK_EQUALS(BigString2.GetRuneCount(), 13ul)
+    QUICK_CHECK_EQUALS(OptimizedString2, "Hello, World!")
     QUICK_CHECK_EQUALS(String2, "Hello, World!")
-    QUICK_CHECK_EQUALS(BigString2, "Hello, World!")
+    QUICK_CHECK_EQUALS(OptimizedString1, OptimizedString2)
     QUICK_CHECK_EQUALS(String1, String2)
-    QUICK_CHECK_EQUALS(BigString1, BigString2)
 
+    OptimizedString2.Assign("");
     String2.Assign("");
-    BigString2.Assign("");
+    QUICK_CHECK_EQUALS(OptimizedString2.GetRuneCount(), 0ul)
     QUICK_CHECK_EQUALS(String2.GetRuneCount(), 0ul)
-    QUICK_CHECK_EQUALS(BigString2.GetRuneCount(), 0ul)
-    QUICK_CHECK_EQUALS(static_cast<const void*>(String2.GetAllocator().GetDataPointer()), static_cast<const void*>(String2.GetAllocator().GetAllocator()._Data))
-    QUICK_CHECK_EQUALS(static_cast<const void*>(BigString2.GetAllocator().GetDataPointer()), nullptr)
+    QUICK_CHECK_EQUALS(static_cast<const void*>(OptimizedString2.GetAllocator().GetDataPointer()), static_cast<const void*>(OptimizedString2.GetAllocator().GetAllocator()._Data))
+    QUICK_CHECK_EQUALS(static_cast<const void*>(String2.GetAllocator().GetDataPointer()), nullptr)
 
-    BigString1.Assign(String1);
-    QUICK_CHECK_EQUALS(BigString1.GetRuneCount(), 13ul)
-    QUICK_CHECK_EQUALS(BigString1, "Hello, World!")
+    String1.Assign(OptimizedString1);
+    QUICK_CHECK_EQUALS(String1.GetRuneCount(), 13ul)
+    QUICK_CHECK_EQUALS(String1, "Hello, World!")
 
     return;
 }
 
-TEST_CASE(StringMemoryReuse, "Lal.Strings")
+TEST_CASE(OptimizedStringMemoryReuse, "Lal.Strings")
 {
+    LOptimizedString OptimizedString { "Hello, World! This is a long string." };
     LString String { "Hello, World! This is a long string." };
-    LBigString BigString { "Hello, World! This is a long string." };
 
+    const LOptimizedString::SizeType OptimizedStringLength { OptimizedString.GetRuneCount() };
+    const LOptimizedString::ConstPointer OptimizedStringPtr { OptimizedString.ToPtr() };
     const LString::SizeType StringLength { String.GetRuneCount() };
     const LString::ConstPointer StringPtr { String.ToPtr() };
-    const LBigString::SizeType BigStringLength { BigString.GetRuneCount() };
-    const LBigString::ConstPointer BigStringPtr { BigString.ToPtr() };
 
+    OptimizedString = "Hello, World! Is this a long string?";
     String = "Hello, World! Is this a long string?";
-    BigString = "Hello, World! Is this a long string?";
+
+    QUICK_CHECK_EQUALS(OptimizedStringLength, OptimizedString.GetRuneCount())
+    QUICK_CHECK_EQUALS(static_cast<const void*>(OptimizedStringPtr), static_cast<const void*>(OptimizedString.ToPtr()))
 
     QUICK_CHECK_EQUALS(StringLength, String.GetRuneCount())
     QUICK_CHECK_EQUALS(static_cast<const void*>(StringPtr), static_cast<const void*>(String.ToPtr()))
 
-    QUICK_CHECK_EQUALS(BigStringLength, BigString.GetRuneCount())
-    QUICK_CHECK_EQUALS(static_cast<const void*>(BigStringPtr), static_cast<const void*>(BigString.ToPtr()))
-
     return;
 }
 
-TEST_CASE(StringAppendOperations, "Lal.Containers")
+TEST_CASE(OptimizedStringAppendOperations, "Lal.Containers")
 {
-    LString String1 { "Hello" };
-    QUICK_CHECK_EQUALS(String1.GetRuneCount(), 5ul)
-    QUICK_CHECK_EQUALS(String1, "Hello")
+    LOptimizedString OptimizedString1 { "Hello" };
+    QUICK_CHECK_EQUALS(OptimizedString1.GetRuneCount(), 5ul)
+    QUICK_CHECK_EQUALS(OptimizedString1, "Hello")
 
-    String1.Append(',');
-    QUICK_CHECK_EQUALS(String1.GetRuneCount(), 6ul)
-    QUICK_CHECK_EQUALS(String1, "Hello,")
+    OptimizedString1.Append(',');
+    QUICK_CHECK_EQUALS(OptimizedString1.GetRuneCount(), 6ul)
+    QUICK_CHECK_EQUALS(OptimizedString1, "Hello,")
 
-    String1.Append(" ");
-    QUICK_CHECK_EQUALS(String1.GetRuneCount(), 7ul)
-    QUICK_CHECK_EQUALS(String1, "Hello, ")
+    OptimizedString1.Append(" ");
+    QUICK_CHECK_EQUALS(OptimizedString1.GetRuneCount(), 7ul)
+    QUICK_CHECK_EQUALS(OptimizedString1, "Hello, ")
 
-    String1.Append("");
-    QUICK_CHECK_EQUALS(String1.GetRuneCount(), 7ul)
-    QUICK_CHECK_EQUALS(String1, "Hello, ")
+    OptimizedString1.Append("");
+    QUICK_CHECK_EQUALS(OptimizedString1.GetRuneCount(), 7ul)
+    QUICK_CHECK_EQUALS(OptimizedString1, "Hello, ")
 
     LStringView View { "World" };
-    String1.Append(View);
-    QUICK_CHECK_EQUALS(String1.GetRuneCount(), 12ul)
-    QUICK_CHECK_EQUALS(String1, "Hello, World")
+    OptimizedString1.Append(View);
+    QUICK_CHECK_EQUALS(OptimizedString1.GetRuneCount(), 12ul)
+    QUICK_CHECK_EQUALS(OptimizedString1, "Hello, World")
 
-    LString::Iterator It { String1.AppendAt(String1.end(), '!') };
-    QUICK_CHECK_EQUALS(String1.GetRuneCount(), 13ul)
-    QUICK_CHECK_EQUALS(String1, "Hello, World!")
+    LOptimizedString::Iterator It { OptimizedString1.AppendAt(OptimizedString1.end(), '!') };
+    QUICK_CHECK_EQUALS(OptimizedString1.GetRuneCount(), 13ul)
+    QUICK_CHECK_EQUALS(OptimizedString1, "Hello, World!")
     QUICK_CHECK_EQUALS(*It, '!')
-    QUICK_CHECK_EQUALS(It, --String1.end())
-    QUICK_CHECK_EQUALS(It.Cursor, String1.end_ptr() - 1)
+    QUICK_CHECK_EQUALS(It, --OptimizedString1.end())
+    QUICK_CHECK_EQUALS(It.Cursor, OptimizedString1.end_ptr() - 1)
 
-    It = String1.AppendAt(String1.end(), "");
-    QUICK_CHECK_EQUALS(String1.GetRuneCount(), 13ul)
-    QUICK_CHECK_EQUALS(String1, "Hello, World!")
-    QUICK_CHECK_EQUALS(It, String1.end())
-    QUICK_CHECK_EQUALS(It.Cursor, String1.end_ptr())
+    It = OptimizedString1.AppendAt(OptimizedString1.end(), "");
+    QUICK_CHECK_EQUALS(OptimizedString1.GetRuneCount(), 13ul)
+    QUICK_CHECK_EQUALS(OptimizedString1, "Hello, World!")
+    QUICK_CHECK_EQUALS(It, OptimizedString1.end())
+    QUICK_CHECK_EQUALS(It.Cursor, OptimizedString1.end_ptr())
 
-    LString String2 { String1 + " How are you?" };
-    QUICK_CHECK_EQUALS(String2.GetRuneCount(), 26ul)
-    QUICK_CHECK_EQUALS(String2, "Hello, World! How are you?")
+    LOptimizedString OptimizedString2 { OptimizedString1 + " How are you?" };
+    QUICK_CHECK_EQUALS(OptimizedString2.GetRuneCount(), 26ul)
+    QUICK_CHECK_EQUALS(OptimizedString2, "Hello, World! How are you?")
 
-    String2 = { LString{"Hello"} + ',' + " " + "World" + '!' };
-    QUICK_CHECK_EQUALS(String2.GetRuneCount(), 13ul)
-    QUICK_CHECK_EQUALS(String2, "Hello, World!")
-
-    return;
-}
-
-TEST_CASE(StringPathOperations, "Lal.Containers")
-{
-    LString String { "/home/user" };
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 10ul)
-    QUICK_CHECK_EQUALS(String, "/home/user")
-
-    String /= "Development";
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 22ul)
-    QUICK_CHECK_EQUALS(String, "/home/user/Development")
-
-    String.Append('/');
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 23ul)
-    QUICK_CHECK_EQUALS(String, "/home/user/Development/")
-
-    String = String / "/Rust/" / "/Sucks.sln";
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 37ul)
-    QUICK_CHECK_EQUALS(String, "/home/user/Development/Rust/Sucks.sln")
+    OptimizedString2 = { LOptimizedString{"Hello"} + ',' + " " + "World" + '!' };
+    QUICK_CHECK_EQUALS(OptimizedString2.GetRuneCount(), 13ul)
+    QUICK_CHECK_EQUALS(OptimizedString2, "Hello, World!")
 
     return;
 }
 
-TEST_CASE(StringRemovalOperations, "Lal.Containers")
+TEST_CASE(OptimizedStringPathOperations, "Lal.Containers")
 {
-    LString String { "Hello, World! This is a long string." };
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 36ul)
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string.")
+    LOptimizedString OptimizedString { "/home/user" };
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 10ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "/home/user")
 
-    String.RemoveAt(0ul);
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 35ul)
-    QUICK_CHECK_EQUALS(String, "ello, World! This is a long string.")
-    String.RemoveAt(String.begin());
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 34ul)
-    QUICK_CHECK_EQUALS(String, "llo, World! This is a long string.")
-    String.RemoveAt(String.begin_ptr());
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 33ul)
-    QUICK_CHECK_EQUALS(String, "lo, World! This is a long string.")
-    String.RemoveAt(++String.begin());
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 32ul)
-    QUICK_CHECK_EQUALS(String, "l, World! This is a long string.")
-    String.RemoveAt(--String.end());
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 31ul)
-    QUICK_CHECK_EQUALS(String, "l, World! This is a long string")
-    String.RemoveAt(String.end_ptr() - 1);
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 30ul)
-    QUICK_CHECK_EQUALS(String, "l, World! This is a long strin")
+    OptimizedString /= "Development";
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 22ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "/home/user/Development")
 
-    QUICK_CHECK_TRUE(String.RemoveOnce('o'))
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 29ul)
-    QUICK_CHECK_EQUALS(String, "l, Wrld! This is a long strin")
+    OptimizedString.Append('/');
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 23ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "/home/user/Development/")
 
-    QUICK_CHECK_EQUALS(String.Remove('s'), 3ul)
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 26ul)
-    QUICK_CHECK_EQUALS(String, "l, Wrld! Thi i a long trin")
+    OptimizedString = OptimizedString / "/Rust/" / "/Sucks.sln";
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 37ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "/home/user/Development/Rust/Sucks.sln")
 
-    QUICK_CHECK_EQUALS(String.Remove(" "), 6ul)
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 20ul)
-    QUICK_CHECK_EQUALS(String, "l,Wrld!Thiialongtrin")
+    return;
+}
+
+TEST_CASE(OptimizedStringRemovalOperations, "Lal.Containers")
+{
+    LOptimizedString OptimizedString { "Hello, World! This is a long string." };
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 36ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long string.")
+
+    OptimizedString.RemoveAt(0ul);
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 35ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "ello, World! This is a long string.")
+    OptimizedString.RemoveAt(OptimizedString.begin());
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 34ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "llo, World! This is a long string.")
+    OptimizedString.RemoveAt(OptimizedString.begin_ptr());
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 33ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "lo, World! This is a long string.")
+    OptimizedString.RemoveAt(++OptimizedString.begin());
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 32ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "l, World! This is a long string.")
+    OptimizedString.RemoveAt(--OptimizedString.end());
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 31ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "l, World! This is a long string")
+    OptimizedString.RemoveAt(OptimizedString.end_ptr() - 1);
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 30ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "l, World! This is a long strin")
+
+    QUICK_CHECK_TRUE(OptimizedString.RemoveOnce('o'))
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 29ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "l, Wrld! This is a long strin")
+
+    QUICK_CHECK_EQUALS(OptimizedString.Remove('s'), 3ul)
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 26ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "l, Wrld! Thi i a long trin")
+
+    QUICK_CHECK_EQUALS(OptimizedString.Remove(" "), 6ul)
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 20ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "l,Wrld!Thiialongtrin")
 
     LStringView View = { "aabbabababaabbbaabbbaaabba" };
-    String.Assign(View);
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 26ul)
-    QUICK_CHECK_EQUALS(String, "aabbabababaabbbaabbbaaabba")
+    OptimizedString.Assign(View);
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 26ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "aabbabababaabbbaabbbaaabba")
 
-    QUICK_CHECK_EQUALS(String.Remove("aa"), 4ul)
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 18ul)
-    QUICK_CHECK_EQUALS(String, "bbabababbbbbbbabba")
-
-    return;
-}
-
-TEST_CASE(StringFindOperations, "Lal.Containers")
-{
-    LString String { "bbabababbbbbbbabba" };
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 18ul)
-    QUICK_CHECK_EQUALS(String, "bbabababbbbbbbabba")
-
-    QUICK_CHECK_EQUALS(String.FindFirst('b'), String.begin())
-    QUICK_CHECK_EQUALS(String.FindFirst('a'), String.begin() + 2)
-    QUICK_CHECK_EQUALS(String.FindFirst('c'), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth('b', 1), String.begin())
-    QUICK_CHECK_EQUALS(String.FindNth('a', 1), String.begin() + 2)
-    QUICK_CHECK_EQUALS(String.FindNth('c', 1), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindSecond('b'), String.begin() + 1)
-    QUICK_CHECK_EQUALS(String.FindSecond('a'), String.begin() + 4)
-    QUICK_CHECK_EQUALS(String.FindSecond('c'), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth('b', 2), String.begin() + 1)
-    QUICK_CHECK_EQUALS(String.FindNth('a', 2), String.begin() + 4)
-    QUICK_CHECK_EQUALS(String.FindNth('c', 2), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth('b', 3), String.begin() + 3)
-    QUICK_CHECK_EQUALS(String.FindNth('a', 3), String.begin() + 6)
-    QUICK_CHECK_EQUALS(String.FindNth('c', 3), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth('b', 12), String.begin() + 15)
-    QUICK_CHECK_EQUALS(String.FindNth('a', 4), String.begin() + 14)
-    QUICK_CHECK_EQUALS(String.FindNth('b', 13), String.begin() + 16)
-    QUICK_CHECK_EQUALS(String.FindNth('a', 5), String.begin() + 17)
-    QUICK_CHECK_EQUALS(String.FindNth('b', 14), String.end())
-    QUICK_CHECK_EQUALS(String.FindNth('a', 6), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth('b', 20), String.end())
-    QUICK_CHECK_EQUALS(String.FindNth('a', 20), String.end())
-    QUICK_CHECK_EQUALS(String.FindNth('c', 3), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindFirst("b"), String.begin())
-    QUICK_CHECK_EQUALS(String.FindFirst("a"), String.begin() + 2)
-    QUICK_CHECK_EQUALS(String.FindFirst("c"), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth("b", 1), String.begin())
-    QUICK_CHECK_EQUALS(String.FindNth("a", 1), String.begin() + 2)
-    QUICK_CHECK_EQUALS(String.FindNth("c", 1), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindSecond("b"), String.begin() + 1)
-    QUICK_CHECK_EQUALS(String.FindSecond("a"), String.begin() + 4)
-    QUICK_CHECK_EQUALS(String.FindSecond("c"), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth("b", 2), String.begin() + 1)
-    QUICK_CHECK_EQUALS(String.FindNth("a", 2), String.begin() + 4)
-    QUICK_CHECK_EQUALS(String.FindNth("c", 2), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth("b", 3), String.begin() + 3)
-    QUICK_CHECK_EQUALS(String.FindNth("a", 3), String.begin() + 6)
-    QUICK_CHECK_EQUALS(String.FindNth("c", 3), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth("b", 12), String.begin() + 15)
-    QUICK_CHECK_EQUALS(String.FindNth("a", 4), String.begin() + 14)
-    QUICK_CHECK_EQUALS(String.FindNth("b", 13), String.begin() + 16)
-    QUICK_CHECK_EQUALS(String.FindNth("a", 5), String.begin() + 17)
-    QUICK_CHECK_EQUALS(String.FindNth("b", 14), String.end())
-    QUICK_CHECK_EQUALS(String.FindNth("a", 6), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth("b", 20), String.end())
-    QUICK_CHECK_EQUALS(String.FindNth("a", 20), String.end())
-    QUICK_CHECK_EQUALS(String.FindNth("c", 3), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindFirst("bb"), String.begin())
-    QUICK_CHECK_EQUALS(String.FindFirst("ab"), String.begin() + 2)
-    QUICK_CHECK_EQUALS(String.FindFirst("cd"), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth("bb", 1), String.begin())
-    QUICK_CHECK_EQUALS(String.FindNth("ab", 1), String.begin() + 2)
-    QUICK_CHECK_EQUALS(String.FindNth("cd", 1), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindSecond("ba"), String.begin() + 3)
-    QUICK_CHECK_EQUALS(String.FindSecond("ab"), String.begin() + 4)
-    QUICK_CHECK_EQUALS(String.FindSecond("cd"), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth("ba", 2), String.begin() + 3)
-    QUICK_CHECK_EQUALS(String.FindNth("ab", 2), String.begin() + 4)
-    QUICK_CHECK_EQUALS(String.FindNth("cd", 2), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth("ba", 3), String.begin() + 5)
-    QUICK_CHECK_EQUALS(String.FindNth("ab", 3), String.begin() + 6)
-    QUICK_CHECK_EQUALS(String.FindNth("cd", 3), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth("ba", 4), String.begin() + 13)
-    QUICK_CHECK_EQUALS(String.FindNth("ab", 3), String.begin() + 6)
-    QUICK_CHECK_EQUALS(String.FindNth("ba", 5), String.begin() + 16)
-    QUICK_CHECK_EQUALS(String.FindNth("ab", 4), String.begin() + 14)
-    QUICK_CHECK_EQUALS(String.FindNth("ba", 6), String.end())
-    QUICK_CHECK_EQUALS(String.FindNth("ab", 5), String.end())
-
-    QUICK_CHECK_EQUALS(String.FindNth("ba", 20), String.end())
-    QUICK_CHECK_EQUALS(String.FindNth("ab", 20), String.end())
-    QUICK_CHECK_EQUALS(String.FindNth("cd", 3), String.end())
-
-    QUICK_CHECK_TRUE(String.StartsWith('b'))
-    QUICK_CHECK_FALSE(String.StartsWith('a'))
-    QUICK_CHECK_FALSE(String.StartsWith('c'))
-    QUICK_CHECK_TRUE(String.StartsWith("b"))
-    QUICK_CHECK_FALSE(String.StartsWith("a"))
-    QUICK_CHECK_FALSE(String.StartsWith("c"))
-    QUICK_CHECK_TRUE(String.StartsWith("bb"))
-    QUICK_CHECK_FALSE(String.StartsWith("ab"))
-    QUICK_CHECK_FALSE(String.StartsWith("cd"))
-    QUICK_CHECK_TRUE(String.StartsWith("bbabababbbbbb"))
-    QUICK_CHECK_TRUE(String.StartsWith("bbabababbbbbbbabb"))
-    QUICK_CHECK_TRUE(String.StartsWith("bbabababbbbbbbabba"))
-    QUICK_CHECK_FALSE(String.StartsWith("bbabababbbbbbbabbaa"))
-
-    QUICK_CHECK_TRUE(String.EndsWith('a'))
-    QUICK_CHECK_FALSE(String.EndsWith('b'))
-    QUICK_CHECK_FALSE(String.EndsWith('c'))
-    QUICK_CHECK_TRUE(String.EndsWith("a"))
-    QUICK_CHECK_FALSE(String.EndsWith("b"))
-    QUICK_CHECK_FALSE(String.EndsWith("c"))
-    QUICK_CHECK_TRUE(String.EndsWith("ba"))
-    QUICK_CHECK_FALSE(String.EndsWith("ab"))
-    QUICK_CHECK_FALSE(String.EndsWith("cd"))
-    QUICK_CHECK_TRUE(String.EndsWith("bbabba"))
-    QUICK_CHECK_TRUE(String.EndsWith("babababbbbbbbabba"))
-    QUICK_CHECK_TRUE(String.EndsWith("bbabababbbbbbbabba"))
-    QUICK_CHECK_FALSE(String.EndsWith("abbabababbbbbbbabba"))
-
-    QUICK_CHECK_EQUALS(String.FindLast('a'), String.end() - 1)
-    QUICK_CHECK_EQUALS(String.FindLast('b'), String.end() - 2)
-    QUICK_CHECK_EQUALS(String.FindLast("ba"), String.end() - 2)
-    QUICK_CHECK_EQUALS(String.FindLast("bba"), String.end() - 3)
-    QUICK_CHECK_EQUALS(String.FindLast('c'), String.end())
-    QUICK_CHECK_EQUALS(String.FindLast("c"), String.end())
-    QUICK_CHECK_EQUALS(String.FindLast("bbabababbbbbbbabba"), String.begin())
-    QUICK_CHECK_EQUALS(String.FindLast("bbabababbbbbbbabbaa"), String.end())
-    QUICK_CHECK_EQUALS(String.FindLast("abbabababbbbbbbabba"), String.end())
-    QUICK_CHECK_EQUALS(String.FindNthLast("ab", 4), String.begin() + 2)
-    QUICK_CHECK_EQUALS(String.FindNthLast("ab", 3), String.begin() + 4)
-
-    QUICK_CHECK_EQUALS(String.Count('a'), 5ul)
-    QUICK_CHECK_EQUALS(String.Count('b'), 13ul)
-    QUICK_CHECK_EQUALS(String.Count("a"), 5ul)
-    QUICK_CHECK_EQUALS(String.Count("b"), 13ul)
-    QUICK_CHECK_EQUALS(String.Count("ba"), 5ul)
-    QUICK_CHECK_EQUALS(String.Count("ab"), 4ul)
-    QUICK_CHECK_EQUALS(String.Count("baa"), 0ul)
-    QUICK_CHECK_EQUALS(String.Count("bab"), 3ul)
-
-    QUICK_CHECK_TRUE(String.Contains('a'))
-    QUICK_CHECK_TRUE(String.Contains('b'))
-    QUICK_CHECK_FALSE(String.Contains('c'))
-    QUICK_CHECK_TRUE(String.Contains("a"))
-    QUICK_CHECK_TRUE(String.Contains("b"))
-    QUICK_CHECK_FALSE(String.Contains("c"))
-    QUICK_CHECK_TRUE(String.Contains("ba"))
-    QUICK_CHECK_TRUE(String.Contains("ab"))
-    QUICK_CHECK_FALSE(String.Contains("baa"))
-    QUICK_CHECK_TRUE(String.Contains("bbabababbbbbbbabb"))
-    QUICK_CHECK_TRUE(String.Contains("bbabababbbbbbbabba"))
-    QUICK_CHECK_FALSE(String.Contains("bbabababbbbbbbabbaa"))
+    QUICK_CHECK_EQUALS(OptimizedString.Remove("aa"), 4ul)
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 18ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "bbabababbbbbbbabba")
 
     return;
 }
 
-TEST_CASE(StringChopsOperatios, "Lal.Containers")
+TEST_CASE(OptimizedStringFindOperations, "Lal.Containers")
 {
-    LString String { "Hello, World! This is a long string." };
-    QUICK_CHECK_EQUALS(String.GetRuneCount(), 36ul)
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string.")
+    LOptimizedString OptimizedString { "bbabababbbbbbbabba" };
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 18ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "bbabababbbbbbbabba")
 
-    String.InlineCut(0ul, 0ul);
-    QUICK_CHECK_EQUALS(String, "")
+    QUICK_CHECK_EQUALS(OptimizedString.FindFirst('b'), OptimizedString.begin())
+    QUICK_CHECK_EQUALS(OptimizedString.FindFirst('a'), OptimizedString.begin() + 2)
+    QUICK_CHECK_EQUALS(OptimizedString.FindFirst('c'), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(String.begin_ptr(), String.begin_ptr());
-    QUICK_CHECK_EQUALS(String, "")
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('b', 1), OptimizedString.begin())
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('a', 1), OptimizedString.begin() + 2)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('c', 1), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(String.begin(), String.begin());
-    QUICK_CHECK_EQUALS(String, "")
+    QUICK_CHECK_EQUALS(OptimizedString.FindSecond('b'), OptimizedString.begin() + 1)
+    QUICK_CHECK_EQUALS(OptimizedString.FindSecond('a'), OptimizedString.begin() + 4)
+    QUICK_CHECK_EQUALS(OptimizedString.FindSecond('c'), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(0ul, 1ul);
-    QUICK_CHECK_EQUALS(String, "H")
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('b', 2), OptimizedString.begin() + 1)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('a', 2), OptimizedString.begin() + 4)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('c', 2), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(String.begin_ptr(), String.begin_ptr() + 1);
-    QUICK_CHECK_EQUALS(String, "H")
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('b', 3), OptimizedString.begin() + 3)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('a', 3), OptimizedString.begin() + 6)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('c', 3), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(String.begin(), String.begin() + 1);
-    QUICK_CHECK_EQUALS(String, "H")
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('b', 12), OptimizedString.begin() + 15)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('a', 4), OptimizedString.begin() + 14)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('b', 13), OptimizedString.begin() + 16)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('a', 5), OptimizedString.begin() + 17)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('b', 14), OptimizedString.end())
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('a', 6), OptimizedString.end())
 
-    String.InlineCut(String.begin(), String.begin());
-    QUICK_CHECK_EQUALS(String, "")
-    String.InlineCut(String.begin(), String.begin());
-    QUICK_CHECK_EQUALS(String, "")
-    String.InlineCut(String.begin(), String.begin());
-    QUICK_CHECK_EQUALS(String, "")
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('b', 20), OptimizedString.end())
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('a', 20), OptimizedString.end())
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth('c', 3), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(0ul, String.GetRuneCount());
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string.")
+    QUICK_CHECK_EQUALS(OptimizedString.FindFirst("b"), OptimizedString.begin())
+    QUICK_CHECK_EQUALS(OptimizedString.FindFirst("a"), OptimizedString.begin() + 2)
+    QUICK_CHECK_EQUALS(OptimizedString.FindFirst("c"), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(String.begin_ptr(), String.end_ptr());
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string.")
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("b", 1), OptimizedString.begin())
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("a", 1), OptimizedString.begin() + 2)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("c", 1), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(String.begin(), String.end());
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string.")
+    QUICK_CHECK_EQUALS(OptimizedString.FindSecond("b"), OptimizedString.begin() + 1)
+    QUICK_CHECK_EQUALS(OptimizedString.FindSecond("a"), OptimizedString.begin() + 4)
+    QUICK_CHECK_EQUALS(OptimizedString.FindSecond("c"), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(0ul, String.GetRuneCount() - 1);
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string")
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("b", 2), OptimizedString.begin() + 1)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("a", 2), OptimizedString.begin() + 4)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("c", 2), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(0ul, String.end_idx() - 1);
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string")
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("b", 3), OptimizedString.begin() + 3)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("a", 3), OptimizedString.begin() + 6)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("c", 3), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(String.begin_ptr(), String.end_ptr() - 1);
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string")
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("b", 12), OptimizedString.begin() + 15)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("a", 4), OptimizedString.begin() + 14)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("b", 13), OptimizedString.begin() + 16)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("a", 5), OptimizedString.begin() + 17)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("b", 14), OptimizedString.end())
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("a", 6), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(String.begin(), String.end() - 1);
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string")
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("b", 20), OptimizedString.end())
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("a", 20), OptimizedString.end())
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("c", 3), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(String.begin(), String.end() - 7);
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long ")
+    QUICK_CHECK_EQUALS(OptimizedString.FindFirst("bb"), OptimizedString.begin())
+    QUICK_CHECK_EQUALS(OptimizedString.FindFirst("ab"), OptimizedString.begin() + 2)
+    QUICK_CHECK_EQUALS(OptimizedString.FindFirst("cd"), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(String.begin() + 1, String.end());
-    QUICK_CHECK_EQUALS(String, "ello, World! This is a long string.")
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("bb", 1), OptimizedString.begin())
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("ab", 1), OptimizedString.begin() + 2)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("cd", 1), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(String.end(), String.end());
-    QUICK_CHECK_EQUALS(String, "");
+    QUICK_CHECK_EQUALS(OptimizedString.FindSecond("ba"), OptimizedString.begin() + 3)
+    QUICK_CHECK_EQUALS(OptimizedString.FindSecond("ab"), OptimizedString.begin() + 4)
+    QUICK_CHECK_EQUALS(OptimizedString.FindSecond("cd"), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(String.end() - 1, String.end());
-    QUICK_CHECK_EQUALS(String, ".");
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("ba", 2), OptimizedString.begin() + 3)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("ab", 2), OptimizedString.begin() + 4)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("cd", 2), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(String.end() - 7, String.end());
-    QUICK_CHECK_EQUALS(String, "string.");
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("ba", 3), OptimizedString.begin() + 5)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("ab", 3), OptimizedString.begin() + 6)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("cd", 3), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    String.InlineCut(String.begin() + 14, String.end() - 8);
-    QUICK_CHECK_EQUALS(String, "This is a long");
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("ba", 4), OptimizedString.begin() + 13)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("ab", 3), OptimizedString.begin() + 6)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("ba", 5), OptimizedString.begin() + 16)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("ab", 4), OptimizedString.begin() + 14)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("ba", 6), OptimizedString.end())
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("ab", 5), OptimizedString.end())
 
-    String = "Hello, World! This is a long string.";
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string.")
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("ba", 20), OptimizedString.end())
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("ab", 20), OptimizedString.end())
+    QUICK_CHECK_EQUALS(OptimizedString.FindNth("cd", 3), OptimizedString.end())
 
-    LString OtherString;
+    QUICK_CHECK_TRUE(OptimizedString.StartsWith('b'))
+    QUICK_CHECK_FALSE(OptimizedString.StartsWith('a'))
+    QUICK_CHECK_FALSE(OptimizedString.StartsWith('c'))
+    QUICK_CHECK_TRUE(OptimizedString.StartsWith("b"))
+    QUICK_CHECK_FALSE(OptimizedString.StartsWith("a"))
+    QUICK_CHECK_FALSE(OptimizedString.StartsWith("c"))
+    QUICK_CHECK_TRUE(OptimizedString.StartsWith("bb"))
+    QUICK_CHECK_FALSE(OptimizedString.StartsWith("ab"))
+    QUICK_CHECK_FALSE(OptimizedString.StartsWith("cd"))
+    QUICK_CHECK_TRUE(OptimizedString.StartsWith("bbabababbbbbb"))
+    QUICK_CHECK_TRUE(OptimizedString.StartsWith("bbabababbbbbbbabb"))
+    QUICK_CHECK_TRUE(OptimizedString.StartsWith("bbabababbbbbbbabba"))
+    QUICK_CHECK_FALSE(OptimizedString.StartsWith("bbabababbbbbbbabbaa"))
+
+    QUICK_CHECK_TRUE(OptimizedString.EndsWith('a'))
+    QUICK_CHECK_FALSE(OptimizedString.EndsWith('b'))
+    QUICK_CHECK_FALSE(OptimizedString.EndsWith('c'))
+    QUICK_CHECK_TRUE(OptimizedString.EndsWith("a"))
+    QUICK_CHECK_FALSE(OptimizedString.EndsWith("b"))
+    QUICK_CHECK_FALSE(OptimizedString.EndsWith("c"))
+    QUICK_CHECK_TRUE(OptimizedString.EndsWith("ba"))
+    QUICK_CHECK_FALSE(OptimizedString.EndsWith("ab"))
+    QUICK_CHECK_FALSE(OptimizedString.EndsWith("cd"))
+    QUICK_CHECK_TRUE(OptimizedString.EndsWith("bbabba"))
+    QUICK_CHECK_TRUE(OptimizedString.EndsWith("babababbbbbbbabba"))
+    QUICK_CHECK_TRUE(OptimizedString.EndsWith("bbabababbbbbbbabba"))
+    QUICK_CHECK_FALSE(OptimizedString.EndsWith("abbabababbbbbbbabba"))
+
+    QUICK_CHECK_EQUALS(OptimizedString.FindLast('a'), OptimizedString.end() - 1)
+    QUICK_CHECK_EQUALS(OptimizedString.FindLast('b'), OptimizedString.end() - 2)
+    QUICK_CHECK_EQUALS(OptimizedString.FindLast("ba"), OptimizedString.end() - 2)
+    QUICK_CHECK_EQUALS(OptimizedString.FindLast("bba"), OptimizedString.end() - 3)
+    QUICK_CHECK_EQUALS(OptimizedString.FindLast('c'), OptimizedString.end())
+    QUICK_CHECK_EQUALS(OptimizedString.FindLast("c"), OptimizedString.end())
+    QUICK_CHECK_EQUALS(OptimizedString.FindLast("bbabababbbbbbbabba"), OptimizedString.begin())
+    QUICK_CHECK_EQUALS(OptimizedString.FindLast("bbabababbbbbbbabbaa"), OptimizedString.end())
+    QUICK_CHECK_EQUALS(OptimizedString.FindLast("abbabababbbbbbbabba"), OptimizedString.end())
+    QUICK_CHECK_EQUALS(OptimizedString.FindNthLast("ab", 4), OptimizedString.begin() + 2)
+    QUICK_CHECK_EQUALS(OptimizedString.FindNthLast("ab", 3), OptimizedString.begin() + 4)
+
+    QUICK_CHECK_EQUALS(OptimizedString.Count('a'), 5ul)
+    QUICK_CHECK_EQUALS(OptimizedString.Count('b'), 13ul)
+    QUICK_CHECK_EQUALS(OptimizedString.Count("a"), 5ul)
+    QUICK_CHECK_EQUALS(OptimizedString.Count("b"), 13ul)
+    QUICK_CHECK_EQUALS(OptimizedString.Count("ba"), 5ul)
+    QUICK_CHECK_EQUALS(OptimizedString.Count("ab"), 4ul)
+    QUICK_CHECK_EQUALS(OptimizedString.Count("baa"), 0ul)
+    QUICK_CHECK_EQUALS(OptimizedString.Count("bab"), 3ul)
+
+    QUICK_CHECK_TRUE(OptimizedString.Contains('a'))
+    QUICK_CHECK_TRUE(OptimizedString.Contains('b'))
+    QUICK_CHECK_FALSE(OptimizedString.Contains('c'))
+    QUICK_CHECK_TRUE(OptimizedString.Contains("a"))
+    QUICK_CHECK_TRUE(OptimizedString.Contains("b"))
+    QUICK_CHECK_FALSE(OptimizedString.Contains("c"))
+    QUICK_CHECK_TRUE(OptimizedString.Contains("ba"))
+    QUICK_CHECK_TRUE(OptimizedString.Contains("ab"))
+    QUICK_CHECK_FALSE(OptimizedString.Contains("baa"))
+    QUICK_CHECK_TRUE(OptimizedString.Contains("bbabababbbbbbbabb"))
+    QUICK_CHECK_TRUE(OptimizedString.Contains("bbabababbbbbbbabba"))
+    QUICK_CHECK_FALSE(OptimizedString.Contains("bbabababbbbbbbabbaa"))
+
+    return;
+}
+
+TEST_CASE(OptimizedStringChopsOperatios, "Lal.Containers")
+{
+    LOptimizedString OptimizedString { "Hello, World! This is a long string." };
+    QUICK_CHECK_EQUALS(OptimizedString.GetRuneCount(), 36ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long string.")
+
+    OptimizedString.InlineCut(0ul, 0ul);
+    QUICK_CHECK_EQUALS(OptimizedString, "")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(OptimizedString.begin_ptr(), OptimizedString.begin_ptr());
+    QUICK_CHECK_EQUALS(OptimizedString, "")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(OptimizedString.begin(), OptimizedString.begin());
+    QUICK_CHECK_EQUALS(OptimizedString, "")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(0ul, 1ul);
+    QUICK_CHECK_EQUALS(OptimizedString, "H")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(OptimizedString.begin_ptr(), OptimizedString.begin_ptr() + 1);
+    QUICK_CHECK_EQUALS(OptimizedString, "H")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(OptimizedString.begin(), OptimizedString.begin() + 1);
+    QUICK_CHECK_EQUALS(OptimizedString, "H")
+
+    OptimizedString.InlineCut(OptimizedString.begin(), OptimizedString.begin());
+    QUICK_CHECK_EQUALS(OptimizedString, "")
+    OptimizedString.InlineCut(OptimizedString.begin(), OptimizedString.begin());
+    QUICK_CHECK_EQUALS(OptimizedString, "")
+    OptimizedString.InlineCut(OptimizedString.begin(), OptimizedString.begin());
+    QUICK_CHECK_EQUALS(OptimizedString, "")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(0ul, OptimizedString.GetRuneCount());
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long string.")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(OptimizedString.begin_ptr(), OptimizedString.end_ptr());
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long string.")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(OptimizedString.begin(), OptimizedString.end());
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long string.")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(0ul, OptimizedString.GetRuneCount() - 1);
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long string")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(0ul, OptimizedString.end_idx() - 1);
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long string")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(OptimizedString.begin_ptr(), OptimizedString.end_ptr() - 1);
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long string")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(OptimizedString.begin(), OptimizedString.end() - 1);
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long string")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(OptimizedString.begin(), OptimizedString.end() - 7);
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long ")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(OptimizedString.begin() + 1, OptimizedString.end());
+    QUICK_CHECK_EQUALS(OptimizedString, "ello, World! This is a long string.")
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(OptimizedString.end(), OptimizedString.end());
+    QUICK_CHECK_EQUALS(OptimizedString, "");
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(OptimizedString.end() - 1, OptimizedString.end());
+    QUICK_CHECK_EQUALS(OptimizedString, ".");
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(OptimizedString.end() - 7, OptimizedString.end());
+    QUICK_CHECK_EQUALS(OptimizedString, "string.");
+
+    OptimizedString = "Hello, World! This is a long string.";
+    OptimizedString.InlineCut(OptimizedString.begin() + 14, OptimizedString.end() - 8);
+    QUICK_CHECK_EQUALS(OptimizedString, "This is a long");
+
+    OptimizedString = "Hello, World! This is a long string.";
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long string.")
+
+    LOptimizedString OtherString;
     QUICK_CHECK_EQUALS(OtherString, "")
-    OtherString = String.Cut(0ul, 0ul);
+    OtherString = OptimizedString.Cut(0ul, 0ul);
     QUICK_CHECK_EQUALS(OtherString, "")
-    OtherString = String.Cut(String.begin_ptr(), String.begin_ptr());
+    OtherString = OptimizedString.Cut(OptimizedString.begin_ptr(), OptimizedString.begin_ptr());
     QUICK_CHECK_EQUALS(OtherString, "")
-    OtherString = String.Cut(String.begin(), String.begin());
+    OtherString = OptimizedString.Cut(OptimizedString.begin(), OptimizedString.begin());
     QUICK_CHECK_EQUALS(OtherString, "")
-    OtherString = String.Cut(0ul, 1ul);
+    OtherString = OptimizedString.Cut(0ul, 1ul);
     QUICK_CHECK_EQUALS(OtherString, "H")
-    OtherString = String.Cut(String.begin_ptr(), String.begin_ptr() + 1);
+    OtherString = OptimizedString.Cut(OptimizedString.begin_ptr(), OptimizedString.begin_ptr() + 1);
     QUICK_CHECK_EQUALS(OtherString, "H")
-    OtherString = String.Cut(String.begin(), String.begin() + 1);
+    OtherString = OptimizedString.Cut(OptimizedString.begin(), OptimizedString.begin() + 1);
     QUICK_CHECK_EQUALS(OtherString, "H")
-    OtherString = String.Cut(String.begin() + 7, String.end());
+    OtherString = OptimizedString.Cut(OptimizedString.begin() + 7, OptimizedString.end());
     QUICK_CHECK_EQUALS(OtherString, "World! This is a long string.")
-    OtherString = String.Cut(String.begin() + 7, String.end() - 8);
+    OtherString = OptimizedString.Cut(OptimizedString.begin() + 7, OptimizedString.end() - 8);
     QUICK_CHECK_EQUALS(OtherString, "World! This is a long")
-    OtherString = String.Cut(String.begin_ptr() + 7, String.end_ptr() - 8);
+    OtherString = OptimizedString.Cut(OptimizedString.begin_ptr() + 7, OptimizedString.end_ptr() - 8);
     QUICK_CHECK_EQUALS(OtherString, "World! This is a long")
-    OtherString = String.Cut(7ul, String.end_idx() - 8);
+    OtherString = OptimizedString.Cut(7ul, OptimizedString.end_idx() - 8);
     QUICK_CHECK_EQUALS(OtherString, "World! This is a long")
 
-    OtherString = String.LeftCut(0ul);
+    OtherString = OptimizedString.LeftCut(0ul);
     QUICK_CHECK_EQUALS(OtherString, "")
-    OtherString = String.LeftCut(String.begin_ptr());
+    OtherString = OptimizedString.LeftCut(OptimizedString.begin_ptr());
     QUICK_CHECK_EQUALS(OtherString, "")
-    OtherString = String.LeftCut(String.begin());
+    OtherString = OptimizedString.LeftCut(OptimizedString.begin());
     QUICK_CHECK_EQUALS(OtherString, "")
 
-    OtherString = String.LeftCut(1ul);
+    OtherString = OptimizedString.LeftCut(1ul);
     QUICK_CHECK_EQUALS(OtherString, "H")
-    OtherString = String.LeftCut(String.begin_ptr() + 1);
+    OtherString = OptimizedString.LeftCut(OptimizedString.begin_ptr() + 1);
     QUICK_CHECK_EQUALS(OtherString, "H")
-    OtherString = String.LeftCut(String.begin() + 1);
+    OtherString = OptimizedString.LeftCut(OptimizedString.begin() + 1);
     QUICK_CHECK_EQUALS(OtherString, "H")
 
-    OtherString = String.LeftCut(String.GetRuneCount());
+    OtherString = OptimizedString.LeftCut(OptimizedString.GetRuneCount());
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string.")
-    OtherString = String.LeftCut(String.end_ptr() - String.begin_ptr());
+    OtherString = OptimizedString.LeftCut(OptimizedString.end_ptr() - OptimizedString.begin_ptr());
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string.")
-    OtherString = String.LeftCut(String.end() - String.begin());
+    OtherString = OptimizedString.LeftCut(OptimizedString.end() - OptimizedString.begin());
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string.")
-    OtherString = String.LeftCut(String.GetRuneCount() - 1);
+    OtherString = OptimizedString.LeftCut(OptimizedString.GetRuneCount() - 1);
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string")
-    OtherString = String.LeftCut(String.end_idx() - 1);
+    OtherString = OptimizedString.LeftCut(OptimizedString.end_idx() - 1);
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string")
-    OtherString = String.LeftCut(String.end_ptr() - 1);
+    OtherString = OptimizedString.LeftCut(OptimizedString.end_ptr() - 1);
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string")
-    OtherString = String.LeftCut(String.end());
+    OtherString = OptimizedString.LeftCut(OptimizedString.end());
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string.")
-    OtherString = String.LeftCut(String.end_idx());
+    OtherString = OptimizedString.LeftCut(OptimizedString.end_idx());
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string.")
-    OtherString = String.LeftCut(String.end_ptr());
+    OtherString = OptimizedString.LeftCut(OptimizedString.end_ptr());
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string.")
 
-    OtherString = String.RightCut(0ul);
+    OtherString = OptimizedString.RightCut(0ul);
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string.")
 
-    OtherString = String.LeftChop(0);
+    OtherString = OptimizedString.LeftChop(0);
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string.")
-    OtherString = String.LeftChop(1);
+    OtherString = OptimizedString.LeftChop(1);
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string")
-    OtherString = String.LeftChop(2);
+    OtherString = OptimizedString.LeftChop(2);
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long strin")
-    OtherString = String.LeftChop(String.GetRuneCount());
+    OtherString = OptimizedString.LeftChop(OptimizedString.GetRuneCount());
     QUICK_CHECK_EQUALS(OtherString, "")
 
-    OtherString = String;
+    OtherString = OptimizedString;
     OtherString.InlineLeftChop(0);
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string.")
     OtherString.InlineLeftChop(1);
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string")
     OtherString.InlineLeftChop(2);
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long stri")
-    OtherString.InlineLeftChop(String.GetRuneCount());
+    OtherString.InlineLeftChop(OptimizedString.GetRuneCount());
     QUICK_CHECK_EQUALS(OtherString, "")
 
-    OtherString = String.RightChop(0);
+    OtherString = OptimizedString.RightChop(0);
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string.")
-    OtherString = String.RightChop(1);
+    OtherString = OptimizedString.RightChop(1);
     QUICK_CHECK_EQUALS(OtherString, "ello, World! This is a long string.")
-    OtherString = String.RightChop(2);
+    OtherString = OptimizedString.RightChop(2);
     QUICK_CHECK_EQUALS(OtherString, "llo, World! This is a long string.")
-    OtherString = String.RightChop(String.GetRuneCount());
+    OtherString = OptimizedString.RightChop(OptimizedString.GetRuneCount());
     QUICK_CHECK_EQUALS(OtherString, "")
 
-    OtherString = String;
+    OtherString = OptimizedString;
     OtherString.InlineRightChop(0);
     QUICK_CHECK_EQUALS(OtherString, "Hello, World! This is a long string.")
     OtherString.InlineRightChop(1);
@@ -565,51 +565,51 @@ TEST_CASE(StringChopsOperatios, "Lal.Containers")
     return;
 }
 
-TEST_CASE(StringLowerUpperOperatios, "Lal.Containers")
+TEST_CASE(OptimizedStringLowerUpperOperatios, "Lal.Containers")
 {
-    LString String { " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~" };
+    LOptimizedString OptimizedString { " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~" };
 
-    String.ToUpper();
-    QUICK_CHECK_EQUALS(String, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`ABCDEFGHIJKLMNOPQRSTUVWXYZ{|}~")
-    String.ToLower();
-    QUICK_CHECK_EQUALS(String, " !\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")
+    OptimizedString.ToUpper();
+    QUICK_CHECK_EQUALS(OptimizedString, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`ABCDEFGHIJKLMNOPQRSTUVWXYZ{|}~")
+    OptimizedString.ToLower();
+    QUICK_CHECK_EQUALS(OptimizedString, " !\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")
 
-    String = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-    String.ToLower();
-    QUICK_CHECK_EQUALS(String, " !\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")
-    String.ToUpper();
-    QUICK_CHECK_EQUALS(String, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`ABCDEFGHIJKLMNOPQRSTUVWXYZ{|}~")
+    OptimizedString = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+    OptimizedString.ToLower();
+    QUICK_CHECK_EQUALS(OptimizedString, " !\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")
+    OptimizedString.ToUpper();
+    QUICK_CHECK_EQUALS(OptimizedString, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`ABCDEFGHIJKLMNOPQRSTUVWXYZ{|}~")
 
-    String = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+    OptimizedString = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 
-    LString Other;
-    Other = String.GetLower();
+    LOptimizedString Other;
+    Other = OptimizedString.GetLower();
     QUICK_CHECK_EQUALS(Other, " !\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")
-    Other = String.GetUpper();
+    Other = OptimizedString.GetUpper();
     QUICK_CHECK_EQUALS(Other, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`ABCDEFGHIJKLMNOPQRSTUVWXYZ{|}~")
 
     return;
 }
 
-TEST_CASE(StringPops, "Lal.Containers")
+TEST_CASE(OptimizedStringPops, "Lal.Containers")
 {
-    LString String { "Hello, World! This is a long string." };
+    LOptimizedString OptimizedString { "Hello, World! This is a long string." };
 
-    QUICK_CHECK_TRUE(String.Pop())
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string")
-    QUICK_CHECK_TRUE(String.Pop())
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long strin")
-    String.Pop(0);
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long strin")
-    String.Pop(1);
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long stri")
-    String.Pop(2);
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long st")
-    String.Pop(3);
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long")
+    QUICK_CHECK_TRUE(OptimizedString.Pop())
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long string")
+    QUICK_CHECK_TRUE(OptimizedString.Pop())
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long strin")
+    OptimizedString.Pop(0);
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long strin")
+    OptimizedString.Pop(1);
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long stri")
+    OptimizedString.Pop(2);
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long st")
+    OptimizedString.Pop(3);
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long")
 
-    LStringView View { String };
-    QUICK_CHECK_EQUALS(View, String)
+    LStringView View { OptimizedString };
+    QUICK_CHECK_EQUALS(View, OptimizedString)
     QUICK_CHECK_EQUALS(View, "Hello, World! This is a long")
     View.Pop();
     QUICK_CHECK_EQUALS(View, "Hello, World! This is a lon")
@@ -621,10 +621,10 @@ TEST_CASE(StringPops, "Lal.Containers")
     QUICK_CHECK_EQUALS(View, "Hello, World! This is a l")
     View.Pop(2);
     QUICK_CHECK_EQUALS(View, "Hello, World! This is a")
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long")
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long")
 
-    String = "Hello, World! This is a long string.";
-    View.Assign(String);
+    OptimizedString = "Hello, World! This is a long string.";
+    View.Assign(OptimizedString);
 
     QUICK_CHECK_TRUE(View.Drop())
     QUICK_CHECK_EQUALS(View, "ello, World! This is a long string.")
@@ -639,102 +639,102 @@ TEST_CASE(StringPops, "Lal.Containers")
     QUICK_CHECK_EQUALS(View.Drop(99), 31ul)
     QUICK_CHECK_EQUALS(View, "")
 
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string.")
-    QUICK_CHECK_TRUE(String.Drop())
-    QUICK_CHECK_EQUALS(String, "ello, World! This is a long string.")
-    QUICK_CHECK_TRUE(String.Drop())
-    QUICK_CHECK_EQUALS(String, "llo, World! This is a long string.")
-    QUICK_CHECK_EQUALS(String.Drop(0), 0ul)
-    QUICK_CHECK_EQUALS(String, "llo, World! This is a long string.")
-    QUICK_CHECK_EQUALS(String.Drop(1), 1ul)
-    QUICK_CHECK_EQUALS(String, "lo, World! This is a long string.")
-    QUICK_CHECK_EQUALS(String.Drop(2), 2ul)
-    QUICK_CHECK_EQUALS(String, ", World! This is a long string.")
-    QUICK_CHECK_EQUALS(String.Drop(99), 31ul)
-    QUICK_CHECK_EQUALS(String, "")
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long string.")
+    QUICK_CHECK_TRUE(OptimizedString.Drop())
+    QUICK_CHECK_EQUALS(OptimizedString, "ello, World! This is a long string.")
+    QUICK_CHECK_TRUE(OptimizedString.Drop())
+    QUICK_CHECK_EQUALS(OptimizedString, "llo, World! This is a long string.")
+    QUICK_CHECK_EQUALS(OptimizedString.Drop(0), 0ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "llo, World! This is a long string.")
+    QUICK_CHECK_EQUALS(OptimizedString.Drop(1), 1ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "lo, World! This is a long string.")
+    QUICK_CHECK_EQUALS(OptimizedString.Drop(2), 2ul)
+    QUICK_CHECK_EQUALS(OptimizedString, ", World! This is a long string.")
+    QUICK_CHECK_EQUALS(OptimizedString.Drop(99), 31ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "")
 
     return;
 }
 
-TEST_CASE(StringFormat, "Lal.Containers")
+TEST_CASE(OptimizedStringFormat, "Lal.Containers")
 {
-    LString String { LString::SprintF("{} {}", "Five", 5) };
-    QUICK_CHECK_EQUALS(String, "Five 5")
+    LOptimizedString OptimizedString { LOptimizedString::SprintF("{} {}", "Five", 5) };
+    QUICK_CHECK_EQUALS(OptimizedString, "Five 5")
 
     return;
 }
 
-TEST_CASE(StringSubstitute, "Lal.Containers")
+TEST_CASE(OptimizedStringSubstitute, "Lal.Containers")
 {
     std::string StdString { "Hello, World! This is a long string." };
-    LString String { "Hello, World! This is a long string." };
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string.")
+    LOptimizedString OptimizedString { "Hello, World! This is a long string." };
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long string.")
 
-    String.Substitute(String.begin(), String.begin() + 5, "Hi");
-    QUICK_CHECK_EQUALS(String, "Hi, World! This is a long string.")
-    String.Substitute(String.begin(), String.begin() + 2, "Servus");
-    QUICK_CHECK_EQUALS(String, "Servus, World! This is a long string.")
-    String.Substitute(String.begin() + 8, String.begin() + 8 + 5, "City");
-    QUICK_CHECK_EQUALS(String, "Servus, City! This is a long string.")
-    String.Substitute(String.begin() + 8, String.begin() + 8, "my ");
-    QUICK_CHECK_EQUALS(String, "Servus, my City! This is a long string.")
-    String.Substitute(String.begin(), String.begin() + 6, "");
-    QUICK_CHECK_EQUALS(String, ", my City! This is a long string.")
-    String.Substitute(String.begin(), String.begin() + 5, '!');
-    QUICK_CHECK_EQUALS(String, "!City! This is a long string.")
-    String.Substitute(String.begin() + 1, String.begin() + 1, '*');
-    QUICK_CHECK_EQUALS(String, "!*City! This is a long string.")
-    String.Substitute(String.begin() + 6, String.begin() + 6, '*');
-    QUICK_CHECK_EQUALS(String, "!*City*! This is a long string.")
-    String.Substitute(String.begin(), String.begin(), "");
-    QUICK_CHECK_EQUALS(String, "!*City*! This is a long string.")
-    String.Substitute(String.begin() + 1, String.begin() + 1, "");
-    QUICK_CHECK_EQUALS(String, "!*City*! This is a long string.")
-    String.Substitute(--String.end(), --String.end(), "");
-    QUICK_CHECK_EQUALS(String, "!*City*! This is a long string.")
-    String.Substitute(--String.end(), String.end(), "");
-    QUICK_CHECK_EQUALS(String, "!*City*! This is a long string")
-    String.Substitute(String.end() - 6, String.end(), "sentence");
-    QUICK_CHECK_EQUALS(String, "!*City*! This is a long sentence")
+    OptimizedString.Substitute(OptimizedString.begin(), OptimizedString.begin() + 5, "Hi");
+    QUICK_CHECK_EQUALS(OptimizedString, "Hi, World! This is a long string.")
+    OptimizedString.Substitute(OptimizedString.begin(), OptimizedString.begin() + 2, "Servus");
+    QUICK_CHECK_EQUALS(OptimizedString, "Servus, World! This is a long string.")
+    OptimizedString.Substitute(OptimizedString.begin() + 8, OptimizedString.begin() + 8 + 5, "City");
+    QUICK_CHECK_EQUALS(OptimizedString, "Servus, City! This is a long string.")
+    OptimizedString.Substitute(OptimizedString.begin() + 8, OptimizedString.begin() + 8, "my ");
+    QUICK_CHECK_EQUALS(OptimizedString, "Servus, my City! This is a long string.")
+    OptimizedString.Substitute(OptimizedString.begin(), OptimizedString.begin() + 6, "");
+    QUICK_CHECK_EQUALS(OptimizedString, ", my City! This is a long string.")
+    OptimizedString.Substitute(OptimizedString.begin(), OptimizedString.begin() + 5, '!');
+    QUICK_CHECK_EQUALS(OptimizedString, "!City! This is a long string.")
+    OptimizedString.Substitute(OptimizedString.begin() + 1, OptimizedString.begin() + 1, '*');
+    QUICK_CHECK_EQUALS(OptimizedString, "!*City! This is a long string.")
+    OptimizedString.Substitute(OptimizedString.begin() + 6, OptimizedString.begin() + 6, '*');
+    QUICK_CHECK_EQUALS(OptimizedString, "!*City*! This is a long string.")
+    OptimizedString.Substitute(OptimizedString.begin(), OptimizedString.begin(), "");
+    QUICK_CHECK_EQUALS(OptimizedString, "!*City*! This is a long string.")
+    OptimizedString.Substitute(OptimizedString.begin() + 1, OptimizedString.begin() + 1, "");
+    QUICK_CHECK_EQUALS(OptimizedString, "!*City*! This is a long string.")
+    OptimizedString.Substitute(--OptimizedString.end(), --OptimizedString.end(), "");
+    QUICK_CHECK_EQUALS(OptimizedString, "!*City*! This is a long string.")
+    OptimizedString.Substitute(--OptimizedString.end(), OptimizedString.end(), "");
+    QUICK_CHECK_EQUALS(OptimizedString, "!*City*! This is a long string")
+    OptimizedString.Substitute(OptimizedString.end() - 6, OptimizedString.end(), "sentence");
+    QUICK_CHECK_EQUALS(OptimizedString, "!*City*! This is a long sentence")
 
     return;
 }
 
-TEST_CASE(StringRepalce, "Lal.Containers")
+TEST_CASE(OptimizedStringRepalce, "Lal.Containers")
 {
-    LString String { "Hello, World! This is a long string." };
-    QUICK_CHECK_EQUALS(String, "Hello, World! This is a long string.")
+    LOptimizedString OptimizedString { "Hello, World! This is a long string." };
+    QUICK_CHECK_EQUALS(OptimizedString, "Hello, World! This is a long string.")
 
-    QUICK_CHECK_EQUALS(String.Replace('e', 'W'), 1ul)
-    QUICK_CHECK_EQUALS(String, "HWllo, World! This is a long string.")
-    QUICK_CHECK_EQUALS(String.Replace('W', 'o'), 2ul)
-    QUICK_CHECK_EQUALS(String, "Hollo, oorld! This is a long string.")
-    QUICK_CHECK_EQUALS(String.Replace('o', 'i'), 5ul)
-    QUICK_CHECK_EQUALS(String, "Hilli, iirld! This is a ling string.")
-    QUICK_CHECK_EQUALS(String.Count('i'), 8ul)
+    QUICK_CHECK_EQUALS(OptimizedString.Replace('e', 'W'), 1ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "HWllo, World! This is a long string.")
+    QUICK_CHECK_EQUALS(OptimizedString.Replace('W', 'o'), 2ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "Hollo, oorld! This is a long string.")
+    QUICK_CHECK_EQUALS(OptimizedString.Replace('o', 'i'), 5ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "Hilli, iirld! This is a ling string.")
+    QUICK_CHECK_EQUALS(OptimizedString.Count('i'), 8ul)
 
-    QUICK_CHECK_EQUALS(String.Replace("This", "That"), 1ul)
-    QUICK_CHECK_EQUALS(String, "Hilli, iirld! That is a ling string.")
+    QUICK_CHECK_EQUALS(OptimizedString.Replace("This", "That"), 1ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "Hilli, iirld! That is a ling string.")
 
-    String = "AAaBbAAAAa";
-    QUICK_CHECK_EQUALS(String.Replace("AAa", "Bb"), 2ul)
-    QUICK_CHECK_EQUALS(String, "BbBbAABb")
-    QUICK_CHECK_EQUALS(String.Replace("Bb", "AA"), 3ul)
-    QUICK_CHECK_EQUALS(String, "AAAAAAAA")
-    QUICK_CHECK_EQUALS(String.Replace("A", "B"), 8ul)
-    QUICK_CHECK_EQUALS(String, "BBBBBBBB")
-    QUICK_CHECK_EQUALS(String.Replace("BB", "AA"), 4ul)
-    QUICK_CHECK_EQUALS(String, "AAAAAAAA")
-    QUICK_CHECK_EQUALS(String.Replace("AA", "AA"), 4ul)
-    QUICK_CHECK_EQUALS(String, "AAAAAAAA")
-    QUICK_CHECK_EQUALS(String.Replace("A", "AA"), 8ul)
-    QUICK_CHECK_EQUALS(String, "AAAAAAAAAAAAAAAA")
-    QUICK_CHECK_EQUALS(String.Replace("A", "AAA"), 16ul)
-    QUICK_CHECK_EQUALS(String, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-    QUICK_CHECK_EQUALS(String.Replace("AAAA", "A"), 12ul)
-    QUICK_CHECK_EQUALS(String, "AAAAAAAAAAAA")
-    QUICK_CHECK_EQUALS(String.Replace("A", ""), 12ul)
-    QUICK_CHECK_EQUALS(String, "")
+    OptimizedString = "AAaBbAAAAa";
+    QUICK_CHECK_EQUALS(OptimizedString.Replace("AAa", "Bb"), 2ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "BbBbAABb")
+    QUICK_CHECK_EQUALS(OptimizedString.Replace("Bb", "AA"), 3ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "AAAAAAAA")
+    QUICK_CHECK_EQUALS(OptimizedString.Replace("A", "B"), 8ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "BBBBBBBB")
+    QUICK_CHECK_EQUALS(OptimizedString.Replace("BB", "AA"), 4ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "AAAAAAAA")
+    QUICK_CHECK_EQUALS(OptimizedString.Replace("AA", "AA"), 4ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "AAAAAAAA")
+    QUICK_CHECK_EQUALS(OptimizedString.Replace("A", "AA"), 8ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "AAAAAAAAAAAAAAAA")
+    QUICK_CHECK_EQUALS(OptimizedString.Replace("A", "AAA"), 16ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    QUICK_CHECK_EQUALS(OptimizedString.Replace("AAAA", "A"), 12ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "AAAAAAAAAAAA")
+    QUICK_CHECK_EQUALS(OptimizedString.Replace("A", ""), 12ul)
+    QUICK_CHECK_EQUALS(OptimizedString, "")
 
     return;
 }

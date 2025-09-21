@@ -94,6 +94,7 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     #pragma clang diagnostic error "-Wbuiltin-macro-redefined"
     #pragma clang diagnostic error "-Wdangling-else"
     #pragma clang diagnostic error "-Wdynamic-class-memaccess"
+    #pragma clang diagnostic error "-Wextra-qualification"
     #pragma clang diagnostic error "-Wextra-semi"
     #pragma clang diagnostic error "-Wextra-tokens"
     #pragma clang diagnostic error "-Winconsistent-missing-override"

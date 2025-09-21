@@ -35,6 +35,8 @@ using namespace Jafg;
     #endif /* !IN_SHIPPING */
 #endif /* JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES */
 
+#include "Runtime/Args.h"
+
 namespace
 {
 
@@ -287,12 +289,24 @@ EPlatformExit::Type GuardedMain()
     } GuardedMainScope;
 #endif /* !LAL_PLATFORM_USES_NON_GENERIC_EXIT */
 
+    Application::Private::ProcessCommandLineVariables();
+
+    if (const std::tuple Ret { Application::Private::ConditionallyShowHelpAndExit() }; std::get<0>(Ret))
+    {
+        GCustomExitStatusOverride = static_cast<i32>(std::get<1>(Ret));
+        GCustomExitReason = "Help shown.";
+        return ::GetMostSignificantExitReason();
+    }
+
     LOG_INFO
     (
         LogGuardedMain,
         "Finished static storage initialization after {} seconds.",
         Application::GetDeltaSinceStaticStorageInitialization()
     )
+
+    Application::Private::bPauseBeforeExit = Application::HasCmdLineParameter("PauseBeforeExit");
+    Application::Private::bAlwaysReportCrash = Application::HasCmdLineParameter("AlwaysReportCrash");
 
     Tasks::RegisterThread(ENamedThreads::Master);
 

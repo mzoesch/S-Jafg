@@ -93,8 +93,15 @@ template <template <typename, typename> class TEncoding, TStringBaseAllocatorCon
     requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
 FORCEINLINE void TPathBase<TEncoding, TAllocator>::MakeRelativePath() noexcept
 {
+    auto Ptr { this->begin_ptr() };
+
+    if (Ptr == nullptr || Ptr == this->end_ptr())
+    {
+        return;
+    }
+
 #if LAL_PLATFORM_USES_POSIX
-    if ((*this->begin_ptr()) == '/')
+    if (*Ptr == '/')
     {
         this->Drop();
     }
