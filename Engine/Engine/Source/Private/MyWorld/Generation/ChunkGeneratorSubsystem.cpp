@@ -114,7 +114,7 @@ void Jafg::JChunkGeneratorSubsystem::Initialize(LSubsystemCollection& Collection
 
     this->ChunkGenerationSubsystem = Collection.GetCheckedSubsystem<JChunkGenerationSubsystem>();
 
-    for (i32 i = 0; i < 10; ++i)
+    for (i32 i = 0; i < 1 /* 10 */; ++i)
     {
         ETaskExit::Type Exit;
         const ENamedThreads::Type WorkerName = Tasks::LaunchNamedThread<LChunkGeneratorWorker>

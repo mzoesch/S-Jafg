@@ -440,7 +440,7 @@ EPlatformExit::Type GuardedMain()
 
     STAT_CYCLE_START(GmEngineWorldLoad, "EngineWorldLoad")
     LWorldStorage World = GEngine->SummonWorld("StartUpWorld");
-    GEngine->Browse(World, Name_LevelFrontend.ToString());
+    GEngine->Browse(World, Name_LevelMyWorld.ToString());
     STAT_CYCLE_END(GmEngineWorldLoad)
 
     if (GEngine == nullptr || ::IsEngineExitRequested())

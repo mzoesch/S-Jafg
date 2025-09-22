@@ -646,16 +646,15 @@ void Jafg::LEngine::Browse(Private::LWorldContext& Context, const LString& Url) 
     {
         if (this->IsLevelRegistered(Url) == false)
         {
-            panicMsgf( "Local Url [{}] is not registered.", Url )
+            panicMsgf( "Level [{}] is not registered.", Url )
             return;
         }
     }
     else
     {
-        if (this->IsLevelRegistered(Url.LeftChop(Barrier)) == false)
+        if (const LString LevelUrl { Url.LeftCut(Barrier) }; this->IsLevelRegistered(LevelUrl) == false)
         {
-            panicMsgf( "Local Url [{}] is not registered.", Url )
-            return;
+            LOG_FATAL(LogEngine, "Level [{}] is not registered. Retrieved from URL [{}].", LevelUrl, Url)
         }
     }
 
@@ -717,7 +716,7 @@ Jafg::LLevel* Jafg::LEngine::GetLevelByInternalUrl(const LString& Url)
     }
     else
     {
-        return this->RegisteredLevels.FindRef(Url.LeftChop(Barrier));
+        return this->RegisteredLevels.FindRef(Url.LeftCut(Barrier));
     }
 }
 
