@@ -23,37 +23,37 @@ from Lal.Lal.Source.Debug.Containers.LalArray import (
 def lal_pretty_lookup(val: any) -> any:
     type_str: str = str(val.type.strip_typedefs())
 
-    pattern_lal_array = re.compile(
-        r'Lal::TArrayBase<\s*[^>]+\s*>'
-        )
-    pattern_lal_string = re.compile(
-        r'Lal::TStringBase<\s*[^>]+\s*>'
-        )
     pattern_lal_path = re.compile(
-        r'Lal::TPathBase<\s*[^>]+\s*>'
+        r'.*Lal::TPathBase<\s*[^>]+\s*>'
     )
+    pattern_lal_string = re.compile(
+        r'.*Lal::TStringBase<\s*[^>]+\s*>'
+        )
+    pattern_lal_array = re.compile(
+        r'.*Lal::TArrayBase<\s*[^>]+\s*>'
+        )
 
     # Legacy
     pattern_array = re.compile(
-        r'Jafg::TArrayBase<\s*[^>]+\s*>'
+        r'.*Jafg::TArrayBase<\s*[^>]+\s*>'
         )
     pattern_strong_string = re.compile(
-        r'Jafg::_TStringBase<\s*Jafg::TStringTraits<[^>]+>,\s*Jafg::TArrayBase<\s*(Jafg::TArrayAllocator<[^>]+>)\s*>\s*>'
+        r'.*Jafg::_TStringBase<\s*Jafg::TStringTraits<[^>]+>,\s*Jafg::TArrayBase<\s*(Jafg::TArrayAllocator<[^>]+>)\s*>\s*>'
         )
     pattern_weak_string = re.compile(
-        r'Jafg::_TStringBase<\s*Jafg::TStringTraits<[^>]+>,\s*Jafg::TArrayBase<\s*(Jafg::TArrayViewAllocator<[^>]+>)\s*>\s*>'
+        r'.*Jafg::_TStringBase<\s*Jafg::TStringTraits<[^>]+>,\s*Jafg::TArrayBase<\s*(Jafg::TArrayViewAllocator<[^>]+>)\s*>\s*>'
         )
     pattern_path_base = re.compile(
-        r'Jafg::TPathBase<\s*Jafg::TStringTraits<[^>]+>,\s*Jafg::TArrayBase<\s*(Jafg::TArrayAllocator<[^>]+>)\s*>\s*>'
+        r'.*Jafg::TPathBase<\s*Jafg::TStringTraits<[^>]+>,\s*Jafg::TArrayBase<\s*(Jafg::TArrayAllocator<[^>]+>)\s*>\s*>'
         )
     # ~Legacy
 
-    if pattern_lal_array.match(type_str):
-        return LalTArrayBase_Printer(val)
-    if pattern_lal_string.match(type_str):
-        return LalTStringBase_Printer(val)
     if pattern_lal_path.match(type_str):
         return LalTPathBase_Printer(val)
+    if pattern_lal_string.match(type_str):
+        return LalTStringBase_Printer(val)
+    if pattern_lal_array.match(type_str):
+        return LalTArrayBase_Printer(val)
 
     # Legacy
     if pattern_array.match(type_str):
