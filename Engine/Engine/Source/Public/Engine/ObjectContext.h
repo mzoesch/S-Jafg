@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Lal.afx"
 #include "Foreign/PluginForward.h"
 
 namespace Jafg

@@ -1,3 +1,3 @@
 // Copyright mzoesch. All rights reserved.
 
-#pragma once
+#include "Engine.afx"

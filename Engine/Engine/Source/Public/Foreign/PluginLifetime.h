@@ -11,11 +11,10 @@ namespace Jafg
 //# This the main class that defines a foreign plugin.
 //# Inherit from this and make it engine public by adding it to the DEFINE_PLUGIN macro.
 //#
-//# @see For questions, read this README.md: Foreign/README.md.
+//# @see For questions, read this README.md: Documentation/Foreign.md.
 //#
 class LPluginLifetime
 {
-
 public:
 
     virtual ~LPluginLifetime() = default;

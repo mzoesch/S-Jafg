@@ -312,12 +312,15 @@ EPlatformExit::Type GuardedMain()
 
 #endif /* !WITH_TESTS */
 
-    PlatformMisc::InvalidateCachedValues();
+    PlatformMisc::Private::InvalidateCachedValues();
 
 #if PLATFORM_DESKTOP
     std::filesystem::current_path(PlatformMisc::GetEngineRootDir().ToPtr());
     Finder::CreateDirectories(Finder::GetSavesDir());
 #endif /* PLATFORM_DESKTOP */
+
+    LOG_VERBOSE(LogSystem, "Engine root directory is [{}].", PlatformMisc::GetEngineRootDir())
+    LOG_VERBOSE(LogSystem, "Real engine root directory is [{}].", PlatformMisc::GetRealEngineRootDir())
 
 #if WITH_TESTS
     return Tester::LTestFramework{}.RunRegisteredTests();
@@ -423,7 +426,7 @@ EPlatformExit::Type GuardedMain()
 
 #if JAFG_WITH_FOREIGN_SUPPORT
     STAT_CYCLE_START(GmEnabledEnginePluginsLoad, "EnabledEnginePluginsLoad")
-    const JUserPreferences* Prefs = GetDefault<JUserPreferences>();
+    const JUserPreferences* Prefs { GetDefault<JUserPreferences>() };
     GEngine->RefetchPlugins(Prefs->AdditionalPluginsSearchPaths);
     for (const LString& Plugin : Prefs->EnabledEnginePlugins)
     {
@@ -440,7 +443,7 @@ EPlatformExit::Type GuardedMain()
 
     STAT_CYCLE_START(GmEngineWorldLoad, "EngineWorldLoad")
     LWorldStorage World = GEngine->SummonWorld("StartUpWorld");
-    GEngine->Browse(World, Name_LevelMyWorld.ToString());
+    GEngine->Browse(World, Name_LevelFrontend.ToString());
     STAT_CYCLE_END(GmEngineWorldLoad)
 
     if (GEngine == nullptr || ::IsEngineExitRequested())

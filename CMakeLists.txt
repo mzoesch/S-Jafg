@@ -114,7 +114,7 @@ set(JAFG_MODULE_TYPE_PLUGIN     "plugin")
 #         < Custom CMake commands here if necessary >   # This module can now be dynamically loaded at runtime.
 #     endif()
 #
-# @see Examples can be found at "Engine/Engine/CMakeLists.txt" or at "Plugins/JafgPlugin/CMakeLists.txt".
+# @see Examples can be found at "Engine/Engine/CMakeLists.txt" or at "Plugins/Jgc/CMakeLists.txt".
 #
 macro(jafg_add_module
     # The type of the module. See the #JAFG_MODULE_TYPE_* constants above for valid values.
@@ -125,7 +125,7 @@ endmacro()
 
 #
 # Add another Jafg module as a dependency to the current module.
-# @see Examples can be found at "Engine/EngineForward/CMakeLists.txt" or at "Plugins/JafgPlugin/CMakeLists.txt".
+# @see Examples can be found at "Engine/EngineForward/CMakeLists.txt" or at "Plugins/Jgc/CMakeLists.txt".
 #
 macro(jafg_add_dependency
     # The relative path of the module to add as a dependency to the engine. E.g.: "Engine/Engine".
@@ -148,6 +148,7 @@ include(CMake/LateSetup.cmake)
 # To write your own module and load it at runtime into the Jafg engine, create a new directory in the
 # "Plugins" directory or any subdirectory of it. In said directory, create a CMakeLists.txt file that
 # contains the module's CMake configuration.
-# @see Example can be found at "Plugins/JafgPlugin/CMakeLists.txt".
+#
+# @see Example can be found at "Plugins/Jgc/CMakeLists.txt".
 #
 include(CMake/ModuleFetcher.cmake)

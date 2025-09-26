@@ -18,6 +18,7 @@
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-W#warnings"
     #endif /* LAL_WITH_CLANG */
+    #define JSON_NOEXCEPTION
     #include "nlohmann/json.hpp"
     #if LAL_WITH_CLANG
         #pragma clang diagnostic pop
@@ -725,7 +726,7 @@ void Jafg::LEngine::RefetchPlugins(const TArray<LString>& InAdditionalPaths)
 {
     check( Tasks::IsOnMasterThread() )
 
-    this->FetchPlugins(GPlatformMisc->RealEngineRootDir);
+    this->FetchPlugins(PlatformMisc::GetRootBinaryDirectory());
 
     for (const LString& AdditionalPath : InAdditionalPaths)
     {
@@ -739,15 +740,15 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPlugin(const LString& InNam
 {
     check( Tasks::IsOnMasterThread() )
 
-    const LFetchedPlugin* P = this->FetchedPlugins.FindRefByPredicate([InName](const LFetchedPlugin& Plugin) -> bool
+    const LFetchedPlugin* P = this->FetchedPlugins.FindRefByPredicate([InName](const auto& Item) -> bool
     {
-       return Plugin.Identifier == InName;
+       return Item.Identifier == InName;
     });
     if (P == nullptr)
     {
         P = this->FetchedPlugins.FindRefByPredicate([InName](const LFetchedPlugin& Plugin) -> bool
         {
-            return Plugin.AbsolutePath == InName.ToPtr();
+            return Plugin.AbsolutePath.Equals(InName.begin(), InName.end());
         });
     }
 
@@ -887,7 +888,7 @@ void Jafg::LEngine::UnLoadPluginNoFailure(LLoadedPlugin* InPlugin, const EPlugin
     return;
 }
 
-void Jafg::LEngine::FetchPlugins(const LPath& InPath)
+void Jafg::LEngine::FetchPlugins(const LPathView InPath)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -897,16 +898,13 @@ void Jafg::LEngine::FetchPlugins(const LPath& InPath)
 
     for
     (
-        const TArray<LString> Files = Finder::FindFilesRecursively(InPath, true, ".jafg");
-        const LString& File: Files
+        const TArray<LString> Files = Finder::FindFilesRecursively(InPath, true, ".*\\.jafg\\.root\\.plugin$");
+        const LString& File : Files
     )
     {
-        if (File.EndsWith("/root.plugin.jafg") == false)
-        {
-            continue;
-        }
+        check( File.EndsWith("/.jafg.root.plugin"))
 
-        if (this->FetchPlugin(LPath{File.begin(), File.end()}))
+        if (this->FetchPlugin(LPathView{File}))
         {
             ++Fetched;
         }
@@ -922,23 +920,28 @@ void Jafg::LEngine::FetchPlugins(const LPath& InPath)
     return;
 }
 
-bool Jafg::LEngine::FetchPlugin(LPath&& InPath)
+bool Jafg::LEngine::FetchPlugin(const LPathView InPath)
 {
     checkCode( Finder::CheckFile(InPath) )
 
     using json = nlohmann::json;
 
-    const json PluginJson = json::parse(Finder::ReadFile(InPath).ToPtr());
+    const json PluginJson = json::parse(Finder::ReadFile(InPath).ToPtr(), nullptr, false);
+    if (PluginJson.is_discarded())
+    {
+        LOG_ERROR(LogForeign, "Plugin [{}] is not valid json. Failed to fetch.", InPath)
+        return false;
+    }
 
-    if (PluginJson.contains("Identifier") == false)
+    if (PluginJson.contains("Version") == false)
     {
         LOG_ERROR(LogForeign, "Plugin [{}] does not contain an identifier. Failed to fetch.", InPath)
         return false;
     }
 
-    if (PluginJson.contains("FriendlyName") == false)
+    if (PluginJson.contains("Identifier") == false)
     {
-        LOG_ERROR(LogForeign, "Plugin [{}] does not contain a friendly name. Failed to fetch.", InPath)
+        LOG_ERROR(LogForeign, "Plugin [{}] does not contain an identifier. Failed to fetch.", InPath)
         return false;
     }
 
@@ -948,23 +951,31 @@ bool Jafg::LEngine::FetchPlugin(LPath&& InPath)
         return false;
     }
 
-    LFetchedPlugin P =
+    LFetchedPlugin P;
+    P.AbsolutePath = InPath.GetAbsolute<LPath>();
+    P.Version = PluginJson["Version"].get<std::string>().c_str();
+    P.Identifier = PluginJson["Identifier"].get<std::string>().c_str();
+    if (PluginJson.contains("FriendlyName"))
     {
-        std::move(InPath),
-        PluginJson["Identifier"].get<std::string>().c_str(),
-        PluginJson["FriendlyName"].get<std::string>().c_str(),
-        PluginJson["Bin"].get<std::string>().c_str()
-    };
+        P.FriendlyName = PluginJson["FriendlyName"].get<std::string>().c_str();
+    }
+    P.Bin = PluginJson["Bin"].get<std::string>().c_str();
+
+    if (P.Version.IsEmpty())
+    {
+        LOG_ERROR(LogForeign, "Failed to fetch plugin [{}].", P.AbsolutePath)
+        return false;
+    }
 
     if (P.AbsolutePath.IsEmpty())
     {
-        LOG_ERROR(LogForeign, "Failed to fetch plug.")
+        LOG_ERROR(LogForeign, "Failed to fetch plugin.")
         return false;
     }
 
     if (P.Identifier.IsEmpty())
     {
-        LOG_ERROR(LogForeign, "Failed to fetch plug [{}].", P.AbsolutePath)
+        LOG_ERROR(LogForeign, "Failed to fetch plugin [{}].", P.AbsolutePath)
         return false;
     }
 
@@ -975,12 +986,20 @@ bool Jafg::LEngine::FetchPlugin(LPath&& InPath)
 
     if (P.Bin.IsEmpty())
     {
-        LOG_ERROR(LogForeign, "Failed to fetch plug [{}].", P.Bin)
+        LOG_ERROR(LogForeign, "Failed to fetch plugin [{}].", P.Bin)
         return false;
     }
 
-    LOG_VERBOSE(LogForeign, "Fetched plugin [{}].", P.FriendlyName)
+    if (this->FetchedPlugins.ContainsByPredicate([&P](const auto& Item) -> bool
+    {
+        return P.AbsolutePath == Item.AbsolutePath;
+    }))
+    {
+        LOG_ERROR(LogForeign, "Plugin [{}] already fetched.", P.AbsolutePath)
+        return false;
+    }
 
+    LOG_VERBOSE(LogForeign, "Fetched plugin [{}] from [{}].", P.Identifier, P.AbsolutePath)
     this->FetchedPlugins.Emplace(std::move(P));
 
     return true;
@@ -990,44 +1009,25 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(const LFetchedPl
 {
     STAT_CYCLE_FUNCTION()
 
-    LPath PathToBin;
-
-    if (InFetchedPlugin.Bin.IsAbsolute())
+    if (Finder::DoesFileExist(InFetchedPlugin.Bin) == false)
     {
-        if (Finder::DoesFileExist(InFetchedPlugin.Bin) == false)
-        {
-            return EPluginLoadReturnCode::NoBin;
-        }
-
-        PathToBin = InFetchedPlugin.Bin;
-    }
-    else
-    {
-        PathToBin = InFetchedPlugin.AbsolutePath;
-        PathToBin.ToParent();
-        PathToBin /= InFetchedPlugin.Bin;
-
-        if (Finder::DoesFileExist(PathToBin) == false)
-        {
-            return EPluginLoadReturnCode::NoBin;
-        }
+        return EPluginLoadReturnCode::NoBin;
     }
 
-    if (this->LoadedPlugins.ContainsByPredicate([&PathToBin](const LLoadedPlugin& LoadedPlugin) -> bool
+    if (this->LoadedPlugins.ContainsByPredicate([&InFetchedPlugin](const auto& Item) -> bool
     {
-        return LoadedPlugin.GetPathToBin() == PathToBin;
+        return Item.GetPathToBin() == InFetchedPlugin.Bin;
     }))
     {
         return EPluginLoadReturnCode::AlreadyLoaded;
     }
 
-    LOG_VERBOSE(LogForeign, "Loading plugin [{}] from [{}].", InFetchedPlugin.FriendlyName, PathToBin)
+    LOG_VERBOSE(LogForeign, "Loading plugin [{}] from [{}].", InFetchedPlugin.Identifier, InFetchedPlugin.Bin)
 
-    LLoadedPlugin Plugin(InFetchedPlugin, std::move(PathToBin));
-
+    LLoadedPlugin Plugin{ InFetchedPlugin, InFetchedPlugin.Bin };
     check( Private::GetRegisterObjectQueue().IsEmpty() )
 
-    if (const EPluginLoadReturnCode::Type Rc = Plugin.OpenLibrary(); Rc != EPluginLoadReturnCode::Success)
+    if (const EPluginLoadReturnCode::Type Rc { Plugin.OpenLibrary() }; Rc != EPluginLoadReturnCode::Success)
     {
         Private::GObjectRegistry->KillPendingPackages();
         return Rc;

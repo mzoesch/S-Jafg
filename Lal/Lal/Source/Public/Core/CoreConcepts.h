@@ -41,9 +41,15 @@ concept AssignableFromWeak
 
 // Strong assignable clause. TRhs must be an l-value reference.
 template<typename TLhs, typename TRhs>
-concept AssignableFrom
+concept AssignableFromL
     =  AssignableFromWeak<TLhs, TRhs>
     && std::is_lvalue_reference_v<TRhs>;
+
+// Strong assignable clause. TRhs must be an r-value reference.
+template<typename TLhs, typename TRhs>
+concept AssignableFromR
+    =  AssignableFromWeak<TLhs, TRhs>
+    && std::is_rvalue_reference_v<TRhs>;
 
 template <typename T> struct TIsChar : FalseType { };
 template <typename T> struct TIsChar<const T> : TIsChar<T> { };

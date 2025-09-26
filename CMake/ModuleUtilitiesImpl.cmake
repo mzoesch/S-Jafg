@@ -1,5 +1,7 @@
 # Copyright mzoesch. All rights reserved.
 
+include(CMake/RetrieveFileContent.cmake)
+
 macro(_jafg_add_module
     module_type
     )
@@ -138,7 +140,7 @@ function(_jafg_add_module_impl
         RUNTIME_OUTPUT_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}"
         )
 
-    set(pch_file "${module_dir}/Source/Internal/Module.pch.hpp")
+    set(pch_file "${module_dir}/Source/Internal/Module.pch")
     if(EXISTS "${pch_file}")
         target_precompile_headers(${module_name} PRIVATE
             "${pch_file}"
@@ -333,6 +335,55 @@ function(_jafg_add_module_impl
             --Kind ${motor_module_type}
         )
     add_dependencies(${module_name} zzz_${module_name}_PRE_BUILD)
+
+    ###############################################################################
+    # Human readable plugin info file
+    if(${module_type} STREQUAL JAFG_MODULE_TYPE_PLUGIN)
+        set(_target_root_plugin_jafg "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}/.jafg.root.plugin")
+        if(NOT EXISTS "${_target_root_plugin_jafg}")
+            retrieve_file_content_no_fail("${JAFG_ENGINE_ROOT}/${module_rel_dir}/Config/.ver" _target_ver)
+
+            get_target_property(loc_type ${module_name} TYPE)
+            if(loc_type STREQUAL "STATIC_LIBRARY" OR loc_type STREQUAL "SHARED_LIBRARY")
+                set(prefix "${CMAKE_SHARED_LIBRARY_PREFIX}")
+                set(suffix "${CMAKE_SHARED_LIBRARY_SUFFIX}")
+            elseif(loc_type STREQUAL "MODULE_LIBRARY")
+                set(prefix "${CMAKE_SHARED_MODULE_PREFIX}")
+                set(suffix "${CMAKE_SHARED_MODULE_SUFFIX}")
+            elseif(loc_type STREQUAL "EXECUTABLE")
+                set(prefix "")
+                set(suffix "${CMAKE_EXECUTABLE_SUFFIX}")
+            endif()
+
+            if(DEFINED this_plugin_identifier)
+                set(_this_plugin_identifier "${this_plugin_identifier}")
+                unset(this_plugin_identifier PARENT_SCOPE)
+            else()
+                set(_this_plugin_identifier "${module_name}")
+            endif()
+            if(DEFINED this_plugin_friendly_name)
+                set(_this_plugin_friendly_name "${this_plugin_friendly_name}")
+                unset(this_plugin_friendly_name PARENT_SCOPE)
+            else()
+                set(_this_plugin_friendly_name "${module_name}")
+            endif()
+
+            set(_target_root_plugin_jafg_content
+"{
+    \"Version\": \"${_target_ver}\",
+    \"Identifier\": \"${this_plugin_identifier}\",
+    \"NativeIdentifier\": \"${module_name}\",
+    \"FriendlyName\": \"${_this_plugin_friendly_name}\",
+    \"Bin\": \"Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}/${prefix}${module_name}${suffix}\"
+}
+")
+            file(MAKE_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}")
+            file(WRITE "${_target_root_plugin_jafg}" "${_target_root_plugin_jafg_content}")
+            message(STATUS "[${module_rel_dir}]: Created plugin info file at [${_target_root_plugin_jafg}].")
+        endif()
+    endif()
+    # ~Human readable plugin info file
+    ###############################################################################
 endfunction()
 
 macro(_jafg_add_dependency

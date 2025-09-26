@@ -7,6 +7,8 @@
 namespace Jafg
 {
 
+class WNode;
+
 class LReplyBase
 {
 public:

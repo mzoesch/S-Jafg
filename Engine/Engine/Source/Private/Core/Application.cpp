@@ -172,7 +172,7 @@ std::tuple<bool, EPlatformExit::Type> ConditionallyShowHelpAndExit()
 }
 
 ENGINE_API bool    bPauseBeforeExit   { false };
-ENGINE_API bool    bHasTracerPid       { false };
+ENGINE_API bool    bHasTracerPid      { false };
 ENGINE_API bool    bAlwaysReportCrash { false };
 ENGINE_API bool    bAllowProfiling    { false };
 

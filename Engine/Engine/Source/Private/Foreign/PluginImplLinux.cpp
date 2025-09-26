@@ -29,26 +29,26 @@ EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
 {
     check( this->IsValid() )
 
-    this->Handle = dlopen(this->BinPath.ToPtr(), RTLD_LAZY);
+    this->Handle = ::dlopen(this->BinPath.ToPtr(), RTLD_LAZY);
 
     if (this->Handle == nullptr)
     {
-        LOG_ERROR(LogForeign, "Failed to dlopen library: [{}].", this->BinPath)
+        LOG_ERROR(LogForeign, "Failed to dlopen library [{}].", this->BinPath)
         return EPluginLoadReturnCode::PlatformError;
     }
 
-    dlerror();
+    ::dlerror();
 
     typedef LPluginLifetime* (*LCreatePluginLifetime)();
 
-    const LString Symbol = LString::SprintF("GetPluginLifetime_{}", this->GetIdentifier());
+    const LString Symbol { LString::SprintF("GetPluginLifetime_{}", this->GetIdentifier()) };
 
-    LCreatePluginLifetime CreatePluginLifetime = reinterpret_cast<LCreatePluginLifetime>(dlsym(this->Handle, Symbol.ToPtr()));
-    const char* Error = dlerror();
+    LCreatePluginLifetime CreatePluginLifetime { reinterpret_cast<LCreatePluginLifetime>(::dlsym(this->Handle, Symbol.ToPtr())) };
+    const char* Error = ::dlerror();
     if (Error)
     {
-        LOG_ERROR(LogForeign, "Failed to dlsym symbol: [{}].", Symbol)
-        dlclose(this->Handle);
+        LOG_ERROR(LogForeign, "Failed to dlsym symbol [{}].", Symbol)
+        ::dlclose(this->Handle);
         this->Handle = nullptr;
         return EPluginLoadReturnCode::NoLifetimeHandle;
     }
@@ -56,12 +56,13 @@ EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
     this->Lifetime = CreatePluginLifetime();
     if (this->Lifetime == nullptr)
     {
-        LOG_ERROR(LogForeign, "Failed to create plugin lifetime.")
-        dlclose(this->Handle);
+        LOG_ERROR(LogForeign, "Failed to create plugin lifetime in [{}].", this->BinPath)
+        ::dlclose(this->Handle);
         this->Handle = nullptr;
         return EPluginLoadReturnCode::NoLifetime;
     }
 
+    LOG_TRACE(LogForeign, "Waking up plugin lifetime for [{}].", this->GetIdentifier())
     this->Lifetime->OnStartup();
 
     return EPluginLoadReturnCode::Success;
@@ -107,7 +108,7 @@ EPluginLoadReturnCode::Type LLoadedPlugin::CloseLibrary(const EPluginShutdownRea
         LOG_ERROR(LogForeign, "Lifetime is invalid.")
     }
 
-    dlclose(this->Handle);
+    ::dlclose(this->Handle);
     this->Handle = nullptr;
     check( this->IsLoaded() == false )
 

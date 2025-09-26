@@ -301,7 +301,9 @@ void Finder::MakeFileBackup(const LPathView& File, const bool bMakeIfSame /* = f
     {
         checkSlow( Count > 0 )
 
-        const LPath Target { File.AppendPathToNew<LPath>(Extension) / std::to_string(Count).c_str() };
+        LPath Target { File };
+        Target.Append(Extension.begin(), Extension.end());
+        Target += LString::SprintF("{}", Count).ToPtr();
 
         LPath Previous;
         if (Count == 1)
@@ -310,7 +312,9 @@ void Finder::MakeFileBackup(const LPathView& File, const bool bMakeIfSame /* = f
         }
         else
         {
-            Previous = File.AppendPathToNew<LPath>(Extension) / std::to_string(Count - 1).c_str();
+            Previous.Assign(File.begin(), File.end());
+            Previous.Append(Extension.begin(), Extension.end());
+            Previous += LString::SprintF("{}", Count - 1).ToPtr();
         }
 
         const std::filesystem::path StdTarget {Target.begin_ptr(), Target.end_ptr()};
@@ -381,7 +385,7 @@ TArray<LString> Finder::FindFilesRecursively
 (
     const LPathView& Directory,
     const bool bKeepExtension /* = true */,
-    const LStringView& Extension /* = "*" */,
+    const LStringView& Regex /* = "*" */,
     std::regex_constants::syntax_option_type Options /* = std::regex_constants::ECMAScript */
 )
 {
@@ -395,9 +399,9 @@ TArray<LString> Finder::FindFilesRecursively
     TArray<LString> Out;
 
     std::regex Pattern;
-    if (Extension != '*')
+    if (Regex != '*')
     {
-        Pattern = std::regex{ std::string{Extension.begin_ptr(), Extension.end_ptr()}, Options };
+        Pattern = std::regex{ std::string{Regex.begin_ptr(), Regex.end_ptr()}, Options };
     }
 
     for (const std::filesystem::directory_entry& P : std::filesystem::recursive_directory_iterator
@@ -412,7 +416,7 @@ TArray<LString> Finder::FindFilesRecursively
             continue;
         }
 
-        if (Extension == '*' || std::regex_match(P.path().native(), Pattern))
+        if (Regex == '*' || std::regex_match(P.path().native(), Pattern))
         {
             if (bKeepExtension)
             {

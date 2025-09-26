@@ -36,6 +36,18 @@ enum Type
 };
 
 } /* ~Namespace EPluginShutdownReason */
+
+inline LString LexToString(const EPluginShutdownReason::Type InReason)
+{
+    switch (InReason)
+    {
+        case EPluginShutdownReason::Unload:         return "Unload";
+        case EPluginShutdownReason::EngineTearDown: return "EngineTearDown";
+        case EPluginShutdownReason::Unspecified:    return "Unspecified";
+        default:                                    return "Unknown";
+    }
+}
+
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
 //

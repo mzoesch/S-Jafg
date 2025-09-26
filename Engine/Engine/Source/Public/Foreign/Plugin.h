@@ -56,22 +56,9 @@ struct LLoadedPlugin;
 struct LFetchedPlugin final
 {
     FORCEINLINE LFetchedPlugin() = default;
-    FORCEINLINE LFetchedPlugin(const LPath& InAbsolutePath, const LString& InIdentifier, const LString& InFriendlyName, const LPath& InBin)
-        : AbsolutePath(InAbsolutePath)
-        , Identifier(InIdentifier)
-        , FriendlyName(InFriendlyName)
-        , Bin(InBin)
-    {
-    }
-    FORCEINLINE LFetchedPlugin(LPath&& InAbsolutePath, LString&& InIdentifier, LString&& InFriendlyName, LPath&& InBin)
-        : AbsolutePath(std::move(InAbsolutePath))
-        , Identifier(std::move(InIdentifier))
-        , FriendlyName(std::move(InFriendlyName))
-        , Bin(std::move(InBin))
-    {
-    }
 
     LPath AbsolutePath;
+    LString Version;
     LString Identifier;
     LString FriendlyName;
     LPath Bin;
@@ -86,10 +73,6 @@ struct LLoadedPlugin final
     FORCEINLINE LLoadedPlugin() = default;
     FORCEINLINE LLoadedPlugin(const LFetchedPlugin& InFetched, const LPath& InBinPath)
         : Fetched(InFetched), BinPath(InBinPath)
-    {
-    }
-    FORCEINLINE LLoadedPlugin(LFetchedPlugin&& InFetched, LPath&& InBinPath)
-        : Fetched(std::move(InFetched)), BinPath(std::move(InBinPath))
     {
     }
 

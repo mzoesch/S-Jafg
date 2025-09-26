@@ -61,34 +61,64 @@ public:
     FORCEINLINE constexpr TStringBase(const TStringBase& Other) noexcept
         requires(std::is_constructible_v<Allocator, const Allocator&>);
     FORCEINLINE constexpr TStringBase& operator=(const TStringBase& Other) noexcept
-        requires(Lal::AssignableFrom<Allocator&, const Allocator&>);
+        requires(Lal::AssignableFromL<Allocator&, const Allocator&>);
 
     FORCEINLINE constexpr TStringBase(TStringBase&& Other) noexcept
         requires(std::is_constructible_v<Allocator, Allocator&&>);
     FORCEINLINE constexpr TStringBase& operator=(TStringBase&& Other) noexcept
-        requires(Lal::AssignableFrom<Allocator&, Allocator&&>);
+        requires(Lal::AssignableFromR<Allocator&, Allocator&&>);
 
-    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding>)
+    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding> && !std::is_same_v<TStringBase, TDerived>)
     FORCEINLINE explicit constexpr TStringBase(const TDerived& Other) noexcept
-        requires(std::is_constructible_v<Allocator, const typename TDerived::Allocator&> && !(std::is_same_v<TStringBase, typename TDerived::_WeakRepr> || std::is_same_v<TStringBase, typename TDerived::_WeakMutableRepr>));
-    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding>)
+        requires(std::is_constructible_v<Allocator, const typename TDerived::Allocator&> && !(std::is_same_v<TStringBase, typename TDerived::_WeakRepr> || std::is_same_v<TStringBase, typename TDerived::_WeakMutableRepr>))
+        : Impl{Other.Impl}
+    {
+        this->CreateInvariantWeak();
+        PRIVATE_LAL_ENSURE_STRING_INVARIANT()
+        return;
+    }
+    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding> && !std::is_same_v<TStringBase, TDerived>)
     FORCEINLINE constexpr TStringBase(const TDerived& Other) noexcept
-        requires(std::is_constructible_v<Allocator, const typename TDerived::Allocator&> && (std::is_same_v<TStringBase, typename TDerived::_WeakRepr> || std::is_same_v<TStringBase, typename TDerived::_WeakMutableRepr>));
-    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding>)
+        requires(std::is_constructible_v<Allocator, const typename TDerived::Allocator&> && (std::is_same_v<TStringBase, typename TDerived::_WeakRepr> || std::is_same_v<TStringBase, typename TDerived::_WeakMutableRepr>))
+        : Impl{Other.Impl}
+    {
+        this->CreateInvariantWeak();
+        PRIVATE_LAL_ENSURE_STRING_INVARIANT()
+        return;
+    }
+    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding> && !std::is_same_v<TStringBase, TDerived>)
     FORCEINLINE constexpr TStringBase& operator=(const TDerived& Other) noexcept
-        requires(Lal::AssignableFromWeak<Allocator&, const typename TDerived::Allocator&>);
+        requires(Lal::AssignableFromWeak<Allocator&, const typename TDerived::Allocator&>)
+    {
+        this->Impl = Other.Impl;
+        this->CreateInvariantWeak();
+        PRIVATE_LAL_ENSURE_STRING_INVARIANT()
+        return *this;
+    }
 
-    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding>)
+    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding> && !std::is_same_v<TStringBase, TDerived>)
     FORCEINLINE explicit constexpr TStringBase(TDerived&& Other) noexcept
-        requires(std::is_constructible_v<Allocator, typename TDerived::Allocator&&>);
-    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding>)
+        requires(std::is_constructible_v<Allocator, typename TDerived::Allocator&&>)
+        : Impl{std::move(Other.Impl)}
+    {
+        this->CreateInvariant();
+        PRIVATE_LAL_ENSURE_STRING_INVARIANT()
+        return;
+    }
+    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding> && !std::is_same_v<TStringBase, TDerived>)
     FORCEINLINE constexpr TStringBase& operator=(TDerived&& Other) noexcept
-        requires(Lal::AssignableFromWeak<Allocator&, typename TDerived::Allocator&&>);
+        requires(Lal::AssignableFromWeak<Allocator&, typename TDerived::Allocator&&>)
+    {
+        this->Impl = std::move(Other.Impl);
+        this->CreateInvariant();
+        PRIVATE_LAL_ENSURE_STRING_INVARIANT()
+        return *this;
+    }
 
-    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding>)
+    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding> && !std::is_same_v<TStringBase, TDerived>)
     FORCEINLINE explicit constexpr TStringBase(TDerived&& Other) noexcept
         requires(std::is_constructible_v<Allocator, typename TDerived::Allocator&&> == false) = delete;
-    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding>)
+    template <TStringBaseConcept TDerived> requires(std::is_same_v<typename TDerived::Encoding, Encoding> && !std::is_same_v<TStringBase, TDerived>)
     FORCEINLINE TStringBase& operator=(TDerived&& Other) noexcept
         requires(Lal::AssignableFromWeak<Allocator&, typename TDerived::Allocator&&> == false) = delete;
 

@@ -46,22 +46,30 @@ namespace PlatformMisc
 //#
 //# The engine root dir that is currently being used. This might not be the real engine root dir as the runtime
 //# console application might not be inside this directory.
-//# In shipped builds, this is the same as GetRealEngineRootDir().
 //#
 ENGINE_API LPath GetEngineRootDir();
-ENGINE_API LPath GetEngineRootDirImpl();
 
 //#
 //# The real engine root dir where the runtime console application is located and running from.
-//# In shipped builds, this is the same as GetEngineRootDir().
 //#
 ENGINE_API LPath GetRealEngineRootDir();
-ENGINE_API LPath GetRealEngineRootDirImpl();
 
-//#
-//# Invalidate all cached values and reinitialize them inside GPlatformMisc.
-//#
-ENGINE_API void InvalidateCachedValues();
+//# E.g.: "Windows", "Linux", ...
+ENGINE_API LStringView GetTargetPlatform() noexcept;
+//# E.g.: "x86_64", "x86", ...
+ENGINE_API LStringView GetTargetArchitecture() noexcept;
+//# E.g.: "Client", "Daemon", ...
+ENGINE_API LStringView GetTargetType() noexcept;
+//# E.g.: "Debug", "Shipping", ...
+ENGINE_API LStringView GetTargetConfiguration() noexcept;
+//# E.g.: "Client-Shipping", ...
+ENGINE_API LStringView GetTargetCompound() noexcept;
+//# E.g.: "Windows-x86_64", "Linux-x86_64", ...
+ENGINE_API LStringView GetTargetPlatformCompound() noexcept;
+//# E.g.: "Linux-x86_64/Client-Shipping", ...
+ENGINE_API LStringView GetTargetConfigPath() noexcept;
+
+inline LPath GetRootBinaryDirectory() noexcept { return LPath{ "Binaries" } / GetTargetConfigPath(); }
 
 //#
 //# The number of physical viewports available on the current platform.
@@ -69,6 +77,19 @@ ENGINE_API void InvalidateCachedValues();
 //#
 ENGINE_API i32  GetNumberOfPhysicalViewports();
 ENGINE_API bool SetPhysicalViewports();
+
+namespace Private
+{
+
+//#
+//# Invalidate all cached values and reinitialize them inside GPlatformMisc.
+//#
+ENGINE_API void InvalidateCachedValues();
+
+ENGINE_API LPath GetEngineRootDirImpl();
+ENGINE_API LPath GetRealEngineRootDirImpl();
+
+} /* ~Namespace Private */
 
 } /* ~Namespace PlatformMisc */
 

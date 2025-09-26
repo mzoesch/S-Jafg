@@ -11,13 +11,7 @@
 
 #include "Stats/StatsForward.h"
 
-#if !WITH_STATS
-    #error "This file should only be included if the application compiles with stats."
-#endif /* WITH_STATS */
-
 #if WITH_STATS
-
-#include "Stats/StatsForward.h"
 
 #if JAFG_STATS_USE_GOOGLE_CHROME_TRACER
     #include "Stats/GoogleChromeTracer.h"

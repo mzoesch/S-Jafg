@@ -75,7 +75,7 @@ LAL_API TArray<LString> FindFilesRecursively
 (
     const LPathView& Directory,
     const bool bKeepExtension = true,
-    const LStringView& Extension = "*",
+    const LStringView& Regex = "*",
     const std::regex_constants::syntax_option_type Options = std::regex_constants::ECMAScript
 );
 

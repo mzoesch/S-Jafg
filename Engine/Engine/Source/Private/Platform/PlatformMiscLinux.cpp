@@ -9,7 +9,7 @@ namespace
 
 } /* ~Namespace <Anonymous> */
 
-LPath Jafg::PlatformMisc::GetEngineRootDirImpl()
+LPath Jafg::PlatformMisc::Private::GetEngineRootDirImpl()
 {
     LPath RealRootDir { PlatformMisc::GetRealEngineRootDir() };
 
@@ -30,7 +30,7 @@ LPath Jafg::PlatformMisc::GetEngineRootDirImpl()
     return RealRootDir;
 }
 
-LPath Jafg::PlatformMisc::GetRealEngineRootDirImpl()
+LPath Jafg::PlatformMisc::Private::GetRealEngineRootDirImpl()
 {
     char Buffer[LAL_PLATFORM_MAX_PATH] = { 0 };
     const i64 Ret = readlink("/proc/self/exe", Buffer, LAL_PLATFORM_MAX_PATH);

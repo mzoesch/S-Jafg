@@ -1,0 +1,178 @@
+// Copyright mzoesch. All rights reserved.
+
+#pragma once
+
+/*----------------------------------------------------------------------------
+    Dependencies.
+----------------------------------------------------------------------------*/
+
+#include "Lal.afx"
+
+
+/*----------------------------------------------------------------------------
+    System Layer.
+----------------------------------------------------------------------------*/
+
+#include "System/SystemForward.h"
+#include "System/EnginePath.h"
+
+
+/*----------------------------------------------------------------------------
+    Platform.
+----------------------------------------------------------------------------*/
+
+#include "Platform/MouseCursor.h"
+
+
+/*----------------------------------------------------------------------------
+    Serialization.
+----------------------------------------------------------------------------*/
+
+#include "Serialization/SerializationCore.h"
+#include "Serialization/BulkData.h"
+
+
+/*----------------------------------------------------------------------------
+    Async.
+----------------------------------------------------------------------------*/
+
+#include "Async/TaskForward.h"
+#include "Async/Runnable.h"
+#include "Async/TickedRunnable.h"
+#include "Async/TaskUtility.h"
+
+
+/*----------------------------------------------------------------------------
+    Stats.
+----------------------------------------------------------------------------*/
+
+#include "Stats/StatsForward.h"
+#include "Stats/Stats.h"
+
+
+/*----------------------------------------------------------------------------
+    User Core.
+----------------------------------------------------------------------------*/
+
+#include "User/Input/InputMode.h"
+#include "User/Input/InputTypes.h"
+#include "User/Input/RawInput.h"
+#include "User/Input/Replies.h"
+#include "User/Input/Events.h"
+
+
+/*----------------------------------------------------------------------------
+    Core.
+----------------------------------------------------------------------------*/
+
+#include "Core/Application.h"
+#include "Core/Uuid.h"
+#include "Core/Name.h"
+#include "Core/CoreNames.h"
+
+
+/*----------------------------------------------------------------------------
+    CLI.
+----------------------------------------------------------------------------*/
+
+#include "Cli/CliObject.h"
+#include "Cli/CliType.h"
+#include "Cli/CliCommand.h"
+#include "Cli/CliVariable.h"
+#include "Cli/CliHandles.h"
+#include "Cli/CommandLineInterface.h"
+
+
+/*----------------------------------------------------------------------------
+    Engine Forward.
+----------------------------------------------------------------------------*/
+
+///////////////////////////////////////////////////////////////////////////////
+// Core
+#include "Engine/EngineCompileTimeConstants.h"
+#include "Foreign/PluginForward.h"
+#if JAFG_WITH_FOREIGN_SUPPORT
+    #include "Foreign/Plugin.h"
+#endif /* JAFG_WITH_FOREIGN_SUPPORT */
+#include "Engine/Level.h"
+#include "Engine/Carnifex.h"
+
+///////////////////////////////////////////////////////////////////////////////
+// Object
+#include "Engine/ObjectBaseTypes.h"
+#include "Engine/ObjectContext.h"
+#include "Engine/ObjectClass.h"
+#include "Engine/ObjectBaseUtility.h"
+#include "Engine/SubclassOf.h"
+#include "Engine/ObjectMacros.h"
+#include "Engine/ObjectBase.h"
+#include "Engine/ObjectStorage.h"
+
+///////////////////////////////////////////////////////////////////////////////
+// World
+#include "Engine/World.h"
+#include "Engine/WorldStorage.h"
+#include "Engine/TickableObject.h"
+#include "Engine/Object.h"
+#include "Engine/Actor.h"
+#include "Engine/ActorUtility.h"
+
+
+/*----------------------------------------------------------------------------
+    Rhi.
+----------------------------------------------------------------------------*/
+
+#include "Rhi/TextureCore.h"
+#include "Rhi/TextureMipMap2.h"
+#include "Rhi/Texture2Handle.h"
+#include "Rhi/Texture2.h"
+#include "Rhi/Image.h"
+#include "Rhi/FrameBuffer.h"
+#include "Rhi/Shader.h"
+#include "Rhi/EngineShader.h"
+
+
+/*----------------------------------------------------------------------------
+    Engine.
+----------------------------------------------------------------------------*/
+
+#include "Engine/Engine.h"
+
+
+/*----------------------------------------------------------------------------
+    Front-end.
+----------------------------------------------------------------------------*/
+
+#include "Widgets/Whitespace.h"
+#include "Widgets/InterfaceTypes.h"
+#include "Widgets/Node.h"
+#include "Widgets/Spacer.h"
+#include "Widgets/BackgroundBlur.h"
+#include "Widgets/RegionForward.h"
+#include "Widgets/BoxForward.h"
+#include "Widgets/TextBoxForward.h"
+#include "Widgets/EditableTextBoxForward.h"
+#include "Widgets/ParentBaseFactory.h"
+#include "Widgets/RegionFactory.h"
+#include "Widgets/VRegionFactory.h"
+#include "Widgets/HRegionFactory.h"
+#include "Widgets/ButtonForward.h"
+#include "Widgets/Box.h"
+#include "Widgets/TextBox.h"
+#include "Widgets/EditableTextBox.h"
+#include "Widgets/ParentBase.h"
+#include "Widgets/Parent.h"
+#include "Widgets/Panel.h"
+#include "Widgets/Overlay.h"
+#include "Widgets/Region.h"
+#include "Widgets/UserWidget.h"
+#include "Widgets/Switcher.h"
+#include "Widgets/VRegion.h"
+#include "Widgets/HRegion.h"
+#include "Widgets/ScrollRegion.h"
+#include "Widgets/Button.h"
+#include "Widgets/VButton.h"
+#include "Widgets/HButton.h"
+#include "Widgets/Compound/TabBarPanel.h"
+#include "Widgets/Compound/TabBarButton.h"
+#include "Widgets/Compound/TabBarPanel.h"

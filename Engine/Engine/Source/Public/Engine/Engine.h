@@ -9,8 +9,8 @@
 #include "User/LocalEgo.h"
 #include "Engine/World.h"
 #include "Rhi/EngineShader.h"
+#include "Foreign/PluginForward.h"
 #if JAFG_WITH_FOREIGN_SUPPORT
-    #include "Foreign/PluginForward.h"
     #include "Foreign/Plugin.h"
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
@@ -272,8 +272,8 @@ public:
 
 private:
 
-    void FetchPlugins(const LPath& InPath);
-    bool FetchPlugin(LPath&& InPath);
+    void FetchPlugins(const LPathView InPath);
+    bool FetchPlugin(const LPathView InPath);
     EPluginLoadReturnCode::Type LoadPluginImpl(const LFetchedPlugin& InFetchedPlugin);
 
     TArray<LFetchedPlugin> FetchedPlugins;

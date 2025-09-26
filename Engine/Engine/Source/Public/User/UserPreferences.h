@@ -119,7 +119,7 @@ public:
     //# The plugins that are loaded when the engine loads.
     //#
     CLASS_FIELD(Config)
-    TArray<LString> EnabledEnginePlugins { };
+    TArray<LString> EnabledEnginePlugins { "JafgGameplayCore" };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Storage
@@ -127,7 +127,7 @@ public:
 
     //#
     //# Additional saves search paths that are used to fetch saves info metadata.
-    //# The default ist ENGINE_ROOT/Saved/Saves.
+    //# The default ist Saved/Saves.
     //#
     CLASS_FIELD(Config)
     TArray<LString> AdditionalSavesSearchPaths;
