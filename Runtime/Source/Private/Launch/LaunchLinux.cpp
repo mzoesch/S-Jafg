@@ -80,10 +80,9 @@ i32 main(const i32 ArgC, const char* ArgV[])
     i32 ErrorLevel { 0 };
 
     TArray<LString> Arguments;
-    for (i32 i { 1 }; i < ArgC; ++i)
+    for (i32 Idx { 1 }; Idx < ArgC; ++Idx)
     {
-        Arguments.Emplace(ArgV[i]);
-        continue;
+        Arguments.Emplace(ArgV[Idx]);
     }
     Application::Private::RawCommandLine = std::move(Arguments);
 

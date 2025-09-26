@@ -97,6 +97,11 @@
     //#
     #define unimplemented()                     checkNoEntry()
 
+    //#
+    //# Do not use std::unreachable but this here as it works directly with the Jafg assertion system.
+    //#
+    #define unreachable()                       checkNoEntry()
+
 #endif /* LAL_DO_CHECKS */
 
 //#
@@ -169,6 +174,8 @@
     #else /* LAL_DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING */
         #define unimplemented()                     static_assert( false, LAL_FORCED_CODE_PATH_IMPL_TEXT );
     #endif /* !LAL_DO_COMPILER_IGNORE_UNIMPLEMENTED_CTRL_PATHS_IN_SHIPPING */
+
+    #define unreachable()                           LAL_PLATFORM_UNREACHABLE()
 
 #endif /* !LAL_DO_CHECKS */
 

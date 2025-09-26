@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Lal.afx"
 #include "Core/Name.h"
 #include "Async/TaskUtility.h"
 
@@ -13,7 +12,7 @@ TArray<LString>& GetStaticNameContainer()
     return StaticNameContainer;
 }
 
-ENGINE_API LNameRegistry* GNameRegistry = nullptr;
+ENGINE_API LNameRegistry* GNameRegistry { nullptr };
 
 LNameRegistry* GetNameRegistryPtr()
 {
@@ -60,8 +59,8 @@ LName RegisterStaticName(LString&& InName)
 namespace Jafg
 {
 
-ENGINE_API LName LName::NoName = LName(NO_NAME);
-ENGINE_API LString LName::NoNameStringRepresentation = "NoName";
+ENGINE_API LName LName::NoName { NO_NAME };
+ENGINE_API LString LName::NoNameStringRepresentation { "NoName" };
 
 const LString& LName::ToString() const
 {
@@ -78,64 +77,28 @@ Jafg::Private::LNameRegistry::~LNameRegistry()
     return;
 }
 
-Jafg::LName Jafg::Private::LNameRegistry::GetName(const LString& InName, const bool bConvertToLower /* = true */) const
+Jafg::LName Jafg::Private::LNameRegistry::GetName(const LString& InName) const
 {
-    if (bConvertToLower)
+    if (const TArray<LString>::SizeType Idx { this->Names.FindIndex(InName) }; Idx != this->Names.GetSize())
     {
-        const LString LowerName = InName.GetLower();
-        if (const TArray<LString>::SizeType Index { this->Names.FindIndex(LowerName) }; Index != this->Names.GetSize())
-        {
-            return { static_cast<LUnderlyingName>(Index + 1) };
-        }
-    }
-    else
-    {
-        if (const TArray<LString>::SizeType Index { this->Names.FindIndex(InName) }; Index != this->Names.GetSize())
-        {
-            return { static_cast<LUnderlyingName>(Index + 1) };
-        }
+        return { static_cast<LUnderlyingName>(Idx + 1) };
     }
 
     return LName::NoName;
 }
 
-bool Jafg::Private::LNameRegistry::IsNameRegistered(const LString& InName, const bool bConvertToLower /* = true */) const
+bool Jafg::Private::LNameRegistry::IsNameRegistered(const LString& InName) const
 {
-    if (bConvertToLower)
-    {
-        const LString LowerName = InName.GetLower();
-        return this->Names.Contains(LowerName);
-    }
-
     return this->Names.Contains(InName);
-}
-
-bool Jafg::Private::LNameRegistry::RegisterName(const LString& InName)
-{
-    check( Tasks::IsOnMasterThread() )
-
-    LString LowerName = InName.GetLower();
-
-    if (this->IsNameRegistered(LowerName, false))
-    {
-        LOG_WARNING(LogNames, "Name [{}] is already registered.", InName)
-        return false;
-    }
-
-    this->Names.Emplace(std::move(LowerName));
-    LOG_TRACE(LogNames, "Registered name [{}].", *this->Names.GetLast())
-    return true;
 }
 
 Jafg::LName Jafg::Private::LNameRegistry::RegisterAndGetName(const LString& InName)
 {
     check( Tasks::IsOnMasterThread() )
 
-    const LString LowerName = InName.GetLower();
-
-    if (const LName InRepo = this->GetName(LowerName, false); InRepo.IsSet())
+    if (const LName Name { this->GetName(InName) }; Name.IsSet())
     {
-        return InRepo;
+        return Name;
     }
 
     if (this->RegisterName(InName))
@@ -143,6 +106,28 @@ Jafg::LName Jafg::Private::LNameRegistry::RegisterAndGetName(const LString& InNa
         return { static_cast<LUnderlyingName>(this->Names.GetSize()) };
     }
 
-    jassertNoEntry()
-    return LName::NoName;
+    unreachable()
+}
+
+void Jafg::Private::LNameRegistry::Destroy()
+{
+    LOG_VERBOSE(LogNames, "Destroying name registry with [{}] names.", this->Names.GetSize())
+    this->Names.Empty();
+
+    return;
+}
+
+bool Jafg::Private::LNameRegistry::RegisterName(const LString& InName)
+{
+    check( Tasks::IsOnMasterThread() )
+
+    if (this->IsNameRegistered(InName))
+    {
+        LOG_WARNING(LogNames, "Name [{}] is already registered.", InName)
+        return false;
+    }
+
+    this->Names.Emplace(std::move(InName));
+    LOG_TRACE(LogNames, "Registered name [{}].", *this->Names.GetLast())
+    return true;
 }

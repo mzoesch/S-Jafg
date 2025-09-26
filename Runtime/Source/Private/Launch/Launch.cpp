@@ -13,6 +13,7 @@
 #include "Core/CoreNames.h"
 #include "User/UserPreferences.h"
 #include "Stats/Stats.h"
+#include "Runtime/Args.h"
 #if WITH_TESTS
     #include "TestCore/TestRunner.h"
 #endif /* WITH_TESTS */
@@ -35,12 +36,11 @@ using namespace Jafg;
     #endif /* !IN_SHIPPING */
 #endif /* JAFG_LOG_TIME_FOR_VERY_LONG_FRAMES */
 
-#include "Runtime/Args.h"
-
 namespace
 {
 
 LCarnifex PrivateCarnifex;
+Private::LNameRegistry PrivateNameRegistry;
 
 #if WITH_STATS
     Stats::LTracer PrivateTracer;
@@ -220,7 +220,7 @@ void EngineExit()
 
     if (Private::GNameRegistry)
     {
-        delete Private::GNameRegistry;
+        Private::GNameRegistry->Destroy();
         Private::GNameRegistry = nullptr;
     }
 
@@ -315,8 +315,13 @@ EPlatformExit::Type GuardedMain()
     PlatformMisc::Private::InvalidateCachedValues();
 
 #if PLATFORM_DESKTOP
-    std::filesystem::current_path(PlatformMisc::GetEngineRootDir().ToPtr());
+    {
+        const LPath EngineRoot { PlatformMisc::GetEngineRootDir() };
+        std::filesystem::current_path(std::filesystem::path{EngineRoot.begin_ptr(), EngineRoot.end_ptr()});
+    }
+    Finder::CreateDirectories(Finder::GetSavedDir());
     Finder::CreateDirectories(Finder::GetSavesDir());
+    Finder::CreateDirectories(Finder::GetDumpsDir());
 #endif /* PLATFORM_DESKTOP */
 
     LOG_VERBOSE(LogSystem, "Engine root directory is [{}].", PlatformMisc::GetEngineRootDir())
@@ -329,7 +334,10 @@ EPlatformExit::Type GuardedMain()
 #if WITH_STATS
     if (Application::IsAllowProfiling())
     {
-        Stats::Private::GTracer = &::PrivateTracer;
+        if (Stats::Private::GTracer == nullptr)
+        {
+            Stats::Private::GTracer = &::PrivateTracer;
+        }
         Stats::Private::GTracer->BeginSession("Program");
     }
 #endif /* WITH_STATS */
@@ -344,11 +352,13 @@ EPlatformExit::Type GuardedMain()
 
     STAT_CYCLE_START(GmNames, "StaticNameRegistration")
     check( Private::GNameRegistry == nullptr )
-    Private::GNameRegistry = new Private::LNameRegistry();
+    Private::GNameRegistry = &::PrivateNameRegistry;
     LOG_VERBOSE(LogNames, "Program initialized {} names during static storage initialization.", Private::GetStaticNameCount())
-    for (i32 Index = 0; Index < Private::GetStaticNameCount(); ++Index)
+    for (i32 Idx { 0 }; Idx < Private::GetStaticNameCount(); ++Idx)
     {
-        ensure( Private::GNameRegistry->RegisterName(Private::GetStaticNameByIndex(Index)) );
+        const auto Name { Private::GNameRegistry->RegisterAndGetName(Private::GetStaticNameByIndex(Idx)) };
+        check( Name.IsSet() )
+        continue;
     }
     Private::ClearStaticNameContainer();
     LOG_INFO(LogNames, "Finished transferring static names to the name registry. With a total of {} names.", Private::GNameRegistry->GetNameCount())

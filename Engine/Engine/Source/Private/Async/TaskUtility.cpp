@@ -566,12 +566,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                 Runnable->GetHumanReadableName(), LexToString(ThreadName),
                 GetCurrentThreadDisplayName(), GetCurrentThreadId(),
                 LexToString(ErrorLevel), static_cast<LTaskExit>(ErrorLevel)
-            )
-            if (bKillRunnableWhenFinished)
-            {
-                delete Runnable;
-            }
-            return ErrorLevel;
+                )
         }
 
         if (ErrorLevel >= ETaskExit::SanitizedFailure)
@@ -602,7 +597,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                 Runnable->GetHumanReadableName(), LexToString(ThreadName),
                 GetCurrentThreadDisplayName(), GetCurrentThreadId(),
                 LexToString(ErrorLevel), static_cast<LTaskExit>(ErrorLevel)
-            )
+                )
             if (bKillRunnableWhenFinished)
             {
                 delete Runnable;
@@ -616,7 +611,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
             Runnable->GetHumanReadableName(), LexToString(ThreadName),
             GetCurrentThreadDisplayName(), GetCurrentThreadId(),
             LexToString(ErrorLevel), static_cast<LTaskExit>(ErrorLevel)
-        )
+            )
         if (bKillRunnableWhenFinished)
         {
             delete Runnable;
@@ -672,7 +667,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                         "Thread {}[{}] failed to initialize with a non transient failure code: {}[{}].",
                         Runnable->GetHumanReadableName(), LexToString(ThreadName),
                         LexToString(LambdaErrorLevel), static_cast<LTaskExit>(LambdaErrorLevel)
-                    )
+                        )
                     return;
                 }
                 if (LambdaErrorLevel >= ETaskExit::SanitizedFailure)
@@ -681,7 +676,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                         "Thread {}[{}] failed to initialize with a sanitized failure code: {}[{}].",
                         Runnable->GetHumanReadableName(), LexToString(ThreadName),
                         LexToString(LambdaErrorLevel), static_cast<LTaskExit>(LambdaErrorLevel)
-                    );
+                        );
 
                     LOG_ERROR(LogTaskSystem, "{}", ErrorLevelStr)
                     ::Jafg::RequestEngineExit(EPlatformExit::Fatal, ErrorLevelStr);
@@ -693,7 +688,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                         "Thread {}[{}] failed to initialize with a transient failure code: {}[{}].",
                         Runnable->GetHumanReadableName(), LexToString(ThreadName),
                         LexToString(LambdaErrorLevel), static_cast<LTaskExit>(LambdaErrorLevel)
-                    )
+                        )
                 }
                 else
                 {
@@ -702,7 +697,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                         "Thread {}[{}] failed to initialize with an unknown code: {}[{}].",
                         Runnable->GetHumanReadableName(), LexToString(ThreadName),
                         LexToString(LambdaErrorLevel), static_cast<LTaskExit>(LambdaErrorLevel)
-                    )
+                        )
                 }
             }
 

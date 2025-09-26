@@ -118,8 +118,8 @@ FORCEINLINE bool IsOnRendererThread() { return IsOnThread(ENamedThreads::Rendere
 ENGINE_API void Make(const ENamedThreads::Type InThreadName, const ETaskTime::Type InPreferredTime, LTaskDelegate&& InDelegate);
 
 //# Launch a named thread. This thread is globally accessible by its ENamedThreads::Type.
-template <typename T, typename... Args>
-ETaskExit::Type LaunchNamedThread(ENamedThreads::Type Thread, Args&&... InArgs);
+template <typename T, typename... Args> requires std::is_base_of_v<LRunnable, T>
+ETaskExit::Type LaunchNamedThread(const ENamedThreads::Type Thread, Args&&... InArgs);
 //#
 //# Launch a named thread where its ENamedThreads::Type is resolved at function call time.
 //# @return The ENamedThreads::Type of the thread that was just launched.
@@ -167,10 +167,9 @@ FORCEINLINE ENamedThreads::Type GetCurrentThreadNameAsserted()
     return Thread;
 }
 
-template <typename T, typename... Args>
-FORCEINLINE ETaskExit::Type LaunchNamedThread(ENamedThreads::Type Thread, Args&&... InArgs)
+template <typename T, typename... Args> requires std::is_base_of_v<LRunnable, T>
+FORCEINLINE ETaskExit::Type LaunchNamedThread(const ENamedThreads::Type Thread, Args&&... InArgs)
 {
-    static_assert(std::is_base_of_v<LRunnable, T>, "T must be derived from LRunnable.");
     return Private::LaunchNamedThread(Thread, new T(std::forward<Args>(InArgs)...));
 }
 

@@ -3,7 +3,6 @@
 #include "Core/Application.h"
 #include "Core/Uuid.h"
 #include "Stats/Stats.h"
-
 #include "Runtime/Args.h"
 
 namespace JafgCore

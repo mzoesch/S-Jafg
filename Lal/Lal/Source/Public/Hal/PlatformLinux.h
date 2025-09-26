@@ -252,6 +252,10 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     #endif /* !__has_builtin(__builtin_trap) */
 #endif /* !LAL_PLATFORM_TRAP */
 
+#ifndef LAL_PLATFORM_UNREACHABLE
+    #define LAL_PLATFORM_UNREACHABLE()                                  (__builtin_unreachable());
+#endif /* LAL_PLATFORM_UNREACHABLE */
+
 #ifndef NOINLINE
     #define NOINLINE                                                    __attribute__ ((noinline))
 #endif /* !NOINLINE */
