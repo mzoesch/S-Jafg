@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Lal.afx"
-
+#include "Misc/Tag.h"
 
 namespace Jafg
 {
@@ -27,7 +27,7 @@ ENGINE_API LNameRegistry* GetNameRegistryPtr();
 ENGINE_API LNameRegistry& GetNameRegistry();
 
 ENGINE_API void ClearStaticNameContainer();
-ENGINE_API auto GetStaticNameCount() -> i32;
+ENGINE_API i32  GetStaticNameCount();
 ENGINE_API auto GetStaticNameByIndex(const i32 InIndex) -> const LString&;
 ENGINE_API auto RegisterStaticName(const LString& InName) -> LName;
 ENGINE_API auto RegisterStaticName(LString&& InName) -> LName;
@@ -92,18 +92,18 @@ private:
 //# Dynamically register a name depending on context at runtime.
 //# If the name is already registered, it will return that. This is basically a weak form of #GET_NAME.
 //#
-#define MAKE_DYNAMIC_NAME(Name)     ::Jafg::Private::GNameRegistry->RegisterAndGetName(Name)
+#define MAKE_DYNAMIC_NAME(Name)     ::Jafg::Private::GetNameRegistry().RegisterAndGetName(Name)
 
 //#
 //# Get a name by its string representation.
 //# If the name is not registered, it will return #LName::NoName.
 //#
-#define GET_NAME(Name)              ::Jafg::Private::GNameRegistry->GetName(Name)
+#define GET_NAME(Name)              ::Jafg::Private::GetNameRegistry().GetName(Name)
 //#
 //# Get a name by its string representation.
 //# If #LAL_DO_CHECKS is true, the program will panic, otherwise #LName::NoName will be returned.
 //#
-#define GET_NAME_CHECKED(Name)      ::Jafg::Private::GNameRegistry->GetNameChecked(Name)
+#define GET_NAME_CHECKED(Name)      ::Jafg::Private::GetNameRegistry().GetNameChecked(Name)
 
 namespace Private
 {

@@ -73,6 +73,7 @@ DECLARE_INLINE_LOG_CATEGORY( LogStorage,                      LAL_LOG_DEFAULT_VE
 DECLARE_INLINE_LOG_CATEGORY( LogSubsystemCollection,          LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogSurface,                      LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogSystem,                       LAL_LOG_DEFAULT_VERBOSITY                             )
+DECLARE_INLINE_LOG_CATEGORY( LogTags,                         LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogTasks,                        LAL_LOG_DEFAULT_VERBOSITY_TASKS                       )
 DECLARE_INLINE_LOG_CATEGORY( LogTaskSystem,                   LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogTaskUtility,                  LAL_LOG_DEFAULT_VERBOSITY                             )

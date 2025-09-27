@@ -12,6 +12,12 @@ TArray<LString>& GetStaticNameContainer()
     return StaticNameContainer;
 }
 
+//#
+//# Q: Why is this not static initialized?
+//#
+//# A: To preserve consistency over non-deterministic plugin loading order and static initialization order, as well
+//#    as coherence in unity builds.
+//#
 ENGINE_API LNameRegistry* GNameRegistry { nullptr };
 
 LNameRegistry* GetNameRegistryPtr()

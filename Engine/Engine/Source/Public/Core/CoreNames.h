@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Lal.afx"
 #include "Core/Name.h"
 
 //#
@@ -54,4 +53,3 @@ ENGINE_API extern LName Name_UsrInRotatePawn;
 ENGINE_API extern LName Name_UsrInPawnVelocity;
 ENGINE_API extern LName Name_UsrInPrimary;
 ENGINE_API extern LName Name_UsrInSecondary;
-
