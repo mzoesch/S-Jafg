@@ -74,10 +74,12 @@ class TStringBase;
 
 template <template <typename, typename> typename TEncoding, typename T>
 using THeapString = TStringBase<TEncoding, TArray<T>>;
-template <template <typename, typename> typename TEncoding, typename T, LSize TStringCapacity>
-using TSmallString = TStringBase<TEncoding, TStackArray<T, TStringCapacity>>;
-template <template <typename, typename> typename TEncoding, typename T, LSize TStringCapacity>
-using TOptimizedString = TStringBase<TEncoding, TStackOptimizedArray<T, TStringCapacity>>;
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    template <template <typename, typename> typename TEncoding, typename T, LSize TStringCapacity>
+    using TSmallString = TStringBase<TEncoding, TStackArray<T, TStringCapacity>>;
+    template <template <typename, typename> typename TEncoding, typename T, LSize TStringCapacity>
+    using TOptimizedString = TStringBase<TEncoding, TStackOptimizedArray<T, TStringCapacity>>;
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
 template <template <typename, typename> typename TEncoding, typename T>
 using TStringView = TStringBase<TEncoding, TArrayView<T>>;
@@ -86,10 +88,12 @@ using TMutableStringView = TStringBase<TEncoding, TMutableArrayView<T>>;
 
 template <typename T>
 using THeapStringUtf8 = THeapString<TStringBaseDefaultUtf8Traits, T>;
-template <typename T, LSize TStringCapacity>
-using TSmallStringUtf8 = TSmallString<TStringBaseDefaultUtf8Traits, T, TStringCapacity>;
-template <typename T, LSize TStringCapacity>
-using TOptimizedStringUtf8 = TOptimizedString<TStringBaseDefaultUtf8Traits, T, TStringCapacity>;
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    template <typename T, LSize TStringCapacity>
+    using TSmallStringUtf8 = TSmallString<TStringBaseDefaultUtf8Traits, T, TStringCapacity>;
+    template <typename T, LSize TStringCapacity>
+    using TOptimizedStringUtf8 = TOptimizedString<TStringBaseDefaultUtf8Traits, T, TStringCapacity>;
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
 template <typename T>
 using TStringViewUtf8 = TStringView<TStringBaseDefaultUtf8Traits, T>;
@@ -98,12 +102,14 @@ using TMutableStringViewUtf8 = TMutableStringView<TStringBaseDefaultUtf8Traits, 
 
 } /* ~Namespace Lal */
 
-//#
-//# This string is a good all-rounder. It is optimized for small strings but uses different allocation strategies
-//# when the string gets larger.
-//# Not trivial to use this string with the Jafg reflection system.
-//#
-typedef Lal::TOptimizedStringUtf8<LJafgChar, 8> LOptimizedString;
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    //#
+    //# This string is a good all-rounder. It is optimized for small strings but uses different allocation strategies
+    //# when the string gets larger.
+    //# Not trivial to use this string with the Jafg reflection system.
+    //#
+    typedef Lal::TOptimizedStringUtf8<LJafgChar, 8> LOptimizedString;
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
 //#
 //# The default string for Lal with UTF-8 encoding.
@@ -112,14 +118,16 @@ typedef Lal::TOptimizedStringUtf8<LJafgChar, 8> LOptimizedString;
 //#
 typedef Lal::THeapStringUtf8<LJafgChar> LString;
 
-//#
-//# This string is optimized for small strings. This string uses stack allocation and is meant if the string's max
-//# sizes are well-defined and more or less small.
-//#
-//# @tparam The capacity to reserve on the stack. This is the maximum size of the string.
-//#
-template <LSize TCapacity>
-using LSmallString = Lal::TSmallStringUtf8<LJafgChar, TCapacity>;
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    //#
+    //# This string is optimized for small strings. This string uses stack allocation and is meant if the string's max
+    //# sizes are well-defined and more or less small.
+    //#
+    //# @tparam The capacity to reserve on the stack. This is the maximum size of the string.
+    //#
+    template <LSize TCapacity>
+    using LSmallString = Lal::TSmallStringUtf8<LJafgChar, TCapacity>;
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
 //#
 //# The default string view for Lal with UTF-8 encoding.

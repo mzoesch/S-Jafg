@@ -7,7 +7,7 @@ namespace Lal
 
 //# @see Containers/ContainerForward.h
 template <TArrayBaseAllocatorConceptBase TAllocator>
-class TArrayBase
+class TArrayBase final
 {
 public:
 
@@ -65,19 +65,22 @@ public:
     FORCEINLINE constexpr TArrayBase(const TArrayBase& Other) noexcept
         requires(std::is_constructible_v<Allocator, const Allocator&>);
     FORCEINLINE constexpr TArrayBase& operator=(const TArrayBase& Other) noexcept
-        requires(std::assignable_from<Allocator&, const Allocator&>);
+        requires(std::is_assignable_v<Allocator&, const Allocator&>);
 
     FORCEINLINE constexpr TArrayBase(TArrayBase&& Other) noexcept
         requires(std::is_constructible_v<Allocator, Allocator&&>);
     FORCEINLINE constexpr TArrayBase& operator=(TArrayBase&& Other) noexcept
         requires(std::assignable_from<Allocator&, Allocator&&>);
 
-    template <TArrayBaseAllocatorConceptBase UAllocator>
-    FORCEINLINE explicit constexpr TArrayBase(const TArrayBase<UAllocator>& Other) noexcept
-        requires(std::is_constructible_v<Allocator, const UAllocator&>);
-    template <TArrayBaseAllocatorConceptBase UAllocator>
-    FORCEINLINE constexpr TArrayBase& operator=(const TArrayBase<UAllocator>& Other) noexcept
-        requires(std::assignable_from<Allocator&, const UAllocator&>);
+    FORCEINLINE explicit constexpr TArrayBase(CRange auto& Range) noexcept
+        requires std::is_lvalue_reference_v<decltype((Range))> && std::is_constructible_v<Allocator, decltype(Range)>
+        : Impl(Range) { return; }
+    FORCEINLINE constexpr TArrayBase& operator=(CRange auto& Range) noexcept
+        requires std::is_lvalue_reference_v<decltype((Range))> && requires(Allocator _Allocator, decltype(Range) R) { _Allocator = R; }
+    {
+        this->Impl = Range;
+        return *this;
+    }
 
     template <TArrayBaseAllocatorConceptBase UAllocator>
     FORCEINLINE explicit constexpr TArrayBase(TArrayBase<UAllocator>&& Other) noexcept
@@ -101,20 +104,26 @@ public:
 
     //# Non templated ctor for recursive implicit bracket initialization.
     FORCEINLINE constexpr TArrayBase(const std::initializer_list<T> List) noexcept
-        requires(std::is_constructible_v<Allocator, std::initializer_list<T>>);
+        requires(std::is_constructible_v<Allocator, typename std::initializer_list<T>::const_iterator, typename std::initializer_list<T>::const_iterator>)
+        : Impl(List.begin(), List.end()) { return; }
     template <typename U>
     FORCEINLINE constexpr TArrayBase(const std::initializer_list<U> List) noexcept
-        requires(std::is_constructible_v<Allocator, std::initializer_list<U>>);
+        requires(std::is_constructible_v<Allocator, typename std::initializer_list<U>::const_iterator, typename std::initializer_list<U>::const_iterator>)
+        : Impl(List.begin(), List.end()) { return; }
     template <typename U>
     FORCEINLINE constexpr TArrayBase& operator=(const std::initializer_list<U> List) noexcept
-        requires(std::assignable_from<Allocator&, std::initializer_list<U>>);
+        requires(requires(Allocator _Allocator, typename std::initializer_list<U>::const_iterator It) { _Allocator.Assign(It, It); })
+    {
+        this->Impl.Assign(List.begin(), List.end());
+        return *this;
+    }
 
-    template <TIteratorConcept UIterator, TIteratorConcept VIterator> requires(TIteratorPairConcept<UIterator, VIterator>)
-    FORCEINLINE constexpr TArrayBase(const UIterator Begin, const VIterator End) noexcept
-        requires(std::is_constructible_v<Allocator, UIterator, VIterator>);
-    template <TIteratorConcept UIterator>
-    FORCEINLINE constexpr TArrayBase(const UIterator Begin, const SizeType Length) noexcept
-        requires(std::is_constructible_v<Allocator, UIterator, UIterator>);
+    FORCEINLINE constexpr TArrayBase(ITERATOR Begin, ITERATOR End) noexcept
+        requires(std::is_constructible_v<Allocator, decltype(Begin), decltype(End)>)
+        : Impl(Begin, End) { return; }
+    FORCEINLINE constexpr TArrayBase(ITERATOR Begin, const SizeType Length) noexcept
+        requires(std::is_constructible_v<Allocator, decltype(Begin), decltype(Begin)>)
+        : Impl(Begin, Begin + Length) { return; }
 
     FORCEINLINE constexpr ~TArrayBase() noexcept = default;
 
@@ -696,15 +705,13 @@ private:
         return;
     }
 
-    template <TIteratorConcept UIterator>
-    FORCEINLINE constexpr void DestroyAt(const UIterator It) noexcept
+    FORCEINLINE constexpr void DestroyAt(ITERATOR It) noexcept
         requires(requires(Allocator _Allocator) { _Allocator.DestroyAt(std::to_address(It)); })
     {
         this->Impl.DestroyAt(std::to_address(It));
         return;
     }
-    template <TIteratorConcept UIterator>
-    FORCEINLINE constexpr void DestroyAt(const UIterator It) noexcept
+    FORCEINLINE constexpr void DestroyAt(ITERATOR It) noexcept
         requires(!requires(Allocator _Allocator) { _Allocator.DestroyAt(std::to_address(It)); } && TArrayBase::IsContentMutable());
 
     FORCEINLINE constexpr void DestroyAt(const SizeType Index) noexcept
@@ -732,12 +739,18 @@ static_assert(TArrayBaseAllocatorTraitsConceptWeak<LArrayBaseAllocatorDefaultTra
 static_assert(TArrayBaseCappedAllocatorTraitsConceptWeak<TArrayBaseCappedAllocatorDefaultTraitsWeak<64>>);
 static_assert(TArrayBaseCappedAllocatorTraitsConceptStrong<TArrayBaseCappedAllocatorDefaultTraitsStrong<64>>);
 
-static_assert(TArrayBaseMutableAllocatorConceptStrong<TArrayBaseMutableDefaultAllocatorStrong<LPlatformTypes::LSize>>);
-static_assert(TArrayBaseConstAllocatorConceptWeak<TArrayBaseConstDefaultAllocatorWeak<LPlatformTypes::LSize>>);
-static_assert(TArrayBaseMutableAllocatorConceptWeak<TArrayBaseMutableDefaultAllocatorWeak<LPlatformTypes::LSize>>);
-static_assert(TArrayBaseMutableCappedAllocatorConceptWeak<TArrayBaseMutableDefaultFixedAllocatorWeak<LPlatformTypes::LSize, 64>>);
-static_assert(TArrayBaseMutableCappedAllocatorConceptWeak<TArrayBaseMutableDefaultStackAllocatorWeak<LPlatformTypes::LSize, 64>>);
-static_assert(TArrayBaseMutableCapacityAllocatorConceptStrong<TArrayBaseMutableDefaultStackOptimizedAllocatorStrong<LPlatformTypes::LSize, 64>>);
+static_assert(TArrayBaseMutableAllocatorConceptStrong<TArrayBaseDefaultHeapAllocator<LPlatformTypes::LSize>>);
+static_assert(TArrayBaseConstAllocatorConceptWeak<TArrayBaseDefaultViewAllocator<LPlatformTypes::LSize>>);
+static_assert(TArrayBaseMutableAllocatorConceptWeak<TArrayBaseDefaultMutableViewAllocator<LPlatformTypes::LSize>>);
+
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    static_assert(TArrayBaseMutableAllocatorConceptStrong<TArrayBaseMutableDefaultAllocatorStrong<LPlatformTypes::LSize>>);
+    static_assert(TArrayBaseConstAllocatorConceptWeak<TArrayBaseConstDefaultAllocatorWeak<LPlatformTypes::LSize>>);
+    static_assert(TArrayBaseMutableAllocatorConceptWeak<TArrayBaseMutableDefaultAllocatorWeak<LPlatformTypes::LSize>>);
+    static_assert(TArrayBaseMutableCappedAllocatorConceptWeak<TArrayBaseMutableDefaultFixedAllocatorWeak<LPlatformTypes::LSize, 64>>);
+    static_assert(TArrayBaseMutableCappedAllocatorConceptWeak<TArrayBaseMutableDefaultStackAllocatorWeak<LPlatformTypes::LSize, 64>>);
+    static_assert(TArrayBaseMutableCapacityAllocatorConceptStrong<TArrayBaseMutableDefaultStackOptimizedAllocatorStrong<LPlatformTypes::LSize, 64>>);
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
 } /* ~Namespace Lal */
 
@@ -771,12 +784,16 @@ template <typename T>
 struct Lal::TArrayBaseAllowTrivialMemoryBufferMove<TArrayView<T>> : Lal::TrueType { };
 template <typename T>
 struct Lal::TArrayBaseAllowTrivialMemoryBufferMove<TMutableArrayView<T>> : Lal::TrueType { };
-template <typename T, LSize TSizeCapacity>
-struct Lal::TArrayBaseAllowTrivialMemoryBufferMove<TFixedArray<T, TSizeCapacity>> : Lal::TrueType { };
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    template <typename T, LSize TSizeCapacity>
+    struct Lal::TArrayBaseAllowTrivialMemoryBufferMove<TFixedArray<T, TSizeCapacity>> : Lal::TrueType { };
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
 static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<TArray<LSize>>);
 static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<TArrayView<LSize>>);
 static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<TMutableArrayView<LSize>>);
-static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<TFixedArray<LSize, 64>>);
-static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<TStackArray<LSize, 64>> == false);
-static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<TStackOptimizedArray<LSize, 64>> == false);
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<TFixedArray<LSize, 64>>);
+    static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<TStackArray<LSize, 64>> == false);
+    static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<TStackOptimizedArray<LSize, 64>> == false);
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */

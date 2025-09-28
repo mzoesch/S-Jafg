@@ -4,69 +4,68 @@
 
 namespace Lal
 {
+    template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
+        requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+    FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(const TStringBase& Other) noexcept
+        requires(std::is_constructible_v<TAllocator, const TAllocator&>)
+        : Impl(Other.Impl)
+    {
+        PRIVATE_LAL_ENSURE_STRING_INVARIANT()
+        return;
+    }
 
-template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
-    requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
-FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(const TStringBase& Other) noexcept
-    requires(std::is_constructible_v<TAllocator, const TAllocator&>)
-    : Impl{Other.Impl}
-{
-    PRIVATE_LAL_ENSURE_STRING_INVARIANT()
-    return;
-}
+    template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
+        requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+    FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>& TStringBase<TEncoding, TAllocator>::operator=(const TStringBase& Other) noexcept
+        requires(Lal::AssignableFromL<TAllocator&, const TAllocator&>)
+    {
+        this->Impl = Other.Impl;
+        PRIVATE_LAL_ENSURE_STRING_INVARIANT()
 
-template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
-    requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
-FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>& TStringBase<TEncoding, TAllocator>::operator=(const TStringBase& Other) noexcept
-    requires(Lal::AssignableFromL<TAllocator&, const TAllocator&>)
-{
-    this->Impl = Other.Impl;
-    PRIVATE_LAL_ENSURE_STRING_INVARIANT()
+        return *this;
+    }
 
-    return *this;
-}
+    template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
+        requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+    FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(TStringBase&& Other) noexcept
+        requires(std::is_constructible_v<TAllocator, TAllocator&&>)
+        : Impl(std::move(Other.Impl))
+    {
+        PRIVATE_LAL_ENSURE_STRING_INVARIANT()
+        return;
+    }
 
-template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
-    requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
-FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(TStringBase&& Other) noexcept
-    requires(std::is_constructible_v<TAllocator, TAllocator&&>)
-    : Impl{std::move(Other.Impl)}
-{
-    PRIVATE_LAL_ENSURE_STRING_INVARIANT()
-    return;
-}
+    template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
+        requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+    FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>& TStringBase<TEncoding, TAllocator>::operator=(TStringBase&& Other) noexcept
+        requires(Lal::AssignableFromR<TAllocator&, TAllocator&&>)
+    {
+        this->Impl = std::move(Other.Impl);
+        PRIVATE_LAL_ENSURE_STRING_INVARIANT()
 
-template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
-    requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
-FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>& TStringBase<TEncoding, TAllocator>::operator=(TStringBase&& Other) noexcept
-    requires(Lal::AssignableFromR<TAllocator&, TAllocator&&>)
-{
-    this->Impl = std::move(Other.Impl);
-    PRIVATE_LAL_ENSURE_STRING_INVARIANT()
+        return *this;
+    }
 
-    return *this;
-}
+    template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
+        requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+    template <TIteratorConcept UIterator, TIteratorConcept VIterator>
+        requires(TIteratorPairConcept<UIterator, VIterator>)
+    FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(UIterator Begin, VIterator End) noexcept
+        requires(std::is_constructible_v<TAllocator, UIterator, VIterator>)
+        : Impl(Begin, End)
+    {
+        this->CreateInvariant();
+        PRIVATE_LAL_ENSURE_STRING_INVARIANT()
 
-template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
-    requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
-template <TIteratorConcept UIterator, TIteratorConcept VIterator>
-    requires(TIteratorPairConcept<UIterator, VIterator>)
-FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(UIterator Begin, VIterator End) noexcept
-    requires(std::is_constructible_v<TAllocator, UIterator, VIterator>)
-    : Impl{ Begin, End }
-{
-    this->CreateInvariant();
-    PRIVATE_LAL_ENSURE_STRING_INVARIANT()
+        return;
+    }
 
-    return;
-}
-
-template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
-    requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
-template <TIteratorConcept UIterator>
-FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(UIterator Begin, const SizeType Length) noexcept
-    requires(std::is_constructible_v<TAllocator, UIterator, UIterator>)
-    : Impl{ Begin, Begin + Length }
+    template <template <typename, typename> typename TEncoding, TStringBaseAllocatorConcept TAllocator>
+        requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+    template <TIteratorConcept UIterator>
+    FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(UIterator Begin, const SizeType Length) noexcept
+        requires(std::is_constructible_v<TAllocator, UIterator, UIterator>)
+        : Impl(Begin, Begin + Length)
 {
     this->CreateInvariant();
     PRIVATE_LAL_ENSURE_STRING_INVARIANT()
@@ -78,7 +77,7 @@ template <template <typename, typename> typename TEncoding, TStringBaseAllocator
     requires(TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
 FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(Pointer String) noexcept
     requires(TStringBase::IsStringView() && std::is_constructible_v<TAllocator, Pointer, Pointer>)
-    : Impl{ String, String + Encoding::GetStringLength(String) }
+    : Impl(String, String + Encoding::GetStringLength(String))
 {
     PRIVATE_LAL_ENSURE_STRING_INVARIANT()
     return;
@@ -89,7 +88,7 @@ template <template <typename, typename> typename TEncoding, TStringBaseAllocator
 FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(Pointer String) noexcept
     requires(!TStringBase::
     IsStringView() && std::is_constructible_v<TAllocator, Pointer, Pointer>)
-    : Impl{ String, String + Encoding::GetStringLength(String) + /*Terminator*/1 }
+    : Impl( String, String + Encoding::GetStringLength(String) + /*Terminator*/1)
 {
     PRIVATE_LAL_ENSURE_STRING_INVARIANT()
     return;
@@ -132,7 +131,7 @@ FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(ConstPoint
         && std::is_constructible_v<TAllocator, typename TAllocator::ConstPointer, typename TAllocator::ConstPointer>
         && std::is_same_v<typename TAllocator::Pointer, typename TAllocator::ConstPointer> == false
     )
-    : Impl{ String, String + Encoding::GetStringLength(String) }
+    : Impl( String, String + Encoding::GetStringLength(String))
 {
     PRIVATE_LAL_ENSURE_STRING_INVARIANT()
     return;
@@ -147,7 +146,7 @@ FORCEINLINE constexpr TStringBase<TEncoding, TAllocator>::TStringBase(ConstPoint
         && std::is_constructible_v<TAllocator, typename TAllocator::ConstPointer, typename TAllocator::ConstPointer>
         && std::is_same_v<typename TAllocator::Pointer, typename TAllocator::ConstPointer> == false
     )
-    : Impl{ String, String + Encoding::GetStringLength(String) + /*Terminator*/1 }
+    : Impl( String, String + Encoding::GetStringLength(String) + /*Terminator*/1)
 {
     PRIVATE_LAL_ENSURE_STRING_INVARIANT()
     return;
@@ -2081,26 +2080,30 @@ void TStringBase<TEncoding, TAllocator>::EnsureInvariant() const
 
 } /* Namespace Lal */
 
-//#
-//# Guaranteed to be the same size as std::string.
-//#
-static_assert(sizeof(std::string) == sizeof(LOptimizedString));
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    //#
+    //# Guaranteed to be the same size as std::string.
+    //#
+    static_assert(sizeof(std::string) == sizeof(LOptimizedString));
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
 static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<int>);
 static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<LString> == false);
 
-template <>
-struct std::formatter<LOptimizedString> : std::formatter<std::string_view>
-{
-    FORCEINLINE auto format
-    (
-        const LOptimizedString& String,
-        std::format_context& InContext
-    ) const -> std::format_context::iterator
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    template <>
+    struct std::formatter<LOptimizedString> : std::formatter<std::string_view>
     {
-        return std::formatter<std::string_view>::format(std::string_view(String.begin_ptr(), String.end_ptr()), InContext);
-    }
-};
+        FORCEINLINE auto format
+        (
+            const LOptimizedString& String,
+            std::format_context& InContext
+        ) const -> std::format_context::iterator
+        {
+            return std::formatter<std::string_view>::format(std::string_view(String.begin_ptr(), String.end_ptr()), InContext);
+        }
+    };
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
 template <>
 struct std::formatter<LString> : std::formatter<std::string_view>
@@ -2115,18 +2118,20 @@ struct std::formatter<LString> : std::formatter<std::string_view>
     }
 };
 
-template <LSize TCapacity>
-struct std::formatter<LSmallString<TCapacity>> : std::formatter<std::string_view>
-{
-    FORCEINLINE auto format
-    (
-        const LSmallString<TCapacity>& String,
-        std::format_context& InContext
-    ) const -> std::format_context::iterator
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    template <LSize TCapacity>
+    struct std::formatter<LSmallString<TCapacity>> : std::formatter<std::string_view>
     {
-        return std::formatter<std::string_view>::format(std::string_view(String.begin_ptr(), String.end_ptr()), InContext);
-    }
-};
+        FORCEINLINE auto format
+        (
+            const LSmallString<TCapacity>& String,
+            std::format_context& InContext
+        ) const -> std::format_context::iterator
+        {
+            return std::formatter<std::string_view>::format(std::string_view(String.begin_ptr(), String.end_ptr()), InContext);
+        }
+    };
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
 template <>
 struct std::formatter<LStringView> : std::formatter<std::string_view>

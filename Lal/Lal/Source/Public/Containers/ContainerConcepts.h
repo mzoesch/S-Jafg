@@ -100,6 +100,7 @@ concept TArrayBaseAllocatorConceptBase = requires(T Allocator)
     typename T::Reference;
     typename T::ConstReference;
 
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
     //#
     //# For internal use only. Do not call.
     //#
@@ -108,6 +109,7 @@ concept TArrayBaseAllocatorConceptBase = requires(T Allocator)
     //# Therefore it has to correctly implement a function #IsCurrentDataOnHeap if special handling is required.
     //#
     { Allocator._ResetToDefaultState() } -> std::same_as<void>;
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
     //#
     //# Whether this array owns the memory it uses for its data.

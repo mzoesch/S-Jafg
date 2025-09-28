@@ -605,16 +605,14 @@ FORCEINLINE void ExplicitCommonZeroOnDefaultOnlyMallocMember(TMemberField* Membe
 template <Lal::TArrayBaseAllocatorConceptBase Alloc>
 FORCEINLINE void OnDefaultOnlyMallocMember(Lal::TArrayBase<Alloc>* MemberField)
 {
-    MemberField->GetMutableAllocator()._ResetToDefaultState();
-
+    std::construct_at<typename Lal::TArrayBase<Alloc>::Allocator>(&MemberField->GetMutableAllocator());
     return;
 }
 
 template <template <typename, typename> typename TEncoding, typename TAllocator>
 FORCEINLINE void OnDefaultOnlyMallocMember(Lal::TStringBase<TEncoding, TAllocator>* MemberField)
 {
-    MemberField->GetMutableAllocator().GetMutableAllocator()._ResetToDefaultState();
-
+    OnDefaultOnlyMallocMember(&MemberField->GetMutableAllocator());
     return;
 }
 

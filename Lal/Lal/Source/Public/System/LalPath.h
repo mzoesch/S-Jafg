@@ -202,10 +202,12 @@ FORCEINLINE TOther TPathBase<TEncoding, TAllocator>::GetPosixSecure() const noex
 
 template <template <typename, typename> typename TEncoding, typename T>
 using THeapPath = TPathBase<TEncoding, TArray<T>>;
-template <template <typename, typename> typename TEncoding, typename T, LSize TPathCapacity>
-using TSmallPath = TPathBase<TEncoding, TStackArray<T, TPathCapacity>>;
-template <template <typename, typename> typename TEncoding, typename T, LSize TPathCapacity>
-using TOptimizedPath = TPathBase<TEncoding, TStackOptimizedArray<T, TPathCapacity>>;
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    template <template <typename, typename> typename TEncoding, typename T, LSize TPathCapacity>
+    using TSmallPath = TPathBase<TEncoding, TStackArray<T, TPathCapacity>>;
+    template <template <typename, typename> typename TEncoding, typename T, LSize TPathCapacity>
+    using TOptimizedPath = TPathBase<TEncoding, TStackOptimizedArray<T, TPathCapacity>>;
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
 template <template <typename, typename> typename TEncoding, typename T>
 using TPathView = TPathBase<TEncoding, TArrayView<T>>;
@@ -214,10 +216,12 @@ using TMutablePathView = TPathBase<TEncoding, TMutableArrayView<T>>;
 
 template <typename T>
 using THeapPathUtf8 = THeapPath<TPathBaseDefaultUtf8Traits, T>;
-template <typename T, LSize TPathCapacity>
-using TSmallPathUtf8 = TSmallPath<TPathBaseDefaultUtf8Traits, T, TPathCapacity>;
-template <typename T, LSize TPathCapacity>
-using TOptimizedPathUtf8 = TOptimizedPath<TPathBaseDefaultUtf8Traits, T, TPathCapacity>;
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    template <typename T, LSize TPathCapacity>
+    using TSmallPathUtf8 = TSmallPath<TPathBaseDefaultUtf8Traits, T, TPathCapacity>;
+    template <typename T, LSize TPathCapacity>
+    using TOptimizedPathUtf8 = TOptimizedPath<TPathBaseDefaultUtf8Traits, T, TPathCapacity>;
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
 template <typename T>
 using TPathViewUtf8 = TPathView<TPathBaseDefaultUtf8Traits, T>;
@@ -226,26 +230,32 @@ using TMutablePathViewUtf8 = TMutablePathView<TPathBaseDefaultUtf8Traits, T>;
 
 } /* ~Namespace Lal */
 
-typedef Lal::TOptimizedPathUtf8<LJafgChar, 8> LOptimizedPath;
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    typedef Lal::TOptimizedPathUtf8<LJafgChar, 8> LOptimizedPath;
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 typedef Lal::THeapPathUtf8<LJafgChar> LPath;
-template <LSize TCapacity>
-using LSmallPath = Lal::TSmallPathUtf8<LJafgChar, TCapacity>;
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    template <LSize TCapacity>
+    using LSmallPath = Lal::TSmallPathUtf8<LJafgChar, TCapacity>;
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
 typedef Lal::TPathViewUtf8<LJafgChar> LPathView;
 typedef Lal::TMutablePathViewUtf8<LJafgChar> LMutablePathView;
 
-template <>
-struct std::formatter<LOptimizedPath> : std::formatter<std::string_view>
-{
-    FORCEINLINE auto format
-    (
-        const LOptimizedPath& Path,
-        std::format_context& InContext
-    ) const -> std::format_context::iterator
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    template <>
+    struct std::formatter<LOptimizedPath> : std::formatter<std::string_view>
     {
-        return std::formatter<std::string_view>::format(std::string_view(Path.begin_ptr(), Path.end_ptr()), InContext);
-    }
-};
+        FORCEINLINE auto format
+        (
+            const LOptimizedPath& Path,
+            std::format_context& InContext
+        ) const -> std::format_context::iterator
+        {
+            return std::formatter<std::string_view>::format(std::string_view(Path.begin_ptr(), Path.end_ptr()), InContext);
+        }
+    };
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
 template <>
 struct std::formatter<LPath> : std::formatter<std::string_view>
@@ -260,18 +270,20 @@ struct std::formatter<LPath> : std::formatter<std::string_view>
     }
 };
 
-template <LSize TCapacity>
-struct std::formatter<LSmallPath<TCapacity>> : std::formatter<std::string_view>
-{
-    FORCEINLINE auto format
-    (
-        const LSmallPath<TCapacity>& Path,
-        std::format_context& InContext
-    ) const -> std::format_context::iterator
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    template <LSize TCapacity>
+    struct std::formatter<LSmallPath<TCapacity>> : std::formatter<std::string_view>
     {
-        return std::formatter<std::string_view>::format(std::string_view(Path.begin_ptr(), Path.end_ptr()), InContext);
-    }
-};
+        FORCEINLINE auto format
+        (
+            const LSmallPath<TCapacity>& Path,
+            std::format_context& InContext
+        ) const -> std::format_context::iterator
+        {
+            return std::formatter<std::string_view>::format(std::string_view(Path.begin_ptr(), Path.end_ptr()), InContext);
+        }
+    };
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
 
 template <>
 struct std::formatter<LPathView> : std::formatter<std::string_view>
@@ -298,3 +310,7 @@ struct std::formatter<LMutablePathView> : std::formatter<std::string_view>
         return std::formatter<std::string_view>::format(std::string_view(Path.begin_ptr(), Path.end_ptr()), InContext);
     }
 };
+
+IMPLEMENT_TRAIT(String, LPath)
+IMPLEMENT_TRAIT(String, LPathView)
+IMPLEMENT_TRAIT(String, LMutablePathView)

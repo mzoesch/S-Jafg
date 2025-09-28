@@ -73,6 +73,8 @@ function(_jafg_add_module_impl
     endif()
 
     file(GLOB_RECURSE src_files
+        "${module_dir}/Source/*.afx"
+        "${module_dir}/Source/*.pch"
         "${module_dir}/Source/*.h"
         "${module_dir}/Source/*.hpp"
         "${module_dir}/Source/*.c"

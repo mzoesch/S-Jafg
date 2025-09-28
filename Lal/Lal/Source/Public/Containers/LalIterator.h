@@ -140,10 +140,15 @@ concept IsValidIteratorWeak = requires
     typename TIteratorTraits<T>::iterator_concept;
 };
 
+struct LDefaultIterator { };
+struct LDefaultReversedIterator { };
+struct LDefaultFilteredIterator { };
+struct LDefaultReversedFilteredIterator { };
+
 } /* ~Namespace Private */
 
 template <typename TIn, bool bMove = false>
-struct TDefaultIterator
+struct TDefaultIterator : public Private::LDefaultIterator
 {
     ///////////////////////////////////////////////////////////////////////////////
     // C++ ISO
@@ -314,7 +319,7 @@ FORCEINLINE constexpr typename TDefaultIterator<T, bMove>::difference_type opera
 }
 
 template <typename TIn, bool bMove = false>
-struct TDefaultReversedIterator
+struct TDefaultReversedIterator : public Private::LDefaultReversedIterator
 {
     ///////////////////////////////////////////////////////////////////////////////
     // C++ ISO
@@ -447,7 +452,7 @@ FORCEINLINE constexpr TDefaultReversedIterator<T, bMove> operator+(const typenam
 }
 
 template <typename TPredicate, typename TIn, bool bMove = false>
-struct TDefaultFilteredIterator
+struct TDefaultFilteredIterator : public Private::LDefaultFilteredIterator
 {
     ///////////////////////////////////////////////////////////////////////////////
     // C++ ISO
@@ -598,7 +603,7 @@ private:
 };
 
 template <typename TPredicate, typename TIn, bool bMove = false>
-struct TDefaultReversedFilteredIterator
+struct TDefaultReversedFilteredIterator : public Private::LDefaultReversedFilteredIterator
 {
     ///////////////////////////////////////////////////////////////////////////////
     // C++ ISO
@@ -1121,3 +1126,68 @@ struct TDefaultReversedFilteredIteratorFactory
 #ifndef ITERATOR_CROSS
     #define ITERATOR_CROSS(A, B) ::Lal::TCrossIteratorConcept<decltype(A), decltype(B)>
 #endif /* ITERATOR_CROSS */
+
+namespace Lal::Private
+{
+
+template <typename TIn, bool bMove>
+NODISCARD
+FORCEINLINE constexpr auto ToMove_TDefaultIterator(TDefaultIterator<TIn, bMove> It) noexcept -> TDefaultIterator<TIn, true>
+{
+    return TDefaultIterator<TIn, true>{ It.base() };
+}
+
+template <typename TIn, bool bMove>
+NODISCARD
+FORCEINLINE constexpr auto ToMove_TDefaultReversedIterator(TDefaultReversedIterator<TIn, bMove> It) noexcept -> TDefaultReversedIterator<TIn, true>
+{
+    return TDefaultReversedIterator<TIn, true>{ It.base() };
+}
+
+template <typename TPredicate, typename TIn, bool bMove>
+NODISCARD
+FORCEINLINE constexpr auto ToMove_TDefaultFilteredIterator(TDefaultFilteredIterator<TPredicate, TIn, bMove> It) noexcept -> TDefaultFilteredIterator<TPredicate, TIn, true>
+{
+    return TDefaultFilteredIterator<TPredicate, TIn, true>{ It.Filter, It.Cursor, It.Slack, It.bFirstDereference == false };
+}
+
+template <typename TPredicate, typename TIn, bool bMove>
+NODISCARD
+FORCEINLINE constexpr auto ToMove_TDefaultReversedFilteredIterator(TDefaultReversedFilteredIterator<TPredicate, TIn, bMove> It) noexcept -> TDefaultReversedFilteredIterator<TPredicate, TIn, true>
+{
+    return TDefaultReversedFilteredIterator<TPredicate, TIn, true>{ It.Filter, It.Cursor, It.Begin, It.bFirstDereference == false };
+}
+
+} /* ~Namespace Lal::Private */
+
+namespace std
+{
+
+template <typename Iterator> requires std::is_base_of_v<Lal::Private::LDefaultIterator, Iterator>
+NODISCARD
+FORCEINLINE constexpr auto make_move_iterator(Iterator It) noexcept -> decltype(Lal::Private::ToMove_TDefaultIterator(It))
+{
+    return Lal::Private::ToMove_TDefaultIterator(It);
+}
+
+template <typename Iterator> requires std::is_base_of_v<Lal::Private::LDefaultReversedIterator, Iterator>
+NODISCARD
+FORCEINLINE constexpr auto make_move_iterator(Iterator It) noexcept -> decltype(Lal::Private::ToMove_TDefaultReversedIterator(It))
+{
+    return Lal::Private::ToMove_TDefaultReversedIterator(It);
+}
+
+template <typename Iterator> requires std::is_base_of_v<Lal::Private::LDefaultFilteredIterator, Iterator>
+NODISCARD
+FORCEINLINE constexpr auto make_move_iterator(Iterator It) noexcept -> decltype(Lal::Private::ToMove_TDefaultFilteredIterator(It))
+{
+    return Lal::Private::ToMove_TDefaultFilteredIterator(It);
+}
+
+template <typename Iterator> requires std::is_base_of_v<Lal::Private::LDefaultReversedFilteredIterator, Iterator>
+FORCEINLINE constexpr auto make_move_iterator(Iterator It) noexcept -> decltype(Lal::Private::ToMove_TDefaultReversedFilteredIterator(It))
+{
+    return Lal::Private::ToMove_TDefaultReversedFilteredIterator(It);
+}
+
+} /* ~Namespace std */

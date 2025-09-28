@@ -23,26 +23,6 @@
 
 
 /*----------------------------------------------------------------------------
-    Core Forwards.
-----------------------------------------------------------------------------*/
-
-#include "Containers/ContainerBuild.h"
-#include "Containers/ContainerLegacyForward.h"
-#include "Containers/ContainerConcepts.h"
-#include "Containers/ContainerEarlyForward.h"
-#include "Containers/LalIteratorTraits.h"
-#include "Containers/LalIterator.h"
-#include "Containers/LalArrayAllocators.h"
-#include "Containers/ContainerArrayForward.h"
-#include "Containers/LalArray.h"
-#include "Containers/LalStringEncoding.h"
-#include "Containers/LalStringForward.h"
-#include "Containers/LalString.h"
-#include "Maths/MathDefines.h"
-#include "Maths/MathForward.h"
-
-
-/*----------------------------------------------------------------------------
     Standard, Platform-APIs and Third-Party.
 ----------------------------------------------------------------------------*/
 
@@ -72,6 +52,45 @@
 
 
 /*----------------------------------------------------------------------------
+    Forward Containers.
+----------------------------------------------------------------------------*/
+
+#include "Containers/ContainerBuild.h"
+#include "Containers/ContainerLegacyForward.h"
+#include "Containers/LalRange.h"
+#include "Containers/ContainerConcepts.h"
+#include "Containers/ContainerEarlyForward.h"
+#include "Containers/LalIteratorTraits.h"
+#include "Containers/LalIterator.h"
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    #include "Containers/LalArrayAllocators.h"
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
+#include "Containers/LalArrayAllocatorHeap.h"
+#include "Containers/LalArrayAllocatorView.h"
+#include "Containers/ContainerArrayForward.h"
+#include "Containers/LalArray.h"
+#include "Containers/LalStringEncoding.h"
+#include "Containers/LalStringForward.h"
+#include "Containers/LalString.h"
+
+
+/*----------------------------------------------------------------------------
+    Traits.
+----------------------------------------------------------------------------*/
+
+#include "Traits/Traits.h"
+#include "Traits/CoreTraits.h"
+
+
+/*----------------------------------------------------------------------------
+    Forward Maths.
+----------------------------------------------------------------------------*/
+
+#include "Maths/MathDefines.h"
+#include "Maths/MathForward.h"
+
+
+/*----------------------------------------------------------------------------
     Commonly used headers.
 ----------------------------------------------------------------------------*/
 
@@ -98,7 +117,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Containers
 #include "Containers/ContainerMacros.h"
-#include "Containers/LalArrayAllocatorsImpl.h"
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    #include "Containers/LalArrayAllocatorsImpl.h"
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
+#include "Containers/LalArrayAllocatorHeapImpl.h"
+#include "Containers/LalArrayAllocatorViewImpl.h"
 #include "Containers/LalArrayImpl.h"
 #include "Containers/LalStringEncodingImpl.h"
 #include "Containers/LalStringImpl.h"

@@ -18,23 +18,34 @@ struct TArrayBaseCappedAllocatorDefaultTraitsWeakImpl;
 template <std::integral TSizeType, template <typename, bool> typename TIterator, TSizeType TSizeCapacity>
 struct TArrayBaseCappedAllocatorDefaultTraitStrongImpl;
 
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    template <typename TIn, TArrayBaseAllocatorTraitsConceptStrong TTraits>
+    struct TArrayBaseMutableDefaultAllocatorStrongImpl;
+
+    template <typename TIn, TArrayBaseAllocatorTraitsConceptBase TTraits>
+    struct TArrayBaseConstDefaultAllocatorWeakImpl;
+
+    template <typename TIn, TArrayBaseAllocatorTraitsConceptBase TTraits>
+    struct TArrayBaseMutableDefaultAllocatorWeakImpl;
+
+    template <typename TIn, TArrayBaseCappedAllocatorTraitsConceptWeak TTraits>
+    struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl;
+
+    template <typename TIn, TArrayBaseCappedAllocatorTraitsConceptWeak TTraits>
+    struct TArrayBaseMutableDefaultStackAllocatorWeakImpl;
+
+    template <typename TIn, TArrayBaseCappedAllocatorTraitsConceptStrong TTraits>
+    struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl;
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
+
 template <typename TIn, TArrayBaseAllocatorTraitsConceptStrong TTraits>
-struct TArrayBaseMutableDefaultAllocatorStrongImpl;
+struct TArrayBaseDefaultAllocatorHeapImpl;
 
 template <typename TIn, TArrayBaseAllocatorTraitsConceptBase TTraits>
-struct TArrayBaseConstDefaultAllocatorWeakImpl;
+struct TArrayBaseDefaultAllocatorViewImpl;
 
 template <typename TIn, TArrayBaseAllocatorTraitsConceptBase TTraits>
-struct TArrayBaseMutableDefaultAllocatorWeakImpl;
-
-template <typename TIn, TArrayBaseCappedAllocatorTraitsConceptWeak TTraits>
-struct TArrayBaseMutableDefaultFixedAllocatorWeakImpl;
-
-template <typename TIn, TArrayBaseCappedAllocatorTraitsConceptWeak TTraits>
-struct TArrayBaseMutableDefaultStackAllocatorWeakImpl;
-
-template <typename TIn, TArrayBaseCappedAllocatorTraitsConceptStrong TTraits>
-struct TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl;
+struct TArrayBaseDefaultAllocatorMutableViewImpl;
 
 //#
 //# An array container that may use any form of (un-)owned stack or heap allocated memory.
@@ -91,24 +102,36 @@ template <LSize TSizeCapacity>
 using TArrayBaseCappedAllocatorDefaultTraitsStrong
     = TArrayBaseCappedAllocatorDefaultTraitStrongImpl<LSize, Lal::TDefaultIterator, TSizeCapacity>;
 
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    template <typename T>
+    using TArrayBaseMutableDefaultAllocatorStrong
+        = TArrayBaseMutableDefaultAllocatorStrongImpl<T, LArrayBaseAllocatorDefaultTraitsStrong>;
+    template <typename T>
+    using TArrayBaseConstDefaultAllocatorWeak
+        = TArrayBaseConstDefaultAllocatorWeakImpl<T, LArrayBaseAllocatorDefaultTraitsWeak>;
+    template <typename T>
+    using TArrayBaseMutableDefaultAllocatorWeak
+        = TArrayBaseMutableDefaultAllocatorWeakImpl<T, LArrayBaseAllocatorDefaultTraitsWeak>;
+    template <typename T, TArrayBaseAllocatorDefaultTraitsWeak<LSize, Lal::TDefaultIterator>::SizeType TSizeCapacity>
+    using TArrayBaseMutableDefaultFixedAllocatorWeak
+        = TArrayBaseMutableDefaultFixedAllocatorWeakImpl<T, TArrayBaseCappedAllocatorDefaultTraitsWeak<TSizeCapacity>>;
+    template <typename T, TArrayBaseAllocatorDefaultTraitsWeak<LSize, Lal::TDefaultIterator>::SizeType TSizeCapacity>
+    using TArrayBaseMutableDefaultStackAllocatorWeak
+        = TArrayBaseMutableDefaultStackAllocatorWeakImpl<T, TArrayBaseCappedAllocatorDefaultTraitsWeak<TSizeCapacity>>;
+    template <typename T, TArrayBaseAllocatorDefaultTraitsWeak<LSize, Lal::TDefaultIterator>::SizeType TStackSizeCapacity>
+    using TArrayBaseMutableDefaultStackOptimizedAllocatorStrong
+        = TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl<T, TArrayBaseCappedAllocatorDefaultTraitsStrong<TStackSizeCapacity>>;
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */
+
 template <typename T>
-using TArrayBaseMutableDefaultAllocatorStrong
-    = TArrayBaseMutableDefaultAllocatorStrongImpl<T, LArrayBaseAllocatorDefaultTraitsStrong>;
+using TArrayBaseDefaultHeapAllocator
+    = TArrayBaseDefaultAllocatorHeapImpl<T, LArrayBaseAllocatorDefaultTraitsStrong>;
 template <typename T>
-using TArrayBaseConstDefaultAllocatorWeak
-    = TArrayBaseConstDefaultAllocatorWeakImpl<T, LArrayBaseAllocatorDefaultTraitsWeak>;
+using TArrayBaseDefaultViewAllocator
+    = TArrayBaseDefaultAllocatorViewImpl<T, LArrayBaseAllocatorDefaultTraitsWeak>;
 template <typename T>
-using TArrayBaseMutableDefaultAllocatorWeak
-    = TArrayBaseMutableDefaultAllocatorWeakImpl<T, LArrayBaseAllocatorDefaultTraitsWeak>;
-template <typename T, TArrayBaseAllocatorDefaultTraitsWeak<LSize, Lal::TDefaultIterator>::SizeType TSizeCapacity>
-using TArrayBaseMutableDefaultFixedAllocatorWeak
-    = TArrayBaseMutableDefaultFixedAllocatorWeakImpl<T, TArrayBaseCappedAllocatorDefaultTraitsWeak<TSizeCapacity>>;
-template <typename T, TArrayBaseAllocatorDefaultTraitsWeak<LSize, Lal::TDefaultIterator>::SizeType TSizeCapacity>
-using TArrayBaseMutableDefaultStackAllocatorWeak
-    = TArrayBaseMutableDefaultStackAllocatorWeakImpl<T, TArrayBaseCappedAllocatorDefaultTraitsWeak<TSizeCapacity>>;
-template <typename T, TArrayBaseAllocatorDefaultTraitsWeak<LSize, Lal::TDefaultIterator>::SizeType TStackSizeCapacity>
-using TArrayBaseMutableDefaultStackOptimizedAllocatorStrong
-    = TArrayBaseMutableDefaultStackOptimizedAllocatorStrongImpl<T, TArrayBaseCappedAllocatorDefaultTraitsStrong<TStackSizeCapacity>>;
+using TArrayBaseDefaultMutableViewAllocator
+    = TArrayBaseDefaultAllocatorMutableViewImpl<T, LArrayBaseAllocatorDefaultTraitsWeak>;
 
 } /* ~Namespace Lal */
 
@@ -118,7 +141,7 @@ using TArrayBaseMutableDefaultStackOptimizedAllocatorStrong
 //# @tparam T The type of the elements in this array.
 //#
 template <typename T>
-using TArray = Lal::TArrayBase<Lal::TArrayBaseMutableDefaultAllocatorStrong<T>>;
+using TArray = Lal::TArrayBase<Lal::TArrayBaseDefaultHeapAllocator<T>>;
 
 //#
 //# An array that has a view on some memory of any other array.
@@ -128,7 +151,7 @@ using TArray = Lal::TArrayBase<Lal::TArrayBaseMutableDefaultAllocatorStrong<T>>;
 //# @tparam T The type of the elements in this array.
 //#
 template <typename T>
-using TArrayView = Lal::TArrayBase<Lal::TArrayBaseConstDefaultAllocatorWeak<T>>;
+using TArrayView = Lal::TArrayBase<Lal::TArrayBaseDefaultViewAllocator<T>>;
 
 //#
 //# An array that has a view on some memory of any other array.
@@ -138,38 +161,40 @@ using TArrayView = Lal::TArrayBase<Lal::TArrayBaseConstDefaultAllocatorWeak<T>>;
 //# @tparam T The type of the elements in this array.
 //#
 template <typename T>
-using TMutableArrayView = Lal::TArrayBase<Lal::TArrayBaseMutableDefaultAllocatorWeak<T>>;
+using TMutableArrayView = Lal::TArrayBase<Lal::TArrayBaseDefaultMutableViewAllocator<T>>;
 
-//#
-//# An array that pre-allocates a specific number of elements and lives on the heap.
-//# This array does not grow or shrink, it is fixed in its maximal size.
-//#
-//# @tparam T             The type of the elements in this array.
-//# @tparam TSizeCapacity The size of the heap buffer in number of elements. This is the maximal size this array
-//#                       can ever hold.
-//#
-template <typename T, LSize TSizeCapacity>
-using TFixedArray = Lal::TArrayBase<Lal::TArrayBaseMutableDefaultFixedAllocatorWeak<T, TSizeCapacity>>;
+#if PRIVATE_LAL_WITH_LEGACY_ALLOCATORS
+    //#
+    //# An array that pre-allocates a specific number of elements and lives on the heap.
+    //# This array does not grow or shrink, it is fixed in its maximal size.
+    //#
+    //# @tparam T             The type of the elements in this array.
+    //# @tparam TSizeCapacity The size of the heap buffer in number of elements. This is the maximal size this array
+    //#                       can ever hold.
+    //#
+    template <typename T, LSize TSizeCapacity>
+    using TFixedArray = Lal::TArrayBase<Lal::TArrayBaseMutableDefaultFixedAllocatorWeak<T, TSizeCapacity>>;
 
-//#
-//# An array that pre-allocates a specific number of elements and lives on the stack.
-//# It does therefore not allocate any memory in the heap.
-//# This array does not grow or shrink, it is fixed in its maximal size.
-//#
-//# @tparam T             The type of the elements in this array.
-//# @tparam TSizeCapacity The size of the stack buffer in number of elements. This is the maximal size this array
-//#                       can ever hold.
-//#
-template <typename T, LSize TSizeCapacity>
-using TStackArray = Lal::TArrayBase<Lal::TArrayBaseMutableDefaultStackAllocatorWeak<T, TSizeCapacity>>;
+    //#
+    //# An array that pre-allocates a specific number of elements and lives on the stack.
+    //# It does therefore not allocate any memory in the heap.
+    //# This array does not grow or shrink, it is fixed in its maximal size.
+    //#
+    //# @tparam T             The type of the elements in this array.
+    //# @tparam TSizeCapacity The size of the stack buffer in number of elements. This is the maximal size this array
+    //#                       can ever hold.
+    //#
+    template <typename T, LSize TSizeCapacity>
+    using TStackArray = Lal::TArrayBase<Lal::TArrayBaseMutableDefaultStackAllocatorWeak<T, TSizeCapacity>>;
 
-//#
-//# An array that has an internal buffer on the stack and uses the heap for larger arrays.
-//# If a small array is used it will use the stack buffer, if it gets larger it will automatically switch to the heap;
-//# and if it gets smaller again, it will switch back to the stack buffer and orphan its heap memory.
-//#
-//# @tparam T                  The type of the elements in this array.
-//# @tparam TStackSizeCapacity The size of the stack buffer in number of elements.
-//#
-template <typename T, Lal::TArrayBaseAllocatorDefaultTraitsWeak<LSize, Lal::TDefaultIterator>::SizeType TStackSizeCapacity>
-using TStackOptimizedArray = Lal::TArrayBase<Lal::TArrayBaseMutableDefaultStackOptimizedAllocatorStrong<T, TStackSizeCapacity>>;
+    //#
+    //# An array that has an internal buffer on the stack and uses the heap for larger arrays.
+    //# If a small array is used it will use the stack buffer, if it gets larger it will automatically switch to the heap;
+    //# and if it gets smaller again, it will switch back to the stack buffer and orphan its heap memory.
+    //#
+    //# @tparam T                  The type of the elements in this array.
+    //# @tparam TStackSizeCapacity The size of the stack buffer in number of elements.
+    //#
+    template <typename T, Lal::TArrayBaseAllocatorDefaultTraitsWeak<LSize, Lal::TDefaultIterator>::SizeType TStackSizeCapacity>
+    using TStackOptimizedArray = Lal::TArrayBase<Lal::TArrayBaseMutableDefaultStackOptimizedAllocatorStrong<T, TStackSizeCapacity>>;
+#endif /* PRIVATE_LAL_WITH_LEGACY_ALLOCATORS */

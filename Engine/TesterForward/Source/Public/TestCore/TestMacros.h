@@ -20,6 +20,11 @@
 #define TEST_CASE(PrettyName, Category)                                 TEST_CASE_IMPL(PrettyName, Category)
 
 //#
+//# Check something that is statically evaluated.
+//#
+#define CHECK_STATIC(Condition)                                         CHECK_STATIC_WITH_LINE(Condition, __LINE__)
+
+//#
 //# Checks if A and B are equal.
 //#
 //# @param What Short description of the check.
@@ -164,6 +169,10 @@
         __FILE__,                                    \
         __LINE__                                     \
         )
+
+#define CHECK_STATIC_WITH_LINE(Condition, Line) \
+    static_assert(Condition);                   \
+    this->IncreaseTestCount();
 
 #define CHECK_EQUALS_WITH_LINE(What, A, B, Line, ...) \
     this->TestEqual(#What": { "#A" == "#B" }", A, B, Line, ##__VA_ARGS__);

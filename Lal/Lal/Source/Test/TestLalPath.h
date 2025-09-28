@@ -4,27 +4,27 @@
 
 TEST_CASE(EmptyPathOperations, "Lal.System")
 {
-    LOptimizedPath OptimizedPath;
+    // LOptimizedPath OptimizedPath;
     LPath Path;
-    LSmallPath<25> SmallPath;
+    // LSmallPath<25> SmallPath;
     LPathView PathView;
     LMutablePathView MutablePathView;
 
-    QUICK_CHECK_EQUALS(OptimizedPath.GetRuneCount(), 0ul)
+    // QUICK_CHECK_EQUALS(OptimizedPath.GetRuneCount(), 0ul)
     QUICK_CHECK_EQUALS(Path.GetRuneCount(), 0ul)
-    QUICK_CHECK_EQUALS(SmallPath.GetRuneCount(), 0ul)
+    // QUICK_CHECK_EQUALS(SmallPath.GetRuneCount(), 0ul)
     QUICK_CHECK_EQUALS(PathView.GetRuneCount(), 0ul)
     QUICK_CHECK_EQUALS(MutablePathView.GetRuneCount(), 0ul)
 
-    QUICK_CHECK_EQUALS(OptimizedPath.GetCharacterCount(), 0ul)
+    // QUICK_CHECK_EQUALS(OptimizedPath.GetCharacterCount(), 0ul)
     QUICK_CHECK_EQUALS(Path.GetCharacterCount(), 0ul)
-    QUICK_CHECK_EQUALS(SmallPath.GetCharacterCount(), 0ul)
+    // QUICK_CHECK_EQUALS(SmallPath.GetCharacterCount(), 0ul)
     QUICK_CHECK_EQUALS(PathView.GetCharacterCount(), 0ul)
     QUICK_CHECK_EQUALS(MutablePathView.GetCharacterCount(), 0ul)
 
-    QUICK_CHECK_EQUALS(OptimizedPath.GetAllocatedByteSize(), 8ul)
+    // QUICK_CHECK_EQUALS(OptimizedPath.GetAllocatedByteSize(), 8ul)
     QUICK_CHECK_EQUALS(Path.GetAllocatedByteSize(), 0ul)
-    QUICK_CHECK_EQUALS(SmallPath.GetAllocatedByteSize(), 25ul)
+    // QUICK_CHECK_EQUALS(SmallPath.GetAllocatedByteSize(), 25ul)
     QUICK_CHECK_EQUALS(PathView.GetAllocatedByteSize(), 0ul)
     QUICK_CHECK_EQUALS(MutablePathView.GetAllocatedByteSize(), 0ul)
 

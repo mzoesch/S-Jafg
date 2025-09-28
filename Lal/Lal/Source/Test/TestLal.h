@@ -20,3 +20,4 @@
 #include "TestLalArray.h"
 #include "TestLalString.h"
 #include "TestLalPath.h"
+#include "TestTraits.h"
