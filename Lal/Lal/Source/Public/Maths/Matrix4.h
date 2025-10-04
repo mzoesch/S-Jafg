@@ -620,9 +620,9 @@ template<typename T>
 LString TMatrix4<T>::ToString() const
 {
     LString Result;
-    for (i32 Row = 0; Row < 4; ++Row)
+    for (i32 Row { 0 }; Row < 4; ++Row)
     {
-        Result.Append(LString::SprintF("{:.2f} {:.2f} {:.2f} {:.2f}\n",
+        Result.append(Lal::SprintF("{:.2f} {:.2f} {:.2f} {:.2f}\n",
             this->Matrix[0][Row], this->Matrix[1][Row], this->Matrix[2][Row], this->Matrix[3][Row]));
     }
 

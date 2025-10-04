@@ -134,7 +134,7 @@ struct LLinearColor final
 
     FORCEINLINE LString ToString() const
     {
-        return LString::SprintF("RGBA: {} {} {} {}", this->R, this->G, this->B, this->A);
+        return Lal::SprintF("RGBA: {} {} {} {}", this->R, this->G, this->B, this->A);
     }
 
     //#
@@ -511,7 +511,7 @@ struct LColor final
 
     FORCEINLINE LString ToString() const
     {
-        return LString::SprintF("RGBA: {} {} {} {}", this->R, this->G, this->B, this->A);
+        return Lal::SprintF("RGBA: {} {} {} {}", this->R, this->G, this->B, this->A);
     }
 
     //#

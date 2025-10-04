@@ -158,11 +158,11 @@ struct TVector3
 
     LString ToString() const
     {
-        return LString::SprintF("{:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z);
+        return Lal::SprintF("{:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z);
     }
     LString ToHighPrecisionString() const
     {
-        return LString::SprintF("{:.9f} {:.9f} {:.9f}", this->X, this->Y, this->Z);
+        return Lal::SprintF("{:.9f} {:.9f} {:.9f}", this->X, this->Y, this->Z);
     }
 };
 

@@ -104,7 +104,8 @@ struct TVector2 final
 
     LString ToString() const
     {
-        return LString::SprintF("{} {}", this->X, this->Y);
+
+        return Lal::SprintF("{} {}", this->X, this->Y);
     }
 };
 

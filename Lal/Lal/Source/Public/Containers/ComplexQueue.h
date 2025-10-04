@@ -516,7 +516,11 @@ FORCEINLINE void TMpmcQueue<T, TSizeType>::FromRRef(TMpmcQueue&& Other) noexcept
 }
 } /* ~Namespace Jafg */
 
+#if LAL_WITH_LEGACY_LAL_ARRAY
+
 template<typename T, typename TSizeType>
 struct Lal::TArrayBaseAllowTrivialMemoryBufferMove<Jafg::TMpmcQueue<T, TSizeType>> : Lal::TrueType { };
 
 static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<Jafg::TMpmcQueue<i64, LSize>>);
+
+#endif /* LAL_WITH_LEGACY_LAL_ARRAY */

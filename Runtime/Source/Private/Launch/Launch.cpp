@@ -40,7 +40,6 @@ namespace
 {
 
 LCarnifex PrivateCarnifex;
-Private::LNameRegistry PrivateNameRegistry;
 
 #if WITH_STATS
     Stats::LTracer PrivateTracer;
@@ -218,11 +217,7 @@ void EngineExit()
         Private::KillSingletonObjectRegistry();
     }
 
-    if (Private::GNameRegistry)
-    {
-        Private::GNameRegistry->Destroy();
-        Private::GNameRegistry = nullptr;
-    }
+    (void)Private::GetNameRegistry().Destroy();
 
     if (::HasCustomExitReason())
     {
@@ -277,6 +272,8 @@ void EngineExit()
 //#
 EPlatformExit::Type GuardedMain()
 {
+    LString k { LStringView{} };
+
 #if !WITH_TESTS
 
 #if !LAL_PLATFORM_USES_NON_GENERIC_EXIT
@@ -349,20 +346,6 @@ EPlatformExit::Type GuardedMain()
 
     check( GEngine == nullptr )
     LEngine::PreInitialize();
-
-    STAT_CYCLE_START(GmNames, "StaticNameRegistration")
-    check( Private::GNameRegistry == nullptr )
-    Private::GNameRegistry = &::PrivateNameRegistry;
-    LOG_VERBOSE(LogNames, "Program initialized {} names during static storage initialization.", Private::GetStaticNameCount())
-    for (i32 Idx { 0 }; Idx < Private::GetStaticNameCount(); ++Idx)
-    {
-        const auto Name { Private::GNameRegistry->RegisterAndGetName(Private::GetStaticNameByIndex(Idx)) };
-        check( Name.IsSet() )
-        continue;
-    }
-    Private::ClearStaticNameContainer();
-    LOG_INFO(LogNames, "Finished transferring static names to the name registry. With a total of {} names.", Private::GNameRegistry->GetNameCount())
-    STAT_CYCLE_END(GmNames)
 
     STAT_CYCLE_START(GmObjects, "JafgObjectInitialization")
     Private::GCarnifexReferrer = &::PrivateCarnifex;

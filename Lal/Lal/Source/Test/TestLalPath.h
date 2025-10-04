@@ -2,6 +2,8 @@
 
 #pragma once
 
+#if TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS
+
 TEST_CASE(EmptyPathOperations, "Lal.System")
 {
     // LOptimizedPath OptimizedPath;
@@ -343,3 +345,5 @@ TEST_CASE(Finder, "Lal.System")
 
     return;
 }
+
+#endif /* TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS */

@@ -2,6 +2,8 @@
 
 #pragma once
 
+#if TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS
+
 namespace Testing::Lal::Array
 {
 
@@ -2571,3 +2573,5 @@ TEST_CASE(RemoveArray, "Lal.Containers")
 
     return;
 }
+
+#endif /* TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS */

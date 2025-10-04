@@ -133,9 +133,9 @@
 //# @param CategoryName Name of the log category as provided to DECLARE_INLINE_LOG_CATEGORY.
 //# @param Format       Format string literal in the style of std::format.
 //#
-#define LOG_FATAL(Category, Format, ...)      \
-    LAL_GORGEOUS_TRAP_MSG(::LString::SprintF( \
-        "[{}] - {}: " Format "", Category.GetCategory(), std::string_view{__FUNCTION__}, ##__VA_ARGS__).ToPtr())
+#define LOG_FATAL(Category, Format, ...)  \
+    LAL_GORGEOUS_TRAP_MSG(::Lal::SprintF( \
+        "[{}] - {}: " Format "", Category.GetCategory(), std::string_view{__FUNCTION__}, ##__VA_ARGS__).c_str())
 #define PRIVATE_LAL_LOG_FATAL_CORE(Category, Format, ...) \
     LAL_GORGEOUS_TRAP_MSG(std::vformat(                   \
         "[{}] - {}: " Format "", std::make_format_args(Category.GetCategory(), __FUNCTION__, ##__VA_ARGS__)).c_str())

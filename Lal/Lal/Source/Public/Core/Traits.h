@@ -2,6 +2,8 @@
 
 #pragma once
 
+#if LAL_WITH_LEGACY_TRAITS
+
 namespace Lal
 {
 
@@ -24,3 +26,5 @@ typedef BoolConstant<true > TrueType;
 typedef BoolConstant<false> FalseType;
 
 } /* Namespace Lal */
+
+#endif /* LAL_WITH_LEGACY_TRAITS */

@@ -109,6 +109,8 @@ static_assert(TIterator_CanTraverseBackward_v<i64*>);
 static_assert(TIterator_IsPointerLike_v<i64*>);
 static_assert(TIterator_IsContiguous_v<i64*>);
 
+#if LAL_WITH_LEGACY_ITERATORS
+
 namespace Private
 {
 
@@ -1113,6 +1115,8 @@ struct TDefaultReversedFilteredIteratorFactory
     const Predicate& Filter;
 };
 
+#endif /* LAL_WITH_LEGACY_ITERATORS */
+
 } /* ~Namespace Lal */
 
 #ifndef ITERATOR
@@ -1126,6 +1130,8 @@ struct TDefaultReversedFilteredIteratorFactory
 #ifndef ITERATOR_CROSS
     #define ITERATOR_CROSS(A, B) ::Lal::TCrossIteratorConcept<decltype(A), decltype(B)>
 #endif /* ITERATOR_CROSS */
+
+#if LAL_WITH_LEGACY_ITERATORS
 
 namespace Lal::Private
 {
@@ -1191,3 +1197,5 @@ FORCEINLINE constexpr auto make_move_iterator(Iterator It) noexcept -> decltype(
 }
 
 } /* ~Namespace std */
+
+#endif /* LAL_WITH_LEGACY_ITERATORS */

@@ -62,6 +62,12 @@
 #endif /* IN_SHIPPING */
 
 ///////////////////////////////////////////////////////////////////////////////
+// Whether this is a reflected build.
+#ifndef LAL_IS_REFLECTED
+    #define LAL_IS_REFLECTED            0
+#endif /* !LAL_IS_REFLECTED */
+
+///////////////////////////////////////////////////////////////////////////////
 // Build targets.
 #ifndef AS_CLIENT
     #define AS_CLIENT                   0

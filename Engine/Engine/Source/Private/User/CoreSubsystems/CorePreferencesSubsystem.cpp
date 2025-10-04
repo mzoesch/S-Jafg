@@ -32,7 +32,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
         Smart::TUnique<LPreferenceCollection> Screen = Smart::EmplaceUnique<LPreferenceCollection>(Name_PrefAudio, "Audio");
 
         {
-            Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::EmplaceUnique<LPreferenceValue_Scalar>(MAKE_DYNAMIC_NAME("MasterVolume"), "Master Volume");
+            Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::EmplaceUnique<LPreferenceValue_Scalar>(MAKE_NAME("MasterVolume"), "Master Volume");
             Preference->SetDefaultValue(UserPreferences->MasterVolume);
             Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->MasterVolume; });
             Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->MasterVolume = static_cast<f32>(Value); });
@@ -43,7 +43,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
         }
 
         {
-            Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::EmplaceUnique<LPreferenceValue_Scalar>(MAKE_DYNAMIC_NAME("MusicVolume"), "Music Volume");
+            Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::EmplaceUnique<LPreferenceValue_Scalar>(MAKE_NAME("MusicVolume"), "Music Volume");
             Preference->SetDefaultValue(UserPreferences->MusicVolume);
             Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->MusicVolume; });
             Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->MusicVolume = static_cast<f32>(Value); });
@@ -54,7 +54,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
         }
 
         {
-            Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::EmplaceUnique<LPreferenceValue_Scalar>(MAKE_DYNAMIC_NAME("MiscVolume"), "Misc Volume");
+            Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::EmplaceUnique<LPreferenceValue_Scalar>(MAKE_NAME("MiscVolume"), "Misc Volume");
             Preference->SetDefaultValue(UserPreferences->MiscVolume);
             Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->MiscVolume; });
             Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->MiscVolume = static_cast<f32>(Value); });
@@ -65,7 +65,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
         }
 
         {
-            Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::EmplaceUnique<LPreferenceValue_Scalar>(MAKE_DYNAMIC_NAME("VoiceVolume"), "Voice Volume");
+            Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::EmplaceUnique<LPreferenceValue_Scalar>(MAKE_NAME("VoiceVolume"), "Voice Volume");
             Preference->SetDefaultValue(UserPreferences->VoiceVolume);
             Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->VoiceVolume; });
             Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->VoiceVolume = static_cast<f32>(Value); });
@@ -274,7 +274,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 
                     Smart::TUnique<LPreferenceValue_CliType> T = Smart::EmplaceUnique<LPreferenceValue_CliType>
                     (
-                        MAKE_DYNAMIC_NAME(LString::SprintF("CliType_{}", Type.GetIdentifier())),
+                        MAKE_NAME(LString::SprintF("CliType_{}", Type.GetIdentifier())),
                         LString::SprintF("Cli Type {}", Type.GetIdentifier()),
                         Handle.GetValue()
                     );
@@ -301,7 +301,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 
                     Smart::TUnique<LPreferenceValue_CliCommand> T = Smart::EmplaceUnique<LPreferenceValue_CliCommand>
                     (
-                        MAKE_DYNAMIC_NAME(LString::SprintF("CliCmd_{}", Type.GetIdentifier())),
+                        MAKE_NAME(LString::SprintF("CliCmd_{}", Type.GetIdentifier())),
                         LString::SprintF("Cli Cmd {}", Type.GetIdentifier()),
                         Handle.GetValue()
                     );
@@ -328,7 +328,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
 
                     Smart::TUnique<LPreferenceValue_CliVariable> T = Smart::EmplaceUnique<LPreferenceValue_CliVariable>
                     (
-                        MAKE_DYNAMIC_NAME(LString::SprintF("CliVar_{}", Type.GetIdentifier())),
+                        MAKE_NAME(LString::SprintF("CliVar_{}", Type.GetIdentifier())),
                         LString::SprintF("Cli Var {}", Type.GetIdentifier()),
                         Handle.GetValue()
                     );

@@ -126,7 +126,7 @@ struct TRotator final
 
     LString ToString() const
     {
-        return LString::SprintF("{:.2f} {:.2f} {:.2f}", Pitch, Yaw, Roll);
+        return Lal::SprintF("{:.2f} {:.2f} {:.2f}", Pitch, Yaw, Roll);
     }
 };
 

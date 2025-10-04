@@ -36,7 +36,7 @@ struct ENGINE_API LInputAction final
     (
         const LString& InDisplayName,
         const EInputActionCategory::Type InCategory
-    ) : Name(MAKE_DYNAMIC_NAME(InDisplayName)), DisplayName(InDisplayName), Category(InCategory) {  }
+    ) : Name(MAKE_NAME(InDisplayName)), DisplayName(InDisplayName), Category(InCategory) {  }
 
     DEFAULT_REALLOC_OF_ANY_FORM(LInputAction)
 

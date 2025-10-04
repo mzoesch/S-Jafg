@@ -10,7 +10,12 @@ namespace Lal
 template <std::unsigned_integral T, LSize Alignment = alignof(T)>
 struct TTag
 {
-    enum : T { NO_TAG = 0 };
+    template <typename TTag, typename TAllocator>
+    friend struct TTagRegistry;
+
+    using SizeType = T;
+
+    enum : SizeType { NO_TAG = 0 };
 
     FORCEINLINE constexpr TTag() noexcept : Value(NO_TAG) { }
     FORCEINLINE constexpr TTag(const TTag& Other) noexcept = default;
@@ -33,6 +38,8 @@ struct TTag
     // ~Hashing only. Do not use.
     ///////////////////////////////////////////////////////////////////////////////
 
+    FORCEINLINE constexpr T GetUnderlyingValue() const noexcept { return this->Value; }
+
 private:
 
     FORCEINLINE explicit constexpr TTag(const T InValue) noexcept : Value(InValue)
@@ -44,13 +51,14 @@ private:
     T Value;
 };
 
-template <std::unsigned_integral T, LSize Alignment = alignof(T), typename TAllocator = TArray<TTag<T, Alignment>>>
+template <typename TTag, typename TAllocator = TArray<LString>>
 struct TTagRegistry
 {
-    using TagType = TTag<T, Alignment>;
+    using TagType   = TTag;
     using Allocator = TAllocator;
+    using ReprType  = typename Allocator::T;
 
-    FORCEINLINE constexpr TTagRegistry() noexcept = default;
+    FORCEINLINE constexpr TTagRegistry() noexcept requires(std::is_default_constructible_v<Allocator>) = default;
     template <typename... TArgs> requires(std::is_constructible_v<Allocator, TArgs...>)
     FORCEINLINE constexpr TTagRegistry(TArgs&&... Args) noexcept(std::is_nothrow_constructible_v<Allocator, TArgs...>)
         : Tags(std::forward<TArgs>(Args)...)
@@ -58,19 +66,73 @@ struct TTagRegistry
         return;
     }
 
-    FORCEINLINE constexpr bool IsTagRegistered(const TagType InTag) const noexcept
-    {
-        return InTag.IsSet() && InTag.Value <= this->Tags.GetSize();
-    }
-
-    //# FORCEINLINE constexpr bool IsTagRegistered(CString auto&& InRepr) const noexcept
-    //# {
-    //#     return this->Tags.Contains(InRepr);
-    //# }
-
     FORCEINLINE u64 GetTagCount() const noexcept { return this->Tags.GetSize(); }
 
-    FORCEINLINE u64 Destroy() const
+    FORCEINLINE TagType GetTag(Trait::CString auto&& InRepr) const noexcept
+    {
+        if (const typename Allocator::SizeType Idx { this->Tags.FindIndex(InRepr) }; Idx != this->Tags.GetSize())
+        {
+            return TagType(static_cast<typename TagType::SizeType>(Idx + 1));
+        }
+        return TagType{};
+    }
+    FORCEINLINE TagType GetTagChecked(Trait::CString auto&& InRepr) const noexcept
+    {
+        const TagType Tag {this->GetTag(InRepr)};
+        check( Tag.IsSet() )
+        return Tag;
+    }
+    FORCEINLINE TagType GetTagAsserted(Trait::CString auto&& InRepr) const noexcept
+    {
+        const TagType Tag {this->GetTag(InRepr)};
+        jassert( Tag.IsSet() )
+        return Tag;
+    }
+
+    FORCEINLINE constexpr bool IsTagRegistered(Trait::CString auto&& InRepr) const noexcept
+    {
+        return this->Tags.Contains(InRepr);
+    }
+
+    FORCEINLINE TagType RegisterOrGet(Trait::CString auto&& InRepr) noexcept
+    {
+        if (const TagType Tag {this->GetTag(InRepr)}; Tag.IsSet())
+        {
+            return Tag;
+        }
+
+        LString x{std::forward<decltype(InRepr)>(InRepr)};
+
+        this->Tags.Emplace(std::forward<decltype(InRepr)>(InRepr));
+        LOG_TRACE(LogTags, "Registered tag [{}].", *this->Tags.GetLast())
+
+        return TagType{static_cast<typename TagType::SizeType>(this->GetTagCount())};
+    }
+
+    template <LSize N>
+    FORCEINLINE TagType RegisterOrGet(const char(&InRepr)[N]) noexcept
+    {
+        return this->RegisterOrGet(LStringView{InRepr, N - 1});
+    }
+
+    FORCEINLINE const ReprType& GetReprFast(const TagType InTag) const { check( InTag.IsSet() ) return this->Tags[InTag.GetUnderlyingValue() - 1]; }
+    FORCEINLINE ReprType GetReprSafe(const TagType InTag) const
+    {
+        if (InTag.IsSet() == false)
+        {
+            return "<NotSet>";
+        }
+
+        if (InTag.GetUnderlyingValue() - 1 < this->Tags.GetSize())
+        {
+            return this->GetReprFast(InTag);
+        }
+
+        static const ReprType Unknown { "<Unknown>" };
+        return Unknown;
+    }
+
+    FORCEINLINE u64 Destroy()
     {
         const u64 Count { this->Tags.GetSize() };
 

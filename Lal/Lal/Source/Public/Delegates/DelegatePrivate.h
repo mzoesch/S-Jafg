@@ -209,7 +209,9 @@ private:
     u32 Handle;
 };
 
-static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<LDelegateHandle>);
+#if LAL_WITH_LEGACY_LAL_ARRAY
+    static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<LDelegateHandle>);
+#endif /* LAL_WITH_LEGACY_LAL_ARRAY */
 
 /**
  * A delegate that can store multiple functions and broadcast to all of them.
@@ -255,6 +257,8 @@ private:
 
     static constexpr u32 InvalidHandle { 0 };
     u32         HandleCount { 0 };
+
+    // TODO: Use one array with structs or std::pair.
     TArray<u32> DelegatesHandles;
     TArray<TFunction<RetTy(ParamsTy...)>> Delegates;
 };
@@ -270,7 +274,7 @@ bool TMulticastDelegate<RetTy(ParamsTy...)>::Broadcast(ParamsTy... InFuncParams)
     /**
      * Delegates must never remove their handle when boradcasting, so this is safe.
      */
-    return this->Delegates.IsEmpty() == false;
+    return this->Delegates.empty() == false;
 }
 
 template <typename RetTy, typename... ParamsTy>
@@ -280,14 +284,17 @@ LDelegateHandle TMulticastDelegate<RetTy(ParamsTy...)>::AddStrong(CallableTy&& I
     static_assert(
         std::is_invocable_v<CallableTy, ParamsTy...>,
         "Callable is not invocable with parameters. Was an invalid function signature provided?"
-    );
+        );
     static_assert(
         std::is_same_v<std::invoke_result_t<CallableTy, ParamsTy...>, void>,
         "Callable must return void."
-    );    this->Delegates.Emplace(std::forward<CallableTy>(InCallable));
-    this->DelegatesHandles.Emplace(++HandleCount);
-    checkSlow( *this->DelegatesHandles.Peek() == this->HandleCount  )
-    return LDelegateHandle(*this->DelegatesHandles.Peek());
+        );
+
+    this->Delegates.emplace_back(std::forward<CallableTy>(InCallable));
+    this->DelegatesHandles.emplace_back(++HandleCount);
+
+    checkSlow( this->DelegatesHandles.back() == this->HandleCount  )
+    return LDelegateHandle{this->DelegatesHandles.back()};
 }
 
 template <typename RetTy, typename... ParamsTy>
@@ -297,14 +304,17 @@ LDelegateHandle TMulticastDelegate<RetTy(ParamsTy...)>::AddWeak(CallableTy* InCa
     static_assert(
         std::is_invocable_v<CallableTy, ParamsTy...>,
         "Callable is not invocable with parameters. Was an invalid function signature provided?"
-    );
+        );
     static_assert(
         std::is_same_v<std::invoke_result_t<CallableTy, ParamsTy...>, void>,
         "Callable must return void."
-    );    this->Delegates.Emplace(InCallable);
-    this->DelegatesHandles.Emplace(++HandleCount);
-    checkSlow( *this->DelegatesHandles.Peek() == this->HandleCount  )
-    return LDelegateHandle(*this->DelegatesHandles.Peek());
+        );
+
+    this->Delegates.emplace_back(InCallable);
+    this->DelegatesHandles.emplace_back(++HandleCount);
+
+    checkSlow( this->DelegatesHandles.back() == this->HandleCount  )
+    return LDelegateHandle{this->DelegatesHandles.back()};
 }
 
 template <typename RetTy, typename... ParamsTy>
@@ -314,27 +324,29 @@ LDelegateHandle TMulticastDelegate<RetTy(ParamsTy...)>::AddMember(ObjTy* InObj, 
     static_assert(
         std::is_invocable_v<CallableTy, ObjTy*, ParamsTy...>,
         "Callable is not invocable with object and parameters. Was an invalid function signature provided?"
-    );
+        );
     static_assert(
         std::is_same_v<std::invoke_result_t<CallableTy, ObjTy*, ParamsTy...>, void>,
         "Callable must return void."
-    );
-    this->Delegates.Emplace(InObj, InMember);
-    this->DelegatesHandles.Emplace(++HandleCount);
-    checkSlow( *this->DelegatesHandles.Peek() == this->HandleCount  )
-    return LDelegateHandle(*this->DelegatesHandles.Peek());
+        );
+
+    this->Delegates.emplace_back(InObj, InMember);
+    this->DelegatesHandles.emplace_back(++HandleCount);
+
+    checkSlow( this->DelegatesHandles.back() == this->HandleCount  )
+    return LDelegateHandle{this->DelegatesHandles.back()};
 }
 
 template <typename RetTy, typename... ParamsTy>
 bool TMulticastDelegate<RetTy(ParamsTy...)>::IsStillBound(const LDelegateHandle& InDelegateHandle) const
 {
-    return this->DelegatesHandles.Contains(InDelegateHandle.Handle);
+    return Algo::Contains(this->DelegatesHandles, InDelegateHandle.Handle);
 }
 
-    template <typename RetTy, typename... ParamsTy>
-    bool TMulticastDelegate<RetTy(ParamsTy...)>::HasAny() const
+template <typename RetTy, typename... ParamsTy>
+bool TMulticastDelegate<RetTy(ParamsTy...)>::HasAny() const
 {
-    return this->DelegatesHandles.IsEmpty() == false;
+    return this->DelegatesHandles.empty() == false;
 }
 
 template <typename RetTy, typename... ParamsTy>
@@ -342,19 +354,24 @@ bool TMulticastDelegate<RetTy(ParamsTy...)>::Remove(LDelegateHandle* InDelegateH
 {
     check( InDelegateHandle )
 
-    for (TArray<u32>::SizeType Idx = 0; Idx < this->DelegatesHandles.GetSize(); ++Idx)
+    check( this->Delegates.size() == this->DelegatesHandles.size() )
+
+    auto Begin { this->DelegatesHandles.begin() };
+    while (Begin != this->DelegatesHandles.end())
     {
-        if (this->DelegatesHandles[Idx] == InDelegateHandle->Handle)
+        if (*Begin == InDelegateHandle->Handle)
         {
-            this->Delegates.RemoveAt(Idx);
-            this->DelegatesHandles.RemoveAt(Idx);
+            this->Delegates.erase(this->Delegates.begin() + std::distance(this->DelegatesHandles.begin(), Begin));
+            this->DelegatesHandles.erase(Begin);
 
             InDelegateHandle->Reset();
 
-            checkSlow( this->Delegates.GetSize() == this->DelegatesHandles.GetSize() )
+            checkSlow( this->Delegates.size() == this->DelegatesHandles.size() )
 
             return true;
         }
+
+        ++Begin;
 
         continue;
     }
@@ -365,15 +382,15 @@ bool TMulticastDelegate<RetTy(ParamsTy...)>::Remove(LDelegateHandle* InDelegateH
 template <typename RetTy, typename... ParamsTy>
 i32 TMulticastDelegate<RetTy(ParamsTy...)>::UnbindAll()
 {
-    for (TFunction<RetTy(ParamsTy...)>& Delegate : this->Delegates)
+    for (auto& Delegate : this->Delegates)
     {
         Delegate.Reset();
     }
 
-    const i32 NumDelegates = this->Delegates.GetSize();
+    const i32 NumDelegates { static_cast<i32>(this->Delegates.size()) };
 
-    this->Delegates.Empty();
-    this->DelegatesHandles.Empty();
+    std::orphan(&this->Delegates);
+    std::orphan(&this->DelegatesHandles);
 
     /*
      * Do not reset handle count to avoid handle reuse.
@@ -384,11 +401,13 @@ i32 TMulticastDelegate<RetTy(ParamsTy...)>::UnbindAll()
 
 } /* ~Namespace Jafg */
 
-template <typename RetTy, typename... ParamsTy>
-struct Lal::TArrayBaseAllowTrivialMemoryBufferMove<Jafg::TMulticastDelegate<RetTy(ParamsTy...)>> : Lal::TrueType { };
+#if LAL_WITH_LEGACY_LAL_ARRAY
+    template <typename RetTy, typename... ParamsTy>
+    struct Lal::TArrayBaseAllowTrivialMemoryBufferMove<Jafg::TMulticastDelegate<RetTy(ParamsTy...)>> : Lal::TrueType { };
 
-template <typename RetTy, typename... ParamsTy>
-struct Lal::TArrayBaseAllowTrivialMemoryBufferMove<Jafg::TFunction<RetTy(ParamsTy...)>> : Lal::TrueType { };
+    template <typename RetTy, typename... ParamsTy>
+    struct Lal::TArrayBaseAllowTrivialMemoryBufferMove<Jafg::TFunction<RetTy(ParamsTy...)>> : Lal::TrueType { };
 
-static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<Jafg::TMulticastDelegate<int()>>);
-static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<Jafg::TFunction<int()>>);
+    static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<Jafg::TMulticastDelegate<int()>>);
+    static_assert(Lal::TArrayBaseAllowTrivialMemoryBufferMove_v<Jafg::TFunction<int()>>);
+#endif /* LAL_WITH_LEGACY_LAL_ARRAY */

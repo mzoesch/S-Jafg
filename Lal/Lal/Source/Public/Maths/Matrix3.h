@@ -471,9 +471,9 @@ template <typename T>
 LString TMatrix3<T>::ToString() const
 {
     LString Result;
-    for (i32 Col = 0; Col < 3; ++Col)
+    for (i32 Col { 0 }; Col < 3; ++Col)
     {
-        Result.Append(LString::SprintF("{:.2f} {:.2f} {:.2f}\n",
+        Result.append(Lal::SprintF("{:.2f} {:.2f} {:.2f}\n",
             this->Matrix[Col][0], this->Matrix[Col][1], this->Matrix[Col][2]));
     }
 

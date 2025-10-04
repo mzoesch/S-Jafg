@@ -148,10 +148,10 @@
 //# Same as jassertNoEntry but more user-friendly with a message. Eww, is this that GoLang?
 //#
 #define panic(Msg)                              LAL_GORGEOUS_TRAP_MSG( "Program panicked. " Msg )
-#define panicMsgf(Format, ...)                  LAL_GORGEOUS_TRAP_MSG( ::LString::SprintF         \
+#define panicMsgf(Format, ...)                  LAL_GORGEOUS_TRAP_MSG( ::Lal::SprintF             \
                                                 (                                                 \
                                                     "Program panicked. " Format "", ##__VA_ARGS__ \
-                                                ).ToPtr() )
+                                                ).c_str() )
 
 
 /*----------------------------------------------------------------------------
@@ -289,7 +289,7 @@
 
 //# Combines an expression with a formatted message.
 #define PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ...) \
-    ::LString::SprintF                                                     \
+    ::Lal::SprintF                                                         \
     (                                                                      \
         "Program panicked. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__ \
     )
@@ -304,7 +304,7 @@
     "Program panicked. Reason: [" #Expr "]. " Msg ""                   \
     LAL_LOG_COLOR_END
 #define PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_MSGF_GET_MSG_ANSI(Expr, Format, ...) \
-    ::LString::SprintF                                                          \
+    ::Lal::SprintF                                                              \
     (                                                                           \
         LAL_LOG_COLOR_FATAL                                                     \
         "Program panicked. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__      \
@@ -321,7 +321,7 @@
 
 //# Combines an expression with a formatted message.
 #define PRIVATE_LAL_ASSERT_WEAK_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ...)            \
-    ::LString::SprintF                                                              \
+    ::Lal::SprintF                                                                  \
     (                                                                               \
         "Program run into an error. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__ \
     )
@@ -336,7 +336,7 @@
     "Program run into an error. Reason: [" #Expr "]. " Msg ""        \
     LAL_LOG_COLOR_END
 #define PRIVATE_LAL_ASSERT_WEAK_LOG_EXPR_MSGF_GET_MSG_ANSI(Expr, Format, ...)       \
-    ::LString::SprintF                                                              \
+    ::Lal::SprintF                                                                  \
     (                                                                               \
         LAL_LOG_COLOR_ERROR                                                         \
         "Program run into an error. Reason: [" #Expr "]. " Format "", ##__VA_ARGS__ \
@@ -418,7 +418,7 @@
     )
 
 #define PRIVATE_LAL_ASSERT_STRONG_MSGF_IMPL_ON_FAIL(Expr, Format, ...)                                          \
-    LAL_GORGEOUS_TRAP_MSG(PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ##__VA_ARGS__).ToPtr()) \
+    LAL_GORGEOUS_TRAP_MSG(PRIVATE_LAL_ASSERT_STRONG_LOG_EXPR_MSGF_GET_MSG(Expr, Format, ##__VA_ARGS__).c_str()) \
 
 #define PRIVATE_LAL_ENSURE_IMPL(Expr)              \
     (LAL_LIKELY(Expr) || [](void) -> bool          \

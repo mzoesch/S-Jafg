@@ -38,7 +38,7 @@ void Lal::LOnPlatformBreakLinux::OnProgramPanicImpl
     ///////////////////////////////////////////////////////////////////////////////
     // pthread kill
     LString TaskPath { "/proc/self/task" };
-    if (DIR* Dir { ::opendir(TaskPath.ToPtr()) }; Dir)
+    if (DIR* Dir { ::opendir(TaskPath.c_str()) }; Dir)
     {
         struct dirent* Entry;
 
@@ -73,10 +73,10 @@ void Lal::LOnPlatformBreakLinux::OnProgramPanicImpl
     //
     std::stringstream Stream;
     Stream << "gdb -p " << Pid
-           << " -batch -ex \"gcore " << DumpF.ToPtr()
+           << " -batch -ex \"gcore " << DumpF.c_str()
            << "\" -ex \"detach\" -ex \"quit\""
            ;
-    std::filesystem::create_directories(DumpF.GetParent().ToPtr());
+    std::filesystem::create_directories(DumpF.parent_path().c_str());
     LOG_VERBOSE(LogJafgInternal, "Executing memory dump command: [{}].", Stream.str());
     if (const i32 Rc { ::system(Stream.str().c_str()) }; Rc != 0)
     {
@@ -139,14 +139,14 @@ void Lal::LOnPlatformBreakLinux::OnProgramPanicImpl
         Lal::FlushOutStreams();
         const LString Zenity
         {
-            LString::SprintF
+            Lal::SprintF
             (
                 "zenity --error --title=\"Jafg Panic; We are fucked.\" --text=\"{}\n\nStacktrace:\n{}\"",
                 ZenityMessage,
                 TraceStream.str()
             )
         };
-        ::system(Zenity.ToPtr());
+        ::system(Zenity.c_str());
     }
     else
     {
@@ -157,7 +157,7 @@ void Lal::LOnPlatformBreakLinux::OnProgramPanicImpl
     /* Try writing the dump first, as this is also likely to fail - and then we would not have any dump. */
     const LString TraceContent
     {
-        LString::SprintF
+        Lal::SprintF
         (
             "{}\n\nStacktrace:\n{}",
             InMessage,

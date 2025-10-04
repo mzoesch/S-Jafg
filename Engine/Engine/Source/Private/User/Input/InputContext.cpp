@@ -30,7 +30,7 @@ Jafg::LUserInputContext::LUserInputContext(LName InUniqueIdentifier, const LStri
 }
 
 Jafg::LUserInputContext::LUserInputContext(const LString& InDisplayName)
-    : Name(MAKE_DYNAMIC_NAME(InDisplayName)), DisplayName(InDisplayName)
+    : Name(MAKE_NAME(InDisplayName)), DisplayName(InDisplayName)
 {
     check( this->Name.IsSet() )
 

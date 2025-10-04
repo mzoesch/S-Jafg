@@ -2,6 +2,8 @@
 
 #pragma once
 
+#if TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS
+
 TEST_CASE(TraitsCore, "Lal.Traits")
 {
     CHECK_STATIC(Trait::CString<std::string>)
@@ -31,3 +33,5 @@ TEST_CASE(TraitsCore, "Lal.Traits")
 
     return;
 }
+
+#endif /* TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS */

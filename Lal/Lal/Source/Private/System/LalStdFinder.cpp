@@ -9,95 +9,39 @@
     #undef CreateFile
 #endif /* PLATFORM_WINDOWS */
 
-namespace
+LPath Finder::GetCwd()
 {
+    return std::filesystem::current_path();
+}
 
-bool DoesExist(const std::filesystem::path& Path);
-bool DoesFileExist(const std::filesystem::path& File);
-bool DoesDirectoryExist(const std::filesystem::path& Directory);
-void CreateFile(const std::filesystem::path& File, const bool bMakeParents);
-void CreateDirectories(const std::filesystem::path& Directory);
-
-bool DoesExist(const std::filesystem::path& Path)
+bool Finder::DoesExist(const LPath& Path)
 {
     return std::filesystem::exists(Path);
 }
 
-bool DoesFileExist(const std::filesystem::path& File)
+bool Finder::DoesFileExist(const LPath& File)
 {
     return std::filesystem::is_regular_file(File);
 }
 
-bool DoesDirectoryExist(const std::filesystem::path& Directory)
+bool Finder::DoesDirectoryExist(const LPath& Directory)
 {
     return std::filesystem::is_directory(Directory);
 }
 
-void CreateFile(const std::filesystem::path& File, const bool bMakeParents)
+void Finder::EnsureFile(const LPath& File)
 {
-    if (bMakeParents)
+    if (DoesExist(File) == false)
     {
-        ::CreateDirectories(File.parent_path());
-    }
-
-    if (std::ofstream Out{ File }; Out.fail())
-    {
-        LOG_FATAL(LogSystem, "Failed to create file: [{}].", File.string())
-    }
-    else
-    {
-        Out.close();
+        CreateFile(File, true);
     }
 
     return;
 }
 
-void CreateDirectories(const std::filesystem::path& Directory)
+void Finder::CheckFile(const LPath& File)
 {
-    if (std::filesystem::create_directories(Directory))
-    {
-        LOG_VERBOSE(LogSystem, "Created directory [{}].", Directory.string())
-    }
-
-    return;
-}
-
-} /* ~Namespace <Anonymous> */
-
-LPath Finder::GetCwd()
-{
-    const std::filesystem::path Cwd{std::filesystem::current_path()};
-    return LPath{ Cwd.native().cbegin().base(), Cwd.native().cend().base() };
-}
-
-bool Finder::DoesExist(const LPathView& Path)
-{
-    return ::DoesExist(std::filesystem::path{Path.begin_ptr(), Path.end_ptr()});
-}
-
-bool Finder::DoesFileExist(const LPathView& File)
-{
-    return ::DoesFileExist(std::filesystem::path{File.begin_ptr(), File.end_ptr()});
-}
-
-bool Finder::DoesDirectoryExist(const LPathView& Directory)
-{
-    return ::DoesDirectoryExist(std::filesystem::path{Directory.begin_ptr(), Directory.end_ptr()});
-}
-
-void Finder::EnsureFile(const LPathView& File)
-{
-    if (const std::filesystem::path StdPath{File.begin_ptr(), File.end_ptr()}; ::DoesFileExist(StdPath) == false)
-    {
-        ::CreateFile(StdPath, true);
-    }
-
-    return;
-}
-
-void Finder::CheckFile(const LPathView& File)
-{
-    if (::DoesFileExist(std::filesystem::path{File.begin_ptr(), File.end_ptr()}) == false)
+    if (DoesFileExist(File) == false)
     {
         LOG_FATAL(LogSystem, "No such file: [{}].", File)
     }
@@ -105,14 +49,13 @@ void Finder::CheckFile(const LPathView& File)
     return;
 }
 
-bool Finder::AreFilesIdentical(const LPathView& A, const LPathView& B)
+bool Finder::AreFilesIdentical(const LPath& A, const LPath& B)
 {
-
     LOG_TRACE(LogSystem, "Reading file [{}].", A)
-    std::ifstream F1(std::filesystem::path{A.begin_ptr(), A.end_ptr()}, std::ios::binary);
+    std::ifstream F1(A, std::ios::binary);
 
     LOG_TRACE(LogSystem, "Reading file [{}].", B)
-    std::ifstream F2(std::filesystem::path{B.begin_ptr(), B.end_ptr()}, std::ios::binary);
+    std::ifstream F2(B, std::ios::binary);
 
     if (!F1 || !F2)
     {
@@ -144,57 +87,74 @@ bool Finder::AreFilesIdentical(const LPathView& A, const LPathView& B)
     return F1.eof() && F2.eof();
 }
 
-void Finder::CreateFile(const LPathView& File, const bool bMakeParents)
+void Finder::CreateFile(const LPath& File, const bool bMakeParents)
 {
-    ::CreateFile(std::filesystem::path{File.begin_ptr(), File.end_ptr()}, bMakeParents);
+    if (bMakeParents)
+    {
+        CreateDirectories(File.parent_path());
+    }
+
+    if (std::ofstream Out{ File }; Out.fail())
+    {
+        LOG_FATAL(LogSystem, "Failed to create file: [{}].", File.string())
+    }
+    else
+    {
+        Out.close();
+    }
+
+    return;
 }
 
-void Finder::CreateDirectories(const LPathView& Directory)
+void Finder::CreateDirectories(const LPath& Directory)
 {
-    ::CreateDirectories(std::filesystem::path{Directory.begin_ptr(), Directory.end_ptr()});
+    if (std::filesystem::create_directories(Directory))
+    {
+        LOG_VERBOSE(LogSystem, "Created directory [{}].", Directory.string())
+    }
+
+    return;
 }
 
-LString Finder::ReadFile(const LPathView& File)
+LString Finder::ReadFile(const LPath& File)
 {
     LString Error;
-    Jafg::TOptional<LString> Out { TryReadFile(File, &Error) };
+    TOptional Out { TryReadFile(File, &Error) };
 
     if (!Out)
     {
         LOG_FATAL(LogSystem, "{}", Error)
     }
 
-    LString Val { std::move(Out.GetValue()) };
-    check( Out.GetValue().IsEmpty() )
+    LString Val { std::move(Out.value()) };
     return Val;
 }
 
-TArray<u8> Finder::ReadFileAsBinary(const LPathView& File)
+TArray<u8> Finder::ReadFileAsBinary(const LPath& File)
 {
     LString Error;
-    Jafg::TOptional<TArray<u8>> Out { TryReadFileAsBinary(File, &Error) };
+    TOptional Out { TryReadFileAsBinary(File, &Error) };
 
     if (!Out)
     {
         LOG_FATAL(LogSystem, "{}", Error)
     }
 
-    TArray<u8> Val { std::move(Out.GetValue()) };
-    check( Out.GetValue().IsEmpty() )
+    TArray Val { std::move(Out.value()) };
     return Val;
 }
 
-Jafg::TOptional<LString> Finder::TryReadFile(const LPathView& File, LString* OutHumanReadableError)
+TOptional<LString> Finder::TryReadFile(const LPath& File, LString* OutHumanReadableError)
 {
     LOG_TRACE(LogSystem, "Reading file [{}].", File)
 
-    const std::ifstream F(std::filesystem::path{File.begin_ptr(), File.end_ptr()}, std::ios::in | std::ios::binary);
+    const std::ifstream F{File, std::ios::in | std::ios::binary};
 
     if (F.fail())
     {
         if (OutHumanReadableError)
         {
-            *OutHumanReadableError = LString::SprintF("Failed to open file: [{}].", File);
+            *OutHumanReadableError = Lal::SprintF("Failed to open file: [{}].", File);
         }
 
         return { };
@@ -205,36 +165,32 @@ Jafg::TOptional<LString> Finder::TryReadFile(const LPathView& File, LString* Out
     return LString{ S.begin().base(), S.end().base() };
 }
 
-Jafg::TOptional<TArray<u8>> Finder::TryReadFileAsBinary(const LPathView& File, LString* OutHumanReadableError)
+TOptional<TArray<u8>> Finder::TryReadFileAsBinary(const LPath& File, LString* OutHumanReadableError)
 {
     LOG_TRACE(LogSystem, "Reading file [{}].", File)
 
-    std::ifstream F
-    {
-        std::filesystem::path{File.begin_ptr(), File.end_ptr()},
-        std::ios::binary | std::ios::ate
-    };
-
+    std::ifstream F{ File, std::ios::binary | std::ios::ate};
     if (F.fail())
     {
         if (OutHumanReadableError)
         {
-            *OutHumanReadableError = LString::SprintF("Failed to open file at [{}].", File);
+            *OutHumanReadableError = Lal::SprintF("Failed to open file at [{}].", File);
         }
 
         return { };
     }
 
-    TArray<u8> Buffer; Buffer.AddUninitialized(F.tellg());
+    TArray<u8> Buffer;
+    Lal::AddUninitialized(&Buffer, static_cast<TArray<u8>::size_type>(F.tellg()));
 
     F.seekg(0, std::ios::beg);
 
-    if (F.read(reinterpret_cast<LJafgChar*>(Buffer.GetDataPointer()), Buffer.GetSize()).fail())
+    if (F.read(reinterpret_cast<LJafgChar*>(Buffer.data()), Buffer.size()).fail())
     {
         F.close();
         if (OutHumanReadableError)
         {
-            *OutHumanReadableError = LString::SprintF("Failed to read file at [{}].", File);
+            *OutHumanReadableError = Lal::SprintF("Failed to read file at [{}].", File);
         }
 
         return { };
@@ -245,22 +201,20 @@ Jafg::TOptional<TArray<u8>> Finder::TryReadFileAsBinary(const LPathView& File, L
     return Buffer;
 }
 
-void Finder::OverrideFile(const LPathView& File, const LStringView& Content, const bool bUseNativeLineEndings)
+void Finder::OverrideFile(const LPath& File, const LStringView& Content, const bool bUseNativeLineEndings)
 {
-    std::filesystem::path F{File.begin_ptr(), File.end_ptr()};
-
-    if (::DoesFileExist(F) == false)
+    if (DoesFileExist(File) == false)
     {
-        ::CreateFile(F, true);
+        CreateFile(File, true);
     }
 
     std::ofstream Out
     {
-        F,
+        File,
         std::ios::out | std::ios::trunc | (bUseNativeLineEndings ? static_cast<std::ios::openmode>(0) : std::ios::binary)
     };
 
-    Out.write(Content.begin_ptr(), Content.GetRuneCount());
+    Out.write(Content.begin(), Content.size());
     Out.close();
 
     LOG_TRACE(LogSystem, "File [{}] overridden.", File )
@@ -268,7 +222,7 @@ void Finder::OverrideFile(const LPathView& File, const LStringView& Content, con
     return;
 }
 
-void Finder::MakeFileBackup(const LPathView& File, const bool bMakeIfSame /* = false */, i32 Count /* = 5 */, const LStringView& Extension /* = ".old" */)
+void Finder::MakeFileBackup(const LPath& File, const bool bMakeIfSame /* = false */, i32 Count /* = 5 */, const LStringView& Extension /* = ".old" */)
 {
     LOG_VERBOSE(LogSystem, "Making backup of file [{}].", File)
 
@@ -278,9 +232,7 @@ void Finder::MakeFileBackup(const LPathView& File, const bool bMakeIfSame /* = f
         Count = 1;
     }
 
-    const std::filesystem::path F{File.begin_ptr(), File.end_ptr()};
-
-    if (::DoesFileExist(F) == false)
+    if (DoesFileExist(File) == false)
     {
         LOG_FATAL(LogSystem, "No such file: [{}].", File)
         return;
@@ -288,7 +240,10 @@ void Finder::MakeFileBackup(const LPathView& File, const bool bMakeIfSame /* = f
 
     if (bMakeIfSame)
     {
-        const LPath MostRecent { File.AppendPathToNew<LPath>(Extension) / '1' };
+        LPath MostRecent { File };
+        MostRecent.concat(Extension);
+        MostRecent.concat("1");
+
         EnsureFile(MostRecent);
         if (AreFilesIdentical(File, MostRecent))
         {
@@ -302,28 +257,25 @@ void Finder::MakeFileBackup(const LPathView& File, const bool bMakeIfSame /* = f
         checkSlow( Count > 0 )
 
         LPath Target { File };
-        Target.Append(Extension.begin(), Extension.end());
-        Target += LString::SprintF("{}", Count).ToPtr();
+        Target.append(Extension);
+        Target += Lal::SprintF("{}", Count);
 
         LPath Previous;
         if (Count == 1)
         {
-            Previous.Assign(File);
+            Previous.assign(File);
         }
         else
         {
-            Previous.Assign(File.begin(), File.end());
-            Previous.Append(Extension.begin(), Extension.end());
-            Previous += LString::SprintF("{}", Count - 1).ToPtr();
+            Previous.assign(File);
+            Previous.append(Extension);
+            Previous += Lal::SprintF("{}", Count - 1);
         }
 
-        const std::filesystem::path StdTarget {Target.begin_ptr(), Target.end_ptr()};
-        const std::filesystem::path StdPrevious {Previous.begin_ptr(), Previous.end_ptr()};
-
-        if (::DoesFileExist(StdPrevious))
+        if (DoesFileExist(Previous))
         {
             EnsureFile(Target);
-            std::filesystem::copy(StdPrevious, StdTarget, std::filesystem::copy_options::overwrite_existing);
+            std::filesystem::copy(Previous, Target, std::filesystem::copy_options::overwrite_existing);
         }
 
         continue;
@@ -334,44 +286,42 @@ void Finder::MakeFileBackup(const LPathView& File, const bool bMakeIfSame /* = f
 
 TArray<LString> Finder::FindFiles
 (
-    const LPathView& Directory,
+    const LPath& Directory,
     const bool bKeepExtension /* = true */,
     const LStringView& Extension /* = "*" */,
     std::regex_constants::syntax_option_type Options /* = std::regex_constants::ECMAScript */
 )
 {
-    std::filesystem::path D { Directory.begin_ptr(), Directory.end_ptr() };
-
-    if (::DoesDirectoryExist(D) == false)
+    if (DoesDirectoryExist(Directory) == false)
     {
         return { };
     }
 
     std::regex Pattern;
-    if (Extension != '*')
+    if (Extension != "*")
     {
-        Pattern = std::regex{ std::string{Extension.begin_ptr(), Extension.end_ptr()} };
+        Pattern = std::regex{ Extension.begin(), Extension.end(), Options };
     }
 
     TArray<LString> Out;
-    for (auto& P : std::filesystem::directory_iterator{D})
+    for (auto& P : std::filesystem::directory_iterator{Directory})
     {
         if (P.is_directory())
         {
             continue;
         }
 
-        if (Extension == '*' || std::regex_match(P.path().extension().string(), Pattern))
+        if (Extension == "*" || std::regex_match(P.path().extension().string(), Pattern))
         {
             if (bKeepExtension)
             {
                 const std::string S { P.path().filename().string() };
-                Out.Emplace(LString{ S.c_str(), S.size() });
+                Out.emplace_back(LString{ S.c_str(), S.size() });
             }
             else
             {
                 const std::string S { P.path().stem().string() };
-                Out.Emplace( LString{ S.c_str(), S.size() });
+                Out.emplace_back( LString{ S.c_str(), S.size() });
             }
         }
 
@@ -383,15 +333,13 @@ TArray<LString> Finder::FindFiles
 
 TArray<LString> Finder::FindFilesRecursively
 (
-    const LPathView& Directory,
+    const LPath& Directory,
     const bool bKeepExtension /* = true */,
     const LStringView& Regex /* = "*" */,
     std::regex_constants::syntax_option_type Options /* = std::regex_constants::ECMAScript */
 )
 {
-    const std::filesystem::path D { Directory.begin_ptr(), Directory.end_ptr() };
-
-    if (::DoesDirectoryExist(D) == false)
+    if (DoesDirectoryExist(Directory) == false)
     {
         return { };
     }
@@ -399,14 +347,14 @@ TArray<LString> Finder::FindFilesRecursively
     TArray<LString> Out;
 
     std::regex Pattern;
-    if (Regex != '*')
+    if (Regex != "*")
     {
-        Pattern = std::regex{ std::string{Regex.begin_ptr(), Regex.end_ptr()}, Options };
+        Pattern = std::regex{Regex.begin(), Regex.end(), Options };
     }
 
     for (const std::filesystem::directory_entry& P : std::filesystem::recursive_directory_iterator
          {
-             D,
+             Directory,
              std::filesystem::directory_options::skip_permission_denied
              | std::filesystem::directory_options::follow_directory_symlink
          })
@@ -416,17 +364,17 @@ TArray<LString> Finder::FindFilesRecursively
             continue;
         }
 
-        if (Regex == '*' || std::regex_match(P.path().native(), Pattern))
+        if (Regex == "*" || std::regex_match(P.path().native(), Pattern))
         {
             if (bKeepExtension)
             {
-                Out.Emplace(LString{ P.path().native().begin().base(), P.path().native().size() });
+                Out.emplace_back(LString{ P.path().native().begin().base(), P.path().native().size() });
             }
             else
             {
                 std::filesystem::path NoExtension { P.path().native() };
                 NoExtension.replace_extension();
-                Out.Emplace( LString{ NoExtension.native().begin().base(), NoExtension.native().size() } );
+                Out.emplace_back( NoExtension.string() );
             }
         }
 
@@ -436,11 +384,9 @@ TArray<LString> Finder::FindFilesRecursively
     return Out;
 }
 
-TArray<LString> Finder::FindFilesRecursivelyByName(const LPathView& Directory, const LStringView& FileName)
+TArray<LString> Finder::FindFilesRecursivelyByName(const LPath& Directory, const LStringView& FileName)
 {
-    const std::filesystem::path D { Directory.begin_ptr(), Directory.end_ptr() };
-
-    if (::DoesDirectoryExist(D) == false)
+    if (DoesDirectoryExist(Directory) == false)
     {
         return { };
     }
@@ -449,7 +395,7 @@ TArray<LString> Finder::FindFilesRecursivelyByName(const LPathView& Directory, c
 
     for (const std::filesystem::directory_entry& P : std::filesystem::recursive_directory_iterator
          {
-             D,
+             Directory,
              std::filesystem::directory_options::skip_permission_denied
              | std::filesystem::directory_options::follow_directory_symlink
          })
@@ -459,9 +405,9 @@ TArray<LString> Finder::FindFilesRecursivelyByName(const LPathView& Directory, c
             continue;
         }
 
-        if (const std::string F { P.path().filename().string() }; FileName.Equals(F.begin().base(), F.end().base()))
+        if (const LString F { P.path().filename().string() }; FileName == F)
         {
-            Out.Emplace(LString{ P.path().native().begin().base(), P.path().native().size() });
+            Out.emplace_back(P.path().string());
         }
 
         continue;

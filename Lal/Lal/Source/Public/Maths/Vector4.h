@@ -162,12 +162,12 @@ struct TVector4 final
 
     LString ToString3() const
     {
-        return LString::SprintF("{:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z);
+        return Lal::SprintF("{:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z);
     }
 
     LString ToString4() const
     {
-        return LString::SprintF("{:.2f} {:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z, this->W);
+        return Lal::SprintF("{:.2f} {:.2f} {:.2f} {:.2f}", this->X, this->Y, this->Z, this->W);
     }
 };
 

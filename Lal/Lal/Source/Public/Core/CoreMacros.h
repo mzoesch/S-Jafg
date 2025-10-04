@@ -4,6 +4,11 @@
 
 #define PRIVATE_JAFG_CORE_COMMA                                         ,
 
+#define LAL_COMBINE_ANY_INNER(...)                                            __VA_ARGS__
+#define LAL_COMBINE_ANY_OUTER(...)                                            LAL_COMBINE_ANY_INNER(__VA_ARGS__)
+#define LAL_MAKE_STRING_INNER(...)                                            #__VA_ARGS__
+#define LAL_MAKE_STRING_OUTER(...)                                            LAL_MAKE_STRING_INNER(__VA_ARGS__)
+
 #define PRIVATE_JAFG_CORE_JOIN_INNER_TWO(   A, B                      ) A##B
 #define PRIVATE_JAFG_CORE_JOIN_INNER_THREE( A, B, C                   ) A##B##C
 #define PRIVATE_JAFG_CORE_JOIN_INNER_FOUR(  A, B, C, D                ) A##B##C##D

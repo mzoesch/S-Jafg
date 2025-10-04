@@ -303,7 +303,7 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages(const LLoadedPluginHand
         LRegistryPackage NewPackage;
         NewPackage.StaticClass                         = Smart::EmplaceUnique<LObjectClass>();
         NewPackage.StaticClass->SpacedClassName        = Package.SpacedClassName;
-        NewPackage.StaticClass->ClassName              = MAKE_DYNAMIC_NAME(NewPackage.StaticClass->SpacedClassName);
+        NewPackage.StaticClass->ClassName              = MAKE_NAME(NewPackage.StaticClass->SpacedClassName);
         NewPackage.StaticClass->PluginHandle           = InHandle;
         NewPackage.StaticClass->DefaultPackageReferrer = Package.GetContentDefault();
         check( NewPackage.StaticClass->SpacedClassName.IsEmpty() == false )

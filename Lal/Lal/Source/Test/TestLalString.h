@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Containers/LalString.h"
+#if TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS
 
 TEST_CASE(EmptyStringOperations, "Lal.Containers")
 {
@@ -738,3 +738,5 @@ TEST_CASE(StringRepalce, "Lal.Containers")
 
     return;
 }
+
+#endif /* TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS */

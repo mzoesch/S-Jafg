@@ -2,17 +2,8 @@
 
 #pragma once
 
-#include "Lal.afx"
 #include "Misc/Tag.h"
-
-namespace Jafg
-{
-
-struct LName;
-
-} /* ~Namespace Jafg */
-
-using LName = Jafg::LName;
+#include "Async/TaskUtility.h"
 
 namespace Jafg
 {
@@ -20,23 +11,34 @@ namespace Jafg
 namespace Private
 {
 
-class LNameRegistry;
+struct LNameRegistryTag;
+struct LOmniVitaNameRegistry;
 
-ENGINE_API extern LNameRegistry* GNameRegistry;
-ENGINE_API LNameRegistry* GetNameRegistryPtr();
-ENGINE_API LNameRegistry& GetNameRegistry();
+struct LNameRegistryTag : public Lal::TTag<u16>
+{
+    using Super = Lal::TTag<u16>;
+    using Super::Super;
+    ENGINE_API LString ToString() const noexcept;
+};
 
-ENGINE_API void ClearStaticNameContainer();
-ENGINE_API i32  GetStaticNameCount();
-ENGINE_API auto GetStaticNameByIndex(const i32 InIndex) -> const LString&;
-ENGINE_API auto RegisterStaticName(const LString& InName) -> LName;
-ENGINE_API auto RegisterStaticName(LString&& InName) -> LName;
+//# Valid at the start of the static storage initialization phase from the runtime until the very end.
+ENGINE_API LOmniVitaNameRegistry& GetNameRegistry() noexcept;
+
+struct LOmniVitaNameRegistry : public Lal::TTagRegistry<LNameRegistryTag>
+{
+    using Super = TTagRegistry;
+
+    FORCEINLINE TagType RegisterOrGet(Trait::CString auto&& InRepr) noexcept;
+    template <LSize N>
+    FORCEINLINE TagType RegisterOrGet(const char(&InRepr)[N]) noexcept
+    {
+        return this->RegisterOrGet(LStringView{InRepr, N - 1});
+    }
+};
 
 } /* ~Namespace Private */
 
-typedef u32 LUnderlyingName;
-
-enum : u8 { NO_NAME = 0 };
+} /* ~Namespace Jafg */
 
 //#
 //# A name maps a string to a unique integer. Names are case-insensitive and are stored in a global registry.
@@ -45,127 +47,44 @@ enum : u8 { NO_NAME = 0 };
 //# might differ between runs.
 //# Names are safe to use in networked environments.
 //#
-struct LName
-{
-    friend Private::LNameRegistry;
-    friend std::formatter<LName>;
-
-    FORCEINLINE LName() : UnderlyingName(NO_NAME) { }
-    FORCEINLINE LName(const LName& Other) = default;
-    FORCEINLINE LName(LName&& Other) noexcept : UnderlyingName(Other.UnderlyingName) { Other.UnderlyingName = NO_NAME; }
-    FORCEINLINE LName& operator=(const LName& Other) = default;
-    FORCEINLINE LName& operator=(LName&& Other) noexcept { this->UnderlyingName = Other.UnderlyingName; Other.UnderlyingName = NO_NAME; return *this; }
-    FORCEINLINE ~LName() = default;
-
-    FORCEINLINE static bool IsEqual(const LName& A, const LName& B) { return A.UnderlyingName == B.UnderlyingName; }
-    FORCEINLINE bool Equals(const LName& Other) const { return this->UnderlyingName == Other.UnderlyingName; }
-    FORCEINLINE bool operator==(const LName& Other) const { return this->UnderlyingName == Other.UnderlyingName; }
-    FORCEINLINE bool operator!=(const LName& Other) const { return this->UnderlyingName != Other.UnderlyingName; }
-
-    FORCEINLINE bool IsSet() const { return this->UnderlyingName != NO_NAME; }
-
-    ENGINE_API const LString& ToString() const;
-
-    ENGINE_API static LName NoName;
-    ENGINE_API static LString NoNameStringRepresentation;
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // Hashing only. Do not use.
-    // This is meaningless as names are not deterministic.
-    FORCEINLINE std::strong_ordering operator<=>(const LName& Other) const { return this->UnderlyingName <=> Other.UnderlyingName; }
-    // ~Hashing only. Do not use.
-    ///////////////////////////////////////////////////////////////////////////////
-
-private:
-
-    FORCEINLINE LName(const LUnderlyingName InUnderlyingName) : UnderlyingName(InUnderlyingName) { }
-
-    LUnderlyingName UnderlyingName;
-};
-
-//#
-//# Register a name known at compile time.
-//#
-#define MAKE_STATIC_NAME(Name)      ::Jafg::Private::RegisterStaticName(Name)
+typedef Jafg::Private::LOmniVitaNameRegistry::TagType LName;
 
 //#
 //# Dynamically register a name depending on context at runtime.
-//# If the name is already registered, it will return that. This is basically a weak form of #GET_NAME.
+//# If the name is already registered, it will return that.
 //#
-#define MAKE_DYNAMIC_NAME(Name)     ::Jafg::Private::GetNameRegistry().RegisterAndGetName(Name)
+#define MAKE_NAME(Name)             ::Jafg::Private::GetNameRegistry().RegisterOrGet(Name)
 
-//#
-//# Get a name by its string representation.
-//# If the name is not registered, it will return #LName::NoName.
-//#
-#define GET_NAME(Name)              ::Jafg::Private::GetNameRegistry().GetName(Name)
 //#
 //# Get a name by its string representation.
-//# If #LAL_DO_CHECKS is true, the program will panic, otherwise #LName::NoName will be returned.
+//# If the name is not registered, it will return #LName::NO_TAG.
 //#
-#define GET_NAME_CHECKED(Name)      ::Jafg::Private::GetNameRegistry().GetNameChecked(Name)
+#define GET_NAME(Name)              ::Jafg::Private::GetNameRegistry().GetTag(Name)
+#define GET_NAME_CHECKED(Name)      ::Jafg::Private::GetNameRegistry().GetTagChecked(Name)
+#define GET_NAME_ASSERTED(Name)     ::Jafg::Private::GetNameRegistry().GetTagAsserted(Name)
 
-namespace Private
-{
-
-class LNameRegistry
-{
-public:
-
-    LNameRegistry() = default;
-    PROHIBIT_REALLOC_OF_ANY_FORM(LNameRegistry)
-    ENGINE_API ~LNameRegistry();
-
-    static      LName GetNameByValue(LUnderlyingName InUnderlyingName) { return { InUnderlyingName }; }
-    ENGINE_API  LName GetName(const LString& InName) const;
-    FORCEINLINE LName GetNameChecked(const LString& InName) const;
-    FORCEINLINE auto  GetRealNameFast(const LName InName) const -> const LString& { check( InName.IsSet() ) return this->Names[InName.UnderlyingName - 1]; }
-    FORCEINLINE auto  GetRealNameSafe(const LName InName) const -> const LString&;
-
-    ENGINE_API bool  IsNameRegistered(const LString& InName) const;
-    ENGINE_API LName RegisterAndGetName(const LString& InName);
-
-    FORCEINLINE i32 GetNameCount() const { return this->Names.GetSize(); }
-
-    ENGINE_API void Destroy();
-
-private:
-
-    ENGINE_API bool RegisterName(const LString& InName);
-
-    TArray<LString> Names;
-};
-
-FORCEINLINE LName LNameRegistry::GetNameChecked(const LString& InName) const
-{
-    const LName Name { this->GetName(InName) };
-    check( Name.IsSet() )
-    return Name;
-}
-
-FORCEINLINE const LString& LNameRegistry::GetRealNameSafe(const LName InName) const
-{
-    if (InName.IsSet())
-    {
-        return this->GetRealNameFast(InName);
-    }
-
-    return LName::NoNameStringRepresentation;
-}
-
-} /* ~Namespace Private */
-
-} /* ~Namespace Jafg */
+//#
+//# Convert a name to its string representation.
+//#
+#define GET_NAME_REPR(Name)         ::Jafg::Private::GetNameRegistry().GetReprSafe(Name)
+#define GET_NAME_REPR_FAST(Name)    ::Jafg::Private::GetNameRegistry().GetReprFast(Name)
 
 template <>
-struct std::formatter<::Jafg::LName> : std::formatter<LString>
+struct std::formatter<::LName> : std::formatter<LString>
 {
     FORCEINLINE auto format
     (
-        const ::Jafg::LName& InName,
+        const ::LName& InName,
         ::std::format_context& InContext
     ) const -> ::std::format_context::iterator
     {
-        return ::std::formatter<LString>::format(InName.ToString(), InContext);
+        return ::std::formatter<LString>::format(Jafg::Private::GetNameRegistry().GetReprSafe(InName), InContext);
     }
 };
+
+FORCEINLINE Jafg::Private::LOmniVitaNameRegistry::TagType
+Jafg::Private::LOmniVitaNameRegistry::RegisterOrGet(Trait::CString auto&& InRepr) noexcept
+{
+    check( Tasks::IsOnMasterThread() )
+    return Super::RegisterOrGet(std::forward<decltype(InRepr)>(InRepr));
+}
