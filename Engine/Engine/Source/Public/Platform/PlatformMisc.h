@@ -32,7 +32,7 @@ struct LPhysicalViewport
 
     FORCEINLINE LString ToString() const
     {
-        return LString::SprintF("Monitor{{{},{}x{}mm,{}x{}px}}",
+        return Lal::SprintF("Monitor{{{},{}x{}mm,{}x{}px}}",
             this->Name,
             this->WidthMm, this->HeightMm,
             this->WidthPx, this->HeightPx

@@ -9,7 +9,7 @@ TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicOutlineBoxShader::Ge
 {
     TArray<LShaderCompileTimeConstant> SuperConstants = Super::GetDefaultConstants();
 
-    SuperConstants.Append
+    SuperConstants.append_range
     (TArray<LShaderCompileTimeConstant>{
         {
             "WITH_UV", "1"
@@ -22,7 +22,8 @@ TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicOutlineBoxShader::Ge
         },
     });
 
-    return SuperConstants;}
+    return SuperConstants;
+}
 
 bool Jafg::LOrthographicOutlineBoxShader::Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants /* = {} */)
 {

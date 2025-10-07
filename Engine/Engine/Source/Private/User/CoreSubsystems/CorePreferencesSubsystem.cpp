@@ -24,15 +24,15 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
     JPreferenceRegistry* Registry        = GetMutableDefault<JPreferenceRegistry>();
 
     {
-        Smart::TUnique<LPreferenceCollection> Screen = Smart::EmplaceUnique<LPreferenceCollection>(Name_PrefGameplay, "Gameplay");
+        TUnique<LPreferenceCollection> Screen = std::make_unique<LPreferenceCollection>(Name_PrefGameplay, "Gameplay");
         Registry->AddTopLevelPreference(std::move(Screen));
     }
 
     {
-        Smart::TUnique<LPreferenceCollection> Screen = Smart::EmplaceUnique<LPreferenceCollection>(Name_PrefAudio, "Audio");
+        TUnique<LPreferenceCollection> Screen = std::make_unique<LPreferenceCollection>(Name_PrefAudio, "Audio");
 
         {
-            Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::EmplaceUnique<LPreferenceValue_Scalar>(MAKE_NAME("MasterVolume"), "Master Volume");
+            TUnique<LPreferenceValue_Scalar> Preference = std::make_unique<LPreferenceValue_Scalar>(MAKE_NAME("MasterVolume"), "Master Volume");
             Preference->SetDefaultValue(UserPreferences->MasterVolume);
             Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->MasterVolume; });
             Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->MasterVolume = static_cast<f32>(Value); });
@@ -43,7 +43,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
         }
 
         {
-            Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::EmplaceUnique<LPreferenceValue_Scalar>(MAKE_NAME("MusicVolume"), "Music Volume");
+            TUnique<LPreferenceValue_Scalar> Preference = std::make_unique<LPreferenceValue_Scalar>(MAKE_NAME("MusicVolume"), "Music Volume");
             Preference->SetDefaultValue(UserPreferences->MusicVolume);
             Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->MusicVolume; });
             Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->MusicVolume = static_cast<f32>(Value); });
@@ -54,7 +54,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
         }
 
         {
-            Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::EmplaceUnique<LPreferenceValue_Scalar>(MAKE_NAME("MiscVolume"), "Misc Volume");
+            TUnique<LPreferenceValue_Scalar> Preference = std::make_unique<LPreferenceValue_Scalar>(MAKE_NAME("MiscVolume"), "Misc Volume");
             Preference->SetDefaultValue(UserPreferences->MiscVolume);
             Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->MiscVolume; });
             Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->MiscVolume = static_cast<f32>(Value); });
@@ -65,7 +65,7 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
         }
 
         {
-            Smart::TUnique<LPreferenceValue_Scalar> Preference = Smart::EmplaceUnique<LPreferenceValue_Scalar>(MAKE_NAME("VoiceVolume"), "Voice Volume");
+            TUnique<LPreferenceValue_Scalar> Preference = std::make_unique<LPreferenceValue_Scalar>(MAKE_NAME("VoiceVolume"), "Voice Volume");
             Preference->SetDefaultValue(UserPreferences->VoiceVolume);
             Preference->SetValueGetter([UserPreferences](void) -> f64 { return UserPreferences->VoiceVolume; });
             Preference->SetValueSetter([UserPreferences](const f64 Value) -> void { UserPreferences->VoiceVolume = static_cast<f32>(Value); });
@@ -79,17 +79,17 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
     }
 
     {
-        Smart::TUnique<LPreferenceCollection> Screen = Smart::EmplaceUnique<LPreferenceCollection>(Name_PrefVideo, "Video");
+        TUnique<LPreferenceCollection> Screen = std::make_unique<LPreferenceCollection>(Name_PrefVideo, "Video");
         Registry->AddTopLevelPreference(std::move(Screen));
     }
 
     {
-        Smart::TUnique<LPreferenceCollection> Screen = Smart::EmplaceUnique<LPreferenceCollection>(Name_PrefControls, "Controls");
+        TUnique<LPreferenceCollection> Screen = std::make_unique<LPreferenceCollection>(Name_PrefControls, "Controls");
         Registry->AddTopLevelPreference(std::move(Screen));
     }
 
     {
-        Smart::TUnique<LIntermediatePreferenceCollection> Screen = Smart::EmplaceUnique<LIntermediatePreferenceCollection>(Name_PrefKeybindings, "Keybindings");
+        TUnique<LIntermediatePreferenceCollection> Screen = std::make_unique<LIntermediatePreferenceCollection>(Name_PrefKeybindings, "Keybindings");
         Screen->OnBuild([](const LPreference* Self, WParentBase* Target) -> void
         {
             check( Self && Target )
@@ -127,18 +127,15 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                             return;
                         }
 
-                        Smart::TUnique<LPreference>* P = Registry->GetMutablePreferences().FindRefByPredicate([](const Smart::TUnique<LPreference>& InPreference)
-                        {
-                            return InPreference->GetName() == Name_PrefDeveloper;
-                        });
-                        if (P == nullptr || P->IsValid() == false)
+                        auto* P { algo::find_pointer(Registry->GetMutablePreferences(), Name_PrefDeveloper, [](auto const& E){ return E->GetName(); }) };
+                        if (P == nullptr || P->get() == nullptr)
                         {
                             return;
                         }
 
                         LPreferencesPanelData Data;
                         Data.DerivedClass = WPreferencesPanel::StaticClass()->GetName();
-                        Data.Preference   = P->GetPointer();
+                        Data.Preference   = P->get();
                         Panel->AddData(&Data);
 
                         return;
@@ -167,9 +164,9 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                 return;
             }
 
-            for (const LInputAction* Action: GEngine->GetLocalEgo()->GetUserInput()->GetRegisteredActions())
+            for (auto& Action : GEngine->GetLocalEgo()->GetUserInput()->GetRegisteredActions())
             {
-                Smart::TUnique<LPreferenceValue_InputAction> T = Smart::EmplaceUnique<LPreferenceValue_InputAction>(Action->GetName());
+                TUnique<LPreferenceValue_InputAction> T = std::make_unique<LPreferenceValue_InputAction>(Action->GetName());
                 InCollection->AddPreference(std::move(T));
 
                 continue;
@@ -182,12 +179,12 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
     }
 
     {
-        Smart::TUnique<LPreferenceCollection> Screen = Smart::EmplaceUnique<LPreferenceCollection>(Name_PrefUserInterface, "User Interface");
+        TUnique<LPreferenceCollection> Screen = std::make_unique<LPreferenceCollection>(Name_PrefUserInterface, "User Interface");
         Registry->AddTopLevelPreference(std::move(Screen));
     }
 
     {
-        Smart::TUnique<LIntermediatePreferenceCollection> Screen = Smart::EmplaceUnique<LIntermediatePreferenceCollection>(Name_PrefDeveloper, "Developer");
+        TUnique<LIntermediatePreferenceCollection> Screen = std::make_unique<LIntermediatePreferenceCollection>(Name_PrefDeveloper, "Developer");
         Screen->OnBuild([](const LPreference* Self, WParentBase* Target) -> void
         {
             check( Self && Target )
@@ -225,18 +222,15 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                             return;
                         }
 
-                        Smart::TUnique<LPreference>* P = Registry->GetMutablePreferences().FindRefByPredicate([](const Smart::TUnique<LPreference>& InPreference)
-                        {
-                            return InPreference->GetName() == Name_PrefDeveloper;
-                        });
-                        if (P == nullptr || P->IsValid() == false)
+                        auto* P { algo::find_pointer(Registry->GetMutablePreferences(), Name_PrefDeveloper, [](auto const& E){ return E->GetName(); }) };
+                        if (P == nullptr || P->get() == nullptr)
                         {
                             return;
                         }
 
                         LPreferencesPanelData Data;
                         Data.DerivedClass = WPreferencesPanel::StaticClass()->GetName();
-                        Data.Preference   = P->GetPointer();
+                        Data.Preference   = P->get();
                         Panel->AddData(&Data);
 
                         return;
@@ -261,22 +255,22 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
             checkSlow( Cli )
 
             {
-                Smart::TUnique<LPreferenceCollection> Collection = Smart::EmplaceUnique<LPreferenceCollection>(Name_PrefDeveloperTypes, "Cli Types");
+                TUnique<LPreferenceCollection> Collection = std::make_unique<LPreferenceCollection>(Name_PrefDeveloperTypes, "Cli Types");
 
                 for (const LCliType& Type : Cli->GetTypes())
                 {
                     TOptional<LCliObjectHandle> Handle = Cli->GetHandle(Type);
-                    if (Handle.IsValid() == false)
+                    if (Handle.has_value() == false)
                     {
                         LOG_WARNING(LogPreferences, "Encountered invalid type handle.")
                         continue;
                     }
 
-                    Smart::TUnique<LPreferenceValue_CliType> T = Smart::EmplaceUnique<LPreferenceValue_CliType>
+                    TUnique<LPreferenceValue_CliType> T = std::make_unique<LPreferenceValue_CliType>
                     (
-                        MAKE_NAME(LString::SprintF("CliType_{}", Type.GetIdentifier())),
-                        LString::SprintF("Cli Type {}", Type.GetIdentifier()),
-                        Handle.GetValue()
+                        MAKE_NAME(Lal::SprintF("CliType_{}", Type.GetIdentifier())),
+                        Lal::SprintF("Cli Type {}", Type.GetIdentifier()),
+                        Handle.value()
                     );
 
                     Collection->AddPreference(std::move(T));
@@ -288,22 +282,22 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
             }
 
             {
-                Smart::TUnique<LPreferenceCollection> Collection = Smart::EmplaceUnique<LPreferenceCollection>(Name_PrefDeveloperCmds, "Cli Commands");
+                TUnique<LPreferenceCollection> Collection = std::make_unique<LPreferenceCollection>(Name_PrefDeveloperCmds, "Cli Commands");
 
                 for (const LCliCommand& Type : Cli->GetCommands())
                 {
                     TOptional<LCliObjectHandle> Handle = Cli->GetHandle(Type);
-                    if (Handle.IsValid() == false)
+                    if (Handle.has_value() == false)
                     {
                         LOG_WARNING(LogPreferences, "Encountered invalid command handle.")
                         continue;
                     }
 
-                    Smart::TUnique<LPreferenceValue_CliCommand> T = Smart::EmplaceUnique<LPreferenceValue_CliCommand>
+                    TUnique<LPreferenceValue_CliCommand> T = std::make_unique<LPreferenceValue_CliCommand>
                     (
-                        MAKE_NAME(LString::SprintF("CliCmd_{}", Type.GetIdentifier())),
-                        LString::SprintF("Cli Cmd {}", Type.GetIdentifier()),
-                        Handle.GetValue()
+                        MAKE_NAME(Lal::SprintF("CliCmd_{}", Type.GetIdentifier())),
+                        Lal::SprintF("Cli Cmd {}", Type.GetIdentifier()),
+                        Handle.value()
                     );
 
                     Collection->AddPreference(std::move(T));
@@ -315,22 +309,22 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
             }
 
             {
-                Smart::TUnique<LPreferenceCollection> Collection = Smart::EmplaceUnique<LPreferenceCollection>(Name_PrefDeveloperVars, "Cli Vars");
+                TUnique<LPreferenceCollection> Collection = std::make_unique<LPreferenceCollection>(Name_PrefDeveloperVars, "Cli Vars");
 
                 for (const LCliVariable& Type : Cli->GetVariables())
                 {
                     TOptional<LCliObjectHandle> Handle = Cli->GetHandle(Type);
-                    if (Handle.IsValid() == false)
+                    if (Handle.has_value() == false)
                     {
                         LOG_WARNING(LogPreferences, "Encountered invalid variable handle.")
                         continue;
                     }
 
-                    Smart::TUnique<LPreferenceValue_CliVariable> T = Smart::EmplaceUnique<LPreferenceValue_CliVariable>
+                    TUnique<LPreferenceValue_CliVariable> T = std::make_unique<LPreferenceValue_CliVariable>
                     (
-                        MAKE_NAME(LString::SprintF("CliVar_{}", Type.GetIdentifier())),
-                        LString::SprintF("Cli Var {}", Type.GetIdentifier()),
-                        Handle.GetValue()
+                        MAKE_NAME(Lal::SprintF("CliVar_{}", Type.GetIdentifier())),
+                        Lal::SprintF("Cli Var {}", Type.GetIdentifier()),
+                        Handle.value()
                     );
 
                     Collection->AddPreference(std::move(T));

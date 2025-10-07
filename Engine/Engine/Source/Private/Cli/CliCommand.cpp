@@ -78,11 +78,11 @@ void Jafg::LCommandArgs::GetCatRepresentation(LString* AppendTo) const
     checkSlow( AppendTo )
     check( this->IsValid() )
 
-    if (this->Name.IsEmpty() == false && AppendTo->IsEmpty() == false)
+    if (this->Name.empty() == false && AppendTo->empty() == false)
     {
-        AppendTo->Append(" ");
+        AppendTo->append(" ");
     }
-    AppendTo->Append(this->Name);
+    AppendTo->append(this->Name);
 
     for (const LCommandArgs& SubArg : this->SubArgs)
     {
@@ -94,7 +94,7 @@ void Jafg::LCommandArgs::GetCatRepresentation(LString* AppendTo) const
 
 bool Jafg::LCommandParams::IsInvocable(const LCommandArgs& Args) const
 {
-    if (this->Signature.GetSize() == 0 && Args.GetArgCount() == 0)
+    if (this->Signature.size() == 0 && Args.GetArgCount() == 0)
     {
         return true;
     }
@@ -120,7 +120,7 @@ bool Jafg::LCommandParams::IsInvocable(const LCommandArgs& Args) const
         return false;
     }
 
-    return this->Signature.GetSize() > 0;
+    return this->Signature.size() > 0;
 }
 
 TArray<LString> Jafg::LCommandParams::GetCommonSuggestions(const LCommandArgs& Args, const u32 MaxSuggestions, const bool bParseNotBeginTypedArg) const
@@ -140,7 +140,7 @@ TArray<LString> Jafg::LCommandParams::GetCommonSuggestions(const LCommandArgs& A
         {
             if (bParseNotBeginTypedArg)
             {
-                Out.Append(Param.Suggest(Args, ArgCursor, MaxSuggestions - Out.GetSize()));
+                Out.append_range(Param.Suggest(Args, ArgCursor, MaxSuggestions - Out.size()));
             }
             break;
         }
@@ -150,7 +150,7 @@ TArray<LString> Jafg::LCommandParams::GetCommonSuggestions(const LCommandArgs& A
             continue;
         }
 
-        Out.Append(Param.Suggest(Args, ArgCursor, MaxSuggestions - Out.GetSize()));
+        Out.append_range(Param.Suggest(Args, ArgCursor, MaxSuggestions - Out.size()));
         break;
     }
 
@@ -159,7 +159,7 @@ TArray<LString> Jafg::LCommandParams::GetCommonSuggestions(const LCommandArgs& A
 
 LString Jafg::LCommandParams::GetCatRepresentation() const
 {
-    if (this->Signature.IsEmpty())
+    if (this->Signature.empty())
     {
         return "<no parameters>";
     }
@@ -169,29 +169,29 @@ LString Jafg::LCommandParams::GetCatRepresentation() const
     {
         if (const LCliType* RegisteredType { Param.GetRegisteredType() }; RegisteredType)
         {
-            if (RegisteredType->GetIdentifier().IsEmpty())
+            if (RegisteredType->GetIdentifier().empty())
             {
                 LOG_WARNING(LogTemporal, "Found invalid type in command signature.")
                 continue;
             }
-            if (Out.IsEmpty() == false)
+            if (Out.empty() == false)
             {
-                Out.Append(", ");
+                Out.append(", ");
             }
-            Out.Append(RegisteredType->GetIdentifier());
+            Out.append(RegisteredType->GetIdentifier());
             continue;
         }
 
-        if (Param.GetIdentifier().IsEmpty())
+        if (Param.GetIdentifier().empty())
         {
             LOG_WARNING(LogTemporal, "Found invalid type in command signature.")
             continue;
         }
-        if (Out.IsEmpty() == false)
+        if (Out.empty() == false)
         {
-            Out.Append(", ");
+            Out.append(", ");
         }
-        Out.Append(Param.GetIdentifier());
+        Out.append(Param.GetIdentifier());
 
         continue;
     }

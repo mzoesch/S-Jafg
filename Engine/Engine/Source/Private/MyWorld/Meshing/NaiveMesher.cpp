@@ -42,21 +42,21 @@ void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubs
                     LTextureIndex Idx = Mask.FindTextureIndex(ENormalLookup::North);
                     LTextureIndex BlendIdx = Mask.FindBlendTextureIndex(ENormalLookup::North);
 
-                    Vertices.Emplace(X + 1, Y + 1, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 1, Y + 1, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::None, ENormalShadingMap::Forward, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 1, Y + 0, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 1, Y + 0, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::East, ENormalShadingMap::Forward, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 1, Y + 0, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 1, Y + 0, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::Both, ENormalShadingMap::Forward, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 1, Y + 1, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 1, Y + 1, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::South, ENormalShadingMap::Forward, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
 
-                    Indices.Emplace(CurrentVertex + 0);
-                    Indices.Emplace(CurrentVertex + 1);
-                    Indices.Emplace(CurrentVertex + 2);
-                    Indices.Emplace(CurrentVertex + 0);
-                    Indices.Emplace(CurrentVertex + 2);
-                    Indices.Emplace(CurrentVertex + 3);
+                    Indices.emplace_back(CurrentVertex + 0);
+                    Indices.emplace_back(CurrentVertex + 1);
+                    Indices.emplace_back(CurrentVertex + 2);
+                    Indices.emplace_back(CurrentVertex + 0);
+                    Indices.emplace_back(CurrentVertex + 2);
+                    Indices.emplace_back(CurrentVertex + 3);
                     CurrentVertex += 4;
                 }
 
@@ -66,21 +66,21 @@ void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubs
                     LTextureIndex Idx = Mask.FindTextureIndex(ENormalLookup::South);
                     LTextureIndex BlendIdx = Mask.FindBlendTextureIndex(ENormalLookup::South);
 
-                    Vertices.Emplace(X + 0, Y + 0, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 0, Y + 0, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::None, ENormalShadingMap::Backward, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 0, Y + 1, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 0, Y + 1, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::East, ENormalShadingMap::Backward, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 0, Y + 1, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 0, Y + 1, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::Both, ENormalShadingMap::Backward, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 0, Y + 0, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 0, Y + 0, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::South, ENormalShadingMap::Backward, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
 
-                    Indices.Emplace(CurrentVertex + 0);
-                    Indices.Emplace(CurrentVertex + 1);
-                    Indices.Emplace(CurrentVertex + 2);
-                    Indices.Emplace(CurrentVertex + 0);
-                    Indices.Emplace(CurrentVertex + 2);
-                    Indices.Emplace(CurrentVertex + 3);
+                    Indices.emplace_back(CurrentVertex + 0);
+                    Indices.emplace_back(CurrentVertex + 1);
+                    Indices.emplace_back(CurrentVertex + 2);
+                    Indices.emplace_back(CurrentVertex + 0);
+                    Indices.emplace_back(CurrentVertex + 2);
+                    Indices.emplace_back(CurrentVertex + 3);
                     CurrentVertex += 4;
                 }
 
@@ -90,21 +90,21 @@ void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubs
                     LTextureIndex Idx = Mask.FindTextureIndex(ENormalLookup::West);
                     LTextureIndex BlendIdx = Mask.FindBlendTextureIndex(ENormalLookup::West);
 
-                    Vertices.Emplace(X + 1, Y + 0, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 1, Y + 0, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::None, ENormalShadingMap::Left, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 0, Y + 0, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 0, Y + 0, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::East, ENormalShadingMap::Left, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 0, Y + 0, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 0, Y + 0, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::Both, ENormalShadingMap::Left, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 1, Y + 0, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 1, Y + 0, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::South, ENormalShadingMap::Left, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
 
-                    Indices.Emplace(CurrentVertex + 0);
-                    Indices.Emplace(CurrentVertex + 1);
-                    Indices.Emplace(CurrentVertex + 2);
-                    Indices.Emplace(CurrentVertex + 0);
-                    Indices.Emplace(CurrentVertex + 2);
-                    Indices.Emplace(CurrentVertex + 3);
+                    Indices.emplace_back(CurrentVertex + 0);
+                    Indices.emplace_back(CurrentVertex + 1);
+                    Indices.emplace_back(CurrentVertex + 2);
+                    Indices.emplace_back(CurrentVertex + 0);
+                    Indices.emplace_back(CurrentVertex + 2);
+                    Indices.emplace_back(CurrentVertex + 3);
                     CurrentVertex += 4;
                 }
 
@@ -114,21 +114,21 @@ void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubs
                     LTextureIndex Idx = Mask.FindTextureIndex(ENormalLookup::East);
                     LTextureIndex BlendIdx = Mask.FindBlendTextureIndex(ENormalLookup::East);
 
-                    Vertices.Emplace(X + 0, Y + 1, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 0, Y + 1, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::None, ENormalShadingMap::Right, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 1, Y + 1, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 1, Y + 1, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::East, ENormalShadingMap::Right, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 1, Y + 1, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 1, Y + 1, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::Both, ENormalShadingMap::Right, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 0, Y + 1, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 0, Y + 1, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::South, ENormalShadingMap::Right, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
 
-                    Indices.Emplace(CurrentVertex + 0);
-                    Indices.Emplace(CurrentVertex + 1);
-                    Indices.Emplace(CurrentVertex + 2);
-                    Indices.Emplace(CurrentVertex + 0);
-                    Indices.Emplace(CurrentVertex + 2);
-                    Indices.Emplace(CurrentVertex + 3);
+                    Indices.emplace_back(CurrentVertex + 0);
+                    Indices.emplace_back(CurrentVertex + 1);
+                    Indices.emplace_back(CurrentVertex + 2);
+                    Indices.emplace_back(CurrentVertex + 0);
+                    Indices.emplace_back(CurrentVertex + 2);
+                    Indices.emplace_back(CurrentVertex + 3);
                     CurrentVertex += 4;
                 }
 
@@ -138,21 +138,21 @@ void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubs
                     LTextureIndex Idx = Mask.FindTextureIndex(ENormalLookup::Up);
                     LTextureIndex BlendIdx = Mask.FindBlendTextureIndex(ENormalLookup::Up);
 
-                    Vertices.Emplace(X + 1, Y + 0, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 1, Y + 0, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::None, ENormalShadingMap::Up, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 1, Y + 1, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 1, Y + 1, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::East, ENormalShadingMap::Up, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 0, Y + 1, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 0, Y + 1, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::Both, ENormalShadingMap::Up, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 0, Y + 0, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 0, Y + 0, Z + 1, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::South, ENormalShadingMap::Up, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
 
-                    Indices.Emplace(CurrentVertex + 0);
-                    Indices.Emplace(CurrentVertex + 1);
-                    Indices.Emplace(CurrentVertex + 2);
-                    Indices.Emplace(CurrentVertex + 0);
-                    Indices.Emplace(CurrentVertex + 2);
-                    Indices.Emplace(CurrentVertex + 3);
+                    Indices.emplace_back(CurrentVertex + 0);
+                    Indices.emplace_back(CurrentVertex + 1);
+                    Indices.emplace_back(CurrentVertex + 2);
+                    Indices.emplace_back(CurrentVertex + 0);
+                    Indices.emplace_back(CurrentVertex + 2);
+                    Indices.emplace_back(CurrentVertex + 3);
                     CurrentVertex += 4;
                 }
 
@@ -162,21 +162,21 @@ void Jafg::LNaiveMesher::GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubs
                     LTextureIndex Idx = Mask.FindTextureIndex(ENormalLookup::Down);
                     LTextureIndex BlendIdx = Mask.FindBlendTextureIndex(ENormalLookup::Down);
 
-                    Vertices.Emplace(X + 1, Y + 1, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 1, Y + 1, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::None, ENormalShadingMap::Down, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 1, Y + 0, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 1, Y + 0, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::East, ENormalShadingMap::Down, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 0, Y + 0, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 0, Y + 0, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::Both, ENormalShadingMap::Down, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
-                    Vertices.Emplace(X + 0, Y + 1, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
+                    Vertices.emplace_back(X + 0, Y + 1, Z + 0, Idx, MaterialSubsystem->GetBlendOpaqueDomainWidth(),
                         ChunkBoxVertex::TexOffset::South, ENormalShadingMap::Down, BlendIdx, MaterialSubsystem->GetBlendersDomainWidth());
 
-                    Indices.Emplace(CurrentVertex + 0);
-                    Indices.Emplace(CurrentVertex + 1);
-                    Indices.Emplace(CurrentVertex + 2);
-                    Indices.Emplace(CurrentVertex + 0);
-                    Indices.Emplace(CurrentVertex + 2);
-                    Indices.Emplace(CurrentVertex + 3);
+                    Indices.emplace_back(CurrentVertex + 0);
+                    Indices.emplace_back(CurrentVertex + 1);
+                    Indices.emplace_back(CurrentVertex + 2);
+                    Indices.emplace_back(CurrentVertex + 0);
+                    Indices.emplace_back(CurrentVertex + 2);
+                    Indices.emplace_back(CurrentVertex + 3);
                     CurrentVertex += 4;
                 }
 

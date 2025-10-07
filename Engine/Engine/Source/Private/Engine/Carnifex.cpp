@@ -6,40 +6,39 @@
 
 void Jafg::LCarnifex::KillAllGarbageChildren()
 {
-    if (this->GarbageChildren.IsEmpty())
+    if (this->GarbageChildren.empty())
     {
         return;
     }
 
     STAT_CYCLE_FUNCTION()
 
-    LOG_TRACE(LogCarnifex, "Found {} garbage children. Begin to kill them.", this->GarbageChildren.GetSize())
+    LOG_TRACE(LogCarnifex, "Found {} garbage children. Begin to kill them.", this->GarbageChildren.size())
 
-    while (this->GarbageChildren.IsEmpty() == false)
+    while (this->GarbageChildren.empty() == false)
     {
-        JObjectBase* Child = *this->GarbageChildren.Peek();
-        checkSlow( Child )
+        JObjectBase* Child = this->GarbageChildren.back();
         check( Child->IsGarbage() )
 
         Child->EndLife();
 
         this->FreeChild(Child);
 
-        this->GarbageChildren.Pop();
+        this->GarbageChildren.pop_back();
 
         continue;
     }
 
-    check( this->GarbageChildren.IsEmpty() )
+    check( this->GarbageChildren.empty() )
 
     return;
 }
 
 void Jafg::LCarnifex::DevourGarbageChildNow(JObjectBase* Child)
 {
-    if (JObjectBase** GarbageChild = this->GarbageChildren.FindRef(Child); GarbageChild)
+    if (JObjectBase** GarbageChild { algo::find_pointer(this->GarbageChildren, Child) }; GarbageChild)
     {
-        this->GarbageChildren.RemoveOnceChecked(*GarbageChild);
+        algo::erase_once_checked(&this->GarbageChildren, *GarbageChild);
     }
     else
     {
@@ -50,9 +49,9 @@ void Jafg::LCarnifex::DevourGarbageChildNow(JObjectBase* Child)
             check( Child->GetVTable() )
 
             Child->MarkAsGarbage();
-            if (GarbageChild = this->GarbageChildren.FindRef(Child); GarbageChild)
+            if (GarbageChild = algo::find_pointer(this->GarbageChildren, Child); GarbageChild)
             {
-                this->GarbageChildren.RemoveOnceChecked(*GarbageChild);
+                algo::erase_once_checked(&this->GarbageChildren, *GarbageChild);
             }
             else
             {

@@ -42,52 +42,52 @@ template <typename TIterator>
 struct TIterator_IsContiguous;
 
 template <typename TIterator>
-struct TIterator_IsReadWrite : FalseType
+struct TIterator_IsReadWrite : std::false_type
 {
 };
 template <typename TIterator> requires requires { typename TIteratorTraits<TIterator>::iterator_concept; }
 struct TIterator_IsReadWrite<TIterator>
-    : BoolConstant<std::is_base_of_v<std::forward_iterator_tag, typename TIteratorTraits<TIterator>::iterator_concept>>
+    : std::bool_constant<std::is_base_of_v<std::forward_iterator_tag, typename TIteratorTraits<TIterator>::iterator_concept>>
 {
 };
 
 template <typename TIterator>
-struct TIterator_CanTraverseMultipleTimes : FalseType
+struct TIterator_CanTraverseMultipleTimes : std::false_type
 {
 };
 template <typename TIterator> requires requires { typename TIteratorTraits<TIterator>::iterator_concept; }
 struct TIterator_CanTraverseMultipleTimes<TIterator>
-    : BoolConstant<std::is_base_of_v<std::forward_iterator_tag, typename TIteratorTraits<TIterator>::iterator_concept>>
+    : std::bool_constant<std::is_base_of_v<std::forward_iterator_tag, typename TIteratorTraits<TIterator>::iterator_concept>>
 {
 };
 
 template <typename TIterator>
-struct TIterator_CanTraverseBackward : FalseType
+struct TIterator_CanTraverseBackward : std::false_type
 {
 };
 template <typename TIterator> requires requires { typename TIteratorTraits<TIterator>::iterator_concept; }
 struct TIterator_CanTraverseBackward<TIterator>
-    : BoolConstant<std::is_base_of_v<std::bidirectional_iterator_tag, typename TIteratorTraits<TIterator>::iterator_concept>>
+    : std::bool_constant<std::is_base_of_v<std::bidirectional_iterator_tag, typename TIteratorTraits<TIterator>::iterator_concept>>
 {
 };
 
 template <typename TIterator>
-struct TIterator_IsPointerLike : FalseType
+struct TIterator_IsPointerLike : std::false_type
 {
 };
 template <typename TIterator> requires requires { typename TIteratorTraits<TIterator>::iterator_concept; }
 struct TIterator_IsPointerLike<TIterator>
-    : BoolConstant<std::is_base_of_v<std::random_access_iterator_tag, typename TIteratorTraits<TIterator>::iterator_concept>>
+    : std::bool_constant<std::is_base_of_v<std::random_access_iterator_tag, typename TIteratorTraits<TIterator>::iterator_concept>>
 {
 };
 
 template <typename TIterator>
-struct TIterator_IsContiguous : FalseType
+struct TIterator_IsContiguous : std::false_type
 {
 };
 template <typename TIterator> requires requires { typename TIteratorTraits<TIterator>::iterator_concept; }
 struct TIterator_IsContiguous<TIterator>
-    : BoolConstant<std::is_base_of_v<std::contiguous_iterator_tag, typename TIteratorTraits<TIterator>::iterator_concept>>
+    : std::bool_constant<std::is_base_of_v<std::contiguous_iterator_tag, typename TIteratorTraits<TIterator>::iterator_concept>>
 {
 };
 

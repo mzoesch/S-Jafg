@@ -12,7 +12,7 @@ void Jafg::LAtlas2::Make(const TArray<LTexture2>& InTextures, const bool bFreeOl
     }
     checkSlow( this->Data.GetFirstMipMap().GetBulk().IsAllocated() == false )
 
-    if (static_cast<LSize>(InTextures.GetSize()) >= static_cast<LSize>(std::numeric_limits<u8>::max()))
+    if (static_cast<LSize>(InTextures.size()) >= static_cast<LSize>(std::numeric_limits<u8>::max()))
     {
         panic( "Exceed texture count limit. Shaders need updating." )
     }
@@ -34,7 +34,7 @@ void Jafg::LAtlas2::Make(const TArray<LTexture2>& InTextures, const bool bFreeOl
     }
     this->TexWidth = MaxTextureSize;
 
-    const i32 AtlasTextureDimensionCount =  static_cast<i32>(Maths::Ceil<float>(Maths::Sqrt(static_cast<float>(InTextures.GetSize()))));
+    const i32 AtlasTextureDimensionCount =  static_cast<i32>(Maths::Ceil<float>(Maths::Sqrt(static_cast<float>(InTextures.size()))));
     jassert(AtlasTextureDimensionCount > 0)
 
     this->Data.CreateEmpty(
@@ -43,7 +43,7 @@ void Jafg::LAtlas2::Make(const TArray<LTexture2>& InTextures, const bool bFreeOl
         ERawImageFormat::BGRA8
     );
 
-    for (LTextureIndex TextureIndex = 0; TextureIndex < static_cast<LTextureIndex>(InTextures.GetSize()); ++TextureIndex)
+    for (LTextureIndex TextureIndex = 0; TextureIndex < static_cast<LTextureIndex>(InTextures.size()); ++TextureIndex)
     {
         const LTexture2& Texture = InTextures[static_cast<i32>(TextureIndex)];
         const LPoint TexturePoint = this->CalculateSpecificTexturePointOnAtlas(TextureIndex);

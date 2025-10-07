@@ -84,11 +84,11 @@ void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy /* = true */)
 void Jafg::WUserWidget::RemoveChild(WNode* InChild)
 {
     check( this->Root )
-    check( this->GetChildren().GetSize() == 1 )
+    check( this->GetChildren().size() == 1 )
 
     Super::RemoveChild(InChild);
 
-    check( this->GetChildren().IsEmpty() )
+    check( this->GetChildren().empty() )
     this->Root = nullptr;
 
     return;
@@ -96,7 +96,7 @@ void Jafg::WUserWidget::RemoveChild(WNode* InChild)
 
 Jafg::LWidgetSlot* Jafg::WUserWidget::AddChild(WNode* InChild)
 {
-    check( this->Root == nullptr && this->GetChildren().GetSize() == 0 )
+    check( this->Root == nullptr && this->GetChildren().size() == 0 )
     LWidgetSlot* Out = Super::AddChild(InChild);
     check( Out )
     this->Root = Out;
@@ -105,7 +105,7 @@ Jafg::LWidgetSlot* Jafg::WUserWidget::AddChild(WNode* InChild)
 
 Jafg::LWidgetSlot* Jafg::WUserWidget::AddChildAt(const i32 InIndex, WNode* InChild)
 {
-    check( this->Root == nullptr && this->GetChildren().GetSize() == 0 )
+    check( this->Root == nullptr && this->GetChildren().size() == 0 )
     LWidgetSlot* Out = Super::AddChildAt(InIndex, InChild);
     check( Out )
     this->Root = Out;
@@ -122,7 +122,7 @@ Jafg::WParentBase* Jafg::WUserWidget::ReplaceRootImpl(WParentBase* InRoot)
 
     const LWidgetSlot* Out = this->AddChild(InRoot);
     check( this->Root != nullptr )
-    check( this->GetChildren().GetSize() == 1 )
+    check( this->GetChildren().size() == 1 )
 
     /* Typesafe this is. Look at function parameters. */
     return static_cast<WParentBase*>(Out->Content);

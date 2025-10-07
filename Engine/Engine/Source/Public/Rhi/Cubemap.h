@@ -47,9 +47,9 @@ struct LCubemap final
     ENGINE_API void Cache(const TArray<LEnginePath>& InPaths);
     ENGINE_API void Load(const TArray<LEnginePath>& InPaths);
 
-    FORCEINLINE constexpr bool IsValid() const noexcept { return this->Handle.IsValid(); }
+    FORCEINLINE constexpr bool IsValid() const noexcept { return this->Handle.has_value(); }
 
-    FORCEINLINE constexpr u32 GetHandle() const noexcept { return this->Handle.GetValue(); }
+    FORCEINLINE constexpr u32 GetHandle() const noexcept { return this->Handle.value(); }
     FORCEINLINE constexpr operator  u32() const noexcept { return this->GetHandle(); }
 
 private:

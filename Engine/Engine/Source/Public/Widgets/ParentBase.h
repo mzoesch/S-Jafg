@@ -52,7 +52,7 @@ FORCEINLINE typename TWidgetFactoryParentBase<TNode>::TFactoryRetTy& TWidgetFact
         this->AddChild(Sibling);
         continue;
     }
-    InChild->GetMutableSiblingsDangerous().Empty();
+    algo::orphan(&InChild->GetMutableSiblingsDangerous());
 
     return this->Self();
 }

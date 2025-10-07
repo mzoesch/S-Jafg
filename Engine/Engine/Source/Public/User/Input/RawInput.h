@@ -35,7 +35,7 @@ struct LRawInput
 
     FORCEINLINE LString ToString() const
     {
-        return LString::SprintF("{{{}: {:.2f}}}", LexToString(this->Key), this->Value);
+        return Lal::SprintF("{{{}: {:.2f}}}", LexToString(this->Key), this->Value);
     }
 };
 

@@ -23,8 +23,8 @@ struct Entry
 //# @param InValue   The string representation of the value to serialize.
 //# @return True if something was written, changed or updated, false otherwise.
 //#
-ENGINE_API bool Serialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey, const LStringView& InValue, const bool bDoBackup = true);
-ENGINE_API bool SerializeBulk(const LPath& InPath, const TArray<Entry>& InEntries, const bool bDoBackup = true);
+/* ENGINE_API */ inline bool Serialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey, const LStringView& InValue, const bool bDoBackup = true) { return false; }
+/* ENGINE_API */ inline bool SerializeBulk(const LPath& InPath, const TArray<Entry>& InEntries, const bool bDoBackup = true) { return false; }
 
 //#
 //# Deserialize a value from a configuration file.
@@ -34,6 +34,9 @@ ENGINE_API bool SerializeBulk(const LPath& InPath, const TArray<Entry>& InEntrie
 //# @param InKey     The unique key of said section.
 //# @return The deserialized value if it was found, nothing otherwise.
 //#
-ENGINE_API TOptional<LString> Deserialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey);
+/* ENGINE_API */ inline TOptional<LString> Deserialize(const LPath& InPath, const LStringView& InSection, const LStringView& InKey)
+{
+    return {};
+}
 
 } /* ~Namespace Jafg::ConfigIo */

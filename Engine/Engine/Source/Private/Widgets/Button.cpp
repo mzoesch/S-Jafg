@@ -182,19 +182,19 @@ void Jafg::WTextButton::Construct()
         this->AddChild(this->ButtonText);
     }
 
-    check( this->GetChildren().GetSize() > 0 )
+    check( this->GetChildren().size() > 0 )
 
-    if (this->IntermediateContent.IsEmpty() == false)
+    if (this->IntermediateContent.empty() == false)
     {
         this->ButtonText->SetContent(std::move(this->IntermediateContent));
-        check( this->IntermediateContent.IsEmpty() )
+        check( this->IntermediateContent.empty() )
     }
 
-    if (this->IntermediateTextBoxBrush.IsValid())
+    if (this->IntermediateTextBoxBrush.has_value())
     {
-        this->ButtonText->SetBrush(this->IntermediateTextBoxBrush.GetValue());
-        this->IntermediateTextBoxBrush.Reset();
-        check( this->IntermediateTextBoxBrush.IsValid() == false )
+        this->ButtonText->SetBrush(this->IntermediateTextBoxBrush.value());
+        this->IntermediateTextBoxBrush.reset();
+        check( this->IntermediateTextBoxBrush.has_value() == false )
     }
 
     Super::Construct();
@@ -245,10 +245,10 @@ bool Jafg::WTextButton::SetTextBoxBrush(const LTextBoxBrush& InBrush)
 
 bool Jafg::WTextButton::LoadIntermediateContent()
 {
-    if (this->IntermediateContent.IsEmpty() && this->ButtonText)
+    if (this->IntermediateContent.empty() && this->ButtonText)
     {
         this->ButtonText->SetContent(std::move(this->IntermediateContent));
-        check( this->IntermediateContent.IsEmpty() )
+        check( this->IntermediateContent.empty() )
         return true;
     }
 

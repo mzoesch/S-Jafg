@@ -52,8 +52,8 @@ public:
     FORCEINLINE const LName& GetName(void) const { return this->Name; }
     FORCEINLINE const LString& GetDisplayName(void) const { return this->DisplayName; }
 
-    FORCEINLINE virtual const TArray<Smart::TUnique<LPreference>>& GetChildPreferences() const;
-    FORCEINLINE virtual const TArray<Smart::TUnique<LPreference>>& LoadAndGetChildPreferences();
+    FORCEINLINE virtual const TArray<TUnique<LPreference>>& GetChildPreferences() const;
+    FORCEINLINE virtual const TArray<TUnique<LPreference>>& LoadAndGetChildPreferences();
 
     FORCEINLINE virtual bool IsLeaf() const { return true; }
     FORCEINLINE bool IsBuildable() const { return this->OnBuildDelegate.IsBound(); }
@@ -68,12 +68,12 @@ private:
     LBuildPreference OnBuildDelegate;
 };
 
-FORCEINLINE const TArray<Smart::TUnique<LPreference>>& LPreference::GetChildPreferences() const
+FORCEINLINE const TArray<TUnique<LPreference>>& LPreference::GetChildPreferences() const
 {
-    static const TArray<Smart::TUnique<LPreference>> _; return _;
+    static const TArray<TUnique<LPreference>> _; return _;
 }
 
-FORCEINLINE const TArray<Smart::TUnique<LPreference>>& LPreference::LoadAndGetChildPreferences()
+FORCEINLINE const TArray<TUnique<LPreference>>& LPreference::LoadAndGetChildPreferences()
 {
     return this->GetChildPreferences();
 }

@@ -55,13 +55,15 @@
     Forward Containers.
 ----------------------------------------------------------------------------*/
 
+#include "Containers/LalIteratorTraits.h"
+#include "Containers/LalIterator.h"
 #include "Containers/ContainerLegacyForward.h"
 #include "Containers/BasicRange.h"
 #include "Containers/CoreContainers.h"
-#include "Algo/Basic.h"
-#include "StdExt/Core.h"
 #include "Containers/LalFormat.h"
 #include "Containers/FuckTheStdGiveMeUb.h"
+#include "Traits/Traits.h"
+#include "Traits/CoreTraits.h"
 
 
 /*----------------------------------------------------------------------------
@@ -90,7 +92,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Memory
-#include "Memory/Smart.h"
+#include "Memory/SmartBasic.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Maths core
@@ -98,6 +100,9 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Containers
+#include "Algo/It.h"
+#include "Algo/Move.h"
+#include "Algo/Access.h"
 #include "Containers/ComplexQueue.h"
 #include "Containers/SimpleQueue.h"
 #include "System/LalFinder.h"

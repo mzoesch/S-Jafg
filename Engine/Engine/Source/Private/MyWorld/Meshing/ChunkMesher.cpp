@@ -9,8 +9,8 @@ void Jafg::LChunkMesher::ClearProceduralMesh()
 {
     check( this->Mutex.try_lock() == false )
 
-    this->Vertices.Empty();
-    this->Indices.Empty();
+    algo::orphan(&this->Vertices);
+    algo::orphan(&this->Indices);
 
     return;
 }
@@ -25,7 +25,7 @@ void Jafg::LChunkMesher::ApplyProceduralMesh()
     {
         check( this->Owner->IsRendererComponentValid() )
         this->Owner->GetChunkRendererComponent()->GetShaderInstance()->LoadMeshToGraphicsMemory(this->Vertices, this->Indices);
-        this->NumTriangles = this->Indices.GetSize();
+        this->NumTriangles = this->Indices.size();
     }
     else
     {
@@ -44,7 +44,7 @@ void Jafg::LChunkMesher::ApplyProceduralMesh()
 
             check( this->Owner->IsRendererComponentValid() )
             this->Owner->GetChunkRendererComponent()->GetShaderInstance()->LoadMeshToGraphicsMemory(this->Vertices, this->Indices);
-            this->NumTriangles = this->Indices.GetSize();
+            this->NumTriangles = this->Indices.size();
 
             if (this->Owner->GetCurrentHuntedStateDangerous() == EChunkState::Active)
             {

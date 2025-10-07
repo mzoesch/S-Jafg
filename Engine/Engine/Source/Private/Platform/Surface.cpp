@@ -41,7 +41,7 @@ void Jafg::LSurfaceBase::Tick()
                     {
                         this->RepeatedBufferTime -= this->RepeatedRate;
                         this->bThisFrameRepeatedKeyDown = true;
-                        if (LRawInput* RealKey { this->GetCurrentlyPressedKeys().FindRef(this->GetCurrenRepeatedKeyInQuestion()) })
+                        if (LRawInput* RealKey { algo::find_pointer(this->GetCurrentlyPressedKeys(), this->GetCurrenRepeatedKeyInQuestion(), &LRawInput::Key) })
                         {
                             RealKey->bRepeated = true;
                         }
@@ -97,10 +97,10 @@ void Jafg::LSurfaceBase::TearDown()
 
 void Jafg::LSurfaceBase::BeginNewFrame()
 {
-    this->PlatformInput.Empty();
+    algo::orphan(&this->PlatformInput);
 
-    this->DownKeys.SwapBuffers(&this->LastFrameDownKeys);
-    this->DownKeys.Reset(this->DownKeys.GetSize());
+    this->DownKeys.swap(this->LastFrameDownKeys);
+    this->DownKeys.clear();
 
     return;
 }
@@ -109,13 +109,13 @@ void Jafg::LSurfaceBase::PollVirtualInputs()
 {
     for (const LRawInput& Input : this->VirtualInput)
     {
-        if (this->DownKeys.Contains(Input.Key) == false)
+        if (algo::contains(this->DownKeys, Input.Key, &LRawInput::Key) == false)
         {
             this->AddKeyDown(Input);
         }
     }
 
-    this->VirtualInput.Empty();
+    algo::orphan(&this->VirtualInput);
 
     return;
 }

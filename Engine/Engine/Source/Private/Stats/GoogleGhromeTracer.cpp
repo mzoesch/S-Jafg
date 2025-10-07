@@ -26,13 +26,13 @@ void Jafg::Stats::Vendor::LGoogleChromeTracer::BeginSession(LString&& InName)
     check( this->Session.IsValid() == false )
     this->Session.Name = std::move(InName);
 
-    const LString Path = this->GetPath();
+    const LString Path { this->GetPath() };
 
     // Do not use finder, as it may not exist yet.
-    const std::filesystem::path P{Path.ToPtr()};
+    const LPath P{ Path };
     std::filesystem::create_directories(P.parent_path());
 
-    this->Stream.open(Path.ToPtr(), std::ios::out | std::ios::trunc);
+    this->Stream.open(Path.c_str(), std::ios::out | std::ios::trunc);
     this->Stream << R"({"traceEvents":[)";
 
     Lock.unlock();
@@ -61,7 +61,7 @@ void Jafg::Stats::Vendor::LGoogleChromeTracer::AddNamedThread(Private::LThread&&
     this->Stream << R"({"name":"thread_name","ph":"M","pid":1,"tid":)";
     this->Stream << InThread.ThreadId;
     this->Stream << R"(,"args":{"name":")";
-    this->Stream << InThread.Name.ToPtr();
+    this->Stream << InThread.Name;
     this->Stream << R"("}})";
 
     return;
@@ -146,7 +146,7 @@ void Jafg::Stats::Vendor::LGoogleChromeTracer::EndSession()
         LOG_ERROR(LogStats, "Failed to write file: [{}].", this->GetPath())
     }
 
-    this->Session.Name.Empty();
+    algo::orphan(&this->Session.Name);
 
     this->bFirstEvent = true;
 
@@ -159,10 +159,10 @@ LString Jafg::Stats::Vendor::LGoogleChromeTracer::GetPath() const
 
     LPath Path = Finder::GetSavedDir();
     Path /= "GoogleChrome";
-    Path /= this->Session.Name.ToPtr();
-    Path.Append(".json");
+    Path /= this->Session.Name;
+    Path.concat(".json");
 
-    return { Path.ToPtr() };
+    return Path.generic_string();
 }
 
 #endif /* WITH_STATS && JAFG_STATS_USE_GOOGLE_CHROME_TRACER */

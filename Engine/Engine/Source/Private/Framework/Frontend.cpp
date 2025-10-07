@@ -18,10 +18,10 @@ void Jafg::LFrontend::Initialize(LObjectContext* InOuter)
 {
     this->CachedOuter = InOuter;
 
-    this->Surfaces.Emplace(this->CreateNewSurface());
-    this->Surfaces.GetLast()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+    this->Surfaces.emplace_back(this->CreateNewSurface());
+    this->Surfaces.back().SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
 
-    this->FocusedSurface = this->Surfaces.GetSize() - 1;
+    this->FocusedSurface = this->Surfaces.size() - 1;
     check( this->IsFocusedSurfaceValid() )
 
     this->Collection.DeferredInitialize(this->CachedOuter);
@@ -81,7 +81,7 @@ void Jafg::LFrontend::TearDown()
     {
         Surface.TearDown();
     }
-    this->Surfaces.Empty();
+    algo::orphan(&this->Surfaces);
     this->CachedOuter = nullptr;
 
     return;
@@ -152,9 +152,9 @@ Jafg::WNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(const LObjectClass* 
         }
     }
 
-    for (TArray<LSurface>::SizeType Idx { 0 }; Idx < this->Surfaces.GetSize(); ++Idx)
+    for (TArray<LSurface>::size_type Idx { 0 }; Idx < this->Surfaces.size(); ++Idx)
     {
-        if (this->FocusedSurface != INDEX_NONE && static_cast<TArray<LSurface>::SizeType>(this->FocusedSurface) == Idx)
+        if (this->FocusedSurface != INDEX_NONE && static_cast<TArray<LSurface>::size_type>(this->FocusedSurface) == Idx)
         {
             continue;
         }

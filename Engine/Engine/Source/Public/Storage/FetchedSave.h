@@ -31,8 +31,8 @@ struct LFetchedSave
     //#
     LTexture2 PreviewTexture;
 
-    FORCEINLINE bool IsValid() const noexcept { return this->Path.IsEmpty() == false; }
-    FORCEINLINE bool IsCorrupted() const noexcept { return this->DisplayName.IsEmpty(); }
+    FORCEINLINE bool IsValid() const noexcept { return this->Path.empty() == false; }
+    FORCEINLINE bool IsCorrupted() const noexcept { return this->DisplayName.empty(); }
     FORCEINLINE bool IsPreviewTextureValid() const noexcept { return this->PreviewTexture.IsValid(); }
 
     FORCEINLINE void ValueCopy(const LFetchedSave& Other) noexcept

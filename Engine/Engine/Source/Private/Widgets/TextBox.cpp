@@ -124,7 +124,7 @@ void Jafg::WTextBox::UpdateDesiredSizeForString(const LString& InString) const
 
 f32 Jafg::WTextBox::GetDesiredWidth(const LString& InString) const
 {
-    if (InString.IsEmpty())
+    if (InString.empty())
     {
         return 0.0f;
     }
@@ -132,7 +132,7 @@ f32 Jafg::WTextBox::GetDesiredWidth(const LString& InString) const
     const LOrthographicTextShader* Shader { GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText) };
 
     f32 Out { 0.0f };
-    for (const LString::T Rune : InString)
+    for (auto const Rune : InString)
     {
         if (auto It { Shader->GetCharacters().find(static_cast<i8>(Rune)) }; It != Shader->GetCharacters().end())
         {
@@ -147,7 +147,7 @@ f32 Jafg::WTextBox::GetDesiredWidth(const LString& InString) const
 
 i32 Jafg::WTextBox::GoToWidth(const LString& InString, const f32 InWidth) const
 {
-    if (InString.IsEmpty())
+    if (InString.empty())
     {
         return 0;
     }
@@ -156,7 +156,7 @@ i32 Jafg::WTextBox::GoToWidth(const LString& InString, const f32 InWidth) const
 
     f32 Width { 0.0f };
     i32 Index { 0 };
-    for (const LString::T Rune : InString)
+    for (auto const Rune : InString)
     {
         ++Index;
 

@@ -56,7 +56,7 @@ FORCEINLINE bool WillShortlyTerminate() { return bGShouldRequestExit || bGEngine
 
 FORCEINLINE bool HasCustomExitStatus() { return GCustomExitStatusOverride != INDEX_NONE; }
 FORCEINLINE i32  GetCustomExitStatus() { return GCustomExitStatusOverride; }
-FORCEINLINE bool HasCustomExitReason() { return GCustomExitReason.IsEmpty() == false; }
+FORCEINLINE bool HasCustomExitReason() { return GCustomExitReason.empty() == false; }
 FORCEINLINE auto GetCustomExitReason() -> LString { return GCustomExitReason; }
 
 // ~Engine Globals
@@ -92,7 +92,7 @@ struct LWorldContext
     LString TravelUrl;
     LWorld* ChildWorld;
 
-    FORCEINLINE bool IsWaitingForTravel() const { return this->TravelUrl.IsEmpty() == false; }
+    FORCEINLINE bool IsWaitingForTravel() const { return this->TravelUrl.empty() == false; }
 };
 
 } /* ~Namespace Private */
@@ -272,8 +272,8 @@ public:
 
 private:
 
-    void FetchPlugins(const LPathView InPath);
-    bool FetchPlugin(const LPathView InPath);
+    void FetchPlugins(const LPath& InPath);
+    bool FetchPlugin(const LPath& InPath);
     EPluginLoadReturnCode::Type LoadPluginImpl(const LFetchedPlugin& InFetchedPlugin);
 
     TArray<LFetchedPlugin> FetchedPlugins;
@@ -437,7 +437,7 @@ bool LEngine::RemoveShader(const LEngineShader* InShader) noexcept
 
 FORCEINLINE bool LEngine::IsObjectContextKnown(const LObjectContext* InContext) const
 {
-    return this->KnownObjectContexts.Contains(InContext);
+    return algo::contains(this->KnownObjectContexts, InContext);
 }
 
 #if JAFG_WITH_FOREIGN_SUPPORT

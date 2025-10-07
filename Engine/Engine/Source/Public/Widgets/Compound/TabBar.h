@@ -66,7 +66,7 @@ struct LTabBarTabDescriptor final
     FORCEINLINE LTabBarTabDescriptor&& AddAfter(const LString& InString) { this->AddAfterField = InString; return std::move(*this); }
     FORCEINLINE LTabBarTabDescriptor&& AddAfter(LString&& InString) { this->AddAfterField = std::move(InString); return std::move(*this); }
 
-    FORCEINLINE LTabBarTabDescriptor&& Sibling(LTabBarTabDescriptor&& InSibling) { this->Siblings.Emplace(std::move(InSibling)); return std::move(*this); }
+    FORCEINLINE LTabBarTabDescriptor&& Sibling(LTabBarTabDescriptor&& InSibling) { this->Siblings.emplace_back(std::move(InSibling)); return std::move(*this); }
     FORCEINLINE LTabBarTabDescriptor&& operator+(LTabBarTabDescriptor&& InSibling) { return this->Sibling(std::move(InSibling)); }
 
     TArray<LTabBarTabDescriptor> Siblings;
@@ -121,7 +121,7 @@ public:
 
     FORCEINLINE void ResetWrapperClass() { this->WrapperClass = nullptr; }
     FORCEINLINE void SetWrapperClass(const TSubclassOf<WParentBase>& InWrapperClass) { this->WrapperClass = InWrapperClass; }
-    FORCEINLINE void ResetDefaultAlignmentPreference() { this->bIsVertical.Reset(); }
+    FORCEINLINE void ResetDefaultAlignmentPreference() { this->bIsVertical.reset(); }
     FORCEINLINE void SetVerticalPreference() { this->bIsVertical = true; }
     FORCEINLINE void SetHorizontalPreference() { this->bIsVertical = false; }
 

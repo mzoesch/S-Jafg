@@ -26,11 +26,7 @@ void Jafg::LViewport::ClearInvalidWidgets()
 
     auto ClearOnContainer {[](TArray<TObjectStorage<WNode>>* InContainer) -> void
     {
-        const TArray<TObjectStorage<WNode>>::SizeType Removed { InContainer->RemoveByPredicate([](const TObjectStorage<WNode>& InNode)
-        {
-            return InNode.IsValidDeep() == false;
-        })};
-
+        auto const Removed { algo::erase_if(InContainer, [](auto const& E) { return E.IsValidDeep() == false; }) };
         if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
         {
             if (Removed > 0)
@@ -61,13 +57,13 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
     }
     else
     {
-        this->CachedCursorLocation.Reset();
+        this->CachedCursorLocation.reset();
     }
 
     this->LastFrameHoveredWidgets = this->HoveredWidgets;
     if (bCursorLocationIsMeaningful)
     {
-        this->HoveredWidgets.Reset(this->HoveredWidgets.GetSize());
+        this->HoveredWidgets.clear();
     }
 
     LCursorReply SweepReply;
@@ -98,7 +94,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
         LCursorReply MostRecentReply = LCursorReply::Unhandled();
         for (WNode* Node : this->LastFrameHoveredWidgets)
         {
-            if (this->HoveredWidgets.Contains(Node) == false)
+            if (algo::contains(this->HoveredWidgets, Node) == false)
             {
                 if (const LCursorReply Reply { Node->OnCursorLeave() }; MostRecentReply.IsHandled() == false && Reply.IsHandled())
                 {
@@ -268,7 +264,7 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
 {
     this->CachedContext = &Context;
 
-    if (this->HoveredWidgets.IsEmpty() == false || this->LastFrameHoveredWidgets.IsEmpty() == false)
+    if (this->HoveredWidgets.empty() == false || this->LastFrameHoveredWidgets.empty() == false)
     {
         LCursorReply MostRecentReply;
         for (WNode* Node : this->HoveredWidgets)
@@ -286,8 +282,8 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
             }
         }
 
-        this->HoveredWidgets.Empty();
-        this->LastFrameHoveredWidgets.Empty();
+        algo::orphan(&this->HoveredWidgets);
+        algo::orphan(&this->LastFrameHoveredWidgets);
     }
 
     if (bInvalidateAllInputs && this->FocusedWidget)
@@ -304,7 +300,7 @@ void Jafg::LViewport::OnClear()
 {
     if
     (
-           this->BackgroundContexts.IsEmpty() == false
+           this->BackgroundContexts.empty() == false
         && this->BackgroundContexts[0].World->IsSkyboxValid()
     )
     {
@@ -415,7 +411,7 @@ void Jafg::LViewport::TearDown()
         Widget->MarkAsGarbage();
     }
 
-    this->TopLevelWidgets.Empty();
+    algo::orphan(&this->TopLevelWidgets);
 
     return;
 }
@@ -423,7 +419,7 @@ void Jafg::LViewport::TearDown()
 void Jafg::LViewport::AddWidget(WUserWidget* Widget)
 {
     check( Widget )
-    this->TopLevelWidgets.Add(Widget);
+    this->TopLevelWidgets.push_back(Widget);
 
     check( Widget->GetViewport() == this )
 
@@ -433,7 +429,7 @@ void Jafg::LViewport::AddWidget(WUserWidget* Widget)
 void Jafg::LViewport::AddWidgetAt(const i32 Index, WUserWidget* Widget)
 {
     check( Widget )
-    this->TopLevelWidgets.AddAt(Index, Widget);
+    this->TopLevelWidgets.insert(this->TopLevelWidgets.begin() + Index, Widget);
 
     check( Widget->GetViewport() == this )
 
@@ -442,12 +438,12 @@ void Jafg::LViewport::AddWidgetAt(const i32 Index, WUserWidget* Widget)
 
 void Jafg::LViewport::RemoveWidget(WUserWidget* Widget)
 {
-    this->TopLevelWidgets.RemoveOnceChecked(Widget);
+    algo::erase_once_checked(&this->TopLevelWidgets, Widget);
 }
 
 bool Jafg::LViewport::TryRemoveWidget(WUserWidget* Widget)
 {
-    return this->TopLevelWidgets.RemoveOnce(Widget);
+    return algo::erase_once(&this->HoveredWidgets, Widget);
 }
 
 void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
@@ -518,9 +514,9 @@ bool Jafg::LViewport::FocusWidgetNode(WNode* InNode)
 
 bool Jafg::LViewport::AddHoveredWidgetForFrame(WNode* Node)
 {
-    check( this->HoveredWidgets.Contains(Node) == false )
-    this->HoveredWidgets.Emplace(Node);
-    return this->LastFrameHoveredWidgets.Contains(Node) == false;
+    check( algo::contains(this->HoveredWidgets, Node) == false )
+    this->HoveredWidgets.emplace_back(Node);
+    return algo::contains(this->LastFrameHoveredWidgets, Node) == false;
 }
 
 void Jafg::LViewport::ChangeFocusUnsafe(WNode* InNode)

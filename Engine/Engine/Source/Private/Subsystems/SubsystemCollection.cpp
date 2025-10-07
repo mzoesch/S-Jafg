@@ -13,8 +13,8 @@ void Jafg::LSubsystemCollection::Reset()
 
     this->Outer = nullptr;
     this->OuterClass = nullptr;
-    this->SubsystemInstances.Empty();
-    this->IntermediateInstances.Empty();
+    algo::orphan(&this->SubsystemInstances);
+    algo::orphan(&this->IntermediateInstances);
 
     if (GEngine && this->OnForeignPluginLoadedHandle.IsValid())
     {
@@ -29,7 +29,7 @@ void Jafg::LSubsystemCollection::DeferredInitialize(LObjectContext* InOuter, con
 {
     check( InOuter )
     check( this->Outer == nullptr )
-    check( this->SubsystemInstances.IsEmpty() )
+    check( this->SubsystemInstances.empty() )
 
     this->Outer = InOuter;
     this->bAllowDeferredSubsystems = bAllowDeferredSubsystems;
@@ -43,7 +43,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(const LObjectClass* InClas
 
     check( this->Outer )
     check( this->OuterClass == nullptr )
-    check( this->SubsystemInstances.IsEmpty() )
+    check( this->SubsystemInstances.empty() )
 
     LOG_VERBOSE(LogSubsystemCollection, "Locating all subsystems of class {}.", InClass->GetSpacedClassName())
 
@@ -57,33 +57,31 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(const LObjectClass* InClas
             continue;
         }
 
-        this->SubsystemInstances.Emplace(NewObject<JSubsystem>(this->Outer, SubsystemClass));
+        this->SubsystemInstances.emplace_back(NewObject<JSubsystem>(this->Outer, SubsystemClass));
 
         continue;
     }
 
-    for (TArray<JSubsystem*>::SizeType Idx { 0 }; Idx < this->SubsystemInstances.GetSize();)
+    for (auto It{ this->SubsystemInstances.begin() }; It != this->SubsystemInstances.end();)
     {
-        JSubsystem* Subsystem = this->SubsystemInstances[Idx];
+        checkSlow( *It )
 
-        checkSlow( Subsystem )
-
-        if (Subsystem->IsInitialized())
+        if ((*It)->IsInitialized())
         {
-            ++Idx;
+            It = algo::next(It);
             continue;
         }
 
-        if (Subsystem->ShouldCreateSubsystem(this->Outer))
+        if ((*It)->ShouldCreateSubsystem(this->Outer))
         {
-            LOG_TRACE(LogSubsystemCollection, "Initializing subsystem {}.", Subsystem->GetFullName())
-            Subsystem->Initialize(*this);
-            ++Idx;
+            LOG_TRACE(LogSubsystemCollection, "Initializing subsystem {}.", (*It)->GetFullName())
+            (*It)->Initialize(*this);
+            It = algo::next(It);
             continue;
         }
 
-        Subsystem->MarkAsGarbage();
-        this->SubsystemInstances.RemoveAt(Idx);
+        (*It)->MarkAsGarbage();
+        this->SubsystemInstances.erase(It);
 
         continue;
     }
@@ -104,44 +102,36 @@ void Jafg::LSubsystemCollection::InitializeSubsystemsDeferredOnly()
 
     check( this->Outer )
     check( this->OuterClass != nullptr )
-    check( this->IntermediateInstances.IsEmpty() )
+    check( this->IntermediateInstances.empty() )
 
     LOG_VERBOSE(LogSubsystemCollection, "Locating all subsystems of class {} that are not loaded.", this->OuterClass->GetSpacedClassName())
 
-    TArray<const LObjectClass*> SubsystemsClasses;
+    TArray<LObjectClass const*> SubsystemsClasses;
     Private::GObjectRegistry->GetRegisteredObjectsOfClass(this->OuterClass, &SubsystemsClasses);
 
-    for (const LObjectClass* SubsystemClass : SubsystemsClasses)
+    for (LObjectClass const* SubsystemClass : SubsystemsClasses)
     {
         if (SubsystemClass->IsAbstract())
         {
             continue;
         }
 
-        if (this->SubsystemInstances.ContainsByPredicate([SubsystemClass](const JSubsystem* Subsystem) -> bool
-        {
-            if (Subsystem->GetVTable() == SubsystemClass)
-            {
-                return true;
-            }
-
-            return false;
-        }) == false)
+        if (algo::contains(this->SubsystemInstances, SubsystemClass, &JSubsystem::GetVTable) == false)
         {
             LOG_VERBOSE(LogSubsystemCollection, "Found potential subsystem [{}].", SubsystemClass->GetSpacedClassName() )
-            this->IntermediateInstances.Emplace(NewObject<JSubsystem>(this->Outer, SubsystemClass));
+            this->IntermediateInstances.emplace_back(NewObject<JSubsystem>(this->Outer, SubsystemClass));
         }
 
         continue;
     }
 
-    for (TArray<JSubsystem*>::SizeType Idx { 0 }; Idx < this->IntermediateInstances.GetSize();)
+    for (auto It{ this->IntermediateInstances.begin() }; It != this->IntermediateInstances.end();)
     {
-        JSubsystem* Subsystem = this->IntermediateInstances[Idx];
+        auto* Subsystem { *It };
 
         if (Subsystem->IsInitialized())
         {
-            ++Idx;
+            It = algo::next(It);
             continue;
         }
 
@@ -149,17 +139,17 @@ void Jafg::LSubsystemCollection::InitializeSubsystemsDeferredOnly()
         {
             LOG_TRACE(LogSubsystemCollection, "Initializing subsystem {}.", Subsystem->GetFullName())
             Subsystem->Initialize(*this);
-            ++Idx;
+            It = algo::next(It);
             continue;
         }
 
         Subsystem->MarkAsGarbage();
-        this->IntermediateInstances.RemoveAt(Idx);
+        this->IntermediateInstances.erase(It);
 
         continue;
     }
 
-    this->SubsystemInstances.Append(std::move(this->IntermediateInstances));
+    this->SubsystemInstances.append_range(std::move(this->IntermediateInstances));
 
     return;
 }
@@ -262,16 +252,12 @@ void Jafg::LSubsystemCollection::TearDownPrioritySubsystems()
 
     i32 SubsystemCount { 0 };
 
-    for (TArray<JSubsystem*>::SizeType Idx { 0 }; Idx < this->SubsystemInstances.GetSize(); ++Idx)
+    for (auto*& Subsystem : this->SubsystemInstances)
     {
-        JSubsystem*& Subsystem = this->SubsystemInstances[Idx];
-        checkSlow( Subsystem )
-
         if (Subsystem->IsPriorityTearDown())
         {
             Subsystem->MarkAsGarbage();
             Subsystem = nullptr;
-            checkSlow( this->SubsystemInstances[Idx] == nullptr )
             ++SubsystemCount;
         }
 
@@ -295,7 +281,7 @@ void Jafg::LSubsystemCollection::TearDownNonPrioritySubsystems()
     check( Tasks::IsOnMasterThread() )
     check( this->Outer )
 
-    LOG_VERBOSE(LogSubsystemCollection, "Tearing down {} subsystems for outer [{}].", this->SubsystemInstances.GetSize(), this->Outer->GetHumanReadableName())
+    LOG_VERBOSE(LogSubsystemCollection, "Tearing down {} subsystems for outer [{}].", this->SubsystemInstances.size(), this->Outer->GetHumanReadableName())
 
     for (JSubsystem* Subsystem : this->SubsystemInstances)
     {
@@ -307,7 +293,7 @@ void Jafg::LSubsystemCollection::TearDownNonPrioritySubsystems()
         continue;
     }
 
-    this->SubsystemInstances.Empty();
+    algo::orphan(&this->SubsystemInstances);
     this->Outer->GetCarnifex()->KillAllGarbageChildren();
     this->Outer = nullptr;
     this->OuterClass = nullptr;

@@ -341,7 +341,7 @@ Jafg::LReply Jafg::WScrollRegion::SweepFocusTest(const LViewport& Context, const
 
 void Jafg::WScrollRegion::UserInterfaceTick(const LViewport& InViewport)
 {
-    if (InViewport.GetCachedCursorLocation().IsValid() == false)
+    if (InViewport.GetCachedCursorLocation().has_value() == false)
     {
         return;
     }
@@ -545,7 +545,7 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(const LViewport& InViewport)
 {
     check( this->UserInterfaceTickDelegateHandle.IsValid() == false )
 
-    if (InViewport.GetCachedCursorLocation().IsValid() == false)
+    if (InViewport.GetCachedCursorLocation().has_value() == false)
     {
         return false;
     }

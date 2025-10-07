@@ -66,7 +66,7 @@ void Jafg::WDebugScreen::Construct()
 
             NewNode(WTextBox)
                 .Brush(Brush)
-                .Content(LString::SprintF(
+                .Content(Lal::SprintF(
                     "JAFG v{} at [{} {}] on [{} - {}] @mzoesch",
                     BuildInfo::GetEngineVersionStr(),
                     BuildInfo::GetBuildDate(),
@@ -183,7 +183,7 @@ void Jafg::WDebugScreen::Tick()
     {
         {
             const LVector Location { Controller->GetPossessed()->GetTranslation() };
-            this->LocalPawnLocationSection->SetContent(LString::SprintF
+            this->LocalPawnLocationSection->SetContent(Lal::SprintF
             (
                 "XYZ: {:.3f} / {:.3f} / {:.3f}",
                 Location.X,
@@ -211,7 +211,7 @@ void Jafg::WDebugScreen::Tick()
             {
                 YawAsText = "-Y (West)";
             }
-            this->LocalPawnFacingSection->SetContent(LString::SprintF
+            this->LocalPawnFacingSection->SetContent(Lal::SprintF
             (
                 "Facing: {} ({:.2f}Y / {:.2f}P)",
                 YawAsText, Rotator.Yaw, Rotator.Pitch
@@ -221,7 +221,7 @@ void Jafg::WDebugScreen::Tick()
         {
             const LVector Location { Controller->GetPossessed()->GetTranslation() };
             const LChunkKey Key { LChunkKey(Location) };
-            this->LocalPawnChunkSection->SetContent(LString::SprintF
+            this->LocalPawnChunkSection->SetContent(Lal::SprintF
             (
                 "Chunk: {} {} {}",
                 Key.X, Key.Y, Key.Z
@@ -231,7 +231,7 @@ void Jafg::WDebugScreen::Tick()
         {
             const LVector Location { Controller->GetPossessed()->GetTranslation() };
             const LVoxelKey Key { LVoxelKey::FromWorldSpace(Location) };
-            this->LocalPawnVoxelSection->SetContent(LString::SprintF
+            this->LocalPawnVoxelSection->SetContent(Lal::SprintF
             (
                 "Local voxel: {} {} {}",
                 Key.X, Key.Y, Key.Z
@@ -245,11 +245,11 @@ void Jafg::WDebugScreen::Tick()
                 if (const AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
                 {
                     const LVoxelKey Key = LVoxelKey::FromWorldSpace(Hit.GlobalWorldLocation);
-                    this->LocalPawnTargetVoxelSectionDestroy->SetContent(LString::SprintF("TvD: {} {} {}", Key.X, Key.Y, Key.Z));
+                    this->LocalPawnTargetVoxelSectionDestroy->SetContent(Lal::SprintF("TvD: {} {} {}", Key.X, Key.Y, Key.Z));
                     break;
                 }
             }
-            if (this->LocalPawnTargetVoxelSectionDestroy->GetContent().IsEmpty())
+            if (this->LocalPawnTargetVoxelSectionDestroy->GetContent().empty())
             {
                 this->LocalPawnTargetVoxelSectionDestroy->SetContent("TvD: N/A");
             }
@@ -259,14 +259,14 @@ void Jafg::WDebugScreen::Tick()
             this->LocalPawnTargetVoxelSectionCreate->EmptyContent();
             for (const LHitResult& Hit : Controller->GetPossessed()->GetCurrentGenericTraceResults())
             {
-                if (const AChunk* HitChunk { Hit.Actor->As<AChunk>() }; HitChunk && Hit.SurfaceNormal.IsValid())
+                if (const AChunk* HitChunk { Hit.Actor->As<AChunk>() }; HitChunk && Hit.SurfaceNormal.has_value())
                 {
-                    const LVoxelKey Key { HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal.GetValue() * 0.5f) };
-                    this->LocalPawnTargetVoxelSectionCreate->SetContent(LString::SprintF("TvC: {} {} {}", Key.X, Key.Y, Key.Z));
+                    const LVoxelKey Key { HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal.value() * 0.5f) };
+                    this->LocalPawnTargetVoxelSectionCreate->SetContent(Lal::SprintF("TvC: {} {} {}", Key.X, Key.Y, Key.Z));
                     break;
                 }
             }
-            if (this->LocalPawnTargetVoxelSectionCreate->GetContent().IsEmpty())
+            if (this->LocalPawnTargetVoxelSectionCreate->GetContent().empty())
             {
                 this->LocalPawnTargetVoxelSectionCreate->SetContent("TvC: N/A");
             }
@@ -289,9 +289,9 @@ void Jafg::WDebugScreen::Tick()
                 LDebugTraceSphereVisualParams{16, 16, Lal::LColor::Green}
             });
 
-            if (Hit.SurfaceNormal.IsValid())
+            if (Hit.SurfaceNormal.has_value())
             {
-                const LVector WorldHit_Create { Hit.GlobalWorldLocation + Hit.SurfaceNormal.GetValue() * 0.5f };
+                const LVector WorldHit_Create { Hit.GlobalWorldLocation + Hit.SurfaceNormal.value() * 0.5f };
                 const LVoxelKey VKey_Create { LVoxelKey::FromWorldSpace(WorldHit_Create) };
                 const LVector WorldSpaceCenter_Create
                 {
@@ -304,7 +304,7 @@ void Jafg::WDebugScreen::Tick()
                 };
                 World->AddTemporalObject(LDebugTraceLine
                 {
-                    LTemporalWorldObject::DrawOnce, Hit.GlobalWorldLocation, Hit.GlobalWorldLocation + Hit.SurfaceNormal.GetValue(),
+                    LTemporalWorldObject::DrawOnce, Hit.GlobalWorldLocation, Hit.GlobalWorldLocation + Hit.SurfaceNormal.value(),
                     LDebugTraceLineVisualParams{Lal::LColor::Magenta}
                 });
                 World->AddTemporalObject(LDebugTraceSphere
@@ -440,7 +440,7 @@ void Jafg::WDebugScreen::SlowTick()
 
     const JUserPreferences* UserPreferences { GetDefault<JUserPreferences>() };
 
-    this->FpsSection->SetContent(LString::SprintF
+    this->FpsSection->SetContent(Lal::SprintF
     (
         "{} Fps @ {:.2f} ms T: {}; VSync: {} - Fcsssi: {}; L@{:.2f} Lh@{:.2f} I@{:.2f}",
         static_cast<i32>(Application::GetCurrentFps()),
@@ -453,7 +453,7 @@ void Jafg::WDebugScreen::SlowTick()
         Application::GetIdleDeltaTime() * 1'000.0f
     ));
 
-    this->TimeStatsSection->SetContent(LString::SprintF
+    this->TimeStatsSection->SetContent(Lal::SprintF
     (
         "Steady: Avg {}fps/{:.2f}ms; Low: {}fps/{:.2f}ms; High: {}fps/{:.2f}ms",
         static_cast<i32>(static_cast<double>(Application::GetPreviousFrameCount()) / Application::GetRealTimeOfPreviousStatisticsDuration()),
@@ -470,7 +470,7 @@ void Jafg::WDebugScreen::SlowTick()
 
         if (const JTimeWorldSubsystem* TimeSubsystem { World->GetSubsystem<JTimeWorldSubsystem>() }; TimeSubsystem)
         {
-            this->MyWorldTimeSection->SetContent(LString::SprintF
+            this->MyWorldTimeSection->SetContent(Lal::SprintF
             (
                 "T: {} [{} {}] {} [{:.3f}% {}-{}]",
                 TimeSubsystem->IsDay() ? 'D' : 'N',

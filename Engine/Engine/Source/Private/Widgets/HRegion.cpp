@@ -15,7 +15,7 @@ void Jafg::WHRegion::UpdateDesiredSize() const
         continue;
     }
 
-    DesiredSize.X += this->HSpace * (this->GetChildren().GetSize() - 1);
+    DesiredSize.X += this->HSpace * (this->GetChildren().size() - 1);
 
     DesiredSize += this->GetPadding().GetDesiredSize();
 
@@ -54,7 +54,7 @@ void Jafg::WHRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const 
     {
         (this->GetAnchoredSize().X - this->GetPadding().GetDesiredSizeX())
         - TotalDesiredSize
-        - this->GetHSpace() * (this->GetChildren().GetSize() - 1)
+        - this->GetHSpace() * (this->GetChildren().size() - 1)
     };
 
     const f32 InverseFreeUsage { 1.0f / TotalFreeUsage };

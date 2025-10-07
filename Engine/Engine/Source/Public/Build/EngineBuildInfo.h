@@ -17,7 +17,7 @@ struct LEngineVersion final
 
     FORCEINLINE LString ToString() const
     {
-        return LString::SprintF("{}.{}.{}", this->Major, this->Minor, this->Patch);
+        return Lal::SprintF("{}.{}.{}", this->Major, this->Minor, this->Patch);
     }
 };
 

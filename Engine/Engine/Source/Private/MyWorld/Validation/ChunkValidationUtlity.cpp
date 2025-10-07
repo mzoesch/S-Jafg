@@ -11,7 +11,7 @@ TArray<LIntVector2> GetAllChunksFromCenterAsBox(const LIntVector2& Center, const
     TArray<LIntVector2> Out;
 
     const i32 PredictedOutChunkCount = (Distance * 2 + 1) * (Distance * 2 + 1);
-    Out.Reserve(PredictedOutChunkCount);
+    Out.reserve(PredictedOutChunkCount);
 
     auto MoveCursorRight = [] (const LIntVector2& CursorLocation) { return LIntVector2(CursorLocation.X + 1, CursorLocation.Y); };
     auto MoveCursorDown  = [] (const LIntVector2& CursorLocation) { return LIntVector2(CursorLocation.X, CursorLocation.Y - 1); };
@@ -27,7 +27,7 @@ TArray<LIntVector2> GetAllChunksFromCenterAsBox(const LIntVector2& Center, const
     i32 TimesToMove = 1;
     LIntVector2 TargetPoint = Center;
 
-    Out.Emplace(Center.X, Center.Y);
+    Out.emplace_back(Center.X, Center.Y);
 
     while (true)
     {
@@ -43,7 +43,7 @@ TArray<LIntVector2> GetAllChunksFromCenterAsBox(const LIntVector2& Center, const
                     goto FunctionEnd;
                 }
 
-                Out.Emplace(TargetPoint.X, TargetPoint.Y);
+                Out.emplace_back(TargetPoint.X, TargetPoint.Y);
 
                 continue;
             }
@@ -59,11 +59,11 @@ FunctionEnd:
 
     checkCode
     (
-        check( static_cast<i32>(Out.GetSize()) == PredictedOutChunkCount )
+        check( static_cast<i32>(Out.size()) == PredictedOutChunkCount )
 
-        for (TArray<LIntVector2>::SizeType i { 0 }; i < Out.GetSize(); ++i)
+        for (TArray<LIntVector2>::size_type i { 0 }; i < Out.size(); ++i)
         {
-            for (TArray<LIntVector2>::SizeType j { i + 1 }; j < Out.GetSize(); ++j)
+            for (TArray<LIntVector2>::size_type j { i + 1 }; j < Out.size(); ++j)
             {
                 check( Out[i] != Out[j] )
             }
@@ -80,13 +80,13 @@ TArray<LChunkKey> GetAllChunksFromCenterAsBox(const LChunkKey& Center, const i32
     /* Intermediate result */
     const TArray<LIntVector2> Ir = GetAllChunksFromCenterAsBox(Center.XY(), Distance);
 
-    Out.Reserve(Ir.GetSize() * Height);
+    Out.reserve(Ir.size() * Height);
 
     for (const LIntVector2& Chunk : Ir)
     {
         for (i32 Z = 0; Z < Height; ++Z)
         {
-            Out.Emplace(Chunk.X, Chunk.Y, HeightOffset + Z);
+            Out.emplace_back(Chunk.X, Chunk.Y, HeightOffset + Z);
         }
     }
 

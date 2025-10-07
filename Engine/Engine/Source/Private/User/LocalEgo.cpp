@@ -176,15 +176,12 @@ void Jafg::LLocalEgo::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
     {
         if (InOld)
         {
-            Surface->GetViewport().GetMutableBackgroundContexts().RemoveOnceByPredicate([InOld](const LBackgroundContext& LambdaContext)
-            {
-                return LambdaContext.Eye == InOld->GetEye();
-            });
+            algo::erase_once_checked(&Surface->GetViewport().GetMutableBackgroundContexts(), InOld->GetEye(), &LBackgroundContext::Eye);
         }
 
         if (InNew)
         {
-            Surface->GetViewport().GetMutableBackgroundContexts().Emplace(InNew->GetEye(), InNew->GetOrCalculateCastedOuterAsserted());
+            Surface->GetViewport().GetMutableBackgroundContexts().emplace_back(InNew->GetEye(), InNew->GetOrCalculateCastedOuterAsserted());
         }
     }
 
@@ -225,7 +222,7 @@ void Jafg::LLocalEgo::OnWorldBeginLife(LWorld* InNewWorld)
             Surface->GetViewport().SetBackgroundColor(InNewWorld->GetUnderlyingLevel().BackgroundColor);
         }
 
-        if (InNewWorld->GetUnderlyingLevelName() == Name_LevelMyWorld.ToString().ToPtr())
+        if (InNewWorld->GetUnderlyingLevelName() == Name_LevelMyWorld.ToString())
         {
             if (this->PersonaController->DoesPossess() == false)
             {

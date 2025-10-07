@@ -8,13 +8,13 @@ bool Jafg::LEngineShader::Make(const LName InName, TArray<LShaderCompileTimeCons
     check( GEngine )
     check( this->IsValid() == false )
 
-    InConstants.Append(this->GetDefaultConstants());
+    InConstants.append_range(this->GetDefaultConstants());
     checkCode
     (
         for (const LShaderCompileTimeConstant& Constant : InConstants)
         {
             i32 Count { 0 };
-            InConstants.ForEach([&Count, &Constant](const LShaderCompileTimeConstant& InConstant) -> void
+            algo::for_each(InConstants, [&Count, &Constant](const LShaderCompileTimeConstant& InConstant) -> void
             {
                 if (InConstant == Constant)
                 {
@@ -40,12 +40,12 @@ void Jafg::LEngineShader::Recompile(const TArray<LShaderCompileTimeConstant>& In
 {
     for (const LShaderCompileTimeConstant& Constant : InRemove)
     {
-        this->Constants.Remove(Constant);
+        algo::erase(&this->Constants, Constant);
     }
 
     for (const LShaderCompileTimeConstant& Constant : InAdd)
     {
-        this->Constants.Add(Constant);
+        this->Constants.push_back(Constant);
     }
 
     this->Program.Recompile(this->Constants);

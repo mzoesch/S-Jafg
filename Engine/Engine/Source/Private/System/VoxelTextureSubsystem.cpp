@@ -17,35 +17,32 @@ LString Jafg::LDiskVoxelTexture::GetVoxelName() const
             break;
         }
 
-        Out.Append(Rune);
+        Out.push_back(Rune);
 
         continue;
     }
 
-    check( Out.IsEmpty() == false )
+    check( Out.empty() == false )
 
     return Out;
 }
 
 Jafg::ENormalLookup::Type Jafg::LDiskVoxelTexture::GetNormalLookUpBasedOfFileName() const
 {
-    if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) > 2)
+    if (algo::count(this->Name, LDiskVoxelTexture::TexSectionDividerChar) > 2)
     {
         panicMsgf( "Encountered invalid texture name '{}'.", this->Name )
         return ENormalLookup::None;
     }
 
-    if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 0)
+    if (algo::count(this->Name, LDiskVoxelTexture::TexSectionDividerChar) == 0)
     {
         return ENormalLookup::Omnia;
     }
 
-    if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 1)
+    if (algo::count(this->Name, LDiskVoxelTexture::TexSectionDividerChar) == 1)
     {
-        LString Copy = this->Name;
-        Copy.InlineRightCut(Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1);
-
-        if (ENormalLookup::IsValid(Copy))
+        if (LString const Copy { this->Name.substr(this->Name.find(LDiskVoxelTexture::TexSectionDividerChar) + 1) }; ENormalLookup::IsValid(Copy))
         {
             return ENormalLookup::FromString(Copy);
         }
@@ -53,11 +50,12 @@ Jafg::ENormalLookup::Type Jafg::LDiskVoxelTexture::GetNormalLookUpBasedOfFileNam
         return ENormalLookup::Omnia;
     }
 
-    check( this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 2 )
+    check( algo::count(this->Name, LDiskVoxelTexture::TexSectionDividerChar) == 2 )
 
     LString Copy = this->Name;
-    const auto FirstOccurrence = Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1;
-    Copy.InlineCut(FirstOccurrence, Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar));
+    const auto FirstOccurrence { Copy.find(LDiskVoxelTexture::TexSectionDividerChar) + 1 };
+    auto x = Copy.substr(FirstOccurrence, Copy.rfind(LDiskVoxelTexture::TexSectionDividerChar) - FirstOccurrence);
+    Copy = x;
 
     if (ENormalLookup::IsValid(Copy))
     {
@@ -65,8 +63,8 @@ Jafg::ENormalLookup::Type Jafg::LDiskVoxelTexture::GetNormalLookUpBasedOfFileNam
     }
 
     Copy = this->Name;
-    const auto SecondOccurrence = Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar);
-    Copy.InlineCut(SecondOccurrence, SecondOccurrence - 1);
+    const auto SecondOccurrence { Copy.rfind(LDiskVoxelTexture::TexSectionDividerChar) };
+    Copy = Copy.substr(SecondOccurrence + 1, SecondOccurrence);
 
     if (ENormalLookup::IsValid(Copy))
     {
@@ -80,77 +78,48 @@ Jafg::ENormalLookup::Type Jafg::LDiskVoxelTexture::GetNormalLookUpBasedOfFileNam
 
 Jafg::LTextureIndex Jafg::LDiskVoxelTexture::GetBlendLookUpBasedOfFileName(const TArray<LDiskBlendTexture>& InCurrentUsedBlends) const
 {
-    if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) > 2)
+    if (algo::count(this->Name, LDiskVoxelTexture::TexSectionDividerChar) > 2)
     {
         panicMsgf( "Encountered invalid texture name '{}'.", this->Name )
         return ENormalLookup::None;
     }
 
-    if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 0)
+    if (algo::count(this->Name, LDiskVoxelTexture::TexSectionDividerChar) == 0)
     {
-        const  TArray<LDiskBlendTexture>::SizeType Idx { InCurrentUsedBlends.FindIndexByPredicate([](const LDiskBlendTexture& InElement) -> bool
-        {
-            return InElement.Name == "None";
-        })};
-        check( Idx != InCurrentUsedBlends.end_idx() )
-        return static_cast<LTextureIndex>(Idx);
+        auto const It{ algo::find(InCurrentUsedBlends, "None", &LDiskBlendTexture::Name) };
+        check( It != InCurrentUsedBlends.end() )
+        return static_cast<LTextureIndex>(algo::distance(InCurrentUsedBlends.begin(), It));
     }
 
-    if (this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 1)
+    if (algo::count(this->Name, LDiskVoxelTexture::TexSectionDividerChar) == 1)
     {
-        LString Copy = this->Name;
-        Copy.InlineCut(Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1, Copy.end());
-
-        const TArray<LDiskBlendTexture>::SizeType MaybeIdx { InCurrentUsedBlends.FindIndexByPredicate([Copy](const LDiskBlendTexture& InElement) -> bool
+        LString const Copy { this->Name.substr(this->Name.find(LDiskVoxelTexture::TexSectionDividerChar) + 1) };
+        if (auto const It{ algo::find(InCurrentUsedBlends, Copy, &LDiskBlendTexture::Name) }; It != InCurrentUsedBlends.end())
         {
-            return InElement.Name == Copy;
-        })};
-        if (MaybeIdx != InCurrentUsedBlends.end_idx())
-        {
-            return static_cast<LTextureIndex>(MaybeIdx);
+            return static_cast<LTextureIndex>(algo::distance(InCurrentUsedBlends.begin(), It));
         }
-        const TArray<LDiskBlendTexture>::SizeType NoneIdx { InCurrentUsedBlends.FindIndexByPredicate([](const LDiskBlendTexture& InElement) -> bool
-        {
-            return InElement.Name == "None";
-        })};
-        check( NoneIdx != InCurrentUsedBlends.end_idx() )
-        return static_cast<LTextureIndex>(MaybeIdx);
+
+        auto const NoneIt{ algo::find(InCurrentUsedBlends, "None", &LDiskBlendTexture::Name) };
+        check( NoneIt != InCurrentUsedBlends.end() )
+        return static_cast<LTextureIndex>(algo::distance(InCurrentUsedBlends.begin(), NoneIt));
     }
 
-    check( this->Name.Count(LDiskVoxelTexture::TexSectionDividerChar) == 2 )
+    check( algo::count(this->Name, LDiskVoxelTexture::TexSectionDividerChar) == 2 )
 
-    LString Copy = this->Name;
-    const auto FirstOccurrence = Copy.FindFirst(LDiskVoxelTexture::TexSectionDividerChar) + 1;
-    Copy.InlineCut(FirstOccurrence, Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar));
+    LString Copy { this->Name.substr(this->Name.find(LDiskVoxelTexture::TexSectionDividerChar) + 1, this->Name.rfind(LDiskVoxelTexture::TexSectionDividerChar)) };
 
-    if (const TArray<LDiskBlendTexture>::SizeType MaybeIdx { InCurrentUsedBlends.FindIndexByPredicate([Copy](const LDiskBlendTexture& InElement) -> bool
+    if (auto const MaybeIt{ algo::find(InCurrentUsedBlends, Copy, &LDiskBlendTexture::Name) }; MaybeIt != InCurrentUsedBlends.end())
     {
-        return InElement.Name == Copy;
-    })}; MaybeIdx != InCurrentUsedBlends.end_idx())
-    {
-        return static_cast<LTextureIndex>(MaybeIdx);
+        return static_cast<LTextureIndex>(algo::distance(InCurrentUsedBlends.begin(), MaybeIt));
     }
 
-    Copy = this->Name;
-    const auto SecondOccurrence = Copy.FindLast(LDiskVoxelTexture::TexSectionDividerChar);
-    Copy.InlineRightCut(SecondOccurrence + 1);
-
-    if (const TArray<LDiskBlendTexture>::SizeType MaybeIdx { InCurrentUsedBlends.FindIndexByPredicate([Copy](const LDiskBlendTexture& InElement) -> bool
+    Copy = this->Name.substr(this->Name.rfind(LDiskVoxelTexture::TexSectionDividerChar) + 1);
+    if (auto const MaybeIt{ algo::find(InCurrentUsedBlends, Copy, &LDiskBlendTexture::Name) }; MaybeIt != InCurrentUsedBlends.end())
     {
-        return InElement.Name == Copy;
-    })}; MaybeIdx != InCurrentUsedBlends.end_idx())
-    {
-        return static_cast<LTextureIndex>(MaybeIdx);
+        return static_cast<LTextureIndex>(algo::distance(InCurrentUsedBlends.begin(), MaybeIt));
     }
 
     panicMsgf( "Encountered invalid texture name '{}'.", this->Name )
-
-    const TArray<LDiskBlendTexture>::SizeType NoneIdx { InCurrentUsedBlends.FindIndexByPredicate([](const LDiskBlendTexture& InElement) -> bool
-    {
-        return InElement.Name == "None";
-    })};
-    check( NoneIdx != InCurrentUsedBlends.end_idx() )
-    return static_cast<LTextureIndex>(NoneIdx);
 }
 
 void Jafg::JVoxelTextureSubsystem::Initialize(LSubsystemCollection& Collection)
@@ -174,7 +143,7 @@ TArray<Jafg::LDiskVoxelTexture> Jafg::JVoxelTextureSubsystem::FindMeaningFullVox
     TArray<LDiskVoxelTexture> Out;
     for (LString& Name : Names)
     {
-        Out.Emplace(std::move(Name));
+        Out.emplace_back(std::move(Name));
     }
 
     return Out;
@@ -188,7 +157,7 @@ TArray<Jafg::LDiskBlendTexture> Jafg::JVoxelTextureSubsystem::FindMeaningBlendTe
     TArray<LDiskBlendTexture> Out;
     for (LString& Name : Names)
     {
-        Out.Emplace(std::move(Name));
+        Out.emplace_back(std::move(Name));
     }
 
     return Out;

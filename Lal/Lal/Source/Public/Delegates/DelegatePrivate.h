@@ -340,7 +340,7 @@ LDelegateHandle TMulticastDelegate<RetTy(ParamsTy...)>::AddMember(ObjTy* InObj, 
 template <typename RetTy, typename... ParamsTy>
 bool TMulticastDelegate<RetTy(ParamsTy...)>::IsStillBound(const LDelegateHandle& InDelegateHandle) const
 {
-    return Algo::Contains(this->DelegatesHandles, InDelegateHandle.Handle);
+    return algo::contains(this->DelegatesHandles, InDelegateHandle.Handle);
 }
 
 template <typename RetTy, typename... ParamsTy>
@@ -389,8 +389,8 @@ i32 TMulticastDelegate<RetTy(ParamsTy...)>::UnbindAll()
 
     const i32 NumDelegates { static_cast<i32>(this->Delegates.size()) };
 
-    std::orphan(&this->Delegates);
-    std::orphan(&this->DelegatesHandles);
+    algo::orphan(&this->Delegates);
+    algo::orphan(&this->DelegatesHandles);
 
     /*
      * Do not reset handle count to avoid handle reuse.

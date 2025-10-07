@@ -2,39 +2,36 @@
 
 #include "User/Preferences/PreferenceCollection.h"
 
-void Jafg::LPreferenceCollection::AddPreference(Smart::TUnique<LPreference>&& InPreference)
+void Jafg::LPreferenceCollection::AddPreference(TUnique<LPreference>&& InPreference)
 {
-    jassert( InPreference.IsValid() )
+    jassert( InPreference.get() )
 
-    if (this->Preferences.ContainsByPredicate([&InPreference](const Smart::TUnique<LPreference>& Preference)
-    {
-        return Preference->GetName() == InPreference->GetName();
-    }))
+    if (algo::contains(this->Preferences, InPreference->GetName(), [](auto const& E){ return E->GetName(); }))
     {
         panicMsgf( "Cannot add duplicate preference [{}].", InPreference->GetDisplayName())
         return;
     }
 
-    this->Preferences.Add(std::move(InPreference));
-    checkSlow( InPreference.IsValid() == false )
+    this->Preferences.emplace_back(std::move(InPreference));
+    checkSlow( InPreference.get() == nullptr )
 
     return;
 }
 
 Jafg::LPreference* Jafg::LPreferenceCollection::GetPreferenceByIdentifier(const LName InIdentifier)
 {
-    for (Smart::TUnique<LPreference>& Preference : this->Preferences)
+    for (TUnique<LPreference>& Preference : this->Preferences)
     {
         if (Preference->GetName() == InIdentifier)
         {
-            return Preference;
+            return Preference.get();
         }
 
-        if (Preference->GetChildPreferences().GetSize() > 0)
+        if (Preference->GetChildPreferences().size() > 0)
         {
             if ( /* Very cheeky. Not a fan of this code. */
                 LPreference* Out =
-                    static_cast<LPreferenceCollection*>(Preference.GetPointerChecked())->GetPreferenceByIdentifier(InIdentifier);
+                    static_cast<LPreferenceCollection*>(Preference.get())->GetPreferenceByIdentifier(InIdentifier);
                 Out
             )
             {
@@ -53,7 +50,7 @@ Jafg::LPreference* Jafg::LPreferenceCollection::GetPreferenceByIdentifier(const 
     return this->GetPreferenceByIdentifier(GET_NAME(InIdentifier));
 }
 
-const TArray<Smart::TUnique<Jafg::LPreference>>& Jafg::LIntermediatePreferenceCollection::LoadAndGetChildPreferences()
+const TArray<TUnique<Jafg::LPreference>>& Jafg::LIntermediatePreferenceCollection::LoadAndGetChildPreferences()
 {
     if (this->Refresh() == false)
     {
@@ -71,7 +68,8 @@ bool Jafg::LIntermediatePreferenceCollection::Refresh()
     }
 
     LOG_VERBOSE(LogPreferences, "Loading intermediate preference collection [{}].", this->GetName())
-    this->Preferences.Reset(this->Preferences.GetSize());
+    this->Preferences.clear();
+    this->Preferences.reserve(this->Preferences.size());
     this->OnLoadDelegate.Invoke(this);
 
     return true;

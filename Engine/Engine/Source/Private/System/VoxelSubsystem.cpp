@@ -12,7 +12,7 @@ void Jafg::JVoxelSubsystem::Initialize(LSubsystemCollection& Collection)
 
     this->InitializeOptionalVoxels();
 
-    LOG_INFO(LogVoxelSubsystem, "Voxel Subsystem initialized with [{}/{}] voxels.", this->CompileTimeVoxels, this->VoxelMasks.GetSize())
+    LOG_INFO(LogVoxelSubsystem, "Voxel Subsystem initialized with [{}/{}] voxels.", this->CompileTimeVoxels, this->VoxelMasks.size())
 
     return;
 }
@@ -24,7 +24,7 @@ void Jafg::JVoxelSubsystem::TearDown()
 
 Jafg::voxel_t Jafg::JVoxelSubsystem::GetVoxelIndex(const LString& Name) const
 {
-    for (TArray<LVoxelMask>::SizeType Idx { 0 }; Idx < this->VoxelMasks.GetSize(); ++Idx)
+    for (TArray<LVoxelMask>::size_type Idx { 0 }; Idx < this->VoxelMasks.size(); ++Idx)
     {
         if (this->VoxelMasks[Idx].GetName() == Name)
         {
@@ -39,7 +39,7 @@ Jafg::voxel_t Jafg::JVoxelSubsystem::GetVoxelIndex(const LString& Name) const
 
 Jafg::voxel_t Jafg::JVoxelSubsystem::GetVoxelIndex(const LString& Namespace, const LString& Name) const
 {
-    for (TArray<LVoxelMask>::SizeType Idx { 0 }; Idx < this->VoxelMasks.GetSize(); ++Idx)
+    for (TArray<LVoxelMask>::size_type Idx { 0 }; Idx < this->VoxelMasks.size(); ++Idx)
     {
         if (this->VoxelMasks[Idx].GetNamespace() == Namespace && this->VoxelMasks[Idx].GetName() == Name)
         {
@@ -56,20 +56,20 @@ void Jafg::JVoxelSubsystem::SortAllVoxelMasksTextureGroups()
 {
     for (LVoxelMask& Mask : this->VoxelMasks)
     {
-        for (TArray<LVoxelMask::LTextureGroup>::SizeType Idx { 0 }; Idx < Mask.TextureGroups.GetSize(); ++Idx)
+        for (TArray<LVoxelMask::LTextureGroup>::size_type Idx { 0 }; Idx < Mask.TextureGroups.size(); ++Idx)
         {
             if (Mask.TextureGroups[Idx].Normal != ENormalLookup::Omnia)
             {
                 continue;
             }
 
-            if (Idx == Mask.TextureGroups.GetSize() - 1)
+            if (Idx == Mask.TextureGroups.size() - 1)
             {
                 /* Already at the end. Nothing to do. */
                 continue;
             }
 
-            Mask.TextureGroups.SwapIndices(Idx, Mask.TextureGroups.GetSize() - 1);
+            algo::swap(Mask.TextureGroups[Idx], Mask.TextureGroups[Mask.TextureGroups.size() - 1]);
 
             continue;
         }
@@ -82,10 +82,10 @@ void Jafg::JVoxelSubsystem::SortAllVoxelMasksTextureGroups()
 
 void Jafg::JVoxelSubsystem::InitializeCompileTimeVoxels()
 {
-    this->VoxelMasks.Add(LVoxelMask::Null);
-    this->VoxelMasks.Add(LVoxelMask::Air);
+    this->VoxelMasks.emplace_back(LVoxelMask::Null);
+    this->VoxelMasks.emplace_back(LVoxelMask::Air);
 
-    this->CompileTimeVoxels = this->VoxelMasks.GetSize();
+    this->CompileTimeVoxels = this->VoxelMasks.size();
 
     return;
 }
@@ -98,11 +98,11 @@ void Jafg::JVoxelSubsystem::InitializeOptionalVoxels()
     LVoxelMask GrassVoxel("Jafg", "Grass");
     LVoxelMask StoneVoxel("Jafg", "Stone");
 
-    this->VoxelMasks.Add(std::move(DebugVoxel1));
-    this->VoxelMasks.Add(std::move(DebugVoxel2));
-    this->VoxelMasks.Add(std::move(DirtVoxel));
-    this->VoxelMasks.Add(std::move(GrassVoxel));
-    this->VoxelMasks.Add(std::move(StoneVoxel));
+    this->VoxelMasks.emplace_back(std::move(DebugVoxel1));
+    this->VoxelMasks.emplace_back(std::move(DebugVoxel2));
+    this->VoxelMasks.emplace_back(std::move(DirtVoxel));
+    this->VoxelMasks.emplace_back(std::move(GrassVoxel));
+    this->VoxelMasks.emplace_back(std::move(StoneVoxel));
 
     return;
 }

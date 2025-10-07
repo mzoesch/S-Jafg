@@ -11,16 +11,13 @@ void Jafg::WSwitcher::SetActiveWidgetIndex(const i32 Index)
 
     if (WNode* CurrentNode = this->GetActiveNode(); CurrentNode)
     {
-        if (LRecentVisibility* Recent = this->RecentVisibilities.FindRefByPredicate([CurrentNode](const LRecentVisibility& InRecent)
-        {
-            return InRecent.Target == CurrentNode;
-        }))
+        if (LRecentVisibility* Recent = algo::find_pointer(this->RecentVisibilities, CurrentNode, &LRecentVisibility::Target))
         {
             Recent->Visibility = CurrentNode->GetVisibility();
         }
         else
         {
-            this->RecentVisibilities.Emplace(CurrentNode, CurrentNode->GetVisibility());
+            this->RecentVisibilities.emplace_back(CurrentNode, CurrentNode->GetVisibility());
         }
         CurrentNode->SetVisibility(EWidgetVisibility::Collapsed);
     }
@@ -32,7 +29,7 @@ void Jafg::WSwitcher::SetActiveWidgetIndex(const i32 Index)
         return;
     }
 
-    if (this->GetChildren().IsValidIndex(Index) == false)
+    if (algo::is_valid_index(this->GetChildren(), Index) == false)
     {
         LOG_WARNING(LogWidgets, "The index [{}] is out of bounds.", Index)
         this->ActiveIndex = NoActiveWidgetIndex;
@@ -41,16 +38,10 @@ void Jafg::WSwitcher::SetActiveWidgetIndex(const i32 Index)
 
     if (WNode* NewNode = this->GetActiveNode(); NewNode)
     {
-        if (LRecentVisibility* Recent = this->RecentVisibilities.FindRefByPredicate([NewNode](const LRecentVisibility& InRecent)
-        {
-            return InRecent.Target == NewNode;
-        }))
+        if (LRecentVisibility* Recent = algo::find_pointer(this->RecentVisibilities, NewNode, &LRecentVisibility::Target))
         {
             NewNode->SetVisibility(Recent->Visibility);
-            this->RecentVisibilities.RemoveOnceByPredicateChecked([NewNode](const LRecentVisibility& InRecent)
-            {
-                return InRecent.Target == NewNode;
-            });
+            algo::erase_once_checked(&this->RecentVisibilities, NewNode, &LRecentVisibility::Target);
         }
         else
         {
@@ -65,12 +56,9 @@ void Jafg::WSwitcher::SetActiveWidget(WNode* Widget)
 {
     checkSlow( Widget )
 
-    if (const TArray<LWidgetSlot*>::SizeType Idx { this->GetChildren().FindIndexByPredicate([Widget](const LWidgetSlot* Slot)
+    if (auto It{ algo::find(this->GetChildren(), Widget, &LWidgetSlot::Content) }; It != this->GetChildren().end())
     {
-        return Slot->Content == Widget;
-    })}; Idx != this->GetChildren().end_idx())
-    {
-        this->SetActiveWidgetIndex(Idx);
+        this->SetActiveWidgetIndex(algo::distance(this->GetChildren(), It));
     }
     else
     {
@@ -89,8 +77,8 @@ Jafg::LWidgetSlot* Jafg::WSwitcher::AddChild(WNode* InChild)
 {
     LWidgetSlot* Ret = Super::AddChild(InChild);
 
-    check( this->RecentVisibilities.FindRefByPredicate([InChild](const LRecentVisibility& InRecent){ return InRecent.Target == InChild; }) == nullptr )
-    this->RecentVisibilities.Emplace(InChild, InChild->GetVisibility());
+    check( algo::find_pointer(this->RecentVisibilities, InChild, &LRecentVisibility::Target) == nullptr )
+    this->RecentVisibilities.emplace_back(InChild, InChild->GetVisibility());
     InChild->SetVisibility(EWidgetVisibility::Collapsed);
 
     return Ret;
@@ -100,8 +88,8 @@ Jafg::LWidgetSlot* Jafg::WSwitcher::AddChildAt(const i32 InIndex, WNode* InChild
 {
     LWidgetSlot* Ret = Super::AddChildAt(InIndex, InChild);
 
-    check( this->RecentVisibilities.FindRefByPredicate([InChild](const LRecentVisibility& InRecent){ return InRecent.Target == InChild; }) == nullptr )
-    this->RecentVisibilities.Emplace(InChild, InChild->GetVisibility());
+    check( algo::find_pointer(this->RecentVisibilities, InChild, &LRecentVisibility::Target) == nullptr )
+    this->RecentVisibilities.emplace_back(InChild, InChild->GetVisibility());
     InChild->SetVisibility(EWidgetVisibility::Collapsed);
 
     return Ret;

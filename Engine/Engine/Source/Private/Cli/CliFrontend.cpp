@@ -41,7 +41,7 @@ void Jafg::LPreferenceValue_CliType::BuildDefault(const LPreference* Self, WPare
 
     WParentBase* Container;
 
-    const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().GetSize() % 2 == 0 ? 1.8 : 1));
+    const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().size() % 2 == 0 ? 1.8 : 1));
 
     NewNodeCtx(Target, WHRegion).SaveTo(&Container)
         .Anchor(EAnchor::HFill)
@@ -107,7 +107,7 @@ void Jafg::LPreferenceValue_CliCommand::BuildDefault(const LPreference* Self, WP
 
     WParentBase* Container;
 
-    const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().GetSize() % 2 == 0 ? 1.8 : 1));
+    const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().size() % 2 == 0 ? 1.8 : 1));
 
     NewNodeCtx(Target, WHRegion).SaveTo(&Container)
         .Anchor(EAnchor::HFill)
@@ -167,7 +167,7 @@ void Jafg::LPreferenceValue_CliVariable::BuildDefault(const LPreference* Self, W
 
     WParentBase* Container;
 
-    const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().GetSize() % 2 == 0 ? 1.8 : 1));
+    const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().size() % 2 == 0 ? 1.8 : 1));
 
     NewNodeCtx(Target, WHRegion).SaveTo(&Container)
         .Anchor(EAnchor::HFill)

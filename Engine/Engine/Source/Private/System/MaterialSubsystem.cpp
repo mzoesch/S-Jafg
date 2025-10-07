@@ -53,8 +53,8 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
 
         for (const LDiskBlendTexture& DiskTexture : BlendedTextureNames)
         {
-            LEnginePath Path = LEnginePath(EEnginePaths::Blends, DiskTexture.Name.ToPtr());
-            Path.Append(".png");
+            LEnginePath Path = LEnginePath(EEnginePaths::Blends, DiskTexture.Name);
+            Path.concat(".png");
 
             LTexture2 Texture;
             if (Texture.LoadFromDisk(Path, ERawImageFormat::BGRA8) == false)
@@ -87,7 +87,7 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
                 continue;
             }
 
-            LoadedTextures.Add(std::move(Texture));
+            LoadedTextures.emplace_back(std::move(Texture));
 
             continue;
         }
@@ -108,14 +108,14 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
             LVoxelMask*   VoxelMask  = VoxelSubsystem->GetVoxelMask(VoxelIndex);
             checkSlow( VoxelMask->GetName() == DiskTexture.GetVoxelName() )
 
-            VoxelMask->TextureGroups.Emplace(
+            VoxelMask->TextureGroups.emplace_back(
                 DiskTexture.GetNormalLookUpBasedOfFileName(),
-                static_cast<LTextureIndex>(LoadedTextures.GetSize()),
+                static_cast<LTextureIndex>(LoadedTextures.size()),
                 DiskTexture.GetBlendLookUpBasedOfFileName(BlendedTextureNames)
-            );
+                );
 
-            LEnginePath Path = LEnginePath(EEnginePaths::Voxels, DiskTexture.Name.ToPtr());
-            Path.Append(".png");
+            LEnginePath Path = LEnginePath(EEnginePaths::Voxels, DiskTexture.Name);
+            Path.concat(".png");
 
             LTexture2 Texture;
             if (Texture.LoadFromDisk(Path, ERawImageFormat::BGRA8) == false)
@@ -148,7 +148,7 @@ void Jafg::JMaterialSubsystem::LoadAllTextures()
                 continue;
             }
 
-            LoadedTextures.Add(std::move(Texture));
+            LoadedTextures.emplace_back(std::move(Texture));
 
             continue;
         }

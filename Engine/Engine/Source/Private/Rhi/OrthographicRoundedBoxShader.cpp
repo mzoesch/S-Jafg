@@ -9,7 +9,7 @@ TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicRoundedBoxShader::Ge
 {
     TArray<LShaderCompileTimeConstant> SuperConstants = Super::GetDefaultConstants();
 
-    SuperConstants.Append
+    SuperConstants.append_range
     (TArray<LShaderCompileTimeConstant>{
         {
             "WITH_UV", "1"

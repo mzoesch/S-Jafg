@@ -92,6 +92,8 @@ void ShapeChunk_SuperFlat(const LSharedChunkArgs* SharedArgs, const LChunkKey& I
 
 void ChunkGenerator::ShapeChunk(const LSharedChunkArgs* SharedArgs, const LChunkKey& InKey, voxel_t* InOutChunkData)
 {
+    check( InOutChunkData )
+
     if (SharedArgs->bSuperFlat)
     {
         ShapeChunk_SuperFlat(SharedArgs, InKey, InOutChunkData);

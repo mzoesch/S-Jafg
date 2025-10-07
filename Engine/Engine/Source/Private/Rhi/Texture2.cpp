@@ -4,14 +4,14 @@
 #include "System/EnginePath.h"
 #include "Rhi/RhiVendorInclude.h"
 
-Smart::TUnique<u8[]> Jafg::Texture2::RotateCW(const u8* InData, const u32 InWidth, const u32 InHeight, const u32 InChannels)
+TUnique<u8[]> Jafg::Texture2::RotateCW(const u8* InData, const u32 InWidth, const u32 InHeight, const u32 InChannels)
 {
     check( InData )
 
     const u32 NewW { InHeight };
     const u32 NewH { InWidth  };
 
-    Smart::TUnique<u8[]> Buffer { new u8[InWidth * InHeight * InChannels] };
+    TUnique<u8[]> Buffer { new u8[InWidth * InHeight * InChannels] };
 
     for (u32 Y { 0 }; Y < InHeight; ++Y)
     {
@@ -37,14 +37,14 @@ Smart::TUnique<u8[]> Jafg::Texture2::RotateCW(const u8* InData, const u32 InWidt
     return Buffer;
 }
 
-Smart::TUnique<u8[]> Jafg::Texture2::RotateCCW(const u8* InData, const u32 InWidth, const u32 InHeight, const u32 InChannels)
+TUnique<u8[]> Jafg::Texture2::RotateCCW(const u8* InData, const u32 InWidth, const u32 InHeight, const u32 InChannels)
 {
     check( InData )
 
     const u32 NewW { InHeight };
     const u32 NewH { InWidth  };
 
-    Smart::TUnique<u8[]> Buffer { new u8[InWidth * InHeight * InChannels] };
+    TUnique<u8[]> Buffer { new u8[InWidth * InHeight * InChannels] };
 
     for (u32 Y { 0 }; Y < InHeight; ++Y)
     {
@@ -99,7 +99,7 @@ bool Jafg::LTexture2::LoadFromDisk(const LPath& Path, const ERawImageFormat::Typ
     i32 NrChannels = 0;
 
     ::stbi_set_flip_vertically_on_load(false);
-    u8* Data = ::stbi_load_from_memory(Bin.GetDataPointer(), static_cast<int>(Bin.GetSize()), &Width, &Height, &NrChannels, ERawImageFormat::GetChannelsPerPixel(InFormat));
+    u8* Data = ::stbi_load_from_memory(Bin.data(), static_cast<int>(Bin.size()), &Width, &Height, &NrChannels, ERawImageFormat::GetChannelsPerPixel(InFormat));
 
     if (stbi_failure_reason())
     {
@@ -146,7 +146,7 @@ bool Jafg::LTexture2::LoadFromDisk(const LEnginePath& Path, const ERawImageForma
     TArray Bulk { Finder::ReadFileAsBinary(Path.ResolvePath()) };
 
     ::stbi_set_flip_vertically_on_load(false);
-    u8* Data = ::stbi_load_from_memory(Bulk.begin_ptr(), static_cast<int>(Bulk.GetSize()), &Width, &Height, &NrChannels, ERawImageFormat::GetChannelsPerPixel(InFormat));
+    u8* Data = ::stbi_load_from_memory(Bulk.data(), static_cast<int>(Bulk.size()), &Width, &Height, &NrChannels, ERawImageFormat::GetChannelsPerPixel(InFormat));
 
     if (stbi_failure_reason())
     {

@@ -56,7 +56,7 @@ struct TTagRegistry
 {
     using TagType   = TTag;
     using Allocator = TAllocator;
-    using ReprType  = typename Allocator::T;
+    using ReprType  = typename Allocator::value_type;
 
     FORCEINLINE constexpr TTagRegistry() noexcept requires(std::is_default_constructible_v<Allocator>) = default;
     template <typename... TArgs> requires(std::is_constructible_v<Allocator, TArgs...>)
@@ -66,13 +66,13 @@ struct TTagRegistry
         return;
     }
 
-    FORCEINLINE u64 GetTagCount() const noexcept { return this->Tags.GetSize(); }
+    FORCEINLINE u64 GetTagCount() const noexcept { return this->Tags.size(); }
 
     FORCEINLINE TagType GetTag(Trait::CString auto&& InRepr) const noexcept
     {
-        if (const typename Allocator::SizeType Idx { this->Tags.FindIndex(InRepr) }; Idx != this->Tags.GetSize())
+        if (const auto It { algo::find(this->Tags, InRepr) }; It != this->Tags.end() )
         {
-            return TagType(static_cast<typename TagType::SizeType>(Idx + 1));
+            return TagType(static_cast<typename TagType::SizeType>(std::distance(this->Tags.begin(), It) + 1));
         }
         return TagType{};
     }
@@ -103,8 +103,8 @@ struct TTagRegistry
 
         LString x{std::forward<decltype(InRepr)>(InRepr)};
 
-        this->Tags.Emplace(std::forward<decltype(InRepr)>(InRepr));
-        LOG_TRACE(LogTags, "Registered tag [{}].", *this->Tags.GetLast())
+        this->Tags.emplace_back(std::forward<decltype(InRepr)>(InRepr));
+        LOG_TRACE(LogTags, "Registered tag [{}].", this->Tags.back())
 
         return TagType{static_cast<typename TagType::SizeType>(this->GetTagCount())};
     }
@@ -123,7 +123,7 @@ struct TTagRegistry
             return "<NotSet>";
         }
 
-        if (InTag.GetUnderlyingValue() - 1 < this->Tags.GetSize())
+        if (InTag.GetUnderlyingValue() - 1 < this->Tags.size())
         {
             return this->GetReprFast(InTag);
         }
@@ -134,10 +134,10 @@ struct TTagRegistry
 
     FORCEINLINE u64 Destroy()
     {
-        const u64 Count { this->Tags.GetSize() };
+        const u64 Count { this->Tags.size() };
 
         LOG_VERBOSE(LogTags, "Destroying [{}] tags from the registry.", Count)
-        this->Tags.Empty();
+        algo::orphan(&this->Tags);
 
         return Count;
     }

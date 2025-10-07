@@ -45,9 +45,9 @@ void Jafg::WTabBar::Construct()
         this->AddChild(Container);
         MakeDeferredWidgetNodeFinal(Container);
     }
-    else if (this->bIsVertical.IsValid())
+    else if (this->bIsVertical.has_value())
     {
-        if (this->bIsVertical.GetValue() == true)
+        if (this->bIsVertical.value() == true)
         {
             Container = ConstructDeferredWidgetNode<WVRegion>(this->GetOuter());
             Container->SetAnchor(EAnchor::Fill);
@@ -74,7 +74,7 @@ void Jafg::WTabBar::Construct()
     {
         this->RegisterTab(std::move(DeferredTab));
     }
-    this->DeferredTabs.Empty();
+    algo::orphan(&this->DeferredTabs);
 
     this->ResetToDefault();
 
@@ -83,48 +83,39 @@ void Jafg::WTabBar::Construct()
 
 void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, rvalue is just to do some inline stuff... no need to move.
 {
-    const LString* const IdentPtr = &InTabDescriptor.IdentifierField;
-    if (this->TabsInOrder.ContainsByPredicate([IdentPtr](const LAddedTabBarTab& Tab)
-    {
-        return Tab.Identifier == *IdentPtr;
-    }))
+    if (algo::contains(this->TabsInOrder, InTabDescriptor.IdentifierField, &LAddedTabBarTab::Identifier))
     {
         panicMsgf("Tab with identifier [{}] already exists.", InTabDescriptor.IdentifierField)
     }
 
     if (this->ButtonsContainer == nullptr)
     {
-        this->DeferredTabs.Emplace(std::move(InTabDescriptor));
+        this->DeferredTabs.emplace_back(std::move(InTabDescriptor));
         return;
     }
 
-    TArray<LAddedTabBarTab>::SizeType Index;
-    if (InTabDescriptor.AddAfterField.IsEmpty())
+    TArray<LAddedTabBarTab>::size_type Idx;
+    if (InTabDescriptor.AddAfterField.empty())
     {
-        this->TabsInOrder.Add(LAddedTabBarTab({.Identifier = InTabDescriptor.IdentifierField}));
-        Index = this->TabsInOrder.GetSize() - 1;
+        this->TabsInOrder.push_back(LAddedTabBarTab({.Identifier = InTabDescriptor.IdentifierField}));
+        Idx = this->TabsInOrder.size() - 1;
     }
     else
     {
-        const LString* const AddAfterPtr = &InTabDescriptor.AddAfterField;
-        Index = this->TabsInOrder.FindIndexByPredicate([AddAfterPtr](const LAddedTabBarTab& Tab)
-        {
-            return Tab.Identifier == *AddAfterPtr;
-        });
-        check( Index != this->TabsInOrder.end_idx() )
-        ++Index;
+        Idx = algo::distance(this->TabsInOrder.begin(), algo::find(this->TabsInOrder, InTabDescriptor.AddAfterField, &LAddedTabBarTab::Identifier));
+        check( Idx != this->TabsInOrder.size() )
+        ++Idx;
         LAddedTabBarTab AddedTab;
         AddedTab.Identifier = InTabDescriptor.IdentifierField;
-        this->TabsInOrder.AddAt(Index, std::move(AddedTab));
+        this->TabsInOrder.insert(this->TabsInOrder.begin() + Idx, std::move(AddedTab));
     }
 
-    if (InTabDescriptor.DisplayNameField.IsEmpty())
+    if (InTabDescriptor.DisplayNameField.empty())
     {
-        const LString S = Strings::AddSpacesToCamelCase(InTabDescriptor.IdentifierField);
-        InTabDescriptor.DisplayNameField = S.ToPtr();
+        InTabDescriptor.DisplayNameField = Strings::AddSpacesToCamelCase(InTabDescriptor.IdentifierField);;
     }
 
-    this->LoadTab(std::move(InTabDescriptor), Index);
+    this->LoadTab(std::move(InTabDescriptor), Idx);
 
     return;
 }
@@ -166,7 +157,7 @@ bool Jafg::WTabBar::UnregisterTab(const LString& Identifier)
 
 void Jafg::WTabBar::ResetToDefault()
 {
-    if (this->TabsInOrder.IsValidIndex(static_cast<TArray<LAddedTabBarTab>::SizeType>(this->DefaultIndex)))
+    if (algo::is_valid_index(this->TabsInOrder, static_cast<TArray<LAddedTabBarTab>::size_type>(this->DefaultIndex)))
     {
         this->ActivateTab(this->TabsInOrder[this->DefaultIndex].Identifier);
     }
@@ -191,8 +182,8 @@ void Jafg::WTabBar::ResetToDefault()
 
 void Jafg::WTabBar::ActivateTab(const LString& Identifier)
 {
-    TArray<LAddedTabBarTab>::SizeType Idx { 0 };
-    for (; Idx < this->TabsInOrder.GetSize(); ++Idx)
+    TArray<LAddedTabBarTab>::size_type Idx { 0 };
+    for (; Idx < this->TabsInOrder.size(); ++Idx)
     {
         if (this->TabsInOrder[Idx].Identifier == Identifier)
         {
@@ -200,15 +191,15 @@ void Jafg::WTabBar::ActivateTab(const LString& Identifier)
         }
         continue;
     }
-    jassert( Idx < this->TabsInOrder.GetSize() || Identifier.IsEmpty() )
+    jassert( Idx < this->TabsInOrder.size() || Identifier.empty() )
 
-    if (Identifier.IsEmpty() && this->bAllowNone == false)
+    if (Identifier.empty() && this->bAllowNone == false)
     {
         LOG_ERROR(LogWidgets, "The tab bar is not allowed to be none. Discarding change request.")
         return;
     }
 
-    const LAddedTabBarTab* TabDescriptor = this->TabsInOrder.IsValidIndex(Idx) ? &this->TabsInOrder[Idx] : nullptr;
+    const LAddedTabBarTab* TabDescriptor { algo::is_valid_index(this->TabsInOrder, Idx) ? &this->TabsInOrder[Idx] : nullptr };
 
     if (const LAddedTabBarTab* FocusedTab = this->GetCurrentlyFocusedTab(); FocusedTab)
     {
@@ -232,7 +223,7 @@ void Jafg::WTabBar::ActivateTab(const LString& Identifier)
         this->CurrentlyFocusedTab = nullptr;
     }
 
-    if (Identifier.IsEmpty())
+    if (Identifier.empty())
     {
         check( this->bAllowNone )
         this->Switcher->ResetWidgetIndex();
@@ -296,7 +287,7 @@ void Jafg::WTabBar::LoadTab(LTabBarTabDescriptor&& InTabDescriptor, const i32 In
         continue;
     }
     check( Iterator == InIndex )
-    while (this->ButtonsContainer->GetChildren().IsValidIndex(Where))
+    while (algo::is_valid_index(this->ButtonsContainer->GetChildren(), Where))
     {
         const LWidgetSlot* Slot = this->ButtonsContainer->GetChildren()[Where];
         check( Slot && Slot->Content )
@@ -329,7 +320,7 @@ void Jafg::WTabBar::LoadTab(LTabBarTabDescriptor&& InTabDescriptor, const i32 In
         checkSlow( this->TabsInOrder[InIndex].Panel == nullptr )
         this->TabsInOrder[InIndex].Panel = Panel;
         this->Switcher->AddChild(Panel);
-        this->TabsInOrder[InIndex].SwitcherIndex = static_cast<i8>(this->Switcher->GetChildren().GetSize() - 1);
+        this->TabsInOrder[InIndex].SwitcherIndex = static_cast<i8>(this->Switcher->GetChildren().size() - 1);
         Panel->AddData(&Data);
         MakeDeferredWidgetNodeFinal(Panel);
     }
@@ -340,7 +331,7 @@ void Jafg::WTabBar::LoadTab(LTabBarTabDescriptor&& InTabDescriptor, const i32 In
     {
         this->RegisterTab(std::move(Siblings));
     }
-    InTabDescriptor.Siblings.Empty();
+    algo::orphan(&InTabDescriptor.Siblings);
 
     return;
 }
@@ -349,13 +340,7 @@ const Jafg::WTabBar::LAddedTabBarTab* Jafg::WTabBar::GetCurrentlyFocusedTab() co
 {
     if (this->CurrentlyFocusedTab)
     {
-        if (const TArray<LAddedTabBarTab>::SizeType Idx { this->TabsInOrder.FindIndexByPredicate([this](const LAddedTabBarTab& Tab)
-        {
-            return Tab.Button == this->CurrentlyFocusedTab;
-        })}; Idx != this->TabsInOrder.end_idx())
-        {
-            return &this->TabsInOrder[Idx];
-        }
+        return algo::find_pointer(this->TabsInOrder, this->CurrentlyFocusedTab, &LAddedTabBarTab::Button);
     }
 
     return nullptr;

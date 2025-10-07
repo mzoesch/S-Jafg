@@ -20,14 +20,14 @@ protected:
 
 public:
 
-    void AddTopLevelPreference(Smart::TUnique<LPreference>&& InPreference);
+    void AddTopLevelPreference(TUnique<LPreference>&& InPreference);
 
-    FORCEINLINE virtual       TArray<Smart::TUnique<LPreference>>& GetMutablePreferences() { return this->Preferences; }
-    FORCEINLINE virtual const TArray<Smart::TUnique<LPreference>>& GetPreferences() const { return this->Preferences; }
+    FORCEINLINE virtual       TArray<TUnique<LPreference>>& GetMutablePreferences() { return this->Preferences; }
+    FORCEINLINE virtual const TArray<TUnique<LPreference>>& GetPreferences() const { return this->Preferences; }
 
 protected:
 
-    TArray<Smart::TUnique<LPreference>> Preferences;
+    TArray<TUnique<LPreference>> Preferences;
 };
 
 } /* ~Namespace Jafg */

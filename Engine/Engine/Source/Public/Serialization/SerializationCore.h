@@ -16,7 +16,7 @@ template <typename TField>
 void Deserialize(TField* Destination, const LString& InValue) UNSUPPORTED_TEMPLATED_SPECIALIZATION(TField)
 
 template <typename TField>
-LString Serialize(const TField& InValue) { return LString::SprintF("{}", InValue); }
+LString Serialize(const TField& InValue) { return Lal::SprintF("{}", InValue); }
 
 
 /*----------------------------------------------------------------------------
@@ -27,70 +27,70 @@ template <>
 FORCEINLINE void Deserialize<f32>(f32* Destination, const LString& InValue)
 {
     checkSlow( Destination )
-    *Destination = std::stof(InValue.ToPtr());
+    *Destination = std::stof(InValue.c_str());
 }
 
 template <>
 FORCEINLINE void Deserialize<f64>(f64* Destination, const LString& InValue)
 {
     checkSlow( Destination )
-    *Destination = std::stod(InValue.ToPtr());
+    *Destination = std::stod(InValue.c_str());
 }
 
 template <>
 FORCEINLINE void Deserialize<u8>(u8* Destination, const LString& InValue)
 {
     checkSlow( Destination )
-    *Destination = static_cast<u8>(std::stoull(InValue.ToPtr()));
+    *Destination = static_cast<u8>(std::stoull(InValue.c_str()));
 }
 
 template <>
 FORCEINLINE void Deserialize<u16>(u16* Destination, const LString& InValue)
 {
     checkSlow( Destination )
-    *Destination = static_cast<u16>(std::stoull(InValue.ToPtr()));
+    *Destination = static_cast<u16>(std::stoull(InValue.c_str()));
 }
 
 template <>
 FORCEINLINE void Deserialize<u32>(u32* Destination, const LString& InValue)
 {
     checkSlow( Destination )
-    *Destination = static_cast<u32>(std::stoull(InValue.ToPtr()));
+    *Destination = static_cast<u32>(std::stoull(InValue.c_str()));
 }
 
 template <>
 FORCEINLINE void Deserialize<u64>(u64* Destination, const LString& InValue)
 {
     checkSlow( Destination )
-    *Destination = static_cast<u64>(std::stoull(InValue.ToPtr()));
+    *Destination = static_cast<u64>(std::stoull(InValue.c_str()));
 }
 
 template <>
 FORCEINLINE void Deserialize<i8>(i8* Destination, const LString& InValue)
 {
     checkSlow( Destination )
-    *Destination = static_cast<i8>(std::stoll(InValue.ToPtr()));
+    *Destination = static_cast<i8>(std::stoll(InValue.c_str()));
 }
 
 template <>
 FORCEINLINE void Deserialize<i16>(i16* Destination, const LString& InValue)
 {
     checkSlow( Destination )
-    *Destination = static_cast<i16>(std::stoll(InValue.ToPtr()));
+    *Destination = static_cast<i16>(std::stoll(InValue.c_str()));
 }
 
 template <>
 FORCEINLINE void Deserialize<i32>(i32* Destination, const LString& InValue)
 {
     checkSlow( Destination )
-    *Destination = static_cast<i32>(std::stoll(InValue.ToPtr()));
+    *Destination = static_cast<i32>(std::stoll(InValue.c_str()));
 }
 
 template <>
 FORCEINLINE void Deserialize<i64>(i64* Destination, const LString& InValue)
 {
     checkSlow( Destination )
-    *Destination = static_cast<i64>(std::stoll(InValue.ToPtr()));
+    *Destination = static_cast<i64>(std::stoll(InValue.c_str()));
 }
 
 template <>
@@ -109,7 +109,7 @@ FORCEINLINE void Deserialize<bool>(bool* Destination, const LString& InValue)
         return;
     }
 
-    panicMsgf( "Invalid boolean value [{}].", InValue.ToPtr() )
+    panicMsgf( "Invalid boolean value [{}].", InValue.c_str() )
 
     return;
 }
@@ -126,8 +126,8 @@ FORCEINLINE void Deserialize<Lal::LColor>(Lal::LColor* Destination, const LStrin
 {
     checkSlow( Destination )
 
-    jassert( InValue.StartsWith("0x") )
-    jassert( InValue.GetRuneCount() == 10 )
+    jassert( InValue.starts_with("0x") )
+    jassert( InValue.size() == 10 )
 
     *Destination = Lal::LColor::Transparent;
 
@@ -185,13 +185,13 @@ FORCEINLINE void Deserialize(TArray<TField>* Destination, const LString& InValue
     {
         TField Temp;
         Deserialize<TField>(&Temp, Lambda);
-        Intermediate.Add(Temp);
+        Intermediate.emplace_back(Temp);
 
         return;
     };
 
     LString Temp;
-    const i32 Count = InValue.GetRuneCount();
+    const i32 Count = InValue.size();
     for (i32 i = 0; i < Count; ++i)
     {
         if (i == 0 || i == Count - 1)
@@ -202,13 +202,13 @@ FORCEINLINE void Deserialize(TArray<TField>* Destination, const LString& InValue
 
         if (InValue[i] == ',')
         {
-            if (Temp.IsEmpty())
+            if (Temp.empty())
             {
                 continue;
             }
 
             AddToIntermediate(Temp);
-            Temp.Empty();
+            Temp.clear();
             continue;
         }
 
@@ -217,13 +217,13 @@ FORCEINLINE void Deserialize(TArray<TField>* Destination, const LString& InValue
         continue;
     }
 
-    if (Temp.IsEmpty() == false)
+    if (Temp.empty() == false)
     {
         AddToIntermediate(Temp);
-        Temp.Empty();
+        Temp.clear();
     }
 
-    if (Destination->IsDataUnequal(Intermediate))
+    if (algo::equal(*Destination, Intermediate) == false)
     {
         *Destination = std::move(Intermediate);
     }
@@ -241,10 +241,10 @@ FORCEINLINE LString Serialize(const TArray<TField>& InValue)
 {
     LString Result = "[";
 
-    for (typename TArray<TField>::SizeType Index { 0 }; Index < InValue.GetSize(); ++Index)
+    for (typename TArray<TField>::size_type Index { 0 }; Index < InValue.size(); ++Index)
     {
         Result += Serialize(InValue[Index]);
-        if (Index < InValue.GetSize() - 1)
+        if (Index < InValue.size() - 1)
         {
             Result += ',';
         }
@@ -252,7 +252,7 @@ FORCEINLINE LString Serialize(const TArray<TField>& InValue)
         continue;
     }
 
-    Result += "]";
+    Result += ']';
 
     return Result;
 }
@@ -260,7 +260,7 @@ FORCEINLINE LString Serialize(const TArray<TField>& InValue)
 template <>
 FORCEINLINE LString Serialize<Lal::LColor>(const Lal::LColor& InValue)
 {
-    return LString::SprintF("0x{:02X}{:02X}{:02X}{:02X}", InValue.R, InValue.G, InValue.B, InValue.A);
+    return Lal::SprintF("0x{:02X}{:02X}{:02X}{:02X}", InValue.R, InValue.G, InValue.B, InValue.A);
 }
 
 } /* ~Namespace Jafg */

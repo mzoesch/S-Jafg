@@ -73,7 +73,7 @@ public:
 
     //# Same logic as with #SetContent.
     bool SetTextBoxBrush(const LTextBoxBrush& InBrush);
-    bool ResetTextBoxBrush() { this->IntermediateTextBoxBrush.Reset(); return true; }
+    bool ResetTextBoxBrush() { this->IntermediateTextBoxBrush.reset(); return true; }
 
     //#
     //# @return True if the content (if available) was set to the #ButtonText widget.

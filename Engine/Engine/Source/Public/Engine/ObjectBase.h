@@ -113,8 +113,8 @@ public:
     FORCEINLINE       LObjectClass* GetMutableVTableChecked() { check( this->VClass ) return this->VClass; }
     FORCEINLINE const LObjectClass* GetVTableAsserted() const { jassert( this->VClass ) return this->VClass; }
     FORCEINLINE       LObjectClass* GetMutableVTableAsserted() { jassert( this->VClass ) return this->VClass; }
-    FORCEINLINE const LObjectClass* GetVTableSlow() const { return this->VClass ? this->VClass : Private::GObjectRegistry->GetPanickedPackageByContentDefault(this)->StaticClass; }
-    FORCEINLINE       LObjectClass* GetMutableVTableSlow() const { return this->VClass ? this->VClass : Private::GObjectRegistry->GetPanickedPackageByContentDefault(this)->StaticClass; }
+    FORCEINLINE const LObjectClass* GetVTableSlow() const { return this->VClass ? this->VClass : Private::GObjectRegistry->GetPanickedPackageByContentDefault(this)->StaticClass.get(); }
+    FORCEINLINE       LObjectClass* GetMutableVTableSlow() const { return this->VClass ? this->VClass : Private::GObjectRegistry->GetPanickedPackageByContentDefault(this)->StaticClass.get(); }
     FORCEINLINE bool           IsDefault() const { return this->VClass == nullptr; }
     FORCEINLINE const LString& GetFullName() const { check( this->VClass ) return this->VClass->GetSpacedClassName(); }
     FORCEINLINE LName          GetName() const { check( this->VClass ) return this->VClass->GetName(); }
@@ -153,7 +153,7 @@ public:
         //#
         //# Only the default class referrer may contain fields.
         //#
-        check( this->ClassFields.IsDataValid() == false )
+        check( this->ClassFields.capacity() == 0 && algo::to_address(this->ClassFields.begin()) == nullptr )
 
         return;
     }
@@ -224,7 +224,7 @@ template <typename TObj>
 FORCEINLINE void Deserialize(Jafg::TSubclassOf<TObj>* Destination, const LString& InValue)
 {
     checkSlow( Destination )
-    const LObjectClass* X = Private::GObjectRegistry->GetPanickedPackageByName(InValue.ToPtr())->StaticClass;
+    const LObjectClass* X = Private::GObjectRegistry->GetPanickedPackageByName(InValue)->StaticClass.get();
     *Destination = X;
 }
 
@@ -241,7 +241,7 @@ struct std::formatter<::Jafg::TSubclassOf<T>> : std::formatter<const char*>
     {
         if (InClass)
         {
-            return std::formatter<const char*>::format(InClass->GetSpacedClassName().ToPtr(), InContext);
+            return std::formatter<const char*>::format(InClass->GetSpacedClassName().c_str(), InContext);
         }
         return ::std::formatter<const char*>::format("", InContext);
     }

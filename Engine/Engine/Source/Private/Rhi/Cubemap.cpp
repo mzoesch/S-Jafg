@@ -22,17 +22,17 @@ void Jafg::LCubemap::Free()
         return;
     }
 
-    if (this->Paths.GetSize() > 0)
+    if (this->Paths.size() > 0)
     {
         LOG_VERBOSE(LogTextureSubsystem, "Shredding cubemap [{}].", this->Paths[0])
     }
     else
     {
-        LOG_VERBOSE(LogTextureSubsystem, "Shredding cubemap [{}].", this->Handle.GetValue())
+        LOG_VERBOSE(LogTextureSubsystem, "Shredding cubemap [{}].", this->Handle.value())
     }
 
-    glDeleteTextures(1, &this->Handle.GetValue());
-    this->Handle.Reset();
+    glDeleteTextures(1, &this->Handle.value());
+    this->Handle.reset();
 
     return;
 }
@@ -44,7 +44,7 @@ void Jafg::LCubemap::Reload()
         this->Free();
     }
 
-    jassert( this->Paths.GetSize() == ECubemap::Size )
+    jassert( this->Paths.size() == ECubemap::Size )
     check( this->IsValid() == false )
 
     this->LoadImpl();
@@ -57,12 +57,12 @@ void Jafg::LCubemap::Cache(const TArray<LEnginePath>& InPaths)
     check( this->IsValid() == false )
 
     TArray<LEnginePath> Cache = InPaths;
-    if (InPaths.GetSize() == 1)
+    if (InPaths.size() == 1)
     {
         const LEnginePath Path { InPaths[0] };
         for (u32 i = 0; i < 5; ++i)
         {
-            Cache.Emplace(Path);
+            Cache.emplace_back(Path);
             continue;
         }
     }
@@ -75,17 +75,17 @@ void Jafg::LCubemap::Cache(const TArray<LEnginePath>& InPaths)
 void Jafg::LCubemap::Load(const TArray<LEnginePath>& InPaths)
 {
     TArray<LEnginePath> Cache = InPaths;
-    if (InPaths.GetSize() == 1)
+    if (InPaths.size() == 1)
     {
         const LEnginePath Path { InPaths[0] };
         for (u32 i = 0; i < 5; ++i)
         {
-            Cache.Emplace(Path);
+            Cache.emplace_back(Path);
             continue;
         }
     }
 
-    jassert( Cache.GetSize() == ECubemap::Size )
+    jassert( Cache.size() == ECubemap::Size )
     check( this->IsValid() == false )
     this->Paths = std::move(Cache);
 
@@ -96,16 +96,16 @@ void Jafg::LCubemap::Load(const TArray<LEnginePath>& InPaths)
 
 void Jafg::LCubemap::LoadImpl()
 {
-    check( this->Paths.GetSize() == ECubemap::Size )
+    check( this->Paths.size() == ECubemap::Size )
     check( this->IsValid() == false )
 
     LOG_VERBOSE(LogRhi, "Uploading cubemap [{}].", this->Paths[0])
 
     const JUserPreferences* Prefs = GetDefault<JUserPreferences>();
 
-    this->Handle.Emplace(0);
+    this->Handle.emplace(0);
 
-    glGenTextures(1, &this->Handle.GetValue());
+    glGenTextures(1, &this->Handle.value());
     glBindTexture(GL_TEXTURE_CUBE_MAP, *this);
 
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -121,7 +121,7 @@ void Jafg::LCubemap::LoadImpl()
     /* Back */
     {
         ::stbi_set_flip_vertically_on_load(false);
-        u8* Data { stbi_load(this->Paths[ECubemap::Back].ResolvePath().ToPtr(), &W, &H, &C, 0) };
+        u8* Data { stbi_load(this->Paths[ECubemap::Back].ResolvePath().c_str(), &W, &H, &C, 0) };
         jassert( Data )
         if (C == 4)
         {
@@ -139,7 +139,7 @@ void Jafg::LCubemap::LoadImpl()
     /* Front */
     {
         ::stbi_set_flip_vertically_on_load(false);
-        u8* Data { stbi_load(this->Paths[ECubemap::Front].ResolvePath().ToPtr(), &W, &H, &C, 0) };
+        u8* Data { stbi_load(this->Paths[ECubemap::Front].ResolvePath().c_str(), &W, &H, &C, 0) };
         jassert( Data )
         if (C == 4)
         {
@@ -157,18 +157,18 @@ void Jafg::LCubemap::LoadImpl()
     /* Top */
     {
         ::stbi_set_flip_vertically_on_load(false);
-        u8* Data { stbi_load(this->Paths[ECubemap::Top].ResolvePath().ToPtr(), &W, &H, &C, 0) };
+        u8* Data { stbi_load(this->Paths[ECubemap::Top].ResolvePath().c_str(), &W, &H, &C, 0) };
         jassert( Data )
-        const Smart::TUnique Rotated { Texture2::RotateCW(Data, W, H, C) };
+        const TUnique Rotated { Texture2::RotateCW(Data, W, H, C) };
         if (C == 4)
         {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, H, W, 0, GL_RGBA, GL_UNSIGNED_BYTE, Rotated);
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, H, W, 0, GL_RGBA, GL_UNSIGNED_BYTE, Rotated.get());
 
         }
         else
         {
             check( C == 3 )
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, H, W, 0, GL_RGB, GL_UNSIGNED_BYTE, Rotated);
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, H, W, 0, GL_RGB, GL_UNSIGNED_BYTE, Rotated.get());
         }
         stbi_image_free(Data);
     }
@@ -176,9 +176,9 @@ void Jafg::LCubemap::LoadImpl()
     /* Bottom */
     {
         ::stbi_set_flip_vertically_on_load(false);
-        u8* Data { stbi_load(this->Paths[ECubemap::Bottom].ResolvePath().ToPtr(), &W, &H, &C, 0) };
+        u8* Data { stbi_load(this->Paths[ECubemap::Bottom].ResolvePath().c_str(), &W, &H, &C, 0) };
         jassert( Data )
-        const Smart::TUnique Rotated { Texture2::RotateCCW(Data, W, H, C) };
+        const TUnique Rotated { Texture2::RotateCCW(Data, W, H, C) };
         if (C == 4)
         {
             glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB, H, W, 0, GL_RGBA, GL_UNSIGNED_BYTE, Data);
@@ -195,7 +195,7 @@ void Jafg::LCubemap::LoadImpl()
     /* Right */
     {
         ::stbi_set_flip_vertically_on_load(false);
-        u8* Data { stbi_load(this->Paths[ECubemap::Right].ResolvePath().ToPtr(), &W, &H, &C, 0) };
+        u8* Data { stbi_load(this->Paths[ECubemap::Right].ResolvePath().c_str(), &W, &H, &C, 0) };
         jassert( Data )
         if (C == 4)
         {
@@ -213,7 +213,7 @@ void Jafg::LCubemap::LoadImpl()
     /* Left */
     {
         ::stbi_set_flip_vertically_on_load(false);
-        u8* Data { stbi_load(this->Paths[ECubemap::Left].ResolvePath().ToPtr(), &W, &H, &C, 0) };
+        u8* Data { stbi_load(this->Paths[ECubemap::Left].ResolvePath().c_str(), &W, &H, &C, 0) };
         jassert( Data )
         if (C == 4)
         {

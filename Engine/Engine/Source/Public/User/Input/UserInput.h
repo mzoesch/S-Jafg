@@ -79,8 +79,8 @@ public:
     ENGINE_API const TArray<LRawInput>& GetOngoingKeys() const;
     ENGINE_API TArray<LRawInput>        GetCompletedKeys() const;
 
-    FORCEINLINE       LUserInputContext* GetContextByName(const LName& InName) { Smart::TUnique<LUserInputContext>* Out = this->RegisteredContexts.FindRef(InName); return Out ? Out->GetPointer() : nullptr; }
-    FORCEINLINE const LUserInputContext* GetContextByName(const LName& InName) const { const Smart::TUnique<LUserInputContext>* Out = this->RegisteredContexts.FindRef(InName); return Out ? Out->GetPointer() : nullptr; }
+    FORCEINLINE       LUserInputContext* GetContextByName(const LName& InName) { auto* Out { algo::wfind_pointer(this->RegisteredContexts, InName, algo::unique_raw{}) }; if (Out) { return Out->get(); } return nullptr; }
+    FORCEINLINE const LUserInputContext* GetContextByName(const LName& InName) const { auto const* Out { algo::wfind_pointer(this->RegisteredContexts, InName, algo::unique_raw{}) }; if (Out) { return Out->get(); } return nullptr; }
     FORCEINLINE       LUserInputContext* GetContextByNameChecked(const LName& InName) { LUserInputContext* Out = this->GetContextByName(InName); check( Out ) return Out; }
     FORCEINLINE const LUserInputContext* GetContextByNameChecked(const LName& InName) const { const LUserInputContext* Out = this->GetContextByName(InName); check( Out ) return Out; }
     FORCEINLINE       LUserInputContext* GetContextByNameAsserted(const LName& InName) { LUserInputContext* Out = this->GetContextByName(InName); jassert( Out ) return Out; }
@@ -93,8 +93,8 @@ public:
     FORCEINLINE       LUserInputContext* GetContextByNameAsserted(const LString& InName) { LUserInputContext* Out = this->GetContextByName(InName); jassert( Out ) return Out; }
     FORCEINLINE const LUserInputContext* GetContextByNameAsserted(const LString& InName) const { const LUserInputContext* Out = this->GetContextByName(InName); jassert( Out ) return Out; }
 
-    FORCEINLINE       LInputAction* GetActionByName(const LName& InName) { Smart::TUnique<LInputAction>* Out = this->RegisteredActions.FindRef(InName); return Out ? Out->GetPointer() : nullptr; }
-    FORCEINLINE const LInputAction* GetActionByName(const LName& InName) const { const Smart::TUnique<LInputAction>* Out = this->RegisteredActions.FindRef(InName); return Out ? Out->GetPointer() : nullptr; }
+    FORCEINLINE       LInputAction* GetActionByName(const LName& InName) { TUnique<LInputAction>* Out { algo::wfind_pointer(this->RegisteredActions, InName, algo::unique_raw{}) }; if (Out) { return Out->get(); } return nullptr; }
+    FORCEINLINE const LInputAction* GetActionByName(const LName& InName) const { const TUnique<LInputAction>* Out { algo::wfind_pointer(this->RegisteredActions, InName, algo::unique_raw{}) }; if (Out) { return Out->get(); } return nullptr; }
     FORCEINLINE       LInputAction* GetActionByNameChecked(const LName& InName) { LInputAction* Out = this->GetActionByName(InName); check( Out ) return Out; }
     FORCEINLINE const LInputAction* GetActionByNameChecked(const LName& InName) const { const LInputAction* Out = this->GetActionByName(InName); check( Out ) return Out; }
     FORCEINLINE       LInputAction* GetActionByNameAsserted(const LName& InName) { LInputAction* Out = this->GetActionByName(InName); jassert( Out ) return Out; }
@@ -119,15 +119,15 @@ public:
     FORCEINLINE void SetReferenceContexts(const TArray<LUserInputContext*>& InContexts) { this->ReferenceContexts = InContexts; }
     FORCEINLINE const TArray<LUserInputContext*>& GetReferenceContexts() const noexcept { return this->ReferenceContexts; }
 
-    FORCEINLINE const TArray<Smart::TUnique<LInputAction>>& GetRegisteredActions() const noexcept { return this->RegisteredActions; }
-    FORCEINLINE const TArray<Smart::TUnique<LUserInputContext>>& GetRegisteredContexts() const noexcept { return this->RegisteredContexts; }
+    FORCEINLINE const TArray<TUnique<LInputAction>>& GetRegisteredActions() const noexcept { return this->RegisteredActions; }
+    FORCEINLINE const TArray<TUnique<LUserInputContext>>& GetRegisteredContexts() const noexcept { return this->RegisteredContexts; }
 
 private:
 
     void DispatchInputDelegatesForKeyCategory(TArray<LRawInput>* InRawInputs, const EInputActionTrigger::Type InActionTriggerType);
 
-    TArray<Smart::TUnique<LInputAction>> RegisteredActions;
-    TArray<Smart::TUnique<LUserInputContext>> RegisteredContexts;
+    TArray<TUnique<LInputAction>> RegisteredActions;
+    TArray<TUnique<LUserInputContext>> RegisteredContexts;
 
     //#
     //# The most important context is stored first.
@@ -141,7 +141,7 @@ FORCEINLINE bool LUserInput::ActivateContexts(const TArray<LUserInputContext*>& 
 {
     bool bOut { false };
 
-    InContexts.ForEach([this, &bOut](LUserInputContext* InContext) -> void
+    algo::for_each(InContexts, [this, &bOut](LUserInputContext* InContext) -> void
     {
         if (this->ActivateContext(InContext))
         {
@@ -158,7 +158,7 @@ FORCEINLINE bool LUserInput::ActivateContexts(const TArray<LName>& InNames)
 {
     bool bOut { false };
 
-    InNames.ForEach([this, &bOut](const LName& InName) -> void
+    algo::for_each(InNames, [this, &bOut](const LName& InName) -> void
     {
         if (this->ActivateContext(InName))
         {
@@ -174,7 +174,7 @@ FORCEINLINE bool LUserInput::ActivateContexts(const TArray<LString>& InNames)
 {
     bool bOut { false };
 
-    InNames.ForEach([this, &bOut](const LString& InName) -> void
+    algo::for_each(InNames, [this, &bOut](const LString& InName) -> void
     {
         if (this->ActivateContext(InName))
         {
@@ -191,7 +191,7 @@ FORCEINLINE bool LUserInput::DeactivateContexts(const TArray<LUserInputContext*>
 {
     bool bOut { false };
 
-    InContexts.ForEach([this, &bOut](LUserInputContext* InContext) -> void
+    algo::for_each(InContexts, [this, &bOut](LUserInputContext* InContext) -> void
     {
         if (this->DeactivateContext(InContext))
         {
@@ -208,7 +208,7 @@ FORCEINLINE bool LUserInput:: DeactivateContexts(const TArray<LName>& InNames)
 {
     bool bOut { false };
 
-    InNames.ForEach([this, &bOut](const LName& InName) -> void
+    algo::for_each(InNames, [this, &bOut](const LName& InName) -> void
     {
         if (this->DeactivateContext(InName))
         {
@@ -225,7 +225,7 @@ FORCEINLINE bool LUserInput:: DeactivateContexts(const TArray<LString>& InNames)
 {
     bool bOut { false };
 
-    InNames.ForEach([this, &bOut](const LString& InName) -> void
+    algo::for_each(InNames, [this, &bOut](const LString& InName) -> void
     {
         if (this->DeactivateContext(InName))
         {

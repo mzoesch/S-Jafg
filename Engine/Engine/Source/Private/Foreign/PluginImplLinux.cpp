@@ -29,7 +29,7 @@ EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
 {
     check( this->IsValid() )
 
-    this->Handle = ::dlopen(this->BinPath.ToPtr(), RTLD_LAZY);
+    this->Handle = ::dlopen(this->BinPath.c_str(), RTLD_LAZY);
 
     if (this->Handle == nullptr)
     {
@@ -41,9 +41,9 @@ EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
 
     typedef LPluginLifetime* (*LCreatePluginLifetime)();
 
-    const LString Symbol { LString::SprintF("GetPluginLifetime_{}", this->GetIdentifier()) };
+    const LString Symbol { Lal::SprintF("GetPluginLifetime_{}", this->GetIdentifier()) };
 
-    LCreatePluginLifetime CreatePluginLifetime { reinterpret_cast<LCreatePluginLifetime>(::dlsym(this->Handle, Symbol.ToPtr())) };
+    LCreatePluginLifetime CreatePluginLifetime { reinterpret_cast<LCreatePluginLifetime>(::dlsym(this->Handle, Symbol.c_str())) };
     const char* Error = ::dlerror();
     if (Error)
     {

@@ -12,9 +12,9 @@ void Jafg::JTextureSubsystem::PurgeTextures()
 
 std::shared_ptr<Jafg::LTexture2> Jafg::JTextureSubsystem::GetTexture(const LPath& InPath, const ERawImageFormat::Type InFormat) const
 {
-    check( InPath.IsEmpty() == false )
+    check( InPath.empty() == false )
 
-    std::string Path = InPath.ToPtr();
+    std::string Path { InPath.generic_string() };
     if (const auto& It = this->Textures.find(Path); It != this->Textures.end())
     {
         return It->second;

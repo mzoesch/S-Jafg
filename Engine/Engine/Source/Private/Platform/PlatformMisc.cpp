@@ -14,11 +14,11 @@ LPath PlatformMisc::GetEngineRootDir()
     return "";
 #else /* WITH_VIRTUAL_FILESYSTEM */
     checkSlow( GPlatformMisc )
-    if (GPlatformMisc->EngineRootDir.IsEmpty())
+    if (GPlatformMisc->EngineRootDir.empty())
     {
         GPlatformMisc->EngineRootDir = PlatformMisc::Private::GetEngineRootDirImpl();
     }
-    check( GPlatformMisc->EngineRootDir.IsEmpty() == false )
+    check( GPlatformMisc->EngineRootDir.empty() == false )
     check( Finder::DoesFileExist(GPlatformMisc->EngineRootDir / "jafg.jafgworkspace") )
     return GPlatformMisc->EngineRootDir;
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
@@ -31,11 +31,11 @@ LPath PlatformMisc::GetRealEngineRootDir()
     return "";
 #else /* WITH_VIRTUAL_FILESYSTEM */
     checkSlow( GPlatformMisc )
-    if (GPlatformMisc->RealEngineRootDir.IsEmpty())
+    if (GPlatformMisc->RealEngineRootDir.empty())
     {
         GPlatformMisc->RealEngineRootDir = PlatformMisc::Private::GetRealEngineRootDirImpl();
     }
-    check( GPlatformMisc->RealEngineRootDir.IsEmpty() == false )
+    check( GPlatformMisc->RealEngineRootDir.empty() == false )
     return GPlatformMisc->RealEngineRootDir;
 #endif /* !WITH_VIRTUAL_FILESYSTEM */
 }

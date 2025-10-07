@@ -69,7 +69,7 @@ unsigned int BillboardIndices[] = { 0, 1, 2, 2, 3, 0 };
 
 Jafg::LSkybox::LSkybox(const LString& DefaultName, const TArray<LEnginePath>& InDefaultSkybox)
 {
-    this->Maps.Emplace(DefaultName, LCubemap{InDefaultSkybox});
+    this->Maps.emplace_back(DefaultName, LCubemap{InDefaultSkybox});
     return;
 }
 
@@ -77,7 +77,7 @@ Jafg::LSkybox::LSkybox(const TArray<LLevelSkyboxMap>& InDefaultSkybox)
 {
     for (const auto& [Identifier, Textures, DefaultLoad] : InDefaultSkybox)
     {
-        this->Maps.Emplace(Identifier, LCubemap{Textures}, DefaultLoad);
+        this->Maps.emplace_back(Identifier, LCubemap{Textures}, DefaultLoad);
         continue;
     }
 
@@ -90,18 +90,18 @@ void Jafg::LSkybox::Upload()
 
     LOG_VERBOSE(LogRhi, "Uploading new skybox.")
 
-    check( this->Vao.IsValid() == false && this->Vbo.IsValid() == false )
+    check( this->Vao.has_value() == false && this->Vbo.has_value() == false )
 
     this->Shader = LShader{{EEnginePaths::Shaders, "Skybox"}};
     this->BillboardShader = LShader{{EEnginePaths::Shaders, "Billboard"}};
 
-    this->Vao.Emplace(0);
-    glGenVertexArrays(1, &this->Vao.GetValue());
-    this->Vbo.Emplace(0);
-    glGenBuffers(1, &this->Vbo.GetValue());
+    this->Vao.emplace(0);
+    glGenVertexArrays(1, &this->Vao.value());
+    this->Vbo.emplace(0);
+    glGenBuffers(1, &this->Vbo.value());
 
-    glBindVertexArray(this->Vao.GetValue());
-    glBindBuffer(GL_ARRAY_BUFFER, this->Vbo.GetValue());
+    glBindVertexArray(this->Vao.value());
+    glBindBuffer(GL_ARRAY_BUFFER, this->Vbo.value());
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), &Vertices, GL_STATIC_DRAW);
 
@@ -118,16 +118,16 @@ void Jafg::LSkybox::Upload()
     this->Shader.Use();
     this->Shader.SetIntUniform("SkyboxSampler0", 0);
 
-    this->BillboardVao.Emplace(0);
-    glGenVertexArrays(1, &this->BillboardVao.GetValue());
-    this->BillboardVbo.Emplace(0);
-    glGenBuffers(1, &this->BillboardVbo.GetValue());
-    this->BillboardEbo.Emplace(0);
-    glGenBuffers(1, &this->BillboardEbo.GetValue());
+    this->BillboardVao.emplace(0);
+    glGenVertexArrays(1, &this->BillboardVao.value());
+    this->BillboardVbo.emplace(0);
+    glGenBuffers(1, &this->BillboardVbo.value());
+    this->BillboardEbo.emplace(0);
+    glGenBuffers(1, &this->BillboardEbo.value());
 
-    glBindVertexArray(this->BillboardVao.GetValue());
-    glBindBuffer(GL_ARRAY_BUFFER, this->BillboardVbo.GetValue());
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->BillboardEbo.GetValue());
+    glBindVertexArray(this->BillboardVao.value());
+    glBindBuffer(GL_ARRAY_BUFFER, this->BillboardVbo.value());
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->BillboardEbo.value());
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), static_cast<void*>(nullptr));
     glEnableVertexAttribArray(0);
@@ -160,8 +160,8 @@ void Jafg::LSkybox::Upload()
 
 void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
 {
-    glBindVertexArray(this->Vao.GetValue());
-    glBindBuffer(GL_ARRAY_BUFFER, this->Vbo.GetValue());
+    glBindVertexArray(this->Vao.value());
+    glBindBuffer(GL_ARRAY_BUFFER, this->Vbo.value());
 
     this->Shader.Use();
 
@@ -188,14 +188,14 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
     glDepthFunc(GL_LEQUAL);
     glDisable(GL_CULL_FACE);
 
-    for (TArray<LLoadedCubemap>::SizeType Idx { 0 }; Idx < this->Maps.GetSize(); ++Idx)
+    for (TArray<LLoadedCubemap>::size_type Idx { 0 }; Idx < this->Maps.size(); ++Idx)
     {
         const LLoadedCubemap& Map { this->Maps[Idx] };
 
         glActiveTexture(GL_TEXTURE0 + Idx);
         glBindTexture(GL_TEXTURE_CUBE_MAP, Map.Map);
 
-        this->Shader.SetFloatUniform(LString::SprintF("SkyboxSampler{}", Idx), Map.Load);
+        this->Shader.SetFloatUniform(Lal::SprintF("SkyboxSampler{}", Idx), Map.Load);
 
         continue;
     }
@@ -220,9 +220,9 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
 
-    glBindVertexArray(this->BillboardVao.GetValue());
-    glBindBuffer(GL_ARRAY_BUFFER, this->BillboardVbo.GetValue());
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->BillboardEbo.GetValue());
+    glBindVertexArray(this->BillboardVao.value());
+    glBindBuffer(GL_ARRAY_BUFFER, this->BillboardVbo.value());
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->BillboardEbo.value());
 
     for (const LAstron& Astron : this->Astra)
     {
@@ -271,15 +271,15 @@ void Jafg::LSkybox::Draw(const LViewport& InViewport, const LEye& InEye) const
 
 void Jafg::LSkybox::Free()
 {
-    if (this->Vao.IsValid())
+    if (this->Vao.has_value())
     {
-        check( this->Vbo.IsValid() )
+        check( this->Vbo.has_value() )
 
-        glDeleteVertexArrays(1, &this->Vao.GetValue());
-        this->Vao.Reset();
+        glDeleteVertexArrays(1, &this->Vao.value());
+        this->Vao.reset();
 
-        glDeleteBuffers(1, &this->Vbo.GetValue());
-        this->Vbo.Reset();
+        glDeleteBuffers(1, &this->Vbo.value());
+        this->Vbo.reset();
     }
 
     return;

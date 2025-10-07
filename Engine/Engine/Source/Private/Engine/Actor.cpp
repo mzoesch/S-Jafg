@@ -25,11 +25,11 @@ void Jafg::AActor::OnGarbage()
     {
         if (this->GetWorld()->IsTickableObjectsPutMutexLocked())
         {
-            this->GetWorld()->DeletedTickableObjects.Add(this);
+            this->GetWorld()->DeletedTickableObjects.push_back(this);
         }
         else
         {
-            this->GetWorld()->TickableObjects.RemoveOnceChecked(this);
+            algo::erase_once_checked(&this->GetWorld()->TickableObjects, this);
         }
     }
 
@@ -39,7 +39,7 @@ void Jafg::AActor::OnGarbage()
          * Though we keep the pointer to the world to let this actor's children unsubscribe to world-specific
          * delegates - the context on the other hand should now no longer care about this child.
          */
-        this->GetWorld()->Actors.RemoveOnceChecked(this);
+        algo::erase_once_checked(&this->GetWorld()->Actors, this);
     }
 
     return;

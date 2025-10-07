@@ -312,10 +312,7 @@ EPlatformExit::Type GuardedMain()
     PlatformMisc::Private::InvalidateCachedValues();
 
 #if PLATFORM_DESKTOP
-    {
-        const LPath EngineRoot { PlatformMisc::GetEngineRootDir() };
-        std::filesystem::current_path(std::filesystem::path{EngineRoot.begin_ptr(), EngineRoot.end_ptr()});
-    }
+    std::filesystem::current_path(PlatformMisc::GetEngineRootDir());
     Finder::CreateDirectories(Finder::GetSavedDir());
     Finder::CreateDirectories(Finder::GetSavesDir());
     Finder::CreateDirectories(Finder::GetDumpsDir());

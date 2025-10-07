@@ -26,8 +26,8 @@ Jafg::JObjectBase::JObjectBase(const LObjectInitializer& ObjectInitializer)
     check( ObjectInitializer.Outer )
     this->Outer = ObjectInitializer.Outer;
 
-    check( this->Outer->Employees.Contains(this) == false )
-    this->Outer->Employees.Add(this);
+    check( algo::contains(this->Outer->Employees, this) == false )
+    this->Outer->Employees.push_back(this);
 
     return;
 }
@@ -93,7 +93,7 @@ void Jafg::JObjectBase::MarkAsGarbage(const bool bAddToCarnifex)
 
     check( this->Outer )
 
-    this->Outer->Employees.RemoveOnceChecked(this);
+    algo::erase_once_checked(&this->Outer->Employees, this);
 
     if (bAddToCarnifex)
     {

@@ -19,7 +19,7 @@ public:
 
     FORCEINLINE virtual bool IsLeaf() const override { return false; }
 
-    ENGINE_API void AddPreference(Smart::TUnique<LPreference>&& InPreference);
+    ENGINE_API void AddPreference(TUnique<LPreference>&& InPreference);
 
     ENGINE_API  auto GetPreferenceByIdentifier(const LName InIdentifier) -> LPreference*;
     FORCEINLINE auto GetPreferenceByIdentifier(const LName InIdentifier) const -> const LPreference*;
@@ -29,11 +29,11 @@ public:
     FORCEINLINE auto GetPreferenceByIdentifier(const LString& InIdentifier) const -> const LPreference*;
     FORCEINLINE auto GetPreferenceByIdentifierChecked(const LString& InIdentifier) -> LPreference*;
     FORCEINLINE auto GetPreferenceByIdentifierChecked(const LString& InIdentifier) const -> const LPreference*;
-    FORCEINLINE auto GetChildPreferences(void) const -> const TArray<Smart::TUnique<LPreference>>&  override { return this->Preferences; }
+    FORCEINLINE auto GetChildPreferences(void) const -> const TArray<TUnique<LPreference>>&  override { return this->Preferences; }
 
 protected:
 
-    TArray<Smart::TUnique<LPreference>> Preferences;
+    TArray<TUnique<LPreference>> Preferences;
 };
 
 MAKE_DELEGATE_SIGNATURE(LOnDemandLoadPreferences, void, LPreferenceCollection*)
@@ -48,7 +48,7 @@ public:
 
     using LPreferenceCollection::LPreferenceCollection;
 
-    ENGINE_API virtual const TArray<Smart::TUnique<LPreference>>& LoadAndGetChildPreferences() override;
+    ENGINE_API virtual const TArray<TUnique<LPreference>>& LoadAndGetChildPreferences() override;
 
     FORCEINLINE bool IsOnLoadDelegateValid() const { return this->OnLoadDelegate.IsBound(); }
     FORCEINLINE void OnLoad(LOnDemandLoadPreferences&& InDelegate) { this->OnLoadDelegate = std::move(InDelegate); }

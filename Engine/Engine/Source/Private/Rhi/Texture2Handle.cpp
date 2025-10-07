@@ -13,14 +13,14 @@ Jafg::LTexture2Handle::LTexture2Handle(const LTexture2& InTexture)
 void Jafg::LTexture2Handle::Upload(const LTexture2& InTexture, const bool bForceAlpha)
 {
     check( InTexture.GetWidth() > 0 && InTexture.GetHeight() > 0 )
-    check( this->Handle.IsValid() == false )
+    check( this->Handle.has_value() == false )
 
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    this->Handle.Emplace(0);
+    this->Handle.emplace(0);
 
-    glGenTextures(1, &this->Handle.GetValue());
+    glGenTextures(1, &this->Handle.value());
     glBindTexture(GL_TEXTURE_2D, *this->Handle);
 
     // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -63,7 +63,7 @@ void Jafg::LTexture2Handle::Upload(const LTexture2& InTexture, const bool bForce
         LogRhi, "Uploaded texture2 with a size of [{}x{}] to [{}].",
         InTexture.GetWidth(),
         InTexture.GetHeight(),
-        this->Handle.GetValue()
+        this->Handle.value()
     )
 
     return;
@@ -72,11 +72,11 @@ void Jafg::LTexture2Handle::Upload(const LTexture2& InTexture, const bool bForce
 void Jafg::LTexture2Handle::Upload(const LIntVector2& InDimensions, const ERawImageFormat::Type InFormat)
 {
     check( InDimensions.X > 0 && InDimensions.Y > 0 )
-    check( this->Handle.IsValid() == false )
+    check( this->Handle.has_value() == false )
 
-    this->Handle.Emplace(0);
+    this->Handle.emplace(0);
 
-    glGenTextures(1, &this->Handle.GetValue());
+    glGenTextures(1, &this->Handle.value());
     glBindTexture(GL_TEXTURE_2D, *this->Handle);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -100,7 +100,7 @@ void Jafg::LTexture2Handle::Upload(const LIntVector2& InDimensions, const ERawIm
         LogRhi, "Uploaded texture2 with a size of [{}x{}] to [{}].",
         InDimensions.X,
         InDimensions.Y,
-        this->Handle.GetValue()
+        this->Handle.value()
     )
 
     return;
@@ -113,8 +113,8 @@ void Jafg::LTexture2Handle::Shred()
         LOG_VERBOSE(LogTextureSubsystem, "Shredding texture [{}].", *this->Handle)
 
         glBindTexture(GL_TEXTURE_2D, *this->Handle);
-        glDeleteTextures(1, &this->Handle.GetValue());
-        this->Handle.Reset();
+        glDeleteTextures(1, &this->Handle.value());
+        this->Handle.reset();
     }
 
     return;

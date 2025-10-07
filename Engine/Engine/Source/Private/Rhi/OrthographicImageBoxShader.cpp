@@ -10,7 +10,7 @@ TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicImageBoxShader::GetD
 {
     TArray<LShaderCompileTimeConstant> SuperConstants = Super::GetDefaultConstants();
 
-    SuperConstants.Append
+    SuperConstants.append_range
     (TArray<LShaderCompileTimeConstant>{
         {
             "WITH_UV", "1"
@@ -23,7 +23,8 @@ TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicImageBoxShader::GetD
         },
     });
 
-    return SuperConstants;}
+    return SuperConstants;
+}
 
 bool Jafg::LOrthographicImageBoxShader::Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants /* = {} */)
 {

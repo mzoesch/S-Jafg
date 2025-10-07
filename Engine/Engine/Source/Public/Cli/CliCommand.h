@@ -101,11 +101,11 @@ struct LCommandArgs
     DEFAULT_REALLOC_OF_ANY_FORM(LCommandArgs)
     FORCEINLINE ~LCommandArgs() = default;
 
-    FORCEINLINE i32    GetArgCount() const { check( this->IsValid() ) return this->SubArgs.GetSize(); }
+    FORCEINLINE i32    GetArgCount() const { check( this->IsValid() ) return this->SubArgs.size(); }
     ENGINE_API LString GetCatRepresentation() const;
     ENGINE_API void    GetCatRepresentation(LString* AppendTo) const;
 
-    FORCEINLINE bool IsValid() const { return Name.IsEmpty() ? true : this->SubArgs.IsEmpty(); }
+    FORCEINLINE bool IsValid() const { return Name.empty() ? true : this->SubArgs.empty(); }
 
     FORCEINLINE const LCommandArgs& operator[](const i32 Index) const { return this->SubArgs[Index]; }
 
@@ -149,7 +149,7 @@ struct LCommandParams
 
     FORCEINLINE LCommandParams&& Token(LCliType&& InToken)
     {
-        this->Signature.Emplace(std::move(InToken));
+        this->Signature.emplace_back(std::move(InToken));
         return std::move(*this);
     }
 
@@ -230,10 +230,10 @@ public:
         return *this;
     }
 
-    FORCEINLINE i32  GetOverloadCount() const { return this->Overloads.GetSize(); }
+    FORCEINLINE i32  GetOverloadCount() const { return this->Overloads.size(); }
     FORCEINLINE auto GetOverloads()       ->       TArray<LCommandParams>& { return this->Overloads; }
     FORCEINLINE auto GetOverloads() const -> const TArray<LCommandParams>& { return this->Overloads; }
-    FORCEINLINE void AddOverload(LCommandParams&& InParams) { this->Overloads.Emplace(std::move(InParams)); }
+    FORCEINLINE void AddOverload(LCommandParams&& InParams) { this->Overloads.emplace_back(std::move(InParams)); }
 
 private:
 

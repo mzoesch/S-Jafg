@@ -85,6 +85,6 @@ struct std::formatter<::LName> : std::formatter<LString>
 FORCEINLINE Jafg::Private::LOmniVitaNameRegistry::TagType
 Jafg::Private::LOmniVitaNameRegistry::RegisterOrGet(Trait::CString auto&& InRepr) noexcept
 {
-    check( Tasks::IsOnMasterThread() )
+    check( !Tasks::HasMasterThread() || Tasks::IsOnMasterThread() )
     return Super::RegisterOrGet(std::forward<decltype(InRepr)>(InRepr));
 }

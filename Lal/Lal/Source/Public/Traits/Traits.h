@@ -19,7 +19,7 @@ template <typename T>
 concept CTrait = std::is_base_of_v<Trait::Base, T>;
 
 template <CTrait Trait, typename T>
-struct Implements_t : Lal::FalseType
+struct Implements_t : std::false_type
 {
 };
 
@@ -46,7 +46,7 @@ inline constexpr bool Implements = Implements_t<Trait, T>::value;
         template <>                                                       \
         struct Implements_t<                                              \
             JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_TWO(Trait, _TraitName), \
-            _Type> : Lal::TrueType { };                                   \
+            _Type> : std::true_type { };                                  \
     } /* ~Namespace Traits */
 
 #define ACCEPT_TRAIT_TEMPLATE(_TraitName, _Type, ...)                     \
@@ -55,5 +55,5 @@ inline constexpr bool Implements = Implements_t<Trait, T>::value;
         template <__VA_ARGS__>                                            \
         struct Implements_t<                                              \
             JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_TWO(Trait, _TraitName), \
-            _Type<__VA_ARGS__> : Lal::TrueType { };                       \
+            _Type<__VA_ARGS__> : std::true_type { };                      \
     } /* ~Namespace Traits */

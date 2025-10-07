@@ -55,13 +55,13 @@ void API()
     u64 MaxSize { 0 };
     for (const auto& Param : JafgCore::GRegisteredProgramArguments)
     {
-        MaxSize = Maths::Max(MaxSize, static_cast<u64>(Param->Identifier.GetRuneCount()));
+        MaxSize = Maths::Max(MaxSize, static_cast<u64>(Param->Identifier.size()));
     }
 
     LOG_INFO(LogCli, "Available command line parameters:")
     for (const auto& Param : JafgCore::GRegisteredProgramArguments)
     {
-        LOG_INFO(LogCli, "  -{:<{}} : {}", Param->Identifier, MaxSize, Param->Description.ToPtr())
+        LOG_INFO(LogCli, "  -{:<{}} : {}", Param->Identifier, MaxSize, Param->Description.c_str())
         continue;
     }
 
@@ -103,7 +103,7 @@ void WaitForDebuggerGracefully(const bool bAllowInstantBreak)
 
     if (bAllowInstantBreak)
     {
-        if (Application::GetRawCmdLine().Contains("-IgnoreInstantDebuggerBreak") == false)
+        if (algo::contains(Application::GetRawCmdLine(), "-IgnoreInstantDebuggerBreak") == false)
         {
             LAL_PLATFORM_BREAK()
         }
@@ -117,39 +117,39 @@ ENGINE_API TArray<LProgramArgument> ProcessedCommandLine;
 
 void ProcessCommandLineVariables()
 {
-    check( ProcessedCommandLine.IsEmpty() )
+    check( ProcessedCommandLine.empty() )
 
     LProgramArgument* List { nullptr };
 
     for (const auto& Arg : RawCommandLine)
     {
-        if (Arg.StartsWith('-'))
+        if (Arg.starts_with('-'))
         {
-            if (auto It { Arg.FindFirst('=') }; It != Arg.end())
+            if (const auto Idx { Arg.find('=') }; Idx != Arg.npos)
             {
-                ProcessedCommandLine.Emplace(Arg.Cut(Arg.begin() + 1, It), Arg.RightCut(It + 1));
+                ProcessedCommandLine.emplace_back(algo::sub(Arg, 1, Idx), algo::right_sub(Arg, Idx + 1));
                 List = nullptr;
             }
             else
             {
-                ProcessedCommandLine.Emplace(Arg.RightChop(1));
-                List = ProcessedCommandLine.GetLast();
+                ProcessedCommandLine.emplace_back(algo::right_chop(Arg, 1));
+                List = &ProcessedCommandLine.back();
             }
         }
         else
         {
             if (List)
             {
-                check( List->Value.IsValid() == false )
-                if (List->Values.IsValid() == false)
+                check( List->Value.has_value() == false )
+                if (List->Values.has_value() == false)
                 {
-                    List->Values.Emplace();
-                    List->Values->Emplace(Arg);
+                    List->Values.emplace();
                 }
+                List->Values->emplace_back(Arg);
             }
             else
             {
-                ProcessedCommandLine.Emplace(Arg);
+                ProcessedCommandLine.emplace_back(Arg);
             }
         }
 

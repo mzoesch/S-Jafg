@@ -8,9 +8,9 @@ namespace
 
 bool IsValidArgs(const Jafg::LCommandArgs& InArgs)
 {
-    if (InArgs.Name.IsEmpty() == false)
+    if (InArgs.Name.empty() == false)
     {
-        return InArgs.SubArgs.IsEmpty();
+        return InArgs.SubArgs.empty();
     }
 
     for (const Jafg::LCommandArgs& SubArg : InArgs.SubArgs)
@@ -30,9 +30,10 @@ LString Jafg::CliStatics::SafelyRemoveCommandPrefix(const LString& InText)
 {
     LString Out;
 
-    if (InText.StartsWith('/'))
+    if (InText.starts_with('/'))
     {
-        Out = InText.RightChop(1);
+
+        Out = algo::right_chop(InText, 1);
     }
     else
     {
@@ -44,12 +45,12 @@ LString Jafg::CliStatics::SafelyRemoveCommandPrefix(const LString& InText)
 
 void Jafg::CliStatics::SafelyRemoveCommandPrefixInline(LString& InText)
 {
-    if (InText.StartsWith('/'))
+    if (InText.starts_with('/'))
     {
-        InText.InlineRightChop(1);
+        algo::inline_right_chop(&InText, 1);
     }
 
-    check( InText.StartsWith('/') == false )
+    check( InText.starts_with('/') == false )
 
     return;
 }
@@ -58,7 +59,7 @@ LString Jafg::CliStatics::SafelyAddCommandPrefix(const LString& InText)
 {
     LString Out;
 
-    if (InText.StartsWith('/'))
+    if (InText.starts_with('/'))
     {
         Out = InText;
     }
@@ -73,69 +74,68 @@ LString Jafg::CliStatics::SafelyAddCommandPrefix(const LString& InText)
 
 void Jafg::CliStatics::SafelyAddCommandPrefixInline(LString& InText)
 {
-    if (InText.StartsWith('/') == false)
+    if (InText.starts_with('/') == false)
     {
-        InText.AppendAt(0, '/');
+        InText.insert(0, "/");
     }
 
-    check( InText.StartsWith('/') )
+    check( InText.starts_with('/') )
 
     return;
 }
 
 LString Jafg::CliStatics::GetCommandFromText(const LString& InText)
 {
-    const i64 Space = InText.ToIndex(InText.FindFirst(' '));
-
-    if (Space == INDEX_NONE)
+    const auto Space{ InText.find(' ') };
+    if (Space == InText.npos)
     {
         LString Temp = InText;
         SafelyRemoveCommandPrefixInline(Temp);
         return Temp;
     }
 
-    LString Temp = InText.LeftChop(Space);
+    LString Temp = algo::left_chop(InText, Space);
     SafelyRemoveCommandPrefixInline(Temp);
     return Temp;
 }
 
 LString Jafg::CliStatics::GetArgsFromText(const LString& InText)
 {
-    const i64 Space = InText.ToIndex(InText.FindFirst(' '));
+    const auto Space{ InText.find(' ') };
 
-    if (Space == INDEX_NONE)
+    if (Space == InText.npos)
     {
         return { };
     }
 
-    if (InText.GetRuneCount() - 1 <= static_cast<u64>(Space + 1))
+    if (InText.size() - 1 <= static_cast<u64>(Space + 1))
     {
         return { };
     }
 
-    return InText.RightChop(Space + 1);
+    return algo::right_chop(InText, Space + 1);
 }
 
 Jafg::LCommandArgs Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine)
 {
     LCommandArgs Out;
 
-    LString Cur; Cur.Reserve(InCommandLine.GetRuneCount());
+    LString Cur; Cur.reserve(InCommandLine.size());
     i64 Cursor = INDEX_NONE;
     bool bInString = false;
     char LastChar = 0;
-    while (static_cast<u64>(++Cursor) < InCommandLine.GetRuneCount())
+    while (static_cast<u64>(++Cursor) < InCommandLine.size())
     {
         const char CurChar = InCommandLine[Cursor];
         if (bInString)
         {
             if (CurChar == '"' && LastChar != '\\')
             {
-                if (Cur.IsEmpty() == false)
+                if (Cur.empty() == false)
                 {
-                    Out.SubArgs.Emplace(std::move(Cur));
+                    Out.SubArgs.emplace_back(std::move(Cur));
                 }
-                check( Cur.IsEmpty() )
+                check( Cur.empty() )
                 LastChar = CurChar;
                 continue;
             }
@@ -151,11 +151,11 @@ Jafg::LCommandArgs Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine)
 
         if (CurChar == '"')
         {
-            if (Cur.IsEmpty() == false)
+            if (Cur.empty() == false)
             {
-                Out.SubArgs.Emplace(std::move(Cur));
+                Out.SubArgs.emplace_back(std::move(Cur));
             }
-            check( Cur.IsEmpty() )
+            check( Cur.empty() )
             bInString = true;
             LastChar = CurChar;
             continue;
@@ -163,11 +163,11 @@ Jafg::LCommandArgs Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine)
 
         if (CurChar == ' ')
         {
-            if (Cur.IsEmpty() == false)
+            if (Cur.empty() == false)
             {
-                Out.SubArgs.Emplace(std::move(Cur));
+                Out.SubArgs.emplace_back(std::move(Cur));
             }
-            check( Cur.IsEmpty() )
+            check( Cur.empty() )
             LastChar = CurChar;
             continue;
         }
@@ -177,9 +177,9 @@ Jafg::LCommandArgs Jafg::CliStatics::TokenizeCommand(LString&& InCommandLine)
         continue;
     }
 
-    if (Cur.IsEmpty() == false)
+    if (Cur.empty() == false)
     {
-        Out.SubArgs.Emplace(std::move(Cur));
+        Out.SubArgs.emplace_back(std::move(Cur));
     }
 
     if (bInString)

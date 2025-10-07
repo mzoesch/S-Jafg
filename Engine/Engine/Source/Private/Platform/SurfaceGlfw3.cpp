@@ -556,11 +556,11 @@ void Jafg::LSurfaceGlfw3::MouseCallback(const double XPos, const double YPos)
         return;
     }
 
-    if (this->GetCurrentlyPressedKeys().Contains(EKeys::MouseX))
+    if (algo::contains(this->GetCurrentlyPressedKeys(), EKeys::MouseX, &LRawInput::Key))
     {
         return;
     }
-    if (this->GetCurrentlyPressedKeys().Contains(EKeys::MouseY))
+    if (algo::contains(this->GetCurrentlyPressedKeys(), EKeys::MouseY, &LRawInput::Key))
     {
         return;
     }
@@ -585,7 +585,7 @@ void Jafg::LSurfaceGlfw3::MouseCallback(const double XPos, const double YPos)
 
 void Jafg::LSurfaceGlfw3::ScrollCallback(const double XOffset, const double YOffset)
 {
-    if (this->GetCurrentlyPressedKeys().Contains(EKeys::MouseWheelAxis))
+    if (algo::contains(this->GetCurrentlyPressedKeys(), EKeys::MouseWheelAxis, &LRawInput::Key))
     {
         return;
     }
@@ -653,11 +653,11 @@ void Jafg::LSurfaceGlfw3::KeyCallback(const i32 Key, const i32 Scancode, const i
 
         if (JafgKey != EKeys::Unresolved)
         {
-            LRawInput* RealKey = this->GetCurrentlyPressedKeys().FindRef(JafgKey);
+            LRawInput* RealKey = algo::find_pointer(this->GetCurrentlyPressedKeys(), JafgKey, &LRawInput::Key);
             if (RealKey == nullptr)
             {
                 this->AddKeyDown(JafgKey);
-                RealKey = this->GetCurrentlyPressedKeys().FindRef(JafgKey);
+                RealKey = algo::find_pointer(this->GetCurrentlyPressedKeys(), JafgKey, &LRawInput::Key);
             }
 
             check( RealKey )

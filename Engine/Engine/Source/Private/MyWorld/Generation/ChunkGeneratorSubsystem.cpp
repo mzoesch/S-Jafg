@@ -15,10 +15,10 @@
 
 #if WITH_STATS
     #if STAT_CHUNK_VERBOSE_OUT
-        #define STAT_QUICK_CYCLE_START_KEY(InChunkKey)                               \
-            std::string_view _sv = LAL_PRETTY_FUNCTION;                              \
-            ::LString _s = ::LString::SprintF("{}::{}", _sv, InChunkKey.ToString()); \
-            STAT_QUICK_CYCLE_START(std::string_view(_s.begin(), _s.end()))
+        #define STAT_QUICK_CYCLE_START_KEY(InChunkKey)                             \
+            ::LStringView _sv { LAL_PRETTY_FUNCTION };                             \
+            ::LString _s { ::Lal::SprintF("{}::{}", _sv, InChunkKey.ToString()) }; \
+            STAT_QUICK_CYCLE_START(LStringView(_s.begin(), _s.end()))
     #else /* STAT_CHUNK_VERBOSE_OUT */
         #define STAT_QUICK_CYCLE_START_KEY(InChunkKey)  STAT_CYCLE_FUNCTION()
     #endif /* !STAT_CHUNK_VERBOSE_OUT */
@@ -120,7 +120,7 @@ void Jafg::JChunkGeneratorSubsystem::Initialize(LSubsystemCollection& Collection
         const ENamedThreads::Type WorkerName = Tasks::LaunchNamedThread<LChunkGeneratorWorker>
         (
             &Exit,
-            LString::SprintF("WkrCg_{}", i),
+            Lal::SprintF("WkrCg_{}", i),
             this->ChunkGenerationSubsystem
         );
 
@@ -130,7 +130,7 @@ void Jafg::JChunkGeneratorSubsystem::Initialize(LSubsystemCollection& Collection
             break;
         }
 
-        this->Workers.Emplace(WorkerName);
+        this->Workers.emplace_back(WorkerName);
     }
 
     return;
@@ -152,7 +152,7 @@ void Jafg::JChunkGeneratorSubsystem::TearDown()
         Tasks::JoinThread(Worker);
     }
 
-    this->Workers.Empty();
+    algo::orphan(&this->Workers);
 
     return;
 }

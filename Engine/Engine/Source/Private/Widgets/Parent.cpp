@@ -70,7 +70,7 @@ void Jafg::WParent::Destruct()
         delete ChildSlot;
     }
 
-    this->Children.Empty();
+    algo::orphan(&this->Children);
 
     return;
 }
@@ -258,13 +258,9 @@ void Jafg::WParent::RemoveChild(WNode* Child)
         {
             *ChildSlot->Content->GetMutableSlotDangerousDoNotUseForInternalStuffOnlyOrIfYouWantYourOwnParentClass() = nullptr;
             ChildSlot->Content->MarkAsGarbage();
-            this->Children.RemoveOnceChecked(ChildSlot);
+            algo::erase_once_checked(&this->Children, ChildSlot);
             delete ChildSlot;
-
-            check( this->Children.FindRefByPredicate([Child] (const LWidgetSlot* Slot)
-            {
-                return Slot->Content == Child;
-            }) == nullptr )
+            check( algo::find(this->GetChildren(), Child, [](auto const& E){ return E->Content; }) == this->GetChildren().end() )
 
             return;
         }
@@ -292,10 +288,10 @@ void Jafg::WParent::RemoveChildren()
 {
     check( Tasks::IsOnMasterThread() )
 
-    while (this->Children.IsEmpty() == false)
+    while (this->Children.empty() == false)
     {
-        checkSlow( this->Children.GetLast() )
-        this->RemoveChild(*this->Children.GetLast());
+        checkSlow( this->Children.back() )
+        this->RemoveChild(this->Children.back());
         continue;
     }
 
@@ -304,14 +300,11 @@ void Jafg::WParent::RemoveChildren()
 
 Jafg::LWidgetSlot* Jafg::WParent::AddChild(WNode* InChild)
 {
-    check( this->GetChildren().FindByPredicate([InChild](const LWidgetSlot* InSlot) -> bool
-    {
-        return InSlot->Content == InChild;
-    }) == this->GetChildren().end() )
+    check( algo::find(this->GetChildren(), InChild, [](auto const& E){ return E->Content; }) == this->GetChildren().end() )
 
     check( InChild )
     LWidgetSlot* NewChildSlot = new LWidgetSlot(this, InChild);
-    this->Children.Add(NewChildSlot);
+    this->Children.push_back(NewChildSlot);
     *NewChildSlot->Content->GetMutableSlotDangerousDoNotUseForInternalStuffOnlyOrIfYouWantYourOwnParentClass() = NewChildSlot;
     NewChildSlot->Margin = this->GetPaddingPtr();
 
@@ -322,7 +315,7 @@ Jafg::LWidgetSlot* Jafg::WParent::AddChildAt(const i32 InIndex, WNode* InChild)
 {
     check( InChild )
     LWidgetSlot* NewChildSlot = new LWidgetSlot(this, InChild);
-    this->Children.AddAt(InIndex, NewChildSlot);
+    this->Children.insert(this->Children.begin() + InIndex, NewChildSlot);
     *NewChildSlot->Content->GetMutableSlotDangerousDoNotUseForInternalStuffOnlyOrIfYouWantYourOwnParentClass() = NewChildSlot;
     NewChildSlot->Margin = this->GetPaddingPtr();
 

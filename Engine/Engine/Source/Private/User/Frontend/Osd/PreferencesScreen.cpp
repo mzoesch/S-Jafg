@@ -34,9 +34,9 @@ void AddPreference(Jafg::WParentBase* Target, Jafg::LPreference* P)
 
     Target->AddChild(NewNodeNoFactoryCtx(Target, WSpacer));
 
-    for (const Smart::TUnique<LPreference>& SubSection : P->LoadAndGetChildPreferences())
+    for (const TUnique<LPreference>& SubSection : P->LoadAndGetChildPreferences())
     {
-        ::AddPreference(Target, const_cast<LPreference*>(&SubSection.GetValue()));
+        ::AddPreference(Target, SubSection.get());
     }
 
     return;
@@ -76,9 +76,9 @@ bool Jafg::WPreferencesPanel::AddData(const LWidgetNodeData* InData)
 
     ::AddPreference(ChildContainer, P);
 
-    if (this->GetChildren().GetSize() > 1)
+    if (this->GetChildren().size() > 1)
     {
-        this->RemoveChild(*this->GetChildren().GetLast());
+        this->RemoveChild(this->GetChildren().back());
     }
     this->AddChild(Root);
     MakeDeferredWidgetNodeFinal(Root);
@@ -102,9 +102,10 @@ void Jafg::WPreferencesScreen::Construct()
     jassert( this->PanelClass )
 
     const JPreferenceRegistry* Registry = GetDefault<JPreferenceRegistry>();
-    for (const Smart::TUnique<LPreference>& TopPreference : Registry->GetPreferences())
+    for (const TUnique<LPreference>& TopPreference : Registry->GetPreferences())
     {
-        LPreference* LambdaPreference = const_cast<LPreference*>(TopPreference.GetPointerChecked());
+        check( TopPreference.get() )
+        LPreference* LambdaPreference = TopPreference.get();
 
         LTabBarTabDescriptor Descriptor;
         Descriptor.IdentifierField = TopPreference->GetName().ToString();

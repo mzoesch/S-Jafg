@@ -15,6 +15,7 @@
 #endif /* !JAFG_WITH_FOREIGN_SUPPORT */
 
 #include "Foreign/PluginForward.h"
+#include "Engine/ObjectContext.h"
 
 namespace Jafg
 {
@@ -114,7 +115,7 @@ struct LLoadedPlugin final
 
     FORCEINLINE constexpr bool IsLoaded() const { return this->Handle != nullptr; }
 
-    FORCEINLINE constexpr bool IsValid() const { return this->Fetched.AbsolutePath.IsEmpty() == false; }
+    FORCEINLINE constexpr bool IsValid() const { return this->Fetched.AbsolutePath.empty() == false; }
     FORCEINLINE const LPath&   GetAbsolutePath() const { return this->Fetched.AbsolutePath; }
     FORCEINLINE const LString& GetIdentifier() const { return this->Fetched.Identifier; }
     FORCEINLINE const LString& GetFriendlyName() const { return this->Fetched.FriendlyName; }
@@ -137,7 +138,7 @@ private:
     void* Handle { nullptr };
     LPluginLifetime* Lifetime { nullptr };
 
-    Smart::TUnique<LObjectContext> ObjectContext { nullptr };
+    TUnique<LObjectContext> ObjectContext { nullptr };
 };
 
 } /* ~Namespace Jafg */

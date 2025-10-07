@@ -80,7 +80,7 @@ void PullConfigFromObject(LObjectClass* InClass)
     jassert( InClass && InClass->IsConfig() )
     checkSlow( Tasks::IsOnMasterThread() )
 
-    if (InClass->GetDefaultPackageReferrer()->GetClassFields().IsEmpty())
+    if (InClass->GetDefaultPackageReferrer()->GetClassFields().empty())
     {
         return;
     }
@@ -93,9 +93,9 @@ void PullConfigFromObject(LObjectClass* InClass)
 
     for (LClassField& Field : InClass->GetMutableDefaultPackageReferrer()->GetMutableClassFieldsDangerous())
     {
-        checkSlow( Field.Identifier.IsEmpty() == false )
+        checkSlow( Field.Identifier.empty() == false )
 
-        if (TOptional<LString> StringValue = ConfigIo::Deserialize(CfgPath, InClass->GetSpacedClassName(), Field.Identifier); StringValue.IsValid())
+        if (TOptional<LString> StringValue = ConfigIo::Deserialize(CfgPath, InClass->GetSpacedClassName(), Field.Identifier); StringValue.has_value())
         {
             Field.Set(std::move(*StringValue));
         }
@@ -111,7 +111,7 @@ void PushConfigFromObject(const LObjectClass* InClass)
     jassert( InClass && InClass->IsConfig() )
     checkSlow( Tasks::IsOnMasterThread() )
 
-    if (InClass->GetDefaultPackageReferrer()->GetClassFields().IsEmpty())
+    if (InClass->GetDefaultPackageReferrer()->GetClassFields().empty())
     {
         return;
     }
@@ -124,7 +124,7 @@ void PushConfigFromObject(const LObjectClass* InClass)
     {
         if (Field.Get.IsBound())
         {
-            Entries.Emplace(InClass->GetSpacedClassName(), LString{Field.Identifier}, Field.Get());
+            Entries.emplace_back(InClass->GetSpacedClassName(), LString{Field.Identifier}, Field.Get());
         }
 
         continue;
@@ -237,7 +237,7 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
     #pragma clang diagnostic pop
 #endif /* LAL_WITH_CLANG */
 
-    check( Reinterpreted->ClassFields.GetSize() == 0 && Reinterpreted->ClassFields.IsDataValid() == false )
+    check( Reinterpreted->ClassFields.size() == 0 && Reinterpreted->ClassFields.data() == nullptr )
 
     for (const LClassField& Field : InStaticClass->GetDefaultPackageReferrer()->GetClassFields())
     {
@@ -247,7 +247,7 @@ Jafg::JObjectBase* Jafg::Private::LObjectMiscellaneousAccessor::NewDeferredObjec
         }
     }
 
-    InContext->Employees.Emplace(Reinterpreted);
+    InContext->Employees.emplace_back(Reinterpreted);
 
     return Reinterpreted;
 }
@@ -259,20 +259,20 @@ bool Jafg::Private::LObjectMiscellaneousAccessor::DynamicCast(const JObjectBase*
 
 void Jafg::Private::LObjectRegistry::KillPendingPackages()
 {
-    if (Private::GetRegisterObjectQueue().IsEmpty())
+    if (Private::GetRegisterObjectQueue().empty())
     {
         return;
     }
 
     check( Tasks::IsOnMasterThread() )
 
-    LOG_VERBOSE(LogObjectPackager, "Killing [{}] pending packages.", this->RegisteredObjects.GetSize())
-    this->RegisteredObjects.Empty();
+    LOG_VERBOSE(LogObjectPackager, "Killing [{}] pending packages.", this->RegisteredObjects.size())
+    algo::orphan(&this->RegisteredObjects);
 
-    if (this->DeferredPackages.IsEmpty() == false)
+    if (this->DeferredPackages.empty() == false)
     {
-        LOG_ERROR(LogObjectPackager, "Found [{}] deferred packages after killing pending packages.", this->DeferredPackages.GetSize())
-        this->DeferredPackages.Empty();
+        LOG_ERROR(LogObjectPackager, "Found [{}] deferred packages after killing pending packages.", this->DeferredPackages.size())
+        algo::orphan(&this->DeferredPackages);
     }
 
     return;
@@ -280,17 +280,17 @@ void Jafg::Private::LObjectRegistry::KillPendingPackages()
 
 void Jafg::Private::LObjectRegistry::LoadPendingPackages(const LLoadedPluginHandle InHandle)
 {
-    if (Private::GetRegisterObjectQueue().IsEmpty())
+    if (Private::GetRegisterObjectQueue().empty())
     {
         return;
     }
 
     check( Tasks::IsOnMasterThread() )
 
-    const TArray<LRegistryPackage>::SizeType CurrentPackages { this->RegisteredObjects.GetSize() };
-    const TArray<LRegistrationQueuePackage>::SizeType CurrentQueue { Private::GetRegisterObjectQueue().GetSize() };
+    const auto CurrentPackages { this->RegisteredObjects.size() };
+    const auto CurrentQueue { Private::GetRegisterObjectQueue().size() };
 
-    LOG_VERBOSE(LogObjectPackager, "Loading [{}] pending packages.", Private::GetRegisterObjectQueue().GetSize())
+    LOG_VERBOSE(LogObjectPackager, "Loading [{}] pending packages.", Private::GetRegisterObjectQueue().size())
 
     for (LRegistrationQueuePackage& Package : Private::GetRegisterObjectQueue())
     {
@@ -301,23 +301,23 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages(const LLoadedPluginHand
         }
 
         LRegistryPackage NewPackage;
-        NewPackage.StaticClass                         = Smart::EmplaceUnique<LObjectClass>();
+        NewPackage.StaticClass                         = std::make_unique<LObjectClass>();
         NewPackage.StaticClass->SpacedClassName        = Package.SpacedClassName;
         NewPackage.StaticClass->ClassName              = MAKE_NAME(NewPackage.StaticClass->SpacedClassName);
         NewPackage.StaticClass->PluginHandle           = InHandle;
         NewPackage.StaticClass->DefaultPackageReferrer = Package.GetContentDefault();
-        check( NewPackage.StaticClass->SpacedClassName.IsEmpty() == false )
+        check( NewPackage.StaticClass->SpacedClassName.empty() == false )
         check( NewPackage.StaticClass->DefaultPackageReferrer != nullptr )
 
-        this->RegisteredObjects.Emplace(std::move(NewPackage));
+        this->RegisteredObjects.emplace_back(std::move(NewPackage));
 
-        Package.Callback(this->RegisteredObjects.GetLast()->StaticClass);
+        Package.Callback(this->RegisteredObjects.back().StaticClass.get());
 
         continue;
     }
 
-    check( Private::GetRegisterObjectQueue().GetSize() == CurrentQueue )
-    Private::GetRegisterObjectQueue().Empty();
+    check( Private::GetRegisterObjectQueue().size() == CurrentQueue )
+    algo::orphan(&Private::GetRegisterObjectQueue());
 
     for (auto& [SuperName, StaticClass] : this->DeferredPackages)
     {
@@ -330,7 +330,7 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages(const LLoadedPluginHand
         }
 
         LRegistryPackage* ParentPackage = GetPanickedPackageByNameWeak(SuperName);
-        if (ParentPackage->StaticClass->GetChildren().Contains(StaticClass))
+        if (algo::contains(ParentPackage->StaticClass->GetChildren(), StaticClass))
         {
             panicMsgf
             (
@@ -340,16 +340,16 @@ void Jafg::Private::LObjectRegistry::LoadPendingPackages(const LLoadedPluginHand
             continue;
         }
 
-        ParentPackage->StaticClass->GetChildren().Emplace(StaticClass);
-        StaticClass->Parent = ParentPackage->StaticClass;
+        ParentPackage->StaticClass->GetChildren().emplace_back(StaticClass);
+        StaticClass->Parent = ParentPackage->StaticClass.get();
 
         continue;
     }
-    this->DeferredPackages.Empty();
+    algo::orphan(&this->DeferredPackages);
 
-    for (TArray<LRegistryPackage>::SizeType Idx { CurrentPackages }; Idx < this->RegisteredObjects.GetSize(); ++Idx)
+    for (auto& [UniqueStaticClass] : this->RegisteredObjects)
     {
-        auto& [StaticClass] = this->RegisteredObjects[Idx];
+        auto* StaticClass = UniqueStaticClass.get();
 
         if (StaticClass->IsConfig())
         {
@@ -379,7 +379,7 @@ void Jafg::Private::LObjectRegistry::ValidateLoadedPackages()
     bool bRootFound = false;
     for (const LRegistryPackage& Package : this->RegisteredObjects)
     {
-        if (Package.GetSpacedClassName().IsEmpty())
+        if (Package.GetSpacedClassName().empty())
         {
             panic( "Found loaded package with empty name." )
             continue;
@@ -471,7 +471,7 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageByNam
 
     for (LRegistryPackage& Package : this->RegisteredObjects)
     {
-        if (Package.GetSpacedClassName().EndsWith(Name))
+        if (Package.GetSpacedClassName().ends_with(Name))
         {
             return &Package;
         }
@@ -525,7 +525,7 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackageBySta
 {
     for (LRegistryPackage& Package : this->RegisteredObjects)
     {
-        if (Package.StaticClass == StaticClass)
+        if (Package.StaticClass.get() == StaticClass)
         {
             return &Package;
         }
@@ -540,7 +540,7 @@ Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanickedPack
 {
     for (LRegistryPackage& Package : this->RegisteredObjects)
     {
-        if (Package.StaticClass == StaticClass)
+        if (Package.StaticClass.get() == StaticClass)
         {
             return &Package;
         }
@@ -557,7 +557,7 @@ const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPackag
 {
     for (const LRegistryPackage& Package : this->RegisteredObjects)
     {
-        if (Package.StaticClass == StaticClass)
+        if (Package.StaticClass.get() == StaticClass)
         {
             return &Package;
         }
@@ -572,7 +572,7 @@ const Jafg::Private::LRegistryPackage* Jafg::Private::LObjectRegistry::GetPanick
 {
     for (const LRegistryPackage& Package : this->RegisteredObjects)
     {
-        if (Package.StaticClass == StaticClass)
+        if (Package.StaticClass.get() == StaticClass)
         {
             return &Package;
         }
@@ -621,7 +621,7 @@ void Jafg::Private::LObjectRegistry::GetRegisteredObjectsOfClass(
     {
         if (Package.StaticClass->DerivesFrom(InStaticClass))
         {
-            OutArray->Emplace(Package.StaticClass);
+            OutArray->emplace_back(Package.StaticClass.get());
         }
 
         continue;
@@ -635,7 +635,7 @@ i32 Jafg::Private::LObjectRegistry::RemovePackagesOf(const LLoadedPluginHandle I
     check( Tasks::IsOnMasterThread() )
 
     i32 Removed { 0 };
-    for (TArray<LRegistryPackage>::SizeType Idx { 0 }; Idx < this->RegisteredObjects.GetSize();)
+    for (TArray<LRegistryPackage>::size_type Idx { 0 }; Idx < this->RegisteredObjects.size();)
     {
         LRegistryPackage& Package = this->RegisteredObjects[Idx];
 
@@ -645,17 +645,17 @@ i32 Jafg::Private::LObjectRegistry::RemovePackagesOf(const LLoadedPluginHandle I
             continue;
         }
 
-        Package.StaticClass->Parent->GetChildren().RemoveOnceChecked(Package.StaticClass);
+        algo::erase_once_checked(&Package.StaticClass->Parent->GetChildren(), Package.StaticClass.get());
         for (LObjectClass* Child: Package.StaticClass->GetChildren())
         {
-            check( Package.StaticClass == Child->Parent  )
+            check( Package.StaticClass.get() == Child->Parent  )
             Child->Parent = nullptr;
 
             continue;
         }
 
         ++Removed;
-        this->RegisteredObjects.RemoveAt(Idx);
+        this->RegisteredObjects.erase(this->RegisteredObjects.begin() + Idx);
 
         continue;
     }

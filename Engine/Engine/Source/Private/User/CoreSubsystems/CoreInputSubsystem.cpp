@@ -62,13 +62,11 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             },
             [this, UserInput](LInputActionValue& InValue) -> void
             {
-                if (UserInput->GetReferenceContexts().ContainsByPredicate([](const LUserInputContext* InContext) -> bool
-                {
-                    return InContext->GetName() == Name_UicInDebugMenu;
-                }) || UserInput->GetActiveContexts().ContainsByPredicate([](const LUserInputContext* InContext) -> bool
-                {
-                    return InContext->GetName() == Name_UicInDebugMenu;
-                }))
+                if
+                (
+                       algo::contains(UserInput->GetReferenceContexts(), Name_UicInDebugMenu, &LUserInputContext::GetName)
+                    || algo::contains(UserInput->GetActiveContexts(), Name_UicInDebugMenu, &LUserInputContext::GetName)
+                )
                 {
                     LOG_VERBOSE(LogUserInput, "Aborting request for debug menu activation, already active or in reference.")
                     return;
@@ -212,7 +210,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
                     return;
                 }
 
-                if (Shader->GetCachedConstants().Contains("DISPLAY_NORMALS"))
+                if (algo::contains(Shader->GetCachedConstants(), "DISPLAY_NORMALS", &LShaderCompileTimeConstant::Name))
                 {
                     Shader->Recompile({{"DISPLAY_NORMALS"}}, {});
                 }
@@ -264,60 +262,60 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             UserInput,
             {Name_UsrInMovePawn, "Move Pawn", EInputActionCategory::Axis3D},
             TArray<LInputTrigger>{}
-                .Push(LInputTrigger
+                .reflexive_emplace_back(LInputTrigger
                 {
                     "Forward",
                     EKeys::W,
                     EInputActionTrigger::Ongoing,
                     LInputActionMappedTriggerModifiers{}
-                        .Push(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
+                        .reflexive_emplace_back(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
                 })
-                .Push(LInputTrigger
+                .reflexive_emplace_back(LInputTrigger
                 {
                     "Left",
                     EKeys::A,
                     EInputActionTrigger::Ongoing,
                     LInputActionMappedTriggerModifiers{}
-                        .Push(MakeModifier<LInputActionMappedKeySwizzleModifier>())
-                        .Push(MakeModifier<LInputActionMappedKeyNegateModifier>())
-                        .Push(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
+                        .reflexive_emplace_back(MakeModifier<LInputActionMappedKeySwizzleModifier>())
+                        .reflexive_emplace_back(MakeModifier<LInputActionMappedKeyNegateModifier>())
+                        .reflexive_emplace_back(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
                 })
-                .Push(LInputTrigger
+                .reflexive_emplace_back(LInputTrigger
                 {
                     "Backwards",
                     EKeys::S,
                     EInputActionTrigger::Ongoing,
                     LInputActionMappedTriggerModifiers{}
-                        .Push(MakeModifier<LInputActionMappedKeyNegateModifier>())
-                        .Push(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
+                        .reflexive_emplace_back(MakeModifier<LInputActionMappedKeyNegateModifier>())
+                        .reflexive_emplace_back(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
                 })
-                .Push(LInputTrigger
+                .reflexive_emplace_back(LInputTrigger
                 {
                     "Right",
                     EKeys::D,
                     EInputActionTrigger::Ongoing,
                     LInputActionMappedTriggerModifiers{}
-                        .Push(MakeModifier<LInputActionMappedKeySwizzleModifier>())
-                        .Push(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
+                        .reflexive_emplace_back(MakeModifier<LInputActionMappedKeySwizzleModifier>())
+                        .reflexive_emplace_back(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
                 })
-                .Push(LInputTrigger
+                .reflexive_emplace_back(LInputTrigger
                 {
                     "Up",
                     EKeys::E,
                     EInputActionTrigger::Ongoing,
                     LInputActionMappedTriggerModifiers{}
-                        .Push(MakeModifier<LInputActionMappedKeySwizzleXZModifier>())
-                        .Push(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
+                        .reflexive_emplace_back(MakeModifier<LInputActionMappedKeySwizzleXZModifier>())
+                        .reflexive_emplace_back(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
                 })
-                .Push(LInputTrigger
+                .reflexive_emplace_back(LInputTrigger
                 {
                     "Down",
                     EKeys::Q,
                     EInputActionTrigger::Ongoing,
                     LInputActionMappedTriggerModifiers{}
-                        .Push(MakeModifier<LInputActionMappedKeySwizzleXZModifier>())
-                        .Push(MakeModifier<LInputActionMappedKeyNegateModifier>())
-                        .Push(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
+                        .reflexive_emplace_back(MakeModifier<LInputActionMappedKeySwizzleXZModifier>())
+                        .reflexive_emplace_back(MakeModifier<LInputActionMappedKeyNegateModifier>())
+                        .reflexive_emplace_back(MakeModifier<LInputActionMappedKeyDeltaTimeModifier>())
                 }),
             {
             }

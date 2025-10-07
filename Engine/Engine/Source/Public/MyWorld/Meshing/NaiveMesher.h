@@ -12,7 +12,7 @@ class LNaiveMesher final : public LChunkMesher
 public:
 
     LNaiveMesher() = delete;
-    explicit LNaiveMesher(AChunk& Owner) : LChunkMesher(Owner) { }
+    explicit LNaiveMesher(AChunk& Owner) noexcept : LChunkMesher(Owner) { }
 
     virtual void GenerateProceduralMesh(const JVoxelSubsystem* VoxelSubsystem, const JMaterialSubsystem* MaterialSubsystem) override;
 };

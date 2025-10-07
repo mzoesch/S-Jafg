@@ -53,7 +53,7 @@ public:
     //# Called if the text box content changes.
     LTextBoxChangedDelegate OnChanged;
 
-    FORCEINLINE void EmptyContent() noexcept { this->Content.Empty(); this->OnChanged.InvokeIfBound(this->Content); }
+    FORCEINLINE void EmptyContent() noexcept { algo::orphan(&this->Content); this->OnChanged.InvokeIfBound(this->Content); }
     FORCEINLINE void SetContent(const LString& InContent) noexcept { this->Content = InContent; this->OnChanged.InvokeIfBound(this->Content); }
     FORCEINLINE void SetContent(LString&& InContent) noexcept { this->Content = std::move(InContent); this->OnChanged.InvokeIfBound(this->Content); }
     FORCEINLINE const LString& GetContent() const noexcept { return this->Content; }

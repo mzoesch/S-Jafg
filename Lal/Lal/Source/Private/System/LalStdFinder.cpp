@@ -11,7 +11,7 @@
 
 LPath Finder::GetCwd()
 {
-    return std::filesystem::current_path();
+    return LPath{ std::filesystem::current_path() };
 }
 
 bool Finder::DoesExist(const LPath& Path)
@@ -374,7 +374,7 @@ TArray<LString> Finder::FindFilesRecursively
             {
                 std::filesystem::path NoExtension { P.path().native() };
                 NoExtension.replace_extension();
-                Out.emplace_back( NoExtension.string() );
+                Out.emplace_back(NoExtension.string());
             }
         }
 
@@ -405,7 +405,7 @@ TArray<LString> Finder::FindFilesRecursivelyByName(const LPath& Directory, const
             continue;
         }
 
-        if (const LString F { P.path().filename().string() }; FileName == F)
+        if (const LString F{ P.path().filename().string() }; FileName == F)
         {
             Out.emplace_back(P.path().string());
         }

@@ -88,7 +88,7 @@ void Jafg::LObjectContext::SeparateAndKillEmployees(const LLoadedPluginHandle In
 {
     check( InPluginHandle )
 
-    if (this->Employees.IsEmpty() == false)
+    if (this->Employees.empty() == false)
     {
         STAT_CYCLE_FUNCTION()
 
@@ -99,9 +99,9 @@ void Jafg::LObjectContext::SeparateAndKillEmployees(const LLoadedPluginHandle In
         {
             bTouched = false;
 
-            for (TArray<JObjectBase*>::SizeType Idx { 0 }; Idx < this->Employees.GetSize(); ++Idx)
+            for (auto& E : this->Employees)
             {
-                if (const LObjectClass* Class = this->Employees[Idx]->GetVTable(); Class)
+                if (const LObjectClass* Class = E->GetVTable(); Class)
                 {
                     if (Class->GetPluginHandle() != InPluginHandle)
                     {
@@ -110,8 +110,8 @@ void Jafg::LObjectContext::SeparateAndKillEmployees(const LLoadedPluginHandle In
 
                     bTouched = true;
                     ++Removed;
-                    this->Employees[Idx]->MarkAsGarbage();
-                    this->Employees.RemoveAt(Idx);
+                    E->MarkAsGarbage();
+                    this->Employees.erase(TArray<JObjectBase*>::const_iterator{&E});
                     break;
                 }
 
@@ -148,7 +148,7 @@ void Jafg::LObjectContext::TearDownContextNoEngineUnregistration()
 {
     check( this->Carnifex )
 
-    if (this->Employees.IsEmpty() == false)
+    if (this->Employees.empty() == false)
     {
         STAT_CYCLE_FUNCTION()
 
@@ -156,12 +156,12 @@ void Jafg::LObjectContext::TearDownContextNoEngineUnregistration()
         (
             LogCarnifex,
             "Context [{}] found {} left over garbage employees. Begin to kill them.",
-            this->HumanReadableName, this->Employees.GetSize()
+            this->HumanReadableName, this->Employees.size()
         )
 
-        while (this->Employees.IsEmpty() == false)
+        while (this->Employees.empty() == false)
         {
-            JObjectBase* Employee { *this->Employees.Peek() };
+            JObjectBase* Employee { this->Employees.back() };
 
             checkSlow( Employee )
 
@@ -170,7 +170,7 @@ void Jafg::LObjectContext::TearDownContextNoEngineUnregistration()
                 check( Employee->GetOuter() == this )
                 Employee->MarkAsGarbage();
 
-                check( this->Employees.Contains( Employee ) == false )
+                check( algo::contains(this->Employees, Employee) == false )
 
                 continue;
             }
@@ -180,14 +180,14 @@ void Jafg::LObjectContext::TearDownContextNoEngineUnregistration()
             Employee->bGarbage = true;
             Employee->OnDefaultGarbageInternal();
 
-            this->Employees.RemoveOnceChecked(Employee);
+            algo::erase_once_checked(&this->Employees, Employee);
 
             delete Employee;
 
             continue;
         }
 
-        check( this->Employees.IsEmpty() )
+        check( this->Employees.empty() )
     }
 
     this->Carnifex->KillAllGarbageChildren();

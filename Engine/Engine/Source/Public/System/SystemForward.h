@@ -36,28 +36,28 @@ enum Type : u8
 
 } /* ~Namespace EEnginePaths */
 
-inline LPath LexToString(const EEnginePaths::Type InType)
+template <typename TOut = LPath>
+inline TOut LexToString(const EEnginePaths::Type InType)
 {
     switch (InType)
     {
-    case EEnginePaths::Textures:     { return "Content/Textures"; }
-    case EEnginePaths::Voxels:       { return "Content/Textures/Voxels"; }
-    case EEnginePaths::Interface:    { return "Content/Textures/Interface"; }
-    case EEnginePaths::Blends:       { return "Content/Textures/Blends"; }
+    case EEnginePaths::Textures:     { return TOut{"Content/Textures"}; }
+    case EEnginePaths::Voxels:       { return TOut{"Content/Textures/Voxels"}; }
+    case EEnginePaths::Interface:    { return TOut{"Content/Textures/Interface"}; }
+    case EEnginePaths::Blends:       { return TOut{"Content/Textures/Blends"}; }
 #if PLATFORM_WASM
     case EEnginePaths::Shaders:      { return "Content/Shaders/Gles3"; }
 #else /* PLATFORM_WASM */
-    case EEnginePaths::Shaders:      { return "Content/Shaders/NativeGl"; }
+    case EEnginePaths::Shaders:      { return TOut{"Content/Shaders/NativeGl"}; }
 #endif /* !PLATFORM_WASM */
-    case EEnginePaths::Fonts:        { return "Content/Fonts"; }
+    case EEnginePaths::Fonts:        { return TOut{"Content/Fonts"}; }
     default:                         { panic( "Could not resolve engine path type." )  return ""; }
     }
 }
 
-template <template <typename, typename> typename TEncoding, Lal::TStringBaseAllocatorConcept TAllocator>
-    requires(Lal::TStringBaseEncodingConcept<TEncoding<typename TAllocator::T, typename TAllocator::SizeType>>)
+template <typename TRet, typename TSuper>
 class TEnginePathBase;
 
-typedef TEnginePathBase<Lal::TStringBaseDefaultUtf8Traits, TArray<LJafgChar>> LEnginePath;
+typedef TEnginePathBase<LPath, LPath> LEnginePath;
 
 } /* ~Namespace Jafg */

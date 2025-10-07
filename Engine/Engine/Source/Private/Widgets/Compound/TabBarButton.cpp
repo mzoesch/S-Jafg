@@ -14,7 +14,7 @@ bool Jafg::WTabBarButton::AddData(const LWidgetNodeData* InData)
     }
 
     const LTabBarTabData* Data = static_cast<const LTabBarTabData*>(InData);
-    if (Data->Descriptor->DisplayNameField.IsEmpty() == false)
+    if (Data->Descriptor->DisplayNameField.empty() == false)
     {
         this->GetFactory<WTabBarButton>()
         [

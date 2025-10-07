@@ -8,7 +8,7 @@
         "Did you mean to compile the main application? Then try to only compile the Runtime "
         "by adding \"--target Runtime\" to your CMake build command."
         );
-#endif /* !WITH_TESTS */
+#else /* !WITH_TESTS */
 
 #include "TestCore/TestRunner.h"
 
@@ -40,3 +40,5 @@
         std::filesystem::canonical(std::filesystem::current_path()).string()
         )
 }
+
+#endif /* WITH_TESTS */

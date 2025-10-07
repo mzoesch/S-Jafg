@@ -25,7 +25,7 @@ bool Jafg::LOrthographicTextShader::Make(const LName InName, TArray<LShaderCompi
 
     FT_Face Face;
     TArray FontData = Finder::ReadFileAsBinary(LEnginePath{EEnginePaths::Fonts, "Core.otf"}.ResolvePath());
-    if (::FT_New_Memory_Face(Library, reinterpret_cast<const FT_Byte*>(FontData.begin_ptr()), static_cast<FT_Long>(FontData.GetSize()), 0, &Face))
+    if (::FT_New_Memory_Face(Library, reinterpret_cast<const FT_Byte*>(FontData.data()), static_cast<FT_Long>(FontData.size()), 0, &Face))
     {
         LOG_ERROR(LogRhi, "Failed to load font face.")
         return false;

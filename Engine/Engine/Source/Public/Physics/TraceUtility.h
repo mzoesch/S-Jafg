@@ -40,7 +40,7 @@ inline void LHitResult::Reset()
 {
     this->Actor = nullptr;
     this->GlobalWorldLocation = LVector::ZeroVector;
-    this->SurfaceNormal.Reset();
+    this->SurfaceNormal.reset();
 
     return;
 }

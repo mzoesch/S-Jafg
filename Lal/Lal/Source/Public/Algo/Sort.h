@@ -15,13 +15,10 @@ void SortQuick(T* Begin, T* Slack);
 
 } /* ~Namespace Private */
 
-template <typename TAlloc> requires (Lal::TArrayBase<TAlloc>::IsContentMutable())
-FORCEINLINE void SortQuick(Lal::TArrayBase<TAlloc>* Container);
-
-template <typename TAlloc> requires (Lal::TArrayBase<TAlloc>::IsContentMutable())
-FORCEINLINE void SortQuick(Lal::TArrayBase<TAlloc>* Container)
+FORCEINLINE void SortQuick(auto* Container)
 {
-    Private::SortQuick(Container->GetDataPointer(), Container->GetSlackPointer());
+    static_assert(Lal::TIterator_IsContiguous_v<Lal::TIteratorTraits<decltype(Container->begin())>>);
+    Private::SortQuick(Container->begin().base(), Container->end().base());
 }
 
 namespace Private

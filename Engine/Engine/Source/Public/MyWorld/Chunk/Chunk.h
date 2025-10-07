@@ -74,7 +74,7 @@ struct LSharedChunkArgs final
     JMaterialSubsystem*        MaterialSubsystem        { nullptr };
     JVoxelTextureSubsystem*    VoxelTextureSubsystem    { nullptr };
     LChunkShader               ChunkShader;
-    TFunction<Smart::TUnique<LChunkMesher>(AChunk& Owner)> GetNewMesher;
+    TFunction<TUnique<LChunkMesher>(AChunk& Owner)> GetNewMesher;
 
     bool bSuperFlat { false };
 };
@@ -135,8 +135,8 @@ public:
     FORCEINLINE void SetSharedArgs(LSharedChunkArgs* NewSharedArgs);
 
     FORCEINLINE bool IsMesherValid() const noexcept { return this->Mesher != nullptr; }
-    FORCEINLINE LChunkMesher* GetMesher() noexcept { return this->Mesher; }
-    FORCEINLINE const LChunkMesher* GetMesher() const noexcept { return this->Mesher; }
+    FORCEINLINE LChunkMesher* GetMesher() noexcept { return this->Mesher.get(); }
+    FORCEINLINE const LChunkMesher* GetMesher() const noexcept { return this->Mesher.get(); }
 
     //#
     //# Create a relative voxel key from the world location of this chunk.
@@ -169,7 +169,7 @@ private:
 
     LChunkKey ChunkKey;
     LSharedChunkArgs* SharedArgs { nullptr };
-    Smart::TUnique<LChunkMesher> Mesher;
+    TUnique<LChunkMesher> Mesher;
 
 public:
 
@@ -177,7 +177,7 @@ public:
     // Raw Voxel Data
     //////////////////////////////////////////////////////////////////////////
 
-    FORCEINLINE bool HasRawVoxelData() const { return this->RawVoxelData; }
+    FORCEINLINE bool HasRawVoxelData() const { return this->RawVoxelData.get() != nullptr; }
 
     FORCEINLINE static LVoxelIndex GetRawVoxelIndex(const LVoxelKey InKey);
     FORCEINLINE static LVoxelIndex GetRawVoxelIndex(const LVoxelKeyDomainTy InX, const LVoxelKeyDomainTy InY, const LVoxelKeyDomainTy InZ);
@@ -198,7 +198,7 @@ public:
 
 private:
 
-    Smart::TUnique<voxel_t[]> RawVoxelData;
+    TUnique<voxel_t[]> RawVoxelData;
 
     //////////////////////////////////////////////////////////////////////////
     // Data Manipulation

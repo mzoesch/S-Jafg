@@ -35,7 +35,7 @@ public:
     ENGINE_API LUserInput* GetUserInput() const;
     ENGINE_API LUserInput* GetUserInputChecked() const;
 
-    FORCEINLINE i32 GetSurfaceCount() const { return this->Surfaces.GetSize(); }
+    FORCEINLINE i32 GetSurfaceCount() const { return this->Surfaces.size(); }
     FORCEINLINE auto  GetSurfaces() -> TArray<LSurface>& { return this->Surfaces; }
     FORCEINLINE auto  GetSurfaces() const -> const TArray<LSurface>& { return this->Surfaces; }
 

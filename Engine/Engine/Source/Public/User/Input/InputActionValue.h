@@ -129,11 +129,11 @@ FORCEINLINE LString LInputActionValue::ToString() const
     }
     if (this->ValueType == EInputActionCategory::Axis1D)
     {
-        return LString::SprintF("{:.3f}", this->Value.X);
+        return Lal::SprintF("{:.3f}", this->Value.X);
     }
     if (this->ValueType == EInputActionCategory::Axis2D)
     {
-        return LString::SprintF("{:.3f},{:.3f}", this->Value.X, this->Value.Y);
+        return Lal::SprintF("{:.3f},{:.3f}", this->Value.X, this->Value.Y);
     }
 
     checkNoEntry()

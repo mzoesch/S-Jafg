@@ -124,11 +124,11 @@ struct TPreference<T, TEnableIfTy<std::is_floating_point_v<T>>>
 
     FORCEINLINE T    GetDefaultValue() const { return this->DefaultValue; }
     FORCEINLINE T    GetCurrentValue() const { return this->Value; }
-    FORCEINLINE bool IsMinMaxValueValid() const { return this->MinValue.IsValid() && this->MaxValue.IsValid(); }
-    FORCEINLINE bool IsMinValueValid() const { return this->MinValue.IsValid(); }
-    FORCEINLINE bool IsMaxValueValid() const { return this->MaxValue.IsValid(); }
-    FORCEINLINE T    GetMinValue() const { return this->MinValue.GetValue(); }
-    FORCEINLINE T    GetMaxValue() const { return this->MaxValue.GetValue(); }
+    FORCEINLINE bool IsMinMaxValueValid() const { return this->MinValue.has_value() && this->MaxValue.has_value(); }
+    FORCEINLINE bool IsMinValueValid() const { return this->MinValue.has_value(); }
+    FORCEINLINE bool IsMaxValueValid() const { return this->MaxValue.has_value(); }
+    FORCEINLINE T    GetMinValue() const { return this->MinValue.value(); }
+    FORCEINLINE T    GetMaxValue() const { return this->MaxValue.value(); }
 
     FORCEINLINE bool operator==(const T& Other) const { return Maths::IsNearlyEqual(this->Value, Other); }
     FORCEINLINE bool operator!=(const T& Other) const { return !(*this == Other); }
@@ -153,13 +153,13 @@ struct TPreference<T, TEnableIfTy<std::is_floating_point_v<T>>>
 template <typename T>
 void TPreference<T, TEnableIfTy<std::is_floating_point_v<T>>>::SetSafeValue(const T InValue)
 {
-    if (this->MinValue.IsValid() && InValue < this->MinValue.GetValue())
+    if (this->MinValue.has_value() && InValue < this->MinValue.value())
     {
-        this->Value = this->MinValue.GetValue();
+        this->Value = this->MinValue.value();
     }
-    else if (MaxValue.IsValid() && InValue > this->MaxValue.GetValue())
+    else if (MaxValue.has_value() && InValue > this->MaxValue.value())
     {
-        this->Value = this->MaxValue.GetValue();
+        this->Value = this->MaxValue.value();
     }
     else
     {
@@ -188,7 +188,7 @@ FORCEINLINE void Deserialize(TPreference<T>* Destination, const LString& InValue
 template <typename T>
 FORCEINLINE LString Serialize(const TPreference<T>& InValue)
 {
-    return LString::SprintF("{}", InValue.GetCurrentValue());
+    return Lal::SprintF("{}", InValue.GetCurrentValue());
 }
 
 } /* ~Namespace Jafg */

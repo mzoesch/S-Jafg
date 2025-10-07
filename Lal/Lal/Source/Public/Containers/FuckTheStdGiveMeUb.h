@@ -47,7 +47,7 @@ void AddUninitialized(TContainer* Container, const typename TContainer::size_typ
     typename TContainer::size_type OldSize{ Container->size() };
 #endif /* LAL_DO_CHECKS */
 
-    Container->resize(Container->size() + Count);
+    Container->reserve(Container->size() + Count);
 
     typename TContainer::pointer& Slack =
         *reinterpret_cast<typename TContainer::pointer*>
@@ -62,6 +62,7 @@ void AddUninitialized(TContainer* Container, const typename TContainer::size_typ
 
 #if LAL_DO_CHECKS
     LAL_FWD_CHECK([Container, OldSize, Count]{return Container->size() == OldSize + Count;})
+    LAL_FWD_CHECK([Container]{return Container->size() <= Container->capacity();})
 #endif /* LAL_DO_CHECKS */
 
     return;

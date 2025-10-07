@@ -43,9 +43,9 @@ void Jafg::JChunkGenerationSubsystem::Initialize(LSubsystemCollection& Collectio
     this->SharedChunkArgs.MaterialSubsystem = this->GetEngine()->GetCheckedSubsystem<JMaterialSubsystem>();
     this->SharedChunkArgs.VoxelTextureSubsystem = this->GetEngine()->GetCheckedSubsystem<JVoxelTextureSubsystem>();
     this->SharedChunkArgs.ChunkShader.MakeChecked(Name_ShaderChunk);
-    this->SharedChunkArgs.GetNewMesher = [](AChunk& Owner) -> Smart::TUnique<LChunkMesher>
+    this->SharedChunkArgs.GetNewMesher = [](AChunk& Owner) -> TUnique<LChunkMesher>
     {
-        return Smart::EmplaceUniqueOfType<LChunkMesher, LNaiveMesher>(Owner);
+        return std::make_unique<LNaiveMesher>(Owner);
     };
 
     this->SharedChunkArgs.bSuperFlat = true;
@@ -71,9 +71,9 @@ void Jafg::JChunkGenerationSubsystem::FixedTick(const f32 EngineDeltaTime, const
     if (const i32 New { OutBuffer - Size }; New > 0)
     {
         i32 GeneratedChunks { 0 };
-        while (this->Requested.IsEmpty() == false && GeneratedChunks < 20)
+        while (this->Requested.empty() == false && GeneratedChunks < 20)
         {
-            const LChunkKey& Key = *this->Requested.GetLast();
+            const LChunkKey& Key = this->Requested.back();
 
             AChunk* Chunk { this->FindChunk(Key) };
             if (Chunk == nullptr)
@@ -91,7 +91,7 @@ void Jafg::JChunkGenerationSubsystem::FixedTick(const f32 EngineDeltaTime, const
                 }
             }
 
-            this->Requested.Pop();
+            this->Requested.pop_back();
 
             continue;
         }
@@ -164,7 +164,7 @@ bool Jafg::JChunkGenerationSubsystem::LineTraceByChannel(
         {
             if (Element->second->GetPhysicsComponent()->Sweep(Start, End, Dummy))
             {
-                OutHits.Add(Dummy);
+                OutHits.push_back(Dummy);
 
                 if (Params.bSingleHit)
                 {
@@ -181,7 +181,7 @@ bool Jafg::JChunkGenerationSubsystem::LineTraceByChannel(
         continue;
     }
 
-    return OutHits.IsEmpty() == false;
+    return OutHits.empty() == false;
 }
 
 void Jafg::JChunkGenerationSubsystem::OnStaticDraw(const LViewport& Viewport, const LEye& Eye, const std::span<LVector>& Corners) const

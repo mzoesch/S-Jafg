@@ -74,8 +74,8 @@ void Jafg::LaunchProgress::FinishAndGiveUpMemory()
 {
     Private::GProgress = 0.0f;
     Private::GProgressStep = 0.0;
-    Private::GProgressName.Empty();
-    Private::GProgressDescription.Empty();
+    algo::orphan(&Private::GProgressName);
+    algo::orphan(&Private::GProgressDescription);
 
     if (Private::GProgressSurface == nullptr || Private::bOwnerShipToken)
     {

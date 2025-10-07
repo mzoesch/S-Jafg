@@ -12,7 +12,7 @@ bool Jafg::LCliType::SetVariable(const LCommandArgs& InValue, LString* OutValue)
         return this->OnValueSetDelegate(InValue, OutValue);
     }
 
-    if (InValue.Name.Equals(*OutValue))
+    if (InValue.Name == *OutValue)
     {
         return false;
     }

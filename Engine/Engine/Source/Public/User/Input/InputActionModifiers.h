@@ -10,7 +10,7 @@ namespace Jafg
 
 //# Base struct for input action modifiers. Inherit from this to add your own modifiers.
 struct LInputActionMappedTriggerModifier;
-typedef TArray<Smart::TUnique<LInputActionMappedTriggerModifier>> LInputActionMappedTriggerModifiers;
+typedef TArray<TUnique<LInputActionMappedTriggerModifier>> LInputActionMappedTriggerModifiers;
 
 //# Negate all axes of the input value. */
 struct LInputActionMappedKeyNegateModifier;
@@ -30,7 +30,7 @@ struct LInputActionMappedKeyDeltaTimeModifier;
 //# Factory function to create a modifier of type TModifier.
 //#
 template <typename TModifier> requires (std::is_abstract_v<TModifier> == false && std::is_base_of_v<LInputActionMappedTriggerModifier, TModifier>)
-FORCEINLINE Smart::TUnique<LInputActionMappedTriggerModifier> MakeModifier() noexcept;
+FORCEINLINE TUnique<LInputActionMappedTriggerModifier> MakeModifier() noexcept;
 
 struct LInputActionMappedTriggerModifier
 {
@@ -75,9 +75,9 @@ struct LInputActionMappedKeyDeltaTimeModifier final : public LInputActionMappedT
 };
 
 template <typename TModifier> requires (std::is_abstract_v<TModifier> == false && std::is_base_of_v<LInputActionMappedTriggerModifier, TModifier>)
-FORCEINLINE Smart::TUnique<LInputActionMappedTriggerModifier> MakeModifier() noexcept
+FORCEINLINE TUnique<LInputActionMappedTriggerModifier> MakeModifier() noexcept
 {
-    return Smart::EmplaceUniqueOfType<LInputActionMappedTriggerModifier, TModifier>();
+    return TUnique<LInputActionMappedTriggerModifier>{ new TModifier{} };
 }
 
 } /* ~Namespace Jafg */

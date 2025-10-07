@@ -139,16 +139,16 @@ void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TArray<ChunkBoxV
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
     glBufferData(
         GL_ARRAY_BUFFER,
-        Vertices.GetSize() * static_cast<GLsizeiptr>(sizeof(ChunkBoxVertex)),
-        Vertices.GetDataPointer(),
+        Vertices.size() * static_cast<GLsizeiptr>(sizeof(ChunkBoxVertex)),
+        Vertices.data(),
         GL_STATIC_DRAW
     );
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->Ebo);
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,
-        Indices.GetSize() * static_cast<GLsizeiptr>(sizeof(u32)),
-        Indices.GetDataPointer(),
+        Indices.size() * static_cast<GLsizeiptr>(sizeof(u32)),
+        Indices.data(),
         GL_STATIC_DRAW
     );
 

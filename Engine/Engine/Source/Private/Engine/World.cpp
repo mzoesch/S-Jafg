@@ -29,10 +29,10 @@ LString Jafg::LWorldParameters::ToString() const
         }
         else
         {
-            Out.Append(", ");
+            Out.append(", ");
         }
 
-        Out.Append(LString::SprintF("{}={}", Param.Key, Param.Value));
+        Out.append(Lal::SprintF("{}={}", Param.Key, Param.Value));
         continue;
     }
 
@@ -42,7 +42,7 @@ LString Jafg::LWorldParameters::ToString() const
 
 void Jafg::LWorldParameters::Reset() noexcept
 {
-    this->Params.Empty();
+    algo::orphan(&this->Params);
     return;
 }
 
@@ -98,20 +98,20 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level, LString&& InLaunchedUrl)
     this->UnsanitizedUrl = InLaunchedUrl;
 
     /* Remove level name from url. */
-    if (const auto It { InLaunchedUrl.FindFirst('?') }; It != InLaunchedUrl.end())
+    if (const auto Idx { InLaunchedUrl.find('?') }; Idx != InLaunchedUrl.npos)
     {
-        if (InLaunchedUrl.IsValidIterator(It + 1))
+        if (algo::is_valid_index(InLaunchedUrl, Idx + 1))
         {
-            InLaunchedUrl.InlineRightChop(InLaunchedUrl.ToIndex(It + 1));
+            algo::inline_right_chop(&InLaunchedUrl, Idx + 1);
         }
         else
         {
-            InLaunchedUrl.Empty();
+            algo::orphan(&InLaunchedUrl);
         }
     }
     else
     {
-        InLaunchedUrl.Empty();
+        algo::orphan(&InLaunchedUrl);
     }
     this->Url = std::move(InLaunchedUrl);
     this->UpdateUrlParams();
@@ -121,7 +121,7 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level, LString&& InLaunchedUrl)
 
     this->UnderlyingLevel = Level;
 
-    if (this->UnderlyingLevel.IsValid())
+    if (this->UnderlyingLevel.has_value())
     {
         this->bDrawSkyboxFirst = this->UnderlyingLevel->bDrawSkyboxFirst;
 
@@ -134,7 +134,7 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level, LString&& InLaunchedUrl)
 
     this->GetEngine()->OnWorldBeginLife.Broadcast(this);
 
-    LOG_VERBOSE(LogWorld, "Initializing {} level actors.", this->Actors.GetSize())
+    LOG_VERBOSE(LogWorld, "Initializing {} level actors.", this->Actors.size())
     for (AActor* Actor : this->Actors)
     {
         MakeDeferredActorFinal(Actor);
@@ -160,9 +160,9 @@ void Jafg::LWorld::Tick(const f32 DeltaTime)
     this->ReleaseTickableObjectsLock();
     for (LTickableObject* Tickable : this->DeletedTickableObjects)
     {
-        this->TickableObjects.RemoveOnceChecked(Tickable);
+        algo::erase_once_checked(&this->TickableObjects, Tickable);
     }
-    this->DeletedTickableObjects.Empty();
+    algo::orphan(&this->DeletedTickableObjects);
 
     return;
 }
@@ -215,7 +215,7 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
     // };
     const std::span CornersSpan{Corners};
 
-    if (this->Skybox.IsValid() && this->bDrawSkyboxFirst)
+    if (this->Skybox.has_value() && this->bDrawSkyboxFirst)
     {
         this->Skybox->Draw(Viewport, Eye);
     }
@@ -279,7 +279,7 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
         TemporalObject->Draw(*this, Viewport, Eye);
     }
 
-    if (this->Skybox.IsValid() && this->bDrawSkyboxFirst == false)
+    if (this->Skybox.has_value() && this->bDrawSkyboxFirst == false)
     {
         this->Skybox->Draw(Viewport, Eye);
     }
@@ -296,7 +296,8 @@ void Jafg::LWorld::LateTick(const float DeltaTime)
     {
         TemporalObject->ReduceLifeTime(DeltaTime);
     }
-    this->TemporalObjects.RemoveByPredicate([](const LTemporalWorldObject* const& TemporalObject) -> bool
+
+    algo::erase_if(&this->TemporalObjects, [](LTemporalWorldObject const* const& TemporalObject) -> bool
     {
         if (TemporalObject->IsAlive())
         {
@@ -333,35 +334,35 @@ void Jafg::LWorld::TearDownContext()
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::RunAllTasks);
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::RunAllTasks);
 
-    LOG_VERBOSE(LogWorld, "Killing {} actors of world [{}].", this->Actors.GetSize(), this->GetHumanReadableName())
+    LOG_VERBOSE(LogWorld, "Killing {} actors of world [{}].", this->Actors.size(), this->GetHumanReadableName())
     for (AActor* Actor : this->Actors)
     {
         Actor->MarkAsGarbage();
     }
 
-    this->Actors.Empty();
-    this->TickableObjects.Empty();
-    this->DeletedTickableObjects.Empty();
+    algo::orphan(&this->Actors);
+    algo::orphan(&this->TickableObjects);
+    algo::orphan(&this->DeletedTickableObjects);
 
     this->OnStaticDraw.Unbind();
     this->OnStaticLineTrace.Unbind();
 
-    this->UnsanitizedUrl.Empty();
-    this->Url.Empty();
+    algo::orphan(&this->UnsanitizedUrl);
+    algo::orphan(&this->Url);
     this->Parameters.Reset();
 
-    this->UnderlyingLevel.Reset();
+    this->UnderlyingLevel.reset();
 
-    ensureDiscard( this->TemporalObjects.IsEmpty() );
-    this->TemporalObjects.Empty();
+    ensureDiscard( this->TemporalObjects.empty() );
+    algo::orphan(&this->TemporalObjects);
 
-    ensureDiscard( this->TickableObjects.IsEmpty() );
-    this->TickableObjects.Empty();
-    ensureDiscard( this->DeletedTickableObjects.IsEmpty() );
-    this->DeletedTickableObjects.Empty();
+    ensureDiscard( this->TickableObjects.empty() );
+    algo::orphan(&this->TickableObjects);
+    ensureDiscard( this->DeletedTickableObjects.empty() );
+    algo::orphan(&this->DeletedTickableObjects);
 
     this->bDrawSkyboxFirst = false;
-    this->Skybox.Reset();
+    this->Skybox.reset();
 
     this->EyeToMatrices.clear();
 
@@ -380,20 +381,20 @@ void Jafg::LWorld::TearDownContext()
 
 void Jafg::LWorld::RegisterTickableObject(LTickableObject* Tickable)
 {
-    if (this->TickableObjects.Contains(Tickable))
+    if (algo::contains(this->TickableObjects, Tickable))
     {
         panic( "Found duplicate tickable object" )
         return;
     }
 
-    this->TickableObjects.Add(Tickable);
+    this->TickableObjects.push_back(Tickable);
 
     return;
 }
 
 void Jafg::LWorld::UnregisterTickableObject(LTickableObject* Tickable)
 {
-    if (this->TickableObjects.RemoveOnce(Tickable))
+    if (algo::erase_once(&this->TickableObjects, Tickable))
     {
         return;
     }
@@ -438,7 +439,7 @@ bool Jafg::LWorld::LineTraceByChannel(
     {
         if (Actor->GetPhysicsComponent()->Sweep(Begin, End, Dummy))
         {
-            OutHits.Add(Dummy);
+            OutHits.push_back(Dummy);
             Dummy.Reset();
 
             if (Params.bSingleHit)
@@ -450,7 +451,7 @@ bool Jafg::LWorld::LineTraceByChannel(
         continue;
     }
 
-    return OutHits.IsEmpty() == false;
+    return OutHits.empty() == false;
 }
 
 void Jafg::LWorld::UpdateUrlParams()
@@ -465,7 +466,7 @@ void Jafg::LWorld::UpdateUrlParams()
     {
         if (C == '?' && Last != '\\')
         {
-            Params.Emplace(std::move(Current));
+            Params.emplace_back(std::move(Current));
         }
 
         Current += C;
@@ -473,9 +474,9 @@ void Jafg::LWorld::UpdateUrlParams()
         continue;
     }
 
-    if (Current.IsEmpty() == false)
+    if (Current.empty() == false)
     {
-        Params.Emplace(std::move(Current));
+        Params.emplace_back(std::move(Current));
     }
 
     for (const LString& P : Params)
@@ -523,9 +524,9 @@ void Jafg::LWorld::UpdateUrlParams()
             continue;
         }
 
-        check( K.IsEmpty() == false )
+        check( K.empty() == false )
 
-        this->Parameters.Params.Emplace(std::move(K), std::move(V));
+        this->Parameters.Params.emplace_back(std::move(K), std::move(V));
 
         continue;
     }
@@ -539,10 +540,7 @@ Jafg::LWorld* Jafg::LWorld::GetWorldFromHumanReadableName(const LString& InHuman
     {
         const Private::LWorldContext* Context
         {
-            GEngine->GetContexts().FindRefByPredicate([InHumanReadableName](const Private::LWorldContext& InContext) -> bool
-            {
-                return InContext.ChildWorld->GetHumanReadableName() == InHumanReadableName;
-            })
+            algo::find_pointer(GEngine->GetContexts(), InHumanReadableName, [](auto const& E){ return E.ChildWorld->GetHumanReadableName(); })
         };
 
         return Context ? Context->ChildWorld : nullptr;

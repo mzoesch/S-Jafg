@@ -186,7 +186,7 @@ private:
 
 FORCEINLINE bool WConsoleScreen::IsHistoryCursorValid() const
 {
-    check( this->HistoryCursor == INDEX_NONE ? true : GetDefault<WConsoleScreen>()->History.IsValidIndex(this->HistoryCursor) )
+    check( this->HistoryCursor == INDEX_NONE ? true : algo::is_valid_index(GetDefault<WConsoleScreen>()->History, this->HistoryCursor) )
     return this->HistoryCursor != INDEX_NONE;
 }
 
@@ -198,8 +198,8 @@ i32 WConsoleScreen::GetIndexInHistory() const
     }
 
     const TArray<LString>& DefaultHistory = GetDefault<WConsoleScreen>()->History;
-    check( DefaultHistory.IsValidIndex(DefaultHistory.GetSize() - 1 - this->HistoryCursor) )
-    return DefaultHistory.GetSize() - 1 - this->HistoryCursor;
+    check( algo::is_valid_index(DefaultHistory, DefaultHistory.size() - 1 - this->HistoryCursor) )
+    return DefaultHistory.size() - 1 - this->HistoryCursor;
 }
 
 const LString* WConsoleScreen::GetCurrentHistoryItem() const

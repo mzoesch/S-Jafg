@@ -13,19 +13,19 @@ LPath Jafg::PlatformMisc::Private::GetEngineRootDirImpl()
 {
     LPath RealRootDir { PlatformMisc::GetRealEngineRootDir() };
 
-    while (RealRootDir.IsEmpty() == false)
+    while (RealRootDir.empty() == false)
     {
         if (Finder::DoesFileExist(RealRootDir / "jafg.jafgworkspace"))
         {
             break;
         }
 
-        RealRootDir.ToParent();
+        RealRootDir.assign(RealRootDir.parent_path());
 
         continue;
     }
 
-    jassert( RealRootDir.IsEmpty() == false && "Failed to find engine root directory." )
+    jassert( RealRootDir.empty() == false && "Failed to find engine root directory." )
 
     return RealRootDir;
 }
@@ -41,13 +41,9 @@ LPath Jafg::PlatformMisc::Private::GetRealEngineRootDirImpl()
 
     Buffer[Ret - 1] = '\0';
 
-    const std::string FromBuffer = Buffer;
-    const std::string::size_type Position = FromBuffer.find_last_of('/');
-    LPath Path = LPath{FromBuffer.substr(0, Position).c_str()};
-    Path.ToPosix();
-    check( Path.IsPosix() )
-
-    return Path;
+    const std::string FromBuffer { Buffer };
+    const std::string::size_type Position { FromBuffer.find_last_of('/') };
+    return LPath{FromBuffer.substr(0, Position)};
 }
 
 i32 Jafg::PlatformMisc::GetNumberOfPhysicalViewports()

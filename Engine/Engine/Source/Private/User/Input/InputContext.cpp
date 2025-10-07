@@ -60,9 +60,9 @@ Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction(const LInputAction*
         return Out;
     }
 
-    this->MappedActions.Emplace(InAction);
+    this->MappedActions.emplace_back(InAction);
 
-    return this->MappedActions.GetLast();
+    return &this->MappedActions.back();
 }
 
 
@@ -73,7 +73,7 @@ Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction
     LString&& InName,
     const LKey InDefaultKey,
     const EInputActionTrigger::Type InActionTrigger,
-    TArray<Smart::TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
+    TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
     LUserInputActionCallback&& InCallback
 )
 {

@@ -61,7 +61,7 @@ public:
     FORCEINLINE auto SetHumanReadableName(const LString& InS) -> void { this->HumanReadableName = InS; }
     FORCEINLINE auto GetHumanReadableName() const -> const LString& { return this->HumanReadableName; }
 
-    FORCEINLINE bool IsHiredHere(const JObjectBase* InObject) const { return InObject && this->Employees.Contains(InObject); }
+    FORCEINLINE bool IsHiredHere(const JObjectBase* InObject) const { return InObject && algo::contains(this->Employees, InObject); }
 
     void SeparateAndKillEmployees(const LLoadedPluginHandle InPluginHandle);
 

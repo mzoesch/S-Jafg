@@ -162,9 +162,11 @@ ENGINE_API bool IsValidFast(const LObjectContext* InContext, const JObjectBase* 
 //# Valid means:
 //#   1. The #InContextPointer is not null.
 //#   2. The #InPointer is not null.
-//#   3. The #InContextPointer is still allocated, based on the current engine state.
-//#   4. The context at #InContextPointer employees the #InPointer currently.
-//#   5. The object at the #InPointer address is not marked as garbage.
+//#   3. The Engine exists.
+//#   4. The Engine is in a defined state (not starting up, not shutting down).
+//#   5. The #InContextPointer is still allocated, based on the current engine state.
+//#   6. The context at #InContextPointer employees the #InPointer currently.
+//#   7. The object at the #InPointer address is not marked as garbage.
 //#
 //# @remark This function may be used on any thread, but of course, after this function returned the boolean, it
 //#         might get immediately invalid.
@@ -216,11 +218,9 @@ template <> FORCEINLINE void OnDefaultOnlyMallocMember<u64>(u64* MemberField)   
 template <> FORCEINLINE void OnDefaultOnlyMallocMember<bool>(bool* MemberField)     { *MemberField = false; }
 template <> FORCEINLINE void OnDefaultOnlyMallocMember<Lal::LColor>(Lal::LColor* MemberField) { *MemberField = Lal::LColor::Black; }
 
-template <Lal::TArrayBaseAllocatorConceptBase Alloc>
-FORCEINLINE void OnDefaultOnlyMallocMember(Lal::TArrayBase<Alloc>* MemberField);
-
-template <template <typename, typename> typename TEncoding, typename TAllocator>
-FORCEINLINE void OnDefaultOnlyMallocMember(Lal::TStringBase<TEncoding, TAllocator>* MemberField);
+template <typename T>
+FORCEINLINE void OnDefaultOnlyMallocMember(TArray<T>* MemberField);
+FORCEINLINE void OnDefaultOnlyMallocMember(LString* MemberField);
 
 template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
 FORCEINLINE void OnDefaultOnlyMallocMember(TSubclassOf<TObj>* MemberField) { *MemberField = nullptr; }
@@ -319,7 +319,7 @@ struct LDeferredRegistryPackage final
 struct LRegistryPackage final
 {
     //# Pointer to the static class object of the target class.
-    Smart::TUnique<LObjectClass> StaticClass;
+    TUnique<LObjectClass> StaticClass;
 
     FORCEINLINE const LString& GetSpacedClassName() const
     {
@@ -513,7 +513,7 @@ FORCEINLINE TObj* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContex
 
 FORCEINLINE JObjectBase* Private::LObjectMiscellaneousAccessor::NewObject(LObjectContext* Context, const LString& ClassName)
 {
-    return LObjectMiscellaneousAccessor::NewObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass);
+    return LObjectMiscellaneousAccessor::NewObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass.get());
 }
 
 template <typename TObj> requires std::is_base_of_v<JObjectBase, TObj>
@@ -580,7 +580,7 @@ FORCEINLINE void Private::LRegistrationCallbackHelper::DoRegisterContentsForClas
 
     check( TObj::StaticClass() )
 
-    GObjectRegistry->DeferredPackages.Emplace
+    GObjectRegistry->DeferredPackages.emplace_back
     (
         std::move(Parent),
         const_cast<LObjectClass*>(TObj::StaticClass())
@@ -591,7 +591,7 @@ FORCEINLINE void Private::LRegistrationCallbackHelper::DoRegisterContentsForClas
 
 FORCEINLINE JObjectBase* Private::LObjectMiscellaneousAccessor::NewDeferredObject(LObjectContext* Context, const LString& ClassName)
 {
-    return LObjectMiscellaneousAccessor::NewDeferredObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass);
+    return LObjectMiscellaneousAccessor::NewDeferredObject(Context, GObjectRegistry->GetPanickedPackageByName(ClassName)->StaticClass.get());
 }
 
 template <typename TMemberField>
@@ -602,17 +602,16 @@ FORCEINLINE void ExplicitCommonZeroOnDefaultOnlyMallocMember(TMemberField* Membe
     return;
 }
 
-template <Lal::TArrayBaseAllocatorConceptBase Alloc>
-FORCEINLINE void OnDefaultOnlyMallocMember(Lal::TArrayBase<Alloc>* MemberField)
+template<typename T>
+FORCEINLINE void OnDefaultOnlyMallocMember(TArray<T>* MemberField)
 {
-    std::construct_at<typename Lal::TArrayBase<Alloc>::Allocator>(&MemberField->GetMutableAllocator());
+    std::construct_at<TArray<T>>(MemberField);
     return;
 }
 
-template <template <typename, typename> typename TEncoding, typename TAllocator>
-FORCEINLINE void OnDefaultOnlyMallocMember(Lal::TStringBase<TEncoding, TAllocator>* MemberField)
+FORCEINLINE void OnDefaultOnlyMallocMember(LString* MemberField)
 {
-    OnDefaultOnlyMallocMember(&MemberField->GetMutableAllocator());
+    std::construct_at<LString>(MemberField);
     return;
 }
 
@@ -653,7 +652,7 @@ FORCEINLINE void Private::RegisterNewObjectType
     OnRegistrationDelegate Callback
 )
 {
-    Private::GetRegisterObjectQueue().Emplace
+    Private::GetRegisterObjectQueue().emplace_back
     (
         std::forward<LString>(SpacedClassName),
         GetContentDefaultDelegate,

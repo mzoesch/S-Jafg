@@ -53,9 +53,6 @@ struct LLevel final
     DEFAULT_REALLOC_OF_ANY_FORM(LLevel)
 
     FORCEINLINE bool operator==(const LLevel&  Other) const noexcept { return this->Identifier == Other.Identifier; }
-    FORCEINLINE bool operator!=(const LLevel&  Other) const noexcept { return !(*this == Other); }
-    FORCEINLINE bool operator==(const LString& Other) const noexcept { return this->Identifier == Other; }
-    FORCEINLINE bool operator!=(const LString& Other) const noexcept { return !(*this == Other); }
 
     LString Identifier;
 

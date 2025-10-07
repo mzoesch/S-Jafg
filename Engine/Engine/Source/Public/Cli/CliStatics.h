@@ -33,7 +33,7 @@ ENGINE_API LCommandArgs TokenizeCommand(LString&& InCommandLine);
 
 bool CliStatics::IsCommand(const LString& InText)
 {
-    return InText.StartsWith(FMT("/"));
+    return InText.starts_with('/');
 }
 
 } /* ~Namespace Jafg */

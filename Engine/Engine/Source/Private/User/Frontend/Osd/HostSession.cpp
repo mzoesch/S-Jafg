@@ -401,7 +401,7 @@ Jafg::TWidgetFactoryHRegion<Jafg::WHRegion>* Jafg::WHostSessionScreen_New::AddMe
                 }
 
                 LString Name { DEFAULT_SESSION_NAME };
-                if (this->SessionName && this->SessionName->GetContent().IsEmpty() == false)
+                if (this->SessionName && this->SessionName->GetContent().empty() == false)
                 {
                     Name = this->SessionName->GetContent();
                 }
@@ -412,7 +412,7 @@ Jafg::TWidgetFactoryHRegion<Jafg::WHRegion>* Jafg::WHostSessionScreen_New::AddMe
                 };
 
                 LString Error;
-                const LPath Path = Finder::GetSavesDir() / Name.ToPtr();
+                const LPath Path = Finder::GetSavesDir() / Name;
                 if (Saves::CreateNewSave(Path, Meta, &Error) == false)
                 {
                     LOG_ERROR(LogWidgets, "Failed to create new save entry. Reason: [{}].", Error)
@@ -422,7 +422,7 @@ Jafg::TWidgetFactoryHRegion<Jafg::WHRegion>* Jafg::WHostSessionScreen_New::AddMe
                 this->GetEngine()->Browse
                 (
                     static_cast<LWorld*>(this->GetOuter()),
-                    LString::SprintF("{}?Save={}", Name_LevelMyWorld.ToString(), Path)
+                    Lal::SprintF("{}?Save={}", Name_LevelMyWorld.ToString(), Path)
                 );
 
                 return;
@@ -436,7 +436,7 @@ void Jafg::WHostSessionScreen_New::OnLoad_General(WTabBar* TabBar, WNode* Button
     WVRegion* Region = DynamicCast<WVRegion>(Panel);
     jassert( Region )
 
-    check( Region->GetChildren().IsEmpty() )
+    check( Region->GetChildren().empty() )
 
     Region->SetAnchor(EAnchor::Fill);
     Region->SetPadding({25.0f});
@@ -459,18 +459,18 @@ void Jafg::WHostSessionScreen_New::OnLoad_General(WTabBar* TabBar, WNode* Button
 
     if (this->SessionName)
     {
-        SessionPath->SetContent(LString::SprintF("Path: {}/{}", Finder::GetSavesDir(), DEFAULT_SESSION_NAME));
+        SessionPath->SetContent(Lal::SprintF("Path: {}/{}", Finder::GetSavesDir(), DEFAULT_SESSION_NAME));
         this->SessionName->OnContentChanged.BindStrong([this, SessionPath](const LString& NewContent) -> void
         {
             if (IsValidFast(this->GetOuter(), SessionPath))
             {
-                if (NewContent.IsEmpty())
+                if (NewContent.empty())
                 {
-                    SessionPath->SetContent(LString::SprintF("Path: {}/{}", Finder::GetSavesDir(), DEFAULT_SESSION_NAME));
+                    SessionPath->SetContent(Lal::SprintF("Path: {}/{}", Finder::GetSavesDir(), DEFAULT_SESSION_NAME));
                 }
                 else
                 {
-                    SessionPath->SetContent(LString::SprintF("Path: {}/{}", Finder::GetSavesDir(), NewContent));
+                    SessionPath->SetContent(Lal::SprintF("Path: {}/{}", Finder::GetSavesDir(), NewContent));
                 }
             }
 
@@ -486,7 +486,7 @@ void Jafg::WHostSessionScreen_New::OnLoad_Multiplayer(WTabBar* TabBar, WNode* Bu
     WVRegion* Region = DynamicCast<WVRegion>(Panel);
     jassert( Region )
 
-    check( Region->GetChildren().IsEmpty() )
+    check( Region->GetChildren().empty() )
 
     Region->SetAnchor(EAnchor::Fill);
     Region->SetPadding(25.0f);
@@ -606,7 +606,7 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
                 .Anchor(EAnchor::VFill)
             +
             NewNode(WTextBox)
-                .Content(this->Save.Path.ToString())
+                .Content(this->Save.Path.generic_string())
                 .Brush(LTextBoxBrush::Body())
                 .TextColor(Lal::LColor::DarkerGray)
         ]
@@ -760,7 +760,7 @@ void Jafg::WHostSessionScreen_Old::RefetchSaves(const bool bResetHighlight /* = 
 
     this->RefetchSavesImpl();
 
-    if (this->FetchedSaves.IsEmpty())
+    if (this->FetchedSaves.empty())
     {
         WTextBox* Text;
         NewNode(WTextBox).SaveTo(&Text)
@@ -790,7 +790,7 @@ void Jafg::WHostSessionScreen_Old::RefetchSaves(const bool bResetHighlight /* = 
         continue;
     }
 
-    this->FetchedSaves.Empty();
+    algo::orphan(&this->FetchedSaves);
 
     return;
 }
@@ -816,13 +816,9 @@ void Jafg::WHostSessionScreen_Old::HighlightSave(WHostSessionScreen_Old_Save& Wh
         }
     }
 
-    const WHostSessionScreen_Old_Save* WhoPtr = &Who;
-    if (const TArray<LWidgetSlot*>::SizeType Idx { this->SavesRegion->GetChildren().FindIndexByPredicate([WhoPtr](const LWidgetSlot* Slot) -> bool
+    if (auto const It{algo::find(this->SavesRegion->GetChildren(), static_cast<WNode const*>(&Who), [](auto const& E){ return E->Content; }) }; It != this->SavesRegion->GetChildren().end())
     {
-        return Slot->Content == WhoPtr;
-    })}; Idx != this->SavesRegion->GetChildren().end_idx())
-    {
-        this->SelectedSaveIndex = Idx;
+        this->SelectedSaveIndex = algo::distance(this->SavesRegion->GetChildren(), It);
         if (this->DeleteButton)
         {
             this->DeleteButton->SetEnabled(true);
@@ -895,26 +891,26 @@ void Jafg::WHostSessionScreen_Old::HighlightNoSave(const bool bScrollUp /* = fal
 
 void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
 {
-    this->FetchedSaves.Reset(this->FetchedSaves.GetSize());
+    this->FetchedSaves.clear();
 
     TArray<LString> SavesPaths { Finder::GetSavesDir() };
-    SavesPaths.Append(GetDefault<JUserPreferences>()->AdditionalSavesSearchPaths);
+    SavesPaths.append_range(GetDefault<JUserPreferences>()->AdditionalSavesSearchPaths);
 
     TArray<LString> Candidats;
 
     for (const LString& SavePath: SavesPaths)
     {
-        if (const LPathView AsPath {SavePath.begin(), SavePath.end()}; Finder::DoesDirectoryExist(AsPath))
+        if (const LPath AsPath{ SavePath.begin(), SavePath.end() }; Finder::DoesDirectoryExist(AsPath))
         {
             for (TArray<LString> New = Finder::FindFilesRecursivelyByName(AsPath, "sqlite3.db"); LString& X : New)
             {
-                if (Candidats.Contains(X))
+                if (algo::contains(Candidats, X))
                 {
                     LOG_WARNING(LogStorage, "Found duplicate [{}].", X)
                     continue;
                 }
 
-                Candidats.Emplace(std::move(X));
+                Candidats.emplace_back(std::move(X));
                 continue;
             }
         }
@@ -925,10 +921,10 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
     for (LString& Candidat : Candidats)
     {
         LPath AsPath { std::move(Candidat) };
-        AsPath.ToParent();
+        AsPath = AsPath.parent_path();
 
         TOptional<LString> DisplayName = Saves::GetDisplayName(AsPath);
-        if (DisplayName.IsValid() == false)
+        if (DisplayName.has_value() == false)
         {
             LOG_ERROR(LogStorage, "Found corrupt save at [{}].", AsPath)
             continue;
@@ -937,7 +933,7 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
         LTexture2 Preview;
         Preview.LoadFromDisk(AsPath / "Thumbnail.png", ERawImageFormat::BGR8);
 
-        this->FetchedSaves.Emplace(std::move(AsPath), false, std::move(*DisplayName), "A description of this save.", std::move(Preview));
+        this->FetchedSaves.emplace_back(std::move(AsPath), false, std::move(*DisplayName), "A description of this save.", std::move(Preview));
 
         continue;
     }
@@ -1009,7 +1005,7 @@ void Jafg::WHostSessionScreen_Old_Host::UpdateToCachedSave()
     check( this->IsCachedSaveValid() )
 
     check( this->Header )
-    this->Header->SetContent(LString::SprintF("Hosting \"{}\"", this->Save.DisplayName));
+    this->Header->SetContent(Lal::SprintF("Hosting \"{}\"", this->Save.DisplayName));
 
     return;
 }
@@ -1052,7 +1048,7 @@ Jafg::TWidgetFactoryHRegion<Jafg::WHRegion>* Jafg::WHostSessionScreen_Old_Host::
                 this->GetEngine()->Browse
                 (
                     this->GetOuter()->AsWorld(),
-                    LString::SprintF("{}?Save={}", Name_LevelMyWorld.ToString(), this->Save.Path)
+                    Lal::SprintF("{}?Save={}", Name_LevelMyWorld.ToString(), this->Save.Path)
                 );
 
                 return;

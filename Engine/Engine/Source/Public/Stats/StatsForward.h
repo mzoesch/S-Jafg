@@ -56,7 +56,7 @@ namespace Jafg::Stats::Private
 struct LSession final
 {
     LString Name;
-    FORCEINLINE bool IsValid() const { return this->Name.IsEmpty() == false; }
+    FORCEINLINE bool IsValid() const { return this->Name.empty() == false; }
 };
 
 struct LThread final

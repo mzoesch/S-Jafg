@@ -33,7 +33,7 @@ public:
         InOther.Uuid = NoUuid;
         this->Identifier = std::move(InOther.Identifier);
         this->Help = std::move(InOther.Help);
-        check( InOther.Uuid == NoUuid && InOther.Identifier.IsEmpty() && InOther.Help.IsEmpty() )
+        check( InOther.Uuid == NoUuid && InOther.Identifier.empty() && InOther.Help.empty() )
         return;
     }
     FORCEINLINE LCliObject& operator=(LCliObject&& InOther) noexcept
@@ -42,7 +42,7 @@ public:
         InOther.Uuid = NoUuid;
         this->Identifier = std::move(InOther.Identifier);
         this->Help = std::move(InOther.Help);
-        check( InOther.Uuid == NoUuid && InOther.Identifier.IsEmpty() && InOther.Help.IsEmpty() )
+        check( InOther.Uuid == NoUuid && InOther.Identifier.empty() && InOther.Help.empty() )
         return *this;
     }
     virtual ~LCliObject() = default;

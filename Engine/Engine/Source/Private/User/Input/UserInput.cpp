@@ -47,47 +47,47 @@ Jafg::LLocalEgo* Jafg::LUserInput::GetLocalEgo() const
 
 const Jafg::LInputAction* Jafg::LUserInput::RegisterAction(LInputAction&& InAction)
 {
-    if (this->RegisteredActions.Contains(InAction.GetName()))
+    if (algo::contains(this->RegisteredActions, InAction.GetName(), &LInputAction::GetName))
     {
         LOG_WARNING(LogUserInput, "Action [{}] was already registered.", InAction.GetName())
         return nullptr;
     }
 
-    this->RegisteredActions.Emplace(Smart::EmplaceUnique<LInputAction>(std::move(InAction)));
+    this->RegisteredActions.emplace_back(std::make_unique<LInputAction>(std::move(InAction)));
 
-    return *this->RegisteredActions.GetLast();
+    return this->RegisteredActions.back().get();
 }
 
 Jafg::LUserInputContext* Jafg::LUserInput::RegisterContext(LUserInputContext&& Context, const bool bMakeActive /* = false */)
 {
-    if (this->RegisteredContexts.Contains(Context))
+    if (algo::contains(this->RegisteredContexts, Context, algo::unique_deref{}))
     {
         LOG_WARNING(LogUserInput, "Context [{}] was already registered.", Context.GetName())
         return nullptr;
     }
 
-    this->RegisteredContexts.Emplace(Smart::EmplaceUnique<LUserInputContext>(std::move(Context)));
+    this->RegisteredContexts.emplace_back(std::make_unique<LUserInputContext>(std::move(Context)));
 
     if (bMakeActive)
     {
-        this->ActiveContexts.Emplace(*this->RegisteredContexts.GetLast());
+        this->ActiveContexts.emplace_back(this->RegisteredContexts.back().get());
     }
 
-    return *this->RegisteredContexts.GetLast();
+    return this->RegisteredContexts.back().get();
 }
 
 bool Jafg::LUserInput::ActivateContext(LUserInputContext* InContext)
 {
     if (InContext)
     {
-        if (this->ActiveContexts.Contains(InContext))
+        if (algo::contains(this->ActiveContexts, InContext))
         {
             LOG_VERBOSE(LogUserInput, "Context [{}] is already active. Cannot activate.", InContext->GetName())
             return false;
         }
 
         LOG_VERBOSE(LogUserInput, "Activating context [{}].", InContext->GetName())
-        this->ActiveContexts.Emplace(InContext);
+        this->ActiveContexts.emplace_back(InContext);
         return true;
     }
 
@@ -98,14 +98,14 @@ bool Jafg::LUserInput::DeactivateContext(LUserInputContext* InContext)
 {
     if (InContext)
     {
-        if (this->ActiveContexts.Contains(InContext) == false)
+        if (algo::contains(this->ActiveContexts, InContext) == false)
         {
             LOG_VERBOSE(LogUserInput, "Context [{}] is not active. Cannot deactivate.", InContext->GetName())
             return false;
         }
 
         LOG_VERBOSE(LogUserInput, "Deactivating context [{}].", InContext->GetName())
-        const i32 Removed = this->ActiveContexts.Remove(InContext);
+        const i32 Removed = algo::erase(&this->ActiveContexts, InContext);
         check( Removed == 1 )
         return true;
     }
@@ -116,7 +116,7 @@ bool Jafg::LUserInput::DeactivateContext(LUserInputContext* InContext)
 
 i32 Jafg::LUserInput::DeactivateAllContexts(TArray<LUserInputContext*>* OutActiveContexts /* = nullptr */)
 {
-    const i32 Out = this->ActiveContexts.GetSize();
+    const auto Out { this->ActiveContexts.size() };
 
     if (OutActiveContexts)
     {
@@ -124,25 +124,25 @@ i32 Jafg::LUserInput::DeactivateAllContexts(TArray<LUserInputContext*>* OutActiv
     }
 
     LOG_VERBOSE(LogUserInput, "Deactivating all contexts [{}].", Out)
-    this->ActiveContexts.Empty();
-    return Out;
+    algo::orphan(&this->ActiveContexts);
+    return static_cast<i32>(Out);
 }
 
 void Jafg::LUserInput::PushContexts(const bool bEmpty /* = true */)
 {
     if (bEmpty)
     {
-        this->ContextStack.Emplace(std::move(this->ActiveContexts));
-        check( this->ActiveContexts.IsEmpty() )
+        this->ContextStack.emplace_back(std::move(this->ActiveContexts));
+        check( this->ActiveContexts.empty() )
     }
     else
     {
         TArray<LUserInputContext*> Ctx; Ctx = this->ActiveContexts;
-        this->ContextStack.Add(std::move(Ctx));
-        check( this->ContextStack.GetLast()->GetSize() == this->ActiveContexts.GetSize() )
+        this->ContextStack.emplace_back(std::move(Ctx));
+        check( this->ContextStack.back().size() == this->ActiveContexts.size() )
     }
 
-    LOG_VERBOSE(LogUserInput, "Pushed [{}] active contexts onto the stack.", this->ContextStack.GetLast()->GetSize())
+    LOG_VERBOSE(LogUserInput, "Pushed [{}] active contexts onto the stack.", this->ContextStack.back().size())
 
     return;
 }
@@ -151,7 +151,7 @@ bool Jafg::LUserInput::PopContexts()
 {
     bool bRet;
 
-    if (this->ContextStack.IsEmpty())
+    if (this->ContextStack.empty())
     {
         bRet = false;
     }
@@ -159,11 +159,11 @@ bool Jafg::LUserInput::PopContexts()
     {
         bRet = true;
 
-        this->ActiveContexts = std::move(*this->ContextStack.GetLast());
-        this->ContextStack.Pop();
+        this->ActiveContexts = std::move(this->ContextStack.back());
+        this->ContextStack.pop_back();
     }
 
-    LOG_VERBOSE(LogUserInput, "Popped [{}] active contexts from the stack.", this->ActiveContexts.GetSize())
+    LOG_VERBOSE(LogUserInput, "Popped [{}] active contexts from the stack.", this->ActiveContexts.size())
 
     return bRet;
 }
@@ -174,9 +174,9 @@ TArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
 
     for (const LRawInput& Key : this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys())
     {
-        if (this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetLastFramePressedKeys().Contains(Key) == false)
+        if (algo::contains(this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetLastFramePressedKeys(), Key) == false)
         {
-            TriggeredKeys.Emplace(Key);
+            TriggeredKeys.emplace_back(Key);
         }
 
         continue;
@@ -196,9 +196,9 @@ TArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
 
     for (const LRawInput& Key : this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetLastFramePressedKeys())
     {
-        if (this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys().Contains(Key) == false)
+        if (algo::contains(this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys(), Key) == false)
         {
-            CompletedKeys.Emplace(Key);
+            CompletedKeys.emplace_back(Key);
         }
 
         continue;
@@ -242,15 +242,15 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(TArray<LRawInput>* I
 
                 LInputActionValue Value = MappedAction.Action->GetCategory();
 
-                for (TArray<LRawInput>::SizeType Idx { 0 }; Idx < InRawInputs->GetSize();)
+                for (TArray<LRawInput>::size_type Idx { 0 }; Idx < InRawInputs->size();)
                 {
                     const LRawInput& RawInput = (*InRawInputs)[Idx];
 
                     LInputActionValue::Axis3D Magnitude;
 
-                    if (Trigger.Keys.Contains(RawInput.Key) == false)
+                    if (algo::contains(Trigger.Keys, RawInput.Key) == false)
                     {
-                        if (Trigger.Keys.Contains(EKeys::MouseXY) == false)
+                        if (algo::contains(Trigger.Keys, EKeys::MouseXY) == false)
                         {
                             ++Idx;
                             continue;
@@ -275,13 +275,13 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(TArray<LRawInput>* I
                         Magnitude = {RawInput.Value, 0.0f, 0.0f};
                     }
 
-                    for (const LInputActionMappedTriggerModifier* Modifier : Trigger.Modifiers)
+                    for (auto& Modifier : Trigger.Modifiers)
                     {
                         Magnitude = Modifier->ApplyModifier(Magnitude);
                     }
                     Value += Magnitude;
 
-                    InRawInputs->RemoveAt(Idx);
+                    InRawInputs->erase(InRawInputs->begin() + Idx);
 
                     continue;
                 }

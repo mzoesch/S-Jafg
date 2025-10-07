@@ -106,7 +106,7 @@ FORCEINLINE TArray<LChunkKey> JChunkGenerationSubsystem::GetCurrentActiveChunkSn
     {
         if (Snd->GetCurrentStateDangerous() == EChunkState::Active)
         {
-            Out.Add(Fst);
+            Out.push_back(Fst);
         }
     }
 

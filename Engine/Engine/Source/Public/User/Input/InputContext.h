@@ -28,10 +28,10 @@ struct LInputMappedAction
     struct LTrigger
     {
         LTrigger() = default;
-        LTrigger(LString&& InName, TArray<LKey>&& InDefaultKeys, const EInputActionTrigger::Type InType, TArray<Smart::TUnique<LInputActionMappedTriggerModifier>>&& InModifiers)
+        LTrigger(LString&& InName, TArray<LKey>&& InDefaultKeys, const EInputActionTrigger::Type InType, TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers)
             : Name(std::move(InName)), Keys(std::move(InDefaultKeys)), Type(InType), Modifiers(std::move(InModifiers)) { }
-        LTrigger(LString&& InName, const LKey InDefaultKey, const EInputActionTrigger::Type InType, TArray<Smart::TUnique<LInputActionMappedTriggerModifier>>&& InModifiers)
-            : Name(std::move(InName)), Keys(), Type(InType), Modifiers(std::move(InModifiers)) { this->Keys.Emplace(InDefaultKey); }
+        LTrigger(LString&& InName, const LKey InDefaultKey, const EInputActionTrigger::Type InType, TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers)
+            : Name(std::move(InName)), Keys(), Type(InType), Modifiers(std::move(InModifiers)) { this->Keys.emplace_back(InDefaultKey); }
 
         PROHIBIT_COPY(LTrigger)
         DEFAULT_MOVE(LTrigger)
@@ -40,11 +40,11 @@ struct LInputMappedAction
         LString Name;
         TArray<LKey> Keys;
         EInputActionTrigger::Type Type;
-        TArray<Smart::TUnique<LInputActionMappedTriggerModifier>> Modifiers;
+        TArray<TUnique<LInputActionMappedTriggerModifier>> Modifiers;
     };
 
     LInputMappedAction() = delete;
-    explicit LInputMappedAction(const LInputAction* InAction) : Action(InAction) { check( InAction ) }
+    explicit LInputMappedAction(const LInputAction* InAction) noexcept : Action(InAction) { check( InAction ) }
     DEFAULT_MOVE(LInputMappedAction)
     PROHIBIT_COPY(LInputMappedAction)
     ~LInputMappedAction() = default;
@@ -143,7 +143,7 @@ struct LUserInputContext final
         LString&& InName,
         const LKey InDefaultKey,
         const EInputActionTrigger::Type InActionTrigger,
-        TArray<Smart::TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
+        TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
         ObjTy* InObject,
         CallableTy InMember
     );
@@ -155,7 +155,7 @@ struct LUserInputContext final
         LString&& InName,
         const LKey InDefaultKey,
         const EInputActionTrigger::Type InActionTrigger,
-        TArray<Smart::TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
+        TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
         ObjTy* InObject,
         CallableTy InMember
     );
@@ -167,7 +167,7 @@ struct LUserInputContext final
         LString&& InName,
         const LKey InDefaultKey,
         const EInputActionTrigger::Type InActionTrigger,
-        TArray<Smart::TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
+        TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
         LUserInputActionCallback&& InCallback
     );
 
@@ -177,7 +177,7 @@ struct LUserInputContext final
         LString&& InName,
         const LKey InDefaultKey,
         const EInputActionTrigger::Type InActionTrigger,
-        TArray<Smart::TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
+        TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
         LUserInputActionCallback&& InCallback
     );
 
@@ -228,8 +228,7 @@ private:
 
 FORCEINLINE LInputMappedAction* LUserInputContext::FindMappedAction(const LName& InName)
 {
-    LInputMappedAction* Out = this->MappedActions.FindRef(InName);
-    return Out ? Out : nullptr;
+    return algo::wfind_pointer(this->MappedActions, InName);
 }
 
 FORCEINLINE LInputMappedAction* LUserInputContext::FindMappedActionChecked(const LName& InName)
@@ -248,8 +247,7 @@ FORCEINLINE LInputMappedAction* LUserInputContext::FindMappedActionAsserted(cons
 
 FORCEINLINE const LInputMappedAction* LUserInputContext::FindMappedAction(const LName& InName) const
 {
-    const LInputMappedAction* Out = this->MappedActions.FindRef(InName);
-    return Out ? Out : nullptr;
+    return algo::wfind_pointer(this->MappedActions, InName);
 }
 
 FORCEINLINE const LInputMappedAction* LUserInputContext::FindMappedActionChecked(const LName& InName) const
@@ -269,7 +267,7 @@ FORCEINLINE const LInputMappedAction* LUserInputContext::FindMappedActionAsserte
 FORCEINLINE LInputMappedAction* LUserInputContext::FindMappedAction(const LInputAction* InAction)
 {
     check( InAction )
-    LInputMappedAction* Out = this->MappedActions.FindRef(InAction);
+    LInputMappedAction* Out = algo::find_pointer(this->MappedActions, InAction, &LInputMappedAction::Action);
     return Out ? Out : nullptr;
 }
 
@@ -290,7 +288,7 @@ FORCEINLINE LInputMappedAction* LUserInputContext::FindMappedActionAsserted(cons
 FORCEINLINE const LInputMappedAction* LUserInputContext::FindMappedAction(const LInputAction* InAction) const
 {
     check( InAction )
-    const LInputMappedAction* Out = this->MappedActions.FindRef(InAction);
+    const LInputMappedAction* Out = algo::find_pointer(this->MappedActions, InAction, &LInputMappedAction::Action);
     return Out ? Out : nullptr;
 }
 
@@ -316,7 +314,7 @@ FORCEINLINE LInputMappedAction* LUserInputContext::MapAction
     LString&& InName,
     const LKey InDefaultKey,
     const EInputActionTrigger::Type InActionTrigger,
-    TArray<Smart::TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
+    TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
     ObjTy* InObject,
     CallableTy InMember
 )
@@ -331,7 +329,7 @@ FORCEINLINE LInputMappedAction* LUserInputContext::MapAction
     LString&& InName,
     const LKey InDefaultKey,
     const EInputActionTrigger::Type InActionTrigger,
-    TArray<Smart::TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
+    TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
     ObjTy* InObject,
     CallableTy InMember
 )
@@ -345,13 +343,13 @@ FORCEINLINE LInputMappedAction* LUserInputContext::MapAction
     LString&& InName,
     const LKey InDefaultKey,
     const EInputActionTrigger::Type InActionTrigger,
-    TArray<Smart::TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
+    TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
     LUserInputActionCallback&& InCallback
 )
 {
     LInputMappedAction* MappedAction = this->MapAction(InAction);
     check( MappedAction )
-    MappedAction->Triggers.Emplace(std::move(InName), InDefaultKey, InActionTrigger, std::move(InModifiers));
+    MappedAction->Triggers.emplace_back(std::move(InName), InDefaultKey, InActionTrigger, std::move(InModifiers));
     MappedAction->Callback = std::move(InCallback);
 
     return MappedAction;

@@ -19,7 +19,7 @@ void Jafg::APawn::Tick(const float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    this->CurrentGenericTraceResults.Empty();
+    algo::orphan(&this->CurrentGenericTraceResults);
     const LVector TraceStart = this->GetTranslation();
     const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
     this->GetWorld()->LineTraceByChannel
@@ -29,7 +29,7 @@ void Jafg::APawn::Tick(const float DeltaTime)
     );
 
     // Quick user feedback. Just temp.
-    if (this->CurrentGenericTraceResults.IsValidIndex(0) && this->CurrentGenericTraceResults[0].Actor->IsA<AChunk>())
+    if (algo::is_valid_index(this->CurrentGenericTraceResults, 0) && this->CurrentGenericTraceResults[0].Actor->IsA<AChunk>())
     {
         const LVoxelKey VKey = LVoxelKey::FromWorldSpace(this->CurrentGenericTraceResults[0].GlobalWorldLocation);
         this->GetWorld()->AddTemporalObject(LDebugTraceCube
@@ -155,7 +155,7 @@ void Jafg::APawn::OnOngoingSecondaryInput(LInputActionValue& InValue)
         if (AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
         {
             const JVoxelSubsystem* Vs = GEngine->GetCheckedSubsystem<JVoxelSubsystem>();
-            const LVoxelKey Key = HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal.GetValue() * 0.5f);
+            const LVoxelKey Key = HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal.value() * 0.5f);
             HitChunk->ModifySingleVoxelByNonZeroOrigin(Key, Vs->GetCheckedVoxelIndex("Stone"));
             break;
         }

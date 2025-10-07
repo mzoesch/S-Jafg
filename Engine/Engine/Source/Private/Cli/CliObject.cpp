@@ -22,7 +22,7 @@ void Jafg::LCliObject::ExpandToUuid()
     const LCliObject* Obj { GEngine->GetCommandLineInterface()->GetObjectAsserted(this->Identifier) };
 
     this->Uuid = Obj->Uuid;
-    this->Identifier.Empty();
+    algo::orphan(&this->Identifier);
 
     check( this->Uuid != LCliObject::NoUuid )
 

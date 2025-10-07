@@ -27,7 +27,7 @@ void MakeSphereVertices(const float InRadius, const i32 InSlices, const i32 InSt
             const float Theta = static_cast<float>(j) * 2.0f * LAL_PI / static_cast<float>(InSlices);
 
             // Longitude
-            OutLocations.Emplace(
+            OutLocations.emplace_back(
                 InRadius * Maths::Sin(Phi) * Maths::Cos(Theta),
                 InRadius * Maths::Sin(Phi) * Maths::Sin(Theta),
                 InRadius * Maths::Cos(Phi)
@@ -36,7 +36,7 @@ void MakeSphereVertices(const float InRadius, const i32 InSlices, const i32 InSt
             // Latitude
             if (i > 0)
             {
-                OutLocations.Emplace(
+                OutLocations.emplace_back(
                     InRadius * Maths::Sin(Phi - LAL_PI / static_cast<float>(InStacks)) * Maths::Cos(Theta),
                     InRadius * Maths::Sin(Phi - LAL_PI / static_cast<float>(InStacks)) * Maths::Sin(Theta),
                     InRadius * Maths::Cos(Phi - LAL_PI / static_cast<float>(InStacks))
@@ -86,8 +86,8 @@ void Jafg::LDebugTraceSphereShaderContext::Draw(const LViewport& Context, LGener
     glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
     glBufferData(
         GL_ARRAY_BUFFER,
-        static_cast<GLsizeiptr>(sizeof(LVector) * SphereVertices.GetSize()),
-        SphereVertices.GetDataPointer(),
+        static_cast<GLsizeiptr>(sizeof(LVector) * SphereVertices.size()),
+        SphereVertices.data(),
         GL_DYNAMIC_DRAW
     );
 
@@ -104,7 +104,7 @@ void Jafg::LDebugTraceSphereShaderContext::Draw(const LViewport& Context, LGener
     this->Program.SetMatrixUniform("Projection", Projection);
 
     glLineWidth(Args.Thickness);
-    glDrawArrays(GL_LINES, 0, SphereVertices.GetSize());
+    glDrawArrays(GL_LINES, 0, SphereVertices.size());
     glLineWidth(1); /* Reset */
 
     glBindVertexArray(0);

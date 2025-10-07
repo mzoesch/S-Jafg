@@ -45,7 +45,7 @@ private:
 
 public:
 
-    typedef Smart::TUnique<LCallableBase> LImpl;
+    typedef TUnique<LCallableBase> LImpl;
 
     FORCEINLINE constexpr TFunction() noexcept = default;
     FORCEINLINE constexpr TFunction(LNullptrTy) noexcept : Impl(nullptr) { }
@@ -61,17 +61,17 @@ public:
     template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     FORCEINLINE constexpr TFunction(TFunctor&& Functor) noexcept
     {
-        this->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableStrong<TFunctor>>(this, std::forward<TFunctor>(Functor));
+        this->Impl = TUnique<LCallableBase>{new LCallableStrong<TFunctor>(this, std::forward<TFunctor>(Functor))};
     }
     template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     FORCEINLINE constexpr TFunction(TFunctor* Functor) noexcept
     {
-        this->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableWeak<TFunctor>>(this, Functor);
+        this->Impl = TUnique<LCallableBase>{new LCallableWeak<TFunctor>(this, Functor)};
     }
     template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
     FORCEINLINE constexpr TFunction(TObj* Object, TMemberFunctor MemberFunctor) noexcept
     {
-        this->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableMember<TObj, TMemberFunctor>>(this, Object, MemberFunctor);
+        this->Impl = TUnique<LCallableBase>{new LCallableMember<TObj, TMemberFunctor>(this, Object, MemberFunctor)};
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -79,17 +79,17 @@ public:
     template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     FORCEINLINE void BindStrong(TFunctor&& Functor)
     {
-        this->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableStrong<TFunctor>>(this, std::forward<TFunctor>(Functor));
+        this->Impl = TUnique<LCallableBase>{new LCallableStrong<TFunctor>(this, std::forward<TFunctor>(Functor))};
     }
     template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     FORCEINLINE void BindWeak(TFunctor* Functor)
     {
-        this->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableWeak<TFunctor>>(this, Functor);
+        this->Impl = TUnique<LCallableBase>{new LCallableWeak<TFunctor>(this, Functor)};
     }
     template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
     FORCEINLINE void BindMember(TObj* Object, TMemberFunctor MemberFunctor)
     {
-        this->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableMember<TObj, TMemberFunctor>>(this, Object, MemberFunctor);
+        this->Impl = TUnique<LCallableBase>{new LCallableMember<TObj, TMemberFunctor>(this, Object, MemberFunctor)};
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -144,8 +144,8 @@ public:
 
     FORCEINLINE constexpr bool operator==(LNullptrTy) const noexcept { return this->IsValid() == false; }
 
-    FORCEINLINE constexpr void Reset() noexcept { this->Impl.Reset(); this->CopyImplDelegate = nullptr; }
-    FORCEINLINE constexpr bool IsValid() const noexcept { return this->Impl.IsValid(); }
+    FORCEINLINE constexpr void Reset() noexcept { this->Impl.reset(); this->CopyImplDelegate = nullptr; }
+    FORCEINLINE constexpr bool IsValid() const noexcept { return this->Impl.get() != nullptr; }
     FORCEINLINE constexpr bool IsCopyable() const noexcept { return this->IsValid() && this->CopyImplDelegate != nullptr; }
 
 private:
@@ -230,7 +230,7 @@ private:
             check( Base && OutFunction )
             const LCallableWeak* Weak { static_cast<const LCallableWeak*>(Base) };
 
-            OutFunction->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableWeak<TFunctor>>(OutFunction, Weak->Inner);
+            OutFunction->Impl = TUnique<LCallableBase>{ new LCallableWeak<TFunctor>(OutFunction, Weak->Inner) };
             check( OutFunction->IsValid() )
             check( OutFunction->IsCopyable() )
 
@@ -266,7 +266,7 @@ private:
             check( Base && OutFunction )
             const LCallableMember* Member { static_cast<const LCallableMember*>(Base) };
 
-            OutFunction->Impl = Smart::EmplaceUniqueOfType<LCallableBase, LCallableMember<TObj, TMemberFunctor>>(OutFunction, Member->Object, Member->MemberFunctor);
+            OutFunction->Impl = TUnique<LCallableBase>{new LCallableMember<TObj, TMemberFunctor>(OutFunction, Member->Object, Member->MemberFunctor)};
             check( OutFunction->IsValid() )
             check( OutFunction->IsCopyable() )
 
@@ -288,7 +288,7 @@ template <typename TRet, typename... TParams>
 FORCEINLINE constexpr TFunction<TRet(TParams...)>::TFunction(TFunction&& Other) noexcept
     : Impl(std::move(Other.Impl)), CopyImplDelegate(std::move(Other.CopyImplDelegate))
 {
-    check( Other.Impl.IsValid() == false )
+    check( Other.Impl.get() == nullptr )
 }
 
 template <typename TRet, typename... TParams>
@@ -297,7 +297,7 @@ FORCEINLINE constexpr TFunction<TRet(TParams...)>& TFunction<TRet(TParams...)>::
     this->Impl = std::move(Other.Impl);
     this->CopyImplDelegate = Other.CopyImplDelegate;
 
-    check( Other.Impl.IsValid() == false )
+    check( Other.Impl.get() == nullptr )
 
     return *this;
 }
@@ -312,7 +312,7 @@ FORCEINLINE void TFunction<TRet(TParams...)>::CopyImpl(const TFunction& Other) n
     }
 
     jassert( Other.IsCopyable() )
-    Other.CopyImplDelegate(Other.Impl.GetPointer(), this);
+    Other.CopyImplDelegate(Other.Impl.get(), this);
 
     return;
 }

@@ -106,6 +106,10 @@ FORCEINLINE auto GetCurrentThreadNameChecked() -> ENamedThreads::Type;
 FORCEINLINE auto GetCurrentThreadNameAsserted() -> ENamedThreads::Type;
 ENGINE_API  auto GetCurrentThreadId() -> LThreadId;
 
+ENGINE_API  bool HasThread(const ENamedThreads::Type InThreadName);
+FORCEINLINE bool HasMasterThread() { return HasThread(ENamedThreads::Master); }
+FORCEINLINE bool HasRendererThread() { return HasThread(ENamedThreads::Renderer); }
+
 ENGINE_API  bool IsOnThread(const ENamedThreads::Type InThreadName);
 FORCEINLINE bool IsOnMasterThread() { return IsOnThread(ENamedThreads::Master); }
 FORCEINLINE bool IsOnRendererThread() { return IsOnThread(ENamedThreads::Renderer); }

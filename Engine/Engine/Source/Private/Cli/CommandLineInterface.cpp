@@ -13,9 +13,9 @@ Jafg::LCommandLineInterface* Jafg::LCliObjectHandle::GetCommandLineInterface() c
 
 void Jafg::LCommandLineInterface::TearDown()
 {
-    LOG_VERBOSE(LogCli, "Tearing down command line interface with [{}] commands.", this->Commands.GetSize())
+    LOG_VERBOSE(LogCli, "Tearing down command line interface with [{}] commands.", this->Commands.size())
     this->UuidCursor = 0;
-    this->Commands.Empty();
+    algo::orphan(&this->Commands);
 
     return;
 }
@@ -25,17 +25,10 @@ void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandE
     check( OutResponse )
 
     const LString CommandStr = CliStatics::GetCommandFromText(InCommandLine);
-    if (CommandStr.IsEmpty())
+    if (CommandStr.empty())
     {
         OutResponse->Rc = ECommandReturnCode::Failure;
         OutResponse->StdErr = "Failed to extract command from input";
-        return;
-    }
-
-    if (Str::IsValidAscii(CommandStr.ToPtr()) == false)
-    {
-        OutResponse->Rc = ECommandReturnCode::Failure;
-        OutResponse->StdErr = "Command contains invalid characters";
         return;
     }
 
@@ -43,14 +36,14 @@ void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandE
     if (Cmd == nullptr)
     {
         OutResponse->Rc = ECommandReturnCode::Unknown;
-        OutResponse->StdErr = LString::SprintF("No such command [{}]", CommandStr);
+        OutResponse->StdErr = Lal::SprintF("No such command [{}]", CommandStr);
         return;
     }
 
     if (Cmd->GetOverloadCount() == 0)
     {
         OutResponse->Rc = ECommandReturnCode::Failure;
-        OutResponse->StdErr = LString::SprintF("Command [{}] has no overloads and is therefore not invokable", CommandStr);
+        OutResponse->StdErr = Lal::SprintF("Command [{}] has no overloads and is therefore not invokable", CommandStr);
         return;
     }
 
@@ -77,15 +70,9 @@ void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandE
 TArray<LString> Jafg::LCommandLineInterface::GetCommonSuggestions(const LString& InCommandLine, const u32 MaxSuggestions) const
 {
     const LString CommandStr = CliStatics::GetCommandFromText(InCommandLine);
-    if (CommandStr.IsEmpty())
+    if (CommandStr.empty())
     {
         LOG_ERROR(LogCli, "Failed to extract command from input");
-        return { };
-    }
-
-    if (Str::IsValidAscii(CommandStr.ToPtr()) == false)
-    {
-        LOG_ERROR(LogCli, "Command contains invalid characters" );
         return { };
     }
 
@@ -108,12 +95,12 @@ TArray<LString> Jafg::LCommandLineInterface::GetCommonSuggestions(const LString&
     const LCommandArgs Args { CliStatics::TokenizeCommand(std::move(ChoppedArgs)) };
     for (const LCommandParams& Overloads : Cmd->GetOverloads())
     {
-        if (Out.GetSize() >= MaxSuggestions)
+        if (Out.size() >= MaxSuggestions)
         {
             break;
         }
 
-        Out.Append(Overloads.GetCommonSuggestions(Args, MaxSuggestions - Out.GetSize(), InCommandLine.EndsWith(' ')));
+        Out.append_range(Overloads.GetCommonSuggestions(Args, MaxSuggestions - Out.size(), InCommandLine.ends_with(' ')));
 
         continue;
     }
@@ -127,7 +114,7 @@ Jafg::LCliTypeHandle Jafg::LCommandLineInterface::RegisterType(LCliType&& InType
     LOG_VERBOSE(LogCli, "Registering type [{}].", InType.GetIdentifier())
     check( InType.Uuid == LCliObject::NoUuid )
 
-    if (InType.Identifier.IsEmpty())
+    if (InType.Identifier.empty())
     {
         LOG_ERROR(LogCli, "Failed to register type. Identifier is empty.")
         return { };
@@ -139,7 +126,7 @@ Jafg::LCliTypeHandle Jafg::LCommandLineInterface::RegisterType(LCliType&& InType
     }
 
     InType.Uuid = ++this->UuidCursor;
-    this->Types.Emplace(std::move(InType));
+    this->Types.emplace_back(std::move(InType));
 
     Algo::SortQuick(&this->Types);
 
@@ -157,13 +144,10 @@ bool Jafg::LCommandLineInterface::UnregisterType(LCliTypeHandle* InHandle)
         return false;
     }
 
-    if (const TArray<LCliVariable>::SizeType Idx { this->Types.FindIndexByPredicate([InHandle](const LCliType& Type)
+    if (auto It { algo::find(this->Types, InHandle->Uuid, &LCliType::Uuid) }; It != this->Types.end())
     {
-        return Type.Uuid == InHandle->Uuid;
-    })}; Idx != this->Types.end_idx())
-    {
-        LOG_VERBOSE(LogCli, "Unregistering type [{}].", this->Types[Idx].GetIdentifier())
-        this->Types.RemoveAt(Idx);
+        LOG_VERBOSE(LogCli, "Unregistering type [{}].", It->GetIdentifier())
+        this->Types.erase(It);
         InHandle->Reset();
         return true;
     }
@@ -178,7 +162,7 @@ Jafg::LCliCommandHandle Jafg::LCommandLineInterface::RegisterCommand(LCliCommand
     LOG_VERBOSE(LogCli, "Registering command [{}].", InCommand.GetIdentifier())
     check( InCommand.Uuid == LCliObject::NoUuid )
 
-    if (InCommand.Identifier.IsEmpty())
+    if (InCommand.Identifier.empty())
     {
         LOG_ERROR(LogCli, "Failed to register command. Identifier is empty.")
         return { };
@@ -190,7 +174,7 @@ Jafg::LCliCommandHandle Jafg::LCommandLineInterface::RegisterCommand(LCliCommand
     }
 
     InCommand.Uuid = ++this->UuidCursor;
-    this->Commands.Emplace(std::move(InCommand));
+    this->Commands.emplace_back(std::move(InCommand));
 
     Algo::SortQuick(&this->Commands);
 
@@ -207,13 +191,10 @@ bool Jafg::LCommandLineInterface::UnregisterCommand(LCliCommandHandle* InHandle)
         return false;
     }
 
-    if (const TArray<LCliVariable>::SizeType Idx { this->Commands.FindIndexByPredicate([InHandle](const LCliCommand& Command)
+    if (auto It { algo::find(this->Commands, InHandle->Uuid, &LCliCommand::Uuid) }; It != this->Commands.end())
     {
-        return Command.Uuid == InHandle->Uuid;
-    })}; Idx != this->Commands.end_idx())
-    {
-        LOG_VERBOSE(LogCli, "Unregistering command [{}].", this->Commands[Idx].GetIdentifier())
-        this->Commands.RemoveAt(Idx);
+        LOG_VERBOSE(LogCli, "Unregistering command [{}].", It->GetIdentifier())
+        this->Commands.erase(It);
         InHandle->Reset();
         return true;
     }
@@ -228,7 +209,7 @@ Jafg::LCliVariableHandle Jafg::LCommandLineInterface::RegisterVariable(LCliVaria
     LOG_VERBOSE(LogCli, "Registering variable [{}].", InVariable.GetIdentifier())
     check( InVariable.Uuid == LCliObject::NoUuid )
 
-    if (InVariable.Identifier.IsEmpty())
+    if (InVariable.Identifier.empty())
     {
         LOG_ERROR(LogCli, "Failed to register variable. Identifier is empty.")
         return { };
@@ -240,7 +221,7 @@ Jafg::LCliVariableHandle Jafg::LCommandLineInterface::RegisterVariable(LCliVaria
     }
 
     InVariable.Uuid = ++this->UuidCursor;
-    this->Variables.Emplace(std::move(InVariable));
+    this->Variables.emplace_back(std::move(InVariable));
 
     Algo::SortQuick(&this->Variables);
 
@@ -257,13 +238,10 @@ bool Jafg::LCommandLineInterface::UnregisterVariable(LCliVariableHandle* InHandl
         return false;
     }
 
-    if (const TArray<LCliVariable>::SizeType Idx { this->Variables.FindIndexByPredicate([InHandle](const LCliVariable& Variable)
+    if (auto It { algo::find(this->Variables, InHandle->Uuid, &LCliVariable::Uuid) }; It != this->Variables.end())
     {
-        return Variable.Uuid == InHandle->Uuid;
-    })}; Idx != this->Variables.end_idx())
-    {
-        LOG_VERBOSE(LogCli, "Unregistering variable [{}].", this->Variables[Idx].GetIdentifier())
-        this->Variables.RemoveAt(Idx);
+        LOG_VERBOSE(LogCli, "Unregistering variable [{}].", It->GetIdentifier())
+        this->Variables.erase(It);
         InHandle->Reset();
         return true;
     }

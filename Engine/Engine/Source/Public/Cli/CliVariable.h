@@ -33,9 +33,9 @@ public:
     : Type(std::move(InOther.Type)), Value(std::move(InOther.Value)), OnVariableChangedDelegate(std::move(InOther.OnVariableChangedDelegate))
     {
         this->LCliObject::operator=(std::move(InOther));
-        check( InOther.GetUuid() == LCliObject::NoUuid && InOther.GetIdentifier().IsEmpty() && InOther.GetHelp().IsEmpty() )
-        check( InOther.Type.GetDefault().IsEmpty() && InOther.Type.IsTypeDelegateValid() == false && InOther.Type.IsValueSetDelegateValid() == false )
-        check( InOther.Value.IsEmpty() && InOther.OnVariableChangedDelegate.IsValid() == false )
+        check( InOther.GetUuid() == LCliObject::NoUuid && InOther.GetIdentifier().empty() && InOther.GetHelp().empty() )
+        check( InOther.Type.GetDefault().empty() && InOther.Type.IsTypeDelegateValid() == false && InOther.Type.IsValueSetDelegateValid() == false )
+        check( InOther.Value.empty() && InOther.OnVariableChangedDelegate.IsValid() == false )
 
         return;
     }
@@ -46,9 +46,9 @@ public:
         this->OnVariableChangedDelegate = std::move(InOther.OnVariableChangedDelegate);
 
         this->LCliObject::operator=(std::move(InOther));
-        check( InOther.GetUuid() == LCliObject::NoUuid && InOther.GetIdentifier().IsEmpty() && InOther.GetHelp().IsEmpty() )
-        check( InOther.Type.GetDefault().IsEmpty() && InOther.Type.IsTypeDelegateValid() == false && InOther.Type.IsValueSetDelegateValid() == false )
-        check( InOther.Value.IsEmpty() && InOther.OnVariableChangedDelegate.IsValid() == false )
+        check( InOther.GetUuid() == LCliObject::NoUuid && InOther.GetIdentifier().empty() && InOther.GetHelp().empty() )
+        check( InOther.Type.GetDefault().empty() && InOther.Type.IsTypeDelegateValid() == false && InOther.Type.IsValueSetDelegateValid() == false )
+        check( InOther.Value.empty() && InOther.OnVariableChangedDelegate.IsValid() == false )
 
         return *this;
     }

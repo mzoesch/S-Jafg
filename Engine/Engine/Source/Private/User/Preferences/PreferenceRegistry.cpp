@@ -2,21 +2,18 @@
 
 #include "User/Preferences/PreferenceRegistry.h"
 
-void Jafg::JPreferenceRegistry::AddTopLevelPreference(Smart::TUnique<LPreference>&& InPreference)
+void Jafg::JPreferenceRegistry::AddTopLevelPreference(TUnique<LPreference>&& InPreference)
 {
-    jassert( InPreference.IsValid() )
+    jassert( InPreference.get() )
 
-    if (this->Preferences.ContainsByPredicate([&InPreference](const Smart::TUnique<LPreference>& Preference)
-    {
-        return Preference->GetName() == InPreference->GetName();
-    }))
+    if (algo::contains(this->Preferences, InPreference->GetName(), [](auto const& E){ return E->GetName(); }))
     {
         panicMsgf( "Cannot add duplicate preference [{}::{}].", InPreference->GetName().ToString(), InPreference->GetDisplayName())
         return;
     }
 
-    this->Preferences.Add(std::move(InPreference));
-    checkSlow( InPreference.IsValid() == false )
+    this->Preferences.emplace_back(std::move(InPreference));
+    checkSlow( InPreference.get() == nullptr )
 
     return;
 }

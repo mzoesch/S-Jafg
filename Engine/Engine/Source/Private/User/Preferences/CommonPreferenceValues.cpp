@@ -23,7 +23,7 @@ void Jafg::LPreferenceValue_Scalar::ResetToInitial()
 
 LString Jafg::LPreferenceValue_Scalar::Fmt_Raw(const double Value)
 {
-    return LString::SprintF("{}", Value);
+    return Lal::SprintF("{}", Value);
 }
 
 LString Jafg::LPreferenceValue_Scalar::Fmt_ZeroToOneAsPercent(const double Value)
@@ -34,7 +34,7 @@ LString Jafg::LPreferenceValue_Scalar::Fmt_ZeroToOneAsPercent(const double Value
         return "ERROR";
     }
 
-    return LString::SprintF("{}%", static_cast<i32>(Maths::Round(LAL_TO_PERCENT * Value)));
+    return Lal::SprintF("{}%", static_cast<i32>(Maths::Round(LAL_TO_PERCENT * Value)));
 }
 
 void Jafg::LPreferenceValue_Scalar::BuildDefault(const LPreference* Self, WParentBase* Target)
@@ -43,7 +43,7 @@ void Jafg::LPreferenceValue_Scalar::BuildDefault(const LPreference* Self, WParen
 
     WParentBase* Container;
 
-    const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().GetSize() % 2 == 0 ? 1.8 : 1));
+    const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().size() % 2 == 0 ? 1.8 : 1));
 
     NewNodeCtx(Target, WHRegion).SaveTo(&Container)
         .Anchor(EAnchor::HFill)
@@ -102,10 +102,10 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
 
     WParentBase* Container;
 
-    const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().GetSize() % 2 == 0 ? 1.8 : 1));
+    const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().size() % 2 == 0 ? 1.8 : 1));
 
     const LInputAction* Action = GEngine->GetLocalEgo()->GetUserInput()->GetActionByNameChecked(Self->GetName());
-    const TArray<Smart::TUnique<LUserInputContext>>& Contexts = GEngine->GetLocalEgo()->GetUserInput()->GetRegisteredContexts();
+    const TArray<TUnique<LUserInputContext>>& Contexts = GEngine->GetLocalEgo()->GetUserInput()->GetRegisteredContexts();
 
     NewNodeCtx(Target, WVRegion).SaveTo(&Container)
         .Anchor(EAnchor::HFill)
@@ -130,7 +130,7 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
     ]
     ;
 
-    for (const LUserInputContext* Context: Contexts)
+    for (auto& Context: Contexts)
     {
         const LInputMappedAction* MappedAction = Context->FindMappedAction(Action);
         if (MappedAction == nullptr)
@@ -138,7 +138,7 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
             continue;
         }
 
-        if (MappedAction->Triggers.IsEmpty())
+        if (MappedAction->Triggers.empty())
         {
             LOG_WARNING(LogPreferences, "Mapped action [{}] has no triggers.", Action->GetName())
             continue;
@@ -162,7 +162,7 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
             return;
         };
 
-        if (MappedAction->Triggers.GetSize() == 1)
+        if (MappedAction->Triggers.size() == 1)
         {
             WHRegion* ContextContainer;
             NewNodeCtx(Target, WHRegion).SaveTo(&ContextContainer)
@@ -179,7 +179,7 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
             ;
 
             const LInputTrigger& Trigger = MappedAction->Triggers[0];
-            check( Trigger.Name.IsEmpty() )
+            check( Trigger.Name.empty() )
 
             AddKeys(ContextContainer, Trigger.Keys);
 

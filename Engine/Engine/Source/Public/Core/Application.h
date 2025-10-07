@@ -36,7 +36,7 @@ struct LProgramArgument
     TOptional<LString> Value;
     TOptional<TArray<LString>> Values;
 
-    FORCEINLINE constexpr bool HasValue() const noexcept { return Value.IsValid(); }
+    FORCEINLINE constexpr bool HasValue() const noexcept { return Value.has_value(); }
 };
 
 namespace Private

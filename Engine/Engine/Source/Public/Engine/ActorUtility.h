@@ -99,7 +99,7 @@ FORCEINLINE AActor* Private::LWorldMiscellaneousAccessor::SpawnActorWeak(LWorld*
 
     if (Actor->CanEverTick())
     {
-        InContext->TickableObjects.Add(Actor);
+        InContext->TickableObjects.push_back(Actor);
     }
 
     return Actor;
@@ -108,7 +108,7 @@ FORCEINLINE AActor* Private::LWorldMiscellaneousAccessor::SpawnActorWeak(LWorld*
 FORCEINLINE AActor* Private::LWorldMiscellaneousAccessor::SpawnDeferredActor(LWorld* InContext, const LObjectClass* InStaticClass)
 {
     AActor* Actor = SpawnActorWeak(InContext, InStaticClass);
-    InContext->Actors.Add(Actor);
+    InContext->Actors.push_back(Actor);
     return Actor;
 }
 

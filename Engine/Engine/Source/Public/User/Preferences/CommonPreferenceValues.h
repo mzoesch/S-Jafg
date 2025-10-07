@@ -35,7 +35,7 @@ public:
     FORCEINLINE auto GetInitialF() const -> f32 { return static_cast<f32>(this->Initial); }
     FORCEINLINE auto GetInitial() const -> f64 { return this->Initial; }
 
-    FORCEINLINE bool IsDefaultValueValid() const { return this->Default.IsValid(); }
+    FORCEINLINE bool IsDefaultValueValid() const { return this->Default.has_value(); }
     FORCEINLINE void SetDefaultValue(const f32  InValue) { this->SetDefaultValue(static_cast<f64>(InValue)); }
     FORCEINLINE void SetDefaultValue(const f64 InValue) { this->Default = InValue; }
     FORCEINLINE auto GetDefaultValueF() const -> TOptional<f32>;
@@ -43,12 +43,12 @@ public:
     FORCEINLINE void SetMinimum(const f32  InValue) { this->SetMinimum(static_cast<f64>(InValue)); }
 
     FORCEINLINE void SetMinimum(const f64 InValue) { this->Minimum = InValue; }
-    FORCEINLINE bool IsMinimumValid() const { return this->Minimum.IsValid(); }
+    FORCEINLINE bool IsMinimumValid() const { return this->Minimum.has_value(); }
     FORCEINLINE auto GetMinimumF() const -> TOptional<f32>;
     FORCEINLINE auto GetMinimum() const -> TOptional<f64> { return this->Minimum; }
     FORCEINLINE void SetMaximum(const f32  InValue) { this->SetMaximum(static_cast<f64>(InValue)); }
     FORCEINLINE void SetMaximum(const f64 InValue) { this->Maximum = InValue; }
-    FORCEINLINE bool IsMaximumValid() const { return this->Maximum.IsValid(); }
+    FORCEINLINE bool IsMaximumValid() const { return this->Maximum.has_value(); }
     FORCEINLINE auto GetMaximumF() const -> TOptional<f32>;
     FORCEINLINE auto GetMaximum() const -> TOptional<f64> { return this->Maximum; }
 
@@ -113,31 +113,31 @@ public:
 
 } /* ~Namespace Jafg */
 
-Jafg::TOptional<f32> Jafg::LPreferenceValue_Scalar::GetDefaultValueF() const
+TOptional<f32> Jafg::LPreferenceValue_Scalar::GetDefaultValueF() const
 {
-    if (this->Default.IsValid())
+    if (this->Default.has_value())
     {
-        return static_cast<f32>(this->Default.GetValue());
+        return static_cast<f32>(this->Default.value());
     }
 
     return { };
 }
 
-Jafg::TOptional<f32> Jafg::LPreferenceValue_Scalar::GetMinimumF() const
+TOptional<f32> Jafg::LPreferenceValue_Scalar::GetMinimumF() const
 {
-    if (this->Minimum.IsValid())
+    if (this->Minimum.has_value())
     {
-        return static_cast<f32>(this->Minimum.GetValue());
+        return static_cast<f32>(this->Minimum.value());
     }
 
     return { };
 }
 
-Jafg::TOptional<f32> Jafg::LPreferenceValue_Scalar::GetMaximumF() const
+TOptional<f32> Jafg::LPreferenceValue_Scalar::GetMaximumF() const
 {
-    if (this->Maximum.IsValid())
+    if (this->Maximum.has_value())
     {
-        return static_cast<f32>(this->Maximum.GetValue());
+        return static_cast<f32>(this->Maximum.value());
     }
 
     return { };

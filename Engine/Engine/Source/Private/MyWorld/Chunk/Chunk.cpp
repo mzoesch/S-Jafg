@@ -81,8 +81,8 @@ void Jafg::AChunk::EndLife()
     Super::EndLife();
 
     this->SharedArgs = nullptr;
-    this->Mesher.Reset();
-    this->RawVoxelData.Reset();
+    this->Mesher.reset();
+    this->RawVoxelData.reset();
 
     return;
 }
@@ -279,10 +279,10 @@ void Jafg::AChunk::Shape()
 
     check( this->HuntedState == EChunkState::Shaped )
 
-    check( this->RawVoxelData.IsValid() == false )
-    this->RawVoxelData = Smart::TUnique<voxel_t[]>{ new voxel_t[MwStatics::ChunkSizeCubed] };
+    check( this->RawVoxelData.get() == nullptr )
+    this->RawVoxelData = TUnique<voxel_t[]>{ new voxel_t[MwStatics::ChunkSizeCubed] };
 
-    ChunkGenerator::ShapeChunk(this->SharedArgs, this->ChunkKey, this->RawVoxelData.GetPointerChecked());
+    ChunkGenerator::ShapeChunk(this->SharedArgs, this->ChunkKey, this->RawVoxelData.get());
 
     return;
 }
@@ -294,7 +294,7 @@ void Jafg::AChunk::ReplaceSurface()
     check( Tasks::IsOnMasterThread() == false )
 
     check( this->HuntedState == EChunkState::SurfaceReplaced )
-    ChunkGenerator::ReplaceSurface(this->SharedArgs, this->ChunkKey, this, this->RawVoxelData);
+    ChunkGenerator::ReplaceSurface(this->SharedArgs, this->ChunkKey, this, this->RawVoxelData.get());
     return;
 }
 
@@ -337,37 +337,37 @@ void Jafg::AChunk::RegenerateNeighboringMeshes() const
 
     if (this->NNorth && this->NNorth->GetCurrentStateDangerous() == EChunkState::Active)
     {
-        check( this->NNorth->Mesher.IsValid() )
+        check( this->NNorth->Mesher.get() != nullptr )
         this->NNorth->Mesher->RegenerateProceduralMesh(Vs, Ms);
     }
 
     if (this->NEast && this->NEast->GetCurrentStateDangerous() == EChunkState::Active)
     {
-        check( this->NEast->Mesher.IsValid() )
+        check( this->NEast->Mesher.get() != nullptr )
         this->NEast->Mesher->RegenerateProceduralMesh(Vs, Ms);
     }
 
     if (this->NSouth && this->NSouth->GetCurrentStateDangerous() == EChunkState::Active)
     {
-        check( this->NSouth->Mesher.IsValid() )
+        check( this->NSouth->Mesher.get() != nullptr )
         this->NSouth->Mesher->RegenerateProceduralMesh(Vs, Ms);
     }
 
     if (this->NWest && this->NWest->GetCurrentStateDangerous() == EChunkState::Active)
     {
-        check( this->NWest->Mesher.IsValid() )
+        check( this->NWest->Mesher.get() != nullptr )
         this->NWest->Mesher->RegenerateProceduralMesh(Vs, Ms);
     }
 
     if (this->NUp && this->NUp->GetCurrentStateDangerous() == EChunkState::Active)
     {
-        check( this->NUp->Mesher.IsValid() )
+        check( this->NUp->Mesher.get() != nullptr )
         this->NUp->Mesher->RegenerateProceduralMesh(Vs, Ms);
     }
 
     if (this->NDown && this->NDown->GetCurrentStateDangerous() == EChunkState::Active)
     {
-        check( this->NDown->Mesher.IsValid() )
+        check( this->NDown->Mesher.get() != nullptr )
         this->NDown->Mesher->RegenerateProceduralMesh(Vs, Ms);
     }
 

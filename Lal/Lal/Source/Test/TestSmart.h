@@ -4,6 +4,8 @@
 
 #include "TestInclude.h"
 
+#if TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS
+
 namespace Jafg::Testing::Smart
 {
 
@@ -70,3 +72,5 @@ TEST_CASE(SmartUniqueOperations, "Lal.Smart")
 
     return;
 }
+
+#endif /* TESTER_DO_INCLUDE_LEGACY_UNIT_TESTS */

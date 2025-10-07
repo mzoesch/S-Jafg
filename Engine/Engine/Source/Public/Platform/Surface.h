@@ -75,9 +75,9 @@ public:
     FORCEINLINE void AddKeyDown(const LKey InKey);
     FORCEINLINE void AddKeyDown(const LKey InKey, const f32 InValue);
     FORCEINLINE void AddKeyDown(const LRawInput& InRawInput);
-    FORCEINLINE void AddVirtualKeyDown(const LKey InKey) { this->VirtualInput.Emplace(InKey); }
-    FORCEINLINE void AddVirtualKeyDown(const LKey InKey, const float InValue) { this->VirtualInput.Emplace(InKey, InValue); }
-    FORCEINLINE void AddVirtualKeyDown(const LRawInput& InRawInput) { this->VirtualInput.Emplace(InRawInput); }
+    FORCEINLINE void AddVirtualKeyDown(const LKey InKey) { this->VirtualInput.emplace_back(InKey); }
+    FORCEINLINE void AddVirtualKeyDown(const LKey InKey, const float InValue) { this->VirtualInput.emplace_back(InKey, InValue); }
+    FORCEINLINE void AddVirtualKeyDown(const LRawInput& InRawInput) { this->VirtualInput.emplace_back(InRawInput); }
     FORCEINLINE auto GetCurrentlyPressedKeys()       ->       TArray<LRawInput>& { return this->DownKeys;          }
     FORCEINLINE auto GetCurrentlyPressedKeys() const -> const TArray<LRawInput>& { return this->DownKeys;          }
     FORCEINLINE auto GetLastFramePressedKeys()       ->       TArray<LRawInput>& { return this->LastFrameDownKeys; }
@@ -85,7 +85,7 @@ public:
     FORCEINLINE auto GetVirtualInput()       ->       TArray<LRawInput>& { return this->VirtualInput; }
     FORCEINLINE auto GetVirtualInput() const -> const TArray<LRawInput>& { return this->VirtualInput; }
     //# @return Whether the key is currently down.
-    FORCEINLINE bool IsKeyDown(const LKey InKey) const { return this->GetCurrentlyPressedKeys().Contains(InKey); }
+    FORCEINLINE bool IsKeyDown(const LKey InKey) const { return algo::contains(this->GetCurrentlyPressedKeys(), InKey, &LRawInput::Key); }
     FORCEINLINE bool IsKeyDown(const LRawInput& InRawInput) const { return this->IsKeyDown(InRawInput.Key); }
     //# @return Whether the key was just downed this frame.
     FORCEINLINE bool IsNewKeyDown(const LKey InKey) const;
@@ -94,7 +94,7 @@ public:
     FORCEINLINE bool IsKeyUp(const LKey InKey) const;
     FORCEINLINE bool IsKeyUp(const LRawInput& InRawInput) const { return this->IsKeyUp(InRawInput.Key); }
 
-    FORCEINLINE bool HasBufferedPlatformInput() const { return this->PlatformInput.IsEmpty() == false; }
+    FORCEINLINE bool HasBufferedPlatformInput() const { return this->PlatformInput.empty() == false; }
     FORCEINLINE const TArray<LString>& GetBufferedPlatformInput() const { return this->PlatformInput; }
     FORCEINLINE LString GetBufferedPlatformInputAsStr() const;
 
@@ -103,9 +103,9 @@ public:
 
 protected:
 
-    FORCEINLINE void AddBufferedPlatformInput(const char* InInput) { this->PlatformInput.Emplace(InInput); }
-    FORCEINLINE void AddBufferedPlatformInput(const LString& InInput) { this->PlatformInput.Emplace(InInput); }
-    FORCEINLINE void AddBufferedPlatformInput(LString&& InInput) { this->PlatformInput.Emplace(std::move(InInput)); }
+    FORCEINLINE void AddBufferedPlatformInput(const char* InInput) { this->PlatformInput.emplace_back(InInput); }
+    FORCEINLINE void AddBufferedPlatformInput(const LString& InInput) { this->PlatformInput.emplace_back(InInput); }
+    FORCEINLINE void AddBufferedPlatformInput(LString&& InInput) { this->PlatformInput.emplace_back(std::move(InInput)); }
 
 #if PLATFORM_LINUX
     FORCEINLINE void SetPlatformSupportsRepeatedKey(const bool bInSupportsRepeatedKey) noexcept { this->bPlatformSupportsRepeatedKeyDown = bInSupportsRepeatedKey; }
@@ -181,22 +181,22 @@ private:
 
 void Jafg::LSurfaceBase::AddKeyDown(const LKey InKey)
 {
-    check( this->DownKeys.FindRef(InKey) == nullptr )
-    this->DownKeys.Emplace(InKey);
+    check( algo::find_pointer(this->DownKeys, InKey, &LRawInput::Key) == nullptr )
+    this->DownKeys.emplace_back(InKey);
     return;
 }
 
 void Jafg::LSurfaceBase::AddKeyDown(const LKey InKey, const float InValue)
 {
-    check( this->DownKeys.FindRef(InKey) == nullptr )
-    this->DownKeys.Emplace(InKey, InValue);
+    check( algo::find_pointer(this->DownKeys, InKey, &LRawInput::Key) == nullptr )
+    this->DownKeys.emplace_back(InKey, InValue);
     return;
 }
 
 void Jafg::LSurfaceBase::AddKeyDown(const LRawInput& InRawInput)
 {
-    check( this->DownKeys.FindRef(InRawInput.Key) == nullptr )
-    this->DownKeys.Emplace(InRawInput);
+    check( algo::find_pointer(this->DownKeys, InRawInput.Key, &LRawInput::Key) == nullptr )
+    this->DownKeys.emplace_back(InRawInput);
     return;
 }
 
@@ -226,12 +226,12 @@ NODISCARD FORCEINLINE const Jafg::LSurface* Jafg::LSurfaceBase::AsSurface() cons
 
 FORCEINLINE bool Jafg::LSurfaceBase::IsNewKeyDown(const LKey InKey) const
 {
-    return this->GetCurrentlyPressedKeys().Contains(InKey) && (this->GetLastFramePressedKeys().Contains(InKey) == false);
+    return algo::contains(this->GetCurrentlyPressedKeys(), InKey, &LRawInput::Key) && (algo::contains(this->GetLastFramePressedKeys(), InKey, &LRawInput::Key) == false);
 }
 
 FORCEINLINE bool Jafg::LSurfaceBase::IsKeyUp(const LKey InKey) const
 {
-    return this->GetCurrentlyPressedKeys().Contains(InKey) == false && this->GetLastFramePressedKeys().Contains(InKey);
+    return algo::contains(this->GetCurrentlyPressedKeys(), InKey, &LRawInput::Key) == false && algo::contains(this->GetLastFramePressedKeys(), InKey, &LRawInput::Key);
 }
 
 FORCEINLINE LString Jafg::LSurfaceBase::GetBufferedPlatformInputAsStr() const
@@ -240,7 +240,7 @@ FORCEINLINE LString Jafg::LSurfaceBase::GetBufferedPlatformInputAsStr() const
 
     for (const LString& Input : this->PlatformInput)
     {
-        Out.Append(Input);
+        Out.append(Input);
     }
 
     return Out;

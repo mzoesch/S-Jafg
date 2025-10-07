@@ -18,7 +18,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         checkSlow( *Cursor < Args.GetArgCount() )
         const LString& String = Args[*Cursor].Name;
 
-        if (String.IsEmpty())
+        if (String.empty())
         {
             return false;
         }
@@ -28,13 +28,13 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         {
             std::from_chars
             (
-                String.begin_ptr(),
-                String.end_ptr(),
+                String.data(),
+                String.end().base(),
                 Value
             )
         };
 
-        if (ec == std::errc{} && ptr == String.end_ptr())
+        if (ec == std::errc{} && ptr == String.end().base())
         {
             ++*Cursor;
             return true;
@@ -56,7 +56,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         checkSlow( *Cursor < Args.GetArgCount() )
         const LString& String = Args[*Cursor].Name;
 
-        if (String.IsEmpty())
+        if (String.empty())
         {
             return false;
         }
@@ -66,13 +66,13 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         {
             std::from_chars
             (
-                String.begin_ptr(),
-                String.end_ptr(),
+                String.data(),
+                String.end().base(),
                 Value
             )
         };
 
-        if (ec == std::errc{} && ptr == String.end_ptr())
+        if (ec == std::errc{} && ptr == String.end().base())
         {
             ++*Cursor;
             return true;
@@ -94,7 +94,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         checkSlow( *Cursor < Args.GetArgCount() )
         const LString& String = Args[*Cursor].Name;
 
-        if (String.IsEmpty())
+        if (String.empty())
         {
             return false;
         }
@@ -104,13 +104,13 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         {
             std::from_chars
             (
-                String.begin_ptr(),
-                String.end_ptr(),
+                String.data(),
+                String.end().base(),
                 Value
             )
         };
 
-        if (ec == std::errc{} && ptr == String.end_ptr() && (Value >= 0 && Value <= 255))
+        if (ec == std::errc{} && ptr == String.end().base() && (Value >= 0 && Value <= 255))
         {
             ++*Cursor;
             return true;
@@ -142,7 +142,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         checkSlow( *Cursor < Args.GetArgCount() )
         const LString& String = Args[*Cursor].Name;
 
-        if (String.IsEmpty())
+        if (String.empty())
         {
             return false;
         }
@@ -152,13 +152,13 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
         {
             std::from_chars
             (
-                String.begin_ptr(),
-                String.end_ptr(),
+                String.data(),
+                String.end().base(),
                 Value
             )
         };
 
-        if (ec == std::errc{} && ptr == String.end_ptr())
+        if (ec == std::errc{} && ptr == String.end().base())
         {
             ++*Cursor;
             return true;
@@ -178,7 +178,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
     [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
-        if (Args[*Cursor].Name.IsEmpty())
+        if (Args[*Cursor].Name.empty())
         {
             return false;
         }
@@ -198,17 +198,17 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
     [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
-        if (Args[*Cursor].Name.IsEmpty())
+        if (Args[*Cursor].Name.empty())
         {
             return false;
         }
 
         if
         (
-               Args[*Cursor].Name.Equals("true")  == false
-            && Args[*Cursor].Name.Equals("false") == false
-            && Args[*Cursor].Name.Equals("1")     == false
-            && Args[*Cursor].Name.Equals("0")     == false
+               (Args[*Cursor].Name == "true")  == false
+            && (Args[*Cursor].Name == "false") == false
+            && (Args[*Cursor].Name == "1")     == false
+            && (Args[*Cursor].Name == "0")     == false
         )
         {
             return false;
@@ -219,9 +219,9 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
     },
     [](const LCommandArgs& InValue, LString* OutValue) -> bool
     {
-        check( InValue.IsValid() && InValue.Name.IsEmpty() == false )
+        check( InValue.IsValid() && InValue.Name.empty() == false )
 
-        if (InValue.Name.Equals("true") || InValue.Name.Equals("1"))
+        if ((InValue.Name == "true") || (InValue.Name == "1"))
         {
             if (*OutValue != "true")
             {
@@ -229,7 +229,7 @@ void Jafg::Private::AddPrimitivesToCli(LCommandLineInterface* Cli)
                 return true;
             }
         }
-        else if (InValue.Name.Equals("false") || InValue.Name.Equals("0"))
+        else if ((InValue.Name == "false") || (InValue.Name == "0"))
         {
             if (*OutValue != "false")
             {
@@ -270,7 +270,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
     [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
-        if (Args[*Cursor].Name.IsEmpty())
+        if (Args[*Cursor].Name.empty())
         {
             return false;
         }
@@ -290,7 +290,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
     [](const LCommandArgs& Args, i32* Cursor) -> bool
     {
         checkSlow( *Cursor < Args.GetArgCount() )
-        if (Args[*Cursor].Name.IsEmpty())
+        if (Args[*Cursor].Name.empty())
         {
             return false;
         }
@@ -314,7 +314,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
     {
         const LCommandArgs* Target { nullptr };
 
-        if (Args.SubArgs.IsValidIndex(Cursor))
+        if (algo::is_valid_index(Args.SubArgs, Cursor))
         {
             Target = &Args[Cursor];
         }
@@ -328,21 +328,21 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
 
         for (const LCliVariable& Var : GEngine->GetCommandLineInterface()->GetVariables())
         {
-            if (Out.GetSize() >= static_cast<TArray<LString>::SizeType>(MaxSuggestions))
+            if (Out.size() >= static_cast<TArray<LString>::size_type>(MaxSuggestions))
             {
                 break;
             }
 
             if (Target)
             {
-                if (Var.GetIdentifier().StartsWith(Target->Name))
+                if (Var.GetIdentifier().starts_with(Target->Name))
                 {
-                    Out.Emplace(Var.GetIdentifier());
+                    Out.emplace_back(Var.GetIdentifier());
                 }
             }
             else
             {
-                Out.Emplace(Var.GetIdentifier());
+                Out.emplace_back(Var.GetIdentifier());
             }
 
             continue;
@@ -359,12 +359,12 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
 bool Jafg::Private::CliQueryImpl(const LCommandArgs& Args, i32* Cursor, const TArray<LString>& Values)
 {
     checkSlow( *Cursor < Args.GetArgCount() )
-    if (Args[*Cursor].Name.IsEmpty())
+    if (Args[*Cursor].Name.empty())
     {
         return false;
     }
 
-    if (Values.Contains(Args[*Cursor].Name))
+    if (algo::contains(Values, Args[*Cursor].Name))
     {
         ++*Cursor;
         return true;
@@ -377,7 +377,7 @@ TArray<LString> Jafg::Private::CliQuerySuggestImpl(const LCommandArgs& Args, con
 {
     const LCommandArgs* Target { nullptr };
 
-    if (Args.SubArgs.IsValidIndex(Cursor))
+    if (algo::is_valid_index(Args.SubArgs, Cursor))
     {
         Target = &Args[Cursor];
     }
@@ -386,21 +386,21 @@ TArray<LString> Jafg::Private::CliQuerySuggestImpl(const LCommandArgs& Args, con
 
     for (const LString& Value : Values)
     {
-        if (Out.GetSize() >= MaxSuggestions)
+        if (Out.size() >= MaxSuggestions)
         {
             break;
         }
 
         if (Target)
         {
-            if (Value.StartsWith(Target->Name))
+            if (Value.starts_with(Target->Name))
             {
-                Out.Emplace(Value);
+                Out.emplace_back(Value);
             }
         }
         else
         {
-            Out.Emplace(Value);
+            Out.emplace_back(Value);
         }
 
         continue;
@@ -412,7 +412,7 @@ TArray<LString> Jafg::Private::CliQuerySuggestImpl(const LCommandArgs& Args, con
 bool Jafg::Private::CliStringImpl(const LCommandArgs& Args, i32* Cursor, const LString& Value)
 {
     checkSlow( *Cursor < Args.GetArgCount() )
-    if (Args[*Cursor].Name.IsEmpty())
+    if (Args[*Cursor].Name.empty())
     {
         return false;
     }
@@ -430,9 +430,9 @@ TArray<LString> Jafg::Private::CliStringSuggestImpl(const LCommandArgs& Args, co
 {
     if (MaxSuggestions > 0)
     {
-        if (Args.SubArgs.IsValidIndex(Cursor))
+        if (algo::is_valid_index(Args.SubArgs, Cursor))
         {
-            if (Value.StartsWith(Args[Cursor].Name))
+            if (Value.starts_with(Args[Cursor].Name))
             {
                 return { Value };
             }

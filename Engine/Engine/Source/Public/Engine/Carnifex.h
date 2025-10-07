@@ -21,7 +21,7 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LCarnifex)
     ~LCarnifex() = default;
 
-    FORCEINLINE void AddGarbageChild(JObjectBase* Child) { this->GarbageChildren.Add(Child); }
+    FORCEINLINE void AddGarbageChild(JObjectBase* Child) { this->GarbageChildren.push_back(Child); }
 
     void KillAllGarbageChildren();
     void DevourGarbageChildNow(JObjectBase* Child);

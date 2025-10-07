@@ -75,21 +75,21 @@ struct LChunkKey final
     FORCEINLINE auto GetDownKey()  const -> LChunkKey { return { Key.X, Key.Y, Key.Z - 1 }; }
     FORCEINLINE auto GetNeighboringChunkKeys() const -> TArray<LChunkKey>
     {
-        TArray<LChunkKey> Out; Out.Reserve(6);
+        TArray<LChunkKey> Out; Out.reserve(6);
 
-        Out.Emplace(Key.X + 1, Key.Y,     Key.Z    );
-        Out.Emplace(Key.X - 1, Key.Y,     Key.Z    );
-        Out.Emplace(Key.X,     Key.Y + 1, Key.Z    );
-        Out.Emplace(Key.X,     Key.Y - 1, Key.Z    );
-        Out.Emplace(Key.X,     Key.Y,     Key.Z + 1);
-        Out.Emplace(Key.X,     Key.Y,     Key.Z - 1);
+        Out.emplace_back(Key.X + 1, Key.Y,     Key.Z    );
+        Out.emplace_back(Key.X - 1, Key.Y,     Key.Z    );
+        Out.emplace_back(Key.X,     Key.Y + 1, Key.Z    );
+        Out.emplace_back(Key.X,     Key.Y - 1, Key.Z    );
+        Out.emplace_back(Key.X,     Key.Y,     Key.Z + 1);
+        Out.emplace_back(Key.X,     Key.Y,     Key.Z - 1);
 
         return Out;
     }
 
     FORCEINLINE LString ToString() const
     {
-        return LString::SprintF("{{{}, {}, {}}}", this->Key.X, this->Key.Y, this->Key.Z);
+        return Lal::SprintF("{{{}, {}, {}}}", this->Key.X, this->Key.Y, this->Key.Z);
     }
 };
 static_assert(sizeof(LChunkKey) == sizeof(LChunkKeyDomain) * 3, "LChunkKey is not tightly packed.");

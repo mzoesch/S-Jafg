@@ -5,24 +5,24 @@
 
 #define STORAGE_NAME "sqlite3.db"
 
-#define EMIT_ERROR_SQL(InDescription)                                                        \
-    if (OutError)                                                                            \
-    {                                                                                        \
-        *OutError = ::LString::SprintF("SQL {}: [{}].", InDescription, sqlite3_errmsg(Con)); \
-    }                                                                                        \
-    else                                                                                     \
-    {                                                                                        \
-        LOG_ERROR(LogStorage, "SQL {}: [{}].", InDescription, sqlite3_errmsg(Con));          \
+#define EMIT_ERROR_SQL(InDescription)                                                    \
+    if (OutError)                                                                        \
+    {                                                                                    \
+        *OutError = ::Lal::SprintF("SQL {}: [{}].", InDescription, sqlite3_errmsg(Con)); \
+    }                                                                                    \
+    else                                                                                 \
+    {                                                                                    \
+        LOG_ERROR(LogStorage, "SQL {}: [{}].", InDescription, sqlite3_errmsg(Con));      \
     }
 
-#define EMIT_ERROR(Format, ...)                                \
-    if (OutError)                                              \
-    {                                                          \
-        *OutError = ::LString::SprintF(Format, ##__VA_ARGS__); \
-    }                                                          \
-    else                                                       \
-    {                                                          \
-        LOG_ERROR(LogStorage, Format, ##__VA_ARGS__)           \
+#define EMIT_ERROR(Format, ...)                            \
+    if (OutError)                                          \
+    {                                                      \
+        *OutError = ::Lal::SprintF(Format, ##__VA_ARGS__); \
+    }                                                      \
+    else                                                   \
+    {                                                      \
+        LOG_ERROR(LogStorage, Format, ##__VA_ARGS__)       \
     }
 
 namespace
@@ -37,11 +37,11 @@ struct LSql3Con final
 
     LSql3Con(const LPath& InPath, LString* OutError /* = nullptr */)
     {
-        if (const int Rc = sqlite3_open((InPath / STORAGE_NAME).ToPtr(), &this->Db); Rc)
+        if (const int Rc = sqlite3_open((InPath / STORAGE_NAME).c_str(), &this->Db); Rc)
         {
             if (OutError)
             {
-                *OutError = LString::SprintF("Failed to open database. Reason: [{}].", sqlite3_errmsg(Db));
+                *OutError = Lal::SprintF("Failed to open database. Reason: [{}].", sqlite3_errmsg(Db));
             }
             else
             {
@@ -159,7 +159,7 @@ bool Jafg::Saves::CreateNewSave(const LPath& InPath, const LMinimalMetaData& Met
             R"();)"
         };
 
-        if (sqlite3_exec(Con, Sql.ToPtr(), nullptr, nullptr, nullptr) != SQLITE_OK)
+        if (sqlite3_exec(Con, Sql.c_str(), nullptr, nullptr, nullptr) != SQLITE_OK)
         {
             EMIT_ERROR_SQL("Creating Table")
             return false;
@@ -169,10 +169,10 @@ bool Jafg::Saves::CreateNewSave(const LPath& InPath, const LMinimalMetaData& Met
     {
         const LString Sql
         {
-            LString::SprintF("INSERT INTO Meta VALUES ( \"{}\" );", Meta.DisplayName)
+            Lal::SprintF("INSERT INTO Meta VALUES ( \"{}\" );", Meta.DisplayName)
         };
 
-        if (sqlite3_exec(Con, Sql.ToPtr(), nullptr, nullptr, nullptr) != SQLITE_OK)
+        if (sqlite3_exec(Con, Sql.c_str(), nullptr, nullptr, nullptr) != SQLITE_OK)
         {
             EMIT_ERROR_SQL("Insert values")
             return false;
@@ -182,7 +182,7 @@ bool Jafg::Saves::CreateNewSave(const LPath& InPath, const LMinimalMetaData& Met
     return true;
 }
 
-Jafg::TOptional<LString> Jafg::Saves::GetDisplayName(const LPath& InPath, LString* OutError /* = nullptr */)
+TOptional<LString> Jafg::Saves::GetDisplayName(const LPath& InPath, LString* OutError /* = nullptr */)
 {
     LSql3Con Con(InPath, OutError);
     if (Con.IsValid() == false)
@@ -197,7 +197,7 @@ Jafg::TOptional<LString> Jafg::Saves::GetDisplayName(const LPath& InPath, LStrin
     };
 
     LSqlSmt Stmt;
-    if (sqlite3_prepare_v2(Con, Sql.ToPtr(), -1, &Stmt, nullptr) != SQLITE_OK)
+    if (sqlite3_prepare_v2(Con, Sql.c_str(), -1, &Stmt, nullptr) != SQLITE_OK)
     {
         EMIT_ERROR_SQL("Prepare")
         return { };

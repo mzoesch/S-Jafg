@@ -461,7 +461,7 @@ fn on_add_class__VA__ARGS(packet: &JPacket) -> String
         if config && default_only
         {
             out.push_str(&format!(r##"                                                                   \
-Ref->GetMutableClassFieldsDangerous().Emplace(                                                           \
+Ref->GetMutableClassFieldsDangerous().emplace_back(                                                      \
     /* Field Name   */ "{member}",                                                                       \
     /* Field Setter */ LSetClassField::CreateMemberFunction(Ref, &_TObj::_SetField_{member}),            \
     /* Field Getter */ LGetClassField::CreateMemberFunction(Ref, &_TObj::_GetField_{member}),            \
@@ -472,7 +472,7 @@ Ref->GetMutableClassFieldsDangerous().Emplace(                                  
         else if config && !default_only
         {
             out.push_str(&format!(r##"                                                        \
-Ref->GetMutableClassFieldsDangerous().Emplace(                                                \
+Ref->GetMutableClassFieldsDangerous().emplace_back(                                           \
     /* Field Name   */ "{member}",                                                            \
     /* Field Setter */ LSetClassField::CreateMemberFunction(Ref, &_TObj::_SetField_{member}), \
     /* Field Getter */ LGetClassField::CreateMemberFunction(Ref, &_TObj::_GetField_{member}), \
@@ -483,7 +483,7 @@ Ref->GetMutableClassFieldsDangerous().Emplace(                                  
         else if !config && default_only
         {
             out.push_str(&format!(r##"                                                                   \
-Ref->GetMutableClassFieldsDangerous().Emplace(                                                           \
+Ref->GetMutableClassFieldsDangerous().emplace_back(                                                      \
     /* Field Name   */ "{member}",                                                                       \
     /* Field Setter */ nullptr,                                                                          \
     /* Field Getter */ nullptr,                                                                          \

@@ -329,7 +329,7 @@ public:
 
     FORCEINLINE WNode* GetNodeRaw() const noexcept { check( this->Node ) return this->Node; }
 
-    FORCEINLINE bool HasAnySibling() const noexcept { return this->Siblings.IsEmpty() == false; }
+    FORCEINLINE bool HasAnySibling() const noexcept { return this->Siblings.empty() == false; }
     FORCEINLINE auto GetSiblings() const noexcept -> const TArray<LWidgetFactory*>& { return this->Siblings; }
 
 private:
@@ -635,8 +635,8 @@ public:
     FORCEINLINE const LWidgetSlot* GetSlotChecked() const { const LWidgetSlot* Out = this->GetSlot(); check( Out ); return Out; }
     FORCEINLINE const LWidgetSlot* GetSlotAsserted() const { const LWidgetSlot* Out = this->GetSlot(); jassert( Out ); return Out; }
     FORCEINLINE TOptional<LMargin> GetMargin() const { if (this->Slot && this->Slot->Margin) { return *this->Slot->Margin; } return { }; }
-    FORCEINLINE TOptional<LMargin> GetMarginChecked() const { TOptional<LMargin> Out = this->GetMargin(); check( Out.IsValid() ); return Out; }
-    FORCEINLINE TOptional<LMargin> GetMarginAsserted() const { TOptional<LMargin> Out = this->GetMargin(); jassert( Out.IsValid() ); return Out; }
+    FORCEINLINE TOptional<LMargin> GetMarginChecked() const { TOptional<LMargin> Out = this->GetMargin(); check( Out.has_value() ); return Out; }
+    FORCEINLINE TOptional<LMargin> GetMarginAsserted() const { TOptional<LMargin> Out = this->GetMargin(); jassert( Out.has_value() ); return Out; }
                 bool SetMargin(const LMargin& InMargin);
     FORCEINLINE bool SetMarginChecked(const LMargin& InMargin) { const bool Out = this->SetMargin(InMargin); check( Out ); return Out; }
     FORCEINLINE bool SetMarginAsserted(const LMargin& InMargin) { const bool Out = this->SetMargin(InMargin); jassert( Out ); return Out; }
@@ -761,8 +761,8 @@ FORCEINLINE typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>
 template <typename TNode>
 FORCEINLINE typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::AddSibling(LWidgetFactory* InSibling)
 {
-    check( this->Siblings.Contains(InSibling) == false )
-    this->Siblings.Add(InSibling);
+    check( algo::contains(this->Siblings, InSibling) == false )
+    this->Siblings.push_back(InSibling);
     return this->Self();
 }
 

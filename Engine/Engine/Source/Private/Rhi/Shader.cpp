@@ -70,9 +70,9 @@ void Jafg::LShader::Load(const LEnginePath& Path, const TArray<LShaderCompileTim
 void Jafg::LShader::Load(const TArray<LShaderCompileTimeConstant>& InConstants)
 {
     LEnginePath VertexPath = this->CachedPath;
-    VertexPath.Append(".vert");
+    VertexPath.concat(".vert");
     LEnginePath FragmentPath = this->CachedPath;
-    FragmentPath.Append(".frag");
+    FragmentPath.concat(".frag");
 
     LString UncompiledVertex   { Finder::ReadFile(VertexPath.ResolvePath()) };
     LString UncompiledFragment { Finder::ReadFile(FragmentPath.ResolvePath()) };
@@ -113,13 +113,13 @@ void Jafg::LShader::SetBoolUniform(const LString& Name, const bool Value) const
 {
     checkCode
     (
-        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
         {
             LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
         }
     )
 
-    glUniform1i(glGetUniformLocation(this->Id, Name.ToPtr()), static_cast<int>(Value));
+    glUniform1i(glGetUniformLocation(this->Id, Name.c_str()), static_cast<int>(Value));
 
     return;
 }
@@ -128,13 +128,13 @@ void Jafg::LShader::SetIntUniform(const LString& Name, const i32 Value) const
 {
     checkCode
     (
-        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
         {
             LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
         }
     )
 
-    glUniform1i(glGetUniformLocation(this->Id, Name.ToPtr()), Value);
+    glUniform1i(glGetUniformLocation(this->Id, Name.c_str()), Value);
 
     return;
 }
@@ -143,13 +143,13 @@ void Jafg::LShader::SetUIntUniform(const LString& Name, const u32 Value) const
 {
     checkCode
     (
-        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
         {
             LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
         }
     )
 
-    glUniform1ui(glGetUniformLocation(this->Id, Name.ToPtr()), Value);
+    glUniform1ui(glGetUniformLocation(this->Id, Name.c_str()), Value);
 
     return;
 }
@@ -158,13 +158,13 @@ void Jafg::LShader::SetFloatUniform(const LString& Name, const f32 Value) const
 {
     checkCode
     (
-        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
         {
             LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
         }
     )
 
-    glUniform1f(glGetUniformLocation(this->Id, Name.ToPtr()), Value);
+    glUniform1f(glGetUniformLocation(this->Id, Name.c_str()), Value);
 
     return;
 }
@@ -173,13 +173,13 @@ void Jafg::LShader::SetVec2Uniform(const LString& Name, const LVector2& Value) c
 {
     checkCode
     (
-        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
         {
             LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
         }
     )
 
-    glUniform2f(glGetUniformLocation(this->Id, Name.ToPtr()), Value.X, Value.Y);
+    glUniform2f(glGetUniformLocation(this->Id, Name.c_str()), Value.X, Value.Y);
 
     return;
 }
@@ -188,13 +188,13 @@ void Jafg::LShader::SetVec3Uniform(const LString& Name, const LVector3& Value) c
 {
     checkCode
     (
-        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
         {
             LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
         }
     )
 
-    glUniform3f(glGetUniformLocation(this->Id, Name.ToPtr()), Value.X, Value.Y, Value.Z);
+    glUniform3f(glGetUniformLocation(this->Id, Name.c_str()), Value.X, Value.Y, Value.Z);
 
     return;
 }
@@ -203,13 +203,13 @@ void Jafg::LShader::SetVec4Uniform(const LString& Name, const LVector4& Value) c
 {
     checkCode
     (
-        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
         {
             LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
         }
     )
 
-    glUniform4f(glGetUniformLocation(this->Id, Name.ToPtr()), Value.X, Value.Y, Value.Z, Value.W);
+    glUniform4f(glGetUniformLocation(this->Id, Name.c_str()), Value.X, Value.Y, Value.Z, Value.W);
 
     return;
 }
@@ -218,13 +218,13 @@ void Jafg::LShader::SetMatrixUniform(const LString& Name, const LMatrixF& Value)
 {
     checkCode
     (
-        if (glGetUniformLocation(this->Id, Name.ToPtr()) < 0)
+        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
         {
             LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
         }
     )
 
-    glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.ToPtr()), 1, GL_FALSE, Value.GetData());
+    glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.c_str()), 1, GL_FALSE, Value.GetData());
 
     return;
 }
@@ -249,12 +249,12 @@ void Jafg::LShader::LoadImpl(LString&& UncompiledVertex, LString&& UncompiledFra
     i32 AddConstantsIdxFragment = INDEX_NONE;
     i32 AddConstantsIdxVertex   = INDEX_NONE;
 
-    const i64 HashVersionFragment = UncompiledFragment.FindFirstIndex("#version");
-    const i64 HashVersionVertex   = UncompiledVertex.FindFirstIndex("#version");
+    const i64 HashVersionFragment = UncompiledFragment.find("#version");
+    const i64 HashVersionVertex   = UncompiledVertex.find("#version");
     jassert( HashVersionFragment != INDEX_NONE )
     jassert( HashVersionVertex   != INDEX_NONE )
 
-    for (u32 i = static_cast<u32>(HashVersionFragment); i < UncompiledFragment.GetRuneCount(); ++i)
+    for (u32 i = static_cast<u32>(HashVersionFragment); i < UncompiledFragment.size(); ++i)
     {
         if (UncompiledFragment[i] == '\n')
         {
@@ -266,7 +266,7 @@ void Jafg::LShader::LoadImpl(LString&& UncompiledVertex, LString&& UncompiledFra
     }
     jassert( AddConstantsIdxFragment != INDEX_NONE )
 
-    for (u32 i = static_cast<u32>(HashVersionVertex); i < UncompiledVertex.GetRuneCount(); ++i)
+    for (u32 i = static_cast<u32>(HashVersionVertex); i < UncompiledVertex.size(); ++i)
     {
         if (UncompiledVertex[i] == '\n')
         {
@@ -281,14 +281,14 @@ void Jafg::LShader::LoadImpl(LString&& UncompiledVertex, LString&& UncompiledFra
     LString ConstantsAsStr;
     for (const auto& [Name, Value] : InConstants)
     {
-        ConstantsAsStr += LString::SprintF("#define {} {}\n", Name, Value);
+        ConstantsAsStr += Lal::SprintF("#define {} {}\n", Name, Value);
     }
 
-    UncompiledFragment.AppendAt(AddConstantsIdxFragment, ConstantsAsStr);
-    UncompiledVertex.AppendAt(AddConstantsIdxVertex, ConstantsAsStr);
+    UncompiledFragment.insert(AddConstantsIdxFragment, ConstantsAsStr);
+    UncompiledVertex.insert(AddConstantsIdxVertex, ConstantsAsStr);
 
-    const char* UncompiledVertexC   = UncompiledVertex.ToPtr();
-    const char* UncompiledFragmentC = UncompiledFragment.ToPtr();
+    const char* UncompiledVertexC   = UncompiledVertex.c_str();
+    const char* UncompiledFragmentC = UncompiledFragment.c_str();
 
     i32 Success;
     char InfoLog[512];

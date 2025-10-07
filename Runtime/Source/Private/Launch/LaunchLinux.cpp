@@ -82,11 +82,11 @@ i32 main(const i32 ArgC, const char* ArgV[])
     TArray<LString> Arguments;
     for (i32 Idx { 1 }; Idx < ArgC; ++Idx)
     {
-        Arguments.Emplace(ArgV[Idx]);
+        Arguments.emplace_back(ArgV[Idx]);
     }
     Application::Private::RawCommandLine = std::move(Arguments);
 
-    if (Application::GetRawCmdLine().Contains("-WaitForDebugger"))
+    if (algo::contains(Application::GetRawCmdLine(), "-WaitForDebugger"))
     {
         Application::Private::WaitForDebuggerGracefully(true);
     }

@@ -188,14 +188,14 @@ LVector LVoxelKey::ToWorldSpace()
 
 FORCEINLINE TArray<LVoxelKey> LVoxelKey::GetNeighboringVoxelKeys() const
 {
-    TArray<LVoxelKey> Out; Out.Reserve(6);
+    TArray<LVoxelKey> Out; Out.reserve(6);
 
-    Out.Emplace(static_cast<LVoxelKeyDomainTy>(this->Key.X + 1), this->Key.Y, this->Key.Z);
-    Out.Emplace(static_cast<LVoxelKeyDomainTy>(this->Key.X - 1), this->Key.Y, this->Key.Z);
-    Out.Emplace(this->Key.X, static_cast<LVoxelKeyDomainTy>(this->Key.Y + 1), this->Key.Z);
-    Out.Emplace(this->Key.X, static_cast<LVoxelKeyDomainTy>(this->Key.Y - 1), this->Key.Z);
-    Out.Emplace(this->Key.X, this->Key.Y, static_cast<LVoxelKeyDomainTy>(this->Key.Z + 1));
-    Out.Emplace(this->Key.X, this->Key.Y, static_cast<LVoxelKeyDomainTy>(this->Key.Z - 1));
+    Out.emplace_back(static_cast<LVoxelKeyDomainTy>(this->Key.X + 1), this->Key.Y, this->Key.Z);
+    Out.emplace_back(static_cast<LVoxelKeyDomainTy>(this->Key.X - 1), this->Key.Y, this->Key.Z);
+    Out.emplace_back(this->Key.X, static_cast<LVoxelKeyDomainTy>(this->Key.Y + 1), this->Key.Z);
+    Out.emplace_back(this->Key.X, static_cast<LVoxelKeyDomainTy>(this->Key.Y - 1), this->Key.Z);
+    Out.emplace_back(this->Key.X, this->Key.Y, static_cast<LVoxelKeyDomainTy>(this->Key.Z + 1));
+    Out.emplace_back(this->Key.X, this->Key.Y, static_cast<LVoxelKeyDomainTy>(this->Key.Z - 1));
 
     return Out;
 }
@@ -238,7 +238,7 @@ FORCEINLINE EVoxelKeyLocation::Type LVoxelKey::NormalizeKeyForNeighbor()
 
 FORCEINLINE LString LVoxelKey::ToString() const
 {
-    return LString::SprintF("{{{},{},{}}}", this->Key.X, this->Key.Y, this->Key.Z);
+    return Lal::SprintF("{{{},{},{}}}", this->Key.X, this->Key.Y, this->Key.Z);
 }
 
 } /* ~Namespace Jafg */

@@ -205,8 +205,8 @@ public:
     virtual void TearDownContext() override;
     // ~LObjectContext implementation
 
-    FORCEINLINE bool IsUnderlyingLevelValid() const { return this->UnderlyingLevel.IsValid(); }
-    FORCEINLINE const LLevel& GetUnderlyingLevel() const { return this->UnderlyingLevel.GetValue(); }
+    FORCEINLINE bool IsUnderlyingLevelValid() const { return this->UnderlyingLevel.has_value(); }
+    FORCEINLINE const LLevel& GetUnderlyingLevel() const { return this->UnderlyingLevel.value(); }
     FORCEINLINE LStringView   GetUnderlyingLevelName() const { return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }
     FORCEINLINE LStringView   GetUnderlyingLevelNameChecked() const { check( this->IsUnderlyingLevelValid() ) return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }
     FORCEINLINE LStringView   GetUnderlyingLevelNameAsserted() const { jassert( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel->Identifier; }
@@ -215,9 +215,9 @@ public:
     ENGINE_API  void UnregisterTickableObject(LTickableObject* Tickable);
     FORCEINLINE auto GetTickableObjects() const -> const TArray<LTickableObject*>& { return this->TickableObjects; }
     FORCEINLINE auto GetActors() const -> const TArray<AActor*>& { return this->Actors; }
-    FORCEINLINE bool IsSkyboxValid() const noexcept { return this->Skybox.IsValid(); }
-    FORCEINLINE auto GetSkybox() noexcept -> LSkybox& { return this->Skybox.GetValue(); }
-    FORCEINLINE auto GetSkybox() const noexcept -> const LSkybox& { return this->Skybox.GetValue(); }
+    FORCEINLINE bool IsSkyboxValid() const noexcept { return this->Skybox.has_value(); }
+    FORCEINLINE auto GetSkybox() noexcept -> LSkybox& { return this->Skybox.value(); }
+    FORCEINLINE auto GetSkybox() const noexcept -> const LSkybox& { return this->Skybox.value(); }
 
     ENGINE_API f32 GetRealTimeSecondsSinceWorldLaunch() const;
 
@@ -302,7 +302,7 @@ template <typename T>
 FORCEINLINE void LWorld::AddTemporalObject(T&& InTemporalObject)
 {
     T* TemporalObject { new T(std::forward<T>(InTemporalObject)) };
-    this->TemporalObjects.Add(TemporalObject);
+    this->TemporalObjects.push_back(TemporalObject);
     return;
 }
 #endif /* AS_CLIENT */

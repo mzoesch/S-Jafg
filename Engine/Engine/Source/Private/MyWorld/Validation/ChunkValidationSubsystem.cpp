@@ -61,21 +61,12 @@ void Jafg::JChunkValidationSubsystem::FixedTick(const f32 EngineDeltaTime, const
     this->LastChunkKey = CurrentKey;
 
     const JUserPreferences* Prefs = GetDefault<JUserPreferences>();
-
-    TArray<LChunkKey> TargetChunks = Validation::GetAllChunksFromCenterAsBox(
+    this->GetWorld()->GetCheckedSubsystem<JChunkGenerationSubsystem>()->SetRequestedChunks(Validation::GetAllChunksFromCenterAsBox(
         CurrentKey,
         Prefs->ChunkRenderDistance,
         Prefs->ChunkRenderHeight,
         CurrentKey.Z - (Prefs->ChunkRenderHeight / 2)
-        );
-
-    TArray<LChunkKey> Reversed; Reversed.Reserve(TargetChunks.GetSize());
-    for (i32 i = TargetChunks.GetSize() - 1; i >= 0; --i)
-    {
-        Reversed.Emplace(TargetChunks[i]);
-    }
-
-    this->GetWorld()->GetCheckedSubsystem<JChunkGenerationSubsystem>()->SetRequestedChunks(std::move(Reversed));
+        ));
 
     return;
 }
