@@ -9,7 +9,7 @@ namespace Jafg
 {
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API AController : public AActor
+class AController : public AActor
 {
     GENERATED_CLASS_BODY()
 

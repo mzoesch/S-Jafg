@@ -3,7 +3,7 @@
 #pragma once
 
 
-#include "Engine/ObjectBase.h"
+#include "Engine/CxxClass.h"
 #include "UserPreferences.generated.h"
 
 namespace Jafg
@@ -20,27 +20,37 @@ enum Type : u8
     Num       = 2,
 };
 
-} /* ~Namespace EPolygonMode. */
+} /* ~Namespace EPolygonMode */
+
 template <> struct TIsPreferenceTypeAllowed<EPolygonMode::Type> : std::true_type { };
-template <>
-FORCEINLINE void Deserialize<EPolygonMode::Type>(EPolygonMode::Type* Destination, const LString& InValue)
+
+} /* ~Namespace Jafg */
+
+template<> FORCEINLINE LString Serialization::ToString<Jafg::EPolygonMode::Type>(Jafg::EPolygonMode::Type const& Field) noexcept
 {
-    static_assert(std::is_enum_v<EPolygonMode::Type>);
-    static_assert(std::is_same_v<u8, std::underlying_type_t<EPolygonMode::Type>>);
-    checkSlow( Destination )
-    Deserialize<u8>(reinterpret_cast<u8*>(&Destination), InValue);
+    static_assert(std::is_enum_v<Jafg::EPolygonMode::Type>);
+    static_assert(std::is_same_v<u8, std::underlying_type_t<Jafg::EPolygonMode::Type>>);
+
+    return ToString(static_cast<u8>(Field));
+}
+
+template<> FORCEINLINE void Serialization::FromString<Jafg::EPolygonMode::Type>(Jafg::EPolygonMode::Type* Dst, LString const& Value) noexcept
+{
+    static_assert(std::is_enum_v<Jafg::EPolygonMode::Type>);
+    static_assert(std::is_same_v<u8, std::underlying_type_t<Jafg::EPolygonMode::Type>>);
+
+    check( Dst )
+    FromString(reinterpret_cast<u8*>(Dst), Value);
     return;
 }
-#if PLATFORM_WASM
-    template <> NODISCARD inline auto FormatArgLegacy<const TPreference<EPolygonMode::Type>&>(const TPreference<EPolygonMode::Type>& Arg) { return static_cast<u8>(Arg.Value); }
-    template <> NODISCARD inline auto FormatArgLegacy<TPreference<EPolygonMode::Type>>(TPreference<EPolygonMode::Type> Arg) { return static_cast<u8>(Arg.Value); }
-    template <> NODISCARD inline auto FormatArgLegacy<TPreference<EPolygonMode::Type>&>(TPreference<EPolygonMode::Type>& Arg) { return static_cast<u8>(Arg.Value); }
-#endif /* PLATFORM_WASM */
 
-DECLARE_JAFG_CLASS(EClassFlags::Config, EClassFlags::Singleton)
-class ENGINE_API JUserPreferences final : public JObjectBase
+namespace Jafg
 {
-    GENERATED_CLASS_BODY()
+
+DECLARE_JAFG_CLASS(ECxxClassFlags::Config, ECxxClassFlags::Singleton)
+class JUserPreferences final : public JCxxClass
+{
+    GENERATED_CLASS_BODY(ENGINE_API)
 
 protected:
 
@@ -74,23 +84,26 @@ public:
     LPreferencei32 MaxFps         { UnlimitedFps };
 
     CLASS_FIELD(Config)
-    TPreference<EPolygonMode::Type> PolygonMode { EPolygonMode::Fill };
+    TPreference<EPolygonMode::Type> PolygonMode{ EPolygonMode::Fill };
 
     CLASS_FIELD(Config)
-    i32 ChunkRenderDistance { 6 };
+    i32 ChunkRenderDistance{ 6 };
     CLASS_FIELD(Config)
-    i32 ChunkRenderHeight   { 6 };
+    i32 ChunkRenderHeight{ 6 };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Interface
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
-    LPreferenceBool bInvertVerticalScrollWheel { true };
+    f32 ApplicationScale{ 1.0f };
+
     CLASS_FIELD(Config)
-    LPreferenceBool bInvertHorizontalScrollWheel { true };
+    LPreferenceBool bInvertVerticalScrollWheel{ true };
     CLASS_FIELD(Config)
-    LPreferencef32 MouseWheelScrollSpeed { 35.0f };
+    LPreferenceBool bInvertHorizontalScrollWheel{ true };
+    CLASS_FIELD(Config)
+    LPreferencef32 MouseWheelScrollSpeed{ 35.0f };
 
     CLASS_FIELD(Config)
     LPreferencef32 HeaderFontSize    { 0.70f };
@@ -119,7 +132,7 @@ public:
     //# The plugins that are loaded when the engine loads.
     //#
     CLASS_FIELD(Config)
-    TArray<LString> EnabledEnginePlugins { "JafgGameplayCore" };
+    TArray<LString> EnabledEnginePlugins{ "JafgGameplayCore" };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Storage

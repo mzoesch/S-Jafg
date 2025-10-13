@@ -7,7 +7,7 @@
 namespace Jafg
 {
 
-class ENGINE_API LNoPhysicsComponent final : public LPhysicsComponent
+class LNoPhysicsComponent final : public LPhysicsComponent
 {
 public:
     LNoPhysicsComponent() = default;

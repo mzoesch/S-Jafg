@@ -107,13 +107,14 @@ public:
 //# Tab bars can be nested within each other.
 //#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTabBar)
-class ENGINE_API WTabBar : public WTabBarPanel
+class WTabBar : public WTabBarPanel
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WTabBar(const LObjectInitializer& ObjectInitializer);
+    explicit WTabBar(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WTabBar)
 
 public:
 
@@ -175,22 +176,22 @@ protected:
     //# The preference for alignment of buttons and switcher if the wrapper class is not set.
     //# If this is not set, then there will not occur any wrapping.
     //#
-    TOptional<bool> bIsVertical { false };
+    TOptional<bool> bIsVertical{ false };
 
     //#
     //# The container where the buttons are stored.
     //#
-    WParentBase* ButtonsContainer { nullptr };
+    WParentBase* ButtonsContainer{ nullptr };
     TSubclassOf<WParentBase> ButtonsContainerClass;
     TSubclassOf<WNode> DefaultButtonClass;
 
     //#
     //# The switcher where the panels are stored.
     //#
-    WSwitcher* Switcher { nullptr };
+    WSwitcher* Switcher{ nullptr };
     TSubclassOf<WSwitcher> SwitcherClass;
 
-    const void* CurrentlyFocusedTab { nullptr };
+    CDR_NULL_PTR(void const*) CurrentlyFocusedTab{ nullptr };
                 const LAddedTabBarTab* GetCurrentlyFocusedTab() const;
     FORCEINLINE const LAddedTabBarTab* GetCurrentlyFocusedTabChecked() const;
     FORCEINLINE const LAddedTabBarTab* GetCurrentlyFocusedTabPanicked() const;
@@ -198,23 +199,23 @@ protected:
     struct LAddedTabBarTab final
     {
         LString Identifier;
-        WNode* Button { nullptr };
-        WNode* Panel { nullptr };
-        i8 SwitcherIndex { INDEX_NONE };
+        WNode* Button{ nullptr };
+        WNode* Panel{ nullptr };
+        i8 SwitcherIndex{ INDEX_NONE };
     };
-    TArray<LAddedTabBarTab> TabsInOrder;
-    TArray<LTabBarTabDescriptor> DeferredTabs;
+    TCdrEmptyArray<TArray<LAddedTabBarTab>> TabsInOrder;
+    TCdrEmptyArray<TArray<LTabBarTabDescriptor>> DeferredTabs;
 
     //#
     //# The default index to switch to when the tab bar is being made visible, or #ResetToDefault is called
     //# INDEX_NONE for no tab to be present.
     //#
-    i32 DefaultIndex { INDEX_NONE };
+    i32 DefaultIndex{ INDEX_NONE };
 
     //#
     //# Whether to allow none to be selected.
     //#
-    bool bAllowNone { true };
+    bool bAllowNone{ true };
 };
 
 } /* ~Namespace Jafg */

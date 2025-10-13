@@ -429,7 +429,7 @@ struct find_pointer_if_fn
     NODISCARD FORCEINLINE constexpr auto
     operator()(TIter Begin, TSent Sent, TPred&& Pred, TProj Proj = {}) const // -> decltype(algo::to_address(__first))
     {
-        if (TIter It { algo::find(Begin, Sent, std::forward<TPred>(Pred), std::move(Proj)) }; It != Sent)
+        if (TIter It{ algo::find_if(Begin, Sent, std::forward<TPred>(Pred), std::move(Proj)) }; It != Sent)
         {
             return algo::to_address(It);
         }

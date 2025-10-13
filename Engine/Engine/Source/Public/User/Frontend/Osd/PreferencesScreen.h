@@ -23,7 +23,7 @@ template <> NODISCARD inline auto FormatArgLegacy<TSubclassOf<WPreferencesPanel>
 #endif /* PLATFORM_WASM */
 
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WPreferencesPanel : public WCommonMenuTabBarPanel
+class WPreferencesPanel : public WCommonMenuTabBarPanel
 {
     GENERATED_CLASS_BODY()
 
@@ -37,21 +37,22 @@ protected:
     virtual bool AddData(const LWidgetNodeData* InData) override;
 };
 
-DECLARE_JAFG_WIDGET(EClassFlags::Config)
-class ENGINE_API WPreferencesScreen : public WCommonMenuTabBar
+DECLARE_JAFG_WIDGET(ECxxClassFlags::Config)
+class WPreferencesScreen : public WCommonMenuTabBar
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WPreferencesScreen(const LObjectInitializer& ObjectInitializer);
+    explicit WPreferencesScreen(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WPreferencesScreen)
 
 public:
 
     virtual void Construct() override;
 
     CLASS_FIELD(Config)
-    TSubclassOf<WPreferencesPanel> PanelClass = LazyInit;
+    TSubclassOf<WPreferencesPanel> PanelClass{ DefaultInit };
 };
 
 } /* ~Namespace Jafg */

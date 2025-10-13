@@ -33,7 +33,7 @@ enum Type : u8
 
 } /* ~Namespace EConsoleScreenState */
 
-DECLARE_JAFG_WIDGET(EClassFlags::Config)
+DECLARE_JAFG_WIDGET(ECxxClassFlags::Config)
 class WConsoleScreen final : public WUserWidget
 {
     GENERATED_CLASS_BODY()
@@ -44,10 +44,10 @@ protected:
 
 public:
 
-    virtual void BeginLifeDefault() override;
+    virtual void BeginLifeCDR() override;
     virtual void Construct() override;
     virtual void Tick() override;
-    virtual void OnGarbageDefault() override;
+    virtual void OnGarbageDefault(ECxxRecordTearDownReason::Type Reason) override;
     virtual LReply OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
 
     void OnEscape();
@@ -116,57 +116,57 @@ private:
 
     WEditableTextBox* EditableTextBlock { nullptr };
 
-    CLASS_FIELD(Config, DefaultOnly)
-    u32 MaxHistorySize { 50 };
+    CLASS_FIELD(Config)
+    TCdrIgnore<u32> MaxHistorySize{ 50 };
 
-    CLASS_FIELD(Config, DefaultOnly)
-    TArray<LString> History;
+    CLASS_FIELD(Config)
+    TCdrIgnore<TArray<LString>> History;
 
-    CLASS_FIELD(Config, DefaultOnly)
-    u32 ConsoleWidth { 500 };
+    CLASS_FIELD(Config)
+    TCdrIgnore<u32> ConsoleWidth{ 500 };
 
-    CLASS_FIELD(Config, DefaultOnly)
-    u32 MaxPreviewLines { 10 };
+    CLASS_FIELD(Config)
+    TCdrIgnore<u32> MaxPreviewLines{ 10 };
 
-    CLASS_FIELD(Config, DefaultOnly)
-    f32 PreviewMessageLifetime { 5.0f };
+    CLASS_FIELD(Config)
+    TCdrIgnore<f32> PreviewMessageLifetime{ 5.0f };
 
-    CLASS_FIELD(Config, DefaultOnly)
-    u32 MaxIntellisensePredictions { 10 };
+    CLASS_FIELD(Config)
+    TCdrIgnore<u32> MaxIntellisensePredictions{ 10 };
 
-    CLASS_FIELD(Config, DefaultOnly)
-    Lal::LColor IntellisenseTint { Lal::LColor::LightSlateGray };
+    CLASS_FIELD(Config)
+    TCdrIgnore<Lal::LColor> IntellisenseTint{ Lal::LColor::LightSlateGray };
 
-    CLASS_FIELD(Config, DefaultOnly)
-    Lal::LColor IntellisenseHighlightTint { Lal::LColor::DarkSlateGray };
+    CLASS_FIELD(Config)
+    TCdrIgnore<Lal::LColor> IntellisenseHighlightTint{ Lal::LColor::DarkSlateGray };
 
     //#
     //# The cursor of the history from back to front.
     //# Meaning 0 => The most recent history entry. The last entry in the array.
     //# Meaning n => The n-th history entry. The n-th entry in the array when counting from the back.
     //#
-    i32 HistoryCursor { INDEX_NONE };
+    i32 HistoryCursor{ INDEX_NONE };
 
     //#
     //# The region that is used to store the preview of the console if the console itself is not visible.
     //#
-    WVRegion* ConsolePreview { nullptr };
+    CDR_NULL_PTR(WVRegion*) ConsolePreview{ nullptr };
 
     //#
     //# The region that is used to store the console history only if the console itself is visible.
     //#
-    WVRegion* ConsoleHistory { nullptr };
-    WScrollRegion* ConsoleHistoryContainer { nullptr };
+    CDR_NULL_PTR(WVRegion*) ConsoleHistory{ nullptr };
+    CDR_NULL_PTR(WScrollRegion*) ConsoleHistoryContainer{ nullptr };
 
     //#
     //# The intellisense regions that are used if a command is being typed.
     //#
-    WVRegion* IntellisenseContainer { nullptr };
-    WVRegion* Intellisense { nullptr };
-    WRegion*  IntellisenseHelpContainer { nullptr };
-    WTextBox* IntellisenseHelp { nullptr };
-    WTextBox* IntellisenseText { nullptr };
-    WVRegion* IntellisensePredictions { nullptr };
+    CDR_NULL_PTR(WVRegion*) IntellisenseContainer { nullptr };
+    CDR_NULL_PTR(WVRegion*) Intellisense { nullptr };
+    CDR_NULL_PTR(WRegion*)  IntellisenseHelpContainer { nullptr };
+    CDR_NULL_PTR(WTextBox*) IntellisenseHelp { nullptr };
+    CDR_NULL_PTR(WTextBox*) IntellisenseText { nullptr };
+    CDR_NULL_PTR(WVRegion*) IntellisensePredictions { nullptr };
     LString   CurrentIntellisensePrediction;
 
     struct LPreviewMessage final
@@ -176,8 +176,8 @@ private:
     };
     TArray<LPreviewMessage> PreviewMessages;
 
-    CLASS_FIELD(DefaultOnly)
-    LCliCommandHandle CommandHandle_Clear;
+    CLASS_FIELD()
+    TCdrIgnore<LCliCommandHandle> CommandHandle_Clear;
 
 #if !IN_SHIPPING
     void MockSomeMessages();
@@ -186,7 +186,7 @@ private:
 
 FORCEINLINE bool WConsoleScreen::IsHistoryCursorValid() const
 {
-    check( this->HistoryCursor == INDEX_NONE ? true : algo::is_valid_index(GetDefault<WConsoleScreen>()->History, this->HistoryCursor) )
+    check( this->HistoryCursor == INDEX_NONE ? true : algo::is_valid_index(GetDefault<WConsoleScreen>()->History.get(), this->HistoryCursor) )
     return this->HistoryCursor != INDEX_NONE;
 }
 
@@ -197,7 +197,7 @@ i32 WConsoleScreen::GetIndexInHistory() const
         return INDEX_NONE;
     }
 
-    const TArray<LString>& DefaultHistory = GetDefault<WConsoleScreen>()->History;
+    TArray<LString> const& DefaultHistory{ GetDefault<WConsoleScreen>()->History };
     check( algo::is_valid_index(DefaultHistory, DefaultHistory.size() - 1 - this->HistoryCursor) )
     return DefaultHistory.size() - 1 - this->HistoryCursor;
 }

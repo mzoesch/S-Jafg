@@ -9,14 +9,14 @@
 #include "Stats/Stats.h"
 #include "User/UserPreferences.h"
 
-bool Jafg::JChunkValidationSubsystem::ShouldCreateSubsystem(const LObjectContext* InOuter) const
+bool Jafg::JChunkValidationSubsystem::ShouldCreateSubsystem(LClassOuter const* Outer) const
 {
-    if (Super::ShouldCreateSubsystem(InOuter) == false)
+    if (Super::ShouldCreateSubsystem(Outer) == false)
     {
         return false;
     }
 
-    return Super::IsOuterWorld(InOuter);
+    return Super::IsOuterWorld(Outer);
 }
 
 void Jafg::JChunkValidationSubsystem::Initialize(LSubsystemCollection& Collection)
@@ -61,7 +61,7 @@ void Jafg::JChunkValidationSubsystem::FixedTick(const f32 EngineDeltaTime, const
     this->LastChunkKey = CurrentKey;
 
     const JUserPreferences* Prefs = GetDefault<JUserPreferences>();
-    this->GetWorld()->GetCheckedSubsystem<JChunkGenerationSubsystem>()->SetRequestedChunks(Validation::GetAllChunksFromCenterAsBox(
+    this->GetWorld()->GetSubsystemChecked<JChunkGenerationSubsystem>()->SetRequestedChunks(Validation::GetAllChunksFromCenterAsBox(
         CurrentKey,
         Prefs->ChunkRenderDistance,
         Prefs->ChunkRenderHeight,

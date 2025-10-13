@@ -3,13 +3,14 @@
 #pragma once
 
 #include "Engine/EngineCompileTimeConstants.h"
-#include "Level.h"
-#include "Subsystems/EngineSubsystem.h"
+#include "Engine/Level.h"
 #include "Cli/CommandLineInterface.h"
-#include "User/LocalEgo.h"
+#include "Engine/CxxClass.h"
 #include "Engine/World.h"
+#include "User/LocalEgo.h"
 #include "Rhi/EngineShader.h"
 #include "Foreign/PluginForward.h"
+#include "Subsystems/EngineSubsystem.h"
 #if JAFG_WITH_FOREIGN_SUPPORT
     #include "Foreign/Plugin.h"
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
@@ -17,10 +18,11 @@
 namespace Jafg
 {
 
-class JObject;
 class LEngine;
 class LWorld;
+class JEngineSubsystem;
 class LCommandLineInterface;
+struct LWorldTrack;
 
 } /* ~Namespace Jafg */
 
@@ -69,30 +71,36 @@ MAKE_MULTICAST_SIGNATURE(LOnWorldBeginLife, LWorld* InNewWorld)
     //# This delegate gets called when a foreign plugin has been loaded.
     //# @param InStaticClassContainer All static classes that are registered with the default public context of the new
     //#                               plugin.
-    MAKE_MULTICAST_SIGNATURE(LOnForeignPluginLoaded, LObjectContext* InStaticClassContainer)
+    MAKE_MULTICAST_SIGNATURE(LOnForeignPluginLoaded, LLoadedPlugin* Plugin)
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
 namespace Private
 {
 
-//#
-//# Private engine context wrapper around a world.
-//#
-struct LWorldContext
+struct LWorldTrack final
 {
-    LWorldContext() = delete;
-    LWorldContext(const LString& InHumanReadableName)
+    LWorldTrack() = delete;
+    LWorldTrack(LWorldTrack&&) = default;
+    LWorldTrack(LString HumanReadableName) noexcept
+        : ChildWorld{ std::make_unique<LWorld>(std::move(HumanReadableName)) }
     {
-        this->ChildWorld = new LWorld(InHumanReadableName, EWorldState::Uninitialized);
+        check( this->ChildWorld.get() != nullptr && this->ChildWorld->GetWorldState() == EWorldState::PreInitializing )
     }
-    ~LWorldContext() { check( this->ChildWorld == nullptr ) }
 
-    FORCEINLINE bool IsValid() const { return this->ChildWorld && this->ChildWorld->IsValid(); }
+    ~LWorldTrack() { check( this->ChildWorld.get() == nullptr || this->ChildWorld->GetWorldState() == EWorldState::WaitingForKill ) }
 
-    LString TravelUrl;
-    LWorld* ChildWorld;
+    FORCEINLINE bool IsValid() const { return this->ChildWorld.get() != nullptr; }
 
     FORCEINLINE bool IsWaitingForTravel() const { return this->TravelUrl.empty() == false; }
+    LString TravelUrl;
+
+    ENGINE_API void CreateWorldFromParams();
+
+#if WITH_LOCAL_LAYER
+    bool bSkipThisTick { false };
+#endif /* WITH_LOCAL_LAYER */
+
+    TUnique<LWorld> ChildWorld;
 };
 
 } /* ~Namespace Private */
@@ -104,7 +112,6 @@ class LEngine final
 {
     typedef std::chrono::steady_clock::time_point LSteadyStatisticsTimePoint;
 
-    friend JObject;
     friend LEngineShader;
 
 public:
@@ -119,9 +126,9 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
 
     //# Internal public method. Do not use.
-    ENGINE_API static void BeginExitIfRequested();
+    ENGINE_API static void _BeginExitIfRequested();
     //# Internal public method. Do not use.
-    ENGINE_API static void ReflectForwardedExitRequest();
+    ENGINE_API static void _ReflectForwardedExitRequest();
 
     ENGINE_API void RequestEngineExit();
     ENGINE_API void RequestEngineExit(const LString& Reason);
@@ -134,71 +141,84 @@ public:
 
     ENGINE_API  bool CanEverRender() const noexcept;
 
+#if !WITH_LOCAL_LAYER
+
+    FORCEINLINE bool IsLocalEgoValid() const noexcept { return false; }
+
+#else /* !WITH_LOCAL_LAYER */
+
     FORCEINLINE bool IsLocalEgoValid() const noexcept { return this->LocalEgo.IsValid(); }
     FORCEINLINE auto GetLocalEgo() -> LLocalEgo* { check( this->IsLocalEgoValid() ) return &this->LocalEgo; }
     FORCEINLINE auto GetLocalEgo() const -> const LLocalEgo* { check( this->IsLocalEgoValid() ) return &this->LocalEgo; }
 
     FORCEINLINE bool IsShaderValid(const LName InName) const noexcept { return this->GetShader(InName) != nullptr; }
-    FORCEINLINE auto GetShader(const LName InName) noexcept -> LEngineShader*;
+    FORCEINLINE auto GetShader(const LName Name) noexcept -> LEngineShader*;
     FORCEINLINE auto GetShader(const LName InName) const noexcept -> const LEngineShader* { return const_cast<LEngine*>(this)->GetShader(InName); }
     FORCEINLINE auto GetShaderChecked(const LName InName) noexceptcheck -> LEngineShader* { LEngineShader* Out = this->GetShader(InName); check( Out ) return Out; }
     FORCEINLINE auto GetShaderChecked(const LName InName) noexceptcheck const -> const LEngineShader* { return const_cast<LEngine*>(this)->GetShaderChecked(InName); }
     FORCEINLINE auto GetShaderAsserted(const LName InName) -> LEngineShader* { LEngineShader* Out = this->GetShader(InName); jassert( Out ) return Out; }
     FORCEINLINE auto GetShaderAsserted(const LName InName) const -> const LEngineShader* { return const_cast<LEngine*>(this)->GetShaderAsserted(InName); }
     FORCEINLINE auto GetShaders() const noexcept -> const std::map<LName, LEngineShader*>& { return this->Shaders; }
-    FORCEINLINE bool UnregisterShader(const LName InName, const bool bFree = true) noexcept;
-    FORCEINLINE bool UnregisterShaderChecked(const LName InName, const bool bFree = true) noexceptcheck;
+    FORCEINLINE bool UnregisterShader(const LName Name, const bool bFree = true) noexcept;
+    FORCEINLINE bool UnregisterShaderChecked(const LName Name, const bool bFree = true) noexceptcheck;
 
-    template <typename TShader> FORCEINLINE       TShader* GetShader(const LName InName) noexcept;
-    template <typename TShader> FORCEINLINE const TShader* GetShader(const LName InName) const noexcept;
-    template <typename TShader> FORCEINLINE       TShader* GetShaderChecked(const LName InName) noexcept;
-    template <typename TShader> FORCEINLINE const TShader* GetShaderChecked(const LName InName) const noexcept;
-    template <typename TShader> FORCEINLINE       TShader* GetShaderAsserted(const LName InName) noexcept;
-    template <typename TShader> FORCEINLINE const TShader* GetShaderAsserted(const LName InName) const noexcept;
+    template<typename TShader> requires std::is_base_of_v<LEngineShader, TShader>
+    FORCEINLINE TShader*       GetShader(LName Name) noexcept { return static_cast<TShader*>(this->GetShader(Name)); }
+    template<typename TShader> requires std::is_base_of_v<LEngineShader, TShader>
+    FORCEINLINE TShader const* GetShader(LName Name) const noexcept { return static_cast<const TShader*>(this->GetShader(Name)); }
+    template<typename TShader> requires std::is_base_of_v<LEngineShader, TShader>
+    FORCEINLINE TShader*       GetShaderChecked(LName Name) noexcept { return static_cast<TShader*>(this->GetShaderChecked(Name)); }
+    template<typename TShader> requires std::is_base_of_v<LEngineShader, TShader>
+    FORCEINLINE TShader const* GetShaderChecked(LName Name) const noexcept { return static_cast<const TShader*>(this->GetShaderChecked(Name)); }
+    template<typename TShader> requires std::is_base_of_v<LEngineShader, TShader>
+    FORCEINLINE TShader*       GetShaderAsserted(LName Name) noexcept { return static_cast<TShader*>(this->GetShaderAsserted(Name)); }
+    template<typename TShader> requires std::is_base_of_v<LEngineShader, TShader>
+    FORCEINLINE TShader const* GetShaderAsserted(LName Name) const noexcept { return static_cast<const TShader*>(this->GetShaderAsserted(Name)); }
 
-    FORCEINLINE void RecompileShader(const LName InName, const TArray<LShaderCompileTimeConstant>& InRemove, const TArray<LShaderCompileTimeConstant>& InAdd);
+    FORCEINLINE void RecompileShader(const LName Name, TArray<LShaderCompileTimeConstant> const& Remove, TArray<LShaderCompileTimeConstant> const& Add)
+    {
+        this->GetShaderAsserted(Name)->Recompile(Remove, Add);
+    }
 
 private:
 
-    FORCEINLINE bool AddShader(const LName InName, LEngineShader* InShader);
-    FORCEINLINE bool AddShaderChecked(const LName InName, LEngineShader* InShader);
-    FORCEINLINE bool AddShaderAsserted(const LName InName, LEngineShader* InShader);
+    FORCEINLINE bool AddShader(const LName Name, LEngineShader* Shader);
+    FORCEINLINE bool AddShaderChecked(const LName Name, LEngineShader* Shader) noexceptcheck { const bool bOut{ this->AddShader(Name, Shader) }; check( bOut ) return bOut; }
+    FORCEINLINE bool AddShaderAsserted(const LName Name, LEngineShader* Shader) { const bool bOut{ this->AddShader(Name, Shader) }; jassert( bOut ) return bOut; }
 
-    FORCEINLINE bool RemoveShader(const LEngineShader* InShader) noexcept;
+    FORCEINLINE bool RemoveShader(const LEngineShader* Shader) noexcept;
 
     LLocalEgo LocalEgo;
     std::map<LName, LEngineShader*> Shaders;
 
+#endif /* WITH_LOCAL_LAYER */
+
 public:
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Object Context Related.
+    // Class Outer Related.
     ///////////////////////////////////////////////////////////////////////////////
 
-    ENGINE_API  void RegisterObjectContext(LObjectContext* InContext);
-    ENGINE_API  void UnregisterObjectContext(LObjectContext* InContext);
-    FORCEINLINE bool IsObjectContextKnown(const LObjectContext* InContext) const;
+    ENGINE_API  void RegisterClassOuter(LClassOuter* Outer);
+    ENGINE_API  void UnregisterClassOuter(LClassOuter* Outer);
+    FORCEINLINE bool IsClassOuterKnown(LClassOuter const* Outer) const noexcept { return algo::contains(this->KnownOuters, Outer); }
 
 private:
 
-    //#
-    //# Known contexts to the engine. These contexts are read-only and should never be accessed through
-    //# the engine directly.
-    //# We only store the pointers to them here for object life management behind the scenes.
-    //#
-    TArray<LObjectContext*> KnownObjectContexts;
+    TArray<LClassOuter*> KnownOuters;
 
 public:
 
     ///////////////////////////////////////////////////////////////////////////////
-    // Context Related.
+    // Track Related.
     ///////////////////////////////////////////////////////////////////////////////
 
-    ENGINE_API Private::LWorldContext& GetContextFromWorld(const LWorld* World);
+    ENGINE_API Private::LWorldTrack& GetTrackFromWorld(LWorld const* World);
 
-    ENGINE_API LWorldStorage SummonWorld(const LString& HumanReadableName);
+    //# Summon a completely new fresh world.
+    ENGINE_API LWorldStorage SummonWorld(LString const& HumanReadableName);
 
-    ENGINE_API bool IsWorldValid(const LWorld* InWorld) const;
+    ENGINE_API bool IsWorldValid(LWorld const* World) const;
 
     //#
     //# Browse the provided world to a new url at the next opportunity.
@@ -207,12 +227,12 @@ public:
     //#    <LevelName>
     //#    <LevelName>?<option>?... (@see #LWorldParameters for how to format options.)
     //#
-    ENGINE_API void Browse(const LWorld* World, const LString& Url);
+    FORCEINLINE void Browse(LWorld const* World, LString const& Url) { this->Browse(this->GetTrackFromWorld(World), Url); }
 
     //# @return True if registered successfully.
-    ENGINE_API bool RegisterLevel(const LLevel& InLevel);
-    ENGINE_API bool RegisterLevel(LLevel&& InLevel);
-    ENGINE_API bool IsLevelRegistered(const LString& Identifier) const;
+    ENGINE_API  bool RegisterLevel(LLevel const& Level);
+    ENGINE_API  bool RegisterLevel(LLevel&& Level);
+    FORCEINLINE bool IsLevelRegistered(LString const& Identifier) const { return algo::contains(this->RegisteredLevels, Identifier, &LLevel::Identifier); }
 
     //#
     //# Delegate called when a new world is shortly about to be running inside its beginning life cycle.
@@ -220,30 +240,28 @@ public:
     //#
     LOnWorldBeginLife OnWorldBeginLife;
 
-    FORCEINLINE auto GetContexts() const noexcept -> const TArray<Private::LWorldContext>& { return this->Contexts; }
+    FORCEINLINE auto GetTracks() const noexcept -> const TArray<Private::LWorldTrack>& { return this->Tracks; }
     FORCEINLINE auto GetRegisteredLevels() const noexcept -> const TArray<LLevel>& { return this->RegisteredLevels; }
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JEngineSubsystem)
 
 private:
 
-    Private::LWorldContext& CreateNewWorldContext(const LString& InHumanReadableName);
-
-    void Browse(Private::LWorldContext& Context, const LString& Url) const;
-    bool IsContextUrlInternal(const LString& Url) const;
-    bool TravelContext(Private::LWorldContext& Context);
-    LLevel* GetLevelByInternalUrl(const LString& Url);
+    ENGINE_API void Browse(Private::LWorldTrack& Track, LString const& Url) const;
+    bool IsTrackUrlInternal(LString const& Url) const;
+    bool TravelTrack(Private::LWorldTrack& Track);
+    LLevel* GetLevelByInternalUrl(LString const& Url);
 
     //#
-    //# All current engine contexts.
+    //# All current engine tracks.
     //# An index of a specific context is not guaranteed to stay the same. Always expect a short
     //# lifetime of the index.
     //#
-    TArray<Private::LWorldContext> Contexts;
+    TArray<Private::LWorldTrack> Tracks;
     //# The registered levels that this engine can load.
     TArray<LLevel> RegisteredLevels;
 
-    LObjectContext ObjectContext { DeferredGlobalCarnifex };
+    LClassOuter Outer{ "Engine" };
     LSubsystemCollection Collection;
 
 #if JAFG_WITH_FOREIGN_SUPPORT
@@ -253,36 +271,32 @@ public:
     // Foreign Related.
     ///////////////////////////////////////////////////////////////////////////////
 
-    ENGINE_API void RefetchPlugins(const TArray<LString>& InAdditionalPaths);
+    ENGINE_API void RefetchPlugins(TArray<LString> const& AdditionalPaths);
 
     //#
     //# Tries to load the plugin with the provided name.
     //#
-    ENGINE_API EPluginLoadReturnCode::Type LoadPlugin(const LString& InName);
-    ENGINE_API void LoadPluginNoFailure(const LString& InName);
+    ENGINE_API EPluginLoadReturnCode::Type LoadPlugin(LString const& Name);
+    ENGINE_API void LoadPluginNoFailure(LString const& Name);
 
     ENGINE_API auto UnLoadPlugin(const LString& InName, const EPluginShutdownReason::Type InReason) -> EPluginLoadReturnCode::Type;
     ENGINE_API void UnLoadPluginNoFailure(const LString& InName, const EPluginShutdownReason::Type InReason);
-    auto UnLoadPlugin(LLoadedPlugin* InPlugin, const EPluginShutdownReason::Type InReason) -> EPluginLoadReturnCode::Type;
+    auto UnLoadPlugin(LLoadedPlugin* Plugin, const EPluginShutdownReason::Type Reason) -> EPluginLoadReturnCode::Type;
     void UnLoadPluginNoFailure(LLoadedPlugin* InPlugin, const EPluginShutdownReason::Type InReason);
-
-    LObjectContext* GetCurrentForeignContext() const;
 
     LOnForeignPluginLoaded OnForeignPluginLoaded;
 
 private:
 
-    void FetchPlugins(const LPath& InPath);
-    bool FetchPlugin(const LPath& InPath);
-    EPluginLoadReturnCode::Type LoadPluginImpl(const LFetchedPlugin& InFetchedPlugin);
+    void FetchPlugins(LPath const& Path);
+    bool FetchPlugin(LPath const& Path);
+    EPluginLoadReturnCode::Type LoadPluginImpl(const LFetchedPlugin& FetchedPlugin);
 
     TArray<LFetchedPlugin> FetchedPlugins;
     TArray<LLoadedPlugin>  LoadedPlugins;
 
     NODISCARD FORCEINLINE u32 GetNextPluginUuid() noexcept { return ++this->PluginUuidCounter; }
     u32 PluginUuidCounter { LLoadedPluginHandle::EngineUuid };
-
-    LObjectContext* ForeignContextCursor { nullptr };
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
 public:
@@ -299,57 +313,9 @@ private:
     LCommandLineInterface CommandLineInterface;
 };
 
-template<typename TShader>
-FORCEINLINE TShader* LEngine::GetShader(const LName InName) noexcept
+FORCEINLINE LEngineShader* LEngine::GetShader(const LName Name) noexcept
 {
-    static_assert(std::is_base_of_v<LEngineShader, TShader>, "TShader must be derived from LEngineShader");
-    return static_cast<TShader*>(this->GetShader(InName));
-}
-
-template<typename TShader>
-FORCEINLINE const TShader* LEngine::GetShader(const LName InName) const noexcept
-{
-    static_assert(std::is_base_of_v<LEngineShader, TShader>, "TShader must be derived from LEngineShader");
-    return static_cast<const TShader*>(this->GetShader(InName));
-}
-
-template<typename TShader>
-FORCEINLINE TShader* LEngine::GetShaderChecked(const LName InName) noexcept
-{
-    static_assert(std::is_base_of_v<LEngineShader, TShader>, "TShader must be derived from LEngineShader");
-    return static_cast<TShader*>(this->GetShaderChecked(InName));
-}
-
-template<typename TShader>
-FORCEINLINE const TShader* LEngine::GetShaderChecked(const LName InName) const noexcept
-{
-    static_assert(std::is_base_of_v<LEngineShader, TShader>, "TShader must be derived from LEngineShader");
-    return static_cast<const TShader*>(this->GetShaderChecked(InName));
-}
-
-template<typename TShader>
-FORCEINLINE TShader* LEngine::GetShaderAsserted(const LName InName) noexcept
-{
-    static_assert(std::is_base_of_v<LEngineShader, TShader>, "TShader must be derived from LEngineShader");
-    return static_cast<TShader*>(this->GetShaderAsserted(InName));
-}
-
-template<typename TShader>
-FORCEINLINE const TShader* LEngine::GetShaderAsserted(const LName InName) const noexcept
-{
-    static_assert(std::is_base_of_v<LEngineShader, TShader>, "TShader must be derived from LEngineShader");
-    return static_cast<const TShader*>(this->GetShaderAsserted(InName));
-}
-
-FORCEINLINE void LEngine::RecompileShader(const LName InName, const TArray<LShaderCompileTimeConstant>& InRemove, const TArray<LShaderCompileTimeConstant>& InAdd)
-{
-    this->GetShaderAsserted(InName)->Recompile(InRemove, InAdd);
-    return;
-}
-
-FORCEINLINE LEngineShader* LEngine::GetShader(const LName InName) noexcept
-{
-    if (const auto& It = this->Shaders.find(InName); It != this->Shaders.end())
+    if (const auto& It = this->Shaders.find(Name); It != this->Shaders.end())
     {
         return It->second;
     }
@@ -357,68 +323,54 @@ FORCEINLINE LEngineShader* LEngine::GetShader(const LName InName) noexcept
     return nullptr;
 }
 
-FORCEINLINE bool LEngine::UnregisterShader(const LName InName, const bool bFree /* = true */) noexcept
+FORCEINLINE bool LEngine::UnregisterShader(const LName Name, const bool bFree /* = true */) noexcept
 {
-    LOG_VERBOSE(LogEngine, "Removing engine shader [{}].", InName)
+    LOG_VERBOSE(LogEngine, "Removing engine shader [{}].", Name)
 
     if (bFree)
     {
-        if (const auto& It = this->Shaders.find(InName); It != this->Shaders.end())
+        if (auto const& It{ this->Shaders.find(Name) }; It != this->Shaders.end())
         {
-            const LEngineShader* Shader = It->second;
+            LEngineShader const* Shader{ It->second };
             this->Shaders.erase(It);
             delete Shader;
             return true;
         }
 
-        LOG_ERROR(LogEngine, "Failed to find engine shader [{}] to free.", InName)
+        LOG_ERROR(LogEngine, "Failed to find engine shader [{}] to free.", Name)
     }
 
-    return this->Shaders.erase(InName) > 0;
+    return this->Shaders.erase(Name) > 0;
 }
 
-FORCEINLINE bool LEngine::UnregisterShaderChecked(const LName InName, const bool bFree /* = true */) noexceptcheck
+FORCEINLINE bool LEngine::UnregisterShaderChecked(const LName Name, const bool bFree /* = true */) noexceptcheck
 {
-    const bool bOut = this->UnregisterShader(InName, bFree);
+    const bool bOut{ this->UnregisterShader(Name, bFree) };
     check( bOut )
     return bOut;
 }
 
-FORCEINLINE bool LEngine::AddShader(const LName InName, LEngineShader* InShader)
+FORCEINLINE bool LEngine::AddShader(const LName Name, LEngineShader* Shader)
 {
-    check( InShader )
+    check( Shader )
 
-    if (this->GetShader(InName))
+    if (this->GetShader(Name))
     {
         return false;
     }
 
-    this->Shaders.emplace(InName, InShader);
+    this->Shaders.emplace(Name, Shader);
 
-    LOG_VERBOSE(LogEngine, "Added new engine shader [{}] to a total of {} shaders.", InName, this->Shaders.size())
+    LOG_VERBOSE(LogEngine, "Added new engine shader [{}] to a total of {} shaders.", Name, this->Shaders.size())
     return true;
 }
 
-FORCEINLINE bool LEngine::AddShaderChecked(const LName InName, LEngineShader* InShader)
-{
-    const bool bOut = this->AddShader(InName, InShader);
-    check( bOut )
-    return bOut;
-}
-
-FORCEINLINE bool LEngine::AddShaderAsserted(const LName InName, LEngineShader* InShader)
-{
-    const bool bOut = this->AddShader(InName, InShader);
-    jassert( bOut )
-    return bOut;
-}
-
-bool LEngine::RemoveShader(const LEngineShader* InShader) noexcept
+bool LEngine::RemoveShader(LEngineShader const* Shader) noexcept
 {
     LName Name;
-    for (const auto& It : this->Shaders)
+    for (auto const& It : this->Shaders)
     {
-        if (It.second == InShader)
+        if (It.second == Shader)
         {
             Name = It.first;
             break;
@@ -434,18 +386,5 @@ bool LEngine::RemoveShader(const LEngineShader* InShader) noexcept
 
     return false;
 }
-
-FORCEINLINE bool LEngine::IsObjectContextKnown(const LObjectContext* InContext) const
-{
-    return algo::contains(this->KnownObjectContexts, InContext);
-}
-
-#if JAFG_WITH_FOREIGN_SUPPORT
-FORCEINLINE LObjectContext* LEngine::GetCurrentForeignContext() const
-{
-    check( this->ForeignContextCursor )
-    return this->ForeignContextCursor;
-}
-#endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
 } /* ~Namespace Jafg */

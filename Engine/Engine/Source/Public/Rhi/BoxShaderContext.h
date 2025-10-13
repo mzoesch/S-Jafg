@@ -13,7 +13,7 @@ class LViewport;
 //#
 //# A simple shader helping class that renders a box on an orthographic projection.
 //#
-class ENGINE_API LBoxShaderContext
+class LBoxShaderContext
 {
 public:
 

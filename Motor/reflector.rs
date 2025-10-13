@@ -147,7 +147,7 @@ fn remove_suffixed_scoped_operator_because_gcc_does_gcc_unjustifiable_shenanigan
 {
     /*
      * Why gcc why?? This literally costed me days of fucking refactoring the whole fucking reflection system.
-     * @see ~Lal/Core/CoreMacros.h: JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_XXX
+     * @see ~Lal/Core/CoreMacros.h: LAL_JOIN_SCOPE_RESOLUTION_OUTER_XXX
      */
     if spaced_identifier.ends_with("::")
     {
@@ -258,7 +258,8 @@ fn get_generated_file_stub_checked(file: &str) -> String
 
 fn reflect_file(args: &Cli, file: &str) -> Option<JPacketUnit>
 {
-    if file == "Engine/Engine/Source/Public/Engine/ObjectMacros.h"
+    if     file == "Engine/Engine/Source/Public/Engine/CxxClassMacros.h"
+        || file == "Engine/Engine/Source/Public/Engine/CxxRecordMacros.h"
     {
         // Very, very special file that declares a lot of stuff. But sadly confuses our tokenizer...
         // It would take simply too much time to implement special rules that are commonly accepted over all files
@@ -439,7 +440,7 @@ fn add_pragma(_args: &Cli, file: &str, tokens: &Vec<Token>, i: usize, t: &Token)
     assert_eq!(t.ty.is_pragma(), true);
     assert_eq!(tokens[i].ty.is_pragma(), true);
 
-    if t.content == "\"NextIsObjectBaseClass\""
+    if t.content == "\"NextIsBaseCxxClass\""
     {
         return None;
     }
@@ -448,7 +449,7 @@ fn add_pragma(_args: &Cli, file: &str, tokens: &Vec<Token>, i: usize, t: &Token)
 }
 
 #[allow(non_snake_case)]
-fn on_add_class__VA__ARGS(packet: &JPacket) -> String
+fn on_add_class__VA_ARGS__(packet: &JPacket) -> String
 {
     let mut out: String = String::new();
 
@@ -535,10 +536,10 @@ fn add_class(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Option<JPa
         {
             arg.push_str("@C");
         }
-        if field.info.contains(&"DefaultOnly".to_string())
-        {
-            arg.push_str("@D");
-        }
+        // if field.info.contains(&"DefaultOnly".to_string())
+        // {
+        //     arg.push_str("@D");
+        // }
         arg.push_str(&field.content);
         additional_args.push(arg);
         continue
@@ -587,11 +588,11 @@ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DE
     /* __VA_ARGS__ */            {}                                                       \
 )
 "##,
-                    remove_all_namespaces(&self_packet.name), self_packet.name,
-                    get_all_namespaces(&self_packet.name), self_packet.name,
-                    self_packet.line,
-                    self_packet.args[SUPER_CLASS],
-                    on_add_class__VA__ARGS(&self_packet),
+                                            remove_all_namespaces(&self_packet.name), self_packet.name,
+                                            get_all_namespaces(&self_packet.name), self_packet.name,
+                                            self_packet.line,
+                                            self_packet.args[SUPER_CLASS],
+                                            on_add_class__VA_ARGS__(&self_packet),
                 ));
 
                 return
@@ -632,11 +633,11 @@ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DE
     /* __VA_ARGS__ */            {}                                                       \
 )
 "##,
-                    remove_all_namespaces(&self_packet.name), self_packet.name,
-                    get_all_namespaces(&self_packet.name), self_packet.name,
-                    self_packet.line,
-                    &self_packet.args[SUPER_CLASS],
-                    on_add_class__VA__ARGS(&self_packet),
+                                            remove_all_namespaces(&self_packet.name), self_packet.name,
+                                            get_all_namespaces(&self_packet.name), self_packet.name,
+                                            self_packet.line,
+                                            &self_packet.args[SUPER_CLASS],
+                                            on_add_class__VA_ARGS__(&self_packet),
                 ));
 
                 return
@@ -678,11 +679,11 @@ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_REGISTRATION_CONSTRUCTOR_HELPER_DE
     /* __VA_ARGS__ */            {}                                                       \
 )
 "##,
-                    remove_all_namespaces(&self_packet.name), self_packet.name,
-                    get_all_namespaces(&self_packet.name), self_packet.name,
-                    self_packet.line,
-                    self_packet.args[SUPER_CLASS],
-                    on_add_class__VA__ARGS(&self_packet),
+                                            remove_all_namespaces(&self_packet.name), self_packet.name,
+                                            get_all_namespaces(&self_packet.name), self_packet.name,
+                                            self_packet.line,
+                                            self_packet.args[SUPER_CLASS],
+                                            on_add_class__VA_ARGS__(&self_packet),
                 ));
 
                 return
@@ -718,6 +719,8 @@ fn add_class_field(_file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Opt
                     h_file_id, self_packet.line,
                 ));
 
+                let mut analyzed_count: usize = 0;
+
                 if self_packet.args.contains(&"Config".to_string())
                 {
                     h_builder.push_str(&format!(r##"                        \
@@ -727,17 +730,27 @@ PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config(     \
 "##,
                         self_packet.name,
                     ));
+
+                    analyzed_count += 1;
                 }
 
-                if self_packet.args.contains(&"DefaultOnly".to_string())
+//                 if self_packet.args.contains(&"DefaultOnly".to_string())
+//                 {
+//                     h_builder.push_str(&format!(r##"                         \
+// PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly( \
+//         /* My Class Member */ {}                                             \
+//     )                                                                        \
+// "##,
+//                         self_packet.name,
+//                     ));
+//                 }
+
+                if analyzed_count != self_packet.args.len()
                 {
-                    h_builder.push_str(&format!(r##"                         \
-PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly( \
-        /* My Class Member */ {}                                             \
-    )                                                                        \
-"##,
-                        self_packet.name,
-                    ));
+                    panic!("[{}]: Could not analyze all class field args on [{}]. Analyzed [{}/{}] args: [{:?}].",
+                        h_file_id, self_packet.name,
+                        analyzed_count, self_packet.args.len(), self_packet.args
+                        );
                 }
 
                 return;
@@ -757,7 +770,7 @@ fn add_class_body(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Optio
     {
         name: class_decl.content.to_string(),
         line: t.line,
-        args: vec![class_decl.info[SUPER_CLASS].clone(), class_decl.line.to_string()],
+        args: vec![class_decl.info[SUPER_CLASS].clone(), class_decl.line.to_string(), tokens[i].content.clone()],
         callback: match class_decl.ty
         {
             TokenType::ClassDeclaration => Box::new(|h_file_id, h_builder, _t_builder, self_packet|
@@ -773,7 +786,8 @@ fn add_class_body(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Optio
         /* My Class Name */            {}, /* ORIGIN VALUE: {} */     \
         /* My Class Spaces */          {}, /* ORIGIN ARG VALUE: {} */ \
         /* Super Class Name */         {},                            \
-        /* Construction Helper Line */ {}                             \
+        /* Construction Helper Line */ {},                            \
+        __VA_ARGS__ /* API */                                         \
     )
 "##,
                     h_file_id, self_packet.line,
@@ -799,7 +813,8 @@ fn add_class_body(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Optio
         /* My Class Name */            {}, /* ORIGIN VALUE: {} */     \
         /* My Class Spaces */          {}, /* ORIGIN ARG VALUE: {} */ \
         /* Super Class Name */         {},                            \
-        /* Construction Helper Line */ {}                             \
+        /* Construction Helper Line */ {},                            \
+        __VA_ARGS__ /* API */                                         \
     )
 "##,
                     h_file_id, self_packet.line,
@@ -825,7 +840,8 @@ fn add_class_body(file: &str, tokens: &Vec<Token>, i: usize, t: &Token) -> Optio
         /* My Class Name */            {}, /* ORIGIN VALUE: {} */          \
         /* My Class Spaces */          {}, /* ORIGIN ARG VALUE: {} */      \
         /* Super Class Name */         {},                                 \
-        /* Construction Helper Line */ {}                                  \
+        /* Construction Helper Line */ {},                                 \
+        __VA_ARGS__ /* API */                                              \
     )
 "##,
                     h_file_id, self_packet.line,

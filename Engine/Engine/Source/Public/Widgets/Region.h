@@ -16,17 +16,18 @@ namespace Jafg
 //# A region might still draw outside these bounds.
 //#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryRegion)
-class ENGINE_API WRegion : public WOverlay
+class WRegion : public WOverlay
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WRegion(const LObjectInitializer& ObjectInitializer);
+    explicit WRegion(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WRegion)
 
 public:
 
-    virtual void BeginLifeDefault() override;
+    virtual void BeginLifeCDR() override;
     virtual void Draw(LViewport& Context) const override;
 
     void SetBrush(const LRegionBrush& InBrush) { this->Brush = InBrush; }

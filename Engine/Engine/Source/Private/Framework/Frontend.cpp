@@ -14,18 +14,16 @@
 #include "Widgets/UserWidget.h"
 #include "Stats/Stats.h"
 
-void Jafg::LFrontend::Initialize(LObjectContext* InOuter)
+void Jafg::LFrontend::Initialize(LClassOuter* Outer)
 {
-    this->CachedOuter = InOuter;
-
     this->Surfaces.emplace_back(this->CreateNewSurface());
     this->Surfaces.back().SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
 
     this->FocusedSurface = this->Surfaces.size() - 1;
     check( this->IsFocusedSurfaceValid() )
 
-    this->Collection.DeferredInitialize(this->CachedOuter);
-    this->Collection.InitializeSubsystems(JFrontendSubsystem::StaticClass());
+    this->Collection.InitializeDeferred(Outer);
+    this->Collection.InitializeSubsystems<JFrontendSubsystem>();
 
     return;
 }
@@ -58,11 +56,13 @@ void Jafg::LFrontend::Tick(LUserInput* UserInput)
         }
     }
 
-    this->Collection.ForEachSubsystem<JFrontendSubsystem>([](JFrontendSubsystem* Subsystem)
+    this->ForEachMutableSubsystem([](JFrontendSubsystem* E)
     {
-        if (Subsystem->ShouldTick())
+        check( E )
+
+        if (E->ShouldTick())
         {
-            Subsystem->Tick();
+            E->Tick();
         }
 
         return;
@@ -73,8 +73,6 @@ void Jafg::LFrontend::Tick(LUserInput* UserInput)
 
 void Jafg::LFrontend::TearDown()
 {
-    check( this->CachedOuter )
-
     this->Collection.TearDownSubsystems();
 
     for (LSurface& Surface : this->Surfaces)
@@ -82,7 +80,6 @@ void Jafg::LFrontend::TearDown()
         Surface.TearDown();
     }
     algo::orphan(&this->Surfaces);
-    this->CachedOuter = nullptr;
 
     return;
 }
@@ -137,16 +134,16 @@ void Jafg::LFrontend::RemoveWidget(WUserWidget* Widget)
         continue;
     }
 
-    panicMsgf( "Could not remove widget [{}] from any surface.", Widget->GetFullName() )
+    panicMsgf( "Could not remove widget [{}] from any surface.", Widget->GetNameAsString() )
 
     return;
 }
 
-Jafg::WNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
+Jafg::WNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(TSubclassOf<WNode> Class) const
 {
     if (this->IsFocusedSurfaceValid())
     {
-        if (WNode* Widget = this->GetFocusedSurface()->GetViewport().GetTopLevelWidgetByClass(WidgetClass); Widget)
+        if (WNode* Widget = this->GetFocusedSurface()->GetViewport().GetTopLevelWidgetByClass(Class); Widget)
         {
             return Widget;
         }
@@ -160,7 +157,7 @@ Jafg::WNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(const LObjectClass* 
         }
 
         const LSurface& Surface = this->Surfaces[Idx];
-        if (WNode* Widget = Surface.GetViewport().GetTopLevelWidgetByClass(WidgetClass); Widget)
+        if (WNode* Widget = Surface.GetViewport().GetTopLevelWidgetByClass(Class); Widget)
         {
             return Widget;
         }
@@ -171,14 +168,14 @@ Jafg::WNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(const LObjectClass* 
     return nullptr;
 }
 
-bool Jafg::LFrontend::ChangeWidgetVisibility(const LViewport* Context, const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+bool Jafg::LFrontend::ChangeWidgetVisibility(const LViewport* Context, TSubclassOf<WNode> Class, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
-    WNode* Widget = this->GetTopLevelWidgetByClass(Context, WidgetClass);
+    WNode* Widget = this->GetTopLevelWidgetByClass(Context, Class);
     if (Widget == nullptr)
     {
         if (bAllowNotFound == false)
         {
-            panicMsgf( "Could not find widget of class [{}] to change visibility.", WidgetClass->GetSpacedClassName() )
+            panicMsgf( "Could not find widget of class [{}] to change visibility.", Class->GetFullyQualifiedName() )
         }
 
         return false;
@@ -194,14 +191,14 @@ bool Jafg::LFrontend::ChangeWidgetVisibility(const LViewport* Context, const LOb
     return true;
 }
 
-bool Jafg::LFrontend::ChangeWidgetVisibility(const LObjectClass* WidgetClass, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+bool Jafg::LFrontend::ChangeWidgetVisibility(TSubclassOf<WNode> Class, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
-    WNode* Widget = this->GetFirstTopLevelWidgetByClass(WidgetClass);
+    WNode* Widget = this->GetFirstTopLevelWidgetByClass(Class);
     if (Widget == nullptr)
     {
         if (bAllowNotFound == false)
         {
-            panicMsgf( "Could not find widget of class [{}] to change visibility.", WidgetClass->GetSpacedClassName() )
+            panicMsgf( "Could not find widget of class [{}] to change visibility.", Class->GetFullyQualifiedName() )
         }
 
         return false;

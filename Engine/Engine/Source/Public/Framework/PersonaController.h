@@ -13,7 +13,7 @@ class LEye;
 class APawn;
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API APersonaController final : public AController
+class APersonaController final : public AController
 {
     GENERATED_CLASS_BODY()
 

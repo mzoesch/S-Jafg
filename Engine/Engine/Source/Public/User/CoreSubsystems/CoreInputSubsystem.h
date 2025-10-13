@@ -15,7 +15,7 @@ struct LInputActionValue;
 //# These keys are not intended to be overridden by other subsystems.
 //#
 DECLARE_JAFG_CLASS()
-class ENGINE_API JCoreInputSubsystem final : public JLocalEgoSubsystem
+class JCoreInputSubsystem final : public JLocalEgoSubsystem
 {
     GENERATED_CLASS_BODY()
 

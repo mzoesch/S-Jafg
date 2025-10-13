@@ -2,7 +2,8 @@
 
 #include "Widgets/VButton.h"
 
-Jafg::WVButton::WVButton(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WVButton::WVButton(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetVisibility(EWidgetVisibility::Visible);
     return;

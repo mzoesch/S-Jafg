@@ -20,7 +20,12 @@ public:
     using SizeType = TSizeType;
 
     FORCEINLINE TMpmcQueue() = default;
-    PROHIBIT_COPY(TMpmcQueue)
+    TMpmcQueue(TMpmcQueue& MpmcQueue) = delete;
+    TMpmcQueue(TMpmcQueue const& MpmcQueue)
+    {
+        check( MpmcQueue.IsEmpty() && "Cannot copy a non-empty queue." )
+    }
+    TMpmcQueue& operator=(TMpmcQueue const& MpmcQueue) = delete;
     FORCEINLINE TMpmcQueue(TMpmcQueue&& Other) noexcept { this->FromRRef(std::move(Other)); }
     FORCEINLINE TMpmcQueue& operator=(TMpmcQueue&& Other) noexcept;
     FORCEINLINE ~TMpmcQueue() { this->Empty(); }

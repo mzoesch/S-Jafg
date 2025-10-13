@@ -10,13 +10,14 @@ namespace Jafg
 {
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryVButton)
-class ENGINE_API WVButton : public WVRegion, public LButtonBase
+class WVButton : public WVRegion, public LButtonBase
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WVButton(const LObjectInitializer& ObjectInitializer);
+    explicit WVButton(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WVButton)
 
 public:
 

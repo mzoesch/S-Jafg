@@ -24,10 +24,16 @@ public:
 
 protected:
 
-    DEFAULT_OBJECT_CONSTRUCTOR(JChunkGenerationSubsystem)
+    DEFAULT_OBJECT_CTOR(JChunkGenerationSubsystem)
+    explicit JChunkGenerationSubsystem(JChunkGenerationSubsystem const& CDR) noexcept
+        : Super(CDR)
+        , SharedChunkArgs(CDR.SharedChunkArgs)
+    {
+
+    }
 
     // JFixedTickableWorldSubsystem implementation
-    virtual bool ShouldCreateSubsystem(const LObjectContext* InOuter) const override;
+    virtual bool ShouldCreateSubsystem(LClassOuter const* Outer) const override;
     virtual void Initialize(LSubsystemCollection& Collection) override;
     virtual void FixedTick(const f32 EngineDeltaTime, const f32 FixedDeltaTime) override;
     virtual void TearDown() override;

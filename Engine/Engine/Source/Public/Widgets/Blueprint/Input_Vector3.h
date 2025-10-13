@@ -21,13 +21,14 @@ public:
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryInput_Vector3)
-class ENGINE_API WInput_Vector3 : public WHButton
+class WInput_Vector3 : public WHButton
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WInput_Vector3(const LObjectInitializer& ObjectInitializer);
+    explicit WInput_Vector3(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WInput_Vector3)
 
 public:
 

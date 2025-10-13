@@ -1,6 +1,9 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Lal.afx"
+
+#if 0
+
 #include "Engine/ObjectBaseUtility.h"
 #include "Async/TaskUtility.h"
 #include "Engine/Engine.h"
@@ -12,16 +15,6 @@
 
 namespace Jafg
 {
-
-ENGINE_API LObjectContext* GOmniVitaContext = nullptr;
-
-namespace Private
-{
-
-ENGINE_API LObjectRegistry* GObjectRegistry   = nullptr;
-ENGINE_API LCarnifex*       GCarnifexReferrer = nullptr;
-
-} /* ~Namespace Private */
 
 void MakeDeferredObjectFinal(JObjectBase* InObject)
 {
@@ -663,3 +656,5 @@ i32 Jafg::Private::LObjectRegistry::RemovePackagesOf(const LLoadedPluginHandle I
     return Removed;
 }
 
+
+#endif

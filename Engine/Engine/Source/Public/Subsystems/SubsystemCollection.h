@@ -3,189 +3,176 @@
 #pragma once
 
 #include "Subsystems/Subsystem.h"
-#include "Engine/ObjectClass.h"
-#include "Engine/ObjectBaseUtility.h"
 
 namespace Jafg
 {
 
-class LObjectContext;
 class LWorld;
 class JSubsystem;
+struct LSubsystemCollection;
 
 //# Common subsystem getters that an outer may want to use to avoid boilerplate.
-#define SUBSYSTEM_COLLECTION_OUTER_GETTERS(Member, MySubsystem)                                                                                                          \
-    FORCEINLINE       LSubsystemCollection* GetCollection() { return &this->Member; }                                                                                    \
-    FORCEINLINE const LSubsystemCollection* GetCollection() const { return &this->Member; }                                                                              \
-    FORCEINLINE       MySubsystem* GetSubsystem(const LObjectClass* InStaticClass) { return this->Member.GetSubsystem<MySubsystem>(InStaticClass); }                     \
-    FORCEINLINE const MySubsystem* GetSubsystem(const LObjectClass* InStaticClass) const { return this->Member.GetSubsystem<MySubsystem>(InStaticClass); }               \
-    FORCEINLINE       MySubsystem* GetCheckedSubsystem(const LObjectClass* InStaticClass) { return this->Member.GetCheckedSubsystem<MySubsystem>(InStaticClass); }       \
-    FORCEINLINE const MySubsystem* GetCheckedSubsystem(const LObjectClass* InStaticClass) const { return this->Member.GetCheckedSubsystem<MySubsystem>(InStaticClass); } \
-    template <typename TSubsystem, bool bAllowForNullptr = true>                               \
-    FORCEINLINE TSubsystem* GetSubsystem()                                                     \
-    {                                                                                          \
-        static_assert(std::is_base_of_v<MySubsystem, TSubsystem>);                             \
-        return this->Member.GetSubsystem<TSubsystem, bAllowForNullptr>();                      \
-    }                                                                                          \
-    template <typename TSubsystem, bool bAllowForNullptr = true>                               \
-    FORCEINLINE const TSubsystem* GetSubsystem() const                                         \
-    {                                                                                          \
-        static_assert(std::is_base_of_v<MySubsystem, TSubsystem>);                             \
-        return this->Member.GetSubsystem<TSubsystem, bAllowForNullptr>();                      \
-    }                                                                                          \
-    template <typename TSubsystem, bool bAllowForNullptr = true>                               \
-    FORCEINLINE TSubsystem* GetSubsystem(const LObjectClass* InStaticClass)                    \
-    {                                                                                          \
-        static_assert(std::is_base_of_v<MySubsystem, TSubsystem>);                             \
-        return this->Member.GetSubsystem<TSubsystem, bAllowForNullptr>(InStaticClass);         \
-    }                                                                                          \
-    template <typename TSubsystem, bool bAllowForNullptr = true>                               \
-    FORCEINLINE const TSubsystem* GetSubsystem(const LObjectClass* InStaticClass) const        \
-    {                                                                                          \
-        static_assert(std::is_base_of_v<MySubsystem, TSubsystem>);                             \
-        return this->Member.GetSubsystem<TSubsystem, bAllowForNullptr>(InStaticClass);         \
-    }                                                                                          \
-    template <typename TSubsystem>                                                             \
-    FORCEINLINE TSubsystem* GetCheckedSubsystem()                                              \
-    {                                                                                          \
-        static_assert(std::is_base_of_v<MySubsystem, TSubsystem>);                             \
-        return this->Member.GetCheckedSubsystem<TSubsystem>();                                 \
-    }                                                                                          \
-    template <typename TSubsystem>                                                             \
-    FORCEINLINE const TSubsystem* GetCheckedSubsystem() const                                  \
-    {                                                                                          \
-        static_assert(std::is_base_of_v<MySubsystem, TSubsystem>);                             \
-        return this->Member.GetCheckedSubsystem<TSubsystem>();                                 \
-    }                                                                                          \
-    template <typename TSubsystem>                                                             \
-    FORCEINLINE TSubsystem* GetCheckedSubsystem(const LObjectClass* InStaticClass)             \
-    {                                                                                          \
-        static_assert(std::is_base_of_v<MySubsystem, TSubsystem>);                             \
-        return this->Member.GetCheckedSubsystem<TSubsystem>(InStaticClass);                    \
-    }                                                                                          \
-    template <typename TSubsystem>                                                             \
-    FORCEINLINE const TSubsystem* GetCheckedSubsystem(const LObjectClass* InStaticClass) const \
-    {                                                                                          \
-        static_assert(std::is_base_of_v<MySubsystem, TSubsystem>);                             \
-        return this->Member.GetCheckedSubsystem<TSubsystem>(InStaticClass);                    \
-    }
+#define SUBSYSTEM_COLLECTION_OUTER_GETTERS(Member, MySubsystem)                                                                                         \
+    FORCEINLINE LSubsystemCollection      * GetCollection() noexcept { return &this->Member; }                                                          \
+    FORCEINLINE LSubsystemCollection const* GetCollection() const noexcept { return &this->Member; }                                                    \
+    template<algo::void_predicate<MySubsystem> TPredicate>                                                                                              \
+    FORCEINLINE void ForEachSubsystem(TPredicate&& Predicate) { this->Member.ForEachSubsystem<MySubsystem>(std::forward<TPredicate>(Predicate)); }      \
+    template<typename TSubsystem, algo::void_predicate<TSubsystem> TPredicate, bool bAllowMissCast = false>                                             \
+        requires(std::is_base_of_v<MySubsystem, TSubsystem> && !std::is_same_v<MySubsystem, TSubsystem>)                                                \
+    FORCEINLINE void ForEachSubtypeSubsystem(TPredicate&& Predicate)                                                                                    \
+        { this->Member.ForEachSubsystem<TSubsystem, bAllowMissCast>(std::forward<TPredicate>(Predicate)); }                                             \
+    template<algo::void_mutable_predicate<MySubsystem*> TPredicate>                                                                                     \
+    FORCEINLINE void ForEachMutableSubsystem(TPredicate&& Predicate)                                                                                    \
+        { this->Member.ForEachMutableSubsystem<MySubsystem>(std::forward<TPredicate>(Predicate)); }                                                     \
+    template<typename TSubsystem, algo::void_mutable_predicate<TSubsystem*> TPredicate, bool bAllowMissCast = false>                                    \
+        requires(std::is_base_of_v<MySubsystem, TSubsystem> && !std::is_same_v<MySubsystem, TSubsystem>)                                                \
+    FORCEINLINE void ForEachMutableSubtypeSubsystem(TPredicate&& Predicate)                                                                             \
+        { this->Member.ForEachMutableSubtypeSubsystem<TSubsystem, bAllowMissCast>(std::forward<TPredicate>(Predicate)); }                               \
+    FORCEINLINE MySubsystem      * GetSubsystem(LCxxClass const* Class) { return this->Member.GetSubsystem<MySubsystem>(Class); }                       \
+    FORCEINLINE MySubsystem const* GetSubsystem(LCxxClass const* Class) const { return this->Member.GetSubsystem<MySubsystem>(Class); }                 \
+    FORCEINLINE MySubsystem      * GetSubsystemChecked(LCxxClass const* Class) { return this->Member.GetSubsystemChecked<MySubsystem>(Class); }         \
+    FORCEINLINE MySubsystem const* GetSubsystemChecked(LCxxClass const* Class) const { return this->Member.GetSubsystemChecked<MySubsystem>(Class); }   \
+    FORCEINLINE MySubsystem      * GetSubsystemAsserted(LCxxClass const* Class) { return this->Member.GetSubsystemAsserted<MySubsystem>(Class); }       \
+    FORCEINLINE MySubsystem const* GetSubsystemAsserted(LCxxClass const* Class) const { return this->Member.GetSubsystemAsserted<MySubsystem>(Class); } \
+    template<typename TSubsystem> requires(std::is_base_of_v<MySubsystem, TSubsystem> && !std::is_same_v<MySubsystem, TSubsystem>)                      \
+    FORCEINLINE TSubsystem      * GetSubsystem() { return this->Member.GetSubsystem<TSubsystem>(); }                                                    \
+    template<typename TSubsystem> requires(std::is_base_of_v<MySubsystem, TSubsystem> && !std::is_same_v<MySubsystem, TSubsystem>)                      \
+    FORCEINLINE TSubsystem const* GetSubsystem() const { return this->Member.GetSubsystem<TSubsystem>(); }                                              \
+    template<typename TSubsystem> requires(std::is_base_of_v<MySubsystem, TSubsystem> && !std::is_same_v<MySubsystem, TSubsystem>)                      \
+    FORCEINLINE TSubsystem      * GetSubsystemChecked() { return this->Member.GetSubsystemChecked<TSubsystem>(); }                                      \
+    template<typename TSubsystem> requires(std::is_base_of_v<MySubsystem, TSubsystem> && !std::is_same_v<MySubsystem, TSubsystem>)                      \
+    FORCEINLINE TSubsystem const* GetSubsystemChecked() const { return this->Member.GetSubsystemChecked<TSubsystem>(); }                                \
+    template<typename TSubsystem> requires(std::is_base_of_v<MySubsystem, TSubsystem> && !std::is_same_v<MySubsystem, TSubsystem>)                      \
+    FORCEINLINE TSubsystem      * GetSubsystemAsserted() { return this->Member.GetSubsystemAsserted<TSubsystem>(); }                                    \
+    template<typename TSubsystem> requires(std::is_base_of_v<MySubsystem, TSubsystem> && !std::is_same_v<MySubsystem, TSubsystem>)                      \
+    FORCEINLINE TSubsystem const* GetSubsystemAsserted() const { return this->Member.GetSubsystemAsserted<TSubsystem>(); }
 
-//#
-//# Represents a collection of subsystems that act inside a given
-//# lifetime determined by its owning object.
-//#
+//# Represents a collection of subsystems that act inside a given lifetime determined by its owning object.
 struct LSubsystemCollection final
 {
-    LSubsystemCollection() = default;
-    LSubsystemCollection(const bool bAllowDeferredSubsystems)
-        : bAllowDeferredSubsystems(bAllowDeferredSubsystems) { }
-    ENGINE_API explicit LSubsystemCollection(LObjectContext* InOuter, const bool bAllowDeferredSubsystems = false)
-        : bAllowDeferredSubsystems(bAllowDeferredSubsystems), Outer(InOuter) { }
+    constexpr LSubsystemCollection() noexcept = default;
+    LSubsystemCollection(LClassOuter* InOuter) noexceptcheck : Outer(InOuter) { check( this->Outer ) }
+    void InitializeDeferred(LClassOuter* InOuter) noexceptcheck
+    {
+        check( InOuter )
+
+        check( this->IsValid() == false )
+        check( this->SubsystemInstances.empty() )
+
+        this->Outer = InOuter;
+
+        return;
+    }
+
     PROHIBIT_REALLOC_OF_ANY_FORM(LSubsystemCollection)
-    ENGINE_API ~LSubsystemCollection() = default;
 
-    FORCEINLINE bool IsValid() const { return this->Outer != nullptr; }
+    ~LSubsystemCollection() noexceptcheck { check( this->IsValid() == false && this->SubsystemInstances.empty() ) }
 
-    ENGINE_API void Reset();
+    FORCEINLINE bool IsValid() const noexcept { return this->Outer != nullptr && this->Class != nullptr; }
 
-    ENGINE_API void DeferredInitialize(LObjectContext* InOuter, const bool bAllowDeferredSubsystems = false);
-
-    ENGINE_API void InitializeSubsystems(const LObjectClass* InClass);
+    ENGINE_API void InitializeSubsystems(TSubclassOf<JSubsystem> Class, bool bRegisterDeferredDelegate = true);
+    template<typename TSubsystem> requires std::is_base_of_v<JSubsystem, TSubsystem>
+    FORCEINLINE void InitializeSubsystems(bool bRegisterDeferredDelegate = true) noexcept { this->InitializeSubsystems(TSubsystem::StaticClass(), bRegisterDeferredDelegate); }
 
     //#
     //# Same as #InitializeSubsystems but only for deferred subsystems.
-    //# This might be automatically called if #bAllowDeferredSubsystems is set to true.
+    //# This will be automatically called if bRegisterDeferredDelegate is set during the initial initializing phase.
     //# You may call this yourselves if you want a custom behavior.
     //#
-    ENGINE_API void InitializeSubsystemsDeferredOnly();
+    ENGINE_API void InitializeSubsystemsForDeferred();
 
-    void OnForeignPluginLoaded(const LObjectContext* InStaticClassContainer);
+    void OnForeignPluginLoaded(LLoadedPlugin const* Plugin);
 
     //#
     //# Tears down all subsystems in this collection.
     //# The in predicate is called inbetween tearing down the priority and non-priority subsystems.
     //#
-    template <typename Predicate>
-    FORCEINLINE void TearDownSubsystems(Predicate&& InPredicate);
+    template<typename TPredicate> requires std::is_invocable_r_v<void, TPredicate>
+    FORCEINLINE void TearDownSubsystems(TPredicate&& Predicate);
     FORCEINLINE void TearDownSubsystems();
 
-    FORCEINLINE constexpr bool IsAllowingDeferredSubsystems() const noexcept { return this->bAllowDeferredSubsystems; }
-
-    FORCEINLINE bool IsOuterValid() const { return this->Outer != nullptr; }
-    FORCEINLINE auto GetOuter() const -> const LObjectContext* { return this->Outer; }
-    FORCEINLINE bool IsOuterClassValid() const { return this->OuterClass != nullptr; }
-    FORCEINLINE auto GetOuterClass() const -> const LObjectClass* { return this->OuterClass; }
-    FORCEINLINE auto GetSubsystems() const -> const TArray<JSubsystem*>& { return this->SubsystemInstances; }
+    FORCEINLINE bool IsOuterValid() const noexcept { return this->Outer != nullptr; }
+    FORCEINLINE LClassOuter const* GetOuter() const noexcept { return this->Outer; }
+    FORCEINLINE bool IsClassValid() const noexcept { return this->Class != nullptr; }
+    FORCEINLINE TSubclassOf<JSubsystem> GetClass() const noexcept { return this->Class; }
+    FORCEINLINE TArray<JSubsystem*> const& GetSubsystems() const noexcept { return this->SubsystemInstances; }
 
     //#
     //# Try to initialize a subsystem of the given class. The target subsystem must be in this collection where this
     //# this method was called on.
     //# Use this method if you must preserve the order of initialization of subsystems in a given collection.
     //#
-    ENGINE_API void InitializeDependency(const LObjectClass* InStaticClass);
-    template <typename TSubsystem>
-    FORCEINLINE void InitializeDependency() { this->InitializeDependency(TSubsystem::StaticClass()); }
+    ENGINE_API void InitializeDependency(TSubclassOf<JSubsystem> Class);
+    template<typename TSubsystem>
+    FORCEINLINE void InitializeDependency() noexcept { this->InitializeDependency(TSubsystem::StaticClass()); }
 
-    //# Use this if you execute the predicate on all subsystems in the collection and do not need any specific subsystem.
-    template <typename Predicate>
-    FORCEINLINE void ForEachSubsystem(Predicate&& InPredicate);
-
-    //# Use this if you execute the predicate on all subsystems in the collection with the type it was initialized with.
-    template <typename TSubsystem, typename Predicate>
-    FORCEINLINE void ForEachSubsystem(Predicate&& InPredicate);
-
+    //# Execute the given predicate on all subsystems in this collection.
+    template<algo::void_predicate<JSubsystem> TPredicate>
+    FORCEINLINE void ForEachSubsystem(TPredicate&& Predicate) const;
+    template<algo::void_mutable_predicate<JSubsystem*> TPredicate>
+    FORCEINLINE void ForEachMutableSubsystem(TPredicate&& Predicate);
+    //# Same as above but will cast the subsystem to the given type. Only use this if all subsystems in this collection are of the #TSubsystem type.
+    template<typename TSubsystem, algo::void_predicate<TSubsystem> TPredicate> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE void ForEachSubsystem(TPredicate&& Predicate) const;
+    template<typename TSubsystem, algo::void_mutable_predicate<TSubsystem*> TPredicate> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE void ForEachMutableSubsystem(TPredicate&& Predicate);
     //# Use this if you only want to execute the predicate on subsystems that are a subtype of the collection type.
-    template <typename TSubsystem, typename Predicate, bool bAllowMissCast = false>
-    FORCEINLINE void ForEachSubtypeSubsystem(Predicate&& InPredicate);
+    template <typename TSubsystem, algo::void_predicate<TSubsystem> TPredicate, bool bAllowMissCast = false> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE void ForEachSubtypeSubsystem(TPredicate&& Predicate) const;
+    template <typename TSubsystem, algo::void_mutable_predicate<TSubsystem*> TPredicate, bool bAllowMissCast = false> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE void ForEachMutableSubtypeSubsystem(TPredicate&& Predicate);
 
-    ENGINE_API JSubsystem* GetSubsystem(const LObjectClass* InStaticClass);
-    ENGINE_API  const JSubsystem* GetSubsystem(const LObjectClass* InStaticClass) const;
-    FORCEINLINE       JSubsystem* GetCheckedSubsystem(const LObjectClass* InStaticClass);
-    FORCEINLINE const JSubsystem* GetCheckedSubsystem(const LObjectClass* InStaticClass) const;
+    ENGINE_API  JSubsystem const* GetSubsystem(TSubclassOf<JSubsystem> Class) const;
+    ENGINE_API  JSubsystem*       GetSubsystem(TSubclassOf<JSubsystem> Class);
+    FORCEINLINE JSubsystem const* GetSubsystemChecked(TSubclassOf<JSubsystem> Class) const { JSubsystem const* Out { this->GetSubsystem(Class) }; check( Out ); return Out; }
+    FORCEINLINE JSubsystem*       GetSubsystemChecked(TSubclassOf<JSubsystem> Class) { JSubsystem* Out { this->GetSubsystem(Class) }; check( Out ); return Out; }
+    FORCEINLINE JSubsystem const* GetSubsystemAsserted(TSubclassOf<JSubsystem> Class) const { JSubsystem const* Out { this->GetSubsystem(Class) }; jassert( Out ); return Out; }
+    FORCEINLINE JSubsystem*       GetSubsystemAsserted(TSubclassOf<JSubsystem> Class) { JSubsystem* Out { this->GetSubsystem(Class) }; jassert( Out ); return Out; }
 
-    template <typename TSubsystem, bool bAllowForNullptr = true>
-    FORCEINLINE       TSubsystem* GetSubsystem();
-    template <typename TSubsystem, bool bAllowForNullptr = true>
-    FORCEINLINE const TSubsystem* GetSubsystem() const;
+    template<typename TSubsystem> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE TSubsystem const* GetSubsystem() const { return StaticCast<TSubsystem>(this->GetSubsystem(TSubsystem::StaticClass())); }
+    template<typename TSubsystem> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE TSubsystem*       GetSubsystem() { return StaticCast<TSubsystem>(this->GetSubsystem(TSubsystem::StaticClass())); }
+    template<typename TSubsystem> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE TSubsystem const* GetSubsystemChecked() const { return StaticCastChecked<TSubsystem>(this->GetSubsystemChecked(TSubsystem::StaticClass())); }
+    template<typename TSubsystem> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE TSubsystem*       GetSubsystemChecked() { return StaticCastChecked<TSubsystem>(this->GetSubsystemChecked(TSubsystem::StaticClass())); }
+    template<typename TSubsystem> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE TSubsystem const* GetSubsystemAsserted() const { return StaticCastAsserted<TSubsystem>(this->GetSubsystemAsserted(TSubsystem::StaticClass())); }
+    template<typename TSubsystem> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE TSubsystem*       GetSubsystemAsserted() { return StaticCastAsserted<TSubsystem>(this->GetSubsystemAsserted(TSubsystem::StaticClass())); }
 
-    template <typename TSubsystem, bool bAllowForNullptr = true>
-    FORCEINLINE       TSubsystem* GetSubsystem(const LObjectClass* InStaticClass);
-    template <typename TSubsystem, bool bAllowForNullptr = true>
-    FORCEINLINE const TSubsystem* GetSubsystem(const LObjectClass* InStaticClass) const;
-
-    template <typename TSubsystem>
-    FORCEINLINE       TSubsystem* GetCheckedSubsystem();
-    template <typename TSubsystem>
-    FORCEINLINE const TSubsystem* GetCheckedSubsystem() const;
-
-    template <typename TSubsystem>
-    FORCEINLINE       TSubsystem* GetCheckedSubsystem(const LObjectClass* InStaticClass);
-    template <typename TSubsystem>
-    FORCEINLINE const TSubsystem* GetCheckedSubsystem(const LObjectClass* InStaticClass) const;
+    template<typename TSubsystem> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE TSubsystem const* GetSubsystem(TSubclassOf<JSubsystem> Class) const { return StaticCast<TSubsystem>(this->GetSubsystem(Class)); }
+    template<typename TSubsystem> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE TSubsystem*       GetSubsystem(TSubclassOf<JSubsystem> Class) { return StaticCast<TSubsystem>(this->GetSubsystem(Class)); }
+    template<typename TSubsystem> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE TSubsystem const* GetSubsystemChecked(TSubclassOf<JSubsystem> Class) const { return StaticCastChecked<TSubsystem>(this->GetSubsystemChecked(Class)); }
+    template<typename TSubsystem> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE TSubsystem*       GetSubsystemChecked(TSubclassOf<JSubsystem> Class) { return StaticCastChecked<TSubsystem>(this->GetSubsystemChecked(Class)); }
+    template<typename TSubsystem> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE TSubsystem const* GetSubsystemAsserted(TSubclassOf<JSubsystem> Class) const { return StaticCastAsserted<TSubsystem>(this->GetSubsystemAsserted(Class)); }
+    template<typename TSubsystem> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+    FORCEINLINE TSubsystem*       GetSubsystemAsserted(TSubclassOf<JSubsystem> Class) { return StaticCastAsserted<TSubsystem>(this->GetSubsystemAsserted(Class)); }
 
 private:
 
     void TearDownPrioritySubsystems();
     void TearDownNonPrioritySubsystems();
 
-    //#
-    //# Whether to allow for deferred packages to be loaded after the main subsystems have been initialized.
-    //#
-    bool bAllowDeferredSubsystems { false };
+    LClassOuter* Outer { nullptr };
+    TSubclassOf<JSubsystem> Class;
 
-    LObjectContext*     Outer { nullptr };
-    const LObjectClass* OuterClass { nullptr };
     TArray<JSubsystem*> SubsystemInstances;
-    TArray<JSubsystem*> IntermediateInstances;
 
     LDelegateHandle OnForeignPluginLoadedHandle { nullptr };
 };
 
-template<typename Predicate>
-FORCEINLINE void LSubsystemCollection::TearDownSubsystems(Predicate&& InPredicate)
+template<typename TPredicate> requires std::is_invocable_r_v<void, TPredicate>
+FORCEINLINE void LSubsystemCollection::TearDownSubsystems(TPredicate&& Predicate)
 {
     this->TearDownPrioritySubsystems();
-    InPredicate();
+    std::invoke(std::forward<TPredicate>(Predicate));
     this->TearDownNonPrioritySubsystems();
 
     return;
@@ -195,52 +182,86 @@ FORCEINLINE void LSubsystemCollection::TearDownSubsystems()
 {
     this->TearDownPrioritySubsystems();
     this->TearDownNonPrioritySubsystems();
+
     return;
 }
 
-template <typename Predicate>
-FORCEINLINE void LSubsystemCollection::ForEachSubsystem(Predicate&& InPredicate)
+template<algo::void_predicate<JSubsystem> TPredicate>
+FORCEINLINE void LSubsystemCollection::ForEachSubsystem(TPredicate&& Predicate) const
 {
     check( this->Outer )
 
     for (JSubsystem* Subsystem : this->SubsystemInstances)
     {
         checkSlow( Subsystem )
-        std::forward<Predicate>(InPredicate)(Subsystem);
+        std::invoke(std::forward<TPredicate>(Predicate), *Subsystem);
+
         continue;
     }
 
     return;
 }
 
-template <typename TSubsystem, typename Predicate>
-FORCEINLINE void LSubsystemCollection::ForEachSubsystem(Predicate&& InPredicate)
+template<algo::void_mutable_predicate<JSubsystem*> TPredicate>
+FORCEINLINE void LSubsystemCollection::ForEachMutableSubsystem(TPredicate&& Predicate)
 {
     check( this->Outer )
-    check( TSubsystem::StaticClass() == this->OuterClass )
 
     for (JSubsystem* Subsystem : this->SubsystemInstances)
     {
         checkSlow( Subsystem )
-        std::forward<Predicate>(InPredicate)(CheckedStaticCast<TSubsystem>(Subsystem));
+        std::invoke(std::forward<TPredicate>(Predicate), Subsystem);
+
         continue;
     }
 
     return;
 }
 
-template <typename TSubsystem, typename Predicate, bool bAllowMissCast>
-FORCEINLINE void LSubsystemCollection::ForEachSubtypeSubsystem(Predicate&& InPredicate)
+template<typename TSubsystem, algo::void_predicate<TSubsystem> TPredicate> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+FORCEINLINE void LSubsystemCollection::ForEachSubsystem(TPredicate&& Predicate) const
 {
     check( this->Outer )
-    check( TSubsystem::StaticClass()->DerivesFrom(this->OuterClass) )
+    check( TSubsystem::StaticClass() == this->Class )
 
     for (JSubsystem* Subsystem : this->SubsystemInstances)
     {
         checkSlow( Subsystem )
-        if (TSubsystem* SubsystemT = DynamicCast<TSubsystem>(Subsystem); SubsystemT)
+        std::invoke(std::forward<TPredicate>(Predicate), *StaticCast<TSubsystem>(Subsystem));
+        continue;
+    }
+
+    return;
+}
+
+template<typename TSubsystem, algo::void_mutable_predicate<TSubsystem*> TPredicate> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+FORCEINLINE void LSubsystemCollection::ForEachMutableSubsystem(TPredicate&& Predicate)
+{
+    check( this->Outer )
+    check( TSubsystem::StaticClass() == this->Class )
+
+    for (JSubsystem* Subsystem : this->SubsystemInstances)
+    {
+        checkSlow( Subsystem )
+        std::invoke(std::forward<TPredicate>(Predicate), StaticCast<TSubsystem>(Subsystem));
+        continue;
+    }
+
+    return;
+}
+
+template<typename TSubsystem, algo::void_predicate<TSubsystem> TPredicate, bool bAllowMissCast> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+FORCEINLINE void LSubsystemCollection::ForEachSubtypeSubsystem(TPredicate&& Predicate) const
+{
+    check( this->Outer )
+    check( TSubsystem::StaticClass()->DerivesFrom(this->Class) )
+
+    for (JSubsystem* Subsystem : this->SubsystemInstances)
+    {
+        checkSlow( Subsystem )
+        if (TSubsystem* CastedSubsystem { DynamicCast<TSubsystem>(Subsystem) })
         {
-            std::forward<Predicate>(InPredicate)(SubsystemT);
+            std::invoke(std::forward<TPredicate>(Predicate), *CastedSubsystem);
             continue;
         }
 
@@ -252,8 +273,8 @@ FORCEINLINE void LSubsystemCollection::ForEachSubtypeSubsystem(Predicate&& InPre
         panicMsgf
         (
             "Failed to dynamically cast subsystem [{}] to [{}].",
-            Subsystem->GetFullName(),
-            TSubsystem::StaticClass()->GetSpacedClassName()
+            Subsystem->GetNameAsString(),
+            TSubsystem::StaticClass()->GetFullyQualifiedName()
         )
 
         continue;
@@ -262,66 +283,37 @@ FORCEINLINE void LSubsystemCollection::ForEachSubtypeSubsystem(Predicate&& InPre
     return;
 }
 
-FORCEINLINE JSubsystem* LSubsystemCollection::GetCheckedSubsystem(const LObjectClass* InStaticClass)
+template<typename TSubsystem, algo::void_mutable_predicate<TSubsystem*> TPredicate, bool bAllowMissCast> requires(std::is_base_of_v<JSubsystem, TSubsystem> && !std::is_same_v<JSubsystem, TSubsystem>)
+FORCEINLINE void LSubsystemCollection::ForEachMutableSubtypeSubsystem(TPredicate&& Predicate)
 {
-    JSubsystem* Out = this->GetSubsystem(InStaticClass);
-    check( Out )
-    return Out;
-}
+    check( this->Outer )
+    check( TSubsystem::StaticClass()->DerivesFrom(this->Class) )
 
-FORCEINLINE const JSubsystem* LSubsystemCollection::GetCheckedSubsystem(const LObjectClass* InStaticClass) const
-{
-    const JSubsystem* Out = this->GetSubsystem(InStaticClass);
-    check( Out )
-    return Out;
-}
+    for (JSubsystem* Subsystem : this->SubsystemInstances)
+    {
+        checkSlow( Subsystem )
+        if (TSubsystem* CastedSubsystem { DynamicCast<TSubsystem>(Subsystem) })
+        {
+            std::invoke(std::forward<TPredicate>(Predicate), CastedSubsystem);
+            continue;
+        }
 
-template <typename TSubsystem, bool bAllowForNullptr>
-FORCEINLINE TSubsystem* LSubsystemCollection::GetSubsystem()
-{
-    return CheckedStaticCast<TSubsystem, JSubsystem, bAllowForNullptr>(this->GetSubsystem(TSubsystem::StaticClass()));
-}
+        if constexpr (bAllowMissCast)
+        {
+            continue;
+        }
 
-template <typename TSubsystem, bool bAllowForNullptr>
-FORCEINLINE const TSubsystem* LSubsystemCollection::GetSubsystem() const
-{
-    return CheckedStaticCast<TSubsystem, JSubsystem, bAllowForNullptr>(this->GetSubsystem(TSubsystem::StaticClass()));
-}
+        panicMsgf
+        (
+            "Failed to dynamically cast subsystem [{}] to [{}].",
+            Subsystem->GetNameAsString(),
+            TSubsystem::StaticClass()->GetFullyQualifiedName()
+        )
 
-template <typename TSubsystem, bool bAllowForNullptr>
-FORCEINLINE TSubsystem* LSubsystemCollection::GetSubsystem(const LObjectClass* InStaticClass)
-{
-    return CheckedStaticCast<TSubsystem, JSubsystem, bAllowForNullptr>(this->GetSubsystem(InStaticClass));
-}
+        continue;
+    }
 
-template <typename TSubsystem, bool bAllowForNullptr>
-FORCEINLINE const TSubsystem* LSubsystemCollection::GetSubsystem(const LObjectClass* InStaticClass) const
-{
-    return CheckedStaticCast<TSubsystem, JSubsystem, bAllowForNullptr>(this->GetSubsystem(InStaticClass));
-}
-
-template <typename TSubsystem>
-FORCEINLINE TSubsystem* LSubsystemCollection::GetCheckedSubsystem()
-{
-    return CheckedStaticCast<TSubsystem>(this->GetCheckedSubsystem(TSubsystem::StaticClass()));
-}
-
-template <typename TSubsystem>
-FORCEINLINE const TSubsystem* LSubsystemCollection::GetCheckedSubsystem() const
-{
-    return CheckedStaticCast<TSubsystem>(this->GetCheckedSubsystem(TSubsystem::StaticClass()));
-}
-
-template <typename TSubsystem>
-FORCEINLINE TSubsystem* LSubsystemCollection::GetCheckedSubsystem(const LObjectClass* InStaticClass)
-{
-    return CheckedStaticCast<TSubsystem>(this->GetCheckedSubsystem(InStaticClass));
-}
-
-template <typename TSubsystem>
-FORCEINLINE const TSubsystem* LSubsystemCollection::GetCheckedSubsystem(const LObjectClass* InStaticClass) const
-{
-    return CheckedStaticCast<TSubsystem>(this->GetCheckedSubsystem(InStaticClass));
+    return;
 }
 
 } /* ~Namespace Jafg */

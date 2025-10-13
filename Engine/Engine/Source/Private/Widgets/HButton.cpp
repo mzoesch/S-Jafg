@@ -2,7 +2,8 @@
 
 #include "Widgets/HButton.h"
 
-Jafg::WHButton::WHButton(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WHButton::WHButton(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetVisibility(EWidgetVisibility::Visible);
     return;

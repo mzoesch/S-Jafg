@@ -8,9 +8,7 @@ namespace Jafg
 template <typename DelegateTy>
 struct TDelegate;
 
-/**
- * A delegate that can store a single function.
- */
+//# A delegate that can store a single function.
 template <typename RetTy, typename... ParamsTy>
 struct TDelegate<RetTy(ParamsTy...)> final
 {
@@ -27,7 +25,8 @@ struct TDelegate<RetTy(ParamsTy...)> final
 
     FORCEINLINE TDelegate() = default;
     FORCEINLINE TDelegate(LNullptrTy) : Delegate(nullptr) { return; }
-    PROHIBIT_COPY(TDelegate)
+    FORCEINLINE TDelegate(TDelegate const& Delegate) noexcept = default;
+    FORCEINLINE TDelegate& operator=(TDelegate const& Delegate) noexcept = default;
     FORCEINLINE TDelegate(TDelegate&& InOther) noexcept : Delegate(std::move(InOther.Delegate))
     {
         check( InOther.Delegate.IsValid() == false );

@@ -22,7 +22,8 @@ LString Jafg::LexToString(const ETextCommit::Type InType)
     }
 }
 
-Jafg::WEditableTextBox::WEditableTextBox(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WEditableTextBox::WEditableTextBox(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetVisibility(EWidgetVisibility::Visible);
     this->SetAnchor(EAnchor::Fill);

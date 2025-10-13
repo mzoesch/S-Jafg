@@ -51,7 +51,7 @@ void Jafg::WCommonMenuTabBar::Construct()
 {
     if (this->DefaultButtonClass == nullptr)
     {
-        this->DefaultButtonClass.Set<WCommonMenuTabBarButton>();
+        this->DefaultButtonClass.SetClass<WCommonMenuTabBarButton>();
     }
 
     if (this->bBlur)

@@ -4,7 +4,6 @@
 #include "Engine/Engine.h"
 #include "Platform/Surface.h"
 #include "Core/Application.h"
-#include "Engine/ActorUtility.h"
 #include "Framework/Pawn.h"
 #include "Framework/PersonaController.h"
 #include "MyWorld/Generation/ChunkGenerationSubsystem.h"
@@ -46,10 +45,10 @@ void Jafg::LWorldParameters::Reset() noexcept
     return;
 }
 
-Jafg::LWorld::LWorld(const LString& InHumanReadableName, const EWorldState::Type InWorldType) : WorldState(InWorldType)
+Jafg::LWorld::LWorld(const LString& InHumanReadableName)
+    : WorldState(EWorldState::PreInitializing)
 {
     this->SetHumanReadableName(InHumanReadableName);
-    check( this->WorldState == EWorldState::Uninitialized )
 
     return;
 }
@@ -85,39 +84,37 @@ Jafg::APawn* Jafg::LWorld::GetLocalPawn() const
     return nullptr;
 }
 
-void Jafg::LWorld::InitializeWorld(const LLevel& Level, LString&& InLaunchedUrl)
+void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LString&& Url /* = {} */)
 {
     STAT_CYCLE_FUNCTION()
 
     this->RealTimeWhenWorldWasLaunched = static_cast<f32>(Application::GetDeltaSinceStaticStorageInitialization());
     check( this->RealTimeWhenWorldWasLaunched > 0.0f )
 
-    check( this->WorldState == EWorldState::Uninitialized || this->WorldState == EWorldState::WaitingForKill )
+    check( this->WorldState == EWorldState::PreInitializing )
     this->WorldState = EWorldState::Initializing;
 
-    this->UnsanitizedUrl = InLaunchedUrl;
+    this->UnsanitizedUrl = Url;
 
     /* Remove level name from url. */
-    if (const auto Idx { InLaunchedUrl.find('?') }; Idx != InLaunchedUrl.npos)
+    if (const auto Idx { Url.find('?') }; Idx != Url.npos)
     {
-        if (algo::is_valid_index(InLaunchedUrl, Idx + 1))
+        if (algo::is_valid_index(Url, Idx + 1))
         {
-            algo::inline_right_chop(&InLaunchedUrl, Idx + 1);
+            algo::inline_right_chop(&Url, Idx + 1);
         }
         else
         {
-            algo::orphan(&InLaunchedUrl);
+            algo::orphan(&Url);
         }
     }
     else
     {
-        algo::orphan(&InLaunchedUrl);
+        algo::orphan(&Url);
     }
-    this->Url = std::move(InLaunchedUrl);
+    this->Url = std::move(Url);
     this->UpdateUrlParams();
     LOG_VERBOSE(LogWorld, "Initializing new world with [{}].", this->Parameters.ToString())
-
-    this->DeferredInitialize(GlobalCarnifex);
 
     this->UnderlyingLevel = Level;
 
@@ -134,14 +131,25 @@ void Jafg::LWorld::InitializeWorld(const LLevel& Level, LString&& InLaunchedUrl)
 
     this->GetEngine()->OnWorldBeginLife.Broadcast(this);
 
-    LOG_VERBOSE(LogWorld, "Initializing {} level actors.", this->Actors.size())
-    for (AActor* Actor : this->Actors)
+    LOG_VERBOSE(LogWorld, "Initializing level actors.")
+#if !IN_SHIPPING
+    LSize ActorCount{ 0 };
+#endif /* !IN_SHIPPING */
+    for (auto& Obj : this->GetEmployees())
     {
-        MakeDeferredActorFinal(Actor);
-    }
+        if (Obj->IsA<AActor>())
+        {
+            MakeDeferredActorFinal(StaticCast<AActor>(Obj.get()));
+        }
 
-    this->Collection.DeferredInitialize(this);
-    this->Collection.InitializeSubsystems(JWorldSubsystem::StaticClass());
+        continue;
+    }
+#if !IN_SHIPPING
+    LOG_VERBOSE(LogWorld, "Initialized [{}] actors.", ActorCount)
+#endif /* !IN_SHIPPING */
+
+    this->Collection.InitializeDeferred(this);
+    this->Collection.InitializeSubsystems<JWorldSubsystem>();
 
     this->WorldState = EWorldState::Running;
 
@@ -222,8 +230,14 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
 
     this->OnStaticDraw.InvokeIfBound(Viewport, Eye, CornersSpan);
 
-    for (const AActor* Actor : this->Actors)
+    for (auto& Obj : this->GetEmployees())
     {
+        AActor* Actor{ Obj->As<AActor>() };
+        if (Actor == nullptr)
+        {
+            continue;
+        }
+
         check( Actor->IsGarbage() == false )
 
         if
@@ -274,7 +288,7 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
         ));
     }
 
-    for (LTemporalWorldObject* const& TemporalObject : this->TemporalObjects)
+    for (auto& TemporalObject : this->TemporalObjects)
     {
         TemporalObject->Draw(*this, Viewport, Eye);
     }
@@ -292,27 +306,18 @@ void Jafg::LWorld::LateTick(const float DeltaTime)
 {
     STAT_CYCLE_FUNCTION()
 
-    for (LTemporalWorldObject* const& TemporalObject : this->TemporalObjects)
+    for (auto& TemporalObject : this->TemporalObjects)
     {
         TemporalObject->ReduceLifeTime(DeltaTime);
     }
 
-    algo::erase_if(&this->TemporalObjects, [](LTemporalWorldObject const* const& TemporalObject) -> bool
-    {
-        if (TemporalObject->IsAlive())
-        {
-            return false;
-        }
-
-        delete TemporalObject;
-        return true;
-    });
+    algo::erase_if(&this->TemporalObjects, [](auto& E){ return E->IsAlive() == false; });
 
     return;
 }
 #endif /* AS_CLIENT */
 
-void Jafg::LWorld::TearDownContext()
+void Jafg::LWorld::OnTearDown()
 {
     STAT_CYCLE_FUNCTION()
 
@@ -334,13 +339,20 @@ void Jafg::LWorld::TearDownContext()
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::RunAllTasks);
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::RunAllTasks);
 
-    LOG_VERBOSE(LogWorld, "Killing {} actors of world [{}].", this->Actors.size(), this->GetHumanReadableName())
-    for (AActor* Actor : this->Actors)
+    LOG_VERBOSE(LogWorld, "Killing actors of world [{}].", this->GetHumanReadableName())
+#if !IN_SHIPPING
+    LSize ActorCount{ 0 };
+#endif /* !IN_SHIPPING */
+    for (auto& Obj : this->GetEmployees())
     {
-        Actor->MarkAsGarbage();
+        if (Obj->IsA<AActor>())
+        {
+            Obj->MarkAsGarbage_v2(ECxxRecordTearDownReason::OuterTearDown);
+        }
+
+        continue;
     }
 
-    algo::orphan(&this->Actors);
     algo::orphan(&this->TickableObjects);
     algo::orphan(&this->DeletedTickableObjects);
 
@@ -366,13 +378,13 @@ void Jafg::LWorld::TearDownContext()
 
     this->EyeToMatrices.clear();
 
-    this->Collection.Reset();
+    check( this->Collection.IsValid() == false )
 
     check( this->TickableObjectsPutMutex == false )
 
     this->RealTimeWhenWorldWasLaunched = -1.0f;
 
-    LObjectContext::TearDownContext();
+    LClassOuter::OnTearDown();
 
     this->WorldState = EWorldState::WaitingForKill;
 
@@ -404,9 +416,9 @@ void Jafg::LWorld::UnregisterTickableObject(LTickableObject* Tickable)
     return;
 }
 
-f32 Jafg::LWorld::GetRealTimeSecondsSinceWorldLaunch() const
+f32 Jafg::LWorld::GetRealTimeSecondsSinceWorldLaunch() const noexcept
 {
-    const f32 Now = static_cast<f32>(Application::GetDeltaSinceStaticStorageInitialization());
+    const f32 Now { static_cast<f32>(Application::GetDeltaSinceStaticStorageInitialization()) };
     return Now - this->RealTimeWhenWorldWasLaunched;
 }
 
@@ -434,10 +446,11 @@ bool Jafg::LWorld::LineTraceByChannel(
     }
 
     STAT_QUICK_CYCLE_START("LineTraceByChannelImpl")
+    /* TODO: Save (as the tickables) the physics in a separate cached vector. */
     LHitResult Dummy;
-    for (const AActor* Actor : this->Actors)
+    for (auto& Obj : this->GetEmployees())
     {
-        if (Actor->GetPhysicsComponent()->Sweep(Begin, End, Dummy))
+        if (auto* Actor{ Obj->As<AActor>() }; Actor && Actor->GetPhysicsComponent()->Sweep(Begin, End, Dummy))
         {
             OutHits.push_back(Dummy);
             Dummy.Reset();
@@ -454,7 +467,7 @@ bool Jafg::LWorld::LineTraceByChannel(
     return OutHits.empty() == false;
 }
 
-void Jafg::LWorld::UpdateUrlParams()
+void Jafg::LWorld::UpdateUrlParams() noexcept
 {
     this->Parameters.Reset();
 
@@ -534,16 +547,16 @@ void Jafg::LWorld::UpdateUrlParams()
     return;
 }
 
-Jafg::LWorld* Jafg::LWorld::GetWorldFromHumanReadableName(const LString& InHumanReadableName)
+Jafg::LWorld* Jafg::LWorld::GetWorldFromHumanReadableName(const LString& InHumanReadableName) noexcept
 {
     if (GEngine)
     {
-        const Private::LWorldContext* Context
+        const auto* Track
         {
-            algo::find_pointer(GEngine->GetContexts(), InHumanReadableName, [](auto const& E){ return E.ChildWorld->GetHumanReadableName(); })
+            algo::find_pointer(GEngine->GetTracks(), InHumanReadableName, [](auto const& E){ return E.ChildWorld->GetHumanReadableName(); })
         };
 
-        return Context ? Context->ChildWorld : nullptr;
+        return Track ? Track->ChildWorld.get() : nullptr;
     }
 
     return nullptr;

@@ -72,13 +72,14 @@ public:
 //# should be used to define the size of the scroll overlay.
 //#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryScrollRegion)
-class ENGINE_API WScrollRegion : public WRegion
+class WScrollRegion : public WRegion
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WScrollRegion(const LObjectInitializer& ObjectInitializer);
+    explicit WScrollRegion(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WScrollRegion)
 
 public:
 

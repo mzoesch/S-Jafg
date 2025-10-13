@@ -12,23 +12,20 @@
 #include "Rhi/OrthographicRoundedOutlineBoxShader.h"
 #include "Rhi/OrthographicRoundedOutlineImageBoxShader.h"
 
-Jafg::WRegion::WRegion(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WRegion::WRegion(LCxxObjectInitializer const& CxxObjectInitializer) : Super(CxxObjectInitializer)
 {
-    Tasks::Make(ENamedThreads::Master, ETaskTime::BeforeEngineInitButAfterAlloc, [](void) -> void
-    {
-        check( GEngine )
-
-
-
-        return;
-    });
+    // Tasks::Make(ENamedThreads::Master, ETaskTime::BeforeEngineInitButAfterAlloc, [](void) -> void
+    // {
+    //     check( GEngine )
+    //     return;
+    // });
 
     return;
 }
 
-void Jafg::WRegion::BeginLifeDefault()
+void Jafg::WRegion::BeginLifeCDR()
 {
-    Super::BeginLifeDefault();
+    Super::BeginLifeCDR();
 
     if (GEngine)
     {

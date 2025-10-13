@@ -36,7 +36,7 @@ inline constexpr bool Implements = Implements_t<Trait, T>::value;
     {                                                                 \
         struct _TraitName : public Trait::Base { };                   \
         template <typename T>                                         \
-        concept PRIVATE_JAFG_CORE_JOIN_OUTER_TWO(C, _TraitName) =     \
+        concept LAL_JOIN_OUTER_TWO(C, _TraitName) =                   \
             ::Traits::Implements<_TraitName, std::remove_cvref_t<T>>; \
     } /* ~Namespace Trait */
 
@@ -45,7 +45,7 @@ inline constexpr bool Implements = Implements_t<Trait, T>::value;
     {                                                                     \
         template <>                                                       \
         struct Implements_t<                                              \
-            JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_TWO(Trait, _TraitName), \
+            LAL_JOIN_SCOPE_RESOLUTION_OUTER_TWO(Trait, _TraitName),       \
             _Type> : std::true_type { };                                  \
     } /* ~Namespace Traits */
 
@@ -54,6 +54,6 @@ inline constexpr bool Implements = Implements_t<Trait, T>::value;
     {                                                                     \
         template <__VA_ARGS__>                                            \
         struct Implements_t<                                              \
-            JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_TWO(Trait, _TraitName), \
+            LAL_JOIN_SCOPE_RESOLUTION_OUTER_TWO(Trait, _TraitName),       \
             _Type<__VA_ARGS__> : std::true_type { };                      \
     } /* ~Namespace Traits */

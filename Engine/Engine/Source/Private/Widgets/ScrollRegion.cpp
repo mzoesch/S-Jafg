@@ -14,7 +14,8 @@
 #include "Rhi/OrthographicRoundedOutlineBoxShader.h"
 #include "Rhi/OrthographicRoundedOutlineImageBoxShader.h"
 
-Jafg::WScrollRegion::WScrollRegion(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+Jafg::WScrollRegion::WScrollRegion(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetVisibility(EWidgetVisibility::Visible);
     return;

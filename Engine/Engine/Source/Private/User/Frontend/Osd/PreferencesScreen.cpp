@@ -86,7 +86,8 @@ bool Jafg::WPreferencesPanel::AddData(const LWidgetNodeData* InData)
     return true;
 }
 
-Jafg::WPreferencesScreen::WPreferencesScreen(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WPreferencesScreen::WPreferencesScreen(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetHorizontalPreference();
     this->SetAnchor(EAnchor::Fill);

@@ -13,7 +13,7 @@ namespace Jafg
 //# Vertical region widget. Children are stacked underneath each other. From top to bottom.
 //#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryVRegion)
-class ENGINE_API WVRegion : public WRegion
+class WVRegion : public WRegion
 {
     GENERATED_CLASS_BODY()
 

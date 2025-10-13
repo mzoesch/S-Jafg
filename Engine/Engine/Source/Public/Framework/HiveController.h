@@ -9,7 +9,7 @@ namespace Jafg
 {
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API AHiveController final : public AController
+class AHiveController final : public AController
 {
     GENERATED_CLASS_BODY()
 

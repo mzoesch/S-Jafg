@@ -15,8 +15,8 @@ class WTextBox;
 typedef TFunction<bool(WTabBar& Self, const LString& InIdentifier)> LOnTabBarButtonRelease;
 
 //# @see Widgets/Compound/TabBar.h
-DECLARE_JAFG_WIDGET(EClassFlags::Abstract)
-class ENGINE_API WTabBarButton : public WButton
+DECLARE_JAFG_WIDGET(ECxxClassFlags::Abstract)
+class WTabBarButton : public WButton
 {
     GENERATED_CLASS_BODY()
 

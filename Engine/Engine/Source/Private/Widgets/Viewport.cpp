@@ -24,7 +24,7 @@ void Jafg::LViewport::ClearInvalidWidgets()
         this->FocusedWidget.Reset();
     }
 
-    auto ClearOnContainer {[](TArray<TObjectStorage<WNode>>* InContainer) -> void
+    auto ClearOnContainer {[](TArray<TClassStorage<WNode>>* InContainer) -> void
     {
         auto const Removed { algo::erase_if(InContainer, [](auto const& E) { return E.IsValidDeep() == false; }) };
         if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
@@ -163,7 +163,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
 
         if (bIsDrawn == false)
         {
-            LOG_VERBOSE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetFullName())
+            LOG_VERBOSE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetNameAsString())
             this->FocusedWidget->OnFocusLost();
             this->FocusedWidget = nullptr;
         }
@@ -288,7 +288,7 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
 
     if (bInvalidateAllInputs && this->FocusedWidget)
     {
-        LOG_VERBOSE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetFullName())
+        LOG_VERBOSE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetNameAsString())
         this->FocusedWidget->OnFocusLost();
         this->FocusedWidget = nullptr;
     }
@@ -408,7 +408,7 @@ void Jafg::LViewport::TearDown()
 {
     for (WUserWidget* Widget : this->TopLevelWidgets)
     {
-        Widget->MarkAsGarbage();
+        Widget->MarkAsGarbage_v2();
     }
 
     algo::orphan(&this->TopLevelWidgets);
@@ -474,11 +474,11 @@ void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
     return;
 }
 
-Jafg::WNode* Jafg::LViewport::GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const
+Jafg::WNode* Jafg::LViewport::GetTopLevelWidgetByClass(TSubclassOf<WNode> Class) const
 {
     for (WUserWidget* Widget : this->TopLevelWidgets)
     {
-        if (Widget->GetVTableChecked()->DerivesFrom(WidgetClass))
+        if (Widget->GetVirtualTableChecked()->DerivesFrom(Class))
         {
             return Widget;
         }
@@ -523,7 +523,7 @@ void Jafg::LViewport::ChangeFocusUnsafe(WNode* InNode)
 {
     if (this->FocusedWidget)
     {
-        LOG_VERBOSE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetFullName())
+        LOG_VERBOSE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetNameAsString())
         this->FocusedWidget->OnFocusLost();
     }
 
@@ -531,7 +531,7 @@ void Jafg::LViewport::ChangeFocusUnsafe(WNode* InNode)
 
     if (this->FocusedWidget)
     {
-        LOG_VERBOSE(LogWidgetFramework, "Gained focus on [{}].", this->FocusedWidget->GetFullName())
+        LOG_VERBOSE(LogWidgetFramework, "Gained focus on [{}].", this->FocusedWidget->GetNameAsString())
         this->FocusedWidget->OnFocusReceived();
     }
 

@@ -2,15 +2,15 @@
 
 #pragma once
 
-#include "Engine/ObjectBase.h"
+#include "Engine/CxxClass.h"
 #include "User/Preferences/Preference.h"
 #include "PreferenceRegistry.generated.h"
 
 namespace Jafg
 {
 
-DECLARE_JAFG_CLASS(EClassFlags::Singleton)
-class ENGINE_API JPreferenceRegistry : public JObjectBase
+DECLARE_JAFG_CLASS(ECxxClassFlags::Singleton)
+class JPreferenceRegistry : public JCxxClass
 {
     GENERATED_CLASS_BODY()
 
@@ -27,7 +27,7 @@ public:
 
 protected:
 
-    TArray<TUnique<LPreference>> Preferences;
+    TCdrEmptyArray<TArray<TUnique<LPreference>>> Preferences;
 };
 
 } /* ~Namespace Jafg */

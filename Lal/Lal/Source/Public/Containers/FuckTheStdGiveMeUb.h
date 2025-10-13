@@ -41,7 +41,7 @@ public:
 } /* HellYeaThisIsAsFuckedUpAsItCanBeLol */
 
 template <typename TContainer>
-void AddUninitialized(TContainer* Container, const typename TContainer::size_type Count)
+void AddUninitialized(TContainer* Container, const typename TContainer::size_type Count = 1) noexcept
 {
 #if LAL_DO_CHECKS
     typename TContainer::size_type OldSize{ Container->size() };

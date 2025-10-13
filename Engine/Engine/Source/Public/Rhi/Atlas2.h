@@ -16,7 +16,12 @@ class LAtlas2 final
 public:
 
     LAtlas2() = default;
-    PROHIBIT_COPY(LAtlas2)
+    LAtlas2( LAtlas2& Atlas2) noexcept = delete;
+    LAtlas2(LAtlas2 const& Atlas2) noexcept
+    {
+        check( Atlas2.Data.IsValid() == false )
+    }
+    LAtlas2& operator=(LAtlas2 const& Atlas2) noexcept = delete;
     DEFAULT_MOVE(LAtlas2)
     ~LAtlas2() { this->Free(); }
 

@@ -12,7 +12,7 @@ namespace Jafg
 //# A widget switcher has widgets that can be switched between like tabs - at maximum one widget is visible at a time.
 //#
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WSwitcher : public WOverlay
+class WSwitcher : public WOverlay
 {
     GENERATED_CLASS_BODY()
 

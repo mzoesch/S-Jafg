@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "EnginePath.h"
-#include "Subsystems/EngineSubsystem.h"
 #include "Rhi/TextureCore.h"
+#include "System/EnginePath.h"
+#include "Engine/CxxClass.h"
 #include "TextureSubsystem.generated.h"
 
 namespace Jafg
@@ -16,8 +16,8 @@ class LTexture2;
 //# A texture that was loaded by the program and may be used across many different widgets.
 //# @remark This is not intended for textures that are very specific.
 //#
-DECLARE_JAFG_CLASS(EClassFlags::Singleton)
-class JTextureSubsystem : public JObjectBase
+DECLARE_JAFG_CLASS(ECxxClassFlags::Singleton)
+class JTextureSubsystem : public JCxxClass
 {
     GENERATED_CLASS_BODY()
 

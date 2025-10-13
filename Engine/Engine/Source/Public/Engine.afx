@@ -91,31 +91,42 @@
 // Core
 #include "Engine/EngineCompileTimeConstants.h"
 #include "Foreign/PluginForward.h"
-#if JAFG_WITH_FOREIGN_SUPPORT
-    #include "Foreign/Plugin.h"
-#endif /* JAFG_WITH_FOREIGN_SUPPORT */
 #include "Engine/Level.h"
+
+///////////////////////////////////////////////////////////////////////////////
+// Cxx Reflex
+#include "Engine/CxxRecord.h"
+#include "Engine/CxxRecordUtility.h"
+#include "Engine/CxxClassFlags.h"
+#include "Engine/BuildToolMacros.h"
+#include "Engine/CxxClassMacros.h"
+#include "Engine/CxxClassBaseForward.h"
+#include "Engine/CxxRecordTearDownReason.h"
+#include "Engine/CxxClass.h"
+#include "Engine/CxxClassStatic.h"
+#include "Engine/ClassOuter.h"
+#include "Engine/SubclassOf.h"
+#include "User/Preferences/PreferenceTypes.h"
+#include "Engine/CxxClassUtlity.h"
+#include "Engine/CdrMemberManipulation.h"
+#include "Engine/CdrMemberManipulationCoreTypes.h"
+#include "Engine/ClassStorage.h"
 #include "Engine/Carnifex.h"
 
 ///////////////////////////////////////////////////////////////////////////////
-// Object
-#include "Engine/ObjectBaseTypes.h"
-#include "Engine/ObjectContext.h"
-#include "Engine/ObjectClass.h"
-#include "Engine/ObjectBaseUtility.h"
-#include "Engine/SubclassOf.h"
-#include "Engine/ObjectMacros.h"
-#include "Engine/ObjectBase.h"
-#include "Engine/ObjectStorage.h"
+// Foreign
+#if JAFG_WITH_FOREIGN_SUPPORT
+    #include "Foreign/Plugin.h"
+#endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
 ///////////////////////////////////////////////////////////////////////////////
 // World
+#include "Engine/WorldObject.h"
+#include "Engine/Level.h"
 #include "Engine/World.h"
 #include "Engine/WorldStorage.h"
 #include "Engine/TickableObject.h"
-#include "Engine/Object.h"
 #include "Engine/Actor.h"
-#include "Engine/ActorUtility.h"
 
 
 /*----------------------------------------------------------------------------

@@ -39,13 +39,14 @@ public:
 //# pasting, etc.
 //#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryEditableTextBox)
-class ENGINE_API WEditableTextBox : public WTextBox
+class WEditableTextBox : public WTextBox
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WEditableTextBox(const LObjectInitializer& ObjectInitializer);
+    explicit WEditableTextBox(const LCxxObjectInitializer& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WEditableTextBox)
 
 public:
 

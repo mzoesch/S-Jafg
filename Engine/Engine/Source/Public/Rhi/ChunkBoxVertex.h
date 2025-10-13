@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Lal.afx"
 #include "MyWorld/CommonTypes.h"
 
 namespace Jafg

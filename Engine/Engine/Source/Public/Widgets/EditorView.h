@@ -11,13 +11,14 @@ namespace Jafg
 struct LUserInputContext;
 
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WEditorView final : public WUserWidget
+class WEditorView final : public WUserWidget
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WEditorView(const LObjectInitializer& ObjectInitializer);
+    explicit WEditorView(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WEditorView)
 
 public:
 
@@ -33,7 +34,7 @@ private:
     void OnSecondaryDown();
     void OnSecondaryUp();
 
-    TArray<LUserInputContext*> LastUsedContexts;
+    TCdrEmptyArray<TArray<LUserInputContext*>> LastUsedContexts;
 };
 
 } /* ~Namespace Jafg */

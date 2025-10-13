@@ -21,7 +21,7 @@ public:
 };
 
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WCommonMenuTabBarButton : public WTabBarButton
+class WCommonMenuTabBarButton : public WTabBarButton
 {
     GENERATED_CLASS_BODY()
 
@@ -35,7 +35,7 @@ public:
 };
 
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WCommonMenuTabBarPanel : public WTabBarPanel
+class WCommonMenuTabBarPanel : public WTabBarPanel
 {
     GENERATED_CLASS_BODY()
 
@@ -57,7 +57,7 @@ private:
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryCommonMenuTabBar)
-class ENGINE_API WCommonMenuTabBar : public WTabBar
+class WCommonMenuTabBar : public WTabBar
 {
     GENERATED_CLASS_BODY()
 

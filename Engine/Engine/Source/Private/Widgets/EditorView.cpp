@@ -5,7 +5,8 @@
 #include "User/LocalEgo.h"
 #include "Widgets/Viewport.h"
 
-Jafg::WEditorView::WEditorView(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WEditorView::WEditorView(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetAnchor(EAnchor::Fill);
     this->SetVisibility(EWidgetVisibility::Visible);

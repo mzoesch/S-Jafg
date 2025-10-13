@@ -131,17 +131,15 @@ LString LexToString(const EWidgetVisibility::Type InVisibility)
     }
 }
 
-ENGINE_API LObjectContext* GCurrentWidgetContextState = nullptr;
-
 struct LWidgetConstructor
 {
 };
 
 } /* ~Namespace Jafg */
 
-void Jafg::WNode::OnGarbage()
+void Jafg::WNode::OnGarbage(ECxxRecordTearDownReason::Type Reason)
 {
-    Super::OnGarbage();
+    Super::OnGarbage(Reason);
 
     this->Destruct();
 
@@ -283,7 +281,7 @@ void Jafg::WNode::RemoveFromParent(const bool bDestroy /* = true */)
     }
     if (bDestroy)
     {
-        this->MarkAsGarbage();
+        this->MarkAsGarbage_v2();
     }
 
     return;
@@ -440,16 +438,4 @@ bool Jafg::WNode::SetMargin(const LMargin& InMargin)
     }
 
     return false;
-}
-
-Jafg::LEngine* Jafg::WNode::GetEngine() const
-{
-    check( GEngine )
-    return GEngine;
-}
-
-Jafg::LLocalEgo* Jafg::WNode::GetLocalEgo() const
-{
-    check( GEngine )
-    return GEngine->GetLocalEgo();
 }

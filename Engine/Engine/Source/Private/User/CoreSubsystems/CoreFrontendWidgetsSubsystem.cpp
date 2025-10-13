@@ -5,9 +5,9 @@
 #include "User/LocalEgo.h"
 #include "User/Frontend/Osd/FrontendScreen.h"
 
-bool Jafg::JCoreFrontendWidgetsSubsystem::ShouldCreateSubsystem(const LObjectContext* InOuter) const
+bool Jafg::JCoreFrontendWidgetsSubsystem::ShouldCreateSubsystem(LClassOuter const* Outer) const
 {
-    if (Super::ShouldCreateSubsystem(InOuter) == false)
+    if (Super::ShouldCreateSubsystem(Outer) == false)
     {
         return false;
     }
@@ -18,7 +18,7 @@ bool Jafg::JCoreFrontendWidgetsSubsystem::ShouldCreateSubsystem(const LObjectCon
         return false;
     }
 
-    return Super::IsOuterFrontend(InOuter);
+    return Super::IsOuterFrontend(Outer);
 }
 
 void Jafg::JCoreFrontendWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)

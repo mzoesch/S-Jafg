@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Cli/CliObject.h"
-#include "Engine/ObjectBaseUtility.h"
 
 namespace Jafg
 {
@@ -41,12 +40,6 @@ private:
 
     LCliObjectUuid Uuid { LCliObject::NoUuid };
 };
-
-template <>
-FORCEINLINE void OnDefaultOnlyMallocMember<LCliObjectHandle>(LCliCommandHandle* MemberField)
-{
-    MemberField->Reset();
-}
 
 namespace ECliType
 {

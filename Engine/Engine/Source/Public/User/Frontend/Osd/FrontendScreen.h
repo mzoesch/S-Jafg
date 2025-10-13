@@ -13,8 +13,8 @@ class WHostSessionScreen;
 class WTabBar;
 class WFrontendScreen;
 
-DECLARE_JAFG_WIDGET(EClassFlags::Config)
-class ENGINE_API WFrontendScreen final : public WUserWidget
+DECLARE_JAFG_WIDGET(ECxxClassFlags::Config)
+class WFrontendScreen final : public WUserWidget
 {
     GENERATED_CLASS_BODY()
 
@@ -35,11 +35,11 @@ public:
     FORCEINLINE const WTabBar* GetTabBarAsserted() const { jassert( this->TabBar ) return this->TabBar; }
 
     CLASS_FIELD(Config)
-    TSubclassOf<WHostSessionScreen> HostSessionScreenClass { LazyInit };
+    TSubclassOf<WHostSessionScreen> HostSessionScreenClass{ DefaultInit };
 
 private:
 
-    WTabBar* TabBar { nullptr };
+    WTabBar* TabBar{ nullptr };
 };
 
 } /* ~Namespace Jafg */

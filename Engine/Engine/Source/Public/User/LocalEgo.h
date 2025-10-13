@@ -13,7 +13,6 @@
 namespace Jafg
 {
 
-class LObjectContext;
 class APawn;
 class LEngine;
 class LWorld;
@@ -33,11 +32,11 @@ public:
 
     LLocalEgo() noexcept = default;
     PROHIBIT_REALLOC_OF_ANY_FORM(LLocalEgo)
-    ~LLocalEgo() { check( this->Context.IsValid() == false ) }
+    ~LLocalEgo() noexcept = default;
 
     void Initialize();
-    void Tick(const float DeltaTime);
-    void OnLateTick(const float DeltaTime);
+    void Tick(const f32 DeltaTime);
+    void OnLateTick(const f32 DeltaTime);
     void TearDown();
 
     FORCEINLINE bool IsValid() const { return this->bValid; }
@@ -53,8 +52,8 @@ public:
     FORCEINLINE auto GetPanickedPossessed() const -> APersonaController*;
     ENGINE_API  void Possess(APersonaController* InNewController);
 
-    FORCEINLINE auto GetContext() -> LObjectContext& { return this->Context; }
-    FORCEINLINE auto GetContext() const -> const LObjectContext& { return this->Context; }
+    FORCEINLINE LClassOuter* GetOuter() noexcept { return &this->Outer; }
+    FORCEINLINE const LClassOuter* GetOuter() const noexcept { return &this->Outer; }
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JLocalEgoSubsystem)
 
@@ -90,7 +89,7 @@ private:
     //# The context of the local ego. It is created when the local ego is instantiated
     //# and not destroyed until the local ego is killed.
     //#
-    LObjectContext       Context { DeferredGlobalCarnifex };
+    LClassOuter Outer{"LocalEgo"};
     LSubsystemCollection Collection;
 
     LCliVariableHandle VariableHandle_UpdateFrustum;

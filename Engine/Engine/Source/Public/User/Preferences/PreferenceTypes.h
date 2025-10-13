@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Lal.afx"
+#include "Serialization/SerializationCore.h"
 
 namespace Jafg
 {
@@ -169,29 +169,42 @@ void TPreference<T, TEnableIfTy<std::is_floating_point_v<T>>>::SetSafeValue(cons
     return;
 }
 
-template <>
-FORCEINLINE void Deserialize<TPreference<float>>(TPreference<float>* Destination, const LString& InValue)
-{
-    float InValueF; Deserialize<float>(&InValueF, InValue);
-    Destination->SetSafeValue(InValueF);
-    return;
-}
-
-template <typename T>
-FORCEINLINE void Deserialize(TPreference<T>* Destination, const LString& InValue)
-{
-    checkSlow( Destination )
-    Deserialize<T>(&Destination->Value, InValue);
-    return;
-}
-
-template <typename T>
-FORCEINLINE LString Serialize(const TPreference<T>& InValue)
-{
-    return Lal::SprintF("{}", InValue.GetCurrentValue());
-}
-
 } /* ~Namespace Jafg */
+
+namespace Serialization
+{
+
+template<typename TSubField> NODISCARD FORCEINLINE constexpr LString ToString(Jafg::TPreference<TSubField> const& Field) noexcept
+    requires requires(TSubField const& SubField){ ToString(SubField); }
+{
+    return ToString<TSubField>(Field.Value);
+}
+
+template<> FORCEINLINE constexpr void FromString<Jafg::LPreferencef32>(Jafg::LPreferencef32* Dst, LString const& Value) noexcept
+{
+    check( Dst )
+    f32 ValueF; FromString<f32>(&ValueF, Value);
+    Dst->SetSafeValue(ValueF);
+
+    return;
+}
+
+template<> FORCEINLINE constexpr void FromString<Jafg::LPreferencef64>(Jafg::LPreferencef64* Dst, LString const& Value) noexcept
+{
+    check( Dst )
+    f64 ValueD; FromString<f64>(&ValueD, Value);
+    Dst->SetSafeValue(ValueD);
+
+    return;
+}
+
+template<typename TSubField> FORCEINLINE constexpr void FromString(Jafg::TPreference<TSubField>* Dst, LString const& Value) noexcept
+    requires requires(TSubField* SubField, LString const& SubValue){ FromString(SubField, SubValue); }
+{
+    Serialization::FromString<TSubField>(&Dst->Value, Value);
+}
+
+} /* ~Namespace Serialization */
 
 template <typename T>
 struct std::formatter<::Jafg::TPreference<T>> : std::formatter<T>
@@ -205,27 +218,3 @@ struct std::formatter<::Jafg::TPreference<T>> : std::formatter<T>
         return ::std::formatter<T>::format(InPreference.Value, InContext);
     }
 };
-
-template <>
-FORCEINLINE void ::Jafg::Deserialize<Jafg::LPreferenceBool>(LPreferenceBool* Destination, const LString& InValue)
-{
-    checkSlow( Destination )
-    Jafg::Deserialize<bool>(&Destination->Value, InValue);
-}
-
-#if PLATFORM_WASM
-namespace Jafg
-{
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<bool>>(TPreference<bool> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<u8>>(TPreference<u8> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<u16>>(TPreference<u16> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<u32>>(TPreference<u32> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<u64>>(TPreference<u64> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<i8>>(TPreference<i8> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<i16>>(TPreference<i16> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<i32>>(TPreference<i32> Arg) { return Arg.Value; }
-template <> NODISCARD inline auto FormatArgLegacy<TPreference<i64>>(TPreference<i64> Arg) { return Arg.Value; }
-template <typename T> NODISCARD inline auto FormatArgLegacy(const TPreference<T>& Arg) { return Arg.Value; }
-template <typename T> NODISCARD inline auto FormatArgLegacy(      TPreference<T>  Arg) { return Arg.Value; }
-} /* ~Namespace Jafg */
-#endif /* PLATFORM_WASM */

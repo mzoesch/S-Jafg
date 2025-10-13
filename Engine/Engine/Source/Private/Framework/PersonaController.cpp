@@ -35,7 +35,7 @@ void Jafg::APersonaController::Possess(APawn* InNewPawn, const bool bKillOld /* 
         this->PossessedPawn->DeclareNewPossessor(nullptr);
         if (bKillOld)
         {
-            this->PossessedPawn->MarkAsGarbage();
+            this->PossessedPawn->MarkAsGarbage_v2();
         }
     }
 

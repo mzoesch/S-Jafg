@@ -386,6 +386,23 @@ function(_jafg_add_module_impl
     endif()
     # ~Human readable plugin info file
     ###############################################################################
+
+    ###############################################################################
+    # Reflex
+#    if(JAFG_TARGET_PLATFORM STREQUAL JAFG_PLATFORM_LINUX)
+#        target_compile_options(${module_name} PRIVATE
+#            "SHELL:-Xclang -load"
+#            "SHELL:-Xclang ${JAFG_ENGINE_ROOT}/Binaries/Reflex/libReflexHook.so"
+#            "SHELL:-Xclang -add-plugin"
+#            "SHELL:-Xclang jafg_reflex"
+#            )
+#        message(STATUS "[${module_rel_dir}]: Added Reflex support. ${DCMAKE_CXX_FLAGS}")
+#    else()
+#        message(FATAL_ERROR "Compiler not supported for Reflex: [${CMAKE_CXX_COMPILER_ID}].")
+#    endif()
+    # ~Reflex
+    ###############################################################################
+
 endfunction()
 
 macro(_jafg_add_dependency

@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include "Engine/ObjectContext.h"
+#include "Core/Arguments.h"
+#include "Engine/ClassOuter.h"
 #include "Physics/TraceUtility.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/WorldSubsystem.h"
@@ -40,35 +41,43 @@ struct LWorldMiscellaneousAccessor;
 } /* ~Namespace Private */
 
 MAKE_DELEGATE_SIGNATURE(LOnStaticLineTrace, bool,
-    TArray<LHitResult>& OutHits,
-    const LVector& Start,
-    const LVector& End,
-    const LCollisionQueryParams& Params
-)
+      TArray<LHitResult>& OutHits
+    , const LVector& Start
+    , const LVector& End
+    , const LCollisionQueryParams& Params
+    )
 MAKE_DELEGATE_SIGNATURE(LOnStaticDraw, void,
-    const LViewport& Viewport,
-    const LEye& Eye,
-    const std::span<LVector>& Corners
-)
+      const LViewport& Viewport
+    , const LEye& Eye
+    , const std::span<LVector>& Corners
+    )
 
 namespace EWorldState
 {
-
 enum Type : u8
 {
-    None,
-    Uninitialized,
+    PreInitializing,
     Initializing,
     Running,
     TearingDown,
     WaitingForKill,
 };
-
 } /* ~Namespace EWorldState */
+inline LStringView LexToString(const EWorldState::Type InType) noexcept
+{
+    switch (InType)
+    {
+        case EWorldState::PreInitializing: return "PreInitializing";
+        case EWorldState::Initializing:    return "Initializing";
+        case EWorldState::Running:         return "Running";
+        case EWorldState::TearingDown:     return "TearingDown";
+        case EWorldState::WaitingForKill:  return "WaitingForKill";
+        default:                           return "<Unknown>";
+    }
+}
 
 namespace EWorldTimeBehavior
 {
-
 enum Type : u8
 {
     //#
@@ -88,8 +97,17 @@ enum Type : u8
     //#
     Simulate,
 };
-
 } /* ~Namespace EWorldTimeBehavior */
+inline LStringView LexToString(const EWorldTimeBehavior::Type InType) noexcept
+{
+    switch (InType)
+    {
+        case EWorldTimeBehavior::Linear:   return "Linear";
+        case EWorldTimeBehavior::Desist:   return "Desist";
+        case EWorldTimeBehavior::Simulate: return "Simulate";
+        default:                           return "<Unknown>";
+    }
+}
 
 //#
 //# The parameters for a world.
@@ -120,6 +138,8 @@ private:
     void Reset() noexcept;
 };
 
+typedef LGenericArgument LWorldArgument;
+
 template<> FORCEINLINE LCliType LCliType::Type<LWorld>  () { return LCliType::Type("World");   }
 
 template<>
@@ -138,88 +158,103 @@ template<>
 FORCEINLINE LCommandArgsTypeRet<const LWorld>::Type LCommandArgs::GetAs<const LWorld>() const;
 
 //#
-//# Represents a world at its core.
-//# Once every frame a world will be ticked. It may register itself to the RHI to be used when
+//# A world.
+//#
+//# Once every frame the world will be ticked. It may register itself to the RHI to be used when
 //# rendering on any kind of surface. Multiple worlds may draw to the same surface, and a world
 //# may draw to multiple surfaces.
 //#
-class LWorld final : public LObjectContext
+class LWorld final : public LClassOuter
 {
     friend AActor;
     friend Private::LWorldMiscellaneousAccessor;
 
-    struct LEyeToMatricesMapSecond
-    {
-        LMatrix P;
-        LMatrix V;
-    };
-    typedef std::unordered_map<const void*, LEyeToMatricesMapSecond> LEyeToMatricesMap;
+    struct LEyeToMatricesMapSecond { LMatrix P; LMatrix V; };
+    typedef std::unordered_map<void const*, LEyeToMatricesMapSecond> LEyeToMatricesMap;
 
 public:
 
     LWorld() = delete;
     PROHIBIT_REALLOC_OF_ANY_FORM(LWorld)
-    LWorld(const LString& InHumanReadableName, const EWorldState::Type InWorldType);
+    LWorld(LString const& InHumanReadableName);
 
-    // LObjectContext implementation
+    // LClassOuter implementation
     virtual bool IsWorld() const noexcept override { return true; }
-    // ~LObjectContext implementation
+    // ~LClassOuter implementation
 
+    void InitializeWorld(TOptional<LLevel> const& Level = {}, LString&& Url = {});
+
+    //# There are no checked alternatives, as the engine must be valid at all times if a world exists.
     ENGINE_API LEngine* GetEngine() const;
-    ENGINE_API LLocalEgo* GetLocalEgo() const;
-    ENGINE_API APersonaController* GetLocalController() const;
     ENGINE_API LCommandLineInterface* GetCommandLineInterface() const;
 
-    //# Only valid if the pawn is in this world.
-    FORCEINLINE bool IsLocalPawnValid() const { return this->GetLocalPawn() != nullptr; }
+    ENGINE_API  LLocalEgo* GetLocalEgo() const;
+    FORCEINLINE LLocalEgo* GetLocalEgoChecked() const { LLocalEgo* Out{ this->GetLocalEgo() }; check( Out ) return Out; }
+    FORCEINLINE LLocalEgo* GetLocalEgoAsserted() const { LLocalEgo* Out{ this->GetLocalEgo() }; jassert( Out ) return Out; }
+
+    //# Get the local controller if any and said local controller is home to this world.
+    FORCEINLINE bool                IsLocalControllerValid() const { return this->GetLocalController() != nullptr; }
+    ENGINE_API  APersonaController* GetLocalController() const;
+    FORCEINLINE APersonaController* GetLocalControllerChecked() const { APersonaController* Out{ this->GetLocalController() }; check( Out ) return Out; }
+    FORCEINLINE APersonaController* GetLocalControllerAsserted() const { APersonaController* Out{ this->GetLocalController() }; jassert( Out ) return Out; }
+
+    //# Get the local pawn if any and said local pawn is home to this world.
+    FORCEINLINE bool   IsLocalPawnValid() const { return this->GetLocalPawn() != nullptr; }
     ENGINE_API  APawn* GetLocalPawn() const;
-    FORCEINLINE APawn* GetLocalPawnChecked() const { APawn* Out = this->GetLocalPawn(); check( Out ) return Out; }
-    FORCEINLINE APawn* GetLocalPawnAsserted() const { APawn* Out = this->GetLocalPawn(); jassert( Out ) return Out; }
+    FORCEINLINE APawn* GetLocalPawnChecked() const { APawn* Out{ this->GetLocalPawn() }; check( Out ) return Out; }
+    FORCEINLINE APawn* GetLocalPawnAsserted() const { APawn* Out{ this->GetLocalPawn() }; jassert( Out ) return Out; }
 
     //#
     //# The real URL that was used to launch this world. This might not be valid.
     //# @note This URL is not sanitized, so for the most cases you should use the sanitized URL by
     //#       calling #GetBrowsedUrl.
     //#
-    FORCEINLINE const LString& GetUnsanitizedUrl() const noexcept { return this->UnsanitizedUrl; }
+    FORCEINLINE LString const& GetUnsanitizedUrl() const noexcept { return this->UnsanitizedUrl; }
     //# The URL that was used to launch this world. This might not be valid.
-    FORCEINLINE const LString& GetBrowsedUrl() const noexcept { return this->Url; }
+    FORCEINLINE LString const& GetBrowsedUrl() const noexcept { return this->Url; }
     //# The URL but parsed into a structured way. This might not be valid.
-    FORCEINLINE const LWorldParameters& GetParameters() const noexcept { return this->Parameters; }
+    FORCEINLINE LWorldParameters const& GetParameters() const noexcept { return this->Parameters; }
 
     FORCEINLINE EWorldState::Type GetWorldState() const noexcept { return this->WorldState; }
 
-    void InitializeWorld(const LLevel& Level, LString&& InLaunchedUrl);
-
-    FORCEINLINE bool CanTick() const { return this->GetWorldState() == EWorldState::Running; }
+    FORCEINLINE bool CanTick() const noexcept { return this->GetWorldState() == EWorldState::Running; }
     void Tick(const f32 DeltaTime);
 
-    void Draw(const LViewport& Viewport, const LEye& Eye) const;
+    void Draw(LViewport const& Viewport, LEye const& Eye) const;
+    //# Performance optimization for static objects.
     LOnStaticDraw OnStaticDraw;
 
 #if AS_CLIENT
     void LateTick(const f32 DeltaTime);
 #endif /* AS_CLIENT */
 
-    // LObjectContext implementation
-    virtual void TearDownContext() override;
-    // ~LObjectContext implementation
-
-    FORCEINLINE bool IsUnderlyingLevelValid() const { return this->UnderlyingLevel.has_value(); }
-    FORCEINLINE const LLevel& GetUnderlyingLevel() const { return this->UnderlyingLevel.value(); }
-    FORCEINLINE LStringView   GetUnderlyingLevelName() const { return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }
-    FORCEINLINE LStringView   GetUnderlyingLevelNameChecked() const { check( this->IsUnderlyingLevelValid() ) return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }
+    FORCEINLINE bool IsUnderlyingLevelValid() const noexcept { return this->UnderlyingLevel.has_value(); }
+    FORCEINLINE LLevel const& GetUnderlyingLevel() const noexceptcheck { check( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel.value(); }
+    FORCEINLINE LStringView   GetUnderlyingLevelName() const noexcept { if (this->IsUnderlyingLevelValid()) { return LStringView{this->UnderlyingLevel->Identifier}; } return {}; }
+    FORCEINLINE LStringView   GetUnderlyingLevelNameChecked() const noexceptcheck { check( this->IsUnderlyingLevelValid() ) return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }
     FORCEINLINE LStringView   GetUnderlyingLevelNameAsserted() const { jassert( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel->Identifier; }
+
+#if AS_CLIENT
+    template <typename T>
+    void AddTemporalObject(T&& InTemporalObject);
+    FORCEINLINE TArray<TUnique<LTemporalWorldObject>> const& GetTemporalObjects() const noexcept { return this->TemporalObjects; }
+    FORCEINLINE TArray<TUnique<LTemporalWorldObject>>& GetMutableTemporalObjects() noexcept { return this->TemporalObjects; }
+#endif /* AS_CLIENT */
 
     ENGINE_API  void RegisterTickableObject(LTickableObject* Tickable);
     ENGINE_API  void UnregisterTickableObject(LTickableObject* Tickable);
-    FORCEINLINE auto GetTickableObjects() const -> const TArray<LTickableObject*>& { return this->TickableObjects; }
-    FORCEINLINE auto GetActors() const -> const TArray<AActor*>& { return this->Actors; }
-    FORCEINLINE bool IsSkyboxValid() const noexcept { return this->Skybox.has_value(); }
-    FORCEINLINE auto GetSkybox() noexcept -> LSkybox& { return this->Skybox.value(); }
-    FORCEINLINE auto GetSkybox() const noexcept -> const LSkybox& { return this->Skybox.value(); }
+    FORCEINLINE bool IsTickableObjectsPutMutexLocked() const { return this->TickableObjectsPutMutex; }
+    FORCEINLINE TArray<LTickableObject*> const& GetTickableObjects() const noexcept { return this->TickableObjects; }
+    FORCEINLINE TArray<LTickableObject*>& GetMutableTickableObjects() noexcept { return this->TickableObjects; }
+    FORCEINLINE TArray<LTickableObject*> const& GetDeletedTickableObjects() const noexcept { return this->DeletedTickableObjects; }
+    FORCEINLINE TArray<LTickableObject*>& GetDeletedMutableTickableObjects() noexcept { return this->DeletedTickableObjects; }
 
-    ENGINE_API f32 GetRealTimeSecondsSinceWorldLaunch() const;
+    FORCEINLINE bool ShouldDrawSkyboxFirst() const noexcept { return this->bDrawSkyboxFirst; }
+    FORCEINLINE bool IsSkyboxValid() const noexcept { return this->Skybox.has_value(); }
+    FORCEINLINE LSkybox const& GetSkybox() const noexceptcheck { check( this->IsSkyboxValid() ) return this->Skybox.value(); }
+    FORCEINLINE LSkybox& GetMutableSkybox() noexceptcheck { check( this->IsSkyboxValid() ) return this->Skybox.value(); }
+
+    ENGINE_API f32 GetRealTimeSecondsSinceWorldLaunch() const noexcept;
 
     //#
     //# Trace this world for physical hits.
@@ -227,43 +262,46 @@ public:
     //#
     bool LineTraceByChannel
     (
-        TArray<LHitResult>& OutHits,
-        const LVector& Begin,
-        const LVector& End,
-        const ECollisionChannel::Type Channel,
-        const LCollisionQueryParams& Params
+          TArray<LHitResult>& OutHits
+        , LVector const& Begin
+        , LVector const& End
+        , ECollisionChannel::Type Channel
+        , LCollisionQueryParams const& Params
     ) const;
-
     LOnStaticLineTrace OnStaticLineTrace;
-
-#if AS_CLIENT
-    template <typename T>
-    void AddTemporalObject(T&& InTemporalObject);
-#endif /* AS_CLIENT */
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JWorldSubsystem)
 
-    ENGINE_API  static LWorld* GetWorldFromHumanReadableName(const LString& InHumanReadableName);
-    FORCEINLINE static LWorld* GetWorldFromHumanReadableNameChecked(const LString& InHumanReadableName);
-    FORCEINLINE static LWorld* GetWorldFromHumanReadableNameAsserted(const LString& InHumanReadableName);
+    ENGINE_API  static LWorld* GetWorldFromHumanReadableName(LString const& InHumanReadableName) noexcept;
+    FORCEINLINE static LWorld* GetWorldFromHumanReadableNameChecked(LString const& InHumanReadableName) noexceptcheck;
+    FORCEINLINE static LWorld* GetWorldFromHumanReadableNameAsserted(LString const& InHumanReadableName);
+
+protected:
+
+    // LObjectContext implementation
+    virtual void OnTearDown() override;
+    // ~LObjectContext implementation
 
 private:
 
     LString UnsanitizedUrl;
     LString Url;
     LWorldParameters Parameters;
-    void UpdateUrlParams();
+    void UpdateUrlParams() noexcept;
 
     TOptional<LLevel> UnderlyingLevel;
 
 #if AS_CLIENT
-    TArray<LTemporalWorldObject*> TemporalObjects;
+    TArray<TUnique<LTemporalWorldObject>> TemporalObjects;
 #endif /* AS_CLIENT */
 
+    //# Main thread only.
+    void AcquireTickableObjectsLock() { this->TickableObjectsPutMutex = true; }
+    void ReleaseTickableObjectsLock() { this->TickableObjectsPutMutex = false; }
+    bool TickableObjectsPutMutex = false;
     TArray<LTickableObject*> TickableObjects;
     TArray<LTickableObject*> DeletedTickableObjects;
 
-    TArray<AActor*> Actors;
     bool bDrawSkyboxFirst { false };
     TOptional<LSkybox> Skybox;
 
@@ -271,12 +309,6 @@ private:
     EWorldState::Type WorldState;
 
     LSubsystemCollection Collection;
-
-    //# Main thread only.
-    bool TickableObjectsPutMutex = false;
-    bool IsTickableObjectsPutMutexLocked() const { return this->TickableObjectsPutMutex; }
-    void AcquireTickableObjectsLock() { this->TickableObjectsPutMutex = true; }
-    void ReleaseTickableObjectsLock() { this->TickableObjectsPutMutex = false; }
 
     //#
     //# The real time (not stopped or dilated / clamped) when this world was launched.
@@ -301,13 +333,12 @@ FORCEINLINE LCommandArgsTypeRet<const LWorld>::Type LCommandArgs::GetAs<const LW
 template <typename T>
 FORCEINLINE void LWorld::AddTemporalObject(T&& InTemporalObject)
 {
-    T* TemporalObject { new T(std::forward<T>(InTemporalObject)) };
-    this->TemporalObjects.push_back(TemporalObject);
+    this->TemporalObjects.emplace_back(std::make_unique<T>(std::forward<T>(InTemporalObject)));
     return;
 }
 #endif /* AS_CLIENT */
 
-FORCEINLINE LWorld* LWorld::GetWorldFromHumanReadableNameChecked(const LString& InHumanReadableName)
+FORCEINLINE LWorld* LWorld::GetWorldFromHumanReadableNameChecked(const LString& InHumanReadableName) noexceptcheck
 {
     LWorld* Out { LWorld::GetWorldFromHumanReadableName(InHumanReadableName) };
     check( Out )
@@ -321,16 +352,16 @@ FORCEINLINE LWorld* LWorld::GetWorldFromHumanReadableNameAsserted(const LString&
     return Out;
 }
 
-FORCEINLINE LWorld* LObjectContext::AsWorld() noexcept
+FORCEINLINE LWorld* LClassOuter::AsWorld() noexcept
 {
     check( this->IsWorld() )
     return static_cast<LWorld*>(this);
 }
 
-FORCEINLINE const LWorld* LObjectContext::AsWorld() const noexcept
+FORCEINLINE LWorld const* LClassOuter::AsWorld() const noexcept
 {
     check( this->IsWorld() )
-    return static_cast<const LWorld*>(this);
+    return static_cast<LWorld const*>(this);
 }
 
 } /* ~Namespace Jafg */

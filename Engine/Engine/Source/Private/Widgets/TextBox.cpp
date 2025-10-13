@@ -50,9 +50,9 @@ Jafg::LTextBoxBrush Jafg::LTextBoxBrush::Tiny()
     return ::GetDefaultTextBoxBrush().TextScaleRet(GetDefault<JUserPreferences>()->TinyFontSize);
 }
 
-void Jafg::WTextBox::BeginLifeDefault()
+void Jafg::WTextBox::BeginLifeCDR()
 {
-    Super::BeginLifeDefault();
+    Super::BeginLifeCDR();
 
     if (GEngine)
     {

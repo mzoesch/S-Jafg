@@ -14,8 +14,8 @@ namespace Jafg
 //# To let clients implement their own data structure for children.
 //# TODO: Please think of a better name for this class.
 //#
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryParentBase, EClassFlags::Abstract)
-class ENGINE_API WParentBase : public WNode
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryParentBase, ECxxClassFlags::Abstract)
+class WParentBase : public WNode
 {
     GENERATED_CLASS_BODY()
 

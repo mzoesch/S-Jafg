@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "Engine/ObjectBaseUtility.h"
-
 namespace Jafg
 {
 

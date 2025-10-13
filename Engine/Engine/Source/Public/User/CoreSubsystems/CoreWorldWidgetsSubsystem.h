@@ -16,7 +16,7 @@ class WConsoleScreen;
 class WPauseScreen;
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API JCoreWorldWidgetsSubsystem final : public JWorldSubsystem
+class JCoreWorldWidgetsSubsystem final : public JWorldSubsystem
 {
     GENERATED_CLASS_BODY()
 
@@ -24,7 +24,7 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JCoreWorldWidgetsSubsystem)
 
-    virtual bool ShouldCreateSubsystem(const LObjectContext* InOuter) const override;
+    virtual bool ShouldCreateSubsystem(LClassOuter const* Outer) const override;
     virtual void Initialize(LSubsystemCollection& Collection) override;
 
 public:
@@ -51,11 +51,11 @@ public:
 
 private:
 
-    WDebugScreen* DebugScreen { nullptr };
-    WDebugMenu* DebugMenu { nullptr };
-    WCrosshair* Crosshair { nullptr };
-    WConsoleScreen* ConsoleScreen { nullptr };
-    WPauseScreen* PauseScreen { nullptr };
+    CDR_NULL_PTR(WDebugScreen*) DebugScreen{ nullptr };
+    CDR_NULL_PTR(WDebugMenu*) DebugMenu{ nullptr };
+    CDR_NULL_PTR(WCrosshair*) Crosshair{ nullptr };
+    CDR_NULL_PTR(WConsoleScreen*) ConsoleScreen{ nullptr };
+    CDR_NULL_PTR(WPauseScreen*) PauseScreen{ nullptr };
 };
 
 } /* ~Namespace Jafg */

@@ -47,7 +47,6 @@ inline LString LexToString(const EPluginShutdownReason::Type InReason)
         default:                                    return "Unknown";
     }
 }
-
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
 //
@@ -75,10 +74,11 @@ struct LLoadedPluginHandle final
     FORCEINLINE constexpr bool IsValid() const noexcept { return this->Handle != 0; }
     FORCEINLINE constexpr bool IsInvalid() const noexcept { return this->Handle == 0; }
 
-    FORCEINLINE constexpr bool operator==(const LLoadedPluginHandle& Other) const noexcept { return this->Handle == Other.Handle; }
-    FORCEINLINE constexpr bool operator!=(const LLoadedPluginHandle& Other) const noexcept { return this->Handle != Other.Handle; }
+    FORCEINLINE constexpr bool operator==(LLoadedPluginHandle const& Other) const noexcept { return this->Handle == Other.Handle; }
 
     FORCEINLINE constexpr operator bool() const noexcept { return this->IsValid(); }
+
+    FORCEINLINE constexpr explicit operator u32() const noexcept { return this->Handle; }
 
 private:
 

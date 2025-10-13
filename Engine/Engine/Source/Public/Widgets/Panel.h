@@ -15,7 +15,7 @@ namespace Jafg
 //# If no complex drawing is needed, use #WOverlay instead for better performance.
 //#
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WPanel : public WParent
+class WPanel : public WParent
 {
     GENERATED_CLASS_BODY()
 

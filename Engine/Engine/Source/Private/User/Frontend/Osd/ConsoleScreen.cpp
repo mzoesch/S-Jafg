@@ -16,31 +16,31 @@
 #include "Widgets/TextBox.h"
 #include "Widgets/VRegion.h"
 
-void Jafg::WConsoleScreen::BeginLifeDefault()
+void Jafg::WConsoleScreen::BeginLifeCDR()
 {
-    Super::BeginLifeDefault();
+    Super::BeginLifeCDR();
 
     if (this->MaxHistorySize < 5)
     {
-        LOG_ERROR(LogWidgets, "MaxHistorySize is set to [{}] which is less than the minimum of 5. Setting it to 5.", this->MaxHistorySize)
+        LOG_ERROR(LogWidgets, "MaxHistorySize is set to [{}] which is less than the minimum of 5. Setting it to 5.", this->MaxHistorySize.get())
         this->MaxHistorySize = 5;
     }
 
     if (this->ConsoleWidth < 200)
     {
-        LOG_ERROR(LogWidgets, "ConsoleWidth is set to [{}] which is less than the minimum of 200. Setting it to 200.", this->ConsoleWidth)
+        LOG_ERROR(LogWidgets, "ConsoleWidth is set to [{}] which is less than the minimum of 200. Setting it to 200.", this->ConsoleWidth.get())
         this->ConsoleWidth = 200;
     }
 
     if (this->MaxPreviewLines < 2)
     {
-        LOG_ERROR(LogWidgets, "MaxPreviewLines is set to [{}] which is less than the minimum of 2. Setting it to 2.", this->MaxPreviewLines)
+        LOG_ERROR(LogWidgets, "MaxPreviewLines is set to [{}] which is less than the minimum of 2. Setting it to 2.", this->MaxPreviewLines.get())
         this->MaxPreviewLines = 2;
     }
 
     if (this->PreviewMessageLifetime < 0.5)
     {
-        LOG_ERROR(LogWidgets, "PreviewMessageLifetime is set to [{}] which is less than the minimum of 0.5. Setting it to 0.5.", this->PreviewMessageLifetime)
+        LOG_ERROR(LogWidgets, "PreviewMessageLifetime is set to [{}] which is less than the minimum of 0.5. Setting it to 0.5.", this->PreviewMessageLifetime.get())
         this->PreviewMessageLifetime = 0.5;
     }
 
@@ -166,13 +166,13 @@ void Jafg::WConsoleScreen::Tick()
     return;
 }
 
-void Jafg::WConsoleScreen::OnGarbageDefault()
+void Jafg::WConsoleScreen::OnGarbageDefault(ECxxRecordTearDownReason::Type Reason)
 {
-    Super::OnGarbageDefault();
+    Super::OnGarbageDefault(Reason);
 
     if (GEngine)
     {
-        GEngine->GetCommandLineInterface()->UnregisterCommand(&this->CommandHandle_Clear);
+        GEngine->GetCommandLineInterface()->UnregisterCommand(this->CommandHandle_Clear.get_ptr());
     }
 
     return;
@@ -393,7 +393,7 @@ void Jafg::WConsoleScreen::GoHistoryForward()
 {
     const i32 LastHistoryCursor = this->HistoryCursor;
 
-    this->HistoryCursor = Maths::Clamp(this->HistoryCursor - 1, static_cast<i32>(INDEX_NONE), static_cast<i32>(GetDefault<WConsoleScreen>()->History.size()) - 1);
+    this->HistoryCursor = Maths::Clamp(this->HistoryCursor - 1, static_cast<i32>(INDEX_NONE), static_cast<i32>(GetDefault<WConsoleScreen>()->History->size()) - 1);
 
     if (this->HistoryCursor == INDEX_NONE || this->HistoryCursor == LastHistoryCursor)
     {

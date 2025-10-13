@@ -3,7 +3,7 @@
 #include "Widgets/Compound/TabBarPanel.h"
 #include "Widgets/Compound/TabBar.h"
 
-Jafg::WTabBarPanel::WTabBarPanel(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WTabBarPanel::WTabBarPanel(LCxxObjectInitializer const& CxxObjectInitializer) : Super(CxxObjectInitializer)
 {
     this->SetAnchor(EAnchor::Fill);
     return;

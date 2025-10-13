@@ -2,7 +2,8 @@
 
 #include "Widgets/Button.h"
 
-Jafg::WButton::WButton(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WButton::WButton(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetVisibility(EWidgetVisibility::DerivedHitTestInvisible);
     return;
@@ -164,7 +165,8 @@ void Jafg::WButton::SetEnabled(const bool bInEnabled)
     return;
 }
 
-Jafg::WTextButton::WTextButton(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WTextButton::WTextButton(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetPadding({15, 8});
     return;

@@ -11,7 +11,7 @@ namespace Jafg
 class WFrontendScreen;
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API JCoreFrontendWidgetsSubsystem final : public JWorldSubsystem
+class JCoreFrontendWidgetsSubsystem final : public JWorldSubsystem
 {
     GENERATED_CLASS_BODY()
 
@@ -19,7 +19,7 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JCoreFrontendWidgetsSubsystem)
 
-    virtual bool ShouldCreateSubsystem(const LObjectContext* InOuter) const override;
+    virtual bool ShouldCreateSubsystem(LClassOuter const* Outer) const override;
     virtual void Initialize(LSubsystemCollection& Collection) override;
 
 private:

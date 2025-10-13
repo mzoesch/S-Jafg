@@ -22,16 +22,17 @@
 #include "MyWorld/TimeWorldSubsystem.h"
 #include "MyWorld/Validation/ChunkValidationUtility.h"
 
-Jafg::WDebugScreen::WDebugScreen(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WDebugScreen::WDebugScreen(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetShouldTick(true);
     this->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
     return;
 }
 
-void Jafg::WDebugScreen::BeginLifeDefault()
+void Jafg::WDebugScreen::BeginLifeCDR()
 {
-    Super::BeginLifeDefault();
+    Super::BeginLifeCDR();
 
     if (GEngine == nullptr)
     {
@@ -420,9 +421,9 @@ void Jafg::WDebugScreen::Tick()
     return;
 }
 
-void Jafg::WDebugScreen::OnGarbageDefault()
+void Jafg::WDebugScreen::OnGarbageDefault(ECxxRecordTearDownReason::Type Reason)
 {
-    Super::OnGarbageDefault();
+    Super::OnGarbageDefault(Reason);
 
     if (GEngine)
     {
@@ -507,7 +508,7 @@ void Jafg::WDebugScreen::UnregisterCliObjects()
     check( GEngine )
     check( this->IsDefault() )
 
-    if (ensure(this->VariableHandle_ShowChunkBordersInDebugScreen.IsValid()))
+    if (ensure(this->VariableHandle_ShowChunkBordersInDebugScreen->IsValid()))
     {
         GEngine->GetCommandLineInterface()->UnregisterCommand(&this->VariableHandle_ShowChunkBordersInDebugScreen);
     }

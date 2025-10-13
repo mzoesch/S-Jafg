@@ -42,11 +42,11 @@ enum Type
 
 Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildGeneral
 (
-    const Jafg::JObjectBase* Context,
-    LString&& Header,
+    Jafg::JCxxClass*         Context,
+    LString&&                Header,
     const EBuildReason::Type Reason,
     Jafg::WEditableTextBox** SessionName = nullptr,
-    Jafg::WTextBox** SessionPath = nullptr
+    Jafg::WTextBox**         SessionPath = nullptr
 )
 {
     using namespace Jafg;
@@ -144,7 +144,7 @@ Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildGeneral
 
 Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildMultiplayer
 (
-    const Jafg::JObjectBase* Context,
+    Jafg::JCxxClass*         Context,
     LString&&                Header,
     const EBuildReason::Type Reason,
     Jafg::WTextBox**         OutHeader = nullptr
@@ -295,7 +295,8 @@ void Jafg::WHostSessionScreen::ShowOldScreenHost()
     return;
 }
 
-Jafg::WHostSessionScreen_New::WHostSessionScreen_New(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+Jafg::WHostSessionScreen_New::WHostSessionScreen_New(LCxxObjectInitializer const& ObjectInitializer)
+    : Super(ObjectInitializer)
 {
     this->SetAnchor(EAnchor::Fill);
     return;
@@ -541,7 +542,8 @@ void Jafg::WHostSessionScreen_New::OnLoad_Advanced(WTabBar* TabBar, WNode* Butto
     return;
 }
 
-Jafg::WHostSessionScreen_Old_Save::WHostSessionScreen_Old_Save(const Jafg::LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WHostSessionScreen_Old_Save::WHostSessionScreen_Old_Save(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetAnchor(EAnchor::HFill);
     return;
@@ -559,7 +561,7 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
 
     this->RemoveChildren();
 
-    if (this->Save.PreviewTexture.IsValid() == false)
+    if (this->Save->PreviewTexture.IsValid() == false)
     {
         this->OptionalHolder = GetDefault<JTextureSubsystem>()->GetTexture
         ({
@@ -583,8 +585,8 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
             .ImagePadding(2)
             .Texture
             (
-                  this->Save.PreviewTexture.IsValid()
-                ? &this->Save.PreviewTexture
+                  this->Save->PreviewTexture.IsValid()
+                ? &this->Save->PreviewTexture
                 : GetDefault<JTextureSubsystem>()->GetTexture
                     ({
                         EEnginePaths::Interface, "NoImage.png"
@@ -595,18 +597,18 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
             .Anchor(EAnchor::Fill)
         [
             NewNode(WTextBox)
-                .Content(this->Save.DisplayName)
+                .Content(this->Save->DisplayName)
                 .Brush(LTextBoxBrush::SubHeader())
             +
             NewNode(WTextBox)
-                .Content(this->Save.Description)
+                .Content(this->Save->Description)
                 .Brush(LTextBoxBrush::Body())
             +
             NewNode(WSpacer)
                 .Anchor(EAnchor::VFill)
             +
             NewNode(WTextBox)
-                .Content(this->Save.Path.generic_string())
+                .Content(this->Save->Path.generic_string())
                 .Brush(LTextBoxBrush::Body())
                 .TextColor(Lal::LColor::DarkerGray)
         ]
@@ -634,7 +636,8 @@ void Jafg::WHostSessionScreen_Old_Save::OnPrimaryRelease()
     return;
 }
 
-Jafg::WHostSessionScreen_Old::WHostSessionScreen_Old(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WHostSessionScreen_Old::WHostSessionScreen_Old(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetAnchor(EAnchor::Fill);
     return;
@@ -760,7 +763,7 @@ void Jafg::WHostSessionScreen_Old::RefetchSaves(const bool bResetHighlight /* = 
 
     this->RefetchSavesImpl();
 
-    if (this->FetchedSaves.empty())
+    if (this->FetchedSaves->empty())
     {
         WTextBox* Text;
         NewNode(WTextBox).SaveTo(&Text)
@@ -891,7 +894,7 @@ void Jafg::WHostSessionScreen_Old::HighlightNoSave(const bool bScrollUp /* = fal
 
 void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
 {
-    this->FetchedSaves.clear();
+    this->FetchedSaves->clear();
 
     TArray<LString> SavesPaths { Finder::GetSavesDir() };
     SavesPaths.append_range(GetDefault<JUserPreferences>()->AdditionalSavesSearchPaths);
@@ -933,7 +936,7 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
         LTexture2 Preview;
         Preview.LoadFromDisk(AsPath / "Thumbnail.png", ERawImageFormat::BGR8);
 
-        this->FetchedSaves.emplace_back(std::move(AsPath), false, std::move(*DisplayName), "A description of this save.", std::move(Preview));
+        this->FetchedSaves->emplace_back(std::move(AsPath), false, std::move(*DisplayName), "A description of this save.", std::move(Preview));
 
         continue;
     }
@@ -946,7 +949,8 @@ void Jafg::WHostSessionScreen_Old::RefetchSavesImpl()
     return;
 }
 
-Jafg::WHostSessionScreen_Old_Host::WHostSessionScreen_Old_Host(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WHostSessionScreen_Old_Host::WHostSessionScreen_Old_Host(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetAnchor(EAnchor::Fill);
     return;
@@ -1005,7 +1009,7 @@ void Jafg::WHostSessionScreen_Old_Host::UpdateToCachedSave()
     check( this->IsCachedSaveValid() )
 
     check( this->Header )
-    this->Header->SetContent(Lal::SprintF("Hosting \"{}\"", this->Save.DisplayName));
+    this->Header->SetContent(Lal::SprintF("Hosting \"{}\"", this->Save->DisplayName));
 
     return;
 }
@@ -1044,11 +1048,11 @@ Jafg::TWidgetFactoryHRegion<Jafg::WHRegion>* Jafg::WHostSessionScreen_Old_Host::
                     return;
                 }
 
-                LOG_VERBOSE(LogWidgets, "Forwarding host request for [{}].", this->Save.Path)
+                LOG_VERBOSE(LogWidgets, "Forwarding host request for [{}].", this->Save->Path)
                 this->GetEngine()->Browse
                 (
                     this->GetOuter()->AsWorld(),
-                    Lal::SprintF("{}?Save={}", Name_LevelMyWorld.ToString(), this->Save.Path)
+                    Lal::SprintF("{}?Save={}", Name_LevelMyWorld.ToString(), this->Save->Path)
                 );
 
                 return;

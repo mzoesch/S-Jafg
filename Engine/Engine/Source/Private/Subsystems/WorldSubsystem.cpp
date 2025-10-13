@@ -4,12 +4,12 @@
 #include "Core/CoreNames.h"
 #include "Engine/World.h"
 
-bool Jafg::JWorldSubsystem::IsOuterFrontend(const LObjectContext* InOuter) noexcept
+bool Jafg::JWorldSubsystem::IsOuterFrontend(LClassOuter const* Outer) noexcept
 {
-    return InOuter && InOuter->IsWorld() && static_cast<const LWorld*>(InOuter)->GetUnderlyingLevelName() == Name_LevelFrontend.ToString().c_str();
+    return Outer && Outer->IsWorld() && Outer->AsWorld()->GetUnderlyingLevelName() == Name_LevelFrontend.ToString();
 }
 
-bool Jafg::JWorldSubsystem::IsOuterWorld(const LObjectContext* InOuter) noexcept
+bool Jafg::JWorldSubsystem::IsOuterWorld(LClassOuter const* Outer) noexcept
 {
-    return InOuter && InOuter->IsWorld() && static_cast<const LWorld*>(InOuter)->GetUnderlyingLevelName() == Name_LevelMyWorld.ToString().c_str();
+    return Outer && Outer->IsWorld() && Outer->AsWorld()->GetUnderlyingLevelName() == Name_LevelMyWorld.ToString();
 }

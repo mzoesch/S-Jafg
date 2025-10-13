@@ -10,7 +10,7 @@ namespace Jafg
 //#
 //# A runnable that has a fixed tick interval and defines common boilerplate logic for ticking and stopping.
 //#
-class ENGINE_API LTickedRunnable : public LRunnable
+class LTickedRunnable : public LRunnable
 {
 public:
 
@@ -41,10 +41,10 @@ private:
     //#
     //# The tick interval in seconds. Zero means no interval -> tick always (not recommended).
     //#
-    f64 TickInterval { 0.1 };
+    f64 TickInterval{ 0.1 };
 
-    bool bShouldTick = true;
-    ERunnableStopReason::Type StopReason = ERunnableStopReason::Custom;
+    bool bShouldTick{ true };
+    ERunnableStopReason::Type StopReason{ ERunnableStopReason::Custom };
 };
 
 } /* ~Namespace Jafg */

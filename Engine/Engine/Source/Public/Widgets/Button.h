@@ -27,13 +27,14 @@ public:
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryButton)
-class ENGINE_API WButton : public WRegion, public LButtonBase
+class WButton : public WRegion, public LButtonBase
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WButton(const LObjectInitializer& ObjectInitializer);
+    explicit WButton(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WButton)
 
 public:
 
@@ -52,13 +53,14 @@ public:
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTextButton)
-class ENGINE_API WTextButton : public WButton
+class WTextButton : public WButton
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WTextButton(const ::Jafg::LObjectInitializer& ObjectInitializer);
+    explicit WTextButton(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WTextButton)
 
 public:
 

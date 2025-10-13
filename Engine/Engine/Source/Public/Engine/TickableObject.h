@@ -11,12 +11,12 @@ namespace Jafg
 //# An object that can be registered with some sort of context that is ticked by the engine or a sub-tickable system
 //# from the engine-tick.
 //#
-class ENGINE_API LTickableObject
+class LTickableObject
 {
 public:
 
     LTickableObject() = default;
-    PROHIBIT_REALLOC_OF_ANY_FORM(LTickableObject)
+    PROHIBIT_ANY_REALLOC_OTHER_THAN_CDR_DEFAULTED(LTickableObject)
     virtual ~LTickableObject() = default;
 
     virtual void Tick(const f32 DeltaTime) = 0;

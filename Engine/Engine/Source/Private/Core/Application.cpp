@@ -1,6 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Core/Application.h"
+
+#include "Build/EngineBuildInfo.h"
 #include "Core/Uuid.h"
 #include "Stats/Stats.h"
 #include "Runtime/Args.h"
@@ -23,6 +25,16 @@ Lal::LProgramParameter _CoreHelp{
 Lal::LProgramParameter _Help{
     "VerboseHelp",
     "Shows help window for all default loaded systems."
+    };
+
+Lal::LProgramParameter _Version{
+    "Version",
+    "Shows the version of the engine."
+    };
+
+Lal::LProgramParameter _version{
+    "version",
+    "Same as \"Version}\" but in lowercase."
     };
 
 Lal::LProgramParameter _WaitForDebugger{
@@ -64,6 +76,19 @@ void API()
         LOG_INFO(LogCli, "  -{:<{}} : {}", Param->Identifier, MaxSize, Param->Description.c_str())
         continue;
     }
+
+    return;
+}
+
+void APIVersion()
+{
+    LOG_INFO(LogCli, "Engine version [{}] @mzoesch at [{} - {}] on {} in {}.",
+        Jafg::BuildInfo::GetEngineVersionStr(),
+        Jafg::BuildInfo::GetBuildTime(),
+        Jafg::BuildInfo::GetBuildDate(),
+        Jafg::BuildInfo::GetVcsBranch(),
+        Jafg::BuildInfo::GetVcsRevision()
+        )
 
     return;
 }
@@ -164,6 +189,17 @@ std::tuple<bool, EPlatformExit::Type> ConditionallyShowHelpAndExit()
     if (HasCmdLineParameter("Help"))
     {
         ::API();
+        return { true, EPlatformExit::Success };
+    }
+
+    return { false, EPlatformExit::Success };
+}
+
+std::tuple<bool, EPlatformExit::Type> ConditionallyShowVersionAndExit()
+{
+    if (HasCmdLineParameter("Version") || HasCmdLineParameter("version"))
+    {
+        ::APIVersion();
         return { true, EPlatformExit::Success };
     }
 

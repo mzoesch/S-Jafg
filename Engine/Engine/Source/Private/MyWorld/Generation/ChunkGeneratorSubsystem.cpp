@@ -86,20 +86,21 @@ void Jafg::LChunkGeneratorWorker::MakeChunkActive(AChunk* Target)
     return;
 }
 
-Jafg::JChunkGeneratorSubsystem::JChunkGeneratorSubsystem(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+Jafg::JChunkGeneratorSubsystem::JChunkGeneratorSubsystem(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetPriorityTearDown(true);
     return;
 }
 
-bool Jafg::JChunkGeneratorSubsystem::ShouldCreateSubsystem(const LObjectContext* InOuter) const
+bool Jafg::JChunkGeneratorSubsystem::ShouldCreateSubsystem(LClassOuter const* Outer) const
 {
-    if (Super::ShouldCreateSubsystem(InOuter) == false)
+    if (Super::ShouldCreateSubsystem(Outer) == false)
     {
         return false;
     }
 
-    return Super::IsOuterWorld(InOuter);
+    return Super::IsOuterWorld(Outer);
 }
 
 void Jafg::JChunkGeneratorSubsystem::Initialize(LSubsystemCollection& Collection)
@@ -112,7 +113,7 @@ void Jafg::JChunkGeneratorSubsystem::Initialize(LSubsystemCollection& Collection
     LOG_INFO(LogChunkGeneration, "Using SIMD: [{}].", static_cast<FastSIMD::Level_BitFlags>(this->FnGenerator->GetSIMDLevel()));
 #endif /* PLATFORM_SUPPORTS_SIMD */
 
-    this->ChunkGenerationSubsystem = Collection.GetCheckedSubsystem<JChunkGenerationSubsystem>();
+    this->ChunkGenerationSubsystem = Collection.GetSubsystemChecked<JChunkGenerationSubsystem>();
 
     for (i32 i = 0; i < 1 /* 10 */; ++i)
     {

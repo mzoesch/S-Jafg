@@ -44,9 +44,10 @@ class JChunkGeneratorSubsystem final : public JWorldSubsystem
 
 protected:
 
-    explicit JChunkGeneratorSubsystem(const LObjectInitializer& ObjectInitializer);
+    explicit JChunkGeneratorSubsystem(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(JChunkGeneratorSubsystem)
 
-    virtual bool ShouldCreateSubsystem(const LObjectContext* InOuter) const override;
+    virtual bool ShouldCreateSubsystem(LClassOuter const* Outer) const override;
     virtual void Initialize(LSubsystemCollection& Collection) override;
     virtual void TearDown() override;
 

@@ -12,18 +12,19 @@ namespace Jafg
 //# The base class for all nodes that can possess children.
 //# Generally speaking, inheriting from this class directly is not recommended.
 //#
-DECLARE_JAFG_WIDGET(EClassFlags::Abstract)
-class ENGINE_API WParent : public WParentBase
+DECLARE_JAFG_WIDGET(ECxxClassFlags::Abstract)
+class WParent : public WParentBase
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WParent(const LObjectInitializer& ObjectInitializer);
+    explicit WParent(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WParent)
 
 public:
 
-    virtual void OnGarbage() override;
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
     virtual void Construct() override;
     virtual void Tick() override;
     virtual void Destruct() override;

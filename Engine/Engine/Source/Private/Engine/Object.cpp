@@ -1,52 +1,34 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Engine/Object.h"
+#include "Engine/WorldObject.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 
-Jafg::LEngine* Jafg::JObject::GetEngine() const
-{
-    return GEngine;
-}
-
-Jafg::LCommandLineInterface* Jafg::JObject::GetCommandLineInterface() const
-{
-    return GEngine ? GEngine->GetCommandLineInterface() : nullptr;
-}
-
-Jafg::LWorld* Jafg::JObject::GetOrCalculateCastedOuter()
+Jafg::LWorld* Jafg::JWorldObject::GetOrCalculateCastedOuter()
 {
     if (this->CastedOuter)
     {
         return this->CastedOuter;
     }
 
-    for (const Private::LWorldContext& Context : GEngine->GetContexts())
+    for (Private::LWorldTrack const& Track : GEngine->GetTracks())
     {
-        check( Context.ChildWorld )
-        if (Context.ChildWorld == this->GetOuter())
+        check( Track.ChildWorld.get() )
+        if (Track.ChildWorld.get() == this->GetOuter())
         {
-            this->CastedOuter = Context.ChildWorld;
+            this->CastedOuter = Track.ChildWorld.get();
             return this->CastedOuter;
         }
+
+        continue;
     }
 
     return nullptr;
 }
 
-void Jafg::JObject::BeginLife()
+void Jafg::JWorldObject::BeginLife()
 {
-    JObjectBase::BeginLife();
-
-    for (const Private::LWorldContext& Context : GEngine->GetContexts())
-    {
-        check( Context.ChildWorld )
-        if (Context.ChildWorld == this->GetOuter())
-        {
-            this->CastedOuter = Context.ChildWorld;
-            return;
-        }
-    }
-
+    JCxxClass::BeginLife();
+    (void)this->GetOrCalculateCastedOuter();
     return;
 }

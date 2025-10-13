@@ -9,7 +9,7 @@ namespace Jafg
 {
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API JCorePreferencesSubsystem : public JLocalEgoSubsystem
+class JCorePreferencesSubsystem : public JLocalEgoSubsystem
 {
     GENERATED_CLASS_BODY()
 

@@ -62,21 +62,21 @@ void Jafg::WFrontendScreen::Construct()
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.IdentifierField = "Encyclopedia";
-        Descriptor.PanelWidgetClassField.Set<WCommonMenuTabBarPanel>();
+        Descriptor.PanelWidgetClassField.SetClass<WCommonMenuTabBarPanel>();
         this->TabBar->RegisterTab(std::move(Descriptor));
     }
 
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.IdentifierField = "Preferences";
-        Descriptor.PanelWidgetClassField.Set<WPreferencesScreen>();
+        Descriptor.PanelWidgetClassField.SetClass<WPreferencesScreen>();
         this->TabBar->RegisterTab(std::move(Descriptor));
     }
 
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.IdentifierField = "Credits";
-        Descriptor.PanelWidgetClassField.Set<WCommonMenuTabBarPanel>();
+        Descriptor.PanelWidgetClassField.SetClass<WCommonMenuTabBarPanel>();
         this->TabBar->RegisterTab(std::move(Descriptor));
     }
 

@@ -24,7 +24,7 @@ struct LGenericPerspectiveShaderContextDrawArgs : public LGenericShaderContextDr
     const LEye* Eye = nullptr;
 };
 
-class ENGINE_API LGenericShaderContext
+class LGenericShaderContext
 {
 public:
 

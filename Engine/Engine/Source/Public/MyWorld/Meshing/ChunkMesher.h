@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Lal.afx"
 #include "Rhi/ChunkBoxVertex.h"
 
 namespace Jafg

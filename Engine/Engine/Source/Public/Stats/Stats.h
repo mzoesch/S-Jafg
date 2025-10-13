@@ -25,7 +25,7 @@
 
 #define PRIVATE_JAFG_STAT_TRACER ::Jafg::Stats::Private::GTracer
 #define PRIVATE_JAFG_STAT ::Jafg::Stats::Private::LStat
-#define PRIVATE_JAFG_STAT_UNIQUE_SYMBOL PRIVATE_JAFG_CORE_JOIN_OUTER_TWO(_Stat, __LINE__)
+#define PRIVATE_JAFG_STAT_UNIQUE_SYMBOL LAL_JOIN_OUTER_TWO(_Stat, __LINE__)
 
 //#
 //# Start a new stat for cycles that has a unique symbol so it may be ended before leaving the scope.

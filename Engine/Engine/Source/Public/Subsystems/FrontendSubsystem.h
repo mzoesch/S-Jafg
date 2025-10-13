@@ -16,8 +16,8 @@ class LFrontend;
 //# Important delegates will be broadcasted to all children of this subsystem.
 //# Widget construction and destruction should be done here.
 //#
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
-class ENGINE_API JFrontendSubsystem : public JSubsystem
+DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+class JFrontendSubsystem : public JSubsystem
 {
     GENERATED_CLASS_BODY()
 

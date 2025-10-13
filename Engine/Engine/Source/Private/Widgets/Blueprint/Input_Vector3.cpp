@@ -4,7 +4,8 @@
 #include "Widgets/EditableTextBox.h"
 #include "Widgets/TextBox.h"
 
-Jafg::WInput_Vector3::WInput_Vector3(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WInput_Vector3::WInput_Vector3(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetPadding(5.0f);
     this->SetOmniOutlineThickness(1.0f);

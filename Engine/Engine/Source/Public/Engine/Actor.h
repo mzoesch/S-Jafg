@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/Object.h"
+#include "Engine/WorldObject.h"
 #include "Engine/TickableObject.h"
 #include "Actor.generated.h"
 
@@ -24,8 +24,8 @@ enum Type : u8
 
 } /* ~Namespace EActorSweep */
 
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
-class ENGINE_API AActor : public JObject, public LTickableObject
+DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+class AActor : public JWorldObject, public LTickableObject
 {
     GENERATED_CLASS_BODY()
 
@@ -41,7 +41,7 @@ public:
     virtual void Tick(const float DeltaTime) override { check( this->IsGarbage() == false ) }
     virtual void EndLife() override;
 
-    virtual void OnGarbage() override;
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
 
     FORCEINLINE auto   IsRendererComponentValid() const -> bool { return this->RendererComponent != nullptr; }
     FORCEINLINE auto   GetRendererComponent() const -> LRendererComponent* { return this->RendererComponent; }
@@ -76,8 +76,6 @@ protected:
     FORCEINLINE void SetEverTickConstructorOnlyFlag() { this->bCanEverTick = true; }
     FORCEINLINE void CancelEverTickConstructorOnlyFlag() { this->bCanEverTick = false; }
 
-    FORCEINLINE void DisableStrongActorContext() { this->bWeakContext = true; return; }
-
 private:
 
     //# Make this virtual private to not confuse it with #ShouldTick.
@@ -99,13 +97,47 @@ private:
     //# Whether this actor should tick now or not. This flag does nothing if bCanEverTick is false.
     //#
     bool bShouldTick : 1  = true;
-
-    bool bWeakContext : 1 = false;
 };
 
-} /* ~Namespace Jafg */
+template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+FORCEINLINE TActor* SpawnActor(LWorld* World);
+template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+FORCEINLINE TActor* SpawnActor(LWorld* World, TSubclassOf<TActor> Class);
+FORCEINLINE AActor* SpawnActor(LWorld* World, TSubclassOf<AActor> Class);
+FORCEINLINE AActor* SpawnActor(LWorld* World, LString const& ClassName);
 
-//#
-//# Keep this include as every action with any actor will need a ton of function from this include.
-//#
-#include "ActorUtility.h"
+template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+FORCEINLINE TActor* SpawnDeferredActor(LWorld* World);
+template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+FORCEINLINE TActor* SpawnDeferredActor(LWorld* World, TSubclassOf<TActor> Class);
+FORCEINLINE AActor* SpawnDeferredActor(LWorld* World, TSubclassOf<AActor> Class);
+FORCEINLINE AActor* SpawnDeferredActor(LWorld* World, LString const& ClassName);
+
+FORCEINLINE void MakeDeferredActorFinal(AActor* Actor) { MakeDeferredObjectFinal(Actor);}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Impl
+///////////////////////////////////////////////////////////////////////////////
+
+template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+FORCEINLINE TActor* SpawnActor(LWorld* World) { return SpawnActor<TActor>(World, TSubclassOf<TActor>(TActor::StaticClass())); }
+template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+FORCEINLINE TActor* SpawnActor(LWorld* World, TSubclassOf<TActor> Class) { return StaticCastChecked<TActor>(SpawnActor(World, Class)); }
+FORCEINLINE AActor* SpawnActor(LWorld* World, TSubclassOf<AActor> Class) { AActor* Out{ SpawnDeferredActor(World, Class) }; MakeDeferredActorFinal(Out); return Out; }
+FORCEINLINE AActor* SpawnActor(LWorld* World, LString const& ClassName) { return SpawnActor(World, Private::GetGlobalCxxRecordRegistry().GetClassByNameChecked(ClassName)->StaticClass); }
+
+template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+FORCEINLINE TActor* SpawnDeferredActor(LWorld* World) { return SpawnDeferredActor<TActor>(World, TSubclassOf<TActor>(TActor::StaticClass())); }
+template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+FORCEINLINE TActor* SpawnDeferredActor(LWorld* World, TSubclassOf<TActor> Class) { return StaticCastChecked<TActor>(SpawnDeferredActor(World, Class)); }
+FORCEINLINE AActor* SpawnDeferredActor(LWorld* World, TSubclassOf<AActor> Class)
+{
+    check( World && Class.HasClass() && Class.IsValidType() )
+    AActor* Out{ NewDeferredObject<AActor>(World, *Class.GetClass()) };
+    if (Out->CanEverTick()) { World->RegisterTickableObject(Out); }
+    return Out;
+}
+FORCEINLINE AActor* SpawnDeferredActor(LWorld* World, LString const& ClassName) { return SpawnDeferredActor(World, Private::GetGlobalCxxRecordRegistry().GetClassByNameChecked(ClassName)->StaticClass); }
+
+} /* ~Namespace Jafg */

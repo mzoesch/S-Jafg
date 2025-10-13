@@ -15,7 +15,7 @@ struct LBlurShaderContextDrawArgs final : public LGenericShaderContextDrawArgs
     float Strength = 0.0f;
 };
 
-class ENGINE_API LBlurShaderContext final : public LGenericShaderContext
+class LBlurShaderContext final : public LGenericShaderContext
 {
 public:
 

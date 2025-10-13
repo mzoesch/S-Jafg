@@ -32,7 +32,7 @@ public:
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTextBox)
-class ENGINE_API WTextBox : public WBox
+class WTextBox : public WBox
 {
     GENERATED_CLASS_BODY()
 
@@ -42,7 +42,7 @@ protected:
 
 public:
 
-    virtual void BeginLifeDefault() override;
+    virtual void BeginLifeCDR() override;
     virtual void Draw(LViewport& Context) const override;
 
     virtual void UpdateDesiredSize() const override;

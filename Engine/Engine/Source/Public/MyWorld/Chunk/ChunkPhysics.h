@@ -8,7 +8,7 @@
 namespace Jafg
 {
 
-class ENGINE_API LChunkPhysicsComponent final : public LPhysicsComponent
+class LChunkPhysicsComponent final : public LPhysicsComponent
 {
 public:
 

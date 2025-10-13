@@ -5,6 +5,7 @@
 #include "Rhi/TextureMipMap2.h"
 #include "Rhi/Texture2Handle.h"
 #include "System/SystemForward.h"
+#include "Engine/CdrMemberManipulation.h"
 
 namespace Jafg
 {
@@ -87,5 +88,7 @@ FORCEINLINE const LTexture2Handle& LTexture2::GetHandle() const noexcept
 
     return this->Handle;
 }
+
+template<> NODISCARD FORCEINLINE bool IsCdrMemberConsideredDefault<LTexture2>(LTexture2 const& Value) noexcept { return Value.GetFirstMipMap().GetBulk().IsAllocated(); }
 
 } /* ~Namespace Jafg */

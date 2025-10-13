@@ -101,7 +101,6 @@ private:
     u32 Id = NULL;
 };
 
-
 FORCEINLINE LShader& LShader::operator=(LShader&& InShader) noexcept
 {
     if (this->bLoaded)

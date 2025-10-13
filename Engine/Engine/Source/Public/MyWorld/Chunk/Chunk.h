@@ -10,6 +10,7 @@
 #include "MyWorld/CommonTypes.h"
 #include "MyWorld/VoxelKey.h"
 #include "Rhi/ChunkShader.h"
+#include "MyWorld/Meshing/ChunkMesher.h"
 #include "Chunk.generated.h"
 
 namespace Jafg
@@ -41,7 +42,7 @@ enum Type : u8
 
 } /* ~Namespace ChunkStateTimeoutBehavior */
 
-class ENGINE_API LChunkRendererComponent final : public LRendererComponent
+class LChunkRendererComponent final : public LRendererComponent
 {
 public:
 
@@ -68,6 +69,21 @@ private:
 //#
 struct LSharedChunkArgs final
 {
+    constexpr LSharedChunkArgs() noexcept = default;
+    LSharedChunkArgs(LSharedChunkArgs const& Other) noexcept
+        : ChunkGenerationSubsystem(Other.ChunkGenerationSubsystem)
+        , ChunkGeneratorSubsystem(Other.ChunkGeneratorSubsystem)
+        , VoxelSubsystem(Other.VoxelSubsystem)
+        , MaterialSubsystem(Other.MaterialSubsystem)
+        , VoxelTextureSubsystem(Other.VoxelTextureSubsystem)
+        , GetNewMesher(Other.GetNewMesher)
+        , bSuperFlat(Other.bSuperFlat)
+    {
+        check( Other.ChunkShader.IsValid() == false )
+    }
+    LSharedChunkArgs& operator=(LSharedChunkArgs const& Other) noexcept = delete;
+    PROHIBIT_MOVE(LSharedChunkArgs)
+
     JChunkGenerationSubsystem* ChunkGenerationSubsystem { nullptr };
     JChunkGeneratorSubsystem*  ChunkGeneratorSubsystem  { nullptr };
     JVoxelSubsystem*           VoxelSubsystem           { nullptr };
@@ -80,7 +96,7 @@ struct LSharedChunkArgs final
 };
 
 DECLARE_JAFG_CLASS()
-class ENGINE_API AChunk final : public AActor
+class AChunk final : public AActor
 {
     GENERATED_CLASS_BODY()
 
@@ -100,7 +116,21 @@ public:
 
 protected:
 
-    explicit AChunk(const LObjectInitializer& ObjectInitializer);
+    DEFAULT_OBJECT_CTOR(AChunk)
+    //# When do we have reflection... :(
+    explicit AChunk(AChunk const& CDR) noexcept
+        : Super(CDR)
+        , SharedArgs{CDR.SharedArgs}
+    {
+        check( CDR.State == EChunkState::Invalid )
+        check( CDR.HuntedState == EChunkState::Invalid )
+        check( this->SharedArgs )
+        check( CDR.Mesher.get() == nullptr )
+        check( CDR.RawVoxelData.get() == nullptr )
+        check( !(CDR.NNorth || CDR.NEast || CDR.NSouth || CDR.NWest || CDR.NUp || CDR.NDown) )
+
+        return;
+    }
 
 public:
 

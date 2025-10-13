@@ -43,8 +43,8 @@ void Jafg::JMaterialSubsystem::ClearAllTextures()
 
 void Jafg::JMaterialSubsystem::LoadAllTextures()
 {
-    JVoxelSubsystem* VoxelSubsystem = this->GetEngine()->GetCheckedSubsystem<JVoxelSubsystem>();
-    JVoxelTextureSubsystem* TextureSubsystem = this->GetEngine()->GetCheckedSubsystem<JVoxelTextureSubsystem>();
+    JVoxelSubsystem* VoxelSubsystem = this->GetEngine()->GetSubsystemChecked<JVoxelSubsystem>();
+    JVoxelTextureSubsystem* TextureSubsystem = this->GetEngine()->GetSubsystemChecked<JVoxelTextureSubsystem>();
 
 #pragma region "Blending"
     TArray<LDiskBlendTexture> BlendedTextureNames = TextureSubsystem->FindMeaningBlendTextureNames();

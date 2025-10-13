@@ -15,14 +15,14 @@
 #include "Rhi/ChunkShader.h"
 #include "Stats/Stats.h"
 
-bool Jafg::JChunkGenerationSubsystem::ShouldCreateSubsystem(const LObjectContext* InOuter) const
+bool Jafg::JChunkGenerationSubsystem::ShouldCreateSubsystem(LClassOuter const* Outer) const
 {
-    if (Super::ShouldCreateSubsystem(InOuter) == false)
+    if (Super::ShouldCreateSubsystem(Outer) == false)
     {
         return false;
     }
 
-    return Super::IsOuterWorld(InOuter);
+    return Super::IsOuterWorld(Outer);
 }
 
 void Jafg::JChunkGenerationSubsystem::Initialize(LSubsystemCollection& Collection)
@@ -38,10 +38,10 @@ void Jafg::JChunkGenerationSubsystem::Initialize(LSubsystemCollection& Collectio
     );
 
     this->SharedChunkArgs.ChunkGenerationSubsystem = this;
-    this->SharedChunkArgs.ChunkGeneratorSubsystem = Collection.GetCheckedSubsystem<JChunkGeneratorSubsystem>();
-    this->SharedChunkArgs.VoxelSubsystem = this->GetEngine()->GetCheckedSubsystem<JVoxelSubsystem>();
-    this->SharedChunkArgs.MaterialSubsystem = this->GetEngine()->GetCheckedSubsystem<JMaterialSubsystem>();
-    this->SharedChunkArgs.VoxelTextureSubsystem = this->GetEngine()->GetCheckedSubsystem<JVoxelTextureSubsystem>();
+    this->SharedChunkArgs.ChunkGeneratorSubsystem = Collection.GetSubsystemChecked<JChunkGeneratorSubsystem>();
+    this->SharedChunkArgs.VoxelSubsystem = this->GetEngine()->GetSubsystemChecked<JVoxelSubsystem>();
+    this->SharedChunkArgs.MaterialSubsystem = this->GetEngine()->GetSubsystemChecked<JMaterialSubsystem>();
+    this->SharedChunkArgs.VoxelTextureSubsystem = this->GetEngine()->GetSubsystemChecked<JVoxelTextureSubsystem>();
     this->SharedChunkArgs.ChunkShader.MakeChecked(Name_ShaderChunk);
     this->SharedChunkArgs.GetNewMesher = [](AChunk& Owner) -> TUnique<LChunkMesher>
     {
@@ -113,7 +113,7 @@ void Jafg::JChunkGenerationSubsystem::TearDown()
 
     for (const std::pair<const LChunkKey&, AChunk*> Pair : this->LoadedChunks.value())
     {
-        Pair.second->KillYourSelfNow();
+        Pair.second->KillYourSelfNow_v2();
     }
 
     this->LoadedChunks.reset();
@@ -209,7 +209,7 @@ Jafg::AChunk* Jafg::JChunkGenerationSubsystem::SpawnWeakChunk(const LChunkKey& I
 {
     STAT_CYCLE_FUNCTION()
 
-    AChunk* Chunk = CheckedStaticCast<AChunk>(Private::LWorldMiscellaneousAccessor::SpawnActorWeak(this->GetWorld(), AChunk::StaticClass()));
+    AChunk* Chunk = SpawnDeferredActor<AChunk>(this->GetWorld(), AChunk::StaticClass());
     Chunk->ChunkKey = InChunkKey;
     Chunk->SetSharedArgs(&this->SharedChunkArgs);
     MakeDeferredActorFinal(Chunk);

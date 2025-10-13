@@ -1,17 +1,16 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Lal.afx"
 #include "Widgets/Parent.h"
-
 #include "Widgets/Viewport.h"
 
-Jafg::WParent::WParent(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+Jafg::WParent::WParent(LCxxObjectInitializer const& ObjectInitializer)
+    : Super(ObjectInitializer)
 {
     this->SetVisibility(EWidgetVisibility::IntransitiveHitTestInvisible);
     return;
 }
 
-void Jafg::WParent::OnGarbage()
+void Jafg::WParent::OnGarbage(ECxxRecordTearDownReason::Type Reason)
 {
     // for (const LWidgetSlot* ChildSlot : this->Children)
     // {
@@ -23,7 +22,7 @@ void Jafg::WParent::OnGarbage()
     //
     // this->Children.Empty();
 
-    Super::OnGarbage();
+    Super::OnGarbage(Reason);
 
     return;
 }
@@ -66,7 +65,7 @@ void Jafg::WParent::Destruct()
     for (const LWidgetSlot* ChildSlot : this->Children)
     {
         *ChildSlot->Content->GetMutableSlotDangerousDoNotUseForInternalStuffOnlyOrIfYouWantYourOwnParentClass() = nullptr;
-        ChildSlot->Content->MarkAsGarbage();
+        ChildSlot->Content->MarkAsGarbage_v2();
         delete ChildSlot;
     }
 
@@ -257,7 +256,7 @@ void Jafg::WParent::RemoveChild(WNode* Child)
         if (ChildSlot->Content == Child)
         {
             *ChildSlot->Content->GetMutableSlotDangerousDoNotUseForInternalStuffOnlyOrIfYouWantYourOwnParentClass() = nullptr;
-            ChildSlot->Content->MarkAsGarbage();
+            ChildSlot->Content->MarkAsGarbage_v2();
             algo::erase_once_checked(&this->Children, ChildSlot);
             delete ChildSlot;
             check( algo::find(this->GetChildren(), Child, [](auto const& E){ return E->Content; }) == this->GetChildren().end() )

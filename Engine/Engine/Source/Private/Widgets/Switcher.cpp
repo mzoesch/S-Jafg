@@ -66,7 +66,7 @@ void Jafg::WSwitcher::SetActiveWidget(WNode* Widget)
         (
             LogWidgets,
             "The widget [{}] is not a child of this [{}] switcher.",
-            Widget->GetFullName(), this->GetFullName()
+            Widget->GetNameAsString(), this->GetNameAsString()
         )
     }
 

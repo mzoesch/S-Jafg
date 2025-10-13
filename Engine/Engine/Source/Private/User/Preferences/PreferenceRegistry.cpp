@@ -12,7 +12,7 @@ void Jafg::JPreferenceRegistry::AddTopLevelPreference(TUnique<LPreference>&& InP
         return;
     }
 
-    this->Preferences.emplace_back(std::move(InPreference));
+    this->Preferences->emplace_back(std::move(InPreference));
     checkSlow( InPreference.get() == nullptr )
 
     return;

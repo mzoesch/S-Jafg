@@ -1,19 +1,10 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Lal.afx"
-#include "Engine/EngineCompileTimeConstants.h"
-#include "Engine/Engine.h"
-#include "Core/Application.h"
+#include "Engine.afx"
 #include "Core/LaunchProgress.h"
-#include "Core/Name.h"
-#include "Engine/ObjectBaseUtility.h"
-#include "Engine/Carnifex.h"
-#include "Platform/PlatformMisc.h"
-#include "Async/TaskUtility.h"
-#include "Core/CoreNames.h"
 #include "User/UserPreferences.h"
-#include "Stats/Stats.h"
-#include "Runtime/Args.h"
+#include "Platform/PlatformMisc.h"
+
 #if WITH_TESTS
     #include "TestCore/TestRunner.h"
 #endif /* WITH_TESTS */
@@ -39,33 +30,12 @@ using namespace Jafg;
 namespace
 {
 
-LCarnifex PrivateCarnifex;
-
 #if WITH_STATS
-    Stats::LTracer PrivateTracer;
+    //# The default tracer used in this program.
+    Stats::LTracer RuntimeTracer;
 #endif /* WITH_STATS */
 
 } /* ~Namespace <Anonymous> */
-
-namespace Jafg
-{
-
-struct LPrivateLaunch
-{
-    static void CreateGOmniVitaContext()
-    {
-        check( GOmniVitaContext == nullptr )
-        GOmniVitaContext = new LObjectContext(LObjectContext::NoEngineRegistration);
-    }
-
-    static void DestroyGOmniVitaContext()
-    {
-        check( GOmniVitaContext )
-        GOmniVitaContext->TearDownContextNoEngineUnregistration();
-    }
-};
-
-} /* ~Namespace Jafg */
 
 #if !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT)
 FORCEINLINE
@@ -82,7 +52,7 @@ FORCEINLINE
 #endif /* !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT) */
 EPlatformExit::Type GetMostSignificantExitReason()
 {
-    LEngine::ReflectForwardedExitRequest();
+    LEngine::_ReflectForwardedExitRequest();
 
     return ::HasCustomExitStatus()
         ? static_cast<EPlatformExit::Type>(::GetCustomExitStatus())
@@ -103,11 +73,11 @@ void EngineTick()
         ::FlushLogs();
     }
 
-    LEngine::BeginExitIfRequested();
+    LEngine::_BeginExitIfRequested();
 
     {
         STAT_QUICK_CYCLE_START("UpdateTime")
-        const JUserPreferences* UserPreferences = GetDefault<JUserPreferences>();
+        JUserPreferences const* UserPreferences{ GetDefault<JUserPreferences>() };
 
         Application::Private::LostDeltaTime = 0.0;
         Application::Private::IdleDeltaTime = 0.0;
@@ -172,7 +142,7 @@ void EngineTick()
 
     GEngine->Tick(Application::GetDeltaTimeAsFloat());
 
-    PrivateCarnifex.KillAllGarbageChildren();
+    Private::GetGlobalCarnifex().KillAllGarbageChildren();
 
     return;
 }
@@ -199,23 +169,12 @@ void EngineExit()
     //
     else
     {
-        LEngine::ReflectForwardedExitRequest();
+        LEngine::_ReflectForwardedExitRequest();
     }
 
-    if (GOmniVitaContext)
-    {
-        LPrivateLaunch::DestroyGOmniVitaContext();
-        delete GOmniVitaContext;
-        GOmniVitaContext = nullptr;
-    }
-
-    PrivateCarnifex.KillAllGarbageChildren();
-    Private::GCarnifexReferrer = nullptr;
-
-    if (Private::GObjectRegistry)
-    {
-        Private::KillSingletonObjectRegistry();
-    }
+    Private::GetGlobalCarnifex().KillAllGarbageChildren(); /* Non-CDRs */
+    Private::GetGlobalCxxRecordRegistry().TearDown();
+    Private::GetGlobalCarnifex().KillAllGarbageChildren(); /* CDRs */
 
     (void)Private::GetNameRegistry().Destroy();
 
@@ -261,19 +220,14 @@ void EngineExit()
     //# unused and remove them during the linking phase to this runtime executable.
     //# We can do this because LAL does not use the default automatic simple unit test registration process.
     //#
-    //# @see Motor/Launch.rs:80
+    //# @see Motor/Launch.rs
     //#
     #include "Lal/Lal/Source/Test/TestLal.h"
 #endif /* WITH_TESTS */
 
-//#
-//# A function that is "guarded" by platform-specific code implementing error handlers and user interface
-//# crash reporters.
-//#
+//# A function "guarded" by platform-specific code implementing error handlers and user interface crash reporters.
 EPlatformExit::Type GuardedMain()
 {
-    LString k { LStringView{} };
-
 #if !WITH_TESTS
 
 #if !LAL_PLATFORM_USES_NON_GENERIC_EXIT
@@ -288,10 +242,17 @@ EPlatformExit::Type GuardedMain()
 
     Application::Private::ProcessCommandLineVariables();
 
-    if (const std::tuple Ret { Application::Private::ConditionallyShowHelpAndExit() }; std::get<0>(Ret))
+    if (auto const Ret { Application::Private::ConditionallyShowHelpAndExit() }; std::get<0>(Ret))
     {
         GCustomExitStatusOverride = static_cast<i32>(std::get<1>(Ret));
         GCustomExitReason = "Help shown.";
+        return ::GetMostSignificantExitReason();
+    }
+
+    if (auto const Ret { Application::Private::ConditionallyShowVersionAndExit() }; std::get<0>(Ret))
+    {
+        GCustomExitStatusOverride = static_cast<i32>(std::get<1>(Ret));
+        GCustomExitReason = "Version shown.";
         return ::GetMostSignificantExitReason();
     }
 
@@ -330,7 +291,7 @@ EPlatformExit::Type GuardedMain()
     {
         if (Stats::Private::GTracer == nullptr)
         {
-            Stats::Private::GTracer = &::PrivateTracer;
+            Stats::Private::GTracer = &::RuntimeTracer;
         }
         Stats::Private::GTracer->BeginSession("Program");
     }
@@ -345,18 +306,7 @@ EPlatformExit::Type GuardedMain()
     LEngine::PreInitialize();
 
     STAT_CYCLE_START(GmObjects, "JafgObjectInitialization")
-    Private::GCarnifexReferrer = &::PrivateCarnifex;
-    LPrivateLaunch::CreateGOmniVitaContext();
-    check( GOmniVitaContext->IsValid() )
-    GOmniVitaContext->SetHumanReadableName("OmniVitaContext");
-    check( GOmniVitaContext->GetCarnifex() )
-
-    Private::CreateSingletonObjectRegistry();
-    if (Private::GObjectRegistry == nullptr)
-    {
-        return EPlatformExit::Fatal;
-    }
-    Private::GObjectRegistry->LoadPendingPackages(LLoadedPluginHandle::GetEnginePluginHandle());
+    Private::GetGlobalCxxRecordRegistry().LoadPendingPackages(LLoadedPluginHandle::GetEnginePluginHandle());
     if (::IsEngineExitRequested() || GEngine)
     {
         return EPlatformExit::Fatal;
@@ -371,7 +321,7 @@ EPlatformExit::Type GuardedMain()
 
     STAT_CYCLE_START(GmEngineInit, "EngineInit")
     GEngine = new LEngine();
-    GEngine->RegisterObjectContext(GOmniVitaContext);
+    GEngine->RegisterClassOuter(&Private::GetGlobalCxxRecordRegistry().GetMutableOuter());
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::BeforeEngineInitButAfterAllocDangerous, Tasks::RunAllTasks);
     GEngine->Initialize();
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterEngineInitDangerous, Tasks::RunAllTasks);

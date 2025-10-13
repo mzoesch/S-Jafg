@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "ChunkShader.h"
 #include "Rhi/EngineShader.h"
 #include "Rhi/ChunkBoxVertex.h"
 

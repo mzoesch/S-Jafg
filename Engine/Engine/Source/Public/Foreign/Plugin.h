@@ -15,14 +15,13 @@
 #endif /* !JAFG_WITH_FOREIGN_SUPPORT */
 
 #include "Foreign/PluginForward.h"
-#include "Engine/ObjectContext.h"
+#include "Foreign/PluginLifetime.h"
 
 namespace Jafg
 {
 
 class LEngine;
 class LPluginLifetime;
-class LObjectContext;
 
 namespace EPluginLoadReturnCode
 {
@@ -58,11 +57,11 @@ struct LFetchedPlugin final
 {
     FORCEINLINE LFetchedPlugin() = default;
 
-    LPath AbsolutePath;
+    LPath   AbsolutePath;
     LString Version;
     LString Identifier;
     LString FriendlyName;
-    LPath Bin;
+    LPath   Bin;
 };
 
 struct LLoadedPlugin final
@@ -72,23 +71,22 @@ struct LLoadedPlugin final
     enum { InvalidUuid = 0 };
 
     FORCEINLINE LLoadedPlugin() = default;
-    FORCEINLINE LLoadedPlugin(const LFetchedPlugin& InFetched, const LPath& InBinPath)
+    FORCEINLINE LLoadedPlugin(LFetchedPlugin const& InFetched, LPath const& InBinPath)
         : Fetched(InFetched), BinPath(InBinPath)
     {
     }
 
-    FORCEINLINE LLoadedPlugin(const LLoadedPlugin& Other) noexcept = delete;
+    FORCEINLINE LLoadedPlugin(LLoadedPlugin const& Other) noexcept = delete;
     FORCEINLINE LLoadedPlugin(LLoadedPlugin&& Other) noexcept
     {
         this->Fetched = std::move(Other.Fetched);
         this->BinPath = std::move(Other.BinPath);
-        this->Handle = Other.Handle;
-        this->Lifetime = Other.Lifetime;
         this->Uuid = Other.Uuid;
-        this->ObjectContext = std::move(Other.ObjectContext);
-        Other.Handle = nullptr;
-        Other.Lifetime = nullptr;
+        this->NativeHandle = Other.NativeHandle;
+        this->Lifetime = std::move(Other.Lifetime);
         Other.Uuid = InvalidUuid;
+        Other.NativeHandle = nullptr;
+        check( Other.Lifetime.get() == nullptr )
 
         return;
     }
@@ -98,47 +96,48 @@ struct LLoadedPlugin final
     {
         this->Fetched = std::move(Other.Fetched);
         this->BinPath = std::move(Other.BinPath);
-        this->Handle = Other.Handle;
-        this->Lifetime = Other.Lifetime;
         this->Uuid = Other.Uuid;
-        this->ObjectContext = std::move(Other.ObjectContext);
-        Other.Handle = nullptr;
-        Other.Lifetime = nullptr;
+        this->NativeHandle = Other.NativeHandle;
+        this->Lifetime = std::move(Other.Lifetime);
         Other.Uuid = InvalidUuid;
+        Other.NativeHandle = nullptr;
+        check( Other.Lifetime.get() == nullptr )
 
         return *this;
     }
 
     ENGINE_API ~LLoadedPlugin();
 
-    FORCEINLINE bool operator==(const LLoadedPlugin& Other) const { return this->BinPath == Other.BinPath; }
+    FORCEINLINE bool operator==(const LLoadedPlugin& Other) const noexcept { return this->BinPath == Other.BinPath; }
 
-    FORCEINLINE constexpr bool IsLoaded() const { return this->Handle != nullptr; }
+    FORCEINLINE constexpr bool IsLoaded() const noexcept { return this->NativeHandle != nullptr; }
 
-    FORCEINLINE constexpr bool IsValid() const { return this->Fetched.AbsolutePath.empty() == false; }
-    FORCEINLINE const LPath&   GetAbsolutePath() const { return this->Fetched.AbsolutePath; }
-    FORCEINLINE const LString& GetIdentifier() const { return this->Fetched.Identifier; }
-    FORCEINLINE const LString& GetFriendlyName() const { return this->Fetched.FriendlyName; }
-    FORCEINLINE const LPath&   GetBin() const { return this->Fetched.Bin; }
-    FORCEINLINE const LPath&   GetPathToBin() const { return this->BinPath; }
+    FORCEINLINE constexpr bool IsValid() const noexcept { return this->Fetched.AbsolutePath.empty() == false; }
+    FORCEINLINE const LPath&   GetAbsolutePath() const noexcept { return this->Fetched.AbsolutePath; }
+    FORCEINLINE const LString& GetIdentifier() const noexcept { return this->Fetched.Identifier; }
+    FORCEINLINE const LString& GetFriendlyName() const noexcept { return this->Fetched.FriendlyName; }
+    FORCEINLINE const LPath&   GetBin() const noexcept { return this->Fetched.Bin; }
+    FORCEINLINE const LPath&   GetPathToBin() const noexcept { return this->BinPath; }
 
-    FORCEINLINE constexpr LLoadedPluginHandle GetHandle() const { return { this->Uuid }; }
+    FORCEINLINE constexpr LLoadedPluginHandle GetHandle() const noexcept { return { this->Uuid }; }
+
+    FORCEINLINE LPluginLifetime* GetLifetime() noexcept { return this->Lifetime.get(); }
+    FORCEINLINE LPluginLifetime const* GetLifetime() const noexcept { return this->Lifetime.get(); }
 
 private:
 
     EPluginLoadReturnCode::Type OpenLibrary();
-    void PrePareLibraryClose(const EPluginShutdownReason::Type InReason);
+    void PrepareLibraryClose(const EPluginShutdownReason::Type InReason);
     EPluginLoadReturnCode::Type CloseLibrary(const EPluginShutdownReason::Type InReason);
 
     LFetchedPlugin Fetched;
     LPath BinPath;
 
-    u32 Uuid { InvalidUuid };
+    u32 Uuid{ LLoadedPlugin::InvalidUuid };
 
-    void* Handle { nullptr };
-    LPluginLifetime* Lifetime { nullptr };
+    void* NativeHandle { nullptr };
 
-    TUnique<LObjectContext> ObjectContext { nullptr };
+    TUnique<LPluginLifetime> Lifetime;
 };
 
 } /* ~Namespace Jafg */

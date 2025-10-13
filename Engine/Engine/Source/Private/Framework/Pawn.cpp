@@ -9,7 +9,8 @@
 #include "Engine/Engine.h"
 #include "System/VoxelSubsystem.h"
 
-Jafg::APawn::APawn(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::APawn::APawn(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetEverTickConstructorOnlyFlag();
     return;
@@ -35,7 +36,7 @@ void Jafg::APawn::Tick(const float DeltaTime)
         this->GetWorld()->AddTemporalObject(LDebugTraceCube
         (
             LTemporalWorldObject::DrawOnce,
-            CheckedStaticCast<AChunk>(this->CurrentGenericTraceResults[0].Actor)
+            StaticCastChecked<AChunk>(this->CurrentGenericTraceResults[0].Actor)
                 ->GetChunkKey().ToWorldSpace() + LVector(VKey.X, VKey.Y, VKey.Z) + LVector(-0.001f),
             LVector::One() + LVector(0.002f),
             LDebugTraceCubeVisualParams{Lal::LColor{0.1f}, 5}
@@ -154,7 +155,7 @@ void Jafg::APawn::OnOngoingSecondaryInput(LInputActionValue& InValue)
     {
         if (AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
         {
-            const JVoxelSubsystem* Vs = GEngine->GetCheckedSubsystem<JVoxelSubsystem>();
+            const JVoxelSubsystem* Vs = GEngine->GetSubsystemChecked<JVoxelSubsystem>();
             const LVoxelKey Key = HitChunk->CreateRelativeVoxelKey(Hit.GlobalWorldLocation + Hit.SurfaceNormal.value() * 0.5f);
             HitChunk->ModifySingleVoxelByNonZeroOrigin(Key, Vs->GetCheckedVoxelIndex("Stone"));
             break;

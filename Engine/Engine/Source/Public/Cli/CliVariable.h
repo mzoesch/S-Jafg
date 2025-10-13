@@ -58,7 +58,7 @@ public:
     FORCEINLINE auto GetValue() const -> const LString& { return this->Value; }
 
     template <typename TField>
-    FORCEINLINE void GetValue(TField* Destination) const { Deserialize<TField>(Destination, this->Value); }
+    FORCEINLINE void GetValue(TField* Destination) const { Serialization::FromString(Destination, this->Value); }
     template <typename TField> requires (std::is_default_constructible_v<TField>)
     FORCEINLINE TField GetValue() const
     {

@@ -99,6 +99,7 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     #pragma clang diagnostic error "-Wextra-tokens"
     #pragma clang diagnostic error "-Winconsistent-missing-override"
     #pragma clang diagnostic error "-Winvalid-noreturn"
+    #pragma clang diagnostic error "-Wkeyword-macro"
     #pragma clang diagnostic error "-Wlogical-op-parentheses"
     #pragma clang diagnostic error "-Wmacro-redefined"
     #pragma clang diagnostic error "-Wmismatched-new-delete"

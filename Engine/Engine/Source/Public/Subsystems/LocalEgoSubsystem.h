@@ -16,8 +16,8 @@ class APawn;
 //# A subsystem that shares its lifetime with the local ego.
 //# @see User/LocalEgo.h
 //#
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
-class ENGINE_API JLocalEgoSubsystem : public JSubsystem
+DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+class JLocalEgoSubsystem : public JSubsystem
 {
     GENERATED_CLASS_BODY()
 

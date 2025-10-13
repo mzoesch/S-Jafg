@@ -8,8 +8,8 @@
 namespace Jafg
 {
 
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
-class ENGINE_API JFixedTickableWorldSubsystem : public JTickableWorldSubsystem
+DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+class JFixedTickableWorldSubsystem : public JTickableWorldSubsystem
 {
     GENERATED_CLASS_BODY()
 
@@ -37,12 +37,12 @@ private:
     //#
     //# The tick interval in seconds. Zero means no interval -> tick every frame.
     //#
-    f32 TickInterval = 0.0f;
+    f32 TickInterval{ 0.0f };
 
     //#
     //# The last time the subsystem was ticked.
     //#
-    f32 LastTickTime = 0.0f;
+    f32 LastTickTime{ 0.0f };
 };
 
 } /* ~Namespace Jafg */

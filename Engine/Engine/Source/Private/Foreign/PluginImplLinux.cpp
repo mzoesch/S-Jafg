@@ -6,6 +6,7 @@
 
 #include "Foreign/Plugin.h"
 #include "Foreign/PluginLifetime.h"
+#include "Engine/ClassOuter.h"
 #include <dlfcn.h>
 
 namespace Jafg
@@ -27,38 +28,47 @@ LLoadedPlugin::~LLoadedPlugin()
 
 EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
 {
+    check( Tasks::IsOnMasterThread() )
+
     check( this->IsValid() )
+    check( this->IsLoaded() == false )
 
-    this->Handle = ::dlopen(this->BinPath.c_str(), RTLD_LAZY);
-
-    if (this->Handle == nullptr)
+    this->NativeHandle = ::dlopen(this->BinPath.c_str(), RTLD_LAZY);
+    if (this->NativeHandle == nullptr)
     {
         LOG_ERROR(LogForeign, "Failed to dlopen library [{}].", this->BinPath)
         return EPluginLoadReturnCode::PlatformError;
     }
 
-    ::dlerror();
+    if (char const* Error{ ::dlerror() })
+    {
+        LOG_ERROR(LogForeign, "Failed to dlopen library [{}]: {}.", this->BinPath, Error)
+        ::dlclose(this->NativeHandle);
+        this->NativeHandle = nullptr;
+
+        return EPluginLoadReturnCode::PlatformError;
+    }
+
+    const LString Symbol{ Lal::SprintF("GetPluginLifetime_{}", this->GetIdentifier()) };
 
     typedef LPluginLifetime* (*LCreatePluginLifetime)();
-
-    const LString Symbol { Lal::SprintF("GetPluginLifetime_{}", this->GetIdentifier()) };
-
-    LCreatePluginLifetime CreatePluginLifetime { reinterpret_cast<LCreatePluginLifetime>(::dlsym(this->Handle, Symbol.c_str())) };
-    const char* Error = ::dlerror();
-    if (Error)
+    const LCreatePluginLifetime CreatePluginLifetime{ reinterpret_cast<LCreatePluginLifetime>(::dlsym(this->NativeHandle, Symbol.c_str())) };
+    if (char const* Error{ ::dlerror() })
     {
-        LOG_ERROR(LogForeign, "Failed to dlsym symbol [{}].", Symbol)
-        ::dlclose(this->Handle);
-        this->Handle = nullptr;
+        LOG_ERROR(LogForeign, "Failed to dlsym symbol [{}] in [{}]: {}.", Symbol, this->GetAbsolutePath(), Error)
+        ::dlclose(this->NativeHandle);
+        this->NativeHandle = nullptr;
+
         return EPluginLoadReturnCode::NoLifetimeHandle;
     }
 
-    this->Lifetime = CreatePluginLifetime();
-    if (this->Lifetime == nullptr)
+    this->Lifetime = TUnique<LPluginLifetime>{CreatePluginLifetime()};
+    if (this->Lifetime.get() == nullptr)
     {
-        LOG_ERROR(LogForeign, "Failed to create plugin lifetime in [{}].", this->BinPath)
-        ::dlclose(this->Handle);
-        this->Handle = nullptr;
+        LOG_ERROR(LogForeign, "Failed to create plugin lifetime in [{}].", this->GetAbsolutePath())
+        ::dlclose(this->NativeHandle);
+        this->NativeHandle = nullptr;
+
         return EPluginLoadReturnCode::NoLifetime;
     }
 
@@ -68,21 +78,23 @@ EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
     return EPluginLoadReturnCode::Success;
 }
 
-void LLoadedPlugin::PrePareLibraryClose(const EPluginShutdownReason::Type InReason)
+void LLoadedPlugin::PrepareLibraryClose(const EPluginShutdownReason::Type InReason)
 {
+    check( Tasks::IsOnMasterThread() )
+
     if (this->IsLoaded() == false)
     {
-        LOG_ERROR(LogForeign, "Plugin is not loaded.")
+        LOG_ERROR(LogForeign, "Plugin [{}] is not loaded.", this->GetAbsolutePath())
         return;
     }
 
-    if (this->Lifetime != nullptr)
+    if (this->Lifetime.get() != nullptr)
     {
         this->Lifetime->OnPrepareShutdown(InReason);
     }
     else
     {
-        LOG_ERROR(LogForeign, "Lifetime is invalid.")
+        LOG_ERROR(LogForeign, "Lifetime [{}] is invalid.", this->GetAbsolutePath())
     }
 
     return;
@@ -90,26 +102,28 @@ void LLoadedPlugin::PrePareLibraryClose(const EPluginShutdownReason::Type InReas
 
 EPluginLoadReturnCode::Type LLoadedPlugin::CloseLibrary(const EPluginShutdownReason::Type InReason)
 {
+    check( Tasks::IsOnMasterThread() )
     check( this->IsValid() )
 
     if (this->IsLoaded() == false)
     {
+        check( this->NativeHandle == nullptr )
         return EPluginLoadReturnCode::NotLoaded;
     }
 
-    if (this->Lifetime != nullptr)
+    check( this->NativeHandle )
+    if (this->Lifetime.get() != nullptr)
     {
         this->Lifetime->OnShutdown(InReason);
-        delete this->Lifetime;
-        this->Lifetime = nullptr;
+        this->Lifetime.reset();
     }
     else
     {
-        LOG_ERROR(LogForeign, "Lifetime is invalid.")
+        LOG_ERROR(LogForeign, "Lifetime in [{}] is invalid.", this->GetAbsolutePath())
     }
 
-    ::dlclose(this->Handle);
-    this->Handle = nullptr;
+    ::dlclose(this->NativeHandle);
+    this->NativeHandle = nullptr;
     check( this->IsLoaded() == false )
 
     return EPluginLoadReturnCode::Success;

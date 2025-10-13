@@ -10,9 +10,9 @@
 #include "User/Frontend/Osd/ConsoleScreen.h"
 #include "User/Frontend/Osd/PauseScreen.h"
 
-bool Jafg::JCoreWorldWidgetsSubsystem::ShouldCreateSubsystem(const LObjectContext* InOuter) const
+bool Jafg::JCoreWorldWidgetsSubsystem::ShouldCreateSubsystem(LClassOuter const* Outer) const
 {
-    if (Super::ShouldCreateSubsystem(InOuter) == false)
+    if (Super::ShouldCreateSubsystem(Outer) == false)
     {
         return false;
     }
@@ -23,7 +23,7 @@ bool Jafg::JCoreWorldWidgetsSubsystem::ShouldCreateSubsystem(const LObjectContex
         return false;
     }
 
-    return Super::IsOuterWorld(InOuter);
+    return Super::IsOuterWorld(Outer);
 }
 
 void Jafg::JCoreWorldWidgetsSubsystem::Initialize(LSubsystemCollection& Collection)
@@ -34,6 +34,7 @@ void Jafg::JCoreWorldWidgetsSubsystem::Initialize(LSubsystemCollection& Collecti
     LFrontend* Frontend = this->GetLocalEgo()->GetFrontend();
 
     this->DebugScreen = ConstructDeferredWidgetNode<WDebugScreen>(this->GetOuter());
+
     this->DebugScreen->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
     this->DebugScreen->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->DebugScreen);

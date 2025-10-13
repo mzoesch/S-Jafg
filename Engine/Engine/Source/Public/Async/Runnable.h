@@ -31,7 +31,13 @@ public:
     ENGINE_API LRunnable();
     ENGINE_API LRunnable(const LString& InHumanReadableName);
 
-    PROHIBIT_REALLOC_OF_ANY_FORM(LRunnable)
+    PROHIBIT_ANY_REALLOC_OTHER_THAN_CDR(LRunnable)
+    {
+        check( CDR.IsStopped() == false )
+        check( CDR.HumanReadableName.empty() )
+
+        return;
+    }
 
     virtual ~LRunnable() = default;
 
@@ -71,7 +77,7 @@ protected:
 
     virtual void OnStop(const ERunnableStopReason::Type InType) { }
 
-    std::atomic_bool bStopped { false };
+    std::atomic_bool bStopped{ false };
     LString HumanReadableName;
 };
 

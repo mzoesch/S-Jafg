@@ -4,132 +4,183 @@
 
 #include "Lal.afx"
 
-namespace Jafg
+namespace Serialization
 {
 
+//# Default
+template<typename TField> NODISCARD FORCEINLINE constexpr LString ToString(TField const& Field) noexcept = delete;
+template<typename TField> FORCEINLINE constexpr void FromString(TField* Field, LString const& Value) noexcept = delete;
 
-/*----------------------------------------------------------------------------
-    Forwards.
-----------------------------------------------------------------------------*/
+template<> NODISCARD FORCEINLINE constexpr LString ToString<LString>(LString const& Field) noexcept { return Field; }
+template<> NODISCARD FORCEINLINE constexpr LString ToString<LStringView>(LStringView const& Field) noexcept { return LString{Field}; }
+template<> FORCEINLINE constexpr void FromString<LString>(LString* Field, LString const& Value) noexcept { check( Field ) *Field = Value; }
+template<> FORCEINLINE constexpr void FromString<LStringView>(LStringView* Field, LString const& Value) noexcept = delete;
 
-template <typename TField>
-void Deserialize(TField* Destination, const LString& InValue) UNSUPPORTED_TEMPLATED_SPECIALIZATION(TField)
-
-template <typename TField>
-LString Serialize(const TField& InValue) { return Lal::SprintF("{}", InValue); }
-
-
-/*----------------------------------------------------------------------------
-    Deserialize.
-----------------------------------------------------------------------------*/
-
-template <>
-FORCEINLINE void Deserialize<f32>(f32* Destination, const LString& InValue)
+///////////////////////////////////////////////////////////////////////////////
+// Array
+///////////////////////////////////////////////////////////////////////////////
+template<typename TSubField> FORCEINLINE constexpr LString
+ToString(TArray<TSubField> const& Field) noexcept
+    requires requires(TSubField const& SubField){ ToString(SubField); }
 {
-    checkSlow( Destination )
-    *Destination = std::stof(InValue.c_str());
-}
+    LString Result { "[" };
 
-template <>
-FORCEINLINE void Deserialize<f64>(f64* Destination, const LString& InValue)
-{
-    checkSlow( Destination )
-    *Destination = std::stod(InValue.c_str());
-}
-
-template <>
-FORCEINLINE void Deserialize<u8>(u8* Destination, const LString& InValue)
-{
-    checkSlow( Destination )
-    *Destination = static_cast<u8>(std::stoull(InValue.c_str()));
-}
-
-template <>
-FORCEINLINE void Deserialize<u16>(u16* Destination, const LString& InValue)
-{
-    checkSlow( Destination )
-    *Destination = static_cast<u16>(std::stoull(InValue.c_str()));
-}
-
-template <>
-FORCEINLINE void Deserialize<u32>(u32* Destination, const LString& InValue)
-{
-    checkSlow( Destination )
-    *Destination = static_cast<u32>(std::stoull(InValue.c_str()));
-}
-
-template <>
-FORCEINLINE void Deserialize<u64>(u64* Destination, const LString& InValue)
-{
-    checkSlow( Destination )
-    *Destination = static_cast<u64>(std::stoull(InValue.c_str()));
-}
-
-template <>
-FORCEINLINE void Deserialize<i8>(i8* Destination, const LString& InValue)
-{
-    checkSlow( Destination )
-    *Destination = static_cast<i8>(std::stoll(InValue.c_str()));
-}
-
-template <>
-FORCEINLINE void Deserialize<i16>(i16* Destination, const LString& InValue)
-{
-    checkSlow( Destination )
-    *Destination = static_cast<i16>(std::stoll(InValue.c_str()));
-}
-
-template <>
-FORCEINLINE void Deserialize<i32>(i32* Destination, const LString& InValue)
-{
-    checkSlow( Destination )
-    *Destination = static_cast<i32>(std::stoll(InValue.c_str()));
-}
-
-template <>
-FORCEINLINE void Deserialize<i64>(i64* Destination, const LString& InValue)
-{
-    checkSlow( Destination )
-    *Destination = static_cast<i64>(std::stoll(InValue.c_str()));
-}
-
-template <>
-FORCEINLINE void Deserialize<bool>(bool* Destination, const LString& InValue)
-{
-    checkSlow( Destination )
-    if (InValue == "false" || InValue == "0")
+    bool bFirst { true };
+    for (TSubField const& Elem : Field)
     {
-        *Destination = false;
+        if (bFirst)
+        {
+            bFirst = false;
+        }
+        else
+        {
+            Result += ',';
+        }
+
+        for (LString Intermediate{ ToString<TSubField>(Elem) }; LChar const& C : Intermediate)
+        {
+            if (C == '[' || C == ']' || C == ',' || C == '\\')
+            {
+                Result += '\\';
+            }
+
+            Result += C;
+
+            continue;
+        }
+
+        continue;
+    }
+
+    Result += ']';
+    return Result;
+}
+
+template<typename TSubField> FORCEINLINE constexpr void
+FromString(TArray<TSubField>* Field, LString const& Value) noexcept
+    requires requires(TSubField* SubField, LString const& SubValue){ FromString(SubField, SubValue); }
+{
+    check( Field)
+
+    TArray<TSubField> Out;
+
+    jassert( Value.starts_with('[') && Value.ends_with(']') )
+
+    const LStringView View{ Value.begin() + 1, Value.end() - 1 };
+    if (View.empty())
+    {
+        *Field = std::move(Out);
         return;
     }
 
-    if (InValue == "true" || InValue == "1")
+    LString Element;
+    bool bEscaped{ false };
+    for (const auto Char : View)
     {
-        *Destination = true;
-        return;
+        if (bEscaped)
+        {
+            Element += Char;
+            bEscaped = false;
+            continue;
+        }
+
+        if (Char == '\\')
+        {
+            bEscaped = true;
+            continue;
+        }
+
+        if (Char == ',')
+        {
+            Out.emplace_back();
+            FromString(&Out.back(), Element);
+
+            Element.clear();
+            continue;
+        }
+
+        Element += Char;
+
+        continue;
     }
 
-    panicMsgf( "Invalid boolean value [{}].", InValue.c_str() )
+    *Field = std::move(Out);
 
     return;
 }
 
-template <>
-FORCEINLINE void Deserialize<LString>(LString* Destination, const LString& InValue)
+
+///////////////////////////////////////////////////////////////////////////////
+// Primitives.
+///////////////////////////////////////////////////////////////////////////////
+template<> NODISCARD FORCEINLINE constexpr LString ToString<bool>(bool const& Field) noexcept { if (Field) { return "1"; } return "0"; }
+template<> FORCEINLINE constexpr void FromString<bool>(bool* Field, LString const& Value) noexcept
 {
-    checkSlow( Destination )
-    *Destination = InValue;
+    check( Field )
+
+    if (Value == "false" || Value == "0")
+    {
+        *Field = false;
+        return;
+    }
+
+    if (Value == "true" || Value == "1")
+    {
+        *Field = true;
+        return;
+    }
+
+    panicMsgf( "[{}] can not be interpreted as boolean.", Value )
+
+    return;
 }
 
-template <>
-FORCEINLINE void Deserialize<Lal::LColor>(Lal::LColor* Destination, const LString& InValue)
+static_assert(sizeof(i32) == sizeof(int), "stoi is not valid for i32.");
+static_assert(sizeof(f32) == sizeof(float) , "stof is not valid for f32.");
+static_assert(sizeof(f64) == sizeof(double), "stod is not valid for f64.");
+
+template<> NODISCARD FORCEINLINE constexpr LString ToString<i8>(i8 const& Field) noexcept { return std::to_string(Field); }
+template<> FORCEINLINE constexpr void FromString<i8>(i8* Field, LString const& Value) noexcept { check( Field ) *Field = static_cast<i8>(std::stoi(Value) ); }
+
+template<> NODISCARD FORCEINLINE constexpr LString ToString<i16>(i16 const& Field) noexcept { return std::to_string(Field); }
+template<> FORCEINLINE constexpr void FromString<i16>(i16* Field, LString const& Value) noexcept { check( Field ) *Field = static_cast<i16>(std::stoi(Value) ); }
+
+template<> NODISCARD FORCEINLINE constexpr LString ToString<i32>(i32 const& Field) noexcept { return std::to_string(Field); }
+template<> FORCEINLINE constexpr void FromString<i32>(i32* Field, LString const& Value) noexcept { check( Field ) *Field = static_cast<i32>(std::stoi(Value) ); }
+
+template<> NODISCARD FORCEINLINE constexpr LString ToString<i64>(i64 const& Field) noexcept { return std::to_string(Field); }
+template<> FORCEINLINE constexpr void FromString<i64>(i64* Field, LString const& Value) noexcept { check( Field ) *Field = static_cast<i64>(std::stoll(Value) ); }
+
+template<> NODISCARD FORCEINLINE constexpr LString ToString<u8>(u8 const& Field) noexcept { return std::to_string(Field); }
+template<> FORCEINLINE constexpr void FromString<u8>(u8* Field, LString const& Value) noexcept { check( Field ) *Field = static_cast<u8>(std::stoul(Value) ); }
+
+template<> NODISCARD FORCEINLINE constexpr LString ToString<u16>(u16 const& Field) noexcept { return std::to_string(Field); }
+template<> FORCEINLINE constexpr void FromString<u16>(u16* Field, LString const& Value) noexcept { check( Field ) *Field = static_cast<u16>(std::stoul(Value) ); }
+
+template<> NODISCARD FORCEINLINE constexpr LString ToString<u32>(u32 const& Field) noexcept { return std::to_string(Field); }
+template<> FORCEINLINE constexpr void FromString<u32>(u32* Field, LString const& Value) noexcept { check( Field ) *Field = static_cast<u32>(std::stoul(Value) ); }
+
+template<> NODISCARD FORCEINLINE constexpr LString ToString<u64>(u64 const& Field) noexcept { return std::to_string(Field); }
+template<> FORCEINLINE constexpr void FromString<u64>(u64* Field, LString const& Value) noexcept { check( Field ) *Field = static_cast<u64>(std::stoull(Value) ); }
+
+template<> NODISCARD FORCEINLINE constexpr LString ToString<f32>(f32 const& Field) noexcept { return std::to_string(Field); }
+template<> FORCEINLINE constexpr void FromString<f32>(f32* Field, LString const& Value) noexcept { check( Field ) *Field = static_cast<f32>(std::stof(Value) ); }
+
+template<> NODISCARD FORCEINLINE constexpr LString ToString<f64>(f64 const& Field) noexcept { return std::to_string(Field); }
+template<> FORCEINLINE constexpr void FromString<f64>(f64* Field, LString const& Value) noexcept { check( Field ) *Field = static_cast<f64>(std::stod(Value) ); }
+
+template<> NODISCARD FORCEINLINE constexpr LString ToString<Lal::LColor>(Lal::LColor const& Field) noexcept
 {
-    checkSlow( Destination )
+    return Lal::SprintF("0x{:02X}{:02X}{:02X}{:02X}", Field.R, Field.G, Field.B, Field.A);
+}
+template<> FORCEINLINE constexpr void FromString<Lal::LColor>(Lal::LColor* Field, LString const& Value) noexcept
+{
+    check( Field )
 
-    jassert( InValue.starts_with("0x") )
-    jassert( InValue.size() == 10 )
+    jassert( Value.starts_with("0x") )
+    jassert( Value.size() == 10 )
 
-    *Destination = Lal::LColor::Transparent;
+    *Field = Lal::LColor::Transparent;
 
     auto GetValue
     {
@@ -150,117 +201,23 @@ FORCEINLINE void Deserialize<Lal::LColor>(Lal::LColor* Destination, const LStrin
         }
     };
 
-    /*
-     * This can be written simpler, but then we need two versions...
-     * One for little endian and one for big endian platforms.
-     */
+    Field->R = GetValue(Value, 2);
+    Field->R <<= 4;
+    Field->R |= GetValue(Value, 3);
 
-    Destination->R = GetValue(InValue, 2);
-    Destination->R <<= 4;
-    Destination->R |= GetValue(InValue, 3);
+    Field->G = GetValue(Value, 4);
+    Field->G <<= 4;
+    Field->G |= GetValue(Value, 5);
 
-    Destination->G = GetValue(InValue, 4);
-    Destination->G <<= 4;
-    Destination->G |= GetValue(InValue, 5);
+    Field->B = GetValue(Value, 6);
+    Field->B <<= 4;
+    Field->B |= GetValue(Value, 7);
 
-    Destination->B = GetValue(InValue, 6);
-    Destination->B <<= 4;
-    Destination->B |= GetValue(InValue, 7);
-
-    Destination->A = GetValue(InValue, 8);
-    Destination->A <<= 4;
-    Destination->A |= GetValue(InValue, 9);
+    Field->A = GetValue(Value, 8);
+    Field->A <<= 4;
+    Field->A |= GetValue(Value, 9);
 
     return;
 }
 
-template <typename TField>
-FORCEINLINE void Deserialize(TArray<TField>* Destination, const LString& InValue)
-{
-    checkSlow( Destination )
-
-    TArray<TField> Intermediate;
-
-    const auto AddToIntermediate = [&Intermediate](const LString& Lambda) -> void
-    {
-        TField Temp;
-        Deserialize<TField>(&Temp, Lambda);
-        Intermediate.emplace_back(Temp);
-
-        return;
-    };
-
-    LString Temp;
-    const i32 Count = InValue.size();
-    for (i32 i = 0; i < Count; ++i)
-    {
-        if (i == 0 || i == Count - 1)
-        {
-            check( InValue[i] == '[' || InValue[i] == ']' )
-            continue;
-        }
-
-        if (InValue[i] == ',')
-        {
-            if (Temp.empty())
-            {
-                continue;
-            }
-
-            AddToIntermediate(Temp);
-            Temp.clear();
-            continue;
-        }
-
-        Temp += InValue[i];
-
-        continue;
-    }
-
-    if (Temp.empty() == false)
-    {
-        AddToIntermediate(Temp);
-        Temp.clear();
-    }
-
-    if (algo::equal(*Destination, Intermediate) == false)
-    {
-        *Destination = std::move(Intermediate);
-    }
-
-    return;
-}
-
-
-/*----------------------------------------------------------------------------
-    Serialize.
-----------------------------------------------------------------------------*/
-
-template <typename TField>
-FORCEINLINE LString Serialize(const TArray<TField>& InValue)
-{
-    LString Result = "[";
-
-    for (typename TArray<TField>::size_type Index { 0 }; Index < InValue.size(); ++Index)
-    {
-        Result += Serialize(InValue[Index]);
-        if (Index < InValue.size() - 1)
-        {
-            Result += ',';
-        }
-
-        continue;
-    }
-
-    Result += ']';
-
-    return Result;
-}
-
-template <>
-FORCEINLINE LString Serialize<Lal::LColor>(const Lal::LColor& InValue)
-{
-    return Lal::SprintF("0x{:02X}{:02X}{:02X}{:02X}", InValue.R, InValue.G, InValue.B, InValue.A);
-}
-
-} /* ~Namespace Jafg */
+} /* ~Namespace Serialization */

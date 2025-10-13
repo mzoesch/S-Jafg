@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/ObjectBase.h"
+#include "Engine/CxxClass.h"
 #include "Widgets/Whitespace.h"
 #include "User/Input/Replies.h"
 #include "User/Input/Events.h"
@@ -20,9 +20,9 @@ class WUserWidget;
 class LViewport;
 class LWidgetFactory;
 class WParentBase;
-template <typename TNode>
+template<typename TNode>
 class TWidgetFactory;
-template <typename TNode>
+template<typename TNode>
 class TWidgetFactoryParentBase;
 struct LWidgetSlot;
 struct LWidgetConstructor;
@@ -53,7 +53,7 @@ struct LWidgetFactoryUtility final
     //# @param  InNode The node to create a factory for.
     //# @return The factory for the given node.
     //#
-    template <typename TNode>
+    template<typename TNode>
     NODISCARD static auto MakeWidgetFactory(const WNode* InNode) -> typename TNode::TWidgetFactory&;
 };
 
@@ -322,9 +322,9 @@ public:
 
     friend WNode;
     friend Private::LWidgetFactoryUtility;
-    template <typename TNode>
+    template<typename TNode>
     friend class TWidgetFactory;
-    template <typename TNode>
+    template<typename TNode>
     friend class TWidgetFactoryParentBase;
 
     FORCEINLINE WNode* GetNodeRaw() const noexcept { check( this->Node ) return this->Node; }
@@ -343,7 +343,7 @@ private:
 //#
 //# Base class of all widget factories that can be used with the declarative syntax defined by Wsdsml.
 //#
-template <typename TNode>
+template<typename TNode>
 class TWidgetFactory : public LWidgetFactory
 {
 public:
@@ -358,7 +358,7 @@ public:
     //# The return type of the factory. Always valid.
     using TFactoryRetTy = typename TNodeTy::TWidgetFactory;
 
-    FORCEINLINE TNodeTy* GetNode() const { return CheckedStaticCast<TNodeTy>(this->GetNodeRaw()); }
+    FORCEINLINE TNodeTy* GetNode() const { return StaticCastChecked<TNodeTy>(this->GetNodeRaw()); }
 
     //# @return A pointer to self.
     FORCEINLINE TFactoryRetTy& Self() noexcept { return *static_cast<TFactoryRetTy*>(this); }
@@ -373,8 +373,8 @@ public:
 
     FORCEINLINE TFactoryRetTy& Visibility(const EWidgetVisibility::Type InVisibility) { this->This()->SetVisibility(InVisibility); return this->Self(); }
 
-    template <typename T> FORCEINLINE auto SaveTo(T** Out) -> TFactoryRetTy&;
-    template <typename T> FORCEINLINE auto operator>>(T** Out) -> TFactoryRetTy& { return this->SaveTo(std::forward<T*&>(Out)); }
+    template<typename T> FORCEINLINE auto SaveTo(T** Out) -> TFactoryRetTy&;
+    template<typename T> FORCEINLINE auto operator>>(T** Out) -> TFactoryRetTy& { return this->SaveTo(std::forward<T*&>(Out)); }
 
     FORCEINLINE TFactoryRetTy& AddSibling(LWidgetFactory* InSibling);
     FORCEINLINE TFactoryRetTy& operator+(LWidgetFactory& InSibling) { return this->AddSibling(&InSibling); }
@@ -391,27 +391,27 @@ public:
     using TFactoryRetTy = typename Super::TFactoryRetTy; \
 
 //#
-//# Constructs a new widget node in the given context
+//# Constructs a new widget node in the given outer.
 //# @see NewNode(TNode) (Wsdsml)
 //# @see User/Frontend/DebugScreen.cpp (for usage example)
 //#
-template <typename TNode>
-FORCEINLINE TNode* ConstructWidgetNode(LObjectContext* InContext);
-template <typename TNode>
-FORCEINLINE TNode* ConstructWidgetNode(LObjectContext* InContext, const TSubclassOf<TNode>& InClass);
+template<typename TNode>
+FORCEINLINE TNode* ConstructWidgetNode(LClassOuter* Outer);
+template<typename TNode>
+FORCEINLINE TNode* ConstructWidgetNode(LClassOuter* Outer, TSubclassOf<TNode> const& Class);
 
 //#
 //# Constructs a new deferred widget node in the given context.
 //# @see NewNode(TNode) (Wsdsml)
 //# @see User/Frontend/DebugScreen.cpp (for usage example)
 //#
-template <typename TNode>
-FORCEINLINE TNode* ConstructDeferredWidgetNode(LObjectContext* InContext);
-template <typename TNode>
-FORCEINLINE TNode* ConstructDeferredWidgetNode(LObjectContext* InContext, const TSubclassOf<TNode>& InClass);
+template<typename TNode>
+FORCEINLINE TNode* ConstructDeferredWidgetNode(LClassOuter* Outer);
+template<typename TNode>
+FORCEINLINE TNode* ConstructDeferredWidgetNode(LClassOuter* Outer, TSubclassOf<TNode> const& Class);
 
 //# Call this method to finalize a widget that was deferred.
-FORCEINLINE void MakeDeferredWidgetNodeFinal(WNode* InNode);
+FORCEINLINE void MakeDeferredWidgetNodeFinal(WNode* Node);
 
 struct LWidgetNodeData
 {
@@ -422,8 +422,8 @@ struct LWidgetNodeData
 //# The base class for everything that can be interpreted as a visual element.
 //# Generally speaking, inheriting from this class directly is not recommended.
 //#
-DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactory, EClassFlags::Abstract)
-class ENGINE_API WNode : public JObjectBase
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactory, ECxxClassFlags::Abstract)
+class WNode : public JCxxClass
 {
     GENERATED_CLASS_BODY()
 
@@ -439,7 +439,7 @@ public:
     // JObjectBase implementation
     virtual void BeginLife() override final { Super::BeginLife(); this->Construct(); return; }
     virtual void EndLife() override final   { this->Destruct();   Super::EndLife();  return; }
-    virtual void OnGarbage() override;
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
     // ~JObjectBase implementation
 
     //#
@@ -654,7 +654,7 @@ public:
     //# @see    #TWidgetFactoryTy<TNode>
     //# @see    #Private::LWidgetFactoryUtility::MakeWidgetFactory<TNode>
     //#
-    template <typename TNode>
+    template<typename TNode>
     NODISCARD FORCEINLINE typename TNode::TWidgetFactory& GetFactory()
     {
         return ::Jafg::Private::LWidgetFactoryUtility::MakeWidgetFactory<TNode>(this);
@@ -664,21 +664,6 @@ public:
     FORCEINLINE auto GetAnchor()     const -> const LAnchor& { return this->Anchor; }
     FORCEINLINE void SetAnchor(const LAnchor&      InAnchor) { this->Anchor = InAnchor; }
     FORCEINLINE void SetAnchor(const EAnchor::Type InAnchor) { this->Anchor = InAnchor; }
-
-    template <typename T> FORCEINLINE bool IsA() const;
-    template <typename T> FORCEINLINE bool IsA(const T** OutObject) const;
-                          FORCEINLINE bool IsA(const LObjectClass* InStaticClass) const { return this->GetVTableSlow()->DerivesFrom(InStaticClass); }
-    template <typename T> FORCEINLINE       T* As() { return DynamicCast<T>(this); }
-    template <typename T> FORCEINLINE const T* As() const { return DynamicCast<T>(this); }
-    template <typename T> FORCEINLINE       T* AsChecked() { T* Out = this->As<T>(); check( Out ) return Out; }
-    template <typename T> FORCEINLINE const T* AsChecked() const { const T* Out = this->As<T>(this); check( Out ) return Out; }
-    template <typename T> FORCEINLINE       T* AsAsserted() { T* Out = this->As<T>(); jassert( Out ) return Out; }
-    template <typename T> FORCEINLINE const T* AsAsserted() const { const T* Out = this->As<T>(); jassert( Out ) return Out; }
-    template <typename T> FORCEINLINE       T* AsStatic() { return CheckedStaticCast<T>(this); }
-    template <typename T> FORCEINLINE const T* AsStatic() const { return CheckedStaticCast<T>(this); }
-
-    LEngine*   GetEngine() const;
-    LLocalEgo* GetLocalEgo() const;
 
 private:
 
@@ -719,7 +704,7 @@ private:
     LAnchor Anchor { EAnchor::TopLeft };
 };
 
-template <typename TInNode>
+template<typename TInNode>
 typename TInNode::TWidgetFactory& Private::LWidgetFactoryUtility::MakeWidgetFactory(const WNode* InNode)
 {
     using TNode    = TInNode;
@@ -744,8 +729,8 @@ typename TInNode::TWidgetFactory& Private::LWidgetFactoryUtility::MakeWidgetFact
     return *Factory;
 }
 
-template <typename TNode>
-template <typename T>
+template<typename TNode>
+template<typename T>
 FORCEINLINE typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::SaveTo(T** Out)
 {
     static_assert(std::is_base_of_v<WNode, T>);
@@ -758,7 +743,7 @@ FORCEINLINE typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>
     return this->Self();
 }
 
-template <typename TNode>
+template<typename TNode>
 FORCEINLINE typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::AddSibling(LWidgetFactory* InSibling)
 {
     check( algo::contains(this->Siblings, InSibling) == false )
@@ -766,37 +751,35 @@ FORCEINLINE typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>
     return this->Self();
 }
 
-template <typename TNode>
-FORCEINLINE TNode* ConstructWidgetNode(LObjectContext* InContext)
+template<typename TNode>
+FORCEINLINE TNode* ConstructWidgetNode(LClassOuter* Outer)
 {
-    return ConstructWidgetNode<TNode>(InContext, TNode::StaticClass());
+    return ConstructWidgetNode<TNode>(Outer, TNode::StaticClass());
 }
 
-template <typename TNode>
-FORCEINLINE TNode* ConstructWidgetNode(LObjectContext* InContext, const TSubclassOf<TNode>& InClass)
+template<typename TNode>
+FORCEINLINE TNode* ConstructWidgetNode(LClassOuter* Outer, TSubclassOf<TNode> const& Class)
 {
-    TNode* Out { ConstructDeferredWidgetNode<TNode>(InContext, InClass) };
+    TNode* Out{ ConstructDeferredWidgetNode<TNode>(Outer, Class) };
     MakeDeferredWidgetNodeFinal(Out);
     return Out;
 }
 
-template <typename TNode>
-FORCEINLINE TNode* ConstructDeferredWidgetNode(LObjectContext* InContext)
+template<typename TNode>
+FORCEINLINE TNode* ConstructDeferredWidgetNode(LClassOuter* Outer)
 {
-    return ConstructDeferredWidgetNode<TNode>(InContext, TNode::StaticClass());
+    return ConstructDeferredWidgetNode<TNode>(Outer, TNode::StaticClass());
 }
 
 template<typename TNode>
-FORCEINLINE TNode* ConstructDeferredWidgetNode(LObjectContext* InContext, const TSubclassOf<TNode>& InClass)
+FORCEINLINE TNode* ConstructDeferredWidgetNode(LClassOuter* Outer, TSubclassOf<TNode> const& Class)
 {
-    return CheckedStaticCast<TNode>(NewDeferredObject(InContext, InClass));
+    return StaticCastChecked<TNode>(NewDeferredObject(Outer, *Class.GetClass()));
 }
 
-FORCEINLINE void MakeDeferredWidgetNodeFinal(WNode* InNode)
+FORCEINLINE void MakeDeferredWidgetNodeFinal(WNode* Node)
 {
-    check( InNode )
-    MakeDeferredObjectFinal(InNode);
-    return;
+    MakeDeferredObjectFinal(Node);
 }
 
 #if !LAL_DO_CHECKS
@@ -810,30 +793,6 @@ FORCEINLINE LReply WNode::OnKeyUpNoFocus(const LViewport& InViewport, const LKey
     return LReply::Unhandled();
 }
 #endif /* !LAL_DO_CHECKS */
-
-template<typename T>
-FORCEINLINE bool WNode::IsA() const
-{
-    static_assert(std::is_base_of_v<WNode, T>, "T must derive from WNode");
-    return this->GetVTableSlow()->DerivesFrom(T::StaticClass());
-}
-
-template<typename T>
-FORCEINLINE bool WNode::IsA(const T** OutObject) const
-{
-    static_assert(std::is_base_of_v<WNode, T>, "T must derive from WNode");
-    if (this->IsA<T>())
-    {
-        if (OutObject)
-        {
-            *OutObject = CheckedStaticCast<T>(this);
-        }
-
-        return true;
-    }
-
-    return false;
-}
 
 } /* ~Namespace Jafg */
 

@@ -1,6 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Engine/Engine.h"
+#include "Engine/Engine.h"
 #include "Engine/CoreGlobals.h"
 #include "Async/TaskUtility.h"
 #include "Cli/CliExtended.h"
@@ -13,6 +14,7 @@
 #include "Stats/Stats.h"
 #include "Platform/PlatformMisc.h"
 #include "Engine/EngineRunnable.h"
+#include "Engine/Carnifex.h"
 #if JAFG_WITH_FOREIGN_SUPPORT
     #if LAL_WITH_CLANG
         #pragma clang diagnostic push
@@ -46,7 +48,7 @@ ENGINE_API LString GCustomExitReason;
 
 bool Jafg::LWorldStorage::IsValid() const noexcept
 {
-    if (GEngine == nullptr)
+    if (this->World == nullptr || GEngine == nullptr)
     {
         return false;
     }
@@ -93,7 +95,7 @@ void Jafg::LEngine::Initialize()
                 return false;
             }
 
-            const bool bValid { algo::contains(GEngine->GetContexts(), Args[*Cursor].Name, [](auto const& E){ return E.ChildWorld->GetHumanReadableName(); }) };
+            const bool bValid { algo::contains(GEngine->GetTracks(), Args[*Cursor].Name, [](auto const& E){ return E.ChildWorld->GetHumanReadableName(); }) };
             if (bValid)
             {
                 ++*Cursor;
@@ -102,7 +104,7 @@ void Jafg::LEngine::Initialize()
             return bValid;
         },
         nullptr,
-        [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
+        [](LCommandArgs const& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
         {
             const LCommandArgs* Target { nullptr };
 
@@ -118,25 +120,25 @@ void Jafg::LEngine::Initialize()
 
             TArray<LString> Out;
 
-            for (const Private::LWorldContext& Context : GEngine->GetContexts())
+            for (Private::LWorldTrack const& Tracks : GEngine->GetTracks())
             {
                 if (Out.size() >= MaxSuggestions)
                 {
                     break;
                 }
 
-                check( Context.ChildWorld )
+                check( Tracks.ChildWorld )
 
                 if (Target)
                 {
-                    if (Context.ChildWorld->GetHumanReadableName().starts_with(Target->Name))
+                    if (Tracks.ChildWorld->GetHumanReadableName().starts_with(Target->Name))
                     {
-                        Out.emplace_back(Context.ChildWorld->GetHumanReadableName());
+                        Out.emplace_back(Tracks.ChildWorld->GetHumanReadableName());
                     }
                 }
                 else
                 {
-                    Out.emplace_back(Context.ChildWorld->GetHumanReadableName());
+                    Out.emplace_back(Tracks.ChildWorld->GetHumanReadableName());
                 }
 
                 continue;
@@ -153,7 +155,7 @@ void Jafg::LEngine::Initialize()
         {
             "VarType", "The value to set.",
             {},
-            [](const LCommandArgs& Args, i32* Cursor) -> bool
+            [](LCommandArgs const& Args, i32* Cursor) -> bool
             {
                 checkSlow( *Cursor < Args.GetArgCount() )
                 if (Args[*Cursor].Name.empty())
@@ -165,7 +167,7 @@ void Jafg::LEngine::Initialize()
                 return true;
             },
             nullptr,
-            [](const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
+            [](LCommandArgs const& Args, const i32 Cursor, const u32 MaxSuggestions) -> TArray<LString>
             {
                 if (algo::is_valid_index(Args.SubArgs, Cursor - 1) == false)
                 {
@@ -191,7 +193,7 @@ void Jafg::LEngine::Initialize()
                 return { };
             }
         })
-        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+        .Exec([](LCommandArgs const& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {
             check( InArgs.GetArgCount() == 2 )
             if (LCliVariable* Var = GEngine->CommandLineInterface.GetVariable(InArgs[0].Name); Var)
@@ -335,8 +337,7 @@ void Jafg::LEngine::Initialize()
         ensureDiscard(bValid_CommandThrowStdAccessViolation);
     }
 
-    this->ObjectContext.SetHumanReadableName("Engine");
-    this->Collection.DeferredInitialize(&this->ObjectContext, true);
+    this->Collection.InitializeDeferred(&this->Outer);
     this->Collection.InitializeSubsystems(JEngineSubsystem::StaticClass());
 
 #if WITH_LOCAL_LAYER
@@ -347,7 +348,7 @@ void Jafg::LEngine::Initialize()
     return;
 }
 
-void Jafg::LEngine::Tick(f32 const DeltaTime)
+void Jafg::LEngine::Tick(const f32 DeltaTime)
 {
     STAT_CYCLE_FUNCTION()
 
@@ -357,23 +358,38 @@ void Jafg::LEngine::Tick(f32 const DeltaTime)
     this->LocalEgo.Tick(DeltaTime);
 #endif /* WITH_LOCAL_LAYER */
 
-    for (Private::LWorldContext& Context : this->Contexts)
+    for (Private::LWorldTrack& Track : this->Tracks)
     {
+#if !WITH_LOCAL_LAYER
         bool bTraveled { false };
+#endif /* WITH_LOCAL_LAYER */
 
-        if (Context.IsWaitingForTravel())
+        if (Track.IsWaitingForTravel())
         {
-            if (this->TravelContext(Context))
+            if (this->TravelTrack(Track))
             {
+#if WITH_LOCAL_LAYER
+                /* Avoids late ticking before a real tick was done. */
+                Track.bSkipThisTick = true;
+#else /* WITH_LOCAL_LAYER */
                 bTraveled = true;
+#endif /* !WITH_LOCAL_LAYER */
             }
         }
 
-        checkSlow( Context.IsValid() )
+        check( Track.IsValid() )
 
-        if (bTraveled == false && Context.ChildWorld->CanTick())
+        if
+        (
+#if WITH_LOCAL_LAYER
+               !Track.bSkipThisTick
+#else /* WITH_LOCAL_LAYER */
+               bTraveled == false
+#endif /* !WITH_LOCAL_LAYER */
+            && Track.ChildWorld->CanTick()
+        )
         {
-            Context.ChildWorld->Tick(DeltaTime);
+            Track.ChildWorld->Tick(DeltaTime);
         }
 
         continue;
@@ -384,13 +400,19 @@ void Jafg::LEngine::Tick(f32 const DeltaTime)
 #endif /* WITH_LOCAL_LAYER */
 
 #if WITH_LOCAL_LAYER
-    for (Private::LWorldContext& Context : this->Contexts)
+    for (Private::LWorldTrack& Track : this->Tracks)
     {
-        checkSlow( Context.IsValid() )
+        check( Track.IsValid() )
 
-        if (Context.ChildWorld->CanTick())
+        if (Track.bSkipThisTick)
         {
-            Context.ChildWorld->LateTick(DeltaTime);
+            Track.bSkipThisTick = false;
+            continue;
+        }
+
+        if (Track.ChildWorld->CanTick())
+        {
+            Track.ChildWorld->LateTick(DeltaTime);
         }
 
         continue;
@@ -408,23 +430,19 @@ void Jafg::LEngine::TearDown()
 
     LOG_VERBOSE(LogEngine, "Tearing down engine.")
 
-    LOG_VERBOSE(LogEngine, "Deallocating {} registered contexts.", this->Contexts.size())
-    for (const Private::LWorldContext& Context : this->Contexts)
+    LOG_VERBOSE(LogEngine, "Deallocating {} registered tracks.", this->Tracks.size())
+    for (auto const& Track : this->Tracks)
     {
-        Context.ChildWorld->TearDownContext();
-        check( Context.ChildWorld->GetWorldState() == EWorldState::WaitingForKill )
+        check( Track.IsValid() )
+        Track.ChildWorld->TearDown();
+        check( Track.ChildWorld->GetWorldState() == EWorldState::WaitingForKill )
         continue;
     }
-    for (Private::LWorldContext& Context : this->Contexts)
-    {
-        check( Context.ChildWorld->GetWorldState() == EWorldState::WaitingForKill )
-        delete Context.ChildWorld;
-        Context.ChildWorld = nullptr;
-    }
-    algo::orphan(&this->Contexts);
+    algo::orphan(&this->Tracks);
 
     this->Collection.TearDownSubsystems();
-    this->ObjectContext.TearDownContext();
+    this->Outer.TearDown();
+    Private::GetGlobalCarnifex().KillAllGarbageChildren();
 
 #if WITH_LOCAL_LAYER
     if (ensure(this->LocalEgo.IsValid()))
@@ -440,47 +458,54 @@ void Jafg::LEngine::TearDown()
 
     this->CommandLineInterface.TearDown();
 
-    Private::GCarnifexReferrer->KillAllGarbageChildren();
+    Private::GetGlobalCarnifex().KillAllGarbageChildren();
 
 #if JAFG_WITH_FOREIGN_SUPPORT
     if (this->LoadedPlugins.empty() == false)
     {
         LOG_VERBOSE(LogForeign, "There are [{}] loaded plugins. Unloading them now.", this->LoadedPlugins.size())
 
-        for (TArray<LLoadedPlugin>::size_type Idx { 0 }; Idx < this->LoadedPlugins.size(); ++Idx)
+        while (this->LoadedPlugins.empty() == false)
         {
-            const LString CachedIdentifier = this->LoadedPlugins[Idx].GetIdentifier();
+            LLoadedPlugin& Plugin{ this->LoadedPlugins.back() };
+
+            if (Plugin.IsLoaded() == false)
+            {
+                LOG_WARNING(LogForeign, "Plugin [{}] is not loaded, but the engine still has it registered. Removing it.", Plugin.GetIdentifier() )
+                this->LoadedPlugins.pop_back();
+                continue;
+            }
+
+            LString CachedIdentifier{ Plugin.GetIdentifier() };
             if
             (
-                const EPluginLoadReturnCode::Type Rc = this->UnLoadPlugin(&this->LoadedPlugins[Idx], EPluginShutdownReason::EngineTearDown);
+                const EPluginLoadReturnCode::Type Rc{ this->UnLoadPlugin(&Plugin, EPluginShutdownReason::EngineTearDown) };
                 Rc != EPluginLoadReturnCode::Success
             )
             {
-                LOG_WARNING(LogForeign, "Failed to unload plugin [{}] with return code [{}].", CachedIdentifier, LexToString(Rc) )
+                    LOG_WARNING(LogForeign, "Failed to unload plugin [{}] with return code [{}].", CachedIdentifier, LexToString(Rc) )
             }
 
             continue;
         }
-
         check( this->LoadedPlugins.empty() )
     }
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
-    this->UnregisterObjectContext(GOmniVitaContext);
-    if (this->KnownObjectContexts.empty() == false)
+    if (this->KnownOuters.empty() == false)
     {
-        LOG_WARNING(LogObjectInternal, "Some context [#{}] where not correctly teared down.", this->KnownObjectContexts.size() )
+        LOG_WARNING(LogObjectInternal, "Some class outers [#{}] where not correctly teared down.", this->KnownOuters.size() )
     }
 
     return;
 }
 
-void Jafg::LEngine::BeginExitIfRequested()
+void Jafg::LEngine::_BeginExitIfRequested()
 {
     ::Jafg::Private::BeginExitIfRequested();
 }
 
-void Jafg::LEngine::ReflectForwardedExitRequest()
+void Jafg::LEngine::_ReflectForwardedExitRequest()
 {
     ::Jafg::Private::ReflectForwardEngineExitRequest();
 }
@@ -524,116 +549,96 @@ bool Jafg::LEngine::CanEverRender() const noexcept
 #endif /* !WITH_FRONTEND */
 }
 
-void Jafg::LEngine::RegisterObjectContext(LObjectContext* InContext)
+void Jafg::LEngine::RegisterClassOuter(LClassOuter* Outer)
 {
-    if (algo::contains(this->KnownObjectContexts, InContext))
+    check( Tasks::IsOnMasterThread() )
+
+    if (algo::contains(this->KnownOuters, Outer))
     {
-        panic( "Context already registered." )
+        panic( "Outer already registered." )
         return;
     }
 
-    this->KnownObjectContexts.emplace_back(InContext);
+    this->KnownOuters.emplace_back(Outer);
     return;
 }
 
-void Jafg::LEngine::UnregisterObjectContext(LObjectContext* InContext)
+void Jafg::LEngine::UnregisterClassOuter(LClassOuter* Outer)
 {
-    if (algo::contains(this->KnownObjectContexts, InContext) == false)
+    check( Tasks::IsOnMasterThread() )
+
+    if (algo::contains(this->KnownOuters, Outer) == false)
     {
-        panic( "Context not registered." )
+        panic( "Outer not registered." )
         return;
     }
 
-    algo::erase_once_checked(&this->KnownObjectContexts, InContext);
+    algo::erase_once_checked(&this->KnownOuters, Outer);
     return;
 }
 
-Jafg::Private::LWorldContext& Jafg::LEngine::GetContextFromWorld(LWorld const* World)
+Jafg::Private::LWorldTrack& Jafg::LEngine::GetTrackFromWorld(LWorld const* World)
 {
     check( World )
 
-    for (Private::LWorldContext& Context : this->Contexts)
-    {
-        if (Context.ChildWorld == World)
-        {
-            return Context;
-        }
+    auto It{ algo::find(this->Tracks, World, [](auto const& E){ return E.ChildWorld.get(); }) };
+    check( It != this->Tracks.end() )
 
-        continue;
-    }
-
-    jassertNoEntry()
-    abort();
+    return *It;
 }
 
 Jafg::LWorldStorage Jafg::LEngine::SummonWorld(LString const& HumanReadableName)
 {
-    const Private::LWorldContext& Context = this->CreateNewWorldContext(HumanReadableName);
-    return LWorldStorage(Context.ChildWorld);
+    check( Tasks::IsOnMasterThread() )
+    this->Tracks.emplace_back(Private::LWorldTrack{HumanReadableName});
+    return LWorldStorage{ this->Tracks.back().ChildWorld.get() };
 }
 
-bool Jafg::LEngine::IsWorldValid(LWorld const* InWorld) const
+bool Jafg::LEngine::IsWorldValid(LWorld const* World) const
 {
-    return algo::contains_if(this->Contexts, [InWorld](const Private::LWorldContext& Context) -> bool
+    return algo::contains_if(this->Tracks, [World](auto const& E) -> bool
     {
-        if (Context.ChildWorld == InWorld)
+        if (E.ChildWorld.get() == World)
         {
-            return Context.IsValid();
+            return E.IsValid();
         }
 
         return false;
     });
 }
 
-void Jafg::LEngine::Browse(LWorld const* World, LString const& Url)
+bool Jafg::LEngine::RegisterLevel(LLevel const& Level)
 {
-    this->Browse(this->GetContextFromWorld(World), Url);
-}
-
-bool Jafg::LEngine::RegisterLevel(LLevel const& InLevel)
-{
-    if (this->IsLevelRegistered(InLevel.Identifier))
+    if (this->IsLevelRegistered(Level.Identifier))
     {
         return false;
     }
 
-    this->RegisteredLevels.emplace_back(InLevel);
+    this->RegisteredLevels.emplace_back(Level);
 
     return true;
 }
 
-bool Jafg::LEngine::RegisterLevel(LLevel&& InLevel)
+bool Jafg::LEngine::RegisterLevel(LLevel&& Level)
 {
-    if (this->IsLevelRegistered(InLevel.Identifier))
+    if (this->IsLevelRegistered(Level.Identifier))
     {
         return false;
     }
 
-    this->RegisteredLevels.emplace_back(std::move(InLevel));
+    this->RegisteredLevels.emplace_back(std::move(Level));
 
     return true;
 }
 
-bool Jafg::LEngine::IsLevelRegistered(LString const& Identifier) const
+void Jafg::LEngine::Browse(Private::LWorldTrack& Track, LString const& Url) const
 {
-    return algo::contains(this->RegisteredLevels, Identifier, &LLevel::Identifier);
-}
+    check( Track.ChildWorld.get() )
+    check( Track.TravelUrl.empty() )
 
-Jafg::Private::LWorldContext& Jafg::LEngine::CreateNewWorldContext(const LString& InHumanReadableName)
-{
-    check( Tasks::IsOnMasterThread() )
-    this->Contexts.emplace_back(InHumanReadableName);
-    return this->Contexts.back();
-}
+    LOG_VERBOSE(LogEngine, "Browsing world [{}] to [{}].", Track.ChildWorld->GetHumanReadableName(), Url)
 
-void Jafg::LEngine::Browse(Private::LWorldContext& Context, LString const& Url) const
-{
-    check( Context.ChildWorld )
-    check( Context.TravelUrl.empty() )
-
-    LOG_VERBOSE(LogEngine, "Browsing world [{}] to [{}].", Context.ChildWorld->GetHumanReadableName(), Url)
-
-    if (this->IsContextUrlInternal(Url) == false)
+    if (this->IsTrackUrlInternal(Url) == false)
     {
         unimplemented()
         return;
@@ -654,12 +659,12 @@ void Jafg::LEngine::Browse(Private::LWorldContext& Context, LString const& Url) 
         }
     }
 
-    Context.TravelUrl = Url;
+    Track.TravelUrl = Url;
 
     return;
 }
 
-bool Jafg::LEngine::IsContextUrlInternal(LString const& Url) const
+bool Jafg::LEngine::IsTrackUrlInternal(LString const& Url) const
 {
     if (Url.empty())
     {
@@ -670,36 +675,36 @@ bool Jafg::LEngine::IsContextUrlInternal(LString const& Url) const
     return true;
 }
 
-bool Jafg::LEngine::TravelContext(Private::LWorldContext& Context)
+bool Jafg::LEngine::TravelTrack(Private::LWorldTrack& Track)
 {
-    check( Context.ChildWorld )
-    check( Context.IsWaitingForTravel() )
+    check( Track.ChildWorld.get() )
+    check( Track.IsWaitingForTravel() )
 
-    LOG_INFO(LogEngine, "Traveling [{}] to [{}].", Context.ChildWorld->GetHumanReadableName(), Context.TravelUrl)
+    LOG_INFO(LogEngine, "Traveling [{}] to [{}].", Track.ChildWorld->GetHumanReadableName(), Track.TravelUrl)
 
-    LLevel* Level { this->GetLevelByInternalUrl(Context.TravelUrl) };
+    LLevel* Level{ this->GetLevelByInternalUrl(Track.TravelUrl) };
     if (Level == nullptr)
     {
-        LOG_ERROR(LogEngine, "Failed to resolve URL for any world [{}].", Context.TravelUrl)
-        algo::orphan(&Context.TravelUrl);
+        LOG_ERROR(LogEngine, "Failed to resolve URL for any world [{}].", Track.TravelUrl)
+        algo::orphan(&Track.TravelUrl);
         return false;
     }
 
-    if (Context.ChildWorld->GetWorldState() == EWorldState::Running)
+    if (Track.ChildWorld->GetWorldState() == EWorldState::Running)
     {
-        Context.ChildWorld->TearDownContext();
+        LString OldHumanReadableName { Track.ChildWorld->GetHumanReadableName() };
+        Track.ChildWorld->TearDown();
+        check( Track.ChildWorld->GetWorldState() == EWorldState::WaitingForKill )
+        Track.ChildWorld.reset();
+        check( Track.ChildWorld.get() == nullptr )
+        Track.ChildWorld = std::make_unique<LWorld>(std::move(OldHumanReadableName));
     }
 
-    jassert
-    (
-           Context.ChildWorld->GetWorldState() == EWorldState::Uninitialized
-        || Context.ChildWorld->GetWorldState() == EWorldState::WaitingForKill
-        && "Travel is only allowed in these world states."
-    )
+    check( Track.ChildWorld->GetWorldState() == EWorldState::PreInitializing )
+    check( Track.ChildWorld->GetHumanReadableName().empty() == false )
 
-    Context.ChildWorld->InitializeWorld(*Level, std::move(Context.TravelUrl));
-
-    check( Context.TravelUrl.empty() )
+    Track.ChildWorld->InitializeWorld(*Level, std::move(Track.TravelUrl));
+    check( Track.TravelUrl.empty() )
 
     return true;
 }
@@ -717,13 +722,13 @@ Jafg::LLevel* Jafg::LEngine::GetLevelByInternalUrl(LString const& Url)
 }
 
 #if JAFG_WITH_FOREIGN_SUPPORT
-void Jafg::LEngine::RefetchPlugins(TArray<LString> const& InAdditionalPaths)
+void Jafg::LEngine::RefetchPlugins(TArray<LString> const& AdditionalPaths)
 {
     check( Tasks::IsOnMasterThread() )
 
     this->FetchPlugins(PlatformMisc::GetRootBinaryDirectory());
 
-    for (const LString& AdditionalPath : InAdditionalPaths)
+    for (const LString& AdditionalPath : AdditionalPaths)
     {
         this->FetchPlugins(LPath{AdditionalPath});
     }
@@ -731,14 +736,14 @@ void Jafg::LEngine::RefetchPlugins(TArray<LString> const& InAdditionalPaths)
     return;
 }
 
-Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPlugin(LString const& InName)
+Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPlugin(LString const& Name)
 {
     check( Tasks::IsOnMasterThread() )
 
-    LFetchedPlugin const* P{ algo::find_pointer(this->FetchedPlugins, InName, &LFetchedPlugin::Identifier) };
+    LFetchedPlugin const* P{ algo::find_pointer(this->FetchedPlugins, Name, &LFetchedPlugin::Identifier) };
     if (P == nullptr)
     {
-        P = algo::find_pointer(this->FetchedPlugins, LPath{InName}, &LFetchedPlugin::AbsolutePath);
+        P = algo::find_pointer(this->FetchedPlugins, LPath{Name}, &LFetchedPlugin::AbsolutePath);
     }
 
     if (P == nullptr)
@@ -749,15 +754,15 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPlugin(LString const& InNam
     return this->LoadPluginImpl(*P);
 }
 
-void Jafg::LEngine::LoadPluginNoFailure(const LString& InName)
+void Jafg::LEngine::LoadPluginNoFailure(LString const& Name)
 {
-    const EPluginLoadReturnCode::Type ReturnCode = this->LoadPlugin(InName);
+    const EPluginLoadReturnCode::Type ReturnCode = this->LoadPlugin(Name);
     if (ReturnCode == EPluginLoadReturnCode::Success)
     {
         return;
     }
 
-    panicMsgf( "Failed to load plugin [{}] with return code [{}].", InName, LexToString(ReturnCode) )
+    panicMsgf( "Failed to load plugin [{}] with return code [{}].", Name, LexToString(ReturnCode) )
 
     return;
 }
@@ -798,49 +803,35 @@ void Jafg::LEngine::UnLoadPluginNoFailure(const LString& InName, const EPluginSh
     return;
 }
 
-Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(LLoadedPlugin* InPlugin, const EPluginShutdownReason::Type InReason)
+Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(LLoadedPlugin* Plugin, const EPluginShutdownReason::Type Reason)
 {
     STAT_CYCLE_FUNCTION()
 
     check( Tasks::IsOnMasterThread() )
-    check( InPlugin )
+    check( Plugin )
 
-    const LString CachedIdent = InPlugin->GetIdentifier();
-    const LPath   CachedPath  = InPlugin->GetAbsolutePath();
+    check( Plugin->IsLoaded() )
 
-    InPlugin->PrePareLibraryClose(InReason);
+    const LString CachedIdent{ Plugin->GetIdentifier() };
+    const LPath CachedPath{ Plugin->GetAbsolutePath() };
 
-    for (LObjectContext* Context : this->KnownObjectContexts)
+    Plugin->PrepareLibraryClose(Reason);
+
+    for (auto& Outer : this->KnownOuters)
     {
-        if (Context->IsValid() == false)
-        {
-            LOG_WARNING(LogObjectInternal, "Encountered invalid context while unloading plugin [{}].", CachedIdent)
-            continue;
-        }
-
-        Context->SeparateAndKillEmployees(InPlugin->GetHandle());
-
-        continue;
+        Outer->KillEmployeesFromForeignPlugin(Plugin->GetHandle());
     }
 
-    check( this->ForeignContextCursor == nullptr )
-    check( InPlugin->ObjectContext && InPlugin->ObjectContext->IsValid() )
-    InPlugin->ObjectContext->TearDownContext();
-    InPlugin->ObjectContext.reset();
+    auto RemovedPackages{ Private::GetGlobalCxxRecordRegistry().RemovePackagesOf(Plugin->GetHandle()) };
+    LOG_VERBOSE(LogForeign, "Removed [{}] registered packages from [{}].", RemovedPackages, CachedIdent)
 
-    {
-        const i32 Removed { Private::GObjectRegistry->RemovePackagesOf(InPlugin->GetHandle()) };
-        LOG_VERBOSE(LogForeign, "Removed [{}] registered packages from [{}].", Removed, CachedIdent)
-    }
-
-    const EPluginLoadReturnCode::Type Rc = InPlugin->CloseLibrary(InReason);
-
+    const EPluginLoadReturnCode::Type Rc{ Plugin->CloseLibrary(Reason) };
     if (Rc == EPluginLoadReturnCode::Success)
     {
-        LOG_INFO(LogForeign, "Successfully unloaded plugin [{}] from [{}].", CachedIdent, CachedPath )
+        LOG_INFO(LogForeign, "Successfully unloaded plugin [{}] from [{}].", CachedIdent, CachedPath)
     }
 
-    if (auto const Removed { algo::erase(&this->LoadedPlugins, CachedPath, &LLoadedPlugin::GetAbsolutePath) }; Removed != 1)
+    if (auto const Removed{ algo::erase(&this->LoadedPlugins, CachedPath, &LLoadedPlugin::GetAbsolutePath) }; Removed != 1)
     {
         LOG_ERROR(LogForeign, "Suspicious behavior while unloading plugin [{}]. Found [{}] loaded.", CachedIdent, Removed)
     }
@@ -863,21 +854,20 @@ void Jafg::LEngine::UnLoadPluginNoFailure(LLoadedPlugin* InPlugin, const EPlugin
     return;
 }
 
-void Jafg::LEngine::FetchPlugins(LPath const& InPath)
+void Jafg::LEngine::FetchPlugins(LPath const& Path)
 {
     STAT_CYCLE_FUNCTION()
 
-    LOG_VERBOSE(LogForeign, "Fetching in [{}] ...", InPath)
+    LOG_VERBOSE(LogForeign, "Fetching in [{}] ...", Path)
 
-    i32 Fetched { 0 };
-
+    i32 Fetched{ 0 };
     for
     (
-        const TArray<LString> Files = Finder::FindFilesRecursively(InPath, true, ".*\\.jafg\\.root\\.plugin$");
-        const LString& File : Files
+        const TArray<LString> Files{ Finder::FindFilesRecursively(Path, true, ".*\\.jafg\\.root\\.plugin$") };
+        LString const& File : Files
     )
     {
-        check( File.ends_with("/.jafg.root.plugin"))
+        check( File.ends_with("/.jafg.root.plugin") )
 
         if (this->FetchPlugin(File))
         {
@@ -889,45 +879,45 @@ void Jafg::LEngine::FetchPlugins(LPath const& InPath)
 
     if (Fetched > 0)
     {
-        LOG_VERBOSE(LogForeign, "Fetched [{}] plugins in [{}].", Fetched, InPath)
+        LOG_VERBOSE(LogForeign, "Fetched [{}] plugins in [{}].", Fetched, Path)
     }
 
     return;
 }
 
-bool Jafg::LEngine::FetchPlugin(const LPath& InPath)
+bool Jafg::LEngine::FetchPlugin(LPath const& Path)
 {
-    checkCode( Finder::CheckFile(InPath) )
+    checkCode( Finder::CheckFile(Path) )
 
     using json = nlohmann::json;
 
-    const json PluginJson = json::parse(Finder::ReadFile(InPath).c_str(), nullptr, false);
+    const json PluginJson{ json::parse(Finder::ReadFile(Path).c_str(), nullptr, false) };
     if (PluginJson.is_discarded())
     {
-        LOG_ERROR(LogForeign, "Plugin [{}] is not valid json. Failed to fetch.", InPath)
+        LOG_ERROR(LogForeign, "Plugin [{}] is not valid json. Failed to fetch.", Path)
         return false;
     }
 
     if (PluginJson.contains("Version") == false)
     {
-        LOG_ERROR(LogForeign, "Plugin [{}] does not contain an identifier. Failed to fetch.", InPath)
+        LOG_ERROR(LogForeign, "Plugin [{}] does not contain an identifier. Failed to fetch.", Path)
         return false;
     }
 
     if (PluginJson.contains("Identifier") == false)
     {
-        LOG_ERROR(LogForeign, "Plugin [{}] does not contain an identifier. Failed to fetch.", InPath)
+        LOG_ERROR(LogForeign, "Plugin [{}] does not contain an identifier. Failed to fetch.", Path)
         return false;
     }
 
     if (PluginJson.contains("Bin") == false)
     {
-        LOG_ERROR(LogForeign, "Plugin [{}] does not contain a bin. Failed to fetch.", InPath)
+        LOG_ERROR(LogForeign, "Plugin [{}] does not contain a bin. Failed to fetch.", Path)
         return false;
     }
 
     LFetchedPlugin P;
-    P.AbsolutePath = absolute(InPath);
+    P.AbsolutePath = absolute(Path);
     P.Version = PluginJson["Version"].get<std::string>().c_str();
     P.Identifier = PluginJson["Identifier"].get<std::string>().c_str();
     if (PluginJson.contains("FriendlyName"))
@@ -977,46 +967,46 @@ bool Jafg::LEngine::FetchPlugin(const LPath& InPath)
     return true;
 }
 
-Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(const LFetchedPlugin& InFetchedPlugin)
+Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin const& FetchedPlugin)
 {
     STAT_CYCLE_FUNCTION()
 
-    if (Finder::DoesFileExist(InFetchedPlugin.Bin) == false)
+    if (Finder::DoesFileExist(FetchedPlugin.Bin) == false)
     {
         return EPluginLoadReturnCode::NoBin;
     }
 
-    if (algo::contains(this->LoadedPlugins, InFetchedPlugin.Bin, &LLoadedPlugin::GetPathToBin))
+    if (algo::contains(this->LoadedPlugins, FetchedPlugin.Bin, &LLoadedPlugin::GetPathToBin))
     {
         return EPluginLoadReturnCode::AlreadyLoaded;
     }
 
-    LOG_VERBOSE(LogForeign, "Loading plugin [{}] from [{}].", InFetchedPlugin.Identifier, InFetchedPlugin.Bin)
+    LOG_VERBOSE(LogForeign, "Loading plugin [{}] from [{}].", FetchedPlugin.Identifier, FetchedPlugin.Bin)
 
-    LLoadedPlugin Plugin{ InFetchedPlugin, InFetchedPlugin.Bin };
-    check( Private::GetRegisterObjectQueue().empty() )
+    check( Private::GetGlobalCxxRecordRegistry().GetPendingPackages().empty() )
+    Private::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(true);
 
-    if (const EPluginLoadReturnCode::Type Rc { Plugin.OpenLibrary() }; Rc != EPluginLoadReturnCode::Success)
+    LLoadedPlugin Plugin{ FetchedPlugin, FetchedPlugin.Bin };
+    if (const EPluginLoadReturnCode::Type Rc{ Plugin.OpenLibrary() }; Rc != EPluginLoadReturnCode::Success)
     {
-        Private::GObjectRegistry->KillPendingPackages();
+        Private::GetGlobalCxxRecordRegistry().KillPendingPackages();
+        Private::GetGlobalCarnifex().KillAllGarbageChildren();
+        Private::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(false);
+
         return Rc;
     }
+    Private::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(false);
 
     LOG_VERBOSE(LogForeign, "Loaded plugin [{}] from [{}]. Now loading contents.", Plugin.GetIdentifier(), Plugin.GetPathToBin())
 
     Plugin.Uuid = this->GetNextPluginUuid();
 
-    Plugin.ObjectContext = std::make_unique<LObjectContext>(GlobalCarnifex);
-    Plugin.ObjectContext->SetHumanReadableName(Lal::SprintF("Plugin_{}", Plugin.GetIdentifier()));
+    Private::GetGlobalCxxRecordRegistry().LoadPendingPackages(Plugin.GetHandle());
 
-    this->ForeignContextCursor = Plugin.ObjectContext.get() ;
-    Private::GObjectRegistry->LoadPendingPackages(Plugin.GetHandle());
-    this->ForeignContextCursor = nullptr;
-
-    this->OnForeignPluginLoaded.Broadcast(Plugin.ObjectContext.get());
+    this->LoadedPlugins.emplace_back(std::move(Plugin));
+    this->OnForeignPluginLoaded.Broadcast(&this->LoadedPlugins.back());
 
     LOG_INFO(LogForeign, "Successfully loaded plugin [{}] from [{}].", Plugin.GetIdentifier(), Plugin.GetPathToBin())
-    this->LoadedPlugins.emplace_back(std::move(Plugin));
 
     return EPluginLoadReturnCode::Success;
 }

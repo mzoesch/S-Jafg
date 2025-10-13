@@ -2,12 +2,7 @@
 
 #pragma once
 
-/*-----------------------------------------------------------------------------
-    Jafg build tool.
------------------------------------------------------------------------------*/
-
-/** Pragmas for the Jafg Build Tool. */
-#define PRAGMA_FOR_JAFG_BUILD_TOOL(Pragma)
+#include "Lal.afx"
 
 
 /*-----------------------------------------------------------------------------
@@ -24,7 +19,7 @@
         Line,                                                                                      \
         ...                                                                                        \
     )                                                                                              \
-    struct PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                      \
+    struct LAL_JOIN_OUTER_NINE(                                                                    \
         L,                                                                                         \
         _,                                                                                         \
         JAFG_PRIVATE_FILE_ID,                                                                      \
@@ -36,7 +31,7 @@
         ConstructionHelper                                                                         \
     ) final                                                                                        \
     {                                                                                              \
-        PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                         \
+        LAL_JOIN_OUTER_NINE(                                                                       \
         L,                                                                                         \
         _,                                                                                         \
         JAFG_PRIVATE_FILE_ID,                                                                      \
@@ -47,7 +42,7 @@
         _,                                                                                         \
         ConstructionHelper                                                                         \
         )();                                                                                       \
-        inline static ::EClassFlags::Type ClassFlags = EClassFlags::CombineFlags(__VA_ARGS__);     \
+        inline static ::ECxxClassFlags::Type Flags { ::Jafg::CombineCxxClassFlags(__VA_ARGS__) };  \
     };
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_REGISTRATION_CONSTRUCTOR_HELPER_DECLARATION
@@ -79,7 +74,7 @@
     FactoryType,                                                                                                 \
     ...                                                                                                          \
     )                                                                                                            \
-    struct PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                                    \
+    struct LAL_JOIN_OUTER_NINE(                                                                                  \
         L,                                                                                                       \
         _,                                                                                                       \
         JAFG_PRIVATE_FILE_ID,                                                                                    \
@@ -91,7 +86,7 @@
         ConstructionHelper                                                                                       \
     ) final                                                                                                      \
     {                                                                                                            \
-        PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                                       \
+        LAL_JOIN_OUTER_NINE(                                                                                     \
         L,                                                                                                       \
         _,                                                                                                       \
         JAFG_PRIVATE_FILE_ID,                                                                                    \
@@ -102,8 +97,8 @@
         _,                                                                                                       \
         ConstructionHelper                                                                                       \
         )();                                                                                                     \
-        inline static ::EClassFlags::Type ClassFlags = EClassFlags::CombineFlags(__VA_ARGS__);                   \
-        template <typename TNode>                                                                                \
+        inline static ::ECxxClassFlags::Type Flags { ::Jafg::CombineCxxClassFlags(__VA_ARGS__) };                \
+        template<typename TNode>                                                                                 \
         using TWidgetFactoryTy = FactoryType<TNode>;                                                             \
     };
 
@@ -118,10 +113,10 @@
         ...                                                                                       \
     )                                                                                             \
                                                                                                   \
-    JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_TWO(                                                    \
-        JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(                                                \
+    LAL_JOIN_SCOPE_RESOLUTION_OUTER_TWO(                                                          \
+        LAL_JOIN_SCOPE_RESOLUTION_INNER_TWO(                                                      \
             MyClassSpaces,                                                                        \
-            PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                    \
+            LAL_JOIN_OUTER_NINE(                                                                  \
                 L,                                                                                \
                 _,                                                                                \
                 JAFG_PRIVATE_FILE_ID,                                                             \
@@ -131,9 +126,9 @@
                 LineOfDeclaration,                                                                \
                 _,                                                                                \
                 ConstructionHelper                                                                \
-            )                                                                                     \
-        ),                                                                                        \
-        PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                        \
+                )                                                                                     \
+            ),                                                                                        \
+        LAL_JOIN_OUTER_NINE(                                                                      \
             L,                                                                                    \
             _,                                                                                    \
             JAFG_PRIVATE_FILE_ID,                                                                 \
@@ -143,59 +138,37 @@
             LineOfDeclaration,                                                                    \
             _,                                                                                    \
             ConstructionHelper                                                                    \
-        )                                                                                         \
-    )()                                                                                           \
+            )                                                                                         \
+        )()                                                                                           \
     {                                                                                             \
-        ::Jafg::Private::RegisterNewObjectType<                                                   \
-                JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)             \
-        >(                                                                                        \
-            PRIVATE_JAFG_CORE_CAT_OUTER_THREE(#MyClassSpaces, "::", #MyClassName),                \
-            [] (void) -> ::Jafg::JObjectBase*                                                     \
-            {                                                                                     \
-                return                                                                            \
-                new JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)         \
-                    (::Jafg::GetDefaultObjectInitializer());                                      \
-            },                                                                                    \
-            [] (::Jafg::LObjectClass* StaticClass) -> void                                        \
-            {                                                                                     \
-                ::Jafg::Private::LRegistrationCallbackHelper::DoRegisterContentsForClass<         \
-                    JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)         \
-                >(                                                                                \
-                    StaticClass,                                                                  \
-                    JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(                                    \
-                        MyClassSpaces,                                                            \
-                        PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                        \
-                            L,                                                                    \
-                            _,                                                                    \
-                            JAFG_PRIVATE_FILE_ID,                                                 \
-                            _,                                                                    \
-                            MyClassName,                                                          \
-                            _,                                                                    \
-                            LineOfDeclaration,                                                    \
-                            _,                                                                    \
-                            ConstructionHelper                                                    \
-                        )                                                                         \
-                    )::ClassFlags,                                                                \
-                    #SuperClassName                                                               \
-                );                                                                                \
-                typedef                                                                           \
-                    JAFG_CORE_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)         \
-                    _TObj;                                                                        \
-                _TObj* Ref = StaticClass->GetMutableDefaultPackageReferrer<_TObj>();              \
-                check( Ref )                                                                      \
-                __VA_ARGS__                                                                       \
-                return;                                                                           \
-            }                                                                                     \
-        );                                                                                        \
+        Jafg::Private::GetGlobalCxxRecordRegistry().AddNewPendingPackage(\
+            std::make_unique<::Jafg::Private::LRegistryClassPackage>( \
+          *LAL_JOIN_SCOPE_RESOLUTION_OUTER_THREE(MyClassSpaces, MyClassName, MutableStaticClass)() \
+            , LAL_JOIN_SCOPE_RESOLUTION_INNER_TWO(                                          \
+            MyClassSpaces,                                                            \
+            LAL_JOIN_OUTER_NINE(                                                      \
+            L,                                                                    \
+            _,                                                                    \
+            JAFG_PRIVATE_FILE_ID,                                                 \
+            _,                                                                    \
+            MyClassName,                                                          \
+            _,                                                                    \
+            LineOfDeclaration,                                                    \
+            _,                                                                    \
+            ConstructionHelper                                                    \
+            )                                                                         \
+            )::Flags \
+        )); \
+                                                           \
         return;                                                                                   \
     }                                                                                             \
                                                                                                   \
     namespace                                                                                     \
     {                                                                                             \
                                                                                                   \
-    JAFG_CORE_JOIN_SCOPE_RESOLUTION_OUTER_TWO(                                                    \
+    LAL_JOIN_SCOPE_RESOLUTION_OUTER_TWO(                                                          \
         MyClassSpaces,                                                                            \
-        PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                        \
+        LAL_JOIN_OUTER_NINE(                                                                      \
             L,                                                                                    \
             _,                                                                                    \
             JAFG_PRIVATE_FILE_ID,                                                                 \
@@ -206,9 +179,9 @@
             _,                                                                                    \
             ConstructionHelper                                                                    \
         )                                                                                         \
-    )                                                                                             \
-        PRIVATE_JAFG_CORE_JOIN_OUTER_TWO(                                                         \
-            PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                    \
+        )                                                                                             \
+        LAL_JOIN_OUTER_TWO(                                                                       \
+            LAL_JOIN_OUTER_NINE(                                                                  \
                 L,                                                                                \
                 _,                                                                                \
                 JAFG_PRIVATE_FILE_ID,                                                             \
@@ -218,86 +191,110 @@
                 LineOfDeclaration,                                                                \
                 _,                                                                                \
                 ConstructionHelper                                                                \
-            ),                                                                                    \
+                ),                                                                                    \
             Instance                                                                              \
-        );                                                                                        \
+            );                                                                                        \
                                                                                                   \
-    } /* ~Namespace <Anonymous> */
+    } /* ~Namespace <Anonymous> */                                                                \
+    ::Jafg::LCxxClass& LAL_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)            \
+        ::_GetCxxClass() noexcept \
+    {\
+        static auto CDRGetter = [] (void) -> ::Jafg::JCxxClass* \
+        { \
+            return new\
+                LAL_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)\
+                (::Jafg::GetDefaultObjectInitializer()); \
+        }; \
+        static ::Jafg::LCxxClass Instance{ \
+              CDRGetter \
+            , #SuperClassName, {} \
+            }; \
+        return Instance; \
+    }
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL */
-#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(                                    \
-        MyClassName,                                                                                \
-        MyClassSpaces,                                                                              \
-        SuperClassName,                                                                             \
-        ConstructionHelperLine                                                                      \
-    )                                                                                               \
-                                                                                                    \
-private:                                                                                            \
-                                                                                                    \
-    typedef SuperClassName Super;                                                                   \
-    typedef MyClassName    Derived;                                                                 \
-    friend class  ::Jafg::Private::LObjectRegistry;                                                 \
-    friend struct ::Jafg::Private::LRegistrationCallbackHelper;                                     \
-    friend struct ::Jafg::Private::LObjectMiscellaneousAccessor;                                    \
-    friend PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                                                       \
-      L,                                                                                            \
-      _,                                                                                            \
-      JAFG_PRIVATE_FILE_ID,                                                                         \
-      _,                                                                                            \
-      MyClassName,                                                                                  \
-      _,                                                                                            \
-      ConstructionHelperLine,                                                                       \
-      _,                                                                                            \
-      ConstructionHelper                                                                            \
-      );                                                                                            \
-    inline static ::Jafg::LObjectClass* StaticClassReferrer = nullptr;                              \
-    inline static auto GetMutableClassReferrer() -> MyClassName*                                    \
-    {                                                                                               \
-        check( MyClassName :: StaticClassReferrer)                                                  \
-        return MyClassName :: StaticClassReferrer->GetMutableDefaultPackageReferrer<MyClassName>(); \
-    }                                                                                               \
-    inline static auto GetImmutableClassReferrer() -> const MyClassName*                            \
-    {                                                                                               \
-        check( MyClassName :: StaticClassReferrer)                                                  \
-        return MyClassName :: StaticClassReferrer->GetDefaultPackageReferrer<MyClassName>();        \
-    }                                                                                               \
-                                                                                                    \
-public:                                                                                             \
-                                                                                                    \
-    static const MyClassName* ContentDefault()                                                      \
-    {                                                                                               \
-        return MyClassName :: GetImmutableClassReferrer();                                          \
-    }                                                                                               \
-    static const ::Jafg::LObjectClass* StaticClass()                                                \
-    {                                                                                               \
-        check( MyClassName :: StaticClassReferrer)                                                  \
-        return MyClassName :: StaticClassReferrer;                                                  \
-    }                                                                                               \
-    MyClassName() = delete;                                                                         \
-    PROHIBIT_REALLOC_OF_ANY_FORM( MyClassName )                                                     \
-    /* void operator delete(void* Ptr) = delete; */                                                 \
-                                                                                                    \
-private: /* Restore default visibility. */
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(                            \
+        MyClassName,                                                                        \
+        MyClassSpaces,                                                                      \
+        SuperClassName,                                                                     \
+        ConstructionHelperLine,                                                             \
+        OptionalAPI,                                                                        \
+        ...                                                                                 \
+    )                                                                                       \
+                                                                                            \
+private:                                                                                    \
+    typedef SuperClassName Super;                                                           \
+    typedef MyClassName    Derived;                                                         \
+    friend class  ::Jafg::Private::LCxxRecordRegistry;                                      \
+    friend struct ::Jafg::Private::LCxxRecordMiscellaneousAccessor;                         \
+    friend LAL_JOIN_OUTER_NINE(                                                             \
+      L,                                                                                    \
+      _,                                                                                    \
+      JAFG_PRIVATE_FILE_ID,                                                                 \
+      _,                                                                                    \
+      MyClassName,                                                                          \
+      _,                                                                                    \
+      ConstructionHelperLine,                                                               \
+      _,                                                                                    \
+      ConstructionHelper                                                                    \
+      );                                                                                    \
+    OptionalAPI static ::Jafg::LCxxClass& _GetCxxClass() noexcept;                          \
+                                                                                            \
+protected:                                                                                  \
+    virtual MyClassName* _MallocClone() const override                                      \
+    {                                                                                       \
+        check( this->IsCDR() ) return new MyClassName{*this};                               \
+    }                                                                                       \
+                                                                                            \
+public:                                                                                     \
+    inline static MyClassName const* GetCDR()                                               \
+    {                                                                                       \
+        return ::Jafg::Private::GetCDRFromCxxClass<MyClassName>();                          \
+    }                                                                                       \
+    inline static MyClassName* GetMutableCDR()                                              \
+    {                                                                                       \
+        return ::Jafg::Private::GetCDRFromCxxClass<MyClassName>();                          \
+    }                                                                                       \
+    inline static ::Jafg::LCxxClass const* StaticClass()                                    \
+    {                                                                                       \
+        return &MyClassName::_GetCxxClass();                                                \
+    }                                                                                       \
+    inline static ::Jafg::LCxxClass* MutableStaticClass()                                   \
+    {                                                                                       \
+        return &MyClassName::_GetCxxClass();                                                \
+    }                                                                                       \
+    MyClassName() = delete;                                                                 \
+    MyClassName(      MyClassName& LAL_JOIN_INNER_TWO(_, MyClassName))            = delete; \
+    MyClassName& operator=(const MyClassName& LAL_JOIN_INNER_TWO(_, MyClassName)) = delete; \
+    PROHIBIT_MOVE(MyClassName)                                                              \
+    /* void operator delete(void* Ptr) = delete; */                                         \
+                                                                                            \
+private: /* Restore default visibility. */                                                  \
+    __VA_ARGS__
 
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_BODY_IMPL( \
     MyClassName,                                                  \
     MyClassSpaces,                                                \
     SuperClassName,                                               \
-    ConstructionHelperLine                                        \
+    ConstructionHelperLine,                                       \
+    OptionalAPI,                                                  \
+    ...                                                           \
     )                                                             \
     PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(      \
         MyClassName,                                              \
         MyClassSpaces,                                            \
         SuperClassName,                                           \
-        ConstructionHelperLine                                    \
+        ConstructionHelperLine,                                   \
+        OptionalAPI                                               \
     )                                                             \
 public:                                                           \
     template <typename TNode>                                     \
     using TWidgetFactoryTy = Super::TWidgetFactoryTy<TNode>;      \
     using TWidgetFactory = TWidgetFactoryTy<Derived>;             \
-private: /* Restore default visibility. */
+private: /* Restore default visibility. */                        \
+    __VA_ARGS__
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_BODY_IMPL
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_WIDGET_WITH_FACTORY_BODY_IMPL already defined."
@@ -306,17 +303,20 @@ private: /* Restore default visibility. */
     MyClassName,                                                               \
     MyClassSpaces,                                                             \
     SuperClassName,                                                            \
-    ConstructionHelperLine                                                     \
+    ConstructionHelperLine,                                                    \
+    OptionalAPI,                                                               \
+    ...                                                                        \
     )                                                                          \
     PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_BODY_IMPL(                   \
         MyClassName,                                                           \
         MyClassSpaces,                                                         \
         SuperClassName,                                                        \
-        ConstructionHelperLine                                                 \
+        ConstructionHelperLine,                                                \
+        OptionalAPI                                                            \
     )                                                                          \
 public:                                                                        \
     template <typename TNode>                                                  \
-    using TWidgetFactoryTy = PRIVATE_JAFG_CORE_JOIN_OUTER_NINE(                \
+    using TWidgetFactoryTy = LAL_JOIN_OUTER_NINE(                              \
         L,                                                                     \
         _,                                                                     \
         JAFG_PRIVATE_FILE_ID,                                                  \
@@ -328,26 +328,27 @@ public:                                                                        \
         ConstructionHelper                                                     \
     )::TWidgetFactoryTy<TNode>;                                                \
     using TWidgetFactory = TWidgetFactoryTy<Derived>;                          \
-private: /* Restore default visibility. */
+private: /* Restore default visibility. */                                     \
+    __VA_ARGS__
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config */
-#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config(MyClassMember)        \
-    void PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(_, SetField, _, MyClassMember)(const ::LString& _InValue) \
-    {                                                                                                \
-        ::Jafg::Deserialize(&this->MyClassMember, _InValue);                                         \
-    }                                                                                                \
-    ::LString PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(_, GetField, _, MyClassMember)() const               \
-    {                                                                                                \
-        return ::Jafg::Serialize(this->MyClassMember);                                               \
+#define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_Config(MyClassMember) \
+    void LAL_JOIN_OUTER_FOUR(_, SetField, _, MyClassMember)(const ::LString& _InValue)        \
+    {                                                                                         \
+        ::Serialization::FromString(&this->MyClassMember, _InValue);                          \
+    }                                                                                         \
+    ::LString LAL_JOIN_OUTER_FOUR(_, GetField, _, MyClassMember)() const                      \
+    {                                                                                         \
+        return ::Serialization::ToString(this->MyClassMember);                                \
     }
 
 #ifdef PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly
     #error "PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly already defined."
 #endif /* PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly */
 #define PRIVATE_JAFG_OBJECT_HIERARCHY_GENERATED_CLASS_FIELD_DECLARATION_DefaultOnly(MyClassMember) \
-    void PRIVATE_JAFG_CORE_JOIN_OUTER_FOUR(_, MallocField, _, MyClassMember)(void* InMemory)       \
+    void LAL_JOIN_OUTER_FOUR(_, MallocField, _, MyClassMember)(void* InMemory)                     \
     {                                                                                              \
         ::Jafg::OnDefaultOnlyMallocMember(&static_cast<Derived*>(InMemory)->MyClassMember);        \
     }
@@ -360,7 +361,7 @@ private: /* Restore default visibility. */
     #undef DECLARE_JAFG_CLASS
 #endif /* DECLARE_JAFG_CLASS */
 #define DECLARE_JAFG_CLASS(...)                                        \
-    PRIVATE_JAFG_CORE_JOIN_OUTER_FIVE(                                 \
+    LAL_JOIN_OUTER_FIVE(                                               \
         JAFG_PRIVATE_FILE_ID,                                          \
         _,                                                             \
         __LINE__,                                                      \
@@ -372,17 +373,19 @@ private: /* Restore default visibility. */
 //# Required as the first statement of a jafg-class declaration.
 //# @see Engine/Object.h, for example.
 //#
+//# You may optionally provide an API as argument.
+//#
 #ifdef GENERATED_CLASS_BODY
     #undef GENERATED_CLASS_BODY
 #endif /* GENERATED_CLASS_BODY */
-#define GENERATED_CLASS_BODY(...)      \
-    PRIVATE_JAFG_CORE_JOIN_OUTER_FIVE( \
+#define GENERATED_CLASS_BODY(MY_API)   \
+    LAL_JOIN_OUTER_FIVE(               \
         JAFG_PRIVATE_FILE_ID,          \
         _,                             \
         __LINE__,                      \
         _,                             \
         MY_GENERATED_CLASS_BODY        \
-    )( __VA_ARGS__ )
+    )( MY_API )
 
 //#
 //# Required before the jafg-widget-class declaration
@@ -401,7 +404,7 @@ private: /* Restore default visibility. */
     #undef DECLARE_JAFG_WIDGET_WITH_FACTORY
 #endif /* DECLARE_JAFG_WIDGET_WITH_FACTORY */
 #define DECLARE_JAFG_WIDGET_WITH_FACTORY(TFactoryTy, ...)              \
-    PRIVATE_JAFG_CORE_JOIN_OUTER_FIVE(                                 \
+    LAL_JOIN_OUTER_FIVE(                                               \
         JAFG_PRIVATE_FILE_ID,                                          \
         _,                                                             \
         __LINE__,                                                      \
@@ -410,14 +413,32 @@ private: /* Restore default visibility. */
         )(TFactoryTy, __VA_ARGS__ )
 
 //#
-//# Default constructor for an JObject. Mandatory. It may be used to declare extra information for all objects of this
-//# type. The new constructor is prohibited from changing the arguments of the constructor.
+//# Default behavior for all memory allocations.
 //#
 #ifdef DEFAULT_OBJECT_CONSTRUCTOR
     #undef DEFAULT_OBJECT_CONSTRUCTOR
 #endif /* DEFAULT_OBJECT_CONSTRUCTOR */
-#define DEFAULT_OBJECT_CONSTRUCTOR(MyClassName)                                                              \
-    explicit MyClassName(const ::Jafg::LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) { return; }
+#define DEFAULT_OBJECT_CONSTRUCTOR(MyClassName) \
+    DEFAULT_OBJECT_CTOR(MyClassName)            \
+    DEFAULT_OBJECT_CDR_CTOR(MyClassName)
+
+//#
+//# Default constructor for an JObject. Mandatory. It may be used to declare extra information for all objects of this
+//# type. The new constructor is prohibited from changing the arguments of the constructor.
+//#
+#ifdef DEFAULT_OBJECT_CTOR
+    #undef DEFAULT_OBJECT_CTOR
+#endif /* DEFAULT_OBJECT_CTOR */
+#define DEFAULT_OBJECT_CTOR(MyClassName)                                         \
+    explicit MyClassName(::Jafg::LCxxObjectInitializer const& ObjectInitializer) \
+        : Super{ObjectInitializer} { return; }
+
+//# Default behavior for a CDR malloc.
+#ifdef DEFAULT_OBJECT_CDR_CTOR
+    #undef DEFAULT_OBJECT_CDR_CTOR
+#endif /* DEFAULT_OBJECT_CDR_CTOR */
+#define DEFAULT_OBJECT_CDR_CTOR(MyClassName) \
+    explicit MyClassName(MyClassName const& CDR) noexcept = default;
 
 //#
 //# Mark a member of a j-class as something special.
@@ -427,12 +448,11 @@ private: /* Restore default visibility. */
 //#   DefaultOnly - On j-object class allocation, this member will usually be zeroed out.
 //#                 (@see Engine/ObjectBaseUtility.h::OnJObjectDefaultOnlyMallocMember)
 //#
-//#
 #ifdef CLASS_FIELD
     #undef CLASS_FIELD
 #endif /* CLASS_FIELD */
 #define CLASS_FIELD(...)                     \
-    PRIVATE_JAFG_CORE_JOIN_OUTER_FIVE(       \
+    LAL_JOIN_OUTER_FIVE(                     \
         JAFG_PRIVATE_FILE_ID,                \
         _,                                   \
         __LINE__,                            \

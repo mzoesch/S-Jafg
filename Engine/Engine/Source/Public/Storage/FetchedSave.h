@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Rhi/Texture2.h"
+#include "Engine/CdrMemberManipulation.h"
 
 namespace Jafg
 {
@@ -45,5 +46,7 @@ struct LFetchedSave
         return;
     }
 };
+
+template<> NODISCARD FORCEINLINE bool IsCdrMemberConsideredDefault<LFetchedSave>(LFetchedSave const& Value) noexcept { return Value.Path.empty(); }
 
 } /* ~Namespace Jafg */

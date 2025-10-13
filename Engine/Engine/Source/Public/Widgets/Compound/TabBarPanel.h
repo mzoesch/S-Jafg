@@ -11,14 +11,15 @@ namespace Jafg
 class WTabBar;
 
 //# @see Widgets/Compound/TabBar.h
-DECLARE_JAFG_WIDGET(EClassFlags::Abstract)
-class ENGINE_API WTabBarPanel : public WRegion
+DECLARE_JAFG_WIDGET(ECxxClassFlags::Abstract)
+class WTabBarPanel : public WRegion
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WTabBarPanel(const LObjectInitializer& ObjectInitializer);
+    explicit WTabBarPanel(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WTabBarPanel)
 
 public:
 

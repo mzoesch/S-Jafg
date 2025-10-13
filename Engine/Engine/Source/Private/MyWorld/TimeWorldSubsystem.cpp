@@ -96,7 +96,6 @@ Jafg::ENamedDayTime::Type Jafg::StringToLex(const LString& InString)
     }
 
     panicMsgf("Could not parse named day time from [{}].", InString);
-    return ENamedDayTime::Sunrise;
 }
 
 Jafg::LCommandArgsTypeRet<Jafg::LCliDayTime>::Type Jafg::LCommandArgsTypeRet<Jafg::LCliDayTime>::Dispatch(const LCommandArgs& Self, const JTimeWorldSubsystem* InSubsystem)
@@ -125,10 +124,10 @@ Jafg::LCommandArgsTypeRet<Jafg::LCliDayTime>::Type Jafg::LCommandArgsTypeRet<Jaf
     }
 
     panicMsgf("Could not parse day time from [{}]", Self.Name);
-    return 0;
 }
 
-Jafg::JTimeWorldSubsystem::JTimeWorldSubsystem(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::JTimeWorldSubsystem::JTimeWorldSubsystem(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     if (GEngine)
     {
@@ -146,23 +145,23 @@ Jafg::JTimeWorldSubsystem::JTimeWorldSubsystem(const LObjectInitializer& ObjectI
     return;
 }
 
-void Jafg::JTimeWorldSubsystem::OnGarbageDefault()
+void Jafg::JTimeWorldSubsystem::OnGarbageDefault(ECxxRecordTearDownReason::Type Reason)
 {
-    Super::OnGarbageDefault();
+    Super::OnGarbageDefault(Reason);
 
     this->DefaultOnly_UnregisterCliObjects();
 
     return;
 }
 
-bool Jafg::JTimeWorldSubsystem::ShouldCreateSubsystem(const LObjectContext* InOuter) const
+bool Jafg::JTimeWorldSubsystem::ShouldCreateSubsystem(LClassOuter const* Outer) const
 {
-    if (Super::ShouldCreateSubsystem(InOuter) == false)
+    if (Super::ShouldCreateSubsystem(Outer) == false)
     {
         return false;
     }
 
-    return Super::IsOuterWorld(InOuter);
+    return Super::IsOuterWorld(Outer);
 }
 
 void Jafg::JTimeWorldSubsystem::Initialize(LSubsystemCollection& Collection)
@@ -171,7 +170,7 @@ void Jafg::JTimeWorldSubsystem::Initialize(LSubsystemCollection& Collection)
 
     if (LWorld* World { this->GetWorld() }; World->IsSkyboxValid())
     {
-        LSkybox& Skybox { World->GetSkybox() };
+        LSkybox& Skybox{ World->GetMutableSkybox() };
 
         LAstron Sun;
         Sun.Identifier.GenerateNew();
@@ -332,7 +331,7 @@ Jafg::LAstron* Jafg::JTimeWorldSubsystem::GetMutableSunAstron()
 {
     if (LWorld* World { this->GetWorld() }; World && World->IsSkyboxValid())
     {
-        return algo::find_pointer(World->GetSkybox().GetMutableAstra(), this->SunAstronIdentifier, &LAstron::Identifier);
+        return algo::find_pointer(World->GetMutableSkybox().GetMutableAstra(), this->SunAstronIdentifier, &LAstron::Identifier);
     }
 
     return nullptr;
@@ -483,7 +482,7 @@ void Jafg::JTimeWorldSubsystem::DefaultOnly_RegisterCliObjects()
 
     /* Type: DayTime */
     {
-        check( this->TypeHandle_DayTime.IsValid() == false )
+        check( this->TypeHandle_DayTime->IsValid() == false )
         this->TypeHandle_DayTime = GEngine->GetCommandLineInterface()->RegisterType({"DayTime", "The time of the day.",
             {},
             [](const LCommandArgs& Args, i32* Cursor) -> bool
@@ -553,12 +552,12 @@ void Jafg::JTimeWorldSubsystem::DefaultOnly_RegisterCliObjects()
             }
         });
 
-        check( this->TypeHandle_DayTime.IsValid() )
+        check( this->TypeHandle_DayTime->IsValid() )
     }
 
     /* Command: Time */
     {
-        check( this->CommandHandle_Time.IsValid() == false )
+        check( this->CommandHandle_Time->IsValid() == false )
         this->CommandHandle_Time = GEngine->GetCommandLineInterface()->RegisterCommand({"Time", "Changes day and night related time variables.",
             LCommandParams{}
             .Token(LCliType::Type<EDayTimeAddBehavior::Type>())
@@ -624,7 +623,7 @@ void Jafg::JTimeWorldSubsystem::DefaultOnly_RegisterCliObjects()
             })
         });
 
-        check( this->CommandHandle_Time.IsValid() )
+        check( this->CommandHandle_Time->IsValid() )
     }
 
     return;
@@ -642,14 +641,14 @@ void Jafg::JTimeWorldSubsystem::DefaultOnly_UnregisterCliObjects()
 
     LOG_VERBOSE(LogTime, "Unregistering time related objects.")
 
-    if (ensure(this->TypeHandle_DayTime.IsValid()))
+    if (ensure(this->TypeHandle_DayTime->IsValid()))
     {
-        GEngine->GetCommandLineInterface()->UnregisterType(&this->TypeHandle_DayTime);
+        GEngine->GetCommandLineInterface()->UnregisterType(this->TypeHandle_DayTime.get_ptr());
     }
 
-    if (ensure(this->CommandHandle_Time.IsValid()))
+    if (ensure(this->CommandHandle_Time->IsValid()))
     {
-        GEngine->GetCommandLineInterface()->UnregisterCommand(&this->CommandHandle_Time);
+        GEngine->GetCommandLineInterface()->UnregisterCommand(this->CommandHandle_Time.get_ptr());
     }
 
     return;
@@ -662,7 +661,7 @@ void Jafg::JTimeWorldSubsystem::OnTimeUpdated()
         return;
     }
 
-    LSkybox& Skybox { this->GetWorld()->GetSkybox() };
+    LSkybox& Skybox{ this->GetWorld()->GetMutableSkybox() };
     const bool bNight { this->IsNight() };
 
     if (bNight)

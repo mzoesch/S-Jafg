@@ -52,20 +52,21 @@ public:
 
 private:
 
-    WSwitcher* Switcher { nullptr };
-    WHostSessionScreen_Old* OldScreen { nullptr };
-    WHostSessionScreen_Old_Host* OldScreenHost { nullptr };
-    WHostSessionScreen_New* NewScreen { nullptr };
+    CDR_NULL_PTR(WSwitcher*) Switcher{ nullptr };
+    CDR_NULL_PTR(WHostSessionScreen_Old*) OldScreen{ nullptr };
+    CDR_NULL_PTR(WHostSessionScreen_Old_Host*) OldScreenHost{ nullptr };
+    CDR_NULL_PTR(WHostSessionScreen_New*) NewScreen{ nullptr };
 };
 
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WHostSessionScreen_New : public WRegion
+class WHostSessionScreen_New : public WRegion
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WHostSessionScreen_New(const LObjectInitializer& ObjectInitializer);
+    explicit WHostSessionScreen_New(LCxxObjectInitializer const& ObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WHostSessionScreen_New)
 
 public:
 
@@ -101,13 +102,13 @@ private:
     void OnLoad_Policies(WTabBar* TabBar, WNode* Button, WNode* Panel);
     void OnLoad_Advanced(WTabBar* TabBar, WNode* Button, WNode* Panel);
 
-    WCommonMenuTabBar*  InternalTabBar { nullptr };
-    WHostSessionScreen* Owner;
-    WEditableTextBox* SessionName { nullptr };
+    CDR_NULL_PTR(WCommonMenuTabBar*)  InternalTabBar{ nullptr };
+    CDR_NULL_PTR(WHostSessionScreen*) Owner{ nullptr };
+    CDR_NULL_PTR(WEditableTextBox*)   SessionName{ nullptr };
 };
 
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WHostSessionScreen_Old_Save : public WButton
+class WHostSessionScreen_Old_Save : public WButton
 {
     GENERATED_CLASS_BODY()
 
@@ -115,7 +116,8 @@ class ENGINE_API WHostSessionScreen_Old_Save : public WButton
 
 protected:
 
-    explicit WHostSessionScreen_Old_Save(const LObjectInitializer& ObjectInitializer);
+    explicit WHostSessionScreen_Old_Save(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WHostSessionScreen_Old_Save)
 
 public:
 
@@ -123,7 +125,7 @@ public:
 
     virtual void OnPrimaryRelease() override;
 
-    FORCEINLINE bool IsSaveValid() const noexcept { return this->Save.IsValid(); }
+    FORCEINLINE bool IsSaveValid() const noexcept { return this->Save->IsValid(); }
     FORCEINLINE const LFetchedSave& GetSave() const noexcept { return this->Save; }
 
     FORCEINLINE bool IsOwnerValid() const noexcept { return this->Owner != nullptr; }
@@ -132,19 +134,20 @@ public:
 
 protected:
 
-    LFetchedSave Save;
+    TCdrIgnore<LFetchedSave> Save;
     WHostSessionScreen_Old* Owner { nullptr };
     std::shared_ptr<LTexture2> OptionalHolder;
 };
 
-DECLARE_JAFG_WIDGET(EClassFlags::Config)
-class ENGINE_API WHostSessionScreen_Old : public WRegion
+DECLARE_JAFG_WIDGET(ECxxClassFlags::Config)
+class WHostSessionScreen_Old : public WRegion
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WHostSessionScreen_Old(const LObjectInitializer& ObjectInitializer);
+    explicit WHostSessionScreen_Old(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WHostSessionScreen_Old)
 
 public:
 
@@ -163,7 +166,7 @@ public:
     void RefetchSaves(const bool bResetHighlight = true);
 
     CLASS_FIELD(Config)
-    TSubclassOf<WHostSessionScreen_Old_Save> SaveNodeClass { LazyInit };
+    TSubclassOf<WHostSessionScreen_Old_Save> SaveNodeClass{ DefaultInit };
 
     void HighlightSave(WHostSessionScreen_Old_Save& Who);
     void HighlightNoSave(const bool bScrollUp = false);
@@ -172,25 +175,26 @@ private:
 
     void RefetchSavesImpl();
 
-    i32 SelectedSaveIndex { INDEX_NONE };
-    TArray<LFetchedSave> FetchedSaves;
-    WHostSessionScreen* Owner { nullptr };
-    WScrollRegion* SavesRegionContainer { nullptr };
-    WVRegion* SavesRegion { nullptr };
+    i32 SelectedSaveIndex{ INDEX_NONE };
+    TCdrEmptyArray<TArray<LFetchedSave>> FetchedSaves;
+    CDR_NULL_PTR(WHostSessionScreen*) Owner{ nullptr };
+    CDR_NULL_PTR(WScrollRegion*) SavesRegionContainer{ nullptr };
+    CDR_NULL_PTR(WVRegion*) SavesRegion{ nullptr };
 
-    WButton* DeleteButton { nullptr };
-    WButton* EditButton { nullptr };
-    WButton* HostButton { nullptr };
+    CDR_NULL_PTR(WButton*) DeleteButton{ nullptr };
+    CDR_NULL_PTR(WButton*) EditButton{ nullptr };
+    CDR_NULL_PTR(WButton*) HostButton{ nullptr };
 };
 
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WHostSessionScreen_Old_Host : public WRegion
+class WHostSessionScreen_Old_Host : public WRegion
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WHostSessionScreen_Old_Host(const LObjectInitializer& ObjectInitializer);
+    explicit WHostSessionScreen_Old_Host(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WHostSessionScreen_Old_Host)
 
 public:
 
@@ -200,19 +204,19 @@ public:
 
     void UpdateToCachedSave();
 
-    FORCEINLINE bool IsCachedSaveValid() const noexcept { return this->Save.IsValid(); }
+    FORCEINLINE bool IsCachedSaveValid() const noexcept { return this->Save->IsValid(); }
     FORCEINLINE void Reset() noexcept { this->Save = LFetchedSave{}; }
     FORCEINLINE void SetSave(LFetchedSave&& Save) noexcept { this->Save = std::move(Save); }
-    FORCEINLINE void SetSave(const LFetchedSave& Save) noexcept { this->Save.ValueCopy(Save); }
+    FORCEINLINE void SetSave(const LFetchedSave& Save) noexcept { this->Save->ValueCopy(Save); }
 
 private:
 
     TWidgetFactoryHRegion<WHRegion>* AddMenuButtons();
 
-    WTextBox* Header { nullptr };
+    CDR_NULL_PTR(WTextBox*) Header{ nullptr };
+    CDR_NULL_PTR(WHostSessionScreen*) Owner{ nullptr };
 
-    WHostSessionScreen* Owner { nullptr };
-    LFetchedSave Save;
+    TCdrExpectDefault<LFetchedSave> Save;
 };
 
 } /* ~Namespace Jafg */

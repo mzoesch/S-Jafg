@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Lal.afx"
 #include "Engine/Actor.h"
 #include "Components/RenderComponent.h"
 #include "Components/NoPhysicsCompontent.h"
@@ -15,9 +14,9 @@ void Jafg::AActor::EndLife()
     return;
 }
 
-void Jafg::AActor::OnGarbage()
+void Jafg::AActor::OnGarbage(ECxxRecordTearDownReason::Type Reason)
 {
-    Super::OnGarbage();
+    Super::OnGarbage(Reason);
 
     check( this->GetWorld() )
 
@@ -25,21 +24,12 @@ void Jafg::AActor::OnGarbage()
     {
         if (this->GetWorld()->IsTickableObjectsPutMutexLocked())
         {
-            this->GetWorld()->DeletedTickableObjects.push_back(this);
+            this->GetWorld()->DeletedTickableObjects.emplace_back(static_cast<LTickableObject*>(this));
         }
         else
         {
-            algo::erase_once_checked(&this->GetWorld()->TickableObjects, this);
+            algo::erase_once_checked(&this->GetWorld()->TickableObjects, static_cast<LTickableObject*>(this));
         }
-    }
-
-    if (this->bWeakContext == false && this->GetWorld()->GetWorldState() != EWorldState::TearingDown)
-    {
-        /*
-         * Though we keep the pointer to the world to let this actor's children unsubscribe to world-specific
-         * delegates - the context on the other hand should now no longer care about this child.
-         */
-        algo::erase_once_checked(&this->GetWorld()->Actors, this);
     }
 
     return;

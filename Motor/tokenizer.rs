@@ -303,9 +303,9 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
             }
             let classname_idx: usize = inner_idx;
 
-            if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsObjectBaseClass\""
+            if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsBaseCxxClass\""
             {
-                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsObjectBaseClass".to_string()] });
+                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsBaseCxxClass".to_string()] });
             }
             else
             {
@@ -342,12 +342,12 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                 {
                     if remove_all_namespaces(&words[inner_idx].content).starts_with('A') == false && words[classname_idx].content != "AActor"
                     {
-                        panic!("[{}]: Excepted a-object super class after class declaration.", file);
+                        panic!("[{}]: Excepted a-object super class after a-class declaration.", file);
                     }
                 }
                 else
                 {
-                    panic!("[{}]: Excepted j-object or a-object super class after class declaration.", file);
+                    panic!("[{}]: Excepted j-object or a-object super class after j-class declaration.", file);
                 }
 
                 tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec![String::from(&words[inner_idx].content)] });
@@ -378,9 +378,9 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
             }
             let classname_idx: usize = inner_idx;
 
-            if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsObjectBaseClass\""
+            if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsBaseCxxClass\""
             {
-                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsObjectBaseClass".to_string()] });
+                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsBaseCxxClass".to_string()] });
             }
             else
             {
@@ -403,7 +403,7 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                 inner_idx += 1;
                 if inner_idx >= words.len()
                 {
-                    panic!("[{}]: Excepted j-object super class after class declaration.", file);
+                    panic!("[{}]: Excepted j-object super class after j-class declaration.", file);
                 }
 
                 if words[classname_idx].content.starts_with('W') == false
@@ -446,9 +446,9 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
             }
             let classname_idx: usize = inner_idx;
 
-            if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsObjectBaseClass\""
+            if tokens.last().is_some() && tokens.last().unwrap().ty.is_pragma() && tokens.last().unwrap().content == "\"NextIsBaseCxxClass\""
             {
-                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsObjectBaseClass".to_string()] });
+                tokens.push(Token { ty: TokenType::ClassDeclaration, line: w.line, content: String::from(&words[classname_idx].content), info: vec!["NextIsBaseCxxClass".to_string()] });
             }
             else
             {
@@ -471,7 +471,7 @@ pub fn tokenize_file(file: &str) -> Vec<Token>
                 inner_idx += 1;
                 if inner_idx >= words.len()
                 {
-                    panic!("[{}]: Excepted j-object super class after class declaration.", file);
+                    panic!("[{}]: Excepted j-object super class after j-class declaration.", file);
                 }
 
                 if words[classname_idx].content.starts_with('W') == false

@@ -7,7 +7,7 @@
 namespace Jafg
 {
 
-struct ENGINE_API LWhitespace
+struct LWhitespace
 {
     union
     {

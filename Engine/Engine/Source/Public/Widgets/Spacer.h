@@ -23,7 +23,7 @@ public:
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactorySpacer)
-class ENGINE_API WSpacer final : public WNode
+class WSpacer final : public WNode
 {
     GENERATED_CLASS_BODY()
 

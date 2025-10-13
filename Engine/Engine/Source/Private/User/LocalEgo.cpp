@@ -4,7 +4,6 @@
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "Platform/Surface.h"
-#include "Engine/ActorUtility.h"
 #include "Framework/Frontend.h"
 #include "Framework/Pawn.h"
 #include "Framework/PersonaController.h"
@@ -35,7 +34,7 @@ void Jafg::LLocalEgo::Initialize()
             && GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()
         )
         {
-            f32 NearFrustum; Deserialize<float>(&NearFrustum, InValue);
+            f32 NearFrustum; Serialization::FromString(&NearFrustum, InValue);
             GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()->GetEye()->SetNearFrustum(NearFrustum);
             LOG_VERBOSE(LogEgo, "Set current possessed eye near frustum to [{}].", NearFrustum)
         }
@@ -52,7 +51,7 @@ void Jafg::LLocalEgo::Initialize()
             && GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()
         )
         {
-            f32 FarFrustum; Deserialize<float>(&FarFrustum, InValue);
+            f32 FarFrustum; Serialization::FromString(&FarFrustum, InValue);
             GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()->GetEye()->SetFarFrustum(FarFrustum);
             LOG_VERBOSE(LogEgo, "Set current possessed eye far frustum to [{}].", FarFrustum)
         }
@@ -60,14 +59,12 @@ void Jafg::LLocalEgo::Initialize()
     })});
     this->VariableHandle_VerifyChunks = Cli->RegisterVariable({"VerifyChunks", LCliType::Type("Bool"), "true"});
 
-    this->Context.SetHumanReadableName("LocalEgo");
-
     this->OnWorldBeginLifeHandle = GEngine->OnWorldBeginLife.Add(this, &LLocalEgo::OnWorldBeginLife);
 
-    this->Collection.DeferredInitialize(&this->Context);
-    this->Collection.InitializeSubsystems(JLocalEgoSubsystem::StaticClass());
+    this->Collection.InitializeDeferred(&this->Outer);
+    this->Collection.InitializeSubsystems<JLocalEgoSubsystem>();
 
-    this->Frontend.Initialize(&this->GetContext());
+    this->Frontend.Initialize(&this->Outer);
 
     return;
 }
@@ -116,8 +113,7 @@ void Jafg::LLocalEgo::TearDown()
     }
 
     this->Frontend.TearDown();
-    this->Context.TearDownContext();
-    check( this->Context.IsValid() == false )
+    this->Outer.TearDown();
 
     GEngine->GetCommandLineInterface()->UnregisterVariable(&this->VariableHandle_UpdateFrustum);
     GEngine->GetCommandLineInterface()->UnregisterVariable(&this->VariableHandle_VisualizeFrustum);
@@ -152,8 +148,7 @@ void Jafg::LLocalEgo::Possess(APersonaController* InNewController)
         InNewController->SetLocalEgo(this);
     }
 
-    this->Collection.ForEachSubsystem<JLocalEgoSubsystem>(
-    [Old, InNewController] (JLocalEgoSubsystem* Subsystem)
+    this->ForEachMutableSubsystem([Old, InNewController](JLocalEgoSubsystem* Subsystem)
     {
         Subsystem->OnNewPersonaControllerPossessed(Old, InNewController);
     });
@@ -185,8 +180,7 @@ void Jafg::LLocalEgo::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
         }
     }
 
-    this->Collection.ForEachSubsystem<JLocalEgoSubsystem>(
-    [InOld, InNew](JLocalEgoSubsystem* Subsystem)
+    this->ForEachMutableSubsystem([InOld, InNew](JLocalEgoSubsystem* Subsystem)
     {
         Subsystem->OnNewPawnPossessed(InOld, InNew);
     });

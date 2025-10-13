@@ -17,17 +17,18 @@ class WParent;
 //# user interfaces.
 //#
 DECLARE_JAFG_WIDGET()
-class ENGINE_API WUserWidget : public WOverlay
+class WUserWidget : public WOverlay
 {
     GENERATED_CLASS_BODY()
 
 protected:
 
-    explicit WUserWidget(const LObjectInitializer& ObjectInitializer);
+    explicit WUserWidget(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(WUserWidget)
 
 public:
 
-    virtual void OnGarbage() override;
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
     virtual void Destruct() override;
 
     virtual auto GetViewport() const -> LViewport* override;
@@ -44,11 +45,11 @@ public:
 
     //# @return The new root.
     template <typename TParent>
-    TParent* ReplaceRoot(TParent* InRoot) { return CheckedStaticCast<TParent>(this->ReplaceRootImpl(InRoot)); }
+    TParent* ReplaceRoot(TParent* InRoot) { return StaticCastChecked<TParent>(this->ReplaceRootImpl(InRoot)); }
     FORCEINLINE bool IsRootValid() const { return this->Root != nullptr; }
     FORCEINLINE WNode* GetRoot() const { return this->Root->Content;  }
     template <typename TNode>
-    FORCEINLINE TNode* GetRoot() const { return CheckedStaticCast<TNode>(this->Root->Content); }
+    FORCEINLINE TNode* GetRoot() const { return StaticCastChecked<TNode>(this->Root->Content); }
 
 private:
 

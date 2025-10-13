@@ -2,15 +2,12 @@
 
 #pragma once
 
-#include "Engine/ObjectBase.h"
+#include "Engine/CxxClass.h"
 #include "Subsystem.generated.h"
 
 namespace Jafg
 {
 
-class LLocalEgo;
-class LEngine;
-class LCommandLineInterface;
 struct LSubsystemCollection;
 
 //#
@@ -18,8 +15,8 @@ struct LSubsystemCollection;
 //#
 //# To create your own subsystem lifetime:
 //#
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
-class ENGINE_API JSubsystem : public JObjectBase
+DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+class JSubsystem : public JCxxClass
 {
     friend LSubsystemCollection;
 
@@ -31,7 +28,7 @@ protected:
 
     virtual void BeginLife() override final { Super::BeginLife(); }
     virtual void EndLife()   override final { Super::EndLife();   }
-    virtual void OnGarbage() override final { Super::OnGarbage(); if (this->IsInitialized()) { this->TearDown(); } }
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override final { Super::OnGarbage(Reason); if (this->IsInitialized()) { this->TearDown(); } }
 
     //#
     //# Weather a subsystem should be created given its new context.
@@ -39,7 +36,7 @@ protected:
     //# @note The object will still be instanced if ShouldCreateSubsystem returns false, but will be killed
     //#       soon after.
     //#
-    virtual bool ShouldCreateSubsystem(const LObjectContext* InOuter) const { return true; }
+    virtual bool ShouldCreateSubsystem(LClassOuter const* Outer) const { return true; }
     virtual void Initialize(LSubsystemCollection& Collection);
     virtual void TearDown() { }
 
@@ -48,16 +45,11 @@ protected:
     //# Please see the #bPriorityTearDown documentation for more information. DO NOT JUST SET THIS TO TRUE.
     FORCEINLINE void SetPriorityTearDown(const bool bPriority) { this->bPriorityTearDown = bPriority; }
 
-    LEngine* GetEngine() const;
-    LLocalEgo* GetLocalEgo() const;
-    LLocalEgo* GetLocalEgoChecked() const { LLocalEgo* Out { this->GetLocalEgo() }; check( Out ) return Out; }
-    LCommandLineInterface* GetCommandLineInterface() const;
-
 private:
 
     //#
     //# This flag is generally only for subsystems that have very special rules and states attached to them.
-    //# In general this **ONLY** applies to subsystems that are threaded.
+    //# In general, this **ONLY** applies to subsystems that are threaded.
     //# If you see yourself setting this flag on a NON-THREADED subsystem, please reconsider your design choice.
     //#
     bool bPriorityTearDown : 1 { false };
@@ -67,7 +59,5 @@ private:
 
 } /* Namespace Jafg */
 
-/*
- * Include for children as they will need this always.
- */
+//# Include for children as they will need this always.
 #include "Subsystems/SubsystemCollection.h"

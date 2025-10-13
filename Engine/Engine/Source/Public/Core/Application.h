@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Lal.afx"
+#include "Core/Arguments.h"
 
 namespace Jafg
 {
@@ -24,20 +25,7 @@ namespace Application
 typedef std::chrono::high_resolution_clock             Hrc;
 typedef std::chrono::high_resolution_clock::time_point LHrcTimePoint;
 
-struct LProgramArgument
-{
-    FORCEINLINE LProgramArgument() noexcept = default;
-    FORCEINLINE LProgramArgument(LString InIdentifier) noexcept
-        : Identifier{std::move(InIdentifier)} { return; }
-    FORCEINLINE LProgramArgument(LString InIdentifier, LString InValue) noexcept
-        : Identifier{std::move(InIdentifier)}, Value{std::move(InValue)} { return; }
-
-    LString Identifier;
-    TOptional<LString> Value;
-    TOptional<TArray<LString>> Values;
-
-    FORCEINLINE constexpr bool HasValue() const noexcept { return Value.has_value(); }
-};
+typedef LGenericArgument LProgramArgument;
 
 namespace Private
 {
@@ -57,6 +45,7 @@ ENGINE_API extern TArray<LProgramArgument> ProcessedCommandLine;
 ENGINE_API void ProcessCommandLineVariables();
 
 ENGINE_API auto ConditionallyShowHelpAndExit() -> std::tuple<bool, EPlatformExit::Type>;
+ENGINE_API auto ConditionallyShowVersionAndExit() -> std::tuple<bool, EPlatformExit::Type>;
 
 //# Not all platforms may respect this.
 ENGINE_API extern bool bPauseBeforeExit;

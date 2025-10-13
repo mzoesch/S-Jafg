@@ -2,155 +2,99 @@
 
 #pragma once
 
-#include "Lal.afx"
-#include "Async/TaskUtility.h"
-#include "Engine/ObjectBase.h"
+#include "SubclassOf.h"
+#include "Engine/CxxClass.h"
 
 namespace Jafg
 {
 
-template <typename InTObj>
+template<typename TObj>
 class TSubclassOf;
 
-template <typename InTObj>
+template<typename TObj>
 class TSubclassOf final
 {
-    template <typename U>
+    template <typename UObj>
     friend class TSubclassOf;
 
 public:
 
-    using TObj = InTObj;
+    // static_assert(!Lal::TIsCompleteType_v<TObj> || std::is_base_of_v<JCxxClass, TObj>);
 
-    TSubclassOf() = default;
-    ~TSubclassOf() = default;
+    constexpr TSubclassOf() noexcept : Class{nullptr} { }
+    constexpr TSubclassOf(LNullptrTy) noexcept : Class{nullptr} { }
 
-    FORCEINLINE TSubclassOf(LNullptrTy) { this->Class = nullptr; }
+    TSubclassOf(EDefaultInit) noexcept : Class{TObj::StaticClass()} { check( this->HasClass() && this->IsValidType() ) }
 
-    FORCEINLINE TSubclassOf(const ELazyInit LazyInit)
-    {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::NoTick, [this](void)
-        {
-            if
-            (
-                /* Soft force class init because of Config-init could happen in the meantime. */
-                this->Class == nullptr
-            )
-            {
-                this->Class = TObj::StaticClass();
-                check( this->Class ) // Type deduction failed or is no longer available.
-                                     // Do we want a soft failure by not leaving null but base type? Currently, I do not know.
-            }
+    TSubclassOf(LCxxClass const* InClass) noexceptcheck : Class{InClass} { check( this->IsValidType() ) }
+    TSubclassOf(LCxxClass const& InClass) noexceptcheck : Class{&InClass} { check( this->IsValidType() ) }
+    TSubclassOf& operator=(LCxxClass const* InClass) noexceptcheck { return this->Assign(InClass); }
+    TSubclassOf& operator=(LCxxClass const& InClass) noexceptcheck { return this->Assign(InClass); }
 
-            return;
-        });
-        return;
-    }
+    template<typename UObj> requires std::is_base_of_v<TObj, UObj>
+    TSubclassOf(TSubclassOf<UObj> const& Other) noexceptcheck : Class{Other.Class} { check( this->IsValidType() ) }
+    template<typename UObj> requires std::is_base_of_v<TObj, UObj>
+    TSubclassOf& operator=(TSubclassOf<UObj> const& Other) noexceptcheck { return this->Assign(Other.Class); }
 
-    FORCEINLINE TSubclassOf(const LObjectClass* InClass) : Class(InClass) { check( this->IsValidType() ) }
-    FORCEINLINE TSubclassOf& operator=(const LObjectClass* InClass)
+    template<typename UObj> requires std::is_base_of_v<TObj, UObj>
+    TSubclassOf(UObj const* What) noexcept : Class{What->GetVirtualTable()} { check( this->IsValidType() ) }
+    template<typename UObj> requires std::is_base_of_v<TObj, UObj>
+    TSubclassOf& operator=(UObj const* What) noexcept { return this->Assign(What->GetVirtualTable()); }
+
+    constexpr ~TSubclassOf() = default;
+
+    FORCEINLINE bool HasClass() const noexcept { return this->Class != nullptr; }
+    template<typename UObj> requires std::is_base_of_v<TObj, UObj>
+    FORCEINLINE void SetClass() noexcept { this->Assign(UObj::StaticClass()); }
+    FORCEINLINE void SetClass(LNullptrTy) noexcept { this->Assign(nullptr); }
+
+    FORCEINLINE TSubclassOf& Assign(LCxxClass const* InClass) noexceptcheck
     {
         this->Class = InClass;
         check( this->IsValidType() )
         return *this;
     }
 
-    template <typename U>
-    FORCEINLINE TSubclassOf(const TSubclassOf<U>& Other)
+    FORCEINLINE TSubclassOf& Assign(LCxxClass const& InClass) noexceptcheck
     {
-        static_assert(std::is_base_of_v<JObjectBase, U>);
-        static_assert(std::is_base_of_v<TObj, U>);
-        this->Class = Other.Class;
-        check( this->IsValidType() )
-        return;
-    }
-    template <typename U>
-    FORCEINLINE TSubclassOf& operator=(const TSubclassOf<U>& Other)
-    {
-        static_assert(std::is_base_of_v<JObjectBase, U>);
-        static_assert(std::is_base_of_v<TObj, U>);
-        this->Class = Other.Class;
+        this->Class = &InClass;
         check( this->IsValidType() )
         return *this;
     }
 
-    template <typename U>
-    FORCEINLINE TSubclassOf(U* What)
-    {
-        static_assert(std::is_base_of_v<JObjectBase, U>);
-        static_assert(std::is_base_of_v<TObj, U>);
-        this->Class = What->GetVTableSlow();
-        check( this->IsValidType() )
-        return;
-    }
-    template <typename U>
-    FORCEINLINE TSubclassOf& operator=(U* What)
-    {
-        static_assert(std::is_base_of_v<JObjectBase, U>);
-        static_assert(std::is_base_of_v<TObj, U>);
-        this->Class = What->GetVTableSlow();
-        check( this->IsValidType() )
-        return *this;
-    }
+    FORCEINLINE LCxxClass const* GetClass() const noexcept { return this->Class; }
+    FORCEINLINE operator LCxxClass const*() const noexcept { return this->Class; }
 
-    FORCEINLINE bool IsSet() const { return this->Class != nullptr; }
-    template <typename U>
-    FORCEINLINE void Set()
-    {
-        static_assert(std::is_base_of_v<JObjectBase, U>);
-        static_assert(std::is_base_of_v<TObj, U>);
-        this->Class = U::StaticClass();
-        checkSlow( this->IsValidType() )
-        return;
-    }
-    FORCEINLINE void Set(LNullptrTy)
-    {
-        this->Class = nullptr;
-        checkSlow( this->IsValidType() )
-        return;
-    }
+    FORCEINLINE operator LCxxClass const&() const noexceptcheck { check( this->HasClass() ) return *this->Class; }
 
-    FORCEINLINE operator const LObjectClass*() const { return **this; }
-    FORCEINLINE const LObjectClass* Get() const { return **this; }
-    FORCEINLINE const LObjectClass* operator->() const { return **this; }
-    FORCEINLINE const LObjectClass* operator*() const
+    FORCEINLINE LCxxClass const* operator->() const noexcept { check( this->HasClass() ) return this->Class; }
+    FORCEINLINE LCxxClass const* operator*() const noexcept { if (this->HasClass()) { return this->Class; } return nullptr; }
+
+    FORCEINLINE TObj const* GetCDR() noexcept
     {
-        if (this->Class == nullptr || this->Class->DerivesFrom(TObj::StaticClass()) == false)
+        if (this->HasClass())
         {
-            return nullptr;
-        }
-
-        return this->Class;
-    }
-
-    FORCEINLINE const TObj* GetDefault()
-    {
-        if (this->Class)
-        {
-            const JObjectBase* Default = this->Class->GetDefaultPackageReferrer();
-            check( Default && Default->GetVTableChecked()->DerivesFrom(TObj::StaticClass()) )
-            return static_cast<const TObj*>(Default);
+            return this->Class->GetCDR<TObj>();
         }
 
         return nullptr;
     }
 
-    FORCEINLINE bool IsValidType()
+    FORCEINLINE bool IsValidType() const noexcept
     {
         if (this->Class)
         {
-            return this->Class->DerivesFrom(TObj::StaticClass());
+            return this->Class->DerivesFrom<TObj>();
         }
+
         return true;
     }
 
-    FORCEINLINE operator bool() const { return this->Class != nullptr; }
-    FORCEINLINE bool operator==(const LNullptrTy) const { return this->Class == nullptr; }
-    FORCEINLINE bool operator!=(const LNullptrTy) const { return this->Class != nullptr; }
+    FORCEINLINE bool operator==(const LNullptrTy) const noexcept { return this->Class == nullptr; }
 
 private:
 
-    const LObjectClass* Class { nullptr };
+    LCxxClass const* Class;
 };
 
 } /* ~Namespace Jafg */

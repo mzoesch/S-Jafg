@@ -55,6 +55,7 @@
     Forward Containers.
 ----------------------------------------------------------------------------*/
 
+#include "Core/Traits.h"
 #include "Containers/LalIteratorTraits.h"
 #include "Containers/LalIterator.h"
 #include "Containers/ContainerLegacyForward.h"

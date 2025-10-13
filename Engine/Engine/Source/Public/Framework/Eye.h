@@ -9,12 +9,12 @@ namespace Jafg
 
 class APawn;
 
-class ENGINE_API LEye final
+class LEye final
 {
 public:
 
     LEye() noexcept = default;
-    PROHIBIT_REALLOC_OF_ANY_FORM(LEye)
+    PROHIBIT_ANY_REALLOC_OTHER_THAN_CDR_DEFAULTED(LEye)
     ~LEye() noexcept = default;
 
     FORCEINLINE bool IsOwnerValid() const noexcept { return this->Owner != nullptr; }

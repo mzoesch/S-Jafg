@@ -4,7 +4,7 @@
 #include "Widgets/Viewport.h"
 #include "Widgets/Parent.h"
 
-Jafg::WUserWidget::WUserWidget(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WUserWidget::WUserWidget(LCxxObjectInitializer const& CxxObjectInitializer) : Super(CxxObjectInitializer)
 {
     this->SetAnchor(EAnchor::Fill);
     this->SetShouldTick(false);
@@ -12,9 +12,9 @@ Jafg::WUserWidget::WUserWidget(const LObjectInitializer& ObjectInitializer) : Su
     return;
 }
 
-void Jafg::WUserWidget::OnGarbage()
+void Jafg::WUserWidget::OnGarbage(ECxxRecordTearDownReason::Type Reason)
 {
-    Super::OnGarbage();
+    Super::OnGarbage(Reason);
     this->Root = nullptr;
 
     if (this->AttachedViewport)
@@ -75,7 +75,7 @@ void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy /* = true */)
 
     if (bDestroy)
     {
-        this->MarkAsGarbage();
+        this->MarkAsGarbage_v2();
     }
 
     return;

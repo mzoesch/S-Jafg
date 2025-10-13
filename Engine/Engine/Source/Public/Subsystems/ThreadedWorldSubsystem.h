@@ -15,8 +15,8 @@ namespace Jafg
 //# The tick of this subsystem is not synchronized with the tick of the engine.
 //# If you desire synchronization, use the #JSynchronizedThreadedWorldSubsystem class instead.
 //#
-DECLARE_JAFG_CLASS(EClassFlags::Abstract)
-class ENGINE_API JThreadedWorldSubsystem : public JWorldSubsystem, public LTickedRunnable
+DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+class JThreadedWorldSubsystem : public JWorldSubsystem, public LTickedRunnable
 {
     GENERATED_CLASS_BODY()
 
@@ -48,7 +48,7 @@ public:
 
 private:
 
-    ENamedThreads::Type ThisSubsystemsThreadName = ENamedThreads::Custom;
+    ENamedThreads::Type ThisSubsystemsThreadName{ ENamedThreads::Custom };
 };
 
 } /* ~Namespace Jafg */

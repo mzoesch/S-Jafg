@@ -47,10 +47,7 @@ struct LPrimitivePlatformTypesGeneric
     //# Native char.
     typedef char                        LChar;
 
-    //#
-    //# A wide character. ?-bit fixed-width representation of the platform's natural wide character set. It could
-    //# be different sizes on different platforms.
-    //#
+    //# A wide character. ?-bit fixed-width representation of the platform's natural wide character set.
     typedef wchar_t                     LWideChar;
 
     typedef std::wstring                LWideString;
@@ -279,6 +276,11 @@ struct LPrimitivePlatformTypesGeneric
 #ifndef LAL_PLATFORM_SUPPORTS_SIMD
     #define LAL_PLATFORM_SUPPORTS_SIMD                                  0
 #endif /* !LAL_PLATFORM_SUPPORTS_SIMD */
+
+//# Whether the platform supports C++23 stacktrace in the stl library.
+#ifndef LAL_PLATFORM_SUPPORTS_STD_STACKTRACE
+    #define LAL_PLATFORM_SUPPORTS_STD_STACKTRACE                        0
+#endif /* !LAL_PLATFORM_SUPPORTS_STD_STACKTRACE */
 
 //#
 //# Whether allocated memory can be shrunk by platform intrinsics or memory shrinking is performed by allocating

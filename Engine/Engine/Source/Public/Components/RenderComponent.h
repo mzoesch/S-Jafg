@@ -11,7 +11,7 @@ class LRendererComponent;
 class LEye;
 class LViewport;
 
-class ENGINE_API LRendererComponent
+class LRendererComponent
 {
 public:
 

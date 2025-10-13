@@ -5,6 +5,12 @@
 namespace algo
 {
 
+using std::predicate;
+template<typename F, typename... TArgs>
+concept void_predicate = std::regular_invocable<F, TArgs...> && std::same_as<std::invoke_result_t<F, TArgs...>, void>;
+template<typename TFn, typename TWhat>
+concept void_mutable_predicate = requires(TFn&& Fn, TWhat What) { std::invoke(std::forward<TFn>(Fn), What); };
+
 //# Trivial distance.
 using std::distance;
 template<std::ranges::input_range TRange, typename TIt>

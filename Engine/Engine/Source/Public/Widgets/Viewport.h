@@ -3,15 +3,13 @@
 #pragma once
 
 #include "Lal.afx"
-#include "Node.h"
-#include "Engine/ObjectBaseUtility.h"
+#include "Widgets/Node.h"
 #include "Rhi/FrameBuffer.h"
 #include "User/Input/Replies.h"
 
 namespace Jafg
 {
 
-class LObjectClass;
 class WNode;
 class WUserWidget;
 class LEye;
@@ -97,17 +95,17 @@ public:
     FORCEINLINE f64         GetWidthD() const noexcept { return static_cast<f64>(this->Dimensions.X); }
     FORCEINLINE f64         GetHeightD() const noexcept { return static_cast<f64>(this->Dimensions.Y); }
 
-    ENGINE_API  WNode* GetTopLevelWidgetByClass(const LObjectClass* WidgetClass) const;
-    FORCEINLINE WNode* GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const;
-    template <typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClass() const;
-    template <typename TNode> FORCEINLINE TNode* GetTopLevelWidgetByClassChecked() const;
+    ENGINE_API  WNode* GetTopLevelWidgetByClass(TSubclassOf<WNode> Class) const;
+    FORCEINLINE WNode* GetTopLevelWidgetByClassChecked(TSubclassOf<WNode> Class) const;
+    template <typename TNode> requires std::is_base_of_v<WNode, TNode> TNode* GetTopLevelWidgetByClass() const;
+    template <typename TNode> requires std::is_base_of_v<WNode, TNode> TNode* GetTopLevelWidgetByClassChecked() const;
 
     template <typename TNode>
     FORCEINLINE auto GetFocusedWidget() const -> const TNode* { return DynamicCast<TNode>(this->FocusedWidget); }
     FORCEINLINE auto GetFocusedWidget() const -> const WNode* { return this->FocusedWidget; }
     FORCEINLINE auto IsFocusedWidgetValid() const -> bool { return this->FocusedWidget != nullptr; }
     bool FocusWidgetNode(WNode* InNode);
-    FORCEINLINE auto GetHoveredWidgets() const -> const TArray<TObjectStorage<WNode>>& { return this->HoveredWidgets; }
+    FORCEINLINE auto GetHoveredWidgets() const -> const TArray<TClassStorage<WNode>>& { return this->HoveredWidgets; }
 
     //# @return True if in the last frame, this node was not added.
     bool AddHoveredWidgetForFrame(WNode* Node);
@@ -189,9 +187,9 @@ private:
     //# Top level widgets that this viewport owns.
     TArray<WUserWidget*> TopLevelWidgets;
 
-    TObjectStorage<WNode> FocusedWidget;
-    TArray<TObjectStorage<WNode>> HoveredWidgets;
-    TArray<TObjectStorage<WNode>> LastFrameHoveredWidgets;
+    TClassStorage<WNode> FocusedWidget;
+    TArray<TClassStorage<WNode>> HoveredWidgets;
+    TArray<TClassStorage<WNode>> LastFrameHoveredWidgets;
 
     mutable f32 FrameZLayerDepth { 0.0f };
     mutable LVector2D FrameTranslation;
@@ -219,25 +217,23 @@ FORCEINLINE LViewportSweepTranslation::~LViewportSweepTranslation() noexcept
     return;
 }
 
-FORCEINLINE WNode* LViewport::GetTopLevelWidgetByClassChecked(const LObjectClass* WidgetClass) const
+FORCEINLINE WNode* LViewport::GetTopLevelWidgetByClassChecked(TSubclassOf<WNode> Class) const
 {
-    WNode* Widget = this->GetTopLevelWidgetByClass(WidgetClass);
+    WNode* Widget{ this->GetTopLevelWidgetByClass(Class) };
     check( Widget )
     return Widget;
 }
 
-template <typename TNode>
+template<typename TNode> requires std::is_base_of_v<WNode, TNode>
 FORCEINLINE TNode* LViewport::GetTopLevelWidgetByClass() const
 {
-    static_assert(std::derived_from<TNode, WNode>, "TNode must derive from WNode.");
-    return CheckedStaticCast<TNode, WNode, true>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
+    return StaticCastChecked<TNode>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
 }
 
-template <typename TNode>
+template<typename TNode> requires std::is_base_of_v<WNode, TNode>
 FORCEINLINE TNode* LViewport::GetTopLevelWidgetByClassChecked() const
 {
-    static_assert(std::derived_from<TNode, WNode>, "TNode must derive from WNode.");
-    return CheckedStaticCast<TNode>(this->GetTopLevelWidgetByClassChecked(TNode::StaticClass()));
+    return StaticCastChecked<TNode>(this->GetTopLevelWidgetByClassChecked(TNode::StaticClass()));
 }
 
 FORCEINLINE constexpr bool LViewport::IsInBounds(const LVector2& InTopLeft, const LVector2& InSize, const LVector2& InPoint) noexcept

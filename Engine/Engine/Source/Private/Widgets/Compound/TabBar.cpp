@@ -8,7 +8,8 @@
 #include "Widgets/Spacer.h"
 #include "Widgets/VRegion.h"
 
-Jafg::WTabBar::WTabBar(const LObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+Jafg::WTabBar::WTabBar(LCxxObjectInitializer const& CxxObjectInitializer)
+    : Super(CxxObjectInitializer)
 {
     this->SetAnchor(EAnchor::TopLeft);
     return;
@@ -20,15 +21,15 @@ void Jafg::WTabBar::Construct()
 
     if (this->ButtonsContainerClass == nullptr)
     {
-        this->ButtonsContainerClass.Set<WVRegion>();
+        this->ButtonsContainerClass.SetClass<WVRegion>();
     }
     if (this->SwitcherClass == nullptr)
     {
-        this->SwitcherClass.Set<WSwitcher>();
+        this->SwitcherClass.SetClass<WSwitcher>();
     }
     if (this->DefaultButtonClass == nullptr)
     {
-        this->DefaultButtonClass.Set<WRegion>();
+        this->DefaultButtonClass.SetClass<WRegion>();
     }
 
     checkSlow( this->ButtonsContainerClass )
@@ -90,24 +91,24 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, r
 
     if (this->ButtonsContainer == nullptr)
     {
-        this->DeferredTabs.emplace_back(std::move(InTabDescriptor));
+        this->DeferredTabs->emplace_back(std::move(InTabDescriptor));
         return;
     }
 
     TArray<LAddedTabBarTab>::size_type Idx;
     if (InTabDescriptor.AddAfterField.empty())
     {
-        this->TabsInOrder.push_back(LAddedTabBarTab({.Identifier = InTabDescriptor.IdentifierField}));
-        Idx = this->TabsInOrder.size() - 1;
+        this->TabsInOrder->push_back(LAddedTabBarTab({.Identifier = InTabDescriptor.IdentifierField}));
+        Idx = this->TabsInOrder->size() - 1;
     }
     else
     {
         Idx = algo::distance(this->TabsInOrder.begin(), algo::find(this->TabsInOrder, InTabDescriptor.AddAfterField, &LAddedTabBarTab::Identifier));
-        check( Idx != this->TabsInOrder.size() )
+        check( Idx != this->TabsInOrder->size() )
         ++Idx;
         LAddedTabBarTab AddedTab;
         AddedTab.Identifier = InTabDescriptor.IdentifierField;
-        this->TabsInOrder.insert(this->TabsInOrder.begin() + Idx, std::move(AddedTab));
+        this->TabsInOrder->insert(this->TabsInOrder.begin() + Idx, std::move(AddedTab));
     }
 
     if (InTabDescriptor.DisplayNameField.empty())
@@ -183,7 +184,7 @@ void Jafg::WTabBar::ResetToDefault()
 void Jafg::WTabBar::ActivateTab(const LString& Identifier)
 {
     TArray<LAddedTabBarTab>::size_type Idx { 0 };
-    for (; Idx < this->TabsInOrder.size(); ++Idx)
+    for (; Idx < this->TabsInOrder->size(); ++Idx)
     {
         if (this->TabsInOrder[Idx].Identifier == Identifier)
         {
@@ -191,7 +192,7 @@ void Jafg::WTabBar::ActivateTab(const LString& Identifier)
         }
         continue;
     }
-    jassert( Idx < this->TabsInOrder.size() || Identifier.empty() )
+    jassert( Idx < this->TabsInOrder->size() || Identifier.empty() )
 
     if (Identifier.empty() && this->bAllowNone == false)
     {
@@ -263,7 +264,7 @@ void Jafg::WTabBar::LoadTab(LTabBarTabDescriptor&& InTabDescriptor, const i32 In
     check( this->ButtonsContainer )
     check( !(InTabDescriptor.ButtonWidgetClassField && InTabDescriptor.OnButtonReleaseField.IsValid()) )
 
-    WNode* Button = InTabDescriptor.ButtonWidgetClassField.IsSet()
+    WNode* Button = InTabDescriptor.ButtonWidgetClassField.HasClass()
         ? ConstructDeferredWidgetNode<WNode>(this->GetOuter(), InTabDescriptor.ButtonWidgetClassField)
         : ConstructDeferredWidgetNode<WNode>(this->GetOuter(), this->DefaultButtonClass);
 

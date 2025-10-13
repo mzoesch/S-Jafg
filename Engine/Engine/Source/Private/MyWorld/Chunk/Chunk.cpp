@@ -49,12 +49,6 @@ void Jafg::LChunkRendererComponent::Draw(const LViewport& Context, const LEye& E
     return;
 }
 
-Jafg::AChunk::AChunk(const LObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
-{
-    this->DisableStrongActorContext();
-    return;
-}
-
 void Jafg::AChunk::BeginLife()
 {
     Super::BeginLife();
@@ -317,7 +311,7 @@ void Jafg::AChunk::Activate()
         std::unique_lock Lock(this->Mesher->GetMutex());
 
         this->Mesher->ClearProceduralMesh();
-        this->Mesher->GenerateProceduralMesh(GEngine->GetCheckedSubsystem<JVoxelSubsystem>(), GEngine->GetCheckedSubsystem<JMaterialSubsystem>());
+        this->Mesher->GenerateProceduralMesh(GEngine->GetSubsystemChecked<JVoxelSubsystem>(), GEngine->GetSubsystemChecked<JMaterialSubsystem>());
 
         this->SetRendererComponent(new LChunkRendererComponent(*this));
         checkSlow( this->IsRendererComponentValid() )
@@ -332,8 +326,8 @@ void Jafg::AChunk::Activate()
 
 void Jafg::AChunk::RegenerateNeighboringMeshes() const
 {
-    const JVoxelSubsystem* Vs { GEngine->GetCheckedSubsystem<JVoxelSubsystem>() };
-    const JMaterialSubsystem* Ms { GEngine->GetCheckedSubsystem<JMaterialSubsystem>() };
+    const JVoxelSubsystem* Vs { GEngine->GetSubsystemChecked<JVoxelSubsystem>() };
+    const JMaterialSubsystem* Ms { GEngine->GetSubsystemChecked<JMaterialSubsystem>() };
 
     if (this->NNorth && this->NNorth->GetCurrentStateDangerous() == EChunkState::Active)
     {

@@ -146,11 +146,13 @@ class JTimeWorldSubsystem final : public JTickableWorldSubsystem
 
 protected:
 
-    explicit JTimeWorldSubsystem(const LObjectInitializer& ObjectInitializer);
-    virtual void OnGarbageDefault() override;
+    explicit JTimeWorldSubsystem(LCxxObjectInitializer const& CxxObjectInitializer);
+    DEFAULT_OBJECT_CDR_CTOR(JTimeWorldSubsystem)
+
+    virtual void OnGarbageDefault(ECxxRecordTearDownReason::Type Reason) override;
 
     // JTickableWorldSubsystem implementation
-    virtual bool ShouldCreateSubsystem(const LObjectContext* InOuter) const override;
+    virtual bool ShouldCreateSubsystem(LClassOuter const* Outer) const override;
     virtual void Initialize(LSubsystemCollection& Collection) override;
     virtual void Tick(const f32 DeltaTime) override;
     virtual void TearDown() override;
@@ -230,11 +232,11 @@ private:
 
     void OnTimeUpdated();
 
-    CLASS_FIELD(DefaultOnly)
-    LCliCommandHandle CommandHandle_Time;
+    CLASS_FIELD()
+    TCdrIgnore<LCliCommandHandle> CommandHandle_Time;
 
-    CLASS_FIELD(DefaultOnly)
-    LCliTypeHandle TypeHandle_DayTime;
+    CLASS_FIELD()
+    TCdrIgnore<LCliTypeHandle> TypeHandle_DayTime;
 
     //# The actual daytime.
     LDaytime Daytime { 0 };
