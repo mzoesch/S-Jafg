@@ -68,40 +68,40 @@ struct TTagRegistry
 
     FORCEINLINE u64 GetTagCount() const noexcept { return this->Tags.size(); }
 
-    FORCEINLINE TagType GetTag(Trait::CString auto&& InRepr) const noexcept
+    FORCEINLINE TagType GetTag(LStringView InRepr) const noexcept
     {
-        if (const auto It { algo::find(this->Tags, InRepr) }; It != this->Tags.end() )
+        if (const auto It{ algo::find(this->Tags, InRepr) }; It != this->Tags.end() )
         {
             return TagType(static_cast<typename TagType::SizeType>(std::distance(this->Tags.begin(), It) + 1));
         }
         return TagType{};
     }
-    FORCEINLINE TagType GetTagChecked(Trait::CString auto&& InRepr) const noexcept
+    FORCEINLINE TagType GetTagChecked(LStringView InRepr) const noexcept
     {
         const TagType Tag {this->GetTag(InRepr)};
         check( Tag.IsSet() )
         return Tag;
     }
-    FORCEINLINE TagType GetTagAsserted(Trait::CString auto&& InRepr) const noexcept
+    FORCEINLINE TagType GetTagAsserted(LStringView InRepr) const noexcept
     {
         const TagType Tag {this->GetTag(InRepr)};
         jassert( Tag.IsSet() )
         return Tag;
     }
 
-    FORCEINLINE constexpr bool IsTagRegistered(Trait::CString auto&& InRepr) const noexcept
+    FORCEINLINE constexpr bool IsTagRegistered(LStringView InRepr) const noexcept
     {
         return this->Tags.Contains(InRepr);
     }
 
-    FORCEINLINE TagType RegisterOrGet(Trait::CString auto&& InRepr) noexcept
+    FORCEINLINE TagType RegisterOrGet(LStringView InRepr) noexcept
     {
+        check( InRepr.empty() == false )
+
         if (const TagType Tag {this->GetTag(InRepr)}; Tag.IsSet())
         {
             return Tag;
         }
-
-        LString x{std::forward<decltype(InRepr)>(InRepr)};
 
         this->Tags.emplace_back(std::forward<decltype(InRepr)>(InRepr));
         LOG_TRACE(LogTags, "Registered tag [{}].", this->Tags.back())

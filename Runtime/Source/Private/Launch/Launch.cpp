@@ -306,6 +306,7 @@ EPlatformExit::Type GuardedMain()
     LEngine::PreInitialize();
 
     STAT_CYCLE_START(GmObjects, "JafgObjectInitialization")
+    Private::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(false);
     Private::GetGlobalCxxRecordRegistry().LoadPendingPackages(LLoadedPluginHandle::GetEnginePluginHandle());
     if (::IsEngineExitRequested() || GEngine)
     {
@@ -321,7 +322,6 @@ EPlatformExit::Type GuardedMain()
 
     STAT_CYCLE_START(GmEngineInit, "EngineInit")
     GEngine = new LEngine();
-    GEngine->RegisterClassOuter(&Private::GetGlobalCxxRecordRegistry().GetMutableOuter());
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::BeforeEngineInitButAfterAllocDangerous, Tasks::RunAllTasks);
     GEngine->Initialize();
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterEngineInitDangerous, Tasks::RunAllTasks);

@@ -45,14 +45,6 @@ void Jafg::LWorldParameters::Reset() noexcept
     return;
 }
 
-Jafg::LWorld::LWorld(const LString& InHumanReadableName)
-    : WorldState(EWorldState::PreInitializing)
-{
-    this->SetHumanReadableName(InHumanReadableName);
-
-    return;
-}
-
 Jafg::LEngine* Jafg::LWorld::GetEngine() const
 {
     check( GEngine )
@@ -343,11 +335,18 @@ void Jafg::LWorld::OnTearDown()
 #if !IN_SHIPPING
     LSize ActorCount{ 0 };
 #endif /* !IN_SHIPPING */
-    for (auto& Obj : this->GetEmployees())
+    for (TUnique<JCxxClass> const& Obj : this->GetEmployees())
     {
+        check( Obj.get() != nullptr )
+
         if (Obj->IsA<AActor>())
         {
             Obj->MarkAsGarbage_v2(ECxxRecordTearDownReason::OuterTearDown);
+#if !IN_SHIPPING
+            ++ActorCount;
+#endif /* !IN_SHIPPING */
+
+            check( Obj.get() == nullptr )
         }
 
         continue;

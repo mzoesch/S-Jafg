@@ -11,7 +11,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Cl
     STAT_CYCLE_FUNCTION()
 
     check( Tasks::IsOnMasterThread() )
-    check( this->IsValid() )
+    check( this->Outer )
     check( this->SubsystemInstances.empty() )
     check( Class.HasClass() )
 
@@ -54,6 +54,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Cl
         continue;
     }
 
+    /* This will make this collection, so do not set it before, while subsystems are still initializing. */
     this->Class = Class;
 
     if (bRegisterDeferredDelegate && GEngine)
@@ -67,7 +68,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Cl
     (
         for (auto E : this->SubsystemInstances)
         {
-            check( E && E->IsInitialized() && E->GetOuter() == this->Outer && E->GetVirtualTableChecked()->DerivesFrom(*Class.GetClass()) )
+            check( E && E->IsInitialized() && E->GetOuter() == this->Outer && E->GetVirtualTable().DerivesFrom(*Class.GetClass()) )
         }
     )
 
@@ -82,7 +83,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystemsForDeferred()
     check( this->Outer )
     check( this->Class.HasClass() )
 
-    LOG_VERBOSE(LogSubsystemCollection, "Locating all subsystems of class {} that are not loaded.", this->Class->GetFullyQualifiedName())
+    LOG_VERBOSE(LogSubsystemCollection, "[{}]: Locating all subsystems of class {} that are not loaded.", this->FriendlyName, this->Class->GetFullyQualifiedName())
 
     auto& Registry{ Private::GetGlobalCxxRecordRegistry() };
     for (TArray ValidClasses{ Registry.GetClassesByBase(*this->Class.GetClass()) }; auto const* Candidate : ValidClasses)
@@ -94,7 +95,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystemsForDeferred()
             continue;
         }
 
-        if (algo::contains(this->SubsystemInstances, &Candidate->StaticClass, &JSubsystem::GetVirtualTableChecked) == false)
+        if (algo::contains(this->SubsystemInstances, &Candidate->StaticClass, &JSubsystem::GetVirtualTablePtr) == false)
         {
             LOG_VERBOSE(LogSubsystemCollection, "Found potential subsystem [{}].", Candidate->GetFullyQualifiedName() )
             this->SubsystemInstances.emplace_back(NewObject<JSubsystem>(this->Outer, Candidate->StaticClass));
@@ -171,7 +172,7 @@ Jafg::JSubsystem const* Jafg::LSubsystemCollection::GetSubsystem(TSubclassOf<JSu
     for (JSubsystem const* Subsystem : this->SubsystemInstances)
     {
         checkSlow( Subsystem )
-        if (Subsystem->GetVirtualTableChecked() == Class.GetClass())
+        if (Subsystem->GetVirtualTablePtr() == Class.GetClass())
         {
             return Subsystem;
         }
@@ -187,7 +188,7 @@ Jafg::JSubsystem* Jafg::LSubsystemCollection::GetSubsystem(TSubclassOf<JSubsyste
     for (JSubsystem* Subsystem : this->SubsystemInstances)
     {
         checkSlow( Subsystem )
-        if (Subsystem->GetVirtualTableChecked() == Class.GetClass())
+        if (Subsystem->GetVirtualTablePtr() == Class.GetClass())
         {
             return Subsystem;
         }

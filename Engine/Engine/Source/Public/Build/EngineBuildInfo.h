@@ -21,17 +21,15 @@ struct LEngineVersion final
     }
 };
 
-//# @return Build time of the engine.
-NOINLINE ENGINE_API const LString& GetBuildTime();
-
-//# @return Build date of the engine.
-NOINLINE ENGINE_API const LString& GetBuildDate();
-
-NOINLINE ENGINE_API const LString& GetVcsBranch();
-NOINLINE ENGINE_API const LString& GetVcsRevision();
+NOINLINE ENGINE_API LString const& GetBuildTime();
+NOINLINE ENGINE_API LString const& GetBuildDate();
+NOINLINE ENGINE_API LString const& GetVcsBranch();
+NOINLINE ENGINE_API LString const& GetVcsRevision();
 
 //# @return The engine version when the engine library was build.
 NOINLINE ENGINE_API const LString& GetEngineVersionStr();
 NOINLINE ENGINE_API LEngineVersion GetEngineVersion();
+
+NOINLINE ENGINE_API LString const& GetCompilerVersion();
 
 } /* ~Namespace Jafg::BuildInfo */

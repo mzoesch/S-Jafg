@@ -203,10 +203,12 @@
         { \
             return new\
                 LAL_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)\
-                (::Jafg::GetDefaultObjectInitializer()); \
+                (::Jafg::GetDefaultObjectInitializer(\
+                LAL_JOIN_SCOPE_RESOLUTION_INNER_TWO(MyClassSpaces, MyClassName)::_GetCxxClass())); \
         }; \
         static ::Jafg::LCxxClass Instance{ \
-              CDRGetter \
+              #MyClassSpaces "::" #MyClassName \
+            , CDRGetter \
             , #SuperClassName, {} \
             }; \
         return Instance; \

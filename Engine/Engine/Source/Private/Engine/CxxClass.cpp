@@ -23,14 +23,12 @@ namespace
 } /* ~Namespace <Anonymous> */
 
 Jafg::JCxxClass::JCxxClass(LCxxObjectInitializer const& CxxObjectInitializer) noexceptcheck
-    : Outer{&CxxObjectInitializer.Outer}
+    : JafgVirtualTable{CxxObjectInitializer.Class}, Outer{&CxxObjectInitializer.Outer}
 {
     check( this->Outer )
 
     check( algo::contains(this->Outer->GetEmployees(), this, &TUnique<JCxxClass>::get) == false )
     this->Outer->Employees.push_back(TUnique<JCxxClass>(this));
-
-    check( this->IsVirtualTableValid() == false )
 
     return;
 }
@@ -123,13 +121,16 @@ void Jafg::JCxxClass::MarkAsGarbage(EMarkAsGarbageBehavior Behavior, ECxxRecordT
     check( this->Outer )
 
     TUnique<JCxxClass> Self;
+    if (Reason == ECxxRecordTearDownReason::OuterTearDown)
     {
-        auto& Employees{ this->Outer->Employees };
-        auto const It{ algo::find(Employees, this, &TUnique<JCxxClass>::get) };
-        check( It != Employees.end() )
-        Self = std::move(*It);
-        Employees.erase(It);
+        Self = this->Outer->PoachToNull(this);
     }
+    else
+    {
+        Self = this->Outer->Poach(this);
+    }
+
+    Private::LCxxRecordMiscellaneousAccessor::ChangeOuter(Self.get(), nullptr);
 
     if (this->IsDefault())
     {
@@ -139,8 +140,6 @@ void Jafg::JCxxClass::MarkAsGarbage(EMarkAsGarbageBehavior Behavior, ECxxRecordT
     {
         this->OnGarbage(Reason);
     }
-
-    Self->Outer->RemoveDanglingReferencesToObject(Self.get());
 
     if (Behavior == EMarkAsGarbageBehavior::Default)
     {
@@ -170,11 +169,21 @@ void Jafg::JCxxClass::OnDefaultGarbageInternal(ECxxRecordTearDownReason::Type Re
 
     this->OnGarbageDefault(Reason);
 
-    check( this->IsVirtualTableValid() )
-    if (this->GetVirtualTable()->IsConfig())
+    if (this->GetVirtualTable().IsConfig())
     {
-        PushConfigFromCxxObject(*this->GetVirtualTable());
+        PushConfigFromCxxObject(this->GetVirtualTable());
     }
+
+    check( this->GetVirtualTable().IsCDRValid() )
+    check( this->GetVirtualTable().GetCDR() == this )
+
+    auto Self{ Private::LCxxClassMiscellaneousAccessor::ExchangeCDR(&this->GetMutableVirtualTable(), nullptr) };
+    check( Self.get() == this )
+
+    check( this->GetVirtualTable().IsCDRValid() == false )
+
+    Self.release();
+    check( Self.get() == nullptr )
 
     return;
 }

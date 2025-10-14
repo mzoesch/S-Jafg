@@ -130,7 +130,7 @@ FORCEINLINE AActor* SpawnActor(LWorld* World, LString const& ClassName) { return
 template<typename TActor> requires std::is_base_of_v<AActor, TActor>
 FORCEINLINE TActor* SpawnDeferredActor(LWorld* World) { return SpawnDeferredActor<TActor>(World, TSubclassOf<TActor>(TActor::StaticClass())); }
 template<typename TActor> requires std::is_base_of_v<AActor, TActor>
-FORCEINLINE TActor* SpawnDeferredActor(LWorld* World, TSubclassOf<TActor> Class) { return StaticCastChecked<TActor>(SpawnDeferredActor(World, Class)); }
+FORCEINLINE TActor* SpawnDeferredActor(LWorld* World, TSubclassOf<TActor> Class) { return StaticCastChecked<TActor>(SpawnDeferredActor(World, static_cast<TSubclassOf<AActor>>(Class))); }
 FORCEINLINE AActor* SpawnDeferredActor(LWorld* World, TSubclassOf<AActor> Class)
 {
     check( World && Class.HasClass() && Class.IsValidType() )

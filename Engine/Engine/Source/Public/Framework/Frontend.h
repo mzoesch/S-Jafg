@@ -100,8 +100,8 @@ private:
     LSurface CreateNewSurface();
 
     TArray<LSurface>     Surfaces;
-    i32                  FocusedSurface { 0 };
-    LSubsystemCollection Collection;
+    i32                  FocusedSurface{ 0 };
+    LSubsystemCollection Collection{ "Frontend" };
 };
 
 FORCEINLINE WNode* LFrontend::GetFirstTopLevelWidgetByClassChecked(TSubclassOf<WNode> Class) const

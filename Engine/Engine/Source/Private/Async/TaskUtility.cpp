@@ -388,7 +388,13 @@ bool Jafg::Tasks::IsOnThread(const ENamedThreads::Type InThreadName)
         return Thread->Id == PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
     }
 
-    LOG_ERROR(LogTaskUtility, "Thread {} not found.", LexToString(InThreadName))
+    if (::EngineThreads.empty() && InThreadName == ENamedThreads::Master)
+    {
+        /* If no threads are registered, we are most likely on the master thread during ssi. */
+        return true;
+    }
+
+    LOG_ERROR(LogTaskUtility, "Thread [{}] not found.", LexToString(InThreadName))
     return false;
 }
 

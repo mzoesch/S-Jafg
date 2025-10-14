@@ -26,7 +26,10 @@ void Jafg::LViewport::ClearInvalidWidgets()
 
     auto ClearOnContainer {[](TArray<TClassStorage<WNode>>* InContainer) -> void
     {
-        auto const Removed { algo::erase_if(InContainer, [](auto const& E) { return E.IsValidDeep() == false; }) };
+        auto const Removed { algo::erase_if(InContainer, [](auto const& E)
+        {
+            return E.IsValidDeep() == false;
+        }) };
         if constexpr (IS_COMPILED_LOG(LogWidgetFramework, Verbose))
         {
             if (Removed > 0)
@@ -92,7 +95,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
     if (bCursorLocationIsMeaningful)
     {
         LCursorReply MostRecentReply = LCursorReply::Unhandled();
-        for (WNode* Node : this->LastFrameHoveredWidgets)
+        for (auto& Node : this->LastFrameHoveredWidgets)
         {
             if (algo::contains(this->HoveredWidgets, Node) == false)
             {
@@ -147,12 +150,12 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
     }
 
     /* Check if the focused widget is valid to be focused. */
-    if (this->FocusedWidget)
+    if (this->FocusedWidget.IsValid())
     {
         bool bIsDrawn { false };
         for (const WUserWidget* Widget : this->TopLevelWidgets)
         {
-            if (Widget->FindNodeInVisiblePath(this->FocusedWidget))
+            if (Widget->FindNodeInVisiblePath(this->FocusedWidget.Get()))
             {
                 bIsDrawn = true;
                 break;
@@ -177,7 +180,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
             continue;
         }
 
-        if (this->FocusedWidget)
+        if (this->FocusedWidget.IsNotNull())
         {
             if (const LReply Reply { this->FocusedWidget->OnKeyDown(*this, Input) }; Reply.IsHandled())
             {
@@ -221,7 +224,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
             continue;
         }
 
-        if (this->FocusedWidget)
+        if (this->FocusedWidget.IsNotNull())
         {
             if (const LReply Reply { this->FocusedWidget->OnKeyUp(*this, Input) }; Reply.IsHandled())
             {
@@ -267,7 +270,7 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
     if (this->HoveredWidgets.empty() == false || this->LastFrameHoveredWidgets.empty() == false)
     {
         LCursorReply MostRecentReply;
-        for (WNode* Node : this->HoveredWidgets)
+        for (auto& Node : this->HoveredWidgets)
         {
             if (LCursorReply Reply { Node->OnCursorLeave() }; Reply.IsHandled())
             {
@@ -286,7 +289,7 @@ void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalid
         algo::orphan(&this->LastFrameHoveredWidgets);
     }
 
-    if (bInvalidateAllInputs && this->FocusedWidget)
+    if (bInvalidateAllInputs && this->FocusedWidget.IsNotNull())
     {
         LOG_VERBOSE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetNameAsString())
         this->FocusedWidget->OnFocusLost();
@@ -478,7 +481,7 @@ Jafg::WNode* Jafg::LViewport::GetTopLevelWidgetByClass(TSubclassOf<WNode> Class)
 {
     for (WUserWidget* Widget : this->TopLevelWidgets)
     {
-        if (Widget->GetVirtualTableChecked()->DerivesFrom(Class))
+        if (Widget->GetVirtualTable().DerivesFrom(Class))
         {
             return Widget;
         }
@@ -521,7 +524,7 @@ bool Jafg::LViewport::AddHoveredWidgetForFrame(WNode* Node)
 
 void Jafg::LViewport::ChangeFocusUnsafe(WNode* InNode)
 {
-    if (this->FocusedWidget)
+    if (this->FocusedWidget.IsNotNull())
     {
         LOG_VERBOSE(LogWidgetFramework, "Lost focus on [{}].", this->FocusedWidget->GetNameAsString())
         this->FocusedWidget->OnFocusLost();
@@ -529,7 +532,7 @@ void Jafg::LViewport::ChangeFocusUnsafe(WNode* InNode)
 
     this->FocusedWidget = InNode;
 
-    if (this->FocusedWidget)
+    if (this->FocusedWidget.IsNotNull())
     {
         LOG_VERBOSE(LogWidgetFramework, "Gained focus on [{}].", this->FocusedWidget->GetNameAsString())
         this->FocusedWidget->OnFocusReceived();

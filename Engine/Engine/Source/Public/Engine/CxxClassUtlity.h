@@ -178,7 +178,7 @@ FORCEINLINE JCxxClass* NewDeferredObject(LClassOuter* Outer, LString   const& Cl
 template<typename TCxxClass> requires std::is_base_of_v<JCxxClass, TCxxClass>
 FORCEINLINE TCxxClass* DynamicCast(JCxxClass* Obj)
 {
-    if (Obj && Obj->GetVirtualTableChecked()->DerivesFrom(*TCxxClass::StaticClass()))
+    if (Obj && Obj->GetVirtualTable().DerivesFrom(*TCxxClass::StaticClass()))
     {
         return static_cast<TCxxClass*>(Obj);
     }
@@ -189,7 +189,7 @@ FORCEINLINE TCxxClass* DynamicCast(JCxxClass* Obj)
 template<typename TCxxClass> requires std::is_base_of_v<JCxxClass, TCxxClass>
 FORCEINLINE TCxxClass const* DynamicCast(JCxxClass const* Obj)
 {
-    if (Obj && Obj->GetVirtualTableChecked()->DerivesFrom(*TCxxClass::StaticClass()))
+    if (Obj && Obj->GetVirtualTable().DerivesFrom(*TCxxClass::StaticClass()))
     {
         return static_cast<TCxxClass const*>(Obj);
     }
@@ -200,14 +200,14 @@ FORCEINLINE TCxxClass const* DynamicCast(JCxxClass const* Obj)
 template<typename TCxxClass> requires std::is_base_of_v<JCxxClass, TCxxClass>
 FORCEINLINE TCxxClass* StaticCast(JCxxClass* Obj)
 {
-    check( !Obj || Obj->GetVirtualTableChecked()->DerivesFrom(*TCxxClass::StaticClass()) )
+    check( !Obj || Obj->GetVirtualTable().DerivesFrom(*TCxxClass::StaticClass()) )
     return static_cast<TCxxClass*>(Obj);
 }
 
 template<typename TCxxClass> requires std::is_base_of_v<JCxxClass, TCxxClass>
 FORCEINLINE TCxxClass const* StaticCast(JCxxClass const* Obj)
 {
-    check( !Obj || Obj->GetVirtualTableChecked()->DerivesFrom(*TCxxClass::StaticClass()) )
+    check( !Obj || Obj->GetVirtualTable().DerivesFrom(*TCxxClass::StaticClass()) )
     return static_cast<TCxxClass const*>(Obj);
 }
 

@@ -363,6 +363,12 @@ function(_jafg_add_module_impl
             else()
                 set(_this_plugin_identifier "${module_name}")
             endif()
+            if(DEFINED this_plugin_lifetime_identifier)
+                set(_this_plugin_lifetime_identifier "${this_plugin_lifetime_identifier}")
+                unset(this_plugin_lifetime_identifier PARENT_SCOPE)
+            else()
+                set(_this_plugin_lifetime_identifier "${_this_plugin_identifier}")
+            endif()
             if(DEFINED this_plugin_friendly_name)
                 set(_this_plugin_friendly_name "${this_plugin_friendly_name}")
                 unset(this_plugin_friendly_name PARENT_SCOPE)
@@ -373,12 +379,14 @@ function(_jafg_add_module_impl
             set(_target_root_plugin_jafg_content
 "{
     \"Version\": \"${_target_ver}\",
-    \"Identifier\": \"${this_plugin_identifier}\",
+    \"Identifier\": \"${_this_plugin_identifier}\",
+    \"LifetimeIdentifier\": \"${_this_plugin_lifetime_identifier}\",
     \"NativeIdentifier\": \"${module_name}\",
     \"FriendlyName\": \"${_this_plugin_friendly_name}\",
-    \"Bin\": \"Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}/${prefix}${module_name}${suffix}\"
+    \"Bin\": \"${prefix}${module_name}${suffix}\"
 }
 ")
+#    \"Bin\": \"Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}/${prefix}${module_name}${suffix}\"
             file(MAKE_DIRECTORY "${JAFG_ENGINE_ROOT}/Binaries/${JAFG_COMPOUND_CONFIG_PATH}/${module_rel_dir}")
             file(WRITE "${_target_root_plugin_jafg}" "${_target_root_plugin_jafg_content}")
             message(STATUS "[${module_rel_dir}]: Created plugin info file at [${_target_root_plugin_jafg}].")

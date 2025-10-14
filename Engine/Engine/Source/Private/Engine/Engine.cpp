@@ -30,15 +30,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
 
-ENGINE_API Jafg::LEngine* GEngine { nullptr };
+ENGINE_API Jafg::LEngine* GEngine{ nullptr };
 
 namespace Jafg
 {
 
-ENGINE_API bool bGShouldRequestExit { false };
-ENGINE_API bool bGEngineRequestingExit { false };
+ENGINE_API bool bGShouldRequestExit{ false };
+ENGINE_API bool bGEngineRequestingExit{ false };
 
-ENGINE_API i32     GCustomExitStatusOverride { INDEX_NONE };
+ENGINE_API i32     GCustomExitStatusOverride{ INDEX_NONE };
 ENGINE_API LString GCustomExitReason;
 
 } /* ~Namespace Jafg */
@@ -338,7 +338,7 @@ void Jafg::LEngine::Initialize()
     }
 
     this->Collection.InitializeDeferred(&this->Outer);
-    this->Collection.InitializeSubsystems(JEngineSubsystem::StaticClass());
+    this->Collection.InitializeSubsystems<JEngineSubsystem>();
 
 #if WITH_LOCAL_LAYER
     check( this->LocalEgo.IsValid() == false )
@@ -891,16 +891,24 @@ bool Jafg::LEngine::FetchPlugin(LPath const& Path)
 
     using json = nlohmann::json;
 
-    const json PluginJson{ json::parse(Finder::ReadFile(Path).c_str(), nullptr, false) };
+    //# Do not use {} init, as this would trigger an implicit creation of an array...
+    const json PluginJson = json::parse(Finder::ReadFile(Path), nullptr, false);
+
     if (PluginJson.is_discarded())
     {
         LOG_ERROR(LogForeign, "Plugin [{}] is not valid json. Failed to fetch.", Path)
         return false;
     }
 
+    if (PluginJson.is_object() == false)
+    {
+        LOG_ERROR(LogForeign, "Plugin [{}] is not a json object. Failed to fetch.", Path)
+        return false;
+    }
+
     if (PluginJson.contains("Version") == false)
     {
-        LOG_ERROR(LogForeign, "Plugin [{}] does not contain an identifier. Failed to fetch.", Path)
+        LOG_ERROR(LogForeign, "Plugin [{}] does not contain a version. Failed to fetch.", Path)
         return false;
     }
 
@@ -917,41 +925,58 @@ bool Jafg::LEngine::FetchPlugin(LPath const& Path)
     }
 
     LFetchedPlugin P;
-    P.AbsolutePath = absolute(Path);
-    P.Version = PluginJson["Version"].get<std::string>().c_str();
-    P.Identifier = PluginJson["Identifier"].get<std::string>().c_str();
-    if (PluginJson.contains("FriendlyName"))
-    {
-        P.FriendlyName = PluginJson["FriendlyName"].get<std::string>().c_str();
-    }
-    P.Bin = PluginJson["Bin"].get<std::string>().c_str();
 
+    P.AbsolutePath = absolute(Path);
+    check( P.AbsolutePath.empty() == false )
+
+    P.Version = PluginJson["Version"].get<std::string>();
     if (P.Version.empty())
     {
-        LOG_ERROR(LogForeign, "Failed to fetch plugin [{}].", P.AbsolutePath)
+        LOG_ERROR(LogForeign, "Failed to fetch plugin [{}]. No version.", P.AbsolutePath)
         return false;
     }
 
-    if (P.AbsolutePath.empty())
-    {
-        LOG_ERROR(LogForeign, "Failed to fetch plugin.")
-        return false;
-    }
-
+    P.Identifier = PluginJson["Identifier"].get<std::string>();
     if (P.Identifier.empty())
     {
-        LOG_ERROR(LogForeign, "Failed to fetch plugin [{}].", P.AbsolutePath)
+        LOG_ERROR(LogForeign, "Failed to fetch plugin [{}]. No identifier.", P.AbsolutePath)
         return false;
     }
 
+    if (PluginJson.contains("LifetimeIdentifier"))
+    {
+        P.LifetimeIdentifier = PluginJson["LifetimeIdentifier"].get<std::string>();
+    }
+    if (P.LifetimeIdentifier.empty())
+    {
+        P.LifetimeIdentifier = P.Identifier;
+    }
+    check( P.LifetimeIdentifier.empty() == false )
+
+    if (PluginJson.contains("NativeIdentifier"))
+    {
+        P.NativeIdentifier = PluginJson["NativeIdentifier"].get<std::string>();
+    }
+    if (P.NativeIdentifier.empty())
+    {
+        P.NativeIdentifier = P.Identifier;
+    }
+    check( P.NativeIdentifier.empty() == false )
+
+    if (PluginJson.contains("FriendlyName"))
+    {
+        P.FriendlyName = PluginJson["FriendlyName"].get<std::string>();
+    }
     if (P.FriendlyName.empty())
     {
         P.FriendlyName = P.Identifier;
     }
+    check( P.FriendlyName.empty() == false )
 
+    P.Bin = PluginJson["Bin"].get<std::string>();
     if (P.Bin.empty())
     {
-        LOG_ERROR(LogForeign, "Failed to fetch plugin [{}].", P.Bin)
+        LOG_ERROR(LogForeign, "Failed to fetch plugin [{}]. No binary found.", P.Bin)
         return false;
     }
 
@@ -961,9 +986,14 @@ bool Jafg::LEngine::FetchPlugin(LPath const& Path)
         return false;
     }
 
+    if (auto It{ algo::find(this->FetchedPlugins, P.Identifier, &LFetchedPlugin::Identifier) }; It != this->FetchedPlugins.end())
+    {
+        LOG_ERROR(LogForeign, "Plugin [{}] already fetched from [{}]. Cannot fetch from [{}].", It->Identifier, It->AbsolutePath, P.AbsolutePath)
+        return false;
+    }
+
     LOG_VERBOSE(LogForeign, "Fetched plugin [{}] from [{}].", P.Identifier, P.AbsolutePath)
     this->FetchedPlugins.emplace_back(std::move(P));
-
     return true;
 }
 
@@ -971,31 +1001,41 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
 {
     STAT_CYCLE_FUNCTION()
 
-    if (Finder::DoesFileExist(FetchedPlugin.Bin) == false)
+    check( FetchedPlugin.Identifier.empty() == false )
+
+    check( Tasks::IsOnMasterThread() )
+
+    const LPath Bin{ FetchedPlugin.AbsolutePath.parent_path() / FetchedPlugin.Bin };
+    check( Bin.is_absolute() )
+
+    if (Finder::DoesFileExist(Bin) == false)
     {
+        LOG_ERROR(LogForeign, "Expected [{}] to exist.", FetchedPlugin.Identifier, Bin)
         return EPluginLoadReturnCode::NoBin;
     }
 
-    if (algo::contains(this->LoadedPlugins, FetchedPlugin.Bin, &LLoadedPlugin::GetPathToBin))
+    if (algo::contains(this->LoadedPlugins, Bin, &LLoadedPlugin::GetPathToBin))
     {
         return EPluginLoadReturnCode::AlreadyLoaded;
     }
 
-    LOG_VERBOSE(LogForeign, "Loading plugin [{}] from [{}].", FetchedPlugin.Identifier, FetchedPlugin.Bin)
+    LOG_VERBOSE(LogForeign, "Loading plugin [{}] from [{}].", FetchedPlugin.Identifier, Bin)
 
     check( Private::GetGlobalCxxRecordRegistry().GetPendingPackages().empty() )
     Private::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(true);
 
-    LLoadedPlugin Plugin{ FetchedPlugin, FetchedPlugin.Bin };
-    if (const EPluginLoadReturnCode::Type Rc{ Plugin.OpenLibrary() }; Rc != EPluginLoadReturnCode::Success)
+    LLoadedPlugin Plugin{ FetchedPlugin, Bin };
+    check( Plugin.GetIdentifier().empty() == false )
+    const EPluginLoadReturnCode::Type Rc{ Plugin.OpenLibrary() };
+    Private::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(false);
+
+    if (Rc != EPluginLoadReturnCode::Success)
     {
         Private::GetGlobalCxxRecordRegistry().KillPendingPackages();
         Private::GetGlobalCarnifex().KillAllGarbageChildren();
-        Private::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(false);
 
         return Rc;
     }
-    Private::GetGlobalCxxRecordRegistry().SetAllowNewPendingPackages(false);
 
     LOG_VERBOSE(LogForeign, "Loaded plugin [{}] from [{}]. Now loading contents.", Plugin.GetIdentifier(), Plugin.GetPathToBin())
 
@@ -1004,9 +1044,10 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
     Private::GetGlobalCxxRecordRegistry().LoadPendingPackages(Plugin.GetHandle());
 
     this->LoadedPlugins.emplace_back(std::move(Plugin));
-    this->OnForeignPluginLoaded.Broadcast(&this->LoadedPlugins.back());
+    auto& Ref{ this->LoadedPlugins.back() };
+    this->OnForeignPluginLoaded.Broadcast(&Ref);
 
-    LOG_INFO(LogForeign, "Successfully loaded plugin [{}] from [{}].", Plugin.GetIdentifier(), Plugin.GetPathToBin())
+    LOG_INFO(LogForeign, "Successfully loaded plugin [{}] from [{}].", Ref.GetIdentifier(), Ref.GetPathToBin())
 
     return EPluginLoadReturnCode::Success;
 }

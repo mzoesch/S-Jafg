@@ -176,7 +176,11 @@ public:
 
     LWorld() = delete;
     PROHIBIT_REALLOC_OF_ANY_FORM(LWorld)
-    LWorld(LString const& InHumanReadableName);
+    constexpr LWorld(LString const& InHumanReadableName) noexcept
+        : LClassOuter{InHumanReadableName}, WorldState(EWorldState::PreInitializing)
+    {
+        return;
+    }
 
     // LClassOuter implementation
     virtual bool IsWorld() const noexcept override { return true; }
@@ -308,7 +312,7 @@ private:
     mutable LEyeToMatricesMap EyeToMatrices;
     EWorldState::Type WorldState;
 
-    LSubsystemCollection Collection;
+    LSubsystemCollection Collection{ "World" };
 
     //#
     //# The real time (not stopped or dilated / clamped) when this world was launched.

@@ -47,7 +47,7 @@ void Jafg::LCarnifex::DevourGarbageChildNow(TUnique<JCxxClass> Child)
         {
             LOG_WARNING(LogCarnifex,
                 "The provided child is not garbage - but still alive. {}",
-                Child->GetVirtualTableChecked()->GetFullyQualifiedName()
+                Child->GetVirtualTable().GetFullyQualifiedName()
                 )
 
             Child->MarkAsGarbage(JCxxClass::EMarkAsGarbageBehavior::Ignore, ECxxRecordTearDownReason::Default);
@@ -57,7 +57,7 @@ void Jafg::LCarnifex::DevourGarbageChildNow(TUnique<JCxxClass> Child)
 
     checkSlow( Child.get() )
     check( Child->IsGarbage() )
-    check( Child->Outer && Child->Outer->IsHiredHere(Child.get() ) == false )
+    check( Child->Outer == nullptr && Child->Outer->IsHiredHere(Child.get()) == false )
     check( Child->HasEndedLife() == false )
     Child->EndLife();
 

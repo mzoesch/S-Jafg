@@ -16,8 +16,8 @@ class LClassOuter;
 struct LCxxObjectInitializer final
 {
     LCxxObjectInitializer() noexcept = delete;
-    constexpr explicit LCxxObjectInitializer(LClassOuter& Outer) noexcept
-        : Outer(Outer)
+    constexpr explicit LCxxObjectInitializer(LClassOuter& InOuter, LCxxClass& InClass) noexcept
+        : Outer(InOuter), Class(InClass)
     {
     }
 
@@ -26,9 +26,10 @@ struct LCxxObjectInitializer final
     ~LCxxObjectInitializer() noexcept = default;
 
     LClassOuter& Outer;
+    LCxxClass& Class;
 };
 
-ENGINE_API LCxxObjectInitializer GetDefaultObjectInitializer() noexcept;
+ENGINE_API LCxxObjectInitializer GetDefaultObjectInitializer(LCxxClass& Class) noexcept;
 
 MAKE_DELEGATE_SIGNATURE(LSetCxxClassField, void, LString const& Value)
 MAKE_DELEGATE_SIGNATURE(LGetCxxClassField, LString)

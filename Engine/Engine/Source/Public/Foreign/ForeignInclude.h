@@ -8,12 +8,12 @@
 
 #include "Foreign/PluginLifetime.h"
 
-#define DEFINE_PLUGIN(Api, InPluginLifetime, InPluginName)                        \
-    extern "C"                                                                    \
-    Api void PRIVATE_JAFG_CORE_JOIN_INNER_TWO(GetPluginLifetime_, InPluginName)() \
-    {                                                                             \
-        new InPluginLifetime();                                                   \
-    }                                                                             \
+#define DEFINE_PLUGIN(Api, InPluginLifetime, InPluginName)          \
+    extern "C"                                                      \
+    Api void LAL_JOIN_INNER_TWO(GetPluginLifetime_, InPluginName)() \
+    {                                                               \
+        new InPluginLifetime();                                     \
+    }                                                               \
     PRIVATE_JAFG_PLUGINS_NATIVE_CALLS(InPluginLifetime)
 
 #define PRIVATE_JAFG_PLUGINS_LINUX_NATIVE_CALLS(InPluginLifetime) \

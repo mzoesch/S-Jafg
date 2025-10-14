@@ -153,7 +153,7 @@ struct TClassStorage final
     //#
     //# @see #IsValidFast function in Engine/CxxClassUtility.h
     //#
-    FORCEINLINE bool IsValid() const noexcept { return IsValidFast(this->Outer, this->Pointer); }
+    FORCEINLINE bool IsValid() const noexcept { return this->Pointer && IsValidFast(this->Outer, this->Pointer); }
 
     //#
     //# A check if the #Pointer is still valid. This check will also check if the context has gotten out of scope.
@@ -163,6 +163,9 @@ struct TClassStorage final
     //#
     FORCEINLINE bool IsValidDeep() const noexcept { return IsValidSlow(this->Outer, this->Pointer); }
 
+    FORCEINLINE TObj* GetPointer() noexcept { return this->Pointer; }
+    FORCEINLINE TObj const* GetPointer() const noexcept { return this->Pointer; }
+
     FORCEINLINE TObj* Get() noexcept { check( this->IsValid() ) return this->Pointer; }
     FORCEINLINE TObj const* Get() const noexcept { check( this->IsValid() ) return this->Pointer; }
 
@@ -171,11 +174,6 @@ struct TClassStorage final
 
     FORCEINLINE TObj& operator*() noexcept { return *this->Get(); }
     FORCEINLINE TObj const& operator*() const noexcept { return *this->Get(); }
-
-    FORCEINLINE constexpr operator bool() const noexcept { return this->IsNotNull(); }
-
-    FORCEINLINE operator TObj*() noexcept { return this->Get(); }
-    FORCEINLINE operator TObj const*() const noexcept { return this->Get(); }
 
 private:
 

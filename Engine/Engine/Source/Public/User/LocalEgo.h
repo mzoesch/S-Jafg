@@ -90,7 +90,7 @@ private:
     //# and not destroyed until the local ego is killed.
     //#
     LClassOuter Outer{"LocalEgo"};
-    LSubsystemCollection Collection;
+    LSubsystemCollection Collection{ "LocalEgo" };
 
     LCliVariableHandle VariableHandle_UpdateFrustum;
     LCliVariableHandle VariableHandle_VisualizeFrustum;

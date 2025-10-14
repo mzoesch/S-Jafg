@@ -49,7 +49,7 @@ class JCxxClass
 {
     friend LCarnifex;
 
-    LCxxClass* JafgVirtualTable { nullptr };
+    LCxxClass& JafgVirtualTable;
 
 #if LAL_WITH_CLANG
     #pragma clang diagnostic push
@@ -70,7 +70,10 @@ protected:
     //#
     ENGINE_API  explicit JCxxClass(LCxxObjectInitializer const& CxxObjectInitializer) noexceptcheck;
     FORCEINLINE explicit JCxxClass(JCxxClass const& CDR) noexceptcheck
-        : Outer{nullptr} { check( CDR.IsCDR() ) }
+        : JafgVirtualTable{CDR.GetVirtualTableInternal()}, Outer{nullptr}
+    {
+        check( CDR.IsCDR() )
+    }
 
 public:
 
@@ -93,7 +96,7 @@ public:
 
         checkCode
         (
-            if (this->IsCDR())
+            if (this->IsCDRInternalWeak())
             {
                 check( this->HasBegunLifeDefault() )
                 check( this->HasBegunLife() == false )
@@ -118,12 +121,12 @@ public:
     {
         check( this->IsDefault() )
 #if DO_DOUBLE_CHECK_LIFETIMES
-    jassert( this->bHasBegunLifeDCR == false )
-    this->bHasBegunLifeDCR = true;
+    jassert( this->bHasBegunLifeCDR == false )
+    this->bHasBegunLifeCDR = true;
 #endif /* DO_DOUBLE_CHECK_LIFETIMES */
     }
 #if DO_DOUBLE_CHECK_LIFETIMES
-    NODISCARD FORCEINLINE constexpr bool HasBegunLifeDefault() const noexcept { return this->bHasBegunLifeDCR; }
+    NODISCARD FORCEINLINE constexpr bool HasBegunLifeDefault() const noexcept { return this->bHasBegunLifeCDR; }
 #endif /* DO_DOUBLE_CHECK_LIFETIMES */
 
     //#
@@ -156,11 +159,10 @@ public:
     NODISCARD FORCEINLINE constexpr bool HasEndedLife() const noexcept { return this->bHasExecutedEndLife; }
 #endif /* DO_DOUBLE_CHECK_LIFETIMES */
 
-    NODISCARD FORCEINLINE bool   IsVirtualTableValid() const noexcept { return this->JafgVirtualTable != nullptr; }
-    FORCEINLINE LCxxClass const* GetVirtualTable() const noexcept { return this->JafgVirtualTable; }
-    FORCEINLINE LCxxClass const* GetVirtualTableChecked() const noexcept { check( this->JafgVirtualTable ) return this->JafgVirtualTable; }
-    FORCEINLINE LCxxClass      * GetMutableVirtualTable() noexcept { return this->JafgVirtualTable; }
-    FORCEINLINE LCxxClass      * GetMutableVirtualTableChecked() noexcept { check( this->JafgVirtualTable ) return this->JafgVirtualTable; }
+    FORCEINLINE LCxxClass const& GetVirtualTable() const noexcept { return this->JafgVirtualTable; }
+    FORCEINLINE LCxxClass& GetMutableVirtualTable() noexcept { return this->JafgVirtualTable; }
+    FORCEINLINE LCxxClass const* GetVirtualTablePtr() const noexcept { return &this->JafgVirtualTable; }
+    FORCEINLINE LCxxClass* GetMutableVirtualTablePtr() noexcept { return &this->JafgVirtualTable; }
 
     NODISCARD FORCEINLINE bool IsCDR() const noexcept { return this->IsDefault(); }
     NODISCARD FORCEINLINE bool IsDefault() const noexcept;
@@ -191,6 +193,10 @@ public:
     FORCEINLINE bool IsOuterValid() const noexcept { return this->Outer != nullptr; }
     FORCEINLINE LClassOuter const* GetOuter() const noexcept { return this->Outer; }
     FORCEINLINE LClassOuter      * GetOuter() noexcept { return this->Outer; }
+    FORCEINLINE LClassOuter const* GetOuterChecked() const noexceptcheck { auto* Out{ this->GetOuter() }; check( Out ) return Out; }
+    FORCEINLINE LClassOuter      * GetOuterChecked() noexceptcheck { auto* Out{ this->GetOuter() }; check( Out ) return Out; }
+    FORCEINLINE LClassOuter const* GetOuterAsserted() const { auto* Out{ this->GetOuter() }; jassert( Out ) return Out; }
+    FORCEINLINE LClassOuter      * GetOuterAsserted()       { auto* Out{ this->GetOuter() }; jassert( Out ) return Out; }
 
     FORCEINLINE LName          GetName() const noexcept;
     FORCEINLINE LStringView    GetNameAsStringView() const noexcept;
@@ -237,6 +243,10 @@ public:
 
 private:
 
+    FORCEINLINE LCxxClass& GetVirtualTableInternal() const noexcept { return this->JafgVirtualTable; }
+
+    NODISCARD FORCEINLINE bool IsCDRInternalWeak() const noexcept;
+
 #if LAL_DO_CHECKS
     ENGINE_API static void CheckDoubleDestroy(void const* Ptr);
 #endif /* LAL_DO_CHECKS */
@@ -251,12 +261,12 @@ private:
     void MarkAsGarbage(EMarkAsGarbageBehavior Behavior, ECxxRecordTearDownReason::Type Reason);
     void OnDefaultGarbageInternal(ECxxRecordTearDownReason::Type Reason);
 
-    bool bGarbage : 1 { false };
+    bool bGarbage : 1{ false };
 
 #if DO_DOUBLE_CHECK_LIFETIMES
-    bool bHasBegunLife : 1 { false };
-    bool bHasBegunLifeDCR : 1 { false };
-    bool bHasExecutedEndLife : 1 { false };
+    bool bHasBegunLife : 1{ false };
+    bool bHasBegunLifeCDR : 1{ false };
+    bool bHasExecutedEndLife : 1{ false };
 #endif /* DO_DOUBLE_CHECK_LIFETIMES */
 
     LClassOuter* Outer;
@@ -271,38 +281,32 @@ namespace Jafg
 
 NODISCARD FORCEINLINE bool JCxxClass::IsDefault() const noexcept
 {
-    check( this->IsVirtualTableValid() )
-    return this->GetVirtualTable()->GetCDR() == this;
+    return this->GetVirtualTable().GetCDR() == this;
 }
 
 NODISCARD LName JCxxClass::GetName() const noexcept
 {
-    check( this->IsVirtualTableValid() )
-    return this->GetVirtualTable()->GetName();
+    return this->GetVirtualTable().GetName();
 }
 
 NODISCARD LStringView JCxxClass::GetNameAsStringView() const noexcept
 {
-    check( this->IsVirtualTableValid() )
-    return this->GetVirtualTable()->GetFullyQualifiedName();
+    return this->GetVirtualTable().GetFullyQualifiedName();
 }
 
 NODISCARD LString const& JCxxClass::GetNameAsString() const noexcept
 {
-    check( this->IsVirtualTableValid() )
-    return this->GetVirtualTable()->GetFullyQualifiedName();
+    return this->GetVirtualTable().GetFullyQualifiedName();
 }
 
 NODISCARD TArray<LCxxClassField> const& JCxxClass::GetFields() const noexcept
 {
-    check( this->IsVirtualTableValid() )
-    return this->GetVirtualTable()->GetFields();
+    return this->GetVirtualTable().GetFields();
 }
 
 NODISCARD TArray<LCxxClassField>& JCxxClass::GetMutableFieldsDangerous() noexcept
 {
-    check( this->IsVirtualTableValid() )
-    return this->GetMutableVirtualTable()->GetMutableFieldsDangerous();
+    return this->GetMutableVirtualTable().GetMutableFieldsDangerous();
 }
 
 } /* ~Namespace Jafg */
@@ -349,7 +353,7 @@ NODISCARD FORCEINLINE T* LCxxClass::GetMutableCDR() noexcept
 template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
 FORCEINLINE bool JCxxClass::IsA() const noexcept
 {
-    return this->GetVirtualTableChecked()->DerivesFrom(*TObj::StaticClass());
+    return this->GetVirtualTable().DerivesFrom(*TObj::StaticClass());
 }
 
 template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
@@ -386,7 +390,7 @@ FORCEINLINE bool JCxxClass::IsA(TObj** CastedOut) noexcept
 
 FORCEINLINE bool JCxxClass::IsA(LCxxClass const& Class) const noexcept
 {
-    return this->GetVirtualTableChecked()->DerivesFrom(Class);
+    return this->GetVirtualTable().DerivesFrom(Class);
 }
 
 template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
@@ -445,6 +449,18 @@ FORCEINLINE TObj const* JCxxClass::AsStatic() const noexcept
     return StaticCast<TObj>(this);
 }
 
+NODISCARD FORCEINLINE bool JCxxClass::IsCDRInternalWeak() const noexcept
+{
+    auto* CDR{ this->GetVirtualTable().GetCDRInternalWeakDoNotUsePlease() };
+    if (CDR)
+    {
+        return CDR == this;
+    }
+
+    //# Assume that there is no other object then the CDR if CDR is null.
+    return true;
+}
+
 namespace Private
 {
 
@@ -480,8 +496,7 @@ FORCEINLINE LRegistryClassPackage const* LCxxRecordRegistry::GetPackageByCDR(voi
 FORCEINLINE JCxxClass* LCxxRecordMiscellaneousAccessor::MallocClass(JCxxClass const& Class) { return Class._MallocClone(); }
 FORCEINLINE void LCxxRecordMiscellaneousAccessor::ChangeOuter(JCxxClass* Obj, LClassOuter* NewOuter) noexcept
 {
-    check( Obj && NewOuter )
-    check( Obj->Outer == nullptr )
+    check( Obj )
     Obj->Outer = NewOuter;
 
     return;

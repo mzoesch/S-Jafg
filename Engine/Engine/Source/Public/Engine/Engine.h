@@ -262,7 +262,7 @@ private:
     TArray<LLevel> RegisteredLevels;
 
     LClassOuter Outer{ "Engine" };
-    LSubsystemCollection Collection;
+    LSubsystemCollection Collection{ "Engine" };
 
 #if JAFG_WITH_FOREIGN_SUPPORT
 public:

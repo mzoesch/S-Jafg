@@ -38,6 +38,18 @@ void Jafg::LClassOuter::TearDown() noexcept
     STAT_CYCLE_FUNCTION()
 
     LOG_TRACE(LogClassOuter, "Tearing down class outer [{}].", this->HumanReadableName)
+
+    checkCode
+    (
+        for (auto& E : this->Employees)
+        {
+            check( E.get() != nullptr )
+            check( E->IsGarbage() == false )
+            check( E->GetOuter() == this )
+
+            continue;
+        }
+    )
     this->OnTearDown();
 
     LOG_TRACE
@@ -49,16 +61,16 @@ void Jafg::LClassOuter::TearDown() noexcept
 
     while (this->Employees.empty() == false)
     {
-#if LAL_DO_CHECKS
-        const LSize Size { this->Employees.size() };
-#endif /* LAL_DO_CHECKS */
+        auto& E{ this->Employees.back() };
 
-        check( this->Employees.back().get() != nullptr )
-        this->Employees.back()->MarkAsGarbage_v2(ECxxRecordTearDownReason::OuterTearDown);
+        /* Null only allowed in tear down. */
+        if (E.get() == nullptr)
+        {
+            this->Employees.pop_back();
+            continue;
+        }
 
-#if LAL_DO_CHECKS
-        check( this->Employees.size() < Size )
-#endif /* LAL_DO_CHECKS */
+        E->MarkAsGarbage_v2(ECxxRecordTearDownReason::OuterTearDown);
 
         continue;
     }
@@ -73,6 +85,8 @@ void Jafg::LClassOuter::TearDown() noexcept
 
     check( this->Employees.empty() )
     check( this->bWasRegisteredToEngine == false )
+
+    algo::orphan(&this->Employees);
 
     Private::GetGlobalCarnifex().KillAllGarbageChildren();
 
@@ -136,10 +150,8 @@ LSize Jafg::LClassOuter::KillEmployeesFromForeignPlugin(
     {
         for (auto const& E : this->Employees)
         {
-            auto const* Class { E->GetVirtualTable() };
-            check( Class )
-
-            if (Class->GetPluginHandle() != PluginHandle)
+            auto const& Class{ E->GetVirtualTable() };
+            if (Class.GetPluginHandle() != PluginHandle)
             {
                 continue;
             }
@@ -172,9 +184,20 @@ LSize Jafg::LClassOuter::KillEmployeesFromForeignPlugin(
 void Jafg::LClassOuter::RegisterToEngine()
 {
     check( Tasks::IsOnMasterThread() )
-    check( GEngine )
 
-    GEngine->RegisterClassOuter(this);
+    if (GEngine)
+    {
+        GEngine->RegisterClassOuter(this);
+    }
+    else
+    {
+        Tasks::Make(ENamedThreads::Master, ETaskTime::BeforeEngineInitButAfterAlloc, [this]()
+        {
+            check( GEngine )
+            GEngine->RegisterClassOuter(this);
+            return;
+        });
+    }
 
     return;
 }

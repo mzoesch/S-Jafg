@@ -127,6 +127,7 @@ public:
     ~LCxxRecordRegistry() noexcept = default;
 
     NODISCARD FORCEINLINE constexpr bool AreNewPendingPackagesAllowed() const noexcept { return this->bAllowNewPendingPackages; }
+    NODISCARD FORCEINLINE constexpr bool IsCDRRegistrationAllowed() const noexcept { return this->bAllowCDRRegistration; }
 
     ENGINE_API void AddNewPendingPackage(TUnique<LRegistryPackage> Package);
 
@@ -202,7 +203,8 @@ private:
     LPackages RegisteredPackages;
 
     //# Default to true for core static storage packages.
-    bool bAllowNewPendingPackages { true };
+    bool bAllowNewPendingPackages{ true };
+    bool bAllowCDRRegistration{ false };
 
     //# Outer for CDRs.
     LClassOuter& Outer;

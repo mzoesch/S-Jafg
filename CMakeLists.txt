@@ -114,6 +114,11 @@ set(JAFG_MODULE_TYPE_PLUGIN     "plugin")
 #         < Custom CMake commands here if necessary >   # This module can now be dynamically loaded at runtime.
 #     endif()
 #
+# You may set the following variables before calling this macro:
+#   this_plugin_identifier:             Set a custom identifier for your module.
+#   this_plugin_lifetime_identifier:    Set a custom lifetime identifier for your module.
+#   this_plugin_friendly_name:          Set a custom friendly name for your module.
+#
 # @see Examples can be found at "Engine/Engine/CMakeLists.txt" or at "Plugins/Jgc/CMakeLists.txt".
 #
 macro(jafg_add_module

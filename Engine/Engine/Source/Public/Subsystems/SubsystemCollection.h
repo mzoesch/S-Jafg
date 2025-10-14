@@ -50,9 +50,19 @@ struct LSubsystemCollection;
 //# Represents a collection of subsystems that act inside a given lifetime determined by its owning object.
 struct LSubsystemCollection final
 {
-    constexpr LSubsystemCollection() noexcept = default;
-    LSubsystemCollection(LClassOuter* InOuter) noexceptcheck : Outer(InOuter) { check( this->Outer ) }
-    void InitializeDeferred(LClassOuter* InOuter) noexceptcheck
+    constexpr LSubsystemCollection() noexcept = delete;
+    constexpr LSubsystemCollection(LString InFriendlyName) noexcept : FriendlyName(std::move(InFriendlyName)) {}
+    LSubsystemCollection(LClassOuter* InOuter, LString InFriendlyName = {}) noexceptcheck : Outer(InOuter)
+    {
+        check( this->Outer )
+        if (InFriendlyName.empty() == false)
+        {
+            this->FriendlyName = std::move(InFriendlyName);
+        }
+
+        return;
+    }
+    void InitializeDeferred(LClassOuter* InOuter, LString InFriendlyName = {}) noexceptcheck
     {
         check( InOuter )
 
@@ -60,6 +70,11 @@ struct LSubsystemCollection final
         check( this->SubsystemInstances.empty() )
 
         this->Outer = InOuter;
+
+        if (InFriendlyName.empty() == false)
+        {
+            this->FriendlyName = std::move(InFriendlyName);
+        }
 
         return;
     }
@@ -159,6 +174,8 @@ private:
 
     void TearDownPrioritySubsystems();
     void TearDownNonPrioritySubsystems();
+
+    LString FriendlyName;
 
     LClassOuter* Outer { nullptr };
     TSubclassOf<JSubsystem> Class;

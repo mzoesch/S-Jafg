@@ -56,21 +56,38 @@ public:
     FORCEINLINE LWorld const* AsWorld() const noexcept;
     FORCEINLINE LWorld* AsWorld() noexcept;
 
+    FORCEINLINE TUnique<JCxxClass> Poach(JCxxClass* Employee) noexceptcheck
+    {
+        check( Employee )
+        auto It{ algo::find(this->Employees, Employee, algo::unique_raw{}) };
+        check( It != this->Employees.end() )
+
+        TUnique Out{ std::move(*It) };
+        check( *It == nullptr )
+        check( Out.get() == Employee )
+        this->Employees.erase(It);
+
+        return Out;
+    }
+
+    FORCEINLINE TUnique<JCxxClass> PoachToNull(JCxxClass* Employee) noexceptcheck
+    {
+        check( Employee )
+        auto It{ algo::find(this->Employees, Employee, algo::unique_raw{}) };
+        check( It != this->Employees.end() )
+
+        TUnique Out{ std::move(*It) };
+        check( *It == nullptr )
+        check( Out.get() == Employee )
+
+        return Out;
+    }
+
 protected:
 
     virtual void OnTearDown() { }
 
 private:
-
-    FORCEINLINE void RemoveDanglingReferencesToObject(JCxxClass* Employee) noexceptcheck
-    {
-        auto It{ algo::find(this->Employees, Employee, algo::unique_raw{}) };
-        check( It != this->Employees.end() )
-        check( (*It)->IsGarbage() )
-        this->Employees.erase(It);
-
-        return;
-    }
 
     void RegisterToEngine();
     void UnregisterFromEngine();

@@ -22,6 +22,8 @@ enum Type : LCxxClassFlags
 
     //# The class is a singleton and can only be accessed through the #DetDefault and #GetMutableDefault functions.
     Singleton       = Abstract,
+
+    Error           = 1 << 7,
 };
 
 } /* ~Namespace ECxxClassFlags */

@@ -57,11 +57,38 @@ struct LFetchedPlugin final
 {
     FORCEINLINE LFetchedPlugin() = default;
 
+    //# The absolute path to the .jaf.root.plugin config file.
     LPath   AbsolutePath;
+
+    //# Version as specified in the config.
     LString Version;
+
+    //#
+    //# Identifier used to refer to this plugin. Must be unique among all plugins.
+    //# This identifier can be freely changed.
+    //#
     LString Identifier;
+
+    //#
+    //# Optional identifier for the lifetime used for dynamic linking.
+    //# This cannot be changed without recompiling the plugin binary.
+    //#
+    //# @note If not specified, the #Identifier is used.
+    //#
+    LString LifetimeIdentifier;
+
+    //# Native identifier used for internal purposes only. Cannot be changed.
+    LString NativeIdentifier;
+
+    //#
+    //# Optional Friendly name used for display purposes only.
+    //#
+    //# @note If not specified, the #Identifier is used.
+    //#
     LString FriendlyName;
-    LPath   Bin;
+
+    //# Relative (to the config file) or absolute path to the binary implementing this plugin.
+    LPath Bin;
 };
 
 struct LLoadedPlugin final

@@ -20,11 +20,20 @@ Jafg::Private::LCxxRecordRegistry::LCxxRecordRegistry() noexcept
 void Jafg::Private::LCxxRecordRegistry::AddNewPendingPackage(TUnique<LRegistryPackage> Package)
 {
     check( Tasks::IsOnMasterThread() )
+    check( Package.get() != nullptr )
+    check( Package->GetFullyQualifiedName().empty() == false )
 
-    check( algo::contains(this->PendingPackages, Package.get()->GetFullyQualifiedName(), [](auto const& E){ return E->GetFullyQualifiedName(); }) == false )
-    check( algo::contains(this->RegisteredPackages, Package.get()->GetFullyQualifiedName(), [](auto const& E){ return E->GetFullyQualifiedName(); }) == false )
+    check( algo::contains(this->PendingPackages, Package->GetFullyQualifiedName(), [](auto const& E){ return E->GetFullyQualifiedName(); }) == false )
+    check( algo::contains(this->RegisteredPackages, Package->GetFullyQualifiedName(), [](auto const& E){ return E->GetFullyQualifiedName(); }) == false )
 
     check( this->bAllowNewPendingPackages )
+
+    if (Package->IsClass())
+    {
+        auto& ClassPackage{ Package->AsClass() };
+        ClassPackage.StaticClass.Flags = ClassPackage.Flags;
+        check( (ClassPackage.StaticClass.Flags & ECxxClassFlags::Error) == ECxxClassFlags::None )
+    }
 
     this->PendingPackages.emplace_back(std::move(Package));
 
@@ -34,6 +43,7 @@ void Jafg::Private::LCxxRecordRegistry::AddNewPendingPackage(TUnique<LRegistryPa
 void Jafg::Private::LCxxRecordRegistry::LoadPendingPackages(const LLoadedPluginHandle Handle)
 {
     check( this->bAllowNewPendingPackages == false )
+    check( this->bAllowCDRRegistration == false )
 
     if (this->PendingPackages.empty())
     {
@@ -56,7 +66,10 @@ void Jafg::Private::LCxxRecordRegistry::LoadPendingPackages(const LLoadedPluginH
         {
             auto& ClassPackage{ Package->AsClass() };
 
+            this->bAllowCDRRegistration = true;
             ClassPackage.StaticClass.CDR = TUnique<JCxxClass>{ClassPackage.StaticClass.GetCDRFunction()};
+            this->bAllowCDRRegistration = false;
+
             check( ClassPackage.StaticClass.CDR.get() )
 
             NewCDRs.emplace_back(ClassPackage.StaticClass.CDR.get());
@@ -91,14 +104,17 @@ void Jafg::Private::LCxxRecordRegistry::LoadPendingPackages(const LLoadedPluginH
             continue;
         }
 
-        if (Class.FullyQualifiedParentName == "NextIsBaseCxxClass")
+        if (Class.ParentName == "NextIsBaseCxxClass")
         {
             continue;
         }
 
-        Class.Parent = &this->GetClassByNameAsserted(Class.FullyQualifiedParentName)->StaticClass;
+        Class.Parent = &this->GetClassByNameWeakAsserted(Class.ParentName)->StaticClass;
         check( std::addressof(Class) != Class.Parent )
         checkSlow( Class.Parent )
+
+        check( algo::contains(Class.Parent->Children, &Class) == false )
+        Class.Parent->Children.emplace_back(&Class);
 
         continue;
     }
@@ -133,7 +149,7 @@ void Jafg::Private::LCxxRecordRegistry::LoadPendingPackages(const LLoadedPluginH
                 continue;
             }
 
-            if (ClassPackage.StaticClass.GetParent() == nullptr)
+            if (ClassPackage.StaticClass.Parent == nullptr)
             {
                 if (RootClassName.has_value())
                 {
@@ -253,14 +269,14 @@ LSize Jafg::Private::LCxxRecordRegistry::RemovePackagesOf(const LLoadedPluginHan
         auto& Class{ Package->AsClass().StaticClass };
         if (Class.Parent == nullptr)
         {
-            if (Class.FullyQualifiedParentName == "NextIsBaseCxxClass")
+            if (Class.ParentName == "NextIsBaseCxxClass")
             {
                 continue;
             }
 
             panicMsgf( "Found class [{}] with invalid parent [{}] after removing packages of plugin [{}]. Possible dangling dependency on foreign plugin.",
                 Class.GetFullyQualifiedName(),
-                Class.FullyQualifiedParentName,
+                Class.ParentName,
                 static_cast<u32>(Handle)
                 )
             continue;

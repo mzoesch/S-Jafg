@@ -16,7 +16,16 @@ class LCxxRecord
 {
 public:
 
-    constexpr LCxxRecord() noexcept = default;
+    constexpr LCxxRecord() noexcept = delete;
+    constexpr LCxxRecord(LString InFullyQualifiedName) noexcept
+        : FullyQualifiedName(std::move(InFullyQualifiedName))
+    {
+        check( this->FullyQualifiedName.empty() == false )
+        this->Name = MAKE_NAME(this->FullyQualifiedName);
+        check( this->Name.IsSet() )
+
+        return;
+    }
     PROHIBIT_REALLOC_OF_ANY_FORM(LCxxRecord)
     ~LCxxRecord() noexcept = default;
 
