@@ -366,7 +366,7 @@ EPlatformExit::Type GuardedMain()
 
 #if JAFG_WITH_FOREIGN_SUPPORT
     STAT_CYCLE_START(GmEnabledEnginePluginsLoad, "EnabledEnginePluginsLoad")
-    const JUserPreferences* Prefs { GetDefault<JUserPreferences>() };
+    const JUserPreferences* Prefs{ GetDefault<JUserPreferences>() };
     GEngine->RefetchPlugins(Prefs->AdditionalPluginsSearchPaths);
     for (const LString& Plugin : Prefs->EnabledEnginePlugins)
     {
@@ -386,10 +386,21 @@ EPlatformExit::Type GuardedMain()
     GEngine->Browse(World, Name_LevelFrontend.ToString());
     STAT_CYCLE_END(GmEngineWorldLoad)
 
-    if (GEngine == nullptr || ::IsEngineExitRequested())
+    checkSlow( GEngine )
+    if (::IsEngineExitRequested())
     {
         return ::GetMostSignificantExitReason();
     }
+
+#if JAFG_WITH_REST_CLS
+    checkSlow( GEngine )
+    GEngine->StartReSTCliServer();
+    checkSlow( GEngine )
+    if (::IsEngineExitRequested())
+    {
+        return ::GetMostSignificantExitReason();
+    }
+#endif /* JAFG_WITH_REST_CLS */
 
     LaunchProgress::BeginProgress("End of initialization", "Starting ticking ...", 1.0f);
     ::FlushLogs();

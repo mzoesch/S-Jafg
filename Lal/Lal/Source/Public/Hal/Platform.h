@@ -203,6 +203,11 @@ struct LPrimitivePlatformTypesGeneric
     #endif /* (JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER || JAFG_PLATFORM_USES_JAVA_SCRIPT_FRONTEND) */
 #endif /* !AS_CLIENT */
 
+//# Whether to compile with the ReST command line system.
+#ifndef JAFG_WITH_REST_CLS
+    #define JAFG_WITH_REST_CLS                                           0
+#endif /* !JAFG_WITH_REST_CLS */
+
 //# Whether the used compiler supports extern template specifications.
 #ifndef LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS
     #define LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS        0

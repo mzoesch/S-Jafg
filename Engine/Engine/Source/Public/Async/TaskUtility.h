@@ -35,6 +35,10 @@ enum Type : i32
     //#
     WorkerThread    = 0x3,
 
+#if JAFG_WITH_REST_CLS
+    ReSTCli         = 0x10,
+#endif /* JAFG_WITH_REST_CLS */
+
     ReservedMax     = 0x1FF,
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -109,10 +113,14 @@ ENGINE_API  auto GetCurrentThreadId() -> LThreadId;
 ENGINE_API  bool HasThread(const ENamedThreads::Type InThreadName);
 FORCEINLINE bool HasMasterThread() { return HasThread(ENamedThreads::Master); }
 FORCEINLINE bool HasRendererThread() { return HasThread(ENamedThreads::Renderer); }
+FORCEINLINE bool HasWorkerThread() { return HasThread(ENamedThreads::WorkerThread); }
+FORCEINLINE bool HasReSTCliThread();
 
 ENGINE_API  bool IsOnThread(const ENamedThreads::Type InThreadName);
 FORCEINLINE bool IsOnMasterThread() { return IsOnThread(ENamedThreads::Master); }
 FORCEINLINE bool IsOnRendererThread() { return IsOnThread(ENamedThreads::Renderer); }
+FORCEINLINE bool IsOnWorkerThread() { return IsOnThread(ENamedThreads::WorkerThread); }
+FORCEINLINE bool IsOnReSTCliThread();
 
 //#
 //# Make a new task that is being executed on the specified thread in the future.
@@ -169,6 +177,24 @@ FORCEINLINE ENamedThreads::Type GetCurrentThreadNameAsserted()
     const ENamedThreads::Type Thread = GetCurrentThreadName();
     jassert( Thread != ENamedThreads::Failure )
     return Thread;
+}
+
+FORCEINLINE bool HasReSTCliThread()
+{
+#if JAFG_WITH_REST_CLS
+    return HasThread(ENamedThreads::ReSTCli);
+#else /* JAFG_WITH_REST_CLS */
+    return false;
+#endif /* !JAFG_WITH_REST_CLS */
+}
+
+FORCEINLINE bool IsOnReSTCliThread()
+{
+#if JAFG_WITH_REST_CLS
+    return IsOnThread(ENamedThreads::ReSTCli);
+#else /* JAFG_WITH_REST_CLS */
+    return false;
+#endif /* JAFG_WITH_REST_CLS */
 }
 
 template <typename T, typename... Args> requires std::is_base_of_v<LRunnable, T>

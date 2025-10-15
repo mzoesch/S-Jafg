@@ -169,6 +169,10 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     #endif /* JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */
 #endif /* AS_CLIENT */
 
+#ifndef JAFG_WITH_REST_CLS
+    #define JAFG_WITH_REST_CLS                                          1
+#endif /* !JAFG_WITH_REST_CLS */
+
 #ifndef LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS
     #define LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS        1
 #endif /* !LAL_PLATFORM_SUPPORTS_EXTERN_TEMPLATE_SPECIFICATIONS */

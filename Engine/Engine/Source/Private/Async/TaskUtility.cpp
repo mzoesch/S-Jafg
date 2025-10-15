@@ -78,19 +78,6 @@ struct LEngineThread final
 
     FORCEINLINE explicit LEngineThread(
         const Jafg::ENamedThreads::Type InThreadName,
-        std::thread&&                   InNativeThread,
-        Jafg::LRunnable*                InRunnable,
-        const bool                      bInKillRunnableWhenFinished
-    )
-        // The #Id is deferred to when the thread is running autarcik. This ctor is called on the aggregating thread,
-        // so we have to wait for the platform to assign an id to the thread.
-        : Id(0), ThreadName(InThreadName), Thread(std::move(InNativeThread)),
-          Runnable(InRunnable), bKillRunnableWhenFinished(bInKillRunnableWhenFinished)
-    {
-    }
-
-    FORCEINLINE explicit LEngineThread(
-        const Jafg::ENamedThreads::Type InThreadName,
         Jafg::LRunnable*                InRunnable,
         const bool                      bInKillRunnableWhenFinished
     )
@@ -106,10 +93,12 @@ struct LEngineThread final
 
     FORCEINLINE ~LEngineThread()
     {
-        if (this->bKillRunnableWhenFinished)
+        if (this->bKillRunnableWhenFinished == false)
         {
-            delete this->Runnable;
+            this->Runnable.release();
         }
+
+        return;
     }
 
     FORCEINLINE LString GetDisplayName() const;
@@ -119,8 +108,8 @@ struct LEngineThread final
     LString                   HumanReadableName;
     Jafg::TMpmcQueue<LTask>   TaskQueue;
     TOptional<std::thread>    Thread;
-    Jafg::LRunnable*          Runnable { nullptr };
-    bool                      bKillRunnableWhenFinished { false };
+    TUnique<Jafg::LRunnable>  Runnable;
+    bool                      bKillRunnableWhenFinished{ false };
 };
 
 //# Mutex for when adding or removing threads from the engine known threads list.
@@ -190,14 +179,14 @@ void Jafg::LRunnable::Join()
      */
     std::shared_lock Lock(::EngineThreadsMutex);
 
-    auto EngineThread { algo::find(::EngineThreads, this, &LEngineThread::Runnable) };
+    auto EngineThread { algo::find(::EngineThreads, this, [](auto const& E){ return E.Runnable.get(); }) };
     if (EngineThread == ::EngineThreads.end())
     {
         LOG_WARNING(LogRunnable, "No such runnable.")
         return;
     }
 
-    const ENamedThreads::Type Name = EngineThread->ThreadName;
+    const ENamedThreads::Type Name{ EngineThread->ThreadName };
     Lock.unlock();
 
     Tasks::JoinThread(Name);
@@ -647,11 +636,11 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
     ::EngineThreads.emplace_back(ThreadName, Runnable, bKillRunnableWhenFinished);
 
     std::thread ThreadObj = std::thread(
-        [ThreadName, Runnable] (void) -> void
+        [ThreadName] (void) -> void
         {
             {
-                std::shared_lock RefLock(::EngineThreadsMutex);
-                LEngineThread* Ref = algo::find_pointer(::EngineThreads, ThreadName, &LEngineThread::ThreadName);
+                std::unique_lock RefLock(::EngineThreadsMutex);
+                LEngineThread* Ref{ algo::find_pointer(::EngineThreads, ThreadName, &LEngineThread::ThreadName) };
                 check( Ref )
                 Ref->Id = PRIVATE_JAFG_GET_UNDERLYING_THREAD_ID();
 
@@ -670,16 +659,27 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
 
             STAT_QUICK_CYCLE_START("Jafg::Tasks::Private::LaunchNamedThread::std::thread")
 
-            check( Runnable )
-            const ETaskExit::Type LambdaErrorLevel = Runnable->Run();
+            LRunnable* MyRunnable{ nullptr };
+            {
+                std::shared_lock RefLock(::EngineThreadsMutex);
+                LEngineThread* Ref{ algo::find_pointer(::EngineThreads, ThreadName, &LEngineThread::ThreadName) };
+                check( Ref )
+                MyRunnable = Ref->Runnable.get();
+                check( MyRunnable )
+            }
+
+            const ETaskExit::Type LambdaErrorLevel{ MyRunnable->Run() };
+
             if (LambdaErrorLevel != ETaskExit::Success)
             {
+                check( MyRunnable )
+
                 if (LambdaErrorLevel >= ETaskExit::Failure)
                 {
                     LOG_FATAL(
                         LogTaskSystem,
                         "Thread {}[{}] failed to initialize with a non transient failure code: {}[{}].",
-                        Runnable->GetHumanReadableName(), LexToString(ThreadName),
+                        MyRunnable->GetHumanReadableName(), LexToString(ThreadName),
                         LexToString(LambdaErrorLevel), static_cast<LTaskExit>(LambdaErrorLevel)
                         )
                     return;
@@ -688,7 +688,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                 {
                     LString ErrorLevelStr = Lal::SprintF(
                         "Thread {}[{}] failed to initialize with a sanitized failure code: {}[{}].",
-                        Runnable->GetHumanReadableName(), LexToString(ThreadName),
+                        MyRunnable->GetHumanReadableName(), LexToString(ThreadName),
                         LexToString(LambdaErrorLevel), static_cast<LTaskExit>(LambdaErrorLevel)
                         );
 
@@ -700,7 +700,7 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                     LOG_ERROR(
                         LogTaskSystem,
                         "Thread {}[{}] failed to initialize with a transient failure code: {}[{}].",
-                        Runnable->GetHumanReadableName(), LexToString(ThreadName),
+                        MyRunnable->GetHumanReadableName(), LexToString(ThreadName),
                         LexToString(LambdaErrorLevel), static_cast<LTaskExit>(LambdaErrorLevel)
                         )
                 }
@@ -709,14 +709,14 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                     LOG_ERROR(
                         LogTaskSystem,
                         "Thread {}[{}] failed to initialize with an unknown code: {}[{}].",
-                        Runnable->GetHumanReadableName(), LexToString(ThreadName),
+                        MyRunnable->GetHumanReadableName(), LexToString(ThreadName),
                         LexToString(LambdaErrorLevel), static_cast<LTaskExit>(LambdaErrorLevel)
                         )
                 }
             }
 
             STAT_CYCLE_START(Re, "Runnable::Exit")
-            Runnable->Exit();
+            MyRunnable->Exit();
             STAT_CYCLE_END(Re)
 
             if (::bTearingDown)
@@ -735,7 +735,19 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                         return;
                     }
 
-                    algo::erase_once_checked(&::EngineThreads, ThreadName, &LEngineThread::ThreadName);
+                    auto It{ algo::find(::EngineThreads, ThreadName, &LEngineThread::ThreadName) };
+                    if (It == ::EngineThreads.end())
+                    {
+                        LOG_ERROR(LogTaskSystem, "Failed to find thread {} for removal.", LexToString(ThreadName))
+                        return;
+                    }
+
+                    check( It->Thread.has_value() )
+                    check( It->Thread->joinable() )
+                    It->Thread->join();
+
+                    ::EngineThreads.erase(It);
+
                     LOG_VERBOSE(LogTaskSystem, "Removed thread {}[{}].", LexToString(ThreadName), static_cast<i32>(ThreadName))
 
                     return;
@@ -746,6 +758,8 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
         }
     );
 
+    check( ::EngineThreads.back().ThreadName == ThreadName )
+    check( ::EngineThreads.back().Thread.has_value() == false )
     ::EngineThreads.back().Thread = std::move(ThreadObj);
 
     return ErrorLevel;
@@ -760,7 +774,7 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
     ::EngineThreadsMutex.lock();
     check( ::bTearingDown == false )
     ::bTearingDown = true;
-    const TArray<LEngineThread>::size_type EngineThreadsSize { ::EngineThreads.size() - /* Master */1};
+    const TArray<LEngineThread>::size_type EngineThreadsSize{ ::EngineThreads.size() };
     ::EngineThreadsMutex.unlock();
 
     if (bJoinTasks)
@@ -768,14 +782,16 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
         TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, RunAllTasks);
     }
 
-    const Application::LHrcTimePoint TimeBeforeJoinedAllThreads = Application::GetHighestNow();
+    const Application::LHrcTimePoint TimeBeforeJoinedAllThreads{ Application::GetHighestNow() };
     for (LEngineThread& Thread : ::EngineThreads)
     {
+        check( ::EngineThreads.size() == EngineThreadsSize )
+
         if (Thread.Runnable)
         {
             check( Thread.Thread.has_value())
             Thread.Runnable->Stop(ERunnableStopReason::EngineTermination);
-            const Application::LHrcTimePoint TimeBeforeJoin = Application::GetHighestNow();
+            const Application::LHrcTimePoint TimeBeforeJoin{ Application::GetHighestNow() };
             if (Thread.Thread->joinable())
             {
                 Thread.Thread->join();
@@ -784,7 +800,7 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
                 Thread.Runnable->GetHumanReadableName(),
                 LexToString(Thread.ThreadName),
                 Application::GetTimeDiff(TimeBeforeJoin, Application::GetHighestNow())
-            )
+                )
         }
 
         checkCode
@@ -811,7 +827,7 @@ void Jafg::Tasks::Private::StopAndJoinRemainingThreads(const bool bJoinTasks /* 
     (
         LogTaskSystem,
         "Joined {} threads after {} seconds.",
-        EngineThreadsSize,
+        EngineThreadsSize - /* Master */ 1,
         Application::GetTimeDiff(TimeBeforeJoinedAllThreads, Application::GetHighestNow())
     )
 

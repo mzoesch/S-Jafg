@@ -14,6 +14,9 @@
 #if JAFG_WITH_FOREIGN_SUPPORT
     #include "Foreign/Plugin.h"
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
+#if JAFG_WITH_REST_CLS
+    #include "Cli/ReSTCli.h"
+#endif /* JAFG_WITH_REST_CLS */
 
 namespace Jafg
 {
@@ -308,9 +311,20 @@ public:
     FORCEINLINE LCommandLineInterface* GetCommandLineInterface() noexcept { return &this->CommandLineInterface; }
     FORCEINLINE const LCommandLineInterface* GetCommandLineInterface() const noexcept { return &this->CommandLineInterface; }
 
+#if JAFG_WITH_REST_CLS
+    ENGINE_API void StartReSTCliServer();
+    ENGINE_API void StopReSTCliServer(ERunnableStopReason::Type Reason = ERunnableStopReason::EngineTermination);
+
+    FORCEINLINE constexpr LReStCli* GetReSTCli() noexcept { return &this->ReSTCli; }
+    FORCEINLINE constexpr const LReStCli* GetReSTCli() const noexcept { return &this->ReSTCli; }
+#endif /* JAFG_WITH_REST_CLS */
+
 private:
 
     LCommandLineInterface CommandLineInterface;
+#if JAFG_WITH_REST_CLS
+    LReStCli ReSTCli;
+#endif /* JAFG_WITH_REST_CLS */
 };
 
 FORCEINLINE LEngineShader* LEngine::GetShader(const LName Name) noexcept

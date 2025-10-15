@@ -4,6 +4,7 @@
 #include "Engine/Engine.h"
 #include "Engine/CoreGlobals.h"
 #include "Async/TaskUtility.h"
+#include "Async/TickedRunnable.h"
 #include "Cli/CliExtended.h"
 #include "Cli/CliPrimitives.h"
 #include "Engine/World.h"
@@ -62,7 +63,7 @@ void Jafg::LEngine::PreInitialize()
 
     if
     (
-        ETaskExit::Type const Rc { Tasks::LaunchNamedThread<LEngineRunnable>(ENamedThreads::WorkerThread, "WorkerThread") };
+        ETaskExit::Type const Rc{ Tasks::LaunchNamedThread<LEngineRunnable>(ENamedThreads::WorkerThread, "WorkerThread") };
         Rc != ETaskExit::Success
     )
     {
@@ -429,6 +430,10 @@ void Jafg::LEngine::TearDown()
     STAT_CYCLE_FUNCTION()
 
     LOG_VERBOSE(LogEngine, "Tearing down engine.")
+
+#if JAFG_WITH_REST_CLS
+    this->StopReSTCliServer();
+#endif /* JAFG_WITH_REST_CLS */
 
     LOG_VERBOSE(LogEngine, "Deallocating {} registered tracks.", this->Tracks.size())
     for (auto const& Track : this->Tracks)
@@ -858,7 +863,7 @@ void Jafg::LEngine::FetchPlugins(LPath const& Path)
 {
     STAT_CYCLE_FUNCTION()
 
-    LOG_VERBOSE(LogForeign, "Fetching in [{}] ...", Path)
+    LOG_VERBOSE(LogForeign, "Fetching in [{}]...", Path)
 
     i32 Fetched{ 0 };
     for
@@ -1052,3 +1057,30 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
     return EPluginLoadReturnCode::Success;
 }
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
+
+#if JAFG_WITH_REST_CLS
+void Jafg::LEngine::StartReSTCliServer()
+{
+    LOG_VERBOSE(LogEngine, "Starting ReST CLI server...")
+
+    if
+    (
+        ETaskExit::Type const Rc{ Tasks::Private::LaunchNamedThread(ENamedThreads::ReSTCli, &this->ReSTCli, false) };
+        Rc != ETaskExit::Success
+    )
+    {
+        LOG_FATAL(LogGuardedMain, "Failed to create ReST Cli thread: [{}].", static_cast<i32>(Rc));
+    }
+
+    return;
+}
+
+void Jafg::LEngine::StopReSTCliServer(ERunnableStopReason::Type Reason /* = ERunnableStopReason::EngineTermination */)
+{
+    LOG_VERBOSE(LogEngine, "Trying to stop ReST CLI server...")
+    this->ReSTCli.Stop(Reason);
+    this->ReSTCli.Join();
+
+    return;
+}
+#endif /* JAFG_WITH_REST_CLS */

@@ -66,6 +66,7 @@ DECLARE_INLINE_LOG_CATEGORY( LogPlatformMisc,                 LAL_LOG_DEFAULT_VE
 DECLARE_INLINE_LOG_CATEGORY( LogPreferences,                  LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogProgramArguments,             Warning                                               )
 DECLARE_INLINE_LOG_CATEGORY( LogRecipeSystem,                 LAL_LOG_DEFAULT_VERBOSITY                             )
+DECLARE_INLINE_LOG_CATEGORY( LogReST,                         LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogRhi,                          LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogRunnable,                     LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogStats,                        LAL_LOG_DEFAULT_VERBOSITY                             )
