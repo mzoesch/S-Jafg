@@ -1062,6 +1062,7 @@ void Jafg::LEngine::StartReSTCliServer()
 
     this->ReSTCli.Get("/info", [](ReST::LRequest const&, ReST::LResponse* OutResponse) -> void
     {
+        check( OutResponse )
         check( GEngine )
 
         json Info;
@@ -1100,9 +1101,60 @@ void Jafg::LEngine::StartReSTCliServer()
 
     this->ReSTCli.Get("/", [](ReST::LRequest const&, ReST::LResponse* OutResponse) -> void
     {
-        OutResponse->SetStatusCode(302);
+        check( OutResponse )
+
+        OutResponse->SetStatusCode(ReST::Found_302);
         OutResponse->AddHeader("Location", "/info");
         OutResponse->SetContent("Redirecting to /info", "text/plain");
+
+        return;
+    });
+
+    this->ReSTCli.Get("/logs", [](ReST::LRequest const& Request, ReST::LResponse* OutResponse) -> void
+    {
+        check( OutResponse )
+
+#if LAL_SAVE_LOGS_IN_MEMORY
+        if (Request.HasParameter("id"))
+        {
+            LString Id{ Request.GetParameter("id") };
+
+            if (Id.empty())
+            {
+                OutResponse->SetStatusCode(ReST::BadRequest_400);
+                OutResponse->SetContent(R"({"error":"Empty 'id' parameter."})", "application/json");
+                return;
+            }
+
+            u64 ConvertedId; Serialization::FromString(&ConvertedId, Id);
+
+            json Res;
+            auto& Logs = Res["logs"] = json::array();
+            while (ConvertedId < JafgCore::GLongLiquidLogs.size())
+            {
+                auto const& Entry{ JafgCore::GLongLiquidLogs.at(ConvertedId) };
+
+                json E;
+                E["id"] = ConvertedId;
+                E["level"] = std::get<0>(Entry);
+                E["message"] = std::get<1>(Entry);
+                Logs.emplace_back(std::move(E));
+
+                ++ConvertedId;
+                continue;
+            }
+
+            OutResponse->SetContent(Res.dump(), "application/json");
+        }
+        else
+        {
+            OutResponse->SetStatusCode(ReST::BadRequest_400);
+            OutResponse->SetContent(R"({"error":"Missing 'id' parameter."})", "application/json");
+        }
+#else /* LAL_SAVE_LOGS_IN_MEMORY */
+        OutResponse->SetStatusCode(ReST::BadRequest_400);
+        OutResponse->SetContent(R"({"error":"Logs are not permitted in this engine build."})", "application/json");
+#endif /* !LAL_SAVE_LOGS_IN_MEMORY */
 
         return;
     });

@@ -183,9 +183,18 @@
 #define PRIVATE_LAL_LOG_DECLARE_INLINE_LOG_CATEGORY_IMPL(Category, Verbosity) \
     inline ::Lal::LLogCategory<::Lal::ELogVerbosity::Type::Verbosity> Category(#Category);
 
-#define PRIVATE_LAL_LOG_PRIVATE_LOG(Category, Verbosity, Color, Format, ...) \
+#if LAL_SAVE_LOGS_IN_MEMORY
+    #define PRIVATE_LAL_LOG_SAVE_LOG(Category, Verbosity, Format, ...)                             \
+        ::Lal::SaveLog<::Lal::ELogVerbosity::Type::Verbosity, Category.GetCompileTimeVerbosity()>( \
+            "[" #Category "] - {}: " Format "", std::string_view{__FUNCTION__}, ##__VA_ARGS__);
+#else /* LAL_SAVE_LOGS_IN_MEMORY */
+    #define PRIVATE_LAL_LOG_SAVE_LOG(Category, Verbosity, Format, ...)
+#endif /* !LAL_SAVE_LOGS_IN_MEMORY */
+
+#define PRIVATE_LAL_LOG_PRIVATE_LOG(Category, Verbosity, Color, Format, ...)                \
+    PRIVATE_LAL_LOG_SAVE_LOG(Category, Verbosity, Format, ##__VA_ARGS__)                    \
     ::Lal::LogMessage<::Lal::ELogVerbosity::Verbosity, Category.GetCompileTimeVerbosity()>( \
-    Color "[" #Category "] - {}: " Format "" LAL_LOG_COLOR_END, std::string_view{__FUNCTION__}, ##__VA_ARGS__);
+        Color "[" #Category "] - {}: " Format "" LAL_LOG_COLOR_END, std::string_view{__FUNCTION__}, ##__VA_ARGS__);
 
 #if !LAL_LOG_ENABLE_TRACE
     #define LOG_TRACE(Category, Format, ...)

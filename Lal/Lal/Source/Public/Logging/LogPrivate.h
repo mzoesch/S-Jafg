@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "LongLiquidLogger.h"
+
 namespace Lal
 {
 
@@ -64,27 +66,50 @@ FORCEINLINE void FlushOutStreams()
     return;
 }
 
-//# This function may be used with ANSI escapes.
-template <ELogVerbosity::Type InVerbosity, ELogVerbosity::Type InCategoryVerbosity, typename... TArgs>
-FORCEINLINE void LogMessage(std::format_string<TArgs...> InFormat, TArgs&&... InArgs)
+#if LAL_SAVE_LOGS_IN_MEMORY
+template<ELogVerbosity::Type Verbosity, ELogVerbosity::Type CategoryVerbosity, typename... TArgs>
+FORCEINLINE void SaveLog(std::format_string<TArgs...> Format, TArgs&&... Args)
 {
+    if constexpr ((Verbosity < CategoryVerbosity) == false)
+    {
+        JafgCore::GLongLiquidLogs.emplace_back
+        (
+            std::make_tuple
+            (
+                LexToString(Verbosity),
+                std::string{std::format(Format, std::forward<TArgs>(Args)...)}
+            )
+        );
+    }
+
+    return;
+}
+#endif /* LAL_SAVE_LOGS_IN_MEMORY */
+
+template<ELogVerbosity::Type Verbosity, ELogVerbosity::Type CategoryVerbosity, typename... TArgs>
+FORCEINLINE void LogMessage(std::format_string<TArgs...> Format, TArgs&&... Args)
+{
+    /* Not thread safe. But who actually care. It's just logs. */
 #if PLATFORM_WASM
-    if constexpr (ActualVerbosity == ELogVerbosity::Warning)
+    if constexpr ((Verbosity < CategoryVerbosity) == false)
     {
-        ::emscripten_log(EM_LOG_CONSOLE | EM_LOG_WARN, std::format(InFormat, InArgs...));
-    }
-    else if constexpr (ActualVerbosity == ELogVerbosity::Error || ActualVerbosity == ELogVerbosity::Fatal)
-    {
-        ::emscripten_log(EM_LOG_CONSOLE | EM_LOG_ERROR, std::format(InFormat, InArgs...));
-    }
-    else
-    {
-        ::emscripten_log(EM_LOG_CONSOLE, std::format(InFormat, InArgs...));
+        if constexpr (Verbosity == ELogVerbosity::Warning)
+        {
+            ::emscripten_log(EM_LOG_CONSOLE | EM_LOG_WARN, std::format(Format, Args...));
+        }
+        else if constexpr (Verbosity == ELogVerbosity::Error || Verbosity == ELogVerbosity::Fatal)
+        {
+            ::emscripten_log(EM_LOG_CONSOLE | EM_LOG_ERROR, std::format(Format, Args...));
+        }
+        else
+        {
+            ::emscripten_log(EM_LOG_CONSOLE, std::format(Format, Args...));
+        }
     }
 #else /* PLATFORM_WASM */
-    if constexpr ((InVerbosity < InCategoryVerbosity) == false)
+    if constexpr ((Verbosity < CategoryVerbosity) == false)
     {
-        std::cout << std::format(InFormat, std::forward<TArgs>(InArgs)...) << '\n';
+        std::cout << std::format(Format, std::forward<TArgs>(Args)...) << '\n';
     }
 #endif /* !PLATFORM_WASM */
 

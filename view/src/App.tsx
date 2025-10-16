@@ -3,16 +3,19 @@ import { Routes, Route } from 'react-router-dom'
 import Navbar from "./components/Navbar.tsx";
 import HomePage from './pages/Home.tsx'
 import NotFound from "./pages/NotFound.tsx";
+import ConsolePage from "./pages/Console.tsx";
 
 export default function App() {
   return (
-    <div style={{ minHeight: '100vh', width: '100%', }}>
+    <div className='min-h-screen w-screen flex flex-col'>
       <Navbar />
-      <div style={{ height: '0rem' }}></div>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <main className='flex flex-grow'>
+        <Routes>
+          <Route path='/' element={<HomePage />} />
+          <Route path='*' element={<NotFound />} />
+          <Route path='/console' element={<ConsolePage />} />
+        </Routes>
+      </main>
     </div>
   )
 }

@@ -19,9 +19,19 @@ TUnique<httplib::Server> Server;
 
 } /* ~Namespace <Anonymous> */
 
-void Jafg::ReST::LResponse::SetStatusCode(i32 InStatusCode) noexcept
+bool Jafg::ReST::LRequest::HasParameter(LString const& Key) const noexcept
 {
-    static_cast<httplib::Response*>(this->Pimpl)->status = InStatusCode;
+    return static_cast<httplib::Request const*>(this->Pimpl)->has_param(Key);
+}
+
+LString Jafg::ReST::LRequest::GetParameter(LString const& Key) const noexcept
+{
+    return static_cast<httplib::Request const*>(this->Pimpl)->get_param_value(Key);
+}
+
+void Jafg::ReST::LResponse::SetStatusCode(EStatusCode InStatusCode) noexcept
+{
+    static_cast<httplib::Response*>(this->Pimpl)->status = static_cast<i32>(InStatusCode);
 }
 
 void Jafg::ReST::LResponse::AddHeader(std::string&& InHeader, std::string&& InValue) noexcept
@@ -104,22 +114,15 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Initialize()
 
     ::Server->Options(".*", [](httplib::Request const& Req, httplib::Response& Res)
     {
-        Res.set_header("Access-Control-Allow-Origin", "*");
-        Res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        Res.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
         Res.status = httplib::NoContent_204;
-
         return;
     });
 
-    ::Server->set_post_routing_handler([](httplib::Request const&, httplib::Response& Res)
+    ::Server->set_default_headers(
     {
-        Res.set_header("Access-Control-Allow-Origin", "*");
-        Res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        Res.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-        return;
+        { "Access-Control-Allow-Origin", "*" },
+        { "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS" },
+        { "Access-Control-Allow-Headers", "Content-Type, Authorization" }
     });
 
     ::Server->Get("/docs", [](httplib::Request const& Req, httplib::Response& Res)
@@ -129,7 +132,6 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Initialize()
         Res.set_content("{}", "application/json");
         return;
     });
-
 
     return LRunnable::Initialize();
 }

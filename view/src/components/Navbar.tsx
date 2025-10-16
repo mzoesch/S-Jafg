@@ -1,4 +1,6 @@
-import {Link} from 'react-router-dom';
+// Copyright mzoesch. All rights reserved.
+
+import {Link, NavLink} from 'react-router-dom';
 import {Button, Input, Menu, MenuButton, MenuItems} from '@headlessui/react'
 import {ChevronDownIcon} from '@heroicons/react/16/solid'
 import {useEffect, useState} from 'react';
@@ -54,7 +56,7 @@ function GetEnginePingMenu() {
   const [engineStats, setEngineStats] = useState<{ [key: string]: string | number | boolean }>(initialEngineStats)
   const [allowPing, setAllowPing] = useState<boolean>(true)
   const [engineUrl, setEngineUrl] = useState<string>(() => {
-    return localStorage.getItem(ENGINE_URL_STORAGE_KEY) ?? 'http://localhost:8080'
+    return localStorage.getItem(ENGINE_URL_STORAGE_KEY) || ''
   });
 
   useEffect(() => {
@@ -68,7 +70,11 @@ function GetEnginePingMenu() {
   }, []);
 
   const saveEngineUrl = (value: string) => {
-    localStorage.setItem(ENGINE_URL_STORAGE_KEY, value)
+    if (!value || value.length === 0) {
+      localStorage.removeItem(ENGINE_URL_STORAGE_KEY)
+    } else {
+      localStorage.setItem(ENGINE_URL_STORAGE_KEY, value)
+    }
   }
 
   const handlePing = async () => {
@@ -156,13 +162,7 @@ function GetEnginePingMenu() {
 
 export default function Navbar() {
   return (
-    <nav style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '0.2rem 0.75rem',
-      backgroundColor: '#2f343f',
-    }} aria-label='Main navigation'>
+    <nav className='sticky top-0 left-0 flex justify-between items-center px-3 py-2 bg-gray-900' aria-label='Main navigation'>
       <Link style={{ color: 'inherit', }} to={'/'}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '7rem' }}>
           <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>JAFG</div>
@@ -171,9 +171,18 @@ export default function Navbar() {
       </Link>
 
       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-        <Link style={{ color: 'inherit' }} to='/'>Home</Link>
-        <Link style={{ color: 'inherit' }} to='/about'>About</Link>
-        <Link style={{ color: 'inherit' }} to='/contact'>Contact</Link>
+        <NavLink to='/' style=
+          {({ isActive }) => ({
+            color: isActive ? 'antiquewhite' : 'inherit',
+            textDecoration: isActive ? 'underline' : 'none',
+          })}>Home</NavLink>
+
+        <NavLink to='/console' style=
+          {({ isActive }) => ({
+            color: isActive ? 'antiquewhite' : 'inherit',
+            textDecoration: isActive ? 'underline' : 'none',
+          })}>Console</NavLink>
+
         {GetEnginePingMenu()}
       </div>
     </nav>

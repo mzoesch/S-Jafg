@@ -1,11 +1,5 @@
+// Copyright mzoesch. All rights reserved.
 
-function HomePage()
-{
-  return (
-    <>
-      <p>Home</p>
-    </>
-  )
+export default function HomePage() {
+  return <><p>Home Page</p></>
 }
-
-export default HomePage;
