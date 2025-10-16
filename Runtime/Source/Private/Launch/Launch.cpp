@@ -91,6 +91,10 @@ void EngineTick()
                 const f64 SleepTime = (1.0 / UserPreferences->MaxFps) - ThisFrameTime;
                 Lal::Hal::SleepNoStats(Maths::Max(SleepTime - 0.002, 0.0)); // This doesn't really work, sadly. How tf can we fix that - to sleep more precisely?
                 Application::Private::IdleDeltaTime = Application::GetTimeDiff(SleepStart, Application::GetHighestNow());
+                if (Application::GetIdleDeltaTime() > Application::GetHighestIdleDeltaTime())
+                {
+                    Application::Private::HighestIdleDeltaTime = Application::GetIdleDeltaTime();
+                }
             }
         }
 

@@ -743,8 +743,10 @@ Jafg::ETaskExit::Type Jafg::Tasks::Private::LaunchNamedThread(const ENamedThread
                     }
 
                     check( It->Thread.has_value() )
-                    check( It->Thread->joinable() )
-                    It->Thread->join();
+                    if (It->Thread->joinable())
+                    {
+                        It->Thread->join();
+                    }
 
                     ::EngineThreads.erase(It);
 

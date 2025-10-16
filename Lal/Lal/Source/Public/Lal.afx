@@ -107,6 +107,7 @@
 #include "Containers/ComplexQueue.h"
 #include "Containers/SimpleQueue.h"
 #include "System/LalFinder.h"
+#include "Containers/CoreContainersUtility.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Functors
@@ -136,3 +137,7 @@
     #define PRIVATE_JAFG_MAKE_INLINE
     #include "Lal/Lal/Source/Private/Math/MathDefines.cpp"
 #endif /* !PLATFORM_USES_INLINE_MATH_DEFINES */
+
+///////////////////////////////////////////////////////////////////////////////
+// Wrappers
+#include "Wrappers/Json.h"

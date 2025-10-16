@@ -224,10 +224,13 @@ ENGINE_API LHrcTimePoint StaticContainerInitializationTime { Hrc::now() };
 ENGINE_API f64           LowestDeltaTime                   { std::numeric_limits<double>::max() };
 ENGINE_API f64           HighestDeltaTime                  { -1.0 };
 ENGINE_API f64           HighestLostDeltaTime              {  0.0 };
+ENGINE_API f64           HighestIdleDeltaTime              {  0.0 };
 ENGINE_API LHrcTimePoint PreviousStatisticsStartTime       { StaticContainerInitializationTime };
-ENGINE_API u64           PreviousStatisticsFrameCount      { FrameCount       };
-ENGINE_API f64           PreviousLowestDeltaTime           { LowestDeltaTime  };
+ENGINE_API u64           PreviousStatisticsFrameCount      { FrameCount };
+ENGINE_API f64           PreviousLowestDeltaTime           { LowestDeltaTime };
 ENGINE_API f64           PreviousHighestDeltaTime          { HighestDeltaTime };
+ENGINE_API f64           PreviousHighestLostDeltaTime      { HighestLostDeltaTime };
+ENGINE_API f64           PreviousHighestIdleDeltaTime      { HighestIdleDeltaTime };
 ENGINE_API LHrcTimePoint LastStatisticsTime                { StaticContainerInitializationTime };
 ENGINE_API u64           StatisticsFrameCount              { 0 };
 ENGINE_API f32           StatisticsPeriod                  { 1.0f };
@@ -263,6 +266,15 @@ bool HasTracerPidNow()
 {
     Private::bHasTracerPid = Lal::Hal::IsTracerPidValidVerySlow();
     return HasTracerPid();
+}
+
+bool CanEverProfile() noexcept
+{
+#if WITH_STATS
+    return true;
+#else /* WITH_STATS */
+    return false;
+#endif /* !WITH_STATS */
 }
 
 bool IsAllowProfiling() noexcept

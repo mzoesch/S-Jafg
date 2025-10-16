@@ -125,6 +125,15 @@ if(_guard)
     target_include_directories(${_scoped_module_name} PRIVATE "${stb_dir}")
 
     ###############################################################################
+    # http
+    message(STATUS "Including cpp-httplib...")
+    set(httplib_dir "${JAFG_ENGINE_ROOT}/Engine/Vendor/cpp-httplib")
+    if(NOT EXISTS "${httplib_dir}")
+        message(FATAL_ERROR "Expected submodule at [${httplib_dir}].")
+    endif()
+    target_include_directories(${_scoped_module_name} PRIVATE "${httplib_dir}")
+
+    ###############################################################################
     # Tracked vendors
     message(STATUS "Including tracked vendors...")
     target_include_directories(${_scoped_module_name} PRIVATE

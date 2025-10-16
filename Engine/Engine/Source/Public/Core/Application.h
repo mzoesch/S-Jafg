@@ -76,6 +76,7 @@ ENGINE_API  bool HasTracerPidNow();
 
 FORCEINLINE bool IsAlwaysReportCrash() noexcept { return Private::bAlwaysReportCrash; }
 
+ENGINE_API  bool CanEverProfile() noexcept;
 ENGINE_API  bool IsAllowProfiling() noexcept;
 
 //#
@@ -108,10 +109,13 @@ FORCEINLINE f32  GetCurrentFps() noexcept;
 FORCEINLINE f64  GetLowestDeltaTime() noexcept;
 FORCEINLINE f64  GetHighestDeltaTime() noexcept;
 FORCEINLINE f64  GetHighestLostDeltaTime() noexcept;
+FORCEINLINE f64  GetHighestIdleDeltaTime() noexcept;
 FORCEINLINE f64  GetRealTimeOfPreviousStatisticsDuration() noexcept;
 FORCEINLINE u64  GetPreviousFrameCount() noexcept;
 FORCEINLINE f64  GetPreviousLowestDeltaTime() noexcept;
 FORCEINLINE f64  GetPreviousHighestDeltaTime() noexcept;
+FORCEINLINE f64  GetPreviousHighestLostDeltaTime() noexcept;
+FORCEINLINE f64  GetPreviousHighestIdleDeltaTime() noexcept;
 FORCEINLINE f32  CalculateLowestFps() noexcept;
 FORCEINLINE f32  CalculateHighestFps() noexcept;
 FORCEINLINE auto GetLastStatisticsTime() noexcept -> LHrcTimePoint;
@@ -142,10 +146,13 @@ ENGINE_API extern LHrcTimePoint StaticContainerInitializationTime;
 ENGINE_API extern f64           LowestDeltaTime;
 ENGINE_API extern f64           HighestDeltaTime;
 ENGINE_API extern f64           HighestLostDeltaTime;
+ENGINE_API extern f64           HighestIdleDeltaTime;
 ENGINE_API extern LHrcTimePoint PreviousStatisticsStartTime;
 ENGINE_API extern u64           PreviousStatisticsFrameCount;
 ENGINE_API extern f64           PreviousLowestDeltaTime;
 ENGINE_API extern f64           PreviousHighestDeltaTime;
+ENGINE_API extern f64           PreviousHighestLostDeltaTime;
+ENGINE_API extern f64           PreviousHighestIdleDeltaTime;
 ENGINE_API extern LHrcTimePoint LastStatisticsTime;
 ENGINE_API extern u64           StatisticsFrameCount;
 ENGINE_API extern f32           StatisticsPeriod;
@@ -258,6 +265,11 @@ FORCEINLINE f64 Jafg::Application::GetHighestLostDeltaTime() noexcept
     return Private::HighestLostDeltaTime;
 }
 
+FORCEINLINE f64 Jafg::Application::GetHighestIdleDeltaTime() noexcept
+{
+    return Private::HighestIdleDeltaTime;
+}
+
 FORCEINLINE f64 Jafg::Application::GetRealTimeOfPreviousStatisticsDuration() noexcept
 {
     return std::chrono::duration<f64>(Private::LastStatisticsTime - Private::PreviousStatisticsStartTime).count();
@@ -276,6 +288,16 @@ FORCEINLINE f64 Jafg::Application::GetPreviousLowestDeltaTime() noexcept
 FORCEINLINE f64 Jafg::Application::GetPreviousHighestDeltaTime() noexcept
 {
     return Private::PreviousHighestDeltaTime;
+}
+
+FORCEINLINE f64 Jafg::Application::GetPreviousHighestLostDeltaTime() noexcept
+{
+    return Private::PreviousHighestLostDeltaTime;
+}
+
+FORCEINLINE f64 Jafg::Application::GetPreviousHighestIdleDeltaTime() noexcept
+{
+    return Private::PreviousHighestIdleDeltaTime;
 }
 
 FORCEINLINE f32 Jafg::Application::CalculateLowestFps() noexcept
@@ -309,12 +331,15 @@ FORCEINLINE void Jafg::Application::ResetStatistics() noexcept
     Private::PreviousStatisticsFrameCount = Private::StatisticsFrameCount;
     Private::PreviousLowestDeltaTime      = Private::LowestDeltaTime;
     Private::PreviousHighestDeltaTime     = Private::HighestDeltaTime;
+    Private::PreviousHighestLostDeltaTime = Private::HighestLostDeltaTime;
+    Private::PreviousHighestIdleDeltaTime = Private::HighestIdleDeltaTime;
 
     Private::LastStatisticsTime   = Application::GetHighestNow();
     Private::StatisticsFrameCount = 0;
     Private::LowestDeltaTime      = std::numeric_limits<f64>::max();
     Private::HighestDeltaTime     = -1.0;
     Private::HighestLostDeltaTime =  0.0;
+    Private::HighestIdleDeltaTime =  0.0;
 
     return;
 }

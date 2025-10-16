@@ -13,14 +13,45 @@ function GetEnginePingMenu() {
     Failed: 'Failed',
   }
 
-  const engineStats = {
-    Version: 'N/A',
-    Uptime: 'N/A',
-    Requests: 'N/A',
-    Errors: 'N/A',
+  const [status, setStatus] = useState<string>(pingStates.Unknown)
+  const statusClass = (() => {
+    if (status === pingStates.Successful) return 'bg-teal-950'
+    if (status === pingStates.Failed) return 'bg-red-700'
+    if (status === pingStates.Pinging) return 'bg-gray-600'
+    return 'bg-gray-700'
+  })()
+
+  const initialEngineStats = {
+    BuildTime: 'N/A',
+    BuildDate: 'N/A',
+    VcsBranch: 'N/A',
+    VcsRevision: 'N/A',
+
+    EngineVersion: 'N/A',
+
+    CompilerVersion: 'N/A',
+    CxxStandard: 'N/A',
+
+    TargetPlatform: 'N/A',
+    TargetType: 'N/A',
+    TargetConfig: 'N/A',
+    bEverRender: false,
+
+    Uptime: 0.0,
+    Ticks: 0,
+    AvgDeltaTime: 0.0,
+    AvgTickRate: 0.0,
+    MaxDeltaTime: 0.0,
+    LowestDeltaTime: 0.0,
+    HighestDeltaTime: 0.0,
+    HighestLostDeltaTime: 0.0,
+    HighestIdleTime: 0.0,
+    bTracerPid: false,
+    bEverProfile: false,
+    bProfiling: false,
   }
 
-  const [status, setStatus] = useState<string>(pingStates.Unknown)
+  const [engineStats, setEngineStats] = useState<{ [key: string]: string | number | boolean }>(initialEngineStats)
   const [allowPing, setAllowPing] = useState<boolean>(true)
   const [engineUrl, setEngineUrl] = useState<string>(() => {
     return localStorage.getItem(ENGINE_URL_STORAGE_KEY) ?? 'http://localhost:8080'
@@ -48,11 +79,28 @@ function GetEnginePingMenu() {
     setAllowPing(false)
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       const res = await fetch(engineUrl, { method: 'GET' });
       setStatus(res.ok ? pingStates.Successful : pingStates.Failed)
 
+      if (res.ok) {
+        const data = await res.json()
+
+        const newStats = { ...initialEngineStats }
+        Object.keys(initialEngineStats).forEach((key) => {
+          if (key in data && data[key] !== undefined && data[key] !== null) {
+            newStats[key] = data[key];
+          } else {
+            newStats[key] = 'N/A';
+          }
+        })
+
+        if (newStats['EngineVersion'] === 'N/A') {
+          console.error('Invalid response from engine. ["EngineVersion"] is always required: ', data)
+          setStatus(pingStates.Failed)
+        }
+
+        setEngineStats(newStats)
+      }
     } catch (error) {
       console.error('Ping failed:', error)
       setStatus(pingStates.Failed)
@@ -86,7 +134,7 @@ function GetEnginePingMenu() {
         <div>
           <div className='flex items-center justify-between'>
             <Button className='min-w-36' onClick={handlePing} disabled={!allowPing}>Ping</Button>
-            <div className='text-xl bg-teal-950 px-4 border-1 border-white/25 min-w-48 text-center'>Status: {status}</div>
+            <div className={`text-xl ${statusClass} px-4 border-1 border-white/25 min-w-48 text-center`}>Status: {status}</div>
           </div>
         </div>
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} className='mt-2 pt-2 f font-bold text-xl text-white/75'
@@ -95,7 +143,9 @@ function GetEnginePingMenu() {
           {Object.entries(engineStats).map(([key, value]) => (
             <div key={key} className='flex justify-between'>
               <div className='font-bold text-white/75'>{key}:</div>
-              <div>{value}</div>
+              <div className='text-white/50'>
+                {typeof value === 'number' ? value.toFixed(4) : value.toString()}
+              </div>
             </div>
           ))}
         </div>
@@ -125,19 +175,6 @@ export default function Navbar() {
         <Link style={{ color: 'inherit' }} to='/about'>About</Link>
         <Link style={{ color: 'inherit' }} to='/contact'>Contact</Link>
         {GetEnginePingMenu()}
-        {/*<Menu>*/}
-        {/*  <MenuButton>Connection</MenuButton>*/}
-        {/*  <MenuItems style={{ padding: '1rem', minWidth: '20rem', backgroundColor: '#1b202b',*/}
-        {/*      border: '2px solid rgba(255,255,255,0.3)', borderRadius: '6px',*/}
-        {/*    }} anchor='bottom end'>*/}
-        {/*    <MenuItem>*/}
-        {/*      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'left' }}>*/}
-        {/*        <MenuButton>Test Connection</MenuButton>*/}
-        {/*        <text>Test the connection by pinging it.</text>*/}
-        {/*      </div>*/}
-        {/*    </MenuItem>*/}
-        {/*  </MenuItems>*/}
-        {/*</Menu>*/}
       </div>
     </nav>
   );

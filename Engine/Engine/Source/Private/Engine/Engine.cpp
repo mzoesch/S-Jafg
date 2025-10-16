@@ -5,6 +5,7 @@
 #include "Engine/CoreGlobals.h"
 #include "Async/TaskUtility.h"
 #include "Async/TickedRunnable.h"
+#include "Build/EngineBuildInfo.h"
 #include "Cli/CliExtended.h"
 #include "Cli/CliPrimitives.h"
 #include "Engine/World.h"
@@ -16,17 +17,6 @@
 #include "Platform/PlatformMisc.h"
 #include "Engine/EngineRunnable.h"
 #include "Engine/Carnifex.h"
-#if JAFG_WITH_FOREIGN_SUPPORT
-    #if LAL_WITH_CLANG
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-W#warnings"
-    #endif /* LAL_WITH_CLANG */
-    #define JSON_NOEXCEPTION
-    #include "nlohmann/json.hpp"
-    #if LAL_WITH_CLANG
-        #pragma clang diagnostic pop
-    #endif /* LAL_WITH_CLANG */
-#endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
@@ -547,11 +537,11 @@ void Jafg::LEngine::RequestEngineExit(const i32 CustomExitStatus, LString const&
 // ReSharper disable once CppMemberFunctionMayBeStatic
 bool Jafg::LEngine::CanEverRender() const noexcept
 {
-#if WITH_FRONTEND
+#if WITH_LOCAL_LAYER
     return true;
-#else /* WITH_FRONTEND */
+#else /* WITH_LOCAL_LAYER */
     return false;
-#endif /* !WITH_FRONTEND */
+#endif /* !WITH_LOCAL_LAYER */
 }
 
 void Jafg::LEngine::RegisterClassOuter(LClassOuter* Outer)
@@ -894,8 +884,6 @@ bool Jafg::LEngine::FetchPlugin(LPath const& Path)
 {
     checkCode( Finder::CheckFile(Path) )
 
-    using json = nlohmann::json;
-
     //# Do not use {} init, as this would trigger an implicit creation of an array...
     const json PluginJson = json::parse(Finder::ReadFile(Path), nullptr, false);
 
@@ -1071,6 +1059,53 @@ void Jafg::LEngine::StartReSTCliServer()
     {
         LOG_FATAL(LogGuardedMain, "Failed to create ReST Cli thread: [{}].", static_cast<i32>(Rc));
     }
+
+    this->ReSTCli.Get("/info", [](ReST::LRequest const&, ReST::LResponse* OutResponse) -> void
+    {
+        check( GEngine )
+
+        json Info;
+        Info["BuildTime"] = BuildInfo::GetBuildTime();
+        Info["BuildDate"] = BuildInfo::GetBuildDate();
+        Info["VcsBranch"] = BuildInfo::GetVcsBranch();
+        Info["VcsRevision"] = BuildInfo::GetVcsRevision();
+
+        Info["EngineVersion"] = BuildInfo::GetEngineVersionStr();
+
+        Info["CompilerVersion"] = BuildInfo::GetCompilerVersion();
+        Info["CxxStandard"] = BuildInfo::GetCxxStandard();
+
+        Info["TargetPlatform"] = BuildInfo::GetJafgTargetPlatform();
+        Info["TargetType"] = BuildInfo::GetJafgTargetType();
+        Info["TargetConfig"] = BuildInfo::GetJafgTargetConfig();
+        Info["bEverRender"] = GEngine->CanEverRender();
+
+        Info["Uptime"] = Application::GetCurrentFrameTime();
+        Info["Ticks"] = Application::GetFrameCount();
+        Info["AvgDeltaTime"] = Application::GetRealDeltaTime();
+        Info["AvgTickRate"] = Application::GetCurrentFps();
+        Info["MaxDeltaTime"] = Application::MaxDeltaTime;
+        Info["LowestDeltaTime"] = Application::GetPreviousLowestDeltaTime();
+        Info["HighestDeltaTime"] = Application::GetPreviousHighestDeltaTime();
+        Info["HighestLostDeltaTime"] = Application::GetPreviousHighestLostDeltaTime();
+        Info["HighestIdleTime"] = Application::GetPreviousHighestIdleDeltaTime();
+        Info["bTracerPid"] = Application::HasTracerPid();
+        Info["bEverProfile"] = Application::CanEverProfile();
+        Info["bProfiling"] = Application::IsAllowProfiling();
+
+        OutResponse->SetContent(Info.dump(), "application/json");
+
+        return;
+    });
+
+    this->ReSTCli.Get("/", [](ReST::LRequest const&, ReST::LResponse* OutResponse) -> void
+    {
+        OutResponse->SetStatusCode(302);
+        OutResponse->AddHeader("Location", "/info");
+        OutResponse->SetContent("Redirecting to /info", "text/plain");
+
+        return;
+    });
 
     return;
 }

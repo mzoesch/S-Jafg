@@ -57,14 +57,7 @@ public:
     //#
     //# Call from any other thread to early stop this thread's execution.
     //#
-    void Stop(const ERunnableStopReason::Type InType)
-    {
-        if (this->bStopped == false)
-        {
-            this->bStopped = true;
-            this->OnStop(InType);
-        }
-    }
+    void Stop(const ERunnableStopReason::Type InType) { if (this->bStopped == false) { this->bStopped = true; this->OnStop(InType); } }
 
     //#
     //# Called in the context of the thread that wishes to exit.

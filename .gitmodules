@@ -10,3 +10,6 @@
 	path = Engine/Vendor/CommonMath
 	url = https://github.com/g-truc/glm.git
 	branch = master
+[submodule "Engine/Vendor/cpp-httplib"]
+	path = Engine/Vendor/cpp-httplib
+	url = https://github.com/yhirose/cpp-httplib
