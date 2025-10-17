@@ -1126,7 +1126,13 @@ void Jafg::LEngine::StartReSTCliServer()
                 return;
             }
 
-            u64 ConvertedId; Serialization::FromString(&ConvertedId, Id);
+            u64 ConvertedId;
+            if (Serialization::FromStringSafe(&ConvertedId, Id) == false)
+            {
+                OutResponse->SetStatusCode(ReST::BadRequest_400);
+                OutResponse->SetContent(R"({"error":"Invalid 'id' parameter."})", "application/json");
+                return;
+            }
 
             json Res;
             auto& Logs = Res["logs"] = json::array();

@@ -63,7 +63,24 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Initialize()
         {
             std::stringstream ss;
 
-            ss << Req.method << " " << Req.path << " -> " << Res.status;
+            ss << Req.method << " " << Req.path;
+            if (Req.params.size() > 0)
+            {
+                ss << "{";
+                bool bFirst{ true };
+                for (const auto& Param : Req.params)
+                {
+                    if (bFirst == false)
+                    {
+                        ss << ",";
+                    }
+                    bFirst = false;
+                    ss << Param.first << ":" << Param.second;
+                }
+                ss << "}";
+            }
+            ss << " -> " << Res.status;
+            ss << " remote[" << Req.remote_addr << ":" << Req.remote_port << "]";
             if (Req.method == "POST" || Req.method == "PUT")
             {
                 ss << " (" << Req.body.size() << " bytes)";
@@ -75,7 +92,7 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Initialize()
         });
     }
 
-    if constexpr (IS_COMPILED_LOG(LogReST, Verbose))
+    if constexpr (IS_COMPILED_LOG(LogReST, Trace))
     {
         ::Server->set_pre_compression_logger([](httplib::Request const& Req, httplib::Response const& Res)
         {
@@ -87,7 +104,7 @@ Jafg::ETaskExit::Type Jafg::LReStCli::Initialize()
                 ss << " (" << Req.body.size() << " bytes)";
             }
 
-            LOG_VERBOSE(LogReST, "{}", ss.str())
+            LOG_TRACE(LogReST, "{}", ss.str())
 
             return;
         });

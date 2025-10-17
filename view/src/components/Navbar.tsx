@@ -4,10 +4,12 @@ import {Link, NavLink} from 'react-router-dom';
 import {Button, Input, Menu, MenuButton, MenuItems} from '@headlessui/react'
 import {ChevronDownIcon} from '@heroicons/react/16/solid'
 import {useEffect, useState} from 'react';
+import {
+  ENGINE_URL_STORAGE_KEY,
+  deleteStoredEntry, storeValue
+  } from "../lib/Storage.tsx";
 
-function GetEnginePingMenu() {
-  const ENGINE_URL_STORAGE_KEY = 'engine_url'
-
+function EnginePingMenu() {
   const pingStates = {
     Unknown: 'Unknown',
     Pinging: 'Pinging...',
@@ -71,9 +73,9 @@ function GetEnginePingMenu() {
 
   const saveEngineUrl = (value: string) => {
     if (!value || value.length === 0) {
-      localStorage.removeItem(ENGINE_URL_STORAGE_KEY)
+      deleteStoredEntry(ENGINE_URL_STORAGE_KEY)
     } else {
-      localStorage.setItem(ENGINE_URL_STORAGE_KEY, value)
+      storeValue(ENGINE_URL_STORAGE_KEY, value)
     }
   }
 
@@ -183,7 +185,7 @@ export default function Navbar() {
             textDecoration: isActive ? 'underline' : 'none',
           })}>Console</NavLink>
 
-        {GetEnginePingMenu()}
+        <EnginePingMenu />
       </div>
     </nav>
   );
