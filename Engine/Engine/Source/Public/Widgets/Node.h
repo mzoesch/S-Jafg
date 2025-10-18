@@ -294,22 +294,22 @@ ENGINE_API LString LexToString(const EWidgetVisibility::Type InVisibility);
 //#
 //# The base struct for every widget slot.
 //#
-struct LWidgetSlot
+struct LWidgetSlot final
 {
     //#
     //# The parent of this slot and the owner of the memory.
     //#
-    WParentBase* Parent;
+    WParentBase* Parent{ nullptr };
 
     //#
     //# The content of this slot. We interpret all names in this and derived structs as of the view of the content.
     //#
-    WNode* Content;
+    WNode* Content{ nullptr };
 
     //#
     //# The padding of the parent widget aka the margin of the child widget.
     //#
-    LMargin* Margin;
+    LMargin* Margin{ nullptr };
 };
 
 //#
@@ -435,6 +435,10 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(WNode)
 
 public:
+
+#if LAL_DO_CHECKS
+    virtual ~WNode() override;
+#endif /* LAL_DO_CHECKS */
 
     // JObjectBase implementation
     virtual void BeginLife() override final { Super::BeginLife(); this->Construct(); return; }
@@ -570,10 +574,10 @@ public:
     //# @param bDestroy If true, this child will be killed automatically by the butcher at his next sweep.
     //#
     virtual void RemoveFromParent(const bool bDestroy = true); // TODO WARNING Will currently always destroy the child.
-    FORCEINLINE WParentBase* GetParent() { return this->Slot ? this->Slot->Parent : nullptr; }
+    FORCEINLINE WParentBase* GetParent() { return this->Slot.Parent; }
     FORCEINLINE WParentBase* GetParentChecked() { WParentBase* Out = this->GetParent(); check( Out ); return Out; }
     FORCEINLINE WParentBase* GetParentAsserted() { WParentBase* Out = this->GetParent(); jassert( Out ); return Out; }
-    FORCEINLINE const WParentBase* GetParent() const { return this->Slot ? this->Slot->Parent : nullptr; }
+    FORCEINLINE const WParentBase* GetParent() const { return this->Slot.Parent; }
     FORCEINLINE const WParentBase* GetParentChecked() const { const WParentBase* Out = this->GetParent(); check( Out ); return Out; }
     FORCEINLINE const WParentBase* GetParentAsserted() const { const WParentBase* Out = this->GetParent(); jassert( Out ); return Out; }
     //# @return The most outer parent of this widget or the widget itself if no outer parent.
@@ -627,21 +631,20 @@ public:
     //# @return The anchored top-left corner of the direct child relative to the given context's top-left corner.
     virtual LVector2 GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const PURE_VIRTUAL(return { })
 
-    FORCEINLINE bool IsSlotValid() const { return this->Slot != nullptr; }
-    FORCEINLINE LWidgetSlot* GetSlot() { return this->Slot; }
-    FORCEINLINE LWidgetSlot* GetSlotChecked() { LWidgetSlot* Out = this->GetSlot(); check( Out ); return Out; }
-    FORCEINLINE LWidgetSlot* GetSlotAsserted() { LWidgetSlot* Out = this->GetSlot(); jassert( Out ); return Out; }
-    FORCEINLINE const LWidgetSlot* GetSlot() const { return this->Slot; }
-    FORCEINLINE const LWidgetSlot* GetSlotChecked() const { const LWidgetSlot* Out = this->GetSlot(); check( Out ); return Out; }
-    FORCEINLINE const LWidgetSlot* GetSlotAsserted() const { const LWidgetSlot* Out = this->GetSlot(); jassert( Out ); return Out; }
-    FORCEINLINE TOptional<LMargin> GetMargin() const { if (this->Slot && this->Slot->Margin) { return *this->Slot->Margin; } return { }; }
-    FORCEINLINE TOptional<LMargin> GetMarginChecked() const { TOptional<LMargin> Out = this->GetMargin(); check( Out.has_value() ); return Out; }
-    FORCEINLINE TOptional<LMargin> GetMarginAsserted() const { TOptional<LMargin> Out = this->GetMargin(); jassert( Out.has_value() ); return Out; }
-                bool SetMargin(const LMargin& InMargin);
-    FORCEINLINE bool SetMarginChecked(const LMargin& InMargin) { const bool Out = this->SetMargin(InMargin); check( Out ); return Out; }
+    FORCEINLINE bool IsSlotValid() const noexcept { return this->Slot.Parent != nullptr; }
+    FORCEINLINE LWidgetSlot& GetMutableSlot() noexcept { return this->Slot; }
+    FORCEINLINE LWidgetSlot& GetMutableSlotChecked() noexceptcheck { check( this->IsSlotValid() ) return this->GetMutableSlot(); }
+    FORCEINLINE LWidgetSlot& GetMutableSlotAsserted() { jassert( this->IsSlotValid() ) return this->GetMutableSlot(); }
+    FORCEINLINE LWidgetSlot const& GetSlot() const noexcept { return this->Slot; }
+    FORCEINLINE LWidgetSlot const& GetSlotChecked() const noexceptcheck { check( this->IsSlotValid() ) return this->GetSlot(); }
+    FORCEINLINE LWidgetSlot const& GetSlotAsserted() const { jassert( this->IsSlotValid() ) return this->GetSlot(); }
+    FORCEINLINE TOptional<LMargin> GetMargin() const noexcept { if (this->Slot.Margin) { check( this->Slot.Parent ) return *this->Slot.Margin; } return { }; }
+    FORCEINLINE TOptional<LMargin> GetMarginChecked() const noexceptcheck { TOptional Out{ this->GetMargin() }; check( Out.has_value() ); return Out; }
+    FORCEINLINE TOptional<LMargin> GetMarginAsserted() const { TOptional Out{ this->GetMargin() }; jassert( Out.has_value() ); return Out; }
+                bool SetMargin(const LMargin& InMargin) noexcept;
+    FORCEINLINE bool SetMarginChecked(const LMargin& InMargin) noexceptcheck { const bool Out = this->SetMargin(InMargin); check( Out ); return Out; }
     FORCEINLINE bool SetMarginAsserted(const LMargin& InMargin) { const bool Out = this->SetMargin(InMargin); jassert( Out ); return Out; }
-
-    FORCEINLINE LWidgetSlot** GetMutableSlotDangerousDoNotUseForInternalStuffOnlyOrIfYouWantYourOwnParentClass() { return &this->Slot; }
+    FORCEINLINE void InvalidateSlotDangerous() noexceptcheck { check( this->IsSlotValid() ) this->Slot.Parent = nullptr; this->Slot.Content = nullptr; this->Slot.Margin = nullptr; }
 
     //#
     //# Prepare and use the factory for the given node. Only valid in the engine tick where the factory was requested
@@ -671,10 +674,9 @@ private:
     EWidgetVisibility::Type Visibility { EWidgetVisibility::TransitiveHitTestInvisible };
 
     //#
-    //# The slot that this widget is currently in. Might be null if the widget is a standalone.
-    //# This class is not the owner of this slot. But the parent holding the child is.
+    //# The slot that this widget is currently in.
     //#
-    LWidgetSlot* Slot { nullptr };
+    LWidgetSlot Slot;
 
     //#
     //# The desired size of this widget.
@@ -701,7 +703,7 @@ private:
     //#
     mutable LVector2 LostAnchoredSize;
 
-    LAnchor Anchor { EAnchor::TopLeft };
+    LAnchor Anchor{ EAnchor::TopLeft };
 };
 
 template<typename TInNode>

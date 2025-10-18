@@ -138,6 +138,8 @@ public:
     ENGINE_API LReStCli& Get(std::string&& Pattern, ReST::LCallback&& Callback) noexcept;
     ENGINE_API LReStCli& Get(std::string&& Pattern, LString&& Help, ReST::LCallback&& Callback) noexcept;
 
+    ENGINE_API bool IsServerRunning() const noexcept;
+
 protected:
 
     virtual void OnStop(const ERunnableStopReason::Type InType) override;

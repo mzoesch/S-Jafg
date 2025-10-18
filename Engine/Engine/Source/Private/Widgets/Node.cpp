@@ -137,6 +137,11 @@ struct LWidgetConstructor
 
 } /* ~Namespace Jafg */
 
+Jafg::WNode::~WNode()
+{
+    check( this->Slot.Parent == nullptr && this->Slot.Content == nullptr && this->Slot.Margin == nullptr )
+}
+
 void Jafg::WNode::OnGarbage(ECxxRecordTearDownReason::Type Reason)
 {
     Super::OnGarbage(Reason);
@@ -197,9 +202,9 @@ Jafg::LReply Jafg::WNode::SweepFocusTest(const LViewport& Context, const LVector
 
 Jafg::LReply Jafg::WNode::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
-    if (this->Slot && this->Slot->Parent)
+    if (this->Slot.Parent)
     {
-        return this->Slot->Parent->OnKeyDown(InViewport, InKeyEvent);
+        return this->Slot.Parent->OnKeyDown(InViewport, InKeyEvent);
     }
 
     return LReply::Unhandled();
@@ -207,9 +212,9 @@ Jafg::LReply Jafg::WNode::OnKeyDown(const LViewport& InViewport, const LKeyEvent
 
 Jafg::LReply Jafg::WNode::OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
-    if (this->Slot && this->Slot->Parent)
+    if (this->Slot.Parent)
     {
-        return this->Slot->Parent->OnKeyUp(InViewport, InKeyEvent);
+        return this->Slot.Parent->OnKeyUp(InViewport, InKeyEvent);
     }
 
     return LReply::Unhandled();
@@ -273,11 +278,11 @@ void Jafg::WNode::SetVisibility(const EWidgetVisibility::Type InVisibility)
 
 void Jafg::WNode::RemoveFromParent(const bool bDestroy /* = true */)
 {
-    if (this->Slot)
+    if (this->Slot.Parent)
     {
-        check( this->Slot->Parent )
-        this->Slot->Parent->RemoveChild(this);
-        this->Slot = nullptr;
+        check( this->Slot.Content == this )
+        this->Slot.Parent->RemoveChild(this);
+        check( this->Slot.Parent == nullptr && this->Slot.Content == nullptr && this->Slot.Margin == nullptr )
     }
     if (bDestroy)
     {
@@ -289,10 +294,9 @@ void Jafg::WNode::RemoveFromParent(const bool bDestroy /* = true */)
 
 Jafg::WNode* Jafg::WNode::GetMostOuterParent()
 {
-    if (this->Slot)
+    if (this->Slot.Parent)
     {
-        check( this->Slot->Parent )
-        return this->Slot->Parent->GetMostOuterParent();
+        return this->Slot.Parent->GetMostOuterParent();
     }
 
     return this;
@@ -300,10 +304,9 @@ Jafg::WNode* Jafg::WNode::GetMostOuterParent()
 
 const Jafg::WNode* Jafg::WNode::GetMostOuterParent() const
 {
-    if (this->Slot)
+    if (this->Slot.Parent)
     {
-        check( this->Slot->Parent )
-        return this->Slot->Parent->GetMostOuterParent();
+        return this->Slot.Parent->GetMostOuterParent();
     }
 
     return this;
@@ -321,10 +324,9 @@ LIntVector2 Jafg::WNode::GetViewportSize() const
 
 Jafg::LViewport* Jafg::WNode::GetViewport() const
 {
-    if (this->Slot)
+    if (this->Slot.Parent)
     {
-        check( this->Slot->Parent )
-        return this->Slot->Parent->GetViewport();
+        return this->Slot.Parent->GetViewport();
     }
 
     return nullptr;
@@ -355,9 +357,10 @@ void Jafg::WNode::UpdateAnchoredSize(const LViewport& Context) const
     check( this->TransformsWidgetLayout() )
     check( this->Anchor.IsNormalized() )
 
-    if (this->Slot)
+    if (this->Slot.Parent)
     {
-        this->Slot->Parent->UpdateAnchoredSizeForChild(Context, this);
+        check( this->Slot.Content == this )
+        this->Slot.Parent->UpdateAnchoredSizeForChild(Context, this);
         return;
     }
 
@@ -412,9 +415,10 @@ LVector2 Jafg::WNode::GetAnchoredTopLeftFromMostOuter(const LViewport& Context) 
     check( this->TransformsWidgetLayout() )
     check( this->Anchor.IsNormalized() )
 
-    if (this->Slot)
+    if (this->Slot.Parent)
     {
-        return this->Slot->Parent->GetAnchoredTopLeftFromMostOuterForChild(Context, this);
+        check( this->Slot.Content == this )
+        return this->Slot.Parent->GetAnchoredTopLeftFromMostOuterForChild(Context, this);
     }
 
     LVector2 Out;
@@ -429,11 +433,12 @@ LVector2 Jafg::WNode::GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewpo
     return this->GetAnchoredTopLeftFromMostOuter(Context) + static_cast<LVector2>(Context.GetFrameTranslation());
 }
 
-bool Jafg::WNode::SetMargin(const LMargin& InMargin)
+bool Jafg::WNode::SetMargin(const LMargin& InMargin) noexcept
 {
-    if (this->Slot && this->Slot->Margin)
+    if (this->Slot.Margin)
     {
-        *this->Slot->Margin = InMargin;
+        check( this->Slot.Parent )
+        *this->Slot.Margin = InMargin;
         return true;
     }
 

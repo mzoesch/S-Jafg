@@ -338,6 +338,11 @@ Jafg::LReStCli& Jafg::LReStCli::Get(std::string&& Pattern, LString&& Help, ReST:
     return *this;
 }
 
+bool Jafg::LReStCli::IsServerRunning() const noexcept
+{
+    return ::Server.get() && ::Server->is_running();
+}
+
 void Jafg::LReStCli::OnStop(const ERunnableStopReason::Type InType)
 {
     LOG_VERBOSE(LogReST, "Stopping ReSTCli.")

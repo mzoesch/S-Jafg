@@ -32,7 +32,7 @@ public:
 
 private:
 
-    //# Vertical space between children.
+    //# Horizontal space between children.
     f32 HSpace { 0.0f };
 };
 

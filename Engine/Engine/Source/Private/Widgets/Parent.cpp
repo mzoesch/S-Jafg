@@ -62,12 +62,23 @@ void Jafg::WParent::Destruct()
 {
     Super::Destruct();
 
-    for (const LWidgetSlot* ChildSlot : this->Children)
+    algo::for_each(this->Children,
+    [
+#if LAL_DO_CHECKS
+        this
+#endif  /* LAL_DO_CHECKS */
+    ](LWidgetSlot* ChildSlot)
     {
-        *ChildSlot->Content->GetMutableSlotDangerousDoNotUseForInternalStuffOnlyOrIfYouWantYourOwnParentClass() = nullptr;
-        ChildSlot->Content->MarkAsGarbage_v2();
-        delete ChildSlot;
-    }
+        check( ChildSlot && ChildSlot->Content && ChildSlot->Parent == this )
+
+        auto* ChildWidget{ ChildSlot->Content };
+
+        ChildSlot->Content->InvalidateSlotDangerous();
+        check( ChildSlot->Parent == nullptr && ChildSlot->Content == nullptr && ChildSlot->Margin == nullptr )
+        ChildWidget->MarkAsGarbage_v2();
+
+        return;
+    });
 
     algo::orphan(&this->Children);
 
@@ -251,23 +262,21 @@ bool Jafg::WParent::FindNodeInVisiblePath(const WNode* InNode) const
 
 void Jafg::WParent::RemoveChild(WNode* Child)
 {
-    for (LWidgetSlot* ChildSlot : this->Children)
+    auto It{ algo::find(this->Children, Child, [](auto const& E){ return E->Content; }) };
+
+    if (It == this->Children.end())
     {
-        if (ChildSlot->Content == Child)
-        {
-            *ChildSlot->Content->GetMutableSlotDangerousDoNotUseForInternalStuffOnlyOrIfYouWantYourOwnParentClass() = nullptr;
-            ChildSlot->Content->MarkAsGarbage_v2();
-            algo::erase_once_checked(&this->Children, ChildSlot);
-            delete ChildSlot;
-            check( algo::find(this->GetChildren(), Child, [](auto const& E){ return E->Content; }) == this->GetChildren().end() )
-
-            return;
-        }
-
-        continue;
+        panic( "The in child is not a child of this widget." )
     }
 
-    panic( "The in child is not a child of this widget." )
+    auto* ChildWidget{ (*It)->Content };
+
+    (*It)->Content->InvalidateSlotDangerous();
+    check( (*It)->Parent == nullptr && (*It)->Content == nullptr && (*It)->Margin == nullptr )
+    ChildWidget->MarkAsGarbage_v2();
+
+    this->Children.erase(It);
+    check( algo::find(this->GetChildren(), Child, [](auto const& E){ return E->Content; }) == this->GetChildren().end() )
 
     return;
 }
@@ -299,26 +308,38 @@ void Jafg::WParent::RemoveChildren()
 
 Jafg::LWidgetSlot* Jafg::WParent::AddChild(WNode* InChild)
 {
+    check( Tasks::IsOnMasterThread() )
+
     check( algo::find(this->GetChildren(), InChild, [](auto const& E){ return E->Content; }) == this->GetChildren().end() )
 
     check( InChild )
-    LWidgetSlot* NewChildSlot = new LWidgetSlot(this, InChild);
-    this->Children.push_back(NewChildSlot);
-    *NewChildSlot->Content->GetMutableSlotDangerousDoNotUseForInternalStuffOnlyOrIfYouWantYourOwnParentClass() = NewChildSlot;
-    NewChildSlot->Margin = this->GetPaddingPtr();
+    check( InChild->GetSlot().Parent == nullptr && InChild->GetSlot().Content == nullptr && InChild->GetSlot().Margin == nullptr )
 
-    return NewChildSlot;
+    InChild->GetMutableSlot().Parent  = this;
+    InChild->GetMutableSlot().Content = InChild;
+    InChild->GetMutableSlot().Margin  = this->GetPaddingPtr();
+
+    this->Children.push_back(&InChild->GetMutableSlotChecked());
+
+    return this->Children.back();
 }
 
 Jafg::LWidgetSlot* Jafg::WParent::AddChildAt(const i32 InIndex, WNode* InChild)
 {
-    check( InChild )
-    LWidgetSlot* NewChildSlot = new LWidgetSlot(this, InChild);
-    this->Children.insert(this->Children.begin() + InIndex, NewChildSlot);
-    *NewChildSlot->Content->GetMutableSlotDangerousDoNotUseForInternalStuffOnlyOrIfYouWantYourOwnParentClass() = NewChildSlot;
-    NewChildSlot->Margin = this->GetPaddingPtr();
+    check( Tasks::IsOnMasterThread() )
 
-    return NewChildSlot;
+    check( algo::find(this->GetChildren(), InChild, [](auto const& E){ return E->Content; }) == this->GetChildren().end() )
+
+    check( InChild )
+    check( InChild->GetSlot().Parent == nullptr && InChild->GetSlot().Content == nullptr && InChild->GetSlot().Margin == nullptr )
+
+    InChild->GetMutableSlot().Parent  = this;
+    InChild->GetMutableSlot().Content = InChild;
+    InChild->GetMutableSlot().Margin  = this->GetPaddingPtr();
+
+    this->Children.insert(this->Children.begin() + InIndex, &InChild->GetMutableSlotChecked());
+
+    return this->Children[InIndex];
 }
 
 void Jafg::WParent::MakeChildrenFinal()

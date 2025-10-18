@@ -423,7 +423,10 @@ void Jafg::LEngine::TearDown()
     LOG_VERBOSE(LogEngine, "Tearing down engine.")
 
 #if JAFG_WITH_REST_CLS
-    this->StopReSTCliServer();
+    if (GEngine && GEngine->GetReSTCli()->IsServerRunning())
+    {
+        this->StopReSTCliServer();
+    }
 #endif /* JAFG_WITH_REST_CLS */
 
     LOG_VERBOSE(LogEngine, "Deallocating {} registered tracks.", this->Tracks.size())

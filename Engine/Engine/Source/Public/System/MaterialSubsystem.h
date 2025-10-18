@@ -5,8 +5,8 @@
 #include "Subsystems/EngineSubsystem.h"
 #include "Rhi/Texture2.h"
 #include "MyWorld/CommonTypes.h"
-#include "MaterialSubsystem.generated.h"
 #include "Rhi/Atlas2.h"
+#include "MaterialSubsystem.generated.h"
 
 namespace Jafg
 {

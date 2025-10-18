@@ -247,14 +247,14 @@ EPlatformExit::Type GuardedMain()
 
     Application::Private::ProcessCommandLineVariables();
 
-    if (auto const Ret { Application::Private::ConditionallyShowHelpAndExit() }; std::get<0>(Ret))
+    if (auto const Ret{ Application::Private::ConditionallyShowHelpAndExit() }; std::get<0>(Ret))
     {
         GCustomExitStatusOverride = static_cast<i32>(std::get<1>(Ret));
         GCustomExitReason = "Help shown.";
         return ::GetMostSignificantExitReason();
     }
 
-    if (auto const Ret { Application::Private::ConditionallyShowVersionAndExit() }; std::get<0>(Ret))
+    if (auto const Ret{ Application::Private::ConditionallyShowVersionAndExit() }; std::get<0>(Ret))
     {
         GCustomExitStatusOverride = static_cast<i32>(std::get<1>(Ret));
         GCustomExitReason = "Version shown.";
@@ -400,9 +400,7 @@ EPlatformExit::Type GuardedMain()
 #if JAFG_WITH_REST_CLS
     checkSlow( GEngine )
     GEngine->SetReSTCliCorePaths();
-
-    auto& ReSTCliPrefs{ *GetDefault<JReSTCliPreferences>() };
-    if (ReSTCliPrefs.bAlwaysDisable == false)
+    if (auto& ReSTCliPrefs{ *GetDefault<JReSTCliPreferences>() }; ReSTCliPrefs.bAlwaysDisable == false)
     {
         if
         (
