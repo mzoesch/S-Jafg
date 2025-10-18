@@ -4,6 +4,7 @@
 #include "Core/LaunchProgress.h"
 #include "User/UserPreferences.h"
 #include "Platform/PlatformMisc.h"
+#include "Cli/ReSTCliPreferences.h"
 
 #if WITH_TESTS
     #include "TestCore/TestRunner.h"
@@ -398,7 +399,20 @@ EPlatformExit::Type GuardedMain()
 
 #if JAFG_WITH_REST_CLS
     checkSlow( GEngine )
-    GEngine->StartReSTCliServer();
+    GEngine->SetReSTCliCorePaths();
+
+    auto& ReSTCliPrefs{ *GetDefault<JReSTCliPreferences>() };
+    if (ReSTCliPrefs.bAlwaysDisable == false)
+    {
+        if
+        (
+               (ReSTCliPrefs.bAutoStart && !Application::HasCmdLineParameter("ReSTCli.DisableAutoStart"))
+            || (Application::HasCmdLineParameter("ReSTCli.InstantStart"))
+        )
+        {
+            GEngine->StartReSTCliServer();
+        }
+    }
     checkSlow( GEngine )
     if (::IsEngineExitRequested())
     {

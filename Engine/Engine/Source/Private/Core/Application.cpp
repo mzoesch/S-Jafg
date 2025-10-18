@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Core/Application.h"
-
 #include "Build/EngineBuildInfo.h"
 #include "Core/Uuid.h"
 #include "Stats/Stats.h"

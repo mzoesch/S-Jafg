@@ -213,6 +213,10 @@ template<> NODISCARD FORCEINLINE constexpr LString ToString<f64>(f64 const& Fiel
 template<> FORCEINLINE constexpr void FromString<f64>(f64* Field, LString const& Value) noexcept { check( Field ) *Field = static_cast<f64>(std::stod(Value) ); }
 template<> FORCEINLINE constexpr bool FromStringSafe<f64>(f64* Field, LString const& Value, LString* OutError /* = nullptr */) noexcept { return Private::NumericFromStringSafe<f64>(Field, Value, OutError); }
 
+template<> NODISCARD FORCEINLINE constexpr LString ToString<LSize>(LSize const& Field) noexcept { return std::to_string(Field); }
+template<> FORCEINLINE constexpr void FromString<LSize>(LSize* Field, LString const& Value) noexcept { check( Field ) *Field = static_cast<LSize>(std::stoull(Value) ); }
+template<> FORCEINLINE constexpr bool FromStringSafe<LSize>(LSize* Field, LString const& Value, LString* OutError /* = nullptr */) noexcept { return Private::NumericFromStringSafe<LSize>(Field, Value, OutError); }
+
 template<> NODISCARD FORCEINLINE constexpr LString ToString<Lal::LColor>(Lal::LColor const& Field) noexcept
 {
     return Lal::SprintF("0x{:02X}{:02X}{:02X}{:02X}", Field.R, Field.G, Field.B, Field.A);

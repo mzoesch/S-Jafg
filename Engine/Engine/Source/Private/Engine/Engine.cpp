@@ -17,6 +17,7 @@
 #include "Platform/PlatformMisc.h"
 #include "Engine/EngineRunnable.h"
 #include "Engine/Carnifex.h"
+#include "Cli/ReSTCliPreferences.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
@@ -1047,18 +1048,9 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
 #if JAFG_WITH_REST_CLS
-void Jafg::LEngine::StartReSTCliServer()
+void Jafg::LEngine::SetReSTCliCorePaths()
 {
-    LOG_VERBOSE(LogEngine, "Starting ReST CLI server...")
-
-    if
-    (
-        ETaskExit::Type const Rc{ Tasks::Private::LaunchNamedThread(ENamedThreads::ReSTCli, &this->ReSTCli, false) };
-        Rc != ETaskExit::Success
-    )
-    {
-        LOG_FATAL(LogGuardedMain, "Failed to create ReST Cli thread: [{}].", static_cast<i32>(Rc));
-    }
+    LOG_VERBOSE(LogReST, "Setting ReST CLI core paths...")
 
     this->ReSTCli.Get("/info", [](ReST::LRequest const&, ReST::LResponse* OutResponse) -> void
     {
@@ -1164,6 +1156,34 @@ void Jafg::LEngine::StartReSTCliServer()
 
         return;
     });
+
+    return;
+}
+
+void Jafg::LEngine::StartReSTCliServer()
+{
+    if (GetDefault<JReSTCliPreferences>()->bAlwaysDisable)
+    {
+        LOG_WARNING(LogReST, "ReST CLI server is always disabled by preferences.")
+        return;
+    }
+
+    LOG_VERBOSE(LogEngine, "Starting ReST CLI server...")
+
+    if (Tasks::HasReSTCliThread())
+    {
+        LOG_WARNING(LogEngine, "ReST CLI server is already running.")
+        return;
+    }
+
+    if
+    (
+        ETaskExit::Type const Rc{ Tasks::Private::LaunchNamedThread(ENamedThreads::ReSTCli, &this->ReSTCli, false) };
+        Rc != ETaskExit::Success
+    )
+    {
+        LOG_FATAL(LogEngine, "Failed to create ReST Cli thread: [{}].", static_cast<i32>(Rc));
+    }
 
     return;
 }

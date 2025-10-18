@@ -312,6 +312,7 @@ public:
     FORCEINLINE const LCommandLineInterface* GetCommandLineInterface() const noexcept { return &this->CommandLineInterface; }
 
 #if JAFG_WITH_REST_CLS
+    ENGINE_API void SetReSTCliCorePaths();
     ENGINE_API void StartReSTCliServer();
     ENGINE_API void StopReSTCliServer(ERunnableStopReason::Type Reason = ERunnableStopReason::EngineTermination);
 

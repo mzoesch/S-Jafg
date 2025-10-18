@@ -136,10 +136,23 @@ public:
     virtual void Exit() override;
 
     ENGINE_API LReStCli& Get(std::string&& Pattern, ReST::LCallback&& Callback) noexcept;
+    ENGINE_API LReStCli& Get(std::string&& Pattern, LString&& Help, ReST::LCallback&& Callback) noexcept;
 
 protected:
 
     virtual void OnStop(const ERunnableStopReason::Type InType) override;
+
+    struct LReSTPattern
+    {
+        LString Pattern;
+        LString Help;
+        ReST::LCallback Callback;
+    };
+
+    void RegisterPattern(TArray<LReSTPattern>::iterator It);
+    void InitializeDeferred();
+
+    TArray<LReSTPattern> GetRegisteredPatterns;
 };
 
 } /* ~Namespace Jafg */
