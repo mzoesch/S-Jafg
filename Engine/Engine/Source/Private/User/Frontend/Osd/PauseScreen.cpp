@@ -31,7 +31,7 @@ void Jafg::WPauseScreen::Construct()
         Descriptor.OnButtonReleaseField = [](WTabBar& Self, const LString& InIdentifier) -> bool
         {
             Self.OnTabBarButtonReleased(InIdentifier);
-            Self.GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->AddVirtualKeyDown(EKeys::Escape);
+            Self.GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->AddVirtualKeyDown(EKeys::Escape);
             return true;
         };
         Descriptor.CallbackField = [](WTabBar* TabBar, WNode* Button, WNode* Panel) -> void
@@ -93,7 +93,7 @@ void Jafg::WPauseScreen::Construct()
             Self.OnTabBarButtonReleased(InIdentifier);
             if (this->GetOuter()->IsWorld())
             {
-                this->GetEngine()->Browse(static_cast<LWorld*>(this->GetOuter()), Name_LevelFrontend.ToString());
+                this->GetEngine().Browse(static_cast<LWorld*>(this->GetOuter()), "LevelFrontend");
             }
             else
             {
@@ -110,7 +110,7 @@ void Jafg::WPauseScreen::Construct()
         Descriptor.OnButtonReleaseField = [](WTabBar& Self, const LString& InIdentifier) -> bool
         {
             Self.OnTabBarButtonReleased(InIdentifier);
-            Self.GetEngine()->RequestEngineExit("Exited through pause menu.");
+            Self.GetEngine().RequestEngineExit("Exited through pause menu.");
             return true;
         };
         this->TabBar->RegisterTab(std::move(Descriptor));

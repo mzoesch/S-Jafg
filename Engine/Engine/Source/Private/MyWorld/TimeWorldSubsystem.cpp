@@ -483,7 +483,7 @@ void Jafg::JTimeWorldSubsystem::DefaultOnly_RegisterCliObjects()
     /* Type: DayTime */
     {
         check( this->TypeHandle_DayTime->IsValid() == false )
-        this->TypeHandle_DayTime = GEngine->GetCommandLineInterface()->RegisterType({"DayTime", "The time of the day.",
+        this->TypeHandle_DayTime = GEngine->GetCommandLineInterface().RegisterType({"DayTime", "The time of the day.",
             {},
             [](const LCommandArgs& Args, i32* Cursor) -> bool
             {
@@ -558,7 +558,7 @@ void Jafg::JTimeWorldSubsystem::DefaultOnly_RegisterCliObjects()
     /* Command: Time */
     {
         check( this->CommandHandle_Time->IsValid() == false )
-        this->CommandHandle_Time = GEngine->GetCommandLineInterface()->RegisterCommand({"Time", "Changes day and night related time variables.",
+        this->CommandHandle_Time = GEngine->GetCommandLineInterface().RegisterCommand({"Time", "Changes day and night related time variables.",
             LCommandParams{}
             .Token(LCliType::Type<EDayTimeAddBehavior::Type>())
             .Token(LCliType::Type<LWorld>())
@@ -643,12 +643,12 @@ void Jafg::JTimeWorldSubsystem::DefaultOnly_UnregisterCliObjects()
 
     if (ensure(this->TypeHandle_DayTime->IsValid()))
     {
-        GEngine->GetCommandLineInterface()->UnregisterType(this->TypeHandle_DayTime.get_ptr());
+        GEngine->GetCommandLineInterface().UnregisterType(this->TypeHandle_DayTime.get_ptr());
     }
 
     if (ensure(this->CommandHandle_Time->IsValid()))
     {
-        GEngine->GetCommandLineInterface()->UnregisterCommand(this->CommandHandle_Time.get_ptr());
+        GEngine->GetCommandLineInterface().UnregisterCommand(this->CommandHandle_Time.get_ptr());
     }
 
     return;

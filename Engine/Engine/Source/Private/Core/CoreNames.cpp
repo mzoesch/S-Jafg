@@ -1,10 +1,8 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Lal.afx"
 #include "Core/CoreNames.h"
 
 ENGINE_API LName Name_LevelMyWorld          = MAKE_NAME("LevelMyWorld");
-ENGINE_API LName Name_LevelFrontend         = MAKE_NAME("LevelFrontend");
 
 ENGINE_API LName Name_UicInMyWorld          = MAKE_NAME("InMyWorld");
 ENGINE_API LName Name_UicInMyWorldFoot      = MAKE_NAME("InMyWorldFoot");

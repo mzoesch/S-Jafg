@@ -49,7 +49,7 @@ Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction(const LInputAction*
 
     checkCode
     (
-        const LInputAction* Action = GEngine->GetLocalEgo()->GetUserInput()->GetActionByName(InAction->GetName());
+        const LInputAction* Action = GEngine->GetLocalEgo().GetUserInput().GetActionByName(InAction->GetName());
         check( Action )
         check( *Action == *InAction )
     )

@@ -11,13 +11,12 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
 
-    LCommandLineInterface* CommandLineInterface = this->GetCommandLineInterface();
-    check( CommandLineInterface )
+    LCommandLineInterface& CommandLineInterface{ this->GetCommandLineInterface() };
 
     // Command: quit
     {
 
-        this->CommandHandle_Quit = CommandLineInterface->RegisterCommand({"Quit", "Quit to desktop.",
+        this->CommandHandle_Quit = CommandLineInterface.RegisterCommand({"Quit", "Quit to desktop.",
         LCommandParams()
         .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
         {
@@ -30,7 +29,7 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
 
     // Command: say
     {
-        this->CommandHandle_Say = CommandLineInterface->RegisterCommand({"Say", "Say something.",
+        this->CommandHandle_Say = CommandLineInterface.RegisterCommand({"Say", "Say something.",
         LCommandParams()
         .Token(LCliType::Type("String"))
         .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
@@ -53,7 +52,7 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
             })
 
         ));
-        this->CommandHandle_CreateNewSurface = CommandLineInterface->RegisterCommand(std::move(Command));
+        this->CommandHandle_CreateNewSurface = CommandLineInterface.RegisterCommand(std::move(Command));
     }
 
     return;
@@ -63,11 +62,10 @@ void Jafg::JCoreCommandSubsystem::TearDown()
 {
     Super::TearDown();
 
-    LCommandLineInterface* CommandLineInterface = this->GetCommandLineInterface();
-    check( CommandLineInterface )
+    LCommandLineInterface& CommandLineInterface{ this->GetCommandLineInterface() };
 
 #define UNREGISTER_COMMAND(CommandHandle)                                                  \
-    if (CommandLineInterface->UnregisterCommand(&(CommandHandle)) == false)                \
+    if (CommandLineInterface.UnregisterCommand(&(CommandHandle)) == false)                 \
     {                                                                                      \
         LOG_WARNING(LogCoreCommands, "Failed to unregister command [" #CommandHandle "].") \
         (CommandHandle).Reset();                                                           \

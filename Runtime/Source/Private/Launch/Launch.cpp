@@ -331,17 +331,6 @@ EPlatformExit::Type GuardedMain()
     GEngine->Initialize();
     Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::NoTickDangerous | ETaskTime::AfterEngineInitDangerous, Tasks::RunAllTasks);
 
-    //
-    // The core levels. Hardcoded into the engine generation for better communication with other plugins.
-    // To give them a common / default way for different engine states.
-    //
-    GEngine->RegisterLevel
-    (
-        LLevel
-        {
-            Name_LevelFrontend.ToString(), EInputMode::UserInterface, true
-        }
-    );
     GEngine->RegisterLevel
     (
         LLevel
@@ -387,8 +376,8 @@ EPlatformExit::Type GuardedMain()
 #endif /* JAFG_WITH_FOREIGN_SUPPORT */
 
     STAT_CYCLE_START(GmEngineWorldLoad, "EngineWorldLoad")
-    LWorldStorage World = GEngine->SummonWorld("StartUpWorld");
-    GEngine->Browse(World, Name_LevelFrontend.ToString());
+    // LWorldStorage World = GEngine->SummonWorld("StartUpWorld");
+    // GEngine->Browse(World, Name_LevelFrontend.ToString());
     STAT_CYCLE_END(GmEngineWorldLoad)
 
     checkSlow( GEngine )

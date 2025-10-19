@@ -4,12 +4,14 @@
 #include "User/LocalEgo.h"
 #include "Engine/Engine.h"
 
-void Jafg::JFrontendSubsystem::Initialize(LSubsystemCollection& Collection)
+Jafg::LFrontend& Jafg::JFrontendSubsystem::GetFrontend() noexcept
 {
-    Super::Initialize(Collection);
+    check( GEngine && "Absence of GEngine while JFrontendSubsystem exists is invalid." )
+    return GEngine->GetLocalEgo().GetFrontend();
+}
 
-    this->OwningFrontend = GEngine->GetLocalEgo()->GetFrontend();
-    checkSlow( this->OwningFrontend )
-
-    return;
+Jafg::LFrontend const& Jafg::JFrontendSubsystem::GetFrontend() const noexcept
+{
+    check( GEngine && "Absence of GEngine while JFrontendSubsystem exists is invalid." )
+    return GEngine->GetLocalEgo().GetFrontend();
 }

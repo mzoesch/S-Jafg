@@ -189,24 +189,9 @@ public:
     void InitializeWorld(TOptional<LLevel> const& Level = {}, LString&& Url = {});
 
     //# There are no checked alternatives, as the engine must be valid at all times if a world exists.
-    ENGINE_API LEngine* GetEngine() const;
-    ENGINE_API LCommandLineInterface* GetCommandLineInterface() const;
-
-    ENGINE_API  LLocalEgo* GetLocalEgo() const;
-    FORCEINLINE LLocalEgo* GetLocalEgoChecked() const { LLocalEgo* Out{ this->GetLocalEgo() }; check( Out ) return Out; }
-    FORCEINLINE LLocalEgo* GetLocalEgoAsserted() const { LLocalEgo* Out{ this->GetLocalEgo() }; jassert( Out ) return Out; }
-
-    //# Get the local controller if any and said local controller is home to this world.
-    FORCEINLINE bool                IsLocalControllerValid() const { return this->GetLocalController() != nullptr; }
-    ENGINE_API  APersonaController* GetLocalController() const;
-    FORCEINLINE APersonaController* GetLocalControllerChecked() const { APersonaController* Out{ this->GetLocalController() }; check( Out ) return Out; }
-    FORCEINLINE APersonaController* GetLocalControllerAsserted() const { APersonaController* Out{ this->GetLocalController() }; jassert( Out ) return Out; }
-
-    //# Get the local pawn if any and said local pawn is home to this world.
-    FORCEINLINE bool   IsLocalPawnValid() const { return this->GetLocalPawn() != nullptr; }
-    ENGINE_API  APawn* GetLocalPawn() const;
-    FORCEINLINE APawn* GetLocalPawnChecked() const { APawn* Out{ this->GetLocalPawn() }; check( Out ) return Out; }
-    FORCEINLINE APawn* GetLocalPawnAsserted() const { APawn* Out{ this->GetLocalPawn() }; jassert( Out ) return Out; }
+    ENGINE_API LEngine& GetEngine() const noexceptcheck;
+    ENGINE_API LCommandLineInterface& GetCommandLineInterface() const noexceptcheck;
+    ENGINE_API LLocalEgo& GetLocalEgo() const noexceptcheck;
 
     //#
     //# The real URL that was used to launch this world. This might not be valid.
@@ -233,7 +218,9 @@ public:
 #endif /* AS_CLIENT */
 
     FORCEINLINE bool IsUnderlyingLevelValid() const noexcept { return this->UnderlyingLevel.has_value(); }
-    FORCEINLINE LLevel const& GetUnderlyingLevel() const noexceptcheck { check( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel.value(); }
+    FORCEINLINE LLevel const& GetUnderlyingLevel() const { return this->UnderlyingLevel.value(); }
+    FORCEINLINE LLevel const& GetUnderlyingLevelChecked() const noexceptcheck { check( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel.value(); }
+    FORCEINLINE LLevel const& GetUnderlyingLevelAsserted() const { jassert( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel.value(); }
     FORCEINLINE LStringView   GetUnderlyingLevelName() const noexcept { if (this->IsUnderlyingLevelValid()) { return LStringView{this->UnderlyingLevel->Identifier}; } return {}; }
     FORCEINLINE LStringView   GetUnderlyingLevelNameChecked() const noexceptcheck { check( this->IsUnderlyingLevelValid() ) return this->IsUnderlyingLevelValid() ? LStringView{this->UnderlyingLevel->Identifier} : LStringView{ }; }
     FORCEINLINE LStringView   GetUnderlyingLevelNameAsserted() const { jassert( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel->Identifier; }

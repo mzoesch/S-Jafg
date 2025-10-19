@@ -9,6 +9,26 @@
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
 
+Jafg::LSurface& Jafg::LViewport::GetOwningSurface()
+{
+    check( GEngine )
+    return *algo::find(
+        GEngine->GetLocalEgo().GetFrontend().GetSurfaces(),
+        this,
+        [](auto const& E){ return &E.GetViewport(); }
+        );
+}
+
+Jafg::LSurface const& Jafg::LViewport::GetOwningSurface() const
+{
+    check( GEngine )
+    return *algo::find(
+        GEngine->GetLocalEgo().GetFrontend().GetSurfaces(),
+        this,
+        [](auto const& E){ return &E.GetViewport(); }
+        );
+}
+
 void Jafg::LViewport::ClearInvalidWidgets()
 {
     if (this->FocusedWidget.IsValidDeep() == false)
@@ -353,9 +373,8 @@ void Jafg::LViewport::Draw()
     );
 
     RendererStateMachine::PrepareForPerspectivePainting();
-    for (const auto& [Eye, World] : this->BackgroundContexts)
+    for (auto const& [Eye, World] : this->BackgroundContexts)
     {
-        check( Eye && World )
         Eye->UpdateViewMatrix();
 
         for (LEngineShader* Shader : GEngine->GetShaders() | std::views::values)

@@ -29,7 +29,8 @@ bool Jafg::LCliType::CanParse(const LCommandArgs& Args, i32* Cursor) const
         return this->OnParseTypeDelegate.Invoke(Args, Cursor);
     }
 
-    const LCliType* CliType { GEngine->GetCommandLineInterface()->GetTypeAsserted(*this) };
+    check( GEngine )
+    const LCliType* CliType{ GEngine->GetCommandLineInterface().GetTypeAsserted(*this) };
 
     if (this == CliType)
     {
@@ -47,7 +48,8 @@ TArray<LString> Jafg::LCliType::Suggest(const LCommandArgs& Args, const i32 Curs
         return this->OnSuggestDelegate.Invoke(Args, Cursor, MaxSuggestions);
     }
 
-    const LCliType* CliType { GEngine->GetCommandLineInterface()->GetType(*this) };
+    check( GEngine )
+    const LCliType* CliType{ GEngine->GetCommandLineInterface().GetType(*this) };
 
     if (CliType == nullptr)
     {

@@ -92,20 +92,15 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
         return;
     }
 
-    if (GEngine->IsLocalEgoValid() == false)
-    {
-        LOG_WARNING(LogPreferences, "Local ego is invalid.")
-        return;
-    }
-
+    check( GEngine->GetLocalEgo().IsDecommissioned() == false )
     check( Self->GetName().IsSet() )
 
     WParentBase* Container;
 
     const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().size() % 2 == 0 ? 1.8 : 1));
 
-    const LInputAction* Action = GEngine->GetLocalEgo()->GetUserInput()->GetActionByNameChecked(Self->GetName());
-    const TArray<TUnique<LUserInputContext>>& Contexts = GEngine->GetLocalEgo()->GetUserInput()->GetRegisteredContexts();
+    const LInputAction* Action = GEngine->GetLocalEgo().GetUserInput().GetActionByNameChecked(Self->GetName());
+    const TArray<TUnique<LUserInputContext>>& Contexts = GEngine->GetLocalEgo().GetUserInput().GetRegisteredContexts();
 
     NewNodeCtx(Target, WVRegion).SaveTo(&Container)
         .Anchor(EAnchor::HFill)

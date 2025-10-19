@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Lal.afx"
 #include "Core/Arguments.h"
 
 namespace Jafg

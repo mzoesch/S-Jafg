@@ -45,35 +45,20 @@ void Jafg::LWorldParameters::Reset() noexcept
     return;
 }
 
-Jafg::LEngine* Jafg::LWorld::GetEngine() const
+Jafg::LEngine& Jafg::LWorld::GetEngine() const noexceptcheck
 {
-    check( GEngine )
-    return GEngine;
+    check( GEngine && "Engine has to be valid if a world exists." )
+    return *GEngine;
 }
 
-Jafg::LLocalEgo* Jafg::LWorld::GetLocalEgo() const
+Jafg::LLocalEgo& Jafg::LWorld::GetLocalEgo() const noexceptcheck
 {
-    return this->GetEngine()->GetLocalEgo();
+    return this->GetEngine().GetLocalEgo();
 }
 
-Jafg::APersonaController* Jafg::LWorld::GetLocalController() const
+Jafg::LCommandLineInterface& Jafg::LWorld::GetCommandLineInterface() const noexceptcheck
 {
-    return this->GetLocalEgo()->GetPossessed();
-}
-
-Jafg::LCommandLineInterface* Jafg::LWorld::GetCommandLineInterface() const
-{
-    return this->GetEngine()->GetCommandLineInterface();
-}
-
-Jafg::APawn* Jafg::LWorld::GetLocalPawn() const
-{
-    if (APawn* Out = this->GetLocalController()->GetPossessed(); Out && Out->GetOuter() == this)
-    {
-        return Out;
-    }
-
-    return nullptr;
+    return this->GetEngine().GetCommandLineInterface();
 }
 
 void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LString&& Url /* = {} */)
@@ -121,7 +106,12 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
         }
     }
 
-    this->GetEngine()->OnWorldBeginLife.Broadcast(this);
+    auto& Track{ GEngine->GetTrackFromWorld(this) };
+    if (Track.OnWorldPreInit.IsValid())
+    {
+        Track.OnWorldPreInit(*this);
+        Track.OnWorldPreInit.Reset();
+    }
 
     LOG_VERBOSE(LogWorld, "Initializing level actors.")
 #if !IN_SHIPPING
@@ -142,6 +132,14 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
 
     this->Collection.InitializeDeferred(this);
     this->Collection.InitializeSubsystems<JWorldSubsystem>();
+
+    if (Track.OnWorldPostInit.IsValid())
+    {
+        Track.OnWorldPostInit(*this);
+        Track.OnWorldPostInit.Reset();
+    }
+
+    this->GetEngine().OnWorldBeginLife.Broadcast(this);
 
     this->WorldState = EWorldState::Running;
 
@@ -173,7 +171,7 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
 
     LMatrix P{SkipInit};
     LMatrix V{SkipInit};
-    if (const auto Cache = this->EyeToMatrices.find(&Eye); this->GetLocalEgo()->GetVariable_UpdateFrustum() || Cache == this->EyeToMatrices.end())
+    if (const auto Cache = this->EyeToMatrices.find(&Eye); this->GetLocalEgo().GetVariable_UpdateFrustum() || Cache == this->EyeToMatrices.end())
     {
         P = Maths::MakePerspectiveProjectionMatrix(
             Maths::ToRadians(Eye.GetDegYFov()),
@@ -220,7 +218,7 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
         this->Skybox->Draw(Viewport, Eye);
     }
 
-    this->OnStaticDraw.InvokeIfBound(Viewport, Eye, CornersSpan);
+    (void)this->OnStaticDraw.InvokeIfBound(Viewport, Eye, CornersSpan);
 
     for (auto& Obj : this->GetEmployees())
     {
@@ -244,7 +242,7 @@ void Jafg::LWorld::Draw(const LViewport& Viewport, const LEye& Eye) const
         continue;
     }
 
-    if (this->GetLocalEgo()->GetVariable_VisualizeFrustum())
+    if (this->GetLocalEgo().GetVariable_VisualizeFrustum())
     {
         const_cast<LWorld*>(this)->AddTemporalObject(LDebugTraceSphere(
             LTemporalWorldObject::DrawOnce,

@@ -27,7 +27,7 @@ enum Type : u8
 DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
 class AActor : public JWorldObject, public LTickableObject
 {
-    GENERATED_CLASS_BODY()
+    GENERATED_CLASS_BODY(ENGINE_API)
 
     friend LWorld;
 
@@ -43,17 +43,17 @@ public:
 
     virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
 
-    FORCEINLINE auto   IsRendererComponentValid() const -> bool { return this->RendererComponent != nullptr; }
-    FORCEINLINE auto   GetRendererComponent() const -> LRendererComponent* { return this->RendererComponent; }
-    LPhysicsComponent* GetPhysicsComponent() const;
+    FORCEINLINE auto IsRendererComponentValid() const -> bool { return this->RendererComponent != nullptr; }
+    FORCEINLINE auto GetRendererComponent() const -> LRendererComponent* { return this->RendererComponent; }
+    ENGINE_API LPhysicsComponent* GetPhysicsComponent() const;
 
-    void ChangeTransform(const LTransform& InTransform, const EActorSweep::Type SweepType = EActorSweep::Teleport);
-    void AddTranslation(const LVector& InLocation, const EActorSweep::Type SweepType = EActorSweep::Teleport);
-    void AddRotator(const LRotator& InRotator, const EActorSweep::Type SweepType = EActorSweep::Teleport);
-    void AddScale(const LVector& InScale, const EActorSweep::Type SweepType = EActorSweep::Teleport);
-    void SetTranslation(const LVector& InLocation, const EActorSweep::Type SweepType = EActorSweep::Teleport);
-    void SetRotator(const LRotator& InRotator, const EActorSweep::Type SweepType = EActorSweep::Teleport);
-    void SetScale(const LVector& InScale, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    ENGINE_API  void ChangeTransform(const LTransform& InTransform, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    ENGINE_API  void AddTranslation(const LVector& InLocation, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    ENGINE_API  void AddRotator(const LRotator& InRotator, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    ENGINE_API  void AddScale(const LVector& InScale, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    ENGINE_API  void SetTranslation(const LVector& InLocation, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    ENGINE_API  void SetRotator(const LRotator& InRotator, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    ENGINE_API  void SetScale(const LVector& InScale, const EActorSweep::Type SweepType = EActorSweep::Teleport);
     FORCEINLINE auto GetTransform() const -> const LTransform& { return this->Transform; }
     FORCEINLINE auto GetTranslation() const -> const LVector& { return this->Transform.Translation; }
     FORCEINLINE auto GetRotator() const -> const LRotator& { return this->Transform.Rotator; }
@@ -99,16 +99,16 @@ private:
     bool bShouldTick : 1  = true;
 };
 
-template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+template<typename TActor> requires(std::is_base_of_v<AActor, TActor> && !std::is_same_v<AActor, TActor>)
 FORCEINLINE TActor* SpawnActor(LWorld* World);
-template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+template<typename TActor> requires(std::is_base_of_v<AActor, TActor> && !std::is_same_v<AActor, TActor>)
 FORCEINLINE TActor* SpawnActor(LWorld* World, TSubclassOf<TActor> Class);
 FORCEINLINE AActor* SpawnActor(LWorld* World, TSubclassOf<AActor> Class);
 FORCEINLINE AActor* SpawnActor(LWorld* World, LString const& ClassName);
 
-template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+template<typename TActor> requires(std::is_base_of_v<AActor, TActor> && !std::is_same_v<AActor, TActor>)
 FORCEINLINE TActor* SpawnDeferredActor(LWorld* World);
-template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+template<typename TActor> requires(std::is_base_of_v<AActor, TActor> && !std::is_same_v<AActor, TActor>)
 FORCEINLINE TActor* SpawnDeferredActor(LWorld* World, TSubclassOf<TActor> Class);
 FORCEINLINE AActor* SpawnDeferredActor(LWorld* World, TSubclassOf<AActor> Class);
 FORCEINLINE AActor* SpawnDeferredActor(LWorld* World, LString const& ClassName);
@@ -120,16 +120,16 @@ FORCEINLINE void MakeDeferredActorFinal(AActor* Actor) { MakeDeferredObjectFinal
 // Impl
 ///////////////////////////////////////////////////////////////////////////////
 
-template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+template<typename TActor> requires(std::is_base_of_v<AActor, TActor> && !std::is_same_v<AActor, TActor>)
 FORCEINLINE TActor* SpawnActor(LWorld* World) { return SpawnActor<TActor>(World, TSubclassOf<TActor>(TActor::StaticClass())); }
-template<typename TActor> requires std::is_base_of_v<AActor, TActor>
-FORCEINLINE TActor* SpawnActor(LWorld* World, TSubclassOf<TActor> Class) { return StaticCastChecked<TActor>(SpawnActor(World, Class)); }
+template<typename TActor> requires(std::is_base_of_v<AActor, TActor> && !std::is_same_v<AActor, TActor>)
+FORCEINLINE TActor* SpawnActor(LWorld* World, TSubclassOf<TActor> Class) { return StaticCastChecked<TActor>(SpawnActor(World, TSubclassOf<AActor>{Class})); }
 FORCEINLINE AActor* SpawnActor(LWorld* World, TSubclassOf<AActor> Class) { AActor* Out{ SpawnDeferredActor(World, Class) }; MakeDeferredActorFinal(Out); return Out; }
 FORCEINLINE AActor* SpawnActor(LWorld* World, LString const& ClassName) { return SpawnActor(World, Private::GetGlobalCxxRecordRegistry().GetClassByNameChecked(ClassName)->StaticClass); }
 
-template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+template<typename TActor> requires(std::is_base_of_v<AActor, TActor> && !std::is_same_v<AActor, TActor>)
 FORCEINLINE TActor* SpawnDeferredActor(LWorld* World) { return SpawnDeferredActor<TActor>(World, TSubclassOf<TActor>(TActor::StaticClass())); }
-template<typename TActor> requires std::is_base_of_v<AActor, TActor>
+template<typename TActor> requires(std::is_base_of_v<AActor, TActor> && !std::is_same_v<AActor, TActor>)
 FORCEINLINE TActor* SpawnDeferredActor(LWorld* World, TSubclassOf<TActor> Class) { return StaticCastChecked<TActor>(SpawnDeferredActor(World, static_cast<TSubclassOf<AActor>>(Class))); }
 FORCEINLINE AActor* SpawnDeferredActor(LWorld* World, TSubclassOf<AActor> Class)
 {

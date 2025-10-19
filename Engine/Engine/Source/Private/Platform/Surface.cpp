@@ -1,9 +1,10 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Lal.afx"
 #include "Platform/Surface.h"
+#include "Framework/PersonaController.h"
 #include "Platform/PlatformMisc.h"
 #include "Widgets/Viewport.h"
+#include "Engine/Engine.h"
 
 void Jafg::LSurfaceBase::Initialize()
 {
@@ -126,4 +127,46 @@ void Jafg::LSurfaceBase::SetInputMode(const EInputMode::Type InMode, const bool 
     this->bShowCursor = bInShowCursor;
 
     return;
+}
+
+void Jafg::LSurfaceBase::Possess(APersonaController* NewController)
+{
+    APersonaController* OldController{ this->Controller };
+    this->Controller = NewController;
+
+    if (OldController)
+    {
+        OldController->SetSurface(nullptr);
+    }
+    if (this->Controller)
+    {
+        this->Controller->SetSurface(this->AsSurface());
+    }
+
+    if (this->Controller)
+    {
+        if (auto const* World{ this->Controller->GetWorldChecked() }; World->IsUnderlyingLevelValid())
+        {
+            this->SetInputMode(World->GetUnderlyingLevelChecked().InputMode, World->GetUnderlyingLevelChecked().bShowMouseCursor);
+            this->GetViewport().SetBackgroundColor(World->GetUnderlyingLevelChecked().BackgroundColor);
+        }
+    }
+
+    this->GetLocalEgo().ForEachMutableSubsystem([OldController, NewController](JLocalEgoSubsystem* Subsystem)
+    {
+        Subsystem->OnNewPersonaControllerPossessed(OldController, NewController);
+    });
+
+    return;
+}
+
+Jafg::LEngine& Jafg::LSurfaceBase::GetEngine() const noexcept
+{
+    check( GEngine && "Absence of GEngine while a surface exists is undefined behavior." )
+    return *GEngine;
+}
+
+Jafg::LLocalEgo& Jafg::LSurfaceBase::GetLocalEgo() const noexcept
+{
+    return this->GetEngine().GetLocalEgo();
 }

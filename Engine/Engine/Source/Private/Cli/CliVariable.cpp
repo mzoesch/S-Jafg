@@ -6,7 +6,8 @@
 
 const Jafg::LCliType* Jafg::LCliVariable::GetType() const
 {
-    return GEngine->GetCommandLineInterface()->GetTypeAsserted(this->Type);
+    check( GEngine )
+    return GEngine->GetCommandLineInterface().GetTypeAsserted(this->Type);
 }
 
 bool Jafg::LCliVariable::SetValue(const LString& InValue)
@@ -16,7 +17,8 @@ bool Jafg::LCliVariable::SetValue(const LString& InValue)
         return false;
     }
 
-    const LCliType* EngineType = GEngine->GetCommandLineInterface()->GetTypeAsserted(this->Type);
+    check( GEngine )
+    const LCliType* EngineType = GEngine->GetCommandLineInterface().GetTypeAsserted(this->Type);
     const bool bOut = EngineType->SetVariable(InValue, &this->Value);
     if (bOut && this->OnVariableChangedDelegate.IsValid())
     {
@@ -27,60 +29,64 @@ bool Jafg::LCliVariable::SetValue(const LString& InValue)
 }
 
 Jafg::LCliVariable::LCliVariable(const LString& InIdentifier, LCliType&& InType)
-: LCliObject(InIdentifier), Type(std::move(InType))
+    : LCliObject(InIdentifier), Type(std::move(InType))
 {
-    const LCliType* EngineType = GEngine->GetCommandLineInterface()->GetTypeAsserted(this->Type);
+    check( GEngine )
+    const LCliType* EngineType = GEngine->GetCommandLineInterface().GetTypeAsserted(this->Type);
     this->Value = EngineType->GetDefault();
 
     return;
 }
 
 Jafg::LCliVariable::LCliVariable(const LString& InIdentifier, LCliType&& InType, const LString& InDefault)
-: LCliObject(InIdentifier), Type(std::move(InType)), Value(InDefault)
+    : LCliObject(InIdentifier), Type(std::move(InType)), Value(InDefault)
 {
     return;
 }
 
 Jafg::LCliVariable::LCliVariable(const LString& InIdentifier, LCliType&& InType, const LString& InDefault, LOnVariableChangedDelegate&& InDelegate)
-: LCliObject(InIdentifier), Type(std::move(InType)), Value(InDefault), OnVariableChangedDelegate(std::move(InDelegate))
+    : LCliObject(InIdentifier), Type(std::move(InType)), Value(InDefault), OnVariableChangedDelegate(std::move(InDelegate))
 {
     return;
 }
 
 Jafg::LCliVariable::LCliVariable(const LString& InIdentifier, LCliType&& InType, LOnVariableChangedDelegate&& InDelegate)
-: LCliObject(InIdentifier), Type(std::move(InType)), OnVariableChangedDelegate(std::move(InDelegate))
+    : LCliObject(InIdentifier), Type(std::move(InType)), OnVariableChangedDelegate(std::move(InDelegate))
 {
-    const LCliType* EngineType = GEngine->GetCommandLineInterface()->GetTypeAsserted(this->Type);
+    check( GEngine )
+    const LCliType* EngineType = GEngine->GetCommandLineInterface().GetTypeAsserted(this->Type);
     this->Value = EngineType->GetDefault();
 
     return;
 }
 
 Jafg::LCliVariable::LCliVariable(const LString& InIdentifier, const LString& InHelp, LCliType&& InType)
-: LCliObject(InIdentifier, InHelp), Type(std::move(InType))
+    : LCliObject(InIdentifier, InHelp), Type(std::move(InType))
 {
-    const LCliType* EngineType = GEngine->GetCommandLineInterface()->GetTypeAsserted(this->Type);
+    check( GEngine )
+    const LCliType* EngineType = GEngine->GetCommandLineInterface().GetTypeAsserted(this->Type);
     this->Value = EngineType->GetDefault();
 
     return;
 }
 
 Jafg::LCliVariable::LCliVariable(const LString& InIdentifier, const LString& InHelp, LCliType&& InType, const LString& InDefault)
-: LCliObject(InIdentifier, InHelp), Type(std::move(InType)), Value(InDefault)
+    : LCliObject(InIdentifier, InHelp), Type(std::move(InType)), Value(InDefault)
 {
     return;
 }
 
 Jafg::LCliVariable::LCliVariable(const LString& InIdentifier, const LString& InHelp, LCliType&& InType, const LString& InDefault, LOnVariableChangedDelegate&& InDelegate)
-: LCliObject(InIdentifier, InHelp), Type(std::move(InType)), Value(InDefault), OnVariableChangedDelegate(std::move(InDelegate))
+    : LCliObject(InIdentifier, InHelp), Type(std::move(InType)), Value(InDefault), OnVariableChangedDelegate(std::move(InDelegate))
 {
     return;
 }
 
 Jafg::LCliVariable::LCliVariable(const LString& InIdentifier, const LString& InHelp, LCliType&& InType, LOnVariableChangedDelegate&& InDelegate)
-: LCliObject(InIdentifier, InHelp), Type(std::move(InType)), OnVariableChangedDelegate(std::move(InDelegate))
+    : LCliObject(InIdentifier, InHelp), Type(std::move(InType)), OnVariableChangedDelegate(std::move(InDelegate))
 {
-    const LCliType* EngineType = GEngine->GetCommandLineInterface()->GetTypeAsserted(this->Type);
+    check( GEngine )
+    const LCliType* EngineType = GEngine->GetCommandLineInterface().GetTypeAsserted(this->Type);
     this->Value = EngineType->GetDefault();
 
     return;

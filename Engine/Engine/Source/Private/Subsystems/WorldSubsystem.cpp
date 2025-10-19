@@ -6,7 +6,7 @@
 
 bool Jafg::JWorldSubsystem::IsOuterFrontend(LClassOuter const* Outer) noexcept
 {
-    return Outer && Outer->IsWorld() && Outer->AsWorld()->GetUnderlyingLevelName() == Name_LevelFrontend.ToString();
+    return Outer && Outer->IsWorld() && Outer->AsWorld()->GetUnderlyingLevelName() == "LevelFrontend";
 }
 
 bool Jafg::JWorldSubsystem::IsOuterWorld(LClassOuter const* Outer) noexcept

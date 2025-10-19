@@ -20,6 +20,8 @@
 namespace Jafg
 {
 
+class APersonaController;
+
 //#
 //# Interface for a generic surface that the RHI may use to draw on.
 //#
@@ -101,6 +103,18 @@ public:
     template <typename Predicate>
     FORCEINLINE void ForEachNewKeyDown(Predicate InPredicate);
 
+    FORCEINLINE bool DoesPossess() const { return this->Controller != nullptr; }
+    FORCEINLINE APersonaController* GetPossessed() { return this->Controller; }
+    FORCEINLINE APersonaController* GetPossessedChecked() { check( this->DoesPossess() ) return this->Controller; }
+    FORCEINLINE APersonaController* GetPossessedAsserted() { jassert( this->DoesPossess() ) return this->Controller; }
+    FORCEINLINE APersonaController const* GetPossessed() const { return this->Controller; }
+    FORCEINLINE APersonaController const* GetPossessedChecked() const { check( this->DoesPossess() ) return this->Controller; }
+    FORCEINLINE APersonaController const* GetPossessedAsserted() const { jassert( this->DoesPossess() ) return this->Controller; }
+    ENGINE_API  void Possess(APersonaController* NewController);
+
+    ENGINE_API LEngine& GetEngine() const noexcept;
+    ENGINE_API LLocalEgo& GetLocalEgo() const noexcept;
+
 protected:
 
     FORCEINLINE void AddBufferedPlatformInput(const char* InInput) { this->PlatformInput.emplace_back(InInput); }
@@ -175,6 +189,8 @@ private:
     bool bThisFrameRepeatedKeyDown { false };
     LKey LastNewKey { EKeys::Unresolved };
 #endif /* PLATFORM_LINUX */
+
+    APersonaController* Controller{ nullptr };
 };
 
 } /* ~Namespace Jafg */

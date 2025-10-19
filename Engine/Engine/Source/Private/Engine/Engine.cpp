@@ -68,12 +68,12 @@ void Jafg::LEngine::Initialize()
 {
     STAT_CYCLE_FUNCTION()
 
-    Private::AddPrimitivesToCli(this->GetCommandLineInterface());
-    Private::AddExtendedPrimitivesToCli(this->GetCommandLineInterface());
+    Private::AddPrimitivesToCli(&this->GetCommandLineInterface());
+    Private::AddExtendedPrimitivesToCli(&this->GetCommandLineInterface());
 
     /* Engine stuff. */
     {
-        const bool bValid_TypeWorld { this->CommandLineInterface.RegisterType({"World", "A world registered to the engine.", "",
+        const bool bValid_TypeWorld{ this->CommandLineInterface.RegisterType({"World", "A world registered to the engine.", "",
         [](LCommandArgs const& Args, i32* Cursor) -> bool
         {
             checkSlow( *Cursor < Args.GetArgCount() )
@@ -140,7 +140,7 @@ void Jafg::LEngine::Initialize()
         }}).IsValid()};
         ensureDiscard(bValid_TypeWorld);
 
-        const bool bValid_CommandSet { this->CommandLineInterface.RegisterCommand({"Set", "Set any variable.",
+        const bool bValid_CommandSet{ this->CommandLineInterface.RegisterCommand({"Set", "Set any variable.",
         LCommandParams{}
         .Token(LCliType::Type<LCliVariable>())
         .Token(LCliType
@@ -218,7 +218,7 @@ void Jafg::LEngine::Initialize()
         })}).IsValid()};
         ensureDiscard(bValid_CommandSet);
 
-        const bool bValid_CommandGet { this->CommandLineInterface.RegisterCommand({"Get", "Get any variable.",
+        const bool bValid_CommandGet{ this->CommandLineInterface.RegisterCommand({"Get", "Get any variable.",
         LCommandParams{}
         .Token(LCliType::Type("Var", "The variable to get."))
         .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
@@ -239,7 +239,7 @@ void Jafg::LEngine::Initialize()
         })}).IsValid()};
         ensureDiscard(bValid_CommandGet);
 
-        const bool bValid_CommandBreak { this->GetCommandLineInterface()->RegisterCommand({"_Break", "Breaks jafg.",
+        const bool bValid_CommandBreak{ this->GetCommandLineInterface().RegisterCommand({"_Break", "Breaks jafg.",
         LCommandParams{}
         .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {
@@ -252,7 +252,7 @@ void Jafg::LEngine::Initialize()
         })}).IsValid()};
         ensureDiscard(bValid_CommandBreak);
 
-        const bool bValid_CommandPrintWorldParams { this->GetCommandLineInterface()->RegisterCommand(
+        const bool bValid_CommandPrintWorldParams{ this->GetCommandLineInterface().RegisterCommand(
         {
             "PrintWorldParams", "Prints the world parameters to the standard output.",
             LCommandParams{}
@@ -271,7 +271,7 @@ void Jafg::LEngine::Initialize()
         }).IsValid()};
         ensureDiscard(bValid_CommandPrintWorldParams);
 
-        const bool bValid_CommandTrap { this->GetCommandLineInterface()->RegisterCommand({"_Trap", "Traps jafg.",
+        const bool bValid_CommandTrap{ this->GetCommandLineInterface().RegisterCommand({"_Trap", "Traps jafg.",
         LCommandParams{}
         .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {
@@ -284,7 +284,7 @@ void Jafg::LEngine::Initialize()
         })}).IsValid()};
         ensureDiscard(bValid_CommandTrap);
 
-        const bool bValid_CommandTrapThread { this->GetCommandLineInterface()->RegisterCommand({"_TrapThread", "Traps jafg but not the master thread.",
+        const bool bValid_CommandTrapThread{ this->GetCommandLineInterface().RegisterCommand({"_TrapThread", "Traps jafg but not the master thread.",
         LCommandParams{}
         .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {
@@ -301,7 +301,7 @@ void Jafg::LEngine::Initialize()
         })}).IsValid()};
         ensureDiscard(bValid_CommandTrapThread);
 
-        const bool bValid_CommandThrowAccessViolation { this->GetCommandLineInterface()->RegisterCommand({"_ThrowAccessViolation", "Causes a C access violation.",
+        const bool bValid_CommandThrowAccessViolation{ this->GetCommandLineInterface().RegisterCommand({"_ThrowAccessViolation", "Causes a C access violation.",
         LCommandParams{}
         .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {
@@ -315,7 +315,7 @@ void Jafg::LEngine::Initialize()
         })}).IsValid()};
         ensureDiscard(bValid_CommandThrowAccessViolation);
 
-        const bool bValid_CommandThrowStdAccessViolation { this->GetCommandLineInterface()->RegisterCommand({"_ThrowStdAccessViolation", "Causes an access violation in the Stl.",
+        const bool bValid_CommandThrowStdAccessViolation{ this->GetCommandLineInterface().RegisterCommand({"_ThrowStdAccessViolation", "Causes an access violation in the Stl.",
         LCommandParams{}
         .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
         {
@@ -333,7 +333,7 @@ void Jafg::LEngine::Initialize()
     this->Collection.InitializeSubsystems<JEngineSubsystem>();
 
 #if WITH_LOCAL_LAYER
-    check( this->LocalEgo.IsValid() == false )
+    check( this->LocalEgo.IsDecommissioned() == false )
     this->LocalEgo.Initialize();
 #endif /* WITH_LOCAL_LAYER */
 
@@ -423,7 +423,7 @@ void Jafg::LEngine::TearDown()
     LOG_VERBOSE(LogEngine, "Tearing down engine.")
 
 #if JAFG_WITH_REST_CLS
-    if (GEngine && GEngine->GetReSTCli()->IsServerRunning())
+    if (this->GetReSTCli().IsServerRunning())
     {
         this->StopReSTCliServer();
     }
@@ -444,10 +444,8 @@ void Jafg::LEngine::TearDown()
     Private::GetGlobalCarnifex().KillAllGarbageChildren();
 
 #if WITH_LOCAL_LAYER
-    if (ensure(this->LocalEgo.IsValid()))
-    {
-        this->LocalEgo.TearDown();
-    }
+    check( this->LocalEgo.IsDecommissioned() == false )
+    this->LocalEgo.TearDown();
 #endif /* WITH_LOCAL_LAYER */
 
     Tasks::Private::StopAndJoinRemainingThreads();
@@ -589,6 +587,12 @@ Jafg::Private::LWorldTrack& Jafg::LEngine::GetTrackFromWorld(LWorld const* World
 Jafg::LWorldStorage Jafg::LEngine::SummonWorld(LString const& HumanReadableName)
 {
     check( Tasks::IsOnMasterThread() )
+
+    if (algo::contains(this->Tracks, HumanReadableName, [](auto const& E){ return E.ChildWorld->GetHumanReadableName(); }))
+    {
+        LOG_WARNING(LogEngine, "A world with the name [{}] is already summoned.", HumanReadableName)
+    }
+
     this->Tracks.emplace_back(Private::LWorldTrack{HumanReadableName});
     return LWorldStorage{ this->Tracks.back().ChildWorld.get() };
 }
@@ -630,7 +634,7 @@ bool Jafg::LEngine::RegisterLevel(LLevel&& Level)
     return true;
 }
 
-void Jafg::LEngine::Browse(Private::LWorldTrack& Track, LString const& Url) const
+void Jafg::LEngine::Browse(Private::LWorldTrack& Track, LString const& Url, TFunction<void(LWorld&)>&& PreInitCallback, TFunction<void(LWorld&)>&& PostInitCallback)
 {
     check( Track.ChildWorld.get() )
     check( Track.TravelUrl.empty() )
@@ -659,6 +663,8 @@ void Jafg::LEngine::Browse(Private::LWorldTrack& Track, LString const& Url) cons
     }
 
     Track.TravelUrl = Url;
+    Track.OnWorldPreInit = std::move(PreInitCallback);
+    Track.OnWorldPostInit =  std::move(PostInitCallback);
 
     return;
 }

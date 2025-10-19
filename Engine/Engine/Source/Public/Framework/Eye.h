@@ -14,7 +14,16 @@ class LEye final
 public:
 
     LEye() noexcept = default;
-    PROHIBIT_ANY_REALLOC_OTHER_THAN_CDR_DEFAULTED(LEye)
+    PROHIBIT_ANY_REALLOC_OTHER_THAN_CDR(LEye) noexceptcheck
+    {
+        check( CDR.Owner == nullptr )
+
+        this->DegYFov = CDR.DegYFov;
+        this->NearFrustum = CDR.NearFrustum;
+        this->FarFrustum  = CDR.FarFrustum;
+
+        return;
+    }
     ~LEye() noexcept = default;
 
     FORCEINLINE bool IsOwnerValid() const noexcept { return this->Owner != nullptr; }
@@ -38,7 +47,7 @@ public:
 
 private:
 
-    APawn*  Owner { nullptr };
+    APawn*  Owner{ nullptr };
     LMatrix CachedViewMatrix;
 
     void UpdateRelativeVectors() const;
@@ -46,10 +55,10 @@ private:
     mutable LVector RelativeRight { LVector::RightVector };
     mutable LVector RelativeUp    { LVector::UpVector };
 
-    f32 DegYFov { 90.0f };
+    f32 DegYFov{ 90.0f };
 
-    f32 NearFrustum { 0.1f };
-    f32 FarFrustum  { 1.0f };
+    f32 NearFrustum{ 0.1f };
+    f32 FarFrustum{ 1.0f };
 };
 
 } /* ~Namespace Jafg */

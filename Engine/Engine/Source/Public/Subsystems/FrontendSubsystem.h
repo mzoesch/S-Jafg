@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Lal.afx"
 #include "Subsystems/Subsystem.h"
 #include "FrontendSubsystem.generated.h"
 
@@ -19,7 +18,7 @@ class LFrontend;
 DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
 class JFrontendSubsystem : public JSubsystem
 {
-    GENERATED_CLASS_BODY()
+    GENERATED_CLASS_BODY(ENGINE_API)
 
     friend LFrontend;
 
@@ -27,23 +26,17 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JFrontendSubsystem)
 
-    // JSubsystem implementation
-    virtual void Initialize(LSubsystemCollection& Collection) override;
-    // ~JSubsystem implementation
-
     virtual void Tick() { }
 
-    FORCEINLINE bool ShouldTick() const { return this->bShouldTick; }
-    FORCEINLINE void SetShouldTick(const bool bShouldTick) { this->bShouldTick = bShouldTick; }
+    FORCEINLINE bool ShouldTick() const noexcept { return this->bShouldTick; }
+    FORCEINLINE void SetShouldTick(const bool bShouldTick) noexcept { this->bShouldTick = bShouldTick; }
 
-    //# Always valid.
-    FORCEINLINE       LFrontend* GetFrontend() { return this->OwningFrontend; }
-    FORCEINLINE const LFrontend* GetFrontend() const { return this->OwningFrontend; }
+    ENGINE_API LFrontend& GetFrontend() noexcept;
+    ENGINE_API LFrontend const& GetFrontend() const noexcept;
 
 private:
 
-    bool bShouldTick = false;
-    LFrontend* OwningFrontend = nullptr;
+    bool bShouldTick{ false };
 };
 
 } /* ~Namespace Jafg */

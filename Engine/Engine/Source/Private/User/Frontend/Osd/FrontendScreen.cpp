@@ -90,7 +90,7 @@ void Jafg::WFrontendScreen::Construct()
         Descriptor.OnButtonReleaseField = [](WTabBar& Self, const LString& InIdentifier) -> bool
         {
             Self.OnTabBarButtonReleased(InIdentifier);
-            Self.GetEngine()->RequestEngineExit("Exited through front-end menu.");
+            Self.GetEngine().RequestEngineExit("Exited through front-end menu.");
             return true;
         };
         this->TabBar->RegisterTab(std::move(Descriptor));

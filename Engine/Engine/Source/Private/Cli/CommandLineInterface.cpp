@@ -8,7 +8,12 @@
 
 Jafg::LCommandLineInterface* Jafg::LCliObjectHandle::GetCommandLineInterface() const
 {
-    return GEngine->GetCommandLineInterface();
+    if (GEngine)
+    {
+        return &GEngine->GetCommandLineInterface();
+    }
+
+    return nullptr;
 }
 
 void Jafg::LCommandLineInterface::TearDown()

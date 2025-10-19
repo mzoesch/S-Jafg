@@ -50,7 +50,7 @@ void Jafg::WDebugScreen::Construct()
 {
     Super::Construct();
 
-    const JMaterialSubsystem* MaterialSubsystem = this->GetEngine()->GetSubsystem<JMaterialSubsystem>();
+    const JMaterialSubsystem* MaterialSubsystem = this->GetEngine().GetSubsystem<JMaterialSubsystem>();
 
     constexpr f32 SpacerHeight { 20.0f };
 
@@ -177,10 +177,7 @@ void Jafg::WDebugScreen::Tick()
     check( this->LocalPawnTargetVoxelSectionDestroy )
     check( this->LocalPawnTargetVoxelSectionCreate )
 
-    const LLocalEgo* LocalEgo { GEngine->GetLocalEgo() };
-    const APersonaController* Controller { LocalEgo->GetCheckedPossessed() };
-
-    if (Controller->DoesPossess())
+    if (APersonaController* Controller{ this->GetViewport()->GetOwningSurface().GetPossessed() }; Controller && Controller->DoesPossess())
     {
         {
             const LVector Location { Controller->GetPossessed()->GetTranslation() };
@@ -331,11 +328,11 @@ void Jafg::WDebugScreen::Tick()
         /* Chunk debug lines. */
         if
         (
-            const LCliVariable* Var { GEngine->GetCommandLineInterface()->GetVariable("ShowChunkBordersInDebugScreen") };
+            const LCliVariable* Var { GEngine->GetCommandLineInterface().GetVariable("ShowChunkBordersInDebugScreen") };
             Var && Var->GetValue<bool>()
         )
         {
-            LWorld* World { Controller->GetPossessed()->GetWorld() };
+            LWorld* World{ Controller->GetPossessed()->GetWorld() };
 
             const LVector PawnTranslation { Controller->GetPossessed()->GetTranslation() };
             const LChunkKey CKey { PawnTranslation };
@@ -498,7 +495,7 @@ void Jafg::WDebugScreen::RegisterCliObjects()
     check( this->IsDefault() )
 
     this->VariableHandle_ShowChunkBordersInDebugScreen =
-        GEngine->GetCommandLineInterface()->RegisterVariable({"ShowChunkBordersInDebugScreen", LCliType::Type<bool>()});
+        GEngine->GetCommandLineInterface().RegisterVariable({"ShowChunkBordersInDebugScreen", LCliType::Type<bool>()});
 
     return;
 }
@@ -510,7 +507,7 @@ void Jafg::WDebugScreen::UnregisterCliObjects()
 
     if (ensure(this->VariableHandle_ShowChunkBordersInDebugScreen->IsValid()))
     {
-        GEngine->GetCommandLineInterface()->UnregisterCommand(&this->VariableHandle_ShowChunkBordersInDebugScreen);
+        GEngine->GetCommandLineInterface().UnregisterCommand(&this->VariableHandle_ShowChunkBordersInDebugScreen);
     }
 
     return;

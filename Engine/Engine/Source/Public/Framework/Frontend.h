@@ -31,10 +31,10 @@ public:
     void Tick(LUserInput* UserInput);
     void TearDown();
 
-    ENGINE_API LLocalEgo*  GetLocalEgo() const;
-    ENGINE_API LLocalEgo*  GetLocalEgoChecked() const;
-    ENGINE_API LUserInput* GetUserInput() const;
-    ENGINE_API LUserInput* GetUserInputChecked() const;
+    ENGINE_API LEngine&    GetEngine() const noexceptcheck;
+    ENGINE_API LLocalEgo&  GetLocalEgo() const noexceptcheck;
+    ENGINE_API LLocalEgo&  GetLocalEgoChecked() const noexceptcheck;
+    ENGINE_API LUserInput& GetUserInput() const noexceptcheck;
 
     FORCEINLINE i32 GetSurfaceCount() const { return this->Surfaces.size(); }
     FORCEINLINE auto  GetSurfaces() -> TArray<LSurface>& { return this->Surfaces; }

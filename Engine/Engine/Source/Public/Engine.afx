@@ -148,6 +148,10 @@
 ----------------------------------------------------------------------------*/
 
 #include "Engine/Engine.h"
+#include "Framework/Controller.h"
+#include "Framework/PersonaController.h"
+#include "Framework/Eye.h"
+#include "Framework/Pawn.h"
 
 
 /*----------------------------------------------------------------------------

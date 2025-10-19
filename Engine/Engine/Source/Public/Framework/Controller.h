@@ -11,7 +11,7 @@ namespace Jafg
 DECLARE_JAFG_CLASS()
 class AController : public AActor
 {
-    GENERATED_CLASS_BODY()
+    GENERATED_CLASS_BODY(ENGINE_API)
 
 protected:
 

@@ -158,13 +158,8 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                 return;
             }
 
-            if (GEngine->IsLocalEgoValid() == false)
-            {
-                LOG_WARNING(LogPreferences, "Failed to load intermediate preference collection [{}] due to invalid local ego.", InCollection->GetName())
-                return;
-            }
-
-            for (auto& Action : GEngine->GetLocalEgo()->GetUserInput()->GetRegisteredActions())
+            check( GEngine->GetLocalEgo().IsDecommissioned() == false )
+            for (auto& Action : GEngine->GetLocalEgo().GetUserInput().GetRegisteredActions())
             {
                 TUnique<LPreferenceValue_InputAction> T = std::make_unique<LPreferenceValue_InputAction>(Action->GetName());
                 InCollection->AddPreference(std::move(T));
@@ -251,15 +246,13 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                 return;
             }
 
-            LCommandLineInterface* Cli = GEngine->GetCommandLineInterface();
-            checkSlow( Cli )
-
+            LCommandLineInterface& Cli = GEngine->GetCommandLineInterface();
             {
                 TUnique<LPreferenceCollection> Collection = std::make_unique<LPreferenceCollection>(Name_PrefDeveloperTypes, "Cli Types");
 
-                for (const LCliType& Type : Cli->GetTypes())
+                for (const LCliType& Type : Cli.GetTypes())
                 {
-                    TOptional<LCliObjectHandle> Handle = Cli->GetHandle(Type);
+                    TOptional<LCliObjectHandle> Handle = Cli.GetHandle(Type);
                     if (Handle.has_value() == false)
                     {
                         LOG_WARNING(LogPreferences, "Encountered invalid type handle.")
@@ -284,9 +277,9 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
             {
                 TUnique<LPreferenceCollection> Collection = std::make_unique<LPreferenceCollection>(Name_PrefDeveloperCmds, "Cli Commands");
 
-                for (const LCliCommand& Type : Cli->GetCommands())
+                for (const LCliCommand& Type : Cli.GetCommands())
                 {
-                    TOptional<LCliObjectHandle> Handle = Cli->GetHandle(Type);
+                    TOptional<LCliObjectHandle> Handle = Cli.GetHandle(Type);
                     if (Handle.has_value() == false)
                     {
                         LOG_WARNING(LogPreferences, "Encountered invalid command handle.")
@@ -311,9 +304,9 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
             {
                 TUnique<LPreferenceCollection> Collection = std::make_unique<LPreferenceCollection>(Name_PrefDeveloperVars, "Cli Vars");
 
-                for (const LCliVariable& Type : Cli->GetVariables())
+                for (const LCliVariable& Type : Cli.GetVariables())
                 {
-                    TOptional<LCliObjectHandle> Handle = Cli->GetHandle(Type);
+                    TOptional<LCliObjectHandle> Handle = Cli.GetHandle(Type);
                     if (Handle.has_value() == false)
                     {
                         LOG_WARNING(LogPreferences, "Encountered invalid variable handle.")

@@ -244,7 +244,7 @@ void Jafg::LSurfaceGlfw3::Initialize()
         glfwSetKeyCallback(this->Handle, Private::LGlfw3Bridge::KeyCallback);
     }
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    this->GetViewport().SetBackgroundColor(Lal::LLinearColor::Black);
 
     return;
 }
@@ -290,7 +290,7 @@ void Jafg::LSurfaceGlfw3::TearDown()
         this->Handle = nullptr;
     }
 
-    if (IsEngineExitRequested() && GEngine->GetLocalEgo()->GetFrontend()->GetSurfaceCount() == 0)
+    if (IsEngineExitRequested() && GEngine->GetLocalEgo().GetFrontend().GetSurfaceCount() == 0)
     {
         LOG_INFO(LogSurface, "Terminating glfw.")
         glfwTerminate();

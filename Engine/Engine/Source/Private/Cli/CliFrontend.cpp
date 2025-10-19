@@ -21,7 +21,7 @@ void Jafg::LPreferenceValue_CliType::ResetToInitial()
     jassertNoEntry()
 }
 
-void Jafg::LPreferenceValue_CliType::BuildDefault(const LPreference* Self, WParentBase* Target)
+void Jafg::LPreferenceValue_CliType::BuildDefault(LPreference const* Self, WParentBase* Target)
 {
     if (GEngine == nullptr)
     {
@@ -29,10 +29,10 @@ void Jafg::LPreferenceValue_CliType::BuildDefault(const LPreference* Self, WPare
         return;
     }
 
-    const LPreferenceValue_CliType* This = static_cast<const LPreferenceValue_CliType*>(Self);
+    LPreferenceValue_CliType const* This{ static_cast<LPreferenceValue_CliType const*>(Self) };
 
-    const LCommandLineInterface* Cli = GEngine->GetCommandLineInterface();
-    const LCliType* Type = Cli->GetType(This->Type);
+    LCommandLineInterface const& Cli{ GEngine->GetCommandLineInterface() };
+    LCliType const* Type{ Cli.GetType(This->Type) };
     if (Type == nullptr)
     {
         LOG_ERROR(LogPreferences, "CliType is invalid.")
@@ -97,8 +97,8 @@ void Jafg::LPreferenceValue_CliCommand::BuildDefault(const LPreference* Self, WP
 
     const LPreferenceValue_CliCommand* This = static_cast<const LPreferenceValue_CliCommand*>(Self);
 
-    const LCommandLineInterface* Cli = GEngine->GetCommandLineInterface();
-    const LCliCommand* Command = Cli->GetCommand(This->Type);
+    LCommandLineInterface const& Cli{ GEngine->GetCommandLineInterface() };
+    LCliCommand const* Command{ Cli.GetCommand(This->Type) };
     if (Command == nullptr)
     {
         LOG_ERROR(LogPreferences, "CliCommand is invalid.")
@@ -157,8 +157,8 @@ void Jafg::LPreferenceValue_CliVariable::BuildDefault(const LPreference* Self, W
 
     const LPreferenceValue_CliVariable* This = static_cast<const LPreferenceValue_CliVariable*>(Self);
 
-    const LCommandLineInterface* Cli = GEngine->GetCommandLineInterface();
-    const LCliVariable* Variable = Cli->GetVariable(This->Type);
+    LCommandLineInterface const& Cli{ GEngine->GetCommandLineInterface() };
+    LCliVariable const* Variable{ Cli.GetVariable(This->Type) };
     if (Variable == nullptr)
     {
         LOG_ERROR(LogPreferences, "CliVariable is invalid.")

@@ -300,7 +300,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
             return false;
         }
 
-        const LCliVariable* Var { GEngine->GetCommandLineInterface()->GetVariable(Args[*Cursor].Name) };
+        const LCliVariable* Var{ GEngine->GetCommandLineInterface().GetVariable(Args[*Cursor].Name) };
 
         if (Var)
         {
@@ -325,8 +325,7 @@ void Jafg::Private::AddExtendedPrimitivesToCli(LCommandLineInterface* Cli)
         }
 
         TArray<LString> Out;
-
-        for (const LCliVariable& Var : GEngine->GetCommandLineInterface()->GetVariables())
+        for (const LCliVariable& Var : GEngine->GetCommandLineInterface().GetVariables())
         {
             if (Out.size() >= static_cast<TArray<LString>::size_type>(MaxSuggestions))
             {

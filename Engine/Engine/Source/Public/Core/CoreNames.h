@@ -11,7 +11,6 @@
 #endif /* PREPROCESSOR_EXCLUDE_FF */
 
 ENGINE_API extern LName Name_LevelMyWorld;
-ENGINE_API extern LName Name_LevelFrontend;
 
 ENGINE_API extern LName Name_UicInMyWorld;
 ENGINE_API extern LName Name_UicInMyWorldFoot;

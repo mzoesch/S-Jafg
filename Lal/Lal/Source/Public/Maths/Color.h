@@ -140,8 +140,8 @@ struct LLinearColor final
     //#
     //# @see #LColor for some documentation on the colors below.
     //#
-    LAL_API static const LLinearColor Aliceblue;
-    LAL_API static const LLinearColor Antiquewhite;
+    LAL_API static const LLinearColor AliceBlue;
+    LAL_API static const LLinearColor AntiqueWhite;
     LAL_API static const LLinearColor Aqua;
     LAL_API static const LLinearColor Aquamarine;
     LAL_API static const LLinearColor Azure;
@@ -556,8 +556,8 @@ struct LColor final
     //# BEGIN Additional Standard
     //#
 
-    LAL_API static const LColor Aliceblue;
-    LAL_API static const LColor Antiquewhite;
+    LAL_API static const LColor AliceBlue;
+    LAL_API static const LColor AntiqueWhite;
     // LAL_API static const LColor Aqua;
     LAL_API static const LColor Aquamarine;
     LAL_API static const LColor Azure;

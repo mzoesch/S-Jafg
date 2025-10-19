@@ -19,8 +19,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 {
     Super::Initialize(Collection);
 
-    check( this->GetLocalEgo() )
-    LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
+    LUserInput* UserInput{ &this->GetLocalEgo().GetUserInput() };
 
     LUserInputContext* ContextMyWorld     = UserInput->RegisterContext(LUserInputContext{Name_UicInMyWorld, "In My World"});
     LUserInputContext* ContextMyWorldFoot = UserInput->RegisterContext(LUserInputContext{Name_UicInMyWorldFoot, "In My World Foot"});
@@ -77,7 +76,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 
                 if
                 (
-                    WDebugMenu* Screen { this->GetLocalEgo()->GetFrontend()->GetFirstTopLevelWidgetByClass<WDebugMenu>() };
+                    WDebugMenu* Screen{ this->GetLocalEgo().GetFrontend().GetFirstTopLevelWidgetByClass<WDebugMenu>() };
                     ensure(Screen)
                 )
                 {
@@ -101,7 +100,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 
                 if
                 (
-                    WDebugMenu* Screen { this->GetLocalEgo()->GetFrontend()->GetFirstTopLevelWidgetByClass<WDebugMenu>() };
+                    WDebugMenu* Screen { this->GetLocalEgo().GetFrontend().GetFirstTopLevelWidgetByClass<WDebugMenu>() };
                     ensure(Screen)
                 )
                 {
@@ -129,8 +128,8 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
                 UserInput->DeactivateContext(Name_UicInMyWorldFoot);
                 UserInput->DeactivateContext(Name_UicInMyWorld);
                 UserInput->ActivateContext(Name_UicInPause);
-                this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both, ShowMouseCursor);
-                (void)this->GetLocalEgo()->GetFrontend()->ChangeWidgetVisibility<WPauseScreen>(EWidgetVisibility::IntransitiveHitTestInvisible);
+                this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both, ShowMouseCursor);
+                (void)this->GetLocalEgo().GetFrontend().ChangeWidgetVisibility<WPauseScreen>(EWidgetVisibility::IntransitiveHitTestInvisible);
                 return;
             }
         );
@@ -147,8 +146,8 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
                 UserInput->DeactivateContext(Name_UicInPause);
                 UserInput->ActivateContext(Name_UicInMyWorldFoot);
                 UserInput->ActivateContext(Name_UicInMyWorld);
-                this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
-                (void)this->GetLocalEgo()->GetFrontend()->ChangeWidgetVisibility<WPauseScreen>(EWidgetVisibility::Collapsed);
+                this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+                (void)this->GetLocalEgo().GetFrontend().ChangeWidgetVisibility<WPauseScreen>(EWidgetVisibility::Collapsed);
                 return;
             }
         );
@@ -237,7 +236,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             },
             [this] (LInputActionValue& InValue)
             {
-                this->GetLocalEgo()->GetFrontend()->GetFirstTopLevelWidgetByClassChecked<WConsoleScreen>()->SetConsoleFrontendState(EConsoleScreenState::Show);
+                this->GetLocalEgo().GetFrontend().GetFirstTopLevelWidgetByClassChecked<WConsoleScreen>()->SetConsoleFrontendState(EConsoleScreenState::Show);
             }
         );
         ContextInConsole->MapAction
@@ -250,7 +249,7 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             },
             [this](LInputActionValue& InValue) -> void
             {
-                this->GetLocalEgo()->GetFrontend()->GetFirstTopLevelWidgetByClassChecked<WConsoleScreen>()->OnEscape();
+                this->GetLocalEgo().GetFrontend().GetFirstTopLevelWidgetByClassChecked<WConsoleScreen>()->OnEscape();
             }
         );
     }
@@ -393,8 +392,8 @@ void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
 {
     Super::OnNewPawnPossessed(InOld, InNew);
 
-    LUserInput* UserInput = this->GetLocalEgo()->GetUserInput();
-    LUserInputContext* ContextInMyWorldFoot = UserInput->GetContextByNameChecked(Name_UicInMyWorldFoot);
+    LUserInput& UserInput{ this->GetLocalEgo().GetUserInput() };
+    LUserInputContext* ContextInMyWorldFoot{ UserInput.GetContextByNameChecked(Name_UicInMyWorldFoot) };
 
     if (InNew)
     {
@@ -420,7 +419,7 @@ void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
 
 void Jafg::JCoreInputSubsystem::OnDebugScreenToggle(LInputActionValue& InValue) const
 {
-    WDebugScreen* Screen { this->GetLocalEgo()->GetFrontend()->GetFirstTopLevelWidgetByClass<WDebugScreen>() };
+    WDebugScreen* Screen { this->GetLocalEgo().GetFrontend().GetFirstTopLevelWidgetByClass<WDebugScreen>() };
 
     if (Screen)
     {

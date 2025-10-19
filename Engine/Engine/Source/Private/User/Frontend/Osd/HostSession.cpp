@@ -420,7 +420,7 @@ Jafg::TWidgetFactoryHRegion<Jafg::WHRegion>* Jafg::WHostSessionScreen_New::AddMe
                     return;
                 }
 
-                this->GetEngine()->Browse
+                this->GetEngine().Browse
                 (
                     static_cast<LWorld*>(this->GetOuter()),
                     Lal::SprintF("{}?Save={}", Name_LevelMyWorld.ToString(), Path)
@@ -1049,7 +1049,7 @@ Jafg::TWidgetFactoryHRegion<Jafg::WHRegion>* Jafg::WHostSessionScreen_Old_Host::
                 }
 
                 LOG_VERBOSE(LogWidgets, "Forwarding host request for [{}].", this->Save->Path)
-                this->GetEngine()->Browse
+                this->GetEngine().Browse
                 (
                     this->GetOuter()->AsWorld(),
                     Lal::SprintF("{}?Save={}", Name_LevelMyWorld.ToString(), this->Save->Path)

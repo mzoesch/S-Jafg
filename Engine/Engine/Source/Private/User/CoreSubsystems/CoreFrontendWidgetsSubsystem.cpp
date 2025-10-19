@@ -12,12 +12,6 @@ bool Jafg::JCoreFrontendWidgetsSubsystem::ShouldCreateSubsystem(LClassOuter cons
         return false;
     }
 
-    if (this->GetLocalEgo() == nullptr)
-    {
-        LOG_WARNING(LogWidgets, "No local ego found. Widgets subsystem will not be initialized.")
-        return false;
-    }
-
     return Super::IsOuterFrontend(Outer);
 }
 
@@ -25,11 +19,8 @@ void Jafg::JCoreFrontendWidgetsSubsystem::Initialize(LSubsystemCollection& Colle
 {
     Super::Initialize(Collection);
 
-    check( this->GetLocalEgo() )
-    LFrontend* Frontend = this->GetLocalEgo()->GetFrontend();
-
     this->FrontendScreen = ConstructDeferredWidgetNode<WFrontendScreen>(this->GetOuter());
-    this->FrontendScreen->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
+    this->FrontendScreen->AddToViewport(&this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetViewport());
     MakeDeferredWidgetNodeFinal(this->FrontendScreen);
 
     return;

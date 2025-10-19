@@ -126,9 +126,9 @@ void Jafg::WEditableTextBox::UserInterfaceTick(const LViewport& InViewport)
 {
     bool bHandled { false };
 
-    if (this->GetLocalEgo()->GetUserInput()->HasBufferedPlatformInput())
+    if (this->GetLocalEgo().GetUserInput().HasBufferedPlatformInput())
     {
-        const LString BufferedInput { this->GetLocalEgo()->GetUserInput()->GetBufferedPlatformInputAsStr() };
+        const LString BufferedInput { this->GetLocalEgo().GetUserInput().GetBufferedPlatformInputAsStr() };
 
         LString NewContent { this->GetContent() };
         NewContent.insert(this->CaretCursor, BufferedInput);
@@ -341,7 +341,7 @@ void Jafg::WEditableTextBox::OnSuperContentChanged(const LString& InNewContent)
 {
     this->CaretBlinker = 0.0f;
     this->CaretCursor = Maths::Min(this->CaretCursor, static_cast<i32>(this->GetContent().size()));
-    this->OnContentChanged.InvokeIfBound(InNewContent);
+    (void)this->OnContentChanged.InvokeIfBound(InNewContent);
 
     return;
 }

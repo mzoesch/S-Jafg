@@ -65,29 +65,20 @@ void Jafg::JCxxClass::KillYourSelfNow_v2(ECxxRecordTearDownReason::Type Reason /
     return;
 }
 
-Jafg::LEngine* Jafg::JCxxClass::GetEngine() const noexcept
+Jafg::LEngine& Jafg::JCxxClass::GetEngine() const noexcept
 {
-    return GEngine;
+    check( GEngine && "Absence of GEngine if undefined behavior." )
+    return *GEngine;
 }
 
-Jafg::LLocalEgo* Jafg::JCxxClass::GetLocalEgo() const
+Jafg::LLocalEgo& Jafg::JCxxClass::GetLocalEgo() const noexcept
 {
-    if (auto* Engine{ this->GetEngine() })
-    {
-        return Engine->GetLocalEgo();
-    }
-
-    return nullptr;
+    return this->GetEngine().GetLocalEgo();
 }
 
-Jafg::LCommandLineInterface* Jafg::JCxxClass::GetCommandLineInterface() const
+Jafg::LCommandLineInterface& Jafg::JCxxClass::GetCommandLineInterface() const noexcept
 {
-    if (auto* Engine{ this->GetEngine() })
-    {
-        return Engine->GetCommandLineInterface();
-    }
-
-    return nullptr;
+    return this->GetEngine().GetCommandLineInterface();
 }
 
 #if LAL_DO_CHECKS

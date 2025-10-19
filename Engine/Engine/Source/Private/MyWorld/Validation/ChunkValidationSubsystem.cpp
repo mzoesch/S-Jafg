@@ -35,7 +35,7 @@ void Jafg::JChunkValidationSubsystem::FixedTick(const f32 EngineDeltaTime, const
     Super::FixedTick(EngineDeltaTime, FixedDeltaTime);
 
     bool bVerifyChunks = true;
-    this->GetEngine()->GetCommandLineInterface()->GetVariableChecked("VerifyChunks")->GetValue<bool>(&bVerifyChunks);
+    this->GetEngine().GetCommandLineInterface().GetVariableChecked("VerifyChunks")->GetValue<bool>(&bVerifyChunks);
     if (bVerifyChunks == false)
     {
         return;
@@ -43,13 +43,13 @@ void Jafg::JChunkValidationSubsystem::FixedTick(const f32 EngineDeltaTime, const
 
     check( this->GetWorld() )
 
-    if (this->GetWorld()->IsLocalPawnValid() == false)
+    if (true) //(this->GetWorld()->IsLocalPawnValid() == false)
     {
         LOG_WARNING(LogChunkValidation, "Local pawn is invalid. Nothing to do.")
         return;
     }
 
-    const LVector   Translation = this->GetWorld()->GetLocalPawn()->GetTranslation();
+    const LVector   Translation;// = this->GetWorld()->GetLocalPawn()->GetTranslation();
     const LChunkKey CurrentKey  = LChunkKey(Translation);
 
     if (CurrentKey == this->LastChunkKey)

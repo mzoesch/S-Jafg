@@ -84,28 +84,20 @@ void Jafg::LFrontend::TearDown()
     return;
 }
 
-Jafg::LLocalEgo* Jafg::LFrontend::GetLocalEgo() const
+Jafg::LEngine& Jafg::LFrontend::GetEngine() const noexceptcheck
 {
-    check( GEngine )
-    return GEngine->GetLocalEgo();
+    check( GEngine && "Absence of GEngine when an object of LFrontend exists is undefined behavior." )
+    return *GEngine;
 }
 
-Jafg::LLocalEgo* Jafg::LFrontend::GetLocalEgoChecked() const
+Jafg::LLocalEgo& Jafg::LFrontend::GetLocalEgo() const noexceptcheck
 {
-    check( GEngine )
-    return GEngine->GetLocalEgo();
+    return this->GetEngine().GetLocalEgo();
 }
 
-Jafg::LUserInput* Jafg::LFrontend::GetUserInput() const
+Jafg::LUserInput& Jafg::LFrontend::GetUserInput() const noexceptcheck
 {
-    check( GEngine )
-    return GEngine->GetLocalEgo()->GetUserInput();
-}
-
-Jafg::LUserInput* Jafg::LFrontend::GetUserInputChecked() const
-{
-    check( GEngine )
-    return GEngine->GetLocalEgo()->GetUserInput();
+    return this->GetEngine().GetLocalEgo().GetUserInput();
 }
 
 void Jafg::LFrontend::AddWidget(LViewport* Context, WUserWidget* Widget)

@@ -46,7 +46,7 @@ void Jafg::WConsoleScreen::BeginLifeCDR()
 
     if (GEngine)
     {
-        this->CommandHandle_Clear = GEngine->GetCommandLineInterface()->RegisterCommand(
+        this->CommandHandle_Clear = GEngine->GetCommandLineInterface().RegisterCommand(
         {
             "Clear", "Clears the console messages.",
             LCommandParams{}
@@ -57,7 +57,7 @@ void Jafg::WConsoleScreen::BeginLifeCDR()
     {
         Tasks::Make(ENamedThreads::Master, ETaskTime::AfterEngineInit, [this](void) -> void
         {
-            this->CommandHandle_Clear = GEngine->GetCommandLineInterface()->RegisterCommand(
+            this->CommandHandle_Clear = GEngine->GetCommandLineInterface().RegisterCommand(
             {
                 "Clear", "Clears the console messages.",
                 LCommandParams{}
@@ -172,7 +172,7 @@ void Jafg::WConsoleScreen::OnGarbageDefault(ECxxRecordTearDownReason::Type Reaso
 
     if (GEngine)
     {
-        GEngine->GetCommandLineInterface()->UnregisterCommand(this->CommandHandle_Clear.get_ptr());
+        GEngine->GetCommandLineInterface().UnregisterCommand(this->CommandHandle_Clear.get_ptr());
     }
 
     return;
@@ -273,11 +273,11 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
         this->HistoryCursor = INDEX_NONE;
         algo::orphan(&this->CurrentIntellisensePrediction);
 
-        LUserInput* UserInput { this->GetLocalEgo()->GetUserInput() };
-        UserInput->DeactivateContext(Name_UicInMyWorldFoot);
-        UserInput->DeactivateContext(Name_UicInMyWorld);
-        UserInput->ActivateContext(Name_UicInConsole);
-        this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both, ShowMouseCursor);
+        LUserInput& UserInput{ this->GetLocalEgo().GetUserInput() };
+        UserInput.DeactivateContext(Name_UicInMyWorldFoot);
+        UserInput.DeactivateContext(Name_UicInMyWorld);
+        UserInput.ActivateContext(Name_UicInConsole);
+        this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both, ShowMouseCursor);
     }
 
     else if (InState == EConsoleScreenState::Preview)
@@ -293,11 +293,11 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
         this->ConsoleHistoryContainer->SetVisibility(EWidgetVisibility::Collapsed);
         this->IntellisenseContainer->SetVisibility(EWidgetVisibility::Collapsed);
 
-        LUserInput* UserInput { this->GetLocalEgo()->GetUserInput() };
-        UserInput->DeactivateContext(Name_UicInConsole);
-        UserInput->ActivateContext(Name_UicInMyWorldFoot);
-        UserInput->ActivateContext(Name_UicInMyWorld);
-        this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+        LUserInput& UserInput{ this->GetLocalEgo().GetUserInput() };
+        UserInput.DeactivateContext(Name_UicInConsole);
+        UserInput.ActivateContext(Name_UicInMyWorldFoot);
+        UserInput.ActivateContext(Name_UicInMyWorld);
+        this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
     }
 
     else if (InState == EConsoleScreenState::TryPreview)
@@ -317,11 +317,11 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
     {
         this->SetVisibility(EWidgetVisibility::Collapsed);
 
-        LUserInput* UserInput { this->GetLocalEgo()->GetUserInput() };
-        UserInput->DeactivateContext(Name_UicInConsole);
-        UserInput->ActivateContext(Name_UicInMyWorldFoot);
-        UserInput->ActivateContext(Name_UicInMyWorld);
-        this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+        LUserInput& UserInput{ this->GetLocalEgo().GetUserInput() };
+        UserInput.DeactivateContext(Name_UicInConsole);
+        UserInput.ActivateContext(Name_UicInMyWorldFoot);
+        UserInput.ActivateContext(Name_UicInMyWorld);
+        this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
     }
 
     else
@@ -587,7 +587,7 @@ void Jafg::WConsoleScreen::OnTextCommit(const LString& InText, const ETextCommit
         }
 
         LCommandExecutionResponse Response;
-        this->GetEngine()->GetCommandLineInterface()->Invoke(Command, &Response);
+        this->GetEngine().GetCommandLineInterface().Invoke(Command, &Response);
 
         if (Response.Rc > ECommandReturnCode::Failure)
         {
@@ -694,7 +694,7 @@ void Jafg::WConsoleScreen::ClearMessagesDefault(const LCommandArgs& InArgs, LCom
     (
         WConsoleScreen* Instance
         {
-            GEngine->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetViewport().GetTopLevelWidgetByClass<WConsoleScreen>()
+            GEngine->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetViewport().GetTopLevelWidgetByClass<WConsoleScreen>()
         };
         Instance
     )
@@ -736,12 +736,12 @@ void Jafg::WConsoleScreen::PrepareIntellisense(const LString& NewContent)
     this->ClearIntellisensePredictions();
 
     const LString CommandLine { CliStatics::SafelyRemoveCommandPrefix(NewContent) };
-    const LCommandLineInterface* Cli { this->GetEngine()->GetCommandLineInterface() };
+    LCommandLineInterface const& Cli{ this->GetEngine().GetCommandLineInterface() };
 
     if (CommandLine.empty())
     {
         i32 AddedCommands { 0 };
-        for (const LCliCommand& Command : Cli->GetCommands())
+        for (const LCliCommand& Command : Cli.GetCommands())
         {
             if (AddedCommands >= static_cast<i32>(this->GetMaxIntellisensePredictions()))
             {
@@ -775,7 +775,7 @@ void Jafg::WConsoleScreen::PrepareIntellisense(const LString& NewContent)
 
         TArray<const LCliCommand*> Predictions;
 
-        for (const LCliCommand& CliCommand : Cli->GetCommands())
+        for (const LCliCommand& CliCommand : Cli.GetCommands())
         {
             if (Predictions.size() >= this->GetMaxIntellisensePredictions())
             {
@@ -799,7 +799,7 @@ void Jafg::WConsoleScreen::PrepareIntellisense(const LString& NewContent)
             if (Predictions.size() == 1 && Predictions[0]->GetIdentifier() == CommandStr)
             {
                 this->IntellisensePredictions->SetVisibility(EWidgetVisibility::Collapsed);
-                Command = Cli->GetCommandAsserted(CommandStr);
+                Command = Cli.GetCommandAsserted(CommandStr);
             }
             else
             {
@@ -814,13 +814,13 @@ void Jafg::WConsoleScreen::PrepareIntellisense(const LString& NewContent)
 
         this->UpdateIntellisense(Command);
     }
-    else if (const LCliCommand* Command { Cli->GetCommand(CommandStr) }; Command)
+    else if (const LCliCommand* Command { Cli.GetCommand(CommandStr) }; Command)
     {
         check( this->IntellisensePredictions->GetChildren().empty() )
 
         if
         (
-            TArray<LString> Suggestions { Cli->GetCommonSuggestions(NewContent, this->GetMaxIntellisensePredictions()) };
+            TArray<LString> Suggestions { Cli.GetCommonSuggestions(NewContent, this->GetMaxIntellisensePredictions()) };
             Suggestions.empty())
         {
             this->IntellisensePredictions->SetVisibility(EWidgetVisibility::Collapsed);
@@ -1026,7 +1026,7 @@ Jafg::LCliCommand* Jafg::WConsoleScreen::GetCurrentHighlightedIntellisenseComman
     }
 
     check( GEngine )
-    return GEngine->GetCommandLineInterface()->GetCommandChecked(this->CurrentIntellisensePrediction);
+    return GEngine->GetCommandLineInterface().GetCommandChecked(this->CurrentIntellisensePrediction);
 }
 
 #if !IN_SHIPPING

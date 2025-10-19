@@ -39,9 +39,9 @@ void Jafg::JChunkGenerationSubsystem::Initialize(LSubsystemCollection& Collectio
 
     this->SharedChunkArgs.ChunkGenerationSubsystem = this;
     this->SharedChunkArgs.ChunkGeneratorSubsystem = Collection.GetSubsystemChecked<JChunkGeneratorSubsystem>();
-    this->SharedChunkArgs.VoxelSubsystem = this->GetEngine()->GetSubsystemChecked<JVoxelSubsystem>();
-    this->SharedChunkArgs.MaterialSubsystem = this->GetEngine()->GetSubsystemChecked<JMaterialSubsystem>();
-    this->SharedChunkArgs.VoxelTextureSubsystem = this->GetEngine()->GetSubsystemChecked<JVoxelTextureSubsystem>();
+    this->SharedChunkArgs.VoxelSubsystem = this->GetEngine().GetSubsystemChecked<JVoxelSubsystem>();
+    this->SharedChunkArgs.MaterialSubsystem = this->GetEngine().GetSubsystemChecked<JMaterialSubsystem>();
+    this->SharedChunkArgs.VoxelTextureSubsystem = this->GetEngine().GetSubsystemChecked<JVoxelTextureSubsystem>();
     this->SharedChunkArgs.ChunkShader.MakeChecked(Name_ShaderChunk);
     this->SharedChunkArgs.GetNewMesher = [](AChunk& Owner) -> TUnique<LChunkMesher>
     {

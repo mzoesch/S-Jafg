@@ -231,15 +231,9 @@ public:
     template<typename TObj> requires std::is_base_of_v<JCxxClass, TObj>
     FORCEINLINE TObj const* AsStatic() const noexcept;
 
-    ENGINE_API  LEngine* GetEngine() const noexcept;
-    FORCEINLINE LEngine* GetEngineChecked() const noexceptcheck { auto* Out{ this->GetEngine() }; check( Out ) return Out; }
-    FORCEINLINE LEngine* GetEngineAsserted() const { auto* Out{ this->GetEngine() }; jassert( Out ) return Out; }
-    ENGINE_API  LLocalEgo* GetLocalEgo() const;
-    FORCEINLINE LLocalEgo* GetLocalEgoChecked() const noexceptcheck { auto* Out{ this->GetLocalEgo() }; check( Out ) return Out; }
-    FORCEINLINE LLocalEgo* GetLocalEgoAsserted() const { auto* Out{ this->GetLocalEgo() }; jassert( Out ) return Out; }
-    ENGINE_API  LCommandLineInterface* GetCommandLineInterface() const;
-    FORCEINLINE LCommandLineInterface* GetCommandLineInterfaceChecked() const noexceptcheck { auto* Out{ this->GetCommandLineInterface() }; check( Out ) return Out; }
-    FORCEINLINE LCommandLineInterface* GetCommandLineInterfaceAsserted() const { auto* Out{ this->GetCommandLineInterface() }; jassert( Out ) return Out; }
+    ENGINE_API LEngine& GetEngine() const noexcept;
+    ENGINE_API LLocalEgo& GetLocalEgo() const noexcept;
+    ENGINE_API LCommandLineInterface& GetCommandLineInterface() const noexcept;
 
 private:
 

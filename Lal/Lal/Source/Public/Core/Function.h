@@ -12,7 +12,7 @@ class TFunction;
 //# A function object that can store any callable type.
 //# Weak / strong references to lambdas, function pointers, and member functions are supported.
 //#
-template <typename TRet, typename... TParams>
+template<typename TRet, typename... TParams>
 class TFunction<TRet(TParams...)>
 {
     template <typename T>
@@ -281,7 +281,7 @@ private:
     };
 
     LImpl Impl;
-    LCopyImplDelegate CopyImplDelegate { nullptr };
+    LCopyImplDelegate CopyImplDelegate{ nullptr };
 };
 
 template <typename TRet, typename... TParams>

@@ -18,7 +18,7 @@ class LWorld;
 DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
 class JWorldObject : public JCxxClass
 {
-    GENERATED_CLASS_BODY()
+    GENERATED_CLASS_BODY(ENGINE_API)
 
 protected:
 
@@ -26,19 +26,20 @@ protected:
 
 public:
 
-    FORCEINLINE auto IsWorldValid() const -> bool { return this->CastedOuter != nullptr; }
-                LWorld* GetOrCalculateCastedOuter();
-    FORCEINLINE LWorld* GetOrCalculateCastedOuterChecked() { LWorld* Out = this->GetOrCalculateCastedOuter(); check( Out) return Out; }
-    FORCEINLINE LWorld* GetOrCalculateCastedOuterAsserted() { LWorld* Out = this->GetOrCalculateCastedOuter(); jassert( Out ) return Out; }
-    FORCEINLINE auto GetWorld() const -> LWorld* { return this->CastedOuter; }
-    FORCEINLINE auto GetWorldChecked() const -> LWorld* { check( this->GetWorld() ) return this->GetWorld(); }
-    FORCEINLINE auto GetWorldAsserted() const -> LWorld* { jassert( this->GetWorld() ) return this->GetWorld(); }
-
     virtual void BeginLife() override;
+
+    FORCEINLINE auto IsWorldValid() const -> bool { return this->CastedOuter != nullptr; }
+
+    FORCEINLINE LWorld* GetWorld() noexcept { return this->CastedOuter; }
+    FORCEINLINE LWorld* GetWorldChecked() noexceptcheck { check( this->GetWorld() ) return this->GetWorld(); }
+    FORCEINLINE LWorld* GetWorldAsserted() noexceptcheck { jassert( this->GetWorld() ) return this->GetWorld(); }
+    FORCEINLINE LWorld const* GetWorld() const noexcept { return this->CastedOuter; }
+    FORCEINLINE LWorld const* GetWorldChecked() const noexceptcheck { check( this->GetWorld() ) return this->GetWorld(); }
+    FORCEINLINE LWorld const* GetWorldAsserted() const noexceptcheck { jassert( this->GetWorld() ) return this->GetWorld(); }
 
 private:
 
-    LWorld* CastedOuter { nullptr };
+    LWorld* CastedOuter{ nullptr };
 };
 
 } /* ~Namespace Jafg */

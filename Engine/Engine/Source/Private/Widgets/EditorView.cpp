@@ -79,12 +79,12 @@ Jafg::LReply Jafg::WEditorView::OnKeyUpNoFocus(const LViewport& InViewport, cons
 
 void Jafg::WEditorView::OnSecondaryDown()
 {
-    LViewport* Viewport { this->GetViewport() };
+    LViewport* Viewport{ this->GetViewport() };
     if (ensure(Viewport != nullptr) == false)
     {
         return;
     }
-    LSurface* Surface { Viewport->GetCachedContext() };
+    LSurface* Surface{ Viewport->GetCachedContext() };
     if (ensure(Surface != nullptr) == false)
     {
         return;
@@ -93,21 +93,21 @@ void Jafg::WEditorView::OnSecondaryDown()
     Surface->SetInputMode(EInputMode::Both, false);
     this->SetShouldTick(true);
 
-    LUserInput* Input { this->GetLocalEgo()->GetUserInput() };
-    Input->SetReferenceContexts(Input->GetActiveContexts());
-    Input->PopContexts();
+    LUserInput& Input{ this->GetLocalEgo().GetUserInput() };
+    Input.SetReferenceContexts(Input.GetActiveContexts());
+    Input.PopContexts();
 
     return;
 }
 
 void Jafg::WEditorView::OnSecondaryUp()
 {
-    LViewport* Viewport { this->GetViewport() };
+    LViewport* Viewport{ this->GetViewport() };
     if (ensure(Viewport != nullptr) == false)
     {
         return;
     }
-    LSurface* Surface { Viewport->GetCachedContext() };
+    LSurface* Surface{ Viewport->GetCachedContext() };
     if (ensure(Surface != nullptr) == false)
     {
         return;
@@ -116,10 +116,10 @@ void Jafg::WEditorView::OnSecondaryUp()
     Surface->SetInputMode(EInputMode::Both, true);
     this->SetShouldTick(false);
 
-    LUserInput* Input { this->GetLocalEgo()->GetUserInput() };
-    Input->PushContexts();
-    Input->ActivateContexts(Input->GetReferenceContexts());
-    Input->SetReferenceContexts({});
+    LUserInput& Input{ this->GetLocalEgo().GetUserInput() };
+    Input.PushContexts();
+    Input.ActivateContexts(Input.GetReferenceContexts());
+    Input.SetReferenceContexts({});
 
     return;
 }

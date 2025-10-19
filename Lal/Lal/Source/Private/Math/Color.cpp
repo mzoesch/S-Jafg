@@ -7,8 +7,8 @@ LAL_API const Lal::LLinearColor Lal::LLinearColor::DarkerGray                 { 
 LAL_API const Lal::LLinearColor Lal::LLinearColor::NotSoDarkGray              { Lal::LLinearColor::FromColor( 0x2B, 0x2B, 0x2B, 0xFF ) };
 // LAL_API const Lal::LLinearColor Lal::LLinearColor::NotSoDarkGrey              { Lal::LLinearColor::FromColor( 0x2B, 0x2B, 0x2B, 0xFF ) };
 
-LAL_API const Lal::LLinearColor Lal::LLinearColor::Aliceblue                  { Lal::LLinearColor::FromColor( 0xF0, 0xF8, 0xFF, 0xFF ) };
-LAL_API const Lal::LLinearColor Lal::LLinearColor::Antiquewhite               { Lal::LLinearColor::FromColor( 0xFA, 0xEB, 0xD7, 0xFF ) };
+LAL_API const Lal::LLinearColor Lal::LLinearColor::AliceBlue                  { Lal::LLinearColor::FromColor( 0xF0, 0xF8, 0xFF, 0xFF ) };
+LAL_API const Lal::LLinearColor Lal::LLinearColor::AntiqueWhite               { Lal::LLinearColor::FromColor( 0xFA, 0xEB, 0xD7, 0xFF ) };
 LAL_API const Lal::LLinearColor Lal::LLinearColor::Aqua                       { Lal::LLinearColor::FromColor( 0x00, 0xFF, 0xFF, 0xFF ) };
 LAL_API const Lal::LLinearColor Lal::LLinearColor::Aquamarine                 { Lal::LLinearColor::FromColor( 0x7F, 0xFF, 0xD4, 0xFF ) };
 LAL_API const Lal::LLinearColor Lal::LLinearColor::Azure                      { Lal::LLinearColor::FromColor( 0xF0, 0xFF, 0xFF, 0xFF ) };
@@ -162,8 +162,8 @@ LAL_API const Lal::LColor Lal::LColor::DarkerGray                 { 0x1A, 0x1A, 
 LAL_API const Lal::LColor Lal::LColor::NotSoDarkGray              { 0x2B, 0x2B, 0x2B, 0xFF };
 // LAL_API const Lal::LColor Lal::LColor::NotSoDarkGrey              { 0x2B, 0x2B, 0x2B, 0xFF };
 
-LAL_API const Lal::LColor Lal::LColor::Aliceblue                  { 0xF0, 0xF8, 0xFF, 0xFF };
-LAL_API const Lal::LColor Lal::LColor::Antiquewhite               { 0xFA, 0xEB, 0xD7, 0xFF };
+LAL_API const Lal::LColor Lal::LColor::AliceBlue                  { 0xF0, 0xF8, 0xFF, 0xFF };
+LAL_API const Lal::LColor Lal::LColor::AntiqueWhite               { 0xFA, 0xEB, 0xD7, 0xFF };
 LAL_API const Lal::LColor Lal::LColor::Aqua                       { 0x00, 0xFF, 0xFF, 0xFF };
 LAL_API const Lal::LColor Lal::LColor::Aquamarine                 { 0x7F, 0xFF, 0xD4, 0xFF };
 LAL_API const Lal::LColor Lal::LColor::Azure                      { 0xF0, 0xFF, 0xFF, 0xFF };

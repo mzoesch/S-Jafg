@@ -6,49 +6,72 @@
 #include "User/LocalEgo.h"
 #include "Engine/Engine.h"
 
-void Jafg::APersonaController::BeginLife()
-{
-    Super::BeginLife();
-}
-
 void Jafg::APersonaController::EndLife()
 {
     Super::EndLife();
 
-    if (this->IsLocalEgoValid())
+    if (this->IsSurfaceValid())
     {
-        this->LocalEgo->Possess(nullptr);
+        if (Jafg::IsTearingDown() == false)
+        {
+            LOG_WARNING(LogEgo,
+                "Persona controller [{}] is ending life while still possessed by local ego. Local ego will no longer posses a controller.",
+                this->GetNameAsString()
+                )
+        }
+
+        this->GetSurfaceChecked()->Possess(nullptr);
     }
 
-    this->Possess(nullptr);
+    if (this->DoesPossess())
+    {
+        this->Possess(nullptr);
+    }
 
     return;
 }
 
-void Jafg::APersonaController::Possess(APawn* InNewPawn, const bool bKillOld /* = true */)
+void Jafg::APersonaController::Possess(APawn* NewPawn, const bool bKillOld /* = true */)
 {
     /* Otherwise, we will get access violations. */
-    APawn* OldPawn = bKillOld ? nullptr : this->PossessedPawn;
+    APawn* OldPawn{ bKillOld ? nullptr : this->Pawn };
 
-    if (this->PossessedPawn)
+    if (this->Pawn)
     {
-        this->PossessedPawn->DeclareNewPossessor(nullptr);
+        if (auto* Surface{ this->GetSurface()})
+        {
+            algo::erase_once_checked(
+                &Surface->GetViewport().GetMutableBackgroundContexts(),
+                &this->Pawn->GetEye(),
+                &LBackgroundContext::Eye
+                );
+        }
+
+        this->Pawn->DeclareNewPossessor(nullptr);
         if (bKillOld)
         {
-            this->PossessedPawn->MarkAsGarbage_v2();
+            this->Pawn->MarkAsGarbage_v2();
         }
     }
 
-    this->PossessedPawn = InNewPawn;
-    if (this->PossessedPawn)
+    this->Pawn = NewPawn;
+    if (this->Pawn)
     {
-        this->PossessedPawn->DeclareNewPossessor(this);
+        this->Pawn->DeclareNewPossessor(this);
+
+        if (auto* Surface{ this->GetSurface()})
+        {
+            Surface->GetViewport().GetMutableBackgroundContexts().emplace_back(
+                &this->Pawn->GetEye(),
+                this->Pawn->GetWorldChecked()
+                );
+        }
     }
 
-    if (this->IsLocalEgoValid())
+    this->GetLocalEgo().ForEachMutableSubsystem([OldPawn, NewPawn](JLocalEgoSubsystem* Subsystem)
     {
-        this->LocalEgo->OnNewPawnPossessed(OldPawn, this->PossessedPawn);
-    }
+        Subsystem->OnNewPawnPossessed(OldPawn, NewPawn);
+    });
 
     return;
 }

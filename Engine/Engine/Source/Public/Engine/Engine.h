@@ -104,6 +104,9 @@ struct LWorldTrack final
 #endif /* WITH_LOCAL_LAYER */
 
     TUnique<LWorld> ChildWorld;
+
+    TFunction<void(LWorld&)> OnWorldPreInit;
+    TFunction<void(LWorld&)> OnWorldPostInit;
 };
 
 } /* ~Namespace Private */
@@ -150,9 +153,8 @@ public:
 
 #else /* !WITH_LOCAL_LAYER */
 
-    FORCEINLINE bool IsLocalEgoValid() const noexcept { return this->LocalEgo.IsValid(); }
-    FORCEINLINE auto GetLocalEgo() -> LLocalEgo* { check( this->IsLocalEgoValid() ) return &this->LocalEgo; }
-    FORCEINLINE auto GetLocalEgo() const -> const LLocalEgo* { check( this->IsLocalEgoValid() ) return &this->LocalEgo; }
+    FORCEINLINE LLocalEgo& GetLocalEgo() noexcept { return this->LocalEgo; }
+    FORCEINLINE LLocalEgo const& GetLocalEgo() const noexcept { return this->LocalEgo; }
 
     FORCEINLINE bool IsShaderValid(const LName InName) const noexcept { return this->GetShader(InName) != nullptr; }
     FORCEINLINE auto GetShader(const LName Name) noexcept -> LEngineShader*;
@@ -230,7 +232,10 @@ public:
     //#    <LevelName>
     //#    <LevelName>?<option>?... (@see #LWorldParameters for how to format options.)
     //#
-    FORCEINLINE void Browse(LWorld const* World, LString const& Url) { this->Browse(this->GetTrackFromWorld(World), Url); }
+    FORCEINLINE void Browse(LWorld const* World, LString const& Url,
+        TFunction<void(LWorld&)>&& PreInitCallback = {},
+        TFunction<void(LWorld&)>&& PostInitCallback = {}
+        ) { this->Browse(this->GetTrackFromWorld(World), Url, std::move(PreInitCallback), std::move(PostInitCallback)); }
 
     //# @return True if registered successfully.
     ENGINE_API  bool RegisterLevel(LLevel const& Level);
@@ -250,7 +255,7 @@ public:
 
 private:
 
-    ENGINE_API void Browse(Private::LWorldTrack& Track, LString const& Url) const;
+    ENGINE_API void Browse(Private::LWorldTrack& Track, LString const& Url, TFunction<void(LWorld&)>&& PreInitCallback, TFunction<void(LWorld&)>&& PostInitCallback);
     bool IsTrackUrlInternal(LString const& Url) const;
     bool TravelTrack(Private::LWorldTrack& Track);
     LLevel* GetLevelByInternalUrl(LString const& Url);
@@ -308,16 +313,16 @@ public:
     // Misc.
     ///////////////////////////////////////////////////////////////////////////////
 
-    FORCEINLINE LCommandLineInterface* GetCommandLineInterface() noexcept { return &this->CommandLineInterface; }
-    FORCEINLINE const LCommandLineInterface* GetCommandLineInterface() const noexcept { return &this->CommandLineInterface; }
+    FORCEINLINE LCommandLineInterface& GetCommandLineInterface() noexcept { return this->CommandLineInterface; }
+    FORCEINLINE LCommandLineInterface const& GetCommandLineInterface() const noexcept { return this->CommandLineInterface; }
 
 #if JAFG_WITH_REST_CLS
     ENGINE_API void SetReSTCliCorePaths();
     ENGINE_API void StartReSTCliServer();
     ENGINE_API void StopReSTCliServer(ERunnableStopReason::Type Reason = ERunnableStopReason::EngineTermination);
 
-    FORCEINLINE constexpr LReStCli* GetReSTCli() noexcept { return &this->ReSTCli; }
-    FORCEINLINE constexpr const LReStCli* GetReSTCli() const noexcept { return &this->ReSTCli; }
+    FORCEINLINE constexpr LReStCli& GetReSTCli() noexcept { return this->ReSTCli; }
+    FORCEINLINE constexpr LReStCli const& GetReSTCli() const noexcept { return this->ReSTCli; }
 #endif /* JAFG_WITH_REST_CLS */
 
 private:

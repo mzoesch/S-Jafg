@@ -39,9 +39,9 @@ public:
     FORCEINLINE auto GetOwningController() const -> APersonaController* { return this->OwningController; }
                 void DeclareNewPossessor(APersonaController* InNewController);
 
-    FORCEINLINE auto IsEyeValid() const -> bool { return this->Eye.IsOwnerValid(); }
-    FORCEINLINE auto GetEye() -> LEye* { return &this->Eye; }
-    FORCEINLINE auto GetEye() const -> const LEye* { return &this->Eye; }
+    FORCEINLINE bool IsEyeValid() const noexcept { return this->Eye.IsOwnerValid(); }
+    FORCEINLINE LEye& GetEye() noexcept { return this->Eye; }
+    FORCEINLINE LEye const& GetEye() const noexcept { return this->Eye; }
 
     void OnOngoingMovementInput(LInputActionValue& InValue);
     void OnOngoingRotationInput(LInputActionValue& InValue);

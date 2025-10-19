@@ -17,47 +17,62 @@ void Jafg::LLocalEgo::Initialize()
     STAT_CYCLE_FUNCTION()
 
     check( Tasks::IsOnMasterThread() )
-    check( this->IsValid() == false )
-    this->bValid = true;
+    check( this->bDecommissioned == false )
 
-    LCommandLineInterface* Cli = GEngine->GetCommandLineInterface();
-    this->VariableHandle_UpdateFrustum = Cli->RegisterVariable({"UpdateFrustum", LCliType::Type("Bool"), "true"});
-    this->VariableHandle_VisualizeFrustum = Cli->RegisterVariable({"VisualizeFrustum", LCliType::Type("Bool"), "false"});
-    this->VariableHandle_FrustumNearPlane = Cli->RegisterVariable({"NearFrustumPlane", LCliType::Type("Float"), "0.1f",
+    LCommandLineInterface& Cli{ GEngine->GetCommandLineInterface() };
+    this->VariableHandle_UpdateFrustum = Cli.RegisterVariable({"UpdateFrustum", LCliType::Type("Bool"), "true"});
+    this->VariableHandle_VisualizeFrustum = Cli.RegisterVariable({"VisualizeFrustum", LCliType::Type("Bool"), "false"});
+    this->VariableHandle_FrustumNearPlane = Cli.RegisterVariable({"NearFrustumPlane", LCliType::Type("Float"), "0.1f",
     LOnVariableChangedDelegate::CreateStrong([](const LString& InValue) -> void
     {
-        if
-        (
-               GEngine
-            && GEngine->GetLocalEgo()
-            && GEngine->GetLocalEgo()->GetPossessed()
-            && GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()
-        )
+        if (GEngine)
         {
             f32 NearFrustum; Serialization::FromString(&NearFrustum, InValue);
-            GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()->GetEye()->SetNearFrustum(NearFrustum);
-            LOG_VERBOSE(LogEgo, "Set current possessed eye near frustum to [{}].", NearFrustum)
+            LOG_VERBOSE(LogEgo, "Setting all possessed eyes near frustum to [{}].", NearFrustum)
+
+            for (LSurface& Surface : GEngine->GetLocalEgo().GetFrontend().GetSurfaces())
+            {
+                if (auto* Controller{ Surface.GetPossessed() })
+                {
+                    if (auto* Pawn{ Controller->GetPossessed() })
+                    {
+                        Pawn->GetEye().SetNearFrustum(NearFrustum);
+
+                    }
+
+                }
+
+                continue;
+            }
         }
+
         return;
     })});
-    this->VariableHandle_FrustumFarPlane = Cli->RegisterVariable({"FarFrustumPlane", LCliType::Type("Float"), "2000.0f",
+    this->VariableHandle_FrustumFarPlane = Cli.RegisterVariable({"FarFrustumPlane", LCliType::Type("Float"), "2000.0f",
     LOnVariableChangedDelegate::CreateStrong([](const LString& InValue) -> void
     {
-        if
-        (
-               GEngine
-            && GEngine->GetLocalEgo()
-            && GEngine->GetLocalEgo()->GetPossessed()
-            && GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()
-        )
+        if (GEngine)
         {
             f32 FarFrustum; Serialization::FromString(&FarFrustum, InValue);
-            GEngine->GetLocalEgo()->GetPossessed()->GetPossessed()->GetEye()->SetFarFrustum(FarFrustum);
-            LOG_VERBOSE(LogEgo, "Set current possessed eye far frustum to [{}].", FarFrustum)
+            LOG_VERBOSE(LogEgo, "Setting all possessed eyes far frustum to [{}].", FarFrustum)
+
+            for (LSurface& Surface : GEngine->GetLocalEgo().GetFrontend().GetSurfaces())
+            {
+                if (auto* Controller{ Surface.GetPossessed() })
+                {
+                    if (auto* Pawn{ Controller->GetPossessed() })
+                    {
+                        Pawn->GetEye().SetFarFrustum(FarFrustum);
+                    }
+                }
+
+                continue;
+            }
         }
+
         return;
     })});
-    this->VariableHandle_VerifyChunks = Cli->RegisterVariable({"VerifyChunks", LCliType::Type("Bool"), "true"});
+    this->VariableHandle_VerifyChunks = Cli.RegisterVariable({"VerifyChunks", LCliType::Type("Bool"), "true"});
 
     this->OnWorldBeginLifeHandle = GEngine->OnWorldBeginLife.Add(this, &LLocalEgo::OnWorldBeginLife);
 
@@ -97,12 +112,10 @@ void Jafg::LLocalEgo::OnLateTick(const float DeltaTime)
 
 void Jafg::LLocalEgo::TearDown()
 {
-    if (ensure(this->bValid) == false)
-    {
-        return;
-    }
-
     check( GEngine )
+
+    check( this->bDecommissioned == false )
+    checkCode( this->bDecommissioned = true )
 
     this->Collection.TearDownSubsystems();
 
@@ -115,86 +128,24 @@ void Jafg::LLocalEgo::TearDown()
     this->Frontend.TearDown();
     this->Outer.TearDown();
 
-    GEngine->GetCommandLineInterface()->UnregisterVariable(&this->VariableHandle_UpdateFrustum);
-    GEngine->GetCommandLineInterface()->UnregisterVariable(&this->VariableHandle_VisualizeFrustum);
-    GEngine->GetCommandLineInterface()->UnregisterVariable(&this->VariableHandle_FrustumNearPlane);
-    GEngine->GetCommandLineInterface()->UnregisterVariable(&this->VariableHandle_FrustumFarPlane);
-    GEngine->GetCommandLineInterface()->UnregisterVariable(&this->VariableHandle_VerifyChunks);
-
-    this->bValid = false;
-    return;
-}
-
-void Jafg::LLocalEgo::Possess(APersonaController* InNewController)
-{
-    if (InNewController)
-    {
-        this->GetUserInput()->ActivateContext(Name_UicInMyWorld);
-    }
-    else
-    {
-        this->GetUserInput()->DeactivateContext(Name_UicInMyWorld);
-    }
-
-    APersonaController* Old = this->PersonaController;
-    this->PersonaController = InNewController;
-
-    if (Old)
-    {
-        Old->SetLocalEgo(nullptr);
-    }
-    if (InNewController)
-    {
-        InNewController->SetLocalEgo(this);
-    }
-
-    this->ForEachMutableSubsystem([Old, InNewController](JLocalEgoSubsystem* Subsystem)
-    {
-        Subsystem->OnNewPersonaControllerPossessed(Old, InNewController);
-    });
+    GEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_UpdateFrustum);
+    GEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_VisualizeFrustum);
+    GEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_FrustumNearPlane);
+    GEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_FrustumFarPlane);
+    GEngine->GetCommandLineInterface().UnregisterVariable(&this->VariableHandle_VerifyChunks);
 
     return;
 }
 
-void Jafg::LLocalEgo::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
+Jafg::LEngine& Jafg::LLocalEgo::GetEngine()
 {
-    if (InNew)
-    {
-        this->UserInput.ActivateContext(Name_UicInMyWorldFoot);
-    }
-    else
-    {
-        this->UserInput.DeactivateContext(Name_UicInMyWorldFoot);
-    }
-
-    if (LSurface* Surface = this->GetFrontend()->GetFocusedSurface(); Surface)
-    {
-        if (InOld)
-        {
-            algo::erase_once_checked(&Surface->GetViewport().GetMutableBackgroundContexts(), InOld->GetEye(), &LBackgroundContext::Eye);
-        }
-
-        if (InNew)
-        {
-            Surface->GetViewport().GetMutableBackgroundContexts().emplace_back(InNew->GetEye(), InNew->GetOrCalculateCastedOuterAsserted());
-        }
-    }
-
-    this->ForEachMutableSubsystem([InOld, InNew](JLocalEgoSubsystem* Subsystem)
-    {
-        Subsystem->OnNewPawnPossessed(InOld, InNew);
-    });
-
-    return;
+    check( GEngine )
+    return *GEngine;
 }
 
-Jafg::LEngine* Jafg::LLocalEgo::GetEngine()
+Jafg::LCommandLineInterface& Jafg::LLocalEgo::GetCommandLineInterface()
 {
-    return GEngine;
-}
-
-Jafg::LCommandLineInterface* Jafg::LLocalEgo::GetCommandLineInterface()
-{
+    check( GEngine )
     return GEngine->GetCommandLineInterface();
 }
 
@@ -203,29 +154,29 @@ void Jafg::LLocalEgo::OnWorldBeginLife(LWorld* InNewWorld)
     check( Tasks::IsOnMasterThread() )
     checkSlow( InNewWorld )
 
-    if (this->PersonaController == nullptr)
-    {
-        this->UserInput.DeactivateAllContexts();
-
-        APersonaController* Pc = SpawnDeferredActor<APersonaController>(InNewWorld);
-        this->Possess(Pc);
-
-        if (LSurface* Surface = this->GetFrontend()->GetFocusedSurface(); Surface)
-        {
-            Surface->SetInputMode(InNewWorld->GetUnderlyingLevel().InputMode, InNewWorld->GetUnderlyingLevel().bShowMouseCursor);
-            Surface->GetViewport().SetBackgroundColor(InNewWorld->GetUnderlyingLevel().BackgroundColor);
-        }
-
-        if (InNewWorld->GetUnderlyingLevelName() == Name_LevelMyWorld.ToString())
-        {
-            if (this->PersonaController->DoesPossess() == false)
-            {
-                APawn* Pawn = SpawnDeferredActor<APawn>(InNewWorld, ALackey::StaticClass());
-                this->PersonaController->Possess(Pawn);
-                Pawn->SetTranslation(LVector(MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 4.0f + MwStatics::ChunkSize / 2.0f));
-            }
-        }
-    }
+    // if (this->PersonaController == nullptr)
+    // {
+    //     this->UserInput.DeactivateAllContexts();
+    //
+    //     APersonaController* Pc = SpawnDeferredActor<APersonaController>(InNewWorld);
+    //     this->Possess(Pc);
+    //
+    //     if (LSurface* Surface = this->GetFrontend()->GetFocusedSurface(); Surface)
+    //     {
+    //         Surface->SetInputMode(InNewWorld->GetUnderlyingLevel().InputMode, InNewWorld->GetUnderlyingLevel().bShowMouseCursor);
+    //         Surface->GetViewport().SetBackgroundColor(InNewWorld->GetUnderlyingLevel().BackgroundColor);
+    //     }
+    //
+    //     if (InNewWorld->GetUnderlyingLevelName() == Name_LevelMyWorld.ToString())
+    //     {
+    //         if (this->PersonaController->DoesPossess() == false)
+    //         {
+    //             APawn* Pawn = SpawnDeferredActor<APawn>(InNewWorld, ALackey::StaticClass());
+    //             this->PersonaController->Possess(Pawn);
+    //             Pawn->SetTranslation(LVector(MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 4.0f + MwStatics::ChunkSize / 2.0f));
+    //         }
+    //     }
+    // }
 
     return;
 }

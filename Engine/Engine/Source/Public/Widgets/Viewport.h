@@ -49,6 +49,9 @@ public:
     DEFAULT_MOVE(LViewport)
     ~LViewport() = default;
 
+    ENGINE_API LSurface& GetOwningSurface();
+    ENGINE_API LSurface const& GetOwningSurface() const;
+
     void Initialize() { }
     void ClearInvalidWidgets();
     void DispatchInputs(LSurface& Context, const LVector2& InCursorLocation);

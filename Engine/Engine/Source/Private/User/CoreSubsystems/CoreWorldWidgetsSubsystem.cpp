@@ -17,12 +17,6 @@ bool Jafg::JCoreWorldWidgetsSubsystem::ShouldCreateSubsystem(LClassOuter const* 
         return false;
     }
 
-    if (this->GetLocalEgo() == nullptr)
-    {
-        LOG_WARNING(LogWidgets, "No local ego found. Widgets subsystem will not be initialized.")
-        return false;
-    }
-
     return Super::IsOuterWorld(Outer);
 }
 
@@ -30,32 +24,31 @@ void Jafg::JCoreWorldWidgetsSubsystem::Initialize(LSubsystemCollection& Collecti
 {
     Super::Initialize(Collection);
 
-    check( this->GetLocalEgo() )
-    LFrontend* Frontend = this->GetLocalEgo()->GetFrontend();
+    LFrontend& Frontend{ this->GetLocalEgo().GetFrontend() };
 
     this->DebugScreen = ConstructDeferredWidgetNode<WDebugScreen>(this->GetOuter());
 
-    this->DebugScreen->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
+    this->DebugScreen->AddToViewport(&Frontend.GetFocusedSurfaceChecked()->GetViewport());
     this->DebugScreen->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->DebugScreen);
 
     this->DebugMenu = ConstructDeferredWidgetNode<WDebugMenu>(this->GetOuter());
-    this->DebugMenu->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
+    this->DebugMenu->AddToViewport(&Frontend.GetFocusedSurfaceChecked()->GetViewport());
     this->DebugMenu->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->DebugMenu);
 
     this->Crosshair = ConstructDeferredWidgetNode<WCrosshair>(this->GetOuter());
-    this->Crosshair->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
+    this->Crosshair->AddToViewport(&Frontend.GetFocusedSurfaceChecked()->GetViewport());
     this->Crosshair->SetVisibility(EWidgetVisibility::TransitiveHitTestInvisible);
     MakeDeferredWidgetNodeFinal(this->Crosshair);
 
     this->ConsoleScreen = ConstructDeferredWidgetNode<WConsoleScreen>(this->GetOuter());
-    this->ConsoleScreen->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
+    this->ConsoleScreen->AddToViewport(&Frontend.GetFocusedSurfaceChecked()->GetViewport());
     this->ConsoleScreen->SetConsoleFrontendState(EConsoleScreenState::Hide);
     MakeDeferredWidgetNodeFinal(this->ConsoleScreen);
 
     this->PauseScreen = ConstructDeferredWidgetNode<WPauseScreen>(this->GetOuter());
-    this->PauseScreen->AddToViewport(&Frontend->GetFocusedSurfaceChecked()->GetViewport());
+    this->PauseScreen->AddToViewport(&Frontend.GetFocusedSurfaceChecked()->GetViewport());
     this->PauseScreen->SetVisibility(EWidgetVisibility::Collapsed);
     MakeDeferredWidgetNodeFinal(this->PauseScreen);
 

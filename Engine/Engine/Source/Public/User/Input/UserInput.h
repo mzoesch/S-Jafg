@@ -30,7 +30,8 @@ public:
 
     void DispatchInputDelegates();
 
-    ENGINE_API LLocalEgo* GetLocalEgo() const;
+    ENGINE_API LLocalEgo& GetLocalEgo();
+    ENGINE_API LLocalEgo const& GetLocalEgo() const;
 
     //# @return The newly mapped action. This is not the same as the input argument. Nullptr if something went wrong.
     ENGINE_API const LInputAction* RegisterAction(LInputAction&& InAction);

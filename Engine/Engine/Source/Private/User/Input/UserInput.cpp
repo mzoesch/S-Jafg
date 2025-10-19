@@ -23,7 +23,7 @@ LString Jafg::LexToString(EInputActionCategory::Type InType)
 
 bool Jafg::LUserInput::IsNewDown(const LKey Key) const
 {
-    return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->IsNewKeyDown(Key);
+    return this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->IsNewKeyDown(Key);
 }
 
 void Jafg::LUserInput::DispatchInputDelegates()
@@ -39,9 +39,17 @@ void Jafg::LUserInput::DispatchInputDelegates()
     return;
 }
 
-Jafg::LLocalEgo* Jafg::LUserInput::GetLocalEgo() const
+Jafg::LLocalEgo& Jafg::LUserInput::GetLocalEgo()
 {
-    checkSlow( GEngine && GEngine->GetLocalEgo() && GEngine->GetLocalEgo()->GetUserInput() == this )
+    check( GEngine && "Absence of GEngine is undefined behavior here." )
+    check( &GEngine->GetLocalEgo().GetUserInput() == this )
+    return GEngine->GetLocalEgo();
+}
+
+Jafg::LLocalEgo const& Jafg::LUserInput::GetLocalEgo() const
+{
+    check( GEngine && "Absence of GEngine is undefined behavior here." )
+    check( &GEngine->GetLocalEgo().GetUserInput() == this )
     return GEngine->GetLocalEgo();
 }
 
@@ -172,9 +180,9 @@ TArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
 {
     TArray<LRawInput> TriggeredKeys;
 
-    for (const LRawInput& Key : this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys())
+    for (const LRawInput& Key : this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys())
     {
-        if (algo::contains(this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetLastFramePressedKeys(), Key) == false)
+        if (algo::contains(this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetLastFramePressedKeys(), Key) == false)
         {
             TriggeredKeys.emplace_back(Key);
         }
@@ -187,16 +195,16 @@ TArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
 
 const TArray<Jafg::LRawInput>& Jafg::LUserInput::GetOngoingKeys() const
 {
-    return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys();
+    return this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys();
 }
 
 TArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
 {
     TArray<LRawInput> CompletedKeys;
 
-    for (const LRawInput& Key : this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetLastFramePressedKeys())
+    for (const LRawInput& Key : this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetLastFramePressedKeys())
     {
-        if (algo::contains(this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys(), Key) == false)
+        if (algo::contains(this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys(), Key) == false)
         {
             CompletedKeys.emplace_back(Key);
         }
@@ -209,20 +217,20 @@ TArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
 
 bool Jafg::LUserInput::HasBufferedPlatformInput() const
 {
-    check( this->GetLocalEgo()->GetUserInput() == this )
-    return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->HasBufferedPlatformInput();
+    check( &this->GetLocalEgo().GetUserInput() == this )
+    return this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->HasBufferedPlatformInput();
 }
 
 const TArray<LString>& Jafg::LUserInput::GetBufferedPlatformInput() const
 {
-    check( this->GetLocalEgo()->GetUserInput() == this )
-    return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetBufferedPlatformInput();
+    check( &this->GetLocalEgo().GetUserInput() == this )
+    return this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetBufferedPlatformInput();
 }
 
 LString Jafg::LUserInput::GetBufferedPlatformInputAsStr() const
 {
-    check( this->GetLocalEgo()->GetUserInput() == this )
-    return this->GetLocalEgo()->GetFrontend()->GetFocusedSurfaceChecked()->GetBufferedPlatformInputAsStr();
+    check( &this->GetLocalEgo().GetUserInput() == this )
+    return this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetBufferedPlatformInputAsStr();
 }
 
 void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(TArray<LRawInput>* InRawInputs, const EInputActionTrigger::Type InActionTriggerType)

@@ -39,18 +39,10 @@ public:
     void OnLateTick(const f32 DeltaTime);
     void TearDown();
 
-    FORCEINLINE bool IsValid() const { return this->bValid; }
-
-    FORCEINLINE auto GetFrontend() -> LFrontend* { return &this->Frontend; }
-    FORCEINLINE auto GetFrontend() const -> const LFrontend* { return &this->Frontend; }
-    FORCEINLINE auto GetUserInput() -> LUserInput* { return &this->UserInput; }
-    FORCEINLINE auto GetUserInput() const -> const LUserInput* { return &this->UserInput; }
-
-    FORCEINLINE bool DoesPossess() const { return this->PersonaController != nullptr; }
-    FORCEINLINE auto GetPossessed() const -> APersonaController* { return this->PersonaController; }
-    FORCEINLINE auto GetCheckedPossessed() const -> APersonaController* { check( this->PersonaController ) return this->PersonaController; }
-    FORCEINLINE auto GetPanickedPossessed() const -> APersonaController*;
-    ENGINE_API  void Possess(APersonaController* InNewController);
+    FORCEINLINE auto GetFrontend() -> LFrontend& { return this->Frontend; }
+    FORCEINLINE auto GetFrontend() const -> LFrontend const& { return this->Frontend; }
+    FORCEINLINE auto GetUserInput() -> LUserInput& { return this->UserInput; }
+    FORCEINLINE auto GetUserInput() const -> LUserInput const& { return this->UserInput; }
 
     FORCEINLINE LClassOuter* GetOuter() noexcept { return &this->Outer; }
     FORCEINLINE const LClassOuter* GetOuter() const noexcept { return &this->Outer; }
@@ -59,8 +51,8 @@ public:
 
     void OnNewPawnPossessed(APawn* InOld, APawn* InNew);
 
-    ENGINE_API LEngine* GetEngine();
-    ENGINE_API LCommandLineInterface* GetCommandLineInterface();
+    ENGINE_API LEngine& GetEngine();
+    ENGINE_API LCommandLineInterface& GetCommandLineInterface();
 
     FORCEINLINE bool GetVariable_UpdateFrustum() const { bool bOut = false; this->VariableHandle_UpdateFrustum.GetValue(&bOut); return bOut; }
     FORCEINLINE auto GetVariableHandle_UpdateFrustum() const -> const LCliVariableHandle& { return this->VariableHandle_UpdateFrustum; }
@@ -71,19 +63,22 @@ public:
     FORCEINLINE f32  GetVariable_FrustumFarPlane() const { f32 Out = 0.0f; this->VariableHandle_FrustumFarPlane.GetValue(&Out); return Out; }
     FORCEINLINE auto GetVariableHandle_FrustumFarPlane() const -> const LCliVariableHandle& { return this->VariableHandle_FrustumFarPlane; }
 
+#if LAL_DO_CHECKS
+    FORCEINLINE bool IsDecommissioned() const noexcept { return this->bDecommissioned; }
+#endif /* LAL_DO_CHECKS */
+
 private:
 
     void OnWorldBeginLife(LWorld* InNewWorld);
 
-    bool bValid = false;
+#if LAL_DO_CHECKS
+    bool bDecommissioned{ false };
+#endif /* LAL_DO_CHECKS */
 
     LFrontend  Frontend;
     LUserInput UserInput;
 
-    LDelegateHandle OnWorldBeginLifeHandle = nullptr;
-
-    //# Currently possessed persona controller.
-    APersonaController* PersonaController = nullptr;
+    LDelegateHandle OnWorldBeginLifeHandle{ nullptr };
 
     //#
     //# The context of the local ego. It is created when the local ego is instantiated
@@ -101,13 +96,3 @@ private:
 };
 
 } /* ~Namespace Jafg */
-
-Jafg::APersonaController* Jafg::LLocalEgo::GetPanickedPossessed() const
-{
-    if (this->PersonaController)
-    {
-        return this->PersonaController;
-    }
-    panic( "No persona controller possessed by the local ego." )
-    return nullptr;
-}

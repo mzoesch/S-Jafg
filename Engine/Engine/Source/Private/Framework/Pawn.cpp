@@ -60,12 +60,17 @@ void Jafg::APawn::EndLife()
 
 bool Jafg::APawn::IsPossessedLocally() const
 {
-    return this->OwningController && this->OwningController->IsLocalEgoValid();
+    return this->OwningController && this->OwningController->IsSurfaceValid();
 }
 
 Jafg::LLocalEgo* Jafg::APawn::GetPossessedEgo() const
 {
-    return this->OwningController ? this->OwningController->GetLocalEgo() : nullptr;
+    if (this->OwningController)
+    {
+        return &this->OwningController->GetLocalEgo();
+    }
+
+    return nullptr;
 }
 
 void Jafg::APawn::DeclareNewPossessor(APersonaController* InNewController)
