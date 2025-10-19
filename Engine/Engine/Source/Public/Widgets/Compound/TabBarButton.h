@@ -26,7 +26,7 @@ protected:
 
 public:
 
-    virtual bool AddData(const LWidgetNodeData* InData) override;
+    virtual bool AddData(JNodeData& InData) override;
 
     virtual void OnPrimaryRelease() override;
 

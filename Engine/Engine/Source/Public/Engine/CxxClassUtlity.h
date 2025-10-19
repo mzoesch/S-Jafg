@@ -129,7 +129,7 @@ struct LClassOuterMiscellaneousAccessor
 template<typename TCxxClass> requires std::is_base_of_v<JCxxClass, TCxxClass>
 FORCEINLINE TCxxClass* NewObject(LClassOuter* Outer)
 {
-    return StaticCastChecked<TCxxClass>(NewObject(Outer, TCxxClass::StaticClass()));
+    return StaticCastChecked<TCxxClass>(NewObject(Outer, *TCxxClass::StaticClass()));
 }
 
 template<typename TCxxClass> requires std::is_base_of_v<JCxxClass, TCxxClass>

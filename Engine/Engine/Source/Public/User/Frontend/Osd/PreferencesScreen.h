@@ -13,14 +13,19 @@ class WPreferencesPanel;
 class WPreferencesScreen;
 class JCorePreferencesSubsystem;
 
-struct LPreferencesPanelData : public LWidgetNodeData
+DECLARE_JAFG_CLASS()
+class JPreferencesPanelData : public JNodeData
 {
-    LPreference* Preference = nullptr;
-};
+    GENERATED_CLASS_BODY()
 
-#if PLATFORM_WASM
-template <> NODISCARD inline auto FormatArgLegacy<TSubclassOf<WPreferencesPanel>>(TSubclassOf<WPreferencesPanel> Arg) { return Arg->GetSpacedClassName().ToC(); }
-#endif /* PLATFORM_WASM */
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTOR(JPreferencesPanelData)
+
+public:
+
+    LPreference* Preference{ nullptr };
+};
 
 DECLARE_JAFG_WIDGET()
 class WPreferencesPanel : public WCommonMenuTabBarPanel
@@ -34,7 +39,7 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(WPreferencesPanel)
 
     virtual void Construct() override;
-    virtual bool AddData(const LWidgetNodeData* InData) override;
+    virtual bool AddData(JNodeData& Data) override;
 };
 
 DECLARE_JAFG_WIDGET(ECxxClassFlags::Config)

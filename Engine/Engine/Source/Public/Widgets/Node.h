@@ -13,6 +13,7 @@
 namespace Jafg
 {
 
+class JNodeData;
 class LLocalEgo;
 class WNode;
 class WParent;
@@ -26,7 +27,6 @@ template<typename TNode>
 class TWidgetFactoryParentBase;
 struct LWidgetSlot;
 struct LWidgetConstructor;
-struct LWidgetNodeData;
 
 namespace Private
 {
@@ -380,7 +380,7 @@ public:
     FORCEINLINE TFactoryRetTy& operator+(LWidgetFactory& InSibling) { return this->AddSibling(&InSibling); }
     FORCEINLINE TFactoryRetTy& operator+(LWidgetFactory* InSibling) { return this->AddSibling(InSibling); }
 
-    FORCEINLINE TFactoryRetTy& Data(const LWidgetNodeData* InData) { this->This()->AddData(InData); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Data(JNodeData& Data) { this->This()->AddData(Data); return this->Self(); }
 };
 
 //#
@@ -413,9 +413,14 @@ FORCEINLINE TNode* ConstructDeferredWidgetNode(LClassOuter* Outer, TSubclassOf<T
 //# Call this method to finalize a widget that was deferred.
 FORCEINLINE void MakeDeferredWidgetNodeFinal(WNode* Node);
 
-struct LWidgetNodeData
+DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
+class JNodeData : public JCxxClass
 {
-    LName DerivedClass;
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTOR(JNodeData)
 };
 
 //#
@@ -476,7 +481,7 @@ public:
     //# Use this method to pass arbitrary typesafe data to the widget.
     //# @return True, if the data was used successfully handled.
     //#
-    virtual bool AddData(const LWidgetNodeData* InData) { return false; }
+    virtual bool AddData(JNodeData& Data) { return false; }
 
     bool IsInBounds(const LViewport& Context, const LVector2& InLocation) const;
     virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation);

@@ -72,12 +72,6 @@ struct LTabBarTabDescriptor final
     TArray<LTabBarTabDescriptor> Siblings;
 };
 
-struct LTabBarTabData : public LWidgetNodeData
-{
-    WTabBar* Context;
-    const LTabBarTabDescriptor* Descriptor;
-};
-
 template <typename TNode>
 class TWidgetFactoryTabBar : public TWidgetFactoryParentBase<TNode>
 {
@@ -95,6 +89,21 @@ public:
     FORCEINLINE TFactoryRetTy& DefaultIndex(const i32 InIndex) { this->This()->SetDefaultIndex(InIndex); return this->Self(); }
 
     FORCEINLINE TFactoryRetTy& operator[](LTabBarTabDescriptor&& InDescriptor) { return this->AddTab(std::move(InDescriptor)); }
+};
+
+DECLARE_JAFG_CLASS()
+class JTabBarData : public JNodeData
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTOR(JTabBarData)
+
+public:
+
+    WTabBar* Context;
+    LTabBarTabDescriptor const* Descriptor;
 };
 
 //#

@@ -305,24 +305,22 @@ void Jafg::WTabBar::LoadTab(LTabBarTabDescriptor&& InTabDescriptor, const i32 In
 
     this->TabsInOrder[InIndex].Button = Button;
 
-    LTabBarTabData Data;
-    Data.DerivedClass = WTabBarButton::StaticClass()->GetName();
-    Data.Context = this;
-    Data.Descriptor = &InTabDescriptor;
-    Button->AddData(&Data);
+    JTabBarData* Data{ NewObject<JTabBarData>(this->GetOuter()) };
+    Data->Context = this;
+    Data->Descriptor = &InTabDescriptor;
+    Button->AddData(*Data);
 
     MakeDeferredWidgetNodeFinal(Button);
 
     WNode* Panel { nullptr };
     if (InTabDescriptor.PanelWidgetClassField)
     {
-        Data.DerivedClass = WTabBarPanel::StaticClass()->GetName();
         Panel = ConstructDeferredWidgetNode(this->GetOuter(), InTabDescriptor.PanelWidgetClassField);
         checkSlow( this->TabsInOrder[InIndex].Panel == nullptr )
         this->TabsInOrder[InIndex].Panel = Panel;
         this->Switcher->AddChild(Panel);
         this->TabsInOrder[InIndex].SwitcherIndex = static_cast<i8>(this->Switcher->GetChildren().size() - 1);
-        Panel->AddData(&Data);
+        Panel->AddData(*Data);
         MakeDeferredWidgetNodeFinal(Panel);
     }
 
@@ -333,6 +331,8 @@ void Jafg::WTabBar::LoadTab(LTabBarTabDescriptor&& InTabDescriptor, const i32 In
         this->RegisterTab(std::move(Siblings));
     }
     algo::orphan(&InTabDescriptor.Siblings);
+
+    Data->MarkAsGarbage_v2();
 
     return;
 }

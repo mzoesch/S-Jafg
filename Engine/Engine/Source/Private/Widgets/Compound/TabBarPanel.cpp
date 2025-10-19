@@ -9,17 +9,16 @@ Jafg::WTabBarPanel::WTabBarPanel(LCxxObjectInitializer const& CxxObjectInitializ
     return;
 }
 
-bool Jafg::WTabBarPanel::AddData(const LWidgetNodeData* InData)
+bool Jafg::WTabBarPanel::AddData(JNodeData& Data)
 {
-    const bool bSuper = Super::AddData(InData);
-
-    if (InData->DerivedClass != WTabBarPanel::StaticClass()->GetName())
+    const bool bSuper = Super::AddData(Data);
+    JTabBarData* TbData{ Data.As<JTabBarData>() };
+    if (TbData == nullptr)
     {
         return bSuper;
     }
 
-    const LTabBarTabData* Data = static_cast<const LTabBarTabData*>(InData);
-    this->OwningTabBar = Data->Context;
+    this->OwningTabBar = TbData->Context;
 
     return true;
 }

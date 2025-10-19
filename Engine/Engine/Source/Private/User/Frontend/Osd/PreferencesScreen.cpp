@@ -51,16 +51,16 @@ void Jafg::WPreferencesPanel::Construct()
     return;
 }
 
-bool Jafg::WPreferencesPanel::AddData(const LWidgetNodeData* InData)
+bool Jafg::WPreferencesPanel::AddData(JNodeData& Data)
 {
-    Super::AddData(InData);
-    if (InData->DerivedClass != WPreferencesPanel::StaticClass()->GetName())
+    const bool bSuper{ Super::AddData(Data) };
+    JPreferencesPanelData* PpData{ Data.As<JPreferencesPanelData>() };
+    if (PpData == nullptr)
     {
         return false;
     }
 
-    const LPreferencesPanelData* Data = static_cast<const LPreferencesPanelData*>(InData);
-    LPreference* P = Data->Preference;
+    LPreference* P = PpData->Preference;
     check( P )
 
     WParentBase* Root;
@@ -113,14 +113,15 @@ void Jafg::WPreferencesScreen::Construct()
         Descriptor.DisplayNameField = TopPreference->GetDisplayName();
         Descriptor.PaddingField = LPadding(7.0f, 0.0f, 0.0f, 0.0f);
         Descriptor.PanelWidgetClassField = this->PanelClass;
-        Descriptor.CallbackField = [LambdaPreference](WTabBar* TabBar, WNode* Button, WNode* Panel) -> void
+        Descriptor.CallbackField = [this, LambdaPreference](WTabBar* TabBar, WNode* Button, WNode* Panel) -> void
         {
             if (Panel)
             {
-                LPreferencesPanelData Data;
-                Data.DerivedClass = WPreferencesPanel::StaticClass()->GetName();
-                Data.Preference = LambdaPreference;
-                Panel->AddData(&Data);
+                JPreferencesPanelData* Data{ NewObject<JPreferencesPanelData>(this->GetOuter()) };
+                Data->Preference = LambdaPreference;
+                Panel->AddData(*Data);
+
+                Data->MarkAsGarbage_v2();
             }
             else
             {

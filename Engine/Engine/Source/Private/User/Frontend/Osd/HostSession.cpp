@@ -24,11 +24,6 @@
 namespace
 {
 
-struct LHostSessionScreenData final : public Jafg::LWidgetNodeData
-{
-    Jafg::WHostSessionScreen* Screen { nullptr };
-};
-
 namespace EBuildReason
 {
 
@@ -210,33 +205,26 @@ void Jafg::WHostSessionScreen::Construct()
 {
     Super::Construct();
 
-    LHostSessionScreenData DataOld;
-    DataOld.DerivedClass = WHostSessionScreen_Old::StaticClass()->GetName();
-    DataOld.Screen = this;
-
-    LHostSessionScreenData DataNew;
-    DataNew.DerivedClass = WHostSessionScreen_New::StaticClass()->GetName();
-    DataNew.Screen = this;
-
-    LHostSessionScreenData DataOldHost;
-    DataOldHost.DerivedClass = WHostSessionScreen_Old_Host::StaticClass()->GetName();
-    DataOldHost.Screen = this;
+    Private::JHostSessionScreenData* Data{ NewObject<Private::JHostSessionScreenData>(this->GetOuter()) };
+    Data->Screen = this;
 
     MakeRootNode(WSwitcher).SaveTo(&this->Switcher)
         .Anchor(EAnchor::Fill)
     [
         NewNode(WHostSessionScreen_Old).SaveTo(&this->OldScreen)
-            .Data(&DataOld)
+            .Data(*Data)
         +
         NewNode(WHostSessionScreen_New).SaveTo(&this->NewScreen)
-            .Data(&DataNew)
+            .Data(*Data)
         +
         NewNode(WHostSessionScreen_Old_Host).SaveTo(&this->OldScreenHost)
-            .Data(&DataOldHost)
+            .Data(*Data)
     ]
     FinishWidgetStyling()
 
     this->Switcher->SetActiveWidget(this->OldScreen);
+
+    Data->MarkAsGarbage_v2();
 
     return;
 }
@@ -345,16 +333,16 @@ void Jafg::WHostSessionScreen_New::Construct()
     return;
 }
 
-bool Jafg::WHostSessionScreen_New::AddData(const LWidgetNodeData* InData)
+bool Jafg::WHostSessionScreen_New::AddData(JNodeData& Data)
 {
-    const bool bSuper = Super::AddData(InData);
-    if (InData->DerivedClass != WHostSessionScreen_New::StaticClass()->GetName())
+    const bool bSuper{ Super::AddData(Data) };
+    Private::JHostSessionScreenData* HssData{ Data.As<Private::JHostSessionScreenData>() };
+    if (HssData == nullptr)
     {
         return bSuper;
     }
 
-    const LHostSessionScreenData* Data = static_cast<const LHostSessionScreenData*>(InData);
-    this->Owner = Data->Screen;
+    this->Owner = HssData->Screen;
     check( this->Owner )
 
     return true;
@@ -736,16 +724,16 @@ void Jafg::WHostSessionScreen_Old::Construct()
     return;
 }
 
-bool Jafg::WHostSessionScreen_Old::AddData(const LWidgetNodeData* InData)
+bool Jafg::WHostSessionScreen_Old::AddData(JNodeData& Data)
 {
-    const bool bSuper = Super::AddData(InData);
-    if (InData->DerivedClass != WHostSessionScreen_Old::StaticClass()->GetName())
+    const bool bSuper{ Super::AddData(Data) };
+    Private::JHostSessionScreenData* HssData{ Data.As<Private::JHostSessionScreenData>() };
+    if (HssData == nullptr)
     {
         return bSuper;
     }
 
-    const LHostSessionScreenData* Data = static_cast<const LHostSessionScreenData*>(InData);
-    this->Owner = Data->Screen;
+    this->Owner = HssData->Screen;
     check( this->Owner )
 
     return true;
@@ -989,16 +977,16 @@ void Jafg::WHostSessionScreen_Old_Host::Construct()
     return;
 }
 
-bool Jafg::WHostSessionScreen_Old_Host::AddData(const LWidgetNodeData* InData)
+bool Jafg::WHostSessionScreen_Old_Host::AddData(JNodeData& Data)
 {
-    const bool bSuper = Super::AddData(InData);
-    if (InData->DerivedClass != WHostSessionScreen_Old_Host::StaticClass()->GetName())
+    const bool bSuper{ Super::AddData(Data) };
+    Private::JHostSessionScreenData* HssData{ Data.As<Private::JHostSessionScreenData>() };
+    if (HssData == nullptr)
     {
         return bSuper;
     }
 
-    const LHostSessionScreenData* Data = static_cast<const LHostSessionScreenData*>(InData);
-    this->Owner = Data->Screen;
+    this->Owner = HssData->Screen;
     check( this->Owner )
 
     return true;

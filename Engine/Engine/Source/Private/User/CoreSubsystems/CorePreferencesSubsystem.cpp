@@ -110,6 +110,8 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                     .TextBlockBrush(LTextBoxBrush::Body())
                     .OnPrimaryRelease([Target](WButton* Self, const LKeyEvent& InKeyEvent) -> void
                     {
+                        check( Self )
+
                         if (Target->IsGarbage())
                         {
                             return;
@@ -133,10 +135,10 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                             return;
                         }
 
-                        LPreferencesPanelData Data;
-                        Data.DerivedClass = WPreferencesPanel::StaticClass()->GetName();
-                        Data.Preference   = P->get();
-                        Panel->AddData(&Data);
+                        JPreferencesPanelData* Data{ NewObject<JPreferencesPanelData>(Self->GetOuter()) };
+                        Data->Preference = P->get();
+                        Panel->AddData(*Data);
+                        Data->MarkAsGarbage_v2();
 
                         return;
                     })
@@ -223,10 +225,10 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
                             return;
                         }
 
-                        LPreferencesPanelData Data;
-                        Data.DerivedClass = WPreferencesPanel::StaticClass()->GetName();
-                        Data.Preference   = P->get();
-                        Panel->AddData(&Data);
+                        JPreferencesPanelData* Data { NewObject<JPreferencesPanelData>(Self->GetOuter()) };
+                        Data->Preference = P->get();
+                        Panel->AddData(*Data);
+                        Data->MarkAsGarbage_v2();
 
                         return;
                     })

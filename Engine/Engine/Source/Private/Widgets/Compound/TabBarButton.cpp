@@ -4,34 +4,34 @@
 #include "Widgets/TextBox.h"
 #include "Widgets/Compound/TabBar.h"
 
-bool Jafg::WTabBarButton::AddData(const LWidgetNodeData* InData)
+bool Jafg::WTabBarButton::AddData(JNodeData& Data)
 {
-    Super::AddData(InData);
+    const bool bSuper{ Super::AddData(Data) };
 
-    if (InData->DerivedClass != WTabBarButton::StaticClass()->GetName())
+    JTabBarData* TbData{ Data.As<JTabBarData>() };
+    if (TbData == nullptr)
     {
-        return false;
+        return bSuper;
     }
 
-    const LTabBarTabData* Data = static_cast<const LTabBarTabData*>(InData);
-    if (Data->Descriptor->DisplayNameField.empty() == false)
+    if (TbData->Descriptor->DisplayNameField.empty() == false)
     {
         this->GetFactory<WTabBarButton>()
         [
             NewNode(WTextBox).SaveTo(&this->ButtonText)
                 .Brush(LTextBoxBrush::SubHeader())
-                .Content(Data->Descriptor->DisplayNameField)
+                .Content(TbData->Descriptor->DisplayNameField)
                 .Anchor(EAnchor::CenterCenter)
-                .Padding(Data->Descriptor->PaddingField)
+                .Padding(TbData->Descriptor->PaddingField)
         ];
     }
 
-    this->Context = Data->Context;
-    this->Identifier = Data->Descriptor->IdentifierField;
+    this->Context = TbData->Context;
+    this->Identifier = TbData->Descriptor->IdentifierField;
 
-    if (Data->Descriptor->OnButtonReleaseField.IsValid())
+    if (TbData->Descriptor->OnButtonReleaseField.IsValid())
     {
-        this->OnButtonRelease = Data->Descriptor->OnButtonReleaseField;
+        this->OnButtonRelease = TbData->Descriptor->OnButtonReleaseField;
     }
 
     return true;

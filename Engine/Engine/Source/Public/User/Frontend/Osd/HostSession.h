@@ -19,10 +19,30 @@ class WVRegion;
 class WSwitcher;
 class WEditableTextBox;
 class WCommonMenuTabBar;
+class WHostSessionScreen;
 class WHostSessionScreen_New;
 class WHostSessionScreen_Old;
 class WHostSessionScreen_Old_Save;
 class WHostSessionScreen_Old_Host;
+
+namespace Private
+{
+
+DECLARE_JAFG_CLASS()
+class JHostSessionScreenData : public JNodeData
+{
+    GENERATED_CLASS_BODY()
+
+protected:
+
+    DEFAULT_OBJECT_CONSTRUCTOR(JHostSessionScreenData)
+
+public:
+
+    WHostSessionScreen* Screen{ nullptr };
+};
+
+} /* ~Namespace Private */
 
 //#
 //# The main class screen for hosting a session.
@@ -72,7 +92,7 @@ public:
 
     virtual void Construct() override;
 
-    virtual bool AddData(const LWidgetNodeData* InData) override;
+    virtual bool AddData(JNodeData& Data) override;
 
     virtual void OnVisibilityChanged(const EWidgetVisibility::Type InOldVisibility, const EWidgetVisibility::Type InNewVisibility) override;
 
@@ -153,7 +173,7 @@ public:
 
     virtual void Construct() override;
 
-    virtual bool AddData(const LWidgetNodeData* InData) override;
+    virtual bool AddData(JNodeData& Data) override;
 
     FORCEINLINE bool IsOwnerValid() const noexcept { return this->Owner != nullptr; }
     FORCEINLINE WHostSessionScreen* GetOwner() noexcept { return this->Owner; }
@@ -200,7 +220,7 @@ public:
 
     virtual void Construct() override;
 
-    virtual bool AddData(const LWidgetNodeData* InData) override;
+    virtual bool AddData(JNodeData& Data) override;
 
     void UpdateToCachedSave();
 
