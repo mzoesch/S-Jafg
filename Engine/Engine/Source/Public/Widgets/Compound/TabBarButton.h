@@ -41,9 +41,9 @@ public:
 
 protected:
 
-    WTabBar* Context { nullptr };
+    WTabBar* Context{ nullptr };
     LString Identifier;
-    WTextBox* ButtonText { nullptr };
+    WTextBox* ButtonText{ nullptr };
     LOnTabBarButtonRelease OnButtonRelease;
 };
 

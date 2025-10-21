@@ -175,15 +175,15 @@ private:
     LMatrix CachedOrthographicProjectionMatrix;
 
     //# The factor with which the entire orthographic projection is scaled.
-    f32 ScaleFactor { 1.0f };
+    f32 ScaleFactor{ 1.0f };
     //# The dpi fetched from the physical platform.
-    f32 PlatformDpi { 0.0f };
+    f32 PlatformDpi{ 0.0f };
     //#
     //# The base dpi that the application was designed for.
     //# All scales are based and calculated from this value, and only for the drawing
     //# we use the platform dpi.
     //#
-    f32 BaseDpi { 96.0f };
+    f32 BaseDpi{ 96.0f };
 
     //# The dimensions of the viewport in px.
     LIntVector2 Dimensions;

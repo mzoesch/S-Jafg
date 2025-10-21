@@ -96,7 +96,7 @@ void Jafg::WConsoleScreen::Construct()
         [
             NewNode(WScrollRegion).SaveTo(&this->ConsoleHistoryContainer)
                 .Anchor(EAnchor::VFill)
-                .MinDesiredSize({static_cast<f32>(this->GetConsoleWidth()), 0.0f})
+                .MinDesiredSize({EWidgetSize::Points, static_cast<f32>(this->GetConsoleWidth()), 0.0f})
             [
                 NewNode(WVRegion).SaveTo(&this->ConsoleHistory)
                     .Anchor(EAnchor::VBottom | EAnchor::HFill)
@@ -110,7 +110,7 @@ void Jafg::WConsoleScreen::Construct()
         [
             NewNode(WVRegion).SaveTo(&this->ConsolePreview)
                 .Anchor(EAnchor::VBottom)
-                .MinDesiredSize({static_cast<f32>(this->GetConsoleWidth()), 0.0f})
+                .MinDesiredSize({EWidgetSize::Points, static_cast<f32>(this->GetConsoleWidth()), 0.0f})
                 .Type(ERegionBrush::Box)
                 .Tint({0, 0, 0, 164})
         ]

@@ -15,7 +15,7 @@ void Jafg::WFrontendScreen::Construct()
     FinishWidgetStyling()
 
     {
-        this->TabBar->AppendVSpace(35.0f);
+        this->TabBar->AppendVSpace_v2(15_pt);
     }
 
     {
@@ -56,7 +56,7 @@ void Jafg::WFrontendScreen::Construct()
     }
 
     {
-        this->TabBar->AppendVSpace(40.0f);
+        this->TabBar->AppendVSpace_v2(20_pt);
     }
 
     {
@@ -97,7 +97,7 @@ void Jafg::WFrontendScreen::Construct()
     }
 
     {
-        this->TabBar->AppendVSpace(125.0f);
+        this->TabBar->AppendVSpace_v2(55_pt);
     }
 
     return;

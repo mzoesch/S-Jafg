@@ -52,7 +52,7 @@ void Jafg::LPreferenceValue_CliType::BuildDefault(LPreference const* Self, WPare
         NewNodeCtx(Target, WTextBox)
             .Anchor(EAnchor::VCenter)
             .Brush(LTextBoxBrush::Body())
-            .MinDesiredSize({100.0f, 0.0f})
+            .MinDesiredSize({100_pt, 0})
             .Content(Type->GetIdentifier())
         +
         NewNodeCtx(Target, WTextBox)
@@ -118,7 +118,7 @@ void Jafg::LPreferenceValue_CliCommand::BuildDefault(const LPreference* Self, WP
         NewNodeCtx(Target, WTextBox)
             .Anchor(EAnchor::VCenter)
             .Brush(LTextBoxBrush::Body())
-            .MinDesiredSize({100.0f, 0.0f})
+            .MinDesiredSize({100_pt, 0})
             .Content(Command->GetIdentifier())
         +
         NewNodeCtx(Target, WTextBox)
@@ -178,7 +178,7 @@ void Jafg::LPreferenceValue_CliVariable::BuildDefault(const LPreference* Self, W
         NewNodeCtx(Target, WTextBox)
             .Anchor(EAnchor::VCenter)
             .Brush(LTextBoxBrush::Body())
-            .MinDesiredSize({100.0f, 0.0f})
+            .MinDesiredSize({100_pt, 0})
             .Content(Variable->GetIdentifier())
         +
         NewNodeCtx(Target, WTextBox)

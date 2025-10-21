@@ -6,17 +6,23 @@
 #include "Widgets/Switcher.h"
 #include "Widgets/BackgroundBlur.h"
 
-void Jafg::WCommonMenuTabBarButton::Construct()
+Jafg::WCommonMenuTabBarButton::WCommonMenuTabBarButton(Jafg::LCxxObjectInitializer const& ObjectInitializer)
+    : Super{ObjectInitializer}
 {
     this->SetNormalBrush({ERegionBrush::None});
     this->SetHoverBrush({ERegionBrush::Box, {0, 0, 0, 128}});
     this->SetPressBrush({ERegionBrush::Box, {0, 0, 0, 192}});
 
-    Super::Construct();
-
-    this->SetPadding({10, 20});
-    this->SetMinDesiredSize(LVector2(10));
+    this->SetPadding({5, 10});
+    this->SetMinDesiredSize(5_pt2);
     this->SetAnchor(EAnchor::HFill);
+
+    return;
+}
+
+void Jafg::WCommonMenuTabBarButton::Construct()
+{
+    Super::Construct();
 
     if (this->IsButtonTextWidgetValid())
     {
@@ -68,7 +74,7 @@ void Jafg::WCommonMenuTabBar::Construct()
 
     if (WVRegion* VRegion = DynamicCast<WVRegion>(this->ButtonsContainer); VRegion)
     {
-        VRegion->SetMinDesiredSize({200, 0});
+        VRegion->SetMinDesiredSize({100_pt, 0});
 
         VRegion->SetAnchor(EAnchor::VFill);
         VRegion->SetType(ERegionBrush::Box);

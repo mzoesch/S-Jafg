@@ -351,36 +351,36 @@ public:
     friend WNode;
     friend Private::LWidgetFactoryUtility;
 
-    using Super         = LWidgetFactory;
+    using Super = LWidgetFactory;
 
     //# The node to target. Always valid.
-    using TNodeTy       = TNode;
+    using TNodeTy = TNode;
     //# The return type of the factory. Always valid.
     using TFactoryRetTy = typename TNodeTy::TWidgetFactory;
 
-    FORCEINLINE TNodeTy* GetNode() const { return StaticCastChecked<TNodeTy>(this->GetNodeRaw()); }
+    FORCEINLINE TNodeTy* GetNode() const noexcept { return StaticCastChecked<TNodeTy>(this->GetNodeRaw()); }
 
     //# @return A pointer to self.
     FORCEINLINE TFactoryRetTy& Self() noexcept { return *static_cast<TFactoryRetTy*>(this); }
     //# @return A pointer to this.
-    FORCEINLINE TNodeTy*       This() { return this->GetNode(); }
+    FORCEINLINE TNodeTy*       This() noexcept { return this->GetNode(); }
 
-    FORCEINLINE TFactoryRetTy& Anchor(const LAnchor&      InAnchor) { this->This()->SetAnchor(InAnchor); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Anchor(const EAnchor::Type InAnchor) { this->This()->SetAnchor(InAnchor); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Anchor(const LAnchor&      InAnchor) noexcept { this->This()->SetAnchor(InAnchor); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Anchor(const EAnchor::Type InAnchor) noexcept { this->This()->SetAnchor(InAnchor); return this->Self(); }
 
-    FORCEINLINE TFactoryRetTy& MinDesiredSize(const LVector2& InSize) { this->This()->SetMinDesiredSize(InSize); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& MaxDesiredSize(const LVector2& InSize) { this->This()->SetMaxDesiredSize(InSize); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& MinDesiredSize(LWidgetSize2 Size) noexcept { this->This()->SetMinDesiredSize(std::move(Size)); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& MaxDesiredSize(LWidgetSize2 Size) noexcept { this->This()->SetMaxDesiredSize(std::move(Size)); return this->Self(); }
 
     FORCEINLINE TFactoryRetTy& Visibility(const EWidgetVisibility::Type InVisibility) { this->This()->SetVisibility(InVisibility); return this->Self(); }
 
-    template<typename T> FORCEINLINE auto SaveTo(T** Out) -> TFactoryRetTy&;
-    template<typename T> FORCEINLINE auto operator>>(T** Out) -> TFactoryRetTy& { return this->SaveTo(std::forward<T*&>(Out)); }
+    template<typename T> FORCEINLINE TFactoryRetTy& SaveTo(T** Out) noexcept;
+    template<typename T> FORCEINLINE TFactoryRetTy& operator>>(T** Out) noexcept { return this->SaveTo(std::forward<T*&>(Out)); }
 
-    FORCEINLINE TFactoryRetTy& AddSibling(LWidgetFactory* InSibling);
-    FORCEINLINE TFactoryRetTy& operator+(LWidgetFactory& InSibling) { return this->AddSibling(&InSibling); }
-    FORCEINLINE TFactoryRetTy& operator+(LWidgetFactory* InSibling) { return this->AddSibling(InSibling); }
+    FORCEINLINE TFactoryRetTy& AddSibling(LWidgetFactory* InSibling) noexcept;
+    FORCEINLINE TFactoryRetTy& operator+(LWidgetFactory& InSibling) noexcept { return this->AddSibling(&InSibling); }
+    FORCEINLINE TFactoryRetTy& operator+(LWidgetFactory* InSibling) noexcept { return this->AddSibling(InSibling); }
 
-    FORCEINLINE TFactoryRetTy& Data(JNodeData& Data) { this->This()->AddData(Data); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Data(JNodeData& Data) noexcept { this->This()->AddData(Data); return this->Self(); }
 };
 
 //#
@@ -422,6 +422,9 @@ protected:
 
     DEFAULT_OBJECT_CONSTRUCTOR(JNodeData)
 };
+
+ENGINE_API f32      ToStaticPoints(LWidgetSize1 Size) noexcept;
+ENGINE_API LVector2 ToStaticPoints(LWidgetSize2 Size) noexcept;
 
 //#
 //# The base class for everything that can be interpreted as a visual element.
@@ -607,29 +610,30 @@ public:
     //# Update the #DesiredSize of a widget inside the overridden #UpdateDesiredSize method with this one.
     //# Do not call this method from outside the #UpdateDesiredSize method.
     //#
-    void SetDesiredSize(const LVector2& InSize) const;
-    //# Internal usage only. Do not use.
-    FORCEINLINE void SetDesiredSizeRaw(const LVector2& InSize) const { this->DesiredSize = InSize; return; }
-    FORCEINLINE const LVector2& GetDesiredSize() const { return this->DesiredSize; }
-    FORCEINLINE const LVector2& GetDesiredSizeSmart() const { return this->TransformsWidgetLayout() ? this->DesiredSize : LVector2::ZeroVector; }
+    FORCEINLINE void SetDesiredSize(LWidgetSize2 Size) const noexcept { this->SetDesiredSizeInSpt(ToStaticPoints(Size)); }
+    void SetDesiredSizeInSpt(LVector2 Size) const noexcept;
+    //# Internal usage only. Do not use unless you are a really smart person.
+    FORCEINLINE void SetDesiredSizeUnsanitized(LVector2 Size) const { this->DesiredSize_v2 = std::move(Size); return; }
+    FORCEINLINE LVector2 const& GetDesiredSize_v2() const { return this->DesiredSize_v2; }
+    FORCEINLINE LVector2 const& GetDesiredSizeSmart_v2() const { return this->TransformsWidgetLayout() ? this->DesiredSize_v2 : LVector2::ZeroVector; }
     //# The min desired size. A widget will always be at least this size.
-    FORCEINLINE void SetMinDesiredSize(const LVector2& InSize) { this->MinDesiredSize = InSize; return; }
-    FORCEINLINE const LVector2& GetMinDesiredSize() const { return this->MinDesiredSize; }
+    FORCEINLINE void SetMinDesiredSize(LWidgetSize2 Size) { this->MinDesiredSize = std::move(Size); return; }
+    FORCEINLINE LWidgetSize2 const& GetMinDesiredSize() const { return this->MinDesiredSize; }
     //# The max desired size. A widget will have at maximum this size. Zero means unbound. This includes max size of anchored nodes.
-    FORCEINLINE void SetMaxDesiredSize(const LVector2& InSize) { this->MaxDesiredSize = InSize; return; }
-    FORCEINLINE const LVector2& GetMaxDesiredSize() const { return this->MaxDesiredSize; }
+    FORCEINLINE void SetMaxDesiredSize(LWidgetSize2 Size) { this->MaxDesiredSize = std::move(Size); return; }
+    FORCEINLINE LWidgetSize2 const& GetMaxDesiredSize() const { return this->MaxDesiredSize; }
 
     //# Virtual update method for the anchored size. Automatically called. Do not call manually.
     virtual void UpdateAnchoredSize(const LViewport& Context) const;
     //# Virtual update method for the anchored size of a child. Automatically called. Do not call manually.
     virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const PURE_VIRTUAL()
-    void SetAnchoredSize(const LVector2& InSize) const;
-    void SetAnchoredSize(LVector2&& InSize) const;
-    FORCEINLINE const LVector2& GetAnchoredSize() const { return this->AnchoredSize; }
-    FORCEINLINE LVector2 CopyAnchoredSize() const { return this->AnchoredSize; }
+    FORCEINLINE void SetAnchoredSize(LVector2 const& Size) const noexcept { this->SetAnchoredSize(LVector2{ Size }); }
+    void SetAnchoredSize(LVector2&& Size) const noexcept;
+    FORCEINLINE LVector2 const& GetAnchoredSize_v2() const noexcept { return this->AnchoredSize_v2; }
+    FORCEINLINE LVector2 CopyAnchoredSize_v2() const noexcept { return this->AnchoredSize_v2; }
     //# The anchored size that was lost during #MaxDesiredSize clamp.
-    FORCEINLINE const LVector2& GetLostAnchoredSize() const { return this->LostAnchoredSize; }
-    FORCEINLINE LVector2 CopyLostAnchoredSize() const { return this->LostAnchoredSize; }
+    FORCEINLINE LVector2 const& GetLostAnchoredSize_v2() const noexcept { return this->LostAnchoredSize_v2; }
+    FORCEINLINE LVector2 CopyLostAnchoredSize_v2() const noexcept { return this->LostAnchoredSize_v2; }
     //# @return The anchored top-left corner of the widget relative to the given context's top-left corner.
     virtual LVector2 GetAnchoredTopLeftFromMostOuter(const LViewport& Context) const;
     LVector2 GetAnchoredAndTranslatedTopLeftFromMostOuter(const LViewport& Context) const;
@@ -675,8 +679,8 @@ public:
 
 private:
 
-    bool bAllowTick { true };
-    EWidgetVisibility::Type Visibility { EWidgetVisibility::TransitiveHitTestInvisible };
+    bool bAllowTick{ true };
+    EWidgetVisibility::Type Visibility{ EWidgetVisibility::TransitiveHitTestInvisible };
 
     //#
     //# The slot that this widget is currently in.
@@ -684,29 +688,29 @@ private:
     LWidgetSlot Slot;
 
     //#
-    //# The desired size of this widget.
+    //# The desired size of this widget in pt.
     //#
-    mutable LVector2 DesiredSize;
+    mutable LVector2 DesiredSize_v2;
 
     //#
     //# The minimum content area.
     //#
-    LVector2 MinDesiredSize;
+    LWidgetSize2 MinDesiredSize;
 
     //#
     //# The maximal content area. Zero means unbound. This includes max size of anchored nodes.
     //#
-    LVector2 MaxDesiredSize;
+    LWidgetSize2 MaxDesiredSize;
 
     //#
-    //# The anchored size of this widget.
+    //# The anchored size of this widget in pt.
     //#
-    mutable LVector2 AnchoredSize;
+    mutable LVector2 AnchoredSize_v2;
 
     //#
-    //# The anchored size that was lost during #MaxDesiredSize clamp.
+    //# The anchored size that was lost during #MaxDesiredSize clamp in pt.
     //#
-    mutable LVector2 LostAnchoredSize;
+    mutable LVector2 LostAnchoredSize_v2;
 
     LAnchor Anchor{ EAnchor::TopLeft };
 };
@@ -738,7 +742,7 @@ typename TInNode::TWidgetFactory& Private::LWidgetFactoryUtility::MakeWidgetFact
 
 template<typename TNode>
 template<typename T>
-FORCEINLINE typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::SaveTo(T** Out)
+FORCEINLINE typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::SaveTo(T** Out) noexcept
 {
     static_assert(std::is_base_of_v<WNode, T>);
     static_assert(std::is_base_of_v<T, TNodeTy>);
@@ -751,7 +755,7 @@ FORCEINLINE typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>
 }
 
 template<typename TNode>
-FORCEINLINE typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::AddSibling(LWidgetFactory* InSibling)
+FORCEINLINE typename TWidgetFactory<TNode>::TFactoryRetTy& TWidgetFactory<TNode>::AddSibling(LWidgetFactory* InSibling) noexcept
 {
     check( algo::contains(this->Siblings, InSibling) == false )
     this->Siblings.push_back(InSibling);

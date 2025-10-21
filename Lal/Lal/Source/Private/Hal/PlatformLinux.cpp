@@ -141,7 +141,7 @@ void Lal::LOnPlatformBreakLinux::OnProgramPanicImpl
         {
             Lal::SprintF
             (
-                "zenity --error --title=\"Jafg Panic; We are fucked.\" --text=\"{}\n\nStacktrace:\n{}\"",
+                "zenity --error --title=\"Jafg Panic; We are fucked.\" --text=\"{}\n\nStacktrace:\n{}\" --width=1000",
                 ZenityMessage,
                 TraceStream.str()
             )

@@ -22,7 +22,7 @@ void Jafg::WPauseScreen::Construct()
     FinishWidgetStyling()
 
     {
-        this->TabBar->AppendVSpace(35.0f);
+        this->TabBar->AppendVSpace_v2(35_pt);
     }
 
     {
@@ -50,7 +50,7 @@ void Jafg::WPauseScreen::Construct()
     }
 
     {
-        this->TabBar->AppendVSpace(40.0f);
+        this->TabBar->AppendVSpace_v2(40_pt);
     }
 
     {
@@ -117,7 +117,7 @@ void Jafg::WPauseScreen::Construct()
     }
 
     {
-        this->TabBar->AppendVSpace(125.0f);
+        this->TabBar->AppendVSpace_v2(125_pt);
     }
 
     return;

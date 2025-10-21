@@ -247,7 +247,7 @@ private:
     LScrollRegionBrushImpl Brush;
 
     //#
-    //# The size to use for the whole scroll region if it was not anchored.
+    //# The size to use for the whole scroll region if it was not anchored in spt.
     //#
     LVector2 ScrollRegionSize;
 

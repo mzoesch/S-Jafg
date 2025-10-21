@@ -5,6 +5,7 @@
 #include "Widgets/Viewport.h"
 #include "Widgets/Parent.h"
 #include "Widgets/Region.h"
+#include "User/UserPreferences.h"
 
 namespace
 {
@@ -137,6 +138,38 @@ struct LWidgetConstructor
 
 } /* ~Namespace Jafg */
 
+f32 Jafg::ToStaticPoints(LWidgetSize1 Size) noexcept
+{
+    if (Size.Type == EWidgetSize::StaticPoints)
+    {
+        return Size.Size;
+    }
+
+    if (Size.Type == EWidgetSize::Points)
+    {
+        JUserPreferences const* Prefs{GetDefault<JUserPreferences>()};
+        return Size.Size * Prefs->ApplicationScale;
+    }
+
+    unreachable()
+}
+
+LVector2 Jafg::ToStaticPoints(LWidgetSize2 Size) noexcept
+{
+    if (Size.Type == EWidgetSize::StaticPoints)
+    {
+        return Size.Size;
+    }
+
+    if (Size.Type == EWidgetSize::Points)
+    {
+        JUserPreferences const* Prefs{GetDefault<JUserPreferences>()};
+        return Size.Size * Prefs->ApplicationScale;
+    }
+
+    unreachable()
+}
+
 Jafg::WNode::~WNode()
 {
     check( this->Slot.Parent == nullptr && this->Slot.Content == nullptr && this->Slot.Margin == nullptr )
@@ -161,9 +194,9 @@ bool Jafg::WNode::IsInBounds(const LViewport& Context, const LVector2& InLocatio
     const LVector2 TopLeftMostOuter = this->GetAnchoredTopLeftFromMostOuter(Context) + static_cast<LVector2>(Context.GetSweepTranslation());
     return
             TopLeftMostOuter.X <= InLocation.X
-         && InLocation.X       <= TopLeftMostOuter.X + this->GetAnchoredSize().X
+         && InLocation.X       <= TopLeftMostOuter.X + this->GetAnchoredSize_v2().X
          && TopLeftMostOuter.Y <= InLocation.Y
-         && InLocation.Y       <= TopLeftMostOuter.Y + this->GetAnchoredSize().Y
+         && InLocation.Y       <= TopLeftMostOuter.Y + this->GetAnchoredSize_v2().Y
          ;
 }
 
@@ -332,22 +365,26 @@ Jafg::LViewport* Jafg::WNode::GetViewport() const
     return nullptr;
 }
 
-void Jafg::WNode::SetDesiredSize(const LVector2& InSize) const
+void Jafg::WNode::SetDesiredSizeInSpt(LVector2 Size) const noexcept
 {
-    this->DesiredSize = InSize;
-    this->DesiredSize.X = Maths::Max(this->DesiredSize.X, this->MinDesiredSize.X);
-    this->DesiredSize.Y = Maths::Max(this->DesiredSize.Y, this->MinDesiredSize.Y);
+    this->DesiredSize_v2 = Size;
 
-    if (this->MaxDesiredSize.X > 0.0f)
+    LVector2 SptMinSize{ToStaticPoints(this->MinDesiredSize)};
+    LVector2 SptMaxSize{ToStaticPoints(this->MaxDesiredSize)};
+
+    this->DesiredSize_v2.X = Maths::Max(this->DesiredSize_v2.X, SptMinSize.X);
+    this->DesiredSize_v2.Y = Maths::Max(this->DesiredSize_v2.Y, SptMinSize.Y);
+
+    if (SptMaxSize.X > 0.0f)
     {
-        this->DesiredSize.X = Maths::Min(this->DesiredSize.X, this->MaxDesiredSize.X);
+        this->DesiredSize_v2.X = Maths::Min(this->DesiredSize_v2.X, SptMaxSize.X);
     }
-    if (this->MaxDesiredSize.Y > 0.0f)
+    if (SptMaxSize.Y > 0.0f)
     {
-        this->DesiredSize.Y = Maths::Min(this->DesiredSize.Y, this->MaxDesiredSize.Y);
+        this->DesiredSize_v2.Y = Maths::Min(this->DesiredSize_v2.Y, SptMaxSize.Y);
     }
 
-    check( this->DesiredSize.X >= 0.0f && this->DesiredSize.Y >= 0.0f )
+    check( this->DesiredSize_v2.X >= 0.0f && this->DesiredSize_v2.Y >= 0.0f )
 
     return;
 }
@@ -365,46 +402,27 @@ void Jafg::WNode::UpdateAnchoredSize(const LViewport& Context) const
     }
 
     LVector2 Out;
-    Out.X = Maths::Max(this->Anchor.MaxX * static_cast<f32>(Context.GetDimensions().X), this->DesiredSize.X);
-    Out.Y = Maths::Max(this->Anchor.MaxY * static_cast<f32>(Context.GetDimensions().Y), this->DesiredSize.Y);
+    Out.X = Maths::Max(this->Anchor.MaxX * static_cast<f32>(Context.GetDimensions().X), this->DesiredSize_v2.X);
+    Out.Y = Maths::Max(this->Anchor.MaxY * static_cast<f32>(Context.GetDimensions().Y), this->DesiredSize_v2.Y);
     this->SetAnchoredSize(Out);
 
     return;
 }
 
-void Jafg::WNode::SetAnchoredSize(const LVector2& InSize) const
+void Jafg::WNode::SetAnchoredSize(LVector2&& InSize) const noexcept
 {
-    this->LostAnchoredSize = LVector2::ZeroVector;
-    this->AnchoredSize = InSize;
+    this->LostAnchoredSize_v2 = LVector2::ZeroVector;
+    this->AnchoredSize_v2 = std::move(InSize);
 
     if (this->MaxDesiredSize.X > 0.0f)
     {
-        this->LostAnchoredSize.X = Maths::Max(this->AnchoredSize.X - this->MaxDesiredSize.X, 0.0f);
-        this->AnchoredSize.X = Maths::Min(this->AnchoredSize.X, this->MaxDesiredSize.X);
+        this->LostAnchoredSize_v2.X = Maths::Max(this->AnchoredSize_v2.X - this->MaxDesiredSize.X, 0.0f);
+        this->AnchoredSize_v2.X = Maths::Min(this->AnchoredSize_v2.X, this->MaxDesiredSize.X);
     }
     if (this->MaxDesiredSize.Y > 0.0f)
     {
-        this->LostAnchoredSize.Y = Maths::Max(this->AnchoredSize.Y - this->MaxDesiredSize.Y, 0.0f);
-        this->AnchoredSize.Y = Maths::Min(this->AnchoredSize.Y, this->MaxDesiredSize.Y);
-    }
-
-    return;
-}
-
-void Jafg::WNode::SetAnchoredSize(LVector2&& InSize) const
-{
-    this->LostAnchoredSize = LVector2::ZeroVector;
-    this->AnchoredSize = std::move(InSize);
-
-    if (this->MaxDesiredSize.X > 0.0f)
-    {
-        this->LostAnchoredSize.X = Maths::Max(this->AnchoredSize.X - this->MaxDesiredSize.X, 0.0f);
-        this->AnchoredSize.X = Maths::Min(this->AnchoredSize.X, this->MaxDesiredSize.X);
-    }
-    if (this->MaxDesiredSize.Y > 0.0f)
-    {
-        this->LostAnchoredSize.Y = Maths::Max(this->AnchoredSize.Y - this->MaxDesiredSize.Y, 0.0f);
-        this->AnchoredSize.Y = Maths::Min(this->AnchoredSize.Y, this->MaxDesiredSize.Y);
+        this->LostAnchoredSize_v2.Y = Maths::Max(this->AnchoredSize_v2.Y - this->MaxDesiredSize.Y, 0.0f);
+        this->AnchoredSize_v2.Y = Maths::Min(this->AnchoredSize_v2.Y, this->MaxDesiredSize.Y);
     }
 
     return;

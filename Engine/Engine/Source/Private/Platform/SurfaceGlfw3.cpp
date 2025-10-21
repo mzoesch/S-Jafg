@@ -169,8 +169,8 @@ void Jafg::LSurfaceGlfw3::Initialize()
     {
         STAT_QUICK_CYCLE_START("Glfw3WindowCreation")
 
-        // Min 640 480
-        this->Handle = glfwCreateWindow(1280, 720, "Jafg - mzoesch", nullptr, nullptr);
+        // Min 640 480 - Default 1280 720
+        this->Handle = glfwCreateWindow(640, 480, "Jafg - mzoesch", nullptr, nullptr);
     }
     if (this->Handle == nullptr)
     {

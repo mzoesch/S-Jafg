@@ -74,7 +74,7 @@ Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildGeneral
             .Brush(LTextBoxBrush::SubHeader())
             .TextColor(Lal::LColor::Gray)
         +
-        NewNodeCtx(Context, WSpacer).Height(20.0f)
+        NewNodeCtx(Context, WSpacer).Height(20_pt)
         +
         NewNodeCtx(Context, WHRegion)
             .Anchor(EAnchor::HFill)
@@ -84,7 +84,7 @@ Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildGeneral
                 .Brush(LTextBoxBrush::Body())
         ]
         +
-        NewNodeCtx(Context, WSpacer).Height(20.0f)
+        NewNodeCtx(Context, WSpacer).Height(20_pt)
         +
         NewNodeCtx(Context, WTextBox)
             .Anchor(EAnchor::HLeft)
@@ -99,7 +99,7 @@ Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildGeneral
                 .Brush(LTextBoxBrush::Body())
         ]
         +
-        NewNodeCtx(Context, WSpacer).Height(20.0f)
+        NewNodeCtx(Context, WSpacer).Height(20_pt)
         +
         NewNodeCtx(Context, WTextBox)
             .Anchor(EAnchor::HLeft)
@@ -564,7 +564,7 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
         .Padding(10)
     [
         NewNode(WRegion).SaveTo(&Thumbnail)
-            .MinDesiredSize({100,100})
+            .MinDesiredSize({100_pt, 100})
             .Type(ERegionBrush::OutlineBox)
             .Tint(Lal::LColor::White)
             .OutlineTint(Lal::LColor::Black)
@@ -640,7 +640,7 @@ void Jafg::WHostSessionScreen_Old::Construct()
     WVRegion* Region;
     NewNode(WVRegion).SaveTo(&Region)
         .Anchor(EAnchor::Fill)
-        .MaxDesiredSize({1000, 0})
+        .MaxDesiredSize({1000_pt, 0})
         .VSpace(10)
     [
         NewNode(WTextBox)

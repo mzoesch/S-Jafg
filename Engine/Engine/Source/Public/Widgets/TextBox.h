@@ -20,7 +20,7 @@ public:
     FORCEINLINE TFactoryRetTy& Content(LString&& InContent) { this->This()->SetContent(std::move(InContent)); return this->Self(); }
 
     FORCEINLINE TFactoryRetTy& TextColor(const Lal::LColor&  InColor) { this->This()->SetTextColor(InColor); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& TextScale(const f32 InScale) { this->This()->SetTextScale(InScale); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& TextScale(const LTextScale InScale) { this->This()->SetTextScale(InScale); return this->Self(); }
     FORCEINLINE TFactoryRetTy& TextAlign(const ETextHAlign::Type InAlign) { this->This()->SetTextHAlign(InAlign); return this->Self(); }
     FORCEINLINE TFactoryRetTy& TextAlign(const ETextVAlign::Type InAlign) { this->This()->SetTextVAlign(InAlign); return this->Self(); }
     FORCEINLINE TFactoryRetTy& TextHAlign(const ETextHAlign::Type InAlign) { this->This()->SetTextHAlign(InAlign); return this->Self(); }
@@ -59,7 +59,7 @@ public:
     FORCEINLINE const LString& GetContent() const noexcept { return this->Content; }
 
     FORCEINLINE constexpr void SetTextColor(const Lal::LColor& InColor) noexcept { this->TextColor = InColor; }
-    FORCEINLINE constexpr void SetTextScale(const f32 InScale) noexcept { this->TextScale = InScale; }
+    FORCEINLINE constexpr void SetTextScale(const LTextScale InScale) noexcept { this->TextScale = InScale; }
     FORCEINLINE constexpr void SetTextAlign(const ETextHAlign::Type InAlign) noexcept { this->TextHAlign = InAlign; }
     FORCEINLINE constexpr void SetTextAlign(const ETextVAlign::Type InAlign) noexcept { this->TextVAlign = InAlign; }
     FORCEINLINE constexpr void SetTextHAlign(const ETextHAlign::Type InAlign) noexcept { this->TextHAlign = InAlign; }
@@ -67,7 +67,7 @@ public:
     FORCEINLINE constexpr void SetRespectContentHeight(const bool bInRespect) noexcept { this->bRespectContentHeight = bInRespect; }
 
     FORCEINLINE constexpr const Lal::LColor& GetTextColor() const noexcept { return this->TextColor; }
-    FORCEINLINE constexpr f32               GetTextScale() const noexcept { return this->TextScale; }
+    FORCEINLINE constexpr LTextScale        GetTextScale() const noexcept { return this->TextScale; }
     FORCEINLINE constexpr ETextHAlign::Type GetTextAlign() const noexcept { return this->TextHAlign; }
     FORCEINLINE constexpr ETextHAlign::Type GetTextHAlign() const noexcept { return this->TextHAlign; }
     FORCEINLINE constexpr ETextVAlign::Type GetTextVAlign() const noexcept { return this->TextVAlign; }
@@ -98,17 +98,17 @@ private:
 
     void RegisterShaders();
 
-    Lal::LColor TextColor { Lal::LColor::Black };
-    f32 TextScale { 1.0f };
-    ETextHAlign::Type TextHAlign { ETextHAlign::Left };
-    ETextVAlign::Type TextVAlign { ETextVAlign::Top };
+    Lal::LColor TextColor{ Lal::LColor::Black };
+    LTextScale TextScale;
+    ETextHAlign::Type TextHAlign{ ETextHAlign::Left };
+    ETextVAlign::Type TextVAlign{ ETextVAlign::Top };
 
     //#
     //# Whether to respect the content height when calculating the desired size.
     //# Meaning, if we always calculate for the highest character that might occour in the content, even if it
     //# doesn't.
     //#
-    bool bRespectContentHeight { false };
+    bool bRespectContentHeight{ false };
 
     LString Content;
 
@@ -141,7 +141,7 @@ FORCEINLINE constexpr void WTextBox::SetBrush(LTextBoxBrush&& InBrush) noexcept
 
 FORCEINLINE constexpr LTextBoxBrush WTextBox::GetBrush() const noexcept
 {
-    static_assert(sizeof(LTextBoxBrush) == 88, "This method needs to be updated because LTextBoxBrush has changed.");
+    static_assert(sizeof(LTextBoxBrush) == 96, "This method needs to be updated because LTextBoxBrush has changed.");
 
     LTextBoxBrush Out;
 

@@ -54,14 +54,14 @@ void Jafg::WEditableTextBox::Draw(LViewport& Context) const
         GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)->Draw
         (
             Context,
-            this->GetAnchoredSize(),
+            this->GetAnchoredSize_v2(),
             this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
             this->GetPadding(),
             this->GetDesiredSizeOfRawText(),
             this->GetTextHAlign(),
             this->GetTextVAlign(),
             this->PlaceholderColor,
-            this->GetTextScale(),
+            this->GetTextScale().InSpt(),
             this->PlaceholderContent
         );
     }
@@ -74,12 +74,12 @@ void Jafg::WEditableTextBox::Draw(LViewport& Context) const
     {
         const LVector2 AnchoredTopLeftFromMostOuter { this->GetAnchoredTopLeftFromMostOuter(Context) };
 
-        const LVector2 CaretSize { LVector2{2.0f, this->GetDesiredSize().Y} * this->CaretBrush.Size };
+        const LVector2 CaretSize { LVector2{2.0f, this->GetDesiredSize_v2().Y} * this->CaretBrush.Size };
 
         LVector2 CaretTopLeft
         {
               AnchoredTopLeftFromMostOuter
-            + LVector2{0.0f, (this->GetDesiredSize().Y - CaretSize.Y) * 0.5f }
+            + LVector2{0.0f, (this->GetDesiredSize_v2().Y - CaretSize.Y) * 0.5f }
             + LVector2{this->GetBrush().Padding.Left, 0.0f}
         }
         ;

@@ -9,6 +9,6 @@ namespace Jafg::RendererInformation
 {
 
 i32         GetLimitTextureDimension(void);
-LViewportSize GetLimitViewportDimensions(void);
+LIntVector2 GetLimitViewportDimensions(void);
 
 } /* ~Namespace Jafg::RendererInformation */

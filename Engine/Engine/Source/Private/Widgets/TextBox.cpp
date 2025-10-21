@@ -4,50 +4,36 @@
 #include "Core/CoreNames.h"
 #include "Engine/Engine.h"
 #include "Rhi/OrthographicBoxShader.h"
-#include "User/UserPreferences.h"
 #include "Rhi/OrthographicTextShader.h"
+#include "User/UserPreferences.h"
 
-namespace
+f32 Jafg::LTextScale::InSpt() const noexcept
 {
+    if (this->IsCustom())
+    {
+        return this->GetCustomScale();
+    }
 
-FORCEINLINE Jafg::LTextBoxBrush GetDefaultTextBoxBrush() noexcept
-{
-    Jafg::LTextBoxBrush Brush;
-    Brush.Tint = Lal::LColor::Transparent;
-    Brush.Padding = {4.5f};
-    return Brush;
-}
+    JUserPreferences const* Prefs { GetDefault<JUserPreferences>() };
 
-} /* ~Namespace <Anonymous> */
+    switch (this->GetPredefinedScale())
+    {
+    case ETextScale::Header:    return 0.4  * Prefs->ApplicationScale;
+    case ETextScale::SubHeader: return 0.25 * Prefs->ApplicationScale;
+    case ETextScale::Body:      return 0.2  * Prefs->ApplicationScale;
+    case ETextScale::Compact:   return 0.2  * Prefs->ApplicationScale;
+    case ETextScale::Small:     return 0.2  * Prefs->ApplicationScale;
+    case ETextScale::Tiny:      return 0.18 * Prefs->ApplicationScale;
+    // TODO: Make for each application scale an other font size. HeaderFontSize_Single, HeaderFontSize_Double, ...
+    // case ETextScale::Header:    return Prefs->HeaderFontSize * Prefs->ApplicationScale;
+    // case ETextScale::SubHeader: return Prefs->SubHeaderFontSize * Prefs->ApplicationScale;
+    // case ETextScale::Body:      return Prefs->BodyFontSize * Prefs->ApplicationScale;
+    // case ETextScale::Compact:   return Prefs->CompactFontSize * Prefs->ApplicationScale;
+    // case ETextScale::Small:     return Prefs->SmallFontSize * Prefs->ApplicationScale;
+    // case ETextScale::Tiny:      return Prefs->TinyFontSize * Prefs->ApplicationScale;
+    }
 
-Jafg::LTextBoxBrush Jafg::LTextBoxBrush::Header()
-{
-    return ::GetDefaultTextBoxBrush().TextScaleRet(GetDefault<JUserPreferences>()->HeaderFontSize);
-}
-
-Jafg::LTextBoxBrush Jafg::LTextBoxBrush::SubHeader()
-{
-    return ::GetDefaultTextBoxBrush().TextScaleRet(GetDefault<JUserPreferences>()->SubHeaderFontSize);
-}
-
-Jafg::LTextBoxBrush Jafg::LTextBoxBrush::Body()
-{
-    return ::GetDefaultTextBoxBrush().TextScaleRet(GetDefault<JUserPreferences>()->BodyFontSize);
-}
-
-Jafg::LTextBoxBrush Jafg::LTextBoxBrush::Compact()
-{
-    return ::GetDefaultTextBoxBrush().TextScaleRet(GetDefault<JUserPreferences>()->CompactFontSize);
-}
-
-Jafg::LTextBoxBrush Jafg::LTextBoxBrush::Small()
-{
-    return ::GetDefaultTextBoxBrush().TextScaleRet(GetDefault<JUserPreferences>()->SmallFontSize);
-}
-
-Jafg::LTextBoxBrush Jafg::LTextBoxBrush::Tiny()
-{
-    return ::GetDefaultTextBoxBrush().TextScaleRet(GetDefault<JUserPreferences>()->TinyFontSize);
+    unreachable()
 }
 
 void Jafg::WTextBox::BeginLifeCDR()
@@ -78,14 +64,14 @@ void Jafg::WTextBox::Draw(LViewport& Context) const
     GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)->Draw
     (
         Context,
-        this->GetAnchoredSize(),
+        this->GetAnchoredSize_v2(),
         this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
         this->GetPadding(),
         this->TextDesiredSize,
         this->TextHAlign,
         this->TextVAlign,
         this->TextColor,
-        this->TextScale,
+        this->TextScale.InSpt(),
         this->Content
     );
 
@@ -101,23 +87,25 @@ void Jafg::WTextBox::UpdateDesiredSizeForString(const LString& InString) const
 {
     const LOrthographicTextShader* Shader { GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText) };
 
+    f32 TextScaleInSpt{ this->TextScale.InSpt() };
+
     LVector2 DesiredSize;
     for (const u8 Rune : InString)
     {
         const Character& Ch { Shader->GetCharacters().at(static_cast<i8>(Rune)) };
-        DesiredSize.X += static_cast<f32>(Ch.Advance.X) * this->TextScale / 64.0f;
-        DesiredSize.Y = Maths::Max(DesiredSize.Y, static_cast<f32>(Ch.Size.y) * this->TextScale);
+        DesiredSize.X += static_cast<f32>(Ch.Advance.X) * TextScaleInSpt / 64.0f;
+        DesiredSize.Y = Maths::Max(DesiredSize.Y, static_cast<f32>(Ch.Size.y) * TextScaleInSpt);
     }
 
     if (this->bRespectContentHeight == false)
     {
-        DesiredSize.Y = Shader->GetApproximateHeight(this->TextScale);
+        DesiredSize.Y = Shader->GetApproximateHeight(TextScaleInSpt);
     }
 
     this->TextDesiredSize = DesiredSize;
 
-    DesiredSize += this->GetPadding().GetDesiredSize();
-    this->SetDesiredSize(DesiredSize);
+    DesiredSize += this->GetPadding().GetDesiredSizeInSpt();
+    this->SetDesiredSizeInSpt(DesiredSize);
 
     return;
 }
@@ -136,7 +124,7 @@ f32 Jafg::WTextBox::GetDesiredWidth(const LString& InString) const
     {
         if (auto It { Shader->GetCharacters().find(static_cast<i8>(Rune)) }; It != Shader->GetCharacters().end())
         {
-            Out += static_cast<f32>(It->second.Advance.X) * this->TextScale / 64.0f;
+            Out += static_cast<f32>(It->second.Advance.X) * this->TextScale.InSpt() / 64.0f;
         }
 
         continue;
@@ -165,7 +153,7 @@ i32 Jafg::WTextBox::GoToWidth(const LString& InString, const f32 InWidth) const
             // TODO: Improve this algorithm to better reflect the actual width of one single character instead of the advance.
 
             const f32 OldWidth { Width };
-            Width += static_cast<f32>(It->second.Advance.X) * this->TextScale / 64.0f;
+            Width += static_cast<f32>(It->second.Advance.X) * this->TextScale.InSpt() / 64.0f;
 
             if (Width >= InWidth)
             {
@@ -175,7 +163,7 @@ i32 Jafg::WTextBox::GoToWidth(const LString& InString, const f32 InWidth) const
                     (
                         OldWidth - InWidth
                         /* Super sketchy solution. This calculation should just not be based of the advance of the character. */
-                        + (15.0f * this->TextScale)
+                        + (15.0f * this->TextScale.InSpt())
                     )
                 };
 

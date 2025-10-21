@@ -95,12 +95,12 @@ struct LRegionBrush
     //#
     //# The type of the region brush.
     //#
-    ERegionBrush::Type Type { ERegionBrush::None };
+    ERegionBrush::Type Type{ ERegionBrush::None };
 
     //#
     //# The tint of the draw area from this region.
     //#
-    Lal::LColor Tint { Lal::LColor::White };
+    Lal::LColor Tint{ Lal::LColor::White };
 
     //#
     //# An optional image to use as a background.
@@ -110,42 +110,42 @@ struct LRegionBrush
     //#
     //# The tint of the image.
     //#
-    Lal::LColor ImageTint { Lal::LColor::White };
+    Lal::LColor ImageTint{ Lal::LColor::White };
 
     //#
     //# The scale of the image.
     //#
-    f32 ImageScale { 1.0f };
+    f32 ImageScale{ 1.0f };
 
     //#
     //# How the #Image should behave.
     //#
-    EImageBehavior::Type ImageBehavior { EImageBehavior::Scale };
+    EImageBehavior::Type ImageBehavior{ EImageBehavior::Scale };
 
     //#
     //# The image out of bounds mode. @see #EImageOobm.
     //#
-    EImageOobm::Type ImageOobm { EImageOobm::Wrap };
+    EImageOobm::Type ImageOobm{ EImageOobm::Wrap };
 
     //#
     //# How much padding to apply to the image.
     //#
-    f32 ImagePadding { 0.0f };
+    f32 ImagePadding{ 0.0f };
 
     //#
     //# The radii to use for the edges. TL => TR => BR => BL.
     //#
-    LVector4 Radii { 4.0f };
+    LVector4 Radii{ 4.0f };
 
     //#
     //# The thickness of the outline.
     //#
-    f32 OutlineThickness { 2.0f };
+    f32 OutlineThickness{ 2.0f };
 
     //#
     //# The outline color to use.
     //#
-   Lal::LColor OutlineTint { Lal::LColor::White };
+   Lal::LColor OutlineTint{ Lal::LColor::White };
 };
 
 } /* ~Namespace Jafg */

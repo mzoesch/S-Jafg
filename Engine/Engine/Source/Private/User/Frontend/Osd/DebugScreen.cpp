@@ -52,9 +52,9 @@ void Jafg::WDebugScreen::Construct()
 
     const JMaterialSubsystem* MaterialSubsystem = this->GetEngine().GetSubsystem<JMaterialSubsystem>();
 
-    constexpr f32 SpacerHeight { 20.0f };
+    constexpr LWidgetSize1 SpacerHeight{ 20_pt };
 
-    LTextBoxBrush Brush { LTextBoxBrush::Body() };
+    LTextBoxBrush Brush{ LTextBoxBrush::Body() };
     Brush.Type = ERegionBrush::Box;
     Brush.Tint = { 0, 0, 0, 128 };
 

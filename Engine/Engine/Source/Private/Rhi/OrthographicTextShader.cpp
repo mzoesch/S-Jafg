@@ -143,7 +143,7 @@ void Jafg::LOrthographicTextShader::Draw
     const f32       YFromBottom      = Context.GetHeightF();
     const LVector2    Offset           =
         TopLeft
-        + ((Size - Padding.GetDesiredSize() - TextDesiredSize) * LVector2
+        + ((Size - Padding.GetDesiredSizeInSpt() - TextDesiredSize) * LVector2
         (
             ETextHAlign::IsLeft(TextHAlign) ? 0.0f : (ETextHAlign::IsCenter(TextHAlign) ? 0.5f : 1.0f),
             ETextVAlign::IsTop(TextVAlign)  ? 0.0f : (ETextVAlign::IsCenter(TextVAlign) ? 0.5f : 1.0f)

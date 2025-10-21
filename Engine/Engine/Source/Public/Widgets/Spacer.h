@@ -16,10 +16,10 @@ public:
     using Super         = TWidgetFactory<TNode>;
     using TFactoryRetTy = typename Super::TFactoryRetTy;
 
-    FORCEINLINE TFactoryRetTy& Size(const LVector2&  InSize) { this->This()->SetSize(InSize); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Size(const LVector2&& InSize) { this->This()->SetSize(InSize); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Height(const f32 InHeight)  { this->This()->SetHeight(InHeight); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& Width(const f32 InWidth)    { this->This()->SetWidth(InWidth);   return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Size(LWidgetSize2 const& Size) noexcept { this->This()->SetSize(Size); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Size(LWidgetSize2&& Size) noexcept { this->This()->SetSize(std::move(Size)); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Height(const LWidgetSize1 Height) noexcept { this->This()->SetHeight(Height); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Width(const LWidgetSize1 Width) noexcept { this->This()->SetWidth(Width);   return this->Self(); }
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactorySpacer)
@@ -33,29 +33,34 @@ protected:
 
 public:
 
-    virtual void UpdateDesiredSize() const override;
+    virtual void UpdateDesiredSize() const override { this->SetDesiredSize(this->Size); }
 
-    FORCEINLINE WSpacer& SetSize(const LVector2& InSize)
+    FORCEINLINE constexpr WSpacer& SetSize(LWidgetSize2 Size) noexcept
     {
-        this->Size = InSize;
+        this->Size = Size;
         return *this;
     }
 
-    FORCEINLINE WSpacer& SetHeight(const float InHeight)
+    FORCEINLINE constexpr WSpacer& SetHeight(LWidgetSize1 Height) noexcept
     {
-        this->Size.Y = InHeight;
+        this->Size.SetYAxis(Height);
         return *this;
     }
 
-    FORCEINLINE WSpacer& SetWidth(const float InWidth)
+    FORCEINLINE constexpr WSpacer& SetWidth(LWidgetSize1 Width) noexcept
     {
-        this->Size.X = InWidth;
+        this->Size.SetXAxis(Width);
         return *this;
+    }
+
+    FORCEINLINE constexpr LWidgetSize2 const& GetSize() const noexcept
+    {
+        return this->Size;
     }
 
 private:
 
-    LVector2 Size = LVector2::Zero();
+    LWidgetSize2 Size;
 };
 
 } /* ~Namespace Jafg */

@@ -55,7 +55,7 @@ void Jafg::WRegion::Draw(LViewport& Context) const
                 GEngine->GetShaderChecked<LOrthographicImageBoxShader>(Name_ShaderOrthographicImageBox)->Draw
                 (
                     Context,
-                    this->GetAnchoredSize(),
+                    this->GetAnchoredSize_v2(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
                     this->GetBrush().Tint,
                     this->GetBrush().Image,
@@ -71,7 +71,7 @@ void Jafg::WRegion::Draw(LViewport& Context) const
                 GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
                 (
                     Context,
-                    this->GetAnchoredSize(),
+                    this->GetAnchoredSize_v2(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
                     this->GetBrush().Tint
                 );
@@ -85,7 +85,7 @@ void Jafg::WRegion::Draw(LViewport& Context) const
                 GEngine->GetShaderChecked<LOrthographicRoundedImageBoxShader>(Name_ShaderOrthographicRoundedImageBox)->Draw
                 (
                     Context,
-                    this->GetAnchoredSize(),
+                    this->GetAnchoredSize_v2(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
                     this->GetBrush().Tint,
                     this->GetBrush().Radii,
@@ -102,7 +102,7 @@ void Jafg::WRegion::Draw(LViewport& Context) const
                 GEngine->GetShaderChecked<LOrthographicRoundedBoxShader>(Name_ShaderOrthographicRoundedBox)->Draw
                 (
                     Context,
-                    this->GetAnchoredSize(),
+                    this->GetAnchoredSize_v2(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
                     this->GetBrush().Tint,
                     this->GetBrush().Radii
@@ -117,7 +117,7 @@ void Jafg::WRegion::Draw(LViewport& Context) const
                 GEngine->GetShaderChecked<LOrthographicOutlineImageBoxShader>(Name_ShaderOrthographicOutlineImageBox)->Draw
                 (
                     Context,
-                    this->GetAnchoredSize(),
+                    this->GetAnchoredSize_v2(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
                     this->GetBrush().Tint,
                     this->GetBrush().OutlineThickness,
@@ -135,7 +135,7 @@ void Jafg::WRegion::Draw(LViewport& Context) const
                 GEngine->GetShaderChecked<LOrthographicOutlineBoxShader>(Name_ShaderOrthographicOutlineBox)->Draw
                 (
                     Context,
-                    this->GetAnchoredSize(),
+                    this->GetAnchoredSize_v2(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
                     this->GetBrush().Tint,
                     this->GetBrush().OutlineThickness,
@@ -151,7 +151,7 @@ void Jafg::WRegion::Draw(LViewport& Context) const
                 GEngine->GetShaderChecked<LOrthographicRoundedOutlineImageBoxShader>(Name_ShaderOrthographicRoundedOutlineImageBox)->Draw
                 (
                     Context,
-                    this->GetAnchoredSize(),
+                    this->GetAnchoredSize_v2(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
                     this->GetBrush().Tint,
                     this->GetBrush().OutlineThickness,
@@ -170,7 +170,7 @@ void Jafg::WRegion::Draw(LViewport& Context) const
                 GEngine->GetShaderChecked<LOrthographicRoundedOutlineBoxShader>(Name_ShaderOrthographicRoundedOutlineBox)->Draw
                 (
                     Context,
-                    this->GetAnchoredSize(),
+                    this->GetAnchoredSize_v2(),
                     this->GetAnchoredAndTranslatedTopLeftFromMostOuter(Context),
                     this->GetBrush().Tint,
                     this->GetBrush().OutlineThickness,

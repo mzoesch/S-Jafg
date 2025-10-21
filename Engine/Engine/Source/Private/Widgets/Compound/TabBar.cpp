@@ -121,20 +121,20 @@ void Jafg::WTabBar::RegisterTab(LTabBarTabDescriptor&& InTabDescriptor) // Ok, r
     return;
 }
 
-void Jafg::WTabBar::AppendVSpace(const f32 InVSpace)
+void Jafg::WTabBar::AppendVSpace_v2(const LWidgetSize1 VSpace)
 {
     WSpacer* Spacer = ConstructDeferredWidgetNode<WSpacer>(this->GetOuter());
-    Spacer->SetHeight(InVSpace);
+    Spacer->SetHeight(VSpace);
     this->ButtonsContainer->AddChild(Spacer);
     MakeDeferredWidgetNodeFinal(Spacer);
 
     return;
 }
 
-void Jafg::WTabBar::AppendHSpace(const f32 InHSpace)
+void Jafg::WTabBar::AppendHSpace_v2(const LWidgetSize1 HSpace)
 {
     WSpacer* Spacer = ConstructDeferredWidgetNode<WSpacer>(this->GetOuter());
-    Spacer->SetWidth(InHSpace);
+    Spacer->SetWidth(HSpace);
     this->ButtonsContainer->AddChild(Spacer);
     MakeDeferredWidgetNodeFinal(Spacer);
 

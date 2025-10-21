@@ -28,28 +28,28 @@ void Jafg::WInput_Vector3::Construct()
     Display->SetBrush(Brush);
     Display->SetType(ERegionBrush::None);
     Display->SetContent(this->DisplayName);
-    Display->SetMinDesiredSize({128, 0});
+    Display->SetMinDesiredSize({128_pt, 0});
 
     this->AddChild(Display);
 
     WEditableTextBox* X { ConstructWidgetNode<WEditableTextBox>(this->GetOuter()) };
     X->SetBrush(Brush);
     X->SetContent("1.0");
-    X->SetMinDesiredSize({48, 0});
+    X->SetMinDesiredSize({48_pt, 0});
     X->ContentPredicate.BindWeak(WEditableTextBox::IsContentFloatingPoint);
     this->AddChild(X);
 
     WEditableTextBox* Y { ConstructWidgetNode<WEditableTextBox>(this->GetOuter()) };
     Y->SetBrush(Brush);
     Y->SetContent("1.0");
-    Y->SetMinDesiredSize({48, 0});
+    Y->SetMinDesiredSize({48_pt, 0});
     Y->ContentPredicate.BindWeak(WEditableTextBox::IsContentFloatingPoint);
     this->AddChild(Y);
 
     WEditableTextBox* Z { ConstructWidgetNode<WEditableTextBox>(this->GetOuter()) };
     Z->SetBrush(Brush);
     Z->SetContent("1.0");
-    Z->SetMinDesiredSize({48, 0});
+    Z->SetMinDesiredSize({48_pt, 0});
     Z->ContentPredicate.BindWeak(WEditableTextBox::IsContentFloatingPoint);
     this->AddChild(Z);
 

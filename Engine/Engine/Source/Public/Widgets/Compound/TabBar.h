@@ -143,8 +143,8 @@ public:
     FORCEINLINE auto GetSwitcher() const -> const WSwitcher* { return this->Switcher; }
 
     void RegisterTab(LTabBarTabDescriptor&& InTabDescriptor);
-    void AppendVSpace(const f32 InVSpace);
-    void AppendHSpace(const f32 InHSpace);
+    void AppendVSpace_v2(const LWidgetSize1 VSpace);
+    void AppendHSpace_v2(const LWidgetSize1 HSpace);
     void AppendStretch(const LAnchor& InStretch);
     bool UnregisterTab(const LString& Identifier);
     bool UnregisterTabChecked(const LString& Identifier) { const bool bOut = this->UnregisterTab(Identifier); check( bOut ); return bOut; }

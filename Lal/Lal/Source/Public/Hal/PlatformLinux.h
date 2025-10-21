@@ -93,6 +93,7 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     #pragma clang diagnostic error "-Wbraced-scalar-init"
     #pragma clang diagnostic error "-Wbuiltin-macro-redefined"
     #pragma clang diagnostic error "-Wdangling-else"
+    #pragma clang diagnostic error "-Wdeprecated-literal-operator"
     #pragma clang diagnostic error "-Wdynamic-class-memaccess"
     #pragma clang diagnostic error "-Wextra-qualification"
     #pragma clang diagnostic error "-Wextra-semi"
