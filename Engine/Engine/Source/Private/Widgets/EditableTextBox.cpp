@@ -61,7 +61,7 @@ void Jafg::WEditableTextBox::Draw(LViewport& Context) const
             this->GetTextHAlign(),
             this->GetTextVAlign(),
             this->PlaceholderColor,
-            this->GetTextScale().InSpt(),
+            this->GetTextScale().InSpt(Context),
             this->PlaceholderContent
         );
     }
@@ -180,18 +180,11 @@ void Jafg::WEditableTextBox::OnFocusReceived()
     Super::OnFocusReceived();
     this->CaretBlinker = 0.0f;
 
-    if (const LViewport* Context { this->GetViewport() }; Context)
-    {
-        this->UserInterfaceTickDelegateHandle = Context->OnLateTick.AddMember(this, &WEditableTextBox::UserInterfaceTick);
+    this->UserInterfaceTickDelegateHandle = this->GetViewport().OnLateTick.AddMember(this, &WEditableTextBox::UserInterfaceTick);
 
-        if (Context->GetCachedContext()->IsMouseLocationMeaningful())
-        {
-            this->MoveCaretToMouseCursor(*Context);
-        }
-        else
-        {
-            this->SetCaretCursorToEnd();
-        }
+    if (this->GetViewport().GetSurface().IsMouseLocationMeaningful())
+    {
+        this->MoveCaretToMouseCursor(this->GetViewport());
     }
     else
     {
@@ -207,14 +200,7 @@ void Jafg::WEditableTextBox::OnFocusLost()
 
     if (this->UserInterfaceTickDelegateHandle.IsValid())
     {
-        if (const LViewport* Viewport { this->GetViewport() }; Viewport)
-        {
-            Viewport->OnLateTick.Remove(&this->UserInterfaceTickDelegateHandle);
-        }
-        else
-        {
-            LOG_ERROR(LogWidgets, "Viewport is invalid. Cannot remove handle.")
-        }
+        this->GetViewport().OnLateTick.Remove(&this->UserInterfaceTickDelegateHandle);
     }
 
     return;
@@ -288,7 +274,7 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(const LViewport& InViewport, cons
 
     if (InKeyEvent.GetKey() == EKeys::LeftMouseButton)
     {
-        if (const LSurface* Surface { InViewport.GetCachedContext() }; Surface->IsMouseLocationMeaningful())
+        if (InViewport.GetSurface().IsMouseLocationMeaningful())
         {
             this->MoveCaretToMouseCursor(InViewport);
         }
@@ -346,9 +332,9 @@ void Jafg::WEditableTextBox::OnSuperContentChanged(const LString& InNewContent)
     return;
 }
 
-void Jafg::WEditableTextBox::MoveCaretToMouseCursor(const LViewport& Context)
+void Jafg::WEditableTextBox::MoveCaretToMouseCursor(LViewport const& Viewport)
 {
-    check( Context.GetCachedContext()->IsMouseLocationMeaningful() )
+    check( Viewport.GetSurface().IsMouseLocationMeaningful() )
 
     /*
      * This is a workaround and bugprone. We are using the widget location data from the last frame.
@@ -359,10 +345,10 @@ void Jafg::WEditableTextBox::MoveCaretToMouseCursor(const LViewport& Context)
      */
     const f32 BaseTopLeft
     {
-        this->GetAnchoredTopLeftFromMostOuter(Context).X // + this->CaretBrush.HOffset
+        this->GetAnchoredTopLeftFromMostOuter(Viewport).X // + this->CaretBrush.HOffset
     };
 
-    const f32 RelativeTopLeft { Context.GetCachedContext()->GetMouseLocation().X - BaseTopLeft };
+    const f32 RelativeTopLeft { Viewport.GetSurface().GetMouseLocation().X - BaseTopLeft };
 
     if (RelativeTopLeft < 0.0f)
     {

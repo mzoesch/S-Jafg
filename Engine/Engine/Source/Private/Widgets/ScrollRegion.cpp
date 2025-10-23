@@ -28,8 +28,8 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
     const LOrthographicBoxShader* Shader { GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox) };
     const LVector2 AnchoredTopLeftFromMostOuter { this->GetAnchoredTopLeftFromMostOuter(Context) };
 
-    const LVector2 MostOuterTopLeftContentArea { AnchoredTopLeftFromMostOuter + this->GetPadding().GetTopLeftOffsetInSpt() };
-    const LVector2 MaxContentAreaSize { this->GetAnchoredSize_v2() - this->GetPadding().GetDesiredSizeInSpt() };
+    const LVector2 MostOuterTopLeftContentArea { AnchoredTopLeftFromMostOuter + this->GetPadding().GetTopLeftOffsetInSpt(Context) };
+    const LVector2 MaxContentAreaSize { this->GetAnchoredSize_v2() - this->GetPadding().GetDesiredSizeInSpt(Context) };
 
     const f64 MaxScrollY { Maths::Max(static_cast<f64>(this->DesiredSizeOfChildren.Y) - static_cast<f64>(this->GetAnchoredSize_v2().Y), 0.0) };
     const f64 ScrollOffsetY { this->ScrollPosition.Y * MaxScrollY };
@@ -515,7 +515,7 @@ void Jafg::WScrollRegion::UpdateDesiredSize() const
     Super::UpdateDesiredSize();
 
     this->DesiredSizeOfChildren = this->GetDesiredSize_v2();
-    this->SetDesiredSizeInSpt(this->ScrollRegionSize + this->GetPadding().GetDesiredSizeInSpt());
+    this->SetDesiredSizeInSpt(this->ScrollRegionSize + this->GetPadding().GetDesiredSizeInSpt(*this));
 
     return;
 }

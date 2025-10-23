@@ -127,14 +127,7 @@ void Jafg::WPauseScreen::OnVisibilityChanged(const EWidgetVisibility::Type InOld
 {
     Super::OnVisibilityChanged(InOldVisibility, InNewVisibility);
 
-    LViewport* Viewport { this->GetViewport() };
-    if (ensure(Viewport != nullptr) == false)
-    {
-        return;
-    }
-
-    WCrosshair* Crosshair { Viewport->GetTopLevelWidgetByClass<WCrosshair>() };
-
+    WCrosshair* Crosshair{ this->GetViewport().GetTopLevelWidgetByClass<WCrosshair>() };
     if (EWidgetVisibility::IsDrawn(InNewVisibility))
     {
         if (this->TabBar)

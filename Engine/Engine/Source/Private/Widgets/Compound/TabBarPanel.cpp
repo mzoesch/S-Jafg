@@ -36,7 +36,7 @@ void Jafg::WTabBarPanel::UpdateDesiredSize() const
         continue;
     }
 
-    DesiredSize += this->GetPadding().GetDesiredSizeInSpt();
+    DesiredSize += this->GetPadding().GetDesiredSizeInSpt(*this);
 
     this->SetDesiredSizeInSpt(DesiredSize);
 

@@ -3,23 +3,30 @@
 #pragma once
 
 #include "Widgets/InterfaceTypes.h"
+#include "User/UserPreferencesForward.h"
 
-#define GET_IN_SPT(Ret, Function) \
-    FORCEINLINE constexpr Ret LAL_JOIN_INNER_TWO(Function, InSpt)() const noexcept \
-    { \
-    if (this->Type == EWidgetSize::StaticPoints) \
-    { \
-    return this->Function().Size; \
-    } \
-    check( this->Type == EWidgetSize::Points ) \
-    return ToStaticPoints(this->Function()); \
+#define PRIVATE_JAFG_GET_IN_SPT(Ret, Function)                                     \
+    FORCEINLINE constexpr Ret LAL_JOIN_INNER_TWO(Function, InSpt)                  \
+        (auto const& Context) const noexcept                                       \
+    {                                                                              \
+        if (this->Type == EWidgetSize::StaticPoints)                               \
+        {                                                                          \
+            return this->Function().Size;                                          \
+        }                                                                          \
+        check( this->Type == EWidgetSize::Points )                                 \
+        return InSpt(Context, this->Function());                                   \
     }
 
 namespace Jafg
 {
 
-ENGINE_API f32 ToStaticPoints(LWidgetSize1 Size) noexcept;
-ENGINE_API LVector2 ToStaticPoints(LWidgetSize2 Size) noexcept;
+class LViewport;
+class WNode;
+
+ENGINE_API  f32 InSpt(LViewport const& Viewport, LWidgetSize1 Size) noexcept;
+FORCEINLINE f32 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept;
+ENGINE_API  LVector2 InSpt(LViewport const& Viewport, LWidgetSize2 Size) noexcept;
+FORCEINLINE LVector2 InSpt(WNode const& Node, LWidgetSize2 Size) noexcept;
 
 struct LWhitespace
 {
@@ -274,15 +281,15 @@ struct LWhitespace
     FORCEINLINE constexpr LWidgetSize1 GetDesiredSizeY() const noexcept { return {this->Type, this->Top + this->Bottom}; }
     FORCEINLINE constexpr LWidgetSize2 GetDesiredSize() const noexcept { return {this->Type, this->Left + this->Right, this->Top + this->Bottom}; }
 
-    GET_IN_SPT(f32, GetLeftOffset)
-    GET_IN_SPT(f32, GetTopOffset)
-    GET_IN_SPT(LVector2, GetTopLeftOffset)
-    GET_IN_SPT(f32, GetRightOffset)
-    GET_IN_SPT(f32, GetBottomOffset)
-    GET_IN_SPT(LVector2, GetBottomRightOffset)
-    GET_IN_SPT(f32, GetDesiredSizeX)
-    GET_IN_SPT(f32, GetDesiredSizeY)
-    GET_IN_SPT(LVector2, GetDesiredSize)
+    PRIVATE_JAFG_GET_IN_SPT(f32, GetLeftOffset)
+    PRIVATE_JAFG_GET_IN_SPT(f32, GetTopOffset)
+    PRIVATE_JAFG_GET_IN_SPT(LVector2, GetTopLeftOffset)
+    PRIVATE_JAFG_GET_IN_SPT(f32, GetRightOffset)
+    PRIVATE_JAFG_GET_IN_SPT(f32, GetBottomOffset)
+    PRIVATE_JAFG_GET_IN_SPT(LVector2, GetBottomRightOffset)
+    PRIVATE_JAFG_GET_IN_SPT(f32, GetDesiredSizeX)
+    PRIVATE_JAFG_GET_IN_SPT(f32, GetDesiredSizeY)
+    PRIVATE_JAFG_GET_IN_SPT(LVector2, GetDesiredSize)
 };
 
 typedef LWhitespace LPadding;
@@ -290,4 +297,4 @@ typedef LWhitespace LMargin;
 
 } /* ~Namespace Jafg */
 
-#undef GET_IN_SPT
+#undef PRIVATE_JAFG_GET_IN_SPT

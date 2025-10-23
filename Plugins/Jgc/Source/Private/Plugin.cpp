@@ -59,14 +59,14 @@ void LJgcPluginLifetime::OnStartup()
         else
         {
             auto& Surface{ Frontend.GetSurfaces()[0] };
-            if (Surface.GetPossessed())
+            if (Surface->GetPossessed())
             {
                 LOG_VERBOSE(LogJgcLifetime, "Local ego already possesses a persona controller. Skipping default jgc persona controller spawn.")
             }
             else
             {
                 Jafg::APersonaController* Pc{ Jafg::SpawnActor<Jafg::APersonaController>(&World) };
-                if (Surface.DoesPossess())
+                if (Surface->DoesPossess())
                 {
                     /* Derived probably has a default spawn logic. */
                     check( Pc->IsSurfaceValid() )
@@ -74,7 +74,7 @@ void LJgcPluginLifetime::OnStartup()
                 }
                 else
                 {
-                    Surface.Possess(Pc);
+                    Surface->Possess(Pc);
                 }
             }
         }

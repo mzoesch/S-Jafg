@@ -266,7 +266,7 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
         this->IntellisenseContainer->SetVisibility(EWidgetVisibility::Collapsed);
 
         this->EditableTextBlock->EmptyContent();
-        this->GetViewport()->FocusWidgetNode(this->EditableTextBlock);
+        this->GetViewport().FocusWidgetNode(this->EditableTextBlock);
 
         this->ConsoleHistoryContainer->ApplyVScroll(WScrollRegion::MaxScrollDown);
 

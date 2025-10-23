@@ -29,7 +29,7 @@ void Jafg::WOverlay::UpdateDesiredSize() const
         continue;
     }
 
-    DesiredSize += this->GetPadding().GetDesiredSizeInSpt();
+    DesiredSize += this->GetPadding().GetDesiredSizeInSpt(*this);
 
     this->SetDesiredSizeInSpt(DesiredSize);
 
@@ -67,12 +67,12 @@ void Jafg::WOverlay::UpdateAnchoredSizeForChild(const LViewport& Context, const 
         Maths::Max
         (
             InDirectChild->GetDesiredSize_v2().X,
-            InDirectChild->GetAnchor().MaxX * (this->GetAnchoredSize_v2().X - this->GetPadding().GetDesiredSizeXInSpt())
+            InDirectChild->GetAnchor().MaxX * (this->GetAnchoredSize_v2().X - this->GetPadding().GetDesiredSizeXInSpt(Context))
         ),
         Maths::Max
         (
             InDirectChild->GetDesiredSize_v2().Y,
-            InDirectChild->GetAnchor().MaxY * (this->GetAnchoredSize_v2().Y - this->GetPadding().GetDesiredSizeYInSpt())
+            InDirectChild->GetAnchor().MaxY * (this->GetAnchoredSize_v2().Y - this->GetPadding().GetDesiredSizeYInSpt(Context))
         )
     });
 
@@ -85,19 +85,19 @@ LVector2 Jafg::WOverlay::GetAnchoredTopLeftFromMostOuterForChild(const LViewport
 
     LVector2 Out
     {
-        this->GetPadding().GetLeftOffsetInSpt()
+        this->GetPadding().GetLeftOffsetInSpt(Context)
         + InDirectChild->GetAnchor().MinX *
         (
             this->GetAnchoredSize_v2().X
-            - this->GetPadding().GetDesiredSizeXInSpt()
+            - this->GetPadding().GetDesiredSizeXInSpt(Context)
             - InDirectChild->GetAnchoredSize_v2().X
         )
         + InDirectChild->GetLostAnchoredSize_v2().X * 0.5f,
-        this->GetPadding().GetTopOffsetInSpt()
+        this->GetPadding().GetTopOffsetInSpt(Context)
         + InDirectChild->GetAnchor().MinY *
         (
             this->GetAnchoredSize_v2().Y
-            - this->GetPadding().GetDesiredSizeYInSpt()
+            - this->GetPadding().GetDesiredSizeYInSpt(Context)
             - InDirectChild->GetAnchoredSize_v2().Y
         )
         + InDirectChild->GetLostAnchoredSize_v2().Y * 0.5f,

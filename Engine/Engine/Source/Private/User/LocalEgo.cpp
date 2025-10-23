@@ -30,9 +30,9 @@ void Jafg::LLocalEgo::Initialize()
             f32 NearFrustum; Serialization::FromString(&NearFrustum, InValue);
             LOG_VERBOSE(LogEgo, "Setting all possessed eyes near frustum to [{}].", NearFrustum)
 
-            for (LSurface& Surface : GEngine->GetLocalEgo().GetFrontend().GetSurfaces())
+            for (auto& Surface : GEngine->GetLocalEgo().GetFrontend().GetSurfaces())
             {
-                if (auto* Controller{ Surface.GetPossessed() })
+                if (auto* Controller{ Surface->GetPossessed() })
                 {
                     if (auto* Pawn{ Controller->GetPossessed() })
                     {
@@ -56,9 +56,9 @@ void Jafg::LLocalEgo::Initialize()
             f32 FarFrustum; Serialization::FromString(&FarFrustum, InValue);
             LOG_VERBOSE(LogEgo, "Setting all possessed eyes far frustum to [{}].", FarFrustum)
 
-            for (LSurface& Surface : GEngine->GetLocalEgo().GetFrontend().GetSurfaces())
+            for (auto& Surface : GEngine->GetLocalEgo().GetFrontend().GetSurfaces())
             {
-                if (auto* Controller{ Surface.GetPossessed() })
+                if (auto* Controller{ Surface->GetPossessed() })
                 {
                     if (auto* Pawn{ Controller->GetPossessed() })
                     {
@@ -102,9 +102,9 @@ void Jafg::LLocalEgo::OnLateTick(const float DeltaTime)
 {
     STAT_CYCLE_FUNCTION()
 
-    for (LSurface& Surface : this->Frontend.GetSurfaces())
+    for (auto& Surface : this->Frontend.GetSurfaces())
     {
-        Surface.OnUpdate();
+        Surface->OnUpdate();
     }
 
     return;

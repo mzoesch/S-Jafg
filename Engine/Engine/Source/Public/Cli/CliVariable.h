@@ -4,7 +4,6 @@
 
 #include "Cli/CliObject.h"
 #include "Cli/CliType.h"
-#include "Serialization/SerializationCore.h"
 
 namespace Jafg
 {

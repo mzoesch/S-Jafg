@@ -31,7 +31,7 @@ public:
     virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
     virtual void Destruct() override;
 
-    virtual auto GetViewport() const -> LViewport* override;
+    virtual LViewport* GetMostOuterViewport() override;
     virtual void RemoveFromParent(const bool bDestroy = true) override;
 
     virtual void RemoveChild(WNode* InChild) override;
@@ -56,9 +56,9 @@ private:
     WParentBase* ReplaceRootImpl(WParentBase* InRoot);
 
     //# The absolute root of this widget. Attach everything to this widget. Weak pointer.
-    LWidgetSlot* Root { nullptr };
+    LWidgetSlot* Root{ nullptr };
     //# Where this widget resides in. Can be null if attached to another widget. So do not use without checking.
-    LViewport* AttachedViewport { nullptr };
+    LViewport* AttachedViewport{ nullptr };
 };
 
 } /* ~Namespace Jafg */

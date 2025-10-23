@@ -33,9 +33,7 @@ public:
     static_assert(std::is_same_v<LSurfaceGlfw3, LSurface>);
 
     ENGINE_API LSurfaceGlfw3() = default;
-    PROHIBIT_COPY(LSurfaceGlfw3)
-    ENGINE_API LSurfaceGlfw3(LSurfaceGlfw3&& Other) noexcept;
-    ENGINE_API LSurfaceGlfw3& operator=(LSurfaceGlfw3&& Other) noexcept;
+    PROHIBIT_REALLOC_OF_ANY_FORM(LSurfaceGlfw3)
     ENGINE_API virtual ~LSurfaceGlfw3() override;
 
     virtual void Initialize() override;
@@ -84,25 +82,25 @@ private:
     virtual void EmulateContentForBufferedInputGlfw3(const i32 InKey);
 #endif /* PLATFORM_LINUX */
 
-    GLFWcursor* Cursor { nullptr };
-    GLFWwindow* Handle { nullptr };
+    GLFWcursor* Cursor{ nullptr };
+    GLFWwindow* Handle{ nullptr };
 
-    bool bVSync { false };
+    bool bVSync{ false };
 
-    bool bFirstMouseCallback { true };
-    f64 LastMouseX { 0.0 };
-    f64 LastMouseY { 0.0 };
+    bool bFirstMouseCallback{ true };
+    f64 LastMouseX{ 0.0 };
+    f64 LastMouseY{ 0.0 };
 
-    bool bPendingResize { false };
-    i32 PendingWidth { 0 };
-    i32 PendingHeight { 0 };
-    f32 PendingTimeForResizeApply { 0.0f };
+    bool bPendingResize{ false };
+    i32 PendingWidth{ 0 };
+    i32 PendingHeight{ 0 };
+    f32 PendingTimeForResizeApply{ 0.0f };
 
 #if PLATFORM_LINUX
     //#
     //# This is not in the EKeys::Type format but in the Glfw3 format.
     //#
-    i32 Glfw3LastNewKey { INDEX_NONE };
+    i32 Glfw3LastNewKey{ INDEX_NONE };
 #endif /* PLATFORM_LINUX */
 };
 

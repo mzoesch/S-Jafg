@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Serialization/SerializationCore.h"
+#include "Lal.afx"
 
 namespace Jafg
 {

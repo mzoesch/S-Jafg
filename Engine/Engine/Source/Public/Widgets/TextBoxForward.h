@@ -3,10 +3,12 @@
 #pragma once
 
 #include "Widgets/BoxForward.h"
+#include "User/UserPreferencesForward.h"
 
 namespace Jafg
 {
 
+class WNode;
 class WTextBox;
 struct LTextBoxBrush;
 
@@ -132,7 +134,8 @@ struct LTextScale final
         return std::bit_cast<f32>(this->CustomScale);
     }
 
-    ENGINE_API f32 InSpt() const noexcept;
+    ENGINE_API f32 InSpt(LViewport const& Viewport) const noexcept;
+    ENGINE_API f32 InSpt(WNode const& Node) const noexcept;
 
     FORCEINLINE void Assign(LTextScale const& Other) noexcept
     {
@@ -155,6 +158,13 @@ struct LTextScale final
 
         return;
     }
+
+    FORCEINLINE constexpr static LTextScale Header() noexcept { return LTextScale{ETextScale::Header}; }
+    FORCEINLINE constexpr static LTextScale SubHeader() noexcept { return LTextScale{ETextScale::SubHeader}; }
+    FORCEINLINE constexpr static LTextScale Body() noexcept { return LTextScale{ETextScale::Body}; }
+    FORCEINLINE constexpr static LTextScale Compact() noexcept { return LTextScale{ETextScale::Compact}; }
+    FORCEINLINE constexpr static LTextScale Small() noexcept { return LTextScale{ETextScale::Small}; }
+    FORCEINLINE constexpr static LTextScale Tiny() noexcept { return LTextScale{ETextScale::Tiny}; }
 
 private:
 

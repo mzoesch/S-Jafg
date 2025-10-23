@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Widgets/UserWidget.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "CoreFrontendWidgetsSubsystem.generated.h"
 

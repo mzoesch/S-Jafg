@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "Lal.afx"
-
 namespace Serialization
 {
 
@@ -269,3 +267,17 @@ template<> FORCEINLINE constexpr void FromString<Lal::LColor>(Lal::LColor* Field
 }
 
 } /* ~Namespace Serialization */
+
+#define ENUM_CLASS_SERIALIZATION_FUNCTIONS(EnumType)                                                              \
+    template<> FORCEINLINE LString Serialization::ToString<EnumType>(EnumType const& Field) noexcept              \
+    {                                                                                                             \
+        static_assert(std::is_enum_v<EnumType>);                                                                  \
+        return ToString(static_cast<std::underlying_type_t<EnumType>>(Field));                                    \
+    }                                                                                                             \
+    template<> FORCEINLINE void Serialization::FromString<EnumType>(EnumType* Dst, LString const& Value) noexcept \
+    {                                                                                                             \
+        static_assert(std::is_enum_v<EnumType>);                                                                  \
+        check( Dst )                                                                                              \
+        FromString(reinterpret_cast<std::underlying_type_t<EnumType>*>(Dst), Value);                              \
+        return;                                                                                                   \
+    }

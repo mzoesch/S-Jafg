@@ -13,7 +13,7 @@ Jafg::WCommonMenuTabBarButton::WCommonMenuTabBarButton(Jafg::LCxxObjectInitializ
     this->SetHoverBrush({ERegionBrush::Box, {0, 0, 0, 128}});
     this->SetPressBrush({ERegionBrush::Box, {0, 0, 0, 192}});
 
-    this->SetPadding({5, 10});
+    this->SetPadding({0, 0});
     this->SetMinDesiredSize(5_pt2);
     this->SetAnchor(EAnchor::HFill);
 
@@ -74,7 +74,7 @@ void Jafg::WCommonMenuTabBar::Construct()
 
     if (WVRegion* VRegion = DynamicCast<WVRegion>(this->ButtonsContainer); VRegion)
     {
-        VRegion->SetMinDesiredSize({100_pt, 0});
+        VRegion->SetMinDesiredSize({80_pt, 0});
 
         VRegion->SetAnchor(EAnchor::VFill);
         VRegion->SetType(ERegionBrush::Box);

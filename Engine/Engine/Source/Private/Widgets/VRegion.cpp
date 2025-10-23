@@ -17,7 +17,7 @@ void Jafg::WVRegion::UpdateDesiredSize() const
 
     DesiredSize.Y += this->VSpace * (this->GetChildren().size() - 1);
 
-    DesiredSize += this->GetPadding().GetDesiredSizeInSpt();
+    DesiredSize += this->GetPadding().GetDesiredSizeInSpt(*this);
 
     this->SetDesiredSizeInSpt(DesiredSize);
 
@@ -52,7 +52,7 @@ void Jafg::WVRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const 
 
     const f32 FreeSpace
     {
-        (this->GetAnchoredSize_v2().Y - this->GetPadding().GetDesiredSizeYInSpt())
+        (this->GetAnchoredSize_v2().Y - this->GetPadding().GetDesiredSizeYInSpt(Context))
         - TotalDesiredSize
         - this->GetVSpace() * (this->GetChildren().size() - 1)
     };
@@ -64,7 +64,7 @@ void Jafg::WVRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const 
         Maths::Max
         (
             InDirectChild->GetDesiredSize_v2().X,
-            InDirectChild->GetAnchor().MaxX * (this->GetAnchoredSize_v2().X - this->GetPadding().GetDesiredSizeXInSpt())
+            InDirectChild->GetAnchor().MaxX * (this->GetAnchoredSize_v2().X - this->GetPadding().GetDesiredSizeXInSpt(Context))
         ),
         InDirectChild->GetDesiredSize_v2().Y
         + InDirectChild->GetAnchor().MaxY * InverseFreeUsage * FreeSpace
@@ -93,15 +93,15 @@ LVector2 Jafg::WVRegion::GetAnchoredTopLeftFromMostOuterForChild(const LViewport
 
     LVector2 Out
     {
-        this->GetPadding().GetLeftOffsetInSpt()
+        this->GetPadding().GetLeftOffsetInSpt(Context)
         + InDirectChild->GetAnchor().MinX *
         (
             this->GetAnchoredSize_v2().X
-            - this->GetPadding().GetDesiredSizeXInSpt()
+            - this->GetPadding().GetDesiredSizeXInSpt(Context)
             - InDirectChild->GetAnchoredSize_v2().X
         )
         + InDirectChild->GetLostAnchoredSize_v2().X * 0.5f,
-        this->GetPadding().GetTopOffsetInSpt()
+        this->GetPadding().GetTopOffsetInSpt(Context)
         + Offset
         + InDirectChild->GetLostAnchoredSize_v2().Y * 0.5f
     };

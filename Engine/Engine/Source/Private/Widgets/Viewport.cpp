@@ -9,26 +9,6 @@
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
 
-Jafg::LSurface& Jafg::LViewport::GetOwningSurface()
-{
-    check( GEngine )
-    return *algo::find(
-        GEngine->GetLocalEgo().GetFrontend().GetSurfaces(),
-        this,
-        [](auto const& E){ return &E.GetViewport(); }
-        );
-}
-
-Jafg::LSurface const& Jafg::LViewport::GetOwningSurface() const
-{
-    check( GEngine )
-    return *algo::find(
-        GEngine->GetLocalEgo().GetFrontend().GetSurfaces(),
-        this,
-        [](auto const& E){ return &E.GetViewport(); }
-        );
-}
-
 void Jafg::LViewport::ClearInvalidWidgets()
 {
     if (this->FocusedWidget.IsValidDeep() == false)
@@ -44,9 +24,9 @@ void Jafg::LViewport::ClearInvalidWidgets()
         this->FocusedWidget.Reset();
     }
 
-    auto ClearOnContainer {[](TArray<TClassStorage<WNode>>* InContainer) -> void
+    auto ClearOnContainer{[](TArray<TClassStorage<WNode>>* InContainer) -> void
     {
-        auto const Removed { algo::erase_if(InContainer, [](auto const& E)
+        auto const Removed{ algo::erase_if(InContainer, [](auto const& E)
         {
             return E.IsValidDeep() == false;
         }) };
@@ -69,7 +49,7 @@ void Jafg::LViewport::ClearInvalidWidgets()
 
 void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursorLocation)
 {
-    this->CachedContext = &Context;
+    check( &this->Surface == &Context )
     this->SweepTranslation = LVector2D::ZeroVector;
 
     const bool bCursorLocationIsMeaningful { InCursorLocation.X >= 0.0f && InCursorLocation.Y >= 0.0f };
@@ -285,7 +265,7 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
 
 void Jafg::LViewport::OnMouseLeftViewport(LSurface& Context, const bool bInvalidateAllInputs)
 {
-    this->CachedContext = &Context;
+    check( &this->Surface == &Context )
 
     if (this->HoveredWidgets.empty() == false || this->LastFrameHoveredWidgets.empty() == false)
     {
@@ -443,7 +423,7 @@ void Jafg::LViewport::AddWidget(WUserWidget* Widget)
     check( Widget )
     this->TopLevelWidgets.push_back(Widget);
 
-    check( Widget->GetViewport() == this )
+    check( &Widget->GetViewport() == this )
 
     return;
 }
@@ -453,7 +433,7 @@ void Jafg::LViewport::AddWidgetAt(const i32 Index, WUserWidget* Widget)
     check( Widget )
     this->TopLevelWidgets.insert(this->TopLevelWidgets.begin() + Index, Widget);
 
-    check( Widget->GetViewport() == this )
+    check( &Widget->GetViewport() == this )
 
     return;
 }

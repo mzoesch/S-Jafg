@@ -17,7 +17,7 @@
 void Jafg::LFrontend::Initialize(LClassOuter* Outer)
 {
     this->Surfaces.emplace_back(this->CreateNewSurface());
-    this->Surfaces.back().SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+    this->Surfaces.back()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
 
     this->FocusedSurface = this->Surfaces.size() - 1;
     check( this->IsFocusedSurfaceValid() )
@@ -32,20 +32,20 @@ void Jafg::LFrontend::Tick(LUserInput* UserInput)
 {
     STAT_CYCLE_FUNCTION()
 
-    for (LSurface& Surface : this->Surfaces)
+    for (auto& Surface : this->Surfaces)
     {
-        Surface.OnClear();
-        Surface.BeginNewFrame();
-        Surface.PollInputs();
-        Surface.PollEvents();
-        Surface.PollVirtualInputs();
+        Surface->OnClear();
+        Surface->BeginNewFrame();
+        Surface->PollInputs();
+        Surface->PollEvents();
+        Surface->PollVirtualInputs();
 
         continue;
     }
 
-    for (LSurface& Surface : this->Surfaces)
+    for (auto& Surface : this->Surfaces)
     {
-        Surface.Tick();
+        Surface->Tick();
     }
 
     if (this->IsFocusedSurfaceValid())
@@ -75,9 +75,9 @@ void Jafg::LFrontend::TearDown()
 {
     this->Collection.TearDownSubsystems();
 
-    for (LSurface& Surface : this->Surfaces)
+    for (auto& Surface : this->Surfaces)
     {
-        Surface.TearDown();
+        Surface->TearDown();
     }
     algo::orphan(&this->Surfaces);
 
@@ -116,9 +116,9 @@ void Jafg::LFrontend::AddWidget(LSurface* Context, WUserWidget* Widget)
 
 void Jafg::LFrontend::RemoveWidget(WUserWidget* Widget)
 {
-    for (LSurface& Surface : this->Surfaces)
+    for (auto& Surface : this->Surfaces)
     {
-        if (Surface.GetViewport().TryRemoveWidget(Widget))
+        if (Surface->GetViewport().TryRemoveWidget(Widget))
         {
             return;
         }
@@ -148,8 +148,8 @@ Jafg::WNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(TSubclassOf<WNode> C
             continue;
         }
 
-        const LSurface& Surface = this->Surfaces[Idx];
-        if (WNode* Widget = Surface.GetViewport().GetTopLevelWidgetByClass(Class); Widget)
+        LSurface const& Surface = *this->Surfaces[Idx];
+        if (WNode* Widget{ Surface.GetViewport().GetTopLevelWidgetByClass(Class) }; Widget)
         {
             return Widget;
         }
@@ -212,19 +212,19 @@ bool Jafg::LFrontend::FocusWidget(LViewport* Context, WNode* InNode)
     return Context->FocusWidgetNode(InNode);
 }
 
-Jafg::LSurface Jafg::LFrontend::CreateNewSurface()
+TUnique<Jafg::LSurface> Jafg::LFrontend::CreateNewSurface()
 {
-    LSurface Out;
+    TUnique Out{ std::make_unique<LSurface>() };
 
     if (LaunchProgress::Private::GProgressSurface && LaunchProgress::Private::bOwnerShipToken == false)
     {
         LaunchProgress::Private::bOwnerShipToken = true;
-        Out = std::move(*LaunchProgress::Private::GProgressSurface);
+        Out = TUnique<LSurface>(LaunchProgress::Private::GProgressSurface);
         LaunchProgress::Private::GProgressSurface = nullptr;
     }
     else
     {
-        Out.Initialize();
+        Out->Initialize();
     }
 
     return Out;

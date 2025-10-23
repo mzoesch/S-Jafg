@@ -34,20 +34,22 @@ void Jafg::WUserWidget::Destruct()
     return;
 }
 
-Jafg::LViewport* Jafg::WUserWidget::GetViewport() const
+Jafg::LViewport* Jafg::WUserWidget::GetMostOuterViewport()
 {
-    if (this->AttachedViewport)
+    if (this->Slot.Parent)
     {
-        return this->AttachedViewport;
+        check( this->AttachedViewport == nullptr )
+        return Super::GetMostOuterViewport();
     }
 
-    return Super::GetViewport();
+    return this->AttachedViewport;
 }
 
 void Jafg::WUserWidget::AddToViewport(LViewport* InViewport)
 {
     check( this->AttachedViewport == nullptr )
     this->AttachedViewport = InViewport;
+    this->RecacheViewport();
     this->AttachedViewport->AddWidget(this);
 
     return;
@@ -123,6 +125,9 @@ Jafg::WParentBase* Jafg::WUserWidget::ReplaceRootImpl(WParentBase* InRoot)
     const LWidgetSlot* Out = this->AddChild(InRoot);
     check( this->Root != nullptr )
     check( this->GetChildren().size() == 1 )
+
+    this->RecacheViewport();
+    check( this->CachedViewport )
 
     /* Typesafe this is. Look at function parameters. */
     return static_cast<WParentBase*>(Out->Content);

@@ -28,7 +28,6 @@
     Serialization.
 ----------------------------------------------------------------------------*/
 
-#include "Serialization/SerializationCore.h"
 #include "Serialization/BulkData.h"
 
 

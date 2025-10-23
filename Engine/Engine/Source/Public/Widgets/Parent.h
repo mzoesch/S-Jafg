@@ -55,6 +55,8 @@ public:
     FORCEINLINE auto GetPaddingPtr() const -> const LPadding* { return &this->Padding; }
     FORCEINLINE auto GetPaddingPtr()       ->       LPadding* { return &this->Padding; }
 
+    virtual void RecacheViewport() noexcept override;
+
 private:
 
     TArray<LWidgetSlot*> Children;

@@ -18,18 +18,7 @@ void Jafg::WEditorView::Tick()
 {
     Super::Tick();
 
-    LViewport* Viewport { this->GetViewport() };
-    if (ensure(Viewport != nullptr) == false)
-    {
-        return;
-    }
-    LSurface* Surface { Viewport->GetCachedContext() };
-    if (ensure(Surface != nullptr) == false)
-    {
-        return;
-    }
-
-    if (Surface->IsKeyUp(EKeys::RightMouseButton))
+    if (this->GetViewport().GetSurface().IsKeyUp(EKeys::RightMouseButton))
     {
         this->OnSecondaryUp();
     }
@@ -79,18 +68,7 @@ Jafg::LReply Jafg::WEditorView::OnKeyUpNoFocus(const LViewport& InViewport, cons
 
 void Jafg::WEditorView::OnSecondaryDown()
 {
-    LViewport* Viewport{ this->GetViewport() };
-    if (ensure(Viewport != nullptr) == false)
-    {
-        return;
-    }
-    LSurface* Surface{ Viewport->GetCachedContext() };
-    if (ensure(Surface != nullptr) == false)
-    {
-        return;
-    }
-
-    Surface->SetInputMode(EInputMode::Both, false);
+    this->GetViewport().GetSurface().SetInputMode(EInputMode::Both, false);
     this->SetShouldTick(true);
 
     LUserInput& Input{ this->GetLocalEgo().GetUserInput() };
@@ -102,18 +80,7 @@ void Jafg::WEditorView::OnSecondaryDown()
 
 void Jafg::WEditorView::OnSecondaryUp()
 {
-    LViewport* Viewport{ this->GetViewport() };
-    if (ensure(Viewport != nullptr) == false)
-    {
-        return;
-    }
-    LSurface* Surface{ Viewport->GetCachedContext() };
-    if (ensure(Surface != nullptr) == false)
-    {
-        return;
-    }
-
-    Surface->SetInputMode(EInputMode::Both, true);
+    this->GetViewport().GetSurface().SetInputMode(EInputMode::Both, true);
     this->SetShouldTick(false);
 
     LUserInput& Input{ this->GetLocalEgo().GetUserInput() };

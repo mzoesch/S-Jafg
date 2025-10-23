@@ -4,45 +4,8 @@
 
 
 #include "Engine/CxxClass.h"
+#include "User/UserPreferencesForward.h"
 #include "UserPreferences.generated.h"
-
-namespace Jafg
-{
-
-namespace EPolygonMode
-{
-
-enum Type : u8
-{
-    Fill      = 0,
-    Wireframe = 1,
-    Max       = 1,
-    Num       = 2,
-};
-
-} /* ~Namespace EPolygonMode */
-
-template <> struct TIsPreferenceTypeAllowed<EPolygonMode::Type> : std::true_type { };
-
-} /* ~Namespace Jafg */
-
-template<> FORCEINLINE LString Serialization::ToString<Jafg::EPolygonMode::Type>(Jafg::EPolygonMode::Type const& Field) noexcept
-{
-    static_assert(std::is_enum_v<Jafg::EPolygonMode::Type>);
-    static_assert(std::is_same_v<u8, std::underlying_type_t<Jafg::EPolygonMode::Type>>);
-
-    return ToString(static_cast<u8>(Field));
-}
-
-template<> FORCEINLINE void Serialization::FromString<Jafg::EPolygonMode::Type>(Jafg::EPolygonMode::Type* Dst, LString const& Value) noexcept
-{
-    static_assert(std::is_enum_v<Jafg::EPolygonMode::Type>);
-    static_assert(std::is_same_v<u8, std::underlying_type_t<Jafg::EPolygonMode::Type>>);
-
-    check( Dst )
-    FromString(reinterpret_cast<u8*>(Dst), Value);
-    return;
-}
 
 namespace Jafg
 {
@@ -65,23 +28,23 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
-    LPreferencef32 MasterVolume { 1.0f, true };
+    LPreferencef32 MasterVolume{ 1.0f, true };
     CLASS_FIELD(Config)
-    LPreferencef32 MusicVolume  { 1.0f, true };
+    LPreferencef32 MusicVolume{ 1.0f, true };
     CLASS_FIELD(Config)
-    LPreferencef32 MiscVolume   { 1.0f, true };
+    LPreferencef32 MiscVolume{ 1.0f, true };
     CLASS_FIELD(Config)
-    LPreferencef32 VoiceVolume  { 1.0f, true };
+    LPreferencef32 VoiceVolume{ 1.0f, true };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Rendering pipeline
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
-    LPreferenceBool bVSyncEnabled { true };
+    LPreferenceBool bVSyncEnabled{ true };
     //# Number of maximum frames per second. Zero means no limit. This requires VSync to be disabled.
     CLASS_FIELD(Config)
-    LPreferencei32 MaxFps         { UnlimitedFps };
+    LPreferencei32 MaxFps{ UnlimitedFps };
 
     CLASS_FIELD(Config)
     TPreference<EPolygonMode::Type> PolygonMode{ EPolygonMode::Fill };
@@ -96,7 +59,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
 
     CLASS_FIELD(Config)
-    f32 ApplicationScale{ 1.0f };
+    TPreference<EApplicationScale::Type> ApplicationScaleMode{ EApplicationScale::Double };
 
     CLASS_FIELD(Config)
     LPreferenceBool bInvertVerticalScrollWheel{ true };
@@ -106,17 +69,43 @@ public:
     LPreferencef32 MouseWheelScrollSpeed{ 35.0f };
 
     CLASS_FIELD(Config)
-    LPreferencef32 HeaderFontSize    { 0.70f };
+    LPreferencef32 HeaderFontSizeSingle    { 0.40f };
     CLASS_FIELD(Config)
-    LPreferencef32 SubHeaderFontSize { 0.40f };
+    LPreferencef32 SubHeaderFontSizeSingle { 0.25f };
     CLASS_FIELD(Config)
-    LPreferencef32 BodyFontSize      { 0.30f };
+    LPreferencef32 BodyFontSizeSingle      { 0.20f };
     CLASS_FIELD(Config)
-    LPreferencef32 CompactFontSize   { 0.25f };
+    LPreferencef32 CompactFontSizeSingle   { 0.20f };
     CLASS_FIELD(Config)
-    LPreferencef32 SmallFontSize     { 0.20f };
+    LPreferencef32 SmallFontSizeSingle     { 0.20f };
     CLASS_FIELD(Config)
-    LPreferencef32 TinyFontSize      { 0.18f };
+    LPreferencef32 TinyFontSizeSingle      { 0.18f };
+
+    CLASS_FIELD(Config)
+    LPreferencef32 HeaderFontSizeDouble    { 0.70f };
+    CLASS_FIELD(Config)
+    LPreferencef32 SubHeaderFontSizeDouble { 0.40f };
+    CLASS_FIELD(Config)
+    LPreferencef32 BodyFontSizeDouble      { 0.30f };
+    CLASS_FIELD(Config)
+    LPreferencef32 CompactFontSizeDouble   { 0.25f };
+    CLASS_FIELD(Config)
+    LPreferencef32 SmallFontSizeDouble     { 0.20f };
+    CLASS_FIELD(Config)
+    LPreferencef32 TinyFontSizeDouble      { 0.18f };
+
+    CLASS_FIELD(Config)
+    LPreferencef32 HeaderFontSizeTriple    { 1.40f };
+    CLASS_FIELD(Config)
+    LPreferencef32 SubHeaderFontSizeTriple { 0.80f };
+    CLASS_FIELD(Config)
+    LPreferencef32 BodyFontSizeTriple      { 0.60f };
+    CLASS_FIELD(Config)
+    LPreferencef32 CompactFontSizeTriple   { 0.50f };
+    CLASS_FIELD(Config)
+    LPreferencef32 SmallFontSizeTriple     { 0.40f };
+    CLASS_FIELD(Config)
+    LPreferencef32 TinyFontSizeTriple      { 0.36f };
 
     ///////////////////////////////////////////////////////////////////////////////
     // Foreign plugins

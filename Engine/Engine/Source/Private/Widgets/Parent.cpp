@@ -315,11 +315,15 @@ Jafg::LWidgetSlot* Jafg::WParent::AddChild(WNode* InChild)
     check( InChild )
     check( InChild->GetSlot().Parent == nullptr && InChild->GetSlot().Content == nullptr && InChild->GetSlot().Margin == nullptr )
 
+    check( InChild->HasViewportDangerous() == false )
+
     InChild->GetMutableSlot().Parent  = this;
     InChild->GetMutableSlot().Content = InChild;
     InChild->GetMutableSlot().Margin  = this->GetPaddingPtr();
 
     this->Children.push_back(&InChild->GetMutableSlotChecked());
+
+    InChild->RecacheViewport();
 
     return this->Children.back();
 }
@@ -333,11 +337,15 @@ Jafg::LWidgetSlot* Jafg::WParent::AddChildAt(const i32 InIndex, WNode* InChild)
     check( InChild )
     check( InChild->GetSlot().Parent == nullptr && InChild->GetSlot().Content == nullptr && InChild->GetSlot().Margin == nullptr )
 
+    check( InChild->HasViewportDangerous() == false )
+
     InChild->GetMutableSlot().Parent  = this;
     InChild->GetMutableSlot().Content = InChild;
     InChild->GetMutableSlot().Margin  = this->GetPaddingPtr();
 
     this->Children.insert(this->Children.begin() + InIndex, &InChild->GetMutableSlotChecked());
+
+    InChild->RecacheViewport();
 
     return this->Children[InIndex];
 }
@@ -348,6 +356,27 @@ void Jafg::WParent::MakeChildrenFinal()
     {
         MakeDeferredWidgetNodeFinal(ChildSlot->Content);
     }
+
+    return;
+}
+
+void Jafg::WParent::RecacheViewport() noexcept
+{
+    Super::RecacheViewport();
+
+    algo::for_each(this->Children,
+    [
+#if LAL_DO_CHECKS
+        this
+#endif /* LAL_DO_CHECKS */
+    ](LWidgetSlot* ChildSlot)
+    {
+        check( ChildSlot && ChildSlot->Content && ChildSlot->Parent == this )
+
+        ChildSlot->Content->RecacheViewport();
+
+        return;
+    });
 
     return;
 }

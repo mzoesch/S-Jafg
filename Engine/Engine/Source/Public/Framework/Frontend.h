@@ -37,16 +37,16 @@ public:
     ENGINE_API LUserInput& GetUserInput() const noexceptcheck;
 
     FORCEINLINE i32 GetSurfaceCount() const { return this->Surfaces.size(); }
-    FORCEINLINE auto  GetSurfaces() -> TArray<LSurface>& { return this->Surfaces; }
-    FORCEINLINE auto  GetSurfaces() const -> const TArray<LSurface>& { return this->Surfaces; }
+    FORCEINLINE auto  GetSurfaces() -> TArray<TUnique<LSurface>>& { return this->Surfaces; }
+    FORCEINLINE auto  GetSurfaces() const -> const TArray<TUnique<LSurface>>& { return this->Surfaces; }
 
     FORCEINLINE bool IsFocusedSurfaceValid() const { return this->FocusedSurface > INDEX_NONE; }
-    FORCEINLINE auto GetFocusedSurface() -> LSurface* { return this->IsFocusedSurfaceValid() ? &this->Surfaces[this->FocusedSurface] : nullptr; }
-    FORCEINLINE auto GetFocusedSurfaceChecked() -> LSurface* { check( this->IsFocusedSurfaceValid() ) return &this->Surfaces[this->FocusedSurface]; }
-    FORCEINLINE auto GetFocusedSurfaceAsserted() -> LSurface* { jassert( this->IsFocusedSurfaceValid() ) return &this->Surfaces[this->FocusedSurface]; }
-    FORCEINLINE auto GetFocusedSurface() const -> const LSurface* { return this->IsFocusedSurfaceValid() ? &this->Surfaces[this->FocusedSurface] : nullptr; }
-    FORCEINLINE auto GetFocusedSurfaceChecked() const -> const LSurface* { check( this->IsFocusedSurfaceValid() ) return &this->Surfaces[this->FocusedSurface]; }
-    FORCEINLINE auto GetFocusedSurfaceAsserted() const -> const LSurface* { jassert( this->IsFocusedSurfaceValid() ) return &this->Surfaces[this->FocusedSurface]; }
+    FORCEINLINE auto GetFocusedSurface() -> LSurface* { return this->IsFocusedSurfaceValid() ? this->Surfaces[this->FocusedSurface].get() : nullptr; }
+    FORCEINLINE auto GetFocusedSurfaceChecked() -> LSurface* { check( this->IsFocusedSurfaceValid() ) return this->Surfaces[this->FocusedSurface].get(); }
+    FORCEINLINE auto GetFocusedSurfaceAsserted() -> LSurface* { jassert( this->IsFocusedSurfaceValid() ) return this->Surfaces[this->FocusedSurface].get(); }
+    FORCEINLINE auto GetFocusedSurface() const -> const LSurface* { return this->IsFocusedSurfaceValid() ? this->Surfaces[this->FocusedSurface].get() : nullptr; }
+    FORCEINLINE auto GetFocusedSurfaceChecked() const -> const LSurface* { check( this->IsFocusedSurfaceValid() ) return this->Surfaces[this->FocusedSurface].get(); }
+    FORCEINLINE auto GetFocusedSurfaceAsserted() const -> const LSurface* { jassert( this->IsFocusedSurfaceValid() ) return this->Surfaces[this->FocusedSurface].get(); }
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JFrontendSubsystem)
 
@@ -97,10 +97,10 @@ public:
 
 private:
 
-    LSurface CreateNewSurface();
+    TUnique<LSurface> CreateNewSurface();
 
-    TArray<LSurface>     Surfaces;
-    i32                  FocusedSurface{ 0 };
+    i32 FocusedSurface{ 0 };
+    TArray<TUnique<LSurface>> Surfaces;
     LSubsystemCollection Collection{ "Frontend" };
 };
 

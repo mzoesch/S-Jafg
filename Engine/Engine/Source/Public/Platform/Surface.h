@@ -29,9 +29,8 @@ class LSurfaceBase
 {
 public:
 
-    LSurfaceBase() = default;
-    PROHIBIT_COPY(LSurfaceBase)
-    DEFAULT_MOVE(LSurfaceBase)
+    LSurfaceBase() noexcept : SurfaceViewport(*this->AsSurface()) { }
+    PROHIBIT_REALLOC_OF_ANY_FORM(LSurfaceBase)
     virtual ~LSurfaceBase() = default;
 
     template <class T = LSurfaceBase>
@@ -139,9 +138,9 @@ protected:
     virtual     void EmulateContentForBufferedInput(const LKey InKey) = 0;
 #endif /* PLATFORM_LINUX */
 
-    EInputMode::Type InputMode { EInputMode::UserInterface };
-    bool bShowCursor { true };
-    bool bMouseLocationIsMeaningful { false };
+    EInputMode::Type InputMode{ EInputMode::UserInterface };
+    bool bShowCursor{ true };
+    bool bMouseLocationIsMeaningful{ false };
     LVector2 MouseLocation;
 
 private:
@@ -150,7 +149,7 @@ private:
     //# The viewport that is used to draw on this surface meaning the viewport that includes the whole surface screen.
     //#
     LViewport SurfaceViewport;
-    bool bSurfaceViewportValid { false };
+    bool bSurfaceViewportValid{ false };
 
     //# The keys that are currently down for this surface this frame.
     TArray<LRawInput> DownKeys;
@@ -181,13 +180,13 @@ private:
     //# Not that this is not a good solution - but works for basic stuff. If the main loop lags, some input may be
     //# lost that would usually be repeated (when using the underlying operating system directly).
     //#
-    bool bPlatformSupportsRepeatedKeyDown { true };
+    bool bPlatformSupportsRepeatedKeyDown{ true };
     Application::LHrcTimePoint LastPressTimePoint;
-    f32 RepeatedBufferTime {  1.0f / 25.0f };
-    f32 RepeatedDelay { 0.6f };
-    f32 RepeatedRate  { 1.0f / 25.0f };
-    bool bThisFrameRepeatedKeyDown { false };
-    LKey LastNewKey { EKeys::Unresolved };
+    f32 RepeatedBufferTime{ 1.0f / 25.0f };
+    f32 RepeatedDelay{ 0.6f };
+    f32 RepeatedRate{ 1.0f / 25.0f };
+    bool bThisFrameRepeatedKeyDown{ false };
+    LKey LastNewKey{ EKeys::Unresolved };
 #endif /* PLATFORM_LINUX */
 
     APersonaController* Controller{ nullptr };

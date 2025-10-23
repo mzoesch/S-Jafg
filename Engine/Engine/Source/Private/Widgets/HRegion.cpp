@@ -17,7 +17,7 @@ void Jafg::WHRegion::UpdateDesiredSize() const
 
     DesiredSize.X += this->HSpace * (this->GetChildren().size() - 1);
 
-    DesiredSize += this->GetPadding().GetDesiredSizeInSpt();
+    DesiredSize += this->GetPadding().GetDesiredSizeInSpt(*this);
 
     this->SetDesiredSizeInSpt(DesiredSize);
 
@@ -52,7 +52,7 @@ void Jafg::WHRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const 
 
     const f32 FreeSpace
     {
-        (this->GetAnchoredSize_v2().X - this->GetPadding().GetDesiredSizeXInSpt())
+        (this->GetAnchoredSize_v2().X - this->GetPadding().GetDesiredSizeXInSpt(Context))
         - TotalDesiredSize
         - this->GetHSpace() * (this->GetChildren().size() - 1)
     };
@@ -66,7 +66,7 @@ void Jafg::WHRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const 
         Maths::Max
         (
             InDirectChild->GetDesiredSize_v2().Y,
-            InDirectChild->GetAnchor().MaxY * (this->GetAnchoredSize_v2().Y - this->GetPadding().GetDesiredSizeYInSpt())
+            InDirectChild->GetAnchor().MaxY * (this->GetAnchoredSize_v2().Y - this->GetPadding().GetDesiredSizeYInSpt(Context))
         )
     });
 
@@ -93,14 +93,14 @@ LVector2 Jafg::WHRegion::GetAnchoredTopLeftFromMostOuterForChild(const LViewport
 
     LVector2 Out
     {
-        this->GetPadding().GetLeftOffsetInSpt()
+        this->GetPadding().GetLeftOffsetInSpt(Context)
         + Offset
         + InDirectChild->GetLostAnchoredSize_v2().X,
-        this->GetPadding().GetTopOffsetInSpt()
+        this->GetPadding().GetTopOffsetInSpt(Context)
         + InDirectChild->GetAnchor().MinY *
         (
             this->GetAnchoredSize_v2().Y
-            - this->GetPadding().GetDesiredSizeYInSpt()
+            - this->GetPadding().GetDesiredSizeYInSpt(Context)
             - InDirectChild->GetAnchoredSize_v2().Y
         )
         + InDirectChild->GetLostAnchoredSize_v2().Y

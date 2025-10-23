@@ -600,10 +600,9 @@ void Jafg::WHostSessionScreen_Old_Save::Reload()
                 .Brush(LTextBoxBrush::Body())
                 .TextColor(Lal::LColor::DarkerGray)
         ]
-    ]
-    FinishWidget(Region);
-
+    ];
     this->AddChild(Region);
+    FinishWidget(Region);
 
     return;
 }
@@ -770,13 +769,14 @@ void Jafg::WHostSessionScreen_Old::RefetchSaves(const bool bResetHighlight /* = 
     for (LFetchedSave& Save : this->FetchedSaves)
     {
         WHostSessionScreen_Old_Save* SaveWidget;
-            NewNode(WHostSessionScreen_Old_Save).SaveTo(&SaveWidget)
-        FinishWidget(SaveWidget);
+        NewNode(WHostSessionScreen_Old_Save).SaveTo(&SaveWidget);
+
         SaveWidget->Save = std::move(Save);
         SaveWidget->Owner = this;
-        SaveWidget->Reload();
-
         this->SavesRegion->AddChild(SaveWidget);
+
+        FinishWidget(SaveWidget);
+        SaveWidget->Reload();
 
         continue;
     }

@@ -8,6 +8,7 @@
 #include "User/Input/Events.h"
 #include "Platform/SurfaceForward.h"
 #include "Widgets/InterfaceTypes.h"
+#include "User/UserPreferencesForward.h"
 #include "Node.generated.h"
 
 namespace Jafg
@@ -423,8 +424,15 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(JNodeData)
 };
 
-ENGINE_API f32      ToStaticPoints(LWidgetSize1 Size) noexcept;
-ENGINE_API LVector2 ToStaticPoints(LWidgetSize2 Size) noexcept;
+ENGINE_API  f32 InSpt(LViewport const& Viewport, LWidgetSize1 Size) noexcept;
+FORCEINLINE f32 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept;
+ENGINE_API  LVector2 InSpt(LViewport const& Viewport, LWidgetSize2 Size) noexcept;
+FORCEINLINE LVector2 InSpt(WNode const& Node, LWidgetSize2 Size) noexcept;
+
+ENGINE_API  f32 InSptFromRelative(LViewport const& Viewport, f32 Relative) noexcept;
+FORCEINLINE f32 InSptFromRelative(WNode const& Node, f32 Relative) noexcept;
+ENGINE_API  LVector2 InSptFromRelative(LViewport const& Viewport, LVector2 Relative) noexcept;
+FORCEINLINE LVector2 InSptFromRelative(WNode const& Node, LVector2 Relative) noexcept;
 
 //#
 //# The base class for everything that can be interpreted as a visual element.
@@ -449,7 +457,7 @@ public:
 #endif /* LAL_DO_CHECKS */
 
     // JObjectBase implementation
-    virtual void BeginLife() override final { Super::BeginLife(); this->Construct(); return; }
+    virtual void BeginLife() override final { Super::BeginLife();  this->ConstructInternal(); return; }
     virtual void EndLife() override final   { this->Destruct();   Super::EndLife();  return; }
     virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
     // ~JObjectBase implementation
@@ -459,7 +467,7 @@ public:
     //# constructed but never drawn on a canvas in their entire lifespan. This method replaces the #BeginLife super
     //# method.
     //#
-    virtual void Construct() { }
+    virtual void Construct() { check( this->CachedViewport ) }
 
     //#
     //# Called when this widget is being ticked.
@@ -600,9 +608,11 @@ public:
 
     //# @return The size of the current viewport in pixels.
     LIntVector2 GetViewportSize() const;
-                virtual LViewport* GetViewport() const;
-    FORCEINLINE virtual LViewport* GetViewportChecked() const { LViewport* Out = this->GetViewport(); check( Out ) return Out; }
-    FORCEINLINE virtual LViewport* GetViewportAsserted() const { LViewport* Out = this->GetViewport(); jassert( Out ) return Out; }
+    FORCEINLINE bool HasViewportDangerous() const noexcept { return this->CachedViewport != nullptr; }
+    FORCEINLINE LViewport& GetViewport() noexceptcheck { check( this->CachedViewport ) return *this->CachedViewport; }
+    FORCEINLINE LViewport const& GetViewport() const noexceptcheck { check( this->CachedViewport ) return *this->CachedViewport; }
+    ENGINE_API virtual void RecacheViewport() noexcept;
+    ENGINE_API virtual LViewport* GetMostOuterViewport() noexcept;
 
     //# Virtual update method for the desired size. Automatically called. Do not call manually.
     virtual void UpdateDesiredSize() const { }
@@ -610,7 +620,7 @@ public:
     //# Update the #DesiredSize of a widget inside the overridden #UpdateDesiredSize method with this one.
     //# Do not call this method from outside the #UpdateDesiredSize method.
     //#
-    FORCEINLINE void SetDesiredSize(LWidgetSize2 Size) const noexcept { this->SetDesiredSizeInSpt(ToStaticPoints(Size)); }
+    FORCEINLINE void SetDesiredSize(LWidgetSize2 Size) const noexcept { this->SetDesiredSizeInSpt(InSpt(*this, Size)); }
     void SetDesiredSizeInSpt(LVector2 Size) const noexcept;
     //# Internal usage only. Do not use unless you are a really smart person.
     FORCEINLINE void SetDesiredSizeUnsanitized(LVector2 Size) const { this->DesiredSize_v2 = std::move(Size); return; }
@@ -679,6 +689,8 @@ public:
 
 private:
 
+    ENGINE_API void ConstructInternal() noexcept;
+
     bool bAllowTick{ true };
     EWidgetVisibility::Type Visibility{ EWidgetVisibility::TransitiveHitTestInvisible };
 
@@ -686,6 +698,8 @@ private:
     //# The slot that this widget is currently in.
     //#
     LWidgetSlot Slot;
+
+    LViewport* CachedViewport{ nullptr };
 
     //#
     //# The desired size of this widget in pt.
@@ -791,6 +805,38 @@ FORCEINLINE TNode* ConstructDeferredWidgetNode(LClassOuter* Outer, TSubclassOf<T
 FORCEINLINE void MakeDeferredWidgetNodeFinal(WNode* Node)
 {
     MakeDeferredObjectFinal(Node);
+}
+
+FORCEINLINE f32 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept
+{
+    if (Size.Type == EWidgetSize::StaticPoints)
+    {
+        return Size.Size;
+    }
+
+    check( Size.Type == EWidgetSize::Points )
+    return InSptFromRelative(Node.GetViewport(), Size.Size);
+}
+
+FORCEINLINE LVector2 InSpt(WNode const& Node, LWidgetSize2 Size) noexcept
+{
+    if (Size.Type == EWidgetSize::StaticPoints)
+    {
+        return Size.Size;
+    }
+
+    check( Size.Type == EWidgetSize::Points )
+    return InSptFromRelative(Node.GetViewport(), Size.Size);
+}
+
+FORCEINLINE f32 InSptFromRelative(WNode const& Node, f32 Relative) noexcept
+{
+    return InSptFromRelative(Node.GetViewport(), Relative);
+}
+
+FORCEINLINE LVector2 InSptFromRelative(WNode const& Node, LVector2 Relative) noexcept
+{
+    return InSptFromRelative(Node.GetViewport(), Relative);
 }
 
 #if !LAL_DO_CHECKS

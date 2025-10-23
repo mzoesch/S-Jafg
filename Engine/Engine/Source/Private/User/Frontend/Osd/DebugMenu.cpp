@@ -46,28 +46,19 @@ void Jafg::WDebugMenu::OnVisibilityChanged(const EWidgetVisibility::Type InOldVi
 {
     Super::OnVisibilityChanged(InOldVisibility, InNewVisibility);
 
-    LViewport* Viewport { this->GetViewport() };
-    if (ensure(Viewport != nullptr) == false)
-    {
-        return;
-    }
-    LSurface* Surface { Viewport->GetCachedContext() };
-    if (ensure(Surface != nullptr) == false)
-    {
-        return;
-    }
+    LSurface& Surface { this->GetViewport().GetSurface() };
 
     if (EWidgetVisibility::IsDrawn(InNewVisibility))
     {
-        Surface->SetInputMode(EInputMode::Both, true);
+        Surface.SetInputMode(EInputMode::Both, true);
 
-        ConstructWidgetNode<WEditorView>(this->GetOuter())->AddToViewport(Viewport);
+        ConstructWidgetNode<WEditorView>(this->GetOuter())->AddToViewport(&this->GetViewport());
     }
     else
     {
-        Surface->SetInputMode(EInputMode::Both, false);
+        Surface.SetInputMode(EInputMode::Both, false);
 
-        while (WEditorView* View { Viewport->GetTopLevelWidgetByClass<WEditorView>() })
+        while (WEditorView* View { this->GetViewport().GetTopLevelWidgetByClass<WEditorView>() })
         {
             View->RemoveFromParent();
             continue;

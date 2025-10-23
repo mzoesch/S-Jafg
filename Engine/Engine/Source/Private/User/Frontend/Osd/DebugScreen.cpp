@@ -177,7 +177,7 @@ void Jafg::WDebugScreen::Tick()
     check( this->LocalPawnTargetVoxelSectionDestroy )
     check( this->LocalPawnTargetVoxelSectionCreate )
 
-    if (APersonaController* Controller{ this->GetViewport()->GetOwningSurface().GetPossessed() }; Controller && Controller->DoesPossess())
+    if (APersonaController* Controller{ this->GetViewport().GetSurface().GetPossessed() }; Controller && Controller->DoesPossess())
     {
         {
             const LVector Location { Controller->GetPossessed()->GetTranslation() };

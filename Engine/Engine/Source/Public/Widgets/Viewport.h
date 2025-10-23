@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "Lal.afx"
 #include "Widgets/Node.h"
 #include "Rhi/FrameBuffer.h"
 #include "User/Input/Replies.h"
+#include "User/UserPreferencesForward.h"
 
 namespace Jafg
 {
@@ -44,13 +44,9 @@ class LViewport final
 
 public:
 
-    LViewport() = default;
-    PROHIBIT_COPY(LViewport)
-    DEFAULT_MOVE(LViewport)
+    explicit LViewport(LSurface& Owner) noexcept : Surface(Owner) { }
+    PROHIBIT_REALLOC_OF_ANY_FORM(LViewport)
     ~LViewport() = default;
-
-    ENGINE_API LSurface& GetOwningSurface();
-    ENGINE_API LSurface const& GetOwningSurface() const;
 
     void Initialize() { }
     void ClearInvalidWidgets();
@@ -82,6 +78,7 @@ public:
     FORCEINLINE const LMatrix& GetCachedOrthographicProjectionMatrix() const noexcept { return this->CachedOrthographicProjectionMatrix; }
 
     //# The scale factor is based on the physical platform dpi in relation to the base dpi.
+    FORCEINLINE EApplicationScale::Type GetMaxAllowApplicationScale() const noexcept;
     FORCEINLINE f32  GetScaleFactor() const { return this->ScaleFactor; }
     FORCEINLINE void SetPlatformDpi(const f32 InDpi) { this->PlatformDpi = InDpi; }
     FORCEINLINE f32  GetPlatformDpi() const { return this->PlatformDpi; }
@@ -137,15 +134,8 @@ public:
     FORCEINLINE bool IsIntermediateBufferValid() const noexcept { return this->IntermediateBuffer.IsValid(); }
     FORCEINLINE auto GetIntermediateBuffer() const noexcept -> const LFrameBuffer& { return this->IntermediateBuffer; }
 
-    //#
-    //# Get the most recent context that was used on this viewport. Might be null, so do not use without checking.
-    //#
-    FORCEINLINE       LSurface* GetCachedContext()       { return this->CachedContext; }
-    FORCEINLINE const LSurface* GetCachedContext() const { return this->CachedContext; }
-    FORCEINLINE       LSurface* GetCachedContextChecked()       { check( this->CachedContext ) return this->CachedContext; }
-    FORCEINLINE const LSurface* GetCachedContextChecked() const { check( this->CachedContext ) return this->CachedContext; }
-    FORCEINLINE       LSurface* GetCachedContextAsserted()       { jassert( this->CachedContext ) return this->CachedContext; }
-    FORCEINLINE const LSurface* GetCachedContextAsserted() const { jassert( this->CachedContext ) return this->CachedContext; }
+    FORCEINLINE LSurface& GetSurface() noexcept { return this->Surface; }
+    FORCEINLINE const LSurface& GetSurface() const noexcept { return this->Surface; }
 
     FORCEINLINE const TOptional<LVector2>& GetCachedCursorLocation() const { return this->CachedCursorLocation; }
     FORCEINLINE const TOptional<LVector2>& GetCachedCursorLocationChecked() const { check( this->CachedCursorLocation.has_value() ) return this->CachedCursorLocation; }
@@ -201,7 +191,7 @@ private:
     TArray<LBackgroundContext> BackgroundContexts;
     LFrameBuffer IntermediateBuffer;
 
-    LSurface* CachedContext { nullptr };
+    LSurface& Surface;
     TOptional<LVector2> CachedCursorLocation;
 
     Lal::LLinearColor BackgroundColor;
@@ -218,6 +208,21 @@ FORCEINLINE LViewportSweepTranslation::~LViewportSweepTranslation() noexcept
 {
     this->Viewport.ApplySweepTranslation(-this->Offset);
     return;
+}
+
+FORCEINLINE EApplicationScale::Type LViewport::GetMaxAllowApplicationScale() const noexcept
+{
+    if (this->Dimensions.X < 640 || this->Dimensions.Y < 475)
+    {
+        return EApplicationScale::Single;
+    }
+
+    if (this->Dimensions.X < 960 || this->Dimensions.Y < 720)
+    {
+        return EApplicationScale::Double;
+    }
+
+    return EApplicationScale::Triple;
 }
 
 FORCEINLINE WNode* LViewport::GetTopLevelWidgetByClassChecked(TSubclassOf<WNode> Class) const

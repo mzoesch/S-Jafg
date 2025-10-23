@@ -112,7 +112,7 @@ private:
 
     void OnSuperContentChanged(const LString& InNewContent);
 
-    void MoveCaretToMouseCursor(const LViewport& Context);
+    void MoveCaretToMouseCursor(const LViewport& Viewport);
     void SafelyReduceCaretCursor();
     void SafelyIncreaseCaretCursor();
 

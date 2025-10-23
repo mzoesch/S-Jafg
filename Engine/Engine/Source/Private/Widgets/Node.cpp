@@ -138,36 +138,38 @@ struct LWidgetConstructor
 
 } /* ~Namespace Jafg */
 
-f32 Jafg::ToStaticPoints(LWidgetSize1 Size) noexcept
+f32 Jafg::InSpt(LViewport const& Viewport, LWidgetSize1 Size) noexcept
 {
     if (Size.Type == EWidgetSize::StaticPoints)
     {
         return Size.Size;
     }
 
-    if (Size.Type == EWidgetSize::Points)
-    {
-        JUserPreferences const* Prefs{GetDefault<JUserPreferences>()};
-        return Size.Size * Prefs->ApplicationScale;
-    }
-
-    unreachable()
+    return InSptFromRelative(Viewport, Size.Size);
 }
 
-LVector2 Jafg::ToStaticPoints(LWidgetSize2 Size) noexcept
+LVector2 Jafg::InSpt(LViewport const& Viewport, LWidgetSize2 Size) noexcept
 {
     if (Size.Type == EWidgetSize::StaticPoints)
     {
         return Size.Size;
     }
 
-    if (Size.Type == EWidgetSize::Points)
-    {
-        JUserPreferences const* Prefs{GetDefault<JUserPreferences>()};
-        return Size.Size * Prefs->ApplicationScale;
-    }
+    return InSptFromRelative(Viewport, Size.Size);
+}
 
-    unreachable()
+f32 Jafg::InSptFromRelative(LViewport const& Viewport, f32 Relative) noexcept
+{
+    const EApplicationScale::Type Scale{ Viewport.GetMaxAllowApplicationScale() };
+    check( Scale != EApplicationScale::Auto )
+    return Relative * LexToFloat(Scale);
+}
+
+LVector2 Jafg::InSptFromRelative(LViewport const& Viewport, LVector2 Relative) noexcept
+{
+    const EApplicationScale::Type Scale{ Viewport.GetMaxAllowApplicationScale() };
+    check( Scale != EApplicationScale::Auto )
+    return Relative * LexToFloat(Scale);
 }
 
 Jafg::WNode::~WNode()
@@ -267,7 +269,7 @@ Jafg::LReply Jafg::WNode::OnKeyUpNoFocus(const LViewport& InViewport, const LKey
 
 bool Jafg::WNode::IsFocusWidget() const
 {
-    return this->IsFocusWidget(this->GetViewport());
+    return this->IsFocusWidget(&this->GetViewport());
 }
 
 bool Jafg::WNode::IsFocusWidget(const LViewport* InViewport) const
@@ -282,7 +284,7 @@ bool Jafg::WNode::IsFocusWidget(const LViewport* InViewport) const
 
 bool Jafg::WNode::IsFocusWidgetTransitive() const
 {
-    return this->IsFocusWidgetTransitive(this->GetViewport());
+    return this->IsFocusWidgetTransitive(&this->GetViewport());
 }
 
 bool Jafg::WNode::IsFocusWidgetTransitive(const LViewport* InViewport) const
@@ -352,14 +354,19 @@ bool Jafg::WNode::FindNodeInVisiblePath(const WNode* InNode) const
 
 LIntVector2 Jafg::WNode::GetViewportSize() const
 {
-    return this->GetViewportChecked()->GetDimensions();
+    return this->GetViewport().GetDimensions();
 }
 
-Jafg::LViewport* Jafg::WNode::GetViewport() const
+void Jafg::WNode::RecacheViewport() noexcept
+{
+    this->CachedViewport = this->GetMostOuterViewport();
+}
+
+Jafg::LViewport* Jafg::WNode::GetMostOuterViewport() noexcept
 {
     if (this->Slot.Parent)
     {
-        return this->Slot.Parent->GetViewport();
+        return this->Slot.Parent->GetMostOuterViewport();
     }
 
     return nullptr;
@@ -369,8 +376,8 @@ void Jafg::WNode::SetDesiredSizeInSpt(LVector2 Size) const noexcept
 {
     this->DesiredSize_v2 = Size;
 
-    LVector2 SptMinSize{ToStaticPoints(this->MinDesiredSize)};
-    LVector2 SptMaxSize{ToStaticPoints(this->MaxDesiredSize)};
+    LVector2 SptMinSize{InSpt(this->GetViewport(), this->MinDesiredSize)};
+    LVector2 SptMaxSize{InSpt(this->GetViewport(), this->MaxDesiredSize)};
 
     this->DesiredSize_v2.X = Maths::Max(this->DesiredSize_v2.X, SptMinSize.X);
     this->DesiredSize_v2.Y = Maths::Max(this->DesiredSize_v2.Y, SptMinSize.Y);
@@ -462,3 +469,11 @@ bool Jafg::WNode::SetMargin(const LMargin& InMargin) noexcept
 
     return false;
 }
+
+void Jafg::WNode::ConstructInternal() noexcept
+{
+
+    this->Construct();
+    return;
+}
+

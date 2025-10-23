@@ -93,31 +93,6 @@ void LGlfw3Bridge::KeyCallback(GLFWwindow* Window, const i32 Key, const i32 Scan
 
 } /* ~Namespace Jafg::Private */
 
-Jafg::LSurfaceGlfw3::LSurfaceGlfw3(LSurfaceGlfw3&& Other) noexcept
-{
-    *this = std::move(Other);
-}
-
-Jafg::LSurfaceGlfw3& Jafg::LSurfaceGlfw3::operator=(LSurfaceGlfw3&& Other) noexcept
-{
-    Super::operator=(std::move(Other));
-
-    this->Cursor = Other.Cursor;
-    this->Handle = Other.Handle;
-    this->bVSync = Other.bVSync;
-    this->bFirstMouseCallback = Other.bFirstMouseCallback;
-    this->LastMouseX = Other.LastMouseX;
-    this->LastMouseY = Other.LastMouseY;
-
-    glfwMakeContextCurrent(this->Handle);
-    glfwSetWindowUserPointer(this->Handle, reinterpret_cast<void*>(this));
-
-    Other.Cursor = nullptr;
-    Other.Handle = nullptr;
-
-    return *this;
-}
-
 Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
 {
     if (this->Handle)
@@ -169,8 +144,8 @@ void Jafg::LSurfaceGlfw3::Initialize()
     {
         STAT_QUICK_CYCLE_START("Glfw3WindowCreation")
 
-        // Min 640 480 - Default 1280 720
-        this->Handle = glfwCreateWindow(640, 480, "Jafg - mzoesch", nullptr, nullptr);
+        // Min 640 475 - Default 1280 720
+        this->Handle = glfwCreateWindow(855, 475, "Jafg - mzoesch", nullptr, nullptr);
     }
     if (this->Handle == nullptr)
     {
@@ -530,7 +505,8 @@ void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const i32 Width, const i32 Hei
      * One-point-five-second delay when making changes to the viewport. We might want to change this later depending
      * on some platform parameters.
      */
-    this->PendingTimeForResizeApply = 1.5f;
+    // this->PendingTimeForResizeApply = 1.5f;
+    this->PendingTimeForResizeApply = 0.2f;
 
     return;
 }
