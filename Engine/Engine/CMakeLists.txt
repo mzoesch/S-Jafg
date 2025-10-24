@@ -138,4 +138,31 @@ if(_guard)
     target_include_directories(${_scoped_module_name} PRIVATE
         "${JAFG_ENGINE_ROOT}/Engine/Vendor/Include"
         )
+
+    ###############################################################################
+    # Fonts
+    message(STATUS "Including fonts...")
+    set(CASCADIA_MONO_URL "https://github.com/microsoft/cascadia-code/releases/download/v2407.24/CascadiaCode-2407.24.zip")
+    set(CASCADIA_MONO_ZIP "${CMAKE_BINARY_DIR}/CascadiaCode.zip")
+    set(CASCADIA_MONO_DIR "${JAFG_ENGINE_ROOT}/Content/Fonts/CascadiaMono")
+    if(NOT EXISTS "${CASCADIA_MONO_ZIP}")
+        message(STATUS "Downloading Cascadia Mono font...")
+        file(DOWNLOAD
+            "${CASCADIA_MONO_URL}"
+            "${CASCADIA_MONO_ZIP}"
+            SHOW_PROGRESS
+            STATUS download_status
+            )
+        list(GET download_status 0 download_result)
+        if(NOT download_result EQUAL 0)
+            message(FATAL_ERROR "Failed to download Cascadia Mono font from [${CASCADIA_MONO_URL}].")
+        endif()
+    endif()
+    if(NOT EXISTS "${CASCADIA_MONO_DIR}")
+        message(STATUS "Extracting Cascadia Mono font...")
+        file(ARCHIVE_EXTRACT
+            INPUT            "${CASCADIA_MONO_ZIP}"
+            DESTINATION      "${CASCADIA_MONO_DIR}"
+            )
+    endif()
 endif()

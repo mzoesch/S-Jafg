@@ -168,7 +168,7 @@ void Jafg::WButton::SetEnabled(const bool bInEnabled)
 Jafg::WTextButton::WTextButton(LCxxObjectInitializer const& CxxObjectInitializer)
     : Super(CxxObjectInitializer)
 {
-    this->SetPadding({15, 8});
+    this->SetPadding({4, 2});
     return;
 }
 

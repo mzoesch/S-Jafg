@@ -207,7 +207,7 @@ struct LTextBoxBrush : public LBoxBrush
     {
         LTextBoxBrush Brush;
         Brush.Tint = Lal::LColor::Transparent;
-        Brush.Padding = { 4.5f };
+        Brush.Padding = { 4, 2 };
         return Brush;
     }
 

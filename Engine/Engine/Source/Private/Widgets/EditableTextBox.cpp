@@ -94,7 +94,7 @@ void Jafg::WEditableTextBox::Draw(LViewport& Context) const
             CaretContent = this->GetContent();
         }
 
-        CaretTopLeft.X += this->GetDesiredWidth(CaretContent) + this->CaretBrush.HOffset;
+        CaretTopLeft.X += this->GetDesiredWidthForString(CaretContent) + this->CaretBrush.HOffset;
 
         GEngine->GetShaderChecked<LOrthographicBoxShader>(Name_ShaderOrthographicBox)->Draw
         (

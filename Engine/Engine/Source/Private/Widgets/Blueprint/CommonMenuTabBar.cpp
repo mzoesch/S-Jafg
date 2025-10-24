@@ -13,7 +13,7 @@ Jafg::WCommonMenuTabBarButton::WCommonMenuTabBarButton(Jafg::LCxxObjectInitializ
     this->SetHoverBrush({ERegionBrush::Box, {0, 0, 0, 128}});
     this->SetPressBrush({ERegionBrush::Box, {0, 0, 0, 192}});
 
-    this->SetPadding({0, 0});
+    this->SetPadding({2, 4});
     this->SetMinDesiredSize(5_pt2);
     this->SetAnchor(EAnchor::HFill);
 

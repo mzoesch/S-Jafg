@@ -14,7 +14,7 @@
             return this->Function().Size;                                          \
         }                                                                          \
         check( this->Type == EWidgetSize::Points )                                 \
-        return InSpt(Context, this->Function());                                   \
+        return Jafg::InSpt(Context, this->Function());                             \
     }
 
 namespace Jafg
@@ -27,6 +27,11 @@ ENGINE_API  f32 InSpt(LViewport const& Viewport, LWidgetSize1 Size) noexcept;
 FORCEINLINE f32 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept;
 ENGINE_API  LVector2 InSpt(LViewport const& Viewport, LWidgetSize2 Size) noexcept;
 FORCEINLINE LVector2 InSpt(WNode const& Node, LWidgetSize2 Size) noexcept;
+
+ENGINE_API  f32 InSptFromRelative(LViewport const& Viewport, f32 Relative) noexcept;
+FORCEINLINE f32 InSptFromRelative(WNode const& Node, f32 Relative) noexcept;
+ENGINE_API  LVector2 InSptFromRelative(LViewport const& Viewport, LVector2 Relative) noexcept;
+FORCEINLINE LVector2 InSptFromRelative(WNode const& Node, LVector2 Relative) noexcept;
 
 struct LWhitespace
 {
@@ -61,35 +66,11 @@ struct LWhitespace
     {
     }
 
-    FORCEINLINE constexpr LWhitespace(const i32 UniformWhitespace) noexcept
-        : West(static_cast<f32>(UniformWhitespace))
-        , North(static_cast<f32>(UniformWhitespace))
-        , East(static_cast<f32>(UniformWhitespace))
-        , South(static_cast<f32>(UniformWhitespace))
-    {
-    }
-
     FORCEINLINE constexpr LWhitespace(const f32 UniformWhitespace) noexcept
         : West(UniformWhitespace)
         , North(UniformWhitespace)
         , East(UniformWhitespace)
         , South(UniformWhitespace)
-    {
-    }
-
-    FORCEINLINE constexpr LWhitespace(const f64 UniformWhitespace) noexcept
-        : West(static_cast<f32>(UniformWhitespace))
-        , North(static_cast<f32>(UniformWhitespace))
-        , East(static_cast<f32>(UniformWhitespace))
-        , South(static_cast<f32>(UniformWhitespace))
-    {
-    }
-
-    FORCEINLINE constexpr LWhitespace(const i32 Horizontal, const i32 Vertical) noexcept
-        : West(static_cast<f32>(Horizontal))
-        , North(static_cast<f32>(Vertical))
-        , East(static_cast<f32>(Horizontal))
-        , South(static_cast<f32>(Vertical))
     {
     }
 
@@ -101,44 +82,11 @@ struct LWhitespace
     {
     }
 
-    FORCEINLINE constexpr LWhitespace(const f64 Horizontal, const f64 Vertical) noexcept
-        : West(static_cast<f32>(Horizontal))
-        , North(static_cast<f32>(Vertical))
-        , East(static_cast<f32>(Horizontal))
-        , South(static_cast<f32>(Vertical))
-    {
-    }
-
-    FORCEINLINE constexpr LWhitespace(const i32 InWest, const i32 InNorth, const i32 InEast, const i32 InSouth) noexcept
-        : West(static_cast<f32>(InWest))
-        , North(static_cast<f32>(InNorth))
-        , East(static_cast<f32>(InEast))
-        , South(static_cast<f32>(InSouth))
-    {
-    }
-
     FORCEINLINE constexpr LWhitespace(const f32 InWest, const f32 InNorth, const f32 InEast, const f32 InSouth) noexcept
         : West(InWest)
         , North(InNorth)
         , East(InEast)
         , South(InSouth)
-    {
-    }
-
-    FORCEINLINE constexpr LWhitespace(const f64 InWest, const f64 InNorth, const f64 InEast, const f64 InSouth) noexcept
-        : West(static_cast<f32>(InWest))
-        , North(static_cast<f32>(InNorth))
-        , East(static_cast<f32>(InEast))
-        , South(static_cast<f32>(InSouth))
-    {
-    }
-
-    FORCEINLINE constexpr LWhitespace(const EWidgetSize::Type InType, const i32 UniformWhitespace) noexcept
-        : Type(InType)
-        , West(static_cast<f32>(UniformWhitespace))
-        , North(static_cast<f32>(UniformWhitespace))
-        , East(static_cast<f32>(UniformWhitespace))
-        , South(static_cast<f32>(UniformWhitespace))
     {
     }
 
@@ -151,24 +99,6 @@ struct LWhitespace
     {
     }
 
-    FORCEINLINE constexpr LWhitespace(const EWidgetSize::Type InType, const f64 UniformWhitespace) noexcept
-        : Type(InType)
-        , West(static_cast<f32>(UniformWhitespace))
-        , North(static_cast<f32>(UniformWhitespace))
-        , East(static_cast<f32>(UniformWhitespace))
-        , South(static_cast<f32>(UniformWhitespace))
-    {
-    }
-
-    FORCEINLINE constexpr LWhitespace(const EWidgetSize::Type InType, const i32 Horizontal, const i32 Vertical) noexcept
-        : Type(InType)
-        , West(static_cast<f32>(Horizontal))
-        , North(static_cast<f32>(Vertical))
-        , East(static_cast<f32>(Horizontal))
-        , South(static_cast<f32>(Vertical))
-    {
-    }
-
     FORCEINLINE constexpr LWhitespace(const EWidgetSize::Type InType, const f32 Horizontal, const f32 Vertical) noexcept
         : Type(InType)
         , West(Horizontal)
@@ -178,39 +108,12 @@ struct LWhitespace
     {
     }
 
-    FORCEINLINE constexpr LWhitespace(const EWidgetSize::Type InType, const f64 Horizontal, const f64 Vertical) noexcept
-        : Type(InType)
-        , West(static_cast<f32>(Horizontal))
-        , North(static_cast<f32>(Vertical))
-        , East(static_cast<f32>(Horizontal))
-        , South(static_cast<f32>(Vertical))
-    {
-    }
-
-    FORCEINLINE constexpr LWhitespace(const EWidgetSize::Type InType, const i32 InWest, const i32 InNorth, const i32 InEast, const i32 InSouth) noexcept
-        : Type(InType)
-        , West(static_cast<f32>(InWest))
-        , North(static_cast<f32>(InNorth))
-        , East(static_cast<f32>(InEast))
-        , South(static_cast<f32>(InSouth))
-    {
-    }
-
     FORCEINLINE constexpr LWhitespace(const EWidgetSize::Type InType, const f32 InWest, const f32 InNorth, const f32 InEast, const f32 InSouth) noexcept
         : Type(InType)
         , West(InWest)
         , North(InNorth)
         , East(InEast)
         , South(InSouth)
-    {
-    }
-
-    FORCEINLINE constexpr LWhitespace(const EWidgetSize::Type InType, const f64 InWest, const f64 InNorth, const f64 InEast, const f64 InSouth) noexcept
-        : Type(InType)
-        , West(static_cast<f32>(InWest))
-        , North(static_cast<f32>(InNorth))
-        , East(static_cast<f32>(InEast))
-        , South(static_cast<f32>(InSouth))
     {
     }
 
@@ -271,6 +174,17 @@ struct LWhitespace
         return !(*this == Other);
     }
 
+
+    FORCEINLINE constexpr f32 GetLeftOffsetRaw() const noexceptcheck { check( this->Type == EWidgetSize::StaticPoints ) return this->Left; }
+    FORCEINLINE constexpr f32 GetTopOffsetRaw() const noexceptcheck { check( this->Type == EWidgetSize::StaticPoints ) return this->Top; }
+    FORCEINLINE constexpr LVector2 GetTopLeftOffsetRaw() const noexceptcheck { check( this->Type == EWidgetSize::StaticPoints ) return {this->Left, this->Top}; }
+    FORCEINLINE constexpr f32 GetRightOffsetRaw() const noexceptcheck { check( this->Type == EWidgetSize::StaticPoints ) return this->Right; }
+    FORCEINLINE constexpr f32 GetBottomOffsetRaw() const noexceptcheck { check( this->Type == EWidgetSize::StaticPoints ) return this->Bottom; }
+    FORCEINLINE constexpr LVector2 GetBottomRightOffsetRaw() const noexceptcheck { check( this->Type == EWidgetSize::StaticPoints ) return {this->Right, this->Bottom}; }
+    FORCEINLINE constexpr f32 GetDesiredSizeXRaw() const noexceptcheck { check( this->Type == EWidgetSize::StaticPoints ) return this->Left + this->Right; }
+    FORCEINLINE constexpr f32 GetDesiredSizeYRaw() const noexceptcheck { check( this->Type == EWidgetSize::StaticPoints ) return this->Top + this->Bottom; }
+    FORCEINLINE constexpr LVector2 GetDesiredSizeRaw() const noexceptcheck { check( this->Type == EWidgetSize::StaticPoints ) return {this->Left + this->Right, this->Top + this->Bottom}; }
+
     FORCEINLINE constexpr LWidgetSize1 GetLeftOffset() const noexcept { return {this->Type, this->Left}; }
     FORCEINLINE constexpr LWidgetSize1 GetTopOffset() const noexcept { return {this->Type, this->Top}; }
     FORCEINLINE constexpr LWidgetSize2 GetTopLeftOffset() const noexcept { return {this->Type, this->Left, this->Top}; }
@@ -290,6 +204,25 @@ struct LWhitespace
     PRIVATE_JAFG_GET_IN_SPT(f32, GetDesiredSizeX)
     PRIVATE_JAFG_GET_IN_SPT(f32, GetDesiredSizeY)
     PRIVATE_JAFG_GET_IN_SPT(LVector2, GetDesiredSize)
+
+    FORCEINLINE LWhitespace InSpt(auto& Context) const noexcept
+    {
+        if (this->Type == EWidgetSize::StaticPoints)
+        {
+            return *this;
+        }
+
+        check( this->Type == EWidgetSize::Points )
+        LVector2 Vertical{ InSptFromRelative(Context, LVector2{ this->North, this->South }) };
+        LVector2 Horizontal{ InSptFromRelative(Context, LVector2{ this->West, this->East }) };
+
+        return LWhitespace
+        {
+            EWidgetSize::StaticPoints,
+            Horizontal.X, Vertical.X,
+            Horizontal.Y, Vertical.Y
+        };
+    }
 };
 
 typedef LWhitespace LPadding;

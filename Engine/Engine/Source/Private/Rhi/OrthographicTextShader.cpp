@@ -6,7 +6,7 @@
 
 bool Jafg::LOrthographicTextShader::Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants)
 {
-    if (const bool bOut { Super::Make(InName, std::move(InConstants)) }; bOut == false)
+    if (const bool bOut{ Super::Make(InName, std::move(InConstants)) }; bOut == false)
     {
         return false;
     }
@@ -24,7 +24,7 @@ bool Jafg::LOrthographicTextShader::Make(const LName InName, TArray<LShaderCompi
     }
 
     FT_Face Face;
-    TArray FontData = Finder::ReadFileAsBinary(LEnginePath{EEnginePaths::Fonts, "Core.otf"}.ResolvePath());
+    TArray FontData{ Finder::ReadFileAsBinary(this->FontPath.ResolvePath()) };
     if (::FT_New_Memory_Face(Library, reinterpret_cast<const FT_Byte*>(FontData.data()), static_cast<FT_Long>(FontData.size()), 0, &Face))
     {
         LOG_ERROR(LogRhi, "Failed to load font face.")
@@ -33,19 +33,17 @@ bool Jafg::LOrthographicTextShader::Make(const LName InName, TArray<LShaderCompi
 
     ::FT_Set_Pixel_Sizes(Face, 0, 48);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    for (u8 C = 0; C < 128; C++)
+    for (u8 Ascii{ 0 }; Ascii < 128; ++Ascii)
     {
-        // load character glyph
-        if (::FT_Load_Char(Face, C, FT_LOAD_RENDER))
+        if (::FT_Load_Char(Face, Ascii, FT_LOAD_RENDER))
         {
-            std::cout << "Failed to load Glyph" << '\n';
-            std::cout.flush();
+            LOG_ERROR(LogFontSubsystem, "Failed to load ascii Glyph [{}].", static_cast<i32>(Ascii))
             continue;
         }
 
-        unsigned int texture;
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        u32 Texture;
+        glGenTextures(1, &Texture);
+        glBindTexture(GL_TEXTURE_2D, Texture);
 
         glTexImage2D(
             GL_TEXTURE_2D,
@@ -57,21 +55,21 @@ bool Jafg::LOrthographicTextShader::Make(const LName InName, TArray<LShaderCompi
             GL_RED,
             GL_UNSIGNED_BYTE,
             Face->glyph->bitmap.buffer
-        );
+            );
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        Character character =
-        {
-            texture,
-            glm::ivec2(Face->glyph->bitmap.width, Face->glyph->bitmap.rows),
-            glm::ivec2(Face->glyph->bitmap_left, Face->glyph->bitmap_top),
-            LIntVector2(Face->glyph->advance.x, Face->glyph->advance.y)
-        };
-        Characters.insert(std::pair<u8, Character>(C, character));
+        LCharacter Character{
+              Texture
+            , Lu32Vector2{ Face->glyph->bitmap.width, Face->glyph->bitmap.rows }
+            , Li32Vector2{ Face->glyph->bitmap_left, Face->glyph->bitmap_top }
+            , Li64Vector2{ Face->glyph->advance.x, Face->glyph->advance.y }
+            };
+
+        Characters.insert(std::pair{Ascii, Character});
     }
     glBindTexture(GL_TEXTURE_2D, 1);
     FT_Done_Face(Face);
@@ -94,9 +92,17 @@ bool Jafg::LOrthographicTextShader::Make(const LName InName, TArray<LShaderCompi
 
     glDisable(GL_BLEND);
 
-    const Character& MaxChar { Characters.at(static_cast<i8>('H')) };
-    /* Using 1.0 as it is the identity element of the binary operation 'multiply'. */
-    this->ApproxHeight = static_cast<f32>(MaxChar.Size.y) * 1.0f;
+    this->ApproxBearingHeight = -1.0f;
+
+    LStringView TheCharsWeCareAbout{
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        };
+
+    for (auto Char : TheCharsWeCareAbout)
+    {
+        LCharacter const& Ch{ Characters.at(static_cast<u8>(Char)) };
+        this->ApproxBearingHeight = Maths::Max(this->ApproxBearingHeight, static_cast<f32>(Ch.Bearing.Y));
+    }
 
     return true;
 }
@@ -139,11 +145,14 @@ void Jafg::LOrthographicTextShader::Draw
 
     glCullFace(GL_FRONT);
 
+    LPadding SptPadding{ Padding.InSpt(Context) };
+    check( SptPadding.Type == EWidgetSize::StaticPoints )
+
     const f32       ScaleFactor      = Context.GetScaleFactor();
     const f32       YFromBottom      = Context.GetHeightF();
     const LVector2    Offset           =
         TopLeft
-        + ((Size - Padding.GetDesiredSizeInSpt(Context) - TextDesiredSize) * LVector2
+        + ((Size - SptPadding.GetDesiredSizeRaw() - TextDesiredSize) * LVector2
         (
             ETextHAlign::IsLeft(TextHAlign) ? 0.0f : (ETextHAlign::IsCenter(TextHAlign) ? 0.5f : 1.0f),
             ETextVAlign::IsTop(TextVAlign)  ? 0.0f : (ETextVAlign::IsCenter(TextVAlign) ? 0.5f : 1.0f)
@@ -155,16 +164,16 @@ void Jafg::LOrthographicTextShader::Draw
 
     glBindVertexArray(this->Vao);
 
-    f32 X = Offset.X + Padding.Left;
+    f32 X = Offset.X + SptPadding.Left;
     for (const u8 Rune : Content)
     {
-        const Character& Ch = Characters.at(Rune);
+        const LCharacter& Ch = Characters.at(Rune);
 
-        const f32 PosX = X + static_cast<f32>(Ch.Bearing.x) * TextScale * ScaleFactor;
-        const f32 PosY = (YFromBottom - Offset.Y - (static_cast<f32>(Ch.Size.y - Ch.Bearing.y) * TextScale) - TextDesiredSize.Y - Padding.Top) * ScaleFactor;
+        const f32 PosX = X + static_cast<f32>(Ch.Bearing.X) * TextScale * ScaleFactor;
+        const f32 PosY = (YFromBottom - Offset.Y - (static_cast<f32>(Ch.Size.Y - Ch.Bearing.Y) * TextScale) - TextDesiredSize.Y - SptPadding.Top) * ScaleFactor;
 
-        const f32 CharW = static_cast<f32>(Ch.Size.x) * TextScale * ScaleFactor;
-        const f32 CharH = static_cast<f32>(Ch.Size.y) * TextScale * ScaleFactor;
+        const f32 CharW = static_cast<f32>(Ch.Size.X) * TextScale * ScaleFactor;
+        const f32 CharH = static_cast<f32>(Ch.Size.Y) * TextScale * ScaleFactor;
 
         const f32 Vertices[6][4]
         {
@@ -177,7 +186,7 @@ void Jafg::LOrthographicTextShader::Draw
             { PosX + CharW, PosY + CharH, 1.0f, 0.0f }
         };
 
-        glBindTexture(GL_TEXTURE_2D, Ch.TextureId);
+        glBindTexture(GL_TEXTURE_2D, Ch.Handle);
         glBindBuffer(GL_ARRAY_BUFFER, this->Vbo);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertices), Vertices);
 

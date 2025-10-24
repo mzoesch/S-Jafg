@@ -22,13 +22,12 @@ void Jafg::WFrontendScreen::Construct()
         LTabBarTabDescriptor Descriptor;
         Descriptor.IdentifierField = "HostSession";
         Descriptor.PanelWidgetClassField = this->HostSessionScreenClass;
-        Descriptor.CallbackField = [](WTabBar* TabBar, WNode* Button, WNode* Panel) -> void
+        Descriptor.CallbackField = [](WTabBar* TabBar, WNode* Button, WNode* Panel)
         {
             check( Button )
             if (WTabBarButton* Btn = DynamicCast<WTabBarButton>(Button))
             {
-                WTextBox* Text = Btn->GetButtonTextWidget();
-                if (Text)
+                if (WTextBox* Text{ Btn->GetButtonTextWidget() })
                 {
                     Text->SetBrush(LTextBoxBrush::Header());
                 }
@@ -40,7 +39,7 @@ void Jafg::WFrontendScreen::Construct()
     {
         LTabBarTabDescriptor Descriptor;
         Descriptor.IdentifierField = "JoinSession";
-        Descriptor.CallbackField = [](WTabBar* TabBar, WNode* Button, WNode* Panel) -> void
+        Descriptor.CallbackField = [](WTabBar* TabBar, WNode* Button, WNode* Panel)
         {
             check( Button )
             if (WTabBarButton* Btn = DynamicCast<WTabBarButton>(Button))
@@ -97,7 +96,7 @@ void Jafg::WFrontendScreen::Construct()
     }
 
     {
-        this->TabBar->AppendVSpace_v2(55_pt);
+        this->TabBar->AppendVSpace_v2(40_pt);
     }
 
     return;

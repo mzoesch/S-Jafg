@@ -6,41 +6,15 @@
 #include "Widgets/Whitespace.h"
 #include "Widgets/TextBoxForward.h"
 
-#include <glm/fwd.hpp>
-#include <glm/glm.hpp>
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/gtc/type_ptr.inl>
-
 namespace Jafg
 {
 
-struct Character final
+struct LCharacter final
 {
-    u32     TextureId = 0;             // ID handle of the glyph texture
-    glm::ivec2 Size      = glm::ivec2();  // Size of glyph
-    glm::ivec2 Bearing   = glm::ivec2();  // Offset from baseline to left/top of glyph
-    LIntVector2 Advance  = LIntVector2(); // Offset to advance to next glyph
-
-    Character() = default;
-    Character(const Character& InOther)
-    {
-        this->TextureId = InOther.TextureId;
-        this->Size      = InOther.Size;
-        this->Bearing   = InOther.Bearing;
-        this->Advance   = InOther.Advance;
-
-        return;
-    }
-
-    Character(const u32 InTextureId, const glm::ivec2& InSize, const glm::ivec2& InBearing, const LIntVector2& InAdvance)
-    {
-        this->TextureId = InTextureId;
-        this->Size      = InSize;
-        this->Bearing   = InBearing;
-        this->Advance   = InAdvance;
-
-        return;
-    }
+    u32 Handle{ 0 };
+    Lu32Vector2 Size;
+    Li32Vector2 Bearing;
+    Li64Vector2 Advance;
 };
 
 class LOrthographicTextShader : public LEngineShader
@@ -48,7 +22,7 @@ class LOrthographicTextShader : public LEngineShader
 public:
 
     typedef LEngineShader Super;
-    typedef std::map<u8, Character> LCharacterMap;
+    typedef std::map<u8, LCharacter> LCharacterMap;
 
     virtual bool Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants) override;
     virtual void UpdateViewportUniforms(const LViewport& Context) override;
@@ -68,11 +42,8 @@ public:
         const LString& Content
     ) const;
 
-    //#
-    //# The approximate height of the font when looking at the highest character.
-    //#
     NODISCARD
-    FORCEINLINE f32 GetApproximateHeight(const f32 InScale) const { check( this->ApproxHeight > 0.0f ) return this->ApproxHeight * InScale; }
+    FORCEINLINE f32 GetApproxBearingHeight(const f32 InScale) const { check( this->ApproxBearingHeight > 0.0f ) return this->ApproxBearingHeight * InScale; }
 
     FORCEINLINE void SetFontPath(const LEnginePath& InFontPath) noexcept { this->FontPath = InFontPath; }
     FORCEINLINE const LEnginePath& GetFontPath() const noexcept { return this->FontPath; }
@@ -81,13 +52,13 @@ public:
     
 private:
 
-    LEnginePath FontPath { LEnginePath{EEnginePaths::Fonts, "Core.otf"} };
+    LEnginePath FontPath{ LEnginePath{EEnginePaths::Fonts, "CascadiaMono/ttf/CascadiaMono.ttf"} };
     LCharacterMap Characters;
 
-    f32 ApproxHeight { -1.0f };
+    f32 ApproxBearingHeight{ -1.0f };
 
-    u32 Vao { 0x0u };
-    u32 Vbo { 0x0u };
+    u32 Vao{ 0x0u };
+    u32 Vbo{ 0x0u };
 };
 
 } /* ~Namespace Jafg */

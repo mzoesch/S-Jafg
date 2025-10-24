@@ -127,27 +127,14 @@ void Jafg::WTextBox::Draw(LViewport& Context) const
     return;
 }
 
-void Jafg::WTextBox::UpdateDesiredSize() const
+void Jafg::WTextBox::UpdateDesiredSizeForString(LString const& String) const noexcept
 {
-    this->UpdateDesiredSizeForString(this->Content);
-}
-
-void Jafg::WTextBox::UpdateDesiredSizeForString(const LString& InString) const
-{
-    LOrthographicTextShader const* Shader{ GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText) };
-    const f32 TextScaleInSpt{ this->TextScale.InSpt(this->GetViewport()) };
-
-    LVector2 DesiredSize;
-    for (const u8 Rune : InString)
-    {
-        const Character& Ch { Shader->GetCharacters().at(static_cast<i8>(Rune)) };
-        DesiredSize.X += static_cast<f32>(Ch.Advance.X) * TextScaleInSpt / 64.0f;
-        DesiredSize.Y = Maths::Max(DesiredSize.Y, static_cast<f32>(Ch.Size.y) * TextScaleInSpt);
-    }
+    LVector2 DesiredSize{ this->GetDesiredSizeForString(String) };
 
     if (this->bRespectContentHeight == false)
     {
-        DesiredSize.Y = Shader->GetApproximateHeight(TextScaleInSpt);
+        DesiredSize.Y = GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText)
+            ->GetApproxBearingHeight(this->TextScale.InSpt(this->GetViewport()));
     }
 
     this->TextDesiredSize = DesiredSize;
@@ -158,30 +145,43 @@ void Jafg::WTextBox::UpdateDesiredSizeForString(const LString& InString) const
     return;
 }
 
-f32 Jafg::WTextBox::GetDesiredWidth(const LString& InString) const
+LVector2 Jafg::WTextBox::GetDesiredSizeForString(LString const& String) const noexcept
 {
-    if (InString.empty())
-    {
-        return 0.0f;
-    }
+    const LOrthographicTextShader* Shader{ GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText) };
 
-    const LOrthographicTextShader* Shader { GEngine->GetShaderChecked<LOrthographicTextShader>(Name_ShaderOrthographicText) };
+    const f32 TextScaleInSpt{ this->TextScale.InSpt(this->GetViewport()) };
 
-    f32 Out { 0.0f };
-    for (auto const Rune : InString)
+    LVector2 Out;
+    // LOrthographicTextShader::LCharacterMap::const_iterator LastIt{ Shader->GetCharacters().end() };
+    for (auto Rune : String)
     {
-        if (auto It { Shader->GetCharacters().find(static_cast<i8>(Rune)) }; It != Shader->GetCharacters().end())
+        if (auto It{ Shader->GetCharacters().find(static_cast<i8>(Rune)) }; It != Shader->GetCharacters().end())
         {
-            Out += static_cast<f32>(It->second.Advance.X) * this->TextScale.InSpt(*this) / 64.0f;
+            // if (LastIt != Shader->GetCharacters().end())
+            // {
+            //     Out.X += (static_cast<f32>(LastIt->second.Advance.X) / 64.0f) * TextScaleInSpt;
+            //     Out.Y  = Maths::Max(Out.Y, static_cast<f32>(LastIt->second.Size.Y) * TextScaleInSpt);
+            // }
+            //
+            // LastIt = It;
+
+            Out.X += (static_cast<f32>(It->second.Advance.X) / 64.0f) * TextScaleInSpt;
+            Out.Y  = Maths::Max(Out.Y, static_cast<f32>(It->second.Size.Y) * TextScaleInSpt);
         }
 
         continue;
     }
 
+    // if (LastIt != Shader->GetCharacters().end())
+    // {
+    //     Out.X += (static_cast<f32>(LastIt->second.Size.X)) * TextScaleInSpt;
+    //     Out.Y  = Maths::Max(Out.Y, static_cast<f32>(LastIt->second.Size.Y) * TextScaleInSpt);
+    // }
+
     return Out;
 }
 
-i32 Jafg::WTextBox::GoToWidth(const LString& InString, const f32 InWidth) const
+i32 Jafg::WTextBox::GoToWidth(const LString& InString, const f32 InWidth) const noexcept
 {
     if (InString.empty())
     {

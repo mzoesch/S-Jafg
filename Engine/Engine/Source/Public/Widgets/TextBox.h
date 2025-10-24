@@ -45,10 +45,11 @@ public:
     virtual void BeginLifeCDR() override;
     virtual void Draw(LViewport& Context) const override;
 
-    virtual void UpdateDesiredSize() const override;
-    void UpdateDesiredSizeForString(const LString& InString) const;
-    f32 GetDesiredWidth(const LString& InString) const;
-    i32 GoToWidth(const LString& InString, const f32 InWidth) const;
+    FORCEINLINE void UpdateDesiredSize() const override { this->UpdateDesiredSizeForString(this->Content); }
+    void UpdateDesiredSizeForString(LString const& String) const noexcept;
+    FORCEINLINE f32 GetDesiredWidthForString(LString const& String) const noexcept { return this->GetDesiredSizeForString(String).X; }
+    LVector2 GetDesiredSizeForString(LString const& String) const noexcept;
+    i32 GoToWidth(LString const& InString, const f32 InWidth) const noexcept;
 
     //# Called if the text box content changes.
     LTextBoxChangedDelegate OnChanged;
