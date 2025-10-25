@@ -52,7 +52,10 @@ void Jafg::WDebugMenu::OnVisibilityChanged(const EWidgetVisibility::Type InOldVi
     {
         Surface.SetInputMode(EInputMode::Both, true);
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         ConstructWidgetNode<WEditorView>(this->GetOuter())->AddToViewport(&this->GetViewport());
+#pragma clang diagnostic pop
     }
     else
     {

@@ -23,14 +23,17 @@ void Jafg::WButton::Construct()
 
 Jafg::LCursorReply Jafg::WButton::OnCursorEnter()
 {
-    if (LCursorReply Reply { Super::OnCursorEnter() }; Reply.IsHandled())
-    {
-        return Reply;
-    }
-
     if (this->IsEnabled() && this->bLetUiReactToEvents)
     {
         this->SetBrush(this->Style.HoverBrush);
+    }
+
+    if (this->OnCursorEnterEvent.IsBound())
+    {
+        if (LCursorReply Reply{ this->OnCursorEnterEvent.Invoke(*this) }; Reply.IsHandled())
+        {
+            return Reply;
+        }
     }
 
     return LCursorReply::Handled();
@@ -38,20 +41,23 @@ Jafg::LCursorReply Jafg::WButton::OnCursorEnter()
 
 Jafg::LCursorReply Jafg::WButton::OnCursorLeave()
 {
-    if (LCursorReply Reply { Super::OnCursorLeave() }; Reply.IsHandled())
-    {
-        return Reply;
-    }
-
     if (this->IsEnabled() && this->bLetUiReactToEvents)
     {
         this->SetBrush(this->Style.NormalBrush);
     }
 
+    if (this->OnCursorLeaveEvent.IsBound())
+    {
+        if (LCursorReply Reply{ this->OnCursorLeaveEvent.Invoke(*this) }; Reply.IsHandled())
+        {
+            return Reply;
+        }
+    }
+
     return LCursorReply::Handled();
 }
 
-Jafg::LReply Jafg::WButton::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WButton::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     if (this->IsEnabled() == false)
     {
@@ -99,7 +105,7 @@ Jafg::LReply Jafg::WButton::OnKeyDown(const LViewport& InViewport, const LKeyEve
     return Super::OnKeyDown(InViewport, InKeyEvent);
 }
 
-Jafg::LReply Jafg::WButton::OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WButton::OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     if (this->IsEnabled() == false)
     {

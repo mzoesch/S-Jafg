@@ -33,7 +33,19 @@ enum Type : u8
 
 } /* ~Namespace EConsoleScreenState */
 
-DECLARE_JAFG_WIDGET(ECxxClassFlags::Config)
+template<typename TNode>
+struct TConsoleScreenFactory : public TWidgetFactoryParentBase<TNode>
+{
+    GENERATED_FACTORY_BODY(TWidgetFactoryParentBase)
+
+    FORCEINLINE TFactoryRetTy& StretchConsoleComponents(const bool bInStretchConsoleComponents) noexcept
+    {
+        this->This()->StretchConsoleComponents(bInStretchConsoleComponents);
+        return this->Self();
+    }
+};
+
+DECLARE_JAFG_WIDGET_WITH_FACTORY(TConsoleScreenFactory, ECxxClassFlags::Config)
 class WConsoleScreen final : public WUserWidget
 {
     GENERATED_CLASS_BODY()
@@ -48,7 +60,7 @@ public:
     virtual void Construct() override;
     virtual void Tick() override;
     virtual void OnGarbageDefault(ECxxRecordTearDownReason::Type Reason) override;
-    virtual LReply OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
+    virtual LReply OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
 
     void OnEscape();
     ENGINE_API void SetConsoleFrontendState(const EConsoleScreenState::Type InState);
@@ -96,6 +108,9 @@ public:
     FORCEINLINE const LString* GetCurrentHistoryItemChecked() const { check( this->IsHistoryCursorValid() ) return this->GetCurrentHistoryItem(); }
     FORCEINLINE const LString* GetCurrentHistoryItemCheckedAssert() const { jassert( this->IsHistoryCursorValid() ) return this->GetCurrentHistoryItem(); }
 
+    FORCEINLINE void StretchConsoleComponents(const bool bStretch) noexcept { this->bStretchConsoleComponents = bStretch; }
+    FORCEINLINE bool AreConsoleComponentsStretched() const noexcept { return this->bStretchConsoleComponents; }
+
 private:
 
     bool OnAllowCommit();
@@ -123,7 +138,7 @@ private:
     TCdrIgnore<TArray<LString>> History;
 
     CLASS_FIELD(Config)
-    TCdrIgnore<u32> ConsoleWidth{ 500 };
+    TCdrIgnore<u32> ConsoleWidth{ 250 };
 
     CLASS_FIELD(Config)
     TCdrIgnore<u32> MaxPreviewLines{ 10 };
@@ -178,6 +193,8 @@ private:
 
     CLASS_FIELD()
     TCdrIgnore<LCliCommandHandle> CommandHandle_Clear;
+
+    bool bStretchConsoleComponents{ false };
 
 #if !IN_SHIPPING
     void MockSomeMessages();

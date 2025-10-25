@@ -384,7 +384,7 @@ void Jafg::WScrollRegion::UserInterfaceTick(const LViewport& InViewport)
     return;
 }
 
-Jafg::LReply Jafg::WScrollRegion::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WScrollRegion::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     if (InKeyEvent.GetKey() == EKeys::MouseWheelAxis)
     {
@@ -403,7 +403,7 @@ Jafg::LReply Jafg::WScrollRegion::OnKeyDown(const LViewport& InViewport, const L
     return Super::OnKeyDown(InViewport, InKeyEvent);
 }
 
-Jafg::LReply Jafg::WScrollRegion::OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WScrollRegion::OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     if (InKeyEvent.GetKey() == EKeys::LeftMouseButton)
     {

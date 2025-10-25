@@ -74,14 +74,14 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
     /* Sweep cursor input over widgets. */
     if (bCursorLocationIsMeaningful)
     {
-        for (WUserWidget* Widget : this->TopLevelWidgets)
+        for (auto It{this->TopLevelWidgets.rbegin()}; It != this->TopLevelWidgets.rend(); ++It)
         {
-            if (Widget->ShouldCheckForInputs() == false)
+            if ((*It)->ShouldCheckForInputs() == false)
             {
                 continue;
             }
 
-            if (LCursorReply Reply { Widget->SweepMouse(*this, InCursorLocation) }; Reply.IsHandled())
+            if (LCursorReply Reply{ (*It)->SweepMouse(*this, InCursorLocation) }; Reply.IsHandled())
             {
                 SweepReply = std::move(Reply);
                 break;
@@ -127,14 +127,14 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
     if (bCursorLocationIsMeaningful && Context.IsNewKeyDown(EKeys::LeftMouseButton))
     {
         bool bIsHandled { false };
-        for (WUserWidget* Widget : this->TopLevelWidgets)
+        for (auto& Widget : this->HoveredWidgets)
         {
             if (Widget->ShouldCheckForInputs() == false)
             {
                 continue;
             }
 
-            if (const LReply Reply { Widget->SweepFocusTest(*this, InCursorLocation) }; Reply.IsHandled())
+            if (const LReply Reply{ Widget->SweepFocusTest(*this, InCursorLocation) }; Reply.IsHandled())
             {
                 this->HandleReply(Context, Reply);
                 bIsHandled = true;
@@ -153,9 +153,9 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
     if (this->FocusedWidget.IsValid())
     {
         bool bIsDrawn { false };
-        for (const WUserWidget* Widget : this->TopLevelWidgets)
+        for (auto It{ this->TopLevelWidgets.rbegin() }; It != this->TopLevelWidgets.rend(); ++It)
         {
-            if (Widget->FindNodeInVisiblePath(this->FocusedWidget.Get()))
+            if ((*It)->FindNodeInVisiblePath(this->FocusedWidget.Get()))
             {
                 bIsDrawn = true;
                 break;
@@ -191,19 +191,19 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
 
         if (bCursorLocationIsMeaningful)
         {
-            for (WUserWidget* Widget : this->TopLevelWidgets)
+            for (auto It{ this->TopLevelWidgets.rbegin() }; It != this->TopLevelWidgets.rend(); ++It)
             {
-                if (Widget == this->FocusedWidget || Widget->ShouldCheckForInputs() == false)
+                if ((*It) == this->FocusedWidget || (*It)->ShouldCheckForInputs() == false)
                 {
                     continue;
                 }
 
-                if (Widget->IsInBounds(*this, InCursorLocation) == false)
+                if ((*It)->IsInBounds(*this, InCursorLocation) == false)
                 {
                     continue;
                 }
 
-                if (const LReply Reply { Widget->OnKeyDownNoFocus(*this, Input) }; Reply.IsHandled())
+                if (const LReply Reply { (*It)->OnKeyDownNoFocus(*this, Input) }; Reply.IsHandled())
                 {
                     this->HandleReply(Context, Reply);
                     break;
@@ -235,19 +235,19 @@ void Jafg::LViewport::DispatchInputs(LSurface& Context, const LVector2& InCursor
 
         if (bCursorLocationIsMeaningful)
         {
-            for (WUserWidget* Widget : this->TopLevelWidgets)
+            for (auto It{ this->TopLevelWidgets.rbegin() }; It != this->TopLevelWidgets.rend(); ++It)
             {
-                if (Widget == this->FocusedWidget || Widget->ShouldCheckForInputs() == false)
+                if ((*It) == this->FocusedWidget || (*It)->ShouldCheckForInputs() == false)
                 {
                     continue;
                 }
 
-                if (Widget->IsInBounds(*this, InCursorLocation) == false)
+                if ((*It)->IsInBounds(*this, InCursorLocation) == false)
                 {
                     continue;
                 }
 
-                if (const LReply Reply { Widget->OnKeyUpNoFocus(*this, Input) }; Reply.IsHandled())
+                if (const LReply Reply { (*It)->OnKeyUpNoFocus(*this, Input) }; Reply.IsHandled())
                 {
                     this->HandleReply(Context, Reply);
                     break;
@@ -445,7 +445,7 @@ void Jafg::LViewport::RemoveWidget(WUserWidget* Widget)
 
 bool Jafg::LViewport::TryRemoveWidget(WUserWidget* Widget)
 {
-    return algo::erase_once(&this->HoveredWidgets, Widget);
+    return algo::erase_once(&this->TopLevelWidgets, Widget);
 }
 
 void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)

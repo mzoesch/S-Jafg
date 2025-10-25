@@ -26,8 +26,8 @@ public:
     virtual void Construct() override;
     virtual LCursorReply OnCursorEnter() override;
     virtual LCursorReply OnCursorLeave() override;
-    virtual LReply OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
-    virtual LReply OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
+    virtual LReply OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
+    virtual LReply OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
 
     LOnHButtonKeyEvent OnPrimaryPressDelegate;
     LOnHButtonKeyEvent OnPrimaryReleaseDelegate;

@@ -62,3 +62,32 @@ private:
 };
 
 } /* ~Namespace Jafg */
+
+#include "Widgets/Viewport.h"
+
+namespace Jafg
+{
+
+template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
+FORCEINLINE TNode* ConstructWidgetNode(LViewport* Viewport, LClassOuter* Outer /* = nullptr */)
+{
+    check( Viewport )
+    return ConstructWidgetNode<TNode>(Viewport, Outer ? Outer : &Viewport->GetOuter(), TNode::StaticClass());
+}
+template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
+FORCEINLINE TNode* ConstructWidgetNode(LViewport* Viewport, TSubclassOf<TNode> const& Class)
+{
+    check( Viewport )
+    return ConstructWidgetNode<TNode>(Viewport, Viewport->GetOuter(), Class);
+}
+template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
+FORCEINLINE TNode* ConstructWidgetNode(LViewport* Viewport, LClassOuter* Outer, TSubclassOf<TNode> const& Class)
+{
+    check( Viewport && Outer )
+    TNode* Out{ ConstructDeferredWidgetNode<TNode>(Outer, Class) };
+    Out->AddToViewport(Viewport);
+    MakeDeferredWidgetNodeFinal(Out);
+    return Out;
+}
+
+} /* ~Namespace Jafg */

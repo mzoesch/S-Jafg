@@ -62,7 +62,7 @@ public:
     virtual LCursorReply OnCursorLeave() override;
     virtual void         OnFocusReceived() override;
     virtual void         OnFocusLost() override;
-    virtual LReply       OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
+    virtual LReply       OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
 
     void OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType);
 

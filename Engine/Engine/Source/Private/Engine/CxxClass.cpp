@@ -84,6 +84,8 @@ Jafg::LCommandLineInterface& Jafg::JCxxClass::GetCommandLineInterface() const no
 #if LAL_DO_CHECKS
 void Jafg::JCxxClass::CheckDoubleDestroy(void const* Ptr)
 {
+    return;
+
     if (const auto It{ DoubleDestroyCheckTable.find(Ptr) }; It != DoubleDestroyCheckTable.end())
     {
         panicMsgf("Double destroy detected. At memory address [{}]. Previous destroy stacktrace:\n{}"

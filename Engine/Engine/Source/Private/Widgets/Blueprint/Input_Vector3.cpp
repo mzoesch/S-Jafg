@@ -24,6 +24,9 @@ void Jafg::WInput_Vector3::Construct()
     Brush.OutlineThickness = 1.0f;
     Brush.OutlineTint = Lal::LColor::Gray;
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
     WTextBox* Display { ConstructWidgetNode<WTextBox>(this->GetOuter()) };
     Display->SetBrush(Brush);
     Display->SetType(ERegionBrush::None);
@@ -52,6 +55,8 @@ void Jafg::WInput_Vector3::Construct()
     Z->SetMinDesiredSize({48_pt, 0});
     Z->ContentPredicate.BindWeak(WEditableTextBox::IsContentFloatingPoint);
     this->AddChild(Z);
+
+#pragma clang diagnostic pop
 
     return;
 }

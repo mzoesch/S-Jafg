@@ -216,10 +216,12 @@ Jafg::LCursorReply Jafg::WNode::SweepMouse(LViewport& Context, const LVector2& I
 
     if (Context.AddHoveredWidgetForFrame(this))
     {
-        if (LCursorReply Reply { this->OnCursorEnter() }; Reply.IsHandled())
+        if (LCursorReply Reply{ this->OnCursorEnter() }; Reply.IsHandled())
         {
             return Reply;
         }
+
+        return LCursorReply::Handled();
     }
 
     return this->OnCursorMoved(InLocation);
@@ -235,8 +237,13 @@ Jafg::LReply Jafg::WNode::SweepFocusTest(const LViewport& Context, const LVector
     return { this };
 }
 
-Jafg::LReply Jafg::WNode::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WNode::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
+    if (this->OnKeyDownEvent.IsBound())
+    {
+        return this->OnKeyDownEvent.Invoke(*this, InViewport, InKeyEvent);
+    }
+
     if (this->Slot.Parent)
     {
         return this->Slot.Parent->OnKeyDown(InViewport, InKeyEvent);
@@ -245,8 +252,13 @@ Jafg::LReply Jafg::WNode::OnKeyDown(const LViewport& InViewport, const LKeyEvent
     return LReply::Unhandled();
 }
 
-Jafg::LReply Jafg::WNode::OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WNode::OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
+    if (this->OnKeyUpEvent.IsBound())
+    {
+        return this->OnKeyUpEvent.Invoke(*this, InViewport, InKeyEvent);
+    }
+
     if (this->Slot.Parent)
     {
         return this->Slot.Parent->OnKeyUp(InViewport, InKeyEvent);
@@ -319,6 +331,7 @@ void Jafg::WNode::RemoveFromParent(const bool bDestroy /* = true */)
         this->Slot.Parent->RemoveChild(this);
         check( this->Slot.Parent == nullptr && this->Slot.Content == nullptr && this->Slot.Margin == nullptr )
     }
+
     if (bDestroy)
     {
         this->MarkAsGarbage_v2();

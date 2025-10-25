@@ -71,8 +71,13 @@ enum Type : u8
 struct LTextScale final
 {
     FORCEINLINE constexpr LTextScale() noexcept
+#if LAL_PLATFORM_USES_LITTLE_ENDIAN
+        : PredefinedScale(static_cast<u8>(ETextScale::Body))
+        , bPredefined(true)
+#else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
         : bPredefined(true)
-        , PredefinedScale(ETextScale::Body)
+        , PredefinedScale(static_cast<u8>(ETextScale::Body))
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
     {
         check( this->bPredefined == true )
         check( this->GetPredefinedScale() == ETextScale::Body )
@@ -84,14 +89,20 @@ struct LTextScale final
     FORCEINLINE LTextScale(f32 CustomScale) noexcept
         : bPredefined(false)
     {
+        check( CustomScale > 0.0f )
         this->CustomScale = std::bit_cast<u32>(CustomScale);
         check( this->bPredefined == false )
         check( this->GetCustomScale() == CustomScale )
     }
 
     FORCEINLINE LTextScale(ETextScale::Type Predefined) noexcept
+#if LAL_PLATFORM_USES_LITTLE_ENDIAN
+        : PredefinedScale(static_cast<u8>(Predefined))
+        , bPredefined(true)
+#else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
         : bPredefined(true)
         , PredefinedScale(static_cast<u8>(Predefined))
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
     {
         check( this->bPredefined == true )
         check( this->GetPredefinedScale() == Predefined )
@@ -100,6 +111,7 @@ struct LTextScale final
     FORCEINLINE LTextScale& operator=(f32 CustomScale) noexcept
     {
         this->bPredefined = false;
+        check( CustomScale > 0.0f )
         this->CustomScale = std::bit_cast<u32>(CustomScale);
 
         check( this->bPredefined == false )
@@ -170,11 +182,25 @@ private:
 
     union
     {
+#if LAL_PLATFORM_USES_LITTLE_ENDIAN
         struct
         {
-            bool bPredefined;
+            u8 PredefinedScale;
+            bool _padding1;
+            bool _padding2;
+            bool _padding3 : 7;
+            bool bPredefined : 1;
+        };
+#else /* LAL_PLATFORM_USES_LITTLE_ENDIAN */
+        struct
+        {
+            bool bPredefined : 1;
+            bool _padding3 : 7;
+            bool _padding2;
+            bool _padding1;
             u8 PredefinedScale;
         };
+#endif /* !LAL_PLATFORM_USES_LITTLE_ENDIAN */
         u32 CustomScale;
     };
 };

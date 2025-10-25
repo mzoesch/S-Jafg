@@ -26,10 +26,10 @@ void Jafg::WConsoleScreen::BeginLifeCDR()
         this->MaxHistorySize = 5;
     }
 
-    if (this->ConsoleWidth < 200)
+    if (this->ConsoleWidth < 100)
     {
-        LOG_ERROR(LogWidgets, "ConsoleWidth is set to [{}] which is less than the minimum of 200. Setting it to 200.", this->ConsoleWidth.get())
-        this->ConsoleWidth = 200;
+        LOG_ERROR(LogWidgets, "ConsoleWidth is set to [{}] which is less than the minimum of 100. Setting it to 100.", this->ConsoleWidth.get())
+        this->ConsoleWidth = 100;
     }
 
     if (this->MaxPreviewLines < 2)
@@ -77,14 +77,14 @@ void Jafg::WConsoleScreen::Construct()
     this->SetShouldTick(true);
 
     MakeRootNode(WRegion)
-        .Padding(5.0f)
+        .Padding(1_spt)
         .Anchor(EAnchor::Fill)
     [
         NewNode(WEditableTextBox).SaveTo(&this->EditableTextBlock)
             .Anchor(EAnchor::VBottom | EAnchor::HFill)
             .TextColor(Lal::LColor::White)
-            .TextScale(0.5f)
-            .Padding({5.0f, 4.5f})
+            .TextScale(ETextScale::Body)
+            .Padding({2, 2})
             .Tint({0, 0, 0, 164})
             .OnAllowCommit(LEditableTextBoxAllowCommitDelegate::CreateFunction(this, &WConsoleScreen::OnAllowCommit))
             .OnCommit(LEditableTextBoxCommitDelegate::CreateFunction(this, &WConsoleScreen::OnTextCommit))
@@ -95,8 +95,10 @@ void Jafg::WConsoleScreen::Construct()
             .Padding({0.0f, 0.0f, 0.0f, 50.0f})
         [
             NewNode(WScrollRegion).SaveTo(&this->ConsoleHistoryContainer)
-                .Anchor(EAnchor::VFill)
-                .MinDesiredSize({EWidgetSize::Points, static_cast<f32>(this->GetConsoleWidth()), 0.0f})
+                .Anchor(EAnchor::VFill | (this->AreConsoleComponentsStretched() ? EAnchor::HFill : EAnchor::Identity))
+                .MinDesiredSize(this->AreConsoleComponentsStretched() ?
+                      LWidgetSize2{}
+                    : LWidgetSize2{EWidgetSize::StaticPoints, static_cast<f32>(this->GetConsoleWidth()), 0.0f})
             [
                 NewNode(WVRegion).SaveTo(&this->ConsoleHistory)
                     .Anchor(EAnchor::VBottom | EAnchor::HFill)
@@ -150,6 +152,7 @@ void Jafg::WConsoleScreen::Construct()
     ]
     FinishWidgetStyling()
 
+    this->SetConsoleFrontendState(EConsoleScreenState::Show);
     return;
 }
 
@@ -178,7 +181,7 @@ void Jafg::WConsoleScreen::OnGarbageDefault(ECxxRecordTearDownReason::Type Reaso
     return;
 }
 
-Jafg::LReply Jafg::WConsoleScreen::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WConsoleScreen::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     check( this->EditableTextBlock )
 
@@ -336,11 +339,11 @@ void Jafg::WConsoleScreen::OnVisibilityChanged(const EWidgetVisibility::Type InO
 {
     Super::OnVisibilityChanged(InOldVisibility, InNewVisibility);
 
-    check
-    (
-        InNewVisibility == EWidgetVisibility::IntransitiveHitTestInvisible || InNewVisibility == EWidgetVisibility::Collapsed
-        && "This widget only allows IntransitiveHitTestInvisible and Collapsed visibility."
-    )
+    // check
+    // (
+    //     InNewVisibility == EWidgetVisibility::IntransitiveHitTestInvisible || InNewVisibility == EWidgetVisibility::Collapsed
+    //     && "This widget only allows IntransitiveHitTestInvisible and Collapsed visibility."
+    // )
 
     return;
 }

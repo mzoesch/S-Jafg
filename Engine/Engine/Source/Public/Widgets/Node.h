@@ -70,7 +70,7 @@ namespace EAnchor
 enum Type : u8
 {
     //# Default behavior. Usually this is the VTop | HLeft.
-    Default    = 0x0 << 0,
+    Identity   = 0x0 << 0,
 
     //# The top on the vertical axis.
     VTop       = 0x1 << 0,
@@ -396,10 +396,16 @@ public:
 //# @see NewNode(TNode) (Wsdsml)
 //# @see User/Frontend/DebugScreen.cpp (for usage example)
 //#
-template<typename TNode>
+template<typename TNode> [[deprecated]]
 FORCEINLINE TNode* ConstructWidgetNode(LClassOuter* Outer);
-template<typename TNode>
+template<typename TNode> [[deprecated]]
 FORCEINLINE TNode* ConstructWidgetNode(LClassOuter* Outer, TSubclassOf<TNode> const& Class);
+template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
+FORCEINLINE TNode* ConstructWidgetNode(LViewport* Viewport, LClassOuter* Outer = nullptr);
+template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
+FORCEINLINE TNode* ConstructWidgetNode(LViewport* Viewport, TSubclassOf<TNode> const& Class);
+template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
+FORCEINLINE TNode* ConstructWidgetNode(LViewport* Viewport, LClassOuter* Outer, TSubclassOf<TNode> const& Class);
 
 //#
 //# Constructs a new deferred widget node in the given context.
@@ -433,6 +439,9 @@ ENGINE_API  f32 InSptFromRelative(LViewport const& Viewport, f32 Relative) noexc
 FORCEINLINE f32 InSptFromRelative(WNode const& Node, f32 Relative) noexcept;
 ENGINE_API  LVector2 InSptFromRelative(LViewport const& Viewport, LVector2 Relative) noexcept;
 FORCEINLINE LVector2 InSptFromRelative(WNode const& Node, LVector2 Relative) noexcept;
+
+MAKE_DELEGATE_SIGNATURE(OnWidgetCursorEventSignature, LCursorReply, WNode& /* Widget */)
+MAKE_DELEGATE_SIGNATURE(OnWidgetKeyEventSignature, LReply, WNode& /* Widget */, LViewport& /* Viewport */, LKeyEvent const& /* KeyEvent */)
 
 //#
 //# The base class for everything that can be interpreted as a visual element.
@@ -497,9 +506,13 @@ public:
     bool IsInBounds(const LViewport& Context, const LVector2& InLocation) const;
     virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation);
 
-    virtual LCursorReply OnCursorEnter() { return LCursorReply::Unhandled(); }
-    virtual LCursorReply OnCursorMoved(const LVector2& InLocation) { return LCursorReply::Unhandled(); }
-    virtual LCursorReply OnCursorLeave() { return LCursorReply::Unhandled(); }
+    virtual LCursorReply OnCursorEnter() { if (this->OnCursorEnterEvent.IsBound()) { return this->OnCursorEnterEvent.Invoke(*this); } return LCursorReply::Handled(); }
+    virtual LCursorReply OnCursorMoved(const LVector2& InLocation) { if (this->OnCursorMovedEvent.IsBound()) { return this->OnCursorMovedEvent.Invoke(*this); } return LCursorReply::Handled(); }
+    virtual LCursorReply OnCursorLeave() { if (this->OnCursorLeaveEvent.IsBound()) { return this->OnCursorLeaveEvent.Invoke(*this); } return LCursorReply::Handled(); }
+
+    OnWidgetCursorEventSignature OnCursorEnterEvent;
+    OnWidgetCursorEventSignature OnCursorMovedEvent;
+    OnWidgetCursorEventSignature OnCursorLeaveEvent;
 
     virtual LReply SweepFocusTest(const LViewport& Context, const LVector2& InLocation);
 
@@ -525,8 +538,11 @@ public:
     //#
     //# @remark This key event includes repeated key events. Make sure to filter them accordingly.
     //#
-    virtual LReply OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent);
-    virtual LReply OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent);
+    virtual LReply OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent);
+    virtual LReply OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent);
+
+    OnWidgetKeyEventSignature OnKeyDownEvent;
+    OnWidgetKeyEventSignature OnKeyUpEvent;
 
     //#
     //# These events are meant to be bubbled from the parent down to the most outer children. If a child does handle

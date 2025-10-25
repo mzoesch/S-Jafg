@@ -4,6 +4,7 @@
 
 ENGINE_API LName Name_LevelMyWorld          = MAKE_NAME("LevelMyWorld");
 
+ENGINE_API LName Name_UicInOmni             = MAKE_NAME("InOmni");
 ENGINE_API LName Name_UicInMyWorld          = MAKE_NAME("InMyWorld");
 ENGINE_API LName Name_UicInMyWorldFoot      = MAKE_NAME("InMyWorldFoot");
 ENGINE_API LName Name_UicInPause            = MAKE_NAME("InPause");
@@ -32,6 +33,7 @@ ENGINE_API LName Name_ShaderOrthographicRoundedOutlineImageBox = MAKE_NAME("Shad
 ENGINE_API LName Name_ShaderOrthographicText                   = MAKE_NAME("ShaderJafgOrthographicText");
 ENGINE_API LName Name_ShaderChunk                              = MAKE_NAME("ShaderJafgChunk");
 
+ENGINE_API LName Name_UsrInOpenConsole         = MAKE_NAME("OpenConsole");
 ENGINE_API LName Name_UsrInToggleDebugScreen   = MAKE_NAME("ToggleDebugScreen");
 ENGINE_API LName Name_UsrInToggleDebugMenu     = MAKE_NAME("ToggleDebugMenu");
 ENGINE_API LName Name_UsrInTogglePauseScreen   = MAKE_NAME("TogglePauseScreen");

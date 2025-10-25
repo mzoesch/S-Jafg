@@ -27,7 +27,7 @@ Jafg::WEditableTextBox::WEditableTextBox(LCxxObjectInitializer const& CxxObjectI
 {
     this->SetVisibility(EWidgetVisibility::Visible);
     this->SetAnchor(EAnchor::Fill);
-    this->SetPadding({10.0, 8.0});
+    this->SetPadding({5.0, 4.0});
     this->SetType(ERegionBrush::Box);
     this->SetTint(Lal::LColor::Black);
     this->SetTextColor(Lal::LColor::White);
@@ -206,7 +206,7 @@ void Jafg::WEditableTextBox::OnFocusLost()
     return;
 }
 
-Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     if (InKeyEvent.GetKey() == EKeys::BackSpace || InKeyEvent.GetKey() == EKeys::PlatformDelete)
     {

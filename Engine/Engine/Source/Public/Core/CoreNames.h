@@ -12,6 +12,7 @@
 
 ENGINE_API extern LName Name_LevelMyWorld;
 
+ENGINE_API extern LName Name_UicInOmni;
 ENGINE_API extern LName Name_UicInMyWorld;
 ENGINE_API extern LName Name_UicInMyWorldFoot;
 ENGINE_API extern LName Name_UicInPause;
@@ -40,6 +41,7 @@ ENGINE_API extern LName Name_ShaderOrthographicRoundedOutlineImageBox;
 ENGINE_API extern LName Name_ShaderOrthographicText;
 ENGINE_API extern LName Name_ShaderChunk;
 
+ENGINE_API extern LName Name_UsrInOpenConsole;
 ENGINE_API extern LName Name_UsrInToggleDebugScreen;
 ENGINE_API extern LName Name_UsrInToggleDebugMenu;
 ENGINE_API extern LName Name_UsrInTogglePauseScreen;

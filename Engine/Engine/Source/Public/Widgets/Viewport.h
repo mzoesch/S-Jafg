@@ -57,6 +57,10 @@ public:
     void Draw();
     void TearDown();
 
+    //# Outer for this viewport only.
+    FORCEINLINE LClassOuter& GetOuter() noexcept { return this->Outer; }
+    FORCEINLINE LClassOuter const& GetOuter() const noexcept { return this->Outer; }
+
     //#
     //# !!!DO NOT USE!!! - Please read carefully.
     //# This delegate is called after the viewport has ticked.
@@ -70,6 +74,14 @@ public:
     //#
     mutable LOnLateTick OnLateTick;
 
+    template<typename TWidget> requires std::is_base_of_v<WUserWidget, TWidget>
+    FORCEINLINE TWidget* AddWidget()
+    {
+        TWidget* NewWidget{ ConstructDeferredWidgetNode<TWidget>(&this->Outer) };
+        NewWidget->AddToViewport(this);
+        MakeDeferredWidgetNodeFinal(NewWidget);
+        return NewWidget;
+    }
     void AddWidget(WUserWidget* Widget);
     void AddWidgetAt(const i32 Index, WUserWidget* Widget);
     ENGINE_API void RemoveWidget(WUserWidget* Widget);
@@ -100,7 +112,7 @@ public:
     template <typename TNode> requires std::is_base_of_v<WNode, TNode> TNode* GetTopLevelWidgetByClass() const;
     template <typename TNode> requires std::is_base_of_v<WNode, TNode> TNode* GetTopLevelWidgetByClassChecked() const;
 
-    template <typename TNode>
+    template<typename TNode>
     FORCEINLINE auto GetFocusedWidget() const -> const TNode* { return DynamicCast<TNode>(this->FocusedWidget.GetPointer()); }
     FORCEINLINE auto GetFocusedWidget() const -> const WNode* { return this->FocusedWidget.GetPointer(); }
     FORCEINLINE auto IsFocusedWidgetValid() const -> bool { return this->FocusedWidget != nullptr; }
@@ -195,6 +207,8 @@ private:
     TOptional<LVector2> CachedCursorLocation;
 
     Lal::LLinearColor BackgroundColor;
+
+    LClassOuter Outer{ "SurfaceViewport" };
 };
 
 FORCEINLINE LViewportSweepTranslation::LViewportSweepTranslation(const LViewport& InViewport, const LVector2D& InOffset) noexcept

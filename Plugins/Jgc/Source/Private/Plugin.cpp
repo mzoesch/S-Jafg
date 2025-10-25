@@ -36,7 +36,7 @@ void LJgcPluginLifetime::OnStartup()
         Jafg::LLevel
         {
             Name_LevelFrontend.ToString(),
-            Jafg::EInputMode::UserInterface, true,
+            Jafg::EInputMode::Both, true,
             Lal::LLinearColor::CadetBlue
         }
     ) == false)

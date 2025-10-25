@@ -29,6 +29,10 @@ void Jafg::WUserWidget::OnGarbage(ECxxRecordTearDownReason::Type Reason)
 void Jafg::WUserWidget::Destruct()
 {
     Super::Destruct();
+
+    // check( this->GetParent() == nullptr )
+    check( this->GetChildren().size() == 0 )
+    // check( this->AttachedViewport == nullptr )
     this->Root = nullptr;
 
     return;
@@ -67,17 +71,12 @@ void Jafg::WUserWidget::AddToViewportAt(const i32 InIndex, LViewport* InViewport
 
 void Jafg::WUserWidget::RemoveFromParent(const bool bDestroy /* = true */)
 {
-    Super::RemoveFromParent();
+    Super::RemoveFromParent(bDestroy);
 
     if (this->AttachedViewport)
     {
         this->AttachedViewport->RemoveWidget(this);
         this->AttachedViewport = nullptr;
-    }
-
-    if (bDestroy)
-    {
-        this->MarkAsGarbage_v2();
     }
 
     return;

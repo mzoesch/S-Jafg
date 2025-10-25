@@ -51,7 +51,7 @@ Jafg::LCursorReply Jafg::WVButton::OnCursorLeave()
     return LCursorReply::Handled();
 }
 
-Jafg::LReply Jafg::WVButton::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WVButton::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     if (this->IsEnabled() == false)
     {
@@ -99,7 +99,7 @@ Jafg::LReply Jafg::WVButton::OnKeyDown(const LViewport& InViewport, const LKeyEv
     return Super::OnKeyDown(InViewport, InKeyEvent);
 }
 
-Jafg::LReply Jafg::WVButton::OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WVButton::OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     if (this->IsEnabled() == false)
     {

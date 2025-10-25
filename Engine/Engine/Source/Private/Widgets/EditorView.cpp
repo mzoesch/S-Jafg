@@ -26,7 +26,7 @@ void Jafg::WEditorView::Tick()
     return;
 }
 
-Jafg::LReply Jafg::WEditorView::OnKeyDown(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WEditorView::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     if (InKeyEvent.GetKey() == EKeys::RightMouseButton)
     {
@@ -46,7 +46,7 @@ Jafg::LReply Jafg::WEditorView::OnKeyDownNoFocus(const LViewport& InViewport, co
     return Super::OnKeyDownNoFocus(InViewport, InKeyEvent);
 }
 
-Jafg::LReply Jafg::WEditorView::OnKeyUp(const LViewport& InViewport, const LKeyEvent& InKeyEvent)
+Jafg::LReply Jafg::WEditorView::OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
     if (InKeyEvent.GetKey() == EKeys::RightMouseButton)
     {

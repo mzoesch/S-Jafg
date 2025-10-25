@@ -41,11 +41,11 @@ public:
     virtual void OnSecondaryPress()   { }
     virtual void OnSecondaryRelease() { }
 
-    FORCEINLINE void SetNormalBrush(const LRegionBrush& InBrush) noexcept { this->Style.NormalBrush = InBrush; }
-    FORCEINLINE void SetHoverBrush(const LRegionBrush& InBrush) noexcept { this->Style.HoverBrush = InBrush; }
-    FORCEINLINE void SetPressBrush(const LRegionBrush& InBrush) noexcept { this->Style.PressBrush = InBrush; }
-    FORCEINLINE void SetDisabledBrush(const LRegionBrush& InBrush) noexcept { this->Style.DisabledBrush = InBrush; }
-    FORCEINLINE void SetOmniBrush(const LRegionBrush& InBrush) noexcept
+    FORCEINLINE void SetNormalBrush(LRegionBrush const& InBrush) noexcept { this->Style.NormalBrush = InBrush; }
+    FORCEINLINE void SetHoverBrush(LRegionBrush const& InBrush) noexcept { this->Style.HoverBrush = InBrush; }
+    FORCEINLINE void SetPressBrush(LRegionBrush const& InBrush) noexcept { this->Style.PressBrush = InBrush; }
+    FORCEINLINE void SetDisabledBrush(LRegionBrush const& InBrush) noexcept { this->Style.DisabledBrush = InBrush; }
+    FORCEINLINE void SetOmniBrush(LRegionBrush const& InBrush) noexcept
     {
         this->Style.NormalBrush   = InBrush;
         this->Style.HoverBrush    = InBrush;
@@ -69,11 +69,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalTint(const Lal::LColor& InTint) noexcept { this->Style.NormalBrush.Tint = InTint; }
-    FORCEINLINE void SetHoverTint(const Lal::LColor& InTint) noexcept { this->Style.HoverBrush.Tint = InTint; }
-    FORCEINLINE void SetPressTint(const Lal::LColor& InTint) noexcept { this->Style.PressBrush.Tint = InTint; }
-    FORCEINLINE void SetDisabledTint(const Lal::LColor& InTint) noexcept { this->Style.DisabledBrush.Tint = InTint; }
-    FORCEINLINE void SetOmniTint(const Lal::LColor& InTint) noexcept
+    FORCEINLINE void SetNormalTint(Lal::LColor const& InTint) noexcept { this->Style.NormalBrush.Tint = InTint; }
+    FORCEINLINE void SetHoverTint(Lal::LColor const& InTint) noexcept { this->Style.HoverBrush.Tint = InTint; }
+    FORCEINLINE void SetPressTint(Lal::LColor const& InTint) noexcept { this->Style.PressBrush.Tint = InTint; }
+    FORCEINLINE void SetDisabledTint(Lal::LColor const& InTint) noexcept { this->Style.DisabledBrush.Tint = InTint; }
+    FORCEINLINE void SetOmniTint(Lal::LColor const& InTint) noexcept
     {
         this->Style.NormalBrush.Tint   = InTint;
         this->Style.HoverBrush.Tint    = InTint;
@@ -83,11 +83,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalImage(const LImage& InImage) noexcept { this->Style.NormalBrush.Image = InImage; }
-    FORCEINLINE void SetHoverImage(const LImage& InImage) noexcept { this->Style.HoverBrush.Image = InImage; }
-    FORCEINLINE void SetPressImage(const LImage& InImage) noexcept { this->Style.PressBrush.Image = InImage; }
-    FORCEINLINE void SetDisabledImage(const LImage& InImage) noexcept { this->Style.DisabledBrush.Image = InImage; }
-    FORCEINLINE void SetOmniImage(const LImage& InImage) noexcept
+    FORCEINLINE void SetNormalImage(LImage const& InImage) noexcept { this->Style.NormalBrush.Image = InImage; }
+    FORCEINLINE void SetHoverImage(LImage const& InImage) noexcept { this->Style.HoverBrush.Image = InImage; }
+    FORCEINLINE void SetPressImage(LImage const& InImage) noexcept { this->Style.PressBrush.Image = InImage; }
+    FORCEINLINE void SetDisabledImage(LImage const& InImage) noexcept { this->Style.DisabledBrush.Image = InImage; }
+    FORCEINLINE void SetOmniImage(LImage const& InImage) noexcept
     {
         this->Style.NormalBrush.Image   = InImage;
         this->Style.HoverBrush.Image    = InImage;
@@ -97,11 +97,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalImageTint(const Lal::LColor& InImageTint) noexcept { this->Style.NormalBrush.Tint = InImageTint; }
-    FORCEINLINE void SetHoverImageTint(const Lal::LColor& InImageTint) noexcept { this->Style.HoverBrush.Tint = InImageTint; }
-    FORCEINLINE void SetPressImageTint(const Lal::LColor& InImageTint) noexcept { this->Style.PressBrush.Tint = InImageTint; }
-    FORCEINLINE void SetDisabledImageTint(const Lal::LColor& InImageTint) noexcept { this->Style.DisabledBrush.Tint = InImageTint; }
-    FORCEINLINE void SetOmniImageTint(const Lal::LColor& InImageTint) noexcept
+    FORCEINLINE void SetNormalImageTint(Lal::LColor const& InImageTint) noexcept { this->Style.NormalBrush.Tint = InImageTint; }
+    FORCEINLINE void SetHoverImageTint(Lal::LColor const& InImageTint) noexcept { this->Style.HoverBrush.Tint = InImageTint; }
+    FORCEINLINE void SetPressImageTint(Lal::LColor const& InImageTint) noexcept { this->Style.PressBrush.Tint = InImageTint; }
+    FORCEINLINE void SetDisabledImageTint(Lal::LColor const& InImageTint) noexcept { this->Style.DisabledBrush.Tint = InImageTint; }
+    FORCEINLINE void SetOmniImageTint(Lal::LColor const& InImageTint) noexcept
     {
         this->Style.NormalBrush.ImageTint   = InImageTint;
         this->Style.HoverBrush.ImageTint    = InImageTint;
@@ -167,11 +167,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalRadii(const LVector4& InRadii) noexcept { this->Style.NormalBrush.Radii = InRadii; }
-    FORCEINLINE void SetHoverRadii(const LVector4& InRadii) noexcept { this->Style.HoverBrush.Radii = InRadii; }
-    FORCEINLINE void SetPressRadii(const LVector4& InRadii) noexcept { this->Style.PressBrush.Radii = InRadii; }
-    FORCEINLINE void SetDisabledRadii(const LVector4& InRadii) noexcept { this->Style.DisabledBrush.Radii = InRadii; }
-    FORCEINLINE void SetOmniRadii(const LVector4& InRadii) noexcept
+    FORCEINLINE void SetNormalRadii(LVector4 const& InRadii) noexcept { this->Style.NormalBrush.Radii = InRadii; }
+    FORCEINLINE void SetHoverRadii(LVector4 const& InRadii) noexcept { this->Style.HoverBrush.Radii = InRadii; }
+    FORCEINLINE void SetPressRadii(LVector4 const& InRadii) noexcept { this->Style.PressBrush.Radii = InRadii; }
+    FORCEINLINE void SetDisabledRadii(LVector4 const& InRadii) noexcept { this->Style.DisabledBrush.Radii = InRadii; }
+    FORCEINLINE void SetOmniRadii(LVector4 const& InRadii) noexcept
     {
         this->Style.NormalBrush.Radii   = InRadii;
         this->Style.HoverBrush.Radii    = InRadii;
@@ -195,11 +195,11 @@ public:
         return;
     }
 
-    FORCEINLINE void SetNormalOutlineTint(const Lal::LColor& InOutlineTint) noexcept { this->Style.NormalBrush.OutlineTint = InOutlineTint; }
-    FORCEINLINE void SetHoverOutlineTint(const Lal::LColor& InOutlineTint) noexcept { this->Style.HoverBrush.OutlineTint = InOutlineTint; }
-    FORCEINLINE void SetPressOutlineTint(const Lal::LColor& InOutlineTint) noexcept { this->Style.PressBrush.OutlineTint = InOutlineTint; }
-    FORCEINLINE void SetDisabledOutlineTint(const Lal::LColor& InOutlineTint) noexcept { this->Style.DisabledBrush.OutlineTint = InOutlineTint; }
-    FORCEINLINE void SetOmniOutlineTint(const Lal::LColor& InOutlineTint) noexcept
+    FORCEINLINE void SetNormalOutlineTint(Lal::LColor const& InOutlineTint) noexcept { this->Style.NormalBrush.OutlineTint = InOutlineTint; }
+    FORCEINLINE void SetHoverOutlineTint(Lal::LColor const& InOutlineTint) noexcept { this->Style.HoverBrush.OutlineTint = InOutlineTint; }
+    FORCEINLINE void SetPressOutlineTint(Lal::LColor const& InOutlineTint) noexcept { this->Style.PressBrush.OutlineTint = InOutlineTint; }
+    FORCEINLINE void SetDisabledOutlineTint(Lal::LColor const& InOutlineTint) noexcept { this->Style.DisabledBrush.OutlineTint = InOutlineTint; }
+    FORCEINLINE void SetOmniOutlineTint(Lal::LColor const& InOutlineTint) noexcept
     {
         this->Style.NormalBrush.OutlineTint   = InOutlineTint;
         this->Style.HoverBrush.OutlineTint    = InOutlineTint;
@@ -209,13 +209,14 @@ public:
         return;
     }
 
+    FORCEINLINE void SetStyle(LButtonStyle const& InStyle) noexcept { this->Style = InStyle; }
     FORCEINLINE const LButtonStyle& GetStyle() const noexcept { return this->Style; }
     FORCEINLINE LButtonStyle& GetMutableStyle() noexcept { return this->Style; }
 
-    FORCEINLINE const LRegionBrush& GetNormalBrush() const noexcept { return this->Style.NormalBrush; }
-    FORCEINLINE const LRegionBrush& GetHoverBrush() const noexcept { return this->Style.HoverBrush; }
-    FORCEINLINE const LRegionBrush& GetPressBrush() const noexcept { return this->Style.PressBrush; }
-    FORCEINLINE const LRegionBrush& GetDisabledBrush() const noexcept { return this->Style.DisabledBrush; }
+    FORCEINLINE LRegionBrush const& GetNormalBrush() const noexcept { return this->Style.NormalBrush; }
+    FORCEINLINE LRegionBrush const& GetHoverBrush() const noexcept { return this->Style.HoverBrush; }
+    FORCEINLINE LRegionBrush const& GetPressBrush() const noexcept { return this->Style.PressBrush; }
+    FORCEINLINE LRegionBrush const& GetDisabledBrush() const noexcept { return this->Style.DisabledBrush; }
 
     FORCEINLINE LRegionBrush& GetMutableNormalBrush() noexcept { return this->Style.NormalBrush; }
     FORCEINLINE LRegionBrush& GetMutableHoverBrush() noexcept { return this->Style.HoverBrush; }
@@ -254,8 +255,78 @@ public:
     FORCEINLINE TFactoryRetTy& NormalBrush(const LRegionBrush& InBrush) { this->This()->SetNormalBrush(InBrush); return this->Self(); }
     FORCEINLINE TFactoryRetTy& HoverBrush(const LRegionBrush& InBrush) { this->This()->SetHoverBrush(InBrush); return this->Self(); }
     FORCEINLINE TFactoryRetTy& PressBrush(const LRegionBrush& InBrush) { this->This()->SetPressBrush(InBrush); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& DisabledBrush(const LRegionBrush& InBrush) { this->This()->SetDisabledBrush(InBrush); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OmniBrush(const LRegionBrush& InBrush) { this->This()->SetOmniBrush(InBrush); return this->Self(); }
 
+    FORCEINLINE TFactoryRetTy& NormalType(const ERegionBrush::Type InType) { this->This()->SetNormalType(InType); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& HoverType(const ERegionBrush::Type InType) { this->This()->SetHoverType(InType); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PressType(const ERegionBrush::Type InType) { this->This()->SetPressType(InType); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& DisabledType(const ERegionBrush::Type InType) { this->This()->SetDisabledType(InType); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OmniType(const ERegionBrush::Type InType) { this->This()->SetOmniType(InType); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& NormalTint(const Lal::LColor& InTint) { this->This()->SetNormalTint(InTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& HoverTint(const Lal::LColor& InTint) { this->This()->SetHoverTint(InTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PressTint(const Lal::LColor& InTint) { this->This()->SetPressTint(InTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& DisabledTint(const Lal::LColor& InTint) { this->This()->SetDisabledTint(InTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OmniTint(const Lal::LColor& InTint) { this->This()->SetOmniTint(InTint); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& NormalImage(const LImage& InImage) { this->This()->SetNormalImage(InImage); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& HoverImage(const LImage& InImage) { this->This()->SetHoverImage(InImage); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PressImage(const LImage& InImage) { this->This()->SetPressImage(InImage); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& DisabledImage(const LImage& InImage) { this->This()->SetDisabledImage(InImage); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OmniImage(const LImage& InImage) { this->This()->SetOmniImage(InImage); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& NormalImageTint(const Lal::LColor& InImageTint) { this->This()->SetNormalImageTint(InImageTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& HoverImageTint(const Lal::LColor& InImageTint) { this->This()->SetHoverImageTint(InImageTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PressImageTint(const Lal::LColor& InImageTint) { this->This()->SetPressImageTint(InImageTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& DisabledImageTint(const Lal::LColor& InImageTint) { this->This()->SetDisabledImageTint(InImageTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OmniImageTint(const Lal::LColor& InImageTint) { this->This()->SetOmniImageTint(InImageTint); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& NormalImageScale(const f32 InImageScale) { this->This()->SetNormalImageScale(InImageScale); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& HoverImageScale(const f32 InImageScale) { this->This()->SetHoverImageScale(InImageScale); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PressImageScale(const f32 InImageScale) { this->This()->SetPressImageScale(InImageScale); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& DisabledImageScale(const f32 InImageScale) { this->This()->SetDisabledImageScale(InImageScale); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OmniImageScale(const f32 InImageScale) { this->This()->SetOmniImageScale(InImageScale); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& NormalImageBehavior(const EImageBehavior::Type InImageBehavior) { this->This()->SetNormalImageBehavior(InImageBehavior); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& HoverImageBehavior(const EImageBehavior::Type InImageBehavior) { this->This()->SetHoverImageBehavior(InImageBehavior); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PressImageBehavior(const EImageBehavior::Type InImageBehavior) { this->This()->SetPressImageBehavior(InImageBehavior); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& DisabledImageBehavior(const EImageBehavior::Type InImageBehavior) { this->This()->SetDisabledImageBehavior(InImageBehavior); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OmniImageBehavior(const EImageBehavior::Type InImageBehavior) { this->This()->SetOmniImageBehavior(InImageBehavior); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& NormalImageOobm(const EImageOobm::Type InImageOobm) { this->This()->SetNormalImageOobm(InImageOobm); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& HoverImageOobm(const EImageOobm::Type InImageOobm) { this->This()->SetHoverImageOobm(InImageOobm); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PressImageOobm(const EImageOobm::Type InImageOobm) { this->This()->SetPressImageOobm(InImageOobm); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& DisabledImageOobm(const EImageOobm::Type InImageOobm) { this->This()->SetDisabledImageOobm(InImageOobm); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OmniImageOobm(const EImageOobm::Type InImageOobm) { this->This()->SetOmniImageOobm(InImageOobm); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& NormalImagePadding(const f32 InImagePadding) { this->This()->SetNormalImagePadding(InImagePadding); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& HoverImagePadding(const f32 InImagePadding) { this->This()->SetHoverImagePadding(InImagePadding); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PressImagePadding(const f32 InImagePadding) { this->This()->SetPressImagePadding(InImagePadding); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& DisabledImagePadding(const f32 InImagePadding) { this->This()->SetDisabledImagePadding(InImagePadding); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OmniImagePadding(const f32 InImagePadding) { this->This()->SetOmniImagePadding(InImagePadding); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& NormalRadii(const LVector4& InRadii) { this->This()->SetNormalRadii(InRadii); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& HoverRadii(const LVector4& InRadii) { this->This()->SetHoverRadii(InRadii); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PressRadii(const LVector4& InRadii) { this->This()->SetPressRadii(InRadii); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& DisabledRadii(const LVector4& InRadii) { this->This()->SetDisabledRadii(InRadii); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OmniRadii(const LVector4& InRadii) { this->This()->SetOmniRadii(InRadii); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& NormalOutlineThickness(const f32 InOutlineThickness) { this->This()->SetNormalOutlineThickness(InOutlineThickness); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& HoverOutlineThickness(const f32 InOutlineThickness) { this->This()->SetHoverOutlineThickness(InOutlineThickness); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PressOutlineThickness(const f32 InOutlineThickness) { this->This()->SetPressOutlineThickness(InOutlineThickness); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& DisabledOutlineThickness(const f32 InOutlineThickness) { this->This()->SetDisabledOutlineThickness(InOutlineThickness); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OmniOutlineThickness(const f32 InOutlineThickness) { this->This()->SetOmniOutlineThickness(InOutlineThickness); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& NormalOutlineTint(const Lal::LColor& InOutlineTint) { this->This()->SetNormalOutlineTint(InOutlineTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& HoverOutlineTint(const Lal::LColor& InOutlineTint) { this->This()->SetHoverOutlineTint(InOutlineTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& PressOutlineTint(const Lal::LColor& InOutlineTint) { this->This()->SetPressOutlineTint(InOutlineTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& DisabledOutlineTint(const Lal::LColor& InOutlineTint) { this->This()->SetDisabledOutlineTint(InOutlineTint); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OmniOutlineTint(const Lal::LColor& InOutlineTint) { this->This()->SetOmniOutlineTint(InOutlineTint); return this->Self(); }
+
+    FORCEINLINE TFactoryRetTy& Style(const LButtonStyle& InStyle) { this->This()->SetStyle(InStyle); return this->Self(); }
     FORCEINLINE TFactoryRetTy& UiResponsive(const bool bTrue) { this->This()->SetLetUiReactToEvents(bTrue); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& Enabled(const bool bInEnabled) { this->This()->SetEnabled(bInEnabled); return this->Self(); }
 };
 
 template <typename TNode>

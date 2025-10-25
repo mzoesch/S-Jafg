@@ -114,7 +114,7 @@ Jafg::LCursorReply Jafg::WParent::SweepMouse(LViewport& Context, const LVector2&
     {
         if (ChildSlot->Content->ShouldCheckForInputs())
         {
-            if (const LCursorReply Reply { ChildSlot->Content->SweepMouse(Context, InLocation) }; Reply.IsHandled())
+            if (const LCursorReply Reply{ ChildSlot->Content->SweepMouse(Context, InLocation) }; Reply.IsHandled())
             {
                 return Reply;
             }

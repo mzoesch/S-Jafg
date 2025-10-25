@@ -14,6 +14,7 @@
 #include "User/Input/InputAction.h"
 #include "Engine/Engine.h"
 #include "User/Frontend/Osd/DebugMenu.h"
+#include "User/Frontend/Osd/ConsoleWindow.h"
 
 void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 {
@@ -21,16 +22,44 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
 
     LUserInput* UserInput{ &this->GetLocalEgo().GetUserInput() };
 
+    LUserInputContext* ContextOmni        = UserInput->RegisterContext(LUserInputContext{Name_UicInOmni, "In Omni"});
     LUserInputContext* ContextMyWorld     = UserInput->RegisterContext(LUserInputContext{Name_UicInMyWorld, "In My World"});
     LUserInputContext* ContextMyWorldFoot = UserInput->RegisterContext(LUserInputContext{Name_UicInMyWorldFoot, "In My World Foot"});
     LUserInputContext* ContextInPause     = UserInput->RegisterContext(LUserInputContext{Name_UicInPause, "In Pause"});
     LUserInputContext* ContextInConsole   = UserInput->RegisterContext(LUserInputContext{Name_UicInConsole, "In Console"});
     LUserInputContext* ContextDebugMenu   = UserInput->RegisterContext(LUserInputContext{Name_UicInDebugMenu, "In Debug Menu"});
+    check( ContextOmni        )
     check( ContextMyWorld     )
     check( ContextMyWorldFoot )
     check( ContextInPause     )
     check( ContextInConsole   )
     check( ContextDebugMenu   )
+
+    // Action: OpenConsole
+    {
+        ContextOmni->MapAction
+        (
+            UserInput,
+            {Name_UsrInOpenConsole, "Open Console", EInputActionCategory::Boolean},
+            "",
+            EKeys::F9,
+            EInputActionTrigger::Triggered,
+            {},
+            [](LInputActionValue& InValue)
+            {
+                if (auto* FocusedSurface{ GEngine->GetLocalEgo().GetFrontend().GetFocusedSurface() })
+                {
+                    FocusedSurface->GetViewport().AddWidget<WConsoleWindow>();
+                }
+                else
+                {
+                    LOG_ERROR(LogUserInput, "No focused surface found to open console on.")
+                }
+
+                return;
+            }
+        );
+    }
 
     // Action: ToggleDebugScreen
     {
@@ -384,6 +413,8 @@ void Jafg::JCoreInputSubsystem::Initialize(LSubsystemCollection& Collection)
             }
         );
     }
+
+    UserInput->ActivateContext(ContextOmni);
 
     return;
 }

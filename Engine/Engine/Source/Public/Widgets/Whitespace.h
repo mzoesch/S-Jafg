@@ -90,6 +90,14 @@ struct LWhitespace
     {
     }
 
+    FORCEINLINE constexpr LWhitespace(const LVector2& WestNorth, f32 InEast, f32 InSouth) noexcept
+        : West(WestNorth.X)
+        , North(WestNorth.Y)
+        , East(InEast)
+        , South(InSouth)
+    {
+    }
+
     FORCEINLINE constexpr LWhitespace(const EWidgetSize::Type InType, const f32 UniformWhitespace) noexcept
         : Type(InType)
         , West(UniformWhitespace)
@@ -114,6 +122,33 @@ struct LWhitespace
         , North(InNorth)
         , East(InEast)
         , South(InSouth)
+    {
+    }
+
+    FORCEINLINE constexpr LWhitespace(const EWidgetSize::Type InType, const LVector2& WestNorth, f32 InEast, f32 InSouth) noexcept
+        : Type(InType)
+        , West(WestNorth.X)
+        , North(WestNorth.Y)
+        , East(InEast)
+        , South(InSouth)
+    {
+    }
+
+    FORCEINLINE constexpr LWhitespace(const LWidgetSize1 Size) noexcept
+        : Type(Size.Type)
+        , West(Size.Size)
+        , North(Size.Size)
+        , East(Size.Size)
+        , South(Size.Size)
+    {
+    }
+
+    FORCEINLINE constexpr LWhitespace(const LWidgetSize2 Size) noexcept
+        : Type(Size.Type)
+        , West(Size.X)
+        , North(Size.Y)
+        , East(Size.X)
+        , South(Size.Y)
     {
     }
 
