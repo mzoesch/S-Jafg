@@ -48,7 +48,7 @@ Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildGeneral
 
     return &NewNodeCtx(Context, WVRegion)
         .Anchor(EAnchor::Fill)
-        .VSpace(5)
+        .VSpace(5_pt)
     [
         NewNodeCtx(Context, WTextBox)
             .Anchor(EAnchor::HCenter)
@@ -149,7 +149,7 @@ Jafg::TWidgetFactoryVRegion<Jafg::WVRegion>* _BuildMultiplayer
 
     return &NewNodeCtx(Context, WVRegion)
         .Anchor(EAnchor::Fill)
-        .VSpace(5)
+        .VSpace(5_pt)
     [
         NewNodeCtx(Context, WTextBox).SaveTo(OutHeader)
             .Anchor(EAnchor::HCenter)
@@ -640,7 +640,7 @@ void Jafg::WHostSessionScreen_Old::Construct()
     NewNode(WVRegion).SaveTo(&Region)
         .Anchor(EAnchor::Fill)
         .MaxDesiredSize({1000_pt, 0})
-        .VSpace(10)
+        .VSpace(10_pt)
     [
         NewNode(WTextBox)
             .Anchor(EAnchor::CenterCenter)
@@ -656,7 +656,7 @@ void Jafg::WHostSessionScreen_Old::Construct()
         [
             NewNode(WVRegion).SaveTo(&this->SavesRegion)
                 .Anchor(EAnchor::Fill)
-                .VSpace(5)
+                .VSpace(5_pt)
                 .Padding({30, 10})
         ]
         +
@@ -953,7 +953,7 @@ void Jafg::WHostSessionScreen_Old_Host::Construct()
     WVRegion* Region;
     NewNode(WVRegion).SaveTo(&Region)
         .Anchor(EAnchor::Fill)
-        .VSpace(10)
+        .VSpace(10_pt)
     [
         NewNode(WScrollRegion)
             .Anchor(EAnchor::Fill)

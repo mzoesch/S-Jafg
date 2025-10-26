@@ -71,7 +71,7 @@ bool Jafg::WPreferencesPanel::AddData(JNodeData& Data)
         NewNode(WVRegion).SaveTo(&ChildContainer)
             .Anchor(EAnchor::Fill)
             .Padding(40.0f)
-            .VSpace(5.0f)
+            .VSpace(5_pt)
     ];
 
     ::AddPreference(ChildContainer, P);

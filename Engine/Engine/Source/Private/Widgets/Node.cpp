@@ -10,35 +10,39 @@
 namespace
 {
 
-std::map<void*, Jafg::LWidgetFactory*> GWidgetFactories;
+std::map<void*, TUnique<Jafg::LWidgetFactory>> GWidgetFactories;
 
 } /* ~Namespace <Anonymous> */
 
 namespace Jafg::Private
 {
 
-ENGINE_API void AddWidgetFactory(LWidgetFactory* InFactory)
+ENGINE_API void AddWidgetFactory(TUnique<LWidgetFactory> InFactory)
 {
-#if LAL_DO_CHECKS
     check( InFactory->GetNodeRaw() )
-    const std::map<void*, Jafg::LWidgetFactory*>::iterator It = GWidgetFactories.find(InFactory->GetNodeRaw());
-    if (It != GWidgetFactories.end())
+
+#if LAL_DO_CHECKS
+    for (auto const& Snd: GWidgetFactories | std::views::values)
     {
-        panic( "The widget factory is already registered." )
+        check( Snd && Snd->GetNodeRaw() )
+        check( Snd->GetNodeRaw() != InFactory->GetNodeRaw() )
     }
 #endif /* LAL_DO_CHECKS */
 
-    GWidgetFactories[InFactory->GetNodeRaw()] = InFactory;
+    GWidgetFactories[InFactory->GetNodeRaw()] = std::move(InFactory);
 
     return;
 }
 
 ENGINE_API LWidgetFactory* FindOrNullWidgetFactory(const void* InNode)
 {
-    const std::map<void*, Jafg::LWidgetFactory*>::iterator It = GWidgetFactories.find(const_cast<void*>(InNode));
-    if (It != GWidgetFactories.end())
+    for (auto const& [Fst, Snd] : GWidgetFactories)
     {
-        return It->second;
+        if (Fst == InNode)
+        {
+            check( Snd )
+            return Snd.get();
+        }
     }
 
     return nullptr;
@@ -46,28 +50,18 @@ ENGINE_API LWidgetFactory* FindOrNullWidgetFactory(const void* InNode)
 
 ENGINE_API LWidgetFactory& GetWidgetFactory(const void* InNode)
 {
-    const std::map<void*, Jafg::LWidgetFactory*>::iterator It = GWidgetFactories.find(const_cast<void*>(InNode));
-    if (It != GWidgetFactories.end())
+    if (auto* Factory{ FindOrNullWidgetFactory(InNode) })
     {
-        check( It->second )
-        return *It->second;
+        return *Factory;
     }
 
     panic( "The widget factory is not registered." )
-    abort();
 }
 
 ENGINE_API i32 PurgeWidgetFactories()
 {
-    i32 Count = 0;
-    for (const auto& [fst, snd] : GWidgetFactories)
-    {
-        delete snd;
-        ++Count;
-    }
-
+    const i32 Count{ static_cast<i32>(GWidgetFactories.size()) };
     GWidgetFactories.clear();
-
     return Count;
 }
 

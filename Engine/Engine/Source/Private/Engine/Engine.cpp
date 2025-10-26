@@ -1137,6 +1137,7 @@ void Jafg::LEngine::SetReSTCliCorePaths()
 
             json Res;
             auto& Logs = Res["logs"] = json::array();
+            std::unique_lock Lock{ JafgCore::GLongLiquidLogsMutex };
             while (ConvertedId < JafgCore::GLongLiquidLogs.size())
             {
                 auto const& Entry{ JafgCore::GLongLiquidLogs.at(ConvertedId) };

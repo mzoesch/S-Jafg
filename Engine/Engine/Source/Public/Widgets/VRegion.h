@@ -27,13 +27,13 @@ public:
     virtual void UpdateAnchoredSizeForChild(const LViewport& Context, const WNode* InDirectChild) const override;
     virtual auto GetAnchoredTopLeftFromMostOuterForChild(const LViewport& Context, const WNode* InDirectChild) const -> LVector2 override;
 
-    FORCEINLINE void SetVSpace(const f32 InVSpace) { this->VSpace = InVSpace; }
-    FORCEINLINE f32  GetVSpace() const { return this->VSpace; }
+    FORCEINLINE void SetVSpace(const LWidgetSize1 InVSpace) { this->VSpace = InVSpace; }
+    FORCEINLINE LWidgetSize1 GetVSpace() const { return this->VSpace; }
 
 private:
 
     //# Vertical space between children.
-    f32 VSpace { 0.0f };
+    LWidgetSize1 VSpace;
 };
 
 } /* ~Namespace Jafg */

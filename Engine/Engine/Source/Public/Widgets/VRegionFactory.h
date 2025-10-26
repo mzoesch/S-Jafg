@@ -14,7 +14,7 @@ public:
 
     GENERATED_FACTORY_BODY(TWidgetFactoryRegion)
 
-    FORCEINLINE TFactoryRetTy& VSpace(const f32 InVSpace) { this->This()->SetVSpace(InVSpace); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& VSpace(const LWidgetSize1 InVSpace) { this->This()->SetVSpace(InVSpace); return this->Self(); }
 };
 
 } /* ~Namespace Jafg */

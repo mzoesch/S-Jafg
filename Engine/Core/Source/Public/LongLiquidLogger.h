@@ -6,6 +6,7 @@ namespace JafgCore
 {
 
 #if LAL_SAVE_LOGS_IN_MEMORY
+CORE_API extern std::mutex GLongLiquidLogsMutex;
 CORE_API extern std::vector<std::tuple<
     std::string, /* Verbosity */
     std::string  /* Message */

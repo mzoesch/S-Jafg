@@ -72,6 +72,7 @@ FORCEINLINE void SaveLog(std::format_string<TArgs...> Format, TArgs&&... Args)
 {
     if constexpr ((Verbosity < CategoryVerbosity) == false)
     {
+        std::unique_lock Lock{ JafgCore::GLongLiquidLogsMutex };
         JafgCore::GLongLiquidLogs.emplace_back
         (
             std::make_tuple

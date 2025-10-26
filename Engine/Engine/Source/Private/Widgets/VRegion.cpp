@@ -15,7 +15,7 @@ void Jafg::WVRegion::UpdateDesiredSize() const
         continue;
     }
 
-    DesiredSize.Y += this->VSpace * (this->GetChildren().size() - 1);
+    DesiredSize.Y += InSpt(this->GetViewport(), this->VSpace) * (this->GetChildren().size() - 1);
 
     DesiredSize += this->GetPadding().GetDesiredSizeInSpt(*this);
 
@@ -54,7 +54,7 @@ void Jafg::WVRegion::UpdateAnchoredSizeForChild(const LViewport& Context, const 
     {
         (this->GetAnchoredSize_v2().Y - this->GetPadding().GetDesiredSizeYInSpt(Context))
         - TotalDesiredSize
-        - this->GetVSpace() * (this->GetChildren().size() - 1)
+        - InSpt(this->GetViewport(), this->GetVSpace()) * (this->GetChildren().size() - 1)
     };
 
     const f32 InverseFreeUsage { 1.0f / TotalFreeUsage };
@@ -86,7 +86,7 @@ LVector2 Jafg::WVRegion::GetAnchoredTopLeftFromMostOuterForChild(const LViewport
         }
 
         Offset += ChildSlot->Content->GetAnchoredSize_v2().Y;
-        Offset += this->GetVSpace();
+        Offset += InSpt(this->GetViewport(), this->GetVSpace());
 
         continue;
     }

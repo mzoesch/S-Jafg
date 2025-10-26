@@ -40,7 +40,7 @@ private:
     static inline TArray<LWidgetSlot*> NothingArrayReference;
 };
 
-template <typename TNode>
+template<typename TNode>
 FORCEINLINE typename TWidgetFactoryParentBase<TNode>::TFactoryRetTy& TWidgetFactoryParentBase<TNode>::AddChild(LWidgetFactory* InChild)
 {
     check( InChild->GetNodeRaw() )
@@ -55,6 +55,23 @@ FORCEINLINE typename TWidgetFactoryParentBase<TNode>::TFactoryRetTy& TWidgetFact
     algo::orphan(&InChild->GetMutableSiblingsDangerous());
 
     return this->Self();
+}
+
+template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+FORCEINLINE TNode* ConstructWidgetNode(WParentBase* Parent)
+{
+    return ConstructWidgetNode<TNode>(Parent, TNode::StaticClass());
+}
+template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+FORCEINLINE TNode* ConstructWidgetNode(WParentBase* Parent, TSubclassOf<TNode> const& Class)
+{
+    check( Parent )
+
+    auto* Node{ ConstructDeferredWidgetNode(Parent->GetOuter(), Class) };
+    Parent->AddChild(Node);
+    MakeDeferredWidgetNodeFinal(Node);
+
+    return Node;
 }
 
 } /* ~Namespace Jafg */

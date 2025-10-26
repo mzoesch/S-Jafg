@@ -1,6 +1,5 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Lal.afx"
 #include "Platform/Surface.h"
 #include "Core/LaunchProgress.h"
 #include "Forward/EngineForward.h"

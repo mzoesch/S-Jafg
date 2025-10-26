@@ -32,7 +32,7 @@ struct LWidgetConstructor;
 namespace Private
 {
 
-ENGINE_API void            AddWidgetFactory(LWidgetFactory* InFactory);
+ENGINE_API void            AddWidgetFactory(TUnique<LWidgetFactory> InFactory);
 ENGINE_API LWidgetFactory* FindOrNullWidgetFactory(const void* InNode);
 ENGINE_API LWidgetFactory& GetWidgetFactory(const void* InNode);
 ENGINE_API i32             PurgeWidgetFactories();
@@ -328,10 +328,34 @@ public:
     template<typename TNode>
     friend class TWidgetFactoryParentBase;
 
+#if LAL_DO_CHECKS
+    ~LWidgetFactory()
+    {
+        check( this->Siblings.empty() )
+    }
+#endif /* LAL_DO_CHECKS */
+
     FORCEINLINE WNode* GetNodeRaw() const noexcept { check( this->Node ) return this->Node; }
 
     FORCEINLINE bool HasAnySibling() const noexcept { return this->Siblings.empty() == false; }
     FORCEINLINE auto GetSiblings() const noexcept -> const TArray<LWidgetFactory*>& { return this->Siblings; }
+
+    //# Only use at the end of a Wsdsml factory chain.
+    template<typename TParent> requires std::is_base_of_v<WParentBase, TParent>
+    FORCEINLINE void TrailingParent(TParent* InParent) noexcept
+    {
+        check( InParent )
+
+        InParent->AddChild(this->GetNodeRaw());
+
+        for (LWidgetFactory* Sibling : this->GetSiblings())
+        {
+            Sibling->TrailingParent(InParent);
+        }
+        algo::orphan(&this->GetMutableSiblingsDangerous());
+
+        return;
+    }
 
 private:
 
@@ -406,6 +430,11 @@ template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
 FORCEINLINE TNode* ConstructWidgetNode(LViewport* Viewport, TSubclassOf<TNode> const& Class);
 template<typename TNode> requires std::is_base_of_v<WUserWidget, TNode>
 FORCEINLINE TNode* ConstructWidgetNode(LViewport* Viewport, LClassOuter* Outer, TSubclassOf<TNode> const& Class);
+
+template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+FORCEINLINE TNode* ConstructWidgetNode(WParentBase* Parent);
+template<typename TNode> requires std::is_base_of_v<WNode, TNode>
+FORCEINLINE TNode* ConstructWidgetNode(WParentBase* Parent, TSubclassOf<TNode> const& Class);
 
 //#
 //# Constructs a new deferred widget node in the given context.
@@ -746,7 +775,7 @@ private:
 };
 
 template<typename TInNode>
-typename TInNode::TWidgetFactory& Private::LWidgetFactoryUtility::MakeWidgetFactory(const WNode* InNode)
+typename TInNode::TWidgetFactory& Private::LWidgetFactoryUtility::MakeWidgetFactory(WNode const* InNode)
 {
     using TNode    = TInNode;
     using TFactory = typename TNode::TWidgetFactory;
@@ -757,17 +786,20 @@ typename TInNode::TWidgetFactory& Private::LWidgetFactoryUtility::MakeWidgetFact
 
     check( DynamicCast<TNode>(InNode) )
 
-    if (LWidgetFactory* Factory = FindOrNullWidgetFactory(InNode); Factory)
+    if (LWidgetFactory* Factory{ FindOrNullWidgetFactory(InNode) }; Factory)
     {
         return *reinterpret_cast<TFactory*>(Factory);
     }
 
-    TFactory* Factory = new TFactory();
+    auto Factory{ std::make_unique<TFactory>() };
     Factory->Node = const_cast<WNode*>(InNode);
 
-    Private::AddWidgetFactory(Factory);
+    auto* FactoryPtr{ Factory.get() };
 
-    return *Factory;
+    Private::AddWidgetFactory(std::move(Factory));
+
+    check( FactoryPtr )
+    return *FactoryPtr;
 }
 
 template<typename TNode>

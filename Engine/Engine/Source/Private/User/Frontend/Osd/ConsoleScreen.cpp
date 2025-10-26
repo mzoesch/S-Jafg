@@ -120,7 +120,7 @@ void Jafg::WConsoleScreen::Construct()
         NewNode(WVRegion).SaveTo(&this->IntellisenseContainer)
             .Anchor(EAnchor::VBottom)
             .Padding({0.0f, 0.0f, 0.0f, 30.0f})
-            .VSpace(2.0f)
+            .VSpace(2_spt)
         [
             NewNode(WVRegion).SaveTo(&this->IntellisensePredictions)
                 .Padding(3.0f)

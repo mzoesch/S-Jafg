@@ -18,6 +18,7 @@ public:
     FORCEINLINE TFactoryRetTy& Padding(const LPadding&& InPadding) { this->This()->SetPadding(InPadding); return this->Self(); }
 
     FORCEINLINE TFactoryRetTy& AddChild(LWidgetFactory* InChild);
+    FORCEINLINE TFactoryRetTy& AddChild(LWidgetFactory& InChild) { return this->AddChild(&InChild); }
     FORCEINLINE TFactoryRetTy& operator[](LWidgetFactory& InChild) { return this->AddChild(&InChild); }
     FORCEINLINE TFactoryRetTy& operator[](LWidgetFactory* InChild) { return this->AddChild(InChild); }
 };

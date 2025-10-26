@@ -22,8 +22,7 @@ class WRegion : public WOverlay
 
 protected:
 
-    explicit WRegion(LCxxObjectInitializer const& CxxObjectInitializer);
-    DEFAULT_OBJECT_CDR_CTOR(WRegion)
+    DEFAULT_OBJECT_CONSTRUCTOR(WRegion)
 
 public:
 

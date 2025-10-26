@@ -12,17 +12,6 @@
 #include "Rhi/OrthographicRoundedOutlineBoxShader.h"
 #include "Rhi/OrthographicRoundedOutlineImageBoxShader.h"
 
-Jafg::WRegion::WRegion(LCxxObjectInitializer const& CxxObjectInitializer) : Super(CxxObjectInitializer)
-{
-    // Tasks::Make(ENamedThreads::Master, ETaskTime::BeforeEngineInitButAfterAlloc, [](void) -> void
-    // {
-    //     check( GEngine )
-    //     return;
-    // });
-
-    return;
-}
-
 void Jafg::WRegion::BeginLifeCDR()
 {
     Super::BeginLifeCDR();
