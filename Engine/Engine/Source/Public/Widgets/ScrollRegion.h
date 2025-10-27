@@ -62,6 +62,12 @@ class TWidgetFactoryScrollRegion : public TWidgetFactoryRegion<TNode>
 public:
 
     GENERATED_FACTORY_BODY(TWidgetFactoryRegion)
+
+    FORCEINLINE TFactoryRetTy& CullNonVisible(const bool bCull) noexcept
+    {
+        this->This()->SetCullNonVisible(bCull);
+        return this->Self();
+    }
 };
 
 //#
@@ -212,6 +218,9 @@ public:
     FORCEINLINE constexpr void SetHScrollBarHeight(const f32 InValue) noexcept { this->Brush.HScrollBarHeight = InValue; }
     FORCEINLINE constexpr void SetHScrollBarBackgroundHeight(const f32 InValue) noexcept { this->Brush.HScrollBarBackgroundHeight = InValue; }
 
+    FORCEINLINE constexpr void SetCullNonVisible(const bool InValue) noexcept { this->bCullNonVisible = InValue; }
+    FORCEINLINE constexpr bool GetCullNonVisible() const noexcept { return this->bCullNonVisible; }
+
 protected:
 
     //# @return Whether the event is meaning full or not for this #WScrollRegion.
@@ -260,6 +269,7 @@ private:
 
     LDelegateHandle UserInterfaceTickDelegateHandle { nullptr };
 
+    bool bCullNonVisible{ true };
     bool bUiTickV { false };
     bool bUiTickH { false };
     f32 MbVOffset { 0.0f };

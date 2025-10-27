@@ -52,7 +52,7 @@ void Jafg::WFloatingWindow::Construct()
     ]
     FinishWidgetStyling()
 
-    this->SetWindowSize({640_spt, 360});
+    this->SetWindowSize({640, 360});
 
     WindowTopBar->OnKeyDownEvent.BindStrong([](WNode& Self, LViewport& Viewport, LKeyEvent const& KeyEvent) -> LReply
     {
@@ -61,7 +61,7 @@ void Jafg::WFloatingWindow::Construct()
             Viewport.GetSurface().SetMouseCursor(EMouseCursor::Hand);
 
             WFloatingWindow* Window{ StaticCast<WFloatingWindow>(Self.GetParent()->GetParent()) };
-            Window->UserInterfaceTickDelegateHandle = Viewport.OnLateTick.AddMember(Window, &WFloatingWindow::UserInterfaceTick);
+            Window->UiTickMoveHandle = Viewport.OnLateTick.AddMember(Window, &WFloatingWindow::UiTickMove);
 
             return LReply::Handled();
         }
@@ -76,11 +76,11 @@ void Jafg::WFloatingWindow::Construct()
             Viewport.GetSurface().SetMouseCursor(EMouseCursor::Default);
 
             auto* Window{ StaticCast<WFloatingWindow>(Self.GetParent()->GetParent()) };
-            if (Window->UserInterfaceTickDelegateHandle.IsValid())
+            if (Window->UiTickMoveHandle.IsValid())
             {
-                Viewport.OnLateTick.Remove(&Window->UserInterfaceTickDelegateHandle);
+                Viewport.OnLateTick.Remove(&Window->UiTickMoveHandle);
             }
-            Window->DragOffset.reset();
+            Window->MoveDragOffset.reset();
 
             return LReply::Handled();
         }
@@ -101,21 +101,50 @@ void Jafg::WFloatingWindow::SetContentNode(WNode& Content) noexcept
     Content.SetAnchor(EAnchor::Fill);
     Content.SetVisibility(EWidgetVisibility::Visible);
 
+    if (this->bCreateResizeUi && Content.IsA<WParentBase>())
+    {
+        NewNode(WTextButton)
+            .Anchor(EAnchor::BottomRight)
+            .Content("#")
+            .TextBlockBrush(LTextBoxBrush::Compact())
+            .Padding({2_spt})
+            .OnPrimaryPress([](WButton* Self, const LKeyEvent& InKeyEvent)
+            {
+                WFloatingWindow* Window{ StaticCast<WFloatingWindow>(Self->GetParent()->GetParent()->GetParent()) };
+                Window->UiTickResizeHandle = Self->GetViewport().OnLateTick.AddMember(Window, &WFloatingWindow::UiTickResize);
+
+                return;
+            })
+            .OnPrimaryRelease([](WButton* Self, const LKeyEvent& InKeyEvent)
+            {
+                WFloatingWindow* Window{ StaticCast<WFloatingWindow>(Self->GetParent()->GetParent()->GetParent()) };
+                if (Window->UiTickResizeHandle.IsValid())
+                {
+                    Self->GetViewport().OnLateTick.Remove(&Window->UiTickResizeHandle);
+                }
+                Window->ResizeDragOffset.reset();
+
+                return;
+            })
+            .TrailingParent(StaticCast<WParentBase>(&Content))
+            ;
+    }
+
     return;
 }
 
-void Jafg::WFloatingWindow::UserInterfaceTick(LViewport const& Viewport)
+void Jafg::WFloatingWindow::UiTickMove(LViewport const& Viewport)
 {
-    if (this->DragOffset.has_value() == false)
+    if (this->MoveDragOffset.has_value() == false)
     {
-        this->DragOffset =
+        this->MoveDragOffset =
             Viewport.GetSurface().GetMouseLocation()
                 - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport);
 
         return;
     }
 
-    LVector2 NewPos{ Viewport.GetSurface().GetMouseLocation() - this->DragOffset.value() };
+    LVector2 NewPos{ Viewport.GetSurface().GetMouseLocation() - this->MoveDragOffset.value() };
 
     if (NewPos.X + 25.0f > Viewport.GetDimensions().X)
     {
@@ -136,6 +165,37 @@ void Jafg::WFloatingWindow::UserInterfaceTick(LViewport const& Viewport)
     }
 
     this->SetWindowPosition(NewPos);
+
+    return;
+}
+
+void Jafg::WFloatingWindow::UiTickResize(LViewport const& Viewport)
+{
+    if (this->ResizeDragOffset.has_value() == false)
+    {
+        this->ResizeDragOffset =
+            Viewport.GetSurface().GetMouseLocation()
+                - (this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport)
+                    + this->GetWindow()->GetDesiredSize_v2());
+
+        return;
+    }
+
+    LVector2 NewSize{
+        Viewport.GetSurface().GetMouseLocation().X - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).X - this->ResizeDragOffset.value().X,
+        Viewport.GetSurface().GetMouseLocation().Y - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).Y - this->ResizeDragOffset.value().Y
+    };
+
+    if (NewSize.X > Viewport.GetDimensions().X)
+    {
+        NewSize.X = Viewport.GetDimensions().X;
+    }
+    if (NewSize.Y > Viewport.GetDimensions().Y)
+    {
+        NewSize.Y = Viewport.GetDimensions().Y;
+    }
+
+    this->SetWindowSize(NewSize);
 
     return;
 }

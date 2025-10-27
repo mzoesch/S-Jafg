@@ -98,8 +98,10 @@ void Jafg::WConsoleWindow::Tick()
 {
     Super::Tick();
 
-    this->LoadLogs(this->LoadedLogCount);
-    this->HistoryScrollRegion->ApplyVScroll(WScrollRegion::MaxScrollDown);
+    if (this->LoadLogs(this->LoadedLogCount))
+    {
+        this->HistoryScrollRegion->ApplyVScroll(WScrollRegion::MaxScrollDown);
+    }
 
     return;
 }
@@ -116,7 +118,7 @@ void Jafg::WConsoleWindow::AddToConsole(LConsoleMessage Message)
     return;
 }
 
-void Jafg::WConsoleWindow::LoadLogs(u64 Start)
+u64 Jafg::WConsoleWindow::LoadLogs(u64 Start)
 {
     check( Tasks::IsOnMasterThread() )
 
@@ -134,7 +136,9 @@ void Jafg::WConsoleWindow::LoadLogs(u64 Start)
         ++Start;
     }
 
+    const u64 Diff{ Start - this->LoadedLogCount };
+
     this->LoadedLogCount = Start;
 
-    return;
+    return Diff;
 }

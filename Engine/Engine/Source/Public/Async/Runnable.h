@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Lal.afx"
 #include "Async/TaskForward.h"
 
 namespace Jafg

@@ -270,6 +270,9 @@ EPlatformExit::Type GuardedMain()
 
     Application::Private::bPauseBeforeExit = Application::HasCmdLineParameter("PauseBeforeExit");
     Application::Private::bAlwaysReportCrash = Application::HasCmdLineParameter("AlwaysReportCrash");
+#if WITH_STATS
+    Application::Private::bAllowProfiling = Application::CanEverProfile() && Application::HasCmdLineParameter("AllowProfiling");
+#endif /* WITH_STATS */
 
     Tasks::RegisterThread(ENamedThreads::Master);
 
@@ -294,6 +297,7 @@ EPlatformExit::Type GuardedMain()
 #if WITH_STATS
     if (Application::IsAllowProfiling())
     {
+        LOG_VERBOSE(LogStats, "Profiling and stats gathering is enabled.")
         if (Stats::Private::GTracer == nullptr)
         {
             Stats::Private::GTracer = &::RuntimeTracer;

@@ -181,6 +181,11 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
     WNode::Draw(Context);
 
     RendererStateMachine::ClipOrthographic(Context, MostOuterTopLeftContentArea.Copy(), MaxContentAreaSize);
+    if (this->bCullNonVisible)
+    {
+        Context.PushFrameCull(LVector4D{MostOuterTopLeftContentArea.X, MostOuterTopLeftContentArea.Y, this->GetAnchoredSize_v2().X, this->GetAnchoredSize_v2().Y});
+    }
+
     for (const LWidgetSlot* ChildSlot : this->GetChildren())
     {
         if (ChildSlot->Content->ShouldNowDraw())
@@ -208,6 +213,11 @@ void Jafg::WScrollRegion::Draw(LViewport& Context) const
             Context.ApplyFrameTranslation(-Translation);
         }
         continue;
+    }
+
+    if (this->bCullNonVisible)
+    {
+        Context.PopFrameCull();
     }
     RendererStateMachine::DisableClipOrthographic();
 

@@ -34,7 +34,7 @@ public:
 
 private:
 
-    void LoadLogs(u64 Start);
+    u64 LoadLogs(u64 Start);
 
     static TOptional<LVector2> LastWindowLocation;
     static TOptional<LVector2> LastWindowSize;

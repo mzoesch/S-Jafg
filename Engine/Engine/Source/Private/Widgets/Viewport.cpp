@@ -8,6 +8,7 @@
 #include "Rhi/RendererStateMachine.h"
 #include "User/Input/Replies.h"
 #include "Widgets/UserWidget.h"
+#include "Stats/Stats.h"
 
 void Jafg::LViewport::ClearInvalidWidgets()
 {
@@ -322,6 +323,8 @@ void Jafg::LViewport::OnClear()
 
 void Jafg::LViewport::Tick()
 {
+    STAT_CYCLE_FUNCTION()
+
     for (WUserWidget* Widget : this->TopLevelWidgets)
     {
         if (Widget->ShouldNowTick())
@@ -339,6 +342,8 @@ void Jafg::LViewport::Tick()
 
 void Jafg::LViewport::Draw()
 {
+    STAT_CYCLE_FUNCTION()
+
     this->ClearInvalidWidgets();
 
     this->FrameZLayerDepth = 0.0f;
@@ -385,6 +390,7 @@ void Jafg::LViewport::Draw()
             Widget->UpdateAnchoredSize(*this);
             if (Widget->ShouldNowDraw())
             {
+                STAT_QUICK_CYCLE_START(Widget->GetNameAsString())
                 Widget->Draw(*this);
             }
         }

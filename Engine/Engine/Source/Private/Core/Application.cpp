@@ -33,7 +33,7 @@ Lal::LProgramParameter _Version{
 
 Lal::LProgramParameter _version{
     "version",
-    "Same as \"Version}\" but in lowercase."
+    "Same as \"Version\" but in lowercase."
     };
 
 Lal::LProgramParameter _WaitForDebugger{

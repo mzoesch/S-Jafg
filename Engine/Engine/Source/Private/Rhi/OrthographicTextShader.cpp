@@ -141,6 +141,14 @@ void Jafg::LOrthographicTextShader::Draw
     const LString& Content
 ) const
 {
+    if (Context.HasFrameCulls())
+    {
+        if (Maths::AabbsOverlap2D(LVector2D{TopLeft}, LVector2D{Size}, Context.GetFrameCullTopLeft(), Context.GetFrameCullSize()) == false)
+        {
+            return;
+        }
+    }
+
     check( this->Characters.empty() == false )
 
     glCullFace(GL_FRONT);

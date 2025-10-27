@@ -141,6 +141,23 @@ public:
     FORCEINLINE void ApplySweepTranslation(const LVector2D& InTranslation) const noexcept { this->SweepTranslation += InTranslation; }
     FORCEINLINE auto GetSweepTranslation() const -> const LVector2D& { return this->SweepTranslation; }
 
+    FORCEINLINE bool HasFrameCulls() const noexcept { return this->FrameCulls.empty() == false; }
+    FORCEINLINE TArray<LVector4D> const& GetFrameCulls() const noexcept { return this->FrameCulls; }
+    FORCEINLINE LVector2D GetFrameCullTopLeft() const noexcept
+    {
+        check( this->HasFrameCulls() )
+        const LVector4D& CullDimensions{ this->FrameCulls.back() };
+        return LVector2D{ CullDimensions.X, CullDimensions.Y };
+    }
+    FORCEINLINE LVector2D GetFrameCullSize() const noexcept
+    {
+        check( this->HasFrameCulls() )
+        const LVector4D& CullDimensions{ this->FrameCulls.back() };
+        return LVector2D{ CullDimensions.Z, CullDimensions.W };
+    }
+    FORCEINLINE void PushFrameCull(LVector4D const& CullDimensions) noexcept { this->FrameCulls.emplace_back(CullDimensions); }
+    FORCEINLINE void PopFrameCull() noexcept { this->FrameCulls.pop_back(); }
+
     FORCEINLINE auto GetBackgroundContexts() const noexcept -> const TArray<LBackgroundContext>& { return this->BackgroundContexts; }
     FORCEINLINE auto GetMutableBackgroundContexts() noexcept -> TArray<LBackgroundContext>& { return this->BackgroundContexts; }
     FORCEINLINE bool IsIntermediateBufferValid() const noexcept { return this->IntermediateBuffer.IsValid(); }
@@ -199,6 +216,7 @@ private:
     mutable f32 FrameZLayerDepth { 0.0f };
     mutable LVector2D FrameTranslation;
     mutable LVector2D SweepTranslation;
+    TArray<LVector4D> FrameCulls;
 
     TArray<LBackgroundContext> BackgroundContexts;
     LFrameBuffer IntermediateBuffer;

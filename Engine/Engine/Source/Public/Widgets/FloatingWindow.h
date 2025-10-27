@@ -32,10 +32,24 @@ public:
     FORCEINLINE WVRegion* GetWindow() noexcept { return this->GetRoot<WVRegion>(); }
     FORCEINLINE WVRegion const* GetWindow() const noexcept { return this->GetRoot<WVRegion>(); }
 
-    FORCEINLINE void SetWindowSize(LWidgetSize2 Size) noexcept { this->GetWindow()->SetMinDesiredSize(Size); }
-    FORCEINLINE void SetWindowPosition(LVector2 Position) noexcept { this->GetWindow()->SetMargin({EWidgetSize::StaticPoints, Position, 0, 0}); }
+    FORCEINLINE void SetWindowSize(LVector2 SizeInSpt) noexcept
+    {
+        this->GetWindow()->SetMinDesiredSize(
+        {
+              EWidgetSize::StaticPoints
+            , Maths::Max(SizeInSpt.X, WFloatingWindow::MinWindowSizeInSpt.X)
+            , Maths::Max(SizeInSpt.Y, WFloatingWindow::MinWindowSizeInSpt.Y)
+        });
+    }
+    FORCEINLINE void SetWindowPosition(LVector2 PositionInSpt) noexcept
+    {
+        this->GetWindow()->SetMargin({EWidgetSize::StaticPoints, PositionInSpt, 0, 0});
+    }
 
     ENGINE_API void SetContentNode(WNode& Content) noexcept;
+
+    FORCEINLINE bool CreateResizeUi() const noexcept { return this->bCreateResizeUi; }
+    FORCEINLINE void SetCreateResizeUi(const bool bInCreateResizeUi) noexcept { this->bCreateResizeUi = bInCreateResizeUi; }
 
     //#
     //# Event called when the window is closed.
@@ -53,13 +67,19 @@ public:
 
 protected:
 
-    LDelegateHandle UserInterfaceTickDelegateHandle{ nullptr };
-    void UserInterfaceTick(LViewport const& Viewport);
-    TOptional<LVector2> DragOffset;
+    LDelegateHandle UiTickMoveHandle{ nullptr };
+    void UiTickMove(LViewport const& Viewport);
+    TOptional<LVector2> MoveDragOffset;
+
+    bool bCreateResizeUi{ true };
+    LDelegateHandle UiTickResizeHandle{ nullptr };
+    void UiTickResize(LViewport const& Viewport);
+    TOptional<LVector2> ResizeDragOffset;
 
 private:
 
     WTextBox* WindowTitle{ nullptr };
+    static constexpr LVector2 MinWindowSizeInSpt{ 320, 180 };
 };
 
 } /* ~Namespace Jafg */

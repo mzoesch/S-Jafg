@@ -110,11 +110,11 @@ Jafg::LCursorReply Jafg::WParent::SweepMouse(LViewport& Context, const LVector2&
         return Super::SweepMouse(Context, InLocation);
     }
 
-    for (const LWidgetSlot* ChildSlot : this->Children)
+    for (auto It{ this->Children.rbegin() }; It != this->Children.rend(); ++It)
     {
-        if (ChildSlot->Content->ShouldCheckForInputs())
+        if ((*It)->Content->ShouldCheckForInputs())
         {
-            if (const LCursorReply Reply{ ChildSlot->Content->SweepMouse(Context, InLocation) }; Reply.IsHandled())
+            if (const LCursorReply Reply{ (*It)->Content->SweepMouse(Context, InLocation) }; Reply.IsHandled())
             {
                 return Reply;
             }

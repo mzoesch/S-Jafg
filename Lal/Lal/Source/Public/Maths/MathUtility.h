@@ -155,6 +155,10 @@ NODISCARD FORCEINLINE f64 Round(const f64 Value) { return ::round(Value); }
 NODISCARD FORCEINLINE f32  RoundToZero(const f32 Value);
 NODISCARD FORCEINLINE f64 RoundToZero(const f64 Value);
 
+/** Whether aabb overlap in two-dimensional space. */
+template<typename T>
+NODISCARD FORCEINLINE bool AabbsOverlap2D(TVector2<T> const& ALoc, TVector2<T> const& ASize, TVector2<T> const& BLoc, TVector2<T> const& BSize) noexcept;
+
 /**
  * An affine transformation to get the transformation for objects viewed as of Eye.
  *
@@ -444,6 +448,13 @@ NODISCARD FORCEINLINE f64 RoundToZero(const f64 Value)
     }
 
     return FractionalPart > 0.5f ? IntegralPart + 1.0f : IntegralPart;
+}
+
+template<typename T>
+NODISCARD FORCEINLINE bool AabbsOverlap2D(TVector2<T> const& ALoc, TVector2<T> const& ASize, TVector2<T> const& BLoc, TVector2<T> const& BSize) noexcept
+{
+    return (ALoc.X < (BLoc.X + BSize.X)) && ((ALoc.X + ASize.X) > BLoc.X)
+        && (ALoc.Y < (BLoc.Y + BSize.Y)) && ((ALoc.Y + ASize.Y) > BLoc.Y);
 }
 
 template <typename T>

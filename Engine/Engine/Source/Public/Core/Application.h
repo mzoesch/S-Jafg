@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Core/Arguments.h"
+#include "Stats/StatsForward.h"
 
 namespace Jafg
 {

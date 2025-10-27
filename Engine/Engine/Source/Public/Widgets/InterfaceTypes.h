@@ -116,6 +116,12 @@ struct LWidgetSize2 final
         return;
     }
 
+    FORCEINLINE constexpr LWidgetSize2(EWidgetSize::Type Type, LVector2 Size) noexcept
+        : Type(Type), Size(Size)
+    {
+        return;
+    }
+
     FORCEINLINE constexpr LWidgetSize2(LWidgetSize1 X, f32 Y) noexcept
         : Type(X.Type), Size(X.Size, Y)
     {

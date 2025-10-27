@@ -100,8 +100,6 @@ void Jafg::LLocalEgo::Tick(const float DeltaTime)
 
 void Jafg::LLocalEgo::OnLateTick(const float DeltaTime)
 {
-    STAT_CYCLE_FUNCTION()
-
     for (auto& Surface : this->Frontend.GetSurfaces())
     {
         Surface->OnUpdate();

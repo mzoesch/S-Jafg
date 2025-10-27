@@ -237,13 +237,18 @@ void Jafg::LSurfaceGlfw3::OnClear()
 
 void Jafg::LSurfaceGlfw3::OnUpdate()
 {
+    STAT_CYCLE_FUNCTION()
+
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
     glfwMakeContextCurrent(this->Handle);
 
     Super::OnUpdate();
 
-    glfwSwapBuffers(this->Handle);
+    {
+        STAT_QUICK_CYCLE_START("SwapBuffers")
+        glfwSwapBuffers(this->Handle);
+    }
 
     return;
 }
