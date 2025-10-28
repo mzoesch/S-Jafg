@@ -2,11 +2,17 @@
 
 #pragma once
 
+template<typename TOwner, typename TSig>
+class TEvent;
+
 //# An event is a #TFunction which can only be invoked by its owning class.
 template<typename TOwner, typename TRet, typename... TParams>
-class TEvent : public TFunction<TRet(TParams...)>
+class TEvent<TOwner, TRet(TParams...)> : public TFunction<TRet(TParams...)>
 {
     friend TOwner;
+
+    template<typename UOwner, typename USig>
+    friend class TEvent;
 
     typedef TFunction<TRet(TParams...)> Super;
 
@@ -37,7 +43,7 @@ class TMulticastEvent<TOwner, void(TParams...)> : public TMulticastDelegate<void
 {
     friend TOwner;
 
-    template<typename UOwner, typename TSig>
+    template<typename UOwner, typename USig>
     friend class TMulticastEvent;
 
     typedef TMulticastDelegate<void(TParams...)> Super;
