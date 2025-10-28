@@ -428,19 +428,19 @@ void Jafg::JCoreInputSubsystem::OnNewPawnPossessed(APawn* InOld, APawn* InNew)
 
     if (InNew)
     {
-        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInMovePawn)->Callback = LUserInputActionDelegate::CreateFunction(InNew, &APawn::OnOngoingMovementInput);
-        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInRotatePawn)->Callback = LUserInputActionDelegate::CreateFunction(InNew, &APawn::OnOngoingRotationInput);
-        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInPawnVelocity)->Callback = LUserInputActionDelegate::CreateFunction(InNew, &APawn::OnOngoingVelocityChange);
-        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInPrimary)->Callback = LUserInputActionDelegate::CreateFunction(InNew, &APawn::OnOngoingPrimaryInput);
-        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInSecondary)->Callback = LUserInputActionDelegate::CreateFunction(InNew, &APawn::OnOngoingSecondaryInput);
+        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInMovePawn)->Callback = LUserInputActionDelegate::Create(InNew, &APawn::OnOngoingMovementInput);
+        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInRotatePawn)->Callback = LUserInputActionDelegate::Create(InNew, &APawn::OnOngoingRotationInput);
+        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInPawnVelocity)->Callback = LUserInputActionDelegate::Create(InNew, &APawn::OnOngoingVelocityChange);
+        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInPrimary)->Callback = LUserInputActionDelegate::Create(InNew, &APawn::OnOngoingPrimaryInput);
+        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInSecondary)->Callback = LUserInputActionDelegate::Create(InNew, &APawn::OnOngoingSecondaryInput);
     }
     else
     {
-        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInMovePawn)->Callback.Unbind();
-        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInRotatePawn)->Callback.Unbind();
-        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInPawnVelocity)->Callback.Unbind();
-        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInPrimary)->Callback.Unbind();
-        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInSecondary)->Callback.Unbind();
+        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInMovePawn)->Callback.Reset();
+        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInRotatePawn)->Callback.Reset();
+        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInPawnVelocity)->Callback.Reset();
+        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInPrimary)->Callback.Reset();
+        ContextInMyWorldFoot->FindMappedActionChecked(Name_UsrInSecondary)->Callback.Reset();
 
         return;
     }

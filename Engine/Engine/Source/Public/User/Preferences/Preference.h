@@ -13,7 +13,8 @@ class LPreferenceCollection;
 class LPreferenceValue;
 class WParentBase;
 
-MAKE_DELEGATE_SIGNATURE(LBuildPreference, void, const LPreference* Self, WParentBase* Target)
+typedef TFunction<void(LPreference const* Self, WParentBase* Target)> LBuildPreference;
+
 
 //#
 //# A preference adjustable by the user, that comes with default user interface and cli support.
@@ -56,7 +57,7 @@ public:
     FORCEINLINE virtual const TArray<TUnique<LPreference>>& LoadAndGetChildPreferences();
 
     FORCEINLINE virtual bool IsLeaf() const { return true; }
-    FORCEINLINE bool IsBuildable() const { return this->OnBuildDelegate.IsBound(); }
+    FORCEINLINE bool IsBuildable() const { return this->OnBuildDelegate.IsValid(); }
     FORCEINLINE void OnBuild(LBuildPreference&& InBuildPreference) { this->OnBuildDelegate = std::move(InBuildPreference); }
 
     bool Build(WParentBase* Target) const;

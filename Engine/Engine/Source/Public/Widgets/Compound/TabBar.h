@@ -16,7 +16,7 @@ class WSwitcher;
 class WNode;
 class WTabBarButton;
 
-MAKE_DELEGATE_SIGNATURE(LOnTabBarLoaded, void, WTabBar* TabBar, WNode* Button, WNode* Panel)
+typedef TFunction<void(WTabBar* TabBar, WNode* Button, WNode* Panel)> LOnTabBarLoaded;
 
 struct LTabBarTabDescriptor final
 {

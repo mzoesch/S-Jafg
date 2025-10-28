@@ -59,7 +59,7 @@ void Jafg::LSubsystemCollection::InitializeSubsystems(TSubclassOf<JSubsystem> Cl
 
     if (bRegisterDeferredDelegate && GEngine)
     {
-        this->OnForeignPluginLoadedHandle = GEngine->OnForeignPluginLoaded.AddMember(this, &LSubsystemCollection::OnForeignPluginLoaded);
+        this->OnForeignPluginLoadedHandle = GEngine->OnForeignPluginLoaded.Emplace(this, &LSubsystemCollection::OnForeignPluginLoaded);
     }
 
     this->SubsystemInstances.shrink_to_fit();

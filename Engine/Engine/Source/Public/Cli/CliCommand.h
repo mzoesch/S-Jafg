@@ -16,7 +16,7 @@ struct LCommandArgs;
 struct LCommandParams;
 namespace ECommandReturnCode { enum Type : u8; }
 
-MAKE_DELEGATE_SIGNATURE(LOnCommandInvokation, void, const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+typedef TFunction<void(LCommandArgs const& InArgs, LCommandExecutionResponse* OutResponse)> LOnCommandInvocation;
 
 namespace ECommandReturnCode
 {
@@ -140,7 +140,7 @@ struct LCommandParams
     DEFAULT_MOVE(LCommandParams)
     FORCEINLINE ~LCommandParams() = default;
 
-    FORCEINLINE LCommandParams&& Exec(LOnCommandInvokation&& InExec)
+    FORCEINLINE LCommandParams&& Exec(LOnCommandInvocation&& InExec)
     {
         this->OnExec = std::move(InExec);
         return std::move(*this);
@@ -163,7 +163,7 @@ struct LCommandParams
 
     ENGINE_API LString GetCatRepresentation() const;
 
-    LOnCommandInvokation OnExec;
+    LOnCommandInvocation OnExec;
     TArray<LCliType>     Signature;
 };
 

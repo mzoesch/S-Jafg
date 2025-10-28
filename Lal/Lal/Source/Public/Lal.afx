@@ -112,8 +112,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Functors
 #include "Core/Function.h"
-#include "Delegates/DelegatePrivate.h"
-#include "Delegates/DelegateMacros.h"
+#include "Delegates/Delegatev2.h"
+#include "Delegates/Event.h"
+#include "Delegates/EventMacros.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Maths

@@ -18,7 +18,7 @@ namespace ETextVAlign { enum Type : u8; }
 //# Vertical text alignment is not often used, so we just use the horizontal alignment.
 namespace ETextAlign = ETextHAlign;
 
-MAKE_DELEGATE_SIGNATURE(LTextBoxChangedDelegate, void, const LString& InNewContent)
+typedef TFunction<void(LString const& InNewContent)> LTextBoxChangedDelegate;
 
 namespace ETextHAlign
 {

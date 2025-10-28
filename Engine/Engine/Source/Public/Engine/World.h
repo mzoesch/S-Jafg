@@ -40,17 +40,18 @@ struct LWorldMiscellaneousAccessor;
 
 } /* ~Namespace Private */
 
-MAKE_DELEGATE_SIGNATURE(LOnStaticLineTrace, bool,
+typedef TFunction<bool(
       TArray<LHitResult>& OutHits
-    , const LVector& Start
-    , const LVector& End
-    , const LCollisionQueryParams& Params
-    )
-MAKE_DELEGATE_SIGNATURE(LOnStaticDraw, void,
-      const LViewport& Viewport
-    , const LEye& Eye
-    , const std::span<LVector>& Corners
-    )
+    , LVector const& Start
+    , LVector const& End
+    , LCollisionQueryParams const& Params
+    )> LOnStaticLineTrace;
+
+typedef TFunction<void(
+      LViewport const& Viewport
+    , LEye const& Eye
+    , std::span<LVector> const& Corners
+    )> LOnStaticDraw;
 
 namespace EWorldState
 {

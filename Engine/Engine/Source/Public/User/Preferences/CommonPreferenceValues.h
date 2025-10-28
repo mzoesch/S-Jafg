@@ -20,9 +20,9 @@ class LPreferenceValue_Scalar : public LPreferenceValue
 public:
 
     LPreferenceValue_Scalar(const LName InName, const LString& InDisplayName)
-        : LPreferenceValue(InName, InDisplayName, LBuildPreference::CreateWeakDelegate(LPreferenceValue_Scalar::BuildDefault)) { }
+        : LPreferenceValue(InName, InDisplayName, LBuildPreference::Create(LPreferenceValue_Scalar::BuildDefault)) { }
     LPreferenceValue_Scalar(const LName InName, LString&& InDisplayName)
-        : LPreferenceValue(InName, std::move(InDisplayName), LBuildPreference::CreateWeakDelegate(LPreferenceValue_Scalar::BuildDefault)) { }
+        : LPreferenceValue(InName, std::move(InDisplayName), LBuildPreference::Create(LPreferenceValue_Scalar::BuildDefault)) { }
     LPreferenceValue_Scalar(const LName InName, const LString& InDisplayName, LBuildPreference&& InBuildDelegate)
         : LPreferenceValue(InName, InDisplayName, std::move(InBuildDelegate)) { }
     LPreferenceValue_Scalar(const LName InName, LString&& InDisplayName, LBuildPreference&& InBuildDelegate)
@@ -90,17 +90,17 @@ class LPreferenceValue_InputAction : public LPreferenceValue
 public:
 
     FORCEINLINE LPreferenceValue_InputAction(LName InName)
-        : LPreferenceValue(std::move(InName), LBuildPreference::CreateWeakFunction(LPreferenceValue_InputAction::BuildDefault)) { }
+        : LPreferenceValue(std::move(InName), LBuildPreference::Create(LPreferenceValue_InputAction::BuildDefault)) { }
     FORCEINLINE LPreferenceValue_InputAction(LName InName, LBuildPreference&& InBuildDelegate)
         : LPreferenceValue(std::move(InName), std::move(InBuildDelegate)) { }
 
     FORCEINLINE LPreferenceValue_InputAction(LName InName, const LString& InDisplayName)
-        : LPreferenceValue(std::move(InName), InDisplayName, LBuildPreference::CreateWeakFunction(LPreferenceValue_InputAction::BuildDefault)) { }
+        : LPreferenceValue(std::move(InName), InDisplayName, LBuildPreference::Create(LPreferenceValue_InputAction::BuildDefault)) { }
     FORCEINLINE LPreferenceValue_InputAction(LName InName, const LString& InDisplayName, LBuildPreference&& InBuildDelegate)
         : LPreferenceValue(std::move(InName), InDisplayName, std::move(InBuildDelegate)) { }
 
     FORCEINLINE LPreferenceValue_InputAction(LName InName, LString&& InDisplayName)
-        : LPreferenceValue(std::move(InName), std::move(InDisplayName), LBuildPreference::CreateWeakFunction(LPreferenceValue_InputAction::BuildDefault)) { }
+        : LPreferenceValue(std::move(InName), std::move(InDisplayName), LBuildPreference::Create(LPreferenceValue_InputAction::BuildDefault)) { }
     FORCEINLINE LPreferenceValue_InputAction(LName InName, LString&& InDisplayName, LBuildPreference&& InBuildDelegate)
         : LPreferenceValue(std::move(InName), std::move(InDisplayName), std::move(InBuildDelegate)) { }
 

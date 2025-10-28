@@ -586,7 +586,7 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(const LViewport& InViewport)
         }
 
         this->bUiTickV = true;
-        this->UserInterfaceTickDelegateHandle = InViewport.OnLateTick.AddMember(this, &WScrollRegion::UserInterfaceTick);
+        this->UserInterfaceTickDelegateHandle = InViewport.OnLateTick.Emplace(this, &WScrollRegion::UserInterfaceTick);
         return true;
     }
 
@@ -612,7 +612,7 @@ bool Jafg::WScrollRegion::MBDownOnScrollbar(const LViewport& InViewport)
         }
 
         this->bUiTickH = true;
-        this->UserInterfaceTickDelegateHandle = InViewport.OnLateTick.AddMember(this, &WScrollRegion::UserInterfaceTick);
+        this->UserInterfaceTickDelegateHandle = InViewport.OnLateTick.Emplace(this, &WScrollRegion::UserInterfaceTick);
         return true;
     }
 

@@ -62,7 +62,7 @@ const TArray<TUnique<Jafg::LPreference>>& Jafg::LIntermediatePreferenceCollectio
 
 bool Jafg::LIntermediatePreferenceCollection::Refresh()
 {
-    if (this->OnLoadDelegate.IsBound() == false)
+    if (this->OnLoadDelegate.IsValid() == false)
     {
         return false;
     }

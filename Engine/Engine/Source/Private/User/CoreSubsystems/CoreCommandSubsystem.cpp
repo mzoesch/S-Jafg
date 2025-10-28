@@ -18,12 +18,12 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
 
         this->CommandHandle_Quit = CommandLineInterface.RegisterCommand({"Quit", "Quit to desktop.",
         LCommandParams()
-        .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
         {
             LOG_VERBOSE(LogCoreCommands, "Received quit request.")
             GEngine->RequestEngineExit("Invoked by CLI command.");
             OutResponse->Rc = ECommandReturnCode::SuccessNoResponse;
-        }))});
+        })});
         check( this->CommandHandle_Quit.IsValid() )
     }
 
@@ -32,11 +32,11 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
         this->CommandHandle_Say = CommandLineInterface.RegisterCommand({"Say", "Say something.",
         LCommandParams()
         .Token(LCliType::Type("String"))
-        .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+        .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
         {
             LOG_WARNING(LogTemporal, "{}", InArgs.GetCatRepresentation())
             OutResponse->Rc = ECommandReturnCode::SuccessNoResponse;
-        }))});
+        })});
         check( this->CommandHandle_Say.IsValid() )
     }
 
@@ -45,11 +45,11 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
         LCliCommand Command("a");
         Command.AddOverload(
             LCommandParams()
-            .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
+            .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse)
             {
                 LOG_WARNING(LogTemporal, "Creating new surface...")
                 OutResponse->Rc = ECommandReturnCode::SuccessNoResponse;
-            })
+            }
 
         ));
         this->CommandHandle_CreateNewSurface = CommandLineInterface.RegisterCommand(std::move(Command));

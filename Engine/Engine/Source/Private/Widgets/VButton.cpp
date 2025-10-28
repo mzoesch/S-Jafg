@@ -65,7 +65,7 @@ Jafg::LReply Jafg::WVButton::OnKeyDown(LViewport& InViewport, const LKeyEvent& I
             this->SetBrush(this->Style.PressBrush);
         }
 
-        if (this->OnPrimaryPressDelegate.IsBound())
+        if (this->OnPrimaryPressDelegate.IsValid())
         {
             this->OnPrimaryPressDelegate.Invoke(this, InKeyEvent);
         }
@@ -84,7 +84,7 @@ Jafg::LReply Jafg::WVButton::OnKeyDown(LViewport& InViewport, const LKeyEvent& I
             this->SetBrush(this->Style.PressBrush);
         }
 
-        if (this->OnSecondaryPressDelegate.IsBound())
+        if (this->OnSecondaryPressDelegate.IsValid())
         {
             this->OnSecondaryPressDelegate.Invoke(this, InKeyEvent);
         }
@@ -113,7 +113,7 @@ Jafg::LReply Jafg::WVButton::OnKeyUp(LViewport& InViewport, const LKeyEvent& InK
             this->SetBrush(this->Style.HoverBrush);
         }
 
-        if (this->OnPrimaryReleaseDelegate.IsBound())
+        if (this->OnPrimaryReleaseDelegate.IsValid())
         {
             this->OnPrimaryReleaseDelegate.Invoke(this, InKeyEvent);
         }
@@ -132,7 +132,7 @@ Jafg::LReply Jafg::WVButton::OnKeyUp(LViewport& InViewport, const LKeyEvent& InK
             this->SetBrush(this->Style.HoverBrush);
         }
 
-        if (this->OnSecondaryReleaseDelegate.IsBound())
+        if (this->OnSecondaryReleaseDelegate.IsValid())
         {
             this->OnSecondaryReleaseDelegate.Invoke(this, InKeyEvent);
         }

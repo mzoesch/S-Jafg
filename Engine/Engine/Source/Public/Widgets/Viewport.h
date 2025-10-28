@@ -21,8 +21,6 @@ struct LBackgroundContext final
     LWorld* World { nullptr };
 };
 
-MAKE_MULTICAST_SIGNATURE(LOnLateTick, const LViewport& InViewport)
-
 //# @see #LViewport::ApplySweepTranslation.
 struct LViewportSweepTranslation final
 {
@@ -72,7 +70,7 @@ public:
     //# allow tick inside the widget's #Tick, then you have to be satisfied with that.
     //# This event is for very, very few widgets - do not abuse its abilities to justify bad object structure design.
     //#
-    mutable LOnLateTick OnLateTick;
+    mutable MULTI_EVENT_DECL_VERBOSE(LViewport, OnLateTick, LViewport const& InViewport)
 
     template<typename TWidget> requires std::is_base_of_v<WUserWidget, TWidget>
     FORCEINLINE TWidget* AddWidget()

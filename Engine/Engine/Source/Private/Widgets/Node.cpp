@@ -233,7 +233,7 @@ Jafg::LReply Jafg::WNode::SweepFocusTest(const LViewport& Context, const LVector
 
 Jafg::LReply Jafg::WNode::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
-    if (this->OnKeyDownEvent.IsBound())
+    if (this->OnKeyDownEvent.IsValid())
     {
         return this->OnKeyDownEvent.Invoke(*this, InViewport, InKeyEvent);
     }
@@ -248,7 +248,7 @@ Jafg::LReply Jafg::WNode::OnKeyDown(LViewport& InViewport, const LKeyEvent& InKe
 
 Jafg::LReply Jafg::WNode::OnKeyUp(LViewport& InViewport, const LKeyEvent& InKeyEvent)
 {
-    if (this->OnKeyUpEvent.IsBound())
+    if (this->OnKeyUpEvent.IsValid())
     {
         return this->OnKeyUpEvent.Invoke(*this, InViewport, InKeyEvent);
     }

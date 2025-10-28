@@ -36,7 +36,7 @@ protected:
     TArray<TUnique<LPreference>> Preferences;
 };
 
-MAKE_DELEGATE_SIGNATURE(LOnDemandLoadPreferences, void, LPreferenceCollection*)
+typedef TFunction<void(LPreferenceCollection* Collection)> LOnDemandLoadPreferences;
 
 //#
 //# A nestable collection of preferences that store intermediate preferences and will be loaded on demand only.
@@ -50,7 +50,7 @@ public:
 
     ENGINE_API virtual const TArray<TUnique<LPreference>>& LoadAndGetChildPreferences() override;
 
-    FORCEINLINE bool IsOnLoadDelegateValid() const { return this->OnLoadDelegate.IsBound(); }
+    FORCEINLINE bool IsOnLoadDelegateValid() const { return this->OnLoadDelegate.IsValid(); }
     FORCEINLINE void OnLoad(LOnDemandLoadPreferences&& InDelegate) { this->OnLoadDelegate = std::move(InDelegate); }
 
     //# @return True if the refresh was successful.

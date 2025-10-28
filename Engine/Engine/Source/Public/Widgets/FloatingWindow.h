@@ -14,7 +14,7 @@ class WTextBox;
 class WVRegion;
 class WFloatingWindow;
 
-MAKE_DELEGATE_SIGNATURE(OnFloatingWindowClosedSignature, bool, WFloatingWindow& /* InWindow */)
+typedef TFunction<bool(WFloatingWindow& InWindow)> OnFloatingWindowClosedSignature;
 
 DECLARE_JAFG_WIDGET()
 class WFloatingWindow : public WUserWidget

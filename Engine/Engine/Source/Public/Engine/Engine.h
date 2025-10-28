@@ -67,16 +67,6 @@ FORCEINLINE auto GetCustomExitReason() -> LString { return GCustomExitReason; }
 // ~Engine Globals
 ///////////////////////////////////////////////////////////////////////////////
 
-MAKE_MULTICAST_SIGNATURE(LOnWorldBeginLife, LWorld* InNewWorld)
-
-#if JAFG_WITH_FOREIGN_SUPPORT
-    //#
-    //# This delegate gets called when a foreign plugin has been loaded.
-    //# @param InStaticClassContainer All static classes that are registered with the default public context of the new
-    //#                               plugin.
-    MAKE_MULTICAST_SIGNATURE(LOnForeignPluginLoaded, LLoadedPlugin* Plugin)
-#endif /* JAFG_WITH_FOREIGN_SUPPORT */
-
 namespace Private
 {
 
@@ -246,7 +236,7 @@ public:
     //# Delegate called when a new world is shortly about to be running inside its beginning life cycle.
     //# The world pointer is guaranteed to be valid.
     //#
-    LOnWorldBeginLife OnWorldBeginLife;
+    TMulticastDelegate<void(LWorld* InNewWorld)> OnWorldBeginLife;
 
     FORCEINLINE auto GetTracks() const noexcept -> const TArray<Private::LWorldTrack>& { return this->Tracks; }
     FORCEINLINE auto GetRegisteredLevels() const noexcept -> const TArray<LLevel>& { return this->RegisteredLevels; }
@@ -292,7 +282,12 @@ public:
     auto UnLoadPlugin(LLoadedPlugin* Plugin, const EPluginShutdownReason::Type Reason) -> EPluginLoadReturnCode::Type;
     void UnLoadPluginNoFailure(LLoadedPlugin* InPlugin, const EPluginShutdownReason::Type InReason);
 
-    LOnForeignPluginLoaded OnForeignPluginLoaded;
+    //#
+    //# This delegate gets called when a foreign plugin has been loaded.
+    //# @param InStaticClassContainer All static classes that are registered with the default public context of the new
+    //#                               plugin.
+    //#
+    MULTI_EVENT_DECL_VERBOSE(LEngine, OnForeignPluginLoaded, LLoadedPlugin* Plugin)
 
 private:
 

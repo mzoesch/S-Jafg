@@ -36,7 +36,7 @@ void Jafg::WFloatingWindow::Construct()
                 .TextBlockBrush(LTextBoxBrush::Compact())
                 .OnPrimaryRelease([this](WButton* Self, const LKeyEvent& InKeyEvent)
                 {
-                    if (this->OnWindowClosed.IsBound())
+                    if (this->OnWindowClosed.IsValid())
                     {
                         if (this->OnWindowClosed.Invoke(*this))
                         {
@@ -61,7 +61,7 @@ void Jafg::WFloatingWindow::Construct()
             Viewport.GetSurface().SetMouseCursor(EMouseCursor::Hand);
 
             WFloatingWindow* Window{ StaticCast<WFloatingWindow>(Self.GetParent()->GetParent()) };
-            Window->UiTickMoveHandle = Viewport.OnLateTick.AddMember(Window, &WFloatingWindow::UiTickMove);
+            Window->UiTickMoveHandle = Viewport.OnLateTick.Emplace(Window, &WFloatingWindow::UiTickMove);
 
             return LReply::Handled();
         }
@@ -111,7 +111,7 @@ void Jafg::WFloatingWindow::SetContentNode(WNode& Content) noexcept
             .OnPrimaryPress([](WButton* Self, const LKeyEvent& InKeyEvent)
             {
                 WFloatingWindow* Window{ StaticCast<WFloatingWindow>(Self->GetParent()->GetParent()->GetParent()) };
-                Window->UiTickResizeHandle = Self->GetViewport().OnLateTick.AddMember(Window, &WFloatingWindow::UiTickResize);
+                Window->UiTickResizeHandle = Self->GetViewport().OnLateTick.Emplace(Window, &WFloatingWindow::UiTickResize);
 
                 return;
             })
@@ -186,14 +186,21 @@ void Jafg::WFloatingWindow::UiTickResize(LViewport const& Viewport)
         Viewport.GetSurface().GetMouseLocation().Y - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).Y - this->ResizeDragOffset.value().Y
     };
 
-    if (NewSize.X > Viewport.GetDimensions().X)
+    LVector2 MaxSize{
+        Viewport.GetDimensions().X - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).X,
+        Viewport.GetDimensions().Y - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).Y
+    };
+
+    if (NewSize.X > MaxSize.X)
     {
-        NewSize.X = Viewport.GetDimensions().X;
+        NewSize.X = MaxSize.X;
     }
-    if (NewSize.Y > Viewport.GetDimensions().Y)
+    if (NewSize.Y > MaxSize.Y)
     {
-        NewSize.Y = Viewport.GetDimensions().Y;
+        NewSize.Y = MaxSize.Y;
     }
+
+    check( NewSize.X > 0.0f && NewSize.Y > 0.0f )
 
     this->SetWindowSize(NewSize);
 

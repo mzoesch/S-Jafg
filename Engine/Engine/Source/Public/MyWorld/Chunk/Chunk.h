@@ -26,7 +26,7 @@ class JChunkGenerationSubsystem;
 class JChunkGeneratorSubsystem;
 class LChunkShader;
 
-MAKE_MULTICAST_SIGNATURE(LChunkStateChangedDelegateSignature, EChunkState::Type /* NewChunkState */)
+typedef TMulticastDelegate<void(EChunkState::Type NewChunkState)> LChunkStateChangedDelegateSignature;
 
 namespace EChunkStateTimeoutBehavior
 {

@@ -17,9 +17,9 @@ class WVButton;
 class WHButton;
 struct LTextBoxBrush;
 
-MAKE_DELEGATE_SIGNATURE(LOnButtonKeyEvent,  void, WButton*  Self, const LKeyEvent& InKeyEvent)
-MAKE_DELEGATE_SIGNATURE(LOnVButtonKeyEvent, void, WVButton* Self, const LKeyEvent& InKeyEvent)
-MAKE_DELEGATE_SIGNATURE(LOnHButtonKeyEvent, void, WHButton* Self, const LKeyEvent& InKeyEvent)
+typedef TFunction<void(WButton* Self, LKeyEvent const& InKeyEvent)>  LOnButtonKeyEvent;
+typedef TFunction<void(WVButton* Self, LKeyEvent const& InKeyEvent)> LOnVButtonKeyEvent;
+typedef TFunction<void(WHButton* Self, LKeyEvent const& InKeyEvent)> LOnHButtonKeyEvent;
 
 struct LButtonStyle
 {

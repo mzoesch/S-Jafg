@@ -18,7 +18,7 @@ struct LInputMappedAction;
 struct LUserInputContext;
 
 typedef TFunction<void(LInputActionValue& InValue)> LUserInputActionCallback;
-MAKE_DELEGATE_SIGNATURE(LUserInputActionDelegate, void, LInputActionValue& InValue)
+typedef TFunction<void(LInputActionValue& InValue)> LUserInputActionDelegate;
 
 //#
 //# A mapped action that is owned by a context.

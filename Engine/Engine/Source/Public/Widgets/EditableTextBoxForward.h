@@ -18,17 +18,17 @@ namespace ETextCommit { enum Type : u8; }
 //# @note   This is useful if the content cannot be applied due to some validation, and handling the content validation
 //#         directly with the #LEditableTextBoxPredicateDelegate is not desired or viable.
 //#
-MAKE_DELEGATE_SIGNATURE(LEditableTextBoxAllowCommitDelegate, bool)
+typedef TFunction<bool()> LEditableTextBoxAllowCommitDelegate;
 
 //#
 //# Delegate, which is invoked when the user commits the content of the editable text box.
 //#
-MAKE_DELEGATE_SIGNATURE(LEditableTextBoxCommitDelegate, void, const LString& InText, const ETextCommit::Type InType)
+typedef TFunction<void(LString const&, ETextCommit::Type)> LEditableTextBoxCommitDelegate;
 
 //#
 //# Delegate, which is invoked when the contents of the editable text box changed in any way.
 //#
-MAKE_DELEGATE_SIGNATURE(LEditableTextBoxChangedDelegate, void, const LString& InNewContent)
+typedef TFunction<void(LString const&)> LEditableTextBoxChangedDelegate;
 
 //#
 //# A delegate that is invoked, if bounded, when the user tries to change the content of the editable text box.
@@ -39,7 +39,7 @@ MAKE_DELEGATE_SIGNATURE(LEditableTextBoxChangedDelegate, void, const LString& In
 //#         will still be invoked. Change events should be handled there. This should only be used for validation.
 //#         If this validation fails, the #LEditableTextBoxChangedDelegate will not be invoked.
 //#
-MAKE_DELEGATE_SIGNATURE(LEditableTextBoxPredicateDelegate, bool, const LString& InNewSuggestedContent)
+typedef TFunction<bool(LString const&)> LEditableTextBoxPredicateDelegate;
 
 //#
 //# A caret is a blinking line, block, or bitmap in the client area of a window. The caret typically indicates

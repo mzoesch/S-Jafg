@@ -74,7 +74,7 @@ void Jafg::LLocalEgo::Initialize()
     })});
     this->VariableHandle_VerifyChunks = Cli.RegisterVariable({"VerifyChunks", LCliType::Type("Bool"), "true"});
 
-    this->OnWorldBeginLifeHandle = GEngine->OnWorldBeginLife.Add(this, &LLocalEgo::OnWorldBeginLife);
+    this->OnWorldBeginLifeHandle = GEngine->OnWorldBeginLife.Emplace(this, &LLocalEgo::OnWorldBeginLife);
 
     this->Collection.InitializeDeferred(&this->Outer);
     this->Collection.InitializeSubsystems<JLocalEgoSubsystem>();

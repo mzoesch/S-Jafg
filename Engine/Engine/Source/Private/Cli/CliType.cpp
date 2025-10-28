@@ -7,9 +7,9 @@ bool Jafg::LCliType::SetVariable(const LCommandArgs& InValue, LString* OutValue)
 {
     check( OutValue )
 
-    if (this->OnValueSetDelegate)
+    if (this->OnValueSet.IsValid())
     {
-        return this->OnValueSetDelegate(InValue, OutValue);
+        return this->OnValueSet(InValue, OutValue);
     }
 
     if (InValue.Name == *OutValue)
@@ -24,9 +24,9 @@ bool Jafg::LCliType::SetVariable(const LCommandArgs& InValue, LString* OutValue)
 bool Jafg::LCliType::CanParse(const LCommandArgs& Args, i32* Cursor) const
 {
     check( Cursor )
-    if (this->OnParseTypeDelegate.IsBound())
+    if (this->OnParseType.IsValid())
     {
-        return this->OnParseTypeDelegate.Invoke(Args, Cursor);
+        return this->OnParseType.Invoke(Args, Cursor);
     }
 
     check( GEngine )
@@ -38,14 +38,14 @@ bool Jafg::LCliType::CanParse(const LCommandArgs& Args, i32* Cursor) const
         return false;
     }
 
-    return CliType->OnParseTypeDelegate.Invoke(Args, Cursor);
+    return CliType->OnParseType.Invoke(Args, Cursor);
 }
 
 TArray<LString> Jafg::LCliType::Suggest(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) const
 {
-    if (this->OnSuggestDelegate.IsBound())
+    if (this->OnSuggest.IsValid())
     {
-        return this->OnSuggestDelegate.Invoke(Args, Cursor, MaxSuggestions);
+        return this->OnSuggest.Invoke(Args, Cursor, MaxSuggestions);
     }
 
     check( GEngine )
@@ -64,5 +64,5 @@ TArray<LString> Jafg::LCliType::Suggest(const LCommandArgs& Args, const i32 Curs
         return { };
     }
 
-    return CliType->OnSuggestDelegate.Invoke(Args, Cursor, MaxSuggestions);
+    return CliType->OnSuggest.Invoke(Args, Cursor, MaxSuggestions);
 }

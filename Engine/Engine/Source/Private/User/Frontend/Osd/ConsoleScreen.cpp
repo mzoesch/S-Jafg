@@ -50,7 +50,7 @@ void Jafg::WConsoleScreen::BeginLifeCDR()
         {
             "Clear", "Clears the console messages.",
             LCommandParams{}
-            .Exec(LOnCommandInvokation::CreateMemberDelegate(this, &WConsoleScreen::ClearMessagesDefault))
+            .Exec(LOnCommandInvocation::Create(this, &WConsoleScreen::ClearMessagesDefault))
         });
     }
     else
@@ -61,7 +61,7 @@ void Jafg::WConsoleScreen::BeginLifeCDR()
             {
                 "Clear", "Clears the console messages.",
                 LCommandParams{}
-                .Exec(LOnCommandInvokation::CreateMemberDelegate(this, &WConsoleScreen::ClearMessagesDefault))
+                .Exec(LOnCommandInvocation::Create(this, &WConsoleScreen::ClearMessagesDefault))
             });
             return;
         });
@@ -86,9 +86,9 @@ void Jafg::WConsoleScreen::Construct()
             .TextScale(ETextScale::Body)
             .Padding({2, 2})
             .Tint({0, 0, 0, 164})
-            .OnAllowCommit(LEditableTextBoxAllowCommitDelegate::CreateFunction(this, &WConsoleScreen::OnAllowCommit))
-            .OnCommit(LEditableTextBoxCommitDelegate::CreateFunction(this, &WConsoleScreen::OnTextCommit))
-            .OnChanged(LEditableTextBoxChangedDelegate::CreateFunction(this, &WConsoleScreen::OnTextChanged))
+            .OnAllowCommit(LEditableTextBoxAllowCommitDelegate::Create(this, &WConsoleScreen::OnAllowCommit))
+            .OnCommit(LEditableTextBoxCommitDelegate::Create(this, &WConsoleScreen::OnTextCommit))
+            .OnChanged(LEditableTextBoxChangedDelegate::Create(this, &WConsoleScreen::OnTextChanged))
         +
         NewNode(WRegion)
             .Anchor(EAnchor::Fill)

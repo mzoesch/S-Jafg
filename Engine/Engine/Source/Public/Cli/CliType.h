@@ -11,16 +11,16 @@ class LCliType;
 struct LCommandArgs;
 
 //# @return True if the argument can be parsed as a valid type.
-MAKE_DELEGATE_SIGNATURE(LOnParseTypeDelegate, bool, const LCommandArgs& Args, i32* Cursor)
+typedef TFunction<bool(LCommandArgs const& Args, i32* Cursor)> LOnParseType;
 
 //#
 //# @param OutValue Is always valid.
 //# @return True if the #OutValue was set changed.
 //#
-MAKE_DELEGATE_SIGNATURE(LOnValueSetDelegate, bool, const LCommandArgs& InValue, LString* OutValue)
+typedef TFunction<bool(const LCommandArgs& InValue, LString* OutValue)> LOnValueSet;
 
 //# @return A list of suggestions for the given arguments. The first index is the most common suggestion.
-MAKE_DELEGATE_SIGNATURE(LOnSuggestTypeDelegate, TArray<LString>, const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions)
+typedef TFunction<TArray<LString>(LCommandArgs const& Args, i32 Cursor, u32 MaxSuggestions)> LOnSuggestType;
 
 //#
 //# Utility struct for a type T that may accept an arbitrary number of arguments which fit for said type T.
@@ -45,15 +45,15 @@ public:
     (
           const LString& InIdentifier
         , const LString& InDefault
-        , LOnParseTypeDelegate&& InOnParseType
-        , LOnValueSetDelegate&& InOnValueSet = nullptr
-        , LOnSuggestTypeDelegate&& InOnSuggest = nullptr
+        , LOnParseType&& InOnParseType
+        , LOnValueSet&& InOnValueSet = nullptr
+        , LOnSuggestType&& InOnSuggest = nullptr
     )
         : LCliObject(InIdentifier)
         , Default(InDefault)
-        , OnParseTypeDelegate(std::move(InOnParseType))
-        , OnValueSetDelegate(std::move(InOnValueSet))
-        , OnSuggestDelegate(std::move(InOnSuggest))
+        , OnParseType(std::move(InOnParseType))
+        , OnValueSet(std::move(InOnValueSet))
+        , OnSuggest(std::move(InOnSuggest))
     {
     }
 
@@ -61,15 +61,15 @@ public:
     (
           const LString& InIdentifier, const LString& InHelp
         , const LString& InDefault
-        , LOnParseTypeDelegate&& InOnParseType
-        , LOnValueSetDelegate&& InOnValueSet = nullptr
-        , LOnSuggestTypeDelegate&& InOnSuggest = nullptr
+        , LOnParseType&& InOnParseType
+        , LOnValueSet&& InOnValueSet = nullptr
+        , LOnSuggestType&& InOnSuggest = nullptr
     )
         : LCliObject(InIdentifier, InHelp)
         , Default(InDefault)
-        , OnParseTypeDelegate(std::move(InOnParseType))
-        , OnValueSetDelegate(std::move(InOnValueSet))
-        , OnSuggestDelegate(std::move(InOnSuggest))
+        , OnParseType(std::move(InOnParseType))
+        , OnValueSet(std::move(InOnValueSet))
+        , OnSuggest(std::move(InOnSuggest))
     {
     }
 
@@ -99,25 +99,26 @@ public:
     ENGINE_API TArray<LString> Suggest(const LCommandArgs& Args, const i32 Cursor, const u32 MaxSuggestions) const;
 
     FORCEINLINE auto GetDefault() const -> const LString& { return this->Default; }
-    FORCEINLINE bool IsTypeDelegateValid() const { return this->OnParseTypeDelegate.IsBound(); }
-    FORCEINLINE bool IsValueSetDelegateValid() const { return this->OnValueSetDelegate.IsBound(); }
+    FORCEINLINE bool IsTypeDelegateValid() const noexcept { return this->OnParseType.IsValid(); }
+    FORCEINLINE bool IsValueSetDelegateValid() const noexcept { return this->OnValueSet.IsValid(); }
 
 private:
 
     FORCEINLINE explicit LCliType(const LString& InIdentifier) : LCliObject(InIdentifier) { this->ExpandToUuid(); }
     FORCEINLINE explicit LCliType(const LString& InIdentifier, const LString& InHelp) : LCliObject(InIdentifier, InHelp) { this->ExpandToUuid(); }
     LString Default;
-    LOnParseTypeDelegate OnParseTypeDelegate;
-    LOnValueSetDelegate OnValueSetDelegate;
-    LOnSuggestTypeDelegate OnSuggestDelegate;
+
+    LOnParseType OnParseType;
+    LOnValueSet OnValueSet;
+    LOnSuggestType OnSuggest;
 };
 
 FORCEINLINE LCliType::LCliType(LCliType&& InOther) noexcept
 {
     this->Default = std::move(InOther.Default);
-    this->OnParseTypeDelegate = std::move(InOther.OnParseTypeDelegate);
-    this->OnValueSetDelegate = std::move(InOther.OnValueSetDelegate);
-    this->OnSuggestDelegate = std::move(InOther.OnSuggestDelegate);
+    this->OnParseType = std::move(InOther.OnParseType);
+    this->OnValueSet = std::move(InOther.OnValueSet);
+    this->OnSuggest = std::move(InOther.OnSuggest);
     this->LCliObject::operator=(std::move(InOther));
     return;
 }
@@ -125,9 +126,9 @@ FORCEINLINE LCliType::LCliType(LCliType&& InOther) noexcept
 FORCEINLINE LCliType& LCliType::operator=(LCliType&& InOther) noexcept
 {
     this->Default = std::move(InOther.Default);
-    this->OnParseTypeDelegate = std::move(InOther.OnParseTypeDelegate);
-    this->OnValueSetDelegate = std::move(InOther.OnValueSetDelegate);
-    this->OnSuggestDelegate = std::move(InOther.OnSuggestDelegate);
+    this->OnParseType = std::move(InOther.OnParseType);
+    this->OnValueSet = std::move(InOther.OnValueSet);
+    this->OnSuggest = std::move(InOther.OnSuggest);
     this->LCliObject::operator=(std::move(InOther));
     return *this;
 }

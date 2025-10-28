@@ -563,7 +563,7 @@ void Jafg::JTimeWorldSubsystem::DefaultOnly_RegisterCliObjects()
             .Token(LCliType::Type<EDayTimeAddBehavior::Type>())
             .Token(LCliType::Type<LWorld>())
             .Token(LCliType::Type<LCliDayTime>())
-            .Exec(LOnCommandInvokation::CreateDelegate([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
+            .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
             {
                 check( InArgs.SubArgs.size() == 3 )
                 const EDayTimeAddBehavior::Type Behavior { InArgs[0].GetAs<EDayTimeAddBehavior::Type>() };
@@ -598,7 +598,7 @@ void Jafg::JTimeWorldSubsystem::DefaultOnly_RegisterCliObjects()
                 OutResponse->Rc = ECommandReturnCode::Success;
 
                 return;
-            })),
+            }),
             LCommandParams()
             .Token(LCliType::Type<LCliString>("Get"))
             .Token(LCliType::Type<LWorld>())

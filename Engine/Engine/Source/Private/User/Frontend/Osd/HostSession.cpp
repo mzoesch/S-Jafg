@@ -302,27 +302,27 @@ void Jafg::WHostSessionScreen_New::Construct()
         LTabBarTabDescriptor()
             .Identifier("General")
             .PanelWidgetClass(WVRegion::StaticClass())
-            .Callback(LOnTabBarLoaded::CreateMemberFunction(this, &WHostSessionScreen_New::OnLoad_General))
+            .Callback(LOnTabBarLoaded::Create(this, &WHostSessionScreen_New::OnLoad_General))
         +
         LTabBarTabDescriptor()
             .Identifier("Multiplayer")
             .PanelWidgetClass(WVRegion::StaticClass())
-            .Callback(LOnTabBarLoaded::CreateMemberFunction(this, &WHostSessionScreen_New::OnLoad_Multiplayer))
+            .Callback(LOnTabBarLoaded::Create(this, &WHostSessionScreen_New::OnLoad_Multiplayer))
         +
         LTabBarTabDescriptor()
             .Identifier("World Generation")
             .PanelWidgetClass(WVRegion::StaticClass())
-            .Callback(LOnTabBarLoaded::CreateMemberFunction(this, &WHostSessionScreen_New::OnLoad_WorldGeneration))
+            .Callback(LOnTabBarLoaded::Create(this, &WHostSessionScreen_New::OnLoad_WorldGeneration))
         +
         LTabBarTabDescriptor()
             .Identifier("Policies")
             .PanelWidgetClass(WVRegion::StaticClass())
-            .Callback(LOnTabBarLoaded::CreateMemberFunction(this, &WHostSessionScreen_New::OnLoad_Policies))
+            .Callback(LOnTabBarLoaded::Create(this, &WHostSessionScreen_New::OnLoad_Policies))
         +
         LTabBarTabDescriptor()
             .Identifier("Advanced")
             .PanelWidgetClass(WVRegion::StaticClass())
-            .Callback(LOnTabBarLoaded::CreateMemberFunction(this, &WHostSessionScreen_New::OnLoad_Advanced))
+            .Callback(LOnTabBarLoaded::Create(this, &WHostSessionScreen_New::OnLoad_Advanced))
     ]
     ;
 

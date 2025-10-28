@@ -469,8 +469,8 @@ FORCEINLINE f32 InSptFromRelative(WNode const& Node, f32 Relative) noexcept;
 ENGINE_API  LVector2 InSptFromRelative(LViewport const& Viewport, LVector2 Relative) noexcept;
 FORCEINLINE LVector2 InSptFromRelative(WNode const& Node, LVector2 Relative) noexcept;
 
-MAKE_DELEGATE_SIGNATURE(OnWidgetCursorEventSignature, LCursorReply, WNode& /* Widget */)
-MAKE_DELEGATE_SIGNATURE(OnWidgetKeyEventSignature, LReply, WNode& /* Widget */, LViewport& /* Viewport */, LKeyEvent const& /* KeyEvent */)
+typedef TFunction<LCursorReply(WNode& Widget)> OnWidgetCursorEventSignature;
+typedef TFunction<LReply(WNode& Widget, LViewport& Viewport, LKeyEvent const& KeyEvent)> OnWidgetKeyEventSignature;
 
 //#
 //# The base class for everything that can be interpreted as a visual element.
@@ -535,9 +535,9 @@ public:
     bool IsInBounds(const LViewport& Context, const LVector2& InLocation) const;
     virtual LCursorReply SweepMouse(LViewport& Context, const LVector2& InLocation);
 
-    virtual LCursorReply OnCursorEnter() { if (this->OnCursorEnterEvent.IsBound()) { return this->OnCursorEnterEvent.Invoke(*this); } return LCursorReply::Handled(); }
-    virtual LCursorReply OnCursorMoved(const LVector2& InLocation) { if (this->OnCursorMovedEvent.IsBound()) { return this->OnCursorMovedEvent.Invoke(*this); } return LCursorReply::Handled(); }
-    virtual LCursorReply OnCursorLeave() { if (this->OnCursorLeaveEvent.IsBound()) { return this->OnCursorLeaveEvent.Invoke(*this); } return LCursorReply::Handled(); }
+    virtual LCursorReply OnCursorEnter() { if (this->OnCursorEnterEvent.IsValid()) { return this->OnCursorEnterEvent.Invoke(*this); } return LCursorReply::Handled(); }
+    virtual LCursorReply OnCursorMoved(const LVector2& InLocation) { if (this->OnCursorMovedEvent.IsValid()) { return this->OnCursorMovedEvent.Invoke(*this); } return LCursorReply::Handled(); }
+    virtual LCursorReply OnCursorLeave() { if (this->OnCursorLeaveEvent.IsValid()) { return this->OnCursorLeaveEvent.Invoke(*this); } return LCursorReply::Handled(); }
 
     OnWidgetCursorEventSignature OnCursorEnterEvent;
     OnWidgetCursorEventSignature OnCursorMovedEvent;

@@ -2,10 +2,7 @@
 
 #pragma once
 
-namespace Jafg
-{
-
-template <typename T>
+template<typename T>
 class TFunction;
 
 //#
@@ -15,7 +12,7 @@ class TFunction;
 template<typename TRet, typename... TParams>
 class TFunction<TRet(TParams...)>
 {
-    template <typename T>
+    template<typename T>
     friend class TFunction;
 
 public:
@@ -26,13 +23,13 @@ private:
 
     struct LCallableBase;
 
-    template <typename TFunctor> requires (std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     struct LCallableStrong;
 
-    template <typename TFunctor> requires (std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     struct LCallableWeak;
 
-    template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
+    template<typename TObj, typename TMemberFunctor> requires(std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
     struct LCallableMember;
 
     friend LCallableBase;
@@ -45,8 +42,6 @@ private:
 
 public:
 
-    typedef TUnique<LCallableBase> LImpl;
-
     FORCEINLINE constexpr TFunction() noexcept = default;
     FORCEINLINE constexpr TFunction(LNullptrTy) noexcept : Impl(nullptr) { }
     FORCEINLINE constexpr TFunction& operator=(LNullptrTy) noexcept { this->Impl.operator=(nullptr); return *this; }
@@ -58,35 +53,56 @@ public:
 
     ///////////////////////////////////////////////////////////////////////////////
     // Templated constructors for different callable types - might not be resolved by compiler.
-    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     FORCEINLINE constexpr TFunction(TFunctor&& Functor) noexcept
     {
         this->Impl = TUnique<LCallableBase>{new LCallableStrong<TFunctor>(this, std::forward<TFunctor>(Functor))};
     }
-    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     FORCEINLINE constexpr TFunction(TFunctor* Functor) noexcept
     {
         this->Impl = TUnique<LCallableBase>{new LCallableWeak<TFunctor>(this, Functor)};
     }
-    template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
+    template<typename TObj, typename TMemberFunctor> requires(std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
     FORCEINLINE constexpr TFunction(TObj* Object, TMemberFunctor MemberFunctor) noexcept
     {
         this->Impl = TUnique<LCallableBase>{new LCallableMember<TObj, TMemberFunctor>(this, Object, MemberFunctor)};
     }
 
     ///////////////////////////////////////////////////////////////////////////////
+    // Implicit bind functions for different callable types.
+    FORCEINLINE void Bind(LNullptrTy) noexcept { this->Reset(); }
+    FORCEINLINE void Bind(TFunction const& Other) noexcept { this->CopyImpl(Other); }
+    FORCEINLINE void Bind(TFunction&& Other) noexcept { *this = std::move(Other); }
+    template<typename TFunctor> requires(std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    FORCEINLINE void Bind(TFunctor&& Functor)
+    {
+        this->Impl = TUnique<LCallableBase>{new LCallableStrong<TFunctor>(this, std::forward<TFunctor>(Functor))};
+    }
+    template<typename TFunctor> requires(std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    FORCEINLINE void Bind(TFunctor* Functor)
+    {
+        this->Impl = TUnique<LCallableBase>{new LCallableWeak<TFunctor>(this, Functor)};
+    }
+    template<typename TObj, typename TMemberFunctor> requires(std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
+    FORCEINLINE void Bind(TObj* Object, TMemberFunctor MemberFunctor)
+    {
+        this->Impl = TUnique<LCallableBase>{new LCallableMember<TObj, TMemberFunctor>(this, Object, MemberFunctor)};
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
     // Explicit bind functions for different callable types.
-    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     FORCEINLINE void BindStrong(TFunctor&& Functor)
     {
         this->Impl = TUnique<LCallableBase>{new LCallableStrong<TFunctor>(this, std::forward<TFunctor>(Functor))};
     }
-    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     FORCEINLINE void BindWeak(TFunctor* Functor)
     {
         this->Impl = TUnique<LCallableBase>{new LCallableWeak<TFunctor>(this, Functor)};
     }
-    template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
+    template<typename TObj, typename TMemberFunctor> requires(std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
     FORCEINLINE void BindMember(TObj* Object, TMemberFunctor MemberFunctor)
     {
         this->Impl = TUnique<LCallableBase>{new LCallableMember<TObj, TMemberFunctor>(this, Object, MemberFunctor)};
@@ -94,41 +110,53 @@ public:
 
     ///////////////////////////////////////////////////////////////////////////////
     // Implicit static bind functions for different callable types.
-    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     FORCEINLINE static TFunction Create(TFunctor&& Functor)
     {
-        return { std::forward<TFunctor>(Functor) };
+        return TFunction{ std::forward<TFunctor>(Functor) };
     }
-    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     FORCEINLINE static TFunction Create(TFunctor* Functor)
     {
-        return { std::forward<TFunctor>(Functor) };
+        return TFunction{ Functor };
     }
-    template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
+    template<typename TObj, typename TMemberFunctor> requires(std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
     FORCEINLINE static TFunction Create(TObj* Object, TMemberFunctor MemberFunctor)
     {
-        return { Object, MemberFunctor };
+        return TFunction{ Object, MemberFunctor };
     }
 
     ///////////////////////////////////////////////////////////////////////////////
     // Explicit static bind functions for different callable types.
-    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     FORCEINLINE static TFunction CreateStrong(TFunctor&& Functor)
     {
         TFunction Function; Function.BindStrong(std::forward<TFunctor>(Functor));
         return Function;
     }
-    template <typename TFunctor> requires (std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_same_v<TFunctor, TFunction> == false && std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     FORCEINLINE static TFunction CreateWeak(TFunctor* Functor)
     {
         TFunction Function; Function.BindWeak(Functor);
         return Function;
     }
-    template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
+    template<typename TObj, typename TMemberFunctor> requires(std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
     FORCEINLINE static TFunction CreateMember(TObj* Object, TMemberFunctor MemberFunctor)
     {
         TFunction Function; Function.BindMember(Object, MemberFunctor);
         return Function;
+    }
+
+    FORCEINLINE bool InvokeIfBound(TParams... Params) const noexcept(std::is_nothrow_invocable_r_v<TRet, decltype(this->Impl), TParams...>)
+        requires std::is_void_v<TRet>
+    {
+        if (this->IsValid() == false)
+        {
+            return false;
+        }
+
+        this->Impl->Invoke(std::forward<TParams>(Params)...);
+        return true;
     }
 
     FORCEINLINE TRet Invoke(TParams... Params) const noexcept(std::is_nothrow_invocable_r_v<TRet, decltype(this->Impl), TParams...>)
@@ -148,6 +176,10 @@ public:
     FORCEINLINE constexpr bool IsValid() const noexcept { return this->Impl.get() != nullptr; }
     FORCEINLINE constexpr bool IsCopyable() const noexcept { return this->IsValid() && this->CopyImplDelegate != nullptr; }
 
+protected:
+
+    typedef TUnique<LCallableBase> LImpl;
+
 private:
 
     FORCEINLINE void CopyImpl(const TFunction& Other) noexcept;
@@ -158,7 +190,7 @@ private:
         FORCEINLINE virtual TRet Invoke(TParams... Params) const = 0;
     };
 
-    template <typename TFunctor> requires (std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     struct LCallableStrong final : public LCallableBase
     {
         TFunctor Inner;
@@ -180,7 +212,7 @@ private:
             return;
         }
 
-        FORCEINLINE static constexpr void Copy(const LCallableBase* Base, TFunction* OutFunction) noexcept requires (std::is_copy_constructible_v<TFunctor>)
+        FORCEINLINE static constexpr void Copy(const LCallableBase* Base, TFunction* OutFunction) noexcept requires(std::is_copy_constructible_v<TFunctor>)
         {
             check( Base && OutFunction )
             const LCallableStrong* Strong { static_cast<const LCallableStrong*>(Base) };
@@ -199,7 +231,7 @@ private:
 
         private:
 
-        FORCEINLINE constexpr LCallableStrong(TFunction* Function, const TFunctor& Functor) noexcept requires (std::is_copy_constructible_v<TFunctor>)
+        FORCEINLINE constexpr LCallableStrong(TFunction* Function, const TFunctor& Functor) noexcept requires(std::is_copy_constructible_v<TFunctor>)
             : Inner(Functor)
         {
             check( Function )
@@ -209,7 +241,7 @@ private:
         }
     };
 
-    template <typename TFunctor> requires (std::is_invocable_r_v<TRet, TFunctor, TParams...>)
+    template<typename TFunctor> requires(std::is_invocable_r_v<TRet, TFunctor, TParams...>)
     struct LCallableWeak final : public LCallableBase
     {
         TFunctor* Inner { nullptr };
@@ -244,7 +276,7 @@ private:
         }
     };
 
-    template <typename TObj, typename TMemberFunctor> requires (std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
+    template<typename TObj, typename TMemberFunctor> requires(std::is_invocable_r_v<TRet, TMemberFunctor, TObj*, TParams...>)
     struct LCallableMember final : public LCallableBase
     {
         TObj* Object { nullptr };
@@ -280,18 +312,20 @@ private:
         }
     };
 
+protected:
+
     LImpl Impl;
     LCopyImplDelegate CopyImplDelegate{ nullptr };
 };
 
-template <typename TRet, typename... TParams>
+template<typename TRet, typename... TParams>
 FORCEINLINE constexpr TFunction<TRet(TParams...)>::TFunction(TFunction&& Other) noexcept
     : Impl(std::move(Other.Impl)), CopyImplDelegate(std::move(Other.CopyImplDelegate))
 {
     check( Other.Impl.get() == nullptr )
 }
 
-template <typename TRet, typename... TParams>
+template<typename TRet, typename... TParams>
 FORCEINLINE constexpr TFunction<TRet(TParams...)>& TFunction<TRet(TParams...)>::operator=(TFunction&& Other) noexcept
 {
     this->Impl = std::move(Other.Impl);
@@ -302,7 +336,7 @@ FORCEINLINE constexpr TFunction<TRet(TParams...)>& TFunction<TRet(TParams...)>::
     return *this;
 }
 
-template <typename TRet, typename... TParams>
+template<typename TRet, typename... TParams>
 FORCEINLINE void TFunction<TRet(TParams...)>::CopyImpl(const TFunction& Other) noexcept
 {
     if (Other.IsValid() == false)
@@ -316,5 +350,3 @@ FORCEINLINE void TFunction<TRet(TParams...)>::CopyImpl(const TFunction& Other) n
 
     return;
 }
-
-} /* ~Namespace Jafg */

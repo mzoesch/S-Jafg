@@ -29,9 +29,9 @@ public:
     FORCEINLINE TFactoryRetTy& Brush(const LEditableTextBoxBrush& InBrush) { this->This()->SetBrush(InBrush); return this->Self(); }
     FORCEINLINE TFactoryRetTy& Brush(LEditableTextBoxBrush&& InBrush) { this->This()->SetBrush(std::move(InBrush)); return this->Self(); }
 
-    FORCEINLINE TFactoryRetTy& OnAllowCommit(LEditableTextBoxAllowCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnAllowContentCommit.BindFunction(std::move(InCallback)); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OnCommit(LEditableTextBoxCommitDelegate::LFunctionSigTy&& InCallback) { this->This()->OnContentCommitted.BindFunction(std::move(InCallback)); return this->Self(); }
-    FORCEINLINE TFactoryRetTy& OnChanged(LEditableTextBoxChangedDelegate::LFunctionSigTy&& InCallback) { this->This()->OnContentChanged.BindFunction(std::move(InCallback)); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OnAllowCommit(auto&& InCallback) { this->This()->OnAllowContentCommit.Bind(std::forward<decltype(InCallback)>(InCallback)); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OnCommit(auto&& InCallback) { this->This()->OnContentCommitted.Bind(std::forward<decltype(InCallback)>(InCallback)); return this->Self(); }
+    FORCEINLINE TFactoryRetTy& OnChanged(auto&& InCallback) { this->This()->OnContentChanged.Bind(std::forward<decltype(InCallback)>(InCallback)); return this->Self(); }
 };
 
 //#

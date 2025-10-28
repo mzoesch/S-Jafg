@@ -39,7 +39,7 @@ void Jafg::WEditableTextBox::Construct()
 {
     Super::Construct();
 
-    check( this->OnChanged.IsBound() == false )
+    check( this->OnChanged.IsValid() == false )
     this->OnChanged.BindMember(this, &WEditableTextBox::OnSuperContentChanged);
 
     return;
@@ -133,7 +133,7 @@ void Jafg::WEditableTextBox::UserInterfaceTick(const LViewport& InViewport)
         LString NewContent { this->GetContent() };
         NewContent.insert(this->CaretCursor, BufferedInput);
 
-        if (this->ContentPredicate.IsBound() && this->ContentPredicate.Invoke(NewContent) == false)
+        if (this->ContentPredicate.IsValid() && this->ContentPredicate.Invoke(NewContent) == false)
         {
             LOG_VERBOSE(LogWidgets, "Content predicate failed for [{}]. Discarding content change request.", NewContent)
         }
@@ -180,7 +180,7 @@ void Jafg::WEditableTextBox::OnFocusReceived()
     Super::OnFocusReceived();
     this->CaretBlinker = 0.0f;
 
-    this->UserInterfaceTickDelegateHandle = this->GetViewport().OnLateTick.AddMember(this, &WEditableTextBox::UserInterfaceTick);
+    this->UserInterfaceTickDelegateHandle = this->GetViewport().OnLateTick.Emplace(this, &WEditableTextBox::UserInterfaceTick);
 
     if (this->GetViewport().GetSurface().IsMouseLocationMeaningful())
     {
@@ -259,7 +259,7 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LViewport& InViewport, const LKey
 
     if (InKeyEvent.GetKey() == EKeys::Enter || InKeyEvent.GetKey() == EKeys::NumPadEnter)
     {
-        if (this->OnAllowContentCommit.IsBound())
+        if (this->OnAllowContentCommit.IsValid())
         {
             if (this->OnAllowContentCommit.Invoke() == false)
             {

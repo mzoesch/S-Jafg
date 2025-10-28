@@ -31,8 +31,8 @@ struct LCxxObjectInitializer final
 
 ENGINE_API LCxxObjectInitializer GetDefaultObjectInitializer(LCxxClass& Class) noexcept;
 
-MAKE_DELEGATE_SIGNATURE(LSetCxxClassField, void, LString const& Value)
-MAKE_DELEGATE_SIGNATURE(LGetCxxClassField, LString)
+typedef TFunction<void(LString const& Value)> LSetCxxClassField;
+typedef TFunction<LString()> LGetCxxClassField;
 
 struct LCxxClassField final
 {

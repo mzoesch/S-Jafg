@@ -353,8 +353,8 @@ void Jafg::LWorld::OnTearDown()
     algo::orphan(&this->TickableObjects);
     algo::orphan(&this->DeletedTickableObjects);
 
-    this->OnStaticDraw.Unbind();
-    this->OnStaticLineTrace.Unbind();
+    this->OnStaticDraw.Reset();
+    this->OnStaticLineTrace.Reset();
 
     algo::orphan(&this->UnsanitizedUrl);
     algo::orphan(&this->Url);
@@ -433,7 +433,7 @@ bool Jafg::LWorld::LineTraceByChannel(
 
     if (Channel == ECollisionChannel::Static)
     {
-        if (this->OnStaticLineTrace.IsBound())
+        if (this->OnStaticLineTrace.IsValid())
         {
             STAT_QUICK_CYCLE_START("OnStaticLineTrace")
             return this->OnStaticLineTrace(OutHits, Begin, End, Params);

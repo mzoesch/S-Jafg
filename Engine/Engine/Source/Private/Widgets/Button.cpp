@@ -28,7 +28,7 @@ Jafg::LCursorReply Jafg::WButton::OnCursorEnter()
         this->SetBrush(this->Style.HoverBrush);
     }
 
-    if (this->OnCursorEnterEvent.IsBound())
+    if (this->OnCursorEnterEvent.IsValid())
     {
         if (LCursorReply Reply{ this->OnCursorEnterEvent.Invoke(*this) }; Reply.IsHandled())
         {
@@ -46,7 +46,7 @@ Jafg::LCursorReply Jafg::WButton::OnCursorLeave()
         this->SetBrush(this->Style.NormalBrush);
     }
 
-    if (this->OnCursorLeaveEvent.IsBound())
+    if (this->OnCursorLeaveEvent.IsValid())
     {
         if (LCursorReply Reply{ this->OnCursorLeaveEvent.Invoke(*this) }; Reply.IsHandled())
         {
@@ -71,7 +71,7 @@ Jafg::LReply Jafg::WButton::OnKeyDown(LViewport& InViewport, const LKeyEvent& In
             this->SetBrush(this->Style.PressBrush);
         }
 
-        if (this->OnPrimaryPressDelegate.IsBound())
+        if (this->OnPrimaryPressDelegate.IsValid())
         {
             this->OnPrimaryPressDelegate.Invoke(this, InKeyEvent);
         }
@@ -90,7 +90,7 @@ Jafg::LReply Jafg::WButton::OnKeyDown(LViewport& InViewport, const LKeyEvent& In
             this->SetBrush(this->Style.PressBrush);
         }
 
-        if (this->OnSecondaryPressDelegate.IsBound())
+        if (this->OnSecondaryPressDelegate.IsValid())
         {
             this->OnSecondaryPressDelegate.Invoke(this, InKeyEvent);
         }
@@ -119,7 +119,7 @@ Jafg::LReply Jafg::WButton::OnKeyUp(LViewport& InViewport, const LKeyEvent& InKe
             this->SetBrush(this->Style.HoverBrush);
         }
 
-        if (this->OnPrimaryReleaseDelegate.IsBound())
+        if (this->OnPrimaryReleaseDelegate.IsValid())
         {
             this->OnPrimaryReleaseDelegate.Invoke(this, InKeyEvent);
         }
@@ -138,7 +138,7 @@ Jafg::LReply Jafg::WButton::OnKeyUp(LViewport& InViewport, const LKeyEvent& InKe
             this->SetBrush(this->Style.HoverBrush);
         }
 
-        if (this->OnSecondaryReleaseDelegate.IsBound())
+        if (this->OnSecondaryReleaseDelegate.IsValid())
         {
             this->OnSecondaryReleaseDelegate.Invoke(this, InKeyEvent);
         }
