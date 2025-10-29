@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Widgets/RegionForward.h"
+#include "Widgets/Whitespace.h"
 
 namespace Jafg
 {

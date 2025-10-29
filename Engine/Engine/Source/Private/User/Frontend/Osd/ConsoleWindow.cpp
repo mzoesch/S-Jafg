@@ -5,6 +5,11 @@
 #include "Widgets/ScrollRegion.h"
 #include "Widgets/VRegion.h"
 #include "Widgets/HRegion.h"
+#include "Cli/CliStatics.h"
+#include "Cli/CliCommand.h"
+#include "Cli/CommandLineInterface.h"
+#include "Widgets/EditableTextBoxForward.h"
+#include "Widgets/EditableTextBox.h"
 
 namespace
 {
@@ -43,9 +48,6 @@ void Jafg::WConsoleWindow::Construct()
         .OutlineThickness(1)
         .OutlineTint(Lal::LColor::Black)
     [
-        NewNode(WConsoleStdIn)
-            .Anchor(EAnchor::Fill)
-        +
         NewNode(WOverlay)
             .Anchor(EAnchor::Fill)
             .Padding({0_spt, 0, 0, 18})
@@ -59,6 +61,9 @@ void Jafg::WConsoleWindow::Construct()
                     .VSpace(5_spt)
             ]
         ]
+        +
+        NewNode(WConsoleStdIn).SaveTo(&this->StdIn)
+            .Anchor(EAnchor::Fill)
     ];
 
     this->SetContentNode(*Content);
@@ -75,6 +80,13 @@ void Jafg::WConsoleWindow::Construct()
 
     this->LoadLogs(0);
     this->HistoryScrollRegion->ApplyVScroll(WScrollRegion::MaxScrollDown);
+
+    this->StdIn->OnTextCommit.Bind(this, &WConsoleWindow::StdInCommit);
+
+    if (this->bHighlightOnConstruct)
+    {
+        this->GetViewport().FocusWidgetNode(this->StdIn->GetEditableTextBox());
+    }
 
     return;
 }
@@ -141,4 +153,56 @@ u64 Jafg::WConsoleWindow::LoadLogs(u64 Start)
     this->LoadedLogCount = Start;
 
     return Diff;
+}
+
+bool Jafg::WConsoleWindow::StdInCommit(LString const& Text, ETextCommit::Type CommitType)
+{
+    if (CommitType == ETextCommit::OnCleared)
+    {
+        this->RemoveFromParent();
+        return true;
+    }
+
+    if (CommitType == ETextCommit::FocusLost)
+    {
+        return false;
+    }
+
+    this->StdIn->ResetHistoryCursor();
+
+    if (Text.empty())
+    {
+        return false;
+    }
+
+    LString CmdLine{ Text };
+    if (CliStatics::IsCommand(CmdLine))
+    {
+        algo::inline_right_chop(&CmdLine, 1);
+    }
+
+    if (CmdLine.empty())
+    {
+        return false;
+    }
+
+    LCommandExecutionResponse Response;
+    this->GetCommandLineInterface().Invoke(CmdLine, &Response);
+
+    if (Response.StdOut.empty() == false)
+    {
+        LOG_INFO(LogCli, "[{}] executed RC[{}]: {}.", CmdLine, LexToString(Response.Rc), Response.StdOut)
+    }
+
+    if (Response.StdErr.empty() == false)
+    {
+        LOG_ERROR(LogCli, "[{}] failed RC[{}]: {}.", CmdLine, LexToString(Response.Rc), Response.StdErr)
+    }
+
+    if (Response.StdOut.empty() && Response.StdErr.empty() && Response.Rc != ECommandReturnCode::SuccessNoResponse)
+    {
+        LOG_INFO(LogCli, "Command [{}] executed RC[{}] with no output.", CmdLine, LexToString(Response.Rc))
+    }
+
+    return false;
 }

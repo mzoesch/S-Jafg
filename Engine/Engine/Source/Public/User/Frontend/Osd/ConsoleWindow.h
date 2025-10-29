@@ -4,6 +4,7 @@
 
 #include "Widgets/FloatingWindow.h"
 #include "User/ConsoleMessage.h"
+#include "Widgets/EditableTextBoxForward.h"
 #include "ConsoleWindow.generated.h"
 
 namespace Jafg
@@ -11,6 +12,7 @@ namespace Jafg
 
 class WScrollRegion;
 class WVRegion;
+class WConsoleStdIn;
 
 DECLARE_JAFG_WIDGET()
 class WConsoleWindow final : public WFloatingWindow
@@ -36,11 +38,16 @@ private:
 
     u64 LoadLogs(u64 Start);
 
+    bool StdInCommit(LString const& Text, ETextCommit::Type CommitType);
+
     static TOptional<LVector2> LastWindowLocation;
     static TOptional<LVector2> LastWindowSize;
 
     u64 LoadedLogCount{ 0 };
 
+    bool bHighlightOnConstruct{ true };
+
+    WConsoleStdIn* StdIn{ nullptr };
     WScrollRegion* HistoryScrollRegion{ nullptr };
     WVRegion* HistoryRegion{ nullptr };
 };

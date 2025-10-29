@@ -341,21 +341,12 @@ public:
     FORCEINLINE auto GetSiblings() const noexcept -> const TArray<LWidgetFactory*>& { return this->Siblings; }
 
     //# Only use at the end of a Wsdsml factory chain.
-    template<typename TParent> requires std::is_base_of_v<WParentBase, TParent>
-    FORCEINLINE void TrailingParent(TParent* InParent) noexcept
-    {
-        check( InParent )
+    FORCEINLINE void TrailingParent(WParentBase* InParent) noexcept;
+    FORCEINLINE void TrailingParentAt(u64 Where, WParentBase* InParent) noexcept;
+    FORCEINLINE void FinishWithParent(WParentBase* InParent) noexcept;
+    FORCEINLINE void FinishWithParentAt(u64 Where, WParentBase* InParent) noexcept;
 
-        InParent->AddChild(this->GetNodeRaw());
-
-        for (LWidgetFactory* Sibling : this->GetSiblings())
-        {
-            Sibling->TrailingParent(InParent);
-        }
-        algo::orphan(&this->GetMutableSiblingsDangerous());
-
-        return;
-    }
+    FORCEINLINE void Finish() noexcept;
 
 private:
 
@@ -853,6 +844,11 @@ FORCEINLINE TNode* ConstructDeferredWidgetNode(LClassOuter* Outer, TSubclassOf<T
 FORCEINLINE void MakeDeferredWidgetNodeFinal(WNode* Node)
 {
     MakeDeferredObjectFinal(Node);
+}
+
+FORCEINLINE void LWidgetFactory::Finish() noexcept
+{
+    MakeDeferredWidgetNodeFinal(this->GetNodeRaw());
 }
 
 FORCEINLINE f32 InSpt(WNode const& Node, LWidgetSize1 Size) noexcept

@@ -8,7 +8,6 @@ namespace algo
 ///////////////////////////////////////////////////////////////////////////////
 // FWD
 template<typename TContainer> FORCEINLINE constexpr void orphan(TContainer* Container) noexcept;
-template<typename TContainer> FORCEINLINE constexpr void shrink_to_fit(TContainer* Container) noexcept;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Core
@@ -252,8 +251,8 @@ FORCEINLINE UContainer right_chop(TContainer const& Container, const LSize N)
 FORCEINLINE void inline_right_chop(auto* Container, const LSize N, const bool bAllowShrinking = true) noexcept
 {
     check( N <= algo::size(*Container) )
-    Container->erase(Container->begin() + N, Container->begin());
-    if (bAllowShrinking) { algo::shrink_to_fit(Container); }
+    Container->erase(Container->begin(), Container->begin() + N);
+    if (bAllowShrinking) { Container->shrink_to_fit(); }
     return;
 }
 
@@ -268,7 +267,7 @@ FORCEINLINE void inline_left_chop(auto* Container, const LSize N, const bool bAl
 {
     check( N <= algo::size(*Container) )
     Container->erase(Container->end() - N, Container->end());
-    if (bAllowShrinking) { algo::shrink_to_fit(Container); }
+    if (bAllowShrinking) { Container->shrink_to_fit(); }
     return;
 }
 
@@ -473,14 +472,6 @@ FORCEINLINE constexpr void orphan<LString>(LString* Container) noexcept
 {
     Container->clear();
     default_swap(Container);
-    return;
-}
-
-template<typename TContainer>
-FORCEINLINE constexpr void shrink_to_fit(TContainer* Container) noexcept
-{
-    Container->shrink_to_fit();
-    check( Container->size() == Container->capacity() )
     return;
 }
 

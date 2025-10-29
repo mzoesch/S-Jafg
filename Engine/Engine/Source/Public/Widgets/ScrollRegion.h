@@ -63,9 +63,27 @@ public:
 
     GENERATED_FACTORY_BODY(TWidgetFactoryRegion)
 
+    FORCEINLINE TFactoryRetTy& Brush(LScrollRegionBrush const& InBrush) noexcept
+    {
+        this->This()->SetBrush(InBrush);
+        return this->Self();
+    }
+
     FORCEINLINE TFactoryRetTy& CullNonVisible(const bool bCull) noexcept
     {
         this->This()->SetCullNonVisible(bCull);
+        return this->Self();
+    }
+
+    FORCEINLINE TFactoryRetTy& ScrollRegionSize(LWidgetSize2 const& InSize) noexcept
+    {
+        this->This()->SetScrollRegionSize(InSize);
+        return this->Self();
+    }
+
+    FORCEINLINE TFactoryRetTy& UseChildrenDesiredSize(const bool bValue) noexcept
+    {
+        this->This()->SetUseChildrenDesiredSize(bValue);
         return this->Self();
     }
 };
@@ -169,8 +187,8 @@ public:
 
     virtual void UpdateDesiredSize() const override;
 
-    FORCEINLINE void SetScrollRegionSize(const LVector2& InSize) { this->ScrollRegionSize = InSize; }
-    FORCEINLINE const LVector2& GetScrollRegionSize() const { return this->ScrollRegionSize; }
+    FORCEINLINE void SetScrollRegionSize(const LWidgetSize2& InSize) { this->ScrollRegionSize = InSize; }
+    FORCEINLINE const LWidgetSize2& GetScrollRegionSize() const { return this->ScrollRegionSize; }
 
     void ApplyScroll(const LKeyEvent& InKeyEvent);
 
@@ -221,6 +239,9 @@ public:
     FORCEINLINE constexpr void SetCullNonVisible(const bool InValue) noexcept { this->bCullNonVisible = InValue; }
     FORCEINLINE constexpr bool GetCullNonVisible() const noexcept { return this->bCullNonVisible; }
 
+    FORCEINLINE constexpr void SetUseChildrenDesiredSize(const bool InValue) noexcept { this->bUseChildrenDesiredSize = InValue; }
+    FORCEINLINE constexpr bool GetUseChildrenDesiredSize() const noexcept { return this->bUseChildrenDesiredSize; }
+
 protected:
 
     //# @return Whether the event is meaning full or not for this #WScrollRegion.
@@ -256,9 +277,9 @@ private:
     LScrollRegionBrushImpl Brush;
 
     //#
-    //# The size to use for the whole scroll region if it was not anchored in spt.
+    //# The size to use for the whole scroll region if it was not anchored.
     //#
-    LVector2 ScrollRegionSize;
+    LWidgetSize2 ScrollRegionSize;
 
     //#
     //# The scroll-position in percent. Where 0.0 is the top / left and 1.0 is the bottom / right.
@@ -269,9 +290,10 @@ private:
 
     LDelegateHandle UserInterfaceTickDelegateHandle { nullptr };
 
-    bool bCullNonVisible{ true };
-    bool bUiTickV { false };
-    bool bUiTickH { false };
+    bool bCullNonVisible : 1{ true };
+    bool bUiTickV : 1{ false };
+    bool bUiTickH : 1{ false };
+    bool bUseChildrenDesiredSize : 1{ false };
     f32 MbVOffset { 0.0f };
     f32 MbHOffset { 0.0f };
 };

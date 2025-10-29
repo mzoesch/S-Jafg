@@ -47,7 +47,7 @@ public:
     }
     virtual ~LCliObject() = default;
 
-    FORCEINLINE auto GetIdentifier() const -> LString { return this->Identifier; }
+    FORCEINLINE auto GetIdentifier() const -> LString const& { return this->Identifier; }
     FORCEINLINE void SetIdentifier(const LString& InIdentifier) { this->Identifier = InIdentifier; }
     FORCEINLINE auto GetHelp() const -> LString { return this->Help; }
     FORCEINLINE void SetHelp(const LString& InHelp) { this->Help = InHelp; }

@@ -89,12 +89,12 @@ LString Jafg::CliStatics::GetCommandFromText(const LString& InText)
     const auto Space{ InText.find(' ') };
     if (Space == InText.npos)
     {
-        LString Temp = InText;
+        LString Temp{ InText };
         SafelyRemoveCommandPrefixInline(Temp);
         return Temp;
     }
 
-    LString Temp = algo::left_chop(InText, Space);
+    LString Temp{ InText.substr(0, Space) };
     SafelyRemoveCommandPrefixInline(Temp);
     return Temp;
 }
@@ -105,12 +105,12 @@ LString Jafg::CliStatics::GetArgsFromText(const LString& InText)
 
     if (Space == InText.npos)
     {
-        return { };
+        return {};
     }
 
-    if (InText.size() - 1 <= static_cast<u64>(Space + 1))
+    if (InText.size() <= static_cast<u64>(Space + 1))
     {
-        return { };
+        return {};
     }
 
     return algo::right_chop(InText, Space + 1);

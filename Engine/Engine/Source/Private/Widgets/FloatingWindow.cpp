@@ -191,6 +191,15 @@ void Jafg::WFloatingWindow::UiTickResize(LViewport const& Viewport)
         Viewport.GetDimensions().Y - this->GetWindow()->GetAnchoredAndTranslatedTopLeftFromMostOuter(Viewport).Y
     };
 
+    if (NewSize.X < 0.0f)
+    {
+        NewSize.X = 0.0f;
+    }
+    if (NewSize.Y < 0.0f)
+    {
+        NewSize.Y = 0.0f;
+    }
+
     if (NewSize.X > MaxSize.X)
     {
         NewSize.X = MaxSize.X;
@@ -200,7 +209,7 @@ void Jafg::WFloatingWindow::UiTickResize(LViewport const& Viewport)
         NewSize.Y = MaxSize.Y;
     }
 
-    check( NewSize.X > 0.0f && NewSize.Y > 0.0f )
+    check( NewSize.X >= 0.0f && NewSize.Y >= 0.0f )
 
     this->SetWindowSize(NewSize);
 

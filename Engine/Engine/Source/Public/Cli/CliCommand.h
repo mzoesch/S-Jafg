@@ -194,7 +194,7 @@ struct LCommandExecutionResponse
     //# The sanitized stdout of the command.
     //# If this is empty, the stderr will be used for the sanitized output.
     //# This parameter is used to hide sensitive information from the user. E.g. missing operation permissions. This
-    //# will not be logged but will most likely server as a user feedback for all attached listeners.
+    //# will not be logged but will most likely serve as a user feedback for all attached listeners.
     //#
     LString SanitizedStdErr;
 };

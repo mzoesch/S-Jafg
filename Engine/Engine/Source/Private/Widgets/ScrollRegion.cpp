@@ -525,7 +525,11 @@ void Jafg::WScrollRegion::UpdateDesiredSize() const
     Super::UpdateDesiredSize();
 
     this->DesiredSizeOfChildren = this->GetDesiredSize_v2();
-    this->SetDesiredSizeInSpt(this->ScrollRegionSize + this->GetPadding().GetDesiredSizeInSpt(*this));
+    this->SetDesiredSizeInSpt(
+          InSpt(this->GetViewport(), this->ScrollRegionSize)
+        + this->GetPadding().GetDesiredSizeInSpt(*this)
+        + (this->bUseChildrenDesiredSize ? this->DesiredSizeOfChildren : LVector2::ZeroVector)
+        );
 
     return;
 }

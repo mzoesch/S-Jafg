@@ -74,4 +74,68 @@ FORCEINLINE TNode* ConstructWidgetNode(WParentBase* Parent, TSubclassOf<TNode> c
     return Node;
 }
 
+FORCEINLINE void LWidgetFactory::TrailingParent(WParentBase* InParent) noexcept
+{
+    check( InParent )
+
+    InParent->AddChild(this->GetNodeRaw());
+
+    for (LWidgetFactory* Sibling : this->GetSiblings())
+    {
+        Sibling->TrailingParent(InParent);
+    }
+    algo::orphan(&this->GetMutableSiblingsDangerous());
+
+    return;
+}
+
+FORCEINLINE void LWidgetFactory::TrailingParentAt(u64 Where, WParentBase* InParent) noexcept
+{
+    check( InParent )
+
+    InParent->AddChildAt(static_cast<i32>(Where), this->GetNodeRaw());
+
+    for (LWidgetFactory* Sibling : this->GetSiblings())
+    {
+        Sibling->TrailingParent(InParent);
+    }
+    algo::orphan(&this->GetMutableSiblingsDangerous());
+
+    return;
+}
+
+FORCEINLINE void LWidgetFactory::FinishWithParent(WParentBase* InParent) noexcept
+{
+    check( InParent )
+
+    InParent->AddChild(this->GetNodeRaw());
+
+    for (LWidgetFactory* Sibling : this->GetSiblings())
+    {
+        Sibling->TrailingParent(InParent);
+    }
+    algo::orphan(&this->GetMutableSiblingsDangerous());
+
+    this->Finish();
+
+    return;
+}
+
+FORCEINLINE void LWidgetFactory::FinishWithParentAt(u64 Where, WParentBase* InParent) noexcept
+{
+    check( InParent )
+
+    InParent->AddChildAt(static_cast<i32>(Where), this->GetNodeRaw());
+
+    for (LWidgetFactory* Sibling : this->GetSiblings())
+    {
+        Sibling->TrailingParent(InParent);
+    }
+    algo::orphan(&this->GetMutableSiblingsDangerous());
+
+    this->Finish();
+
+    return;
+}
+
 } /* ~Namespace Jafg */

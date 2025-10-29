@@ -124,7 +124,7 @@ void Jafg::WEditableTextBox::UpdateDesiredSize() const
 
 void Jafg::WEditableTextBox::UserInterfaceTick(const LViewport& InViewport)
 {
-    bool bHandled { false };
+    bool bHandled{ false };
 
     if (this->GetLocalEgo().GetUserInput().HasBufferedPlatformInput())
     {
@@ -202,6 +202,8 @@ void Jafg::WEditableTextBox::OnFocusLost()
     {
         this->GetViewport().OnLateTick.Remove(&this->UserInterfaceTickDelegateHandle);
     }
+
+    this->OnTextCommit(this->GetContent(), ETextCommit::FocusLost);
 
     return;
 }
@@ -282,12 +284,21 @@ Jafg::LReply Jafg::WEditableTextBox::OnKeyDown(LViewport& InViewport, const LKey
         return LReply::Handled();
     }
 
+    if (InKeyEvent.GetKey() == EKeys::Escape)
+    {
+        if (this->GetViewport().GetFocusedWidget() == this)
+        {
+            this->OnTextCommit(this->GetContent(), ETextCommit::OnCleared);
+            return LReply::Handled();
+        }
+    }
+
     return Super::OnKeyDown(InViewport, InKeyEvent);
 }
 
 void Jafg::WEditableTextBox::OnTextCommit(const LString& InText, const ETextCommit::Type InCommitType)
 {
-    this->OnContentCommitted.InvokeIfBound(InText, InCommitType);
+    (void)this->OnContentCommitted.InvokeIfBound(InText, InCommitType);
 }
 
 i32 Jafg::WEditableTextBox::SetCaretCursor(const i32 InCaretCursor)

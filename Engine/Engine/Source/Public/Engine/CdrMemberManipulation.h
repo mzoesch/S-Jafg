@@ -114,7 +114,11 @@ struct TCdrIgnoreBase<T*>
     TCdrIgnoreBase(TCdrIgnoreBase&&) noexcept = delete;
     TCdrIgnoreBase& operator=(TCdrIgnoreBase&&) noexcept = delete;
 
+    constexpr bool operator==(LNullptrTy) const noexcept { return this->value == nullptr; }
+
     constexpr operator T*() const noexcept { return this->value; }
+    template<typename U> requires(std::is_same_v<T, U> == false && std::is_convertible_v<T*, U*>)
+    constexpr operator U*() const noexcept { return this->value; }
 
     constexpr T* operator->() noexcept { return this->value; }
     constexpr T const* operator->() const noexcept { return this->value; }

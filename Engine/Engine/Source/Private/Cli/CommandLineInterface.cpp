@@ -25,30 +25,32 @@ void Jafg::LCommandLineInterface::TearDown()
     return;
 }
 
-void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandExecutionResponse* OutResponse)
+void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandExecutionResponse* OutResponse /* = nullptr */)
 {
-    check( OutResponse )
+    LCommandExecutionResponse DefaultResponse;
+    LCommandExecutionResponse* Response { OutResponse ? OutResponse : &DefaultResponse };
+    check( Response )
 
     const LString CommandStr = CliStatics::GetCommandFromText(InCommandLine);
     if (CommandStr.empty())
     {
-        OutResponse->Rc = ECommandReturnCode::Failure;
-        OutResponse->StdErr = "Failed to extract command from input";
+        Response->Rc = ECommandReturnCode::Failure;
+        Response->StdErr = "Failed to extract command from input";
         return;
     }
 
     LCliCommand* Cmd = this->GetCommand(CommandStr);
     if (Cmd == nullptr)
     {
-        OutResponse->Rc = ECommandReturnCode::Unknown;
-        OutResponse->StdErr = Lal::SprintF("No such command [{}]", CommandStr);
+        Response->Rc = ECommandReturnCode::Unknown;
+        Response->StdErr = Lal::SprintF("No such command [{}]", CommandStr);
         return;
     }
 
     if (Cmd->GetOverloadCount() == 0)
     {
-        OutResponse->Rc = ECommandReturnCode::Failure;
-        OutResponse->StdErr = Lal::SprintF("Command [{}] has no overloads and is therefore not invokable", CommandStr);
+        Response->Rc = ECommandReturnCode::Failure;
+        Response->StdErr = Lal::SprintF("Command [{}] has no overloads and is therefore not invokable", CommandStr);
         return;
     }
 
@@ -58,47 +60,47 @@ void Jafg::LCommandLineInterface::Invoke(const LString& InCommandLine, LCommandE
     {
         if (Params.IsInvocable(Args))
         {
-            Params.Invoke(Args, OutResponse);
-            check( OutResponse->Rc != ECommandReturnCode::Invalid )
+            Params.Invoke(Args, Response);
+            check( Response->Rc != ECommandReturnCode::Invalid )
 
             return;
         }
         continue;
     }
 
-    OutResponse->Rc = ECommandReturnCode::SyntaxError;
-    OutResponse->StdErr = "Target is not invocable with given arguments. No overload is matching";
+    Response->Rc = ECommandReturnCode::SyntaxError;
+    Response->StdErr = "Target is not invocable with given arguments. No overload is matching";
 
     return;
 }
 
 TArray<LString> Jafg::LCommandLineInterface::GetCommonSuggestions(const LString& InCommandLine, const u32 MaxSuggestions) const
 {
-    const LString CommandStr = CliStatics::GetCommandFromText(InCommandLine);
+    const LString CommandStr{ CliStatics::GetCommandFromText(InCommandLine) };
     if (CommandStr.empty())
     {
         LOG_ERROR(LogCli, "Failed to extract command from input");
-        return { };
+        return {};
     }
 
-    const LCliCommand* Cmd = this->GetCommand(CommandStr);
+    LCliCommand const* Cmd{ this->GetCommand(CommandStr) };
     if (Cmd == nullptr)
     {
         LOG_ERROR(LogCli, "No such command [{}]", CommandStr);
-        return { };
+        return {};
     }
 
     if (Cmd->GetOverloadCount() == 0)
     {
         LOG_ERROR(LogCli, "Command [{}] has no overloads and is therefore not invokable", CommandStr);
-        return { };
+        return {};
     }
 
     TArray<LString> Out;
 
-    LString ChoppedArgs { CliStatics::GetArgsFromText(InCommandLine) };
-    const LCommandArgs Args { CliStatics::TokenizeCommand(std::move(ChoppedArgs)) };
-    for (const LCommandParams& Overloads : Cmd->GetOverloads())
+    LString ChoppedArgs{ CliStatics::GetArgsFromText(InCommandLine) };
+    const LCommandArgs Args{ CliStatics::TokenizeCommand(std::move(ChoppedArgs)) };
+    for (LCommandParams const& Overloads : Cmd->GetOverloads())
     {
         if (Out.size() >= MaxSuggestions)
         {

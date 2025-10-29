@@ -22,4 +22,16 @@ FORCEINLINE constexpr auto distance(TRange Range, TIt It) noexcept
 //# Distance between ranges.
 inline constexpr std::ranges::__distance_fn ranged_distance{};
 
+inline constexpr decltype(LString::npos) npos{ LString::npos };
+
 } /* ~Namespace algo */
+
+static_assert(sizeof(algo::npos) == sizeof(std::string::npos));
+static_assert(sizeof(algo::npos) == sizeof(LString::npos));
+static_assert(sizeof(algo::npos) == sizeof(LStringView::npos));
+static_assert(algo::npos == std::string::npos);
+static_assert(algo::npos == LString::npos);
+static_assert(algo::npos == LStringView::npos);
+static_assert(std::is_same_v<decltype(algo::npos), decltype(std::string::npos)>);
+static_assert(std::is_same_v<decltype(algo::npos), decltype(LString::npos)>);
+static_assert(std::is_same_v<decltype(algo::npos), decltype(LStringView::npos)>);

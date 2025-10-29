@@ -18,6 +18,7 @@ class TEvent<TOwner, TRet(TParams...)> : public TFunction<TRet(TParams...)>
 
 protected:
 
+    UNUSED
     FORCEINLINE bool InvokeIfBound(TParams... Params) const noexcept(std::is_nothrow_invocable_r_v<TRet, decltype(this->Impl), TParams...>)
         requires std::is_void_v<TRet>
     {
