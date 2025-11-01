@@ -9,7 +9,7 @@ namespace Jafg
 
 //#
 //# This the main class that defines a foreign plugin.
-//# Inherit from this and make it engine public by adding it to the DEFINE_PLUGIN macro.
+//# Inherit from this and make it engine public by adding it to the #DEFINE_PLUGIN macro.
 //#
 //# @see For questions, read this README.md: Documentation/Foreign.md.
 //#
@@ -24,6 +24,12 @@ public:
     //# Do your initialization here.
     //#
     virtual void OnStartup() { }
+
+    //#
+    //# This function is called when the engine has finished loading your plugin.
+    //# This is the first point where it is safe to use jcxx objects.
+    //#
+    virtual void OnFinishedLoading() { }
 
     //#
     //# This function is called before the #OnShutdown event is called.

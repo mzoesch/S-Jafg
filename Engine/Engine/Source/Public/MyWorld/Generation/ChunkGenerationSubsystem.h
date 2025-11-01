@@ -36,7 +36,7 @@ protected:
     virtual bool ShouldCreateSubsystem(LClassOuter const* Outer) const override;
     virtual void Initialize(LSubsystemCollection& Collection) override;
     virtual void FixedTick(const f32 EngineDeltaTime, const f32 FixedDeltaTime) override;
-    virtual void TearDown() override;
+    virtual void TearDown(LClassOuter& PreviousOuter) override;
     // ~JFixedTickableWorldSubsystem implementation
 
 public:

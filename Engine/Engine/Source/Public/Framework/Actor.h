@@ -25,9 +25,9 @@ enum Type : u8
 } /* ~Namespace EActorSweep */
 
 DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
-class AActor : public JWorldObject, public LTickableObject
+class ENGINE_API AActor : public JWorldObject, public LTickableObject
 {
-    GENERATED_CLASS_BODY(ENGINE_API)
+    GENERATED_CLASS_BODY()
 
     friend LWorld;
 
@@ -41,19 +41,19 @@ public:
     virtual void Tick(const float DeltaTime) override { check( this->IsGarbage() == false ) }
     virtual void EndLife() override;
 
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter) override;
 
     FORCEINLINE auto IsRendererComponentValid() const -> bool { return this->RendererComponent != nullptr; }
     FORCEINLINE auto GetRendererComponent() const -> LRendererComponent* { return this->RendererComponent; }
-    ENGINE_API LPhysicsComponent* GetPhysicsComponent() const;
+    LPhysicsComponent* GetPhysicsComponent() const;
 
-    ENGINE_API  void ChangeTransform(const LTransform& InTransform, const EActorSweep::Type SweepType = EActorSweep::Teleport);
-    ENGINE_API  void AddTranslation(const LVector& InLocation, const EActorSweep::Type SweepType = EActorSweep::Teleport);
-    ENGINE_API  void AddRotator(const LRotator& InRotator, const EActorSweep::Type SweepType = EActorSweep::Teleport);
-    ENGINE_API  void AddScale(const LVector& InScale, const EActorSweep::Type SweepType = EActorSweep::Teleport);
-    ENGINE_API  void SetTranslation(const LVector& InLocation, const EActorSweep::Type SweepType = EActorSweep::Teleport);
-    ENGINE_API  void SetRotator(const LRotator& InRotator, const EActorSweep::Type SweepType = EActorSweep::Teleport);
-    ENGINE_API  void SetScale(const LVector& InScale, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    void ChangeTransform(const LTransform& InTransform, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    void AddTranslation(const LVector& InLocation, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    void AddRotator(const LRotator& InRotator, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    void AddScale(const LVector& InScale, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    void SetTranslation(const LVector& InLocation, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    void SetRotator(const LRotator& InRotator, const EActorSweep::Type SweepType = EActorSweep::Teleport);
+    void SetScale(const LVector& InScale, const EActorSweep::Type SweepType = EActorSweep::Teleport);
     FORCEINLINE auto GetTransform() const -> const LTransform& { return this->Transform; }
     FORCEINLINE auto GetTranslation() const -> const LVector& { return this->Transform.Translation; }
     FORCEINLINE auto GetRotator() const -> const LRotator& { return this->Transform.Rotator; }

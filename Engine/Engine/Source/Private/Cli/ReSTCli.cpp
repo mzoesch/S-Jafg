@@ -36,7 +36,6 @@ Lal::LProgramParameter _Port{
 
 #define CPPHTTPLIB_THREAD_POOL_COUNT                                    1
 #define CPPHTTPLIB_NO_EXCEPTIONS                                        1
-#define CPPHTTPLIB_ALLOW_LF_AS_LINE_TERMINATOR                          1
 #include "httplib.h"
 
 namespace

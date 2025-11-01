@@ -10,23 +10,6 @@ Jafg::WParent::WParent(LCxxObjectInitializer const& ObjectInitializer)
     return;
 }
 
-void Jafg::WParent::OnGarbage(ECxxRecordTearDownReason::Type Reason)
-{
-    // for (const LWidgetSlot* ChildSlot : this->Children)
-    // {
-    //     checkSlow( ChildSlot->Content )
-    //     *ChildSlot->Content->GetMutableSlotDangerousDoNotUseForInternalStuffOnlyOrIfYouWantYourOwnParentClass() = nullptr;
-    //     ChildSlot->Content->MarkAsGarbage();
-    //     delete ChildSlot;
-    // }
-    //
-    // this->Children.Empty();
-
-    Super::OnGarbage(Reason);
-
-    return;
-}
-
 void Jafg::WParent::Construct()
 {
     Super::Construct();

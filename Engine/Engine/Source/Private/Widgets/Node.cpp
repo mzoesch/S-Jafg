@@ -171,15 +171,6 @@ Jafg::WNode::~WNode()
     check( this->Slot.Parent == nullptr && this->Slot.Content == nullptr && this->Slot.Margin == nullptr )
 }
 
-void Jafg::WNode::OnGarbage(ECxxRecordTearDownReason::Type Reason)
-{
-    Super::OnGarbage(Reason);
-
-    this->Destruct();
-
-    return;
-}
-
 bool Jafg::WNode::IsInBounds(const LViewport& Context, const LVector2& InLocation) const
 {
     if (this->TransformsWidgetLayout() == false)

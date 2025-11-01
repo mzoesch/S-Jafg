@@ -40,6 +40,9 @@ public:
     NODISCARD FORCEINLINE LSurface* AsSurface();
     NODISCARD FORCEINLINE const LSurface* AsSurface() const;
 
+    FORCEINLINE void SetHumanReadableName(const LString& InHumanReadableName) noexcept { this->HumanReadableName = InHumanReadableName; }
+    FORCEINLINE LString const& GetHumanReadableName() const noexcept { return this->HumanReadableName; }
+
     //# Initialize should make the handle to a native surface screen valid or panic if not possible.
     virtual void Initialize();
     virtual void Tick();
@@ -109,7 +112,7 @@ public:
     FORCEINLINE APersonaController const* GetPossessed() const { return this->Controller; }
     FORCEINLINE APersonaController const* GetPossessedChecked() const { check( this->DoesPossess() ) return this->Controller; }
     FORCEINLINE APersonaController const* GetPossessedAsserted() const { jassert( this->DoesPossess() ) return this->Controller; }
-    ENGINE_API  void Possess(APersonaController* NewController);
+    ENGINE_API  void PossessController(APersonaController* NewController, const bool bKillOld = true);
 
     ENGINE_API LEngine& GetEngine() const noexcept;
     ENGINE_API LLocalEgo& GetLocalEgo() const noexcept;
@@ -144,6 +147,8 @@ protected:
     LVector2 MouseLocation;
 
 private:
+
+    LString HumanReadableName{ "Transient" };
 
     //#
     //# The viewport that is used to draw on this surface meaning the viewport that includes the whole surface screen.

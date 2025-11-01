@@ -91,7 +91,7 @@ void Jafg::WConsoleWindow::Construct()
     return;
 }
 
-void Jafg::WConsoleWindow::OnGarbage(ECxxRecordTearDownReason::Type Reason)
+void Jafg::WConsoleWindow::OnGarbage(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter)
 {
     if (auto* Window{ this->GetWindow() })
     {
@@ -101,7 +101,7 @@ void Jafg::WConsoleWindow::OnGarbage(ECxxRecordTearDownReason::Type Reason)
         }
     }
 
-    Super::OnGarbage(Reason);
+    Super::OnGarbage(Reason, PreviousOuter);
 
     return;
 }

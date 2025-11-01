@@ -5,3 +5,4 @@
 #include "Core/Name.h"
 
 JGC_API extern LName Name_LevelFrontend;
+JGC_API extern LName Name_LevelSvw;

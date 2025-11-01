@@ -18,13 +18,6 @@ void Jafg::JMaterialSubsystem::Initialize(LSubsystemCollection& Collection)
     return;
 }
 
-void Jafg::JMaterialSubsystem::TearDown()
-{
-    Super::TearDown();
-
-    return;
-}
-
 void Jafg::JMaterialSubsystem::ReloadAllTextures()
 {
     this->ClearAllTextures();

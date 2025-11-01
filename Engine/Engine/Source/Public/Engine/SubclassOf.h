@@ -2,11 +2,7 @@
 
 #pragma once
 
-#include "SubclassOf.h"
 #include "Engine/CxxClass.h"
-
-namespace Jafg
-{
 
 template<typename TObj>
 class TSubclassOf;
@@ -26,10 +22,10 @@ public:
 
     TSubclassOf(EDefaultInit) noexcept : Class{TObj::StaticClass()} { check( this->HasClass() && this->IsValidType() ) }
 
-    TSubclassOf(LCxxClass const* InClass) noexceptcheck : Class{InClass} { check( this->IsValidType() ) }
-    TSubclassOf(LCxxClass const& InClass) noexceptcheck : Class{&InClass} { check( this->IsValidType() ) }
-    TSubclassOf& operator=(LCxxClass const* InClass) noexceptcheck { return this->Assign(InClass); }
-    TSubclassOf& operator=(LCxxClass const& InClass) noexceptcheck { return this->Assign(InClass); }
+    TSubclassOf(Jafg::LCxxClass const* InClass) noexceptcheck : Class{InClass} { check( this->IsValidType() ) }
+    TSubclassOf(Jafg::LCxxClass const& InClass) noexceptcheck : Class{&InClass} { check( this->IsValidType() ) }
+    TSubclassOf& operator=(Jafg::LCxxClass const* InClass) noexceptcheck { return this->Assign(InClass); }
+    TSubclassOf& operator=(Jafg::LCxxClass const& InClass) noexceptcheck { return this->Assign(InClass); }
 
     template<typename UObj> requires std::is_base_of_v<TObj, UObj>
     TSubclassOf(TSubclassOf<UObj> const& Other) noexceptcheck : Class{Other.Class} { check( this->IsValidType() ) }
@@ -48,27 +44,37 @@ public:
     FORCEINLINE void SetClass() noexcept { this->Assign(UObj::StaticClass()); }
     FORCEINLINE void SetClass(LNullptrTy) noexcept { this->Assign(nullptr); }
 
-    FORCEINLINE TSubclassOf& Assign(LCxxClass const* InClass) noexceptcheck
+    FORCEINLINE TSubclassOf& Assign(Jafg::LCxxClass const* InClass) noexceptcheck
     {
         this->Class = InClass;
         check( this->IsValidType() )
         return *this;
     }
 
-    FORCEINLINE TSubclassOf& Assign(LCxxClass const& InClass) noexceptcheck
+    FORCEINLINE TSubclassOf& Assign(Jafg::LCxxClass const& InClass) noexceptcheck
     {
         this->Class = &InClass;
         check( this->IsValidType() )
         return *this;
     }
 
-    FORCEINLINE LCxxClass const* GetClass() const noexcept { return this->Class; }
-    FORCEINLINE operator LCxxClass const*() const noexcept { return this->Class; }
+    FORCEINLINE Jafg::LCxxClass const& GetCLassOrDefault() const noexcept
+    {
+        if (this->HasClass())
+        {
+            return *this->Class;
+        }
 
-    FORCEINLINE operator LCxxClass const&() const noexceptcheck { check( this->HasClass() ) return *this->Class; }
+        return *TObj::StaticClass();
+    }
 
-    FORCEINLINE LCxxClass const* operator->() const noexcept { check( this->HasClass() ) return this->Class; }
-    FORCEINLINE LCxxClass const* operator*() const noexcept { if (this->HasClass()) { return this->Class; } return nullptr; }
+    FORCEINLINE Jafg::LCxxClass const* GetClass() const noexcept { return this->Class; }
+    FORCEINLINE operator Jafg::LCxxClass const*() const noexcept { return this->Class; }
+
+    FORCEINLINE operator Jafg::LCxxClass const&() const noexceptcheck { check( this->HasClass() ) return *this->Class; }
+
+    FORCEINLINE Jafg::LCxxClass const* operator->() const noexcept { check( this->HasClass() ) return this->Class; }
+    FORCEINLINE Jafg::LCxxClass const* operator*() const noexcept { if (this->HasClass()) { return this->Class; } return nullptr; }
 
     FORCEINLINE TObj const* GetCDR() noexcept
     {
@@ -84,7 +90,22 @@ public:
     {
         if (this->Class)
         {
-            return this->Class->DerivesFrom<TObj>();
+            if (this->Class->DerivesFrom<TObj>())
+            {
+                return true;
+            }
+
+            if (this->Class->IsRoot() || this->Class->IsParentValid())
+            {
+                return false;
+            }
+
+            LOG_WARNING(LogObjectInternal,
+                "[{}] is used in TSubclassOf<{}> but not yet initialized. Assuming valid parent.",
+                this->Class->GetFullyQualifiedName(),
+                TObj::StaticClass()->GetFullyQualifiedName()
+                )
+            return true;
         }
 
         return true;
@@ -94,7 +115,5 @@ public:
 
 private:
 
-    LCxxClass const* Class;
+    Jafg::LCxxClass const* Class;
 };
-
-} /* ~Namespace Jafg */

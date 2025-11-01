@@ -14,12 +14,12 @@ void Jafg::JTickableWorldSubsystem::Initialize(LSubsystemCollection& Collection)
     return;
 }
 
-void Jafg::JTickableWorldSubsystem::TearDown()
+void Jafg::JTickableWorldSubsystem::TearDown(LClassOuter& PreviousOuter)
 {
-    JWorldSubsystem::TearDown();
+    JWorldSubsystem::TearDown(PreviousOuter);
 
-    check( this->GetWorld() )
-    this->GetWorld()->UnregisterTickableObject(this);
+    check( this->GetWorld() == nullptr )
+    PreviousOuter.AsWorld()->UnregisterTickableObject(this);
 
     return;
 }

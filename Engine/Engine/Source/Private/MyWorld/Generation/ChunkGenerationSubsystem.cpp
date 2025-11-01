@@ -100,11 +100,11 @@ void Jafg::JChunkGenerationSubsystem::FixedTick(const f32 EngineDeltaTime, const
     return;
 }
 
-void Jafg::JChunkGenerationSubsystem::TearDown()
+void Jafg::JChunkGenerationSubsystem::TearDown(LClassOuter& PreviousOuter)
 {
     STAT_CYCLE_FUNCTION()
 
-    Super::TearDown();
+    Super::TearDown(PreviousOuter);
 
     check( Tasks::IsOnMasterThread() )
 

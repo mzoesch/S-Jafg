@@ -1,6 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Engine/Actor.h"
+#include "Framework/Actor.h"
 #include "Components/RenderComponent.h"
 #include "Components/NoPhysicsCompontent.h"
 
@@ -14,21 +14,22 @@ void Jafg::AActor::EndLife()
     return;
 }
 
-void Jafg::AActor::OnGarbage(ECxxRecordTearDownReason::Type Reason)
+void Jafg::AActor::OnGarbage(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter)
 {
-    Super::OnGarbage(Reason);
+    Super::OnGarbage(Reason, PreviousOuter);
 
-    check( this->GetWorld() )
+    check( this->GetWorld() == nullptr )
+    check( PreviousOuter.IsWorld() )
 
     if (this->CanEverTick())
     {
-        if (this->GetWorld()->IsTickableObjectsPutMutexLocked())
+        if (PreviousOuter.AsWorld()->IsTickableObjectsPutMutexLocked())
         {
-            this->GetWorld()->DeletedTickableObjects.emplace_back(static_cast<LTickableObject*>(this));
+            PreviousOuter.AsWorld()->DeletedTickableObjects.emplace_back(static_cast<LTickableObject*>(this));
         }
         else
         {
-            algo::erase_once_checked(&this->GetWorld()->TickableObjects, static_cast<LTickableObject*>(this));
+            algo::erase_once_checked(&PreviousOuter.AsWorld()->TickableObjects, static_cast<LTickableObject*>(this));
         }
     }
 

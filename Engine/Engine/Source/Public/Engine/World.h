@@ -11,6 +11,7 @@
 #include "Framework/Skybox.h"
 #include "Cli/CliType.h"
 #include "Cli/CliCommand.h"
+#include "Platform/SurfaceForward.h"
 #if AS_CLIENT
     #include "Debug/TemporalWorldObject.h"
 #endif /* AS_CLIENT */
@@ -31,6 +32,7 @@ class LEye;
 class LCommandLineInterface;
 class LWorld;
 struct LLevel;
+class JSupremePolicies;
 struct LSubsystemCollection;
 
 namespace Private
@@ -55,6 +57,7 @@ typedef TFunction<void(
 
 namespace EWorldState
 {
+
 enum Type : u8
 {
     PreInitializing,
@@ -63,6 +66,7 @@ enum Type : u8
     TearingDown,
     WaitingForKill,
 };
+
 } /* ~Namespace EWorldState */
 inline LStringView LexToString(const EWorldState::Type InType) noexcept
 {
@@ -109,6 +113,24 @@ inline LStringView LexToString(const EWorldTimeBehavior::Type InType) noexcept
         default:                           return "<Unknown>";
     }
 }
+
+namespace EIncomingConnectionRequest
+{
+
+enum Type : u8
+{
+    Local,
+    Remote,
+};
+
+} /* ~Namespace EIncomingConnectionRequest */
+
+struct LTransientPersona final
+{
+    EIncomingConnectionRequest::Type Type;
+    LSurface* Surface;
+    //# TODO: Net stuff etc.
+};
 
 //#
 //# The parameters for a world.
@@ -218,6 +240,8 @@ public:
     void LateTick(const f32 DeltaTime);
 #endif /* AS_CLIENT */
 
+    ENGINE_API APersonaController* Login(LTransientPersona Persona, LString* OutRejectionReason = nullptr);
+
     FORCEINLINE bool IsUnderlyingLevelValid() const noexcept { return this->UnderlyingLevel.has_value(); }
     FORCEINLINE LLevel const& GetUnderlyingLevel() const { return this->UnderlyingLevel.value(); }
     FORCEINLINE LLevel const& GetUnderlyingLevelChecked() const noexceptcheck { check( this->IsUnderlyingLevelValid() ) return this->UnderlyingLevel.value(); }
@@ -228,7 +252,7 @@ public:
 
 #if AS_CLIENT
     template <typename T>
-    void AddTemporalObject(T&& InTemporalObject);
+    FORCEINLINE void AddTemporalObject(T&& InTemporalObject);
     FORCEINLINE TArray<TUnique<LTemporalWorldObject>> const& GetTemporalObjects() const noexcept { return this->TemporalObjects; }
     FORCEINLINE TArray<TUnique<LTemporalWorldObject>>& GetMutableTemporalObjects() noexcept { return this->TemporalObjects; }
 #endif /* AS_CLIENT */
@@ -264,9 +288,23 @@ public:
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JWorldSubsystem)
 
+    FORCEINLINE JSupremePolicies* GetSupremePolicies() noexcept { return this->SupremePolicies; }
+    FORCEINLINE JSupremePolicies const* GetSupremePolicies() const noexcept { return this->SupremePolicies; }
+    FORCEINLINE JSupremePolicies* GetSupremePoliciesChecked() noexceptcheck { check( this->SupremePolicies ) return this->SupremePolicies; }
+    FORCEINLINE JSupremePolicies const* GetSupremePoliciesChecked() const noexceptcheck { check( this->SupremePolicies ) return this->SupremePolicies; }
+    FORCEINLINE JSupremePolicies* GetSupremePoliciesAsserted() { jassert( this->SupremePolicies ) return this->SupremePolicies; }
+    FORCEINLINE JSupremePolicies const* GetSupremePoliciesAsserted() const { jassert( this->SupremePolicies ) return this->SupremePolicies; }
+
     ENGINE_API  static LWorld* GetWorldFromHumanReadableName(LString const& InHumanReadableName) noexcept;
     FORCEINLINE static LWorld* GetWorldFromHumanReadableNameChecked(LString const& InHumanReadableName) noexceptcheck;
     FORCEINLINE static LWorld* GetWorldFromHumanReadableNameAsserted(LString const& InHumanReadableName);
+
+    ENGINE_API  APersonaController* GetThisWorldsLocalPersonaControllerSlow() noexcept;
+    FORCEINLINE APersonaController* GetThisWorldsLocalPersonaControllerSlowAsserted() noexceptcheck { auto* Out{ this->GetThisWorldsLocalPersonaControllerSlow() }; check( Out ) return Out; }
+    FORCEINLINE APersonaController* GetThisWorldsLocalPersonaControllerSlowChecked() { auto* Out{ this->GetThisWorldsLocalPersonaControllerSlow() }; jassert( Out ) return Out; }
+    ENGINE_API  APersonaController const* GetThisWorldsLocalPersonaControllerSlow() const noexcept;
+    FORCEINLINE APersonaController const* GetThisWorldsLocalPersonaControllerSlowAsserted() const noexceptcheck { auto* const Out{ this->GetThisWorldsLocalPersonaControllerSlow() }; check( Out ) return Out; }
+    FORCEINLINE APersonaController const* GetThisWorldsLocalPersonaControllerSlowChecked() const { auto const* Out{ this->GetThisWorldsLocalPersonaControllerSlow() }; jassert( Out ) return Out; }
 
 protected:
 
@@ -288,8 +326,8 @@ private:
 #endif /* AS_CLIENT */
 
     //# Main thread only.
-    void AcquireTickableObjectsLock() { this->TickableObjectsPutMutex = true; }
-    void ReleaseTickableObjectsLock() { this->TickableObjectsPutMutex = false; }
+    FORCEINLINE void AcquireTickableObjectsLock() noexcept { this->TickableObjectsPutMutex = true; }
+    FORCEINLINE void ReleaseTickableObjectsLock() noexcept { this->TickableObjectsPutMutex = false; }
     bool TickableObjectsPutMutex = false;
     TArray<LTickableObject*> TickableObjects;
     TArray<LTickableObject*> DeletedTickableObjects;
@@ -307,6 +345,13 @@ private:
     //# Real time is relative to the static storage initialization of the engine shared library.
     //#
     f32 RealTimeWhenWorldWasLaunched { -1.0f };
+    bool bFinishedActors{ false };
+
+    //#
+    //# Policies for this world. Cannot change. Can only be set during world initialization with the level blueprint.
+    //# Only valid on authorities.
+    //#
+    JSupremePolicies* SupremePolicies{ nullptr };
 };
 
 template <>
@@ -344,13 +389,13 @@ FORCEINLINE LWorld* LWorld::GetWorldFromHumanReadableNameAsserted(const LString&
     return Out;
 }
 
-FORCEINLINE LWorld* LClassOuter::AsWorld() noexcept
+inline LWorld* LClassOuter::AsWorld() noexcept
 {
     check( this->IsWorld() )
     return static_cast<LWorld*>(this);
 }
 
-FORCEINLINE LWorld const* LClassOuter::AsWorld() const noexcept
+inline LWorld const* LClassOuter::AsWorld() const noexcept
 {
     check( this->IsWorld() )
     return static_cast<LWorld const*>(this);

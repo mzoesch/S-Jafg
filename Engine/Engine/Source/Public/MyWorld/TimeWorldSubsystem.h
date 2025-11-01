@@ -149,13 +149,12 @@ protected:
     explicit JTimeWorldSubsystem(LCxxObjectInitializer const& CxxObjectInitializer);
     DEFAULT_OBJECT_CDR_CTOR(JTimeWorldSubsystem)
 
-    virtual void OnGarbageDefault(ECxxRecordTearDownReason::Type Reason) override;
+    virtual void OnGarbageDefault(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter) override;
 
     // JTickableWorldSubsystem implementation
     virtual bool ShouldCreateSubsystem(LClassOuter const* Outer) const override;
     virtual void Initialize(LSubsystemCollection& Collection) override;
     virtual void Tick(const f32 DeltaTime) override;
-    virtual void TearDown() override;
     // ~JTickableWorldSubsystem implementation
 
 public:

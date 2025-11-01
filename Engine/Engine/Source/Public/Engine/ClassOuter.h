@@ -53,8 +53,8 @@ public:
         );
 
     virtual bool IsWorld() const noexcept { return false; }
-    FORCEINLINE LWorld const* AsWorld() const noexcept;
-    FORCEINLINE LWorld* AsWorld() noexcept;
+    LWorld const* AsWorld() const noexcept;
+    LWorld* AsWorld() noexcept;
 
     FORCEINLINE TUnique<JCxxClass> Poach(JCxxClass* Employee) noexceptcheck
     {

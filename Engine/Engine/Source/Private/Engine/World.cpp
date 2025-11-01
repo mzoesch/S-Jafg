@@ -14,6 +14,7 @@
 #include "Debug/DebugTraceLine.h"
 #include "Debug/DebugTraceSphere.h"
 #include "Stats/Stats.h"
+#include "Framework/SupremePolicies.h"
 
 LString Jafg::LWorldParameters::ToString() const
 {
@@ -43,22 +44,6 @@ void Jafg::LWorldParameters::Reset() noexcept
 {
     algo::orphan(&this->Params);
     return;
-}
-
-Jafg::LEngine& Jafg::LWorld::GetEngine() const noexceptcheck
-{
-    check( GEngine && "Engine has to be valid if a world exists." )
-    return *GEngine;
-}
-
-Jafg::LLocalEgo& Jafg::LWorld::GetLocalEgo() const noexceptcheck
-{
-    return this->GetEngine().GetLocalEgo();
-}
-
-Jafg::LCommandLineInterface& Jafg::LWorld::GetCommandLineInterface() const noexceptcheck
-{
-    return this->GetEngine().GetCommandLineInterface();
 }
 
 void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LString&& Url /* = {} */)
@@ -106,6 +91,20 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
         }
     }
 
+    if (this->UnderlyingLevel.has_value())
+    {
+        this->SupremePolicies = NewObject<JSupremePolicies>(this, this->UnderlyingLevel->SupremePoliciesClass.GetCLassOrDefault());
+    }
+    else
+    {
+        this->SupremePolicies = NewObject<JSupremePolicies>(this);
+    }
+
+    if (this->SupremePolicies)
+    {
+        this->SupremePolicies->OnWorldPreInit();
+    }
+
     auto& Track{ GEngine->GetTrackFromWorld(this) };
     if (Track.OnWorldPreInit.IsValid())
     {
@@ -122,10 +121,20 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
         if (Obj->IsA<AActor>())
         {
             MakeDeferredActorFinal(StaticCast<AActor>(Obj.get()));
+
+#if WITH_LOCAL_LAYER
+            if (Obj->IsA<APersonaController>())
+            {
+                this->SupremePolicies->OnPersonaControllerCreated(*StaticCast<APersonaController>(Obj.get()));
+            }
+#else /* WITH_LOCAL_LAYER */
+            check( Obj->IsA<APersonaController>() == false )
+#endif /* !WITH_LOCAL_LAYER */
         }
 
         continue;
     }
+    this->bFinishedActors = true;
 #if !IN_SHIPPING
     LOG_VERBOSE(LogWorld, "Initialized [{}] actors.", ActorCount)
 #endif /* !IN_SHIPPING */
@@ -133,17 +142,43 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
     this->Collection.InitializeDeferred(this);
     this->Collection.InitializeSubsystems<JWorldSubsystem>();
 
-    if (Track.OnWorldPostInit.IsValid())
+    if (this->SupremePolicies)
     {
-        Track.OnWorldPostInit(*this);
-        Track.OnWorldPostInit.Reset();
+        this->SupremePolicies->OnWorldLateInit();
+    }
+
+    if (Track.OnWorldLateInit.IsValid())
+    {
+        Track.OnWorldLateInit(*this);
+        Track.OnWorldLateInit.Reset();
     }
 
     this->GetEngine().OnWorldBeginLife.Broadcast(this);
 
+    if (this->SupremePolicies)
+    {
+        this->SupremePolicies->OnWorldPostInit();
+    }
+
     this->WorldState = EWorldState::Running;
 
     return;
+}
+
+Jafg::LEngine& Jafg::LWorld::GetEngine() const noexceptcheck
+{
+    check( GEngine && "Engine has to be valid if a world exists." )
+    return *GEngine;
+}
+
+Jafg::LCommandLineInterface& Jafg::LWorld::GetCommandLineInterface() const noexceptcheck
+{
+    return this->GetEngine().GetCommandLineInterface();
+}
+
+Jafg::LLocalEgo& Jafg::LWorld::GetLocalEgo() const noexceptcheck
+{
+    return this->GetEngine().GetLocalEgo();
 }
 
 void Jafg::LWorld::Tick(const f32 DeltaTime)
@@ -307,85 +342,64 @@ void Jafg::LWorld::LateTick(const float DeltaTime)
 }
 #endif /* AS_CLIENT */
 
-void Jafg::LWorld::OnTearDown()
+Jafg::APersonaController* Jafg::LWorld::Login(
+      LTransientPersona Persona
+    , LString* OutRejectionReason /* = nullptr */
+    )
 {
-    STAT_CYCLE_FUNCTION()
+    check( this->SupremePolicies )
 
-    check( this->GetWorldState() == EWorldState::Running )
-    this->WorldState = EWorldState::TearingDown;
-
-    LOG_VERBOSE(LogWorld, "Tearing down world subsystems for world [{}].", this->GetHumanReadableName())
-    this->Collection.TearDownSubsystems([](void) -> void
+    if (Persona.Surface)
     {
-        Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, Tasks::RunAllTasks);
-        Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::RunAllTasks);
-        Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::RunAllTasks);
-
-        return;
-    });
-
-    // Preserve order!
-    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, Tasks::RunAllTasks);
-    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::RunAllTasks);
-    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::RunAllTasks);
-
-    LOG_VERBOSE(LogWorld, "Killing actors of world [{}].", this->GetHumanReadableName())
-#if !IN_SHIPPING
-    LSize ActorCount{ 0 };
-#endif /* !IN_SHIPPING */
-    for (TUnique<JCxxClass> const& Obj : this->GetEmployees())
-    {
-        check( Obj.get() != nullptr )
-
-        if (Obj->IsA<AActor>())
+        if (Persona.Surface->DoesPossess())
         {
-            Obj->MarkAsGarbage_v2(ECxxRecordTearDownReason::OuterTearDown);
-#if !IN_SHIPPING
-            ++ActorCount;
-#endif /* !IN_SHIPPING */
+            LOG_WARNING(LogWorld,
+                "Surface [{}] already possesses persona controller [{}]. Rejecting login request.",
+                Persona.Surface->GetHumanReadableName(),
+                Persona.Surface->GetPossessed()->GetNameAsString()
+                )
 
-            check( Obj.get() == nullptr )
+            if (OutRejectionReason)
+            {
+                *OutRejectionReason = Lal::SprintF(
+                    "Surface [{}] already possesses persona controller [{}].",
+                    Persona.Surface->GetHumanReadableName(),
+                    Persona.Surface->GetPossessed()->GetNameAsString()
+                    );
+            }
+
+            return nullptr;
         }
-
-        continue;
     }
 
-    algo::orphan(&this->TickableObjects);
-    algo::orphan(&this->DeletedTickableObjects);
+    auto* Pc{ this->SupremePolicies->OnIncomingConnectionRequest(Persona.Type, OutRejectionReason) };
+    if (Pc == nullptr)
+    {
+        return nullptr;
+    }
 
-    this->OnStaticDraw.Reset();
-    this->OnStaticLineTrace.Reset();
+    if (Persona.Type == EIncomingConnectionRequest::Local)
+    {
+        check( Persona.Surface )
 
-    algo::orphan(&this->UnsanitizedUrl);
-    algo::orphan(&this->Url);
-    this->Parameters.Reset();
+        //# Sideeffect from creation, we do not really care.
+        if (Persona.Surface->DoesPossess())
+        {
+            check( Persona.Surface->GetPossessed() == Pc )
+            check( Pc->IsSurfaceValid() )
+        }
+        else
+        {
+            Persona.Surface->PossessController(Pc);
+        }
+    }
 
-    this->UnderlyingLevel.reset();
+    if (this->bFinishedActors)
+    {
+        this->SupremePolicies->OnPersonaControllerCreated(*Pc);
+    }
 
-    ensureDiscard( this->TemporalObjects.empty() );
-    algo::orphan(&this->TemporalObjects);
-
-    ensureDiscard( this->TickableObjects.empty() );
-    algo::orphan(&this->TickableObjects);
-    ensureDiscard( this->DeletedTickableObjects.empty() );
-    algo::orphan(&this->DeletedTickableObjects);
-
-    this->bDrawSkyboxFirst = false;
-    this->Skybox.reset();
-
-    this->EyeToMatrices.clear();
-
-    check( this->Collection.IsValid() == false )
-
-    check( this->TickableObjectsPutMutex == false )
-
-    this->RealTimeWhenWorldWasLaunched = -1.0f;
-
-    LClassOuter::OnTearDown();
-
-    this->WorldState = EWorldState::WaitingForKill;
-
-    return;
+    return Pc;
 }
 
 void Jafg::LWorld::RegisterTickableObject(LTickableObject* Tickable)
@@ -462,6 +476,144 @@ bool Jafg::LWorld::LineTraceByChannel(
     }
 
     return OutHits.empty() == false;
+}
+
+Jafg::LWorld* Jafg::LWorld::GetWorldFromHumanReadableName(const LString& InHumanReadableName) noexcept
+{
+    if (GEngine)
+    {
+        const auto* Track
+        {
+            algo::find_pointer(GEngine->GetTracks(), InHumanReadableName, [](auto const& E){ return E.ChildWorld->GetHumanReadableName(); })
+        };
+
+        return Track ? Track->ChildWorld.get() : nullptr;
+    }
+
+    return nullptr;
+}
+
+Jafg::APersonaController* Jafg::LWorld::GetThisWorldsLocalPersonaControllerSlow() noexcept
+{
+    for (auto& Surface : this->GetLocalEgo().GetFrontend().GetSurfaces())
+    {
+        if (auto* Possessed{ Surface->GetPossessed() })
+        {
+            if (Possessed->GetWorld() == this)
+            {
+                return Possessed;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+Jafg::APersonaController const* Jafg::LWorld::GetThisWorldsLocalPersonaControllerSlow() const noexcept
+{
+    for (auto& Surface : this->GetLocalEgo().GetFrontend().GetSurfaces())
+    {
+        if (auto* Possessed{ Surface->GetPossessed() })
+        {
+            if (Possessed->GetWorld() == this)
+            {
+                return Possessed;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+void Jafg::LWorld::OnTearDown()
+{
+    STAT_CYCLE_FUNCTION()
+
+    if (this->WorldState == EWorldState::PreInitializing)
+    {
+        check( this->Collection.GetSubsystems().size() == 0 )
+        check( this->TickableObjects.size() == 0 )
+        check( this->DeletedTickableObjects.size() == 0 )
+        LClassOuter::OnTearDown();
+        this->WorldState = EWorldState::WaitingForKill;
+        return;
+    }
+
+    check( this->GetWorldState() == EWorldState::Running )
+    this->WorldState = EWorldState::TearingDown;
+
+    LOG_VERBOSE(LogWorld, "Tearing down world subsystems for world [{}].", this->GetHumanReadableName())
+    this->Collection.TearDownSubsystems([](void) -> void
+    {
+        Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, Tasks::RunAllTasks);
+        Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::RunAllTasks);
+        Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::RunAllTasks);
+
+        return;
+    });
+
+    // Preserve order!
+    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Early, Tasks::RunAllTasks);
+    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Late, Tasks::RunAllTasks);
+    Tasks::TryRunTasks(ENamedThreads::Master, ETaskTime::Whenever, Tasks::RunAllTasks);
+
+    LOG_VERBOSE(LogWorld, "Killing actors of world [{}].", this->GetHumanReadableName())
+#if !IN_SHIPPING
+    LSize ActorCount{ 0 };
+#endif /* !IN_SHIPPING */
+    for (TUnique<JCxxClass> const& Obj : this->GetEmployees())
+    {
+        check( Obj.get() != nullptr )
+
+        if (Obj->IsA<AActor>())
+        {
+            Obj->MarkAsGarbage_v2(ECxxRecordTearDownReason::OuterTearDown);
+#if !IN_SHIPPING
+            ++ActorCount;
+#endif /* !IN_SHIPPING */
+
+            check( Obj.get() == nullptr )
+        }
+
+        continue;
+    }
+
+    algo::orphan(&this->TickableObjects);
+    algo::orphan(&this->DeletedTickableObjects);
+
+    this->OnStaticDraw.Reset();
+    this->OnStaticLineTrace.Reset();
+
+    algo::orphan(&this->UnsanitizedUrl);
+    algo::orphan(&this->Url);
+    this->Parameters.Reset();
+
+    this->UnderlyingLevel.reset();
+
+    ensureDiscard( this->TemporalObjects.empty() );
+    algo::orphan(&this->TemporalObjects);
+
+    ensureDiscard( this->TickableObjects.empty() );
+    algo::orphan(&this->TickableObjects);
+    ensureDiscard( this->DeletedTickableObjects.empty() );
+    algo::orphan(&this->DeletedTickableObjects);
+
+    this->bDrawSkyboxFirst = false;
+    this->Skybox.reset();
+
+    this->EyeToMatrices.clear();
+
+    check( this->Collection.IsValid() == false )
+
+    check( this->TickableObjectsPutMutex == false )
+
+    this->RealTimeWhenWorldWasLaunched = -1.0f;
+
+    LClassOuter::OnTearDown();
+
+    this->WorldState = EWorldState::WaitingForKill;
+
+    return;
 }
 
 void Jafg::LWorld::UpdateUrlParams() noexcept
@@ -542,19 +694,4 @@ void Jafg::LWorld::UpdateUrlParams() noexcept
     }
 
     return;
-}
-
-Jafg::LWorld* Jafg::LWorld::GetWorldFromHumanReadableName(const LString& InHumanReadableName) noexcept
-{
-    if (GEngine)
-    {
-        const auto* Track
-        {
-            algo::find_pointer(GEngine->GetTracks(), InHumanReadableName, [](auto const& E){ return E.ChildWorld->GetHumanReadableName(); })
-        };
-
-        return Track ? Track->ChildWorld.get() : nullptr;
-    }
-
-    return nullptr;
 }

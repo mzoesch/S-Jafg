@@ -58,9 +58,9 @@ void Jafg::JCoreCommandSubsystem::Initialize(LSubsystemCollection& Collection)
     return;
 }
 
-void Jafg::JCoreCommandSubsystem::TearDown()
+void Jafg::JCoreCommandSubsystem::TearDown(LClassOuter& PreviousOuter)
 {
-    Super::TearDown();
+    Super::TearDown(PreviousOuter);
 
     LCommandLineInterface& CommandLineInterface{ this->GetCommandLineInterface() };
 

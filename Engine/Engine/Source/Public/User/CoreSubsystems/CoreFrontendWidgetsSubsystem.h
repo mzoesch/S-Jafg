@@ -25,7 +25,7 @@ protected:
 
 private:
 
-    WFrontendScreen* FrontendScreen { nullptr };
+    WFrontendScreen* FrontendScreen{ nullptr };
 };
 
 } /* ~Namespace Jafg */

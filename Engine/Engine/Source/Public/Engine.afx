@@ -125,7 +125,7 @@
 #include "Engine/World.h"
 #include "Engine/WorldStorage.h"
 #include "Engine/TickableObject.h"
-#include "Engine/Actor.h"
+#include "Framework/Actor.h"
 
 
 /*----------------------------------------------------------------------------
@@ -147,7 +147,6 @@
 ----------------------------------------------------------------------------*/
 
 #include "Engine/Engine.h"
-#include "Framework/Controller.h"
 #include "Framework/PersonaController.h"
 #include "Framework/Eye.h"
 #include "Framework/Pawn.h"

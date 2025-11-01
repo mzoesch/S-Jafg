@@ -223,6 +223,7 @@ function(_jafg_add_module_impl
             -fno-exceptions             # No exceptions.
             -fno-common                 # Forces global variables to be defined in exactly one object file.
             -fvisibility=hidden         # Hides all symbols by default.
+            -fvisibility-inlines-hidden # Fuck those inlines.
             -Wall -Wextra -Wpedantic    # Enable many warnings.
             # -Weverything <-- To much for now.
             )

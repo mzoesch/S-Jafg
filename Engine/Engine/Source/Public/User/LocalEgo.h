@@ -39,17 +39,16 @@ public:
     void OnLateTick(const f32 DeltaTime);
     void TearDown();
 
-    FORCEINLINE auto GetFrontend() -> LFrontend& { return this->Frontend; }
-    FORCEINLINE auto GetFrontend() const -> LFrontend const& { return this->Frontend; }
-    FORCEINLINE auto GetUserInput() -> LUserInput& { return this->UserInput; }
-    FORCEINLINE auto GetUserInput() const -> LUserInput const& { return this->UserInput; }
+    FORCEINLINE LFrontend& GetFrontend() noexcept { return this->Frontend; }
+    FORCEINLINE LFrontend const& GetFrontend() const noexcept { return this->Frontend; }
+
+    FORCEINLINE LUserInput& GetUserInput() noexcept { return this->UserInput; }
+    FORCEINLINE LUserInput const& GetUserInput() const noexcept { return this->UserInput; }
 
     FORCEINLINE LClassOuter* GetOuter() noexcept { return &this->Outer; }
     FORCEINLINE const LClassOuter* GetOuter() const noexcept { return &this->Outer; }
 
     SUBSYSTEM_COLLECTION_OUTER_GETTERS(Collection, JLocalEgoSubsystem)
-
-    void OnNewPawnPossessed(APawn* InOld, APawn* InNew);
 
     ENGINE_API LEngine& GetEngine();
     ENGINE_API LCommandLineInterface& GetCommandLineInterface();
@@ -69,16 +68,12 @@ public:
 
 private:
 
-    void OnWorldBeginLife(LWorld* InNewWorld);
-
 #if LAL_DO_CHECKS
     bool bDecommissioned{ false };
 #endif /* LAL_DO_CHECKS */
 
     LFrontend  Frontend;
     LUserInput UserInput;
-
-    LDelegateHandle OnWorldBeginLifeHandle{ nullptr };
 
     //#
     //# The context of the local ego. It is created when the local ego is instantiated

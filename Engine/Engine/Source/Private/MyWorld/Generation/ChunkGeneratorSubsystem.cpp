@@ -137,11 +137,11 @@ void Jafg::JChunkGeneratorSubsystem::Initialize(LSubsystemCollection& Collection
     return;
 }
 
-void Jafg::JChunkGeneratorSubsystem::TearDown()
+void Jafg::JChunkGeneratorSubsystem::TearDown(LClassOuter& PreviousOuter)
 {
     STAT_CYCLE_FUNCTION()
 
-    Super::TearDown();
+    Super::TearDown(PreviousOuter);
 
     for (const ENamedThreads::Type Worker : this->Workers)
     {

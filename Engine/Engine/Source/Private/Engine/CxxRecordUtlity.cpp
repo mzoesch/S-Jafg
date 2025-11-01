@@ -53,32 +53,11 @@ void Jafg::Private::LCxxRecordRegistry::LoadPendingPackages(const LLoadedPluginH
     check( Tasks::IsOnMasterThread() )
     LOG_VERBOSE(LogPackager, "Loading [{}] pending packages...", this->PendingPackages.size())
 
-    TArray<JCxxClass*> NewCDRs;
-
     for (auto& Package : this->PendingPackages)
     {
         check( Package->GetFullyQualifiedName().empty() == false )
-
         check( Package->Origin.IsValid() == false )
         Package->Origin = Handle;
-
-        if (Package->IsClass())
-        {
-            auto& ClassPackage{ Package->AsClass() };
-
-            this->bAllowCDRRegistration = true;
-            ClassPackage.StaticClass.CDR = TUnique<JCxxClass>{ClassPackage.StaticClass.GetCDRFunction()};
-            this->bAllowCDRRegistration = false;
-
-            check( ClassPackage.StaticClass.CDR.get() )
-
-            NewCDRs.emplace_back(ClassPackage.StaticClass.CDR.get());
-        }
-        else
-        {
-            unreachable()
-        }
-
         this->RegisteredPackages.emplace_back(std::move(Package));
     }
     checkCode
@@ -119,6 +98,46 @@ void Jafg::Private::LCxxRecordRegistry::LoadPendingPackages(const LLoadedPluginH
         continue;
     }
 
+    /* Create CDRs. */
+    TArray<JCxxClass*> NewCDRs;
+    for (auto& Package : this->RegisteredPackages)
+    {
+        if (Package->IsClass() == false)
+        {
+            continue;
+        }
+
+        auto& ClassPackage{ Package->AsClass() };
+
+        if (ClassPackage.StaticClass.IsCDRValid())
+        {
+            continue;
+        }
+
+        this->bAllowCDRRegistration = true;
+        ClassPackage.StaticClass.CDR = TUnique<JCxxClass>{ClassPackage.StaticClass.GetCDRFunction()};
+        check( ClassPackage.StaticClass.CDR.get() )
+        this->bAllowCDRRegistration = false;
+        NewCDRs.emplace_back(ClassPackage.StaticClass.CDR.get());
+
+        continue;
+    }
+    checkCode
+    (
+        for (auto const& Package : this->RegisteredPackages)
+        {
+            if (Package->IsClass() == false)
+            {
+                continue;
+            }
+
+            auto& ClassPackage{ Package->AsClass() };
+            check( ClassPackage.StaticClass.IsCDRValid() )
+            continue;
+        }
+    )
+
+    /* Begin life of all new CDRs. */
     for (JCxxClass* Class : NewCDRs)
     {
         check( Class )
@@ -242,7 +261,7 @@ LSize Jafg::Private::LCxxRecordRegistry::RemovePackagesOf(const LLoadedPluginHan
             auto& ClassPackage{ (*It)->AsClass() };
 
             algo::erase_once_checked(&ClassPackage.StaticClass.GetParent()->GetChildren(), &ClassPackage.StaticClass);
-            for (LCxxClass* Child: ClassPackage.StaticClass.GetChildren())
+            for (LCxxClass* Child : ClassPackage.StaticClass.GetChildren())
             {
                 check( Child )
                 check( Child->GetParent() == &ClassPackage.StaticClass )
@@ -250,6 +269,10 @@ LSize Jafg::Private::LCxxRecordRegistry::RemovePackagesOf(const LLoadedPluginHan
 
                 continue;
             }
+
+            ClassPackage.StaticClass.GetMutableCDR()->MarkAsGarbage_v2(ECxxRecordTearDownReason::PluginUnload);
+            ClassPackage.StaticClass.CDR.release();
+            check( ClassPackage.StaticClass.CDR.get() == nullptr )
         }
 
         ++Out;
@@ -257,6 +280,8 @@ LSize Jafg::Private::LCxxRecordRegistry::RemovePackagesOf(const LLoadedPluginHan
 
         continue;
     }
+
+    Private::GetGlobalCarnifex().KillAllGarbageChildren();
 
     //# Check for invalid parents...
     for (auto& Package : this->RegisteredPackages)

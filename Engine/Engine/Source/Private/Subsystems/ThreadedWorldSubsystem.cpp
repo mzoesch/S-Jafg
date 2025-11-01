@@ -1,7 +1,7 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Lal.afx"
 #include "Subsystems/ThreadedWorldSubsystem.h"
+#include "Engine/World.h"
 #include "Stats/Stats.h"
 
 void Jafg::JThreadedWorldSubsystem::Initialize(LSubsystemCollection& Collection)

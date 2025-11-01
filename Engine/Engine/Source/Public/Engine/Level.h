@@ -4,9 +4,12 @@
 
 #include "System/EnginePath.h"
 #include "User/Input/InputMode.h"
+#include "Engine/CxxClass.h"
 
 namespace Jafg
 {
+
+class JSupremePolicies;
 
 struct LLevelSkyboxMap final
 {
@@ -31,21 +34,23 @@ struct LLevel final
 
     explicit LLevel
     (
-        const LString& InIdentifier,
+        LString InIdentifier,
         const EInputMode::Type InInputMode = EInputMode::None,
         const bool bInShowMouseCursor = true,
-        const Lal::LLinearColor& BackgroundColor = Lal::LLinearColor::Black,
+        Lal::LLinearColor const& BackgroundColor = Lal::LLinearColor::Black,
         const bool bInCreateSkybox = false,
         const bool bInDrawSkyboxFirst = true,
-        const TArray<LLevelSkyboxMap>& InSkybox = { }
+        TArray<LLevelSkyboxMap> const& InSkybox = {},
+        const TSubclassOf<JSupremePolicies> InSupremePoliciesClass = {}
     )
-        : Identifier(InIdentifier)
+        : Identifier(std::move(InIdentifier))
         , InputMode(InInputMode)
         , bShowMouseCursor(bInShowMouseCursor)
         , BackgroundColor(BackgroundColor)
         , bCreateSkybox(bInCreateSkybox)
         , bDrawSkyboxFirst(bInDrawSkyboxFirst)
         , Skybox(InSkybox)
+        , SupremePoliciesClass(InSupremePoliciesClass)
     {
         return;
     }
@@ -63,6 +68,8 @@ struct LLevel final
     bool bCreateSkybox;
     bool bDrawSkyboxFirst;
     TArray<LLevelSkyboxMap> Skybox;
+
+    TSubclassOf<JSupremePolicies> SupremePoliciesClass;
 };
 
 } /* Namespace Jafg */

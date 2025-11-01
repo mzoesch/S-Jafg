@@ -12,7 +12,7 @@ class WTabBar;
 class WPauseScreen;
 
 DECLARE_JAFG_WIDGET()
-class WPauseScreen final : public WUserWidget
+class ENGINE_API WPauseScreen final : public WUserWidget
 {
     GENERATED_CLASS_BODY()
 

@@ -45,6 +45,7 @@ ENGINE_API extern TArray<LProgramArgument> ProcessedCommandLine;
 ENGINE_API void ProcessCommandLineVariables();
 
 ENGINE_API auto ConditionallyShowHelpAndExit() -> std::tuple<bool, EPlatformExit::Type>;
+ENGINE_API auto ConditionallyShowVerboseHelpAndExit() -> std::tuple<bool, EPlatformExit::Type>;
 ENGINE_API auto ConditionallyShowVersionAndExit() -> std::tuple<bool, EPlatformExit::Type>;
 
 //# Not all platforms may respect this.

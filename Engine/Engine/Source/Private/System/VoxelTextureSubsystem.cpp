@@ -130,11 +130,6 @@ void Jafg::JVoxelTextureSubsystem::Initialize(LSubsystemCollection& Collection)
     return;
 }
 
-void Jafg::JVoxelTextureSubsystem::TearDown()
-{
-    Super::TearDown();
-}
-
 TArray<Jafg::LDiskVoxelTexture> Jafg::JVoxelTextureSubsystem::FindMeaningFullVoxelTextureNames() const
 {
     const LPath Voxels { LEnginePath{EEnginePaths::Voxels}.ResolvePath() };

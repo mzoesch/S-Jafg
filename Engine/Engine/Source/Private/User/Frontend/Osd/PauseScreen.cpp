@@ -15,6 +15,8 @@ void Jafg::WPauseScreen::Construct()
 {
     Super::Construct();
 
+    this->SetVisibility(EWidgetVisibility::Collapsed);
+
     MakeRootNode(WCommonMenuTabBar).SaveTo(&this->TabBar)
         .Anchor(EAnchor::Fill)
         .AlignHorizontal()

@@ -24,7 +24,6 @@ protected:
 
 public:
 
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
     virtual void Construct() override;
     virtual void Tick() override;
     virtual void Destruct() override;

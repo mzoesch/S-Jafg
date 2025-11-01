@@ -13,9 +13,10 @@ Jafg::WUserWidget::WUserWidget(LCxxObjectInitializer const& CxxObjectInitializer
     return;
 }
 
-void Jafg::WUserWidget::OnGarbage(ECxxRecordTearDownReason::Type Reason)
+void Jafg::WUserWidget::OnGarbage(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter)
 {
-    Super::OnGarbage(Reason);
+    Super::OnGarbage(Reason, PreviousOuter);
+
     this->Root = nullptr;
 
     if (this->AttachedViewport)

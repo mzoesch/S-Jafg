@@ -4,16 +4,16 @@
 #include "Framework/Pawn.h"
 #include "User/LocalEgo.h"
 
-void Jafg::LEye::SetOwner(APawn* InOwner) noexcept
+void Jafg::LEye::SetOwningPawn(APawn* InOwner) noexcept
 {
-    this->Owner = InOwner;
+    this->OwningPawn = InOwner;
 
-    if (this->Owner == nullptr)
+    if (this->OwningPawn == nullptr)
     {
         return;
     }
 
-    if (const LLocalEgo* Ego = this->GetOwner()->GetPossessedEgo(); Ego)
+    if (LLocalEgo const* Ego{ this->OwningPawn->GetLocalEgoIfPossessed() }; Ego)
     {
         this->NearFrustum = Ego->GetVariable_FrustumNearPlane();
         this->FarFrustum  = Ego->GetVariable_FrustumFarPlane();
@@ -28,17 +28,17 @@ void Jafg::LEye::UpdateViewMatrix()
 
     Maths::MakeViewMatrixInline(
         &this->CachedViewMatrix,
-        this->Owner->GetTranslation(),
-        this->Owner->GetTranslation() + this->RelativeFront,
+        this->OwningPawn->GetTranslation(),
+        this->OwningPawn->GetTranslation() + this->RelativeFront,
         this->RelativeUp
-    );
+        );
 
     return;
 }
 
 void Jafg::LEye::UpdateRelativeVectors() const
 {
-    const LRotator Rotator = this->Owner->GetRotator();
+    const LRotator Rotator{ this->OwningPawn->GetRotator() };
 
     this->RelativeFront.X =
     Maths::Cos(Maths::ToRadians(Rotator.Yaw)) * Maths::Cos(Maths::ToRadians(Rotator.Pitch));

@@ -9,7 +9,7 @@ namespace Jafg
 {
 
 DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
-class JWorldSubsystem : public JSubsystem
+class ENGINE_API JWorldSubsystem : public JSubsystem
 {
     GENERATED_CLASS_BODY()
 
@@ -19,11 +19,15 @@ protected:
 
 public:
 
-    ENGINE_API static bool IsOuterFrontend(LClassOuter const* Outer) noexcept;
-    ENGINE_API static bool IsOuterWorld(LClassOuter const* Outer) noexcept;
+    static bool IsOuterFrontend(LClassOuter const* Outer) noexcept;
+    static bool IsOuterWorld(LClassOuter const* Outer) noexcept;
 
-    FORCEINLINE LWorld* GetWorld() { check( this->GetOuter()->IsWorld() )  return reinterpret_cast<LWorld*>(this->GetOuter()); }
-    FORCEINLINE const LWorld* GetWorld() const { check( this->GetOuter()->IsWorld() ) return reinterpret_cast<LWorld const*>(this->GetOuter()); }
+    FORCEINLINE LWorld* GetWorld() noexcept { auto* Out{ this->GetOuter() }; if (Out) { return Out->AsWorld(); } return nullptr; }
+    FORCEINLINE LWorld* GetWorldChecked() noexceptcheck { return this->GetOuterChecked()->AsWorld(); }
+    FORCEINLINE LWorld* GetWorldAsserted() noexceptcheck { return this->GetOuterAsserted()->AsWorld(); }
+    FORCEINLINE LWorld const* GetWorld() const noexcept { auto* Out{ this->GetOuter() }; if (Out) { return Out->AsWorld(); } return nullptr; }
+    FORCEINLINE LWorld const* GetWorldChecked() const noexceptcheck { return this->GetOuterChecked()->AsWorld(); }
+    FORCEINLINE LWorld const* GetWorldAsserted() const noexceptcheck { return this->GetOuterAsserted()->AsWorld(); }
 };
 
 } /* ~Namespace Jafg */

@@ -17,11 +17,6 @@ void Jafg::JVoxelSubsystem::Initialize(LSubsystemCollection& Collection)
     return;
 }
 
-void Jafg::JVoxelSubsystem::TearDown()
-{
-    Super::TearDown();
-}
-
 Jafg::voxel_t Jafg::JVoxelSubsystem::GetVoxelIndex(const LString& Name) const
 {
     for (TArray<LVoxelMask>::size_type Idx { 0 }; Idx < this->VoxelMasks.size(); ++Idx)

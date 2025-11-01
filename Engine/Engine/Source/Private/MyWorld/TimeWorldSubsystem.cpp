@@ -145,9 +145,9 @@ Jafg::JTimeWorldSubsystem::JTimeWorldSubsystem(LCxxObjectInitializer const& CxxO
     return;
 }
 
-void Jafg::JTimeWorldSubsystem::OnGarbageDefault(ECxxRecordTearDownReason::Type Reason)
+void Jafg::JTimeWorldSubsystem::OnGarbageDefault(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter)
 {
-    Super::OnGarbageDefault(Reason);
+    Super::OnGarbageDefault(Reason, PreviousOuter);
 
     this->DefaultOnly_UnregisterCliObjects();
 
@@ -202,13 +202,6 @@ void Jafg::JTimeWorldSubsystem::Tick(const f32 DeltaTime)
     }
 
     this->OnTimeUpdated();
-
-    return;
-}
-
-void Jafg::JTimeWorldSubsystem::TearDown()
-{
-    Super::TearDown();
 
     return;
 }

@@ -19,7 +19,7 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(JCoreCommandSubsystem)
 
     virtual void Initialize(LSubsystemCollection& Collection) override;
-    virtual void TearDown() override;
+    virtual void TearDown(LClassOuter& PreviousOuter) override;
 
 private:
 

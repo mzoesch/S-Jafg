@@ -1,56 +1,94 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Foreign/ForeignInclude.h"
-#include "JgcNames.h"
+#include "Runtime/Args.h"
+#include "Core/JgcNames.h"
+#include "Svw/SvwSupremePolicies.h"
 
 DECLARE_INLINE_LOG_CATEGORY(LogJgcLifetime, Trace)
 
-namespace Jgc
+namespace
 {
 
-struct LJgcPluginLifetime final : public Jafg::LPluginLifetime
+Lal::LProgramParameter _JgcStartupLevel{
+    "Jgc.StartupLevel",
+    "Specifies the level to start Jgc with.",
+    };
+
+class LJgcPluginLifetime final : public Jafg::LPluginLifetime
 {
 public:
 
-    virtual void OnStartup() override;
-    virtual void OnPrepareShutdown(const Jafg::EPluginShutdownReason::Type InReason) override { }
-    virtual void OnShutdown(const Jafg::EPluginShutdownReason::Type InReason) override { }
-
-    static void OnNativeStartup() noexcept { }
-    static void OnNativeShutdown() noexcept { }
+    virtual void OnFinishedLoading() override;
 };
 
-DEFINE_PLUGIN(JGC_API, LJgcPluginLifetime, JafgGameplayCore)
-
-void LJgcPluginLifetime::OnStartup()
+void LJgcPluginLifetime::OnFinishedLoading()
 {
-    LPluginLifetime::OnStartup();
+    LPluginLifetime::OnFinishedLoading();
     LOG_VERBOSE(LogJgcLifetime, "Loading Jgc plugin.")
 
     check( GEngine )
 
-#if WITH_LOCAL_LAYER
     LOG_VERBOSE(LogJgcLifetime, "Creating jgc levels.")
+#if WITH_LOCAL_LAYER
+   if (GEngine->RegisterLevel
+   (
+       Jafg::LLevel
+       {
+           Name_LevelFrontend.ToString(),
+           Jafg::EInputMode::Both, true,
+           Lal::LLinearColor::CadetBlue
+       }
+   ) == false)
+   {
+       LOG_WARNING(LogJgcLifetime, "Level [{}] is already registered.", Name_LevelFrontend.ToString())
+   }
+#endif /* WITH_LOCAL_LAYER */
     if (GEngine->RegisterLevel
     (
         Jafg::LLevel
         {
-            Name_LevelFrontend.ToString(),
-            Jafg::EInputMode::Both, true,
-            Lal::LLinearColor::CadetBlue
+            Name_LevelSvw.ToString(),
+            Jafg::EInputMode::InputSubSystem, false,
+            Lal::LLinearColor::Gray,
+            true, false, TArray<Jafg::LLevelSkyboxMap>
+            {
+                Jafg::LLevelSkyboxMap
+                {
+                    "Night",
+                    TArray<Jafg::LEnginePath>
+                    {
+                        Jafg::LEnginePath{ Jafg::EEnginePaths::Textures, "Misc/SbNight.png" },
+                    },
+                },
+            },
+            Jgc::JSvwSupremePolicies::StaticClass()
         }
     ) == false)
     {
-        LOG_WARNING(LogJgcLifetime, "Level [{}] is already registered.", Name_LevelFrontend.ToString())
+        LOG_WARNING(LogJgcLifetime, "Level [{}] is already registered.", Name_LevelSvw.ToString())
     }
-#endif /* WITH_LOCAL_LAYER */
 
-#if WITH_LOCAL_LAYER
-    LOG_VERBOSE(LogJgcLifetime, "Browsing to front-end level.")
-    GEngine->Browse(GEngine->SummonWorld("JgcStartUp").Get(), Name_LevelFrontend.ToString(), {}, [](Jafg::LWorld& World)
+    Jafg::Application::LProgramArgument const* StartupLevelArg{ nullptr };
+    if (Jafg::Application::HasCmdLineParameter(_JgcStartupLevel.Identifier, &StartupLevelArg))
     {
-        LOG_VERBOSE(LogJgcLifetime, "Setting up local layer in front-end level.")
+        jassert( StartupLevelArg->Value.has_value() )
+        LOG_VERBOSE(LogJgcLifetime, "Browsing to start-up level [{}] as specified on command line.", StartupLevelArg->Value.value())
+    }
 
+    LOG_VERBOSE(LogJgcLifetime, "Browsing to startup level.")
+    GEngine->Browse(GEngine->SummonWorld("JgcStartUp").Get()
+        , (StartupLevelArg ? StartupLevelArg->Value.value()
+#if WITH_LOCAL_LAYER
+            : Name_LevelFrontend.ToString()
+#else /* WITH_LOCAL_LAYER */
+            : Name_LevelListen.ToString()
+#endif /* !WITH_LOCAL_LAYER */
+          )
+        , [](Jafg::LWorld& World)
+    {
+#if WITH_LOCAL_LAYER
+        LOG_VERBOSE(LogJgcLifetime, "Setting up local layer in front-end level.")
         auto& Frontend{ GEngine->GetLocalEgo().GetFrontend() };
         if (Frontend.GetSurfaceCount() != 1)
         {
@@ -65,25 +103,19 @@ void LJgcPluginLifetime::OnStartup()
             }
             else
             {
-                Jafg::APersonaController* Pc{ Jafg::SpawnActor<Jafg::APersonaController>(&World) };
-                if (Surface->DoesPossess())
-                {
-                    /* Derived probably has a default spawn logic. */
-                    check( Pc->IsSurfaceValid() )
-                    LOG_VERBOSE(LogJgcLifetime, "Ego already possesses a controller. Skipping possess call.")
-                }
-                else
-                {
-                    Surface->Possess(Pc);
-                }
+                auto* Pc{ World.Login(Jafg::LTransientPersona{ Jafg::EIncomingConnectionRequest::Local, Surface.get() }) };
+                check( Pc )
+                check( Pc->HasBegunLife() == false )
             }
         }
+#endif /* WITH_LOCAL_LAYER */
 
         return;
     });
-#endif /* WITH_LOCAL_LAYER */
 
     return;
 }
 
-} /* ~Namespace Jgc */
+} /* ~Namespace <Anonymous> */
+
+DEFINE_PLUGIN(JGC_API, LJgcPluginLifetime, JafgGameplayCore)

@@ -23,7 +23,6 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(JVoxelSubsystem)
 
     virtual void Initialize(LSubsystemCollection& Collection) override;
-    virtual void TearDown() override;
 
 public:
 

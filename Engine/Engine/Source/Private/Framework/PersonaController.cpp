@@ -15,30 +15,30 @@ void Jafg::APersonaController::EndLife()
         if (Jafg::IsTearingDown() == false)
         {
             LOG_WARNING(LogEgo,
-                "Persona controller [{}] is ending life while still possessed by local ego. Local ego will no longer posses a controller.",
+                "Persona controller [{}] is ending life while still possessed by a surface. Surface will no longer posses a controller.",
                 this->GetNameAsString()
                 )
         }
 
-        this->GetSurfaceChecked()->Possess(nullptr);
+        this->GetSurfaceChecked()->PossessController(nullptr, false);
     }
 
-    if (this->DoesPossess())
+    if (this->IsPossessedPawnValid())
     {
-        this->Possess(nullptr);
+        this->PossessPawn(nullptr);
     }
 
     return;
 }
 
-void Jafg::APersonaController::Possess(APawn* NewPawn, const bool bKillOld /* = true */)
+void Jafg::APersonaController::PossessPawn(APawn* New, const bool bKillOld /* = true */)
 {
     /* Otherwise, we will get access violations. */
     APawn* OldPawn{ bKillOld ? nullptr : this->Pawn };
 
     if (this->Pawn)
     {
-        if (auto* Surface{ this->GetSurface()})
+        if (auto* Surface{ this->GetSurface() })
         {
             algo::erase_once_checked(
                 &Surface->GetViewport().GetMutableBackgroundContexts(),
@@ -47,17 +47,17 @@ void Jafg::APersonaController::Possess(APawn* NewPawn, const bool bKillOld /* = 
                 );
         }
 
-        this->Pawn->DeclareNewPossessor(nullptr);
+        this->Pawn->SetOwningController(nullptr);
         if (bKillOld)
         {
             this->Pawn->MarkAsGarbage_v2();
         }
     }
 
-    this->Pawn = NewPawn;
+    this->Pawn = New;
     if (this->Pawn)
     {
-        this->Pawn->DeclareNewPossessor(this);
+        this->Pawn->SetOwningController(this);
 
         if (auto* Surface{ this->GetSurface()})
         {
@@ -68,9 +68,9 @@ void Jafg::APersonaController::Possess(APawn* NewPawn, const bool bKillOld /* = 
         }
     }
 
-    this->GetLocalEgo().ForEachMutableSubsystem([OldPawn, NewPawn](JLocalEgoSubsystem* Subsystem)
+    this->GetLocalEgo().ForEachMutableSubsystem([OldPawn, New](JLocalEgoSubsystem* Subsystem)
     {
-        Subsystem->OnNewPawnPossessed(OldPawn, NewPawn);
+        Subsystem->OnNewPawnPossessed(OldPawn, New);
     });
 
     return;

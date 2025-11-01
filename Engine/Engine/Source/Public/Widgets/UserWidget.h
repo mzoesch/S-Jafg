@@ -28,7 +28,7 @@ protected:
 
 public:
 
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter) override;
     virtual void Destruct() override;
 
     virtual LViewport* GetMostOuterViewport() override;
@@ -40,8 +40,8 @@ public:
     virtual auto AddChildAt(const i32 InIndex, WNode* InChild) -> LWidgetSlot* override;
 
     //# Add this widget to the main viewport of the current active local ego.
-    void AddToViewport(LViewport* InViewport);
-    void AddToViewportAt(const i32 InIndex, LViewport* InViewport);
+    ENGINE_API void AddToViewport(LViewport* InViewport);
+    ENGINE_API void AddToViewportAt(const i32 InIndex, LViewport* InViewport);
 
     //# @return The new root.
     template <typename TParent>

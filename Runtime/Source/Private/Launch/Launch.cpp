@@ -235,16 +235,6 @@ EPlatformExit::Type GuardedMain()
 {
 #if !WITH_TESTS
 
-#if !LAL_PLATFORM_USES_NON_GENERIC_EXIT
-    struct GuardedMainScope
-    {
-        ~GuardedMainScope()
-        {
-            EngineExit();
-        }
-    } GuardedMainScope;
-#endif /* !LAL_PLATFORM_USES_NON_GENERIC_EXIT */
-
     Application::Private::ProcessCommandLineVariables();
 
     if (auto const Ret{ Application::Private::ConditionallyShowHelpAndExit() }; std::get<0>(Ret))
@@ -260,6 +250,16 @@ EPlatformExit::Type GuardedMain()
         GCustomExitReason = "Version shown.";
         return ::GetMostSignificantExitReason();
     }
+
+#if !LAL_PLATFORM_USES_NON_GENERIC_EXIT
+    struct GuardedMainScope
+    {
+        ~GuardedMainScope()
+        {
+            EngineExit();
+        }
+    } GuardedMainScope;
+#endif /* !LAL_PLATFORM_USES_NON_GENERIC_EXIT */
 
     LOG_INFO
     (
@@ -387,6 +387,13 @@ EPlatformExit::Type GuardedMain()
     checkSlow( GEngine )
     if (::IsEngineExitRequested())
     {
+        return ::GetMostSignificantExitReason();
+    }
+
+    if (auto const Ret{ Application::Private::ConditionallyShowVerboseHelpAndExit() }; std::get<0>(Ret))
+    {
+        GCustomExitStatusOverride = static_cast<i32>(std::get<1>(Ret));
+        GCustomExitReason = "Verbose help shown.";
         return ::GetMostSignificantExitReason();
     }
 

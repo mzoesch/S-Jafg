@@ -488,7 +488,7 @@ public:
     // JObjectBase implementation
     virtual void BeginLife() override final { Super::BeginLife();  this->ConstructInternal(); return; }
     virtual void EndLife() override final   { this->Destruct();   Super::EndLife();  return; }
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override;
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter) override { Super::OnGarbage(Reason, PreviousOuter); this->Destruct(); }
     // ~JObjectBase implementation
 
     //#

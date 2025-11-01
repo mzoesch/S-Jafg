@@ -253,7 +253,7 @@ FORCEINLINE typename LCommandArgsTypeRet<TField>::Type LCommandArgs::GetAs() con
 {
     typedef typename LCommandArgsTypeRet<TField>::Type TRet;
     TRet Field;
-    Deserialize<TRet>(&Field, this->GetCatRepresentation());
+    Serialization::FromString<TRet>(&Field, this->GetCatRepresentation());
     return Field;
 }
 

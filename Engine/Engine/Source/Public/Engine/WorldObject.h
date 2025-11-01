@@ -16,9 +16,9 @@ class LWorld;
 //# If you want a simpler base class, use JObjectBase.
 //#
 DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
-class JWorldObject : public JCxxClass
+class ENGINE_API JWorldObject : public JCxxClass
 {
-    GENERATED_CLASS_BODY(ENGINE_API)
+    GENERATED_CLASS_BODY()
 
 protected:
 
@@ -28,18 +28,12 @@ public:
 
     virtual void BeginLife() override;
 
-    FORCEINLINE auto IsWorldValid() const -> bool { return this->CastedOuter != nullptr; }
-
-    FORCEINLINE LWorld* GetWorld() noexcept { return this->CastedOuter; }
-    FORCEINLINE LWorld* GetWorldChecked() noexceptcheck { check( this->GetWorld() ) return this->GetWorld(); }
-    FORCEINLINE LWorld* GetWorldAsserted() noexceptcheck { jassert( this->GetWorld() ) return this->GetWorld(); }
-    FORCEINLINE LWorld const* GetWorld() const noexcept { return this->CastedOuter; }
-    FORCEINLINE LWorld const* GetWorldChecked() const noexceptcheck { check( this->GetWorld() ) return this->GetWorld(); }
-    FORCEINLINE LWorld const* GetWorldAsserted() const noexceptcheck { jassert( this->GetWorld() ) return this->GetWorld(); }
-
-private:
-
-    LWorld* CastedOuter{ nullptr };
+    FORCEINLINE LWorld* GetWorld() noexcept { auto* Out{ this->GetOuter() }; if (Out) { return Out->AsWorld(); } return nullptr; }
+    FORCEINLINE LWorld* GetWorldChecked() noexceptcheck { return this->GetOuterChecked()->AsWorld(); }
+    FORCEINLINE LWorld* GetWorldAsserted() noexceptcheck { return this->GetOuterAsserted()->AsWorld(); }
+    FORCEINLINE LWorld const* GetWorld() const noexcept { auto* Out{ this->GetOuter() }; if (Out) { return Out->AsWorld(); } return nullptr; }
+    FORCEINLINE LWorld const* GetWorldChecked() const noexceptcheck { return this->GetOuterChecked()->AsWorld(); }
+    FORCEINLINE LWorld const* GetWorldAsserted() const noexceptcheck { return this->GetOuterAsserted()->AsWorld(); }
 };
 
 } /* ~Namespace Jafg */

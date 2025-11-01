@@ -177,10 +177,10 @@ void Jafg::WDebugScreen::Tick()
     check( this->LocalPawnTargetVoxelSectionDestroy )
     check( this->LocalPawnTargetVoxelSectionCreate )
 
-    if (APersonaController* Controller{ this->GetViewport().GetSurface().GetPossessed() }; Controller && Controller->DoesPossess())
+    if (APersonaController* Controller{ this->GetViewport().GetSurface().GetPossessed() }; Controller && Controller->IsPossessedPawnValid())
     {
         {
-            const LVector Location { Controller->GetPossessed()->GetTranslation() };
+            const LVector Location { Controller->GetPossessedPawn()->GetTranslation() };
             this->LocalPawnLocationSection->SetContent(Lal::SprintF
             (
                 "XYZ: {:.3f} / {:.3f} / {:.3f}",
@@ -191,7 +191,7 @@ void Jafg::WDebugScreen::Tick()
         }
 
         {
-            const LRotator Rotator { Controller->GetPossessed()->GetRotator() };
+            const LRotator Rotator { Controller->GetPossessedPawn()->GetRotator() };
             LString YawAsText { "N/A" };
             if (Rotator.Yaw >= -45.f && Rotator.Yaw <= 45.f)
             {
@@ -217,7 +217,7 @@ void Jafg::WDebugScreen::Tick()
         }
 
         {
-            const LVector Location { Controller->GetPossessed()->GetTranslation() };
+            const LVector Location { Controller->GetPossessedPawn()->GetTranslation() };
             const LChunkKey Key { LChunkKey(Location) };
             this->LocalPawnChunkSection->SetContent(Lal::SprintF
             (
@@ -227,7 +227,7 @@ void Jafg::WDebugScreen::Tick()
         }
 
         {
-            const LVector Location { Controller->GetPossessed()->GetTranslation() };
+            const LVector Location { Controller->GetPossessedPawn()->GetTranslation() };
             const LVoxelKey Key { LVoxelKey::FromWorldSpace(Location) };
             this->LocalPawnVoxelSection->SetContent(Lal::SprintF
             (
@@ -238,7 +238,7 @@ void Jafg::WDebugScreen::Tick()
 
         {
             this->LocalPawnTargetVoxelSectionDestroy->EmptyContent();
-            for (const LHitResult& Hit : Controller->GetPossessed()->GetCurrentGenericTraceResults())
+            for (const LHitResult& Hit : Controller->GetPossessedPawn()->GetCurrentGenericTraceResults())
             {
                 if (const AChunk* HitChunk = Hit.Actor->As<AChunk>(); HitChunk)
                 {
@@ -255,7 +255,7 @@ void Jafg::WDebugScreen::Tick()
 
         {
             this->LocalPawnTargetVoxelSectionCreate->EmptyContent();
-            for (const LHitResult& Hit : Controller->GetPossessed()->GetCurrentGenericTraceResults())
+            for (const LHitResult& Hit : Controller->GetPossessedPawn()->GetCurrentGenericTraceResults())
             {
                 if (const AChunk* HitChunk { Hit.Actor->As<AChunk>() }; HitChunk && Hit.SurfaceNormal.has_value())
                 {
@@ -270,7 +270,7 @@ void Jafg::WDebugScreen::Tick()
             }
         }
 
-        for (const LHitResult& Hit : Controller->GetPossessed()->GetCurrentGenericTraceResults())
+        for (const LHitResult& Hit : Controller->GetPossessedPawn()->GetCurrentGenericTraceResults())
         {
             const AChunk* HitChunk { Hit.Actor->As<AChunk>() };
             if (HitChunk == nullptr)
@@ -278,7 +278,7 @@ void Jafg::WDebugScreen::Tick()
                 continue;
             }
 
-            LWorld* World { Controller->GetPossessed()->GetWorld() };
+            LWorld* World { Controller->GetPossessedPawn()->GetWorld() };
             const LChunkKey CKey { HitChunk->GetChunkKey() };
 
             World->AddTemporalObject(LDebugTraceSphere
@@ -332,9 +332,9 @@ void Jafg::WDebugScreen::Tick()
             Var && Var->GetValue<bool>()
         )
         {
-            LWorld* World{ Controller->GetPossessed()->GetWorld() };
+            LWorld* World{ Controller->GetPossessedPawn()->GetWorld() };
 
-            const LVector PawnTranslation { Controller->GetPossessed()->GetTranslation() };
+            const LVector PawnTranslation { Controller->GetPossessedPawn()->GetTranslation() };
             const LChunkKey CKey { PawnTranslation };
             const LVector ChunkCenter { CKey.ToWorldSpace() };
 
@@ -418,9 +418,9 @@ void Jafg::WDebugScreen::Tick()
     return;
 }
 
-void Jafg::WDebugScreen::OnGarbageDefault(ECxxRecordTearDownReason::Type Reason)
+void Jafg::WDebugScreen::OnGarbageDefault(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter)
 {
-    Super::OnGarbageDefault(Reason);
+    Super::OnGarbageDefault(Reason, PreviousOuter);
 
     if (GEngine)
     {

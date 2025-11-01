@@ -169,9 +169,9 @@ void Jafg::WConsoleScreen::Tick()
     return;
 }
 
-void Jafg::WConsoleScreen::OnGarbageDefault(ECxxRecordTearDownReason::Type Reason)
+void Jafg::WConsoleScreen::OnGarbageDefault(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter)
 {
-    Super::OnGarbageDefault(Reason);
+    Super::OnGarbageDefault(Reason, PreviousOuter);
 
     if (GEngine)
     {

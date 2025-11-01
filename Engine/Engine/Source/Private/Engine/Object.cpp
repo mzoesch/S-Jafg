@@ -8,17 +8,25 @@ void Jafg::JWorldObject::BeginLife()
 {
     Super::BeginLife();
 
-    check( this->CastedOuter == nullptr )
-    for (Private::LWorldTrack const& Track : GEngine->GetTracks())
-    {
-        check( Track.ChildWorld.get() )
-        if (Track.ChildWorld.get() == this->GetOuter())
+    check( this->GetOuter()->IsWorld() )
+    checkCode
+    (
+        bool bFound{ false };
+
+        for (Private::LWorldTrack const& Track : GEngine->GetTracks())
         {
-            this->CastedOuter = Track.ChildWorld.get();
+            check( Track.ChildWorld.get() )
+            if (Track.ChildWorld.get() == this->GetOuter())
+            {
+                check( bFound == false )
+                bFound = true;
+            }
+
+            continue;
         }
 
-        continue;
-    }
+        check( bFound )
+    )
 
     return;
 }

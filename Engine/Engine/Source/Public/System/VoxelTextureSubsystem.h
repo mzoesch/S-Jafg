@@ -60,7 +60,6 @@ protected:
     DEFAULT_OBJECT_CONSTRUCTOR(JVoxelTextureSubsystem)
 
     virtual void Initialize(LSubsystemCollection& Collection) override;
-    virtual void TearDown() override;
 
 public:
 

@@ -96,7 +96,7 @@ struct LWorldTrack final
     TUnique<LWorld> ChildWorld;
 
     TFunction<void(LWorld&)> OnWorldPreInit;
-    TFunction<void(LWorld&)> OnWorldPostInit;
+    TFunction<void(LWorld&)> OnWorldLateInit;
 };
 
 } /* ~Namespace Private */

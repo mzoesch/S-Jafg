@@ -122,16 +122,19 @@ void Jafg::JCxxClass::MarkAsGarbage(EMarkAsGarbageBehavior Behavior, ECxxRecordT
     {
         Self = this->Outer->Poach(this);
     }
+    check( Self.get() == this )
+
+    LClassOuter* PoachedOuter{ this->Outer };
 
     Private::LCxxRecordMiscellaneousAccessor::ChangeOuter(Self.get(), nullptr);
 
     if (this->IsDefault())
     {
-        this->OnDefaultGarbageInternal(Reason);
+        this->OnDefaultGarbageInternal(Reason, *PoachedOuter);
     }
     else
     {
-        this->OnGarbage(Reason);
+        this->OnGarbage(Reason, *PoachedOuter);
     }
 
     if (Behavior == EMarkAsGarbageBehavior::Default)
@@ -155,12 +158,12 @@ void Jafg::JCxxClass::MarkAsGarbage(EMarkAsGarbageBehavior Behavior, ECxxRecordT
     return;
 }
 
-void Jafg::JCxxClass::OnDefaultGarbageInternal(ECxxRecordTearDownReason::Type Reason)
+void Jafg::JCxxClass::OnDefaultGarbageInternal(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter)
 {
     check( this->IsDefault() )
     check( this->IsGarbage() )
 
-    this->OnGarbageDefault(Reason);
+    this->OnGarbageDefault(Reason, PreviousOuter);
 
     if (this->GetVirtualTable().IsConfig())
     {

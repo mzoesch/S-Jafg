@@ -59,7 +59,7 @@ public:
     virtual void BeginLifeCDR() override;
     virtual void Construct() override;
     virtual void Tick() override;
-    virtual void OnGarbageDefault(ECxxRecordTearDownReason::Type Reason) override;
+    virtual void OnGarbageDefault(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter) override;
     virtual LReply OnKeyDown(LViewport& InViewport, const LKeyEvent& InKeyEvent) override;
 
     void OnEscape();

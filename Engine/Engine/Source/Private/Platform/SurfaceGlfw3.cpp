@@ -144,8 +144,10 @@ void Jafg::LSurfaceGlfw3::Initialize()
     {
         STAT_QUICK_CYCLE_START("Glfw3WindowCreation")
 
+        this->SetHumanReadableName("Jafg - mzoesch");
+
         // Min 640 475 - Default 1280 720
-        this->Handle = glfwCreateWindow(855, 475, "Jafg - mzoesch", nullptr, nullptr);
+        this->Handle = glfwCreateWindow(855, 475, this->GetHumanReadableName().c_str(), nullptr, nullptr);
     }
     if (this->Handle == nullptr)
     {

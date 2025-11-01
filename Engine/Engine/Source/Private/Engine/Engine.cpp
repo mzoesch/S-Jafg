@@ -271,6 +271,33 @@ void Jafg::LEngine::Initialize()
         }).IsValid()};
         ensureDiscard(bValid_CommandPrintWorldParams);
 
+        const bool bValid_Browse{ this->GetCommandLineInterface().RegisterCommand({"Browse", "Browses to an URL.",
+        LCommandParams{}
+        .Token(LCliType::Type<LWorld>())
+        .Token(LCliType::Type<LString>())
+        .Exec([](LCommandArgs const& Args, LCommandExecutionResponse* OutResponse)
+        {
+            check( Args.GetArgCount() == 2 )
+            LWorld* World { Args[0].GetAs<LWorld>() };
+            LString URL { Args[1].GetAs<LString>() };
+
+            if (GEngine)
+            {
+                GEngine->Browse(World, URL);
+                OutResponse->Rc = ECommandReturnCode::Success;
+                OutResponse->StdOut = Lal::SprintF("Browsing to URL [{}] in world [{}]", URL, World->GetHumanReadableName());
+            }
+            else
+            {
+                LOG_WARNING(LogEngine, "GEngine is null, cannot browse to URL [{}] in world [{}].", URL, World->GetHumanReadableName())
+                OutResponse->Rc = ECommandReturnCode::SemanticError;
+                OutResponse->StdOut = "GEngine is null, cannot browse";
+            }
+
+            return;
+        })}).IsValid()};
+        ensureDiscard(bValid_Browse);
+
         const bool bValid_CommandTrap{ this->GetCommandLineInterface().RegisterCommand({"_Trap", "Traps jafg.",
         LCommandParams{}
         .Exec([](const LCommandArgs& InArgs, LCommandExecutionResponse* OutResponse) -> void
@@ -474,13 +501,14 @@ void Jafg::LEngine::TearDown()
             }
 
             LString CachedIdentifier{ Plugin.GetIdentifier() };
+
             if
             (
                 const EPluginLoadReturnCode::Type Rc{ this->UnLoadPlugin(&Plugin, EPluginShutdownReason::EngineTearDown) };
                 Rc != EPluginLoadReturnCode::Success
             )
             {
-                    LOG_WARNING(LogForeign, "Failed to unload plugin [{}] with return code [{}].", CachedIdentifier, LexToString(Rc) )
+                LOG_WARNING(LogForeign, "Failed to unload plugin [{}] with return code [{}].", CachedIdentifier, LexToString(Rc) )
             }
 
             continue;
@@ -664,7 +692,7 @@ void Jafg::LEngine::Browse(Private::LWorldTrack& Track, LString const& Url, TFun
 
     Track.TravelUrl = Url;
     Track.OnWorldPreInit = std::move(PreInitCallback);
-    Track.OnWorldPostInit =  std::move(PostInitCallback);
+    Track.OnWorldLateInit =  std::move(PostInitCallback);
 
     return;
 }
@@ -673,7 +701,7 @@ bool Jafg::LEngine::IsTrackUrlInternal(LString const& Url) const
 {
     if (Url.empty())
     {
-        return false;
+        return true;
     }
 
     /* We have to implement this in the future. If not internal, then connect to a remote server. */
@@ -1045,6 +1073,8 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::LoadPluginImpl(LFetchedPlugin c
     Plugin.Uuid = this->GetNextPluginUuid();
 
     Private::GetGlobalCxxRecordRegistry().LoadPendingPackages(Plugin.GetHandle());
+
+    Plugin.Lifetime->OnFinishedLoading();
 
     this->LoadedPlugins.emplace_back(std::move(Plugin));
     auto& Ref{ this->LoadedPlugins.back() };

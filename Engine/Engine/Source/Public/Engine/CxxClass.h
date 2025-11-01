@@ -182,9 +182,9 @@ public:
     void KillYourSelfNow_v2(ECxxRecordTearDownReason::Type Reason = ECxxRecordTearDownReason::Default, bool bMayBeGarbage = false);
 
     //# Delegate called when this object was marked as garbage. Never called on the default object.
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type) { check( this->IsGarbage() && this->IsDefault() == false ) }
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type, LClassOuter& PreviousOuter) { check( this->IsGarbage() && this->IsDefault() == false ) }
     //# Delegate called when this object was marked as garbage. Only called on the default object.
-    virtual void OnGarbageDefault(ECxxRecordTearDownReason::Type) { check( this->IsGarbage() && this->IsDefault() ) }
+    virtual void OnGarbageDefault(ECxxRecordTearDownReason::Type, LClassOuter& PreviousOuter) { check( this->IsGarbage() && this->IsDefault() ) }
 
     //#
     //# Gets the context that this object lives in and shares its lifetime with it.
@@ -253,7 +253,7 @@ private:
     };
 
     void MarkAsGarbage(EMarkAsGarbageBehavior Behavior, ECxxRecordTearDownReason::Type Reason);
-    void OnDefaultGarbageInternal(ECxxRecordTearDownReason::Type Reason);
+    void OnDefaultGarbageInternal(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter);
 
     bool bGarbage : 1{ false };
 
@@ -312,12 +312,12 @@ NODISCARD TArray<LCxxClassField>& JCxxClass::GetMutableFieldsDangerous() noexcep
 #include "Engine/ClassStorage.h"
 
 template <typename T>
-struct std::formatter<::Jafg::TSubclassOf<T>> : std::formatter<LStringView>
+struct std::formatter<TSubclassOf<T>> : std::formatter<LStringView>
 {
     FORCEINLINE auto format
     (
-        const Jafg::TSubclassOf<T>& InClass,
-        std::format_context&        InContext
+        const TSubclassOf<T>& InClass,
+        std::format_context&  InContext
     ) const -> std::format_context::iterator
     {
         if (InClass)
@@ -503,7 +503,7 @@ FORCEINLINE void LCxxRecordMiscellaneousAccessor::ChangeOuter(JCxxClass* Obj, LC
 namespace Serialization
 {
 
-template<typename TClass> NODISCARD FORCEINLINE constexpr LString ToString(Jafg::TSubclassOf<TClass> const& Field) noexcept
+template<typename TClass> NODISCARD FORCEINLINE constexpr LString ToString(TSubclassOf<TClass> const& Field) noexcept
 {
     if (Field.HasClass())
     {
@@ -513,7 +513,7 @@ template<typename TClass> NODISCARD FORCEINLINE constexpr LString ToString(Jafg:
     return TClass::StaticClass()->GetFullyQualifiedName();
 }
 
-template<typename TClass> FORCEINLINE constexpr void FromString(Jafg::TSubclassOf<TClass>* Dst, LString const& Value) noexcept
+template<typename TClass> FORCEINLINE constexpr void FromString(TSubclassOf<TClass>* Dst, LString const& Value) noexcept
 {
     check( Dst )
 

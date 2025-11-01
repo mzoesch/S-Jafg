@@ -16,7 +16,7 @@ Jafg::APawn::APawn(LCxxObjectInitializer const& CxxObjectInitializer)
     return;
 }
 
-void Jafg::APawn::Tick(const float DeltaTime)
+void Jafg::APawn::Tick(const f32 DeltaTime)
 {
     Super::Tick(DeltaTime);
 
@@ -52,7 +52,7 @@ void Jafg::APawn::EndLife()
 
     if (this->IsPossessed())
     {
-        this->OwningController->Possess(nullptr, false);
+        this->OwningController->PossessPawn(nullptr, false);
     }
 
     return;
@@ -63,7 +63,7 @@ bool Jafg::APawn::IsPossessedLocally() const
     return this->OwningController && this->OwningController->IsSurfaceValid();
 }
 
-Jafg::LLocalEgo* Jafg::APawn::GetPossessedEgo() const
+Jafg::LLocalEgo* Jafg::APawn::GetLocalEgoIfPossessed() const
 {
     if (this->OwningController)
     {
@@ -73,14 +73,14 @@ Jafg::LLocalEgo* Jafg::APawn::GetPossessedEgo() const
     return nullptr;
 }
 
-void Jafg::APawn::DeclareNewPossessor(APersonaController* InNewController)
+void Jafg::APawn::SetOwningController(APersonaController* InNew)
 {
-    this->OwningController = InNewController;
+    this->OwningController = InNew;
 
 #if WITH_LOCAL_LAYER
-    if (InNewController)
+    if (InNew)
     {
-        this->Eye.SetOwner(this);
+        this->Eye.SetOwningPawn(this);
     }
 #endif /* WITH_LOCAL_LAYER */
 

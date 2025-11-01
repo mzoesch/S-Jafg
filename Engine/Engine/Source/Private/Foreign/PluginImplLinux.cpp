@@ -33,19 +33,22 @@ EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
     check( this->IsValid() )
     check( this->IsLoaded() == false )
 
-    this->NativeHandle = ::dlopen(this->BinPath.c_str(), RTLD_LAZY);
-    if (this->NativeHandle == nullptr)
-    {
-        LOG_ERROR(LogForeign, "Failed to dlopen library [{}].", this->BinPath)
-        return EPluginLoadReturnCode::PlatformError;
-    }
-
+    this->NativeHandle = ::dlopen(this->BinPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
     if (char const* Error{ ::dlerror() })
     {
         LOG_ERROR(LogForeign, "Failed to dlopen library [{}]: {}.", this->BinPath, Error)
-        ::dlclose(this->NativeHandle);
-        this->NativeHandle = nullptr;
+        if (this->NativeHandle)
+        {
+            ::dlclose(this->NativeHandle);
+            this->NativeHandle = nullptr;
+        }
 
+        return EPluginLoadReturnCode::PlatformError;
+    }
+
+    if (this->NativeHandle == nullptr)
+    {
+        LOG_ERROR(LogForeign, "Failed to dlopen library [{}].", this->BinPath)
         return EPluginLoadReturnCode::PlatformError;
     }
 

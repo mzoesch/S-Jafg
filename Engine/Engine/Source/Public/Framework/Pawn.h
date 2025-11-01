@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Engine/Actor.h"
+#include "Framework/Actor.h"
 #include "Framework/Eye.h"
 #include "Pawn.generated.h"
 
@@ -16,7 +16,7 @@ struct LInputActionValue;
 //# A pawn is something that can be possessed by a controller.
 //#
 DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
-class APawn : public AActor
+class ENGINE_API APawn : public AActor
 {
     GENERATED_CLASS_BODY()
 
@@ -32,14 +32,15 @@ public:
 
     FORCEINLINE auto IsPossessed() const -> bool { return this->OwningController != nullptr; }
                 bool IsPossessedLocally() const;
-                LLocalEgo* GetPossessedEgo() const;
-    FORCEINLINE LLocalEgo* GetPossessedEgoChecked() const { LLocalEgo* Out = this->GetPossessedEgo(); check( Out ) return Out; }
-    FORCEINLINE LLocalEgo* GetPossessedEgoAsserted() const { LLocalEgo* Out = this->GetPossessedEgo(); jassert( Out ) return Out; }
+                LLocalEgo* GetLocalEgoIfPossessed() const;
+    FORCEINLINE LLocalEgo* GetLocalEgoIfPossessedChecked() const { LLocalEgo* Out = this->GetLocalEgoIfPossessed(); check( Out ) return Out; }
+    FORCEINLINE LLocalEgo* GetLocalEgoIfPossessedAsserted() const { LLocalEgo* Out = this->GetLocalEgoIfPossessed(); jassert( Out ) return Out; }
 
-    FORCEINLINE auto GetOwningController() const -> APersonaController* { return this->OwningController; }
-                void DeclareNewPossessor(APersonaController* InNewController);
+    FORCEINLINE APersonaController* GetOwningController() noexcept { return this->OwningController; }
+    FORCEINLINE APersonaController const* GetOwningController() const noexcept { return this->OwningController; }
+    virtual void SetOwningController(APersonaController* InNew);
 
-    FORCEINLINE bool IsEyeValid() const noexcept { return this->Eye.IsOwnerValid(); }
+    FORCEINLINE bool IsEyeValid() const noexcept { return this->Eye.IsOwningPawnValid(); }
     FORCEINLINE LEye& GetEye() noexcept { return this->Eye; }
     FORCEINLINE LEye const& GetEye() const noexcept { return this->Eye; }
 

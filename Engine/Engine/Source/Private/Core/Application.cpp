@@ -194,6 +194,17 @@ std::tuple<bool, EPlatformExit::Type> ConditionallyShowHelpAndExit()
     return { false, EPlatformExit::Success };
 }
 
+std::tuple<bool, EPlatformExit::Type> ConditionallyShowVerboseHelpAndExit()
+{
+    if (HasCmdLineParameter("VerboseHelp"))
+    {
+        ::API();
+        return { true, EPlatformExit::Success };
+    }
+
+    return { false, EPlatformExit::Success };
+}
+
 std::tuple<bool, EPlatformExit::Type> ConditionallyShowVersionAndExit()
 {
     if (HasCmdLineParameter("Version") || HasCmdLineParameter("version"))

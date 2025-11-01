@@ -16,7 +16,7 @@ struct LSubsystemCollection;
 //# To create your own subsystem lifetime:
 //#
 DECLARE_JAFG_CLASS(ECxxClassFlags::Abstract)
-class JSubsystem : public JCxxClass
+class ENGINE_API JSubsystem : public JCxxClass
 {
     friend LSubsystemCollection;
 
@@ -28,7 +28,19 @@ protected:
 
     virtual void BeginLife() override final { Super::BeginLife(); }
     virtual void EndLife()   override final { Super::EndLife();   }
-    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason) override final { Super::OnGarbage(Reason); if (this->IsInitialized()) { this->TearDown(); } }
+    virtual void OnGarbage(ECxxRecordTearDownReason::Type Reason, LClassOuter& PreviousOuter) override final
+    {
+        Super::OnGarbage(Reason, PreviousOuter);
+
+        check( this->GetOuter() == nullptr )
+
+        if (this->IsInitialized())
+        {
+            this->TearDown(PreviousOuter);
+        }
+
+        return;
+    }
 
     //#
     //# Weather a subsystem should be created given its new context.
@@ -36,14 +48,15 @@ protected:
     //# @note The object will still be instanced if ShouldCreateSubsystem returns false, but will be killed
     //#       soon after.
     //#
-    virtual bool ShouldCreateSubsystem(LClassOuter const* Outer) const { return true; }
-    virtual void Initialize(LSubsystemCollection& Collection);
-    virtual void TearDown() { }
+    FORCEINLINE virtual bool ShouldCreateSubsystem(LClassOuter const* Outer) const { return true; }
+                virtual void Initialize(LSubsystemCollection& Collection);
+    FORCEINLINE virtual void TearDown() { }
+    FORCEINLINE virtual void TearDown(LClassOuter& PreviousOuter) { }
 
-    FORCEINLINE bool IsInitialized() const { return this->bIsInitialized; }
-    FORCEINLINE bool IsPriorityTearDown() const { return this->bPriorityTearDown; }
+    FORCEINLINE bool IsInitialized() const noexcept { return this->bIsInitialized; }
+    FORCEINLINE bool IsPriorityTearDown() const noexcept { return this->bPriorityTearDown; }
     //# Please see the #bPriorityTearDown documentation for more information. DO NOT JUST SET THIS TO TRUE.
-    FORCEINLINE void SetPriorityTearDown(const bool bPriority) { this->bPriorityTearDown = bPriority; }
+    FORCEINLINE void SetPriorityTearDown(const bool bPriority) noexcept { this->bPriorityTearDown = bPriority; }
 
 private:
 

@@ -129,15 +129,21 @@ void Jafg::LSurfaceBase::SetInputMode(const EInputMode::Type InMode, const bool 
     return;
 }
 
-void Jafg::LSurfaceBase::Possess(APersonaController* NewController)
+void Jafg::LSurfaceBase::PossessController(APersonaController* NewController, const bool bKillOld /* = true */)
 {
-    APersonaController* OldController{ this->Controller };
-    this->Controller = NewController;
+    /* Otherwise, we will get access violations. */
+    APersonaController* OldController{ bKillOld ? nullptr : this->Controller };
 
-    if (OldController)
+    if (this->Controller)
     {
-        OldController->SetSurface(nullptr);
+        this->Controller->SetSurface(nullptr);
+        if (bKillOld)
+        {
+            this->Controller->MarkAsGarbage_v2();
+        }
     }
+
+    this->Controller = NewController;
     if (this->Controller)
     {
         this->Controller->SetSurface(this->AsSurface());

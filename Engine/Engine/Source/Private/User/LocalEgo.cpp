@@ -34,7 +34,7 @@ void Jafg::LLocalEgo::Initialize()
             {
                 if (auto* Controller{ Surface->GetPossessed() })
                 {
-                    if (auto* Pawn{ Controller->GetPossessed() })
+                    if (auto* Pawn{ Controller->GetPossessedPawn() })
                     {
                         Pawn->GetEye().SetNearFrustum(NearFrustum);
 
@@ -60,7 +60,7 @@ void Jafg::LLocalEgo::Initialize()
             {
                 if (auto* Controller{ Surface->GetPossessed() })
                 {
-                    if (auto* Pawn{ Controller->GetPossessed() })
+                    if (auto* Pawn{ Controller->GetPossessedPawn() })
                     {
                         Pawn->GetEye().SetFarFrustum(FarFrustum);
                     }
@@ -73,8 +73,6 @@ void Jafg::LLocalEgo::Initialize()
         return;
     })});
     this->VariableHandle_VerifyChunks = Cli.RegisterVariable({"VerifyChunks", LCliType::Type("Bool"), "true"});
-
-    this->OnWorldBeginLifeHandle = GEngine->OnWorldBeginLife.Emplace(this, &LLocalEgo::OnWorldBeginLife);
 
     this->Collection.InitializeDeferred(&this->Outer);
     this->Collection.InitializeSubsystems<JLocalEgoSubsystem>();
@@ -117,12 +115,6 @@ void Jafg::LLocalEgo::TearDown()
 
     this->Collection.TearDownSubsystems();
 
-    if (ensure(this->OnWorldBeginLifeHandle.IsValid()))
-    {
-        GEngine->OnWorldBeginLife.Remove(&this->OnWorldBeginLifeHandle);
-        this->OnWorldBeginLifeHandle.Reset();
-    }
-
     this->Frontend.TearDown();
     this->Outer.TearDown();
 
@@ -145,36 +137,4 @@ Jafg::LCommandLineInterface& Jafg::LLocalEgo::GetCommandLineInterface()
 {
     check( GEngine )
     return GEngine->GetCommandLineInterface();
-}
-
-void Jafg::LLocalEgo::OnWorldBeginLife(LWorld* InNewWorld)
-{
-    check( Tasks::IsOnMasterThread() )
-    checkSlow( InNewWorld )
-
-    // if (this->PersonaController == nullptr)
-    // {
-    //     this->UserInput.DeactivateAllContexts();
-    //
-    //     APersonaController* Pc = SpawnDeferredActor<APersonaController>(InNewWorld);
-    //     this->Possess(Pc);
-    //
-    //     if (LSurface* Surface = this->GetFrontend()->GetFocusedSurface(); Surface)
-    //     {
-    //         Surface->SetInputMode(InNewWorld->GetUnderlyingLevel().InputMode, InNewWorld->GetUnderlyingLevel().bShowMouseCursor);
-    //         Surface->GetViewport().SetBackgroundColor(InNewWorld->GetUnderlyingLevel().BackgroundColor);
-    //     }
-    //
-    //     if (InNewWorld->GetUnderlyingLevelName() == Name_LevelMyWorld.ToString())
-    //     {
-    //         if (this->PersonaController->DoesPossess() == false)
-    //         {
-    //             APawn* Pawn = SpawnDeferredActor<APawn>(InNewWorld, ALackey::StaticClass());
-    //             this->PersonaController->Possess(Pawn);
-    //             Pawn->SetTranslation(LVector(MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 0.5f, MwStatics::ChunkSize * 4.0f + MwStatics::ChunkSize / 2.0f));
-    //         }
-    //     }
-    // }
-
-    return;
 }
