@@ -16,6 +16,7 @@
 #include "User/Input/InputMode.h"
 #include "Platform/MouseCursor.h"
 #include "Widgets/Viewport.h"
+#include "User/Input/UserInput.h"
 
 namespace Jafg
 {
@@ -97,21 +98,27 @@ public:
     //# @return Whether the key was just released this frame.
     FORCEINLINE bool IsKeyUp(const LKey InKey) const;
     FORCEINLINE bool IsKeyUp(const LRawInput& InRawInput) const { return this->IsKeyUp(InRawInput.Key); }
+    FORCEINLINE TArray<LRawInput> GetTriggeredKeys() const noexcept;
+    FORCEINLINE TArray<LRawInput> const& GetOngoingKeys() const noexcept { return this->GetCurrentlyPressedKeys(); }
+    FORCEINLINE TArray<LRawInput> GetCompletedKeys() const noexcept;
 
     FORCEINLINE bool HasBufferedPlatformInput() const { return this->PlatformInput.empty() == false; }
     FORCEINLINE const TArray<LString>& GetBufferedPlatformInput() const { return this->PlatformInput; }
     FORCEINLINE LString GetBufferedPlatformInputAsStr() const;
 
-    template <typename Predicate>
-    FORCEINLINE void ForEachNewKeyDown(Predicate InPredicate);
+    template<typename TPredicate>
+    FORCEINLINE void ForEachNewKeyDown(TPredicate&& Predicate);
+
+    FORCEINLINE LUserInput& GetUserInput() noexcept { return this->UserInput; }
+    FORCEINLINE LUserInput const& GetUserInput() const noexcept { return this->UserInput; }
 
     FORCEINLINE bool DoesPossess() const { return this->Controller != nullptr; }
-    FORCEINLINE APersonaController* GetPossessed() { return this->Controller; }
-    FORCEINLINE APersonaController* GetPossessedChecked() { check( this->DoesPossess() ) return this->Controller; }
-    FORCEINLINE APersonaController* GetPossessedAsserted() { jassert( this->DoesPossess() ) return this->Controller; }
-    FORCEINLINE APersonaController const* GetPossessed() const { return this->Controller; }
-    FORCEINLINE APersonaController const* GetPossessedChecked() const { check( this->DoesPossess() ) return this->Controller; }
-    FORCEINLINE APersonaController const* GetPossessedAsserted() const { jassert( this->DoesPossess() ) return this->Controller; }
+    FORCEINLINE APersonaController* GetController() noexcept { return this->Controller; }
+    FORCEINLINE APersonaController* GetControllerChecked() noexceptcheck { check( this->DoesPossess() ) return this->Controller; }
+    FORCEINLINE APersonaController* GetControllerAsserted() { jassert( this->DoesPossess() ) return this->Controller; }
+    FORCEINLINE APersonaController const* GetController() const noexcept { return this->Controller; }
+    FORCEINLINE APersonaController const* GetControllerChecked() const noexceptcheck { check( this->DoesPossess() ) return this->Controller; }
+    FORCEINLINE APersonaController const* GetControllerAsserted() const { jassert( this->DoesPossess() ) return this->Controller; }
     ENGINE_API  void PossessController(APersonaController* NewController, const bool bKillOld = true);
 
     ENGINE_API LEngine& GetEngine() const noexcept;
@@ -162,6 +169,9 @@ private:
     //# The keys that were down for this surface last frame.
     TArray<LRawInput> LastFrameDownKeys;
 
+    //# Input for this frame that is not consumed yet.
+    TArray<LRawInput> UnconsumedInput; // TODO: How??
+
     //#
     //# Virtual input for mock input.
     //# Only mocked if physical input is not available for said physical action.
@@ -193,6 +203,8 @@ private:
     bool bThisFrameRepeatedKeyDown{ false };
     LKey LastNewKey{ EKeys::Unresolved };
 #endif /* PLATFORM_LINUX */
+
+    LUserInput UserInput;
 
     APersonaController* Controller{ nullptr };
 };
@@ -254,6 +266,40 @@ FORCEINLINE bool Jafg::LSurfaceBase::IsKeyUp(const LKey InKey) const
     return algo::contains(this->GetCurrentlyPressedKeys(), InKey, &LRawInput::Key) == false && algo::contains(this->GetLastFramePressedKeys(), InKey, &LRawInput::Key);
 }
 
+FORCEINLINE TArray<Jafg::LRawInput> Jafg::LSurfaceBase::GetTriggeredKeys() const noexcept
+{
+    TArray<LRawInput> Out;
+
+    for (auto const& Input : this->GetCurrentlyPressedKeys())
+    {
+        if (algo::contains(this->GetLastFramePressedKeys(), Input.Key, &LRawInput::Key) == false)
+        {
+            Out.emplace_back(Input);
+        }
+
+        continue;
+    }
+
+    return Out;
+}
+
+FORCEINLINE TArray<Jafg::LRawInput> Jafg::LSurfaceBase::GetCompletedKeys() const noexcept
+{
+    TArray<LRawInput> Out;
+
+    for (auto const& Input : this->GetLastFramePressedKeys())
+    {
+        if (algo::contains(this->GetCurrentlyPressedKeys(), Input.Key, &LRawInput::Key) == false)
+        {
+            Out.emplace_back(Input);
+        }
+
+        continue;
+    }
+
+    return Out;
+}
+
 FORCEINLINE LString Jafg::LSurfaceBase::GetBufferedPlatformInputAsStr() const
 {
     LString Out;
@@ -266,14 +312,14 @@ FORCEINLINE LString Jafg::LSurfaceBase::GetBufferedPlatformInputAsStr() const
     return Out;
 }
 
-template<typename Predicate>
-FORCEINLINE void Jafg::LSurfaceBase::ForEachNewKeyDown(Predicate InPredicate)
+template<typename TPredicate>
+FORCEINLINE void Jafg::LSurfaceBase::ForEachNewKeyDown(TPredicate&& Predicate)
 {
     for (const LRawInput& Input : this->DownKeys)
     {
         if (this->IsNewKeyDown(Input.Key))
         {
-            InPredicate(Input);
+            Predicate(Input);
         }
 
         continue;

@@ -97,7 +97,7 @@ void LJgcPluginLifetime::OnFinishedLoading()
         else
         {
             auto& Surface{ Frontend.GetSurfaces()[0] };
-            if (Surface->GetPossessed())
+            if (Surface->GetController())
             {
                 LOG_VERBOSE(LogJgcLifetime, "Local ego already possesses a persona controller. Skipping default jgc persona controller spawn.")
             }

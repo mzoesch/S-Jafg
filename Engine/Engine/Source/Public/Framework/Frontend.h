@@ -28,17 +28,15 @@ public:
     ~LFrontend() = default;
 
     void Initialize(LClassOuter* Outer);
-    void Tick(LUserInput* UserInput);
+    void Tick();
     void TearDown();
 
-    ENGINE_API LEngine&    GetEngine() const noexceptcheck;
-    ENGINE_API LLocalEgo&  GetLocalEgo() const noexceptcheck;
-    ENGINE_API LLocalEgo&  GetLocalEgoChecked() const noexceptcheck;
-    ENGINE_API LUserInput& GetUserInput() const noexceptcheck;
+    ENGINE_API LEngine&   GetEngine() const noexceptcheck;
+    ENGINE_API LLocalEgo& GetLocalEgo() const noexceptcheck;
 
-    FORCEINLINE i32 GetSurfaceCount() const { return this->Surfaces.size(); }
-    FORCEINLINE auto  GetSurfaces() -> TArray<TUnique<LSurface>>& { return this->Surfaces; }
-    FORCEINLINE auto  GetSurfaces() const -> const TArray<TUnique<LSurface>>& { return this->Surfaces; }
+    FORCEINLINE LSize GetSurfaceCount() const noexcept { return this->Surfaces.size(); }
+    FORCEINLINE TArray<TUnique<LSurface>>& GetSurfaces() noexcept { return this->Surfaces; }
+    FORCEINLINE TArray<TUnique<LSurface>> const& GetSurfaces() const noexcept { return this->Surfaces; }
 
     FORCEINLINE bool IsFocusedSurfaceValid() const { return this->FocusedSurface > INDEX_NONE; }
     FORCEINLINE auto GetFocusedSurface() -> LSurface* { return this->IsFocusedSurfaceValid() ? this->Surfaces[this->FocusedSurface].get() : nullptr; }

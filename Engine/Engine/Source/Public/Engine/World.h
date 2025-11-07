@@ -345,7 +345,7 @@ private:
     //# Real time is relative to the static storage initialization of the engine shared library.
     //#
     f32 RealTimeWhenWorldWasLaunched { -1.0f };
-    bool bFinishedActors{ false };
+    f32 RealTimeWhenWorldStarted{ -1.0f };
 
     //#
     //# Policies for this world. Cannot change. Can only be set during world initialization with the level blueprint.

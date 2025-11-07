@@ -7,87 +7,56 @@
     #include "Engine/Engine.h"
 #endif /* WITH_CHECKS */
 
-Jafg::LUserInputContext::LUserInputContext(const LName InUniqueIdentifier)
-    : Name(InUniqueIdentifier), DisplayName(Strings::AddSpacesToCamelCase(InUniqueIdentifier.ToString()))
+Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction(LUserInputRegistry* Registry, LInputAction&& InAction) noexceptcheck
 {
-    if (this->Name.IsSet() == false)
-    {
-        panic( "Unique identifier must not be empty." )
-    }
-
-    return;
+    check( Registry )
+    return this->MapAction(Registry->RegisterAction(std::move(InAction))->GetName());
 }
 
-Jafg::LUserInputContext::LUserInputContext(LName InUniqueIdentifier, const LString& InDisplayName)
-    : Name(std::move(InUniqueIdentifier)), DisplayName(InDisplayName)
+Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction(LName ActionName) noexceptcheck
 {
-    if (this->Name.IsSet() == false)
-    {
-        panic( "Unique identifier must not be empty." )
-    }
+    check( ActionName.IsSet() )
+    check( GEngine )
+    check( GEngine->GetLocalEgo().GetUserInputRegistry().GetActionByName(ActionName) )
 
-    return;
-}
-
-Jafg::LUserInputContext::LUserInputContext(const LString& InDisplayName)
-    : Name(MAKE_NAME(InDisplayName)), DisplayName(InDisplayName)
-{
-    check( this->Name.IsSet() )
-
-    return;
-}
-
-Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction(LUserInput* InUserInput, LInputAction&& InAction)
-{
-    check( InUserInput )
-    return this->MapAction(InUserInput->RegisterAction(std::move(InAction)));
-}
-
-Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction(const LInputAction* InAction)
-{
-    check( InAction )
-
-    checkCode
-    (
-        const LInputAction* Action = GEngine->GetLocalEgo().GetUserInput().GetActionByName(InAction->GetName());
-        check( Action )
-        check( *Action == *InAction )
-    )
-
-    if (LInputMappedAction* Out = this->FindMappedAction(InAction); Out)
-    {
-        LOG_WARNING(LogUserInput, "Action was already mapped." )
-        return Out;
-    }
-
-    this->MappedActions.emplace_back(InAction);
-
+    this->MappedActions.emplace_back(ActionName);
     return &this->MappedActions.back();
 }
 
-
 Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction
 (
-    LUserInput* InUserInput,
-    LInputAction&& InAction,
-    LString&& InName,
-    const LKey InDefaultKey,
-    const EInputActionTrigger::Type InActionTrigger,
-    TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
-    LUserInputActionCallback&& InCallback
-)
+    LUserInputRegistry* Registry,
+    LInputAction&& TransientAction,
+    LString TriggerName,
+    const LKey DefaultKey,
+    const EInputActionTrigger::Type ActionTrigger,
+    TArray<TUnique<LInputActionMappedTriggerModifier>>&& Modifiers,
+    LOnUserInputAction&& Callback
+) noexcept
 {
-    return this->MapAction(InUserInput->RegisterAction(std::move(InAction)), std::move(InName), InDefaultKey, InActionTrigger, std::move(InModifiers), std::move(InCallback));
+    check( Registry )
+
+    return this->MapAction(
+        Registry->RegisterAction(std::move(TransientAction))->GetName(),
+        std::move(TriggerName),
+        DefaultKey,
+        ActionTrigger,
+        std::move(Modifiers),
+        std::move(Callback)
+        );
 }
 
-
 Jafg::LInputMappedAction* Jafg::LUserInputContext::MapAction
 (
-    LUserInput* InUserInput,
-    LInputAction&& InAction,
-    TArray<LInputMappedAction::LTrigger>&& InTriggers,
-    LUserInputActionCallback&& InCallback
-)
+    LUserInputRegistry* Registry,
+    LInputAction&& TransientAction,
+    TArray<LInputMappedAction::LTrigger>&& Triggers,
+    LOnUserInputAction&& Callback
+) noexcept
 {
-    return this->MapAction(InUserInput->RegisterAction(std::move(InAction)), std::move(InTriggers), std::move(InCallback));
+    return this->MapAction(
+        Registry->RegisterAction(std::move(TransientAction))->GetName(),
+        std::move(Triggers),
+        std::move(Callback)
+        );
 }

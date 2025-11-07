@@ -16,7 +16,7 @@ namespace Jafg
 //# A region might still draw outside these bounds.
 //#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryRegion)
-class WRegion : public WOverlay
+class ENGINE_API WRegion : public WOverlay
 {
     GENERATED_CLASS_BODY()
 

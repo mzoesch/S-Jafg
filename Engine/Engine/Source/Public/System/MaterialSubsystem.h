@@ -14,7 +14,7 @@ namespace Jafg
 class LTexture2;
 
 DECLARE_JAFG_CLASS()
-class JMaterialSubsystem final : public JEngineSubsystem
+class ENGINE_API JMaterialSubsystem final : public JEngineSubsystem
 {
     GENERATED_CLASS_BODY()
 

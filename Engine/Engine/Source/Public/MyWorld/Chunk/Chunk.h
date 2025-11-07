@@ -96,7 +96,7 @@ struct LSharedChunkArgs final
 };
 
 DECLARE_JAFG_CLASS()
-class AChunk final : public AActor
+class ENGINE_API AChunk final : public AActor
 {
     GENERATED_CLASS_BODY()
 

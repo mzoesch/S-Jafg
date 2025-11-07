@@ -41,7 +41,7 @@ public:
 //# @see Widgets/WidgetRegion.h
 //#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryBox)
-class WBox : public WNode
+class ENGINE_API WBox : public WNode
 {
     GENERATED_CLASS_BODY()
 

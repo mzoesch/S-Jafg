@@ -2,13 +2,12 @@
 
 #pragma once
 
-#include "Lal.afx"
-#include "User/Input/UserInput.h"
 #include "Framework/Frontend.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "Subsystems/LocalEgoSubsystem.h"
 #include "Cli/CliHandles.h"
 #include "Cli/CommandLineInterface.h"
+#include "User/Input/UserInputRegistry.h"
 
 namespace Jafg
 {
@@ -42,8 +41,8 @@ public:
     FORCEINLINE LFrontend& GetFrontend() noexcept { return this->Frontend; }
     FORCEINLINE LFrontend const& GetFrontend() const noexcept { return this->Frontend; }
 
-    FORCEINLINE LUserInput& GetUserInput() noexcept { return this->UserInput; }
-    FORCEINLINE LUserInput const& GetUserInput() const noexcept { return this->UserInput; }
+    FORCEINLINE LUserInputRegistry& GetUserInputRegistry() noexcept { return this->UserInputRegistry; }
+    FORCEINLINE LUserInputRegistry const& GetUserInputRegistry() const noexcept { return this->UserInputRegistry; }
 
     FORCEINLINE LClassOuter* GetOuter() noexcept { return &this->Outer; }
     FORCEINLINE const LClassOuter* GetOuter() const noexcept { return &this->Outer; }
@@ -72,8 +71,8 @@ private:
     bool bDecommissioned{ false };
 #endif /* LAL_DO_CHECKS */
 
-    LFrontend  Frontend;
-    LUserInput UserInput;
+    LFrontend Frontend;
+    LUserInputRegistry UserInputRegistry;
 
     //#
     //# The context of the local ego. It is created when the local ego is instantiated

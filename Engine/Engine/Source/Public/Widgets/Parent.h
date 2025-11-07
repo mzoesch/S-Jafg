@@ -13,7 +13,7 @@ namespace Jafg
 //# Generally speaking, inheriting from this class directly is not recommended.
 //#
 DECLARE_JAFG_WIDGET(ECxxClassFlags::Abstract)
-class WParent : public WParentBase
+class ENGINE_API WParent : public WParentBase
 {
     GENERATED_CLASS_BODY()
 

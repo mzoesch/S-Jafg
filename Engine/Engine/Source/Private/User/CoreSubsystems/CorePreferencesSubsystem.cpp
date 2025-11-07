@@ -161,9 +161,9 @@ void Jafg::JCorePreferencesSubsystem::Initialize(LSubsystemCollection& Collectio
             }
 
             check( GEngine->GetLocalEgo().IsDecommissioned() == false )
-            for (auto& Action : GEngine->GetLocalEgo().GetUserInput().GetRegisteredActions())
+            for (auto& Action : GEngine->GetLocalEgo().GetUserInputRegistry().GetRegisteredActions())
             {
-                TUnique<LPreferenceValue_InputAction> T = std::make_unique<LPreferenceValue_InputAction>(Action->GetName());
+                TUnique<LPreferenceValue_InputAction> T = std::make_unique<LPreferenceValue_InputAction>(Action.GetName());
                 InCollection->AddPreference(std::move(T));
 
                 continue;

@@ -15,50 +15,47 @@ namespace Jafg
 //# It is not tied to any specific physical key - but many physical keys can be bound to this action and can be
 //# changed modularly based on delegates fired in the application / state of the program.
 //#
-struct ENGINE_API LInputAction final
+struct LInputAction final
 {
-    LInputAction() = default;
+    LInputAction() noexcept = default;
 
     LInputAction
     (
         const LName InName,
         const EInputActionCategory::Type InCategory
-    ) :  Name(InName), DisplayName(Strings::AddSpacesToCamelCase(InName.ToString())), Category(InCategory) {  }
+    ) noexcept
+        : Name(InName), DisplayName(Strings::AddSpacesToCamelCase(InName.ToString())), Category(InCategory) {  }
 
     LInputAction
     (
         LName InName,
-        const LString& InDisplayName,
+        LString InDisplayName,
         const EInputActionCategory::Type InCategory
-    ) : Name(std::move(InName)), DisplayName(InDisplayName), Category(InCategory) { }
+    ) noexcept
+        : Name(std::move(InName)), DisplayName(std::move(InDisplayName)), Category(InCategory) { }
 
     LInputAction
     (
-        const LString& InDisplayName,
+        LStringView InDisplayName,
         const EInputActionCategory::Type InCategory
-    ) : Name(MAKE_NAME(InDisplayName)), DisplayName(InDisplayName), Category(InCategory) {  }
+    ) noexcept
+        : Name(MAKE_NAME(InDisplayName)), DisplayName(InDisplayName), Category(InCategory) {  }
 
     DEFAULT_REALLOC_OF_ANY_FORM(LInputAction)
 
-    ~LInputAction() = default;
+    ~LInputAction() noexcept = default;
 
-    FORCEINLINE bool operator==(const LInputAction& InOther) const { return this->Name == InOther.Name; }
-    FORCEINLINE bool operator!=(const LInputAction& InOther) const { return this->Name != InOther.Name; }
-    FORCEINLINE bool operator==(const LName& InOther) const { return this->Name == InOther; }
-    FORCEINLINE bool operator!=(const LName& InOther) const { return this->Name != InOther; }
+    FORCEINLINE bool operator==(LInputAction const& Other) const noexcept { return this->Name == Other.Name; }
 
-    FORCEINLINE const LName& GetName() const { return this->Name; }
-    FORCEINLINE const LString& GetDisplayName() const { return this->DisplayName; }
-    FORCEINLINE EInputActionCategory::Type GetCategory() const { return this->Category; }
+    FORCEINLINE LName const& GetName() const noexcept { return this->Name; }
+    FORCEINLINE LString const& GetDisplayName() const noexcept { return this->DisplayName; }
+    FORCEINLINE EInputActionCategory::Type GetCategory() const noexcept { return this->Category; }
 
 private:
 
     LName Name;
     LString DisplayName;
-    EInputActionCategory::Type Category { EInputActionCategory::None };
+    EInputActionCategory::Type Category{ EInputActionCategory::None };
 };
-
-FORCEINLINE bool operator==(const LInputAction* InA, const LName& InB) { return InA && InA->GetName() == InB; }
-FORCEINLINE bool operator!=(const LInputAction* InA, const LName& InB) { return !(InA == InB); }
 
 } /* ~Namespace Jafg */

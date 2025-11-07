@@ -40,3 +40,5 @@ std::vector<LSimpleTestCase*>& GetMutableRegisteredTestCases()
 } /* ~Namespace Private */
 
 } /* ~Namespace Jafg::Tester */
+
+JAFG_LLMM_NEW_DEL_OPS_REPLACEMENTS

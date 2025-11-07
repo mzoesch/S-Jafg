@@ -38,6 +38,9 @@ namespace
 
 } /* ~Namespace <Anonymous> */
 
+/* Not a custom module. Place boilerplate manually. */
+JAFG_LLMM_NEW_DEL_OPS_REPLACEMENTS
+
 #if !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT)
 FORCEINLINE
 #endif /* !(LAL_PLATFORM_USES_NON_GENERIC_LOOP || LAL_PLATFORM_USES_NON_GENERIC_EXIT) */

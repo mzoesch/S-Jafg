@@ -41,7 +41,6 @@ ENGINE_API LName Name_UsrInRhiPolyToWireframe  = MAKE_NAME("RhiPolyToWireframe")
 ENGINE_API LName Name_UsrInRhiPolyToFill       = MAKE_NAME("RhiPolyToFill");
 ENGINE_API LName Name_UsrInRhiShowNormals      = MAKE_NAME("RhiShowNormals");
 ENGINE_API LName Name_UsrInToggleConsoleScreen = MAKE_NAME("ToggleConsoleScreen");
-ENGINE_API LName Name_UsrInMovePawn            = MAKE_NAME("MovePawn");
 ENGINE_API LName Name_UsrInRotatePawn          = MAKE_NAME("RotatePawn");
 ENGINE_API LName Name_UsrInPawnVelocity        = MAKE_NAME("PawnVelocity");
 ENGINE_API LName Name_UsrInPrimary             = MAKE_NAME("Primary");

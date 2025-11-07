@@ -24,7 +24,7 @@ class LTemporalWorldObject;
 //# If you need access to the tick event, inherit from LTickableObject - but this goes against
 //# the temporal nature of this object and usually should be avoided due to bad design.
 //#
-class LTemporalWorldObject
+class ENGINE_API LTemporalWorldObject
 {
 public:
 

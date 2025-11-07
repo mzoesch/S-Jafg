@@ -4,7 +4,6 @@
 #include "Framework/Frontend.h"
 #include "User/LocalEgo.h"
 #include "Widgets/UserWidget.h"
-#include "User/Frontend/Osd/DebugScreen.h"
 #include "User/Frontend/Osd/DebugMenu.h"
 #include "User/Frontend/Hud/Crosshair.h"
 #include "User/Frontend/Osd/ConsoleScreen.h"
@@ -25,12 +24,6 @@ void Jafg::JCoreWorldWidgetsSubsystem::Initialize(LSubsystemCollection& Collecti
     Super::Initialize(Collection);
 
     LFrontend& Frontend{ this->GetLocalEgo().GetFrontend() };
-
-    this->DebugScreen = ConstructDeferredWidgetNode<WDebugScreen>(this->GetOuter());
-
-    this->DebugScreen->AddToViewport(&Frontend.GetFocusedSurfaceChecked()->GetViewport());
-    this->DebugScreen->SetVisibility(EWidgetVisibility::Collapsed);
-    MakeDeferredWidgetNodeFinal(this->DebugScreen);
 
     this->DebugMenu = ConstructDeferredWidgetNode<WDebugMenu>(this->GetOuter());
     this->DebugMenu->AddToViewport(&Frontend.GetFocusedSurfaceChecked()->GetViewport());

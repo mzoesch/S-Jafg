@@ -17,7 +17,7 @@ struct LDebugTraceLineVisualParams final
     u8 Thickness = 1;
 };
 
-class LDebugTraceLine final : public LTemporalWorldObject
+class ENGINE_API LDebugTraceLine final : public LTemporalWorldObject
 {
     friend LDebugTracePlane;
 

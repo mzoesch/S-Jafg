@@ -51,7 +51,7 @@ struct LDiskBlendTexture final
 //# Texture subsystem that manages the loading, caching and freeing of all textures that are present.
 //#
 DECLARE_JAFG_CLASS()
-class JVoxelTextureSubsystem final : public JEngineSubsystem
+class ENGINE_API JVoxelTextureSubsystem final : public JEngineSubsystem
 {
     GENERATED_CLASS_BODY()
 

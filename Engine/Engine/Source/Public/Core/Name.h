@@ -28,7 +28,11 @@ struct LOmniVitaNameRegistry : public Lal::TTagRegistry<LNameRegistryTag>
 {
     using Super = TTagRegistry;
 
-    FORCEINLINE TagType RegisterOrGet(Trait::CString auto&& InRepr) noexcept;
+    FORCEINLINE TagType RegisterOrGet(Trait::CString auto&& InRepr) noexcept
+    {
+        check( !Tasks::HasMasterThread() || Tasks::IsOnMasterThread() )
+        return Super::RegisterOrGet(std::forward<decltype(InRepr)>(InRepr));
+    }
     template <LSize N>
     FORCEINLINE TagType RegisterOrGet(const char(&InRepr)[N]) noexcept
     {
@@ -41,7 +45,7 @@ struct LOmniVitaNameRegistry : public Lal::TTagRegistry<LNameRegistryTag>
 } /* ~Namespace Jafg */
 
 //#
-//# A name maps a string to a unique integer. Names are case-insensitive and are stored in a global registry.
+//# A name maps a string to a unique integer. Names are case-sensitive and are stored in a global registry.
 //# Names behave trivially in any context.
 //# Core names allocated at module initialization time are not allocated deterministically. The underlying name
 //# might differ between runs.
@@ -69,7 +73,7 @@ typedef Jafg::Private::LOmniVitaNameRegistry::TagType LName;
 #define GET_NAME_REPR(Name)         ::Jafg::Private::GetNameRegistry().GetReprSafe(Name)
 #define GET_NAME_REPR_FAST(Name)    ::Jafg::Private::GetNameRegistry().GetReprFast(Name)
 
-template <>
+template<>
 struct std::formatter<::LName> : std::formatter<LString>
 {
     FORCEINLINE auto format
@@ -81,10 +85,3 @@ struct std::formatter<::LName> : std::formatter<LString>
         return ::std::formatter<LString>::format(Jafg::Private::GetNameRegistry().GetReprSafe(InName), InContext);
     }
 };
-
-FORCEINLINE Jafg::Private::LOmniVitaNameRegistry::TagType
-Jafg::Private::LOmniVitaNameRegistry::RegisterOrGet(Trait::CString auto&& InRepr) noexcept
-{
-    check( !Tasks::HasMasterThread() || Tasks::IsOnMasterThread() )
-    return Super::RegisterOrGet(std::forward<decltype(InRepr)>(InRepr));
-}

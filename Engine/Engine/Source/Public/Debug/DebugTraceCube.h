@@ -14,7 +14,7 @@ struct LDebugTraceCubeVisualParams final
     u8 Thickness = 1;
 };
 
-class LDebugTraceCube final : public LTemporalWorldObject
+class ENGINE_API LDebugTraceCube final : public LTemporalWorldObject
 {
 public:
 

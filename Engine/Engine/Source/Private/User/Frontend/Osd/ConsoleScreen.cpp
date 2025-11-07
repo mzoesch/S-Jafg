@@ -276,10 +276,10 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
         this->HistoryCursor = INDEX_NONE;
         algo::orphan(&this->CurrentIntellisensePrediction);
 
-        LUserInput& UserInput{ this->GetLocalEgo().GetUserInput() };
-        UserInput.DeactivateContext(Name_UicInMyWorldFoot);
-        UserInput.DeactivateContext(Name_UicInMyWorld);
-        UserInput.ActivateContext(Name_UicInConsole);
+        // LUserInput& UserInput{ this->GetLocalEgo().GetUserInput() };
+        // UserInput.DeactivateContext(Name_UicInMyWorldFoot);
+        // UserInput.DeactivateContext(Name_UicInMyWorld);
+        // UserInput.ActivateContext(Name_UicInConsole);
         this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->SetInputMode(EInputMode::Both, ShowMouseCursor);
     }
 
@@ -296,10 +296,10 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
         this->ConsoleHistoryContainer->SetVisibility(EWidgetVisibility::Collapsed);
         this->IntellisenseContainer->SetVisibility(EWidgetVisibility::Collapsed);
 
-        LUserInput& UserInput{ this->GetLocalEgo().GetUserInput() };
-        UserInput.DeactivateContext(Name_UicInConsole);
-        UserInput.ActivateContext(Name_UicInMyWorldFoot);
-        UserInput.ActivateContext(Name_UicInMyWorld);
+        // LUserInput& UserInput{ this->GetLocalEgo().GetUserInput() };
+        // UserInput.DeactivateContext(Name_UicInConsole);
+        // UserInput.ActivateContext(Name_UicInMyWorldFoot);
+        // UserInput.ActivateContext(Name_UicInMyWorld);
         this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
     }
 
@@ -320,10 +320,10 @@ void Jafg::WConsoleScreen::SetConsoleFrontendState(const EConsoleScreenState::Ty
     {
         this->SetVisibility(EWidgetVisibility::Collapsed);
 
-        LUserInput& UserInput{ this->GetLocalEgo().GetUserInput() };
-        UserInput.DeactivateContext(Name_UicInConsole);
-        UserInput.ActivateContext(Name_UicInMyWorldFoot);
-        UserInput.ActivateContext(Name_UicInMyWorld);
+        // LUserInput& UserInput{ this->GetLocalEgo().GetUserInput() };
+        // UserInput.DeactivateContext(Name_UicInConsole);
+        // UserInput.ActivateContext(Name_UicInMyWorldFoot);
+        // UserInput.ActivateContext(Name_UicInMyWorld);
         this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
     }
 

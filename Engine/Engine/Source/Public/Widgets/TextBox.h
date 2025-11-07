@@ -32,7 +32,7 @@ public:
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryTextBox)
-class WTextBox : public WBox
+class ENGINE_API WTextBox : public WBox
 {
     GENERATED_CLASS_BODY()
 

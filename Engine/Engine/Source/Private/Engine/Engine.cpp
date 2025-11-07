@@ -500,6 +500,21 @@ void Jafg::LEngine::TearDown()
                 continue;
             }
 
+            if (Plugin.Fetched.bDynUnloadable == false)
+            {
+                LOG_VERBOSE(LogForeign, "Plugin [{}] is not marked as unloadable. Skipping unload.", Plugin.GetIdentifier() )
+
+                check( Plugin.NativeHandle )
+                check( Plugin.Lifetime.get() )
+
+                //# This causes a memory leak. But who tf cares.
+                this->LoadedPlugins.back().NativeHandle = nullptr;
+                this->LoadedPlugins.back().Lifetime.release();
+
+                this->LoadedPlugins.pop_back();
+                continue;
+            }
+
             LString CachedIdentifier{ Plugin.GetIdentifier() };
 
             if
@@ -802,7 +817,7 @@ void Jafg::LEngine::LoadPluginNoFailure(LString const& Name)
 
 Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(const LString& InName, const EPluginShutdownReason::Type InReason)
 {
-    const LFetchedPlugin* P { algo::find_pointer(this->FetchedPlugins, InName, &LFetchedPlugin::Identifier) };
+    LFetchedPlugin const* P{ algo::find_pointer(this->FetchedPlugins, InName, &LFetchedPlugin::Identifier) };
     if (P == nullptr)
     {
         P = algo::find_pointer(this->FetchedPlugins, LPath{InName}, &LFetchedPlugin::AbsolutePath);
@@ -813,7 +828,7 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(const LString& InN
         return EPluginLoadReturnCode::NotFound;
     }
 
-    if (LLoadedPlugin* L { algo::find_pointer(this->LoadedPlugins, P->AbsolutePath, &LLoadedPlugin::GetAbsolutePath) })
+    if (LLoadedPlugin* L{ algo::find_pointer(this->LoadedPlugins, P->AbsolutePath, &LLoadedPlugin::GetAbsolutePath) })
     {
         return this->UnLoadPlugin(L, InReason);
     }
@@ -844,6 +859,7 @@ Jafg::EPluginLoadReturnCode::Type Jafg::LEngine::UnLoadPlugin(LLoadedPlugin* Plu
     check( Plugin )
 
     check( Plugin->IsLoaded() )
+    check( Plugin->Fetched.bDynUnloadable )
 
     const LString CachedIdent{ Plugin->GetIdentifier() };
     const LPath CachedPath{ Plugin->GetAbsolutePath() };
@@ -1003,6 +1019,25 @@ bool Jafg::LEngine::FetchPlugin(LPath const& Path)
         P.FriendlyName = P.Identifier;
     }
     check( P.FriendlyName.empty() == false )
+
+    if (PluginJson.contains("Description"))
+    {
+        P.Description = PluginJson["Description"].get<std::string>();
+    }
+
+    if (PluginJson.contains("Author"))
+    {
+        P.Author = PluginJson["Author"].get<std::string>();
+    }
+    if (P.Author.empty())
+    {
+        P.Author = "Anonymous";
+    }
+
+    if (PluginJson.contains("bDynUnloadable"))
+    {
+        P.bDynUnloadable = PluginJson["bDynUnloadable"].get<bool>();
+    }
 
     P.Bin = PluginJson["Bin"].get<std::string>();
     if (P.Bin.empty())

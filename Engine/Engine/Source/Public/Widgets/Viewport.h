@@ -46,7 +46,7 @@ public:
     PROHIBIT_REALLOC_OF_ANY_FORM(LViewport)
     ~LViewport() = default;
 
-    void Initialize() { }
+    void Initialize() noexcept { }
     void ClearInvalidWidgets();
     void DispatchInputs(LSurface& Context, const LVector2& InCursorLocation);
     void OnMouseLeftViewport(LSurface& Context, const bool bInvalidateAllInputs);
@@ -265,7 +265,7 @@ FORCEINLINE WNode* LViewport::GetTopLevelWidgetByClassChecked(TSubclassOf<WNode>
 template<typename TNode> requires std::is_base_of_v<WNode, TNode>
 FORCEINLINE TNode* LViewport::GetTopLevelWidgetByClass() const
 {
-    return StaticCastChecked<TNode>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
+    return StaticCast<TNode>(this->GetTopLevelWidgetByClass(TNode::StaticClass()));
 }
 
 template<typename TNode> requires std::is_base_of_v<WNode, TNode>

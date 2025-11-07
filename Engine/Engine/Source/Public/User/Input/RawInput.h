@@ -17,23 +17,16 @@ struct LRawInput
     bool bRepeated;
     f32  Value;
 
-    FORCEINLINE constexpr bool operator <(const LRawInput& Other) const noexcept { return this->Key < Other.Key;  }
-    FORCEINLINE constexpr bool operator <(const LKey& Other) const noexcept      { return this->Key < Other;      }
-    FORCEINLINE constexpr bool operator >(const LRawInput& Other) const noexcept { return this->Key > Other.Key;  }
-    FORCEINLINE constexpr bool operator >(const LKey& Other) const noexcept      { return this->Key > Other;      }
-    FORCEINLINE constexpr bool operator==(const LRawInput& Other) const noexcept { return this->Key == Other.Key; }
-    FORCEINLINE constexpr bool operator==(const LKey& Other) const noexcept      { return this->Key == Other;     }
-    FORCEINLINE constexpr bool operator!=(const LRawInput& Other) const noexcept { return this->Key != Other.Key; }
-    FORCEINLINE constexpr bool operator!=(const LKey& Other) const noexcept      { return this->Key != Other;     }
+    FORCEINLINE constexpr std::strong_ordering operator<=>(const LRawInput& Other) const noexcept { return this->Key <=> Other.Key; }
 
-    FORCEINLINE void Reset() noexcept
+    FORCEINLINE constexpr void Reset() noexcept
     {
         this->Key = EKeys::Unresolved;
         this->bRepeated = false;
         this->Value = 0.0f;
     }
 
-    FORCEINLINE LString ToString() const
+    FORCEINLINE LString ToString() const noexcept
     {
         return Lal::SprintF("{{{}: {:.2f}}}", LexToString(this->Key), this->Value);
     }

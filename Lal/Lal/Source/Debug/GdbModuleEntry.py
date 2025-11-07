@@ -1,7 +1,13 @@
 # Copyright mzoesch. All rights reserved.
+from re import Pattern
 
 import gdb
 import re
+
+from Lal.Lal.Source.Debug.Containers.StdExt import (
+    LalTSimpleString_Printer,
+    # LalTSimpleArray_Printer
+    )
 from Lal.Lal.Source.Debug.Containers.LalString import (
     LalTStringBase_Printer
     )
@@ -23,9 +29,16 @@ from Lal.Lal.Source.Debug.Containers.LalArray import (
 def lal_pretty_lookup(val: any) -> any:
     type_str: str = str(val.type.strip_typedefs())
 
+    pattern_lal_simple_string = re.compile(
+        r'.*Lal::TSimpleString<\s*[^>]+\s*>'
+        )
+    pattern_lal_simple_array = re.compile(
+        r'.*Lal::TSimpleArray<\s*[^>]+\s*,\s*[^>]+\s*>'
+        )
+
     pattern_lal_path = re.compile(
         r'.*Lal::TPathBase<\s*[^>]+\s*>'
-    )
+        )
     pattern_lal_string = re.compile(
         r'.*Lal::TStringBase<\s*[^>]+\s*>'
         )
@@ -47,6 +60,11 @@ def lal_pretty_lookup(val: any) -> any:
         r'.*Jafg::TPathBase<\s*Jafg::TStringTraits<[^>]+>,\s*Jafg::TArrayBase<\s*(Jafg::TArrayAllocator<[^>]+>)\s*>\s*>'
         )
     # ~Legacy
+
+    if pattern_lal_simple_string.match(type_str):
+        return LalTSimpleString_Printer(val)
+    # if pattern_lal_simple_array.match(type_str):
+    #     return LalTSimpleArray_Printer(val)
 
     if pattern_lal_path.match(type_str):
         return LalTPathBase_Printer(val)

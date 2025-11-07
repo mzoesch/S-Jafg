@@ -95,3 +95,5 @@ TEST_CASE(Types, "Jafg.TestFramework")
     return;
 }
 #endif /* WITH_TESTS */
+
+JAFG_LLMM_NEW_DEL_OPS_REPLACEMENTS

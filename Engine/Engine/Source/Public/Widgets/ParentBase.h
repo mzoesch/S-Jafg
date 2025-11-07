@@ -15,7 +15,7 @@ namespace Jafg
 //# TODO: Please think of a better name for this class.
 //#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryParentBase, ECxxClassFlags::Abstract)
-class WParentBase : public WNode
+class ENGINE_API WParentBase : public WNode
 {
     GENERATED_CLASS_BODY()
 

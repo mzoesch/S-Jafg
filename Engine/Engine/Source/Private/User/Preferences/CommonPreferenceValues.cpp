@@ -99,8 +99,8 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
 
     const u8 ColorSpace = static_cast<u8>(20 * (Target->GetChildren().size() % 2 == 0 ? 1.8 : 1));
 
-    const LInputAction* Action = GEngine->GetLocalEgo().GetUserInput().GetActionByNameChecked(Self->GetName());
-    const TArray<TUnique<LUserInputContext>>& Contexts = GEngine->GetLocalEgo().GetUserInput().GetRegisteredContexts();
+    auto* Action = GEngine->GetLocalEgo().GetUserInputRegistry().GetActionByNameChecked(Self->GetName());
+    auto& Contexts = GEngine->GetLocalEgo().GetUserInputRegistry().GetRegisteredContexts();
 
     NewNodeCtx(Target, WVRegion).SaveTo(&Container)
         .Anchor(EAnchor::HFill)
@@ -125,9 +125,9 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
     ]
     ;
 
-    for (auto& Context: Contexts)
+    for (auto& Context : Contexts)
     {
-        const LInputMappedAction* MappedAction = Context->FindMappedAction(Action);
+        const LInputMappedAction* MappedAction = Context.FindMappedAction(Action->GetName());
         if (MappedAction == nullptr)
         {
             continue;
@@ -166,7 +166,7 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
             [
                 NewNodeCtx(Target, WTextBox)
                     .Brush(LTextBoxBrush::Body())
-                    .Content(Context->GetDisplayName())
+                    .Content(Context.GetDisplayName())
                 +
                 NewNodeCtx(Target, WSpacer)
                     .Anchor(EAnchor::HFill)
@@ -190,7 +190,7 @@ void Jafg::LPreferenceValue_InputAction::BuildDefault(const LPreference* Self, W
         [
             NewNodeCtx(Target, WTextBox)
                 .Brush(LTextBoxBrush::Body())
-                .Content(Context->GetDisplayName())
+                .Content(Context.GetDisplayName())
         ]
         ;
 

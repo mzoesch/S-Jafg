@@ -11,14 +11,19 @@
 namespace Jafg
 {
 
+class LViewport;
 class LUserInput;
+class LUserInputRegistry;
 struct LInputAction;
 struct LInputActionValue;
 struct LInputMappedAction;
 struct LUserInputContext;
 
-typedef TFunction<void(LInputActionValue& InValue)> LUserInputActionCallback;
-typedef TFunction<void(LInputActionValue& InValue)> LUserInputActionDelegate;
+//#
+//# @param Value    The value of the action that was triggered.
+//# @param Viewport The viewport on which the action was triggered.
+//#
+typedef TFunction<void(LViewport& Viewport, LInputActionValue& Value)> LOnUserInputAction;
 
 //#
 //# A mapped action that is owned by a context.
@@ -27,12 +32,15 @@ struct LInputMappedAction
 {
     struct LTrigger
     {
-        LTrigger() = default;
-        LTrigger(LString&& InName, TArray<LKey>&& InDefaultKeys, const EInputActionTrigger::Type InType, TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers)
+        constexpr LTrigger() noexcept = default;
+        constexpr LTrigger(TArray<LKey>&& InDefaultKeys, const EInputActionTrigger::Type InType, TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers = {}) noexcept
+            : Keys(std::move(InDefaultKeys)), Type(InType), Modifiers(std::move(InModifiers)) { }
+        constexpr LTrigger(const LKey InDefaultKey, const EInputActionTrigger::Type InType, TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers = {}) noexcept
+            : Keys(), Type(InType), Modifiers(std::move(InModifiers)) { this->Keys.emplace_back(InDefaultKey); }
+        constexpr LTrigger(LString&& InName, TArray<LKey>&& InDefaultKeys, const EInputActionTrigger::Type InType, TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers = {}) noexcept
             : Name(std::move(InName)), Keys(std::move(InDefaultKeys)), Type(InType), Modifiers(std::move(InModifiers)) { }
-        LTrigger(LString&& InName, const LKey InDefaultKey, const EInputActionTrigger::Type InType, TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers)
+        constexpr LTrigger(LString&& InName, const LKey InDefaultKey, const EInputActionTrigger::Type InType, TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers = {}) noexcept
             : Name(std::move(InName)), Keys(), Type(InType), Modifiers(std::move(InModifiers)) { this->Keys.emplace_back(InDefaultKey); }
-
         PROHIBIT_COPY(LTrigger)
         DEFAULT_MOVE(LTrigger)
         ~LTrigger() = default;
@@ -44,22 +52,15 @@ struct LInputMappedAction
     };
 
     LInputMappedAction() = delete;
-    explicit LInputMappedAction(const LInputAction* InAction) noexcept : Action(InAction) { check( InAction ) }
+    explicit LInputMappedAction(LName ActionName) noexcept : Action(ActionName) { check( this->Action.IsSet() ) }
     DEFAULT_MOVE(LInputMappedAction)
     PROHIBIT_COPY(LInputMappedAction)
     ~LInputMappedAction() = default;
 
-    FORCEINLINE bool operator==(const LInputAction* InOther) const noexcept { return this->Action == InOther; }
-    FORCEINLINE bool operator!=(const LInputAction* InOther) const noexcept { return !(*this == InOther); }
     FORCEINLINE bool operator==(const LInputMappedAction& InOther) const noexcept { return this->Action == InOther.Action; }
-    FORCEINLINE bool operator!=(const LInputMappedAction& InOther) const noexcept { return !(*this == InOther); }
-    FORCEINLINE bool operator==(const LName& InName) const noexcept { return this->Action && this->Action->GetName() == InName; }
-    FORCEINLINE bool operator!=(const LName& InName) const noexcept { return !(*this == InName); }
 
-    //#
     //# The mapped action.
-    //#
-    const LInputAction* Action;
+    LName Action;
 
     //#
     //# Through what the action can be triggerd in this context.
@@ -69,7 +70,7 @@ struct LInputMappedAction
     //#
     //# The callback to call if the action was triggered while the owing context is active and valid.
     //#
-    LUserInputActionDelegate Callback { nullptr };
+    LOnUserInputAction Callback;
 };
 
 //#
@@ -83,51 +84,36 @@ using LInputTrigger = LInputMappedAction::LTrigger;
 //#
 struct LUserInputContext final
 {
-    LUserInputContext() = default;
-
-    ENGINE_API explicit LUserInputContext(const LName InUniqueIdentifier);
-    ENGINE_API explicit LUserInputContext(LName InUniqueIdentifier, const LString& InDisplayName);
-    ENGINE_API explicit LUserInputContext(const LString& InDisplayName);
-
+    LUserInputContext() noexcept = delete;
+    explicit LUserInputContext(LName Name) noexcept : LUserInputContext(Name, Strings::AddSpacesToCamelCase(Name.ToString())) {}
+    LUserInputContext(LName Name, LString DisplayName) noexcept : Name(Name), DisplayName(std::move(DisplayName)) { check( this->Name.IsSet() ) }
+    explicit LUserInputContext(LString const& InDisplayName) noexcept : LUserInputContext(MAKE_NAME(InDisplayName), InDisplayName) {}
     DEFAULT_REALLOC_OF_ANY_FORM(LUserInputContext)
-
     ~LUserInputContext() = default;
 
-    FORCEINLINE bool IsValid() const noexcept { return this->Name.IsSet(); }
-
     //#
-    //# Registers the action to the active #LUserInput and maps to this context it.
+    //# Registers the action to the active #LUserInputRegistry and maps to this context it.
     //# @return The newly mapped action.
     //#
-    ENGINE_API LInputMappedAction* MapAction(LUserInput* InUserInput, LInputAction&& InAction);
+    ENGINE_API LInputMappedAction* MapAction(LUserInputRegistry* Registry, LInputAction&& TransientAction) noexceptcheck;
 
     //#
-    //# Map an already registered (inside the user input) action.
-    //# @return The already mapped action.
+    //# Map an already registered (inside the user input registry) action.
+    //# @return The newly mapped action.
     //#
-    ENGINE_API LInputMappedAction* MapAction(const LInputAction* InAction);
+    ENGINE_API LInputMappedAction* MapAction(LName ActionName) noexceptcheck;
 
-    FORCEINLINE bool operator==(const LName& InName) const noexcept { return this->Name == InName; }
-    FORCEINLINE bool operator!=(const LName& InName) const noexcept { return !(*this == InName); }
-    FORCEINLINE bool operator==(const LUserInputContext& InContext) const noexcept { return this->Name == InContext.Name; }
-    FORCEINLINE bool operator!=(const LUserInputContext& InContext) const noexcept { return !(*this == InContext.Name); }
+    FORCEINLINE bool operator==(LUserInputContext const& Other) const noexcept { return this->Name == Other.Name; }
 
     FORCEINLINE const LName& GetName() const { return this->Name; }
     FORCEINLINE const LString& GetDisplayName() const { return this->DisplayName; }
 
-    FORCEINLINE LInputMappedAction* FindMappedAction(const LName& InName);
-    FORCEINLINE LInputMappedAction* FindMappedActionChecked(const LName& InName);
-    FORCEINLINE LInputMappedAction* FindMappedActionAsserted(const LName& InName);
-    FORCEINLINE const LInputMappedAction* FindMappedAction(const LName& InName) const;
-    FORCEINLINE const LInputMappedAction* FindMappedActionChecked(const LName& InName) const;
-    FORCEINLINE const LInputMappedAction* FindMappedActionAsserted(const LName& InName) const;
-
-    FORCEINLINE LInputMappedAction* FindMappedAction(const LInputAction* InAction);
-    FORCEINLINE LInputMappedAction* FindMappedActionChecked(const LInputAction* InAction);
-    FORCEINLINE LInputMappedAction* FindMappedActionAsserted(const LInputAction* InAction);
-    FORCEINLINE const LInputMappedAction* FindMappedAction(const LInputAction* InAction) const;
-    FORCEINLINE const LInputMappedAction* FindMappedActionChecked(const LInputAction* InAction) const;
-    FORCEINLINE const LInputMappedAction* FindMappedActionAsserted(const LInputAction* InAction) const;
+    FORCEINLINE LInputMappedAction* FindMappedAction(LName InName) noexcept { return algo::wfind_pointer(this->MappedActions, InName, &LInputMappedAction::Action); }
+    FORCEINLINE LInputMappedAction const* FindMappedAction(LName InName) const noexcept { return algo::wfind_pointer(this->MappedActions, InName, &LInputMappedAction::Action); }
+    FORCEINLINE LInputMappedAction* FindMappedActionChecked(LName InName) noexceptcheck { auto* Out{ this->FindMappedAction(InName) }; check( Out ) return Out; }
+    FORCEINLINE LInputMappedAction const* FindMappedActionChecked(LName InName) const noexceptcheck { auto* Out{ this->FindMappedAction(InName) }; check( Out ) return Out; }
+    FORCEINLINE LInputMappedAction* FindMappedActionAsserted(LName InName) { auto* Out{ this->FindMappedAction(InName) }; jassert( Out ) return Out; }
+    FORCEINLINE LInputMappedAction const* FindMappedActionAsserted(LName InName) const { auto* Out{ this->FindMappedAction(InName) }; jassert( Out ) return Out; }
 
     FORCEINLINE const TArray<LInputMappedAction>& GetMappedActions() const { return this->MappedActions; }
 
@@ -135,85 +121,57 @@ struct LUserInputContext final
     // Helper methods for faster and less boilerplate action registration.
 #pragma region "Helper methods for faster and less boilerplate action registration."
 
-    template <typename ObjTy, typename CallableTy>
-    FORCEINLINE LInputMappedAction* MapAction
+    ENGINE_API LInputMappedAction* MapAction
     (
-        LUserInput* InUserInput,
-        LInputAction&& InAction,
-        LString&& InName,
-        const LKey InDefaultKey,
-        const EInputActionTrigger::Type InActionTrigger,
-        TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
-        ObjTy* InObject,
-        CallableTy InMember
-    );
+        LUserInputRegistry* Registry,
+        LInputAction&& TransientAction,
+        LString TriggerName,
+        const LKey DefaultKey,
+        const EInputActionTrigger::Type ActionTrigger,
+        TArray<TUnique<LInputActionMappedTriggerModifier>>&& Modifiers,
+        LOnUserInputAction&& Callback
+    ) noexcept;
 
-    template <typename ObjTy, typename CallableTy>
     FORCEINLINE LInputMappedAction* MapAction
     (
-        const LInputAction* InAction,
-        LString&& InName,
-        const LKey InDefaultKey,
-        const EInputActionTrigger::Type InActionTrigger,
-        TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
-        ObjTy* InObject,
-        CallableTy InMember
-    );
+        LName ActionName,
+        LString TriggerName,
+        const LKey DefaultKey,
+        const EInputActionTrigger::Type ActionTrigger,
+        TArray<TUnique<LInputActionMappedTriggerModifier>>&& Modifiers,
+        LOnUserInputAction&& Callback
+    ) noexcept
+    {
+        LInputMappedAction* MappedAction{ this->MapAction(ActionName) };
+        check( MappedAction )
+        MappedAction->Triggers.emplace_back(std::move(TriggerName), DefaultKey, ActionTrigger, std::move(Modifiers));
+        MappedAction->Callback = std::move(Callback);
+
+        return MappedAction;
+    }
 
     ENGINE_API LInputMappedAction* MapAction
     (
-        LUserInput* InUserInput,
-        LInputAction&& InAction,
-        LString&& InName,
-        const LKey InDefaultKey,
-        const EInputActionTrigger::Type InActionTrigger,
-        TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
-        LUserInputActionCallback&& InCallback
-    );
+        LUserInputRegistry* Registry,
+        LInputAction&& TransientAction,
+        TArray<LInputMappedAction::LTrigger>&& Triggers,
+        LOnUserInputAction&& Callback
+    ) noexcept;
 
     FORCEINLINE LInputMappedAction* MapAction
     (
-        const LInputAction* InAction,
-        LString&& InName,
-        const LKey InDefaultKey,
-        const EInputActionTrigger::Type InActionTrigger,
-        TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
-        LUserInputActionCallback&& InCallback
-    );
+        LName ActionName,
+        TArray<LInputMappedAction::LTrigger>&& Triggers,
+        LOnUserInputAction&& Callback
+    ) noexcept
+    {
+        LInputMappedAction* MappedAction{ this->MapAction(ActionName) };
+        check( MappedAction )
+        MappedAction->Triggers = std::move(Triggers);
+        MappedAction->Callback = std::move(Callback);
 
-    template <typename ObjTy, typename CallableTy>
-    FORCEINLINE LInputMappedAction* MapAction
-    (
-        LUserInput* InUserInput,
-        LInputAction&& InAction,
-        TArray<LInputMappedAction::LTrigger>&& InTriggers,
-        ObjTy* InObject,
-        CallableTy InMember
-    );
-
-    template <typename ObjTy, typename CallableTy>
-    FORCEINLINE LInputMappedAction* MapAction
-    (
-        const LInputAction* InAction,
-        TArray<LInputMappedAction::LTrigger>&& InTriggers,
-        ObjTy* InObject,
-        CallableTy InMember
-    );
-
-    ENGINE_API LInputMappedAction* MapAction
-    (
-        LUserInput* InUserInput,
-        LInputAction&& InAction,
-        TArray<LInputMappedAction::LTrigger>&& InTriggers,
-        LUserInputActionCallback&& InCallback
-    );
-
-    FORCEINLINE LInputMappedAction* MapAction
-    (
-        const LInputAction* InAction,
-        TArray<LInputMappedAction::LTrigger>&& InTriggers,
-        LUserInputActionCallback&& InCallback
-    );
+        return MappedAction;
+    }
 
 #pragma endregion "Helper methods for faster and less boilerplate action registration."
     // ~Helper methods for faster and less boilerplate action registration.
@@ -225,183 +183,5 @@ private:
     LString DisplayName;
     TArray<LInputMappedAction> MappedActions;
 };
-
-FORCEINLINE LInputMappedAction* LUserInputContext::FindMappedAction(const LName& InName)
-{
-    return algo::wfind_pointer(this->MappedActions, InName);
-}
-
-FORCEINLINE LInputMappedAction* LUserInputContext::FindMappedActionChecked(const LName& InName)
-{
-    LInputMappedAction* Out = this->FindMappedAction(InName);
-    check( Out )
-    return Out;
-}
-
-FORCEINLINE LInputMappedAction* LUserInputContext::FindMappedActionAsserted(const LName& InName)
-{
-    LInputMappedAction* Out = this->FindMappedAction(InName);
-    jassert( Out )
-    return Out;
-}
-
-FORCEINLINE const LInputMappedAction* LUserInputContext::FindMappedAction(const LName& InName) const
-{
-    return algo::wfind_pointer(this->MappedActions, InName);
-}
-
-FORCEINLINE const LInputMappedAction* LUserInputContext::FindMappedActionChecked(const LName& InName) const
-{
-    const LInputMappedAction* Out = this->FindMappedAction(InName);
-    check( Out )
-    return Out;
-}
-
-FORCEINLINE const LInputMappedAction* LUserInputContext::FindMappedActionAsserted(const LName& InName) const
-{
-    const LInputMappedAction* Out = this->FindMappedAction(InName);
-    jassert( Out )
-    return Out;
-}
-
-FORCEINLINE LInputMappedAction* LUserInputContext::FindMappedAction(const LInputAction* InAction)
-{
-    check( InAction )
-    LInputMappedAction* Out = algo::find_pointer(this->MappedActions, InAction, &LInputMappedAction::Action);
-    return Out ? Out : nullptr;
-}
-
-FORCEINLINE LInputMappedAction* LUserInputContext::FindMappedActionChecked(const LInputAction* InAction)
-{
-    LInputMappedAction* Out = this->FindMappedAction(InAction);
-    check( Out )
-    return Out;
-}
-
-FORCEINLINE LInputMappedAction* LUserInputContext::FindMappedActionAsserted(const LInputAction* InAction)
-{
-    LInputMappedAction* Out = this->FindMappedAction(InAction);
-    jassert( Out )
-    return Out;
-}
-
-FORCEINLINE const LInputMappedAction* LUserInputContext::FindMappedAction(const LInputAction* InAction) const
-{
-    check( InAction )
-    const LInputMappedAction* Out = algo::find_pointer(this->MappedActions, InAction, &LInputMappedAction::Action);
-    return Out ? Out : nullptr;
-}
-
-FORCEINLINE const LInputMappedAction* LUserInputContext::FindMappedActionChecked(const LInputAction* InAction) const
-{
-    const LInputMappedAction* Out = this->FindMappedAction(InAction);
-    check( Out )
-    return Out;
-}
-
-FORCEINLINE const LInputMappedAction* LUserInputContext::FindMappedActionAsserted(const LInputAction* InAction) const
-{
-    const LInputMappedAction* Out = this->FindMappedAction(InAction);
-    jassert( Out )
-    return Out;
-}
-
-template<typename ObjTy, typename CallableTy>
-FORCEINLINE LInputMappedAction* LUserInputContext::MapAction
-(
-    LUserInput* InUserInput,
-    LInputAction&& InAction,
-    LString&& InName,
-    const LKey InDefaultKey,
-    const EInputActionTrigger::Type InActionTrigger,
-    TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
-    ObjTy* InObject,
-    CallableTy InMember
-)
-{
-    return this->MapAction(InUserInput, std::move(InAction), std::move(InName), InDefaultKey, InActionTrigger, std::move(InModifiers), LUserInputActionCallback{InObject, InMember});
-}
-
-template<typename ObjTy, typename CallableTy>
-FORCEINLINE LInputMappedAction* LUserInputContext::MapAction
-(
-    const LInputAction* InAction,
-    LString&& InName,
-    const LKey InDefaultKey,
-    const EInputActionTrigger::Type InActionTrigger,
-    TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
-    ObjTy* InObject,
-    CallableTy InMember
-)
-{
-    return this->MapAction(InAction, std::move(InName), InDefaultKey, InActionTrigger, std::move(InModifiers), LUserInputActionCallback{InObject, InMember});
-}
-
-FORCEINLINE LInputMappedAction* LUserInputContext::MapAction
-(
-    const LInputAction* InAction,
-    LString&& InName,
-    const LKey InDefaultKey,
-    const EInputActionTrigger::Type InActionTrigger,
-    TArray<TUnique<LInputActionMappedTriggerModifier>>&& InModifiers,
-    LUserInputActionCallback&& InCallback
-)
-{
-    LInputMappedAction* MappedAction = this->MapAction(InAction);
-    check( MappedAction )
-    MappedAction->Triggers.emplace_back(std::move(InName), InDefaultKey, InActionTrigger, std::move(InModifiers));
-    MappedAction->Callback = std::move(InCallback);
-
-    return MappedAction;
-}
-
-template <typename ObjTy, typename CallableTy>
-FORCEINLINE LInputMappedAction* LUserInputContext::MapAction
-(
-    LUserInput* InUserInput,
-    LInputAction&& InAction,
-    TArray<LInputMappedAction::LTrigger>&& InTriggers,
-    ObjTy* InObject,
-    CallableTy InMember
-)
-{
-    return this->MapAction(InUserInput, std::move(InAction), std::move(InTriggers), LUserInputActionCallback{InObject, InMember});
-}
-
-template <typename ObjTy, typename CallableTy>
-FORCEINLINE LInputMappedAction* LUserInputContext::MapAction
-(
-    const LInputAction* InAction,
-    TArray<LInputMappedAction::LTrigger>&& InTriggers,
-    ObjTy* InObject,
-    CallableTy InMember
-)
-{
-    return this->MapAction(InAction, std::move(InTriggers), LUserInputActionCallback{InObject, InMember});
-}
-
-FORCEINLINE LInputMappedAction* LUserInputContext::MapAction
-(
-    const LInputAction* InAction,
-    TArray<LInputMappedAction::LTrigger>&& InTriggers,
-    LUserInputActionCallback&& InCallback
-)
-{
-    LInputMappedAction* MappedAction = this->MapAction(InAction);
-    check( MappedAction )
-    MappedAction->Triggers = std::move(InTriggers);
-    MappedAction->Callback = std::move(InCallback);
-
-    return MappedAction;
-}
-
-FORCEINLINE bool operator==(const LInputMappedAction* InA, const LName& InB) { return InA && InA->operator==(InB); }
-FORCEINLINE bool operator!=(const LInputMappedAction* InA, const LName& InB) { return !(InA == InB); }
-FORCEINLINE bool operator==(const LUserInputContext* InA, const LName& InB) { return InA && InA->operator==(InB); }
-FORCEINLINE bool operator!=(const LUserInputContext* InA, const LName& InB) { return !(InA == InB); }
-FORCEINLINE bool operator==(const LInputMappedAction* InA, const LInputMappedAction& InB) { return InA && InA->operator==(InB); }
-FORCEINLINE bool operator!=(const LInputMappedAction* InA, const LInputMappedAction& InB) { return !(InA == InB); }
-FORCEINLINE bool operator==(const LUserInputContext* InA, const LUserInputContext& InB) { return InA && InA->operator==(InB); }
-FORCEINLINE bool operator!=(const LUserInputContext* InA, const LUserInputContext& InB) { return !(InA == InB); }
 
 } /* ~Namespace Jafg */

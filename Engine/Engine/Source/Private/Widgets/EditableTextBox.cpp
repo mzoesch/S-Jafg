@@ -126,9 +126,9 @@ void Jafg::WEditableTextBox::UserInterfaceTick(const LViewport& InViewport)
 {
     bool bHandled{ false };
 
-    if (this->GetLocalEgo().GetUserInput().HasBufferedPlatformInput())
+    if (InViewport.GetSurface().HasBufferedPlatformInput())
     {
-        const LString BufferedInput { this->GetLocalEgo().GetUserInput().GetBufferedPlatformInputAsStr() };
+        const LString BufferedInput{ InViewport.GetSurface().GetBufferedPlatformInputAsStr() };
 
         LString NewContent { this->GetContent() };
         NewContent.insert(this->CaretCursor, BufferedInput);

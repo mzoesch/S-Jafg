@@ -38,13 +38,13 @@ public:
     FORCEINLINE LSurface const* GetSurfaceAsserted() const noexceptcheck { jassert( this->Surface ); return this->Surface; }
     FORCEINLINE void SetSurface(LSurface* InSurface) noexcept { this->Surface = InSurface; }
 
-    FORCEINLINE bool IsPossessedPawnValid() const noexcept { return this->Pawn != nullptr; }
-    FORCEINLINE APawn* GetPossessedPawn() noexcept { return this->Pawn; }
-    FORCEINLINE APawn const* GetPossessedPawn() const noexcept { return this->Pawn; }
-    FORCEINLINE APawn* GetPossessedPawnChecked() noexceptcheck { check( this->IsPossessedPawnValid() ) return this->Pawn; }
-    FORCEINLINE APawn const* GetPossessedPawnChecked() const noexceptcheck { check( this->IsPossessedPawnValid() ) return this->Pawn; }
-    FORCEINLINE APawn* GetPossessedPawnAsserted() noexceptcheck { jassert( this->IsPossessedPawnValid() ) return this->Pawn; }
-    FORCEINLINE APawn const* GetPossessedPawnAsserted() const noexceptcheck { jassert( this->IsPossessedPawnValid() ) return this->Pawn; }
+    FORCEINLINE bool IsPawnValid() const noexcept { return this->Pawn != nullptr; }
+    FORCEINLINE APawn* GetPawn() noexcept { return this->Pawn; }
+    FORCEINLINE APawn const* GetPawn() const noexcept { return this->Pawn; }
+    FORCEINLINE APawn* GetPawnChecked() noexceptcheck { check( this->IsPawnValid() ) return this->Pawn; }
+    FORCEINLINE APawn const* GetPawnChecked() const noexceptcheck { check( this->IsPawnValid() ) return this->Pawn; }
+    FORCEINLINE APawn* GetPawnAsserted() noexceptcheck { jassert( this->IsPawnValid() ) return this->Pawn; }
+    FORCEINLINE APawn const* GetPawnAsserted() const noexceptcheck { jassert( this->IsPawnValid() ) return this->Pawn; }
     void PossessPawn(APawn* New, const bool bKillOld = true);
 
 private:

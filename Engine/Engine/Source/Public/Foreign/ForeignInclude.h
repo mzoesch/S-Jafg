@@ -14,7 +14,8 @@
     {                                                               \
         new InPluginLifetime();                                     \
     }                                                               \
-    PRIVATE_JAFG_PLUGINS_NATIVE_CALLS(InPluginLifetime)
+    PRIVATE_JAFG_PLUGINS_NATIVE_CALLS(InPluginLifetime)             \
+    JAFG_LLMM_NEW_DEL_OPS_REPLACEMENTS
 
 #define PRIVATE_JAFG_PLUGINS_LINUX_NATIVE_CALLS(InPluginLifetime) \
     __attribute__((constructor))                                  \

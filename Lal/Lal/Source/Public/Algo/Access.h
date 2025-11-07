@@ -507,7 +507,13 @@ NODISCARD FORCEINLINE constexpr auto wfind_pointer(ITERATOR Begin, ITERATOR End,
     {
         ++Begin;
     }
-    return &*Begin;
+
+    if (Begin != End)
+    {
+        return &*Begin;
+    }
+
+    return static_cast<decltype(&*Begin)>(nullptr);
 }
 template<typename TProj = algo::identity>
 NODISCARD FORCEINLINE constexpr auto wfind_pointer(RANGE Container, const auto& Value, TProj Proj = {}) noexcept

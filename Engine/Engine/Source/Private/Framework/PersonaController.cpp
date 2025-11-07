@@ -23,7 +23,7 @@ void Jafg::APersonaController::EndLife()
         this->GetSurfaceChecked()->PossessController(nullptr, false);
     }
 
-    if (this->IsPossessedPawnValid())
+    if (this->IsPawnValid())
     {
         this->PossessPawn(nullptr);
     }

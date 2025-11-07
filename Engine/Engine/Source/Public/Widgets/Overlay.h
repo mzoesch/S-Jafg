@@ -14,7 +14,7 @@ namespace Jafg
 //# Children are, as the name suggests, overlaid on top of each other and are independent of each of their siblings.
 //#
 DECLARE_JAFG_WIDGET()
-class WOverlay : public WParent
+class ENGINE_API WOverlay : public WParent
 {
     GENERATED_CLASS_BODY()
 

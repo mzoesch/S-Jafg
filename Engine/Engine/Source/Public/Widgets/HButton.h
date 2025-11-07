@@ -10,7 +10,7 @@ namespace Jafg
 {
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryHButton)
-class WHButton : public WHRegion, public LButtonBase
+class ENGINE_API WHButton : public WHRegion, public LButtonBase
 {
     GENERATED_CLASS_BODY()
 

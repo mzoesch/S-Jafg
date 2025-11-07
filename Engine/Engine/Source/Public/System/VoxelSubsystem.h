@@ -12,7 +12,7 @@ namespace Jafg
 class JMaterialSubsystem;
 
 DECLARE_JAFG_CLASS()
-class JVoxelSubsystem final : public JEngineSubsystem
+class ENGINE_API JVoxelSubsystem final : public JEngineSubsystem
 {
     GENERATED_CLASS_BODY()
 

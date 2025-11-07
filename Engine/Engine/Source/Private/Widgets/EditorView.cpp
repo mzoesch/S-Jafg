@@ -71,9 +71,9 @@ void Jafg::WEditorView::OnSecondaryDown()
     this->GetViewport().GetSurface().SetInputMode(EInputMode::Both, false);
     this->SetShouldTick(true);
 
-    LUserInput& Input{ this->GetLocalEgo().GetUserInput() };
-    Input.SetReferenceContexts(Input.GetActiveContexts());
-    Input.PopContexts();
+    // LUserInput& Input{ this->GetLocalEgo().GetUserInput() };
+    // Input.SetReferenceContexts(Input.GetActiveContexts());
+    // Input.PopContexts();
 
     return;
 }
@@ -82,11 +82,11 @@ void Jafg::WEditorView::OnSecondaryUp()
 {
     this->GetViewport().GetSurface().SetInputMode(EInputMode::Both, true);
     this->SetShouldTick(false);
-
-    LUserInput& Input{ this->GetLocalEgo().GetUserInput() };
-    Input.PushContexts();
-    Input.ActivateContexts(Input.GetReferenceContexts());
-    Input.SetReferenceContexts({});
+    //
+    // LUserInput& Input{ this->GetLocalEgo().GetUserInput() };
+    // Input.PushContexts();
+    // Input.ActivateContexts(Input.GetReferenceContexts());
+    // Input.SetReferenceContexts({});
 
     return;
 }

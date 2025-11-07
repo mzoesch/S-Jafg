@@ -33,7 +33,21 @@ EPluginLoadReturnCode::Type LLoadedPlugin::OpenLibrary()
     check( this->IsValid() )
     check( this->IsLoaded() == false )
 
-    this->NativeHandle = ::dlopen(this->BinPath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+    this->NativeHandle = ::dlopen(this->BinPath.c_str()
+        //
+        // So this is now "now". We could change this to "lazy". This would be great for shipping configs as it would
+        // not lead to chrashes if a plugin is missing symbols that are never used.
+        // However, this only works for unix. Windows does not have an equivalent of lazy loading of symbols.
+        //
+        , RTLD_NOW
+
+        // Also a cool flag. But windows does not have an equivalent.
+        | RTLD_GLOBAL
+
+        // Kinda cheecky but works.
+        | (this->Fetched.bDynUnloadable ? 0 : RTLD_NODELETE)
+        );
+
     if (char const* Error{ ::dlerror() })
     {
         LOG_ERROR(LogForeign, "Failed to dlopen library [{}]: {}.", this->BinPath, Error)
@@ -91,6 +105,12 @@ void LLoadedPlugin::PrepareLibraryClose(const EPluginShutdownReason::Type InReas
         return;
     }
 
+    if (this->Fetched.bDynUnloadable == false)
+    {
+        LOG_ERROR(LogForeign, "Plugin [{}] is not marked as unloadable.", this->GetAbsolutePath())
+        return;
+    }
+
     if (this->Lifetime.get() != nullptr)
     {
         this->Lifetime->OnPrepareShutdown(InReason);
@@ -112,6 +132,12 @@ EPluginLoadReturnCode::Type LLoadedPlugin::CloseLibrary(const EPluginShutdownRea
     {
         check( this->NativeHandle == nullptr )
         return EPluginLoadReturnCode::NotLoaded;
+    }
+
+    if (this->Fetched.bDynUnloadable == false)
+    {
+        LOG_ERROR(LogForeign, "Plugin [{}] is not marked as unloadable.", this->GetAbsolutePath())
+        return EPluginLoadReturnCode::Failure;
     }
 
     check( this->NativeHandle )

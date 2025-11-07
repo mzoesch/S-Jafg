@@ -17,7 +17,7 @@ struct LInputActionValue;
 DECLARE_JAFG_CLASS()
 class JCoreInputSubsystem final : public JLocalEgoSubsystem
 {
-    GENERATED_CLASS_BODY()
+    GENERATED_CLASS_BODY(ENGINE_API)
 
 protected:
 

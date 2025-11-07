@@ -21,7 +21,7 @@ public:
 };
 
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactoryInput_Vector3)
-class WInput_Vector3 : public WHButton
+class ENGINE_API WInput_Vector3 : public WHButton
 {
     GENERATED_CLASS_BODY()
 

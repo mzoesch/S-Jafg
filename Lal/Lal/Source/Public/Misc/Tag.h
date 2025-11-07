@@ -7,7 +7,7 @@
 namespace Lal
 {
 
-template <std::unsigned_integral T, LSize Alignment = alignof(T)>
+template<std::unsigned_integral T, LSize Alignment = alignof(T)>
 struct TTag
 {
     template <typename TTag, typename TAllocator>
@@ -51,7 +51,7 @@ private:
     T Value;
 };
 
-template <typename TTag, typename TAllocator = TArray<LString>>
+template<typename TTag, typename TAllocator = TArray<LString>>
 struct TTagRegistry
 {
     using TagType   = TTag;

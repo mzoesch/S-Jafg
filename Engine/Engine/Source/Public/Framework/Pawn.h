@@ -30,21 +30,31 @@ public:
     virtual void Tick(const float DeltaTime) override;
     virtual void EndLife() override;
 
-    FORCEINLINE auto IsPossessed() const -> bool { return this->OwningController != nullptr; }
-                bool IsPossessedLocally() const;
-                LLocalEgo* GetLocalEgoIfPossessed() const;
-    FORCEINLINE LLocalEgo* GetLocalEgoIfPossessedChecked() const { LLocalEgo* Out = this->GetLocalEgoIfPossessed(); check( Out ) return Out; }
-    FORCEINLINE LLocalEgo* GetLocalEgoIfPossessedAsserted() const { LLocalEgo* Out = this->GetLocalEgoIfPossessed(); jassert( Out ) return Out; }
-
-    FORCEINLINE APersonaController* GetOwningController() noexcept { return this->OwningController; }
-    FORCEINLINE APersonaController const* GetOwningController() const noexcept { return this->OwningController; }
-    virtual void SetOwningController(APersonaController* InNew);
-
     FORCEINLINE bool IsEyeValid() const noexcept { return this->Eye.IsOwningPawnValid(); }
     FORCEINLINE LEye& GetEye() noexcept { return this->Eye; }
     FORCEINLINE LEye const& GetEye() const noexcept { return this->Eye; }
 
-    void OnOngoingMovementInput(LInputActionValue& InValue);
+    FORCEINLINE LVector const& GetRelativeFront() const noexcept { return this->RelativeFront; }
+    FORCEINLINE LVector const& GetRelativeRight() const noexcept { return this->RelativeRight; }
+    FORCEINLINE LVector const& GetRelativeUp() const noexcept { return this->RelativeUp; }
+
+    FORCEINLINE bool IsPossessed() const noexcept { return this->OwningController != nullptr; }
+    bool IsPossessedLocally() const noexcept;
+    LLocalEgo* GetLocalEgoIfPossessed() const noexcept;
+    FORCEINLINE LLocalEgo* GetLocalEgoIfPossessedChecked() const noexceptcheck { LLocalEgo* Out{ this->GetLocalEgoIfPossessed() }; check( Out ) return Out; }
+    FORCEINLINE LLocalEgo* GetLocalEgoIfPossessedAsserted() const { LLocalEgo* Out{ this->GetLocalEgoIfPossessed() }; jassert( Out ) return Out; }
+
+    FORCEINLINE APersonaController* GetOwningController() noexcept { return this->OwningController; }
+    FORCEINLINE APersonaController const* GetOwningController() const noexcept { return this->OwningController; }
+    FORCEINLINE APersonaController* GetOwningControllerChecked() noexceptcheck { check( this->IsPossessed() ) return this->OwningController; }
+    FORCEINLINE APersonaController const* GetOwningControllerChecked() const noexceptcheck { check( this->IsPossessed() ) return this->OwningController; }
+    FORCEINLINE APersonaController* GetOwningControllerAsserted() noexceptcheck { jassert( this->IsPossessed() ) return this->OwningController; }
+    FORCEINLINE APersonaController const* GetOwningControllerAsserted() const noexceptcheck { jassert( this->IsPossessed() ) return this->OwningController; }
+    virtual void SetOwningController(APersonaController* InNew);
+
+    FORCEINLINE void SetMovementSpeed(const f32 InMovementSpeed) noexcept { this->MovementSpeed = InMovementSpeed; }
+    FORCEINLINE f32 GetMovementSpeed() const noexcept { return this->MovementSpeed; }
+
     void OnOngoingRotationInput(LInputActionValue& InValue);
     void OnOngoingVelocityChange(LInputActionValue& InValue);
     void OnOngoingPrimaryInput(LInputActionValue& InValue);

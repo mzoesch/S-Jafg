@@ -1,10 +1,10 @@
 // Copyright mzoesch. All rights reserved.
 
 #include "Svw/SvwSupremePolicies.h"
-#include "Svw/SvwPawn.h"
+#include "Svw/JgcPawn.h"
 
 Jgc::JSvwSupremePolicies::JSvwSupremePolicies(Jafg::LCxxObjectInitializer const& ObjectInitializer)
-    : Jafg::JSupremePolicies(ObjectInitializer)
+    : JSupremePolicies(ObjectInitializer)
 {
-    this->DefaultPawnClass = ASvwPawn::StaticClass();
+    this->DefaultPawnClass = AJgcPawn::StaticClass();
 }

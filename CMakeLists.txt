@@ -115,9 +115,12 @@ set(JAFG_MODULE_TYPE_PLUGIN     "plugin")
 #     endif()
 #
 # You may set the following variables before calling this macro:
-#   this_plugin_identifier:             Set a custom identifier for your module.
-#   this_plugin_lifetime_identifier:    Set a custom lifetime identifier for your module.
-#   this_plugin_friendly_name:          Set a custom friendly name for your module.
+#   this_plugin_identifier:             Set a custom identifier for your module. Default is [_scoped_module_name].
+#   this_plugin_lifetime_identifier:    Set a custom lifetime identifier for your module. Default is [this_plugin_identifier].
+#   this_plugin_friendly_name:          Set a custom friendly name for your module. Default is [_scoped_module_name].
+#   this_plugin_description:            Set a custom description for your module. Default is [""].
+#   this_plugin_author:                 Set a custom author for your module. Default is ["Anonymous"].
+#   this_plugin_supports_dyn_unload:    Set to false if your module does not support dynamic unloading at runtime. Default is [true].
 #
 # @see Examples can be found at "Engine/Engine/CMakeLists.txt" or at "Plugins/Jgc/CMakeLists.txt".
 #

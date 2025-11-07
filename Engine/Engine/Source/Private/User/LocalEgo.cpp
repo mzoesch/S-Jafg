@@ -32,9 +32,9 @@ void Jafg::LLocalEgo::Initialize()
 
             for (auto& Surface : GEngine->GetLocalEgo().GetFrontend().GetSurfaces())
             {
-                if (auto* Controller{ Surface->GetPossessed() })
+                if (auto* Controller{ Surface->GetController() })
                 {
-                    if (auto* Pawn{ Controller->GetPossessedPawn() })
+                    if (auto* Pawn{ Controller->GetPawn() })
                     {
                         Pawn->GetEye().SetNearFrustum(NearFrustum);
 
@@ -58,9 +58,9 @@ void Jafg::LLocalEgo::Initialize()
 
             for (auto& Surface : GEngine->GetLocalEgo().GetFrontend().GetSurfaces())
             {
-                if (auto* Controller{ Surface->GetPossessed() })
+                if (auto* Controller{ Surface->GetController() })
                 {
-                    if (auto* Pawn{ Controller->GetPossessedPawn() })
+                    if (auto* Pawn{ Controller->GetPawn() })
                     {
                         Pawn->GetEye().SetFarFrustum(FarFrustum);
                     }
@@ -74,10 +74,13 @@ void Jafg::LLocalEgo::Initialize()
     })});
     this->VariableHandle_VerifyChunks = Cli.RegisterVariable({"VerifyChunks", LCliType::Type("Bool"), "true"});
 
+    this->Frontend.Initialize(&this->Outer);
+
     this->Collection.InitializeDeferred(&this->Outer);
     this->Collection.InitializeSubsystems<JLocalEgoSubsystem>();
 
-    this->Frontend.Initialize(&this->Outer);
+    this->Frontend.GetCollection()->InitializeDeferred(&this->Outer);
+    this->Frontend.GetCollection()->InitializeSubsystems<JFrontendSubsystem>();
 
     return;
 }
@@ -91,7 +94,7 @@ void Jafg::LLocalEgo::Tick(const float DeltaTime)
         LOG_TRACE(LogWidgetFramework, "Purged {} widget factories.", PurgedFactories)
     }
 
-    this->Frontend.Tick(&this->UserInput);
+    this->Frontend.Tick();
 
     return;
 }

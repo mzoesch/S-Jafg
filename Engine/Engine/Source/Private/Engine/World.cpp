@@ -100,10 +100,8 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
         this->SupremePolicies = NewObject<JSupremePolicies>(this);
     }
 
-    if (this->SupremePolicies)
-    {
-        this->SupremePolicies->OnWorldPreInit();
-    }
+    check( this->SupremePolicies )
+    this->SupremePolicies->OnWorldPreInit();
 
     auto& Track{ GEngine->GetTrackFromWorld(this) };
     if (Track.OnWorldPreInit.IsValid())
@@ -134,18 +132,17 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
 
         continue;
     }
-    this->bFinishedActors = true;
 #if !IN_SHIPPING
     LOG_VERBOSE(LogWorld, "Initialized [{}] actors.", ActorCount)
 #endif /* !IN_SHIPPING */
 
+    this->RealTimeWhenWorldStarted = static_cast<f32>(Application::GetDeltaSinceStaticStorageInitialization());
+    check( this->RealTimeWhenWorldStarted >= this->RealTimeWhenWorldWasLaunched )
+
     this->Collection.InitializeDeferred(this);
     this->Collection.InitializeSubsystems<JWorldSubsystem>();
 
-    if (this->SupremePolicies)
-    {
-        this->SupremePolicies->OnWorldLateInit();
-    }
+    this->SupremePolicies->OnWorldLateInit();
 
     if (Track.OnWorldLateInit.IsValid())
     {
@@ -155,12 +152,30 @@ void Jafg::LWorld::InitializeWorld(TOptional<LLevel> const& Level /* = {} */, LS
 
     this->GetEngine().OnWorldBeginLife.Broadcast(this);
 
-    if (this->SupremePolicies)
-    {
-        this->SupremePolicies->OnWorldPostInit();
-    }
+    this->SupremePolicies->OnWorldPostInit();
 
     this->WorldState = EWorldState::Running;
+
+    if (this->SupremePolicies->bCreatePawn)
+    {
+        for (auto& Obj : this->GetEmployees())
+        {
+            if (APersonaController* Pc{ Obj->As<APersonaController>() })
+            {
+                if (Pc->IsPawnValid())
+                {
+                    continue;
+                }
+
+                auto* Pawn{ this->SupremePolicies->SpawnDeferredPawnForPersonaController(*Pc) };
+                check( Pawn )
+                Pc->PossessPawn(Pawn);
+                MakeDeferredActorFinal(Pawn);
+            }
+
+            continue;
+        }
+    }
 
     return;
 }
@@ -356,7 +371,7 @@ Jafg::APersonaController* Jafg::LWorld::Login(
             LOG_WARNING(LogWorld,
                 "Surface [{}] already possesses persona controller [{}]. Rejecting login request.",
                 Persona.Surface->GetHumanReadableName(),
-                Persona.Surface->GetPossessed()->GetNameAsString()
+                Persona.Surface->GetController()->GetNameAsString()
                 )
 
             if (OutRejectionReason)
@@ -364,7 +379,7 @@ Jafg::APersonaController* Jafg::LWorld::Login(
                 *OutRejectionReason = Lal::SprintF(
                     "Surface [{}] already possesses persona controller [{}].",
                     Persona.Surface->GetHumanReadableName(),
-                    Persona.Surface->GetPossessed()->GetNameAsString()
+                    Persona.Surface->GetController()->GetNameAsString()
                     );
             }
 
@@ -385,7 +400,7 @@ Jafg::APersonaController* Jafg::LWorld::Login(
         //# Sideeffect from creation, we do not really care.
         if (Persona.Surface->DoesPossess())
         {
-            check( Persona.Surface->GetPossessed() == Pc )
+            check( Persona.Surface->GetController() == Pc )
             check( Pc->IsSurfaceValid() )
         }
         else
@@ -394,7 +409,7 @@ Jafg::APersonaController* Jafg::LWorld::Login(
         }
     }
 
-    if (this->bFinishedActors)
+    if (this->RealTimeWhenWorldStarted > 0)
     {
         this->SupremePolicies->OnPersonaControllerCreated(*Pc);
     }
@@ -497,7 +512,7 @@ Jafg::APersonaController* Jafg::LWorld::GetThisWorldsLocalPersonaControllerSlow(
 {
     for (auto& Surface : this->GetLocalEgo().GetFrontend().GetSurfaces())
     {
-        if (auto* Possessed{ Surface->GetPossessed() })
+        if (auto* Possessed{ Surface->GetController() })
         {
             if (Possessed->GetWorld() == this)
             {
@@ -513,7 +528,7 @@ Jafg::APersonaController const* Jafg::LWorld::GetThisWorldsLocalPersonaControlle
 {
     for (auto& Surface : this->GetLocalEgo().GetFrontend().GetSurfaces())
     {
-        if (auto* Possessed{ Surface->GetPossessed() })
+        if (auto* Possessed{ Surface->GetController() })
         {
             if (Possessed->GetWorld() == this)
             {
@@ -608,6 +623,7 @@ void Jafg::LWorld::OnTearDown()
     check( this->TickableObjectsPutMutex == false )
 
     this->RealTimeWhenWorldWasLaunched = -1.0f;
+    this->RealTimeWhenWorldStarted = -1.0f;
 
     LClassOuter::OnTearDown();
 

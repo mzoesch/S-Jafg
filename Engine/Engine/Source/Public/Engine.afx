@@ -58,6 +58,8 @@
 #include "User/Input/RawInput.h"
 #include "User/Input/Replies.h"
 #include "User/Input/Events.h"
+#include "User/Input/InputActionCategory.h"
+#include "User/Input/InputActionValue.h"
 
 
 /*----------------------------------------------------------------------------

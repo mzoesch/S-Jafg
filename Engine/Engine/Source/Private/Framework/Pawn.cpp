@@ -20,6 +20,8 @@ void Jafg::APawn::Tick(const f32 DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+    this->UpdateRelativeVectors();
+
     algo::orphan(&this->CurrentGenericTraceResults);
     const LVector TraceStart = this->GetTranslation();
     const LVector TraceEnd   = this->GetTranslation() + this->GetRotator().ToVector() * 5.0f;
@@ -58,12 +60,12 @@ void Jafg::APawn::EndLife()
     return;
 }
 
-bool Jafg::APawn::IsPossessedLocally() const
+bool Jafg::APawn::IsPossessedLocally() const noexcept
 {
     return this->OwningController && this->OwningController->IsSurfaceValid();
 }
 
-Jafg::LLocalEgo* Jafg::APawn::GetLocalEgoIfPossessed() const
+Jafg::LLocalEgo* Jafg::APawn::GetLocalEgoIfPossessed() const noexcept
 {
     if (this->OwningController)
     {
@@ -83,18 +85,6 @@ void Jafg::APawn::SetOwningController(APersonaController* InNew)
         this->Eye.SetOwningPawn(this);
     }
 #endif /* WITH_LOCAL_LAYER */
-
-    return;
-}
-
-void Jafg::APawn::OnOngoingMovementInput(LInputActionValue& InValue)
-{
-    LVector TranslationDelta = LVector::Zero();
-    TranslationDelta += this->RelativeFront * (InValue.Get<LVector3>().X * this->MovementSpeed);
-    TranslationDelta += this->RelativeRight * (InValue.Get<LVector3>().Y * this->MovementSpeed);
-    TranslationDelta += LVector::UpVector   * (InValue.Get<LVector3>().Z * this->MovementSpeed);
-
-    this->AddTranslation(TranslationDelta);
 
     return;
 }

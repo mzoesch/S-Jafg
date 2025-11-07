@@ -468,7 +468,7 @@ typedef TFunction<LReply(WNode& Widget, LViewport& Viewport, LKeyEvent const& Ke
 //# Generally speaking, inheriting from this class directly is not recommended.
 //#
 DECLARE_JAFG_WIDGET_WITH_FACTORY(TWidgetFactory, ECxxClassFlags::Abstract)
-class WNode : public JCxxClass
+class ENGINE_API WNode : public JCxxClass
 {
     GENERATED_CLASS_BODY()
 
@@ -647,8 +647,8 @@ public:
     FORCEINLINE bool HasViewportDangerous() const noexcept { return this->CachedViewport != nullptr; }
     FORCEINLINE LViewport& GetViewport() noexceptcheck { check( this->CachedViewport ) return *this->CachedViewport; }
     FORCEINLINE LViewport const& GetViewport() const noexceptcheck { check( this->CachedViewport ) return *this->CachedViewport; }
-    ENGINE_API virtual void RecacheViewport() noexcept;
-    ENGINE_API virtual LViewport* GetMostOuterViewport() noexcept;
+    virtual void RecacheViewport() noexcept;
+    virtual LViewport* GetMostOuterViewport() noexcept;
 
     //# Virtual update method for the desired size. Automatically called. Do not call manually.
     virtual void UpdateDesiredSize() const { }
@@ -725,7 +725,7 @@ public:
 
 private:
 
-    ENGINE_API void ConstructInternal() noexcept;
+    void ConstructInternal() noexcept;
 
     bool bAllowTick{ true };
     EWidgetVisibility::Type Visibility{ EWidgetVisibility::TransitiveHitTestInvisible };

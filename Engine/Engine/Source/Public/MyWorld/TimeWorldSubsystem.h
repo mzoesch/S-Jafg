@@ -140,7 +140,7 @@ template <> FORCEINLINE LCliType LCliType::Type<LCliDayTime>() { return LCliType
 //# of 50 (real world) minutes.
 //#
 DECLARE_JAFG_CLASS()
-class JTimeWorldSubsystem final : public JTickableWorldSubsystem
+class ENGINE_API JTimeWorldSubsystem final : public JTickableWorldSubsystem
 {
     GENERATED_CLASS_BODY()
 
@@ -175,11 +175,11 @@ public:
     FORCEINLINE LDaytime GetMaxDayTime() const noexcept { return this->MaxDaytime; }
     FORCEINLINE void SetMaxDayTime(const LDaytime InMaxTime) noexcept { this->MaxDaytime = InMaxTime; }
 
-    ENGINE_API void SetDayTime(const ENamedDayTime::Type InNamedDayTime, const EDayTimeAddBehavior::Type InAddType = EDayTimeAddBehavior::Clamp);
-    ENGINE_API void SetDayTime(const LDaytime InDayTime, const EDayTimeAddBehavior::Type InAddType = EDayTimeAddBehavior::Clamp);
-    ENGINE_API void SetDayCycle(const LDayCycle InDayCycle);
+    void SetDayTime(const ENamedDayTime::Type InNamedDayTime, const EDayTimeAddBehavior::Type InAddType = EDayTimeAddBehavior::Clamp);
+    void SetDayTime(const LDaytime InDayTime, const EDayTimeAddBehavior::Type InAddType = EDayTimeAddBehavior::Clamp);
+    void SetDayCycle(const LDayCycle InDayCycle);
 
-    ENGINE_API LDaytime GetDayTimeFromNamedTimes(const ENamedDayTime::Type InNamedDayTime) const;
+    LDaytime GetDayTimeFromNamedTimes(const ENamedDayTime::Type InNamedDayTime) const;
 
     FORCEINLINE LDaytime  GetDayTime() const noexcept { return this->Daytime; }
     FORCEINLINE LDayCycle GetDayCycle() const noexcept { return this->DayCycle; }
@@ -191,10 +191,10 @@ public:
 
     FORCEINLINE bool  IsSunAstronIdentifierValid() const noexcept { return this->SunAstronIdentifier.IsValid(); }
     FORCEINLINE const LUuid&   GetSunAstronIdentifier() const noexcept { return this->SunAstronIdentifier; }
-    ENGINE_API  const LAstron* GetSunAstron() const;
+                const LAstron* GetSunAstron() const;
     FORCEINLINE const LAstron* GetSunAstronChecked() const { const LAstron* Out { this->GetSunAstron() }; check( Out ) return Out; }
     FORCEINLINE const LAstron* GetSunAstronAsserted() const { const LAstron* Out { this->GetSunAstron() }; jassert( Out ) return Out; }
-    ENGINE_API        LAstron* GetMutableSunAstron();
+                      LAstron* GetMutableSunAstron();
     FORCEINLINE       LAstron* GetMutableSunAstronChecked() { LAstron* Out { this->GetMutableSunAstron() }; check( Out ) return Out; }
     FORCEINLINE       LAstron* GetMutableSunAstronAsserted() { LAstron* Out { this->GetMutableSunAstron() }; jassert( Out ) return Out; }
 
@@ -212,17 +212,17 @@ public:
     //# If the world-day is only 12 milliseconds long then this would return at the time of 00:00:00:006
     //# 12:00:00:000 o'clock.
     //#
-    ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth(E_HHMMSS) const;
-    ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth(E_HHMM) const;
-    ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth(E_MMSS) const;
-    ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth(E_HH) const;
-    ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth(E_MM) const;
-    ENGINE_API LString GetInterpolatedTimeAsItWouldBeOnEarth(E_SS) const;
+    LString GetInterpolatedTimeAsItWouldBeOnEarth(E_HHMMSS) const;
+    LString GetInterpolatedTimeAsItWouldBeOnEarth(E_HHMM) const;
+    LString GetInterpolatedTimeAsItWouldBeOnEarth(E_MMSS) const;
+    LString GetInterpolatedTimeAsItWouldBeOnEarth(E_HH) const;
+    LString GetInterpolatedTimeAsItWouldBeOnEarth(E_MM) const;
+    LString GetInterpolatedTimeAsItWouldBeOnEarth(E_SS) const;
 
     //#
     //# The day of the month with the year, as it would be on Earth.
     //#
-    ENGINE_API LString GetDayCycleAsItWouldBeOnEarth(E_DDMMYYYY) const;
+    LString GetDayCycleAsItWouldBeOnEarth(E_DDMMYYYY) const;
 
 private:
 

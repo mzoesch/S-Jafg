@@ -10,6 +10,19 @@ macro(_jafg_add_module
     set(_scoped_module_name "${module_name}")
 endmacro()
 
+macro(_jafg_meta_plugin_flag
+    flag
+    default_value
+    )
+    if(DEFINED ${flag})
+        set(_${flag} ${${flag}})
+        unset(${flag} PARENT_SCOPE)
+    else()
+        set(_${flag} ${default_value})
+    endif()
+    message(STATUS "[Meta Flag] ${flag} = ${_${flag}}")
+endmacro()
+
 macro(_jafg_add_flag_if_specified
     flag
     cpp_name
@@ -358,24 +371,12 @@ function(_jafg_add_module_impl
                 set(suffix "${CMAKE_EXECUTABLE_SUFFIX}")
             endif()
 
-            if(DEFINED this_plugin_identifier)
-                set(_this_plugin_identifier "${this_plugin_identifier}")
-                unset(this_plugin_identifier PARENT_SCOPE)
-            else()
-                set(_this_plugin_identifier "${module_name}")
-            endif()
-            if(DEFINED this_plugin_lifetime_identifier)
-                set(_this_plugin_lifetime_identifier "${this_plugin_lifetime_identifier}")
-                unset(this_plugin_lifetime_identifier PARENT_SCOPE)
-            else()
-                set(_this_plugin_lifetime_identifier "${_this_plugin_identifier}")
-            endif()
-            if(DEFINED this_plugin_friendly_name)
-                set(_this_plugin_friendly_name "${this_plugin_friendly_name}")
-                unset(this_plugin_friendly_name PARENT_SCOPE)
-            else()
-                set(_this_plugin_friendly_name "${module_name}")
-            endif()
+            _jafg_meta_plugin_flag(this_plugin_identifier "${module_name}")
+            _jafg_meta_plugin_flag(this_plugin_lifetime_identifier ${_this_plugin_identifier})
+            _jafg_meta_plugin_flag(this_plugin_friendly_name "${module_name}")
+            _jafg_meta_plugin_flag(this_plugin_description "")
+            _jafg_meta_plugin_flag(this_plugin_author "Anonymous")
+            _jafg_meta_plugin_flag(this_plugin_supports_dyn_unload "true")
 
             set(_target_root_plugin_jafg_content
 "{
@@ -384,6 +385,9 @@ function(_jafg_add_module_impl
     \"LifetimeIdentifier\": \"${_this_plugin_lifetime_identifier}\",
     \"NativeIdentifier\": \"${module_name}\",
     \"FriendlyName\": \"${_this_plugin_friendly_name}\",
+    \"Description\": \"${_this_plugin_description}\",
+    \"Author\": \"${_this_plugin_author}\",
+    \"bDynUnloadable\": ${_this_plugin_supports_dyn_unload},
     \"Bin\": \"${prefix}${module_name}${suffix}\"
 }
 ")

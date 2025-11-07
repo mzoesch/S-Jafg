@@ -55,10 +55,8 @@ struct LLoadedPlugin;
 
 struct LFetchedPlugin final
 {
-    FORCEINLINE LFetchedPlugin() = default;
-
-    //# The absolute path to the .jaf.root.plugin config file.
-    LPath   AbsolutePath;
+    //# The absolute path to the .jafg.root.plugin config file.
+    LPath AbsolutePath;
 
     //# Version as specified in the config.
     LString Version;
@@ -86,6 +84,21 @@ struct LFetchedPlugin final
     //# @note If not specified, the #Identifier is used.
     //#
     LString FriendlyName;
+
+    //#
+    //# Optional description of the plugin used for display purposes only.
+    //#
+    LString Description;
+
+    //#
+    //# Author of the plugin used for display purposes only.
+    //#
+    LString Author;
+
+    //#
+    //# Whether this plugin can be dynamically unloaded at runtime.
+    //#
+    bool bDynUnloadable{ true };
 
     //# Relative (to the config file) or absolute path to the binary implementing this plugin.
     LPath Bin;

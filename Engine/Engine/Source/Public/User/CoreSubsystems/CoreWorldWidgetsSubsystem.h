@@ -29,13 +29,9 @@ protected:
 
 public:
 
-    FORCEINLINE bool IsDebugScreenValid() const { return this->DebugScreen != nullptr; }
     FORCEINLINE bool IsCrosshairValid() const { return this->Crosshair != nullptr; }
     FORCEINLINE bool IsConsoleScreenValid() const { return this->ConsoleScreen != nullptr; }
     FORCEINLINE bool IsPauseScreenValid() const { return this->PauseScreen != nullptr; }
-
-    FORCEINLINE WDebugScreen* GetDebugScreen() { return this->DebugScreen; }
-    FORCEINLINE const WDebugScreen* GetDebugScreen() const { return this->DebugScreen; }
 
     FORCEINLINE WDebugMenu* GetDebugMenu() { return this->DebugMenu; }
     FORCEINLINE const WDebugMenu* GetDebugMenu() const { return this->DebugMenu; }
@@ -51,7 +47,6 @@ public:
 
 private:
 
-    CDR_NULL_PTR(WDebugScreen*) DebugScreen{ nullptr };
     CDR_NULL_PTR(WDebugMenu*) DebugMenu{ nullptr };
     CDR_NULL_PTR(WCrosshair*) Crosshair{ nullptr };
     CDR_NULL_PTR(WConsoleScreen*) ConsoleScreen{ nullptr };

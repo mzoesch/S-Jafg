@@ -14,7 +14,7 @@ struct LDebugTracePlaneVisualParams final
     u8 Thickness = 1;
 };
 
-class LDebugTracePlane final : public LTemporalWorldObject
+class ENGINE_API LDebugTracePlane final : public LTemporalWorldObject
 {
 public:
 

@@ -1,7 +1,6 @@
 // Copyright mzoesch. All rights reserved.
 
 #pragma once
-#include "CoreContainers.h"
 
 namespace Lal
 {

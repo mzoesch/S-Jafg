@@ -1,10 +1,11 @@
 // Copyright mzoesch. All rights reserved.
 
-#include "Specs.h"
-#include "RegisteredProgramArguments.h"
 #include <vector>
 #include <string>
 #include <mutex>
+#include "Specs.h"
+#include "RegisteredProgramArguments.h"
+#include "Memory/Llmm.h"
 
 namespace JafgCore
 {
@@ -18,3 +19,18 @@ CORE_API std::mutex GLongLiquidLogsMutex;
 CORE_API std::vector<std::tuple<std::string, std::string>> GLongLiquidLogs;
 
 } /* ~Namespace JafgCore */
+
+void* LLlmm::Alloc(std::size_t Size, std::align_val_t) noexcept
+{
+    return std::malloc(Size);
+}
+
+void LLlmm::Free(void* Ptr) noexcept
+{
+    std::free(Ptr);
+}
+
+void* LLlmm::Realloc(void* Ptr, std::size_t NewSize, std::align_val_t) noexcept
+{
+    return std::realloc(Ptr, NewSize);
+}

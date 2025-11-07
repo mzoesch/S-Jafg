@@ -6,6 +6,7 @@
 #include "User/LocalEgo.h"
 #include "User/Input/InputAction.h"
 #include "User/Input/InputActionValue.h"
+#include "Stats/Stats.h"
 
 LString Jafg::LexToString(EInputActionCategory::Type InType)
 {
@@ -21,122 +22,165 @@ LString Jafg::LexToString(EInputActionCategory::Type InType)
     return "Invalid";
 }
 
-bool Jafg::LUserInput::IsNewDown(const LKey Key) const
+void Jafg::LUserInput::DispatchInputDelegates(LSurface& Surface)
 {
-    return this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->IsNewKeyDown(Key);
-}
+    TArray TriggeredKeys{ Surface.GetTriggeredKeys() };
+    TArray OngoingKeys{ Surface.GetOngoingKeys() };
+    TArray CompletedKeys{ Surface.GetCompletedKeys() };
 
-void Jafg::LUserInput::DispatchInputDelegates()
-{
-    TArray<LRawInput> TriggeredKeys = this->GetTriggeredKeys();
-    TArray<LRawInput> OngoingKeys   = this->GetOngoingKeys();
-    TArray<LRawInput> CompletedKeys = this->GetCompletedKeys();
-
-    this->DispatchInputDelegatesForKeyCategory(&TriggeredKeys, EInputActionTrigger::Triggered);
-    this->DispatchInputDelegatesForKeyCategory(&OngoingKeys,   EInputActionTrigger::Ongoing);
-    this->DispatchInputDelegatesForKeyCategory(&CompletedKeys, EInputActionTrigger::Completed);
+    this->DispatchInputDelegatesForKeyCategory(Surface, &TriggeredKeys, EInputActionTrigger::Triggered);
+    this->DispatchInputDelegatesForKeyCategory(Surface, &OngoingKeys,   EInputActionTrigger::Ongoing);
+    this->DispatchInputDelegatesForKeyCategory(Surface, &CompletedKeys, EInputActionTrigger::Completed);
 
     return;
 }
 
-Jafg::LLocalEgo& Jafg::LUserInput::GetLocalEgo()
+bool Jafg::LUserInput::ActivateContext(LName Name, LSize Where /* = INDEX_NONE */) noexcept
 {
-    check( GEngine && "Absence of GEngine is undefined behavior here." )
-    check( &GEngine->GetLocalEgo().GetUserInput() == this )
-    return GEngine->GetLocalEgo();
-}
+    check( Name.IsSet() )
 
-Jafg::LLocalEgo const& Jafg::LUserInput::GetLocalEgo() const
-{
-    check( GEngine && "Absence of GEngine is undefined behavior here." )
-    check( &GEngine->GetLocalEgo().GetUserInput() == this )
-    return GEngine->GetLocalEgo();
-}
-
-const Jafg::LInputAction* Jafg::LUserInput::RegisterAction(LInputAction&& InAction)
-{
-    if (algo::contains(this->RegisteredActions, InAction.GetName(), &LInputAction::GetName))
+    if (algo::contains(this->ActiveContexts, Name))
     {
-        LOG_WARNING(LogUserInput, "Action [{}] was already registered.", InAction.GetName())
-        return nullptr;
+        LOG_VERBOSE(LogUserInput, "Context [{}] is already active. Cannot activate.", Name)
+        return false;
     }
 
-    this->RegisteredActions.emplace_back(std::make_unique<LInputAction>(std::move(InAction)));
-
-    return this->RegisteredActions.back().get();
-}
-
-Jafg::LUserInputContext* Jafg::LUserInput::RegisterContext(LUserInputContext&& Context, const bool bMakeActive /* = false */)
-{
-    if (algo::contains(this->RegisteredContexts, Context, algo::unique_deref{}))
+    LOG_VERBOSE(LogUserInput, "Activating context [{}].", Name)
+    if (Where == static_cast<decltype(Where)>(INDEX_NONE) || Where >= this->ActiveContexts.size())
     {
-        LOG_WARNING(LogUserInput, "Context [{}] was already registered.", Context.GetName())
-        return nullptr;
+        this->ActiveContexts.emplace_back(Name);
+    }
+    else
+    {
+        this->ActiveContexts.insert(this->ActiveContexts.begin() + Where, Name);
     }
 
-    this->RegisteredContexts.emplace_back(std::make_unique<LUserInputContext>(std::move(Context)));
-
-    if (bMakeActive)
-    {
-        this->ActiveContexts.emplace_back(this->RegisteredContexts.back().get());
-    }
-
-    return this->RegisteredContexts.back().get();
+    return true;
 }
 
-bool Jafg::LUserInput::ActivateContext(LUserInputContext* InContext)
+bool Jafg::LUserInput::ActivateContexts(TArray<LUserInputContext const*> const& Contexts, LSize Where) noexcept
 {
-    if (InContext)
+    bool bOut{ false };
+
+    algo::for_each(Contexts, [this, &Where, &bOut](LUserInputContext const* Context)
     {
-        if (algo::contains(this->ActiveContexts, InContext))
+        if (this->ActivateContext(Context->GetName(), Where))
         {
-            LOG_VERBOSE(LogUserInput, "Context [{}] is already active. Cannot activate.", InContext->GetName())
-            return false;
+            bOut = true;
+            ++Where;
         }
 
-        LOG_VERBOSE(LogUserInput, "Activating context [{}].", InContext->GetName())
-        this->ActiveContexts.emplace_back(InContext);
-        return true;
-    }
+        return;
+    });
 
-    return false;
+    return bOut;
 }
 
-bool Jafg::LUserInput::DeactivateContext(LUserInputContext* InContext)
+bool Jafg::LUserInput::ActivateContexts(TArray<LName> const& Names, LSize Where) noexcept
 {
-    if (InContext)
+    bool bOut{ false };
+
+    algo::for_each(Names, [this, &Where, &bOut](LName Name)
     {
-        if (algo::contains(this->ActiveContexts, InContext) == false)
+        if (this->ActivateContext(Name, Where))
         {
-            LOG_VERBOSE(LogUserInput, "Context [{}] is not active. Cannot deactivate.", InContext->GetName())
-            return false;
+            bOut = true;
+            ++Where;
         }
 
-        LOG_VERBOSE(LogUserInput, "Deactivating context [{}].", InContext->GetName())
-        const i32 Removed = algo::erase(&this->ActiveContexts, InContext);
-        check( Removed == 1 )
-        return true;
-    }
+        return;
+    });
 
-    return false;
+    return bOut;
 }
 
-
-i32 Jafg::LUserInput::DeactivateAllContexts(TArray<LUserInputContext*>* OutActiveContexts /* = nullptr */)
+bool Jafg::LUserInput::ActivateContexts(TArray<LStringView> const& Names, LSize Where) noexcept
 {
-    const auto Out { this->ActiveContexts.size() };
+    bool bOut{ false };
 
-    if (OutActiveContexts)
+    algo::for_each(Names, [this, &Where, &bOut](LStringView Name)
     {
-        *OutActiveContexts = std::move(this->ActiveContexts);
-    }
+        if (this->ActivateContext(GET_NAME(Name), Where))
+        {
+            bOut = true;
+            ++Where;
+        }
 
-    LOG_VERBOSE(LogUserInput, "Deactivating all contexts [{}].", Out)
-    algo::orphan(&this->ActiveContexts);
-    return static_cast<i32>(Out);
+        return;
+    });
+
+    return bOut;
 }
 
-void Jafg::LUserInput::PushContexts(const bool bEmpty /* = true */)
+bool Jafg::LUserInput::DeactivateContext(LName Name) noexcept
+{
+    check( Name.IsSet() )
+
+    if (algo::contains(this->ActiveContexts, Name) == false)
+    {
+        LOG_VERBOSE(LogUserInput, "Context [{}] is not active. Cannot deactivate.", Name)
+        return false;
+    }
+
+    LOG_VERBOSE(LogUserInput, "Deactivating context [{}].", Name)
+    auto Removed{ algo::erase(&this->ActiveContexts, Name) };
+    check( Removed == 1 )
+
+    return true;
+}
+
+bool Jafg::LUserInput::DeactivateContexts(TArray<LUserInputContext const*> const& Contexts) noexcept
+{
+    bool bOut { false };
+
+    algo::for_each(Contexts, [this, &bOut](LUserInputContext const* InContext)
+    {
+        if (this->DeactivateContext(InContext->GetName()))
+        {
+            bOut = true;
+        }
+
+        return;
+    });
+
+    return bOut;
+}
+
+bool Jafg::LUserInput::DeactivateContexts(TArray<LName> const& Contexts) noexcept
+{
+    bool bOut{ false };
+
+    algo::for_each(Contexts, [this, &bOut](LName Name)
+    {
+        if (this->DeactivateContext(Name))
+        {
+            bOut = true;
+        }
+
+        return;
+    });
+
+    return bOut;
+}
+
+bool Jafg::LUserInput::DeactivateContexts(TArray<LStringView> const& Contexts) noexcept
+{
+    bool bOut{ false };
+
+    algo::for_each(Contexts, [this, &bOut](LStringView Name)
+    {
+        if (this->DeactivateContext(GET_NAME(Name)))
+        {
+            bOut = true;
+        }
+
+        return;
+    });
+
+    return bOut;
+}
+
+void Jafg::LUserInput::PushContexts(const bool bEmpty /* = true */) noexcept
 {
     if (bEmpty)
     {
@@ -145,7 +189,7 @@ void Jafg::LUserInput::PushContexts(const bool bEmpty /* = true */)
     }
     else
     {
-        TArray<LUserInputContext*> Ctx; Ctx = this->ActiveContexts;
+        TArray Ctx{ this->ActiveContexts };
         this->ContextStack.emplace_back(std::move(Ctx));
         check( this->ContextStack.back().size() == this->ActiveContexts.size() )
     }
@@ -155,7 +199,7 @@ void Jafg::LUserInput::PushContexts(const bool bEmpty /* = true */)
     return;
 }
 
-bool Jafg::LUserInput::PopContexts()
+bool Jafg::LUserInput::PopContexts() noexcept
 {
     bool bRet;
 
@@ -168,6 +212,7 @@ bool Jafg::LUserInput::PopContexts()
         bRet = true;
 
         this->ActiveContexts = std::move(this->ContextStack.back());
+        check( this->ContextStack.back().empty() )
         this->ContextStack.pop_back();
     }
 
@@ -176,111 +221,58 @@ bool Jafg::LUserInput::PopContexts()
     return bRet;
 }
 
-TArray<Jafg::LRawInput> Jafg::LUserInput::GetTriggeredKeys() const
+void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(LSurface& Surface, TArray<LRawInput>* Inputs, EInputActionTrigger::Type TriggerType)
 {
-    TArray<LRawInput> TriggeredKeys;
+    STAT_QUICK_CYCLE_START(Lal::SprintF("{}{}", LAL_PRETTY_FUNCTION, LexToString(TriggerType)))
 
-    for (const LRawInput& Key : this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys())
+    check( Inputs )
+    check( TriggerType != EInputActionTrigger::None )
+
+    LUserInputRegistry const& Registry{ Surface.GetLocalEgo().GetUserInputRegistry() };
+
+    for (auto ContextName : this->ActiveContexts)
     {
-        if (algo::contains(this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetLastFramePressedKeys(), Key) == false)
+        auto* Context{ Registry.GetContextByNameChecked(ContextName) };
+
+        for (auto const& Action : Context->GetMappedActions())
         {
-            TriggeredKeys.emplace_back(Key);
-        }
-
-        continue;
-    }
-
-    return TriggeredKeys;
-}
-
-const TArray<Jafg::LRawInput>& Jafg::LUserInput::GetOngoingKeys() const
-{
-    return this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys();
-}
-
-TArray<Jafg::LRawInput> Jafg::LUserInput::GetCompletedKeys() const
-{
-    TArray<LRawInput> CompletedKeys;
-
-    for (const LRawInput& Key : this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetLastFramePressedKeys())
-    {
-        if (algo::contains(this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetCurrentlyPressedKeys(), Key) == false)
-        {
-            CompletedKeys.emplace_back(Key);
-        }
-
-        continue;
-    }
-
-    return CompletedKeys;
-}
-
-bool Jafg::LUserInput::HasBufferedPlatformInput() const
-{
-    check( &this->GetLocalEgo().GetUserInput() == this )
-    return this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->HasBufferedPlatformInput();
-}
-
-const TArray<LString>& Jafg::LUserInput::GetBufferedPlatformInput() const
-{
-    check( &this->GetLocalEgo().GetUserInput() == this )
-    return this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetBufferedPlatformInput();
-}
-
-LString Jafg::LUserInput::GetBufferedPlatformInputAsStr() const
-{
-    check( &this->GetLocalEgo().GetUserInput() == this )
-    return this->GetLocalEgo().GetFrontend().GetFocusedSurfaceChecked()->GetBufferedPlatformInputAsStr();
-}
-
-void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(TArray<LRawInput>* InRawInputs, const EInputActionTrigger::Type InActionTriggerType)
-{
-    check( InRawInputs )
-
-    for (LUserInputContext* Context : this->ActiveContexts)
-    {
-        for (const LInputMappedAction& MappedAction : Context->GetMappedActions())
-        {
-            for (const LInputMappedAction::LTrigger& Trigger : MappedAction.Triggers)
+            for (auto const& Trigger : Action.Triggers)
             {
-                if (Trigger.Type != InActionTriggerType)
+                if (Trigger.Type != TriggerType)
                 {
                     continue;
                 }
 
-                LInputActionValue Value = MappedAction.Action->GetCategory();
-
-                for (TArray<LRawInput>::size_type Idx { 0 }; Idx < InRawInputs->size();)
+                LInputActionValue Value{ Registry.GetActionByNameChecked(Action.Action)->GetCategory() };
+                for (auto It{ Inputs->begin() }; It != Inputs->end();)
                 {
-                    const LRawInput& RawInput = (*InRawInputs)[Idx];
-
                     LInputActionValue::Axis3D Magnitude;
 
-                    if (algo::contains(Trigger.Keys, RawInput.Key) == false)
+                    if (algo::contains(Trigger.Keys, It->Key) == false)
                     {
                         if (algo::contains(Trigger.Keys, EKeys::MouseXY) == false)
                         {
-                            ++Idx;
+                            ++It;
                             continue;
                         }
 
-                        if (RawInput.Key == EKeys::MouseX)
+                        if (It->Key == EKeys::MouseX)
                         {
-                            Magnitude = {RawInput.Value, 0.0f, 0.0f};
+                            Magnitude = LInputActionValue::Axis3D{It->Value, 0.0f, 0.0f};
                         }
-                        else if (RawInput.Key == EKeys::MouseY)
+                        else if (It->Key == EKeys::MouseY)
                         {
-                            Magnitude = {0.0f, RawInput.Value, 0.0f};
+                            Magnitude = LInputActionValue::Axis3D{0.0f, It->Value, 0.0f};
                         }
                         else
                         {
-                            ++Idx;
+                            ++It;
                             continue;
                         }
                     }
                     else
                     {
-                        Magnitude = {RawInput.Value, 0.0f, 0.0f};
+                        Magnitude = LInputActionValue::Axis3D{It->Value, 0.0f, 0.0f};
                     }
 
                     for (auto& Modifier : Trigger.Modifiers)
@@ -289,14 +281,14 @@ void Jafg::LUserInput::DispatchInputDelegatesForKeyCategory(TArray<LRawInput>* I
                     }
                     Value += Magnitude;
 
-                    InRawInputs->erase(InRawInputs->begin() + Idx);
+                    Inputs->erase(It);
 
                     continue;
                 }
 
                 if (Value.IsNonZero())
                 {
-                    MappedAction.Callback(Value);
+                    Action.Callback(Surface.GetViewport(), Value);
                 }
 
                 continue;

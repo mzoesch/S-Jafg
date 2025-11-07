@@ -33,7 +33,7 @@ bool Jafg::LOrthographicTextShader::Make(const LName InName, TArray<LShaderCompi
 
     ::FT_Set_Pixel_Sizes(Face, 0, 48);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    for (u8 Ascii{ 0 }; Ascii < 128; ++Ascii)
+    for (FT_ULong Ascii{ 0 }; Ascii < 128; ++Ascii)
     {
         if (::FT_Load_Char(Face, Ascii, FT_LOAD_RENDER))
         {

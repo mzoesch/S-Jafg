@@ -22,13 +22,10 @@ void Jafg::LFrontend::Initialize(LClassOuter* Outer)
     this->FocusedSurface = this->Surfaces.size() - 1;
     check( this->IsFocusedSurfaceValid() )
 
-    this->Collection.InitializeDeferred(Outer);
-    this->Collection.InitializeSubsystems<JFrontendSubsystem>();
-
     return;
 }
 
-void Jafg::LFrontend::Tick(LUserInput* UserInput)
+void Jafg::LFrontend::Tick()
 {
     STAT_CYCLE_FUNCTION()
 
@@ -50,9 +47,9 @@ void Jafg::LFrontend::Tick(LUserInput* UserInput)
 
     if (this->IsFocusedSurfaceValid())
     {
-        if (this->GetFocusedSurface()->GetInputMode() & EInputMode::InputSubSystem)
+        if (auto* Fs{ this->GetFocusedSurface() }; Fs->GetInputMode() & EInputMode::InputSubSystem)
         {
-            UserInput->DispatchInputDelegates();
+            Fs->GetUserInput().DispatchInputDelegates(*Fs);
         }
     }
 
@@ -93,11 +90,6 @@ Jafg::LEngine& Jafg::LFrontend::GetEngine() const noexceptcheck
 Jafg::LLocalEgo& Jafg::LFrontend::GetLocalEgo() const noexceptcheck
 {
     return this->GetEngine().GetLocalEgo();
-}
-
-Jafg::LUserInput& Jafg::LFrontend::GetUserInput() const noexceptcheck
-{
-    return this->GetEngine().GetLocalEgo().GetUserInput();
 }
 
 void Jafg::LFrontend::AddWidget(LViewport* Context, WUserWidget* Widget)

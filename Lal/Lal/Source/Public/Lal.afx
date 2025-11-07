@@ -15,6 +15,7 @@
 
 #include "Runtime/AssertionForward.h"
 #include "Hal/Platform.h"
+#include "Memory/Llmm.h"
 #include "Runtime/Asan.h"
 #include "Core/CoreMacros.h"
 #include "Core/CoreDefines.h"

@@ -17,7 +17,7 @@ class WParent;
 //# user interfaces.
 //#
 DECLARE_JAFG_WIDGET()
-class WUserWidget : public WOverlay
+class ENGINE_API WUserWidget : public WOverlay
 {
     GENERATED_CLASS_BODY()
 
@@ -40,8 +40,8 @@ public:
     virtual auto AddChildAt(const i32 InIndex, WNode* InChild) -> LWidgetSlot* override;
 
     //# Add this widget to the main viewport of the current active local ego.
-    ENGINE_API void AddToViewport(LViewport* InViewport);
-    ENGINE_API void AddToViewportAt(const i32 InIndex, LViewport* InViewport);
+    void AddToViewport(LViewport* InViewport);
+    void AddToViewportAt(const i32 InIndex, LViewport* InViewport);
 
     //# @return The new root.
     template <typename TParent>
