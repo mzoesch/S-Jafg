@@ -13,10 +13,10 @@ public:
 
     typedef LEngineShader Super;
 
-    virtual TArray<LShaderCompileTimeConstant> GetDefaultConstants() override;
-    virtual bool Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants = {}) override;
-    virtual void UpdateViewportUniforms(const LViewport& Context) override;
-    virtual void OnFree() override;
+    virtual TArray<LShaderCompileTimeConstant> GetDefaultConstants() override {return {};}
+    virtual bool Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants = {}) override { return true; }
+    virtual void UpdateViewportUniforms(const LViewport& Context) override {}
+    virtual void OnFree() override {}
 
     ENGINE_API void Draw
     (
@@ -26,7 +26,7 @@ public:
         const Lal::LColor& Tint,
         const f32          OutlineThickness,
         const Lal::LColor& OutlineTint
-    ) const;
+    ) const {}
 
 private:
 

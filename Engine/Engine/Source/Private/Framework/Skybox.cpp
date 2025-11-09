@@ -7,6 +7,8 @@
 #include "Rhi/Texture2.h"
 #include "Stats/Stats.h"
 
+#if 0
+
 namespace
 {
 
@@ -55,7 +57,7 @@ constexpr f32 Vertices[]
      1.0f, -1.0f,  1.0f
 };
 
-float BillboardVertices[] = {
+f32 BillboardVertices[] = {
     // pos        // tex
     -1.0f, -1.0f,  0.0f, 0.0f,
      1.0f, -1.0f,  1.0f, 0.0f,
@@ -63,7 +65,7 @@ float BillboardVertices[] = {
     -1.0f,  1.0f,  0.0f, 1.0f,
  };
 
-unsigned int BillboardIndices[] = { 0, 1, 2, 2, 3, 0 };
+unsigned i32 BillboardIndices[] = { 0, 1, 2, 2, 3, 0 };
 
 } /* ~Namespace Jafg */
 
@@ -284,3 +286,5 @@ void Jafg::LSkybox::Free()
 
     return;
 }
+
+#endif

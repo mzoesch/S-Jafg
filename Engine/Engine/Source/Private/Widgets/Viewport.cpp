@@ -369,7 +369,7 @@ void Jafg::LViewport::Draw()
             continue;
         }
 
-        World->Draw(*this, *Eye);
+        // World->Draw(*this, *Eye);
 
         continue;
     }
@@ -391,7 +391,7 @@ void Jafg::LViewport::Draw()
             if (Widget->ShouldNowDraw())
             {
                 STAT_QUICK_CYCLE_START(Widget->GetNameAsString())
-                Widget->Draw(*this);
+                // Widget->Draw(*this);
             }
         }
 

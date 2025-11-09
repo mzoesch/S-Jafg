@@ -5,6 +5,8 @@
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
 
+#if 0
+
 void Jafg::LBlurShaderContext::Make()
 {
     LGenericShaderContext::Make();
@@ -95,3 +97,5 @@ void Jafg::LBlurShaderContext::OnFree()
 
     return;
 }
+
+#endif

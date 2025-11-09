@@ -162,7 +162,7 @@ struct LPrimitivePlatformTypesGeneric
 
 //# Whether to include and link glad. Some compilers may precede this.
 #ifndef JAFG_NO_GLAD /* Part of Jafg and not Lal. Therefore, this is in the Jafg namespace. */
-    #define JAFG_NO_GLAD                                                0
+    #define JAFG_NO_GLAD                                                1
 #endif /* !JAFG_NO_GLAD */
 
 //# Whether to include and link glfw3. Some compilers may precede this.

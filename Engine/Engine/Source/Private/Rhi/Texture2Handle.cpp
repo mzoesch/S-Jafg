@@ -4,6 +4,7 @@
 #include "Rhi/Texture2.h"
 #include "Rhi/RhiVendorInclude.h"
 
+#if 0
 Jafg::LTexture2Handle::LTexture2Handle(const LTexture2& InTexture)
 {
     this->Upload(InTexture);
@@ -119,3 +120,4 @@ void Jafg::LTexture2Handle::Shred()
 
     return;
 }
+#endif

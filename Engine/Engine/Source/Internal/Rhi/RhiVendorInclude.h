@@ -8,13 +8,15 @@
 #endif /* !INCLUDED_RHI_VENDOR_INCLUDE_H */
 
 #if !JAFG_NO_GLAD
-    #include <glad/glad.h>  /* Include glad to get all the required OpenGL headers. */
+    // #include <glad/glad.h>  /* Include glad to get all the required OpenGL headers. */
 #endif /* !JAFG_NO_GLAD */
 
 #if !JAFG_NO_GLFW3
+    #ifndef GLFW_INCLUDE_VULKAN
+        #define GLFW_INCLUDE_VULKAN
+    #endif /* !GLFW_INCLUDE_VULKAN */
     #include <GLFW/glfw3.h> /* Include glfw3 after glad to avoid include order issues. */
 #endif /* !JAFG_NO_GLFW3 */
-
 
 #if !JAFG_NO_FREETYPE
     #include <ft2build.h>

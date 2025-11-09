@@ -7,7 +7,7 @@
 #include "Stats/Stats.h"
 #include "System/MaterialSubsystem.h"
 #include "System/EnginePath.h"
-
+#if 0
 bool Jafg::LChunkShader::Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants)
 {
     if (const bool Out = Super::Make(InName, std::move(InConstants)); Out == false)
@@ -154,3 +154,4 @@ void Jafg::LChunkShaderInstance::LoadMeshToGraphicsMemory(const TArray<ChunkBoxV
 
     return;
 }
+#endif

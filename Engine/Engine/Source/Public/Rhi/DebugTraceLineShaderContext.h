@@ -21,9 +21,9 @@ class LDebugTraceLineShaderContext final : public LGenericShaderContext
 {
 public:
 
-    virtual void Make() override;
-    virtual void Draw(const LViewport& Context, LGenericShaderContextDrawArgs& InArgs) const override;
-    virtual void OnFree() override;
+    virtual void Make() override {}
+    virtual void Draw(const LViewport& Context, LGenericShaderContextDrawArgs& InArgs) const override {}
+    virtual void OnFree() override {}
 
 private:
 

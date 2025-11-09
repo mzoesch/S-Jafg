@@ -33,7 +33,7 @@ void Jafg::LShader::Free()
 {
     if (this->bLoaded)
     {
-        glDeleteProgram(this->Id);
+        // glDeleteProgram(this->Id);
         this->Id = 0x0u;
         this->bLoaded = false;
     }
@@ -104,127 +104,127 @@ void Jafg::LShader::Use() const
 {
     check( this->bLoaded )
 
-    glUseProgram(this->Id);
+    // glUseProgram(this->Id);
 
     return;
 }
 
 void Jafg::LShader::SetBoolUniform(const LString& Name, const bool Value) const
 {
-    checkCode
-    (
-        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
-        {
-            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
-        }
-    )
+    // checkCode
+    // (
+    //     if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
+    //     {
+    //         LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+    //     }
+    // )
 
-    glUniform1i(glGetUniformLocation(this->Id, Name.c_str()), static_cast<int>(Value));
+    // glUniform1i(glGetUniformLocation(this->Id, Name.c_str()), static_cast<int>(Value));
 
     return;
 }
 
 void Jafg::LShader::SetIntUniform(const LString& Name, const i32 Value) const
 {
-    checkCode
-    (
-        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
-        {
-            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
-        }
-    )
-
-    glUniform1i(glGetUniformLocation(this->Id, Name.c_str()), Value);
+    // checkCode
+    // (
+    //     if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
+    //     {
+    //         LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+    //     }
+    // )
+    //
+    // glUniform1i(glGetUniformLocation(this->Id, Name.c_str()), Value);
 
     return;
 }
 
 void Jafg::LShader::SetUIntUniform(const LString& Name, const u32 Value) const
 {
-    checkCode
-    (
-        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
-        {
-            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
-        }
-    )
-
-    glUniform1ui(glGetUniformLocation(this->Id, Name.c_str()), Value);
+    // checkCode
+    // (
+    //     if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
+    //     {
+    //         LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+    //     }
+    // )
+    //
+    // glUniform1ui(glGetUniformLocation(this->Id, Name.c_str()), Value);
 
     return;
 }
 
 void Jafg::LShader::SetFloatUniform(const LString& Name, const f32 Value) const
 {
-    checkCode
-    (
-        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
-        {
-            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
-        }
-    )
-
-    glUniform1f(glGetUniformLocation(this->Id, Name.c_str()), Value);
+    // checkCode
+    // (
+    //     if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
+    //     {
+    //         LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+    //     }
+    // )
+    //
+    // glUniform1f(glGetUniformLocation(this->Id, Name.c_str()), Value);
 
     return;
 }
 
 void Jafg::LShader::SetVec2Uniform(const LString& Name, const LVector2& Value) const
 {
-    checkCode
-    (
-        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
-        {
-            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
-        }
-    )
-
-    glUniform2f(glGetUniformLocation(this->Id, Name.c_str()), Value.X, Value.Y);
+    // checkCode
+    // (
+    //     if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
+    //     {
+    //         LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+    //     }
+    // )
+    //
+    // glUniform2f(glGetUniformLocation(this->Id, Name.c_str()), Value.X, Value.Y);
 
     return;
 }
 
 void Jafg::LShader::SetVec3Uniform(const LString& Name, const LVector3& Value) const
 {
-    checkCode
-    (
-        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
-        {
-            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
-        }
-    )
-
-    glUniform3f(glGetUniformLocation(this->Id, Name.c_str()), Value.X, Value.Y, Value.Z);
+    // checkCode
+    // (
+    //     if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
+    //     {
+    //         LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+    //     }
+    // )
+    //
+    // glUniform3f(glGetUniformLocation(this->Id, Name.c_str()), Value.X, Value.Y, Value.Z);
 
     return;
 }
 
 void Jafg::LShader::SetVec4Uniform(const LString& Name, const LVector4& Value) const
 {
-    checkCode
-    (
-        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
-        {
-            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
-        }
-    )
-
-    glUniform4f(glGetUniformLocation(this->Id, Name.c_str()), Value.X, Value.Y, Value.Z, Value.W);
+    // checkCode
+    // (
+    //     if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
+    //     {
+    //         LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+    //     }
+    // )
+    //
+    // glUniform4f(glGetUniformLocation(this->Id, Name.c_str()), Value.X, Value.Y, Value.Z, Value.W);
 
     return;
 }
 
 void Jafg::LShader::SetMatrixUniform(const LString& Name, const LMatrixF& Value) const
 {
-    checkCode
-    (
-        if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
-        {
-            LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
-        }
-    )
-
-    glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.c_str()), 1, GL_FALSE, Value.GetData());
+    // checkCode
+    // (
+    //     if (glGetUniformLocation(this->Id, Name.c_str()) < 0)
+    //     {
+    //         LOG_WARNING(LogRhi, "Invalid uniform: [{}].", Name)
+    //     }
+    // )
+    //
+    // glUniformMatrix4fv(glGetUniformLocation(this->Id, Name.c_str()), 1, GL_FALSE, Value.GetData());
 
     return;
 }
@@ -293,46 +293,47 @@ void Jafg::LShader::LoadImpl(LString&& UncompiledVertex, LString&& UncompiledFra
     i32 Success;
     char InfoLog[512];
 
-    const u32 Vertex = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(Vertex, 1, &UncompiledVertexC, nullptr);
-    glCompileShader(Vertex);
-
-    glGetShaderiv(Vertex, GL_COMPILE_STATUS, &Success);
-    if (!Success)
-    {
-        glGetShaderInfoLog(Vertex, 512, nullptr, InfoLog);
-        panicMsgf( "Error compiling vertex shader.\n{}", InfoLog )
-        return;
-    }
-
-    const u32 Fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(Fragment, 1, &UncompiledFragmentC, nullptr);
-    glCompileShader(Fragment);
-    glGetShaderiv(Fragment, GL_COMPILE_STATUS, &Success);
-    if (!Success)
-    {
-        glGetShaderInfoLog(Fragment, 512, nullptr, InfoLog);
-
-        panicMsgf( "Error compiling fragment shader.\n{}", InfoLog )
-        return;
-    }
-
-    this->Id = glCreateProgram();
-    glAttachShader(this->Id, Vertex);
-    glAttachShader(this->Id, Fragment);
-    glLinkProgram(this->Id);
-    glGetProgramiv(this->Id, GL_LINK_STATUS, &Success);
-    if (!Success)
-    {
-        glGetProgramInfoLog(this->Id, 512, nullptr, InfoLog);
-        panicMsgf( "Error linking shader program.\n{}", InfoLog )
-        return;
-    }
-
-    glValidateProgram(this->Id);
-
-    glDeleteShader(Vertex);
-    glDeleteShader(Fragment);
+    // const u32 Vertex = glCreateShader(GL_VERTEX_SHADER);
+    // glShaderSource(Vertex, 1, &UncompiledVertexC, nullptr);
+    // glCompileShader(Vertex);
+    //
+    // glGetShaderiv(Vertex, GL_COMPILE_STATUS, &Success);
+    // if (!Success)
+    // {
+    //     glGetShaderInfoLog(Vertex, 512, nullptr, InfoLog);
+    //     panicMsgf( "Error compiling vertex shader.\n{}", InfoLog )
+    //     return;
+    // }
+    //
+    // const u32 Fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    // glShaderSource(Fragment, 1, &UncompiledFragmentC, nullptr);
+    // glCompileShader(Fragment);
+    // glGetShaderiv(Fragment, GL_COMPILE_STATUS, &Success);
+    // if (!Success)
+    // {
+    //     glGetShaderInfoLog(Fragment, 512, nullptr, InfoLog);
+    //
+    //     panicMsgf( "Error compiling fragment shader.\n{}", InfoLog )
+    //     return;
+    // }
+    //
+    // this->Id = glCreateProgram();
+    this->Id = 1;
+    // glAttachShader(this->Id, Vertex);
+    // glAttachShader(this->Id, Fragment);
+    // glLinkProgram(this->Id);
+    // glGetProgramiv(this->Id, GL_LINK_STATUS, &Success);
+    // if (!Success)
+    // {
+    //     glGetProgramInfoLog(this->Id, 512, nullptr, InfoLog);
+    //     panicMsgf( "Error linking shader program.\n{}", InfoLog )
+    //     return;
+    // }
+    //
+    // glValidateProgram(this->Id);
+    //
+    // glDeleteShader(Vertex);
+    // glDeleteShader(Fragment);
 
     this->bLoaded = true;
 

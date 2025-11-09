@@ -65,15 +65,15 @@ class LSkybox final
 public:
 
     LSkybox() = default;
-    ENGINE_API explicit LSkybox(const LString& DefaultName, const TArray<LEnginePath>& InDefaultSkybox);
-    ENGINE_API explicit LSkybox(const TArray<LLevelSkyboxMap>& InDefaultSkybox);
+    /*ENGINE_API*/ explicit LSkybox(const LString& DefaultName, const TArray<LEnginePath>& InDefaultSkybox) {}
+    /*ENGINE_API*/ explicit LSkybox(const TArray<LLevelSkyboxMap>& InDefaultSkybox) {}
     PROHIBIT_COPY(LSkybox)
     DEFAULT_MOVE(LSkybox)
     ~LSkybox() { this->Free(); }
 
-    ENGINE_API void Upload();
-    ENGINE_API void Draw(const LViewport& InViewport, const LEye& InEye) const;
-    ENGINE_API void Free();
+    /*ENGINE_API*/ void Upload() {}
+    /*ENGINE_API*/ void Draw(const LViewport& InViewport, const LEye& InEye) const {}
+    /*ENGINE_API*/ void Free() {}
 
     FORCEINLINE const Lal::LColor& GetBackgroundColor() const { return this->BackgroundColor; }
     FORCEINLINE void SetBackgroundColor(const Lal::LColor& InColor) { this->BackgroundColor = InColor; }

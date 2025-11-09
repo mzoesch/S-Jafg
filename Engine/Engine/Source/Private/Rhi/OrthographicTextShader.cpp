@@ -4,6 +4,7 @@
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
 
+#if 0
 bool Jafg::LOrthographicTextShader::Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants)
 {
     if (const bool bOut{ Super::Make(InName, std::move(InConstants)) }; bOut == false)
@@ -212,3 +213,4 @@ void Jafg::LOrthographicTextShader::Draw
 
     return;
 }
+#endif

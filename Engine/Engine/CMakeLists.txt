@@ -82,8 +82,9 @@ if(_guard)
         GIT_REPOSITORY      https://github.com/glfw/glfw.git
         GIT_TAG             master
         )
+    find_package(Vulkan REQUIRED)
     FetchContent_MakeAvailable(FetchContent_Glfw3)
-    target_link_libraries(${_scoped_module_name} PRIVATE glfw)
+    target_link_libraries(${_scoped_module_name} PRIVATE glfw ${GLFW_LIBRARIES} Vulkan::Vulkan)
 
     ###############################################################################
     # Sqlite3

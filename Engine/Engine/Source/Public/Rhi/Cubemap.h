@@ -36,16 +36,16 @@ struct LCubemap final
 {
 
     LCubemap() = default;
-    ENGINE_API explicit LCubemap(const TArray<LEnginePath>& InPaths);
+    /*ENGINE_API*/ explicit LCubemap(const TArray<LEnginePath>& InPaths) {}
     PROHIBIT_COPY(LCubemap)
     DEFAULT_MOVE(LCubemap)
     inline ~LCubemap() { this->Free(); }
 
-    ENGINE_API void Free();
+    /*ENGINE_API*/ void Free() {}
 
-    ENGINE_API void Reload();
-    ENGINE_API void Cache(const TArray<LEnginePath>& InPaths);
-    ENGINE_API void Load(const TArray<LEnginePath>& InPaths);
+    /*ENGINE_API*/ void Reload() {}
+    /*ENGINE_API*/ void Cache(const TArray<LEnginePath>& InPaths) {}
+    /*ENGINE_API*/ void Load(const TArray<LEnginePath>& InPaths) {}
 
     FORCEINLINE constexpr bool IsValid() const noexcept { return this->Handle.has_value(); }
 

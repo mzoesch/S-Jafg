@@ -17,7 +17,7 @@ class LFrameBuffer final
 public:
 
     LFrameBuffer() = default;
-    ~LFrameBuffer();
+    ~LFrameBuffer() {}
 
     FORCEINLINE LFrameBuffer(const LFrameBuffer&) noexcept = delete;
     FORCEINLINE LFrameBuffer(LFrameBuffer&& Other) noexcept;
@@ -26,25 +26,25 @@ public:
 
     FORCEINLINE bool IsValid() const { return this->bValid; }
 
-    void Build(const LIntVector2& InSize);
+    void Build(const LIntVector2& InSize) {}
 
-    void MakeDrawTarget();
-    void MakeDrawTargetAndReset();
-    void MakeDrawTargetAndReset(const Lal::LLinearColor& InColor);
+    void MakeDrawTarget() {}
+    void MakeDrawTargetAndReset() {}
+    void MakeDrawTargetAndReset(const Lal::LLinearColor& InColor) {}
 
-    static void MakeDefaultDrawTarget();
-    static void MakeDefaultDrawTargetAndReset();
-    static void MakeDefaultDrawTargetAndReset(const Lal::LLinearColor& InColor);
+    static void MakeDefaultDrawTarget() {}
+    static void MakeDefaultDrawTargetAndReset() {}
+    static void MakeDefaultDrawTargetAndReset(const Lal::LLinearColor& InColor) {}
 
-    ENGINE_API void ReadToActive() const;
-    ENGINE_API void ReadTo(const u32 InHandle) const;
+    /*ENGINE_API*/ void ReadToActive() const {}
+    /*ENGINE_API*/ void ReadTo(const u32 InHandle) const {}
 
     // Based of current active rhi context!
-    ENGINE_API void PaintToViewport(const LViewport& InContext) const;
+    /*ENGINE_API*/ void PaintToViewport(const LViewport& InContext) const {}
 
 private:
 
-    void Orphan();
+    void Orphan() {}
 
     bool bValid { false };
     u32 Handle { 0 };

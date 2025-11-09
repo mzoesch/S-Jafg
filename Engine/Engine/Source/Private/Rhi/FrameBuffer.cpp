@@ -6,6 +6,8 @@
 #include "System/EnginePath.h"
 #include "Widgets/Viewport.h"
 
+#if 0
+
 namespace
 {
 
@@ -230,3 +232,5 @@ void Jafg::LFrameBuffer::Orphan()
 
     return;
 }
+
+#endif

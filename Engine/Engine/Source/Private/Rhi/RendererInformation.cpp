@@ -7,14 +7,14 @@
 
 i32 Jafg::RendererInformation::GetLimitTextureDimension()
 {
-    i32 Out = 0;
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &Out);
+    i32 Out = 500;
+    // glGetIntegerv(GL_MAX_TEXTURE_SIZE, &Out);
     return Out;
 }
 
 LIntVector2 Jafg::RendererInformation::GetLimitViewportDimensions()
 {
     LIntVector2 Out;
-    glGetIntegerv(GL_MAX_VIEWPORT_DIMS, Out.GetData());
+    // glGetIntegerv(GL_MAX_VIEWPORT_DIMS, Out.GetData());
     return Out;
 }

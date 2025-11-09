@@ -22,7 +22,7 @@ public:
     //#
     //# Will call #Upload.
     //#
-    ENGINE_API explicit LTexture2Handle(const LTexture2& InTexture);
+    /*ENGINE_API*/ explicit LTexture2Handle(const LTexture2& InTexture) {}
 
     PROHIBIT_COPY(LTexture2Handle)
     DEFAULT_MOVE(LTexture2Handle)
@@ -35,13 +35,13 @@ public:
     //#
     //# Uploads the texture to the graphics processing unit.
     //#
-    ENGINE_API void Upload(const LTexture2& InTexture, const bool bForceAlpha = false);
-    ENGINE_API void Upload(const LIntVector2& InDimensions, const ERawImageFormat::Type InFormat);
+    /*ENGINE_API*/ void Upload(const LTexture2& InTexture, const bool bForceAlpha = false) {}
+    /*ENGINE_API*/ void Upload(const LIntVector2& InDimensions, const ERawImageFormat::Type InFormat) {}
 
     //#
     //# Shreds the texture from the graphics processing unit.
     //#
-    ENGINE_API void Shred();
+    /*ENGINE_API*/ void Shred() {}
 
     FORCEINLINE bool IsValid() const noexcept { return this->Handle.has_value(); }
 

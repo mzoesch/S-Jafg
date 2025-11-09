@@ -6,6 +6,7 @@
 #include "Widgets/Viewport.h"
 #include "Widgets/RegionForward.h"
 
+#if 0
 TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicImageBoxShader::GetDefaultConstants()
 {
     TArray<LShaderCompileTimeConstant> SuperConstants = Super::GetDefaultConstants();
@@ -145,3 +146,4 @@ void Jafg::LOrthographicImageBoxShader::Draw
 
     return;
 }
+#endif

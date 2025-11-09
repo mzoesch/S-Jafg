@@ -25,13 +25,13 @@ public:
     //#
     //# Make the shader context meaningful.
     //#
-    void Make();
+    void Make() {}
 
     //#
     //# Free the shader context from the graphical device.
     //# No C++ memory will be freed through this method.
     //#
-    void Free();
+    void Free() {}
 
     void Draw(
         const LViewport&   Context,
@@ -39,11 +39,11 @@ public:
         const LVector2&    TopLeft,
         const Lal::LColor& Color,
         const LTexture2*   Texture = nullptr
-    ) const;
+    ) const {}
 
     FORCEINLINE auto IsMeaningful() const -> bool { return this->bIsMeaningful; }
 
-    void ReloadShader(const bool bDeleteOld) const;
+    void ReloadShader(const bool bDeleteOld) const{}
 
 private:
 

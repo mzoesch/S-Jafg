@@ -6,6 +6,8 @@
 #include "Widgets/Viewport.h"
 #include "Framework/Eye.h"
 
+#if 0
+
 void Jafg::LDebugTraceCubeShaderContext::Make()
 {
     LGenericShaderContext::Make();
@@ -94,3 +96,5 @@ void Jafg::LDebugTraceCubeShaderContext::OnFree()
 
     return;
 }
+
+#endif

@@ -24,9 +24,9 @@ public:
     typedef LEngineShader Super;
     typedef std::map<u8, LCharacter> LCharacterMap;
 
-    virtual bool Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants) override;
-    virtual void UpdateViewportUniforms(const LViewport& Context) override;
-    virtual void OnFree() override;
+    virtual bool Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants) override { return true; }
+    virtual void UpdateViewportUniforms(const LViewport& Context) override {}
+    virtual void OnFree() override {}
 
     ENGINE_API void Draw
     (
@@ -40,7 +40,7 @@ public:
         const Lal::LColor& TextColor,
         const f32 TextScale,
         const LString& Content
-    ) const;
+    ) const {}
 
     NODISCARD
     FORCEINLINE f32 GetApproxBearingHeight(const f32 InScale) const { check( this->ApproxBearingHeight > 0.0f ) return this->ApproxBearingHeight * InScale; }

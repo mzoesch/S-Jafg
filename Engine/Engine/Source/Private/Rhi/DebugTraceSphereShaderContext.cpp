@@ -6,6 +6,8 @@
 #include "Widgets/Viewport.h"
 #include "Framework/Eye.h"
 
+#if 0
+
 namespace
 {
 
@@ -122,3 +124,5 @@ void Jafg::LDebugTraceSphereShaderContext::OnFree()
 
     return;
 }
+
+#endif

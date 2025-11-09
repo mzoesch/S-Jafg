@@ -5,6 +5,8 @@
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
 
+#if 0
+
 TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicOutlineBoxShader::GetDefaultConstants()
 {
     TArray<LShaderCompileTimeConstant> SuperConstants = Super::GetDefaultConstants();
@@ -132,3 +134,4 @@ void Jafg::LOrthographicOutlineBoxShader::Draw
 
     return;
 }
+#endif

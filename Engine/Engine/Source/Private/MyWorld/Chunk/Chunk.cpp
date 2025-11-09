@@ -29,6 +29,7 @@ void Jafg::LChunkRendererComponent::Draw(const LViewport& Context, const LEye& E
 
     Shader.Use();
 
+#if 0
     glBindTexture(GL_TEXTURE_2D, Shader.GetBlendOpaqueTextureLocation());
 
     glActiveTexture(GL_TEXTURE1);
@@ -45,6 +46,8 @@ void Jafg::LChunkRendererComponent::Draw(const LViewport& Context, const LEye& E
     glDrawElements(GL_TRIANGLES, this->Owner.GetMesher()->GetNumTriangles(), GL_UNSIGNED_INT, nullptr);
 
     glActiveTexture(GL_TEXTURE0);
+
+#endif
 
     return;
 }

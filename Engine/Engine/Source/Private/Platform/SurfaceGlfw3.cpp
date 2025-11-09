@@ -8,15 +8,22 @@
 #include "Engine/CoreGlobals.h"
 #include "Engine/Engine.h"
 #include "Async/TaskUtility.h"
+
 #include "Rhi/RhiVendorInclude.h"
-#include "GLFW/glfw3.h"
+
 #if PLATFORM_WINDOWS
     #define GLFW_EXPOSE_NATIVE_WIN32
     #include <GLFW/glfw3native.h>
 #endif /* PLATFORM_WINDOWS */
+
 #include "User/Input/GlfwInputTranslation.h"
 #include "Widgets/Viewport.h"
 #include "Stats/Stats.h"
+
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 
 namespace
 {
@@ -116,10 +123,9 @@ void Jafg::LSurfaceGlfw3::Initialize()
         glfwInit();
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-        const int Platform { glfwGetPlatform() };
+        const int Platform{ glfwGetPlatform() };
         if (Platform == GLFW_PLATFORM_WAYLAND)
         {
             LOG_VERBOSE(LogSurface, "Using Wayland platform.")
@@ -141,11 +147,13 @@ void Jafg::LSurfaceGlfw3::Initialize()
         this->SetPlatformSupportsRepeatedKey(false);
     }
 
+    if (this->GetHumanReadableName() == "Transient")
+    {
+        this->SetHumanReadableName("Jafg - mzoesch");
+    }
+
     {
         STAT_QUICK_CYCLE_START("Glfw3WindowCreation")
-
-        this->SetHumanReadableName("Jafg - mzoesch");
-
         // Min 640 475 - Default 1280 720
         this->Handle = glfwCreateWindow(855, 475, this->GetHumanReadableName().c_str(), nullptr, nullptr);
     }
@@ -155,14 +163,20 @@ void Jafg::LSurfaceGlfw3::Initialize()
         return;
     }
 
-    glfwMakeContextCurrent(this->Handle);
-    glfwSetWindowUserPointer(this->Handle, reinterpret_cast<void*>(this));
+    u32 ExtensionCount{ 0 };
+    vkEnumerateInstanceExtensionProperties(nullptr, &ExtensionCount, nullptr);
+    LOG_WARNING(LogTemporal, "Vulkan Instance Extension Count: {}", ExtensionCount)
 
+    // glfwMakeContextCurrent(this->Handle);
+    // glfwSetWindowUserPointer(this->Handle, reinterpret_cast<void*>(this));
+
+#if JAFG_WITH_OPENGL
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
     {
         panic( "Failed to initialize glad." )
         return;
     }
+#endif /* JAFG_WITH_OPENGL */
 
     /*
      * We have to call this, as there is no default set by glfw. The default is open for the
@@ -177,7 +191,7 @@ void Jafg::LSurfaceGlfw3::Initialize()
      *      Some GPU drivers do not honor the requested swap interval, either because of a user setting that
      *      overrides the application's request or due to bugs in the driver.
      */
-    glfwSwapInterval(0);
+    // glfwSwapInterval(0);
     this->bVSync = false;
 
     if (GEngine)
@@ -203,22 +217,22 @@ void Jafg::LSurfaceGlfw3::Initialize()
     this->GetViewport().SetPlatformDpi(static_cast<float>(PlatformDpi));
 
     const LIntVector2 WindowDimensions = this->GetDimensions();
-    glViewport(0, 0, WindowDimensions.X, WindowDimensions.Y);
+    // glViewport(0, 0, WindowDimensions.X, WindowDimensions.Y);
     this->GetViewport().ChangeDimensions(WindowDimensions);
 
-    glfwSetErrorCallback(::OpenGlErrorCallback);
-    glfwSetFramebufferSizeCallback(this->Handle, Private::LGlfw3Bridge::FramebufferSizeCallback);
-    glfwSetCursorPosCallback(this->Handle, Private::LGlfw3Bridge::MouseCallback);
-    glfwSetScrollCallback(this->Handle, Private::LGlfw3Bridge::ScrollCallback);
-    glfwSetCursorEnterCallback(this->Handle, Private::LGlfw3Bridge::MouseEnterCallback);
+    // glfwSetErrorCallback(::OpenGlErrorCallback);
+    // glfwSetFramebufferSizeCallback(this->Handle, Private::LGlfw3Bridge::FramebufferSizeCallback);
+    // glfwSetCursorPosCallback(this->Handle, Private::LGlfw3Bridge::MouseCallback);
+    // glfwSetScrollCallback(this->Handle, Private::LGlfw3Bridge::ScrollCallback);
+    // glfwSetCursorEnterCallback(this->Handle, Private::LGlfw3Bridge::MouseEnterCallback);
 
     /*
      * Move this into the if statement later, when we have a native way, to read input reliable.
      */
-    glfwSetCharCallback(this->Handle, Private::LGlfw3Bridge::CharCallback);
+    // glfwSetCharCallback(this->Handle, Private::LGlfw3Bridge::CharCallback);
     if (this->IsPlatformSupportsRepeatedKey())
     {
-        glfwSetKeyCallback(this->Handle, Private::LGlfw3Bridge::KeyCallback);
+        // glfwSetKeyCallback(this->Handle, Private::LGlfw3Bridge::KeyCallback);
     }
 
     this->GetViewport().SetBackgroundColor(Lal::LLinearColor::Black);
@@ -230,7 +244,7 @@ void Jafg::LSurfaceGlfw3::OnClear()
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
-    glfwMakeContextCurrent(this->Handle);
+    // glfwMakeContextCurrent(this->Handle);
 
     Super::OnClear();
 
@@ -243,13 +257,13 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
 
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
-    glfwMakeContextCurrent(this->Handle);
+    // glfwMakeContextCurrent(this->Handle);
 
     Super::OnUpdate();
 
     {
         STAT_QUICK_CYCLE_START("SwapBuffers")
-        glfwSwapBuffers(this->Handle);
+        // glfwSwapBuffers(this->Handle);
     }
 
     return;
@@ -313,7 +327,7 @@ void Jafg::LSurfaceGlfw3::PollInputs()
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
-    glfwMakeContextCurrent(this->Handle);
+    // glfwMakeContextCurrent(this->Handle);
 
     LKey KeyCursor = EKeys::A;
     while (KeyCursor <= EKeys::LastKey)
@@ -325,7 +339,7 @@ void Jafg::LSurfaceGlfw3::PollInputs()
             continue;
         }
 
-        if (glfwGetKey(this->Handle, TranslatedKey) == GLFW_PRESS)
+        if (false)//glfwGetKey(this->Handle, TranslatedKey) == GLFW_PRESS)
         {
             this->AddKeyDown(KeyCursor);
 
@@ -346,18 +360,18 @@ void Jafg::LSurfaceGlfw3::PollInputs()
         continue;
     }
 
-    if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-    {
-        this->AddKeyDown(EKeys::LeftMouseButton);
-    }
-    if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-    {
-        this->AddKeyDown(EKeys::RightMouseButton);
-    }
-    if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
-    {
-        this->AddKeyDown(EKeys::MiddleMouseButton);
-    }
+    // if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+    // {
+    //     this->AddKeyDown(EKeys::LeftMouseButton);
+    // }
+    // if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+    // {
+    //     this->AddKeyDown(EKeys::RightMouseButton);
+    // }
+    // if (glfwGetMouseButton(this->Handle, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
+    // {
+    //     this->AddKeyDown(EKeys::MiddleMouseButton);
+    // }
 
     return;
 }
@@ -366,7 +380,7 @@ void Jafg::LSurfaceGlfw3::PollEvents()
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
-    glfwMakeContextCurrent(this->Handle);
+    // glfwMakeContextCurrent(this->Handle);
 
     if (glfwWindowShouldClose(this->Handle))
     {
@@ -389,8 +403,8 @@ void Jafg::LSurfaceGlfw3::SetInputMode(const EInputMode::Type InMode, const bool
         this->bFirstMouseCallback = true;
     }
 
-    glfwMakeContextCurrent(this->Handle);
-    glfwSetInputMode(this->Handle, GLFW_CURSOR, this->bShowCursor ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+    // glfwMakeContextCurrent(this->Handle);
+    // glfwSetInputMode(this->Handle, GLFW_CURSOR, this->bShowCursor ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
 
     return;
 }
@@ -399,11 +413,11 @@ void Jafg::LSurfaceGlfw3::SetMouseCursor(const EMouseCursor::Type InCursor)
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
-    glfwMakeContextCurrent(this->Handle);
+    // glfwMakeContextCurrent(this->Handle);
 
     if (this->Cursor)
     {
-        glfwDestroyCursor(this->Cursor);
+        //glfwDestroyCursor(this->Cursor);
         this->Cursor = nullptr;
     }
 
@@ -413,43 +427,43 @@ void Jafg::LSurfaceGlfw3::SetMouseCursor(const EMouseCursor::Type InCursor)
     }
     else if (InCursor == EMouseCursor::Arrow)
     {
-        this->Cursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+        // this->Cursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
     }
     else if (InCursor == EMouseCursor::Beam)
     {
-        this->Cursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
+        // this->Cursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
     }
     else if (InCursor == EMouseCursor::Crosshair)
     {
-        this->Cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+        // this->Cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
     }
     else if (InCursor == EMouseCursor::Hand)
     {
-        this->Cursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
+        // this->Cursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
     }
     else if (InCursor == EMouseCursor::ResizeNS)
     {
-        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NS_CURSOR);
+        // this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NS_CURSOR);
     }
     else if (InCursor == EMouseCursor::ResizeEW)
     {
-        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_EW_CURSOR);
+        // this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_EW_CURSOR);
     }
     else if (InCursor == EMouseCursor::ResizeNESW)
     {
-        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NESW_CURSOR);
+        // this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NESW_CURSOR);
     }
     else if (InCursor == EMouseCursor::ResizeNWSE)
     {
-        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NWSE_CURSOR);
+        // this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_NWSE_CURSOR);
     }
     else if (InCursor == EMouseCursor::ResizeOmni)
     {
-        this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR);
+        // this->Cursor = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR);
     }
     else if (InCursor == EMouseCursor::NotAllowed)
     {
-        this->Cursor = glfwCreateStandardCursor(GLFW_NOT_ALLOWED_CURSOR);
+        // this->Cursor = glfwCreateStandardCursor(GLFW_NOT_ALLOWED_CURSOR);
     }
     else
     {
@@ -458,7 +472,7 @@ void Jafg::LSurfaceGlfw3::SetMouseCursor(const EMouseCursor::Type InCursor)
 
     if (InCursor != EMouseCursor::None)
     {
-        glfwSetCursor(this->Handle, this->Cursor);
+        // glfwSetCursor(this->Handle, this->Cursor);
     }
 
     return;
@@ -468,7 +482,7 @@ LIntVector2 Jafg::LSurfaceGlfw3::GetDimensions() const
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
-    glfwMakeContextCurrent(this->Handle);
+    // glfwMakeContextCurrent(this->Handle);
 
     /*
      * Do we want to cache this value?
@@ -496,8 +510,8 @@ void Jafg::LSurfaceGlfw3::SetVSync(const bool bEnabled)
 
     this->bVSync = bEnabled;
 
-    glfwMakeContextCurrent(this->Handle);
-    glfwSwapInterval(this->bVSync ? 1 : 0);
+    // glfwMakeContextCurrent(this->Handle);
+    // glfwSwapInterval(this->bVSync ? 1 : 0);
 
     return;
 }
@@ -522,9 +536,9 @@ void Jafg::LSurfaceGlfw3::FramebufferSizeCallbackImpl(const i32 Width, const i32
 {
     checkSlow( this->Handle )
     checkSlow( Tasks::IsOnMasterThread() )
-    glfwMakeContextCurrent(this->Handle);
+    // glfwMakeContextCurrent(this->Handle);
 
-    glViewport(0, 0, Width, Height);
+    // glViewport(0, 0, Width, Height);
     this->GetViewport().ChangeDimensions({Width, Height});
 
     return;

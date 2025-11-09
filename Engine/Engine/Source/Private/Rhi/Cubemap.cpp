@@ -9,6 +9,7 @@
 #include "Rhi/Shader.h"
 #include "Widgets/Viewport.h"
 
+#if 0
 Jafg::LCubemap::LCubemap(const TArray<LEnginePath>& InPaths)
 {
     this->Load(InPaths);
@@ -232,3 +233,4 @@ void Jafg::LCubemap::LoadImpl()
 
     return;
 }
+#endif

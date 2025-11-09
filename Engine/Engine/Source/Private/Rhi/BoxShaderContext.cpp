@@ -7,6 +7,8 @@
 #include "System/EnginePath.h"
 #include "Rhi/Texture2.h"
 
+#if 0
+
 void Jafg::LBoxShaderContext::Make()
 {
     if (this->bIsMeaningful)
@@ -227,3 +229,5 @@ void Jafg::LBoxShaderContext::FreeStayMeaningful() const
 
     return;
 }
+
+#endif

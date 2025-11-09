@@ -18,10 +18,10 @@ public:
 
     typedef LEngineShader Super;
 
-    virtual bool Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants) override;
-    virtual void OnRecompile() override;
-    virtual void UpdateWorldUniforms(const LViewport& Context, const LWorld& World, const LEye& Eye) override;
-    virtual void OnFree() override;
+    virtual bool Make(const LName InName, TArray<LShaderCompileTimeConstant>&& InConstants) override { return true; }
+    virtual void OnRecompile() override {}
+    virtual void UpdateWorldUniforms(const LViewport& Context, const LWorld& World, const LEye& Eye) override {}
+    virtual void OnFree() override {}
 
     FORCEINLINE constexpr u32 GetBlendOpaqueTextureLocation() const noexcept { return this->BlendOpaqueTex; }
     FORCEINLINE constexpr u32 GetBlendersTextureLocation()    const noexcept { return this->BlendersTex; }
@@ -41,9 +41,9 @@ public:
 
     LChunkShaderInstance() = default;
     DEFAULT_REALLOC_OF_ANY_FORM(LChunkShaderInstance)
-    ~LChunkShaderInstance();
+    ~LChunkShaderInstance() {}
 
-    void LoadMeshToGraphicsMemory(const TArray<ChunkBoxVertex>& Vertices, const TArray<u32>& Indices);
+    void LoadMeshToGraphicsMemory(const TArray<ChunkBoxVertex>& Vertices, const TArray<u32>& Indices) {}
 
     FORCEINLINE u32 GetVertexArrayObject()   const noexcept { return this->Vao; }
     FORCEINLINE u32 GetVertexBufferObject()  const noexcept { return this->Vbo; }

@@ -5,6 +5,7 @@
 #include "Rhi/RhiVendorInclude.h"
 #include "Widgets/Viewport.h"
 
+#if 0
 TArray<Jafg::LShaderCompileTimeConstant> Jafg::LOrthographicRoundedBoxShader::GetDefaultConstants()
 {
     TArray<LShaderCompileTimeConstant> SuperConstants = Super::GetDefaultConstants();
@@ -129,3 +130,4 @@ void Jafg::LOrthographicRoundedBoxShader::Draw
 
     return;
 }
+#endif
