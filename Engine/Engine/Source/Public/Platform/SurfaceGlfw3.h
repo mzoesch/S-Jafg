@@ -12,6 +12,29 @@
 struct GLFWwindow;
 struct GLFWcursor;
 
+struct VkInstance_T;
+typedef struct VkInstance_T* VkInstance;
+
+#if !IN_SHIPPING
+struct VkDebugUtilsMessengerEXT_T;
+typedef struct VkDebugUtilsMessengerEXT_T* VkDebugUtilsMessengerEXT;
+#endif /* !IN_SHIPPING */
+
+struct VkSurfaceKHR_T;
+typedef struct VkSurfaceKHR_T* VkSurfaceKHR;
+
+struct VkPhysicalDevice_T;
+typedef struct VkPhysicalDevice_T* VkPhysicalDevice;
+
+struct VkDevice_T;
+typedef struct VkDevice_T* VkDevice;
+
+struct VkQueue_T;
+typedef struct VkQueue_T* VkQueue;
+
+struct VmaAllocator_T;
+typedef struct VmaAllocator_T* VmaAllocator;
+
 namespace Jafg
 {
 
@@ -84,6 +107,20 @@ private:
 
     GLFWcursor* Cursor{ nullptr };
     GLFWwindow* Handle{ nullptr };
+
+    VkInstance VkMyInstance{ nullptr };
+#if !IN_SHIPPING
+    VkDebugUtilsMessengerEXT VkMyHermes{ nullptr };
+    bool bVkMyInstanceLayerAddressBindings{ false };
+#endif /* !IN_SHIPPING */
+    VkSurfaceKHR VkMySurface{ nullptr };
+    VkPhysicalDevice VkMyPhysicalDevice{ nullptr };
+    std::optional<u32> VkMyGraphicsQueueFamilyIndex;
+    std::optional<u32> VkMyPresentQueueFamilyIndex;
+    VkDevice VkMyDevice{ nullptr };
+    VkQueue VkMyGraphicsQueue{ nullptr };
+    VkQueue VkMyPresentQueue{ nullptr };
+    VmaAllocator VmaMyAllocator{ nullptr };
 
     bool bVSync{ false };
 

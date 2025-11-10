@@ -333,6 +333,9 @@ using _LPath = LSimplePath;
 
 } /* ~Namespace Lal */
 
+template<typename T, typename TCompare = std::less<T>, typename TAlloc = std::allocator<T>>
+using TSet = std::set<T, TCompare, TAlloc>;
+
 template<typename T, typename Alloc = std::allocator<T>>
 using TArray = Lal::TSimpleArray<T, Alloc>;
 

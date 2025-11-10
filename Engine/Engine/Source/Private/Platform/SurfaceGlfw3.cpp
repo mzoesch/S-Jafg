@@ -9,6 +9,7 @@
 #include "Engine/Engine.h"
 #include "Async/TaskUtility.h"
 
+#define VMA_IMPLEMENTATION
 #include "Rhi/RhiVendorInclude.h"
 
 #if PLATFORM_WINDOWS
@@ -28,16 +29,49 @@
 namespace
 {
 
-bool bInitializedGlfw { false };
+bool bInitializedGlfw{ false };
 
-void OpenGlErrorCallback(int error_code, const char* description);
-
-void OpenGlErrorCallback(int error_code, const char* description)
+void GlfwErrorCallback(i32 Error, char const* Description)
 {
-    panicMsgf( "OpenGl encountered an error [{}]: [{}].", error_code, description )
+    panicMsgf("GLFW Error (code {}): {}", Error, Description)
 }
 
 } /* ~Namespace <Anonymous> */
+
+#if !IN_SHIPPING
+static VKAPI_ATTR VkBool32 VKAPI_CALL Hermes(
+    VkDebugUtilsMessageSeverityFlagBitsEXT Severity,
+    VkDebugUtilsMessageTypeFlagsEXT Type,
+    VkDebugUtilsMessengerCallbackDataEXT const* CallbackData,
+    void* UserData
+    )
+{
+    (void)UserData;
+
+    if (Severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+    {
+        LOG_ERROR(LogVulkan, "[{}] Validation Layer [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
+    }
+    else if (Severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+    {
+        LOG_WARNING(LogVulkan, "[{}] Validation Layer [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
+    }
+    else if (Type & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+    {
+        LOG_WARNING(LogVulkan, "[{}] Performance Layer [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
+    }
+    else if (Severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
+    {
+        LOG_VERBOSE(LogVulkan, "[{}] Info (Verbose) [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
+    }
+    else
+    {
+        LOG_INFO(LogVulkan, "[{}] Info [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
+    }
+
+    return VK_FALSE;
+}
+#endif /* !IN_SHIPPING */
 
 namespace Jafg::Private
 {
@@ -48,55 +82,68 @@ struct LGlfw3Bridge final
     PROHIBIT_REALLOC_OF_ANY_FORM(LGlfw3Bridge)
     ~LGlfw3Bridge() = delete;
 
-    static void FramebufferSizeCallback(::GLFWwindow* Window, const i32 Width, const i32 Height);
-    static void MouseCallback(::GLFWwindow* Window, const double XPos, const double YPos);
-    static void ScrollCallback(::GLFWwindow* Window, const double XOffset, const double YOffset);
-    static void MouseEnterCallback(::GLFWwindow* Window, const i32 Entered);
-    static void CharCallback(::GLFWwindow* Window, const u32 Codepoint);
-    static void KeyCallback(::GLFWwindow* Window, const i32 Key, const i32 Scancode, const i32 Action, const i32 Mods);
+    static void WindowCloseCallback(GLFWwindow* Window)
+    {
+        glfwSetWindowShouldClose(Window, GLFW_TRUE);
+    }
+
+    static void WindowSizeCallback(GLFWwindow* Window, const i32 Width, const i32 Height)
+    {
+        LOG_WARNING(LogTemporal, "Width: {}, Height: {}", Width, Height)
+    }
+
+    static void WindowFocusCallback(GLFWwindow* Window, const i32 Focused)
+    {
+        LOG_WARNING(LogTemporal, "Focused: {}", Focused)
+    }
+
+    static void CharCallback(::GLFWwindow* Window, const u32 Codepoint)
+    {
+        LOG_WARNING(LogTemporal, "Codepoint: {}", Codepoint)
+        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+        static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->CharCallback(Codepoint);
+    }
+
+    static void KeyCallback(::GLFWwindow* Window, const i32 Key, const i32 Scancode, const i32 Action, const i32 Mods)
+    {
+        LOG_WARNING(LogTemporal, "Key: {}, Scancode: {}, Action: {}, Mods: {}", Key, Scancode, Action, Mods)
+        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+        static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->KeyCallback(Key, Scancode, Action, Mods);
+    }
+
+    static void CursorPosCallback(::GLFWwindow* Window, const f64 XPos, const f64 YPos)
+    {
+        LOG_WARNING(LogTemporal, "XPos: {}, YPos: {}", XPos, YPos)
+        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+        static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->MouseCallback(XPos, YPos);
+    }
+
+    static void MouseButtonCallback(::GLFWwindow* Window, const i32 Button, const i32 Action, const i32 Mods)
+    {
+        LOG_WARNING(LogTemporal, "Button: {}, Action: {}, Mods: {}", Button, Action, Mods)
+    }
+
+    static void CursorEnterCallback(::GLFWwindow* Window, const i32 Entered)
+    {
+        LOG_WARNING(LogTemporal, "Entered: {}", Entered)
+        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+        static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->MouseEnterCallback(Entered);
+    }
+
+    static void FramebufferSizeCallback(::GLFWwindow* Window, const i32 Width, const i32 Height)
+    {
+        LOG_WARNING(LogTemporal, "Width: {}, Height: {}", Width, Height)
+        checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+        static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->FramebufferSizeCallback(Width, Height);
+    }
+
+    static void ScrollCallback(::GLFWwindow* Window, const f64 XOffset, const f64 YOffset)
+    {
+        LOG_WARNING(LogTemporal, "XOffset: {}, YOffset: {}", XOffset, YOffset)
+        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+        static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->ScrollCallback(XOffset, YOffset);
+    }
 };
-
-void LGlfw3Bridge::FramebufferSizeCallback(::GLFWwindow* Window, const i32 Width, const i32 Height)
-{
-    checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
-    static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->FramebufferSizeCallback(Width, Height);
-    return;
-}
-
-void LGlfw3Bridge::MouseCallback(GLFWwindow* Window, const double XPos, const double YPos)
-{
-    checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
-    static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->MouseCallback(XPos, YPos);
-    return;
-}
-
-void LGlfw3Bridge::ScrollCallback(GLFWwindow* Window, const double XOffset, const double YOffset)
-{
-    checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
-    static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->ScrollCallback(XOffset, YOffset);
-    return;
-}
-
-void LGlfw3Bridge::MouseEnterCallback(GLFWwindow* Window, const i32 Entered)
-{
-    checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
-    static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->MouseEnterCallback(Entered);
-    return;
-}
-
-void LGlfw3Bridge::CharCallback(GLFWwindow* Window, const u32 Codepoint)
-{
-    checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
-    static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->CharCallback(Codepoint);
-    return;
-}
-
-void LGlfw3Bridge::KeyCallback(GLFWwindow* Window, const i32 Key, const i32 Scancode, const i32 Action, const i32 Mods)
-{
-    checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
-    static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->KeyCallback(Key, Scancode, Action, Mods);
-    return;
-}
 
 } /* ~Namespace Jafg::Private */
 
@@ -104,7 +151,7 @@ Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
 {
     if (this->Handle)
     {
-        LSurfaceGlfw3::TearDown();
+        this->TearDown();
     }
 
     return;
@@ -120,9 +167,16 @@ void Jafg::LSurfaceGlfw3::Initialize()
 
     if (bInitializedGlfw == false)
     {
-        glfwInit();
+        if (!glfwInit())
+        {
+            panic( "Failed to initialize glfw." )
+        }
+
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+
+        glfwSetErrorCallback(::GlfwErrorCallback);
+
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
         const int Platform{ glfwGetPlatform() };
@@ -149,7 +203,7 @@ void Jafg::LSurfaceGlfw3::Initialize()
 
     if (this->GetHumanReadableName() == "Transient")
     {
-        this->SetHumanReadableName("Jafg - mzoesch");
+        this->SetHumanReadableName("Jafg - @mzoesch");
     }
 
     {
@@ -160,39 +214,25 @@ void Jafg::LSurfaceGlfw3::Initialize()
     if (this->Handle == nullptr)
     {
         panic( "Failed to create glfw window." )
-        return;
     }
 
-    u32 ExtensionCount{ 0 };
-    vkEnumerateInstanceExtensionProperties(nullptr, &ExtensionCount, nullptr);
-    LOG_WARNING(LogTemporal, "Vulkan Instance Extension Count: {}", ExtensionCount)
+    glfwSetWindowUserPointer(this->Handle, this);
 
-    // glfwMakeContextCurrent(this->Handle);
-    // glfwSetWindowUserPointer(this->Handle, reinterpret_cast<void*>(this));
+    glfwSetWindowCloseCallback(this->Handle, Private::LGlfw3Bridge::WindowCloseCallback);
+    glfwSetWindowSizeCallback(this->Handle, Private::LGlfw3Bridge::WindowSizeCallback);
+    glfwSetWindowFocusCallback(this->Handle, Private::LGlfw3Bridge::WindowFocusCallback);
+    glfwSetCharCallback(this->Handle, Private::LGlfw3Bridge::CharCallback);
+    // if (this->IsPlatformSupportsRepeatedKey())
+        glfwSetKeyCallback(this->Handle, Private::LGlfw3Bridge::KeyCallback);
+    glfwSetCursorPosCallback(this->Handle, Private::LGlfw3Bridge::CursorPosCallback);
+    glfwSetMouseButtonCallback(this->Handle, Private::LGlfw3Bridge::MouseButtonCallback);
+    glfwSetCursorEnterCallback(this->Handle, Private::LGlfw3Bridge::CursorEnterCallback);
+    glfwSetFramebufferSizeCallback(this->Handle, Private::LGlfw3Bridge::FramebufferSizeCallback);
+    glfwSetScrollCallback(this->Handle, Private::LGlfw3Bridge::ScrollCallback);
 
-#if JAFG_WITH_OPENGL
-    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
-    {
-        panic( "Failed to initialize glad." )
-        return;
-    }
-#endif /* JAFG_WITH_OPENGL */
-
-    /*
-     * We have to call this, as there is no default set by glfw. The default is open for the
-     * implementer to decide. Not calling this method directly after initializing the window
-     * will cause undefined behavior (There could be a mismatch between the context window and
-     * the member variable DesktopPlatformWin#bVSync).
-     *
-     * @see Official GLFW Documentation:
-     *      This function is not called during context creation, leaving the swap interval set to whatever is the
-     *      default for that API. This is done because some swap interval extensions used by GLFW do not allow the
-     *      swap interval to be reset to zero once it has been set to a non-zero value.
-     *      Some GPU drivers do not honor the requested swap interval, either because of a user setting that
-     *      overrides the application's request or due to bugs in the driver.
-     */
-    // glfwSwapInterval(0);
-    this->bVSync = false;
+    /* TODO: Do we really want this?? */
+    glfwSetInputMode(this->Handle, GLFW_STICKY_KEYS, GLFW_TRUE);
+    glfwSetInputMode(this->Handle, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
 
     if (GEngine)
     {
@@ -213,29 +253,432 @@ void Jafg::LSurfaceGlfw3::Initialize()
 #else /* PLATFORM_WINDOWS */
     const u32 PlatformDpi = 96; // Sketchy
 #endif /* !PLATFORM_WINDOWS */
-
-    this->GetViewport().SetPlatformDpi(static_cast<float>(PlatformDpi));
-
+    this->GetViewport().SetPlatformDpi(static_cast<f32>(PlatformDpi));
     const LIntVector2 WindowDimensions = this->GetDimensions();
     // glViewport(0, 0, WindowDimensions.X, WindowDimensions.Y);
     this->GetViewport().ChangeDimensions(WindowDimensions);
-
-    // glfwSetErrorCallback(::OpenGlErrorCallback);
-    // glfwSetFramebufferSizeCallback(this->Handle, Private::LGlfw3Bridge::FramebufferSizeCallback);
-    // glfwSetCursorPosCallback(this->Handle, Private::LGlfw3Bridge::MouseCallback);
-    // glfwSetScrollCallback(this->Handle, Private::LGlfw3Bridge::ScrollCallback);
-    // glfwSetCursorEnterCallback(this->Handle, Private::LGlfw3Bridge::MouseEnterCallback);
-
-    /*
-     * Move this into the if statement later, when we have a native way, to read input reliable.
-     */
-    // glfwSetCharCallback(this->Handle, Private::LGlfw3Bridge::CharCallback);
-    if (this->IsPlatformSupportsRepeatedKey())
-    {
-        // glfwSetKeyCallback(this->Handle, Private::LGlfw3Bridge::KeyCallback);
-    }
+    LOG_VERBOSE(LogSurface, "Glfw3 Window Created. Dimensions: [{}x{}], DPI: [{}]", WindowDimensions.X, WindowDimensions.Y, PlatformDpi)
 
     this->GetViewport().SetBackgroundColor(Lal::LLinearColor::Black);
+
+    LOG_VERBOSE(LogRhi, "Initializing volk for Vulkan RHI.")
+    if (volkInitialize() != VK_SUCCESS)
+    {
+        panic( "Failed to initialize volk." )
+    }
+
+    u32 AvailableExtensionCount{ 0 };
+    if (vkEnumerateInstanceExtensionProperties(nullptr, &AvailableExtensionCount, nullptr))
+    {
+        panic( "Failed to enumerate instance extensions." )
+    }
+    LOG_VERBOSE(LogVulkan, "Instance Extension Count [{}]. Available extensions:", AvailableExtensionCount)
+    TArray<VkExtensionProperties> AvailableExtensions(AvailableExtensionCount);
+    if (vkEnumerateInstanceExtensionProperties(nullptr, &AvailableExtensionCount, AvailableExtensions.data()))
+    {
+        panic( "Failed to enumerate instance extensions." )
+    }
+    for (VkExtensionProperties const& Extension : AvailableExtensions)
+    {
+        LOG_VERBOSE(LogVulkan, "    {} spec[{}]", Extension.extensionName, Extension.specVersion)
+    }
+
+    TArray<LString> RequiredExtensions;
+    RequiredExtensions.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
+
+#if !IN_SHIPPING
+    RequiredExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    if (this->bVkMyInstanceLayerAddressBindings)
+    {
+        RequiredExtensions.emplace_back(VK_EXT_DEVICE_ADDRESS_BINDING_REPORT_EXTENSION_NAME);
+    }
+#endif /* !IN_SHIPPING */
+
+    u32 glfw3ExtensionCount{ 0 };
+    char const** glfw3Extensions{ glfwGetRequiredInstanceExtensions(&glfw3ExtensionCount) };
+    for (u32 Idx{ 0 }; Idx < glfw3ExtensionCount; ++Idx)
+    {
+        LString Glfw3Extension{ glfw3Extensions[Idx] };
+        if (algo::contains(RequiredExtensions, Glfw3Extension) == false)
+        {
+            RequiredExtensions.emplace_back(std::move(Glfw3Extension));
+        }
+        continue;
+    }
+    LOG_VERBOSE(LogVulkan, "Instance required extensions:")
+    for (LString const& Extension : RequiredExtensions)
+    {
+        LOG_VERBOSE(LogVulkan, "    {}", Extension)
+    }
+
+    for (LString const& Extension : RequiredExtensions)
+    {
+        bool bFound{ false };
+        for (auto const& AvailableExtension : AvailableExtensions)
+        {
+            if (Extension == AvailableExtension.extensionName)
+            {
+                bFound = true;
+                break;
+            }
+        }
+
+        if (bFound == false)
+        {
+            panicMsgf("Required Vulkan instance extension [{}] is not available.", Extension)
+        }
+    }
+    LOG_VERBOSE(LogVulkan, "All required instance extensions are available. Proceeding.")
+
+    u32 InstanceLayerCount{ 0 };
+    if (vkEnumerateInstanceLayerProperties(&InstanceLayerCount, nullptr) != VK_SUCCESS)
+    {
+        panic( "Failed to enumerate instance layers." )
+    }
+    LOG_VERBOSE(LogVulkan, "Instance Layer Count [{}]. Available layers:", InstanceLayerCount)
+    TArray<VkLayerProperties> AvailableInstanceLayers(InstanceLayerCount);
+    if (vkEnumerateInstanceLayerProperties(&InstanceLayerCount, AvailableInstanceLayers.data()) != VK_SUCCESS)
+    {
+        panic( "Failed to enumerate instance layers." )
+    }
+    for (VkLayerProperties const& InstanceLayer : AvailableInstanceLayers)
+    {
+        LOG_VERBOSE(LogVulkan, "    {} spec[{}]", InstanceLayer.layerName, InstanceLayer.specVersion)
+    }
+
+    TArray<LString> RequiredInstanceLayers;
+#if !IN_SHIPPING
+    RequiredInstanceLayers.emplace_back("VK_LAYER_KHRONOS_validation");
+#endif /* !IN_SHIPPING */
+    LOG_VERBOSE(LogVulkan, "Instance required layers:")
+    for (LString const& Layer : RequiredInstanceLayers)
+    {
+        LOG_VERBOSE(LogVulkan, "    {}", Layer)
+    }
+
+    for (LString const& Layer : RequiredInstanceLayers)
+    {
+        bool bFound{ false };
+        for (auto const& AvailableInstanceLayer : AvailableInstanceLayers)
+        {
+            if (Layer == AvailableInstanceLayer.layerName)
+            {
+                bFound = true;
+                break;
+            }
+        }
+
+        if (bFound == false)
+        {
+            panicMsgf("Required Vulkan instance layer [{}] is not available.", Layer)
+        }
+    }
+    LOG_VERBOSE(LogVulkan, "All required instance layers are available. Proceeding.")
+
+    TArray<char const*> RequiredInstanceLayers_c_str; RequiredInstanceLayers_c_str.reserve(RequiredInstanceLayers.size());
+    algo::for_each(RequiredInstanceLayers, [&RequiredInstanceLayers_c_str](LString const& Extension)
+    {
+        RequiredInstanceLayers_c_str.emplace_back(Extension.c_str());
+    });
+    TArray<char const*> RequiredExtensions_c_str; RequiredExtensions_c_str.reserve(RequiredExtensions.size());
+    algo::for_each(RequiredExtensions, [&RequiredExtensions_c_str](LString const& Extension)
+    {
+        RequiredExtensions_c_str.emplace_back(Extension.c_str());
+    });
+
+    VkApplicationInfo App{
+        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        .pApplicationName = this->GetHumanReadableName().c_str(),
+        .pEngineName = "Jafg",
+        .apiVersion = VK_API_VERSION_1_4
+        };
+
+    VkInstanceCreateInfo Instance{
+        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .pApplicationInfo = &App,
+        .enabledLayerCount = static_cast<u32>(RequiredInstanceLayers_c_str.size()),
+        .ppEnabledLayerNames = reinterpret_cast<char const* const*>(RequiredInstanceLayers_c_str.data()),
+        .enabledExtensionCount = static_cast<u32>(RequiredExtensions_c_str.size()),
+        .ppEnabledExtensionNames = reinterpret_cast<char const* const*>(RequiredExtensions_c_str.data())
+        };
+
+#if !IN_SHIPPING
+    VkDebugUtilsMessengerCreateInfoEXT DebugUtilsMessenger{
+        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+        .messageSeverity =
+              VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+            | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+            | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+            | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+        .messageType =
+              VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+            | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+            | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
+
+            ,
+        .pfnUserCallback = Hermes
+        };
+    if (this->bVkMyInstanceLayerAddressBindings)
+    {
+        DebugUtilsMessenger.messageType |= VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT;
+    }
+
+    check( Instance.pNext == nullptr )
+    Instance.pNext = &DebugUtilsMessenger;
+#endif /* !IN_SHIPPING */
+
+    if (vkCreateInstance(&Instance, nullptr, &this->VkMyInstance) != VK_SUCCESS)
+    {
+        panic( "Failed to create Vulkan instance." )
+    }
+
+    volkLoadInstance(this->VkMyInstance);
+
+#if !IN_SHIPPING
+    if (vkCreateDebugUtilsMessengerEXT(this->VkMyInstance, &DebugUtilsMessenger, nullptr, &this->VkMyHermes) != VK_SUCCESS)
+    {
+        panic( "Failed to create Vulkan debug messenger." )
+    }
+#endif /* !IN_SHIPPING */
+
+    if (glfwCreateWindowSurface(this->VkMyInstance, this->Handle, nullptr, &this->VkMySurface) != VK_SUCCESS)
+    {
+        panic( "Failed to create Vulkan window surface." )
+    }
+    check( this->VkMySurface )
+
+    LOG_VERBOSE(LogVulkan, "Loading vulkan physical device.")
+    u32 PhysicalDeviceCount{ 0 };
+    if (vkEnumeratePhysicalDevices(this->VkMyInstance, &PhysicalDeviceCount, nullptr) != VK_SUCCESS)
+    {
+        panic( "Failed to enumerate physical devices." )
+    }
+    if (PhysicalDeviceCount < 1)
+    {
+        panicMsgf( "Failed to find any physical devices with Vulkan support." )
+    }
+
+    TArray<VkPhysicalDevice> PhysicalDevices(PhysicalDeviceCount);
+    if (vkEnumeratePhysicalDevices(this->VkMyInstance, &PhysicalDeviceCount, PhysicalDevices.data()) != VK_SUCCESS)
+    {
+        panic( "Failed to enumerate physical devices." )
+    }
+
+    std::multimap<u64, VkPhysicalDevice> RankedPhysicalDevices;
+    for (auto const& PhysicalDevice : PhysicalDevices)
+    {
+        auto GetPhysicalDeviceRating = [](VkPhysicalDevice _PhysicalDevice) -> u64
+        {
+            u64 Rating{ 0 };
+
+            VkPhysicalDeviceProperties Properties;
+            vkGetPhysicalDeviceProperties(_PhysicalDevice, &Properties);
+
+            if (Properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+            {
+                Rating += 16'384;
+            }
+            else if (Properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+            {
+                Rating += 8'192;
+            }
+
+            Rating += Properties.limits.maxImageDimension2D;
+
+            return Rating;
+        };
+
+        RankedPhysicalDevices.insert(std::make_pair(GetPhysicalDeviceRating(PhysicalDevice), PhysicalDevice));
+        continue;
+    }
+
+    LOG_VERBOSE(LogVulkan, "Available physical devices ranked by suitability:")
+    for (auto const& [Rating, PhysicalDevice] : RankedPhysicalDevices)
+    {
+        VkPhysicalDeviceProperties Properties;
+        vkGetPhysicalDeviceProperties(PhysicalDevice, &Properties);
+        LOG_VERBOSE(LogVulkan, "    [{}] rated [{}]: {} (API v{}.{}.{}), Driver v{}.{}.{}",
+            reinterpret_cast<void const*>(PhysicalDevice),
+            Rating,
+            Properties.deviceName,
+            VK_VERSION_MAJOR(Properties.apiVersion),
+            VK_VERSION_MINOR(Properties.apiVersion),
+            VK_VERSION_PATCH(Properties.apiVersion),
+            VK_VERSION_MAJOR(Properties.driverVersion),
+            VK_VERSION_MINOR(Properties.driverVersion),
+            VK_VERSION_PATCH(Properties.driverVersion)
+            )
+        continue;
+    }
+    if (RankedPhysicalDevices.rbegin()->first == 0)
+    {
+        panicMsgf( "Failed to find a suitable physical device." )
+    }
+
+    LOG_VERBOSE(LogVulkan, "Loading vulkan queue families.")
+    for (auto const& PhysicalDevice: RankedPhysicalDevices | std::views::values)
+    {
+        check( this->VkMyPhysicalDevice == nullptr )
+        check( this->VkMyGraphicsQueueFamilyIndex.has_value() == false )
+        check( this->VkMyPresentQueueFamilyIndex.has_value() == false )
+
+        u32 QueueFamilies{ 0 };
+        vkGetPhysicalDeviceQueueFamilyProperties(PhysicalDevice, &QueueFamilies, nullptr);
+        if (QueueFamilies < 1)
+        {
+            LOG_VERBOSE(LogVulkan, "Physical device [{}] has no queue families. Skipping.", reinterpret_cast<void const*>(PhysicalDevice))
+            continue;
+        }
+
+        std::vector<VkQueueFamilyProperties> QueueFamilyProperties(QueueFamilies);
+        vkGetPhysicalDeviceQueueFamilyProperties(PhysicalDevice, &QueueFamilies, QueueFamilyProperties.data());
+        for (u32 Idx{ 0 }; Idx < QueueFamilies; ++Idx)
+        {
+            if (this->VkMyGraphicsQueueFamilyIndex.has_value() == false && QueueFamilyProperties[Idx].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            {
+                this->VkMyGraphicsQueueFamilyIndex = Idx;
+            }
+
+            if (this->VkMyPresentQueueFamilyIndex.has_value() == false)
+            {
+                VkBool32 bCanPresent{ VK_FALSE };
+                vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice, Idx, this->VkMySurface, &bCanPresent);
+                if (bCanPresent == VK_TRUE)
+                {
+                   this->VkMyPresentQueueFamilyIndex = Idx;
+                }
+            }
+
+            if (this->VkMyGraphicsQueueFamilyIndex.has_value() && this->VkMyPresentQueueFamilyIndex.has_value())
+            {
+                break;
+            }
+
+            continue;
+        }
+
+        if (this->VkMyGraphicsQueueFamilyIndex.has_value() == false)
+        {
+            LOG_VERBOSE(LogVulkan, "Physical device [{}] has no suitable graphics queue family. Skipping.", reinterpret_cast<void const*>(PhysicalDevice))
+            this->VkMyPresentQueueFamilyIndex.reset();
+            continue;
+        }
+
+        if (this->VkMyPresentQueueFamilyIndex.has_value() == false)
+        {
+            LOG_VERBOSE(LogVulkan, "Physical device [{}] has no suitable graphics queue family. Skipping.", reinterpret_cast<void const*>(PhysicalDevice))
+            this->VkMyGraphicsQueueFamilyIndex.reset();
+            continue;
+        }
+
+        this->VkMyPhysicalDevice = PhysicalDevice;
+        break;
+    }
+    if (this->VkMyPhysicalDevice == nullptr)
+    {
+        panicMsgf( "Failed to find a suitable physical device." )
+    }
+    if (this->VkMyGraphicsQueueFamilyIndex.value())
+    {
+        panicMsgf( "Failed to find a suitable graphics queue family." )
+    }
+    LOG_VERBOSE(LogVulkan, "Selected physical device [{}] with graphics queue family index [{}] and present queue family index [{}].",
+        reinterpret_cast<void const*>(this->VkMyPhysicalDevice),
+        this->VkMyGraphicsQueueFamilyIndex.value(),
+        this->VkMyPresentQueueFamilyIndex.value()
+        )
+
+    LOG_VERBOSE(LogVulkan, "Checking required device extensions.")
+    u32 AvailableDeviceExtensionCount{ 0 };
+    if (vkEnumerateDeviceExtensionProperties(this->VkMyPhysicalDevice, nullptr, &AvailableDeviceExtensionCount, nullptr) != VK_SUCCESS)
+    {
+        panic( "Failed to enumerate device extensions." )
+    }
+    TArray<VkExtensionProperties> AvailableDeviceExtensions(AvailableDeviceExtensionCount);
+    if (vkEnumerateDeviceExtensionProperties(this->VkMyPhysicalDevice, nullptr, &AvailableDeviceExtensionCount, AvailableDeviceExtensions.data()) != VK_SUCCESS)
+    {
+        panic( "Failed to enumerate device extensions." )
+    }
+    LOG_VERBOSE(LogVulkan, "Device Extension Count [{}]. Available extensions:", AvailableDeviceExtensionCount)
+    for (VkExtensionProperties const& Extension : AvailableDeviceExtensions)
+    {
+        LOG_VERBOSE(LogVulkan, "    {} spec[{}]", Extension.extensionName, Extension.specVersion)
+    }
+    TArray<char const*> RequiredDeviceExtensions{
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        };
+    algo::for_each(RequiredDeviceExtensions, [&AvailableDeviceExtensions](auto const* RequiredDeviceExtension)
+    {
+        if (algo::contains(AvailableDeviceExtensions, LString{RequiredDeviceExtension}, &VkExtensionProperties::extensionName) == false)
+        {
+            panicMsgf("Required Vulkan device extension [{}] is not available.", RequiredDeviceExtension)
+        }
+
+        return;
+    });
+
+    LOG_VERBOSE(LogVulkan, "Loading vulkan logical device.")
+    TSet<u32> UniqueQueueFamilyIndices{
+        this->VkMyGraphicsQueueFamilyIndex.value(),
+        this->VkMyPresentQueueFamilyIndex.value()
+        };
+    TArray<VkDeviceQueueCreateInfo> QueueCreateInfos; QueueCreateInfos.reserve(UniqueQueueFamilyIndices.size());
+    f32 QueuePriority{ 1.0f };
+    for (u32 QueueFamilyIndex : UniqueQueueFamilyIndices)
+    {
+        VkDeviceQueueCreateInfo QueueCreateInfo{
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .queueFamilyIndex = QueueFamilyIndex,
+            .queueCount = 1,
+            .pQueuePriorities = &QueuePriority
+            };
+        QueueCreateInfos.emplace_back(std::move(QueueCreateInfo));
+        continue;
+    }
+
+    VkPhysicalDeviceFeatures DeviceFeatures{};
+    VkDeviceCreateInfo CreateInfo{
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .queueCreateInfoCount = static_cast<u32>(QueueCreateInfos.size()),
+        .pQueueCreateInfos = QueueCreateInfos.data(),
+// #if !IN_SHIPPING
+//         .enabledLayerCount = static_cast<u32>(RequiredInstanceLayers_c_str.size()),
+//         .ppEnabledLayerNames = reinterpret_cast<char const* const*>(RequiredInstanceLayers_c_str.data()),
+// #else /* !IN_SHIPPING */
+//         .enabledLayerCount = 0,
+//         .ppEnabledLayerNames = nullptr,
+// #endif /* IN_SHIPPING */
+        .enabledExtensionCount = static_cast<u32>(RequiredDeviceExtensions.size()),
+        .ppEnabledExtensionNames = RequiredDeviceExtensions.data(),
+        };
+    check( CreateInfo.enabledLayerCount == 0 && CreateInfo.ppEnabledLayerNames == nullptr && "Deprecated")
+
+    if (vkCreateDevice(this->VkMyPhysicalDevice, &CreateInfo, nullptr, &this->VkMyDevice) != VK_SUCCESS)
+    {
+        panic( "Failed to create Vulkan logical device." )
+    }
+    volkLoadDevice(this->VkMyDevice);
+
+    vkGetDeviceQueue(this->VkMyDevice, this->VkMyGraphicsQueueFamilyIndex.value(), 0, &this->VkMyGraphicsQueue);
+    vkGetDeviceQueue(this->VkMyDevice, this->VkMyPresentQueueFamilyIndex.value(), 0, &this->VkMyPresentQueue);
+
+    LOG_VERBOSE(LogVulkan, "Creating VMA allocator.")
+    VmaVulkanFunctions VmaVulkanFunc{
+        .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
+        .vkGetDeviceProcAddr = vkGetDeviceProcAddr
+        };
+
+    VmaAllocatorCreateInfo VmaAllocatorCreateInfo{
+        .physicalDevice = this->VkMyPhysicalDevice,
+        .device = this->VkMyDevice,
+        .pVulkanFunctions = &VmaVulkanFunc,
+        .instance = this->VkMyInstance
+        };
+
+    if (vmaCreateAllocator(&VmaAllocatorCreateInfo, &this->VmaMyAllocator) != VK_SUCCESS)
+    {
+        panic( "Failed to create VMA allocator." )
+    }
 
     return;
 }

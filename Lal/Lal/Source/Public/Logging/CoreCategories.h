@@ -87,6 +87,7 @@ DECLARE_INLINE_LOG_CATEGORY( LogTextureSubsystem,             LAL_LOG_DEFAULT_VE
 DECLARE_INLINE_LOG_CATEGORY( LogTime,                         LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogUserInput,                    LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogVoxelSubsystem,               LAL_LOG_DEFAULT_VERBOSITY                             )
+DECLARE_INLINE_LOG_CATEGORY( LogVulkan,                       LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogWidgetFramework,              LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogWidgets,                      LAL_LOG_DEFAULT_VERBOSITY                             )
 DECLARE_INLINE_LOG_CATEGORY( LogWorld,                        LAL_LOG_DEFAULT_VERBOSITY                             )

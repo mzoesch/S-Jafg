@@ -132,6 +132,7 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     #pragma clang diagnostic ignored "-Wmissing-designated-field-initializers"
     #pragma clang diagnostic ignored "-Wmissing-field-initializers"
     #pragma clang diagnostic ignored "-Wnested-anon-types"
+    #pragma clang diagnostic ignored "-Wnullability-extension"
     #pragma clang diagnostic ignored "-Wunused-parameter"
 
     /*-----------------------------------------------------------------------------

@@ -98,6 +98,28 @@ if(_guard)
     target_link_libraries(${_scoped_module_name} PRIVATE jafg_sqlite3_amalgamation)
 
     ###############################################################################
+    # Volk
+    message(STATUS "Fetching Volk...")
+    FetchContent_Declare(
+        FetchContent_Volk
+        GIT_REPOSITORY      https://github.com/zeux/volk
+        GIT_TAG             master
+        )
+    FetchContent_MakeAvailable(FetchContent_Volk)
+    target_link_libraries(${_scoped_module_name} PRIVATE volk)
+
+    ###############################################################################
+    # Vma
+    message(STATUS "Fetching Vma...")
+    FetchContent_Declare(
+        FetchContent_Vma
+        GIT_REPOSITORY      https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+        GIT_TAG             master
+        )
+    FetchContent_MakeAvailable(FetchContent_Vma)
+    target_link_libraries(${_scoped_module_name} PRIVATE GPUOpen::VulkanMemoryAllocator)
+
+    ###############################################################################
     # Glm
     message(STATUS "Including GLM...")
     set(glm_dir "${JAFG_ENGINE_ROOT}/Engine/Vendor/CommonMath")
