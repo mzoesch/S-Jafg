@@ -72,7 +72,7 @@ if(_guard)
         GIT_TAG             VER-2-13-3
         )
     FetchContent_MakeAvailable(FetchContent_Freetype)
-    target_link_libraries(${_scoped_module_name} PRIVATE freetype-interface)
+    target_link_libraries(${_scoped_module_name} PUBLIC freetype-interface)
 
     ###############################################################################
     # Glfw3
@@ -84,7 +84,7 @@ if(_guard)
         )
     find_package(Vulkan REQUIRED)
     FetchContent_MakeAvailable(FetchContent_Glfw3)
-    target_link_libraries(${_scoped_module_name} PRIVATE glfw ${GLFW_LIBRARIES} Vulkan::Vulkan)
+    target_link_libraries(${_scoped_module_name} PUBLIC glfw ${GLFW_LIBRARIES} Vulkan::Vulkan)
 
     ###############################################################################
     # Sqlite3
@@ -106,7 +106,7 @@ if(_guard)
         GIT_TAG             master
         )
     FetchContent_MakeAvailable(FetchContent_Volk)
-    target_link_libraries(${_scoped_module_name} PRIVATE volk)
+    target_link_libraries(${_scoped_module_name} PUBLIC volk)
 
     ###############################################################################
     # Vma
@@ -117,43 +117,51 @@ if(_guard)
         GIT_TAG             master
         )
     FetchContent_MakeAvailable(FetchContent_Vma)
-    target_link_libraries(${_scoped_module_name} PRIVATE GPUOpen::VulkanMemoryAllocator)
+    target_link_libraries(${_scoped_module_name} PUBLIC GPUOpen::VulkanMemoryAllocator)
 
     ###############################################################################
     # Glm
-    message(STATUS "Including GLM...")
-    set(glm_dir "${JAFG_ENGINE_ROOT}/Engine/Vendor/CommonMath")
-    if(NOT EXISTS "${glm_dir}")
-        message(FATAL_ERROR "Expected submodule at [${glm_dir}].")
-    endif()
-    target_include_directories(${_scoped_module_name} PRIVATE "${glm_dir}/glm")
+    message(STATUS "Fetching GLM...")
+    FetchContent_Declare(
+        FetchContent_Glm
+        GIT_REPOSITORY      https://github.com/g-truc/glm
+        GIT_TAG             master
+        )
+    FetchContent_MakeAvailable(FetchContent_Glm)
+    target_include_directories(${_scoped_module_name} PUBLIC ${fetchcontent_glm_SOURCE_DIR})
 
     ###############################################################################
     # Nlohmann JSON
-    message(STATUS "Including Nlohmann JSON...")
-    set(nlohmann_json_dir "${JAFG_ENGINE_ROOT}/Engine/Vendor/Json")
-    if(NOT EXISTS "${nlohmann_json_dir}")
-        message(FATAL_ERROR "Expected submodule at [${nlohmann_json_dir}].")
-    endif()
-    target_include_directories(${_scoped_module_name} PRIVATE "${nlohmann_json_dir}/single_include")
+    message(STATUS "Fetching Nlohmann JSON...")
+    FetchContent_Declare(
+        FetchContent_NlohmannJson
+        GIT_REPOSITORY          https://github.com/nlohmann/json
+        GIT_TAG                 master
+        )
+    FetchContent_MakeAvailable(FetchContent_NlohmannJson)
+    target_include_directories(${_scoped_module_name} PUBLIC ${fetchcontent_nlohmannjson_SOURCE_DIR}/include)
 
     ###############################################################################
     # Stb
-    message(STATUS "Including Stb...")
-    set(stb_dir "${JAFG_ENGINE_ROOT}/Engine/Vendor/Stb")
-    if(NOT EXISTS "${stb_dir}")
-        message(FATAL_ERROR "Expected submodule at [${stb_dir}].")
-    endif()
-    target_include_directories(${_scoped_module_name} PRIVATE "${stb_dir}")
+    message(STATUS "Fetching Stb...")
+    FetchContent_Declare(
+        FetchContent_Stb
+        GIT_REPOSITORY          https://github.com/nothings/stb
+        GIT_TAG                 master
+        )
+    FetchContent_MakeAvailable(FetchContent_Stb)
+    target_include_directories(${_scoped_module_name} PUBLIC ${fetchcontent_stb_SOURCE_DIR})
 
     ###############################################################################
     # http
-    message(STATUS "Including cpp-httplib...")
-    set(httplib_dir "${JAFG_ENGINE_ROOT}/Engine/Vendor/cpp-httplib")
-    if(NOT EXISTS "${httplib_dir}")
-        message(FATAL_ERROR "Expected submodule at [${httplib_dir}].")
-    endif()
-    target_include_directories(${_scoped_module_name} PRIVATE "${httplib_dir}")
+    message(STATUS "Fetching cpp-httplib...")
+    FetchContent_Declare(
+        FetchContent_httplib
+        GIT_REPOSITORY          https://github.com/yhirose/cpp-httplib
+        GIT_TAG                 master
+        )
+    FetchContent_MakeAvailable(FetchContent_httplib)
+    target_include_directories(${_scoped_module_name} PRIVATE ${fetchcontent_httplib_SOURCE_DIR})
 
     ###############################################################################
     # Tracked vendors

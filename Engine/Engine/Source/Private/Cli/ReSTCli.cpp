@@ -2,6 +2,7 @@
 
 #include "Core/Application.h"
 #include "Runtime/Args.h"
+#include "Serialization/Json.h"
 
 namespace
 {

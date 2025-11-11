@@ -18,6 +18,7 @@
 #include "Engine/EngineRunnable.h"
 #include "Engine/Carnifex.h"
 #include "Cli/ReSTCliPreferences.h"
+#include "Serialization/Json.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Engine Globals
