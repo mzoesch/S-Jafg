@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FrontendForward.h"
 #include "Platform/Surface.h"
 #include "Widgets/Node.h"
 #include "Subsystems/FrontendSubsystem.h"
@@ -19,16 +20,17 @@ class WUserWidget;
 //# The frontend is the main hub for all user interface elements. Create frontend subsystems to automatically
 //# add multiple widgets of a type any viewport.
 //#
-class LFrontend final
+class LFrontendBase
 {
 public:
 
-    LFrontend() noexcept = default;
-    PROHIBIT_REALLOC_OF_ANY_FORM(LFrontend)
-    ~LFrontend() = default;
+    LFrontendBase() noexcept = default;
+    PROHIBIT_REALLOC_OF_ANY_FORM(LFrontendBase)
+    ~LFrontendBase() = default;
 
     void Initialize(LClassOuter* Outer);
     void Tick();
+    void OnUpdate();
     void TearDown();
 
     ENGINE_API LEngine&   GetEngine() const noexceptcheck;
@@ -95,14 +97,12 @@ public:
 
 private:
 
-    TUnique<LSurface> CreateNewSurface();
-
     i32 FocusedSurface{ 0 };
     TArray<TUnique<LSurface>> Surfaces;
     LSubsystemCollection Collection{ "Frontend" };
 };
 
-FORCEINLINE WNode* LFrontend::GetFirstTopLevelWidgetByClassChecked(TSubclassOf<WNode> Class) const
+FORCEINLINE WNode* LFrontendBase::GetFirstTopLevelWidgetByClassChecked(TSubclassOf<WNode> Class) const
 {
     WNode* Out = this->GetFirstTopLevelWidgetByClass(Class);
     check( Out )
@@ -110,37 +110,37 @@ FORCEINLINE WNode* LFrontend::GetFirstTopLevelWidgetByClassChecked(TSubclassOf<W
 }
 
 template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-FORCEINLINE bool LFrontend::ChangeWidgetVisibility(const LViewport* Context, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+FORCEINLINE bool LFrontendBase::ChangeWidgetVisibility(const LViewport* Context, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
     return this->ChangeWidgetVisibility(Context, TNode::StaticClass(), InVisibility, bAllowNotFound);
 }
 
 template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-FORCEINLINE bool LFrontend::ChangeWidgetVisibility(const LSurface* Context, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+FORCEINLINE bool LFrontendBase::ChangeWidgetVisibility(const LSurface* Context, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
     return this->ChangeWidgetVisibility(Context, TNode::StaticClass(), InVisibility, bAllowNotFound);
 }
 
 template<typename TNode> requires std::is_base_of_v<WNode, TNode>
-FORCEINLINE bool LFrontend::ChangeWidgetVisibility(const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+FORCEINLINE bool LFrontendBase::ChangeWidgetVisibility(const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
     return this->ChangeWidgetVisibility(TNode::StaticClass(), InVisibility, bAllowNotFound);
 }
 
-FORCEINLINE bool LFrontend::ChangeWidgetVisibility(const LSurface* Context, TSubclassOf<WNode> Class, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+FORCEINLINE bool LFrontendBase::ChangeWidgetVisibility(const LSurface* Context, TSubclassOf<WNode> Class, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
     check( Context )
     return this->ChangeWidgetVisibility(&Context->GetViewport(), Class, InVisibility, bAllowNotFound);
 }
 
-FORCEINLINE bool LFrontend::FocusWidgetChecked(LViewport* Context, WNode* InNode)
+FORCEINLINE bool LFrontendBase::FocusWidgetChecked(LViewport* Context, WNode* InNode)
 {
     const bool bOut = this->FocusWidget(Context, InNode);
     check( bOut )
     return bOut;
 }
 
-FORCEINLINE bool LFrontend::FocusWidgetAsserted(LViewport* Context, WNode* InNode)
+FORCEINLINE bool LFrontendBase::FocusWidgetAsserted(LViewport* Context, WNode* InNode)
 {
     const bool bOut = this->FocusWidget(Context, InNode);
     jassert( bOut )
@@ -148,3 +148,5 @@ FORCEINLINE bool LFrontend::FocusWidgetAsserted(LViewport* Context, WNode* InNod
 }
 
 } /* ~Namespace Jafg */
+
+#include "Framework/FrontendVk.h"

@@ -111,6 +111,7 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     #pragma clang diagnostic error "-Wparentheses"
     #pragma clang diagnostic error "-Wpessimizing-move"
     #pragma clang diagnostic error "-Wpragmas"
+    #pragma clang diagnostic error "-Wreorder-init-list"
     #pragma clang diagnostic error "-Wreturn-stack-address"
     #pragma clang diagnostic error "-Wreturn-type"
     #pragma clang diagnostic error "-Wsign-compare"

@@ -14,10 +14,10 @@
 #include "Widgets/UserWidget.h"
 #include "Stats/Stats.h"
 
-void Jafg::LFrontend::Initialize(LClassOuter* Outer)
+void Jafg::LFrontendBase::Initialize(LClassOuter* Outer)
 {
-    this->Surfaces.emplace_back(this->CreateNewSurface());
-    this->Surfaces.back()->SetInputMode(EInputMode::InputSubSystem, HideMouseCursor);
+    check( this->Surfaces.empty() )
+    this->Surfaces.emplace_back(std::make_unique<LSurface>());
 
     this->FocusedSurface = this->Surfaces.size() - 1;
     check( this->IsFocusedSurfaceValid() )
@@ -25,7 +25,7 @@ void Jafg::LFrontend::Initialize(LClassOuter* Outer)
     return;
 }
 
-void Jafg::LFrontend::Tick()
+void Jafg::LFrontendBase::Tick()
 {
     STAT_CYCLE_FUNCTION()
 
@@ -68,45 +68,54 @@ void Jafg::LFrontend::Tick()
     return;
 }
 
-void Jafg::LFrontend::TearDown()
+void Jafg::LFrontendBase::OnUpdate()
 {
-    this->Collection.TearDownSubsystems();
-
     for (auto& Surface : this->Surfaces)
     {
-        Surface->TearDown();
+        Surface->OnUpdate();
     }
+
+    return;
+}
+
+void Jafg::LFrontendBase::TearDown()
+{
+    STAT_CYCLE_FUNCTION()
+
+    LOG_VERBOSE(LogFrontEnd, "Tearing down frontend and all its surfaces.")
+
+    this->Collection.TearDownSubsystems();
     algo::orphan(&this->Surfaces);
 
     return;
 }
 
-Jafg::LEngine& Jafg::LFrontend::GetEngine() const noexceptcheck
+Jafg::LEngine& Jafg::LFrontendBase::GetEngine() const noexceptcheck
 {
-    check( GEngine && "Absence of GEngine when an object of LFrontend exists is undefined behavior." )
+    check( GEngine && "Absence of GEngine when an object of LFrontendBase exists is undefined behavior." )
     return *GEngine;
 }
 
-Jafg::LLocalEgo& Jafg::LFrontend::GetLocalEgo() const noexceptcheck
+Jafg::LLocalEgo& Jafg::LFrontendBase::GetLocalEgo() const noexceptcheck
 {
     return this->GetEngine().GetLocalEgo();
 }
 
-void Jafg::LFrontend::AddWidget(LViewport* Context, WUserWidget* Widget)
+void Jafg::LFrontendBase::AddWidget(LViewport* Context, WUserWidget* Widget)
 {
     check( Context )
     Context->AddWidget(Widget);
     return;
 }
 
-void Jafg::LFrontend::AddWidget(LSurface* Context, WUserWidget* Widget)
+void Jafg::LFrontendBase::AddWidget(LSurface* Context, WUserWidget* Widget)
 {
     check( Context )
     Context->GetViewport().AddWidget(Widget);
     return;
 }
 
-void Jafg::LFrontend::RemoveWidget(WUserWidget* Widget)
+void Jafg::LFrontendBase::RemoveWidget(WUserWidget* Widget)
 {
     for (auto& Surface : this->Surfaces)
     {
@@ -123,7 +132,7 @@ void Jafg::LFrontend::RemoveWidget(WUserWidget* Widget)
     return;
 }
 
-Jafg::WNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(TSubclassOf<WNode> Class) const
+Jafg::WNode* Jafg::LFrontendBase::GetFirstTopLevelWidgetByClass(TSubclassOf<WNode> Class) const
 {
     if (this->IsFocusedSurfaceValid())
     {
@@ -152,7 +161,7 @@ Jafg::WNode* Jafg::LFrontend::GetFirstTopLevelWidgetByClass(TSubclassOf<WNode> C
     return nullptr;
 }
 
-bool Jafg::LFrontend::ChangeWidgetVisibility(const LViewport* Context, TSubclassOf<WNode> Class, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+bool Jafg::LFrontendBase::ChangeWidgetVisibility(const LViewport* Context, TSubclassOf<WNode> Class, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
     WNode* Widget = this->GetTopLevelWidgetByClass(Context, Class);
     if (Widget == nullptr)
@@ -175,7 +184,7 @@ bool Jafg::LFrontend::ChangeWidgetVisibility(const LViewport* Context, TSubclass
     return true;
 }
 
-bool Jafg::LFrontend::ChangeWidgetVisibility(TSubclassOf<WNode> Class, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
+bool Jafg::LFrontendBase::ChangeWidgetVisibility(TSubclassOf<WNode> Class, const EWidgetVisibility::Type InVisibility, const bool bAllowNotFound) const
 {
     WNode* Widget = this->GetFirstTopLevelWidgetByClass(Class);
     if (Widget == nullptr)
@@ -198,26 +207,12 @@ bool Jafg::LFrontend::ChangeWidgetVisibility(TSubclassOf<WNode> Class, const EWi
     return true;
 }
 
-bool Jafg::LFrontend::FocusWidget(LViewport* Context, WNode* InNode)
+bool Jafg::LFrontendBase::FocusWidget(LViewport* Context, WNode* InNode)
 {
     check( Context )
     return Context->FocusWidgetNode(InNode);
 }
 
-TUnique<Jafg::LSurface> Jafg::LFrontend::CreateNewSurface()
-{
-    TUnique Out{ std::make_unique<LSurface>() };
 
-    if (LaunchProgress::Private::GProgressSurface && LaunchProgress::Private::bOwnerShipToken == false)
-    {
-        LaunchProgress::Private::bOwnerShipToken = true;
-        Out = TUnique<LSurface>(LaunchProgress::Private::GProgressSurface);
-        LaunchProgress::Private::GProgressSurface = nullptr;
-    }
-    else
-    {
-        Out->Initialize();
-    }
 
-    return Out;
-}
+// https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/02_Rendering_and_presentation.html

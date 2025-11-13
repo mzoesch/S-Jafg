@@ -13,6 +13,9 @@
     // #include <GLFW/glfw3.h> /* Include glfw3 after glad to avoid include order issues. */
 #endif /* !JAFG_NO_GLFW3 */
 
+#define VK_NO_PROTOTYPES
+#define VULKAN_HPP_NO_CONSTRUCTORS
+#include <vulkan/vulkan_raii.hpp>
 #include <volk.h>
 
 #if LAL_WITH_CLANG

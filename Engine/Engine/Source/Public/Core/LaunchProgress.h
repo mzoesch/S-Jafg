@@ -19,8 +19,6 @@ ENGINE_API extern f32       GProgress;
 ENGINE_API extern f64       GProgressStep;
 ENGINE_API extern LString   GProgressName;
 ENGINE_API extern LString   GProgressDescription;
-ENGINE_API extern LSurface* GProgressSurface;
-ENGINE_API extern bool      bOwnerShipToken;
 
 } /* ~Namespace Private */
 

@@ -2,6 +2,7 @@
 
 #include "Platform/Surface.h"
 #include "Core/LaunchProgress.h"
+#include "Framework/Frontend.h"
 #include "Forward/EngineForward.h"
 #include "Stats/Stats.h"
 
@@ -12,22 +13,12 @@ ENGINE_API f32       Private::GProgress            = 0.0f;
 ENGINE_API f64       Private::GProgressStep        = 0.0;
 ENGINE_API LString   Private::GProgressName        = "Intermediate";
 ENGINE_API LString   Private::GProgressDescription = "Intermediate";
-ENGINE_API LSurface* Private::GProgressSurface     = nullptr;
-ENGINE_API bool      Private::bOwnerShipToken      = false;
 
 } /* ~Namespace Jafg::LaunchProgress */
 
 void Jafg::LaunchProgress::PrepareBeginProgress()
 {
-    STAT_CYCLE_FUNCTION()
-
-    check( Private::GProgressSurface == nullptr )
-    check( Private::bOwnerShipToken == false )
-
-    Private::GProgressSurface = new LSurface();
-    Private::GProgressSurface->Initialize();
-
-    return;
+    // STAT_CYCLE_FUNCTION() [[deprecated]]
 }
 
 void Jafg::LaunchProgress::BeginProgress(
@@ -75,16 +66,6 @@ void Jafg::LaunchProgress::FinishAndGiveUpMemory()
     Private::GProgressStep = 0.0;
     algo::orphan(&Private::GProgressName);
     algo::orphan(&Private::GProgressDescription);
-
-    if (Private::GProgressSurface == nullptr || Private::bOwnerShipToken)
-    {
-        Private::GProgressSurface = nullptr;
-        Private::bOwnerShipToken = false;
-        return;
-    }
-
-    delete Private::GProgressSurface;
-    Private::GProgressSurface = nullptr;
 
     return;
 }

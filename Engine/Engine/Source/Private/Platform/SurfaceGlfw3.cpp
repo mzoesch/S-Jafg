@@ -9,8 +9,8 @@
 #include "Engine/Engine.h"
 #include "Async/TaskUtility.h"
 
-#define VMA_IMPLEMENTATION
 #include "Rhi/RhiVendorInclude.h"
+#include <GLFW/glfw3.h>
 
 #if PLATFORM_WINDOWS
     #define GLFW_EXPOSE_NATIVE_WIN32
@@ -25,53 +25,6 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
-
-namespace
-{
-
-bool bInitializedGlfw{ false };
-
-void GlfwErrorCallback(i32 Error, char const* Description)
-{
-    panicMsgf("GLFW Error (code {}): {}", Error, Description)
-}
-
-} /* ~Namespace <Anonymous> */
-
-#if !IN_SHIPPING
-static VKAPI_ATTR VkBool32 VKAPI_CALL Hermes(
-    VkDebugUtilsMessageSeverityFlagBitsEXT Severity,
-    VkDebugUtilsMessageTypeFlagsEXT Type,
-    VkDebugUtilsMessengerCallbackDataEXT const* CallbackData,
-    void* UserData
-    )
-{
-    (void)UserData;
-
-    if (Severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-    {
-        LOG_ERROR(LogVulkan, "[{}] Validation Layer [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
-    }
-    else if (Severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-    {
-        LOG_WARNING(LogVulkan, "[{}] Validation Layer [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
-    }
-    else if (Type & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
-    {
-        LOG_WARNING(LogVulkan, "[{}] Performance Layer [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
-    }
-    else if (Severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
-    {
-        LOG_VERBOSE(LogVulkan, "[{}] Info (Verbose) [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
-    }
-    else
-    {
-        LOG_INFO(LogVulkan, "[{}] Info [{}]: {}", CallbackData->messageIdNumber, CallbackData->pMessageIdName, CallbackData->pMessage)
-    }
-
-    return VK_FALSE;
-}
-#endif /* !IN_SHIPPING */
 
 namespace Jafg::Private
 {
@@ -147,55 +100,15 @@ struct LGlfw3Bridge final
 
 } /* ~Namespace Jafg::Private */
 
-Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
-{
-    if (this->Handle)
-    {
-        this->TearDown();
-    }
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::Initialize()
+Jafg::LSurfaceGlfw3::LSurfaceGlfw3() : Super{}
 {
     STAT_CYCLE_FUNCTION()
 
-    Super::Initialize();
-
     check( Tasks::IsOnMasterThread() )
 
-    if (bInitializedGlfw == false)
-    {
-        if (!glfwInit())
-        {
-            panic( "Failed to initialize glfw." )
-        }
+    LOG_VERBOSE(LogSurface, "Creating Glfw3 window surface.")
 
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-
-        glfwSetErrorCallback(::GlfwErrorCallback);
-
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-        const int Platform{ glfwGetPlatform() };
-        if (Platform == GLFW_PLATFORM_WAYLAND)
-        {
-            LOG_VERBOSE(LogSurface, "Using Wayland platform.")
-        }
-        if (Platform == GLFW_PLATFORM_X11)
-        {
-            LOG_VERBOSE(LogSurface, "Using X11 platform.")
-        }
-        if (Platform == GLFW_PLATFORM_WIN32)
-        {
-            LOG_VERBOSE(LogSurface, "Using Win32 platform.")
-        }
-
-        bInitializedGlfw = true;
-    }
-
+    // TODO Do we need this still??
     if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
     {
         this->SetPlatformSupportsRepeatedKey(false);
@@ -261,424 +174,49 @@ void Jafg::LSurfaceGlfw3::Initialize()
 
     this->GetViewport().SetBackgroundColor(Lal::LLinearColor::Black);
 
-    LOG_VERBOSE(LogRhi, "Initializing volk for Vulkan RHI.")
-    if (volkInitialize() != VK_SUCCESS)
-    {
-        panic( "Failed to initialize volk." )
-    }
-
-    u32 AvailableExtensionCount{ 0 };
-    if (vkEnumerateInstanceExtensionProperties(nullptr, &AvailableExtensionCount, nullptr))
-    {
-        panic( "Failed to enumerate instance extensions." )
-    }
-    LOG_VERBOSE(LogVulkan, "Instance Extension Count [{}]. Available extensions:", AvailableExtensionCount)
-    TArray<VkExtensionProperties> AvailableExtensions(AvailableExtensionCount);
-    if (vkEnumerateInstanceExtensionProperties(nullptr, &AvailableExtensionCount, AvailableExtensions.data()))
-    {
-        panic( "Failed to enumerate instance extensions." )
-    }
-    for (VkExtensionProperties const& Extension : AvailableExtensions)
-    {
-        LOG_VERBOSE(LogVulkan, "    {} spec[{}]", Extension.extensionName, Extension.specVersion)
-    }
-
-    TArray<LString> RequiredExtensions;
-    RequiredExtensions.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
-
-#if !IN_SHIPPING
-    RequiredExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    if (this->bVkMyInstanceLayerAddressBindings)
-    {
-        RequiredExtensions.emplace_back(VK_EXT_DEVICE_ADDRESS_BINDING_REPORT_EXTENSION_NAME);
-    }
-#endif /* !IN_SHIPPING */
-
-    u32 glfw3ExtensionCount{ 0 };
-    char const** glfw3Extensions{ glfwGetRequiredInstanceExtensions(&glfw3ExtensionCount) };
-    for (u32 Idx{ 0 }; Idx < glfw3ExtensionCount; ++Idx)
-    {
-        LString Glfw3Extension{ glfw3Extensions[Idx] };
-        if (algo::contains(RequiredExtensions, Glfw3Extension) == false)
-        {
-            RequiredExtensions.emplace_back(std::move(Glfw3Extension));
-        }
-        continue;
-    }
-    LOG_VERBOSE(LogVulkan, "Instance required extensions:")
-    for (LString const& Extension : RequiredExtensions)
-    {
-        LOG_VERBOSE(LogVulkan, "    {}", Extension)
-    }
-
-    for (LString const& Extension : RequiredExtensions)
-    {
-        bool bFound{ false };
-        for (auto const& AvailableExtension : AvailableExtensions)
-        {
-            if (Extension == AvailableExtension.extensionName)
-            {
-                bFound = true;
-                break;
-            }
-        }
-
-        if (bFound == false)
-        {
-            panicMsgf("Required Vulkan instance extension [{}] is not available.", Extension)
-        }
-    }
-    LOG_VERBOSE(LogVulkan, "All required instance extensions are available. Proceeding.")
-
-    u32 InstanceLayerCount{ 0 };
-    if (vkEnumerateInstanceLayerProperties(&InstanceLayerCount, nullptr) != VK_SUCCESS)
-    {
-        panic( "Failed to enumerate instance layers." )
-    }
-    LOG_VERBOSE(LogVulkan, "Instance Layer Count [{}]. Available layers:", InstanceLayerCount)
-    TArray<VkLayerProperties> AvailableInstanceLayers(InstanceLayerCount);
-    if (vkEnumerateInstanceLayerProperties(&InstanceLayerCount, AvailableInstanceLayers.data()) != VK_SUCCESS)
-    {
-        panic( "Failed to enumerate instance layers." )
-    }
-    for (VkLayerProperties const& InstanceLayer : AvailableInstanceLayers)
-    {
-        LOG_VERBOSE(LogVulkan, "    {} spec[{}]", InstanceLayer.layerName, InstanceLayer.specVersion)
-    }
-
-    TArray<LString> RequiredInstanceLayers;
-#if !IN_SHIPPING
-    RequiredInstanceLayers.emplace_back("VK_LAYER_KHRONOS_validation");
-#endif /* !IN_SHIPPING */
-    LOG_VERBOSE(LogVulkan, "Instance required layers:")
-    for (LString const& Layer : RequiredInstanceLayers)
-    {
-        LOG_VERBOSE(LogVulkan, "    {}", Layer)
-    }
-
-    for (LString const& Layer : RequiredInstanceLayers)
-    {
-        bool bFound{ false };
-        for (auto const& AvailableInstanceLayer : AvailableInstanceLayers)
-        {
-            if (Layer == AvailableInstanceLayer.layerName)
-            {
-                bFound = true;
-                break;
-            }
-        }
-
-        if (bFound == false)
-        {
-            panicMsgf("Required Vulkan instance layer [{}] is not available.", Layer)
-        }
-    }
-    LOG_VERBOSE(LogVulkan, "All required instance layers are available. Proceeding.")
-
-    TArray<char const*> RequiredInstanceLayers_c_str; RequiredInstanceLayers_c_str.reserve(RequiredInstanceLayers.size());
-    algo::for_each(RequiredInstanceLayers, [&RequiredInstanceLayers_c_str](LString const& Extension)
-    {
-        RequiredInstanceLayers_c_str.emplace_back(Extension.c_str());
-    });
-    TArray<char const*> RequiredExtensions_c_str; RequiredExtensions_c_str.reserve(RequiredExtensions.size());
-    algo::for_each(RequiredExtensions, [&RequiredExtensions_c_str](LString const& Extension)
-    {
-        RequiredExtensions_c_str.emplace_back(Extension.c_str());
-    });
-
-    VkApplicationInfo App{
-        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-        .pApplicationName = this->GetHumanReadableName().c_str(),
-        .pEngineName = "Jafg",
-        .apiVersion = VK_API_VERSION_1_4
-        };
-
-    VkInstanceCreateInfo Instance{
-        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-        .pApplicationInfo = &App,
-        .enabledLayerCount = static_cast<u32>(RequiredInstanceLayers_c_str.size()),
-        .ppEnabledLayerNames = reinterpret_cast<char const* const*>(RequiredInstanceLayers_c_str.data()),
-        .enabledExtensionCount = static_cast<u32>(RequiredExtensions_c_str.size()),
-        .ppEnabledExtensionNames = reinterpret_cast<char const* const*>(RequiredExtensions_c_str.data())
-        };
-
-#if !IN_SHIPPING
-    VkDebugUtilsMessengerCreateInfoEXT DebugUtilsMessenger{
-        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-        .messageSeverity =
-              VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
-            | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
-            | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
-            | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
-        .messageType =
-              VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-            | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-            | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
-
-            ,
-        .pfnUserCallback = Hermes
-        };
-    if (this->bVkMyInstanceLayerAddressBindings)
-    {
-        DebugUtilsMessenger.messageType |= VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT;
-    }
-
-    check( Instance.pNext == nullptr )
-    Instance.pNext = &DebugUtilsMessenger;
-#endif /* !IN_SHIPPING */
-
-    if (vkCreateInstance(&Instance, nullptr, &this->VkMyInstance) != VK_SUCCESS)
-    {
-        panic( "Failed to create Vulkan instance." )
-    }
-
-    volkLoadInstance(this->VkMyInstance);
-
-#if !IN_SHIPPING
-    if (vkCreateDebugUtilsMessengerEXT(this->VkMyInstance, &DebugUtilsMessenger, nullptr, &this->VkMyHermes) != VK_SUCCESS)
-    {
-        panic( "Failed to create Vulkan debug messenger." )
-    }
-#endif /* !IN_SHIPPING */
-
-    if (glfwCreateWindowSurface(this->VkMyInstance, this->Handle, nullptr, &this->VkMySurface) != VK_SUCCESS)
+    VkSurfaceKHR CSurface;
+    if (glfwCreateWindowSurface(*this->GetFrontend().GetVkInstance(), this->Handle, nullptr, &CSurface) != VK_SUCCESS)
     {
         panic( "Failed to create Vulkan window surface." )
     }
-    check( this->VkMySurface )
+    check( CSurface )
+    this->VkMySurface = vk::raii::SurfaceKHR{ this->GetFrontend().GetVkInstance(), CSurface };
 
-    LOG_VERBOSE(LogVulkan, "Loading vulkan physical device.")
-    u32 PhysicalDeviceCount{ 0 };
-    if (vkEnumeratePhysicalDevices(this->VkMyInstance, &PhysicalDeviceCount, nullptr) != VK_SUCCESS)
-    {
-        panic( "Failed to enumerate physical devices." )
-    }
-    if (PhysicalDeviceCount < 1)
-    {
-        panicMsgf( "Failed to find any physical devices with Vulkan support." )
-    }
+    return;
+}
 
-    TArray<VkPhysicalDevice> PhysicalDevices(PhysicalDeviceCount);
-    if (vkEnumeratePhysicalDevices(this->VkMyInstance, &PhysicalDeviceCount, PhysicalDevices.data()) != VK_SUCCESS)
+Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
+{
     {
-        panic( "Failed to enumerate physical devices." )
+        STAT_QUICK_CYCLE_START("VkDeviceWaitIdle")
+        this->GetFrontend().GetVkDevice().waitIdle();
     }
 
-    std::multimap<u64, VkPhysicalDevice> RankedPhysicalDevices;
-    for (auto const& PhysicalDevice : PhysicalDevices)
+    if (this->Cursor)
     {
-        auto GetPhysicalDeviceRating = [](VkPhysicalDevice _PhysicalDevice) -> u64
-        {
-            u64 Rating{ 0 };
-
-            VkPhysicalDeviceProperties Properties;
-            vkGetPhysicalDeviceProperties(_PhysicalDevice, &Properties);
-
-            if (Properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-            {
-                Rating += 16'384;
-            }
-            else if (Properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
-            {
-                Rating += 8'192;
-            }
-
-            Rating += Properties.limits.maxImageDimension2D;
-
-            return Rating;
-        };
-
-        RankedPhysicalDevices.insert(std::make_pair(GetPhysicalDeviceRating(PhysicalDevice), PhysicalDevice));
-        continue;
+        LOG_VERBOSE(LogSurface, "Destroying glfw cursor.")
+        glfwDestroyCursor(this->Cursor);
+        this->Cursor = nullptr;
     }
 
-    LOG_VERBOSE(LogVulkan, "Available physical devices ranked by suitability:")
-    for (auto const& [Rating, PhysicalDevice] : RankedPhysicalDevices)
+    if (this->Handle)
     {
-        VkPhysicalDeviceProperties Properties;
-        vkGetPhysicalDeviceProperties(PhysicalDevice, &Properties);
-        LOG_VERBOSE(LogVulkan, "    [{}] rated [{}]: {} (API v{}.{}.{}), Driver v{}.{}.{}",
-            reinterpret_cast<void const*>(PhysicalDevice),
-            Rating,
-            Properties.deviceName,
-            VK_VERSION_MAJOR(Properties.apiVersion),
-            VK_VERSION_MINOR(Properties.apiVersion),
-            VK_VERSION_PATCH(Properties.apiVersion),
-            VK_VERSION_MAJOR(Properties.driverVersion),
-            VK_VERSION_MINOR(Properties.driverVersion),
-            VK_VERSION_PATCH(Properties.driverVersion)
-            )
-        continue;
-    }
-    if (RankedPhysicalDevices.rbegin()->first == 0)
-    {
-        panicMsgf( "Failed to find a suitable physical device." )
+        LOG_VERBOSE(LogSurface, "Destroying glfw window.")
+        glfwDestroyWindow(this->Handle);
+        this->Handle = nullptr;
     }
 
-    LOG_VERBOSE(LogVulkan, "Loading vulkan queue families.")
-    for (auto const& PhysicalDevice: RankedPhysicalDevices | std::views::values)
-    {
-        check( this->VkMyPhysicalDevice == nullptr )
-        check( this->VkMyGraphicsQueueFamilyIndex.has_value() == false )
-        check( this->VkMyPresentQueueFamilyIndex.has_value() == false )
+    return;
+}
 
-        u32 QueueFamilies{ 0 };
-        vkGetPhysicalDeviceQueueFamilyProperties(PhysicalDevice, &QueueFamilies, nullptr);
-        if (QueueFamilies < 1)
-        {
-            LOG_VERBOSE(LogVulkan, "Physical device [{}] has no queue families. Skipping.", reinterpret_cast<void const*>(PhysicalDevice))
-            continue;
-        }
-
-        std::vector<VkQueueFamilyProperties> QueueFamilyProperties(QueueFamilies);
-        vkGetPhysicalDeviceQueueFamilyProperties(PhysicalDevice, &QueueFamilies, QueueFamilyProperties.data());
-        for (u32 Idx{ 0 }; Idx < QueueFamilies; ++Idx)
-        {
-            if (this->VkMyGraphicsQueueFamilyIndex.has_value() == false && QueueFamilyProperties[Idx].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-            {
-                this->VkMyGraphicsQueueFamilyIndex = Idx;
-            }
-
-            if (this->VkMyPresentQueueFamilyIndex.has_value() == false)
-            {
-                VkBool32 bCanPresent{ VK_FALSE };
-                vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice, Idx, this->VkMySurface, &bCanPresent);
-                if (bCanPresent == VK_TRUE)
-                {
-                   this->VkMyPresentQueueFamilyIndex = Idx;
-                }
-            }
-
-            if (this->VkMyGraphicsQueueFamilyIndex.has_value() && this->VkMyPresentQueueFamilyIndex.has_value())
-            {
-                break;
-            }
-
-            continue;
-        }
-
-        if (this->VkMyGraphicsQueueFamilyIndex.has_value() == false)
-        {
-            LOG_VERBOSE(LogVulkan, "Physical device [{}] has no suitable graphics queue family. Skipping.", reinterpret_cast<void const*>(PhysicalDevice))
-            this->VkMyPresentQueueFamilyIndex.reset();
-            continue;
-        }
-
-        if (this->VkMyPresentQueueFamilyIndex.has_value() == false)
-        {
-            LOG_VERBOSE(LogVulkan, "Physical device [{}] has no suitable graphics queue family. Skipping.", reinterpret_cast<void const*>(PhysicalDevice))
-            this->VkMyGraphicsQueueFamilyIndex.reset();
-            continue;
-        }
-
-        this->VkMyPhysicalDevice = PhysicalDevice;
-        break;
-    }
-    if (this->VkMyPhysicalDevice == nullptr)
-    {
-        panicMsgf( "Failed to find a suitable physical device." )
-    }
-    if (this->VkMyGraphicsQueueFamilyIndex.value())
-    {
-        panicMsgf( "Failed to find a suitable graphics queue family." )
-    }
-    LOG_VERBOSE(LogVulkan, "Selected physical device [{}] with graphics queue family index [{}] and present queue family index [{}].",
-        reinterpret_cast<void const*>(this->VkMyPhysicalDevice),
-        this->VkMyGraphicsQueueFamilyIndex.value(),
-        this->VkMyPresentQueueFamilyIndex.value()
-        )
-
-    LOG_VERBOSE(LogVulkan, "Checking required device extensions.")
-    u32 AvailableDeviceExtensionCount{ 0 };
-    if (vkEnumerateDeviceExtensionProperties(this->VkMyPhysicalDevice, nullptr, &AvailableDeviceExtensionCount, nullptr) != VK_SUCCESS)
-    {
-        panic( "Failed to enumerate device extensions." )
-    }
-    TArray<VkExtensionProperties> AvailableDeviceExtensions(AvailableDeviceExtensionCount);
-    if (vkEnumerateDeviceExtensionProperties(this->VkMyPhysicalDevice, nullptr, &AvailableDeviceExtensionCount, AvailableDeviceExtensions.data()) != VK_SUCCESS)
-    {
-        panic( "Failed to enumerate device extensions." )
-    }
-    LOG_VERBOSE(LogVulkan, "Device Extension Count [{}]. Available extensions:", AvailableDeviceExtensionCount)
-    for (VkExtensionProperties const& Extension : AvailableDeviceExtensions)
-    {
-        LOG_VERBOSE(LogVulkan, "    {} spec[{}]", Extension.extensionName, Extension.specVersion)
-    }
-    TArray<char const*> RequiredDeviceExtensions{
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
-        };
-    algo::for_each(RequiredDeviceExtensions, [&AvailableDeviceExtensions](auto const* RequiredDeviceExtension)
-    {
-        if (algo::contains(AvailableDeviceExtensions, LString{RequiredDeviceExtension}, &VkExtensionProperties::extensionName) == false)
-        {
-            panicMsgf("Required Vulkan device extension [{}] is not available.", RequiredDeviceExtension)
-        }
-
-        return;
-    });
-
-    LOG_VERBOSE(LogVulkan, "Loading vulkan logical device.")
-    TSet<u32> UniqueQueueFamilyIndices{
-        this->VkMyGraphicsQueueFamilyIndex.value(),
-        this->VkMyPresentQueueFamilyIndex.value()
-        };
-    TArray<VkDeviceQueueCreateInfo> QueueCreateInfos; QueueCreateInfos.reserve(UniqueQueueFamilyIndices.size());
-    f32 QueuePriority{ 1.0f };
-    for (u32 QueueFamilyIndex : UniqueQueueFamilyIndices)
-    {
-        VkDeviceQueueCreateInfo QueueCreateInfo{
-            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            .queueFamilyIndex = QueueFamilyIndex,
-            .queueCount = 1,
-            .pQueuePriorities = &QueuePriority
-            };
-        QueueCreateInfos.emplace_back(std::move(QueueCreateInfo));
-        continue;
-    }
-
-    VkPhysicalDeviceFeatures DeviceFeatures{};
-    VkDeviceCreateInfo CreateInfo{
-        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .queueCreateInfoCount = static_cast<u32>(QueueCreateInfos.size()),
-        .pQueueCreateInfos = QueueCreateInfos.data(),
-// #if !IN_SHIPPING
-//         .enabledLayerCount = static_cast<u32>(RequiredInstanceLayers_c_str.size()),
-//         .ppEnabledLayerNames = reinterpret_cast<char const* const*>(RequiredInstanceLayers_c_str.data()),
-// #else /* !IN_SHIPPING */
-//         .enabledLayerCount = 0,
-//         .ppEnabledLayerNames = nullptr,
-// #endif /* IN_SHIPPING */
-        .enabledExtensionCount = static_cast<u32>(RequiredDeviceExtensions.size()),
-        .ppEnabledExtensionNames = RequiredDeviceExtensions.data(),
-        };
-    check( CreateInfo.enabledLayerCount == 0 && CreateInfo.ppEnabledLayerNames == nullptr && "Deprecated")
-
-    if (vkCreateDevice(this->VkMyPhysicalDevice, &CreateInfo, nullptr, &this->VkMyDevice) != VK_SUCCESS)
-    {
-        panic( "Failed to create Vulkan logical device." )
-    }
-    volkLoadDevice(this->VkMyDevice);
-
-    vkGetDeviceQueue(this->VkMyDevice, this->VkMyGraphicsQueueFamilyIndex.value(), 0, &this->VkMyGraphicsQueue);
-    vkGetDeviceQueue(this->VkMyDevice, this->VkMyPresentQueueFamilyIndex.value(), 0, &this->VkMyPresentQueue);
-
-    LOG_VERBOSE(LogVulkan, "Creating VMA allocator.")
-    VmaVulkanFunctions VmaVulkanFunc{
-        .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
-        .vkGetDeviceProcAddr = vkGetDeviceProcAddr
-        };
-
-    VmaAllocatorCreateInfo VmaAllocatorCreateInfo{
-        .physicalDevice = this->VkMyPhysicalDevice,
-        .device = this->VkMyDevice,
-        .pVulkanFunctions = &VmaVulkanFunc,
-        .instance = this->VkMyInstance
-        };
-
-    if (vmaCreateAllocator(&VmaAllocatorCreateInfo, &this->VmaMyAllocator) != VK_SUCCESS)
-    {
-        panic( "Failed to create VMA allocator." )
-    }
+void Jafg::LSurfaceGlfw3::LateSetupVk()
+{
+    this->VkCreateSwapchainKHR();
+    this->VkCreateImageViews();
+    this->VkCreateGraphicsPipeline();
+    this->VkCreateCommandPool();
+    this->VkCreateCommandBuffer();
+    this->VkCreateSynchObjects();
 
     return;
 }
@@ -694,6 +232,8 @@ void Jafg::LSurfaceGlfw3::OnClear()
     return;
 }
 
+static_assert(UINT64_MAX == std::numeric_limits<u64>::max());
+
 void Jafg::LSurfaceGlfw3::OnUpdate()
 {
     STAT_CYCLE_FUNCTION()
@@ -702,37 +242,39 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
     checkSlow( Tasks::IsOnMasterThread() )
     // glfwMakeContextCurrent(this->Handle);
 
+    this->GetFrontend().GetVkGraphicsQueue().waitIdle();
+
+    auto [Result, ImageIndex] = this->VkMySwapchain.acquireNextImage(
+        std::numeric_limits<u64>::max(), *this->VkMyPresentSemaphore, nullptr
+        );
+
+    this->RecordCommandBuffer(ImageIndex);
+
+    this->GetFrontend().GetVkDevice().resetFences(*this->VkMyFence);
+
+    vk::PipelineStageFlags waitDestinationStageMask( vk::PipelineStageFlagBits::eColorAttachmentOutput );
+    const vk::SubmitInfo submitInfo{ .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->VkMyPresentSemaphore,
+                        .pWaitDstStageMask = &waitDestinationStageMask, .commandBufferCount = 1, .pCommandBuffers = &*this->VkMyCommandBuffer,
+                        .signalSemaphoreCount = 1, .pSignalSemaphores = &*this->VkMyRenderSemaphore };
+    this->GetFrontend().GetVkGraphicsQueue().submit(submitInfo, *this->VkMyFence);
+    while ( vk::Result::eTimeout == this->GetFrontend().GetVkDevice().waitForFences( *this->VkMyFence, vk::True, UINT64_MAX ) )
+        ;
+
+    const vk::PresentInfoKHR presentInfoKHR{ .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->VkMyRenderSemaphore,
+                                            .swapchainCount = 1, .pSwapchains = &*this->VkMySwapchain, .pImageIndices = &ImageIndex };
+    Result = this->GetFrontend().GetVkGraphicsQueue().presentKHR( presentInfoKHR );
+    switch ( Result )
+    {
+    case vk::Result::eSuccess: break;
+    case vk::Result::eSuboptimalKHR: std::cout << "vk::Queue::presentKHR returned vk::Result::eSuboptimalKHR !\n"; break;
+    default: break;  // an unexpected result is returned!
+    }
+
     Super::OnUpdate();
 
     {
         STAT_QUICK_CYCLE_START("SwapBuffers")
         // glfwSwapBuffers(this->Handle);
-    }
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::TearDown()
-{
-    Super::TearDown();
-
-    if (this->Cursor)
-    {
-        glfwDestroyCursor(this->Cursor);
-        this->Cursor = nullptr;
-    }
-
-    if (this->Handle)
-    {
-        LOG_INFO(LogSurface, "Destroying glfw window.")
-        glfwDestroyWindow(this->Handle);
-        this->Handle = nullptr;
-    }
-
-    if (IsEngineExitRequested() && GEngine->GetLocalEgo().GetFrontend().GetSurfaceCount() == 0)
-    {
-        LOG_INFO(LogSurface, "Terminating glfw.")
-        glfwTerminate();
     }
 
     return;
@@ -829,8 +371,10 @@ void Jafg::LSurfaceGlfw3::PollEvents()
     {
         GEngine->RequestEngineExit("Window closed by user.");
     }
-
-    glfwPollEvents();
+    else
+    {
+        glfwPollEvents();
+    }
 
     return;
 }
@@ -1134,5 +678,364 @@ void Jafg::LSurfaceGlfw3::EmulateContentForBufferedInputGlfw3(const i32 InKey)
     return;
 }
 #endif /* PLATFORM_LINUX */
+
+void Jafg::LSurfaceGlfw3::VkCreateSwapchainKHR()
+{
+    LOG_VERBOSE(LogVulkan, "Creating Vulkan swapchain for Glfw3 surface.")
+
+    auto& Frontend = this->GetFrontend();
+
+    auto SurfaceCapabilities = Frontend.GetVkPhysicalDevice().getSurfaceCapabilitiesKHR(this->VkMySurface);
+    auto AvailableFormats = Frontend.GetVkPhysicalDevice().getSurfaceFormatsKHR(this->VkMySurface);
+    auto AvailablePresentModes = Frontend.GetVkPhysicalDevice().getSurfacePresentModesKHR(this->VkMySurface);
+
+    this->VkMySwapchainSurfaceFormat = this->ChooseVkSwapSurfaceFormatKHR(AvailableFormats);
+    this->VkMySwapchainPresentMode = this->ChooseVkSwapPresentModeKHR(Frontend.GetVkPhysicalDevice().getSurfacePresentModesKHR(this->VkMySurface));
+    this->VkMySwapchainExtent = this->ChooseVkSwapExtent(SurfaceCapabilities);
+
+    LOG_VERBOSE(LogVulkan, "Preferred surface format: Format [{}], Color Space [{}]",
+        vk::to_string(this->VkMySwapchainSurfaceFormat.format),
+        vk::to_string(this->VkMySwapchainSurfaceFormat.colorSpace)
+        )
+    LOG_VERBOSE(LogVulkan, "Preferred present mode: [{}]", vk::to_string(this->VkMySwapchainPresentMode))
+    LOG_VERBOSE(LogVulkan, "Swapchain extent: [{}x{}]",
+        this->VkMySwapchainExtent.width,
+        this->VkMySwapchainExtent.height
+        )
+
+    u32 MinImageCount = Maths::Max(3u, SurfaceCapabilities.minImageCount); /* Default to triple buffering. */
+    MinImageCount = (SurfaceCapabilities.maxImageCount > 0 && MinImageCount > SurfaceCapabilities.maxImageCount)
+        ? SurfaceCapabilities.maxImageCount
+        : MinImageCount;
+
+    vk::SwapchainCreateInfoKHR SwapChainCreateInfo{
+        .flags = vk::SwapchainCreateFlagsKHR{},
+        .surface = this->VkMySurface,
+        .minImageCount = MinImageCount,
+        .imageFormat = this->VkMySwapchainSurfaceFormat.format,
+        .imageColorSpace = this->VkMySwapchainSurfaceFormat.colorSpace,
+        .imageExtent =  this->VkMySwapchainExtent,
+        .imageArrayLayers = 1,
+        .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
+        .imageSharingMode = vk::SharingMode::eExclusive,
+        .preTransform = SurfaceCapabilities.currentTransform,
+        .compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque,
+        .presentMode = this->VkMySwapchainPresentMode,
+        .clipped = VK_TRUE,
+        .oldSwapchain = VK_NULL_HANDLE
+        };
+
+    u32 QueueFamilyIndices[] = {Frontend.GetVkGraphicsQueueFamilyIndex(), Frontend.GetVkPresentQueueFamilyIndex()};
+    if (Frontend.GetVkGraphicsQueue() != Frontend.GetVkPresentQueue())
+    {
+        SwapChainCreateInfo.imageSharingMode = vk::SharingMode::eConcurrent; /* TODO: Not optimal performance wise. But we can fix this later. */
+        SwapChainCreateInfo.queueFamilyIndexCount = 2;
+        SwapChainCreateInfo.pQueueFamilyIndices = QueueFamilyIndices;
+    }
+    else
+    {
+        SwapChainCreateInfo.imageSharingMode = vk::SharingMode::eExclusive;
+        SwapChainCreateInfo.queueFamilyIndexCount = 0; /* Optional */
+        SwapChainCreateInfo.pQueueFamilyIndices = nullptr; /* Optional */
+    }
+
+    this->VkMySwapchain = vk::raii::SwapchainKHR{ Frontend.GetVkDevice(), SwapChainCreateInfo };
+    this->VkMySwapchainImages = this->VkMySwapchain.getImages();
+
+    return;
+}
+
+vk::SurfaceFormatKHR Jafg::LSurfaceGlfw3::ChooseVkSwapSurfaceFormatKHR(std::vector<vk::SurfaceFormatKHR> const& AvailableFormats) const
+{
+    for (auto const& AvailableFormat : AvailableFormats)
+    {
+        if (AvailableFormat.format == vk::Format::eB8G8R8A8Srgb && AvailableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
+        {
+            return AvailableFormat;
+        }
+
+        continue;
+    }
+
+    LOG_WARNING(LogVulkan, "Preferred swap surface format not found. Using first available format.")
+    return AvailableFormats[0];
+}
+
+vk::PresentModeKHR Jafg::LSurfaceGlfw3::ChooseVkSwapPresentModeKHR(std::vector<vk::PresentModeKHR> const& AvailablePresentModes) const
+{
+    // VK_PRESENT_MODE_IMMEDIATE_KHR: Images submitted by your application are transferred to the
+    //                                screen right away, which may result in tearing.
+    // VK_PRESENT_MODE_FIFO_KHR: The swap chain is a queue where the display takes an image from the front of the
+    //                           queue when the display is refreshed, and the program inserts rendered images at
+    //                           the back of the queue. If the queue is full, then the program has to wait. This is
+    //                           most similar to vertical sync as found in modern games. The moment that the display
+    //                           is refreshed is known as "vertical blank".
+    // VK_PRESENT_MODE_FIFO_RELAXED_KHR: This mode only differs from the previous one if the application is late and
+    //                                   the queue was empty at the last vertical blank. Instead of waiting for the
+    //                                   next vertical blank, the image is transferred right away when it finally
+    //                                   arrives. This may result in visible tearing.
+    // VK_PRESENT_MODE_MAILBOX_KHR: This is another variation of the second mode. Instead of blocking the
+    //                              application when the queue is full, the images that are already queued are
+    //                              simply replaced with the newer ones. This mode can be used to render frames as
+    //                              fast as possible while still avoiding tearing, resulting in fewer latency issues
+    //                              than standard vertical sync. This is commonly known as "triple buffering,"
+    //                              although the existence of three buffers alone does not necessarily mean that
+    //                              the framerate is unlocked
+
+    for (const auto& AvailablePresentMode : AvailablePresentModes)
+    {
+        if (AvailablePresentMode == vk::PresentModeKHR::eMailbox)
+        {
+            return AvailablePresentMode;
+        }
+
+        continue;
+    }
+
+    LOG_WARNING(LogVulkan, "Preferred swap present mode not found. Using FIFO present mode.")
+    return vk::PresentModeKHR::eFifo;
+}
+
+vk::Extent2D Jafg::LSurfaceGlfw3::ChooseVkSwapExtent(vk::SurfaceCapabilitiesKHR const& Capabilities) const
+{
+    if (Capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+    {
+        return Capabilities.currentExtent;
+    }
+
+    i32 Width;
+    i32 Height;
+    glfwGetFramebufferSize(this->Handle, &Width, &Height);
+
+    return
+    {
+        Maths::Clamp<u32>(Width, Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width),
+        Maths::Clamp<u32>(Height, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height)
+    };
+}
+
+void Jafg::LSurfaceGlfw3::VkCreateImageViews()
+{
+    LOG_VERBOSE(LogVulkan, "Creating Vulkan image views for swapchain images.")
+
+    this->VkMySwapchainImageViews.clear();
+
+    vk::ImageViewCreateInfo CreateInfo{
+        .viewType = vk::ImageViewType::e2D,
+        .format = this->VkMySwapchainSurfaceFormat.format,
+        .components = { vk::ComponentSwizzle::eIdentity,
+                        vk::ComponentSwizzle::eIdentity,
+                        vk::ComponentSwizzle::eIdentity,
+                        vk::ComponentSwizzle::eIdentity },
+        .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 }
+        };
+
+    for (const auto& SwapchainImage : this->VkMySwapchainImages)
+    {
+        CreateInfo.image = SwapchainImage;
+        this->VkMySwapchainImageViews.emplace_back(vk::raii::ImageView{ this->GetFrontend().GetVkDevice(), CreateInfo });
+        continue;
+    }
+
+    LOG_VERBOSE(LogVulkan, "Created {} Vulkan image views for swapchain images.", this->VkMySwapchainImageViews.size())
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkCreateGraphicsPipeline()
+{
+    LOG_VERBOSE(LogVulkan, "Creating Vulkan graphics pipeline for Glfw3 surface.")
+
+    vk::raii::ShaderModule ShaderModule = this->CreateShaderModule(Finder::ReadFileAsBinary("Content/Shaders/Spir-V/Test.spv"));
+    vk::PipelineShaderStageCreateInfo vertShaderStageInfo{
+        .stage = vk::ShaderStageFlagBits::eVertex,
+        .module = ShaderModule,
+        .pName = "vertMain"
+        };
+    vk::PipelineShaderStageCreateInfo fragShaderStageInfo{
+        .stage = vk::ShaderStageFlagBits::eFragment,
+        .module = ShaderModule,
+        .pName = "fragMain"
+        };
+    vk::PipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+
+    vk::PipelineVertexInputStateCreateInfo   vertexInputInfo;
+    vk::PipelineInputAssemblyStateCreateInfo inputAssembly{.topology = vk::PrimitiveTopology::eTriangleList};
+    vk::PipelineViewportStateCreateInfo      viewportState{.viewportCount = 1, .scissorCount = 1};
+
+    vk::PipelineRasterizationStateCreateInfo rasterizer{.depthClampEnable = vk::False, .rasterizerDiscardEnable = vk::False,
+        .polygonMode = vk::PolygonMode::eFill, .cullMode = vk::CullModeFlagBits::eBack, .frontFace = vk::FrontFace::eClockwise,
+        .depthBiasEnable = vk::False, .depthBiasSlopeFactor = 1.0f, .lineWidth = 1.0f};
+
+    vk::PipelineMultisampleStateCreateInfo multisampling{.rasterizationSamples = vk::SampleCountFlagBits::e1, .sampleShadingEnable = vk::False};
+
+    vk::PipelineColorBlendAttachmentState colorBlendAttachment{.blendEnable    = vk::False,
+        .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
+    vk::PipelineColorBlendStateCreateInfo colorBlending{.logicOpEnable = vk::False, .logicOp = vk::LogicOp::eCopy, .attachmentCount = 1, .pAttachments = &colorBlendAttachment};
+
+    TArray<vk::DynamicState> dynamicStates{ vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+    vk::PipelineDynamicStateCreateInfo dynamicState{ .dynamicStateCount = static_cast<u32>(dynamicStates.size()), .pDynamicStates = dynamicStates.data() };
+
+    vk::PipelineLayoutCreateInfo pipelineLayoutInfo{.setLayoutCount = 0, .pushConstantRangeCount = 0};
+
+    this->VkMyPipelineLayout = vk::raii::PipelineLayout(this->GetFrontend().GetVkDevice(), pipelineLayoutInfo);
+
+    vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> pipelineCreateInfoChain = {
+        {.stageCount          = 2,
+         .pStages             = shaderStages,
+         .pVertexInputState   = &vertexInputInfo,
+         .pInputAssemblyState = &inputAssembly,
+         .pViewportState      = &viewportState,
+         .pRasterizationState = &rasterizer,
+         .pMultisampleState   = &multisampling,
+         .pColorBlendState    = &colorBlending,
+         .pDynamicState       = &dynamicState,
+         .layout              = this->VkMyPipelineLayout,
+         .renderPass          = nullptr},
+        {.colorAttachmentCount = 1, .pColorAttachmentFormats = &this->VkMySwapchainSurfaceFormat.format}};
+
+    this->VkMyPipeline = vk::raii::Pipeline{
+        this->GetFrontend().GetVkDevice(),
+        nullptr,
+        pipelineCreateInfoChain.get<vk::GraphicsPipelineCreateInfo>()
+        };
+
+    LOG_VERBOSE(LogVulkan, "Created Vulkan graphics pipeline for surface.")
+
+    return;
+}
+
+vk::raii::ShaderModule Jafg::LSurfaceGlfw3::CreateShaderModule(TArray<u8> const& Code) const
+{
+    vk::ShaderModuleCreateInfo createInfo{
+        .codeSize = Code.size() * sizeof(char),
+        .pCode = reinterpret_cast<u32 const*>(Code.data())
+        };
+
+    return vk::raii::ShaderModule{ this->GetFrontend().GetVkDevice(), createInfo };
+}
+
+void Jafg::LSurfaceGlfw3::VkCreateCommandPool()
+{
+    LOG_VERBOSE(LogVulkan, "Creating vk command pool for surface.")
+
+    vk::CommandPoolCreateInfo PoolInfo{
+        .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+        .queueFamilyIndex = this->GetFrontend().GetVkGraphicsQueueFamilyIndex()
+        };
+
+    this->VkMyCommandPool = vk::raii::CommandPool{ this->GetFrontend().GetVkDevice(), PoolInfo };
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkCreateCommandBuffer()
+{
+    LOG_VERBOSE(LogVulkan, "Creating vk command buffer for surface.")
+
+    vk::CommandBufferAllocateInfo allocInfo{ .commandPool = this->VkMyCommandPool, .level = vk::CommandBufferLevel::ePrimary, .commandBufferCount = 1 };
+
+    this->VkMyCommandBuffer = std::move(vk::raii::CommandBuffers(this->GetFrontend().GetVkDevice(), allocInfo).front());
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkCreateSynchObjects()
+{
+    LOG_VERBOSE(LogVulkan, "Creating vk synchronization objects for surface.")
+
+    this->VkMyPresentSemaphore = vk::raii::Semaphore{ this->GetFrontend().GetVkDevice(), vk::SemaphoreCreateInfo{} };
+    this->VkMyRenderSemaphore = vk::raii::Semaphore{ this->GetFrontend().GetVkDevice(), vk::SemaphoreCreateInfo{} };
+    this->VkMyFence = vk::raii::Fence{ this->GetFrontend().GetVkDevice(), {.flags = vk::FenceCreateFlagBits::eSignaled} };
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
+{
+    this->VkMyCommandBuffer.begin( {} );
+    // Before starting rendering, transition the swapchain image to COLOR_ATTACHMENT_OPTIMAL
+    TransitionImageLayout(
+        ImageIndex,
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eColorAttachmentOptimal,
+        {},                                                         // srcAccessMask (no need to wait for previous operations)
+        vk::AccessFlagBits2::eColorAttachmentWrite,                 // dstAccessMask
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,         // srcStage
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput          // dstStage
+    );
+    vk::ClearValue clearColor = vk::ClearValue( vk::ClearColorValue( std::array<f32,4>{ 0.0f, 0.0f, 0.0f, 1.0f } ) );
+    vk::RenderingAttachmentInfo attachmentInfo = {
+        .imageView = this->VkMySwapchainImageViews[ImageIndex],
+        .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eStore,
+        .clearValue = clearColor
+    };
+    vk::RenderingInfo renderingInfo = {
+        .renderArea = { .offset = { 0, 0 }, .extent = this->VkMySwapchainExtent },
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &attachmentInfo
+        };
+
+    this->VkMyCommandBuffer.beginRendering(renderingInfo);
+    this->VkMyCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->VkMyPipeline);
+    this->VkMyCommandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<f32>(this->VkMySwapchainExtent.width), static_cast<f32>(this->VkMySwapchainExtent.height), 0.0f, 1.0f));
+    this->VkMyCommandBuffer.setScissor( 0, vk::Rect2D( vk::Offset2D( 0, 0 ), this->VkMySwapchainExtent ) );
+    this->VkMyCommandBuffer.draw(3, 1, 0, 0);
+    this->VkMyCommandBuffer.endRendering();
+    // After rendering, transition the swapchain image to PRESENT_SRC
+    TransitionImageLayout(
+        ImageIndex,
+        vk::ImageLayout::eColorAttachmentOptimal,
+        vk::ImageLayout::ePresentSrcKHR,
+        vk::AccessFlagBits2::eColorAttachmentWrite,                 // srcAccessMask
+        {},                                                         // dstAccessMask
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,         // srcStage
+        vk::PipelineStageFlagBits2::eBottomOfPipe                   // dstStage
+        );
+    this->VkMyCommandBuffer.end();
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::TransitionImageLayout(u32 ImageIndex, vk::ImageLayout OldLayout, vk::ImageLayout NewLayout,
+                                                vk::AccessFlags2 SrcAccessMask, vk::AccessFlags2 DstAccessMask, vk::PipelineStageFlags2 SrcStage,
+                                                vk::PipelineStageFlags2 DstStage)
+{
+    LOG_VERBOSE(LogVulkan, "Transitioning image layout for swapchain image [{}] from [{}] to [{}].",
+        ImageIndex,
+        vk::to_string(OldLayout),
+        vk::to_string(NewLayout)
+        )
+
+    vk::ImageMemoryBarrier2 barrier = {
+        .srcStageMask = SrcStage,
+        .srcAccessMask = SrcAccessMask,
+        .dstStageMask = DstStage,
+        .dstAccessMask = DstAccessMask,
+        .oldLayout = OldLayout,
+        .newLayout = NewLayout,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = this->VkMySwapchainImages[ImageIndex],
+        .subresourceRange = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+            }
+        };
+    vk::DependencyInfo dependencyInfo = {
+        .dependencyFlags = {},
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrier
+        };
+    this->VkMyCommandBuffer.pipelineBarrier2(dependencyInfo);
+
+    return;
+}
 
 #endif /* JAFG_PLATFORM_USES_GLFW3_ABSTRACTION_LAYER */

@@ -6,21 +6,25 @@
 #include "Widgets/Viewport.h"
 #include "Engine/Engine.h"
 
-void Jafg::LSurfaceBase::Initialize()
+Jafg::LSurfaceBase::LSurfaceBase() noexcept
+    : SurfaceViewport{*this->AsSurface()}
 {
-    check( this->IsValid() == false )
-
     this->SurfaceViewport.Initialize();
 
     LOG_VERBOSE(LogSurface, "Created surface viewport.")
     LOG_INFO(LogSurface, "Platform stats:")
     LOG_INFO(LogSurface, " - Physical monitors({}).", GPlatformMisc->NumberOfPhysicalViewports)
-    for (const LPhysicalViewport& Viewport : GPlatformMisc->PhysicalViewports)
+    for (auto const& Viewport : GPlatformMisc->PhysicalViewports)
     {
         LOG_INFO(LogSurface, "  - {}", Viewport.ToString())
     }
 
     return;
+}
+
+Jafg::LSurfaceBase::~LSurfaceBase()
+{
+    this->SurfaceViewport.TearDown();
 }
 
 void Jafg::LSurfaceBase::Tick()
@@ -89,11 +93,6 @@ void Jafg::LSurfaceBase::Tick()
     this->SurfaceViewport.Tick();
 
     return;
-}
-
-void Jafg::LSurfaceBase::TearDown()
-{
-    this->SurfaceViewport.TearDown();
 }
 
 void Jafg::LSurfaceBase::BeginNewFrame()
@@ -175,4 +174,9 @@ Jafg::LEngine& Jafg::LSurfaceBase::GetEngine() const noexcept
 Jafg::LLocalEgo& Jafg::LSurfaceBase::GetLocalEgo() const noexcept
 {
     return this->GetEngine().GetLocalEgo();
+}
+
+Jafg::LFrontend& Jafg::LSurfaceBase::GetFrontend() const noexcept
+{
+    return this->GetLocalEgo().GetFrontend();
 }

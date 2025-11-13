@@ -17,6 +17,7 @@
 #include "Platform/MouseCursor.h"
 #include "Widgets/Viewport.h"
 #include "User/Input/UserInput.h"
+#include "Framework/FrontendForward.h"
 
 namespace Jafg
 {
@@ -30,9 +31,11 @@ class LSurfaceBase
 {
 public:
 
-    LSurfaceBase() noexcept : SurfaceViewport(*this->AsSurface()) { }
+    LSurfaceBase() noexcept;
+
     PROHIBIT_REALLOC_OF_ANY_FORM(LSurfaceBase)
-    virtual ~LSurfaceBase() = default;
+
+    virtual ~LSurfaceBase();
 
     template <class T = LSurfaceBase>
     NODISCARD FORCEINLINE T* As();
@@ -45,12 +48,9 @@ public:
     FORCEINLINE LString const& GetHumanReadableName() const noexcept { return this->HumanReadableName; }
 
     //# Initialize should make the handle to a native surface screen valid or panic if not possible.
-    virtual void Initialize();
     virtual void Tick();
     virtual void OnClear() { this->SurfaceViewport.OnClear(); }
     virtual void OnUpdate() { this->SurfaceViewport.Draw(); }
-    //# TearDown should release the handle to the native surface screen or panic if not possible.
-    virtual void TearDown();
 
     virtual bool IsValid() = 0;
 
@@ -123,6 +123,7 @@ public:
 
     ENGINE_API LEngine& GetEngine() const noexcept;
     ENGINE_API LLocalEgo& GetLocalEgo() const noexcept;
+    ENGINE_API LFrontend& GetFrontend() const noexcept;
 
 protected:
 

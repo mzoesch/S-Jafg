@@ -2,13 +2,12 @@
 
 #pragma once
 
+#include "Framework/FrontendForward.h"
 #include "Subsystems/Subsystem.h"
 #include "FrontendSubsystem.generated.h"
 
 namespace Jafg
 {
-
-class LFrontend;
 
 //#
 //# A subsystem that shares its lifetime with the local ego frontend.
@@ -20,6 +19,7 @@ class JFrontendSubsystem : public JSubsystem
 {
     GENERATED_CLASS_BODY(ENGINE_API)
 
+    friend LFrontendBase;
     friend LFrontend;
 
 protected:

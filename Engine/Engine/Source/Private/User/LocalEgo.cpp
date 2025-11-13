@@ -85,11 +85,11 @@ void Jafg::LLocalEgo::Initialize()
     return;
 }
 
-void Jafg::LLocalEgo::Tick(const float DeltaTime)
+void Jafg::LLocalEgo::Tick(const f32 DeltaTime)
 {
     STAT_CYCLE_FUNCTION()
 
-    if (const i32 PurgedFactories = Private::PurgeWidgetFactories(); PurgedFactories > 0)
+    if (const i32 PurgedFactories{ Private::PurgeWidgetFactories() }; PurgedFactories > 0)
     {
         LOG_TRACE(LogWidgetFramework, "Purged {} widget factories.", PurgedFactories)
     }
@@ -99,14 +99,9 @@ void Jafg::LLocalEgo::Tick(const float DeltaTime)
     return;
 }
 
-void Jafg::LLocalEgo::OnLateTick(const float DeltaTime)
+void Jafg::LLocalEgo::OnLateTick(const f32 DeltaTime)
 {
-    for (auto& Surface : this->Frontend.GetSurfaces())
-    {
-        Surface->OnUpdate();
-    }
-
-    return;
+    this->Frontend.OnUpdate();
 }
 
 void Jafg::LLocalEgo::TearDown()

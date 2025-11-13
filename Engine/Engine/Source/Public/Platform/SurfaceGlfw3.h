@@ -12,28 +12,7 @@
 struct GLFWwindow;
 struct GLFWcursor;
 
-struct VkInstance_T;
-typedef struct VkInstance_T* VkInstance;
-
-#if !IN_SHIPPING
-struct VkDebugUtilsMessengerEXT_T;
-typedef struct VkDebugUtilsMessengerEXT_T* VkDebugUtilsMessengerEXT;
-#endif /* !IN_SHIPPING */
-
-struct VkSurfaceKHR_T;
-typedef struct VkSurfaceKHR_T* VkSurfaceKHR;
-
-struct VkPhysicalDevice_T;
-typedef struct VkPhysicalDevice_T* VkPhysicalDevice;
-
-struct VkDevice_T;
-typedef struct VkDevice_T* VkDevice;
-
-struct VkQueue_T;
-typedef struct VkQueue_T* VkQueue;
-
-struct VmaAllocator_T;
-typedef struct VmaAllocator_T* VmaAllocator;
+#include "Rhi/VkCommon.h"
 
 namespace Jafg
 {
@@ -55,14 +34,14 @@ public:
 
     static_assert(std::is_same_v<LSurfaceGlfw3, LSurface>);
 
-    ENGINE_API LSurfaceGlfw3() = default;
+    ENGINE_API LSurfaceGlfw3();
     PROHIBIT_REALLOC_OF_ANY_FORM(LSurfaceGlfw3)
     ENGINE_API virtual ~LSurfaceGlfw3() override;
 
-    virtual void Initialize() override;
+    void LateSetupVk();
+
     virtual void OnClear() override;
     virtual void OnUpdate() override;
-    virtual void TearDown() override;
 
     FORCEINLINE virtual bool IsValid() override { return this->Handle != nullptr; }
 
@@ -89,6 +68,8 @@ public:
     FORCEINLINE GLFWcursor* GetNativeCursorHandleDangerous() const { return this->Cursor; }
     FORCEINLINE GLFWwindow* GetNativeHandleDangerous() const { return this->Handle; }
 
+    FORCEINLINE vk::raii::SurfaceKHR const& GetVkSurface() const { return this->VkMySurface; }
+
 private:
 
     void FramebufferSizeCallback(const i32 Width, const i32 Height);
@@ -105,22 +86,31 @@ private:
     virtual void EmulateContentForBufferedInputGlfw3(const i32 InKey);
 #endif /* PLATFORM_LINUX */
 
+    void VkCreateSwapchainKHR();
+    vk::SurfaceFormatKHR ChooseVkSwapSurfaceFormatKHR(std::vector<vk::SurfaceFormatKHR> const& AvailableFormats) const;
+    vk::PresentModeKHR ChooseVkSwapPresentModeKHR(std::vector<vk::PresentModeKHR> const& AvailablePresentModes) const;
+    vk::Extent2D ChooseVkSwapExtent(vk::SurfaceCapabilitiesKHR const& Capabilities) const;
+    void VkCreateImageViews();
+    void VkCreateGraphicsPipeline();
+    vk::raii::ShaderModule CreateShaderModule(TArray<u8> const& Code) const;
+    void VkCreateCommandPool();
+    void VkCreateCommandBuffer();
+    void VkCreateSynchObjects();
+
+    void RecordCommandBuffer(u32 ImageIndex);
+
+    void TransitionImageLayout(
+        u32 ImageIndex,
+        vk::ImageLayout OldLayout,
+        vk::ImageLayout NewLayout,
+        vk::AccessFlags2 SrcAccessMask,
+        vk::AccessFlags2 DstAccessMask,
+        vk::PipelineStageFlags2 SrcStage,
+        vk::PipelineStageFlags2 DstStage
+        );
+
     GLFWcursor* Cursor{ nullptr };
     GLFWwindow* Handle{ nullptr };
-
-    VkInstance VkMyInstance{ nullptr };
-#if !IN_SHIPPING
-    VkDebugUtilsMessengerEXT VkMyHermes{ nullptr };
-    bool bVkMyInstanceLayerAddressBindings{ false };
-#endif /* !IN_SHIPPING */
-    VkSurfaceKHR VkMySurface{ nullptr };
-    VkPhysicalDevice VkMyPhysicalDevice{ nullptr };
-    std::optional<u32> VkMyGraphicsQueueFamilyIndex;
-    std::optional<u32> VkMyPresentQueueFamilyIndex;
-    VkDevice VkMyDevice{ nullptr };
-    VkQueue VkMyGraphicsQueue{ nullptr };
-    VkQueue VkMyPresentQueue{ nullptr };
-    VmaAllocator VmaMyAllocator{ nullptr };
 
     bool bVSync{ false };
 
@@ -139,6 +129,21 @@ private:
     //#
     i32 Glfw3LastNewKey{ INDEX_NONE };
 #endif /* PLATFORM_LINUX */
+
+    vk::raii::SurfaceKHR VkMySurface{ nullptr };
+    vk::SurfaceFormatKHR VkMySwapchainSurfaceFormat{ vk::Format::eUndefined };
+    vk::PresentModeKHR VkMySwapchainPresentMode;
+    vk::Extent2D VkMySwapchainExtent;
+    vk::raii::SwapchainKHR VkMySwapchain{ nullptr };
+    TArray<vk::Image> VkMySwapchainImages;
+    TArray<vk::raii::ImageView> VkMySwapchainImageViews;
+    vk::raii::PipelineLayout VkMyPipelineLayout{ nullptr };
+    vk::raii::Pipeline VkMyPipeline{ nullptr };
+    vk::raii::CommandPool VkMyCommandPool{ nullptr };
+    vk::raii::CommandBuffer VkMyCommandBuffer{ nullptr };
+    vk::raii::Semaphore VkMyPresentSemaphore{ nullptr };
+    vk::raii::Semaphore VkMyRenderSemaphore{ nullptr };
+    vk::raii::Fence VkMyFence{ nullptr };
 };
 
 } /* ~Namespace Jafg */
