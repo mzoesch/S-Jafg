@@ -456,6 +456,7 @@ bool Jafg::LViewport::TryRemoveWidget(WUserWidget* Widget)
 
 void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
 {
+    check( GEngine )
     check( InDimensions.X > 0 && InDimensions.Y > 0 )
 
     this->Dimensions = InDimensions;
@@ -465,19 +466,7 @@ void Jafg::LViewport::ChangeDimensions(const LIntVector2& InDimensions)
         this->IntermediateBuffer = { };
     }
 
-    if (GEngine)
-    {
-        this->IntermediateBuffer.Build(this->GetDimensions());
-    }
-    else
-    {
-        Tasks::Make(ENamedThreads::Master, ETaskTime::AfterCorePackageLoad, [this](void) -> void
-        {
-            this->IntermediateBuffer.Build(this->GetDimensions());
-
-            return;
-        });
-    }
+    this->IntermediateBuffer.Build(this->GetDimensions());
 
     return;
 }

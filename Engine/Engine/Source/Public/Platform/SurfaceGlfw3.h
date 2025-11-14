@@ -45,8 +45,6 @@ public:
 
     FORCEINLINE virtual bool IsValid() override { return this->Handle != nullptr; }
 
-    virtual void BeginNewFrame() override;
-
     virtual void PollInputs() override;
     virtual void PollEvents() override;
 
@@ -73,7 +71,6 @@ public:
 private:
 
     void FramebufferSizeCallback(const i32 Width, const i32 Height);
-    void FramebufferSizeCallbackImpl(const i32 Width, const i32 Height);
     void MouseCallback(const f64 XPos, const f64 YPos);
     void ScrollCallback(const f64 XOffset, const f64 YOffset);
     void MouseEnterCallback(const i32 Entered);
@@ -86,7 +83,7 @@ private:
     virtual void EmulateContentForBufferedInputGlfw3(const i32 InKey);
 #endif /* PLATFORM_LINUX */
 
-    void VkCreateSwapchainKHR();
+    void VkCreateSwapchain();
     vk::SurfaceFormatKHR ChooseVkSwapSurfaceFormatKHR(std::vector<vk::SurfaceFormatKHR> const& AvailableFormats) const;
     vk::PresentModeKHR ChooseVkSwapPresentModeKHR(std::vector<vk::PresentModeKHR> const& AvailablePresentModes) const;
     vk::Extent2D ChooseVkSwapExtent(vk::SurfaceCapabilitiesKHR const& Capabilities) const;
@@ -94,8 +91,13 @@ private:
     void VkCreateGraphicsPipeline();
     vk::raii::ShaderModule CreateShaderModule(TArray<u8> const& Code) const;
     void VkCreateCommandPool();
-    void VkCreateCommandBuffer();
+    void VkCreateCommandBuffers();
     void VkCreateSynchObjects();
+
+    void VkCleanSwapchain();
+    void WaitForSemaphore(vk::raii::Semaphore const& Semaphore);
+    void WaitForSemaphores(TArray<vk::raii::Semaphore> const& Semaphores);
+    void VkRecreateSwapchain();
 
     void RecordCommandBuffer(u32 ImageIndex);
 
@@ -135,15 +137,17 @@ private:
     vk::PresentModeKHR VkMySwapchainPresentMode;
     vk::Extent2D VkMySwapchainExtent;
     vk::raii::SwapchainKHR VkMySwapchain{ nullptr };
-    TArray<vk::Image> VkMySwapchainImages;
-    TArray<vk::raii::ImageView> VkMySwapchainImageViews;
+    TArray<vk::Image> VkSwapchainImages;
+    TArray<vk::raii::ImageView> VkSwapchainImageViews;
     vk::raii::PipelineLayout VkMyPipelineLayout{ nullptr };
     vk::raii::Pipeline VkMyPipeline{ nullptr };
     vk::raii::CommandPool VkMyCommandPool{ nullptr };
-    vk::raii::CommandBuffer VkMyCommandBuffer{ nullptr };
-    vk::raii::Semaphore VkMyPresentSemaphore{ nullptr };
-    vk::raii::Semaphore VkMyRenderSemaphore{ nullptr };
-    vk::raii::Fence VkMyFence{ nullptr };
+    std::vector<vk::raii::CommandBuffer> VkCommandBuffers;
+    u32 VkFlightSyncFrameIndex{ 0 };
+    u32 VkSemaphoreSyncIndex{ 0 };
+    TArray<vk::raii::Semaphore> VkPresentSemaphores;
+    TArray<vk::raii::Semaphore> VkRenderSemaphores;
+    TArray<vk::raii::Fence> VkFlightFences;
 };
 
 } /* ~Namespace Jafg */

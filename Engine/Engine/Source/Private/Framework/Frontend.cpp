@@ -212,7 +212,3 @@ bool Jafg::LFrontendBase::FocusWidget(LViewport* Context, WNode* InNode)
     check( Context )
     return Context->FocusWidgetNode(InNode);
 }
-
-
-
-// https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/02_Rendering_and_presentation.html

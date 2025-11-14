@@ -77,8 +77,7 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    // Temp: remove later
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     const i32 Platform{ glfwGetPlatform() };
     if (Platform == GLFW_PLATFORM_WAYLAND)
@@ -405,7 +404,7 @@ void Jafg::LFrontendVk::CreateLogicalDevice()
         > FeaturesChain = {
         {}, // vk::PhysicalDeviceFeatures2
         {.shaderDrawParameters = VK_TRUE }, // vk::PhysicalDeviceVulkan11Features
-        {.dynamicRendering = VK_TRUE}, // vk::PhysicalDeviceVulkan13Features
+        {.synchronization2 = VK_TRUE, .dynamicRendering = VK_TRUE}, // vk::PhysicalDeviceVulkan13Features
         {.extendedDynamicState = VK_TRUE} // vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
         };
 

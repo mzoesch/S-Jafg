@@ -45,9 +45,9 @@ private:
 
     TArray<vk::ExtensionProperties> AvailableInstanceExtensions;
     TArray<LString> RequiredInstanceExtensions{
-        VK_KHR_SURFACE_EXTENSION_NAME,
+        vk::KHRSurfaceExtensionName,
 #if !IN_SHIPPING
-        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+        vk::EXTDebugUtilsExtensionName,
         // VK_EXT_DEVICE_ADDRESS_BINDING_REPORT_EXTENSION_NAME,
 #endif /* !IN_SHIPPING */
         };

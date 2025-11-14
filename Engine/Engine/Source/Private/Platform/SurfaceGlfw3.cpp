@@ -26,6 +26,12 @@
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 
+namespace
+{
+constexpr i32 VkMyMaxFramesInFlight{ 2 };
+
+} /* ~Namespace <Anonymous> */
+
 namespace Jafg::Private
 {
 
@@ -42,57 +48,57 @@ struct LGlfw3Bridge final
 
     static void WindowSizeCallback(GLFWwindow* Window, const i32 Width, const i32 Height)
     {
-        LOG_WARNING(LogTemporal, "Width: {}, Height: {}", Width, Height)
+        // LOG_TRACE(LogSurface, "Width: {}, Height: {}", Width, Height)
     }
 
     static void WindowFocusCallback(GLFWwindow* Window, const i32 Focused)
     {
-        LOG_WARNING(LogTemporal, "Focused: {}", Focused)
+        LOG_WARNING(LogSurface, "Focused: {}", Focused)
     }
 
     static void CharCallback(::GLFWwindow* Window, const u32 Codepoint)
     {
-        LOG_WARNING(LogTemporal, "Codepoint: {}", Codepoint)
+        LOG_WARNING(LogSurface, "Codepoint: {}", Codepoint)
         checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->CharCallback(Codepoint);
     }
 
     static void KeyCallback(::GLFWwindow* Window, const i32 Key, const i32 Scancode, const i32 Action, const i32 Mods)
     {
-        LOG_WARNING(LogTemporal, "Key: {}, Scancode: {}, Action: {}, Mods: {}", Key, Scancode, Action, Mods)
+        LOG_WARNING(LogSurface, "Key: {}, Scancode: {}, Action: {}, Mods: {}", Key, Scancode, Action, Mods)
         checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->KeyCallback(Key, Scancode, Action, Mods);
     }
 
     static void CursorPosCallback(::GLFWwindow* Window, const f64 XPos, const f64 YPos)
     {
-        LOG_WARNING(LogTemporal, "XPos: {}, YPos: {}", XPos, YPos)
+        // LOG_TRACE(LogSurface, "XPos: {}, YPos: {}", XPos, YPos)
         checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->MouseCallback(XPos, YPos);
     }
 
     static void MouseButtonCallback(::GLFWwindow* Window, const i32 Button, const i32 Action, const i32 Mods)
     {
-        LOG_WARNING(LogTemporal, "Button: {}, Action: {}, Mods: {}", Button, Action, Mods)
+        LOG_WARNING(LogSurface, "Button: {}, Action: {}, Mods: {}", Button, Action, Mods)
     }
 
     static void CursorEnterCallback(::GLFWwindow* Window, const i32 Entered)
     {
-        LOG_WARNING(LogTemporal, "Entered: {}", Entered)
+        LOG_WARNING(LogSurface, "Entered: {}", Entered)
         checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->MouseEnterCallback(Entered);
     }
 
     static void FramebufferSizeCallback(::GLFWwindow* Window, const i32 Width, const i32 Height)
     {
-        LOG_WARNING(LogTemporal, "Width: {}, Height: {}", Width, Height)
-        checkSlow( static_cast<::Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
-        static_cast<Jafg::LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->FramebufferSizeCallback(Width, Height);
+        // LOG_TRACE(LogSurface, "Width: {}, Height: {}", Width, Height)
+        checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
+        static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->FramebufferSizeCallback(Width, Height);
     }
 
     static void ScrollCallback(::GLFWwindow* Window, const f64 XOffset, const f64 YOffset)
     {
-        LOG_WARNING(LogTemporal, "XOffset: {}, YOffset: {}", XOffset, YOffset)
+        LOG_WARNING(LogSurface, "XOffset: {}, YOffset: {}", XOffset, YOffset)
         checkSlow( static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->GetNativeHandleDangerous() == Window )
         static_cast<LSurfaceGlfw3*>(glfwGetWindowUserPointer(Window))->ScrollCallback(XOffset, YOffset);
     }
@@ -168,9 +174,7 @@ Jafg::LSurfaceGlfw3::LSurfaceGlfw3() : Super{}
 #endif /* !PLATFORM_WINDOWS */
     this->GetViewport().SetPlatformDpi(static_cast<f32>(PlatformDpi));
     const LIntVector2 WindowDimensions = this->GetDimensions();
-    // glViewport(0, 0, WindowDimensions.X, WindowDimensions.Y);
-    this->GetViewport().ChangeDimensions(WindowDimensions);
-    LOG_VERBOSE(LogSurface, "Glfw3 Window Created. Dimensions: [{}x{}], DPI: [{}]", WindowDimensions.X, WindowDimensions.Y, PlatformDpi)
+    LOG_VERBOSE(LogSurface, "Glfw3 window created. Dimensions: [{}x{}], DPI: [{}]", WindowDimensions.X, WindowDimensions.Y, PlatformDpi)
 
     this->GetViewport().SetBackgroundColor(Lal::LLinearColor::Black);
 
@@ -211,11 +215,11 @@ Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
 
 void Jafg::LSurfaceGlfw3::LateSetupVk()
 {
-    this->VkCreateSwapchainKHR();
+    this->VkCreateSwapchain();
     this->VkCreateImageViews();
     this->VkCreateGraphicsPipeline();
     this->VkCreateCommandPool();
-    this->VkCreateCommandBuffer();
+    this->VkCreateCommandBuffers();
     this->VkCreateSynchObjects();
 
     return;
@@ -238,51 +242,29 @@ void Jafg::LSurfaceGlfw3::OnUpdate()
 {
     STAT_CYCLE_FUNCTION()
 
-    checkSlow( this->Handle )
-    checkSlow( Tasks::IsOnMasterThread() )
-    // glfwMakeContextCurrent(this->Handle);
+    check( this->Handle )
+    check( Tasks::IsOnRendererThread() )
 
-    this->GetFrontend().GetVkGraphicsQueue().waitIdle();
+    check( this->VkCommandBuffers.size() == ::VkMyMaxFramesInFlight )
+    check( this->VkPresentSemaphores.size() == this->VkSwapchainImages.size() )
+    check( this->VkRenderSemaphores.size() == this->VkSwapchainImages.size() )
+    check( this->VkFlightFences.size() == ::VkMyMaxFramesInFlight )
 
-    auto [Result, ImageIndex] = this->VkMySwapchain.acquireNextImage(
-        std::numeric_limits<u64>::max(), *this->VkMyPresentSemaphore, nullptr
-        );
+    auto& Frontend{ this->GetFrontend() };
 
-    this->RecordCommandBuffer(ImageIndex);
-
-    this->GetFrontend().GetVkDevice().resetFences(*this->VkMyFence);
-
-    vk::PipelineStageFlags waitDestinationStageMask( vk::PipelineStageFlagBits::eColorAttachmentOutput );
-    const vk::SubmitInfo submitInfo{ .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->VkMyPresentSemaphore,
-                        .pWaitDstStageMask = &waitDestinationStageMask, .commandBufferCount = 1, .pCommandBuffers = &*this->VkMyCommandBuffer,
-                        .signalSemaphoreCount = 1, .pSignalSemaphores = &*this->VkMyRenderSemaphore };
-    this->GetFrontend().GetVkGraphicsQueue().submit(submitInfo, *this->VkMyFence);
-    while ( vk::Result::eTimeout == this->GetFrontend().GetVkDevice().waitForFences( *this->VkMyFence, vk::True, UINT64_MAX ) )
+    while (vk::Result::eTimeout == Frontend.GetVkDevice().waitForFences(*this->VkFlightFences[this->VkFlightSyncFrameIndex], vk::True, UINT64_MAX))
         ;
 
-    const vk::PresentInfoKHR presentInfoKHR{ .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->VkMyRenderSemaphore,
-                                            .swapchainCount = 1, .pSwapchains = &*this->VkMySwapchain, .pImageIndices = &ImageIndex };
-    Result = this->GetFrontend().GetVkGraphicsQueue().presentKHR( presentInfoKHR );
-    switch ( Result )
+    auto [Result, ImageIndex] = this->VkMySwapchain.acquireNextImage(
+        std::numeric_limits<u64>::max(), this->VkPresentSemaphores[this->VkSemaphoreSyncIndex], nullptr
+        );
+
+    if (Result == vk::Result::eErrorOutOfDateKHR)
     {
-    case vk::Result::eSuccess: break;
-    case vk::Result::eSuboptimalKHR: std::cout << "vk::Queue::presentKHR returned vk::Result::eSuboptimalKHR !\n"; break;
-    default: break;  // an unexpected result is returned!
+        LOG_VERBOSE(LogSurface, "Swapchain is out of date. Recreating swapchain.")
+        this->VkRecreateSwapchain();
+        return;
     }
-
-    Super::OnUpdate();
-
-    {
-        STAT_QUICK_CYCLE_START("SwapBuffers")
-        // glfwSwapBuffers(this->Handle);
-    }
-
-    return;
-}
-
-void Jafg::LSurfaceGlfw3::BeginNewFrame()
-{
-    Super::BeginNewFrame();
 
     if (this->bPendingResize)
     {
@@ -296,14 +278,68 @@ void Jafg::LSurfaceGlfw3::BeginNewFrame()
                 this->PendingHeight
                 )
 
-            this->FramebufferSizeCallbackImpl(this->PendingWidth, this->PendingHeight);
-
-            this->bPendingResize = false;
-            this->PendingTimeForResizeApply = 0.0f;
-            this->PendingWidth = 0;
-            this->PendingHeight = 0;
+            LOG_VERBOSE(LogSurface, "Recreating swapchain due to suboptimal state and pending resize.")
+            this->VkRecreateSwapchain();
+            check( this->bPendingResize == false )
+            return;
         }
     }
+    else if (Result == vk::Result::eSuboptimalKHR)
+    {
+        LOG_VERBOSE(LogSurface, "Swapchain is suboptimal. Recreating swapchain.")
+        this->VkRecreateSwapchain();
+        return;
+    }
+
+    if (Result != vk::Result::eSuccess &&
+        Result != vk::Result::eSuboptimalKHR /* Not an error. Just ignore. */
+        )
+    {
+        panicMsgf( "Failed to acquire swapchain image. vk::Result: [{}].", static_cast<u32>(Result) )
+    }
+
+    Frontend.GetVkDevice().resetFences(*this->VkFlightFences[this->VkFlightSyncFrameIndex]);
+
+    this->VkCommandBuffers[this->VkFlightSyncFrameIndex].reset();
+    this->RecordCommandBuffer(ImageIndex);
+
+    vk::PipelineStageFlags DstStageMask( vk::PipelineStageFlagBits::eColorAttachmentOutput );
+    const vk::SubmitInfo SubmitInfo{
+        .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->VkPresentSemaphores[this->VkSemaphoreSyncIndex],
+        .pWaitDstStageMask = &DstStageMask,
+        .commandBufferCount = 1, .pCommandBuffers = &*this->VkCommandBuffers[this->VkFlightSyncFrameIndex],
+        .signalSemaphoreCount = 1, .pSignalSemaphores = &*this->VkRenderSemaphores[ImageIndex]
+        };
+    Frontend.GetVkGraphicsQueue().submit(SubmitInfo, *this->VkFlightFences[this->VkFlightSyncFrameIndex]);
+
+    const vk::PresentInfoKHR PresentInfo{
+        .waitSemaphoreCount = 1, .pWaitSemaphores = &*this->VkRenderSemaphores[ImageIndex],
+        .swapchainCount = 1, .pSwapchains = &*this->VkMySwapchain,
+        .pImageIndices = &ImageIndex
+        };
+    Result = Frontend.GetVkGraphicsQueue().presentKHR(PresentInfo);
+    switch (Result)
+    {
+    case vk::Result::eSuccess:
+    {
+        break;
+    }
+    case vk::Result::eSuboptimalKHR:
+    {
+        LOG_WARNING(LogVulkan, "The swapchain is no longer optimal for the surface. Consider recreating the swapchain.")
+        break;
+    }
+    default:
+    {
+        LOG_WARNING(LogVulkan, "vk::Queue::presentKHR returned unexpected vk::Result [{}].", static_cast<u32>(Result))
+        break;
+    }
+    }
+
+    Super::OnUpdate();
+
+    this->VkSemaphoreSyncIndex = (this->VkSemaphoreSyncIndex + 1) % this->VkPresentSemaphores.size();
+    this->VkFlightSyncFrameIndex = (this->VkFlightSyncFrameIndex + 1) % ::VkMyMaxFramesInFlight;
 
     return;
 }
@@ -519,18 +555,6 @@ void Jafg::LSurfaceGlfw3::FramebufferSizeCallback(const i32 Width, const i32 Hei
     return;
 }
 
-void Jafg::LSurfaceGlfw3::FramebufferSizeCallbackImpl(const i32 Width, const i32 Height)
-{
-    checkSlow( this->Handle )
-    checkSlow( Tasks::IsOnMasterThread() )
-    // glfwMakeContextCurrent(this->Handle);
-
-    // glViewport(0, 0, Width, Height);
-    this->GetViewport().ChangeDimensions({Width, Height});
-
-    return;
-}
-
 void Jafg::LSurfaceGlfw3::MouseCallback(const double XPos, const double YPos)
 {
     this->MouseLocation = LVector2(static_cast<float>(XPos), static_cast<float>(YPos));
@@ -679,7 +703,7 @@ void Jafg::LSurfaceGlfw3::EmulateContentForBufferedInputGlfw3(const i32 InKey)
 }
 #endif /* PLATFORM_LINUX */
 
-void Jafg::LSurfaceGlfw3::VkCreateSwapchainKHR()
+void Jafg::LSurfaceGlfw3::VkCreateSwapchain()
 {
     LOG_VERBOSE(LogVulkan, "Creating Vulkan swapchain for Glfw3 surface.")
 
@@ -728,19 +752,32 @@ void Jafg::LSurfaceGlfw3::VkCreateSwapchainKHR()
     u32 QueueFamilyIndices[] = {Frontend.GetVkGraphicsQueueFamilyIndex(), Frontend.GetVkPresentQueueFamilyIndex()};
     if (Frontend.GetVkGraphicsQueue() != Frontend.GetVkPresentQueue())
     {
+        LOG_VERBOSE(LogVulkan, "Using concurrent image sharing mode for swapchain as graphics and present queues differ.")
         SwapChainCreateInfo.imageSharingMode = vk::SharingMode::eConcurrent; /* TODO: Not optimal performance wise. But we can fix this later. */
         SwapChainCreateInfo.queueFamilyIndexCount = 2;
         SwapChainCreateInfo.pQueueFamilyIndices = QueueFamilyIndices;
     }
     else
     {
+        LOG_VERBOSE(LogVulkan, "Using exclusive image sharing mode for swapchain as graphics and present queues are the same.")
         SwapChainCreateInfo.imageSharingMode = vk::SharingMode::eExclusive;
         SwapChainCreateInfo.queueFamilyIndexCount = 0; /* Optional */
         SwapChainCreateInfo.pQueueFamilyIndices = nullptr; /* Optional */
     }
 
     this->VkMySwapchain = vk::raii::SwapchainKHR{ Frontend.GetVkDevice(), SwapChainCreateInfo };
-    this->VkMySwapchainImages = this->VkMySwapchain.getImages();
+    this->VkSwapchainImages = this->VkMySwapchain.getImages();
+
+    this->GetViewport().ChangeDimensions(LIntVector2{
+        static_cast<i32>(this->VkMySwapchainExtent.width),
+        static_cast<i32>(this->VkMySwapchainExtent.height)
+        });
+
+
+    this->bPendingResize = false;
+    this->PendingTimeForResizeApply = 0.0f;
+    this->PendingWidth = 0;
+    this->PendingHeight = 0;
 
     return;
 }
@@ -818,7 +855,7 @@ void Jafg::LSurfaceGlfw3::VkCreateImageViews()
 {
     LOG_VERBOSE(LogVulkan, "Creating Vulkan image views for swapchain images.")
 
-    this->VkMySwapchainImageViews.clear();
+    this->VkSwapchainImageViews.clear();
 
     vk::ImageViewCreateInfo CreateInfo{
         .viewType = vk::ImageViewType::e2D,
@@ -830,14 +867,14 @@ void Jafg::LSurfaceGlfw3::VkCreateImageViews()
         .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 }
         };
 
-    for (const auto& SwapchainImage : this->VkMySwapchainImages)
+    for (const auto& SwapchainImage : this->VkSwapchainImages)
     {
         CreateInfo.image = SwapchainImage;
-        this->VkMySwapchainImageViews.emplace_back(vk::raii::ImageView{ this->GetFrontend().GetVkDevice(), CreateInfo });
+        this->VkSwapchainImageViews.emplace_back(vk::raii::ImageView{ this->GetFrontend().GetVkDevice(), CreateInfo });
         continue;
     }
 
-    LOG_VERBOSE(LogVulkan, "Created {} Vulkan image views for swapchain images.", this->VkMySwapchainImageViews.size())
+    LOG_VERBOSE(LogVulkan, "Created {} Vulkan image views for swapchain images.", this->VkSwapchainImageViews.size())
 
     return;
 }
@@ -879,6 +916,15 @@ void Jafg::LSurfaceGlfw3::VkCreateGraphicsPipeline()
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo{.setLayoutCount = 0, .pushConstantRangeCount = 0};
 
     this->VkMyPipelineLayout = vk::raii::PipelineLayout(this->GetFrontend().GetVkDevice(), pipelineLayoutInfo);
+
+    // vk::SubpassDependency Dependency{
+    //     .srcSubpass =  VK_SUBPASS_EXTERNAL,
+    //     .dstSubpass = 0,
+    //     .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+    //     .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+    //     .srcAccessMask = {},
+    //     .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite
+    //     };
 
     vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> pipelineCreateInfoChain = {
         {.stageCount          = 2,
@@ -929,32 +975,130 @@ void Jafg::LSurfaceGlfw3::VkCreateCommandPool()
     return;
 }
 
-void Jafg::LSurfaceGlfw3::VkCreateCommandBuffer()
+void Jafg::LSurfaceGlfw3::VkCreateCommandBuffers()
 {
-    LOG_VERBOSE(LogVulkan, "Creating vk command buffer for surface.")
+    LOG_VERBOSE(LogVulkan, "Creating [{}] vulkan command buffers for surface.", ::VkMyMaxFramesInFlight)
 
-    vk::CommandBufferAllocateInfo allocInfo{ .commandPool = this->VkMyCommandPool, .level = vk::CommandBufferLevel::ePrimary, .commandBufferCount = 1 };
+    this->VkCommandBuffers.clear();
 
-    this->VkMyCommandBuffer = std::move(vk::raii::CommandBuffers(this->GetFrontend().GetVkDevice(), allocInfo).front());
+    vk::CommandBufferAllocateInfo Info{
+        .commandPool = this->VkMyCommandPool,
+        .level = vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = ::VkMyMaxFramesInFlight
+        };
+
+    this->VkCommandBuffers = vk::raii::CommandBuffers(this->GetFrontend().GetVkDevice(), Info);
+    check( this->VkCommandBuffers.size() == ::VkMyMaxFramesInFlight )
 
     return;
 }
 
 void Jafg::LSurfaceGlfw3::VkCreateSynchObjects()
 {
-    LOG_VERBOSE(LogVulkan, "Creating vk synchronization objects for surface.")
+    LOG_VERBOSE(LogVulkan, "Creating [{}+2*{}] vulkan synchronization objects for surface.", ::VkMyMaxFramesInFlight, this->VkSwapchainImages.size())
 
-    this->VkMyPresentSemaphore = vk::raii::Semaphore{ this->GetFrontend().GetVkDevice(), vk::SemaphoreCreateInfo{} };
-    this->VkMyRenderSemaphore = vk::raii::Semaphore{ this->GetFrontend().GetVkDevice(), vk::SemaphoreCreateInfo{} };
-    this->VkMyFence = vk::raii::Fence{ this->GetFrontend().GetVkDevice(), {.flags = vk::FenceCreateFlagBits::eSignaled} };
+    this->VkPresentSemaphores.clear();
+    this->VkRenderSemaphores.clear();
+    this->VkFlightFences.clear();
+
+    auto& Device = this->GetFrontend().GetVkDevice();
+
+    for (LSize Idx{ 0 }; Idx < this->VkSwapchainImages.size(); ++Idx)
+    {
+        this->VkPresentSemaphores.emplace_back(Device, vk::SemaphoreCreateInfo{});
+        this->VkRenderSemaphores.emplace_back(Device, vk::SemaphoreCreateInfo{});
+        continue;
+    }
+
+    for (LSize Idx{ 0 }; Idx < ::VkMyMaxFramesInFlight; ++Idx)
+    {
+        this->VkFlightFences.emplace_back(Device, vk::FenceCreateInfo{ .flags = vk::FenceCreateFlagBits::eSignaled });
+        continue;
+    }
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkCleanSwapchain()
+{
+    LOG_TRACE(LogVulkan, "Cleaning up Vulkan swapchain for surface.")
+
+    this->VkSwapchainImageViews.clear();
+    this->VkMySwapchain = nullptr;
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::WaitForSemaphore(vk::raii::Semaphore const& Semaphore)
+{
+    vk::SemaphoreWaitInfo WaitInfo{
+        .semaphoreCount = 1,
+        .pSemaphores = &*Semaphore,
+        .pValues = nullptr
+        };
+
+    if (this->GetFrontend().GetVkDevice().waitSemaphores(WaitInfo, std::numeric_limits<u64>::max()) != vk::Result::eSuccess)
+    {
+        panic("Failed to wait for semaphore.")
+    }
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::WaitForSemaphores(TArray<vk::raii::Semaphore> const& Semaphores)
+{
+    for (const auto& Semaphore : Semaphores)
+    {
+        this->WaitForSemaphore(Semaphore);
+    }
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkRecreateSwapchain()
+{
+    STAT_CYCLE_FUNCTION()
+
+    i32 Width{ 0 };
+    i32 Height{ 0 };
+    glfwGetFramebufferSize(this->Handle, &Width, &Height);
+    if (Width == 0 || Height == 0)
+    {
+        LOG_VERBOSE(LogSurface, "Waiting for non-zero dimensions to recreate vulkan swapchain for surface.")
+        STAT_QUICK_CYCLE_START("GlfwWaitEventsForNonZeroFramebufferSize")
+        while (Width == 0 || Height == 0)
+        {
+            glfwGetFramebufferSize(this->Handle, &Width, &Height);
+            glfwWaitEvents();
+        }
+    }
+
+    {
+        STAT_QUICK_CYCLE_START("VkDevice.waitIdle")
+        this->GetFrontend().GetVkDevice().waitIdle();
+
+        check( this->VkFlightFences.size() == ::VkMyMaxFramesInFlight )
+        check( this->VkPresentSemaphores.size() == this->VkSwapchainImages.size() )
+        check( this->VkRenderSemaphores.size() == this->VkSwapchainImages.size() )
+
+        // this->WaitForSemaphores(this->VkPresentSemaphores);
+        // this->WaitForSemaphores(this->VkRenderSemaphores);
+    }
+
+    this->VkCleanSwapchain();
+    this->VkCreateSwapchain();
+    this->VkCreateImageViews();
+    this->VkCreateSynchObjects();
 
     return;
 }
 
 void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
 {
-    this->VkMyCommandBuffer.begin( {} );
-    // Before starting rendering, transition the swapchain image to COLOR_ATTACHMENT_OPTIMAL
+    auto& TargetBuffer = this->VkCommandBuffers[this->VkFlightSyncFrameIndex];
+
+    TargetBuffer.begin({});
+
     TransitionImageLayout(
         ImageIndex,
         vk::ImageLayout::eUndefined,
@@ -964,9 +1108,10 @@ void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,         // srcStage
         vk::PipelineStageFlagBits2::eColorAttachmentOutput          // dstStage
     );
+
     vk::ClearValue clearColor = vk::ClearValue( vk::ClearColorValue( std::array<f32,4>{ 0.0f, 0.0f, 0.0f, 1.0f } ) );
     vk::RenderingAttachmentInfo attachmentInfo = {
-        .imageView = this->VkMySwapchainImageViews[ImageIndex],
+        .imageView = this->VkSwapchainImageViews[ImageIndex],
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
@@ -979,13 +1124,13 @@ void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
         .pColorAttachments = &attachmentInfo
         };
 
-    this->VkMyCommandBuffer.beginRendering(renderingInfo);
-    this->VkMyCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->VkMyPipeline);
-    this->VkMyCommandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<f32>(this->VkMySwapchainExtent.width), static_cast<f32>(this->VkMySwapchainExtent.height), 0.0f, 1.0f));
-    this->VkMyCommandBuffer.setScissor( 0, vk::Rect2D( vk::Offset2D( 0, 0 ), this->VkMySwapchainExtent ) );
-    this->VkMyCommandBuffer.draw(3, 1, 0, 0);
-    this->VkMyCommandBuffer.endRendering();
-    // After rendering, transition the swapchain image to PRESENT_SRC
+    TargetBuffer.beginRendering(renderingInfo);
+    TargetBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->VkMyPipeline);
+    TargetBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<f32>(this->VkMySwapchainExtent.width), static_cast<f32>(this->VkMySwapchainExtent.height), 0.0f, 1.0f));
+    TargetBuffer.setScissor( 0, vk::Rect2D( vk::Offset2D( 0, 0 ), this->VkMySwapchainExtent ) );
+    TargetBuffer.draw(3, 1, 0, 0);
+    TargetBuffer.endRendering();
+
     TransitionImageLayout(
         ImageIndex,
         vk::ImageLayout::eColorAttachmentOptimal,
@@ -995,7 +1140,8 @@ void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,         // srcStage
         vk::PipelineStageFlagBits2::eBottomOfPipe                   // dstStage
         );
-    this->VkMyCommandBuffer.end();
+
+    TargetBuffer.end();
 
     return;
 }
@@ -1004,13 +1150,13 @@ void Jafg::LSurfaceGlfw3::TransitionImageLayout(u32 ImageIndex, vk::ImageLayout 
                                                 vk::AccessFlags2 SrcAccessMask, vk::AccessFlags2 DstAccessMask, vk::PipelineStageFlags2 SrcStage,
                                                 vk::PipelineStageFlags2 DstStage)
 {
-    LOG_VERBOSE(LogVulkan, "Transitioning image layout for swapchain image [{}] from [{}] to [{}].",
-        ImageIndex,
-        vk::to_string(OldLayout),
-        vk::to_string(NewLayout)
-        )
+    // LOG_TRACE(LogVulkan, "Transitioning image layout for swapchain image [{}] from [{}] to [{}].",
+    //     ImageIndex,
+    //     vk::to_string(OldLayout),
+    //     vk::to_string(NewLayout)
+    //     )
 
-    vk::ImageMemoryBarrier2 barrier = {
+    vk::ImageMemoryBarrier2 Barrier = {
         .srcStageMask = SrcStage,
         .srcAccessMask = SrcAccessMask,
         .dstStageMask = DstStage,
@@ -1019,7 +1165,7 @@ void Jafg::LSurfaceGlfw3::TransitionImageLayout(u32 ImageIndex, vk::ImageLayout 
         .newLayout = NewLayout,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = this->VkMySwapchainImages[ImageIndex],
+        .image = this->VkSwapchainImages[ImageIndex],
         .subresourceRange = {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
             .baseMipLevel = 0,
@@ -1028,12 +1174,13 @@ void Jafg::LSurfaceGlfw3::TransitionImageLayout(u32 ImageIndex, vk::ImageLayout 
             .layerCount = 1
             }
         };
-    vk::DependencyInfo dependencyInfo = {
+    vk::DependencyInfo DependencyInfo = {
         .dependencyFlags = {},
         .imageMemoryBarrierCount = 1,
-        .pImageMemoryBarriers = &barrier
+        .pImageMemoryBarriers = &Barrier
         };
-    this->VkMyCommandBuffer.pipelineBarrier2(dependencyInfo);
+
+    this->VkCommandBuffers[this->VkFlightSyncFrameIndex].pipelineBarrier2(DependencyInfo);
 
     return;
 }
