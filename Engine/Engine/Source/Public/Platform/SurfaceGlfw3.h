@@ -99,6 +99,14 @@ private:
     void WaitForSemaphores(TArray<vk::raii::Semaphore> const& Semaphores);
     void VkRecreateSwapchain();
 
+    void VkCreateBuffer(
+          vk::DeviceSize Size
+        , vk::BufferUsageFlags Usage
+        , vk::MemoryPropertyFlags Properties
+        , vk::raii::Buffer& Buffer
+        , vk::raii::DeviceMemory& BufferMemory
+        );
+
     void RecordCommandBuffer(u32 ImageIndex);
 
     void TransitionImageLayout(
@@ -110,6 +118,8 @@ private:
         vk::PipelineStageFlags2 SrcStage,
         vk::PipelineStageFlags2 DstStage
         );
+
+    u32 FindMemoryType(u32 TypeFilter, vk::MemoryPropertyFlags Properties) const;
 
     GLFWcursor* Cursor{ nullptr };
     GLFWwindow* Handle{ nullptr };
@@ -148,6 +158,12 @@ private:
     TArray<vk::raii::Semaphore> VkPresentSemaphores;
     TArray<vk::raii::Semaphore> VkRenderSemaphores;
     TArray<vk::raii::Fence> VkFlightFences;
+
+    LVmaBuffer VertexBuffer;
+    LVmaBuffer IndexBuffer;
+
+    void VkCreateVertexBuffer();
+    void VkCreateIndexBuffer();
 };
 
 } /* ~Namespace Jafg */

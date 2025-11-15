@@ -24,6 +24,8 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/vec4.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec2.hpp>
 #include <glm/mat4x4.hpp>
 
 namespace
@@ -31,6 +33,45 @@ namespace
 constexpr i32 VkMyMaxFramesInFlight{ 2 };
 
 } /* ~Namespace <Anonymous> */
+
+struct Vertex
+{
+    glm::vec2 pos;
+    glm::vec3 color;
+
+    static vk::VertexInputBindingDescription getBindingDescription()
+    {
+        return {
+            .binding = 0,
+            .stride = sizeof(Vertex),
+            .inputRate = vk::VertexInputRate::eVertex
+            };
+    }
+
+    static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
+        return {
+            vk::VertexInputAttributeDescription{
+                .location = 0, .binding = 0, .format = vk::Format::eR32G32Sfloat, .offset = offsetof(Vertex, pos)
+                },
+            vk::VertexInputAttributeDescription{
+                .location = 1, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(Vertex, color)
+                }
+        };
+    }
+};
+
+static_assert(std::is_standard_layout_v<Vertex>);
+
+const std::vector<Vertex> vertices = {
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    {{ 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{ 0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}},
+    {{-0.5f,  0.5f}, {1.0f, 1.0f, 1.0f}},
+    };
+
+const std::vector<uint16_t> indices = {
+    0, 1, 2, 2, 3, 0
+    };
 
 namespace Jafg::Private
 {
@@ -196,6 +237,8 @@ Jafg::LSurfaceGlfw3::~LSurfaceGlfw3()
         this->GetFrontend().GetVkDevice().waitIdle();
     }
 
+    this->VertexBuffer.Free();
+
     if (this->Cursor)
     {
         LOG_VERBOSE(LogSurface, "Destroying glfw cursor.")
@@ -219,6 +262,8 @@ void Jafg::LSurfaceGlfw3::LateSetupVk()
     this->VkCreateImageViews();
     this->VkCreateGraphicsPipeline();
     this->VkCreateCommandPool();
+    this->VkCreateVertexBuffer();
+    this->VkCreateIndexBuffer();
     this->VkCreateCommandBuffers();
     this->VkCreateSynchObjects();
 
@@ -676,7 +721,6 @@ void Jafg::LSurfaceGlfw3::KeyCallback(const i32 Key, const i32 Scancode, const i
     return;
 }
 
-
 #if PLATFORM_LINUX
 void Jafg::LSurfaceGlfw3::EmulateRepeatedContentForBufferedInput()
 {
@@ -896,7 +940,13 @@ void Jafg::LSurfaceGlfw3::VkCreateGraphicsPipeline()
         };
     vk::PipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
-    vk::PipelineVertexInputStateCreateInfo   vertexInputInfo;
+    auto BindingDescription = Vertex::getBindingDescription();
+    auto AttributeDescriptions = Vertex::getAttributeDescriptions();
+
+    vk::PipelineVertexInputStateCreateInfo   vertexInputInfo {
+        .vertexBindingDescriptionCount = 1, .pVertexBindingDescriptions = &BindingDescription,
+        .vertexAttributeDescriptionCount = AttributeDescriptions.size(), .pVertexAttributeDescriptions = AttributeDescriptions.data()
+        };
     vk::PipelineInputAssemblyStateCreateInfo inputAssembly{.topology = vk::PrimitiveTopology::eTriangleList};
     vk::PipelineViewportStateCreateInfo      viewportState{.viewportCount = 1, .scissorCount = 1};
 
@@ -1093,6 +1143,26 @@ void Jafg::LSurfaceGlfw3::VkRecreateSwapchain()
     return;
 }
 
+void Jafg::LSurfaceGlfw3::VkCreateBuffer(
+      vk::DeviceSize Size
+    , vk::BufferUsageFlags Usage
+    , vk::MemoryPropertyFlags Properties
+    , vk::raii::Buffer& Buffer
+    , vk::raii::DeviceMemory& BufferMemory
+    )
+{
+    auto& Frontend = this->GetFrontend();
+
+    vk::BufferCreateInfo bufferInfo{ .size = Size, .usage = Usage, .sharingMode = vk::SharingMode::eExclusive };
+    Buffer = vk::raii::Buffer(Frontend.GetVkDevice(), bufferInfo);
+    vk::MemoryRequirements memRequirements = Buffer.getMemoryRequirements();
+    vk::MemoryAllocateInfo allocInfo{ .allocationSize = memRequirements.size, .memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, Properties) };
+    BufferMemory = vk::raii::DeviceMemory(Frontend.GetVkDevice(), allocInfo);
+    Buffer.bindMemory(*BufferMemory, 0);
+
+    return;
+}
+
 void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
 {
     auto& TargetBuffer = this->VkCommandBuffers[this->VkFlightSyncFrameIndex];
@@ -1128,7 +1198,11 @@ void Jafg::LSurfaceGlfw3::RecordCommandBuffer(u32 ImageIndex)
     TargetBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *this->VkMyPipeline);
     TargetBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<f32>(this->VkMySwapchainExtent.width), static_cast<f32>(this->VkMySwapchainExtent.height), 0.0f, 1.0f));
     TargetBuffer.setScissor( 0, vk::Rect2D( vk::Offset2D( 0, 0 ), this->VkMySwapchainExtent ) );
-    TargetBuffer.draw(3, 1, 0, 0);
+
+    TargetBuffer.bindVertexBuffers(0, this->VertexBuffer.Buffer, {0});
+    TargetBuffer.bindIndexBuffer(this->IndexBuffer.Buffer, 0, vk::IndexType::eUint16);
+    TargetBuffer.drawIndexed(::indices.size(), 1, 0, 0, 0);
+
     TargetBuffer.endRendering();
 
     TransitionImageLayout(
@@ -1181,6 +1255,104 @@ void Jafg::LSurfaceGlfw3::TransitionImageLayout(u32 ImageIndex, vk::ImageLayout 
         };
 
     this->VkCommandBuffers[this->VkFlightSyncFrameIndex].pipelineBarrier2(DependencyInfo);
+
+    return;
+}
+
+u32 Jafg::LSurfaceGlfw3::FindMemoryType(u32 TypeFilter, vk::MemoryPropertyFlags Properties) const
+{
+    vk::PhysicalDeviceMemoryProperties MemProperties = this->GetFrontend().GetVkPhysicalDevice().getMemoryProperties();
+    for (u32 Idx{ 0 }; Idx < MemProperties.memoryTypeCount; ++Idx)
+    {
+        if ((TypeFilter & (1 << Idx)) && (MemProperties.memoryTypes[Idx].propertyFlags & Properties) == Properties)
+        {
+            return Idx;
+        }
+    }
+
+    panic( "Failed to find suitable memory type." )
+}
+
+void Jafg::LSurfaceGlfw3::VkCreateVertexBuffer()
+{
+    LOG_VERBOSE(LogTemporal, "Creating Vulkan vertex buffer for surface.")
+
+    this->VertexBuffer = this->GetFrontend().VkStageVertexBuffer(
+        vk::BufferCopy{ 0, 0, sizeof(vertices[0]) * vertices.size()},
+        ::vertices.data(),
+        this->VkMyCommandPool
+        );
+
+    // auto& Frontend = this->GetFrontend();
+    // auto  Vma = Frontend.GetVma();
+    //
+    //
+    // vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+    //
+    // // --- Staging buffer (CPU visible) ---
+    // VkBuffer StagingBuffer;
+    // VmaAllocation StagingAllocation;
+    // VmaAllocationCreateInfo StagingAllocationCreateInfo{
+    //     .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+    //     .usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
+    //     };
+    // vk::BufferCreateInfo StagingBufferCreateInfo{
+    //     .size = bufferSize,
+    //     .usage = vk::BufferUsageFlagBits::eTransferSrc,
+    //     .sharingMode = vk::SharingMode::eExclusive
+    //     };
+    //
+    // VmaAllocationInfo stagingAllocResult{};
+    // if (auto Res = vmaCreateBuffer(
+    //     Vma,
+    //     &*StagingBufferCreateInfo,
+    //     &StagingAllocationCreateInfo,
+    //     &StagingBuffer,
+    //     &StagingAllocation,
+    //     &stagingAllocResult
+    //     ); Res != VK_SUCCESS)
+    // {
+    //     panic("Failed to create vertex staging buffer.")
+    // }
+    // check( stagingAllocResult.pMappedData )
+    // std::memcpy(stagingAllocResult.pMappedData, vertices.data(), static_cast<size_t>(bufferSize));
+    //
+    // // --- Device local buffer (GPU only) ---
+    // VkBuffer vertexBuffer;
+    // VmaAllocation vertexAllocation;
+    // VmaAllocationCreateInfo vertexAllocInfo = {};
+    // vertexAllocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+    // vertexAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    //
+    // VkBufferCreateInfo vertexBufferInfo = {};
+    // vertexBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    // vertexBufferInfo.size = bufferSize;
+    // vertexBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    //
+    // vmaCreateBuffer(Vma, &vertexBufferInfo, &vertexAllocInfo, &vertexBuffer, &vertexAllocation, nullptr);
+    //
+    // // --- Copy from staging to device local ---
+    // Frontend.VkCopyBuffer(*this->VkMyCommandPool, StagingBuffer, vertexBuffer, vk::BufferCopy{ 0, 0, bufferSize });
+    //
+    // // --- Cleanup staging buffer ---
+    // vmaDestroyBuffer(Vma, StagingBuffer, StagingAllocation);
+    //
+    // // Store VMA handles for later destruction
+    // this->VkMyVertexBuffer = vertexBuffer;
+    // this->VmaMyVertexBufferAllocation = vertexAllocation;
+
+    return;
+}
+
+void Jafg::LSurfaceGlfw3::VkCreateIndexBuffer()
+{
+    LOG_VERBOSE(LogTemporal, "Creating Vulkan index buffer for surface.")
+
+    this->IndexBuffer = this->GetFrontend().VkStageIndexBuffer(
+        vk::BufferCopy{ 0, 0, sizeof(indices[0]) * indices.size()},
+        indices.data(),
+        this->VkMyCommandPool
+        );
 
     return;
 }

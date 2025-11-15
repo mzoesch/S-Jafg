@@ -1,16 +1,20 @@
 // Copyright mzoesch. All rights reserved.
 
+/* Included for vkGetInstanceProcAddr and vkGetDeviceProcAddr */
+#include <vulkan/vulkan.h>
+
 #define VMA_IMPLEMENTATION
 #include "Framework/FrontendVk.h"
 
+#include <GLFW/glfw3.h>
 #if PLATFORM_WINDOWS
     #define GLFW_EXPOSE_NATIVE_WIN32
     #include <GLFW/glfw3native.h>
 #endif /* PLATFORM_WINDOWS */
 
-#include <GLFW/glfw3.h>
 
 #include "Stats/Stats.h"
+#include "Engine/Engine.h"
 
 namespace
 {
@@ -56,6 +60,27 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL Hermes(
     return VK_FALSE;
 }
 #endif /* !IN_SHIPPING */
+
+void Jafg::LVmaBuffer::FreeImpl() noexcept
+{
+    if (GEngine)
+    {
+        vmaDestroyBuffer(
+            GEngine->GetLocalEgo().GetFrontend().GetVma(),
+            this->Buffer,
+            this->Allocation
+            );
+    }
+    else if constexpr (IS_COMPILED_LOG(LogVulkan, Warning))
+    {
+        if (this->Buffer || this->Allocation)
+        {
+            LOG_WARNING(LogVulkan, "VMA Buffer leaked during LVmaBuffer destruction.")
+        }
+    }
+
+    return;
+}
 
 void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 {
@@ -106,6 +131,7 @@ void Jafg::LFrontendVk::Initialize(LClassOuter* Outer)
 
     this->PickPhysicalDevice();
     this->CreateLogicalDevice();
+    this->CreateVma();
 
     for (auto& Surface : this->GetSurfaces())
     {
@@ -120,10 +146,98 @@ void Jafg::LFrontendVk::TearDown()
 {
     LFrontendBase::TearDown();
 
+    LOG_VERBOSE(LogVulkan, "Destroying VMA.")
+    vmaDestroyAllocator(this->VmaMyAllocator);
+
     LOG_VERBOSE(LogSurface, "Terminating glfw.")
     glfwTerminate();
 
     return;
+}
+
+// TODO: Pool for this only.
+// https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/02_Staging_buffer.html
+void Jafg::LFrontendVk::VkCopyBuffer(vk::CommandPool Pool, vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::BufferCopy BufferCopy) const
+{
+    check( SrcBuffer && DstBuffer )
+
+    vk::CommandBufferAllocateInfo AllocInfo{
+        .commandPool = Pool,
+        .level = vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = 1
+        };
+
+    vk::raii::CommandBuffer CommandCopyBuffer = std::move(this->GetVkDevice().allocateCommandBuffers(AllocInfo).front());
+    CommandCopyBuffer.begin(vk::CommandBufferBeginInfo{ .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
+    CommandCopyBuffer.copyBuffer(SrcBuffer, DstBuffer, BufferCopy);
+    CommandCopyBuffer.end();
+
+    this->VkMyGraphicsQueue.submit(vk::SubmitInfo{ .commandBufferCount = 1, .pCommandBuffers = &*CommandCopyBuffer }, nullptr);
+    this->VkMyGraphicsQueue.waitIdle();
+
+    return;
+}
+
+Jafg::LVmaBuffer Jafg::LFrontendVk::VkStageData(vk::BufferCopy BufferCopy, void const* Data, vk::BufferUsageFlags Usage, vk::CommandPool Pool)
+{
+    VkBuffer StagingBuffer;
+    VmaAllocation StagingAllocation;
+    VmaAllocationCreateInfo StagingAllocationCreateInfo{
+        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT
+            // TODO: This is optional. Make configurable? What are the side effects?
+            | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+        .usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
+        };
+    vk::BufferCreateInfo StagingBufferCreateInfo{
+        .size = BufferCopy.size,
+        .usage = vk::BufferUsageFlagBits::eTransferSrc,
+        // TODO: This only works for one queue family. Make configurable?
+        .sharingMode = vk::SharingMode::eExclusive
+        };
+
+    VmaAllocationInfo StagingAllocationInfo{};
+
+    auto Res = vmaCreateBuffer(
+        this->VmaMyAllocator,
+        StagingBufferCreateInfo,
+        &StagingAllocationCreateInfo,
+        &StagingBuffer,
+        &StagingAllocation,
+        &StagingAllocationInfo
+        );
+    check( Res == VK_SUCCESS )
+    check( StagingAllocationInfo.pMappedData )
+
+    // TODO: Check that HOST_VISIBLE | HOST_COHERENT is picked. Otherwise flush.
+    std::memcpy(StagingAllocationInfo.pMappedData, Data, static_cast<size_t>(BufferCopy.size));
+
+    VkBuffer DeviceBuffer;
+    VmaAllocation DeviceAllocation;
+    VmaAllocationCreateInfo DeviceAllocInfo{
+        .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+        .requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        };
+    check( Usage & vk::BufferUsageFlagBits::eTransferDst )
+    vk::BufferCreateInfo DeviceBufferCreateInfo{
+        .size = BufferCopy.size,
+        .usage = Usage,
+        };
+
+    Res = vmaCreateBuffer(
+        this->VmaMyAllocator,
+        DeviceBufferCreateInfo,
+        &DeviceAllocInfo,
+        &DeviceBuffer,
+        &DeviceAllocation,
+        nullptr
+        );
+    check( Res == VK_SUCCESS )
+
+    this->VkCopyBuffer(Pool, StagingBuffer, DeviceBuffer, BufferCopy);
+
+    vmaDestroyBuffer(this->VmaMyAllocator, StagingBuffer, StagingAllocation);
+
+    return LVmaBuffer{ DeviceBuffer, DeviceAllocation };
 }
 
 void Jafg::LFrontendVk::FetchAndCheckInstanceExtensions()
@@ -441,16 +555,30 @@ void Jafg::LFrontendVk::CreateLogicalDevice()
 void Jafg::LFrontendVk::CreateVma()
 {
     LOG_VERBOSE(LogVulkan, "Creating VMA.")
-    VmaVulkanFunctions VmaVulkanFunc{
-        .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
-        .vkGetDeviceProcAddr = vkGetDeviceProcAddr
+
+    VmaVulkanFunctions VulkanFunctions{
+        .vkGetInstanceProcAddr = &vkGetInstanceProcAddr,
+        .vkGetDeviceProcAddr   = &vkGetDeviceProcAddr,
         };
 
     VmaAllocatorCreateInfo VmaAllocatorCreateInfo{
+        .flags = {}
+            //  VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT
+            // | VMA_ALLOCATOR_CREATE_EXTERNALLY_SYNCHRONIZED_BIT
+            // | VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT
+            // | VMA_ALLOCATOR_CREATE_AMD_DEVICE_COHERENT_MEMORY_BIT
+            // | VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE4_EXTENSION_BIT
+            ,
         .physicalDevice = *this->VkMyPhysicalDevice,
         .device = *this->VkMyDevice,
-        .pVulkanFunctions = &VmaVulkanFunc,
-        .instance = *this->VkMyInstance
+        .preferredLargeHeapBlockSize = 0,
+        .pAllocationCallbacks = nullptr,
+        .pDeviceMemoryCallbacks = nullptr,
+        .pHeapSizeLimit = nullptr,
+        .pVulkanFunctions = &VulkanFunctions,
+        .instance = *this->VkMyInstance,
+        .vulkanApiVersion = VK_API_VERSION_1_4,
+        .pTypeExternalMemoryHandleTypes = nullptr,
         };
 
     if (vmaCreateAllocator(&VmaAllocatorCreateInfo, &this->VmaMyAllocator) != VK_SUCCESS)

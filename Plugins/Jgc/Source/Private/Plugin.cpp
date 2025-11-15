@@ -4,6 +4,7 @@
 #include "Runtime/Args.h"
 #include "Core/JgcNames.h"
 #include "Svw/SvwSupremePolicies.h"
+#include "Fw/FwSupremePolicies.h"
 
 DECLARE_INLINE_LOG_CATEGORY(LogJgcLifetime, Trace)
 
@@ -35,9 +36,10 @@ void LJgcPluginLifetime::OnFinishedLoading()
    (
        Jafg::LLevel
        {
-           Name_LevelFrontend.ToString(),
-           Jafg::EInputMode::Both, true,
-           Lal::LLinearColor::CadetBlue
+           .Identifier = Name_LevelFrontend.ToString(),
+           .InputMode = Jafg::EInputMode::Both,
+           .BackgroundColor = Lal::LLinearColor::CadetBlue,
+           .SupremePoliciesClass = Jgc::JFwSupremePolicies::StaticClass(),
        }
    ) == false)
    {

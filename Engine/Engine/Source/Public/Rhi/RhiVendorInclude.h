@@ -16,8 +16,10 @@
 #define VK_NO_PROTOTYPES
 #define VULKAN_HPP_NO_CONSTRUCTORS
 #include <vulkan/vulkan_raii.hpp>
-#include <volk.h>
+// #include <volk.h>
 
+// We support Vulkan 1.4. This is currently (2025) the latest version. Therefore, we do not need this right now; tm.
+// #define VMA_VULKAN_VERSION 1004000
 #if LAL_WITH_CLANG
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Weverything"

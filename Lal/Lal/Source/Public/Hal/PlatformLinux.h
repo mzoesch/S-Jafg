@@ -92,6 +92,7 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     -----------------------------------------------------------------------------*/
     #pragma clang diagnostic error "-Wbraced-scalar-init"
     #pragma clang diagnostic error "-Wbuiltin-macro-redefined"
+    #pragma clang diagnostic error "-Wc99-designator"
     #pragma clang diagnostic error "-Wdangling-else"
     #pragma clang diagnostic error "-Wdeprecated-literal-operator"
     #pragma clang diagnostic error "-Wdynamic-class-memaccess"
@@ -107,6 +108,7 @@ noexcept __attribute__ ((__noreturn__)) /* __attribute__ ((__cold)) */;
     #pragma clang diagnostic error "-Wmismatched-new-delete"
     #pragma clang diagnostic error "-Wmismatched-tags"
     #pragma clang diagnostic error "-Wnontrivial-memcall"
+    #pragma clang diagnostic error "-Wnull-character"
     #pragma clang diagnostic error "-Wnull-pointer-subtraction"
     #pragma clang diagnostic error "-Wparentheses"
     #pragma clang diagnostic error "-Wpessimizing-move"

@@ -30,43 +30,43 @@ struct LLevelSkyboxMap final
 //#
 struct LLevel final
 {
-    LLevel() = default;
+    // LLevel() = default;
 
-    explicit LLevel
-    (
-        LString InIdentifier,
-        const EInputMode::Type InInputMode = EInputMode::None,
-        const bool bInShowMouseCursor = true,
-        Lal::LLinearColor const& BackgroundColor = Lal::LLinearColor::Black,
-        const bool bInCreateSkybox = false,
-        const bool bInDrawSkyboxFirst = true,
-        TArray<LLevelSkyboxMap> const& InSkybox = {},
-        const TSubclassOf<JSupremePolicies> InSupremePoliciesClass = {}
-    )
-        : Identifier(std::move(InIdentifier))
-        , InputMode(InInputMode)
-        , bShowMouseCursor(bInShowMouseCursor)
-        , BackgroundColor(BackgroundColor)
-        , bCreateSkybox(bInCreateSkybox)
-        , bDrawSkyboxFirst(bInDrawSkyboxFirst)
-        , Skybox(InSkybox)
-        , SupremePoliciesClass(InSupremePoliciesClass)
-    {
-        return;
-    }
+    // explicit LLevel
+    // (
+    //     LString InIdentifier,
+    //     const EInputMode::Type InInputMode = EInputMode::None,
+    //     const bool bInShowMouseCursor = true,
+    //     Lal::LLinearColor const& BackgroundColor = Lal::LLinearColor::Black,
+    //     const bool bInCreateSkybox = false,
+    //     const bool bInDrawSkyboxFirst = true,
+    //     TArray<LLevelSkyboxMap> const& InSkybox = {},
+    //     const TSubclassOf<JSupremePolicies> InSupremePoliciesClass = {}
+    // )
+    //     : Identifier(std::move(InIdentifier))
+    //     , InputMode(InInputMode)
+    //     , bShowMouseCursor(bInShowMouseCursor)
+    //     , BackgroundColor(BackgroundColor)
+    //     , bCreateSkybox(bInCreateSkybox)
+    //     , bDrawSkyboxFirst(bInDrawSkyboxFirst)
+    //     , Skybox(InSkybox)
+    //     , SupremePoliciesClass(InSupremePoliciesClass)
+    // {
+    //     return;
+    // }
 
-    DEFAULT_REALLOC_OF_ANY_FORM(LLevel)
+    // DEFAULT_REALLOC_OF_ANY_FORM(LLevel)
 
     FORCEINLINE bool operator==(const LLevel&  Other) const noexcept { return this->Identifier == Other.Identifier; }
 
     LString Identifier;
 
-    EInputMode::Type InputMode;
-    bool bShowMouseCursor;
+    EInputMode::Type InputMode{ EInputMode::None };
+    bool bShowMouseCursor{ true };
 
     Lal::LLinearColor BackgroundColor;
-    bool bCreateSkybox;
-    bool bDrawSkyboxFirst;
+    bool bCreateSkybox{ false };
+    bool bDrawSkyboxFirst{ true };
     TArray<LLevelSkyboxMap> Skybox;
 
     TSubclassOf<JSupremePolicies> SupremePoliciesClass;

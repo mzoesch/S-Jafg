@@ -25,6 +25,19 @@ public:
     FORCEINLINE auto const& GetVkGraphicsQueue() const noexcept { return this->VkMyGraphicsQueue; }
     FORCEINLINE auto const& GetVkPresentQueue() const noexcept { return this->VkMyPresentQueue; }
 
+    FORCEINLINE auto const& GetVma() const noexcept { return this->VmaMyAllocator; }
+
+    ENGINE_API void VkCopyBuffer(vk::CommandPool Pool, vk::Buffer SrcBuffer, vk::Buffer DstBuffer, vk::BufferCopy BufferCopy) const;
+
+    ENGINE_API LVmaBuffer VkStageData(vk::BufferCopy BufferCopy, void const* Data, vk::BufferUsageFlags Usage, vk::CommandPool Pool /* just temp... */);
+
+    FORCEINLINE LVmaBuffer VkStageVertexBuffer(vk::BufferCopy BufferCopy, void const* Data, vk::CommandPool Pool /* just temp... */,
+        vk::BufferUsageFlags Usage = vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer
+        ) { return this->VkStageData(BufferCopy, Data, Usage, Pool); }
+    FORCEINLINE LVmaBuffer VkStageIndexBuffer(vk::BufferCopy BufferCopy, void const* Data, vk::CommandPool Pool /* just temp... */,
+        vk::BufferUsageFlags Usage = vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer
+        ) { return this->VkStageData(BufferCopy, Data, Usage, Pool); }
+
 private:
 
     void FetchAndCheckInstanceExtensions();
